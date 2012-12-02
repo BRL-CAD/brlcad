@@ -1,0 +1,150 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='rtpp1'>
+<refmeta>
+<refentrytitle>RTPP</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class='source'>BRL-CAD</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>rtpp</refname>
+<refpurpose>raytrace an mged model, writing a GIFT-style Pretty Picture file</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<cmdsynopsis>
+  <command>rtpp</command>    
+    <arg choice='opt' rep='repeat'><replaceable>options</replaceable></arg>
+    <arg choice='plain'><replaceable>model.g</replaceable></arg>
+    <arg choice='plain' rep='repeat'><replaceable>objects</replaceable></arg>
+    
+    <arg choice='plain'><replaceable>&gt;</replaceable></arg>
+    <arg choice='plain'><replaceable>model.pp</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para><emphasis remap='I'>Rtpp</emphasis>
+operates on the indicated
+<emphasis remap='I'>objects</emphasis>
+in the input
+<emphasis remap='I'>model.g</emphasis>
+and produces a GIFT-style "pretty picture" format file
+on standard output.
+The orientation of the rays to be fired may be specified by
+the
+<option>-a</option>
+and
+<option>-e</option>
+options, in which case the model will be autosized, and the grid
+will be centered on the centroid of the model, with ray spacing
+chosen to span the entire set of
+<emphasis remap='I'>objects.</emphasis>
+Alternatively,
+with the
+<option>-M</option>
+option, a transformation matrix may be provided on standard input
+which maps model-space to view-space.
+In this case, the grid ranges from -1.0 &lt;= X,Y &lt;= +1.0 in view space,
+with the size of the grid (number of pixels) specified with
+<option>-f</option>
+This option is most useful when
+<command>rtpp</command>
+is being invoked from a shell script created by an
+<citerefentry><refentrytitle>mged</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+<emphasis remap='I'>saveview</emphasis> command.</para>
+
+<para>The following options are recognized.</para>
+<variablelist remap='TP'>
+  <varlistentry>
+  <term><option>-f#</option></term>
+  <listitem>
+<para>Number of pixels in X and Y directions (square grid).
+Default is 512 (512x512), maximum is 1024 (1024x1024).</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-a#</option></term>
+  <listitem>
+<para>Select azimuth in degrees.  Used with
+<option>-e</option>
+and conflicts With
+<option>-M</option></para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-e#</option></term>
+  <listitem>
+<para>Select elevation in degrees.  Used with
+<option>-a</option>
+and conflicts with
+<option>-M</option></para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-M</option></term>
+  <listitem>
+<para>Read model2view matrix from standard input.
+Conflicts with
+<option>-a</option>
+and
+<option>-e</option></para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-x#</option></term>
+  <listitem>
+<para>Set debug flags to (hexadecimal) number.  Not generally useful.</para>
+  </listitem>
+  </varlistentry>
+</variablelist>
+
+<para>The
+<command>rtpp</command>
+program is a simple front-end to
+<citerefentry><refentrytitle>librt</refentrytitle><manvolnum>3</manvolnum></citerefentry>
+which is most useful when used with
+<citerefentry><refentrytitle>mged</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
+In order to display a pretty-picture file,
+the programs
+<citerefentry><refentrytitle>pp-ik</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+and
+<citerefentry><refentrytitle>pp-fb</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+are used.</para>
+</refsect1>
+
+<refsect1 xml:id='see_also'><title>SEE ALSO</title>
+<para><citerefentry><refentrytitle>gift</refentrytitle><manvolnum>1V</manvolnum></citerefentry>, <citerefentry><refentrytitle>mged</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>pp-ik</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>pp-fb</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>rt</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>rayplot</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>rayvect</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>rtpp</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>rtray</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>librt</refentrytitle><manvolnum>3</manvolnum></citerefentry>, <citerefentry><refentrytitle>ray</refentrytitle><manvolnum>5V</manvolnum></citerefentry>.</para>
+</refsect1>
+
+<refsect1 xml:id='diagnostics'><title>DIAGNOSTICS</title>
+<para>Numerous error conditions are possible.
+Descriptive messages are printed on standard error (file descriptor 2).</para>
+</refsect1>
+
+<refsect1 xml:id='bugs'><title>BUGS</title>
+<para>Most deficiencies observed while using the
+<command>rtpp</command>
+program are usually with the
+<citerefentry><refentrytitle>librt</refentrytitle><manvolnum>3</manvolnum></citerefentry>
+package instead.</para>
+</refsect1>
+
+<refsect1 xml:id='author'><title>AUTHOR</title>
+<para>BRL-CAD Team</para>
+</refsect1>
+
+<refsect1 xml:id='copyright'><title>COPYRIGHT</title>
+<para>This software is Copyright (c) 1986-2012 by the United States
+Government as represented by U.S. Army Research Laboratory.</para>
+</refsect1>
+
+<refsect1 xml:id='bug_reports'><title>BUG REPORTS</title>
+<para>Reports of bugs or problems should be submitted via electronic
+mail to &lt;devs@brlcad.org&gt;.</para>
+</refsect1>
+</refentry>
+

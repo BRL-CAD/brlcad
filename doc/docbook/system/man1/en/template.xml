@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='template1'>
+<!--  \-*\- Text \-*\-
+ Copyright (c) 1990, University of Michigan
+ Template man page. -->
+<refmeta>
+<refentrytitle>PROGNAME</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class='source'>Month DD, YYYY</refmiscinfo>
+<refmiscinfo class='manual'>1</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>progname</refname>
+<refpurpose>a prog for naming</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<cmdsynopsis>
+  <command>progname</command>    
+    <arg choice='opt'>-l </arg>
+    <arg choice='opt'><arg choice='plain'>-o </arg><arg choice='plain'><replaceable>outfile</replaceable></arg></arg>
+    <arg choice='opt'><arg choice='plain'>-p </arg><arg choice='plain'><replaceable>x</replaceable></arg><arg choice='plain'><replaceable>y</replaceable></arg></arg>
+    <arg choice='opt'>-v </arg>
+    <arg choice='opt'><replaceable>infile</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para>This program accepts an
+<!--  .IR refers to another man entry -->
+<citerefentry><refentrytitle>RLE</refentrytitle><manvolnum>5</manvolnum></citerefentry>
+file and does something interesting with it.
+<!--  An option mentioned in\-line -->
+One nice feature is the <option>-l</option> option.</para>
+</refsect1>
+
+<refsect1 xml:id='options'><title>OPTIONS</title>
+<variablelist remap='TP'>
+  <varlistentry>
+  <term><option>-o</option><replaceable> outfile</replaceable></term>
+  <listitem>
+<para>If specified, the output will be written to this file.  If
+<emphasis remap='I'>outfile</emphasis>
+is "-", or if it is not specified, the output will be written to the
+standard output stream.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-p</option><replaceable> x y</replaceable></term>
+  <listitem>
+<para>Reposition the image.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-v</option></term>
+  <listitem>
+<para>Verbose output.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='I'>infile</emphasis></term>
+  <listitem>
+<para>The input will be read from this file.  If
+<emphasis remap='I'>infile</emphasis>
+is "-" or is not specified, the input will be read from the standard
+input stream.</para>
+  </listitem>
+  </varlistentry>
+</variablelist>
+</refsect1>
+
+<refsect1 xml:id='files'><title>FILES</title>
+<para>list files here</para>
+</refsect1>
+
+<refsect1 xml:id='see_also'><title>SEE ALSO</title>
+<para><citerefentry><refentrytitle>otherprog</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>urt</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>RLE</refentrytitle><manvolnum>5</manvolnum></citerefentry>.</para>
+</refsect1>
+
+<refsect1 xml:id='author'><title>AUTHOR</title>
+<para>Your name here</para>
+</refsect1>
+
+<refsect1 xml:id='bugs'><title>BUGS</title>
+<para>Dirty laundry here.</para>
+</refsect1>
+</refentry>
+

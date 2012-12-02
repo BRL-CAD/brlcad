@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man+tkman by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='getversion3'>
+
+<!-- '\" Copyright (c) 1999 Scriptics Corporation -->
+
+<!-- '\" See the file "license.terms" for information on usage and redistribution
+'\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
+'\" 
+'\" RCS: @(#) $Id$
+'\"  -->
+<refentryinfo><date>7.5</date></refentryinfo>
+<refmeta>
+<refentrytitle>Tcl_GetVersion</refentrytitle>
+<manvolnum>3</manvolnum>
+<refmiscinfo class='date'>7.5</refmiscinfo>
+<refmiscinfo class='source'>Tcl</refmiscinfo>
+<refmiscinfo class='manual'>Tcl Library Procedures</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>Tcl_GetVersion</refname>
+<refpurpose>get the version of the library at runtime</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<funcsynopsis>
+<funcsynopsisinfo>
+#include &lt;tcl.h&gt;
+
+</funcsynopsisinfo>
+<funcprototype>
+<funcdef><function>Tcl_GetVersion</function></funcdef>
+<paramdef><parameter>major</parameter></paramdef>
+<paramdef><parameter>minor</parameter></paramdef>
+<paramdef><parameter>patchLevel</parameter></paramdef>
+<paramdef><parameter>type</parameter></paramdef>
+</funcprototype>
+</funcsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='arguments'><title>ARGUMENTS</title>
+<!-- .AS Tcl_ReleaseType *patchLevel out -->
+<informaltable>
+<tgroup cols='3'>
+<tbody>
+
+<row><entry>"int"</entry><entry>"*major"</entry><entry>"out"</entry>
+<entry>
+<para>Major version number of the Tcl library.</para>
+</entry>
+</row>
+<row><entry>int</entry><entry>*minor</entry><entry>out</entry>
+<entry>
+<para>Minor version number of the Tcl library.</para>
+</entry>
+</row>
+<row><entry>int</entry><entry>*patchLevel</entry><entry>out</entry>
+<entry>
+<para>The patch level of the Tcl library (or alpha or beta number).</para>
+</entry>
+</row>
+<row><entry>Tcl_ReleaseType</entry><entry>*type</entry><entry>out</entry>
+<entry>
+<para>The type of release, also indicates the type of patch level. Can be
+one of <emphasis remap='B'>TCL_ALPHA_RELEASE</emphasis>, <emphasis remap='B'>TCL_BETA_RELEASE</emphasis>, or 
+<emphasis remap='B'>TCL_FINAL_RELEASE</emphasis>.</para>
+<!-- .BE -->
+</entry>
+</row>
+</tbody>
+</tgroup>
+</informaltable>
+
+</refsect1>
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para><function>Tcl_GetVersion</function> should be used to query the version number
+of the Tcl library at runtime.  This is useful when using a 
+dynamically loaded Tcl library or when writing a stubs-aware
+extension.  For instance, if you write an extension that is
+linked against the Tcl stubs library, it could be loaded into
+a program linked to an older version of Tcl than you expected.
+Use <function>Tcl_GetVersion</function> to verify that fact, and possibly to
+change the behavior of your extension.</para>
+
+<para><function>Tcl_GetVersion</function> accepts NULL for any of the arguments. For instance if 
+you do not care about the <emphasis remap='I'>patchLevel</emphasis> of the library, pass
+a NULL for the <emphasis remap='I'>patchLevel</emphasis> argument.</para>
+
+</refsect1>
+
+<refsect1 xml:id='keywords'><title>KEYWORDS</title>
+<para>version, patchlevel, major, minor, alpha, beta, release</para>
+</refsect1>
+</refentry>
+

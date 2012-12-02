@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='rle_rawtorow3'>
+<!--  Copyright (c) 1990, University of Michigan -->
+<refmeta>
+<refentrytitle>RLE_RAWTOROW</refentrytitle>
+<manvolnum>3</manvolnum>
+<refmiscinfo class='source'>July, 1990</refmiscinfo>
+<refmiscinfo class='manual'>3</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>rle_rawtorow</refname>
+<refpurpose>Convert "raw" RLE data to scanline form.</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<funcsynopsis>
+<funcsynopsisinfo>
+#include &lt;rle.h&gt;
+
+#include &lt;rle_raw.h&gt;
+
+</funcsynopsisinfo>
+<funcprototype>
+<funcdef><function>rle_rawtorow</function></funcdef>
+<paramdef><parameter>the_hdr</parameter></paramdef>
+<paramdef><parameter>raw</parameter></paramdef>
+<paramdef><parameter>nraw</parameter></paramdef>
+<paramdef><parameter>outrows</parameter></paramdef>
+</funcprototype>
+<funcsynopsisinfo>
+
+rle_hdr *the_hdr;
+
+rle_op **raw;
+
+int *nraw;
+
+rle_pixel **outrows;
+</funcsynopsisinfo>
+</funcsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para><emphasis remap='I'>Rle_rawtorow</emphasis>
+interprets the "raw" run-length encoded data in
+<emphasis remap='I'>raw</emphasis>,
+such as might be returned by
+<citerefentry><refentrytitle>rle_getraw</refentrytitle><manvolnum>3</manvolnum></citerefentry>,
+and produces the corresponding scanline data in
+<emphasis remap='I'>outrows</emphasis>,
+such as would have been returned by
+<citerefentry><refentrytitle>rle_getrow</refentrytitle><manvolnum>3</manvolnum></citerefentry>.</para>
+</refsect1>
+
+<refsect1 xml:id='see_also'><title>SEE ALSO</title>
+<!-- .na -->
+<para><citerefentry><refentrytitle>rle_hdr</refentrytitle><manvolnum>3</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>rle_op</refentrytitle><manvolnum>3</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>rle_getraw</refentrytitle><manvolnum>3</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>rle_getrow</refentrytitle><manvolnum>3</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>librle</refentrytitle><manvolnum>3</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>RLE</refentrytitle><manvolnum>5</manvolnum></citerefentry>.</para>
+<!-- .ad b -->
+</refsect1>
+
+<refsect1 xml:id='author'><title>AUTHOR</title>
+<para>Spencer W. Thomas, after code by Rod G. Bogart and John W. Peterson.</para>
+</refsect1>
+</refentry>
+

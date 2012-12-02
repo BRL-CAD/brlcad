@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='png5'>
+<refmeta>
+<refentrytitle>PNG</refentrytitle>
+<manvolnum>5</manvolnum>
+<refmiscinfo class='source'>July 11, 2012</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>png</refname>
+<refpurpose>Portable Network Graphics (PNG) format</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para>PNG (Portable Network Graphics) is an extensible file format for the
+lossless, portable, well-compressed storage of raster images. PNG provides
+a patent-free replacement for GIF and can also replace many
+common uses of TIFF. Indexed-color, grayscale, and truecolor images are
+supported, plus an optional alpha channel. Sample depths range from
+1 to 16 bits.</para>
+
+
+<para>PNG is designed to work well in online viewing applications, such as the
+World Wide Web, so it is fully streamable with a progressive display
+option. PNG is robust, providing both full file integrity checking and
+fast, simple detection of common transmission errors. Also, PNG can store
+gamma and chromaticity data for improved color matching on heterogeneous
+platforms.</para>
+
+</refsect1>
+
+<refsect1 xml:id='see_also'><title>SEE ALSO</title>
+<para><citerefentry><refentrytitle>libpng</refentrytitle><manvolnum>3</manvolnum></citerefentry>,<emphasis remap='B'> libpngpf</emphasis>(3),<emphasis remap='B'> zlib</emphasis>(3),<emphasis remap='B'> deflate</emphasis>(5),and<emphasis remap='B'> zlib</emphasis>(5)</para>
+
+<para>PNG specification (second edition), November 2003:</para>
+
+
+<para>  &lt;http://www.w3.org/TR/2003/REC-PNG-20031110/
+PNG 1.2 specification, July 1999:</para>
+
+
+<para>http://www.libpng.org/pub/png</para>
+
+<para>PNG 1.0 specification, October 1996:</para>
+
+
+<para>RFC 2083</para>
+
+
+<para>ftp://ds.internic.net/rfc/rfc2083.txt</para>
+
+<para>or (as a W3C Recommendation) at</para>
+
+<para>http://www.w3.org/TR/REC-png.html</para>
+</refsect1>
+
+<refsect1 xml:id='authors'><title>AUTHORS</title>
+<para>This man page: Glenn Randers-Pehrson</para>
+
+<para>Portable Network Graphics (PNG) Specification (Second Edition)
+Information technology - Computer graphics and image processing -
+Portable Network Graphics (PNG): Functional specification.
+ISO/IEC 15948:2003 (E) (November 10, 2003): David Duce and others.</para>
+
+<para>Portable Network Graphics (PNG) Specification Version 1.2 (July 8, 1999):
+Glenn Randers-Pehrson and others (png-list).</para>
+
+<para>Portable Network Graphics (PNG) Specification Version 1.0 (October 1, 1996):
+Thomas Boutell and others (png-list).</para>
+
+
+
+</refsect1>
+
+<refsect1 xml:id='copyright_notice'><title>COPYRIGHT NOTICE</title>
+<para>This man page is Copyright (c) 1998-2006 Glenn Randers-Pehrson.  See png.h
+for conditions of use and distribution.</para>
+
+<para>The PNG Specification (Second Edition) is
+Copyright (c) 2003 W3C. (MIT, ERCIM, Keio), All Rights Reserved.</para>
+
+<para>The PNG-1.2 specification is copyright (c) 1999 Glenn Randers-Pehrson.
+See the specification for conditions of use and distribution.</para>
+
+<para>The PNG-1.0 specification is copyright (c) 1996 Massachusetts Institute of
+Technology.  See the specification for conditions of use and distribution.</para>
+
+<!--  end of man page -->
+</refsect1>
+</refentry>
+

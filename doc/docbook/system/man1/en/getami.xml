@@ -1,0 +1,198 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='getami1'>
+<!--  &bsol;-*&bsol;- Text &bsol;-*&bsol;-
+ Copyright (c) 1990, University of Michigan
+ Template man page. -->
+<refmeta>
+<refentrytitle>GETAMI</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class='source'>February, 1992</refmiscinfo>
+<refmiscinfo class='manual'>1</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>getami</refname>
+<refpurpose>display an RLE image on a Commodore Amiga and optionally save it as an IFF ILBM file.</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<cmdsynopsis>
+  <command>getami</command>    
+    <arg choice='opt'>-w <replaceable>width</replaceable></arg>
+    <arg choice='opt'>-h <replaceable>height</replaceable></arg>
+    <arg choice='opt'>-o <replaceable>IFFfile</replaceable></arg>
+    <arg choice='opt'>-fdlb3H </arg>
+    <arg choice='opt'><replaceable>input_file</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para><emphasis remap='I'>Getami</emphasis>
+displays an
+<citerefentry><refentrytitle>RLE</refentrytitle><manvolnum>5</manvolnum></citerefentry>
+image on a Commodore Amiga. The program tries
+to display the image in the best possible way, using HAM mode and
+overscan when appropriate. Both NTSC and PAL Amigas are catered for.
+In addition, the program allows you to save the displayed picture in
+IFF format, using Christian Weber's
+<emphasis remap='I'>iff.library.</emphasis></para>
+</refsect1>
+
+<refsect1 xml:id='options'><title>OPTIONS</title>
+<variablelist remap='TP'>
+  <varlistentry>
+  <term><option>-w</option><replaceable> width</replaceable></term>
+  <listitem>
+<para>Override the screen width computed by getami. Eg., use
+<option>-w 640</option>
+if
+<command>getami</command>
+selects a screen resolution of 320x400
+(because the picture will fit in it), but what you really
+want is 640x400.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-h</option><replaceable> height</replaceable></term>
+  <listitem>
+<para>Override the screen height computed by
+<command>getami</command>.</para>
+  </listitem>
+  </varlistentry>
+</variablelist>
+
+<para>Apart from the example mentioned above, these two options
+are probably obsolete.</para>
+<variablelist remap='TP'>
+  <varlistentry>
+  <term><option>-o</option><replaceable> file</replaceable></term>
+  <listitem>
+<para>Make
+<command>getami</command>
+act as an RLE-&gt;IFF converter: after rendering the
+RLE file,
+<command>getami</command>
+saves the image in IFF form in the file specified, then exits.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-f</option></term>
+  <listitem>
+<para>Render the image flipped vertically. This option is necessary,
+because
+<userinput>rleflip -v</userinput>
+often requires more memory than available on the amiga.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-d</option></term>
+  <listitem>
+<para>This option causes
+<command>getami</command>
+to dump the color map it computes into file "cmap".</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-l</option></term>
+  <listitem>
+<para>This option causes
+<command>getami</command>
+to ignore the color map it computes, and to replace it with the color
+map stored in file "cmap".</para>
+  </listitem>
+  </varlistentry>
+</variablelist>
+
+<para>These two options must be used if you are using getami to
+create IFF files to be used as frames for an ANIM file, as
+all frames have to have the same color map.</para>
+<variablelist remap='TP'>
+  <varlistentry>
+  <term><option>-b</option></term>
+  <listitem>
+<para>Render the image in black and white. This allows you to
+display pictures at full resolution. (To display in color a
+640x400 picture with more than 16 colors, you need to scale
+it down to 320x400, not to mention the unavoidable blurriness
+introduced by Hold And Modify.)</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-3</option></term>
+  <listitem>
+<para>Render the image in 4096 colors without using HAM. This is
+achieved by rendering the image in three screens, one for each
+of its r,g,b components, then flipping through them in rapid
+succession. Because of this rapid flipping, the image
+flickers. This is especially noticeable in conjunction with
+interlace. If you are sensitive to screen flicker, please do
+not use this option.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-H</option></term>
+  <listitem>
+<para>Force rendering of the image in HAM mode. Useful in rendering
+animation frames, if getami happens to render some of the
+frames in HAM mode and some in another mode.</para>
+  </listitem>
+  </varlistentry>
+</variablelist>
+</refsect1>
+
+<refsect1 xml:id='menu_operations'><title>MENU OPERATIONS</title>
+<para>You can select the following actions from the menu bar:</para>
+<variablelist remap='TP'>
+  <varlistentry>
+  <term><emphasis remap='B'>SAVE</emphasis></term>
+  <listitem>
+<para>Save the rendered picture in an IFF ILBM file. The picture will
+be saved in a file with the extension ".ILBM". Eg., if you are
+rendering a.rle, the picture will be saved in a.ILBM. If the
+picture you are rendering comes from the standard input, you
+will be asked to specify the name of the IFF file. This action
+can also be invoked by pressing right Amiga-S.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>SAVE AS</emphasis></term>
+  <listitem>
+<para>Same as SAVE, but you are always asked for the name of the
+IFF file. To cancel the save, simply give a null file name.
+This action can also be invoked by pressing right Amiga-A.</para>
+  </listitem>
+  </varlistentry>
+</variablelist>
+
+<para>These two operations can only be invoked if you have Christian
+Weber's
+<emphasis remap='I'>iff.library</emphasis>
+in your LIBS: directory. If you save a
+picture which has been rendered with the -3 option, you will
+actually create three files, with extensions ".r", ".g", and
+".b", respectively. You can view this image using the
+<citerefentry><refentrytitle>show3</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+program.</para>
+<variablelist remap='TP'>
+  <varlistentry>
+  <term><emphasis remap='B'>QUIT</emphasis></term>
+  <listitem>
+<para>Exit the program. This action can also be invoked by pressing
+right Amiga-Q, or by clicking on the invisible gadget at the
+top left corner.</para>
+  </listitem>
+  </varlistentry>
+</variablelist>
+</refsect1>
+
+<refsect1 xml:id='authors'><title>AUTHORS</title>
+<para>Eleftherios Koutsofios (ek@ulysses.att.com) wrote the original version
+of this program, including the HAM rendering algorithm.</para>
+
+<para>Kriton Kyrimis (kyrimis%theseas@csi.forth.gr) added support for
+intuition, overscan, saving files, the B&amp;W and 4096 color display
+modes, and all the minor items selectable through switches.</para>
+</refsect1>
+</refentry>
+

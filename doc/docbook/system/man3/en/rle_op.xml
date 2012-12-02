@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='rle_op3'>
+<!--  Copyright (c) 1990, University of Michigan -->
+<refmeta>
+<refentrytitle>RLE_OP</refentrytitle>
+<manvolnum>3</manvolnum>
+<refmiscinfo class='source'>July, 1990</refmiscinfo>
+<refmiscinfo class='manual'>3</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>rle_op</refname>
+<refpurpose>Data structure for raw run-length encoded image data.</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<cmdsynopsis>
+  <command>#include</command>    <arg choice='plain'><replaceable>&lt;rle.h&gt;</replaceable></arg>
+</cmdsynopsis>
+<cmdsynopsis>
+  <command>#include</command>    <arg choice='plain'><replaceable>&lt;rle_raw.h&gt;</replaceable></arg>
+    <sbr/>
+    <arg choice='plain'><replaceable>typedef</replaceable></arg>
+    <arg choice='plain'><replaceable>struct</replaceable></arg>
+    <arg choice='plain'><replaceable>rle_op</replaceable></arg>
+    <arg choice='plain'><replaceable>rle_op;</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para>The
+<emphasis remap='I'>rle_op</emphasis>
+data structure is used to describe a single run of data in a
+<citerefentry><refentrytitle>RLE</refentrytitle><manvolnum>5</manvolnum></citerefentry>
+run-length encoded image.  It is filled by the function
+<citerefentry><refentrytitle>rle_getraw</refentrytitle><manvolnum>3</manvolnum></citerefentry>,
+and is used by the functions
+<citerefentry><refentrytitle>rle_putraw</refentrytitle><manvolnum>3</manvolnum></citerefentry>
+and
+<citerefentry><refentrytitle>rle_rawtorow</refentrytitle><manvolnum>3</manvolnum></citerefentry>.</para>
+
+<para>The structure is</para>
+<literallayout remap='.nf'>
+<!-- ta 1i 1.8i 2.8i 3.8i -->
+    struct rle_op {
+	int	opcode;	/* One of RByteDataOp or RRunDataOp. */
+	int	xloc;	/* X starting location of this data. */
+	int	length;	/* Length of run or data array. */
+	union {
+		rle_pixel	*pixels;	/* ByteData case. */
+		int	run_val;	/* RunData case. */
+	} u;
+     };
+</literallayout> <!-- .fi -->
+
+<para>If the
+<emphasis remap='I'>opcode</emphasis>
+has the value
+<emphasis remap='I'>RByteDataOp</emphasis>,
+then the
+<emphasis remap='I'>u.pixels</emphasis>
+component points to an array of
+<emphasis remap='I'>length</emphasis>
+pixel values.  If the <emphasis remap='I'>opcode</emphasis> has the value <emphasis remap='I'>RRunDataOp</emphasis>,
+then the <emphasis remap='I'>u.run_val</emphasis> component contains a pixel value that is to
+be repeated <emphasis remap='I'>length</emphasis> times.</para>
+</refsect1>
+
+<refsect1 xml:id='see_also'><title>SEE ALSO</title>
+<!-- .na -->
+<para><citerefentry><refentrytitle>rle_hdr</refentrytitle><manvolnum>3</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>rle_getraw</refentrytitle><manvolnum>3</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>rle_putraw</refentrytitle><manvolnum>3</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>rle_rawtorow</refentrytitle><manvolnum>3</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>librle</refentrytitle><manvolnum>3</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>RLE</refentrytitle><manvolnum>5</manvolnum></citerefentry>.</para>
+<!-- .ad b -->
+</refsect1>
+
+<refsect1 xml:id='author'><title>AUTHOR</title>
+<para>Spencer W. Thomas</para>
+</refsect1>
+</refentry>
+

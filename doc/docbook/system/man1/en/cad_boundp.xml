@@ -1,0 +1,211 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='cad_boundp1'>
+<refmeta>
+<refentrytitle>CAD_BOUNDP</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class='source'>BRL-CAD</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>cad_boundp</refname>
+<refpurpose>find bounding polygon of two-dimensional view</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<cmdsynopsis>
+  <command>cad_boundp</command>    
+    <arg choice='opt'><arg choice='plain'>-i </arg><arg choice='plain'><replaceable>input</replaceable></arg></arg>
+    <arg choice='opt'><arg choice='plain'>-o </arg><arg choice='plain'><replaceable>output</replaceable></arg></arg>
+    <arg choice='opt'><arg choice='plain'>-t </arg><arg choice='plain'><replaceable>tolerance</replaceable></arg></arg>
+    <arg choice='opt'>-v </arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para><emphasis remap='I'>cad_boundp</emphasis>
+reads from
+<emphasis remap='I'>input</emphasis>
+(standard input if not specified)
+a series of line segment endpoint
+(<emphasis remap='I'>x</emphasis>,<emphasis remap='I'>y</emphasis>)
+coordinate values
+describing a two-dimensional view
+of the edges of a
+(possibly transparent)
+three-dimensional object
+and writes to
+<emphasis remap='I'>output</emphasis>
+(standard output if not specified)
+the
+(<emphasis remap='I'>x</emphasis>,<emphasis remap='I'>y</emphasis>)
+coordinates
+of vertices of the bounding polygon
+in counter-clockwise order,
+starting with the vertex
+having the smallest
+<emphasis remap='I'>y</emphasis>
+coordinate.
+If the
+<option>-v</option>
+argument is used,
+instead of points
+the output will consist of
+line segment data
+suitable for input into
+another invocation of
+<emphasis remap='I'>cad_boundp</emphasis>.</para>
+
+<para>Input lines not beginning with a number
+are silently skipped.
+This feature can be used to
+accommodate comments or
+additional control information
+in the data stream.</para>
+
+<para>When a
+<emphasis remap='I'>tolerance</emphasis>
+is specified,
+a point is considered to be identical
+to a previously-input point
+if its
+<emphasis remap='I'>x</emphasis>
+and
+<emphasis remap='I'>y</emphasis>
+coordinates are both within
+<emphasis remap='I'>tolerance</emphasis>
+of the first point encountered
+within a group passing the tolerance test.
+Otherwise,
+point coordinates must match precisely
+or the algorithm will produce
+erroneous results.</para>
+</refsect1>
+
+<refsect1 xml:id='restrictions'><title>RESTRICTIONS</title>
+<para><emphasis remap='I'>cad_boundp</emphasis>
+may output a polygon
+smaller than desired
+or produce a
+"degenerate input"
+message
+if the
+<emphasis remap='I'>tolerance</emphasis>
+is too tight
+or if input is incomplete.
+It may be wise to specify
+double the expected
+<emphasis remap='I'>tolerance</emphasis>.</para>
+
+<para>Holes within the view
+cannot be recognized.</para>
+
+<para>Silhouette thickness must everywhere exceed
+<emphasis remap='I'>tolerance</emphasis>
+(no narrow necking-down)
+or a portion of the silhouette
+will be "lost";
+in particular,
+the view should not consist of
+disjoint parts.</para>
+</refsect1>
+
+<refsect1 xml:id='example'><title>EXAMPLE</title>
+  <blockquote remap='RS'>
+<para>$ <emphasis remap='I'>cad_boundp -t 0.1
+<!-- .br -->
+# comment
+<!-- .br -->
+0 2 0 1
+<!-- .br -->
+3 2 3 1
+<!-- .br -->
+2 0 1 0
+<!-- .br -->
+0 2 3 2
+<!-- .br -->
+0 2 3 1
+<!-- .br -->
+0 1 3 2
+<!-- .br -->
+2 2 2 0
+<!-- .br -->
+1 0 1 2
+<!-- .br -->
+2 2 1 2
+<!-- .br -->
+0 1 3 1
+<!-- .br -->
+^D</emphasis>
+<!-- .br -->
+1 0
+<!-- .br -->
+2 0
+<!-- .br -->
+2 1
+<!-- .br -->
+3 1
+<!-- .br -->
+3 2
+<!-- .br -->
+2 2
+<!-- .br -->
+1 2
+<!-- .br -->
+0 2
+<!-- .br -->
+0 1
+<!-- .br -->
+1 1
+  </para></blockquote> <!-- remap='RE' -->
+</refsect1>
+
+<refsect1 xml:id='see_also'><title>SEE ALSO</title>
+<para><citerefentry><refentrytitle>cad_parea</refentrytitle><manvolnum>1</manvolnum></citerefentry>.</para>
+</refsect1>
+
+<refsect1 xml:id='diagnostics'><title>DIAGNOSTICS</title>
+<para>Any error condition causes
+<emphasis remap='I'>cad_boundp</emphasis>
+to terminate
+with non-zero exit status
+after it prints an error message
+on the standard error output.</para>
+
+<para>An illegal argument
+or improperly formatted input
+produces an appropriate message.</para>
+
+<para>If a vertex
+having only one line segment
+connected to it
+is found on the perimeter,
+<emphasis remap='I'>cad_boundp</emphasis>
+produces the message
+"degenerate input".</para>
+
+<para>If there is too much data for
+<emphasis remap='I'>cad_boundp</emphasis>
+to handle,
+the message
+"out of memory"
+is produced.</para>
+</refsect1>
+
+<refsect1 xml:id='author'><title>AUTHOR</title>
+<para>Douglas A. Gwyn, BRL/VLD-VMB</para>
+
+</refsect1>
+
+<refsect1 xml:id='copyright'><title>COPYRIGHT</title>
+<para>This software is Copyright (c) 1991-2012 by the United States
+Government as represented by U.S. Army Research Laboratory.</para>
+
+</refsect1>
+
+<refsect1 xml:id='bug_reports'><title>BUG REPORTS</title>
+<para>Reports of bugs or problems should be submitted via electronic
+mail to &lt;devs@brlcad.org&gt;.</para>
+</refsect1>
+</refentry>
+

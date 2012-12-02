@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='rle_putrow3'>
+<!--  Copyright (c) 1986, University of Utah -->
+<refentryinfo><date>2/2/87</date></refentryinfo>
+<refmeta>
+<refentrytitle>RLE_PUTROW</refentrytitle>
+<manvolnum>3</manvolnum>
+<refmiscinfo class='date'>2/2/87</refmiscinfo>
+<refmiscinfo class='source'>3</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>rle_putrow</refname>
+<refpurpose>Write a row (scanline) of data to an RLE file.</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<funcsynopsis>
+<funcsynopsisinfo>
+#include &lt;rle.h&gt;
+
+</funcsynopsisinfo>
+<funcprototype>
+<funcdef>void <function>rle_putrow</function></funcdef>
+<paramdef><parameter>rows</parameter></paramdef>
+<paramdef><parameter>length</parameter></paramdef>
+<paramdef><parameter>the_hdr</parameter></paramdef>
+</funcprototype>
+<funcsynopsisinfo>
+
+rle_pixel ** rows;
+
+int length;
+
+rle_hdr * the_hdr;
+</funcsynopsisinfo>
+</funcsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para><emphasis remap='I'>Rle_putrow</emphasis>
+is called for each output scanline when creating an
+<citerefentry><refentrytitle>RLE</refentrytitle><manvolnum>5</manvolnum></citerefentry>
+image.
+<emphasis remap='I'>Rows</emphasis>
+is an array of pointers to the pixel data for the color components of
+the scanline.  Rows should have
+<emphasis remap='I'>the_hdr</emphasis>-><emphasis remap='I'>ncolors</emphasis>
+elements.  If an alpha channel is being saved, rows[-1] should point to the
+alpha channel data.
+<emphasis remap='I'>Length</emphasis>
+is the number of pixels in the scanline.
+<emphasis remap='I'>Rows[i]</emphasis>
+should point to the
+<emphasis remap='I'>the_hdr</emphasis>-><emphasis remap='I'>xmin</emphasis>
+element of the scanline.</para>
+
+<para>The function
+<citerefentry><refentrytitle>rle_row_alloc</refentrytitle><manvolnum>3</manvolnum></citerefentry>
+will properly allocate memory for use by
+<function>rle_putrow</function>.</para>
+</refsect1>
+
+<refsect1 xml:id='see_also'><title>SEE ALSO</title>
+<!-- .na -->
+<para><citerefentry><refentrytitle>rle_hdr</refentrytitle><manvolnum>3</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>rle_skiprow</refentrytitle><manvolnum>3</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>rle_putraw</refentrytitle><manvolnum>3</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>rle_puteof</refentrytitle><manvolnum>3</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>rle_row_alloc</refentrytitle><manvolnum>3</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>rle_row_free</refentrytitle><manvolnum>3</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>librle</refentrytitle><manvolnum>3</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>RLE</refentrytitle><manvolnum>5</manvolnum></citerefentry>.</para>
+<!-- .ad b -->
+</refsect1>
+
+<refsect1 xml:id='author'><title>AUTHOR</title>
+<para>Spencer W. Thomas, Todd Fuqua</para>
+</refsect1>
+
+<refsect1 xml:id='bugs'><title>BUGS</title>
+<para>Having the scanline indexed from
+<emphasis remap='I'>xmin</emphasis>
+is an incredible botch.  Its origin lies in the deep dark history of
+the raster toolkit, and it seems it's too late to change it now.</para>
+</refsect1>
+</refentry>
+

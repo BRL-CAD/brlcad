@@ -1,0 +1,310 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man+tkman by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='linkvar3'>
+
+<!-- '\" Copyright (c) 1993 The Regents of the University of California.
+'\" Copyright (c) 1994\-1996 Sun Microsystems, Inc. -->
+
+<!-- '\" See the file "license.terms" for information on usage and redistribution
+'\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
+'\" 
+'\" RCS: @(#) $Id$
+'\"  -->
+<refentryinfo><date>7.5</date></refentryinfo>
+<refmeta>
+<refentrytitle>Tcl_LinkVar</refentrytitle>
+<manvolnum>3</manvolnum>
+<refmiscinfo class='date'>7.5</refmiscinfo>
+<refmiscinfo class='source'>Tcl</refmiscinfo>
+<refmiscinfo class='manual'>Tcl Library Procedures</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>Tcl_LinkVar</refname>
+<refname>Tcl_UnlinkVar</refname>
+<refname>Tcl_UpdateLinkedVar</refname>
+<refpurpose>link Tcl variable to C variable</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<funcsynopsis>
+<funcsynopsisinfo>
+#include &lt;tcl.h&gt;
+
+</funcsynopsisinfo>
+<funcprototype>
+<funcdef>int <function>Tcl_LinkVar</function></funcdef>
+<paramdef><parameter>interp</parameter></paramdef>
+<paramdef><parameter>varName</parameter></paramdef>
+<paramdef><parameter>addr</parameter></paramdef>
+<paramdef><parameter>type</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef><function>Tcl_UnlinkVar</function></funcdef>
+<paramdef><parameter>interp</parameter></paramdef>
+<paramdef><parameter>varName</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef><function>Tcl_UpdateLinkedVar</function></funcdef>
+<paramdef><parameter>interp</parameter></paramdef>
+<paramdef><parameter>varName</parameter></paramdef>
+</funcprototype>
+</funcsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='arguments'><title>ARGUMENTS</title>
+<!-- .AS Tcl_Interp writable -->
+<informaltable>
+<tgroup cols='3'>
+<tbody>
+
+<row><entry>"Tcl_Interp"</entry><entry>"*interp"</entry><entry>"in"</entry>
+<entry>
+<para>Interpreter that contains <emphasis remap='I'>varName</emphasis>.
+Also used by <function>Tcl_LinkVar</function> to return error messages.</para>
+</entry>
+</row>
+<row><entry>"const char"</entry><entry>*varName</entry><entry>in</entry>
+<entry>
+<para>Name of global variable.</para>
+</entry>
+</row>
+<row><entry>char</entry><entry>*addr</entry><entry>in</entry>
+<entry>
+<para>Address of C variable that is to be linked to <emphasis remap='I'>varName</emphasis>.</para>
+</entry>
+</row>
+<row><entry>int</entry><entry>type</entry><entry>in</entry>
+<entry>
+<para>Type of C variable.  Must be one of <emphasis remap='B'>TCL_LINK_INT</emphasis>,
+<!-- .VS 8.5 -->
+<emphasis remap='B'>TCL_LINK_UINT</emphasis>, <emphasis remap='B'>TCL_LINK_CHAR</emphasis>, <emphasis remap='B'>TCL_LINK_UCHAR</emphasis>,
+<emphasis remap='B'>TCL_LINK_SHORT</emphasis>, <emphasis remap='B'>TCL_LINK_USHORT</emphasis>, <emphasis remap='B'>TCL_LINK_LONG</emphasis>,
+<emphasis remap='B'>TCL_LINK_ULONG</emphasis>,
+<!-- .VE 8.5 -->
+<emphasis remap='B'>TCL_LINK_WIDE_INT</emphasis>,
+<!-- .VS 8.5 -->
+<emphasis remap='B'>TCL_LINK_WIDE_UINT</emphasis>, <emphasis remap='B'>TCL_LINK_FLOAT</emphasis>,
+<!-- .VE 8.5 -->
+<emphasis remap='B'>TCL_LINK_DOUBLE</emphasis>, <emphasis remap='B'>TCL_LINK_BOOLEAN</emphasis>, or
+<emphasis remap='B'>TCL_LINK_STRING</emphasis>, optionally OR'ed with <emphasis remap='B'>TCL_LINK_READ_ONLY</emphasis>
+to make Tcl variable read-only.</para>
+<!-- .BE -->
+</entry>
+</row>
+</tbody>
+</tgroup>
+</informaltable>
+
+</refsect1>
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para><function>Tcl_LinkVar</function> uses variable traces to keep the Tcl variable
+named by <emphasis remap='I'>varName</emphasis> in sync with the C variable at the address
+given by <emphasis remap='I'>addr</emphasis>.
+Whenever the Tcl variable is read the value of the C variable will
+be returned, and whenever the Tcl variable is written the C
+variable will be updated to have the same value.
+<function>Tcl_LinkVar</function> normally returns <emphasis remap='B'>TCL_OK</emphasis>;  if an error occurs
+while setting up the link (e.g. because <emphasis remap='I'>varName</emphasis> is the
+name of array) then <emphasis remap='B'>TCL_ERROR</emphasis> is returned and the interpreter's result
+contains an error message.</para>
+
+<para>The <emphasis remap='I'>type</emphasis> argument specifies the type of the C variable,
+and must have one of the following values, optionally OR'ed with
+<emphasis remap='B'>TCL_LINK_READ_ONLY</emphasis>:</para>
+<variablelist remap='TP'>
+  <varlistentry>
+  <term><emphasis remap='B'>TCL_LINK_INT</emphasis></term>
+  <listitem>
+<para>The C variable is of type <emphasis remap='B'>int</emphasis>.
+Any value written into the Tcl variable must have a proper integer
+form acceptable to <emphasis remap='B'>Tcl_GetIntFromObj</emphasis>;  attempts to write
+non-integer values into <emphasis remap='I'>varName</emphasis> will be rejected with
+Tcl errors.</para>
+<!-- .VS 8.5 -->
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>TCL_LINK_UINT</emphasis></term>
+  <listitem>
+<para>The C variable is of type <emphasis remap='B'>unsigned int</emphasis>.
+Any value written into the Tcl variable must have a proper unsigned
+integer form acceptable to <emphasis remap='B'>Tcl_GetWideIntFromObj</emphasis> and in the
+platform's defined range for the <emphasis remap='B'>unsigned int</emphasis> type; attempts to
+write non-integer values (or values outside the range) into
+<emphasis remap='I'>varName</emphasis> will be rejected with Tcl errors.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>TCL_LINK_CHAR</emphasis></term>
+  <listitem>
+<para>The C variable is of type <emphasis remap='B'>char</emphasis>.
+Any value written into the Tcl variable must have a proper integer
+form acceptable to <emphasis remap='B'>Tcl_GetIntFromObj</emphasis> and be in the range of the
+<emphasis remap='B'>char</emphasis> datatype; attempts to write non-integer or out-of-range
+values into <emphasis remap='I'>varName</emphasis> will be rejected with Tcl errors.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>TCL_LINK_UCHAR</emphasis></term>
+  <listitem>
+<para>The C variable is of type <emphasis remap='B'>unsigned char</emphasis>.
+Any value written into the Tcl variable must have a proper unsigned
+integer form acceptable to <emphasis remap='B'>Tcl_GetIntFromObj</emphasis> and in the
+platform's defined range for the <emphasis remap='B'>unsigned char</emphasis> type; attempts to
+write non-integer values (or values outside the range) into
+<emphasis remap='I'>varName</emphasis> will be rejected with Tcl errors.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>TCL_LINK_SHORT</emphasis></term>
+  <listitem>
+<para>The C variable is of type <emphasis remap='B'>short</emphasis>.
+Any value written into the Tcl variable must have a proper integer
+form acceptable to <emphasis remap='B'>Tcl_GetIntFromObj</emphasis> and be in the range of the
+<emphasis remap='B'>short</emphasis> datatype; attempts to write non-integer or out-of-range
+values into <emphasis remap='I'>varName</emphasis> will be rejected with Tcl errors.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>TCL_LINK_USHORT</emphasis></term>
+  <listitem>
+<para>The C variable is of type <emphasis remap='B'>unsigned short</emphasis>.
+Any value written into the Tcl variable must have a proper unsigned
+integer form acceptable to <emphasis remap='B'>Tcl_GetIntFromObj</emphasis> and in the
+platform's defined range for the <emphasis remap='B'>unsigned short</emphasis> type; attempts to
+write non-integer values (or values outside the range) into
+<emphasis remap='I'>varName</emphasis> will be rejected with Tcl errors.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>TCL_LINK_LONG</emphasis></term>
+  <listitem>
+<para>The C variable is of type <emphasis remap='B'>long</emphasis>.
+Any value written into the Tcl variable must have a proper integer
+form acceptable to <emphasis remap='B'>Tcl_GetLongFromObj</emphasis>; attempts to write
+non-integer or out-of-range
+values into <emphasis remap='I'>varName</emphasis> will be rejected with Tcl errors.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>TCL_LINK_ULONG</emphasis></term>
+  <listitem>
+<para>The C variable is of type <emphasis remap='B'>unsigned long</emphasis>.
+Any value written into the Tcl variable must have a proper unsigned
+integer form acceptable to <emphasis remap='B'>Tcl_GetWideIntFromObj</emphasis> and in the
+platform's defined range for the <emphasis remap='B'>unsigned long</emphasis> type; attempts to
+write non-integer values (or values outside the range) into
+<emphasis remap='I'>varName</emphasis> will be rejected with Tcl errors.</para>
+<!-- .VE 8.5 -->
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>TCL_LINK_DOUBLE</emphasis></term>
+  <listitem>
+<para>The C variable is of type <emphasis remap='B'>double</emphasis>.
+Any value written into the Tcl variable must have a proper real
+form acceptable to <emphasis remap='B'>Tcl_GetDoubleFromObj</emphasis>;  attempts to write
+non-real values into <emphasis remap='I'>varName</emphasis> will be rejected with
+Tcl errors.</para>
+<!-- .VS 8.5 -->
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>TCL_LINK_FLOAT</emphasis></term>
+  <listitem>
+<para>The C variable is of type <emphasis remap='B'>float</emphasis>.
+Any value written into the Tcl variable must have a proper real
+form acceptable to <emphasis remap='B'>Tcl_GetDoubleFromObj</emphasis> and must be within the
+range acceptable for a <emphasis remap='B'>float</emphasis>; attempts to
+write non-real values (or values outside the range) into
+<emphasis remap='I'>varName</emphasis> will be rejected with Tcl errors.</para>
+<!-- .VE 8.5 -->
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>TCL_LINK_WIDE_INT</emphasis></term>
+  <listitem>
+<para>The C variable is of type <emphasis remap='B'>Tcl_WideInt</emphasis> (which is an integer type
+at least 64-bits wide on all platforms that can support it.)
+Any value written into the Tcl variable must have a proper integer
+form acceptable to <emphasis remap='B'>Tcl_GetWideIntFromObj</emphasis>;  attempts to write
+non-integer values into <emphasis remap='I'>varName</emphasis> will be rejected with
+Tcl errors.</para>
+<!-- .VS 8.5 -->
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>TCL_LINK_WIDE_UINT</emphasis></term>
+  <listitem>
+<para>The C variable is of type <emphasis remap='B'>Tcl_WideUInt</emphasis> (which is an unsigned
+integer type at least 64-bits wide on all platforms that can support
+it.)
+Any value written into the Tcl variable must have a proper unsigned
+integer form acceptable to <emphasis remap='B'>Tcl_GetWideIntFromObj</emphasis> (it will be
+cast to unsigned);
+<!--  FIXME! Use bignums instead. -->
+attempts to write non-integer values into <emphasis remap='I'>varName</emphasis> will be
+rejected with Tcl errors.</para>
+<!-- .VE 8.5 -->
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>TCL_LINK_BOOLEAN</emphasis></term>
+  <listitem>
+<para>The C variable is of type <emphasis remap='B'>int</emphasis>.
+If its value is zero then it will read from Tcl as
+<quote>0</quote>;
+otherwise it will read from Tcl as
+<quote>1</quote>.
+Whenever <emphasis remap='I'>varName</emphasis> is
+modified, the C variable will be set to a 0 or 1 value.
+Any value written into the Tcl variable must have a proper boolean
+form acceptable to <emphasis remap='B'>Tcl_GetBooleanFromObj</emphasis>;  attempts to write
+non-boolean values into <emphasis remap='I'>varName</emphasis> will be rejected with
+Tcl errors.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>TCL_LINK_STRING</emphasis></term>
+  <listitem>
+<para>The C variable is of type <emphasis remap='B'>char *</emphasis>.
+If its value is not NULL then it must be a pointer to a string
+allocated with <emphasis remap='B'>Tcl_Alloc</emphasis> or <emphasis remap='B'>ckalloc</emphasis>.
+Whenever the Tcl variable is modified the current C string will be
+freed and new memory will be allocated to hold a copy of the variable's
+new value.
+If the C variable contains a NULL pointer then the Tcl variable
+will read as
+<quote>NULL</quote>.</para>
+  </listitem>
+  </varlistentry>
+</variablelist>
+
+<para>If the <emphasis remap='B'>TCL_LINK_READ_ONLY</emphasis> flag is present in <emphasis remap='I'>type</emphasis> then the
+variable will be read-only from Tcl, so that its value can only be
+changed by modifying the C variable.
+Attempts to write the variable from Tcl will be rejected with errors.</para>
+
+<para><function>Tcl_UnlinkVar</function> removes the link previously set up for the
+variable given by <emphasis remap='I'>varName</emphasis>.  If there does not exist a link
+for <emphasis remap='I'>varName</emphasis> then the procedure has no effect.</para>
+
+<para><function>Tcl_UpdateLinkedVar</function> may be invoked after the C variable has
+changed to force the Tcl variable to be updated immediately.
+In many cases this procedure is not needed, since any attempt to
+read the Tcl variable will return the latest value of the C variable.
+However, if a trace has been set on the Tcl variable (such as a
+Tk widget that wishes to display the value of the variable), the
+trace will not trigger when the C variable has changed.
+<function>Tcl_UpdateLinkedVar</function> ensures that any traces on the Tcl
+variable are invoked.</para>
+
+</refsect1>
+
+<refsect1 xml:id='keywords'><title>KEYWORDS</title>
+<para>boolean, integer, link, read-only, real, string, traces, variable</para>
+</refsect1>
+</refentry>
+

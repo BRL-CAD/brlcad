@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man+tkman by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='inactive3'>
+
+<!-- '\" Copyright (c) 1998\-2000 by Scriptics Corporation.
+'\" All rights reserved.
+'\" 
+'\" RCS: @(#) $Id$
+'\"  -->
+<refentryinfo><date>8.5</date></refentryinfo>
+<refmeta>
+<refentrytitle>Tk_GetUserInactiveTime</refentrytitle>
+<manvolnum>3</manvolnum>
+<refmiscinfo class='date'>8.5</refmiscinfo>
+<refmiscinfo class='source'>Tk</refmiscinfo>
+<refmiscinfo class='manual'>Tk Library Procedures</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>Tk_GetUserInactiveTime</refname>
+<refname>Tk_ResetUserInactiveTime</refname>
+<refpurpose>discover user inactivity time</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<funcsynopsis>
+<funcsynopsisinfo>
+#include &lt;tk.h&gt;
+
+</funcsynopsisinfo>
+<funcprototype>
+<funcdef>long <function>Tk_GetUserInactiveTime</function></funcdef>
+<paramdef><parameter>display</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef><function>Tk_GetUserInactiveTime</function></funcdef>
+<paramdef><parameter>display</parameter></paramdef>
+</funcprototype>
+</funcsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='arguments'><title>ARGUMENTS</title>
+<!-- .AS Display *display -->
+<informaltable>
+<tgroup cols='3'>
+<tbody>
+
+<row><entry>"Display"</entry><entry>"*display"</entry><entry>"in"</entry>
+<entry>
+<para>The display on which the user inactivity timer is to be queried or
+reset.</para>
+<!-- .BE -->
+</entry>
+</row>
+</tbody>
+</tgroup>
+</informaltable>
+
+</refsect1>
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para><function>Tk_GetUserInactiveTime</function> returns the number of milliseconds that
+have passed since the last user interaction (usually via keyboard or
+mouse) with the respective display. On systems and displays that do not
+support querying the user inactiviy time, <option>-1</option> is returned.
+<function>Tk_GetUserInactiveTime</function> resets the user inactivity timer of the
+given display to zero.  On windowing systems that do not support
+multiple displays <emphasis remap='I'>display</emphasis> can be passed as <emphasis remap='B'>NULL</emphasis>.</para>
+
+</refsect1>
+
+<refsect1 xml:id='keywords'><title>KEYWORDS</title>
+<para>idle, inactive</para>
+</refsect1>
+</refentry>
+

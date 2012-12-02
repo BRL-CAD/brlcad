@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='avg41'>
+<!--  Copyright (c) 1986, University of Utah
+ Template man page.  Taken from wtm's page for getcx3d -->
+<refmeta>
+<refentrytitle>AVG4</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class='source'>Nov 12, 1986</refmiscinfo>
+<refmiscinfo class='manual'>1</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>avg4</refname>
+<refpurpose>Downfilter an image by simple averaging.</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<cmdsynopsis>
+  <command>avg4</command>    
+    <arg choice='opt'><arg choice='plain'>-o </arg><arg choice='plain'><replaceable>outfile</replaceable></arg></arg>
+    <arg choice='opt'><replaceable>infile</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para><emphasis remap='I'>Avg4</emphasis>
+downfilters an RLE image into a resulting image of 1/4th the size,
+by simply averaging four pixel values in the input image to produce a single
+pixel in the output.  If the original image does not contain an alpha
+channel, avg4 creates one by counting the number of non-zero pixels in each
+group of four input pixels and using the count to produce a coverage value.
+While the alpha channel produced this way is crude (only four levels of
+coverage) it is enough to make a noticeable improvement in the edges of
+composited images.</para>
+</refsect1>
+
+<refsect1 xml:id='options'><title>OPTIONS</title>
+<variablelist remap='TP'>
+  <varlistentry>
+  <term><emphasis remap='I'>infile</emphasis></term>
+  <listitem>
+<para>The input will be read from this file, otherwise, input will
+be taken from stdin.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-o</option><replaceable> outfile</replaceable></term>
+  <listitem>
+<para>If specified, output will be written to this file, otherwise it will
+go to stdout.</para>
+  </listitem>
+  </varlistentry>
+</variablelist>
+</refsect1>
+
+<refsect1 xml:id='see_also'><title>SEE ALSO</title>
+<para><citerefentry><refentrytitle>fant</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>rlecomp</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>smush</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>urt</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>RLE</refentrytitle><manvolnum>5</manvolnum></citerefentry>.</para>
+</refsect1>
+
+<refsect1 xml:id='author'><title>AUTHOR</title>
+<para>Rod Bogart, John W. Peterson</para>
+</refsect1>
+
+<refsect1 xml:id='bugs'><title>BUGS</title>
+<para>Very simple minded - more elaborate filters could be implemented.</para>
+</refsect1>
+</refentry>
+

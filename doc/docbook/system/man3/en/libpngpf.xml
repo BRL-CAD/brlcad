@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='libpngpf3'>
+<refmeta>
+<refentrytitle>LIBPNGPF</refentrytitle>
+<manvolnum>3</manvolnum>
+<refmiscinfo class='source'>July 11, 2012</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>libpng</refname>
+<refpurpose>Portable Network Graphics (PNG) Reference Library 1.5.12 (private functions)</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<cmdsynopsis>
+  <command>#include</command>    <arg choice='plain'><replaceable>"pngpriv.h"</replaceable></arg>
+    <sbr/>
+</cmdsynopsis>
+<para><emphasis remap='B'>As of libpng version </emphasis><literal>1.5.1</literal><emphasis remap='B'>, this section is no longer </emphasis><emphasis remap='I'>maintained</emphasis><emphasis remap='B'>, now </emphasis><emphasis remap='I'>that
+</emphasis><emphasis remap='B'>the private function prototypes are hidden in pngpriv.h and not </emphasis><emphasis remap='I'>accessible
+</emphasis><emphasis remap='B'>to applications. Look in pngpriv.h for the prototypes and a short </emphasis><emphasis remap='I'>description</emphasis></para>
+<cmdsynopsis>
+  <command>of</command></cmdsynopsis>
+<cmdsynopsis>
+  <command>each</command></cmdsynopsis>
+<cmdsynopsis>
+  <command>function.</command></cmdsynopsis>
+<cmdsynopsis>
+  <command>
+</command></cmdsynopsis>
+<cmdsynopsis>
+  <command><sbr/></command></cmdsynopsis>
+<para><emphasis remap='B'></emphasis></para>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para>The functions previously listed here are used privately by libpng
+and are not recommended for use by applications.  They are
+not "exported" to applications using shared libraries.</para>
+</refsect1>
+
+<refsect1 xml:id='see_also'><title>SEE ALSO</title>
+<para><citerefentry><refentrytitle>png</refentrytitle><manvolnum>5</manvolnum></citerefentry>,<emphasis remap='B'> libpng</emphasis>(3),<emphasis remap='B'> zlib</emphasis>(3),<emphasis remap='B'> deflate</emphasis>(5),and<emphasis remap='B'> zlib</emphasis>(5)</para>
+</refsect1>
+
+<refsect1 xml:id='author'><title>AUTHOR</title>
+<para>Glenn Randers-Pehrson</para>
+</refsect1>
+</refentry>
+

@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man+tkman by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='environment3'>
+
+<!-- '\" Copyright (c) 1997\-1998 Sun Microsystems, Inc. -->
+
+<!-- '\" See the file "license.terms" for information on usage and redistribution
+'\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
+'\" 
+'\" RCS: @(#) $Id$
+'\"  -->
+<refentryinfo><date>7.5</date></refentryinfo>
+<refmeta>
+<refentrytitle>Tcl_PutEnv</refentrytitle>
+<manvolnum>3</manvolnum>
+<refmiscinfo class='date'>7.5</refmiscinfo>
+<refmiscinfo class='source'>Tcl</refmiscinfo>
+<refmiscinfo class='manual'>Tcl Library Procedures</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>Tcl_PutEnv</refname>
+<refpurpose>procedures to manipulate the environment</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<funcsynopsis>
+<funcsynopsisinfo>
+#include &lt;tcl.h&gt;
+
+</funcsynopsisinfo>
+<funcprototype>
+<funcdef>int <function>Tcl_PutEnv</function></funcdef>
+<paramdef><parameter>assignment</parameter></paramdef>
+</funcprototype>
+</funcsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='arguments'><title>ARGUMENTS</title>
+<!-- .AS const char *assignment -->
+<informaltable>
+<tgroup cols='3'>
+<tbody>
+
+<row><entry>"const char"</entry><entry>"*assignment"</entry><entry>"in"</entry>
+<entry>
+<para>Info about environment variable in the format
+<quote><emphasis remap='I'>NAME</emphasis><emphasis remap='B'>=</emphasis><emphasis remap='I'>value</emphasis></quote>.
+The <emphasis remap='I'>assignment</emphasis> argument is in the system encoding.</para>
+<!-- .BE -->
+</entry>
+</row>
+</tbody>
+</tgroup>
+</informaltable>
+
+</refsect1>
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para><function>Tcl_PutEnv</function> sets an environment variable. The information is
+passed in a single string of the form
+<quote><emphasis remap='I'>NAME</emphasis><emphasis remap='B'>=</emphasis><emphasis remap='I'>value</emphasis></quote>.
+This procedure is
+intended to be a stand-in for the UNIX <emphasis remap='B'>putenv</emphasis> system call. All
+Tcl-based applications using <emphasis remap='B'>putenv</emphasis> should redefine it to
+<function>Tcl_PutEnv</function> so that they will interface properly to the Tcl
+runtime.</para>
+</refsect1>
+
+<refsect1 xml:id='see_also'><title>SEE ALSO</title>
+<para>tclvars(n)</para>
+</refsect1>
+
+<refsect1 xml:id='keywords'><title>KEYWORDS</title>
+<para>environment, variable</para>
+</refsect1>
+</refentry>
+

@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man+tkman by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='crtchnlhdlr3'>
+
+<!-- '\" Copyright (c) 1996 Sun Microsystems, Inc. -->
+
+<!-- '\" See the file "license.terms" for information on usage and redistribution
+'\" of this file, and for a DISCLAIMER OF ALL WARRANTIES. -->
+
+<!-- '\" RCS: @(#) $Id$ -->
+<refentryinfo><date>7.5</date></refentryinfo>
+<refmeta>
+<refentrytitle>Tcl_CreateChannelHandler</refentrytitle>
+<manvolnum>3</manvolnum>
+<refmiscinfo class='date'>7.5</refmiscinfo>
+<refmiscinfo class='source'>Tcl</refmiscinfo>
+<refmiscinfo class='manual'>Tcl Library Procedures</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>Tcl_CreateChannelHandler</refname>
+<refname>Tcl_DeleteChannelHandler</refname>
+<refpurpose>call a procedure when a channel becomes readable or writable</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<funcsynopsis>
+<funcsynopsisinfo>
+#include &lt;tcl.h&gt;
+
+</funcsynopsisinfo>
+<funcprototype>
+<funcdef>void <function>Tcl_CreateChannelHandler</function></funcdef>
+<paramdef><parameter>channel</parameter></paramdef>
+<paramdef><parameter>mask</parameter></paramdef>
+<paramdef><parameter>proc</parameter></paramdef>
+<paramdef><parameter>clientData</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef>void <function>Tcl_DeleteChannelHandler</function></funcdef>
+<paramdef><parameter>channel</parameter></paramdef>
+<paramdef><parameter>proc</parameter></paramdef>
+<paramdef><parameter>clientData</parameter></paramdef>
+</funcprototype>
+</funcsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='arguments'><title>ARGUMENTS</title>
+<!-- .AS Tcl_ChannelProc clientData -->
+<informaltable>
+<tgroup cols='3'>
+<tbody>
+
+<row><entry>"Tcl_Channel"</entry><entry>"channel"</entry><entry>"in"</entry>
+<entry>
+<para>Tcl channel such as returned by <emphasis remap='B'>Tcl_CreateChannel</emphasis>.</para>
+</entry>
+</row>
+<row><entry>int</entry><entry>mask</entry><entry>in</entry>
+<entry>
+<para>Conditions under which <emphasis remap='I'>proc</emphasis> should be called: OR-ed combination of
+<emphasis remap='B'>TCL_READABLE</emphasis>, <emphasis remap='B'>TCL_WRITABLE</emphasis> and <emphasis remap='B'>TCL_EXCEPTION</emphasis>. Specify
+a zero value to temporarily disable an existing handler.</para>
+</entry>
+</row>
+<row><entry>Tcl_FileProc</entry><entry>*proc</entry><entry>in</entry>
+<entry>
+<para>Procedure to invoke whenever the channel indicated by <emphasis remap='I'>channel</emphasis> meets
+the conditions specified by <varname role='parameter'>mask</varname>.</para>
+</entry>
+</row>
+<row><entry>ClientData</entry><entry>clientData</entry><entry>in</entry>
+<entry>
+<para>Arbitrary one-word value to pass to <emphasis remap='I'>proc</emphasis>.</para>
+<!-- .BE -->
+</entry>
+</row>
+</tbody>
+</tgroup>
+</informaltable>
+
+</refsect1>
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para><function>Tcl_CreateChannelHandler</function> arranges for <emphasis remap='I'>proc</emphasis> to be called in the
+future whenever input or output becomes possible on the channel identified
+by <emphasis remap='I'>channel</emphasis>, or whenever an exceptional condition exists for
+<emphasis remap='I'>channel</emphasis>. The conditions of interest under which <emphasis remap='I'>proc</emphasis> will be
+invoked are specified by the <varname role='parameter'>mask</varname> argument.
+See the manual entry for <emphasis remap='B'>fileevent</emphasis> for a precise description of
+what it means for a channel to be readable or writable.
+<emphasis remap='I'>Proc</emphasis> must conform to the following prototype:</para>
+<programlisting remap='CS'>
+<funcsynopsis>
+<funcprototype>
+<funcdef>typedef void <function>Tcl_ChannelProc</function></funcdef>
+    <paramdef>ClientData <parameter>clientData</parameter></paramdef>
+    <paramdef>int <parameter>mask</parameter></paramdef>
+</funcprototype>
+</funcsynopsis>
+</programlisting> <!-- remap='CE' -->
+<para>The <varname role='parameter'>clientData</varname> argument is the same as the value passed to
+<function>Tcl_CreateChannelHandler</function> when the handler was created. Typically,
+<varname role='parameter'>clientData</varname> points to a data structure containing application-specific
+information about the channel. <emphasis remap='I'>Mask</emphasis> is an integer mask indicating
+which of the requested conditions actually exists for the channel; it will
+contain a subset of the bits from the <varname role='parameter'>mask</varname> argument to
+<function>Tcl_CreateChannelHandler</function> when the handler was created.</para>
+
+<para>Each channel handler is identified by a unique combination of <emphasis remap='I'>channel</emphasis>,
+<emphasis remap='I'>proc</emphasis> and <varname role='parameter'>clientData</varname>.
+There may be many handlers for a given channel as long as they do not
+have the same <emphasis remap='I'>channel</emphasis>, <emphasis remap='I'>proc</emphasis>, and <varname role='parameter'>clientData</varname>.
+If <function>Tcl_CreateChannelHandler</function> is invoked when there is already a handler
+for <emphasis remap='I'>channel</emphasis>, <emphasis remap='I'>proc</emphasis>, and <varname role='parameter'>clientData</varname>, then no new
+handler is created;  instead, the <varname role='parameter'>mask</varname> is changed for the
+existing handler.</para>
+
+<para><function>Tcl_DeleteChannelHandler</function> deletes a channel handler identified by
+<emphasis remap='I'>channel</emphasis>, <emphasis remap='I'>proc</emphasis> and <varname role='parameter'>clientData</varname>; if no such handler exists,
+the call has no effect.</para>
+
+<para>Channel handlers are invoked via the Tcl event mechanism, so they
+are only useful in applications that are event-driven.
+Note also that the conditions specified in the <varname role='parameter'>mask</varname> argument
+to <emphasis remap='I'>proc</emphasis> may no longer exist when <emphasis remap='I'>proc</emphasis> is invoked:  for
+example, if there are two handlers for <emphasis remap='B'>TCL_READABLE</emphasis> on the same
+channel, the first handler could consume all of the available input
+so that the channel is no longer readable when the second handler
+is invoked.
+For this reason it may be useful to use nonblocking I/O on channels
+for which there are event handlers.</para>
+
+</refsect1>
+
+<refsect1 xml:id='see_also'><title>SEE ALSO</title>
+<para>N<citerefentry><refentrytitle>otifier</refentrytitle><manvolnum>3</manvolnum></citerefentry>, Tcl_CreateC<citerefentry><refentrytitle>hannel</refentrytitle><manvolnum>3</manvolnum></citerefentry>, Tcl_OpenFileC<citerefentry><refentrytitle>hannel</refentrytitle><manvolnum>3</manvolnum></citerefentry>, vwait(n).</para>
+
+</refsect1>
+
+<refsect1 xml:id='keywords'><title>KEYWORDS</title>
+<para>blocking, callback, channel, events, handler, nonblocking.</para>
+</refsect1>
+</refentry>
+

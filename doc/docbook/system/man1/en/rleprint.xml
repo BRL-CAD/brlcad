@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='rleprint1'>
+<!--  Copyright (c) 1990, University of Michigan -->
+<refmeta>
+<refentrytitle>RLEPRINT</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class='source'>June 12, 1990</refmiscinfo>
+<refmiscinfo class='manual'>1</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>rleprint</refname>
+<refpurpose>Print the values of all the pixels in the file.</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<cmdsynopsis>
+  <command>rleprint</command>    
+    <arg choice='opt'>-a </arg>
+    <arg choice='opt'><replaceable>infile</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para>This program reads an
+<citerefentry><refentrytitle>RLE</refentrytitle><manvolnum>5</manvolnum></citerefentry>
+image and prints the values of all the pixels to the standard output.
+Each pixel is printed on a single line.  For example, a count of all
+the unique pixel values in the file could be obtained by
+<!-- .br -->
+rleprint pic.rle | sort -u | wc</para>
+<variablelist remap='TP'>
+  <varlistentry>
+  <term><emphasis remap='I'>infile</emphasis></term>
+  <listitem>
+<para>The input will be read from this file.  If
+<emphasis remap='I'>infile</emphasis>
+is "-" or is not specified, the input will be read from the standard
+input stream.</para>
+  </listitem>
+  </varlistentry>
+</variablelist>
+</refsect1>
+
+<refsect1 xml:id='options'><title>OPTIONS</title>
+<variablelist remap='TP'>
+  <varlistentry>
+  <term><option>-a</option></term>
+  <listitem>
+<para>Print the alpha value (if available) as the last entry on the line.</para>
+  </listitem>
+  </varlistentry>
+</variablelist>
+</refsect1>
+
+<refsect1 xml:id='see_also'><title>SEE ALSO</title>
+<para><citerefentry><refentrytitle>rlehdr</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>urt</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>RLE</refentrytitle><manvolnum>5</manvolnum></citerefentry>.</para>
+</refsect1>
+
+<refsect1 xml:id='author'><title>AUTHOR</title>
+<para>Spencer W. Thomas</para>
+</refsect1>
+
+<refsect1 xml:id='bugs'><title>BUGS</title>
+<para>This program is of limited utility because of the sheer volume of
+output it generates.</para>
+</refsect1>
+</refentry>
+

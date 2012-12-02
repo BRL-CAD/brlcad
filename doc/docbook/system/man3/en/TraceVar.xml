@@ -1,0 +1,515 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man+tkman by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='tracevar3'>
+
+<!-- '\" Copyright (c) 1989\-1993 The Regents of the University of California.
+'\" Copyright (c) 1994\-1996 Sun Microsystems, Inc. -->
+
+<!-- '\" See the file "license.terms" for information on usage and redistribution
+'\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
+'\" 
+'\" RCS: @(#) $Id$
+'\"  -->
+<refentryinfo><date>7.4</date></refentryinfo>
+<refmeta>
+<refentrytitle>Tcl_TraceVar</refentrytitle>
+<manvolnum>3</manvolnum>
+<refmiscinfo class='date'>7.4</refmiscinfo>
+<refmiscinfo class='source'>Tcl</refmiscinfo>
+<refmiscinfo class='manual'>Tcl Library Procedures</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>Tcl_TraceVar</refname>
+<refname>Tcl_TraceVar2</refname>
+<refname>Tcl_UntraceVar</refname>
+<refname>Tcl_UntraceVar2</refname>
+<refname>Tcl_VarTraceInfo</refname>
+<refname>Tcl_VarTraceInfo2</refname>
+<refpurpose>monitor accesses to a variable</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<funcsynopsis>
+<funcsynopsisinfo>
+#include &lt;tcl.h&gt;
+
+</funcsynopsisinfo>
+<funcprototype>
+<funcdef>int <function>Tcl_TraceVar</function></funcdef>
+<paramdef><parameter>interp</parameter></paramdef>
+<paramdef><parameter>varName</parameter></paramdef>
+<paramdef><parameter>flags</parameter></paramdef>
+<paramdef><parameter>proc</parameter></paramdef>
+<paramdef><parameter>clientData</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef>int <function>Tcl_TraceVar2</function></funcdef>
+<paramdef><parameter>interp</parameter></paramdef>
+<paramdef><parameter>name1</parameter></paramdef>
+<paramdef><parameter>name2</parameter></paramdef>
+<paramdef><parameter>flags</parameter></paramdef>
+<paramdef><parameter>proc</parameter></paramdef>
+<paramdef><parameter>clientData</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef><function>Tcl_UntraceVar</function></funcdef>
+<paramdef><parameter>interp</parameter></paramdef>
+<paramdef><parameter>varName</parameter></paramdef>
+<paramdef><parameter>flags</parameter></paramdef>
+<paramdef><parameter>proc</parameter></paramdef>
+<paramdef><parameter>clientData</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef><function>Tcl_UntraceVar2</function></funcdef>
+<paramdef><parameter>interp</parameter></paramdef>
+<paramdef><parameter>name1</parameter></paramdef>
+<paramdef><parameter>name2</parameter></paramdef>
+<paramdef><parameter>flags</parameter></paramdef>
+<paramdef><parameter>proc</parameter></paramdef>
+<paramdef><parameter>clientData</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef>ClientData <function>Tcl_VarTraceInfo</function></funcdef>
+<paramdef><parameter>interp</parameter></paramdef>
+<paramdef><parameter>varName</parameter></paramdef>
+<paramdef><parameter>flags</parameter></paramdef>
+<paramdef><parameter>proc</parameter></paramdef>
+<paramdef><parameter>prevClientData</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef>ClientData <function>Tcl_VarTraceInfo2</function></funcdef>
+<paramdef><parameter>interp</parameter></paramdef>
+<paramdef><parameter>name1</parameter></paramdef>
+<paramdef><parameter>name2</parameter></paramdef>
+<paramdef><parameter>flags</parameter></paramdef>
+<paramdef><parameter>proc</parameter></paramdef>
+<paramdef><parameter>prevClientData</parameter></paramdef>
+</funcprototype>
+</funcsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='arguments'><title>ARGUMENTS</title>
+<!-- .AS Tcl_VarTraceProc prevClientData -->
+<informaltable>
+<tgroup cols='3'>
+<tbody>
+
+<row><entry>"Tcl_Interp"</entry><entry>"*interp"</entry><entry>"in"</entry>
+<entry>
+<para>Interpreter containing variable.</para>
+</entry>
+</row>
+<row><entry>"const char"</entry><entry>*varName</entry><entry>in</entry>
+<entry>
+<para>Name of variable.  May refer to a scalar variable, to
+an array variable with no index, or to an array variable
+with a parenthesized index.</para>
+</entry>
+</row>
+<row><entry>int</entry><entry>flags</entry><entry>in</entry>
+<entry>
+<para>OR-ed combination of the values <emphasis remap='B'>TCL_TRACE_READS</emphasis>,
+<emphasis remap='B'>TCL_TRACE_WRITES</emphasis>, <emphasis remap='B'>TCL_TRACE_UNSETS</emphasis>, <emphasis remap='B'>TCL_TRACE_ARRAY</emphasis>,
+<emphasis remap='B'>TCL_GLOBAL_ONLY</emphasis>, <emphasis remap='B'>TCL_NAMESPACE_ONLY</emphasis>,
+<emphasis remap='B'>TCL_TRACE_RESULT_DYNAMIC</emphasis> and <emphasis remap='B'>TCL_TRACE_RESULT_OBJECT</emphasis>.
+Not all flags are used by all
+procedures.  See below for more information.</para>
+</entry>
+</row>
+<row><entry>Tcl_VarTraceProc</entry><entry>*proc</entry><entry>in</entry>
+<entry>
+<para>Procedure to invoke whenever one of the traced operations occurs.</para>
+</entry>
+</row>
+<row><entry>ClientData</entry><entry>clientData</entry><entry>in</entry>
+<entry>
+<para>Arbitrary one-word value to pass to <emphasis remap='I'>proc</emphasis>.</para>
+</entry>
+</row>
+<row><entry>"const char"</entry><entry>*name1</entry><entry>in</entry>
+<entry>
+<para>Name of scalar or array variable (without array index).</para>
+</entry>
+</row>
+<row><entry>"const char"</entry><entry>*name2</entry><entry>in</entry>
+<entry>
+<para>For a trace on an element of an array, gives the index of the
+element.  For traces on scalar variables or on whole arrays,
+is NULL.</para>
+</entry>
+</row>
+<row><entry>ClientData</entry><entry>prevClientData</entry><entry>in</entry>
+<entry>
+<para>If non-NULL, gives last value returned by <function>Tcl_VarTraceInfo</function> or
+<function>Tcl_VarTraceInfo2</function>, so this call will return information about
+next trace.  If NULL, this call will return information about first
+trace.</para>
+<!-- .BE -->
+</entry>
+</row>
+</tbody>
+</tgroup>
+</informaltable>
+
+</refsect1>
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para><function>Tcl_TraceVar</function> allows a C procedure to monitor and control
+access to a Tcl variable, so that the C procedure is invoked
+whenever the variable is read or written or unset.
+If the trace is created successfully then <function>Tcl_TraceVar</function> returns
+<emphasis remap='B'>TCL_OK</emphasis>.  If an error occurred (e.g. <emphasis remap='I'>varName</emphasis> specifies an element
+of an array, but the actual variable is not an array) then <emphasis remap='B'>TCL_ERROR</emphasis>
+is returned and an error message is left in the interpreter's result.</para>
+
+<para>The <varname role='parameter'>flags</varname> argument to <function>Tcl_TraceVar</function> indicates when the
+trace procedure is to be invoked and provides information
+for setting up the trace.  It consists of an OR-ed combination
+of any of the following values:</para>
+<variablelist remap='TP'>
+  <varlistentry>
+  <term><emphasis remap='B'>TCL_GLOBAL_ONLY</emphasis></term>
+  <listitem>
+<para>Normally, the variable will be looked up at the current level of
+procedure call;  if this bit is set then the variable will be looked
+up at global level, ignoring any active procedures.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>TCL_NAMESPACE_ONLY</emphasis></term>
+  <listitem>
+<para>Normally, the variable will be looked up at the current level of
+procedure call;  if this bit is set then the variable will be looked
+up in the current namespace, ignoring any active procedures.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>TCL_TRACE_READS</emphasis></term>
+  <listitem>
+<para>Invoke <emphasis remap='I'>proc</emphasis> whenever an attempt is made to read the variable.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>TCL_TRACE_WRITES</emphasis></term>
+  <listitem>
+<para>Invoke <emphasis remap='I'>proc</emphasis> whenever an attempt is made to modify the variable.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>TCL_TRACE_UNSETS</emphasis></term>
+  <listitem>
+<para>Invoke <emphasis remap='I'>proc</emphasis> whenever the variable is unset.
+A variable may be unset either explicitly by an <emphasis remap='B'>unset</emphasis> command,
+or implicitly when a procedure returns (its local variables are
+automatically unset) or when the interpreter is deleted (all
+variables are automatically unset).</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>TCL_TRACE_ARRAY</emphasis></term>
+  <listitem>
+<para>Invoke <emphasis remap='I'>proc</emphasis> whenever the array command is invoked.
+This gives the trace procedure a chance to update the array before
+array names or array get is called.  Note that this is called
+before an array set, but that will trigger write traces.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>TCL_TRACE_RESULT_DYNAMIC</emphasis></term>
+  <listitem>
+<para>The result of invoking the <emphasis remap='I'>proc</emphasis> is a dynamically allocated
+string that will be released by the Tcl library via a call to
+<emphasis remap='B'>ckfree</emphasis>.  Must not be specified at the same time as
+<emphasis remap='B'>TCL_TRACE_RESULT_OBJECT</emphasis>.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>TCL_TRACE_RESULT_OBJECT</emphasis></term>
+  <listitem>
+<para>The result of invoking the <emphasis remap='I'>proc</emphasis> is a Tcl_Obj* (cast to a char*)
+with a reference count of at least one.  The ownership of that
+reference will be transferred to the Tcl core for release (when the
+core has finished with it) via a call to <emphasis remap='B'>Tcl_DecrRefCount</emphasis>.  Must
+not be specified at the same time as <emphasis remap='B'>TCL_TRACE_RESULT_DYNAMIC</emphasis>.</para>
+  </listitem>
+  </varlistentry>
+</variablelist>
+
+<para>Whenever one of the specified operations occurs on the variable,
+<emphasis remap='I'>proc</emphasis> will be invoked.
+It should have arguments and result that match the type
+<type>Tcl_VarTraceProc</type>:</para>
+<programlisting remap='CS'>
+<funcsynopsis>
+<funcprototype>
+<funcdef>typedef char *<function>Tcl_VarTraceProc</function></funcdef>
+    <paramdef>ClientData <parameter>clientData</parameter></paramdef>
+    <paramdef>Tcl_Interp * <parameter>interp</parameter></paramdef>
+    <paramdef>char * <parameter>name1</parameter></paramdef>
+    <paramdef>char * <parameter>name2</parameter></paramdef>
+    <paramdef>int <parameter>flags</parameter></paramdef>
+</funcprototype>
+</funcsynopsis>
+</programlisting> <!-- remap='CE' -->
+<para>The <varname role='parameter'>clientData</varname> and <varname role='parameter'>interp</varname> parameters will
+have the same values as those passed to <function>Tcl_TraceVar</function> when the
+trace was created.
+<type>ClientData</type> typically points to an application-specific
+data structure that describes what to do when <emphasis remap='I'>proc</emphasis>
+is invoked.
+<emphasis remap='I'>Name1</emphasis> and <varname role='parameter'>name2</varname> give the name of the traced variable
+in the normal two-part form (see the description of <function>Tcl_TraceVar2</function>
+below for details).
+<emphasis remap='I'>Flags</emphasis> is an OR-ed combination of bits providing several
+pieces of information.
+One of the bits <emphasis remap='B'>TCL_TRACE_READS</emphasis>, <emphasis remap='B'>TCL_TRACE_WRITES</emphasis>,
+<emphasis remap='B'>TCL_TRACE_ARRAY</emphasis>, or <emphasis remap='B'>TCL_TRACE_UNSETS</emphasis>
+will be set in <varname role='parameter'>flags</varname> to indicate which operation is being performed
+on the variable.
+The bit <emphasis remap='B'>TCL_GLOBAL_ONLY</emphasis> will be set whenever the variable being
+accessed is a global one not accessible from the current level of
+procedure call:  the trace procedure will need to pass this flag
+back to variable-related procedures like <emphasis remap='B'>Tcl_GetVar</emphasis> if it
+attempts to access the variable.
+The bit <emphasis remap='B'>TCL_NAMESPACE_ONLY</emphasis> will be set whenever the variable being
+accessed is a namespace one not accessible from the current level of
+procedure call:  the trace procedure will need to pass this flag
+back to variable-related procedures like <emphasis remap='B'>Tcl_GetVar</emphasis> if it
+attempts to access the variable.
+The bit <emphasis remap='B'>TCL_TRACE_DESTROYED</emphasis> will be set in <varname role='parameter'>flags</varname> if the trace is
+about to be destroyed;  this information may be useful to <emphasis remap='I'>proc</emphasis>
+so that it can clean up its own internal data structures (see
+the section <emphasis remap='B'>TCL_TRACE_DESTROYED</emphasis> below for more details).
+Lastly, the bit <emphasis remap='B'>TCL_INTERP_DESTROYED</emphasis> will be set if the entire
+interpreter is being destroyed.
+When this bit is set, <emphasis remap='I'>proc</emphasis> must be especially careful in
+the things it does (see the section <emphasis remap='B'>TCL_INTERP_DESTROYED</emphasis> below).
+The trace procedure's return value should normally be NULL;  see
+<emphasis remap='B'>ERROR RETURNS</emphasis> below for information on other possibilities.</para>
+
+<para><function>Tcl_UntraceVar</function> may be used to remove a trace.
+If the variable specified by <varname role='parameter'>interp</varname>, <emphasis remap='I'>varName</emphasis>, and <varname role='parameter'>flags</varname>
+has a trace set with <varname role='parameter'>flags</varname>, <emphasis remap='I'>proc</emphasis>, and
+<varname role='parameter'>clientData</varname>, then the corresponding trace is removed.
+If no such trace exists, then the call to <function>Tcl_UntraceVar</function>
+has no effect.
+The same bits are valid for <varname role='parameter'>flags</varname> as for calls to <function>Tcl_TraceVar</function>.</para>
+
+<para><function>Tcl_VarTraceInfo</function> may be used to retrieve information about
+traces set on a given variable.
+The return value from <function>Tcl_VarTraceInfo</function> is the <varname role='parameter'>clientData</varname>
+associated with a particular trace.
+The trace must be on the variable specified by the <varname role='parameter'>interp</varname>,
+<emphasis remap='I'>varName</emphasis>, and <varname role='parameter'>flags</varname> arguments (only the <emphasis remap='B'>TCL_GLOBAL_ONLY</emphasis> and
+<emphasis remap='B'>TCL_NAMESPACE_ONLY</emphasis> bits from <varname role='parameter'>flags</varname> is used;  other bits are
+ignored) and its trace procedure must the same as the <emphasis remap='I'>proc</emphasis>
+argument.
+If the <emphasis remap='I'>prevClientData</emphasis> argument is NULL then the return
+value corresponds to the first (most recently created) matching
+trace, or NULL if there are no matching traces.
+If the <emphasis remap='I'>prevClientData</emphasis> argument is not NULL, then it should
+be the return value from a previous call to <function>Tcl_VarTraceInfo</function>.
+In this case, the new return value will correspond to the next
+matching trace after the one whose <varname role='parameter'>clientData</varname> matches
+<emphasis remap='I'>prevClientData</emphasis>, or NULL if no trace matches <emphasis remap='I'>prevClientData</emphasis>
+or if there are no more matching traces after it.
+This mechanism makes it possible to step through all of the
+traces for a given variable that have the same <emphasis remap='I'>proc</emphasis>.</para>
+</refsect1>
+
+<refsect1 xml:id='twopart_names'><title>TWO-PART NAMES</title>
+<para>The procedures <function>Tcl_TraceVar2</function>, <function>Tcl_UntraceVar2</function>, and
+<function>Tcl_VarTraceInfo2</function> are identical to <function>Tcl_TraceVar</function>,
+<function>Tcl_UntraceVar</function>, and <function>Tcl_VarTraceInfo</function>, respectively,
+except that the name of the variable consists of two parts.
+<emphasis remap='I'>Name1</emphasis> gives the name of a scalar variable or array,
+and <varname role='parameter'>name2</varname> gives the name of an element within an array.
+When <varname role='parameter'>name2</varname> is NULL, 
+<varname role='parameter'>name1</varname> may contain both an array and an element name:
+if the name contains an open parenthesis and ends with a
+close parenthesis, then the value between the parentheses is
+treated as an element name (which can have any string value) and
+the characters before the first open
+parenthesis are treated as the name of an array variable.
+If <varname role='parameter'>name2</varname> is NULL and <varname role='parameter'>name1</varname> does not refer
+to an array element it means that either the variable is
+a scalar or the trace is to be set on the entire array rather
+than an individual element (see WHOLE-ARRAY TRACES below for
+more information).</para> 
+</refsect1>
+
+<refsect1 xml:id='accessing_variables_during_traces'><title>ACCESSING VARIABLES DURING TRACES</title>
+<para>During read, write, and array traces, the
+trace procedure can read, write, or unset the traced
+variable using <emphasis remap='B'>Tcl_GetVar2</emphasis>, <emphasis remap='B'>Tcl_SetVar2</emphasis>, and
+other procedures.
+While <emphasis remap='I'>proc</emphasis> is executing, traces are temporarily disabled
+for the variable, so that calls to <emphasis remap='B'>Tcl_GetVar2</emphasis> and
+<emphasis remap='B'>Tcl_SetVar2</emphasis> will not cause <emphasis remap='I'>proc</emphasis> or other trace procedures
+to be invoked again.
+Disabling only occurs for the variable whose trace procedure
+is active;  accesses to other variables will still be traced.
+However, if a variable is unset during a read or write trace then unset
+traces will be invoked.</para>
+
+<para>During unset traces the variable has already been completely
+expunged.
+It is possible for the trace procedure to read or write the
+variable, but this will be a new version of the variable.
+Traces are not disabled during unset traces as they are for
+read and write traces, but existing traces have been removed
+from the variable before any trace procedures are invoked.
+If new traces are set by unset trace procedures, these traces
+will be invoked on accesses to the variable by the trace
+procedures.</para>
+</refsect1>
+
+<refsect1 xml:id='callback_timing'><title>CALLBACK TIMING</title>
+<para>When read tracing has been specified for a variable, the trace
+procedure will be invoked whenever the variable's value is
+read.  This includes <emphasis remap='B'>set</emphasis> Tcl commands, <emphasis remap='B'>$</emphasis>-notation
+in Tcl commands, and invocations of the <emphasis remap='B'>Tcl_GetVar</emphasis>
+and <emphasis remap='B'>Tcl_GetVar2</emphasis> procedures.
+<emphasis remap='I'>Proc</emphasis> is invoked just before the variable's value is
+returned.
+It may modify the value of the variable to affect what
+is returned by the traced access.
+If it unsets the variable then the access will return an error
+just as if the variable never existed.</para>
+
+<para>When write tracing has been specified for a variable, the
+trace procedure will be invoked whenever the variable's value
+is modified.  This includes <emphasis remap='B'>set</emphasis> commands,
+commands that modify variables as side effects (such as
+<emphasis remap='B'>catch</emphasis> and <emphasis remap='B'>scan</emphasis>), and calls to the <emphasis remap='B'>Tcl_SetVar</emphasis>
+and <emphasis remap='B'>Tcl_SetVar2</emphasis> procedures).
+<emphasis remap='I'>Proc</emphasis> will be invoked after the variable's value has been
+modified, but before the new value of the variable has been
+returned.
+It may modify the value of the variable to override the change
+and to determine the value actually returned by the traced
+access.
+If it deletes the variable then the traced access will return
+an empty string.</para>
+
+<para>When array tracing has been specified, the trace procedure
+will be invoked at the beginning of the array command implementation,
+before any of the operations like get, set, or names have been invoked.
+The trace procedure can modify the array elements with <emphasis remap='B'>Tcl_SetVar</emphasis>
+and <emphasis remap='B'>Tcl_SetVar2</emphasis>.</para>
+
+<para>When unset tracing has been specified, the trace procedure
+will be invoked whenever the variable is destroyed.
+The traces will be called after the variable has been
+completely unset.</para>
+</refsect1>
+
+<refsect1 xml:id='wholearray_traces'><title>WHOLE-ARRAY TRACES</title>
+<para>If a call to <function>Tcl_TraceVar</function> or <function>Tcl_TraceVar2</function> specifies
+the name of an array variable without an index into the array,
+then the trace will be set on the array as a whole.
+This means that <emphasis remap='I'>proc</emphasis> will be invoked whenever any
+element of the array is accessed in the ways specified by
+<varname role='parameter'>flags</varname>.
+When an array is unset, a whole-array trace will be invoked
+just once, with <varname role='parameter'>name1</varname> equal to the name of the array
+and <varname role='parameter'>name2</varname> NULL;  it will not be invoked once for each
+element.</para>
+</refsect1>
+
+<refsect1 xml:id='multiple_traces'><title>MULTIPLE TRACES</title>
+<para>It is possible for multiple traces to exist on the same variable.
+When this happens, all of the trace procedures will be invoked on each
+access, in order from most-recently-created to least-recently-created.
+When there exist whole-array traces for an array as well as
+traces on individual elements, the whole-array traces are invoked
+before the individual-element traces.
+If a read or write trace unsets the variable then all of the unset
+traces will be invoked but the remainder of the read and write traces
+will be skipped.</para>
+</refsect1>
+
+<refsect1 xml:id='error_returns'><title>ERROR RETURNS</title>
+<para>Under normal conditions trace procedures should return NULL, indicating
+successful completion.
+If <emphasis remap='I'>proc</emphasis> returns a non-NULL value it signifies that an
+error occurred.
+The return value must be a pointer to a static character string
+containing an error message,
+unless (<emphasis remap='I'>exactly</emphasis> one of) the <emphasis remap='B'>TCL_TRACE_RESULT_DYNAMIC</emphasis> and
+<emphasis remap='B'>TCL_TRACE_RESULT_OBJECT</emphasis> flags is set, which specify that the result is
+either a dynamic string (to be released with <emphasis remap='B'>ckfree</emphasis>) or a
+Tcl_Obj* (cast to char* and to be released with
+<emphasis remap='B'>Tcl_DecrRefCount</emphasis>) containing the error message.
+If a trace procedure returns an error, no further traces are
+invoked for the access and the traced access aborts with the
+given message.
+Trace procedures can use this facility to make variables
+read-only, for example (but note that the value of the variable
+will already have been modified before the trace procedure is
+called, so the trace procedure will have to restore the correct
+value).</para>
+
+<para>The return value from <emphasis remap='I'>proc</emphasis> is only used during read and
+write tracing.
+During unset traces, the return value is ignored and all relevant
+trace procedures will always be invoked.</para>
+</refsect1>
+
+<refsect1 xml:id='restrictions'><title>RESTRICTIONS</title>
+<para>A trace procedure can be called at any time, even when there
+is a partially formed result in the interpreter's result area.  If
+the trace procedure does anything that could damage this result (such
+as calling <emphasis remap='B'>Tcl_Eval</emphasis>) then it must save the original values of
+the interpreter's <emphasis remap='B'>result</emphasis> and <emphasis remap='B'>freeProc</emphasis> fields and restore
+them before it returns.</para>
+</refsect1>
+
+<refsect1 xml:id='undefined_variables'><title>UNDEFINED VARIABLES</title>
+<para>It is legal to set a trace on an undefined variable.
+The variable will still appear to be undefined until the
+first time its value is set.
+If an undefined variable is traced and then unset, the unset will fail
+with an error
+(<quote>no such variable</quote>)
+but the trace procedure will still be invoked.</para>
+</refsect1>
+
+<refsect1 xml:id='tcl_trace_destroyed_flag'><title>TCL_TRACE_DESTROYED FLAG</title>
+<para>In an unset callback to <emphasis remap='I'>proc</emphasis>, the <emphasis remap='B'>TCL_TRACE_DESTROYED</emphasis> bit
+is set in <varname role='parameter'>flags</varname> if the trace is being removed as part
+of the deletion.
+Traces on a variable are always removed whenever the variable
+is deleted;  the only time <emphasis remap='B'>TCL_TRACE_DESTROYED</emphasis> is not set is for
+a whole-array trace invoked when only a single element of an
+array is unset.</para>
+</refsect1>
+
+<refsect1 xml:id='tcl_interp_destroyed'><title>TCL_INTERP_DESTROYED</title>
+<para>When an interpreter is destroyed, unset traces are called for
+all of its variables.
+The <emphasis remap='B'>TCL_INTERP_DESTROYED</emphasis> bit will be set in the <varname role='parameter'>flags</varname>
+argument passed to the trace procedures.
+Trace procedures must be extremely careful in what they do if
+the <emphasis remap='B'>TCL_INTERP_DESTROYED</emphasis> bit is set.
+It is not safe for the procedures to invoke any Tcl procedures
+on the interpreter, since its state is partially deleted.
+All that trace procedures should do under these circumstances is
+to clean up and free their own internal data structures.</para>
+</refsect1>
+
+<refsect1 xml:id='bugs'><title>BUGS</title>
+<para>Tcl does not do any error checking to prevent trace procedures
+from misusing the interpreter during traces with <emphasis remap='B'>TCL_INTERP_DESTROYED</emphasis>
+set.</para>
+
+<para>Array traces are not yet integrated with the Tcl <emphasis remap='B'>info exists</emphasis> command,
+nor is there Tcl-level access to array traces.</para>
+</refsect1>
+
+<refsect1 xml:id='keywords'><title>KEYWORDS</title>
+<para>clientData, trace, variable</para>
+</refsect1>
+</refentry>
+

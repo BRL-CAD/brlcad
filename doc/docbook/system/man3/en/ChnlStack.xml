@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man+tkman by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='chnlstack3'>
+
+<!-- '\" Copyright (c) 1999\-2000 Ajuba Solutions. -->
+
+<!-- '\" See the file "license.terms" for information on usage and redistribution
+'\" of this file, and for a DISCLAIMER OF ALL WARRANTIES. -->
+
+<!-- '\" RCS: @(#) $Id$ -->
+<refentryinfo><date>8.3</date></refentryinfo>
+<refmeta>
+<refentrytitle>Tcl_StackChannel</refentrytitle>
+<manvolnum>3</manvolnum>
+<refmiscinfo class='date'>8.3</refmiscinfo>
+<refmiscinfo class='source'>Tcl</refmiscinfo>
+<refmiscinfo class='manual'>Tcl Library Procedures</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>Tcl_StackChannel</refname>
+<refname>Tcl_UnstackChannel</refname>
+<refname>Tcl_GetStackedChannel</refname>
+<refname>Tcl_GetTopChannel</refname>
+<refpurpose>manipulate stacked I/O channels</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<funcsynopsis>
+<funcsynopsisinfo>
+#include &lt;tcl.h&gt;
+
+</funcsynopsisinfo>
+<funcprototype>
+<funcdef>Tcl_Channel <function>Tcl_StackChannel</function></funcdef>
+<paramdef><parameter>interp</parameter></paramdef>
+<paramdef><parameter>typePtr</parameter></paramdef>
+<paramdef><parameter>clientData</parameter></paramdef>
+<paramdef><parameter>mask</parameter></paramdef>
+<paramdef><parameter>channel</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef>int <function>Tcl_UnstackChannel</function></funcdef>
+<paramdef><parameter>interp</parameter></paramdef>
+<paramdef><parameter>channel</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef>Tcl_Channel <function>Tcl_GetStackedChannel</function></funcdef>
+<paramdef><parameter>channel</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef>Tcl_Channel <function>Tcl_GetTopChannel</function></funcdef>
+<paramdef><parameter>channel</parameter></paramdef>
+</funcprototype>
+</funcsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='arguments'><title>ARGUMENTS</title>
+<!-- .AS Tcl_ChannelType clientData -->
+<informaltable>
+<tgroup cols='3'>
+<tbody>
+
+<row><entry>"Tcl_Interp"</entry><entry>"*interp"</entry><entry>"in"</entry>
+<entry>
+<para>Interpreter for error reporting.</para>
+</entry>
+</row>
+<row><entry>Tcl_ChannelType</entry><entry>*typePtr</entry><entry>in</entry>
+<entry>
+<para>The new channel I/O procedures to use for <emphasis remap='I'>channel</emphasis>.</para>
+</entry>
+</row>
+<row><entry>ClientData</entry><entry>clientData</entry><entry>in</entry>
+<entry>
+<para>Arbitrary one-word value to pass to channel I/O procedures.</para>
+</entry>
+</row>
+<row><entry>int</entry><entry>mask</entry><entry>in</entry>
+<entry>
+<para>Conditions under which <emphasis remap='I'>channel</emphasis> will be used: OR-ed combination of
+<emphasis remap='B'>TCL_READABLE</emphasis>, <emphasis remap='B'>TCL_WRITABLE</emphasis> and <emphasis remap='B'>TCL_EXCEPTION</emphasis>.
+This can be a subset of the operations currently allowed on <emphasis remap='I'>channel</emphasis>.</para>
+</entry>
+</row>
+<row><entry>Tcl_Channel</entry><entry>channel</entry><entry>in</entry>
+<entry>
+<para>An existing Tcl channel such as returned by <emphasis remap='B'>Tcl_CreateChannel</emphasis>.</para>
+<!-- .BE -->
+</entry>
+</row>
+</tbody>
+</tgroup>
+</informaltable>
+
+</refsect1>
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para>These functions are for use by extensions that add processing layers to Tcl
+I/O channels.  Examples include compression and encryption modules.  These
+functions transparently stack and unstack a new channel on top of an
+existing one.  Any number of channels can be stacked together.</para>
+
+<para>The implementation of the Tcl channel code was rewritten in 8.3.2 to
+correct some problems with the previous implementation with regard to
+stacked channels.  Anyone using stacked channels or creating stacked
+channel drivers should update to the new <emphasis remap='B'>TCL_CHANNEL_VERSION_2</emphasis>
+<type>Tcl_ChannelType</type> structure.  See <emphasis remap='B'>Tcl_CreateChannel</emphasis> for details.</para>
+
+<para><function>Tcl_StackChannel</function> stacks a new <emphasis remap='I'>channel</emphasis> on an existing channel
+with the same name that was registered for <emphasis remap='I'>channel</emphasis> by
+<emphasis remap='B'>Tcl_RegisterChannel</emphasis>.</para>
+
+<para><function>Tcl_StackChannel</function> works by creating a new channel structure and
+placing itself on top of the channel stack.  EOL translation, encoding and
+buffering options are shared between all channels in the stack.  The hidden
+channel does no buffering, newline translations, or character set encoding.
+Instead, the buffering, newline translations, and encoding functions all
+remain at the top of the channel stack.  A pointer to the new top channel
+structure is returned.  If an error occurs when stacking the channel, NULL
+is returned instead.</para>
+
+<para>The <emphasis remap='I'>mask</emphasis> parameter specifies the operations that are allowed on the
+new channel.  These can be a subset of the operations allowed on the
+original channel.  For example, a read-write channel may become read-only
+after the <function>Tcl_StackChannel</function> call.</para>
+
+<para>Closing a channel closes the channels stacked below it.  The close of
+stacked channels is executed in a way that allows buffered data to be
+properly flushed.</para>
+
+<para><function>Tcl_UnstackChannel</function> reverses the process.  The old channel is
+associated with the channel name, and the processing module added by
+<function>Tcl_StackChannel</function> is destroyed.  If there is no old channel, then
+<function>Tcl_UnstackChannel</function> is equivalent to <emphasis remap='B'>Tcl_Close</emphasis>.  If an error
+occurs unstacking the channel, <emphasis remap='B'>TCL_ERROR</emphasis> is returned, otherwise
+<emphasis remap='B'>TCL_OK</emphasis> is returned.</para>
+
+<para><function>Tcl_GetTopChannel</function> returns the top channel in the stack of
+channels the supplied channel is part of.</para>
+
+<para><function>Tcl_GetStackedChannel</function> returns the channel in the stack of
+channels which is just below the supplied channel.</para>
+
+</refsect1>
+
+<refsect1 xml:id='see_also'><title>SEE ALSO</title>
+<para>N<citerefentry><refentrytitle>otifier</refentrytitle><manvolnum>3</manvolnum></citerefentry>, Tcl_CreateC<citerefentry><refentrytitle>hannel</refentrytitle><manvolnum>3</manvolnum></citerefentry>, Tcl_OpenFileC<citerefentry><refentrytitle>hannel</refentrytitle><manvolnum>3</manvolnum></citerefentry>, vwait(n).</para>
+
+</refsect1>
+
+<refsect1 xml:id='keywords'><title>KEYWORDS</title>
+<para>channel, compression</para>
+</refsect1>
+</refentry>
+

@@ -1,0 +1,1727 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='jove1'>
+<refmeta>
+<refentrytitle>JOVE</refentrytitle>
+<manvolnum>1B</manvolnum>
+</refmeta>
+<refnamediv>
+<refname>jove</refname>
+<refpurpose>EMACS style screen editor</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<cmdsynopsis>
+  <command>jove</command>    
+    <arg choice='opt'>-t <replaceable>tagname</replaceable></arg>
+    <arg choice='opt'>+line </arg>
+    <arg choice='opt'><arg choice='plain'><replaceable>file1</replaceable></arg><arg choice='plain' rep='repeat'><replaceable>file2</replaceable></arg></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para><emphasis remap='B'>JOVE</emphasis> is an interactive display oriented editor which allows one to
+modify text easily.  <emphasis remap='B'>JOVE</emphasis> stands for <emphasis remap='B'>Jonathan's Own Version of
+Emacs</emphasis>. This editor is modeled after the EMACS written at MIT by
+Richard  Stallman.  <emphasis remap='B'>JOVE</emphasis> has tried to stick to the conventions of real
+EMACS, but has strayed away from them in several places.  The real EMACS
+is extensible, which means the user can change the way the editor
+behaves to his own liking. He can do this by changing the commands that
+each key invokes or by writing new commands.  Although new commands
+cannot be written in <emphasis remap='B'>JOVE</emphasis>, existing commands can be <emphasis remap='I'>bound</emphasis>
+to any key or commands can be combined into a <emphasis remap='I'>macro</emphasis> that can
+be invoked like a standard command.
+There are several concepts a user needs to understand before
+he can use the editor to his full advantage. The three most important
+are <emphasis remap='I'>buffers</emphasis>, <emphasis remap='I'>windows</emphasis>, and <emphasis remap='I'>command binding</emphasis>.</para>
+</refsect1>
+
+<refsect1 xml:id='buffers_and_files'><title>Buffers and Files</title>
+<para>In most cases, <emphasis remap='B'>JOVE</emphasis> is used to edit already existing files.
+<emphasis remap='B'>JOVE</emphasis> reads
+files into <emphasis remap='I'>buffers</emphasis>.  A <emphasis remap='I'>buffer</emphasis> is where <emphasis remap='B'>JOVE</emphasis> stores its
+version of the file; changes made in the editor are made to the buffer,
+not the original file.  If the user makes a change but wishes he did
+not,  he can simply reread the file from the disk into a fresh buffer.
+If <emphasis remap='B'>JOVE</emphasis> is given no files to edit it creates an empty buffer with no
+file associated with it.  When the user has finished editing and is
+satisfied with his changes, he can save the buffer to a file with the
+<emphasis remap='I'>write-named-file</emphasis> command. This command asks for a file name and
+writes the contents of the buffer to that file.  Once a buffer is
+written to a file, the previous
+contents of the file are gone forever, so be
+careful!!
+<emphasis remap='B'>JOVE</emphasis> complains if the buffer is modified and an attempt is
+made to leave before saving the changes.  It says "<emphasis remap='I'>Modified buffers
+exist.  Leave anyway?</emphasis>".  Answering <emphasis remap='B'>no</emphasis> to this question will
+leave the user in the editor so that he can write the buffers.
+If he wants to exit, e.g. he made a mistake, he should answer
+<emphasis remap='B'>yes</emphasis>.
+One note of caution, if you modify a buffer and then remove the change,
+<emphasis remap='B'>JOVE</emphasis> will still consider the buffer to have been modified.</para>
+
+<para>The current position in a buffer is indicated by the terminal's
+"cursor" and is called the "point".
+The cursor is normally a solid or blinking square or underline.
+The
+<emphasis remap='I'>point</emphasis> should not be thought of as being on a character, rather
+as being between two characters, namely the character before the cursor
+and the character under the cursor.
+Most buffer-oriented commands apply to the buffer containing the point.</para>
+
+<para><emphasis remap='B'>JOVE</emphasis> supports multiple buffers.  This means that more than one file can
+be edited at a time, each file having its own buffer.  <emphasis remap='B'>JOVE</emphasis> remembers
+what each buffer looks like while it is not in use.  This makes it
+possible to jump around from one buffer to another without losing any
+previous changes and without having to save the changes each time a new
+buffer is selected.  Each buffer has its own set of characteristics that
+<emphasis remap='B'>JOVE</emphasis> also remembers, so switching from one buffer to another can change
+the way the editor behaves.  <emphasis remap='B'>JOVE</emphasis> uses <emphasis remap='I'>windows</emphasis> to show what
+the buffer looks like at any time.</para>
+</refsect1>
+
+<refsect1 xml:id='windows'><title>Windows</title>
+<para>Usually files are too large to fit on the terminal screen all at once.
+While in the editor, the screen acts as a <emphasis remap='I'>window</emphasis> into a buffer,
+always showing what the buffer looks like.  If the point is moved past the
+top or bottom of the window, the window moves to follow the point.
+When a line is too long to fit on the terminal, <emphasis remap='B'>JOVE</emphasis> shows this
+by putting an <emphasis remap='B'>!</emphasis> at the end of the line.  Moving the point to a
+position that is off the screen horizontally causes the line containing
+the point to be <emphasis remap='I'>scrolled</emphasis> to the right or the left such that the
+<emphasis remap='I'>point</emphasis> is visible.  Only the current line is ever scrolled.  If the
+line containing the point is scrolled and the point moves to a different
+line, the scrolled line automatically moved back to its normal
+position.  The window reflects what is being done as it is being done, so
+what you see is ALWAYS what you get.</para>
+
+<para>Initially there is only one window, but it is possible to divide a
+window so that there are two or more smaller windows.
+The smaller windows are
+exactly the same as the original window except for the amount of the
+buffer each can show at a time. Sometimes the same buffer will be shown
+in more than one window, and other times there will be a different
+buffer in each window.</para>
+</refsect1>
+
+<refsect1 xml:id='invocation'><title>Invocation</title>
+<para><emphasis remap='B'>JOVE</emphasis> is invoked by simply typing <command>jove</command> to either the <emphasis remap='B'>shell</emphasis>
+or the Berkeley
+<emphasis remap='B'>C-shell</emphasis>.  If arguments are provided on the command line, <emphasis remap='B'>JOVE</emphasis>
+treats each as a file to be read, and reads it into its own buffer.
+The current buffer will be the first file read in, and the point will be
+at the beginning of the buffer.  There is one exception.  If <emphasis remap='B'>JOVE</emphasis> sees a
+<option>-t</option> on the command line it takes the next argument to be a C language
+program tag and
+reads in the file containing that tag.
+The tag is looked up in the file "tags" in the current directory.
+The <emphasis remap='I'>tags</emphasis> file is produced by the <emphasis remap='B'>ctags</emphasis> program.  This program
+may not be available on all systems.
+Inexperienced users need not
+worry about this option.</para>
+
+<para>If a file is preceded by an argument of the form "+<emphasis remap='I'>number</emphasis>",
+the cursor is initially placed on the specified line of the following
+file.  For example, "jove +100 /etc/passwd" would edit /etc/passwd and
+<emphasis remap='B'>JOVE</emphasis> would start up with the cursor sitting on line 100.</para>
+</refsect1>
+
+<refsect1 xml:id='the_mode_line'><title>The Mode Line</title>
+<para>At the bottom of each window is the <emphasis remap='I'>mode
+line</emphasis> associated with that window.  A typical mode line might look
+like this:</para>
+
+<literallayout remap='.nf'>
+   <emphasis remap='B'>JOVE (RE-TE)   2: jove.1   "jove.1" *</emphasis>
+</literallayout> <!-- .fi -->
+
+<para>The mode line always says <emphasis remap='B'>JOVE</emphasis>.  The <emphasis remap='B'>RE-TE</emphasis> inside the
+parentheses means the editor has
+regular expressions enabled and is in <emphasis remap='I'>text-fill</emphasis> mode
+(see <emphasis remap='B'>Variables and Modes</emphasis> below).
+In this example the name of the buffer is <emphasis remap='B'>jove.1</emphasis> and
+the name inside the quotes is the file.  In this case the file is
+<emphasis remap='B'>jove.1</emphasis>; in general the buffer name and the file name are the
+same. The <emphasis remap='B'>*</emphasis> at the end of the line indicates that the buffer
+has been modified but not saved.</para>
+
+
+<para>The very bottom line on the screen is
+the <emphasis remap='I'>message line</emphasis>, where <emphasis remap='B'>JOVE</emphasis> prints any messages and
+where <emphasis remap='B'>JOVE</emphasis> prompts the user for more input.  For example, when the user
+wants to save the buffer, <emphasis remap='B'>JOVE</emphasis> would ask on this line
+for a file name to use.
+Responses to <emphasis remap='B'>JOVE</emphasis> prompts should be normally be
+terminated by a newline (the RETURN key).  You can abort any input
+function by using the standard abort character, <emphasis remap='B'>^G</emphasis> (control-G).</para>
+
+<para>When prompting for the names of commands, variables, or
+predefined macros, <emphasis remap='B'>JOVE</emphasis> will provide a feature called
+"automatic command completion".  If you have typed as much
+of the command as is necessary to make it unique, you can
+type a space and <emphasis remap='B'>JOVE</emphasis> will fill in the rest of the
+command, variable, or macro name.  If no additional input
+is necessary, <emphasis remap='B'>JOVE</emphasis> will proceed to carry out the command.</para>
+</refsect1>
+
+<refsect1 xml:id='using_fbjovefr'><title>Using <emphasis remap='B'>JOVE</emphasis></title>
+<para>Once invoked, <emphasis remap='B'>JOVE</emphasis> is ready to accept commands from the user.  Many of
+the editor commands move the point around in the buffer and others
+change what the buffer looks like.  These commands operate on single
+characters, words, lines, and regions.  One of the more common
+editor commands is the <emphasis remap='I'>self-insert</emphasis> command.</para>
+
+<para>The <emphasis remap='I'>self-insert</emphasis> command simply inserts the character that invoked it
+into the buffer at the point.  Because the point is really
+between two characters, inserting a character at the point pushes all the
+characters, from the point to the end of the line, over to the right to
+make room for the new character. The point moves one to the right
+staying just ahead of the newly inserted character.  This means that if
+the user wants to insert a word, he can just type the word.
+Characters
+which are not self inserting, for example those which are other editor
+commands, also can be inserted but must be <emphasis remap='I'>quoted</emphasis> first. This is
+done with the <emphasis remap='I'>quote-char</emphasis> command, which inserts the next character
+typed no matter what character it is.</para>
+
+<para>Most commands in <emphasis remap='B'>JOVE</emphasis> are invoked by
+either <emphasis remap='I'>control characters</emphasis> or <emphasis remap='I'>escape sequences</emphasis>.
+<emphasis remap='B'>Control-F</emphasis> (that is the <emphasis remap='B'>CTRL</emphasis> key held down while
+the <emphasis remap='B'>F</emphasis> key is typed) is an example of a <emphasis remap='I'>control</emphasis> character
+and is used for the <emphasis remap='I'>forward-character</emphasis> function.  <emphasis remap='B'>^F</emphasis>
+is shorthand for <emphasis remap='B'>Control-F</emphasis>.  Many of the editor commands are
+<emphasis remap='I'>bound</emphasis> to control keys initially.
+<emphasis remap='I'>Escape</emphasis> sequences
+differ from control characters in that they are typed in two
+keystrokes, namely the <emphasis remap='B'>ESCAPE</emphasis> key followed by any other key.  If
+there is not a command bound to the <emphasis remap='B'>ESCAPE-&lt;character&gt;</emphasis> sequence,
+the editor will complain.
+The "ESCAPE" character is an example of a "command prefix" because it is
+the first part of a two-character command.
+The character <emphasis remap='I'>Control-X</emphasis> is also used as the "prefix" for many
+commands.
+For example, <emphasis remap='B'>^X^F</emphasis> (<emphasis remap='I'>control-X followed by a control-F</emphasis>) is
+normally used to run the file <command>find-file</command>.
+To sum up, there are three forms for commands for <emphasis remap='B'>JOVE</emphasis>: 1) vanilla
+control characters like <emphasis remap='B'>^F</emphasis>, 2) commands prefixed by ESCAPE,
+and 3) commands prefixed by <emphasis remap='B'>^X</emphasis>.</para>
+</refsect1>
+
+<refsect1 xml:id='some_standard_commands'><title>Some Standard Commands</title>
+<para>The commands <emphasis remap='I'>forward-character</emphasis> and <emphasis remap='I'>backward-character</emphasis>
+are bound to the keys <emphasis remap='B'>^F</emphasis> and <emphasis remap='B'>^B</emphasis> respectively.
+At the end of each line of text is an invisible NEWLINE character;
+moving forwards across this advances the point
+to the beginning of the next line.
+They move
+forward and backward one character position in the buffer.
+The commands
+<emphasis remap='I'>forward-word</emphasis> and <emphasis remap='I'>backward-word</emphasis> are bound to the keys
+<emphasis remap='B'>ESCAPE-F</emphasis> and <emphasis remap='B'>ESCAPE-B</emphasis> respectively.  They are the same as
+the <emphasis remap='B'>^F</emphasis> and <emphasis remap='B'>^B</emphasis> commands except that they operate on
+<emphasis remap='B'>words</emphasis>
+(words are continuous
+strings of alphabetic characters).
+The commands <emphasis remap='I'>next-line</emphasis> and <emphasis remap='I'>previous-line</emphasis> are
+examples of commands that operate on lines. There are commands that
+delete text in units of characters, words, and lines also.
+<emphasis remap='I'>Delete-next-character</emphasis> deletes the character after the point and
+<emphasis remap='I'>delete-previous-character</emphasis> deletes the character before the point.
+<emphasis remap='I'>Delete-next-word</emphasis> and <emphasis remap='I'>delete-previous-word</emphasis> are the same as the
+two delete character functions except that they operate on words.</para>
+</refsect1>
+
+<refsect1 xml:id='numeric_arguments'><title>Numeric Arguments</title>
+<para>Sometimes it is useful to run a command a specific number of times.
+<emphasis remap='B'>ESCAPE</emphasis> followed by a <emphasis remap='I'>number</emphasis>,
+followed by a command, runs that
+file <command>number</command> times.
+For example: to move down 10 lines,
+the sequence <emphasis remap='B'>ESC-10-^N</emphasis> will work, if
+<emphasis remap='B'>^N</emphasis> is bound to the <emphasis remap='I'>next-line</emphasis> command.
+This is called giving the command a /fInumeric argument/fR.
+Some of the commands ignore
+numeric arguments, for example <emphasis remap='I'>read-file</emphasis>, but most of the commands
+make use of the optional numeric argument.
+If a numeric argument is not given, a value of 1 is assumed.</para>
+</refsect1>
+
+<refsect1 xml:id='marks_and_regions'><title>Marks and Regions</title>
+<para>A <emphasis remap='I'>region</emphasis> is defined as all the text between two buffer positions.
+<emphasis remap='I'>Marks</emphasis> provide a way to remember a position in the buffer other
+than the point.  The <emphasis remap='I'>set-mark</emphasis> command sets a mark to where the
+point is at the time the command is invoked.  Once a mark is set, the
+user can move the point anywhere else and later use various commands to
+manipulate the mark.
+Each buffer can have any number of marks, but usually two
+suffice.
+Each mark has a number differentiating it from other marks.
+Providing a numeric argument to a mark command uses the mark whose
+number is the numeric argument.  If no argument is given, the 0th
+mark is assumed.
+For example, to delete the region between mark 4 and the point,
+the command ESC-4-^X-^K will work (assuming delete-to-killbuffer
+is bound to ^X-^K).</para>
+</refsect1>
+
+<refsect1 xml:id='searching'><title>Searching</title>
+<para>It is sometimes necessary to get from one place in a buffer to another
+quickly.  Using the primitive motion commands would work but would be
+rather slow. <emphasis remap='I'>Search commands</emphasis> provide a quick and easy way to move
+over large portions of text.  The user is prompted for a string to
+search for.  The search starts from the point, so forward searches will
+not find any matches that are before the point, and reverse searches
+will not find any matches after the point.  If the search was forward
+and the editor manages to find the string, the point moves to the end of
+the string.  If the search was backward and the editor finds the string,
+the point moves to the beginning of the string. Otherwise the user will
+be informed of the failure and left where he was.  <emphasis remap='B'>JOVE</emphasis> supports
+<emphasis remap='I'>regular expressions</emphasis> also which
+provides a powerful pattern matching facility; for
+complete documentation see the article for <emphasis remap='B'>ed</emphasis> in the
+<emphasis remap='B'>Unix Users Manual</emphasis>, section 1. Another useful
+command is the <emphasis remap='I'>query-replace-search</emphasis> command (ESC-q).
+This command prompts the
+user for a search string, then prompts for a replacement string, and
+then searches the buffer for the search string replacing selected
+occurrences
+with the replacement string; at each occurrence, the user is prompted;
+the user can choose to replace this occurrence, skip this occurrence,
+exit query-replace, recursively edit, or replace all remaining
+occurrences without further prompts.
+There is another version of the replace command
+called <emphasis remap='I'>replace-search</emphasis> (ESC-^E) which prompts for a search string
+and a replacement string and then replaces all occurrences without
+further ado.</para>
+</refsect1>
+
+<refsect1 xml:id='binding_commands'><title>Binding Commands</title>
+<para>There are many commands built into <emphasis remap='B'>JOVE</emphasis>, many of which are not
+bound to specific keys.
+The command handler in
+<emphasis remap='B'>JOVE</emphasis> is used to invoke these functions and is activated
+by <emphasis remap='I'>execute-extended-command</emphasis> function (ESC-x).
+When the name of a command typed in is
+unambiguous, that command will be executed.
+Since it is very slow to have
+to type in the name of each command every time it is needed, <emphasis remap='B'>JOVE</emphasis> makes
+it possible to <emphasis remap='I'>bind</emphasis> commands to keys.  When a command is
+<emphasis remap='I'>bound</emphasis> to a key any future hits on that key will invoke that
+command.  All the printing characters are <emphasis remap='B'>initially</emphasis> bound to the
+function <emphasis remap='I'>self-insert</emphasis> so that typing any one of the printing
+characters causes it to be inserted into the text.  Any of the existing
+commands can be bound to any key.
+(A <emphasis remap='I'>key</emphasis> may actually be a <emphasis remap='I'>control character</emphasis>
+or an <emphasis remap='I'>escape sequence</emphasis> as explained previously under
+"Using JOVE".)</para>
+
+<para>Since there are more commands than
+there are keys, two keys are treated as <emphasis remap='B'>prefix</emphasis> commands.  When a
+key bound to one of the prefix commands is typed, the next character
+typed is interpreted on the basis that it was preceded by one of the
+prefix keys.  Initially <emphasis remap='B'>^X</emphasis> and <emphasis remap='B'>ESC</emphasis> are the prefix keys, and
+as you will see, many of the built in commands are initially bound to
+these "two stroke" keys.  (For historical reasons, the ESCAPE key
+is often referred to as "Meta".)</para>
+
+<para>Users will likely want to modify the default key bindings to their
+liking.  Since it would be quite annoying
+to have to set up the bindings
+each time <emphasis remap='B'>JOVE</emphasis> is started up, <emphasis remap='B'>JOVE</emphasis> has the ability to read in
+a "startup" file.
+Whenever <emphasis remap='B'>JOVE</emphasis> is started, it reads commands from the
+file <markup>.joverc</markup> in the user's home directory.
+These commands are read as
+if they were typed to the command handler (ESC-x)
+during an edit.  There can
+be only one command per line in the startup file.
+If there is a file <filename>/usr/lib/jove/joverc</filename>, then this file
+will be read before the user's <markup>.joverc</markup> file.  This can be used
+to set up a system-wide default startup mode for <emphasis remap='B'>JOVE</emphasis>
+that is tailored
+to the needs of that system.
+For more information on using <markup>.joverc</markup> files and tailoring
+in general, see the document "Tailoring the JOVE Editor".</para>
+
+<para>The <emphasis remap='I'>source</emphasis>
+command can be used to read commands from a specified file
+at any time during an editing session,
+even from inside the <markup>.joverc</markup> file.
+This
+means that a macro can be used to change the key bindings, e.g. to
+enter a mode, by reading from a specified file which contains all the
+new bindings.</para>
+<beginpage/>
+
+</refsect1>
+
+<refsect1 xml:id='command_descriptions'><title>Command Descriptions</title>
+<para>Here is a list of all the commands, with a short description of each
+and the key that the command is initially bound to.  If the key is
+listed as "<emphasis remap='B'>[unbound]</emphasis>", then that function is not initially
+bound to any <emphasis remap='I'>control</emphasis> or <emphasis remap='I'>escape</emphasis> key.  Any of the functions
+could be bound to keys of the user's choosing by his own ".joverc" file.</para>
+
+<!-- LEAVE THIS LINE UNTOUCHED, IT DELINEATES THE START OF COMMANDS
+Macro definition:
+de FN
+.sp 1
+<emphasis remap='I'>\$1	</emphasis><emphasis remap='B'>\$2</emphasis>	\" command name, and key binding
+.br
+-->
+<!-- .ll 6.5i
+.ad
+.in .5i
+ta 4.5i -->
+
+<para><emphasis remap='B'>Prefix-1	ESC</emphasis>	\" command name, and key binding</para>
+
+<para><emphasis remap='I'>Prefix-1	</emphasis><emphasis remap='B'>ESC</emphasis>	\" command name, and key binding
+<!-- .br -->
+The next character typed will be interpreted on the basis that it was
+preceded by the file <command>Prefix-1</command>.  This is one of two such commands
+whose purpose in life is to increase the number of commands that can be
+bound to keys and thus easily invoked.  If you are too slow to supply the
+second character, <emphasis remap='B'>JOVE</emphasis> displays "M-" on the message line as a
+reminder that it wants another character.
+The default ESC-? sequences are case insensitive (ESC-b = ESC-B).
+The user is of course free to change this.</para>
+
+<para><emphasis remap='B'>Prefix-2	^X</emphasis>	\" command name, and key binding</para>
+
+<para><emphasis remap='I'>Prefix-2	</emphasis><emphasis remap='B'>^X</emphasis>	\" command name, and key binding
+<!-- .br -->
+The next character typed will be interpreted on the basis that it was
+preceded by the file <command>Prefix-2</command>.  This is one of two such commands
+whose purpose in life is to increase the number of commands that can be
+bound to keys and thus easily invoked.  If you are too slow to supply the
+second character, <emphasis remap='B'>JOVE</emphasis> displays "C-X" on the message line as a
+reminder that it wants another character.
+The default ^X-? sequences are case insensitive (^X-b = ^X-B).</para>
+
+<para><emphasis remap='B'>append-region	[unbound]</emphasis>	\" command name, and key binding</para>
+
+<para><emphasis remap='I'>append-region	</emphasis><emphasis remap='B'>[unbound]</emphasis>	\" command name, and key binding
+<!-- .br -->
+Appends the region bounded by the point and mark to the named file.  If
+the file does not exist it is created.</para>
+
+<para><emphasis remap='B'>apropos	ESC-h</emphasis>	\" command name, and key binding</para>
+
+<para><emphasis remap='I'>apropos	</emphasis><emphasis remap='B'>ESC-h</emphasis>	\" command name, and key binding
+<!-- .br -->
+This command prompts for a keyword (or partial string) and lists all
+the commands that contain that string at the top of the screen.</para>
+
+<para><emphasis remap='B'>backward-character	^B</emphasis>	\" command name, and key binding</para>
+
+<para><emphasis remap='I'>backward-character	</emphasis><emphasis remap='B'>^B</emphasis>	\" command name, and key binding
+<!-- .br -->
+Moves the point backward one character in the buffer.  If the point is
+at the beginning of the line, it moves it to the end of the previous line.</para>
+
+<para><emphasis remap='B'>backward-paren	ESC-^B</emphasis>	\" command name, and key binding</para>
+
+<para><emphasis remap='I'>backward-paren	</emphasis><emphasis remap='B'>ESC-^B</emphasis>	\" command name, and key binding
+<!-- .br -->
+This moves the point to the matching open parenthesis (brace) of the
+close parenthesis (brace) just before the point.  If there is no match,
+an error is reported (with a "bell")
+and the point remains unchanged.</para>
+
+<para><emphasis remap='B'>backward-word	ESC-b</emphasis>	\" command name, and key binding</para>
+
+<para><emphasis remap='I'>backward-word	</emphasis><emphasis remap='B'>ESC-b</emphasis>	\" command name, and key binding
+<!-- .br -->
+If in the middle of a word, the point moves to the beginning of the
+word.  Otherwise it moves the point to the beginning of the previous
+word.</para>
+
+<para><emphasis remap='B'>beginning-of-file	ESC-&lt;</emphasis>	\" command name, and key binding</para>
+
+<para><emphasis remap='I'>beginning-of-file	</emphasis><emphasis remap='B'>ESC-&lt;</emphasis>	\" command name, and key binding
+<!-- .br -->
+Moves the point to the beginning of the current buffer so that the
+character after the point is the first character of the buffer.</para>
+
+<para><emphasis remap='B'>beginning-of-line	^A</emphasis>	\" command name, and key binding</para>
+
+<para><emphasis remap='I'>beginning-of-line	</emphasis><emphasis remap='B'>^A</emphasis>	\" command name, and key binding
+<!-- .br -->
+Moves the point to the beginning of the current line.</para>
+
+<para><emphasis remap='B'>beginning-of-sentence	ESC-a</emphasis>	\" command name, and key binding</para>
+
+<para><emphasis remap='I'>beginning-of-sentence	</emphasis><emphasis remap='B'>ESC-a</emphasis>	\" command name, and key binding
+<!-- .br -->
+Moves the point to the beginning of the current sentence.</para>
+
+<para><emphasis remap='B'>beginning-of-window	ESC-,</emphasis>	\" command name, and key binding</para>
+
+<para><emphasis remap='I'>beginning-of-window	</emphasis><emphasis remap='B'>ESC-,</emphasis>	\" command name, and key binding
+<!-- .br -->
+Moves the point to the first character in the window.</para>
+
+<para><emphasis remap='B'>bind-macro-to-key	[unbound]</emphasis>	\" command name, and key binding</para>
+
+<para><emphasis remap='I'>bind-macro-to-key	</emphasis><emphasis remap='B'>[unbound]</emphasis>	\" command name, and key binding
+<!-- .br -->
+Binds a macro to a key so that future hits on that key will run the
+macro.</para>
+
+<para><emphasis remap='B'>bind-to-key	[unbound]</emphasis>	\" command name, and key binding</para>
+
+<para><emphasis remap='I'>bind-to-key	</emphasis><emphasis remap='B'>[unbound]</emphasis>	\" command name, and key binding
+<!-- .br -->
+Binds a command to a key so that future hits on that key will run the
+command.  For example, the file <command>next-line</command> is normally
+bound to the key
+<emphasis remap='B'>^N</emphasis>.</para>
+
+<para><emphasis remap='B'>buffer-position	[unbound]</emphasis>	\" command name, and key binding</para>
+
+<para><emphasis remap='I'>buffer-position	</emphasis><emphasis remap='B'>[unbound]</emphasis>	\" command name, and key binding
+<!-- .br -->
+Prints the line and column of the point in the current buffer.</para>
+
+<para><emphasis remap='B'>case-char-upper	^C</emphasis>	\" command name, and key binding</para>
+
+<para><emphasis remap='I'>case-char-upper	</emphasis><emphasis remap='B'>^C</emphasis>	\" command name, and key binding
+<!-- .br -->
+Changes the next character to upper case if it is a character,
+and in any case, moves forward one character.</para>
+
+<para><emphasis remap='B'>case-region-lower	^X-^L</emphasis>	\" command name, and key binding</para>
+
+<para><emphasis remap='I'>case-region-lower	</emphasis><emphasis remap='B'>^X-^L</emphasis>	\" command name, and key binding
+<!-- .br -->
+Changes all the letters between the point and mark to lower case.</para>
+
+<para><emphasis remap='B'>case-region-upper	^X-^U</emphasis>	\" command name, and key binding</para>
+
+<para><emphasis remap='I'>case-region-upper	</emphasis><emphasis remap='B'>^X-^U</emphasis>	\" command name, and key binding
+<!-- .br -->
+Changes all the letters between the point and mark to upper case.</para>
+
+<para><emphasis remap='B'>case-word-capitalize	ESC-c</emphasis>	\" command name, and key binding</para>
+
+<para><emphasis remap='I'>case-word-capitalize	</emphasis><emphasis remap='B'>ESC-c</emphasis>	\" command name, and key binding
+<!-- .br -->
+If the point is in the middle of a word, it capitalizes the letter after
+the point and changes the rest of the word to lower case.  Otherwise it
+capitalizes the first letter of the next word and changes the rest of
+the word to lower case.  In any case the point is left at the end of
+the word.</para>
+
+<para><emphasis remap='B'>case-word-lower	ESC-l</emphasis>	\" command name, and key binding</para>
+
+<para><emphasis remap='I'>case-word-lower	</emphasis><emphasis remap='B'>ESC-l</emphasis>	\" command name, and key binding
+<!-- .br -->
+If the point is in the middle of a word, it changes the rest of the word
+to lower case.  Otherwise it changes the next word to lower case.  In
+either case the point is left at the end of the affected word.</para>
+
+<para><emphasis remap='B'>case-word-upper	ESC-u</emphasis>	\" command name, and key binding</para>
+
+<para><emphasis remap='I'>case-word-upper	</emphasis><emphasis remap='B'>ESC-u</emphasis>	\" command name, and key binding
+<!-- .br -->
+If the point is in the middle of a word, it changes the rest of the word
+to upper case.  Otherwise it changes the next word to upper case.  In
+either case the point is left at the end of the affected word.</para>
+
+<para><emphasis remap='B'>char-to-octal-insert	[unbound]</emphasis>	\" command name, and key binding</para>
+
+<para><emphasis remap='I'>char-to-octal-insert	</emphasis><emphasis remap='B'>[unbound]</emphasis>	\" command name, and key binding
+<!-- .br -->
+Reads a character from the terminal and inserts its octal
+ASCII value preceded
+by a back-slash '\' into the text at the point.  For example if the
+character ESC is then typed, the string "<emphasis remap='B'>\033</emphasis>" is inserted.</para>
+
+<para><emphasis remap='B'>clear-and-redraw	^L</emphasis>	\" command name, and key binding</para>
+
+<para><emphasis remap='I'>clear-and-redraw	</emphasis><emphasis remap='B'>^L</emphasis>	\" command name, and key binding
+<!-- .br -->
+Clears and redraws the screen without changing
+the screen contents or position.
+This is useful if the screen gets garbaged by output from another program
+or by someone writing to you.</para>
+
+<para><emphasis remap='B'>copy-region	ESC-w</emphasis>	\" command name, and key binding</para>
+
+<para><emphasis remap='I'>copy-region	</emphasis><emphasis remap='B'>ESC-w</emphasis>	\" command name, and key binding
+<!-- .br -->
+Saves the region bounded by the point and mark
+in the <emphasis remap='I'>kill stack</emphasis>.  The
+next call to <emphasis remap='I'>yank</emphasis> will yank (insert) the region just saved.</para>
+
+<para><emphasis remap='B'>c-tab	[unbound]</emphasis>	\" command name, and key binding</para>
+
+<para><emphasis remap='I'>c-tab	</emphasis><emphasis remap='B'>[unbound]</emphasis>	\" command name, and key binding
+<!-- .br -->
+When in <emphasis remap='I'>c-mode</emphasis>, the file <command>c-tab</command> is automatically bound to
+the tab key, and when invoked, the point is tabbed to the "right" place
+for C programs.</para>
+
+<para><emphasis remap='B'>delete-next-char	^D</emphasis>	\" command name, and key binding</para>
+
+<para><emphasis remap='I'>delete-next-char	</emphasis><emphasis remap='B'>^D</emphasis>	\" command name, and key binding
+<!-- .br -->
+The character after the point is deleted and the
+right-hand portion of the line moves one position to the left,
+leaving the point unchanged.  If at the end of the line,
+the line boundary is deleted, thereby joining the current line with the next
+line.</para>
+
+<para><emphasis remap='B'>delete-next-word	ESC-d</emphasis>	\" command name, and key binding</para>
+
+<para><emphasis remap='I'>delete-next-word	</emphasis><emphasis remap='B'>ESC-d</emphasis>	\" command name, and key binding
+<!-- .br -->
+If the point is in the middle of a word, it deletes to the end of the
+word.  Otherwise it deletes the entire next word.  In either case, the
+point doesn't move, and the deleted text is saved in the <emphasis remap='I'>kill stack</emphasis>.</para>
+
+<para><emphasis remap='B'>delete-other-windows	^X-1</emphasis>	\" command name, and key binding</para>
+
+<para><emphasis remap='I'>delete-other-windows	</emphasis><emphasis remap='B'>^X-1</emphasis>	\" command name, and key binding
+<!-- .br -->
+Makes the current window
+(the window the cursor is in)
+the only window by deleting all the other
+windows.  The window grows to fill the screen as it is when the editor
+starts up.</para>
+
+<para><emphasis remap='B'>delete-previous-char	DELETE</emphasis>	\" command name, and key binding</para>
+
+<para><emphasis remap='I'>delete-previous-char	</emphasis><emphasis remap='B'>DELETE</emphasis>	\" command name, and key binding
+<!-- .br -->
+Deletes the character before the point and moves the right-hand portion
+of the line one position to the left.
+If the point is at the beginning of a line, the current
+line is joined with the previous line and the point is
+positioned after what used
+to be the end of the previous line.
+(DELETE may be labeled RUBOUT on some terminals)</para>
+
+<para><emphasis remap='B'>delete-previous-word	ESC-DELETE</emphasis>	\" command name, and key binding</para>
+
+<para><emphasis remap='I'>delete-previous-word	</emphasis><emphasis remap='B'>ESC-DELETE</emphasis>	\" command name, and key binding</para>
+<!-- .br -->
+
+<para><emphasis remap='B'>	ESC-^H or ^W</emphasis>	\" command name, and key binding</para>
+
+<para><emphasis remap='B'>ESC-^H or ^W</emphasis>	\" command name, and key binding
+<!-- .br -->
+If the point is in the middle of a word, it deletes to the beginning of
+that word.  Otherwise it deletes the entire previous word.  In either
+case, the deleted text is saved in the <emphasis remap='I'>kill stack</emphasis>.
+(DELETE may be labeled RUBOUT on some terminals)</para>
+
+<para><emphasis remap='B'>delete-to-killbuffer	^X-^K</emphasis>	\" command name, and key binding</para>
+
+<para><emphasis remap='I'>delete-to-killbuffer	</emphasis><emphasis remap='B'>^X-^K</emphasis>	\" command name, and key binding
+<!-- .br -->
+Deletes all the text between the point and mark, saving it in the
+<emphasis remap='I'>kill stack</emphasis>.  This is one of the the ways to move text from one
+place in the buffer to another.  The <emphasis remap='I'>yank</emphasis> command will insert the
+most recently deleted text at the point.  <emphasis remap='B'>JOVE</emphasis> remembers 10 separate
+kills in a <emphasis remap='I'>kill stack</emphasis>.
+The <emphasis remap='I'>yank-pop</emphasis> command can be used to go
+through the stack one at a time.</para>
+
+<para><emphasis remap='B'>delete-white-space	ESC-\\</emphasis>	\" command name, and key binding</para>
+
+<para><emphasis remap='I'>delete-white-space	</emphasis><emphasis remap='B'>ESC-\\</emphasis>	\" command name, and key binding
+<!-- .br -->
+Deletes all tabs and space around the point on the current line.  This
+does not cross line boundaries.</para>
+
+<para><emphasis remap='B'>describe-command	ESC-?</emphasis>	\" command name, and key binding</para>
+
+<para><emphasis remap='I'>describe-command	</emphasis><emphasis remap='B'>ESC-?</emphasis>	\" command name, and key binding
+<!-- .br -->
+Prompts for the name of a command and puts a description
+of what the command does
+into a buffer.</para>
+
+<para><emphasis remap='B'>describe-key	^X-?</emphasis>	\" command name, and key binding</para>
+
+<para><emphasis remap='I'>describe-key	</emphasis><emphasis remap='B'>^X-?</emphasis>	\" command name, and key binding
+<!-- .br -->
+Prompts for a key and prints the command that is bound to that key.</para>
+
+<para><emphasis remap='B'>delete-current-window	^X-d</emphasis>	\" command name, and key binding</para>
+
+<para><emphasis remap='I'>delete-current-window	</emphasis><emphasis remap='B'>^X-d</emphasis>	\" command name, and key binding
+<!-- .br -->
+If there is more than one window on the screen, the current window is
+deleted and the cursor
+is moved to a neighboring window.  The space from the deleted
+window is given to the new current window.</para>
+
+<para><emphasis remap='B'>end-of-file	ESC-&gt;</emphasis>	\" command name, and key binding</para>
+
+<para><emphasis remap='I'>end-of-file	</emphasis><emphasis remap='B'>ESC-&gt;</emphasis>	\" command name, and key binding
+<!-- .br -->
+Moves the point to the end of the buffer (just after the
+the last character in the buffer).</para>
+
+<para><emphasis remap='B'>end-of-line	^E</emphasis>	\" command name, and key binding</para>
+
+<para><emphasis remap='I'>end-of-line	</emphasis><emphasis remap='B'>^E</emphasis>	\" command name, and key binding
+<!-- .br -->
+Moves the point to the end of the current line.</para>
+
+<para><emphasis remap='B'>end-of-sentence	ESC-e</emphasis>	\" command name, and key binding</para>
+
+<para><emphasis remap='I'>end-of-sentence	</emphasis><emphasis remap='B'>ESC-e</emphasis>	\" command name, and key binding
+<!-- .br -->
+Moves the point to the end of the sentence.</para>
+
+<para><emphasis remap='B'>end-of-window	ESC-.</emphasis>	\" command name, and key binding</para>
+
+<para><emphasis remap='I'>end-of-window	</emphasis><emphasis remap='B'>ESC-.</emphasis>	\" command name, and key binding
+<!-- .br -->
+Moves the point to the last character in the window.</para>
+
+<para><emphasis remap='B'>erase-buffer	[unbound]</emphasis>	\" command name, and key binding</para>
+
+<para><emphasis remap='I'>erase-buffer	</emphasis><emphasis remap='B'>[unbound]</emphasis>	\" command name, and key binding
+<!-- .br -->
+Prompts for a buffer name, and deletes all the text in that buffer.  If
+the buffer is modified, the user is asked for confirmation.</para>
+
+<para><emphasis remap='B'>exchange-point-and-mark	^X-^X</emphasis>	\" command name, and key binding</para>
+
+<para><emphasis remap='I'>exchange-point-and-mark	</emphasis><emphasis remap='B'>^X-^X</emphasis>	\" command name, and key binding
+<!-- .br -->
+Sets the mark to the point location and the point to the mark location.
+Typing this command twice is a handy way to see where the mark
+is without modifying anything.</para>
+
+<para><emphasis remap='B'>execute-extended-command	ESC-x</emphasis>	\" command name, and key binding</para>
+
+<para><emphasis remap='I'>execute-extended-command	</emphasis><emphasis remap='B'>ESC-x</emphasis>	\" command name, and key binding
+<!-- .br -->
+Prompts for a command to run using command completion.  This is how all
+commands would be run if not for the <emphasis remap='I'>bind-to-key</emphasis> command. (Space
+will cause auto-command-completion, RETURN will execute the command)</para>
+
+<para><emphasis remap='B'>execute-keyboard-macro	[unbound]</emphasis>	\" command name, and key binding</para>
+
+<para><emphasis remap='I'>execute-keyboard-macro	</emphasis><emphasis remap='B'>[unbound]</emphasis>	\" command name, and key binding
+<!-- .br -->
+All the characters that were remembered with the <emphasis remap='I'>start-remembering</emphasis>
+command are executed as if they were typed at the keyboard.</para>
+
+<para><emphasis remap='B'>execute-macro	[unbound]</emphasis>	\" command name, and key binding</para>
+
+<para><emphasis remap='I'>execute-macro	</emphasis><emphasis remap='B'>[unbound]</emphasis>	\" command name, and key binding
+<!-- .br -->
+This is the same as <emphasis remap='I'>execute-keyboard-macro</emphasis> except that it prompts
+for the name of a macro to execute.</para>
+
+<para><emphasis remap='B'>exit-jove	^X-^C</emphasis>	\" command name, and key binding</para>
+
+<para><emphasis remap='I'>exit-jove	</emphasis><emphasis remap='B'>^X-^C</emphasis>	\" command name, and key binding
+<!-- .br -->
+Exits <emphasis remap='B'>JOVE</emphasis>.  It asks for confirmation if there are any modified buffers
+which have not been written to files (except for SCRATCH buffers).</para>
+
+<para><emphasis remap='B'>filter-region	[unbound]</emphasis>	\" command name, and key binding</para>
+
+<para><emphasis remap='I'>filter-region	</emphasis><emphasis remap='B'>[unbound]</emphasis>	\" command name, and key binding
+<!-- .br -->
+Prompts for a UNIX command to send a region to.  The region will be
+replaced with the output from the command.  For example to format a C
+procedure, a region around the procedure could be defined and the
+<emphasis remap='I'>filter-region</emphasis>
+command used to send the region through the UNIX C
+beautifier.</para>
+
+<para><emphasis remap='B'>find-file	^X-^F</emphasis>	\" command name, and key binding</para>
+
+<para><emphasis remap='I'>find-file	</emphasis><emphasis remap='B'>^X-^F</emphasis>	\" command name, and key binding
+<!-- .br -->
+Prompts for a file to find.  If that file is not already in a buffer, it
+creates a new buffer and reads the file into that buffer.  If the
+file is already in another buffer, that buffer will be selected instead.
+In any event the current buffer becomes
+the buffer with that file in it.</para>
+
+<para><emphasis remap='B'>find-file-in-other-window	^X-4</emphasis>	\" command name, and key binding</para>
+
+<para><emphasis remap='I'>find-file-in-other-window	</emphasis><emphasis remap='B'>^X-4</emphasis>	\" command name, and key binding
+<!-- .br -->
+Do a <emphasis remap='I'>find-file</emphasis> into another window.  If there is only one window, it is
+split.  If there is more than one window, one of the windows that is
+not the current window is used instead.</para>
+
+<para><emphasis remap='B'>find-tag	^X-^T</emphasis>	\" command name, and key binding</para>
+
+<para><emphasis remap='I'>find-tag	</emphasis><emphasis remap='B'>^X-^T</emphasis>	\" command name, and key binding
+<!-- .br -->
+Finds the file with the C tag which is prompted for.  The UNIX program
+<emphasis remap='B'>ctags(1)</emphasis> should be used to create a database with the necessary
+information to find the file which contains the tag.  If the tag cannot
+be found, the point and buffer are unchanged and no new files are read in.</para>
+
+<para><emphasis remap='B'>first-non-blank	ESC-m</emphasis>	\" command name, and key binding</para>
+
+<para><emphasis remap='I'>first-non-blank	</emphasis><emphasis remap='B'>ESC-m</emphasis>	\" command name, and key binding
+<!-- .br -->
+Moves the point to the first non-blank character in the current line.</para>
+
+<para><emphasis remap='B'>forward-char	^F</emphasis>	\" command name, and key binding</para>
+
+<para><emphasis remap='I'>forward-char	</emphasis><emphasis remap='B'>^F</emphasis>	\" command name, and key binding
+<!-- .br -->
+Moves the point forward one character in the buffer.  If at the end of
+the current line the point is moved to the beginning of the next line.</para>
+
+<para><emphasis remap='B'>forward-paren	ESC-^F</emphasis>	\" command name, and key binding</para>
+
+<para><emphasis remap='I'>forward-paren	</emphasis><emphasis remap='B'>ESC-^F</emphasis>	\" command name, and key binding
+<!-- .br -->
+Moves the point to the matching close parenthesis (brace) of the open
+parenthesis (brace) right after the point.  If there is no match,
+an error is reported and the point remains unchanged.</para>
+
+<para><emphasis remap='B'>forward-word	ESC-f</emphasis>	\" command name, and key binding</para>
+
+<para><emphasis remap='I'>forward-word	</emphasis><emphasis remap='B'>ESC-f</emphasis>	\" command name, and key binding
+<!-- .br -->
+If the point is in the middle of a word, it moves to the end of the
+current word.  Otherwise it moves to the end of the next word.</para>
+
+<para><emphasis remap='B'>four-times	^U</emphasis>	\" command name, and key binding</para>
+
+<para><emphasis remap='I'>four-times	</emphasis><emphasis remap='B'>^U</emphasis>	\" command name, and key binding
+<!-- .br -->
+Multiply the numeric argument by four.  The sequence <emphasis remap='B'>^U-^U-^N</emphasis> runs
+the file <command>next-line</command> 16 times.</para>
+
+<para><emphasis remap='B'>goto-line	ESC-g</emphasis>	\" command name, and key binding</para>
+
+<para><emphasis remap='I'>goto-line	</emphasis><emphasis remap='B'>ESC-g</emphasis>	\" command name, and key binding
+<!-- .br -->
+Moves the point to the numeric argument line in the buffer.  If no
+argument is supplied, the point moves to the first line in the
+buffer.</para>
+
+<para><emphasis remap='B'>grow-window	^X-^</emphasis>	\" command name, and key binding</para>
+
+<para><emphasis remap='I'>grow-window	</emphasis><emphasis remap='B'>^X-^</emphasis>	\" command name, and key binding
+<!-- .br -->
+Makes the current window one line larger if it can.  There has to be more
+than one window, and the window which would get smaller has to be big
+enough to get smaller.</para>
+
+<para><emphasis remap='B'>i-search-forward	^S or ^\\</emphasis>	\" command name, and key binding</para>
+
+<para><emphasis remap='I'>i-search-forward	</emphasis><emphasis remap='B'>^S or ^\\</emphasis>	\" command name, and key binding
+<!-- .br -->
+Incremental search forward.  This is an interactive search command.
+It prompts for a search string (without containing search patterns)
+and starts searching forwards with each character typed
+to find the next line
+with that (growing) pattern.
+Once started, ^S or ^\ will search forward for the next
+occurrence of the current
+pattern, ^R will search backward for the
+previous occurrence of the current pattern, ^H or DELETE will shorten
+the pattern, ^G will end the search and return to the starting
+point, and any other character will stop the search without returning
+to the starting point.  Carriage return will terminate the search
+and leave the cursor at its current position.</para>
+
+<para><emphasis remap='B'>i-search-reverse	^R</emphasis>	\" command name, and key binding</para>
+
+<para><emphasis remap='I'>i-search-reverse	</emphasis><emphasis remap='B'>^R</emphasis>	\" command name, and key binding
+<!-- .br -->
+Incremental search reverse.  This is an interactive search command.
+It prompts for a search string (without containing search patterns)
+and starts searching backwards with each character typed
+to find the next line
+with that (growing) pattern.
+Once started, ^S or ^\ will search forward for the next
+occurrence of the current
+pattern, ^R will search backward for the
+previous occurrence of the current pattern, ^H or DELETE will shorten
+the pattern, ^G will end the search and return to the starting
+point, and any other character will stop the search without returning
+to the starting point.  Carriage return will terminate the search
+and leave the cursor at its current position.</para>
+
+<para><emphasis remap='B'>insert-file	^X-^I</emphasis>	\" command name, and key binding</para>
+
+<para><emphasis remap='I'>insert-file	</emphasis><emphasis remap='B'>^X-^I</emphasis>	\" command name, and key binding
+<!-- .br -->
+If the named file exists and can be read, its contents are inserted
+into the current buffer at the point.  Otherwise an error is reported
+and the point is unchanged.</para>
+
+<para><emphasis remap='B'>init-bindings	[unbound]</emphasis>	\" command name, and key binding</para>
+
+<para><emphasis remap='I'>init-bindings	</emphasis><emphasis remap='B'>[unbound]</emphasis>	\" command name, and key binding
+<!-- .br -->
+Initialize the bindings to the way they were at the beginning of the
+edit session.</para>
+
+<para><emphasis remap='B'>justify-paragraph	ESC-j</emphasis>	\" command name, and key binding</para>
+
+<para><emphasis remap='I'>justify-paragraph	</emphasis><emphasis remap='B'>ESC-j</emphasis>	\" command name, and key binding
+<!-- .br -->
+Justifies a paragraph surrounding the point.
+Paragraphs are bounded by
+blank lines or lines that begin with a period (such as NROFF control lines).
+The <emphasis remap='I'>margin-length</emphasis> variable determines the length of each
+line in the paragraph.</para>
+
+<para><emphasis remap='B'>kill-buffer	^X-k</emphasis>	\" command name, and key binding</para>
+
+<para><emphasis remap='I'>kill-buffer	</emphasis><emphasis remap='B'>^X-k</emphasis>	\" command name, and key binding
+<!-- .br -->
+Deletes a named buffer.  This command is not reversible; once the
+buffer is deleted, it is gone forever.  It is useful when the editor
+runs out of space and there is a buffer which you no longer need.</para>
+
+<para><emphasis remap='B'>kill-to-end-of-line	^K</emphasis>	\" command name, and key binding</para>
+
+<para><emphasis remap='I'>kill-to-end-of-line	</emphasis><emphasis remap='B'>^K</emphasis>	\" command name, and key binding
+<!-- .br -->
+Kill all the text from the point to the end of the line.  If the point
+is at the end of the line, the current line is joined with the next
+line.  If a numeric count is given, the next count lines are deleted.
+The saved text can be yanked back with the <emphasis remap='I'>yank</emphasis> command (see
+<emphasis remap='I'>delete-to-killbuffer</emphasis>).  If this command is run several times in a
+row all the kills are merged into
+the same <emphasis remap='I'>kill stack</emphasis> entry; thus running
+the yank command will yank all of them back instead of just the last
+one.</para>
+
+<para><emphasis remap='B'>list-buffers	^X-^B</emphasis>	\" command name, and key binding</para>
+
+<para><emphasis remap='I'>list-buffers	</emphasis><emphasis remap='B'>^X-^B</emphasis>	\" command name, and key binding
+<!-- .br -->
+Creates a buffer called <emphasis remap='I'>Buffer list</emphasis> that contains a list of all
+the buffers
+that <emphasis remap='B'>JOVE</emphasis> currently knows about.  Each line tells each buffer's
+number, type, associated file, name, and a <emphasis remap='B'>*</emphasis> if the
+buffer has been modified.</para>
+
+<para><emphasis remap='B'>make	^X-^E</emphasis>	\" command name, and key binding</para>
+
+<para><emphasis remap='I'>make	</emphasis><emphasis remap='B'>^X-^E</emphasis>	\" command name, and key binding
+<!-- .br -->
+Writes all the modified buffers and runs the UNIX program <emphasis remap='I'>make</emphasis>
+with output captured in
+a buffer called <emphasis remap='B'>Errors</emphasis>.  After the make is completed, the
+buffer is parsed for CC-style error messages to be used by the
+<emphasis remap='I'>next-error</emphasis> command.</para>
+
+<para><emphasis remap='B'>make-buffer-unmodified	ESC-~</emphasis>	\" command name, and key binding</para>
+
+<para><emphasis remap='I'>make-buffer-unmodified	</emphasis><emphasis remap='B'>ESC-~</emphasis>	\" command name, and key binding
+<!-- .br -->
+Makes the editor forget that the buffer has been modified.  The <emphasis remap='B'>*</emphasis>
+on the mode line will disappear.</para>
+
+<para><emphasis remap='B'>name-keyboard-macro	[unbound]</emphasis>	\" command name, and key binding</para>
+
+<para><emphasis remap='I'>name-keyboard-macro	</emphasis><emphasis remap='B'>[unbound]</emphasis>	\" command name, and key binding
+<!-- .br -->
+A new macro is defined with the name supplied by the user.  The current
+definition of the keyboard macro is copied into this new macro, making
+it possible to then
+change the keyboard macro without losing the old version.
+Now it is possible to run the new macro by binding the macro to a key,
+or with the <emphasis remap='I'>execute-macro</emphasis> command.  Note that only named macros
+are saved with the <emphasis remap='I'>write-macros-to-file</emphasis> command, so to remember
+macros from one <emphasis remap='B'>JOVE</emphasis>
+execution to another, one must give the macro a name, execute
+the <emphasis remap='I'>write-macros-to-file</emphasis> command, and upon invocation of a new
+<emphasis remap='B'>JOVE</emphasis> the <emphasis remap='I'>read-macros-from-file</emphasis> command should be executed.</para>
+
+<para><emphasis remap='B'>newline	RETURN</emphasis>	\" command name, and key binding</para>
+
+<para><emphasis remap='I'>newline	</emphasis><emphasis remap='B'>RETURN</emphasis>	\" command name, and key binding
+<!-- .br -->
+Divides the current line at the point moving the point to the beginning
+of the newly created line.  It is usually bound to the RETURN key.</para>
+
+<para><emphasis remap='B'>newline-and-backup	^O</emphasis>	\" command name, and key binding</para>
+
+<para><emphasis remap='I'>newline-and-backup	</emphasis><emphasis remap='B'>^O</emphasis>	\" command name, and key binding
+<!-- .br -->
+Divides the current line at the point like the <emphasis remap='I'>newline</emphasis> command, but
+leaves the point unchanged.  Sometimes called "opening" a line.</para>
+
+<para><emphasis remap='B'>newline-and-indent	NEWLINE</emphasis>	\" command name, and key binding</para>
+
+<para><emphasis remap='I'>newline-and-indent	</emphasis><emphasis remap='B'>NEWLINE</emphasis>	\" command name, and key binding
+<!-- .br -->
+Same as <emphasis remap='I'>newline</emphasis> except that it inserts white space at the
+beginning of the newline copying the indent of the previous line.</para>
+
+<para><emphasis remap='B'>next-error	^X-^N</emphasis>	\" command name, and key binding</para>
+
+<para><emphasis remap='I'>next-error	</emphasis><emphasis remap='B'>^X-^N</emphasis>	\" command name, and key binding
+<!-- .br -->
+Takes the next error message
+(as returned by the commands <emphasis remap='I'>parse-C-errors
+and parse-LINT-errors</emphasis>), finds
+the file in which the error occurred, and sets the the point to the line
+on which the error occurred.  The error message will be displayed at the
+top of the <emphasis remap='B'>Errors</emphasis> buffer.  (The <emphasis remap='I'>make</emphasis> command
+automatically runs the <emphasis remap='I'>parse-C-errors</emphasis> and the <emphasis remap='I'>next-error</emphasis>
+commands).</para>
+
+<para><emphasis remap='B'>next-line	^N</emphasis>	\" command name, and key binding</para>
+
+<para><emphasis remap='I'>next-line	</emphasis><emphasis remap='B'>^N</emphasis>	\" command name, and key binding
+<!-- .br -->
+Moves the point to the next line keeping the column as close to
+the "current"
+column as possible.</para>
+
+<para><emphasis remap='B'>next-page	^V</emphasis>	\" command name, and key binding</para>
+
+<para><emphasis remap='I'>next-page	</emphasis><emphasis remap='B'>^V</emphasis>	\" command name, and key binding
+<!-- .br -->
+Puts the bottom line of the window at the top of the window, moving the
+point to the top of the window and to the beginning of the line.</para>
+
+<para><emphasis remap='B'>next-window	^X-n</emphasis>	\" command name, and key binding</para>
+
+<para><emphasis remap='I'>next-window	</emphasis><emphasis remap='B'>^X-n</emphasis>	\" command name, and key binding
+<!-- .br -->
+Moves to the next window in the screen.  If the current window is the
+last window, it moves to the first window.  It is an error to
+attempt to move to the
+next window when there is only one window on the screen.</para>
+
+<para><emphasis remap='B'>number-lines-in-window	[unbound]</emphasis>	\" command name, and key binding</para>
+
+<para><emphasis remap='I'>number-lines-in-window	</emphasis><emphasis remap='B'>[unbound]</emphasis>	\" command name, and key binding
+<!-- .br -->
+Each line in the current window is displayed with its line number to
+the left.  The line
+numbers are not part of the buffer and will disappear when
+this command is executed again (it toggles).</para>
+
+<para><emphasis remap='B'>page-next-window	ESC-^V</emphasis>	\" command name, and key binding</para>
+
+<para><emphasis remap='I'>page-next-window	</emphasis><emphasis remap='B'>ESC-^V</emphasis>	\" command name, and key binding
+<!-- .br -->
+This command does a <emphasis remap='I'>next-page</emphasis> on the next window.  If there is
+only one window the editor complains.</para>
+
+<para><emphasis remap='B'>paren-flash	[unbound]</emphasis>	\" command name, and key binding</para>
+
+<para><emphasis remap='I'>paren-flash	</emphasis><emphasis remap='B'>[unbound]</emphasis>	\" command name, and key binding
+<!-- .br -->
+When the variable <emphasis remap='I'>show-match</emphasis> is non-zero, the close
+parenthesis/brace keys are bound to this command.  When invoked, this
+command inserts the character typed and temporarily
+moves the cursor to the
+matching open parenthesis/brace for about one second.</para>
+
+<para><emphasis remap='B'>parse-C-errors	[unbound]</emphasis>	\" command name, and key binding</para>
+
+<para><emphasis remap='I'>parse-C-errors	</emphasis><emphasis remap='B'>[unbound]</emphasis>	\" command name, and key binding
+<!-- .br -->
+This command takes C compiler (or similar in format) errors and sets
+the editor up for subsequent invocations of the <emphasis remap='I'>next-error</emphasis>
+command.  Giving the UNIX file <command>grep(1)</command> the <option>-n</option> option prints
+its output in the same format as C compiler
+error messages, thus running
+<userinput>grep -n</userinput> into a buffer makes it possible to parse its output.
+This is a
+very useful way to look at all the occurrences of certain strings in
+several files.</para>
+
+<para><emphasis remap='B'>parse-LINT-errors	[unbound]</emphasis>	\" command name, and key binding</para>
+
+<para><emphasis remap='I'>parse-LINT-errors	</emphasis><emphasis remap='B'>[unbound]</emphasis>	\" command name, and key binding
+<!-- .br -->
+This is the same as <emphasis remap='I'>parse-C-errors</emphasis>
+except that it parses <citerefentry><refentrytitle>lint</refentrytitle><manvolnum>1</manvolnum></citerefentry> errors.</para>
+
+<para><emphasis remap='B'>pause-jove	ESC-p</emphasis>	\" command name, and key binding</para>
+
+<para><emphasis remap='I'>pause-jove	</emphasis><emphasis remap='B'>ESC-p</emphasis>	\" command name, and key binding
+<!-- .br -->
+If the system has the Berkeley job control features, control is
+returned to the superior shell.  Otherwise an inferior shell is spawned.</para>
+
+<para><emphasis remap='B'>previous-line	^P</emphasis>	\" command name, and key binding</para>
+
+<para><emphasis remap='I'>previous-line	</emphasis><emphasis remap='B'>^P</emphasis>	\" command name, and key binding
+<!-- .br -->
+Moves the point to the previous line trying to keep the column the
+same.</para>
+
+<para><emphasis remap='B'>previous-page	ESC-v</emphasis>	\" command name, and key binding</para>
+
+<para><emphasis remap='I'>previous-page	</emphasis><emphasis remap='B'>ESC-v</emphasis>	\" command name, and key binding
+<!-- .br -->
+Moves the top line of the window to the bottom line, leaving the point
+at the top of the window and at the beginning of the top line.</para>
+
+<para><emphasis remap='B'>previous-window	^X-p</emphasis>	\" command name, and key binding</para>
+
+<para><emphasis remap='I'>previous-window	</emphasis><emphasis remap='B'>^X-p</emphasis>	\" command name, and key binding
+<!-- .br -->
+Move to the previous window in the screen.  If currently in the first
+window, moves to the last window.  It is an error
+to attempt to move to the previous
+window when there is only one window on the screen.</para>
+
+<para><emphasis remap='B'>print	[unbound]</emphasis>	\" command name, and key binding</para>
+
+<para><emphasis remap='I'>print	</emphasis><emphasis remap='B'>[unbound]</emphasis>	\" command name, and key binding
+<!-- .br -->
+Prompts for a variable name and prints its value.
+(See "Variables and Modes" later in this document.)</para>
+
+<para><emphasis remap='B'>query-replace-search	ESC-q</emphasis>	\" command name, and key binding</para>
+
+<para><emphasis remap='I'>query-replace-search	</emphasis><emphasis remap='B'>ESC-q</emphasis>	\" command name, and key binding
+<!-- .br -->
+Upon receipt of a search and a
+replacement string, the editor replaces all
+occurrences of the search string with the replacement string.  For each
+occurrence the editor asks the user what to do.  The choices are:</para>
+<informaltable pgwide='0' frame='none'>
+  <tgroup cols='3' align='center'>
+    <colspec colname='c1'/>
+    <colspec colname='c2'/>
+    <colspec colname='c3'/>
+    <tbody>
+      <row>
+        <entry align='left'></entry>
+        <entry align='left'>' ' or 'y'</entry>
+        <entry align='left'>to replace this occurrence.</entry>
+      </row>
+      <row>
+        <entry align='left'></entry>
+        <entry align='left'>'.'</entry>
+        <entry align='left'>to replace and stop.</entry>
+      </row>
+      <row>
+        <entry align='left'></entry>
+        <entry align='left'>DELETE or 'n'</entry>
+        <entry align='left'>to skip this occurrence.</entry>
+      </row>
+      <row>
+        <entry align='left'></entry>
+        <entry align='left'>'r'</entry>
+        <entry align='left'>to recursive edit.</entry>
+      </row>
+      <row>
+        <entry align='left'></entry>
+        <entry align='left'>'p'</entry>
+        <entry align='left'>to proceed to replace all occurrences.</entry>
+      </row>
+      <row>
+        <entry align='left'></entry>
+        <entry align='left'>RETURN</entry>
+        <entry align='left'>to stop.</entry>
+      </row>
+    </tbody>
+  </tgroup>
+</informaltable>
+
+
+<!-- .ta 4.5i -->
+
+<para>When there are no more occurrences, the point is moved back to its
+initial position.  Recursive edit makes it possible to temporarily
+suspend the <emphasis remap='I'>query-replace-search</emphasis>, let the user go off and do
+some editing, and then return to the search after the editing is
+finished.  Executing the file <command>exit-jove</command> returns from the
+recursive edit.</para>
+
+<para><emphasis remap='B'>quote-char	^Q or ^~</emphasis>	\" command name, and key binding</para>
+
+<para><emphasis remap='I'>quote-char	</emphasis><emphasis remap='B'>^Q or ^~</emphasis>	\" command name, and key binding
+<!-- .br -->
+Quotes the next character typed for insertion.  This is used to insert
+special characters which otherwise would be interpreted as commands.
+The second version (^~) is included for terminals that may usurp ^Q
+for flow control purposes.</para>
+
+<para><emphasis remap='B'>read-file	^X-^R</emphasis>	\" command name, and key binding</para>
+
+<para><emphasis remap='I'>read-file	</emphasis><emphasis remap='B'>^X-^R</emphasis>	\" command name, and key binding
+<!-- .br -->
+Prompts for a file to read into the current buffer.  It will erase the
+old contents, so if the buffer has been modified but not saved <emphasis remap='B'>JOVE</emphasis>
+complains and asks for confirmation.</para>
+
+<para><emphasis remap='B'>read-macros-from-file	[unbound]</emphasis>	\" command name, and key binding</para>
+
+<para><emphasis remap='I'>read-macros-from-file	</emphasis><emphasis remap='B'>[unbound]</emphasis>	\" command name, and key binding
+<!-- .br -->
+Prompts for a file that was previously written with the
+<emphasis remap='I'>write-macros-to-file</emphasis> command, and reads
+the macros back into the editor.</para>
+
+<para><emphasis remap='B'>redraw-display	ESC-^L</emphasis>	\" command name, and key binding</para>
+
+<para><emphasis remap='I'>redraw-display	</emphasis><emphasis remap='B'>ESC-^L</emphasis>	\" command name, and key binding
+<!-- .br -->
+Redraws the window with the current line in the middle
+of the window.  If a numeric
+argument is provided the current line is moved to the <emphasis remap='I'>argument</emphasis>
+line. If the current line is in the same place as before, the window is
+cleared and redrawn.</para>
+
+<para><emphasis remap='B'>reinitialize-terminal	[unbound]</emphasis>	\" command name, and key binding</para>
+
+<para><emphasis remap='I'>reinitialize-terminal	</emphasis><emphasis remap='B'>[unbound]</emphasis>	\" command name, and key binding
+<!-- .br -->
+If the value of the variable <emphasis remap='I'>allow-^S-and-^Q</emphasis> is changed, this
+command should be called to make the necessary changes to the terminal.</para>
+
+<para><emphasis remap='B'>replace-search	ESC-^E</emphasis>	\" command name, and key binding</para>
+
+<para><emphasis remap='I'>replace-search	</emphasis><emphasis remap='B'>ESC-^E</emphasis>	\" command name, and key binding
+<!-- .br -->
+This is the same as <emphasis remap='I'>query-replace-search</emphasis> except the editor does
+not ask whether to replace matched strings; it always does.</para>
+
+<para><emphasis remap='B'>ring-the-bell	^G</emphasis>	\" command name, and key binding</para>
+
+<para><emphasis remap='I'>ring-the-bell	</emphasis><emphasis remap='B'>^G</emphasis>	\" command name, and key binding
+<!-- .br -->
+Exactly what is says.  It is useful when it is not apparent what the
+editor is currently doing.
+If a prompt or prefix is active, this key
+also aborts the command in progress.</para>
+
+<para><emphasis remap='B'>scroll-one-line-down	ESC-z</emphasis>	\" command name, and key binding</para>
+
+<para><emphasis remap='I'>scroll-one-line-down	</emphasis><emphasis remap='B'>ESC-z</emphasis>	\" command name, and key binding
+<!-- .br -->
+Scrolls the current window down one line.  If the current line moves off the
+bottom of the window, the cursor is moved to the middle of the window.</para>
+
+<para><emphasis remap='B'>scroll-one-line-up	^Z</emphasis>	\" command name, and key binding</para>
+
+<para><emphasis remap='I'>scroll-one-line-up	</emphasis><emphasis remap='B'>^Z</emphasis>	\" command name, and key binding
+<!-- .br -->
+Scrolls the current window up one line.  If the current line moves off
+the top of the window, the cursor is moved to the middle of the
+window.</para>
+
+<para><emphasis remap='B'>search-forward	ESC-s</emphasis>	\" command name, and key binding</para>
+
+<para><emphasis remap='I'>search-forward	</emphasis><emphasis remap='B'>ESC-s</emphasis>	\" command name, and key binding
+<!-- .br -->
+Prompts for a string to search for and searches for the next instance of
+that string in the buffer (see <emphasis remap='B'>Searching</emphasis> above).
+The second version (^\) is included for terminals that may usurp ^S
+for flow control purposes.</para>
+
+<para><emphasis remap='B'>search-reverse	ESC-r</emphasis>	\" command name, and key binding</para>
+
+<para><emphasis remap='I'>search-reverse	</emphasis><emphasis remap='B'>ESC-r</emphasis>	\" command name, and key binding
+<!-- .br -->
+Prompts for a string to search for and searches for the previous instance
+of that string in the buffer (see <emphasis remap='B'>Searching</emphasis> above).</para>
+
+<para><emphasis remap='B'>select-buffer	^X-b</emphasis>	\" command name, and key binding</para>
+
+<para><emphasis remap='I'>select-buffer	</emphasis><emphasis remap='B'>^X-b</emphasis>	\" command name, and key binding
+<!-- .br -->
+Prompts for a buffer name and makes that buffer the current buffer.  If
+the buffer does not exist, a new buffer is created with nothing in
+it.  If a number is supplied instead of a name and a buffer exists with
+that number, that buffer is selected.  Otherwise, a new buffer is created
+with that number as a name.</para>
+
+<para><emphasis remap='B'>self-insert	[very-bound]</emphasis>	\" command name, and key binding</para>
+
+<para><emphasis remap='I'>self-insert	</emphasis><emphasis remap='B'>[very-bound]</emphasis>	\" command name, and key binding
+<!-- .br -->
+This is bound to all the keys that should be inserted when typed.  This
+command does not work unless bound to a key.  Running this command
+manually will probably cause a random character to be inserted.</para>
+
+<para><emphasis remap='B'>set	[unbound]</emphasis>	\" command name, and key binding</para>
+
+<para><emphasis remap='I'>set	</emphasis><emphasis remap='B'>[unbound]</emphasis>	\" command name, and key binding
+<!-- .br -->
+Prompts for a variable name and a value, and sets the variable to that
+value.</para>
+
+<para><emphasis remap='B'>set-mark	^@ or ^SPACE</emphasis>	\" command name, and key binding</para>
+
+<para><emphasis remap='I'>set-mark	</emphasis><emphasis remap='B'>^@ or ^SPACE</emphasis>	\" command name, and key binding
+<!-- .br -->
+Sets the mark to the current buffer location.
+Which of the two commands you use will depend on your terminal.</para>
+
+<para><emphasis remap='B'>set-quote-chars	[unbound]</emphasis>	\" command name, and key binding</para>
+
+<para><emphasis remap='I'>set-quote-chars	</emphasis><emphasis remap='B'>[unbound]</emphasis>	\" command name, and key binding
+<!-- .br -->
+Prompts for a string of characters to be used as the
+quote characters that will invoke the function "quote-char".
+The characters ^Q and ^~ are the default quote characters.</para>
+
+<para><emphasis remap='B'>shell-command	^X-!</emphasis>	\" command name, and key binding</para>
+
+<para><emphasis remap='I'>shell-command	</emphasis><emphasis remap='B'>^X-!</emphasis>	\" command name, and key binding
+<!-- .br -->
+Prompts for a UNIX shell command to be run, placing the output from the
+command into a buffer called the name of the command.  If a numeric
+argument is provided, the buffer is left alone before the UNIX command
+is started.  Otherwise the buffer is emptied.</para>
+
+<para><emphasis remap='B'>shell-command-to-buffer	[unbound]</emphasis>	\" command name, and key binding</para>
+
+<para><emphasis remap='I'>shell-command-to-buffer	</emphasis><emphasis remap='B'>[unbound]</emphasis>	\" command name, and key binding
+<!-- .br -->
+The same as <emphasis remap='I'>shell-command</emphasis> except that it asks for a specific buffer
+to place the output in instead of a buffer called the name of the command.</para>
+
+<para><emphasis remap='B'>source	[unbound]</emphasis>	\" command name, and key binding</para>
+
+<para><emphasis remap='I'>source	</emphasis><emphasis remap='B'>[unbound]</emphasis>	\" command name, and key binding
+<!-- .br -->
+This prompts for a file name which contains editor
+commands.  These commands typically set variables or bind commands to
+keys.  Running <emphasis remap='I'>source</emphasis>
+on a file which does not have editor commands in
+it will very likely cause the editor to crash.</para>
+
+<para><emphasis remap='B'>shrink-window	[unbound]</emphasis>	\" command name, and key binding</para>
+
+<para><emphasis remap='I'>shrink-window	</emphasis><emphasis remap='B'>[unbound]</emphasis>	\" command name, and key binding
+<!-- .br -->
+Shrink the current window by one line if the resulting window would not
+be too small.  It is an error to run this command when there is only one
+window.</para>
+
+<para><emphasis remap='B'>spell-buffer	[unbound]</emphasis>	\" command name, and key binding</para>
+
+<para><emphasis remap='I'>spell-buffer	</emphasis><emphasis remap='B'>[unbound]</emphasis>	\" command name, and key binding
+<!-- .br -->
+Sends the entire buffer to the UNIX spell program.  <emphasis remap='B'>JOVE</emphasis> will go through
+the list of spelling errors and asks whether or not a word is spelled
+correctly.  If it is not, <emphasis remap='B'>JOVE</emphasis> remembers where each occurrence of the
+misspelled word is.  The point in the buffer being spelled is positioned
+at the end of the current misspelled word. The <emphasis remap='I'>next-error</emphasis> command
+moves to the next occurrence of the current word, or to the first
+occurrence of the next word.</para>
+
+<para><emphasis remap='B'>split-current-window	^X-2</emphasis>	\" command name, and key binding</para>
+
+<para><emphasis remap='I'>split-current-window	</emphasis><emphasis remap='B'>^X-2</emphasis>	\" command name, and key binding
+<!-- .br -->
+Splits the current window into two smaller windows, if the resulting
+windows would not be too small.  The two windows have the same buffer
+associated with them, namely the one that the original window had.</para>
+
+<para><emphasis remap='B'>start-remembering	[unbound]</emphasis>	\" command name, and key binding</para>
+
+<para><emphasis remap='I'>start-remembering	</emphasis><emphasis remap='B'>[unbound]</emphasis>	\" command name, and key binding
+<!-- .br -->
+This tells <emphasis remap='B'>JOVE</emphasis> to start remembering all the following keystrokes until
+the <emphasis remap='I'>stop-remembering</emphasis>
+command is executed.  The saved commands are saved
+as the keyboard macro, and can be re-executed with the
+<emphasis remap='I'>execute-keyboard-macro</emphasis> command.  This is useful when it is
+necessary to run the same command lots of times.</para>
+
+<para><emphasis remap='B'>stop-remembering	[unbound]</emphasis>	\" command name, and key binding</para>
+
+<para><emphasis remap='I'>stop-remembering	</emphasis><emphasis remap='B'>[unbound]</emphasis>	\" command name, and key binding
+<!-- .br -->
+This terminates the definition of a macro.  See <emphasis remap='I'>start-remembering</emphasis>
+for more details.</para>
+
+<para><emphasis remap='B'>string-length	^X-c</emphasis>	\" command name, and key binding</para>
+
+<para><emphasis remap='I'>string-length	</emphasis><emphasis remap='B'>^X-c</emphasis>	\" command name, and key binding
+<!-- .br -->
+Prints, on the message line, the number of characters between two
+quotes. The point must be between two quotes or the editor
+complains.</para>
+
+<para><emphasis remap='B'>sub-shell	ESC-!</emphasis>	\" command name, and key binding</para>
+
+<para><emphasis remap='I'>sub-shell	</emphasis><emphasis remap='B'>ESC-!</emphasis>	\" command name, and key binding
+<!-- .br -->
+Causes <emphasis remap='B'>JOVE</emphasis> to suspend and fork an interactive subshell.  When
+the subshell exits, <emphasis remap='B'>JOVE</emphasis> will redraw the screen and pick
+up where it left off.  If the SHELL environment variable is
+set, the program referenced by it will be used as the shell to be run,
+otherwise /bin/sh will be used.</para>
+
+<para><emphasis remap='B'>suspend-jove	[unbound]</emphasis>	\" command name, and key binding</para>
+
+<para><emphasis remap='I'>suspend-jove	</emphasis><emphasis remap='B'>[unbound]</emphasis>	\" command name, and key binding
+<!-- .br -->
+Same as <emphasis remap='I'>pause-jove</emphasis>.</para>
+
+<para><emphasis remap='B'>text-insert	[unbound]</emphasis>	\" command name, and key binding</para>
+
+<para><emphasis remap='I'>text-insert	</emphasis><emphasis remap='B'>[unbound]</emphasis>	\" command name, and key binding
+<!-- .br -->
+When the variable <emphasis remap='I'>text-fill</emphasis> is non-zero, the self-insert keys
+are bound to this command.  This inserts characters like <emphasis remap='I'>self-insert</emphasis>
+does but when the line gets to a certain length, a newline is automatically
+inserted before the word being typed.
+This makes it possible to type in a paper without having to
+remember to hit return, i.e the editor does it automatically.</para>
+
+<para><emphasis remap='B'>transpose-char	^T</emphasis>	\" command name, and key binding</para>
+
+<para><emphasis remap='I'>transpose-char	</emphasis><emphasis remap='B'>^T</emphasis>	\" command name, and key binding
+<!-- .br -->
+Exchanges the characters on opposite sides of the point, namely the
+character before the cursor and the character under the cursor.</para>
+
+<para><emphasis remap='B'>unbound	[unbound]</emphasis>	\" command name, and key binding</para>
+
+<para><emphasis remap='I'>unbound	</emphasis><emphasis remap='B'>[unbound]</emphasis>	\" command name, and key binding
+<!-- .br -->
+The <emphasis remap='I'>unbound</emphasis> function is bound to all the keys that don't run
+commands.  It is essentially a no-op.</para>
+
+<para><emphasis remap='B'>vt100-arrow-keys	ESC-[</emphasis>	\" command name, and key binding</para>
+
+<para><emphasis remap='I'>vt100-arrow-keys	</emphasis><emphasis remap='B'>ESC-[</emphasis>	\" command name, and key binding
+<!-- .br -->
+This makes the arrow keys work on the vt100 terminal.  This is a special
+command that looks at the next character and performs the appropriate
+action.  Users of terminals other than vt100's will not need to use this
+command and vt100 users will only use it implicitly via the arrow keys.</para>
+
+<para><emphasis remap='B'>write-current-file	^X-^S or ^X-^\\</emphasis>	\" command name, and key binding</para>
+
+<para><emphasis remap='I'>write-current-file	</emphasis><emphasis remap='B'>^X-^S or ^X-^\\</emphasis>	\" command name, and key binding
+<!-- .br -->
+This writes the current buffer to the file associated with the buffer,
+without asking.  If there is currently no file associated with the
+buffer, the editor complains. (See the <emphasis remap='I'>write-named-file</emphasis> command
+below).
+The second version (^X-^\) is included for terminals that may usurp ^S
+for flow control purposes.</para>
+
+<para><emphasis remap='B'>write-macros-to-file	[unbound]</emphasis>	\" command name, and key binding</para>
+
+<para><emphasis remap='I'>write-macros-to-file	</emphasis><emphasis remap='B'>[unbound]</emphasis>	\" command name, and key binding
+<!-- .br -->
+Prompts for a file and writes all the currently defined macros to that
+file.  The macros can be read back into the editor with the
+<emphasis remap='I'>read-macros-from-file</emphasis> command.</para>
+
+<para><emphasis remap='B'>write-modified-files	^X-^M or ^X-RETURN</emphasis>	\" command name, and key binding</para>
+
+<para><emphasis remap='I'>write-modified-files	</emphasis><emphasis remap='B'>^X-^M or ^X-RETURN</emphasis>	\" command name, and key binding
+<!-- .br -->
+Writes all the buffers that have been modified but not been saved.</para>
+
+<para><emphasis remap='B'>write-named-file	^X-^W</emphasis>	\" command name, and key binding</para>
+
+<para><emphasis remap='I'>write-named-file	</emphasis><emphasis remap='B'>^X-^W</emphasis>	\" command name, and key binding
+<!-- .br -->
+Prompts for a file name and writes the current buffer to that file. If
+the file already exists and is not the current file name, the user is
+informed and asked if he really wants to do it.  Writing a file erases
+the old contents of the file.</para>
+
+<para><emphasis remap='B'>write-region	[unbound]</emphasis>	\" command name, and key binding</para>
+
+<para><emphasis remap='I'>write-region	</emphasis><emphasis remap='B'>[unbound]</emphasis>	\" command name, and key binding
+<!-- .br -->
+Takes the region between the point and the mark and writes it to a named
+file.</para>
+
+<para><emphasis remap='B'>yank	^Y</emphasis>	\" command name, and key binding</para>
+
+<para><emphasis remap='I'>yank	</emphasis><emphasis remap='B'>^Y</emphasis>	\" command name, and key binding
+<!-- .br -->
+Inserts, at the point, all the text that was most recently deleted with
+a delete command that saves the text it deleted to the <emphasis remap='I'>kill stack</emphasis>.  The
+point moves to the end of the inserted region.</para>
+
+<para><emphasis remap='B'>yank-pop	ESC-y</emphasis>	\" command name, and key binding</para>
+
+<para><emphasis remap='I'>yank-pop	</emphasis><emphasis remap='B'>ESC-y</emphasis>	\" command name, and key binding
+<!-- .br -->
+Goes through the <emphasis remap='I'>kill stack</emphasis> inserting each entry one at a time,
+substituting it for the previous <emphasis remap='I'>yank-pop</emphasis> insertion.
+The
+previous command has to have been the <emphasis remap='I'>yank</emphasis> command or the
+<emphasis remap='I'>yank-pop</emphasis> command.</para>
+<!-- LEAVE THIS LINE UNTOUCHED, IT DELINEATES THE END OF COMMANDS
+ta 4 12 -->
+
+
+<beginpage/>
+
+</refsect1>
+
+<refsect1 xml:id='variables_and_modes'><title>Variables and Modes</title>
+<para>The following is a list of variables which change the way the editor
+behaves.  All the variables and the effect they have on the behavior of
+the editor are listed below.
+Some variables contain numeric values such as the tab stop spacing,
+while other variables simply act as flags to indicate whether modes
+or features are on or off.
+When certain variables are set to non-zero
+values, <emphasis remap='B'>JOVE</emphasis> prints their
+abbreviations (in parentheses) on the mode line.
+For example, the line</para>
+
+<literallayout remap='.nf'>
+   <emphasis remap='B'>JOVE (C-SM-AI)   2: jove.c   "jove.c" *</emphasis>
+</literallayout> <!-- .fi -->
+
+<para>indicates the variables <emphasis remap='I'>c-mode</emphasis>, <emphasis remap='I'>show-match</emphasis>,
+and <emphasis remap='I'>auto-indent</emphasis> are
+all non-zero which enables their respective modes.</para>
+
+<para>To put the editor in one of these modes, use the <emphasis remap='I'>set</emphasis> command.
+The set command prompts for one of the mode variables to set.  A
+non-zero value means the mode is on, and a value of 0 means the mode is
+off.  To find out what the value of a particular variable is,
+you can use the <emphasis remap='I'>print</emphasis> command.</para>
+
+
+<!-- ta 30 -->
+
+<para><emphasis remap='B'>allow-^S-and-^Q	(not-shown)</emphasis>	\" command name, and key binding</para>
+
+<para><emphasis remap='I'>allow-^S-and-^Q	</emphasis><emphasis remap='B'>(not-shown)</emphasis>	\" command name, and key binding
+<!-- .br -->
+When set to non-zero, <emphasis remap='B'>JOVE</emphasis> disables the ^S (XOFF) and ^Q (XON)
+flow control
+characters, thus making it possible to bind editor commands to those
+keys.
+When this variable is set, <emphasis remap='I'>search-forward</emphasis>
+can be bound to <emphasis remap='B'>^S</emphasis>, and <emphasis remap='I'>quote-char</emphasis> can be bound to <emphasis remap='B'>^Q</emphasis>,
+like they are in real EMACS.  Some terminals require flow control
+in which case this mode must remain off (e.g. DEC VT100).</para>
+
+<para><emphasis remap='B'>auto-indent	(AI)</emphasis>	\" command name, and key binding</para>
+
+<para><emphasis remap='I'>auto-indent	</emphasis><emphasis remap='B'>(AI)</emphasis>	\" command name, and key binding
+<!-- .br -->
+This variable affects the way the <emphasis remap='B'>RETURN</emphasis> key works. Normally
+typing <emphasis remap='B'>RETURN</emphasis> divides the
+current line at the point moving the point down
+to the next line. That still happens in this mode but the line is also
+automatically indented the same as the previous line. This is useful for
+block-structured programming languages such as C and PASCAL.</para>
+
+<para><emphasis remap='B'>backup-files	(not-shown)</emphasis>	\" command name, and key binding</para>
+
+<para><emphasis remap='I'>backup-files	</emphasis><emphasis remap='B'>(not-shown)</emphasis>	\" command name, and key binding
+<!-- .br -->
+This is integer variable that controls the making of backup files.
+If <emphasis remap='I'>backup-files</emphasis> is 0, no backup files will be made.
+If <emphasis remap='I'>backup-files</emphasis> is 1, <emphasis remap='B'>JOVE</emphasis> will ask if the user wants
+a backup file whenever a file is written out and a copy of the file
+already existed.
+If <emphasis remap='I'>backup-files</emphasis> is 2, then <emphasis remap='B'>JOVE</emphasis> will always make backup
+files when possible (and without asking).
+The effect of a
+value of <emphasis remap='I'>backup-files</emphasis> other than those listed is undefined.</para>
+
+<para><emphasis remap='B'>c-mode	(C)</emphasis>	\" command name, and key binding</para>
+
+<para><emphasis remap='I'>c-mode	</emphasis><emphasis remap='B'>(C)</emphasis>	\" command name, and key binding
+<!-- .br -->
+This mode affects the behavior
+of the tab character, the <emphasis remap='B'>')'</emphasis>, and the <emphasis remap='B'>'}'</emphasis>.
+Instead of just inserting
+the tab, the editor determines where the tab "ought" to be for the C
+language and tabs to there instead.  The same thing happens with the
+close brace and close parenthesis;
+they are tabbed to the "right" place and then inserted.
+This mode is automatically entered if the file being edited
+ends in ".c" unless the <emphasis remap='I'>c-mode</emphasis> variable is negative.</para>
+
+<para><emphasis remap='B'>case-independent-search	(CIS)</emphasis>	\" command name, and key binding</para>
+
+<para><emphasis remap='I'>case-independent-search	</emphasis><emphasis remap='B'>(CIS)</emphasis>	\" command name, and key binding
+<!-- .br -->
+This affects the way search works.  When in this mode, <emphasis remap='B'>JOVE</emphasis> ignores the
+difference between upper case and lower case so
+that <emphasis remap='B'>a</emphasis> matches <emphasis remap='B'>A</emphasis>
+as well as <emphasis remap='B'>a</emphasis>.</para>
+
+<para><emphasis remap='B'>fast-prompt	(not-shown)</emphasis>	\" command name, and key binding</para>
+
+<para><emphasis remap='I'>fast-prompt	</emphasis><emphasis remap='B'>(not-shown)</emphasis>	\" command name, and key binding
+<!-- .br -->
+When this variable is non-zero, <emphasis remap='B'>JOVE</emphasis> will not delay before
+printing the prompts "M-" and "C-X " below the status line.
+This variable is normally 0 (disabled) so that the efficiency
+of only updating the bottom line once for the
+prefix and the following character will speed up screen updates.</para>
+
+<para><emphasis remap='B'>files-should-end-with-newline	(not-shown)</emphasis>	\" command name, and key binding</para>
+
+<para><emphasis remap='I'>files-should-end-with-newline	</emphasis><emphasis remap='B'>(not-shown)</emphasis>	\" command name, and key binding
+<!-- .br -->
+This causes <emphasis remap='B'>JOVE</emphasis> to ensure that edited files end with a newline.
+This is the default behavior and
+is recommended for normal use.  To disable this feature, set the
+variable to 0.</para>
+
+<para><emphasis remap='B'>internal-tabstop	(not-shown)</emphasis>	\" command name, and key binding</para>
+
+<para><emphasis remap='I'>internal-tabstop	</emphasis><emphasis remap='B'>(not-shown)</emphasis>	\" command name, and key binding
+<!-- .br -->
+This tells <emphasis remap='B'>JOVE</emphasis> how many spaces a tab should take up when it is printed.
+The default is 8.</para>
+
+<para><emphasis remap='B'>make-all-at-once	(not-shown)</emphasis>	\" command name, and key binding</para>
+
+<para><emphasis remap='I'>make-all-at-once	</emphasis><emphasis remap='B'>(not-shown)</emphasis>	\" command name, and key binding
+<!-- .br -->
+Tells the editor to run <emphasis remap='B'>make</emphasis> with the <option>-k</option> option when running
+the <emphasis remap='B'>JOVE</emphasis> file <command>make</command>.  This allows detecting more errors in
+the <emphasis remap='B'>make</emphasis><emphasis remap='I'> process.  This defaults to off.</emphasis></para>
+
+<para><emphasis remap='B'>over-write	(OV)</emphasis>	\" command name, and key binding</para>
+
+<para><emphasis remap='I'>over-write	</emphasis><emphasis remap='B'>(OV)</emphasis>	\" command name, and key binding
+<!-- .br -->
+This mode changes the way self-inserting characters work. Instead of
+pushing the rest of the line over, the character after the point is
+replaced.</para>
+
+<para><emphasis remap='B'>physical-tabstop	(not-shown)</emphasis>	\" command name, and key binding</para>
+
+<para><emphasis remap='I'>physical-tabstop	</emphasis><emphasis remap='B'>(not-shown)</emphasis>	\" command name, and key binding
+<!-- .br -->
+This tells <emphasis remap='B'>JOVE</emphasis> how big the tab
+stops are for the specific terminal.
+When the terminal is in <emphasis remap='I'>tabs</emphasis> mode (see <citerefentry><refentrytitle>stty</refentrytitle><manvolnum>1</manvolnum></citerefentry>), <emphasis remap='B'>JOVE</emphasis> will
+take advantage of that fact and optimize
+the cursor motion using hardware tabs.</para>
+
+<para><emphasis remap='B'>regular-expressions	(RE)</emphasis>	\" command name, and key binding</para>
+
+<para><emphasis remap='I'>regular-expressions	</emphasis><emphasis remap='B'>(RE)</emphasis>	\" command name, and key binding
+<!-- .br -->
+This mode makes regular expressions available.  This is not the default
+for new users because certain characters in regular
+expression search strings do
+not do what one might expect.</para>
+
+<para><emphasis remap='B'>right-margin	(not-shown)</emphasis>	\" command name, and key binding</para>
+
+<para><emphasis remap='I'>right-margin	</emphasis><emphasis remap='B'>(not-shown)</emphasis>	\" command name, and key binding
+<!-- .br -->
+This is used by the <emphasis remap='I'>justify-paragraph</emphasis> command
+and <emphasis remap='I'>text-fill</emphasis> mode, and says how long
+it should try to make each line.
+The default <emphasis remap='I'>right-margin</emphasis> is 72.</para>
+
+<para><emphasis remap='B'>show-match	(SM)</emphasis>	\" command name, and key binding</para>
+
+<para><emphasis remap='I'>show-match	</emphasis><emphasis remap='B'>(SM)</emphasis>	\" command name, and key binding
+<!-- .br -->
+This affects the close parenthesis (brace) characters. When one of those
+is typed in this mode it is inserted normally. Then the cursor flashes
+to the matching open parenthesis (brace) for one second and then moves
+back to the point. If the match was not on the screen, nothing happens.
+If there is no match in the
+buffer, the user is informed of the error.</para>
+
+<para><emphasis remap='B'>scroll-step	</emphasis>	\" command name, and key binding</para>
+
+<para><emphasis remap='I'>scroll-step	</emphasis>	\" command name, and key binding
+<!-- .br -->
+This changes the way the editor behaves when the point moves out of the
+range of a window.  Instead of centering the line containing the point,
+the editor scrolls the screen by the number value of <emphasis remap='I'>scroll-step</emphasis>
+and leaves the cursor on the line that was just off the edge of the
+screen.
+This is useful if the
+terminal is being used at a slow baud rate.</para>
+
+<para><emphasis remap='B'>text-fill	(TE)</emphasis>	\" command name, and key binding</para>
+
+<para><emphasis remap='I'>text-fill	</emphasis><emphasis remap='B'>(TE)</emphasis>	\" command name, and key binding
+<!-- .br -->
+When in this mode, the editor will automatically insert line breaks
+when lines reach the right margin.</para>
+
+<para><emphasis remap='B'>visible-bell	(not-shown)</emphasis>	\" command name, and key binding</para>
+
+<para><emphasis remap='I'>visible-bell	</emphasis><emphasis remap='B'>(not-shown)</emphasis>	\" command name, and key binding
+<!-- .br -->
+When using this mode, <emphasis remap='B'>JOVE</emphasis> will try to use the
+"visible bell" feature of a terminal if it has that capability.</para>
+
+<para><emphasis remap='B'>write-files-on-make	(not-shown)</emphasis>	\" command name, and key binding</para>
+
+<para><emphasis remap='I'>write-files-on-make	</emphasis><emphasis remap='B'>(not-shown)</emphasis>	\" command name, and key binding
+<!-- .br -->
+When non-zero, <emphasis remap='B'>JOVE</emphasis> writes all the modified buffers when the
+<emphasis remap='I'>make</emphasis> command is invoked (default is non-zero).</para>
+</refsect1>
+
+<refsect1 xml:id='files'><title>FILES</title>
+<informaltable pgwide='0' frame='none'>
+  <tgroup cols='2' align='center'>
+    <colspec colname='c1'/>
+    <colspec colname='c2'/>
+    <tbody>
+      <row>
+        <entry align='left'>/tmp</entry>
+        <entry align='left'>where the temporary files are stored.</entry>
+      </row>
+      <row>
+        <entry align='left'>/usr/lib/jove</entry>
+        <entry align='left'>help files, documentation and system-wide joverc</entry>
+      </row>
+      <row>
+        <entry align='left'>$HOME/.joverc</entry>
+        <entry align='left'>user's personal JOVE tailoring file</entry>
+      </row>
+    </tbody>
+  </tgroup>
+</informaltable>
+
+
+</refsect1>
+
+<refsect1 xml:id='see_also'><title>SEE ALSO</title>
+<para><citerefentry><refentrytitle>ed</refentrytitle><manvolnum>1</manvolnum></citerefentry>, "A JOVE Primer", "Tailoring the JOVE Editor"</para>
+</refsect1>
+
+<refsect1 xml:id='diagnostics'><title>DIAGNOSTICS</title>
+<para><emphasis remap='B'>JOVE</emphasis> diagnostics are meant to be self-explanatory.</para>
+</refsect1>
+
+<refsect1 xml:id='bugs'><title>BUGS</title>
+<para>It doesn't garbage-collect the tmp file so it could run out of tmp
+space when it doesn't have to.</para>
+
+<para>There should be one bind-to-key command that works for both macros and
+built in commands.</para>
+
+<para>There should be a way to abort <emphasis remap='I'>read-file</emphasis> and the
+non-interactive search commands.</para>
+
+<para><emphasis remap='B'>JOVE</emphasis> should not blow up when it tries to source a file which doesn't
+have editor commands in it.</para>
+
+<para><emphasis remap='I'>Parse-LINT-errors</emphasis> does not work well with some
+newer versions of <citerefentry><refentrytitle>lint</refentrytitle><manvolnum>1</manvolnum></citerefentry>.</para>
+</refsect1>
+</refentry>
+

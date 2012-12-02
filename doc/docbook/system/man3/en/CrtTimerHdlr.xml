@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man+tkman by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='crttimerhdlr3'>
+
+<!-- '\" Copyright (c) 1990 The Regents of the University of California.
+'\" Copyright (c) 1994\-1996 Sun Microsystems, Inc. -->
+
+<!-- '\" See the file "license.terms" for information on usage and redistribution
+'\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
+'\" 
+'\" RCS: @(#) $Id$
+'\"  -->
+<refentryinfo><date>7.5</date></refentryinfo>
+<refmeta>
+<refentrytitle>Tcl_CreateTimerHandler</refentrytitle>
+<manvolnum>3</manvolnum>
+<refmiscinfo class='date'>7.5</refmiscinfo>
+<refmiscinfo class='source'>Tcl</refmiscinfo>
+<refmiscinfo class='manual'>Tcl Library Procedures</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>Tcl_CreateTimerHandler</refname>
+<refname>Tcl_DeleteTimerHandler</refname>
+<refpurpose>call a procedure at a given time</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<funcsynopsis>
+<funcsynopsisinfo>
+#include &lt;tcl.h&gt;
+
+</funcsynopsisinfo>
+<funcprototype>
+<funcdef>Tcl_TimerToken <function>Tcl_CreateTimerHandler</function></funcdef>
+<paramdef><parameter>milliseconds</parameter></paramdef>
+<paramdef><parameter>proc</parameter></paramdef>
+<paramdef><parameter>clientData</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef><function>Tcl_DeleteTimerHandler</function></funcdef>
+<paramdef><parameter>token</parameter></paramdef>
+</funcprototype>
+</funcsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='arguments'><title>ARGUMENTS</title>
+<!-- .AS Tcl_TimerToken milliseconds -->
+<informaltable>
+<tgroup cols='3'>
+<tbody>
+
+<row><entry>"int"</entry><entry>"milliseconds"</entry><entry>"in"</entry>
+<entry>
+<para>How many milliseconds to wait before invoking <emphasis remap='I'>proc</emphasis>.</para>
+</entry>
+</row>
+<row><entry>Tcl_TimerProc</entry><entry>*proc</entry><entry>in</entry>
+<entry>
+<para>Procedure to invoke after <emphasis remap='I'>milliseconds</emphasis> have elapsed.</para>
+</entry>
+</row>
+<row><entry>ClientData</entry><entry>clientData</entry><entry>in</entry>
+<entry>
+<para>Arbitrary one-word value to pass to <emphasis remap='I'>proc</emphasis>.</para>
+</entry>
+</row>
+<row><entry>Tcl_TimerToken</entry><entry>token</entry><entry>in</entry>
+<entry>
+<para>Token for previously created timer handler (the return value
+from some previous call to <function>Tcl_CreateTimerHandler</function>).</para>
+<!-- .BE -->
+</entry>
+</row>
+</tbody>
+</tgroup>
+</informaltable>
+
+</refsect1>
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para><function>Tcl_CreateTimerHandler</function> arranges for <emphasis remap='I'>proc</emphasis> to be
+invoked at a time <emphasis remap='I'>milliseconds</emphasis> milliseconds in the
+future.
+The callback to <emphasis remap='I'>proc</emphasis> will be made by <emphasis remap='B'>Tcl_DoOneEvent</emphasis>,
+so <function>Tcl_CreateTimerHandler</function> is only useful in programs that
+dispatch events through <emphasis remap='B'>Tcl_DoOneEvent</emphasis> or through Tcl commands
+such as <emphasis remap='B'>vwait</emphasis>.
+The call to <emphasis remap='I'>proc</emphasis> may not be made at the exact time given by
+<emphasis remap='I'>milliseconds</emphasis>:  it will be made at the next opportunity
+after that time.  For example, if <emphasis remap='B'>Tcl_DoOneEvent</emphasis> is not
+called until long after the time has elapsed, or if there
+are other pending events to process before the call to
+<emphasis remap='I'>proc</emphasis>, then the call to <emphasis remap='I'>proc</emphasis> will be delayed.</para>
+
+<para><emphasis remap='I'>Proc</emphasis> should have arguments and return value that match
+the type <type>Tcl_TimerProc</type>:</para>
+<programlisting remap='CS'>
+<funcsynopsis>
+<funcsynopsisinfo>
+typedef void Tcl_TimerProc(ClientData clientData);
+</funcsynopsisinfo>
+</funcsynopsis>
+</programlisting> <!-- remap='CE' -->
+<para>The <emphasis remap='I'>clientData</emphasis> parameter to <emphasis remap='I'>proc</emphasis> is a
+copy of the <emphasis remap='I'>clientData</emphasis> argument given to
+<function>Tcl_CreateTimerHandler</function> when the callback
+was created.  Typically, <emphasis remap='I'>clientData</emphasis> points to a data
+structure containing application-specific information about
+what to do in <emphasis remap='I'>proc</emphasis>.</para>
+
+<para><function>Tcl_DeleteTimerHandler</function> may be called to delete a
+previously created timer handler.  It deletes the handler
+indicated by <emphasis remap='I'>token</emphasis> so that no call to <emphasis remap='I'>proc</emphasis>
+will be made;  if that handler no longer exists
+(e.g. because the time period has already elapsed and <emphasis remap='I'>proc</emphasis>
+has been invoked then <function>Tcl_DeleteTimerHandler</function> does nothing.
+The tokens returned by <function>Tcl_CreateTimerHandler</function> never have
+a value of NULL, so if NULL is passed to <function>Tcl_DeleteTimerHandler</function>
+then the procedure does nothing.</para>
+
+</refsect1>
+
+<refsect1 xml:id='keywords'><title>KEYWORDS</title>
+<para>callback, clock, handler, timer</para>
+</refsect1>
+</refentry>
+

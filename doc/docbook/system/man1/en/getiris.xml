@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='getiris1'>
+<!--  Copyright (c) 1986, University of Utah -->
+<refmeta>
+<refentrytitle>GETIRIS</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class='source'>Jan 20, 1987</refmiscinfo>
+<refmiscinfo class='manual'>1</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>getiris</refname>
+<refpurpose>display an RLE image on a Silicon Graphics Iris Workstation.</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<cmdsynopsis>
+  <command>getiris</command>    
+    <arg choice='opt'><replaceable>infile</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para>This program displays an
+<citerefentry><refentrytitle>RLE</refentrytitle><manvolnum>5</manvolnum></citerefentry>
+file on a
+<emphasis remap='I'>Silicon Graphics Iris</emphasis>
+that is not running the
+window manager.  It uses the full 24 bits of color available on an iris.
+After the picture is displayed, press any mouse button to erase the screen.
+<emphasis remap='I'>Getiris</emphasis>
+does not work on the 4D series, only on the 2400 (or, I assume, 3000) series
+machines.</para>
+</refsect1>
+
+<refsect1 xml:id='options'><title>OPTIONS</title>
+<variablelist remap='TP'>
+  <varlistentry>
+  <term><emphasis remap='I'>infile</emphasis></term>
+  <listitem>
+<para>Name of the
+<citerefentry><refentrytitle>RLE</refentrytitle><manvolnum>5</manvolnum></citerefentry>
+file to display.  If not specified, the image will be read from the
+standard input.</para>
+  </listitem>
+  </varlistentry>
+</variablelist>
+</refsect1>
+
+<refsect1 xml:id='see_also'><title>SEE ALSO</title>
+<para><citerefentry><refentrytitle>get4d</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>getmex</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>urt</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>RLE</refentrytitle><manvolnum>5</manvolnum></citerefentry>.</para>
+</refsect1>
+
+<refsect1 xml:id='author'><title>AUTHOR</title>
+<para>Glenn McMinn and Rod Bogart, University of Utah.</para>
+</refsect1>
+</refentry>
+

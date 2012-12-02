@@ -1,0 +1,176 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man+tkman by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='maintgeom3'>
+
+<!-- '\" Copyright (c) 1994 The Regents of the University of California.
+'\" Copyright (c) 1994\-1996 Sun Microsystems, Inc. -->
+
+<!-- '\" See the file "license.terms" for information on usage and redistribution
+'\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
+'\" 
+'\" RCS: @(#) $Id$
+'\"  -->
+<refentryinfo><date>4.0</date></refentryinfo>
+<refmeta>
+<refentrytitle>Tk_MaintainGeometry</refentrytitle>
+<manvolnum>3</manvolnum>
+<refmiscinfo class='date'>4.0</refmiscinfo>
+<refmiscinfo class='source'>Tk</refmiscinfo>
+<refmiscinfo class='manual'>Tk Library Procedures</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>Tk_MaintainGeometry</refname>
+<refname>Tk_UnmaintainGeometry</refname>
+<refpurpose>maintain geometry of one window relative to another</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<funcsynopsis>
+<funcsynopsisinfo>
+#include &lt;tk.h&gt;
+
+</funcsynopsisinfo>
+<funcprototype>
+<funcdef><function>Tk_MaintainGeometry</function></funcdef>
+<paramdef><parameter>slave</parameter></paramdef>
+<paramdef><parameter>master</parameter></paramdef>
+<paramdef><parameter>x</parameter></paramdef>
+<paramdef><parameter>y</parameter></paramdef>
+<paramdef><parameter>width</parameter></paramdef>
+<paramdef><parameter>height</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef><function>Tk_UnmaintainGeometry</function></funcdef>
+<paramdef><parameter>slave</parameter></paramdef>
+<paramdef><parameter>master</parameter></paramdef>
+</funcprototype>
+</funcsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='arguments'><title>ARGUMENTS</title>
+<!-- .AS Tk_Window master -->
+<informaltable>
+<tgroup cols='3'>
+<tbody>
+
+<row><entry>"Tk_Window"</entry><entry>"slave"</entry><entry>"in"</entry>
+<entry>
+<para>Window whose geometry is to be controlled.</para>
+</entry>
+</row>
+<row><entry>Tk_Window</entry><entry>master</entry><entry>in</entry>
+<entry>
+<para>Window relative to which <emphasis remap='I'>slave</emphasis>'s geometry will be controlled.</para>
+</entry>
+</row>
+<row><entry>int</entry><entry>x</entry><entry>in</entry>
+<entry>
+<para>Desired x-coordinate of <emphasis remap='I'>slave</emphasis> in <emphasis remap='I'>master</emphasis>, measured in pixels
+from the inside of <emphasis remap='I'>master</emphasis>'s left border to the outside of
+<emphasis remap='I'>slave</emphasis>'s left border.</para>
+</entry>
+</row>
+<row><entry>int</entry><entry>y</entry><entry>in</entry>
+<entry>
+<para>Desired y-coordinate of <emphasis remap='I'>slave</emphasis> in <emphasis remap='I'>master</emphasis>, measured in pixels
+from the inside of <emphasis remap='I'>master</emphasis>'s top border to the outside of
+<emphasis remap='I'>slave</emphasis>'s top border.</para>
+</entry>
+</row>
+<row><entry>int</entry><entry>width</entry><entry>in</entry>
+<entry>
+<para>Desired width for <emphasis remap='I'>slave</emphasis>, in pixels.</para>
+</entry>
+</row>
+<row><entry>int</entry><entry>height</entry><entry>in</entry>
+<entry>
+<para>Desired height for <emphasis remap='I'>slave</emphasis>, in pixels.</para>
+<!-- .BE -->
+</entry>
+</row>
+</tbody>
+</tgroup>
+</informaltable>
+
+</refsect1>
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para><function>Tk_MaintainGeometry</function> and <function>Tk_UnmaintainGeometry</function> make it
+easier for geometry managers to deal with slaves whose masters are not
+their parents.
+Three problems arise if the master for a slave is not its parent:</para>
+<variablelist remap='IP'>
+  <varlistentry>
+  <term>[1]</term>
+  <listitem>
+<para>The x- and y-position of the slave must be translated from the
+coordinate system of the master to that of the parent before
+positioning the slave.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term>[2]</term>
+  <listitem>
+<para>If the master window, or any of its ancestors up to the slave's
+parent, is moved, then the slave must be repositioned within its
+parent in order to maintain the correct position relative to the
+master.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term>[3]</term>
+  <listitem>
+<para>If the master or one of its ancestors is mapped or unmapped, then
+the slave must be mapped or unmapped to correspond.</para>
+  </listitem>
+  </varlistentry>
+</variablelist>
+
+<para>None of these problems is an issue if the parent and master are
+the same.  For example, if the master or one of its ancestors
+is unmapped, the slave is automatically removed by the screen
+by X.</para>
+
+<para><function>Tk_MaintainGeometry</function> deals with these problems for slaves
+whose masters are not their parents, as well as handling the simpler
+case of slaves whose masters are their parents.
+<function>Tk_MaintainGeometry</function> is typically called by a window manager
+once it has decided where a slave should be positioned relative
+to its master.
+<function>Tk_MaintainGeometry</function> translates the coordinates to the
+coordinate system of <emphasis remap='I'>slave</emphasis>'s parent and then moves and
+resizes the slave appropriately.
+Furthermore, it remembers the desired position and creates event
+handlers to monitor the master and all of its ancestors up
+to (but not including) the slave's parent.
+If any of these windows is moved, mapped, or unmapped,
+the slave will be adjusted so that it is mapped only when the
+master is mapped and its geometry relative to the master
+remains as specified by <emphasis remap='I'>x</emphasis>, <emphasis remap='I'>y</emphasis>, <emphasis remap='I'>width</emphasis>, and
+<emphasis remap='I'>height</emphasis>.</para>
+
+<para>When a window manager relinquishes control over a window, or
+if it decides that it does not want the window to appear on the
+screen under any conditions, it calls <function>Tk_UnmaintainGeometry</function>.
+<function>Tk_UnmaintainGeometry</function> unmaps the window and cancels any
+previous calls to <function>Tk_MaintainGeometry</function> for the
+<emphasis remap='I'>master</emphasis>-<emphasis remap='I'>slave</emphasis> pair, so that the slave's
+geometry and mapped state are no longer maintained
+automatically.
+<function>Tk_UnmaintainGeometry</function> need not be called by a geometry
+manager if the slave, the master, or any of the master's ancestors
+is destroyed:  Tk will call it automatically.</para>
+
+<para>If <function>Tk_MaintainGeometry</function> is called repeatedly for the same
+<emphasis remap='I'>master</emphasis>-<emphasis remap='I'>slave</emphasis> pair, the information from the most
+recent call supersedes any older information.
+If <function>Tk_UnmaintainGeometry</function> is called for a <emphasis remap='I'>master</emphasis>-<emphasis remap='I'>slave</emphasis>
+pair that is is not currently managed, the call has no effect.</para>
+</refsect1>
+
+<refsect1 xml:id='keywords'><title>KEYWORDS</title>
+<para>geometry manager, map, master, parent, position, slave, unmap</para>
+</refsect1>
+</refentry>
+

@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='cubitorle1'>
+<!--  Copyright (c) 1988, University of Utah -->
+<refentryinfo><date>6 February 1988</date></refentryinfo>
+<refmeta>
+<refentrytitle>CUBITORLE</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class='date'>6 February 1988</refmiscinfo>
+<refmiscinfo class='source'>1</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>cubitorle</refname>
+<refpurpose>Convert cubicomp image to an RLE format file.</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<cmdsynopsis>
+  <command>cubitorle</command>    
+    <arg choice='opt'><arg choice='plain'>-o </arg><arg choice='plain'><replaceable>outfile</replaceable></arg></arg>
+    <arg choice='plain'><replaceable>inprefix</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para><emphasis remap='I'>Cubitorle</emphasis>
+converts a set of files in the Cubicomp image format to a raster file in the
+Utah Raster Toolkit RLE format.
+<emphasis remap='I'>Cubitorle</emphasis>
+expects as input a set of files of the form "<emphasis remap='I'>inprefix</emphasis>.r8",
+"<emphasis remap='I'>inprefix</emphasis>.g8", and "<emphasis remap='I'>inprefix</emphasis>.b8".  These files are combined
+to form a single
+<citerefentry><refentrytitle>RLE</refentrytitle><manvolnum>5</manvolnum></citerefentry>
+file.
+The output is written to
+<emphasis remap='I'>stdout</emphasis>
+unless an output file name is given using the
+<option>-o</option>
+option.</para>
+</refsect1>
+
+<refsect1 xml:id='options'><title>OPTIONS</title>
+<variablelist remap='TP'>
+  <varlistentry>
+  <term><option>-o</option></term>
+  <listitem>
+<para>Allows specification of an output file name.</para>
+  </listitem>
+  </varlistentry>
+</variablelist>
+</refsect1>
+
+<refsect1 xml:id='see_also'><title>SEE ALSO</title>
+<para><citerefentry><refentrytitle>rleflip</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>urt</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>RLE</refentrytitle><manvolnum>5</manvolnum></citerefentry>.</para>
+</refsect1>
+
+<refsect1 xml:id='author'><title>AUTHOR</title>
+<para>Rod Bogart</para>
+</refsect1>
+</refentry>
+

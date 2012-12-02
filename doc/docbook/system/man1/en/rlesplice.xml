@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='rlesplice1'>
+<!--  Copyright (c) 1986, University of Utah -->
+<refmeta>
+<refentrytitle>RLESPLICE</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class='source'>Nov 12, 1986</refmiscinfo>
+<refmiscinfo class='manual'>1</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>rlesplice</refname>
+<refpurpose>Splice two RLE files together horizontally or vertically.</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<cmdsynopsis>
+  <command>rlesplice</command>    
+    <arg choice='plain'>- </arg>
+    <arg choice='opt'><replaceable>hv</replaceable></arg>
+    <arg choice='opt'>-c </arg>
+    <arg choice='opt'><arg choice='plain'>-o </arg><arg choice='plain'><replaceable>outfile</replaceable></arg></arg>
+    <arg choice='plain'><replaceable>infile1</replaceable></arg>
+    <arg choice='plain'><replaceable>infile2</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para><command>rlesplice</command>
+splices two RLE images together either vertically or horizontally.  If one
+image is smaller, then its background value or black is used to pad that image
+to equal the larger dimension in the other image.  The
+<option>-c</option>
+flag is used to
+specify whether the smaller image should be centered when put next to the
+larger.  Presently the two images must have the same number of color channels,
+the same presence of an alpha channel, and the same colormap size and length.
+The colormap from the first image is used for the resultant image.</para>
+</refsect1>
+
+<refsect1 xml:id='see_also'><title>SEE ALSO</title>
+<para><citerefentry><refentrytitle>rlecomp</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>rlepatch</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>unslice</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>urt</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>RLE</refentrytitle><manvolnum>5</manvolnum></citerefentry>.</para>
+</refsect1>
+
+<refsect1 xml:id='author'><title>AUTHOR</title>
+<para>Martin R. Friedmann</para>
+</refsect1>
+</refentry>
+

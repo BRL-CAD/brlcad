@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='rletoppm1'>
+<!--  Copyright (c) 1990, Minnesota Supercomputer Center, Inc. -->
+<refmeta>
+<refentrytitle>RLETOPPM</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class='source'>July 20, 1990</refmiscinfo>
+<refmiscinfo class='manual'>1</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>rletoppm</refname>
+<refpurpose>convert a Utah RLE image file into a PBMPLUS/ppm image file.</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<cmdsynopsis>
+  <command>rletoppm</command>    
+    <arg choice='opt'>-h </arg>
+    <arg choice='opt'>-v </arg>
+    <arg choice='opt'>-p </arg>
+    <arg choice='opt'><replaceable>infile</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para>This program converts Utah
+<citerefentry><refentrytitle>RLE</refentrytitle><manvolnum>5</manvolnum></citerefentry>
+image files into PBMPLUS full-color (ppm) image files.  Rletoppm will handle
+four types of RLE files: Grayscale (8 bit data, no color map), Pseudocolor
+(8 bit data with a color map), Truecolor (24 bit data with color map), and
+Directcolor (24 bit data, no color map).  Since the orgins for the RLE and
+PBMPLUS image file formats are in different locations, this program
+automatically "flips" the image when converting.</para>
+</refsect1>
+
+<refsect1 xml:id='options'><title>OPTIONS</title>
+<variablelist remap='TP'>
+  <varlistentry>
+  <term><option>-v</option></term>
+  <listitem>
+<para>This option will cause rletoppm to operate in verbose mode.  Header information
+is printed to "stderr".</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-h</option></term>
+  <listitem>
+<para>This option allows the header of the RLE file to be dumped to "stderr" without
+converting the file.  It is equivalent to using the -v option except that no
+file conversion takes place.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-p</option></term>
+  <listitem>
+<para>This option will output the ppm data in the "plain" format (P3), instead of the
+default "raw bits" format (P6).  The plain format is more readable, but takes
+up more space.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>infile</emphasis></term>
+  <listitem>
+<para>The input will be read from this file.  If
+<emphasis remap='I'>infile</emphasis>
+is "-" or is not specified, the input will be read from the standard
+input stream.
+The resulting
+PBMPLUS/ppm data will be sent to "stdout".</para>
+  </listitem>
+  </varlistentry>
+</variablelist>
+</refsect1>
+
+<refsect1 xml:id='examples'><title>EXAMPLES</title>
+<variablelist remap='TP'>
+  <varlistentry>
+  <term>rletoppm -v lenna.rle &gt;lenna.ppm</term>
+  <listitem>
+<para>While running in verbose mode, convert lenna.rle to PBMPLUS/ppm format and
+store resulting data in lenna.ppm.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term>rletoppm -h test.rle</term>
+  <listitem>
+<para>Dump the header information of the RLE file called test.rle.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term>rletoppm -p test.rle &gt;lenna.ppm</term>
+  <listitem>
+<para>Convert lenna.rle to PBMPLUS/ppm plain (P3) format and store in lenna.ppm.</para>
+  </listitem>
+  </varlistentry>
+</variablelist>
+</refsect1>
+
+<refsect1 xml:id='see_also'><title>SEE ALSO</title>
+<para><citerefentry><refentrytitle>ppmtorle</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>pgmtorle</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>urt</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>RLE</refentrytitle><manvolnum>5</manvolnum></citerefentry></para>
+</refsect1>
+
+<refsect1 xml:id='author'><title>AUTHOR</title>
+<!-- .br -->
+<para>Wesley C. Barris
+<!-- .br -->
+Army High Performance Computing Research Center (AHPCRC)
+<!-- .br -->
+Minnesota Supercomputer Center, Inc.
+<!-- .br -->
+Modifications by Eric Haines to support raw and plain formats.</para>
+</refsect1>
+</refentry>
+

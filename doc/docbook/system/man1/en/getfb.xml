@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='getfb1'>
+<!--  Copyright (c) 1986, University of Utah -->
+<refmeta>
+<refentrytitle>GETFB</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class='source'>Feb 12, 1987</refmiscinfo>
+<refmiscinfo class='manual'>1</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>getfb</refname>
+<refpurpose>display an RLE file on a BRL libfb frame buffer.</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<cmdsynopsis>
+  <command>getfb</command>    
+    <arg choice='opt'>-d </arg>
+    <arg choice='opt'><replaceable>infile</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para>This program displays an
+<citerefentry><refentrytitle>RLE</refentrytitle><manvolnum>5</manvolnum></citerefentry>
+file on any frame buffer supported by the BRL
+<emphasis remap='I'>libfb</emphasis>.
+The option
+<option>-d</option>
+prints the image header information and turns on debugging of the
+<emphasis remap='I'>RLE</emphasis>
+file.  All of the
+<emphasis remap='I'>RLE</emphasis>
+opcodes will be printed as they are read from the input file.
+If an input
+<emphasis remap='I'>rlefile</emphasis>
+is not specified, input will be taken from standard input.</para>
+</refsect1>
+
+<refsect1 xml:id='see_also'><title>SEE ALSO</title>
+<para><citerefentry><refentrytitle>urt</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>RLE</refentrytitle><manvolnum>5</manvolnum></citerefentry>.</para>
+</refsect1>
+
+<refsect1 xml:id='author'><title>AUTHOR</title>
+<para>Paul Stay, Ballistic Research Laboratory.</para>
+</refsect1>
+
+<refsect1 xml:id='limitations'><title>LIMITATIONS</title>
+<para>Will only display images up to 1024 pixels wide.  Will not display
+black and white (single channel) images correctly.  Ignores color map
+in
+<emphasis remap='I'>RLE</emphasis>
+file.</para>
+</refsect1>
+</refentry>
+

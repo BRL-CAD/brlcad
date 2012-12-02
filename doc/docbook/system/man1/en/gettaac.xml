@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='gettaac1'>
+<!--  Copyright (c) 1990, Southwest Research Institute
+ All rights reserved. -->
+
+<!--  Redistribution and use in source and binary forms are permitted
+ provided that the above copyright notice and this paragraph are
+ duplicated in all such forms and that any documentation,
+ advertising materials, and other materials related to such
+ distribution and use acknowledge that the software was developed
+ by Southwest Research Institute.  The name of Southwest Research
+ Institute may not be used to endorse or promote products derived
+ from this software without specific prior written permission.
+ THIS SOFTWARE IS PROVIDED ``AS IS'' AND WITHOUT ANY EXPRESS OR
+ IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
+ WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE. -->
+
+<refmeta>
+<refentrytitle>GETTAAC</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class='source'>July 5, 1990</refmiscinfo>
+<refmiscinfo class='manual'>1</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>gettaac</refname>
+<refpurpose>display an RLE image on a Sun TAAC-1.</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<cmdsynopsis>
+  <command>gettaac</command>    
+    <sbr/>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para>This program displays an
+<citerefentry><refentrytitle>RLE</refentrytitle><manvolnum>5</manvolnum></citerefentry>
+file on a
+<emphasis remap='I'>Sun TAAC-1</emphasis>
+that is running in single monitor mode under Sunview.
+It uses the full 24 bits of color available on the TAAC.
+The RLE file is either read from the standard input or
+from the file name entered in the control panel.  If the
+file name is entered from the control panel,
+<citerefentry><refentrytitle>csh</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+style tilde expansion and
+file name completion are supported.  The control
+panel allows the gamma to be set and the file to be
+loaded as either a gray scale or rgb image.</para>
+</refsect1>
+
+<refsect1 xml:id='see_also'><title>SEE ALSO</title>
+<para><citerefentry><refentrytitle>urt</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>RLE</refentrytitle><manvolnum>5</manvolnum></citerefentry>.</para>
+</refsect1>
+
+<refsect1 xml:id='author'><title>AUTHOR</title>
+<para>Keith S. Pickens, Southwest Research Institute.</para>
+</refsect1>
+</refentry>
+

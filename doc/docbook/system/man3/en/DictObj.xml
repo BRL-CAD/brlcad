@@ -1,0 +1,354 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man+tkman by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='dictobj3'>
+
+<!-- '\" Copyright (c) 2003 Donal K. Fellows -->
+
+<!-- '\" See the file "license.terms" for information on usage and redistribution
+'\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
+'\" 
+'\" RCS: @(#) $Id$
+'\"  -->
+<refentryinfo><date>8.5</date></refentryinfo>
+<refmeta>
+<refentrytitle>Tcl_DictObj</refentrytitle>
+<manvolnum>3</manvolnum>
+<refmiscinfo class='date'>8.5</refmiscinfo>
+<refmiscinfo class='source'>Tcl</refmiscinfo>
+<refmiscinfo class='manual'>Tcl Library Procedures</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>Tcl_NewDictObj</refname>
+<refname>Tcl_DictObjPut</refname>
+<refname>Tcl_DictObjGet</refname>
+<refname>Tcl_DictObjRemove</refname>
+<refname>Tcl_DictObjSize</refname>
+<refname>Tcl_DictObjFirst</refname>
+<refname>Tcl_DictObjNext</refname>
+<refname>Tcl_DictObjDone</refname>
+<refname>Tcl_DictObjPutKeyList</refname>
+<refname>Tcl_DictObjRemoveKeyList</refname>
+<refpurpose>manipulate Tcl objects as dictionaries</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<funcsynopsis>
+<funcsynopsisinfo>
+#include &lt;tcl.h&gt;
+
+</funcsynopsisinfo>
+<funcprototype>
+<funcdef><function>Tcl_Obj</function> *Tcl_NewDictObj</funcdef>
+<void/></funcprototype>
+<funcprototype>
+<funcdef>int <function>Tcl_DictObjGet</function></funcdef>
+<paramdef><parameter>interp</parameter></paramdef>
+<paramdef><parameter>dictPtr</parameter></paramdef>
+<paramdef><parameter>keyPtr</parameter></paramdef>
+<paramdef><parameter>valuePtrPtr</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef>int <function>Tcl_DictObjPut</function></funcdef>
+<paramdef><parameter>interp</parameter></paramdef>
+<paramdef><parameter>dictPtr</parameter></paramdef>
+<paramdef><parameter>keyPtr</parameter></paramdef>
+<paramdef><parameter>valuePtr</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef>int <function>Tcl_DictObjRemove</function></funcdef>
+<paramdef><parameter>interp</parameter></paramdef>
+<paramdef><parameter>dictPtr</parameter></paramdef>
+<paramdef><parameter>keyPtr</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef>int <function>Tcl_DictObjSize</function></funcdef>
+<paramdef><parameter>interp</parameter></paramdef>
+<paramdef><parameter>dictPtr</parameter></paramdef>
+<paramdef><parameter>sizePtr</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef>int <function>Tcl_DictObjFirst</function></funcdef>
+<paramdef><parameter>interp</parameter></paramdef>
+<paramdef><parameter>dictPtr</parameter></paramdef>
+<paramdef><parameter>searchPtr</parameter></paramdef>
+<paramdef><parameter>
+ keyPtrPtr</parameter></paramdef>
+<paramdef><parameter>valuePtrPtr</parameter></paramdef>
+<paramdef><parameter>donePtr</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef>void <function>Tcl_DictObjNext</function></funcdef>
+<paramdef><parameter>searchPtr</parameter></paramdef>
+<paramdef><parameter>keyPtrPtr</parameter></paramdef>
+<paramdef><parameter>valuePtrPtr</parameter></paramdef>
+<paramdef><parameter>donePtr</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef>void <function>Tcl_DictObjDone</function></funcdef>
+<paramdef><parameter>searchPtr</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef>int <function>Tcl_DictObjPutKeyList</function></funcdef>
+<paramdef><parameter>interp</parameter></paramdef>
+<paramdef><parameter>dictPtr</parameter></paramdef>
+<paramdef><parameter>keyc</parameter></paramdef>
+<paramdef><parameter>keyv</parameter></paramdef>
+<paramdef><parameter>valuePtr</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef>int <function>Tcl_DictObjRemoveKeyList</function></funcdef>
+<paramdef><parameter>interp</parameter></paramdef>
+<paramdef><parameter>dictPtr</parameter></paramdef>
+<paramdef><parameter>keyc</parameter></paramdef>
+<paramdef><parameter>keyv</parameter></paramdef>
+</funcprototype>
+</funcsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='arguments'><title>ARGUMENTS</title>
+<!-- .AS Tcl_DictSearch **valuePtrPtr in/out -->
+<informaltable>
+<tgroup cols='3'>
+<tbody>
+
+<row><entry>"Tcl_Interp"</entry><entry>"*interp"</entry><entry>"in"</entry>
+<entry>
+<para>If an error occurs while converting an object to be a dictionary object,
+an error message is left in the interpreter's result object
+unless <emphasis remap='I'>interp</emphasis> is NULL.</para>
+</entry>
+</row>
+<row><entry>Tcl_Obj</entry><entry>*dictPtr</entry><entry>in/out</entry>
+<entry>
+<para>Points to the dictionary object to be manipulated.
+If <emphasis remap='I'>dictPtr</emphasis> does not already point to a dictionary object,
+an attempt will be made to convert it to one.</para>
+</entry>
+</row>
+<row><entry>Tcl_Obj</entry><entry>*keyPtr</entry><entry>in</entry>
+<entry>
+<para>Points to the key for the key/value pair being manipulated within the
+dictionary object.</para>
+</entry>
+</row>
+<row><entry>Tcl_Obj</entry><entry>**keyPtrPtr</entry><entry>out</entry>
+<entry>
+<para>Points to a variable that will have the key from a key/value pair
+placed within it.  May be NULL to indicate that the caller is not
+interested in the key.</para>
+</entry>
+</row>
+<row><entry>Tcl_Obj</entry><entry>*valuePtr</entry><entry>in</entry>
+<entry>
+<para>Points to the value for the key/value pair being manipulate within the
+dictionary object (or sub-object, in the case of
+<function>Tcl_DictObjPutKeyList</function>.)</para>
+</entry>
+</row>
+<row><entry>Tcl_Obj</entry><entry>**valuePtrPtr</entry><entry>out</entry>
+<entry>
+<para>Points to a variable that will have the value from a key/value pair
+placed within it.  For <function>Tcl_DictObjFirst</function> and
+<varname role='parameter'>Tcl_DictObjNext</varname>, this may be NULL to indicate that the caller is
+not interested in the value.</para>
+</entry>
+</row>
+<row><entry>int</entry><entry>*sizePtr</entry><entry>out</entry>
+<entry>
+<para>Points to a variable that will have the number of key/value pairs
+contained within the dictionary placed within it.</para>
+</entry>
+</row>
+<row><entry>Tcl_DictSearch</entry><entry>*searchPtr</entry><entry>in/out</entry>
+<entry>
+<para>Pointer to record to use to keep track of progress in enumerating all
+key/value pairs in a dictionary.  The contents of the record will be
+initialized by the call to <function>Tcl_DictObjFirst</function>.  If the enumerating
+is to be terminated before all values in the dictionary have been
+returned, the search record <emphasis remap='I'>must</emphasis> be passed to
+<function>Tcl_DictObjDone</function> to enable the internal locks to be released.</para>
+</entry>
+</row>
+<row><entry>int</entry><entry>*donePtr</entry><entry>out</entry>
+<entry>
+<para>Points to a variable that will have a non-zero value written into it
+when the enumeration of the key/value pairs in a dictionary has
+completed, and a zero otherwise.</para>
+</entry>
+</row>
+<row><entry>int</entry><entry>keyc</entry><entry>in</entry>
+<entry>
+<para>Indicates the number of keys that will be supplied in the <emphasis remap='I'>keyv</emphasis>
+array.</para>
+</entry>
+</row>
+<row><entry>"Tcl_Obj *const"</entry><entry>*keyv</entry><entry>in</entry>
+<entry>
+<para>Array of <emphasis remap='I'>keyc</emphasis> pointers to objects that
+<function>Tcl_DictObjPutKeyList</function> and <function>Tcl_DictObjRemoveKeyList</function> will
+use to locate the key/value pair to manipulate within the
+sub-dictionaries of the main dictionary object passed to them.</para>
+<!-- .BE -->
+</entry>
+</row>
+</tbody>
+</tgroup>
+</informaltable>
+
+</refsect1>
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para>Tcl dictionary objects have an internal representation that supports
+efficient mapping from keys to values and which guarantees that the
+particular ordering of keys within the dictionary remains the same
+modulo any keys being deleted (which removes them from the order) or
+added (which adds them to the end of the order). If reinterpreted as a
+list, the values at the even-valued indices in the list will be the
+keys of the dictionary, and each will be followed (in the odd-valued
+index) by the value associated with that key.</para>
+
+<para>The procedures described in this man page are used to
+create, modify, index, and iterate over dictionary objects from C code.</para>
+
+<para><emphasis remap='B'>Tcl_NewDictObj</emphasis> creates a new, empty dictionary object.  The
+string representation of the object will be invalid, and the reference
+count of the object will be zero.</para>
+
+<para><function>Tcl_DictObjGet</function> looks up the given key within the given
+dictionary and writes a pointer to the value associated with that key
+into the variable pointed to by <emphasis remap='I'>valuePtrPtr</emphasis>, or a NULL if the
+key has no mapping within the dictionary.  The result of this
+procedure is <varname role='parameter'>TCL_OK</varname>, or <emphasis remap='B'>TCL_ERROR</emphasis> if the <emphasis remap='I'>dictPtr</emphasis> cannot be
+converted to a dictionary.</para>
+
+<para><function>Tcl_DictObjPut</function> updates the given dictionary so that the given
+key maps to the given value; any key may exist at most once in any
+particular dictionary.  The dictionary must not be shared, but the key
+and value may be.  This procedure may increase the reference count of
+both key and value if it proves necessary to store them.  Neither key
+nor value should be NULL.  The result of this procedure is <varname role='parameter'>TCL_OK</varname>, or
+<emphasis remap='B'>TCL_ERROR</emphasis> if the <emphasis remap='I'>dictPtr</emphasis> cannot be converted to a dictionary.</para>
+
+<para><function>Tcl_DictObjRemove</function> updates the given dictionary so that the given
+key has no mapping to any value.  The dictionary must not be shared,
+but the key may be.  The key actually stored in the dictionary will
+have its reference count decremented if it was present.  It is not an
+error if the key did not previously exist.  The result of this
+procedure is <varname role='parameter'>TCL_OK</varname>, or <emphasis remap='B'>TCL_ERROR</emphasis> if the <emphasis remap='I'>dictPtr</emphasis> cannot be
+converted to a dictionary.</para>
+
+<para><function>Tcl_DictObjSize</function> updates the given variable with the number of
+key/value pairs currently in the given dictionary. The result of this
+procedure is <varname role='parameter'>TCL_OK</varname>, or <emphasis remap='B'>TCL_ERROR</emphasis> if the <emphasis remap='I'>dictPtr</emphasis> cannot be
+converted to a dictionary.</para>
+
+<para><function>Tcl_DictObjFirst</function> commences an iteration across all the key/value
+pairs in the given dictionary, placing the key and value in the
+variables pointed to by the <emphasis remap='I'>keyPtrPtr</emphasis> and <emphasis remap='I'>valuePtrPtr</emphasis>
+arguments (which may be NULL to indicate that the caller is
+uninterested in they key or variable respectively.)  The next
+key/value pair in the dictionary may be retrieved with
+<varname role='parameter'>Tcl_DictObjNext</varname>.  Concurrent updates of the dictionary's
+internal representation will not modify the iteration processing
+unless the dictionary is unshared, when this will trigger premature
+termination of the iteration instead (which Tcl scripts cannot trigger
+via the <emphasis remap='B'>dict</emphasis> command.)  The <emphasis remap='I'>searchPtr</emphasis> argument points to a
+piece of context that is used to identify which particular iteration
+is being performed, and is initialized by the call to
+<function>Tcl_DictObjFirst</function>.  The <emphasis remap='I'>donePtr</emphasis> argument points to a
+variable that is updated to be zero of there are further key/value
+pairs to be iterated over, or non-zero if the iteration is complete.
+The order of iteration is implementation-defined.  If the
+<emphasis remap='I'>dictPtr</emphasis> argument cannot be converted to a dictionary,
+<function>Tcl_DictObjFirst</function> returns <emphasis remap='B'>TCL_ERROR</emphasis> and the iteration is not
+commenced, and otherwise it returns <varname role='parameter'>TCL_OK</varname>.</para>
+
+<para>When <function>Tcl_DictObjFirst</function> is called upon a dictionary, a lock is placed on
+the dictionary to enable that dictionary to be iterated over safely without
+regard for whether the dictionary is modified during the iteration. Because of
+this, once the iteration over a dictionary's keys has finished (whether
+because all values have been iterated over as indicated by the variable
+indicated by the <emphasis remap='I'>donePtr</emphasis> argument being set to one, or because no
+further values are required) the <function>Tcl_DictObjDone</function> function must be called
+with the same <emphasis remap='I'>searchPtr</emphasis> as was passed to <function>Tcl_DictObjFirst</function> so that
+the internal locks can be released. Once a particular <emphasis remap='I'>searchPtr</emphasis> is
+passed to <function>Tcl_DictObjDone</function>, passing it to <varname role='parameter'>Tcl_DictObjNext</varname> (without
+first initializing it with <function>Tcl_DictObjFirst</function>) will result in no values
+being produced and the variable pointed to by <emphasis remap='I'>donePtr</emphasis> being set to one.
+It is safe to call <function>Tcl_DictObjDone</function> multiple times on the same
+<emphasis remap='I'>searchPtr</emphasis> for each call to <function>Tcl_DictObjFirst</function>.</para>
+
+<para>The procedures <function>Tcl_DictObjPutKeyList</function> and
+<function>Tcl_DictObjRemoveKeyList</function> are the close analogues of
+<function>Tcl_DictObjPut</function> and <function>Tcl_DictObjRemove</function> respectively, except
+that instead of working with a single dictionary, they are designed to
+operate on a nested tree of dictionaries, with inner dictionaries
+stored as values inside outer dictionaries.  The <emphasis remap='I'>keyc</emphasis> and
+<emphasis remap='I'>keyv</emphasis> arguments specify a list of keys (with outermost keys
+first) that acts as a path to the key/value pair to be affected.  Note
+that there is no corresponding operation for reading a value for a
+path as this is easy to construct from repeated use of
+<function>Tcl_DictObjGet</function>. With <function>Tcl_DictObjPutKeyList</function>, nested
+dictionaries are created for non-terminal keys where they do not
+already exist. With <function>Tcl_DictObjRemoveKeyList</function>, all non-terminal
+keys must exist and have dictionaries as their values.</para>
+</refsect1>
+
+<refsect1 xml:id='example'><title>EXAMPLE</title>
+<para>Using the dictionary iteration interface to search determine if there
+is a key that maps to itself:</para>
+
+<programlisting remap='CS'>
+<funcsynopsis>
+<funcsynopsisinfo>
+Tcl_DictSearch search;
+Tcl_Obj *key, *value;
+int done;
+
+/* * Assume interp and objPtr are parameters.  This is the * idiomatic way to start an iteration over the dictionary; it * sets a lock on the internal representation that ensures that * there are no concurrent modification issues when normal * reference count management is also used.  The lock is * released automatically when the loop is finished, but must * be released manually when an exceptional exit from the loop * is performed. However it is safe to try to release the lock * even if we've finished iterating over the loop. */ </funcsynopsisinfo>
+</funcsynopsis>
+if (<function>Tcl_DictObjFirst</function>(interp, objPtr, &amp;search,
+        &amp;key, &amp;value, &amp;done) != TCL_OK) {
+<funcsynopsis>
+<funcsynopsisinfo>
+    return TCL_ERROR;
+</funcsynopsisinfo>
+</funcsynopsis>
+}
+for (; !done ; <varname role='parameter'>Tcl_DictObjNext</varname>(&amp;search, &amp;key, &amp;value, &amp;done)) {
+<funcsynopsis>
+<funcsynopsisinfo>
+/* * Note that strcmp() is not a good way of comparing * objects and is just used here for demonstration * purposes. */ </funcsynopsisinfo>
+</funcsynopsis>
+    if (!strcmp(Tcl_GetString(key), Tcl_GetString(value))) {
+<funcsynopsis>
+<funcsynopsisinfo>
+        break;
+</funcsynopsisinfo>
+</funcsynopsis>
+    }
+}
+<funcsynopsis>
+<funcprototype>
+<funcdef><function>Tcl_DictObjDone</function></funcdef>
+    <paramdef><parameter>&amp;search</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef><function>Tcl_SetObjResult</function></funcdef>
+    <paramdef><parameter>interp</parameter></paramdef>
+    <paramdef>Tcl_NewBooleanObj ( !done ) <parameter></parameter></paramdef>
+</funcprototype>
+<funcsynopsisinfo>
+return TCL_OK;
+</funcsynopsisinfo>
+</funcsynopsis>
+</programlisting> <!-- remap='CE' -->
+<para>Tcl_NewObj, Tcl_DecrRefCount, Tcl_IncrRefCount, Tcl_InitObjHashTable</para>
+</refsect1>
+
+<refsect1 xml:id='keywords'><title>KEYWORDS</title>
+<para>dict, dict object, dictionary, dictionary object, hash table, iteration, object</para>
+</refsect1>
+</refentry>
+

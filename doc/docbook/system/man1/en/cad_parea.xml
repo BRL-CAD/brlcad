@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='cad_parea1'>
+<refmeta>
+<refentrytitle>CAD_PAREA</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class='source'>BRL-CAD</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>cad_parea</refname>
+<refpurpose>compute area of polygon</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<cmdsynopsis>
+  <command>cad_parea</command>    
+    <arg choice='opt'><arg choice='plain'>-i </arg><arg choice='plain'><replaceable>input</replaceable></arg></arg>
+    <arg choice='opt'><arg choice='plain'>-o </arg><arg choice='plain'><replaceable>output</replaceable></arg></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para><emphasis remap='I'>cad_parea</emphasis>
+reads from
+<emphasis remap='I'>input</emphasis>
+(standard input if not given)
+a series of
+polygon vertex
+(<emphasis remap='I'>x</emphasis>,<emphasis remap='I'>y</emphasis>)
+coordinate values
+and writes to
+<emphasis remap='I'>output</emphasis>
+(standard output if not given)
+the polygon's area.
+Lines not beginning with a number
+are silently skipped.
+Vertices are assumed to be given
+in counter-clockwise cyclic order.</para>
+</refsect1>
+
+<refsect1 xml:id='hints'><title>HINTS</title>
+<para>A hole can be accommodated as
+a clockwise section
+connected to the periphery
+by a line segment
+traced in both directions.</para>
+
+<para>Disjoint pieces may be connected
+by a line segment
+traced in both directions.</para>
+</refsect1>
+
+<refsect1 xml:id='example'><title>EXAMPLE</title>
+  <blockquote remap='RS'>
+<para>$ <emphasis remap='I'>cad_parea
+<!-- .br -->
+# comment
+<!-- .br -->
+1 0
+<!-- .br -->
+2 0
+<!-- .br -->
+2 1
+<!-- .br -->
+3 1
+<!-- .br -->
+3 2
+<!-- .br -->
+2 2
+<!-- .br -->
+1 2
+<!-- .br -->
+0 2
+<!-- .br -->
+0 1
+<!-- .br -->
+1 1
+<!-- .br -->
+^D</emphasis>
+<!-- .br -->
+4
+  </para></blockquote> <!-- remap='RE' -->
+</refsect1>
+
+<refsect1 xml:id='see_also'><title>SEE ALSO</title>
+<para><citerefentry><refentrytitle>cad_boundp</refentrytitle><manvolnum>1</manvolnum></citerefentry>.</para>
+</refsect1>
+
+<refsect1 xml:id='diagnostics'><title>DIAGNOSTICS</title>
+<para>Improperly formatted input
+produces an error message
+and terminates
+<emphasis remap='I'>cad_parea</emphasis>
+with non-zero exit status.</para>
+
+<para><emphasis remap='I'>cad_parea</emphasis>
+outputs "0"
+for the area
+of a degenerate polygon.</para>
+</refsect1>
+
+<refsect1 xml:id='author'><title>AUTHOR</title>
+<para>Douglas A. Gwyn, BRL/VLD-VMB</para>
+
+</refsect1>
+
+<refsect1 xml:id='copyright'><title>COPYRIGHT</title>
+<para>This software is Copyright (c) 1991-2012 by the United States
+Government as represented by U.S. Army Research Laboratory.</para>
+
+</refsect1>
+
+<refsect1 xml:id='bug_reports'><title>BUG REPORTS</title>
+<para>Reports of bugs or problems should be submitted via electronic
+mail to &lt;devs@brlcad.org&gt;.</para>
+</refsect1>
+</refentry>
+

@@ -1,0 +1,211 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man+tkman by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='tcl_main3'>
+
+<!-- '\" Copyright (c) 1994 The Regents of the University of California.
+'\" Copyright (c) 1994\-1996 Sun Microsystems, Inc.
+'\" Copyright (c) 2000 Ajuba Solutions. -->
+
+<!-- '\" See the file "license.terms" for information on usage and redistribution
+'\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
+'\" 
+'\" RCS: @(#) $Id$
+'\"  -->
+<refentryinfo><date>8.4</date></refentryinfo>
+<refmeta>
+<refentrytitle>Tcl_Main</refentrytitle>
+<manvolnum>3</manvolnum>
+<refmiscinfo class='date'>8.4</refmiscinfo>
+<refmiscinfo class='source'>Tcl</refmiscinfo>
+<refmiscinfo class='manual'>Tcl Library Procedures</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>Tcl_Main</refname>
+<refname>Tcl_SetMainLoop</refname>
+<refpurpose>main program and event loop definition for Tcl-based applications</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<funcsynopsis>
+<funcsynopsisinfo>
+#include &lt;tcl.h&gt;
+
+</funcsynopsisinfo>
+<funcprototype>
+<funcdef><function>Tcl_Main</function></funcdef>
+<paramdef><parameter>argc</parameter></paramdef>
+<paramdef><parameter>argv</parameter></paramdef>
+<paramdef><parameter>appInitProc</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef><function>Tcl_SetMainLoop</function></funcdef>
+<paramdef><parameter>mainLoopProc</parameter></paramdef>
+</funcprototype>
+</funcsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='arguments'><title>ARGUMENTS</title>
+<!-- .AS Tcl_MainLoopProc *mainLoopProc -->
+<informaltable>
+<tgroup cols='3'>
+<tbody>
+
+<row><entry>"int"</entry><entry>"argc"</entry><entry>"in"</entry>
+<entry>
+<para>Number of elements in <emphasis remap='I'>argv</emphasis>.</para>
+</entry>
+</row>
+<row><entry>char</entry><entry>*argv[]</entry><entry>in</entry>
+<entry>
+<para>Array of strings containing command-line arguments.</para>
+</entry>
+</row>
+<row><entry>Tcl_AppInitProc</entry><entry>*appInitProc</entry><entry>in</entry>
+<entry>
+<para>Address of an application-specific initialization procedure.
+The value for this argument is usually <emphasis remap='B'>Tcl_AppInit</emphasis>.</para>
+</entry>
+</row>
+<row><entry>Tcl_MainLoopProc</entry><entry>*mainLoopProc</entry><entry>in</entry>
+<entry>
+<para>Address of an application-specific event loop procedure.</para>
+<!-- .BE -->
+</entry>
+</row>
+</tbody>
+</tgroup>
+</informaltable>
+
+</refsect1>
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para><function>Tcl_Main</function> can serve as the main program for Tcl-based shell
+applications.  A
+<quote>shell application</quote>
+is a program
+like tclsh or wish that supports both interactive interpretation
+of Tcl and evaluation of a script contained in a file given as
+a command line argument.  <function>Tcl_Main</function> is offered as a convenience
+to developers of shell applications, so they do not have to 
+reproduce all of the code for proper initialization of the Tcl
+library and interactive shell operation.  Other styles of embedding
+Tcl in an application are not supported by <function>Tcl_Main</function>.  Those
+must be achieved by calling lower level functions in the Tcl library
+directly.</para>
+
+<para>The <function>Tcl_Main</function> function has been offered by the Tcl library
+since release Tcl 7.4.  In older releases of Tcl, the Tcl library
+itself defined a function <emphasis remap='B'>main</emphasis>, but that lacks flexibility
+of embedding style and having a function <emphasis remap='B'>main</emphasis> in a library
+(particularly a shared library) causes problems on many systems.
+Having <emphasis remap='B'>main</emphasis> in the Tcl library would also make it hard to use
+Tcl in C++ programs, since C++ programs must have special C++
+<emphasis remap='B'>main</emphasis> functions.</para>
+
+<para>Normally each shell application contains a small <emphasis remap='B'>main</emphasis> function
+that does nothing but invoke <function>Tcl_Main</function>.
+<function>Tcl_Main</function> then does all the work of creating and running a
+<emphasis remap='B'>tclsh</emphasis>-like application.</para>
+
+<para><function>Tcl_Main</function> is not provided by the public interface of Tcl's
+stub library.  Programs that call <function>Tcl_Main</function> must be linked
+against the standard Tcl library.  Extensions (stub-enabled or
+not) are not intended to call <function>Tcl_Main</function>.</para>
+
+<para><function>Tcl_Main</function> is not thread-safe.  It should only be called by
+a single master thread of a multi-threaded application.  This
+restriction is not a problem with normal use described above.</para>
+
+<para><function>Tcl_Main</function> and therefore all applications based upon it, like
+<emphasis remap='B'>tclsh</emphasis>, use <emphasis remap='B'>Tcl_GetStdChannel</emphasis> to initialize the standard
+channels to their default values. See <emphasis remap='B'>Tcl_StandardChannels</emphasis> for
+more information.</para>
+
+<para><function>Tcl_Main</function> supports two modes of operation, depending on the
+values of <emphasis remap='I'>argc</emphasis> and <emphasis remap='I'>argv</emphasis>.  If the first few arguments
+in <emphasis remap='I'>argv</emphasis> match ?<option>-encoding </option><emphasis remap='I'>name</emphasis>? <emphasis remap='I'>fileName</emphasis>,
+where <emphasis remap='I'>fileName</emphasis> does not begin with the character <emphasis remap='I'>-</emphasis>,
+then <emphasis remap='I'>fileName</emphasis> is taken to be the name of a file containing
+a <emphasis remap='I'>startup script</emphasis>, and <emphasis remap='I'>name</emphasis> is taken to be the name
+of the encoding of the contents of that file, which <function>Tcl_Main</function>
+will attempt to evaluate.  Otherwise, <function>Tcl_Main</function> will enter an
+interactive mode.</para>
+
+<para>In either mode, <function>Tcl_Main</function> will define in its master interpreter
+the Tcl variables <emphasis remap='I'>argc</emphasis>, <emphasis remap='I'>argv</emphasis>, <emphasis remap='I'>argv0</emphasis>, and
+<emphasis remap='I'>tcl_interactive</emphasis>, as described in the documentation for <emphasis remap='B'>tclsh</emphasis>.</para>
+
+<para>When it has finished its own initialization, but before it processes
+commands, <function>Tcl_Main</function> calls the procedure given by the
+<emphasis remap='I'>appInitProc</emphasis> argument.  This procedure provides a
+<quote>hook</quote>
+for the application to perform its own initialization of the interpreter
+created by <function>Tcl_Main</function>, such as defining application-specific
+commands.  The procedure must have an interface that matches the
+type <type>Tcl_AppInitProc</type>:</para>
+<programlisting remap='CS'>
+<funcsynopsis>
+<funcsynopsisinfo>
+typedef int Tcl_AppInitProc(Tcl_Interp *interp);
+</funcsynopsisinfo>
+</funcsynopsis>
+</programlisting> <!-- remap='CE' -->
+<para><emphasis remap='I'>AppInitProc</emphasis> is almost always a pointer to <emphasis remap='B'>Tcl_AppInit</emphasis>; for more
+details on this procedure, see the documentation for <emphasis remap='B'>Tcl_AppInit</emphasis>.</para>
+
+<para>When the <emphasis remap='I'>appInitProc</emphasis> is finished, <function>Tcl_Main</function> enters one
+of its two modes.  If a startup script has been provided, <function>Tcl_Main</function>
+attempts to evaluate it.  Otherwise, interactive mode begins with
+examination of the variable <emphasis remap='I'>tcl_rcFileName</emphasis> in the master
+interpreter.  If that variable exists and holds the name of a readable
+file, the contents of that file are evaluated in the master interpreter.
+Then interactive operations begin,
+with prompts and command evaluation results written to the standard
+output channel, and commands read from the standard input channel
+and then evaluated.  The prompts written to the standard output
+channel may be customized by defining the Tcl variables <emphasis remap='I'>tcl_prompt1</emphasis>
+and <emphasis remap='I'>tcl_prompt2</emphasis> as described in the documentation for <emphasis remap='B'>tclsh</emphasis>.
+The prompts and command evaluation results are written to the standard
+output channel only if the Tcl variable <emphasis remap='I'>tcl_interactive</emphasis> in the
+master interpreter holds a non-zero integer value.</para>
+
+<para><function>Tcl_SetMainLoop</function> allows setting an event loop procedure to be run.
+This allows, for example, Tk to be dynamically loaded and set its event
+loop.  The event loop will run following the startup script.  If you
+are in interactive mode, setting the main loop procedure will cause the
+prompt to become fileevent based and then the loop procedure is called.
+When the loop procedure returns in interactive mode, interactive operation
+will continue.
+The main loop procedure must have an interface that matches the type
+<type>Tcl_MainLoopProc</type>:</para>
+<programlisting remap='CS'>
+<funcsynopsis>
+<funcsynopsisinfo>
+typedef void Tcl_MainLoopProc(void);
+</funcsynopsisinfo>
+</funcsynopsis>
+</programlisting> <!-- remap='CE' -->
+<para><function>Tcl_Main</function> does not return.  Normally a program based on
+<function>Tcl_Main</function> will terminate when the <emphasis remap='B'>exit</emphasis> command is
+evaluated.  In interactive mode, if an EOF or channel error
+is encountered on the standard input channel, then <function>Tcl_Main</function>
+itself will evaluate the <emphasis remap='B'>exit</emphasis> command after the main loop
+procedure (if any) returns.  In non-interactive mode, after
+<function>Tcl_Main</function> evaluates the startup script, and the main loop
+procedure (if any) returns, <function>Tcl_Main</function> will also evaluate
+the <emphasis remap='B'>exit</emphasis> command.</para>
+
+</refsect1>
+
+<refsect1 xml:id='see_also'><title>SEE ALSO</title>
+<para><citerefentry><refentrytitle>tclsh</refentrytitle><manvolnum>1</manvolnum></citerefentry>, Tcl_GetStdC<citerefentry><refentrytitle>hannel</refentrytitle><manvolnum>3</manvolnum></citerefentry>, Tcl_StandardC<citerefentry><refentrytitle>hannels</refentrytitle><manvolnum>3</manvolnum></citerefentry>, Tcl_AppI<citerefentry><refentrytitle>nit</refentrytitle><manvolnum>3</manvolnum></citerefentry>,
+exit(n)</para>
+
+</refsect1>
+
+<refsect1 xml:id='keywords'><title>KEYWORDS</title>
+<para>application-specific initialization, command-line arguments, main program</para>
+</refsect1>
+</refentry>
+

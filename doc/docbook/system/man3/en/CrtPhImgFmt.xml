@@ -1,0 +1,359 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man+tkman by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='crtphimgfmt3'>
+
+<!-- '\" Copyright (c) 1994 The Australian National University
+'\" Copyright (c) 1994\-1997 Sun Microsystems, Inc. -->
+
+<!-- '\" See the file "license.terms" for information on usage and redistribution
+'\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
+'\" 
+'\" Author: Paul Mackerras (paulus@cs.anu.edu.au),
+'\"	    Department of Computer Science,
+'\"	    Australian National University. -->
+
+<!-- '\" RCS: @(#) $Id$ -->
+
+<refentryinfo><date>8.5</date></refentryinfo>
+<refmeta>
+<refentrytitle>Tk_CreatePhotoImageFormat</refentrytitle>
+<manvolnum>3</manvolnum>
+<refmiscinfo class='date'>8.5</refmiscinfo>
+<refmiscinfo class='source'>Tk</refmiscinfo>
+<refmiscinfo class='manual'>Tk Library Procedures</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>Tk_CreatePhotoImageFormat</refname>
+<refpurpose>define new file format for photo images</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<funcsynopsis>
+<funcsynopsisinfo>
+#include &lt;tk.h&gt;
+
+</funcsynopsisinfo>
+<funcprototype>
+<funcdef><function>Tk_CreatePhotoImageFormat</function></funcdef>
+<paramdef><parameter>formatPtr</parameter></paramdef>
+</funcprototype>
+</funcsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='arguments'><title>ARGUMENTS</title>
+<!-- .AS Tk_PhotoImageFormat *formatPtr -->
+<informaltable>
+<tgroup cols='3'>
+<tbody>
+
+<row><entry>"Tk_PhotoImageFormat"</entry><entry>"*formatPtr"</entry><entry>"in"</entry>
+<entry>
+<para>Structure that defines the new file format.</para>
+<!-- .BE -->
+</entry>
+</row>
+</tbody>
+</tgroup>
+</informaltable>
+
+</refsect1>
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para><function>Tk_CreatePhotoImageFormat</function> is invoked to define a new file format
+for image data for use with photo images.  The code that implements an
+image file format is called an image file format handler, or
+handler for short.  The photo image code
+maintains a list of handlers that can be used to read and
+write data to or from a file.  Some handlers may also
+support reading image data from a string or converting image data to a
+string format.
+The user can specify which handler to use with the <option>-format</option>
+image configuration option or the <option>-format</option> option to the
+<emphasis remap='B'>read</emphasis> and <emphasis remap='B'>write</emphasis> photo image subcommands.</para>
+
+<para>An image file format handler consists of a collection of procedures
+plus a Tk_PhotoImageFormat structure, which contains the name of the
+image file format and pointers to six procedures provided by the
+handler to deal with files and strings in this format.  The
+Tk_PhotoImageFormat structure contains the following fields:</para>
+<programlisting remap='CS'>
+typedef struct Tk_PhotoImageFormat {
+    char *<emphasis remap='I'>name</emphasis>;
+    Tk_ImageFileMatchProc *<emphasis remap='I'>fileMatchProc</emphasis>;
+    Tk_ImageStringMatchProc *<emphasis remap='I'>stringMatchProc</emphasis>;
+    Tk_ImageFileReadProc *<emphasis remap='I'>fileReadProc</emphasis>;
+    Tk_ImageStringReadProc *<emphasis remap='I'>stringReadProc</emphasis>;
+    Tk_ImageFileWriteProc *<emphasis remap='I'>fileWriteProc</emphasis>;
+    Tk_ImageStringWriteProc *<emphasis remap='I'>stringWriteProc</emphasis>;
+} Tk_PhotoImageFormat;
+</programlisting> <!-- remap='CE' -->
+
+<para>The handler need not provide implementations of all six procedures.
+For example, the procedures that handle string data would not be
+provided for a format in which the image data are stored in binary,
+and could therefore contain null characters.  If any procedure is not
+implemented, the corresponding pointer in the Tk_PhotoImageFormat
+structure should be set to NULL.  The handler must provide the
+<emphasis remap='I'>fileMatchProc</emphasis> procedure if it provides the <emphasis remap='I'>fileReadProc</emphasis>
+procedure, and the <emphasis remap='I'>stringMatchProc</emphasis> procedure if it provides the
+<emphasis remap='I'>stringReadProc</emphasis> procedure.</para>
+
+</refsect1>
+
+<refsect1 xml:id='name'><title>NAME</title>
+<para><emphasis remap='I'>formatPtr-&gt;name</emphasis> provides a name for the image type.
+Once <function>Tk_CreatePhotoImageFormat</function> returns, this name may be used
+in the <option>-format</option> photo image configuration and subcommand option.
+The manual page for the photo image (photo(n)) describes how image
+file formats are chosen based on their names and the value given to
+the <option>-format</option> option. The first character of <emphasis remap='I'>formatPtr-&gt;name</emphasis>
+must not be an uppercase character from the ASCII character set
+(that is, one of the characters <emphasis remap='B'>A</emphasis>-<emphasis remap='B'>Z</emphasis>).  Such names are used
+only for legacy interface support (see below).</para>
+
+</refsect1>
+
+<refsect1 xml:id='filematchproc'><title>FILEMATCHPROC</title>
+<para><emphasis remap='I'>formatPtr-&gt;fileMatchProc</emphasis> provides the address of a procedure for
+Tk to call when it is searching for an image file format handler
+suitable for reading data in a given file.
+<emphasis remap='I'>formatPtr-&gt;fileMatchProc</emphasis> must match the following prototype:</para>
+<programlisting remap='CS'>
+<funcsynopsis>
+<funcprototype>
+<funcdef>typedef int <function>Tk_ImageFileMatchProc</function></funcdef>
+    <paramdef>Tcl_Channel <parameter>chan</parameter></paramdef>
+    <paramdef>const char * <parameter>fileName</parameter></paramdef>
+    <paramdef>Tcl_Obj * <parameter>format</parameter></paramdef>
+    <paramdef>int * <parameter>widthPtr</parameter></paramdef>
+    <paramdef>int * <parameter>heightPtr</parameter></paramdef>
+    <paramdef>Tcl_Interp * <parameter>interp</parameter></paramdef>
+</funcprototype>
+</funcsynopsis>
+</programlisting> <!-- remap='CE' -->
+<para>The <varname role='parameter'>fileName</varname> argument is the name of the file containing the
+image data, which is open for reading as <varname role='parameter'>chan</varname>.  The
+<varname role='parameter'>format</varname> argument contains the value given for the
+<option>-format</option> option, or NULL if the option was not specified.
+If the data in the file appears to be in the format supported by this
+handler, the <emphasis remap='I'>formatPtr-&gt;fileMatchProc</emphasis> procedure should store the
+width and height of the image in *<varname role='parameter'>widthPtr</varname> and *<varname role='parameter'>heightPtr</varname>
+respectively, and return 1.  Otherwise it should return 0.</para>
+
+</refsect1>
+
+<refsect1 xml:id='stringmatchproc'><title>STRINGMATCHPROC</title>
+<para><emphasis remap='I'>formatPtr-&gt;stringMatchProc</emphasis> provides the address of a procedure for
+Tk to call when it is searching for an image file format handler for
+suitable for reading data from a given string.
+<emphasis remap='I'>formatPtr-&gt;stringMatchProc</emphasis> must match the following prototype:</para>
+<programlisting remap='CS'>
+<funcsynopsis>
+<funcprototype>
+<funcdef>typedef int <function>Tk_ImageStringMatchProc</function></funcdef>
+    <paramdef>Tcl_Obj * <parameter>data</parameter></paramdef>
+    <paramdef>Tcl_Obj * <parameter>format</parameter></paramdef>
+    <paramdef>int * <parameter>widthPtr</parameter></paramdef>
+    <paramdef>int * <parameter>heightPtr</parameter></paramdef>
+    <paramdef>Tcl_Interp * <parameter>interp</parameter></paramdef>
+</funcprototype>
+</funcsynopsis>
+</programlisting> <!-- remap='CE' -->
+<para>The <varname role='parameter'>data</varname> argument points to the object containing the image
+data.  The <varname role='parameter'>format</varname> argument contains the value given for
+the <option>-format</option> option, or NULL if the option was not specified.
+If the data in the string appears to be in the format supported by
+this handler, the <emphasis remap='I'>formatPtr-&gt;stringMatchProc</emphasis> procedure should
+store the width and height of the image in *<varname role='parameter'>widthPtr</varname> and
+*<varname role='parameter'>heightPtr</varname> respectively, and return 1.  Otherwise it should
+return 0.</para>
+
+</refsect1>
+
+<refsect1 xml:id='filereadproc'><title>FILEREADPROC</title>
+<para><emphasis remap='I'>formatPtr-&gt;fileReadProc</emphasis> provides the address of a procedure for
+Tk to call to read data from an image file into a photo image.
+<emphasis remap='I'>formatPtr-&gt;fileReadProc</emphasis> must match the following prototype:</para>
+<programlisting remap='CS'>
+<funcsynopsis>
+<funcprototype>
+<funcdef>typedef int <function>Tk_ImageFileReadProc</function></funcdef>
+    <paramdef>Tcl_Interp * <parameter>interp</parameter></paramdef>
+    <paramdef>Tcl_Channel <parameter>chan</parameter></paramdef>
+    <paramdef>const char * <parameter>fileName</parameter></paramdef>
+    <paramdef>Tcl_Obj * <parameter>format</parameter></paramdef>
+    <paramdef>PhotoHandle <parameter>imageHandle</parameter></paramdef>
+    <paramdef>int <parameter>destX</parameter></paramdef>
+    <paramdef>int <parameter>destY</parameter></paramdef>
+    <paramdef>int <parameter>width</parameter></paramdef>
+    <paramdef>int <parameter>height</parameter></paramdef>
+    <paramdef>int <parameter>srcX</parameter></paramdef>
+    <paramdef>int <parameter>srcY</parameter></paramdef>
+</funcprototype>
+</funcsynopsis>
+</programlisting> <!-- remap='CE' -->
+<para>The <varname role='parameter'>interp</varname> argument is the interpreter in which the command was
+invoked to read the image; it should be used for reporting errors.
+The image data is in the file named <varname role='parameter'>fileName</varname>, which is open for
+reading as <varname role='parameter'>chan</varname>.  The <varname role='parameter'>format</varname> argument contains the
+value given for the <option>-format</option> option, or NULL if the option was
+not specified.  The image data in the file, or a subimage of it, is to
+be read into the photo image identified by the handle
+<varname role='parameter'>imageHandle</varname>.  The subimage of the data in the file is of
+dimensions <varname role='parameter'>width</varname> x <varname role='parameter'>height</varname> and has its top-left corner at
+coordinates (<varname role='parameter'>srcX</varname>,<varname role='parameter'>srcY</varname>).  It is to be stored in the photo
+image with its top-left corner at coordinates
+(<varname role='parameter'>destX</varname>,<varname role='parameter'>destY</varname>) using the <emphasis remap='B'>Tk_PhotoPutBlock</emphasis> procedure.
+The return value is a standard Tcl return value.</para>
+
+</refsect1>
+
+<refsect1 xml:id='stringreadproc'><title>STRINGREADPROC</title>
+<para><emphasis remap='I'>formatPtr-&gt;stringReadProc</emphasis> provides the address of a procedure for
+Tk to call to read data from a string into a photo image.
+<emphasis remap='I'>formatPtr-&gt;stringReadProc</emphasis> must match the following prototype:</para>
+<programlisting remap='CS'>
+<funcsynopsis>
+<funcprototype>
+<funcdef>typedef int <function>Tk_ImageStringReadProc</function></funcdef>
+    <paramdef>Tcl_Interp * <parameter>interp</parameter></paramdef>
+    <paramdef>Tcl_Obj * <parameter>data</parameter></paramdef>
+    <paramdef>Tcl_Obj * <parameter>format</parameter></paramdef>
+    <paramdef>PhotoHandle <parameter>imageHandle</parameter></paramdef>
+    <paramdef>int <parameter>destX</parameter></paramdef>
+    <paramdef>int <parameter>destY</parameter></paramdef>
+    <paramdef>int <parameter>width</parameter></paramdef>
+    <paramdef>int <parameter>height</parameter></paramdef>
+    <paramdef>int <parameter>srcX</parameter></paramdef>
+    <paramdef>int <parameter>srcY</parameter></paramdef>
+</funcprototype>
+</funcsynopsis>
+</programlisting> <!-- remap='CE' -->
+<para>The <varname role='parameter'>interp</varname> argument is the interpreter in which the command was
+invoked to read the image; it should be used for reporting errors.
+The <varname role='parameter'>data</varname> argument points to the image data in object form.
+The <varname role='parameter'>format</varname> argument contains the
+value given for the <option>-format</option> option, or NULL if the option was
+not specified.  The image data in the string, or a subimage of it, is to
+be read into the photo image identified by the handle
+<varname role='parameter'>imageHandle</varname>.  The subimage of the data in the string is of
+dimensions <varname role='parameter'>width</varname> x <varname role='parameter'>height</varname> and has its top-left corner at
+coordinates (<varname role='parameter'>srcX</varname>,<varname role='parameter'>srcY</varname>).  It is to be stored in the photo
+image with its top-left corner at coordinates
+(<varname role='parameter'>destX</varname>,<varname role='parameter'>destY</varname>) using the <emphasis remap='B'>Tk_PhotoPutBlock</emphasis> procedure.
+The return value is a standard Tcl return value.</para>
+
+</refsect1>
+
+<refsect1 xml:id='filewriteproc'><title>FILEWRITEPROC</title>
+<para><emphasis remap='I'>formatPtr-&gt;fileWriteProc</emphasis> provides the address of a procedure for
+Tk to call to write data from a photo image to a file.
+<emphasis remap='I'>formatPtr-&gt;fileWriteProc</emphasis> must match the following prototype:</para>
+<programlisting remap='CS'>
+<funcsynopsis>
+<funcprototype>
+<funcdef>typedef int <function>Tk_ImageFileWriteProc</function></funcdef>
+    <paramdef>Tcl_Interp * <parameter>interp</parameter></paramdef>
+    <paramdef>const char * <parameter>fileName</parameter></paramdef>
+    <paramdef>Tcl_Obj * <parameter>format</parameter></paramdef>
+    <paramdef>Tk_PhotoImageBlock * <parameter>blockPtr</parameter></paramdef>
+</funcprototype>
+</funcsynopsis>
+</programlisting> <!-- remap='CE' -->
+<para>The <varname role='parameter'>interp</varname> argument is the interpreter in which the command was
+invoked to write the image; it should be used for reporting errors.
+The image data to be written are in memory and are described by the
+Tk_PhotoImageBlock structure pointed to by <varname role='parameter'>blockPtr</varname>; see the
+manual page FindPhoto(3) for details.  The <varname role='parameter'>fileName</varname> argument
+points to the string giving the name of the file in which to write the
+image data.  The <varname role='parameter'>format</varname> argument contains the
+value given for the <option>-format</option> option, or NULL if the option was
+not specified.  The format string can contain extra characters
+after the name of the format.  If appropriate, the
+<emphasis remap='I'>formatPtr-&gt;fileWriteProc</emphasis> procedure may interpret these
+characters to specify further details about the image file.
+The return value is a standard Tcl return value.</para>
+
+</refsect1>
+
+<refsect1 xml:id='stringwriteproc'><title>STRINGWRITEPROC</title>
+<para><emphasis remap='I'>formatPtr-&gt;stringWriteProc</emphasis> provides the address of a procedure for
+Tk to call to translate image data from a photo image into a string.
+<emphasis remap='I'>formatPtr-&gt;stringWriteProc</emphasis> must match the following prototype:</para>
+<programlisting remap='CS'>
+<funcsynopsis>
+<funcprototype>
+<funcdef>typedef int <function>Tk_ImageStringWriteProc</function></funcdef>
+    <paramdef>Tcl_Interp * <parameter>interp</parameter></paramdef>
+    <paramdef>Tcl_Obj * <parameter>format</parameter></paramdef>
+    <paramdef>Tk_PhotoImageBlock * <parameter>blockPtr</parameter></paramdef>
+</funcprototype>
+</funcsynopsis>
+</programlisting> <!-- remap='CE' -->
+<para>The <varname role='parameter'>interp</varname> argument is the interpreter in which the command was
+invoked to convert the image; it should be used for reporting errors.
+The image data to be converted are in memory and are described by the
+Tk_PhotoImageBlock structure pointed to by <varname role='parameter'>blockPtr</varname>; see the
+manual page FindPhoto(3) for details.  The data for the string
+should be put in the interpreter <varname role='parameter'>interp</varname> result.
+The <varname role='parameter'>format</varname> argument contains the
+value given for the <option>-format</option> option, or NULL if the option was
+not specified.  The format string can contain extra characters
+after the name of the format.  If appropriate, the
+<emphasis remap='I'>formatPtr-&gt;stringWriteProc</emphasis> procedure may interpret these
+characters to specify further details about the image file.
+The return value is a standard Tcl return value.</para>
+
+</refsect1>
+
+<refsect1 xml:id='legacy_interface_support'><title>LEGACY INTERFACE SUPPORT</title>
+<para>In Tk 8.2 and earlier, the definition of all the function pointer
+types stored in fields of a <emphasis remap='B'>Tk_PhotoImageFormat</emphasis> struct were
+incompatibly different.  Legacy programs and libraries dating from
+those days may still contain code that defines extended Tk photo image
+formats using the old interface.  The Tk header file will still support
+this legacy interface if the code is compiled with the
+macro <emphasis remap='B'>USE_OLD_IMAGE</emphasis> defined.  Alternatively, the legacy interfaces
+are used if the first character of <emphasis remap='I'>formatPtr-&gt;name</emphasis> is an
+uppercase ASCII character (<emphasis remap='B'>A</emphasis>-<emphasis remap='B'>Z</emphasis>), and explicit casts
+are used to forgive the type mismatch.  For example,</para>
+<programlisting remap='CS'>
+static Tk_PhotoImageFormat myFormat = {
+    "MyFormat",
+    (Tk_ImageFileMatchProc *) FileMatch,
+    NULL,
+    (Tk_ImageFileReadProc *) FileRead,
+    NULL,
+    NULL,
+    NULL
+};
+</programlisting> <!-- remap='CE' -->
+<para>would define a minimal <emphasis remap='B'>Tk_PhotoImageFormat</emphasis> that operates provide
+only file reading capability, where <emphasis remap='B'>FileMatch</emphasis> and <emphasis remap='B'>FileRead</emphasis>
+are written according to the legacy interfaces of Tk 8.2 or earlier.</para>
+
+<para>Any stub-enabled extension providing an extended photo image format
+via the legacy interface enabled by the <emphasis remap='B'>USE_OLD_IMAGE</emphasis> macro
+that is compiled against Tk 8.5 headers and linked against the
+Tk 8.5 stub library will produce a file that can be loaded only
+into interps with Tk 8.5 or later; that is, the normal stub-compatibility
+rules.  If a developer needs to generate from such code a file
+that is loadable into interps with Tk 8.4 or earlier, they must
+use Tk 8.4 headers and stub libraries to do so.</para>
+
+<para>Any new code written today should not make use of the legacy
+interfaces.  Expect their support to go away in Tk 9.</para>
+
+</refsect1>
+
+<refsect1 xml:id='see_also'><title>SEE ALSO</title>
+<para>Tk_FindPhoto, Tk_PhotoPutBlock</para>
+
+</refsect1>
+
+<refsect1 xml:id='keywords'><title>KEYWORDS</title>
+<para>photo image, image file</para>
+</refsect1>
+</refentry>
+

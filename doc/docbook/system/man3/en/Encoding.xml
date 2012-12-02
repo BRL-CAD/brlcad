@@ -1,0 +1,818 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man+tkman by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='encoding3'>
+
+<!-- '\" Copyright (c) 1997\-1998 Sun Microsystems, Inc. -->
+
+<!-- '\" See the file "license.terms" for information on usage and redistribution
+'\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
+'\" 
+'\" RCS: @(#) $Id$
+'\"  -->
+<refentryinfo><date>8.1</date></refentryinfo>
+<refmeta>
+<refentrytitle>Tcl_GetEncoding</refentrytitle>
+<manvolnum>3</manvolnum>
+<refmiscinfo class='date'>8.1</refmiscinfo>
+<refmiscinfo class='source'>Tcl</refmiscinfo>
+<refmiscinfo class='manual'>Tcl Library Procedures</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>Tcl_GetEncoding</refname>
+<refname>Tcl_FreeEncoding</refname>
+<refname>Tcl_GetEncodingFromObj</refname>
+<refname>Tcl_ExternalToUtfDString</refname>
+<refname>Tcl_ExternalToUtf</refname>
+<refname>Tcl_UtfToExternalDString</refname>
+<refname>Tcl_UtfToExternal</refname>
+<refname>Tcl_WinTCharToUtf</refname>
+<refname>Tcl_WinUtfToTChar</refname>
+<refname>Tcl_GetEncodingName</refname>
+<refname>Tcl_SetSystemEncoding</refname>
+<refname>Tcl_GetEncodingNameFromEnvironment</refname>
+<refname>Tcl_GetEncodingNames</refname>
+<refname>Tcl_CreateEncoding</refname>
+<refname>Tcl_GetEncodingSearchPath</refname>
+<refname>Tcl_SetEncodingSearchPath</refname>
+<refname>Tcl_GetDefaultEncodingDir</refname>
+<refname>Tcl_SetDefaultEncodingDir</refname>
+<refpurpose>procedures for creating and using encodings</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<funcsynopsis>
+<funcsynopsisinfo>
+#include &lt;tcl.h&gt;
+
+</funcsynopsisinfo>
+<funcprototype>
+<funcdef>Tcl_Encoding <function>Tcl_GetEncoding</function></funcdef>
+<paramdef><parameter>interp</parameter></paramdef>
+<paramdef><parameter>name</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef>void <function>Tcl_FreeEncoding</function></funcdef>
+<paramdef><parameter>encoding</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef>int <function>Tcl_GetEncodingFromObj</function></funcdef>
+<paramdef><parameter>interp</parameter></paramdef>
+<paramdef><parameter>objPtr</parameter></paramdef>
+<paramdef><parameter>encodingPtr</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef>char *<function>Tcl_ExternalToUtfDString</function></funcdef>
+<paramdef><parameter>encoding</parameter></paramdef>
+<paramdef><parameter>src</parameter></paramdef>
+<paramdef><parameter>srcLen</parameter></paramdef>
+<paramdef><parameter>dstPtr</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef>char *<function>Tcl_UtfToExternalDString</function></funcdef>
+<paramdef><parameter>encoding</parameter></paramdef>
+<paramdef><parameter>src</parameter></paramdef>
+<paramdef><parameter>srcLen</parameter></paramdef>
+<paramdef><parameter>dstPtr</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef>int <function>Tcl_ExternalToUtf</function></funcdef>
+<paramdef><parameter>interp</parameter></paramdef>
+<paramdef><parameter>encoding</parameter></paramdef>
+<paramdef><parameter>src</parameter></paramdef>
+<paramdef><parameter>srcLen</parameter></paramdef>
+<paramdef><parameter>flags</parameter></paramdef>
+<paramdef><parameter>statePtr</parameter></paramdef>
+<paramdef><parameter>
+ dst</parameter></paramdef>
+<paramdef><parameter>dstLen</parameter></paramdef>
+<paramdef><parameter>srcReadPtr</parameter></paramdef>
+<paramdef><parameter>dstWrotePtr</parameter></paramdef>
+<paramdef><parameter>dstCharsPtr</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef>int <function>Tcl_UtfToExternal</function></funcdef>
+<paramdef><parameter>interp</parameter></paramdef>
+<paramdef><parameter>encoding</parameter></paramdef>
+<paramdef><parameter>src</parameter></paramdef>
+<paramdef><parameter>srcLen</parameter></paramdef>
+<paramdef><parameter>flags</parameter></paramdef>
+<paramdef><parameter>statePtr</parameter></paramdef>
+<paramdef><parameter>
+ dst</parameter></paramdef>
+<paramdef><parameter>dstLen</parameter></paramdef>
+<paramdef><parameter>srcReadPtr</parameter></paramdef>
+<paramdef><parameter>dstWrotePtr</parameter></paramdef>
+<paramdef><parameter>dstCharsPtr</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef>char *<function>Tcl_WinTCharToUtf</function></funcdef>
+<paramdef><parameter>tsrc</parameter></paramdef>
+<paramdef><parameter>srcLen</parameter></paramdef>
+<paramdef><parameter>dstPtr</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef><function>TCHAR</function> *Tcl_WinUtfToTChar</funcdef>
+<paramdef><parameter>src</parameter></paramdef>
+<paramdef><parameter>srcLen</parameter></paramdef>
+<paramdef><parameter>dstPtr</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef>const char *<function>Tcl_GetEncodingName</function></funcdef>
+<paramdef><parameter>encoding</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef>int <function>Tcl_SetSystemEncoding</function></funcdef>
+<paramdef><parameter>interp</parameter></paramdef>
+<paramdef><parameter>name</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef>const char *<function>Tcl_GetEncodingNameFromEnvironment</function></funcdef>
+<paramdef><parameter>bufPtr</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef>void <function>Tcl_GetEncodingNames</function></funcdef>
+<paramdef><parameter>interp</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef>Tcl_Encoding <function>Tcl_CreateEncoding</function></funcdef>
+<paramdef><parameter>typePtr</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef><function>Tcl_Obj</function> *Tcl_GetEncodingSearchPath</funcdef>
+<void/></funcprototype>
+<funcprototype>
+<funcdef>int <function>Tcl_SetEncodingSearchPath</function></funcdef>
+<paramdef><parameter>searchPath</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef>const char *<function>Tcl_GetDefaultEncodingDir</function></funcdef>
+    <paramdef><parameter>void</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef>void <function>Tcl_SetDefaultEncodingDir</function></funcdef>
+<paramdef><parameter>path</parameter></paramdef>
+</funcprototype>
+</funcsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='arguments'><title>ARGUMENTS</title>
+<!-- .AS const Tcl_EncodingType *dstWrotePtr in/out -->
+<informaltable>
+<tgroup cols='3'>
+<tbody>
+
+<row><entry>"Tcl_Interp"</entry><entry>"*interp"</entry><entry>"in"</entry>
+<entry>
+<para>Interpreter to use for error reporting, or NULL if no error reporting is
+desired.</para>
+</entry>
+</row>
+<row><entry>"const char"</entry><entry>*name</entry><entry>in</entry>
+<entry>
+<para>Name of encoding to load.</para>
+</entry>
+</row>
+<row><entry>Tcl_Encoding</entry><entry>encoding</entry><entry>in</entry>
+<entry>
+<para>The encoding to query, free, or use for converting text.  If <emphasis remap='I'>encoding</emphasis> is 
+NULL, the current system encoding is used.</para>
+</entry>
+</row>
+<row><entry>Tcl_Obj</entry><entry>*objPtr</entry><entry>in</entry>
+<entry>
+<!-- .VS 8.5 -->
+<para>Name of encoding to get token for.</para>
+<!-- .VE 8.5 -->
+</entry>
+</row>
+<row><entry>Tcl_Encoding</entry><entry>*encodingPtr</entry><entry>out</entry>
+<entry>
+<!-- .VS 8.5 -->
+<para>Points to storage where encoding token is to be written.</para>
+<!-- .VE 8.5 -->
+</entry>
+</row>
+<row><entry>"const char"</entry><entry>*src</entry><entry>in</entry>
+<entry>
+<para>For the <function>Tcl_ExternalToUtf</function> functions, an array of bytes in the
+specified encoding that are to be converted to UTF-8.  For the
+<function>Tcl_UtfToExternal</function> and <emphasis remap='B'>Tcl_WinUtfToTChar</emphasis> functions, an array of
+UTF-8 characters to be converted to the specified encoding.</para>  
+</entry>
+</row>
+<row><entry>"const TCHAR"</entry><entry>*tsrc</entry><entry>in</entry>
+<entry>
+<para>An array of Windows TCHAR characters to convert to UTF-8.</para>
+</entry>
+</row>
+<row><entry>int</entry><entry>srcLen</entry><entry>in</entry>
+<entry>
+<para>Length of <varname role='parameter'>src</varname> or <emphasis remap='I'>tsrc</emphasis> in bytes.  If the length is negative, the 
+encoding-specific length of the string is used.</para>
+</entry>
+</row>
+<row><entry>Tcl_DString</entry><entry>*dstPtr</entry><entry>out</entry>
+<entry>
+<para>Pointer to an uninitialized or free <type>Tcl_DString</type> in which the converted
+result will be stored.</para>
+</entry>
+</row>
+<row><entry>int</entry><entry>flags</entry><entry>in</entry>
+<entry>
+<para>Various flag bits OR-ed together.  
+<emphasis remap='B'>TCL_ENCODING_START</emphasis> signifies that the
+source buffer is the first block in a (potentially multi-block) input
+stream, telling the conversion routine to reset to an initial state and
+perform any initialization that needs to occur before the first byte is
+converted. <emphasis remap='B'>TCL_ENCODING_END</emphasis> signifies that the source buffer is the last
+block in a (potentially multi-block) input stream, telling the conversion
+routine to perform any finalization that needs to occur after the last
+byte is converted and then to reset to an initial state.
+<emphasis remap='B'>TCL_ENCODING_STOPONERROR</emphasis> signifies that the conversion routine should
+return immediately upon reading a source character that does not exist in
+the target encoding; otherwise a default fallback character will
+automatically be substituted.</para>  
+</entry>
+</row>
+<row><entry>Tcl_EncodingState</entry><entry>*statePtr</entry><entry>in/out</entry>
+<entry>
+<para>Used when converting a (generally long or indefinite length) byte stream
+in a piece-by-piece fashion.  The conversion routine stores its current
+state in <emphasis remap='I'>*statePtr</emphasis> after <varname role='parameter'>src</varname> (the buffer containing the
+current piece) has been converted; that state information must be passed
+back when converting the next piece of the stream so the conversion
+routine knows what state it was in when it left off at the end of the
+last piece.  May be NULL, in which case the value specified for <varname role='parameter'>flags</varname> 
+is ignored and the source buffer is assumed to contain the complete string to
+convert.</para>
+</entry>
+</row>
+<row><entry>char</entry><entry>*dst</entry><entry>out</entry>
+<entry>
+<para>Buffer in which the converted result will be stored.  No more than
+<varname role='parameter'>dstLen</varname> bytes will be stored in <varname role='parameter'>dst</varname>.</para>
+</entry>
+</row>
+<row><entry>int</entry><entry>dstLen</entry><entry>in</entry>
+<entry>
+<para>The maximum length of the output buffer <varname role='parameter'>dst</varname> in bytes.</para>
+</entry>
+</row>
+<row><entry>int</entry><entry>*srcReadPtr</entry><entry>out</entry>
+<entry>
+<para>Filled with the number of bytes from <varname role='parameter'>src</varname> that were actually
+converted.  This may be less than the original source length if there was
+a problem converting some source characters.  May be NULL.</para>
+</entry>
+</row>
+<row><entry>int</entry><entry>*dstWrotePtr</entry><entry>out</entry>
+<entry>
+<para>Filled with the number of bytes that were actually stored in the output
+buffer as a result of the conversion.  May be NULL.</para>
+</entry>
+</row>
+<row><entry>int</entry><entry>*dstCharsPtr</entry><entry>out</entry>
+<entry>
+<para>Filled with the number of characters that correspond to the number of bytes
+stored in the output buffer.  May be NULL.</para>
+</entry>
+</row>
+<row><entry>Tcl_DString</entry><entry>*bufPtr</entry><entry>out</entry>
+<entry>
+<!-- .VS 8.5 -->
+<para>Storage for the prescribed system encoding name.</para>
+<!-- .VE 8.5 -->
+</entry>
+</row>
+<row><entry>"const Tcl_EncodingType"</entry><entry>*typePtr</entry><entry>in</entry>
+<entry>
+<para>Structure that defines a new type of encoding.</para>  
+</entry>
+</row>
+<row><entry>Tcl_Obj</entry><entry>*searchPath</entry><entry>in</entry>
+<entry>
+<!-- .VS 8.5 -->
+<para>List of filesystem directories in which to search for encoding data files.</para>
+<!-- .VE 8.5 -->
+</entry>
+</row>
+<row><entry>"const char"</entry><entry>*path</entry><entry>in</entry>
+<entry>
+<para>A path to the location of the encoding file.</para>  
+<!-- .BE -->
+</entry>
+</row>
+</tbody>
+</tgroup>
+</informaltable>
+
+</refsect1>
+
+<refsect1 xml:id='introduction'><title>INTRODUCTION</title>
+<para>These routines convert between Tcl's internal character representation,
+UTF-8, and character representations used by various operating systems or
+file systems, such as Unicode, ASCII, or Shift-JIS.  When operating on
+strings, such as such as obtaining the names of files or displaying
+characters using international fonts, the strings must be translated into
+one or possibly multiple formats that the various system calls can use.  For
+instance, on a Japanese Unix workstation, a user might obtain a filename
+represented in the EUC-JP file encoding and then translate the characters to
+the jisx0208 font encoding in order to display the filename in a Tk widget.
+The purpose of the encoding package is to help bridge the translation gap.
+UTF-8 provides an intermediate staging ground for all the various
+encodings.  In the example above, text would be translated into UTF-8 from
+whatever file encoding the operating system is using.  Then it would be
+translated from UTF-8 into whatever font encoding the display routines
+require.</para>
+
+<para>Some basic encodings are compiled into Tcl.  Others can be defined by the
+user or dynamically loaded from encoding files in a
+platform-independent manner.</para>
+</refsect1>
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para><function>Tcl_GetEncoding</function> finds an encoding given its <emphasis remap='I'>name</emphasis>.  The name may
+refer to a built-in Tcl encoding, a user-defined encoding registered by
+calling <function>Tcl_CreateEncoding</function>, or a dynamically-loadable encoding
+file.  The return value is a token that represents the encoding and can be
+used in subsequent calls to procedures such as <function>Tcl_GetEncodingName</function>,
+<function>Tcl_FreeEncoding</function>, and <function>Tcl_UtfToExternal</function>.  If the name did not
+refer to any known or loadable encoding, NULL is returned and an error
+message is returned in <emphasis remap='I'>interp</emphasis>.</para>
+
+<para>The encoding package maintains a database of all encodings currently in use.
+The first time <emphasis remap='I'>name</emphasis> is seen, <function>Tcl_GetEncoding</function> returns an
+encoding with a reference count of 1.  If the same <emphasis remap='I'>name</emphasis> is requested
+further times, then the reference count for that encoding is incremented
+without the overhead of allocating a new encoding and all its associated
+data structures.</para>  
+
+<para>When an <emphasis remap='I'>encoding</emphasis> is no longer needed, <function>Tcl_FreeEncoding</function>
+should be called to release it.  When an <emphasis remap='I'>encoding</emphasis> is no longer in use
+anywhere (i.e., it has been freed as many times as it has been gotten)
+<function>Tcl_FreeEncoding</function> will release all storage the encoding was using
+and delete it from the database.</para> 
+
+<!-- .VS 8.5 -->
+<para><function>Tcl_GetEncodingFromObj</function> treats the string representation of
+<emphasis remap='I'>objPtr</emphasis> as an encoding name, and finds an encoding with that
+name, just as <function>Tcl_GetEncoding</function> does. When an encoding is found,
+it is cached within the <emphasis remap='B'>objPtr</emphasis> value for future reference, the
+<type>Tcl_Encoding</type> token is written to the storage pointed to by
+<emphasis remap='I'>encodingPtr</emphasis>, and the value <emphasis remap='B'>TCL_OK</emphasis> is returned. If no such
+encoding is found, the value <emphasis remap='B'>TCL_ERROR</emphasis> is returned, and no
+writing to <emphasis remap='B'>*</emphasis><emphasis remap='I'>encodingPtr</emphasis> takes place. Just as with
+<function>Tcl_GetEncoding</function>, the caller should call <function>Tcl_FreeEncoding</function>
+on the resulting encoding token when that token will no longer be
+used.</para>
+<!-- .VE 8.5 -->
+
+<para><function>Tcl_ExternalToUtfDString</function> converts a source buffer <varname role='parameter'>src</varname> from the
+specified <emphasis remap='I'>encoding</emphasis> into UTF-8.  The converted bytes are stored in 
+<emphasis remap='I'>dstPtr</emphasis>, which is then null-terminated.  The caller should eventually
+call <emphasis remap='B'>Tcl_DStringFree</emphasis> to free any information stored in <emphasis remap='I'>dstPtr</emphasis>.
+When converting, if any of the characters in the source buffer cannot be
+represented in the target encoding, a default fallback character will be
+used.  The return value is a pointer to the value stored in the DString.</para>
+
+<para><function>Tcl_ExternalToUtf</function> converts a source buffer <varname role='parameter'>src</varname> from the specified
+<emphasis remap='I'>encoding</emphasis> into UTF-8.  Up to <varname role='parameter'>srcLen</varname> bytes are converted from the
+source buffer and up to <varname role='parameter'>dstLen</varname> converted bytes are stored in <varname role='parameter'>dst</varname>.
+In all cases, <emphasis remap='I'>*srcReadPtr</emphasis> is filled with the number of bytes that were
+successfully converted from <varname role='parameter'>src</varname> and <emphasis remap='I'>*dstWrotePtr</emphasis> is filled with
+the corresponding number of bytes that were stored in <varname role='parameter'>dst</varname>.  The return
+value is one of the following:</para>
+  <blockquote remap='RS'>
+  <variablelist remap='IP'>
+    <varlistentry>
+    <term><emphasis remap='B'>TCL_OK</emphasis></term>
+    <listitem>
+<para>All bytes of <varname role='parameter'>src</varname> were converted.</para>
+    </listitem>
+    </varlistentry>
+    <varlistentry>
+    <term><emphasis remap='B'>TCL_CONVERT_NOSPACE</emphasis></term>
+    <listitem>
+<para>The destination buffer was not large enough for all of the converted data; as
+many characters as could fit were converted though.</para>
+    </listitem>
+    </varlistentry>
+    <varlistentry>
+    <term><emphasis remap='B'>TCL_CONVERT_MULTIBYTE</emphasis></term>
+    <listitem>
+<para>The last few bytes in the source buffer were the beginning of a multibyte
+sequence, but more bytes were needed to complete this sequence.  A
+subsequent call to the conversion routine should pass a buffer containing
+the unconverted bytes that remained in <varname role='parameter'>src</varname> plus some further bytes
+from the source stream to properly convert the formerly split-up multibyte
+sequence.</para>  
+    </listitem>
+    </varlistentry>
+    <varlistentry>
+    <term><emphasis remap='B'>TCL_CONVERT_SYNTAX</emphasis></term>
+    <listitem>
+<para>The source buffer contained an invalid character sequence.  This may occur
+if the input stream has been damaged or if the input encoding method was
+misidentified.</para>
+    </listitem>
+    </varlistentry>
+    <varlistentry>
+    <term><emphasis remap='B'>TCL_CONVERT_UNKNOWN</emphasis></term>
+    <listitem>
+<para>The source buffer contained a character that could not be represented in
+the target encoding and <emphasis remap='B'>TCL_ENCODING_STOPONERROR</emphasis> was specified.</para>  
+    </listitem>
+    </varlistentry>
+  </variablelist>
+  </blockquote> <!-- remap='RE' -->
+
+<para><function>Tcl_UtfToExternalDString</function> converts a source buffer <varname role='parameter'>src</varname> from UTF-8 
+into the specified <emphasis remap='I'>encoding</emphasis>.  The converted bytes are stored in
+<emphasis remap='I'>dstPtr</emphasis>, which is then terminated with the appropriate encoding-specific
+null.  The caller should eventually call <emphasis remap='B'>Tcl_DStringFree</emphasis> to free any
+information stored in <emphasis remap='I'>dstPtr</emphasis>.  When converting, if any of the
+characters in the source buffer cannot be represented in the target
+encoding, a default fallback character will be used.  The return value is
+a pointer to the value stored in the DString.</para>
+
+<para><function>Tcl_UtfToExternal</function> converts a source buffer <varname role='parameter'>src</varname> from UTF-8 into
+the specified <emphasis remap='I'>encoding</emphasis>.  Up to <varname role='parameter'>srcLen</varname> bytes are converted from
+the source buffer and up to <varname role='parameter'>dstLen</varname> converted bytes are stored in
+<varname role='parameter'>dst</varname>.  In all cases, <emphasis remap='I'>*srcReadPtr</emphasis> is filled with the number of
+bytes that were successfully converted from <varname role='parameter'>src</varname> and <emphasis remap='I'>*dstWrotePtr</emphasis>
+is filled with the corresponding number of bytes that were stored in
+<varname role='parameter'>dst</varname>.  The return values are the same as the return values for
+<function>Tcl_ExternalToUtf</function>.</para>
+
+<para><emphasis remap='B'>Tcl_WinUtfToTChar</emphasis> and <function>Tcl_WinTCharToUtf</function> are
+Windows-only convenience
+functions for converting between UTF-8 and Windows strings.  On Windows 95
+(as with the Unix operating system),
+all strings exchanged between Tcl and the operating system are
+<quote>char</quote>
+based.  On Windows NT, some strings exchanged between Tcl and the
+operating system are
+<quote>char</quote>
+oriented while others are in Unicode.  By
+convention, in Windows a TCHAR is a character in the ANSI code page
+on Windows 95 and a Unicode character on Windows NT.</para>
+
+<para>If you planned to use the same
+<quote>char</quote>
+based interfaces on both Windows
+95 and Windows NT, you could use <function>Tcl_UtfToExternal</function> and
+<function>Tcl_ExternalToUtf</function> (or their <type>Tcl_DString</type> equivalents) with an
+encoding of NULL (the current system encoding).  On the other hand,
+if you planned to use the Unicode interface when running on Windows NT
+and the
+<quote>char</quote>
+interfaces when running on Windows 95, you would have
+to perform the following type of test over and over in your program
+(as represented in pseudo-code):</para>
+<programlisting remap='CS'>
+if (running NT) {
+    encoding &lt;- Tcl_GetEncoding("unicode");
+    nativeBuffer &lt;- Tcl_UtfToExternal(encoding, utfBuffer);
+<funcsynopsis>
+<funcprototype>
+<funcdef><function>Tcl_FreeEncoding</function></funcdef>
+    <paramdef><parameter>encoding</parameter></paramdef>
+</funcprototype>
+</funcsynopsis>
+} else {
+    nativeBuffer &lt;- Tcl_UtfToExternal(NULL, utfBuffer);
+}
+</programlisting> <!-- remap='CE' -->
+<para><emphasis remap='B'>Tcl_WinUtfToTChar</emphasis> and <function>Tcl_WinTCharToUtf</function> automatically
+handle this test and use the proper encoding based on the current
+operating system.  <emphasis remap='B'>Tcl_WinUtfToTChar</emphasis> returns a pointer to
+a TCHAR string, and <function>Tcl_WinTCharToUtf</function> expects a TCHAR string
+pointer as the <varname role='parameter'>src</varname> string.  Otherwise, these functions
+behave identically to <function>Tcl_UtfToExternalDString</function> and
+<function>Tcl_ExternalToUtfDString</function>.</para>
+
+<para><function>Tcl_GetEncodingName</function> is roughly the inverse of <function>Tcl_GetEncoding</function>.
+Given an <emphasis remap='I'>encoding</emphasis>, the return value is the <emphasis remap='I'>name</emphasis> argument that
+was used to create the encoding.  The string returned by 
+<function>Tcl_GetEncodingName</function> is only guaranteed to persist until the
+<emphasis remap='I'>encoding</emphasis> is deleted.  The caller must not modify this string.</para>
+
+<para><function>Tcl_SetSystemEncoding</function> sets the default encoding that should be used
+whenever the user passes a NULL value for the <emphasis remap='I'>encoding</emphasis> argument to
+any of the other encoding functions.  If <emphasis remap='I'>name</emphasis> is NULL, the system
+encoding is reset to the default system encoding, <emphasis remap='B'>binary</emphasis>.  If the
+name did not refer to any known or loadable encoding, <emphasis remap='B'>TCL_ERROR</emphasis> is
+returned and an error message is left in <emphasis remap='I'>interp</emphasis>.  Otherwise, this
+procedure increments the reference count of the new system encoding,
+decrements the reference count of the old system encoding, and returns
+<emphasis remap='B'>TCL_OK</emphasis>.</para>
+
+<!-- .VS 8.5 -->
+<para><function>Tcl_GetEncodingNameFromEnvironment</function> provides a means for the Tcl
+library to report the encoding name it believes to be the correct one
+to use as the system encoding, based on system calls and examination of
+the environment suitable for the platform.  It accepts <emphasis remap='I'>bufPtr</emphasis>,
+a pointer to an uninitialized or freed <type>Tcl_DString</type> and writes
+the encoding name to it.  The <emphasis remap='B'>Tcl_DStringValue</emphasis> is returned.</para>
+<!-- .VE 8.5 -->
+
+<para><function>Tcl_GetEncodingNames</function> sets the <emphasis remap='I'>interp</emphasis> result to a list
+consisting of the names of all the encodings that are currently defined
+or can be dynamically loaded, searching the encoding path specified by
+<function>Tcl_SetDefaultEncodingDir</function>.  This procedure does not ensure that the
+dynamically-loadable encoding files contain valid data, but merely that they
+exist.</para>
+
+<para><function>Tcl_CreateEncoding</function> defines a new encoding and registers the C
+procedures that are called back to convert between the encoding and
+UTF-8.  Encodings created by <function>Tcl_CreateEncoding</function> are thereafter
+visible in the database used by <function>Tcl_GetEncoding</function>.  Just as with the
+<function>Tcl_GetEncoding</function> procedure, the return value is a token that
+represents the encoding and can be used in subsequent calls to other
+encoding functions.  <function>Tcl_CreateEncoding</function> returns an encoding with a
+reference count of 1. If an encoding with the specified <emphasis remap='I'>name</emphasis>
+already exists, then its entry in the database is replaced with the new
+encoding; the token for the old encoding will remain valid and continue
+to behave as before, but users of the new token will now call the new
+encoding procedures.</para>  
+
+<para>The <emphasis remap='I'>typePtr</emphasis> argument to <function>Tcl_CreateEncoding</function> contains information 
+about the name of the encoding and the procedures that will be called to
+convert between this encoding and UTF-8.  It is defined as follows:</para>
+
+<programlisting remap='CS'>
+typedef struct Tcl_EncodingType {
+        const char *<emphasis remap='I'>encodingName</emphasis>;
+        Tcl_EncodingConvertProc *<emphasis remap='I'>toUtfProc</emphasis>;
+        Tcl_EncodingConvertProc *<emphasis remap='I'>fromUtfProc</emphasis>;
+        Tcl_EncodingFreeProc *<emphasis remap='I'>freeProc</emphasis>;
+        ClientData <varname role='parameter'>clientData</varname>;
+        int <emphasis remap='I'>nullSize</emphasis>;
+} Tcl_EncodingType;  
+</programlisting> <!-- remap='CE' -->
+
+<para>The <emphasis remap='I'>encodingName</emphasis> provides a string name for the encoding, by
+which it can be referred in other procedures such as
+<function>Tcl_GetEncoding</function>.  The <emphasis remap='I'>toUtfProc</emphasis> refers to a callback
+procedure to invoke to convert text from this encoding into UTF-8.
+The <emphasis remap='I'>fromUtfProc</emphasis> refers to a callback procedure to invoke to
+convert text from UTF-8 into this encoding.  The <emphasis remap='I'>freeProc</emphasis> refers
+to a callback procedure to invoke when this encoding is deleted.  The
+<emphasis remap='I'>freeProc</emphasis> field may be NULL.  The <varname role='parameter'>clientData</varname> contains an
+arbitrary one-word value passed to <emphasis remap='I'>toUtfProc</emphasis>, <emphasis remap='I'>fromUtfProc</emphasis>,
+and <emphasis remap='I'>freeProc</emphasis> whenever they are called.  Typically, this is a
+pointer to a data structure containing encoding-specific information
+that can be used by the callback procedures.  For instance, two very
+similar encodings such as <emphasis remap='B'>ascii</emphasis> and <emphasis remap='B'>macRoman</emphasis> may use the
+same callback procedure, but use different values of <varname role='parameter'>clientData</varname>
+to control its behavior.  The <emphasis remap='I'>nullSize</emphasis> specifies the number of
+zero bytes that signify end-of-string in this encoding.  It must be
+<literal>1</literal> (for single-byte or multi-byte encodings like ASCII or
+Shift-JIS) or <literal>2</literal> (for double-byte encodings like Unicode).
+Constant-sized encodings with 3 or more bytes per character (such as
+CNS11643) are not accepted.</para>
+
+<para>The callback procedures <emphasis remap='I'>toUtfProc</emphasis> and <emphasis remap='I'>fromUtfProc</emphasis> should match the
+type <function>Tcl_EncodingConvertProc</function>:</para>
+
+<programlisting remap='CS'>
+<funcsynopsis>
+<funcprototype>
+<funcdef>typedef int <function>Tcl_EncodingConvertProc</function></funcdef>
+    <paramdef>ClientData <parameter>clientData</parameter></paramdef>
+    <paramdef>const char * <parameter>src</parameter></paramdef>
+    <paramdef>int <parameter>srcLen</parameter></paramdef>
+    <paramdef>int <parameter>flags</parameter></paramdef>
+    <paramdef>Tcl_EncodingState * <parameter>statePtr</parameter></paramdef>
+    <paramdef>char * <parameter>dst</parameter></paramdef>
+    <paramdef>int <parameter>dstLen</parameter></paramdef>
+    <paramdef>int * <parameter>srcReadPtr</parameter></paramdef>
+    <paramdef>int * <parameter>dstWrotePtr</parameter></paramdef>
+    <paramdef>int * <parameter>dstCharsPtr</parameter></paramdef>
+</funcprototype>
+</funcsynopsis>
+</programlisting> <!-- remap='CE' -->
+<para>The <emphasis remap='I'>toUtfProc</emphasis> and <emphasis remap='I'>fromUtfProc</emphasis> procedures are called by the
+<function>Tcl_ExternalToUtf</function> or <function>Tcl_UtfToExternal</function> family of functions to
+perform the actual conversion.  The <varname role='parameter'>clientData</varname> parameter to these
+procedures is the same as the <varname role='parameter'>clientData</varname> field specified to
+<function>Tcl_CreateEncoding</function> when the encoding was created.  The remaining
+arguments to the callback procedures are the same as the arguments,
+documented at the top, to <function>Tcl_ExternalToUtf</function> or
+<function>Tcl_UtfToExternal</function>, with the following exceptions.  If the
+<varname role='parameter'>srcLen</varname> argument to one of those high-level functions is negative,
+the value passed to the callback procedure will be the appropriate
+encoding-specific string length of <varname role='parameter'>src</varname>.  If any of the <varname role='parameter'>srcReadPtr</varname>, 
+<varname role='parameter'>dstWrotePtr</varname>, or <varname role='parameter'>dstCharsPtr</varname> arguments to one of the high-level
+functions is NULL, the corresponding value passed to the callback
+procedure will be a non-NULL location.</para>
+
+<para>The callback procedure <emphasis remap='I'>freeProc</emphasis>, if non-NULL, should match the type 
+<function>Tcl_EncodingFreeProc</function>:</para>
+<programlisting remap='CS'>
+<funcsynopsis>
+<funcprototype>
+<funcdef>typedef void <function>Tcl_EncodingFreeProc</function></funcdef>
+    <paramdef>ClientData <parameter>clientData</parameter></paramdef>
+</funcprototype>
+</funcsynopsis>
+</programlisting> <!-- remap='CE' -->
+<para>This <emphasis remap='I'>freeProc</emphasis> function is called when the encoding is deleted.  The
+<varname role='parameter'>clientData</varname> parameter is the same as the <varname role='parameter'>clientData</varname> field
+specified to <function>Tcl_CreateEncoding</function> when the encoding was created.</para>  
+
+<!-- .VS 8.5 -->
+<para><emphasis remap='B'>Tcl_GetEncodingSearchPath</emphasis> and <function>Tcl_SetEncodingSearchPath</function>
+are called to access and set the list of filesystem directories searched
+for encoding data files.</para>  
+
+<para>The value returned by <emphasis remap='B'>Tcl_GetEncodingSearchPath</emphasis>
+is the value stored by the last successful call to
+<function>Tcl_SetEncodingSearchPath</function>.  If no calls to
+<function>Tcl_SetEncodingSearchPath</function> have occurred, Tcl will compute an initial
+value based on the environment.  There is one encoding search path for the
+entire process, shared by all threads in the process.</para>
+
+<para><function>Tcl_SetEncodingSearchPath</function> stores <emphasis remap='I'>searchPath</emphasis> and returns
+<emphasis remap='B'>TCL_OK</emphasis>, unless <emphasis remap='I'>searchPath</emphasis> is not a valid Tcl list, which
+causes <emphasis remap='B'>TCL_ERROR</emphasis> to be returned.  The elements of <emphasis remap='I'>searchPath</emphasis>
+are not verified as existing readable filesystem directories.  When
+searching for encoding data files takes place, and non-existent or
+non-readable filesystem directories on the <emphasis remap='I'>searchPath</emphasis> are silently
+ignored.</para>
+
+<para><function>Tcl_GetDefaultEncodingDir</function> and <function>Tcl_SetDefaultEncodingDir</function>
+are obsolete interfaces best replaced with calls to
+<emphasis remap='B'>Tcl_GetEncodingSearchPath</emphasis> and <function>Tcl_SetEncodingSearchPath</function>.
+They are called to access and set the first element of the <emphasis remap='I'>searchPath</emphasis>
+list.  Since Tcl searches <emphasis remap='I'>searchPath</emphasis> for encoding data files in
+list order, these routines establish the
+<quote>default</quote>
+directory in which to find encoding data files.</para>
+<!-- .VE 8.5 -->
+</refsect1>
+
+<refsect1 xml:id='encoding_files'><title>ENCODING FILES</title>
+<para>Space would prohibit precompiling into Tcl every possible encoding
+algorithm, so many encodings are stored on disk as dynamically-loadable
+encoding files.  This behavior also allows the user to create additional
+encoding files that can be loaded using the same mechanism.  These
+encoding files contain information about the tables and/or escape
+sequences used to map between an external encoding and Unicode.  The
+external encoding may consist of single-byte, multi-byte, or double-byte
+characters.</para>  
+
+<para>Each dynamically-loadable encoding is represented as a text file.  The
+initial line of the file, beginning with a
+<quote>#</quote>
+symbol, is a comment
+that provides a human-readable description of the file.  The next line
+identifies the type of encoding file.  It can be one of the following
+letters:</para>
+<variablelist remap='IP'>
+  <varlistentry>
+  <term>[1] <emphasis remap='B'>S</emphasis></term>
+  <listitem>
+<para>A single-byte encoding, where one character is always one byte long in the
+encoding.  An example is <emphasis remap='B'>iso8859-1</emphasis>, used by many European languages.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term>[2] <emphasis remap='B'>D</emphasis></term>
+  <listitem>
+<para>A double-byte encoding, where one character is always two bytes long in the
+encoding.  An example is <emphasis remap='B'>big5</emphasis>, used for Chinese text.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term>[3] <emphasis remap='B'>M</emphasis></term>
+  <listitem>
+<para>A multi-byte encoding, where one character may be either one or two bytes long.
+Certain bytes are lead bytes, indicating that another byte must follow
+and that together the two bytes represent one character.  Other bytes are not
+lead bytes and represent themselves.  An example is <emphasis remap='B'>shiftjis</emphasis>, used by
+many Japanese computers.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term>[4] <emphasis remap='B'>E</emphasis></term>
+  <listitem>
+<para>An escape-sequence encoding, specifying that certain sequences of bytes
+do not represent characters, but commands that describe how following bytes
+should be interpreted.</para>  
+  </listitem>
+  </varlistentry>
+</variablelist>
+
+<para>The rest of the lines in the file depend on the type.</para>  
+
+<para>Cases [1], [2], and [3] are collectively referred to as table-based encoding
+files.  The lines in a table-based encoding file are in the same
+format as this example taken from the <emphasis remap='B'>shiftjis</emphasis> encoding (this is not
+the complete file):</para>
+<programlisting remap='CS'>
+# Encoding file: shiftjis, multi-byte
+M
+003F 0 40
+00
+0000000100020003000400050006000700080009000A000B000C000D000E000F
+0010001100120013001400150016001700180019001A001B001C001D001E001F
+0020002100220023002400250026002700280029002A002B002C002D002E002F
+0030003100320033003400350036003700380039003A003B003C003D003E003F
+0040004100420043004400450046004700480049004A004B004C004D004E004F
+0050005100520053005400550056005700580059005A005B005C005D005E005F
+0060006100620063006400650066006700680069006A006B006C006D006E006F
+0070007100720073007400750076007700780079007A007B007C007D203E007F
+0080000000000000000000000000000000000000000000000000000000000000
+0000000000000000000000000000000000000000000000000000000000000000
+0000FF61FF62FF63FF64FF65FF66FF67FF68FF69FF6AFF6BFF6CFF6DFF6EFF6F
+FF70FF71FF72FF73FF74FF75FF76FF77FF78FF79FF7AFF7BFF7CFF7DFF7EFF7F
+FF80FF81FF82FF83FF84FF85FF86FF87FF88FF89FF8AFF8BFF8CFF8DFF8EFF8F
+FF90FF91FF92FF93FF94FF95FF96FF97FF98FF99FF9AFF9BFF9CFF9DFF9EFF9F
+0000000000000000000000000000000000000000000000000000000000000000
+0000000000000000000000000000000000000000000000000000000000000000
+81
+0000000000000000000000000000000000000000000000000000000000000000
+0000000000000000000000000000000000000000000000000000000000000000
+0000000000000000000000000000000000000000000000000000000000000000
+0000000000000000000000000000000000000000000000000000000000000000
+300030013002FF0CFF0E30FBFF1AFF1BFF1FFF01309B309C00B4FF4000A8FF3E
+FFE3FF3F30FD30FE309D309E30034EDD30053006300730FC20152010FF0F005C
+301C2016FF5C2026202520182019201C201DFF08FF0930143015FF3BFF3DFF5B
+FF5D30083009300A300B300C300D300E300F30103011FF0B221200B100D70000
+00F7FF1D2260FF1CFF1E22662267221E22342642264000B0203220332103FFE5
+FF0400A200A3FF05FF03FF06FF0AFF2000A72606260525CB25CF25CE25C725C6
+25A125A025B325B225BD25BC203B301221922190219121933013000000000000
+000000000000000000000000000000002208220B2286228722822283222A2229
+000000000000000000000000000000002227222800AC21D221D4220022030000
+0000000000000000000000000000000000000000222022A52312220222072261
+2252226A226B221A223D221D2235222B222C0000000000000000000000000000
+212B2030266F266D266A2020202100B6000000000000000025EF000000000000
+</programlisting> <!-- remap='CE' -->
+
+<para>The third line of the file is three numbers.  The first number is the
+fallback character (in base 16) to use when converting from UTF-8 to this
+encoding.  The second number is a <literal>1</literal> if this file represents the
+encoding for a symbol font, or <literal>0</literal> otherwise.  The last number (in base
+10) is how many pages of data follow.</para>  
+
+<para>Subsequent lines in the example above are pages that describe how to map
+from the encoding into 2-byte Unicode.  The first line in a page identifies
+the page number.  Following it are 256 double-byte numbers, arranged as 16
+rows of 16 numbers.  Given a character in the encoding, the high byte of
+that character is used to select which page, and the low byte of that
+character is used as an index to select one of the double-byte numbers in
+that page - the value obtained being the corresponding Unicode character.
+By examination of the example above, one can see that the characters 0x7E
+and 0x8163 in <emphasis remap='B'>shiftjis</emphasis> map to 203E and 2026 in Unicode, respectively.</para>
+
+<para>Following the first page will be all the other pages, each in the same
+format as the first: one number identifying the page followed by 256
+double-byte Unicode characters.  If a character in the encoding maps to the
+Unicode character 0000, it means that the character does not actually exist.
+If all characters on a page would map to 0000, that page can be omitted.</para>
+
+<para>Case [4] is the escape-sequence encoding file.  The lines in an this type of
+file are in the same format as this example taken from the <emphasis remap='B'>iso2022-jp</emphasis>
+encoding:</para>
+<programlisting remap='CS'>
+<synopsis>
+# Encoding file: iso2022-jp, escape-driven
+E
+init		{}
+final		{}
+iso8859-1	\x1b(B
+jis0201		\x1b(J
+jis0208		\x1b$@
+jis0208		\x1b$B
+jis0212		\x1b$(D
+gb2312		\x1b$A
+ksc5601		\x1b$(C
+</synopsis>
+</programlisting> <!-- remap='CE' -->
+
+<para>In the file, the first column represents an option and the second column
+is the associated value.  <emphasis remap='B'>init</emphasis> is a string to emit or expect before
+the first character is converted, while <emphasis remap='B'>final</emphasis> is a string to emit
+or expect after the last character.  All other options are names of
+table-based encodings; the associated value is the escape-sequence that
+marks that encoding.  Tcl syntax is used for the values; in the above
+example, for instance,
+<quote><emphasis remap='B'>{}</emphasis></quote>
+represents the empty string and
+<quote><emphasis remap='B'>\x1b</emphasis></quote>
+represents character 27.</para>
+
+<para>When <function>Tcl_GetEncoding</function> encounters an encoding <emphasis remap='I'>name</emphasis> that has not
+been loaded, it attempts to load an encoding file called <emphasis remap='I'>name</emphasis><markup>.enc</markup>
+from the <emphasis remap='B'>encoding</emphasis> subdirectory of each directory that Tcl searches
+for its script library.  If the encoding file exists, but is
+malformed, an error message will be left in <emphasis remap='I'>interp</emphasis>.</para>
+</refsect1>
+
+<refsect1 xml:id='keywords'><title>KEYWORDS</title>
+<para>utf, encoding, convert</para>
+</refsect1>
+</refentry>
+

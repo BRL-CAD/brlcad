@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man+tkman by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='signal3'>
+
+<!-- '\" Copyright (c) 2001 ActiveState Tool Corp. -->
+
+<!-- '\" See the file "license.terms" for information on usage and redistribution
+'\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
+'\" 
+'\" RCS: @(#) $Id$ -->
+<refentryinfo><date>8.3</date></refentryinfo>
+<refmeta>
+<refentrytitle>Tcl_SignalId</refentrytitle>
+<manvolnum>3</manvolnum>
+<refmiscinfo class='date'>8.3</refmiscinfo>
+<refmiscinfo class='source'>Tcl</refmiscinfo>
+<refmiscinfo class='manual'>Tcl Library Procedures</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>Tcl_SignalId</refname>
+<refname>Tcl_SignalMsg</refname>
+<refpurpose>Convert signal codes</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<funcsynopsis>
+<funcsynopsisinfo>
+#include &lt;tcl.h&gt;
+
+</funcsynopsisinfo>
+<funcprototype>
+<funcdef>const char *<function>Tcl_SignalId</function></funcdef>
+<paramdef><parameter>sig</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef>const char *<function>Tcl_SignalMsg</function></funcdef>
+<paramdef><parameter>sig</parameter></paramdef>
+</funcprototype>
+</funcsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='arguments'><title>ARGUMENTS</title>
+<!-- .AS int sig -->
+<informaltable>
+<tgroup cols='3'>
+<tbody>
+
+<row><entry>"int"</entry><entry>"sig"</entry><entry>"in"</entry>
+<entry>
+<para>A POSIX signal number such as <constant>SIGPIPE</constant>.</para>
+<!-- .BE -->
+</entry>
+</row>
+</tbody>
+</tgroup>
+</informaltable>
+
+</refsect1>
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para><function>Tcl_SignalId</function> and <function>Tcl_SignalMsg</function> return a string
+representation of the provided signal number (<emphasis remap='I'>sig</emphasis>).
+<function>Tcl_SignalId</function> returns a machine-readable textual identifier such
+as
+<quote>SIGPIPE</quote>.
+<function>Tcl_SignalMsg</function> returns a human-readable string such as
+<quote>bus error</quote>.
+The strings returned by these functions are
+statically allocated and the caller must not free or modify them.</para>
+
+</refsect1>
+
+<refsect1 xml:id='keywords'><title>KEYWORDS</title>
+<para>signals, signal numbers</para>
+</refsect1>
+</refentry>
+

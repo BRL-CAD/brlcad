@@ -1,0 +1,318 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man+tkman by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='setresult3'>
+
+<!-- '\" Copyright (c) 1989\-1993 The Regents of the University of California.
+'\" Copyright (c) 1994\-1997 Sun Microsystems, Inc. -->
+
+<!-- '\" See the file "license.terms" for information on usage and redistribution
+'\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
+'\" 
+'\" RCS: @(#) $Id$
+'\"  -->
+<refentryinfo><date>8.0</date></refentryinfo>
+<refmeta>
+<refentrytitle>Tcl_SetResult</refentrytitle>
+<manvolnum>3</manvolnum>
+<refmiscinfo class='date'>8.0</refmiscinfo>
+<refmiscinfo class='source'>Tcl</refmiscinfo>
+<refmiscinfo class='manual'>Tcl Library Procedures</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>Tcl_SetObjResult</refname>
+<refname>Tcl_GetObjResult</refname>
+<refname>Tcl_SetResult</refname>
+<refname>Tcl_GetStringResult</refname>
+<refname>Tcl_AppendResult</refname>
+<refname>Tcl_AppendResultVA</refname>
+<refname>Tcl_AppendElement</refname>
+<refname>Tcl_ResetResult</refname>
+<refname>Tcl_FreeResult</refname>
+<refpurpose>manipulate Tcl result</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<funcsynopsis>
+<funcsynopsisinfo>
+#include &lt;tcl.h&gt;
+
+</funcsynopsisinfo>
+<funcprototype>
+<funcdef><function>Tcl_SetObjResult</function></funcdef>
+<paramdef><parameter>interp</parameter></paramdef>
+<paramdef><parameter>objPtr</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef><function>Tcl_Obj</function> *Tcl_GetObjResult</funcdef>
+<paramdef><parameter>interp</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef><function>Tcl_SetResult</function></funcdef>
+<paramdef><parameter>interp</parameter></paramdef>
+<paramdef><parameter>result</parameter></paramdef>
+<paramdef><parameter>freeProc</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef>const char *<function>Tcl_GetStringResult</function></funcdef>
+<paramdef><parameter>interp</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef><function>Tcl_AppendResult</function></funcdef>
+<paramdef><parameter>interp</parameter></paramdef>
+<paramdef><parameter>result</parameter></paramdef>
+<paramdef><parameter>result</parameter></paramdef>
+<paramdef><parameter>...</parameter></paramdef>
+<paramdef><parameter>( char *) NULL</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef><function>Tcl_AppendResultVA</function></funcdef>
+<paramdef><parameter>interp</parameter></paramdef>
+<paramdef><parameter>argList</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef><function>Tcl_AppendElement</function></funcdef>
+<paramdef><parameter>interp</parameter></paramdef>
+<paramdef><parameter>element</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef><function>Tcl_ResetResult</function></funcdef>
+<paramdef><parameter>interp</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef><function>Tcl_FreeResult</function></funcdef>
+<paramdef><parameter>interp</parameter></paramdef>
+</funcprototype>
+</funcsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='arguments'><title>ARGUMENTS</title>
+<!-- .AS Tcl_FreeProc freeProc out -->
+<informaltable>
+<tgroup cols='3'>
+<tbody>
+
+<row><entry>"Tcl_Interp"</entry><entry>"*interp"</entry><entry>"out"</entry>
+<entry>
+<para>Interpreter whose result is to be modified or read.</para>
+</entry>
+</row>
+<row><entry>Tcl_Obj</entry><entry>*objPtr</entry><entry>in</entry>
+<entry>
+<para>Object value to become result for <emphasis remap='I'>interp</emphasis>.</para>
+</entry>
+</row>
+<row><entry>char</entry><entry>*result</entry><entry>in</entry>
+<entry>
+<para>String value to become result for <emphasis remap='I'>interp</emphasis> or to be
+appended to the existing result.</para>
+</entry>
+</row>
+<row><entry>char</entry><entry>*element</entry><entry>in</entry>
+<entry>
+<para>String value to append as a list element
+to the existing result of <emphasis remap='I'>interp</emphasis>.</para>
+</entry>
+</row>
+<row><entry>Tcl_FreeProc</entry><entry>*freeProc</entry><entry>in</entry>
+<entry>
+<para>Address of procedure to call to release storage at
+<emphasis remap='I'>result</emphasis>, or <emphasis remap='B'>TCL_STATIC</emphasis>, <emphasis remap='B'>TCL_DYNAMIC</emphasis>, or
+<emphasis remap='B'>TCL_VOLATILE</emphasis>.</para>
+</entry>
+</row>
+<row><entry>va_list</entry><entry>argList</entry><entry>in</entry>
+<entry>
+<para>An argument list which must have been initialized using
+<emphasis remap='B'>va_start</emphasis>, and cleared using <emphasis remap='B'>va_end</emphasis>.</para>
+<!-- .BE -->
+</entry>
+</row>
+</tbody>
+</tgroup>
+</informaltable>
+
+</refsect1>
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para>The procedures described here are utilities for manipulating the
+result value in a Tcl interpreter.
+The interpreter result may be either a Tcl object or a string.
+For example, <function>Tcl_SetObjResult</function> and <function>Tcl_SetResult</function>
+set the interpreter result to, respectively, an object and a string.
+Similarly, <emphasis remap='B'>Tcl_GetObjResult</emphasis> and <function>Tcl_GetStringResult</function>
+return the interpreter result as an object and as a string.
+The procedures always keep the string and object forms
+of the interpreter result consistent.
+For example, if <function>Tcl_SetObjResult</function> is called to set
+the result to an object,
+then <function>Tcl_GetStringResult</function> is called,
+it will return the object's string value.</para>
+
+<para><function>Tcl_SetObjResult</function>
+arranges for <emphasis remap='I'>objPtr</emphasis> to be the result for <emphasis remap='I'>interp</emphasis>,
+replacing any existing result.
+The result is left pointing to the object
+referenced by <emphasis remap='I'>objPtr</emphasis>.
+<emphasis remap='I'>objPtr</emphasis>'s reference count is incremented
+since there is now a new reference to it from <emphasis remap='I'>interp</emphasis>.
+The reference count for any old result object
+is decremented and the old result object is freed if no
+references to it remain.</para>
+
+<para><emphasis remap='B'>Tcl_GetObjResult</emphasis> returns the result for <emphasis remap='I'>interp</emphasis> as an object.
+The object's reference count is not incremented;
+if the caller needs to retain a long-term pointer to the object
+they should use <emphasis remap='B'>Tcl_IncrRefCount</emphasis> to increment its reference count
+in order to keep it from being freed too early or accidentally changed.</para>
+
+<para><function>Tcl_SetResult</function>
+arranges for <emphasis remap='I'>result</emphasis> to be the result for the current Tcl
+command in <emphasis remap='I'>interp</emphasis>, replacing any existing result.
+The <emphasis remap='I'>freeProc</emphasis> argument specifies how to manage the storage
+for the <emphasis remap='I'>result</emphasis> argument;
+it is discussed in the section
+<emphasis remap='B'>THE TCL_FREEPROC ARGUMENT TO TCL_SETRESULT</emphasis> below.
+If <emphasis remap='I'>result</emphasis> is <emphasis remap='B'>NULL</emphasis>, then <emphasis remap='I'>freeProc</emphasis> is ignored
+and <function>Tcl_SetResult</function>
+re-initializes <emphasis remap='I'>interp</emphasis>'s result to point to an empty string.</para>
+
+<para><function>Tcl_GetStringResult</function> returns the result for <emphasis remap='I'>interp</emphasis> as a string.
+If the result was set to an object by a <function>Tcl_SetObjResult</function> call,
+the object form will be converted to a string and returned.
+If the object's string representation contains null bytes,
+this conversion will lose information.
+For this reason, programmers are encouraged to
+write their code to use the new object API procedures
+and to call <emphasis remap='B'>Tcl_GetObjResult</emphasis> instead.</para>
+
+<para><function>Tcl_ResetResult</function> clears the result for <emphasis remap='I'>interp</emphasis>
+and leaves the result in its normal empty initialized state.
+If the result is an object,
+its reference count is decremented and the result is left
+pointing to an unshared object representing an empty string.
+If the result is a dynamically allocated string, its memory is free*d
+and the result is left as a empty string.
+<function>Tcl_ResetResult</function> also clears the error state managed by
+<emphasis remap='B'>Tcl_AddErrorInfo</emphasis>, <emphasis remap='B'>Tcl_AddObjErrorInfo</emphasis>,
+and <emphasis remap='B'>Tcl_SetErrorCode</emphasis>.</para>
+
+<para><function>Tcl_AppendResult</function> makes it easy to build up Tcl results in pieces.
+It takes each of its <emphasis remap='I'>result</emphasis> arguments and appends them in order
+to the current result associated with <emphasis remap='I'>interp</emphasis>.
+If the result is in its initialized empty state (e.g. a command procedure
+was just invoked or <function>Tcl_ResetResult</function> was just called),
+then <function>Tcl_AppendResult</function> sets the result to the concatenation of
+its <emphasis remap='I'>result</emphasis> arguments.
+<function>Tcl_AppendResult</function> may be called repeatedly as additional pieces
+of the result are produced.
+<function>Tcl_AppendResult</function> takes care of all the
+storage management issues associated with managing <emphasis remap='I'>interp</emphasis>'s
+result, such as allocating a larger result area if necessary.
+It also manages conversion to and from the <emphasis remap='I'>result</emphasis> field of the
+<emphasis remap='I'>interp</emphasis> so as to handle backward-compatibility with old-style
+extensions.
+Any number of <emphasis remap='I'>result</emphasis> arguments may be passed in a single
+call; the last argument in the list must be a NULL pointer.</para>
+
+<para><function>Tcl_AppendResultVA</function> is the same as <function>Tcl_AppendResult</function> except that
+instead of taking a variable number of arguments it takes an argument list.</para>
+</refsect1>
+
+<refsect1 xml:id='old_string_procedures'><title>OLD STRING PROCEDURES</title>
+<para>Use of the following procedures (is deprecated
+since they manipulate the Tcl result as a string.
+Procedures such as <function>Tcl_SetObjResult</function>
+that manipulate the result as an object
+can be significantly more efficient.</para>
+
+<para><function>Tcl_AppendElement</function> is similar to <function>Tcl_AppendResult</function> in
+that it allows results to be built up in pieces.
+However, <function>Tcl_AppendElement</function> takes only a single <emphasis remap='I'>element</emphasis>
+argument and it appends that argument to the current result
+as a proper Tcl list element.
+<function>Tcl_AppendElement</function> adds backslashes or braces if necessary
+to ensure that <emphasis remap='I'>interp</emphasis>'s result can be parsed as a list and that
+<emphasis remap='I'>element</emphasis> will be extracted as a single element.
+Under normal conditions, <function>Tcl_AppendElement</function> will add a space
+character to <emphasis remap='I'>interp</emphasis>'s result just before adding the new
+list element, so that the list elements in the result are properly
+separated.
+However if the new list element is the first in a list or sub-list
+(i.e. <emphasis remap='I'>interp</emphasis>'s current result is empty, or consists of the
+single character
+<quote>{</quote>,
+or ends in the characters
+<quote> {</quote>)
+then no space is added.</para>
+
+<para><function>Tcl_FreeResult</function> performs part of the work
+of <function>Tcl_ResetResult</function>.
+It frees up the memory associated with <emphasis remap='I'>interp</emphasis>'s result.
+It also sets <emphasis remap='I'>interp-&gt;freeProc</emphasis> to zero, but does not
+change <emphasis remap='I'>interp-&gt;result</emphasis> or clear error state.
+<function>Tcl_FreeResult</function> is most commonly used when a procedure
+is about to replace one result value with another.</para>
+</refsect1>
+
+<refsect1 xml:id='direct_access_to_interpgtresult_is_depre'><title>DIRECT ACCESS TO INTERP-&gt;RESULT IS DEPRECATED</title>
+<para>It used to be legal for programs to
+directly read and write <emphasis remap='I'>interp-&gt;result</emphasis>
+to manipulate the interpreter result.
+Direct access to <emphasis remap='I'>interp-&gt;result</emphasis> is now strongly deprecated
+because it can make the result's string and object forms inconsistent.
+Programs should always read the result
+using the procedures <emphasis remap='B'>Tcl_GetObjResult</emphasis> or <function>Tcl_GetStringResult</function>,
+and write the result using <function>Tcl_SetObjResult</function> or <function>Tcl_SetResult</function>.</para>
+</refsect1>
+
+<refsect1 xml:id='the_tcl_freeproc_argument_to_tcl_setresu'><title>THE TCL_FREEPROC ARGUMENT TO TCL_SETRESULT</title>
+<para><function>Tcl_SetResult</function>'s <emphasis remap='I'>freeProc</emphasis> argument specifies how 
+the Tcl system is to manage the storage for the <emphasis remap='I'>result</emphasis> argument.
+If <function>Tcl_SetResult</function> or <function>Tcl_SetObjResult</function> are called
+at a time when <emphasis remap='I'>interp</emphasis> holds a string result,
+they do whatever is necessary to dispose of the old string result
+(see the <emphasis remap='B'>Tcl_Interp</emphasis> manual entry for details on this).</para>
+
+<para>If <emphasis remap='I'>freeProc</emphasis> is <emphasis remap='B'>TCL_STATIC</emphasis> it means that <emphasis remap='I'>result</emphasis>
+refers to an area of static storage that is guaranteed not to be
+modified until at least the next call to <emphasis remap='B'>Tcl_Eval</emphasis>.
+If <emphasis remap='I'>freeProc</emphasis>
+is <emphasis remap='B'>TCL_DYNAMIC</emphasis> it means that <emphasis remap='I'>result</emphasis> was allocated with a call
+to <emphasis remap='B'>Tcl_Alloc</emphasis> and is now the property of the Tcl system.
+<function>Tcl_SetResult</function> will arrange for the string's storage to be
+released by calling <emphasis remap='B'>Tcl_Free</emphasis> when it is no longer needed.
+If <emphasis remap='I'>freeProc</emphasis> is <emphasis remap='B'>TCL_VOLATILE</emphasis> it means that <emphasis remap='I'>result</emphasis>
+points to an area of memory that is likely to be overwritten when
+<function>Tcl_SetResult</function> returns (e.g. it points to something in a stack frame).
+In this case <function>Tcl_SetResult</function> will make a copy of the string in
+dynamically allocated storage and arrange for the copy to be the
+result for the current Tcl command.</para>
+
+<para>If <emphasis remap='I'>freeProc</emphasis> is not one of the values <emphasis remap='B'>TCL_STATIC</emphasis>,
+<emphasis remap='B'>TCL_DYNAMIC</emphasis>, and <emphasis remap='B'>TCL_VOLATILE</emphasis>, then it is the address
+of a procedure that Tcl should call to free the string.
+This allows applications to use non-standard storage allocators.
+When Tcl no longer needs the storage for the string, it will
+call <emphasis remap='I'>freeProc</emphasis>. <emphasis remap='I'>FreeProc</emphasis> should have arguments and
+result that match the type <type>Tcl_FreeProc</type>:</para>
+<programlisting remap='CS'>
+<funcsynopsis>
+<funcsynopsisinfo>
+typedef void Tcl_FreeProc(char *blockPtr);
+</funcsynopsisinfo>
+</funcsynopsis>
+</programlisting> <!-- remap='CE' -->
+<para>When <emphasis remap='I'>freeProc</emphasis> is called, its <emphasis remap='I'>blockPtr</emphasis> will be set to
+the value of <emphasis remap='I'>result</emphasis> passed to <function>Tcl_SetResult</function>.</para>
+</refsect1>
+
+<refsect1 xml:id='see_also'><title>SEE ALSO</title>
+<para>Tcl_AddErrorInfo, Tcl_CreateObjCommand, Tcl_SetErrorCode, Tcl_Interp</para>
+</refsect1>
+
+<refsect1 xml:id='keywords'><title>KEYWORDS</title>
+<para>append, command, element, list, object, result, return value, interpreter</para>
+</refsect1>
+</refentry>
+

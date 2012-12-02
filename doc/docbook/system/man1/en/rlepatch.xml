@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='rlepatch1'>
+<!--  Copyright (c) 1986, University of Utah -->
+<refmeta>
+<refentrytitle>RLEPATCH</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class='source'>Nov 8, 1987</refmiscinfo>
+<refmiscinfo class='manual'>1</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>rlepatch</refname>
+<refpurpose>patch smaller RLE files over a larger image.</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<cmdsynopsis>
+  <command>rlepatch</command>    
+    <arg choice='opt'><arg choice='plain'>-o </arg><arg choice='plain'><replaceable>outfile</replaceable></arg></arg>
+    <arg choice='plain'><replaceable>infile</replaceable></arg>
+    <arg choice='plain' rep='repeat'><replaceable>patchfiles</replaceable></arg>
+    
+    <sbr/>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para><emphasis remap='I'>Rlepatch</emphasis>
+puts smaller RLE files on top of a larger RLE image.  One use
+for rlepatch is to place small "fix" images on top of a larger image that
+took a long time to compute.  Along with
+<citerefentry><refentrytitle>repos</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<command>rlepatch</command>
+can also be used as a simple way to build image mosaics.</para>
+
+<para>Unlike
+<citerefentry><refentrytitle>rlecomp</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<command>rlepatch</command>
+does not perform any arithmetic on the pixels.
+If the patch images overlap, the patches specified last cover those
+specified first.</para>
+
+<para>If the input files each contain multiple images, they are treated as
+streams of images merging to form a stream of output images.  I.e.,
+the
+<emphasis remap='I'>n</emphasis>th
+image in each input file becomes part of the
+<emphasis remap='I'>n</emphasis>th
+image in the output file.  The process ceases as soon as any input
+file reaches its end.</para>
+</refsect1>
+
+<refsect1 xml:id='options'><title>OPTIONS</title>
+<variablelist remap='TP'>
+  <varlistentry>
+  <term><emphasis remap='I'>infile</emphasis></term>
+  <listitem>
+<para>The background image will be read from this file.
+If input is to be taken from
+stdin, "-" must be specified here.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-o</option><replaceable> outfile</replaceable></term>
+  <listitem>
+<para>If specified, output will be written to this file, otherwise it will
+go to stdout.</para>
+  </listitem>
+  </varlistentry>
+</variablelist>
+</refsect1>
+
+<refsect1 xml:id='see_also'><title>SEE ALSO</title>
+<para><citerefentry><refentrytitle>rlecomp</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>crop</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>repos</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>urt</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>RLE</refentrytitle><manvolnum>5</manvolnum></citerefentry>.</para>
+</refsect1>
+
+<refsect1 xml:id='author'><title>AUTHOR</title>
+<para>John W. Peterson, University of Utah.</para>
+</refsect1>
+
+<refsect1 xml:id='bugs'><title>BUGS</title>
+<para><emphasis remap='I'>Rlepatch</emphasis>
+uses the "row" interface to the RLE library.  It would run
+much faster using the "raw" interface, particularly for placing small
+patches over a large image.   Even fixing it to work like
+<emphasis remap='I'>rlecomp</emphasis>
+(which uses
+"raw" mode only for non-overlapping images) would make a major improvement.</para>
+</refsect1>
+</refentry>
+

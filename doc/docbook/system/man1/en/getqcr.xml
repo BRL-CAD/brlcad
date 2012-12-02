@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='getqcr1'>
+<!--  Copyright (c) 1988, University of Utah -->
+<refmeta>
+<refentrytitle>GETQCR</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class='source'>Jan 25, 1988</refmiscinfo>
+<refmiscinfo class='manual'>1</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>getqcr</refname>
+<refpurpose>Photograph an RLE image with the Matrix QCR-Z camera</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<cmdsynopsis>
+  <command>getqcr</command>    
+    <arg choice='opt'>-v </arg>
+    <arg choice='opt'>-c </arg>
+    <arg choice='opt'>-d </arg>
+    <arg choice='opt'>-f </arg>
+    <arg choice='opt'><arg choice='plain'>-p </arg><arg choice='plain'><replaceable>xpos</replaceable></arg><arg choice='plain'><replaceable>ypos</replaceable></arg></arg>
+    <arg choice='opt'><arg choice='plain'>-e </arg><arg choice='plain'><replaceable>exposures</replaceable></arg></arg>
+    <arg choice='plain'><replaceable>infile</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para><emphasis remap='I'>Getqcr</emphasis>
+photographs an image on the Matrix QCR-Z camera.  The program
+reads the image once for each channel, and displays this on QCR-Z,
+moving the filter wheel as appropriate.  The colormap is currently
+ignored, so one must be applied first if needed (see applymap(1)).
+Since the QCR supports large images (2K or 4K pixels in size),
+most images will need to be stretched to fill the QCR-Z's image area.
+Both
+<citerefentry><refentrytitle>fant</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+and
+<citerefentry><refentrytitle>rlezoom</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+perform this function.</para>
+
+<para>The current support library assumes the QCR-Z is connected to an HP
+Series 300 machine, the library may need modifications for other HPIB
+interfaces.</para>
+</refsect1>
+
+<refsect1 xml:id='options'><title>OPTIONS</title>
+<variablelist remap='TP'>
+  <varlistentry>
+  <term><option>-v</option></term>
+  <listitem>
+<para>This enables verbose output.  Since exposing large images takes several
+minutes, this is generally useful to monitor progress.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-e</option><replaceable> exposures</replaceable></term>
+  <listitem>
+<para>Expose the film
+<emphasis remap='I'>exposures</emphasis>
+number of times.  This is much faster than running getqcr multiple times.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-d</option></term>
+  <listitem>
+<para>Double expose (same as "<option>-e 2</option>").</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-f</option></term>
+  <listitem>
+<para>Select high resolution (4K) mode.  Default is low resolution (2K).</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-c</option></term>
+  <listitem>
+<para>Center the image.  This ignores the position values in RLE header,
+and centers the image in the middle of the QCR-Z's camera field.
+The proper resolution (2K or 4K) is automatically selected depending
+on the image size (<option>-f</option> is ignored if <option>-c</option> is specified).</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-p</option><replaceable> xpos ypos</replaceable></term>
+  <listitem>
+<para>Position the image at a specific point.  Note getqcr uses the RLE
+coordinate system (origin at the bottom left) instead of the QCR-Z
+coordinate system.</para>
+  </listitem>
+  </varlistentry>
+</variablelist>
+</refsect1>
+
+<refsect1 xml:id='see_also'><title>SEE ALSO</title>
+<!-- .na -->
+<para><citerefentry><refentrytitle>applymap</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>rlezoom</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>fant</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>rleflip</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>urt</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>RLE</refentrytitle><manvolnum>5</manvolnum></citerefentry>.</para>
+<!-- .ad b -->
+</refsect1>
+
+<refsect1 xml:id='author'><title>AUTHOR</title>
+<para>John W. Peterson</para>
+</refsect1>
+
+<refsect1 xml:id='bugs'><title>BUGS</title>
+<para>The color map should be applied automatically.</para>
+
+<para>Currently uses "row" mode, it may run faster in "raw" mode.</para>
+
+<para>Single channel images should be photographed in black and white (they
+currently come out red).</para>
+
+<para>It was written for the 4x5 film back.  Shutter and film advance controls
+for the 35mm and Oxberry backs are not implemented.</para>
+</refsect1>
+</refentry>
+

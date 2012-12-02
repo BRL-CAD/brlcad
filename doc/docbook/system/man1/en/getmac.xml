@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='getmac1'>
+<!--  Copyright (c) 1986, University of Utah -->
+<refmeta>
+<refentrytitle>GETMAC</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class='source'>Jun 22, 1988</refmiscinfo>
+<refmiscinfo class='manual'>1</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>getmac</refname>
+<refpurpose>Display RLE images on a MacIntosh display.</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<cmdsynopsis>
+  <command>getmac</command>    
+    <arg choice='opt'>-d </arg>
+    <arg choice='opt'><replaceable>infile</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para>This program displays an
+<citerefentry><refentrytitle>RLE</refentrytitle><manvolnum>5</manvolnum></citerefentry>
+file on a MacIntosh display.
+It uses a dithering technique to take a
+full-color or gray scale image into the limited number of colors
+available.</para>
+
+<para>Clicking on the close box or typing a
+<emphasis remap='B'>q</emphasis>
+exits the program and returns to the MPW shell.  All other event
+processing is suspended until the program exits.</para>
+</refsect1>
+
+<refsect1 xml:id='options'><title>OPTIONS</title>
+<variablelist remap='TP'>
+  <varlistentry>
+  <term><option>-d</option></term>
+  <listitem>
+<para>Disables dithering.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>infile</emphasis></term>
+  <listitem>
+<para>Name of the
+<citerefentry><refentrytitle>RLE</refentrytitle><manvolnum>5</manvolnum></citerefentry>
+file to display.  If not specified, the image will be read from the
+standard input.</para>
+  </listitem>
+  </varlistentry>
+</variablelist>
+</refsect1>
+
+<refsect1 xml:id='see_also'><title>SEE ALSO</title>
+<para><citerefentry><refentrytitle>urt</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>RLE</refentrytitle><manvolnum>5</manvolnum></citerefentry>.</para>
+</refsect1>
+
+<refsect1 xml:id='author'><title>AUTHOR</title>
+<para>Spencer W. Thomas, University of Utah</para>
+
+<para>John Peterson, Apple Computer Inc.</para>
+</refsect1>
+
+<refsect1 xml:id='bugs'><title>BUGS</title>
+<para>Behaves unpredictably when it runs out of memory.
+If you have 2mb or less, don't run under multifinder.</para>
+</refsect1>
+
+<refsect1 xml:id='deficiencies'><title>DEFICIENCIES</title>
+<para>Ignores the color map.</para>
+</refsect1>
+</refentry>
+

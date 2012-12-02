@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='unslice1'>
+<!--  Copyright (c) 1987, University of Utah -->
+<refmeta>
+<refentrytitle>UNSLICE</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class='source'>May 21, 1987</refmiscinfo>
+<refmiscinfo class='manual'>1</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>unslice</refname>
+<refpurpose>Quickly assemble image slices</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<cmdsynopsis>
+  <command>unslice</command>    
+    <arg choice='opt'><arg choice='plain'>-f </arg><arg choice='plain'><replaceable>ctlfile</replaceable></arg></arg>
+    <arg choice='opt'><arg choice='plain'>-y </arg><arg choice='plain'><replaceable>ymax</replaceable></arg></arg>
+    <arg choice='opt'><arg choice='plain'>-o </arg><arg choice='plain'><replaceable>outfile</replaceable></arg></arg>
+    <arg choice='plain' rep='repeat'><replaceable>infiles</replaceable></arg>
+    
+</cmdsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para><emphasis remap='I'>Unslice</emphasis>
+quickly assembles a number of horizontal image strips into a single
+output image.  A typical use for <command>unslice</command> is to put together
+portions of an image ("slices") computed independently into a single
+output picture.  Because <command>unslice</command> uses the "raw" RLE library
+calls to read and write the images, it runs much faster than doing the
+equivalent operations with crop and comp.</para>
+
+<para><command>unslice</command> has two modes of operation.  If given the
+<option>-f</option>
+flag, <command>unslice</command> reads a control file telling it how to assemble
+the images.  This is a text file with two decimal numbers on each
+line, one line for each slice to be assembled into the output image.
+Each line gives the starting and stopping scanlines (inclusive) for
+each slice.  These must be in ascending order.  This is useful if the
+slices have excess image area that should be cropped away.</para>
+
+<para>If no control file is given, the
+<option>-y</option>
+flag is used.  This tells <command>unslice</command> what the maximum Y value of
+the output image is.
+<emphasis remap='I'>Unslice</emphasis>
+reads the files in order, using the RLE headers to
+determine where to place the slices.  If two slices overlap, the first
+scanlines from the second slice are thrown away.  In both cases, the slices
+must be in ascending order, and are expected to be of uniform width.</para>
+</refsect1>
+
+<refsect1 xml:id='see_also'><title>SEE ALSO</title>
+<para><citerefentry><refentrytitle>crop</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>rlecomp</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>rlepatch</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>repos</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>urt</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>RLE</refentrytitle><manvolnum>5</manvolnum></citerefentry>.</para>
+</refsect1>
+
+<refsect1 xml:id='author'><title>AUTHOR</title>
+<para>John W. Peterson</para>
+</refsect1>
+
+<refsect1 xml:id='bugs'><title>BUGS</title>
+<para><emphasis remap='I'>Unslice</emphasis>
+has really been superceded by
+<citerefentry><refentrytitle>rlepatch</refentrytitle><manvolnum>1</manvolnum></citerefentry>.</para>
+</refsect1>
+</refentry>
+

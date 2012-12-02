@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man+tkman by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='getuid3'>
+
+<!-- '\" Copyright (c) 1990 The Regents of the University of California.
+'\" Copyright (c) 1994\-1996 Sun Microsystems, Inc. -->
+
+<!-- '\" See the file "license.terms" for information on usage and redistribution
+'\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
+'\" 
+'\" RCS: @(#) $Id$
+'\"  -->
+<refmeta>
+<refentrytitle>Tk_GetUid</refentrytitle>
+<manvolnum>3</manvolnum>
+<refmiscinfo class='manual'>Tk</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>Tk_GetUid</refname>
+<refname>Tk_Uid</refname>
+<refpurpose>convert from string to unique identifier</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<funcsynopsis>
+<funcsynopsisinfo>
+#include &lt;tk.h&gt;
+
+</funcsynopsisinfo>
+<funcprototype>
+<funcdef>Tk_Uid <function>Tk_GetUid</function></funcdef>
+<paramdef><parameter>string</parameter></paramdef>
+</funcprototype>
+</funcsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='arguments'><title>ARGUMENTS</title>
+<para>String for which the corresponding unique identifier is
+desired.</para>
+<!-- .BE -->
+
+</refsect1>
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para><function>Tk_GetUid</function> returns the unique identifier corresponding
+to <emphasis remap='I'>string</emphasis>.
+Unique identifiers are similar to atoms in Lisp, and are used
+in Tk to speed up comparisons and
+searches.  A unique identifier (type Tk_Uid) is a string pointer
+and may be used anywhere that a variable of type
+<quote>char *</quote>
+could be used.  However, there is guaranteed to be exactly
+one unique identifier for any given string value.  If <function>Tk_GetUid</function>
+is called twice, once with string <emphasis remap='I'>a</emphasis> and once with string
+<emphasis remap='I'>b</emphasis>, and if <emphasis remap='I'>a</emphasis> and <emphasis remap='I'>b</emphasis> have the same string value
+(strcmp(a, b) == 0), then <function>Tk_GetUid</function> will return exactly
+the same Tk_Uid value for each call (Tk_GetUid(a) == Tk_GetUid(b)).
+This means that variables of type
+Tk_Uid may be compared directly (x == y) without having to call
+<emphasis remap='B'>strcmp</emphasis>.
+In addition, the return value from <function>Tk_GetUid</function> will have the
+same string value as its argument (strcmp(Tk_GetUid(a), a) == 0).</para>
+
+</refsect1>
+
+<refsect1 xml:id='keywords'><title>KEYWORDS</title>
+<para>atom, unique identifier</para>
+</refsect1>
+</refentry>
+

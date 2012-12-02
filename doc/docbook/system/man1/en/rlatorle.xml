@@ -1,0 +1,155 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='rlatorle1'>
+<!--  Copyright (c) 1990, Minnesota Supercomputer Center, Inc. -->
+<refmeta>
+<refentrytitle>RLATORLE</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class='source'>May 30, 1990</refmiscinfo>
+<refmiscinfo class='manual'>1</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>rlatorle</refname>
+<refpurpose>convert a Wavefront "rla" or "rlb" image file into an RLE image file.</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<cmdsynopsis>
+  <command>rlatorle</command>    
+    <arg choice='opt'>-b </arg>
+    <arg choice='opt'>-h </arg>
+    <arg choice='opt'>-v </arg>
+    <arg choice='opt'>-m </arg>
+    <arg choice='opt'>-o <replaceable>outfile</replaceable></arg>
+    <arg choice='opt'><replaceable>infile.rla</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para>This program converts Wavefront image files (rla or rlb formats) into Utah
+<citerefentry><refentrytitle>RLE</refentrytitle><manvolnum>5</manvolnum></citerefentry>
+image files.  Wavefront image files store RGB data as well as a matte channel.
+They also define a "bounding box" containing non-background pixels which is in
+many cases smaller than the total image area.  Only this non-background area is
+run length encoded.  When converting to an RLE file, the matte channel is
+stored as an alpha channel and the "bounding box" dimensions are ignored.  It
+is for this reason that in general the RLE version of the file will be larger
+than its Wavefront counterpart.</para>
+
+<para>The RLE file will contain a "true color" image
+(24 bits).  These RLE files may then be viewed using any RLE image viewer.  When
+they are displayed on an 8 bit display, the image will be dithered.  In order
+to produce a better looking image (on 8 bit displays), it is recommended that
+the image be quantizing (to 8 bit mapped color) prior to its display.  This may
+be done by piping the output of this program into the Utah
+<citerefentry><refentrytitle>mcut</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+or
+<citerefentry><refentrytitle>rlequant</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+utilities.
+An example of this is shown later.</para>
+
+</refsect1>
+
+<refsect1 xml:id='options'><title>OPTIONS</title>
+<variablelist remap='TP'>
+  <varlistentry>
+  <term><option>-b</option></term>
+  <listitem>
+<para>This option will cause rlatorle to convert from a Wavefront "rlb" image
+rather than use the default "rla" conversion.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-v</option></term>
+  <listitem>
+<para>This option will cause rlatorle to operate in verbose mode.  The header
+information is written to "stderr".</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-h</option></term>
+  <listitem>
+<para>This option allows the header of the wavefront image to be dumped to "stderr"
+without converting the file.  It is equivalent to using the -v option except
+that no file conversion takes place.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-m</option></term>
+  <listitem>
+<para>This option will cause rlatorle to ignore the RGB data and use the matte
+channel information to produce a monochrome image.  The resulting RLE image
+file will contain only one color channel instead of the usual four
+(RGB + alpha).</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-o</option><replaceable> outfile</replaceable></term>
+  <listitem>
+<para>If specified, the output will be written to this file.  If
+<emphasis remap='I'>outfile</emphasis>
+is "-", or if it is not specified, the output will be written to the
+standard output stream.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='I'>infile.rla</emphasis></term>
+  <listitem>
+<para>The name of the Wavefront image data file to be converted.  It is not necessary
+to supply the ".rla" or ".rlb" extension as it will be added to the supplied
+name if not already there.</para>
+  </listitem>
+  </varlistentry>
+</variablelist>
+</refsect1>
+
+<refsect1 xml:id='examples'><title>EXAMPLES</title>
+<variablelist remap='TP'>
+  <varlistentry>
+  <term>rlatorle -v test.0001.rla -o test.rle</term>
+  <listitem>
+<para>While running in verbose mode, convert test.0001.rla to RLE format and store
+resulting data in test.rle.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term>rlatorle test.0001.rla | mcut &gt;test.rle</term>
+  <listitem>
+<para>Convert test.0001.rla to RLE format and convert to 8 bit mapped color before
+storing data in test.rle</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term>rlatorle -h test.0001.rla</term>
+  <listitem>
+<para>Dump the header information of the Wavefront file called test.0001.rla.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term>rlatorle -b test.0001 | get4d</term>
+  <listitem>
+<para>Convert test.0001.rlb to RLE format and display the resulting image.</para>
+  </listitem>
+  </varlistentry>
+</variablelist>
+</refsect1>
+
+<refsect1 xml:id='see_also'><title>SEE ALSO</title>
+<para><citerefentry><refentrytitle>mcut</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>rlequant</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>rletorla</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>urt</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>RLE</refentrytitle><manvolnum>5</manvolnum></citerefentry>.</para>
+</refsect1>
+
+<refsect1 xml:id='author'><title>AUTHOR</title>
+<!-- .br -->
+<para>Wesley C. Barris
+<!-- .br -->
+Army High Performance Computing Research Center (AHPCRC)
+<!-- .br -->
+Minnesota Supercomputer Center, Inc.</para>
+</refsect1>
+</refentry>
+

@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man+tkman by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='class3'>
+
+<!-- '\" Copyright (c) 1993\-1998  Lucent Technologies, Inc. -->
+
+<!-- '\" See the file "license.terms" for information on usage and redistribution
+'\" of this file, and for a DISCLAIMER OF ALL WARRANTIES. -->
+
+<!-- '\" RCS: $Id$ -->
+
+<refentryinfo><date>3.0</date></refentryinfo>
+<refmeta>
+<refentrytitle>Itcl_CreateClass</refentrytitle>
+<manvolnum>3</manvolnum>
+<refmiscinfo class='date'>3.0</refmiscinfo>
+<refmiscinfo class='source'>itcl</refmiscinfo>
+<refmiscinfo class='manual'>[incr Tcl] Library Procedures</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>Itcl_CreateClass</refname>
+<refname>Itcl_DeleteClass</refname>
+<refname>Itcl_FindClass</refname>
+<refname>Itcl_IsClass</refname>
+<refname>Itcl_IsClassNamespace</refname>
+<refpurpose>Manipulate classes.</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<funcsynopsis>
+<funcsynopsisinfo>
+#include &lt;itclInt.h&gt;
+
+</funcsynopsisinfo>
+<funcprototype>
+<funcdef>int <function>Itcl_CreateClass</function></funcdef>
+<paramdef><parameter>interp</parameter></paramdef>
+<paramdef><parameter>path</parameter></paramdef>
+<paramdef><parameter>info</parameter></paramdef>
+<paramdef><parameter>rPtr</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef>int <function>Itcl_DeleteClass</function></funcdef>
+<paramdef><parameter>interp</parameter></paramdef>
+<paramdef><parameter>cdefnPtr</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef><function>ItclClass</function> *Itcl_FindClass</funcdef>
+<paramdef><parameter>interp</parameter></paramdef>
+<paramdef><parameter>path</parameter></paramdef>
+<paramdef><parameter>autoload</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef>int <function>Itcl_IsClass</function></funcdef>
+<paramdef><parameter>cmd</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef>int <function>Itcl_IsClassNamespace</function></funcdef>
+<paramdef><parameter>namesp</parameter></paramdef>
+</funcprototype>
+</funcsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='arguments'><title>ARGUMENTS</title>
+<para>Interpreter to modify.</para>
+<informaltable>
+<tgroup cols='3'>
+<tbody>
+
+<row><entry>"CONST char"</entry><entry>"*path"</entry><entry>"in"</entry>
+<entry>
+<para>Path of the class.</para>
+</entry>
+</row>
+<row><entry>ItclObjectInfo</entry><entry>*info</entry><entry>in</entry>
+<entry>
+<para>TODO.</para>
+</entry>
+</row>
+<row><entry>ItclClass</entry><entry>**rPtr</entry><entry>in/out</entry>
+<entry>
+<para>The address of the pointer to modify.</para>
+</entry>
+</row>
+<row><entry>ItclClass</entry><entry>*cdefnPtr</entry><entry>in</entry>
+<entry>
+<para>Pointer to class info struct.</para>
+</entry>
+</row>
+<row><entry>int</entry><entry>autoload</entry><entry>in</entry>
+<entry>
+<para>Flag value for if the class should be autoloaded</para>
+</entry>
+</row>
+<row><entry>Tcl_Command</entry><entry>cmd</entry><entry>in</entry>
+<entry>
+<para>Command to check.</para>
+</entry>
+</row>
+<row><entry>Tcl_Namespace</entry><entry>*namesp</entry><entry>in</entry>
+<entry>
+<para>Namespace to check.</para>
+<!-- .BE -->
+</entry>
+</row>
+</tbody>
+</tgroup>
+</informaltable>
+
+</refsect1>
+
+<refsect1 xml:id='keywords'><title>KEYWORDS</title>
+<para>class, find</para>
+</refsect1>
+</refentry>
+

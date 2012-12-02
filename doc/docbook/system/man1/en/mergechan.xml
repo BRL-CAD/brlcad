@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='mergechan1'>
+<!--  Copyright (c) 1986, University of Utah -->
+<refmeta>
+<refentrytitle>MERGECHAN</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class='source'>Nov 8, 1987</refmiscinfo>
+<refmiscinfo class='manual'>1</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>mergechan</refname>
+<refpurpose>merge channels from several RLE files into a single output stream</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<cmdsynopsis>
+  <command>mergechan</command>    
+    <arg choice='opt'>-a </arg>
+    <arg choice='opt'><arg choice='plain'>-o </arg><arg choice='plain'><replaceable>outfile</replaceable></arg></arg>
+    <arg choice='plain' rep='repeat'><replaceable>infiles</replaceable></arg>
+    
+</cmdsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para><emphasis remap='I'>Mergechan</emphasis>
+takes input from several RLE files and combines them into a single output
+stream.  Each channel in the output stream comes from the respective filename
+specified on the input (i.e., channel zero is taken from the first file,
+channel one from the next, etc).  The same file can be specified more than
+once.  If the
+<option>-a</option>
+flag is given, the channels are numbered from -1 (the alpha channel) instead
+of zero.  All of the input channels must have exactly the same dimensions
+(use
+<citerefentry><refentrytitle>crop</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+to adjust files to fit each other).</para>
+
+<para>Mergechan is typically used to introduce an alpha mask from another source
+into an image, or combine color channels digitized independently.</para>
+
+<para>If <option>-o</option> is specified, the output will be written to
+<emphasis remap='I'>outfile</emphasis>.</para>
+</refsect1>
+
+<refsect1 xml:id='see_also'><title>SEE ALSO</title>
+<para><citerefentry><refentrytitle>crop</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>rleswap</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>urt</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>RLE</refentrytitle><manvolnum>5</manvolnum></citerefentry>.</para>
+</refsect1>
+
+<refsect1 xml:id='author'><title>AUTHOR</title>
+<para>John W. Peterson, University of Utah.</para>
+</refsect1>
+
+<refsect1 xml:id='bugs'><title>BUGS</title>
+<para>Mergechan is totally ignorant of the color maps of the input files.</para>
+
+<para>The restriction that all input files must be the same size could probably
+be removed.</para>
+</refsect1>
+</refentry>
+

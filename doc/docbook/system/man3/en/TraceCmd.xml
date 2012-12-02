@@ -1,0 +1,247 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man+tkman by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='tracecmd3'>
+
+<!-- '\" Copyright (c) 2002 Donal K. Fellows -->
+
+<!-- '\" See the file "license.terms" for information on usage and redistribution
+'\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
+'\" 
+'\" CVS: @(#) $Id$
+'\"  -->
+<refentryinfo><date>7.4</date></refentryinfo>
+<refmeta>
+<refentrytitle>Tcl_TraceCommand</refentrytitle>
+<manvolnum>3</manvolnum>
+<refmiscinfo class='date'>7.4</refmiscinfo>
+<refmiscinfo class='source'>Tcl</refmiscinfo>
+<refmiscinfo class='manual'>Tcl Library Procedures</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>Tcl_CommandTraceInfo</refname>
+<refname>Tcl_TraceCommand</refname>
+<refname>Tcl_UntraceCommand</refname>
+<refpurpose>monitor renames and deletes of a command</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<funcsynopsis>
+<funcsynopsisinfo>
+#include &lt;tcl.h&gt;
+
+</funcsynopsisinfo>
+<funcprototype>
+<funcdef>ClientData <function>Tcl_CommandTraceInfo</function></funcdef>
+<paramdef><parameter>interp</parameter></paramdef>
+<paramdef><parameter>cmdName</parameter></paramdef>
+<paramdef><parameter>flags</parameter></paramdef>
+<paramdef><parameter>proc</parameter></paramdef>
+<paramdef><parameter>prevClientData</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef>int <function>Tcl_TraceCommand</function></funcdef>
+<paramdef><parameter>interp</parameter></paramdef>
+<paramdef><parameter>cmdName</parameter></paramdef>
+<paramdef><parameter>flags</parameter></paramdef>
+<paramdef><parameter>proc</parameter></paramdef>
+<paramdef><parameter>clientData</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef>void <function>Tcl_UntraceCommand</function></funcdef>
+<paramdef><parameter>interp</parameter></paramdef>
+<paramdef><parameter>cmdName</parameter></paramdef>
+<paramdef><parameter>flags</parameter></paramdef>
+<paramdef><parameter>proc</parameter></paramdef>
+<paramdef><parameter>clientData</parameter></paramdef>
+</funcprototype>
+</funcsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='arguments'><title>ARGUMENTS</title>
+<!-- .AS Tcl_CommandTraceProc prevClientData -->
+<informaltable>
+<tgroup cols='3'>
+<tbody>
+
+<row><entry>"Tcl_Interp"</entry><entry>"*interp"</entry><entry>"in"</entry>
+<entry>
+<para>Interpreter containing the command.</para>
+</entry>
+</row>
+<row><entry>"const char"</entry><entry>*cmdName</entry><entry>in</entry>
+<entry>
+<para>Name of command.</para>
+</entry>
+</row>
+<row><entry>int</entry><entry>flags</entry><entry>in</entry>
+<entry>
+<para>OR'ed collection of the values <emphasis remap='B'>TCL_TRACE_RENAME</emphasis> and
+<emphasis remap='B'>TCL_TRACE_DELETE</emphasis>.</para>
+</entry>
+</row>
+<row><entry>Tcl_CommandTraceProc</entry><entry>*proc</entry><entry>in</entry>
+<entry>
+<para>Procedure to call when specified operations occur to <emphasis remap='I'>cmdName</emphasis>.</para>
+</entry>
+</row>
+<row><entry>ClientData</entry><entry>clientData</entry><entry>in</entry>
+<entry>
+<para>Arbitrary argument to pass to <emphasis remap='I'>proc</emphasis>.</para>
+</entry>
+</row>
+<row><entry>ClientData</entry><entry>prevClientData</entry><entry>in</entry>
+<entry>
+<para>If non-NULL, gives last value returned by <function>Tcl_CommandTraceInfo</function>,
+so this call will return information about next trace.  If NULL, this
+call will return information about first trace.</para>
+<!-- .BE -->
+</entry>
+</row>
+</tbody>
+</tgroup>
+</informaltable>
+
+</refsect1>
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para><function>Tcl_TraceCommand</function> allows a C procedure to monitor operations
+performed on a Tcl command, so that the C procedure is invoked
+whenever the command is renamed or deleted.  If the trace is created
+successfully then <function>Tcl_TraceCommand</function> returns <emphasis remap='B'>TCL_OK</emphasis>. If an error
+occurred (e.g. <emphasis remap='I'>cmdName</emphasis> specifies a non-existent command) then
+<emphasis remap='B'>TCL_ERROR</emphasis> is returned and an error message is left in the
+interpreter's result.</para>
+
+<para>The <varname role='parameter'>flags</varname> argument to <function>Tcl_TraceCommand</function> indicates when the
+trace procedure is to be invoked.  It consists of an OR'ed combination
+of any of the following values:</para>
+<variablelist remap='TP'>
+  <varlistentry>
+  <term><emphasis remap='B'>TCL_TRACE_RENAME</emphasis></term>
+  <listitem>
+<para>Invoke <emphasis remap='I'>proc</emphasis> whenever the command is renamed.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>TCL_TRACE_DELETE</emphasis></term>
+  <listitem>
+<para>Invoke <emphasis remap='I'>proc</emphasis> when the command is deleted.</para>
+  </listitem>
+  </varlistentry>
+</variablelist>
+
+<para>Whenever one of the specified operations occurs to the command,
+<emphasis remap='I'>proc</emphasis> will be invoked.  It should have arguments and result that
+match the type <type>Tcl_CommandTraceProc</type>:</para>
+<programlisting remap='CS'>
+<funcsynopsis>
+<funcprototype>
+<funcdef>typedef void <function>Tcl_CommandTraceProc</function></funcdef>
+    <paramdef>ClientData <parameter>clientData</parameter></paramdef>
+    <paramdef>Tcl_Interp * <parameter>interp</parameter></paramdef>
+    <paramdef>const char * <parameter>oldName</parameter></paramdef>
+    <paramdef>const char * <parameter>newName</parameter></paramdef>
+    <paramdef>int <parameter>flags</parameter></paramdef>
+</funcprototype>
+</funcsynopsis>
+</programlisting> <!-- remap='CE' -->
+<para>The <varname role='parameter'>clientData</varname> and <varname role='parameter'>interp</varname> parameters will have the same
+values as those passed to <function>Tcl_TraceCommand</function> when the trace was
+created.  <type>ClientData</type> typically points to an application-specific
+data structure that describes what to do when <emphasis remap='I'>proc</emphasis> is invoked.
+<emphasis remap='I'>OldName</emphasis> gives the name of the command being renamed, and
+<varname role='parameter'>newName</varname> gives the name that the command is being renamed to (or
+an empty string or NULL when the command is being deleted.)
+<emphasis remap='I'>Flags</emphasis> is an OR'ed combination of bits potentially providing
+several pieces of information.  One of the bits <emphasis remap='B'>TCL_TRACE_RENAME</emphasis> and
+<emphasis remap='B'>TCL_TRACE_DELETE</emphasis> will be set in <varname role='parameter'>flags</varname> to indicate which
+operation is being performed on the command.  The bit
+<emphasis remap='B'>TCL_TRACE_DESTROYED</emphasis> will be set in <varname role='parameter'>flags</varname> if the trace is about
+to be destroyed; this information may be useful to <emphasis remap='I'>proc</emphasis> so that
+it can clean up its own internal data structures (see the section
+<emphasis remap='B'>TCL_TRACE_DESTROYED</emphasis> below for more details).  Lastly, the bit
+<emphasis remap='B'>TCL_INTERP_DESTROYED</emphasis> will be set if the entire interpreter is being
+destroyed.  When this bit is set, <emphasis remap='I'>proc</emphasis> must be especially
+careful in the things it does (see the section <emphasis remap='B'>TCL_INTERP_DESTROYED</emphasis>
+below).</para>
+
+<para><function>Tcl_UntraceCommand</function> may be used to remove a trace.  If the
+command specified by <varname role='parameter'>interp</varname>, <emphasis remap='I'>cmdName</emphasis>, and <varname role='parameter'>flags</varname> has
+a trace set with <varname role='parameter'>flags</varname>, <emphasis remap='I'>proc</emphasis>, and <varname role='parameter'>clientData</varname>, then
+the corresponding trace is removed.  If no such trace exists, then the
+call to <function>Tcl_UntraceCommand</function> has no effect.  The same bits are
+valid for <varname role='parameter'>flags</varname> as for calls to <function>Tcl_TraceCommand</function>.</para>
+
+<para><function>Tcl_CommandTraceInfo</function> may be used to retrieve information about
+traces set on a given command.
+The return value from <function>Tcl_CommandTraceInfo</function> is the <varname role='parameter'>clientData</varname>
+associated with a particular trace.
+The trace must be on the command specified by the <varname role='parameter'>interp</varname>,
+<emphasis remap='I'>cmdName</emphasis>, and <varname role='parameter'>flags</varname> arguments (note that currently the
+flags are ignored; <varname role='parameter'>flags</varname> should be set to 0 for future
+compatibility) and its trace procedure must the same as the <emphasis remap='I'>proc</emphasis>
+argument.
+If the <emphasis remap='I'>prevClientData</emphasis> argument is NULL then the return
+value corresponds to the first (most recently created) matching
+trace, or NULL if there are no matching traces.
+If the <emphasis remap='I'>prevClientData</emphasis> argument is not NULL, then it should
+be the return value from a previous call to <function>Tcl_CommandTraceInfo</function>.
+In this case, the new return value will correspond to the next
+matching trace after the one whose <varname role='parameter'>clientData</varname> matches
+<emphasis remap='I'>prevClientData</emphasis>, or NULL if no trace matches <emphasis remap='I'>prevClientData</emphasis>
+or if there are no more matching traces after it.
+This mechanism makes it possible to step through all of the
+traces for a given command that have the same <emphasis remap='I'>proc</emphasis>.</para>
+</refsect1>
+
+<refsect1 xml:id='calling_commands_during_traces'><title>CALLING COMMANDS DURING TRACES</title>
+<para>During rename traces, the command being renamed is visible with both
+names simultaneously, and the command still exists during delete
+traces (if <emphasis remap='B'>TCL_INTERP_DESTROYED</emphasis> is not set).  However, there is no
+mechanism for signaling that an error occurred in a trace procedure,
+so great care should be taken that errors do not get silently lost.</para>
+</refsect1>
+
+<refsect1 xml:id='multiple_traces'><title>MULTIPLE TRACES</title>
+<para>It is possible for multiple traces to exist on the same command.
+When this happens, all of the trace procedures will be invoked on each
+access, in order from most-recently-created to least-recently-created.
+Attempts to delete the command during a delete trace will fail
+silently, since the command is already scheduled for deletion anyway.
+If the command being renamed is renamed by one of its rename traces,
+that renaming takes precedence over the one that triggered the trace
+and the collection of traces will not be reexecuted; if several traces
+rename the command, the last renaming takes precedence.</para>
+</refsect1>
+
+<refsect1 xml:id='tcl_trace_destroyed_flag'><title>TCL_TRACE_DESTROYED FLAG</title>
+<para>In a delete callback to <emphasis remap='I'>proc</emphasis>, the <emphasis remap='B'>TCL_TRACE_DESTROYED</emphasis> bit
+is set in <varname role='parameter'>flags</varname>.</para>
+<!--  Perhaps need some more comments here? \- DKF -->
+</refsect1>
+
+<refsect1 xml:id='tcl_interp_destroyed'><title>TCL_INTERP_DESTROYED</title>
+<para>When an interpreter is destroyed, unset traces are called for
+all of its commands.
+The <emphasis remap='B'>TCL_INTERP_DESTROYED</emphasis> bit will be set in the <varname role='parameter'>flags</varname>
+argument passed to the trace procedures.
+Trace procedures must be extremely careful in what they do if
+the <emphasis remap='B'>TCL_INTERP_DESTROYED</emphasis> bit is set.
+It is not safe for the procedures to invoke any Tcl procedures
+on the interpreter, since its state is partially deleted.
+All that trace procedures should do under these circumstances is
+to clean up and free their own internal data structures.</para>
+</refsect1>
+
+<refsect1 xml:id='bugs'><title>BUGS</title>
+<para>Tcl does not do any error checking to prevent trace procedures
+from misusing the interpreter during traces with <emphasis remap='B'>TCL_INTERP_DESTROYED</emphasis>
+set.</para>
+</refsect1>
+
+<refsect1 xml:id='keywords'><title>KEYWORDS</title>
+<para>clientData, trace, command</para>
+</refsect1>
+</refentry>
+

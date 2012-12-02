@@ -1,0 +1,255 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man+tkman by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='opentcp3'>
+
+<!-- '\" Copyright (c) 1996\-7 Sun Microsystems, Inc. -->
+
+<!-- '\" See the file "license.terms" for information on usage and redistribution
+'\" of this file, and for a DISCLAIMER OF ALL WARRANTIES. -->
+
+<!-- '\" RCS: @(#) $Id$ -->
+<refentryinfo><date>8.0</date></refentryinfo>
+<refmeta>
+<refentrytitle>Tcl_OpenTcpClient</refentrytitle>
+<manvolnum>3</manvolnum>
+<refmiscinfo class='date'>8.0</refmiscinfo>
+<refmiscinfo class='source'>Tcl</refmiscinfo>
+<refmiscinfo class='manual'>Tcl Library Procedures</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>Tcl_OpenTcpClient</refname>
+<refname>Tcl_MakeTcpClientChannel</refname>
+<refname>Tcl_OpenTcpServer</refname>
+<refpurpose>procedures to open channels using TCP sockets</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<funcsynopsis>
+<funcsynopsisinfo>
+#include &lt;tcl.h&gt; 
+
+</funcsynopsisinfo>
+<funcprototype>
+<funcdef>Tcl_Channel <function>Tcl_OpenTcpClient</function></funcdef>
+<paramdef><parameter>interp</parameter></paramdef>
+<paramdef><parameter>port</parameter></paramdef>
+<paramdef><parameter>host</parameter></paramdef>
+<paramdef><parameter>myaddr</parameter></paramdef>
+<paramdef><parameter>myport</parameter></paramdef>
+<paramdef><parameter>async</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef>Tcl_Channel <function>Tcl_MakeTcpClientChannel</function></funcdef>
+<paramdef><parameter>sock</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef>Tcl_Channel <function>Tcl_OpenTcpServer</function></funcdef>
+<paramdef><parameter>interp</parameter></paramdef>
+<paramdef><parameter>port</parameter></paramdef>
+<paramdef><parameter>myaddr</parameter></paramdef>
+<paramdef><parameter>proc</parameter></paramdef>
+<paramdef><parameter>clientData</parameter></paramdef>
+</funcprototype>
+</funcsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='arguments'><title>ARGUMENTS</title>
+<!-- .AS Tcl_TcpAcceptProc clientData -->
+<informaltable>
+<tgroup cols='3'>
+<tbody>
+
+<row><entry>"Tcl_Interp"</entry><entry>"*interp"</entry><entry>"in"</entry>
+<entry>
+<para>Tcl interpreter to use for error reporting.  If non-NULL and an
+error occurs, an error message is left in the interpreter's result.</para>
+</entry>
+</row>
+<row><entry>int</entry><entry>port</entry><entry>in</entry>
+<entry>
+<para>A port number to connect to as a client or to listen on as a server.</para>
+</entry>
+</row>
+<row><entry>"const char"</entry><entry>*host</entry><entry>in</entry>
+<entry>
+<para>A string specifying a host name or address for the remote end of the connection.</para>
+</entry>
+</row>
+<row><entry>int</entry><entry>myport</entry><entry>in</entry>
+<entry>
+<para>A port number for the client's end of the socket.  If 0, a port number
+is allocated at random.</para>
+</entry>
+</row>
+<row><entry>"const char"</entry><entry>*myaddr</entry><entry>in</entry>
+<entry>
+<para>A string specifying the host name or address for network interface to use
+for the local end of the connection.  If NULL, a default interface is
+chosen.</para>
+</entry>
+</row>
+<row><entry>int</entry><entry>async</entry><entry>in</entry>
+<entry>
+<para>If nonzero, the client socket is connected asynchronously to the server.</para>
+</entry>
+</row>
+<row><entry>ClientData</entry><entry>sock</entry><entry>in</entry>
+<entry>
+<para>Platform-specific handle for client TCP socket.</para>
+</entry>
+</row>
+<row><entry>Tcl_TcpAcceptProc</entry><entry>*proc</entry><entry>in</entry>
+<entry>
+<para>Pointer to a procedure to invoke each time a new connection is
+accepted via the socket.</para>
+</entry>
+</row>
+<row><entry>ClientData</entry><entry>clientData</entry><entry>in</entry>
+<entry>
+<para>Arbitrary one-word value to pass to <emphasis remap='I'>proc</emphasis>.</para>
+<!-- .BE -->
+</entry>
+</row>
+</tbody>
+</tgroup>
+</informaltable>
+
+</refsect1>
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para>These functions are convenience procedures for creating
+channels that communicate over TCP sockets.
+The operations on a channel
+are described in the manual entry for <emphasis remap='B'>Tcl_OpenFileChannel</emphasis>.</para>
+
+</refsect1>
+
+<refsect1 xml:id='tcl_opentcpclient'><title>TCL_OPENTCPCLIENT</title>
+<para><function>Tcl_OpenTcpClient</function> opens a client TCP socket connected to a <varname role='parameter'>port</varname>
+on a specific <emphasis remap='I'>host</emphasis>, and returns a channel that can be used to
+communicate with the server. The host to connect to can be specified either
+as a domain name style name (e.g. <emphasis remap='B'>www.sunlabs.com</emphasis>), or as a string
+containing the alphanumeric representation of its four-byte address (e.g.
+<literal>127.0.0.1</literal>). Use the string <emphasis remap='B'>localhost</emphasis> to connect to a TCP socket on
+the host on which the function is invoked.</para>
+
+<para>The <emphasis remap='I'>myaddr</emphasis> and <emphasis remap='I'>myport</emphasis> arguments allow a client to specify an
+address for the local end of the connection.  If <emphasis remap='I'>myaddr</emphasis> is NULL, then
+an interface is chosen automatically by the operating system.
+If <emphasis remap='I'>myport</emphasis> is 0, then a port number is chosen at random by
+the operating system.</para>
+
+<para>If <emphasis remap='I'>async</emphasis> is zero, the call to <function>Tcl_OpenTcpClient</function> returns only
+after the client socket has either successfully connected to the server, or
+the attempted connection has failed.
+If <emphasis remap='I'>async</emphasis> is nonzero the socket is connected asynchronously and the
+returned channel may not yet be connected to the server when the call to
+<function>Tcl_OpenTcpClient</function> returns. If the channel is in blocking mode and an
+input or output operation is done on the channel before the connection is
+completed or fails, that operation will wait until the connection either
+completes successfully or fails. If the channel is in nonblocking mode, the
+input or output operation will return immediately and a subsequent call to
+<emphasis remap='B'>Tcl_InputBlocked</emphasis> on the channel will return nonzero.</para>
+
+<para>The returned channel is opened for reading and writing.
+If an error occurs in opening the socket, <function>Tcl_OpenTcpClient</function> returns
+NULL and records a POSIX error code that can be retrieved
+with <emphasis remap='B'>Tcl_GetErrno</emphasis>.
+In addition, if <emphasis remap='I'>interp</emphasis> is non-NULL, an error message
+is left in the interpreter's result.</para>
+
+<para>The newly created channel is not registered in the supplied interpreter; to
+register it, use <emphasis remap='B'>Tcl_RegisterChannel</emphasis>.
+If one of the standard channels, <emphasis remap='B'>stdin, stdout</emphasis> or <emphasis remap='B'>stderr</emphasis> was
+previously closed, the act of creating the new channel also assigns it as a
+replacement for the standard channel.</para>
+
+</refsect1>
+
+<refsect1 xml:id='tcl_maketcpclientchannel'><title>TCL_MAKETCPCLIENTCHANNEL</title>
+<para><function>Tcl_MakeTcpClientChannel</function> creates a <type>Tcl_Channel</type> around an
+existing, platform specific, handle for a client TCP socket.</para>
+
+<para>The newly created channel is not registered in the supplied interpreter; to
+register it, use <emphasis remap='B'>Tcl_RegisterChannel</emphasis>.
+If one of the standard channels, <emphasis remap='B'>stdin, stdout</emphasis> or <emphasis remap='B'>stderr</emphasis> was
+previously closed, the act of creating the new channel also assigns it as a
+replacement for the standard channel.</para>
+
+</refsect1>
+
+<refsect1 xml:id='tcl_opentcpserver'><title>TCL_OPENTCPSERVER</title>
+<para><function>Tcl_OpenTcpServer</function> opens a TCP socket on the local host on a specified
+<varname role='parameter'>port</varname> and uses the Tcl event mechanism to accept requests from clients
+to connect to it. The <emphasis remap='I'>myaddr</emphasis> argument specifies the network interface.
+If <emphasis remap='I'>myaddr</emphasis> is NULL the special address INADDR_ANY should be used to
+allow connections from any network interface.
+Each time a client connects to this socket, Tcl creates a channel
+for the new connection and invokes <emphasis remap='I'>proc</emphasis> with information about
+the channel. <emphasis remap='I'>Proc</emphasis> must match the following prototype:</para>
+<programlisting remap='CS'>
+<funcsynopsis>
+<funcprototype>
+<funcdef>typedef void <function>Tcl_TcpAcceptProc</function></funcdef>
+    <paramdef>ClientData <parameter>clientData</parameter></paramdef>
+    <paramdef>Tcl_Channel <parameter>channel</parameter></paramdef>
+    <paramdef>char * <parameter>hostName</parameter></paramdef>
+    <paramdef>int <parameter>port</parameter></paramdef>
+</funcprototype>
+</funcsynopsis>
+</programlisting> <!-- remap='CE' -->
+<para>The <varname role='parameter'>clientData</varname> argument will be the same as the <varname role='parameter'>clientData</varname>
+argument to <function>Tcl_OpenTcpServer</function>, <varname role='parameter'>channel</varname> will be the handle
+for the new channel, <varname role='parameter'>hostName</varname> points to a string containing
+the name of the client host making the connection, and <varname role='parameter'>port</varname>
+will contain the client's port number.
+The new channel
+is opened for both input and output. 
+If <emphasis remap='I'>proc</emphasis> raises an error, the connection is closed automatically.
+<emphasis remap='I'>Proc</emphasis> has no return value, but if it wishes to reject the
+connection it can close <varname role='parameter'>channel</varname>.</para>
+
+<para><function>Tcl_OpenTcpServer</function> normally returns a pointer to a channel
+representing the server socket.
+If an error occurs, <function>Tcl_OpenTcpServer</function> returns NULL and
+records a POSIX error code that can be retrieved with <emphasis remap='B'>Tcl_GetErrno</emphasis>.
+In addition, if the interpreter is non-NULL, an error message
+is left in the interpreter's result.</para>
+
+<para>The channel returned by <function>Tcl_OpenTcpServer</function> cannot be used for
+either input or output.
+It is simply a handle for the socket used to accept connections.
+The caller can close the channel to shut down the server and disallow
+further connections from new clients.</para>
+
+<para>TCP server channels operate correctly only in applications that dispatch
+events through <emphasis remap='B'>Tcl_DoOneEvent</emphasis> or through Tcl commands such as
+<emphasis remap='B'>vwait</emphasis>; otherwise Tcl will never notice that a connection request from
+a remote client is pending.</para>
+
+<para>The newly created channel is not registered in the supplied interpreter; to
+register it, use <emphasis remap='B'>Tcl_RegisterChannel</emphasis>.
+If one of the standard channels, <emphasis remap='B'>stdin, stdout</emphasis> or <emphasis remap='B'>stderr</emphasis> was
+previously closed, the act of creating the new channel also assigns it as a
+replacement for the standard channel.</para>
+
+</refsect1>
+
+<refsect1 xml:id='platform_issues'><title>PLATFORM ISSUES</title>
+<para>On Unix platforms, the socket handle is a Unix file descriptor as
+returned by the <emphasis remap='B'>socket</emphasis> system call.  On the Windows platform, the
+socket handle is a <emphasis remap='B'>SOCKET</emphasis> as defined in the WinSock API.</para>
+
+</refsect1>
+
+<refsect1 xml:id='see_also'><title>SEE ALSO</title>
+<para>Tcl_OpenFileC<citerefentry><refentrytitle>hannel</refentrytitle><manvolnum>3</manvolnum></citerefentry>, Tcl_RegisterC<citerefentry><refentrytitle>hannel</refentrytitle><manvolnum>3</manvolnum></citerefentry>, vwait(n)</para>
+
+</refsect1>
+
+<refsect1 xml:id='keywords'><title>KEYWORDS</title>
+<para>client, server, TCP</para>
+</refsect1>
+</refentry>
+

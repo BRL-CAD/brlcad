@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='getmex1'>
+<!--  Copyright (c) 1986, University of Utah -->
+<refmeta>
+<refentrytitle>GETMEX</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class='source'>Jan 20, 1987</refmiscinfo>
+<refmiscinfo class='manual'>1</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>getmex</refname>
+<refpurpose>get RLE images to an Iris display under the window manager</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<cmdsynopsis>
+  <command>getmex</command>    
+    <arg choice='opt'>-f </arg>
+    <arg choice='opt'>-w </arg>
+    <arg choice='opt'>-D </arg>
+    <arg choice='opt'><arg choice='plain'>-m </arg><arg choice='plain'><replaceable>mapstart</replaceable></arg></arg>
+    <arg choice='opt'><replaceable>infile</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para>This program displays an
+<citerefentry><refentrytitle>RLE</refentrytitle><manvolnum>5</manvolnum></citerefentry>
+file on a
+<emphasis remap='I'>Silicon Graphics Iris</emphasis>
+display running the
+<emphasis remap='I'>mex</emphasis>
+or
+<emphasis remap='I'>4Sight</emphasis>
+window manager.  It uses a dithering technique to take a
+full-color or gray scale image into the limited number of colors
+typically available under
+<emphasis remap='I'>mex</emphasis>.
+Its default behavior is to try to
+display the image in color, an option is provided to force black and
+white display.  Several
+<command>getmex</command>
+processes running simultaneously will share color map entries.</para>
+
+<para><command>getmex</command>
+uses the standard
+window creation procedure to create a window with a location and size
+specified by the user, with the restriction that the window will be no larger
+than the input image.  If the window is smaller than the image, the center of
+the image will be visible in the window.</para>
+
+<para>You can "pan" a small window around in an image by attaching the mouse to
+the window using
+<emphasis remap='I'>mex</emphasis>
+or
+<emphasis remap='I'>4Sight</emphasis>
+and clicking the
+<emphasis remap='I'>left mouse button</emphasis>
+in the image.  The position in the image
+under the cursor will jump to the center of the window.  The
+<emphasis remap='I'>SETUP</emphasis>
+key resets the view to position the center of the image in the center of the
+window.  Furthermore,
+<emphasis remap='I'>control-SETUP</emphasis>
+saves the current view, and
+<emphasis remap='I'>shift-SETUP</emphasis>
+restores it.</para>
+</refsect1>
+
+<refsect1 xml:id='options'><title>OPTIONS</title>
+<variablelist remap='TP'>
+  <varlistentry>
+  <term><option>-f</option></term>
+  <listitem>
+<para>Normally,
+<command>getmex</command>
+will fork itself after putting the image on the screen, so that the
+parent process may return the shell, leaving an "invisible" child to
+keep the image refreshed.  If
+<option>-f</option>
+is specified, getmex will remain attached to the shell, whence it may
+be killed with an interrupt signal or via
+the window manager.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-w</option></term>
+  <listitem>
+<para>This flag forces
+<command>getmex</command>
+to produce a gray scale dithered image instead of a color image.
+Color input will be transformed to black and white via the
+<emphasis remap='I'>NTSC Y</emphasis>
+transform.  Since a 128-step greyscale is used, this will produce a
+much smoother looking image than color dithering.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-D</option></term>
+  <listitem>
+<para>"Debug mode".  The operations in the input
+<citerefentry><refentrytitle>RLE</refentrytitle><manvolnum>5</manvolnum></citerefentry>
+file will be printed as they are read.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-m</option><replaceable> mapstart</replaceable></term>
+  <listitem>
+<para>Specifies the starting location of the block of color map to be used by
+<emphasis remap='I'>getmex .</emphasis>
+(There are 1024 colors available on the Iris 2400/3000s under
+<emphasis remap='I'>mex</emphasis>.)
+The default for color images is a block of 512 rgb colors starting at
+location 512 in the color map.  Black-and-white images default to a block
+of 128 grey shades starting at location 128.  Both the rgb and grey ramps
+are gamma-corrected in the same way as the
+<emphasis remap='I'>makemap</emphasis>
+program in the /usr/gifts/mextools/tools directory.  You probably want
+to set up your initial color map using
+<emphasis remap='I'>makemap .</emphasis></para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='I'>infile</emphasis></term>
+  <listitem>
+<para>Name of the
+<citerefentry><refentrytitle>RLE</refentrytitle><manvolnum>5</manvolnum></citerefentry>
+file to display.  If not specified, the image will be read from the
+standard input.</para>
+  </listitem>
+  </varlistentry>
+</variablelist>
+</refsect1>
+
+<refsect1 xml:id='see_also'><title>SEE ALSO</title>
+<para><citerefentry><refentrytitle>get4d</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>getiris</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>urt</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>RLE</refentrytitle><manvolnum>5</manvolnum></citerefentry>.</para>
+</refsect1>
+
+<refsect1 xml:id='author'><title>AUTHOR</title>
+<para>Russ Fish, University of Utah.</para>
+</refsect1>
+</refentry>
+

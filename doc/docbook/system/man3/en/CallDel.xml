@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man+tkman by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='calldel3'>
+
+<!-- '\" Copyright (c) 1993 The Regents of the University of California.
+'\" Copyright (c) 1994\-1996 Sun Microsystems, Inc. -->
+
+<!-- '\" See the file "license.terms" for information on usage and redistribution
+'\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
+'\" 
+'\" RCS: @(#) $Id$
+'\"  -->
+<refentryinfo><date>7.0</date></refentryinfo>
+<refmeta>
+<refentrytitle>Tcl_CallWhenDeleted</refentrytitle>
+<manvolnum>3</manvolnum>
+<refmiscinfo class='date'>7.0</refmiscinfo>
+<refmiscinfo class='source'>Tcl</refmiscinfo>
+<refmiscinfo class='manual'>Tcl Library Procedures</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>Tcl_CallWhenDeleted</refname>
+<refname>Tcl_DontCallWhenDeleted</refname>
+<refpurpose>Arrange for callback when interpreter is deleted</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<funcsynopsis>
+<funcsynopsisinfo>
+#include &lt;tcl.h&gt;
+
+</funcsynopsisinfo>
+<funcprototype>
+<funcdef><function>Tcl_CallWhenDeleted</function></funcdef>
+<paramdef><parameter>interp</parameter></paramdef>
+<paramdef><parameter>proc</parameter></paramdef>
+<paramdef><parameter>clientData</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef><function>Tcl_DontCallWhenDeleted</function></funcdef>
+<paramdef><parameter>interp</parameter></paramdef>
+<paramdef><parameter>proc</parameter></paramdef>
+<paramdef><parameter>clientData</parameter></paramdef>
+</funcprototype>
+</funcsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='arguments'><title>ARGUMENTS</title>
+<!-- .AS Tcl_InterpDeleteProc clientData -->
+<informaltable>
+<tgroup cols='3'>
+<tbody>
+
+<row><entry>"Tcl_Interp"</entry><entry>"*interp"</entry><entry>"in"</entry>
+<entry>
+<para>Interpreter with which to associated callback.</para>
+</entry>
+</row>
+<row><entry>Tcl_InterpDeleteProc</entry><entry>*proc</entry><entry>in</entry>
+<entry>
+<para>Procedure to call when <varname role='parameter'>interp</varname> is deleted.</para>
+</entry>
+</row>
+<row><entry>ClientData</entry><entry>clientData</entry><entry>in</entry>
+<entry>
+<para>Arbitrary one-word value to pass to <emphasis remap='I'>proc</emphasis>.</para>
+<!-- .BE -->
+</entry>
+</row>
+</tbody>
+</tgroup>
+</informaltable>
+
+</refsect1>
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para><function>Tcl_CallWhenDeleted</function> arranges for <emphasis remap='I'>proc</emphasis> to be called by
+<emphasis remap='B'>Tcl_DeleteInterp</emphasis> if/when <varname role='parameter'>interp</varname> is deleted at some future
+time.  <emphasis remap='I'>Proc</emphasis> will be invoked just before the interpreter
+is deleted, but the interpreter will still be valid at the
+time of the call.
+<emphasis remap='I'>Proc</emphasis> should have arguments and result that match the
+type <type>Tcl_InterpDeleteProc</type>:</para>
+<programlisting remap='CS'>
+<funcsynopsis>
+<funcprototype>
+<funcdef>typedef void <function>Tcl_InterpDeleteProc</function></funcdef>
+    <paramdef>ClientData <parameter>clientData</parameter></paramdef>
+    <paramdef>Tcl_Interp * <parameter>interp</parameter></paramdef>
+</funcprototype>
+</funcsynopsis>
+</programlisting> <!-- remap='CE' -->
+<para>The <varname role='parameter'>clientData</varname> and <varname role='parameter'>interp</varname> parameters are
+copies of the <varname role='parameter'>clientData</varname> and <varname role='parameter'>interp</varname> arguments given
+to <function>Tcl_CallWhenDeleted</function>.
+Typically, <varname role='parameter'>clientData</varname> points to an application-specific
+data structure that <emphasis remap='I'>proc</emphasis> uses to perform cleanup when an
+interpreter is about to go away.
+<emphasis remap='I'>Proc</emphasis> does not return a value.</para>
+
+<para><function>Tcl_DontCallWhenDeleted</function> cancels a previous call to
+<function>Tcl_CallWhenDeleted</function> with the same arguments, so that
+<emphasis remap='I'>proc</emphasis> will not be called after all when <varname role='parameter'>interp</varname> is
+deleted.
+If there is no deletion callback that matches <varname role='parameter'>interp</varname>,
+<emphasis remap='I'>proc</emphasis>, and <varname role='parameter'>clientData</varname> then the call to
+<function>Tcl_DontCallWhenDeleted</function> has no effect.</para>
+
+</refsect1>
+
+<refsect1 xml:id='keywords'><title>KEYWORDS</title>
+<para>callback, delete, interpreter</para>
+</refsect1>
+</refentry>
+

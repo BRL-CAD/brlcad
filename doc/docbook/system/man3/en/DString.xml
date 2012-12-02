@@ -1,0 +1,242 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man+tkman by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='dstring3'>
+
+<!-- '\" Copyright (c) 1993 The Regents of the University of California.
+'\" Copyright (c) 1994\-1996 Sun Microsystems, Inc. -->
+
+<!-- '\" See the file "license.terms" for information on usage and redistribution
+'\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
+'\" 
+'\" RCS: @(#) $Id$
+'\"  -->
+<refentryinfo><date>7.4</date></refentryinfo>
+<refmeta>
+<refentrytitle>Tcl_DString</refentrytitle>
+<manvolnum>3</manvolnum>
+<refmiscinfo class='date'>7.4</refmiscinfo>
+<refmiscinfo class='source'>Tcl</refmiscinfo>
+<refmiscinfo class='manual'>Tcl Library Procedures</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>Tcl_DStringInit</refname>
+<refname>Tcl_DStringAppend</refname>
+<refname>Tcl_DStringAppendElement</refname>
+<refname>Tcl_DStringStartSublist</refname>
+<refname>Tcl_DStringEndSublist</refname>
+<refname>Tcl_DStringLength</refname>
+<refname>Tcl_DStringValue</refname>
+<refname>Tcl_DStringSetLength</refname>
+<refname>Tcl_DStringTrunc</refname>
+<refname>Tcl_DStringFree</refname>
+<refname>Tcl_DStringResult</refname>
+<refname>Tcl_DStringGetResult</refname>
+<refpurpose>manipulate dynamic strings</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<funcsynopsis>
+<funcsynopsisinfo>
+#include &lt;tcl.h&gt;
+
+</funcsynopsisinfo>
+<funcprototype>
+<funcdef><function>Tcl_DStringInit</function></funcdef>
+<paramdef><parameter>dsPtr</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef>char *<function>Tcl_DStringAppend</function></funcdef>
+<paramdef><parameter>dsPtr</parameter></paramdef>
+<paramdef><parameter>bytes</parameter></paramdef>
+<paramdef><parameter>length</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef>char *<function>Tcl_DStringAppendElement</function></funcdef>
+<paramdef><parameter>dsPtr</parameter></paramdef>
+<paramdef><parameter>element</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef><function>Tcl_DStringStartSublist</function></funcdef>
+<paramdef><parameter>dsPtr</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef><function>Tcl_DStringEndSublist</function></funcdef>
+<paramdef><parameter>dsPtr</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef>int <function>Tcl_DStringLength</function></funcdef>
+<paramdef><parameter>dsPtr</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef>char *<function>Tcl_DStringValue</function></funcdef>
+<paramdef><parameter>dsPtr</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef><function>Tcl_DStringSetLength</function></funcdef>
+<paramdef><parameter>dsPtr</parameter></paramdef>
+<paramdef><parameter>newLength</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef><function>Tcl_DStringTrunc</function></funcdef>
+<paramdef><parameter>dsPtr</parameter></paramdef>
+<paramdef><parameter>newLength</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef><function>Tcl_DStringFree</function></funcdef>
+<paramdef><parameter>dsPtr</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef><function>Tcl_DStringResult</function></funcdef>
+<paramdef><parameter>interp</parameter></paramdef>
+<paramdef><parameter>dsPtr</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef><function>Tcl_DStringGetResult</function></funcdef>
+<paramdef><parameter>interp</parameter></paramdef>
+<paramdef><parameter>dsPtr</parameter></paramdef>
+</funcprototype>
+</funcsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='arguments'><title>ARGUMENTS</title>
+<!-- .AS Tcl_DString newLength in/out -->
+<informaltable>
+<tgroup cols='3'>
+<tbody>
+
+<row><entry>"Tcl_DString"</entry><entry>"*dsPtr"</entry><entry>"in/out"</entry>
+<entry>
+<para>Pointer to structure that is used to manage a dynamic string.</para>
+</entry>
+</row>
+<row><entry>"const char"</entry><entry>*bytes</entry><entry>in</entry>
+<entry>
+<para>Pointer to characters to append to dynamic string.</para>
+</entry>
+</row>
+<row><entry>"const char"</entry><entry>*element</entry><entry>in</entry>
+<entry>
+<para>Pointer to characters to append as list element to dynamic string.</para>
+</entry>
+</row>
+<row><entry>int</entry><entry>length</entry><entry>in</entry>
+<entry>
+<para>Number of bytes from <emphasis remap='I'>bytes</emphasis> to add to dynamic string.  If -1,
+add all characters up to null terminating character.</para>
+</entry>
+</row>
+<row><entry>int</entry><entry>newLength</entry><entry>in</entry>
+<entry>
+<para>New length for dynamic string, not including null terminating
+character.</para>
+</entry>
+</row>
+<row><entry>Tcl_Interp</entry><entry>*interp</entry><entry>in/out</entry>
+<entry>
+<para>Interpreter whose result is to be set from or moved to the
+dynamic string.</para>
+<!-- .BE -->
+</entry>
+</row>
+</tbody>
+</tgroup>
+</informaltable>
+
+</refsect1>
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para>Dynamic strings provide a mechanism for building up arbitrarily long
+strings by gradually appending information.  If the dynamic string is
+short then there will be no memory allocation overhead;  as the string
+gets larger, additional space will be allocated as needed.</para>
+
+<para><function>Tcl_DStringInit</function> initializes a dynamic string to zero length.
+The Tcl_DString structure must have been allocated by the caller.
+No assumptions are made about the current state of the structure;
+anything already in it is discarded.
+If the structure has been used previously, <function>Tcl_DStringFree</function> should
+be called first to free up any memory allocated for the old
+string.</para>
+
+<para><function>Tcl_DStringAppend</function> adds new information to a dynamic string,
+allocating more memory for the string if needed.
+If <emphasis remap='I'>length</emphasis> is less than zero then everything in <emphasis remap='I'>bytes</emphasis>
+is appended to the dynamic string;  otherwise <emphasis remap='I'>length</emphasis>
+specifies the number of bytes to append.
+<function>Tcl_DStringAppend</function> returns a pointer to the characters of
+the new string.  The string can also be retrieved from the
+<emphasis remap='I'>string</emphasis> field of the Tcl_DString structure.</para>
+
+<para><function>Tcl_DStringAppendElement</function> is similar to <function>Tcl_DStringAppend</function>
+except that it does not take a <emphasis remap='I'>length</emphasis> argument (it appends
+all of <emphasis remap='I'>element</emphasis>) and it converts the string to a proper list element
+before appending.
+<function>Tcl_DStringAppendElement</function> adds a separator space before the
+new list element unless the new list element is the first in a
+list or sub-list (i.e. either the current string is empty, or it
+contains the single character
+<quote>{</quote>,
+or the last two characters of the current string are
+<quote> {</quote>).
+<function>Tcl_DStringAppendElement</function> returns a pointer to the
+characters of the new string.</para>
+
+<para><function>Tcl_DStringStartSublist</function> and <function>Tcl_DStringEndSublist</function> can be
+used to create nested lists.
+To append a list element that is itself a sublist, first
+call <function>Tcl_DStringStartSublist</function>, then call <function>Tcl_DStringAppendElement</function>
+for each of the elements in the sublist, then call
+<function>Tcl_DStringEndSublist</function> to end the sublist.
+<function>Tcl_DStringStartSublist</function> appends a space character if needed,
+followed by an open brace;  <function>Tcl_DStringEndSublist</function> appends
+a close brace.
+Lists can be nested to any depth.</para>
+
+<para><function>Tcl_DStringLength</function> is a macro that returns the current length
+of a dynamic string (not including the terminating null character).
+<function>Tcl_DStringValue</function> is a  macro that returns a pointer to the
+current contents of a dynamic string.</para>
+
+
+<para><function>Tcl_DStringSetLength</function> changes the length of a dynamic string.
+If <emphasis remap='I'>newLength</emphasis> is less than the string's current length, then
+the string is truncated.
+If <emphasis remap='I'>newLength</emphasis> is greater than the string's current length,
+then the string will become longer and new space will be allocated
+for the string if needed.
+However, <function>Tcl_DStringSetLength</function> will not initialize the new
+space except to provide a terminating null character;  it is up to the
+caller to fill in the new space.
+<function>Tcl_DStringSetLength</function> does not free up the string's storage space
+even if the string is truncated to zero length, so <function>Tcl_DStringFree</function>
+will still need to be called.</para>
+
+<para><function>Tcl_DStringTrunc</function> changes the length of a dynamic string.
+This procedure is now deprecated.  <function>Tcl_DStringSetLength</function>  should
+be used instead.</para>
+
+<para><function>Tcl_DStringFree</function> should be called when you are finished using
+the string.  It frees up any memory that was allocated for the string
+and reinitializes the string's value to an empty string.</para>
+
+<para><function>Tcl_DStringResult</function> sets the result of <emphasis remap='I'>interp</emphasis> to the value of
+the dynamic string given by <emphasis remap='I'>dsPtr</emphasis>.  It does this by moving
+a pointer from <emphasis remap='I'>dsPtr</emphasis> to the interpreter's result.
+This saves the cost of allocating new memory and copying the string.
+<function>Tcl_DStringResult</function> also reinitializes the dynamic string to
+an empty string.</para>
+
+<para><function>Tcl_DStringGetResult</function> does the opposite of <function>Tcl_DStringResult</function>.
+It sets the value of <emphasis remap='I'>dsPtr</emphasis> to the result of <emphasis remap='I'>interp</emphasis> and
+it clears <emphasis remap='I'>interp</emphasis>'s result.
+If possible it does this by moving a pointer rather than by copying
+the string.</para>
+
+</refsect1>
+
+<refsect1 xml:id='keywords'><title>KEYWORDS</title>
+<para>append, dynamic string, free, result</para>
+</refsect1>
+</refentry>
+

@@ -1,0 +1,203 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man+tkman by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='crtcommand3'>
+
+<!-- '\" Copyright (c) 1989\-1993 The Regents of the University of California.
+'\" Copyright (c) 1994\-1997 Sun Microsystems, Inc. -->
+
+<!-- '\" See the file "license.terms" for information on usage and redistribution
+'\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
+'\" 
+'\" RCS: @(#) $Id$
+'\"  -->
+<refmeta>
+<refentrytitle>Tcl_CreateCommand</refentrytitle>
+<manvolnum>3</manvolnum>
+<refmiscinfo class='manual'>Tcl</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>Tcl_CreateCommand</refname>
+<refpurpose>implement new commands in C</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<funcsynopsis>
+<funcsynopsisinfo>
+#include &lt;tcl.h&gt;
+
+</funcsynopsisinfo>
+<funcprototype>
+<funcdef>Tcl_Command <function>Tcl_CreateCommand</function></funcdef>
+<paramdef><parameter>interp</parameter></paramdef>
+<paramdef><parameter>cmdName</parameter></paramdef>
+<paramdef><parameter>proc</parameter></paramdef>
+<paramdef><parameter>clientData</parameter></paramdef>
+<paramdef><parameter>deleteProc</parameter></paramdef>
+</funcprototype>
+</funcsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='arguments'><title>ARGUMENTS</title>
+<!-- .AS Tcl_CmdDeleteProc *deleteProc -->
+<informaltable>
+<tgroup cols='3'>
+<tbody>
+
+<row><entry>"Tcl_Interp"</entry><entry>"*interp"</entry><entry>"in"</entry>
+<entry>
+<para>Interpreter in which to create new command.</para>
+</entry>
+</row>
+<row><entry>"const char"</entry><entry>*cmdName</entry><entry>in</entry>
+<entry>
+<para>Name of command.</para>
+</entry>
+</row>
+<row><entry>Tcl_CmdProc</entry><entry>*proc</entry><entry>in</entry>
+<entry>
+<para>Implementation of new command:  <emphasis remap='I'>proc</emphasis> will be called whenever
+<emphasis remap='I'>cmdName</emphasis> is invoked as a command.</para>
+</entry>
+</row>
+<row><entry>ClientData</entry><entry>clientData</entry><entry>in</entry>
+<entry>
+<para>Arbitrary one-word value to pass to <emphasis remap='I'>proc</emphasis> and <emphasis remap='I'>deleteProc</emphasis>.</para>
+</entry>
+</row>
+<row><entry>Tcl_CmdDeleteProc</entry><entry>*deleteProc</entry><entry>in</entry>
+<entry>
+<para>Procedure to call before <emphasis remap='I'>cmdName</emphasis> is deleted from the interpreter;
+allows for command-specific cleanup.  If NULL, then no procedure is
+called before the command is deleted.</para>
+<!-- .BE -->
+</entry>
+</row>
+</tbody>
+</tgroup>
+</informaltable>
+
+</refsect1>
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para><function>Tcl_CreateCommand</function> defines a new command in <varname role='parameter'>interp</varname> and associates
+it with procedure <emphasis remap='I'>proc</emphasis> such that whenever <emphasis remap='I'>cmdName</emphasis> is
+invoked as a Tcl command (via a call to <emphasis remap='B'>Tcl_Eval</emphasis>) the Tcl interpreter
+will call <emphasis remap='I'>proc</emphasis> to process the command.
+It differs from <emphasis remap='B'>Tcl_CreateObjCommand</emphasis> in that a new string-based
+command is defined;
+that is, a command procedure is defined that takes an array of
+argument strings instead of objects.
+The object-based command procedures registered by <emphasis remap='B'>Tcl_CreateObjCommand</emphasis>
+can execute significantly faster than the string-based command procedures
+defined by <function>Tcl_CreateCommand</function>.
+This is because they take Tcl objects as arguments
+and those objects can retain an internal representation that
+can be manipulated more efficiently.
+Also, Tcl's interpreter now uses objects internally.
+In order to invoke a string-based command procedure
+registered by <function>Tcl_CreateCommand</function>,
+it must generate and fetch a string representation
+from each argument object before the call
+and create a new Tcl object to hold the string result returned by the
+string-based command procedure.
+New commands should be defined using <emphasis remap='B'>Tcl_CreateObjCommand</emphasis>.
+We support <function>Tcl_CreateCommand</function> for backwards compatibility.</para>
+
+<para>The procedures <emphasis remap='B'>Tcl_DeleteCommand</emphasis>, <emphasis remap='B'>Tcl_GetCommandInfo</emphasis>,
+and <emphasis remap='B'>Tcl_SetCommandInfo</emphasis> are used in conjunction with
+<function>Tcl_CreateCommand</function>.</para>
+
+<para><function>Tcl_CreateCommand</function> will delete an existing file <command>cmdName</command>,
+if one is already associated with the interpreter.
+It returns a token that may be used to refer
+to the command in subsequent calls to <emphasis remap='B'>Tcl_GetCommandName</emphasis>.
+If <emphasis remap='I'>cmdName</emphasis> contains any <emphasis remap='B'>::</emphasis> namespace qualifiers,
+then the command is added to the specified namespace;
+otherwise the command is added to the global namespace.
+If <function>Tcl_CreateCommand</function> is called for an interpreter that is in
+the process of being deleted, then it does not create a new command
+and it returns NULL.
+<emphasis remap='I'>Proc</emphasis> should have arguments and result that match the type
+<type>Tcl_CmdProc</type>:</para>
+<programlisting remap='CS'>
+<funcsynopsis>
+<funcprototype>
+<funcdef>typedef int <function>Tcl_CmdProc</function></funcdef>
+    <paramdef>ClientData <parameter>clientData</parameter></paramdef>
+    <paramdef>Tcl_Interp * <parameter>interp</parameter></paramdef>
+    <paramdef>int <parameter>argc</parameter></paramdef>
+    <paramdef>const char * <parameter>argv</parameter>[]</paramdef>
+</funcprototype>
+</funcsynopsis>
+</programlisting> <!-- remap='CE' -->
+<para>When <emphasis remap='I'>proc</emphasis> is invoked the <varname role='parameter'>clientData</varname> and <varname role='parameter'>interp</varname>
+parameters will be copies of the <varname role='parameter'>clientData</varname> and <varname role='parameter'>interp</varname>
+arguments given to <function>Tcl_CreateCommand</function>.
+Typically, <varname role='parameter'>clientData</varname> points to an application-specific
+data structure that describes what to do when the command procedure
+is invoked.  <emphasis remap='I'>Argc</emphasis> and <varname role='parameter'>argv</varname> describe the arguments to
+the command, <varname role='parameter'>argc</varname> giving the number of arguments (including
+the command name) and <varname role='parameter'>argv</varname> giving the values of the arguments
+as strings.  The <varname role='parameter'>argv</varname> array will contain <varname role='parameter'>argc</varname>+1 values;
+the first <varname role='parameter'>argc</varname> values point to the argument strings, and the
+last value is NULL.  
+Note that the argument strings should not be modified as they may
+point to constant strings or may be shared with other parts of the
+interpreter.</para>
+
+<para>Note that the argument strings are encoded in normalized UTF-8 since
+version 8.1 of Tcl.</para>
+
+<para><emphasis remap='I'>Proc</emphasis> must return an integer code that is expected to be one of
+<emphasis remap='B'>TCL_OK</emphasis>, <emphasis remap='B'>TCL_ERROR</emphasis>, <emphasis remap='B'>TCL_RETURN</emphasis>, <emphasis remap='B'>TCL_BREAK</emphasis>, or
+<emphasis remap='B'>TCL_CONTINUE</emphasis>.  See the Tcl overview man page
+for details on what these codes mean.  Most normal commands will only
+return <emphasis remap='B'>TCL_OK</emphasis> or <emphasis remap='B'>TCL_ERROR</emphasis>.  In addition, <emphasis remap='I'>proc</emphasis> must set
+the interpreter result to point to a string value;
+in the case of a <emphasis remap='B'>TCL_OK</emphasis> return code this gives the result
+of the command, and in the case of <emphasis remap='B'>TCL_ERROR</emphasis> it gives an error message.
+The <emphasis remap='B'>Tcl_SetResult</emphasis> procedure provides an easy interface for setting
+the return value;  for complete details on how the interpreter result
+field is managed, see the <emphasis remap='B'>Tcl_Interp</emphasis> man page.
+Before invoking a command procedure,
+<emphasis remap='B'>Tcl_Eval</emphasis> sets the interpreter result to point to an empty string,
+so simple commands can return an empty result by doing nothing at all.</para>
+
+<para>The contents of the <varname role='parameter'>argv</varname> array belong to Tcl and are not
+guaranteed to persist once <emphasis remap='I'>proc</emphasis> returns:  <emphasis remap='I'>proc</emphasis> should
+not modify them, nor should it set the interpreter result to point
+anywhere within the <varname role='parameter'>argv</varname> values.
+Call <emphasis remap='B'>Tcl_SetResult</emphasis> with status <emphasis remap='B'>TCL_VOLATILE</emphasis> if you want
+to return something from the <varname role='parameter'>argv</varname> array.</para>
+
+<para><emphasis remap='I'>DeleteProc</emphasis> will be invoked when (if) <emphasis remap='I'>cmdName</emphasis> is deleted.
+This can occur through a call to <emphasis remap='B'>Tcl_DeleteCommand</emphasis> or <emphasis remap='B'>Tcl_DeleteInterp</emphasis>,
+or by replacing <emphasis remap='I'>cmdName</emphasis> in another call to <function>Tcl_CreateCommand</function>.
+<emphasis remap='I'>DeleteProc</emphasis> is invoked before the command is deleted, and gives the
+application an opportunity to release any structures associated
+with the command.  <emphasis remap='I'>DeleteProc</emphasis> should have arguments and
+result that match the type <type>Tcl_CmdDeleteProc</type>:</para>
+<programlisting remap='CS'>
+<funcsynopsis>
+<funcprototype>
+<funcdef>typedef void <function>Tcl_CmdDeleteProc</function></funcdef>
+    <paramdef>ClientData <parameter>clientData</parameter></paramdef>
+</funcprototype>
+</funcsynopsis>
+</programlisting> <!-- remap='CE' -->
+<para>The <varname role='parameter'>clientData</varname> argument will be the same as the <varname role='parameter'>clientData</varname>
+argument passed to <function>Tcl_CreateCommand</function>.</para>
+
+</refsect1>
+
+<refsect1 xml:id='see_also'><title>SEE ALSO</title>
+<para>Tcl_CreateObjCommand, Tcl_DeleteCommand, Tcl_GetCommandInfo, Tcl_SetCommandInfo, Tcl_GetCommandName, Tcl_SetObjResult</para>
+
+</refsect1>
+
+<refsect1 xml:id='keywords'><title>KEYWORDS</title>
+<para>bind, command, create, delete, interpreter, namespace</para>
+</refsect1>
+</refentry>
+

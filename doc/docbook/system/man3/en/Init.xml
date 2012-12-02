@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man+tkman by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='init3'>
+
+<!-- '\" Copyright (c) 1998\-2000 by Scriptics Corporation.
+'\" All rights reserved.
+'\" 
+'\" RCS: @(#) $Id$
+'\"  -->
+<refentryinfo><date>8.0</date></refentryinfo>
+<refmeta>
+<refentrytitle>Tcl_Init</refentrytitle>
+<manvolnum>3</manvolnum>
+<refmiscinfo class='date'>8.0</refmiscinfo>
+<refmiscinfo class='source'>Tcl</refmiscinfo>
+<refmiscinfo class='manual'>Tcl Library Procedures</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>Tcl_Init</refname>
+<refpurpose>find and source initialization script</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<funcsynopsis>
+<funcsynopsisinfo>
+#include &lt;tcl.h&gt;
+
+</funcsynopsisinfo>
+<funcprototype>
+<funcdef>int <function>Tcl_Init</function></funcdef>
+<paramdef><parameter>interp</parameter></paramdef>
+</funcprototype>
+</funcsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='arguments'><title>ARGUMENTS</title>
+<!-- .AS Tcl_Interp *interp -->
+<informaltable>
+<tgroup cols='3'>
+<tbody>
+
+<row><entry>"Tcl_Interp"</entry><entry>"*interp"</entry><entry>"in"</entry>
+<entry>
+<para>Interpreter to initialize.</para>
+<!-- .BE -->
+</entry>
+</row>
+</tbody>
+</tgroup>
+</informaltable>
+
+</refsect1>
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para><function>Tcl_Init</function> is a helper procedure that finds and <emphasis remap='B'>source</emphasis>s the
+<emphasis remap='B'>init.tcl</emphasis> script, which should exist somewhere on the Tcl library
+path.</para>
+
+<para><function>Tcl_Init</function> is typically called from <emphasis remap='B'>Tcl_AppInit</emphasis> procedures.</para>
+
+</refsect1>
+
+<refsect1 xml:id='see_also'><title>SEE ALSO</title>
+<para>Tcl_AppInit, Tcl_Main</para>
+
+</refsect1>
+
+<refsect1 xml:id='keywords'><title>KEYWORDS</title>
+<para>application, initialization, interpreter</para>
+</refsect1>
+</refentry>
+

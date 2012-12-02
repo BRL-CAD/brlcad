@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man+tkman by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='tk_init3'>
+
+<!-- '\" Copyright (c) 1995\-1996 Sun Microsystems, Inc. -->
+
+<!-- '\" See the file "license.terms" for information on usage and redistribution
+'\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
+'\" 
+'\" RCS: @(#) $Id$
+'\"  -->
+<refentryinfo><date>8.0</date></refentryinfo>
+<refmeta>
+<refentrytitle>Tk_Init</refentrytitle>
+<manvolnum>3</manvolnum>
+<refmiscinfo class='date'>8.0</refmiscinfo>
+<refmiscinfo class='source'>Tk</refmiscinfo>
+<refmiscinfo class='manual'>Tk Library Procedures</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>Tk_Init</refname>
+<refname>Tk_SafeInit</refname>
+<refpurpose>add Tk to an interpreter and make a new Tk application.</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<funcsynopsis>
+<funcsynopsisinfo>
+#include &lt;tk.h&gt;
+
+</funcsynopsisinfo>
+<funcprototype>
+<funcdef>int <function>Tk_Init</function></funcdef>
+<paramdef><parameter>interp</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef>int <function>Tk_SafeInit</function></funcdef>
+<paramdef><parameter>interp</parameter></paramdef>
+</funcprototype>
+</funcsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='arguments'><title>ARGUMENTS</title>
+<para>Interpreter in which to load Tk.  Tk should not already be loaded
+in this interpreter.</para>
+<!-- .BE -->
+
+</refsect1>
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para><function>Tk_Init</function> is the package initialization procedure for Tk.
+It is normally invoked by the <emphasis remap='B'>Tcl_AppInit</emphasis> procedure
+for an application or by the <emphasis remap='B'>load</emphasis> command.
+<function>Tk_Init</function> adds all of Tk's commands to <emphasis remap='I'>interp</emphasis>
+and creates a new Tk application, including its main window.
+If the initialization is successful <function>Tk_Init</function> returns
+<emphasis remap='B'>TCL_OK</emphasis>;  if there is an error it returns <emphasis remap='B'>TCL_ERROR</emphasis>.
+<function>Tk_Init</function> also leaves a result or error message
+in <emphasis remap='I'>interp-&gt;result</emphasis>.</para>
+
+<para>If there is a variable <emphasis remap='B'>argv</emphasis> in <emphasis remap='I'>interp</emphasis>, <function>Tk_Init</function>
+treats the contents of this variable as a list of options for the
+new Tk application.
+The options may have any of the forms documented for the
+<emphasis remap='B'>wish</emphasis> application (in fact, <emphasis remap='B'>wish</emphasis> uses Tk_Init to process
+its command-line arguments).</para>
+
+<para><function>Tk_SafeInit</function> is identical to <function>Tk_Init</function> except that it removes
+all Tk commands that are considered unsafe.  Those commands and the
+reasons for their exclusion are:</para>
+<variablelist remap='TP'>
+  <varlistentry>
+  <term><emphasis remap='B'>bell</emphasis></term>
+  <listitem>
+<para>Continuous ringing of the bell is a nuisance.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>clipboard</emphasis></term>
+  <listitem>
+<para>A malicious script could replace the contents of the clipboard with
+the string
+<quote><userinput>rm -r *</userinput></quote>
+and lead to surprises when the contents of the clipboard are pasted.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>grab</emphasis></term>
+  <listitem>
+<para>Grab can be used to block the user from using any other applications.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>menu</emphasis></term>
+  <listitem>
+<para>Menus can be used to cover the entire screen and to steal input from
+the user.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>selection</emphasis></term>
+  <listitem>
+<para>See clipboard.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>send</emphasis></term>
+  <listitem>
+<para>Send can be used to cause unsafe interpreters to execute commands.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>tk</emphasis></term>
+  <listitem>
+<para>The tk command recreates the send command, which is unsafe.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>tkwait</emphasis></term>
+  <listitem>
+<para>Tkwait can block the containing process forever</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>toplevel</emphasis></term>
+  <listitem>
+<para>Toplevels can be used to cover the entire screen and to steal input
+from the user.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>wm</emphasis></term>
+  <listitem>
+<para>If toplevels are ever allowed, wm can be used to remove decorations,
+move windows around, etc.</para>
+
+  </listitem>
+  </varlistentry>
+</variablelist>
+</refsect1>
+
+<refsect1 xml:id='keywords'><title>KEYWORDS</title>
+<para>safe, application, initialization, load, main window</para>
+</refsect1>
+</refentry>
+

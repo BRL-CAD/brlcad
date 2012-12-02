@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='rlehisto1'>
+<!--  Copyright (c) 1986, University of Utah
+ additions by Gregg Townsend, University of Arizona -->
+<refmeta>
+<refentrytitle>RLEHISTO</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class='source'>June 25, 1990</refmiscinfo>
+<refmiscinfo class='manual'>1</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>rlehisto</refname>
+<refpurpose>generate histogram of RLE image.</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<cmdsynopsis>
+  <command>rlehisto</command>    
+    <arg choice='opt'>-b </arg>
+    <arg choice='opt'>-c </arg>
+    <arg choice='opt'>-t </arg>
+    <arg choice='opt'><arg choice='plain'>-h </arg><arg choice='plain'><replaceable>height</replaceable></arg></arg>
+    <arg choice='opt'><arg choice='plain'>-o </arg><arg choice='plain'><replaceable>outfile</replaceable></arg></arg>
+    <arg choice='opt'><replaceable>infile</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para><emphasis remap='I'>Rlehisto</emphasis>
+counts the pixel values in an RLE file,
+producing an RLE file graphing frequency of occurrence.
+The horizontal axis runs from pixel value 0 on the left
+to pixel value 255 on the right.
+The height indicates the number of pixels seen for each pixel value.
+Histograms are computed independently for each channel,
+scaled identically, and then overlaid.</para>
+
+<para>The following options are available:</para>
+<variablelist remap='TP'>
+  <varlistentry>
+  <term><option>-b</option></term>
+  <listitem>
+<para>Don't count the background pixel values when scaling the histogram.
+This is useful if most pixels are colored the background color, so
+that the interesting part of the histogram would be too small.  This
+option is ignored if
+<option>-c</option>
+is specified.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-c</option></term>
+  <listitem>
+<para>Output cumulative values instead of discrete values.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-t</option></term>
+  <listitem>
+<para>Print the totals instead of generating the histogram as an RLE file.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-h</option></term>
+  <listitem>
+<para><emphasis remap='I'>height</emphasis>
+Scale the output image to the specified height.
+The default is 256.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-o</option><replaceable> outfile</replaceable></term>
+  <listitem>
+<para>Direct the output to
+<emphasis remap='I'>outfile.</emphasis></para>
+  </listitem>
+  </varlistentry>
+</variablelist>
+</refsect1>
+
+<refsect1 xml:id='see_also'><title>SEE ALSO</title>
+<para><citerefentry><refentrytitle>urt</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>RLE</refentrytitle><manvolnum>5</manvolnum></citerefentry>.</para>
+</refsect1>
+
+<refsect1 xml:id='authors'><title>AUTHORS</title>
+<para>Gregg Townsend, University of Arizona;
+Rod Bogart, University of Utah.</para>
+</refsect1>
+</refentry>
+

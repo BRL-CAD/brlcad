@@ -1,0 +1,741 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man+tkman by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='crtitemtype3'>
+
+<!-- '\" Copyright (c) 1994\-1995 Sun Microsystems, Inc. -->
+
+<!-- '\" See the file "license.terms" for information on usage and redistribution
+'\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
+'\" 
+'\" RCS: @(#) $Id$
+'\"  -->
+<refentryinfo><date>4.0</date></refentryinfo>
+<refmeta>
+<refentrytitle>Tk_CreateItemType</refentrytitle>
+<manvolnum>3</manvolnum>
+<refmiscinfo class='date'>4.0</refmiscinfo>
+<refmiscinfo class='source'>Tk</refmiscinfo>
+<refmiscinfo class='manual'>Tk Library Procedures</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>Tk_CreateItemType</refname>
+<refname>Tk_GetItemTypes</refname>
+<refpurpose>define new kind of canvas item</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<funcsynopsis>
+<funcsynopsisinfo>
+#include &lt;tk.h&gt;
+
+</funcsynopsisinfo>
+<funcprototype>
+<funcdef><function>Tk_CreateItemType</function></funcdef>
+<paramdef><parameter>typePtr</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef><function>Tk_ItemType</function> *Tk_GetItemTypes</funcdef>
+<void/></funcprototype>
+</funcsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='arguments'><title>ARGUMENTS</title>
+<!-- .AS Tk_ItemType *typePtr -->
+<informaltable>
+<tgroup cols='3'>
+<tbody>
+
+<row><entry>"Tk_ItemType"</entry><entry>"*typePtr"</entry><entry>"in"</entry>
+<entry>
+<para>Structure that defines the new type of canvas item.</para>
+<!-- .BE -->
+</entry>
+</row>
+</tbody>
+</tgroup>
+</informaltable>
+
+</refsect1>
+
+<refsect1 xml:id='introduction'><title>INTRODUCTION</title>
+<para><function>Tk_CreateItemType</function> is invoked to define a new kind of canvas item
+described by the <emphasis remap='I'>typePtr</emphasis> argument.
+An item type corresponds to a particular value of the <emphasis remap='I'>type</emphasis>
+argument to the <emphasis remap='B'>create</emphasis> widget command for canvases, and
+the code that implements a canvas item type is called a <emphasis remap='I'>type manager</emphasis>.
+Tk defines several built-in item types, such as <emphasis remap='B'>rectangle</emphasis>
+and <emphasis remap='B'>text</emphasis> and <emphasis remap='B'>image</emphasis>, but <function>Tk_CreateItemType</function>
+allows additional item types to be defined.
+Once <function>Tk_CreateItemType</function> returns, the new item type may be used
+in new or existing canvas widgets just like the built-in item
+types.</para>
+
+<para><emphasis remap='B'>Tk_GetItemTypes</emphasis> returns a pointer to the first in the list
+of all item types currently defined for canvases.
+The entries in the list are linked together through their
+<emphasis remap='I'>nextPtr</emphasis> fields, with the end of the list marked by a
+NULL <emphasis remap='I'>nextPtr</emphasis>.</para>
+
+<para>You may find it easier to understand the rest of this manual entry
+by looking at the code for an existing canvas item type such as
+bitmap (file tkCanvBmap.c) or text (tkCanvText.c).
+The easiest way to create a new type manager is to copy the code
+for an existing type and modify it for the new type.</para>
+
+<para>Tk provides a number of utility procedures for the use of canvas
+type managers, such as <emphasis remap='B'>Tk_CanvasCoords</emphasis> and <emphasis remap='B'>Tk_CanvasPsColor</emphasis>;
+these are described in separate manual entries.</para>
+</refsect1>
+
+<refsect1 xml:id='data_structures'><title>DATA STRUCTURES</title>
+<para>A type manager consists of a collection of procedures that provide a
+standard set of operations on items of that type.
+The type manager deals with three kinds of data
+structures.
+The first data structure is a Tk_ItemType; it contains
+information such as the name of the type and pointers to
+the standard procedures implemented by the type manager:</para>
+<programlisting remap='CS'>
+typedef struct Tk_ItemType {
+    char *<emphasis remap='I'>name</emphasis>;
+    int <emphasis remap='I'>itemSize</emphasis>;
+    Tk_ItemCreateProc *<emphasis remap='I'>createProc</emphasis>;
+    Tk_ConfigSpec *<emphasis remap='I'>configSpecs</emphasis>;
+    Tk_ItemConfigureProc *<emphasis remap='I'>configProc</emphasis>;
+    Tk_ItemCoordProc *<emphasis remap='I'>coordProc</emphasis>;
+    Tk_ItemDeleteProc *<emphasis remap='I'>deleteProc</emphasis>;
+    Tk_ItemDisplayProc *<emphasis remap='I'>displayProc</emphasis>;
+    int <emphasis remap='I'>alwaysRedraw</emphasis>;
+    Tk_ItemPointProc *<emphasis remap='I'>pointProc</emphasis>;
+    Tk_ItemAreaProc *<emphasis remap='I'>areaProc</emphasis>;
+    Tk_ItemPostscriptProc *<emphasis remap='I'>postscriptProc</emphasis>;
+    Tk_ItemScaleProc *<emphasis remap='I'>scaleProc</emphasis>;
+    Tk_ItemTranslateProc *<emphasis remap='I'>translateProc</emphasis>;
+    Tk_ItemIndexProc *<emphasis remap='I'>indexProc</emphasis>;
+    Tk_ItemCursorProc *<emphasis remap='I'>icursorProc</emphasis>;
+    Tk_ItemSelectionProc *<emphasis remap='I'>selectionProc</emphasis>;
+    Tk_ItemInsertProc *<emphasis remap='I'>insertProc</emphasis>;
+    Tk_ItemDCharsProc *<emphasis remap='I'>dCharsProc</emphasis>;
+    Tk_ItemType *<emphasis remap='I'>nextPtr</emphasis>;
+} Tk_ItemType;
+</programlisting> <!-- remap='CE' -->
+
+<para>The fields of a Tk_ItemType structure are described in more detail
+later in this manual entry.
+When <function>Tk_CreateItemType</function> is called, its <emphasis remap='I'>typePtr</emphasis>
+argument must point to a structure with all of the fields initialized
+except <emphasis remap='I'>nextPtr</emphasis>, which Tk sets to link all the types together
+into a list.
+The structure must be in permanent memory (either statically
+allocated or dynamically allocated but never freed);  Tk retains
+a pointer to this structure.</para>
+
+<para>The second data structure manipulated by a type manager is an
+<emphasis remap='I'>item record</emphasis>.
+For each item in a canvas there exists one item record.
+All of the items of a given type generally have item records with
+the same structure, but different types usually have different
+formats for their item records.
+The first part of each item record is a header with a standard structure
+defined by Tk via the type Tk_Item;  the rest of the item
+record is defined by the type manager.
+A type manager must define its item records with a Tk_Item as
+the first field.
+For example, the item record for bitmap items is defined as follows:</para>
+<programlisting remap='CS'>
+typedef struct BitmapItem {
+    Tk_Item <emphasis remap='I'>header</emphasis>;
+    double <varname role='parameter'>x</varname>, <varname role='parameter'>y</varname>;
+    Tk_Anchor <emphasis remap='I'>anchor</emphasis>;
+    Pixmap <emphasis remap='I'>bitmap</emphasis>;
+    XColor *<emphasis remap='I'>fgColor</emphasis>;
+    XColor *<emphasis remap='I'>bgColor</emphasis>;
+    GC <emphasis remap='I'>gc</emphasis>;
+} BitmapItem;
+</programlisting> <!-- remap='CE' -->
+<para>The <emphasis remap='I'>header</emphasis> substructure contains information used by Tk
+to manage the item, such as its identifier, its tags, its type,
+and its bounding box.
+The fields starting with <varname role='parameter'>x</varname> belong to the type manager:
+Tk will never read or write them.
+The type manager should not need to read or write any of the
+fields in the header except for four fields
+whose names are <emphasis remap='I'>x1</emphasis>, <emphasis remap='I'>y1</emphasis>, <emphasis remap='I'>x2</emphasis>, and <emphasis remap='I'>y2</emphasis>.
+These fields give a bounding box for the items using integer
+canvas coordinates:  the item should not cover any pixels
+with x-coordinate lower than <emphasis remap='I'>x1</emphasis> or y-coordinate
+lower than <emphasis remap='I'>y1</emphasis>, nor should it cover any pixels with
+x-coordinate greater than or equal to <emphasis remap='I'>x2</emphasis> or y-coordinate
+greater than or equal to <emphasis remap='I'>y2</emphasis>.
+It is up to the type manager to keep the bounding box up to
+date as the item is moved and reconfigured.</para>
+
+<para>Whenever Tk calls a procedure in a type manager it passes in a pointer
+to an item record.
+The argument is always passed as a pointer to a Tk_Item;  the type
+manager will typically cast this into a pointer to its own specific
+type, such as BitmapItem.</para>
+
+<para>The third data structure used by type managers has type
+Tk_Canvas;  it serves as an opaque handle for the canvas widget
+as a whole.
+Type managers need not know anything about the contents of this
+structure.
+A Tk_Canvas handle is typically passed in to the
+procedures of a type manager, and the type manager can pass the
+handle back to library procedures such as Tk_CanvasTkwin
+to fetch information about the canvas.</para>
+
+<refsect2 xml:id='name'><title>NAME</title>
+
+<para>This section and the ones that follow describe each of the fields
+in a Tk_ItemType structure in detail.
+The <emphasis remap='I'>name</emphasis> field provides a string name for the item type.
+Once <emphasis remap='B'>Tk_CreateImageType</emphasis> returns, this name may be used
+in <emphasis remap='B'>create</emphasis> widget commands to create items of the new
+type.
+If there already existed an item type by this name then
+the new item type replaces the old one.</para>
+</refsect2>
+
+<refsect2 xml:id='itemsize'><title>ITEMSIZE</title>
+<para><emphasis remap='I'>typePtr-&gt;itemSize</emphasis> gives the size in bytes of item records
+of this type, including the Tk_Item header.
+Tk uses this size to allocate memory space for items of the type.
+All of the item records for a given type must have the same size.
+If variable length fields are needed for an item (such as a list
+of points for a polygon), the type manager can allocate a separate
+object of variable length and keep a pointer to it in the item record.</para>
+</refsect2>
+
+<refsect2 xml:id='createproc'><title>CREATEPROC</title>
+
+<para><emphasis remap='I'>typePtr-&gt;createProc</emphasis> points to a procedure for
+Tk to call whenever a new item of this type is created.
+<emphasis remap='I'>typePtr-&gt;createProc</emphasis> must match the following prototype:</para>
+<programlisting remap='CS'>
+<funcsynopsis>
+<funcprototype>
+<funcdef>typedef int <function>Tk_ItemCreateProc</function></funcdef>
+    <paramdef>Tcl_Interp * <parameter>interp</parameter></paramdef>
+    <paramdef>Tk_Canvas <parameter>canvas</parameter></paramdef>
+    <paramdef>Tk_Item * <parameter>itemPtr</parameter></paramdef>
+    <paramdef>int <parameter>objc</parameter></paramdef>
+    <paramdef>Tcl_Obj *const <parameter>objv</parameter>[]</paramdef>
+</funcprototype>
+</funcsynopsis>
+</programlisting> <!-- remap='CE' -->
+<para>The <varname role='parameter'>interp</varname> argument is the interpreter in which the canvas's
+<emphasis remap='B'>create</emphasis> widget command was invoked, and <varname role='parameter'>canvas</varname> is a
+handle for the canvas widget.
+<varname role='parameter'>itemPtr</varname> is a pointer to a newly-allocated item of
+size <emphasis remap='I'>typePtr-&gt;itemSize</emphasis>.
+Tk has already initialized the item's header (the first
+<emphasis remap='B'>sizeof(Tk_ItemType)</emphasis> bytes).
+The <varname role='parameter'>objc</varname> and <varname role='parameter'>objv</varname> arguments describe all of the
+arguments to the <emphasis remap='B'>create</emphasis> command after the <emphasis remap='I'>type</emphasis>
+argument.
+For example, in the widget command</para>
+<programlisting remap='CS'>
+<emphasis remap='B'>.c create rectangle 10 20 50 50 -fill black</emphasis>
+</programlisting> <!-- remap='CE' -->
+<para><varname role='parameter'>objc</varname> will be <literal>6</literal> and <varname role='parameter'>objv</varname>[0] will contain the
+integer object <literal>10</literal>.</para>
+
+<para><emphasis remap='I'>createProc</emphasis> should use <varname role='parameter'>objc</varname> and <varname role='parameter'>objv</varname> to initialize
+the type-specific parts of the item record and set an initial value
+for the bounding box in the item's header.
+It should return a standard Tcl completion code and leave an
+error message in <emphasis remap='I'>interp-&gt;result</emphasis> if an error occurs.
+If an error occurs Tk will free the item record, so <emphasis remap='I'>createProc</emphasis>
+must be sure to leave the item record in a clean state if it returns an error
+(e.g., it must free any additional memory that it allocated for
+the item).</para>
+</refsect2>
+
+<refsect2 xml:id='configspecs'><title>CONFIGSPECS</title>
+
+<para>Each type manager must provide a standard table describing its
+configuration options, in a form suitable for use with
+<emphasis remap='B'>Tk_ConfigureWidget</emphasis>.
+This table will normally be used by <emphasis remap='I'>typePtr-&gt;createProc</emphasis>
+and <emphasis remap='I'>typePtr-&gt;configProc</emphasis>, but Tk also uses it directly
+to retrieve option information in the <emphasis remap='B'>itemcget</emphasis> and
+<emphasis remap='B'>itemconfigure</emphasis> widget commands.
+<emphasis remap='I'>typePtr-&gt;configSpecs</emphasis> must point to the configuration table
+for this type.
+Note: Tk provides a custom option type <emphasis remap='B'>tk_CanvasTagsOption</emphasis>
+for implementing the <option>-tags</option> option;  see an existing type
+manager for an example of how to use it in <emphasis remap='I'>configSpecs</emphasis>.</para>
+</refsect2>
+
+<refsect2 xml:id='configproc'><title>CONFIGPROC</title>
+
+<para><emphasis remap='I'>typePtr-&gt;configProc</emphasis> is called by Tk whenever the
+<emphasis remap='B'>itemconfigure</emphasis> widget command is invoked to change the
+configuration options for a canvas item.
+This procedure must match the following prototype:</para>
+<programlisting remap='CS'>
+<funcsynopsis>
+<funcprototype>
+<funcdef>typedef int <function>Tk_ItemConfigureProc</function></funcdef>
+    <paramdef>Tcl_Interp * <parameter>interp</parameter></paramdef>
+    <paramdef>Tk_Canvas <parameter>canvas</parameter></paramdef>
+    <paramdef>Tk_Item * <parameter>itemPtr</parameter></paramdef>
+    <paramdef>int <parameter>objc</parameter></paramdef>
+    <paramdef>Tcl_Obj *const <parameter>objv</parameter>[]</paramdef>
+    <paramdef>int <parameter>flags</parameter></paramdef>
+</funcprototype>
+</funcsynopsis>
+</programlisting> <!-- remap='CE' -->
+<para>The <varname role='parameter'>interp</varname> objument identifies the interpreter in which the
+widget command was invoked,  <varname role='parameter'>canvas</varname> is a handle for the canvas
+widget, and <varname role='parameter'>itemPtr</varname> is a pointer to the item being configured.
+<varname role='parameter'>objc</varname> and <varname role='parameter'>objv</varname> contain the configuration options.  For
+example, if the following command is invoked:</para>
+<programlisting remap='CS'>
+<emphasis remap='B'>.c itemconfigure 2 -fill red -outline black</emphasis>
+</programlisting> <!-- remap='CE' -->
+<para><varname role='parameter'>objc</varname> is <literal>4</literal> and <varname role='parameter'>objv</varname> contains the string objects <option>-fill</option>
+through <emphasis remap='B'>black</emphasis>.
+<varname role='parameter'>objc</varname> will always be an even value.
+The  <varname role='parameter'>flags</varname> argument contains flags to pass to <emphasis remap='B'>Tk_ConfigureWidget</emphasis>;
+currently this value is always <emphasis remap='B'>TK_CONFIG_ARGV_ONLY</emphasis> when Tk
+invokes <emphasis remap='I'>typePtr-&gt;configProc</emphasis>, but the type manager's <emphasis remap='I'>createProc</emphasis>
+procedure will usually invoke <emphasis remap='I'>configProc</emphasis> with different flag values.</para>
+
+<para><emphasis remap='I'>typePtr-&gt;configProc</emphasis> returns a standard Tcl completion code and
+leaves an error message in <emphasis remap='I'>interp-&gt;result</emphasis> if an error occurs.
+It must update the item's bounding box to reflect the new configuration
+options.</para>
+</refsect2>
+
+<refsect2 xml:id='coordproc'><title>COORDPROC</title>
+
+<para><emphasis remap='I'>typePtr-&gt;coordProc</emphasis> is invoked by Tk to implement the <emphasis remap='B'>coords</emphasis>
+widget command for an item.
+It must match the following prototype:</para>
+<programlisting remap='CS'>
+<funcsynopsis>
+<funcprototype>
+<funcdef>typedef int <function>Tk_ItemCoordProc</function></funcdef>
+    <paramdef>Tcl_Interp * <parameter>interp</parameter></paramdef>
+    <paramdef>Tk_Canvas <parameter>canvas</parameter></paramdef>
+    <paramdef>Tk_Item * <parameter>itemPtr</parameter></paramdef>
+    <paramdef>int <parameter>objc</parameter></paramdef>
+    <paramdef>Tcl_Obj *const <parameter>objv</parameter>[]</paramdef>
+</funcprototype>
+</funcsynopsis>
+</programlisting> <!-- remap='CE' -->
+<para>The arguments <varname role='parameter'>interp</varname>, <varname role='parameter'>canvas</varname>, and <varname role='parameter'>itemPtr</varname>
+all have the standard meanings, and <varname role='parameter'>objc</varname> and <varname role='parameter'>objv</varname>
+describe the coordinate arguments.
+For example, if the following widget command is invoked:</para>
+<programlisting remap='CS'>
+<emphasis remap='B'>.c coords 2 30 90</emphasis>
+</programlisting> <!-- remap='CE' -->
+<para><varname role='parameter'>objc</varname> will be <literal>2</literal> and <varname role='parameter'>objv</varname> will contain the integer objects
+<literal>30</literal> and <literal>90</literal>.</para>
+
+<para>The <emphasis remap='I'>coordProc</emphasis> procedure should process the new coordinates,
+update the item appropriately (e.g., it must reset the bounding
+box in the item's header), and return a standard Tcl completion
+code.
+If an error occurs, <emphasis remap='I'>coordProc</emphasis> must leave an error message in
+<emphasis remap='I'>interp-&gt;result</emphasis>.</para>
+</refsect2>
+
+<refsect2 xml:id='deleteproc'><title>DELETEPROC</title>
+
+<para><emphasis remap='I'>typePtr-&gt;deleteProc</emphasis> is invoked by Tk to delete an item
+and free any resources allocated to it.
+It must match the following prototype:</para>
+<programlisting remap='CS'>
+<funcsynopsis>
+<funcprototype>
+<funcdef>typedef void <function>Tk_ItemDeleteProc</function></funcdef>
+    <paramdef>Tk_Canvas <parameter>canvas</parameter></paramdef>
+    <paramdef>Tk_Item * <parameter>itemPtr</parameter></paramdef>
+    <paramdef>Display * <parameter>display</parameter></paramdef>
+</funcprototype>
+</funcsynopsis>
+</programlisting> <!-- remap='CE' -->
+<para>The <varname role='parameter'>canvas</varname> and <varname role='parameter'>itemPtr</varname> arguments have the usual
+interpretations, and <varname role='parameter'>display</varname> identifies the X display containing
+the canvas.
+<emphasis remap='I'>deleteProc</emphasis> must free up any resources allocated for the item,
+so that Tk can free the item record.
+<emphasis remap='I'>deleteProc</emphasis> should not actually free the item record;  this will
+be done by Tk when <emphasis remap='I'>deleteProc</emphasis> returns.</para>
+</refsect2>
+
+<refsect2 xml:id='displayproc_and_alwaysredraw'><title>DISPLAYPROC AND ALWAYSREDRAW</title>
+
+<para><emphasis remap='I'>typePtr-&gt;displayProc</emphasis> is invoked by Tk to redraw an item
+on the screen.
+It must match the following prototype:</para>
+<programlisting remap='CS'>
+<funcsynopsis>
+<funcprototype>
+<funcdef>typedef void <function>Tk_ItemDisplayProc</function></funcdef>
+    <paramdef>Tk_Canvas <parameter>canvas</parameter></paramdef>
+    <paramdef>Tk_Item * <parameter>itemPtr</parameter></paramdef>
+    <paramdef>Display * <parameter>display</parameter></paramdef>
+    <paramdef>Drawable <parameter>dst</parameter></paramdef>
+    <paramdef>int <parameter>x</parameter></paramdef>
+    <paramdef>int <parameter>y</parameter></paramdef>
+    <paramdef>int <parameter>width</parameter></paramdef>
+    <paramdef>int <parameter>height</parameter></paramdef>
+</funcprototype>
+</funcsynopsis>
+</programlisting> <!-- remap='CE' -->
+<para>The <varname role='parameter'>canvas</varname> and <varname role='parameter'>itemPtr</varname> arguments have the usual meaning.
+<varname role='parameter'>display</varname> identifies the display containing the canvas, and
+<varname role='parameter'>dst</varname> specifies a drawable in which the item should be rendered;
+typically this is an off-screen pixmap, which Tk will copy into
+the canvas's window once all relevant items have been drawn.
+<varname role='parameter'>x</varname>, <varname role='parameter'>y</varname>, <varname role='parameter'>width</varname>, and <varname role='parameter'>height</varname> specify a rectangular
+region in canvas coordinates, which is the area to be redrawn;
+only information that overlaps this area needs to be redrawn.
+Tk will not call <emphasis remap='I'>displayProc</emphasis> unless the item's bounding box
+overlaps the redraw area, but the type manager may wish to use
+the redraw area to optimize the redisplay of the item.</para>
+
+<para>Because of scrolling and the use of off-screen pixmaps for
+double-buffered redisplay, the item's coordinates in <varname role='parameter'>dst</varname>
+will not necessarily be the same as those in the canvas.
+<emphasis remap='I'>displayProc</emphasis> should call <emphasis remap='B'>Tk_CanvasDrawableCoords</emphasis>
+to transform coordinates from those of the canvas to those
+of <varname role='parameter'>dst</varname>.</para>
+
+<para>Normally an item's <emphasis remap='I'>displayProc</emphasis> is only invoked if the item
+overlaps the area being displayed.
+However, if <emphasis remap='I'>typePtr-&gt;alwaysRedraw</emphasis> has a non-zero value, then
+<emphasis remap='I'>displayProc</emphasis> is invoked during every redisplay operation,
+even if the item does not overlap the area of redisplay.
+<emphasis remap='I'>alwaysRedraw</emphasis> should normally be set to 0;  it is only
+set to 1 in special cases such as window items that need to be
+unmapped when they are off-screen.</para>
+</refsect2>
+
+<refsect2 xml:id='pointproc'><title>POINTPROC</title>
+
+<para><emphasis remap='I'>typePtr-&gt;pointProc</emphasis> is invoked by Tk to find out how close
+a given point is to a canvas item.
+Tk uses this procedure for purposes such as locating the item
+under the mouse or finding the closest item to a given point.
+The procedure must match the following prototype:</para>
+<programlisting remap='CS'>
+<funcsynopsis>
+<funcprototype>
+<funcdef>typedef double <function>Tk_ItemPointProc</function></funcdef>
+    <paramdef>Tk_Canvas <parameter>canvas</parameter></paramdef>
+    <paramdef>Tk_Item * <parameter>itemPtr</parameter></paramdef>
+    <paramdef>double * <parameter>pointPtr</parameter></paramdef>
+</funcprototype>
+</funcsynopsis>
+</programlisting> <!-- remap='CE' -->
+<para><varname role='parameter'>canvas</varname> and <varname role='parameter'>itemPtr</varname> have the usual meaning.
+<varname role='parameter'>pointPtr</varname> points to an array of two numbers giving
+the x and y coordinates of a point.
+<emphasis remap='I'>pointProc</emphasis> must return a real value giving the distance
+from the point to the item, or 0 if the point lies inside
+the item.</para>
+</refsect2>
+
+<refsect2 xml:id='areaproc'><title>AREAPROC</title>
+
+<para><emphasis remap='I'>typePtr-&gt;areaProc</emphasis> is invoked by Tk to find out the relationship
+between an item and a rectangular area.
+It must match the following prototype:</para>
+<programlisting remap='CS'>
+<funcsynopsis>
+<funcprototype>
+<funcdef>typedef int <function>Tk_ItemAreaProc</function></funcdef>
+    <paramdef>Tk_Canvas <parameter>canvas</parameter></paramdef>
+    <paramdef>Tk_Item * <parameter>itemPtr</parameter></paramdef>
+    <paramdef>double * <parameter>rectPtr</parameter></paramdef>
+</funcprototype>
+</funcsynopsis>
+</programlisting> <!-- remap='CE' -->
+<para><varname role='parameter'>canvas</varname> and <varname role='parameter'>itemPtr</varname> have the usual meaning.
+<varname role='parameter'>rectPtr</varname> points to an array of four real numbers;
+the first two give the x and y coordinates of the upper left
+corner of a rectangle, and the second two give the x and y
+coordinates of the lower right corner.
+<emphasis remap='I'>areaProc</emphasis> must return -1 if the item lies entirely outside
+the given area, 0 if it lies partially inside and partially
+outside the area, and 1 if it lies entirely inside the area.</para>
+</refsect2>
+
+<refsect2 xml:id='postscriptproc'><title>POSTSCRIPTPROC</title>
+
+<para><emphasis remap='I'>typePtr-&gt;postscriptProc</emphasis> is invoked by Tk to generate
+Postscript for an item during the <emphasis remap='B'>postscript</emphasis> widget command.
+If the type manager is not capable of generating Postscript then
+<emphasis remap='I'>typePtr-&gt;postscriptProc</emphasis> should be NULL.
+The procedure must match the following prototype:</para>
+<programlisting remap='CS'>
+<funcsynopsis>
+<funcprototype>
+<funcdef>typedef int <function>Tk_ItemPostscriptProc</function></funcdef>
+    <paramdef>Tcl_Interp * <parameter>interp</parameter></paramdef>
+    <paramdef>Tk_Canvas <parameter>canvas</parameter></paramdef>
+    <paramdef>Tk_Item * <parameter>itemPtr</parameter></paramdef>
+    <paramdef>int <parameter>prepass</parameter></paramdef>
+</funcprototype>
+</funcsynopsis>
+</programlisting> <!-- remap='CE' -->
+<para>The <varname role='parameter'>interp</varname>, <varname role='parameter'>canvas</varname>, and <varname role='parameter'>itemPtr</varname> arguments all have
+standard meanings;  <varname role='parameter'>prepass</varname> will be described below.
+If <emphasis remap='I'>postscriptProc</emphasis> completes successfully, it should append
+Postscript for the item to the information in <emphasis remap='I'>interp-&gt;result</emphasis>
+(e.g. by calling <emphasis remap='B'>Tcl_AppendResult</emphasis>, not <emphasis remap='B'>Tcl_SetResult</emphasis>)
+and return <emphasis remap='B'>TCL_OK</emphasis>.
+If an error occurs, <emphasis remap='I'>postscriptProc</emphasis> should clear the result
+and replace its contents with an error message;  then it should
+return <emphasis remap='B'>TCL_ERROR</emphasis>.</para>
+
+<para>Tk provides a collection of utility procedures to simplify
+<emphasis remap='I'>postscriptProc</emphasis>.
+For example, <emphasis remap='B'>Tk_CanvasPsColor</emphasis> will generate Postscript to set
+the current color to a given Tk color and <emphasis remap='B'>Tk_CanvasPsFont</emphasis> will
+set up font information.
+When generating Postscript, the type manager is free to change the
+graphics state of the Postscript interpreter, since Tk places
+<emphasis remap='B'>gsave</emphasis> and <emphasis remap='B'>grestore</emphasis> commands around the Postscript for
+the item.
+The type manager can use canvas x coordinates directly in its Postscript,
+but it must call <emphasis remap='B'>Tk_CanvasPsY</emphasis> to convert y coordinates from
+the space of the canvas (where the origin is at the
+upper left) to the space of Postscript (where the origin is at the
+lower left).</para>
+
+<para>In order to generate Postscript that complies with the Adobe Document
+Structuring Conventions, Tk actually generates Postscript in two passes.
+It calls each item's <emphasis remap='I'>postscriptProc</emphasis> in each pass.
+The only purpose of the first pass is to collect font information
+(which is done by <emphasis remap='B'>Tk_CanvasPsFont</emphasis>);  the actual Postscript is
+discarded.
+Tk sets the <varname role='parameter'>prepass</varname> argument to <emphasis remap='I'>postscriptProc</emphasis> to 1
+during the first pass;  the type manager can use <varname role='parameter'>prepass</varname> to skip
+all Postscript generation except for calls to <emphasis remap='B'>Tk_CanvasPsFont</emphasis>.
+During the second pass <varname role='parameter'>prepass</varname> will be 0, so the type manager
+must generate complete Postscript.</para>
+</refsect2>
+
+<refsect2 xml:id='scaleproc'><title>SCALEPROC</title>
+<para><emphasis remap='I'>typePtr-&gt;scaleProc</emphasis> is invoked by Tk to rescale a canvas item
+during the <emphasis remap='B'>scale</emphasis> widget command.
+The procedure must match the following prototype:</para>
+<programlisting remap='CS'>
+<funcsynopsis>
+<funcprototype>
+<funcdef>typedef void <function>Tk_ItemScaleProc</function></funcdef>
+    <paramdef>Tk_Canvas <parameter>canvas</parameter></paramdef>
+    <paramdef>Tk_Item * <parameter>itemPtr</parameter></paramdef>
+    <paramdef>double <parameter>originX</parameter></paramdef>
+    <paramdef>double <parameter>originY</parameter></paramdef>
+    <paramdef>double <parameter>scaleX</parameter></paramdef>
+    <paramdef>double <parameter>scaleY</parameter></paramdef>
+</funcprototype>
+</funcsynopsis>
+</programlisting> <!-- remap='CE' -->
+<para>The <varname role='parameter'>canvas</varname> and <varname role='parameter'>itemPtr</varname> arguments have the usual meaning.
+<varname role='parameter'>originX</varname> and <varname role='parameter'>originY</varname> specify an origin relative to which
+the item is to be scaled, and <varname role='parameter'>scaleX</varname> and <varname role='parameter'>scaleY</varname> give the
+x and y scale factors.
+The item should adjust its coordinates so that a point in the item
+that used to have coordinates <varname role='parameter'>x</varname> and <varname role='parameter'>y</varname> will have new
+coordinates <emphasis remap='I'>x</emphasis> and <emphasis remap='I'>y</emphasis>, where</para>
+<programlisting remap='CS'>
+<emphasis remap='I'>x = originX  + scaleX*(x-originX)
+y = originY + scaleY*(y-originY)</emphasis>
+</programlisting> <!-- remap='CE' -->
+<para><emphasis remap='I'>scaleProc</emphasis> must also update the bounding box in the item's
+header.</para>
+</refsect2>
+
+<refsect2 xml:id='translateproc'><title>TRANSLATEPROC</title>
+<para><emphasis remap='I'>typePtr-&gt;translateProc</emphasis> is invoked by Tk to translate a canvas item
+during the <emphasis remap='B'>move</emphasis> widget command.
+The procedure must match the following prototype:</para>
+<programlisting remap='CS'>
+<funcsynopsis>
+<funcprototype>
+<funcdef>typedef void <function>Tk_ItemTranslateProc</function></funcdef>
+    <paramdef>Tk_Canvas <parameter>canvas</parameter></paramdef>
+    <paramdef>Tk_Item * <parameter>itemPtr</parameter></paramdef>
+    <paramdef>double <parameter>deltaX</parameter></paramdef>
+    <paramdef>double <parameter>deltaY</parameter></paramdef>
+</funcprototype>
+</funcsynopsis>
+</programlisting> <!-- remap='CE' -->
+<para>The <varname role='parameter'>canvas</varname> and <varname role='parameter'>itemPtr</varname> arguments have the usual meaning,
+and <varname role='parameter'>deltaX</varname> and <varname role='parameter'>deltaY</varname> give the amounts that should be
+added to each x and y coordinate within the item.
+The type manager should adjust the item's coordinates and
+update the bounding box in the item's header.</para>
+</refsect2>
+
+<refsect2 xml:id='indexproc'><title>INDEXPROC</title>
+<para><emphasis remap='I'>typePtr-&gt;indexProc</emphasis> is invoked by Tk to translate a string
+index specification into a numerical index, for example during the
+<varname role='parameter'>index</varname> widget command.
+It is only relevant for item types that support indexable text;
+<emphasis remap='I'>typePtr-&gt;indexProc</emphasis> may be specified as NULL for non-textual
+item types.
+The procedure must match the following prototype:</para>
+<programlisting remap='CS'>
+<funcsynopsis>
+<funcprototype>
+<funcdef>typedef int <function>Tk_ItemIndexProc</function></funcdef>
+    <paramdef>Tcl_Interp * <parameter>interp</parameter></paramdef>
+    <paramdef>Tk_Canvas <parameter>canvas</parameter></paramdef>
+    <paramdef>Tk_Item * <parameter>itemPtr</parameter></paramdef>
+    <paramdef>char <parameter>indexString</parameter></paramdef>
+    <paramdef>int * <parameter>indexPtr</parameter></paramdef>
+</funcprototype>
+</funcsynopsis>
+</programlisting> <!-- remap='CE' -->
+<para>The <varname role='parameter'>interp</varname>, <varname role='parameter'>canvas</varname>, and <varname role='parameter'>itemPtr</varname> arguments all
+have the usual meaning.
+<varname role='parameter'>indexString</varname> contains a textual description of an index,
+and <varname role='parameter'>indexPtr</varname> points to an integer value that should be
+filled in with a numerical index.
+It is up to the type manager to decide what forms of index
+are supported (e.g., numbers, <emphasis remap='B'>insert</emphasis>,  <emphasis remap='B'>sel.first</emphasis>,
+<emphasis remap='B'>end</emphasis>, etc.).
+<emphasis remap='I'>indexProc</emphasis> should return a Tcl completion code and set
+<emphasis remap='I'>interp-&gt;result</emphasis> in the event of an error.</para>
+</refsect2>
+
+<refsect2 xml:id='icursorproc'><title>ICURSORPROC</title>
+
+<para><emphasis remap='I'>typePtr-&gt;icursorProc</emphasis> is invoked by Tk during
+the <emphasis remap='B'>icursor</emphasis> widget command to set the position of the
+insertion cursor in a textual item.
+It is only relevant for item types that support an insertion cursor;
+<emphasis remap='I'>typePtr-&gt;icursorProc</emphasis> may be specified as NULL for item types
+that do not support an insertion cursor.
+The procedure must match the following prototype:</para>
+<programlisting remap='CS'>
+<funcsynopsis>
+<funcprototype>
+<funcdef>typedef void <function>Tk_ItemCursorProc</function></funcdef>
+    <paramdef>Tk_Canvas <parameter>canvas</parameter></paramdef>
+    <paramdef>Tk_Item * <parameter>itemPtr</parameter></paramdef>
+    <paramdef>int <parameter>index</parameter></paramdef>
+</funcprototype>
+</funcsynopsis>
+</programlisting> <!-- remap='CE' -->
+<para><varname role='parameter'>canvas</varname> and <varname role='parameter'>itemPtr</varname> have the usual meanings, and
+<varname role='parameter'>index</varname> is an index into the item's text, as returned by a
+previous call to <emphasis remap='I'>typePtr-&gt;insertProc</emphasis>.
+The type manager should position the insertion cursor in the
+item just before the character given by <varname role='parameter'>index</varname>.
+Whether or not to actually display the insertion cursor is
+determined by other information provided by <emphasis remap='B'>Tk_CanvasGetTextInfo</emphasis>.</para>
+</refsect2>
+
+<refsect2 xml:id='selectionproc'><title>SELECTIONPROC</title>
+
+<para><emphasis remap='I'>typePtr-&gt;selectionProc</emphasis> is invoked by Tk during selection
+retrievals;  it must return part or all of the selected text in
+the item (if any).
+It is only relevant for item types that support text;
+<emphasis remap='I'>typePtr-&gt;selectionProc</emphasis> may be specified as NULL for non-textual
+item types.
+The procedure must match the following prototype:</para>
+<programlisting remap='CS'>
+<funcsynopsis>
+<funcprototype>
+<funcdef>typedef int <function>Tk_ItemSelectionProc</function></funcdef>
+    <paramdef>Tk_Canvas <parameter>canvas</parameter></paramdef>
+    <paramdef>Tk_Item * <parameter>itemPtr</parameter></paramdef>
+    <paramdef>int <parameter>offset</parameter></paramdef>
+    <paramdef>char * <parameter>buffer</parameter></paramdef>
+    <paramdef>int <parameter>maxBytes</parameter></paramdef>
+</funcprototype>
+</funcsynopsis>
+</programlisting> <!-- remap='CE' -->
+<para><varname role='parameter'>canvas</varname> and <varname role='parameter'>itemPtr</varname> have the usual meanings.
+<varname role='parameter'>offset</varname> is an offset in bytes into the selection where 0 refers
+to the first byte of the selection;  it identifies
+the first character that is to be returned in this call.
+<varname role='parameter'>buffer</varname> points to an area of memory in which to store the
+requested bytes, and <varname role='parameter'>maxBytes</varname> specifies the maximum number
+of bytes to return.
+<emphasis remap='I'>selectionProc</emphasis> should extract up to <varname role='parameter'>maxBytes</varname> characters
+from the selection and copy them to <varname role='parameter'>maxBytes</varname>;  it should
+return a count of the number of bytes actually copied, which may
+be less than <varname role='parameter'>maxBytes</varname> if there are not <emphasis remap='I'>offset+maxBytes</emphasis> bytes
+in the selection.</para>
+</refsect2>
+
+<refsect2 xml:id='insertproc'><title>INSERTPROC</title>
+
+<para><emphasis remap='I'>typePtr-&gt;insertProc</emphasis> is invoked by Tk during
+the <emphasis remap='B'>insert</emphasis> widget command to insert new text into a
+canvas item.
+It is only relevant for item types that support text;
+<emphasis remap='I'>typePtr-&gt;insertProc</emphasis> may be specified as NULL for non-textual
+item types.
+The procedure must match the following prototype:</para>
+<programlisting remap='CS'>
+<funcsynopsis>
+<funcprototype>
+<funcdef>typedef void <function>Tk_ItemInsertProc</function></funcdef>
+    <paramdef>Tk_Canvas <parameter>canvas</parameter></paramdef>
+    <paramdef>Tk_Item * <parameter>itemPtr</parameter></paramdef>
+    <paramdef>int <parameter>index</parameter></paramdef>
+    <paramdef>char * <parameter>string</parameter></paramdef>
+</funcprototype>
+</funcsynopsis>
+</programlisting> <!-- remap='CE' -->
+<para><varname role='parameter'>canvas</varname> and <varname role='parameter'>itemPtr</varname> have the usual meanings.
+<varname role='parameter'>index</varname> is an index into the item's text, as returned by a
+previous call to <emphasis remap='I'>typePtr-&gt;insertProc</emphasis>, and <varname role='parameter'>string</varname>
+contains new text to insert just before the character given
+by <varname role='parameter'>index</varname>.
+The type manager should insert the text and recompute the bounding
+box in the item's header.</para>
+</refsect2>
+
+<refsect2 xml:id='dcharsproc'><title>DCHARSPROC</title>
+
+<para><emphasis remap='I'>typePtr-&gt;dCharsProc</emphasis> is invoked by Tk during the <emphasis remap='B'>dchars</emphasis>
+widget command to delete a range of text from a canvas item.
+It is only relevant for item types that support text;
+<emphasis remap='I'>typePtr-&gt;dCharsProc</emphasis> may be specified as NULL for non-textual
+item types.
+The procedure must match the following prototype:</para>
+<programlisting remap='CS'>
+<funcsynopsis>
+<funcprototype>
+<funcdef>typedef void <function>Tk_ItemDCharsProc</function></funcdef>
+    <paramdef>Tk_Canvas <parameter>canvas</parameter></paramdef>
+    <paramdef>Tk_Item * <parameter>itemPtr</parameter></paramdef>
+    <paramdef>int <parameter>first</parameter></paramdef>
+    <paramdef>int <parameter>last</parameter></paramdef>
+</funcprototype>
+</funcsynopsis>
+</programlisting> <!-- remap='CE' -->
+<para><varname role='parameter'>canvas</varname> and <varname role='parameter'>itemPtr</varname> have the usual meanings.
+<varname role='parameter'>first</varname> and <varname role='parameter'>last</varname> give the indices of the first and last bytes
+to be deleted, as returned by previous calls to <emphasis remap='I'>typePtr-&gt;indexProc</emphasis>.
+The type manager should delete the specified characters and update
+the bounding box in the item's header.</para>
+</refsect2>
+</refsect1>
+
+<refsect1 xml:id='see_also'><title>SEE ALSO</title>
+<para>Tk_CanvasPsY, Tk_CanvasTextInfo, Tk_CanvasTkwin</para>
+</refsect1>
+
+<refsect1 xml:id='keywords'><title>KEYWORDS</title>
+<para>canvas, focus, item type, selection, type manager</para>
+</refsect1>
+</refentry>
+

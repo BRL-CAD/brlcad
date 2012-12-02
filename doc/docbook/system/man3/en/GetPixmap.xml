@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man+tkman by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='getpixmap3'>
+
+<!-- '\" Copyright (c) 1990 The Regents of the University of California.
+'\" Copyright (c) 1994\-1996 Sun Microsystems, Inc. -->
+
+<!-- '\" See the file "license.terms" for information on usage and redistribution
+'\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
+'\" 
+'\" RCS: @(#) $Id$
+'\"  -->
+<refentryinfo><date>4.0</date></refentryinfo>
+<refmeta>
+<refentrytitle>Tk_GetPixmap</refentrytitle>
+<manvolnum>3</manvolnum>
+<refmiscinfo class='date'>4.0</refmiscinfo>
+<refmiscinfo class='source'>Tk</refmiscinfo>
+<refmiscinfo class='manual'>Tk Library Procedures</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>Tk_GetPixmap</refname>
+<refname>Tk_FreePixmap</refname>
+<refpurpose>allocate and free pixmaps</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<funcsynopsis>
+<funcsynopsisinfo>
+#include &lt;tk.h&gt;
+
+</funcsynopsisinfo>
+<funcprototype>
+<funcdef>Pixmap <function>Tk_GetPixmap</function></funcdef>
+<paramdef><parameter>display</parameter></paramdef>
+<paramdef><parameter>d</parameter></paramdef>
+<paramdef><parameter>width</parameter></paramdef>
+<paramdef><parameter>height</parameter></paramdef>
+<paramdef><parameter>depth</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef><function>Tk_FreePixmap</function></funcdef>
+<paramdef><parameter>display</parameter></paramdef>
+<paramdef><parameter>pixmap</parameter></paramdef>
+</funcprototype>
+</funcsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='arguments'><title>ARGUMENTS</title>
+<!-- .AS Drawable *pixelPtr -->
+<informaltable>
+<tgroup cols='3'>
+<tbody>
+
+<row><entry>"Display"</entry><entry>"*display"</entry><entry>"in"</entry>
+<entry>
+<para>X display for the pixmap.</para>
+</entry>
+</row>
+<row><entry>Drawable</entry><entry>d</entry><entry>in</entry>
+<entry>
+<para>Pixmap or window where the new pixmap will be used for drawing.</para>
+</entry>
+</row>
+<row><entry>"int"</entry><entry>width</entry><entry>in</entry>
+<entry>
+<para>Width of pixmap.</para>
+</entry>
+</row>
+<row><entry>"int"</entry><entry>height</entry><entry>in</entry>
+<entry>
+<para>Height of pixmap.</para>
+</entry>
+</row>
+<row><entry>"int"</entry><entry>depth</entry><entry>in</entry>
+<entry>
+<para>Number of bits per pixel in pixmap.</para>
+</entry>
+</row>
+<row><entry>Pixmap</entry><entry>pixmap</entry><entry>in</entry>
+<entry>
+<para>Pixmap to destroy.</para>
+<!-- .BE -->
+</entry>
+</row>
+</tbody>
+</tgroup>
+</informaltable>
+
+</refsect1>
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para>These procedures are identical to the Xlib procedures <emphasis remap='B'>XCreatePixmap</emphasis>
+and <emphasis remap='B'>XFreePixmap</emphasis>, except that they have extra code to manage X
+resource identifiers so that identifiers for deleted pixmaps can be
+reused in the future.
+It is important for Tk applications to use these procedures rather
+than <emphasis remap='B'>XCreatePixmap</emphasis> and <emphasis remap='B'>XFreePixmap</emphasis>;  otherwise long-running
+applications may run out of resource identifiers.</para>
+
+<para><function>Tk_GetPixmap</function> creates a pixmap suitable for drawing in <emphasis remap='I'>d</emphasis>,
+with dimensions given by <emphasis remap='I'>width</emphasis>, <emphasis remap='I'>height</emphasis>, and <emphasis remap='I'>depth</emphasis>,
+and returns its identifier.
+<function>Tk_FreePixmap</function> destroys the pixmap given by <emphasis remap='I'>pixmap</emphasis> and makes
+its resource identifier available for reuse.</para>
+
+</refsect1>
+
+<refsect1 xml:id='keywords'><title>KEYWORDS</title>
+<para>pixmap, resource identifier</para>
+</refsect1>
+</refentry>
+

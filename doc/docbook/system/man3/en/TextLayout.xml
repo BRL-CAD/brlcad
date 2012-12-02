@@ -1,0 +1,421 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man+tkman by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='textlayout3'>
+
+<!-- '\" Copyright (c) 1996 Sun Microsystems, Inc. -->
+
+<!-- '\" See the file "license.terms" for information on usage and redistribution
+'\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
+'\" 
+'\" RCS: @(#) $Id$
+'\"  -->
+<refentryinfo><date>8.1</date></refentryinfo>
+<refmeta>
+<refentrytitle>Tk_ComputeTextLayout</refentrytitle>
+<manvolnum>3</manvolnum>
+<refmiscinfo class='date'>8.1</refmiscinfo>
+<refmiscinfo class='source'>Tk</refmiscinfo>
+<refmiscinfo class='manual'>Tk Library Procedures</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>Tk_ComputeTextLayout</refname>
+<refname>Tk_FreeTextLayout</refname>
+<refname>Tk_DrawTextLayout</refname>
+<refname>Tk_UnderlineTextLayout</refname>
+<refname>Tk_PointToChar</refname>
+<refname>Tk_CharBbox</refname>
+<refname>Tk_DistanceToTextLayout</refname>
+<refname>Tk_IntersectTextLayout</refname>
+<refname>Tk_TextLayoutToPostscript</refname>
+<refpurpose>routines to measure and display single-font, multi-line, justified text.</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<funcsynopsis>
+<funcsynopsisinfo>
+#include &lt;tk.h&gt;
+
+</funcsynopsisinfo>
+<funcprototype>
+<funcdef>Tk_TextLayout <function>Tk_ComputeTextLayout</function></funcdef>
+<paramdef><parameter>tkfont</parameter></paramdef>
+<paramdef><parameter>string</parameter></paramdef>
+<paramdef><parameter>numChars</parameter></paramdef>
+<paramdef><parameter>wrapLength</parameter></paramdef>
+<paramdef><parameter>justify</parameter></paramdef>
+<paramdef><parameter>flags</parameter></paramdef>
+<paramdef><parameter>widthPtr</parameter></paramdef>
+<paramdef><parameter>heightPtr</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef>void <function>Tk_FreeTextLayout</function></funcdef>
+<paramdef><parameter>layout</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef>void <function>Tk_DrawTextLayout</function></funcdef>
+<paramdef><parameter>display</parameter></paramdef>
+<paramdef><parameter>drawable</parameter></paramdef>
+<paramdef><parameter>gc</parameter></paramdef>
+<paramdef><parameter>layout</parameter></paramdef>
+<paramdef><parameter>x</parameter></paramdef>
+<paramdef><parameter>y</parameter></paramdef>
+<paramdef><parameter>firstChar</parameter></paramdef>
+<paramdef><parameter>lastChar</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef>void <function>Tk_UnderlineTextLayout</function></funcdef>
+<paramdef><parameter>display</parameter></paramdef>
+<paramdef><parameter>drawable</parameter></paramdef>
+<paramdef><parameter>gc</parameter></paramdef>
+<paramdef><parameter>layout</parameter></paramdef>
+<paramdef><parameter>x</parameter></paramdef>
+<paramdef><parameter>y</parameter></paramdef>
+<paramdef><parameter>underline</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef>int <function>Tk_PointToChar</function></funcdef>
+<paramdef><parameter>layout</parameter></paramdef>
+<paramdef><parameter>x</parameter></paramdef>
+<paramdef><parameter>y</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef>int <function>Tk_CharBbox</function></funcdef>
+<paramdef><parameter>layout</parameter></paramdef>
+<paramdef><parameter>index</parameter></paramdef>
+<paramdef><parameter>xPtr</parameter></paramdef>
+<paramdef><parameter>yPtr</parameter></paramdef>
+<paramdef><parameter>widthPtr</parameter></paramdef>
+<paramdef><parameter>heightPtr</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef>int <function>Tk_DistanceToTextLayout</function></funcdef>
+<paramdef><parameter>layout</parameter></paramdef>
+<paramdef><parameter>x</parameter></paramdef>
+<paramdef><parameter>y</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef>int <function>Tk_IntersectTextLayout</function></funcdef>
+<paramdef><parameter>layout</parameter></paramdef>
+<paramdef><parameter>x</parameter></paramdef>
+<paramdef><parameter>y</parameter></paramdef>
+<paramdef><parameter>width</parameter></paramdef>
+<paramdef><parameter>height</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef>void <function>Tk_TextLayoutToPostscript</function></funcdef>
+<paramdef><parameter>interp</parameter></paramdef>
+<paramdef><parameter>layout</parameter></paramdef>
+</funcprototype>
+
+</funcsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='arguments'><title>ARGUMENTS</title>
+<!-- .AS Tk_TextLayout *xPtr, *yPtr -->
+<informaltable>
+<tgroup cols='3'>
+<tbody>
+
+<row><entry>"Tk_Font"</entry><entry>"tkfont"</entry><entry>"in"</entry>
+<entry>
+<para>Font to use when constructing and displaying a text layout.  The
+<emphasis remap='I'>tkfont</emphasis> must remain valid for the lifetime of the text layout.  Must
+have been returned by a previous call to <emphasis remap='B'>Tk_GetFont</emphasis>.</para>
+</entry>
+</row>
+<row><entry>"const char"</entry><entry>*string</entry><entry>in</entry>
+<entry>
+<para>Potentially multi-line string whose dimensions are to be computed and
+stored in the text layout.  The <emphasis remap='I'>string</emphasis> must remain valid for the
+lifetime of the text layout.</para>  
+</entry>
+</row>
+<row><entry>int</entry><entry>numChars</entry><entry>in</entry>
+<entry>
+<para>The number of characters to consider from <emphasis remap='I'>string</emphasis>.  If
+<emphasis remap='I'>numChars</emphasis> is less than 0, then assumes <emphasis remap='I'>string</emphasis> is null
+terminated and uses <emphasis remap='B'>Tcl_NumUtfChars</emphasis> to determine the length of
+<emphasis remap='I'>string</emphasis>.</para>
+</entry>
+</row>
+<row><entry>int</entry><entry>wrapLength</entry><entry>in</entry>
+<entry>
+<para>Longest permissible line length, in pixels.  Lines in <emphasis remap='I'>string</emphasis> will
+automatically be broken at word boundaries and wrapped when they reach
+this length.  If <emphasis remap='I'>wrapLength</emphasis> is too small for even a single
+character to fit on a line, it will be expanded to allow one character to
+fit on each line.  If <emphasis remap='I'>wrapLength</emphasis> is &lt;= 0, there is no automatic
+wrapping; lines will get as long as they need to be and only wrap if a
+newline/return character is encountered.</para>
+</entry>
+</row>
+<row><entry>Tk_Justify</entry><entry>justify</entry><entry>in</entry>
+<entry>
+<para>How to justify the lines in a multi-line text layout.  Possible values
+are <emphasis remap='B'>TK_JUSTIFY_LEFT</emphasis>, <emphasis remap='B'>TK_JUSTIFY_CENTER</emphasis>, or
+<emphasis remap='B'>TK_JUSTIFY_RIGHT</emphasis>. If the text layout only occupies a single
+line, then <emphasis remap='I'>justify</emphasis> is irrelevant.</para>
+</entry>
+</row>
+<row><entry>int</entry><entry>flags</entry><entry>in</entry>
+<entry>
+<para>Various flag bits OR-ed together. <emphasis remap='B'>TK_IGNORE_TABS</emphasis> means that tab
+characters should not be expanded to the next tab stop.
+<emphasis remap='B'>TK_IGNORE_NEWLINES</emphasis> means that newline/return characters should
+not cause a line break.  If either tabs or newlines/returns are
+ignored, then they will be treated as regular characters, being
+measured and displayed in a platform-dependent manner as described in
+<emphasis remap='B'>Tk_MeasureChars</emphasis>, and will not have any special behaviors.</para>
+</entry>
+</row>
+<row><entry>int</entry><entry>*widthPtr</entry><entry>out</entry>
+<entry>
+<para>If non-NULL, filled with either the width, in pixels, of the widest
+line in the text layout, or the width, in pixels, of the bounding box for the 
+character specified by <emphasis remap='I'>index</emphasis>.</para>
+</entry>
+</row>
+<row><entry>int</entry><entry>*heightPtr</entry><entry>out</entry>
+<entry>
+<para>If non-NULL, filled with either the total height, in pixels, of all
+the lines in the text layout, or the height, in pixels, of the bounding
+box for the character specified by <emphasis remap='I'>index</emphasis>.</para>
+</entry>
+</row>
+<row><entry>Tk_TextLayout</entry><entry>layout</entry><entry>in</entry>
+<entry>
+<para>A token that represents the cached layout information about the single-font,
+multi-line, justified piece of text.  This token is returned by
+<function>Tk_ComputeTextLayout</function>.</para>
+</entry>
+</row>
+<row><entry>Display</entry><entry>*display</entry><entry>in</entry>
+<entry>
+<para>Display on which to draw.</para>
+</entry>
+</row>
+<row><entry>Drawable</entry><entry>drawable</entry><entry>in</entry>
+<entry>
+<para>Window or pixmap in which to draw.</para>
+</entry>
+</row>
+<row><entry>GC</entry><entry>gc</entry><entry>in</entry>
+<entry>
+<para>Graphics context to use for drawing text layout.  The font selected in
+this GC must correspond to the <emphasis remap='I'>tkfont</emphasis> used when constructing the
+text layout.</para>
+</entry>
+</row>
+<row><entry>int</entry><entry>"x, y"</entry><entry>in</entry>
+<entry>
+<para>Point, in pixels, at which to place the upper-left hand corner of the
+text layout when it is being drawn, or the coordinates of a point (with
+respect to the upper-left hand corner of the text layout) to check
+against the text layout.</para>
+</entry>
+</row>
+<row><entry>int</entry><entry>firstChar</entry><entry>in</entry>
+<entry>
+<para>The index of the first character to draw from the given text layout.  
+The number 0 means to draw from the beginning.</para>
+</entry>
+</row>
+<row><entry>int</entry><entry>lastChar</entry><entry>in</entry>
+<entry>
+<para>The index of the last character up to which to draw.  The character
+specified by <emphasis remap='I'>lastChar</emphasis> itself will not be drawn.  A number less
+than 0 means to draw all characters in the text layout.</para>
+</entry>
+</row>
+<row><entry>int</entry><entry>underline</entry><entry>in</entry>
+<entry>
+<para>Index of the single character to underline in the text layout, or a number
+less than 0 for no underline.</para>
+</entry>
+</row>
+<row><entry>int</entry><entry>index</entry><entry>in</entry>
+<entry>
+<para>The index of the character whose bounding box is desired.  The bounding
+box is computed with respect to the upper-left hand corner of the text layout.</para>
+</entry>
+</row>
+<row><entry>int</entry><entry>"*xPtr, *yPtr"</entry><entry>out</entry>
+<entry>
+<para>Filled with the upper-left hand corner, in pixels, of the bounding box
+for the character specified by <emphasis remap='I'>index</emphasis>.  Either or both <emphasis remap='I'>xPtr</emphasis>
+and <emphasis remap='I'>yPtr</emphasis> may be NULL, in which case the corresponding value
+is not calculated.</para>
+</entry>
+</row>
+<row><entry>int</entry><entry>"width, height"</entry><entry>in</entry>
+<entry>
+<para>Specifies the width and height, in pixels, of the rectangular area to 
+compare for intersection against the text layout.</para>
+</entry>
+</row>
+<row><entry>Tcl_Interp</entry><entry>*interp</entry><entry>out</entry>
+<entry>
+<para>Postscript code that will print the text layout is appended to
+<emphasis remap='I'>interp-&gt;result</emphasis>.</para>
+<!-- .BE -->
+</entry>
+</row>
+</tbody>
+</tgroup>
+</informaltable>
+
+</refsect1>
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para>These routines are for measuring and displaying single-font, multi-line,
+justified text.  To measure and display simple single-font, single-line
+strings, refer to the documentation for <emphasis remap='B'>Tk_MeasureChars</emphasis>.  There is
+no programming interface in the core of Tk that supports multi-font,
+multi-line text; support for that behavior must be built on top of
+simpler layers.  
+Note that unlike the lower level text display routines, the functions
+described here all operate on character-oriented lengths and indices
+rather than byte-oriented values.  See the description of
+<emphasis remap='B'>Tcl_UtfAtIndex</emphasis> for more details on converting between character
+and byte offsets.</para>
+
+<para>The routines described here are built on top of the programming interface
+described in the <emphasis remap='B'>Tk_MeasureChars</emphasis> documentation.  Tab characters and
+newline/return characters may be treated specially by these procedures,
+but all other characters are passed through to the lower level.</para>
+
+<para><function>Tk_ComputeTextLayout</function> computes the layout information needed to
+display a single-font, multi-line, justified <emphasis remap='I'>string</emphasis> of text and
+returns a Tk_TextLayout token that holds this information.  This token is
+used in subsequent calls to procedures such as <function>Tk_DrawTextLayout</function>,
+<function>Tk_DistanceToTextLayout</function>, and <function>Tk_FreeTextLayout</function>.  The
+<emphasis remap='I'>string</emphasis> and <emphasis remap='I'>tkfont</emphasis> used when computing the layout must remain
+valid for the lifetime of this token.</para>  
+
+<para><function>Tk_FreeTextLayout</function> is called to release the storage associated with
+<emphasis remap='I'>layout</emphasis> when it is no longer needed.  A <emphasis remap='I'>layout</emphasis> should not be used
+in any other text layout procedures once it has been released.</para> 
+
+<para><function>Tk_DrawTextLayout</function> uses the information in <emphasis remap='I'>layout</emphasis> to display a
+single-font, multi-line, justified string of text at the specified location.</para>
+
+<para><function>Tk_UnderlineTextLayout</function> uses the information in <emphasis remap='I'>layout</emphasis> to
+display an underline below an individual character.  This procedure does
+not draw the text, just the underline.  To produce natively underlined
+text, an underlined font should be constructed and used.  All characters,
+including tabs, newline/return characters, and spaces at the ends of
+lines, can be underlined using this method.  However, the underline will
+never be drawn outside of the computed width of <emphasis remap='I'>layout</emphasis>; the
+underline will stop at the edge for any character that would extend
+partially outside of <emphasis remap='I'>layout</emphasis>, and the underline will not be visible
+at all for any character that would be located completely outside of the
+layout.</para>
+
+<para><function>Tk_PointToChar</function> uses the information in <emphasis remap='I'>layout</emphasis> to determine the
+character closest to the given point.  The point is specified with respect
+to the upper-left hand corner of the <emphasis remap='I'>layout</emphasis>, which is considered to be
+located at (0, 0).  Any point whose <emphasis remap='I'>y</emphasis>-value is less that 0 will be
+considered closest to the first character in the text layout; any point
+whose <emphasis remap='I'>y</emphasis>-value is greater than the height of the text layout will be
+considered closest to the last character in the text layout.  Any point
+whose <emphasis remap='I'>x</emphasis>-value is less than 0 will be considered closest to the first
+character on that line; any point whose <emphasis remap='I'>x</emphasis>-value is greater than the
+width of the text layout will be considered closest to the last character on
+that line.  The return value is the index of the character that was closest
+to the point.  Given a <emphasis remap='I'>layout</emphasis> with no characters, the value 0 will
+always be returned, referring to a hypothetical zero-width placeholder
+character.</para>  
+
+<para><function>Tk_CharBbox</function> uses the information in <emphasis remap='I'>layout</emphasis> to return the
+bounding box for the character specified by <emphasis remap='I'>index</emphasis>.  The width of the
+bounding box is the advance width of the character, and does not include any
+left or right bearing.  Any character that extends partially outside of 
+<emphasis remap='I'>layout</emphasis> is considered to be truncated at the edge.  Any character
+that would be located completely outside of <emphasis remap='I'>layout</emphasis> is considered to
+be zero-width and pegged against the edge.  The height of the bounding
+box is the line height for this font, extending from the top of the
+ascent to the bottom of the descent; information about the actual height
+of individual letters is not available.  For measurement purposes, a
+<emphasis remap='I'>layout</emphasis> that contains no characters is considered to contain a
+single zero-width placeholder character at index 0.  If <emphasis remap='I'>index</emphasis> was
+not a valid character index, the return value is 0 and <emphasis remap='I'>*xPtr</emphasis>,
+<emphasis remap='I'>*yPtr</emphasis>, <emphasis remap='I'>*widthPtr</emphasis>, and <emphasis remap='I'>*heightPtr</emphasis> are unmodified.
+Otherwise, if <emphasis remap='I'>index</emphasis> did specify a valid, the return value is
+non-zero, and <emphasis remap='I'>*xPtr</emphasis>, <emphasis remap='I'>*yPtr</emphasis>, <emphasis remap='I'>*widthPtr</emphasis>, and
+<emphasis remap='I'>*heightPtr</emphasis> are filled with the bounding box information for the
+character.  If any of <emphasis remap='I'>xPtr</emphasis>, <emphasis remap='I'>yPtr</emphasis>, <emphasis remap='I'>widthPtr</emphasis>, or
+<emphasis remap='I'>heightPtr</emphasis> are NULL, the corresponding value is not calculated or
+stored.</para>
+
+<para><function>Tk_DistanceToTextLayout</function> computes the shortest distance in pixels from
+the given point (<emphasis remap='I'>x, y</emphasis>) to the characters in <emphasis remap='I'>layout</emphasis>.
+Newline/return characters and non-displaying space characters that occur at
+the end of individual lines in the text layout are ignored for hit detection
+purposes, but tab characters are not.  The return value is 0 if the point
+actually hits the <emphasis remap='I'>layout</emphasis>.  If the point did not hit the <emphasis remap='I'>layout</emphasis>
+then the return value is the distance in pixels from the point to the
+<emphasis remap='I'>layout</emphasis>.</para>
+
+<para><function>Tk_IntersectTextLayout</function> determines whether a <emphasis remap='I'>layout</emphasis> lies
+entirely inside, entirely outside, or overlaps a given rectangle.
+Newline/return characters and non-displaying space characters that occur
+at the end of individual lines in the <emphasis remap='I'>layout</emphasis> are ignored for
+intersection calculations.  The return value is -1 if the <emphasis remap='I'>layout</emphasis> is
+entirely outside of the rectangle, 0 if it overlaps, and 1 if it is
+entirely inside of the rectangle.</para>
+
+<para><function>Tk_TextLayoutToPostscript</function> outputs code consisting of a Postscript
+array of strings that represent the individual lines in <emphasis remap='I'>layout</emphasis>.  It
+is the responsibility of the caller to take the Postscript array of
+strings and add some Postscript function operate on the array to render
+each of the lines.  The code that represents the Postscript array of
+strings is appended to <emphasis remap='I'>interp-&gt;result</emphasis>.</para>
+</refsect1>
+
+<refsect1 xml:id='display_model'><title>DISPLAY MODEL</title>
+<para>When measuring a text layout, space characters that occur at the end of a
+line are ignored.  The space characters still exist and the insertion point
+can be positioned amongst them, but their additional width is ignored when
+justifying lines or returning the total width of a text layout.  All
+end-of-line space characters are considered to be attached to the right edge
+of the line; this behavior is logical for left-justified text and reasonable
+for center-justified text, but not very useful when editing right-justified
+text.  Spaces are considered variable width characters; the first space that
+extends past the edge of the text layout is clipped to the edge, and any
+subsequent spaces on the line are considered zero width and pegged against
+the edge.  Space characters that occur in the middle of a line of text are
+not suppressed and occupy their normal space width.</para>
+
+<para>Tab characters are not ignored for measurement calculations.  If wrapping
+is turned on and there are enough tabs on a line, the next tab will wrap
+to the beginning of the next line.  There are some possible strange
+interactions between tabs and justification; tab positions are calculated
+and the line length computed in a left-justified world, and then the
+whole resulting line is shifted so it is centered or right-justified,
+causing the tab columns not to align any more.</para>
+
+<para>When wrapping is turned on, lines may wrap at word breaks (space or tab
+characters) or newline/returns.  A dash or hyphen character in the middle
+of a word is not considered a word break.  <function>Tk_ComputeTextLayout</function>
+always attempts to place at least one word on each line.  If it cannot
+because the <emphasis remap='I'>wrapLength</emphasis> is too small, the word will be broken and as
+much as fits placed on the line and the rest on subsequent line(s).  If
+<emphasis remap='I'>wrapLength</emphasis> is so small that not even one character can fit on a
+given line, the <emphasis remap='I'>wrapLength</emphasis> is ignored for that line and one
+character will be placed on the line anyhow.  When wrapping is turned
+off, only newline/return characters may cause a line break.</para>  
+
+<para>When a text layout has been created using an underlined <emphasis remap='I'>tkfont</emphasis>,
+then any space characters that occur at the end of individual lines,
+newlines/returns, and tabs will not be displayed underlined when 
+<function>Tk_DrawTextLayout</function> is called, because those characters are never
+actually drawn - they are merely placeholders maintained in the
+<emphasis remap='I'>layout</emphasis>.</para>  
+</refsect1>
+
+<refsect1 xml:id='keywords'><title>KEYWORDS</title>
+<para>font</para>
+</refsect1>
+</refentry>
+

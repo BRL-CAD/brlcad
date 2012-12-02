@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man+tkman by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='getstdchan3'>
+
+<!-- '\" Copyright (c) 1996 by Sun Microsystems, Inc. -->
+
+<!-- '\" See the file "license.terms" for information on usage and redistribution
+'\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
+'\" 
+'\" RCS: @(#) $Id$
+'\"  -->
+<refentryinfo><date>7.5</date></refentryinfo>
+<refmeta>
+<refentrytitle>Tcl_GetStdChannel</refentrytitle>
+<manvolnum>3</manvolnum>
+<refmiscinfo class='date'>7.5</refmiscinfo>
+<refmiscinfo class='source'>Tcl</refmiscinfo>
+<refmiscinfo class='manual'>Tcl Library Procedures</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>Tcl_GetStdChannel</refname>
+<refname>Tcl_SetStdChannel</refname>
+<refpurpose>procedures for retrieving and replacing the standard channels</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<funcsynopsis>
+<funcsynopsisinfo>
+#include &lt;tcl.h&gt;
+
+</funcsynopsisinfo>
+<funcprototype>
+<funcdef>Tcl_Channel <function>Tcl_GetStdChannel</function></funcdef>
+<paramdef><parameter>type</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef><function>Tcl_SetStdChannel</function></funcdef>
+<paramdef><parameter>channel</parameter></paramdef>
+<paramdef><parameter>type</parameter></paramdef>
+</funcprototype>
+</funcsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='arguments'><title>ARGUMENTS</title>
+<!-- .AS Tcl_Channel channel -->
+<informaltable>
+<tgroup cols='3'>
+<tbody>
+
+<row><entry>"int"</entry><entry>"type"</entry><entry>"in"</entry>
+<entry>
+<para>The identifier for the standard channel to retrieve or modify.  Must be one of
+<emphasis remap='B'>TCL_STDIN</emphasis>, <emphasis remap='B'>TCL_STDOUT</emphasis>, or <emphasis remap='B'>TCL_STDERR</emphasis>.</para>
+</entry>
+</row>
+<row><entry>Tcl_Channel</entry><entry>channel</entry><entry>in</entry>
+<entry>
+<para>The channel to use as the new value for the specified standard channel.</para>
+<!-- .BE -->
+</entry>
+</row>
+</tbody>
+</tgroup>
+</informaltable>
+
+</refsect1>
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para>Tcl defines three special channels that are used by various I/O related
+commands if no other channels are specified.  The standard input channel
+has a channel name of <emphasis remap='B'>stdin</emphasis> and is used by <emphasis remap='B'>read</emphasis> and <emphasis remap='B'>gets</emphasis>.
+The standard output channel is named <emphasis remap='B'>stdout</emphasis> and is used by
+<emphasis remap='B'>puts</emphasis>.  The standard error channel is named <emphasis remap='B'>stderr</emphasis> and is used for 
+reporting errors.  In addition, the standard channels are inherited by any
+child processes created using <emphasis remap='B'>exec</emphasis> or <emphasis remap='B'>open</emphasis> in the absence of any
+other redirections.</para>
+
+<para>The standard channels are actually aliases for other normal channels.  The
+current channel associated with a standard channel can be retrieved by calling
+<function>Tcl_GetStdChannel</function> with one of 
+<emphasis remap='B'>TCL_STDIN</emphasis>, <emphasis remap='B'>TCL_STDOUT</emphasis>, or <emphasis remap='B'>TCL_STDERR</emphasis> as the <emphasis remap='I'>type</emphasis>.  The
+return value will be a valid channel, or NULL.</para>
+
+<para>A new channel can be set for the standard channel specified by <emphasis remap='I'>type</emphasis> 
+by calling <function>Tcl_SetStdChannel</function> with a new channel or NULL in the
+<emphasis remap='I'>channel</emphasis> argument.  If the specified channel is closed by a later call to
+<emphasis remap='B'>Tcl_Close</emphasis>, then the corresponding standard channel will automatically be
+set to NULL.</para>
+
+<para>If a non-NULL value for <emphasis remap='I'>channel</emphasis> is passed to <function>Tcl_SetStdChannel</function>,
+then that same value should be passed to <function>Tcl_RegisterChannel</function>, like so:</para>
+<programlisting remap='CS'>
+<funcsynopsis>
+<funcprototype>
+<funcdef><function>Tcl_RegisterChannel</function></funcdef>
+    <paramdef><parameter>NULL</parameter></paramdef>
+    <paramdef><parameter>channel</parameter></paramdef>
+</funcprototype>
+</funcsynopsis>
+</programlisting> <!-- remap='CE' -->
+<para>This is a workaround for a misfeature in <function>Tcl_SetStdChannel</function> that it
+fails to do some reference counting housekeeping.  This misfeature cannot
+be corrected without contradicting the assumptions of some existing
+code that calls <function>Tcl_SetStdChannel</function>.</para>
+
+<para>If <function>Tcl_GetStdChannel</function> is called before <function>Tcl_SetStdChannel</function>, Tcl will
+construct a new channel to wrap the appropriate platform-specific standard 
+file handle.  If <function>Tcl_SetStdChannel</function> is called before
+<function>Tcl_GetStdChannel</function>, then the default channel will not be created.</para>
+
+<para>If one of the standard channels is set to NULL, either by calling
+<function>Tcl_SetStdChannel</function> with a NULL <emphasis remap='I'>channel</emphasis> argument, or by calling
+<emphasis remap='B'>Tcl_Close</emphasis> on the channel, then the next call to <emphasis remap='B'>Tcl_CreateChannel</emphasis>
+will automatically set the standard channel with the newly created channel.  If
+more than one standard channel is NULL, then the standard channels will be
+assigned starting with standard input, followed by standard output, with
+standard error being last.</para>
+
+<para>See <emphasis remap='B'>Tcl_StandardChannels</emphasis> for a general treatise about standard
+channels and the behaviour of the Tcl library with regard to them.</para>
+
+</refsect1>
+
+<refsect1 xml:id='see_also'><title>SEE ALSO</title>
+<para>Tcl_C<citerefentry><refentrytitle>lose</refentrytitle><manvolnum>3</manvolnum></citerefentry>, Tcl_CreateC<citerefentry><refentrytitle>hannel</refentrytitle><manvolnum>3</manvolnum></citerefentry>, Tcl_M<citerefentry><refentrytitle>ain</refentrytitle><manvolnum>3</manvolnum></citerefentry>, <citerefentry><refentrytitle>tclsh</refentrytitle><manvolnum>1</manvolnum></citerefentry></para>
+
+</refsect1>
+
+<refsect1 xml:id='keywords'><title>KEYWORDS</title>
+<para>standard channel, standard input, standard output, standard error</para>
+</refsect1>
+</refentry>
+

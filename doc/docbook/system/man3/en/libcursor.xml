@@ -1,0 +1,249 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='libcursor3'>
+<refmeta>
+<refentrytitle>LIBCURSOR</refentrytitle>
+<manvolnum>3</manvolnum>
+<refmiscinfo class='source'>BRL-CAD</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>libcursor</refname>
+<refpurpose>cursor control library</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<funcsynopsis>
+<funcsynopsisinfo>
+#include &lt;stdio.h&gt;
+
+</funcsynopsisinfo>
+<funcprototype>
+<funcdef>int <function>InitTermCap</function></funcdef>
+<paramdef><parameter>fp</parameter></paramdef>
+</funcprototype>
+<funcsynopsisinfo>
+FILE *fp;
+
+</funcsynopsisinfo>
+<funcprototype>
+<funcdef>int <function>MvCursor</function></funcdef>
+<paramdef><parameter>x</parameter></paramdef>
+<paramdef><parameter>y</parameter></paramdef>
+</funcprototype>
+<funcsynopsisinfo>
+int x, y;
+
+</funcsynopsisinfo>
+<funcprototype>
+<funcdef>int <function>HmCursor</function></funcdef>
+<void/></funcprototype>
+
+<funcprototype>
+<funcdef>int <function>ClrEOL</function></funcdef>
+<void/></funcprototype>
+
+<funcprototype>
+<funcdef>int <function>ClrText</function></funcdef>
+<void/></funcprototype>
+
+<funcprototype>
+<funcdef>int <function>ClrStandout</function></funcdef>
+<void/></funcprototype>
+
+<funcprototype>
+<funcdef>int <function>SetStandout</function></funcdef>
+<void/></funcprototype>
+
+<funcprototype>
+<funcdef>int <function>SetScrlReg</function></funcdef>
+<paramdef><parameter>top</parameter></paramdef>
+<paramdef><parameter>bottom</parameter></paramdef>
+</funcprototype>
+<funcsynopsisinfo>
+int top, bottom;
+
+</funcsynopsisinfo>
+<funcprototype>
+<funcdef>int <function>ResetScrlReg</function></funcdef>
+<void/></funcprototype>
+
+<funcprototype>
+<funcdef>int <function>ScrollUp</function></funcdef>
+<void/></funcprototype>
+
+<funcprototype>
+<funcdef>int <function>ScrollDn</function></funcdef>
+<void/></funcprototype>
+
+<funcprototype>
+<funcdef>int <function>DeleteLn</function></funcdef>
+<void/></funcprototype>
+
+<funcprototype>
+<funcdef>int <function>PutChr</function></funcdef>
+<paramdef><parameter>c</parameter></paramdef>
+</funcprototype>
+<funcsynopsisinfo>
+int c;
+
+extern char termName[];
+
+</funcsynopsisinfo>
+</funcsynopsis>
+<para><emphasis remap='B'>extern int LI;</emphasis>		/* number of lines on screen (or layer) */</para>
+
+<para><emphasis remap='B'>extern int CO;</emphasis>	/* number of columns on screen (or layer) */</para>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para>These routines are designed to provide a terminal-independent means of controlling
+cursor movement, character attributes, text scrolling, and erasure of text
+which is a level above the
+<citerefentry><refentrytitle>termlib</refentrytitle><manvolnum>3</manvolnum></citerefentry>
+library.
+It is similar to the
+<citerefentry><refentrytitle>curses</refentrytitle><manvolnum>3</manvolnum></citerefentry>
+library, but does not address the problem of maintaining windows, so it has much
+less overhead and avoids the associated bugs.</para>
+
+<para><emphasis remap='I'>InitTermCap</emphasis>
+must be passed the output stream pointer and invoked before any other functions
+in this library.
+This function reads the
+<citerefentry><refentrytitle>termcap</refentrytitle><manvolnum>4</manvolnum></citerefentry>
+capability data base to extract terminal-specific parameters
+and control strings,
+then initializes the terminal, returning 1 for success and 0 for failure.
+After
+<emphasis remap='I'>InitTermCap</emphasis>
+is used, the global buffer
+<emphasis remap='I'>termName</emphasis>
+will contain the name of the terminal device, or
+``<emphasis remap='B'><?troff ps -2?>UNKNOWN<?troff ps 0?></emphasis>''
+in the event of failure
+(<emphasis remap='I'>e.g.</emphasis>,
+the environment variable
+<!-- B elided -->
+<emphasis remap='SM'>$TERM</emphasis>
+was not set or exported (see
+<citerefentry><refentrytitle>sh</refentrytitle><manvolnum>1</manvolnum></citerefentry>));
+the global variables
+<emphasis remap='I'>LI</emphasis>
+and
+<emphasis remap='I'>CO</emphasis>
+will contain the number of lines and columns, respectively, of the
+terminal screen or window layer attached to the specified output stream;
+and the terminal control string pointers will be set, or
+<!-- B elided -->
+<acronym>NULL</acronym>
+if their respective capabilities are not found.
+The terminal control strings are not generally suitable for direct use
+as they require the
+<emphasis remap='I'>tputs</emphasis>
+or
+<emphasis remap='I'>tgoto</emphasis>
+macros from the
+<citerefentry><refentrytitle>termlib</refentrytitle><manvolnum>3</manvolnum></citerefentry>
+library, but they may be checked for being
+<!-- B elided -->
+<acronym>NULL</acronym>
+to test in advance for a capability,
+rather than testing the respective function for
+success or failure.
+The function
+<emphasis remap='I'>PutChr</emphasis>
+will place the specified character on the terminal's output stream.
+It is not intended
+for use by the application (although such use is permissible),
+but is defined for the
+<citerefentry><refentrytitle>termlib</refentrytitle><manvolnum>3</manvolnum></citerefentry>
+library.</para>
+
+<para>All the following functions will return 1 for success and 0 if the capability
+is not described in the
+<citerefentry><refentrytitle>termcap</refentrytitle><manvolnum>4</manvolnum></citerefentry>
+entry.
+<emphasis remap='I'>MvCursor</emphasis>
+will move the cursor to the specified column and row
+(<emphasis remap='I'>x</emphasis>
+and
+<emphasis remap='I'>y</emphasis>)
+screen location specified.
+<emphasis remap='I'>HmCursor</emphasis>
+will move the cursor to the origin (top left) of the screen and is equivalent
+to
+<emphasis remap='I'>MvCursor(1,1)</emphasis>.
+To erase from the cursor position to the end of the line, use
+<emphasis remap='I'>ClrEOL</emphasis>,
+and to erase the entire screen call
+<emphasis remap='I'>ClrText</emphasis>
+(typically has the side effect of homing the cursor).
+To initiate the output of reverse video or emboldened text (depending
+upon the terminal's capabilities), use
+<emphasis remap='I'>SetStandout</emphasis>;
+<emphasis remap='I'>ClrStandout</emphasis>
+will restore the normal mode.
+For terminals such as the
+<emphasis remap='SM'>DEC VT100</emphasis>
+which have scrolling region capability, the functions
+<emphasis remap='I'>SetScrlReg</emphasis>
+and
+<emphasis remap='I'>ResetScrlReg</emphasis>
+can be used.
+<emphasis remap='I'>SetScrlReg</emphasis>
+must be invoked with the top and bottom line numbers of the region of the
+screen to be scrolled.
+The functions
+<emphasis remap='I'>ScrollUp</emphasis>
+and
+<emphasis remap='I'>ScrollDn</emphasis>
+will scroll the text on the screen up and down
+(forward and backward) respectively,
+by one line per invocation.
+The function
+<emphasis remap='I'>DeleteLn</emphasis>
+will delete the line containing the cursor, causing the text
+below to scroll up to fill the void.</para>
+</refsect1>
+
+<refsect1 xml:id='example'><title>EXAMPLE</title>
+<para><emphasis remap='I'>Libcursor</emphasis>
+can be loaded with any C program:</para>
+
+<literallayout remap='RS'>
+<synopsis>
+$ <emphasis remap='I'>cc program.c -lcursor -ltermlib</emphasis>
+</synopsis>
+</literallayout> <!-- remap='RE' -->
+</refsect1>
+
+<refsect1 xml:id='files'><title>FILES</title>
+<para>/usr/brl/lib/libcursor.a
+<!-- .br -->
+/usr/lib/libtermlib.a
+<!-- .br -->
+/etc/termcap</para>
+</refsect1>
+
+<refsect1 xml:id='see_also'><title>SEE ALSO</title>
+<para><citerefentry><refentrytitle>curses</refentrytitle><manvolnum>3X</manvolnum></citerefentry>, <citerefentry><refentrytitle>termlib</refentrytitle><manvolnum>3</manvolnum></citerefentry>, <citerefentry><refentrytitle>termcap</refentrytitle><manvolnum>4</manvolnum></citerefentry>.</para>
+</refsect1>
+
+<refsect1 xml:id='author'><title>AUTHOR</title>
+<para>Gary S. Moss, BRL/VLD-VMB</para>
+
+</refsect1>
+
+<refsect1 xml:id='copyright'><title>COPYRIGHT</title>
+<para>This software is Copyright (c) 1987-2012 by the United States
+Government as represented by U.S. Army Research Laboratory.</para>
+
+</refsect1>
+
+<refsect1 xml:id='bug_reports'><title>BUG REPORTS</title>
+<para>Reports of bugs or problems should be submitted via electronic
+mail to &lt;devs@brlcad.org&gt;.</para>
+</refsect1>
+</refentry>
+

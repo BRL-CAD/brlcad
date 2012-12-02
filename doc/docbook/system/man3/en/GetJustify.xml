@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man+tkman by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='getjustify3'>
+
+<!-- '\" Copyright (c) 1990\-1994 The Regents of the University of California.
+'\" Copyright (c) 1994\-1998 Sun Microsystems, Inc. -->
+
+<!-- '\" See the file "license.terms" for information on usage and redistribution
+'\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
+'\" 
+'\" RCS: @(#) $Id$
+'\"  -->
+<refentryinfo><date>8.1</date></refentryinfo>
+<refmeta>
+<refentrytitle>Tk_GetJustifyFromObj</refentrytitle>
+<manvolnum>3</manvolnum>
+<refmiscinfo class='date'>8.1</refmiscinfo>
+<refmiscinfo class='source'>Tk</refmiscinfo>
+<refmiscinfo class='manual'>Tk Library Procedures</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>Tk_GetJustifyFromObj</refname>
+<refname>Tk_GetJustify</refname>
+<refname>Tk_NameOfJustify</refname>
+<refpurpose>translate between strings and justification styles</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<funcsynopsis>
+<funcsynopsisinfo>
+#include &lt;tk.h&gt;
+
+</funcsynopsisinfo>
+<funcprototype>
+<funcdef>int <function>Tk_GetJustifyFromObj</function></funcdef>
+<paramdef><parameter>interp</parameter></paramdef>
+<paramdef><parameter>objPtr</parameter></paramdef>
+<paramdef><parameter>justifyPtr</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef>int <function>Tk_GetJustify</function></funcdef>
+<paramdef><parameter>interp</parameter></paramdef>
+<paramdef><parameter>string</parameter></paramdef>
+<paramdef><parameter>justifyPtr</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef>const char *<function>Tk_NameOfJustify</function></funcdef>
+<paramdef><parameter>justify</parameter></paramdef>
+</funcprototype>
+</funcsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='arguments'><title>ARGUMENTS</title>
+<!-- .AS Tk_Justify *justifyPtr -->
+<informaltable>
+<tgroup cols='3'>
+<tbody>
+
+<row><entry>"Tcl_Interp"</entry><entry>"*interp"</entry><entry>"in"</entry>
+<entry>
+<para>Interpreter to use for error reporting, or NULL.</para>
+</entry>
+</row>
+<row><entry>Tcl_Obj</entry><entry>*objPtr</entry><entry>in/out</entry>
+<entry>
+<para>String value contains name of justification style, one of
+<quote>left</quote>,
+<quote>right</quote>,
+or
+<quote>center</quote>.
+The internal rep will be modified to cache corresponding justify value.</para>
+</entry>
+</row>
+<row><entry>"const char"</entry><entry>*string</entry><entry>in</entry>
+<entry>
+<para>Same as <emphasis remap='I'>objPtr</emphasis> except description of justification style is passed as
+a string.</para>
+</entry>
+</row>
+<row><entry>int</entry><entry>*justifyPtr</entry><entry>out</entry>
+<entry>
+<para>Pointer to location in which to store justify value corresponding to
+<emphasis remap='I'>objPtr</emphasis> or <emphasis remap='I'>string</emphasis>.</para>
+</entry>
+</row>
+<row><entry>Tk_Justify</entry><entry>justify</entry><entry>in</entry>
+<entry>
+<para>Justification style (one of the values listed below).</para>
+<!-- .BE -->
+</entry>
+</row>
+</tbody>
+</tgroup>
+</informaltable>
+
+</refsect1>
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para><function>Tk_GetJustifyFromObj</function> places in <emphasis remap='I'>*justifyPtr</emphasis> the justify value
+corresponding to <emphasis remap='I'>objPtr</emphasis>'s value.
+This value will be one of the following:</para>
+<variablelist remap='TP'>
+  <varlistentry>
+  <term><emphasis remap='B'>TK_JUSTIFY_LEFT</emphasis></term>
+  <listitem>
+<para>Means that the text on each line should start at the left edge of
+the line;  as a result, the right edges of lines may be ragged.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>TK_JUSTIFY_RIGHT</emphasis></term>
+  <listitem>
+<para>Means that the text on each line should end at the right edge of
+the line;  as a result, the left edges of lines may be ragged.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>TK_JUSTIFY_CENTER</emphasis></term>
+  <listitem>
+<para>Means that the text on each line should be centered;  as a result,
+both the left and right edges of lines may be ragged.</para>
+  </listitem>
+  </varlistentry>
+</variablelist>
+
+<para>Under normal circumstances the return value is <emphasis remap='B'>TCL_OK</emphasis> and
+<emphasis remap='I'>interp</emphasis> is unused.
+If <emphasis remap='I'>objPtr</emphasis> does not contain a valid justification style
+or an abbreviation of one of these names, <emphasis remap='B'>TCL_ERROR</emphasis> is returned,
+<emphasis remap='I'>*justifyPtr</emphasis> is unmodified, and an error message is
+stored in <emphasis remap='I'>interp</emphasis>'s result if <emphasis remap='I'>interp</emphasis> is not NULL.
+<function>Tk_GetJustifyFromObj</function> caches information about the return
+value in <emphasis remap='I'>objPtr</emphasis>, which speeds up future calls to
+<function>Tk_GetJustifyFromObj</function> with the same <emphasis remap='I'>objPtr</emphasis>.</para>
+
+<para><function>Tk_GetJustify</function> is identical to <function>Tk_GetJustifyFromObj</function> except
+that the description of the justification is specified with a string instead
+of an object.  This prevents <function>Tk_GetJustify</function> from caching the
+return value, so <function>Tk_GetJustify</function> is less efficient than
+<function>Tk_GetJustifyFromObj</function>.</para>
+
+<para><function>Tk_NameOfJustify</function> is the logical inverse of <function>Tk_GetJustify</function>.
+Given a justify value it returns a statically-allocated string
+corresponding to <emphasis remap='I'>justify</emphasis>.
+If <emphasis remap='I'>justify</emphasis> is not a legal justify value, then
+<quote>unknown justification style</quote>
+is returned.</para>
+
+</refsect1>
+
+<refsect1 xml:id='keywords'><title>KEYWORDS</title>
+<para>center, fill, justification, string</para>
+</refsect1>
+</refentry>
+

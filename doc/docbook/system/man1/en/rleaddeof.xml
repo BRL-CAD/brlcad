@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='rleaddeof1'>
+<!--  Copyright (c) 1990, University of Michigan -->
+<refmeta>
+<refentrytitle>RLEADDEOF</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class='source'>June 12, 1990</refmiscinfo>
+<refmiscinfo class='manual'>1</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>rleaddeof</refname>
+<refpurpose>Put an end of image marker on an RLE file.</refpurpose>
+</refnamediv>
+<refsynopsisdiv xml:id='synopsis'>
+<para>Superseded by
+<citerefentry><refentrytitle>rlecat</refentrytitle><manvolnum>1</manvolnum></citerefentry>.</para>
+</refsynopsisdiv>
+
+<!-- body begins here -->
+
+
+<refsect1><title>Description</title>
+<para>This empty page was brought to you by brain damage somewhere in POD,
+the Perl build system, or the Perl maintainers' release procedures.</para>
+</refsect1>
+</refentry>

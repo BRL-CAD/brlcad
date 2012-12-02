@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man+tkman by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='setclass3'>
+
+<!-- '\" Copyright (c) 1990 The Regents of the University of California.
+'\" Copyright (c) 1994\-1996 Sun Microsystems, Inc. -->
+
+<!-- '\" See the file "license.terms" for information on usage and redistribution
+'\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
+'\" 
+'\" RCS: @(#) $Id$
+'\"  -->
+<refmeta>
+<refentrytitle>Tk_SetClass</refentrytitle>
+<manvolnum>3</manvolnum>
+<refmiscinfo class='manual'>Tk</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>Tk_SetClass</refname>
+<refname>Tk_Class</refname>
+<refpurpose>set or retrieve a window's class</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<funcsynopsis>
+<funcsynopsisinfo>
+#include &lt;tk.h&gt;
+
+</funcsynopsisinfo>
+<funcprototype>
+<funcdef><function>Tk_SetClass</function></funcdef>
+<paramdef><parameter>tkwin</parameter></paramdef>
+<paramdef><parameter>class</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef>Tk_Uid <function>Tk_Class</function></funcdef>
+<paramdef><parameter>tkwin</parameter></paramdef>
+</funcprototype>
+</funcsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='arguments'><title>ARGUMENTS</title>
+<!-- .AS Tk_Window parent -->
+<informaltable>
+<tgroup cols='3'>
+<tbody>
+
+<row><entry>"Tk_Window"</entry><entry>"tkwin"</entry><entry>"in"</entry>
+<entry>
+<para>Token for window.</para>
+</entry>
+</row>
+<row><entry>char</entry><entry>*class</entry><entry>in</entry>
+<entry>
+<para>New class name for window.</para>
+<!-- .BE -->
+</entry>
+</row>
+</tbody>
+</tgroup>
+</informaltable>
+
+</refsect1>
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para><function>Tk_SetClass</function> is called to associate a class with a particular
+window.  The <emphasis remap='I'>class</emphasis> string identifies the type of the
+window;  all windows with the same general class of behavior
+(button, menu, etc.) should have the same class.  By
+convention all class names start with a capital letter, and
+there exists a Tcl command with the same name as
+each class (except all in lower-case) which can be used to
+create and manipulate windows of that class.
+A window's class string is initialized to NULL
+when the window is created.</para>
+
+<para>For main windows, Tk automatically propagates the name and class
+to the WM_CLASS property used by window managers.  This happens
+either when a main window is actually created (e.g. in
+<emphasis remap='B'>Tk_MakeWindowExist</emphasis>), or when <function>Tk_SetClass</function>
+is called, whichever occurs later.  If a main window has not been
+assigned a class then Tk will not set the WM_CLASS property for
+the window.</para>
+
+<para><function>Tk_Class</function> is a macro that returns the
+current value of <emphasis remap='I'>tkwin</emphasis>'s class.  The value is returned
+as a Tk_Uid, which may be used just like a string pointer but also has
+the properties of a unique identifier (see the manual entry for
+<emphasis remap='B'>Tk_GetUid</emphasis> for details).
+If <emphasis remap='I'>tkwin</emphasis> has not yet been given a class, then
+<function>Tk_Class</function> will return NULL.</para>
+
+</refsect1>
+
+<refsect1 xml:id='keywords'><title>KEYWORDS</title>
+<para>class, unique identifier, window, window manager</para>
+</refsect1>
+</refentry>
+

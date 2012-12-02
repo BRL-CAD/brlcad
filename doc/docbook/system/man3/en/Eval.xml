@@ -1,0 +1,315 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man+tkman by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='eval3'>
+
+<!-- '\" Copyright (c) 1989\-1993 The Regents of the University of California.
+'\" Copyright (c) 1994\-1997 Sun Microsystems, Inc.
+'\" Copyright (c) 2000 Scriptics Corporation. -->
+
+<!-- '\" See the file "license.terms" for information on usage and redistribution
+'\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
+'\" 
+'\" RCS: @(#) $Id$
+'\"  -->
+<refentryinfo><date>8.1</date></refentryinfo>
+<refmeta>
+<refentrytitle>Tcl_Eval</refentrytitle>
+<manvolnum>3</manvolnum>
+<refmiscinfo class='date'>8.1</refmiscinfo>
+<refmiscinfo class='source'>Tcl</refmiscinfo>
+<refmiscinfo class='manual'>Tcl Library Procedures</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>Tcl_EvalObjEx</refname>
+<refname>Tcl_EvalFile</refname>
+<refname>Tcl_EvalObjv</refname>
+<refname>Tcl_Eval</refname>
+<refname>Tcl_EvalEx</refname>
+<refname>Tcl_GlobalEval</refname>
+<refname>Tcl_GlobalEvalObj</refname>
+<refname>Tcl_VarEval</refname>
+<refname>Tcl_VarEvalVA</refname>
+<refpurpose>execute Tcl scripts</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<funcsynopsis>
+<funcsynopsisinfo>
+#include &lt;tcl.h&gt;
+
+</funcsynopsisinfo>
+<funcprototype>
+<funcdef>int <function>Tcl_EvalObjEx</function></funcdef>
+<paramdef><parameter>interp</parameter></paramdef>
+<paramdef><parameter>objPtr</parameter></paramdef>
+<paramdef><parameter>flags</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef>int <function>Tcl_EvalFile</function></funcdef>
+<paramdef><parameter>interp</parameter></paramdef>
+<paramdef><parameter>fileName</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef>int <function>Tcl_EvalObjv</function></funcdef>
+<paramdef><parameter>interp</parameter></paramdef>
+<paramdef><parameter>objc</parameter></paramdef>
+<paramdef><parameter>objv</parameter></paramdef>
+<paramdef><parameter>flags</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef>int <function>Tcl_Eval</function></funcdef>
+<paramdef><parameter>interp</parameter></paramdef>
+<paramdef><parameter>script</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef>int <function>Tcl_EvalEx</function></funcdef>
+<paramdef><parameter>interp</parameter></paramdef>
+<paramdef><parameter>script</parameter></paramdef>
+<paramdef><parameter>numBytes</parameter></paramdef>
+<paramdef><parameter>flags</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef>int <function>Tcl_GlobalEval</function></funcdef>
+<paramdef><parameter>interp</parameter></paramdef>
+<paramdef><parameter>script</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef>int <function>Tcl_GlobalEvalObj</function></funcdef>
+<paramdef><parameter>interp</parameter></paramdef>
+<paramdef><parameter>objPtr</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef>int <function>Tcl_VarEval</function></funcdef>
+<paramdef><parameter>interp</parameter></paramdef>
+<paramdef><parameter>part</parameter></paramdef>
+<paramdef><parameter>part</parameter></paramdef>
+<paramdef><parameter>... ( char *) NULL</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef>int <function>Tcl_VarEvalVA</function></funcdef>
+<paramdef><parameter>interp</parameter></paramdef>
+<paramdef><parameter>argList</parameter></paramdef>
+</funcprototype>
+</funcsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='arguments'><title>ARGUMENTS</title>
+<!-- .AS Tcl_Interp **termPtr -->
+<informaltable>
+<tgroup cols='3'>
+<tbody>
+
+<row><entry>"Tcl_Interp"</entry><entry>"*interp"</entry><entry>"in"</entry>
+<entry>
+<para>Interpreter in which to execute the script.  The interpreter's result is
+modified to hold the result or error message from the script.</para>
+</entry>
+</row>
+<row><entry>Tcl_Obj</entry><entry>*objPtr</entry><entry>in</entry>
+<entry>
+<para>A Tcl object containing the script to execute.</para>
+</entry>
+</row>
+<row><entry>int</entry><entry>flags</entry><entry>in</entry>
+<entry>
+<para>ORed combination of flag bits that specify additional options.
+<emphasis remap='B'>TCL_EVAL_GLOBAL</emphasis> and <emphasis remap='B'>TCL_EVAL_DIRECT</emphasis> are currently supported.</para>
+</entry>
+</row>
+<row><entry>"const char"</entry><entry>*fileName</entry><entry>in</entry>
+<entry>
+<para>Name of a file containing a Tcl script.</para>
+</entry>
+</row>
+<row><entry>int</entry><entry>objc</entry><entry>in</entry>
+<entry>
+<para>The number of objects in the array pointed to by <emphasis remap='I'>objPtr</emphasis>;
+this is also the number of words in the command.</para>
+</entry>
+</row>
+<row><entry>Tcl_Obj</entry><entry>**objv</entry><entry>in</entry>
+<entry>
+<para>Points to an array of pointers to objects; each object holds the
+value of a single word in the command to execute.</para>
+</entry>
+</row>
+<row><entry>int</entry><entry>numBytes</entry><entry>in</entry>
+<entry>
+<para>The number of bytes in <emphasis remap='I'>script</emphasis>, not including any
+null terminating character.  If -1, then all characters up to the
+first null byte are used.</para>
+</entry>
+</row>
+<row><entry>"const char"</entry><entry>*script</entry><entry>in</entry>
+<entry>
+<para>Points to first byte of script to execute (null-terminated and UTF-8).</para>
+</entry>
+</row>
+<row><entry>char</entry><entry>*part</entry><entry>in</entry>
+<entry>
+<para>String forming part of a Tcl script.</para>
+</entry>
+</row>
+<row><entry>va_list</entry><entry>argList</entry><entry>in</entry>
+<entry>
+<para>An argument list which must have been initialized using
+<emphasis remap='B'>va_start</emphasis>, and cleared using <emphasis remap='B'>va_end</emphasis>.</para>
+<!-- .BE -->
+</entry>
+</row>
+</tbody>
+</tgroup>
+</informaltable>
+
+</refsect1>
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para>The procedures described here are invoked to execute Tcl scripts in
+various forms.
+<function>Tcl_EvalObjEx</function> is the core procedure and is used by many of the others.
+It executes the commands in the script stored in <emphasis remap='I'>objPtr</emphasis>
+until either an error occurs or the end of the script is reached.
+If this is the first time <emphasis remap='I'>objPtr</emphasis> has been executed,
+its commands are compiled into bytecode instructions
+which are then executed.  The
+bytecodes are saved in <emphasis remap='I'>objPtr</emphasis> so that the compilation step
+can be skipped if the object is evaluated again in the future.</para>
+
+<para>The return value from <function>Tcl_EvalObjEx</function> (and all the other procedures
+described here) is a Tcl completion code with
+one of the values <emphasis remap='B'>TCL_OK</emphasis>, <emphasis remap='B'>TCL_ERROR</emphasis>, <emphasis remap='B'>TCL_RETURN</emphasis>,
+<emphasis remap='B'>TCL_BREAK</emphasis>, or <emphasis remap='B'>TCL_CONTINUE</emphasis>, or possibly some other
+integer value originating in an extension.
+In addition, a result value or error message is left in <emphasis remap='I'>interp</emphasis>'s
+result; it can be retrieved using <emphasis remap='B'>Tcl_GetObjResult</emphasis>.</para>
+
+<para><function>Tcl_EvalFile</function> reads the file given by <emphasis remap='I'>fileName</emphasis> and evaluates
+its contents as a Tcl script.  It returns the same information as
+<function>Tcl_EvalObjEx</function>.
+If the file could not be read then a Tcl error is returned to describe
+why the file could not be read.
+The eofchar for files is
+<quote>\32</quote>
+(^Z) for all platforms. If you require a
+<quote>^Z</quote>
+in code for string comparison, you can use
+<quote>\032</quote>
+or
+<quote>\u001a</quote>,
+which will be safely substituted by the Tcl interpreter into
+<quote>^Z</quote>.</para>
+
+<para><function>Tcl_EvalObjv</function> executes a single pre-parsed command instead of a
+script.  The <emphasis remap='I'>objc</emphasis> and <emphasis remap='I'>objv</emphasis> arguments contain the values
+of the words for the Tcl command, one word in each object in
+<emphasis remap='I'>objv</emphasis>.  <function>Tcl_EvalObjv</function> evaluates the command and returns
+a completion code and result just like <function>Tcl_EvalObjEx</function>.
+The caller of <function>Tcl_EvalObjv</function> has to manage the reference count of the
+elements of <emphasis remap='I'>objv</emphasis>, insuring that the objects are valid until
+<function>Tcl_EvalObjv</function> returns.</para>  
+
+<para><function>Tcl_Eval</function> is similar to <function>Tcl_EvalObjEx</function> except that the script to
+be executed is supplied as a string instead of an object and no compilation
+occurs.  The string should be a proper UTF-8 string as converted by
+<emphasis remap='B'>Tcl_ExternalToUtfDString</emphasis> or <emphasis remap='B'>Tcl_ExternalToUtf</emphasis> when it is known
+to possibly contain upper ASCII characters whose possible combinations
+might be a UTF-8 special code.  The string is parsed and executed directly
+(using <function>Tcl_EvalObjv</function>) instead of compiling it and executing the
+bytecodes.  In situations where it is known that the script will never be
+executed again, <function>Tcl_Eval</function> may be faster than <function>Tcl_EvalObjEx</function>.
+ <function>Tcl_Eval</function> returns a completion code and result just like 
+<function>Tcl_EvalObjEx</function>.  Note: for backward compatibility with versions before
+Tcl 8.0, <function>Tcl_Eval</function> copies the object result in <emphasis remap='I'>interp</emphasis> to
+<emphasis remap='I'>interp-&gt;result</emphasis> (use is deprecated) where it can be accessed directly.
+ This makes <function>Tcl_Eval</function> somewhat slower than <function>Tcl_EvalEx</function>, which
+does not do the copy.</para>
+
+<para><function>Tcl_EvalEx</function> is an extended version of <function>Tcl_Eval</function> that takes
+additional arguments <emphasis remap='I'>numBytes</emphasis> and <emphasis remap='I'>flags</emphasis>.  For the
+efficiency reason given above, <function>Tcl_EvalEx</function> is generally preferred
+over <function>Tcl_Eval</function>.</para>
+
+<para><function>Tcl_GlobalEval</function> and <function>Tcl_GlobalEvalObj</function> are older procedures
+that are now deprecated.  They are similar to <function>Tcl_EvalEx</function> and
+<function>Tcl_EvalObjEx</function> except that the script is evaluated in the global
+namespace and its variable context consists of global variables only
+(it ignores any Tcl procedures that are active).  These functions are
+equivalent to using the <emphasis remap='B'>TCL_EVAL_GLOBAL</emphasis> flag (see below).</para>
+
+<para><function>Tcl_VarEval</function> takes any number of string arguments
+of any length, concatenates them into a single string,
+then calls <function>Tcl_Eval</function> to execute that string as a Tcl command.
+It returns the result of the command and also modifies
+<emphasis remap='I'>interp-&gt;result</emphasis> in the same way as <function>Tcl_Eval</function>.
+The last argument to <function>Tcl_VarEval</function> must be NULL to indicate the end
+of arguments.  <function>Tcl_VarEval</function> is now deprecated.</para>
+
+<para><function>Tcl_VarEvalVA</function> is the same as <function>Tcl_VarEval</function> except that
+instead of taking a variable number of arguments it takes an argument
+list. Like <function>Tcl_VarEval</function>, <function>Tcl_VarEvalVA</function> is deprecated.</para>
+
+</refsect1>
+
+<refsect1 xml:id='flag_bits'><title>FLAG BITS</title>
+<para>Any ORed combination of the following values may be used for the
+<emphasis remap='I'>flags</emphasis> argument to procedures such as <function>Tcl_EvalObjEx</function>:</para>
+<variablelist remap='TP'>
+  <varlistentry>
+  <term><emphasis remap='B'>TCL_EVAL_DIRECT</emphasis></term>
+  <listitem>
+<para>This flag is only used by <function>Tcl_EvalObjEx</function>; it is ignored by
+other procedures.  If this flag bit is set, the script is not
+compiled to bytecodes; instead it is executed directly
+as is done by <function>Tcl_EvalEx</function>.  The
+<emphasis remap='B'>TCL_EVAL_DIRECT</emphasis> flag is useful in situations where the
+contents of an object are going to change immediately, so the
+bytecodes will not be reused in a future execution.  In this case,
+it is faster to execute the script directly.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>TCL_EVAL_GLOBAL</emphasis></term>
+  <listitem>
+<para>If this flag is set, the script is processed at global level.  This
+means that it is evaluated in the global namespace and its variable
+context consists of global variables only (it ignores any Tcl
+procedures at are active).</para>
+
+  </listitem>
+  </varlistentry>
+</variablelist>
+</refsect1>
+
+<refsect1 xml:id='miscellaneous_details'><title>MISCELLANEOUS DETAILS</title>
+<para>During the processing of a Tcl command it is legal to make nested
+calls to evaluate other commands (this is how procedures and
+some control structures are implemented).
+If a code other than <emphasis remap='B'>TCL_OK</emphasis> is returned
+from a nested <function>Tcl_EvalObjEx</function> invocation,
+then the caller should normally return immediately,
+passing that same return code back to its caller,
+and so on until the top-level application is reached.
+A few commands, like <emphasis remap='B'>for</emphasis>, will check for certain
+return codes, like <emphasis remap='B'>TCL_BREAK</emphasis> and <emphasis remap='B'>TCL_CONTINUE</emphasis>, and process them
+specially without returning.</para>
+
+<para><function>Tcl_EvalObjEx</function> keeps track of how many nested <function>Tcl_EvalObjEx</function>
+invocations are in progress for <emphasis remap='I'>interp</emphasis>.
+If a code of <emphasis remap='B'>TCL_RETURN</emphasis>, <emphasis remap='B'>TCL_BREAK</emphasis>, or <emphasis remap='B'>TCL_CONTINUE</emphasis> is
+about to be returned from the topmost <function>Tcl_EvalObjEx</function>
+invocation for <emphasis remap='I'>interp</emphasis>,
+it converts the return code to <emphasis remap='B'>TCL_ERROR</emphasis>
+and sets <emphasis remap='I'>interp</emphasis>'s result to an error message indicating that
+the <emphasis remap='B'>return</emphasis>, <emphasis remap='B'>break</emphasis>, or <emphasis remap='B'>continue</emphasis> command was
+invoked in an inappropriate place.
+This means that top-level applications should never see a return code
+from <function>Tcl_EvalObjEx</function> other then <emphasis remap='B'>TCL_OK</emphasis> or <emphasis remap='B'>TCL_ERROR</emphasis>.</para>
+
+</refsect1>
+
+<refsect1 xml:id='keywords'><title>KEYWORDS</title>
+<para>execute, file, global, object, result, script</para>
+</refsect1>
+</refentry>
+

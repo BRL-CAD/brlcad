@@ -1,0 +1,270 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man+tkman by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='canvtkwin3'>
+
+<!-- '\" Copyright (c) 1994\-1996 Sun Microsystems, Inc. -->
+
+<!-- '\" See the file "license.terms" for information on usage and redistribution
+'\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
+'\" 
+'\" RCS: @(#) $Id$
+'\"  -->
+<refentryinfo><date>4.1</date></refentryinfo>
+<refmeta>
+<refentrytitle>Tk_CanvasTkwin</refentrytitle>
+<manvolnum>3</manvolnum>
+<refmiscinfo class='date'>4.1</refmiscinfo>
+<refmiscinfo class='source'>Tk</refmiscinfo>
+<refmiscinfo class='manual'>Tk Library Procedures</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>Tk_CanvasTkwin</refname>
+<refname>Tk_CanvasGetCoord</refname>
+<refname>Tk_CanvasDrawableCoords</refname>
+<refname>Tk_CanvasSetStippleOrigin</refname>
+<refname>Tk_CanvasWindowCoords</refname>
+<refname>Tk_CanvasEventuallyRedraw</refname>
+<refname>Tk_CanvasTagsOption</refname>
+<refpurpose>utility procedures for canvas type managers</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<funcsynopsis>
+<funcsynopsisinfo>
+#include &lt;tk.h&gt;
+
+</funcsynopsisinfo>
+<funcprototype>
+<funcdef>Tk_Window <function>Tk_CanvasTkwin</function></funcdef>
+<paramdef><parameter>canvas</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef>int <function>Tk_CanvasGetCoord</function></funcdef>
+<paramdef><parameter>interp</parameter></paramdef>
+<paramdef><parameter>canvas</parameter></paramdef>
+<paramdef><parameter>string</parameter></paramdef>
+<paramdef><parameter>doublePtr</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef><function>Tk_CanvasDrawableCoords</function></funcdef>
+<paramdef><parameter>canvas</parameter></paramdef>
+<paramdef><parameter>x</parameter></paramdef>
+<paramdef><parameter>y</parameter></paramdef>
+<paramdef><parameter>drawableXPtr</parameter></paramdef>
+<paramdef><parameter>drawableYPtr</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef><function>Tk_CanvasSetStippleOrigin</function></funcdef>
+<paramdef><parameter>canvas</parameter></paramdef>
+<paramdef><parameter>gc</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef><function>Tk_CanvasWindowCoords</function></funcdef>
+<paramdef><parameter>canvas</parameter></paramdef>
+<paramdef><parameter>x</parameter></paramdef>
+<paramdef><parameter>y</parameter></paramdef>
+<paramdef><parameter>screenXPtr</parameter></paramdef>
+<paramdef><parameter>screenYPtr</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef><function>Tk_CanvasEventuallyRedraw</function></funcdef>
+<paramdef><parameter>canvas</parameter></paramdef>
+<paramdef><parameter>x1</parameter></paramdef>
+<paramdef><parameter>y1</parameter></paramdef>
+<paramdef><parameter>x2</parameter></paramdef>
+<paramdef><parameter>y2</parameter></paramdef>
+</funcprototype>
+<funcsynopsisinfo>
+Tk_OptionParseProc *Tk_CanvasTagsParseProc;
+
+Tk_OptionPrintProc *Tk_CanvasTagsPrintProc;
+</funcsynopsisinfo>
+</funcsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='arguments'><title>ARGUMENTS</title>
+<!-- .AS Tk_ItemType *drawableXPtr -->
+<informaltable>
+<tgroup cols='3'>
+<tbody>
+
+<row><entry>"Tk_Canvas"</entry><entry>"canvas"</entry><entry>"in"</entry>
+<entry>
+<para>A token that identifies a canvas widget.</para>
+</entry>
+</row>
+<row><entry>Tcl_Interp</entry><entry>*interp</entry><entry>in/out</entry>
+<entry>
+<para>Interpreter to use for error reporting.</para>
+</entry>
+</row>
+<row><entry>"const char"</entry><entry>*string</entry><entry>in</entry>
+<entry>
+<para>Textual description of a canvas coordinate.</para>
+</entry>
+</row>
+<row><entry>double</entry><entry>*doublePtr</entry><entry>out</entry>
+<entry>
+<para>Points to place to store a converted coordinate.</para>
+</entry>
+</row>
+<row><entry>double</entry><entry>x</entry><entry>in</entry>
+<entry>
+<para>An x coordinate in the space of the canvas.</para>
+</entry>
+</row>
+<row><entry>double</entry><entry>y</entry><entry>in</entry>
+<entry>
+<para>A y coordinate in the space of the canvas.</para>
+</entry>
+</row>
+<row><entry>short</entry><entry>*drawableXPtr</entry><entry>out</entry>
+<entry>
+<para>Pointer to a location in which to store an x coordinate in the space
+of the drawable currently being used to redisplay the canvas.</para>
+</entry>
+</row>
+<row><entry>short</entry><entry>*drawableYPtr</entry><entry>out</entry>
+<entry>
+<para>Pointer to a location in which to store a y coordinate in the space
+of the drawable currently being used to redisplay the canvas.</para>
+</entry>
+</row>
+<row><entry>GC</entry><entry>gc</entry><entry>out</entry>
+<entry>
+<para>Graphics context to modify.</para>
+</entry>
+</row>
+<row><entry>short</entry><entry>*screenXPtr</entry><entry>out</entry>
+<entry>
+<para>Points to a location in which to store the screen coordinate in the
+canvas window that corresponds to <emphasis remap='I'>x</emphasis>.</para>
+</entry>
+</row>
+<row><entry>short</entry><entry>*screenYPtr</entry><entry>out</entry>
+<entry>
+<para>Points to a location in which to store the screen coordinate in the
+canvas window that corresponds to <emphasis remap='I'>y</emphasis>.</para>
+</entry>
+</row>
+<row><entry>int</entry><entry>x1</entry><entry>in</entry>
+<entry>
+<para>Left edge of the region that needs redisplay.  Only pixels at or to
+the right of this coordinate need to be redisplayed.</para>
+</entry>
+</row>
+<row><entry>int</entry><entry>y1</entry><entry>in</entry>
+<entry>
+<para>Top edge of the region that needs redisplay.  Only pixels at or below
+this coordinate need to be redisplayed.</para>
+</entry>
+</row>
+<row><entry>int</entry><entry>x2</entry><entry>in</entry>
+<entry>
+<para>Right edge of the region that needs redisplay.  Only pixels to
+the left of this coordinate need to be redisplayed.</para>
+</entry>
+</row>
+<row><entry>int</entry><entry>y2</entry><entry>in</entry>
+<entry>
+<para>Bottom edge of the region that needs redisplay.  Only pixels above
+this coordinate need to be redisplayed.</para>
+<!-- .BE -->
+</entry>
+</row>
+</tbody>
+</tgroup>
+</informaltable>
+
+</refsect1>
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para>These procedures are called by canvas type managers to perform various
+utility functions.</para>
+
+<para><function>Tk_CanvasTkwin</function> returns the Tk_Window associated with a particular
+canvas.</para>
+
+<para><function>Tk_CanvasGetCoord</function> translates a string specification of a
+coordinate (such as <emphasis remap='B'>2p</emphasis> or <emphasis remap='B'>1.6c</emphasis>) into a double-precision
+canvas coordinate.
+If <emphasis remap='I'>string</emphasis> is a valid coordinate description then <function>Tk_CanvasGetCoord</function>
+stores the corresponding canvas coordinate at *<emphasis remap='I'>doublePtr</emphasis>
+and returns <emphasis remap='B'>TCL_OK</emphasis>.
+Otherwise it stores an error message in <emphasis remap='I'>interp-&gt;result</emphasis> and
+returns <emphasis remap='B'>TCL_ERROR</emphasis>.</para>
+
+<para><function>Tk_CanvasDrawableCoords</function> is called by type managers during
+redisplay to compute where to draw things.
+Given <emphasis remap='I'>x</emphasis> and <emphasis remap='I'>y</emphasis> coordinates in the space of the
+canvas, <function>Tk_CanvasDrawableCoords</function> computes the corresponding
+pixel in the drawable that is currently being used for redisplay;
+it returns those coordinates in *<emphasis remap='I'>drawableXPtr</emphasis> and *<emphasis remap='I'>drawableYPtr</emphasis>.
+This procedure should not be invoked except during redisplay.</para>
+
+<para><function>Tk_CanvasSetStippleOrigin</function> is also used during redisplay.
+It sets the stipple origin in <emphasis remap='I'>gc</emphasis> so that stipples drawn
+with <emphasis remap='I'>gc</emphasis> in the current offscreen pixmap will line up
+with stipples drawn with origin (0,0) in the canvas's actual
+window.
+<function>Tk_CanvasSetStippleOrigin</function> is needed in order to guarantee
+that stipple patterns line up properly when the canvas is
+redisplayed in small pieces.
+Redisplays are carried out in double-buffered fashion where a
+piece of the canvas is redrawn in an offscreen pixmap and then
+copied back onto the screen.
+In this approach the stipple origins in graphics contexts need to
+be adjusted during each redisplay to compensate for the position
+of the off-screen pixmap relative to the window.
+If an item is being drawn with stipples, its type manager typically
+calls <function>Tk_CanvasSetStippleOrigin</function> just before using <emphasis remap='I'>gc</emphasis>
+to draw something;  after it is finished drawing, the type manager
+calls <emphasis remap='B'>XSetTSOrigin</emphasis> to restore the origin in <emphasis remap='I'>gc</emphasis> back to (0,0)
+(the restore is needed because graphics contexts are shared, so
+they cannot be modified permanently).</para>
+
+<para><function>Tk_CanvasWindowCoords</function> is similar to <function>Tk_CanvasDrawableCoords</function>
+except that it returns coordinates in the canvas's window on the
+screen, instead of coordinates in an off-screen pixmap.</para>
+
+<para><function>Tk_CanvasEventuallyRedraw</function> may be invoked by a type manager
+to inform Tk that a portion of a canvas needs to be redrawn.
+The <emphasis remap='I'>x1</emphasis>, <emphasis remap='I'>y1</emphasis>, <emphasis remap='I'>x2</emphasis>, and <emphasis remap='I'>y2</emphasis> arguments
+specify the region that needs to be redrawn, in canvas coordinates.
+Type managers rarely need to invoke <function>Tk_CanvasEventuallyRedraw</function>,
+since Tk can normally figure out when an item has changed and make
+the redisplay request on its behalf (this happens, for example
+whenever Tk calls a <emphasis remap='I'>configureProc</emphasis> or <emphasis remap='I'>scaleProc</emphasis>).
+The only time that a type manager needs to call
+<function>Tk_CanvasEventuallyRedraw</function> is if an item has changed on its own
+without being invoked through one of the procedures in its Tk_ItemType;
+this could happen, for example, in an image item if the image is
+modified using image commands.</para>
+
+<para><emphasis remap='B'>Tk_CanvasTagsParseProc</emphasis> and <emphasis remap='B'>Tk_CanvasTagsPrintProc</emphasis> are
+procedures that handle the <option>-tags</option> option for canvas items.
+The code of a canvas type manager will not call these procedures
+directly, but will use their addresses to create a <emphasis remap='B'>Tk_CustomOption</emphasis>
+structure for the <option>-tags</option> option.   The code typically looks
+like this:</para>
+<programlisting remap='CS'>
+static Tk_CustomOption tagsOption = {Tk_CanvasTagsParseProc,
+    Tk_CanvasTagsPrintProc, (ClientData) NULL
+<funcsynopsis>
+<funcsynopsisinfo>
+};
+
+</funcsynopsisinfo>
+</funcsynopsis>
+static Tk_ConfigSpec configSpecs[] = {
+    ...
+    {TK_CONFIG_CUSTOM, "-tags", (char *) NULL, (char *) NULL,
+        (char *) NULL, 0, TK_CONFIG_NULL_OK, &amp;tagsOption},
+    ...
+};
+</programlisting> <!-- remap='CE' -->
+<para>canvas, focus, item type, redisplay, selection, type manager</para>
+</refsect1>
+</refentry>
+

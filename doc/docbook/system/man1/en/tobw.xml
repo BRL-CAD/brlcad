@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='tobw1'>
+<!--  Copyright (c) 1986, University of Utah -->
+<refmeta>
+<refentrytitle>TOBW</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class='source'>Month DD, YYYY</refmiscinfo>
+<refmiscinfo class='manual'>1</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>tobw</refname>
+<refpurpose>Convert a 24 bit RLE file to eight bits of gray scale value.</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<cmdsynopsis>
+  <command>tobw</command>    
+    <arg choice='opt'>-t </arg>
+    <arg choice='opt'><arg choice='plain'>-o </arg><arg choice='plain'><replaceable>outfile</replaceable></arg></arg>
+    <arg choice='opt'><replaceable>infile</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para><emphasis remap='I'>Tobw</emphasis>
+converts an image with 24 bit pixel values (eight bits each of red,
+green and blue) to eight bits of grayscale information.  The
+<emphasis remap='I'>NTSC Y</emphasis>
+transform is used.  If the
+<option>-t</option>
+flag is given, then the monochrome pixel values are replicated on all three
+output channels (otherwise, just one channel of eight bit data is produced).
+If no input file is specified,
+<command>tobw</command>
+reads from stdin.  If no output file is specified with
+<option>-o,</option>
+it writes the result to stdout.</para>
+</refsect1>
+
+<refsect1 xml:id='see_also'><title>SEE ALSO</title>
+<para><citerefentry><refentrytitle>to8</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>urt</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>rgb_to_bw</refentrytitle><manvolnum>3</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>RLE</refentrytitle><manvolnum>5</manvolnum></citerefentry>.</para>
+</refsect1>
+
+<refsect1 xml:id='author'><title>AUTHOR</title>
+<para>Spencer Thomas</para>
+</refsect1>
+</refentry>
+

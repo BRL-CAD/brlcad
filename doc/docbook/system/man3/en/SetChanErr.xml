@@ -1,0 +1,263 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man+tkman by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='setchanerr3'>
+
+<!-- '\" Copyright (c) 2005 Andreas Kupries &lt;andreas_kupries@users.sourceforge.net&gt; -->
+
+<!-- '\" See the file "license.terms" for information on usage and redistribution
+'\" of this file, and for a DISCLAIMER OF ALL WARRANTIES. -->
+
+<!-- '\" RCS: @(#) $Id$ -->
+<refentryinfo><date>8.5</date></refentryinfo>
+<refmeta>
+<refentrytitle>Tcl_SetChannelError</refentrytitle>
+<manvolnum>3</manvolnum>
+<refmiscinfo class='date'>8.5</refmiscinfo>
+<refmiscinfo class='source'>Tcl</refmiscinfo>
+<refmiscinfo class='manual'>Tcl Library Procedures</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>Tcl_SetChannelError</refname>
+<refname>Tcl_SetChannelErrorInterp</refname>
+<refname>Tcl_GetChannelError</refname>
+<refname>Tcl_GetChannelErrorInterp</refname>
+<refpurpose>functions to create/intercept Tcl errors by channel drivers.</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<funcsynopsis>
+<funcsynopsisinfo>
+#include &lt;tcl.h&gt;
+
+</funcsynopsisinfo>
+<funcprototype>
+<funcdef>void <function>Tcl_SetChannelError</function></funcdef>
+<paramdef><parameter>chan</parameter></paramdef>
+<paramdef><parameter>msg</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef>void <function>Tcl_SetChannelErrorInterp</function></funcdef>
+<paramdef><parameter>interp</parameter></paramdef>
+<paramdef><parameter>msg</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef>void <function>Tcl_GetChannelError</function></funcdef>
+<paramdef><parameter>chan</parameter></paramdef>
+<paramdef><parameter>msgPtr</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef>void <function>Tcl_GetChannelErrorInterp</function></funcdef>
+<paramdef><parameter>interp</parameter></paramdef>
+<paramdef><parameter>msgPtr</parameter></paramdef>
+</funcprototype>
+</funcsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='arguments'><title>ARGUMENTS</title>
+<!-- .AS Tcl_Channel chan -->
+<informaltable>
+<tgroup cols='3'>
+<tbody>
+
+<row><entry>"Tcl_Channel"</entry><entry>"chan"</entry><entry>"in"</entry>
+<entry>
+<para>Refers to the Tcl channel whose bypass area is accessed.</para>
+</entry>
+</row>
+<row><entry>Tcl_Interp*</entry><entry>interp</entry><entry>in</entry>
+<entry>
+<para>Refers to the Tcl interpreter whose bypass area is accessed.</para>
+</entry>
+</row>
+<row><entry>Tcl_Obj*</entry><entry>msg</entry><entry>in</entry>
+<entry>
+<para>Error message put into a bypass area.  A list of return options and
+values, followed by a string message.  Both message and the
+option/value information are optional.</para>
+</entry>
+</row>
+<row><entry>Tcl_Obj**</entry><entry>msgPtr</entry><entry>out</entry>
+<entry>
+<para>Reference to a place where the message stored in the accessed bypass
+area can be stored in.</para>
+<!-- .BE -->
+</entry>
+</row>
+</tbody>
+</tgroup>
+</informaltable>
+
+</refsect1>
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para>The current definition of a Tcl channel driver does not permit the
+direct return of arbitrary error messages, except for the setting and
+retrieval of channel options. All other functions are restricted to
+POSIX error codes.</para>
+
+<para>The functions described here overcome this limitation. Channel drivers
+are allowed to use <function>Tcl_SetChannelError</function> and
+<function>Tcl_SetChannelErrorInterp</function> to place arbitrary error messages in
+<emphasis remap='B'>bypass areas</emphasis><emphasis remap='I'> defined for channels and interpreters. And the
+generic I/O layer uses </emphasis><function>Tcl_GetChannelError</function> and
+<function>Tcl_GetChannelErrorInterp</function> to look for messages in the bypass
+areas and arrange for their return as errors. The posix error codes
+set by a driver are used now if and only if no messages are present.</para>
+
+<para><function>Tcl_SetChannelError</function> stores error information in the bypass area
+of the specified channel. The number of references to the <emphasis remap='B'>msg</emphasis>
+object goes up by one. Previously stored information will be
+discarded, by releasing the reference held by the channel. The channel
+reference must not be NULL.</para>
+
+<para><function>Tcl_SetChannelErrorInterp</function> stores error information in the bypass
+area of the specified interpreter. The number of references to the
+<emphasis remap='B'>msg</emphasis> object goes up by one. Previously stored information will be
+discarded, by releasing the reference held by the interpreter. The
+interpreter reference must not be NULL.</para>
+
+<para><function>Tcl_GetChannelError</function> places either the error message held in the
+bypass area of the specified channel into <emphasis remap='I'>msgPtr</emphasis>, or NULL; and
+resets the bypass. I.e. after an invocation all following invocations
+will return NULL, until an intervening invocation of
+<function>Tcl_SetChannelError</function> with a non-NULL message. The <emphasis remap='I'>msgPtr</emphasis>
+must not be NULL. The reference count of the message is not touched.
+The reference previously held by the channel is now held by the caller
+of the function and it is its responsibility to release that reference
+when it is done with the object.</para>
+
+<para><function>Tcl_GetChannelErrorInterp</function> places either the error message held
+in the bypass area of the specified interpreter into <emphasis remap='I'>msgPtr</emphasis>, or
+NULL; and resets the bypass. I.e. after an invocation all following
+invocations will return NULL, until an intervening invocation of
+<function>Tcl_SetChannelErrorInterp</function> with a non-NULL message. The
+<emphasis remap='I'>msgPtr</emphasis> must not be NULL. The reference count of the message is
+not touched.  The reference previously held by the interpreter is now
+held by the caller of the function and it is its responsibility to
+release that reference when it is done with the object.</para>
+
+<para>Which functions of a channel driver are allowed to use which bypass
+function is listed below, as is which functions of the public channel
+API may leave a messages in the bypass areas.</para>
+
+<variablelist remap='IP'>
+  <varlistentry>
+  <term><emphasis remap='B'>Tcl_DriverCloseProc</emphasis></term>
+  <listitem>
+<para>May use <function>Tcl_SetChannelErrorInterp</function>, and only this function.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>Tcl_DriverInputProc</emphasis></term>
+  <listitem>
+<para>May use <function>Tcl_SetChannelError</function>, and only this function.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>Tcl_DriverOutputProc</emphasis></term>
+  <listitem>
+<para>May use <function>Tcl_SetChannelError</function>, and only this function.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>Tcl_DriverSeekProc</emphasis></term>
+  <listitem>
+<para>May use <function>Tcl_SetChannelError</function>, and only this function.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>Tcl_DriverWideSeekProc</emphasis></term>
+  <listitem>
+<para>May use <function>Tcl_SetChannelError</function>, and only this function.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>Tcl_DriverSetOptionProc</emphasis></term>
+  <listitem>
+<para>Has already the ability to pass arbitrary error messages. Must
+<emphasis remap='B'>not</emphasis> use any of the new functions.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>Tcl_DriverGetOptionProc</emphasis></term>
+  <listitem>
+<para>Has already the ability to pass arbitrary error messages. Must
+<emphasis remap='B'>not</emphasis> use any of the new functions.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>Tcl_DriverWatchProc</emphasis></term>
+  <listitem>
+<para>Must <emphasis remap='B'>not</emphasis> use any of the new functions. Is internally called and
+has no ability to return any type of error whatsoever.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>Tcl_DriverBlockModeProc</emphasis></term>
+  <listitem>
+<para>May use <function>Tcl_SetChannelError</function>, and only this function.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>Tcl_DriverGetHandleProc</emphasis></term>
+  <listitem>
+<para>Must <emphasis remap='B'>not</emphasis> use any of the new functions. It is only a low-level
+function, and not used by Tcl commands.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>Tcl_DriverHandlerProc</emphasis></term>
+  <listitem>
+<para>Must <emphasis remap='B'>not</emphasis> use any of the new functions. Is internally called and
+has no ability to return any type of error whatsoever.</para>
+  </listitem>
+  </varlistentry>
+</variablelist>
+
+<para>Given the information above the following public functions of the Tcl
+C API are affected by these changes. I.e. when these functions are
+called the channel may now contain a stored arbitrary error message
+requiring processing by the caller.</para>
+
+<itemizedlist remap='IP'>
+
+  <listitem><para><emphasis remap='B'>Tcl_StackChannel</emphasis></para></listitem>
+  <listitem><para><emphasis remap='B'>Tcl_Seek</emphasis></para></listitem>
+  <listitem><para><emphasis remap='B'>Tcl_Tell</emphasis></para></listitem>
+  <listitem><para><emphasis remap='B'>Tcl_ReadRaw</emphasis></para></listitem>
+  <listitem><para><emphasis remap='B'>Tcl_Read</emphasis></para></listitem>
+  <listitem><para><emphasis remap='B'>Tcl_ReadChars</emphasis></para></listitem>
+  <listitem><para><emphasis remap='B'>Tcl_Gets</emphasis></para></listitem>
+  <listitem><para><emphasis remap='B'>Tcl_GetsObj</emphasis></para></listitem>
+  <listitem><para><emphasis remap='B'>Tcl_Flush</emphasis></para></listitem>
+  <listitem><para><emphasis remap='B'>Tcl_WriteRaw</emphasis></para></listitem>
+  <listitem><para><emphasis remap='B'>Tcl_WriteObj</emphasis></para></listitem>
+  <listitem><para><emphasis remap='B'>Tcl_Write</emphasis></para></listitem>
+  <listitem><para><emphasis remap='B'>Tcl_WriteChars</emphasis></para></listitem>
+
+</itemizedlist>
+
+<para>All other API functions are unchanged. Especially the functions below
+leave all their error information in the interpreter result.</para>
+
+<itemizedlist remap='IP'>
+
+  <listitem><para><emphasis remap='B'>Tcl_Close</emphasis></para></listitem>
+  <listitem><para><emphasis remap='B'>Tcl_UnregisterChannel</emphasis></para></listitem>
+  <listitem><para><emphasis remap='B'>Tcl_UnstackChannel</emphasis></para></listitem>
+
+
+</itemizedlist>
+</refsect1>
+
+<refsect1 xml:id='see_also'><title>SEE ALSO</title>
+<para>Tcl_C<citerefentry><refentrytitle>lose</refentrytitle><manvolnum>3</manvolnum></citerefentry>, Tcl_OpenFileC<citerefentry><refentrytitle>hannel</refentrytitle><manvolnum>3</manvolnum></citerefentry>, Tcl_SetE<citerefentry><refentrytitle>rrno</refentrytitle><manvolnum>3</manvolnum></citerefentry></para>
+
+</refsect1>
+
+<refsect1 xml:id='keywords'><title>KEYWORDS</title>
+<para>channel driver, error messages, channel type</para>
+</refsect1>
+</refentry>
+

@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='rletogif1'>
+<!--  Copyright (c) 1990, University of Michigan -->
+<refmeta>
+<refentrytitle>RLETOGIF</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class='source'>July 3, 1990</refmiscinfo>
+<refmiscinfo class='manual'>1</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>rletogif</refname>
+<refpurpose>Convert RLE files to GIF format.</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<cmdsynopsis>
+  <command>rletogif</command>    
+    <arg choice='opt'><arg choice='plain'>-o </arg><arg choice='plain'><replaceable>outfile.gif</replaceable></arg></arg>
+    <arg choice='opt'><replaceable>infile.rle</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para>This program converts an
+<citerefentry><refentrytitle>RLE</refentrytitle><manvolnum>5</manvolnum></citerefentry>
+image file to
+<emphasis remap='I'>GIF</emphasis>
+format.  The input file must be a single channel
+(8 bit) image.  Three channel (24 bit) images can be converted to
+single channel images using the programs
+<citerefentry><refentrytitle>tobw</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>to8</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>mcut</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+or
+<citerefentry><refentrytitle>rlequant</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
+The input image will be flipped vertically, since the
+<emphasis remap='I'>GIF</emphasis>
+origin is in the upper left, and the
+<emphasis remap='I'>RLE</emphasis>
+origin is in the lower left.  Only a single image will be converted.</para>
+</refsect1>
+
+<refsect1 xml:id='options'><title>OPTIONS</title>
+<variablelist remap='TP'>
+  <varlistentry>
+  <term><option>-o</option><replaceable> outfile.gif</replaceable></term>
+  <listitem>
+<para>If specified, the output will be written to this file.  If
+<emphasis remap='I'>outfile.gif</emphasis>
+is "-", or if it is not specified, the output will be written to the
+standard output stream.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='I'>infile.rle</emphasis></term>
+  <listitem>
+<para>The input will be read from this file.  If
+<emphasis remap='I'>infile.rle</emphasis>
+is "-" or is not specified, the input will be read from the standard
+input stream.</para>
+  </listitem>
+  </varlistentry>
+</variablelist>
+</refsect1>
+
+<refsect1 xml:id='see_also'><title>SEE ALSO</title>
+<para><citerefentry><refentrytitle>to8</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>mcut</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>rlequant</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>giftorle</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>urt</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>RLE</refentrytitle><manvolnum>5</manvolnum></citerefentry>.</para>
+</refsect1>
+
+<refsect1 xml:id='author'><title>AUTHOR</title>
+<para>Bailey Brown, University of Michigan</para>
+</refsect1>
+</refentry>
+

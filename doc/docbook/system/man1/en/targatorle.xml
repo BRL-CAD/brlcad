@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='targatorle1'>
+<!--  Copyright (c) 1986, University of Utah
+ Template man page.  Taken from wtm's page for getcx3d -->
+<refmeta>
+<refentrytitle>TARGATORLE</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class='source'>July 12, 1991</refmiscinfo>
+<refmiscinfo class='manual'>1</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>targatorle</refname>
+<refpurpose>Convert Truevision TARGA images to RLE format.</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<cmdsynopsis>
+  <command>targatorle</command>    
+    <arg choice='opt'><arg choice='plain'>-h </arg><arg choice='plain'><replaceable>headerfile</replaceable></arg></arg>
+    <arg choice='opt'><arg choice='plain'>-n </arg><arg choice='plain'><replaceable>nchannels</replaceable></arg></arg>
+    <arg choice='opt'><arg choice='plain'>-o </arg><arg choice='plain'><replaceable>outfile.rle</replaceable></arg></arg>
+    <arg choice='opt'><replaceable>infile.tga</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para><emphasis remap='I'>Targatorle</emphasis>
+converts a file from Truevision's TARGA format into RLE format.
+If no input file is specified, the data is
+read from stdin.
+<emphasis remap='I'>Targatorle</emphasis>
+recognizes (but cannot necessarily process) all of the image subtypes
+defined by the 1989 TARGA 2.0 specification:</para>
+
+<informaltable pgwide='0' frame='none'>
+  <tgroup cols='3' align='center'>
+    <colspec colname='c1'/>
+    <colspec colname='c2'/>
+    <colspec colname='c3'/>
+    <tbody>
+      <row>
+        <entry align='left'></entry>
+        <entry align='left'>0</entry>
+        <entry align='left'>- Header Only, No Image Data</entry>
+      </row>
+      <row>
+        <entry align='left'></entry>
+        <entry align='left'>1</entry>
+        <entry align='left'>- Uncompressed, Color-mapped Image</entry>
+      </row>
+      <row>
+        <entry align='left'></entry>
+        <entry align='left'>2</entry>
+        <entry align='left'>- Uncompressed, True-color Image</entry>
+      </row>
+      <row>
+        <entry align='left'></entry>
+        <entry align='left'>3</entry>
+        <entry align='left'>- Uncompressed, B/W (gray scale) Image</entry>
+      </row>
+      <row>
+        <entry align='left'></entry>
+        <entry align='left'>9</entry>
+        <entry align='left'>- Run-length encoded, Color-mapped Image</entry>
+      </row>
+      <row>
+        <entry align='left'></entry>
+        <entry align='left'>10</entry>
+        <entry align='left'>- Run-length encoded, True-color Image</entry>
+      </row>
+      <row>
+        <entry align='left'></entry>
+        <entry align='left'>11</entry>
+        <entry align='left'>- Run-length encoded, B/W Image</entry>
+      </row>
+    </tbody>
+  </tgroup>
+</informaltable>
+
+
+
+<para><emphasis remap='I'>Targatorle</emphasis>
+should correctly process images in formats 0, 2, 3, 10, and 11.
+No support is currently available for color mapped images.</para>
+</refsect1>
+
+<refsect1 xml:id='options'><title>OPTIONS</title>
+<variablelist remap='TP'>
+  <varlistentry>
+  <term><option>-h</option></term>
+  <listitem>
+<para>Allow the program to write TARGA header information to
+<emphasis remap='I'>headerfile</emphasis></para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-n</option></term>
+  <listitem>
+<para>where
+<emphasis remap='I'>nchannels</emphasis>
+is 3 or 4.
+If input is a color image, copy only
+<emphasis remap='I'>nchannels</emphasis>
+of the TARGA file; this allows the alpha channel to be stripped.  By default,
+the alpha channel will be copied if present.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-o</option></term>
+  <listitem>
+<para>Use
+<emphasis remap='I'>outfile</emphasis>
+as output instead of
+<emphasis remap='I'>stdout.</emphasis></para>
+  </listitem>
+  </varlistentry>
+</variablelist>
+</refsect1>
+
+<refsect1 xml:id='limitations'><title>LIMITATIONS</title>
+<para>The TARGA image descriptor byte is ignored; therefore, the image origin
+is assumed to be that of RLE(5) (bottom left).
+None of the color-mapped TARGA formats (types 1 and 9) are
+supported.
+Finally, no attempt has been made to support extensions to the
+TARGA File Format introduced by Truevision in 1989 (new support
+for time stamps, comments, user-defined data fields, etc.).</para>
+</refsect1>
+
+<refsect1 xml:id='see_also'><title>SEE ALSO</title>
+<para><citerefentry><refentrytitle>urt</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>RLE</refentrytitle><manvolnum>5</manvolnum></citerefentry>.</para>
+</refsect1>
+
+<refsect1 xml:id='author'><title>AUTHOR</title>
+<para>Hann-Bin Chuang
+<!-- .br -->
+Andrew C. Hadenfeldt, Univ. of Nebraska-Lincoln (modifications)</para>
+</refsect1>
+</refentry>
+

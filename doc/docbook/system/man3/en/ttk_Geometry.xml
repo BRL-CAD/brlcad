@@ -1,0 +1,372 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man+tkman by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='ttk_geometry3'>
+
+<!-- '\" Copyright (c) 2004 Joe English -->
+
+<!-- '\" RCS: @(#) $Id$
+'\"  -->
+<refentryinfo><date>8.5</date></refentryinfo>
+<refmeta>
+<refentrytitle>Geometry</refentrytitle>
+<manvolnum>3</manvolnum>
+<refmiscinfo class='date'>8.5</refmiscinfo>
+<refmiscinfo class='source'>Tk</refmiscinfo>
+<refmiscinfo class='manual'>Tk Themed Widget</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>Ttk_MakeBox</refname>
+<refname>Ttk_PadBox</refname>
+<refname>Ttk_ExpandBox</refname>
+<refname>Ttk_PackBox</refname>
+<refname>Ttk_StickBox</refname>
+<refname>Ttk_PlaceBox</refname>
+<refname>Ttk_BoxContains</refname>
+<refname>Ttk_MakePadding</refname>
+<refname>Ttk_UniformPadding</refname>
+<refname>Ttk_AddPadding</refname>
+<refname>Ttk_RelievePadding</refname>
+<refname>Ttk_GetPaddingFromObj</refname>
+<refname>Ttk_GetBorderFromObj</refname>
+<refname>Ttk_GetStickyFromObj</refname>
+<refpurpose>Tk themed geometry utilities</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<funcsynopsis>
+<funcsynopsisinfo>
+#include &lt;tkTheme.h&gt;
+
+</funcsynopsisinfo>
+<funcprototype>
+<funcdef>Ttk_Box <function>Ttk_MakeBox</function></funcdef>
+    <paramdef>int <parameter>x</parameter></paramdef>
+    <paramdef>int <parameter>y</parameter></paramdef>
+    <paramdef>int <parameter>width</parameter></paramdef>
+    <paramdef>int <parameter>height</parameter></paramdef>
+</funcprototype>
+
+<funcprototype>
+<funcdef>Ttk_Box <function>Ttk_PadBox</function></funcdef>
+    <paramdef>Ttk_Box <parameter>parcel</parameter></paramdef>
+    <paramdef>Ttk_Padding <parameter>padding</parameter></paramdef>
+</funcprototype>
+
+<funcprototype>
+<funcdef>Ttk_Box <function>Ttk_ExpandBox</function></funcdef>
+    <paramdef>Ttk_Box <parameter>parcel</parameter></paramdef>
+    <paramdef>Ttk_Padding <parameter>padding</parameter></paramdef>
+</funcprototype>
+
+<funcprototype>
+<funcdef>Ttk_Box <function>Ttk_PackBox</function></funcdef>
+    <paramdef>Ttk_Box * <parameter>cavity</parameter></paramdef>
+    <paramdef>int <parameter>width</parameter></paramdef>
+    <paramdef>int <parameter>height</parameter></paramdef>
+    <paramdef>Ttk_Side <parameter>side</parameter></paramdef>
+</funcprototype>
+
+<funcprototype>
+<funcdef>Ttk_Box <function>Ttk_StickBox</function></funcdef>
+    <paramdef>Ttk_Box <parameter>parcel</parameter></paramdef>
+    <paramdef>int <parameter>width</parameter></paramdef>
+    <paramdef>int <parameter>height</parameter></paramdef>
+    <paramdef>unsigned <parameter>sticky</parameter></paramdef>
+</funcprototype>
+
+<funcprototype>
+<funcdef>Ttk_Box <function>Ttk_PlaceBox</function></funcdef>
+    <paramdef>Ttk_Box * <parameter>cavity</parameter></paramdef>
+    <paramdef>int <parameter>width</parameter></paramdef>
+    <paramdef>int <parameter>height</parameter></paramdef>
+    <paramdef>Ttk_Side <parameter>side</parameter></paramdef>
+    <paramdef>unsigned <parameter>sticky</parameter></paramdef>
+</funcprototype>
+
+<funcprototype>
+<funcdef>Ttk_Box <function>Ttk_AnchorBox</function></funcdef>
+    <paramdef>Ttk_Box <parameter>parcel</parameter></paramdef>
+    <paramdef>int <parameter>width</parameter></paramdef>
+    <paramdef>int <parameter>height</parameter></paramdef>
+    <paramdef>Tk_Anchor <parameter>anchor</parameter></paramdef>
+</funcprototype>
+
+<funcprototype>
+<funcdef>Ttk_Padding <function>Ttk_MakePadding</function></funcdef>
+    <paramdef>short <parameter>left</parameter></paramdef>
+    <paramdef>short <parameter>top</parameter></paramdef>
+    <paramdef>short <parameter>right</parameter></paramdef>
+    <paramdef>short <parameter>bottom</parameter></paramdef>
+</funcprototype>
+
+<funcprototype>
+<funcdef>Ttk_Padding <function>Ttk_UniformPadding</function></funcdef>
+    <paramdef>short <parameter>border</parameter></paramdef>
+</funcprototype>
+
+</funcsynopsis>
+<para>int</para>
+<funcsynopsis>
+<funcprototype>
+<funcdef><function>Ttk_GetPaddingFromObj</function></funcdef>
+    <paramdef>Tcl_Interp * <parameter>interp</parameter></paramdef>
+    <paramdef>Tk_Window <parameter>tkwin</parameter></paramdef>
+    <paramdef>Tcl_Obj * <parameter>objPtr</parameter></paramdef>
+    <paramdef>Ttk_Padding * <parameter>padding_rtn</parameter></paramdef>
+</funcprototype>
+
+<funcprototype>
+<funcdef>int <function>Ttk_GetBorderFromObj</function></funcdef>
+    <paramdef>Tcl_Interp * <parameter>interp</parameter></paramdef>
+    <paramdef>Tcl_Obj * <parameter>objPtr</parameter></paramdef>
+    <paramdef>Ttk_Padding * <parameter>padding_rtn</parameter></paramdef>
+</funcprototype>
+
+<funcprototype>
+<funcdef>int <function>Ttk_GetStickyFromObj</function></funcdef>
+    <paramdef>Tcl_Interp * <parameter>interp</parameter></paramdef>
+    <paramdef>Tcl_Obj * <parameter>objPtr</parameter></paramdef>
+    <paramdef>int * <parameter>sticky_rtn</parameter></paramdef>
+</funcprototype>
+</funcsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='arguments'><title>ARGUMENTS</title>
+<para>One of the symbolic constants <emphasis remap='B'>TK_ANCHOR_N</emphasis>, <emphasis remap='B'>TK_ANCHOR_NE</emphasis>,
+etc.  See <emphasis remap='I'>Tk_GetAnchorFromObj(3)</emphasis>.</para>
+<informaltable>
+<tgroup cols='3'>
+<tbody>
+
+<row><entry>"Ttk_Box *"</entry><entry>"cavity"</entry><entry>"in/out"</entry>
+<entry>
+<para>A rectangular region from which a parcel is allocated.</para>
+</entry>
+</row>
+<row><entry>short</entry><entry>border</entry><entry>in</entry>
+<entry>
+<para>Extra padding (in pixels) to add uniformly to each side of a region.</para>
+</entry>
+</row>
+<row><entry>short</entry><entry>bottom</entry><entry>in</entry>
+<entry>
+<para>Extra padding (in pixels) to add to the bottom of a region.</para>
+</entry>
+</row>
+<row><entry>Ttk_Box</entry><entry>box</entry><entry>in</entry>
+<entry>
+<para>Specifies a rectangular region.</para>
+</entry>
+</row>
+<row><entry>int</entry><entry>height</entry><entry>in</entry>
+<entry>
+<para>The height in pixels of a region.</para>
+</entry>
+</row>
+<row><entry>"Tcl_Interp *"</entry><entry>interp</entry><entry>in</entry>
+<entry>
+<para>Used to store error messages.</para>
+</entry>
+</row>
+<row><entry>int</entry><entry>left</entry><entry>in</entry>
+<entry>
+<para>Extra padding (in pixels) to add to the left side of a region.</para>
+</entry>
+</row>
+<row><entry>"Tcl_Obj *"</entry><entry>objPtr</entry><entry>in</entry>
+<entry>
+<para>String value contains a symbolic name 
+to be converted to an enumerated value or bitmask.
+Internal rep may be be modified to cache corresponding value.</para>
+</entry>
+</row>
+<row><entry>Ttk_Padding</entry><entry>padding</entry><entry>in</entry>
+<entry>
+<para>Extra padding to add on the inside of a region.</para>
+</entry>
+</row>
+<row><entry>Ttk_Box</entry><entry>parcel</entry><entry>in</entry>
+<entry>
+<para>A rectangular region, allocated from a cavity.</para>
+</entry>
+</row>
+<row><entry>int</entry><entry>relief</entry><entry>in</entry>
+<entry>
+<para>One of the standard Tk relief options 
+(TK_RELIEF_RAISED, TK_RELIEF_SUNKEN, etc.).  
+See <emphasis remap='B'>Tk_GetReliefFromObj</emphasis>.</para>
+</entry>
+</row>
+<row><entry>short</entry><entry>right</entry><entry>in</entry>
+<entry>
+<para>Extra padding (in pixles) to add to the right side of a region.</para>
+</entry>
+</row>
+<row><entry>Ttk_Side</entry><entry>side</entry><entry>in</entry>
+<entry>
+<para>One of <emphasis remap='B'>TTK_SIDE_LEFT</emphasis>, <emphasis remap='B'>TTK_SIDE_TOP</emphasis>, 
+<emphasis remap='B'>TTK_SIDE_RIGHT</emphasis>, or <emphasis remap='B'>TTK_SIDE_BOTTOM</emphasis>.</para>
+</entry>
+</row>
+<row><entry>unsigned</entry><entry>sticky</entry><entry>in</entry>
+<entry>
+<para>A bitmask containing one or more of the bits
+<emphasis remap='B'>TTK_STICK_W</emphasis> (west, or left), 
+<emphasis remap='B'>TTK_STICK_E</emphasis> (east, or right, 
+<emphasis remap='B'>TTK_STICK_N</emphasis> (north, or top), and
+<emphasis remap='B'>TTK_STICK_S</emphasis> (south, or bottom).
+<emphasis remap='B'>TTK_FILL_X</emphasis> is defined as a synonym for (TTK_STICK_W|TTK_STICK_E),
+<emphasis remap='B'>TTK_FILL_Y</emphasis> is a synonym for (TTK_STICK_N|TTK_STICK_S),
+and  <emphasis remap='B'>TTK_FILL_BOTH</emphasis> and <emphasis remap='B'>TTK_STICK_ALL</emphasis>
+are synonyms for (TTK_FILL_X|TTK_FILL_Y).
+See also: <emphasis remap='I'>grid(n)</emphasis>.</para>
+</entry>
+</row>
+<row><entry>Tk_Window</entry><entry>tkwin</entry><entry>in</entry>
+<entry>
+<para>Window whose screen geometry determines 
+the conversion between absolute units and pixels.</para>
+</entry>
+</row>
+<row><entry>short</entry><entry>top</entry><entry>in</entry>
+<entry>
+<para>Extra padding at the top of a region.</para>
+</entry>
+</row>
+<row><entry>int</entry><entry>width</entry><entry>in</entry>
+<entry>
+<para>The width in pixels of a region.</para>
+</entry>
+</row>
+<row><entry>int</entry><entry>x</entry><entry>in</entry>
+<entry>
+<para>X coordinate of upper-left corner of region.</para>
+</entry>
+</row>
+<row><entry>int</entry><entry>y</entry><entry>in</entry>
+<entry>
+<para>Y coordinate of upper-left corner of region.</para>
+<!-- .BE -->
+</entry>
+</row>
+</tbody>
+</tgroup>
+</informaltable>
+
+</refsect1>
+
+<refsect1 xml:id='boxes'><title>BOXES</title>
+<para>The <type>Ttk_Box</type> structure represents a rectangular region of a window:</para>
+<programlisting remap='CS'>
+typedef struct {
+    int <varname role='parameter'>x</varname>;
+    int <varname role='parameter'>y</varname>;
+    int <varname role='parameter'>width</varname>;
+    int <varname role='parameter'>height</varname>;
+} <type>Ttk_Box</type>;
+</programlisting> <!-- remap='CE' -->
+<para>All coordinates are relative to the window.</para>
+
+<para><function>Ttk_MakeBox</function> is a convenience routine that contsructs
+a <type>Ttk_Box</type> structure representing a region <varname role='parameter'>width</varname> pixels
+wide, <varname role='parameter'>height</varname> pixels tall, at the specified <emphasis remap='I'>x, y</emphasis> coordinates.</para>
+
+<para><function>Ttk_PadBox</function> returns a new box located inside the specified <varname role='parameter'>parcel</varname>,
+shrunken according to the left, top, right, and bottom margins
+specified by <varname role='parameter'>padding</varname>.</para>
+
+<para><function>Ttk_ExpandBox</function> is the inverse of <function>Ttk_PadBox</function>:
+it returns a new box surrounding the specified <varname role='parameter'>parcel</varname>,
+expanded  according to the left, top, right, and bottom margins
+specified by <varname role='parameter'>padding</varname>.</para>
+
+<para><function>Ttk_PackBox</function> allocates a parcel <varname role='parameter'>width</varname> by <varname role='parameter'>height</varname>
+pixels wide on the specified <varname role='parameter'>side</varname> of the <varname role='parameter'>cavity</varname>,
+and shrinks the <varname role='parameter'>cavity</varname> accordingly.</para>
+
+<para><function>Ttk_StickBox</function> places a box with the requested <varname role='parameter'>width</varname>
+and <varname role='parameter'>height</varname> inside the <varname role='parameter'>parcel</varname> according to the
+<varname role='parameter'>sticky</varname> bits.</para>
+
+<para><function>Ttk_PlaceBox</function> combines <function>Ttk_PackBox</function> and <function>Ttk_StickBox</function>:
+it allocates a parcel on the specified <varname role='parameter'>side</varname> of the <varname role='parameter'>cavity</varname>,
+places a box of the requested size inside the parcel according to <varname role='parameter'>sticky</varname>,
+and shrinks the <varname role='parameter'>cavity</varname>.</para>
+
+<para><function>Ttk_AnchorBox</function> places a box with the requested <varname role='parameter'>width</varname>
+and <varname role='parameter'>height</varname> inside the <varname role='parameter'>parcel</varname> according to the
+specified <varname role='parameter'>anchor</varname> option.</para>
+
+<para><emphasis remap='B'>Ttk_BoxContains</emphasis> tests if the specified <emphasis remap='I'>x, y</emphasis> coordinate
+lies within the rectangular region <emphasis remap='I'>box</emphasis>.</para>
+</refsect1>
+
+<refsect1 xml:id='paddding'><title>PADDDING</title>
+<para>The <type>Ttk_Padding</type> structure is used to represent
+borders, internal padding, and external margins:</para>
+<programlisting remap='CS'>
+typedef struct {
+    short <varname role='parameter'>left</varname>;
+    short <varname role='parameter'>top</varname>;
+    short <varname role='parameter'>right</varname>;
+    short <varname role='parameter'>bottom</varname>;
+} <type>Ttk_Padding</type>;
+</programlisting> <!-- remap='CE' -->
+
+<para><function>Ttk_MakePadding</function> is a convenience routine that contsructs
+a <type>Ttk_Padding</type> structure with the specified left, top, right, and bottom
+components.</para>
+
+<para><function>Ttk_UniformPadding</function> constructs a <type>Ttk_Padding</type> structure
+with all components equal to the specified <varname role='parameter'>border</varname>.</para>
+
+<para><emphasis remap='B'>Ttk_AddPadding</emphasis> adds two <type>Ttk_Padding</type>s together
+and returns a combined padding containing the sum of the
+individual padding components.</para>
+
+<para><emphasis remap='B'>Ttk_RelievePadding</emphasis> 
+adds an extra 2 pixels of padding to <varname role='parameter'>padding</varname>
+according to the specified <emphasis remap='I'>relief</emphasis>.
+If <emphasis remap='I'>relief</emphasis> is <emphasis remap='B'>TK_RELIEF_SUNKEN</emphasis>, 
+adds two pixels at the top and left
+so the inner region is shifted down and to the left.
+If it is <emphasis remap='B'>TK_RELIEF_RAISED</emphasis>, adds two pixels
+at the bottom and right so 
+the inner region is shifted up and to the right.
+Otherwise, adds 1 pixel on all sides.
+This is typically used in element geometry procedures to simulate a
+<quote>pressed-in</quote>
+look for pushbuttons.</para>
+</refsect1>
+
+<refsect1 xml:id='conversion_routines'><title>CONVERSION ROUTINES</title>
+<para><function>Ttk_GetPaddingFromObj</function> converts the string in <varname role='parameter'>objPtr</varname>
+to a <type>Ttk_Padding</type> structure.
+The string representation is a list of 
+up to four length specifications 
+<quote><emphasis remap='I'>left top right bottom</emphasis></quote>.
+If fewer than four elements are specified, 
+<varname role='parameter'>bottom</varname> defaults to <varname role='parameter'>top</varname>,
+<varname role='parameter'>right</varname> defaults to <varname role='parameter'>left</varname>, and 
+<varname role='parameter'>top</varname> defaults to <varname role='parameter'>left</varname>.
+See <emphasis remap='B'>Tk_GetPixelsFromObj(3)</emphasis> for the syntax of length specifications.</para>
+
+<para><function>Ttk_GetBorderFromObj</function> is the same as <function>Ttk_GetPaddingFromObj</function>
+except that the lengths are specified as integers 
+(i.e., resolution-dependant values like <emphasis remap='I'>3m</emphasis> are not allowed).</para>
+
+<para><function>Ttk_GetStickyFromObj</function> converts the string in <varname role='parameter'>objPtr</varname>
+to a <varname role='parameter'>sticky</varname> bitmask.  The string contains zero or more
+of the characters <emphasis remap='B'>n</emphasis>, <emphasis remap='B'>s</emphasis>, <emphasis remap='B'>e</emphasis>, or <emphasis remap='B'>w</emphasis>.</para>
+</refsect1>
+
+<refsect1 xml:id='see_also'><title>SEE ALSO</title>
+<para>Tk_GetReliefFromO<citerefentry><refentrytitle>bj</refentrytitle><manvolnum>3</manvolnum></citerefentry>, Tk_GetPixelsFromO<citerefentry><refentrytitle>bj</refentrytitle><manvolnum>3</manvolnum></citerefentry>, Tk_GetAnchorFromO<citerefentry><refentrytitle>bj</refentrytitle><manvolnum>3</manvolnum></citerefentry></para>
+</refsect1>
+
+<refsect1 xml:id='keywords'><title>KEYWORDS</title>
+<para>geometry, padding, margins, box, region, sticky, relief</para>
+</refsect1>
+</refentry>
+

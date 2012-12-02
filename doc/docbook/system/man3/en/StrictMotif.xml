@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man+tkman by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='strictmotif3'>
+
+<!-- '\" Copyright (c) 1995\-1996 Sun Microsystems, Inc. -->
+
+<!-- '\" See the file "license.terms" for information on usage and redistribution
+'\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
+'\" 
+'\" RCS: @(#) $Id$
+'\"  -->
+<refentryinfo><date>4.0</date></refentryinfo>
+<refmeta>
+<refentrytitle>Tk_StrictMotif</refentrytitle>
+<manvolnum>3</manvolnum>
+<refmiscinfo class='date'>4.0</refmiscinfo>
+<refmiscinfo class='source'>Tk</refmiscinfo>
+<refmiscinfo class='manual'>Tk Library Procedures</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>Tk_StrictMotif</refname>
+<refpurpose>Return value of tk_strictMotif variable</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<funcsynopsis>
+<funcsynopsisinfo>
+#include &lt;tk.h&gt;
+
+</funcsynopsisinfo>
+<funcprototype>
+<funcdef>int <function>Tk_StrictMotif</function></funcdef>
+<paramdef><parameter>tkwin</parameter></paramdef>
+</funcprototype>
+</funcsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='arguments'><title>ARGUMENTS</title>
+<!-- .AS Tk_Window tkwin -->
+<informaltable>
+<tgroup cols='3'>
+<tbody>
+
+<row><entry>"Tk_Window"</entry><entry>"tkwin"</entry><entry>"in"</entry>
+<entry>
+<para>Token for window.</para>
+<!-- .BE -->
+</entry>
+</row>
+</tbody>
+</tgroup>
+</informaltable>
+
+</refsect1>
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para>This procedure returns the current value of the <emphasis remap='B'>tk_strictMotif</emphasis>
+variable in the interpreter associated with <emphasis remap='I'>tkwin</emphasis>'s application.
+The value is returned as an integer that is either 0 or 1.
+1 means that strict Motif compliance has been requested, so anything
+that is not part of the Motif specification should be avoided.
+0 means that
+<quote>Motif-like</quote>
+is good enough, and extra features are welcome.</para>
+
+<para>This procedure uses a link to the Tcl variable to provide much
+faster access to the variable's value than could be had by calling
+<emphasis remap='B'>Tcl_GetVar</emphasis>.</para>
+
+</refsect1>
+
+<refsect1 xml:id='keywords'><title>KEYWORDS</title>
+<para>Motif compliance, tk_strictMotif variable</para>
+</refsect1>
+</refentry>
+

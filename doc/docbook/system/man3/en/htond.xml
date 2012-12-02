@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='htond3'>
+<refmeta>
+<refentrytitle>HTOND</refentrytitle>
+<manvolnum>3</manvolnum>
+<refmiscinfo class='source'>BRL-CAD</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>htond</refname>
+<refname>ntohd</refname>
+<refpurpose>convert double-precision floating point numbers between host and network format and byte order</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<funcsynopsis>
+<funcprototype>
+<funcdef><function>htond</function></funcdef>
+<paramdef><parameter>netptr</parameter></paramdef>
+<paramdef><parameter>hostptr</parameter></paramdef>
+<paramdef><parameter>count</parameter></paramdef>
+</funcprototype>
+<funcsynopsisinfo>
+unsigned char *netptr;
+unsigned char *hostptr;
+int count;
+
+</funcsynopsisinfo>
+<funcprototype>
+<funcdef><function>ntohd</function></funcdef>
+<paramdef><parameter>hostptr</parameter></paramdef>
+<paramdef><parameter>netptr</parameter></paramdef>
+<paramdef><parameter>count</parameter></paramdef>
+</funcprototype>
+<funcsynopsisinfo>
+unsigned char *hostptr;
+unsigned char *netptr;
+int count;
+</funcsynopsisinfo>
+</funcsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para>These routines are used for
+conversion between the local host
+64-bit ("double precision") representation, and
+64-bit IEEE double precision representation, in "network order",
+i.e., big-endian, the MSB in byte [0], on the left.</para>
+
+<para>As a quick review, the IEEE double precision format is as follows:
+sign bit, 11 bits of exponent (bias 1023), and 52 bits of mantissa,
+with a hidden leading one (0.1 binary).
+When the exponent is 0, IEEE defines a "denormalized number",
+which is not supported here.
+When the exponent is 2047 (all bits set), and:
+all mantissa bits are zero, value is infinity*sign,
+mantissa is non-zero, and:
+msb of mantissa=0:  signaling NAN
+msb of mantissa=1:  quiet NAN</para>
+
+<para>Note that neither the input or output buffers need be word aligned,
+for greatest flexibility in converting data, even though this
+may impose a speed penalty on some architectures.</para>
+
+<para>These subroutines operate on a sequential block of numbers,
+to save on subroutine linkage execution costs, and to allow
+some hope for vectorization.</para>
+
+<para>On brain-damaged machines like the SGI 3-D, where type "double"
+allocates only 4 bytes of space, these routines *still* return
+8 bytes in the IEEE buffer.</para>
+</refsect1>
+
+<refsect1 xml:id='see_also'><title>SEE ALSO</title>
+<para><citerefentry><refentrytitle>htons</refentrytitle><manvolnum>3N</manvolnum></citerefentry>, <citerefentry><refentrytitle>ntohs</refentrytitle><manvolnum>3N</manvolnum></citerefentry>, <citerefentry><refentrytitle>htonl</refentrytitle><manvolnum>3N</manvolnum></citerefentry>, <citerefentry><refentrytitle>ntohl</refentrytitle><manvolnum>3N</manvolnum></citerefentry></para>
+</refsect1>
+
+<refsect1 xml:id='bugs'><title>BUGS</title>
+<para>The VAX handles bytes backwards from most everyone else in
+the world.  This is not expected to be fixed in the near future.</para>
+
+</refsect1>
+
+<refsect1 xml:id='author'><title>AUTHOR</title>
+<para>BRL-CAD Team</para>
+
+</refsect1>
+
+<refsect1 xml:id='copyright'><title>COPYRIGHT</title>
+<para>This software is Copyright (c) 1988-2012 by the United States
+Government as represented by U.S. Army Research Laboratory.</para>
+
+</refsect1>
+
+<refsect1 xml:id='bug_reports'><title>BUG REPORTS</title>
+<para>Reports of bugs or problems should be submitted via electronic
+mail to &lt;devs@brlcad.org&gt;.</para>
+</refsect1>
+</refentry>
+

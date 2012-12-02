@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man+tkman by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='managegeom3'>
+
+<!-- '\" Copyright (c) 1990\-1994 The Regents of the University of California.
+'\" Copyright (c) 1994\-1996 Sun Microsystems, Inc. -->
+
+<!-- '\" See the file "license.terms" for information on usage and redistribution
+'\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
+'\" 
+'\" RCS: @(#) $Id$
+'\"  -->
+<refentryinfo><date>4.0</date></refentryinfo>
+<refmeta>
+<refentrytitle>Tk_ManageGeometry</refentrytitle>
+<manvolnum>3</manvolnum>
+<refmiscinfo class='date'>4.0</refmiscinfo>
+<refmiscinfo class='source'>Tk</refmiscinfo>
+<refmiscinfo class='manual'>Tk Library Procedures</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>Tk_ManageGeometry</refname>
+<refpurpose>arrange to handle geometry requests for a window</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<funcsynopsis>
+<funcsynopsisinfo>
+#include &lt;tk.h&gt;
+
+</funcsynopsisinfo>
+<funcprototype>
+<funcdef><function>Tk_ManageGeometry</function></funcdef>
+<paramdef><parameter>tkwin</parameter></paramdef>
+<paramdef><parameter>mgrPtr</parameter></paramdef>
+<paramdef><parameter>clientData</parameter></paramdef>
+</funcprototype>
+</funcsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='arguments'><title>ARGUMENTS</title>
+<!-- .AS Tk_GeometryProc clientData -->
+<informaltable>
+<tgroup cols='3'>
+<tbody>
+
+<row><entry>"Tk_Window"</entry><entry>"tkwin"</entry><entry>"in"</entry>
+<entry>
+<para>Token for window to be managed.</para>
+</entry>
+</row>
+<row><entry>"const Tk_GeomMgr"</entry><entry>*mgrPtr</entry><entry>in</entry>
+<entry>
+<para>Pointer to data structure containing information about the
+geometry manager, or NULL to indicate that <varname role='parameter'>tkwin</varname>'s geometry
+should not be managed anymore.
+The data structure pointed to by <emphasis remap='I'>mgrPtr</emphasis> must be static:
+Tk keeps a reference to it as long as the window is managed.</para>
+</entry>
+</row>
+<row><entry>ClientData</entry><entry>clientData</entry><entry>in</entry>
+<entry>
+<para>Arbitrary one-word value to pass to geometry manager callbacks.</para>
+<!-- .BE -->
+</entry>
+</row>
+</tbody>
+</tgroup>
+</informaltable>
+
+</refsect1>
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para><function>Tk_ManageGeometry</function> arranges for a particular geometry manager,
+described by the <emphasis remap='I'>mgrPtr</emphasis> argument, to control the geometry
+of a particular slave window, given by <varname role='parameter'>tkwin</varname>.
+If <varname role='parameter'>tkwin</varname> was previously managed by some other geometry manager,
+the previous manager loses control in favor of the new one.
+If <emphasis remap='I'>mgrPtr</emphasis> is NULL, geometry management is cancelled for
+<varname role='parameter'>tkwin</varname>.</para>
+
+<para>The structure pointed to by <emphasis remap='I'>mgrPtr</emphasis> contains information about
+the geometry manager:</para>
+<programlisting remap='CS'>
+typedef struct {
+    const char *<emphasis remap='I'>name</emphasis>;
+    Tk_GeomRequestProc *<emphasis remap='I'>requestProc</emphasis>;
+    Tk_GeomLostSlaveProc *<emphasis remap='I'>lostSlaveProc</emphasis>;
+} Tk_GeomMgr;
+</programlisting> <!-- remap='CE' -->
+<para>The <emphasis remap='I'>name</emphasis> field is the textual name for the geometry manager,
+such as <emphasis remap='B'>pack</emphasis> or <emphasis remap='B'>place</emphasis>;  this value will be returned
+by the file <command>winfo manager</command>.</para>
+
+<para><emphasis remap='I'>requestProc</emphasis> is a procedure in the geometry manager that
+will be invoked whenever <emphasis remap='B'>Tk_GeometryRequest</emphasis> is called by the
+slave to change its desired geometry.
+<emphasis remap='I'>requestProc</emphasis> should have arguments and results that match the
+type <function>Tk_GeomRequestProc</function>:</para>
+<programlisting remap='CS'>
+<funcsynopsis>
+<funcprototype>
+<funcdef>typedef void <function>Tk_GeomRequestProc</function></funcdef>
+    <paramdef>ClientData <parameter>clientData</parameter></paramdef>
+    <paramdef>Tk_Window <parameter>tkwin</parameter></paramdef>
+</funcprototype>
+</funcsynopsis>
+</programlisting> <!-- remap='CE' -->
+<para>The parameters to <emphasis remap='I'>requestProc</emphasis> will be identical to the
+corresponding parameters passed to <function>Tk_ManageGeometry</function>.
+<varname role='parameter'>clientData</varname> usually points to a data
+structure containing application-specific information about
+how to manage <varname role='parameter'>tkwin</varname>'s geometry.</para>
+
+<para>The <emphasis remap='I'>lostSlaveProc</emphasis> field of <emphasis remap='I'>mgrPtr</emphasis> points to another
+procedure in the geometry manager.
+Tk will invoke <emphasis remap='I'>lostSlaveProc</emphasis> if some other manager
+calls <function>Tk_ManageGeometry</function> to claim
+<varname role='parameter'>tkwin</varname> away from the current geometry manager.
+<emphasis remap='I'>lostSlaveProc</emphasis> is not invoked if <function>Tk_ManageGeometry</function> is
+called with a NULL value for <emphasis remap='I'>mgrPtr</emphasis> (presumably the current
+geometry manager has made this call, so it already knows that the
+window is no longer managed), nor is it called if <emphasis remap='I'>mgrPtr</emphasis>
+is the same as the window's current geometry manager.
+<emphasis remap='I'>lostSlaveProc</emphasis> should have
+arguments and results that match the following prototype:</para>
+<programlisting remap='CS'>
+<funcsynopsis>
+<funcprototype>
+<funcdef>typedef void <function>Tk_GeomLostSlaveProc</function></funcdef>
+    <paramdef>ClientData <parameter>clientData</parameter></paramdef>
+    <paramdef>Tk_Window <parameter>tkwin</parameter></paramdef>
+</funcprototype>
+</funcsynopsis>
+</programlisting> <!-- remap='CE' -->
+<para>The parameters to <emphasis remap='I'>lostSlaveProc</emphasis> will be identical to the
+corresponding parameters passed to <function>Tk_ManageGeometry</function>.</para>
+
+</refsect1>
+
+<refsect1 xml:id='keywords'><title>KEYWORDS</title>
+<para>callback, geometry, managed, request, unmanaged</para>
+</refsect1>
+</refentry>
+

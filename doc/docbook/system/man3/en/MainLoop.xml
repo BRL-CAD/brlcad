@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man+tkman by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='mainloop3'>
+
+<!-- '\" Copyright (c) 1990\-1992 The Regents of the University of California.
+'\" Copyright (c) 1994\-1996 Sun Microsystems, Inc. -->
+
+<!-- '\" See the file "license.terms" for information on usage and redistribution
+'\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
+'\" 
+'\" RCS: @(#) $Id$
+'\"  -->
+<refmeta>
+<refentrytitle>Tk_MainLoop</refentrytitle>
+<manvolnum>3</manvolnum>
+<refmiscinfo class='manual'>Tk</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>Tk_MainLoop</refname>
+<refpurpose>loop for events until all windows are deleted</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<funcsynopsis>
+<funcsynopsisinfo>
+#include &lt;tk.h&gt;
+
+</funcsynopsisinfo>
+<funcprototype>
+<funcdef><function>Tk_MainLoop</function></funcdef>
+<void/></funcprototype>
+
+</funcsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para><function>Tk_MainLoop</function> is a procedure that loops repeatedly calling
+<emphasis remap='B'>Tcl_DoOneEvent</emphasis>.  It returns only when there are no applications
+left in this process (i.e. no main windows exist anymore).  Most
+windowing applications will call <function>Tk_MainLoop</function> after
+initialization; the main execution of the application will consist
+entirely of callbacks invoked via <emphasis remap='B'>Tcl_DoOneEvent</emphasis>.</para>
+
+</refsect1>
+
+<refsect1 xml:id='keywords'><title>KEYWORDS</title>
+<para>application, event, main loop</para>
+</refsect1>
+</refentry>
+

@@ -1,0 +1,214 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='libplot33'>
+<refmeta>
+<refentrytitle>LIBPLOT3</refentrytitle>
+<manvolnum>3</manvolnum>
+<refmiscinfo class='source'>BRL-CAD</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>libplot3</refname>
+<refpurpose>graphics interface subroutines</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<funcsynopsis>
+
+<funcprototype>
+<funcdef><function>pl_space</function></funcdef>
+    <paramdef>FILE *fp <parameter></parameter></paramdef>
+    <paramdef>int x0 , y0 , x1 , <parameter>y1</parameter></paramdef>
+    <paramdef>pl_3space ( fp , x0 , y0 , z0 , x1 , y1 , z1 ) <parameter>FILE</parameter>*fp</paramdef>
+    <paramdef>int x0 , y0 , z0 , x1 , y1 , <parameter>z1</parameter></paramdef>
+    <paramdef>pl_erase ( fp ) <parameter>FILE</parameter>*fp</paramdef>
+</funcprototype>
+
+<funcprototype>
+<funcdef><function>pl_color</function></funcdef>
+    <paramdef>FILE *fp <parameter></parameter></paramdef>
+    <paramdef>int r , g , <parameter>b</parameter></paramdef>
+    <paramdef>pl_linmod ( fp , s ) <parameter>FILE</parameter>*fp</paramdef>
+    <paramdef>char *s <parameter></parameter></paramdef>
+</funcprototype>
+
+<funcprototype>
+<funcdef><function>pl_label</function></funcdef>
+    <paramdef>FILE *fp <parameter></parameter></paramdef>
+    <paramdef>char *s <parameter></parameter></paramdef>
+</funcprototype>
+
+<funcprototype>
+<funcdef><function>pl_line</function></funcdef>
+    <paramdef>FILE *fp <parameter></parameter></paramdef>
+    <paramdef>int x1 , y1 , x2 , <parameter>y2</parameter></paramdef>
+    <paramdef>pl_3line ( fp , x1 , y1 , z1 , x2 , y2 , z2 ) <parameter>FILE</parameter>*fp</paramdef>
+    <paramdef>int x1 , y1 , z1 , x2 , y2 , <parameter>z2</parameter></paramdef>
+    <paramdef>pl_move ( fp , x , y ) <parameter>FILE</parameter>*fp</paramdef>
+</funcprototype>
+<funcsynopsisinfo>
+int x, y;
+
+</funcsynopsisinfo>
+<funcprototype>
+<funcdef><function>pl_3move</function></funcdef>
+    <paramdef>FILE *fp <parameter></parameter></paramdef>
+    <paramdef>int x , y , <parameter>z</parameter></paramdef>
+    <paramdef>pl_cont ( fp , x , y ) <parameter>FILE</parameter>*fp</paramdef>
+    <paramdef>int x , <parameter>y</parameter></paramdef>
+</funcprototype>
+
+<funcprototype>
+<funcdef><function>pl_3cont</function></funcdef>
+    <paramdef>FILE *fp <parameter></parameter></paramdef>
+    <paramdef>int x , y , <parameter>z</parameter></paramdef>
+    <paramdef>pl_point ( fp , x , y ) <parameter>FILE</parameter>*fp</paramdef>
+    <paramdef>int x , <parameter>y</parameter></paramdef>
+</funcprototype>
+
+<funcprototype>
+<funcdef><function>pl_3point</function></funcdef>
+    <paramdef>FILE *fp <parameter></parameter></paramdef>
+    <paramdef>int x , y , <parameter>z</parameter></paramdef>
+    <paramdef>pl_box ( fp , x1 , y1 , x2 , y2 ) <parameter>FILE</parameter>*fp</paramdef>
+    <paramdef>int x1 , y1 , x2 , <parameter>y2</parameter></paramdef>
+</funcprototype>
+
+</funcsynopsis>
+<para><emphasis remap='B'>pl_3box( fp, x1, y1, z1, x2, y2, z2 )</emphasis></para>
+<funcsynopsis>
+<funcsynopsisinfo>
+FILE *fp;
+int x1, y1, z1, x2, y2, z2;
+
+</funcsynopsisinfo>
+<funcprototype>
+<funcdef><function>pl_circle</function></funcdef>
+    <paramdef>FILE *fp <parameter></parameter></paramdef>
+    <paramdef>int x , y , <parameter>r</parameter></paramdef>
+    <paramdef>pl_arc ( fp , x , y , x0 , y0 , x1 , y1 ) <parameter>FILE</parameter>*fp</paramdef>
+    <paramdef>int x , y , x0 , y0 , x1 , <parameter>y1</parameter></paramdef>
+</funcprototype>
+
+</funcsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para>These subroutines
+generate
+graphic output commands for processing
+with the
+<emphasis remap='B'>plot(1)</emphasis>
+plotting filters.
+They are slightly more general than those in
+<emphasis remap='B'>libplot</emphasis>
+as these take a file pointer.   They also include
+the BRL 3-D extensions to the plot intermediate code.</para>
+
+<para><emphasis remap='I'>Pl_space</emphasis>
+or
+<emphasis remap='I'>pl_3space</emphasis>
+must be used before any of the graphic primitives to declare the
+amount of space necessary.
+See
+<emphasis remap='I'>plot3(5)</emphasis>.</para>
+
+<para><emphasis remap='I'>Pl_box</emphasis>
+or
+<emphasis remap='I'>pl_3box</emphasis>
+draws a box between the two given opposite points.
+The ''pen'' will be left at the second point.</para>
+
+<para><emphasis remap='I'>Pl_circle</emphasis>
+draws a circle of radius
+<emphasis remap='I'>r</emphasis>
+with center at the point
+(<emphasis remap='I'>x</emphasis>,
+<varname role='parameter'>y</varname>).
+Note that
+<emphasis remap='I'>circle</emphasis>
+and
+<emphasis remap='I'>arc</emphasis>
+cannot be transformed in three space if one is using a
+filter to do that.</para>
+
+<para><emphasis remap='I'>Pl_arc</emphasis>
+draws an arc of a circle with center at the point
+(<emphasis remap='I'>x</emphasis>,
+<varname role='parameter'>y</varname>)
+between the points
+(<emphasis remap='I'>x0</emphasis>,
+<emphasis remap='I'>y0</emphasis>)
+and
+(<emphasis remap='I'>x1</emphasis>,
+<varname role='parameter'>y1</varname>).</para>
+
+<para>String arguments to
+<emphasis remap='I'>pl_label</emphasis>
+and
+<emphasis remap='I'>pl_linmod</emphasis>
+are terminated by nulls and do not contain new-lines.</para>
+
+<para>There are also 2-D and 3_D double-precision versions, with arguments
+identical to their counterparts above.  The naming conventions are to
+change the prefix to "pd"; examples are thus
+<emphasis remap='I'>pd_point</emphasis>
+and
+<emphasis remap='I'>pd_3point.</emphasis>
+Vector versions for 3_D (also double-precision) are prefixed "pdv", as in
+<emphasis remap='I'>pdv_3point.</emphasis></para>
+
+<para>See
+<emphasis remap='I'>plot3(5)</emphasis>
+and
+<emphasis remap='I'>plot(5)</emphasis>
+for a description
+of the effect of the remaining functions.</para>
+
+</refsect1>
+
+<refsect1 xml:id='files'><title>FILES</title>
+<para>/usr/brlcad/lib/libplot3<literal>.</literal>a	produces output for
+<citerefentry><refentrytitle>plot</refentrytitle><manvolnum>1G</manvolnum></citerefentry>
+filters</para>
+<!-- .br -->
+</refsect1>
+
+<refsect1 xml:id='warnings'><title>WARNINGS</title>
+<para>In order to compile a program containing these functions
+in
+<emphasis remap='I'>file.c</emphasis>
+it is necessary to use
+``cc
+<emphasis remap='I'>file.c</emphasis>
+-lplot3''.</para>
+
+<para><emphasis remap='I'>Color</emphasis>
+specification and
+three-dimensional primitives
+are BRL extensions to the "unix plot" language
+that are not generally found on other systems.</para>
+</refsect1>
+
+<refsect1 xml:id='see_also'><title>SEE ALSO</title>
+<para><citerefentry><refentrytitle>plot</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>pl-fb</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>plot3</refentrytitle><manvolnum>5</manvolnum></citerefentry>, <citerefentry><refentrytitle>plot</refentrytitle><manvolnum>5</manvolnum></citerefentry></para>
+
+</refsect1>
+
+<refsect1 xml:id='author'><title>AUTHOR</title>
+<para>BRL-CAD Team</para>
+
+</refsect1>
+
+<refsect1 xml:id='copyright'><title>COPYRIGHT</title>
+<para>This software is Copyright (c) 1989-2012 by the United States
+Government as represented by U.S. Army Research Laboratory.</para>
+</refsect1>
+
+<refsect1 xml:id='bug_reports'><title>BUG REPORTS</title>
+<para>Reports of bugs or problems should be submitted via electronic
+mail to &lt;devs@brlcad.org&gt;.</para>
+</refsect1>
+</refentry>
+

@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man+tkman by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='getcwd3'>
+
+<!-- '\" Copyright (c) 1998\-1999 Scriptics Corporation -->
+
+<!-- '\" See the file "license.terms" for information on usage and redistribution
+'\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
+'\" 
+'\" RCS: @(#) $Id$
+'\"  -->
+<refentryinfo><date>8.1</date></refentryinfo>
+<refmeta>
+<refentrytitle>Tcl_GetCwd</refentrytitle>
+<manvolnum>3</manvolnum>
+<refmiscinfo class='date'>8.1</refmiscinfo>
+<refmiscinfo class='source'>Tcl</refmiscinfo>
+<refmiscinfo class='manual'>Tcl Library Procedures</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>Tcl_GetCwd</refname>
+<refname>Tcl_Chdir</refname>
+<refpurpose>manipulate the current working directory</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<funcsynopsis>
+<funcsynopsisinfo>
+#include &lt;tcl.h&gt;
+
+</funcsynopsisinfo>
+<funcprototype>
+<funcdef>char *<function>Tcl_GetCwd</function></funcdef>
+<paramdef><parameter>interp</parameter></paramdef>
+<paramdef><parameter>bufferPtr</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef>int <function>Tcl_Chdir</function></funcdef>
+<paramdef><parameter>path</parameter></paramdef>
+</funcprototype>
+</funcsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='arguments'><title>ARGUMENTS</title>
+<!-- .AS Tcl_DString *bufferPtr in/out -->
+<informaltable>
+<tgroup cols='3'>
+<tbody>
+
+<row><entry>"Tcl_Interp"</entry><entry>"*interp"</entry><entry>"in"</entry>
+<entry>
+<para>Interpreter in which to report an error, if any.</para>
+</entry>
+</row>
+<row><entry>Tcl_DString</entry><entry>*bufferPtr</entry><entry>in/out</entry>
+<entry>
+<para>This dynamic string is used to store the current working directory.
+At the time of the call it should be uninitialized or free.  The
+caller must eventually call <emphasis remap='B'>Tcl_DStringFree</emphasis> to free up
+anything stored here.</para>
+</entry>
+</row>
+<row><entry>char</entry><entry>*path</entry><entry>in</entry>
+<entry>
+<para>File path in UTF-8 format.</para>
+<!-- .BE -->
+</entry>
+</row>
+</tbody>
+</tgroup>
+</informaltable>
+
+</refsect1>
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para>These procedures may be used to manipulate the current working
+directory for the application.  They provide C-level access to
+the same functionality as the Tcl <emphasis remap='B'>pwd</emphasis> command.</para>
+
+<para><function>Tcl_GetCwd</function> returns a pointer to a string specifying the current
+directory, or NULL if the current directory could not be determined.
+If NULL is returned, an error message is left in the <emphasis remap='I'>interp</emphasis>'s result.
+Storage for the result string is allocated in bufferPtr; the caller
+must call <emphasis remap='B'>Tcl_DStringFree()</emphasis> when the result is no longer needed.
+The format of the path is UTF-8.</para>
+
+<para><function>Tcl_Chdir</function> changes the applications current working directory to
+the value specified in <emphasis remap='I'>path</emphasis>.  The format of the passed in string
+must be UTF-8.  The function returns -1 on error or 0 on success.</para>
+
+</refsect1>
+
+<refsect1 xml:id='keywords'><title>KEYWORDS</title>
+<para>pwd</para>
+</refsect1>
+</refentry>
+

@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='repos1'>
+<!--  Copyright (c) 1986, University of Utah
+ Template man page.  Taken from wtm's page for getcx3d -->
+<refmeta>
+<refentrytitle>REPOS</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class='source'>Month DD, YYYY</refmiscinfo>
+<refmiscinfo class='manual'>1</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>repos</refname>
+<refpurpose>reposition an RLE image</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<cmdsynopsis>
+  <command>repos</command>    
+    <arg choice='opt'><arg choice='plain'>-p </arg><arg choice='plain'><replaceable>xpos</replaceable></arg><arg choice='plain'><replaceable>ypos</replaceable></arg></arg>
+    <arg choice='opt'><arg choice='plain'>-P </arg><arg choice='plain'><replaceable>xinc</replaceable></arg><arg choice='plain'><replaceable>yinc</replaceable></arg></arg>
+    <arg choice='opt'><arg choice='plain'>-o </arg><arg choice='plain'><replaceable>outfile</replaceable></arg></arg>
+    <arg choice='opt'><replaceable>infile</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para><command>repos</command>
+repositions an RLE image.  Repos just changes the coordinates stored in
+the RLE header (see
+<emphasis remap='I'>RLE(5)),</emphasis>
+no modification is made to the image itself.</para>
+</refsect1>
+
+<refsect1 xml:id='options'><title>OPTIONS</title>
+<para>If neither of the following flags are specified,
+<option>-p</option>
+0 0 is assumed.</para>
+<variablelist remap='TP'>
+  <varlistentry>
+  <term><option>-p</option><replaceable> xpos ypos</replaceable></term>
+  <listitem>
+<para>Reposition the image to the absolute coordinates
+<emphasis remap='I'>xpos ypos.</emphasis></para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-P</option><replaceable> xinc yinc</replaceable></term>
+  <listitem>
+<para>Move the image by
+<emphasis remap='I'>xinc yinc</emphasis>
+pixels from where it currently is (relative movement).</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='I'>infile</emphasis></term>
+  <listitem>
+<para>The input will be read from this file, otherwise, input will
+be taken from stdin.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-o</option><replaceable> outfile</replaceable></term>
+  <listitem>
+<para>If specified, output will be written to this file, otherwise it will
+go to stdout.</para>
+  </listitem>
+  </varlistentry>
+</variablelist>
+</refsect1>
+
+<refsect1 xml:id='diagnostics'><title>DIAGNOSTICS</title>
+<para><emphasis remap='I'>Repos</emphasis>
+does not allow the image origin to have negative coordinates.</para>
+</refsect1>
+
+<refsect1 xml:id='see_also'><title>SEE ALSO</title>
+<para><citerefentry><refentrytitle>rlesetbg</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>urt</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>RLE</refentrytitle><manvolnum>5</manvolnum></citerefentry>.</para>
+</refsect1>
+
+<refsect1 xml:id='authors'><title>AUTHORS</title>
+<para>Rod Bogart, John W. Peterson</para>
+</refsect1>
+</refentry>
+

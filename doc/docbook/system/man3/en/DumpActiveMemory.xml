@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man+tkman by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='dumpactivememory3'>
+
+<!-- '\" Copyright (c) 1992\-1999 Karl Lehenbauer and Mark Diekhans.
+'\" Copyright (c) 2000 by Scriptics Corporation.
+'\" All rights reserved.
+'\" 
+'\" RCS: @(#) $Id$
+'\"  -->
+<refentryinfo><date>8.1</date></refentryinfo>
+<refmeta>
+<refentrytitle>Tcl_DumpActiveMemory</refentrytitle>
+<manvolnum>3</manvolnum>
+<refmiscinfo class='date'>8.1</refmiscinfo>
+<refmiscinfo class='source'>Tcl</refmiscinfo>
+<refmiscinfo class='manual'>Tcl Library Procedures</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>Tcl_DumpActiveMemory</refname>
+<refname>Tcl_InitMemory</refname>
+<refname>Tcl_ValidateAllMemory</refname>
+<refpurpose>Validated memory allocation interface</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<funcsynopsis>
+<funcsynopsisinfo>
+#include &lt;tcl.h&gt;
+
+</funcsynopsisinfo>
+<funcprototype>
+<funcdef>int <function>Tcl_DumpActiveMemory</function></funcdef>
+<paramdef><parameter>fileName</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef>void <function>Tcl_InitMemory</function></funcdef>
+<paramdef><parameter>interp</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef>void <function>Tcl_ValidateAllMemory</function></funcdef>
+<paramdef><parameter>fileName</parameter></paramdef>
+<paramdef><parameter>line</parameter></paramdef>
+</funcprototype>
+
+</funcsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='arguments'><title>ARGUMENTS</title>
+<!-- .AS Tcl_Interp *fileName -->
+<informaltable>
+<tgroup cols='3'>
+<tbody>
+
+<row><entry>"Tcl_Interp"</entry><entry>"*interp"</entry><entry>"in"</entry>
+<entry>
+<para>Tcl interpreter in which to add commands.</para>
+</entry>
+</row>
+<row><entry>"const char"</entry><entry>*fileName</entry><entry>in</entry>
+<entry>
+<para>For <function>Tcl_DumpActiveMemory</function>, name of the file to which memory
+information will be written.  For <function>Tcl_ValidateAllMemory</function>, name of
+the file from which the call is being made (normally <emphasis remap='B'>__FILE__</emphasis>).</para>
+</entry>
+</row>
+<row><entry>int</entry><entry>line</entry><entry>in</entry>
+<entry>
+<para>Line number at which the call to <function>Tcl_ValidateAllMemory</function> is made
+(normally <emphasis remap='B'>__LINE__</emphasis>).</para>
+<!-- .BE -->
+</entry>
+</row>
+</tbody>
+</tgroup>
+</informaltable>
+
+</refsect1>
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para>These functions provide access to Tcl memory debugging information.
+They are only functional when Tcl has been compiled with
+<emphasis remap='B'>TCL_MEM_DEBUG</emphasis> defined at compile-time.  When <emphasis remap='B'>TCL_MEM_DEBUG</emphasis>
+is not defined, these functions are all no-ops.</para>
+
+<para><function>Tcl_DumpActiveMemory</function> will output a list of all currently
+allocated memory to the specified file.  The information output for
+each allocated block of memory is:  starting and ending addresses
+(excluding guard zone), size, source file where <emphasis remap='B'>ckalloc</emphasis> was
+called to allocate the block and line number in that file.  It is
+especially useful to call <function>Tcl_DumpActiveMemory</function> after the Tcl
+interpreter has been deleted.</para>
+
+<para><function>Tcl_InitMemory</function> adds the Tcl <emphasis remap='B'>memory</emphasis> command to the
+interpreter given by <emphasis remap='I'>interp</emphasis>.  <function>Tcl_InitMemory</function> is called
+by <emphasis remap='B'>Tcl_Main</emphasis>.</para>
+
+<para><function>Tcl_ValidateAllMemory</function> forces a validation of the guard zones of
+all currently allocated blocks of memory.  Normally validation of a
+block occurs when its freed, unless full validation is enabled, in
+which case validation of all blocks occurs when <emphasis remap='B'>ckalloc</emphasis> and
+<emphasis remap='B'>ckfree</emphasis> are called.  This function forces the validation to occur
+at any point.</para>
+
+</refsect1>
+
+<refsect1 xml:id='see_also'><title>SEE ALSO</title>
+<para>TCL_MEM_DEBUG, memory</para>
+
+</refsect1>
+
+<refsect1 xml:id='keywords'><title>KEYWORDS</title>
+<para>memory, debug</para>
+</refsect1>
+</refentry>
+

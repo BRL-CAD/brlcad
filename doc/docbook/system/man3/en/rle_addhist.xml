@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='rle_addhist3'>
+<!--  Copyright (c) 1988, Curtin University of Technology -->
+<refentryinfo><date>9/9/88</date></refentryinfo>
+<refmeta>
+<refentrytitle>RLE_ADDHIST</refentrytitle>
+<manvolnum>3</manvolnum>
+<refmiscinfo class='date'>9/9/88</refmiscinfo>
+<refmiscinfo class='source'>3</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>rle_addhist</refname>
+<refpurpose>add a history comment to an RLE file.</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<funcsynopsis>
+<funcsynopsisinfo>
+#include &lt;rle.h&gt;
+
+</funcsynopsisinfo>
+<funcprototype>
+<funcdef>void <function>rle_addhist</function></funcdef>
+<paramdef><parameter>argv</parameter></paramdef>
+<paramdef><parameter>in_hdr</parameter></paramdef>
+<paramdef><parameter>out_hdr</parameter></paramdef>
+</funcprototype>
+<funcsynopsisinfo>
+
+char **argv;
+
+rle_hdr *in_hdr, *out_hdr;
+
+</funcsynopsisinfo>
+</funcsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para><function>rle_addhist</function>
+is used to add history comments to the
+<citerefentry><refentrytitle>RLE</refentrytitle><manvolnum>5</manvolnum></citerefentry>
+file in the form:
+<!-- .br -->
+	HISTORY=cmd arg1 arg2 on Tue Sep 13 01:06:49 WST 1988
+<!-- .br -->
+where cmd, arg1, etc. are the command line arguments which have been
+used to generate or filter this <emphasis remap='I'>RLE</emphasis> file. The HISTORY comment is
+always appended to so that an accumulated history is kept along with a
+timestamp.  Programs which generate <emphasis remap='I'>RLE</emphasis> files should call
+<function>rle_addhist</function>
+as follows:
+<!-- .br -->
+	rle_addhist(argv,(rle_hdr *)0,&amp;out_hdr);
+<!-- .br -->
+Programs which filter <emphasis remap='I'>RLE</emphasis> files should call
+<function>rle_addhist</function>
+as:
+<!-- .br -->
+	rle_addhist(argv,&amp;in_hdr,&amp;out_hdr);</para>
+</refsect1>
+
+<refsect1 xml:id='see_also'><title>SEE ALSO</title>
+<!-- .na -->
+<para><citerefentry><refentrytitle>rle_hdr</refentrytitle><manvolnum>3</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>rle_putcom</refentrytitle><manvolnum>3</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>rle_getcom</refentrytitle><manvolnum>3</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>librle</refentrytitle><manvolnum>3</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>RLE</refentrytitle><manvolnum>5</manvolnum></citerefentry>.</para>
+<!-- .ad b -->
+</refsect1>
+
+<refsect1 xml:id='author'><title>AUTHOR</title>
+<para>Andrew Marriott,
+<!-- .br -->
+Curtin University of Technology (Australia)</para>
+</refsect1>
+</refentry>
+

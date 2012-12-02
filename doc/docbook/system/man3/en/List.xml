@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man+tkman by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='list3'>
+
+<!-- '\" Copyright (c) 1993\-1998  Lucent Technologies, Inc. -->
+
+<!-- '\" See the file "license.terms" for information on usage and redistribution
+'\" of this file, and for a DISCLAIMER OF ALL WARRANTIES. -->
+
+<!-- '\" RCS: $Id$ -->
+
+<refentryinfo><date>3.0</date></refentryinfo>
+<refmeta>
+<refentrytitle>Itcl_InitList</refentrytitle>
+<manvolnum>3</manvolnum>
+<refmiscinfo class='date'>3.0</refmiscinfo>
+<refmiscinfo class='source'>itcl</refmiscinfo>
+<refmiscinfo class='manual'>[incr Tcl] Library Procedures</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>Itcl_InitList</refname>
+<refname>Itcl_DeleteList</refname>
+<refname>Itcl_CreateListElem</refname>
+<refname>Itcl_DeleteListElem</refname>
+<refname>Itcl_InsertList</refname>
+<refname>Itcl_InsertListElem</refname>
+<refname>Itcl_AppendList</refname>
+<refname>Itcl_AppendListElem</refname>
+<refname>Itcl_SetListValue</refname>
+<refpurpose>Manipulate an Itcl list object.</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<funcsynopsis>
+<funcsynopsisinfo>
+#include &lt;itcl.h&gt;
+
+</funcsynopsisinfo>
+<funcprototype>
+<funcdef>void <function>Itcl_InitList</function></funcdef>
+<paramdef><parameter>list</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef>void <function>Itcl_DeleteList</function></funcdef>
+<paramdef><parameter>list</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef><function>Itcl_ListElem</function> *Itcl_CreateListElem</funcdef>
+<paramdef><parameter>list</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef><function>Itcl_ListElem</function> *Itcl_DeleteListElem</funcdef>
+<paramdef><parameter>elem</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef><function>Itcl_ListElem</function> *Itcl_InsertList</funcdef>
+<paramdef><parameter>list</parameter></paramdef>
+<paramdef><parameter>clientData</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef><function>Itcl_ListElem</function> *Itcl_InsertListElem</funcdef>
+<paramdef><parameter>elem</parameter></paramdef>
+<paramdef><parameter>clientData</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef><function>Itcl_ListElem</function> *Itcl_AppendList</funcdef>
+<paramdef><parameter>list</parameter></paramdef>
+<paramdef><parameter>clientData</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef><function>Itcl_ListElem</function> *Itcl_AppendListElem</funcdef>
+<paramdef><parameter>elem</parameter></paramdef>
+<paramdef><parameter>clientData</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef>void <function>Itcl_SetListValue</function></funcdef>
+<paramdef><parameter>elem</parameter></paramdef>
+<paramdef><parameter>clientData</parameter></paramdef>
+</funcprototype>
+</funcsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='arguments'><title>ARGUMENTS</title>
+<para>List info structure.</para>
+<informaltable>
+<tgroup cols='3'>
+<tbody>
+
+<row><entry>"Itcl_ListElem"</entry><entry>"*elem"</entry><entry>"in"</entry>
+<entry>
+<para>List element info structure.</para>
+</entry>
+</row>
+<row><entry>ClientData</entry><entry>clientData</entry><entry>in</entry>
+<entry>
+<para>Arbitrary one-word value to save in the list.</para>
+<!-- .BE -->
+</entry>
+</row>
+</tbody>
+</tgroup>
+</informaltable>
+
+</refsect1>
+
+<refsect1 xml:id='keywords'><title>KEYWORDS</title>
+<para>list</para>
+</refsect1>
+</refentry>
+

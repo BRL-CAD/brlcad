@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man+tkman by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='gethwnd3'>
+
+<!-- '\" Copyright (c) 1998\-2000 by Scriptics Corporation.
+'\" All rights reserved.
+'\" 
+'\" RCS: @(#) $Id$
+'\"  -->
+
+<refentryinfo><date>8.0</date></refentryinfo>
+<refmeta>
+<refentrytitle>HWND</refentrytitle>
+<manvolnum>3</manvolnum>
+<refmiscinfo class='date'>8.0</refmiscinfo>
+<refmiscinfo class='source'>Tk</refmiscinfo>
+<refmiscinfo class='manual'>Tk Library Procedures</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>Tk_GetHWND</refname>
+<refname>Tk_AttachHWND</refname>
+<refpurpose>manage interactions between the Windows handle and an X window</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<funcsynopsis>
+<funcsynopsisinfo>
+#include &lt;tkPlatDecls.h&gt;
+
+</funcsynopsisinfo>
+<funcprototype>
+<funcdef>HWND <function>Tk_GetHWND</function></funcdef>
+<paramdef><parameter>window</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef>Window <function>Tk_AttachHWND</function></funcdef>
+<paramdef><parameter>tkwin</parameter></paramdef>
+<paramdef><parameter>hwnd</parameter></paramdef>
+</funcprototype>
+</funcsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='arguments'><title>ARGUMENTS</title>
+<para>X token for window.</para>
+<informaltable>
+<tgroup cols='3'>
+<tbody>
+
+<row><entry>"Tk_Window"</entry><entry>"tkwin"</entry><entry>"in"</entry>
+<entry>
+<para>Tk window for window.</para>
+</entry>
+</row>
+<row><entry>HWND</entry><entry>hwnd</entry><entry>in</entry>
+<entry>
+<para>Windows HWND for window.</para>
+<!-- .BE -->
+</entry>
+</row>
+</tbody>
+</tgroup>
+</informaltable>
+
+</refsect1>
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para><function>Tk_GetHWND</function> returns the Windows HWND identifier for X Windows
+window given by <emphasis remap='I'>window</emphasis>.</para>
+
+<para><function>Tk_AttachHWND</function> binds the Windows HWND identifier to the
+specified Tk_Window given by <emphasis remap='I'>tkwin</emphasis>. It returns an X Windows
+window that encapsulates the HWND.</para>
+
+</refsect1>
+
+<refsect1 xml:id='keywords'><title>KEYWORDS</title>
+<para>identifier, window</para>
+</refsect1>
+</refentry>
+

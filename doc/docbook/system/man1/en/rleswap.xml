@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='rleswap1'>
+<!--  Copyright (c) 1986, University of Utah -->
+<refmeta>
+<refentrytitle>RLESWAP</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class='source'>Jan 22, 1987</refmiscinfo>
+<refmiscinfo class='manual'>1</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>rleswap</refname>
+<refpurpose>swap the channels in an RLE file.</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<cmdsynopsis>
+  <command>rleswap</command>    
+    <arg choice='opt'>-v </arg>
+    <arg choice='opt'><arg choice='plain'>-f </arg><arg choice='plain' rep='repeat'><replaceable>from-channels,</replaceable></arg></arg>
+    <arg choice='opt'><arg choice='plain'>-t </arg><arg choice='plain' rep='repeat'><replaceable>to-channels,</replaceable></arg></arg>
+    <arg choice='opt'><arg choice='plain'>-d </arg><arg choice='plain' rep='repeat'><replaceable>delete-channels,</replaceable></arg></arg>
+    <arg choice='opt'><arg choice='plain'>-p </arg><arg choice='plain' rep='repeat'><replaceable>channel-pairs,</replaceable></arg></arg>
+    <arg choice='opt'><arg choice='plain'>-o </arg><arg choice='plain'><replaceable>outfile</replaceable></arg></arg>
+    <arg choice='opt'><replaceable>infile</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para>This program can be used to select or swap the color channels in a
+<citerefentry><refentrytitle>RLE</refentrytitle><manvolnum>5</manvolnum></citerefentry>
+file.  The major options provide four different ways of specifying a
+mapping between the channels in the input file and the output file.
+Only one of the options
+<option>-f</option>,
+<option>-t</option>,
+<option>-d</option>,
+or
+<option>-p</option>
+may be specified.  If the optional
+<emphasis remap='I'>infile</emphasis>
+is not given, input will be read from standard input.  A new
+<citerefentry><refentrytitle>RLE</refentrytitle><manvolnum>5</manvolnum></citerefentry>
+file will be written to the standard output or to
+<emphasis remap='I'>outfile</emphasis>,
+if specified.  The output image will be similar to the input,
+except for the specified channel remappings.</para>
+</refsect1>
+
+<refsect1 xml:id='options'><title>OPTIONS</title>
+<variablelist remap='TP'>
+  <varlistentry>
+  <term><option>-v</option></term>
+  <listitem>
+<para>Print the channel mappings that will be performed on the standard
+error output.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-f</option></term>
+  <listitem>
+<para>Following this option is
+a comma separated list of numbers indicating the input channel that
+maps to each output channel in sequence.  I.e., the first number
+indicates the input channel mapping to output channel 0.  The alpha
+channel will be passed through unchanged if present.  Any input
+channels not mentioned in the list will not appear in the output.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-t</option></term>
+  <listitem>
+<para>Following this option is
+a comma separated list of numbers indicating the output channel to
+which each input channel, in sequence, will map.  I.e., the first
+number gives the output channel to which the first input channel will
+map.  No number may be repeated in this list.  The alpha channel will
+be passed through unchanged if present.  Any output channel not
+mentioned in the list will not receive image data.  If there are fewer
+numbers in the list than there are input channels, the excess input
+channels will be ignored.  If there are more numbers than input
+channels, it is an error.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-d</option></term>
+  <listitem>
+<para>Following this option is a comma separated list of numbers indicating
+channels to be deleted from the input file.  All other channels will
+be passed through unchanged.  The alpha channel may be specified as -1.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-p</option></term>
+  <listitem>
+<para>Following this option is
+a comma separated list of pairs of channel numbers.
+The first channel of each pair indicates a channel
+in the input file that will be mapped to the
+the channel in the output file indicated by the
+second number in the pair.  No output channel
+number may appear more than once.  Any input channel
+not mentioned will not appear in the output file.
+Any output channel not mentioned will not receive
+image data.  The alpha channel may be specified as -1.</para>
+  </listitem>
+  </varlistentry>
+</variablelist>
+</refsect1>
+
+<refsect1 xml:id='see_also'><title>SEE ALSO</title>
+<para><citerefentry><refentrytitle>mergechan</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>urt</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>RLE</refentrytitle><manvolnum>5</manvolnum></citerefentry>.</para>
+</refsect1>
+
+<refsect1 xml:id='author'><title>AUTHOR</title>
+<para>Spencer W. Thomas, University of Utah</para>
+</refsect1>
+</refentry>
+

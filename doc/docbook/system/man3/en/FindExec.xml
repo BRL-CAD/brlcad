@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man+tkman by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='findexec3'>
+
+<!-- '\" Copyright (c) 1995\-1996 Sun Microsystems, Inc. -->
+
+<!-- '\" See the file "license.terms" for information on usage and redistribution
+'\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
+'\" 
+'\" RCS: @(#) $Id$
+'\"  -->
+<refentryinfo><date>8.1</date></refentryinfo>
+<refmeta>
+<refentrytitle>Tcl_FindExecutable</refentrytitle>
+<manvolnum>3</manvolnum>
+<refmiscinfo class='date'>8.1</refmiscinfo>
+<refmiscinfo class='source'>Tcl</refmiscinfo>
+<refmiscinfo class='manual'>Tcl Library Procedures</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>Tcl_FindExecutable</refname>
+<refname>Tcl_GetNameOfExecutable</refname>
+<refpurpose>identify or return the name of the binary file containing the application</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<funcsynopsis>
+<funcsynopsisinfo>
+#include &lt;tcl.h&gt;
+
+</funcsynopsisinfo>
+<funcprototype>
+<funcdef>void <function>Tcl_FindExecutable</function></funcdef>
+<paramdef><parameter>argv0</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef>const char *<function>Tcl_GetNameOfExecutable</function></funcdef>
+<void/></funcprototype>
+</funcsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='arguments'><title>ARGUMENTS</title>
+<!-- .AS char *argv0 -->
+<informaltable>
+<tgroup cols='3'>
+<tbody>
+
+<row><entry>"char"</entry><entry>"*argv0"</entry><entry>"in"</entry>
+<entry>
+<para>The first command-line argument to the program, which gives the
+application's name.</para>
+<!-- .BE -->
+</entry>
+</row>
+</tbody>
+</tgroup>
+</informaltable>
+
+</refsect1>
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para>The <function>Tcl_FindExecutable</function> procedure computes the full path name of
+the executable file from which the application was invoked and saves
+it for Tcl's internal use.
+The executable's path name is needed for several purposes in
+Tcl.  For example, it is needed on some platforms in the
+implementation of the <emphasis remap='B'>load</emphasis> command.
+It is also returned by the <emphasis remap='B'>info nameofexecutable</emphasis> command.</para>
+
+<para>On UNIX platforms this procedure is typically invoked as the very
+first thing in the application's main program;  it must be passed
+<emphasis remap='I'>argv[0]</emphasis> as its argument.  It is important not to change the
+working directory before the invocation.
+<function>Tcl_FindExecutable</function> uses <emphasis remap='I'>argv0</emphasis>
+along with the <envar>PATH</envar> environment variable to find the
+application's executable, if possible.  If it fails to find
+the binary, then future calls to <emphasis remap='B'>info nameofexecutable</emphasis>
+will return an empty string.</para>
+
+<para><function>Tcl_GetNameOfExecutable</function> simply returns a pointer to the
+internal full path name of the executable file as computed by
+<function>Tcl_FindExecutable</function>.  This procedure call is the C API
+equivalent to the <emphasis remap='B'>info nameofexecutable</emphasis> command.  NULL
+is returned if the internal full path name has not been
+computed or unknown.</para>
+
+</refsect1>
+
+<refsect1 xml:id='keywords'><title>KEYWORDS</title>
+<para>binary, executable file</para>
+</refsect1>
+</refentry>
+

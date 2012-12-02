@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='giftorle1'>
+<!--  Copyright (c) 1989, David Koblas -->
+<refmeta>
+<refentrytitle>GIFTORLE</refentrytitle>
+<manvolnum>1</manvolnum>
+</refmeta>
+<refnamediv>
+<refname>giftorle</refname>
+<refpurpose>Convert GIF images to RLE format</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<cmdsynopsis>
+  <command>giftorle</command>    
+    <arg choice='opt'>-c </arg>
+    <arg choice='opt'><arg choice='plain'>-o </arg><arg choice='plain'><replaceable>outfile.rle</replaceable></arg></arg>
+    <arg choice='opt' rep='repeat'><replaceable>infile.gif</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para><emphasis remap='I'>Giftorle</emphasis>
+converts a file from Graphics Interchange Format (GIF) format into RLE format.
+Multiple input images may be converted,
+these will be written sequentially to the output RLE file.
+The origin of a GIF image is at the upper left, while the origin of an
+RLE image is at the lower left.  This program automatically flips the
+image to preserve its orientation.</para>
+</refsect1>
+
+<refsect1 xml:id='options'><title>OPTIONS</title>
+<variablelist remap='TP'>
+  <varlistentry>
+  <term><option>-c</option></term>
+  <listitem>
+<para>Preserve the colormap that the GIF image contains, otherwise the
+colormap is applied to input image.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-o</option><replaceable> outfile.rle</replaceable></term>
+  <listitem>
+<para>If specified, the output will be written to this file.  If
+<emphasis remap='I'>outfile.rle</emphasis>
+is "-", or if it is not specified, the output will be written to the
+standard output stream.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='I'>infile.gif ...</emphasis></term>
+  <listitem>
+<para>The input will be read from these files.  If
+<emphasis remap='I'>infile.gif</emphasis>
+is "-" or is not specified, the input will be read from the standard
+input stream.</para>
+  </listitem>
+  </varlistentry>
+</variablelist>
+</refsect1>
+
+<refsect1 xml:id='misc'><title>MISC</title>
+<para>GIF and Graphics Interchange Format are both trademarks of CompuServe
+Incorporated.</para>
+</refsect1>
+
+<refsect1 xml:id='see_also'><title>SEE ALSO</title>
+<para><citerefentry><refentrytitle>rletogif</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>urt</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>RLE</refentrytitle><manvolnum>5</manvolnum></citerefentry>.</para>
+</refsect1>
+
+<refsect1 xml:id='author'><title>AUTHOR</title>
+<para>David Koblas (koblas@mips.com or koblas@cs.uoregon.edu)</para>
+</refsect1>
+</refentry>
+

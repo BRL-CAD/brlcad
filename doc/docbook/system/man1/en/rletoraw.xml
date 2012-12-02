@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='rletoraw1'>
+<refentryinfo><date>1990</date></refentryinfo>
+<refmeta>
+<refentrytitle>RLETORAW</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class='date'>1990</refmiscinfo>
+<refmiscinfo class='source'>1</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>rletoraw</refname>
+<refpurpose>Convert RLE file to raw RGB form.</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<cmdsynopsis>
+  <command>rletoraw</command>    
+    <arg choice='opt'>-a </arg>
+    <arg choice='opt'><arg choice='plain'>- </arg><arg choice='opt'><replaceable>Ns</replaceable></arg></arg>
+    <arg choice='opt'>-r </arg>
+    <arg choice='opt'>-f <replaceable>header-size</replaceable></arg>
+    <arg choice='opt'>-t <replaceable>trailer-size</replaceable></arg>
+    <arg choice='opt'>-l <replaceable>left-scanline-pad</replaceable></arg>
+    <arg choice='opt'>-p <replaceable>scanline-pad</replaceable></arg>
+    <arg choice='opt'><arg choice='plain'>-o </arg><arg choice='plain'><replaceable>outfile</replaceable></arg></arg>
+    <arg choice='opt'><replaceable>infile</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para>This program converts an
+<citerefentry><refentrytitle>RLE</refentrytitle><manvolnum>5</manvolnum></citerefentry>
+image to a raw RGB form.  The output file is normally a stream of pixels
+(RGBRGB...), in left-to-right, bottom-to-top order (this can be
+changed with the <option>-N</option>
+or <option>-s</option> flags).  The width and
+height of the input image will be printed on the standard error
+stream.</para>
+</refsect1>
+
+<refsect1 xml:id='options'><title>OPTIONS</title>
+<variablelist remap='TP'>
+  <varlistentry>
+  <term><option>-a</option></term>
+  <listitem>
+<para>If specified, an alpha channel will be written to the output file.
+This is the last output channel, unless <option>-r</option> is specified,
+in which case it will be the first.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-N</option></term>
+  <listitem>
+<para>If specified, the output will be written in a non-interleaved order.
+I.e., all the red pixels will be written first, then all the green
+pixels, etc.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-s</option></term>
+  <listitem>
+<para>If specified, the output will be written in a scanline-interleaved
+order.  I.e., all the red pixels for a scanline will be written,
+followed by all the green pixels for the scanline, etc.  The options
+<option>-N</option> and <option>-s</option> are mutually exclusive.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-r</option></term>
+  <listitem>
+<para>Reverse the order of the channels in the output.  I.e., output will be
+written ABGR instead of RGBA.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-f</option><replaceable> header-size</replaceable></term>
+  <listitem>
+<para>A header of this many zero bytes will be written to the output file.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-t</option><replaceable> trailer-size</replaceable></term>
+  <listitem>
+<para>A trailer of this many zero bytes will be written after the output file.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-l</option><replaceable> left-scanline-pad</replaceable></term>
+  <listitem>
+<para>The left (beginning) of each scanline will be padded with this many
+zero bytes.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-p</option><replaceable> left-scanline-pad</replaceable></term>
+  <listitem>
+<para>The right (end) of each scanline will be padded with this many zero bytes.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-o</option><replaceable> outfile</replaceable></term>
+  <listitem>
+<para>If specified, the output will be written to this file.  If
+<emphasis remap='I'>outfile</emphasis>
+is "-", or if it is not specified, the output will be written to the
+standard output stream.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='I'>infile</emphasis></term>
+  <listitem>
+<para>The input will be read from this file.  If
+<emphasis remap='I'>infile</emphasis>
+is "-" or is not specified, the input will be read from the standard
+input stream.</para>
+  </listitem>
+  </varlistentry>
+</variablelist>
+</refsect1>
+
+<refsect1 xml:id='see_also'><title>SEE ALSO</title>
+<para><citerefentry><refentrytitle>rawtorle</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>urt</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>RLE</refentrytitle><manvolnum>5</manvolnum></citerefentry>.</para>
+</refsect1>
+
+<refsect1 xml:id='author'><title>AUTHOR</title>
+<para>Martin Friedmann</para>
+</refsect1>
+
+<refsect1 xml:id='bugs'><title>BUGS</title>
+<para>Basically handles input files with 1 or 3 channels (plus alpha).  Only
+the first channel of a 2 channel image will be written.</para>
+
+<para>The header, trailer, and pad options are of dubious utility.</para>
+</refsect1>
+</refentry>
+

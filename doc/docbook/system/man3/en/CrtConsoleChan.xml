@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man+tkman by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='crtconsolechan3'>
+
+<!-- '\" Copyright (c) 2007 ActiveState Software Inc. -->
+
+<!-- '\" See the file "license.terms" for information on usage and redistribution
+'\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
+'\" 
+'\" RCS: @(#) $Id$
+'\"  -->
+<refentryinfo><date>8.5</date></refentryinfo>
+<refmeta>
+<refentrytitle>Tk_InitConsoleChannels</refentrytitle>
+<manvolnum>3</manvolnum>
+<refmiscinfo class='date'>8.5</refmiscinfo>
+<refmiscinfo class='source'>Tk</refmiscinfo>
+<refmiscinfo class='manual'>Tk Library Procedures</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>Tk_InitConsoleChannels</refname>
+<refpurpose>Install the console channels as standard channels</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<funcsynopsis>
+<funcsynopsisinfo>
+#include &lt;tk.h&gt;
+
+</funcsynopsisinfo>
+<funcprototype>
+<funcdef><function>Tk_InitConsoleChannels</function></funcdef>
+<paramdef><parameter>interp</parameter></paramdef>
+</funcprototype>
+</funcsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='arguments'><title>ARGUMENTS</title>
+<!-- .AS Tcl_Interp *interp in -->
+<informaltable>
+<tgroup cols='3'>
+<tbody>
+
+<row><entry>"Tcl_Interp"</entry><entry>"*interp"</entry><entry>"in"</entry>
+<entry>
+<para>Interpreter in which the console channels are created.</para>
+<!-- .BE -->
+</entry>
+</row>
+</tbody>
+</tgroup>
+</informaltable>
+
+</refsect1>
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para><function>Tk_InitConsoleChannels</function> is invoked to create a set of console
+channels and install them as the standard channels. All I/O on these
+channels will be discarded until <emphasis remap='B'>Tk_CreateConsoleWindow</emphasis> is
+called to attach the console to a text widget.</para>
+
+<para>This function is for use by shell applications based on Tk, like
+<emphasis remap='B'>wish</emphasis>, on platforms which have no standard channels in graphical
+mode, like Win32.</para>
+
+<para>The <emphasis remap='I'>interp</emphasis> argument is the interpreter in which to create and
+install the console channels.</para>
+
+<para><emphasis remap='B'>NOTE:</emphasis> If this function is used it has to be called before the
+first call to <emphasis remap='B'>Tcl_RegisterChannel</emphasis>, directly, or indirectly
+through other channel functions. Because otherwise the standard
+channels will be already initialized to the system defaults, which will
+be nonsensical for the case <function>Tk_InitConsoleChannels</function> is for.</para>
+</refsect1>
+
+<refsect1 xml:id='see_also'><title>SEE ALSO</title>
+<para>console(n)</para>
+</refsect1>
+
+<refsect1 xml:id='keywords'><title>KEYWORDS</title>
+<para>standard channels, console</para>
+</refsect1>
+</refentry>
+

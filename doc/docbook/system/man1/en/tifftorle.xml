@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='tifftorle1'>
+<!--  Copyright (c) 1990, University of Michigan -->
+<refmeta>
+<refentrytitle>TIFFTORLE</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class='source'>July 3, 1990</refmiscinfo>
+<refmiscinfo class='manual'>1</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>tifftorle</refname>
+<refpurpose>Convert TIFF image files to RLE.</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<cmdsynopsis>
+  <command>tifftorle</command>    
+    <arg choice='opt'><arg choice='plain'>-o </arg><arg choice='plain'><replaceable>outfile.rle</replaceable></arg></arg>
+    <arg choice='plain'><replaceable>infile.tif</replaceable></arg>
+    <sbr/>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para>This program converts a TIFF image to
+<citerefentry><refentrytitle>RLE</refentrytitle><manvolnum>5</manvolnum></citerefentry>
+format.</para>
+</refsect1>
+
+<refsect1 xml:id='options'><title>OPTIONS</title>
+<variablelist remap='TP'>
+  <varlistentry>
+  <term><option>-o</option><replaceable> outfile.rle</replaceable></term>
+  <listitem>
+<para>If specified, the output will be written to this file.  If
+<emphasis remap='I'>outfile.rle</emphasis>
+is "-", or if it is not specified, the output will be written to the
+standard output stream.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='I'>infile.tif</emphasis></term>
+  <listitem>
+<para>The input will be read from this file.
+<emphasis remap='I'>infile.tif</emphasis>
+must be a real file, the special cases described in
+<citerefentry><refentrytitle>urt</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+do not apply here.</para>
+  </listitem>
+  </varlistentry>
+</variablelist>
+</refsect1>
+
+<refsect1 xml:id='limitations'><title>LIMITATIONS</title>
+<para>Can't handle RGB TIFF files with a separate planar configuration.
+<!-- .br -->
+Can't handle tiled TIFF files.</para>
+</refsect1>
+
+<refsect1 xml:id='see_also'><title>SEE ALSO</title>
+<para><citerefentry><refentrytitle>tifftorle</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>urt</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<emphasis remap='I'>libtiff,</emphasis>
+<citerefentry><refentrytitle>RLE</refentrytitle><manvolnum>5</manvolnum></citerefentry>.</para>
+</refsect1>
+
+<refsect1 xml:id='author'><title>AUTHOR</title>
+<para>Bailey Brown, University of Michigan.
+<!-- .br -->
+Extended by David R. L. Worthington, SRI International to single
+channel TIFF files.
+<!-- .br -->
+Extended by Spencer W. Thomas, University of Michigan to TIFF files
+with fewer than 8 bits/sample.
+<!-- .br -->
+Requires libtiff, by Sam Leffler.</para>
+</refsect1>
+
+<refsect1 xml:id='bugs'><title>BUGS</title>
+<para>Doesn't copy alpha channel when present.</para>
+</refsect1>
+</refentry>
+

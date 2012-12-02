@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='rlebg1'>
+<!--  Copyright (c) 1986, University of Utah -->
+<refmeta>
+<refentrytitle>RLEBG</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class='source'>November 12, 1986</refmiscinfo>
+<refmiscinfo class='manual'>1</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>rlebg</refname>
+<refpurpose>generate simple backgrounds</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<cmdsynopsis>
+  <command>rlebg</command>    
+    <arg choice='opt'>-l </arg>
+    <arg choice='opt'><arg choice='plain'>-v </arg><arg choice='opt'><arg choice='plain'><replaceable>top</replaceable></arg><arg choice='opt'><replaceable>bottom</replaceable></arg></arg></arg>
+    <arg choice='opt'><arg choice='plain'>-s </arg><arg choice='plain'><replaceable>xsize</replaceable></arg><arg choice='plain'><replaceable>ysize</replaceable></arg></arg>
+    <arg choice='opt'><arg choice='plain'>-o </arg><arg choice='plain'><replaceable>outfile</replaceable></arg></arg>
+    <arg choice='plain'><replaceable>red</replaceable></arg>
+    <arg choice='plain'><replaceable>green</replaceable></arg>
+    <arg choice='plain'><replaceable>blue</replaceable></arg>
+    <arg choice='opt'><replaceable>alpha</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para><command>rlebg</command>
+generates a simple background.  These are typically used for compositing
+below other images.  The values
+<emphasis remap='I'>red green blue</emphasis>
+specify the pixel values (between 0 and 255) the background will have.
+If
+<emphasis remap='I'>alpha</emphasis>
+is not specified, it defaults to 255 (full coverage).
+<command>rlebg</command>
+generates both constant backgrounds and backgrounds with continuous
+ramps.</para>
+</refsect1>
+
+<refsect1 xml:id='options'><title>OPTIONS</title>
+<variablelist remap='TP'>
+  <varlistentry>
+  <term><option>-s</option><replaceable> xsize ysize</replaceable></term>
+  <listitem>
+<para>This is the size of the background image.  The default is 512*480.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-l</option></term>
+  <listitem>
+<para>Generate a linear ramp of pixel values.  If no ramp flag is given,
+<command>rlebg</command>
+generates a constant background.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-v</option><replaceable> top bottom</replaceable></term>
+  <listitem>
+<para>Generate a variable ramp, using a quadratic function (this looks best
+with gamma corrected images).
+<emphasis remap='I'>top</emphasis>
+and
+<emphasis remap='I'>bottom</emphasis>
+are the fractions of the full color values at the top and bottom of the image.
+The defaults are 1.0 0.1, respectively.  If both
+<option>-v</option>
+and
+<option>-l</option>
+are given, then a linear ramp function is used instead of a quadratic ramp.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-o</option><replaceable> outfile</replaceable></term>
+  <listitem>
+<para>If specified, the output will be written to this file.  If
+<emphasis remap='I'>outfile</emphasis>
+is "-", or if it is not specified, the output will be written to the
+standard output stream.</para>
+  </listitem>
+  </varlistentry>
+</variablelist>
+
+</refsect1>
+
+<refsect1 xml:id='see_also'><title>SEE ALSO</title>
+<para><citerefentry><refentrytitle>rlesetbg</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>urt</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>RLE</refentrytitle><manvolnum>5</manvolnum></citerefentry>.</para>
+</refsect1>
+
+<refsect1 xml:id='author'><title>AUTHOR</title>
+<para>Rod Bogart</para>
+</refsect1>
+</refentry>
+

@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man+tkman by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='internatom3'>
+
+<!-- '\" Copyright (c) 1990 The Regents of the University of California.
+'\" Copyright (c) 1994\-1996 Sun Microsystems, Inc. -->
+
+<!-- '\" See the file "license.terms" for information on usage and redistribution
+'\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
+'\" 
+'\" RCS: @(#) $Id$
+'\"  -->
+<refmeta>
+<refentrytitle>Tk_InternAtom</refentrytitle>
+<manvolnum>3</manvolnum>
+<refmiscinfo class='manual'>Tk</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>Tk_InternAtom</refname>
+<refname>Tk_GetAtomName</refname>
+<refpurpose>manage cache of X atoms</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<funcsynopsis>
+<funcsynopsisinfo>
+#include &lt;tk.h&gt;
+
+</funcsynopsisinfo>
+<funcprototype>
+<funcdef>Atom <function>Tk_InternAtom</function></funcdef>
+<paramdef><parameter>tkwin</parameter></paramdef>
+<paramdef><parameter>name</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef>const char *<function>Tk_GetAtomName</function></funcdef>
+<paramdef><parameter>tkwin</parameter></paramdef>
+<paramdef><parameter>atom</parameter></paramdef>
+</funcprototype>
+</funcsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='arguments'><title>ARGUMENTS</title>
+<!-- .AS Tk_Window parent -->
+<informaltable>
+<tgroup cols='3'>
+<tbody>
+
+<row><entry>"Tk_Window"</entry><entry>"tkwin"</entry><entry>"in"</entry>
+<entry>
+<para>Token for window.  Used to map atom or name relative to a particular display.</para>
+</entry>
+</row>
+<row><entry>"const char"</entry><entry>*name</entry><entry>in</entry>
+<entry>
+<para>String name for which atom is desired.</para>
+</entry>
+</row>
+<row><entry>Atom</entry><entry>atom</entry><entry>in</entry>
+<entry>
+<para>Atom for which corresponding string name is desired.</para>
+<!-- .BE -->
+</entry>
+</row>
+</tbody>
+</tgroup>
+</informaltable>
+
+</refsect1>
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para>These procedures are similar to the Xlib procedures
+<emphasis remap='B'>XInternAtom</emphasis> and <emphasis remap='B'>XGetAtomName</emphasis>.  <function>Tk_InternAtom</function>
+returns the atom identifier associated with string given by
+<emphasis remap='I'>name</emphasis>;  the atom identifier is only valid for the display
+associated with <emphasis remap='I'>tkwin</emphasis>.
+<function>Tk_GetAtomName</function> returns the string associated
+with <emphasis remap='I'>atom</emphasis> on <emphasis remap='I'>tkwin</emphasis>'s display.  The string returned
+by <function>Tk_GetAtomName</function> is in Tk's storage:  the caller need
+not free this space when finished with the string, and the caller
+should not modify the contents of the returned string.
+If there is no atom <emphasis remap='I'>atom</emphasis> on <emphasis remap='I'>tkwin</emphasis>'s display,
+then <function>Tk_GetAtomName</function> returns the string
+<quote>?bad atom?</quote>.</para>
+
+<para>Tk caches
+the information returned by <function>Tk_InternAtom</function> and <function>Tk_GetAtomName</function>
+so that future calls
+for the same information can be serviced from the cache without
+contacting the server.  Thus <function>Tk_InternAtom</function> and <function>Tk_GetAtomName</function>
+are generally much faster than their Xlib counterparts, and they
+should be used in place of the Xlib procedures.</para>
+
+</refsect1>
+
+<refsect1 xml:id='keywords'><title>KEYWORDS</title>
+<para>atom, cache, display</para>
+</refsect1>
+</refentry>
+

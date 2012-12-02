@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man+tkman by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='setcaret3'>
+
+<!-- '\" Copyright (c) 2002 ActiveState Corporation. -->
+
+<!-- '\" See the file "license.terms" for information on usage and redistribution
+'\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
+'\" 
+'\" RCS: @(#) $Id$
+'\"  -->
+<refentryinfo><date>8.4</date></refentryinfo>
+<refmeta>
+<refentrytitle>Tk_SetCaretPos</refentrytitle>
+<manvolnum>3</manvolnum>
+<refmiscinfo class='date'>8.4</refmiscinfo>
+<refmiscinfo class='source'>Tk</refmiscinfo>
+<refmiscinfo class='manual'>Tk Library Procedures</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>Tk_SetCaretPos</refname>
+<refpurpose>set the display caret location</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<funcsynopsis>
+<funcsynopsisinfo>
+#include &lt;tk.h&gt;
+
+</funcsynopsisinfo>
+<funcprototype>
+<funcdef>int <function>Tk_SetCaretPos</function></funcdef>
+<paramdef><parameter>tkwin</parameter></paramdef>
+<paramdef><parameter>x</parameter></paramdef>
+<paramdef><parameter>y</parameter></paramdef>
+<paramdef><parameter>height</parameter></paramdef>
+</funcprototype>
+</funcsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='arguments'><title>ARGUMENTS</title>
+<para>Token for window.</para>
+<informaltable>
+<tgroup cols='3'>
+<tbody>
+
+<row><entry>"int"</entry><entry>"x"</entry><entry>"in"</entry>
+<entry>
+<para>Window-relative x coordinate.</para>
+</entry>
+</row>
+<row><entry>int</entry><entry>y</entry><entry>in</entry>
+<entry>
+<para>Window-relative y coordinate.</para>
+</entry>
+</row>
+<row><entry>int</entry><entry>h</entry><entry>in</entry>
+<entry>
+<para>Height of the caret in the window.</para>
+<!-- .BE -->
+</entry>
+</row>
+</tbody>
+</tgroup>
+</informaltable>
+
+</refsect1>
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para><function>Tk_SetCaretPos</function> sets the caret location for the display of the
+specified Tk_Window <emphasis remap='I'>tkwin</emphasis>.  The caret is the per-display cursor
+location used for indicating global focus (e.g. to comply with Microsoft
+Accessibility guidelines), as well as for location of the over-the-spot XIM
+(X Input Methods) or Windows IME windows.</para>
+
+</refsect1>
+
+<refsect1 xml:id='keywords'><title>KEYWORDS</title>
+<para>caret, cursor</para>
+</refsect1>
+</refentry>
+

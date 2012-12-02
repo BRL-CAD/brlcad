@@ -1,0 +1,267 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man+tkman by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='crttrace3'>
+
+<!-- '\" Copyright (c) 1989\-1993 The Regents of the University of California.
+'\" Copyright (c) 1994\-1996 Sun Microsystems, Inc.
+'\" Copyright (c) 2002 by Kevin B. Kenny &lt;kennykb@acm.org&gt;.  All rights reserved. -->
+
+<!-- '\" See the file "license.terms" for information on usage and redistribution
+'\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
+'\" 
+'\" RCS: @(#) $Id$
+'\"  -->
+<refmeta>
+<refentrytitle>Tcl_CreateTrace</refentrytitle>
+<manvolnum>3</manvolnum>
+<refmiscinfo class='manual'>Tcl</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>Tcl_CreateTrace</refname>
+<refname>Tcl_CreateObjTrace</refname>
+<refname>Tcl_DeleteTrace</refname>
+<refpurpose>arrange for command execution to be traced</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<funcsynopsis>
+<funcsynopsisinfo>
+#include &lt;tcl.h&gt;
+
+</funcsynopsisinfo>
+<funcprototype>
+<funcdef>Tcl_Trace <function>Tcl_CreateTrace</function></funcdef>
+<paramdef><parameter>interp</parameter></paramdef>
+<paramdef><parameter>level</parameter></paramdef>
+<paramdef><parameter>proc</parameter></paramdef>
+<paramdef><parameter>clientData</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef>Tcl_Trace <function>Tcl_CreateObjTrace</function></funcdef>
+<paramdef><parameter>interp</parameter></paramdef>
+<paramdef><parameter>level</parameter></paramdef>
+<paramdef><parameter>flags</parameter></paramdef>
+<paramdef><parameter>objProc</parameter></paramdef>
+<paramdef><parameter>clientData</parameter></paramdef>
+<paramdef><parameter>deleteProc</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef><function>Tcl_DeleteTrace</function></funcdef>
+<paramdef><parameter>interp</parameter></paramdef>
+<paramdef><parameter>trace</parameter></paramdef>
+</funcprototype>
+</funcsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='arguments'><title>ARGUMENTS</title>
+<!-- .AS Tcl_CmdObjTraceDeleteProc *deleteProc -->
+<informaltable>
+<tgroup cols='3'>
+<tbody>
+
+<row><entry>"Tcl_Interp"</entry><entry>"*interp"</entry><entry>"in"</entry>
+<entry>
+<para>Interpreter containing command to be traced or untraced.</para>
+</entry>
+</row>
+<row><entry>int</entry><entry>level</entry><entry>in</entry>
+<entry>
+<para>Only commands at or below this nesting level will be traced unless
+0 is specified.  1 means
+top-level commands only, 2 means top-level commands or those that are
+invoked as immediate consequences of executing top-level commands
+(procedure bodies, bracketed commands, etc.) and so on.
+A value of 0 means that commands at any level are traced.</para>
+</entry>
+</row>
+<row><entry>int</entry><entry>flags</entry><entry>in</entry>
+<entry>
+<para>Flags governing the trace execution.  See below for details.</para>
+</entry>
+</row>
+<row><entry>Tcl_CmdObjTraceProc</entry><entry>*objProc</entry><entry>in</entry>
+<entry>
+<para>Procedure to call for each command that is executed.  See below for
+details of the calling sequence.</para>
+</entry>
+</row>
+<row><entry>Tcl_CmdTraceProc</entry><entry>*proc</entry><entry>in</entry>
+<entry>
+<para>Procedure to call for each command that is executed.  See below for
+details on the calling sequence.</para>
+</entry>
+</row>
+<row><entry>ClientData</entry><entry>clientData</entry><entry>in</entry>
+<entry>
+<para>Arbitrary one-word value to pass to <emphasis remap='I'>objProc</emphasis> or <emphasis remap='I'>proc</emphasis>.</para>
+</entry>
+</row>
+<row><entry>Tcl_CmdObjTraceDeleteProc</entry><entry>*deleteProc</entry><entry>in</entry>
+<entry>
+<para>Procedure to call when the trace is deleted.  See below for details of
+the calling sequence.  A NULL pointer is permissible and results in no
+callback when the trace is deleted.</para>
+</entry>
+</row>
+<row><entry>Tcl_Trace</entry><entry>trace</entry><entry>in</entry>
+<entry>
+<para>Token for trace to be removed (return value from previous call
+to <function>Tcl_CreateTrace</function>).</para>
+<!-- .BE -->
+</entry>
+</row>
+</tbody>
+</tgroup>
+</informaltable>
+
+</refsect1>
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para><function>Tcl_CreateObjTrace</function> arranges for command tracing.  After it is
+called, <emphasis remap='I'>objProc</emphasis> will be invoked before the Tcl interpreter calls
+any command procedure when evaluating commands in <varname role='parameter'>interp</varname>.
+The return value from <function>Tcl_CreateObjTrace</function> is a token for the trace,
+which may be passed to <function>Tcl_DeleteTrace</function> to remove the trace.
+There may be many traces in effect simultaneously for the same
+interpreter.</para>
+
+<para><emphasis remap='I'>objProc</emphasis> should have arguments and result that match the type,
+<type>Tcl_CmdObjTraceProc</type>:</para>
+<programlisting remap='CS'>
+<funcsynopsis>
+<funcprototype>
+<funcdef>typedef int <function>Tcl_CmdObjTraceProc</function></funcdef>
+    <paramdef>ClientData <parameter>clientData</parameter></paramdef>
+    <paramdef>Tcl_Interp * <parameter>interp</parameter></paramdef>
+    <paramdef>int <parameter>level</parameter></paramdef>
+    <paramdef>const char * <parameter>command</parameter></paramdef>
+    <paramdef>Tcl_Command <parameter>commandToken</parameter></paramdef>
+    <paramdef>int <parameter>objc</parameter></paramdef>
+    <paramdef>Tcl_Obj *const <parameter>objv</parameter>[]</paramdef>
+</funcprototype>
+</funcsynopsis>
+</programlisting> <!-- remap='CE' -->
+<para>The <varname role='parameter'>clientData</varname> and <varname role='parameter'>interp</varname> parameters are copies of the
+corresponding arguments given to <function>Tcl_CreateTrace</function>.
+<type>ClientData</type> typically points to an application-specific data
+structure that describes what to do when <emphasis remap='I'>objProc</emphasis> is invoked.  The
+<varname role='parameter'>level</varname> parameter gives the nesting level of the command (1 for
+top-level commands passed to <emphasis remap='B'>Tcl_Eval</emphasis> by the application, 2 for
+the next-level commands passed to <emphasis remap='B'>Tcl_Eval</emphasis> as part of parsing or
+interpreting level-1 commands, and so on). The <varname role='parameter'>command</varname> parameter
+points to a string containing the text of the command, before any
+argument substitution.  The <varname role='parameter'>commandToken</varname> parameter is a Tcl
+command token that identifies the command to be invoked.  The token
+may be passed to <emphasis remap='B'>Tcl_GetCommandName</emphasis>,
+<emphasis remap='B'>Tcl_GetCommandInfoFromToken</emphasis>, or <emphasis remap='B'>Tcl_SetCommandInfoFromToken</emphasis> to
+manipulate the definition of the command. The <varname role='parameter'>objc</varname> and <varname role='parameter'>objv</varname>
+parameters designate the final parameter count and parameter vector
+that will be passed to the command, and have had all substitutions
+performed.</para>
+
+<para>The <emphasis remap='I'>objProc</emphasis> callback is expected to return a standard Tcl status
+return code.  If this code is <emphasis remap='B'>TCL_OK</emphasis> (the normal case), then
+the Tcl interpreter will invoke the command.  Any other return code
+is treated as if the command returned that status, and the command is
+<emphasis remap='I'>not</emphasis> invoked.</para>
+
+<para>The <emphasis remap='I'>objProc</emphasis> callback must not modify <varname role='parameter'>objv</varname> in any way.  It
+is, however, permissible to change the command by calling
+<emphasis remap='B'>Tcl_SetCommandTokenInfo</emphasis> prior to returning.  Any such change
+takes effect immediately, and the command is invoked with the new
+information.</para>
+
+<para>Tracing will only occur for commands at nesting level less than
+or equal to the <varname role='parameter'>level</varname> parameter (i.e. the <varname role='parameter'>level</varname>
+parameter to <emphasis remap='I'>objProc</emphasis> will always be less than or equal to the
+<varname role='parameter'>level</varname> parameter to <function>Tcl_CreateTrace</function>).</para>
+
+<para>Tracing has a significant effect on runtime performance because it
+causes the bytecode compiler to refrain from generating in-line code
+for Tcl commands such as <emphasis remap='B'>if</emphasis> and <emphasis remap='B'>while</emphasis> in order that they
+may be traced.  If traces for the built-in commands are not required,
+the <emphasis remap='I'>flags</emphasis> parameter may be set to the constant value
+<emphasis remap='B'>TCL_ALLOW_INLINE_COMPILATION</emphasis>.  In this case, traces on built-in
+commands may or may not result in trace callbacks, depending on the
+state of the interpreter, but run-time performance will be improved
+significantly.  (This functionality is desirable, for example, when
+using <function>Tcl_CreateObjTrace</function> to implement an execution time
+profiler.)</para>
+
+<para>Calls to <emphasis remap='I'>objProc</emphasis> will be made by the Tcl parser immediately before
+it calls the command procedure for the command (<varname role='parameter'>cmdProc</varname>).  This
+occurs after argument parsing and substitution, so tracing for
+substituted commands occurs before tracing of the commands
+containing the substitutions.  If there is a syntax error in a
+command, or if there is no command procedure associated with a
+command name, then no tracing will occur for that command.  If a
+string passed to Tcl_Eval contains multiple commands (bracketed, or
+on different lines) then multiple calls to <emphasis remap='I'>objProc</emphasis> will occur,
+one for each command.</para>
+
+<para><function>Tcl_DeleteTrace</function> removes a trace, so that no future calls will be
+made to the procedure associated with the trace.  After <function>Tcl_DeleteTrace</function>
+returns, the caller should never again use the <emphasis remap='I'>trace</emphasis> token.</para>
+
+<para>When <function>Tcl_DeleteTrace</function> is called, the interpreter invokes the
+<emphasis remap='I'>deleteProc</emphasis> that was passed as a parameter to
+<function>Tcl_CreateObjTrace</function>.  The <emphasis remap='I'>deleteProc</emphasis> must match the type,
+<type>Tcl_CmdObjTraceDeleteProc</type>:</para>
+<programlisting remap='CS'>
+<funcsynopsis>
+<funcprototype>
+<funcdef>typedef void <function>Tcl_CmdObjTraceDeleteProc</function></funcdef>
+    <paramdef>ClientData <parameter>clientData</parameter></paramdef>
+</funcprototype>
+</funcsynopsis>
+</programlisting> <!-- remap='CE' -->
+<para>The <varname role='parameter'>clientData</varname> parameter will be the same as the
+<varname role='parameter'>clientData</varname> parameter that was originally passed to
+<function>Tcl_CreateObjTrace</function>.</para>
+
+<para><function>Tcl_CreateTrace</function> is an alternative interface for command tracing,
+<emphasis remap='I'>not recommended for new applications</emphasis>.  It is provided for backward
+compatibility with code that was developed for older versions of the
+Tcl interpreter.  It is similar to <function>Tcl_CreateObjTrace</function>, except
+that its <emphasis remap='I'>proc</emphasis> parameter should have arguments and result that
+match the type <type>Tcl_CmdTraceProc</type>:</para>
+<programlisting remap='CS'>
+<funcsynopsis>
+<funcprototype>
+<funcdef>typedef void <function>Tcl_CmdTraceProc</function></funcdef>
+    <paramdef>ClientData <parameter>clientData</parameter></paramdef>
+    <paramdef>Tcl_Interp * <parameter>interp</parameter></paramdef>
+    <paramdef>int <parameter>level</parameter></paramdef>
+    <paramdef>char * <parameter>command</parameter></paramdef>
+    <paramdef>Tcl_CmdProc * <parameter>cmdProc</parameter></paramdef>
+    <paramdef>ClientData <parameter>cmdClientData</parameter></paramdef>
+    <paramdef>int <parameter>argc</parameter></paramdef>
+    <paramdef>const char * <parameter>argv</parameter>[]</paramdef>
+</funcprototype>
+</funcsynopsis>
+</programlisting> <!-- remap='CE' -->
+<para>The parameters to the <emphasis remap='I'>proc</emphasis> callback are similar to those of the
+<emphasis remap='I'>objProc</emphasis> callback above. The <varname role='parameter'>commandToken</varname> is
+replaced with <varname role='parameter'>cmdProc</varname>, a pointer to the (string-based) command
+procedure that will be invoked; and <varname role='parameter'>cmdClientData</varname>, the client
+data that will be passed to the procedure.  The <varname role='parameter'>objc</varname> parameter
+is replaced with an <varname role='parameter'>argv</varname> parameter, that gives the arguments to
+the command as character strings.
+<emphasis remap='I'>Proc</emphasis> must not modify the <varname role='parameter'>command</varname> or <varname role='parameter'>argv</varname> strings.</para>
+
+<para>If a trace created with <function>Tcl_CreateTrace</function> is in effect, inline
+compilation of Tcl commands such as <emphasis remap='B'>if</emphasis> and <emphasis remap='B'>while</emphasis> is always
+disabled.  There is no notification when a trace created with
+<function>Tcl_CreateTrace</function> is deleted.
+There is no way to be notified when the trace created by
+<function>Tcl_CreateTrace</function> is deleted.  There is no way for the <emphasis remap='I'>proc</emphasis>
+associated with a call to <function>Tcl_CreateTrace</function> to abort execution of
+<varname role='parameter'>command</varname>.</para>
+</refsect1>
+
+<refsect1 xml:id='keywords'><title>KEYWORDS</title>
+<para>command, create, delete, interpreter, trace</para>
+</refsect1>
+</refentry>
+

@@ -1,0 +1,355 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='rtg31'>
+<refmeta>
+<refentrytitle>RTG3</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class='source'>BRL-CAD</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>rtg3</refname>
+<refpurpose> raytrace a model, writing a COVART (GIFT) 3-component format shotline file</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<cmdsynopsis>
+  <command>rtg3</command>    
+    <arg choice='opt' rep='repeat'><replaceable>options</replaceable></arg>
+    <arg choice='plain'><replaceable>model.g</replaceable></arg>
+    <arg choice='plain' rep='repeat'><replaceable>objects</replaceable></arg>
+    
+    <arg choice='plain'><replaceable>&gt;</replaceable></arg>
+    <arg choice='plain'><replaceable>model.cov</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para><emphasis remap='I'>Rtg3</emphasis>
+operates on the indicated
+<emphasis remap='I'>objects</emphasis>
+in the input
+<emphasis remap='I'>model.g</emphasis>
+and produces a GIFT/COVART
+shotline file with three components per line, and both
+entrance and exit obliquity angles
+on standard output.
+The region ID field of the output
+file is set to the region id of each intersected region (partition).
+If the ray partition is followed by air,
+the aircode for the air region (and the line-of-sight thickness of the air)
+is noted on the shotline header line.</para>
+
+<para>The orientation of the rays to be fired may be specified by
+the
+<option>-a</option>
+and
+<option>-e</option>
+options, in which case the model will be autosized, and the grid
+will be centered on the centroid of the model, with ray spacing
+chosen to span the entire set of
+<emphasis remap='I'>objects.</emphasis>
+Alternatively,
+with the
+<option>-M</option>
+option, a transformation matrix may be provided on standard input
+which maps model-space to view-space.
+In this case, the grid ranges from -1.0 &lt;= X,Y &lt;= +1.0 in view space,
+with the size of the grid (number of rays fired) specified with
+<option>-s</option>.
+This option is most useful when
+<command>rtg3</command>
+is being invoked from a shell script created by an
+<citerefentry><refentrytitle>mged</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+<emphasis remap='I'>saveview</emphasis> command.  Note that it conflicts with
+<option>-G#</option>
+and
+<option>-g#</option>;
+negative hit distances have been seen when this
+conflict was not avoided.</para>
+
+<para>The following options are recognized.</para>
+<variablelist remap='TP'>
+  <varlistentry>
+  <term><option>-s#</option></term>
+  <listitem>
+<para>Number of rays to fire in X and Y directions (square grid).
+Default is 512 (512x512).</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-a#</option></term>
+  <listitem>
+<para>Select azimuth in degrees.  Used with
+<option>-e</option>
+and conflicts with
+<option>-M</option>.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-e#</option></term>
+  <listitem>
+<para>Select elevation in degrees.  Used with
+<option>-a</option>
+and conflicts with
+<option>-M</option>.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-M</option></term>
+  <listitem>
+<para>Read model2view matrix from standard input.
+Conflicts with
+<option>-a</option>
+and
+<option>-e</option>.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-g#</option></term>
+  <listitem>
+<para>Select grid cell width.  Do not use with the
+<option>-s#</option>
+option.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-G#</option></term>
+  <listitem>
+<para>Select grid cell height.  If <emphasis remap='I'>not</emphasis> specified, cell height equals
+cell width.  Do not use with the
+<option>-s#</option>
+option.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-U #</option></term>
+  <listitem>
+<para>sets the Boolean variable
+<emphasis remap='I'>use_air</emphasis>
+to the given value.
+The default for
+<citerefentry><refentrytitle>rtg3</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+is on, i.e.
+<option>-U1</option>,
+but the effect of air regions may be disabled with
+<option>-U0</option>.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-o</option></term>
+  <listitem>
+<para><emphasis remap='B'>output.cov</emphasis>
+specifies a named file for COVART-format output.
+By default, the shotlines are written to stdout.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-x#</option></term>
+  <listitem>
+<para>Set librt debug flags to (hexadecimal) number.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-c set ray_data_file=ray_file_name </option></term>
+  <listitem>
+<para>specifies a file name for ray data output.  This output consists of one line of data
+for each shotline in the shotline output file. Each line contains azimuth, elevation; x, y, and z of the ray start point;
+x, y, and z of the ray direction; the corresponding line number in the shotline file; and the coordinates of the first hit
+point along this ray.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-c set rt_cline_radius=# </option></term>
+  <listitem>
+<para>Tells
+<citerefentry><refentrytitle>rtg3</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+to use the provided number (in millimeters) as the additional radius to add to CLINE
+solids.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-c set save_overlaps=1 </option></term>
+  <listitem>
+<para>Tells
+<citerefentry><refentrytitle>rtg3</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+to act like the
+<emphasis remap='I'>FASTGEN4</emphasis>
+raytracer. Specifically, overlap handling is changed to agree with that of
+<emphasis remap='I'>FASTGEN4.</emphasis></para>
+  </listitem>
+  </varlistentry>
+</variablelist>
+
+<para>The
+<command>rtg3</command>
+program is a simple front-end to
+<citerefentry><refentrytitle>librt</refentrytitle><manvolnum>3</manvolnum></citerefentry>
+which is most useful when used with
+<citerefentry><refentrytitle>mged</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+and
+<citerefentry><refentrytitle>covart</refentrytitle><manvolnum>1V</manvolnum></citerefentry>.</para>
+
+<para>A color vector display of ray-model intersections can be written to
+<emphasis remap='I'>rtg3.pl</emphasis>
+by specifying the
+<option>-X80000000</option>
+option.
+The resulting plot file can be displayed with <emphasis remap='I'>pl-fb</emphasis> or <emphasis remap='I'>pl-sgi</emphasis>.</para>
+</refsect1>
+
+<refsect1 xml:id='format'><title>FORMAT</title>
+<para>The general layout of the output format is:</para>
+
+  <blockquote remap='RS'>
+<para>Overall header line (one per run)</para>
+
+<para>View header line (one per view)</para>
+
+<para>Ray (shotline) header line (one per ray)</para>
+
+<para>Component line (one for each three components in this ray)
+  </para></blockquote> <!-- remap='RE' -->
+
+<para>The
+<emphasis remap='B'>GIFT-3</emphasis>
+shotline format has a different convention for the location of
+the start point (and thus the location of parametric distance zero)
+along the ray.  This difference is handled automatically in
+<command>rtg3</command>
+by translating the ray's zero distance to the plane containing the
+model origin, by adding a distance correction factor.
+For each ray, both
+the cell center coordinates and
+the coordinates actually fired from are output.</para>
+
+<para>Obliquity angles (declensions off the normal) are computed internally
+in
+<emphasis remap='I'>radians</emphasis>
+but output in
+<emphasis remap='I'>degrees</emphasis>
+to satisfy the
+<emphasis remap='B'>GIFT-3</emphasis>
+format.  Note that internally,
+<emphasis remap='I'>librt</emphasis>
+normals always point outward, whereas
+<emphasis remap='B'>GIFT</emphasis>
+normals point inward.</para>
+
+<para><emphasis remap='B'>GIFT</emphasis>
+zero-fills the fields of the component card
+if there are less than three components.  Neither
+COVART II nor COVART III require this zero-filling, so it is omitted by
+<emphasis remap='I'>rtg3.</emphasis></para>
+</refsect1>
+
+<refsect1 xml:id='example'><title>EXAMPLE</title>
+<para>This section will acquaint the user with the ordinary usage of <command>rtg3</command>.
+A GIFT-3 output file is produced by giving the command:</para>
+
+<literallayout remap='.nf'>
+rtg3 -s32 model.g all.g &gt; file
+</literallayout> <!-- .fi -->
+
+<para>This will a 32 by 32 ray file of the named model.  If a bounding-box
+plot file is to be made as part of producing visual output, use</para>
+
+<literallayout remap='.nf'>
+rtg3 -s32 -x80000000 model.g
+</literallayout> <!-- .fi -->
+
+<para>The bounding boxes for the objects in the database specified will
+automatically be put into a file called <emphasis remap='I'>rtrpp.plot</emphasis>.  Now,
+to compute the color rays use</para>
+
+<literallayout remap='.nf'>
+Irtg3 -s32 -X80000000 model.g
+</literallayout> <!-- .fi -->
+
+<para>The results will be automatically stored in <emphasis remap='I'>rtg3.pl</emphasis>.  The rays
+will be colored green where they traverse solids in the model, and blue
+where they traverse air within the model.</para>
+
+<para>The two plot files can now be combined into a single picture and
+displayed:</para>
+
+<literallayout remap='.nf'>
+cat rtrpp.plot rtg3.pl | pl-sgi
+</literallayout> <!-- .fi -->
+
+</refsect1>
+
+<refsect1 xml:id='overlap_reporting'><title>OVERLAP REPORTING</title>
+<para><emphasis remap='I'>RTG3</emphasis> shares overlap handling and reporting with the rest of the
+<emphasis remap='I'>RT</emphasis> family of applications.  A brief description of the overlap
+reporting follows.</para>
+
+<para>The first one hundred (100) overlaps are individually reported.  Thereafter,
+only one out of each additional one hundred overlaps are reported, and
+the user is notified that overlap printouts are being omitted.  This
+alerts the user that more overlaps exist, but that they are too numerous to
+list individually.  The general overlap message takes the following form:</para>
+
+<literallayout remap='.nf'>
+OVERLAP1: reg=region_name isol=solid_name
+OVERLAP2: reg=region_name isol=solid_name
+OVERLAP depth #mm at (x, y, z) sx# sy# lvl#
+</literallayout> <!-- .fi -->
+
+<para>This means that OVERLAP1 and OVERLAP2 share a common space (depth) of
+#millimeters starting at the point x, y, z in model coordinates, and
+at the ray coordinates (screen coordinates) sx and sy.  Level refers to the
+level of recursion, and will typically be zero unless glass or mirror
+objects are present.</para>
+</refsect1>
+
+<refsect1 xml:id='see_also'><title>SEE ALSO</title>
+<para><citerefentry><refentrytitle>covart</refentrytitle><manvolnum>1V</manvolnum></citerefentry>, <citerefentry><refentrytitle>gift</refentrytitle><manvolnum>1V</manvolnum></citerefentry>, <citerefentry><refentrytitle>mged</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>rt</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>rtray</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>librt</refentrytitle><manvolnum>3</manvolnum></citerefentry>, <citerefentry><refentrytitle>plot3</refentrytitle><manvolnum>5</manvolnum></citerefentry>, <citerefentry><refentrytitle>ray</refentrytitle><manvolnum>5V</manvolnum></citerefentry>.
+<!-- .br -->
+``<emphasis remap='I'>COVART II - A Simulation Program for Computation of Vulnerable Areas
+and Repair Times - User Manual</emphasis>'', Joint Technical Coordinating
+Group for Munitions Effectiveness, Anti-Air Aerial Target
+Vulnerability Working Group, 61-JTCG/ME-84-3.</para>
+</refsect1>
+
+<refsect1 xml:id='diagnostics'><title>DIAGNOSTICS</title>
+<para>Numerous error conditions are possible, usually due to errors in
+the geometry database.
+Descriptive messages are printed on standard error (file descriptor 2).</para>
+</refsect1>
+
+<refsect1 xml:id='bugs'><title>BUGS</title>
+<para>The COVART file format permits multiple views to be stored in one file.
+<emphasis remap='I'>Rtg3</emphasis>
+presently can only compute a single view.</para>
+
+<para>Most deficiencies observed while using the
+<command>rtg3</command>
+program are usually with the
+<citerefentry><refentrytitle>librt</refentrytitle><manvolnum>3</manvolnum></citerefentry>
+package instead.  If the <option>-s#</option> option is used together with the
+<option>-G#</option> and <option>-g#</option> options, negative hit distances will be
+seen.</para>
+
+</refsect1>
+
+<refsect1 xml:id='authors'><title>AUTHORS</title>
+<para>Dr. Susanne Muuss
+<!-- .br -->
+Michael John Muuss</para>
+
+</refsect1>
+
+<refsect1 xml:id='copyright'><title>COPYRIGHT</title>
+<para>This software is Copyright (c) 1989-2012 by the United States
+Government as represented by U.S. Army Research Laboratory.</para>
+</refsect1>
+
+<refsect1 xml:id='bug_reports'><title>BUG REPORTS</title>
+<para>Reports of bugs or problems should be submitted via electronic
+mail to &lt;devs@brlcad.org&gt;.</para>
+</refsect1>
+</refentry>
+

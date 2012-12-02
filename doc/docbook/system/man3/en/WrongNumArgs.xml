@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man+tkman by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='wrongnumargs3'>
+
+<!-- '\" Copyright (c) 1994\-1997 Sun Microsystems, Inc. -->
+
+<!-- '\" See the file "license.terms" for information on usage and redistribution
+'\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
+'\" 
+'\" RCS: @(#) $Id$
+'\"  -->
+<refentryinfo><date>8.0</date></refentryinfo>
+<refmeta>
+<refentrytitle>Tcl_WrongNumArgs</refentrytitle>
+<manvolnum>3</manvolnum>
+<refmiscinfo class='date'>8.0</refmiscinfo>
+<refmiscinfo class='source'>Tcl</refmiscinfo>
+<refmiscinfo class='manual'>Tcl Library Procedures</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>Tcl_WrongNumArgs</refname>
+<refpurpose>generate standard error message for wrong number of arguments</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<funcsynopsis>
+<funcsynopsisinfo>
+#include &lt;tcl.h&gt;
+
+</funcsynopsisinfo>
+<funcprototype>
+<funcdef><function>Tcl_WrongNumArgs</function></funcdef>
+<paramdef><parameter>interp</parameter></paramdef>
+<paramdef><parameter>objc</parameter></paramdef>
+<paramdef><parameter>objv</parameter></paramdef>
+<paramdef><parameter>message</parameter></paramdef>
+</funcprototype>
+</funcsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='arguments'><title>ARGUMENTS</title>
+<!-- .AS Tcl_Obj *const *message -->
+<informaltable>
+<tgroup cols='3'>
+<tbody>
+
+<row><entry>"Tcl_Interp"</entry><entry>"interp"</entry><entry>"in"</entry>
+<entry>
+<para>Interpreter in which error will be reported: error message gets stored
+in its result object.</para>
+</entry>
+</row>
+<row><entry>int</entry><entry>objc</entry><entry>in</entry>
+<entry>
+<para>Number of leading arguments from <emphasis remap='I'>objv</emphasis> to include in error
+message.</para>
+</entry>
+</row>
+<row><entry>"Tcl_Obj *const"</entry><entry>objv[]</entry><entry>in</entry>
+<entry>
+<para>Arguments to command that had the wrong number of arguments.</para>
+</entry>
+</row>
+<row><entry>"const char"</entry><entry>*message</entry><entry>in</entry>
+<entry>
+<para>Additional error information to print after leading arguments
+from <emphasis remap='I'>objv</emphasis>.  This typically gives the acceptable syntax
+of the command.  This argument may be NULL.</para>
+<!-- .BE -->
+</entry>
+</row>
+</tbody>
+</tgroup>
+</informaltable>
+
+</refsect1>
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para><function>Tcl_WrongNumArgs</function> is a utility procedure that is invoked by
+command procedures when they discover that they have received the
+wrong number of arguments.  <function>Tcl_WrongNumArgs</function> generates a
+standard error message and stores it in the result object of
+<emphasis remap='I'>interp</emphasis>.  The message includes the <emphasis remap='I'>objc</emphasis> initial
+elements of <emphasis remap='I'>objv</emphasis> plus <emphasis remap='I'>message</emphasis>.  For example, if
+<emphasis remap='I'>objv</emphasis> consists of the values <emphasis remap='B'>foo</emphasis> and <emphasis remap='B'>bar</emphasis>,
+<emphasis remap='I'>objc</emphasis> is 1, and <emphasis remap='I'>message</emphasis> is
+<quote><emphasis remap='B'>fileName count</emphasis></quote>
+then <emphasis remap='I'>interp</emphasis>'s result object will be set to the following
+string:</para>
+<programlisting remap='CS'>
+wrong # args: should be "foo fileName count"
+</programlisting> <!-- remap='CE' -->
+<para>If <emphasis remap='I'>objc</emphasis> is 2, the result will be set to the following string:</para>
+<programlisting remap='CS'>
+wrong # args: should be "foo bar fileName count"
+</programlisting> <!-- remap='CE' -->
+<para><emphasis remap='I'>Objc</emphasis> is usually 1, but may be 2 or more for commands like
+<emphasis remap='B'>string</emphasis> and the Tk widget commands, which use the first argument
+as a subcommand.</para>  
+
+<para>Some of the objects in the <emphasis remap='I'>objv</emphasis> array may be abbreviations for
+a subcommand.  The command
+<emphasis remap='B'>Tcl_GetIndexFromObj</emphasis> will convert the abbreviated string object
+into an <emphasis remap='I'>indexObject</emphasis>.  If an error occurs in the parsing of the
+subcommand we would like to use the full subcommand name rather than
+the abbreviation.  If the <function>Tcl_WrongNumArgs</function> command finds any
+<emphasis remap='I'>indexObjects</emphasis> in the <emphasis remap='I'>objv</emphasis> array it will use the full subcommand
+name in the error message instead of the abbreviated name that was
+originally passed in.  Using the above example, let us assume that
+<emphasis remap='I'>bar</emphasis> is actually an abbreviation for <emphasis remap='I'>barfly</emphasis> and the object
+is now an indexObject because it was passed to
+<emphasis remap='B'>Tcl_GetIndexFromObj</emphasis>.  In this case the error message would be:</para>
+<programlisting remap='CS'>
+wrong # args: should be "foo barfly fileName count"
+</programlisting> <!-- remap='CE' -->
+
+</refsect1>
+
+<refsect1 xml:id='see_also'><title>SEE ALSO</title>
+<para>Tcl_GetIndexFromObj</para>
+
+</refsect1>
+
+<refsect1 xml:id='keywords'><title>KEYWORDS</title>
+<para>command, error message, wrong number of arguments</para>
+</refsect1>
+</refentry>
+

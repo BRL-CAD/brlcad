@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man+tkman by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='gethinstance3'>
+
+<!-- '\" Copyright (c) 1998\-2000 by Scriptics Corporation.
+'\" All rights reserved.
+'\" 
+'\" RCS: @(#) $Id$
+'\"  -->
+<refmeta>
+<refentrytitle>Tk_GetHISTANCE</refentrytitle>
+<manvolnum>3</manvolnum>
+<refmiscinfo class='manual'>Tk</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>Tk_GetHINSTANCE</refname>
+<refpurpose>retrieve the global application instance handle</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<funcsynopsis>
+<funcsynopsisinfo>
+#include &lt;tkPlatDecls.h&gt;
+
+</funcsynopsisinfo>
+<funcprototype>
+<funcdef>HINSTANCE <function>Tk_GetHINSTANCE</function></funcdef>
+<void/></funcprototype>
+</funcsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para><function>Tk_GetHINSTANCE</function> returns the Windows application instance handle
+for the Tk application.  This function is only available on Windows platforms.</para>
+</refsect1>
+
+<refsect1 xml:id='keywords'><title>KEYWORDS</title>
+<para>identifier, instance</para>
+</refsect1>
+</refentry>
+

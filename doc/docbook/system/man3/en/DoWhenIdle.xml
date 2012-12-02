@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man+tkman by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='dowhenidle3'>
+
+<!-- '\" Copyright (c) 1990 The Regents of the University of California.
+'\" Copyright (c) 1994\-1996 Sun Microsystems, Inc. -->
+
+<!-- '\" See the file "license.terms" for information on usage and redistribution
+'\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
+'\" 
+'\" RCS: @(#) $Id$
+'\"  -->
+<refentryinfo><date>7.5</date></refentryinfo>
+<refmeta>
+<refentrytitle>Tcl_DoWhenIdle</refentrytitle>
+<manvolnum>3</manvolnum>
+<refmiscinfo class='date'>7.5</refmiscinfo>
+<refmiscinfo class='source'>Tcl</refmiscinfo>
+<refmiscinfo class='manual'>Tcl Library Procedures</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>Tcl_DoWhenIdle</refname>
+<refname>Tcl_CancelIdleCall</refname>
+<refpurpose>invoke a procedure when there are no pending events</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<funcsynopsis>
+<funcsynopsisinfo>
+#include &lt;tcl.h&gt;
+
+</funcsynopsisinfo>
+<funcprototype>
+<funcdef><function>Tcl_DoWhenIdle</function></funcdef>
+<paramdef><parameter>proc</parameter></paramdef>
+<paramdef><parameter>clientData</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef><function>Tcl_CancelIdleCall</function></funcdef>
+<paramdef><parameter>proc</parameter></paramdef>
+<paramdef><parameter>clientData</parameter></paramdef>
+</funcprototype>
+</funcsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='arguments'><title>ARGUMENTS</title>
+<!-- .AS Tcl_IdleProc clientData -->
+<informaltable>
+<tgroup cols='3'>
+<tbody>
+
+<row><entry>"Tcl_IdleProc"</entry><entry>"*proc"</entry><entry>"in"</entry>
+<entry>
+<para>Procedure to invoke.</para>
+</entry>
+</row>
+<row><entry>ClientData</entry><entry>clientData</entry><entry>in</entry>
+<entry>
+<para>Arbitrary one-word value to pass to <emphasis remap='I'>proc</emphasis>.</para>
+<!-- .BE -->
+</entry>
+</row>
+</tbody>
+</tgroup>
+</informaltable>
+
+</refsect1>
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para><function>Tcl_DoWhenIdle</function> arranges for <emphasis remap='I'>proc</emphasis> to be invoked
+when the application becomes idle.  The application is
+considered to be idle when <emphasis remap='B'>Tcl_DoOneEvent</emphasis> has been
+called, could not find any events to handle, and is about
+to go to sleep waiting for an event to occur.  At this
+point all pending <function>Tcl_DoWhenIdle</function> handlers are
+invoked.  For each call to <function>Tcl_DoWhenIdle</function> there will
+be a single call to <emphasis remap='I'>proc</emphasis>;  after <emphasis remap='I'>proc</emphasis> is
+invoked the handler is automatically removed.
+<function>Tcl_DoWhenIdle</function> is only usable in programs that
+use <emphasis remap='B'>Tcl_DoOneEvent</emphasis> to dispatch events.</para>
+
+<para><emphasis remap='I'>Proc</emphasis> should have arguments and result that match the
+type <emphasis remap='B'>Tcl_IdleProc</emphasis>:</para>
+<programlisting remap='CS'>
+<funcsynopsis>
+<funcsynopsisinfo>
+typedef void Tcl_IdleProc(ClientData clientData);
+</funcsynopsisinfo>
+</funcsynopsis>
+</programlisting> <!-- remap='CE' -->
+<para>The <emphasis remap='I'>clientData</emphasis> parameter to <emphasis remap='I'>proc</emphasis> is a copy of the <emphasis remap='I'>clientData</emphasis>
+argument given to <function>Tcl_DoWhenIdle</function>.  Typically, <emphasis remap='I'>clientData</emphasis>
+points to a data structure containing application-specific information about
+what <emphasis remap='I'>proc</emphasis> should do.</para>
+
+<para><function>Tcl_CancelIdleCall</function>
+may be used to cancel one or more previous
+calls to <function>Tcl_DoWhenIdle</function>:  if there is a <function>Tcl_DoWhenIdle</function>
+handler registered for <emphasis remap='I'>proc</emphasis> and <emphasis remap='I'>clientData</emphasis>, then it
+is removed without invoking it.  If there is more than one
+handler on the idle list that refers to <emphasis remap='I'>proc</emphasis> and <emphasis remap='I'>clientData</emphasis>,
+all of the handlers are removed.  If no existing handlers match
+<emphasis remap='I'>proc</emphasis> and <emphasis remap='I'>clientData</emphasis> then nothing happens.</para>
+
+<para><function>Tcl_DoWhenIdle</function> is most useful in situations where
+(a) a piece of work will have to be done but (b) it is
+possible that something will happen in the near future
+that will change what has to be done or require something
+different to be done.  <function>Tcl_DoWhenIdle</function> allows the
+actual work to be deferred until all pending events have
+been processed.  At this point the exact work to be done
+will presumably be known and it can be done exactly once.</para>
+
+<para>For example, <function>Tcl_DoWhenIdle</function> might be used by an editor
+to defer display updates until all pending commands have
+been processed.  Without this feature, redundant redisplays
+might occur in some situations, such as the processing of
+a command file.</para>
+</refsect1>
+
+<refsect1 xml:id='bugs'><title>BUGS</title>
+<para>At present it is not safe for an idle callback to reschedule itself
+continuously.  This will interact badly with certain features of Tk
+that attempt to wait for all idle callbacks to complete.  If you would
+like for an idle callback to reschedule itself continuously, it is
+better to use a timer handler with a zero timeout period.</para>
+
+</refsect1>
+
+<refsect1 xml:id='keywords'><title>KEYWORDS</title>
+<para>callback, defer, idle callback</para>
+</refsect1>
+</refentry>
+

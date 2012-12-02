@@ -1,0 +1,503 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man+tkman by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='getbitmap3'>
+
+<!-- '\" Copyright (c) 1990 The Regents of the University of California.
+'\" Copyright (c) 1994\-1998 Sun Microsystems, Inc. -->
+
+<!-- '\" See the file "license.terms" for information on usage and redistribution
+'\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
+'\" 
+'\" RCS: @(#) $Id$
+'\"  -->
+<refentryinfo><date>8.1</date></refentryinfo>
+<refmeta>
+<refentrytitle>Tk_AllocBitmapFromObj</refentrytitle>
+<manvolnum>3</manvolnum>
+<refmiscinfo class='date'>8.1</refmiscinfo>
+<refmiscinfo class='source'>Tk</refmiscinfo>
+<refmiscinfo class='manual'>Tk Library Procedures</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>Tk_AllocBitmapFromObj</refname>
+<refname>Tk_GetBitmap</refname>
+<refname>Tk_GetBitmapFromObj</refname>
+<refname>Tk_DefineBitmap</refname>
+<refname>Tk_NameOfBitmap</refname>
+<refname>Tk_SizeOfBitmap</refname>
+<refname>Tk_FreeBitmapFromObj</refname>
+<refname>Tk_FreeBitmap</refname>
+<refpurpose>maintain database of single-plane pixmaps</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<funcsynopsis>
+<funcsynopsisinfo>
+#include &lt;tk.h&gt;
+
+</funcsynopsisinfo>
+<funcprototype>
+<funcdef>Pixmap <function>Tk_AllocBitmapFromObj</function></funcdef>
+<paramdef><parameter>interp</parameter></paramdef>
+<paramdef><parameter>tkwin</parameter></paramdef>
+<paramdef><parameter>objPtr</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef>Pixmap <function>Tk_GetBitmap</function></funcdef>
+<paramdef><parameter>interp</parameter></paramdef>
+<paramdef><parameter>tkwin</parameter></paramdef>
+<paramdef><parameter>info</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef>Pixmap <function>Tk_GetBitmapFromObj</function></funcdef>
+<paramdef><parameter>tkwin</parameter></paramdef>
+<paramdef><parameter>objPtr</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef>int <function>Tk_DefineBitmap</function></funcdef>
+<paramdef><parameter>interp</parameter></paramdef>
+<paramdef><parameter>name</parameter></paramdef>
+<paramdef><parameter>source</parameter></paramdef>
+<paramdef><parameter>width</parameter></paramdef>
+<paramdef><parameter>height</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef>const char *<function>Tk_NameOfBitmap</function></funcdef>
+<paramdef><parameter>display</parameter></paramdef>
+<paramdef><parameter>bitmap</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef><function>Tk_SizeOfBitmap</function></funcdef>
+<paramdef><parameter>display</parameter></paramdef>
+<paramdef><parameter>bitmap</parameter></paramdef>
+<paramdef><parameter>widthPtr</parameter></paramdef>
+<paramdef><parameter>heightPtr</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef><function>Tk_FreeBitmapFromObj</function></funcdef>
+<paramdef><parameter>tkwin</parameter></paramdef>
+<paramdef><parameter>objPtr</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef><function>Tk_FreeBitmap</function></funcdef>
+<paramdef><parameter>display</parameter></paramdef>
+<paramdef><parameter>bitmap</parameter></paramdef>
+</funcprototype>
+</funcsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='arguments'><title>ARGUMENTS</title>
+<!-- .AS unsigned long *pixelPtr -->
+<informaltable>
+<tgroup cols='3'>
+<tbody>
+
+<row><entry>"Tcl_Interp"</entry><entry>"*interp"</entry><entry>"in"</entry>
+<entry>
+<para>Interpreter to use for error reporting; if NULL then no error message
+is left after errors.</para>
+</entry>
+</row>
+<row><entry>Tk_Window</entry><entry>tkwin</entry><entry>in</entry>
+<entry>
+<para>Token for window in which the bitmap will be used.</para>
+</entry>
+</row>
+<row><entry>Tcl_Obj</entry><entry>*objPtr</entry><entry>in/out</entry>
+<entry>
+<para>String value describes desired bitmap; internal rep will be
+modified to cache pointer to corresponding Pixmap.</para>
+</entry>
+</row>
+<row><entry>"const char"</entry><entry>*info</entry><entry>in</entry>
+<entry>
+<para>Same as <emphasis remap='I'>objPtr</emphasis> except description of bitmap is passed as a string and
+resulting Pixmap is not cached.</para>
+</entry>
+</row>
+<row><entry>"const char"</entry><entry>*name</entry><entry>in</entry>
+<entry>
+<para>Name for new bitmap to be defined.</para>
+</entry>
+</row>
+<row><entry>"const char"</entry><entry>*source</entry><entry>in</entry>
+<entry>
+<para>Data for bitmap, in standard bitmap format.
+Must be stored in static memory whose value will never change.</para>
+</entry>
+</row>
+<row><entry>"int"</entry><entry>width</entry><entry>in</entry>
+<entry>
+<para>Width of bitmap.</para>
+</entry>
+</row>
+<row><entry>"int"</entry><entry>height</entry><entry>in</entry>
+<entry>
+<para>Height of bitmap.</para>
+</entry>
+</row>
+<row><entry>"int"</entry><entry>*widthPtr</entry><entry>out</entry>
+<entry>
+<para>Pointer to word to fill in with <emphasis remap='I'>bitmap</emphasis>'s width.</para>
+</entry>
+</row>
+<row><entry>"int"</entry><entry>*heightPtr</entry><entry>out</entry>
+<entry>
+<para>Pointer to word to fill in with <emphasis remap='I'>bitmap</emphasis>'s height.</para>
+</entry>
+</row>
+<row><entry>Display</entry><entry>*display</entry><entry>in</entry>
+<entry>
+<para>Display for which <emphasis remap='I'>bitmap</emphasis> was allocated.</para>
+</entry>
+</row>
+<row><entry>Pixmap</entry><entry>bitmap</entry><entry>in</entry>
+<entry>
+<para>Identifier for a bitmap allocated by <function>Tk_AllocBitmapFromObj</function> or
+<function>Tk_GetBitmap</function>.</para>
+<!-- .BE -->
+</entry>
+</row>
+</tbody>
+</tgroup>
+</informaltable>
+
+</refsect1>
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para>These procedures manage a collection of bitmaps (one-plane pixmaps)
+being used by an application.  The procedures allow bitmaps to be
+re-used efficiently, thereby avoiding server overhead, and also
+allow bitmaps to be named with character strings.</para>
+
+<para><function>Tk_AllocBitmapFromObj</function> returns a Pixmap identifier for a bitmap
+that matches the description in <emphasis remap='I'>objPtr</emphasis> and is suitable for use
+in <emphasis remap='I'>tkwin</emphasis>.  It re-uses an existing bitmap, if possible, and
+creates a new one otherwise.  <emphasis remap='I'>ObjPtr</emphasis>'s value must have one
+of the following forms:</para>
+<variablelist remap='TP'>
+  <varlistentry>
+  <term><emphasis remap='B'>@</emphasis><emphasis remap='I'>fileName</emphasis></term>
+  <listitem>
+<para><emphasis remap='I'>FileName</emphasis> must be the name of a file containing a bitmap
+description in the standard X11 or X10 format.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='I'>name</emphasis></term>
+  <listitem>
+<para><emphasis remap='I'>Name</emphasis> must be the name of a bitmap defined previously with
+a call to <function>Tk_DefineBitmap</function>.  The following names are pre-defined
+by Tk:</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>error</emphasis></term>
+  <listitem>
+<para>The international
+<quote>don't</quote>
+symbol:  a circle with a diagonal line across it.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>gray75</emphasis></term>
+  <listitem>
+<para>75% gray: a checkerboard pattern where three out of four bits are on.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>gray50</emphasis></term>
+  <listitem>
+<para>50% gray: a checkerboard pattern where every other bit is on.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>gray25</emphasis></term>
+  <listitem>
+<para>25% gray: a checkerboard pattern where one out of every four bits is on.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>gray12</emphasis></term>
+  <listitem>
+<para>12.5% gray: a pattern where one-eighth of the bits are on, consisting of
+every fourth pixel in every other row.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>hourglass</emphasis></term>
+  <listitem>
+<para>An hourglass symbol.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>info</emphasis></term>
+  <listitem>
+<para>A large letter
+<quote>i</quote>.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>questhead</emphasis></term>
+  <listitem>
+<para>The silhouette of a human head, with a question mark in it.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>question</emphasis></term>
+  <listitem>
+<para>A large question-mark.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>warning</emphasis></term>
+  <listitem>
+<para>A large exclamation point.</para>
+  </listitem>
+  </varlistentry>
+</variablelist>
+
+<para>In addition, the following pre-defined names are available only on the
+<emphasis remap='B'>Macintosh</emphasis> platform:</para>
+<variablelist remap='TP'>
+  <varlistentry>
+  <term><emphasis remap='B'>document</emphasis></term>
+  <listitem>
+<para>A generic document.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>stationery</emphasis></term>
+  <listitem>
+<para>Document stationery.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>edition</emphasis></term>
+  <listitem>
+<para>The <emphasis remap='I'>edition</emphasis> symbol.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>application</emphasis></term>
+  <listitem>
+<para>Generic application icon.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>accessory</emphasis></term>
+  <listitem>
+<para>A desk accessory.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>folder</emphasis></term>
+  <listitem>
+<para>Generic folder icon.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>pfolder</emphasis></term>
+  <listitem>
+<para>A locked folder.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>trash</emphasis></term>
+  <listitem>
+<para>A trash can.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>floppy</emphasis></term>
+  <listitem>
+<para>A floppy disk.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>ramdisk</emphasis></term>
+  <listitem>
+<para>A floppy disk with chip.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>cdrom</emphasis></term>
+  <listitem>
+<para>A cd disk icon.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>preferences</emphasis></term>
+  <listitem>
+<para>A folder with prefs symbol.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>querydoc</emphasis></term>
+  <listitem>
+<para>A database document icon.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>stop</emphasis></term>
+  <listitem>
+<para>A stop sign.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>note</emphasis></term>
+  <listitem>
+<para>A face with balloon words.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>caution</emphasis></term>
+  <listitem>
+<para>A triangle with an exclamation point.</para>
+  </listitem>
+  </varlistentry>
+</variablelist>
+
+<para>Under normal conditions, <function>Tk_AllocBitmapFromObj</function>
+returns an identifier for the requested bitmap.  If an error
+occurs in creating the bitmap, such as when <emphasis remap='I'>objPtr</emphasis> refers
+to a non-existent file, then <emphasis remap='B'>None</emphasis> is returned and an error
+message is left in <emphasis remap='I'>interp</emphasis>'s result if <emphasis remap='I'>interp</emphasis> is not
+NULL. <function>Tk_AllocBitmapFromObj</function> caches information about the return
+value in <emphasis remap='I'>objPtr</emphasis>, which speeds up future calls to procedures
+such as <function>Tk_AllocBitmapFromObj</function> and <function>Tk_GetBitmapFromObj</function>.</para>
+
+<para><function>Tk_GetBitmap</function> is identical to <function>Tk_AllocBitmapFromObj</function> except
+that the description of the bitmap is specified with a string instead
+of an object.  This prevents <function>Tk_GetBitmap</function> from caching the
+return value, so <function>Tk_GetBitmap</function> is less efficient than
+<function>Tk_AllocBitmapFromObj</function>.</para>
+
+<para><function>Tk_GetBitmapFromObj</function> returns the token for an existing bitmap, given
+the window and description used to create the bitmap.
+<function>Tk_GetBitmapFromObj</function> does not actually create the bitmap; the bitmap
+must already have been created with a previous call to
+<function>Tk_AllocBitmapFromObj</function> or <function>Tk_GetBitmap</function>.  The return
+value is cached in <emphasis remap='I'>objPtr</emphasis>, which speeds up
+future calls to <function>Tk_GetBitmapFromObj</function> with the same <emphasis remap='I'>objPtr</emphasis>
+and <emphasis remap='I'>tkwin</emphasis>.</para>
+
+<para><function>Tk_DefineBitmap</function> associates a name with
+in-memory bitmap data so that the name can be used in later
+calls to <function>Tk_AllocBitmapFromObj</function> or <function>Tk_GetBitmap</function>.  The <emphasis remap='I'>nameId</emphasis>
+argument gives a name for the bitmap;  it must not previously
+have been used in a call to <function>Tk_DefineBitmap</function>.
+The arguments <emphasis remap='I'>source</emphasis>, <emphasis remap='I'>width</emphasis>, and <emphasis remap='I'>height</emphasis>
+describe the bitmap.
+<function>Tk_DefineBitmap</function> normally returns <emphasis remap='B'>TCL_OK</emphasis>; if an error occurs
+(e.g. a bitmap named <emphasis remap='I'>nameId</emphasis> has already been defined) then
+<emphasis remap='B'>TCL_ERROR</emphasis> is returned and an error message is left in
+<emphasis remap='I'>interp-&gt;result</emphasis>.
+Note:  <function>Tk_DefineBitmap</function> expects the memory pointed to by
+<emphasis remap='I'>source</emphasis> to be static:  <function>Tk_DefineBitmap</function> does not make
+a private copy of this memory, but uses the bytes pointed to
+by <emphasis remap='I'>source</emphasis> later in calls to <function>Tk_AllocBitmapFromObj</function> or
+<function>Tk_GetBitmap</function>.</para>
+
+<para>Typically <function>Tk_DefineBitmap</function> is used by <emphasis remap='B'>#include</emphasis>-ing a
+bitmap file directly into a C program and then referencing
+the variables defined by the file.
+For example, suppose there exists a file <filename>stip.bitmap</filename>,
+which was created by the <emphasis remap='B'>bitmap</emphasis> program and contains
+a stipple pattern.
+The following code uses <function>Tk_DefineBitmap</function> to define a
+new bitmap named <emphasis remap='B'>foo</emphasis>:</para>
+<programlisting remap='CS'>
+<funcsynopsis>
+<funcsynopsisinfo>
+Pixmap bitmap;
+#include "stip.bitmap"
+</funcsynopsisinfo>
+<funcprototype>
+<funcdef><function>Tk_DefineBitmap</function></funcdef>
+<paramdef><parameter>interp</parameter></paramdef>
+<paramdef><parameter>"foo"</parameter></paramdef>
+<paramdef><parameter>stip_bits</parameter></paramdef>
+<paramdef><parameter>
+ stip_width</parameter></paramdef>
+<paramdef><parameter>stip_height</parameter></paramdef>
+</funcprototype>
+</funcsynopsis>
+...
+bitmap = Tk_GetBitmap(interp, tkwin, "foo");
+</programlisting> <!-- remap='CE' -->
+<para>This code causes the bitmap file to be read
+at compile-time and incorporates the bitmap information into
+the program's executable image.  The same bitmap file could be
+read at run-time using <function>Tk_GetBitmap</function>:</para>
+<programlisting remap='CS'>
+<funcsynopsis>
+<funcsynopsisinfo>
+Pixmap bitmap;
+</funcsynopsisinfo>
+</funcsynopsis>
+bitmap = Tk_GetBitmap(interp, tkwin, "@stip.bitmap");
+</programlisting> <!-- remap='CE' -->
+<para>The second form is a bit more flexible (the file could be modified
+after the program has been compiled, or a different string could be
+provided to read a different file), but it is a little slower and
+requires the bitmap file to exist separately from the program.</para>
+
+<para>Tk maintains a database of all the bitmaps that are currently in use.
+Whenever possible, it will return an existing bitmap rather
+than creating a new one.
+When a bitmap is no longer used, Tk will release it automatically.
+This approach can substantially reduce server overhead, so
+<function>Tk_AllocBitmapFromObj</function> and <function>Tk_GetBitmap</function> should generally
+be used in preference to Xlib procedures like <emphasis remap='B'>XReadBitmapFile</emphasis>.</para>
+
+<para>The bitmaps returned by <function>Tk_AllocBitmapFromObj</function> and <function>Tk_GetBitmap</function>
+are shared, so callers should never modify them.
+If a bitmap must be modified dynamically, then it should be
+created by calling Xlib procedures such as <emphasis remap='B'>XReadBitmapFile</emphasis>
+or <emphasis remap='B'>XCreatePixmap</emphasis> directly.</para>
+
+<para>The procedure <function>Tk_NameOfBitmap</function> is roughly the inverse of
+<function>Tk_GetBitmap</function>.
+Given an X Pixmap argument, it returns the textual description that was
+passed to <function>Tk_GetBitmap</function> when the bitmap was created.
+<emphasis remap='I'>Bitmap</emphasis> must have been the return value from a previous
+call to <function>Tk_AllocBitmapFromObj</function> or <function>Tk_GetBitmap</function>.</para>
+
+<para><function>Tk_SizeOfBitmap</function> returns the dimensions of its <emphasis remap='I'>bitmap</emphasis>
+argument in the words pointed to by the <emphasis remap='I'>widthPtr</emphasis> and
+<emphasis remap='I'>heightPtr</emphasis> arguments.  As with <function>Tk_NameOfBitmap</function>,
+<emphasis remap='I'>bitmap</emphasis> must have been created by <function>Tk_AllocBitmapFromObj</function> or
+<function>Tk_GetBitmap</function>.</para>
+
+<para>When a bitmap is no longer needed, <function>Tk_FreeBitmapFromObj</function> or
+<function>Tk_FreeBitmap</function> should be called to release it.
+For <function>Tk_FreeBitmapFromObj</function> the bitmap to release is specified
+with the same information used to create it; for
+<function>Tk_FreeBitmap</function> the bitmap to release is specified
+with its Pixmap token.
+There should be exactly one call to <function>Tk_FreeBitmapFromObj</function>
+or <function>Tk_FreeBitmap</function> for each call to <function>Tk_AllocBitmapFromObj</function> or
+<function>Tk_GetBitmap</function>.</para>
+
+</refsect1>
+
+<refsect1 xml:id='bugs'><title>BUGS</title>
+<para>In determining whether an existing bitmap can be used to satisfy
+a new request, <function>Tk_AllocBitmapFromObj</function> and <function>Tk_GetBitmap</function>
+consider only the immediate value of the string description.  For
+example, when a file name is passed to <function>Tk_GetBitmap</function>,
+<function>Tk_GetBitmap</function> will assume it is safe to re-use an existing
+bitmap created from the same file name:  it will not check to
+see whether the file itself has changed, or whether the current
+directory has changed, thereby causing the name to refer to
+a different file.</para>
+
+</refsect1>
+
+<refsect1 xml:id='keywords'><title>KEYWORDS</title>
+<para>bitmap, pixmap</para>
+</refsect1>
+</refentry>
+

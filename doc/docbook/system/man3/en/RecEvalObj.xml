@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man+tkman by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='recevalobj3'>
+
+<!-- '\" Copyright (c) 1997 Sun Microsystems, Inc. -->
+
+<!-- '\" See the file "license.terms" for information on usage and redistribution
+'\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
+'\" 
+'\" RCS: @(#) $Id$
+'\"  -->
+<refentryinfo><date>8.0</date></refentryinfo>
+<refmeta>
+<refentrytitle>Tcl_RecordAndEvalObj</refentrytitle>
+<manvolnum>3</manvolnum>
+<refmiscinfo class='date'>8.0</refmiscinfo>
+<refmiscinfo class='source'>Tcl</refmiscinfo>
+<refmiscinfo class='manual'>Tcl Library Procedures</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>Tcl_RecordAndEvalObj</refname>
+<refpurpose>save command on history list before evaluating</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<funcsynopsis>
+<funcsynopsisinfo>
+#include &lt;tcl.h&gt;
+
+</funcsynopsisinfo>
+<funcprototype>
+<funcdef>int <function>Tcl_RecordAndEvalObj</function></funcdef>
+<paramdef><parameter>interp</parameter></paramdef>
+<paramdef><parameter>cmdPtr</parameter></paramdef>
+<paramdef><parameter>flags</parameter></paramdef>
+</funcprototype>
+</funcsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='arguments'><title>ARGUMENTS</title>
+<!-- .AS Tcl_Interp *interp -->
+<informaltable>
+<tgroup cols='3'>
+<tbody>
+
+<row><entry>"Tcl_Interp"</entry><entry>"*interp"</entry><entry>"in"</entry>
+<entry>
+<para>Tcl interpreter in which to evaluate command.</para>
+</entry>
+</row>
+<row><entry>Tcl_Obj</entry><entry>*cmdPtr</entry><entry>in</entry>
+<entry>
+<para>Points to a Tcl object containing a command (or sequence of commands)
+to execute.</para>
+</entry>
+</row>
+<row><entry>int</entry><entry>flags</entry><entry>in</entry>
+<entry>
+<para>An OR'ed combination of flag bits.  <emphasis remap='B'>TCL_NO_EVAL</emphasis> means record the
+command but do not evaluate it.  <emphasis remap='B'>TCL_EVAL_GLOBAL</emphasis> means evaluate
+the command at global level instead of the current stack level.</para>
+<!-- .BE -->
+</entry>
+</row>
+</tbody>
+</tgroup>
+</informaltable>
+
+</refsect1>
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para><function>Tcl_RecordAndEvalObj</function> is invoked to record a command as an event
+on the history list and then execute it using <emphasis remap='B'>Tcl_EvalObjEx</emphasis>
+(or <emphasis remap='B'>Tcl_GlobalEvalObj</emphasis> if the <emphasis remap='B'>TCL_EVAL_GLOBAL</emphasis> bit is set
+in <emphasis remap='I'>flags</emphasis>).
+It returns a completion code such as <emphasis remap='B'>TCL_OK</emphasis> just like <emphasis remap='B'>Tcl_EvalObjEx</emphasis>,
+as well as a result object containing additional information
+(a result value or error message)
+that can be retrieved using <emphasis remap='B'>Tcl_GetObjResult</emphasis>.
+If you do not want the command recorded on the history list then
+you should invoke <emphasis remap='B'>Tcl_EvalObjEx</emphasis> instead of <function>Tcl_RecordAndEvalObj</function>.
+Normally <function>Tcl_RecordAndEvalObj</function> is only called with top-level
+commands typed by the user, since the purpose of history is to
+allow the user to re-issue recently invoked commands.
+If the <emphasis remap='I'>flags</emphasis> argument contains the <emphasis remap='B'>TCL_NO_EVAL</emphasis> bit then
+the command is recorded without being evaluated.</para>
+
+</refsect1>
+
+<refsect1 xml:id='see_also'><title>SEE ALSO</title>
+<para>Tcl_EvalObjEx, Tcl_GetObjResult</para>
+
+</refsect1>
+
+<refsect1 xml:id='keywords'><title>KEYWORDS</title>
+<para>command, event, execute, history, interpreter, object, record</para>
+</refsect1>
+</refentry>
+

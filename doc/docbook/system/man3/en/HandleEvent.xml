@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man+tkman by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='handleevent3'>
+
+<!-- '\" Copyright (c) 1990\-1992 The Regents of the University of California.
+'\" Copyright (c) 1994\-1996 Sun Microsystems, Inc. -->
+
+<!-- '\" See the file "license.terms" for information on usage and redistribution
+'\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
+'\" 
+'\" RCS: @(#) $Id$
+'\"  -->
+<refmeta>
+<refentrytitle>Tk_HandleEvent</refentrytitle>
+<manvolnum>3</manvolnum>
+<refmiscinfo class='manual'>Tk</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>Tk_HandleEvent</refname>
+<refpurpose>invoke event handlers for window system events</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<funcsynopsis>
+<funcsynopsisinfo>
+#include &lt;tk.h&gt;
+
+</funcsynopsisinfo>
+<funcprototype>
+<funcdef><function>Tk_HandleEvent</function></funcdef>
+<paramdef><parameter>eventPtr</parameter></paramdef>
+</funcprototype>
+</funcsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='arguments'><title>ARGUMENTS</title>
+<!-- .AS XEvent *eventPtr -->
+<informaltable>
+<tgroup cols='3'>
+<tbody>
+
+<row><entry>"XEvent"</entry><entry>"*eventPtr"</entry><entry>"in"</entry>
+<entry>
+<para>Pointer to X event to dispatch to relevant handler(s). It is important
+that all unused fields of the structure be set to zero.</para>
+<!-- .BE -->
+</entry>
+</row>
+</tbody>
+</tgroup>
+</informaltable>
+
+</refsect1>
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para><function>Tk_HandleEvent</function> is a lower-level procedure that deals with window
+events.  It is called by <emphasis remap='B'>Tcl_ServiceEvent</emphasis> (and indirectly by
+<emphasis remap='B'>Tcl_DoOneEvent</emphasis>), and in a few other cases within Tk.
+It makes callbacks to any window event
+handlers (created by calls to <emphasis remap='B'>Tk_CreateEventHandler</emphasis>)
+that match <emphasis remap='I'>eventPtr</emphasis> and then returns.  In some cases
+it may be useful for an application to bypass the Tk event
+queue and call <function>Tk_HandleEvent</function> directly instead of
+calling <emphasis remap='B'>Tcl_QueueEvent</emphasis> followed by
+<emphasis remap='B'>Tcl_ServiceEvent</emphasis>.</para>
+
+<para>This procedure may be invoked recursively.  For example,
+it is possible to invoke <function>Tk_HandleEvent</function> recursively
+from a handler called by <function>Tk_HandleEvent</function>.  This sort
+of operation is useful in some modal situations, such
+as when a
+notifier has been popped up and an application wishes to
+wait for the user to click a button in the notifier before
+doing anything else.</para>
+
+</refsect1>
+
+<refsect1 xml:id='keywords'><title>KEYWORDS</title>
+<para>callback, event, handler, window</para>
+</refsect1>
+</refentry>
+

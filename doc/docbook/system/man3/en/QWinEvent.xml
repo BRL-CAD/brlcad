@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man+tkman by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='qwinevent3'>
+
+<!-- '\" Copyright (c) 1995\-1996 Sun Microsystems, Inc. -->
+
+<!-- '\" See the file "license.terms" for information on usage and redistribution
+'\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
+'\" 
+'\" RCS: @(#) $Id$
+'\"  -->
+<refentryinfo><date>7.5</date></refentryinfo>
+<refmeta>
+<refentrytitle>Tk_QueueWindowEvent</refentrytitle>
+<manvolnum>3</manvolnum>
+<refmiscinfo class='date'>7.5</refmiscinfo>
+<refmiscinfo class='source'>Tk</refmiscinfo>
+<refmiscinfo class='manual'>Tk Library Procedures</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>Tk_CollapseMotionEvents</refname>
+<refname>Tk_QueueWindowEvent</refname>
+<refpurpose>Add a window event to the Tcl event queue</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<funcsynopsis>
+<funcsynopsisinfo>
+#include &lt;tk.h&gt;
+
+</funcsynopsisinfo>
+<funcprototype>
+<funcdef>int <function>Tk_CollapseMotionEvents</function></funcdef>
+<paramdef><parameter>display</parameter></paramdef>
+<paramdef><parameter>collapse</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef><function>Tk_QueueWindowEvent</function></funcdef>
+<paramdef><parameter>eventPtr</parameter></paramdef>
+<paramdef><parameter>position</parameter></paramdef>
+</funcprototype>
+</funcsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='arguments'><title>ARGUMENTS</title>
+<!-- .AS Tcl_QueuePosition position -->
+<informaltable>
+<tgroup cols='3'>
+<tbody>
+
+<row><entry>"Display"</entry><entry>"*display"</entry><entry>"in"</entry>
+<entry>
+<para>Display for which to control motion event collapsing.</para>
+</entry>
+</row>
+<row><entry>int</entry><entry>collapse</entry><entry>in</entry>
+<entry>
+<para>Indicates whether motion events should be collapsed or not.</para>
+</entry>
+</row>
+<row><entry>XEvent</entry><entry>*eventPtr</entry><entry>in</entry>
+<entry>
+<para>An event to add to the event queue. It is important
+that all unused fields of the structure be set to zero.</para>
+</entry>
+</row>
+<row><entry>Tcl_QueuePosition</entry><entry>position</entry><entry>in</entry>
+<entry>
+<para>Where to add the new event in the queue:  <emphasis remap='B'>TCL_QUEUE_TAIL</emphasis>,
+<emphasis remap='B'>TCL_QUEUE_HEAD</emphasis>, or <emphasis remap='B'>TCL_QUEUE_MARK</emphasis>.</para>
+<!-- .BE -->
+</entry>
+</row>
+</tbody>
+</tgroup>
+</informaltable>
+
+</refsect1>
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para><function>Tk_QueueWindowEvent</function> places a window event on Tcl's internal event
+queue for eventual servicing.  It creates a Tcl_Event structure, copies the
+event into that structure, and calls <emphasis remap='B'>Tcl_QueueEvent</emphasis> to add the event
+to the queue.  When the event is eventually removed from the queue it is
+processed just like all window events.</para>
+
+<para>When multiple motion events are received for the same window in rapid
+succession, they are collapsed by default.  This behavior can be controlled
+with <function>Tk_CollapseMotionEvents</function>.  <function>Tk_CollapseMotionEvents</function> always
+returns the previous value for collapse behavior on the <emphasis remap='I'>display</emphasis>.</para>
+
+<para>The <emphasis remap='I'>position</emphasis> argument to <function>Tk_QueueWindowEvent</function> has
+the same significance as for <emphasis remap='B'>Tcl_QueueEvent</emphasis>;  see the
+documentation for <emphasis remap='B'>Tcl_QueueEvent</emphasis> for details.</para>
+
+</refsect1>
+
+<refsect1 xml:id='keywords'><title>KEYWORDS</title>
+<para>callback, clock, handler, modal timeout, events</para>
+</refsect1>
+</refentry>
+

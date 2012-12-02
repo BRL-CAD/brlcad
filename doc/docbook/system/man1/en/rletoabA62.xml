@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='rletoaba621'>
+<!--  Copyright (c) 1988, University of Utah -->
+<refentryinfo><date>6 February 1988</date></refentryinfo>
+<refmeta>
+<refentrytitle>RLETOABA62</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class='date'>6 February 1988</refmiscinfo>
+<refmiscinfo class='source'>1</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>rletoabA62</refname>
+<refpurpose>Convert from RLE Format to Abekas A62 Dump Format</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<cmdsynopsis>
+  <command>rletoabA62</command>    
+    <arg choice='opt'>-N </arg>
+    <arg choice='opt'>-f <replaceable>n</replaceable></arg>
+    <arg choice='opt'>-n <replaceable>n</replaceable></arg>
+    <arg choice='opt'><replaceable>infile</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para><emphasis remap='I'>RletoabA62</emphasis>
+converts a raster file in the Utah Raster Toolkit RLE format into a format
+suitable for writing to an Abekas A62 dump tape and subsequent loading onto the
+Abekas disk.
+The generated image is 768 pixels wide and 512 pixels high.
+If the input is larger, it is truncated.
+If it is smaller, it is padded on the top and right with black.
+The output is written to
+<emphasis remap='I'>stdout</emphasis>,
+and should be written to a tape in 24K byte blocks with
+<emphasis remap='I'>dd</emphasis>
+as in the following:</para>
+
+<para>	dd of=/dev/rmt8 obs=24k</para>
+
+<para>Normally, the output is processed with a simple digital filter; this feature
+may be turned off with an option.
+<emphasis remap='I'>RletoabA62</emphasis>
+normally writes two consecutive frames, normally starting at frame 1.</para>
+
+<para>Input is taken from
+<emphasis remap='I'>stdin</emphasis>
+unless a file name is given on the command line.
+Only a single file may be given, and so if multiple invocations of
+<command>rletoabA62</command>
+are performed in a script, care must be taken to tell the program to convert
+the data for the proper Abekas frame number (1-4).
+Otherwise, the colors will appear wrong; they will be rotated on a vector scope
+diagram.</para>
+</refsect1>
+
+<refsect1 xml:id='example'><title>EXAMPLE</title>
+<para>The following example converts all files ending in
+<markup>.rle</markup>
+in the current directory and writes them to a tape.
+Two frames are written per image and the frame number is incremented
+accordingly.</para>
+
+<!-- .in +1i -->
+<para>frame=1
+<!-- .br -->
+number=2
+<!-- .br -->
+for file in *.rle
+<!-- .br -->
+do
+<!-- .br -->
+	rletoabA62 -f $frame $file
+<!-- .br -->
+	frame=`expr \( \( $frame - 1 \) + $number \) % 4 + 1`
+<!-- .br -->
+done |
+<!-- .br -->
+dd of=/dev/rmt8 obs=24k</para>
+<!-- .in \-1i -->
+</refsect1>
+
+<refsect1 xml:id='options'><title>OPTIONS</title>
+<para>Options are parsed by getopt(3).</para>
+<variablelist remap='TP'>
+  <varlistentry>
+  <term><option>-N</option></term>
+  <listitem>
+<para>Do not apply digital filtering.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-f</option><replaceable> n</replaceable></term>
+  <listitem>
+<para>Create the first frame as Abekas frame number
+<emphasis remap='I'>n</emphasis>,
+having a value from one to four.
+Consecutive frames increment this number modulo four.
+The default is one.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-n</option><replaceable> n</replaceable></term>
+  <listitem>
+<para>Write
+<emphasis remap='I'>n</emphasis>
+frames of output, incrementing the frame number each time.
+The default is two.</para>
+  </listitem>
+  </varlistentry>
+</variablelist>
+</refsect1>
+
+<refsect1 xml:id='see_also'><title>SEE ALSO</title>
+<para><citerefentry><refentrytitle>urt</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>RLE</refentrytitle><manvolnum>5</manvolnum></citerefentry>.</para>
+</refsect1>
+
+<refsect1 xml:id='author'><title>AUTHOR</title>
+<para>Bob Brown, RIACS.</para>
+</refsect1>
+
+<refsect1 xml:id='bugs'><title>BUGS</title>
+<para>This program does not preserve the aspect ratio of the input.</para>
+</refsect1>
+</refentry>
+

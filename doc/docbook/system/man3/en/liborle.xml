@@ -1,0 +1,333 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='liborle3'>
+<refmeta>
+<refentrytitle>LIBORLE</refentrytitle>
+<manvolnum>3</manvolnum>
+<refmiscinfo class='source'>BRL-CAD</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>liborle</refname>
+<refpurpose>old run-length encoded image library</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<funcsynopsis>
+<funcsynopsisinfo>
+#include &lt;fb.h&gt;
+#include &lt;rle.h&gt;
+
+</funcsynopsisinfo>
+<funcprototype>
+<funcdef>int <function>rle_rhdr</function></funcdef>
+    <paramdef>FILE * <parameter>stream</parameter></paramdef>
+    <paramdef>int * <parameter>flags</parameter></paramdef>
+    <paramdef>Pixel * <parameter>bgpixel</parameter></paramdef>
+</funcprototype>
+
+<funcprototype>
+<funcdef><function>rle_whdr</function></funcdef>
+    <paramdef>FILE * <parameter>stream</parameter></paramdef>
+    <paramdef>Pixel * <parameter>bgpixel</parameter></paramdef>
+    <paramdef>rle_rlen ( xlen , ylen ) int *xlen , * <parameter>ylen</parameter></paramdef>
+    <paramdef>rle_rpos ( xpos , ypos ) int *xpos , * <parameter>ypos</parameter></paramdef>
+    <paramdef>rle_wlen ( xlen , ylen , mode ) int xlen , ylen , <parameter>mode</parameter></paramdef>
+</funcprototype>
+
+<funcprototype>
+<funcdef><function>rle_wpos</function></funcdef>
+    <paramdef>int xpos , ypos , <parameter>mode</parameter></paramdef>
+    <paramdef>int rle_rmap ( stream , cmap ) FILE * <parameter>stream</parameter></paramdef>
+    <paramdef>ColorMap * <parameter>cmap</parameter></paramdef>
+</funcprototype>
+
+<funcprototype>
+<funcdef><function>rle_wmap</function></funcdef>
+    <paramdef>FILE * <parameter>stream</parameter></paramdef>
+    <paramdef>ColorMap * <parameter>cmap</parameter></paramdef>
+</funcprototype>
+
+<funcprototype>
+<funcdef><function>rle_decode_ln</function></funcdef>
+    <paramdef>FILE * <parameter>stream</parameter></paramdef>
+    <paramdef>Pixel * <parameter>scanline_buffer</parameter></paramdef>
+</funcprototype>
+
+<funcprototype>
+<funcdef><function>rle_encode_ln</function></funcdef>
+    <paramdef>FILE * <parameter>stream</parameter></paramdef>
+    <paramdef>Pixel * <parameter>scanline_buffer</parameter></paramdef>
+</funcprototype>
+</funcsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para>These routines are designed to provide a means of decoding or encoding
+University of Utah Alpha_1 format Run-Length Encoded (RLE) files
+from a
+C
+program.
+There are separate routines for reading or writing the
+RLE
+header, reading
+or writing the encoded color map, and decoding or encoding a scanline of a
+raster image.
+The program that loads this library can be ignorant of the
+particular encoding
+scheme being used.
+This library does not need to know anything about
+the available frame buffer hardware.
+The frame buffer library,
+<citerefentry><refentrytitle>libfb</refentrytitle><manvolnum>3</manvolnum></citerefentry>,
+can also be used to free programs of hardware dependence.</para>
+
+<para>The following routines are used to decode an
+RLE
+file into a raster image:</para>
+
+<para><emphasis remap='I'>Rle_rhdr</emphasis>
+will seek to the beginning of the given input
+<emphasis remap='I'>stream</emphasis>
+and read the
+setup information in the
+RLE
+header.
+This routine
+must be called first when decoding an
+RLE
+file.
+If
+<emphasis remap='I'>bgpixel</emphasis>
+is not
+<emphasis remap='B'><?troff ps -1?>NULL<?troff ps 0?></emphasis>,
+the background color stored in the
+RLE
+header will be placed there.
+<emphasis remap='I'>Flags</emphasis>
+is a flag word using a combination of single-bit flags
+<emphasis remap='B'><?troff ps -1?>NO_BOX_SAVE<?troff ps 0?></emphasis>,
+<emphasis remap='B'><?troff ps -1?>NO_COLORMAP<?troff ps 0?></emphasis>,
+and
+<!-- B elided -->
+<envar>NO_IMAGE</envar>
+(described in
+<emphasis remap='B'>rle.h</emphasis>)
+to indicate whether the image was saved with background,
+whether the color map was saved,
+and whether the image was saved or just the color map.
+If the color map was saved,
+<emphasis remap='I'>rle_rmap</emphasis>
+must be used next to read the color map from the
+RLE
+file and decode it into the buffer
+pointed to by
+<emphasis remap='I'>cmap</emphasis>.
+<emphasis remap='I'>Rle_rlen</emphasis>
+and
+<emphasis remap='I'>rle_rpos</emphasis>
+are used after
+<function>rle_rhdr</function>
+to retrieve, from the header structure, the length and position of the image
+in the locations specified by
+<emphasis remap='I'>xlen</emphasis>,
+<emphasis remap='I'>ylen</emphasis>,
+<emphasis remap='I'>xpos</emphasis>
+and
+<emphasis remap='I'>ypos</emphasis>.</para>
+
+<para><emphasis remap='I'>Rle_decode_ln</emphasis>
+is used to decode the next scanline (starting at the bottom) and
+should be passed the address of a
+<emphasis remap='I'>scanline_buffer</emphasis>
+large enough to store
+<emphasis remap='I'>xlen</emphasis>
+plus
+<emphasis remap='I'>xpos</emphasis>
+pixels.
+Only foreground pixels are written;
+it is the caller's responsibility
+to fill the buffer first with the appropriate background.
+If no
+foreground pixels occur, zero is returned;
+otherwise 1 is returned
+to indicate that the buffer has been altered.</para>
+
+<para>The following routines are used to compress a raster image into an
+RLE
+file:</para>
+
+<para><emphasis remap='I'>Rle_whdr</emphasis>
+is used first to specify the encoding scheme to use and to
+write the
+RLE
+header which will contain this information
+to the given output
+<emphasis remap='I'>stream</emphasis>.
+The
+<emphasis remap='I'>ncolors</emphasis>
+parameter specifies the number of color channels.
+Normally, this should
+be set to
+<emphasis remap='B'><?troff ps -1?>3<?troff ps 0?></emphasis>
+(for red, green, and blue channels).
+If
+<emphasis remap='I'>ncolors</emphasis>
+equals
+<emphasis remap='B'><?troff ps -1?>1<?troff ps 0?></emphasis>,
+a monochrome (black and white) image is assumed, and if
+it is
+<emphasis remap='B'><?troff ps -1?>0<?troff ps 0?></emphasis>,
+only the color map will be saved.
+<emphasis remap='I'>Bgflag</emphasis>
+specifies whether or not the image is saved with the background.
+If
+<emphasis remap='I'>bgflag</emphasis>
+is nonzero, only the foreground image is saved.
+If
+<emphasis remap='I'>bgflag</emphasis>
+is zero,
+the entire image is encoded.
+<emphasis remap='I'>Rle_whdr</emphasis>
+stores the background color along with the other setup information.
+If a monochrome image has been specified, the
+NTSC
+standard is used to calculate the background color from
+<emphasis remap='I'>bgpixel</emphasis>;
+otherwise
+<emphasis remap='I'>bgpixel</emphasis>
+is used as the background color.
+<emphasis remap='I'>Cmflag</emphasis>
+is nonzero to indicate that the color map is to be saved, and this is
+accomplished with
+<emphasis remap='I'>rle_wmap</emphasis>
+which must be used next to encode the color map pointed to by
+<emphasis remap='I'>cmap</emphasis>
+and write it to the
+RLE
+file.
+If the value of
+<emphasis remap='I'>cmap</emphasis>
+is
+<emphasis remap='B'><?troff ps -1?>NULL<?troff ps 0?></emphasis>,
+a standard (linear) color map will be written.</para>
+
+<para><emphasis remap='I'>Rle_encode_ln</emphasis>
+is used to encode the next scanline (starting at the bottom) and
+should be passed the address of a
+<emphasis remap='I'>scanline_buffer</emphasis>
+containing the pixels to be converted.</para>
+
+<para>The
+<emphasis remap='I'>Pixel</emphasis>
+and
+<emphasis remap='I'>ColorMap</emphasis>
+data types are defined in
+<emphasis remap='B'>fb.h</emphasis>.
+The color map and scanlines can be conveniently read from or written to
+a file or supported frame buffer with compatible functions found in
+<citerefentry><refentrytitle>libfb</refentrytitle><manvolnum>3</manvolnum></citerefentry>.</para>
+</refsect1>
+
+<refsect1 xml:id='warnings'><title>WARNINGS</title>
+<para>The current version of this library reads Edition-1 and Edition-2
+RLE files.
+The University of Utah is currently preparing Edition-3 of
+this format.
+All encoding is in Edition-2 format.
+Note that Edition-1 formats are byte-order sensitive, so that they
+cannot be transported around the network with
+<citerefentry><refentrytitle>rcp</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+with abandon.</para>
+
+<para>The
+RLE
+files must be decoded sequentially from the bottom up, as it is the convention
+that the origin be the lower left corner of the screen.
+<emphasis remap='I'>Rle_decode_ln</emphasis>
+should fail if called more than
+<emphasis remap='I'>ylen</emphasis>
+times, as it will attempt to read past the end of the input file.
+Encoding an
+RLE
+file from the top down is considered anti-social behavior and will lead
+to confusion if the installed frame buffer utilities are used.</para>
+
+<para>The library functions must be used
+<emphasis remap='I'>in sequence</emphasis> to read/write the header, followed
+by the color map (if one exists) and then the image.
+It is safe to process multiple images as long as the proper sequence
+is followed.
+Both
+<emphasis remap='I'>rle_rhdr</emphasis>
+and
+<emphasis remap='I'>rle_whdr</emphasis>
+seek to the beginning of
+<emphasis remap='I'>stream</emphasis>
+before performing any I/O, but all other functions rely on sequential
+read/write operations on the
+RLE
+file.</para>
+
+<para>Processing two images asynchronously is not recommended;
+that is,
+you should finish one before you begin the next.
+The problem stems from the fact that some global information is stored by
+<emphasis remap='I'>rle_rhdr</emphasis>,
+and this information is clobbered by subsequent calls.
+Therefore,
+when switching back to an image that is partially decoded, the file offset
+must be determined with
+<citerefentry><refentrytitle>ftell</refentrytitle><manvolnum>3S</manvolnum></citerefentry>;
+then
+<emphasis remap='I'>rle_rhdr</emphasis>
+can be invoked again to set up things, and finally
+<citerefentry><refentrytitle>fseek</refentrytitle><manvolnum>3S</manvolnum></citerefentry>
+can be used to reposition the file pointer.</para>
+</refsect1>
+
+<refsect1 xml:id='example'><title>EXAMPLE</title>
+<para>The library may be loaded as follows:</para>
+<literallayout remap='RS'>
+<emphasis remap='I'>cc program.c -lrle.a</emphasis>
+</literallayout> <!-- remap='RE' -->
+</refsect1>
+
+<refsect1 xml:id='see_also'><title>SEE ALSO</title>
+<para><citerefentry><refentrytitle>rle-fb</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>fb-rle</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>libfb</refentrytitle><manvolnum>3</manvolnum></citerefentry>.</para>
+</refsect1>
+
+<refsect1 xml:id='diagnostics'><title>DIAGNOSTICS</title>
+<para>Upon error, all functions print a message and return -1.</para>
+</refsect1>
+
+<refsect1 xml:id='warning'><title>WARNING</title>
+<para>This library is now obsolete.  The new library is
+compatible with the Utah Raster Toolkit, and now bears the name "librle".</para>
+</refsect1>
+
+<refsect1 xml:id='bugs'><title>BUGS</title>
+<para>It would be nice to fix the problem of asynchronous calls by passing a
+pointer to storage for the setup structure to the read/write header and
+read/write scanline routines so that there is no global information
+to contend with.</para>
+
+</refsect1>
+
+<refsect1 xml:id='author'><title>AUTHOR</title>
+<para>BRL-CAD Team</para>
+
+</refsect1>
+
+<refsect1 xml:id='copyright'><title>COPYRIGHT</title>
+<para>This software is Copyright (c) 1986-2012 by the United States
+Government as represented by U.S. Army Research Laboratory.</para>
+</refsect1>
+
+<refsect1 xml:id='bug_reports'><title>BUG REPORTS</title>
+<para>Reports of bugs or problems should be submitted via electronic
+mail to &lt;devs@brlcad.org&gt;.</para>
+</refsect1>
+</refentry>
+

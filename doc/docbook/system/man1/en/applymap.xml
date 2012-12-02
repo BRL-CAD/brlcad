@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='applymap1'>
+<!--  Copyright (c) 1986, University of Utah -->
+<refmeta>
+<refentrytitle>APPLYMAP</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class='source'>Nov 12, 1986</refmiscinfo>
+<refmiscinfo class='manual'>1</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>applymap</refname>
+<refpurpose>Apply the color map in an RLE file to the pixel data</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<cmdsynopsis>
+  <command>applymap</command>    
+    <arg choice='opt'>-l </arg>
+    <arg choice='opt'><arg choice='plain'>-o </arg><arg choice='plain'><replaceable>outfile</replaceable></arg></arg>
+    <arg choice='opt'><replaceable>infile</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para>This program takes the color map in an
+<citerefentry><refentrytitle>RLE</refentrytitle><manvolnum>5</manvolnum></citerefentry>
+file and modifies the pixel values by applying the color map to them.
+If there is more than one color channel in the input file,
+the color map in the input file should have the same number of
+channels.  If the input file has a single color channel, the
+output file will have the same number of color channels as the color
+map.</para>
+
+<para>Each pixel in the input file is mapped as follows:  For a
+multi-channel input file, a pixel in channel
+<emphasis remap='I'>i</emphasis>
+is mapped as
+<emphasis remap='I'>map[i][pixel] &gt;&gt; 8</emphasis>,
+producing a pixel in output channel
+<emphasis remap='I'>i</emphasis>.
+The right shift takes the 16 bit color map value to an 8 bit pixel
+value.  For a single channel input file, to produce a pixel in output
+channel
+<emphasis remap='I'>i</emphasis>
+is produced from the corresponding input pixel value
+as
+<emphasis remap='I'>map[i][pixel] &gt;&gt; 8</emphasis>.</para>
+</refsect1>
+
+<refsect1 xml:id='options'><title>OPTIONS</title>
+<variablelist remap='TP'>
+  <varlistentry>
+  <term><option>-l</option></term>
+  <listitem>
+<para>This option will cause a linear (identity) color map to be loaded into the
+output file.  Otherwise, the output file will have no color map.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='I'>infile</emphasis></term>
+  <listitem>
+<para>The input will be read from this file, otherwise, input will
+be taken from stdin.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-o</option><replaceable> outfile</replaceable></term>
+  <listitem>
+<para>If specified, output will be written to this file, otherwise it will
+go to stdout.</para>
+  </listitem>
+  </varlistentry>
+</variablelist>
+</refsect1>
+
+<refsect1 xml:id='see_also'><title>SEE ALSO</title>
+<para><citerefentry><refentrytitle>rleldmap</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>urt</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>RLE</refentrytitle><manvolnum>5</manvolnum></citerefentry>.</para>
+</refsect1>
+
+<refsect1 xml:id='author'><title>AUTHOR</title>
+<para>Spencer W. Thomas, University of Utah</para>
+</refsect1>
+
+<refsect1 xml:id='bugs'><title>BUGS</title>
+<para>If the image data and color map channels in the input file do not conform to the restriction stated above (N->N or 1->N) the program will most likely
+core dump.</para>
+</refsect1>
+</refentry>
+

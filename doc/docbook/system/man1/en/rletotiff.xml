@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='rletotiff1'>
+<!--  Copyright (c) 1990, University of Michigan -->
+<refmeta>
+<refentrytitle>RLETOTIFF</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class='source'>July 3, 1990</refmiscinfo>
+<refmiscinfo class='manual'>1</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>rletotiff</refname>
+<refpurpose>Convert 24 bit RLE image files to TIFF.</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<cmdsynopsis>
+  <command>rletotiff</command>    
+    <arg choice='opt'><arg choice='plain'>- </arg><arg choice='opt'><replaceable>cC</replaceable></arg></arg>
+    <arg choice='plain'>-o </arg>
+    <arg choice='plain'><replaceable>outfile.tif</replaceable></arg>
+    <arg choice='opt'>-v </arg>
+    <arg choice='opt'><replaceable>infile.rle</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para>This program converts a 24 bit image in
+<citerefentry><refentrytitle>RLE</refentrytitle><manvolnum>5</manvolnum></citerefentry>
+format into
+<emphasis remap='I'>TIFF</emphasis>
+form.  Only a single image will be converted.</para>
+</refsect1>
+
+<refsect1 xml:id='options'><title>OPTIONS</title>
+<variablelist remap='TP'>
+  <varlistentry>
+  <term><option>-{cC}</option></term>
+  <listitem>
+<para>Sets the type of compression used in the output file.
+<option>-c</option>
+(the default) will cause the output file to be compressed using the
+Lempel-Ziv-Welch (LZW) algorithm.
+<option>-C</option>
+will suppress any compression.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-o</option><replaceable> outfile.tif</replaceable></term>
+  <listitem>
+<para>The output will be written to this file.
+<emphasis remap='I'>outfile.tif</emphasis>
+must be a real file, the special cases described in
+<emphasis remap='I'>urt (1)</emphasis>
+do not apply.  Note also that this "option" is not optional.  The
+<option>-o</option>
+flag is required for consistency with the other tools.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-v</option></term>
+  <listitem>
+<para>Flip image vertically.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='I'>infile.rle</emphasis></term>
+  <listitem>
+<para>The input will be read from this file.  If
+<emphasis remap='I'>infile.rle</emphasis>
+is "-" or is not specified, the input will be read from the standard
+input stream.</para>
+  </listitem>
+  </varlistentry>
+</variablelist>
+</refsect1>
+
+<refsect1 xml:id='see_also'><title>SEE ALSO</title>
+<para><citerefentry><refentrytitle>tifftorle</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>urt</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>RLE</refentrytitle><manvolnum>5</manvolnum></citerefentry>.</para>
+</refsect1>
+
+<refsect1 xml:id='author'><title>AUTHOR</title>
+<para>Bailey Brown, University of Michigan.</para>
+</refsect1>
+</refentry>
+

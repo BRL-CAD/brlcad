@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='rlegrid1'>
+<!--  Copyright (c) 1986, University of Utah -->
+<refmeta>
+<refentrytitle>RLEGRID</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class='source'>November 26, 1990</refmiscinfo>
+<refmiscinfo class='manual'>1</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>rlegrid</refname>
+<refpurpose>create grids and checkerboards in rle format</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<cmdsynopsis>
+  <command>rlegrid</command>    
+    <arg choice='opt'><arg choice='plain'>-b </arg><arg choice='plain'><replaceable>bg_color</replaceable></arg></arg>
+    <arg choice='opt'>-c </arg>
+    <arg choice='opt'><arg choice='plain'>-f </arg><arg choice='plain'><replaceable>fg_color</replaceable></arg></arg>
+    <arg choice='opt'><arg choice='plain'>-o </arg><arg choice='plain'><replaceable>outfile</replaceable></arg></arg>
+    <arg choice='opt'><arg choice='plain'>-s </arg><arg choice='plain'><replaceable>xsize</replaceable></arg><arg choice='plain'><replaceable>ysize</replaceable></arg></arg>
+    <arg choice='opt'><arg choice='plain'>-w </arg><arg choice='plain'><replaceable>width</replaceable></arg></arg>
+    <sbr/>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para><command>rlegrid</command>
+generates simple grid and checkboard patterns.</para>
+
+
+</refsect1>
+
+<refsect1 xml:id='options'><title>OPTIONS</title>
+<variablelist remap='TP'>
+  <varlistentry>
+  <term><option>-b</option><replaceable> bg_color</replaceable></term>
+  <listitem>
+<para>Specifies the background color value.  Should between 0 and 255.
+Default is 0.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-c</option></term>
+  <listitem>
+<para>Generate checkboards.  With the
+<option>-c</option>
+option, rlegrid will generate
+a checkboard with squares of size
+<emphasis remap='I'>width</emphasis>
+on a side.  Squares will alternate between the foreground and background
+colors.</para>
+
+<para>Without the
+<option>-c</option>
+option, rlegrid will generate a grid.  Grid lines will be
+<emphasis remap='I'>width</emphasis>
+apart and will be in the foreground color.  The remainder
+of the image will be in the background color.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-f</option><replaceable> fg_color</replaceable></term>
+  <listitem>
+<para>Specifies the background color value.  Should between 0 and 255.
+Default is 255.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-o</option><replaceable> outfile</replaceable></term>
+  <listitem>
+<para>Specifies where to place the resulting image.  The default is to write
+to stdout.  If
+<emphasis remap='I'>outfile</emphasis>
+is "-", the output will be written to the standard output stream.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-s</option><replaceable> xsize yssize</replaceable></term>
+  <listitem>
+<para>This is the size of the resulting image.  Default is 512x512.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-w</option><replaceable> width</replaceable></term>
+  <listitem>
+<para>The spacing between grid lines or checkboard squares.  The default is 16.</para>
+
+  </listitem>
+  </varlistentry>
+</variablelist>
+
+</refsect1>
+
+<refsect1 xml:id='see_also'><title>SEE ALSO</title>
+<para><citerefentry><refentrytitle>rlebg</refentrytitle><manvolnum>1</manvolnum></citerefentry>,</para>
+<!-- .br -->
+</refsect1>
+
+<refsect1 xml:id='author'><title>AUTHOR</title>
+<para>James S. Painter</para>
+</refsect1>
+</refentry>
+

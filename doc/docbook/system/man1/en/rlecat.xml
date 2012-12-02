@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='rlecat1'>
+<!--  \-*\- Text \-*\-
+ Copyright (c) 1990, University of Michigan -->
+<refmeta>
+<refentrytitle>RLECAT</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class='source'>November 12, 1990</refmiscinfo>
+<refmiscinfo class='manual'>1</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>rlecat</refname>
+<refpurpose>concatenate and repeat images.</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<cmdsynopsis>
+  <command>rlecat</command>    
+    <arg choice='opt'>-c </arg>
+    <arg choice='opt'><arg choice='plain'>-n </arg><arg choice='plain'><replaceable>repeat-count</replaceable></arg></arg>
+    <arg choice='opt'><arg choice='plain'>-o </arg><arg choice='plain'><replaceable>outfile</replaceable></arg></arg>
+    <arg choice='opt' rep='repeat'><replaceable>files</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para>This program will concatenate all the input
+<citerefentry><refentrytitle>RLE</refentrytitle><manvolnum>5</manvolnum></citerefentry>
+images, adding titles, and
+optionally repeating the images a specified number of times.
+For each input file, it copies all images to the output file.  If an
+image does not have a
+<emphasis remap='I'>title</emphasis>
+or
+<emphasis remap='I'>TITLE</emphasis>
+comment, and the input is not coming from the standard input, then the
+file name (and an image number, if it is not the first image in the
+file) is added as a
+<emphasis remap='I'>TITLE</emphasis>
+comment.  If the input file were named 'images.rle', the first image
+would be given a comment
+<emphasis remap='I'>TITLE=images.rle</emphasis>,
+the second would get a comment
+<emphasis remap='I'>TITLE=images.rle(2)</emphasis>,
+and so on.</para>
+</refsect1>
+
+<refsect1 xml:id='options'><title>OPTIONS</title>
+<variablelist remap='TP'>
+  <varlistentry>
+  <term><option>-c</option></term>
+  <listitem>
+<para>With
+<option>-n</option>,
+specifies that the output images should be "collated".  In other
+words, the repeat sequence will be 1 2 3 ... 1 2 3 ... instead of the
+default of 1 1 ... 2 2 ... 3 3 ...</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-n</option><replaceable> repeat-count</replaceable></term>
+  <listitem>
+<para>Specifies that each input image should be repeated
+<emphasis remap='I'>repeat-count</emphasis>
+times.  The "repeat unit" (if
+<option>-c</option>
+is specified, this is the entire concatenated sequence of input
+images, otherwise it is just each image, separately) is written to a
+temporary file, and then copied to the output the requisite number of
+times.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-o</option><replaceable> outfile</replaceable></term>
+  <listitem>
+<para>If specified, the output will be written to this file.  If
+<emphasis remap='I'>outfile</emphasis>
+is "-", or if it is not specified, the output will be written to the
+standard output stream.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='I'>files</emphasis></term>
+  <listitem>
+<para>The input will be read from these files.  If
+a file name
+is "-", or none are specified, the input will be read from the standard
+input stream.</para>
+  </listitem>
+  </varlistentry>
+</variablelist>
+</refsect1>
+
+<refsect1 xml:id='examples'><title>EXAMPLES</title>
+<variablelist remap='TP'>
+  <varlistentry>
+  <term>rlebg 128 128 128 | rlecat -n 25</term>
+  <listitem>
+<para>Generates 25 copies of a gray background; useful for using
+<citerefentry><refentrytitle>rlecomp</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+to put background on an animation sequence (with 25 or fewer frames).</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term>rlecat *.rle | &lt;some processing&gt; | getx11</term>
+  <listitem>
+<para>Adds
+<emphasis remap='I'>TITLE</emphasis>
+comments so the individual images are correctly identified by
+<citerefentry><refentrytitle>getx11</refentrytitle><manvolnum>1</manvolnum></citerefentry>.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term>rlecat -c -r 3 anim*.rle</term>
+  <listitem>
+<para>Generates an animation with 3 repeats of the action.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term>rlecat -r 3 anim*.rle</term>
+  <listitem>
+<para>Generates a "triple-framed" animation - each frame is repeated 3
+times.</para>
+  </listitem>
+  </varlistentry>
+</variablelist>
+</refsect1>
+
+<refsect1 xml:id='files'><title>FILES</title>
+<para>/tmp/rlecatXXXXXXXX</para>
+</refsect1>
+
+<refsect1 xml:id='see_also'><title>SEE ALSO</title>
+<para><citerefentry><refentrytitle>rleaddcom</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>rlehdr</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>urt</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>RLE</refentrytitle><manvolnum>5</manvolnum></citerefentry>.</para>
+</refsect1>
+
+<refsect1 xml:id='author'><title>AUTHOR</title>
+<para>Spencer W. Thomas, University of Michigan</para>
+</refsect1>
+
+<refsect1 xml:id='bugs'><title>BUGS</title>
+<para>If the /tmp directory is not writable, or if there is not sufficient
+space on /tmp to hold a repeat unit, the program will not work
+correctly.</para>
+</refsect1>
+</refentry>
+

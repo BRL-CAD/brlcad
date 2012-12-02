@@ -1,0 +1,174 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='getsun1'>
+<refmeta>
+<refentrytitle>GETSUN</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class='source'>October 6, 1987</refmiscinfo>
+<refmiscinfo class='manual'>1</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>getsun</refname>
+<refpurpose>get RLE images to a sun window</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<cmdsynopsis>
+  <command>getsun</command>    
+    <arg choice='opt'><arg choice='plain'>- </arg><arg choice='opt'><replaceable>wW</replaceable></arg></arg>
+    <arg choice='opt'>-D </arg>
+    <arg choice='opt'><arg choice='plain'>-l </arg><arg choice='plain'><replaceable>levels</replaceable></arg></arg>
+    <arg choice='opt'><arg choice='plain'>- </arg><arg choice='opt'><replaceable>iI</replaceable></arg><arg choice='plain'><replaceable>image_gamma</replaceable></arg></arg>
+    <arg choice='opt'><arg choice='plain'>-g </arg><arg choice='plain'><replaceable>display_gamma</replaceable></arg></arg>
+    <arg choice='opt'><replaceable>file</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para>This program displays an
+<citerefentry><refentrytitle>RLE</refentrytitle><manvolnum>5</manvolnum></citerefentry>
+file in a sun window
+display.  It uses a dithering technique to take a
+full-color or gray scale image into the limited number of colors
+available under sun windows.
+Its default behavior is to try to
+display the image in color with as many brightness levels as possible
+(except on a one bit deep display), options are provided to limit the
+number of levels or to force black and white display.  Several
+<command>getsun</command>
+processes running simultaneously with the same color resolution will
+share color map entries.</para>
+
+<para>Other options allow control over the gamma, or contrast, of the image.
+The dithering process assumes that the incoming image has a gamma of
+1.0 (i.e., a 200 in the input represents an intensity twice that of
+a 100.)  If this is not the case, the input values must be adjusted
+before dithering via the
+<option>-i</option>
+or
+<option>-I</option>
+option.  The input file may also specify the gamma of the image via a
+picture comment (see below).  The output display is assumed to have a gamma of
+2.5 (standard for color TV monitors).  This may be modified via the
+<option>-g</option>
+option if a display with a different gamma is used.</para>
+
+<para><emphasis remap='I'>Getsun</emphasis>
+creates a sun window
+the size of the image being displayed.  The header of the new window
+displays the name of the image being displayed and its size.</para>
+</refsect1>
+
+<refsect1 xml:id='options'><title>OPTIONS</title>
+<variablelist remap='TP'>
+  <varlistentry>
+  <term><option>-w</option></term>
+  <listitem>
+<para>This flag forces
+<command>getsun</command>
+to produce a gray scale dithered image instead of a color image.
+Color input will be transformed to black and white via the
+<emphasis remap='I'>NTSC Y</emphasis>
+transform.  On a low color resolution display (a display with only 4
+bits, for example), this will produce a much smoother looking image
+than color dithering.  It may be used in conjunction with
+<option>-l</option>
+to produce an image with a specified number of gray levels.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-W</option></term>
+  <listitem>
+<para>This flag forces
+<command>getsun</command>
+to display the image as a black and white bitmap image.  This is the
+only mode available on monochrome (non gray scale) displays (and is
+the default there).  Black pixels will be displayed with pixel value 0
+and white with pixel value 1.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-D</option></term>
+  <listitem>
+<para>"Debug mode".  The operations in the input
+<citerefentry><refentrytitle>RLE</refentrytitle><manvolnum>5</manvolnum></citerefentry>
+file will be printed as they are read.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-l</option><replaceable> levels</replaceable></term>
+  <listitem>
+<para>Specify the number of gray or color levels to be used in the dithering
+process. The default is 5 except on monochrome (non gray scale) displays.
+Levels must be in the range \[26\].</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-i</option><replaceable> image_gamma</replaceable></term>
+  <listitem>
+<para>Specify the gamma (contrast) of the image.  A low contrast image,
+suited for direct display without compensation on a high contrast
+monitor (as most monitors are) will have a gamma of less than one.
+The default image gamma is 1.0.  Image gamma may also be specified by
+a picture comment in the
+<emphasis remap='I'>RLE (5)</emphasis>
+file of the form
+<emphasis remap='B'>image_gamma=</emphasis><emphasis remap='I'>gamma.</emphasis>
+The command line argument will override the value in the file if specified.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-I</option><replaceable> image_gamma</replaceable></term>
+  <listitem>
+<para>An alternate method of specifying the image gamma, the number
+following
+<option>-I</option>
+is the gamma of the display for which the image was originally
+computed (and is therefore 1.0 divided by the actual gamma of the
+image).  Image display gamma may also be specified by
+a picture comment in the
+<emphasis remap='I'>RLE (5)</emphasis>
+file of the form
+<emphasis remap='B'>display_gamma=</emphasis><emphasis remap='I'>gamma.</emphasis>
+The command line argument will override the value in the file if specified.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-g</option><replaceable> display_gamma</replaceable></term>
+  <listitem>
+<para>Specify the gamma of the
+<emphasis remap='I'>sun</emphasis>
+display monitor.  The default value is 2.5, suitable for most color TV
+monitors (this is the gamma value assumed by the NTSC video standard).</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='I'>infile</emphasis></term>
+  <listitem>
+<para>Name of the
+<citerefentry><refentrytitle>RLE</refentrytitle><manvolnum>5</manvolnum></citerefentry>
+file to display.  If not specified, the image will be read from the
+standard input.</para>
+  </listitem>
+  </varlistentry>
+</variablelist>
+</refsect1>
+
+<refsect1 xml:id='see_also'><title>SEE ALSO</title>
+<para><citerefentry><refentrytitle>getx11</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>urt</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>RLE</refentrytitle><manvolnum>5</manvolnum></citerefentry>.</para>
+</refsect1>
+
+<refsect1 xml:id='author'><title>AUTHOR</title>
+<para>Philip J. Klimbal, RIACS</para>
+</refsect1>
+
+<refsect1 xml:id='bugs'><title>BUGS</title>
+<para>Single channel input files with color map should be displayed as such
+by loading the colormap directly,
+instead of mapping the input to 24 bits and then dithering back to 8.</para>
+</refsect1>
+</refentry>
+

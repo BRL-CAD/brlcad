@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man+tkman by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='restrictev3'>
+
+<!-- '\" Copyright (c) 1990 The Regents of the University of California.
+'\" Copyright (c) 1994\-1996 Sun Microsystems, Inc. -->
+
+<!-- '\" See the file "license.terms" for information on usage and redistribution
+'\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
+'\" 
+'\" RCS: @(#) $Id$
+'\"  -->
+<refmeta>
+<refentrytitle>Tk_RestrictEvents</refentrytitle>
+<manvolnum>3</manvolnum>
+<refmiscinfo class='manual'>Tk</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>Tk_RestrictEvents</refname>
+<refpurpose>filter and selectively delay X events</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<funcsynopsis>
+<funcsynopsisinfo>
+#include &lt;tk.h&gt;
+
+</funcsynopsisinfo>
+<funcprototype>
+<funcdef><function>Tk_RestrictProc</function> *Tk_RestrictEvents</funcdef>
+<paramdef><parameter>proc</parameter></paramdef>
+<paramdef><parameter>clientData</parameter></paramdef>
+<paramdef><parameter>prevClientDataPtr</parameter></paramdef>
+</funcprototype>
+</funcsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='arguments'><title>ARGUMENTS</title>
+<!-- .AS Tk_RestrictProc **prevClientDataPtr -->
+<informaltable>
+<tgroup cols='3'>
+<tbody>
+
+<row><entry>"Tk_RestrictProc"</entry><entry>"*proc"</entry><entry>"in"</entry>
+<entry>
+<para>Predicate procedure to call to filter incoming X events.
+NULL means do not restrict events at all.</para>
+</entry>
+</row>
+<row><entry>ClientData</entry><entry>clientData</entry><entry>in</entry>
+<entry>
+<para>Arbitrary argument to pass to <emphasis remap='I'>proc</emphasis>.</para>
+</entry>
+</row>
+<row><entry>ClientData</entry><entry>*prevClientDataPtr</entry><entry>out</entry>
+<entry>
+<para>Pointer to place to save argument to previous restrict procedure.</para>
+<!-- .BE -->
+</entry>
+</row>
+</tbody>
+</tgroup>
+</informaltable>
+
+</refsect1>
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para>This procedure is useful in certain situations where applications
+are only prepared to receive certain X events.  After
+<emphasis remap='B'>Tk_RestrictEvents</emphasis> is called, <emphasis remap='B'>Tk_DoOneEvent</emphasis> (and
+hence <emphasis remap='B'>Tk_MainLoop</emphasis>) will filter X input events through
+<emphasis remap='I'>proc</emphasis>.  <emphasis remap='I'>Proc</emphasis> indicates whether a
+given event is to be processed immediately, deferred until some
+later time (e.g. when the event restriction is lifted), or discarded.
+<emphasis remap='I'>Proc</emphasis>
+is a procedure with arguments and result that match
+the type <function>Tk_RestrictProc</function>:</para>
+<programlisting remap='CS'>
+<funcsynopsis>
+<funcprototype>
+<funcdef>typedef Tk_RestrictAction <function>Tk_RestrictProc</function></funcdef>
+    <paramdef>ClientData <parameter>clientData</parameter></paramdef>
+    <paramdef>XEvent * <parameter>eventPtr</parameter></paramdef>
+</funcprototype>
+</funcsynopsis>
+</programlisting> <!-- remap='CE' -->
+<para>The <varname role='parameter'>clientData</varname> argument is a copy of the <varname role='parameter'>clientData</varname> passed
+to <emphasis remap='B'>Tk_RestrictEvents</emphasis>; it may be used to provide <emphasis remap='I'>proc</emphasis> with
+information it needs to filter events.  The <varname role='parameter'>eventPtr</varname> points to
+an event under consideration.  <emphasis remap='I'>Proc</emphasis> returns a restrict action
+(enumerated type <type>Tk_RestrictAction</type>) that indicates what
+<emphasis remap='B'>Tk_DoOneEvent</emphasis> should do with the event.  If the return value is
+<emphasis remap='B'>TK_PROCESS_EVENT</emphasis>, then the event will be handled immediately.
+If the return value is <emphasis remap='B'>TK_DEFER_EVENT</emphasis>, then the event will be
+left on the event queue for later processing.  If the return value is
+<emphasis remap='B'>TK_DISCARD_EVENT</emphasis>, then the event will be removed from the event
+queue and discarded without being processed.</para>
+
+<para><emphasis remap='B'>Tk_RestrictEvents</emphasis> uses its return value and <emphasis remap='I'>prevClientDataPtr</emphasis>
+to return information about the current event restriction procedure
+(a NULL return value means there are currently no restrictions).
+These values may be used to restore the previous restriction state
+when there is no longer any need for the current restriction.</para>
+
+<para>There are very few places where <emphasis remap='B'>Tk_RestrictEvents</emphasis> is needed.
+In most cases, the best way to restrict events is by changing the
+bindings with the <emphasis remap='B'>bind</emphasis> Tcl command or by calling
+<emphasis remap='B'>Tk_CreateEventHandler</emphasis> and <emphasis remap='B'>Tk_DeleteEventHandler</emphasis> from C.
+The main place where <emphasis remap='B'>Tk_RestrictEvents</emphasis> must be used is when
+performing synchronous actions (for example, if you need to wait
+for a particular event to occur on a particular window but you do not
+want to invoke any handlers for any other events).  The
+<quote>obvious</quote>
+solution in these situations is to call <emphasis remap='B'>XNextEvent</emphasis> or
+<emphasis remap='B'>XWindowEvent</emphasis>, but these procedures cannot be used because
+Tk keeps its own event queue that is separate from the X event
+queue.  Instead, call <emphasis remap='B'>Tk_RestrictEvents</emphasis> to set up a filter,
+then call <emphasis remap='B'>Tk_DoOneEvent</emphasis> to retrieve the desired event(s).</para>
+</refsect1>
+
+<refsect1 xml:id='keywords'><title>KEYWORDS</title>
+<para>delay, event, filter, restriction</para>
+</refsect1>
+</refentry>
+

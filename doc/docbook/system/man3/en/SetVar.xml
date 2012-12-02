@@ -1,0 +1,392 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man+tkman by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='setvar3'>
+
+<!-- '\" Copyright (c) 1989\-1993 The Regents of the University of California.
+'\" Copyright (c) 1994\-1997 Sun Microsystems, Inc. -->
+
+<!-- '\" See the file "license.terms" for information on usage and redistribution
+'\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
+'\" 
+'\" RCS: @(#) $Id$
+'\"  -->
+<refentryinfo><date>8.1</date></refentryinfo>
+<refmeta>
+<refentrytitle>Tcl_SetVar</refentrytitle>
+<manvolnum>3</manvolnum>
+<refmiscinfo class='date'>8.1</refmiscinfo>
+<refmiscinfo class='source'>Tcl</refmiscinfo>
+<refmiscinfo class='manual'>Tcl Library Procedures</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>Tcl_SetVar2Ex</refname>
+<refname>Tcl_SetVar</refname>
+<refname>Tcl_SetVar2</refname>
+<refname>Tcl_ObjSetVar2</refname>
+<refname>Tcl_GetVar2Ex</refname>
+<refname>Tcl_GetVar</refname>
+<refname>Tcl_GetVar2</refname>
+<refname>Tcl_ObjGetVar2</refname>
+<refname>Tcl_UnsetVar</refname>
+<refname>Tcl_UnsetVar2</refname>
+<refpurpose>manipulate Tcl variables</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<funcsynopsis>
+<funcsynopsisinfo>
+#include &lt;tcl.h&gt;
+
+</funcsynopsisinfo>
+<funcprototype>
+<funcdef><function>Tcl_Obj</function> *Tcl_SetVar2Ex</funcdef>
+<paramdef><parameter>interp</parameter></paramdef>
+<paramdef><parameter>name1</parameter></paramdef>
+<paramdef><parameter>name2</parameter></paramdef>
+<paramdef><parameter>newValuePtr</parameter></paramdef>
+<paramdef><parameter>flags</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef>const char *<function>Tcl_SetVar</function></funcdef>
+<paramdef><parameter>interp</parameter></paramdef>
+<paramdef><parameter>varName</parameter></paramdef>
+<paramdef><parameter>newValue</parameter></paramdef>
+<paramdef><parameter>flags</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef>const char *<function>Tcl_SetVar2</function></funcdef>
+<paramdef><parameter>interp</parameter></paramdef>
+<paramdef><parameter>name1</parameter></paramdef>
+<paramdef><parameter>name2</parameter></paramdef>
+<paramdef><parameter>newValue</parameter></paramdef>
+<paramdef><parameter>flags</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef><function>Tcl_Obj</function> *Tcl_ObjSetVar2</funcdef>
+<paramdef><parameter>interp</parameter></paramdef>
+<paramdef><parameter>part1Ptr</parameter></paramdef>
+<paramdef><parameter>part2Ptr</parameter></paramdef>
+<paramdef><parameter>newValuePtr</parameter></paramdef>
+<paramdef><parameter>flags</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef><function>Tcl_Obj</function> *Tcl_GetVar2Ex</funcdef>
+<paramdef><parameter>interp</parameter></paramdef>
+<paramdef><parameter>name1</parameter></paramdef>
+<paramdef><parameter>name2</parameter></paramdef>
+<paramdef><parameter>flags</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef>const char *<function>Tcl_GetVar</function></funcdef>
+<paramdef><parameter>interp</parameter></paramdef>
+<paramdef><parameter>varName</parameter></paramdef>
+<paramdef><parameter>flags</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef>const char *<function>Tcl_GetVar2</function></funcdef>
+<paramdef><parameter>interp</parameter></paramdef>
+<paramdef><parameter>name1</parameter></paramdef>
+<paramdef><parameter>name2</parameter></paramdef>
+<paramdef><parameter>flags</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef><function>Tcl_Obj</function> *Tcl_ObjGetVar2</funcdef>
+<paramdef><parameter>interp</parameter></paramdef>
+<paramdef><parameter>part1Ptr</parameter></paramdef>
+<paramdef><parameter>part2Ptr</parameter></paramdef>
+<paramdef><parameter>flags</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef>int <function>Tcl_UnsetVar</function></funcdef>
+<paramdef><parameter>interp</parameter></paramdef>
+<paramdef><parameter>varName</parameter></paramdef>
+<paramdef><parameter>flags</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef>int <function>Tcl_UnsetVar2</function></funcdef>
+<paramdef><parameter>interp</parameter></paramdef>
+<paramdef><parameter>name1</parameter></paramdef>
+<paramdef><parameter>name2</parameter></paramdef>
+<paramdef><parameter>flags</parameter></paramdef>
+</funcprototype>
+</funcsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='arguments'><title>ARGUMENTS</title>
+<!-- .AS Tcl_Interp *newValuePtr -->
+<informaltable>
+<tgroup cols='3'>
+<tbody>
+
+<row><entry>"Tcl_Interp"</entry><entry>"*interp"</entry><entry>"in"</entry>
+<entry>
+<para>Interpreter containing variable.</para>
+</entry>
+</row>
+<row><entry>"const char"</entry><entry>*name1</entry><entry>in</entry>
+<entry>
+<para>Contains the name of an array variable (if <emphasis remap='I'>name2</emphasis> is non-NULL)
+or (if <emphasis remap='I'>name2</emphasis> is NULL) either the name of a scalar variable
+or a complete name including both variable name and index.
+May include <emphasis remap='B'>::</emphasis> namespace qualifiers
+to specify a variable in a particular namespace.</para>
+</entry>
+</row>
+<row><entry>"const char"</entry><entry>*name2</entry><entry>in</entry>
+<entry>
+<para>If non-NULL, gives name of element within array; in this
+case <emphasis remap='I'>name1</emphasis> must refer to an array variable.</para>
+</entry>
+</row>
+<row><entry>Tcl_Obj</entry><entry>*newValuePtr</entry><entry>in</entry>
+<entry>
+<para>Points to a Tcl object containing the new value for the variable.</para>
+</entry>
+</row>
+<row><entry>int</entry><entry>flags</entry><entry>in</entry>
+<entry>
+<para>OR-ed combination of bits providing additional information. See below
+for valid values.</para>
+</entry>
+</row>
+<row><entry>"const char"</entry><entry>*varName</entry><entry>in</entry>
+<entry>
+<para>Name of variable.
+May include <emphasis remap='B'>::</emphasis> namespace qualifiers
+to specify a variable in a particular namespace.
+May refer to a scalar variable or an element of
+an array.</para>
+</entry>
+</row>
+<row><entry>"const char"</entry><entry>*newValue</entry><entry>in</entry>
+<entry>
+<para>New value for variable, specified as a null-terminated string.
+A copy of this value is stored in the variable.</para>
+</entry>
+</row>
+<row><entry>Tcl_Obj</entry><entry>*part1Ptr</entry><entry>in</entry>
+<entry>
+<para>Points to a Tcl object containing the variable's name.
+The name may include a series of <emphasis remap='B'>::</emphasis> namespace qualifiers
+to specify a variable in a particular namespace.
+May refer to a scalar variable or an element of an array variable.</para>
+</entry>
+</row>
+<row><entry>Tcl_Obj</entry><entry>*part2Ptr</entry><entry>in</entry>
+<entry>
+<para>If non-NULL, points to an object containing the name of an element
+within an array and <emphasis remap='I'>part1Ptr</emphasis> must refer to an array variable.</para>
+<!-- .BE -->
+</entry>
+</row>
+</tbody>
+</tgroup>
+</informaltable>
+
+</refsect1>
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para>These procedures are used to create, modify, read, and delete
+Tcl variables from C code.</para>
+
+<para><emphasis remap='B'>Tcl_SetVar2Ex</emphasis>, <function>Tcl_SetVar</function>, <function>Tcl_SetVar2</function>, and
+<emphasis remap='B'>Tcl_ObjSetVar2</emphasis> 
+will create a new variable or modify an existing one.
+These procedures set the given variable to the value
+given by <emphasis remap='I'>newValuePtr</emphasis> or <emphasis remap='I'>newValue</emphasis> and return a
+pointer to the variable's new value, which is stored in Tcl's
+variable structure.
+<emphasis remap='B'>Tcl_SetVar2Ex</emphasis> and <emphasis remap='B'>Tcl_ObjSetVar2</emphasis> take the new value as a
+Tcl_Obj and return
+a pointer to a Tcl_Obj.  <function>Tcl_SetVar</function> and <function>Tcl_SetVar2</function>
+take the new value as a string and return a string; they are
+usually less efficient than <emphasis remap='B'>Tcl_ObjSetVar2</emphasis>.  Note that the
+return value may be different than the <emphasis remap='I'>newValuePtr</emphasis> or
+<emphasis remap='I'>newValue</emphasis> argument, due to modifications made by write traces.
+If an error occurs in setting the variable (e.g. an array
+variable is referenced without giving an index into the array)
+NULL is returned and an error message is left in <emphasis remap='I'>interp</emphasis>'s
+result if the <emphasis remap='B'>TCL_LEAVE_ERR_MSG</emphasis> <emphasis remap='I'>flag</emphasis> bit is set.</para>
+
+<para><emphasis remap='B'>Tcl_GetVar2Ex</emphasis>, <function>Tcl_GetVar</function>, <function>Tcl_GetVar2</function>, and
+<emphasis remap='B'>Tcl_ObjGetVar2</emphasis>
+return the current value of a variable.
+The arguments to these procedures are treated in the same way
+as the arguments to the procedures described above.
+Under normal circumstances, the return value is a pointer
+to the variable's value.  For <emphasis remap='B'>Tcl_GetVar2Ex</emphasis> and
+<emphasis remap='B'>Tcl_ObjGetVar2</emphasis> the value is
+returned as a pointer to a Tcl_Obj.  For <function>Tcl_GetVar</function> and
+<function>Tcl_GetVar2</function> the value is returned as a string; this is
+usually less efficient, so <emphasis remap='B'>Tcl_GetVar2Ex</emphasis> or <emphasis remap='B'>Tcl_ObjGetVar2</emphasis>
+are preferred.
+If an error occurs while reading the variable (e.g. the variable
+does not exist or an array element is specified for a scalar
+variable), then NULL is returned and an error message is left
+in <emphasis remap='I'>interp</emphasis>'s result if the <emphasis remap='B'>TCL_LEAVE_ERR_MSG</emphasis> <emphasis remap='I'>flag</emphasis>
+bit is set.</para>
+
+<para><function>Tcl_UnsetVar</function> and <function>Tcl_UnsetVar2</function> may be used to remove
+a variable, so that future attempts to read the variable will return
+an error.
+The arguments to these procedures are treated in the same way
+as the arguments to the procedures above.
+If the variable is successfully removed then <emphasis remap='B'>TCL_OK</emphasis> is returned.
+If the variable cannot be removed because it does not exist then
+<emphasis remap='B'>TCL_ERROR</emphasis> is returned and an error message is left
+in <emphasis remap='I'>interp</emphasis>'s result if the <emphasis remap='B'>TCL_LEAVE_ERR_MSG</emphasis> <emphasis remap='I'>flag</emphasis>
+bit is set.
+If an array element is specified, the given element is removed
+but the array remains.
+If an array name is specified without an index, then the entire
+array is removed.</para>
+
+<para>The name of a variable may be specified to these procedures in
+four ways:</para>
+<variablelist remap='IP'>
+  <varlistentry>
+  <term>[1]</term>
+  <listitem>
+<para>If <function>Tcl_SetVar</function>, <function>Tcl_GetVar</function>, or <function>Tcl_UnsetVar</function>
+is invoked, the variable name is given as
+a single string, <emphasis remap='I'>varName</emphasis>.
+If <emphasis remap='I'>varName</emphasis> contains an open parenthesis and ends with a
+close parenthesis, then the value between the parentheses is
+treated as an index (which can have any string value) and
+the characters before the first open
+parenthesis are treated as the name of an array variable.
+If <emphasis remap='I'>varName</emphasis> does not have parentheses as described above, then
+the entire string is treated as the name of a scalar variable.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term>[2]</term>
+  <listitem>
+<para>If the <emphasis remap='I'>name1</emphasis> and <emphasis remap='I'>name2</emphasis> arguments are provided and
+<emphasis remap='I'>name2</emphasis> is non-NULL, then an array element is specified and
+the array name and index have
+already been separated by the caller: <emphasis remap='I'>name1</emphasis> contains the
+name and <emphasis remap='I'>name2</emphasis> contains the index.  An error is generated
+if <emphasis remap='I'>name1</emphasis>  contains an open parenthesis and ends with a
+close parenthesis (array element) and <emphasis remap='I'>name2</emphasis> is non-NULL.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term>[3]</term>
+  <listitem>
+<para>If <emphasis remap='I'>name2</emphasis> is NULL, <emphasis remap='I'>name1</emphasis> is treated just like
+<emphasis remap='I'>varName</emphasis> in case [1] above (it can be either a scalar or an array
+element variable name).</para>
+  </listitem>
+  </varlistentry>
+</variablelist>
+
+<para>The <emphasis remap='I'>flags</emphasis> argument may be used to specify any of several
+options to the procedures.
+It consists of an OR-ed combination of the following bits.</para>
+<variablelist remap='TP'>
+  <varlistentry>
+  <term><emphasis remap='B'>TCL_GLOBAL_ONLY</emphasis></term>
+  <listitem>
+<para>Under normal circumstances the procedures look up variables as follows.
+If a procedure call is active in <emphasis remap='I'>interp</emphasis>,
+the variable is looked up at the current level of procedure call.
+Otherwise, the variable is looked up first in the current namespace,
+then in the global namespace.
+However, if this bit is set in <emphasis remap='I'>flags</emphasis> then the variable
+is looked up only in the global namespace
+even if there is a procedure call active.
+If both <emphasis remap='B'>TCL_GLOBAL_ONLY</emphasis> and <emphasis remap='B'>TCL_NAMESPACE_ONLY</emphasis> are given,
+<emphasis remap='B'>TCL_GLOBAL_ONLY</emphasis> is ignored.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>TCL_NAMESPACE_ONLY</emphasis></term>
+  <listitem>
+<para>If this bit is set in <emphasis remap='I'>flags</emphasis> then the variable
+is looked up only in the current namespace; if a procedure is active
+its variables are ignored, and the global namespace is also ignored unless
+it is the current namespace.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>TCL_LEAVE_ERR_MSG</emphasis></term>
+  <listitem>
+<para>If an error is returned and this bit is set in <emphasis remap='I'>flags</emphasis>, then
+an error message will be left in the interpreter's result,
+where it can be retrieved with <emphasis remap='B'>Tcl_GetObjResult</emphasis>
+or <emphasis remap='B'>Tcl_GetStringResult</emphasis>.
+If this flag bit is not set then no error message is left
+and the interpreter's result will not be modified.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>TCL_APPEND_VALUE</emphasis></term>
+  <listitem>
+<para>If this bit is set then <emphasis remap='I'>newValuePtr</emphasis> or <emphasis remap='I'>newValue</emphasis> is
+appended to the current value instead of replacing it.
+If the variable is currently undefined, then the bit is ignored.
+This bit is only used by the <emphasis remap='B'>Tcl_Set*</emphasis> procedures.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>TCL_LIST_ELEMENT</emphasis></term>
+  <listitem>
+<para>If this bit is set, then <emphasis remap='I'>newValue</emphasis> is converted to a valid
+Tcl list element before setting (or appending to) the variable.
+A separator space is appended before the new list element unless
+the list element is going to be the first element in a list or
+sublist (i.e. the variable's current value is empty, or contains
+the single character
+<quote>{</quote>,
+or ends in
+<quote> }</quote>).
+When appending, the original value of the variable must also be
+a valid list, so that the operation is the appending of a new
+list element onto a list.</para>
+  </listitem>
+  </varlistentry>
+</variablelist>
+
+<para><function>Tcl_GetVar</function> and <function>Tcl_GetVar2</function>
+return the current value of a variable.
+The arguments to these procedures are treated in the same way
+as the arguments to <function>Tcl_SetVar</function> and <function>Tcl_SetVar2</function>.
+Under normal circumstances, the return value is a pointer
+to the variable's value (which is stored in Tcl's variable
+structure and will not change before the next call to <function>Tcl_SetVar</function>
+or <function>Tcl_SetVar2</function>).
+<function>Tcl_GetVar</function> and <function>Tcl_GetVar2</function> use the flag bits <emphasis remap='B'>TCL_GLOBAL_ONLY</emphasis>
+and <emphasis remap='B'>TCL_LEAVE_ERR_MSG</emphasis>, both of
+which have
+the same meaning as for <function>Tcl_SetVar</function>.
+If an error occurs in reading the variable (e.g. the variable
+does not exist or an array element is specified for a scalar
+variable), then NULL is returned.</para>
+
+<para><function>Tcl_UnsetVar</function> and <function>Tcl_UnsetVar2</function> may be used to remove
+a variable, so that future calls to <function>Tcl_GetVar</function> or <function>Tcl_GetVar2</function>
+for the variable will return an error.
+The arguments to these procedures are treated in the same way
+as the arguments to <function>Tcl_GetVar</function> and <function>Tcl_GetVar2</function>.
+If the variable is successfully removed then <emphasis remap='B'>TCL_OK</emphasis> is returned.
+If the variable cannot be removed because it does not exist then
+<emphasis remap='B'>TCL_ERROR</emphasis> is returned.
+If an array element is specified, the given element is removed
+but the array remains.
+If an array name is specified without an index, then the entire
+array is removed.</para>
+
+</refsect1>
+
+<refsect1 xml:id='see_also'><title>SEE ALSO</title>
+<para>Tcl_GetObjResult, Tcl_GetStringResult, Tcl_TraceVar</para>
+
+</refsect1>
+
+<refsect1 xml:id='keywords'><title>KEYWORDS</title>
+<para>array, get variable, interpreter, object, scalar, set, unset, variable</para>
+</refsect1>
+</refentry>
+

@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='rleselect1'>
+<!--  \-*\- Text \-*\-
+ Copyright (c) 1990, University of Michigan -->
+<refmeta>
+<refentrytitle>RLESELECT</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class='source'>July 11, 1990</refmiscinfo>
+<refmiscinfo class='manual'>1</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>rleselect</refname>
+<refpurpose>Select images from an RLE file.</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<cmdsynopsis>
+  <command>rleselect</command>    
+    <arg choice='opt'><arg choice='plain'>-i </arg><arg choice='plain'><replaceable>infile</replaceable></arg></arg>
+    <arg choice='opt'><arg choice='plain'>-o </arg><arg choice='plain'><replaceable>outfile</replaceable></arg></arg>
+    <arg choice='opt'>-v </arg>
+    <arg choice='opt' rep='repeat'><replaceable>image-numbers</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para>This program selects images from an
+<citerefentry><refentrytitle>RLE</refentrytitle><manvolnum>5</manvolnum></citerefentry>
+file containing multiple concatenated images.
+The selected images are specified by number; the first image in the
+file is number 1.  A negative number in the
+<emphasis remap='I'>image-numbers</emphasis>
+list means that all images from the previous number in the list to the
+absolute value of this number should be included.  A zero in the list
+is taken as '-infinity', so that all images from the previous number
+to the last image in the file will be included.  To try to clarify
+this, some examples are included below.</para>
+</refsect1>
+
+<refsect1 xml:id='options'><title>OPTIONS</title>
+<variablelist remap='TP'>
+  <varlistentry>
+  <term><option>-i</option><replaceable> infile</replaceable></term>
+  <listitem>
+<para>The input will be read from this file.  If
+<emphasis remap='I'>infile</emphasis>
+is "-" or is not specified, the input will be read from the standard
+input stream.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-o</option><replaceable> outfile</replaceable></term>
+  <listitem>
+<para>If specified, the output will be written to this file.  If
+<emphasis remap='I'>outfile</emphasis>
+is "-", or if it is not specified, the output will be written to the
+standard output stream.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-v</option></term>
+  <listitem>
+<para>Verbose output.</para>
+  </listitem>
+  </varlistentry>
+</variablelist>
+</refsect1>
+
+<refsect1 xml:id='examples'><title>EXAMPLES</title>
+<variablelist remap='TP'>
+  <varlistentry>
+  <term>rleselect 1 4 5</term>
+  <listitem>
+<para>Selects image 1, 4, and 5.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term>rleselect 4 1 5</term>
+  <listitem>
+<para>Also selects image 1, 4, and 5.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term>rleselect 1 -4 5</term>
+  <listitem>
+<para>Selects images 1 through 4 and 5 (i.e., 1 through 5).</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term>rleselect 3 0</term>
+  <listitem>
+<para>Selects images 3 through the last.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term>rleselect -4</term>
+  <listitem>
+<para>Selects images 1 through 4.</para>
+  </listitem>
+  </varlistentry>
+</variablelist>
+</refsect1>
+
+<refsect1 xml:id='see_also'><title>SEE ALSO</title>
+<para><citerefentry><refentrytitle>rlesplit</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>urt</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>RLE</refentrytitle><manvolnum>5</manvolnum></citerefentry>.</para>
+</refsect1>
+
+<refsect1 xml:id='author'><title>AUTHOR</title>
+<para>Spencer W. Thomas</para>
+</refsect1>
+</refentry>
+

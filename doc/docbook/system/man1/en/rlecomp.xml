@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='rlecomp1'>
+<!--  Copyright (c) 1986, University of Utah -->
+<refmeta>
+<refentrytitle>RLECOMP</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class='source'>December 20, 1986</refmiscinfo>
+<refmiscinfo class='manual'>1</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>rlecomp</refname>
+<refpurpose>Digital image compositor</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<cmdsynopsis>
+  <command>rlecomp</command>    
+    <arg choice='opt'><arg choice='plain'>-o </arg><arg choice='plain'><replaceable>outfile</replaceable></arg></arg>
+    <arg choice='plain'><replaceable>Afile</replaceable></arg>
+    <arg choice='plain'><replaceable>operator</replaceable></arg>
+    <arg choice='plain'><replaceable>Bfile</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para><command>rlecomp</command>
+implements an image compositor based on presence of an alpha, or matte channel
+the image.  This extra channel usually defines
+a mask which represents a sort of a cookie-cutter for the image.  This is the
+case when alpha is 255 (full coverage) for pixels inside the shape, zero
+outside, and between zero and 255 on the boundary.
+If <emphasis remap='I'>Afile</emphasis> or <emphasis remap='I'>Bfile</emphasis> is just a single -, then
+<command>rlecomp</command>
+reads that file from the standard input.</para>
+
+<para>The operations behave as follows (assuming the operation is
+"<emphasis remap='I'>A operator B</emphasis>"):</para>
+<variablelist remap='TP'>
+  <varlistentry>
+  <term><emphasis remap='B'>over</emphasis></term>
+  <listitem>
+<para>The result will be the union of the two
+image shapes, with <emphasis remap='I'>A</emphasis> obscuring <emphasis remap='I'>B</emphasis> in the region of overlap.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>in</emphasis></term>
+  <listitem>
+<para>The result is simply the image <emphasis remap='I'>A</emphasis> cut by the shape of <emphasis remap='I'>B</emphasis>.
+None of the image data of <emphasis remap='I'>B</emphasis> will be in the result.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>atop</emphasis></term>
+  <listitem>
+<para>The result is the same shape as image <emphasis remap='I'>B</emphasis>, with <emphasis remap='I'>A</emphasis> obscuring
+<emphasis remap='I'>B</emphasis> where the image shapes overlap.  Note this differs from
+<emphasis remap='B'>over</emphasis>
+because the portion of <emphasis remap='I'>A</emphasis> outside <emphasis remap='I'>B</emphasis>'s shape does not appear
+in the result.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>out</emphasis></term>
+  <listitem>
+<para>The result image is image <emphasis remap='I'>A</emphasis> with the shape of <emphasis remap='I'>B</emphasis> cut out.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>xor</emphasis></term>
+  <listitem>
+<para>The result is the image data from both images that is
+outside the overlap region.  The overlap region will be blank.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>plus</emphasis></term>
+  <listitem>
+<para>The result is just the sum of the image data.  Output values are
+clipped to 255 (no overflow).  This
+operation is actually independent of the alpha channels.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>minus</emphasis></term>
+  <listitem>
+<para>The result of <emphasis remap='I'>A</emphasis> - <emphasis remap='I'>B</emphasis>, with underflow clipped to zero.  The
+alpha channel is ignored (set to 255, full coverage).</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>diff</emphasis></term>
+  <listitem>
+<para>The result of abs(<emphasis remap='I'>A</emphasis> - <emphasis remap='I'>B</emphasis>).
+This is useful for comparing two very similar images.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>add</emphasis></term>
+  <listitem>
+<para>The result of <emphasis remap='I'>A</emphasis> + <emphasis remap='I'>B</emphasis>, with overflow wrapping
+around (<emphasis remap='I'>mod</emphasis> 256).</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>subtract</emphasis></term>
+  <listitem>
+<para>The result of <emphasis remap='I'>A</emphasis> - <emphasis remap='I'>B</emphasis>, with underflow wrapping around
+(<emphasis remap='I'>mod</emphasis> 256).  The <emphasis remap='B'>add</emphasis> and <emphasis remap='B'>subtract</emphasis> operators can be
+used to perform reversible transformations.</para>
+  </listitem>
+  </varlistentry>
+</variablelist>
+
+</refsect1>
+
+<refsect1 xml:id='see_also'><title>SEE ALSO</title>
+<para><citerefentry><refentrytitle>urt</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>RLE</refentrytitle><manvolnum>5</manvolnum></citerefentry>,
+<!-- .br -->
+"Compositing Digital Images", Porter and Duff,
+<emphasis remap='I'>Proceedings of SIGGRAPH '84</emphasis>
+p.255</para>
+</refsect1>
+
+<refsect1 xml:id='authors'><title>AUTHORS</title>
+<para>Rod Bogart and John W. Peterson</para>
+</refsect1>
+
+<refsect1 xml:id='bugs'><title>BUGS</title>
+<para>The other operations could be optimized as much as
+<emphasis remap='B'>over</emphasis>
+is.</para>
+
+<para><emphasis remap='I'>Rlecomp</emphasis>
+assumes both input files have the same number of channels.</para>
+</refsect1>
+</refentry>
+

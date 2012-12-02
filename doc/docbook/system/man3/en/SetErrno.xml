@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man+tkman by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='seterrno3'>
+
+<!-- '\" Copyright (c) 1996 Sun Microsystems, Inc. -->
+
+<!-- '\" See the file "license.terms" for information on usage and redistribution
+'\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
+'\" 
+'\" RCS: @(#) $Id$ -->
+<refentryinfo><date>8.3</date></refentryinfo>
+<refmeta>
+<refentrytitle>Tcl_SetErrno</refentrytitle>
+<manvolnum>3</manvolnum>
+<refmiscinfo class='date'>8.3</refmiscinfo>
+<refmiscinfo class='source'>Tcl</refmiscinfo>
+<refmiscinfo class='manual'>Tcl Library Procedures</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>Tcl_SetErrno</refname>
+<refname>Tcl_GetErrno</refname>
+<refname>Tcl_ErrnoId</refname>
+<refname>Tcl_ErrnoMsg</refname>
+<refpurpose>manipulate errno to store and retrieve error codes</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<funcsynopsis>
+<funcsynopsisinfo>
+#include &lt;tcl.h&gt;
+
+</funcsynopsisinfo>
+<funcprototype>
+<funcdef>void <function>Tcl_SetErrno</function></funcdef>
+<paramdef><parameter>errorCode</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef>int <function>Tcl_GetErrno</function></funcdef>
+<void/></funcprototype>
+<funcprototype>
+<funcdef>const char *<function>Tcl_ErrnoId</function></funcdef>
+<void/></funcprototype>
+<funcprototype>
+<funcdef>const char *<function>Tcl_ErrnoMsg</function></funcdef>
+<paramdef><parameter>errorCode</parameter></paramdef>
+</funcprototype>
+</funcsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='arguments'><title>ARGUMENTS</title>
+<!-- .AS int errorCode -->
+<informaltable>
+<tgroup cols='3'>
+<tbody>
+
+<row><entry>"int"</entry><entry>"errorCode"</entry><entry>"in"</entry>
+<entry>
+<para>A POSIX error code such as <errorcode>ENOENT</errorcode>.</para>
+<!-- .BE -->
+</entry>
+</row>
+</tbody>
+</tgroup>
+</informaltable>
+
+</refsect1>
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para><function>Tcl_SetErrno</function> and <function>Tcl_GetErrno</function> provide portable access
+to the <varname>errno</varname> variable, which is used to record a POSIX error
+code after system calls and other operations such as <emphasis remap='B'>Tcl_Gets</emphasis>.
+These procedures are necessary because global variable accesses cannot
+be made across module boundaries on some platforms.</para>
+
+<para><function>Tcl_SetErrno</function> sets the <varname>errno</varname> variable to the value of the
+<emphasis remap='I'>errorCode</emphasis> argument
+C procedures that wish to return error information to their callers
+via <varname>errno</varname> should call <function>Tcl_SetErrno</function> rather than setting
+<varname>errno</varname> directly.</para>
+
+<para><function>Tcl_GetErrno</function> returns the current value of <varname>errno</varname>.
+Procedures wishing to access <varname>errno</varname> should call this procedure
+instead of accessing <varname>errno</varname> directly.</para>
+
+<para><function>Tcl_ErrnoId</function> and <function>Tcl_ErrnoMsg</function> return string
+representations of <varname>errno</varname> values.  <function>Tcl_ErrnoId</function>
+returns a machine-readable textual identifier such as
+<quote>EACCES</quote>
+that corresponds to the current value of <varname>errno</varname>.
+<function>Tcl_ErrnoMsg</function> returns a human-readable string such as
+<quote>permission denied</quote>
+that corresponds to the value of its
+<emphasis remap='I'>errorCode</emphasis> argument.  The <emphasis remap='I'>errorCode</emphasis> argument is
+typically the value returned by <function>Tcl_GetErrno</function>.
+The strings returned by these functions are
+statically allocated and the caller must not free or modify them.</para>
+
+</refsect1>
+
+<refsect1 xml:id='keywords'><title>KEYWORDS</title>
+<para>errno, error code, global variables</para>
+</refsect1>
+</refentry>
+

@@ -1,0 +1,255 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man+tkman by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='bindtable3'>
+
+<!-- '\" Copyright (c) 1994 The Regents of the University of California.
+'\" Copyright (c) 1994\-1996 Sun Microsystems, Inc. -->
+
+<!-- '\" See the file "license.terms" for information on usage and redistribution
+'\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
+'\" 
+'\" RCS: @(#) $Id$
+'\"  -->
+<refentryinfo><date>4.0</date></refentryinfo>
+<refmeta>
+<refentrytitle>Tk_CreateBindingTable</refentrytitle>
+<manvolnum>3</manvolnum>
+<refmiscinfo class='date'>4.0</refmiscinfo>
+<refmiscinfo class='source'>Tk</refmiscinfo>
+<refmiscinfo class='manual'>Tk Library Procedures</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>Tk_CreateBindingTable</refname>
+<refname>Tk_DeleteBindingTable</refname>
+<refname>Tk_CreateBinding</refname>
+<refname>Tk_DeleteBinding</refname>
+<refname>Tk_GetBinding</refname>
+<refname>Tk_GetAllBindings</refname>
+<refname>Tk_DeleteAllBindings</refname>
+<refname>Tk_BindEvent</refname>
+<refpurpose>invoke scripts in response to X events</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<funcsynopsis>
+<funcsynopsisinfo>
+#include &lt;tk.h&gt;
+
+</funcsynopsisinfo>
+<funcprototype>
+<funcdef>Tk_BindingTable <function>Tk_CreateBindingTable</function></funcdef>
+<paramdef><parameter>interp</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef><function>Tk_DeleteBindingTable</function></funcdef>
+<paramdef><parameter>bindingTable</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef>unsigned long <function>Tk_CreateBinding</function></funcdef>
+<paramdef><parameter>interp</parameter></paramdef>
+<paramdef><parameter>bindingTable</parameter></paramdef>
+<paramdef><parameter>object</parameter></paramdef>
+<paramdef><parameter>eventString</parameter></paramdef>
+<paramdef><parameter>script</parameter></paramdef>
+<paramdef><parameter>append</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef>int <function>Tk_DeleteBinding</function></funcdef>
+<paramdef><parameter>interp</parameter></paramdef>
+<paramdef><parameter>bindingTable</parameter></paramdef>
+<paramdef><parameter>object</parameter></paramdef>
+<paramdef><parameter>eventString</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef>const char *<function>Tk_GetBinding</function></funcdef>
+<paramdef><parameter>interp</parameter></paramdef>
+<paramdef><parameter>bindingTable</parameter></paramdef>
+<paramdef><parameter>object</parameter></paramdef>
+<paramdef><parameter>eventString</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef><function>Tk_GetAllBindings</function></funcdef>
+<paramdef><parameter>interp</parameter></paramdef>
+<paramdef><parameter>bindingTable</parameter></paramdef>
+<paramdef><parameter>object</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef><function>Tk_DeleteAllBindings</function></funcdef>
+<paramdef><parameter>bindingTable</parameter></paramdef>
+<paramdef><parameter>object</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef><function>Tk_BindEvent</function></funcdef>
+<paramdef><parameter>bindingTable</parameter></paramdef>
+<paramdef><parameter>eventPtr</parameter></paramdef>
+<paramdef><parameter>tkwin</parameter></paramdef>
+<paramdef><parameter>numObjects</parameter></paramdef>
+<paramdef><parameter>objectPtr</parameter></paramdef>
+</funcprototype>
+</funcsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='arguments'><title>ARGUMENTS</title>
+<!-- .AS Tk_BindingTable bindingTable -->
+<informaltable>
+<tgroup cols='3'>
+<tbody>
+
+<row><entry>"Tcl_Interp"</entry><entry>"*interp"</entry><entry>"in"</entry>
+<entry>
+<para>Interpreter to use when invoking bindings in binding table.  Also
+used for returning results and errors from binding procedures.</para>
+</entry>
+</row>
+<row><entry>Tk_BindingTable</entry><entry>bindingTable</entry><entry>in</entry>
+<entry>
+<para>Token for binding table;  must have been returned by some previous
+call to <function>Tk_CreateBindingTable</function>.</para>
+</entry>
+</row>
+<row><entry>ClientData</entry><entry>object</entry><entry>in</entry>
+<entry>
+<para>Identifies object with which binding is associated.</para>
+</entry>
+</row>
+<row><entry>"const char"</entry><entry>*eventString</entry><entry>in</entry>
+<entry>
+<para>String describing event sequence.</para>
+</entry>
+</row>
+<row><entry>char</entry><entry>*script</entry><entry>in</entry>
+<entry>
+<para>Tcl script to invoke when binding triggers.</para>
+</entry>
+</row>
+<row><entry>int</entry><entry>append</entry><entry>in</entry>
+<entry>
+<para>Non-zero means append <emphasis remap='I'>script</emphasis> to existing script for binding,
+if any; zero means replace existing script with new one.</para>
+</entry>
+</row>
+<row><entry>XEvent</entry><entry>*eventPtr</entry><entry>in</entry>
+<entry>
+<para>X event to match against bindings in <emphasis remap='I'>bindingTable</emphasis>.</para>
+</entry>
+</row>
+<row><entry>Tk_Window</entry><entry>tkwin</entry><entry>in</entry>
+<entry>
+<para>Identifier for any window on the display where the event occurred.
+Used to find display-related information such as key maps.</para>
+</entry>
+</row>
+<row><entry>int</entry><entry>numObjects</entry><entry>in</entry>
+<entry>
+<para>Number of object identifiers pointed to by <emphasis remap='I'>objectPtr</emphasis>.</para>
+</entry>
+</row>
+<row><entry>ClientData</entry><entry>*objectPtr</entry><entry>in</entry>
+<entry>
+<para>Points to an array of object identifiers:  bindings will be considered
+for each of these objects in order from first to last.</para>
+<!-- .BE -->
+</entry>
+</row>
+</tbody>
+</tgroup>
+</informaltable>
+
+</refsect1>
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para>These procedures provide a general-purpose mechanism for creating
+and invoking bindings.
+Bindings are organized in terms of <emphasis remap='I'>binding tables</emphasis>.
+A binding table consists of a collection of bindings plus a history
+of recent events.
+Within a binding table, bindings are associated with <emphasis remap='I'>objects</emphasis>.
+The meaning of an object is defined by clients of the binding package.
+For example, Tk keeps uses one binding table to hold all of the bindings
+created by the <emphasis remap='B'>bind</emphasis> command.
+For this table, objects are pointers to strings such as window names, class
+names, or other binding tags such as <emphasis remap='B'>all</emphasis>.
+Tk also keeps a separate binding table for each canvas widget, which manages
+bindings created by the canvas's <emphasis remap='B'>bind</emphasis> widget command;  within
+this table, an object is either a pointer to the internal structure for a
+canvas item or a Tk_Uid identifying a tag.</para>
+
+<para>The procedure <function>Tk_CreateBindingTable</function> creates a new binding
+table and associates <emphasis remap='I'>interp</emphasis> with it (when bindings in the
+table are invoked, the scripts will be evaluated in <emphasis remap='I'>interp</emphasis>).
+<function>Tk_CreateBindingTable</function> returns a token for the table, which
+must be used in calls to other procedures such as <function>Tk_CreateBinding</function>
+or <function>Tk_BindEvent</function>.</para>
+
+<para><function>Tk_DeleteBindingTable</function> frees all of the state associated
+with a binding table.
+Once it returns the caller should not use the <emphasis remap='I'>bindingTable</emphasis>
+token again.</para>
+
+<para><function>Tk_CreateBinding</function> adds a new binding to an existing table.
+The <emphasis remap='I'>object</emphasis> argument identifies the object with which the
+binding is to be associated, and it may be any one-word value.
+Typically it is a pointer to a string or data structure.
+The <emphasis remap='I'>eventString</emphasis> argument identifies the event or sequence
+of events for the binding;  see the documentation for the
+<emphasis remap='B'>bind</emphasis> command for a description of its format.
+<emphasis remap='I'>script</emphasis> is the Tcl script to be evaluated when the binding
+triggers.
+<emphasis remap='I'>append</emphasis> indicates what to do if there already
+exists a binding for <emphasis remap='I'>object</emphasis> and <emphasis remap='I'>eventString</emphasis>:  if <emphasis remap='I'>append</emphasis>
+is zero then <emphasis remap='I'>script</emphasis> replaces the old script;  if <emphasis remap='I'>append</emphasis>
+is non-zero then the new script is appended to the old one.
+<function>Tk_CreateBinding</function> returns an X event mask for all the events
+associated with the bindings.
+This information may be useful to invoke <emphasis remap='B'>XSelectInput</emphasis> to
+select relevant events, or to disallow the use of certain events
+in bindings.
+If an error occurred while creating the binding (e.g., <emphasis remap='I'>eventString</emphasis>
+refers to a non-existent event), then 0 is returned and an error
+message is left in <emphasis remap='I'>interp-&gt;result</emphasis>.</para>
+
+<para><function>Tk_DeleteBinding</function> removes from <emphasis remap='I'>bindingTable</emphasis> the
+binding given by <emphasis remap='I'>object</emphasis> and <emphasis remap='I'>eventString</emphasis>, if
+such a binding exists.
+<function>Tk_DeleteBinding</function> always returns <emphasis remap='B'>TCL_OK</emphasis>.
+In some cases it may reset <emphasis remap='I'>interp-&gt;result</emphasis> to the default
+empty value.</para>
+
+<para><function>Tk_GetBinding</function> returns a pointer to the script associated
+with <emphasis remap='I'>eventString</emphasis> and <emphasis remap='I'>object</emphasis> in <emphasis remap='I'>bindingTable</emphasis>.
+If no such binding exists then NULL is returned and an error
+message is left in <emphasis remap='I'>interp-&gt;result</emphasis>.</para>
+
+<para><function>Tk_GetAllBindings</function> returns in <emphasis remap='I'>interp-&gt;result</emphasis> a list
+of all the event strings for which there are bindings in
+<emphasis remap='I'>bindingTable</emphasis> associated with <emphasis remap='I'>object</emphasis>.
+If there are no bindings for <emphasis remap='I'>object</emphasis> then an empty
+string is returned in <emphasis remap='I'>interp-&gt;result</emphasis>.</para>
+
+<para><function>Tk_DeleteAllBindings</function> deletes all of the bindings in
+<emphasis remap='I'>bindingTable</emphasis> that are associated with <emphasis remap='I'>object</emphasis>.</para>
+
+<para><function>Tk_BindEvent</function> is called to process an event.
+It makes a copy of the event in an internal history list associated
+with the binding table, then it checks for bindings that match
+the event.
+<function>Tk_BindEvent</function> processes each of the objects pointed to
+by <emphasis remap='I'>objectPtr</emphasis> in turn.
+For each object, it finds all the bindings that match the current
+event history, selects the most specific binding using the priority
+mechanism described in the documentation for <emphasis remap='B'>bind</emphasis>,
+and invokes the script for that binding.
+If there are no matching bindings for a particular object, then
+the object is skipped.
+<function>Tk_BindEvent</function> continues through all of the objects, handling
+exceptions such as errors, <emphasis remap='B'>break</emphasis>, and <emphasis remap='B'>continue</emphasis> as
+described in the documentation for <emphasis remap='B'>bind</emphasis>.</para>
+
+</refsect1>
+
+<refsect1 xml:id='keywords'><title>KEYWORDS</title>
+<para>binding, event, object, script</para>
+</refsect1>
+</refentry>
+

@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man+tkman by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='detachpids3'>
+
+<!-- '\" Copyright (c) 1989\-1993 The Regents of the University of California.
+'\" Copyright (c) 1994\-1996 Sun Microsystems, Inc. -->
+
+<!-- '\" See the file "license.terms" for information on usage and redistribution
+'\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
+'\" 
+'\" RCS: @(#) $Id$
+'\"  -->
+<refmeta>
+<refentrytitle>Tcl_DetachPids</refentrytitle>
+<manvolnum>3</manvolnum>
+<refmiscinfo class='manual'>Tcl</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>Tcl_DetachPids</refname>
+<refname>Tcl_ReapDetachedProcs</refname>
+<refname>Tcl_WaitPid</refname>
+<refpurpose>manage child processes in background</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<funcsynopsis>
+<funcsynopsisinfo>
+#include &lt;tcl.h&gt;
+
+</funcsynopsisinfo>
+<funcprototype>
+<funcdef><function>Tcl_DetachPids</function></funcdef>
+<paramdef><parameter>numPids</parameter></paramdef>
+<paramdef><parameter>pidPtr</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef><function>Tcl_ReapDetachedProcs</function></funcdef>
+<void/></funcprototype>
+<funcprototype>
+<funcdef>Tcl_Pid <function>Tcl_WaitPid</function></funcdef>
+<paramdef><parameter>pid</parameter></paramdef>
+<paramdef><parameter>statusPtr</parameter></paramdef>
+<paramdef><parameter>options</parameter></paramdef>
+</funcprototype>
+</funcsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='arguments'><title>ARGUMENTS</title>
+<!-- .AS Tcl_Pid *statusPtr out -->
+<informaltable>
+<tgroup cols='3'>
+<tbody>
+
+<row><entry>"int"</entry><entry>"numPids"</entry><entry>"in"</entry>
+<entry>
+<para>Number of process ids contained in the array pointed to by <emphasis remap='I'>pidPtr</emphasis>.</para>
+</entry>
+</row>
+<row><entry>int</entry><entry>*pidPtr</entry><entry>in</entry>
+<entry>
+<para>Address of array containing <emphasis remap='I'>numPids</emphasis> process ids.</para>
+</entry>
+</row>
+<row><entry>Tcl_Pid</entry><entry>pid</entry><entry>in</entry>
+<entry>
+<para>The id of the process (pipe) to wait for.</para>
+</entry>
+</row>
+<row><entry>int</entry><entry>*statusPtr</entry><entry>out</entry>
+<entry>
+<para>The result of waiting on a process (pipe). Either 0 or ECHILD.</para>
+</entry>
+</row>
+<row><entry>int</entry><entry>options</entry><entry>in</entry>
+<entry>
+<para>The options controlling the wait. WNOHANG specifies not to wait when
+checking the process.</para>
+<!-- .BE -->
+</entry>
+</row>
+</tbody>
+</tgroup>
+</informaltable>
+
+</refsect1>
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para><function>Tcl_DetachPids</function> and <function>Tcl_ReapDetachedProcs</function> provide a
+mechanism for managing subprocesses that are running in background.
+These procedures are needed because the parent of a process must
+eventually invoke the <emphasis remap='B'>waitpid</emphasis> kernel call (or one of a few other
+similar kernel calls) to wait for the child to exit.  Until the
+parent waits for the child, the child's state cannot be completely
+reclaimed by the system.  If a parent continually creates children
+and doesn't wait on them, the system's process table will eventually
+overflow, even if all the children have exited.</para>
+
+<para><function>Tcl_DetachPids</function> may be called to ask Tcl to take responsibility
+for one or more processes whose process ids are contained in the
+<emphasis remap='I'>pidPtr</emphasis> array passed as argument.  The caller presumably
+has started these processes running in background and does not
+want to have to deal with them again.</para>
+
+<para><function>Tcl_ReapDetachedProcs</function> invokes the <emphasis remap='B'>waitpid</emphasis> kernel call
+on each of the background processes so that its state can be cleaned
+up if it has exited.  If the process has not exited yet,
+<function>Tcl_ReapDetachedProcs</function> does not wait for it to exit;  it will check again
+the next time it is invoked.
+Tcl automatically calls <function>Tcl_ReapDetachedProcs</function> each time the
+<emphasis remap='B'>exec</emphasis> command is executed, so in most cases it is not necessary
+for any code outside of Tcl to invoke <function>Tcl_ReapDetachedProcs</function>.
+However, if you call <function>Tcl_DetachPids</function> in situations where the
+<emphasis remap='B'>exec</emphasis> command may never get executed, you may wish to call
+<function>Tcl_ReapDetachedProcs</function> from time to time so that background
+processes can be cleaned up.</para>
+
+<para><function>Tcl_WaitPid</function> is a thin wrapper around the facilities provided by
+the operating system to wait on the end of a spawned process and to
+check a whether spawned process is still running. It is used by
+<function>Tcl_ReapDetachedProcs</function> and the channel system to portably access
+the operating system.</para>
+
+</refsect1>
+
+<refsect1 xml:id='keywords'><title>KEYWORDS</title>
+<para>background, child, detach, process, wait</para>
+</refsect1>
+</refentry>
+

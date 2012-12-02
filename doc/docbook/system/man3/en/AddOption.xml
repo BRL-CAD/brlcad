@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man+tkman by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='addoption3'>
+
+<!-- '\" Copyright (c) 1998\-2000 by Scriptics Corporation.
+'\" All rights reserved.
+'\" 
+'\" RCS: @(#) $Id$
+'\"  -->
+
+<refmeta>
+<refentrytitle>Tk_AddOption</refentrytitle>
+<manvolnum>3</manvolnum>
+<refmiscinfo class='manual'>Tk</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>Tk_AddOption</refname>
+<refpurpose>Add an option to the option database</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<funcsynopsis>
+<funcsynopsisinfo>
+#include &lt;tk.h&gt;
+
+</funcsynopsisinfo>
+<funcprototype>
+<funcdef>void <function>Tk_AddOption</function></funcdef>
+<paramdef><parameter>tkwin</parameter></paramdef>
+<paramdef><parameter>name</parameter></paramdef>
+<paramdef><parameter>value</parameter></paramdef>
+<paramdef><parameter>priority</parameter></paramdef>
+</funcprototype>
+</funcsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='arguments'><title>ARGUMENTS</title>
+<para>Token for window.</para>
+<informaltable>
+<tgroup cols='3'>
+<tbody>
+
+<row><entry>"const char"</entry><entry>"*name"</entry><entry>"in"</entry>
+<entry>
+<para>Multi-element name of option.</para>
+</entry>
+</row>
+<row><entry>"const char"</entry><entry>*value</entry><entry>in</entry>
+<entry>
+<para>Value of option.</para>
+</entry>
+</row>
+<row><entry>int</entry><entry>priority</entry><entry>in</entry>
+<entry>
+<para>Overall priority level to use for option.</para>
+<!-- .BE -->
+</entry>
+</row>
+</tbody>
+</tgroup>
+</informaltable>
+
+</refsect1>
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para>This procedure is invoked to add an option to the database
+associated with <emphasis remap='I'>tkwin</emphasis>'s main window.  <emphasis remap='I'>Name</emphasis>
+contains the option being specified and consists of names and/or
+classes separated by asterisks or dots, in the usual X format.
+<emphasis remap='I'>Value</emphasis> contains the text string to associate with <emphasis remap='I'>name</emphasis>;
+this value will be returned in calls to <emphasis remap='B'>Tk_GetOption</emphasis>.
+<emphasis remap='I'>Priority</emphasis> specifies the priority of the value; when options are
+queried using <emphasis remap='B'>Tk_GetOption</emphasis>, the value with the highest priority
+is returned.  <emphasis remap='I'>Priority</emphasis> must be between 0 and <emphasis remap='B'>TK_MAX_PRIO</emphasis>.  Some
+common priority values are:</para>
+<variablelist remap='IP'>
+  <varlistentry>
+  <term>20</term>
+  <listitem>
+<para>Used for default values hard-coded into widgets.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term>40</term>
+  <listitem>
+<para>Used for options specified in application-specific startup files.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term>60</term>
+  <listitem>
+<para>Used for options specified in user-specific defaults files, such as
+<markup>.Xdefaults</markup>, resource databases loaded into the X server, or
+user-specific startup files.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term>80</term>
+  <listitem>
+<para>Used for options specified interactively after the application starts
+running.</para>
+
+  </listitem>
+  </varlistentry>
+</variablelist>
+</refsect1>
+
+<refsect1 xml:id='keywords'><title>KEYWORDS</title>
+<para>class, name, option, add</para>
+</refsect1>
+</refentry>
+

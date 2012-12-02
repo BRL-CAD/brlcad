@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='show31'>
+<!--  \-*\- Text \-*\-
+ Copyright (c) 1990, University of Michigan
+ Template man page. -->
+<refmeta>
+<refentrytitle>SHOW3</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class='source'>February, 1992</refmiscinfo>
+<refmiscinfo class='manual'>1</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>show3</refname>
+<refpurpose>flip through three IFF ILBM files in rapid succession</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<cmdsynopsis>
+  <command>show3</command>    
+    <arg choice='plain'><replaceable>redfile</replaceable></arg>
+    <arg choice='plain'><replaceable>greenfile</replaceable></arg>
+    <arg choice='plain'><replaceable>bluefile</replaceable></arg>
+    <arg choice='plain'><replaceable>show3</replaceable></arg>
+    <arg choice='plain'><replaceable>filename</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para><emphasis remap='I'>Show3</emphasis>
+will render the three specified IFF ILBM files in three different
+screens, then flip through them in rapid succession, thus combining
+them into a single picture. Its main use is to combine the three
+r, g, b components of a picture created by saving a picture rendered
+using
+<userinput>getami -3</userinput>
+into the original picture.</para>
+
+<para>If
+<command>show3</command>
+is called using the second form, then the extensions ".r",
+".g", and ".b" will be appended to the file name given, to produce the
+required three file names.</para>
+
+<para>Click the left mouse button to exit from this program.</para>
+
+<para>This program will only work if you have Christian Weber's
+<emphasis remap='I'>iff.library</emphasis>
+in your LIBS: directory.</para>
+</refsect1>
+
+<refsect1 xml:id='caveat'><title>CAVEAT</title>
+<para>As with
+<userinput>getami -3</userinput>,
+the screen will flicker, especially in conjunction
+with interlace. If you are sensitive to screen flicker, please do not
+use this program.</para>
+</refsect1>
+
+<refsect1 xml:id='bugs'><title>BUGS</title>
+<para>Displaying three images with different resolutions is a sure way to
+crash the machine. Use this program only for the purpose for which it
+is intended.</para>
+</refsect1>
+
+<refsect1 xml:id='author'><title>AUTHOR</title>
+<para>Kriton Kyrimis (kyrimis%theseas@csi.forth.gr), based on showiff.c
+by Christian A. Weber, distributed with his iff.library.</para>
+</refsect1>
+</refentry>
+

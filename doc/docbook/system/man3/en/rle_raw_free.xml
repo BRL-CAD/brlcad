@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='rle_raw_free3'>
+<!--  Copyright (c) 1986, 1987, University of Utah -->
+<refentryinfo><date>2/2/87</date></refentryinfo>
+<refmeta>
+<refentrytitle>RLE_RAW_ALLOC</refentrytitle>
+<manvolnum>3</manvolnum>
+<refmiscinfo class='date'>2/2/87</refmiscinfo>
+<refmiscinfo class='source'>3</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>rle_raw_alloc</refname>
+<refpurpose>Allocate memory for rle_getraw or rle_putraw.</refpurpose>
+</refnamediv>
+<refnamediv>
+<refname>rle_raw_free</refname>
+<refpurpose>free memory allocated by rle_raw_alloc.</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<funcsynopsis>
+<funcsynopsisinfo>
+#include &lt;rle.h&gt;
+
+#include &lt;rle_raw.h&gt;
+
+</funcsynopsisinfo>
+<funcprototype>
+<funcdef><function>rle_raw_alloc</function></funcdef>
+<paramdef><parameter>the_hdr</parameter></paramdef>
+<paramdef><parameter>scanp</parameter></paramdef>
+<paramdef><parameter>nrawp</parameter></paramdef>
+</funcprototype>
+<funcsynopsisinfo>
+
+rle_hdr * the_hdr;
+
+rle_op *** scanp;
+
+int ** nrawp;
+
+</funcsynopsisinfo>
+<funcprototype>
+<funcdef><function>rle_raw_free</function></funcdef>
+<paramdef><parameter>the_hdr</parameter></paramdef>
+<paramdef><parameter>scanp</parameter></paramdef>
+<paramdef><parameter>nrawp</parameter></paramdef>
+</funcprototype>
+<funcsynopsisinfo>
+
+rle_hdr * the_hdr;
+
+rle_op ** scanp;
+
+int * nrawp;
+
+</funcsynopsisinfo>
+</funcsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para>The function
+<function>rle_raw_alloc</function>
+is provided to make it easier to allocate storage for use by the RLE
+"raw" functions.  It examines the
+<emphasis remap='I'>the_hdr</emphasis>
+structure provided and return (via its other arguments) newly
+allocated space suitable for reading from or writing to an RLE file
+described by the
+<emphasis remap='I'>the_hdr</emphasis>
+structure.
+<emphasis remap='I'>Rle_raw_alloc</emphasis>
+allocates
+(<emphasis remap='I'>the_hdr</emphasis>-><emphasis remap='I'>xmax</emphasis>
+-
+<emphasis remap='I'>the_hdr</emphasis>-><emphasis remap='I'>xmin</emphasis>
++ 1)
+elements per channel, which is more than should ever be needed for a
+valid <emphasis remap='I'>RLE</emphasis> file.</para>
+
+<para><emphasis remap='I'>Rle_raw_free</emphasis>
+should be used to free memory allocated by
+<citerefentry><refentrytitle>rle_raw_alloc</refentrytitle><manvolnum>3</manvolnum></citerefentry>.
+The arguments are pointers to the allocated storage.
+This is distinct from
+<citerefentry><refentrytitle>rle_freeraw</refentrytitle><manvolnum>3</manvolnum></citerefentry>,
+which only frees pixel arrays referenced by individual
+<emphasis remap='I'>rle_op</emphasis>
+structures, while
+<function>rle_raw_free</function>
+frees the storage consumed by the arrays of pointers and
+<emphasis remap='I'>rle_op</emphasis>
+structures.
+In fact,
+<emphasis remap='I'>rle_freeraw</emphasis>
+should be called before calling
+<function>rle_raw_free</function>.</para>
+</refsect1>
+
+<refsect1 xml:id='see_also'><title>SEE ALSO</title>
+<!-- .na -->
+<para><citerefentry><refentrytitle>rle_hdr</refentrytitle><manvolnum>3</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>rle_op</refentrytitle><manvolnum>3</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>rle_putraw</refentrytitle><manvolnum>3</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>rle_getraw</refentrytitle><manvolnum>3</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>rle_freeraw</refentrytitle><manvolnum>3</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>librle</refentrytitle><manvolnum>3</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>RLE</refentrytitle><manvolnum>5</manvolnum></citerefentry>.</para>
+<!-- .ad b -->
+</refsect1>
+
+<refsect1 xml:id='author'><title>AUTHOR</title>
+<para>Spencer W. Thomas
+<!-- .br -->
+University of Utah</para>
+</refsect1>
+
+<refsect1 xml:id='bugs'><title>BUGS</title>
+<para>The naming confusion between
+<emphasis remap='I'>rle_freeraw</emphasis>
+and
+<function>rle_raw_free</function>
+is unfortunate.</para>
+</refsect1>
+</refentry>
+

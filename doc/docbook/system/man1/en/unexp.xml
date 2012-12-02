@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='unexp1'>
+<!--  Copyright (c) 1986, University of Utah
+ Template man page.  Taken from wtm's page for getcx3d -->
+<refmeta>
+<refentrytitle>UNEXP</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class='source'>November 8, 1987</refmiscinfo>
+<refmiscinfo class='manual'>1</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>unexp</refname>
+<refpurpose>Convert "exponential" files into normal files.</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<cmdsynopsis>
+  <command>unexp</command>    
+    <arg choice='opt'><arg choice='plain'>-m </arg><arg choice='plain'><replaceable>maxval</replaceable></arg></arg>
+    <arg choice='opt'><arg choice='plain'>-o </arg><arg choice='plain'><replaceable>outfile</replaceable></arg></arg>
+    <arg choice='opt'>-p </arg>
+    <arg choice='opt'>-s </arg>
+    <arg choice='opt'>-v </arg>
+    <arg choice='plain'><replaceable>infile</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para><emphasis remap='I'>Unexp</emphasis>
+Converts a file of "exponential" floating point values into an
+<citerefentry><refentrytitle>RLE</refentrytitle><manvolnum>5</manvolnum></citerefentry>
+file containing integer valued bytes.  Exponential files have N-1 channels of
+eight bit data, with the Nth channel containing a common exponent for
+the other channels.  This allows the values represented by the pixels to have
+a wider dynamic range.</para>
+
+<para>If no maximum value is specified,
+<command>unexp</command>
+first reads the RLE file to find
+the dynamic range of the whole file.  It then rewinds the file and scales
+the output to fit within that dynamic range.  If a maximum value is specified,
+<command>unexp</command>
+runs in one pass, and clamps any values exceeding the maximum.</para>
+
+<para>Files containing exponential data are expected to have a
+"exponential_data" comment;
+<command>unexp</command>
+prints a warning if such a comment
+doesn't exist.  An exponential file should be <command>unexp</command>'ed before
+attempting to use any tools that perform arithmetic on pixels (e.g.,
+<citerefentry><refentrytitle>rlecomp</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>avg4</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>fant</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+or
+<citerefentry><refentrytitle>applymap</refentrytitle><manvolnum>1</manvolnum></citerefentry>)
+or displaying the image.</para>
+
+<para><emphasis remap='I'>Unexp</emphasis>
+does not allow piped input.  The
+<emphasis remap='I'>infile</emphasis>
+must be a real file; the special filenames described in
+<citerefentry><refentrytitle>urt</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+are not allowed.  ("-" does work, as long as the input is coming from
+a real file; this is of minimal utility, therefore, as typing
+<userinput>unexp - &lt;foo.rle</userinput>
+is harder than typing
+<emphasis remap='I'>unexp foo.rle</emphasis>.)</para>
+</refsect1>
+
+<refsect1 xml:id='options'><title>OPTIONS</title>
+<variablelist remap='TP'>
+  <varlistentry>
+  <term><option>-m</option><replaceable> maxval</replaceable></term>
+  <listitem>
+<para>Specify the maximum value (i.e., the data in the file is assumed to be in the
+range 0..maxval).  Only the conversion pass is executed, and values found
+exceeding the maximum are clamped.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-o</option><replaceable> outfile</replaceable></term>
+  <listitem>
+<para>If specified, the output will be written to this file.  If
+<emphasis remap='I'>outfile</emphasis>
+is "-", or if it is not specified, the output will be written to the
+standard output stream.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-p</option></term>
+  <listitem>
+<para>Print the maximum value found during the scanning phase</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-s</option></term>
+  <listitem>
+<para>Just scan the file to find the maximum, don't generate any output.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-v</option></term>
+  <listitem>
+<para>Verbose mode, print a message to stderr after scanning or converting every
+hundred scanlines.</para>
+  </listitem>
+  </varlistentry>
+</variablelist>
+</refsect1>
+
+<refsect1 xml:id='see_also'><title>SEE ALSO</title>
+<para><citerefentry><refentrytitle>float_to_exp</refentrytitle><manvolnum>3</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>urt</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>RLE</refentrytitle><manvolnum>5</manvolnum></citerefentry>.</para>
+</refsect1>
+
+<refsect1 xml:id='author'><title>AUTHOR</title>
+<para>John W. Peterson</para>
+</refsect1>
+
+<refsect1 xml:id='bugs'><title>BUGS</title>
+<para><emphasis remap='I'>Unexp</emphasis>
+is provided because of the lack of floating point or extended
+precision RLE files.</para>
+
+<para>The
+<option>-v</option>
+flag is a historical relict from the slow CPU days.</para>
+</refsect1>
+</refentry>
+

@@ -1,0 +1,394 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man+tkman by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='crtimgtype3'>
+
+<!-- '\" Copyright (c) 1994 The Regents of the University of California.
+'\" Copyright (c) 1994\-1997 Sun Microsystems, Inc. -->
+
+<!-- '\" See the file "license.terms" for information on usage and redistribution
+'\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
+'\" 
+'\" RCS: @(#) $Id$
+'\"  -->
+<refentryinfo><date>8.5</date></refentryinfo>
+<refmeta>
+<refentrytitle>Tk_CreateImageType</refentrytitle>
+<manvolnum>3</manvolnum>
+<refmiscinfo class='date'>8.5</refmiscinfo>
+<refmiscinfo class='source'>Tk</refmiscinfo>
+<refmiscinfo class='manual'>Tk Library Procedures</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>Tk_CreateImageType</refname>
+<refname>Tk_GetImageMasterData</refname>
+<refname>Tk_InitImageArgs</refname>
+<refpurpose>define new kind of image</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<funcsynopsis>
+<funcsynopsisinfo>
+#include &lt;tk.h&gt;
+
+</funcsynopsisinfo>
+<funcprototype>
+<funcdef><function>Tk_CreateImageType</function></funcdef>
+<paramdef><parameter>typePtr</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef>ClientData <function>Tk_GetImageMasterData</function></funcdef>
+<paramdef><parameter>interp</parameter></paramdef>
+<paramdef><parameter>name</parameter></paramdef>
+<paramdef><parameter>typePtrPtr</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef><function>Tk_InitImageArgs</function></funcdef>
+<paramdef><parameter>interp</parameter></paramdef>
+<paramdef><parameter>argc</parameter></paramdef>
+<paramdef><parameter>argvPtr</parameter></paramdef>
+</funcprototype>
+</funcsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='arguments'><title>ARGUMENTS</title>
+<!-- .AS Tk_ImageType *typePtrPtr -->
+<informaltable>
+<tgroup cols='3'>
+<tbody>
+
+<row><entry>"Tk_ImageType"</entry><entry>"*typePtr"</entry><entry>"in"</entry>
+<entry>
+<para>Structure that defines the new type of image.
+Must be static: a
+pointer to this structure is retained by the image code.</para>
+</entry>
+</row>
+<row><entry>Tcl_Interp</entry><entry>*interp</entry><entry>in</entry>
+<entry>
+<para>Interpreter in which image was created.</para>
+</entry>
+</row>
+<row><entry>"const char"</entry><entry>*name</entry><entry>in</entry>
+<entry>
+<para>Name of existing image.</para>
+</entry>
+</row>
+<row><entry>Tk_ImageType</entry><entry>**typePtrPtr</entry><entry>out</entry>
+<entry>
+<para>Points to word in which to store a pointer to type information for
+the given image, if it exists.</para>
+</entry>
+</row>
+<row><entry>int</entry><entry>argc</entry><entry>in</entry>
+<entry>
+<para>Number of arguments</para>
+</entry>
+</row>
+<row><entry>char</entry><entry>***argvPtr</entry><entry>in/out</entry>
+<entry>
+<para>Pointer to argument list</para>
+<!-- .BE -->
+</entry>
+</row>
+</tbody>
+</tgroup>
+</informaltable>
+
+</refsect1>
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para><function>Tk_CreateImageType</function> is invoked to define a new kind of image.
+An image type corresponds to a particular value of the <emphasis remap='I'>type</emphasis>
+argument for the <emphasis remap='B'>image create</emphasis> command.  There may exist
+any number of different image types, and new types may be defined
+dynamically by calling <function>Tk_CreateImageType</function>.
+For example, there might be one type for 2-color bitmaps,
+another for multi-color images, another for dithered images,
+another for video, and so on.</para>
+
+<para>The code that implements a new image type is called an
+<emphasis remap='I'>image manager</emphasis>.
+It consists of a collection of procedures plus three different
+kinds of data structures.
+The first data structure is a Tk_ImageType structure, which contains
+the name of the image type and pointers to five procedures provided
+by the image manager to deal with images of this type:</para>
+<programlisting remap='CS'>
+typedef struct Tk_ImageType {
+    char *<varname role='parameter'>name</varname>;
+    Tk_ImageCreateProc *<emphasis remap='I'>createProc</emphasis>;
+    Tk_ImageGetProc *<emphasis remap='I'>getProc</emphasis>;
+    Tk_ImageDisplayProc *<emphasis remap='I'>displayProc</emphasis>;
+    Tk_ImageFreeProc *<emphasis remap='I'>freeProc</emphasis>;
+    Tk_ImageDeleteProc *<emphasis remap='I'>deleteProc</emphasis>;
+} Tk_ImageType;
+</programlisting> <!-- remap='CE' -->
+<para>The fields of this structure will be described in later subsections
+of this entry.</para>
+
+<para>The second major data structure manipulated by an image manager
+is called an <emphasis remap='I'>image master</emphasis>;  it contains overall information
+about a particular image, such as the values of the configuration
+options specified in an <emphasis remap='B'>image create</emphasis> command.
+There will usually be one of these structures for each
+invocation of the <emphasis remap='B'>image create</emphasis> command.</para>
+
+<para>The third data structure related to images is an <emphasis remap='I'>image instance</emphasis>.
+There will usually be one of these structures for each usage of an
+image in a particular widget.
+It is possible for a single image to appear simultaneously
+in multiple widgets, or even multiple times in the same widget.
+Furthermore, different instances may be on different screens
+or displays.
+The image instance data structure describes things that may
+vary from instance to instance, such as colors and graphics
+contexts for redisplay.
+There is usually one instance structure for each <option>-image</option>
+option specified for a widget or canvas item.</para>
+
+<para>The following subsections describe the fields of a Tk_ImageType
+in more detail.</para>
+
+
+<refsect2 xml:id='name'><title>NAME</title>
+
+<para><emphasis remap='I'>typePtr-&gt;name</emphasis> provides a name for the image type.
+Once <function>Tk_CreateImageType</function> returns, this name may be used
+in <emphasis remap='B'>image create</emphasis> commands to create images of the new
+type.
+If there already existed an image type by this name then
+the new image type replaces the old one.</para>
+
+</refsect2>
+
+<refsect2 xml:id='createproc'><title>CREATEPROC</title>
+<para><emphasis remap='I'>typePtr-&gt;createProc</emphasis> provides the address of a procedure for
+Tk to call whenever <emphasis remap='B'>image create</emphasis> is invoked to create
+an image of the new type.
+<emphasis remap='I'>typePtr-&gt;createProc</emphasis> must match the following prototype:</para>
+<programlisting remap='CS'>
+<funcsynopsis>
+<funcprototype>
+<funcdef>typedef int <function>Tk_ImageCreateProc</function></funcdef>
+    <paramdef>Tcl_Interp * <parameter>interp</parameter></paramdef>
+    <paramdef>char * <parameter>name</parameter></paramdef>
+    <paramdef>int <parameter>objc</parameter></paramdef>
+    <paramdef>Tcl_Obj *const <parameter>objv</parameter>[]</paramdef>
+    <paramdef>Tk_ImageType * <parameter>typePtr</parameter></paramdef>
+    <paramdef>Tk_ImageMaster <parameter>master</parameter></paramdef>
+    <paramdef>ClientData * <parameter>masterDataPtr</parameter></paramdef>
+</funcprototype>
+</funcsynopsis>
+</programlisting> <!-- remap='CE' -->
+<para>The <varname role='parameter'>interp</varname> argument is the interpreter in which the <emphasis remap='B'>image</emphasis>
+command was invoked, and <varname role='parameter'>name</varname> is the name for the new image,
+which was either specified explicitly in the <emphasis remap='B'>image</emphasis> command
+or generated automatically by the <emphasis remap='B'>image</emphasis> command.
+The <varname role='parameter'>objc</varname> and <varname role='parameter'>objv</varname> arguments describe all the configuration
+options for the new image (everything after the name argument to
+<emphasis remap='B'>image</emphasis>).
+The <varname role='parameter'>master</varname> argument is a token that refers to Tk's information
+about this image;  the image manager must return this token to
+Tk when invoking the <emphasis remap='B'>Tk_ImageChanged</emphasis> procedure.
+Typically <emphasis remap='I'>createProc</emphasis> will parse <varname role='parameter'>objc</varname> and <varname role='parameter'>objv</varname>
+and create an image master data structure for the new image.
+<emphasis remap='I'>createProc</emphasis> may store an arbitrary one-word value at
+*<varname role='parameter'>masterDataPtr</varname>, which will be passed back to the
+image manager when other callbacks are invoked.
+Typically the value is a pointer to the master data
+structure for the image.</para>
+
+<para>If <emphasis remap='I'>createProc</emphasis> encounters an error, it should leave an error
+message in the interpreter result and return <emphasis remap='B'>TCL_ERROR</emphasis>;  otherwise
+it should return <emphasis remap='B'>TCL_OK</emphasis>.</para>
+
+<para><emphasis remap='I'>createProc</emphasis> should call <emphasis remap='B'>Tk_ImageChanged</emphasis> in order to set the
+size of the image and request an initial redisplay.</para>
+
+</refsect2>
+
+<refsect2 xml:id='getproc'><title>GETPROC</title>
+
+<para><emphasis remap='I'>typePtr-&gt;getProc</emphasis> is invoked by Tk whenever a widget
+calls <emphasis remap='B'>Tk_GetImage</emphasis> to use a particular image.
+This procedure must match the following prototype:</para>
+<programlisting remap='CS'>
+<funcsynopsis>
+<funcprototype>
+<funcdef>typedef ClientData <function>Tk_ImageGetProc</function></funcdef>
+    <paramdef>Tk_Window <parameter>tkwin</parameter></paramdef>
+    <paramdef>ClientData <parameter>masterData</parameter></paramdef>
+</funcprototype>
+</funcsynopsis>
+</programlisting> <!-- remap='CE' -->
+<para>The <varname role='parameter'>tkwin</varname> argument identifies the window in which the
+image will be used and <varname role='parameter'>masterData</varname> is the value
+returned by <emphasis remap='I'>createProc</emphasis> when the image master was created.
+<emphasis remap='I'>getProc</emphasis> will usually create a data structure for the new
+instance, including such things as the resources needed to
+display the image in the given window.
+<emphasis remap='I'>getProc</emphasis> returns a one-word token for the instance, which
+is typically the address of the instance data structure.
+Tk will pass this value back to the image manager when invoking
+its <emphasis remap='I'>displayProc</emphasis> and <emphasis remap='I'>freeProc</emphasis> procedures.</para>
+
+</refsect2>
+
+<refsect2 xml:id='displayproc'><title>DISPLAYPROC</title>
+
+<para><emphasis remap='I'>typePtr-&gt;displayProc</emphasis> is invoked by Tk whenever an image needs
+to be displayed (i.e., whenever a widget calls <emphasis remap='B'>Tk_RedrawImage</emphasis>).
+<emphasis remap='I'>displayProc</emphasis> must match the following prototype:</para>
+<programlisting remap='CS'>
+<funcsynopsis>
+<funcprototype>
+<funcdef>typedef void <function>Tk_ImageDisplayProc</function></funcdef>
+    <paramdef>ClientData <parameter>instanceData</parameter></paramdef>
+    <paramdef>Display * <parameter>display</parameter></paramdef>
+    <paramdef>Drawable <parameter>drawable</parameter></paramdef>
+    <paramdef>int <parameter>imageX</parameter></paramdef>
+    <paramdef>int <parameter>imageY</parameter></paramdef>
+    <paramdef>int <parameter>width</parameter></paramdef>
+    <paramdef>int <parameter>height</parameter></paramdef>
+    <paramdef>int <parameter>drawableX</parameter></paramdef>
+    <paramdef>int <parameter>drawableY</parameter></paramdef>
+</funcprototype>
+</funcsynopsis>
+</programlisting> <!-- remap='CE' -->
+<para>The <varname role='parameter'>instanceData</varname> will be the same as the value returned by
+<emphasis remap='I'>getProc</emphasis> when the instance was created.
+<varname role='parameter'>display</varname> and <varname role='parameter'>drawable</varname> indicate where to display the
+image;  <varname role='parameter'>drawable</varname> may be a pixmap rather than
+the window specified to <emphasis remap='I'>getProc</emphasis> (this is usually the case,
+since most widgets double-buffer their redisplay to get smoother
+visual effects).
+<varname role='parameter'>imageX</varname>, <varname role='parameter'>imageY</varname>, <varname role='parameter'>width</varname>, and <varname role='parameter'>height</varname>
+identify the region of the image that must be redisplayed.
+This region will always be within the size of the image
+as specified in the most recent call to <emphasis remap='B'>Tk_ImageChanged</emphasis>.
+<varname role='parameter'>drawableX</varname> and <varname role='parameter'>drawableY</varname> indicate where in <varname role='parameter'>drawable</varname>
+the image should be displayed;  <emphasis remap='I'>displayProc</emphasis> should display
+the given region of the image so that point (<varname role='parameter'>imageX</varname>, <varname role='parameter'>imageY</varname>)
+in the image appears at (<varname role='parameter'>drawableX</varname>, <varname role='parameter'>drawableY</varname>) in <varname role='parameter'>drawable</varname>.</para>
+
+</refsect2>
+
+<refsect2 xml:id='freeproc'><title>FREEPROC</title>
+
+<para><emphasis remap='I'>typePtr-&gt;freeProc</emphasis> contains the address of a procedure that
+Tk will invoke when an image instance is released (i.e., when
+<emphasis remap='B'>Tk_FreeImage</emphasis> is invoked).
+This can happen, for example, when a widget is deleted or a image item
+in a canvas is deleted, or when the image displayed in a widget or
+canvas item is changed.
+<emphasis remap='I'>freeProc</emphasis> must match the following prototype:</para>
+<programlisting remap='CS'>
+<funcsynopsis>
+<funcprototype>
+<funcdef>typedef void <function>Tk_ImageFreeProc</function></funcdef>
+    <paramdef>ClientData <parameter>instanceData</parameter></paramdef>
+    <paramdef>Display * <parameter>display</parameter></paramdef>
+</funcprototype>
+</funcsynopsis>
+</programlisting> <!-- remap='CE' -->
+<para>The <varname role='parameter'>instanceData</varname> will be the same as the value returned by
+<emphasis remap='I'>getProc</emphasis> when the instance was created, and <varname role='parameter'>display</varname>
+is the display containing the window for the instance.
+<emphasis remap='I'>freeProc</emphasis> should release any resources associated with the
+image instance, since the instance will never be used again.</para>
+
+</refsect2>
+
+<refsect2 xml:id='deleteproc'><title>DELETEPROC</title>
+
+<para><emphasis remap='I'>typePtr-&gt;deleteProc</emphasis> is a procedure that Tk invokes when an
+image is being deleted (i.e. when the <emphasis remap='B'>image delete</emphasis> command
+is invoked).
+Before invoking <emphasis remap='I'>deleteProc</emphasis> Tk will invoke <emphasis remap='I'>freeProc</emphasis> for
+each of the image's instances.
+<emphasis remap='I'>deleteProc</emphasis> must match the following prototype:</para>
+<programlisting remap='CS'>
+<funcsynopsis>
+<funcprototype>
+<funcdef>typedef void <function>Tk_ImageDeleteProc</function></funcdef>
+    <paramdef>ClientData <parameter>masterData</parameter></paramdef>
+</funcprototype>
+</funcsynopsis>
+</programlisting> <!-- remap='CE' -->
+<para>The <varname role='parameter'>masterData</varname> argument will be the same as the value
+stored in <emphasis remap='I'>*masterDataPtr</emphasis> by <emphasis remap='I'>createProc</emphasis> when the
+image was created.
+<emphasis remap='I'>deleteProc</emphasis> should release any resources associated with
+the image.</para>
+
+</refsect2>
+</refsect1>
+
+<refsect1 xml:id='tk_getimagemasterdata'><title>TK_GETIMAGEMASTERDATA</title>
+<para>The procedure <function>Tk_GetImageMasterData</function> may be invoked to retrieve
+information about an image.  For example, an image manager can use this
+procedure to locate its image master data for an image.
+If there exists an image named <varname role='parameter'>name</varname>
+in the interpreter given by <varname role='parameter'>interp</varname>, then <emphasis remap='I'>*typePtrPtr</emphasis> is
+filled in with type information for the image (the <varname role='parameter'>typePtr</varname> value
+passed to <function>Tk_CreateImageType</function> when the image type was registered)
+and the return value is the ClientData value returned by the
+<emphasis remap='I'>createProc</emphasis> when the image was created (this is typically a
+pointer to the image master data structure).  If no such image exists
+then NULL is returned and NULL is stored at <emphasis remap='I'>*typePtrPtr</emphasis>.</para>
+
+</refsect1>
+
+<refsect1 xml:id='legacy_interface_support'><title>LEGACY INTERFACE SUPPORT</title>
+<para>In Tk 8.2 and earlier, the definition of <function>Tk_ImageCreateProc</function>
+was incompatibly different, with the following prototype:</para>
+<programlisting remap='CS'>
+<funcsynopsis>
+<funcprototype>
+<funcdef>typedef int <function>Tk_ImageCreateProc</function></funcdef>
+    <paramdef>Tcl_Interp * <parameter>interp</parameter></paramdef>
+    <paramdef>char * <parameter>name</parameter></paramdef>
+    <paramdef>int <parameter>argc</parameter></paramdef>
+    <paramdef>char ** <parameter>argv</parameter></paramdef>
+    <paramdef>Tk_ImageType * <parameter>typePtr</parameter></paramdef>
+    <paramdef>Tk_ImageMaster <parameter>master</parameter></paramdef>
+    <paramdef>ClientData * <parameter>masterDataPtr</parameter></paramdef>
+</funcprototype>
+</funcsynopsis>
+</programlisting> <!-- remap='CE' -->
+<para>Legacy programs and libraries dating from those days may still
+contain code that defines extended Tk image types using the old
+interface.  The Tk header file will still support this legacy
+interface if the code is compiled with the macro <emphasis remap='B'>USE_OLD_IMAGE</emphasis>
+defined.</para>
+
+<para>When the <emphasis remap='B'>USE_OLD_IMAGE</emphasis> legacy support is enabled, you may
+see the routine <function>Tk_InitImageArgs</function> in use.  This was a migration
+tool used to create stub-enabled extensions that could be loaded
+into interps containing all versions of Tk 8.1 and later.  Tk 8.5 no longer
+provides this routine, but uses a macro to convert any attempted
+calls of this routine into an empty comment.  Any stub-enabled
+extension providing an extended image type via the legacy interface
+that is compiled against Tk 8.5 headers and linked against the
+Tk 8.5 stub library will produce a file that can be loaded only
+into interps with Tk 8.5 or later; that is, the normal stub-compatibility
+rules.  If a developer needs to generate from such code a file
+that is loadable into interps with Tk 8.4 or earlier, they must
+use Tk 8.4 headers and stub libraries to do so.</para>
+
+<para>Any new code written today should not make use of the legacy
+interfaces.  Expect their support to go away in Tk 9.</para>
+
+</refsect1>
+
+<refsect1 xml:id='see_also'><title>SEE ALSO</title>
+<para>Tk_ImageChanged, Tk_GetImage, Tk_FreeImage, Tk_RedrawImage, Tk_SizeOfImage</para>
+
+</refsect1>
+
+<refsect1 xml:id='keywords'><title>KEYWORDS</title>
+<para>image manager, image type, instance, master</para>
+</refsect1>
+</refentry>
+

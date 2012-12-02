@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man+tkman by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='clipboard3'>
+
+<!-- '\" Copyright (c) 1994 The Regents of the University of California.
+'\" Copyright (c) 1994\-1996 Sun Microsystems, Inc. -->
+
+<!-- '\" See the file "license.terms" for information on usage and redistribution
+'\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
+'\" 
+'\" RCS: @(#) $Id$
+'\"  -->
+<refentryinfo><date>4.0</date></refentryinfo>
+<refmeta>
+<refentrytitle>Tk_ClipboardClear</refentrytitle>
+<manvolnum>3</manvolnum>
+<refmiscinfo class='date'>4.0</refmiscinfo>
+<refmiscinfo class='source'>Tk</refmiscinfo>
+<refmiscinfo class='manual'>Tk Library Procedures</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>Tk_ClipboardClear</refname>
+<refname>Tk_ClipboardAppend</refname>
+<refpurpose>Manage the clipboard</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<funcsynopsis>
+<funcsynopsisinfo>
+#include &lt;tk.h&gt;
+
+</funcsynopsisinfo>
+<funcprototype>
+<funcdef>int <function>Tk_ClipboardClear</function></funcdef>
+<paramdef><parameter>interp</parameter></paramdef>
+<paramdef><parameter>tkwin</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef>int <function>Tk_ClipboardAppend</function></funcdef>
+<paramdef><parameter>interp</parameter></paramdef>
+<paramdef><parameter>tkwin</parameter></paramdef>
+<paramdef><parameter>target</parameter></paramdef>
+<paramdef><parameter>format</parameter></paramdef>
+<paramdef><parameter>buffer</parameter></paramdef>
+</funcprototype>
+</funcsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='arguments'><title>ARGUMENTS</title>
+<!-- .AS Tk_ClipboardClear tkwin -->
+<informaltable>
+<tgroup cols='3'>
+<tbody>
+
+<row><entry>"Tcl_Interp"</entry><entry>"*interp"</entry><entry>"in"</entry>
+<entry>
+<para>Interpreter to use for reporting errors.</para>
+</entry>
+</row>
+<row><entry>Tk_Window</entry><entry>tkwin</entry><entry>in</entry>
+<entry>
+<para>Window that determines which display's clipboard to manipulate.</para>
+</entry>
+</row>
+<row><entry>Atom</entry><entry>target</entry><entry>in</entry>
+<entry>
+<para>Conversion type for this clipboard item;  has same meaning as
+<emphasis remap='I'>target</emphasis> argument to <emphasis remap='B'>Tk_CreateSelHandler</emphasis>.</para>
+</entry>
+</row>
+<row><entry>Atom</entry><entry>format</entry><entry>in</entry>
+<entry>
+<para>Representation to use when data is retrieved;  has same meaning as
+<emphasis remap='I'>format</emphasis> argument to <emphasis remap='B'>Tk_CreateSelHandler</emphasis>.</para>
+</entry>
+</row>
+<row><entry>char</entry><entry>*buffer</entry><entry>in</entry>
+<entry>
+<para>Null terminated string containing the data to be appended to the clipboard.</para>
+<!-- .BE -->
+</entry>
+</row>
+</tbody>
+</tgroup>
+</informaltable>
+
+</refsect1>
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para>These two procedures manage the clipboard for Tk.
+The clipboard is typically managed by calling <function>Tk_ClipboardClear</function>
+once, then calling <function>Tk_ClipboardAppend</function> to add data for any
+number of targets.</para>
+
+<para><function>Tk_ClipboardClear</function> claims the CLIPBOARD selection and frees any
+data items previously stored on the clipboard in this application.  
+It normally returns <emphasis remap='B'>TCL_OK</emphasis>, but if an error occurs it returns
+<emphasis remap='B'>TCL_ERROR</emphasis> and leaves an error message in <emphasis remap='I'>interp-&gt;result</emphasis>.
+<function>Tk_ClipboardClear</function> must be called before a sequence of
+<function>Tk_ClipboardAppend</function> calls can be issued.</para>
+
+<para><function>Tk_ClipboardAppend</function> appends a buffer of data to the clipboard.
+The first buffer for a given <emphasis remap='I'>target</emphasis> determines the <emphasis remap='I'>format</emphasis>
+for that <emphasis remap='I'>target</emphasis>.
+Any successive appends for that <emphasis remap='I'>target</emphasis> must have
+the same format or an error will be returned.
+<function>Tk_ClipboardAppend</function> returns <emphasis remap='B'>TCL_OK</emphasis> if the buffer is
+successfully copied onto the clipboard.  If the clipboard is not
+currently owned by the application, either
+because <function>Tk_ClipboardClear</function> has not been called or because
+ownership of the clipboard has changed since the last call to
+<function>Tk_ClipboardClear</function>,
+<function>Tk_ClipboardAppend</function> returns <emphasis remap='B'>TCL_ERROR</emphasis> and leaves an error message in
+<emphasis remap='I'>interp-&gt;result</emphasis>.</para>
+
+<para>In order to guarantee atomicity, no event handling should occur
+between <function>Tk_ClipboardClear</function> and the following
+<function>Tk_ClipboardAppend</function> calls (otherwise someone could retrieve
+a partially completed clipboard or claim ownership away from
+this application).</para>
+
+<para><function>Tk_ClipboardClear</function> may invoke callbacks, including arbitrary
+Tcl scripts, as a result of losing the CLIPBOARD selection, so
+any calling function should take care to be reentrant at the point
+<function>Tk_ClipboardClear</function> is invoked.</para>
+
+</refsect1>
+
+<refsect1 xml:id='keywords'><title>KEYWORDS</title>
+<para>append, clipboard, clear, format, type</para>
+</refsect1>
+</refentry>
+

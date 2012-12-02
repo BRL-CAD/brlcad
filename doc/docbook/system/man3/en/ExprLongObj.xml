@@ -1,0 +1,174 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man+tkman by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='exprlongobj3'>
+
+<!-- '\" Copyright (c) 1996\-1997 Sun Microsystems, Inc. -->
+
+<!-- '\" See the file "license.terms" for information on usage and redistribution
+'\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
+'\" 
+'\" RCS: @(#) $Id$
+'\"  -->
+<refentryinfo><date>8.0</date></refentryinfo>
+<refmeta>
+<refentrytitle>Tcl_ExprLongObj</refentrytitle>
+<manvolnum>3</manvolnum>
+<refmiscinfo class='date'>8.0</refmiscinfo>
+<refmiscinfo class='source'>Tcl</refmiscinfo>
+<refmiscinfo class='manual'>Tcl Library Procedures</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>Tcl_ExprLongObj</refname>
+<refname>Tcl_ExprDoubleObj</refname>
+<refname>Tcl_ExprBooleanObj</refname>
+<refname>Tcl_ExprObj</refname>
+<refpurpose>evaluate an expression</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<funcsynopsis>
+<funcsynopsisinfo>
+#include &lt;tcl.h&gt;
+
+</funcsynopsisinfo>
+<funcprototype>
+<funcdef>int <function>Tcl_ExprLongObj</function></funcdef>
+<paramdef><parameter>interp</parameter></paramdef>
+<paramdef><parameter>objPtr</parameter></paramdef>
+<paramdef><parameter>longPtr</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef>int <function>Tcl_ExprDoubleObj</function></funcdef>
+<paramdef><parameter>interp</parameter></paramdef>
+<paramdef><parameter>objPtr</parameter></paramdef>
+<paramdef><parameter>doublePtr</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef>int <function>Tcl_ExprBooleanObj</function></funcdef>
+<paramdef><parameter>interp</parameter></paramdef>
+<paramdef><parameter>objPtr</parameter></paramdef>
+<paramdef><parameter>booleanPtr</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef>int <function>Tcl_ExprObj</function></funcdef>
+<paramdef><parameter>interp</parameter></paramdef>
+<paramdef><parameter>objPtr</parameter></paramdef>
+<paramdef><parameter>resultPtrPtr</parameter></paramdef>
+</funcprototype>
+</funcsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='arguments'><title>ARGUMENTS</title>
+<!-- .AS Tcl_Interp **resultPtrPtr out -->
+<informaltable>
+<tgroup cols='3'>
+<tbody>
+
+<row><entry>"Tcl_Interp"</entry><entry>"*interp"</entry><entry>"in"</entry>
+<entry>
+<para>Interpreter in whose context to evaluate <emphasis remap='I'>objPtr</emphasis>.</para>
+</entry>
+</row>
+<row><entry>Tcl_Obj</entry><entry>*objPtr</entry><entry>in</entry>
+<entry>
+<para>Pointer to an object containing the expression to evaluate.</para>
+</entry>
+</row>
+<row><entry>long</entry><entry>*longPtr</entry><entry>out</entry>
+<entry>
+<para>Pointer to location in which to store the integer value of the
+expression.</para>
+</entry>
+</row>
+<row><entry>int</entry><entry>*doublePtr</entry><entry>out</entry>
+<entry>
+<para>Pointer to location in which to store the floating-point value of the
+expression.</para>
+</entry>
+</row>
+<row><entry>int</entry><entry>*booleanPtr</entry><entry>out</entry>
+<entry>
+<para>Pointer to location in which to store the 0/1 boolean value of the
+expression.</para>
+</entry>
+</row>
+<row><entry>Tcl_Obj</entry><entry>**resultPtrPtr</entry><entry>out</entry>
+<entry>
+<para>Pointer to location in which to store a pointer to the object
+that is the result of the expression.</para>
+<!-- .BE -->
+</entry>
+</row>
+</tbody>
+</tgroup>
+</informaltable>
+
+</refsect1>
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para>These four procedures all evaluate an expression, returning
+the result in one of four different forms.
+The expression is given by the <emphasis remap='I'>objPtr</emphasis> argument, and it
+can have any of the forms accepted by the <emphasis remap='B'>expr</emphasis> command.</para>
+
+<para>The <emphasis remap='I'>interp</emphasis> argument refers to an interpreter used to
+evaluate the expression (e.g. for variables and nested Tcl
+commands) and to return error information.</para>
+
+<para>For all of these procedures the return value is a standard
+Tcl result: <emphasis remap='B'>TCL_OK</emphasis> means the expression was successfully
+evaluated, and <emphasis remap='B'>TCL_ERROR</emphasis> means that an error occurred while
+evaluating the expression.
+If <emphasis remap='B'>TCL_ERROR</emphasis> is returned,
+then a message describing the error
+can be retrieved using <emphasis remap='B'>Tcl_GetObjResult</emphasis>.
+If an error occurs while executing a Tcl command embedded in
+the expression then that error will be returned.</para>
+
+<para>If the expression is successfully evaluated, then its value is
+returned in one of four forms, depending on which procedure
+is invoked.
+<function>Tcl_ExprLongObj</function> stores an integer value at <emphasis remap='I'>*longPtr</emphasis>.
+If the expression's actual value is a floating-point number,
+then it is truncated to an integer.
+If the expression's actual value is a non-numeric string then
+an error is returned.</para>
+
+<para><function>Tcl_ExprDoubleObj</function> stores a floating-point value at <emphasis remap='I'>*doublePtr</emphasis>.
+If the expression's actual value is an integer, it is converted to
+floating-point.
+If the expression's actual value is a non-numeric string then
+an error is returned.</para>
+
+<para><function>Tcl_ExprBooleanObj</function> stores a 0/1 integer value at <emphasis remap='I'>*booleanPtr</emphasis>.
+If the expression's actual value is an integer or floating-point
+number, then they store 0 at <emphasis remap='I'>*booleanPtr</emphasis> if
+the value was zero and 1 otherwise.
+If the expression's actual value is a non-numeric string then
+it must be one of the values accepted by <emphasis remap='B'>Tcl_GetBoolean</emphasis>
+such as
+<quote>yes</quote>
+or
+<quote>no</quote>,
+or else an error occurs.</para>
+
+<para>If <function>Tcl_ExprObj</function> successfully evaluates the expression,
+it stores a pointer to the Tcl object
+containing the expression's value at <emphasis remap='I'>*resultPtrPtr</emphasis>.
+In this case, the caller is responsible for calling
+<emphasis remap='B'>Tcl_DecrRefCount</emphasis> to decrement the object's reference count
+when it is finished with the object.</para>
+
+</refsect1>
+
+<refsect1 xml:id='see_also'><title>SEE ALSO</title>
+<para>Tcl_ExprLong, Tcl_ExprDouble, Tcl_ExprBoolean, Tcl_ExprString, Tcl_GetObjResult</para>
+
+</refsect1>
+
+<refsect1 xml:id='keywords'><title>KEYWORDS</title>
+<para>boolean, double, evaluate, expression, integer, object, string</para>
+</refsect1>
+</refentry>
+

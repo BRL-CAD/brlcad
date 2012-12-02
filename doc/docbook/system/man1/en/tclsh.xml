@@ -1,0 +1,193 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man+tkman by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='tclsh1'>
+
+<!-- '\" Copyright (c) 1993 The Regents of the University of California.
+'\" Copyright (c) 1994\-1996 Sun Microsystems, Inc. -->
+
+<!-- '\" See the file "license.terms" for information on usage and redistribution
+'\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
+'\" 
+'\" RCS: @(#) $Id$
+'\"  -->
+<refmeta>
+<refentrytitle>tclsh</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class='manual'>Tcl</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>tclsh</refname>
+<refpurpose>Simple shell containing Tcl interpreter</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<cmdsynopsis>
+  <command>tclsh</command>    <arg choice='plain'><replaceable>?-encoding</replaceable></arg>
+    <arg choice='plain'><replaceable>name?</replaceable></arg>
+    <arg choice='plain'><replaceable>?fileName</replaceable></arg>
+    <arg choice='plain'><replaceable>arg</replaceable></arg>
+    <arg choice='plain' rep='repeat'><replaceable>arg</replaceable></arg>
+    <arg choice='plain'><replaceable>?</replaceable></arg>
+    <sbr/>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para><emphasis remap='B'>Tclsh</emphasis> is a shell-like application that reads Tcl commands
+from its standard input or from a file and evaluates them.
+If invoked with no arguments then it runs interactively, reading
+Tcl commands from standard input and printing command results and
+error messages to standard output.
+It runs until the <emphasis remap='B'>exit</emphasis> command is invoked or until it
+reaches end-of-file on its standard input.
+If there exists a file <markup>.tclshrc</markup> (or <emphasis remap='B'>tclshrc.tcl</emphasis> on
+the Windows platforms) in the home directory of
+the user, interactive <command>tclsh</command> evaluates the file as a Tcl script
+just before reading the first command from standard input.</para>
+
+</refsect1>
+
+<refsect1 xml:id='script_files'><title>SCRIPT FILES</title>
+<!-- .VS 8.5 -->
+<para>If <command>tclsh</command> is invoked with arguments then the first few arguments
+specify the name of a script file, and, optionally, the encoding of
+the text data stored in that script file. 
+<!-- .VE 8.5 -->
+Any additional arguments
+are made available to the script as variables (see below).
+Instead of reading commands from standard input <command>tclsh</command> will
+read Tcl commands from the named file;  <command>tclsh</command> will exit
+when it reaches the end of the file.
+The end of the file may be marked either by the physical end of
+the medium, or by the character,
+<quote>\032</quote>
+(<quote>\u001a</quote>, control-Z)
+If this character is present in the file, the <command>tclsh</command> application
+will read text up to but not including the character.  An application
+that requires this character in the file may safely encode it as
+<quote>\032</quote>,
+<quote>\x1a</quote>,
+or
+<quote>\u001a</quote>;
+or may generate it by use of commands such as <emphasis remap='B'>format</emphasis> or <emphasis remap='B'>binary</emphasis>.
+There is no automatic evaluation of <markup>.tclshrc</markup> when the name
+of a script file is presented on the <command>tclsh</command> command
+line, but the script file can always <emphasis remap='B'>source</emphasis> it if desired.</para>
+
+<para>If you create a Tcl script in a file whose first line is</para>
+<programlisting>
+<emphasis remap='B'>#!/usr/local/bin/tclsh</emphasis>
+</programlisting>
+<para>then you can invoke the script file directly from your shell if
+you mark the file as executable.
+This assumes that <command>tclsh</command> has been installed in the default
+location in /usr/local/bin;  if it is installed somewhere else
+then you will have to modify the above line to match.
+Many UNIX systems do not allow the <emphasis remap='B'>#!</emphasis> line to exceed about
+30 characters in length, so be sure that the <command>tclsh</command>
+executable can be accessed with a short file name.</para>
+
+<para>An even better approach is to start your script files with the
+following three lines:</para>
+<programlisting>
+<synopsis>
+<emphasis remap='B'>#!/bin/sh
+# the next line restarts using tclsh \
+exec tclsh "$0" "$@"</emphasis>
+</synopsis>
+</programlisting>
+<para>This approach has three advantages over the approach in the previous
+paragraph.  First, the location of the <command>tclsh</command> binary does not have
+to be hard-wired into the script:  it can be anywhere in your shell
+search path.  Second, it gets around the 30-character file name limit
+in the previous approach.
+Third, this approach will work even if <command>tclsh</command> is
+itself a shell script (this is done on some systems in order to
+handle multiple architectures or operating systems:  the <command>tclsh</command>
+script selects one of several binaries to run).  The three lines
+cause both <emphasis remap='B'>sh</emphasis> and <command>tclsh</command> to process the script, but the
+<emphasis remap='B'>exec</emphasis> is only executed by <emphasis remap='B'>sh</emphasis>.
+<emphasis remap='B'>sh</emphasis> processes the script first;  it treats the second
+line as a comment and executes the third line.
+The <emphasis remap='B'>exec</emphasis> statement cause the shell to stop processing and
+instead to start up <command>tclsh</command> to reprocess the entire script.
+When <command>tclsh</command> starts up, it treats all three lines as comments,
+since the backslash at the end of the second line causes the third
+line to be treated as part of the comment on the second line.</para>
+
+<para>You should note that it is also common practice to install tclsh with
+its version number as part of the name.  This has the advantage of
+allowing multiple versions of Tcl to exist on the same system at once,
+but also the disadvantage of making it harder to write scripts that
+start up uniformly across different versions of Tcl.</para>
+
+</refsect1>
+
+<refsect1 xml:id='variables'><title>VARIABLES</title>
+<para><emphasis remap='B'>Tclsh</emphasis> sets the following Tcl variables:</para>
+<variablelist remap='TP'>
+  <varlistentry>
+  <term><emphasis remap='B'>argc</emphasis></term>
+  <listitem>
+<para>Contains a count of the number of <emphasis remap='I'>arg</emphasis> arguments (0 if none),
+not including the name of the script file.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>argv</emphasis></term>
+  <listitem>
+<para>Contains a Tcl list whose elements are the <emphasis remap='I'>arg</emphasis> arguments,
+in order, or an empty string if there are no <emphasis remap='I'>arg</emphasis> arguments.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>argv0</emphasis></term>
+  <listitem>
+<para>Contains <emphasis remap='I'>fileName</emphasis> if it was specified.
+Otherwise, contains the name by which <command>tclsh</command> was invoked.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>tcl_interactive</emphasis></term>
+  <listitem>
+<para>Contains 1 if <command>tclsh</command> is running interactively (no
+<emphasis remap='I'>fileName</emphasis> was specified and standard input is a terminal-like
+device), 0 otherwise.</para>
+
+  </listitem>
+  </varlistentry>
+</variablelist>
+</refsect1>
+
+<refsect1 xml:id='prompts'><title>PROMPTS</title>
+<para>When <command>tclsh</command> is invoked interactively it normally prompts for each
+command with
+<quote><emphasis remap='B'>% </emphasis></quote>.
+You can change the prompt by setting the
+variables <emphasis remap='B'>tcl_prompt1</emphasis> and <emphasis remap='B'>tcl_prompt2</emphasis>.  If variable
+<emphasis remap='B'>tcl_prompt1</emphasis> exists then it must consist of a Tcl script
+to output a prompt;  instead of outputting a prompt <command>tclsh</command>
+will evaluate the script in <emphasis remap='B'>tcl_prompt1</emphasis>.
+The variable <emphasis remap='B'>tcl_prompt2</emphasis> is used in a similar way when
+a newline is typed but the current command is not yet complete;
+if <emphasis remap='B'>tcl_prompt2</emphasis> is not set then no prompt is output for
+incomplete commands.</para>
+
+</refsect1>
+
+<refsect1 xml:id='standard_channels'><title>STANDARD CHANNELS</title>
+<para>See <emphasis remap='B'>Tcl_StandardChannels</emphasis> for more explanations.</para>
+
+</refsect1>
+
+<refsect1 xml:id='see_also'><title>SEE ALSO</title>
+<para>encoding(n), fconfigure(n), tclvars(n)</para>
+
+</refsect1>
+
+<refsect1 xml:id='keywords'><title>KEYWORDS</title>
+<para>argument, interpreter, prompt, script file, shell</para>
+</refsect1>
+</refentry>
+

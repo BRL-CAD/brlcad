@@ -1,0 +1,218 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man+tkman by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='exit3'>
+
+<!-- '\" Copyright (c) 1995\-1996 Sun Microsystems, Inc. -->
+
+<!-- '\" See the file "license.terms" for information on usage and redistribution
+'\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
+'\" 
+'\" RCS: @(#) $Id$
+'\"  -->
+<refentryinfo><date>8.5</date></refentryinfo>
+<refmeta>
+<refentrytitle>Tcl_Exit</refentrytitle>
+<manvolnum>3</manvolnum>
+<refmiscinfo class='date'>8.5</refmiscinfo>
+<refmiscinfo class='source'>Tcl</refmiscinfo>
+<refmiscinfo class='manual'>Tcl Library Procedures</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>Tcl_Exit</refname>
+<refname>Tcl_Finalize</refname>
+<refname>Tcl_CreateExitHandler</refname>
+<refname>Tcl_DeleteExitHandler</refname>
+<refname>Tcl_ExitThread</refname>
+<refname>Tcl_FinalizeThread</refname>
+<refname>Tcl_CreateThreadExitHandler</refname>
+<refname>Tcl_DeleteThreadExitHandler</refname>
+<refname>Tcl_SetExitProc</refname>
+<refpurpose>end the application or thread (and invoke exit handlers)</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<funcsynopsis>
+<funcsynopsisinfo>
+#include &lt;tcl.h&gt;
+
+</funcsynopsisinfo>
+<funcprototype>
+<funcdef><function>Tcl_Exit</function></funcdef>
+<paramdef><parameter>status</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef><function>Tcl_Finalize</function></funcdef>
+<void/></funcprototype>
+<funcprototype>
+<funcdef><function>Tcl_CreateExitHandler</function></funcdef>
+<paramdef><parameter>proc</parameter></paramdef>
+<paramdef><parameter>clientData</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef><function>Tcl_DeleteExitHandler</function></funcdef>
+<paramdef><parameter>proc</parameter></paramdef>
+<paramdef><parameter>clientData</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef><function>Tcl_ExitThread</function></funcdef>
+<paramdef><parameter>status</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef><function>Tcl_FinalizeThread</function></funcdef>
+<void/></funcprototype>
+<funcprototype>
+<funcdef><function>Tcl_CreateThreadExitHandler</function></funcdef>
+<paramdef><parameter>proc</parameter></paramdef>
+<paramdef><parameter>clientData</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef><function>Tcl_DeleteThreadExitHandler</function></funcdef>
+<paramdef><parameter>proc</parameter></paramdef>
+<paramdef><parameter>clientData</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef><function>Tcl_ExitProc</function> *Tcl_SetExitProc</funcdef>
+<paramdef><parameter>proc</parameter></paramdef>
+</funcprototype>
+</funcsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='arguments'><title>ARGUMENTS</title>
+<!-- .AS Tcl_ExitProc clientData -->
+<informaltable>
+<tgroup cols='3'>
+<tbody>
+
+<row><entry>"int"</entry><entry>"status"</entry><entry>"in"</entry>
+<entry>
+<para>Provides information about why the application or thread exited.
+Exact meaning may
+be platform-specific.  0 usually means a normal exit, any nonzero value
+usually means that an error occurred.</para>
+</entry>
+</row>
+<row><entry>Tcl_ExitProc</entry><entry>*proc</entry><entry>in</entry>
+<entry>
+<para>Procedure to invoke before exiting application, or (for
+<emphasis remap='B'>Tcl_SetExitProc</emphasis>) NULL to uninstall the current application exit
+procedure.</para>
+</entry>
+</row>
+<row><entry>ClientData</entry><entry>clientData</entry><entry>in</entry>
+<entry>
+<para>Arbitrary one-word value to pass to <emphasis remap='I'>proc</emphasis>.</para>
+<!-- .BE -->
+</entry>
+</row>
+</tbody>
+</tgroup>
+</informaltable>
+
+</refsect1>
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para>The procedures described here provide a graceful mechanism to end the
+execution of a <emphasis remap='B'>Tcl</emphasis> application. Exit handlers are invoked to cleanup the
+application's state before ending the execution of <emphasis remap='B'>Tcl</emphasis> code.</para>
+
+<para>Invoke <function>Tcl_Exit</function> to end a <emphasis remap='B'>Tcl</emphasis> application and to exit from this
+process. This procedure is invoked by the <emphasis remap='B'>exit</emphasis> command, and can be
+invoked anyplace else to terminate the application.
+No-one should ever invoke the <emphasis remap='B'>exit</emphasis> system procedure directly;  always
+invoke <function>Tcl_Exit</function> instead, so that it can invoke exit handlers.
+Note that if other code invokes <emphasis remap='B'>exit</emphasis> system procedure directly, or
+otherwise causes the application to terminate without calling
+<function>Tcl_Exit</function>, the exit handlers will not be run.
+<function>Tcl_Exit</function> internally invokes the <emphasis remap='B'>exit</emphasis> system call, thus it never
+returns control to its caller.
+<!-- .VS 8.5 -->
+If an application exit handler has been installed (see
+<emphasis remap='B'>Tcl_SetExitProc</emphasis>), that handler is invoked with an argument
+consisting of the exit status (cast to ClientData); the application
+exit handler should not return control to Tcl.</para>
+<!-- .VE 8.5 -->
+
+<para><function>Tcl_Finalize</function> is similar to <function>Tcl_Exit</function> except that it does not
+exit from the current process.
+It is useful for cleaning up when a process is finished using <emphasis remap='B'>Tcl</emphasis> but
+wishes to continue executing, and when <emphasis remap='B'>Tcl</emphasis> is used in a dynamically
+loaded extension that is about to be unloaded.
+On some systems <emphasis remap='B'>Tcl</emphasis> is automatically notified when it is being
+unloaded, and it calls <function>Tcl_Finalize</function> internally; on these systems it
+not necessary for the caller to explicitly call <function>Tcl_Finalize</function>.
+However, to ensure portability, your code should always invoke
+<function>Tcl_Finalize</function> when <emphasis remap='B'>Tcl</emphasis> is being unloaded, to ensure that the
+code will work on all platforms. <function>Tcl_Finalize</function> can be safely called
+more than once.</para>
+
+<para><function>Tcl_ExitThread</function> is used to terminate the current thread and invoke
+per-thread exit handlers.  This finalization is done by
+<function>Tcl_FinalizeThread</function>, which you can call if you just want to clean
+up per-thread state and invoke the thread exit handlers.
+<function>Tcl_Finalize</function> calls <function>Tcl_FinalizeThread</function> for the current
+thread automatically.</para>
+
+<para><function>Tcl_CreateExitHandler</function> arranges for <emphasis remap='I'>proc</emphasis> to be invoked
+by <function>Tcl_Finalize</function> and <function>Tcl_Exit</function>.
+<function>Tcl_CreateThreadExitHandler</function> arranges for <emphasis remap='I'>proc</emphasis> to be invoked
+by <function>Tcl_FinalizeThread</function> and <function>Tcl_ExitThread</function>.
+This provides a hook for cleanup operations such as flushing buffers
+and freeing global memory.
+<emphasis remap='I'>Proc</emphasis> should match the type <type>Tcl_ExitProc</type>:</para>
+<programlisting remap='CS'>
+<funcsynopsis>
+<funcsynopsisinfo>
+typedef void Tcl_ExitProc(ClientData clientData);
+</funcsynopsisinfo>
+</funcsynopsis>
+</programlisting> <!-- remap='CE' -->
+<para>The <emphasis remap='I'>clientData</emphasis> parameter to <emphasis remap='I'>proc</emphasis> is a
+copy of the <emphasis remap='I'>clientData</emphasis> argument given to
+<function>Tcl_CreateExitHandler</function> or <function>Tcl_CreateThreadExitHandler</function> when
+the callback
+was created.  Typically, <emphasis remap='I'>clientData</emphasis> points to a data
+structure containing application-specific information about
+what to do in <emphasis remap='I'>proc</emphasis>.</para>
+
+<para><function>Tcl_DeleteExitHandler</function> and <function>Tcl_DeleteThreadExitHandler</function> may be
+called to delete a
+previously-created exit handler.  It removes the handler
+indicated by <emphasis remap='I'>proc</emphasis> and <emphasis remap='I'>clientData</emphasis> so that no call
+to <emphasis remap='I'>proc</emphasis> will be made.  If no such handler exists then
+<function>Tcl_DeleteExitHandler</function> or <function>Tcl_DeleteThreadExitHandler</function> does nothing.</para>
+
+
+<para><function>Tcl_Finalize</function> and <function>Tcl_Exit</function> execute all registered exit handlers,
+in reverse order from the order in which they were registered.
+This matches the natural order in which extensions are loaded and unloaded;
+if extension <emphasis remap='B'>A</emphasis> loads extension <emphasis remap='B'>B</emphasis>, it usually
+unloads <emphasis remap='B'>B</emphasis> before it itself is unloaded.
+If extension <emphasis remap='B'>A</emphasis> registers its exit handlers before loading extension
+<emphasis remap='B'>B</emphasis>, this ensures that any exit handlers for <emphasis remap='B'>B</emphasis> will be executed
+before the exit handlers for <emphasis remap='B'>A</emphasis>.</para>
+
+<para><function>Tcl_Finalize</function> and <function>Tcl_Exit</function> call <function>Tcl_FinalizeThread</function> 
+and the thread exit handlers <emphasis remap='I'>after</emphasis>
+the process-wide exit handlers.  This is because thread finalization shuts
+down the I/O channel system, so any attempt at I/O by the global exit
+handlers will vanish into the bitbucket.</para>
+
+<!-- .VS 8.5 -->
+<para><emphasis remap='B'>Tcl_SetExitProc</emphasis> installs an application exit handler, returning
+the previously-installed application exit handler or NULL if no
+application handler was installed.  If an application exit handler is
+installed, that exit handler takes over complete responsibility for
+finalization of Tcl's subsystems via <function>Tcl_Finalize</function> at an
+appropriate time.  The argument passed to <emphasis remap='I'>proc</emphasis> when it is
+invoked will be the exit status code (as passed to <function>Tcl_Exit</function>)
+cast to a ClientData value.</para>
+<!-- .VE 8.5 -->
+
+</refsect1>
+
+<refsect1 xml:id='keywords'><title>KEYWORDS</title>
+<para>callback, cleanup, dynamic loading, end application, exit, unloading, thread</para>
+</refsect1>
+</refentry>
+

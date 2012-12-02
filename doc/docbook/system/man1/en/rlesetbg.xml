@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='rlesetbg1'>
+<!--  Copyright (c) 1986, University of Utah -->
+<refmeta>
+<refentrytitle>RLESETBG</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class='source'>December 20, 1986</refmiscinfo>
+<refmiscinfo class='manual'>1</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>rlesetbg</refname>
+<refpurpose>Set the background value in the RLE header.</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<cmdsynopsis>
+  <command>rlesetbg</command>    
+    <arg choice='opt'><arg choice='plain'>- </arg><arg choice='opt'><replaceable>DO</replaceable></arg></arg>
+    <arg choice='opt'><arg choice='plain'>-c </arg><arg choice='plain' rep='repeat'><replaceable>bgcolor</replaceable></arg></arg>
+    <arg choice='opt'><arg choice='plain'>-o </arg><arg choice='plain'><replaceable>outfile</replaceable></arg></arg>
+    <arg choice='opt'><replaceable>infile</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para><command>rlesetbg</command>
+sets the background color field in the image header of an
+<citerefentry><refentrytitle>RLE</refentrytitle><manvolnum>5</manvolnum></citerefentry>
+image (none of the actual
+pixels are changed).  If
+<emphasis remap='I'>infile</emphasis>
+isn't specified, the image is read from stdin.</para>
+
+<para>The background color in the header is used to save space in the
+run-length encoded file.  Runs of background-colored pixels longer
+than 2 pixels are simply not saved.  (Doing this for runs of 1 or 2
+background pixels can make the saved image larger than if no encoding
+were done.)  Therefore, changing the background color with
+<command>rlesetbg</command>
+may still leave some pixels saved in the original background color.
+The <option>-D</option> option will delete the background color altogether from
+the header; this can be useful in certain circumstances, but can also
+lead to very strange results.</para>
+</refsect1>
+
+<refsect1 xml:id='options'><title>OPTIONS</title>
+<variablelist remap='TP'>
+  <varlistentry>
+  <term><option>-D</option></term>
+  <listitem>
+<para>Delete any background specification that might be present.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-O</option></term>
+  <listitem>
+<para>Specifies that the image has no background, it overlays existing images.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-c </option><emphasis remap='I'>bgcolor ...</emphasis></term>
+  <listitem>
+<para>Specifies the color values to set the background to.  There should be
+at least as many values as there are color channels in the image.  Use
+-- or another option to separate the list of colors from
+<emphasis remap='I'>infile</emphasis>.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-o</option><replaceable> outfile</replaceable></term>
+  <listitem>
+<para>If specified, the output will be written to this file.  If
+<emphasis remap='I'>outfile</emphasis>
+is "-", or if it is not specified, the output will be written to the
+standard output stream.</para>
+  </listitem>
+  </varlistentry>
+</variablelist>
+</refsect1>
+
+<refsect1 xml:id='authors'><title>AUTHORS</title>
+<para>John W. Peterson and Rod Bogart</para>
+</refsect1>
+
+<refsect1 xml:id='see_also'><title>SEE ALSO</title>
+<para><citerefentry><refentrytitle>repos</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>urt</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>RLE</refentrytitle><manvolnum>5</manvolnum></citerefentry>.</para>
+</refsect1>
+
+<refsect1 xml:id='bugs'><title>BUGS</title>
+<para>This should really be part of a single program that does all header munging...</para>
+</refsect1>
+</refentry>
+

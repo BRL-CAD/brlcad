@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='painttorle1'>
+<!--  Copyright (c) 1986, University of Utah -->
+<refmeta>
+<refentrytitle>PAINTTORLE</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class='source'>December 20, 1986</refmiscinfo>
+<refmiscinfo class='manual'>1</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>painttorle</refname>
+<refpurpose>Convert MacPaint images to RLE format.</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<cmdsynopsis>
+  <command>painttorle</command>    
+    <arg choice='opt'><arg choice='plain'>-c </arg><arg choice='opt'><replaceable>red</replaceable></arg><arg choice='opt'><replaceable>green</replaceable></arg><arg choice='opt'><replaceable>blue</replaceable></arg><arg choice='opt'><replaceable>alpha</replaceable></arg></arg>
+    <arg choice='opt'>-r </arg>
+    <arg choice='opt'><arg choice='plain'>-o </arg><arg choice='plain'><replaceable>outfile.rle</replaceable></arg></arg>
+    <arg choice='opt'><replaceable>infile.paint</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para><emphasis remap='I'>Painttorle</emphasis>
+converts a file from MacPaint format into RLE format.  Because MacPaint and
+RLE disagree on which end is up, the output should be sent through
+<emphasis remap='I'>rleflip</emphasis>
+to preserve orientation.</para>
+</refsect1>
+
+<refsect1 xml:id='options'><title>OPTIONS</title>
+<variablelist remap='TP'>
+  <varlistentry>
+  <term><option>-c</option><replaceable>[red] [green] [blue] [alpha]</replaceable></term>
+  <listitem>
+<para>Allows the color values to be specified (the default is 255).</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-r</option></term>
+  <listitem>
+<para>Invert the color of the MacPaint pixels (reverse video).</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='I'>infile.paint</emphasis></term>
+  <listitem>
+<para>The input paint data will be read from this file, otherwise, input will
+be taken from stdin.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-o</option><replaceable> outfile.rle</replaceable></term>
+  <listitem>
+<para>If specified, output will be written to this file, otherwise it will
+go to stdout.</para>
+  </listitem>
+  </varlistentry>
+</variablelist>
+</refsect1>
+
+<refsect1 xml:id='see_also'><title>SEE ALSO</title>
+<para><citerefentry><refentrytitle>rletopaint</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>urt</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>RLE</refentrytitle><manvolnum>5</manvolnum></citerefentry>.</para>
+</refsect1>
+
+<refsect1 xml:id='author'><title>AUTHOR</title>
+<para>John W. Peterson</para>
+</refsect1>
+</refentry>
+

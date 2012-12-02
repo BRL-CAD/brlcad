@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man+tkman by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='doubleobj3'>
+
+<!-- '\" Copyright (c) 1996\-1997 Sun Microsystems, Inc. -->
+
+<!-- '\" See the file "license.terms" for information on usage and redistribution
+'\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
+'\" 
+'\" RCS: @(#) $Id$
+'\"  -->
+<refentryinfo><date>8.0</date></refentryinfo>
+<refmeta>
+<refentrytitle>Tcl_DoubleObj</refentrytitle>
+<manvolnum>3</manvolnum>
+<refmiscinfo class='date'>8.0</refmiscinfo>
+<refmiscinfo class='source'>Tcl</refmiscinfo>
+<refmiscinfo class='manual'>Tcl Library Procedures</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>Tcl_NewDoubleObj</refname>
+<refname>Tcl_SetDoubleObj</refname>
+<refname>Tcl_GetDoubleFromObj</refname>
+<refpurpose>manipulate Tcl objects as floating-point values</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<funcsynopsis>
+<funcsynopsisinfo>
+#include &lt;tcl.h&gt;
+
+</funcsynopsisinfo>
+<funcprototype>
+<funcdef><function>Tcl_Obj</function> *Tcl_NewDoubleObj</funcdef>
+<paramdef><parameter>doubleValue</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef><function>Tcl_SetDoubleObj</function></funcdef>
+<paramdef><parameter>objPtr</parameter></paramdef>
+<paramdef><parameter>doubleValue</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef>int <function>Tcl_GetDoubleFromObj</function></funcdef>
+<paramdef><parameter>interp</parameter></paramdef>
+<paramdef><parameter>objPtr</parameter></paramdef>
+<paramdef><parameter>doublePtr</parameter></paramdef>
+</funcprototype>
+</funcsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='arguments'><title>ARGUMENTS</title>
+<!-- .AS Tcl_Interp doubleValue in/out -->
+<informaltable>
+<tgroup cols='3'>
+<tbody>
+
+<row><entry>"double"</entry><entry>"doubleValue"</entry><entry>"in"</entry>
+<entry>
+<para>A double-precision floating-point value used to initialize or set a Tcl object.</para>
+</entry>
+</row>
+<row><entry>Tcl_Obj</entry><entry>*objPtr</entry><entry>in/out</entry>
+<entry>
+<para>For <function>Tcl_SetDoubleObj</function>, this points to the object in which to store a
+double value.
+For <function>Tcl_GetDoubleFromObj</function>, this refers to the object
+from which to retrieve a double value.</para> 
+</entry>
+</row>
+<row><entry>Tcl_Interp</entry><entry>*interp</entry><entry>in/out</entry>
+<entry>
+<para>When non-NULL, an error message is left here when double value retrieval fails.</para>
+</entry>
+</row>
+<row><entry>double</entry><entry>*doublePtr</entry><entry>out</entry>
+<entry>
+<para>Points to place to store the double value obtained from <emphasis remap='I'>objPtr</emphasis>.</para>
+<!-- .BE -->
+</entry>
+</row>
+</tbody>
+</tgroup>
+</informaltable>
+
+</refsect1>
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para>These procedures are used to create, modify, and read Tcl objects that
+hold double-precision floating-point values.</para>
+
+<para><emphasis remap='B'>Tcl_NewDoubleObj</emphasis> creates and returns a new Tcl object initialized to
+the double value <emphasis remap='I'>doubleValue</emphasis>.  The returned Tcl object is unshared.</para>
+
+<para><function>Tcl_SetDoubleObj</function> sets the value of an existing Tcl object pointed to
+by <emphasis remap='I'>objPtr</emphasis> to the double value <emphasis remap='I'>doubleValue</emphasis>.  The <emphasis remap='I'>objPtr</emphasis>
+argument must point to an unshared Tcl object.  Any attempt to set the value
+of a shared Tcl object violates Tcl's copy-on-write policy.  Any existing
+string representation or internal representation in the unshared Tcl object
+will be freed as a consequence of setting the new value.</para>
+
+<para><function>Tcl_GetDoubleFromObj</function> attempts to retrieve a double value from the
+Tcl object <emphasis remap='I'>objPtr</emphasis>.  If the attempt succeeds, then <emphasis remap='B'>TCL_OK</emphasis> is
+returned, and the double value is written to the storage pointed to by
+<emphasis remap='I'>doublePtr</emphasis>.  If the attempt fails, then <emphasis remap='B'>TCL_ERROR</emphasis> is returned,
+and if <emphasis remap='I'>interp</emphasis> is non-NULL, an error message is left in <emphasis remap='I'>interp</emphasis>.
+The <emphasis remap='B'>Tcl_ObjType</emphasis> of <emphasis remap='I'>objPtr</emphasis> may be changed to make subsequent
+calls to <function>Tcl_GetDoubleFromObj</function> more efficient.</para> 
+<!-- '\" TODO: add discussion of treatment of NaN value -->
+</refsect1>
+
+<refsect1 xml:id='see_also'><title>SEE ALSO</title>
+<para>Tcl_NewObj, Tcl_DecrRefCount, Tcl_IncrRefCount, Tcl_GetObjResult</para>
+</refsect1>
+
+<refsect1 xml:id='keywords'><title>KEYWORDS</title>
+<para>double, double object, double type, internal representation, object, object type, string representation</para>
+</refsect1>
+</refentry>
+

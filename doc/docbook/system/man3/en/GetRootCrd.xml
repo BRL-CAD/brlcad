@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man+tkman by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='getrootcrd3'>
+
+<!-- '\" Copyright (c) 1990 The Regents of the University of California.
+'\" Copyright (c) 1994\-1996 Sun Microsystems, Inc. -->
+
+<!-- '\" See the file "license.terms" for information on usage and redistribution
+'\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
+'\" 
+'\" RCS: @(#) $Id$
+'\"  -->
+<refmeta>
+<refentrytitle>Tk_GetRootCoords</refentrytitle>
+<manvolnum>3</manvolnum>
+<refmiscinfo class='manual'>Tk</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>Tk_GetRootCoords</refname>
+<refpurpose>Compute root-window coordinates of window</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<funcsynopsis>
+<funcsynopsisinfo>
+#include &lt;tk.h&gt;
+
+</funcsynopsisinfo>
+<funcprototype>
+<funcdef><function>Tk_GetRootCoords</function></funcdef>
+<paramdef><parameter>tkwin</parameter></paramdef>
+<paramdef><parameter>xPtr</parameter></paramdef>
+<paramdef><parameter>yPtr</parameter></paramdef>
+</funcprototype>
+</funcsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='arguments'><title>ARGUMENTS</title>
+<!-- .AS Tk_Window tkwin -->
+<informaltable>
+<tgroup cols='3'>
+<tbody>
+
+<row><entry>"Tk_Window"</entry><entry>"tkwin"</entry><entry>"in"</entry>
+<entry>
+<para>Token for window.</para>
+</entry>
+</row>
+<row><entry>int</entry><entry>*xPtr</entry><entry>out</entry>
+<entry>
+<para>Pointer to location in which to store root-window x-coordinate
+corresponding to left edge of <emphasis remap='I'>tkwin</emphasis>'s border.</para>
+</entry>
+</row>
+<row><entry>int</entry><entry>*yPtr</entry><entry>out</entry>
+<entry>
+<para>Pointer to location in which to store root-window y-coordinate
+corresponding to top edge of <emphasis remap='I'>tkwin</emphasis>'s border.</para>
+<!-- .BE -->
+</entry>
+</row>
+</tbody>
+</tgroup>
+</informaltable>
+
+</refsect1>
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para>This procedure scans through the structural information maintained
+by Tk to compute the root-window coordinates corresponding to
+the upper-left corner of <emphasis remap='I'>tkwin</emphasis>'s border.  If <emphasis remap='I'>tkwin</emphasis> has
+no border, then <function>Tk_GetRootCoords</function> returns the root-window
+coordinates corresponding to location (0,0) in <emphasis remap='I'>tkwin</emphasis>.
+<function>Tk_GetRootCoords</function> is relatively efficient, since it does not have to
+communicate with the X server.</para>
+</refsect1>
+
+<refsect1 xml:id='keywords'><title>KEYWORDS</title>
+<para>coordinates, root window</para>
+</refsect1>
+</refentry>
+

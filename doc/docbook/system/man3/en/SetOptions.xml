@@ -1,0 +1,856 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man+tkman by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='setoptions3'>
+
+<!-- '\" Copyright (c) 1998 Sun Microsystems, Inc. -->
+
+<!-- '\" See the file "license.terms" for information on usage and redistribution
+'\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
+'\" 
+'\" RCS: @(#) $Id$
+'\"  -->
+<refentryinfo><date>8.1</date></refentryinfo>
+<refmeta>
+<refentrytitle>Tk_SetOptions</refentrytitle>
+<manvolnum>3</manvolnum>
+<refmiscinfo class='date'>8.1</refmiscinfo>
+<refmiscinfo class='source'>Tk</refmiscinfo>
+<refmiscinfo class='manual'>Tk Library Procedures</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>Tk_CreateOptionTable</refname>
+<refname>Tk_DeleteOptionTable</refname>
+<refname>Tk_InitOptions</refname>
+<refname>Tk_SetOptions</refname>
+<refname>Tk_FreeSavedOptions</refname>
+<refname>Tk_RestoreSavedOptions</refname>
+<refname>Tk_GetOptionValue</refname>
+<refname>Tk_GetOptionInfo</refname>
+<refname>Tk_FreeConfigOptions</refname>
+<refname>Tk_Offset</refname>
+<refpurpose>process configuration options</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<funcsynopsis>
+<funcsynopsisinfo>
+#include &lt;tk.h&gt;
+
+</funcsynopsisinfo>
+<funcprototype>
+<funcdef>Tk_OptionTable <function>Tk_CreateOptionTable</function></funcdef>
+<paramdef><parameter>interp</parameter></paramdef>
+<paramdef><parameter>templatePtr</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef><function>Tk_DeleteOptionTable</function></funcdef>
+<paramdef><parameter>optionTable</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef>int <function>Tk_InitOptions</function></funcdef>
+<paramdef><parameter>interp</parameter></paramdef>
+<paramdef><parameter>recordPtr</parameter></paramdef>
+<paramdef><parameter>optionTable</parameter></paramdef>
+<paramdef><parameter>tkwin</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef>int <function>Tk_SetOptions</function></funcdef>
+<paramdef><parameter>interp</parameter></paramdef>
+<paramdef><parameter>recordPtr</parameter></paramdef>
+<paramdef><parameter>optionTable</parameter></paramdef>
+<paramdef><parameter>objc</parameter></paramdef>
+<paramdef><parameter>objv</parameter></paramdef>
+<paramdef><parameter>tkwin</parameter></paramdef>
+<paramdef><parameter>savePtr</parameter></paramdef>
+<paramdef><parameter>maskPtr</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef><function>Tk_FreeSavedOptions</function></funcdef>
+<paramdef><parameter>savedPtr</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef><function>Tk_RestoreSavedOptions</function></funcdef>
+<paramdef><parameter>savedPtr</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef><function>Tcl_Obj</function> *Tk_GetOptionValue</funcdef>
+<paramdef><parameter>interp</parameter></paramdef>
+<paramdef><parameter>recordPtr</parameter></paramdef>
+<paramdef><parameter>optionTable</parameter></paramdef>
+<paramdef><parameter>namePtr</parameter></paramdef>
+<paramdef><parameter>tkwin</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef><function>Tcl_Obj</function> *Tk_GetOptionInfo</funcdef>
+<paramdef><parameter>interp</parameter></paramdef>
+<paramdef><parameter>recordPtr</parameter></paramdef>
+<paramdef><parameter>optionTable</parameter></paramdef>
+<paramdef><parameter>namePtr</parameter></paramdef>
+<paramdef><parameter>tkwin</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef><function>Tk_FreeConfigOptions</function></funcdef>
+<paramdef><parameter>recordPtr</parameter></paramdef>
+<paramdef><parameter>optionTable</parameter></paramdef>
+<paramdef><parameter>tkwin</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef>int <function>Tk_Offset</function></funcdef>
+<paramdef><parameter>type</parameter></paramdef>
+<paramdef><parameter>field</parameter></paramdef>
+</funcprototype>
+</funcsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='arguments'><title>ARGUMENTS</title>
+<!-- .AS Tk_SavedOptions *const objv[] in/out -->
+<informaltable>
+<tgroup cols='3'>
+<tbody>
+
+<row><entry>"Tcl_Interp"</entry><entry>"*interp"</entry><entry>"in"</entry>
+<entry>
+<para>A Tcl interpreter.  Most procedures use this only for returning error
+messages; if it is NULL then no error messages are returned.  For
+<function>Tk_CreateOptionTable</function> the value cannot be NULL; it gives the
+interpreter in which the option table will be used.</para>
+</entry>
+</row>
+<row><entry>"const Tk_OptionSpec"</entry><entry>*templatePtr</entry><entry>in</entry>
+<entry>
+<para>Points to an array of static information that describes the configuration
+options that are supported.  Used to build a Tk_OptionTable.  The information
+pointed to by this argument must exist for the lifetime of the Tk_OptionTable.</para>
+</entry>
+</row>
+<row><entry>Tk_OptionTable</entry><entry>optionTable</entry><entry>in</entry>
+<entry>
+<para>Token for an option table.  Must have been returned by a previous call
+to <function>Tk_CreateOptionTable</function>.</para>
+</entry>
+</row>
+<row><entry>char</entry><entry>*recordPtr</entry><entry>in/out</entry>
+<entry>
+<para>Points to structure in which values of configuration options are stored;
+fields of this record are modified by procedures such as <function>Tk_SetOptions</function>
+and read by procedures such as <emphasis remap='B'>Tk_GetOptionValue</emphasis>.</para>
+</entry>
+</row>
+<row><entry>Tk_Window</entry><entry>tkwin</entry><entry>in</entry>
+<entry>
+<para>For options such as <emphasis remap='B'>TK_OPTION_COLOR</emphasis>, this argument indicates
+the window in which the option will be used.  If <emphasis remap='I'>optionTable</emphasis> uses
+no window-dependent options, then a NULL value may be supplied for
+this argument.</para>
+</entry>
+</row>
+<row><entry>int</entry><entry>objc</entry><entry>in</entry>
+<entry>
+<para>Number of values in <emphasis remap='I'>objv</emphasis>.</para>
+</entry>
+</row>
+<row><entry>Tcl_Obj</entry><entry>"*const objv[]"</entry><entry>in</entry>
+<entry>
+<para>Command-line arguments for setting configuring options.</para>
+</entry>
+</row>
+<row><entry>Tk_SavedOptions</entry><entry>*savePtr</entry><entry>out</entry>
+<entry>
+<para>If not NULL, the structure pointed to by this argument is filled
+in with the old values of any options that were modified and old
+values are restored automatically if an error occurs in <function>Tk_SetOptions</function>.</para>
+</entry>
+</row>
+<row><entry>int</entry><entry>*maskPtr</entry><entry>out</entry>
+<entry>
+<para>If not NULL, the word pointed to by <emphasis remap='I'>maskPtr</emphasis> is filled in with the
+bit-wise OR of the <emphasis remap='I'>typeMask</emphasis> fields for the options that
+were modified.</para>
+</entry>
+</row>
+<row><entry>Tk_SavedOptions</entry><entry>*savedPtr</entry><entry>in/out</entry>
+<entry>
+<para>Points to a structure previously filled in by <function>Tk_SetOptions</function> with
+old values of modified options.</para>
+</entry>
+</row>
+<row><entry>Tcl_Obj</entry><entry>*namePtr</entry><entry>in</entry>
+<entry>
+<para>The value of this object is the name of a particular option.  If NULL
+is passed to <emphasis remap='B'>Tk_GetOptionInfo</emphasis> then information is returned for
+all options.  Must not be NULL when <emphasis remap='B'>Tk_GetOptionValue</emphasis> is called.</para>
+</entry>
+</row>
+<row><entry>"type name"</entry><entry>type</entry><entry>in</entry>
+<entry>
+<para>The name of the type of a record.</para>
+</entry>
+</row>
+<row><entry>"field name"</entry><entry>field</entry><entry>in</entry>
+<entry>
+<para>The name of a field in records of type <emphasis remap='I'>type</emphasis>.</para>
+<!-- .BE -->
+</entry>
+</row>
+</tbody>
+</tgroup>
+</informaltable>
+
+</refsect1>
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para>These procedures handle most of the details of parsing configuration
+options such as those for Tk widgets.  Given a description of what
+options are supported, these procedures handle all the details of
+parsing options and storing their values into a C structure associated
+with the widget or object. The procedures were designed primarily for
+widgets in Tk, but they can also be used for other kinds of objects that
+have configuration options.  In the rest of this manual page
+<quote>widget</quote>
+will be used to refer to the object whose options are being managed; in
+practice the object may not actually be a widget.  The term
+<quote>widget record</quote>
+is used to refer to the C-level structure in
+which information about a particular widget or object is stored.</para>
+
+<para>Note: the easiest way to learn how to use these procedures is to
+look at a working example.  In Tk, the simplest example is the code
+that implements the button family of widgets, which is in <emphasis remap='B'>tkButton.c</emphasis>.
+Other examples are in <emphasis remap='B'>tkSquare.c</emphasis> and <emphasis remap='B'>tkMenu.c</emphasis>.</para>
+
+<para>In order to use these procedures, the code that implements the widget
+must contain a static array of Tk_OptionSpec structures. This is a
+template that describes the various options supported by that class of
+widget; there is a separate template for each kind of widget.  The
+template contains information such as the name of each option, its type,
+its default value, and where the value of the option is stored in the
+widget record.  See TEMPLATES below for more detail.</para>
+
+<para>In order to process configuration options efficiently, the static
+template must be augmented with additional information that is available
+only at runtime.  The procedure <function>Tk_CreateOptionTable</function> creates this
+dynamic information from the template and returns a Tk_OptionTable token
+that describes both the static and dynamic information.  All of the
+other procedures, such as <function>Tk_SetOptions</function>, take a Tk_OptionTable
+token as argument.  Typically, <function>Tk_CreateOptionTable</function> is called the
+first time that a widget of a particular class is created and the
+resulting Tk_OptionTable is used in the future for all widgets of that
+class.  A Tk_OptionTable may be used only in a single interpreter, given
+by the <varname role='parameter'>interp</varname> argument to <function>Tk_CreateOptionTable</function>.  When an
+option table is no longer needed <function>Tk_DeleteOptionTable</function> should be
+called to free all of its resources.  All of the option tables
+for a Tcl interpreter are freed automatically if the interpreter is deleted.</para>
+
+<para><function>Tk_InitOptions</function> is invoked when a new widget is created to set
+the default values for all of the widget's configuration options.
+<function>Tk_InitOptions</function> is passed a token for an option table (<emphasis remap='I'>optionTable</emphasis>)
+and a pointer to a widget record (<varname role='parameter'>recordPtr</varname>), which is the C
+structure that holds information about this widget. <function>Tk_InitOptions</function>
+uses the information in the option table to
+choose an appropriate default for each option, then it stores the default
+value directly into the widget record, overwriting any information that
+was already present in the widget record.  <function>Tk_InitOptions</function> normally
+returns <emphasis remap='B'>TCL_OK</emphasis>.  If an error occurred while setting the default values
+(e.g., because a default value was erroneous) then <emphasis remap='B'>TCL_ERROR</emphasis> is returned
+and an error message is left in <varname role='parameter'>interp</varname>'s result if <varname role='parameter'>interp</varname>
+is not NULL.</para>
+
+<para><function>Tk_SetOptions</function> is invoked to modify configuration options based
+on information specified in a Tcl command.  The command might be one that
+creates a new widget, or a command that modifies options on an existing
+widget.  The <emphasis remap='I'>objc</emphasis> and <emphasis remap='I'>objv</emphasis> arguments describe the
+values of the arguments from the Tcl command.  <emphasis remap='I'>Objv</emphasis> must contain
+an even number of objects: the first object of each pair gives the name of
+an option and the second object gives the new value for that option.
+<function>Tk_SetOptions</function> looks up each name in <emphasis remap='I'>optionTable</emphasis>, checks that
+the new value of the option conforms to the type in <emphasis remap='I'>optionTable</emphasis>,
+and stores the value of the option into the widget record given by
+<varname role='parameter'>recordPtr</varname>.  <function>Tk_SetOptions</function> normally returns <emphasis remap='B'>TCL_OK</emphasis>.  If
+an error occurred (such as an unknown option name or an illegal option
+value) then <emphasis remap='B'>TCL_ERROR</emphasis> is returned and an error message is left in
+<varname role='parameter'>interp</varname>'s result if <varname role='parameter'>interp</varname> is not NULL.</para>
+
+<para><function>Tk_SetOptions</function> has two additional features.  First, if the
+<emphasis remap='I'>maskPtr</emphasis> argument is not NULL then it points to an integer
+value that is filled in with information about the options that were
+modified.  For each option in the template passed to
+<function>Tk_CreateOptionTable</function> there is a <emphasis remap='I'>typeMask</emphasis> field.  The
+bits of this field are defined by the code that implements the widget;
+for example, each bit might correspond to a particular configuration option.
+Alternatively, bits might be used functionally.  For example, one bit might
+be used for redisplay: all options that affect the widget's display, such
+that changing the option requires the widget to be redisplayed, might have
+that bit set.  Another bit might indicate that the geometry of the widget
+must be recomputed, and so on.  <function>Tk_SetOptions</function> OR's together the
+<emphasis remap='I'>typeMask</emphasis> fields from all the options that were modified and returns
+this value at *<emphasis remap='I'>maskPtr</emphasis>; the caller can then use this information
+to optimize itself so that, for example, it does not redisplay the widget
+if the modified options do not affect the widget's appearance.</para>
+
+<para>The second additional feature of <function>Tk_SetOptions</function> has to do with error
+recovery.  If an error occurs while processing configuration options, this
+feature makes it possible to restore all the configuration options to their
+previous values.  Errors can occur either while processing options in
+<function>Tk_SetOptions</function> or later in the caller.  In many cases the caller does
+additional processing after <function>Tk_SetOptions</function> returns; for example, it
+might use an option value to set a trace on a variable and may detect
+an error if the variable is an array instead of a scalar.  Error recovery
+is enabled by passing in a non-NULL value for the <emphasis remap='I'>savePtr</emphasis> argument
+to <function>Tk_SetOptions</function>; this should be a pointer to an uninitialized
+Tk_SavedOptions structure on the caller's stack.  <function>Tk_SetOptions</function>
+overwrites the structure pointed to by <emphasis remap='I'>savePtr</emphasis> with information
+about the old values of any options modified by the procedure.
+If <function>Tk_SetOptions</function> returns successfully, the
+caller uses the structure in one of two ways.  If the caller completes
+its processing of the new options without any errors, then it must pass
+the structure to <function>Tk_FreeSavedOptions</function> so that the old values can be
+freed.  If the caller detects an error in its processing of the new
+options, then it should pass the structure to <function>Tk_RestoreSavedOptions</function>,
+which will copy the old values back into the widget record and free
+the new values.
+If <function>Tk_SetOptions</function> detects an error then it automatically restores
+any options that had already been modified and leaves *<emphasis remap='I'>savePtr</emphasis> in
+an empty state: the caller need not call either <function>Tk_FreeSavedOptions</function> or
+<function>Tk_RestoreSavedOptions</function>.
+If the <emphasis remap='I'>savePtr</emphasis> argument to <function>Tk_SetOptions</function> is NULL then
+<function>Tk_SetOptions</function> frees each old option value immediately when it sets a new
+value for the option.  In this case, if an error occurs in the third
+option, the old values for the first two options cannot be restored.</para>
+
+<para><emphasis remap='B'>Tk_GetOptionValue</emphasis> returns the current value of a configuration option
+for a particular widget.  The <emphasis remap='I'>namePtr</emphasis> argument contains the name of
+an option; <emphasis remap='B'>Tk_GetOptionValue</emphasis> uses <emphasis remap='I'>optionTable</emphasis>
+to lookup the option and extract its value from the widget record
+pointed to by <varname role='parameter'>recordPtr</varname>, then it returns an object containing
+that value.  If an error occurs (e.g., because <emphasis remap='I'>namePtr</emphasis> contains an
+unknown option name) then NULL is returned and an error message is left
+in <varname role='parameter'>interp</varname>'s result unless <varname role='parameter'>interp</varname> is NULL.</para>
+
+<para><emphasis remap='B'>Tk_GetOptionInfo</emphasis> returns information about configuration options in
+a form suitable for <emphasis remap='B'>configure</emphasis> widget commands.  If the <emphasis remap='I'>namePtr</emphasis>
+argument is not NULL, it points to an object that gives the name of a
+configuration option; <emphasis remap='B'>Tk_GetOptionInfo</emphasis> returns an object containing
+a list with five elements, which are the name of the option, the name and
+class used for the option in the option database, the default value for
+the option, and the current value for the option.  If the <emphasis remap='I'>namePtr</emphasis>
+argument is NULL, then <emphasis remap='B'>Tk_GetOptionInfo</emphasis> returns information about
+all options in the form of a list of lists; each sublist describes one
+option.  Synonym options are handled differently depending on whether
+<emphasis remap='I'>namePtr</emphasis> is NULL: if <emphasis remap='I'>namePtr</emphasis> is NULL then the sublist for
+each synonym option has only two elements, which are the name of the
+option and the name of the other option that it refers to; if <emphasis remap='I'>namePtr</emphasis>
+is non-NULL and names a synonym option then the object returned
+is the five-element list
+for the other option that the synonym refers to.  If an error occurs
+(e.g., because <emphasis remap='I'>namePtr</emphasis> contains an unknown option name) then NULL
+is returned and an error message is left in <varname role='parameter'>interp</varname>'s result unless
+<varname role='parameter'>interp</varname> is NULL.</para>
+
+<para><function>Tk_FreeConfigOptions</function> must be invoked when a widget is deleted.
+It frees all of the resources associated with any of the configuration
+options defined in <varname role='parameter'>recordPtr</varname> by <emphasis remap='I'>optionTable</emphasis>.</para>
+
+<para>The <function>Tk_Offset</function> macro is provided as a safe way of generating the
+<emphasis remap='I'>objOffset</emphasis> and <varname role='parameter'>internalOffset</varname> values for entries in
+Tk_OptionSpec structures.  It takes two arguments: the name of a type
+of record, and the name of a field in that record. It returns the byte
+offset of the named field in records of the given type.</para>
+
+</refsect1>
+
+<refsect1 xml:id='templates'><title>TEMPLATES</title>
+<para>The array of Tk_OptionSpec structures passed to <function>Tk_CreateOptionTable</function>
+via its <emphasis remap='I'>templatePtr</emphasis> argument describes the configuration options
+supported by a particular class of widgets.  Each structure specifies
+one configuration option and has the following fields:</para>
+<programlisting remap='CS'>
+typedef struct {
+    Tk_OptionType <emphasis remap='I'>type</emphasis>;
+    const char *<emphasis remap='I'>optionName</emphasis>;
+    const char *<emphasis remap='I'>dbName</emphasis>;
+    const char *<emphasis remap='I'>dbClass</emphasis>;
+    const char *<emphasis remap='I'>defValue</emphasis>;
+    int <emphasis remap='I'>objOffset</emphasis>;
+    int <varname role='parameter'>internalOffset</varname>;
+    int <varname role='parameter'>flags</varname>;
+    ClientData <varname role='parameter'>clientData</varname>;
+    int <emphasis remap='I'>typeMask</emphasis>;
+} Tk_OptionSpec;
+</programlisting> <!-- remap='CE' -->
+<para>The <emphasis remap='I'>type</emphasis> field indicates what kind of configuration option this is
+(e.g. <emphasis remap='B'>TK_OPTION_COLOR</emphasis> for a color value, or <emphasis remap='B'>TK_OPTION_INT</emphasis> for
+an integer value).  <emphasis remap='I'>Type</emphasis> determines how the
+value of the option is parsed (more on this below).
+The <emphasis remap='I'>optionName</emphasis> field is a string such as <option>-font</option> or <option>-bg</option>;
+it is the name used for the option in Tcl commands and passed to
+procedures via the <emphasis remap='I'>objc</emphasis> or <emphasis remap='I'>namePtr</emphasis> arguments.
+The <emphasis remap='I'>dbName</emphasis> and <emphasis remap='I'>dbClass</emphasis> fields are used by <function>Tk_InitOptions</function>
+to look up a default value for this option in the option database; if
+<emphasis remap='I'>dbName</emphasis> is NULL then the option database is not used by
+<function>Tk_InitOptions</function> for this option.  The <emphasis remap='I'>defValue</emphasis> field
+specifies a default value for this configuration option if no
+value is specified in the option database.  The <emphasis remap='I'>objOffset</emphasis> and
+<varname role='parameter'>internalOffset</varname> fields indicate where to store the value of this
+option in widget records (more on this below); values for the <emphasis remap='I'>objOffset</emphasis>
+and <varname role='parameter'>internalOffset</varname> fields should always be generated with the
+<function>Tk_Offset</function> macro.
+The <varname role='parameter'>flags</varname> field contains additional information
+to control the processing of this configuration option (see below
+for details).
+<emphasis remap='I'>ClientData</emphasis> provides additional type-specific data needed
+by certain types.  For instance, for <emphasis remap='B'>TK_OPTION_COLOR</emphasis> types,
+<varname role='parameter'>clientData</varname> is a string giving the default value to use on
+monochrome displays.  See the descriptions of the different types
+below for details.
+The last field, <emphasis remap='I'>typeMask</emphasis>, is used by <function>Tk_SetOptions</function> to
+return information about which options were modified; see the description
+of <function>Tk_SetOptions</function> above for details.</para>
+
+<para>When <function>Tk_InitOptions</function> and <function>Tk_SetOptions</function> store the value of an
+option into the widget record, they can do it in either of two ways.
+If the <emphasis remap='I'>objOffset</emphasis> field of the Tk_OptionSpec is greater than
+or equal to zero, then the value of the option is stored as a
+(Tcl_Obj *) at the location in the widget record given by <emphasis remap='I'>objOffset</emphasis>.
+If the <varname role='parameter'>internalOffset</varname> field of the Tk_OptionSpec is
+greater than or equal to zero, then the value of the option is stored
+in a type-specific internal form at the location in the widget record
+given by <varname role='parameter'>internalOffset</varname>.  For example, if the option's type is
+<emphasis remap='B'>TK_OPTION_INT</emphasis> then the internal form is an integer.  If the
+<emphasis remap='I'>objOffset</emphasis> or <varname role='parameter'>internalOffset</varname> field is negative then the
+value is not stored in that form.  At least one of the offsets must be
+greater than or equal to zero.</para>
+
+<para>The <varname role='parameter'>flags</varname> field consists of one or more bits ORed together.  At
+present only a single flag is supported: <emphasis remap='B'>TK_OPTION_NULL_OK</emphasis>.  If
+this bit is set for an option then an empty string will be accepted as
+the value for the option and the resulting internal form will be a
+NULL pointer, a zero value, or <emphasis remap='B'>None</emphasis>, depending on the type of
+the option.  If the flag is not set then empty strings will result
+in errors.
+<emphasis remap='B'>TK_OPTION_NULL_OK</emphasis> is typically used to allow a
+feature to be turned off entirely, e.g. set a cursor value to
+<emphasis remap='B'>None</emphasis> so that a window simply inherits its parent's cursor.
+Not all option types support the <emphasis remap='B'>TK_OPTION_NULL_OK</emphasis>
+flag; for those that do, there is an explicit indication of that fact
+in the descriptions below.</para>
+
+<para>The <emphasis remap='I'>type</emphasis> field of each Tk_OptionSpec structure determines
+how to parse the value of that configuration option. The
+legal value for <emphasis remap='I'>type</emphasis>, and the corresponding actions, are
+described below.  If the type requires a <varname role='parameter'>tkwin</varname> value to be
+passed into procedures like <function>Tk_SetOptions</function>, or if it uses
+the <varname role='parameter'>clientData</varname> field of the Tk_OptionSpec, then it is indicated
+explicitly; if not mentioned, the type requires neither <varname role='parameter'>tkwin</varname>
+nor <varname role='parameter'>clientData</varname>.</para>
+<variablelist remap='TP'>
+  <varlistentry>
+  <term><emphasis remap='B'>TK_OPTION_ANCHOR</emphasis></term>
+  <listitem>
+<para>The value must be a standard anchor position such as <emphasis remap='B'>ne</emphasis> or
+<emphasis remap='B'>center</emphasis>.  The internal form is a Tk_Anchor value like the ones
+returned by <emphasis remap='B'>Tk_GetAnchorFromObj</emphasis>.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>TK_OPTION_BITMAP</emphasis></term>
+  <listitem>
+<para>The value must be a standard Tk bitmap name. The internal form is a
+Pixmap token like the ones returned by <emphasis remap='B'>Tk_AllocBitmapFromObj</emphasis>.
+This option type requires <varname role='parameter'>tkwin</varname> to be supplied to procedures
+such as <function>Tk_SetOptions</function>, and it supports the <emphasis remap='B'>TK_OPTION_NULL_OK</emphasis> flag.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>TK_OPTION_BOOLEAN</emphasis></term>
+  <listitem>
+<para>The value must be a standard boolean value such as <emphasis remap='B'>true</emphasis> or
+<emphasis remap='B'>no</emphasis>.  The internal form is an integer with value 0 or 1.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>TK_OPTION_BORDER</emphasis></term>
+  <listitem>
+<para>The value must be a standard color name such as <emphasis remap='B'>red</emphasis> or <emphasis remap='B'>#ff8080</emphasis>.
+The internal form is a Tk_3DBorder token like the ones returned
+by <emphasis remap='B'>Tk_Alloc3DBorderFromObj</emphasis>.
+This option type requires <varname role='parameter'>tkwin</varname> to be supplied to procedures
+such as <function>Tk_SetOptions</function>, and it supports the <emphasis remap='B'>TK_OPTION_NULL_OK</emphasis> flag.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>TK_OPTION_COLOR</emphasis></term>
+  <listitem>
+<para>The value must be a standard color name such as <emphasis remap='B'>red</emphasis> or <emphasis remap='B'>#ff8080</emphasis>.
+The internal form is an (XColor *) token like the ones returned by
+<emphasis remap='B'>Tk_AllocColorFromObj</emphasis>.
+This option type requires <varname role='parameter'>tkwin</varname> to be supplied to procedures
+such as <function>Tk_SetOptions</function>, and it supports the <emphasis remap='B'>TK_OPTION_NULL_OK</emphasis> flag.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>TK_OPTION_CURSOR</emphasis></term>
+  <listitem>
+<para>The value must be a standard cursor name such as <emphasis remap='B'>cross</emphasis> or <emphasis remap='B'>@foo</emphasis>.
+The internal form is a Tk_Cursor token like the ones returned by
+<emphasis remap='B'>Tk_AllocCursorFromObj</emphasis>.
+This option type requires <varname role='parameter'>tkwin</varname> to be supplied to procedures
+such as <function>Tk_SetOptions</function>, and when the option is set the cursor
+for the window is changed by calling <emphasis remap='B'>XDefineCursor</emphasis>.  This
+option type also supports the <emphasis remap='B'>TK_OPTION_NULL_OK</emphasis> flag.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>TK_OPTION_CUSTOM</emphasis></term>
+  <listitem>
+<para>This option allows applications to define new option types.  The
+clientData field of the entry points to a structure defining the new
+option type.  See the section <emphasis remap='B'>CUSTOM OPTION TYPES</emphasis> below for details.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>TK_OPTION_DOUBLE</emphasis></term>
+  <listitem>
+<para>The string value must be a floating-point number in
+the format accepted by <emphasis remap='B'>strtol</emphasis>.  The internal form is a C
+<emphasis remap='B'>double</emphasis> value.  This option type supports the <emphasis remap='B'>TK_OPTION_NULL_OK</emphasis>
+flag; if a NULL value is set, the internal representation is set to zero.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>TK_OPTION_END</emphasis></term>
+  <listitem>
+<para>Marks the end of the template.  There must be a Tk_OptionSpec structure
+with <emphasis remap='I'>type</emphasis> <emphasis remap='B'>TK_OPTION_END</emphasis> at the end of each template.  If the
+<varname role='parameter'>clientData</varname> field of this structure is not NULL, then it points to
+an additional array of Tk_OptionSpec's, which is itself terminated by
+another <emphasis remap='B'>TK_OPTION_END</emphasis> entry.  Templates may be chained arbitrarily
+deeply.  This feature allows common options to be shared by several
+widget classes.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>TK_OPTION_FONT</emphasis></term>
+  <listitem>
+<para>The value must be a standard font name such as <emphasis remap='B'>Times 16</emphasis>.
+The internal form is a Tk_Font handle like the ones returned by
+<emphasis remap='B'>Tk_AllocFontFromObj</emphasis>.
+This option type requires <varname role='parameter'>tkwin</varname> to be supplied to procedures
+such as <function>Tk_SetOptions</function>, and it supports the <emphasis remap='B'>TK_OPTION_NULL_OK</emphasis> flag.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>TK_OPTION_INT</emphasis></term>
+  <listitem>
+<para>The string value must be an integer in the format accepted by
+<emphasis remap='B'>strtol</emphasis> (e.g. <literal>0</literal> and <emphasis remap='B'>0x</emphasis> prefixes may be used to
+specify octal or hexadecimal numbers, respectively).  The internal
+form is a C <emphasis remap='B'>int</emphasis> value.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>TK_OPTION_JUSTIFY</emphasis></term>
+  <listitem>
+<para>The value must be a standard justification value such as <emphasis remap='B'>left</emphasis>.
+The internal form is a Tk_Justify like the values returned by
+<emphasis remap='B'>Tk_GetJustifyFromObj</emphasis>.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>TK_OPTION_PIXELS</emphasis></term>
+  <listitem>
+<para>The value must specify a screen distance such as <emphasis remap='B'>2i</emphasis> or <literal>6.4</literal>.
+The internal form is an integer value giving a
+distance in pixels, like the values returned by
+<emphasis remap='B'>Tk_GetPixelsFromObj</emphasis>.  Note: if the <emphasis remap='I'>objOffset</emphasis> field is not
+used then information about the original value of this option will be lost.
+See <emphasis remap='B'>OBJOFFSET VS. INTERNALOFFSET</emphasis> below for details.  This option
+type supports the <emphasis remap='B'>TK_OPTION_NULL_OK</emphasis> flag; if a NULL value is set, the
+internal representation is set to zero.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>TK_OPTION_RELIEF</emphasis></term>
+  <listitem>
+<para>The value must be standard relief such as <emphasis remap='B'>raised</emphasis>.
+The internal form is an integer relief value such as
+<emphasis remap='B'>TK_RELIEF_RAISED</emphasis>.  This option type supports the <emphasis remap='B'>TK_OPTION_NULL_OK</emphasis>
+flag; if the empty string is specified as the value for the option,
+the integer relief value is set to <emphasis remap='B'>TK_RELIEF_NULL</emphasis>.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>TK_OPTION_STRING</emphasis></term>
+  <listitem>
+<para>The value may be any string.  The internal form is a (char *) pointer
+that points to a dynamically allocated copy of the value.
+This option type supports the <emphasis remap='B'>TK_OPTION_NULL_OK</emphasis> flag.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>TK_OPTION_STRING_TABLE</emphasis></term>
+  <listitem>
+<para>For this type, <varname role='parameter'>clientData</varname> is a pointer to an array of strings
+suitable for passing to <emphasis remap='B'>Tcl_GetIndexFromObj</emphasis>.  The value must
+be one of the strings in the table, or a unique abbreviation of
+one of the strings.  The internal form is an integer giving the index
+into the table of the matching string, like the return value
+from <emphasis remap='B'>Tcl_GetStringFromObj</emphasis>.</para> 
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>TK_OPTION_SYNONYM</emphasis></term>
+  <listitem>
+<para>This type is used to provide alternative names for an option (for
+example, <option>-bg</option> is often used as a synonym for <option>-background</option>).
+The <varname role='parameter'>clientData</varname> field is a (char *) pointer that gives
+the name of another option in the same table.  Whenever the
+synonym option is used, the information from the other option
+will be used instead.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>TK_OPTION_WINDOW</emphasis></term>
+  <listitem>
+<para>The value must be a window path name.  The internal form is a
+<type>Tk_Window</type> token for the window.
+This option type requires <varname role='parameter'>tkwin</varname> to be supplied to procedures
+such as <function>Tk_SetOptions</function> (in order to identify the application),
+and it supports the <emphasis remap='B'>TK_OPTION_NULL_OK</emphasis> flag.</para>
+
+  </listitem>
+  </varlistentry>
+</variablelist>
+</refsect1>
+
+<refsect1 xml:id='storage_management_issues'><title>STORAGE MANAGEMENT ISSUES</title>
+<para>If a field of a widget record has its offset stored in the <emphasis remap='I'>objOffset</emphasis>
+or <varname role='parameter'>internalOffset</varname> field of a Tk_OptionSpec structure then the
+procedures described here will handle all of the storage allocation and
+resource management issues associated with the field.  When the value
+of an option is changed, <function>Tk_SetOptions</function> (or <function>Tk_FreeSavedOptions</function>)
+will automatically free any resources associated with the old value, such as
+Tk_Fonts for <emphasis remap='B'>TK_OPTION_FONT</emphasis> options or dynamically allocated memory for
+<emphasis remap='B'>TK_OPTION_STRING</emphasis> options.  For an option stored as an object using the
+<emphasis remap='I'>objOffset</emphasis> field of a Tk_OptionSpec, the widget record shares the
+object pointed to by the <emphasis remap='I'>objv</emphasis> value from the call to
+<function>Tk_SetOptions</function>.  The reference count for this object is incremented
+when a pointer to it is stored in the widget record and decremented when
+the option is modified.  When the widget is deleted
+<function>Tk_FreeConfigOptions</function> should be invoked; it will free the resources
+associated with all options and decrement reference counts for any
+objects.</para>
+
+<para>However, the widget code is responsible for storing NULL or <emphasis remap='B'>None</emphasis> in
+all pointer and token fields before invoking <function>Tk_InitOptions</function>.
+This is needed to allow proper cleanup in the rare case where
+an error occurs in <function>Tk_InitOptions</function>.</para>
+
+</refsect1>
+
+<refsect1 xml:id='objoffset_vs_internaloffset'><title>OBJOFFSET VS. INTERNALOFFSET</title>
+<para>In most cases it is simplest to use the <varname role='parameter'>internalOffset</varname> field of
+a Tk_OptionSpec structure and not the <emphasis remap='I'>objOffset</emphasis> field.  This
+makes the internal form of the value immediately available to the
+widget code so the value does not have to be extracted from an object
+each time it is used.  However, there are two cases where the
+<emphasis remap='I'>objOffset</emphasis> field is useful.  The first case is for
+<emphasis remap='B'>TK_OPTION_PIXELS</emphasis> options.  In this case, the internal form is
+an integer pixel value that is valid only for a particular screen.
+If the value of the option is retrieved, it will be returned as a simple
+number.  For example, after the command <markup>.b configure -borderwidth 2m</markup>,
+the command <markup>.b configure -borderwidth</markup> might return 7, which is the
+integer pixel value corresponding to <emphasis remap='B'>2m</emphasis>.  Unfortunately, this loses
+the original screen-independent value. Thus for <emphasis remap='B'>TK_OPTION_PIXELS</emphasis> options
+it is better to use the <emphasis remap='I'>objOffset</emphasis> field.  In this case the original
+value of the option is retained in the object and can be returned when
+the option is retrieved.  In most cases it is convenient to use the
+<varname role='parameter'>internalOffset</varname> field as well, so that the integer value is
+immediately available for use in the widget code (alternatively,
+<emphasis remap='B'>Tk_GetPixelsFromObj</emphasis> can be used to extract the integer value from
+the object whenever it is needed).  Note: the problem of losing information
+on retrievals exists only for <emphasis remap='B'>TK_OPTION_PIXELS</emphasis> options.</para>
+
+<para>The second reason to use the <emphasis remap='I'>objOffset</emphasis> field is in order to
+implement new types of options not supported by these procedures.
+To implement a new type of option, you can use <emphasis remap='B'>TK_OPTION_STRING</emphasis> as
+the type in the Tk_OptionSpec structure and set the <emphasis remap='I'>objOffset</emphasis> field
+but not the <varname role='parameter'>internalOffset</varname> field.  Then, after calling
+<function>Tk_SetOptions</function>, convert the object to internal form yourself.</para>
+
+</refsect1>
+
+<refsect1 xml:id='custom_option_types'><title>CUSTOM OPTION TYPES</title>
+<para>Applications can extend the built-in configuration types with
+additional configuration types by writing procedures to parse, print,
+free, and restore saved copies of the type and creating a structure
+pointing to those procedures:</para>
+<programlisting remap='CS'>
+<funcsynopsis>
+<funcsynopsisinfo>
+typedef struct Tk_ObjCustomOption { char *name; Tk_CustomOptionSetProc *setProc; Tk_CustomOptionGetProc *getProc; Tk_CustomOptionRestoreProc *restoreProc; Tk_CustomOptionFreeProc *freeProc; ClientData clientData; } Tk_ObjCustomOption; </funcsynopsisinfo>
+<funcprototype>
+<funcdef>typedef int <function>Tk_CustomOptionSetProc</function></funcdef>
+    <paramdef>ClientData <parameter>clientData</parameter></paramdef>
+    <paramdef>Tcl_Interp * <parameter>interp</parameter></paramdef>
+    <paramdef>Tk_Window <parameter>tkwin</parameter></paramdef>
+    <paramdef>Tcl_Obj ** <parameter>valuePtr</parameter></paramdef>
+    <paramdef>char * <parameter>recordPtr</parameter></paramdef>
+    <paramdef>int <parameter>internalOffset</parameter></paramdef>
+    <paramdef>char * <parameter>saveInternalPtr</parameter></paramdef>
+    <paramdef>int <parameter>flags</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef>typedef <function>Tcl_Obj</function> *Tk_CustomOptionGetProc</funcdef>
+    <paramdef>ClientData <parameter>clientData</parameter></paramdef>
+    <paramdef>Tk_Window <parameter>tkwin</parameter></paramdef>
+    <paramdef>char * <parameter>recordPtr</parameter></paramdef>
+    <paramdef>int <parameter>internalOffset</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef>typedef void <function>Tk_CustomOptionRestoreProc</function></funcdef>
+    <paramdef>ClientData <parameter>clientData</parameter></paramdef>
+    <paramdef>Tk_Window <parameter>tkwin</parameter></paramdef>
+    <paramdef>char * <parameter>internalPtr</parameter></paramdef>
+    <paramdef>char * <parameter>saveInternalPtr</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef>typedef void <function>Tk_CustomOptionFreeProc</function></funcdef>
+    <paramdef>ClientData <parameter>clientData</parameter></paramdef>
+    <paramdef>Tk_Window <parameter>tkwin</parameter></paramdef>
+    <paramdef>char * <parameter>internalPtr</parameter></paramdef>
+</funcprototype>
+</funcsynopsis>
+</programlisting> <!-- remap='CE' -->
+<para>The Tk_ObjCustomOption structure contains six fields: a name
+for the custom option type; pointers to the four procedures; and a
+<varname role='parameter'>clientData</varname> value to be passed to those procedures when they are
+invoked.  The <varname role='parameter'>clientData</varname> value typically points to a structure
+containing information that is needed by the procedures when they are
+parsing and printing options.  <emphasis remap='I'>RestoreProc</emphasis> and <emphasis remap='I'>freeProc</emphasis>
+may be NULL, indicating that no function should be called for those
+operations.</para>
+
+<para>The <emphasis remap='I'>setProc</emphasis> procedure is invoked by <function>Tk_SetOptions</function> to
+convert a Tcl_Obj into an internal representation and store the
+resulting value in the widget record.  The arguments are:</para>
+  <blockquote remap='RS'>
+  <variablelist remap='TP'>
+    <varlistentry>
+    <term><varname role='parameter'>clientData</varname></term>
+    <listitem>
+<para>A copy of the <varname role='parameter'>clientData</varname> field in the Tk_ObjCustomOption
+structure.</para>
+    </listitem>
+    </varlistentry>
+    <varlistentry>
+    <term><varname role='parameter'>interp</varname></term>
+    <listitem>
+<para>A pointer to a Tcl interpreter, used for error reporting.</para>
+    </listitem>
+    </varlistentry>
+    <varlistentry>
+    <term><emphasis remap='I'>Tkwin</emphasis></term>
+    <listitem>
+<para>A copy of the <varname role='parameter'>tkwin</varname> argument to <function>Tk_SetOptions</function></para>
+    </listitem>
+    </varlistentry>
+    <varlistentry>
+    <term><varname role='parameter'>valuePtr</varname></term>
+    <listitem>
+<para>A pointer to a reference to a Tcl_Obj describing the new value for the
+option; it could have been specified explicitly in the call to
+<function>Tk_SetOptions</function> or it could come from the option database or a
+default.  If the objOffset for the option is non-negative (the option
+value is stored as a (Tcl_Obj *) in the widget record), the Tcl_Obj
+pointer referenced by <varname role='parameter'>valuePtr</varname> is the pointer that will be
+stored at the objOffset for the option.  <emphasis remap='I'>SetProc</emphasis> may modify the
+value if necessary; for example, <emphasis remap='I'>setProc</emphasis> may change the value to
+NULL to support the <emphasis remap='B'>TK_OPTION_NULL_OK</emphasis> flag.</para>
+    </listitem>
+    </varlistentry>
+    <varlistentry>
+    <term><varname role='parameter'>recordPtr</varname></term>
+    <listitem>
+<para>A pointer to the start of the widget record to modify.</para>
+    </listitem>
+    </varlistentry>
+    <varlistentry>
+    <term><varname role='parameter'>internalOffset</varname></term>
+    <listitem>
+<para>Offset in bytes from the start of the widget record to the location
+where the internal representation of the option value is to be placed.</para>
+    </listitem>
+    </varlistentry>
+    <varlistentry>
+    <term><varname role='parameter'>saveInternalPtr</varname></term>
+    <listitem>
+<para>A pointer to storage allocated in a Tk_SavedOptions structure for the
+internal representation of the original option value.  Before setting
+the option to its new value, <emphasis remap='I'>setProc</emphasis> should set the value
+referenced by <varname role='parameter'>saveInternalPtr</varname> to the original value of the
+option in order to support <function>Tk_RestoreSavedOptions</function>.</para>
+    </listitem>
+    </varlistentry>
+    <varlistentry>
+    <term><varname role='parameter'>flags</varname></term>
+    <listitem>
+<para>A copy of the <varname role='parameter'>flags</varname> field in the Tk_OptionSpec structure for the
+option</para>
+    </listitem>
+    </varlistentry>
+  </variablelist>
+  </blockquote> <!-- remap='RE' -->
+
+<para><emphasis remap='I'>SetProc</emphasis> returns a standard Tcl result: <emphasis remap='B'>TCL_OK</emphasis> to indicate successful
+processing, or <emphasis remap='B'>TCL_ERROR</emphasis> to indicate a failure of any kind.  An error
+message may be left in the Tcl interpreter given by <varname role='parameter'>interp</varname> in
+the case of an error.</para>
+
+<para>The <emphasis remap='I'>getProc</emphasis> procedure is invoked by <emphasis remap='B'>Tk_GetOptionValue</emphasis> and
+<emphasis remap='B'>Tk_GetOptionInfo</emphasis> to retrieve a Tcl_Obj representation of the
+internal representation of an option.  The <varname role='parameter'>clientData</varname> argument
+is a copy of the <varname role='parameter'>clientData</varname> field in the Tk_ObjCustomOption
+structure.  <emphasis remap='I'>Tkwin</emphasis> is a copy of the <varname role='parameter'>tkwin</varname> argument to
+<emphasis remap='B'>Tk_GetOptionValue</emphasis> or <emphasis remap='B'>Tk_GetOptionInfo</emphasis>.  <emphasis remap='I'>RecordPtr</emphasis>
+is a pointer to the beginning of the widget record to query.
+<emphasis remap='I'>InternalOffset</emphasis> is the offset in bytes from the beginning of the
+widget record to the location where the internal representation of the
+option value is stored.  <emphasis remap='I'>GetProc</emphasis> must return a pointer to a
+Tcl_Obj representing the value of the option.</para>
+
+<para>The <emphasis remap='I'>restoreProc</emphasis> procedure is invoked by
+<function>Tk_RestoreSavedOptions</function> to restore a previously saved internal
+representation of a custom option value.  The <varname role='parameter'>clientData</varname> argument
+is a copy of the <varname role='parameter'>clientData</varname> field in the Tk_ObjCustomOption
+structure.  <emphasis remap='I'>Tkwin</emphasis> is a copy of the <varname role='parameter'>tkwin</varname> argument to
+<emphasis remap='B'>Tk_GetOptionValue</emphasis> or <emphasis remap='B'>Tk_GetOptionInfo</emphasis>.  <emphasis remap='I'>InternalPtr</emphasis>
+is a pointer to the location where internal representation of the
+option value is stored.
+<emphasis remap='I'>SaveInternalPtr</emphasis> is a pointer to the saved value.
+<emphasis remap='I'>RestoreProc</emphasis> must copy the value from <varname role='parameter'>saveInternalPtr</varname> to
+<varname role='parameter'>internalPtr</varname> to restore the value.  <emphasis remap='I'>RestoreProc</emphasis> need not
+free any memory associated with either <varname role='parameter'>internalPtr</varname> or
+<varname role='parameter'>saveInternalPtr</varname>; <emphasis remap='I'>freeProc</emphasis> will be invoked to free that
+memory if necessary.  <emphasis remap='I'>RestoreProc</emphasis> has no return value.</para>
+
+<para>The <emphasis remap='I'>freeProc</emphasis> procedure is invoked by <function>Tk_SetOptions</function> and
+<function>Tk_FreeSavedOptions</function> to free any storage allocated for the
+internal representation of a custom option.  The <varname role='parameter'>clientData</varname> argument
+is a copy of the <varname role='parameter'>clientData</varname> field in the Tk_ObjCustomOption
+structure.  <emphasis remap='I'>Tkwin</emphasis> is a copy of the <varname role='parameter'>tkwin</varname> argument to
+<emphasis remap='B'>Tk_GetOptionValue</emphasis> or <emphasis remap='B'>Tk_GetOptionInfo</emphasis>.  <emphasis remap='I'>InternalPtr</emphasis>
+is a pointer to the location where the internal representation of the
+option value is stored.  The <emphasis remap='I'>freeProc</emphasis> must free any storage
+associated with the option.  <emphasis remap='I'>FreeProc</emphasis> has no return value.</para>
+
+
+</refsect1>
+
+<refsect1 xml:id='keywords'><title>KEYWORDS</title>
+<para>anchor, bitmap, boolean, border, color, configuration option,
+cursor, double, font, integer, justify,
+pixels, relief, screen distance, synonym</para>
+</refsect1>
+</refentry>
+

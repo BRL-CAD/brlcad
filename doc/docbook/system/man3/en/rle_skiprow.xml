@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='rle_skiprow3'>
+<!--  Copyright (c) 1986, University of Utah -->
+<refentryinfo><date>2/2/87</date></refentryinfo>
+<refmeta>
+<refentrytitle>RLE_SKIPROW</refentrytitle>
+<manvolnum>3</manvolnum>
+<refmiscinfo class='date'>2/2/87</refmiscinfo>
+<refmiscinfo class='source'>3</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>rle_skiprow</refname>
+<refpurpose>Skip output scanlines in an RLE file.</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<funcsynopsis>
+<funcsynopsisinfo>
+#include &lt;rle.h&gt;
+
+</funcsynopsisinfo>
+<funcprototype>
+<funcdef><function>rle_skiprow</function></funcdef>
+<paramdef><parameter>the_hdr</parameter></paramdef>
+<paramdef><parameter>nrow</parameter></paramdef>
+</funcprototype>
+<funcsynopsisinfo>
+
+rle_hdr * the_hdr;
+
+int nrow;
+</funcsynopsisinfo>
+</funcsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para>This routine is used to output blank (background) scanlines to an
+<citerefentry><refentrytitle>RLE</refentrytitle><manvolnum>5</manvolnum></citerefentry>
+file.  It is used in conjunction with
+<citerefentry><refentrytitle>rle_putrow</refentrytitle><manvolnum>3</manvolnum></citerefentry>
+or
+<citerefentry><refentrytitle>rle_putraw</refentrytitle><manvolnum>3</manvolnum></citerefentry>.
+The number of scanlines indicated by
+<emphasis remap='I'>nrow</emphasis>
+will be blank in the output file.</para>
+</refsect1>
+
+<refsect1 xml:id='see_also'><title>SEE ALSO</title>
+<!-- .na -->
+<para><citerefentry><refentrytitle>rle_hdr</refentrytitle><manvolnum>3</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>rle_put_setup</refentrytitle><manvolnum>3</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>rle_putrow</refentrytitle><manvolnum>3</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>rle_putraw</refentrytitle><manvolnum>3</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>librle</refentrytitle><manvolnum>3</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>RLE</refentrytitle><manvolnum>5</manvolnum></citerefentry>.</para>
+<!-- .ad b -->
+</refsect1>
+
+<refsect1 xml:id='author'><title>AUTHOR</title>
+<para>Spencer W. Thomas
+<!-- .br -->
+University of Utah</para>
+</refsect1>
+
+<refsect1 xml:id='bugs'><title>BUGS</title>
+<para><emphasis remap='I'>Rle_skiprow</emphasis>
+should not be called when creating an <emphasis remap='I'>RLE</emphasis> file with
+<emphasis remap='I'>the_hdr</emphasis>-><emphasis remap='I'>background</emphasis>
+set to zero.  The specified number of rows will indeed be skipped, but
+they will not be filled with background when the file is read.</para>
+</refsect1>
+</refentry>
+

@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man+tkman by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='tcl_mem_debug3'>
+<!-- '\" 
+'\" Copyright (c) 1992\-1999 Karl Lehenbauer and Mark Diekhans.
+'\" Copyright (c) 2000 by Scriptics Corporation.
+'\" All rights reserved.
+'\" 
+'\" RCS: @(#) $Id$
+'\"  -->
+<refentryinfo><date>8.1</date></refentryinfo>
+<refmeta>
+<refentrytitle>TCL_MEM_DEBUG</refentrytitle>
+<manvolnum>3</manvolnum>
+<refmiscinfo class='date'>8.1</refmiscinfo>
+<refmiscinfo class='source'>Tcl</refmiscinfo>
+<refmiscinfo class='manual'>Tcl Library Procedures</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>TCL_MEM_DEBUG</refname>
+<refpurpose>Compile-time flag to enable Tcl memory debugging</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para>When Tcl is compiled with <emphasis remap='B'>TCL_MEM_DEBUG</emphasis> defined, a powerful set
+of memory debugging aids is included in the compiled binary.  This
+includes C and Tcl functions which can aid with debugging
+memory leaks, memory allocation overruns, and other memory related
+errors.</para>
+</refsect1>
+
+<refsect1 xml:id='enabling_memory_debugging'><title>ENABLING MEMORY DEBUGGING</title>
+<para>To enable memory debugging, Tcl should be recompiled from scratch with
+<emphasis remap='B'>TCL_MEM_DEBUG</emphasis> defined (e.g. by passing the
+<option>--enable-symbols=mem</option> flag to the <emphasis remap='I'>configure</emphasis> script when
+building).  This will also compile in a non-stub
+version of <emphasis remap='B'>Tcl_InitMemory</emphasis> to add the <emphasis remap='B'>memory</emphasis> command to Tcl.</para>
+
+<para><emphasis remap='B'>TCL_MEM_DEBUG</emphasis> must be either left defined for all modules or undefined
+for all modules that are going to be linked together.  If they are not, link
+errors will occur, with either <emphasis remap='B'>Tcl_DbCkfree</emphasis> and <emphasis remap='B'>Tcl_DbCkalloc</emphasis> or
+<emphasis remap='B'>Tcl_Ckalloc</emphasis> and <emphasis remap='B'>Tcl_Ckfree</emphasis> being undefined.</para>
+
+<para>Once memory debugging support has been compiled into Tcl, the C
+functions <emphasis remap='B'>Tcl_ValidateAllMemory</emphasis>, and <emphasis remap='B'>Tcl_DumpActiveMemory</emphasis>,
+and the Tcl <emphasis remap='B'>memory</emphasis> command can be used to validate and examine
+memory usage.</para>
+</refsect1>
+
+<refsect1 xml:id='guard_zones'><title>GUARD ZONES</title>
+<para>When memory debugging is enabled, whenever a call to <emphasis remap='B'>ckalloc</emphasis> is
+made, slightly more memory than requested is allocated so the memory
+debugging code can keep track of the allocated memory, and eight-byte
+<quote>guard zones</quote>
+are placed in front of and behind the space that will be
+returned to the caller.  (The sizes of the guard zones are defined by the
+C #define <emphasis remap='B'>LOW_GUARD_SIZE</emphasis> and #define <emphasis remap='B'>HIGH_GUARD_SIZE</emphasis>
+in the file <filename>generic/tclCkalloc.c</filename> - it can
+be extended if you suspect large overwrite problems, at some cost in
+performance.)  A known pattern is written into the guard zones and, on
+a call to <emphasis remap='B'>ckfree</emphasis>, the guard zones of the space being freed are
+checked to see if either zone has been modified in any way.  If one
+has been, the guard bytes and their new contents are identified, and a
+<quote>low guard failed</quote>
+or
+<quote>high guard failed</quote>
+message is issued.  The
+<quote>guard failed</quote>
+message includes the address of the memory packet and
+the file name and line number of the code that called <emphasis remap='B'>ckfree</emphasis>.
+This allows you to detect the common sorts of one-off problems, where
+not enough space was allocated to contain the data written, for
+example.</para>
+</refsect1>
+
+<refsect1 xml:id='debugging_difficult_memory_corruption_pr'><title>DEBUGGING DIFFICULT MEMORY CORRUPTION PROBLEMS</title>
+<para>Normally, Tcl compiled with memory debugging enabled will make it easy
+to isolate a corruption problem.  Turning on memory validation with
+the memory command can help isolate difficult problems.  If you
+suspect (or know) that corruption is occurring before the Tcl
+interpreter comes up far enough for you to issue commands, you can set
+<emphasis remap='B'>MEM_VALIDATE</emphasis> define, recompile tclCkalloc.c and rebuild Tcl.
+This will enable memory validation from the first call to
+<emphasis remap='B'>ckalloc</emphasis>, again, at a large performance impact.</para>
+
+<para>If you are desperate and validating memory on every call to
+<emphasis remap='B'>ckalloc</emphasis> and <emphasis remap='B'>ckfree</emphasis> is not enough, you can explicitly call
+<emphasis remap='B'>Tcl_ValidateAllMemory</emphasis> directly at any point.  It takes a <emphasis remap='I'>char
+*</emphasis> and an <emphasis remap='I'>int</emphasis> which are normally the filename and line number
+of the caller, but they can actually be anything you want.  Remember
+to remove the calls after you find the problem.</para>
+</refsect1>
+
+<refsect1 xml:id='see_also'><title>SEE ALSO</title>
+<para>ckalloc, memory, Tcl_ValidateAllMemory, Tcl_DumpActiveMemory</para>
+</refsect1>
+
+<refsect1 xml:id='keywords'><title>KEYWORDS</title>
+<para>memory, debug</para>
+</refsect1>
+</refentry>
+

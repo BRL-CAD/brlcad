@@ -1,0 +1,223 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='rle5'>
+<!--  Copyright (c) 1986, University of Utah -->
+<refentryinfo><date>9/14/82</date></refentryinfo>
+<refmeta>
+<refentrytitle>RLE</refentrytitle>
+<manvolnum>5</manvolnum>
+<refmiscinfo class='date'>9/14/82</refmiscinfo>
+<refmiscinfo class='source'>5</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>rle</refname>
+<refpurpose>Run length encoded file format produced by the rle library</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para>The output file format is (note: all words are 16 bits, and in PDP-11 byte
+order):</para>
+<variablelist remap='TP'>
+  <varlistentry>
+  <term><emphasis remap='B'>Word 0</emphasis></term>
+  <listitem>
+<para>A "magic" number 0xcc52.  (Byte order 0x52, 0xcc.)</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>Words 1-4</emphasis></term>
+  <listitem>
+<para>The structure (chars saved in PDP-11 order)</para>
+
+<literallayout remap='.nf'>
+{
+    short   xpos,                       /* Lower left corner
+            ypos,
+            xsize,                      /* Size of saved box
+            ysize;
+}
+</literallayout> <!-- .fi -->
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>Byte 10</emphasis></term>
+  <listitem>
+<para><emphasis remap='I'>(flags)</emphasis>
+The following flags are defined:</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='I'>H_CLEARFIRST</emphasis></term>
+  <listitem>
+<para>(0x1) If set, clear the frame buffer to background color before restoring.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='I'>H_NO_BACKGROUND</emphasis></term>
+  <listitem>
+<para>(0x2) If set, no background color is supplied.  If
+<emphasis remap='I'>H_CLEARFIRST</emphasis>
+is also set, it should be ignored (or alternatively, a clear-to-black
+operation could be performed).</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='I'>H_ALPHA</emphasis></term>
+  <listitem>
+<para>(0x4) If set, an alpha channel is saved as color channel -1.  The alpha
+channel does not contribute to the count of colors in
+<emphasis remap='I'>ncolors</emphasis>.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='I'>H_COMMENT</emphasis></term>
+  <listitem>
+<para>(0x8) If set, comments will follow the color map in the header.</para>
+  </listitem>
+  </varlistentry>
+</variablelist>
+<variablelist remap='TP'>
+  <varlistentry>
+  <term><emphasis remap='B'>Byte 11</emphasis></term>
+  <listitem>
+<para><emphasis remap='I'>(ncolors)</emphasis>
+Number of color channels present.  0 means load only the color map (if
+present), 1 means a B&amp;W image, 3 means a normal color image.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>Byte 12</emphasis></term>
+  <listitem>
+<para><emphasis remap='I'>(pixelbits)</emphasis>
+Number of bits per pixel, per color channel.  Values greater than 8
+currently will not work.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>Byte 13</emphasis></term>
+  <listitem>
+<para><emphasis remap='I'>(ncmap)</emphasis>
+Number of color map channels present.  Need not be identical to
+<emphasis remap='I'>ncolors</emphasis>.
+If this is non-zero, the color map follows immediately after the background
+colors.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>Byte 14</emphasis></term>
+  <listitem>
+<para><emphasis remap='I'>(cmaplen)</emphasis>
+Log base 2 of the number of entries in the color map for each color channel.
+I.e., would be 8 for a color map with 256 entries.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>Bytes 15-...</emphasis></term>
+  <listitem>
+<para>The background color.  There are
+<emphasis remap='I'>ncolors</emphasis>
+bytes of background color.  If
+<emphasis remap='I'>ncolors</emphasis>
+is even, an extra padding byte is inserted to end on a 16 bit boundary.
+The background color is only present if
+<emphasis remap='I'>H_NO_BACKGROUND</emphasis>
+is not set in
+<emphasis remap='I'>flags</emphasis>.
+IF
+<emphasis remap='I'>H_NO BACKGROUND</emphasis>
+is set, there is a single filler byte.  Background color is ignored, but
+present, if
+<emphasis remap='I'>H_CLEARFIRST</emphasis>
+is not set in
+<emphasis remap='I'>flags</emphasis>.</para>
+
+<para>If
+<emphasis remap='I'>ncmap</emphasis>
+is non-zero, then the color map will follow as
+<emphasis remap='I'>ncmap</emphasis>*2^<emphasis remap='I'>cmaplen</emphasis>
+16 bit words.  The color map data is left justified in each word.</para>
+
+<para>If the
+<emphasis remap='I'>H_COMMENT</emphasis>
+flag is set, a set of comments will follow.  The first 16 bit word
+gives the length of the comments in bytes.  If this is odd, a filler
+byte will be appended to the comments.  The comments are interpreted
+as a sequence of null terminated strings which should be, by
+convention, of the form
+<emphasis remap='I'>name</emphasis>=<emphasis remap='I'>value</emphasis>,
+or just
+<emphasis remap='I'>name</emphasis>.</para>
+
+<para>Following the setup information is the Run Length Encoded image.  Each
+instruction consists of an opcode, a datum and possibly one or
+more following words (all words are 16 bits).  The opcode is encoded in the
+first byte of the instruction word.  Instructions come in either a short or
+long form.  In the short form, the datum is in the second byte of the
+instruction word; in the long form, the datum is a 16 bit value in the word
+following the instruction word.  Long form instructions are distinguished by
+having the 0x40 bit set in the opcode byte.
+The instruction opcodes are:</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>SkipLines (1)</emphasis></term>
+  <listitem>
+<para>The datum is an unsigned number to be added to the current Y position.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>SetColor (2)</emphasis></term>
+  <listitem>
+<para>The datum indicates which color is to be loaded with the data described by the
+following ByteData and RunData instructions.  Typically,
+0->red, 1->green, 2->blue.  The
+operation also resets the X position to the initial X (i.e. a carriage return
+operation is performed).</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>SkipPixels (3)</emphasis></term>
+  <listitem>
+<para>The datum is an unsigned number to be added to the current X
+position.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>ByteData (5)</emphasis></term>
+  <listitem>
+<para>The datum is one less than the number of bytes of color data following.  If the
+number of bytes is odd, a filler byte will be appended to the end of the byte
+string to make an integral number of 16-bit words.  The X position is
+incremented to follow the last byte of data.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>RunData (6)</emphasis></term>
+  <listitem>
+<para>The datum is one less than the run length.  The following word contains (in its
+lower 8 bits) the color of the run.  The X position is incremented to follow
+the last byte in the run.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>EOF (7)</emphasis></term>
+  <listitem>
+<para>This opcode indicates the logical end of image data.  A physical
+end-of-file will also serve as well.  The
+<emphasis remap='B'>EOF</emphasis>
+opcode may be used to concatenate several images in a single file.</para>
+  </listitem>
+  </varlistentry>
+</variablelist>
+</refsect1>
+
+<refsect1 xml:id='see_also'><title>SEE ALSO</title>
+<para><emphasis remap='I'><citerefentry><refentrytitle>librle</refentrytitle><manvolnum>3</manvolnum></citerefentry></emphasis></para>
+</refsect1>
+
+<refsect1 xml:id='author'><title>AUTHOR</title>
+<para>Spencer W. Thomas, Todd Fuqua</para>
+</refsect1>
+</refentry>
+

@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man+tkman by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='eventhndlr3'>
+
+<!-- '\" Copyright (c) 1990 The Regents of the University of California.
+'\" Copyright (c) 1994\-1996 Sun Microsystems, Inc. -->
+
+<!-- '\" See the file "license.terms" for information on usage and redistribution
+'\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
+'\" 
+'\" RCS: @(#) $Id$
+'\"  -->
+<refmeta>
+<refentrytitle>Tk_CreateEventHandler</refentrytitle>
+<manvolnum>3</manvolnum>
+<refmiscinfo class='manual'>Tk</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>Tk_CreateEventHandler</refname>
+<refname>Tk_DeleteEventHandler</refname>
+<refpurpose>associate procedure callback with an X event</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<funcsynopsis>
+<funcsynopsisinfo>
+#include &lt;tk.h&gt;
+
+</funcsynopsisinfo>
+<funcprototype>
+<funcdef><function>Tk_CreateEventHandler</function></funcdef>
+<paramdef><parameter>tkwin</parameter></paramdef>
+<paramdef><parameter>mask</parameter></paramdef>
+<paramdef><parameter>proc</parameter></paramdef>
+<paramdef><parameter>clientData</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef><function>Tk_DeleteEventHandler</function></funcdef>
+<paramdef><parameter>tkwin</parameter></paramdef>
+<paramdef><parameter>mask</parameter></paramdef>
+<paramdef><parameter>proc</parameter></paramdef>
+<paramdef><parameter>clientData</parameter></paramdef>
+</funcprototype>
+</funcsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='arguments'><title>ARGUMENTS</title>
+<!-- .AS unsigned long clientData -->
+<informaltable>
+<tgroup cols='3'>
+<tbody>
+
+<row><entry>"Tk_Window"</entry><entry>"tkwin"</entry><entry>"in"</entry>
+<entry>
+<para>Token for window in which events may occur.</para>
+</entry>
+</row>
+<row><entry>"unsigned long"</entry><entry>mask</entry><entry>in</entry>
+<entry>
+<para>Bit-mask of events (such as <emphasis remap='B'>ButtonPressMask</emphasis>)
+for which <emphasis remap='I'>proc</emphasis> should be called.</para>
+</entry>
+</row>
+<row><entry>Tk_EventProc</entry><entry>*proc</entry><entry>in</entry>
+<entry>
+<para>Procedure to invoke whenever an event in <emphasis remap='I'>mask</emphasis> occurs
+in the window given by <emphasis remap='I'>tkwin</emphasis>.</para>
+</entry>
+</row>
+<row><entry>ClientData</entry><entry>clientData</entry><entry>in</entry>
+<entry>
+<para>Arbitrary one-word value to pass to <emphasis remap='I'>proc</emphasis>.</para>
+<!-- .BE -->
+</entry>
+</row>
+</tbody>
+</tgroup>
+</informaltable>
+
+</refsect1>
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para><function>Tk_CreateEventHandler</function> arranges for <emphasis remap='I'>proc</emphasis> to be
+invoked in the future whenever one of the event types specified
+by <emphasis remap='I'>mask</emphasis> occurs in the window specified by <emphasis remap='I'>tkwin</emphasis>.
+The callback to <emphasis remap='I'>proc</emphasis> will be made by <emphasis remap='B'>Tk_HandleEvent</emphasis>;
+this mechanism only works in programs that dispatch events
+through <emphasis remap='B'>Tk_HandleEvent</emphasis> (or through other Tk procedures that
+call <emphasis remap='B'>Tk_HandleEvent</emphasis>, such as <emphasis remap='B'>Tk_DoOneEvent</emphasis> or
+<emphasis remap='B'>Tk_MainLoop</emphasis>).</para>
+
+<para><emphasis remap='I'>Proc</emphasis> should have arguments and result that match the
+type <type>Tk_EventProc</type>:</para>
+<programlisting remap='CS'>
+<funcsynopsis>
+<funcprototype>
+<funcdef>typedef void <function>Tk_EventProc</function></funcdef>
+    <paramdef>ClientData <parameter>clientData</parameter></paramdef>
+    <paramdef>XEvent * <parameter>eventPtr</parameter></paramdef>
+</funcprototype>
+</funcsynopsis>
+</programlisting> <!-- remap='CE' -->
+<para>The <varname role='parameter'>clientData</varname> parameter to <emphasis remap='I'>proc</emphasis> is a copy of the <varname role='parameter'>clientData</varname>
+argument given to <function>Tk_CreateEventHandler</function> when the callback
+was created.  Typically, <varname role='parameter'>clientData</varname> points to a data
+structure containing application-specific information about
+the window in which the event occurred.  <emphasis remap='I'>EventPtr</emphasis> is
+a pointer to the X event, which will be one of the ones
+specified in the <emphasis remap='I'>mask</emphasis> argument to <function>Tk_CreateEventHandler</function>.</para>
+
+<para><function>Tk_DeleteEventHandler</function> may be called to delete a
+previously-created event handler:  it deletes the first handler
+it finds that is associated with <emphasis remap='I'>tkwin</emphasis> and matches the
+<emphasis remap='I'>mask</emphasis>, <emphasis remap='I'>proc</emphasis>, and <varname role='parameter'>clientData</varname> arguments.  If
+no such handler exists, then <emphasis remap='B'>Tk_HandleEvent</emphasis> returns
+without doing anything.  Although Tk supports it, it's probably
+a bad idea to have more than one callback with the same <emphasis remap='I'>mask</emphasis>,
+<emphasis remap='I'>proc</emphasis>, and <varname role='parameter'>clientData</varname> arguments.
+When a window is deleted all of its handlers will be deleted
+automatically;  in this case there is no need to call
+<function>Tk_DeleteEventHandler</function>.</para>
+
+<para>If multiple handlers are declared for the same type of X event
+on the same window, then the handlers will be invoked in the
+order they were created.</para>
+
+</refsect1>
+
+<refsect1 xml:id='keywords'><title>KEYWORDS</title>
+<para>bind, callback, event, handler</para>
+</refsect1>
+</refentry>
+

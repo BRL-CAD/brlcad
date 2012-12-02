@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man+tkman by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='setgrid3'>
+
+<!-- '\" Copyright (c) 1990\-1994 The Regents of the University of California.
+'\" Copyright (c) 1994\-1996 Sun Microsystems, Inc. -->
+
+<!-- '\" See the file "license.terms" for information on usage and redistribution
+'\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
+'\" 
+'\" RCS: @(#) $Id$
+'\"  -->
+<refentryinfo><date>4.0</date></refentryinfo>
+<refmeta>
+<refentrytitle>Tk_SetGrid</refentrytitle>
+<manvolnum>3</manvolnum>
+<refmiscinfo class='date'>4.0</refmiscinfo>
+<refmiscinfo class='source'>Tk</refmiscinfo>
+<refmiscinfo class='manual'>Tk Library Procedures</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>Tk_SetGrid</refname>
+<refname>Tk_UnsetGrid</refname>
+<refpurpose>control the grid for interactive resizing</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<funcsynopsis>
+<funcsynopsisinfo>
+#include &lt;tk.h&gt;
+
+</funcsynopsisinfo>
+<funcprototype>
+<funcdef><function>Tk_SetGrid</function></funcdef>
+<paramdef><parameter>tkwin</parameter></paramdef>
+<paramdef><parameter>reqWidth</parameter></paramdef>
+<paramdef><parameter>reqHeight</parameter></paramdef>
+<paramdef><parameter>widthInc</parameter></paramdef>
+<paramdef><parameter>heightInc</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef><function>Tk_UnsetGrid</function></funcdef>
+<paramdef><parameter>tkwin</parameter></paramdef>
+</funcprototype>
+</funcsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='arguments'><title>ARGUMENTS</title>
+<!-- .AS Tk_Window heightInc -->
+<informaltable>
+<tgroup cols='3'>
+<tbody>
+
+<row><entry>"Tk_Window"</entry><entry>"tkwin"</entry><entry>"in"</entry>
+<entry>
+<para>Token for window.</para>
+</entry>
+</row>
+<row><entry>int</entry><entry>reqWidth</entry><entry>in</entry>
+<entry>
+<para>Width in grid units that corresponds to the pixel dimension <emphasis remap='I'>tkwin</emphasis>
+has requested via <emphasis remap='B'>Tk_GeometryRequest</emphasis>.</para>
+</entry>
+</row>
+<row><entry>int</entry><entry>reqHeight</entry><entry>in</entry>
+<entry>
+<para>Height in grid units that corresponds to the pixel dimension <emphasis remap='I'>tkwin</emphasis>
+has requested via <emphasis remap='B'>Tk_GeometryRequest</emphasis>.</para>
+</entry>
+</row>
+<row><entry>int</entry><entry>widthInc</entry><entry>in</entry>
+<entry>
+<para>Width of one grid unit, in pixels.</para>
+</entry>
+</row>
+<row><entry>int</entry><entry>heightInc</entry><entry>in</entry>
+<entry>
+<para>Height of one grid unit, in pixels.</para>
+<!-- .BE -->
+</entry>
+</row>
+</tbody>
+</tgroup>
+</informaltable>
+
+</refsect1>
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para><function>Tk_SetGrid</function> turns on gridded geometry management for <emphasis remap='I'>tkwin</emphasis>'s
+toplevel window and specifies the geometry of the grid.
+<function>Tk_SetGrid</function> is typically invoked by a widget when its <emphasis remap='B'>setGrid</emphasis>
+option is true.
+It restricts interactive resizing of <emphasis remap='I'>tkwin</emphasis>'s toplevel window so
+that the space allocated to the toplevel is equal to its requested
+size plus or minus even multiples of <emphasis remap='I'>widthInc</emphasis> and <emphasis remap='I'>heightInc</emphasis>.
+Furthermore, the <emphasis remap='I'>reqWidth</emphasis> and <emphasis remap='I'>reqHeight</emphasis> values are
+passed to the window manager so that it can report the window's
+size in grid units during interactive resizes.
+If <emphasis remap='I'>tkwin</emphasis>'s configuration changes (e.g., the size of a grid unit
+changes) then the widget should invoke <function>Tk_SetGrid</function> again with the new
+information.</para>
+
+<para><function>Tk_UnsetGrid</function> cancels gridded geometry management for
+<emphasis remap='I'>tkwin</emphasis>'s toplevel window.</para>
+
+<para>For each toplevel window there can be at most one internal window
+with gridding enabled.
+If <function>Tk_SetGrid</function> or <function>Tk_UnsetGrid</function> is invoked when some
+other window is already controlling gridding for <emphasis remap='I'>tkwin</emphasis>'s
+toplevel, the calls for the new window have no effect.</para>
+
+<para>See the <emphasis remap='B'>wm</emphasis> manual entry for additional information on gridded geometry
+management.</para>
+
+</refsect1>
+
+<refsect1 xml:id='keywords'><title>KEYWORDS</title>
+<para>grid, window, window manager</para>
+</refsect1>
+</refentry>
+

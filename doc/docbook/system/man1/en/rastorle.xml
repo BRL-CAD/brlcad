@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='rastorle1'>
+<!--  Copyright (c) 1988, University of Utah -->
+<refentryinfo><date>21 June 1988</date></refentryinfo>
+<refmeta>
+<refentrytitle>RASTORLE</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class='date'>21 June 1988</refmiscinfo>
+<refmiscinfo class='source'>1</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>rastorle</refname>
+<refpurpose>Convert sun raster file image to an RLE format file.</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<cmdsynopsis>
+  <command>rastorle</command>    
+    <arg choice='opt'>-a </arg>
+    <arg choice='opt'><arg choice='plain'>-o </arg><arg choice='plain'><replaceable>outfile</replaceable></arg></arg>
+    <arg choice='opt'><replaceable>infile.ras</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para><emphasis remap='I'>Rastorle</emphasis>
+converts a sun raster file to a file in the
+Utah Raster Toolkit
+<citerefentry><refentrytitle>RLE</refentrytitle><manvolnum>5</manvolnum></citerefentry>
+format.  It understands both the original unencoded format and the
+"type 2" (run length encoded) format raster files.  Since Sun raster
+files and RLE images disagree on where the origin is, the program
+automatically flips the image.</para>
+</refsect1>
+
+<refsect1 xml:id='options'><title>OPTIONS</title>
+<variablelist remap='TP'>
+  <varlistentry>
+  <term><emphasis remap='I'>infile.ras</emphasis></term>
+  <listitem>
+<para>The input sun raster will be read from this file, otherwise, input will
+be taken from stdin.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-a</option></term>
+  <listitem>
+<para>If specified, an alpha channel will be "faked".  That is, the alpha
+channel will be zero wherever the input is black (0), and 255
+elsewhere.
+<option>-o</option><replaceable> outfile</replaceable>
+If specified, output will be written to this file, otherwise it will
+go to stdout.</para>
+  </listitem>
+  </varlistentry>
+</variablelist>
+</refsect1>
+
+<refsect1 xml:id='see_also'><title>SEE ALSO</title>
+<para><citerefentry><refentrytitle>rletorast</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>urt</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>RLE</refentrytitle><manvolnum>5</manvolnum></citerefentry>.</para>
+</refsect1>
+
+<refsect1 xml:id='author'><title>AUTHOR</title>
+<para>Berry Kercheval</para>
+</refsect1>
+</refentry>
+

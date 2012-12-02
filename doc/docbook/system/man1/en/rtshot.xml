@@ -1,0 +1,188 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='rtshot1'>
+<refmeta>
+<refentrytitle>RTSHOT</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class='source'>BRL-CAD</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>rtshot</refname>
+<refpurpose>fire one ray at an mged model, for debugging</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<cmdsynopsis>
+  <command>rtshot</command>    
+    <arg choice='opt' rep='repeat'><replaceable>options</replaceable></arg>
+    <arg choice='plain'><replaceable>model.g</replaceable></arg>
+    <arg choice='plain' rep='repeat'><replaceable>objects</replaceable></arg>
+    
+</cmdsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para><emphasis remap='I'>Rtshot</emphasis>
+fires a single ray at the indicated
+<emphasis remap='I'>objects</emphasis>
+in the input
+<emphasis remap='I'>model.g</emphasis>
+and produces a printed summary of the geometry that the ray passes through.
+The orientation of the ray to be fired is specified by
+giving any two of the three options
+<option>-a</option>
+<option>-d</option>
+and
+<option>-p.</option></para>
+<variablelist remap='TP'>
+  <varlistentry>
+  <term>The</term>
+  <listitem>
+<para><option>-d</option>
+option is followed by three numbers specifying the direction vector.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term>The</term>
+  <listitem>
+<para><option>-p</option>
+option is followed by three numbers specifying the start point.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term>The</term>
+  <listitem>
+<para><option>-a</option>
+option is followed by three numbers specifying a point to be fired "at".</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-t #</option></term>
+  <listitem>
+<para>specifies the number of triangles per piece for facetted primitives (currently only the BOT).
+The default value is 4.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-b #</option></term>
+  <listitem>
+<para>specifies the threshold for breaking facetted primitives into pieces.
+The default is 32.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-x #</option></term>
+  <listitem>
+<para>Set debug flags to (hexadecimal) number.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-U #</option></term>
+  <listitem>
+<para>Set use_air flag.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-v attribute_name1 [attribute_name2 ...]</option></term>
+  <listitem>
+<para>This option specifies a list of attribute names to be listed (along with
+the appropriate values) for each region hit.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-O # or keyword</option></term>
+  <listitem>
+<para>This option indicates how overlaps should be handled. The
+<emphasis remap='I'>resolve</emphasis>
+or
+<literal>0</literal>
+argument is the default (normal BRL-CAD mode, all overlaps are resolved
+and no overlaps appear in the output). The
+<emphasis remap='I'>rebuild_fastgen</emphasis>
+or
+<literal>1</literal>
+argument mimics FASTGEN4 raytracing (plate-mode overlaps appear in the output). The
+<emphasis remap='I'>rebuild_all</emphasis>
+or
+<literal>2</literal>
+argument rebuilds all overlaps that occurred along the ray (all overlaps appear in the output). The
+<emphasis remap='I'>retain</emphasis>
+or
+<literal>3</literal>
+argument does not resolve any overlaps (each unique combination of
+intersection extent and list of claiming regions produces a single partition).</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-n #</option></term>
+  <listitem>
+<para>This option specifies the number of rings to use in a ray bundle (does not include
+the central ray).</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-c #</option></term>
+  <listitem>
+<para>This option specifies the number of rays in each ring. The rays in each ring are
+not aligned with the rays in the previous ring, they make an outward spiral pattern.
+A central ray is included.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-R #</option></term>
+  <listitem>
+<para>This option specifies the radius of the ray bundle. Each ring is evenly spaced with the
+outermost ring at this radius.</para>
+  </listitem>
+  </varlistentry>
+</variablelist>
+
+<para>The
+<command>rtshot</command>
+program is a simple front-end to
+<citerefentry><refentrytitle>librt</refentrytitle><manvolnum>3</manvolnum></citerefentry>
+which can be invoked directly by the user. If a ray bundle is desired, all of the
+<option>-n</option>
+,
+<option>-c</option>
+, and
+<option>-R</option>
+options must be specified. The output from a ray bundle is handled as a single ray.
+Any overlaps between rays in the bundle are resolved by favoring rays closer to the
+central ray. The default is to fire a single ray.</para>
+</refsect1>
+
+<refsect1 xml:id='see_also'><title>SEE ALSO</title>
+<para><citerefentry><refentrytitle>mged</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>rt</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>pix-fb</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>rtray</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>rtpp</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>librt</refentrytitle><manvolnum>3</manvolnum></citerefentry>, <citerefentry><refentrytitle>ray</refentrytitle><manvolnum>5V</manvolnum></citerefentry>, <citerefentry><refentrytitle>pix</refentrytitle><manvolnum>5</manvolnum></citerefentry>.</para>
+</refsect1>
+
+<refsect1 xml:id='diagnostics'><title>DIAGNOSTICS</title>
+<para>Numerous error conditions are possible.
+Descriptive messages are printed on standard error.</para>
+</refsect1>
+
+<refsect1 xml:id='bugs'><title>BUGS</title>
+<para>Most deficiencies observed while using the
+<command>rtshot</command>
+program are usually with the
+<citerefentry><refentrytitle>librt</refentrytitle><manvolnum>3</manvolnum></citerefentry>
+package instead.</para>
+</refsect1>
+
+<refsect1 xml:id='author'><title>AUTHOR</title>
+<para>BRL-CAD Team</para>
+</refsect1>
+
+<refsect1 xml:id='copyright'><title>COPYRIGHT</title>
+<para>This software is Copyright (c) 1987-2012 United States Government as
+represented by the U.S. Army Research Laboratory. All rights reserved.</para>
+</refsect1>
+
+<refsect1 xml:id='bug_reports'><title>BUG REPORTS</title>
+<para>Reports of bugs or problems should be submitted via electronic
+mail to &lt;devs@brlcad.org&gt;.</para>
+</refsect1>
+</refentry>
+

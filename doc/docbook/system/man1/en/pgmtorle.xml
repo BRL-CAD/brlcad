@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='pgmtorle1'>
+<!--  Copyright (c) 1990, Minnesota Supercomputer Center, Inc. -->
+<refmeta>
+<refentrytitle>PGMTORLE</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class='source'>July 20, 1990</refmiscinfo>
+<refmiscinfo class='manual'>1</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>pgmtorle</refname>
+<refpurpose>convert a pbmplus/pgm image file into an RLE image file.</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<cmdsynopsis>
+  <command>pgmtorle</command>    
+    <arg choice='opt'>-h </arg>
+    <arg choice='opt'>-v </arg>
+    <arg choice='opt'>-a </arg>
+    <arg choice='opt'>-o <replaceable>outfile</replaceable></arg>
+    <arg choice='opt'><replaceable>filename</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para>This program converts PBMPLUS grayscale (pgm) image files into Utah
+<citerefentry><refentrytitle>RLE</refentrytitle><manvolnum>5</manvolnum></citerefentry>
+image files.  PBMPLUS/pgm image files contain the image dimensions and 8-bit
+pixels with no matte or alpha data.  When converting to an RLE file, the alpha
+channel may optionally be computed.  The RLE file will contain a "grayscale"
+image (8 bits) with no colormap.  The origins of PBMPLUS and Utah RLE files
+are in the upper left and lower left corners respectively, so this
+program automatically "flips" the image.
+These RLE files may then be viewed using any
+RLE image viewer.</para>
+
+</refsect1>
+
+<refsect1 xml:id='options'><title>OPTIONS</title>
+<variablelist remap='TP'>
+  <varlistentry>
+  <term><option>-v</option></term>
+  <listitem>
+<para>This option will cause pgmtorle to operate in verbose mode.  The header
+information is written to "stderr".  Actually, there is not much header
+information stored in a PBMPLUS file so this information is minimal.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-h</option></term>
+  <listitem>
+<para>This option allows the header of the PBMPLUS image to be dumped to "stderr"
+without converting the file.  It is equivalent to using the -v option except
+that no file conversion takes place.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-a</option></term>
+  <listitem>
+<para>This option will cause pgmtorle to use the grayscale data to compute an alpha
+channel in the resulting RLE file.  For any non-zero grayscale data, the alpha
+channel will contain a value of 255.  The resulting RLE image file will
+contain one color channel and one alpha channel.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-o</option><replaceable> outfile</replaceable></term>
+  <listitem>
+<para>If specified, the output will be written to this file.  If
+<emphasis remap='I'>outfile</emphasis>
+is "-", or if it is not specified, the output will be written to the
+standard output stream.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='I'>infile.pgm</emphasis></term>
+  <listitem>
+<para>The name of the PBMPLUS image data file to be converted.  This file must end
+in ".pgm".  However, it is not necessary to supply the ".pgm" extension as it
+will be added to the supplied name if not already there.</para>
+  </listitem>
+  </varlistentry>
+</variablelist>
+</refsect1>
+
+<refsect1 xml:id='examples'><title>EXAMPLES</title>
+<variablelist remap='TP'>
+  <varlistentry>
+  <term>pgmtorle -v test.pgm -o test.rle</term>
+  <listitem>
+<para>While running in verbose mode, convert test.pgm to RLE format and store
+resulting data in test.rle.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term>pgmtorle -h test</term>
+  <listitem>
+<para>Dump the header information of the PBMPLUS file called test.pgm.</para>
+  </listitem>
+  </varlistentry>
+</variablelist>
+</refsect1>
+
+<refsect1 xml:id='see_also'><title>SEE ALSO</title>
+<para><citerefentry><refentrytitle>ppmtorle</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>rletoppm</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>urt</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>RLE</refentrytitle><manvolnum>5</manvolnum></citerefentry>.</para>
+</refsect1>
+
+<refsect1 xml:id='author'><title>AUTHOR</title>
+<!-- .br -->
+<para>Wesley C. Barris
+<!-- .br -->
+Army High Performance Computing Research Center (AHPCRC)
+<!-- .br -->
+Minnesota Supercomputer Center, Inc.</para>
+</refsect1>
+</refentry>
+

@@ -1,0 +1,270 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man+tkman by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='intobj3'>
+
+<!-- '\" Copyright (c) 1996\-1997 Sun Microsystems, Inc. -->
+
+<!-- '\" See the file "license.terms" for information on usage and redistribution
+'\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
+'\" 
+'\" RCS: @(#) $Id$
+'\"  -->
+<refentryinfo><date>8.5</date></refentryinfo>
+<refmeta>
+<refentrytitle>Tcl_IntObj</refentrytitle>
+<manvolnum>3</manvolnum>
+<refmiscinfo class='date'>8.5</refmiscinfo>
+<refmiscinfo class='source'>Tcl</refmiscinfo>
+<refmiscinfo class='manual'>Tcl Library Procedures</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>Tcl_NewIntObj</refname>
+<refname>Tcl_NewLongObj</refname>
+<refname>Tcl_NewWideIntObj</refname>
+<refname>Tcl_SetIntObj</refname>
+<refname>Tcl_SetLongObj</refname>
+<refname>Tcl_SetWideIntObj</refname>
+<refname>Tcl_GetIntFromObj</refname>
+<refname>Tcl_GetLongFromObj</refname>
+<refname>Tcl_GetWideIntFromObj</refname>
+<refname>Tcl_NewBignumObj</refname>
+<refname>Tcl_SetBignumObj</refname>
+<refname>Tcl_GetBignumFromObj</refname>
+<refname>Tcl_TakeBignumFromObj</refname>
+<refpurpose>manipulate Tcl objects as integer values</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<funcsynopsis>
+<funcsynopsisinfo>
+#include &lt;tcl.h&gt;
+
+</funcsynopsisinfo>
+<funcprototype>
+<funcdef><function>Tcl_Obj</function> *Tcl_NewIntObj</funcdef>
+<paramdef><parameter>intValue</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef><function>Tcl_Obj</function> *Tcl_NewLongObj</funcdef>
+<paramdef><parameter>longValue</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef><function>Tcl_Obj</function> *Tcl_NewWideIntObj</funcdef>
+<paramdef><parameter>wideValue</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef><function>Tcl_SetIntObj</function></funcdef>
+<paramdef><parameter>objPtr</parameter></paramdef>
+<paramdef><parameter>intValue</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef><function>Tcl_SetLongObj</function></funcdef>
+<paramdef><parameter>objPtr</parameter></paramdef>
+<paramdef><parameter>longValue</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef><function>Tcl_SetWideIntObj</function></funcdef>
+<paramdef><parameter>objPtr</parameter></paramdef>
+<paramdef><parameter>wideValue</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef>int <function>Tcl_GetIntFromObj</function></funcdef>
+<paramdef><parameter>interp</parameter></paramdef>
+<paramdef><parameter>objPtr</parameter></paramdef>
+<paramdef><parameter>intPtr</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef>int <function>Tcl_GetLongFromObj</function></funcdef>
+<paramdef><parameter>interp</parameter></paramdef>
+<paramdef><parameter>objPtr</parameter></paramdef>
+<paramdef><parameter>longPtr</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef>int <function>Tcl_GetWideIntFromObj</function></funcdef>
+<paramdef><parameter>interp</parameter></paramdef>
+<paramdef><parameter>objPtr</parameter></paramdef>
+<paramdef><parameter>widePtr</parameter></paramdef>
+</funcprototype>
+<funcsynopsisinfo>
+#include &lt;tclTomMath.h&gt;
+
+</funcsynopsisinfo>
+<funcprototype>
+<funcdef><function>Tcl_Obj</function> *Tcl_NewBignumObj</funcdef>
+<paramdef><parameter>bigValue</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef><function>Tcl_SetBignumObj</function></funcdef>
+<paramdef><parameter>objPtr</parameter></paramdef>
+<paramdef><parameter>bigValue</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef>int <function>Tcl_GetBignumFromObj</function></funcdef>
+<paramdef><parameter>interp</parameter></paramdef>
+<paramdef><parameter>objPtr</parameter></paramdef>
+<paramdef><parameter>bigValue</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef>int <function>Tcl_TakeBignumFromObj</function></funcdef>
+<paramdef><parameter>interp</parameter></paramdef>
+<paramdef><parameter>objPtr</parameter></paramdef>
+<paramdef><parameter>bigValue</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef>int <function>Tcl_InitBignumFromDouble</function></funcdef>
+<paramdef><parameter>interp</parameter></paramdef>
+<paramdef><parameter>doubleValue</parameter></paramdef>
+<paramdef><parameter>bigValue</parameter></paramdef>
+</funcprototype>
+</funcsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='arguments'><title>ARGUMENTS</title>
+<!-- .AS Tcl_WideInt doubleValue in/out -->
+<informaltable>
+<tgroup cols='3'>
+<tbody>
+
+<row><entry>"int"</entry><entry>"intValue"</entry><entry>"in"</entry>
+<entry>
+<para>Integer value used to initialize or set a Tcl object.</para>
+</entry>
+</row>
+<row><entry>long</entry><entry>longValue</entry><entry>in</entry>
+<entry>
+<para>Long integer value used to initialize or set a Tcl object.</para>
+</entry>
+</row>
+<row><entry>Tcl_WideInt</entry><entry>wideValue</entry><entry>in</entry>
+<entry>
+<para>Wide integer value used to initialize or set a Tcl object.</para>
+</entry>
+</row>
+<row><entry>Tcl_Obj</entry><entry>*objPtr</entry><entry>in/out</entry>
+<entry>
+<para>For <function>Tcl_SetIntObj</function>, <function>Tcl_SetLongObj</function>, <function>Tcl_SetWideIntObj</function>,
+and <function>Tcl_SetBignumObj</function>, this points to the object in which to store an
+integral value.  For <function>Tcl_GetIntFromObj</function>, <function>Tcl_GetLongFromObj</function>,
+<function>Tcl_GetWideIntFromObj</function>, <function>Tcl_GetBignumFromObj</function>, and
+<function>Tcl_TakeBignumFromObj</function>, this refers to the object from which
+to retrieve an integral value.</para>
+</entry>
+</row>
+<row><entry>Tcl_Interp</entry><entry>*interp</entry><entry>in/out</entry>
+<entry>
+<para>When non-NULL, an error message is left here when integral value
+retrieval fails.</para>
+</entry>
+</row>
+<row><entry>int</entry><entry>*intPtr</entry><entry>out</entry>
+<entry>
+<para>Points to place to store the integer value retrieved from <emphasis remap='I'>objPtr</emphasis>.</para>
+</entry>
+</row>
+<row><entry>long</entry><entry>*longPtr</entry><entry>out</entry>
+<entry>
+<para>Points to place to store the long integer value retrieved from <emphasis remap='I'>objPtr</emphasis>.</para>
+</entry>
+</row>
+<row><entry>Tcl_WideInt</entry><entry>*widePtr</entry><entry>out</entry>
+<entry>
+<para>Points to place to store the wide integer value retrieved from <emphasis remap='I'>objPtr</emphasis>.</para>
+</entry>
+</row>
+<row><entry>mp_int</entry><entry>*bigValue</entry><entry>in/out</entry>
+<entry>
+<!-- .VS 8.5 -->
+<para>Points to a multi-precision integer structure declared by the LibTomMath
+library.</para>
+<!-- .VE 8.5 -->
+</entry>
+</row>
+<row><entry>double</entry><entry>doubleValue</entry><entry>in</entry>
+<entry>
+<!-- .VS 8.5 -->
+<para>Double value from which the integer part is determined and
+used to initialize a multi-precision integer value.</para>
+<!-- .VE 8.5
+.BE -->
+</entry>
+</row>
+</tbody>
+</tgroup>
+</informaltable>
+
+</refsect1>
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<!-- .VS 8.5 -->
+<para>These procedures are used to create, modify, and read Tcl objects
+that hold integral values.</para>  
+
+<para>The different routines exist to accommodate different integral types in C
+with which values might be exchanged.  The C integral types for which Tcl
+provides value exchange routines are <emphasis remap='B'>int</emphasis>, <emphasis remap='B'>long int</emphasis>,
+<type>Tcl_WideInt</type>, and <type>mp_int</type>.  The <emphasis remap='B'>int</emphasis> and <emphasis remap='B'>long int</emphasis> types
+are provided by the C language standard.  The <type>Tcl_WideInt</type> type is a
+typedef defined to be whatever signed integral type covers at least the
+64-bit integer range (-9223372036854775808 to 9223372036854775807).  Depending
+on the platform and the C compiler, the actual type might be
+<emphasis remap='B'>long int</emphasis>, <emphasis remap='B'>long long int</emphasis>, <emphasis remap='B'>int64</emphasis>, or something else.
+The <type>mp_int</type> type is a multiple-precision integer type defined
+by the LibTomMath multiple-precision integer library.</para>  
+
+<para>The <emphasis remap='B'>Tcl_NewIntObj</emphasis>, <emphasis remap='B'>Tcl_NewLongObj</emphasis>, <emphasis remap='B'>Tcl_NewWideIntObj</emphasis>,
+and <emphasis remap='B'>Tcl_NewBignumObj</emphasis> routines each create and return a new
+Tcl object initialized to the integral value of the argument.  The
+returned Tcl object is unshared.</para>
+
+<para>The <function>Tcl_SetIntObj</function>, <function>Tcl_SetLongObj</function>, <function>Tcl_SetWideIntObj</function>,
+and <function>Tcl_SetBignumObj</function> routines each set the value of an existing
+Tcl object pointed to by <emphasis remap='I'>objPtr</emphasis> to the integral value provided
+by the other argument.  The <emphasis remap='I'>objPtr</emphasis> argument must point to an
+unshared Tcl object.  Any attempt to set the value of a shared Tcl object
+violates Tcl's copy-on-write policy.  Any existing string representation
+or internal representation in the unshared Tcl object will be freed
+as a consequence of setting the new value.</para>
+
+<para>The <function>Tcl_GetIntFromObj</function>, <function>Tcl_GetLongFromObj</function>,
+<function>Tcl_GetWideIntFromObj</function>, <function>Tcl_GetBignumFromObj</function>, and
+<function>Tcl_TakeBignumFromObj</function> routines attempt to retrieve an integral
+value of the appropriate type from the Tcl object <emphasis remap='I'>objPtr</emphasis>.  If the
+attempt succeeds, then <emphasis remap='B'>TCL_OK</emphasis> is returned, and the value is
+written to the storage provided by the caller.  The attempt might
+fail if <emphasis remap='I'>objPtr</emphasis> does not hold an integral value, or if the
+value exceeds the range of the target type.  If the attempt fails,
+then <emphasis remap='B'>TCL_ERROR</emphasis> is returned, and if <emphasis remap='I'>interp</emphasis> is non-NULL,
+an error message is left in <emphasis remap='I'>interp</emphasis>.  The <emphasis remap='B'>Tcl_ObjType</emphasis>
+of <emphasis remap='I'>objPtr</emphasis> may be changed to make subsequent calls to the
+same routine more efficient. Unlike the other functions,
+<function>Tcl_TakeBignumFromObj</function> may set the content of the Tcl object
+<emphasis remap='I'>objPtr</emphasis> to an empty string in the process of retrieving the
+multiple-precision integer value.</para>
+
+<para>The choice between <function>Tcl_GetBignumFromObj</function> and
+<function>Tcl_TakeBignumFromObj</function> is governed by how the caller will
+continue to use <emphasis remap='I'>objPtr</emphasis>.  If after the <type>mp_int</type> value
+is retrieved from <emphasis remap='I'>objPtr</emphasis>, the caller will make no more
+use of <emphasis remap='I'>objPtr</emphasis>, then using <function>Tcl_TakeBignumFromObj</function>
+permits Tcl to detect when an unshared <emphasis remap='I'>objPtr</emphasis> permits the
+value to be moved instead of copied, which should be more efficient.
+If anything later in the caller requires
+<emphasis remap='I'>objPtr</emphasis> to continue to hold the same value, then
+<function>Tcl_GetBignumFromObj</function> must be chosen.</para>
+
+<para>The <function>Tcl_InitBignumFromDouble</function> routine is a utility procedure
+that extracts the integer part of <emphasis remap='I'>doubleValue</emphasis> and stores that
+integer value in the <type>mp_int</type> value <emphasis remap='I'>bigValue</emphasis>.</para>
+<!-- .VE 8.5 -->
+</refsect1>
+
+<refsect1 xml:id='see_also'><title>SEE ALSO</title>
+<para>Tcl_NewObj, Tcl_DecrRefCount, Tcl_IncrRefCount, Tcl_GetObjResult</para>
+</refsect1>
+
+<refsect1 xml:id='keywords'><title>KEYWORDS</title>
+<para>integer, integer object, integer type, internal representation, object, object type, string representation</para>
+</refsect1>
+</refentry>
+

@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man+tkman by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='tk_main3'>
+
+<!-- '\" Copyright (c) 1994 The Regents of the University of California.
+'\" Copyright (c) 1994\-1996 Sun Microsystems, Inc. -->
+
+<!-- '\" See the file "license.terms" for information on usage and redistribution
+'\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
+'\" 
+'\" RCS: @(#) $Id$
+'\"  -->
+<refentryinfo><date>4.0</date></refentryinfo>
+<refmeta>
+<refentrytitle>Tk_Main</refentrytitle>
+<manvolnum>3</manvolnum>
+<refmiscinfo class='date'>4.0</refmiscinfo>
+<refmiscinfo class='source'>Tk</refmiscinfo>
+<refmiscinfo class='manual'>Tk Library Procedures</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>Tk_Main</refname>
+<refpurpose>main program for Tk-based applications</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<funcsynopsis>
+<funcsynopsisinfo>
+#include &lt;tk.h&gt;
+
+</funcsynopsisinfo>
+<funcprototype>
+<funcdef><function>Tk_Main</function></funcdef>
+<paramdef><parameter>argc</parameter></paramdef>
+<paramdef><parameter>argv</parameter></paramdef>
+<paramdef><parameter>appInitProc</parameter></paramdef>
+</funcprototype>
+</funcsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='arguments'><title>ARGUMENTS</title>
+<!-- .AS Tcl_AppInitProc *appInitProc -->
+<informaltable>
+<tgroup cols='3'>
+<tbody>
+
+<row><entry>"int"</entry><entry>"argc"</entry><entry>"in"</entry>
+<entry>
+<para>Number of elements in <emphasis remap='I'>argv</emphasis>.</para>
+</entry>
+</row>
+<row><entry>char</entry><entry>*argv[]</entry><entry>in</entry>
+<entry>
+<para>Array of strings containing command-line arguments.</para>
+</entry>
+</row>
+<row><entry>Tcl_AppInitProc</entry><entry>*appInitProc</entry><entry>in</entry>
+<entry>
+<para>Address of an application-specific initialization procedure.
+The value for this argument is usually <emphasis remap='B'>Tcl_AppInit</emphasis>.</para>
+<!-- .BE -->
+</entry>
+</row>
+</tbody>
+</tgroup>
+</informaltable>
+
+</refsect1>
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para><function>Tk_Main</function> acts as the main program for most Tk-based applications.
+Starting with Tk 4.0 it is not called <emphasis remap='B'>main</emphasis> anymore because it 
+is part of the Tk library and having a function <emphasis remap='B'>main</emphasis>
+in a library (particularly a shared library) causes problems on many
+systems.
+Having <emphasis remap='B'>main</emphasis> in the Tk library would also make it hard to use
+Tk in C++ programs, since C++ programs must have special C++
+<emphasis remap='B'>main</emphasis> functions.</para>
+
+<para>Normally each application contains a small <emphasis remap='B'>main</emphasis> function that does
+nothing but invoke <function>Tk_Main</function>.
+<function>Tk_Main</function> then does all the work of creating and running a
+<emphasis remap='B'>wish</emphasis>-like application.</para>
+
+<para>When it is has finished its own initialization, but before
+it processes commands, <function>Tk_Main</function> calls the procedure given by
+the <emphasis remap='I'>appInitProc</emphasis> argument.  This procedure provides a
+<quote>hook</quote>
+for the application to perform its own initialization, such as defining
+application-specific commands.  The procedure must have an interface
+that matches the type <type>Tcl_AppInitProc</type>:</para>
+<programlisting remap='CS'>
+<funcsynopsis>
+<funcsynopsisinfo>
+typedef int Tcl_AppInitProc(Tcl_Interp *interp);
+</funcsynopsisinfo>
+</funcsynopsis>
+</programlisting> <!-- remap='CE' -->
+<para><emphasis remap='I'>AppInitProc</emphasis> is almost always a pointer to <emphasis remap='B'>Tcl_AppInit</emphasis>;
+for more details on this procedure, see the documentation
+for <emphasis remap='B'>Tcl_AppInit</emphasis>.</para>
+
+</refsect1>
+
+<refsect1 xml:id='keywords'><title>KEYWORDS</title>
+<para>application-specific initialization, command-line arguments, main program</para>
+</refsect1>
+</refentry>
+

@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='rledither1'>
+<!--  Copyright (c) 1986, University of Utah
+ Template man page.  Taken from wtm's page for getcx3d -->
+<refmeta>
+<refentrytitle>RLEDITHER</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class='source'>Month DD, YYYY</refmiscinfo>
+<refmiscinfo class='manual'>1</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>rledither</refname>
+<refpurpose>Floyd Steinberg dither an image to the given colors.</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<cmdsynopsis>
+  <command>rledither</command>    
+    <arg choice='opt'><arg choice='plain'>-e </arg><arg choice='plain'><replaceable>edge_factor</replaceable></arg></arg>
+    <arg choice='opt'><arg choice='plain'>-l </arg><arg choice='plain'><replaceable>nchan</replaceable></arg><arg choice='plain'><replaceable>length</replaceable></arg></arg>
+    <arg choice='plain'>- </arg>
+    <arg choice='opt'><replaceable>tf</replaceable></arg>
+    <arg choice='plain'><replaceable>mapfile</replaceable></arg>
+    <arg choice='opt'><arg choice='plain'>-o </arg><arg choice='plain'><replaceable>outfile</replaceable></arg></arg>
+    <arg choice='opt'><replaceable>infile</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para>This program accepts an
+<citerefentry><refentrytitle>RLE</refentrytitle><manvolnum>5</manvolnum></citerefentry>
+file and a file of colormap entries, and dithers the image to those colors.
+Edge enhancement is also performed, if specified.</para>
+</refsect1>
+
+<refsect1 xml:id='options'><title>OPTIONS</title>
+<variablelist remap='TP'>
+  <varlistentry>
+  <term><option>-e</option><replaceable> edge_factor</replaceable></term>
+  <listitem>
+<para>An
+<emphasis remap='I'>edge_factor</emphasis>
+of zero means no edge enhancement (the default).  A value of 1.0 looks pretty
+good for most images.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-l</option><replaceable> nchan length</replaceable></term>
+  <listitem>
+<para>Specifies the number of channels in the colormap, and the number of entries
+in each channel.  The default is 3 channels of 256 entries, which is
+appropriate for an eight bit color display.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-{tf}</option><replaceable> mapfile</replaceable></term>
+  <listitem>
+<para>The
+<emphasis remap='I'>mapfile</emphasis>
+must contain at least
+<emphasis remap='I'>nchan*length</emphasis>
+values in the range 0 to 255.  The <option>-t</option> flag causes
+<emphasis remap='I'>mapfile</emphasis>
+to be read as R G B R G B R G B...  The <option>-f</option> flag implies the entries are
+listed as R R R... G G G... B B B...</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-o</option><replaceable> outfile</replaceable></term>
+  <listitem>
+<para>If specified, the output will be written to this file.  If
+<emphasis remap='I'>outfile</emphasis>
+is "-", or if it is not specified, the output will be written to the
+standard output stream.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='I'>infile</emphasis></term>
+  <listitem>
+<para>The input will be read from this file.  If
+<emphasis remap='I'>infile</emphasis>
+is "-" or is not specified, the input will be read from the standard
+input stream.</para>
+  </listitem>
+  </varlistentry>
+</variablelist>
+</refsect1>
+
+<refsect1 xml:id='see_also'><title>SEE ALSO</title>
+<para><citerefentry><refentrytitle>mcut</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>rlehdr</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>rlequant</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>urt</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>RLE</refentrytitle><manvolnum>5</manvolnum></citerefentry>.</para>
+</refsect1>
+
+<refsect1 xml:id='author'><title>AUTHOR</title>
+<para>Rod G. Bogart, University of Michigan</para>
+</refsect1>
+
+<refsect1 xml:id='bugs'><title>BUGS</title>
+<para>It should read colormaps from RLE files, too.  For the moment, edit
+the output from
+<userinput>rlehdr -m</userinput>.</para>
+</refsect1>
+</refentry>
+

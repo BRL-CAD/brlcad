@@ -1,0 +1,284 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man+tkman by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='splitlist3'>
+
+<!-- '\" Copyright (c) 1989\-1993 The Regents of the University of California.
+'\" Copyright (c) 1994\-1996 Sun Microsystems, Inc. -->
+
+<!-- '\" See the file "license.terms" for information on usage and redistribution
+'\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
+'\" 
+'\" RCS: @(#) $Id$
+'\"  -->
+<refentryinfo><date>8.0</date></refentryinfo>
+<refmeta>
+<refentrytitle>Tcl_SplitList</refentrytitle>
+<manvolnum>3</manvolnum>
+<refmiscinfo class='date'>8.0</refmiscinfo>
+<refmiscinfo class='source'>Tcl</refmiscinfo>
+<refmiscinfo class='manual'>Tcl Library Procedures</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>Tcl_SplitList</refname>
+<refname>Tcl_Merge</refname>
+<refname>Tcl_ScanElement</refname>
+<refname>Tcl_ConvertElement</refname>
+<refname>Tcl_ScanCountedElement</refname>
+<refname>Tcl_ConvertCountedElement</refname>
+<refpurpose>manipulate Tcl lists</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<funcsynopsis>
+<funcsynopsisinfo>
+#include &lt;tcl.h&gt;
+
+</funcsynopsisinfo>
+<funcprototype>
+<funcdef>int <function>Tcl_SplitList</function></funcdef>
+<paramdef><parameter>interp</parameter></paramdef>
+<paramdef><parameter>list</parameter></paramdef>
+<paramdef><parameter>argcPtr</parameter></paramdef>
+<paramdef><parameter>argvPtr</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef>char *<function>Tcl_Merge</function></funcdef>
+<paramdef><parameter>argc</parameter></paramdef>
+<paramdef><parameter>argv</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef>int <function>Tcl_ScanElement</function></funcdef>
+<paramdef><parameter>src</parameter></paramdef>
+<paramdef><parameter>flagsPtr</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef>int <function>Tcl_ScanCountedElement</function></funcdef>
+<paramdef><parameter>src</parameter></paramdef>
+<paramdef><parameter>length</parameter></paramdef>
+<paramdef><parameter>flagsPtr</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef>int <function>Tcl_ConvertElement</function></funcdef>
+<paramdef><parameter>src</parameter></paramdef>
+<paramdef><parameter>dst</parameter></paramdef>
+<paramdef><parameter>flags</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef>int <function>Tcl_ConvertCountedElement</function></funcdef>
+<paramdef><parameter>src</parameter></paramdef>
+<paramdef><parameter>length</parameter></paramdef>
+<paramdef><parameter>dst</parameter></paramdef>
+<paramdef><parameter>flags</parameter></paramdef>
+</funcprototype>
+</funcsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='arguments'><title>ARGUMENTS</title>
+<!-- .AS const char *const ***argvPtr out -->
+<informaltable>
+<tgroup cols='3'>
+<tbody>
+
+<row><entry>"Tcl_Interp"</entry><entry>"*interp"</entry><entry>"out"</entry>
+<entry>
+<para>Interpreter to use for error reporting.  If NULL, then no error message
+is left.</para>
+</entry>
+</row>
+<row><entry>char</entry><entry>*list</entry><entry>in</entry>
+<entry>
+<para>Pointer to a string with proper list structure.</para>
+</entry>
+</row>
+<row><entry>int</entry><entry>*argcPtr</entry><entry>out</entry>
+<entry>
+<para>Filled in with number of elements in <emphasis remap='I'>list</emphasis>.</para>
+</entry>
+</row>
+<row><entry>"const char"</entry><entry>***argvPtr</entry><entry>out</entry>
+<entry>
+<para><emphasis remap='I'>*argvPtr</emphasis> will be filled in with the address of an array of
+pointers to the strings that are the extracted elements of <emphasis remap='I'>list</emphasis>.
+There will be <emphasis remap='I'>*argcPtr</emphasis> valid entries in the array, followed by
+a NULL entry.</para>
+</entry>
+</row>
+<row><entry>int</entry><entry>argc</entry><entry>in</entry>
+<entry>
+<para>Number of elements in <varname role='parameter'>argv</varname>.</para>
+</entry>
+</row>
+<row><entry>"const char *const"</entry><entry>*argv</entry><entry>in</entry>
+<entry>
+<para>Array of strings to merge together into a single list.
+Each string will become a separate element of the list.</para>
+</entry>
+</row>
+<row><entry>"const char"</entry><entry>*src</entry><entry>in</entry>
+<entry>
+<para>String that is to become an element of a list.</para>
+</entry>
+</row>
+<row><entry>int</entry><entry>*flagsPtr</entry><entry>in</entry>
+<entry>
+<para>Pointer to word to fill in with information about <emphasis remap='I'>src</emphasis>.
+The value of *<emphasis remap='I'>flagsPtr</emphasis> must be passed to <function>Tcl_ConvertElement</function>.</para>
+</entry>
+</row>
+<row><entry>int</entry><entry>length</entry><entry>in</entry>
+<entry>
+<para>Number of bytes in string <emphasis remap='I'>src</emphasis>.</para>
+</entry>
+</row>
+<row><entry>char</entry><entry>*dst</entry><entry>in</entry>
+<entry>
+<para>Place to copy converted list element.  Must contain enough characters
+to hold converted string.</para>
+</entry>
+</row>
+<row><entry>int</entry><entry>flags</entry><entry>in</entry>
+<entry>
+<para>Information about <emphasis remap='I'>src</emphasis>. Must be value returned by previous
+call to <function>Tcl_ScanElement</function>, possibly OR-ed
+with <emphasis remap='B'>TCL_DONT_USE_BRACES</emphasis>.</para>
+<!-- .BE -->
+</entry>
+</row>
+</tbody>
+</tgroup>
+</informaltable>
+
+</refsect1>
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para>These procedures may be used to disassemble and reassemble Tcl lists.
+<function>Tcl_SplitList</function> breaks a list up into its constituent elements,
+returning an array of pointers to the elements using
+<emphasis remap='I'>argcPtr</emphasis> and <emphasis remap='I'>argvPtr</emphasis>.
+While extracting the arguments, <function>Tcl_SplitList</function> obeys the usual
+rules for backslash substitutions and braces.  The area of
+memory pointed to by <emphasis remap='I'>*argvPtr</emphasis> is dynamically allocated;  in
+addition to the array of pointers, it
+also holds copies of all the list elements.  It is the caller's
+responsibility to free up all of this storage.
+For example, suppose that you have called <function>Tcl_SplitList</function> with
+the following code:</para>
+<programlisting remap='CS'>
+<funcsynopsis>
+<funcsynopsisinfo>
+int argc, code;
+char *string;
+char **argv;
+</funcsynopsisinfo>
+</funcsynopsis>
+...
+code = Tcl_SplitList(interp, string, &amp;argc, &amp;argv);
+</programlisting> <!-- remap='CE' -->
+<para>Then you should eventually free the storage with a call like the
+following:</para>
+<programlisting remap='CS'>
+<funcsynopsis>
+<funcprototype>
+<funcdef><function>Tcl_Free</function></funcdef>
+    <paramdef>( char *) <parameter>argv</parameter></paramdef>
+</funcprototype>
+</funcsynopsis>
+</programlisting> <!-- remap='CE' -->
+<para><function>Tcl_SplitList</function> normally returns <emphasis remap='B'>TCL_OK</emphasis>, which means the list was
+successfully parsed.
+If there was a syntax error in <emphasis remap='I'>list</emphasis>, then <emphasis remap='B'>TCL_ERROR</emphasis> is returned
+and the interpreter's result will point to an error message describing the
+problem (if <emphasis remap='I'>interp</emphasis> was not NULL).
+If <emphasis remap='B'>TCL_ERROR</emphasis> is returned then no memory is allocated and <emphasis remap='I'>*argvPtr</emphasis>
+is not modified.</para>
+
+<para><function>Tcl_Merge</function> is the inverse of <function>Tcl_SplitList</function>:  it
+takes a collection of strings given by <emphasis remap='I'>argc</emphasis>
+and <varname role='parameter'>argv</varname> and generates a result string
+that has proper list structure.
+This means that commands like <emphasis remap='B'>index</emphasis> may be used to
+extract the original elements again.
+In addition, if the result of <function>Tcl_Merge</function> is passed to <emphasis remap='B'>Tcl_Eval</emphasis>,
+it will be parsed into <emphasis remap='I'>argc</emphasis> words whose values will
+be the same as the <varname role='parameter'>argv</varname> strings passed to <function>Tcl_Merge</function>.
+<function>Tcl_Merge</function> will modify the list elements with braces and/or
+backslashes in order to produce proper Tcl list structure.
+The result string is dynamically allocated
+using <emphasis remap='B'>Tcl_Alloc</emphasis>;  the caller must eventually release the space
+using <function>Tcl_Free</function>.</para>
+
+<para>If the result of <function>Tcl_Merge</function> is passed to <function>Tcl_SplitList</function>,
+the elements returned by <function>Tcl_SplitList</function> will be identical to
+those passed into <function>Tcl_Merge</function>.
+However, the converse is not true:  if <function>Tcl_SplitList</function>
+is passed a given string, and the resulting <emphasis remap='I'>argc</emphasis> and
+<varname role='parameter'>argv</varname> are passed to <function>Tcl_Merge</function>, the resulting string
+may not be the same as the original string passed to <function>Tcl_SplitList</function>.
+This is because <function>Tcl_Merge</function> may use backslashes and braces
+differently than the original string.</para>
+
+<para><function>Tcl_ScanElement</function> and <function>Tcl_ConvertElement</function> are the
+procedures that do all of the real work of <function>Tcl_Merge</function>.
+<function>Tcl_ScanElement</function> scans its <emphasis remap='I'>src</emphasis> argument
+and determines how to use backslashes and braces
+when converting it to a list element.
+It returns an overestimate of the number of characters
+required to represent <emphasis remap='I'>src</emphasis> as a list element, and
+it stores information in <emphasis remap='I'>*flagsPtr</emphasis> that is needed
+by <function>Tcl_ConvertElement</function>.</para>
+
+<para><function>Tcl_ConvertElement</function> is a companion procedure to <function>Tcl_ScanElement</function>.
+It does the actual work of converting a string to a list element.
+Its <emphasis remap='I'>flags</emphasis> argument must be the same as the value returned
+by <function>Tcl_ScanElement</function>.
+<function>Tcl_ConvertElement</function> writes a proper list element to memory
+starting at *<emphasis remap='I'>dst</emphasis> and returns a count of the total number
+of characters written, which will be no more than the result
+returned by <function>Tcl_ScanElement</function>.
+<function>Tcl_ConvertElement</function> writes out only the actual list element
+without any leading or trailing spaces: it is up to the caller to
+include spaces between adjacent list elements.</para>
+
+<para><function>Tcl_ConvertElement</function> uses one of two different approaches to
+handle the special characters in <emphasis remap='I'>src</emphasis>.  Wherever possible, it
+handles special characters by surrounding the string with braces.
+This produces clean-looking output, but cannot be used in some situations,
+such as when <emphasis remap='I'>src</emphasis> contains unmatched braces.
+In these situations, <function>Tcl_ConvertElement</function> handles special
+characters by generating backslash sequences for them.
+The caller may insist on the second approach by OR-ing the
+flag value returned by <function>Tcl_ScanElement</function> with
+<emphasis remap='B'>TCL_DONT_USE_BRACES</emphasis>.
+Although this will produce an uglier result, it is useful in some
+special situations, such as when <function>Tcl_ConvertElement</function> is being
+used to generate a portion of an argument for a Tcl command.
+In this case, surrounding <emphasis remap='I'>src</emphasis> with curly braces would cause
+the command not to be parsed correctly.</para>
+
+<!-- .VS 8.5 -->
+<para>By default, <function>Tcl_ConvertElement</function> will use quoting in its output
+to be sure the first character of an element is not the hash
+character
+(<quote>#</quote>.)
+This is to be sure the first element of any list
+passed to <emphasis remap='B'>eval</emphasis> is not mis-parsed as the beginning of a comment.
+When a list element is not the first element of a list, this quoting
+is not necessary.  When the caller can be sure that the element is
+not the first element of a list, it can disable quoting of the leading
+hash character by OR-ing the flag value returned by <function>Tcl_ScanElement</function>
+with <emphasis remap='B'>TCL_DONT_QUOTE_HASH</emphasis>.</para>
+<!-- .VE 8.5 -->
+
+<para><function>Tcl_ScanCountedElement</function> and <function>Tcl_ConvertCountedElement</function> are
+the same as <function>Tcl_ScanElement</function> and <function>Tcl_ConvertElement</function>, except
+the length of string <emphasis remap='I'>src</emphasis> is specified by the <emphasis remap='I'>length</emphasis>
+argument, and the string may contain embedded nulls.</para>
+
+</refsect1>
+
+<refsect1 xml:id='keywords'><title>KEYWORDS</title>
+<para>backslash, convert, element, list, merge, split, strings</para>
+</refsect1>
+</refentry>
+

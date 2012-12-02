@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man+tkman by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='grab3'>
+
+<!-- '\" Copyright (c) 1998\-2000 by Scriptics Corporation.
+'\" All rights reserved.
+'\" 
+'\" RCS: @(#) $Id$
+'\"  -->
+<refmeta>
+<refentrytitle>Tk_Grab</refentrytitle>
+<manvolnum>3</manvolnum>
+<refmiscinfo class='manual'>Tk</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>Tk_Grab</refname>
+<refname>Tk_Ungrab</refname>
+<refpurpose>manipulate grab state in an application</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<funcsynopsis>
+<funcsynopsisinfo>
+#include &lt;tk.h&gt;
+
+</funcsynopsisinfo>
+<funcprototype>
+<funcdef>int <function>Tk_Grab</function></funcdef>
+<paramdef><parameter>interp</parameter></paramdef>
+<paramdef><parameter>tkwin</parameter></paramdef>
+<paramdef><parameter>grabGlobal</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef>void <function>Tk_Ungrab</function></funcdef>
+<paramdef><parameter>tkwin</parameter></paramdef>
+</funcprototype>
+
+</funcsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='arguments'><title>ARGUMENTS</title>
+<para>Interpreter to use for error reporting</para>
+<informaltable>
+<tgroup cols='3'>
+<tbody>
+
+<row><entry>"Tk_Window"</entry><entry>"tkwin"</entry><entry>"in"</entry>
+<entry>
+<para>Window on whose behalf the pointer is to be grabbed or released</para>
+</entry>
+</row>
+<row><entry>int</entry><entry>grabGlobal</entry><entry>in</entry>
+<entry>
+<para>Boolean indicating whether the grab is global or application local</para>
+<!-- .BE -->
+</entry>
+</row>
+</tbody>
+</tgroup>
+</informaltable>
+
+</refsect1>
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para>These functions are used to set or release a global or
+application local grab.  When a grab is set on a particular window
+in a Tk application, mouse and keyboard events can only be received by
+that window and its descendants.  Mouse and keyboard events for
+windows outside the tree rooted at <emphasis remap='I'>tkwin</emphasis> will be redirected to
+<emphasis remap='I'>tkwin</emphasis>.  If the grab is global, then all mouse and keyboard
+events for windows outside the tree rooted at <emphasis remap='I'>tkwin</emphasis> (even those
+intended for windows in other applications) will be redirected to
+<emphasis remap='I'>tkwin</emphasis>.  If the grab is application local, only mouse and
+keyboard events intended for a windows within the same application
+(but outside the tree rooted at <emphasis remap='I'>tkwin</emphasis>) will be redirected.</para>
+
+
+<para><function>Tk_Grab</function> sets a grab on a particular window.  <emphasis remap='I'>Tkwin</emphasis>
+specifies the window on whose behalf the pointer is to be grabbed.
+<emphasis remap='I'>GrabGlobal</emphasis> indicates whether the grab should be global or
+application local; if it is non-zero, it means the grab should be
+global.  Normally, <function>Tk_Grab</function> returns <emphasis remap='B'>TCL_OK</emphasis>; if an error occurs
+and the grab cannot be set, <emphasis remap='B'>TCL_ERROR</emphasis> is returned and an error message
+is left if <emphasis remap='I'>interp</emphasis>'s result.  Once this call completes
+successfully, no window outside the tree rooted at <emphasis remap='I'>tkwin</emphasis> will
+receive pointer- or keyboard-related events until the next call to
+Tk_Ungrab.  If a previous grab was in effect within the application,
+then it is replaced with a new one.</para>
+
+
+<para><emphasis remap='B'>Tcl_Ungrab</emphasis> releases a grab on the mouse pointer and keyboard, if
+there is one set on the window given by <emphasis remap='I'>tkwin</emphasis>.  Once a grab is
+released, pointer and keyboard events will start being delivered to
+other windows again.</para>
+
+</refsect1>
+
+<refsect1 xml:id='keywords'><title>KEYWORDS</title>
+<para>grab, window</para>
+</refsect1>
+</refentry>
+

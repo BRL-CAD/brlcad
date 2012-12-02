@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man+tkman by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='concat3'>
+
+<!-- '\" Copyright (c) 1989\-1993 The Regents of the University of California.
+'\" Copyright (c) 1994\-1996 Sun Microsystems, Inc. -->
+
+<!-- '\" See the file "license.terms" for information on usage and redistribution
+'\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
+'\" 
+'\" RCS: @(#) $Id$
+'\"  -->
+<refentryinfo><date>7.5</date></refentryinfo>
+<refmeta>
+<refentrytitle>Tcl_Concat</refentrytitle>
+<manvolnum>3</manvolnum>
+<refmiscinfo class='date'>7.5</refmiscinfo>
+<refmiscinfo class='source'>Tcl</refmiscinfo>
+<refmiscinfo class='manual'>Tcl Library Procedures</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>Tcl_Concat</refname>
+<refpurpose>concatenate a collection of strings</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<funcsynopsis>
+<funcsynopsisinfo>
+#include &lt;tcl.h&gt;
+
+</funcsynopsisinfo>
+<funcprototype>
+<funcdef>const char *<function>Tcl_Concat</function></funcdef>
+<paramdef><parameter>argc</parameter></paramdef>
+<paramdef><parameter>argv</parameter></paramdef>
+</funcprototype>
+</funcsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='arguments'><title>ARGUMENTS</title>
+<!-- .AS const char *const argv[] -->
+<informaltable>
+<tgroup cols='3'>
+<tbody>
+
+<row><entry>"int"</entry><entry>"argc"</entry><entry>"in"</entry>
+<entry>
+<para>Number of strings.</para>
+</entry>
+</row>
+<row><entry>"const char *const"</entry><entry>argv[]</entry><entry>in</entry>
+<entry>
+<para>Array of strings to concatenate.  Must have <emphasis remap='I'>argc</emphasis> entries.</para>
+<!-- .BE -->
+</entry>
+</row>
+</tbody>
+</tgroup>
+</informaltable>
+
+</refsect1>
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para><function>Tcl_Concat</function> is a utility procedure used by several of the
+Tcl commands.  Given a collection of strings, it concatenates
+them together into a single string, with the original strings
+separated by spaces.  This procedure behaves differently than
+<emphasis remap='B'>Tcl_Merge</emphasis>, in that the arguments are simply concatenated:
+no effort is made to ensure proper list structure.
+However, in most common usage the arguments will all be proper
+lists themselves;  if this is true, then the result will also have
+proper list structure.</para>
+
+<para><function>Tcl_Concat</function> eliminates leading and trailing white space as it
+copies strings from <emphasis remap='B'>argv</emphasis> to the result.  If an element of
+<emphasis remap='B'>argv</emphasis> consists of nothing but white space, then that string
+is ignored entirely.  This white-space removal was added to make
+the output of the <emphasis remap='B'>concat</emphasis> command cleaner-looking.</para>
+
+<para>The result string is dynamically allocated
+using <emphasis remap='B'>Tcl_Alloc</emphasis>;  the caller must eventually release the space
+by calling <emphasis remap='B'>Tcl_Free</emphasis>.</para>
+</refsect1>
+
+<refsect1 xml:id='see_also'><title>SEE ALSO</title>
+<para>Tcl_ConcatObj</para>
+</refsect1>
+
+<refsect1 xml:id='keywords'><title>KEYWORDS</title>
+<para>concatenate, strings</para>
+</refsect1>
+</refentry>
+

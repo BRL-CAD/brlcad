@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='ppmtorle1'>
+<!--  Copyright (c) 1990, Minnesota Supercomputer Center, Inc. -->
+<refmeta>
+<refentrytitle>PPMTORLE</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class='source'>July 30, 1990</refmiscinfo>
+<refmiscinfo class='manual'>1</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>ppmtorle</refname>
+<refpurpose>convert a PBMPLUS/ppm image file into an RLE image file.</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<cmdsynopsis>
+  <command>ppmtorle</command>    
+    <arg choice='opt'>-h </arg>
+    <arg choice='opt'>-v </arg>
+    <arg choice='opt'>-a </arg>
+    <arg choice='opt'>-o <replaceable>outfile</replaceable></arg>
+    <arg choice='opt'><replaceable>infile.ppm</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para>This program converts PBMPLUS full-color (ppm) image files into Utah
+<citerefentry><refentrytitle>RLE</refentrytitle><manvolnum>5</manvolnum></citerefentry>
+image files.  PBMPLUS/ppm image files contain the image dimensions and image
+data in the form of RGB triplets.  When converting to an RLE file, the alpha
+channel may be optionally computed.  The origins of PBMPLUS and Utah RLE files
+are  in the upper left and lower left corners respectively, so this
+program automatically "flips" the image.  The input can consist of
+several concatenated ppm images, in which case, the output will
+consist of several concatenated RLE images.</para>
+
+<para>The RLE file will contain a "true color" image
+(24 bits).  These RLE files may then be viewed using any RLE image viewer.  When
+they are displayed on an 8 bit display, the image must be dithered.  In order
+to produce a better looking image (on 8 bit displays), it is recommended that
+the image be quantizing (to 8 bit mapped color) prior to its display.  This may
+be done by piping the output of this program into the Utah
+<citerefentry><refentrytitle>mcut</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+or
+<citerefentry><refentrytitle>rlequant</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+utilities.
+An example of this is shown later.</para>
+
+</refsect1>
+
+<refsect1 xml:id='options'><title>OPTIONS</title>
+<variablelist remap='TP'>
+  <varlistentry>
+  <term><option>-v</option></term>
+  <listitem>
+<para>This option will cause ppmtorle to operate in verbose mode.  The header
+information is written to "stderr".  Actually, there is not much header
+information stored in a PBMPLUS file, so this information is minimal.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-h</option></term>
+  <listitem>
+<para>This option allows the header of the PBMPLUS image to be dumped to "stderr"
+without converting the file.  It is equivalent to using the -v option except
+that no file conversion takes place.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-a</option></term>
+  <listitem>
+<para>This option will cause ppmtorle to use the RGB data to compute an alpha
+channel in the resulting RLE file.  For any non-zero RGB data, the alpha
+channel will contain a value of 255.  The resulting RLE image file will
+contain three color channels and an alpha channel.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-o</option><replaceable> outfile</replaceable></term>
+  <listitem>
+<para>If specified, the output will be written to this file.  If
+<emphasis remap='I'>outfile</emphasis>
+is "-", or if it is not specified, the output will be written to the
+standard output stream.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='I'>infile.ppm</emphasis></term>
+  <listitem>
+<para>The name of the PBMPLUS image data file to be converted.  This file must end
+in ".ppm".  However, it is not necessary to supply the ".ppm" extension as it
+will be added to the supplied name if not already there.</para>
+  </listitem>
+  </varlistentry>
+</variablelist>
+</refsect1>
+
+<refsect1 xml:id='examples'><title>EXAMPLES</title>
+<variablelist remap='TP'>
+  <varlistentry>
+  <term>ppmtorle -v test.ppm -o test.rle</term>
+  <listitem>
+<para>While running in verbose mode, convert test.ppm to RLE format and store
+resulting data in test.rle.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term>ppmtorle test | mcut &gt;test.rle</term>
+  <listitem>
+<para>Convert test.ppm to RLE format and convert to 8 bit
+mapped color before storing data in test.rle</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term>ppmtorle -h test</term>
+  <listitem>
+<para>Dump the header information of the PBMPLUS file called test.ppm.</para>
+  </listitem>
+  </varlistentry>
+</variablelist>
+</refsect1>
+
+<refsect1 xml:id='see_also'><title>SEE ALSO</title>
+<para><citerefentry><refentrytitle>mcut</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>pgmtorle</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>rlequant</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>rletoppm</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>urt</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>RLE</refentrytitle><manvolnum>5</manvolnum></citerefentry>.</para>
+</refsect1>
+
+<refsect1 xml:id='author'><title>AUTHOR</title>
+<!-- .br -->
+<para>Wesley C. Barris
+<!-- .br -->
+Army High Performance Computing Research Center (AHPCRC)
+<!-- .br -->
+Minnesota Supercomputer Center, Inc.</para>
+</refsect1>
+</refentry>
+

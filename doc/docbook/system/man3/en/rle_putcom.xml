@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='rle_putcom3'>
+<!--  Copyright (c) 1986, 1987, University of Utah -->
+<refentryinfo><date>2/2/87</date></refentryinfo>
+<refmeta>
+<refentrytitle>RLE_PUTCOM</refentrytitle>
+<manvolnum>3</manvolnum>
+<refmiscinfo class='date'>2/2/87</refmiscinfo>
+<refmiscinfo class='source'>3</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>rle_putcom</refname>
+<refpurpose>set the value of a picture comment in an RLE file.</refpurpose>
+</refnamediv>
+<refnamediv>
+<refname>rle_getcom</refname>
+<refpurpose>get a picture comment from an RLE file.</refpurpose>
+</refnamediv>
+<refnamediv>
+<refname>rle_delcom</refname>
+<refpurpose>delete a picture comment from an RLE file.</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<funcsynopsis>
+<funcsynopsisinfo>
+#include &lt;rle.h&gt;
+
+</funcsynopsisinfo>
+<funcprototype>
+<funcdef>char *<function>rle_putcom</function></funcdef>
+<paramdef><parameter>value</parameter></paramdef>
+<paramdef><parameter>the_hdr</parameter></paramdef>
+</funcprototype>
+<funcsynopsisinfo>
+
+char * value;
+
+rle_hdr * the_hdr;
+
+</funcsynopsisinfo>
+<funcprototype>
+<funcdef>char *<function>rle_getcom</function></funcdef>
+<paramdef><parameter>name</parameter></paramdef>
+<paramdef><parameter>the_hdr</parameter></paramdef>
+</funcprototype>
+<funcsynopsisinfo>
+
+char * name;
+
+rle_hdr * the_hdr;
+
+</funcsynopsisinfo>
+<funcprototype>
+<funcdef>char *<function>rle_delcom</function></funcdef>
+<paramdef><parameter>name</parameter></paramdef>
+<paramdef><parameter>the_hdr</parameter></paramdef>
+</funcprototype>
+<funcsynopsisinfo>
+
+char * name;
+
+rle_hdr * the_hdr;
+</funcsynopsisinfo>
+</funcsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para><emphasis remap='I'>Rle_putcom</emphasis>
+can be used to add a picture comment or change the value of a picture
+comment in a
+<citerefentry><refentrytitle>rle_hdr</refentrytitle><manvolnum>3</manvolnum></citerefentry>
+structure.  The argument
+<emphasis remap='I'>value</emphasis>
+is the string value of the comment, and is generally of the form
+<emphasis remap='I'>name=value</emphasis>.
+It may also be of the form
+<emphasis remap='I'>name</emphasis>.
+If there is another comment with the same
+<emphasis remap='I'>name</emphasis>,
+it will be replaced with the new
+<emphasis remap='I'>value</emphasis>,
+and the previous comment will be returned as the value of
+<function>rle_putcom</function>.</para>
+
+<para><emphasis remap='I'>Rle_getcom</emphasis>
+returns a pointer to the data portion of a picture comment from an RLE file.
+The comment is assumed to be in the form
+<emphasis remap='I'>name=value</emphasis>;
+a pointer to
+<emphasis remap='I'>value</emphasis>
+is returned.  If the comment is of the form
+<emphasis remap='I'>name</emphasis>,
+a pointer to the null character at the end of the string is returned.
+If there is no comment of the above forms, a
+<emphasis remap='I'>NULL</emphasis>
+pointer is returned.
+The
+<emphasis remap='I'>the_hdr</emphasis>
+structure contains the picture comments in question.</para>
+
+<para><emphasis remap='I'>Rle_delcom</emphasis>
+is used to delete a picture comment from a
+<citerefentry><refentrytitle>rle_hdr</refentrytitle><manvolnum>3</manvolnum></citerefentry>
+structure.  It is called with the
+<emphasis remap='I'>name</emphasis>
+of the comment and the
+<emphasis remap='I'>the_hdr</emphasis>
+structure to be modified.  The first comment in the
+<emphasis remap='I'>rle_hdr</emphasis>
+structure of the form
+<emphasis remap='I'>name=value</emphasis>
+or
+<emphasis remap='I'>name</emphasis>
+will be deleted.  The deleted comment will be returned as the function
+value.</para>
+</refsect1>
+
+<refsect1 xml:id='see_also'><title>SEE ALSO</title>
+<para><citerefentry><refentrytitle>rle_addhist</refentrytitle><manvolnum>3</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>rle_hdr</refentrytitle><manvolnum>3</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>librle</refentrytitle><manvolnum>3</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>RLE</refentrytitle><manvolnum>5</manvolnum></citerefentry>.</para>
+</refsect1>
+
+<refsect1 xml:id='author'><title>AUTHOR</title>
+<para>Spencer W. Thomas
+<!-- .br -->
+University of Utah</para>
+</refsect1>
+</refentry>
+

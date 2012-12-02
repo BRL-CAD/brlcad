@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='rlemandl1'>
+<!--  Copyright (c) 1986, University of Utah -->
+<refmeta>
+<refentrytitle>RLEMANDL</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class='source'>Nov 8, 1987</refmiscinfo>
+<refmiscinfo class='manual'>1</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>rlemandl</refname>
+<refpurpose>Compute images of the Mandelbrot set.</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<cmdsynopsis>
+  <command>rlemandl</command>    
+    <arg choice='opt'><arg choice='plain'>-o </arg><arg choice='plain'><replaceable>outfile</replaceable></arg></arg>
+    <arg choice='opt'><arg choice='plain'>-s </arg><arg choice='plain'><replaceable>xsize</replaceable></arg><arg choice='plain'><replaceable>ysize</replaceable></arg></arg>
+    <arg choice='opt'>-v </arg>
+    <arg choice='plain'><replaceable>real</replaceable></arg>
+    <arg choice='plain'><replaceable>imaginary</replaceable></arg>
+    <arg choice='plain'><replaceable>width</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para><emphasis remap='I'>Rlemandl</emphasis>
+computes images of the Mandelbrot set as an eight bit gray scale image.
+The
+<emphasis remap='I'>real</emphasis>
+and
+<emphasis remap='I'>imaginary</emphasis>
+arguments specify the center of the area in the complex plane to be examined.
+<emphasis remap='I'>Width</emphasis>
+specifies the width area to be examined.</para>
+</refsect1>
+
+<refsect1 xml:id='options'><title>OPTIONS</title>
+<variablelist remap='TP'>
+  <varlistentry>
+  <term><option>-o</option><replaceable> outfile</replaceable></term>
+  <listitem>
+<para>If specified, output will be written to this file, otherwise it will
+go to stdout.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-s</option></term>
+  <listitem>
+<para><emphasis remap='I'>xsize ysize</emphasis>
+Specify the resolution of the image (in pixels).</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-v</option></term>
+  <listitem>
+<para>Print a message after every 50 lines are generated.</para>
+  </listitem>
+  </varlistentry>
+</variablelist>
+</refsect1>
+
+<refsect1 xml:id='see_also'><title>SEE ALSO</title>
+<para><citerefentry><refentrytitle>urt</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<!-- .br -->
+"Computer Recreations," <emphasis remap='I'>Scientific American</emphasis>, August 1985.</para>
+</refsect1>
+
+<refsect1 xml:id='author'><title>AUTHOR</title>
+<para>John W. Peterson, University of Utah.</para>
+</refsect1>
+
+<refsect1 xml:id='bugs'><title>BUGS</title>
+<para>What a frob.  Gratuitous features are left as exercise to the reader.
+The command name is spelled incorrectly.</para>
+</refsect1>
+</refentry>
+
