@@ -204,7 +204,7 @@ set(docbook_man1_EN
   ir-X.xml
   irdisp.xml
   lgt.xml
-  pictx.xml
+  #pictx.xml
   remapid.xml
   remrt.xml
   reshoot.xml
@@ -245,6 +245,8 @@ DOCBOOK_TO_MAN(man1 docbook_man1_EN 1 1 man1 "")
 if(BRLCAD_EXTRADOCS_PDF_MAN)
   DOCBOOK_TO_PDF(man1 docbook_man1_EN pdf/man1/en "")
 endif(BRLCAD_EXTRADOCS_PDF_MAN)
+
+CMAKEFILES(pictx.xml)
 
 # Local Variables:
 # tab-width: 8

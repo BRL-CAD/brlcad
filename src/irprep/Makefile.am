@@ -54,7 +54,6 @@ shapefact_LDADD = ${RT}
 EXTRA_DIST = \
 	${IRDISP_EXTRA} \
 	${IR_X_EXTRA} \
-	pictx.1 \
 	pictx.c \
 	CMakeLists.txt
 
