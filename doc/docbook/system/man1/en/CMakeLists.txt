@@ -55,6 +55,7 @@ set(docbook_man1_EN
   vdeck.xml
   viewpoint-g.xml
   cmap-fb.xml
+  fb-cmap.xml
   fbanim.xml
   fb-bw.xml
   fbcbars.xml 
