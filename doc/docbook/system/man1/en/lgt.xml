@@ -784,9 +784,7 @@ and
 of the target description in file
 <emphasis remap='I'>tank.g</emphasis>.</para>
 <literallayout remap='RS'>
-<synopsis>
 $ <emphasis remap='I'>lgt -o fictitious.brlcad.org: tank.g hull turret</emphasis>
-</synopsis>
 </literallayout> <!-- remap='RE' -->
 
 <para>This command will start up an interactive session on an alternate device
@@ -798,17 +796,13 @@ and
 <option>-G</option>
 options take multiple arguments, they must appear in double-quotes.</para>
 <literallayout remap='RS'>
-<synopsis>
 $ <emphasis remap='I'>lgt -G "512 0 0 0.0" -o fictitious.brlcad.org:/dev/ik1l -y "250 511" tank.g hull turret</emphasis>
-</synopsis>
 </literallayout> <!-- remap='RE' -->
 
 <para>This will run the program as a detached process by executing a saved script called
 <emphasis remap='I'>tankscript</emphasis>.</para>
 <literallayout remap='RS'>
-<synopsis>
 $ <emphasis remap='I'>tankscript &lt; /dev/null &amp;</emphasis>
-</synopsis>
 </literallayout> <!-- remap='RE' -->
 </refsect1>
 
