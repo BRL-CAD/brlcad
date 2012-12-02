@@ -36,7 +36,6 @@
 #include "vmath.h"
 #include "bn.h"
 #include "solid.h"
-#include "dm.h"
 
 #include "./ged_private.h"
 

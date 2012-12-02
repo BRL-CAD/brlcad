@@ -654,6 +654,7 @@ void color_soltab(void);
 /* utility1.c */
 int editit(const char *command, const char *tempfile);
 
+
 #endif  /* __GED_H__ */
 
 /*

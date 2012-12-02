@@ -32,7 +32,6 @@
 #include "bu.h"
 #include "vmath.h"
 #include "fb.h"
-#include "dm.h"
 
 #include "./ged_private.h"
 

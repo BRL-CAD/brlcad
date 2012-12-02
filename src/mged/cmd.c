@@ -82,6 +82,37 @@ Tk_Window tkwin = NULL;
  */
 static struct bu_vls tcl_output_hook = BU_VLS_INIT_ZERO;
 
+static int
+mged_dm_width(struct ged *gedpp)
+{
+    struct dm *dmpp = (struct dm *)gedpp->ged_dmp;
+    return dmpp->dm_width;
+}
+
+
+static int
+mged_dm_height(struct ged *gedpp)
+{
+    struct dm *dmpp = (struct dm *)gedpp->ged_dmp;
+    return dmpp->dm_height;
+}
+
+
+static int
+mged_dmp_is_null(struct ged *gedpp)
+{
+    struct dm *dmpp = (struct dm *)gedpp->ged_dmp;
+    return dmpp == NULL;
+}
+
+
+static void
+mged_dm_get_display_image(struct ged *gedpp, unsigned char **idata)
+{
+    struct dm *dmpp = (struct dm *)gedpp->ged_dmp;
+    DM_GET_DISPLAY_IMAGE(dmpp, idata);
+}
+
 
 /**
  * G U I _ O U T P U T
@@ -624,6 +655,10 @@ cmd_ged_dm_wrapper(ClientData clientData, Tcl_Interp *interpreter, int argc, con
     if (!gedp->ged_gvp)
 	gedp->ged_gvp = view_state->vs_gvp;
     gedp->ged_dmp = (void *)curr_dm_list->dml_dmp;
+    gedp->ged_dm_width = mged_dm_width(gedp);
+    gedp->ged_dm_height = mged_dm_height(gedp);
+    gedp->ged_dmp_is_null = mged_dmp_is_null(gedp);
+    gedp->ged_dm_get_display_image = mged_dm_get_display_image;
 
     ret = (*ctp->ged_func)(gedp, argc, (const char **)argv);
     Tcl_AppendResult(interpreter, bu_vls_addr(gedp->ged_result_str), NULL);

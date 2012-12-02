@@ -254,6 +254,13 @@ __BEGIN_DECLS
 	return (_flags); \
     }
 
+/* From include/dm.h */
+#define GED_MAX 2047.0
+#define GED_MIN -2048.0
+#define GED_RANGE 4095.0
+#define INV_GED 0.00048828125
+#define INV_4096 0.000244140625
+
 struct ged_adc_state {
     int		gas_draw;
     int		gas_dv_x;
@@ -559,6 +566,12 @@ struct ged {
     int (*add)(const struct ged_cmd *cmd);
     int (*del)(const char *name);
     int (*run)(int ac, char *av[]);
+
+    /* Interface to LIBDM */
+    int ged_dm_width;
+    int ged_dm_height;
+    int ged_dmp_is_null;
+    void (*ged_dm_get_display_image)();
 };
 
 typedef int (*ged_func_ptr)(struct ged *, int, const char *[]);

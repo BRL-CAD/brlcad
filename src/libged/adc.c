@@ -32,7 +32,6 @@
 #include "bu.h"
 #include "vmath.h"
 #include "ged.h"
-#include "dm.h"
 
 static void
 adc_model_to_adc_view(struct ged_view *gvp)

@@ -37,7 +37,6 @@
 #include "bio.h"
 
 #include "vmath.h"
-#include "dm.h"
 
 #include "./ged_private.h"
 
