@@ -22,24 +22,11 @@
 /** @{ */
 /** @file libbn/mat.c
  *
- * @brief
- * 4 x 4 Matrix manipulation functions...
- *
- * Matrix array elements have the following positions in the matrix:
- @code
- *			|  0  1  2  3 |		| 0 |
- *	[ 0 1 2 3 ]	|  4  5  6  7 |		| 1 |
- *			|  8  9 10 11 |		| 2 |
- *			| 12 13 14 15 |		| 3 |
- *
- * preVector (vect_t) Matrix (mat_t) postVector (vect_t)
- @endcode
- *
  * TODO: need a better way to control tolerancing, either via
  * additional tolerance parameters or perhaps providing a global
  * tolerance state interface.
  */
-/** @} */
+
 
 #include "common.h"
 
