@@ -91,7 +91,7 @@ or equal to the bytes of the in2 element.
 The
 <option>-w#</option>
 flag specifies the width (in bytes) of each element;  the default is
-3, <emphasis remap='I'>ie</emphasis>
+3, <emphasis remap='I'>i.e.</emphasis>
 <citerefentry><refentrytitle>pix</refentrytitle><manvolnum>5</manvolnum></citerefentry>
 file format.  A width of 1 is used for processing
 <citerefentry><refentrytitle>bw</refentrytitle><manvolnum>5</manvolnum></citerefentry>
