@@ -5,7 +5,16 @@
 <refentrytitle>DPIX-PIX</refentrytitle>
 <manvolnum>1</manvolnum>
 <refmiscinfo class='source'>BRL-CAD</refmiscinfo>
+<refmiscinfo class='manual'>BRL-CAD</refmiscinfo>
 </refmeta>
+
+<info>
+    <author>
+        <orgname>BRL-CAD</orgname>
+        <contrib>brl-cad</contrib>
+    </author>
+</info>
+
 <refnamediv>
 <refname>dpix-pix</refname>
 <refpurpose>convert a double precision dpix file to a pix file</refpurpose>

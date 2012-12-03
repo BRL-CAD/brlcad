@@ -5,7 +5,16 @@
 <refentrytitle>REMAPID</refentrytitle>
 <manvolnum>1</manvolnum>
 <refmiscinfo class='source'>BRL-CAD</refmiscinfo>
+<refmiscinfo class='manual'>BRL-CAD</refmiscinfo>
 </refmeta>
+
+<info>
+    <author>
+        <orgname>BRL-CAD</orgname>
+        <contrib>brl-cad</contrib>
+    </author>
+</info>
+
 <refnamediv>
 <refname>remapid</refname>
 <refpurpose>reassign region idents in a BRL-CAD or TANKILL model according to commands in a specification file</refpurpose>

@@ -5,7 +5,16 @@
 <refentrytitle>PIXMERGE</refentrytitle>
 <manvolnum>1</manvolnum>
 <refmiscinfo class='source'>BRL-CAD</refmiscinfo>
+<refmiscinfo class='manual'>BRL-CAD</refmiscinfo>
 </refmeta>
+
+<info>
+    <author>
+        <orgname>BRL-CAD</orgname>
+        <contrib>brl-cad</contrib>
+    </author>
+</info>
+
 <refnamediv>
 <refname>pixmerge</refname>
 <refpurpose>merge two pix(5) or bw(5) images by a formula</refpurpose>

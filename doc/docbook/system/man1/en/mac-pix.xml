@@ -5,7 +5,16 @@
 <refentrytitle>MAC-PIX</refentrytitle>
 <manvolnum>1</manvolnum>
 <refmiscinfo class='source'>BRL-CAD</refmiscinfo>
+<refmiscinfo class='manual'>BRL-CAD</refmiscinfo>
 </refmeta>
+
+<info>
+    <author>
+        <orgname>BRL-CAD</orgname>
+        <contrib>brl-cad</contrib>
+    </author>
+</info>
+
 <refnamediv>
 <refname>mac-pix</refname>
 <refpurpose>convert Apple MacPaint bitmap into pix(5) or bw(5) raster image</refpurpose>

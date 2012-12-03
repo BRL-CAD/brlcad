@@ -5,7 +5,16 @@
 <refentrytitle>G-DXF</refentrytitle>
 <manvolnum>1</manvolnum>
 <refmiscinfo class='source'>BRL-CAD</refmiscinfo>
+<refmiscinfo class='manual'>BRL-CAD</refmiscinfo>
 </refmeta>
+
+<info>
+    <author>
+        <orgname>BRL-CAD</orgname>
+        <contrib>brl-cad</contrib>
+    </author>
+</info>
+
 <refnamediv>
 <refname>g-dxf</refname>
 <refpurpose>AutoCad DXF Translator (BRL-CAD to DXF)</refpurpose>

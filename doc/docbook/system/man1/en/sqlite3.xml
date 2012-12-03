@@ -9,7 +9,16 @@
 <refentrytitle>SQLITE3</refentrytitle>
 <manvolnum>1</manvolnum>
 <refmiscinfo class='source'>Mon Apr 15 23:49:17 2002</refmiscinfo>
+<refmiscinfo class='manual'>Mon Apr 15 23:49:17 2002</refmiscinfo>
 </refmeta>
+
+<info>
+    <author>
+        <orgname>BRL-CAD</orgname>
+        <contrib>brl-cad</contrib>
+    </author>
+</info>
+
 <refnamediv>
 <refname></refname>
 <refpurpose>A command line interface for SQLite version 3</refpurpose>

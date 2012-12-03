@@ -5,7 +5,16 @@
 <refentrytitle>PIX-RLE</refentrytitle>
 <manvolnum>1</manvolnum>
 <refmiscinfo class='source'>BRL-CAD</refmiscinfo>
+<refmiscinfo class='manual'>BRL-CAD</refmiscinfo>
 </refmeta>
+
+<info>
+    <author>
+        <orgname>BRL-CAD</orgname>
+        <contrib>brl-cad</contrib>
+    </author>
+</info>
+
 <refnamediv>
 <refname>pix-rle</refname>
 <refpurpose>convert RGB pixel format image to Utah Raster Toolkit run-length encoded</refpurpose>

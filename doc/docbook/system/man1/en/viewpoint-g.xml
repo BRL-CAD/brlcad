@@ -8,6 +8,14 @@
 <refmiscinfo class='software'>BRL-CAD</refmiscinfo>
 <refmiscinfo class='manual'>User Commands</refmiscinfo>
 </refmeta>
+
+<info>
+    <author>
+        <orgname>BRL-CAD</orgname>
+        <contrib>brl-cad</contrib>
+    </author>
+</info>
+
 <refnamediv>
 <refname>viewpoint-g</refname>
 <refpurpose>VIEWPOINT Translator (VIEWPOINT to BRL-CAD)</refpurpose>

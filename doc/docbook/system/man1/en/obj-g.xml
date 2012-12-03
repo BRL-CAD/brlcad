@@ -9,6 +9,13 @@
   <refmiscinfo class="manual">BRL-CAD User Commands</refmiscinfo>
 </refmeta>
 
+<info>
+    <author>
+        <orgname>BRL-CAD</orgname>
+        <contrib>brl-cad</contrib>
+    </author>
+</info>
+
 <refnamediv xml:id="objg_name">
   <refname>obj-g</refname>
   <refpurpose>

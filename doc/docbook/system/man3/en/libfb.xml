@@ -7,6 +7,14 @@
 		<refmiscinfo class="source">BRL-CAD</refmiscinfo>
 		<refmiscinfo class="manual">BRL-CAD Libraries</refmiscinfo>
 	</refmeta>
+
+    <info>
+    <author>
+        <orgname>BRL-CAD</orgname>
+        <contrib>brl-cad</contrib>
+    </author>
+</info>
+
 	<refnamediv xml:id="name">
 		<refname>libfb</refname>
 		<refpurpose>
