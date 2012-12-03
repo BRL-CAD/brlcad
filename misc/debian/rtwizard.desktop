@@ -1,0 +1,10 @@
+
+[Desktop Entry]
+Name=RtWizard
+Comment=Rt Wizard
+Exec=/usr/brlcad/bin/rtwizard
+Icon=rtwizard
+Terminal=false
+Type=Application
+Categories=BRL-CAD;
+MimeType=application/brlcad-v4;application/brlcad-v5;

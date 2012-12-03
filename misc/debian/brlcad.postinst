@@ -9,8 +9,8 @@ else
 	sed --follow-symlinks -i "/application\/brlcad-v[45]/d" $F
 fi
 
-echo "application/brlcad-v4=brlcad-mged.desktop" >> $F
-echo "application/brlcad-v5=brlcad-mged.desktop" >> $F
+echo "application/brlcad-v4=mged.desktop" >> $F
+echo "application/brlcad-v5=mged.desktop" >> $F
 
 source /etc/profile.d/brlcad.sh
 

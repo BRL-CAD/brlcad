@@ -161,13 +161,13 @@ mkdir -p $TMPDIR/tmp/etc/xdg/menus/applications-merged
 cp -f $TMPDIR/brlcad.menu $TMPDIR/tmp/etc/xdg/menus/applications-merged
 
 mkdir -p $TMPDIR/tmp/usr/share/applications
-cp -f $TMPDIR/brlcad-archer.desktop $TMPDIR/tmp/usr/share/applications
-cp -f $TMPDIR/brlcad-mged.desktop $TMPDIR/tmp/usr/share/applications
-cp -f $TMPDIR/brlcad-rtwizard.desktop $TMPDIR/tmp/usr/share/applications
+cp -f $TMPDIR/archer.desktop $TMPDIR/tmp/usr/share/applications
 cp -f $TMPDIR/brlcad-db.desktop $TMPDIR/tmp/usr/share/applications
 cp -f $TMPDIR/brlcad-doc.desktop $TMPDIR/tmp/usr/share/applications
 cp -f $TMPDIR/brlcad-doc-animation.desktop $TMPDIR/tmp/usr/share/applications
 cp -f $TMPDIR/brlcad-doc-mged.desktop $TMPDIR/tmp/usr/share/applications
+cp -f $TMPDIR/mged.desktop $TMPDIR/tmp/usr/share/applications
+cp -f $TMPDIR/rtwizard.desktop $TMPDIR/tmp/usr/share/applications
 
 mkdir -p $TMPDIR/tmp/usr/share/desktop-directories
 cp -f $TMPDIR/brlcad.directory $TMPDIR/tmp/usr/share/desktop-directories
@@ -180,10 +180,12 @@ cp -f $TMPDIR/brlcad.xml $TMPDIR/tmp/usr/share/mime/packages
 for I in 16x16 24x24 36x36 48x48 64x64 96x96 128x128 256x256
 do
     mkdir -p $TMPDIR/tmp/usr/share/icons/hicolor/$I/apps
-    cp -f $TMPDIR/icons/$I/brlcad-mged.png $TMPDIR/tmp/usr/share/icons/hicolor/$I/apps
-    cp -f $TMPDIR/icons/$I/brlcad-archer.png $TMPDIR/tmp/usr/share/icons/hicolor/$I/apps
+    cp -f $TMPDIR/icons/$I/archer.png $TMPDIR/tmp/usr/share/icons/hicolor/$I/apps
+    cp -f $TMPDIR/icons/$I/brlcad.png $TMPDIR/tmp/usr/share/icons/hicolor/$I/apps
     cp -f $TMPDIR/icons/$I/brlcad-db.png $TMPDIR/tmp/usr/share/icons/hicolor/$I/apps
     cp -f $TMPDIR/icons/$I/brlcad-doc.png $TMPDIR/tmp/usr/share/icons/hicolor/$I/apps
+    cp -f $TMPDIR/icons/$I/mged.png $TMPDIR/tmp/usr/share/icons/hicolor/$I/apps
+    cp -f $TMPDIR/icons/$I/rtwizard.png $TMPDIR/tmp/usr/share/icons/hicolor/$I/apps
 
     mkdir -p $TMPDIR/tmp/usr/share/icons/hicolor/$I/mimetypes
     cp -f $TMPDIR/icons/$I/brlcad-v4.png $TMPDIR/tmp/usr/share/icons/hicolor/$I/mimetypes
@@ -233,8 +235,8 @@ else
 	sed --follow-symlinks -i "/application\/brlcad-v[45]/d" $F
 fi
 
-echo "application/brlcad-v4=brlcad-mged.desktop" >> $F
-echo "application/brlcad-v5=brlcad-mged.desktop" >> $F
+echo "application/brlcad-v4=mged.desktop" >> $F
+echo "application/brlcad-v5=mged.desktop" >> $F
 
 source /etc/profile.d/brlcad.sh
 
