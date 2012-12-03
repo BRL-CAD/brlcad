@@ -21,7 +21,7 @@
 <!-- body begins here -->
 <refsynopsisdiv xml:id='synopsis'>
 <cmdsynopsis>
-  <command>plrot</command>    
+  <command>plrot</command>
     <arg choice='opt'><arg choice='plain'>-x# </arg><arg choice='plain'>-y# </arg><arg choice='plain'>-z# </arg></arg>
     <arg choice='opt'><arg choice='plain'>-X# </arg><arg choice='plain'>-Y# </arg><arg choice='plain'>-Z# </arg></arg>
     <arg choice='opt'>-s# </arg>

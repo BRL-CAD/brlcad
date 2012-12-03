@@ -21,7 +21,7 @@
 <!-- body begins here -->
 <refsynopsisdiv xml:id='synopsis'>
 <cmdsynopsis>
-  <command>pixcolors</command>    
+  <command>pixcolors</command>
     <arg choice='opt'>-v </arg>
     <arg choice='plain'><replaceable>&lt;</replaceable></arg>
     <arg choice='plain'><replaceable>pixfile</replaceable></arg>

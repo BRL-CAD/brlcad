@@ -21,7 +21,7 @@
 <!-- body begins here -->
 <refsynopsisdiv xml:id='synopsis'>
 <cmdsynopsis>
-  <command>buffer</command>    
+  <command>buffer</command>
 </cmdsynopsis>
 </refsynopsisdiv>
 

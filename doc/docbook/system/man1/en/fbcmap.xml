@@ -20,7 +20,7 @@
 <!-- body begins here -->
 <refsynopsisdiv xml:id="synopsis">
 <cmdsynopsis sepchar=" ">
-  <command>fbcmap</command>    
+  <command>fbcmap</command>
     <arg choice="opt" rep="norepeat">-h </arg>
     <arg choice="opt" rep="norepeat">-F <replaceable>framebuffer</replaceable></arg>
     <arg choice="opt" rep="norepeat"><arg choice="plain" rep="norepeat">- </arg><arg choice="opt" rep="norepeat"><replaceable>sS</replaceable></arg><arg choice="plain" rep="norepeat"><replaceable>squarescrsize</replaceable></arg></arg>

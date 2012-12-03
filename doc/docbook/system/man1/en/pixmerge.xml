@@ -21,7 +21,7 @@
 <!-- body begins here -->
 <refsynopsisdiv xml:id='synopsis'>
 <cmdsynopsis>
-  <command>pixmerge</command>    
+  <command>pixmerge</command>
     <arg choice='opt'>-glen </arg>
     <arg choice='opt'>-w <replaceable>bytes_wide</replaceable></arg>
     <arg choice='opt'>-C <replaceable>r/g/b</replaceable></arg>

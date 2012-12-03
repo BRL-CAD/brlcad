@@ -21,12 +21,12 @@
 <!-- body begins here -->
 <refsynopsisdiv xml:id='synopsis'>
 <cmdsynopsis>
-  <command>rttherm</command>    
+  <command>rttherm</command>
     <arg choice='opt' rep='repeat'><replaceable>options</replaceable></arg>
     <arg choice='plain'>-o <replaceable>output.ssamp</replaceable></arg>
     <arg choice='plain'><replaceable>model.g</replaceable></arg>
     <arg choice='plain' rep='repeat'><replaceable>objects</replaceable></arg>
-    
+
 </cmdsynopsis>
 </refsynopsisdiv>
 

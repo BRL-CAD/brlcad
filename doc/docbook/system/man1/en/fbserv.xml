@@ -21,7 +21,7 @@
 <!-- body begins here -->
 <refsynopsisdiv xml:id='synopsis'>
 <cmdsynopsis>
-  <command>fbserv</command>    
+  <command>fbserv</command>
     <arg choice='opt'>-h </arg>
     <group choice='opt'><arg choice='plain'>-s </arg><arg choice='plain'><replaceable>S</replaceable></arg><arg choice='plain'><replaceable>square_size</replaceable></arg></group>
     <group choice='opt'><arg choice='plain'>-w </arg><arg choice='plain'><replaceable>W</replaceable></arg><arg choice='plain'><replaceable>width</replaceable></arg></group>

@@ -21,7 +21,7 @@
 <!-- body begins here -->
 <refsynopsisdiv xml:id='synopsis'>
 <cmdsynopsis>
-  <command>pixclump</command>    
+  <command>pixclump</command>
     <arg choice='opt'>-c <replaceable>R/G/B</replaceable></arg>
     <arg choice='opt'>-f <replaceable>color_file</replaceable></arg>
     <arg choice='opt'>-x <replaceable>debug_flags</replaceable></arg>

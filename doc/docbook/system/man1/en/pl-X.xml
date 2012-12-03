@@ -21,7 +21,7 @@
 <!-- body begins here -->
 <refsynopsisdiv xml:id='synopsis'>
 <cmdsynopsis>
-  <command>pl-X</command>    
+  <command>pl-X</command>
     <arg choice='opt'>-v </arg>
     <arg choice='plain'><replaceable>&lt;</replaceable></arg>
     <arg choice='plain'><replaceable>unix_plot</replaceable></arg>

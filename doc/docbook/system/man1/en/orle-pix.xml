@@ -21,7 +21,7 @@
 <!-- body begins here -->
 <refsynopsisdiv xml:id='synopsis'>
 <cmdsynopsis>
-  <command>orle-pix</command>    
+  <command>orle-pix</command>
     <arg choice='opt'>-dv </arg>
     <arg choice='opt'><arg choice='plain'>-b </arg><arg choice='opt'><replaceable>rgbwBG</replaceable></arg></arg>
     <arg choice='opt'><replaceable>file.rle</replaceable></arg>

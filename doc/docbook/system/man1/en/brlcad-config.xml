@@ -21,7 +21,7 @@
 <!-- body begins here -->
 <refsynopsisdiv xml:id='synopsis'>
 <cmdsynopsis>
-  <command>brlcad-config</command>    
+  <command>brlcad-config</command>
     <arg choice='opt'><arg choice='plain'>--prefix </arg><arg choice='opt'><replaceable>=DIR</replaceable></arg></arg>
     <arg choice='opt'>--libs </arg>
     <arg choice='opt'>--cflags </arg>

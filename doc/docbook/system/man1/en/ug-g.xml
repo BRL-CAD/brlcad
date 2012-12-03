@@ -21,7 +21,7 @@
 <!-- body begins here -->
 <refsynopsisdiv xml:id='synopsis'>
 <cmdsynopsis>
-  <command>ug-g</command>    
+  <command>ug-g</command>
     <arg choice='opt'>-d <replaceable>level</replaceable></arg>
     <arg choice='opt'>-i <replaceable>starting_ident_number</replaceable></arg>
     <arg choice='opt'>-n <replaceable>part_no_to_part_name_mapping_file</replaceable></arg>

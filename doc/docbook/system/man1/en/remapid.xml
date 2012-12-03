@@ -21,7 +21,7 @@
 <!-- body begins here -->
 <refsynopsisdiv xml:id='synopsis'>
 <cmdsynopsis>
-  <command>remapid</command>    
+  <command>remapid</command>
     <arg choice='opt'><arg choice='plain'>- </arg><group choice='opt'><arg choice='plain'><replaceable>g</replaceable></arg><arg choice='plain'><replaceable>t</replaceable></arg></group></arg>
     <group choice='opt'><arg choice='plain'><replaceable>file.g</replaceable></arg><arg choice='plain'><replaceable>file.tankill</replaceable></arg></group>
     <arg choice='opt'><replaceable>spec_file</replaceable></arg>

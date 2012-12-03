@@ -20,7 +20,7 @@
 <!-- body begins here -->
 <refsynopsisdiv xml:id="synopsis">
 <cmdsynopsis sepchar=" ">
-  <command>fb-bw</command>    
+  <command>fb-bw</command>
     <arg choice="opt" rep="norepeat">-hi </arg>
     <arg choice="opt" rep="norepeat">-Fframebuffer </arg>
     <arg choice="opt" rep="norepeat">-X <replaceable>scr_xoff</replaceable></arg>

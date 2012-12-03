@@ -20,7 +20,7 @@
 <!-- body begins here -->
 <refsynopsisdiv xml:id="synopsis">
 <cmdsynopsis sepchar=" ">
-  <command>fbzoom</command>    
+  <command>fbzoom</command>
     <arg choice="opt" rep="norepeat">-F <replaceable>frame_buffer</replaceable></arg>
     <arg choice="opt" rep="norepeat">-h </arg>
     <arg choice="opt" rep="norepeat">-s <replaceable>image_sqrsize</replaceable></arg>

@@ -21,7 +21,7 @@
 <!-- body begins here -->
 <refsynopsisdiv xml:id='synopsis'>
 <cmdsynopsis>
-  <command>pl-hpgl</command>    
+  <command>pl-hpgl</command>
     <arg choice='plain'><replaceable>&lt;</replaceable></arg>
     <arg choice='plain'><replaceable>unix_plot</replaceable></arg>
     <arg choice='plain'><replaceable>&gt;</replaceable></arg>

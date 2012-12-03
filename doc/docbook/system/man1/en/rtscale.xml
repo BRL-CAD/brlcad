@@ -21,7 +21,7 @@
 <!-- body begins here -->
 <refsynopsisdiv xml:id='synopsis'>
 <cmdsynopsis>
-  <command>rtscale</command>    
+  <command>rtscale</command>
     <arg choice='plain'><replaceable>width</replaceable></arg>
     <arg choice='plain'><replaceable>units</replaceable></arg>
     <arg choice='plain'><replaceable>intervals</replaceable></arg>

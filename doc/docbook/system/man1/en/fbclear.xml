@@ -20,13 +20,13 @@
 <!-- body begins here -->
 <refsynopsisdiv xml:id="synopsis">
 <cmdsynopsis sepchar=" ">
-  <command>fbclear</command>    
+  <command>fbclear</command>
     <arg choice="opt" rep="norepeat"><arg choice="plain" rep="norepeat">-h </arg><arg choice="plain" rep="norepeat">-c </arg></arg>
     <arg choice="opt" rep="norepeat">-F <replaceable>framebuffer</replaceable></arg>
     <arg choice="opt" rep="norepeat"><arg choice="plain" rep="norepeat"><replaceable>red</replaceable></arg><arg choice="plain" rep="norepeat"><replaceable>green</replaceable></arg><arg choice="plain" rep="norepeat"><replaceable>blue</replaceable></arg></arg>
 </cmdsynopsis>
 <cmdsynopsis sepchar=" ">
-  <command>fbclear</command>    
+  <command>fbclear</command>
     <arg choice="opt" rep="norepeat"><arg choice="plain" rep="norepeat">-h </arg><arg choice="plain" rep="norepeat">-c </arg></arg>
     <arg choice="opt" rep="norepeat">-F <replaceable>framebuffer</replaceable></arg>
     <arg choice="opt" rep="norepeat"><replaceable>gray_value</replaceable></arg>

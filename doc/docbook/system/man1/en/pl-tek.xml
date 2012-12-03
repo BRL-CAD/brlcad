@@ -21,7 +21,7 @@
 <!-- body begins here -->
 <refsynopsisdiv xml:id='synopsis'>
 <cmdsynopsis>
-  <command>pl-tek</command>    
+  <command>pl-tek</command>
     <arg choice='opt'>-e </arg>
     <arg choice='opt'>-v </arg>
     <arg choice='plain'><replaceable>&lt;</replaceable></arg>

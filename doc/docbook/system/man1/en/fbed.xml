@@ -21,7 +21,7 @@
 <!-- body begins here -->
 <refsynopsisdiv xml:id='synopsis'>
 <cmdsynopsis>
-  <command>fbed</command>    
+  <command>fbed</command>
     <arg choice='opt'>-ph </arg>
 </cmdsynopsis>
 </refsynopsisdiv>

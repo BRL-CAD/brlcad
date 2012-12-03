@@ -21,7 +21,7 @@
 <!-- body begins here -->
 <refsynopsisdiv xml:id='synopsis'>
 <cmdsynopsis>
-  <command>gencolor</command>    
+  <command>gencolor</command>
     <arg choice='opt'>-r# </arg>
     <arg choice='opt'><arg choice='plain' rep='repeat'><replaceable>val1</replaceable></arg><arg choice='plain'><replaceable>valN</replaceable></arg></arg>
 </cmdsynopsis>

@@ -21,7 +21,7 @@
 <!-- body begins here -->
 <refsynopsisdiv xml:id='synopsis'>
 <cmdsynopsis>
-  <command>tabinterp</command>    
+  <command>tabinterp</command>
     <arg choice='plain'><replaceable>&gt;table.final</replaceable></arg>
 </cmdsynopsis>
 </refsynopsisdiv>

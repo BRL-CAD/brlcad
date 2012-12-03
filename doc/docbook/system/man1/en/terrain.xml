@@ -21,7 +21,7 @@
 <!-- body begins here -->
 <refsynopsisdiv xml:id='synopsis'>
 <cmdsynopsis>
-  <command>terrain</command>    
+  <command>terrain</command>
     <arg choice='opt'>-w <replaceable>x_postings</replaceable></arg>
     <arg choice='opt'>-n <replaceable>y_postings</replaceable></arg>
     <arg choice='opt'>-s <replaceable>xy_postings</replaceable></arg>

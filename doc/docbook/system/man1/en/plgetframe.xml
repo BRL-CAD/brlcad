@@ -21,7 +21,7 @@
 <!-- body begins here -->
 <refsynopsisdiv xml:id='synopsis'>
 <cmdsynopsis>
-  <command>plgetframe</command>    
+  <command>plgetframe</command>
     <arg choice='opt'>-v </arg>
     <arg choice='plain'><replaceable>desired_frame</replaceable></arg>
     <arg choice='plain'><replaceable>&lt;</replaceable></arg>

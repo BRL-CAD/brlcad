@@ -21,7 +21,7 @@
 <!-- body begins here -->
 <refsynopsisdiv xml:id='synopsis'>
 <cmdsynopsis>
-  <command>anim_time</command>    
+  <command>anim_time</command>
     <arg choice='opt'>-s <replaceable>start_speed_absolute</replaceable></arg>
     <arg choice='opt'>-e <replaceable>end_speed_absolute</replaceable></arg>
     <arg choice='opt'>-i <replaceable>initial_speed_relative</replaceable></arg>

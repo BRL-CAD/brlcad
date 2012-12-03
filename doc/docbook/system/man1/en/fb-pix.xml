@@ -20,7 +20,7 @@
 <!-- body begins here -->
 <refsynopsisdiv xml:id="synopsis">
 <cmdsynopsis sepchar=" ">
-  <command>fb-pix</command>    
+  <command>fb-pix</command>
     <arg choice="opt" rep="norepeat">-hic </arg>
     <arg choice="opt" rep="norepeat">-F <replaceable>framebuffer</replaceable></arg>
     <arg choice="opt" rep="norepeat">-s <replaceable>squaresize</replaceable></arg>

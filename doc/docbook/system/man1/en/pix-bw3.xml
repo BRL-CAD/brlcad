@@ -21,7 +21,7 @@
 <!-- body begins here -->
 <refsynopsisdiv xml:id='synopsis'>
 <cmdsynopsis>
-  <command>pix-bw3</command>    
+  <command>pix-bw3</command>
     <arg choice='plain'><replaceable>redout</replaceable></arg>
     <arg choice='plain'><replaceable>greenout</replaceable></arg>
     <arg choice='plain'><replaceable>blueout</replaceable></arg>

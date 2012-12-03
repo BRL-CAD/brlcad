@@ -21,7 +21,7 @@
 <!-- body begins here -->
 <refsynopsisdiv xml:id='synopsis'>
 <cmdsynopsis>
-  <command>pixbustup</command>    
+  <command>pixbustup</command>
     <arg choice='plain'><replaceable>basename</replaceable></arg>
     <arg choice='plain'><replaceable>width</replaceable></arg>
     <arg choice='opt'><replaceable>image_offset</replaceable></arg>

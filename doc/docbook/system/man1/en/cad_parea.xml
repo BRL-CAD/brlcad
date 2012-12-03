@@ -21,7 +21,7 @@
 <!-- body begins here -->
 <refsynopsisdiv xml:id='synopsis'>
 <cmdsynopsis>
-  <command>cad_parea</command>    
+  <command>cad_parea</command>
     <arg choice='opt'><arg choice='plain'>-i </arg><arg choice='plain'><replaceable>input</replaceable></arg></arg>
     <arg choice='opt'><arg choice='plain'>-o </arg><arg choice='plain'><replaceable>output</replaceable></arg></arg>
 </cmdsynopsis>

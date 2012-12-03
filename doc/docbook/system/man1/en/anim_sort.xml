@@ -21,7 +21,7 @@
 <!-- body begins here -->
 <refsynopsisdiv xml:id='synopsis'>
 <cmdsynopsis>
-  <command>anim_sort</command>    
+  <command>anim_sort</command>
     <arg choice='opt'>-ic </arg>
     <arg choice='plain'><replaceable>&lt;</replaceable></arg>
     <arg choice='plain'><replaceable>mixed.script</replaceable></arg>

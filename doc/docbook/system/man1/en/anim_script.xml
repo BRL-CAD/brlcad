@@ -21,7 +21,7 @@
 <!-- body begins here -->
 <refsynopsisdiv xml:id='synopsis'>
 <cmdsynopsis>
-  <command>anim_script</command>    
+  <command>anim_script</command>
     <arg choice='opt'>-v <replaceable>#</replaceable></arg>
     <group choice='opt'><arg choice='plain'>-r </arg><arg choice='plain'><replaceable>t</replaceable></arg><arg choice='plain'><replaceable>s</replaceable></arg></group><arg choice='opt'>-p </arg>
     <group choice='opt'><arg choice='plain'>-a </arg><arg choice='plain'><replaceable>b</replaceable></arg><arg choice='plain'><replaceable>#</replaceable></arg><arg choice='plain'><replaceable>#</replaceable></arg><arg choice='plain'><replaceable>#</replaceable></arg></group>

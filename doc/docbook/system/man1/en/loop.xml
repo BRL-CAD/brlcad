@@ -21,7 +21,7 @@
 <!-- body begins here -->
 <refsynopsisdiv xml:id='synopsis'>
 <cmdsynopsis>
-  <command>loop</command>    
+  <command>loop</command>
     <arg choice='plain'><replaceable>start</replaceable></arg>
     <arg choice='plain'><replaceable>finish</replaceable></arg>
     <arg choice='opt'><replaceable>increment</replaceable></arg>

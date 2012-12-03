@@ -20,7 +20,7 @@
 <!-- body begins here -->
 <refsynopsisdiv xml:id="synopsis">
 <cmdsynopsis sepchar=" ">
-  <command>pp-fb</command>    
+  <command>pp-fb</command>
     <arg choice="opt" rep="norepeat">-F <replaceable>framebuffer</replaceable></arg>
     <arg choice="opt" rep="norepeat">-W <replaceable>out_width</replaceable></arg>
     <arg choice="opt" rep="norepeat">-N <replaceable>out_height</replaceable></arg>

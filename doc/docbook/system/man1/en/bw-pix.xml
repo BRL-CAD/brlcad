@@ -21,7 +21,7 @@
 <!-- body begins here -->
 <refsynopsisdiv xml:id='synopsis'>
 <cmdsynopsis>
-  <command>bw-pix</command>    
+  <command>bw-pix</command>
     <arg choice='opt'><replaceable>in.bw</replaceable></arg>
     <arg choice='opt'><replaceable>out.pix</replaceable></arg>
 </cmdsynopsis>

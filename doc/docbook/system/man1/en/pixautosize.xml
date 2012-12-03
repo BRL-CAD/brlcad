@@ -20,7 +20,7 @@
 <!-- body begins here -->
 <refsynopsisdiv xml:id="synopsis">
 <cmdsynopsis sepchar=" ">
-  <command>pixautosize</command>    
+  <command>pixautosize</command>
     <arg choice="opt" rep="norepeat">-b <replaceable>bytes_per_sample</replaceable></arg>
     <arg choice="opt" rep="norepeat">-f <replaceable>file_name</replaceable></arg>
     <arg choice="opt" rep="norepeat">-l <replaceable>file_length</replaceable></arg>

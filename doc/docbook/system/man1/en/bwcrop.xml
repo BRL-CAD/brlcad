@@ -21,12 +21,12 @@
 <!-- body begins here -->
 <refsynopsisdiv xml:id='synopsis'>
 <cmdsynopsis>
-  <command>bwcrop</command>    
+  <command>bwcrop</command>
     <arg choice='plain'><replaceable>in.bw</replaceable></arg>
     <arg choice='plain'><replaceable>out.bw</replaceable></arg>
 </cmdsynopsis>
 <cmdsynopsis>
-  <command>bwcrop</command>    
+  <command>bwcrop</command>
     <arg choice='plain'><replaceable>in.bw</replaceable></arg>
     <arg choice='plain'><replaceable>out.bw</replaceable></arg>
     <arg choice='plain'><replaceable>inwidth</replaceable></arg>

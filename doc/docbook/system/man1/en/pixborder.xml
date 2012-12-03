@@ -21,7 +21,7 @@
 <!-- body begins here -->
 <refsynopsisdiv xml:id='synopsis'>
 <cmdsynopsis>
-  <command>pixborder</command>    
+  <command>pixborder</command>
     <arg choice='opt'><arg choice='plain'>-b <replaceable>'R</replaceable></arg><arg choice='plain'><replaceable>G</replaceable></arg><arg choice='plain'><replaceable>B'</replaceable></arg></arg>
     <arg choice='opt'><arg choice='plain'>-e <replaceable>'R</replaceable></arg><arg choice='plain'><replaceable>G</replaceable></arg><arg choice='plain'><replaceable>B'</replaceable></arg></arg>
     <arg choice='opt'><arg choice='plain'>-i <replaceable>'R</replaceable></arg><arg choice='plain'><replaceable>G</replaceable></arg><arg choice='plain'><replaceable>B'</replaceable></arg></arg>

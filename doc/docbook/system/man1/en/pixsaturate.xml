@@ -21,7 +21,7 @@
 <!-- body begins here -->
 <refsynopsisdiv xml:id='synopsis'>
 <cmdsynopsis>
-  <command>pixsaturate</command>    
+  <command>pixsaturate</command>
     <arg choice='plain'><replaceable>saturation</replaceable></arg>
     <arg choice='plain'><replaceable>&gt;</replaceable></arg>
     <arg choice='plain'><replaceable>outfile.pix</replaceable></arg>

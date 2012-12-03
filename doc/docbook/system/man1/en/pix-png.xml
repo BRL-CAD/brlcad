@@ -21,7 +21,7 @@
 <!-- body begins here -->
 <refsynopsisdiv xml:id='synopsis'>
 <cmdsynopsis>
-  <command>pix-png</command>    
+  <command>pix-png</command>
     <arg choice='opt'>-a </arg>
     <arg choice='opt'>-ggamma </arg>
     <arg choice='opt'>-ssquaresize </arg>

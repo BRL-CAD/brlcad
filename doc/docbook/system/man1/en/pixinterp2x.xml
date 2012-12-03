@@ -21,7 +21,7 @@
 <!-- body begins here -->
 <refsynopsisdiv xml:id='synopsis'>
 <cmdsynopsis>
-  <command>pixinterp2x</command>    
+  <command>pixinterp2x</command>
     <arg choice='opt'>-h </arg>
     <arg choice='opt'>-s <replaceable>squarefilesize</replaceable></arg>
     <arg choice='opt'>-w <replaceable>file_width</replaceable></arg>

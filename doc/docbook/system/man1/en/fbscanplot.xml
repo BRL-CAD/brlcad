@@ -20,7 +20,7 @@
 <!-- body begins here -->
 <refsynopsisdiv xml:id="synopsis">
 <cmdsynopsis sepchar=" ">
-  <command>fbscanplot</command>    
+  <command>fbscanplot</command>
     <arg choice="opt" rep="norepeat">-h </arg>
     <arg choice="opt" rep="norepeat">-v </arg>
     <arg choice="opt" rep="norepeat">-o </arg>

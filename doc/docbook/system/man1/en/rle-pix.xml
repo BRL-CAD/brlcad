@@ -21,7 +21,7 @@
 <!-- body begins here -->
 <refsynopsisdiv xml:id='synopsis'>
 <cmdsynopsis>
-  <command>rle-pix</command>    
+  <command>rle-pix</command>
     <arg choice='opt'>-cdhH </arg>
     <arg choice='opt'>-C <replaceable>r/g/b</replaceable></arg>
     <arg choice='opt'>-s <replaceable>squareoutsize</replaceable></arg>

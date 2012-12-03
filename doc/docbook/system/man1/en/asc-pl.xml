@@ -21,7 +21,7 @@
 <!-- body begins here -->
 <refsynopsisdiv xml:id='synopsis'>
 <cmdsynopsis>
-  <command>asc-pl</command>    
+  <command>asc-pl</command>
     <arg choice='opt'><arg choice='plain'><replaceable>file.asc</replaceable></arg><arg choice='opt'><replaceable>unix_plot</replaceable></arg></arg>
 </cmdsynopsis>
 </refsynopsisdiv>

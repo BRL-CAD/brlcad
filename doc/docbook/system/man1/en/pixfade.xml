@@ -21,7 +21,7 @@
 <!-- body begins here -->
 <refsynopsisdiv xml:id='synopsis'>
 <cmdsynopsis>
-  <command>pixfade</command>    
+  <command>pixfade</command>
     <arg choice='opt'>-f <replaceable>fraction</replaceable></arg>
     <arg choice='opt'>-m <replaceable>max</replaceable></arg>
     <arg choice='opt'>-p <replaceable>percentage</replaceable></arg>

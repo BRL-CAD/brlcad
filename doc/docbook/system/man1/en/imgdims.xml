@@ -21,13 +21,13 @@
 <!-- body begins here -->
 <refsynopsisdiv xml:id='synopsis'>
 <cmdsynopsis>
-  <command>imgdims</command>    
+  <command>imgdims</command>
     <arg choice='opt'>-ns </arg>
     <arg choice='opt'>-# <replaceable>bytes_per_pixel</replaceable></arg>
     <arg choice='plain'><replaceable>file_name</replaceable></arg>
 </cmdsynopsis>
 <cmdsynopsis>
-  <command>imgdims</command>    
+  <command>imgdims</command>
     <arg choice='opt'>-# <replaceable>bytes_per_pixel</replaceable></arg>
     <arg choice='plain'><replaceable>num_bytes</replaceable></arg>
     <sbr/>

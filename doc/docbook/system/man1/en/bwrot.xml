@@ -21,7 +21,7 @@
 <!-- body begins here -->
 <refsynopsisdiv xml:id='synopsis'>
 <cmdsynopsis>
-  <command>bwrot</command>    
+  <command>bwrot</command>
     <group choice='opt'><arg choice='plain'>-rifb </arg><arg choice='plain'>-a <replaceable>angle</replaceable></arg></group>
     <arg choice='opt'>-s <replaceable>squaresize</replaceable></arg>
     <arg choice='opt'>-w <replaceable>in_width</replaceable></arg>

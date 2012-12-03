@@ -21,7 +21,7 @@
 <!-- body begins here -->
 <refsynopsisdiv xml:id='synopsis'>
 <cmdsynopsis>
-  <command>scriptsort</command>    
+  <command>scriptsort</command>
     <arg choice='opt'>-fsq </arg>
     <arg choice='opt'>-b <replaceable>base</replaceable></arg>
     <arg choice='opt'>-o <replaceable>frame_offset</replaceable></arg>

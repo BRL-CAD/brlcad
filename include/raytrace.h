@@ -4380,7 +4380,7 @@ RT_EXPORT extern int db_fwrite_external(FILE			*fp,
 					struct bu_external	*ep);
 
 /* malloc & read records */
-					
+
 /**
  * Retrieve all records in the database pertaining to an object, and
  * place them in malloc()'ed storage, which the caller is responsible
@@ -4411,7 +4411,7 @@ RT_EXPORT extern int db_get(const struct db_i *,
 			    off_t offset,
 			    size_t len);
 /* put several records into db */
-				
+
 /**
  * Store 'len' records to the database, "offset" granules into this
  * entry.
@@ -4424,7 +4424,7 @@ RT_EXPORT extern int db_put(struct db_i *,
 			    const struct directory *dp,
 			    union record *where,
 			    off_t offset, size_t len);
-				
+
 /**
  * Obtains a object from the database, leaving it in external (on-disk)
  * format.
@@ -4710,7 +4710,7 @@ RT_EXPORT extern int db_dircheck(struct db_i *dbip,
 				 int noisy,
 				 struct directory ***headp);
 /* convert name to directory ptr */
-				 
+
 /**
  * D B _ L O O K U P
  *
@@ -4756,7 +4756,7 @@ RT_EXPORT extern struct bu_ptbl *db_lookup_by_attr(struct db_i *dbip,
 						   struct bu_attribute_value_set *avs,
 						   int op);
 /* add entry to directory */
-						   
+
 /**
  * D B _ D I R A D D
  *
@@ -4795,7 +4795,7 @@ RT_EXPORT extern struct directory *db_diradd5(struct db_i *dbip,
 					      struct bu_attribute_value_set	*avs);
 
 /* delete entry from directory */
-						  
+
 /**
  * D B _ D I R D E L E T E
  *
@@ -4881,7 +4881,7 @@ RT_EXPORT extern int db_regexp_match_all(struct bu_vls *dest,
 					 struct db_i *dbip,
 					 const char *pattern);
 
-/* db_flags.c */			 
+/* db_flags.c */
 /**
  * Given the internal form of a database object, return the
  * appropriate 'flags' word for stashing in the in-memory directory of
@@ -4991,7 +4991,7 @@ RT_EXPORT extern int db_apply_state_from_comb(struct db_tree_state *tsp,
 RT_EXPORT extern int db_apply_state_from_memb(struct db_tree_state *tsp,
 					      struct db_full_path *pathp,
 					      const union tree *tp);
-						  
+
 /**
  * Returns -
  * -1 found member, failed to apply state
@@ -5003,7 +5003,7 @@ RT_EXPORT extern int db_apply_state_from_one_member(struct db_tree_state *tsp,
 						    const char *cp,
 						    int sofar,
 						    const union tree *tp);
-							
+
 /**
  * The search stops on the first match.
  *
@@ -5103,7 +5103,7 @@ RT_EXPORT extern int db_follow_path(struct db_tree_state *tsp,
 				    const struct db_full_path *new_path,
 				    int noisy,
 				    long pdepth);
-					
+
 /**
  * Follow the slash-separated path given by "cp", and update *tsp and
  * *total_path with full state information along the way.
@@ -5158,7 +5158,7 @@ RT_EXPORT extern void db_left_hvy_node(union tree *tp);
  */
 RT_EXPORT extern void db_non_union_push(union tree *tp,
 					struct resource *resp);
-					
+
 
 /**
  * Return a count of the number of "union tree" nodes below "tp",
@@ -5180,7 +5180,7 @@ RT_EXPORT extern int db_tally_subtree_regions(union tree	*tp,
 					      int		cur,
 					      int		lim,
 					      struct resource *resp);
-						  
+
 /**
  * This is the top interface to the "tree walker."
  *
@@ -5252,7 +5252,7 @@ RT_EXPORT extern int db_walk_tree(struct db_i *dbip,
 							    struct rt_db_internal * /*ip*/,
 							    genptr_t client_data),
 				  genptr_t client_data);
-								
+
 /**
  * Returns -
  * 1 OK, path matrix written into 'mat'.
@@ -5265,7 +5265,7 @@ RT_EXPORT extern int db_path_to_mat(struct db_i		*dbip,
 				    mat_t			mat,		/* result */
 				    int			depth,		/* number of arcs */
 				    struct resource		*resp);
-					
+
 /**
  * 'arc' may be a null pointer, signifying an identity matrix.
  * 'materp' may be a null pointer, signifying that the region has
@@ -5276,7 +5276,7 @@ RT_EXPORT extern void db_apply_anims(struct db_full_path *pathp,
 				     mat_t stck,
 				     mat_t arc,
 				     struct mater_info *materp);
-					 
+
 /**
  * Given the name of a region, return the matrix which maps model
  * coordinates into "region" coordinates.
@@ -5290,7 +5290,7 @@ RT_EXPORT extern int db_region_mat(mat_t		m,		/* result */
 				   const char	*name,
 				   struct resource *resp);
 
-				   
+
 /**
  * XXX given that this routine depends on rtip, it should be called
  * XXX rt_shader_mat().
@@ -5313,7 +5313,7 @@ RT_EXPORT extern int rt_shader_mat(mat_t			model_to_shader,	/* result */
 				   point_t			p_min,	/* input/output: shader/region min point */
 				   point_t			p_max,	/* input/output: shader/region max point */
 				   struct resource		*resp);
-				   
+
 /**
  * Fills a bu_vls with a representation of the given tree appropriate
  * for processing by Tcl scripts.

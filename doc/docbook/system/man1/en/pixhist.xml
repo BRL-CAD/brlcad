@@ -21,7 +21,7 @@
 <!-- body begins here -->
 <refsynopsisdiv xml:id='synopsis'>
 <cmdsynopsis>
-  <command>pixhist</command>    
+  <command>pixhist</command>
     <arg choice='opt'>-v </arg>
     <arg choice='opt'><replaceable>file.pix</replaceable></arg>
 </cmdsynopsis>

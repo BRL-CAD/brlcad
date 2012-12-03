@@ -21,7 +21,7 @@
 <!-- body begins here -->
 <refsynopsisdiv xml:id='synopsis'>
 <cmdsynopsis>
-  <command>ap-pix</command>    
+  <command>ap-pix</command>
     <arg choice='opt'>-v </arg>
     <arg choice='plain'><replaceable>file.ap</replaceable></arg>
     <arg choice='plain'><replaceable>&gt;</replaceable></arg>

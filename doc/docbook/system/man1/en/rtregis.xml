@@ -20,7 +20,7 @@
 <!-- body begins here -->
 <refsynopsisdiv xml:id='synopsis'>
 <cmdsynopsis>
-  <command>rtregis</command>    
+  <command>rtregis</command>
     <arg choice='plain'><replaceable>plot.log</replaceable></arg>
     <arg choice='plain'><replaceable>pix.log</replaceable></arg>
     <arg choice='plain'><replaceable>&gt;</replaceable></arg>

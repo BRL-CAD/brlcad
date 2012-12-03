@@ -21,7 +21,7 @@
 <!-- body begins here -->
 <refsynopsisdiv xml:id='synopsis'>
 <cmdsynopsis>
-  <command>rtwalk</command>    
+  <command>rtwalk</command>
     <arg choice='opt' rep='repeat'><replaceable>options</replaceable></arg>
     <arg choice='plain'><replaceable>startX</replaceable></arg>
     <arg choice='plain'><replaceable>startY</replaceable></arg>
@@ -31,7 +31,7 @@
     <arg choice='plain'><replaceable>destZ</replaceable></arg>
     <arg choice='plain'><replaceable>model.g</replaceable></arg>
     <arg choice='plain' rep='repeat'><replaceable>objects</replaceable></arg>
-    
+
 </cmdsynopsis>
 </refsynopsisdiv>
 

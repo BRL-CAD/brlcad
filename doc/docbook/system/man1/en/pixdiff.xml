@@ -21,7 +21,7 @@
 <!-- body begins here -->
 <refsynopsisdiv xml:id='synopsis'>
 <cmdsynopsis>
-  <command>pixdiff</command>    
+  <command>pixdiff</command>
     <arg choice='plain'><replaceable>file1.pix</replaceable></arg>
     <arg choice='plain'><replaceable>file2.pix</replaceable></arg>
     <arg choice='plain'><replaceable>&gt;</replaceable></arg>

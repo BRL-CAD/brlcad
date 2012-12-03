@@ -25,7 +25,7 @@
 <!-- body begins here -->
 <refsynopsisdiv xml:id='synopsis'>
 <cmdsynopsis>
-  <command>sqlite3</command>    
+  <command>sqlite3</command>
     <arg choice='opt'><replaceable>options</replaceable></arg>
     <arg choice='opt'><replaceable>databasefile</replaceable></arg>
     <arg choice='opt'><replaceable>SQL</replaceable></arg>
@@ -56,7 +56,7 @@ does exist, it will be opened.</para>
 <para>For example, to create a new database file named "mydata.db", create
 a table named "memos" and insert a couple of records into that table:</para>
 
-<para>$ 
+<para>$
 <emphasis remap='B'>sqlite3 mydata.db</emphasis>
 <!-- .br -->
 SQLite version 3.1.3
@@ -94,7 +94,7 @@ semi-colons.</para>
 
 <para>For example:</para>
 
-<para>$ 
+<para>$
 <userinput>sqlite3 -line mydata.db 'select * from memos where priority &gt; 20;'</userinput>
 <!-- .br -->
     text = lunch with Christine
@@ -256,7 +256,7 @@ continue prompt = "   ...&gt; "
 
 </literallayout> <!-- .fi -->
 
-<para>o If the file 
+<para>o If the file
 <filename>~/.sqliterc</filename>
 exists, it is processed first.
 can be found in the user's home directory, it is

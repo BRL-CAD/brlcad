@@ -21,7 +21,7 @@
 <!-- body begins here -->
 <refsynopsisdiv xml:id='synopsis'>
 <cmdsynopsis>
-  <command>pixcmp</command>    
+  <command>pixcmp</command>
     <arg choice='opt'><replaceable>OPTIONS</replaceable></arg>
     <arg choice='plain'><replaceable>FILE1</replaceable></arg>
     <arg choice='opt'><arg choice='plain'><replaceable>FILE2</replaceable></arg><arg choice='opt'><arg choice='plain'><replaceable>SKIP1</replaceable></arg><arg choice='opt'><replaceable>SKIP2</replaceable></arg></arg></arg>

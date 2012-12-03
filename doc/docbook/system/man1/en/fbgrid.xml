@@ -20,7 +20,7 @@
 <!-- body begins here -->
 <refsynopsisdiv xml:id="synopsis">
 <cmdsynopsis sepchar=" ">
-  <command>fbgrid</command>    
+  <command>fbgrid</command>
     <arg choice="opt" rep="norepeat">-hcbdo </arg>
     <arg choice="opt" rep="norepeat">-F <replaceable>framebuffer</replaceable></arg>
     <arg choice="opt" rep="norepeat">-S <replaceable>squaresize</replaceable></arg>

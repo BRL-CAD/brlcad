@@ -21,7 +21,7 @@
 <!-- body begins here -->
 <refsynopsisdiv xml:id='synopsis'>
 <cmdsynopsis>
-  <command>bwdiff</command>    
+  <command>bwdiff</command>
     <arg choice='opt'><arg choice='plain'>- </arg><arg choice='opt'><replaceable>mglen</replaceable></arg></arg>
     <arg choice='opt'>-b </arg>
     <arg choice='plain'><replaceable>file1</replaceable></arg>

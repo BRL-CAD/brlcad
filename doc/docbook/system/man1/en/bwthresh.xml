@@ -21,7 +21,7 @@
 <!-- body begins here -->
 <refsynopsisdiv xml:id='synopsis'>
 <cmdsynopsis>
-  <command>bwthresh</command>    
+  <command>bwthresh</command>
     <arg choice='plain' rep='repeat'><replaceable>val</replaceable></arg>
     <arg choice='plain'><replaceable>&lt;</replaceable></arg>
     <arg choice='plain'><replaceable>file.bw</replaceable></arg>

@@ -20,7 +20,7 @@
 <!-- body begins here -->
 <refsynopsisdiv xml:id="synopsis">
 <cmdsynopsis sepchar=" ">
-  <command>fb-orle</command>    
+  <command>fb-orle</command>
     <arg choice="opt" rep="norepeat">-CShvw </arg>
     <arg choice="opt" rep="norepeat"><arg choice="plain" rep="norepeat">-c </arg><arg choice="opt" rep="norepeat"><replaceable>rgbwBG</replaceable></arg></arg>
     <arg choice="opt" rep="norepeat"><arg choice="plain" rep="norepeat">-l </arg><arg choice="plain" rep="norepeat"><replaceable>x</replaceable></arg><arg choice="plain" rep="norepeat"><replaceable>y</replaceable></arg></arg>

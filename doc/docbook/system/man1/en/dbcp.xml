@@ -21,7 +21,7 @@
 <!-- body begins here -->
 <refsynopsisdiv xml:id='synopsis'>
 <cmdsynopsis>
-  <command>dbcp</command>    
+  <command>dbcp</command>
     <arg choice='opt'>-v </arg>
     <arg choice='plain'><replaceable>blocksize</replaceable></arg>
     <arg choice='plain'><replaceable>&lt;</replaceable></arg>

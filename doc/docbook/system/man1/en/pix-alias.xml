@@ -21,7 +21,7 @@
 <!-- body begins here -->
 <refsynopsisdiv xml:id='synopsis'>
 <cmdsynopsis>
-  <command>pix-alias</command>    
+  <command>pix-alias</command>
     <arg choice='opt'>-s <replaceable>squaresize</replaceable></arg>
     <arg choice='opt'>-w <replaceable>file_width</replaceable></arg>
     <arg choice='opt'>-nfile_height </arg>

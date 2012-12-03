@@ -21,7 +21,7 @@
 <!-- body begins here -->
 <refsynopsisdiv xml:id='synopsis'>
 <cmdsynopsis>
-  <command>pictx</command>    
+  <command>pictx</command>
 </cmdsynopsis>
 </refsynopsisdiv>
 

@@ -21,7 +21,7 @@
 <!-- body begins here -->
 <refsynopsisdiv xml:id='synopsis'>
 <cmdsynopsis>
-  <command>wavelet</command>    
+  <command>wavelet</command>
     <arg choice='opt'>-1 </arg>
     <arg choice='opt'>-2 </arg>
     <arg choice='opt'>-d </arg>

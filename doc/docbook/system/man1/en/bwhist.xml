@@ -21,7 +21,7 @@
 <!-- body begins here -->
 <refsynopsisdiv xml:id='synopsis'>
 <cmdsynopsis>
-  <command>bwhist</command>    
+  <command>bwhist</command>
     <arg choice='opt'>-v </arg>
     <arg choice='opt'><replaceable>file.bw</replaceable></arg>
 </cmdsynopsis>

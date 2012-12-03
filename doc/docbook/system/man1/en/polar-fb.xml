@@ -20,7 +20,7 @@
 <!-- body begins here -->
 <refsynopsisdiv xml:id="synopsis">
 <cmdsynopsis sepchar=" ">
-  <command>polar-fb</command>    
+  <command>polar-fb</command>
     <arg choice="opt" rep="norepeat"><replaceable>options</replaceable></arg>
     <arg choice="opt" rep="norepeat"><replaceable>file</replaceable></arg>
 </cmdsynopsis>

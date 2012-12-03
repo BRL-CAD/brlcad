@@ -21,7 +21,7 @@
 <!-- body begins here -->
 <refsynopsisdiv xml:id='synopsis'>
 <cmdsynopsis>
-  <command>pix-orle</command>    
+  <command>pix-orle</command>
     <arg choice='opt'>-hdv </arg>
     <arg choice='opt'>-s <replaceable>squarefilesize</replaceable></arg>
     <arg choice='opt'>-w <replaceable>file_width</replaceable></arg>

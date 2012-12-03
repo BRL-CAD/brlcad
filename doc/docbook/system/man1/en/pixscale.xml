@@ -19,7 +19,7 @@
 <!-- body begins here -->
 <refsynopsisdiv xml:id='synopsis'>
 <cmdsynopsis>
-  <command>pixscale</command>    
+  <command>pixscale</command>
     <arg choice='opt'>-h </arg>
     <arg choice='opt'>-r </arg>
     <arg choice='opt'>-s <replaceable>squareinsize</replaceable></arg>

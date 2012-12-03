@@ -21,7 +21,7 @@
 <!-- body begins here -->
 <refsynopsisdiv xml:id='synopsis'>
 <cmdsynopsis>
-  <command>bwfilter</command>    
+  <command>bwfilter</command>
     <arg choice='opt'>-f <replaceable>type</replaceable></arg>
     <arg choice='opt'>-v </arg>
     <arg choice='opt'>-d <replaceable>div</replaceable></arg>

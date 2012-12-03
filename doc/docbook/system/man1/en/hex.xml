@@ -21,7 +21,7 @@
 <!-- body begins here -->
 <refsynopsisdiv xml:id='synopsis'>
 <cmdsynopsis>
-  <command>hex</command>    
+  <command>hex</command>
     <arg choice='opt'>-o <replaceable>offset</replaceable></arg>
     <arg choice='opt' rep='repeat'><replaceable>file</replaceable></arg>
 </cmdsynopsis>

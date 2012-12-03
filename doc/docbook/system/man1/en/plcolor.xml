@@ -21,7 +21,7 @@
 <!-- body begins here -->
 <refsynopsisdiv xml:id='synopsis'>
 <cmdsynopsis>
-  <command>color</command>    
+  <command>color</command>
     <arg choice='plain'><replaceable>r</replaceable></arg>
     <arg choice='plain'><replaceable>g</replaceable></arg>
     <arg choice='plain'><replaceable>b</replaceable></arg>

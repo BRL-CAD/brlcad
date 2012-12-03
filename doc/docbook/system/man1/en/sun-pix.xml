@@ -21,7 +21,7 @@
 <!-- body begins here -->
 <refsynopsisdiv xml:id='synopsis'>
 <cmdsynopsis>
-  <command>sun-pix</command>    
+  <command>sun-pix</command>
     <arg choice='opt'>-b </arg>
     <arg choice='opt'>-h </arg>
     <arg choice='opt'>-i </arg>

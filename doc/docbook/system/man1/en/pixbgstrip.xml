@@ -21,7 +21,7 @@
 <!-- body begins here -->
 <refsynopsisdiv xml:id='synopsis'>
 <cmdsynopsis>
-  <command>pixbgstrip</command>    
+  <command>pixbgstrip</command>
     <arg choice='opt'>-ah </arg>
     <arg choice='opt'>-t <replaceable>thresh</replaceable></arg>
     <arg choice='opt'>-x <replaceable>x_offset_for_bg_pixel</replaceable></arg>

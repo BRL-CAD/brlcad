@@ -21,7 +21,7 @@
 <!-- body begins here -->
 <refsynopsisdiv xml:id='synopsis'>
 <cmdsynopsis>
-  <command>ssamp-bw</command>    
+  <command>ssamp-bw</command>
     <arg choice='opt'>-v </arg>
     <arg choice='opt'>-s <replaceable>squarefilesize</replaceable></arg>
     <arg choice='opt'>-w <replaceable>file_width</replaceable></arg>

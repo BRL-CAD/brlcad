@@ -20,7 +20,7 @@
 <!-- body begins here -->
 <refsynopsisdiv xml:id="synopsis">
 <cmdsynopsis sepchar=" ">
-  <command>cell-fb</command>    
+  <command>cell-fb</command>
     <arg choice="opt" rep="repeat"><replaceable>options</replaceable></arg>
     <arg choice="opt" rep="norepeat"><replaceable>file</replaceable></arg>
 </cmdsynopsis>

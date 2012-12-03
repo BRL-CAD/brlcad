@@ -21,7 +21,7 @@
 <!-- body begins here -->
 <refsynopsisdiv xml:id='synopsis'>
 <cmdsynopsis>
-  <command>png-pix</command>    
+  <command>png-pix</command>
     <arg choice='opt'>-v </arg>
     <arg choice='opt'><replaceable>file.png</replaceable></arg>
     <arg choice='plain'><replaceable>&gt;</replaceable></arg>

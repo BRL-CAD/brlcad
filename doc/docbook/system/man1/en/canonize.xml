@@ -21,7 +21,7 @@
 <!-- body begins here -->
 <refsynopsisdiv xml:id='synopsis'>
 <cmdsynopsis>
-  <command>canonize</command>    
+  <command>canonize</command>
     <arg choice='opt'>-ah </arg>
     <arg choice='opt'>-s <replaceable>squarefilesize</replaceable></arg>
     <sbr/>

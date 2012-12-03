@@ -32,7 +32,7 @@
 </refnamediv>
 <refsynopsisdiv xml:id='synopsis'>
 <cmdsynopsis>
-  <command>enigma,</command>    
+  <command>enigma,</command>
     <arg choice='plain'>--s </arg>
     <arg choice='plain'>--k </arg>
     <arg choice='plain'><replaceable>password</replaceable></arg>

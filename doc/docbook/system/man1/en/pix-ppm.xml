@@ -21,7 +21,7 @@
 <!-- body begins here -->
 <refsynopsisdiv xml:id='synopsis'>
 <cmdsynopsis>
-  <command>pix-ppm</command>    
+  <command>pix-ppm</command>
     <arg choice='opt'>-a </arg>
     <arg choice='opt'>-ssquaresize </arg>
     <arg choice='opt'>-wfile_width </arg>

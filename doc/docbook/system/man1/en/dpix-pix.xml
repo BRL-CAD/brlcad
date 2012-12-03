@@ -21,7 +21,7 @@
 <!-- body begins here -->
 <refsynopsisdiv xml:id='synopsis'>
 <cmdsynopsis>
-  <command>dpix-pix</command>    
+  <command>dpix-pix</command>
     <arg choice='plain'><replaceable>file.dpix</replaceable></arg>
     <arg choice='plain'><replaceable>&gt;</replaceable></arg>
     <arg choice='plain'><replaceable>file.pix</replaceable></arg>

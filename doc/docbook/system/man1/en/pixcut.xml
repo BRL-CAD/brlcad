@@ -21,7 +21,7 @@
 <!-- body begins here -->
 <refsynopsisdiv xml:id='synopsis'>
 <cmdsynopsis>
-  <command>pixcut</command>    
+  <command>pixcut</command>
     <arg choice='opt'>-v </arg>
     <arg choice='opt'>-h </arg>
     <arg choice='opt'>-H </arg>

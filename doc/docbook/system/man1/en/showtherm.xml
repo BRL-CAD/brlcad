@@ -23,7 +23,7 @@
 <cmdsynopsis>
   <command>showtherm</command>    <arg choice='plain'><replaceable>model.g</replaceable></arg>
     <arg choice='plain' rep='repeat'><replaceable>objects</replaceable></arg>
-    
+
 </cmdsynopsis>
 </refsynopsisdiv>
 

@@ -21,7 +21,7 @@
 <!-- body begins here -->
 <refsynopsisdiv xml:id='synopsis'>
 <cmdsynopsis>
-  <command>random</command>    
+  <command>random</command>
     <arg choice='opt'>-s <replaceable>seed</replaceable></arg>
     <arg choice='opt'><arg choice='plain'>-g </arg><arg choice='opt'>-c <replaceable>center</replaceable></arg></arg>
     <arg choice='opt'>-u </arg>

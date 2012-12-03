@@ -21,7 +21,7 @@
 <!-- body begins here -->
 <refsynopsisdiv xml:id='synopsis'>
 <cmdsynopsis>
-  <command>tabsub</command>    
+  <command>tabsub</command>
     <arg choice='plain'><replaceable>template_file</replaceable></arg>
     <arg choice='plain'><replaceable>&lt;table.final</replaceable></arg>
     <arg choice='plain'><replaceable>&gt;&gt;script</replaceable></arg>

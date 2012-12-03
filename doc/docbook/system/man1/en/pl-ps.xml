@@ -21,7 +21,7 @@
 <!-- body begins here -->
 <refsynopsisdiv xml:id='synopsis'>
 <cmdsynopsis>
-  <command>pl-ps</command>    
+  <command>pl-ps</command>
     <arg choice='opt'>-ec </arg>
     <arg choice='opt'>-s <replaceable>square_output_size</replaceable></arg>
     <arg choice='opt'>-w <replaceable>output_width</replaceable></arg>

@@ -21,7 +21,7 @@
 <!-- body begins here -->
 <refsynopsisdiv xml:id='synopsis'>
 <cmdsynopsis>
-  <command>png-bw</command>    
+  <command>png-bw</command>
     <arg choice='opt'>-ntsc </arg>
     <arg choice='opt'>-crt </arg>
     <arg choice='opt'><arg choice='plain'>-R </arg><arg choice='opt'><replaceable>num</replaceable></arg></arg>

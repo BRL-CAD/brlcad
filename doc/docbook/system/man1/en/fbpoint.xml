@@ -20,7 +20,7 @@
 <!-- body begins here -->
 <refsynopsisdiv xml:id="synopsis">
 <cmdsynopsis sepchar=" ">
-  <command>fbpoint</command>    
+  <command>fbpoint</command>
     <arg choice="opt" rep="norepeat">-h </arg>
     <arg choice="opt" rep="norepeat"><arg choice="plain" rep="norepeat">-x </arg><arg choice="opt" rep="norepeat"><replaceable>prefix</replaceable></arg></arg>
     <arg choice="opt" rep="norepeat"><arg choice="plain" rep="norepeat">-y </arg><arg choice="opt" rep="norepeat"><replaceable>prefix</replaceable></arg></arg>

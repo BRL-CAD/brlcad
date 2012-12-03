@@ -20,7 +20,7 @@
 <!-- body begins here -->
 <refsynopsisdiv xml:id="synopsis">
 <cmdsynopsis sepchar=" ">
-  <command>fbcolor</command>    
+  <command>fbcolor</command>
     <arg choice="opt" rep="norepeat">-h </arg>
     <arg choice="opt" rep="norepeat"><arg choice="plain" rep="norepeat">-S <replaceable>screen</replaceable></arg><arg choice="plain" rep="norepeat"><replaceable>squaresize</replaceable></arg></arg>
     <arg choice="opt" rep="norepeat"><arg choice="plain" rep="norepeat">-W <replaceable>screen</replaceable></arg><arg choice="plain" rep="norepeat"><replaceable>width</replaceable></arg></arg>

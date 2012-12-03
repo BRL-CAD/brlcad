@@ -21,7 +21,7 @@
 <!-- body begins here -->
 <refsynopsisdiv xml:id='synopsis'>
 <cmdsynopsis>
-  <command>mac-pix</command>    
+  <command>mac-pix</command>
     <arg choice='opt'>-clb </arg>
     <arg choice='opt'>-s <replaceable>squareMacSize</replaceable></arg>
     <arg choice='opt'>-w <replaceable>Mac_width</replaceable></arg>

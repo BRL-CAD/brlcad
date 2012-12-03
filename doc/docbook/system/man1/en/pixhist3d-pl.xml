@@ -21,7 +21,7 @@
 <!-- body begins here -->
 <refsynopsisdiv xml:id='synopsis'>
 <cmdsynopsis>
-  <command>pixhist3d-pl</command>    
+  <command>pixhist3d-pl</command>
     <group choice='plain'><arg choice='opt'><replaceable>file.pix</replaceable></arg><arg choice='plain'><replaceable>plot</replaceable></arg></group>
 </cmdsynopsis>
 </refsynopsisdiv>

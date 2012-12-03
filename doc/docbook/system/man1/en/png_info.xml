@@ -21,7 +21,7 @@
 <!-- body begins here -->
 <refsynopsisdiv xml:id='synopsis'>
 <cmdsynopsis>
-  <command>png_info</command>    
+  <command>png_info</command>
     <arg choice='opt'><replaceable>in.png</replaceable></arg>
 </cmdsynopsis>
 </refsynopsisdiv>

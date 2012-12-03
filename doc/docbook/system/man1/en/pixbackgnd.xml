@@ -21,7 +21,7 @@
 <!-- body begins here -->
 <refsynopsisdiv xml:id='synopsis'>
 <cmdsynopsis>
-  <command>pixbackgnd</command>    
+  <command>pixbackgnd</command>
     <arg choice='opt'>-h </arg>
     <arg choice='opt'>-i </arg>
     <arg choice='opt'>-s <replaceable>squaresize</replaceable></arg>
@@ -36,7 +36,7 @@
     <arg choice='plain'><replaceable>file.pix</replaceable></arg>
 </cmdsynopsis>
 <cmdsynopsis>
-  <command>pixbackgnd</command>    
+  <command>pixbackgnd</command>
     <arg choice='opt'>-h </arg>
     <arg choice='opt'>-i </arg>
     <arg choice='opt'>-s <replaceable>squaresize</replaceable></arg>

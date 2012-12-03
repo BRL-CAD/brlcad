@@ -21,7 +21,7 @@
 <!-- body begins here -->
 <refsynopsisdiv xml:id='synopsis'>
 <cmdsynopsis>
-  <command>pldebug</command>    
+  <command>pldebug</command>
     <arg choice='opt'>-v </arg>
     <arg choice='opt'><replaceable>unix_plot</replaceable></arg>
 </cmdsynopsis>

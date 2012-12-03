@@ -21,7 +21,7 @@
 <!-- body begins here -->
 <refsynopsisdiv xml:id='synopsis'>
 <cmdsynopsis>
-  <command>bwhisteq</command>    
+  <command>bwhisteq</command>
     <arg choice='opt'>-v </arg>
     <arg choice='plain'><replaceable>file.bw</replaceable></arg>
     <arg choice='plain'><replaceable>&gt;</replaceable></arg>

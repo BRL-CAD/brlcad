@@ -21,7 +21,7 @@
 <!-- body begins here -->
 <refsynopsisdiv xml:id='synopsis'>
 <cmdsynopsis>
-  <command>pixmatte</command>    
+  <command>pixmatte</command>
     <arg choice='opt'>-a </arg>
     <arg choice='opt'>-w <replaceable>bytes_wide</replaceable></arg>
     <arg choice='opt'>-glen </arg>

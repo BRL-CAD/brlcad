@@ -21,7 +21,7 @@
 <!-- body begins here -->
 <refsynopsisdiv xml:id='synopsis'>
 <cmdsynopsis>
-  <command>cv</command>    
+  <command>cv</command>
     <arg choice='plain'><replaceable>in_pat</replaceable></arg>
     <arg choice='plain'><replaceable>out_pat</replaceable></arg>
     <arg choice='opt'><arg choice='opt'><replaceable>infile</replaceable></arg><arg choice='plain'><replaceable>outfile</replaceable></arg></arg>

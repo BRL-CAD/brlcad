@@ -21,7 +21,7 @@
 <!-- body begins here -->
 <refsynopsisdiv xml:id='synopsis'>
 <cmdsynopsis>
-  <command>pixrect</command>    
+  <command>pixrect</command>
     <arg choice='opt'>-#bytes </arg>
     <arg choice='plain'><replaceable>infile</replaceable></arg>
     <arg choice='plain'><replaceable>outfile</replaceable></arg>

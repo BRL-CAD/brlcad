@@ -21,7 +21,7 @@
 <!-- body begins here -->
 <refsynopsisdiv xml:id='synopsis'>
 <cmdsynopsis>
-  <command>pixuntile</command>    
+  <command>pixuntile</command>
     <arg choice='opt'>-h </arg>
     <arg choice='opt'>-s <replaceable>squareinsize</replaceable></arg>
     <arg choice='opt'>-w <replaceable>in_width</replaceable></arg>
@@ -35,7 +35,7 @@
     <arg choice='plain'><replaceable>file.pix</replaceable></arg>
 </cmdsynopsis>
 <cmdsynopsis>
-  <command>pixuntile</command>    
+  <command>pixuntile</command>
     <arg choice='opt'>-h </arg>
     <arg choice='opt'>-s <replaceable>squareinsize</replaceable></arg>
     <arg choice='opt'>-w <replaceable>in_width</replaceable></arg>

@@ -21,7 +21,7 @@
 <!-- body begins here -->
 <refsynopsisdiv xml:id='synopsis'>
 <cmdsynopsis>
-  <command>pixrot</command>    
+  <command>pixrot</command>
     <arg choice='opt'>-#bytes </arg>
     <arg choice='opt'>-rifb </arg>
     <arg choice='opt'>-s <replaceable>squaresize</replaceable></arg>

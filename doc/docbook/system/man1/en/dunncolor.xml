@@ -21,7 +21,7 @@
 <!-- body begins here -->
 <refsynopsisdiv xml:id='synopsis'>
 <cmdsynopsis>
-  <command>dunncolor</command>    
+  <command>dunncolor</command>
     <arg choice='opt'>-p </arg>
     <arg choice='plain'><replaceable>baseval</replaceable></arg>
     <arg choice='plain'><replaceable>redval</replaceable></arg>

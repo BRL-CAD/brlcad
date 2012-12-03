@@ -20,7 +20,7 @@
 <!-- body begins here -->
 <refsynopsisdiv xml:id='synopsis'>
 <cmdsynopsis>
-  <command>pixsubst</command>    
+  <command>pixsubst</command>
     <arg choice='opt'><arg choice='plain'><replaceable>R_in</replaceable></arg><arg choice='plain'><replaceable>G_in</replaceable></arg><arg choice='plain'><replaceable>B_in</replaceable></arg></arg>
     <arg choice='plain'><replaceable>R_out</replaceable></arg>
     <arg choice='plain'><replaceable>G_out</replaceable></arg>

@@ -20,7 +20,7 @@
 <!-- body begins here -->
 <refsynopsisdiv xml:id="synopsis">
 <cmdsynopsis sepchar=" ">
-  <command>rle-fb</command>    
+  <command>rle-fb</command>
     <arg choice="opt" rep="norepeat">-Ocdh </arg>
     <arg choice="opt" rep="norepeat">-F <replaceable>framebuffer</replaceable></arg>
     <arg choice="opt" rep="norepeat">-C <replaceable>r/g/b</replaceable></arg>

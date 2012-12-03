@@ -21,7 +21,7 @@
 <!-- body begins here -->
 <refsynopsisdiv xml:id='synopsis'>
 <cmdsynopsis>
-  <command>pix-ps</command>    
+  <command>pix-ps</command>
     <arg choice='opt'>-e </arg>
     <arg choice='opt'>-c </arg>
     <arg choice='opt'>-L </arg>

@@ -21,16 +21,16 @@
 <!-- body begins here -->
 <refsynopsisdiv xml:id='synopsis'>
 <cmdsynopsis>
-  <command>chan_permute</command>    
+  <command>chan_permute</command>
     <arg choice='plain'>-i <replaceable>infile1</replaceable></arg>
     <arg choice='plain'><replaceable>id</replaceable></arg>
     <arg choice='plain' rep='repeat'><replaceable>id</replaceable></arg>
-    
+
     <arg choice='opt'><arg choice='plain'>-i <replaceable>infile2</replaceable></arg><arg choice='plain' rep='repeat'><replaceable>id</replaceable></arg></arg>
     <arg choice='plain'>-o <replaceable>outfile1</replaceable></arg>
     <arg choice='plain'><replaceable>id</replaceable></arg>
     <arg choice='plain' rep='repeat'><replaceable>id</replaceable></arg>
-    
+
     <arg choice='opt'><arg choice='plain'>-o <replaceable>outfile2</replaceable></arg><arg choice='plain' rep='repeat'><replaceable>id</replaceable></arg></arg>
 </cmdsynopsis>
 </refsynopsisdiv>

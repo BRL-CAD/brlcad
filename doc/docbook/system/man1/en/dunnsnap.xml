@@ -21,7 +21,7 @@
 <!-- body begins here -->
 <refsynopsisdiv xml:id='synopsis'>
 <cmdsynopsis>
-  <command>dunnsnap</command>    
+  <command>dunnsnap</command>
     <arg choice='opt'>-F <replaceable>framebuffer</replaceable></arg>
     <arg choice='opt'><arg choice='plain'>- </arg><arg choice='opt'><replaceable>sS</replaceable></arg><arg choice='plain'><replaceable>squarescrsize</replaceable></arg></arg>
     <arg choice='opt'><arg choice='plain'>- </arg><arg choice='opt'><replaceable>wW</replaceable></arg><arg choice='plain'><replaceable>scr_width</replaceable></arg></arg>
