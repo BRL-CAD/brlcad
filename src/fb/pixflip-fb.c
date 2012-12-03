@@ -220,7 +220,7 @@ main(int argc, char **argv)
 	char *ifname;
 
 	if ((obuf = (unsigned char *)malloc(scanbytes)) == (unsigned char *)0) {
-	    (void)fprintf(stderr, "pixflip-fb:  malloc %d failure\n", scanbytes);
+	    fprintf(stderr, "pixflip-fb:  malloc %d failure\n", scanbytes);
 	    break;
 	}
 	memset((char *)obuf, 0, scanbytes);

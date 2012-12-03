@@ -35,9 +35,9 @@
 #include "orle.h"
 
 #define PRNT_A1_DEBUG(_op, _n)					\
-    if (rle_debug) (void)fprintf(stderr, "%s(%d)\n", _op, _n)
+    if (rle_debug) fprintf(stderr, "%s(%d)\n", _op, _n)
 #define PRNT_A2_DEBUG(_op, _n, _c)					\
-    if (rle_debug) (void)fprintf(stderr, "%s(%ld, %d)\n", _op, (long)(_n), _c)
+    if (rle_debug) fprintf(stderr, "%s(%ld, %d)\n", _op, (long)(_n), _c)
 #define CUR RED		/* Must be rightmost part of Pixel.		*/
 
 /* States for run detection */

@@ -143,7 +143,7 @@ get_args(int argc, char **argv)
     } else {
 	file_name = argv[bu_optind];
 	if ((infp = fopen(file_name, "r")) == NULL) {
-	    (void)fprintf(stderr,
+	    fprintf(stderr,
 			  "bw-imp: cannot open \"%s\" for reading\n",
 			  file_name);
 	    return false;
@@ -151,7 +151,7 @@ get_args(int argc, char **argv)
     }
 
     if (argc > ++bu_optind)
-	(void)fprintf(stderr, "bw-imp: excess argument(s) ignored\n");
+	fprintf(stderr, "bw-imp: excess argument(s) ignored\n");
 
     return true;
 }
@@ -207,7 +207,7 @@ int
 im_header(void)
 {
 
-    (void)printf("@document(language impress, prerasterization on, Name \"%s\")",
+    printf("@document(language impress, prerasterization on, Name \"%s\")",
 		 file_name
 	);
 

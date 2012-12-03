@@ -200,7 +200,7 @@ get_args(int argc, char **argv)
     }
 
     if ( argc > ++bu_optind )
-	(void)fprintf( stderr, "fbcbars: excess argument(s) ignored\n" );
+	fprintf( stderr, "fbcbars: excess argument(s) ignored\n" );
 
     return 1;		/* OK */
 }

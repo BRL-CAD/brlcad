@@ -100,7 +100,7 @@ get_args(int argc, char **argv)
     } else {
 	file_name = argv[bu_optind];
 	if ((outfp = fopen(file_name, "wb")) == NULL) {
-	    (void)fprintf(stderr,
+	    fprintf(stderr,
 			  "fb-bw: cannot open \"%s\" for writing\n",
 			  file_name);
 	    return 0;
@@ -108,7 +108,7 @@ get_args(int argc, char **argv)
     }
 
     if (argc > ++bu_optind)
-	(void)fprintf(stderr, "fb-bw: excess argument(s) ignored\n");
+	fprintf(stderr, "fb-bw: excess argument(s) ignored\n");
 
     return 1;		/* OK */
 }

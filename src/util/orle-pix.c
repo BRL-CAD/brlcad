@@ -110,7 +110,7 @@ main(int argc, char **argv)
 	/* Standard linear colormap */
 	non_linear_cmap = 0;
     }
-    if (rle_verbose)  (void)fprintf(stderr, "Using %s colormap\n",
+    if (rle_verbose)  fprintf(stderr, "Using %s colormap\n",
 				    non_linear_cmap ? "stored" : "linear");
 
     /* Fill buffer with background.	*/

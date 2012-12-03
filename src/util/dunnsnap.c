@@ -92,7 +92,7 @@ get_args(int argc, char **argv)
 	nframes = atoi(argv[bu_optind]);
     }
     if (argc > ++bu_optind)
-	(void)fprintf(stderr, "dunnsnap: excess argument(s) ignored\n");
+	fprintf(stderr, "dunnsnap: excess argument(s) ignored\n");
 
     return 1;		/* OK */
 }

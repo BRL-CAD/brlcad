@@ -301,8 +301,8 @@ void
 usage(void)
 {
 
-    (void)fprintf(stderr, "Usage: %s [-s squaresize] [-w width] [-n height] [ -d ]\n", progname);
-    (void)fprintf(stderr, "\t< BRLpixfile > rasterfile\n");
+    fprintf(stderr, "Usage: %s [-s squaresize] [-w width] [-n height] [ -d ]\n", progname);
+    fprintf(stderr, "\t< BRLpixfile > rasterfile\n");
     bu_exit (1, NULL);
 }
 

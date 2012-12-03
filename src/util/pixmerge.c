@@ -125,7 +125,7 @@ get_args(int argc, char **argv)
 	f1 = stdin;
     else if ((f1 = fopen(f1_name, "r")) == NULL) {
 	perror(f1_name);
-	(void)fprintf(stderr,
+	fprintf(stderr,
 		      "pixmerge: cannot open \"%s\" for reading\n",
 		      f1_name);
 	return 0;
@@ -136,14 +136,14 @@ get_args(int argc, char **argv)
 	f2 = stdin;
     else if ((f2 = fopen(f2_name, "r")) == NULL) {
 	perror(f2_name);
-	(void)fprintf(stderr,
+	fprintf(stderr,
 		      "pixmerge: cannot open \"%s\" for reading\n",
 		      f2_name);
 	return 0;
     }
 
     if (argc > bu_optind)
-	(void)fprintf(stderr, "pixmerge: excess argument(s) ignored\n");
+	fprintf(stderr, "pixmerge: excess argument(s) ignored\n");
 
     return 1;		/* OK */
 }

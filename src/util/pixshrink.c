@@ -53,7 +53,7 @@ UCHAR *read_image(int scanlen, int Width, int Height, unsigned char *buffer)
 
     if (!buffer &&
 	(buffer=(UCHAR *)malloc(scanlen * Height)) == (UCHAR *)NULL) {
-	(void)fprintf(stderr, "%s: cannot allocate input buffer\n",
+	fprintf(stderr, "%s: cannot allocate input buffer\n",
 		      progname);
 	bu_exit (-1, NULL);
     }
@@ -226,7 +226,7 @@ void parse_args(int ac, char **av)
 	bu_free(ifname,"ifname alloc from bu_realpath");
     }
     if (bu_optind+1 < ac)
-	(void)fprintf(stderr, "%s: Excess arguments ignored\n", progname);
+	fprintf(stderr, "%s: Excess arguments ignored\n", progname);
 
 }
 

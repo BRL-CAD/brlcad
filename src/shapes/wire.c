@@ -143,7 +143,7 @@ main(int argc, char *argv[])
     solsub2[7] = '\0';
 
     /* Find name of mged file to be created. */
-    (void)printf("Enter mged file name (25 char max).\n\t");
+    printf("Enter mged file name (25 char max).\n\t");
     (void)fflush(stdout);
     ret = scanf("%26s", filemged);
     if (ret == 0) {
@@ -153,7 +153,7 @@ main(int argc, char *argv[])
 	bu_strlcpy(filemged, "wire.g", sizeof(filemged));
 
     /* Find the number of segments. */
-    (void)printf("Enter the number of segments (maximum of %d).\n\t",
+    printf("Enter the number of segments (maximum of %d).\n\t",
 		 MAXWIRESEG);
     (void)fflush(stdout);
     ret = scanf("%lf", &scanseg);
@@ -165,7 +165,7 @@ main(int argc, char *argv[])
     /* Check that the number of segments is less than or equal to the */
     /* maximum. */
     while (scanseg > MAXWIRESEG && scanseg < 0.0) {
-	(void)printf("The maximum number of segments is %d.  Enter the\nnumber of segments.\n\t",
+	printf("The maximum number of segments is %d.  Enter the\nnumber of segments.\n\t",
 		     MAXWIRESEG);
 	(void)fflush(stdout);
 	ret = scanf("%lf", &scanseg);
@@ -186,7 +186,7 @@ main(int argc, char *argv[])
 	/* START # 2 */
 	if (i == 0) {
 	    /* START # 3 */
-	    (void)printf("Enter starting point of segment # %d.\n\t", (i+1));
+	    printf("Enter starting point of segment # %d.\n\t", (i+1));
 	    (void)fflush(stdout);
 	    ret = scanf("%lf %lf %lf", &strtpt[i][0], &strtpt[i][1],
 			&strtpt[i][2]);
@@ -194,8 +194,8 @@ main(int argc, char *argv[])
 		perror("scanf");
 		VSET(strtpt[i], 0.0, 0.0, 0.0);
 	    }
-	    (void)printf("Enter radius at the starting point of ");
-	    (void)printf("segment # %d.\n\t", (i+1));
+	    printf("Enter radius at the starting point of ");
+	    printf("segment # %d.\n\t", (i+1));
 	    (void)fflush(stdout);
 	    ret = scanf("%lf", &strtrad[i]);
 	    if (ret == 0) {
@@ -205,7 +205,7 @@ main(int argc, char *argv[])
 	    if (strtrad[i] < SMALL_FASTF)
 		strtrad[i] = SMALL_FASTF;
 
-	    (void)printf("Enter ending point of segment # %d.\n\t", (i+1));
+	    printf("Enter ending point of segment # %d.\n\t", (i+1));
 	    (void)fflush(stdout);
 	    ret = scanf("%lf %lf %lf", &endpt[i][0], &endpt[i][1], &endpt[i][2]);
 	    if (ret == 0) {
@@ -213,8 +213,8 @@ main(int argc, char *argv[])
 		VSET(endpt[i], 0.0, 0.0, 1000.0);
 	    }
 
-	    (void)printf("Enter radius at the ending point of ");
-	    (void)printf("segment # %d.\n\t", (i+1));
+	    printf("Enter radius at the ending point of ");
+	    printf("segment # %d.\n\t", (i+1));
 	    (void)fflush(stdout);
 	    ret = scanf("%lf", &endrad[i]);
 	    if (ret == 0) {
@@ -231,7 +231,7 @@ main(int argc, char *argv[])
 	    strtpt[i][1] = endpt[i - 1][1];
 	    strtpt[i][2] = endpt[i - 1][2];
 	    strtrad[i] = endrad[i - 1];
-	    (void)printf("Enter ending point of segment # %d.\n\t", (i+1));
+	    printf("Enter ending point of segment # %d.\n\t", (i+1));
 	    (void)fflush(stdout);
 	    ret = scanf("%lf %lf %lf", &endpt[i][0], &endpt[i][1], &endpt[i][2]);
 	    if (ret == 0) {
@@ -239,8 +239,8 @@ main(int argc, char *argv[])
 		VSET(endpt[i], 0.0, 0.0, 1000.0);
 	    }
 
-	    (void)printf("Enter radius at the ending point of ");
-	    (void)printf("segment # %d.\n\t", (i+1));
+	    printf("Enter radius at the ending point of ");
+	    printf("segment # %d.\n\t", (i+1));
 	    (void)fflush(stdout);
 	    ret = scanf("%lf", &endrad[i]);
 	    if (ret == 0) {
@@ -253,18 +253,18 @@ main(int argc, char *argv[])
     }							/* END # 2 */
 
     /* Print out all info. */
-    (void)printf("\n\nmged file created:  %s\n", filemged);
+    printf("\n\nmged file created:  %s\n", filemged);
     (void)fflush(stdout);
 
     /* Print out coordinates of segments. */
     for (i=0; i<numseg; i++) {
 	/* START # 5 */
-	(void)printf("Segment # %d:  ", (i+1));
-	(void)printf("(%f, %f, %f)", strtpt[i][0], strtpt[i][1], strtpt[i][2]);
-	(void)printf(" %f\n", strtrad[i]);
-	(void)printf("              ");
-	(void)printf("(%f, %f, %f)", endpt[i][0], endpt[i][1], endpt[i][2]);
-	(void)printf("%f\n", endrad[i]);
+	printf("Segment # %d:  ", (i+1));
+	printf("(%f, %f, %f)", strtpt[i][0], strtpt[i][1], strtpt[i][2]);
+	printf(" %f\n", strtrad[i]);
+	printf("              ");
+	printf("(%f, %f, %f)", endpt[i][0], endpt[i][1], endpt[i][2]);
+	printf("%f\n", endrad[i]);
 	(void)fflush(stdout);
     }							/* END # 5 */
 
@@ -316,7 +316,7 @@ main(int argc, char *argv[])
 	}						/* END # 12 */
 	else {
 	    /* START # 13 */
-	    (void)printf("** ERROR ** i = %d\n", i);
+	    printf("** ERROR ** i = %d\n", i);
 	    (void)fflush(stdout);
 	}						/* END # 13 */
 
@@ -353,7 +353,7 @@ main(int argc, char *argv[])
 	}						/* END # 22 */
 	else {
 	    /* START # 23 */
-	    (void)printf("** ERROR ** i = %d\n", i);
+	    printf("** ERROR ** i = %d\n", i);
 	    (void)fflush(stdout);
 	}						/* END # 23 */
 
@@ -411,7 +411,7 @@ main(int argc, char *argv[])
 
 	else {
 	    /* START # 37 */
-	    (void)printf("** ERROR ** i = %d\n", i);
+	    printf("** ERROR ** i = %d\n", i);
 	    (void)fflush(stdout);
 	}						/* END # 37 */
 
@@ -457,7 +457,7 @@ main(int argc, char *argv[])
 
 	else {
 	    /* START # 43 */
-	    (void)printf("** ERROR ** i = %d\n", i);
+	    printf("** ERROR ** i = %d\n", i);
 	    (void)fflush(stdout);
 	}						/* END # 43 */
 
@@ -496,7 +496,7 @@ main(int argc, char *argv[])
 	}						/* END # 53 */
 	else {
 	    /* START # 54 */
-	    (void)printf("** ERROR ** i = %d\n", i);
+	    printf("** ERROR ** i = %d\n", i);
 	    (void)fflush(stdout);
 	}						/* END # 54 */
 

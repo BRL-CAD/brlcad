@@ -80,14 +80,14 @@ get_args(int argc, char **argv)
     } else {
 
 	if ((fldonefp = fopen(argv[bu_optind], "r")) == NULL) {
-	    (void)fprintf(stderr,
+	    fprintf(stderr,
 			  "pixfields: cannot open \"%s\" for reading\n",
 			  argv[bu_optind]);
 	    return 0;
 	}
 
 	if ((fldtwofp = fopen(argv[++bu_optind], "r")) == NULL) {
-	    (void)fprintf(stderr,
+	    fprintf(stderr,
 			  "pixfields: cannot open \"%s\" for reading\n",
 			  argv[bu_optind]);
 	    return 0;
@@ -99,7 +99,7 @@ get_args(int argc, char **argv)
 	return 0;
 
     if (argc > ++bu_optind)
-	(void)fprintf(stderr, "pixfields: excess argument(s) ignored\n");
+	fprintf(stderr, "pixfields: excess argument(s) ignored\n");
 
     return 1;		/* OK */
 }

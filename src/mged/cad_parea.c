@@ -45,7 +45,7 @@ static void Output(double result), Usage(void);
 static void
 Usage(void) 				/* print usage message */
 {
-    (void)printf("usage: cad_parea[ -i input][ -o output]\n");
+    printf("usage: cad_parea[ -i input][ -o output]\n");
 }
 
 
@@ -104,7 +104,7 @@ GetArgs(int argc, const char *argv[])			/* process command arguments */
 	switch (c) {
 	    case 'i':
 		if (iflag) {
-		    (void)printf("cad_parea: too many -i options\n");
+		    printf("cad_parea: too many -i options\n");
 		    return 0;
 		}
 		iflag = 1;
@@ -112,14 +112,14 @@ GetArgs(int argc, const char *argv[])			/* process command arguments */
 		if (!BU_STR_EQUAL(bu_optarg, "-")
 		    && freopen(bu_optarg, "r", stdin) == NULL
 		    ) {
-		    (void)printf("cad_parea: can't open \"%s\"\n", bu_optarg);
+		    printf("cad_parea: can't open \"%s\"\n", bu_optarg);
 		    return 0;
 		}
 		break;
 
 	    case 'o':
 		if (oflag) {
-		    (void)printf("cad_parea: too many -o options\n");
+		    printf("cad_parea: too many -o options\n");
 		    return 0;
 		}
 		oflag = 1;
@@ -127,7 +127,7 @@ GetArgs(int argc, const char *argv[])			/* process command arguments */
 		if (!BU_STR_EQUAL(bu_optarg, "-")
 		    && freopen(bu_optarg, "w", stdout) == NULL
 		    ) {
-		    (void)printf("cad_parea: can't create \"%s\"\n", bu_optarg);
+		    printf("cad_parea: can't create \"%s\"\n", bu_optarg);
 		    return 0;
 		}
 		break;
@@ -159,7 +159,7 @@ Input(point *coop)				/* input a coordinate record */
 	if (cvt == 2)
 	    return 1;	/* successfully converted */
 
-	(void)printf("cad_parea: bad input:\n%s\n", inbuf);
+	printf("cad_parea: bad input:\n%s\n", inbuf);
 	Output(0.0);
 	bu_exit(2, NULL);		/* return false insufficient */
     }

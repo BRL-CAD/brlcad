@@ -195,14 +195,14 @@ void gen_mortar(int horiz_bricks, int vert_bricks, double horiz_spacing, double 
 
     if (vert_spacing > tol)
 	if (horiz_spacing > tol)
-	    (void)fprintf(stderr, "generating mortar\n");
+	    fprintf(stderr, "generating mortar\n");
 	else
-	    (void)fprintf(stderr, "generating vertical mortar\n");
+	    fprintf(stderr, "generating vertical mortar\n");
     else
 	if (horiz_spacing > tol)
-	    (void)fprintf(stderr, "generating horizontal mortar\n");
+	    fprintf(stderr, "generating horizontal mortar\n");
 	else {
-	    (void)fprintf(stderr, "bricks too close for mortar\n");
+	    fprintf(stderr, "bricks too close for mortar\n");
 	    return;
 	}
 
@@ -215,14 +215,14 @@ void gen_mortar(int horiz_bricks, int vert_bricks, double horiz_spacing, double 
 	    zstart = brick_height + (vert_spacing+brick_height) * row;
 
 	    /* generate a slab of mortar underneath the brick row */
-	    (void)fprintf(stdout,
+	    fprintf(stdout,
 			  "in s.%s.rm.%d rpp %g %g  %g %g  %g %g\n",
 			  brick_name, row,
 			  xstart, xstart + (wall_width - brick_depth),
 			  0.0, brick_depth,
 			  zstart, zstart+vert_spacing);
 
-	    (void)fprintf(stdout,
+	    fprintf(stdout,
 			  "r r.m.%s u s.%s.rm.%d\n",
 			  brick_name, brick_name, row);
 	}
@@ -237,14 +237,14 @@ void gen_mortar(int horiz_bricks, int vert_bricks, double horiz_spacing, double 
 
 		zstart = (brick_height+vert_spacing) * row;
 
-		(void)fprintf(stdout,
+		fprintf(stdout,
 			      "in s.%s.bm.%d.%d rpp %g %g  %g %g  %g %g\n",
 			      brick_name, row, i,
 			      xstart, xstart + horiz_spacing,
 			      0.0, brick_depth,
 			      zstart, zstart+brick_height);
 
-		(void)fprintf(stdout,
+		fprintf(stdout,
 			      "r r.m.%s u s.%s.bm.%d.%d\n",
 			      brick_name, brick_name, row, i);
 
@@ -252,10 +252,10 @@ void gen_mortar(int horiz_bricks, int vert_bricks, double horiz_spacing, double 
 	}
     }
 
-    (void)fprintf(stdout, "mater r.m.%s\nplastic\n%s\n%s\n\n",
+    fprintf(stdout, "mater r.m.%s\nplastic\n%s\n%s\n\n",
 		  brick_name, "sh=40 di=0.9 sp=0.1", mortar_color);
 
-    (void)fprintf(stdout, "g g.%s g.%s.wall r.m.%s\n",
+    fprintf(stdout, "g g.%s g.%s.wall r.m.%s\n",
 		  brick_name, brick_name, brick_name);
 
 }
@@ -276,7 +276,7 @@ void gen_bricks(int horiz_bricks, int vert_bricks, double horiz_spacing, double 
 
     /* print the commands to make the wall */
 
-    (void)fprintf(stdout, "\n\n");
+    fprintf(stdout, "\n\n");
 
     for (row=0; row < vert_bricks; ++row) {
 
@@ -289,27 +289,27 @@ void gen_bricks(int horiz_bricks, int vert_bricks, double horiz_spacing, double 
 		brick * horiz_spacing + offset;
 	    zstart = row * brick_height + row * vert_spacing;
 
-	    (void)fprintf(stdout,
+	    fprintf(stdout,
 			  "in s.%s.%d.%d rpp %g %g  %g %g  %g %g\n",
 			  brick_name, row, brick,
 			  xstart, xstart + brick_width,
 			  0.0, brick_depth,
 			  zstart, zstart + brick_height);
 
-	    (void)fprintf(stdout,
+	    fprintf(stdout,
 			  "r r.%s.%d.%d u s.%s.%d.%d\n",
 			  brick_name, row, brick,
 			  brick_name, row, brick);
 
-	    (void)fprintf(stdout, "g g.%s.r.%d r.%s.%d.%d\n",
+	    fprintf(stdout, "g g.%s.r.%d r.%s.%d.%d\n",
 			  brick_name, row, brick_name, row, brick);
 	}
 
-	(void)fprintf(stdout, "g g.%s.wall g.%s.r.%d\n",
+	fprintf(stdout, "g g.%s.wall g.%s.r.%d\n",
 		      brick_name, brick_name, row);
     }
 
-    (void)fprintf(stdout, "mater g.%s.wall\nplastic\n%s\n%s\n\n",
+    fprintf(stdout, "mater g.%s.wall\nplastic\n%s\n%s\n\n",
 		  brick_name, "sh=40 di=0.9 sp=0.1", color);
 }
 /*
@@ -335,7 +335,7 @@ int main(int ac, char **av)
     /* build the wall
 
        if (debug)
-       (void)fprintf(stderr,
+       fprintf(stderr,
        "bw %g bh %g bd %g ww %g wh %g bn\"%s\"\n",
        brick_width, brick_height, brick_depth,
        wall_width, wall_height, brick_name);
@@ -349,7 +349,7 @@ int main(int ac, char **av)
 	--horiz_bricks;
 
     if (horiz_bricks <= 0) {
-	(void)fprintf(stderr, "wall not wide enough for brick\n");
+	fprintf(stderr, "wall not wide enough for brick\n");
 	return -1;
     }
 
@@ -371,11 +371,11 @@ int main(int ac, char **av)
 	(vert_bricks - 1);
 
 
-    (void)fprintf(stderr, "wall %d bricks wide,  %d bricks high\n",
+    fprintf(stderr, "wall %d bricks wide,  %d bricks high\n",
 		  horiz_bricks, vert_bricks);
-    (void)fprintf(stderr, "distance between adjacent bricks %g\n",
+    fprintf(stderr, "distance between adjacent bricks %g\n",
 		  horiz_spacing / units_conv);
-    (void)fprintf(stderr, "distance between layers of bricks %g\n",
+    fprintf(stderr, "distance between layers of bricks %g\n",
 		  vert_spacing / units_conv);
 
 

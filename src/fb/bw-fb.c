@@ -163,7 +163,7 @@ get_args(int argc, char **argv)
 	file_name = argv[bu_optind];
 	ifname = bu_realpath(file_name, NULL);
 	if ((infd = open(ifname, 0)) < 0) {
-	    (void)fprintf(stderr,
+	    fprintf(stderr,
 			  "bw-fb: cannot open \"%s(canonical %s)\" for reading\n",
 			  file_name,ifname);
 	    bu_free(ifname,"ifname alloc from bu_realpath");
@@ -174,7 +174,7 @@ get_args(int argc, char **argv)
     }
 
     if (argc > ++bu_optind)
-	(void)fprintf(stderr, "bw-fb: excess argument(s) ignored\n");
+	fprintf(stderr, "bw-fb: excess argument(s) ignored\n");
 
     return 1;		/* OK */
 }

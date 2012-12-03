@@ -147,7 +147,7 @@ get_args(int argc, char **argv)
 	file_name = argv[bu_optind];
 	if ((fp_in = fopen(file_name, "rb")) == NULL) {
 	    perror(file_name);
-	    (void)fprintf(stderr,
+	    fprintf(stderr,
 			  "png-fb: cannot open \"%s\" for reading\n",
 			  file_name);
 	    bu_exit(1, NULL);
@@ -156,7 +156,7 @@ get_args(int argc, char **argv)
     }
 
     if (argc > ++bu_optind)
-	(void)fprintf(stderr, "png-fb: excess argument(s) ignored\n");
+	fprintf(stderr, "png-fb: excess argument(s) ignored\n");
 
     return 1;		/* OK */
 }

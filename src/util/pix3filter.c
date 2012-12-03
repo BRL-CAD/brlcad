@@ -129,21 +129,21 @@ get_args(int argc, char **argv)
     } else if (bu_optind + 3 <= argc) {
 
 	if ((oldfp = fopen(argv[bu_optind], "r")) == NULL) {
-	    (void)fprintf(stderr,
+	    fprintf(stderr,
 			  "pix3filter: cannot open \"%s\" for reading\n",
 			  argv[bu_optind]);
 	    return 0;
 	}
 
 	if ((curfp = fopen(argv[++bu_optind], "r")) == NULL) {
-	    (void)fprintf(stderr,
+	    fprintf(stderr,
 			  "pix3filter: cannot open \"%s\" for reading\n",
 			  argv[bu_optind]);
 	    return 0;
 	}
 
 	if ((newfp = fopen(argv[++bu_optind], "r")) == NULL) {
-	    (void)fprintf(stderr,
+	    fprintf(stderr,
 			  "pix3filter: cannot open \"%s\" for reading\n",
 			  argv[bu_optind]);
 	    return 0;
@@ -157,7 +157,7 @@ get_args(int argc, char **argv)
 	working_name = (char *)bu_malloc(strlen(file_name)+5, "working_name");
 
 	if ((curfp = fopen(file_name, "r")) == NULL) {
-	    (void)fprintf(stderr,
+	    fprintf(stderr,
 			  "pix3filter: cannot open \"%s\" for reading\n",
 			  file_name);
 	    bu_free(working_name, "free working_name");
@@ -180,14 +180,14 @@ get_args(int argc, char **argv)
 	snprintf(working_name, strlen(file_name)+5, "%s.%d", file_name, frameNumber-1);
 	if ((oldfp = fopen(working_name, "r")) == NULL) {
 	    if (frameNumber-1 != 0) {
-		(void)fprintf(stderr,
+		fprintf(stderr,
 			      "pix3filter: cannot open \"%s\" for reading.\n",
 			      working_name);
 		bu_free(working_name, "free working_name");
 		return 0;
 	    }
 	    if ((oldfp = fopen(file_name, "r")) == NULL) {
-		(void)fprintf(stderr,
+		fprintf(stderr,
 			      "pix3filter: cannot open \"%s\" for reading.\n",
 			      file_name);
 		bu_free(working_name, "free working_name");
@@ -197,7 +197,7 @@ get_args(int argc, char **argv)
 
 	snprintf(working_name, strlen(file_name)+5, "%s.%d", file_name, frameNumber+1);
 	if ((newfp = fopen(working_name, "r")) == NULL) {
-	    (void)fprintf(stderr,
+	    fprintf(stderr,
 			  "pix3filter: cannot open \"%s\" for reading.\n",
 			  working_name);
 	    bu_free(working_name, "free working_name");
@@ -211,7 +211,7 @@ get_args(int argc, char **argv)
 	return 0;
 
     if (argc > bu_optind)
-	(void)fprintf(stderr, "pix3filter: excess argument(s) ignored\n");
+	fprintf(stderr, "pix3filter: excess argument(s) ignored\n");
 
     return 1;		/* OK */
 }

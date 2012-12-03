@@ -93,7 +93,7 @@ void comp_stats(FILE *fd)
 
     stdev = sqrt(((num * sum_sq) - (sum*sum)) / (num * (num-1)));
 
-    (void)printf("   Num: %g\n   Min: %hd\n   Max: %hd\n   Sum: %g\n  Mean: %g\nSStdev: %g\n",
+    printf("   Num: %g\n   Min: %hd\n   Max: %hd\n   Sum: %g\n  Mean: %g\nSStdev: %g\n",
 		 num, min, max, sum, sum/num, stdev);
 
     bu_free(buffer, "buffer");

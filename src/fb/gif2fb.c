@@ -146,7 +146,7 @@ main(int argc, char **argv)
     } else {
 	file_name = argv[bu_optind];
 	if ( (fp = fopen(file_name, "rb")) == NULL )  {
-	    (void)fprintf( stderr,
+	    fprintf( stderr,
 			   "%s: cannot open \"%s\" for reading\n", argv[0],
 			   file_name );
 	    usage(argv);

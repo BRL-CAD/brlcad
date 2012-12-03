@@ -76,7 +76,7 @@ get_args(int argc, char **argv)
     out_fb_name = argv[bu_optind++];
 
     if (argc > bu_optind)
-	(void)fprintf(stderr, "fb-fb: excess argument(s) ignored\n");
+	fprintf(stderr, "fb-fb: excess argument(s) ignored\n");
 
     return 1;		/* OK */
 }

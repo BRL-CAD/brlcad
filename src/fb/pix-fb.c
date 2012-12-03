@@ -165,7 +165,7 @@ get_args(int argc, char **argv)
 	ifname = bu_realpath(file_name, NULL);
 	if ((infd = open(ifname, 0)) < 0) {
 	    perror(ifname);
-	    (void)fprintf(stderr,
+	    fprintf(stderr,
 			  "pix-fb: cannot open \"%s(canonical %s)\" for reading\n",
 			  file_name,ifname);
 	    bu_free(ifname,"ifname alloc from bu_realpath");
@@ -179,7 +179,7 @@ get_args(int argc, char **argv)
     }
 
     if (argc > ++bu_optind)
-	(void)fprintf(stderr, "pix-fb: excess argument(s) ignored\n");
+	fprintf(stderr, "pix-fb: excess argument(s) ignored\n");
 
     return 1;		/* OK */
 }

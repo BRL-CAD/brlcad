@@ -105,11 +105,11 @@ main(int argc, char **argv)
 	/* START # 1 */
 
 	/* Find type of bolt to build. */
-	(void)printf("Enter option:\n");
-	(void)printf("\t1 - bolt head\n");
-	(void)printf("\t2 - bolt head & washer\n");
-	(void)printf("\t3 - bolt head, washer, & stem\n");
-	(void)printf("\t4 - bolt head & stem\n");
+	printf("Enter option:\n");
+	printf("\t1 - bolt head\n");
+	printf("\t2 - bolt head & washer\n");
+	printf("\t3 - bolt head, washer, & stem\n");
+	printf("\t4 - bolt head & stem\n");
 	(void)fflush(stdout);
 	ret = scanf("%d", &iopt);
 	if (ret == 0) {
@@ -122,7 +122,7 @@ main(int argc, char **argv)
 	    iopt = 4;
 
 	/* Get file name of mged file to be created. */
-	(void)printf("Enter name of mged file to be created (25 char max).\n\t");
+	printf("Enter name of mged file to be created (25 char max).\n\t");
 	(void)fflush(stdout);
 	ret = scanf("%26s", filemged);
 	if (ret == 0) {
@@ -132,7 +132,7 @@ main(int argc, char **argv)
 	    bu_strlcpy(filemged, "bolt.g", sizeof(filemged));
 
 	/* Find the number of bolts to be created (<=26). */
-	(void)printf("Enter the number of bolts to be created (26 max).\n\t");
+	printf("Enter the number of bolts to be created (26 max).\n\t");
 	(void)fflush(stdout);
 	ret = scanf("%d", &numblt);
 	if (ret == 0) {
@@ -146,8 +146,8 @@ main(int argc, char **argv)
 
 	/* Find dimensions of the bolt. */
 	/* Find dimensions of head first. */
-	(void)printf("Enter diameter (flat edge to flat edge) & height of ");
-	(void)printf("bolt head.\n\t");
+	printf("Enter diameter (flat edge to flat edge) & height of ");
+	printf("bolt head.\n\t");
 	(void)fflush(stdout);
 	ret = scanf("%lf %lf", &hd, &hh);
 	if (ret == 0) {
@@ -162,7 +162,7 @@ main(int argc, char **argv)
 
 	/* Find dimensions of washer if necessary. */
 	if ((iopt == 2) || (iopt == 3)) {
-	    (void)printf("Enter diameter & height of washer.\n\t");
+	    printf("Enter diameter & height of washer.\n\t");
 	    (void)fflush(stdout);
 	    ret = scanf("%lf %lf", &wd, &wh);
 	    if (ret == 0) {
@@ -177,7 +177,7 @@ main(int argc, char **argv)
 	}
 	/* Find dimensions of bolt stem if necessary. */
 	if ((iopt == 3) || (iopt == 4)) {
-	    (void)printf("Enter diameter & height of bolt stem.\n\t");
+	    printf("Enter diameter & height of bolt stem.\n\t");
 	    (void)fflush(stdout);
 	    ret = scanf("%lf %lf", &sd, &sh);
 	    if (ret == 0) {
@@ -253,7 +253,7 @@ main(int argc, char **argv)
 		    k++;
 		}
 		temp1[k] = '\0';
-		(void)sscanf(temp1, "%d", &numblt);
+		sscanf(temp1, "%d", &numblt);
 		if (numblt > 26) numblt = 26;
 	    }						/* END # 6.05 */
 
@@ -275,10 +275,10 @@ main(int argc, char **argv)
 		    /* START # 7 */
 		    if (temp[2] == 'd') {
 			/* Head diameter. */
-			(void)sscanf(temp1, "%lf", &hd);
+			sscanf(temp1, "%lf", &hd);
 		    } else if (temp[2] =='h') {
 			/* Head height. */
-			(void)sscanf(temp1, "%lf", &hh);
+			sscanf(temp1, "%lf", &hh);
 		    }
 		}					/* END # 7 */
 
@@ -287,10 +287,10 @@ main(int argc, char **argv)
 		    /* START # 8 */
 		    if (temp[2] == 'd') {
 			/* Washer diameter. */
-			(void)sscanf(temp1, "%lf", &wd);
+			sscanf(temp1, "%lf", &wd);
 		    } else if (temp[2] == 'h') {
 			/* Washer height. */
-			(void)sscanf(temp1, "%lf", &wh);
+			sscanf(temp1, "%lf", &wh);
 		    }
 		}					/* END # 8 */
 
@@ -299,10 +299,10 @@ main(int argc, char **argv)
 		    /* START # 9 */
 		    if (temp[2] == 'd') {
 			/* Stem diameter. */
-			(void)sscanf(temp1, "%lf", &sd);
+			sscanf(temp1, "%lf", &sd);
 		    } else if (temp[2] == 'h') {
 			/* Stem height. */
-			(void)sscanf(temp1, "%lf", &sh);
+			sscanf(temp1, "%lf", &sh);
 		    }
 		}					/* END # 9 */
 	    }						/* END # 6.1 */
@@ -311,16 +311,16 @@ main(int argc, char **argv)
     }							/* END # 2 */
 
     /* Print out bolt dimensions. */
-    (void)printf("\noption:  %d - ", iopt);
-    if (iopt == 1) (void)printf("bolt head\n");
-    if (iopt == 2) (void)printf("head & washer\n");
-    if (iopt == 3) (void)printf("head, washer, & stem\n");
-    if (iopt == 4) (void)printf("head & stem\n");
-    (void)printf(".g file:  %s\n", filemged);
-    (void)printf("head diameter:  %f, & height:  %f\n", hd, hh);
-    (void)printf("washer diameter:  %f, & height:  %f\n", wd, wh);
-    (void)printf("stem diameter:  %f, & height:  %f\n", sd, sh);
-    (void)printf("number of bolts:  %d\n\n", numblt);
+    printf("\noption:  %d - ", iopt);
+    if (iopt == 1) printf("bolt head\n");
+    if (iopt == 2) printf("head & washer\n");
+    if (iopt == 3) printf("head, washer, & stem\n");
+    if (iopt == 4) printf("head & stem\n");
+    printf(".g file:  %s\n", filemged);
+    printf("head diameter:  %f, & height:  %f\n", hd, hh);
+    printf("washer diameter:  %f, & height:  %f\n", wd, wh);
+    printf("stem diameter:  %f, & height:  %f\n", sd, sh);
+    printf("number of bolts:  %d\n\n", numblt);
     (void)fflush(stdout);
 
     /* Open mged file for writing to. */

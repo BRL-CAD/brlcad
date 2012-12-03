@@ -101,7 +101,7 @@ get_args(int argc, char **argv)
 	file_name = argv[bu_optind];
 	if ((infp = fopen(file_name, "r")) == NULL) {
 	    perror(file_name);
-	    (void)fprintf(stderr,
+	    fprintf(stderr,
 			  "pixbgstrip: cannot open \"%s\" for reading\n",
 			  file_name);
 	    bu_exit (1, NULL);
@@ -110,7 +110,7 @@ get_args(int argc, char **argv)
     }
 
     if (argc > ++bu_optind)
-	(void)fprintf(stderr, "pixbgstrip: excess argument(s) ignored\n");
+	fprintf(stderr, "pixbgstrip: excess argument(s) ignored\n");
 
     return 1;		/* OK */
 }

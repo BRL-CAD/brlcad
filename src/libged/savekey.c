@@ -45,15 +45,15 @@ savekey_rt_oldwrite(struct ged *gedp, FILE *fp, fastf_t *eye_model)
 {
     int i;
 
-    (void)fprintf(fp, "%.9e\n", gedp->ged_gvp->gv_size);
-    (void)fprintf(fp, "%.9e %.9e %.9e\n",
+    fprintf(fp, "%.9e\n", gedp->ged_gvp->gv_size);
+    fprintf(fp, "%.9e %.9e %.9e\n",
 		  eye_model[X], eye_model[Y], eye_model[Z]);
     for (i = 0; i < 16; i++) {
-	(void)fprintf(fp, "%.9e ", gedp->ged_gvp->gv_rotation[i]);
+	fprintf(fp, "%.9e ", gedp->ged_gvp->gv_rotation[i]);
 	if ((i%4) == 3)
-	    (void)fprintf(fp, "\n");
+	    fprintf(fp, "\n");
     }
-    (void)fprintf(fp, "\n");
+    fprintf(fp, "\n");
 }
 
 
@@ -90,7 +90,7 @@ ged_savekey(struct ged *gedp, int argc, const char *argv[])
     }
     if (argc > 2) {
 	timearg = atof(argv[2]);
-	(void)fprintf(fp, "%f\n", timearg);
+	fprintf(fp, "%f\n", timearg);
     }
     /*
      * Eye is in conventional place.

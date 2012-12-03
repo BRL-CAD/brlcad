@@ -98,13 +98,13 @@ main(int argc, char **argv)
 	/* START # 3 */
 
 	/* Print info about the window. */
-	(void)printf("\nThe window frames are composed of 4 arb8s and 8\n");
-	(void)printf("cylinders.  The front of the window frame is centered\n");
-	(void)printf("at (0, 0, 0) and extends in the negative x-direction\n");
-	(void)printf("the depth of the window frame.\n\n");
+	printf("\nThe window frames are composed of 4 arb8s and 8\n");
+	printf("cylinders.  The front of the window frame is centered\n");
+	printf("at (0, 0, 0) and extends in the negative x-direction\n");
+	printf("the depth of the window frame.\n\n");
 
 	/* Find name of mged file to be created. */
-	(void)printf("Enter the mged file to be created (25 char max).\n\t");
+	printf("Enter the mged file to be created (25 char max).\n\t");
 	(void)fflush(stdout);
 	ret = scanf("%26s", filemged);
 	if (ret == 0) {
@@ -114,7 +114,7 @@ main(int argc, char **argv)
 	    bu_strlcpy(filemged, "window_frame.g", sizeof(filemged));
 
 	/* Find the number of window frames to create. */
-	(void)printf("Enter the number of window frames to create (26 max).\n\t");
+	printf("Enter the number of window frames to create (26 max).\n\t");
 	(void)fflush(stdout);
 	ret = scanf("%d", &numwin);
 	if (ret == 0) {
@@ -127,7 +127,7 @@ main(int argc, char **argv)
 	    numwin = 26;
 
 	/* Find the dimensions of the window frames. */
-	(void)printf("Enter the height, width, and depth of the window frame.\n\t");
+	printf("Enter the height, width, and depth of the window frame.\n\t");
 	(void)fflush(stdout);
 	ret = scanf("%lf %lf %lf", &hgt, &wid, &dpt);
 	if (ret == 0) {
@@ -143,7 +143,7 @@ main(int argc, char **argv)
 	if (dpt < SMALL_FASTF)
 	    dpt = SMALL_FASTF;
 
-	(void)printf("Enter the radius of the corner.\n\t");
+	printf("Enter the radius of the corner.\n\t");
 	(void)fflush(stdout);
 	ret = scanf("%lf", &rds);
 	if (ret == 0) {
@@ -153,7 +153,7 @@ main(int argc, char **argv)
 	if (rds < SMALL_FASTF)
 	    rds = SMALL_FASTF;
 
-	(void)printf("Enter the actual width of the window frame.\n\t");
+	printf("Enter the actual width of the window frame.\n\t");
 	(void)fflush(stdout);
 	ret = scanf("%lf", &isw);
 	if (ret == 0) {
@@ -209,31 +209,31 @@ main(int argc, char **argv)
 		}					/* END # 9 */
 		temp1[k] = '\0';
 		if (temp[1] == 'n') {
-		    (void)sscanf(temp1, "%d", &numwin);
+		    sscanf(temp1, "%d", &numwin);
 		    if (numwin > 26) numwin = 26;
 		} else if (temp[1] == 'h') {
-		    (void)sscanf(temp1, "%lf", &hgt);
+		    sscanf(temp1, "%lf", &hgt);
 		} else if (temp[1] == 'w') {
-		    (void)sscanf(temp1, "%lf", &wid);
+		    sscanf(temp1, "%lf", &wid);
 		} else if (temp[1] == 'd') {
-		    (void)sscanf(temp1, "%lf", &dpt);
+		    sscanf(temp1, "%lf", &dpt);
 		} else if (temp[1] == 'r') {
-		    (void)sscanf(temp1, "%lf", &rds);
+		    sscanf(temp1, "%lf", &rds);
 		} else if (temp[1] == 'i') {
-		    (void)sscanf(temp1, "%lf", &isw);
+		    sscanf(temp1, "%lf", &isw);
 		}
 	    }						/* END # 8 */
 	}						/* END # 5 */
     }							/* END # 4 */
 
     /* Print out all info. */
-    (void)printf("\nmged file:  %s\n", filemged);
-    (void)printf("height of window frame:  %f mm\n", hgt);
-    (void)printf("width of window frame:  %f mm\n", wid);
-    (void)printf("depth of window frame:  %f mm\n", dpt);
-    (void)printf("radius of corner:  %f mm\n", rds);
-    (void)printf("width of frame:  %f mm\n", isw);
-    (void)printf("number of window frames:  %d\n\n", numwin);
+    printf("\nmged file:  %s\n", filemged);
+    printf("height of window frame:  %f mm\n", hgt);
+    printf("width of window frame:  %f mm\n", wid);
+    printf("depth of window frame:  %f mm\n", dpt);
+    printf("radius of corner:  %f mm\n", rds);
+    printf("width of frame:  %f mm\n", isw);
+    printf("number of window frames:  %d\n\n", numwin);
     (void)fflush(stdout);
 
     /* Open mged file. */

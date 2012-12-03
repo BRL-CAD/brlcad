@@ -229,7 +229,7 @@ get_args(int argc, char **argv)
     fby2 = atoi(argv[bu_optind++]);
 
     if (argc > bu_optind)
-	(void)fprintf(stderr, "fbline: excess argument(s) ignored\n");
+	fprintf(stderr, "fbline: excess argument(s) ignored\n");
 
     return 1;		/* OK */
 }

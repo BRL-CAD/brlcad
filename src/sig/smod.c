@@ -115,7 +115,7 @@ get_args(int argc, char *argv[])
 	file_name = argv[bu_optind];
 	ifname = bu_realpath(file_name, NULL);
 	if (freopen(ifname, "r", stdin) == NULL) {
-	    (void)fprintf(stderr,
+	    fprintf(stderr,
 			  "bwmod: cannot open \"%s(canonical %s)\" for reading\n",
 			  file_name,ifname);
 	    bu_free(ifname,"ifname alloc from bu_realpath");
@@ -125,7 +125,7 @@ get_args(int argc, char *argv[])
     }
 
     if (argc > ++bu_optind)
-	(void)fprintf(stderr, "bwmod: excess argument(s) ignored\n");
+	fprintf(stderr, "bwmod: excess argument(s) ignored\n");
 
     return 1;		/* OK */
 }
@@ -150,7 +150,7 @@ mk_trans_tbl()
 		case MULT: d *= val[i]; break;
 		case POW : d = pow(d, val[i]); break;
 		case ABS : if (d < 0.0) d = - d; break;
-		default  : (void)fprintf(stderr, "%s: error in op\n",
+		default  : fprintf(stderr, "%s: error in op\n",
 					 progname); break;
 	    }
 	}
@@ -216,7 +216,7 @@ main(int argc, char *argv[])
     }
 
     if (clip_high != 0 || clip_low != 0) {
-	(void)fprintf(stderr, "%s: clipped %lu high, %lu low\n", progname, (long unsigned)clip_high, (long unsigned)clip_low);
+	fprintf(stderr, "%s: clipped %lu high, %lu low\n", progname, (long unsigned)clip_high, (long unsigned)clip_low);
     }
 
     return 0;

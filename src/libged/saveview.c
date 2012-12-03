@@ -152,29 +152,29 @@ ged_saveview(struct ged *gedp, int argc, const char *argv[])
     }
 
     /* Do not specify -v option to rt; batch jobs must print everything. -Mike */
-    (void)fprintf(fp, "#!/bin/sh\n%s -M ", rtcmd);
+    fprintf(fp, "#!/bin/sh\n%s -M ", rtcmd);
     if (gedp->ged_gvp->gv_perspective > 0)
-	(void)fprintf(fp, "-p%g ", gedp->ged_gvp->gv_perspective);
+	fprintf(fp, "-p%g ", gedp->ged_gvp->gv_perspective);
     for (i = 2; i < argc; i++)
-	(void)fprintf(fp, "%s ", argv[i]);
+	fprintf(fp, "%s ", argv[i]);
 
     if (bu_strncmp(rtcmd, "nirt", 4) != 0)
-	(void)fprintf(fp, "\\\n -o %s\\\n $*\\\n", outpix);
+	fprintf(fp, "\\\n -o %s\\\n $*\\\n", outpix);
 
     if (inputg[0] == '\0') {
 	snprintf(inputg, 255, "%s", gedp->ged_wdbp->dbip->dbi_filename);
     }
-    (void)fprintf(fp, " '%s'\\\n ", inputg);
+    fprintf(fp, " '%s'\\\n ", inputg);
 
     gdlp = BU_LIST_NEXT(ged_display_list, &gedp->ged_gdp->gd_headDisplay);
     while (BU_LIST_NOT_HEAD(gdlp, &gedp->ged_gdp->gd_headDisplay)) {
 	next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
-	(void)fprintf(fp, "'%s' ", bu_vls_addr(&gdlp->gdl_path));
+	fprintf(fp, "'%s' ", bu_vls_addr(&gdlp->gdl_path));
 	gdlp = next_gdlp;
     }
 
-    (void)fprintf(fp, "\\\n 2>> %s\\\n", outlog);
-    (void)fprintf(fp, " <<EOF\n");
+    fprintf(fp, "\\\n 2>> %s\\\n", outlog);
+    fprintf(fp, " <<EOF\n");
 
     {
 	vect_t eye_model;
@@ -183,7 +183,7 @@ ged_saveview(struct ged *gedp, int argc, const char *argv[])
 	_ged_rt_write(gedp, fp, eye_model);
     }
 
-    (void)fprintf(fp, "\nEOF\n");
+    fprintf(fp, "\nEOF\n");
     (void)fclose(fp);
 
     return GED_OK;

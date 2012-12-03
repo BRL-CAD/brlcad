@@ -80,7 +80,7 @@ get_args(int argc, char **argv)
     }
 
     if (++bu_optind <= argc)
-	(void)fprintf(stderr, "pixfieldsep: excess argument(s) ignored\n");
+	fprintf(stderr, "pixfieldsep: excess argument(s) ignored\n");
 
     return 1;		/* OK */
 }

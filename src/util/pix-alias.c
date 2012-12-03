@@ -128,8 +128,8 @@ void doit(void)
 
 void usage(void)
 {
-    (void)fprintf(stderr, "Usage: %s [ -s squaresize ] [-w file_width ] [-n file_height ]\n", progname);
-    (void)fprintf(stderr, "\t< BRLpixfile > ALIASpixfile\n");
+    fprintf(stderr, "Usage: %s [ -s squaresize ] [-w file_width ] [-n file_height ]\n", progname);
+    fprintf(stderr, "\t< BRLpixfile > ALIASpixfile\n");
     bu_exit (1, NULL);
 }
 

@@ -102,11 +102,11 @@ main(int argc, char **argv)
 	/* START # 3 */
 
 	/* Print info about the window. */
-	(void)printf("\nThis program constructs a solid gas tank with all\n");
-	(void)printf("edges and corners rounded.\n\n");
+	printf("\nThis program constructs a solid gas tank with all\n");
+	printf("edges and corners rounded.\n\n");
 
 	/* Find name of mged file to be created. */
-	(void)printf("Enter the mged file to be created (25 char max).\n\t");
+	printf("Enter the mged file to be created (25 char max).\n\t");
 	(void)fflush(stdout);
 	ret = scanf("%26s", filemged);
 	if (ret == 0) {
@@ -116,7 +116,7 @@ main(int argc, char **argv)
 	    bu_strlcpy(filemged, "gastank.g", sizeof(filemged));
 
 	/* Find the number of gas tanks to create. */
-	(void)printf("Enter the number of gas tanks to create (26 max).\n\t");
+	printf("Enter the number of gas tanks to create (26 max).\n\t");
 	(void)fflush(stdout);
 	ret = scanf("%d", &numtnk);
 	if (ret == 0) {
@@ -129,7 +129,7 @@ main(int argc, char **argv)
 	    numtnk = 26;
 
 	/* Find the dimensions of the gas tanks. */
-	(void)printf("Enter the height, width, and depth of the gas tank.\n\t");
+	printf("Enter the height, width, and depth of the gas tank.\n\t");
 	(void)fflush(stdout);
 	ret = scanf("%lf %lf %lf", &hgt, &wid, &dpt);
 	if (ret == 0) {
@@ -145,7 +145,7 @@ main(int argc, char **argv)
 	if (dpt < SMALL_FASTF)
 	    dpt = SMALL_FASTF;
 
-	(void)printf("Enter the radius of the corners.\n\t");
+	printf("Enter the radius of the corners.\n\t");
 	(void)fflush(stdout);
 	ret = scanf("%lf", &rds);
 	if (ret == 0) {
@@ -200,28 +200,28 @@ main(int argc, char **argv)
 		}					/* END # 9 */
 		temp1[k] = '\0';
 		if (temp[1] == 'n') {
-		    (void)sscanf(temp1, "%d", &numtnk);
+		    sscanf(temp1, "%d", &numtnk);
 		    if (numtnk > 26) numtnk = 26;
 		} else if (temp[1] == 'h') {
-		    (void)sscanf(temp1, "%lf", &hgt);
+		    sscanf(temp1, "%lf", &hgt);
 		} else if (temp[1] == 'w') {
-		    (void)sscanf(temp1, "%lf", &wid);
+		    sscanf(temp1, "%lf", &wid);
 		} else if (temp[1] == 'd') {
-		    (void)sscanf(temp1, "%lf", &dpt);
+		    sscanf(temp1, "%lf", &dpt);
 		} else if (temp[1] == 'r') {
-		    (void)sscanf(temp1, "%lf", &rds);
+		    sscanf(temp1, "%lf", &rds);
 		}
 	    }						/* END # 8 */
 	}						/* END # 5 */
     }							/* END # 4 */
 
     /* Print out all info. */
-    (void)printf("\nmged file:  %s\n", filemged);
-    (void)printf("height of gas tank:  %f mm\n", hgt);
-    (void)printf("width of gas tank:  %f mm\n", wid);
-    (void)printf("depth of gas tank:  %f mm\n", dpt);
-    (void)printf("radius of corner:  %f mm\n", rds);
-    (void)printf("number of gas tanks:  %d\n\n", numtnk);
+    printf("\nmged file:  %s\n", filemged);
+    printf("height of gas tank:  %f mm\n", hgt);
+    printf("width of gas tank:  %f mm\n", wid);
+    printf("depth of gas tank:  %f mm\n", dpt);
+    printf("radius of corner:  %f mm\n", rds);
+    printf("number of gas tanks:  %d\n\n", numtnk);
     (void)fflush(stdout);
 
     /* Open mged file. */

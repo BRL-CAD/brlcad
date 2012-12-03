@@ -184,7 +184,7 @@ main(int argc, char **argv)
 	switch (i) {
 	    case 'd' : rt_g.debug |= DEBUG_MEM | DEBUG_MEM_FULL; break;
 	    default	:
-		(void)fprintf(stderr,
+		fprintf(stderr,
 			      "Usage: %s [-d] > database.g\n", *argv);
 		return -1;
 	}

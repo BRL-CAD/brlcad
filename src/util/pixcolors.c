@@ -91,11 +91,11 @@ void doit(FILE *fd)
 	    }
 	}
     }
-    (void)printf("%lu\n", (long unsigned)count);
+    printf("%lu\n", (long unsigned)count);
     if (verbose)
 	for (i = 0; i < 1<<24; ++i)
 	    if ((vals[i>>3] & (1<<(i & 0x07))))
-		(void)printf("%3d %3d %3d\n",
+		printf("%3d %3d %3d\n",
 			     i & 0x0ff,
 			     (i >> 8) & 0x0ff,
 			     (i >> 16) & 0x0ff);
@@ -104,7 +104,7 @@ void doit(FILE *fd)
 
 void usage(void)
 {
-    (void)fprintf(stderr, "Usage: %s [ -v ] < PIXfile\n", progname);
+    fprintf(stderr, "Usage: %s [ -v ] < PIXfile\n", progname);
     bu_exit (1, NULL);
 }
 

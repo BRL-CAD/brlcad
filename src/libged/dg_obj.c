@@ -1519,13 +1519,13 @@ dgo_rt_write(struct dg_obj *dgop,
     quat_t quat;
     struct solid *sp;
 
-    (void)fprintf(fp, "viewsize %.15e;\n", vop->vo_size);
+    fprintf(fp, "viewsize %.15e;\n", vop->vo_size);
     quat_mat2quat(quat, vop->vo_rotation);
-    (void)fprintf(fp, "orientation %.15e %.15e %.15e %.15e;\n", V4ARGS(quat));
-    (void)fprintf(fp, "eye_pt %.15e %.15e %.15e;\n",
+    fprintf(fp, "orientation %.15e %.15e %.15e %.15e;\n", V4ARGS(quat));
+    fprintf(fp, "eye_pt %.15e %.15e %.15e;\n",
 		  eye_model[X], eye_model[Y], eye_model[Z]);
 
-    (void)fprintf(fp, "start 0; clean;\n");
+    fprintf(fp, "start 0; clean;\n");
     FOR_ALL_SOLIDS (sp, &dgop->dgo_headSolid) {
 	for (i = 0; i < sp->s_fullpath.fp_len; i++) {
 	    DB_FULL_PATH_GET(&sp->s_fullpath, i)->d_flags &= ~RT_DIR_USED;
@@ -1549,7 +1549,7 @@ dgo_rt_write(struct dg_obj *dgop,
 	    DB_FULL_PATH_GET(&sp->s_fullpath, i)->d_flags &= ~RT_DIR_USED;
 	}
     }
-    (void)fprintf(fp, "end;\n");
+    fprintf(fp, "end;\n");
 }
 
 

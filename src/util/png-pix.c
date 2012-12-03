@@ -80,7 +80,7 @@ main(int argc, char **argv)
     } else {
 	if ((fp_in = fopen(argv[bu_optind], "rb")) == NULL) {
 	    perror(argv[bu_optind]);
-	    (void)fprintf(stderr,
+	    fprintf(stderr,
 			  "png-pix: cannot open \"%s\" for reading\n",
 			  argv[bu_optind]);
 	    return 1;
@@ -88,7 +88,7 @@ main(int argc, char **argv)
     }
 
     if (argc > ++bu_optind)
-	(void)fprintf(stderr, "png-pix: excess argument(s) ignored\n");
+	fprintf(stderr, "png-pix: excess argument(s) ignored\n");
 
     if (fread(header, 8, 1, fp_in) != 1)
 	bu_exit(EXIT_FAILURE, "ERROR: Failed while reading file header!!!\n");

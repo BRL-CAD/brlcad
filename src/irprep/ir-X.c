@@ -129,18 +129,18 @@ main(void)
     struct colstr array[MAXCOL + EXTRA];	/*  Array for color information.  */
 
     /*  Get file name to be read.  */
-    (void)printf("Enter name of file to be read (%d char max).\n\t", MAXFIL);
+    printf("Enter name of file to be read (%d char max).\n\t", MAXFIL);
     (void)fflush(stdout);
     ret = scanf("%25s", file);
     if (ret == 0)
 	perror("scanf");
 
     /*  Find what color shading to use.  */
-    (void)printf("Indicate type of color shading to use.\n");
-    (void)printf("\t0 - gray\n");
-    (void)printf("\t1 - red\n");
-    (void)printf("\t2 - black-blue-cyan-green-yellow-white\n");
-    (void)printf("\t3 - black-blue-magenta-red-yellow-white\n");
+    printf("Indicate type of color shading to use.\n");
+    printf("\t0 - gray\n");
+    printf("\t1 - red\n");
+    printf("\t2 - black-blue-cyan-green-yellow-white\n");
+    printf("\t3 - black-blue-magenta-red-yellow-white\n");
     (void)fflush(stdout);
     ret = scanf("%d", &icol);
     if (ret == 0)
@@ -149,7 +149,7 @@ main(void)
 
     /*  Determine if a pix file is to be written.  */
     flag_pix = 0;
-    (void)printf("Do you wish to create a pix file (0-no, 1-yes)?\n\t");
+    printf("Do you wish to create a pix file (0-no, 1-yes)?\n\t");
     (void)fflush(stdout);
     ret = scanf("%d", &flag_pix);
     if (ret == 0)
@@ -157,15 +157,15 @@ main(void)
     if (flag_pix != 1) flag_pix = 0;
     if (flag_pix == 1)
     {
-	(void)printf("Enter name of the pix file to be created ");
-	(void)printf("(%d char max).\n\t", MAXFIL);
+	printf("Enter name of the pix file to be created ");
+	printf("(%d char max).\n\t", MAXFIL);
 	(void)fflush(stdout);
 	ret = scanf("%25s", file_pix);
 	if (ret == 0)
 	    perror("scanf");
     }
 
-    (void)printf("Zeroing color info array ");
+    printf("Zeroing color info array ");
     (void)fflush(stdout);
 
     /*  Zero color info array.  */
@@ -183,17 +183,17 @@ main(void)
     }
     lstarr = MAXCOL;
 
-    (void)printf("- finished zeroing\n");
+    printf("- finished zeroing\n");
     (void)fflush(stdout);
 
-    (void)printf("Setting up color scale ");
+    printf("Setting up color scale ");
     (void)fflush(stdout);
 
     /*  Set up color scale.  */
     dcol = (65535. + 1.) / MAXCOL;
     if (icol == 0)		/*  Shades of gray.  */
     {
-	(void)printf("-shades of gray ");
+	printf("-shades of gray ");
 	(void)fflush(stdout);
 	for (i=0; i<MAXCOL; i++)
 	{
@@ -205,7 +205,7 @@ main(void)
 
     if (icol == 1)		/*  Shades of red.  */
     {
-	(void)printf("- shades of red ");
+	printf("- shades of red ");
 	(void)fflush(stdout);
 	for (i=0; i<MAXCOL; i++)
 	{
@@ -217,13 +217,13 @@ main(void)
 
     if (icol == 2)		/*  Black-blue-cyan-green-yellow-white.  */
     {
-	(void)printf("- black-blue-cyan-green-yellow-white ");
+	printf("- black-blue-cyan-green-yellow-white ");
 	(void)fflush(stdout);
 	if (MAXCOL > 1280.)
 	{
-	    (void)printf("Maximum number of colors, %d, is ", MAXCOL);
-	    (void)printf("greater than 1280.\n");
-	    (void)printf("This may create problems.\n");
+	    printf("Maximum number of colors, %d, is ", MAXCOL);
+	    printf("greater than 1280.\n");
+	    printf("This may create problems.\n");
 	}
 	/*  Color step.  */
 	dcol = 1280. / MAXCOL;
@@ -282,13 +282,13 @@ main(void)
 
     if (icol == 3)		/*  Black-blue-magenta-red-yellow-white.  */
     {
-	(void)printf("- black-blue-magenta-red-yellow-white ");
+	printf("- black-blue-magenta-red-yellow-white ");
 	(void)fflush(stdout);
 	if (MAXCOL > 1280.)
 	{
-	    (void)printf("Maximum number of colors, %d, is ", MAXCOL);
-	    (void)printf("greater than 1280.\n");
-	    (void)printf("This may create problems.\n");
+	    printf("Maximum number of colors, %d, is ", MAXCOL);
+	    printf("greater than 1280.\n");
+	    printf("This may create problems.\n");
 	}
 	/*  Color step.  */
 	dcol = 1280. / MAXCOL;
@@ -345,7 +345,7 @@ main(void)
 	}
     }
 
-    (void)printf("- finished.\n");
+    printf("- finished.\n");
     (void)fflush(stdout);
 
     /*  Print out colors.  */
@@ -358,7 +358,7 @@ main(void)
  * }
  */
 
-    (void)printf("Reading file ");
+    printf("Reading file ");
     (void)fflush(stdout);
 
     /*  Open file for reading.  */
@@ -367,7 +367,7 @@ main(void)
     /*  Check for non-existent file.  */
     while (fpr == NULL)
     {
-	(void)printf("\nThis file does not exist, please try again.\n");
+	printf("\nThis file does not exist, please try again.\n");
 	(void)fflush(stdout);
 	ret = scanf("%25s", file);
 	if (ret == 0) {
@@ -380,7 +380,7 @@ main(void)
     (void)bu_fgets(line, 150, fpr);
     {
 	unsigned long w, h;
-	(void)sscanf(line, "%lu %lu", &w, &h);
+	sscanf(line, "%lu %lu", &w, &h);
 	wide = w;
 	high = h;
     }
@@ -388,16 +388,16 @@ main(void)
     /*  Check that width and height are not too big.  */
     if (wide > (size_t)MAXPIX)
     {
-	(void)printf("The width of the window, %lu, is greater\n", (unsigned long)wide);
-	(void)printf("than the maximum for width, %lu.  Press\n", (unsigned long)MAXPIX);
-	(void)printf("delete to end program.\n");
+	printf("The width of the window, %lu, is greater\n", (unsigned long)wide);
+	printf("than the maximum for width, %lu.  Press\n", (unsigned long)MAXPIX);
+	printf("delete to end program.\n");
 	(void)fflush(stdout);
     }
     if (high > MAXPIX)
     {
-	(void)printf("The height of the window, %lu, is greater\n", (unsigned long)wide);
-	(void)printf("than the maximum for height, %lu.  Press\n", (unsigned long)MAXPIX);
-	(void)printf("delete to end program.\n");
+	printf("The height of the window, %lu, is greater\n", (unsigned long)wide);
+	printf("than the maximum for height, %lu.  Press\n", (unsigned long)MAXPIX);
+	printf("delete to end program.\n");
 	(void)fflush(stdout);
     }
 
@@ -407,19 +407,19 @@ main(void)
 	for (j=0; j<(int)wide; j++)
 	{
 	    (void)bu_fgets(line, 150, fpr);
-	    (void)sscanf(line, "%lf", &pixval[j][i]);
+	    sscanf(line, "%lf", &pixval[j][i]);
 	}
     }
 
     /*  Close file.  */
     (void)fclose(fpr);
 
-    (void)printf("- file read.\n");
+    printf("- file read.\n");
     (void)fflush(stdout);
 
     /*  Print out width and height of window.  */
-    (void)printf("Width:  %lu\n", (unsigned long)wide);
-    (void)printf("Height:  %lu\n", (unsigned long)high);
+    printf("Width:  %lu\n", (unsigned long)wide);
+    printf("Height:  %lu\n", (unsigned long)high);
     (void)fflush(stdout);
 
     /*  Print out the first ten values as check.  */
@@ -441,7 +441,7 @@ main(void)
  * }
  */
 
-    (void)printf("Finding min & max.\n");
+    printf("Finding min & max.\n");
     (void)fflush(stdout);
 
     /*  Find minimum and maximum of pixel values.  */
@@ -460,11 +460,11 @@ main(void)
     }
 
     /*  Write minimum and maximum pixel values.  */
-    (void)printf("Minimum:  %f\n", min);
-    (void)printf("Maximum:  %f\n", max);
+    printf("Minimum:  %f\n", min);
+    printf("Maximum:  %f\n", max);
     (void)fflush(stdout);
 
-    (void)printf("Finding pixel bins ");
+    printf("Finding pixel bins ");
     (void)fflush(stdout);
 
     /*  Find pixel bins.  */
@@ -498,10 +498,10 @@ main(void)
 	}
     }
 
-    (void)printf("- found pixel bins.\n");
+    printf("- found pixel bins.\n");
     (void)fflush(stdout);
 
-    (void)printf("Putting color info in arrays ");
+    printf("Putting color info in arrays ");
     (void)fflush(stdout);
 
     /*  Put color info in arrays.  */
@@ -551,14 +551,14 @@ main(void)
 	}
     }
 
-    (void)printf("- color info in arrays.\n");
+    printf("- color info in arrays.\n");
     (void)fflush(stdout);
 
     if (flag != 0)
     {
-	(void)printf("There too many pixels of one color.  Note that\n");
-	(void)printf("this means there is something wrong with the\n");
-	(void)printf("picture!\n");
+	printf("There too many pixels of one color.  Note that\n");
+	printf("this means there is something wrong with the\n");
+	printf("picture!\n");
 	(void)fflush(stdout);
     }
 
@@ -772,7 +772,7 @@ main(void)
 			/*  Close file.  */
 			(void)fclose(fpw);
 
-			(void)printf("Pix file, %s, has been written.\n", file_pix);
+			printf("Pix file, %s, has been written.\n", file_pix);
 			(void)fflush(stdout);
 		    }					/*  END # 1.  */
 

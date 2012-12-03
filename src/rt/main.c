@@ -188,7 +188,7 @@ int main(int argc, const char **argv)
     }
     /* Identify the versions of the libraries we are using. */
     if (rt_verbosity & VERBOSE_LIBVERSIONS) {
-	(void)fprintf(stderr, "%s%s%s%s\n",
+	fprintf(stderr, "%s%s%s%s\n",
 		      brlcad_ident(title),
 		      rt_version(),
 		      bn_version(),
@@ -196,10 +196,10 @@ int main(int argc, const char **argv)
 	    );
     }
 #if defined(DEBUG)
-    (void)fprintf(stderr, "Compile-time debug symbols are available\n");
+    fprintf(stderr, "Compile-time debug symbols are available\n");
 #endif
 #if defined(NO_BOMBING_MACROS) || defined(NO_MAGIC_CHECKING) || defined(NO_BADRAY_CHECKING) || defined(NO_DEBUG_CHECKING)
-    (void)fprintf(stderr, "WARNING: Run-time debugging is disabled and may enhance performance\n");
+    fprintf(stderr, "WARNING: Run-time debugging is disabled and may enhance performance\n");
 #endif
 
     /* Identify what host we're running on */
@@ -208,10 +208,10 @@ int main(int argc, const char **argv)
 #ifndef _WIN32
 	if (gethostname(hostname, sizeof(hostname)) >= 0 &&
 	    hostname[0] != '\0' )
-	    (void)fprintf(stderr, "Running on %s\n", hostname);
+	    fprintf(stderr, "Running on %s\n", hostname);
 #else
 	sprintf(hostname, "Microsoft Windows");
-	(void)fprintf(stderr, "Running on %s\n", hostname);
+	fprintf(stderr, "Running on %s\n", hostname);
 #endif
     }
 

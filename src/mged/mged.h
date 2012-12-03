@@ -327,7 +327,7 @@ you should exit MGED now, and resolve the I/O problem, before continuing.\n", (c
  */
 /* For errors from db_get() or db_getmrec() */
 #define READ_ERR { \
-	(void)printf("Database read error, aborting\n"); }
+	printf("Database read error, aborting\n"); }
 
 #define READ_ERR_return { \
 	READ_ERR; \
@@ -335,7 +335,7 @@ you should exit MGED now, and resolve the I/O problem, before continuing.\n", (c
 
 /* For errors from db_put() */
 #define WRITE_ERR { \
-	(void)printf("Database write error, aborting.\n"); \
+	printf("Database write error, aborting.\n"); \
 	ERROR_RECOVERY_SUGGESTION; }
 
 #define WRITE_ERR_return { \
@@ -344,7 +344,7 @@ you should exit MGED now, and resolve the I/O problem, before continuing.\n", (c
 
 /* For errors from db_diradd() or db_alloc() */
 #define ALLOC_ERR { \
-	(void)printf("\
+	printf("\
 An error has occurred while adding a new object to the database.\n"); \
 	ERROR_RECOVERY_SUGGESTION; }
 
@@ -354,7 +354,7 @@ An error has occurred while adding a new object to the database.\n"); \
 
 /* For errors from db_delete() or db_dirdelete() */
 #define DELETE_ERR(_name) { \
-	(void)printf("\
+	printf("\
 An error has occurred while deleting '%s' from the database.\n", _name); \
 	ERROR_RECOVERY_SUGGESTION; }
 
@@ -364,7 +364,7 @@ An error has occurred while deleting '%s' from the database.\n", _name); \
 
 /* A verbose message to attempt to soothe and advise the user */
 #define ERROR_RECOVERY_SUGGESTION	\
-    (void)printf("\
+    printf("\
 The in-memory table of contents may not match the status of the on-disk\n\
 database.  The on-disk database should still be intact.  For safety, \n\
 you should exit MGED now, and resolve the I/O problem, before continuing.\n")

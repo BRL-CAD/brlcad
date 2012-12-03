@@ -422,10 +422,10 @@ map_vu_to_2d(struct vertexuse *vu, struct bu_list *tbl2d, fastf_t *mat, struct f
 	BU_LIST_APPEND(&np->l, &p->l);
 
 	if (rt_g.NMG_debug & DEBUG_TRI && flatten_debug)
-	    (void)bu_log("vertexuse transformed\n");
+	    bu_log("vertexuse transformed\n");
     }
     if (rt_g.NMG_debug & DEBUG_TRI && flatten_debug)
-	(void)bu_log("Done.\n");
+	bu_log("Done.\n");
 }
 
 
@@ -3345,7 +3345,7 @@ nmg_dump_model(struct model *m)
 			NMG_CK_VERTEX(eu->vu_p->v_p);
 			NMG_CK_VERTEX_G(eu->vu_p->v_p->vg_p);
 			vg = eu->vu_p->v_p->vg_p;
-			(void)fprintf(fp, "%ld %ld %ld %ld %ld %g %g %g\n",
+			fprintf(fp, "%ld %ld %ld %ld %ld %g %g %g\n",
 			      (unsigned long)r_cnt,
 			      (unsigned long)s_cnt,
 			      (unsigned long)fu_cnt,

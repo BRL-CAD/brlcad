@@ -98,7 +98,7 @@ get_args(int argc, char **argv, FILE **inpp, int *max, double *multiplier)
     } else {
 	*inpp = fopen(argv[bu_optind], "r");
 	if (*inpp == NULL) {
-	    (void)fprintf(stderr,
+	    fprintf(stderr,
 			  "pixfade: cannot open \"%s\" for reading\n",
 			  argv[bu_optind]);
 	    return 0;
@@ -106,7 +106,7 @@ get_args(int argc, char **argv, FILE **inpp, int *max, double *multiplier)
     }
 
     if (argc > ++bu_optind)
-	(void)fprintf(stderr, "pixfade: excess argument(s) ignored\n");
+	fprintf(stderr, "pixfade: excess argument(s) ignored\n");
 
     if (isatty(fileno(stdout))) {
 	fprintf(stderr, "pixfade: stdout is a tty\n");

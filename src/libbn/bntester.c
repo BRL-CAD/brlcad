@@ -54,7 +54,7 @@ parse_case(char *buf_p, int *i, long *l, fastf_t *d, unsigned long *u, char *fmt
 	 * data is supplied in the data file.
 	 */
 	if (buf_p == NULL) {
-	    (void)fprintf(stream, "ERROR: Missing parameter(s) for test case on line %lu, skipping test case.\n", line_num);
+	    fprintf(stream, "ERROR: Missing parameter(s) for test case on line %lu, skipping test case.\n", line_num);
 	    return EXIT_FAILURE;
 	}
 
@@ -63,12 +63,12 @@ parse_case(char *buf_p, int *i, long *l, fastf_t *d, unsigned long *u, char *fmt
 	    case 'd' : /* double */
 		d[d_idx] = strtod(buf_p, &endp);
 		if (errno) {
-		    (void)fprintf(stream, "Convert to double failed, function %lu test case on line %lu parameter %d error msg: '%s' string '%s'\n",
+		    fprintf(stream, "Convert to double failed, function %lu test case on line %lu parameter %d error msg: '%s' string '%s'\n",
 				  u[0], line_num, idx+2, strerror(errno), buf_p);
 		    return EXIT_FAILURE;
 		}
 		if ((*endp != '\0') || (buf_p == endp)) {
-		    (void)fprintf(stream, "Convert to double failed, function %lu test case on line %lu parameter %d string '%s'\n",
+		    fprintf(stream, "Convert to double failed, function %lu test case on line %lu parameter %d string '%s'\n",
 				  u[0], line_num, idx+2, buf_p);
 		    return EXIT_FAILURE;
 		}
@@ -77,12 +77,12 @@ parse_case(char *buf_p, int *i, long *l, fastf_t *d, unsigned long *u, char *fmt
 	    case 'l' : /* long int */
 		l[l_idx] = strtol(buf_p, &endp, 10);
 		if (errno) {
-		    (void)fprintf(stream, "Convert to long int failed, function %lu test case on line %lu parameter %d error msg: '%s' string '%s'\n",
+		    fprintf(stream, "Convert to long int failed, function %lu test case on line %lu parameter %d error msg: '%s' string '%s'\n",
 				  u[0], line_num, idx+2, strerror(errno), buf_p);
 		    return EXIT_FAILURE;
 		}
 		if ((*endp != '\0') || (buf_p == endp)) {
-		    (void)fprintf(stream, "Convert to long int failed, function %lu test case on line %lu parameter %d string '%s'\n",
+		    fprintf(stream, "Convert to long int failed, function %lu test case on line %lu parameter %d string '%s'\n",
 				  u[0], line_num, idx+2, buf_p);
 		    return EXIT_FAILURE;
 		}
@@ -91,17 +91,17 @@ parse_case(char *buf_p, int *i, long *l, fastf_t *d, unsigned long *u, char *fmt
 	    case 'i' : /* int */
 		l_tmp = strtol(buf_p, &endp, 10);
 		if (errno) {
-		    (void)fprintf(stream, "Convert to int failed, function %lu test case on line %lu parameter %d error msg: '%s' string '%s'\n",
+		    fprintf(stream, "Convert to int failed, function %lu test case on line %lu parameter %d error msg: '%s' string '%s'\n",
 				  u[0], line_num, idx+2, strerror(errno), buf_p);
 		    return EXIT_FAILURE;
 		}
 		if ((*endp != '\0') || (buf_p == endp)) {
-		    (void)fprintf(stream, "Convert to int failed, function %lu test case on line %lu parameter %d string '%s'\n",
+		    fprintf(stream, "Convert to int failed, function %lu test case on line %lu parameter %d string '%s'\n",
 				  u[0], line_num, idx+2, buf_p);
 		    return EXIT_FAILURE;
 		}
 		if (l_tmp > INT_MAX || l_tmp < INT_MIN) {
-		    (void)fprintf(stream, "Convert to int failed (under/over flow), function %lu test case on line %lu parameter %d string '%s'\n",
+		    fprintf(stream, "Convert to int failed (under/over flow), function %lu test case on line %lu parameter %d string '%s'\n",
 				  u[0], line_num, idx+2, buf_p);
 		    return EXIT_FAILURE;
 		}
@@ -111,19 +111,19 @@ parse_case(char *buf_p, int *i, long *l, fastf_t *d, unsigned long *u, char *fmt
 	    case 'u' : /* unsigned long */
 		u[u_idx] = strtoul(buf_p, &endp, 10);
 		if (errno) {
-		    (void)fprintf(stream, "Convert to unsigned long int failed, function %lu test case on line %lu parameter %d error msg: '%s' string '%s'\n",
+		    fprintf(stream, "Convert to unsigned long int failed, function %lu test case on line %lu parameter %d error msg: '%s' string '%s'\n",
 				  u[0], line_num, idx+2, strerror(errno), buf_p);
 		    return EXIT_FAILURE;
 		}
 		if ((*endp != '\0') || (buf_p == endp) || (strchr(buf_p, '-') != '\0')) {
-		    (void)fprintf(stream, "Convert to unsigned long int failed, function %lu test case on line %lu parameter %d string '%s'\n",
+		    fprintf(stream, "Convert to unsigned long int failed, function %lu test case on line %lu parameter %d string '%s'\n",
 				  u[0], line_num, idx+2, buf_p);
 		    return EXIT_FAILURE;
 		}
 		u_idx++;
 		break;
 	    default:
-		(void)fprintf(stream, "INTERNAL ERROR: Unknown data type '%c' for function %lu test case on line %lu, skipping test case.\n",
+		fprintf(stream, "INTERNAL ERROR: Unknown data type '%c' for function %lu test case on line %lu, skipping test case.\n",
 			      fmt_str[idx], u[0], line_num);
 		return EXIT_FAILURE;
 		break;
@@ -286,30 +286,30 @@ main(int argc, char **argv)
 
     /* all output after this point is sent to stream */
 
-    (void)fprintf(stream, "Command line parameters: bntester ");
+    fprintf(stream, "Command line parameters: bntester ");
     for (argv_idx = 1 ; argv_idx < argc ; argv_idx++) {
-	(void)fprintf(stream, "%s ", argv[argv_idx]);
+	fprintf(stream, "%s ", argv[argv_idx]);
     }
-    (void)fprintf(stream, "\n");
+    fprintf(stream, "\n");
 
     if (process_single_test_case) {
-	(void)fprintf(stream, "Processing only test case on line number: %lu\n", test_case_line_num);
+	fprintf(stream, "Processing only test case on line number: %lu\n", test_case_line_num);
     }
 
     if (process_single_function) {
-	(void)fprintf(stream, "Processing all test cases for function number: %lu\n", function_num);
+	fprintf(stream, "Processing all test cases for function number: %lu\n", function_num);
     }
 
     if (!process_single_test_case && !process_single_function) {
-	(void)fprintf(stream, "Processing all test cases.\n");
+	fprintf(stream, "Processing all test cases.\n");
     }
 
 
     while (!found_eof) {
 	if (line_num == ULONG_MAX) {
-	    (void)fprintf(stream, "ERROR: Input data file exceeded max %lu number of lines.\n", ULONG_MAX);
+	    fprintf(stream, "ERROR: Input data file exceeded max %lu number of lines.\n", ULONG_MAX);
 	    if (fclose(fp_in) != 0) {
-		(void)fprintf(stream, "Unable to close input file.\n");
+		fprintf(stream, "Unable to close input file.\n");
 	    }
 	    if (output_file_name_defined) {
 		if (fclose(stream) != 0) {
@@ -329,7 +329,7 @@ main(int argc, char **argv)
 	    if (ferror(fp_in)) {
 		perror("ERROR: Problem reading file, system error message");
 		if (fclose(fp_in) != 0) {
-		    (void)fprintf(stream, "Unable to close input file.\n");
+		    fprintf(stream, "Unable to close input file.\n");
 		}
 	    } else {
 		perror("Oddness reading input file");
@@ -354,11 +354,11 @@ main(int argc, char **argv)
 		errno = 0;
 		u[0] = strtoul(buf_p, &endp, 10);
 		if (errno) {
-		    (void)fprintf(stream, "Read function number failed, line %lu error msg: '%s' string '%s'\n",
+		    fprintf(stream, "Read function number failed, line %lu error msg: '%s' string '%s'\n",
 				  line_num, strerror(errno), buf_p);
 		    valid_function_number = 0;
 		} else if ((*endp != '\0') || (buf_p == endp) || (strchr(buf_p, '-') != '\0')) {
-		    (void)fprintf(stream, "Read function number failed, line %lu string '%s'\n", line_num, buf_p);
+		    fprintf(stream, "Read function number failed, line %lu string '%s'\n", line_num, buf_p);
 		    valid_function_number = 0;
 		}
 
@@ -392,7 +392,7 @@ main(int argc, char **argv)
 				    if (!NEAR_EQUAL(result, d[9], VUNITIZE_TOL)) {
 					ret = 1;
 					failed_cnt++;
-					(void)fprintf(stream, "Failed function %lu test case on line %lu expected = %.15f result = %.15f\n",
+					fprintf(stream, "Failed function %lu test case on line %lu expected = %.15f result = %.15f\n",
 						      u[0], line_num, d[9], result);
 				    } else {
 					success_cnt++;
@@ -402,7 +402,7 @@ main(int argc, char **argv)
 				    BU_UNSETJUMP;
 				    ret = 1;
 				    bomb_cnt++;
-				    (void)fprintf(stream, "Failed function %lu test case on line %lu bu_bomb encountered.\n", u[0], line_num);
+				    fprintf(stream, "Failed function %lu test case on line %lu bu_bomb encountered.\n", u[0], line_num);
 				} BU_UNSETJUMP;
 			    }
 			    break;
@@ -424,7 +424,7 @@ main(int argc, char **argv)
 				    if (result != i[0]) {
 					ret = 1;
 					failed_cnt++;
-					(void)fprintf(stream, "Failed function %lu test case on line %lu expected = %d result = %d\n",
+					fprintf(stream, "Failed function %lu test case on line %lu expected = %d result = %d\n",
 						      u[0], line_num, i[0], result);
 				    } else {
 					success_cnt++;
@@ -434,7 +434,7 @@ main(int argc, char **argv)
 				    BU_UNSETJUMP;
 				    ret = 1;
 				    bomb_cnt++;
-				    (void)fprintf(stream, "Failed function %lu test case on line %lu bu_bomb encountered.\n", u[0], line_num);
+				    fprintf(stream, "Failed function %lu test case on line %lu bu_bomb encountered.\n", u[0], line_num);
 				} BU_UNSETJUMP;
 			    }
 			    break;
@@ -461,13 +461,13 @@ main(int argc, char **argv)
 				    if (result != i[0]) {
 					ret = 1;
 					failed_cnt++;
-					(void)fprintf(stream, "Failed function %lu test case on line %lu expected = %d result = %d\n",
+					fprintf(stream, "Failed function %lu test case on line %lu expected = %d result = %d\n",
 						      u[0], line_num, i[0], result);
 				    } else if (result == 0) {
 					if (!NEAR_EQUAL(t_out, d[0], tol.dist)) {
 					    ret = 1;
 					    failed_cnt++;
-					    (void)fprintf(stream, "Failed function %lu test case on line %lu result = %d expected t = %.15f result t = %.15f\n",
+					    fprintf(stream, "Failed function %lu test case on line %lu result = %d expected t = %.15f result t = %.15f\n",
 							  u[0], line_num, result, d[0], t_out);
 					} else {
 					    success_cnt++;
@@ -476,11 +476,11 @@ main(int argc, char **argv)
 					t_fail = !NEAR_EQUAL(t_out, d[0], tol.dist);
 					u_fail = !NEAR_EQUAL(u_out, d[1], tol.dist);
 					if (t_fail) {
-					    (void)fprintf(stream, "Failed function %lu test case on line %lu result = %d expected t = %.15f result t = %.15f\n",
+					    fprintf(stream, "Failed function %lu test case on line %lu result = %d expected t = %.15f result t = %.15f\n",
 							  u[0], line_num, result, d[0], t_out);
 					}
 					if (u_fail) {
-					    (void)fprintf(stream, "Failed function %lu test case on line %lu result = %d expected u = %.15f result u = %.15f\n",
+					    fprintf(stream, "Failed function %lu test case on line %lu result = %d expected u = %.15f result u = %.15f\n",
 							  u[0], line_num, result, d[1], u_out);
 					}
 					if (t_fail || u_fail) {
@@ -500,7 +500,7 @@ main(int argc, char **argv)
 				    BU_UNSETJUMP;
 				    ret = 1;
 				    bomb_cnt++;
-				    (void)fprintf(stream, "Failed function %lu test case on line %lu bu_bomb encountered.\n", u[0], line_num);
+				    fprintf(stream, "Failed function %lu test case on line %lu bu_bomb encountered.\n", u[0], line_num);
 				} BU_UNSETJUMP;
 			    }
 			    break;
@@ -526,17 +526,17 @@ main(int argc, char **argv)
 				    if (result != i[0]) {
 					ret = 1;
 					failed_cnt++;
-					(void)fprintf(stream, "Failed function %lu test case on line %lu expected = %d result = %d\n",
+					fprintf(stream, "Failed function %lu test case on line %lu expected = %d result = %d\n",
 						      u[0], line_num, i[0], result);
 				    } else if (result == 0 || result == 1) {
 					d0_fail = !NEAR_EQUAL(dist[0], d[0], VUNITIZE_TOL);
 					d1_fail = !NEAR_EQUAL(dist[1], d[1], VUNITIZE_TOL);
 					if (d0_fail) {
-					    (void)fprintf(stream, "Failed function %lu test case on line %lu result = %d expected dist[0] = %.15f result dist[0] = %.15f\n",
+					    fprintf(stream, "Failed function %lu test case on line %lu result = %d expected dist[0] = %.15f result dist[0] = %.15f\n",
 							  u[0], line_num, result, d[0], dist[0]);
 					}
 					if (d1_fail) {
-					    (void)fprintf(stream, "Failed function %lu test case on line %lu result = %d expected dist[1] = %.15f result dist[1] = %.15f\n",
+					    fprintf(stream, "Failed function %lu test case on line %lu result = %d expected dist[1] = %.15f result dist[1] = %.15f\n",
 							  u[0], line_num, result, d[1], dist[1]);
 					}
 					if (d0_fail || d1_fail) {
@@ -556,12 +556,12 @@ main(int argc, char **argv)
 				    BU_UNSETJUMP;
 				    ret = 1;
 				    bomb_cnt++;
-				    (void)fprintf(stream, "Failed function %lu test case on line %lu bu_bomb encountered.\n", u[0], line_num);
+				    fprintf(stream, "Failed function %lu test case on line %lu bu_bomb encountered.\n", u[0], line_num);
 				} BU_UNSETJUMP;
 			    }
 			    break;
 			default:
-			    (void)fprintf(stream, "ERROR: Unknown function number %lu test case on line %lu, skipping test case.\n", u[0], line_num);
+			    fprintf(stream, "ERROR: Unknown function number %lu test case on line %lu, skipping test case.\n", u[0], line_num);
 			    bu_vls_free(&input_file_name);
 			    bu_vls_free(&output_file_name);
 			    return EXIT_FAILURE;
@@ -572,9 +572,9 @@ main(int argc, char **argv)
 	}
     } /* End of while loop reading lines from data file */
 
-    (void)fprintf(stream, "Summary: %lu total test cases success.\n", success_cnt);
-    (void)fprintf(stream, "Summary: %lu total test cases failed.\n", failed_cnt);
-    (void)fprintf(stream, "Summary: %lu total test cases bomb.\n", bomb_cnt);
+    fprintf(stream, "Summary: %lu total test cases success.\n", success_cnt);
+    fprintf(stream, "Summary: %lu total test cases failed.\n", failed_cnt);
+    fprintf(stream, "Summary: %lu total test cases bomb.\n", bomb_cnt);
 
     if (output_file_name_defined) {
 	bu_log("Summary: %lu total test cases success.\n", success_cnt);
@@ -582,14 +582,14 @@ main(int argc, char **argv)
 	bu_log("Summary: %lu total test cases bomb.\n", bomb_cnt);
     }
 
-    (void)fprintf(stream, "Done.\n");
+    fprintf(stream, "Done.\n");
 
     if (output_file_name_defined) {
 	bu_log("Done.\n");
     }
 
     if (fclose(fp_in) != 0) {
-	(void)fprintf(stream, "Unable to close input file.\n");
+	fprintf(stream, "Unable to close input file.\n");
     }
 
     if (output_file_name_defined) {

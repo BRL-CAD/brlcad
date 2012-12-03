@@ -191,7 +191,7 @@ get_args(int argc, char **argv)
     } else {
 	file_name = argv[bu_optind];
 	if ((infp = fopen(file_name, "r")) == NULL) {
-	    (void)fprintf(stderr,
+	    fprintf(stderr,
 			  "pix-ps: cannot open \"%s\" for reading\n",
 			  file_name);
 	    return 0;
@@ -200,7 +200,7 @@ get_args(int argc, char **argv)
     }
 
     if (argc > ++bu_optind)
-	(void)fprintf(stderr, "pix-ps: excess argument(s) ignored\n");
+	fprintf(stderr, "pix-ps: excess argument(s) ignored\n");
 
     return 1;		/* OK */
 }

@@ -99,15 +99,15 @@ main(int argc, char **argv)
 	/* START # 3 */
 
 	/* Explain makings of handle. */
-	(void)printf("\nThis program constructs a handle with the base centered\n");
-	(void)printf("at (0, 0, 0) and the height extending in the positive z-\n");
-	(void)printf("direction.  The handle will be composed of 3 cylinders, \n");
-	(void)printf("2 tori, and 2 arb8s.\n\n");
+	printf("\nThis program constructs a handle with the base centered\n");
+	printf("at (0, 0, 0) and the height extending in the positive z-\n");
+	printf("direction.  The handle will be composed of 3 cylinders, \n");
+	printf("2 tori, and 2 arb8s.\n\n");
 	(void)fflush(stdout);
 
 	/* Find name of mged file to create. */
-	(void)printf("Enter the name of the mged file to be created ");
-	(void)printf("(25 char max).\n\t");
+	printf("Enter the name of the mged file to be created ");
+	printf("(25 char max).\n\t");
 	(void)fflush(stdout);
 	ret = scanf("%26s", filemged);
 	if (ret == 0) {
@@ -117,7 +117,7 @@ main(int argc, char **argv)
 	    bu_strlcpy(filemged, "handle.g", sizeof(filemged));
 
 	/* Find number of handles to create (<=26). */
-	(void)printf("Enter number of handles to create (26 max).\n\t");
+	printf("Enter number of handles to create (26 max).\n\t");
 	(void)fflush(stdout);
 	ret = scanf("%d", &numhan);
 	if (ret == 0) {
@@ -130,7 +130,7 @@ main(int argc, char **argv)
 	    numhan = 26;
 
 	/* Find dimensions of handle. */
-	(void)printf("Enter the length and height of handle in mm.\n\t");
+	printf("Enter the length and height of handle in mm.\n\t");
 	(void)fflush(stdout);
 	ret = scanf("%lf %lf", &len, &hgt);
 	if (ret == 0) {
@@ -143,7 +143,7 @@ main(int argc, char **argv)
 	if (hgt < SMALL_FASTF)
 	    hgt = SMALL_FASTF;
 
-	(void)printf("Enter the radius of the tori in mm.\n\t");
+	printf("Enter the radius of the tori in mm.\n\t");
 	(void)fflush(stdout);
 	ret = scanf("%lf", &r1);
 	if (ret == 0) {
@@ -153,7 +153,7 @@ main(int argc, char **argv)
 	if (r1 < SMALL_FASTF)
 	    r1 = SMALL_FASTF;
 
-	(void)printf("Enter the radius of the cylinders in mm.\n\t");
+	printf("Enter the radius of the cylinders in mm.\n\t");
 	(void)fflush(stdout);
 	ret = scanf("%lf", &r2);
 	if (ret == 0) {
@@ -207,7 +207,7 @@ main(int argc, char **argv)
 		    k++;
 		}					/* END # 9 */
 		temp1[k] = '\0';
-		(void)sscanf(temp1, "%d", &numhan);
+		sscanf(temp1, "%d", &numhan);
 		if (numhan > 26) numhan = 26;
 	    }						/* END # 8 */
 
@@ -224,8 +224,8 @@ main(int argc, char **argv)
 		    k++;
 		}					/* END # 11 */
 		temp1[k] = '\0';
-		if (temp[1] == 'l') (void)sscanf(temp1, "%lf", &len);
-		else if (temp[1] == 'h') (void)sscanf(temp1, "%lf", &hgt);
+		if (temp[1] == 'l') sscanf(temp1, "%lf", &len);
+		else if (temp[1] == 'h') sscanf(temp1, "%lf", &hgt);
 	    }						/* END # 10 */
 
 	    /* -r1 or -r2 - radii for torus. */
@@ -241,19 +241,19 @@ main(int argc, char **argv)
 		    k++;
 		}					/* END # 13 */
 		temp1[k] = '\0';
-		if (temp[2] == '1') (void)sscanf(temp1, "%lf", &r1);
-		else if (temp[2] == '2') (void)sscanf(temp1, "%lf", &r2);
+		if (temp[2] == '1') sscanf(temp1, "%lf", &r1);
+		else if (temp[2] == '2') sscanf(temp1, "%lf", &r2);
 	    }						/* END # 12 */
 	}						/* END # 5 */
     }							/* END # 4 */
 
     /* Print out dimensions of the handle. */
-    (void)printf("\nmged file name:  %s\n", filemged);
-    (void)printf("length:  %f mm\n", len);
-    (void)printf("height:  %f mm\n", hgt);
-    (void)printf("radius of tori:  %f mm\n", r1);
-    (void)printf("radius of cylinders:  %f mm\n", r2);
-    (void)printf("number of handles:  %d\n\n", numhan);
+    printf("\nmged file name:  %s\n", filemged);
+    printf("length:  %f mm\n", len);
+    printf("height:  %f mm\n", hgt);
+    printf("radius of tori:  %f mm\n", r1);
+    printf("radius of cylinders:  %f mm\n", r2);
+    printf("number of handles:  %d\n\n", numhan);
     (void)fflush(stdout);
 
     /* Open mged file for writing to. */

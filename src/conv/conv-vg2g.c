@@ -97,14 +97,14 @@ main(int argc, char **argv)
     if (rec.u_id == ID_IDENT) {
 	/* have an mged type file - check its version */
 	if ( BU_STR_EQUAL(rec.i.i_version, ID_VERSION) ) {
-	    (void)printf("%s: NO conversion necessary\n", argv[1]);
+	    printf("%s: NO conversion necessary\n", argv[1]);
 	    (void)putchar(7);
 	    return 0;
 	}
 
 	else {
 	    /* convert from version 3 to version 4 */
-	    (void)printf("convert from ver 3 to ver 4\n");
+	    printf("convert from ver 3 to ver 4\n");
 	    units = ID_IN_UNIT;
 	    rec.i.i_version[0] = '\0';
 	    bu_strlcpy(rec.i.i_version, ID_VERSION, sizeof(rec.i.i_version));
@@ -121,9 +121,9 @@ main(int argc, char **argv)
 	 *    	Hence cv must know the original units of the ".vg" file so
 	 *	that they can be converted to BASE units.
 	 */
-	(void)printf("* *  V E R Y    I M P O R T A N T    N O T I C E  * *\n");
-	(void)printf("    You must KNOW the units of the %s file\n", argv[1]);
-	(void)printf("    If you don't know, DON'T guess....find out\n");
+	printf("* *  V E R Y    I M P O R T A N T    N O T I C E  * *\n");
+	printf("    You must KNOW the units of the %s file\n", argv[1]);
+	printf("    If you don't know, DON'T guess....find out\n");
 	(void)putchar( 7 );
 
 	rec.i.i_id = ID_IDENT;

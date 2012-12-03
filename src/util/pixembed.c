@@ -104,7 +104,7 @@ get_args(int argc, char **argv)
     } else {
 	file_name = argv[bu_optind];
 	if ((buffp = fopen(file_name, "r")) == NULL) {
-	    (void)fprintf(stderr,
+	    fprintf(stderr,
 			  "pixembed: cannot open \"%s\" for reading\n",
 			  file_name);
 	    return 0;
@@ -112,7 +112,7 @@ get_args(int argc, char **argv)
     }
 
     if (argc > ++bu_optind)
-	(void)fprintf(stderr, "pixembed: excess argument(s) ignored\n");
+	fprintf(stderr, "pixembed: excess argument(s) ignored\n");
 
     return 1;		/* OK */
 }

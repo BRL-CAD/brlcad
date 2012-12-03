@@ -149,7 +149,7 @@ get_args(int argc, char **argv)
 	file_name = argv[bu_optind];
 	ifname = bu_realpath(file_name, NULL);
 	if (freopen(ifname, "rb", stdin) == NULL) {
-	    (void)fprintf(stderr,
+	    fprintf(stderr,
 			  "bwmod: cannot open \"%s(canonical %s)\" for reading\n",
 			  file_name,ifname);
 	    bu_free(ifname,"ifname alloc from bu_realpath");
@@ -159,7 +159,7 @@ get_args(int argc, char **argv)
     }
 
     if (argc > ++bu_optind)
-	(void)fprintf(stderr, "bwmod: excess argument(s) ignored\n");
+	fprintf(stderr, "bwmod: excess argument(s) ignored\n");
 
     return 1;		/* OK */
 }
@@ -184,7 +184,7 @@ void mk_trans_tbl(void)
 		case AND : tmp=d; tmp &= (int)val[i]; d=tmp;break;
 		case XOR : tmp=d; tmp ^= (int)val[i]; d= tmp; break;
 		case TRUNC: tmp=((int)d/(int)val[i])*(int)val[i]; break;
-		default  : (void)fprintf(stderr, "%s: error in op\n", progname);
+		default  : fprintf(stderr, "%s: error in op\n", progname);
 		    bu_exit (-1, NULL);
 		    break;
 	    }
@@ -216,7 +216,7 @@ void mk_char_trans_tbl(void)
 		case OR  : d |= (int)val[i]; break;
 		case XOR : d ^= (int)val[i]; break;
 		case TRUNC: d /= (int)val[i];d *= (int)val[i]; break;
-		default  : (void)fprintf(stderr, "%s: error in op\n", progname);
+		default  : fprintf(stderr, "%s: error in op\n", progname);
 		    bu_exit (-1, NULL);
 		    break;
 	    }
@@ -273,7 +273,7 @@ int main(int argc, char **argv)
 	}
 	/* output */
 	if (write(1, (void *)ibuf, (unsigned)n) != n) {
-	    (void)fprintf(stderr, "%s: Error writing stdout\n",
+	    fprintf(stderr, "%s: Error writing stdout\n",
 			  progname);
 	    bu_exit (-1, NULL);
 	}
@@ -283,7 +283,7 @@ int main(int argc, char **argv)
     }
 
     if (clip_high != 0 || clip_low != 0) {
-	(void)fprintf(stderr, "bwmod: clipped %lu high, %lu low\n", (long unsigned)clip_high, (long unsigned)clip_low);
+	fprintf(stderr, "bwmod: clipped %lu high, %lu low\n", (long unsigned)clip_high, (long unsigned)clip_low);
     }
     return 0;
 }

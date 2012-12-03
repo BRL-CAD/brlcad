@@ -357,10 +357,10 @@ get_args(int argc, char **argv)
     xpos = atoi(argv[bu_optind++]);
     ypos = atoi(argv[bu_optind++]);
     textstring = argv[bu_optind++];
-    if (debug) (void)fprintf(stderr, "fblabel %d %d %s\n", xpos, ypos, textstring);
+    if (debug) fprintf(stderr, "fblabel %d %d %s\n", xpos, ypos, textstring);
 
     if (argc > bu_optind)
-	(void)fprintf(stderr, "fblabel: excess argument(s) ignored\n");
+	fprintf(stderr, "fblabel: excess argument(s) ignored\n");
 
     return 1;		/* OK */
 }

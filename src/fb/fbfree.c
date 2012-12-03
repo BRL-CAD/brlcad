@@ -56,7 +56,7 @@ main(int argc, char **argv)
 	}
     }
     if ( argc > ++bu_optind ) {
-	(void)fprintf( stderr, "fbfree: excess argument(s) ignored\n" );
+	fprintf( stderr, "fbfree: excess argument(s) ignored\n" );
     }
 
     if ( (fbp = fb_open( framebuffer, 0, 0 )) == FBIO_NULL ) {

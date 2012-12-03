@@ -47,21 +47,21 @@ main(void)
     int i, j, k;			/*  Loop counters.  */
 
     /*  Find option.  */
-    (void)printf("This takes a BRL-CAD mged model with a PRISM\n");
-    (void)printf("temperature output file and raytrace and/or\n");
-    (void)printf("display it using X-Windows graphics.  Make\n");
-    (void)printf("your selection.\n");
-    (void)printf("\t0 - raytrace & store file\n");
-    (void)printf("\t1 - raytrace, store, & showtherm file\n");
-    (void)printf("\t2 - showtherm file\n");
+    printf("This takes a BRL-CAD mged model with a PRISM\n");
+    printf("temperature output file and raytrace and/or\n");
+    printf("display it using X-Windows graphics.  Make\n");
+    printf("your selection.\n");
+    printf("\t0 - raytrace & store file\n");
+    printf("\t1 - raytrace, store, & showtherm file\n");
+    printf("\t2 - showtherm file\n");
     (void)fflush(stdout);
-    (void)scanf("%d", &ichoice);
+    scanf("%d", &ichoice);
 
     while ( (ichoice !=0 ) && (ichoice != 1) &&(ichoice != 2) )
     {
-	(void)printf("Your choice was not 0, 1, or 2, enter again!!\n");
+	printf("Your choice was not 0, 1, or 2, enter again!!\n");
 	(void)fflush(stdout);
-	(void)scanf("%d", &ichoice);
+	scanf("%d", &ichoice);
     }
 
     if ( (ichoice == 0) || (ichoice == 1) )
@@ -79,13 +79,13 @@ main(void)
 	showtherm[9] = ' ';
 	i = 10;
 	/*  Find name of .g file to be used.  */
-	(void)printf("Enter .g file to be raytraced (15 char max).\n\t");
+	printf("Enter .g file to be raytraced (15 char max).\n\t");
 	(void)fflush(stdout);
-	(void)scanf("%15s", gfile);
+	scanf("%15s", gfile);
 	/*  Find number of groups to be raytraced.  */
-	(void)printf("Enter the number of groups to be raytraced.\n\t");
+	printf("Enter the number of groups to be raytraced.\n\t");
 	(void)fflush(stdout);
-	(void)scanf("%d", &ngrp);
+	scanf("%d", &ngrp);
 	/*  Read each group & put it in the variable showtherm.  */
 	j = 0;
 	while ( (gfile[j] != '\0') && (i < 123) )
@@ -96,9 +96,9 @@ main(void)
 	}
 	for (j=0; j<ngrp; j++)
 	{
-	    (void)printf("Enter group %d (25 char max).\n\t", j);
+	    printf("Enter group %d (25 char max).\n\t", j);
 	    (void)fflush(stdout);
-	    (void)scanf("%25s", group);
+	    scanf("%25s", group);
 	    showtherm[i] = ' ';
 	    i++;
 	    k = 0;
@@ -112,15 +112,15 @@ main(void)
 	showtherm[i] = '\0';
 	if (i >= 123)
 	{
-	    (void)printf("There are too many characters for showtherm,\n");
-	    (void)printf("please revise pictx.\n");
+	    printf("There are too many characters for showtherm,\n");
+	    printf("please revise pictx.\n");
 	    (void)fflush(stdout);
 	}
 
 	/*  Call the program showtherm with the appropriate options.  */
 	/*  This will raytrace a .g file & find the appropriate  */
 	/*  temperature for each region.  */
-	(void)printf("\nThe program showtherm is now being run.\n\n");
+	printf("\nThe program showtherm is now being run.\n\n");
 	(void)fflush(stdout);
 	system(showtherm);
     }
@@ -129,10 +129,10 @@ main(void)
     {
 	/*  Call the program ir-X so that a file that has been raytraced  */
 	/*  may be displayed using X-Windows.  */
-	(void)printf("\nThe program ir-X in now being run.  If option\n");
-	(void)printf("0 or 1 was used when the name of a file is asked\n");
-	(void)printf("for enter the name of the file that was just\n");
-	(void)printf("stored.\n\n");
+	printf("\nThe program ir-X in now being run.  If option\n");
+	printf("0 or 1 was used when the name of a file is asked\n");
+	printf("for enter the name of the file that was just\n");
+	printf("stored.\n\n");
 	(void)fflush(stdout);
 	system(irX);
     }

@@ -98,7 +98,7 @@ get_args(int argc, char **argv)
 	file_name = argv[bu_optind];
 	if ((infp = fopen(file_name, "r")) == NULL) {
 	    perror(file_name);
-	    (void)fprintf(stderr,
+	    fprintf(stderr,
 			  "pixhalve: cannot open \"%s\" for reading\n",
 			  file_name);
 	    return 0;
@@ -107,7 +107,7 @@ get_args(int argc, char **argv)
     }
 
     if (argc > ++bu_optind)
-	(void)fprintf(stderr, "pixhalve: excess argument(s) ignored\n");
+	fprintf(stderr, "pixhalve: excess argument(s) ignored\n");
 
     return 1;		/* OK */
 }

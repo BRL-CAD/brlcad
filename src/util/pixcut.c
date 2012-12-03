@@ -152,7 +152,7 @@ get_args(int argc, char **argv)
 	} else {
 	    if ((input = fopen(in_name, "r")) == NULL) {
 		perror(in_name);
-		(void)fprintf(stderr,
+		fprintf(stderr,
 			      "pixcut: cannot open \"%s\" for reading\n",
 			      in_name);
 		return 0;
@@ -161,7 +161,7 @@ get_args(int argc, char **argv)
 	}
     }
     if (argc > ++bu_optind) {
-	(void)fprintf(stderr, "pixcut: excess argument(s) ignored\n");
+	fprintf(stderr, "pixcut: excess argument(s) ignored\n");
     }
     return 1;	/* OK */
 }
@@ -180,7 +180,7 @@ main(int argc, char **argv)
     background[2] = 1;
 
     if (!get_args(argc, argv)) {
-	(void)fprintf(stderr, "%s", usage);
+	fprintf(stderr, "%s", usage);
 	bu_exit (1, NULL);
     }
     /* Should we autosize the input? */
@@ -212,14 +212,14 @@ main(int argc, char **argv)
  * Spew at the user if they asked.
  */
     if (Verbose) {
-	(void)fprintf(stderr, "pixcut: Copyright (C) 1992 Paladin Software\n");
-	(void)fprintf(stderr, "pixcut: All rights reserved.\npixcut:\n");
-	(void)fprintf(stderr, "pixcut: original image %ldx%ld\n",
+	fprintf(stderr, "pixcut: Copyright (C) 1992 Paladin Software\n");
+	fprintf(stderr, "pixcut: All rights reserved.\npixcut:\n");
+	fprintf(stderr, "pixcut: original image %ldx%ld\n",
 		      org_width, org_height);
-	(void)fprintf(stderr, "pixcut: new image %ldx%ld\n",
+	fprintf(stderr, "pixcut: new image %ldx%ld\n",
 		      new_width, new_height);
-	(void)fprintf(stderr, "pixcut: offset %ldx%ld\n", base_x, base_y);
-	(void)fprintf(stderr, "pixcut: background color %d/%d/%d\n",
+	fprintf(stderr, "pixcut: offset %ldx%ld\n", base_x, base_y);
+	fprintf(stderr, "pixcut: background color %d/%d/%d\n",
 		      background[0], background[1], background[2]);
 
 	if (base_x < 0 || base_y < 0 ||
@@ -243,9 +243,9 @@ main(int argc, char **argv)
 	    if (base_x+new_width >org_width) {
 		if (last) {
 		    if (comma) {
-			(void)fprintf(stderr, ", %s", last);
+			fprintf(stderr, ", %s", last);
 		    } else {
-			(void)fprintf(stderr, " %s", last);
+			fprintf(stderr, " %s", last);
 		    }
 		    comma=1;
 		}
@@ -253,18 +253,18 @@ main(int argc, char **argv)
 	    if (base_y+new_height > org_height) {
 		if (last) {
 		    if (comma) {
-			(void)fprintf(stderr, ", %s", last);
+			fprintf(stderr, ", %s", last);
 		    } else {
-			(void)fprintf(stderr, " %s", last);
+			fprintf(stderr, " %s", last);
 		    }
 		    comma = 1;
 		}
 		last = "top";
 	    }
 	    if (comma) {
-		(void)fprintf(stderr, " and %s.\n", last);
+		fprintf(stderr, " and %s.\n", last);
 	    } else {
-		(void)fprintf(stderr, " %s.\n", last);
+		fprintf(stderr, " %s.\n", last);
 	    }
 	}
     }

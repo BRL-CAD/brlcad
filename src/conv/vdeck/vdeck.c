@@ -1200,7 +1200,7 @@ ewrite(FILE *fp, const char *buf, unsigned bytes)
 
     if (fwrite(buf, bytes, 1, fp) != 1) {
 	perror("write");
-	(void)fprintf(stderr, "vdeck: write error\n");
+	fprintf(stderr, "vdeck: write error\n");
 	bu_exit(2, NULL);
     }
 }

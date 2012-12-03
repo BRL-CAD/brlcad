@@ -77,7 +77,7 @@ void rotate(double *p, double *a, double *np)
 	+   p[2]  * ca[0] * ca[1];
 
 /*
- *	(void)printf("End of subroutine\n");
+ *	printf("End of subroutine\n");
  *	(void)fflush(stdout);
  */
 

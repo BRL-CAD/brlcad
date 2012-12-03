@@ -94,7 +94,7 @@ get_args(int argc, char **argv)
     }
 
     if (argc > ++bu_optind)
-	(void)fprintf(stderr, "spm-fb: excess argument(s) ignored\n");
+	fprintf(stderr, "spm-fb: excess argument(s) ignored\n");
 
     return 1;		/* OK */
 }

@@ -151,7 +151,7 @@ main(int argc, char **argv)
     maximage = im_line * im_high;
 
     if ((obuf = (char *)malloc(swathbytes)) == (char *)0) {
-	(void)fprintf(stderr, "pixtile:  malloc %d failure\n", swathbytes);
+	fprintf(stderr, "pixtile:  malloc %d failure\n", swathbytes);
 	bu_exit (10, NULL);
     }
 

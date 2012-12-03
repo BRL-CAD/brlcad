@@ -54,8 +54,8 @@ static struct mater *material_head = MATER_NULL;
 void
 rt_pr_mater(register const struct mater *mp)
 {
-    (void)bu_log("%5d..%d\t", mp->mt_low, mp->mt_high);
-    (void)bu_log("%d, %d, %d\t", mp->mt_r, mp->mt_g, mp->mt_b);
+    bu_log("%5d..%d\t", mp->mt_low, mp->mt_high);
+    bu_log("%d, %d, %d\t", mp->mt_r, mp->mt_g, mp->mt_b);
 }
 
 

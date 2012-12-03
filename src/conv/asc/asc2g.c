@@ -292,7 +292,7 @@ sktbld(void)
     cp++;
     cp++;
 
-    (void)sscanf(cp, "%200s %f %f %f %f %f %f %f %f %f %lu %lu", /* NAME_LEN */
+    sscanf(cp, "%200s %f %f %f %f %f %f %f %f %f %lu %lu", /* NAME_LEN */
 		 name,
 		 &fV[0], &fV[1], &fV[2],
 		 &fu[0], &fu[1], &fu[2],
@@ -417,7 +417,7 @@ extrbld(void)
     cp++;
 
     cp++;
-    (void)sscanf(cp, "%200s %200s %d %f %f %f  %f %f %f %f %f %f %f %f %f", /* NAME_LEN */
+    sscanf(cp, "%200s %200s %d %f %f %f  %f %f %f %f %f %f %f %f %f", /* NAME_LEN */
 		 name, sketch_name, &keypoint, &fV[0], &fV[1], &fV[2], &fh[0], &fh[1], &fh[2],
 		 &fu_vec[0], &fu_vec[1], &fu_vec[2], &fv_vec[0], &fv_vec[1], &fv_vec[2]);
 
@@ -1349,7 +1349,7 @@ pipebld(void)
 
 	sp = (struct wdb_pipept *)bu_malloc(sizeof(struct wdb_pipept), "pipe");
 
-	(void)sscanf(buf, "%le %le %le %le %le %le",
+	sscanf(buf, "%le %le %le %le %le %le",
 		     &id, &od,
 		     &bendradius, &x, &y, &z);
 
@@ -1393,7 +1393,7 @@ particlebld(void)
      * particles fit into one granule.
      */
 
-    (void)sscanf(buf, "%c %200s %le %le %le %le %le %le %le %le", /* NAME_LEN */
+    sscanf(buf, "%c %200s %le %le %le %le %le %le %le %le", /* NAME_LEN */
 		 &ident, name,
 		 &scanvertex[0],
 		 &scanvertex[1],
@@ -1463,7 +1463,7 @@ arbnbld(void)
 	double scan[4];
 
 	bu_fgets(buf, BUFSIZE, ifp);
-	(void)sscanf(buf, "%200s %le %le %le %le", type, /* TYPE_LEN */
+	sscanf(buf, "%200s %le %le %le %le", type, /* TYPE_LEN */
 		     &scan[0], &scan[1], &scan[2], &scan[3]);
 	/* convert double to fastf_t */
 	HMOVE(eqn[i], scan);

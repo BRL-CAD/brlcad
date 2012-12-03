@@ -161,7 +161,7 @@ tables_new(struct ged *gedp, struct directory *dp, struct bu_ptbl *cur_path, con
 
     if (dp->d_flags & RT_DIR_REGION) {
 	(*numreg)++;
-	(void)fprintf(tabptr, " %-4ld %4ld %4ld %4ld %4ld  ",
+	fprintf(tabptr, " %-4ld %4ld %4ld %4ld %4ld  ",
 		      *numreg, comb->region_id, comb->aircode, comb->GIFTmater,
 		      comb->los);
 	for (k = 0; k < BU_PTBL_LEN(cur_path); k++) {
@@ -169,9 +169,9 @@ tables_new(struct ged *gedp, struct directory *dp, struct bu_ptbl *cur_path, con
 
 	    path_dp = (struct directory *)BU_PTBL_GET(cur_path, k);
 	    RT_CK_DIR(path_dp);
-	    (void)fprintf(tabptr, "/%s", path_dp->d_namep);
+	    fprintf(tabptr, "/%s", path_dp->d_namep);
 	}
-	(void)fprintf(tabptr, "/%s:\n", dp->d_namep);
+	fprintf(tabptr, "/%s:\n", dp->d_namep);
 
 	if (flag == ID_TABLE)
 	    goto out;
@@ -202,11 +202,11 @@ tables_new(struct ged *gedp, struct directory *dp, struct bu_ptbl *cur_path, con
 
 	    if ((sol_dp=db_lookup(gedp->ged_wdbp->dbip, tree_list[i].tl_tree->tr_l.tl_name, LOOKUP_QUIET)) != RT_DIR_NULL) {
 		if (sol_dp->d_flags & RT_DIR_COMB) {
-		    (void)fprintf(tabptr, "   RG %c %s\n",
+		    fprintf(tabptr, "   RG %c %s\n",
 				  op, sol_dp->d_namep);
 		    continue;
 		} else if (!(sol_dp->d_flags & RT_DIR_SOLID)) {
-		    (void)fprintf(tabptr, "   ?? %c %s\n",
+		    fprintf(tabptr, "   ?? %c %s\n",
 				  op, sol_dp->d_namep);
 		    continue;
 		} else {
@@ -221,11 +221,11 @@ tables_new(struct ged *gedp, struct directory *dp, struct bu_ptbl *cur_path, con
 			nsoltemp = 0;
 		    }
 		    nsoltemp = tables_sol_number((matp_t)temp_mat, tree_list[i].tl_tree->tr_l.tl_name, &old, numsol);
-		    (void)fprintf(tabptr, "   %c [%d] ", op, nsoltemp);
+		    fprintf(tabptr, "   %c [%d] ", op, nsoltemp);
 		}
 	    } else {
 		nsoltemp = tables_sol_number((matp_t)old_mat, tree_list[i].tl_tree->tr_l.tl_name, &old, numsol);
-		(void)fprintf(tabptr, "   %c [%d] ", op, nsoltemp);
+		fprintf(tabptr, "   %c [%d] ", op, nsoltemp);
 		continue;
 	    }
 
@@ -364,32 +364,32 @@ ged_tables(struct ged *gedp, int argc, const char *argv[])
     (void)time(&now);
     timep = ctime(&now);
     timep[24] = '\0';
-    (void)fprintf(tabptr, "1 -8    Summary Table {%s}  (written: %s)\n", argv[0], timep);
-    (void)fprintf(tabptr, "2 -7         file name    : %s\n", gedp->ged_wdbp->dbip->dbi_filename);
-    (void)fprintf(tabptr, "3 -6         \n");
-    (void)fprintf(tabptr, "4 -5         \n");
+    fprintf(tabptr, "1 -8    Summary Table {%s}  (written: %s)\n", argv[0], timep);
+    fprintf(tabptr, "2 -7         file name    : %s\n", gedp->ged_wdbp->dbip->dbi_filename);
+    fprintf(tabptr, "3 -6         \n");
+    fprintf(tabptr, "4 -5         \n");
 #ifndef _WIN32
-    (void)fprintf(tabptr, "5 -4         user         : %s\n", getpwuid(getuid())->pw_gecos);
+    fprintf(tabptr, "5 -4         user         : %s\n", getpwuid(getuid())->pw_gecos);
 #else
     {
 	char uname[256];
 	DWORD dwNumBytes = 256;
 	if (GetUserName(uname, &dwNumBytes))
-	    (void)fprintf(tabptr, "5 -4         user         : %s\n", uname);
+	    fprintf(tabptr, "5 -4         user         : %s\n", uname);
 	else
-	    (void)fprintf(tabptr, "5 -4         user         : UNKNOWN\n");
+	    fprintf(tabptr, "5 -4         user         : UNKNOWN\n");
     }
 #endif
-    (void)fprintf(tabptr, "6 -3         target title : %s\n", gedp->ged_wdbp->dbip->dbi_title);
-    (void)fprintf(tabptr, "7 -2         target units : %s\n",
+    fprintf(tabptr, "6 -3         target title : %s\n", gedp->ged_wdbp->dbip->dbi_title);
+    fprintf(tabptr, "7 -2         target units : %s\n",
 		  bu_units_string(gedp->ged_wdbp->dbip->dbi_local2base));
-    (void)fprintf(tabptr, "8 -1         objects      :");
+    fprintf(tabptr, "8 -1         objects      :");
     for (i = 2; i < argc; i++) {
 	if ((i%8) == 0)
-	    (void)fprintf(tabptr, "\n                           ");
-	(void)fprintf(tabptr, " %s", argv[i]);
+	    fprintf(tabptr, "\n                           ");
+	fprintf(tabptr, " %s", argv[i]);
     }
-    (void)fprintf(tabptr, "\n\n");
+    fprintf(tabptr, "\n\n");
 
     /* make the tables */
     for (i = 2; i < argc; i++) {
@@ -406,7 +406,7 @@ ged_tables(struct ged *gedp, int argc, const char *argv[])
 
     if (flag == SOL_TABLE || flag == REG_TABLE) {
 	bu_file_delete("/tmp/mged_discr\0");
-	(void)fprintf(tabptr, "\n\nNumber Primitives = %ld  Number Regions = %ld\n",
+	fprintf(tabptr, "\n\nNumber Primitives = %ld  Number Regions = %ld\n",
 		      numsol, numreg);
 
 	bu_vls_printf(gedp->ged_result_str, "Processed %d Primitives and %d Regions\n",
@@ -416,7 +416,7 @@ ged_tables(struct ged *gedp, int argc, const char *argv[])
     } else {
 	int ret;
 
-	(void)fprintf(tabptr, "* 9999999\n* 9999999\n* 9999999\n* 9999999\n* 9999999\n");
+	fprintf(tabptr, "* 9999999\n* 9999999\n* 9999999\n* 9999999\n* 9999999\n");
 	(void)fclose(tabptr);
 
 	bu_vls_printf(gedp->ged_result_str, "Processed %d Regions\n", numreg);

@@ -71,13 +71,13 @@ _ged_rt_write(struct ged *gedp,
      * from 9->14 "should" be safe as it's above our calculation
      * tolerance and above single-precision capability.
      */
-    (void)fprintf(fp, "viewsize %.14e;\n", gedp->ged_gvp->gv_size);
+    fprintf(fp, "viewsize %.14e;\n", gedp->ged_gvp->gv_size);
     quat_mat2quat(quat, gedp->ged_gvp->gv_rotation);
-    (void)fprintf(fp, "orientation %.14e %.14e %.14e %.14e;\n", V4ARGS(quat));
-    (void)fprintf(fp, "eye_pt %.14e %.14e %.14e;\n",
+    fprintf(fp, "orientation %.14e %.14e %.14e %.14e;\n", V4ARGS(quat));
+    fprintf(fp, "eye_pt %.14e %.14e %.14e;\n",
 		  eye_model[X], eye_model[Y], eye_model[Z]);
 
-    (void)fprintf(fp, "start 0; clean;\n");
+    fprintf(fp, "start 0; clean;\n");
 
     gdlp = BU_LIST_NEXT(ged_display_list, &gedp->ged_gdp->gd_headDisplay);
     while (BU_LIST_NOT_HEAD(gdlp, &gedp->ged_gdp->gd_headDisplay)) {
@@ -124,7 +124,7 @@ _ged_rt_write(struct ged *gedp,
 
 	gdlp = next_gdlp;
     }
-    (void)fprintf(fp, "end;\n");
+    fprintf(fp, "end;\n");
 }
 
 

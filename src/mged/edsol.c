@@ -6981,7 +6981,7 @@ sedit_mouse(const vect_t mousevec)
 		    bu_vls_free(&vls);
 		}
 		if (hits == 1) {
-		    (void)sscanf(bu_vls_addr(&vls), " { { %d %d %d", &bot_verts[0], &bot_verts[1], &bot_verts[2]);
+		    sscanf(bu_vls_addr(&vls), " { { %d %d %d", &bot_verts[0], &bot_verts[1], &bot_verts[2]);
 		    bu_vls_free(&vls);
 		} else {
 		    Tcl_LinkVar(INTERP, "bot_v1", (char *)&bot_verts[0], TCL_LINK_INT);
