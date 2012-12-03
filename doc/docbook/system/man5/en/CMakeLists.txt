@@ -1,6 +1,10 @@
 set(docbook_man5_EN
   dsp.xml
   gattributes.xml
+  bw.xml
+  cmap.xml
+  pix.xml
+  plot3.xml
   )
 
 DOCBOOK_TO_HTML(man5 docbook_man5_EN html/man5/en "")
