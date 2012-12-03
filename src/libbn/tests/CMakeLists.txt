@@ -1,5 +1,6 @@
 BRLCAD_ADDEXEC(tester_bn_coplanar_tri_tri_isect bn_coplanar_tri_tri_isect.c "libbu;libbn" NO_INSTALL LOCAL)
 BRLCAD_ADDEXEC(tester_bn_tri_tri_isect bn_tri_tri_isect.c "libbu;libbn" NO_INSTALL LOCAL)
+BRLCAD_ADDEXEC(tester_bn_list bn_list.c "libbu;libbn" NO_INSTALL LOCAL)
 
 # For tester_bn_coplanar_tri_tri_isect, the input format is as follows:
 #
@@ -37,6 +38,25 @@ add_test(bn_tri_tri_isect_coplanar_full   tester_bn_tri_tri_isect  0,0,0 1,0,0 1
 
 # Test more general triangles
 add_test(bn_tri_tri_isect_null   tester_bn_tri_tri_isect  0,0,0 1,0,0 1,1,0  1,0,1 1,0,1 1,1,1  0)
+
+
+#
+#  ************ list.c tests *************
+#
+# Format is:
+#  tester_bn_list  <2 or 3 (the dimension)>  X0,Y0[,Z0] X1,Y1[,Z1] Xn,Yn[,Zn] 
+add_test(bn_list_2d_null                tester_bn_list  2) # NULL list of points
+add_test(bn_list_2d_1                   tester_bn_list  2  0,0)
+add_test(bn_list_2d_2                   tester_bn_list  2  0,0 1.64,1)
+add_test(bn_list_2d_3                   tester_bn_list  2  3,7 1,-5)
+add_test(bn_list_2d_4                   tester_bn_list  2  3,7 1,-5.321 67,0 0,100)
+
+
+add_test(bn_list_3d_null                tester_bn_list  3) # NULL list of points
+add_test(bn_list_3d_1                   tester_bn_list  3  0,0,0)
+add_test(bn_list_3d_2                   tester_bn_list  3  0,0,3 1.64,1,4)
+add_test(bn_list_3d_3                   tester_bn_list  3  3,7,8 1,-5,8)
+add_test(bn_list_3d_4                   tester_bn_list  3  3,7,8 1,-5.321,3 67,0,67 0,100,23)
 
 # Local Variables:
 # tab-width: 8
