@@ -683,7 +683,7 @@ doErrorTests()
 
     /* Attempt to read 2 values and assign 1 value from src.
      * If src includes 2 valid and 1 invalid input value, should return 0 to
-     * indicate matching failiure.
+     * indicate matching failure.
      * If src includes 2 valid values and terminates, should return EOF to
      * indicate input failure.
      */

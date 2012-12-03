@@ -796,7 +796,7 @@ MakeWheelRims(struct rt_wdb (*file), char *suffix, fastf_t dyhub,
  *                                                                    *
  *               Extrusion Creation Routines for Tire                 *
  *               Tread Patterns - makes sketch and                    *
- *               uses sketch to make extrustion                       *
+ *               uses sketch to make extrusion                        *
  *                                                                    *
  **********************************************************************/
 static void

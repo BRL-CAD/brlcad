@@ -45,7 +45,7 @@ struct scloud_specific {
     double octaves;
     double scale;	/* scale coordinate space */
     point_t vscale;
-    vect_t delta;	/* xlatd in noise space (where interesting noise is)*/
+    vect_t delta;	/* xlate in noise space (where interesting noise is)*/
     double max_d_p_mm;	/* maximum density per millimeter */
     double min_d_p_mm;	/* background density per millimeter */
     mat_t mtos;		/* model to shader */

@@ -763,7 +763,7 @@
 	<para>
 
 	  Para ello, tiene básicamente dos opciones: (1) utilizar cutaway.s
-	  para que sólo subtraiga de case.r, o (2) utilizar cutaway.s para
+	  para que sólo substraiga de case.r, o (2) utilizar cutaway.s para
 	  que substraiga de body.s y spkr.s, los dos componentes que conforman
 	  case.r. Si bien ambas opciones producirían el mismo efecto, el
 	  primer método sólo requiere una resta, mientras que el segundo
