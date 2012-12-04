@@ -831,9 +831,27 @@ ehy_plot_hyperbola(
 }
 
 static int
+ehy_curve_points(
+    const struct rt_ehy_internal *ehy,
+    const struct rt_view_info *info)
+{
+    fastf_t avg_r, approx_curve_len;
+    point_t p1, p2;
+
+    avg_r = (ehy->ehy_r1 + ehy->ehy_r2) / 2.0;
+
+    VADD2(p1, ehy->ehy_V, ehy->ehy_H);
+    VJOIN1(p2, ehy->ehy_V, avg_r, ehy->ehy_Au);
+
+    approx_curve_len = 2.0 * DIST_PT_PT(p1, p2);
+
+    return approx_curve_len / info->point_spacing;
+}
+
+static int
 ehy_ellipse_points(
-	struct rt_ehy_internal *ehy,
-	const struct rt_view_info *info)
+    const struct rt_ehy_internal *ehy,
+    const struct rt_view_info *info)
 {
     fastf_t avg_radius, avg_circumference;
 
@@ -857,7 +875,7 @@ rt_ehy_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
     ehy = (struct rt_ehy_internal *)ip->idb_ptr;
     RT_EHY_CK_MAGIC(ehy);
 
-    num_curve_points = primitive_curve_count(ip, info);
+    num_curve_points = ehy_curve_points(ehy, info);
 
     if (num_curve_points < 3) {
 	num_curve_points = 3;
