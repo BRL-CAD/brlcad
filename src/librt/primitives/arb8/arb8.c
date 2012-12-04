@@ -315,7 +315,7 @@ rt_arb_std_type(const struct rt_db_internal *ip, const struct bn_tol *tol)
 /**
  * R T _ A R B _ C E N T R O I D
  *
- * Find the center point for the arb in the rt_db_internat structure,
+ * Find the center point for the arb in the rt_db_internal structure,
  * and return it as a point_t.
  */
 void
