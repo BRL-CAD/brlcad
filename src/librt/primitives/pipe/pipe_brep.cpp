@@ -65,7 +65,7 @@ make_linear_surfaces(ON_Brep **b, ON_SimpleArray<ON_Curve*> *startoutercurves, O
     startedge->m_tolerance = 0.0;
     ON_BrepEdge* endedge = &(*b)->NewEdge((*b)->m_V[vert2ind], (*b)->m_V[vert2ind], c2ind);
     endedge->m_tolerance = 0.0;
-    // startedge might points to the wrong place if adding endegde expands the capacity
+    // startedge might point to the wrong place if adding endedge expands the capacity
     // of the edge array, so we need to fix it.
     startedge = (*b)->Edge(startedge->m_edge_index);
     startoutercurves->Empty();
