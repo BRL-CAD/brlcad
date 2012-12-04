@@ -155,7 +155,7 @@ arbin(struct ged *gedp,
     RT_ARB_CK_MAGIC(arb);
 
     /* find reference point (center_pt[3]) to find direction of normals */
-    rt_arb_centroid(center_pt, arb, cgtype);
+    rt_arb_centroid(&center_pt, ip);
 
     /* move new face planes for the desired thicknesses
      * don't do this yet for an arb7 */

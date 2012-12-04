@@ -315,25 +315,46 @@ rt_arb_std_type(const struct rt_db_internal *ip, const struct bn_tol *tol)
 /**
  * R T _ A R B _ C E N T R O I D
  *
- * Find the center point for the arb whose values are in the s array,
- * with the given number of vertices.  Return the point in center_pt.
+ * Find the center point for the arb in the rt_db_internat structure,
+ * and return it as a point_t.
  */
 void
-rt_arb_centroid(point_t center_pt, const struct rt_arb_internal *arb, int npoints)
+rt_arb_centroid(point_t *cent, const struct rt_db_internal *ip)
 {
-    register int j;
-    fastf_t divisor;
-    point_t sum;
 
-    RT_ARB_CK_MAGIC(arb);
+    struct rt_arb_internal *aip = (struct rt_arb_internal *)ip->idb_ptr;
+    struct bn_tol tmp_tol;
+    int arb_type = -1;
+    int i;
+    fastf_t x_avg, y_avg, z_avg;
+    RT_ARB_CK_MAGIC(aip);
 
-    VSETALL(sum, 0);
+    /* set up tolerance for rt_arb_std_type */
+    tmp_tol.magic = BN_TOL_MAGIC;
+    tmp_tol.dist = 0.0001; /* to get old behavior of rt_arb_std_type() */
+    tmp_tol.dist_sq = tmp_tol.dist * tmp_tol.dist;
+    tmp_tol.perp = 1e-5;
+    tmp_tol.para = 1 - tmp_tol.perp;
+    x_avg = y_avg = z_avg = 0;
 
-    for (j = 0; j < npoints; j++) {
-	VADD2(sum, sum, arb->pt[j]);
+    /* get number of vertices in arb_type */
+    arb_type = rt_arb_std_type(ip, &tmp_tol);
+  
+    /* centroid is the average for each axis of all coordinates of vertices */  
+    for (i = 0; i < arb_type; i++) {
+	x_avg += aip->pt[i][0];
+	y_avg += aip->pt[i][1];
+	z_avg += aip->pt[i][2];
     }
-    divisor = 1.0 / npoints;
-    VSCALE(center_pt, sum, divisor);
+
+    x_avg /= arb_type;
+    y_avg /= arb_type;
+    z_avg /= arb_type;
+
+    *cent[0] = x_avg;
+    *cent[1] = y_avg;
+    *cent[2] = z_avg;
+
 }
 
 
@@ -625,6 +646,7 @@ rt_arb_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct 
     }
     return 0;
 }
+
 
 /**
  * R T _ A R B _ S E T U P

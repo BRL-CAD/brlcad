@@ -354,7 +354,7 @@ const struct rt_functab rt_functab[] = {
 	rt_arb_bbox,
 	rt_arb_volume,
 	NULL,
-	NULL,
+	rt_arb_centroid,
     },
 
     {

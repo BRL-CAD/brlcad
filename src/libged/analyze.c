@@ -863,7 +863,7 @@ analyze_arb8(struct ged *gedp, const struct rt_db_internal *ip)
 
     /* TABLE 1 =========================================== */
     /* analyze each face, use center point of arb for reference */
-    rt_arb_centroid(center_pt, arb, cgtype);
+    rt_arb_centroid(&center_pt, ip);
 
     /* allocate pts array, maximum 4 verts per arb8 face */
     face.pts = (point_t *)bu_calloc(4, sizeof(point_t), "analyze_arb8: pts");
