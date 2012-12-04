@@ -3673,16 +3673,12 @@ package provide cadwidgets::Ged 1.0
     $mGed data_polygons $itk_component($_pane) polygons $plist
 
     if {[llength $plist] > $clip_pindex} {
-	if {[$mGed data_polygons $itk_component($_pane) polygons_overlap $pindex $clip_pindex]} {
-	    $mGed data_polygons $itk_component($_pane) clip $pindex $clip_pindex
+	$mGed data_polygons $itk_component($_pane) clip $pindex $clip_pindex
 
-	    # Get rid of the clip polygon
-	    set plist [$mGed data_polygons $itk_component($_pane) polygons]
-	    set plist [lreplace $plist $clip_pindex $clip_pindex]
-	    $mGed data_polygons $itk_component($_pane) polygons $plist
-	} else {
-	    $mGed data_polygons $itk_component($_pane) polygons $save_plist
-	}
+	# Get rid of the clip polygon
+	set plist [$mGed data_polygons $itk_component($_pane) polygons]
+	set plist [lreplace $plist $clip_pindex $clip_pindex]
+	$mGed data_polygons $itk_component($_pane) polygons $plist
     }
 
     foreach callback $mEndDataPolygonCallbacks {
