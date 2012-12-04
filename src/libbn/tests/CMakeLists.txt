@@ -44,7 +44,7 @@ add_test(bn_tri_tri_isect_null   tester_bn_tri_tri_isect  0,0,0 1,0,0 1,1,0  1,0
 #  ************ list.c tests *************
 #
 # Format is:
-#  tester_bn_list  <2 or 3 (the dimension)>  X0,Y0[,Z0] X1,Y1[,Z1] Xn,Yn[,Zn] 
+#  tester_bn_list  <2 or 3 (the dimension)>  X0,Y0[,Z0] X1,Y1[,Z1] Xn,Yn[,Zn]
 add_test(bn_list_2d_null                tester_bn_list  2) # NULL list of points
 add_test(bn_list_2d_1                   tester_bn_list  2  0,0)
 add_test(bn_list_2d_2                   tester_bn_list  2  0,0 1.64,1)

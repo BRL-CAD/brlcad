@@ -339,8 +339,8 @@ rt_arb_centroid(point_t *cent, const struct rt_db_internal *ip)
 
     /* get number of vertices in arb_type */
     arb_type = rt_arb_std_type(ip, &tmp_tol);
-  
-    /* centroid is the average for each axis of all coordinates of vertices */  
+
+    /* centroid is the average for each axis of all coordinates of vertices */
     for (i = 0; i < arb_type; i++) {
 	x_avg += aip->pt[i][0];
 	y_avg += aip->pt[i][1];

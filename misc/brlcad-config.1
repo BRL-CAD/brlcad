@@ -1,84 +1,105 @@
-.TH BRLCAD-CONFIG 1 BRL-CAD
-.\"                  B R L C A D - C O N F I G . 1
-.\" BRL-CAD
+'\" t
+.\"     Title: BRLCAD-CONFIG
+.\"    Author:
+.\" Generator: DocBook XSL-NS Stylesheets v1.76.1 <http://docbook.sf.net/>
+.\"      Date: 12/04/2012
+.\"    Manual: BRL-CAD
+.\"    Source: BRL-CAD
+.\"  Language: English
 .\"
-.\" Copyright (c) 2007-2012 United States Government as represented by
-.\" the U.S. Army Research Laboratory.
-.\"
-.\" Redistribution and use in source (Docbook format) and 'compiled'
-.\" forms (PDF, PostScript, HTML, RTF, etc.), with or without
-.\" modification, are permitted provided that the following conditions
-.\" are met:
-.\"
-.\" 1. Redistributions of source code (Docbook format) must retain the
-.\" above copyright notice, this list of conditions and the following
-.\" disclaimer.
-.\"
-.\" 2. Redistributions in compiled form (transformed to other DTDs,
-.\" converted to PDF, PostScript, HTML, RTF, and other formats) must
-.\" reproduce the above copyright notice, this list of conditions and
-.\" the following disclaimer in the documentation and/or other
-.\" materials provided with the distribution.
-.\"
-.\" 3. The name of the author may not be used to endorse or promote
-.\" products derived from this documentation without specific prior
-.\" written permission.
-.\"
-.\" THIS DOCUMENTATION IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY
-.\" EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
-.\" PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
-.\" ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
-.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT
-.\" OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR
-.\" BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
-.\" LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-.\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
-.\" USE OF THIS DOCUMENTATION, EVEN IF ADVISED OF THE POSSIBILITY OF
-.\" SUCH DAMAGE.
-.\"
-.\".\".\"
-.SH NAME
-brlcad-config \- script to get information about the installed version of BRL-CAD
-.SH SYNOPSIS
-.B brlcad-config
-[ \-\-prefix\fI[=DIR]\fP ] [ \-\-libs ] [ \-\-cflags ] [ \-\-version ] [ \-\-help ]
-.SH DESCRIPTION
-.I brlcad-config
-is a script that describes the compile and linker flags that should be
-used to compile and link programs that use \fIBRL-CAD\fP's libraries.
-.SH OPTIONS
-.TP
-.I brlcad-config
+.TH "BRLCAD\-CONFIG" "1" "12/04/2012" "BRL\-CAD" "BRL\-CAD"
+.\" -----------------------------------------------------------------
+.\" * Define some portability stuff
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" http://bugs.debian.org/507673
+.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
+.\" -----------------------------------------------------------------
+.\" * set default formatting
+.\" -----------------------------------------------------------------
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.\" -----------------------------------------------------------------
+.\" * MAIN CONTENT STARTS HERE *
+.\" -----------------------------------------------------------------
+.SH "NAME"
+brlcad-config \- script to get information about the installed version of BRL\-CAD
+.SH "SYNOPSIS"
+.HP \w'\fBbrlcad\-config\fR\ 'u
+\fBbrlcad\-config\fR [\-\-prefix\ [\fI=DIR\fR]] [\-\-libs] [\-\-cflags] [\-\-version] [\-\-help]
+.SH "DESCRIPTION"
+.PP
+\fBbrlcad\-config\fR
+is a script that describes the compile and linker flags that should be used to compile and link programs that use
+\fIBRL\-CAD\fR\*(Aqs libraries\&.
+.SH "OPTIONS"
+.PP
+\fBbrlcad\-config\fR
+.RS 4
 accepts the following options:
-.TP
-.B \-\-prefix=PREFIX
-If specified, use the provided installation PREFIX instead of the
-prefix that \fIBRL-CAD\fP was compiled with when providing the output
-for the other \fIbrlcad-config\fP script options.
-.TP
-.B \-\-libs
-Prints out library linker flags that are generally needed when
-creating a program that links to \fIBRL-CAD\fP libraries.
-.TP
-.B \-\-cflags
-Prints out compilation flags that are generally needed when
-creating a program that refers to \fIBRL-CAD\fP headers.
-.TP
-.B \-\-version
-Prints out the version of \fIBRL-CAD\fP that is installed.
-.TP
-.B \-\-help
-Display usage.
+.RE
+.PP
+\fB\-\-prefix=PREFIX\fR
+.RS 4
+If specified, use the provided installation PREFIX instead of the prefix that
+\fIBRL\-CAD\fR
+was compiled with when providing the output for the other
+\fBbrlcad\-config\fR
+script options\&.
+.RE
+.PP
+\fB\-\-libs\fR
+.RS 4
+Prints out library linker flags that are generally needed when creating a program that links to
+\fIBRL\-CAD\fR
+libraries\&.
+.RE
+.PP
+\fB\-\-cflags\fR
+.RS 4
+Prints out compilation flags that are generally needed when creating a program that refers to
+\fIBRL\-CAD\fR
+headers\&.
+.RE
+.PP
+\fB\-\-version\fR
+.RS 4
+Prints out the version of
+\fIBRL\-CAD\fR
+that is installed\&.
+.RE
+.PP
+\fB\-\-help\fR
+.RS 4
+Display usage\&.
+.RE
 .SH "SEE ALSO"
-brlcad(1), libbu(3), libbn(3), librt(3), libwdb(3).
-.SH BUGS
-No bugs known for \fIbrlcad-config\fP.
-.SH AUTHOR
+.PP
+\fBbrlcad\fR(1),
+\fBlibbu\fR(3),
+\fBlibbn\fR(3),
+\fBlibrt\fR(3),
+\fBlibwdb\fR(3)\&.
+.SH "BUGS"
+.PP
+No bugs known for
+\fBbrlcad\-config\fR\&.
+.SH "AUTHOR"
+.PP
 Christopher Sean Morrison
-.SH COPYRIGHT
-This software is Copyright (c) 2007-2012 United States Government as
-represented by the U.S. Army Research Laboratory. All rights reserved.
+.SH "COPYRIGHT"
+.PP
+This software is Copyright (c) 2007\-2012 United States Government as represented by the U\&.S\&. Army Research Laboratory\&. All rights reserved\&.
 .SH "BUG REPORTS"
-Reports of bugs or problems should be submitted via electronic
-mail to <devs@brlcad.org>.
+.PP
+Reports of bugs or problems should be submitted via electronic mail to <devs@brlcad\&.org>\&.
+.SH "AUTHOR"
+.br
+.RS 4
+Author.
+.RE

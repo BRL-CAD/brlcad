@@ -181,7 +181,7 @@ test_tp_2list(double *x, double *y, int npoints)
 }
 
 
-/* 
+/*
  * This test tests the tp_2mlist marker function to ensure it
  *  doesn't have any SEGFAULTs when invalid values are put in, and
  *  produces output when required and not when none is required

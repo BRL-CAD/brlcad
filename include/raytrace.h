@@ -5458,7 +5458,7 @@ RT_EXPORT extern int rt_arb_get_cgtype();		/* needs rt_arb_internal for arg list
 RT_EXPORT extern int rt_arb_std_type(const struct rt_db_internal *ip,
 				     const struct bn_tol *tol);
 RT_EXPORT extern void rt_arb_centroid(point_t                       *cent,
-				      const struct rt_db_internal   *ip);		
+				      const struct rt_db_internal   *ip);
 RT_EXPORT extern int rt_arb_calc_points();		/* needs wdb.h for arg list */
 RT_EXPORT extern int rt_arb_3face_intersect(point_t			point,
 					    const plane_t		planes[6],
