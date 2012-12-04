@@ -232,24 +232,38 @@ again:
 	    goto again;
 	case 't':
 #ifndef HAVE_C99_FORMAT_SPECIFIERS
-	    /* Assume MSVC, where equivalent of %t[dioxX] is %I[dioxX]. */
+	    /* remove C99 't' */
 	    bu_vls_trunc(&partFmt, bu_vls_strlen(&partFmt) - 1);
+
+	    /* Assume MSVC.
+	     *
+	     * For 32-bit, ptrdiff_t is __int32, and equivalent of %t[dioxX] is
+	     * %[dioxX].
+	     *
+	     * For 64-bit, ptrdiff_t is __int64, and equivalent of %t[dioxX] is
+	     * %I64[dioxX].
+	     */ 
 #if defined(SIZEOF_SIZE_T) && SIZEOF_SIZE_T == 8
 	    bu_vls_strcat(&partFmt, "I64");
-#else
-	    bu_vls_putc(&partFmt, 'I');
 #endif
 #endif
 	    flags |= PTRDIFFT;
 	    goto again;
 	case 'z':
 #ifndef HAVE_C99_FORMAT_SPECIFIERS
-	    /* Assume MSVC, where equivalent of %z[ouxX] is %I[ouxX]. */
+	    /* remove C99 't' */
 	    bu_vls_trunc(&partFmt, bu_vls_strlen(&partFmt) - 1);
+
+	    /* Assume MSVC.
+	     *
+	     * For 32-bit, size_t is unsigned __int32, and equivalent of
+	     * %z[dioxX] is %[dioxX].
+	     *
+	     * For 64-bit, size_t is unsigned __int64, and equivalent of
+	     * %z[dioxX] is %I64[dioxX].
+	     */ 
 #if defined(SIZEOF_SIZE_T) && SIZEOF_SIZE_T == 8
 	    bu_vls_strcat(&partFmt, "I64");
-#else
-	    bu_vls_putc(&partFmt, 'I');
 #endif
 #endif
 	    flags |= SIZET;
