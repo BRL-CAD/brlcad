@@ -1989,8 +1989,8 @@ pipe_connecting_arcs(
     avg_circumference = bn_pi * avg_diameter;
     num_arcs = avg_circumference / info->curve_spacing;
 
-    if (num_arcs < 2) {
-	num_arcs = 2;
+    if (num_arcs < 4) {
+	num_arcs = 4;
     }
 
     return num_arcs;

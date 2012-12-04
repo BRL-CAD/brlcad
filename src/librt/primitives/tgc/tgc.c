@@ -1891,8 +1891,8 @@ rt_tgc_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
 
     connecting_lines = primitive_curve_count(ip, info);
 
-    if (connecting_lines < 2) {
-	connecting_lines = 2;
+    if (connecting_lines < 4) {
+	connecting_lines = 4;
     }
 
     draw_lines_between_ellipses(info->vhead, ellipse1, ellipse2, connecting_lines);
