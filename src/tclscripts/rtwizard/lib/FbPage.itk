@@ -135,7 +135,7 @@ namespace eval RtWizard {
 	    variable fbFile
 
 	    variable width
-	    variable heigh
+	    variable height
 
 	    variable widthIndex
 	    variable heightIndex
