@@ -8,3 +8,4 @@ Terminal=false
 Type=Application
 Categories=BRL-CAD;
 MimeType=application/brlcad-v4;application/brlcad-v5;
+InitialPreference=1
