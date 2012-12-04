@@ -235,7 +235,7 @@ again:
 	    /* Assume MSVC, where equivalent of %t[dioxX] is %I[dioxX]. */
 	    bu_vls_trunc(&partFmt, bu_vls_strlen(&partFmt) - 1);
 #if defined(SIZEOF_SIZE_T) && SIZEOF_SIZE_T == 8
-	    bu_vls_puts(&partFmt, "I64");
+	    bu_vls_strcat(&partFmt, "I64");
 #else
 	    bu_vls_putc(&partFmt, 'I');
 #endif
@@ -247,7 +247,7 @@ again:
 	    /* Assume MSVC, where equivalent of %z[ouxX] is %I[ouxX]. */
 	    bu_vls_trunc(&partFmt, bu_vls_strlen(&partFmt) - 1);
 #if defined(SIZEOF_SIZE_T) && SIZEOF_SIZE_T == 8
-	    bu_vls_puts(&partFmt, "I64");
+	    bu_vls_strcat(&partFmt, "I64");
 #else
 	    bu_vls_putc(&partFmt, 'I');
 #endif
