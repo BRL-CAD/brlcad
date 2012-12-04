@@ -493,20 +493,19 @@ bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
 	fbufp = bu_vls_addr(&fbuf);
 
 #ifndef HAVE_C99_FORMAT_SPECIFIERS
-	/* if the format string uses the %z width specifier, we need
-	 * to replace it with something more palatable to this busted
-	 * compiler.
+	/* if the format string uses the %z or %t width specifier, we need to
+	 * replace it with something more palatable to this busted compiler.
 	 */
 
-	if (f.flags & SIZETINT) {
+	if ((f.flags & SIZETINT) || (f.flags & PTRDIFFT)) {
 	    char *fp = fbufp;
 	    while (*fp) {
 		if (*fp == '%') {
 		    /* found the next format specifier */
 		    while (*fp) {
 			fp++;
-			/* possible characters that can precede the
-			 * field length character (before the type).
+			/* possible characters that can precede the field
+			 * length character (before the type).
 			 */
 			if (isdigit(*fp)
 			    || *fp == '$'
@@ -518,10 +517,10 @@ bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
 			    || *fp == '*') {
 			    continue;
 			}
-			if (*fp == 'z') {
-			    /* assume MSVC replacing instances of %z
-			     * with %I (capital i) until we encounter
-			     * anything different.
+			if (*fp == 'z' || *fp = 't') {
+			    /* assume MSVC replacing instances of %z or %t with
+			     * %I (capital i) until we encounter anything
+			     * different.
 			     */
 			    *fp = 'I';
 			}
