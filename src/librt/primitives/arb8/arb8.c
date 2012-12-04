@@ -1138,40 +1138,37 @@ arb_plot_cross_sections(
 	point_t end[4],
 	const struct rt_view_info *info)
 {
-    int i, num_steps;
+    int i, num_steps, tlen = 4;
     vect_t t[4];
     point_t rec[4];
-    fastf_t width, step;
+    fastf_t avg_width, step, vmag[4];
 
     VMOVE(rec[0], start[0]);
     VMOVE(rec[1], start[1]);
     VMOVE(rec[2], start[2]);
     VMOVE(rec[3], start[3]);
 
+    avg_width = 0.0;
+    for (i = 0; i < tlen; ++i) {
+	VSUB2(t[i], end[i], start[i]);
+	vmag[i] = MAGNITUDE(t[i]);
+	avg_width += vmag[i];
+    }
+
     /* choose number of steps based on average distance between faces */
-    width = DIST_PT_PT(start[0], end[0]);
-    width += DIST_PT_PT(start[1], end[1]);
-    width += DIST_PT_PT(start[2], end[2]);
-    width += DIST_PT_PT(start[3], end[3]);
-    width /= 4.0;
-    num_steps = (width / info->curve_spacing) - 1.0;
+    avg_width /= 4.0;
+    num_steps = (avg_width / info->curve_spacing) - 1.0;
 
     if (num_steps < 1) {
 	return;
     }
 
-    /* calculate actual step vectors for each pair of points between faces */
-#define CALCULATE_TRAVEL_VECTOR(i) \
-    width = DIST_PT_PT(start[i], end[i]); \
-    step = width / num_steps; \
-    VSUB2(t[i], end[i], start[i]); \
-    VUNITIZE(t[i]); \
-    VSCALE(t[i], t[i], step); \
-
-    CALCULATE_TRAVEL_VECTOR(0);
-    CALCULATE_TRAVEL_VECTOR(1);
-    CALCULATE_TRAVEL_VECTOR(2);
-    CALCULATE_TRAVEL_VECTOR(3);
+    /* scale step vectors to the step size */
+    for (i = 0; i < tlen; ++i) {
+	step = vmag[i] / num_steps;
+	VUNITIZE(t[i]);
+	VSCALE(t[i], t[i], step);
+    }
 
     /* step and plot rectangles */
     for (i = 1; i < num_steps; ++i) {
