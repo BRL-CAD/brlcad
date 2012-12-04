@@ -1853,6 +1853,33 @@ tgc_points_per_ellipse(const struct rt_db_internal *ip, const struct rt_view_inf
     return avg_circumference / info->point_spacing;
 }
 
+static fastf_t
+ramanujan_approx_circumference(fastf_t major_len, fastf_t minor_len)
+{
+    fastf_t a = major_len, b = minor_len;
+
+    return M_PI * (3.0 * (a + b) - sqrt(10.0 * a * b + 3.0 * (a * a + b * b)));
+}
+
+static int
+tgc_connecting_lines(
+    const struct rt_tgc_internal *tgc,
+    const struct rt_view_info *info)
+{
+    fastf_t mag_a, mag_b, mag_c, mag_d, avg_circumference;
+
+    mag_a = MAGNITUDE(tgc->a);
+    mag_b = MAGNITUDE(tgc->b);
+    mag_c = MAGNITUDE(tgc->c);
+    mag_d = MAGNITUDE(tgc->d);
+
+    avg_circumference = ramanujan_approx_circumference(mag_a, mag_b);
+    avg_circumference += ramanujan_approx_circumference(mag_c, mag_d);
+    avg_circumference /= 2.0;
+
+    return avg_circumference / info->curve_spacing;
+}
+
 int
 rt_tgc_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
 {
@@ -1889,7 +1916,7 @@ rt_tgc_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
     plot_ellipse(info->vhead, ellipse2.center, ellipse2.axis_a, ellipse2.axis_b,
 		 points_per_ellipse);
 
-    connecting_lines = primitive_curve_count(ip, info);
+    connecting_lines = tgc_connecting_lines(tip, info);
 
     if (connecting_lines < 4) {
 	connecting_lines = 4;
