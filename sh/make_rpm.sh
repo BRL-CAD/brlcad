@@ -227,18 +227,25 @@ Homepage: http://brlcad.org
 %post
 
 F="/usr/share/applications/defaults.list"
+G="/etc/gnome/defaults.list"
+H="mged.desktop"
 
-if [ ! -f $F ]
+if [ ! -f $F ] && [ ! -h $F ]
 then
-	echo "[Default Applications]" > $F
-else
-	sed --follow-symlinks -i "/application\/brlcad-v[45]/d" $F
+	if [ -f $G ]
+	then
+		ln -s $G $F || :
+	else
+		echo "[Default Applications]" > $F || :
+	fi
 fi
 
-echo "application/brlcad-v4=mged.desktop" >> $F
-echo "application/brlcad-v5=mged.desktop" >> $F
+sed --follow-symlinks -i "/application\/brlcad-v[45]/d" $F || :
 
-source /etc/profile.d/brlcad.sh
+echo "application/brlcad-v4=$H" >> $F || :
+echo "application/brlcad-v5=$H" >> $F || :
+
+source /etc/profile.d/brlcad.sh || :
 
 update-mime-database /usr/share/mime || :
 update-desktop-database -q || :
@@ -253,9 +260,14 @@ echo -e '
 
 F="/usr/share/applications/defaults.list"
 
-if [ $1 -eq 0 ] && [ -f $F ]
+if [ -f $F ] || [ -h $F ]
 then
-	sed --follow-symlinks -i "/application\/brlcad-v[45]/d" $F
+	sed --follow-symlinks -i "/application\/brlcad-v[45]/d" $F || :
+fi
+
+if [ -f $F ] && [ -z "$(sed "/\[Default Applications\]/d" $F)" ]
+then
+	rm $F || :
 fi
 
 update-mime-database /usr/share/mime || :

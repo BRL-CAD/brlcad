@@ -2,9 +2,14 @@
 
 F="/usr/share/applications/defaults.list"
 
-if [ -f $F ]
+if [ -f $F ] || [ -h $F ]
 then
-	sed --follow-symlinks -i "/application\/brlcad-v[45]/d" $F
+	sed --follow-symlinks -i "/application\/brlcad-v[45]/d" $F || :
+fi
+
+if [ -f $F ] && [ -z "$(sed "/\[Default Applications\]/d" $F)" ]
+then
+	rm $F || :
 fi
 
 update-mime-database /usr/share/mime || :
