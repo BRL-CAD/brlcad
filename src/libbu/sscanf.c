@@ -251,7 +251,7 @@ again:
 	    goto again;
 	case 'z':
 #ifndef HAVE_C99_FORMAT_SPECIFIERS
-	    /* remove C99 't' */
+	    /* remove C99 'z' */
 	    bu_vls_trunc(&partFmt, bu_vls_strlen(&partFmt) - 1);
 
 	    /* Assume MSVC.
