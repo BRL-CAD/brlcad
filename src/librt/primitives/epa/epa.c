@@ -792,6 +792,24 @@ epa_plot_parabola(
 }
 
 static int
+epa_curve_points(
+    const struct rt_epa_internal *epa,
+    const struct rt_view_info *info)
+{
+    fastf_t avg_r, approx_curve_len;
+    point_t p1, p2;
+
+    avg_r = (epa->epa_r1 + epa->epa_r2) / 2.0;
+
+    VADD2(p1, epa->epa_V, epa->epa_H);
+    VJOIN1(p2, epa->epa_V, avg_r, epa->epa_Au);
+
+    approx_curve_len = 2.0 * DIST_PT_PT(p1, p2);
+
+    return approx_curve_len / info->point_spacing;
+}
+
+static int
 epa_ellipse_points(
 	struct rt_epa_internal *epa,
 	const struct rt_view_info *info)
@@ -821,7 +839,7 @@ rt_epa_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
 	return -2;
     }
 
-    num_curve_points = primitive_curve_count(ip, info);
+    num_curve_points = epa_curve_points(epa, info);
 
     if (num_curve_points < 3) {
 	num_curve_points = 3;
