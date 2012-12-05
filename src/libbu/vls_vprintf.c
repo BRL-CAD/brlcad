@@ -517,7 +517,7 @@ bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
 			    || *fp == '*') {
 			    continue;
 			}
-			if (*fp == 'z' || *fp = 't') {
+			if (*fp == 'z' || *fp == 't') {
 			    /* assume MSVC replacing instances of %z or %t with
 			     * %I (capital i) until we encounter anything
 			     * different.
