@@ -1334,6 +1334,11 @@ CMAKE_DEPENDENT_OPTION(BRLCAD_EXTRADOCS_PDF_MAN "Build PDF output from DocBook d
 # of the DocBook build - sort of a "strict flags" mode for DocBook.
 # By default, this will be enabled when extra docs are built and
 # the toplevel BRLCAD_ENABLE_STRICT setting is enabled.
+# Unfortunately, Visual Studio 2010 seems to have issues when we
+# enable validation on top of everything else... not clear why,
+# unless build target counts >1800 are beyond MSVC's practical
+# limit.  Until we either find a resolution or a way to reduce
+# the target count on MSVC, disable validation there.
 if(NOT MSVC)
   CMAKE_DEPENDENT_OPTION(BRLCAD_EXTRADOCS_VALIDATE "Perform validation for DocBook documentation" OFF "BRLCAD_EXTRADOCS;BRLCAD_ENABLE_STRICT" OFF)
 else(NOT MSVC)
