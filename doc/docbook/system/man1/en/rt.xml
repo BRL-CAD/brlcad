@@ -2,24 +2,12 @@
 
 <refentry xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="rt1">
   <refmeta>
-    <refentrytitle>RT</refentrytitle>
+      <refentrytitle>RT
+</refentrytitle>
     <manvolnum>1</manvolnum>
     <refmiscinfo class="source">BRL-CAD</refmiscinfo>
     <refmiscinfo class="manual">BRL-CAD User Commands</refmiscinfo>
   </refmeta>
-
-  <info>
-    <author>
-        <orgname>BRL-CAD</orgname>
-    </author>
-</info>
-
-
-  <info>
-    <author>
-        <orgname>BRL-CAD</orgname>
-    </author>
-  </info>
 
   <refnamediv xml:id="name">
     <refname>rt</refname>
@@ -40,7 +28,7 @@
   </refsynopsisdiv>
 
 
-  <refsection xml:id="description"><info><title>DESCRIPTION</title></info>
+  <refsection xml:id="description"><title>DESCRIPTION</title>
 
     <para>
       <emphasis remap="I">Rt</emphasis> operates on the indicated
@@ -603,7 +591,7 @@
     <citerefentry><refentrytitle>mged</refentrytitle><manvolnum>1</manvolnum></citerefentry>.</para>
   </refsection>
 
-  <refsection xml:id="signals"><info><title>SIGNALS</title></info>
+  <refsection xml:id="signals"><title>SIGNALS</title>
   <para>You can obtain progress information from a running rt process by
   sending it a SIGUSR1 or SIGINFO signal.  The raytracer will report
   progress via details about the ray sample being processed at the time
@@ -613,7 +601,7 @@
   frame 0, xy=1516,2466 on cpu 0, samp=0</para>
   </refsection>
 
-  <refsection xml:id="animation_scripts"><info><title>ANIMATION SCRIPTS</title></info>
+  <refsection xml:id="animation_scripts"><title>ANIMATION SCRIPTS</title>
   <para>For information on the animation script language accepted by
   <command>rt</command>,
   please refer to the manual pages for
@@ -625,7 +613,7 @@
   tutorial.</para>
   </refsection>
 
-  <refsection xml:id="ntsc_animation_tips"><info><title>NTSC ANIMATION TIPS</title></info>
+  <refsection xml:id="ntsc_animation_tips"><title>NTSC ANIMATION TIPS</title>
   <para>When using
   <command>rt</command>
   to create an animation sequence destined for NTSC video,
@@ -649,7 +637,7 @@
   maximum amount of image detail.</para>
   </refsection>
 
-  <refsection xml:id="see_also"><info><title>SEE ALSO</title></info>
+  <refsection xml:id="see_also"><title>SEE ALSO</title>
   <para><citerefentry><refentrytitle>brlcad</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
   <citerefentry><refentrytitle>mged</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
   <citerefentry><refentrytitle>lgt</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
@@ -661,7 +649,7 @@
   <citerefentry><refentrytitle>pix</refentrytitle><manvolnum>5</manvolnum></citerefentry>.</para>
   </refsection>
 
-  <refsection xml:id="diagnostics"><info><title>DIAGNOSTICS</title></info>
+  <refsection xml:id="diagnostics"><title>DIAGNOSTICS</title>
   <para>Numerous error conditions are possible.
   Descriptive messages are printed on stderr.</para>
   </refsection>
@@ -670,12 +658,12 @@
   <para>BRL-CAD Team</para>
   </refsection>
 
-  <refsection xml:id="copyright"><info><title>COPYRIGHT</title></info>
+  <refsection xml:id="copyright"><title>COPYRIGHT</title>
   <para>This software is Copyright (c) 1984-2012 United States Government as
   represented by the U.S. Army Research Laboratory. All rights reserved.</para>
   </refsection>
 
-  <refsection xml:id="bugs"><info><title>BUGS</title></info>
+  <refsection xml:id="bugs"><title>BUGS</title>
   <para>Most deficiencies observed while using the
   <command>rt</command>
   program are a consequence of problems in
@@ -683,7 +671,7 @@
   </para>
   </refsection>
 
-  <refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
+  <refsection xml:id="bug_reports"><title>BUG REPORTS</title>
   <para>Reports of bugs or problems should be submitted via electronic
   mail to &lt;devs@brlcad.org&gt;, or via the "cadbug.sh" script.</para>
   </refsection>

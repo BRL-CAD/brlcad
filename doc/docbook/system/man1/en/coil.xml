@@ -3,17 +3,11 @@
 <refentry xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="coil1">
 
 <refmeta>
-  <refentrytitle>COIL</refentrytitle>
+    <refentrytitle>COIL</refentrytitle>
   <manvolnum>1</manvolnum>
   <refmiscinfo class="source">BRL-CAD</refmiscinfo>
   <refmiscinfo class="manual">BRL-CAD User Commands</refmiscinfo>
 </refmeta>
-
-<info>
-    <author>
-        <orgname>BRL-CAD</orgname>
-    </author>
-</info>
 
 <refnamediv xml:id="coil_name">
   <refname>coil</refname>
@@ -32,7 +26,7 @@
   </cmdsynopsis>
 </refsynopsisdiv>
 
-<refsection xml:id="coil_description"><info><title>DESCRIPTION</title></info>
+<refsection xml:id="coil_description"><title>DESCRIPTION</title>
 
   <para>
     <command>coil</command> creates a pipe shape within <emphasis remap="I">coil.g</emphasis>
@@ -41,7 +35,7 @@
   </para>
 </refsection>
 
-<refsection xml:id="coil_options"><info><title>OPTIONS:</title></info>
+<refsection xml:id="coil_options"><title>OPTIONS:</title>
 
   <variablelist remap="TP">
     <varlistentry>
@@ -150,24 +144,24 @@
   </variablelist>
 </refsection>
 
-<refsection xml:id="coil_examples"><info><title>EXAMPLES</title></info>
+<refsection xml:id="coil_examples"><title>EXAMPLES</title>
 
   <para>
     The following will create coils exercising the various options.
   </para>
-  <example><info><title>Creating a tight coil with default dimensions and ground ends</title></info>
+  <example><title>Creating a tight coil with default dimensions and ground ends</title>
 
     <para>
       <userinput>coil -s 3 -e 3</userinput>
     </para>
   </example>
-  <example><info><title>Creating a coil with large helix angle and pitch</title></info>
+  <example><title>Creating a coil with large helix angle and pitch</title>
 
     <para>
       <userinput>coil -h 40 -p 350</userinput>
     </para>
   </example>
-  <example><info><title>Creating a multi-section coil with right handed winding</title></info>
+  <example><title>Creating a multi-section coil with right handed winding</title>
 
     <para>
       <userinput>coil -S 10,1000,50,60,800,1 -S 10,1000,50,0,100,1</userinput>
@@ -175,7 +169,7 @@
   </example>
 </refsection>
 
-<refsection xml:id="diagnostics"><info><title>DIAGNOSTICS</title></info>
+<refsection xml:id="diagnostics"><title>DIAGNOSTICS</title>
 
   <para>
     Not much error checking yet - need to add.
@@ -186,7 +180,7 @@
 <para>Clifford Yapp</para>
 </refsection>
 
-<refsection xml:id="copyright"><info><title>COPYRIGHT</title></info>
+<refsection xml:id="copyright"><title>COPYRIGHT</title>
 
   <para>
     This software is Copyright (c) 2009-2012 United States Government as
@@ -194,7 +188,7 @@
   </para>
 </refsection>
 
-<refsection xml:id="bugs"><info><title>BUGS</title></info>
+<refsection xml:id="bugs"><title>BUGS</title>
 
   <para>
     There are many inputs that will be accepted but will attempt to generate
@@ -202,7 +196,7 @@
   </para>
 </refsection>
 
-<refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
+<refsection xml:id="bug_reports"><title>BUG REPORTS</title>
 
   <para>
     Reports of bugs or problems should be submitted via electronic

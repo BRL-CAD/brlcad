@@ -2,17 +2,12 @@
 
 <refentry xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="mged1">
   <refmeta>
-    <refentrytitle>MGED</refentrytitle>
+      <refentrytitle>MGED
+</refentrytitle>
     <manvolnum>1</manvolnum>
     <refmiscinfo class="source">BRL-CAD</refmiscinfo>
     <refmiscinfo class="manual">BRL-CAD User Commands</refmiscinfo>
   </refmeta>
-
-  <info>
-    <author>
-        <orgname>BRL-CAD</orgname>
-    </author>
-  </info>
 
   <refnamediv xml:id="name">
     <refname>mged</refname>
@@ -38,7 +33,7 @@
   </refsynopsisdiv>
 
 
-  <refsection xml:id="description"><info><title>DESCRIPTION</title></info>
+  <refsection xml:id="description"><title>DESCRIPTION</title>
 
     <para>
       <application>MGED</application>, a.k.a the "Multi-Device Geometry Editor" is the
@@ -175,7 +170,7 @@
 
   </refsection>
 
-  <refsection xml:id="hints"><info><title>HINTS</title></info>
+  <refsection xml:id="hints"><title>HINTS</title>
 
     <para>
       <application>MGED</application> database names conventionally end with
@@ -211,14 +206,14 @@
 
   </refsection>
 
-  <refsection xml:id="examples"><info><title>EXAMPLES</title></info>
+  <refsection xml:id="examples"><title>EXAMPLES</title>
 
     <para>
       The following are run from the operating system command prompt:
     </para>
 
-    <example><info><title>Running the <application>MGED</application> <command>l</command> from the operating
-      system command line.</title></info>
+    <example><title>Running the <application>MGED</application> <command>l</command> from the operating
+      system command line.</title>
 
       <para>
 	<prompt>user:~ </prompt><userinput>mged /usr/brlcad/share/brlcad/7.12.2/db/m35.g l component</userinput>
@@ -235,7 +230,7 @@ component:  --
       </para>
     </example>
 
-    <example><info><title>Running <application>MGED</application> without a display manager.</title></info>
+    <example><title>Running <application>MGED</application> without a display manager.</title>
 
       <para>
 	<prompt>user:~ </prompt><userinput>mged -c</userinput>
@@ -250,8 +245,8 @@ mged&gt;
       </para>
     </example>
 
-    <example><info><title>Running <application>MGED</application> and bypassing the attach prompt by specifying
-      the X11 display manager.</title></info>
+    <example><title>Running <application>MGED</application> and bypassing the attach prompt by specifying
+      the X11 display manager.</title>
 
       <para>
 	<prompt>user:~ </prompt><userinput>mged -a X -c</userinput>
@@ -269,7 +264,7 @@ mged&gt;
 
   </refsection>
 
-  <refsection xml:id="see_also"><info><title>SEE ALSO</title></info>
+  <refsection xml:id="see_also"><title>SEE ALSO</title>
 
     <para>
       <emphasis remap="I">Computer Graphics for Target Descriptions</emphasis>, BRL Technical Report ARBRL-TR-02480, <emphasis remap="I">GED:  An Interactive Solid Modeling System for Vulnerability Assessments</emphasis>
@@ -279,7 +274,7 @@ mged&gt;
     </para>
   </refsection>
 
-  <refsection xml:id="diagnostics"><info><title>DIAGNOSTICS</title></info>
+  <refsection xml:id="diagnostics"><title>DIAGNOSTICS</title>
 
     <para>Error messages are intended to be self-explanatory.</para>
   </refsection>
@@ -288,7 +283,7 @@ mged&gt;
       <para>BRL-CAD Team</para>
   </refsection>
 
-  <refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
+  <refsection xml:id="bug_reports"><title>BUG REPORTS</title>
 
     <para>
       Reports of bugs or problems should be submitted via electronic

@@ -2,17 +2,12 @@
 
 <refentry xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="nirt1">
   <refmeta>
-    <refentrytitle>NIRT</refentrytitle>
+      <refentrytitle>NIRT
+</refentrytitle>
     <manvolnum>1</manvolnum>
     <refmiscinfo class="source">BRL-CAD</refmiscinfo>
     <refmiscinfo class="manual">BRL-CAD User Commands</refmiscinfo>
   </refmeta>
-
-  <info>
-    <author>
-        <orgname>BRL-CAD</orgname>
-    </author>
-  </info>
 
   <refnamediv xml:id="name">
     <refname>nirt</refname>
@@ -29,7 +24,7 @@
   </refsynopsisdiv>
 
 
-  <refsection xml:id="description"><info><title>DESCRIPTION</title></info>
+  <refsection xml:id="description"><title>DESCRIPTION</title>
   <para>
     <emphasis remap="I">Nirt</emphasis> operates on the specified <emphasis remap="I">objects</emphasis>
     in the database <emphasis remap="I">model.g,</emphasis> using
@@ -44,7 +39,7 @@
     vectors expressed in model coordinates or as angles of azimuth and elevation.
   </para>
 
-  <refsection xml:id="options"><info><title>Options</title></info>
+  <refsection xml:id="options"><title>Options</title>
   <variablelist remap="TP">
     <varlistentry>
       <term><option>-A <replaceable>attribute_name...</replaceable></option></term>
@@ -212,7 +207,7 @@
 
 </refsection>
 
-<refsection xml:id="commands"><info><title>Commands</title></info>
+<refsection xml:id="commands"><title>Commands</title>
 
   <variablelist remap="TP">
     <varlistentry>
@@ -488,7 +483,7 @@
 </variablelist>
 </refsection>
 
-<refsection xml:id="output_statements"><info><title>Output Statements</title></info>
+<refsection xml:id="output_statements"><title>Output Statements</title>
 
   <para>
     <emphasis remap="I">Nirt</emphasis> allows the user a high degree of control,
@@ -985,7 +980,7 @@
 </refsection>
 </refsection>
 
-<refsection xml:id="hints"><info><title>HINTS</title></info>
+<refsection xml:id="hints"><title>HINTS</title>
 
   <para>
     Ray origination coordinates specified with the  <emphasis remap="I">hv</emphasis>
@@ -1001,7 +996,7 @@
   </para>
 </refsection>
 
-<refsection xml:id="definitions"><info><title>DEFINITIONS</title></info>
+<refsection xml:id="definitions"><title>DEFINITIONS</title>
 
   <para>
     The usage in <command>nirt</command> of the following terms corresponds to that found in
@@ -1009,7 +1004,7 @@
     and elsewhere throughout BRL-CAD. We provide the definitions here for reference.
   </para>
 
-  <refsection xml:id="view_coordinates"><info><title>View Coordinates</title></info>
+  <refsection xml:id="view_coordinates"><title>View Coordinates</title>
 
     <para>
       We define the view coordinate system (more precisely its basis vectors
@@ -1038,7 +1033,7 @@
     </para>
   </refsection>
 
-  <refsection xml:id="azimuth_and_elevation"><info><title>Azimuth and Elevation</title></info>
+  <refsection xml:id="azimuth_and_elevation"><title>Azimuth and Elevation</title>
 
     <para>
       Azimuth is the angle measured around <emphasis remap="B" role="B">k</emphasis> (right-hand rule)
@@ -1049,7 +1044,7 @@
   </refsection>
 </refsection>
 
-<refsection xml:id="files"><info><title>FILES</title></info>
+<refsection xml:id="files"><title>FILES</title>
 
   <variablelist remap="TP">
     <varlistentry>
@@ -1061,14 +1056,14 @@
   </variablelist>
 </refsection>
 
-<refsection xml:id="see_also"><info><title>SEE ALSO</title></info>
+<refsection xml:id="see_also"><title>SEE ALSO</title>
 
   <para>
     <citerefentry><refentrytitle>mged</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>librt</refentrytitle><manvolnum>3</manvolnum></citerefentry>, <citerefentry><refentrytitle>printf</refentrytitle><manvolnum>3</manvolnum></citerefentry>
   </para>
 </refsection>
 
-<refsection xml:id="bugs"><info><title>BUGS</title></info>
+<refsection xml:id="bugs"><title>BUGS</title>
 
   <para>
     The program sometimes complains about "previously unreported overlaps."  To the best of our knowledge, this

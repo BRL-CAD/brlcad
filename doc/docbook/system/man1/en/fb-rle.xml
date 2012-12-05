@@ -1,17 +1,12 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 <refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id="fbrle1">
 <refmeta>
-<refentrytitle>FB-RLE</refentrytitle>
+    <refentrytitle>FB-RLE
+</refentrytitle>
 <manvolnum>1</manvolnum>
 <refmiscinfo class="source">BRL-CAD</refmiscinfo>
 <refmiscinfo class="manual">BRL-CAD</refmiscinfo>
 </refmeta>
-
-<info>
-    <author>
-        <orgname>BRL-CAD</orgname>
-    </author>
-</info>
 
 <refnamediv>
 <refname>fb-rle</refname>
@@ -37,7 +32,7 @@
 </refsynopsisdiv>
 
 
-<refsection xml:id="description"><info><title>DESCRIPTION</title></info>
+<refsection xml:id="description"><title>DESCRIPTION</title>
 <para><emphasis remap="I">fb-rle</emphasis>
 saves an image from a frame buffer in the University of Utah
 standard (Edition-3, or "Utah Raster Toolkit")
@@ -188,7 +183,7 @@ This program is also useful when using the Utah Raster Toolkit
 utilities, which only operate on RLE encoded files.</para>
 </refsection>
 
-<refsection xml:id="examples"><info><title>EXAMPLES</title></info>
+<refsection xml:id="examples"><title>EXAMPLES</title>
   <blockquote remap="RS">
 <para> fb-rle  truck.rle
 <!-- .br -->
@@ -198,23 +193,23 @@ utilities, which only operate on RLE encoded files.</para>
   </para></blockquote> <!-- remap='RE' -->
 </refsection>
 
-<refsection xml:id="see_also"><info><title>SEE ALSO</title></info>
+<refsection xml:id="see_also"><title>SEE ALSO</title>
 <para><citerefentry><refentrytitle>brlcad</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>rle-fb</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>fb-pix</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>rle-pix</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>pix-rle</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
 <citerefentry><refentrytitle>pixrect</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>pixscale</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>pixmerge</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
 <citerefentry><refentrytitle>comp</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>crop</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>repos</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>rlepatch</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>rlebox</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
 <citerefentry><refentrytitle>librle</refentrytitle><manvolnum>3</manvolnum></citerefentry>.</para>
 </refsection>
 
-<refsection xml:id="author"><info><title>AUTHOR</title></info>
+<refsection xml:id="author"><title>AUTHOR</title>
 <para>BRL-CAD Team</para>
 </refsection>
 
-<refsection xml:id="copyright"><info><title>COPYRIGHT</title></info>
+<refsection xml:id="copyright"><title>COPYRIGHT</title>
 <para>This software is Copyright (c) 1988-2012 by the United States
 Government as represented by U.S. Army Research Laboratory.</para>
 </refsection>
 
-<refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
+<refsection xml:id="bug_reports"><title>BUG REPORTS</title>
 <para>Reports of bugs or problems should be submitted via electronic
 mail to &lt;devs@brlcad.org&gt;.</para>
 </refsection>

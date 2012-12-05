@@ -3,17 +3,12 @@
 <refentry xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="objg1">
 
 <refmeta>
-  <refentrytitle>OBJ-G</refentrytitle>
+    <refentrytitle>OBJ-G
+</refentrytitle>
   <manvolnum>1</manvolnum>
   <refmiscinfo class="source">BRL-CAD</refmiscinfo>
   <refmiscinfo class="manual">BRL-CAD User Commands</refmiscinfo>
 </refmeta>
-
-<info>
-    <author>
-        <orgname>BRL-CAD</orgname>
-    </author>
-</info>
 
 <refnamediv xml:id="objg_name">
   <refname>obj-g</refname>
@@ -45,7 +40,7 @@
   </cmdsynopsis>
 </refsynopsisdiv>
 
-<refsection xml:id="objg_description"><info><title>DESCRIPTION</title></info>
+<refsection xml:id="objg_description"><title>DESCRIPTION</title>
 
   <para>
     <command>obj-g</command> converts a Wavefront Object file to BRL-CAD's .g format.
@@ -69,7 +64,7 @@
   </para>
 </refsection>
 
-<refsection xml:id="objg_options"><info><title>OPTIONS:</title></info>
+<refsection xml:id="objg_options"><title>OPTIONS</title>
 
   <variablelist remap="TP">
 
@@ -286,13 +281,13 @@
   </variablelist>
 </refsection>
 
-<refsection xml:id="objg_examples"><info><title>EXAMPLE</title></info>
+<refsection xml:id="objg_examples"><title>EXAMPLE</title>
 
   <para>
     The following will convert the obj file <emphasis remap="I">input.obj</emphasis>
     to the BRL-CAD database <emphasis remap="I">output.g</emphasis>.
   </para>
-  <example><info><title>BOT Conversion</title></info>
+  <example><title>BOT Conversion</title>
 
     <para>
       <userinput>obj-g -u mm -i input.obj output.g</userinput>
@@ -308,7 +303,7 @@
     </para>
   </example>
 
-  <example><info><title>BOT via NMG Conversion</title></info>
+  <example><title>BOT via NMG Conversion</title>
 
     <para>
       <userinput>obj-g -m v -o p -h 5 -g o -v -v input.obj output.g 2&gt; output.log</userinput>
@@ -326,7 +321,7 @@
 
 </refsection>
 
-<refsection xml:id="objg_diagnostics"><info><title>DIAGNOSTICS</title></info>
+<refsection xml:id="objg_diagnostics"><title>DIAGNOSTICS</title>
 
   <para>
    Numerous warning and error conditions are possible, usually due to
@@ -340,7 +335,7 @@
   <para>Richard Weiss</para>
 </refsection>
 
-<refsection xml:id="copyright"><info><title>COPYRIGHT</title></info>
+<refsection xml:id="copyright"><title>COPYRIGHT</title>
 
   <para>
     This software is Copyright (c) 2010-2012 United States Government as
@@ -348,13 +343,13 @@
   </para>
 </refsection>
 
-<refsection xml:id="objg_bugs"><info><title>BUGS</title></info>
+<refsection xml:id="objg_bugs"><title>BUGS</title>
 
   <para>
   </para>
 </refsection>
 
-<refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
+<refsection xml:id="bug_reports"><title>BUG REPORTS</title>
 
   <para>
     Reports of bugs or problems should be submitted via electronic

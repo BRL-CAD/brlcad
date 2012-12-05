@@ -1,17 +1,12 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 <refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id="gif2fb1">
 <refmeta>
-<refentrytitle>GIF2FB</refentrytitle>
+    <refentrytitle>GIF2FB
+</refentrytitle>
 <manvolnum>1</manvolnum>
 <refmiscinfo class="source">BRL-CAD</refmiscinfo>
 <refmiscinfo class="manual">BRL-CAD</refmiscinfo>
 </refmeta>
-
-<info>
-    <author>
-        <orgname>BRL-CAD</orgname>
-    </author>
-</info>
 
 <refnamediv>
 <refname>gif2fb</refname>
@@ -31,7 +26,7 @@
 </refsynopsisdiv>
 
 
-<refsection xml:id="description"><info><title>DESCRIPTION</title></info>
+<refsection xml:id="description"><title>DESCRIPTION</title>
 <para><command>gif2fb</command>
 displays on a frame buffer the images described by a
 CompuServe GIF (Graphics Interchange Format) file.
@@ -58,7 +53,7 @@ Specifies the GIF input file to be translated,
 rather than reading the file from the standard input.</para>
 </refsection>
 
-<refsection xml:id="see_also"><info><title>SEE ALSO</title></info>
+<refsection xml:id="see_also"><title>SEE ALSO</title>
 <para>“A Standard Defining a Mechanism for the Storage and Transmission of
 Raster-Based Graphics Information”,
 June 15, 1987 (CompuServe Incorporated).
@@ -66,22 +61,22 @@ June 15, 1987 (CompuServe Incorporated).
 <citerefentry><refentrytitle>libfb</refentrytitle><manvolnum>3</manvolnum></citerefentry>,<citerefentry><refentrytitle>gif-fb</refentrytitle><manvolnum>1</manvolnum></citerefentry>.</para>
 </refsection>
 
-<refsection xml:id="diagnostics"><info><title>DIAGNOSTICS</title></info>
+<refsection xml:id="diagnostics"><title>DIAGNOSTICS</title>
 <para>Error messages are intended to be self-explanatory.</para>
 </refsection>
 
-<refsection xml:id="author"><info><title>AUTHOR</title></info>
+<refsection xml:id="author"><title>AUTHOR</title>
 <para>Christopher T. Johnson</para>
 
 </refsection>
 
-<refsection xml:id="copyright"><info><title>COPYRIGHT</title></info>
+<refsection xml:id="copyright"><title>COPYRIGHT</title>
 <para>This software is Copyright (c) 1994-2012 by the United States
 Government as represented by U.S. Army Research Laboratory.</para>
 
 </refsection>
 
-<refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
+<refsection xml:id="bug_reports"><title>BUG REPORTS</title>
 <para>Reports of bugs or problems should be submitted via electronic
 mail to &lt;devs@brlcad.org&gt;.</para>
 </refsection>

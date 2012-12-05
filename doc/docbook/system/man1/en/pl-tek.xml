@@ -2,17 +2,12 @@
 <!-- lifted from troff+man by doclifter -->
 <refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='pltek1'>
 <refmeta>
-<refentrytitle>PL-TEK</refentrytitle>
+    <refentrytitle>PL-TEK
+</refentrytitle>
 <manvolnum>1</manvolnum>
 <refmiscinfo class='source'>BRL-CAD</refmiscinfo>
 <refmiscinfo class='manual'>BRL-CAD</refmiscinfo>
 </refmeta>
-
-<info>
-    <author>
-        <orgname>BRL-CAD</orgname>
-    </author>
-</info>
 
 <refnamediv>
 <refname>pl-tek</refname>

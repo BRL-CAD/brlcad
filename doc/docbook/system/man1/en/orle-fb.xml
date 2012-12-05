@@ -1,17 +1,12 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 <refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id="orlefb1">
 <refmeta>
-<refentrytitle>ORLE-FB</refentrytitle>
+    <refentrytitle>ORLE-FB
+</refentrytitle>
 <manvolnum>1</manvolnum>
 <refmiscinfo class="source">BRL-CAD</refmiscinfo>
 <refmiscinfo class="manual">BRL-CAD</refmiscinfo>
 </refmeta>
-
-<info>
-    <author>
-        <orgname>BRL-CAD</orgname>
-    </author>
-</info>
 
 <refnamediv>
 <refname>orle-fb</refname>
@@ -30,7 +25,7 @@
 </refsynopsisdiv>
 
 
-<refsection xml:id="description"><info><title>DESCRIPTION</title></info>
+<refsection xml:id="description"><title>DESCRIPTION</title>
 <para><emphasis remap="I">orle-fb</emphasis>
 decodes an old, Edition-2
 University of Utah standard Run-Length Encoded (RLE) format file
@@ -146,7 +141,7 @@ for more details on the specification of a framebuffer.</para>
 </variablelist>
 </refsection>
 
-<refsection xml:id="examples"><info><title>EXAMPLES</title></info>
+<refsection xml:id="examples"><title>EXAMPLES</title>
   <blockquote remap="RS">
 <para> orle-fb  truck.rle
 <!-- .br -->
@@ -156,23 +151,23 @@ for more details on the specification of a framebuffer.</para>
   </para></blockquote> <!-- remap='RE' -->
 </refsection>
 
-<refsection xml:id="see_also"><info><title>SEE ALSO</title></info>
+<refsection xml:id="see_also"><title>SEE ALSO</title>
 <para><citerefentry><refentrytitle>brlcad</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>rle-fb</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>fb-rle</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>rle-pix</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>pix-rle</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>librle</refentrytitle><manvolnum>3</manvolnum></citerefentry>,
 <citerefentry><refentrytitle>liborle</refentrytitle><manvolnum>3</manvolnum></citerefentry>.</para>
 
 </refsection>
 
-<refsection xml:id="author"><info><title>AUTHOR</title></info>
+<refsection xml:id="author"><title>AUTHOR</title>
 <para>BRL-CAD Team</para>
 
 </refsection>
 
-<refsection xml:id="copyright"><info><title>COPYRIGHT</title></info>
+<refsection xml:id="copyright"><title>COPYRIGHT</title>
 <para>This software is Copyright (c) 1986-2012 by the United States
 Government as represented by U.S. Army Research Laboratory.</para>
 </refsection>
 
-<refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
+<refsection xml:id="bug_reports"><title>BUG REPORTS</title>
 <para>Reports of bugs or problems should be submitted via electronic
 mail to &lt;devs@brlcad.org&gt;.</para>
 </refsection>

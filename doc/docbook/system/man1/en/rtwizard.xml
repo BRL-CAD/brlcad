@@ -1,17 +1,11 @@
 <refentry xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="rtwizard1">
   <refmeta>
-    <refentrytitle>RTWIZARD</refentrytitle>
+      <refentrytitle>RTWIZARD
+</refentrytitle>
     <manvolnum>1</manvolnum>
     <refmiscinfo class="source">BRL-CAD</refmiscinfo>
     <refmiscinfo class="manual">BRL-CAD User Commands</refmiscinfo>
   </refmeta>
-
-  <info>
-    <author>
-        <orgname>BRL-CAD</orgname>
-    </author>
-</info>
-
 
   <refnamediv xml:id="rtwizard_name">
     <refname>rtwizard</refname>
@@ -26,7 +20,7 @@
     </cmdsynopsis>
   </refsynopsisdiv>
 
-  <refsection xml:id="rtwizard_description"><info><title>DESCRIPTION</title></info>
+  <refsection xml:id="rtwizard_description"><title>DESCRIPTION</title>
 
     <para>
       <emphasis remap="I">rtwizard</emphasis> is a tool that automates the use of several
@@ -368,13 +362,13 @@
 
   </refsection>
 
-  <refsection xml:id="examples"><info><title>EXAMPLES</title></info>
+  <refsection xml:id="examples"><title>EXAMPLES</title>
 
     <para>
       Introduction
     </para>
 
-    <example><info><title>Basic Color Image</title></info>
+    <example><title>Basic Color Image</title>
 
       <para>
       <userinput>rtwizard m35.g component</userinput>
@@ -384,7 +378,7 @@
       </para>
     </example>
 
-    <example><info><title>Line Drawing Image</title></info>
+    <example><title>Line Drawing Image</title>
 
       <para>
       <userinput>rtwizard -d /dev/ogl m35.g -l component</userinput>
@@ -394,7 +388,7 @@
       </para>
     </example>
 
-    <example><info><title>Complex Image</title></info>
+    <example><title>Complex Image</title>
 
       <para>
       <userinput>rtwizard -d /dev/ogl -i m35.g -c component/power.train -g component -l component</userinput>
@@ -404,7 +398,7 @@
       </para>
     </example>
 
-    <example><info><title>Complex Image with Non-Default View</title></info>
+    <example><title>Complex Image with Non-Default View</title>
 
       <para>
       <userinput>rtwizard -d /dev/ogl -i m35.g -c component/power.train -g component -l component -a -35 -e 15 -z 1.6</userinput>
@@ -415,25 +409,29 @@
     </example>
   </refsection>
 
-  <refsection xml:id="see_also"><info><title>SEE ALSO</title></info>
+  <refsection xml:id="see_also"><title>SEE ALSO</title>
 
     <para><citerefentry><refentrytitle>rt</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>rtedge</refentrytitle><manvolnum>1</manvolnum></citerefentry></para>
   </refsection>
 
-   <refsection xml:id="copyright"><info><title>COPYRIGHT</title></info>
+   <refsection xml:id="copyright"><title>COPYRIGHT</title>
 
     <para>This software is Copyright (c) 2001-2012 United States Government as
     represented by the U.S. Army Research Laboratory. All rights reserved.</para>
   </refsection>
 
-  <refsection xml:id="bugs"><info><title>BUGS</title></info>
+   <refsection xml:id="author"><title>AUTHOR</title>
+       <para>BRL-CAD Team</para>
+  </refsection>
+
+  <refsection xml:id="bugs"><title>BUGS</title>
 
     <para>Most deficiencies observed while using the <command>rtwizard</command>
     program are a consequence of problems in commands used by rtwizard to generate
     images, such as rtedge</para>
   </refsection>
 
-  <refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
+  <refsection xml:id="bug_reports"><title>BUG REPORTS</title>
 
     <para>Reports of bugs or problems should be submitted via electronic
     mail to &lt;devs@brlcad.org&gt;.</para>

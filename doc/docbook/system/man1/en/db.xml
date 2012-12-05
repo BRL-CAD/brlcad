@@ -3,17 +3,12 @@
 <refentry xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="db">
 
   <refmeta>
-    <refentrytitle>DB</refentrytitle>
+      <refentrytitle>DB
+ </refentrytitle>
     <manvolnum>1</manvolnum>
     <refmiscinfo class="source">BRL-CAD</refmiscinfo>
     <refmiscinfo class="manual">BRL-CAD User Commands</refmiscinfo>
   </refmeta>
-
-  <info>
-    <author>
-        <orgname>BRL-CAD</orgname>
-    </author>
-</info>
 
   <refnamediv xml:id="name">
     <refname>db</refname>
@@ -32,7 +27,7 @@
     </cmdsynopsis>
   </refsynopsisdiv>
 
-  <refsection xml:id="description"><info><title>DESCRIPTION</title></info>
+  <refsection xml:id="description"><title>DESCRIPTION</title>
 
     <para>
       Provides an interface to a number of database manipulation
@@ -111,20 +106,20 @@
     </variablelist>
   </refsection>
 
-  <refsection xml:id="examples"><info><title>EXAMPLES</title></info>
+  <refsection xml:id="examples"><title>EXAMPLES</title>
 
     <para>
       The following examples show the uses of the <command>db</command> command to list various
       objects and attributes from the database, as well as to create new TGC shapes, adjust a vertex attribute,
       and display command formats.
     </para>
-    <example><info><title>List all objects in the database that end with ".s"</title></info>
+    <example><title>List all objects in the database that end with ".s"</title>
 
       <para><prompt>mged&gt;</prompt> <userinput>db match *.s</userinput></para>
       <para>Gets a list of all objects in the database that end with ".s".</para>
     </example>
 
-    <example><info><title>List all attributes and their values for <emphasis>cone.s</emphasis></title></info>
+    <example><title>List all attributes and their values for <emphasis>cone.s</emphasis></title>
 
       <para><prompt>mged&gt;</prompt><userinput>db get cone.s</userinput></para>
       <para>
@@ -132,7 +127,7 @@
       </para>
     </example>
 
-    <example><info><title>Get the value of the vertex attribute of <emphasis>cone.s</emphasis></title></info>
+    <example><title>Get the value of the vertex attribute of <emphasis>cone.s</emphasis></title>
 
       <para><prompt>mged&gt;</prompt><userinput>db get cone.s V</userinput></para>
       <para>
@@ -140,7 +135,7 @@
       </para>
     </example>
 
-    <example><info><title>Create a new TGC shape named <emphasis>new_cone.s</emphasis> with specified attributes.</title></info>
+    <example><title>Create a new TGC shape named <emphasis>new_cone.s</emphasis> with specified attributes.</title>
 
       <para><prompt>mged&gt;</prompt><userinput>db put new_cone.s tgc V {0 0 0} H {0 0 1} A {1 0 0} B {0 1 0} C {5 0 0} D {0 5 0}</userinput></para>
       <para>
@@ -148,7 +143,7 @@
       </para>
     </example>
 
-    <example><info><title>Adjust the vertex attribute of <emphasis>new_cone.s</emphasis> to a given value.</title></info>
+    <example><title>Adjust the vertex attribute of <emphasis>new_cone.s</emphasis> to a given value.</title>
 
       <para><prompt>mged&gt;</prompt><userinput>db adjust new_cone.s V {0 0 10}</userinput></para>
       <para>
@@ -157,8 +152,8 @@
       </para>
     </example>
 
-    <example><info><title>Display the format used by the <command>get</command> and <command>put</command> commands
-      for the TGC shape type.</title></info>
+    <example><title>Display the format used by the <command>get</command> and <command>put</command> commands
+      for the TGC shape type.</title>
 
       <para><prompt>mged&gt;</prompt><userinput>db form tgc</userinput></para>
       <para>
@@ -172,7 +167,7 @@
       <para>BRL-CAD Team</para>
   </refsection>
 
-  <refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
+  <refsection xml:id="bug_reports"><title>BUG REPORTS</title>
 
     <para>
       Reports of bugs or problems should be submitted via electronic

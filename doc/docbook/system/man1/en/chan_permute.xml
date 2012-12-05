@@ -2,17 +2,12 @@
 <!-- lifted from troff+man by doclifter -->
 <refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='chan_permute1'>
 <refmeta>
-<refentrytitle>CHAN_PERMUTE</refentrytitle>
+    <refentrytitle>CHAN_PERMUTE
+</refentrytitle>
 <manvolnum>1</manvolnum>
 <refmiscinfo class='source'>BRL-CAD</refmiscinfo>
 <refmiscinfo class='manual'>BRL-CAD</refmiscinfo>
 </refmeta>
-
-<info>
-    <author>
-        <orgname>BRL-CAD</orgname>
-    </author>
-</info>
 
 <refnamediv>
 <refname>chan_permute</refname>

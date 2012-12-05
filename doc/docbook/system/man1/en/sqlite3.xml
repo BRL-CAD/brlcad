@@ -6,17 +6,12 @@
  Second parameter, SECTION, should be 1\-8, maybe w/ subsection
  other parameters are allowed: see man(7), man(1) -->
 <refmeta>
-<refentrytitle>SQLITE3</refentrytitle>
+    <refentrytitle>SQLITE3
+</refentrytitle>
 <manvolnum>1</manvolnum>
 <refmiscinfo class='source'>Mon Apr 15 23:49:17 2002</refmiscinfo>
 <refmiscinfo class='manual'>Mon Apr 15 23:49:17 2002</refmiscinfo>
 </refmeta>
-
-<info>
-    <author>
-        <orgname>BRL-CAD</orgname>
-    </author>
-</info>
 
 <refnamediv>
 <refname></refname>

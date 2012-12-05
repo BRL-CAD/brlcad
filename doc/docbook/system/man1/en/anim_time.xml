@@ -2,11 +2,7 @@
 <!-- lifted from troff+man by doclifter -->
 <refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='anim_time1'>
 <refmeta>
-<refentrytitle>ANIM_TIME
-    <author>
-        <orgname>BRL-CAD</orgname>
-    </author>
-</refentrytitle>
+<refentrytitle>ANIM_TIME</refentrytitle>
 <manvolnum>1</manvolnum>
 <refmiscinfo class='source'>BRL-CAD</refmiscinfo>
 <refmiscinfo class='manual'>BRL-CAD</refmiscinfo>

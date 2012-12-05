@@ -1,17 +1,12 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 <refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id="cellfb1">
 <refmeta>
-<refentrytitle>CELL-FB</refentrytitle>
+    <refentrytitle>CELL-FB
+</refentrytitle>
 <manvolnum>1</manvolnum>
 <refmiscinfo class="source">BRL-CAD</refmiscinfo>
 <refmiscinfo class="manual">BRL-CAD</refmiscinfo>
 </refmeta>
-
-<info>
-    <author>
-        <orgname>BRL-CAD</orgname>
-    </author>
-</info>
 
 <refnamediv>
 <refname>cell-fb</refname>
@@ -27,7 +22,7 @@
 </refsynopsisdiv>
 
 
-<refsection xml:id="description"><info><title>DESCRIPTION</title></info>
+<refsection xml:id="description"><title>DESCRIPTION</title>
 <para><emphasis remap="I">Cell-fb</emphasis>
 reads a stream of cell-by-cell data
 and displays the data, one view at a time, on a frame buffer.
@@ -38,7 +33,7 @@ is specified, then
 tries to read the data from it.
 Otherwise, the standard input is read.</para>
 
-<refsection xml:id="options"><info><title>Options</title></info>
+<refsection xml:id="options"><title>Options</title>
 <para>The command-line options and their meanings are given below.</para>
 <variablelist remap="TP">
   <varlistentry>
@@ -349,7 +344,7 @@ memory allocation.</para>
 </refsection>
 </refsection>
 
-<refsection xml:id="hint"><info><title>HINT</title></info>
+<refsection xml:id="hint"><title>HINT</title>
 <para>If multiple views are input,
 the user will be asked between views whether he wants to see the next view.
 While being prompted, the user can save the previous image by using a
@@ -357,7 +352,7 @@ utility such as
 <citerefentry><refentrytitle>fb-rle</refentrytitle><manvolnum>1</manvolnum></citerefentry>.</para>
 </refsection>
 
-<refsection xml:id="discussion"><info><title>DISCUSSION</title></info>
+<refsection xml:id="discussion"><title>DISCUSSION</title>
 <para><emphasis remap="I">Cell-fb</emphasis>
 determines the appropriate width and height of the frame buffer
 independently.
@@ -407,7 +402,7 @@ Whenever autosizing is performed,
 prints to the standard error the actual width and height used for each view.</para>
 </refsection>
 
-<refsection xml:id="definitions"><info><title>DEFINITIONS</title></info>
+<refsection xml:id="definitions"><title>DEFINITIONS</title>
 <para>A stream of cell-by-cell data contains one or more views,
 each of which may start with view-header information and contains
 one line of data for each cell in the view.
@@ -452,7 +447,7 @@ on its format is that it not pass for data.</para>
 These values represent intensities of red, green, and blue, respectively.</para>
 </refsection>
 
-<refsection xml:id="example"><info><title>EXAMPLE</title></info>
+<refsection xml:id="example"><title>EXAMPLE</title>
 <para>The following invocation will display the cell-by-cell data from
 <emphasis remap="I">inputs</emphasis>
 on the default frame buffer on the network host
@@ -470,11 +465,11 @@ $  <emphasis remap="I">cell-fb</emphasis>  -F  fictitious.brlcad.org:  -ge
 </literallayout> <!-- remap='RE' -->
 </refsection>
 
-<refsection xml:id="see_also"><info><title>SEE ALSO</title></info>
+<refsection xml:id="see_also"><title>SEE ALSO</title>
 <para><citerefentry><refentrytitle>fb-rle</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>rtregis</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>libfb</refentrytitle><manvolnum>3</manvolnum></citerefentry>, <citerefentry><refentrytitle>pix</refentrytitle><manvolnum>5</manvolnum></citerefentry></para>
 </refsection>
 
-<refsection xml:id="authors"><info><title>AUTHORS</title></info>
+<refsection xml:id="authors"><title>AUTHORS</title>
 <itemizedlist remap="TP">
 
   <listitem><para>Gary S. Moss, BRL/VLD-VMB</para></listitem>
@@ -484,13 +479,13 @@ $  <emphasis remap="I">cell-fb</emphasis>  -F  fictitious.brlcad.org:  -ge
 </itemizedlist>
 </refsection>
 
-<refsection xml:id="copyright"><info><title>COPYRIGHT</title></info>
+<refsection xml:id="copyright"><title>COPYRIGHT</title>
 <para>This software is Copyright (c) 1991-2012 by the United States
 Government as represented by U.S. Army Research Laboratory.</para>
 
 </refsection>
 
-<refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
+<refsection xml:id="bug_reports"><title>BUG REPORTS</title>
 <para>Reports of bugs or problems should be submitted via electronic
 mail to &lt;devs@brlcad.org&gt;.</para>
 </refsection>

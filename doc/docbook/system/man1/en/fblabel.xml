@@ -1,17 +1,12 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 <refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id="fblabel1">
 <refmeta>
-<refentrytitle>FBLABEL</refentrytitle>
+    <refentrytitle>FBLABEL
+</refentrytitle>
 <manvolnum>1</manvolnum>
 <refmiscinfo class="source">BRL-CAD</refmiscinfo>
 <refmiscinfo class="manual">BRL-CAD</refmiscinfo>
 </refmeta>
-
-<info>
-    <author>
-        <orgname>BRL-CAD</orgname>
-    </author>
-</info>
 
 <refnamediv>
 <refname>fblabel</refname>
@@ -32,7 +27,7 @@
 </refsynopsisdiv>
 
 
-<refsection xml:id="description"><info><title>DESCRIPTION</title></info>
+<refsection xml:id="description"><title>DESCRIPTION</title>
 <para><emphasis remap="I">Fblabel</emphasis>
 writes a text string to
 the image on the currently selected framebuffer.
@@ -78,7 +73,7 @@ flag will change the current default
 font from nonie.r.12 to "/usr/lib/vfont/fontname".</para>
 </refsection>
 
-<refsection xml:id="fonts"><info><title>FONTS</title></info>
+<refsection xml:id="fonts"><title>FONTS</title>
 <para><emphasis remap="I">Fblabel</emphasis>
 expects the Berkley fonts in the directory /usr/lib/vfont.
 The fonts are expected to be in Vax byte order,
@@ -86,26 +81,26 @@ even if that is not the natural byte order of the machine,
 to avoid having to create a font converter.</para>
 </refsection>
 
-<refsection xml:id="example"><info><title>EXAMPLE</title></info>
+<refsection xml:id="example"><title>EXAMPLE</title>
 <para>fblabel -h -f "oldenglish.14" `fbpoint -h` "Hello"</para>
 </refsection>
 
-<refsection xml:id="see_also"><info><title>SEE ALSO</title></info>
+<refsection xml:id="see_also"><title>SEE ALSO</title>
 <para><citerefentry><refentrytitle>brlcad</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>fbed</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>fbpoint</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>libfb</refentrytitle><manvolnum>3</manvolnum></citerefentry>, <citerefentry><refentrytitle>pix</refentrytitle><manvolnum>5</manvolnum></citerefentry></para>
 
 </refsection>
 
-<refsection xml:id="author"><info><title>AUTHOR</title></info>
+<refsection xml:id="author"><title>AUTHOR</title>
 <para>BRL-CAD Team</para>
 
 </refsection>
 
-<refsection xml:id="copyright"><info><title>COPYRIGHT</title></info>
+<refsection xml:id="copyright"><title>COPYRIGHT</title>
 <para>This software is Copyright (c) 1989-2012 by the United States
 Government as represented by U.S. Army Research Laboratory.</para>
 </refsection>
 
-<refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
+<refsection xml:id="bug_reports"><title>BUG REPORTS</title>
 <para>Reports of bugs or problems should be submitted via electronic
 mail to &lt;devs@brlcad.org&gt;.</para>
 </refsection>

@@ -3,17 +3,12 @@
 <refentry xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="tire1">
 
 <refmeta>
-  <refentrytitle>TIRE</refentrytitle>
+    <refentrytitle>TIRE
+</refentrytitle>
   <manvolnum>1</manvolnum>
   <refmiscinfo class="source">BRL-CAD</refmiscinfo>
   <refmiscinfo class="manual">BRL-CAD User Commands</refmiscinfo>
 </refmeta>
-
-<info>
-    <author>
-        <orgname>BRL-CAD</orgname>
-    </author>
-</info>
 
 <refnamediv xml:id="tire_name">
   <refname>tire</refname>
@@ -31,7 +26,7 @@
   </cmdsynopsis>
 </refsynopsisdiv>
 
-<refsection xml:id="tire_description"><info><title>DESCRIPTION</title></info>
+<refsection xml:id="tire_description"><title>DESCRIPTION</title>
 
   <para>
     <command>tire</command> creates a curved sidewall tire in either the current
@@ -50,7 +45,7 @@
   </para>
 </refsection>
 
-<refsection xml:id="tire_options"><info><title>OPTIONS:</title></info>
+<refsection xml:id="tire_options"><title>OPTIONS</title>
 
   <variablelist remap="TP">
     <varlistentry>
@@ -183,7 +178,7 @@
   </variablelist>
 </refsection>
 
-<refsection xml:id="tire_examples"><info><title>EXAMPLE</title></info>
+<refsection xml:id="tire_examples"><title>EXAMPLE</title>
 
   <para>
     The following will create a tire with width=185mm, ratio=65mm, and wheel
@@ -193,7 +188,7 @@
     flag will append '-185-65R15' to 'autowheel' to create the final
     toplevel name 'autowheel-185-65R15' in the database rather than 'tire'.
   </para>
-  <example><info><title>Creating a 185/65R15 tire with wheel</title></info>
+  <example><title>Creating a 185/65R15 tire with wheel</title>
 
     <para>
       <userinput>tire -d 185/65R15 -t 1 -a -n autowheel</userinput>
@@ -202,7 +197,7 @@
 
 </refsection>
 
-<refsection xml:id="diagnostics"><info><title>DIAGNOSTICS</title></info>
+<refsection xml:id="diagnostics"><title>DIAGNOSTICS</title>
 
   <para>
     Not much error checking yet - need to add.
@@ -213,7 +208,7 @@
   <para>Clifford Yapp</para>
 </refsection>
 
-<refsection xml:id="copyright"><info><title>COPYRIGHT</title></info>
+<refsection xml:id="copyright"><title>COPYRIGHT</title>
 
   <para>
     This software is Copyright (c) 2008-2012 United States Government as
@@ -221,7 +216,7 @@
   </para>
 </refsection>
 
-<refsection xml:id="bugs"><info><title>BUGS</title></info>
+<refsection xml:id="bugs"><title>BUGS</title>
 
   <para>
     There is a known problem where specifying very thin tires with a large
@@ -231,7 +226,7 @@
   </para>
 </refsection>
 
-<refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
+<refsection xml:id="bug_reports"><title>BUG REPORTS</title>
 
   <para>
     Reports of bugs or problems should be submitted via electronic

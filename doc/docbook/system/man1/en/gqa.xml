@@ -2,17 +2,12 @@
 
 <refentry xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="gqa1">
   <refmeta>
-    <refentrytitle>GQA</refentrytitle>
+      <refentrytitle>GQA
+</refentrytitle>
     <manvolnum>1</manvolnum>
     <refmiscinfo class="source">BRL-CAD</refmiscinfo>
     <refmiscinfo class="manual">BRL-CAD User Commands</refmiscinfo>
   </refmeta>
-
-  <info>
-    <author>
-        <orgname>BRL-CAD</orgname>
-    </author>
-  </info>
 
   <refnamediv xml:id="name">
     <refname>gqa</refname>
@@ -29,7 +24,7 @@
   </refsynopsisdiv>
 
 
-  <refsection xml:id="description"><info><title>DESCRIPTION</title></info>
+  <refsection xml:id="description"><title>DESCRIPTION</title>
 
     <para>
       The <command>gqa</command> program computes and reports a variety of characteristics of the
@@ -66,7 +61,7 @@
     </para>
   </refsection>
 
-  <refsection xml:id="volume_and_weight_calculation"><info><title>VOLUME AND WEIGHT CALCULATION</title></info>
+  <refsection xml:id="volume_and_weight_calculation"><title>VOLUME AND WEIGHT CALCULATION</title>
 
     <para>
       If volume or weight calculation is selected, a value is calculated and reported
@@ -155,7 +150,7 @@
     </para>
   </refsection>
 
-  <refsection xml:id="geometry_error_detection"><info><title>GEOMETRY ERROR DETECTION</title></info>
+  <refsection xml:id="geometry_error_detection"><title>GEOMETRY ERROR DETECTION</title>
 
     <para>
       All of these calculations run until an error is detected, or until the grid
@@ -163,7 +158,7 @@
     </para>
   </refsection>
 
-  <refsection xml:id="overlap_detection"><info><title>OVERLAP DETECTION</title></info>
+  <refsection xml:id="overlap_detection"><title>OVERLAP DETECTION</title>
 
     <para>
       For each pair of regions that overlap, the tool reports the two regions that
@@ -175,7 +170,7 @@
     </para>
   </refsection>
 
-  <refsection xml:id="options"><info><title>OPTIONS</title></info>
+  <refsection xml:id="options"><title>OPTIONS</title>
 
     <variablelist remap="TP">
       <varlistentry>
@@ -556,9 +551,9 @@
     </variablelist>
   </refsection>
 
-  <refsection xml:id="examples"><info><title>EXAMPLES</title></info>
+  <refsection xml:id="examples"><title>EXAMPLES</title>
 
-    <example><info><title>Default Behavior</title></info>
+    <example><title>Default Behavior</title>
 
       <para>
 	The following command computes the weight of an object called <emphasis remap="I">wheel.r</emphasis> from the geometry database <emphasis remap="I">model.g</emphasis> and reports the weight and volume, and checks for overlaps.
@@ -567,7 +562,7 @@
 
     </example>
 
-    <example><info><title>Specifying Grid and Target Objects</title></info>
+    <example><title>Specifying Grid and Target Objects</title>
 
       <para>
 	The following will check objects hull, turret, and suspension for overlaps and report exposed air. The grid starts at 1 cm and is refined to 1 mm unless overlaps or exposed air are detected before the grid is refined to 1 mm.
@@ -576,7 +571,7 @@
 
     </example>
 
-    <example><info><title>Specifying Using Non-Default Units</title></info>
+    <example><title>Specifying Using Non-Default Units</title>
 
       <para>
 	The following computes volume and weight of hull, turret, and suspension.  Results are reported in cubic centimeters (cc) and ounces (oz).  The grid spacing starts at 5 in. and will not be refined below 0.3 mm spacing.
@@ -665,7 +660,7 @@ Weight:
       <para>BRL-CAD Team</para>
   </refsection>
 
-<refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
+<refsection xml:id="bug_reports"><title>BUG REPORTS</title>
 <para>Reports of bugs or problems should be submitted via electronic
 mail to devs@brlcad.org.</para>
 </refsection>

@@ -3,17 +3,11 @@
 <refentry xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="bwscale1">
 
 <refmeta>
-  <refentrytitle>BWSCALE</refentrytitle>
+    <refentrytitle>BWSCALE</refentrytitle>
   <manvolnum>1</manvolnum>
   <refmiscinfo class="source">BRL-CAD</refmiscinfo>
   <refmiscinfo class="manual">BRL-CAD User Commands</refmiscinfo>
 </refmeta>
-
-<info>
-    <author>
-        <orgname>BRL-CAD</orgname>
-    </author>
-</info>
 
 <refnamediv xml:id="name">
   <refname>bwscale</refname>
@@ -40,7 +34,7 @@
 </refsynopsisdiv>
 
 
-<refsection xml:id="description"><info><title>DESCRIPTION</title></info>
+<refsection xml:id="description"><title>DESCRIPTION</title>
 
   <para>
     <command>bwscale</command>
@@ -94,7 +88,7 @@
   the entire screen).</para>
 </refsection>
 
-<refsection xml:id="see_also"><info><title>SEE ALSO</title></info>
+<refsection xml:id="see_also"><title>SEE ALSO</title>
 <para>
   <citerefentry><refentrytitle>brlcad</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
   <citerefentry><refentrytitle>bwcrop</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
@@ -104,7 +98,7 @@
 </para>
 </refsection>
 
-<refsection xml:id="bugs"><info><title>BUGS</title></info>
+<refsection xml:id="bugs"><title>BUGS</title>
 <para>This program cannot scale up in one dimension and down in the other
 at the same time.</para>
 <para>
@@ -118,7 +112,7 @@ Optional cubic interpolation would be nice.</para>
     <para>BRL-CAD Team</para>
 </refsection>
 
-<refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
+<refsection xml:id="bug_reports"><title>BUG REPORTS</title>
 <para>Reports of bugs or problems should be submitted via electronic
 mail to devs@brlcad.org.</para>
 </refsection>

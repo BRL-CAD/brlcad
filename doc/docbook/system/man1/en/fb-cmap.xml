@@ -1,17 +1,12 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 <refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id="fbcmap1">
 <refmeta>
-<refentrytitle>FB-CMAP</refentrytitle>
+    <refentrytitle>FB-CMAP
+</refentrytitle>
 <manvolnum>1</manvolnum>
 <refmiscinfo class="source">BRL-CAD</refmiscinfo>
 <refmiscinfo class="manual">BRL-CAD</refmiscinfo>
 </refmeta>
-
-<info>
-    <author>
-        <orgname>BRL-CAD</orgname>
-    </author>
-</info>
 
 <refnamediv>
 <refname>fb-cmap</refname>
@@ -27,7 +22,7 @@
 </refsynopsisdiv>
 
 
-<refsection xml:id="description"><info><title>DESCRIPTION</title></info>
+<refsection xml:id="description"><title>DESCRIPTION</title>
 <para><emphasis remap="I">Fb-cmap</emphasis>
 reads a colormap from a framebuffer.  A
 <emphasis remap="I">colormap</emphasis>
@@ -45,7 +40,7 @@ framebuffers which have different operating modes based on the
 display size.</para>
 </refsection>
 
-<refsection xml:id="diagnostics"><info><title>DIAGNOSTICS</title></info>
+<refsection xml:id="diagnostics"><title>DIAGNOSTICS</title>
 <para>The message "can't read colormap" occurs if the read failed.
 No output will be produced.  This usually means that the
 currently selected framebuffer either does not have, or can
@@ -53,22 +48,22 @@ not support, a colormap.  This will usually be the case for
 example with a disk file "framebuffer."</para>
 </refsection>
 
-<refsection xml:id="see_also"><info><title>SEE ALSO</title></info>
+<refsection xml:id="see_also"><title>SEE ALSO</title>
 <para><citerefentry><refentrytitle>brlcad</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>fbcmap</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>cmap-fb</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>fbcmrot</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>cmap</refentrytitle><manvolnum>5</manvolnum></citerefentry></para>
 
 </refsection>
 
-<refsection xml:id="author"><info><title>AUTHOR</title></info>
+<refsection xml:id="author"><title>AUTHOR</title>
 <para>BRL-CAD Team</para>
 
 </refsection>
 
-<refsection xml:id="copyright"><info><title>COPYRIGHT</title></info>
+<refsection xml:id="copyright"><title>COPYRIGHT</title>
 <para>This software is Copyright (c) 1987-2012 by the United States
 Government as represented by U.S. Army Research Laboratory.</para>
 </refsection>
 
-<refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
+<refsection xml:id="bug_reports"><title>BUG REPORTS</title>
 <para>Reports of bugs or problems should be submitted via electronic
 mail to &lt;devs@brlcad.org&gt;.</para>
 </refsection>

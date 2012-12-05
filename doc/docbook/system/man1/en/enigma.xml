@@ -10,21 +10,12 @@
 <!--  $FreeBSD: src/usr.bin/enigma/enigma.1,v 1.5 1999/08/28 01:00:38 peter Exp $
  " -->
 <refmeta>
-<refentrytitle>ENIGMA</refentrytitle>
+    <refentrytitle>ENIGMA
+</refentrytitle>
 <manvolnum>1</manvolnum>
 <refmiscinfo class='source'>BRL-CAD</refmiscinfo>
 <refmiscinfo class='manual'>BRL-CAD</refmiscinfo>
 </refmeta>
-
-<info>
-    <author>
-        <personname>
-            <firstname>Joerg</firstname>
-            <surname>Wunsch</surname>
-        </personname>
-        <contrib>enigma</contrib>
-    </author>
-</info>
 
 <refnamediv xml:id='purpose'>
 <refname>enigma</refname>
@@ -117,6 +108,10 @@ has been given</para>
 </listitem>
 </varlistentry>
 </variablelist>
+</refsect1>
+
+<refsect1 xml:id='author'><title>AUTHOR</title>
+    <para>Joerg Wunsch</para>
 </refsect1>
 
 <refsect1 xml:id='examples'><title>EXAMPLES</title>

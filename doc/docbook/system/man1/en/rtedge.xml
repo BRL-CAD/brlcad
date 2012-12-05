@@ -2,24 +2,12 @@
 
 <refentry xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="rtedge1">
   <refmeta>
-    <refentrytitle>RTEDGE</refentrytitle>
+      <refentrytitle>RTEDGE
+</refentrytitle>
     <manvolnum>1</manvolnum>
     <refmiscinfo class="source">BRL-CAD</refmiscinfo>
     <refmiscinfo class="manual">BRL-CAD User Commands</refmiscinfo>
   </refmeta>
-
-  <info>
-    <author>
-        <orgname>BRL-CAD</orgname>
-    </author>
-</info>
-
-
-  <info>
-    <author>
-        <orgname>BRL-CAD</orgname>
-    </author>
-  </info>
 
   <refnamediv xml:id="name">
     <refname>rtedge</refname>
@@ -38,7 +26,7 @@
   </refsynopsisdiv>
 
 
-  <refsection xml:id="description"><info><title>DESCRIPTION</title></info>
+  <refsection xml:id="description"><title>DESCRIPTION</title>
 
     <para>
       <emphasis remap="I">Rtedge</emphasis> operates on the indicated
@@ -200,7 +188,7 @@
     </para>
   </refsection>
 
-  <refsection xml:id="additional_options"><info><title>ADDITIONAL OPTIONS</title></info>
+  <refsection xml:id="additional_options"><title>ADDITIONAL OPTIONS</title>
 
     <para>
       <emphasis remap="I">Rtedge</emphasis> replaces <citerefentry><refentrytitle>lgt</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
@@ -400,7 +388,7 @@
     </variablelist>
   </refsection>
 
-  <refsection xml:id="occlusion_checking"><info><title>OCCLUSION CHECKING</title></info>
+  <refsection xml:id="occlusion_checking"><title>OCCLUSION CHECKING</title>
 
     <para>
       <emphasis remap="I">Rtedge</emphasis> has the ability to perform occlusion
@@ -467,7 +455,7 @@
     </variablelist>
   </refsection>
 
-  <refsection xml:id="examples"><info><title>EXAMPLES</title></info>
+  <refsection xml:id="examples"><title>EXAMPLES</title>
 
     <para>
       <emphasis remap="I">Rtedge</emphasis> can be somewhat complicated
@@ -485,7 +473,7 @@
       <emphasis remap="I">rtedge.</emphasis>
     </para>
 
-    <example><info><title>Rtedge rendering of havoc.g</title></info>
+    <example><title>Rtedge rendering of havoc.g</title>
 
       <para>
       <userinput>rtedge -s 1024 -Fnew.pix havoc.g havoc</userinput>
@@ -611,12 +599,12 @@ EOF
     </example>
   </refsection>
 
-  <refsection xml:id="see_also"><info><title>SEE ALSO</title></info>
+  <refsection xml:id="see_also"><title>SEE ALSO</title>
 
     <para><citerefentry><refentrytitle>mged</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>rt</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>fbserv</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>librt</refentrytitle><manvolnum>3</manvolnum></citerefentry></para>
   </refsection>
 
-  <refsection xml:id="diagnostics"><info><title>DIAGNOSTICS</title></info>
+  <refsection xml:id="diagnostics"><title>DIAGNOSTICS</title>
 
     <para>
       Numerous error conditions are possible, usually due to errors in
@@ -630,19 +618,19 @@ EOF
     <para>Michael John Muuss</para>
   </refsection>
 
-  <refsection xml:id="copyright"><info><title>COPYRIGHT</title></info>
+  <refsection xml:id="copyright"><title>COPYRIGHT</title>
 
     <para>This software is Copyright (c) 2001-2012 United States Government as
     represented by the U.S. Army Research Laboratory. All rights reserved.</para>
   </refsection>
 
-  <refsection xml:id="bugs"><info><title>BUGS</title></info>
+  <refsection xml:id="bugs"><title>BUGS</title>
 
     <para>Most deficiencies observed while using the <command>rtedge</command>
     program are a consequence of problems in <citerefentry><refentrytitle>librt</refentrytitle><manvolnum>3</manvolnum></citerefentry>.</para>
   </refsection>
 
-  <refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
+  <refsection xml:id="bug_reports"><title>BUG REPORTS</title>
 
     <para>Reports of bugs or problems should be submitted via electronic
     mail to &lt;devs@brlcad.org&gt;.</para>
