@@ -826,8 +826,8 @@ int
 rt_epa_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
 {
     vect_t epa_H, Hu, Au, Bu;
-    fastf_t mag_H, z, r1, r2;
-    int i, num_curve_points, num_ellipse_points;
+    fastf_t mag_H, z, z_step, r1, r2;
+    int i, num_curve_points, num_ellipse_points, num_curves;
     struct rt_epa_internal *epa;
     struct rt_pt_node *pts_r1, *pts_r2, *node, *node1, *node2;
 
@@ -870,17 +870,17 @@ rt_epa_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
 	return -1;
     }
 
-    node1 = pts_r1;
-    node2 = pts_r2;
-    for (i = 0; i < num_curve_points; ++i) {
-	/* Select cross-section to draw by averaging the z values and flip over y-axis
-	 * to get a distance along H.
-	 */
-	z = (node1->p[Z] + node2->p[Z]) / 2.0;
-	epa_plot_ellipse(info->vhead, epa, -z, num_ellipse_points);
+    num_curves = mag_H / info->curve_spacing;
+    if (num_curves < 2) {
+	num_curves = 2;
+    }
 
-	node1 = node1->next;
-	node2 = node2->next;
+    z_step = mag_H / num_curves;
+    z = 0.0;
+    for (i = 0; i < num_curves; ++i) {
+	epa_plot_ellipse(info->vhead, epa, z, num_ellipse_points);
+
+	z += z_step;
     }
 
     epa_plot_parabola(info->vhead, epa, pts_r1, Au, r1);
