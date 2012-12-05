@@ -2049,7 +2049,7 @@ rt_tgc_curve(register struct curvature *cvp, register struct hit *hitp, struct s
 /**
  * R T _ T G C _ T E S S
  *
- * Tesselation of the TGC.
+ * Tessellation of the TGC.
  *
  * Returns -
  * -1 failure
@@ -2107,7 +2107,7 @@ rt_tgc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     RT_TGC_CK_MAGIC(tip);
 
     if (ttol->abs > 0.0 && ttol->abs < tol->dist) {
-	bu_log("WARNING: tesselation tolerance is %fmm while calculational tolerance is %fmm\n",
+	bu_log("WARNING: tessellation tolerance is %fmm while calculational tolerance is %fmm\n",
 	       ttol->abs, tol->dist);
 	bu_log("Cannot tesselate a TGC to finer tolerance than the calculational tolerance\n");
 	abs_tol = tol->dist;
@@ -2741,7 +2741,7 @@ rt_tgc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
  *
  * Returns -
  * -1 failure
- * 0 OK. *r points to nmgregion that holds this tesselation
+ * 0 OK. *r points to nmgregion that holds this tessellation
  */
 
 int

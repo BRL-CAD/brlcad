@@ -244,7 +244,7 @@ int
 load_g (struct tie_s *tie, const char *db, int argc, const char **argv, struct adrt_mesh_s **meshes)
 {
     struct model *the_model;
-    struct rt_tess_tol ttol;		/* tesselation tolerance in mm */
+    struct rt_tess_tol ttol;		/* tessellation tolerance in mm */
     struct db_tree_state tree_state;	/* includes tol & model */
 
     cur_tie = tie;	/* blehhh, global... need locking. */
@@ -254,7 +254,7 @@ load_g (struct tie_s *tie, const char *db, int argc, const char **argv, struct a
     tree_state.ts_ttol = &ttol;
     tree_state.ts_m = &the_model;
 
-    /* Set up tesselation tolerance defaults */
+    /* Set up tessellation tolerance defaults */
     ttol.magic = RT_TESS_TOL_MAGIC;
     /* Defaults, updated by command line options. */
     ttol.abs = 0.0;

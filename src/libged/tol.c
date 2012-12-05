@@ -48,7 +48,7 @@ ged_tol(struct ged *gedp, int argc, const char *argv[])
     /* print all tolerance settings */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Current tolerance settings are:\n");
-	bu_vls_printf(gedp->ged_result_str, "Tesselation tolerances:\n");
+	bu_vls_printf(gedp->ged_result_str, "Tessellation tolerances:\n");
 
 	if (gedp->ged_wdbp->wdb_ttol.abs > 0.0) {
 	    bu_vls_printf(gedp->ged_result_str, "\tabs %g mm\n", gedp->ged_wdbp->wdb_ttol.abs);

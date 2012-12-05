@@ -54,7 +54,7 @@ option specifies an NMG debug flag. The
 <option>-r</option>
 , and
 <option>-n</option>
-options specify tesselation tolerances.
+options specify tessellation tolerances.
 The
 <option>-D</option>
 option specifies a calculational distance tolerance (mm). Any two vertices

@@ -114,7 +114,7 @@ static int ident=1000;			/* ident number for BRL-CAD regions */
 
 static double tol_dist=0.0005;	/* (mm) minimum distance between two distinct vertices */
 static double tol_dist_sq;
-static double surf_tol=3.175;	/* (mm) allowable surface tesselation tolerance (default is 1/8 inch) */
+static double surf_tol=3.175;	/* (mm) allowable surface tessellation tolerance (default is 1/8 inch) */
 static double ang_tol=0.0;
 static double min_chamfer=0.0;	/* (mm) chamfers smaller than this are ignored */
 static double min_round=0.0;	/* (mm) rounds smaller than this are ignored */

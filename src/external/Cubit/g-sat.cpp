@@ -77,7 +77,7 @@ int verbose = 0;
 
 static  db_i		*dbip;
 
-static  rt_tess_tol     ttol;   /* tesselation tolerance in mm */
+static  rt_tess_tol     ttol;   /* tessellation tolerance in mm */
 static  bn_tol          tol;    /* calculation tolerance */
 
 // Global map for bodies names in the CGM global list

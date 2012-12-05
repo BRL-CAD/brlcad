@@ -530,7 +530,7 @@ MAKING A RELEASE
     chunks.  See the patch manual documentation for more details.
 
     Failing any of the above, patches may also be applied manually.
-    This is often even desireable to become more familiar with the
+    This is often even desirable to become more familiar with the
     changes being made providing an opportunity for a healthy peer
     review.
 

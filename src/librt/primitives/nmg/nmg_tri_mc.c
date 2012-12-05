@@ -43,7 +43,7 @@
 /** @} */
 
 /* rough game plan
- *   [ ] develop/proof metaball primitive tesselation using MC (end of Jan10)
+ *   [ ] develop/proof metaball primitive tessellation using MC (end of Jan10)
  *       [ ] asc-g/g-asc of metaballs for regression/comparison testing
  *           [X] asc-g
  *           [X] g-asc

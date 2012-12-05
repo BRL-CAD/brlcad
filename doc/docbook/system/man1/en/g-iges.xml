@@ -66,19 +66,19 @@ options.</para>
   <varlistentry>
   <term><option>-a </option><emphasis remap='I'>abs_tol</emphasis></term>
   <listitem>
-<para>Sets the absolute tolerance (floating point value) for tesselation.</para>
+<para>Sets the absolute tolerance (floating point value) for tessellation.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
   <term><option>-r </option><emphasis remap='I'>rel_tol</emphasis></term>
   <listitem>
-<para>Sets the relative (to the size of the object) tolerance (floating point value) for tesselation.</para>
+<para>Sets the relative (to the size of the object) tolerance (floating point value) for tessellation.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
   <term><option>-n </option><emphasis remap='I'>norm_tol</emphasis></term>
   <listitem>
-<para>Sets the normal tolerance (floating point value 0..1) for tesselation.
+<para>Sets the normal tolerance (floating point value 0..1) for tessellation.
 This value is compared to the dot product of the normals to determine if the surfaces are within tolerance</para>
 
   </listitem>

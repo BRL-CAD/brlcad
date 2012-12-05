@@ -2603,7 +2603,7 @@ void plot_face_trim(struct bu_list *vhead, ON_BrepFace &face, int plotres,
  *
  * There are several ways to visualize NURBS surfaces, depending on
  * the purpose.  For "normal" wireframe viewing, the ideal approach is
- * to do a tesselation of the NURBS surface and show that wireframe.
+ * to do a tessellation of the NURBS surface and show that wireframe.
  * The quicker and simpler approach is to visualize the edges,
  * although that can sometimes generate less than ideal/useful results
  * (for example, a revolved edge that forms a sphere will have a

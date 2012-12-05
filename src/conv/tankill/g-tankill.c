@@ -48,9 +48,9 @@ static const char usage[] = "Usage:\n\
 		v - verbose\n\
 		x - librt debug level\n\
 		X - NMG debug level\n\
-		a - absolute tolerance for tesselation\n\
-		r - relative tolerance for tesselation\n\
-		n - surface normal tolerance for tesselation\n\
+		a - absolute tolerance for tessellation\n\
+		r - relative tolerance for tessellation\n\
+		n - surface normal tolerance for tessellation\n\
 		s - surroundings code to use in tankill file\n\
 		i - assign new idents sequentially and output ident list\n\
 		o - TANKILL output file\n";

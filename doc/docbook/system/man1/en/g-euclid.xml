@@ -56,7 +56,7 @@ option specifies an NMG debug flag. The
 <option>-r</option>
 , and
 <option>-n</option>
-options specify tesselation tolerances. The
+options specify tessellation tolerances. The
 <option>-o</option>
 option specifies the name of the file to receive the output
 (stdout is the default).</para>

@@ -278,9 +278,9 @@ select_non_lights(struct db_tree_state *UNUSED(tsp), const struct db_full_path *
 }
 
 
-/* CSG objects are tesselated and stored in the tree. BOTs are
+/* CSG objects are tessellated and stored in the tree. BOTs are
  * processed but stored outside tree. This leaf-tess function is
- * used when we want CSG objects tesselated and evaluated but we
+ * used when we want CSG objects tessellated and evaluated but we
  * want to output BOTs without boolean evaluation.
  */
 union tree *

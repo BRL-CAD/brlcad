@@ -32,7 +32,7 @@
 #include "adrt_struct.h"
 #include "render.h"
 
-#define TESSELATION 32
+#define TESSELLATION 32
 #define SPALL_LEN 20
 
 struct render_spall_s {
@@ -208,7 +208,7 @@ render_spall_init(render_t *render, const char *buf)
     VMOVE(d->ray_pos, ray_pos);
     VMOVE(d->ray_dir, ray_dir);
 
-    tie_init(&d->tie, TESSELATION, TIE_KDTREE_FAST);
+    tie_init(&d->tie, TESSELLATION, TIE_KDTREE_FAST);
 
     /* Calculate the normal to be used for the plane */
     up[0] = 0;
@@ -228,19 +228,19 @@ render_spall_init(render_t *render, const char *buf)
     /******************/
     /* The spall Cone */
     /******************/
-    vec_list = (vect_t *)bu_malloc(sizeof(vect_t) * TESSELATION, "vec_list");
-    tri_list = (vect_t *)bu_malloc(sizeof(vect_t) * TESSELATION * 3, "tri_list");
+    vec_list = (vect_t *)bu_malloc(sizeof(vect_t) * TESSELLATION, "vec_list");
+    tri_list = (vect_t *)bu_malloc(sizeof(vect_t) * TESSELLATION * 3, "tri_list");
 
-    render_util_spall_vec(d->ray_dir, angle, TESSELATION, vec_list);
+    render_util_spall_vec(d->ray_dir, angle, TESSELLATION, vec_list);
 
     /* triangles to approximate */
-    for (i = 0; i < TESSELATION; i++) {
+    for (i = 0; i < TESSELLATION; i++) {
 	VMOVE(tri_list[3*i+0], ray_pos);
 
 	VSCALE(tri_list[3*i+1],  vec_list[i],  SPALL_LEN);
 	VADD2(tri_list[3*i+1],  tri_list[3*i+1],  ray_pos);
 
-	if (i == TESSELATION - 1) {
+	if (i == TESSELLATION - 1) {
 	    VSCALE(tri_list[3*i+2],  vec_list[0],  SPALL_LEN);
 	    VADD2(tri_list[3*i+2],  tri_list[3*i+2],  ray_pos);
 	} else {
@@ -249,7 +249,7 @@ render_spall_init(render_t *render, const char *buf)
 	}
     }
 
-/*  tie_push(&d->tie, tri_list, TESSELATION, NULL, 0);   */
+/*  tie_push(&d->tie, tri_list, TESSELLATION, NULL, 0);   */
     tie_prep(&d->tie);
 
     bu_free(vec_list, "vec_list");

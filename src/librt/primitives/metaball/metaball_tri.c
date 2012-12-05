@@ -21,7 +21,7 @@
 /** @{ */
 /** @file primitives/metaball/metaball_tri.c
  *
- * Tesselation/facetization routines for the metaball primitive.
+ * Tessellation/facetization routines for the metaball primitive.
  *
  * Here be magic.
  *

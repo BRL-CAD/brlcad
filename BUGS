@@ -208,7 +208,7 @@ Recent Bugs
 * vdeck truncates the region names in the 'regions' file, probably
   wrong bu_strlcpy() length.
 
-* hyp tesselation routine creates bot that does not raytrace
+* hyp tessellation routine creates bot that does not raytrace
 
 * if you attach a display manager in tk-mged, kill the window, then
   quit, mged crashes on exit.

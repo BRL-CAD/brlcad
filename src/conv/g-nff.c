@@ -479,7 +479,7 @@ Usage: %s [-v] [-i] [-xX lvl] [-a abs_tess_tol] [-r rel_tess_tol] [-n norm_tess_
     fprintf(fpe, "Objects:");
     for (i = 1; i < argc; i++)
 	fprintf(fpe, " %s", argv[i]);
-    fprintf(fpe, "\nTesselation tolerances:\n\tabs = %g mm\n\trel = %g\n\tnorm = %g\n",
+    fprintf(fpe, "\nTessellation tolerances:\n\tabs = %g mm\n\trel = %g\n\tnorm = %g\n",
 	    tree_state.ts_ttol->abs, tree_state.ts_ttol->rel, tree_state.ts_ttol->norm);
     fprintf(fpe, "Calculational tolerances:\n\tdist = %g mm perp = %g\n",
 	    tree_state.ts_tol->dist, tree_state.ts_tol->perp);
@@ -488,7 +488,7 @@ Usage: %s [-v] [-i] [-xX lvl] [-a abs_tess_tol] [-r rel_tess_tol] [-n norm_tess_
     bu_log("Objects:");
     for (i = 1; i < argc; i++)
 	bu_log(" %s", argv[i]);
-    bu_log("\nTesselation tolerances:\n\tabs = %g mm\n\trel = %g\n\tnorm = %g\n",
+    bu_log("\nTessellation tolerances:\n\tabs = %g mm\n\trel = %g\n\tnorm = %g\n",
 	   tree_state.ts_ttol->abs, tree_state.ts_ttol->rel, tree_state.ts_ttol->norm);
     bu_log("Calculational tolerances:\n\tdist = %g mm perp = %g\n",
 	   tree_state.ts_tol->dist, tree_state.ts_tol->perp);

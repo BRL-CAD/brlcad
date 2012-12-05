@@ -1294,7 +1294,7 @@ int nmg_bool_eval_silent=0;
 /**
  * N M G _ B O O L T R E E _ E V A L U A T E
  *
- * Given a tree of leaf nodes tesselated earlier by
+ * Given a tree of leaf nodes tessellated earlier by
  * nmg_booltree_leaf_tess(), use recursion to do a depth-first
  * traversal of the tree, evaluating each pair of boolean operations
  * and reducing that result to a single nmgregion.

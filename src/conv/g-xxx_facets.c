@@ -57,7 +57,7 @@ Usage: %s [-v][-xX lvl][-a abs_tess_tol (default: 0.0)][-r rel_tess_tol (default
 static int	NMG_debug;	/* saved arg of -X, for longjmp handling */
 static int	verbose;
 static struct db_i		*dbip;
-static struct rt_tess_tol	ttol;	/* tesselation tolerance in mm */
+static struct rt_tess_tol	ttol;	/* tessellation tolerance in mm */
 static struct bn_tol		tol;	/* calculation tolerance */
 static struct model		*the_model;
 
@@ -86,7 +86,7 @@ main(int argc, char **argv)
     tree_state.ts_ttol = &ttol;
     tree_state.ts_m = &the_model;
 
-    /* Set up tesselation tolerance defaults */
+    /* Set up tessellation tolerance defaults */
     ttol.magic = RT_TESS_TOL_MAGIC;
     /* Defaults, updated by command line options. */
     ttol.abs = 0.0;
@@ -171,7 +171,7 @@ main(int argc, char **argv)
 	bu_log("Objects:");
 	for (i = 1; i < argc; i++)
 	    bu_log(" %s", argv[i]);
-	bu_log("\nTesselation tolerances:\n\tabs = %g mm\n\trel = %g\n\tnorm = %g\n",
+	bu_log("\nTessellation tolerances:\n\tabs = %g mm\n\trel = %g\n\tnorm = %g\n",
 		tree_state.ts_ttol->abs, tree_state.ts_ttol->rel, tree_state.ts_ttol->norm);
 	bu_log("Calculational tolerances:\n\tdist = %g mm perp = %g\n",
 		tree_state.ts_tol->dist, tree_state.ts_tol->perp);
@@ -202,7 +202,7 @@ main(int argc, char **argv)
 
     bu_log("%zd triangles written\n", tot_polygons);
 
-    bu_log("Tesselation parameters used:\n");
+    bu_log("Tessellation parameters used:\n");
     bu_log("  abs  [-a]    %g\n", ttol.abs);
     bu_log("  rel  [-r]    %g\n", ttol.rel);
     bu_log("  norm [-n]    %g\n", ttol.norm);

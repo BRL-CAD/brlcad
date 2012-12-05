@@ -88,8 +88,8 @@ overall size of the solid by
 This allows small objects to be tessellated with small tolerances, while large objects are tessellated with large tolerances.
 For example, specifying
 <option>-r 0.1</option>
-when tesselating an object 2m in size, will result in a tolerance of .2m (2.0 * 0.1).
-The same option will cause a 5cm object to be tesselated with a tolerance of 0.5cm.</para>
+when tessellating an object 2m in size, will result in a tolerance of .2m (2.0 * 0.1).
+The same option will cause a 5cm object to be tessellated with a tolerance of 0.5cm.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
@@ -140,7 +140,7 @@ $ <emphasis remap='I'>g-nmg -o shell.g sample.g sample_object</emphasis>
 </refsect1>
 
 <refsect1 xml:id='bugs'><title>BUGS</title>
-<para>Boolean operations under finite precision arithmetic are not guaranteed to be solvable.  As a result this command can fail.  Scaling geometry adjusting tolerance values, and restructuring the boolean tree will often result in a successful tesselation.</para>
+<para>Boolean operations under finite precision arithmetic are not guaranteed to be solvable.  As a result this command can fail.  Scaling geometry adjusting tolerance values, and restructuring the boolean tree will often result in a successful tessellation.</para>
 
 </refsect1>
 

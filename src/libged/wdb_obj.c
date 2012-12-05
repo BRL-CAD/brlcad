@@ -6347,7 +6347,7 @@ wdb_tol_cmd(struct rt_wdb *wdbp,
     /* print all tolerance settings */
     if (argc == 1) {
 	Tcl_AppendResult(wdbp->wdb_interp, "Current tolerance settings are:\n", (char *)NULL);
-	Tcl_AppendResult(wdbp->wdb_interp, "Tesselation tolerances:\n", (char *)NULL);
+	Tcl_AppendResult(wdbp->wdb_interp, "Tessellation tolerances:\n", (char *)NULL);
 
 	if (wdbp->wdb_ttol.abs > 0.0) {
 	    bu_vls_init(&vls);
