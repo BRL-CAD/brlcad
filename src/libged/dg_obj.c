@@ -1340,7 +1340,7 @@ dgo_get_autoview_cmd(struct dg_obj *dgop,
     VSETALL(max, -INFINITY);
 
     FOR_ALL_SOLIDS(sp, &dgop->dgo_headSolid) {
-	/* Skip psuedo-solids unless pflag is set */
+	/* Skip pseudo-solids unless pflag is set */
 	if (!pflag &&
 	    sp->s_fullpath.fp_names != (struct directory **)0 &&
 	    sp->s_fullpath.fp_names[0] != (struct directory *)0 &&

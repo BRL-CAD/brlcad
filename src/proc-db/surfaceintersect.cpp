@@ -678,7 +678,7 @@ WalkIntersection(
 /**
  * GetStartPointsInternal
  *
- * @brief Subdibivides the surface recursively to zoom in on
+ * @brief Subdivides the surface recursively to zoom in on
  * intersection points internal to the surfaces.
  */
 bool

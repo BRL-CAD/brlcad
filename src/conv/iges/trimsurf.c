@@ -1474,7 +1474,7 @@ Convtrimsurfs()
 
     }
 
-    bu_log("Converted %d Trimmed Sufaces successfully out of %d total Trimmed Sufaces\n", convsurf, totsurfs);
+    bu_log("Converted %d Trimmed Surfaces successfully out of %d total Trimmed Surfaces\n", convsurf, totsurfs);
 
     if (RT_G_DEBUG & DEBUG_MEM_FULL)
 	bu_mem_barriercheck();

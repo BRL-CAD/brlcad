@@ -3460,7 +3460,7 @@ cd_release(int UNUSED(argc), char **UNUSED(argv))
 /*
  *			C D _ F R A M E S
  *
- *  Sumarize frames waiting
+ *  Summarize frames waiting
  *	Usage: frames [-v]
  */
 int

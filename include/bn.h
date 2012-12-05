@@ -789,7 +789,7 @@ BN_EXPORT extern void bn_ae_vec(fastf_t *azp,
  * Find the azimuth, elevation, and twist from two vectors.  Vec_ae is
  * in the direction of view (+z in mged view) and vec_twist points to
  * the viewers right (+x in mged view).  Accuracy (degrees) is used to
- * stabilze flutter between equivalent extremes of atan2(), and to
+ * stabilize flutter between equivalent extremes of atan2(), and to
  * snap twist to zero when elevation is near +/- 90
  */
 BN_EXPORT extern void bn_aet_vec(fastf_t *az,
@@ -2195,7 +2195,7 @@ BN_EXPORT extern int bn_isect_line3_plane(fastf_t *dist,
  * @param[out]	dir	Direction vector of line of intersection (unit length)
  * @param[in]	a	plane 1 (normal must be unit length)
  * @param[in]	b	plane 2 (normal must be unit length)
- * @param[in]	rpp_min	minimum poit of model RPP
+ * @param[in]	rpp_min	minimum point of model RPP
  * @param[in]	tol	tolerance values
  */
 BN_EXPORT extern int bn_isect_2planes(point_t pt,

@@ -313,7 +313,7 @@ static const struct cvt_tab units_tab[3][40] = {
 	{1000000.0,	"kilometer"},
 	{25.4,		"in"},
 	{25.4,		"inch"},
-	{25.4,		"inche"},		/* for plural */
+	{25.4,		"inches"},		/* for plural */
 	{304.8,		"ft"},
 	{304.8,		"foot"},
 	{304.8,		"feet"},

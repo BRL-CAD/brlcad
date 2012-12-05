@@ -261,7 +261,7 @@ Add_bot_face(int pt1, int pt2, int pt3, fastf_t thick, int pos)
 
     if (mode == PLATE_MODE) {
 	if (pos != POS_CENTER && pos != POS_FRONT) {
-	    bu_log("Add_bot_face: illegal postion parameter (%d), must be one or two (ignoring face for group %d component %d)\n", pos, group_id, comp_id);
+	    bu_log("Add_bot_face: illegal position parameter (%d), must be one or two (ignoring face for group %d component %d)\n", pos, group_id, comp_id);
 	    return;
 	}
     }
@@ -409,7 +409,7 @@ do_quad(char *line)
 	    pos = POS_FRONT;
 
 	if (pos != POS_CENTER && pos != POS_FRONT) {
-	    bu_log("do_quad: illegal postion parameter (%d), must be one or two\n", pos);
+	    bu_log("do_quad: illegal position parameter (%d), must be one or two\n", pos);
 	    bu_log("\telement %d, component %d, group %d\n", element_id, comp_id, group_id);
 	    return;
 	}

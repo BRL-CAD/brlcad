@@ -199,7 +199,7 @@ test_tp_2mlist(double *x, double *y, int npoints)
 
     pl_setOutputMode(PL_OUTPUT_MODE_TEXT);
 
-    /* Test some invalid values (if it gets past this section, no SEGFAULTS have occured) */
+    /* Test some invalid values (if it gets past this section, no SEGFAULTS have occurred) */
     flag = -5;
     mark = -5;
     interval = -5;

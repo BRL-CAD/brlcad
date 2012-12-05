@@ -32,7 +32,7 @@ proc get_refs { refs tree } {
 	# this is a leaf
 	set leaf [lindex $tree 1]
 
-	# if the leaf is not aleady in the list append it
+	# if the leaf is not already in the list append it
 	if { [lsearch -exact $refs $leaf] == -1 } {
 	    lappend refs $leaf
 	}

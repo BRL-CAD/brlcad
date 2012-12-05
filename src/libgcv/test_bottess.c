@@ -136,7 +136,7 @@ test_face_split_single()
 	    VSET(f.plane,0,0,1);                                        \
 	    nsplt = split_face_single(&s,0,isectpt,&f,&t);              \
 	    if (nsplt != s.nfaces) {                                    \
-	      printf("Errr, nsplit %lu != s.nfaces %lu ?\n", numsplit, s.nfaces); \
+	      printf("Error, nsplit %lu != s.nfaces %lu ?\n", numsplit, s.nfaces); \
 	    }
 
     /* the _splits is an array of expected triangles, as 9 fastf_t tuples */
