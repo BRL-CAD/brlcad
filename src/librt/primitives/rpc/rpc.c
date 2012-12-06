@@ -677,6 +677,12 @@ rpc_parabola_p(fastf_t r, fastf_t mag_b)
     return (r * r) / (4 * mag_b);
 }
 
+static fastf_t
+rpc_parabola_y(fastf_t p, fastf_t z)
+{
+    return sqrt(4.0 * p * z);
+}
+
 /* The contour of an rpc in the plane B-R is a parabola with vertex at B,
  * opening toward -B. We can transform this parabola to get an equivalent
  * parabola in the Y-Z plane, opening toward positive Z (-B) with vertex at
@@ -783,42 +789,47 @@ static void
 rpc_plot_curve_connections(
 	struct bu_list *vhead,
 	struct rt_rpc_internal *rpc,
-	struct rt_pt_node *pts,
-	fastf_t rscale)
+	int num_connections)
 {
-    struct rt_pt_node *node;
-    vect_t rpc_V, VH, Ru, Bu, R, B, RB;
-    point_t p;
+    point_t pt;
+    vect_t Yu, Zu;
+    fastf_t mag_Y, mag_Z;
+    fastf_t p, y, z, z_step;
+    int connections_per_half;
 
-    VMOVE(rpc_V, rpc->rpc_V);
-    VADD2(VH, rpc_V, rpc->rpc_H);
+    if (num_connections < 1) {
+	return;
+    }
 
-    VMOVE(Bu, rpc->rpc_B);
-    VUNITIZE(Bu);
+    VMOVE(Zu, rpc->rpc_B);
+    VCROSS(Yu, rpc->rpc_H, Zu);
+    VUNITIZE(Yu);
+    VUNITIZE(Zu);
 
-    VCROSS(Ru, Bu, rpc->rpc_H);
-    VUNITIZE(Ru);
+    mag_Z = MAGNITUDE(rpc->rpc_B);
+    mag_Y = rpc->rpc_r;
 
-    VSCALE(R, Ru, rscale * pts->p[Y]);
-    VSCALE(B, Bu, -pts->p[Z]);
-    VADD2(RB, R, B);
+    p = rpc_parabola_p(rpc->rpc_r, mag_Z);
 
-    node = pts;
-    while (node != NULL) {
-	/* calculate face contour point */
-	VSCALE(R, Ru, rscale * node->p[Y]);
-	VSCALE(B, Bu, -node->p[Z]);
-	VADD2(RB, R, B);
+    connections_per_half = .5 + num_connections / 2.0;
+    z_step = mag_Z / (connections_per_half + 1.0);
 
-	/* start at point on face containing V */
-	VADD2(p, rpc_V, RB);
-	RT_ADD_VLIST(vhead, p, BN_VLIST_LINE_MOVE);
+    for (z = 0.0; z <= mag_Z; z += z_step) {
+	y = rpc_parabola_y(p, mag_Z - z);
 
-	/* draw to corresponding point on opposing face */
-	VADD2(p, VH, RB);
-	RT_ADD_VLIST(vhead, p, BN_VLIST_LINE_DRAW);
+	/* connect faces on one side of the curve */
+	VJOIN2(pt, rpc->rpc_V, z, Zu, -y, Yu);
+	RT_ADD_VLIST(vhead, pt, BN_VLIST_LINE_MOVE);
 
-	node = node->next;
+	VADD2(pt, pt, rpc->rpc_H);
+	RT_ADD_VLIST(vhead, pt, BN_VLIST_LINE_DRAW);
+
+	/* connect the faces on the other side */
+	VJOIN2(pt, rpc->rpc_V, z, Zu, y, Yu);
+	RT_ADD_VLIST(vhead, pt, BN_VLIST_LINE_MOVE);
+
+	VADD2(pt, pt, rpc->rpc_H);
+	RT_ADD_VLIST(vhead, pt, BN_VLIST_LINE_DRAW);
     }
 }
 
@@ -885,17 +896,7 @@ rt_rpc_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
 	num_connections = 2;
     }
 
-    pts = rpc_parabolic_curve(MAGNITUDE(rpc->rpc_B), rpc->rpc_r, num_connections);
-    rpc_plot_curve_connections(info->vhead, rpc, pts, 1.0);
-    rpc_plot_curve_connections(info->vhead, rpc, pts, -1.0);
-
-    node = pts;
-    while (node != NULL) {
-	tmp = node;
-	node = node->next;
-
-	bu_free(tmp, "rt_pt_node");
-    }
+    rpc_plot_curve_connections(info->vhead, rpc, num_connections);
 
     /* plot rectangular face */
     VADD2(p, rpc->rpc_V, rpc_R);
