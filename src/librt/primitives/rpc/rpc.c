@@ -793,7 +793,7 @@ rpc_plot_curve_connections(
 {
     point_t pt;
     vect_t Yu, Zu;
-    fastf_t mag_Y, mag_Z;
+    fastf_t mag_Z;
     fastf_t p, y, z, z_step;
     int connections_per_half;
 
@@ -807,7 +807,6 @@ rpc_plot_curve_connections(
     VUNITIZE(Zu);
 
     mag_Z = MAGNITUDE(rpc->rpc_B);
-    mag_Y = rpc->rpc_r;
 
     p = rpc_parabola_p(rpc->rpc_r, mag_Z);
 

@@ -872,7 +872,7 @@ rhc_plot_curve_connections(
     point_t p;
     vect_t Yu, Zu;
     fastf_t b, y, z, z_step;
-    fastf_t mag_Y, mag_Z, zmax;
+    fastf_t mag_Z, zmax;
     int connections_per_half;
 
     if (num_connections < 1) {
@@ -885,7 +885,6 @@ rhc_plot_curve_connections(
     VUNITIZE(Zu);
 
     mag_Z = MAGNITUDE(rhc->rhc_B);
-    mag_Y = rhc->rhc_r;
 
     b = rhc_hyperbola_b(mag_Z, rhc->rhc_c, rhc->rhc_r);
 
