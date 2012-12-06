@@ -50,7 +50,7 @@
 
       <para>
 	Conceptualmente hay dos objetos en <application>MGED</application>
-	que soportan operaciones Boolenas. Uno se llama combinación, el otro,
+	que soportan operaciones Booleanas. Uno se llama combinación, el otro,
 	región.
       </para>
 
@@ -67,7 +67,7 @@
       <para>
 	En el capítulo anterior se vió que las propiedades del material están
 	asociadas con las regiones. Al igual que las combinaciones, las
-	regiones usan operaciones Boolenas para crear formas complejas. La
+	regiones usan operaciones Booleanas para crear formas complejas. La
 	diferencia es que las regiones son formas que tienen propiedades del
 	material. Ocupan las tres dimensiones del espacio, en vez de definir
 	una forma simple en el espacio.
@@ -90,7 +90,7 @@
       </para>
     </section>
 
-    <section xml:id="boolean_operations"><info><title>Operaciones Boolenas</title></info>
+    <section xml:id="boolean_operations"><info><title>Operaciones Booleanas</title></info>
 
 
       <para>

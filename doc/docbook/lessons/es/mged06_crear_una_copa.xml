@@ -309,7 +309,7 @@
 
       <para>
 	Para combinar todas las regiones dentro de un objeto, necesitará
-	ejecutar una de las últimas operaciones Booleenas. En el prompt de la
+	ejecutar una de las últimas operaciones Booleanas. En el prompt de la
 	Ventana de Comandos, tipee:
 
 	<command>comb globet1.c u basin1.r u stem1.r u base1.r[Enter]</command>
