@@ -41,7 +41,6 @@ else(NOT CMAKE_CONFIGURATION_TYPES)
 endif(NOT CMAKE_CONFIGURATION_TYPES)
 
 BRLCAD_ADDDATA(fortran_example.f sample_applications)
-ADD_MAN_PAGES(1 brlcad-config.1)
 
 set(density_DATAFILES
   GQA_SAMPLE_DENSITIES

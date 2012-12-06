@@ -4,8 +4,6 @@ bin_PROGRAMS = enigma
 enigma_SOURCE = enigma.c
 enigma_LDFLAGS = ${LIBBSD}
 
-dist_man_MANS = enigma.1
-
 EXTRA_DIST = \
 	AUTHORS \
 	COPYING \
