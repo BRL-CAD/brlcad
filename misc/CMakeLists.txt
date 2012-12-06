@@ -77,7 +77,6 @@ set(misc_ignore_files
   archlinux
   astyle.opt
   batch-indent-region.el
-  brlcad-config.1
   brlcad-config.in
   brlcad.spec.in
   debian
