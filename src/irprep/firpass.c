@@ -248,7 +248,7 @@ int main(int argc, char **argv)
 
     /*  Check to see if arguments implemented correctly.  */
     if (argc < 3 || argv[1]==NULL || argv[2]==NULL) {
-	fprintf(stderr, "\nusage:  firpass file.g objects\n\n");
+	fprintf(stderr, "\nUsage:  firpass file.g objects\n\n");
     } else {
 
 	/*  Ask if output goes to standard out or a file.  */

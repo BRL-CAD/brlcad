@@ -63,7 +63,7 @@ main(int argc, char **argv)
     }
 
     if (argc != 2) {
-	bu_exit(1, "usage: %s [-v] file.ap > file.pix (3456 x ?)\n", argv0);
+	bu_exit(1, "Usage: %s [-v] file.ap > file.pix (3456 x ?)\n", argv0);
     }
 
     magfp = fopen(argv[1], "r");

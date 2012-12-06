@@ -145,7 +145,7 @@ int main(int argc, char **argv)
 
     /* Check to see if arguments implemented correctly.  */
     if (argc < 2 || argv[1] == NULL || argv[2] == NULL) {
-	fprintf(stderr, "\nusage:  secpass file.g objects\n\n");
+	fprintf(stderr, "\nUsage:  secpass file.g objects\n\n");
     }
 
     else {

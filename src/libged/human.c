@@ -1582,7 +1582,7 @@ show_help(const char *name, const char *optstr)
 	cp++;
     }
 
-    bu_log("usage: %s [%s]\n", name, bu_vls_addr(&str));
+    bu_log("Usage: %s [%s]\n", name, bu_vls_addr(&str));
     bu_log("options:\n");
     bu_log("\t-h\t\tShow help\n");
     bu_log("\t-?\t\tShow help\n");

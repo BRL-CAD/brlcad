@@ -522,7 +522,7 @@ int main(int ac, char *av[])
     arg_count = parse_args(ac, av);
 
     if ((ac - arg_count) < 1) {
-	fprintf(stderr, "usage: %s geom.g [file.dxf] [bot1 bot2 bot3...]\n", progname);
+	fprintf(stderr, "Usage: %s geom.g [file.dxf] [bot1 bot2 bot3...]\n", progname);
 	return 1;
     }
 

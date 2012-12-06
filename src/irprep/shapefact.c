@@ -163,7 +163,7 @@ int main(int argc, char **argv)
 
     /*  Check to see if arguments are implemented correctly.  */
     if ( (argc < 3 || argv[1] == NULL) || (argv[2] == NULL) ) {
-	fprintf(stderr, "\nusage:  %s file.g objects\n\n", *argv);
+	fprintf(stderr, "\nUsage:  %s file.g objects\n\n", *argv);
     } else {
 	/*  START # 1  */
 

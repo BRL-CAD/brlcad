@@ -534,7 +534,7 @@ static void info(int sig)
 static void help()
 {
     printf("%s\n", ADRT_VER_DETAIL);
-    printf("%s", "usage: adrt_slave [options] [host]\n\
+    printf("%s", "Usage: adrt_slave [options] [host]\n\
   -v\t\tdisplay version\n\
   -h\t\tdisplay help\n\
   -p\t\tport number\n\

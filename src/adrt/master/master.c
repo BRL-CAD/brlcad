@@ -647,7 +647,7 @@ static void finish(int sig) {
 }
 
 static void help() {
-    printf("%s\n", "usage: adrt_master [options]\n\
+    printf("%s\n", "Usage: adrt_master [options]\n\
   -h\t\tdisplay help.\n\
   -c\t\tconnect to component server.\n\
   -d\t\tdaemon mode.\n\
