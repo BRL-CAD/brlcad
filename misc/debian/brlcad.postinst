@@ -1,23 +1,27 @@
 #!/bin/sh
 
-F="/usr/share/applications/defaults.list"
-G="/etc/gnome/defaults.list"
-H="mged.desktop"
+file="/usr/share/applications/mimeapps.list"
+section="Added Associations"
+app="mged.desktop;archer.desktop;rtwizard.desktop;"
+key_v4="application/brlcad-v4=$app"
+key_v5="application/brlcad-v5=$app"
 
-if [ ! -f $F ] && [ ! -h $F ]
+if [ ! -e $file ]
 then
-	if [ -f $G ]
-	then
-		ln -s $G $F || :
-	else
-		echo "[Default Applications]" > $F || :
-	fi
+	touch $file || :
 fi
 
-sed --follow-symlinks -i "/application\/brlcad-v[45]/d" $F || :
-
-echo "application/brlcad-v4=$H" >> $F || :
-echo "application/brlcad-v5=$H" >> $F || :
+if [ -f $file ]
+then
+	sed --follow-symlinks -i "/application\/brlcad-v[45]/d" $file || :
+	line=$(sed -n "/^\[$section\]/=" $file | tail -1) || :
+	if [ -z "$line" ]
+	then
+		echo "[$section]\n$key_v4\n$key_v5" >> $file || :
+	else
+		sed --follow-symlinks -i "$line a$key_v4\n$key_v5" $file || :
+	fi
+fi
 
 source /etc/profile.d/brlcad.sh || :
 

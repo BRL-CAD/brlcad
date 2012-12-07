@@ -1,15 +1,15 @@
 #!/bin/sh
 
-F="/usr/share/applications/defaults.list"
+file="/usr/share/applications/mimeapps.list"
 
-if [ -f $F ] || [ -h $F ]
+if [ -f $file ]
 then
-	sed --follow-symlinks -i "/application\/brlcad-v[45]/d" $F || :
+	sed --follow-symlinks -i "/application\/brlcad-v[45]/d" $file
 fi
 
-if [ -f $F ] && [ -z "$(sed "/\[Default Applications\]/d" $F)" ]
+if [ -f $file ] && [ -z "$(sed "/\[Added Associations\]/d" $file)" ]
 then
-	rm $F || :
+	rm $file || :
 fi
 
 update-mime-database /usr/share/mime || :
