@@ -10,7 +10,7 @@ Vcs-Browser: http://brlcad.svn.sourceforge.net/viewvc/brlcad/
 
 Package: brlcad
 Architecture: any
-Depends: ${misc:Depends}, ${shlibs:Depends}
+Depends: ${misc:Depends}, ${shlibs:Depends}, xterm
 Description: BRL-CAD open source solid modeling
  BRL-CAD is a powerful cross-platform Open Source combinatorial
  Constructive Solid Geometry (CSG) solid modeling system that
