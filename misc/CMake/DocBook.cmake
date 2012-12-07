@@ -136,7 +136,7 @@ define_property(GLOBAL PROPERTY DB_VALIDATION_FILE_LIST BRIEF_DOCS "DocBook file
 
 macro(DB_VALIDATE_TARGET targetdir filename filename_root)
 
-  # Regardless of whether the command is defined or not, we'll need xml_valid_stamp set 
+  # Regardless of whether the command is defined or not, we'll need xml_valid_stamp set
   set(xml_valid_stamp ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_CFG_INTDIR}/${filename_root}.valid)
   # If we have already added a validation command for this file, don't add another one.  Otherwise,
   # proceed to add a new custom command
@@ -203,7 +203,7 @@ macro(DOCBOOK_TO_HTML targetname_suffix xml_files targetdir deps_list)
 
       # If multiple outputs are being generated from the same file, make sure
       # one of them is run to completion before the others to avoid multiple
-      # triggerings of the XML valiation command.
+      # triggerings of the XML validation command.
       get_property(1ST_TARGET SOURCE ${filename} PROPERTY 1ST_TARGET)
       if(1ST_TARGET)
 	add_dependencies(${targetname} ${1ST_TARGET})
@@ -265,7 +265,7 @@ macro(DOCBOOK_TO_MAN targetname_suffix xml_files mannum manext targetdir deps_li
 
       # If multiple outputs are being generated from the same file, make sure
       # one of them is run to completion before the others to avoid multiple
-      # triggerings of the XML valiation command.
+      # triggerings of the XML validation command.
       get_property(1ST_TARGET SOURCE ${filename} PROPERTY 1ST_TARGET)
       if(1ST_TARGET)
 	add_dependencies(${targetname} ${1ST_TARGET})
@@ -325,7 +325,7 @@ macro(DOCBOOK_TO_PDF targetname_suffix xml_files targetdir deps_list)
 
       # If multiple outputs are being generated from the same file, make sure
       # one of them is run to completion before the others to avoid multiple
-      # triggerings of the XML valiation command.
+      # triggerings of the XML validation command.
       get_property(1ST_TARGET SOURCE ${filename} PROPERTY 1ST_TARGET)
       if(1ST_TARGET)
 	add_dependencies(${targetname} ${1ST_TARGET})
