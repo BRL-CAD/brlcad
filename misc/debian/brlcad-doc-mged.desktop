@@ -4,6 +4,5 @@ Name=MGED Manual
 Comment=MGED geometry editor manual
 Exec=xdg-open /usr/brlcad/share/doc/html/manuals/mged/index.html
 Icon=brlcad-doc
-Terminal=false
 Type=Application
 Categories=BRL-CAD-doc;

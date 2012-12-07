@@ -2,10 +2,7 @@
 [Desktop Entry]
 Name=Archer
 Comment=Archer - Constructive solid geometry (CSG) solid modeling computer-aided design (CAD) system
-Exec=/usr/brlcad/bin/archer
+Exec=/usr/brlcad/bin/archer %f
 Icon=archer
-Terminal=false
 Type=Application
 Categories=BRL-CAD;
-MimeType=application/brlcad-v4;application/brlcad-v5;
-InitialPreference=2
