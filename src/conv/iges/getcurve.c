@@ -498,7 +498,7 @@ Getcurve(int curve, struct ptlist **curv_pts)
 			break;
 		    }
 		    b = b/c;
-		    t1 = (b + c)/2.0; /* vaule of 't' at v1 */
+		    t1 = (b + c)/2.0; /* value of 't' at v1 */
 		    t2 = (b - c)/2.0; /* value of 't' at v2 */
 		    xc = v1[0] - a*t1*t1*cos(theta) + t1*sin(theta);
 		    yc = v1[1] - a*t1*t1*sin(theta) - t1*cos(theta);

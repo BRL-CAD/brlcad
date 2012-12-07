@@ -259,7 +259,7 @@
 	mover y rotar objetos puede ser realizado de distintas maneras, de
 	acuerdo a la precisión deseada.
 	Como fue descripto previamente, las funciones Shift Grip (Arrastrar
-	utilizadno el mouse) pueden ser usadas como una manera rápida para
+	utilizando el mouse) pueden ser usadas como una manera rápida para
 	cambiar un objeto cuando su ángulo exacto y localización no son
 	importantes. Alternativamente, para alcanzar una mayor precisión,
 	pueden aplicarse los comandos Translate (Traslación) y Rotate

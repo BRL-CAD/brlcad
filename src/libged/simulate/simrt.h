@@ -68,7 +68,7 @@
 
 /*
  * This structure is a single node of an array
- * of overlap regions: similar to the one in nirt/usrfrmt.h
+ * of overlap regions: similar to the one in nirt/usrfmt.h
  */
 struct overlap {
     int index;

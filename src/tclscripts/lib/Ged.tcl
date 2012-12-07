@@ -5317,7 +5317,7 @@ package provide cadwidgets::Ged 1.0
     $help add plot		{{file [2|3] [f] [g] [z]} {creates a plot file of the current view}}
     $help add pmat		{{} {get the perspective matrix}}
     $help add pmodel2view	{{} {get the pmodel2view matrix}}
-    $help add png		{{[-c r/g/b] [-s size] file} {creates a png file of the current view (wirefram only)}}
+    $help add png		{{[-c r/g/b] [-s size] file} {creates a png file of the current view (wireframe only)}}
     $help add pov		{{args}	{experimental:  set point-of-view}}
     $help add prcolor		{{} {print color and material table}}
     $help add prefix		{{new_prefix object(s)} {prefix each occurrence of object name(s)}}

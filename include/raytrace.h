@@ -819,7 +819,7 @@ struct db_i {
     struct animate * dbi_anroot;	/**< @brief PRIVATE: heads list of anim at root lvl */
     struct bu_mapped_file * dbi_mf;	/**< @brief PRIVATE: Only in read-only mode */
     struct bu_ptbl dbi_clients;		/**< @brief PRIVATE: List of rtip's using this db_i */
-    int dbi_version;			/**< @brief PRIVATE: use db_verison() */
+    int dbi_version;			/**< @brief PRIVATE: use db_version() */
     struct rt_wdb * dbi_wdbp;		/**< @brief PRIVATE: ptr back to containing rt_wdb */
 };
 #define DBI_NULL ((struct db_i *)0)
