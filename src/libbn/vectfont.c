@@ -36,7 +36,7 @@
  *  factors less than 10.0 are unlikely to be legible.
  *
  *  The vector font table here was provided courtesy of Dr. Bruce
- *  Henriksen and Dr. Stephen Wolff, US Army Ballistic Research
+ *  Henrikson and Dr. Stephen Wolff, US Army Ballistic Research
  *  Laboratory, Summer of 1978.  They had developed it for their
  *  remote Houston Instruments pen plotter package for the
  *  GE Tymeshare system.
