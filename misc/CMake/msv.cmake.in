@@ -33,12 +33,12 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 ###
-execute_process(COMMAND "@CMAKE_COMMAND@" -E remove -f "@db_outfile@")
+execute_process(COMMAND "@CMAKE_COMMAND@" -E remove -f "@xml_valid_stamp@")
 execute_process(COMMAND msv -warning "@BRLCAD_BINARY_DIR@/doc/docbook/resources/other/docbook-schema/rng/docbookxi.rng" "@CMAKE_CURRENT_SOURCE_DIR@/@filename@" RESULT_VARIABLE CMDRESULT)
 if(CMDRESULT)
   message(FATAL_ERROR "msv failure: ${CMDRESULT}")
 else(CMDRESULT)
-  execute_process(COMMAND "@CMAKE_COMMAND@" -E touch "@db_outfile@")
+  execute_process(COMMAND "@CMAKE_COMMAND@" -E touch "@xml_valid_stamp@")
 endif(CMDRESULT)
 
 
