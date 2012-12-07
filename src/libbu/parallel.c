@@ -997,7 +997,7 @@ bu_parallel(void (*func)(int, genptr_t), int ncpu, genptr_t arg)
 
     /* XXX How to advise thread library that we need 'ncpu' processors? */
 
-    /* Create the threads */
+    /* Create the posix threads */
     for (x = 0; x < ncpu; x++) {
 	pthread_attr_t attrs;
 	pthread_attr_init(&attrs);
@@ -1065,6 +1065,44 @@ bu_parallel(void (*func)(int, genptr_t), int ncpu, genptr_t arg)
 	       nthreadc, nthreade);
 
 #  endif /* end if posix threads */
+
+
+#  ifdef WIN32
+    /* Win32 Threads */
+
+    thread = 0;
+    nthreadc = 0;
+    DWORD   dwThreadIdArray[ncpu];
+    HANDLE  hThreadArray[ncpu] = {0};
+
+    /* Create the Win32 threads */
+
+    for( int i = 0; i < ncpu; i++){
+	hThreadArray[i] = CreateThread(
+	    NULL,
+	    0,
+	    (LPVOID)parallel_interface,
+	    NULL,
+	    0,
+	    &dwThreadIdArray[i]);
+	if (hThreadArray[i] == NULL) {
+	    bu_log("bu_parallel(): Error in CreateThread");
+	    bu_exit();
+	}
+    }
+    /* Wait for other threads in the array */
+
+    WaitForMultipleObjects(i, hThreadArray, TRUE, INFINITE);
+    for (x = 0; x < nthreadc; x++) {
+	int ret;
+	if ((ret = CloseHandle(hThreadArray[x]) != 0)) {
+	    /* The thread not closing properly */
+	    bu_log("bu_parallel(): Error closing threads");
+	    x--;
+	}
+	nthreade++;
+    }
+#  endif /* end if Win32 threads */
 
     /*
      * Ensure that all the threads are REALLY finished.  On some
