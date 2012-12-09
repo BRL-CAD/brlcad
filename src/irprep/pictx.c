@@ -33,9 +33,11 @@
 #include<stdio.h>
 #include<string.h>
 #include<math.h>
+#include<stdlib.h>
 #include<X11/Xlib.h>
 #include<X11/Xutil.h>
 
+int
 main(void)
 {
     int ichoice;			/*  Choice.  */
@@ -137,6 +139,7 @@ main(void)
 	system(irX);
     }
 
+    return 0;
 }
 
 /*
