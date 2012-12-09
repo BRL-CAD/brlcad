@@ -1958,11 +1958,11 @@ hoc_register_menu_data "Create" "$ptype..." "Make a $ptype" $ksl
     .$id.menubar.tools add separator
 
     .$id.menubar.tools add command -label "Command Window" -underline 6\
-	-command "raise .$id"
+	-command "set mged_gui($id,show_cmd) 1; wm deiconify .$id; raise .$id"
     hoc_register_menu_data "Tools" "Command Window" "Command Window"\
 	{ { summary "Raise the command window." } }
     .$id.menubar.tools add command -label "Graphics Window" -underline 7\
-	-command "raise $mged_gui($id,top)"
+	-command "set mged_gui($id,show_dm) 1; wm deiconify $mged_gui($id,top); raise $mged_gui($id,top)"
     hoc_register_menu_data "Tools" "Graphics Window" "Graphics Window"\
 	{ { summary "Raise the geometry window." } }
 
@@ -2320,7 +2320,8 @@ hoc_register_menu_data "Create" "$ptype..." "Make a $ptype" $ksl
     # set geometry (i.e. size and position) according to mged_default(ggeom)
     wm geometry $mged_gui($id,top) $mged_default(ggeom)
 
-    wm protocol $mged_gui($id,top) WM_DELETE_WINDOW "gui_destroy $id"
+    wm protocol $mged_gui($id,top) WM_DELETE_WINDOW "dm_win_hide $id"
+    wm protocol .$id WM_DELETE_WINDOW "cmd_win_hide $id"
 
     if { $comb } {
 	if { !$mged_gui($id,show_dm) } {
@@ -2337,36 +2338,59 @@ hoc_register_menu_data "Create" "$ptype..." "Make a $ptype" $ksl
     }
 }
 
+proc cmd_win_hide args {
+    global mged_gui
+
+    set id [lindex $args 0]
+    set mged_gui($id,show_cmd) 0
+    wm state .$id withdrawn
+
+    gui_destroy $id
+}
+
+proc dm_win_hide args {
+    global mged_gui
+
+    set id [lindex $args 0]
+    set mged_gui($id,show_dm) 0
+    wm state $mged_gui($id,dmc) withdrawn
+
+    gui_destroy $id
+}
+
 proc gui_destroy args {
     global mged_gui
     global mged_players
     global mged_collaborators
 
     if { [llength $args] != 1 } {
-	return [help gui_destroy]
+        return [help gui_destroy]
     }
 
     set id [lindex $args 0]
 
-    set i [lsearch -exact $mged_players $id]
-    if { $i == -1 } {
-	return "gui_destroy: bad id - $id"
+    if { $mged_gui($id,show_dm) == 0 && $mged_gui($id,show_cmd) == 0 } {
+
+        set i [lsearch -exact $mged_players $id]
+        if { $i == -1 } {
+            return "gui_destroy: bad id - $id"
+        }
+        set mged_players [lreplace $mged_players $i $i]
+
+        if { [lsearch -exact $mged_collaborators $id] != -1 } {
+            collaborate quit $id
+        }
+
+        set mged_gui($id,multi_pane) 0
+        set mged_gui($id,show_edit_info) 0
+
+        releasemv $id
+        catch { cmd_win close $id }
+        catch { destroy .mmenu$id }
+        catch { destroy .sliders$id }
+        catch { destroy $mged_gui($id,top) }
+        catch { destroy .$id }
     }
-    set mged_players [lreplace $mged_players $i $i]
-
-    if { [lsearch -exact $mged_collaborators $id] != -1 } {
-	collaborate quit $id
-    }
-
-    set mged_gui($id,multi_pane) 0
-    set mged_gui($id,show_edit_info) 0
-
-    releasemv $id
-    catch { cmd_win close $id }
-    catch { destroy .mmenu$id }
-    catch { destroy .sliders$id }
-    catch { destroy $mged_gui($id,top) }
-    catch { destroy .$id }
 }
 
 proc reconfig_gui_default { id } {
