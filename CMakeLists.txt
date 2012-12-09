@@ -1005,20 +1005,27 @@ mark_as_advanced(BRLCAD_ENABLE_AQUA)
 # Install example BRL-CAD Geometry Files
 option(BRLCAD_INSTALL_EXAMPLE_GEOMETRY "Install the example BRL-CAD geometry files." ON)
 
-# Enable features requiring X11
+# test for X11 on all platforms since we don't know when/where we'll find it
+include(${BRLCAD_CMAKE_DIR}/FindX11.cmake)
+
+# Set whether X11 is enabled or disabled by default
 if(WIN32)
+  # even if there is x11, we default to native
   option(BRLCAD_ENABLE_X11 "Use X11." OFF)
-  mark_as_advanced(BRLCAD_ENABLE_X11)
 elseif(BRLCAD_ENABLE_AQUA)
+  # aqua implies no X11
   option(BRLCAD_ENABLE_X11 "Use X11." OFF)
 else(WIN32)
-  include(${BRLCAD_CMAKE_DIR}/FindX11.cmake)
+  # make everywhere else depend on whether we found a suitable X11
   if(X11_X11_LIB AND X11_Xext_LIB AND X11_Xi_LIB)
     option(BRLCAD_ENABLE_X11 "Use X11." ON)
   else(X11_X11_LIB AND X11_Xext_LIB AND X11_Xi_LIB)
     option(BRLCAD_ENABLE_X11 "Use X11." OFF)
   endif(X11_X11_LIB AND X11_Xext_LIB AND X11_Xi_LIB)
 endif(WIN32)
+mark_as_advanced(BRLCAD_ENABLE_X11)
+
+# if X11 is enabled, make sure aqua is off
 if(BRLCAD_ENABLE_X11)
   set(BRLCAD_ENABLE_AQUA OFF CACHE STRING "Don't use Aqua if we're doing X11" FORCE)
   set(OPENGL_USE_AQUA OFF CACHE STRING "Don't use Aqua if we're doing X11" FORCE)
@@ -1029,22 +1036,12 @@ mark_as_advanced(OPENGL_USE_AQUA)
 # be on, as a lot of functionality in BRL-CAD depends on Tk
 option(BRLCAD_ENABLE_TK "Enable features requiring the Tk toolkit" ON)
 mark_as_advanced(BRLCAD_ENABLE_TK)
-if(NOT WIN32)
-  if(APPLE)
-    if(NOT BRLCAD_ENABLE_X11 AND NOT BRLCAD_ENABLE_AQUA)
-      set(BRLCAD_ENABLE_TK OFF)
-    endif(NOT BRLCAD_ENABLE_X11 AND NOT BRLCAD_ENABLE_AQUA)
-    if(BRLCAD_ENABLE_X11)
-      set(TK_X11_GRAPHICS ON CACHE STRING "Need X11 Tk" FORCE)
-    endif(BRLCAD_ENABLE_X11)
-  else(APPLE)
-    if(NOT BRLCAD_ENABLE_X11)
-      set(BRLCAD_ENABLE_TK OFF)
-    else(NOT BRLCAD_ENABLE_X11)
-      set(TK_X11_GRAPHICS ON CACHE STRING "Need X11 Tk" FORCE)
-    endif(NOT BRLCAD_ENABLE_X11)
-  endif(APPLE)
-endif(NOT WIN32)
+if(NOT BRLCAD_ENABLE_X11 AND NOT BRLCAD_ENABLE_AQUA)
+  set(BRLCAD_ENABLE_TK OFF)
+endif(NOT BRLCAD_ENABLE_X11 AND NOT BRLCAD_ENABLE_AQUA)
+if(BRLCAD_ENABLE_X11)
+  set(TK_X11_GRAPHICS ON CACHE STRING "Need X11 Tk" FORCE)
+endif(BRLCAD_ENABLE_X11)
 
 # Enable features requiring OPENGL
 # Be smart about this - if we don't have X11 or Aqua and we're
@@ -1054,29 +1051,12 @@ endif(NOT WIN32)
 # about that... for now, on Win32 don't try OpenGL if Tk is
 # off.  That'll hold until we get a non-Tk based GUI - then
 # setting non-graphical on Windows will take more thought.
-if(NOT WIN32)
-  if(APPLE)
-    if(NOT BRLCAD_ENABLE_X11 AND NOT BRLCAD_ENABLE_AQUA)
-      set(OPENGL_FOUND OFF)
-      set(BRLCAD_ENABLE_OPENGL OFF CACHE BOOL "Disabled - NOT BRLCAD_ENABLE_X11 AND NOT BRLCAD_ENABLE_AQUA" FORCE)
-    else(NOT BRLCAD_ENABLE_X11 AND NOT BRLCAD_ENABLE_AQUA)
-      include(${BRLCAD_CMAKE_DIR}/FindGL.cmake)
-    endif(NOT BRLCAD_ENABLE_X11 AND NOT BRLCAD_ENABLE_AQUA)
-  else(APPLE)
-    if(NOT BRLCAD_ENABLE_X11)
-      set(OPENGL_FOUND OFF)
-      set(BRLCAD_ENABLE_OPENGL OFF CACHE BOOL "Disabled - NOT BRLCAD_ENABLE_X11" FORCE)
-    else(NOT BRLCAD_ENABLE_X11)
-      include(${BRLCAD_CMAKE_DIR}/FindGL.cmake)
-    endif(NOT BRLCAD_ENABLE_X11)
-  endif(APPLE)
-else(NOT WIN32)
-  if(BRLCAD_ENABLE_TK)
-    include(${BRLCAD_CMAKE_DIR}/FindGL.cmake)
-  else(BRLCAD_ENABLE_TK)
-    set(BRLCAD_ENABLE_OPENGL OFF CACHE BOOL "Disabled - WIN32 AND NOT BRLCAD_ENABLE_TK" FORCE)
-  endif(BRLCAD_ENABLE_TK)
-endif(NOT WIN32)
+if(NOT BRLCAD_ENABLE_X11 AND NOT BRLCAD_ENABLE_AQUA)
+  set(OPENGL_FOUND OFF)
+  set(BRLCAD_ENABLE_OPENGL OFF CACHE BOOL "Disabled - NOT BRLCAD_ENABLE_X11 and NOT BRLCAD_ENABLE_AQUA" FORCE)
+else(NOT BRLCAD_ENABLE_X11 AND NOT BRLCAD_ENABLE_AQUA)
+  include(${BRLCAD_CMAKE_DIR}/FindGL.cmake)
+endif(NOT BRLCAD_ENABLE_X11 AND NOT BRLCAD_ENABLE_AQUA)
 
 set(BRLCAD_ENABLE_OPENGL_ALIASES
   ENABLE_OPENGL
