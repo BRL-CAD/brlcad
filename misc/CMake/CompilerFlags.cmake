@@ -69,7 +69,7 @@ macro(ADD_NEW_FLAG FLAG_TYPE NEW_FLAG CONFIG_LIST)
   endif(${NEW_FLAG})
 endmacro(ADD_NEW_FLAG)
 
-# Convenience language based wrapper for calling the correct compiler flag test macro 
+# Convenience language based wrapper for calling the correct compiler flag test macro
 macro(CHECK_COMPILER_FLAG FLAG_LANG NEW_FLAG RESULTVAR)
   if("${FLAG_LANG}" STREQUAL "C")
     CHECK_C_COMPILER_FLAG(${NEW_FLAG} ${RESULTVAR})
@@ -84,15 +84,15 @@ endmacro(CHECK_COMPILER_FLAG LANG NEW_FLAG RESULTVAR)
 #
 # BRLCAD_CHECK_FLAG is BRL-CAD's core macro for C/C++ flag testing.  The first value
 # is the language to test (C or C++ currently).  The second entry is the flag (without
-# preliminary dash).  
+# preliminary dash).
 #
 # If the first two mandatory options are the only ones provided, the a successful test
 # of the flag will result in its being assigned to *all* compilations using the appropriate global
 # C/C++ CMake variable.  If optional parameters are included, they tell the macro what to do with the
-# test results instead of doing the default global assignment.  Options include assigning the 
-# flag to one or more of the variable lists associated with build types (e.g. Debug or Release), 
-# appending the variable to a string that contains a group of variables, or assigning the flag to 
-# a variable if that variable does not already hold a value.  The assignments are not mutually 
+# test results instead of doing the default global assignment.  Options include assigning the
+# flag to one or more of the variable lists associated with build types (e.g. Debug or Release),
+# appending the variable to a string that contains a group of variables, or assigning the flag to
+# a variable if that variable does not already hold a value.  The assignments are not mutually
 # exclusive - any or all of them may be used in a given command.
 #
 # For example, to test a flag and add it to the C Debug configuration flags:
@@ -105,9 +105,9 @@ endmacro(CHECK_COMPILER_FLAG LANG NEW_FLAG RESULTVAR)
 #
 # To do all assignments at once, for multiple configs and vars:
 #
-# BRLCAD_CHECK_FLAG(C ggdb3 
-#                   BUILD_TYPES Debug Release 
-#                   GROUPS DEBUG_FLAGS 
+# BRLCAD_CHECK_FLAG(C ggdb3
+#                   BUILD_TYPES Debug Release
+#                   GROUPS DEBUG_FLAGS
 #                   VARS DEBUG1 DEBUG2)
 
 include (CMakeParseArguments)
@@ -140,10 +140,10 @@ macro(BRLCAD_CHECK_FLAG)
 	ADD_NEW_FLAG(C NEW_FLAG "${build_type}")
       endif(${UPPER_FLAG}_COMPILER_FLAG_FOUND)
     endforeach(build_type ${FLAG_BUILD_TYPES})
-   
+
     # Append flag to a group of flags (this apparently needs to be
-    # a string build, not a CMake list build.  Do this for all supplied 
-    # group variables. 
+    # a string build, not a CMake list build.  Do this for all supplied
+    # group variables.
     foreach(flag_group ${FLAG_GROUPS})
       CHECK_COMPILER_FLAG(${FLAG_LANG} ${NEW_FLAG} ${UPPER_FLAG}_COMPILER_FLAG_FOUND)
       if(${UPPER_FLAG}_COMPILER_FLAG_FOUND)
