@@ -151,10 +151,12 @@
 	method continue_move {_state _sx _sy}
 	method create_line {}
 	method end_arc_radius_adjust {_segment _mx _my}
+	method fix_vertex_references {_unused_vindices}
 	method item_pick_highlight {_sx _sy}
 	method pick_arbitrary {_sx _sy}
 	method pick_segment {_sx _sy}
 	method pick_vertex {_sx _sy}
+	method seg_delete {_sx _sy _vflag}
 	method seg_pick_highlight {_sx _sy}
 	method setup_move_arbitrary {}
 	method setup_move_point {}
@@ -172,6 +174,8 @@
 	method start_vert_pick {}
 	method tag_selected_verts {}
 	method unhighlight_selected {}
+	method vert_delete {_sx _sy}
+	method vert_is_used {_vindex}
 	method vert_pick_highlight {_sx _sy}
 	method write_sketch_to_db {}
     }
@@ -548,7 +552,7 @@
 	set seg [lrange $seg 1 end]
 	switch $type {
 	    line {
-		lappend segments [SketchLine \#auto $this $itk_component(canvas) $seg]
+		lappend segments ::SketchEditFrame::[SketchLine \#auto $this $itk_component(canvas) $seg]
 	    }
 	    carc {
 		set index [lsearch -exact $seg R]
@@ -558,10 +562,10 @@
 		    set tmp_radius [expr {$tolocal * $tmp_radius}]
 		    set seg [lreplace $seg $index $index $tmp_radius]
 		}
-		lappend segments [SketchCArc \#auto $this $itk_component(canvas) $seg]
+		lappend segments ::SketchEditFrame::[SketchCArc \#auto $this $itk_component(canvas) $seg]
 	    }
 	    bezier {
-		lappend segments [SketchBezier \#auto $this $itk_component(canvas) $seg]
+		lappend segments ::SketchEditFrame::[SketchBezier \#auto $this $itk_component(canvas) $seg]
 	    }
 	    default {
 		$::ArcherCore::application putString "Curve segments of type '$type' are not yet handled"
@@ -925,6 +929,14 @@
 }
 
 
+::itcl::body SketchEditFrame::fix_vertex_references {_unused_vindices} {
+    foreach seg $segments {
+	$seg fix_vertex_reference $_unused_vindices
+    }
+    drawVertices
+}
+
+
 ::itcl::body SketchEditFrame::item_pick_highlight {_sx _sy} {
     set item [pick_arbitrary $_sx $_sy]
     if {$item == -1} return
@@ -988,6 +1000,7 @@
     if {[lsearch -exact $tags segs] == -1} {
 	return -1
     }
+
     return [lindex $tags 0]
 }
 
@@ -1006,6 +1019,30 @@
 	return -1
     }
     return [string range [lindex $tags $index] 1 end]
+}
+
+
+::itcl::body SketchEditFrame::seg_delete {_sx _sy _vflag} {
+    set item [pick_segment $_sx $_sy]
+    if {$item == -1} return
+
+    set index [lsearch $segments $item]
+    set segments [lreplace $segments $index $index]
+    $itk_component(canvas) delete $item
+
+    if {$_vflag} {
+	set unused_vindices {}
+	foreach vindex [lsort -integer -decreasing [$item get_verts]] {
+	    if {![vert_is_used $vindex]} {
+		set VL [lreplace $VL $vindex $vindex]
+		lappend unused_vindices $vindex
+	    }
+	}
+	fix_vertex_references $unused_vindices
+    }
+
+    ::destroy $item
+    write_sketch_to_db
 }
 
 
@@ -1229,6 +1266,8 @@
     bind $itk_component(canvas) <B1-Motion> {}
     bind $itk_component(canvas) <ButtonRelease-1> {}
     bind $itk_component(canvas) <ButtonPress-1> [code $this seg_pick_highlight %x %y]
+    bind $itk_component(canvas) <Shift-ButtonPress-1> [code $this seg_delete %x %y 0]
+    bind $itk_component(canvas) <Control-Shift-ButtonPress-1> [code $this seg_delete %x %y 1]
 }
 
 
@@ -1239,6 +1278,7 @@
     bind $itk_component(canvas) <B1-Motion> {}
     bind $itk_component(canvas) <ButtonRelease-1> {}
     bind $itk_component(canvas) <ButtonPress-1> [::itcl::code $this vert_pick_highlight %x %y]
+    bind $itk_component(canvas) <Shift-ButtonPress-1> [code $this vert_delete %x %y]
 }
 
 
@@ -1277,6 +1317,32 @@
 }
 
 
+::itcl::body SketchEditFrame::vert_delete {_sx _sy} {
+    set index [pick_vertex $_sx $_sy]
+    if {$index == -1} return
+
+    if {[vert_is_used $index]} {
+	$::ArcherCore::application putString \
+	    "Cannot delete a vertex being used by a segment."
+	$itk_component(canvas) dtag p$index selected
+	$itk_component(canvas) itemconfigure p$index -outline black -fill black
+    } else {
+	set VL [lreplace $VL $index $index]
+	fix_vertex_references $index
+    }
+}
+
+
+::itcl::body SketchEditFrame::vert_is_used {_vindex} {
+    foreach seg $segments {
+	if {[$seg is_vertex_used $_vindex]} {
+	    return 1
+	}
+    }
+    return 0
+}
+
+
 ::itcl::body SketchEditFrame::vert_pick_highlight {_sx _sy} {
     set item [pick_vertex $_sx $_sy]
     if {$item == -1} return
@@ -1310,27 +1376,7 @@
     set command "adjust $itk_option(-geometryObject)"
 
     if {[catch "$::ArcherCore::application $command $out" ret]} {
-	$::ArcherCore::application putString "ERROR Saving Sketch!!!!, $ret"
-    }
-
-    if {0} {
-    set out "V { [expr {$tobase * $V(0)}] [expr {$tobase * $V(1)}] [expr {$tobase * $V(2)}] }"
-    set out "$out A { [expr {$tobase * $A(0)}] [expr {$tobase * $A(1)}] [expr {$tobase * $A(2)}] }"
-    set out "$out B { [expr {$tobase * $B(0)}] [expr {$tobase * $B(1)}] [expr {$tobase * $B(2)}] } VL {"
-    foreach vert $VL {
-	set out "$out { [expr {$tobase * [lindex $vert 0]}] [expr {$tobase * [lindex $vert 1]}] }"
-    }
-    set out "$out } SL {"
-    foreach seg $segments {
-	set out "$out [$seg serialize $tobase] "
-    }
-    set out "$out }"
-
-    set command "adjust $itk_option(-geometryObject)"
-
-    if {[catch "db $command $out" ret]} {
-	$::ArcherCore::application putString "ERROR Saving Sketch!!!!, $ret"
-    }
+	$::ArcherCore::application putString "ERROR Saving $itk_option(-geometryObject)!!!!, $ret"
     }
 }
 
