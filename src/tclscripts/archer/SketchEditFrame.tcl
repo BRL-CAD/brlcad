@@ -95,6 +95,8 @@
 	variable vert_radius 3
 	variable tobase 1.0
 	variable tolocal 1.0
+	variable x_coord 0.0
+	variable y_coord 0.0
 	variable radius 0.0
 	variable index1 -1
 	variable index2 -1
@@ -144,7 +146,10 @@
 	method redrawSegments {}
 
 	method circle_3pt {_x1 _y1 _x2 _y2 _x3 _y3 _cx_out _cy_out}
+	method continue_line {_segment _state _coord_type _mx _my}
+	method continue_line_pick {_segment _state _mx _my}
 	method continue_move {_state _sx _sy}
+	method create_line {}
 	method end_arc_radius_adjust {_segment _mx _my}
 	method item_pick_highlight {_sx _sy}
 	method pick_arbitrary {_sx _sy}
@@ -156,6 +161,9 @@
 	method setup_move_segment {}
 	method setup_move_selected {}
 	method start_arc_radius_adjust {_segment _mx _my}
+	method start_line {_coord_type _x _y}
+	method start_line_guts {}
+	method start_line_pick {_x _y}
 	method start_move_arbitrary {_sx _sy _rflag}
 	method start_move_point {_sx _sy}
 	method start_move_segment {_sx _sy _rflag}
@@ -165,6 +173,7 @@
 	method tag_selected_verts {}
 	method unhighlight_selected {}
 	method vert_pick_highlight {_sx _sy}
+	method write_sketch_to_db {}
     }
 
     private {}
@@ -516,6 +525,7 @@
 	    start_seg_pick
 	} \
 	$createLine {
+	    create_line
 	} \
 	$createCircle {
 	} \
@@ -758,6 +768,65 @@
 }
 
 
+::itcl::body SketchEditFrame::continue_line {_segment _state _coord_type _mx _my} {
+    switch -- $_coord_type {
+	0 {
+	    # model coords
+	    set ex $x_coord
+	    set ey $y_coord
+	}
+	1 {
+	    # screen coords
+	    #show_coords $_mx $_my
+	    set ex [expr {[$itk_component(canvas) canvasx $_mx] / $myscale}]
+	    set ey [expr {-[$itk_component(canvas) canvasy $_my] / $myscale}]
+	}
+	2 {
+	    # use index numbers
+	    $_segment set_vars E $index2
+	}
+	default {
+	    $::ArcherCore::application putString "continue_line: unrecognized coord type - $_coord_type"
+	}
+    }
+
+    if {$_coord_type != 2} {
+	set VL [lreplace $VL $index2 $index2 "$ex $ey"]
+    }
+    $itk_component(canvas) delete $_segment
+    $_segment draw ""
+    $itk_component(canvas) configure -scrollregion [$itk_component(canvas) bbox all]
+
+    if {$_state == 1 || $_state == 3} {
+	if {$_state == 1} {
+	    create_line
+	} else {
+	    # Here we have another segment (i.e., $_state == 3)
+	    set index1 [expr {[llength $VL] - 1}]
+	    set index2 [llength $VL]
+	    lappend VL "$ex $ey"
+	    start_line_guts
+	}
+
+	write_sketch_to_db
+    }
+
+    drawVertices
+}
+
+
+::itcl::body SketchEditFrame::continue_line_pick {_segment _state _mx _my} {
+    set index [pick_vertex $_mx $_my]
+    if {$index == -1} return
+
+    # The last item in VL is no longer needed
+    set VL [lreplace $VL end end]
+
+    set index2 $index
+    continue_line $_segment $_state 2 0 0
+}
+
+
 ::itcl::body SketchEditFrame::continue_move {_state _sx _sy} {
     if {$_state != 2} {
 #	$this show_coords $_sx $_sy
@@ -790,15 +859,18 @@
 	set move_start_x $x
 	set move_start_y $y
     } else {
-	bind $itk_component(canvas) <ButtonPress-1> {}
-	bind $itk_component(canvas) <B1-Motion> {}
-	bind $itk_component(canvas) <ButtonRelease-1> {}
-#	bind $itk_component(coords).x <Return> {}
-#	bind $itk_component(coords).y <Return> {}
-#	$itk_component(status_line) configure -text ""
-	$itk_component(canvas) dtag moving moving
-	unhighlight_selected
+	write_sketch_to_db
     }
+}
+
+
+::itcl::body SketchEditFrame::create_line {} {
+    bind $itk_component(canvas) <B1-Motion> {}
+    bind $itk_component(canvas) <ButtonPress-1> {}
+    bind $itk_component(canvas) <Shift-ButtonRelease-1> {}
+    bind $itk_component(canvas) <Shift-ButtonRelease-3> {}
+    bind $itk_component(canvas) <ButtonRelease-1> [code $this start_line 1 %x %y]
+    bind $itk_component(canvas) <ButtonRelease-3> [code $this start_line_pick %x %y]
 }
 
 
@@ -849,6 +921,7 @@
     $_segment set_vars R $radius L $center_is_left O $orient
 
     drawSegments
+    write_sketch_to_db
 }
 
 
@@ -1031,6 +1104,59 @@
 }
 
 
+::itcl::body SketchEditFrame::start_line {_coord_type _mx _my} {
+    bind $itk_component(canvas) <ButtonPress-1> {}
+    if {$_coord_type == 1} {
+	# screen coords
+	#show_coords $_mx $_my
+	set sx [expr {[$itk_component(canvas) canvasx $_mx] / $myscale}]
+	set sy [expr {-[$itk_component(canvas) canvasy $_my] / $myscale}]
+    } elseif {$_coord_type == 0} {
+	# model coords
+	set sx $x_coord
+	set sy $y_coord
+    }
+
+    if {$_coord_type != 2} {
+	set index1 [llength $VL]
+	lappend VL "$sx $sy"
+	set index2 [llength $VL]
+	lappend VL "$sx $sy"
+    }
+
+    start_line_guts
+}
+
+
+::itcl::body SketchEditFrame::start_line_guts {} {
+    set new_seg [SketchLine \#auto $this $itk_component(canvas) "S $index1 E $index2"]
+    lappend segments $new_seg
+    set needs_saving 1
+    drawVertices
+    drawSegments
+    bind $itk_component(canvas) <B1-Motion> [code $this continue_line $new_seg 0 1 %x %y]
+    bind $itk_component(canvas) <ButtonPress-1> [code $this continue_line $new_seg 2 1 %x %y]
+    bind $itk_component(canvas) <ButtonRelease-1> [code $this continue_line $new_seg 1 1 %x %y]
+    bind $itk_component(canvas) <Shift-ButtonRelease-1> [code $this continue_line $new_seg 3 1 %x %y]
+    bind $itk_component(canvas) <ButtonRelease-3> [code $this continue_line_pick $new_seg 1 %x %y]
+    bind $itk_component(canvas) <Shift-ButtonRelease-3> [code $this continue_line_pick $new_seg 3 %x %y]
+#    bind $itk_component(coords).x <Return> [code $this continue_line $new_seg 2 0 0 0]
+#    bind $itk_component(coords).y <Return> [code $this continue_line $new_seg 2 0 0 0]
+}
+
+
+::itcl::body SketchEditFrame::start_line_pick {_mx _my} {
+    set index [pick_vertex $_mx $_my]
+    if {$index == -1} return
+
+    set vertex [lindex $VL $index]
+    set index1 $index
+    set index2 [llength $VL]
+    lappend VL $vertex
+    start_line 2 0 0
+}
+
+
 ::itcl::body SketchEditFrame::start_move_arbitrary {_sx _sy _rflag} {
     $itk_component(canvas) dtag moving moving
     unhighlight_selected
@@ -1091,7 +1217,7 @@
     set move_start_x [$itk_component(canvas) canvasx $_sx]
     set move_start_y [$itk_component(canvas) canvasy $_sy]
     bind $itk_component(canvas) <B1-Motion> [::itcl::code $this continue_move 0 %x %y]
-    bind $itk_component(canvas) <ButtonRelease-1> [::itcl::code $this continue_move 0 %x %y]
+    bind $itk_component(canvas) <ButtonRelease-1> [::itcl::code $this continue_move 1 %x %y]
     set needs_saving 1
 }
 
@@ -1164,6 +1290,47 @@
     } else {
 	$itk_component(canvas) itemconfigure p$item -fill black -outline black
 	$itk_component(canvas) dtag p$item selected
+    }
+}
+
+
+::itcl::body SketchEditFrame::write_sketch_to_db {} {
+    set out "V { [expr {$tobase * $V(0)}] [expr {$tobase * $V(1)}] [expr {$tobase * $V(2)}] }"
+    append out " A { [expr {$tobase * $A(0)}] [expr {$tobase * $A(1)}] [expr {$tobase * $A(2)}] }"
+    append out " B { [expr {$tobase * $B(0)}] [expr {$tobase * $B(1)}] [expr {$tobase * $B(2)}] } VL {"
+    foreach vert $VL {
+	append out " { [expr {$tobase * [lindex $vert 0]}] [expr {$tobase * [lindex $vert 1]}] }"
+    }
+    append out " } SL {"
+    foreach seg $segments {
+	append out " [$seg serialize $tobase] "
+    }
+    append out " }"
+
+    set command "adjust $itk_option(-geometryObject)"
+
+    if {[catch "$::ArcherCore::application $command $out" ret]} {
+	$::ArcherCore::application putString "ERROR Saving Sketch!!!!, $ret"
+    }
+
+    if {0} {
+    set out "V { [expr {$tobase * $V(0)}] [expr {$tobase * $V(1)}] [expr {$tobase * $V(2)}] }"
+    set out "$out A { [expr {$tobase * $A(0)}] [expr {$tobase * $A(1)}] [expr {$tobase * $A(2)}] }"
+    set out "$out B { [expr {$tobase * $B(0)}] [expr {$tobase * $B(1)}] [expr {$tobase * $B(2)}] } VL {"
+    foreach vert $VL {
+	set out "$out { [expr {$tobase * [lindex $vert 0]}] [expr {$tobase * [lindex $vert 1]}] }"
+    }
+    set out "$out } SL {"
+    foreach seg $segments {
+	set out "$out [$seg serialize $tobase] "
+    }
+    set out "$out }"
+
+    set command "adjust $itk_option(-geometryObject)"
+
+    if {[catch "db $command $out" ret]} {
+	$::ArcherCore::application putString "ERROR Saving Sketch!!!!, $ret"
+    }
     }
 }
 
