@@ -1211,6 +1211,7 @@ ogl_drawBegin(struct dm *dmp)
 
     if (dmp->dm_debugLevel) {
 	bu_log("ogl_drawBegin\n");
+    }
 
     if (!glXMakeCurrent(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
 			((struct dm_xvars *)dmp->dm_vars.pub_vars)->win,
