@@ -252,6 +252,7 @@ set(librt_ignored_files
   test_nurbsfit.cpp
   test_botpatches.cpp
   test_subdivision.cpp
+  subd_test_bot.asc
   prcomb.c
   primitives/bot/btg.h
   primitives/bot/g_bot_include.c

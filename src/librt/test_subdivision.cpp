@@ -144,11 +144,12 @@ void get_all_edges(struct Mesh_Info *mesh, std::set<std::pair<size_t, size_t> > 
 }
 
 // Find outer edge segments and vertices
-void get_boundaries(struct Mesh_Info *mesh, std::set<size_t> *outer_pts, std::set<std::pair<size_t, size_t> > *outer_edges) {
+void get_boundaries(struct Mesh_Info *mesh, std::set<size_t> *outer_pts, std::set<std::pair<size_t, size_t> > *outer_edges, std::set<size_t> *outer_faces) {
     std::map<std::pair<size_t, size_t>, std::set<size_t> >::iterator e_it;
     for (e_it = mesh->edges_to_faces.begin(); e_it!=mesh->edges_to_faces.end(); e_it++) {
 	if ((*e_it).second.size() == 1) {
 	    outer_edges->insert((*e_it).first);
+	    outer_faces->insert(*(*e_it).second.begin());
 	    outer_pts->insert((*e_it).first.first);
 	    outer_pts->insert((*e_it).first.second);
 	}
@@ -178,9 +179,11 @@ struct Mesh_Info * iterate(struct rt_bot_internal *bot, struct Mesh_Info *prev_m
     get_all_edges(starting_mesh, &old_edges);
     std::set<std::pair<size_t, size_t> > outer_edges;
     std::set<size_t > outer_pts;
-    get_boundaries(starting_mesh, &outer_pts, &outer_edges);
+    std::set<size_t > outer_faces;
+    get_boundaries(starting_mesh, &outer_pts, &outer_edges, &outer_faces);
     std::cout << "outer pt count: " << outer_pts.size() << "\n";
     std::cout << "outer edge count: " << outer_edges.size() << "\n";
+    std::cout << "outer face count: " << outer_faces.size() << "\n";
 
     // Relax old points here
     for(size_t pcnt = 0; pcnt < (size_t)starting_mesh->points_p0.Count(); pcnt++) {
@@ -220,6 +223,9 @@ struct Mesh_Info * iterate(struct rt_bot_internal *bot, struct Mesh_Info *prev_m
 		    std::set<size_t> curr_faces = starting_mesh->edges_to_faces[edge];
 		    curr_faces.erase((*f_it).first);
 		    size_t q1 = starting_mesh->index_in_next[*curr_faces.begin()];
+                    if (outer_faces.find(q0) != outer_faces.end() && outer_faces.find(q1) != outer_faces.end()) {
+                       std::cout << "Got two edge faces\n";
+                    }
 		    mesh_add_face((*e_it).first, q1, q0, face_cnt, mesh);
 		    face_cnt++;
 		    mesh_add_face((*e_it).second, q0, q1, face_cnt, mesh);
