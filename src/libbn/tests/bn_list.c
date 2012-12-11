@@ -72,14 +72,14 @@ compare_result(char *expected_buf, FILE *result_fd)
 int
 check_result_len(FILE *result_fd)
 {
-    char result_buf[BUFFER_SIZE];
-    memset(result_buf, 0, BUFFER_SIZE);
+    char result_buf[BUFFER_SIZE+1];
+    memset(result_buf, 0, BUFFER_SIZE+1);
 
     rewind(result_fd);
     fread(result_buf, sizeof(char), BUFFER_SIZE, result_fd);
     fclose(result_fd);
 
-    return strnlen(result_buf, BUFFER_SIZE);
+    return strlen(result_buf);
 }
 
 /* Converts an array of doubles to integers */
