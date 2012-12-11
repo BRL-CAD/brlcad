@@ -90,7 +90,6 @@
 #define YSTEREO		491	/* subfield height, in scanlines */
 #define YOFFSET_LEFT	532	/* YSTEREO + YBLANK ? */
 
-static int ogl_actively_drawing = 0;
 HIDDEN XVisualInfo *ogl_choose_visual(struct dm *dmp, Tk_Window tkwin);
 
 /* Display Manager package interface */
@@ -1213,12 +1212,6 @@ ogl_drawBegin(struct dm *dmp)
     if (dmp->dm_debugLevel) {
 	bu_log("ogl_drawBegin\n");
 
-	if (ogl_actively_drawing)
-	    bu_log("ogl_drawBegin: already actively drawing\n");
-    }
-
-    ogl_actively_drawing = 1;
-
     if (!glXMakeCurrent(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
 			((struct dm_xvars *)dmp->dm_vars.pub_vars)->win,
 			((struct ogl_vars *)dmp->dm_vars.priv_vars)->glxc)) {
@@ -1310,7 +1303,6 @@ ogl_drawEnd(struct dm *dmp)
     glFinish();
 #endif
 
-    ogl_actively_drawing = 0;
     return TCL_OK;
 }
 
