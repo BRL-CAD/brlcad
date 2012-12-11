@@ -51,7 +51,7 @@ void find_q_pts(struct Mesh_Info *mesh) {
     std::vector<size_t>::iterator l_it;
     for(f_it = mesh->face_pts.begin(); f_it != mesh->face_pts.end(); f_it++) {
 	ON_3dPoint p1, p2, p3;
-        l_it = (*f_it).second.begin();
+	l_it = (*f_it).second.begin();
 	p1 = *mesh->points_p0.At((*l_it));
 	p2 = *mesh->points_p0.At((*(l_it+1)));
 	p3 = *mesh->points_p0.At((*(l_it+2)));
@@ -67,40 +67,40 @@ fastf_t alpha_n(size_t n) {
 
 // From Kobbelt sqrt(3)-Subdivision, eqns 7 and 8, solving for pinf
 void point_inf(size_t p, struct Mesh_Info *mesh, ON_3dPointArray *p_a) {
-     size_t n = mesh->point_valence[p];
-     std::multimap<size_t, size_t>::iterator p_it;
-     std::pair<std::multimap<size_t, size_t>::iterator, std::multimap<size_t, size_t>::iterator> range;
-     range = mesh->point_neighbors.equal_range(p);
-     ON_3dPoint psum = ON_3dPoint(0,0,0);
-     for(p_it = range.first; p_it != range.second; p_it++) {
-        psum = psum + *mesh->points_p0.At((*p_it).second);
-     }
-     fastf_t alpha = alpha_n(n);
-     //
-     //                            3 an                 1
-     //                 [pinf = ---------- * psum + -------- * p0]
-     //                         3 an n + n          3 an + 1
-     //
-     ON_3dPoint pinf = (3*alpha/((3*alpha+1)*n))*psum + 1/(3*alpha+1) * *mesh->points_p0.At(p);
-     p_a->Append(pinf);
+    size_t n = mesh->point_valence[p];
+    std::multimap<size_t, size_t>::iterator p_it;
+    std::pair<std::multimap<size_t, size_t>::iterator, std::multimap<size_t, size_t>::iterator> range;
+    range = mesh->point_neighbors.equal_range(p);
+    ON_3dPoint psum = ON_3dPoint(0,0,0);
+    for(p_it = range.first; p_it != range.second; p_it++) {
+	psum = psum + *mesh->points_p0.At((*p_it).second);
+    }
+    fastf_t alpha = alpha_n(n);
+    //
+    //                            3 an                 1
+    //                 [pinf = ---------- * psum + -------- * p0]
+    //                         3 an n + n          3 an + 1
+    //
+    ON_3dPoint pinf = (3*alpha/((3*alpha+1)*n))*psum + 1/(3*alpha+1) * *mesh->points_p0.At(p);
+    p_a->Append(pinf);
 }
 
 // Kobbelt sqrt(3)-Subdivision, eqn. 8
 void point_subdiv(size_t m, size_t p, struct Mesh_Info *mesh, ON_3dPointArray *p_a) {
-     size_t n = mesh->point_valence[p];
-     point_inf(p, mesh, &mesh->points_inf);
-     fastf_t gamma = pow((2/3 - alpha_n(n)),m);
-     ON_3dPoint subdiv_pt = gamma * *mesh->points_p0.At(p) + (1-gamma) * *mesh->points_inf.At(p);
-     p_a->Append(subdiv_pt);
+    size_t n = mesh->point_valence[p];
+    point_inf(p, mesh, &mesh->points_inf);
+    fastf_t gamma = pow((2/3 - alpha_n(n)),m);
+    ON_3dPoint subdiv_pt = gamma * *mesh->points_p0.At(p) + (1-gamma) * *mesh->points_inf.At(p);
+    p_a->Append(subdiv_pt);
 }
 
 // Make an edge using consistent vertex ordering
 std::pair<size_t, size_t> mk_edge(size_t pt_A, size_t pt_B)
 {
     if (pt_A <= pt_B) {
-        return std::make_pair(pt_A, pt_B);
+	return std::make_pair(pt_A, pt_B);
     } else {
-        return std::make_pair(pt_B, pt_A);
+	return std::make_pair(pt_B, pt_A);
     }
 }
 
@@ -126,7 +126,7 @@ void mesh_info_init(struct rt_bot_internal *bot, struct Mesh_Info *mesh)
 	mesh->iteration_of_insert[i] = 0;
     }
     for (size_t i = 0; i < bot->num_faces; ++i) {
-        mesh_add_face(bot->faces[i*3+0], bot->faces[i*3+1], bot->faces[i*3+2], i, mesh);
+	mesh_add_face(bot->faces[i*3+0], bot->faces[i*3+1], bot->faces[i*3+2], i, mesh);
     }
     mesh->iteration_cnt = 0;
 }
@@ -136,21 +136,22 @@ void get_all_edges(struct Mesh_Info *mesh, std::set<std::pair<size_t, size_t> > 
     std::map<size_t, std::vector<size_t> >::iterator f_it;
     std::vector<size_t>::iterator l_it;
     for(f_it = mesh->face_pts.begin(); f_it != mesh->face_pts.end(); f_it++) {
-        l_it = (*f_it).second.begin();
-        edges->insert(mk_edge((*l_it), (*(l_it+1))));
-        edges->insert(mk_edge((*(l_it+1)), (*(l_it+2))));
-        edges->insert(mk_edge((*(l_it+2)), (*l_it)));
+	l_it = (*f_it).second.begin();
+	edges->insert(mk_edge((*l_it), (*(l_it+1))));
+	edges->insert(mk_edge((*(l_it+1)), (*(l_it+2))));
+	edges->insert(mk_edge((*(l_it+2)), (*l_it)));
     }
 }
 
-// Find faces with outer edge segments
-void get_outer_faces(struct Mesh_Info *mesh, std::set<size_t> *outer_faces) {
+// Find outer edge segments and vertices
+void get_boundaries(struct Mesh_Info *mesh, std::set<size_t> *outer_pts, std::set<std::pair<size_t, size_t> > *outer_edges) {
     std::map<std::pair<size_t, size_t>, std::set<size_t> >::iterator e_it;
     for (e_it = mesh->edges_to_faces.begin(); e_it!=mesh->edges_to_faces.end(); e_it++) {
-        if ((*e_it).second.size() == 1) {
-           size_t face = *(*e_it).second.begin();
-           outer_faces->insert(face);
-        }
+	if ((*e_it).second.size() == 1) {
+	    outer_edges->insert((*e_it).first);
+	    outer_pts->insert((*e_it).first.first);
+	    outer_pts->insert((*e_it).first.second);
+	}
     }
 }
 
@@ -172,49 +173,66 @@ struct Mesh_Info * iterate(struct rt_bot_internal *bot, struct Mesh_Info *prev_m
 
     find_q_pts(starting_mesh);
 
+    std::set<std::pair<size_t, size_t> > old_edges;
+    std::set<std::pair<size_t, size_t> >::iterator e_it;
+    get_all_edges(starting_mesh, &old_edges);
+    std::set<std::pair<size_t, size_t> > outer_edges;
+    std::set<size_t > outer_pts;
+    get_boundaries(starting_mesh, &outer_pts, &outer_edges);
+    std::cout << "outer pt count: " << outer_pts.size() << "\n";
+    std::cout << "outer edge count: " << outer_edges.size() << "\n";
+
     // Relax old points here
     for(size_t pcnt = 0; pcnt < (size_t)starting_mesh->points_p0.Count(); pcnt++) {
-       point_subdiv(mesh->iteration_cnt, pcnt, starting_mesh, &(mesh->points_p0));
-       mesh->iteration_of_insert[pcnt] = starting_mesh->iteration_of_insert[pcnt];
+	if (outer_pts.find(pcnt) == outer_pts.end()) {
+	    point_subdiv(mesh->iteration_cnt, pcnt, starting_mesh, &(mesh->points_p0));
+	    mesh->iteration_of_insert[pcnt] = starting_mesh->iteration_of_insert[pcnt];
+	} else {
+	    starting_mesh->points_inf.Append(*starting_mesh->points_p0.At(pcnt));
+	    mesh->points_p0.Append(*starting_mesh->points_p0.At(pcnt));
+	    mesh->iteration_of_insert[pcnt] = starting_mesh->iteration_of_insert[pcnt];
+	}
     }
     for(f_it = starting_mesh->face_pts.begin(); f_it != starting_mesh->face_pts.end(); f_it++) {
 	mesh->points_p0.Append(starting_mesh->points_q[(*f_it).first]);
 	mesh->iteration_of_insert[mesh->points_p0.Count()-1] = mesh->iteration_cnt;
-        starting_mesh->index_in_next[(*f_it).first] = mesh->points_p0.Count()-1;
+	starting_mesh->index_in_next[(*f_it).first] = mesh->points_p0.Count()-1;
     }
-     // Use the old faces to guide the insertion of the new.
-     std::set<std::pair<size_t, size_t> > old_edges;
-     std::set<std::pair<size_t, size_t> >::iterator e_it;
-     get_all_edges(starting_mesh, &old_edges);
-     std::set<size_t > outer_faces;
-     get_outer_faces(starting_mesh, &outer_faces);
-     std::cout << "outer face count: " << outer_faces.size() << "\n";
-     size_t face_cnt = 0;
-     for(f_it = starting_mesh->face_pts.begin(); f_it != starting_mesh->face_pts.end(); f_it++) {
-	 if (outer_faces.find((*f_it).first) == outer_faces.end()) {
-	     std::set<std::pair<size_t, size_t> > face_old_edges;
-	     size_t q0 = starting_mesh->index_in_next[(*f_it).first];
-	     l_it = (*f_it).second.begin();
-	     face_old_edges.insert(std::make_pair((*l_it), (*(l_it+1))));
-	     face_old_edges.insert(std::make_pair((*(l_it+1)), (*(l_it+2))));
-	     face_old_edges.insert(std::make_pair((*(l_it+2)), (*l_it)));
-	     for(e_it = face_old_edges.begin(); e_it != face_old_edges.end(); e_it++) {
-		 std::pair<size_t, size_t> edge = mk_edge((*e_it).first, (*e_it).second);
-		 if (old_edges.find((edge)) != old_edges.end()) {
-		     std::set<size_t> curr_faces = starting_mesh->edges_to_faces[edge];
-		     curr_faces.erase((*f_it).first);
-		     size_t q1 = starting_mesh->index_in_next[*curr_faces.begin()];
-		     mesh_add_face((*e_it).first, q1, q0, face_cnt, mesh);
-		     face_cnt++;
-		     mesh_add_face((*e_it).second, q0, q1, face_cnt, mesh);
-		     face_cnt++;
-		     old_edges.erase(edge);
-		 }
-	     }
-	 }
-     }
-     delete starting_mesh;
-     return mesh;
+    // Use the old faces to guide the insertion of the new.
+    size_t face_cnt = 0;
+    for(f_it = starting_mesh->face_pts.begin(); f_it != starting_mesh->face_pts.end(); f_it++) {
+	std::set<std::pair<size_t, size_t> > face_old_edges;
+	size_t q0 = starting_mesh->index_in_next[(*f_it).first];
+	l_it = (*f_it).second.begin();
+	face_old_edges.insert(std::make_pair((*l_it), (*(l_it+1))));
+	face_old_edges.insert(std::make_pair((*(l_it+1)), (*(l_it+2))));
+	face_old_edges.insert(std::make_pair((*(l_it+2)), (*l_it)));
+	for(e_it = face_old_edges.begin(); e_it != face_old_edges.end(); e_it++) {
+	    std::pair<size_t, size_t> edge = mk_edge((*e_it).first, (*e_it).second);
+	    if (old_edges.find(edge) != old_edges.end()) {
+		if (outer_edges.find(edge) == outer_edges.end()) {
+		    std::set<size_t> curr_faces = starting_mesh->edges_to_faces[edge];
+		    curr_faces.erase((*f_it).first);
+		    size_t q1 = starting_mesh->index_in_next[*curr_faces.begin()];
+		    mesh_add_face((*e_it).first, q1, q0, face_cnt, mesh);
+		    face_cnt++;
+		    mesh_add_face((*e_it).second, q0, q1, face_cnt, mesh);
+		    face_cnt++;
+		    old_edges.erase(edge);
+		} else {
+		    //if (mesh->iteration_cnt % 2 == 0) {
+			std::cout << "second iteration: " << q0 << "\n";
+		    //} else {
+			mesh_add_face((*e_it).first, (*e_it).second, q0, face_cnt, mesh);
+			face_cnt++;
+			old_edges.erase(edge);
+		    //}
+		}
+	    }
+	}
+    }
+    delete starting_mesh;
+    return mesh;
 }
 
 int main(int argc, char *argv[])
@@ -249,9 +267,9 @@ int main(int argc, char *argv[])
     }
 
     RT_DB_INTERNAL_INIT(&intern)
-    if (rt_db_get_internal(&intern, dp, dbip, NULL, &rt_uniresource) < 0) {
-	bu_exit(1, "ERROR: Unable to get internal representation of %s\n", argv[2]);
-    }
+	if (rt_db_get_internal(&intern, dp, dbip, NULL, &rt_uniresource) < 0) {
+	    bu_exit(1, "ERROR: Unable to get internal representation of %s\n", argv[2]);
+	}
 
     if (intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_BOT) {
 	bu_exit(1, "ERROR: object %s does not appear to be of type BoT\n", argv[2]);
@@ -260,11 +278,11 @@ int main(int argc, char *argv[])
     }
     RT_BOT_CK_MAGIC(bot_ip);
 
-    for (size_t i_cnt = 1; i_cnt < 5; i_cnt++) {
-        mesh = iterate(bot_ip, prev_mesh);
-        prev_mesh = mesh;
+    for (size_t i_cnt = 1; i_cnt < 3; i_cnt++) {
+	mesh = iterate(bot_ip, prev_mesh);
+	prev_mesh = mesh;
 
-        // Plot results
+	// Plot results
 	struct bu_vls fname;
 	bu_vls_init(&fname);
 	bu_vls_printf(&fname, "root3_%d.pl", i_cnt);
@@ -299,9 +317,9 @@ int main(int argc, char *argv[])
     }
     scale = scale / bot_ip->num_vertices;
     for(size_t pcnt = 0; pcnt < (size_t)points_inf.Count(); pcnt++) {
-       ON_3dPoint p0(*points_inf.At(pcnt));
-       ON_3dPoint p1 = p0 * scale;
-       *points_inf.At(pcnt) = p1;
+	ON_3dPoint p0(*points_inf.At(pcnt));
+	ON_3dPoint p1 = p0 * scale;
+	*points_inf.At(pcnt) = p1;
     }
 
     wdbp = wdb_dbopen(dbip, RT_WDB_TYPE_DB_DISK);
@@ -309,17 +327,17 @@ int main(int argc, char *argv[])
     fastf_t *vertices = (fastf_t *)bu_malloc(sizeof(fastf_t) * points_inf.Count() * 3, "new verts");
     int *faces = (int *)bu_malloc(sizeof(int) * mesh->face_pts.size() * 3, "new faces");
     for(size_t v = 0; v < (size_t)points_inf.Count(); v++) {
-       vertices[v*3] = points_inf[v].x;
-       vertices[v*3+1] = points_inf[v].y;
-       vertices[v*3+2] = points_inf[v].z;
+	vertices[v*3] = points_inf[v].x;
+	vertices[v*3+1] = points_inf[v].y;
+	vertices[v*3+2] = points_inf[v].z;
     }
     std::map<size_t, std::vector<size_t> >::iterator f_it;
     std::vector<size_t>::iterator l_it;
     for(f_it = mesh->face_pts.begin(); f_it != mesh->face_pts.end(); f_it++) {
-        l_it = (*f_it).second.begin();
-        faces[(*f_it).first*3] = (*l_it);
-        faces[(*f_it).first*3+1] = (*(l_it + 1));
-        faces[(*f_it).first*3+2] = (*(l_it + 2));
+	l_it = (*f_it).second.begin();
+	faces[(*f_it).first*3] = (*l_it);
+	faces[(*f_it).first*3+1] = (*(l_it + 1));
+	faces[(*f_it).first*3+2] = (*(l_it + 2));
     }
 
     bu_vls_init(&bname);
