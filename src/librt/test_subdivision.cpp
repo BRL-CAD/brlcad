@@ -188,9 +188,15 @@ struct Mesh_Info * iterate(struct rt_bot_internal *bot, struct Mesh_Info *prev_m
 	    point_subdiv(mesh->iteration_cnt, pcnt, starting_mesh, &(mesh->points_p0));
 	    mesh->iteration_of_insert[pcnt] = starting_mesh->iteration_of_insert[pcnt];
 	} else {
-	    starting_mesh->points_inf.Append(*starting_mesh->points_p0.At(pcnt));
-	    mesh->points_p0.Append(*starting_mesh->points_p0.At(pcnt));
-	    mesh->iteration_of_insert[pcnt] = starting_mesh->iteration_of_insert[pcnt];
+	    if (mesh->iteration_cnt % 2 == 0) {
+                // Need to do "proper" boundary point adjustment here
+		point_subdiv(mesh->iteration_cnt, pcnt, starting_mesh, &(mesh->points_p0));
+		mesh->iteration_of_insert[pcnt] = starting_mesh->iteration_of_insert[pcnt];
+	    } else {
+		starting_mesh->points_inf.Append(*starting_mesh->points_p0.At(pcnt));
+		mesh->points_p0.Append(*starting_mesh->points_p0.At(pcnt));
+		mesh->iteration_of_insert[pcnt] = starting_mesh->iteration_of_insert[pcnt];
+	    }
 	}
     }
     for(f_it = starting_mesh->face_pts.begin(); f_it != starting_mesh->face_pts.end(); f_it++) {
@@ -220,13 +226,13 @@ struct Mesh_Info * iterate(struct rt_bot_internal *bot, struct Mesh_Info *prev_m
 		    face_cnt++;
 		    old_edges.erase(edge);
 		} else {
-		    //if (mesh->iteration_cnt % 2 == 0) {
-			std::cout << "second iteration: " << q0 << "\n";
-		    //} else {
-			mesh_add_face((*e_it).first, (*e_it).second, q0, face_cnt, mesh);
-			face_cnt++;
-			old_edges.erase(edge);
-		    //}
+		    if (mesh->iteration_cnt % 2 == 0) {
+		      std::cout << "second iteration: " << q0 << "\n";
+		    } else {
+		      mesh_add_face((*e_it).first, (*e_it).second, q0, face_cnt, mesh);
+		      face_cnt++;
+		      old_edges.erase(edge);
+		    }
 		}
 	    }
 	}
