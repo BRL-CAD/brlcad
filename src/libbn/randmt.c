@@ -52,13 +52,13 @@
 
 #define MERSENNE_MAGIC 0x4D54524E
 
-static struct _internal_state_s {
+struct _internal_state_s {
     uint32_t magic;
     int mti;		/* state index */
     uint32_t mt[N];	/* state vector */
-} global_state_static = { MERSENNE_MAGIC, N+1, {0} };
+};
 
-static struct _internal_state_s *global_state = &global_state_static;
+static struct _internal_state_s global_state = { MERSENNE_MAGIC, N+1, {0} };
 
 void *
 bn_randmt_state_create()
@@ -144,12 +144,12 @@ bn_randmt_state_deserialize(struct _internal_state_s *UNUSED(is), struct bu_vls 
 void
 bn_randmt_seed(unsigned long seed)
 {
-    bn_randmt_state_seed(global_state, (uint32_t)seed);
+    bn_randmt_state_seed(&global_state, (uint32_t)seed);
 }
 
 double bn_randmt()
 {
-    return bn_randmt_state(global_state);
+    return bn_randmt_state(&global_state);
 }
 
 /*
