@@ -142,12 +142,6 @@ bn_randmt_state_deserialize(struct _internal_state_s *UNUSED(is), struct bu_vls 
 }
 
 void
-bn_rand_mt_state_set_global(struct _internal_state_s *is)
-{
-    global_state = is;
-}
-
-void
 bn_randmt_seed(unsigned long seed)
 {
     bn_randmt_state_seed(global_state, (uint32_t)seed);
