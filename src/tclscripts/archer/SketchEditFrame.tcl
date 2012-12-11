@@ -146,9 +146,14 @@
 	method redrawSegments {}
 
 	method circle_3pt {_x1 _y1 _x2 _y2 _x3 _y3 _cx_out _cy_out}
+	method continue_circle {_segment _state _coord_type _mx _my}
 	method continue_line {_segment _state _coord_type _mx _my}
+	method continue_circle_pick {_segment _mx _my}
 	method continue_line_pick {_segment _state _mx _my}
 	method continue_move {_state _sx _sy}
+	method create_arc {}
+	method create_bezier {}
+	method create_circle {}
 	method create_line {}
 	method end_arc_radius_adjust {_segment _mx _my}
 	method fix_vertex_references {_unused_vindices}
@@ -163,8 +168,14 @@
 	method setup_move_segment {}
 	method setup_move_selected {}
 	method start_arc_radius_adjust {_segment _mx _my}
+	method start_arc {_coord_type _x _y}
+	method start_bezier {_coord_type _x _y}
+	method start_circle {_coord_type _x _y}
 	method start_line {_coord_type _x _y}
 	method start_line_guts {}
+	method start_arc_pick {_x _y}
+	method start_bezier_pick {_x _y}
+	method start_circle_pick {_x _y}
 	method start_line_pick {_x _y}
 	method start_move_arbitrary {_sx _sy _rflag}
 	method start_move_point {_sx _sy}
@@ -532,10 +543,13 @@
 	    create_line
 	} \
 	$createCircle {
+	    create_circle
 	} \
 	$createArc {
+	    create_arc
 	} \
 	$createBezier {
+	    create_bezier
 	}
 
     GeometryEditFrame::initEditState
@@ -772,6 +786,10 @@
 }
 
 
+::itcl::body SketchEditFrame::continue_circle {_segment _state _coord_type _mx _my} {
+}
+
+
 ::itcl::body SketchEditFrame::continue_line {_segment _state _coord_type _mx _my} {
     switch -- $_coord_type {
 	0 {
@@ -788,6 +806,10 @@
 	2 {
 	    # use index numbers
 	    $_segment set_vars E $index2
+
+	    set vert [lindex $VL $index2]
+	    set ex [lindex $vert 0]
+	    set ey [lindex $vert 1]
 	}
 	default {
 	    $::ArcherCore::application putString "continue_line: unrecognized coord type - $_coord_type"
@@ -801,21 +823,30 @@
     $_segment draw ""
     $itk_component(canvas) configure -scrollregion [$itk_component(canvas) bbox all]
 
-    if {$_state == 1 || $_state == 3} {
-	if {$_state == 1} {
-	    create_line
-	} else {
-	    # Here we have another segment (i.e., $_state == 3)
+    if {$_state == 1} {
+	create_line
+	write_sketch_to_db
+    } elseif {$_state == 3} {
+	if {$_coord_type != 2} {
+	    # The new segment is using a new vertex for its start point
 	    set index1 [expr {[llength $VL] - 1}]
-	    set index2 [llength $VL]
-	    lappend VL "$ex $ey"
-	    start_line_guts
+	} else {
+	    # The new segment is using an existing vertex for its start point
+	    set index1 $index2
 	}
 
+	set index2 [llength $VL]
+	lappend VL "$ex $ey"
+
+	start_line_guts
 	write_sketch_to_db
     }
 
     drawVertices
+}
+
+
+::itcl::body SketchEditFrame::continue_circle_pick {_segment _mx _my} {
 }
 
 
@@ -865,6 +896,36 @@
     } else {
 	write_sketch_to_db
     }
+}
+
+
+::itcl::body SketchEditFrame::create_arc {} {
+    bind $itk_component(canvas) <B1-Motion> {}
+    bind $itk_component(canvas) <ButtonPress-1> {}
+    bind $itk_component(canvas) <Shift-ButtonRelease-1> {}
+    bind $itk_component(canvas) <Shift-ButtonRelease-3> {}
+    bind $itk_component(canvas) <ButtonRelease-1> [code $this start_arc 1 %x %y]
+    bind $itk_component(canvas) <ButtonRelease-3> [code $this start_arc_pick %x %y]
+}
+
+
+::itcl::body SketchEditFrame::create_bezier {} {
+    bind $itk_component(canvas) <B1-Motion> {}
+    bind $itk_component(canvas) <ButtonPress-1> {}
+    bind $itk_component(canvas) <Shift-ButtonRelease-1> {}
+    bind $itk_component(canvas) <Shift-ButtonRelease-3> {}
+    bind $itk_component(canvas) <ButtonRelease-1> [code $this start_bezier 1 %x %y]
+    bind $itk_component(canvas) <ButtonRelease-3> [code $this start_bezier_pick %x %y]
+}
+
+
+::itcl::body SketchEditFrame::create_circle {} {
+    bind $itk_component(canvas) <B1-Motion> {}
+    bind $itk_component(canvas) <ButtonPress-1> {}
+    bind $itk_component(canvas) <Shift-ButtonRelease-1> {}
+    bind $itk_component(canvas) <Shift-ButtonRelease-3> {}
+    bind $itk_component(canvas) <ButtonRelease-1> [code $this start_circle 1 %x %y]
+    bind $itk_component(canvas) <ButtonRelease-3> [code $this start_circle_pick %x %y]
 }
 
 
@@ -1141,6 +1202,18 @@
 }
 
 
+::itcl::body SketchEditFrame::start_arc {_coord_type _mx _my} {
+}
+
+
+::itcl::body SketchEditFrame::start_bezier {_coord_type _mx _my} {
+}
+
+
+::itcl::body SketchEditFrame::start_circle {_coord_type _mx _my} {
+}
+
+
 ::itcl::body SketchEditFrame::start_line {_coord_type _mx _my} {
     bind $itk_component(canvas) <ButtonPress-1> {}
     if {$_coord_type == 1} {
@@ -1179,6 +1252,18 @@
     bind $itk_component(canvas) <Shift-ButtonRelease-3> [code $this continue_line_pick $new_seg 3 %x %y]
 #    bind $itk_component(coords).x <Return> [code $this continue_line $new_seg 2 0 0 0]
 #    bind $itk_component(coords).y <Return> [code $this continue_line $new_seg 2 0 0 0]
+}
+
+
+::itcl::body SketchEditFrame::start_arc_pick {_mx _my} {
+}
+
+
+::itcl::body SketchEditFrame::start_bezier_pick {_mx _my} {
+}
+
+
+::itcl::body SketchEditFrame::start_circle_pick {_mx _my} {
 }
 
 
