@@ -146,6 +146,7 @@
 	method redrawSegments {}
 
 	method circle_3pt {_x1 _y1 _x2 _y2 _x3 _y3 _cx_out _cy_out}
+	method clear_canvas_bindings {}
 	method continue_circle {_segment _state _coord_type _mx _my}
 	method continue_line {_segment _state _coord_type _mx _my}
 	method continue_circle_pick {_segment _mx _my}
@@ -786,6 +787,19 @@
 }
 
 
+::itcl::body SketchEditFrame::clear_canvas_bindings {} {
+    bind $itk_component(canvas) <B1-Motion> {}
+    bind $itk_component(canvas) <ButtonPress-1> {}
+    bind $itk_component(canvas) <Shift-ButtonPress-1> {}
+    bind $itk_component(canvas) <ButtonRelease-1> {}
+    bind $itk_component(canvas) <Shift-ButtonRelease-1> {}
+    bind $itk_component(canvas) <Control-Shift-ButtonPress-1> {}
+
+    bind $itk_component(canvas) <ButtonRelease-3> {}
+    bind $itk_component(canvas) <Shift-ButtonRelease-3> {}
+}
+
+
 ::itcl::body SketchEditFrame::continue_circle {_segment _state _coord_type _mx _my} {
 }
 
@@ -900,40 +914,28 @@
 
 
 ::itcl::body SketchEditFrame::create_arc {} {
-    bind $itk_component(canvas) <B1-Motion> {}
-    bind $itk_component(canvas) <ButtonPress-1> {}
-    bind $itk_component(canvas) <Shift-ButtonRelease-1> {}
-    bind $itk_component(canvas) <Shift-ButtonRelease-3> {}
+    clear_canvas_bindings
     bind $itk_component(canvas) <ButtonRelease-1> [code $this start_arc 1 %x %y]
     bind $itk_component(canvas) <ButtonRelease-3> [code $this start_arc_pick %x %y]
 }
 
 
 ::itcl::body SketchEditFrame::create_bezier {} {
-    bind $itk_component(canvas) <B1-Motion> {}
-    bind $itk_component(canvas) <ButtonPress-1> {}
-    bind $itk_component(canvas) <Shift-ButtonRelease-1> {}
-    bind $itk_component(canvas) <Shift-ButtonRelease-3> {}
+    clear_canvas_bindings
     bind $itk_component(canvas) <ButtonRelease-1> [code $this start_bezier 1 %x %y]
     bind $itk_component(canvas) <ButtonRelease-3> [code $this start_bezier_pick %x %y]
 }
 
 
 ::itcl::body SketchEditFrame::create_circle {} {
-    bind $itk_component(canvas) <B1-Motion> {}
-    bind $itk_component(canvas) <ButtonPress-1> {}
-    bind $itk_component(canvas) <Shift-ButtonRelease-1> {}
-    bind $itk_component(canvas) <Shift-ButtonRelease-3> {}
+    clear_canvas_bindings
     bind $itk_component(canvas) <ButtonRelease-1> [code $this start_circle 1 %x %y]
     bind $itk_component(canvas) <ButtonRelease-3> [code $this start_circle_pick %x %y]
 }
 
 
 ::itcl::body SketchEditFrame::create_line {} {
-    bind $itk_component(canvas) <B1-Motion> {}
-    bind $itk_component(canvas) <ButtonPress-1> {}
-    bind $itk_component(canvas) <Shift-ButtonRelease-1> {}
-    bind $itk_component(canvas) <Shift-ButtonRelease-3> {}
+    clear_canvas_bindings
     bind $itk_component(canvas) <ButtonRelease-1> [code $this start_line 1 %x %y]
     bind $itk_component(canvas) <ButtonRelease-3> [code $this start_line_pick %x %y]
 }
@@ -1131,23 +1133,28 @@
     $itk_component(canvas) dtag moving moving
     unhighlight_selected
 
+    clear_canvas_bindings
     bind $itk_component(canvas) <ButtonPress-1> [::itcl::code $this start_move_arbitrary %x %y 0]
     bind $itk_component(canvas) <Shift-ButtonPress-1> [::itcl::code $this start_move_segment %x %y 1]
 }
 
 
 ::itcl::body SketchEditFrame::setup_move_point {} {
+    clear_canvas_bindings
     bind $itk_component(canvas) <ButtonPress-1> [::itcl::code $this start_move_point %x %y]
 }
 
 
 ::itcl::body SketchEditFrame::setup_move_segment {} {
+    clear_canvas_bindings
     bind $itk_component(canvas) <ButtonPress-1> [::itcl::code $this start_move_segment %x %y 0]
     bind $itk_component(canvas) <Shift-ButtonPress-1> [::itcl::code $this start_move_segment %x %y 1]
 }
 
 
 ::itcl::body SketchEditFrame::setup_move_selected {} {
+    clear_canvas_bindings
+
     tag_selected_verts
     bind $itk_component(canvas) <ButtonPress-1> [::itcl::code $this start_move_selected %x %y]
 }
@@ -1215,7 +1222,6 @@
 
 
 ::itcl::body SketchEditFrame::start_line {_coord_type _mx _my} {
-    bind $itk_component(canvas) <ButtonPress-1> {}
     if {$_coord_type == 1} {
 	# screen coords
 	#show_coords $_mx $_my
@@ -1244,6 +1250,7 @@
     set needs_saving 1
     drawVertices
     drawSegments
+    clear_canvas_bindings
     bind $itk_component(canvas) <B1-Motion> [code $this continue_line $new_seg 0 1 %x %y]
     bind $itk_component(canvas) <ButtonPress-1> [code $this continue_line $new_seg 2 1 %x %y]
     bind $itk_component(canvas) <ButtonRelease-1> [code $this continue_line $new_seg 1 1 %x %y]
@@ -1348,8 +1355,7 @@
     $itk_component(canvas) dtag moving moving
     unhighlight_selected
 
-    bind $itk_component(canvas) <B1-Motion> {}
-    bind $itk_component(canvas) <ButtonRelease-1> {}
+    clear_canvas_bindings
     bind $itk_component(canvas) <ButtonPress-1> [code $this seg_pick_highlight %x %y]
     bind $itk_component(canvas) <Shift-ButtonPress-1> [code $this seg_delete %x %y 0]
     bind $itk_component(canvas) <Control-Shift-ButtonPress-1> [code $this seg_delete %x %y 1]
@@ -1360,8 +1366,7 @@
     $itk_component(canvas) dtag moving moving
     unhighlight_selected
 
-    bind $itk_component(canvas) <B1-Motion> {}
-    bind $itk_component(canvas) <ButtonRelease-1> {}
+    clear_canvas_bindings
     bind $itk_component(canvas) <ButtonPress-1> [::itcl::code $this vert_pick_highlight %x %y]
     bind $itk_component(canvas) <Shift-ButtonPress-1> [code $this vert_delete %x %y]
 }
@@ -1414,6 +1419,7 @@
     } else {
 	set VL [lreplace $VL $index $index]
 	fix_vertex_references $index
+	write_sketch_to_db
     }
 }
 
