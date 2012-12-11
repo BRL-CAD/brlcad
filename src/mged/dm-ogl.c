@@ -176,13 +176,13 @@ static int
 Ogl_doevent(ClientData UNUSED(clientData),
 	    XEvent *eventPtr)
 {
-    if (!glXMakeCurrent(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
-			((struct dm_xvars *)dmp->dm_vars.pub_vars)->win,
-			((struct ogl_vars *)dmp->dm_vars.priv_vars)->glxc))
-	/* allow further processing of this event */
-	return TCL_OK;
-
     if (eventPtr->type == Expose && eventPtr->xexpose.count == 0) {
+	if (!glXMakeCurrent(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
+			    ((struct dm_xvars *)dmp->dm_vars.pub_vars)->win,
+			    ((struct ogl_vars *)dmp->dm_vars.priv_vars)->glxc))
+	    /* allow further processing of this event */
+	    return TCL_OK;
+
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	dirty = 1;
