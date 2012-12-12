@@ -148,10 +148,10 @@ Convert_part_ascii(char line[MAX_LINE_SIZE])
     int solid_in_region=0;
 
     if (RT_G_DEBUG & DEBUG_MEM_FULL)
-	bu_prmem("At start of Conv_prt():\n");
+	bu_prmem("At start of Convert_part_ascii():\n");
 
     if (RT_G_DEBUG & DEBUG_MEM_FULL) {
-	bu_log("Barrier check at start of Convet_part:\n");
+	bu_log("Barrier check at start of Convert_part_ascii:\n");
 	if (bu_mem_barriercheck())
 	    bu_exit(EXIT_FAILURE, "Barrier check failed!\n");
     }
