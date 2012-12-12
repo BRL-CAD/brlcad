@@ -502,6 +502,7 @@ append_solid_to_display_list(
     }
 
     sp->s_Eflag = 0;
+    sp->s_regionid = tsp->ts_regionid;
 
     if (ip->idb_type == ID_GRIP) {
 	float mater_color[3];
@@ -527,7 +528,6 @@ append_solid_to_display_list(
 	solid_set_color_info(sp, dgcdp, tsp);
     }
 
-    sp->s_regionid = tsp->ts_regionid;
     sp->s_dlist = 0;
     sp->s_transparency = dgcdp->transparency;
     sp->s_dmode = dgcdp->dmode;
