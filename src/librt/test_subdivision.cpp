@@ -94,6 +94,162 @@ void point_subdiv(size_t m, size_t p, struct Mesh_Info *mesh, ON_3dPointArray *p
     p_a->Append(subdiv_pt);
 }
 
+// Kobbelt sqrt(3)-Subdivision, eqn. 9
+ON_3dPoint p_edge_new(ON_3dPoint *p1, ON_3dPoint *p2, ON_3dPoint *curr) {
+   ON_3dPoint pnew = (10 * *p1 + 16 * *curr + *p2)/27;
+   return pnew;
+}
+ON_3dPoint p_edge_move(ON_3dPoint *p1, ON_3dPoint *p2, ON_3dPoint *curr) {
+   ON_3dPoint pmv = (4 * *p1 + 19 * *curr + 4 * *p2)/27;
+   return pmv;
+}
+
+// Break edge handling cases into functions.  For each 
+
+/* Case 1 - edge with no boundary points, face is internal to mesh
+/ 
+/                                 C 
+/                                / \ 
+/                               / ' \ 
+/                              /  '  \
+/                     P1      /   '   \     P2
+/                            /    '    \
+/                           /   ' P '   \
+/                          /  '       '  \
+/                         / '           ' \
+/                        /'_______________'\
+/                        A                 B
+/ 
+/                                 P3
+*/ 
+// Edge is A->B, all face edges have an additional ajoint face.  New
+// faces associated with A->B are A->P3->P and P->P3->B.
+
+/* Case 2 - edge with one boundary point, face is on border of mesh
+/ 
+/  Edge is A->B.  If iteration count is odd:
+/ 
+/                                 C 
+/                                / \ 
+/                               / ' \ 
+/                              /  '  \
+/                             /   '   \     P2
+/                            /    '    \
+/                           /   ' P '   \
+/                          /  '       '  \
+/                         / '           ' \
+/                        /'_______________'\
+/                        A                 B
+/ 
+/                                 P3
+*/
+// new faces are A->P3->P and P->P3->B
+//
+//
+// If iteration count is even, there are two possible cases - depending on P3's A->X edge and
+// whether it has one or two boundary points.
+//
+/* A->X has one boundary point: 
+/ 
+/                                 C 
+/                                / \ 
+/                               /   \ 
+/                         E2   /     \
+/                             /       \     P2
+/                            /         \
+/                     E1    /           \
+/                          /             \
+/                         /               \
+/                        / _______________ \
+/                        A                 B
+/                        \                 /
+/                         \               /
+/                          \     P3      /
+/                           \           /
+/                            \         /
+/                             \       /
+/                         P4   \     /      P5
+/                               \   /
+/                                \ /
+/                                 X
+/                                 
+/ 
+/ 
+*/
+// insert faces  B->E1->P3 and P3->E1->A
+//
+/* A->X has two boundary points: 
+/ 
+/                                 C 
+/                                / \ 
+/                               /   \ 
+/                         E2   /     \
+/                             /       \     P2
+/                            /         \
+/                     E1    /           \
+/                          /             \
+/                         /               \
+/                        / _______________ \
+/                        A                 B
+/                        \                 /
+/                         \               /
+/                          \             /
+/                      E3   \           /
+/                            \         /
+/                             \       /
+/                              \     /      P5
+/                          E4   \   /
+/                                \ /
+/                                 X
+/                                 
+*/ 
+//
+//
+// insert faces  B->E1->E3 and E1->A->E3
+
+
+// Case 3 - edge with two boundary points, face is on border of mesh
+//
+//                                
+/* Edge is A->B.  If iteration count is odd
+/ 
+/ 
+/                                 C 
+/                                / \ 
+/                               / ' \ 
+/                              /  '  \
+/                             /   '   \       
+/                            /    '    \
+/                           /   ' P '   \
+/                          /  '       '  \
+/                         / '           ' \
+/                        /'_______________'\
+/                        A                 B
+/ 
+*/
+// insert one face - A->B->P
+//
+/*  If iteration count is even, 
+/ 
+/ 
+/                                 C 
+/                                / \ 
+/                               /   \ 
+/                              /     \
+/                             /       \       
+/                            /         \
+/                           /           \
+/                          /             \
+/                         /               \
+/                        / _______________ \
+/                        A                 B
+/ 
+/                            E1      E2
+*/ 
+// insert one face - E1 -> E2 -> C
+
+
+
 // Make an edge using consistent vertex ordering
 std::pair<size_t, size_t> mk_edge(size_t pt_A, size_t pt_B)
 {
@@ -187,6 +343,9 @@ struct Mesh_Info * iterate(struct rt_bot_internal *bot, struct Mesh_Info *prev_m
 
     // Relax old points here
     for(size_t pcnt = 0; pcnt < (size_t)starting_mesh->points_p0.Count(); pcnt++) {
+		mesh->points_p0.Append(*starting_mesh->points_p0.At(pcnt));
+		mesh->iteration_of_insert[pcnt] = starting_mesh->iteration_of_insert[pcnt];
+#if 0
 	if (outer_pts.find(pcnt) == outer_pts.end()) {
 	    point_subdiv(mesh->iteration_cnt, pcnt, starting_mesh, &(mesh->points_p0));
 	    mesh->iteration_of_insert[pcnt] = starting_mesh->iteration_of_insert[pcnt];
@@ -201,6 +360,7 @@ struct Mesh_Info * iterate(struct rt_bot_internal *bot, struct Mesh_Info *prev_m
 		mesh->iteration_of_insert[pcnt] = starting_mesh->iteration_of_insert[pcnt];
 	    }
 	}
+#endif
     }
     for(f_it = starting_mesh->face_pts.begin(); f_it != starting_mesh->face_pts.end(); f_it++) {
 	mesh->points_p0.Append(starting_mesh->points_q[(*f_it).first]);
@@ -315,7 +475,8 @@ int main(int argc, char *argv[])
     // vertices
     ON_3dPointArray points_inf;
     for(size_t v = 0; v < (size_t)mesh->points_p0.Count(); v++) {
-	point_inf(v, mesh, &points_inf);
+        points_inf.Append(*mesh->points_p0.At(v));
+	//point_inf(v, mesh, &points_inf);
     }
     // The subdivision process shrinks the bot relative to its original
     // vertex positions - to better approximate the original surface,
