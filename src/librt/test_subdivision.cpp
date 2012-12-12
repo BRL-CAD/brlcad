@@ -104,13 +104,13 @@ ON_3dPoint p_edge_move(ON_3dPoint *p1, ON_3dPoint *p2, ON_3dPoint *curr) {
    return pmv;
 }
 
-// Break edge handling cases into functions.  For each 
+// Break edge handling cases into functions.  For each
 
 /* Case 1 - edge with no boundary points, face is internal to mesh
-/ 
-/                                 C 
-/                                / \ 
-/                               / ' \ 
+/
+/                                 C
+/                                / \
+/                               / ' \
 /                              /  '  \
 /                     P1      /   '   \     P2
 /                            /    '    \
@@ -119,19 +119,19 @@ ON_3dPoint p_edge_move(ON_3dPoint *p1, ON_3dPoint *p2, ON_3dPoint *curr) {
 /                         / '           ' \
 /                        /'_______________'\
 /                        A                 B
-/ 
+/
 /                                 P3
-*/ 
+*/
 // Edge is A->B, all face edges have an additional ajoint face.  New
 // faces associated with A->B are A->P3->P and P->P3->B.
 
 /* Case 2 - edge with one boundary point, face is on border of mesh
-/ 
+/
 /  Edge is A->B.  If iteration count is odd:
-/ 
-/                                 C 
-/                                / \ 
-/                               / ' \ 
+/
+/                                 C
+/                                / \
+/                               / ' \
 /                              /  '  \
 /                             /   '   \     P2
 /                            /    '    \
@@ -140,7 +140,7 @@ ON_3dPoint p_edge_move(ON_3dPoint *p1, ON_3dPoint *p2, ON_3dPoint *curr) {
 /                         / '           ' \
 /                        /'_______________'\
 /                        A                 B
-/ 
+/
 /                                 P3
 */
 // new faces are A->P3->P and P->P3->B
@@ -149,11 +149,11 @@ ON_3dPoint p_edge_move(ON_3dPoint *p1, ON_3dPoint *p2, ON_3dPoint *curr) {
 // If iteration count is even, there are two possible cases - depending on P3's A->X edge and
 // whether it has one or two boundary points.
 //
-/* A->X has one boundary point: 
-/ 
-/                                 C 
-/                                / \ 
-/                               /   \ 
+/* A->X has one boundary point:
+/
+/                                 C
+/                                / \
+/                               /   \
 /                         E2   /     \
 /                             /       \     P2
 /                            /         \
@@ -172,17 +172,17 @@ ON_3dPoint p_edge_move(ON_3dPoint *p1, ON_3dPoint *p2, ON_3dPoint *curr) {
 /                               \   /
 /                                \ /
 /                                 X
-/                                 
-/ 
-/ 
+/
+/
+/
 */
 // insert faces  B->E1->P3 and P3->E1->A
 //
-/* A->X has two boundary points: 
-/ 
-/                                 C 
-/                                / \ 
-/                               /   \ 
+/* A->X has two boundary points:
+/
+/                                 C
+/                                / \
+/                               /   \
 /                         E2   /     \
 /                             /       \     P2
 /                            /         \
@@ -201,8 +201,8 @@ ON_3dPoint p_edge_move(ON_3dPoint *p1, ON_3dPoint *p2, ON_3dPoint *curr) {
 /                          E4   \   /
 /                                \ /
 /                                 X
-/                                 
-*/ 
+/
+*/
 //
 //
 // insert faces  B->E1->E3 and E1->A->E3
@@ -210,42 +210,42 @@ ON_3dPoint p_edge_move(ON_3dPoint *p1, ON_3dPoint *p2, ON_3dPoint *curr) {
 
 // Case 3 - edge with two boundary points, face is on border of mesh
 //
-//                                
+//
 /* Edge is A->B.  If iteration count is odd
-/ 
-/ 
-/                                 C 
-/                                / \ 
-/                               / ' \ 
+/
+/
+/                                 C
+/                                / \
+/                               / ' \
 /                              /  '  \
-/                             /   '   \       
+/                             /   '   \
 /                            /    '    \
 /                           /   ' P '   \
 /                          /  '       '  \
 /                         / '           ' \
 /                        /'_______________'\
 /                        A                 B
-/ 
+/
 */
 // insert one face - A->B->P
 //
-/*  If iteration count is even, 
-/ 
-/ 
-/                                 C 
-/                                / \ 
-/                               /   \ 
+/*  If iteration count is even,
+/
+/
+/                                 C
+/                                / \
+/                               /   \
 /                              /     \
-/                             /       \       
+/                             /       \
 /                            /         \
 /                           /           \
 /                          /             \
 /                         /               \
 /                        / _______________ \
 /                        A                 B
-/ 
+/
 /                            E1      E2
-*/ 
+*/
 // insert one face - E1 -> E2 -> C
 
 
