@@ -6223,6 +6223,12 @@ BU_EXPORT extern void bu_pool_put(void *ptr, size_t elem_byte_size);
  */
 BU_EXPORT extern int bu_str_isprint(const char *cp);
 
+/** @file libbu/gethostname.c
+ *
+ * Portable gethostname()
+ *
+ */
+BU_EXPORT extern int bu_gethostname(char *, size_t);
 
 __END_DECLS
 

@@ -1,4 +1,5 @@
 BRLCAD_ADDEXEC(tester_bu_sscanf bu_sscanf.c libbu NO_INSTALL LOCAL)
+BRLCAD_ADDEXEC(tester_bu_gethostname bu_gethostname.c libbu NO_INSTALL LOCAL)
 
 #
 #  ************ basename.c tests *************

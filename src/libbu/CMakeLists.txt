@@ -37,6 +37,7 @@ set(LIBBU_SOURCES
   fnmatch.c
   fopen_uniq.c
   getcwd.c
+  gethostname.c
   getopt.c
   globals.c
   hash.c
