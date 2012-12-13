@@ -49,6 +49,8 @@
 	common createArc 7
 	common createBezier 8
 
+	common EPSILON 0.00000000000000001
+
 	common mVertDetailHeadings {{} X Y Z}
 	common mEdgeDetailHeadings {{} A B}
 	common mFaceDetailHeadings {{} A B C}
@@ -157,6 +159,7 @@
 	method create_bezier {}
 	method create_circle {}
 	method create_line {}
+	method end_arc {_x _y}
 	method end_arc_radius_adjust {_segment _mx _my}
 	method fix_vertex_references {_unused_vindices}
 	method item_pick_highlight {_sx _sy}
@@ -170,8 +173,7 @@
 	method setup_move_segment {}
 	method setup_move_selected {}
 	method start_arc_radius_adjust {_segment _mx _my}
-	method start_arc {_coord_type _x _y}
-	method start_arc_pick {_x _y}
+	method start_arc {_x _y}
 	method start_bezier {_coord_type _x _y}
 	method start_bezier_pick {_x _y}
 	method start_circle {_coord_type _x _y}
@@ -793,6 +795,10 @@
     set cross1 [cross2d dir2 dir1]
     set cross2 [cross2d dir1 diffs]
 
+    if {[expr {abs($cross1) < $EPSILON}]} {
+	return 1
+    }
+
     # if cross1 is to small, this will catch the error
     if { [catch { expr {$cross2 / $cross1} } beta] } {
 	# return an error flag
@@ -1007,15 +1013,13 @@
 
 ::itcl::body SketchEditFrame::create_arc {} {
     clear_canvas_bindings
-    bind $itk_component(canvas) <ButtonRelease-1> [code $this start_arc 1 %x %y]
-    bind $itk_component(canvas) <ButtonRelease-3> [code $this start_arc_pick %x %y]
+    bind $itk_component(canvas) <ButtonRelease-1> [code $this start_arc %x %y]
 }
 
 
 ::itcl::body SketchEditFrame::create_bezier {} {
     clear_canvas_bindings
-    bind $itk_component(canvas) <ButtonRelease-1> [code $this start_bezier 1 %x %y]
-    bind $itk_component(canvas) <ButtonRelease-3> [code $this start_bezier_pick %x %y]
+    bind $itk_component(canvas) <ButtonRelease-1> [code $this start_bezier %x %y]
 }
 
 
@@ -1029,6 +1033,40 @@
     clear_canvas_bindings
     bind $itk_component(canvas) <ButtonRelease-1> [code $this start_line 1 %x %y]
     bind $itk_component(canvas) <ButtonRelease-3> [code $this start_line_pick %x %y]
+}
+
+
+::itcl::body SketchEditFrame::end_arc {_mx _my} {
+    set index [pick_vertex $_mx $_my]
+    if {$index == -1} {
+	set ex [expr {[$itk_component(canvas) canvasx $_mx] / $myscale}]
+	set ey [expr {-[$itk_component(canvas) canvasy $_my] / $myscale}]
+
+	set index [llength $VL]
+	lappend VL "$ex $ey"
+	drawVertices
+    }
+
+    set index2 $index
+
+    # calculate an initial radius
+    set s [lindex $VL $index1]
+    set sx [lindex $s 0]
+    set sy [lindex $s 1]
+    set e [lindex $VL $index2]
+    set ex [lindex $e 0]
+    set ey [lindex $e 1]
+    set radius [::dist $sx $sy $ex $ey]
+    set new_seg [SketchCArc \#auto $this $itk_component(canvas) "S $index1 E $index2 R $radius L 0 O 1"]
+    lappend segments ::SketchEditFrame::$new_seg
+    set needs_saving 1
+    drawSegments
+
+    $new_seg highlight
+    start_arc_radius_adjust $new_seg $_mx $_my
+    bind $itk_component(canvas) <B1-Motion> [code $this start_arc_radius_adjust $new_seg %x %y]
+    bind $itk_component(canvas) <ButtonRelease-1> "[code $this end_arc_radius_adjust $new_seg %x %y]; [code $this create_arc]"
+#    bind $itk_component(coords).radius <Return> [code $this set_arc_radius_end $new_seg 0 0 0]
 }
 
 
@@ -1319,11 +1357,24 @@
 }
 
 
-::itcl::body SketchEditFrame::start_arc {_coord_type _mx _my} {
-}
+::itcl::body SketchEditFrame::start_arc {_mx _my} {
+    set index [pick_vertex $_mx $_my]
+    if {$index != -1} {
+	set index1 $index
+    } else {
+	# screen coords
+	#show_coords $_mx $_my
+	set sx [expr {[$itk_component(canvas) canvasx $_mx] / $myscale}]
+	set sy [expr {-[$itk_component(canvas) canvasy $_my] / $myscale}]
 
+	set index1 [llength $VL]
+	lappend VL "$sx $sy"
+	drawVertices
+    }
 
-::itcl::body SketchEditFrame::start_arc_pick {_mx _my} {
+    bind $itk_component(canvas) <ButtonPress-1> [code $this end_arc %x %y]
+#    bind $itk_component(coords).x <Return> [code $this end_arc 0 0 0]
+#    bind $itk_component(coords).y <Return> [code $this end_arc 0 0 0]
 }
 
 
