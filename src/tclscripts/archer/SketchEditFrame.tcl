@@ -159,10 +159,12 @@
 	method create_bezier {}
 	method create_circle {}
 	method create_line {}
-	method end_arc {_x _y}
+	method end_arc {_mx _my}
 	method end_arc_radius_adjust {_segment _mx _my}
+	method end_bezier {_segment}
 	method fix_vertex_references {_unused_vindices}
 	method item_pick_highlight {_sx _sy}
+	method next_bezier {_segment _mx _my}
 	method pick_arbitrary {_sx _sy}
 	method pick_segment {_sx _sy}
 	method pick_vertex {_sx _sy}
@@ -174,10 +176,8 @@
 	method setup_move_selected {}
 	method start_arc_radius_adjust {_segment _mx _my}
 	method start_arc {_x _y}
-	method start_bezier {_coord_type _x _y}
-	method start_bezier_pick {_x _y}
+	method start_bezier {_x _y}
 	method start_circle {_coord_type _x _y}
-	method start_circle_pick {_x _y}
 	method start_line {_coord_type _x _y}
 	method start_line_guts {}
 	method start_line_pick {_x _y}
@@ -820,6 +820,8 @@
     bind $itk_component(canvas) <Shift-ButtonRelease-1> {}
     bind $itk_component(canvas) <Control-Shift-ButtonPress-1> {}
 
+    bind $itk_component(canvas) <ButtonRelease-2> {}
+
     bind $itk_component(canvas) <ButtonRelease-3> {}
     bind $itk_component(canvas) <Shift-ButtonRelease-3> {}
 }
@@ -1018,6 +1020,7 @@
 
 
 ::itcl::body SketchEditFrame::create_bezier {} {
+    set bezier_indices ""
     clear_canvas_bindings
     bind $itk_component(canvas) <ButtonRelease-1> [code $this start_bezier %x %y]
 }
@@ -1067,6 +1070,20 @@
     bind $itk_component(canvas) <B1-Motion> [code $this start_arc_radius_adjust $new_seg %x %y]
     bind $itk_component(canvas) <ButtonRelease-1> "[code $this end_arc_radius_adjust $new_seg %x %y]; [code $this create_arc]"
 #    bind $itk_component(coords).radius <Return> [code $this set_arc_radius_end $new_seg 0 0 0]
+}
+
+
+::itcl::body SketchEditFrame::end_bezier {_segment} {
+#    drawSegments
+    clear_canvas_bindings
+
+    if {[llength $bezier_indices] < 2} {
+	$::ArcherCore::application putString "A Bezier curve must have at least two points"
+	set bezier_indices ""
+	return
+    }
+
+    create_bezier
 }
 
 
@@ -1165,6 +1182,33 @@
 	    $itk_component(canvas) dtag p$item selected
 	}
     }
+}
+
+
+::itcl::body SketchEditFrame::next_bezier {_segment _mx _my} {
+    set index [pick_vertex $_mx $_my]
+    if {$index != -1} {
+	if {[llength $bezier_indices] == 2 && [lindex $bezier_indices 0] == [lindex $bezier_indices 1]} {
+	    set bezier_indices [lrange $bezier_indices 0 0]
+	}
+	lappend bezier_indices $index
+    } else {
+	# screen coords
+	#show_coords $_mx $_my
+	set sx [expr {[$itk_component(canvas) canvasx $_mx] / $myscale}]
+	set sy [expr {-[$itk_component(canvas) canvasy $_my] / $myscale}]
+
+	if {[llength $bezier_indices] == 2 && [lindex $bezier_indices 0] == [lindex $bezier_indices 1]} {
+	    set bezier_indices [lrange $bezier_indices 0 0]
+	}
+	lappend bezier_indices [llength $VL]
+	lappend VL "$sx $sy"
+	drawVertices
+    }
+
+    $itk_component(canvas) delete ::SketchEditFrame::$_segment
+    $_segment set_vars D [expr [llength $bezier_indices] - 1] P $bezier_indices
+    $_segment draw ""
 }
 
 
@@ -1378,11 +1422,33 @@
 }
 
 
-::itcl::body SketchEditFrame::start_bezier {_coord_type _mx _my} {
-}
+::itcl::body SketchEditFrame::start_bezier {_mx _my} {
+    set index [pick_vertex $_mx $_my]
+    if {$index != -1} {
+	set bezier_indices $index
+    } else {
+	# screen coords
+	#show_coords $_mx $_my
+	set sx [expr {[$itk_component(canvas) canvasx $_mx] / $myscale}]
+	set sy [expr {-[$itk_component(canvas) canvasy $_my] / $myscale}]
 
+	set bezier_indices [llength $VL]
+	lappend VL "$sx $sy"
+	drawVertices
+    }
 
-::itcl::body SketchEditFrame::start_bezier_pick {_mx _my} {
+    lappend bezier_indices $bezier_indices
+    set new_seg [Sketch_bezier \#auto $this $itk_component(canvas) \
+		     "D [expr [llength $bezier_indices] - 1] P [list $bezier_indices]"]
+    lappend segments ::SketchEditFrame::$new_seg
+    set needs_saving 1
+    drawSegments
+
+    # setup to pick next bezier point
+    bind $itk_component(canvas) <ButtonRelease-1> [code $this next_bezier $new_seg %x %y]
+    bind $itk_component(canvas) <ButtonRelease-2> [code $this end_bezier $new_seg]
+#    bind $itk_component(coords).x <Return> [code $this next_bezier $new_seg 0 0 0]
+#    bind $itk_component(coords).y <Return> [code $this next_bezier $new_seg 0 0 0]
 }
 
 
@@ -1421,10 +1487,6 @@
 #    bind $itk_component(coords).x <Return> [code $this continue_circle $new_seg 1 0 0 0]
 #    bind $itk_component(coords).y <Return> [code $this continue_circle $new_seg 1 0 0 0]
 #    bind $itk_component(coords).radius <Return> [code $this continue_circle $new_seg 1 2 0 0]
-}
-
-
-::itcl::body SketchEditFrame::start_circle_pick {_mx _my} {
 }
 
 
