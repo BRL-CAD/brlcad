@@ -883,9 +883,16 @@
 	    drawVertices
 	}
     } else {
-	# At this point index1 refers to the last vertex in VL. Remove it.
-	set VL [lreplace $VL end end]
-	set index1 $index
+	if {$index != $index1} {
+	    # At this point index1 refers to the last vertex in VL. Remove it.
+	    set VL [lreplace $VL end end]
+	    set index1 $index
+	} else {
+	    # Here we have to add a vertex
+	    set vert [lindex $VL $index]
+	    set index1 [llength $VL]
+	    lappend VL $vert
+	}
     }
 
     continue_circle $_segment 1 3 0 0
@@ -1332,7 +1339,6 @@
     set index [pick_vertex $_mx $_my]
     if {$index != -1} {
 	set index1 $index
-	set index2 $index
     } else {
 	if {$_coord_type == 1} {
 	    # screen coords
@@ -1346,11 +1352,10 @@
 	}
 
 	set index1 [llength $VL]
-	set index2 $index1
 	lappend VL "$sx $sy"
-#	set index2 [llength $VL]
-#	lappend VL "$sx $sy"
     }
+
+    set index2 $index1
 
     set radius 0.0
     set new_seg [Sketch_carc \#auto $this $itk_component(canvas) "S $index1 E $index2 R -1 L 0 O 0"]
