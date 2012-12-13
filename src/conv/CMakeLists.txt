@@ -159,6 +159,8 @@ BRLCAD_ADDEXEC(viewpoint-g viewpoint-g.c "libwdb;librt;libbu")
 
 BRLCAD_ADDEXEC(g-xxx_facets g-xxx_facets.c "librt;libbu" NO_INSTALL)
 
+BRLCAD_ADDEXEC(walk_example walk_example.c "libbu;librt" NO_INSTALL)
+
 BRLCAD_ADDEXEC(g-shell-rect g-shell-rect.c "libwdb;librt;libbu;${M_LIBRARY}")
 
 install(PROGRAMS intaval-g.py DESTINATION bin)
@@ -181,7 +183,6 @@ set(conv_ignore_files
   shp/shapelib/license.html
   shp/shapelib/shapefil.h
   shp/README
-  walk_example.c
   )
 CMAKEFILES(${conv_ignore_files})
 CMAKEFILES(Makefile.am)
