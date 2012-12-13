@@ -921,7 +921,8 @@
     if {$_coord_type != 2} {
 	set VL [lreplace $VL $index2 $index2 "$ex $ey"]
     }
-    $itk_component(canvas) delete $_segment
+
+    $itk_component(canvas) delete ::SketchEditFrame::$_segment
     $_segment draw ""
     $itk_component(canvas) configure -scrollregion [$itk_component(canvas) bbox all]
 
