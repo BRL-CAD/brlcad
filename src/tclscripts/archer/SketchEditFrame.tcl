@@ -1083,6 +1083,7 @@
 	return
     }
 
+    write_sketch_to_db
     create_bezier
 }
 
@@ -1707,6 +1708,8 @@
 ::itcl::body SketchEditFrame::vert_is_used {_vindex} {
     foreach seg $segments {
 	if {[$seg is_vertex_used $_vindex]} {
+	    .archer0 putString "vert is being used by $seg"
+	    $seg describe
 	    return 1
 	}
     }
@@ -1872,8 +1875,6 @@ class SketchCArc {
 	set vlist [$editor get_vlist]
 	set start [lindex $vlist $start_index]
 	set end [lindex $vlist $end_index]
-
-	$::ArcherCore::application putString
 
 	if { $radius < 0.0 } {
 	    $::ArcherCore::application putString "full circle centered at vertex #$end_index ($end) with vertex #$start_index ($start)"
