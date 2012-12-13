@@ -91,6 +91,7 @@
 	variable VL {}
 	variable SL {}
 
+	variable mPickTol 0.3
 	variable myscale 1.0
 	variable vert_radius 3
 	variable tobase 1.0
@@ -148,8 +149,8 @@
 	method circle_3pt {_x1 _y1 _x2 _y2 _x3 _y3 _cx_out _cy_out}
 	method clear_canvas_bindings {}
 	method continue_circle {_segment _state _coord_type _mx _my}
-	method continue_line {_segment _state _coord_type _mx _my}
 	method continue_circle_pick {_segment _mx _my}
+	method continue_line {_segment _state _coord_type _mx _my}
 	method continue_line_pick {_segment _state _mx _my}
 	method continue_move {_state _sx _sy}
 	method create_arc {}
@@ -170,13 +171,13 @@
 	method setup_move_selected {}
 	method start_arc_radius_adjust {_segment _mx _my}
 	method start_arc {_coord_type _x _y}
+	method start_arc_pick {_x _y}
 	method start_bezier {_coord_type _x _y}
+	method start_bezier_pick {_x _y}
 	method start_circle {_coord_type _x _y}
+	method start_circle_pick {_x _y}
 	method start_line {_coord_type _x _y}
 	method start_line_guts {}
-	method start_arc_pick {_x _y}
-	method start_bezier_pick {_x _y}
-	method start_circle_pick {_x _y}
 	method start_line_pick {_x _y}
 	method start_move_arbitrary {_sx _sy _rflag}
 	method start_move_point {_sx _sy}
@@ -186,6 +187,7 @@
 	method start_vert_pick {}
 	method tag_selected_verts {}
 	method unhighlight_selected {}
+	method validatePickTol {_tol}
 	method vert_delete {_sx _sy}
 	method vert_is_used {_vindex}
 	method vert_pick_highlight {_sx _sy}
@@ -309,6 +311,7 @@
     initSketchData $_gdata
     createSegments
     drawSegments
+    clear_canvas_bindings
 
     update idletasks
     set canv_height [winfo height $itk_component(canvas)]
@@ -502,8 +505,24 @@
 	incr i
     }
 
+    itk_component add picktolL {
+	::ttk::label $parent.picktolL \
+	    -anchor e \
+	    -text "Point Pick Tolerance"
+    } {}
+    itk_component add picktolE {
+	::ttk::entry $parent.picktolE \
+	    -width 12 \
+	    -textvariable [::itcl::scope mPickTol] \
+	    -validate key \
+	    -validatecommand [::itcl::code $this validatePickTol %P]
+    } {}
+
     incr row
     grid rowconfigure $parent $row -weight 1
+    incr row
+    grid $itk_component(picktolL) -column 0 -row $row -sticky e
+    grid $itk_component(picktolE) -column 1 -row $row -sticky ew
     grid columnconfigure $parent 1 -weight 1
 }
 
@@ -801,6 +820,79 @@
 
 
 ::itcl::body SketchEditFrame::continue_circle {_segment _state _coord_type _mx _my} {
+    switch -- $_coord_type {
+	0 {
+	    # model coords
+	    set ex $x_coord
+	    set ey $y_coord
+	}
+	1 {
+	    # screen coords
+	    #show_coords $_mx $_my
+	    set ex [expr {[$itk_component(canvas) canvasx $_mx] / $myscale}]
+	    set ey [expr {-[$itk_component(canvas) canvasy $_my] / $myscale}]
+	}
+	2 {
+	    # use radius entry widget
+	    set vert [lindex $VL $index1]
+	    set ex [expr {[lindex $vert 0] + $radius}]
+	    set ey [lindex $vert 1]
+	}
+	3 {
+	    # use index numbers
+	    $_segment set_vars S $index1
+	}
+	default {
+	    $::ArcherCore::application putString "continue_circle: unrecognized coord type - $_coord_type"
+	}
+    }
+
+    if {$_coord_type != 3} {
+	if {$index1 == $index2} {
+	    # need to create a new vertex
+	    set index1 [llength $VL]
+	    lappend VL "$ex $ey"
+	    $_segment set_vars S $index1
+.archer0 putString "SketchEditFrame::continue_circle: add a new vertex, index1 - $index1"
+	} else {
+	    set VL [lreplace $VL $index1 $index1 "$ex $ey"]
+	}
+    }
+
+    $itk_component(canvas) delete ::SketchEditFrame::$_segment
+    $_segment draw ""
+    set radius [$_segment get_radius]
+    $itk_component(canvas) configure -scrollregion [$itk_component(canvas) bbox all]
+    if {$_state} {
+	create_circle
+	drawVertices
+	write_sketch_to_db
+    }
+}
+
+
+::itcl::body SketchEditFrame::continue_circle_pick {_segment _mx _my} {
+    set index [pick_vertex $_mx $_my]
+    if {$index == -1} {
+	set ex [expr {[$itk_component(canvas) canvasx $_mx] / $myscale}]
+	set ey [expr {-[$itk_component(canvas) canvasy $_my] / $myscale}]
+
+	if {$index1 == $index2} {
+	    # need to create a new vertex
+	    set index1 [llength $VL]
+	    lappend VL "$ex $ey"
+	    drawVertices
+	}
+    } else {
+	# At this point index1 refers to the last vertex in VL. Remove it.
+	set VL [lreplace $VL end end]
+	set index1 $index
+    }
+
+#    set coords [$itk_component(canvas) coords p$index]
+#    set x_coord [expr {([lindex $coords 0] + [lindex $coords 2]) / (2.0 * $myscale)}]
+#    set y_coord [expr {-([lindex $coords 1] + [lindex $coords 3]) / (2.0 * $myscale)}]
+    continue_circle $_segment 1 3 0 0
 }
 
 
@@ -857,10 +949,6 @@
     }
 
     drawVertices
-}
-
-
-::itcl::body SketchEditFrame::continue_circle_pick {_segment _mx _my} {
 }
 
 
@@ -929,8 +1017,7 @@
 
 ::itcl::body SketchEditFrame::create_circle {} {
     clear_canvas_bindings
-    bind $itk_component(canvas) <ButtonRelease-1> [code $this start_circle 1 %x %y]
-    bind $itk_component(canvas) <ButtonRelease-3> [code $this start_circle_pick %x %y]
+    bind $itk_component(canvas) <ButtonPress-1> [code $this start_circle 1 %x %y]
 }
 
 
@@ -1081,7 +1168,26 @@
     if { $index == -1 } {
 	return -1
     }
-    return [string range [lindex $tags $index] 1 end]
+
+    set index [string range [lindex $tags $index] 1 end]
+
+    set sx [expr {$x / $myscale}]
+    set sy [expr {-$y / $myscale}]
+
+    # Check to see if the nearest vertex is within tolerance
+    set coords [$itk_component(canvas) coords p$index]
+    set cx [expr {([lindex $coords 0] + [lindex $coords 2]) / (2.0 * $myscale)}]
+    set cy [expr {-([lindex $coords 1] + [lindex $coords 3]) / (2.0 * $myscale)}]
+    set u [list $sx $sy 0]
+    set v [list $cx $cy 0]
+    set delta [::vsub2 $u $v]
+    set mag [::vmagnitude $delta]
+
+    if {$mag > $mPickTol} {
+	return -1
+    }
+
+    return $index
 }
 
 
@@ -1213,11 +1319,59 @@
 }
 
 
+::itcl::body SketchEditFrame::start_arc_pick {_mx _my} {
+}
+
+
 ::itcl::body SketchEditFrame::start_bezier {_coord_type _mx _my} {
 }
 
 
+::itcl::body SketchEditFrame::start_bezier_pick {_mx _my} {
+}
+
+
 ::itcl::body SketchEditFrame::start_circle {_coord_type _mx _my} {
+    set index [pick_vertex $_mx $_my]
+    if {$index != -1} {
+	set index1 $index
+	set index2 $index
+    } else {
+	if {$_coord_type == 1} {
+	    # screen coords
+	    #show_coords $_mx $_my
+	    set sx [expr {[$itk_component(canvas) canvasx $_mx] / $myscale}]
+	    set sy [expr {-[$itk_component(canvas) canvasy $_my] / $myscale}]
+	} elseif {$_coord_type == 0} {
+	    # model coords
+	    set sx $x_coord
+	    set sy $y_coord
+	}
+
+	set index1 [llength $VL]
+	set index2 $index1
+	lappend VL "$sx $sy"
+#	set index2 [llength $VL]
+#	lappend VL "$sx $sy"
+    }
+
+    set radius 0.0
+    set new_seg [Sketch_carc \#auto $this $itk_component(canvas) "S $index1 E $index2 R -1 L 0 O 0"]
+    lappend segments $new_seg
+    set needs_saving 1
+    continue_circle $new_seg 0 3 $_mx $_my
+    drawSegments
+
+    clear_canvas_bindings
+    bind $itk_component(canvas) <B1-Motion> [code $this continue_circle $new_seg 0 1 %x %y]
+    bind $itk_component(canvas) <ButtonRelease-1> [code $this continue_circle_pick $new_seg %x %y]
+#    bind $itk_component(coords).x <Return> [code $this continue_circle $new_seg 1 0 0 0]
+#    bind $itk_component(coords).y <Return> [code $this continue_circle $new_seg 1 0 0 0]
+#    bind $itk_component(coords).radius <Return> [code $this continue_circle $new_seg 1 2 0 0]
+}
+
+
+::itcl::body SketchEditFrame::start_circle_pick {_mx _my} {
 }
 
 
@@ -1259,18 +1413,6 @@
     bind $itk_component(canvas) <Shift-ButtonRelease-3> [code $this continue_line_pick $new_seg 3 %x %y]
 #    bind $itk_component(coords).x <Return> [code $this continue_line $new_seg 2 0 0 0]
 #    bind $itk_component(coords).y <Return> [code $this continue_line $new_seg 2 0 0 0]
-}
-
-
-::itcl::body SketchEditFrame::start_arc_pick {_mx _my} {
-}
-
-
-::itcl::body SketchEditFrame::start_bezier_pick {_mx _my} {
-}
-
-
-::itcl::body SketchEditFrame::start_circle_pick {_mx _my} {
 }
 
 
@@ -1404,6 +1546,29 @@
     }
     $itk_component(canvas) dtag selected selected
     $itk_component(canvas) dtag first_select first_select
+}
+
+
+::itcl::body SketchEditFrame::validatePickTol {_tol} {
+    if {$_tol == "."} {
+	set mPickTol $_tol
+
+	return 1
+    }
+
+    if {[string is double $_tol]} {
+	if {$_tol == "" || $_tol < 0} {
+	    set t 0
+	} else {
+	    set t $_tol
+	}
+
+	set mPickTol $t
+
+	return 1
+    }
+
+    return 0
 }
 
 
