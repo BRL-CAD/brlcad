@@ -396,7 +396,7 @@
 		set pt {}
 	    } \
 	    default {
-		puts "Encountered bad one - $mVertDetail($row,$col)"
+		$::ArcherCore::application putString "Encountered bad one - $mVertDetail($row,$col)"
 	    }
     }
 
@@ -853,7 +853,6 @@
 	    set index1 [llength $VL]
 	    lappend VL "$ex $ey"
 	    $_segment set_vars S $index1
-.archer0 putString "SketchEditFrame::continue_circle: add a new vertex, index1 - $index1"
 	} else {
 	    set VL [lreplace $VL $index1 $index1 "$ex $ey"]
 	}
@@ -889,9 +888,6 @@
 	set index1 $index
     }
 
-#    set coords [$itk_component(canvas) coords p$index]
-#    set x_coord [expr {([lindex $coords 0] + [lindex $coords 2]) / (2.0 * $myscale)}]
-#    set y_coord [expr {-([lindex $coords 1] + [lindex $coords 3]) / (2.0 * $myscale)}]
     continue_circle $_segment 1 3 0 0
 }
 
@@ -1758,12 +1754,14 @@ class SketchCArc {
 	set start [lindex $vlist $start_index]
 	set end [lindex $vlist $end_index]
 
+	$::ArcherCore::application putString
+
 	if { $radius < 0.0 } {
-	    puts "full circle centered at vertex #$end_index ($end) with vertex #$start_index ($start)"
+	    $::ArcherCore::application putString "full circle centered at vertex #$end_index ($end) with vertex #$start_index ($start)"
 	} else {
-	    puts "circular arc (radius = $radius) from vertex #$start_index ($start) to #$end_index ($end)"
+	    $::ArcherCore::application putString "circular arc (radius = $radius) from vertex #$start_index ($start) to #$end_index ($end)"
 	}
-	puts "	[$this serialize [$editor get_tobase]]"
+	$::ArcherCore::application putString "	[$this serialize [$editor get_tobase]]"
     }
 
     method get_radius {} {
@@ -1981,7 +1979,7 @@ class SketchBezier {
 	foreach index $index_list {
 	    lappend coords [lindex $vlist $index]
 	}
-	puts "bezier with $num_points vertices: $coords"
+	$::ArcherCore::application putString "bezier with $num_points vertices: $coords"
     }
 
     method serialize { tobase } {
@@ -2086,7 +2084,7 @@ class SketchLine {
 	set vlist [$editor get_vlist]
 	set start [lindex $vlist $start_index]
 	set end [lindex $vlist $end_index]
-	puts "line from vertex #$start_index ($start) to #$end_index ($end)"
+	$::ArcherCore::application putString "line from vertex #$start_index ($start) to #$end_index ($end)"
     }
 
     method serialize { tobase } {
