@@ -1458,6 +1458,10 @@ analyze_do(struct ged *gedp, const struct rt_db_internal *ip)
 	analyze_sketch(gedp, ip);
 	break;
 
+    case ID_HYP:
+	analyze_general(gedp, ip);
+	break;
+
     default:
 	bu_vls_printf(gedp->ged_result_str, "\nanalyze: unable to process %s solid\n",
 		rt_functab[ip->idb_type].ft_name);

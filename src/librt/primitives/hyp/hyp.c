@@ -1364,6 +1364,57 @@ rt_hyp_params(struct pc_pc_set * UNUSED(ps), const struct rt_db_internal *ip)
 }
 
 
+/**
+ * R T _ H Y P _ C E N T R O I D
+ */
+void
+rt_hyp_centroid(point_t *cent, const struct rt_db_internal *ip)
+{
+    if (cent != NULL && ip != NULL) {
+	struct rt_hyp_internal *hip;
+
+	RT_CK_DB_INTERNAL(ip);
+	hip = (struct rt_hyp_internal *)ip->idb_ptr;
+	RT_HYP_CK_MAGIC(hip);
+	
+	VSCALE(*cent, hip->hyp_Hi, 0.5);
+	VADD2(*cent, hip->hyp_Vi, *cent);
+    }
+}
+
+
+/**
+ * R T _ H Y P _ S U R F _ A R E A
+ * 
+ * only the stub to make analyze happy
+ * TODO: needs an implementation
+ */
+void
+rt_hyp_surf_area(fastf_t *UNUSED(area), const struct rt_db_internal *UNUSED(ip)) {}
+
+
+/**
+ * R T _ H Y P _ V O L U M E
+ */
+void
+rt_hyp_volume(fastf_t *volume, const struct rt_db_internal *ip)
+{
+    if (volume != NULL || ip != NULL) {
+	struct rt_hyp_internal *hip;
+	struct hyp_specific *hyp;
+
+	RT_CK_DB_INTERNAL(ip);
+	hip = (struct rt_hyp_internal *)ip->idb_ptr;
+	RT_HYP_CK_MAGIC(hip);
+
+	hyp = hyp_internal_to_specific(hip);
+	*volume = M_PI * hyp->hyp_r1 * hyp->hyp_r2 * hyp->hyp_Hmag * 2 *
+	    (1 + hyp->hyp_Hmag * hyp->hyp_Hmag * hyp->hyp_c * hyp->hyp_c / (12 * hyp->hyp_r1 * hyp->hyp_r1));
+	bu_free(hyp, "hyp volume");
+    }
+}
+
+
 /*
  * Local Variables:
  * mode: C

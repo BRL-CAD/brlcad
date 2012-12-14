@@ -1792,9 +1792,9 @@ const struct rt_functab rt_functab[] = {
 	NULL,
 	rt_hyp_params,
 	rt_hyp_bbox,
-	NULL,
-	NULL,
-	NULL,
+	rt_hyp_volume,
+	rt_hyp_surf_area,
+	rt_hyp_centroid,
     },
 
     {
