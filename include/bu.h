@@ -1178,7 +1178,7 @@ typedef struct bu_list bu_list_t;
  * TODO: If used pervasively, it should eventually be possible to make
  * fastf_t a GMP C++ type for fixed-precision computations.
  */
-typedef double fastf_t;
+typedef float fastf_t;
 
 /**
  * Definitions about limits of floating point representation
@@ -1210,6 +1210,8 @@ typedef double fastf_t;
  * (DEPRECATED)
  *
  */
+#if 0
+
 #if defined(vax)
 /* DEC VAX "D" format, the most restrictive */
 #  define MAX_FASTF		1.0e37	/* Very close to the largest number */
@@ -1227,6 +1229,24 @@ typedef double fastf_t;
 #    define SQRT_SMALL_FASTF	1.0e-39	/* This squared gives zero */
 #  endif
 #endif
+
+#else
+
+#  define MAX_FASTF		1.0e37	/* Very close to the largest number */
+#  define SQRT_MAX_FASTF	1.0e18	/* This squared just avoids overflow */
+#  define SMALL_FASTF		1.0e-37	/* Anything smaller is zero */
+#  define SQRT_SMALL_FASTF	1.0e-18	/* This squared gives zero */
+
+#if 0
+
+#include <float.h>
+#  define MAX_FASTF (sizeof(fastf_t) == sizeof(float) ? FLT_MAX : DBL_MAX)
+#  define SQRT_MAX_FASTF sqrt(MAX_FASTF)
+#  define SMALL_FASTF (sizeof(fastf_t) == sizeof(float) ? FLT_MIN : DBL_MIN)
+#  define SQRT_SMALL_FASTF sqrt(SMALL_FASTF)
+#endif
+
+#endif /* testing new macros */
 
 /** DEPRECATED, do not use */
 #define SMALL SQRT_SMALL_FASTF
@@ -3282,7 +3302,7 @@ DEPRECATED BU_EXPORT extern FILE *bu_fopen_uniq(const char *outfmt, const char *
   char filename[MAXPATHLEN];
   fp = bu_temp_file(&filename, MAXPATHLEN); // get file name
   ...
-  fclose(fp); // optional, auto-closed on exit
+  fclose(fp); // close the file when you're done
   ...
   fp = bu_temp_file(NULL, 0); // don't need file name
   bu_fchmod(fileno(fp), 0777);
