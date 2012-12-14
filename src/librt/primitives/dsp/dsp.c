@@ -4186,7 +4186,7 @@ get_obj_data(struct rt_dsp_internal *dsp_ip, const struct db_i *dbip)
  *
  * Handle things common to both the v4 and v5 database.
  *
- * This include applying the modelling transform, and fetching the
+ * This includes applying the modelling transform, and fetching the
  * actual data.
  *
  * Return:
