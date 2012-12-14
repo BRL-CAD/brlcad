@@ -1376,7 +1376,7 @@ rt_hyp_centroid(point_t *cent, const struct rt_db_internal *ip)
 	RT_CK_DB_INTERNAL(ip);
 	hip = (struct rt_hyp_internal *)ip->idb_ptr;
 	RT_HYP_CK_MAGIC(hip);
-	
+
 	VSCALE(*cent, hip->hyp_Hi, 0.5);
 	VADD2(*cent, hip->hyp_Vi, *cent);
     }
@@ -1385,7 +1385,7 @@ rt_hyp_centroid(point_t *cent, const struct rt_db_internal *ip)
 
 /**
  * R T _ H Y P _ S U R F _ A R E A
- * 
+ *
  * only the stub to make analyze happy
  * TODO: needs an implementation
  */
