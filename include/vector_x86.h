@@ -135,6 +135,15 @@ dvec<LEN>::a_store(double* arr) const
 }
 
 template<int LEN>
+inline void
+dvec<LEN>::a_store(float* arr) const
+{
+    for (int i = 0; i < LEN/2; i++) {
+	_mm_store_ps(&arr[i*2], data.v[i]);
+    }
+}
+
+template<int LEN>
 inline bool
 dvec<LEN>::operator==(const dvec<LEN>& b) const
 {
