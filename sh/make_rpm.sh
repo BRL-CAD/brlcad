@@ -263,13 +263,14 @@ echo -e '
 %postun
 
 file="/usr/share/applications/mimeapps.list"
+section="Added Associations"
 
 if [ -f $file ] && [ $1 -eq 0 ]
 then
     sed --follow-symlinks -i "/application\/brlcad-v[45]/d" $file
 fi
 
-if [ -f $file ] && [ -z "$(sed "/\[Added Associations\]/d" $file)" ]
+if [ -f $file ] && [ -z "$(sed "/\[$section\]/d" $file)" ]
 then
     rm $file || :
 fi
