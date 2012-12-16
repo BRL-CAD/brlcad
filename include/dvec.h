@@ -158,7 +158,7 @@ extern "C++" {
 	dvec<4> iv(tmp);
 	dvec<4> sv(scale);
 	dvec<4> r = iv * sv;
-	r.a_store(inv);
+	r.a_store((double *) inv);
 	return true;
     }
     inline
@@ -170,14 +170,14 @@ extern "C++" {
 	dvec<2> a(_a);
 	dvec<2> b(_b);
 	dvec<2> c = a*x + b*y;
-	c.a_store(r);
+	c.a_store((double *) r);
     }
     inline
     void pt2dsub(pt2d_t r, pt2d_t a, pt2d_t b) {
 	dvec<2> va(a);
 	dvec<2> vb(b);
 	dvec<2> vr = va - vb;
-	vr.a_store(r);
+	vr.a_store((double *) r);
     }
 
     inline
