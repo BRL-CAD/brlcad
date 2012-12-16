@@ -138,8 +138,8 @@ template<int LEN>
 inline void
 dvec<LEN>::a_store(float* arr) const
 {
-    for (int i = 0; i < LEN/2; i++) {
-	_mm_store_ps(&arr[i*2], data.v[i]);
+    for (int i = 0; i < LEN/4; i++) {
+	_mm_store_ps(&arr[i*4], data.v[i]);
     }
 }
 
