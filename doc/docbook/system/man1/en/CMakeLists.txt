@@ -1,12 +1,19 @@
 set(docbook_man1_EN
+  anim_script.xml
+  anim_sort.xml
+  anim_time.xml
+  anim_track.xml
+  anim_turn.xml
   ap-pix.xml
   asc-nmg.xml
   asc-pl.xml
   asc2dsp.xml
   azel.xml
   bary.xml
+  benchmark.xml
   bot_dump.xml
   bot_shell-vtk.xml
+  brlcad-config.xml
   brlcad.xml
   buffer.xml
   bw-fb.xml
@@ -28,7 +35,12 @@ set(docbook_man1_EN
   bwshrink.xml
   bwstat.xml
   bwthresh.xml
+  cad_boundp.xml
+  cad_parea.xml
+  canonize.xml
   cell-fb.xml
+  chan_mult.xml
+  chan_permute.xml
   cmap-fb.xml
   coil.xml
   comgeom-g.xml
@@ -60,6 +72,7 @@ set(docbook_man1_EN
   fbcmap.xml
   fbcmrot.xml
   fbcolor.xml
+  fbed.xml
   fbfade.xml
   fbframe.xml
   fbfree.xml
@@ -70,8 +83,10 @@ set(docbook_man1_EN
   fbline.xml
   fbpoint.xml
   fbscanplot.xml
+  fbserv.xml
   fbstretch.xml
   fbzoom.xml
+  firpass.xml
   g-acad.xml
   g-dxf.xml
   g-egg.xml
@@ -87,13 +102,19 @@ set(docbook_man1_EN
   g-vrml.xml
   g-x3d.xml
   g2asc.xml
+  g_diff.xml
+  g_lint.xml
   gencolor.xml
   gif-fb.xml
   gif2fb.xml
   gqa.xml
+  halftone.xml
   hex.xml
   iges-g.xml
   imgdims.xml
+  ir-X.xml
+  irdisp.xml
+  lgt.xml
   loop.xml
   mac-pix.xml
   mged.xml
@@ -106,6 +127,7 @@ set(docbook_man1_EN
   orle-fb.xml
   orle-pix.xml
   patch-g.xml
+  pictx.xml
   pix-alias.xml
   pix-bw.xml
   pix-bw3.xml
@@ -124,6 +146,7 @@ set(docbook_man1_EN
   pixborder.xml
   pixbustup.xml
   pixclump.xml
+  pixcmp.xml
   pixcolors.xml
   pixcut.xml
   pixdiff.xml
@@ -169,46 +192,17 @@ set(docbook_man1_EN
   pp-fb.xml
   proe-g.xml
   random.xml
+  remapid.xml
+  remrt.xml
+  reshoot.xml
   rle-fb.xml
   rle-pix.xml
   rpatch.xml
   rt.xml
+  rt_bot_faces.xml
   rtarea.xml
   rtcheck.xml
   rtedge.xml
-  rtwizard.xml
-  stl-g.xml
-  sun-pix.xml
-  tankill-g.xml
-  terrain.xml
-  tire.xml
-  vdeck.xml
-  viewpoint-g.xml
-  wavelet.xml
-  anim_script.xml
-  anim_sort.xml
-  anim_time.xml
-  anim_track.xml
-  anim_turn.xml
-  cad_boundp.xml
-  cad_parea.xml
-  canonize.xml
-  chan_mult.xml
-  chan_permute.xml
-  fbed.xml
-  fbserv.xml
-  firpass.xml
-  g_diff.xml
-  g_lint.xml
-  halftone.xml
-  ir-X.xml
-  irdisp.xml
-  lgt.xml
-  #pictx.xml
-  remapid.xml
-  remrt.xml
-  reshoot.xml
-  rt_bot_faces.xml
   rtg3.xml
   rthide.xml
   rtpp.xml
@@ -220,6 +214,7 @@ set(docbook_man1_EN
   rttherm.xml
   rtwalk.xml
   rtweight.xml
+  rtwizard.xml
   rtxray.xml
   scriptsort.xml
   secpass.xml
@@ -227,12 +222,17 @@ set(docbook_man1_EN
   showshot.xml
   showtherm.xml
   ssamp-bw.xml
+  stl-g.xml
+  sun-pix.xml
   tabinterp.xml
   tabsub.xml
+  tankill-g.xml
+  terrain.xml
+  tire.xml
   ug-g.xml
-  benchmark.xml
-  pixcmp.xml
-  brlcad-config.xml
+  vdeck.xml
+  viewpoint-g.xml
+  wavelet.xml
   )
 
 # Some DocBook man pages generate multiple output files, if they
