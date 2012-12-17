@@ -3282,7 +3282,7 @@ DEPRECATED BU_EXPORT extern FILE *bu_fopen_uniq(const char *outfmt, const char *
   char filename[MAXPATHLEN];
   fp = bu_temp_file(&filename, MAXPATHLEN); // get file name
   ...
-  fclose(fp); // optional, auto-closed on exit
+  fclose(fp); // close the file when you're done
   ...
   fp = bu_temp_file(NULL, 0); // don't need file name
   bu_fchmod(fileno(fp), 0777);
