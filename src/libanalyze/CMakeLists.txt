@@ -12,7 +12,6 @@ set(LIBANALYZE_SOURCES
   voxels.c
   )
 
-#BRLCAD_ADDEXEC(test_density test_density.c "libanalyze;libbu" NO_INSTALL)
 add_subdirectory(tests)
 
 BRLCAD_ADDLIB(libanalyze "${LIBANALYZE_SOURCES}" "libbu;librt")
