@@ -65,15 +65,12 @@ extern "C++" {
     class dvec {
     public:
 	dvec(double s);
-	dvec(const float* vals);
 	dvec(const double* vals);
 	dvec(const dvec<LEN>& p);
 
 	dvec<LEN>& operator=(const dvec<LEN>& p);
 	double operator[](int index) const;
-	void u_store(float* arr) const;
 	void u_store(double* arr) const;
-	void a_store(float* arr) const;
 	void a_store(double* arr) const;
 
 	bool operator==(const dvec<LEN>& b) const;
@@ -186,11 +183,7 @@ extern "C++" {
 	dvec<2> sq = a*a;
 	return sqrt(sq.foldr(0, dvec<2>::add()));
     }
-    inline
-    void move(pt2d_t a, const float *b) {
-	a[0] = b[0];
-	a[1] = b[1];
-    }
+
     inline
     void move(pt2d_t a, const double *b) {
 	a[0] = b[0];

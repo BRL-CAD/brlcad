@@ -60,15 +60,6 @@ inline dvec<LEN>::dvec(double s)
 }
 
 template<int LEN>
-inline dvec<LEN>::dvec(const float* vals)
-{
-    for (int i = 0; i < LEN/2; i++) {
-	/* NOTE: assumes that vals are 16-byte aligned */
-	data.v[i] = _mm_load_ps(&vals[i*2]);
-    }
-}
-
-template<int LEN>
 inline dvec<LEN>::dvec(const double* vals)
 {
     for (int i = 0; i < LEN/2; i++) {
@@ -131,15 +122,6 @@ dvec<LEN>::a_store(double* arr) const
 {
     for (int i = 0; i < LEN/2; i++) {
 	_mm_store_pd(&arr[i*2], data.v[i]);
-    }
-}
-
-template<int LEN>
-inline void
-dvec<LEN>::a_store(float* arr) const
-{
-    for (int i = 0; i < LEN/4; i++) {
-	_mm_store_ps(&arr[i*4], data.v[i]);
     }
 }
 
