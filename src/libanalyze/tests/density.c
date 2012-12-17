@@ -67,4 +67,5 @@ main(int argc, char **argv)
 	  bu_log("densities[%i]: %s, %f\n", i, densities[i].name, densities[i].grams_per_cu_mm);
   }
 
+  return 0;
 }
