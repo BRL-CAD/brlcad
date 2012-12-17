@@ -64,7 +64,7 @@ main(int argc, char **argv)
 
   for (i = 0; i < num_densities; i++) {
       if (densities[i].name)
-	  bu_log("densities[%i]: %s, %d\n", i, densities[i].name, densities[i].grams_per_cu_mm);
+	  bu_log("densities[%i]: %s, %f\n", i, densities[i].name, densities[i].grams_per_cu_mm);
   }
 
 }
