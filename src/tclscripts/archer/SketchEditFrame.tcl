@@ -93,7 +93,7 @@
 	variable VL {}
 	variable SL {}
 
-	variable mPickTol 0.3
+	variable mPickTol 11
 	variable myscale 1.0
 	variable vert_radius 3
 	variable tobase 1.0
@@ -112,6 +112,7 @@
 	variable bezier_indices ""
 	variable selection_mode ""
 
+	variable mIgnoreMotion 0
 	variable mVertDetail
 	variable mSegmentDetail
 	variable mFaceDetail
@@ -165,9 +166,9 @@
 	method fix_vertex_references {_unused_vindices}
 	method item_pick_highlight {_sx _sy}
 	method next_bezier {_segment _mx _my}
-	method pick_arbitrary {_sx _sy}
-	method pick_segment {_sx _sy}
-	method pick_vertex {_sx _sy}
+	method pick_arbitrary {_mx _my}
+	method pick_segment {_mx _my}
+	method pick_vertex {_mx _my {_tag ""}}
 	method seg_delete {_sx _sy _vflag}
 	method seg_pick_highlight {_sx _sy}
 	method setup_move_arbitrary {}
@@ -178,9 +179,8 @@
 	method start_arc {_x _y}
 	method start_bezier {_x _y}
 	method start_circle {_coord_type _x _y}
-	method start_line {_coord_type _x _y}
+	method start_line {_x _y}
 	method start_line_guts {}
-	method start_line_pick {_x _y}
 	method start_move_arbitrary {_sx _sy _rflag}
 	method start_move_point {_sx _sy}
 	method start_move_segment {_sx _sy _rflag}
@@ -510,7 +510,7 @@
     itk_component add picktolL {
 	::ttk::label $parent.picktolL \
 	    -anchor e \
-	    -text "Point Pick Tolerance"
+	    -text "Point Pick Tol (pixels)"
     } {}
     itk_component add picktolE {
 	::ttk::entry $parent.picktolE \
@@ -550,27 +550,35 @@
 
     switch -- $mEditMode \
 	$moveArbitrary {
+	    $itk_component(canvas) configure -cursor crosshair
 	    setup_move_arbitrary
 	} \
 	$moveSelected {
+	    $itk_component(canvas) configure -cursor {}
 	    setup_move_selected
 	} \
 	$selectPoints {
+	    $itk_component(canvas) configure -cursor crosshair
 	    start_vert_pick
 	} \
 	$selectSegments {
+	    $itk_component(canvas) configure -cursor {}
 	    start_seg_pick
 	} \
 	$createLine {
+	    $itk_component(canvas) configure -cursor crosshair
 	    create_line
 	} \
 	$createCircle {
+	    $itk_component(canvas) configure -cursor crosshair
 	    create_circle
 	} \
 	$createArc {
+	    $itk_component(canvas) configure -cursor crosshair
 	    create_arc
 	} \
 	$createBezier {
+	    $itk_component(canvas) configure -cursor crosshair
 	    create_bezier
 	}
 
@@ -637,18 +645,18 @@
 
 
 ::itcl::body SketchEditFrame::drawVertices {} {
-	set index 0
-	$itk_component(canvas) delete verts
-	foreach vert $VL {
-	    set xc [lindex $vert 0]
-	    set yc [lindex $vert 1]
-	    set x1 [expr {$myscale * $xc - $vert_radius}]
-	    set y1 [expr {-$myscale * $yc - $vert_radius}]
-	    set x2 [expr {$myscale * $xc + $vert_radius}]
-	    set y2 [expr {-$myscale * $yc + $vert_radius}]
-	    set last [$itk_component(canvas) create oval $x1 $y1 $x2 $y2 -fill black -tags "p$index verts"]
-	    incr index
-	}
+    set index 0
+    $itk_component(canvas) delete verts
+    foreach vert $VL {
+	set xc [lindex $vert 0]
+	set yc [lindex $vert 1]
+	set x1 [expr {$myscale * $xc - $vert_radius}]
+	set y1 [expr {-$myscale * $yc - $vert_radius}]
+	set x2 [expr {$myscale * $xc + $vert_radius}]
+	set y2 [expr {-$myscale * $yc + $vert_radius}]
+	set last [$itk_component(canvas) create oval $x1 $y1 $x2 $y2 -fill black -tags "p$index verts"]
+	incr index
+    }
 }
 
 
@@ -871,6 +879,7 @@
     set radius [$_segment get_radius]
     $itk_component(canvas) configure -scrollregion [$itk_component(canvas) bbox all]
     if {$_state} {
+	$itk_component(canvas) configure -cursor crosshair
 	create_circle
 	drawVertices
 	write_sketch_to_db
@@ -888,7 +897,6 @@
 	    # need to create a new vertex
 	    set index1 [llength $VL]
 	    lappend VL "$ex $ey"
-	    drawVertices
 	}
     } else {
 	if {$index != $index1} {
@@ -908,6 +916,10 @@
 
 
 ::itcl::body SketchEditFrame::continue_line {_segment _state _coord_type _mx _my} {
+    if {$_state == 0 && $mIgnoreMotion} {
+	return
+    }
+
     switch -- $_coord_type {
 	0 {
 	    # model coords
@@ -919,14 +931,16 @@
 	    #show_coords $_mx $_my
 	    set ex [expr {[$itk_component(canvas) canvasx $_mx] / $myscale}]
 	    set ey [expr {-[$itk_component(canvas) canvasy $_my] / $myscale}]
+
+	    if {$_state == 2} {
+		# need to create a new vertex
+		set index2 [llength $VL]
+		lappend VL "$ex $ey"
+	    }
 	}
 	2 {
 	    # use index numbers
 	    $_segment set_vars E $index2
-
-	    set vert [lindex $VL $index2]
-	    set ex [lindex $vert 0]
-	    set ey [lindex $vert 1]
 	}
 	default {
 	    $::ArcherCore::application putString "continue_line: unrecognized coord type - $_coord_type"
@@ -942,9 +956,14 @@
     $itk_component(canvas) configure -scrollregion [$itk_component(canvas) bbox all]
 
     if {$_state == 1} {
+	$itk_component(canvas) configure -cursor crosshair
 	create_line
 	write_sketch_to_db
     } elseif {$_state == 3} {
+	set vert [lindex $VL $index2]
+	set ex [lindex $vert 0]
+	set ey [lindex $vert 1]
+
 	if {$_coord_type != 2} {
 	    # The new segment is using a new vertex for its start point
 	    set index1 [expr {[llength $VL] - 1}]
@@ -953,8 +972,7 @@
 	    set index1 $index2
 	}
 
-	set index2 [llength $VL]
-	lappend VL "$ex $ey"
+	set index2 $index1
 
 	start_line_guts
 	write_sketch_to_db
@@ -965,13 +983,42 @@
 
 
 ::itcl::body SketchEditFrame::continue_line_pick {_segment _state _mx _my} {
-    set index [pick_vertex $_mx $_my]
-    if {$index == -1} return
+    set index [pick_vertex $_mx $_my p$index2]
+    if {$index == -1} {
+	if {$_state == 2} {
+	    $itk_component(canvas) configure -cursor {}
+	}
 
-    # The last item in VL is no longer needed
-    set VL [lreplace $VL end end]
+	set ex [expr {[$itk_component(canvas) canvasx $_mx] / $myscale}]
+	set ey [expr {-[$itk_component(canvas) canvasy $_my] / $myscale}]
 
-    set index2 $index
+	if {$index1 != $index2} {
+	    if {!$mIgnoreMotion} {
+		# Update the vertex
+		set VL [lreplace $VL $index2 $index2 "$ex $ey"]
+	    }
+	} else {
+	    # Add a vertex
+	    set index2 [llength $VL]
+	    lappend VL "$ex $ey"
+	}
+    } else {
+	if {$index != $index2} {
+	    set mIgnoreMotion 1
+	    set prevIndex2 $index2
+	    set index2 $index
+
+	    # If not a button press
+	    if {$_state != 2} {
+		set lastv [expr {[llength $VL] - 1}]
+
+		if {$lastv == $prevIndex2} {
+		    set VL [lreplace $VL end end]
+		}
+	    }
+	}
+    }
+
     continue_line $_segment $_state 2 0 0
 }
 
@@ -1008,6 +1055,7 @@
 	set move_start_x $x
 	set move_start_y $y
     } else {
+	$itk_component(canvas) configure -cursor crosshair
 	write_sketch_to_db
     }
 }
@@ -1034,8 +1082,7 @@
 
 ::itcl::body SketchEditFrame::create_line {} {
     clear_canvas_bindings
-    bind $itk_component(canvas) <ButtonRelease-1> [code $this start_line 1 %x %y]
-    bind $itk_component(canvas) <ButtonRelease-3> [code $this start_line_pick %x %y]
+    bind $itk_component(canvas) <ButtonRelease-1> [code $this start_line %x %y]
 }
 
 
@@ -1065,6 +1112,7 @@
     set needs_saving 1
     drawSegments
 
+    $itk_component(canvas) configure -cursor {}
     $new_seg highlight
     start_arc_radius_adjust $new_seg $_mx $_my
     bind $itk_component(canvas) <B1-Motion> [code $this start_arc_radius_adjust $new_seg %x %y]
@@ -1134,6 +1182,7 @@
     set radius [::dist $s(0) $s(1) $cx $cy]
     $_segment set_vars R $radius L $center_is_left O $orient
 
+    $itk_component(canvas) configure -cursor crosshair
     drawSegments
     write_sketch_to_db
 }
@@ -1213,9 +1262,9 @@
 }
 
 
-::itcl::body SketchEditFrame::pick_arbitrary {_sx _sy} {
-    set x [$itk_component(canvas) canvasx $_sx]
-    set y [$itk_component(canvas) canvasy $_sy]
+::itcl::body SketchEditFrame::pick_arbitrary {_mx _my} {
+    set x [$itk_component(canvas) canvasx $_mx]
+    set y [$itk_component(canvas) canvasy $_my]
     set item [$itk_component(canvas) find closest $x $y]
     if {$item == ""} {
 	return -1
@@ -1225,9 +1274,9 @@
 }
 
 
-::itcl::body SketchEditFrame::pick_segment {_sx _sy} {
-    set x [$itk_component(canvas) canvasx $_sx]
-    set y [$itk_component(canvas) canvasy $_sy]
+::itcl::body SketchEditFrame::pick_segment {_mx _my} {
+    set x [$itk_component(canvas) canvasx $_mx]
+    set y [$itk_component(canvas) canvasy $_my]
     set item [$itk_component(canvas) find closest $x $y]
     if {$item == ""} {
 	return -1
@@ -1242,10 +1291,15 @@
 }
 
 
-::itcl::body SketchEditFrame::pick_vertex {_sx _sy} {
-    set x [$itk_component(canvas) canvasx $_sx]
-    set y [$itk_component(canvas) canvasy $_sy]
-    set item [$itk_component(canvas) find closest $x $y 0 first_seg]
+::itcl::body SketchEditFrame::pick_vertex {_mx _my {_tag ""}} {
+    set x [$itk_component(canvas) canvasx $_mx]
+    set y [$itk_component(canvas) canvasy $_my]
+
+    if {$_tag == ""} {
+	set item [$itk_component(canvas) find closest $x $y 0 first_seg]
+    } else {
+	set item [$itk_component(canvas) find closest $x $y 0 $_tag]
+    }
     if { $item == "" } {
 	return -1
     }
@@ -1258,17 +1312,11 @@
 
     set index [string range [lindex $tags $index] 1 end]
 
-    set sx [expr {$x / $myscale}]
-    set sy [expr {-$y / $myscale}]
-
-    # Check to see if the nearest vertex is within tolerance
+    # Check to see if the nearest vertex is within tolerance (pixels)
     set coords [$itk_component(canvas) coords p$index]
-    set cx [expr {([lindex $coords 0] + [lindex $coords 2]) / (2.0 * $myscale)}]
-    set cy [expr {-([lindex $coords 1] + [lindex $coords 3]) / (2.0 * $myscale)}]
-    set u [list $sx $sy 0]
-    set v [list $cx $cy 0]
-    set delta [::vsub2 $u $v]
-    set mag [::vmagnitude $delta]
+    set cx [expr {([lindex $coords 0] + [lindex $coords 2]) * 0.5}]
+    set cy [expr {([lindex $coords 1] + [lindex $coords 3]) * 0.5}]
+    set mag [::dist $x $y $cx $cy]
 
     if {$mag > $mPickTol} {
 	return -1
@@ -1278,8 +1326,8 @@
 }
 
 
-::itcl::body SketchEditFrame::seg_delete {_sx _sy _vflag} {
-    set item [pick_segment $_sx $_sy]
+::itcl::body SketchEditFrame::seg_delete {_mx _my _vflag} {
+    set item [pick_segment $_mx $_my]
     if {$item == -1} return
 
     set index [lsearch $segments $item]
@@ -1477,10 +1525,11 @@
 
     set radius 0.0
     set new_seg [Sketch_carc \#auto $this $itk_component(canvas) "S $index1 E $index2 R -1 L 0 O 0"]
-    lappend segments $new_seg
+    lappend segments ::SketchEditFrame::$new_seg
     set needs_saving 1
     continue_circle $new_seg 0 3 $_mx $_my
     drawSegments
+    $itk_component(canvas) configure -cursor {}
 
     clear_canvas_bindings
     bind $itk_component(canvas) <B1-Motion> [code $this continue_circle $new_seg 0 1 %x %y]
@@ -1491,56 +1540,41 @@
 }
 
 
-::itcl::body SketchEditFrame::start_line {_coord_type _mx _my} {
-    if {$_coord_type == 1} {
+::itcl::body SketchEditFrame::start_line {_mx _my} {
+    set index [pick_vertex $_mx $_my]
+    if {$index != -1} {
+	set index1 $index
+    } else {
 	# screen coords
 	#show_coords $_mx $_my
 	set sx [expr {[$itk_component(canvas) canvasx $_mx] / $myscale}]
 	set sy [expr {-[$itk_component(canvas) canvasy $_my] / $myscale}]
-    } elseif {$_coord_type == 0} {
-	# model coords
-	set sx $x_coord
-	set sy $y_coord
-    }
 
-    if {$_coord_type != 2} {
 	set index1 [llength $VL]
 	lappend VL "$sx $sy"
-	set index2 [llength $VL]
-	lappend VL "$sx $sy"
     }
+
+    set index2 $index1
 
     start_line_guts
 }
 
 
 ::itcl::body SketchEditFrame::start_line_guts {} {
+    $itk_component(canvas) configure -cursor crosshair
     set new_seg [SketchLine \#auto $this $itk_component(canvas) "S $index1 E $index2"]
-    lappend segments $new_seg
+    lappend segments ::SketchEditFrame::$new_seg
     set needs_saving 1
-    drawVertices
     drawSegments
     clear_canvas_bindings
+    set mIgnoreMotion 0
+    focus $itk_component(canvas)
+    bind $itk_component(canvas) <Escape> [code $this create_line]
     bind $itk_component(canvas) <B1-Motion> [code $this continue_line $new_seg 0 1 %x %y]
-    bind $itk_component(canvas) <ButtonPress-1> [code $this continue_line $new_seg 2 1 %x %y]
-    bind $itk_component(canvas) <ButtonRelease-1> [code $this continue_line $new_seg 1 1 %x %y]
-    bind $itk_component(canvas) <Shift-ButtonRelease-1> [code $this continue_line $new_seg 3 1 %x %y]
-    bind $itk_component(canvas) <ButtonRelease-3> [code $this continue_line_pick $new_seg 1 %x %y]
-    bind $itk_component(canvas) <Shift-ButtonRelease-3> [code $this continue_line_pick $new_seg 3 %x %y]
+    bind $itk_component(canvas) <ButtonPress-1> [code $this continue_line_pick $new_seg 2 %x %y]
+    bind $itk_component(canvas) <ButtonRelease-1> [code $this continue_line_pick $new_seg 3 %x %y]
 #    bind $itk_component(coords).x <Return> [code $this continue_line $new_seg 2 0 0 0]
 #    bind $itk_component(coords).y <Return> [code $this continue_line $new_seg 2 0 0 0]
-}
-
-
-::itcl::body SketchEditFrame::start_line_pick {_mx _my} {
-    set index [pick_vertex $_mx $_my]
-    if {$index == -1} return
-
-    set vertex [lindex $VL $index]
-    set index1 $index
-    set index2 [llength $VL]
-    lappend VL $vertex
-    start_line 2 0 0
 }
 
 
@@ -1550,6 +1584,7 @@
 
     item_pick_highlight $_sx $_sy
     $itk_component(canvas) addtag moving withtag selected
+    $itk_component(canvas) configure -cursor {}
 
     if {$curr_seg != ""} {
 	if {$_rflag && [$itk_component(canvas) type $curr_seg] == "arc" } {
@@ -1672,8 +1707,12 @@
 	return 1
     }
 
+    if {$_tol == ""} {
+	return 1
+    }
+
     if {[string is double $_tol]} {
-	if {$_tol == "" || $_tol < 0} {
+	if {$_tol < 0} {
 	    set t 0
 	} else {
 	    set t $_tol
@@ -1708,7 +1747,6 @@
 ::itcl::body SketchEditFrame::vert_is_used {_vindex} {
     foreach seg $segments {
 	if {[$seg is_vertex_used $_vindex]} {
-	    .archer0 putString "vert is being used by $seg"
 	    $seg describe
 	    return 1
 	}
