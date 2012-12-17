@@ -1,6 +1,5 @@
 
 SUBDIRS = \
-	enigma \
 	macosx \
 	pkgconfig
 

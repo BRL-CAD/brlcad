@@ -4061,9 +4061,6 @@ if test "x$build_brlcad_png" = "xyes" ; then
    AC_CONFIG_SUBDIRS([src/other/libpng])
 fi
 
-dnl configure enigma
-AC_CONFIG_SUBDIRS([misc/enigma])
-
 dnl configure tkhtml
 if test "x$build_brlcad_tkhtml" = "xyes" ; then
     ac_configure_args="$ac_configure_args --exec-prefix=\"$bc_prefix\""

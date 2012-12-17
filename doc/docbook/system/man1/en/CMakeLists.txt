@@ -233,7 +233,6 @@ set(docbook_man1_EN
   benchmark.xml
   pixcmp.xml
   brlcad-config.xml
-  enigma.xml
   )
 
 # Some DocBook man pages generate multiple output files, if they
