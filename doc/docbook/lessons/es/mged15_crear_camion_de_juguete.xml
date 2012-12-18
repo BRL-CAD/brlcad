@@ -261,7 +261,7 @@
 
 	<command> make well1.s rcc [Enter] </command>
 
-	En el menú Edit (Edición), diríjase a Primitive Seletion (Selección
+	En el menú Edit (Edición), diríjase a Primitive Selection (Selección
 	de primitivos) y luego seleccione well1.s. Aplique la vista izquierda, 		vuelva a Edit (Editar) y seleccione Scale (Escala). Reduzca el tamaño
 	del rcc, hasta que su diámetro sea el indicado para la rueda.
 	Regrese a Edit (Edición) y seleccione Rotate (Rotación). Como se ha

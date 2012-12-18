@@ -595,7 +595,7 @@
 
       <para>
 	En general, la tecla SHIFT translada (mueve), el CTRL rota, y el ALT
-	limita las traslaciones o rotaciones a un eje particual (x, y, o z).
+	limita las traslaciones o rotaciones a un eje particular (x, y, o z).
 	Los ejes corresponden a los tres botones del mouse de la siguiente
 	forma: el botón izquierdo para el eje x, el del medio para el eje y y
 	el derecho para el eje z. Además, las teclas SHIFT y CTRL pueden

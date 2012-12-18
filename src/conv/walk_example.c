@@ -269,7 +269,7 @@ int main(int ac, char *av[])
     }
 
     /*
-     *  Build an index of what's in the databse.
+     *  Build an index of what's in the database.
      *  rt_dirbuild() returns an "instance" pointer which describes
      *  the database.  It also gives you back the
      *  title string in the header (ID) record.

@@ -88,7 +88,7 @@ main(int argc, char **argv)
     }
 
     if ( db_version(dbip) != 4 ) {
-	bu_log( "Input database must be a version 4 datbase!!!!\n" );
+	bu_log( "Input database must be a version 4 database!!!!\n" );
 	return 4;
     }
 
