@@ -2182,12 +2182,12 @@ BU_EXPORT extern int bu_debug;
  * probably shouldn't use this technique.
  */
 struct bu_structparse {
-    char sp_fmt[4];		/**< "%i" or "%f", etc. */
+    const char sp_fmt[4];		/**< "%i" or "%f", etc. */
     size_t sp_count;		/**< number of elements */
-    char *sp_name;		/**< Element's symbolic name */
+    const char *sp_name;		/**< Element's symbolic name */
     size_t sp_offset;		/**< Byte offset in struct */
     void (*sp_hook)();		/**< Optional hooked function, or indir ptr */
-    char *sp_desc;		/**< description of element */
+    const char *sp_desc;		/**< description of element */
     void *sp_default;		/**< ptr to default value */
 };
 typedef struct bu_structparse bu_structparse_t;

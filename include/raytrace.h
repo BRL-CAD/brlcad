@@ -1632,7 +1632,7 @@ struct application {
     int			a_level;	/**< @brief  recursion level (for printing) */
     int			a_x;		/**< @brief  Screen X of ray, if applicable */
     int			a_y;		/**< @brief  Screen Y of ray, if applicable */
-    char *		a_purpose;	/**< @brief  Debug string:  purpose of ray */
+    const char *	a_purpose;	/**< @brief  Debug string:  purpose of ray */
     fastf_t		a_rbeam;	/**< @brief  initial beam radius (mm) */
     fastf_t		a_diverge;	/**< @brief  slope of beam divergence/mm */
     int			a_return;	/**< @brief  Return of a_hit()/a_miss() */
@@ -1923,9 +1923,9 @@ struct rt_i {
  * Table for driving generic command-parsing routines
  */
 struct command_tab {
-    char *ct_cmd;
-    char *ct_parms;
-    char *ct_comment;
+    const char *ct_cmd;
+    const char *ct_parms;
+    const char *ct_comment;
     int	(*ct_func)();
     int	ct_min;		/**< @brief  min number of words in cmd */
     int	ct_max;		/**< @brief  max number of words in cmd */
