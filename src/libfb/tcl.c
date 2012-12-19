@@ -282,7 +282,7 @@ fb_cmd_close_existing(ClientData UNUSED(clientData), int argc, const char **argv
 
 void
 #if !defined(IF_X) && !defined(IF_WGL) && !defined(IF_OGL) && !defined(IF_TK)
-fb_configureWindow(FBIO *UNUSED(ifp), int UNUSED(width), int UNUSED(height))
+fb_configureWindow(FBIO *ifp, int UNUSED(width), int UNUSED(height))
 #else
 fb_configureWindow(FBIO *ifp, int width, int height)
 #endif
