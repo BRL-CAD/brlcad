@@ -94,6 +94,9 @@
 	variable SL {}
 
 	variable mPickTol 11
+	variable mLastIndex -1
+	variable mEscapeCreate 1
+	variable mCallingFromEndBezier 0
 	variable myscale 1.0
 	variable vert_radius 3
 	variable tobase 1.0
@@ -162,8 +165,12 @@
 	method create_line {}
 	method end_arc {_mx _my}
 	method end_arc_radius_adjust {_segment _mx _my}
-	method end_bezier {_segment}
+	method end_bezier {_segment _cflag}
+	method escape_arc {}
+	method escape_bezier {_segment}
+	method escape_line {}
 	method fix_vertex_references {_unused_vindices}
+	method handle_escape {}
 	method item_pick_highlight {_sx _sy}
 	method next_bezier {_segment _mx _my}
 	method pick_arbitrary {_mx _my}
@@ -180,7 +187,7 @@
 	method start_bezier {_x _y}
 	method start_circle {_coord_type _x _y}
 	method start_line {_x _y}
-	method start_line_guts {}
+	method start_line_guts {{_mx ""} {_my ""}}
 	method start_move_arbitrary {_sx _sy _rflag}
 	method start_move_point {_sx _sy}
 	method start_move_segment {_sx _sy _rflag}
@@ -212,6 +219,9 @@
     itk_component add canvas {
 	::canvas $parent.sketchcanvas
     }
+
+    bind $itk_component(canvas) <Enter> {::focus %W}
+    bind $itk_component(canvas) <Escape> [::itcl::code $this handle_escape]
 
     set tolocal [$::ArcherCore::application gedCmd base2local]
     set tobase [expr {1.0 / $tolocal}]
@@ -314,6 +324,10 @@
     createSegments
     drawSegments
     clear_canvas_bindings
+    set mEscapeCreate 1
+    set mEditMode 0
+    set mPrevEditMode 0
+    set mLastIndex -1
 
     update idletasks
     set canv_height [winfo height $itk_component(canvas)]
@@ -328,24 +342,6 @@
     } else {
 	do_scale $tmp_scale2
     }
-
-    return
-
-    loadTables $_gdata
-
-    GeometryEditFrame::initGeometry $_gdata
-
-    if {$itk_option(-geometryObject) != $itk_option(-prevGeometryObject)} {
-	set mCurrentSketchPoints ""
-	set mCurrentSketchEdges ""
-	set mCurrentSketchFaces ""
-	set itk_option(-prevGeometryObject) $itk_option(-geometryObject)
-
-	$itk_component(edgeTab) unselectAllRows
-	$itk_component(faceTab) unselectAllRows
-    }
-
-    selectCurrentSketchPoints
 }
 
 
@@ -821,6 +817,12 @@
 
 
 ::itcl::body SketchEditFrame::clear_canvas_bindings {} {
+    bind $itk_component(canvas) <a> [::itcl::code $this create_arc]
+    bind $itk_component(canvas) <b> [::itcl::code $this create_bezier]
+    bind $itk_component(canvas) <c> [::itcl::code $this create_circle]
+    bind $itk_component(canvas) <l> [::itcl::code $this create_line]
+    bind $itk_component(canvas) <m> [::itcl::code $this setup_move_arbitrary]
+
     bind $itk_component(canvas) <B1-Motion> {}
     bind $itk_component(canvas) <ButtonPress-1> {}
     bind $itk_component(canvas) <Shift-ButtonPress-1> {}
@@ -932,7 +934,7 @@
 	    set ex [expr {[$itk_component(canvas) canvasx $_mx] / $myscale}]
 	    set ey [expr {-[$itk_component(canvas) canvasy $_my] / $myscale}]
 
-	    if {$_state == 2} {
+	    if {$_state == 1} {
 		# need to create a new vertex
 		set index2 [llength $VL]
 		lappend VL "$ex $ey"
@@ -955,26 +957,9 @@
     $_segment draw ""
     $itk_component(canvas) configure -scrollregion [$itk_component(canvas) bbox all]
 
-    if {$_state == 1} {
+    if {$_state == 2} {
 	$itk_component(canvas) configure -cursor crosshair
 	create_line
-	write_sketch_to_db
-    } elseif {$_state == 3} {
-	set vert [lindex $VL $index2]
-	set ex [lindex $vert 0]
-	set ey [lindex $vert 1]
-
-	if {$_coord_type != 2} {
-	    # The new segment is using a new vertex for its start point
-	    set index1 [expr {[llength $VL] - 1}]
-	} else {
-	    # The new segment is using an existing vertex for its start point
-	    set index1 $index2
-	}
-
-	set index2 $index1
-
-	start_line_guts
 	write_sketch_to_db
     }
 
@@ -985,7 +970,7 @@
 ::itcl::body SketchEditFrame::continue_line_pick {_segment _state _mx _my} {
     set index [pick_vertex $_mx $_my p$index2]
     if {$index == -1} {
-	if {$_state == 2} {
+	if {$_state == 1} {
 	    $itk_component(canvas) configure -cursor {}
 	}
 
@@ -1009,7 +994,7 @@
 	    set index2 $index
 
 	    # If not a button press
-	    if {$_state != 2} {
+	    if {$_state != 1} {
 		set lastv [expr {[llength $VL] - 1}]
 
 		if {$lastv == $prevIndex2} {
@@ -1062,27 +1047,78 @@
 
 
 ::itcl::body SketchEditFrame::create_arc {} {
+    set mEditMode $createArc
+
+    if {$mPrevEditMode == $createBezier} {
+	end_bezier $curr_seg 0
+	set curr_seg ""
+    }
+
     clear_canvas_bindings
-    bind $itk_component(canvas) <ButtonRelease-1> [code $this start_arc %x %y]
+
+    if {$mEscapeCreate} {
+	bind $itk_component(canvas) <ButtonRelease-1> [::itcl::code $this start_arc %x %y]
+    } else {
+	set mLastIndex $index2
+	bind $itk_component(canvas) <ButtonPress-1> [::itcl::code $this start_arc %x %y]
+    }
+
+    set mPrevEditMode $mEditMode
 }
 
 
 ::itcl::body SketchEditFrame::create_bezier {} {
+    set mEditMode $createBezier
+
+    if {$mPrevEditMode == $createBezier && !$mCallingFromEndBezier} {
+	end_bezier $curr_seg 0
+	set curr_seg ""
+    }
+
     set bezier_indices ""
     clear_canvas_bindings
-    bind $itk_component(canvas) <ButtonRelease-1> [code $this start_bezier %x %y]
+    bind $itk_component(canvas) <ButtonPress-1> [::itcl::code $this start_bezier %x %y]
+
+    set mPrevEditMode $mEditMode
 }
 
 
 ::itcl::body SketchEditFrame::create_circle {} {
+    set mEditMode $createCircle
+
+    if {$mPrevEditMode == $createBezier} {
+	end_bezier $curr_seg 0
+	set curr_seg ""
+    }
+
     clear_canvas_bindings
-    bind $itk_component(canvas) <ButtonPress-1> [code $this start_circle 1 %x %y]
+    bind $itk_component(canvas) <ButtonPress-1> [::itcl::code $this start_circle 1 %x %y]
+
+    set mPrevEditMode $mEditMode
+    set mLastIndex -1
+    set mEscapeCreate 1
 }
 
 
 ::itcl::body SketchEditFrame::create_line {} {
+    set mEditMode $createLine
+
+    if {$mPrevEditMode == $createBezier} {
+	end_bezier $curr_seg 0
+	set curr_seg ""
+	set index2 $mLastIndex
+    }
+
     clear_canvas_bindings
-    bind $itk_component(canvas) <ButtonRelease-1> [code $this start_line %x %y]
+
+    if {$mEscapeCreate} {
+	bind $itk_component(canvas) <ButtonRelease-1> [::itcl::code $this start_line %x %y]
+    } else {
+	set mLastIndex $index2
+	bind $itk_component(canvas) <ButtonPress-1> [::itcl::code $this start_line %x %y]
+    }
+
+    set mPrevEditMode $mEditMode
 }
 
 
@@ -1098,6 +1134,7 @@
     }
 
     set index2 $index
+    set mLastIndex $index2
 
     # calculate an initial radius
     set s [lindex $VL $index1]
@@ -1115,24 +1152,43 @@
     $itk_component(canvas) configure -cursor {}
     $new_seg highlight
     start_arc_radius_adjust $new_seg $_mx $_my
-    bind $itk_component(canvas) <B1-Motion> [code $this start_arc_radius_adjust $new_seg %x %y]
-    bind $itk_component(canvas) <ButtonRelease-1> "[code $this end_arc_radius_adjust $new_seg %x %y]; [code $this create_arc]"
-#    bind $itk_component(coords).radius <Return> [code $this set_arc_radius_end $new_seg 0 0 0]
+    bind $itk_component(canvas) <B1-Motion> [::itcl::code $this start_arc_radius_adjust $new_seg %x %y]
+    bind $itk_component(canvas) <ButtonRelease-1> "[::itcl::code $this end_arc_radius_adjust $new_seg %x %y]; [::itcl::code $this create_arc]"
+#    bind $itk_component(coords).radius <Return> [::itcl::code $this set_arc_radius_end $new_seg 0 0 0]
 }
 
 
-::itcl::body SketchEditFrame::end_bezier {_segment} {
-#    drawSegments
+::itcl::body SketchEditFrame::end_bezier {_segment _cflag} {
     clear_canvas_bindings
 
-    if {[llength $bezier_indices] < 2} {
-	$::ArcherCore::application putString "A Bezier curve must have at least two points"
-	set bezier_indices ""
+    set bi_len [llength $bezier_indices] 
+
+    if {$bi_len < 2} {
 	return
+    } elseif {$bi_len == 2 && [lindex $bezier_indices 0] == [lindex $bezier_indices 1]} {
+	set index [lsearch $segments ::SketchEditFrame::$_segment]
+	set segments [lreplace $segments $index $index]
+	$itk_component(canvas) delete ::SketchEditFrame::$_segment
+
+	set vindex [lindex $bezier_indices 0]
+	if {![vert_is_used $vindex]} {
+	    set VL [lreplace $VL $vindex $vindex]
+	    drawVertices
+	}
+
+	set bezier_indices ""
+    } else {
+	set mLastIndex [lindex $bezier_indices end]
     }
 
+    set curr_seg ""
     write_sketch_to_db
-    create_bezier
+
+    if {$_cflag} {
+	set mCallingFromEndBezier 1
+	create_bezier
+	set mCallingFromEndBezier 0
+    }
 }
 
 
@@ -1196,6 +1252,41 @@
 }
 
 
+::itcl::body SketchEditFrame::handle_escape {} {
+    switch -- $mEditMode \
+	$moveArbitrary {
+	    # nothing yet
+	} \
+	$moveSelected {
+	    # nothing yet
+	} \
+	$selectPoints {
+	    # nothing yet
+	} \
+	$selectSegments {
+	    # nothing yet
+	} \
+	$createLine {
+	    set mEscapeCreate 1
+	    set mLastIndex -1
+	    create_line
+	} \
+	$createCircle {
+	    # nothing yet
+	} \
+	$createArc {
+	    set mEscapeCreate 1
+	    set mLastIndex -1
+	    create_arc
+	} \
+	$createBezier {
+	    set mEscapeCreate 1
+	    end_bezier $curr_seg 1
+	    set mLastIndex -1
+	}
+}
+
+
 ::itcl::body SketchEditFrame::item_pick_highlight {_sx _sy} {
     set item [pick_arbitrary $_sx $_sy]
     if {$item == -1} return
@@ -1239,7 +1330,8 @@
     set index [pick_vertex $_mx $_my]
     if {$index != -1} {
 	if {[llength $bezier_indices] == 2 && [lindex $bezier_indices 0] == [lindex $bezier_indices 1]} {
-	    set bezier_indices [lrange $bezier_indices 0 0]
+	    set bezier_indices [lindex $bezier_indices 0]
+	    set needs_saving 1
 	}
 	lappend bezier_indices $index
     } else {
@@ -1249,7 +1341,8 @@
 	set sy [expr {-[$itk_component(canvas) canvasy $_my] / $myscale}]
 
 	if {[llength $bezier_indices] == 2 && [lindex $bezier_indices 0] == [lindex $bezier_indices 1]} {
-	    set bezier_indices [lrange $bezier_indices 0 0]
+	    set bezier_indices [lindex $bezier_indices 0]
+	    set needs_saving 1
 	}
 	lappend bezier_indices [llength $VL]
 	lappend VL "$sx $sy"
@@ -1345,7 +1438,7 @@
 	fix_vertex_references $unused_vindices
     }
 
-    ::destroy $item
+    ::itcl::delete object $item
     write_sketch_to_db
 }
 
@@ -1371,12 +1464,21 @@
 
 
 ::itcl::body SketchEditFrame::setup_move_arbitrary {} {
+    set mEditMode $moveArbitrary
+
+    if {$mPrevEditMode == $createBezier} {
+	end_bezier $curr_seg 0
+	set curr_seg ""
+    }
+
     $itk_component(canvas) dtag moving moving
     unhighlight_selected
 
     clear_canvas_bindings
     bind $itk_component(canvas) <ButtonPress-1> [::itcl::code $this start_move_arbitrary %x %y 0]
     bind $itk_component(canvas) <Shift-ButtonPress-1> [::itcl::code $this start_move_segment %x %y 1]
+
+    set mPrevEditMode $mEditMode
 }
 
 
@@ -1451,53 +1553,71 @@
 
 
 ::itcl::body SketchEditFrame::start_arc {_mx _my} {
-    set index [pick_vertex $_mx $_my]
-    if {$index != -1} {
-	set index1 $index
-    } else {
-	# screen coords
-	#show_coords $_mx $_my
-	set sx [expr {[$itk_component(canvas) canvasx $_mx] / $myscale}]
-	set sy [expr {-[$itk_component(canvas) canvasy $_my] / $myscale}]
+    set mEscapeCreate 0
 
-	set index1 [llength $VL]
-	lappend VL "$sx $sy"
-	drawVertices
+    if {$mLastIndex != -1} {
+	set index1 $mLastIndex
+	end_arc $_mx $_my
+    } else {
+	set index [pick_vertex $_mx $_my]
+	if {$index != -1} {
+	    set index1 $index
+	} else {
+	    # screen coords
+	    #show_coords $_mx $_my
+	    set sx [expr {[$itk_component(canvas) canvasx $_mx] / $myscale}]
+	    set sy [expr {-[$itk_component(canvas) canvasy $_my] / $myscale}]
+
+	    set index1 [llength $VL]
+	    lappend VL "$sx $sy"
+	    drawVertices
+	}
     }
 
-    bind $itk_component(canvas) <ButtonPress-1> [code $this end_arc %x %y]
-#    bind $itk_component(coords).x <Return> [code $this end_arc 0 0 0]
-#    bind $itk_component(coords).y <Return> [code $this end_arc 0 0 0]
+    bind $itk_component(canvas) <ButtonPress-1> [::itcl::code $this end_arc %x %y]
+#    bind $itk_component(coords).x <Return> [::itcl::code $this end_arc 0 0 0]
+#    bind $itk_component(coords).y <Return> [::itcl::code $this end_arc 0 0 0]
 }
 
 
 ::itcl::body SketchEditFrame::start_bezier {_mx _my} {
+    set mEscapeCreate 0
+
     set index [pick_vertex $_mx $_my]
     if {$index != -1} {
-	set bezier_indices $index
+	if {$mLastIndex != -1} {
+	    set bezier_indices [list $mLastIndex $index]
+	} else {
+	    set bezier_indices $index
+	}
     } else {
 	# screen coords
 	#show_coords $_mx $_my
 	set sx [expr {[$itk_component(canvas) canvasx $_mx] / $myscale}]
 	set sy [expr {-[$itk_component(canvas) canvasy $_my] / $myscale}]
 
-	set bezier_indices [llength $VL]
+
+	if {$mLastIndex != -1} {
+	    set bezier_indices [list $mLastIndex [llength $VL]]
+	} else {
+	    set bezier_indices [llength $VL]
+	    lappend bezier_indices $bezier_indices
+	}
+
 	lappend VL "$sx $sy"
 	drawVertices
     }
 
-    lappend bezier_indices $bezier_indices
-    set new_seg [Sketch_bezier \#auto $this $itk_component(canvas) \
+    set curr_seg [Sketch_bezier \#auto $this $itk_component(canvas) \
 		     "D [expr [llength $bezier_indices] - 1] P [list $bezier_indices]"]
-    lappend segments ::SketchEditFrame::$new_seg
-    set needs_saving 1
-    drawSegments
+    lappend segments ::SketchEditFrame::$curr_seg
+    $curr_seg draw ""
 
     # setup to pick next bezier point
-    bind $itk_component(canvas) <ButtonRelease-1> [code $this next_bezier $new_seg %x %y]
-    bind $itk_component(canvas) <ButtonRelease-2> [code $this end_bezier $new_seg]
-#    bind $itk_component(coords).x <Return> [code $this next_bezier $new_seg 0 0 0]
-#    bind $itk_component(coords).y <Return> [code $this next_bezier $new_seg 0 0 0]
+    bind $itk_component(canvas) <ButtonPress-1> [::itcl::code $this next_bezier $curr_seg %x %y]
+
+#    bind $itk_component(coords).x <Return> [::itcl::code $this next_bezier $curr_seg 0 0 0]
+#    bind $itk_component(coords).y <Return> [::itcl::code $this next_bezier $curr_seg 0 0 0]
 }
 
 
@@ -1532,35 +1652,49 @@
     $itk_component(canvas) configure -cursor {}
 
     clear_canvas_bindings
-    bind $itk_component(canvas) <B1-Motion> [code $this continue_circle $new_seg 0 1 %x %y]
-    bind $itk_component(canvas) <ButtonRelease-1> [code $this continue_circle_pick $new_seg %x %y]
-#    bind $itk_component(coords).x <Return> [code $this continue_circle $new_seg 1 0 0 0]
-#    bind $itk_component(coords).y <Return> [code $this continue_circle $new_seg 1 0 0 0]
-#    bind $itk_component(coords).radius <Return> [code $this continue_circle $new_seg 1 2 0 0]
+    bind $itk_component(canvas) <B1-Motion> [::itcl::code $this continue_circle $new_seg 0 1 %x %y]
+    bind $itk_component(canvas) <ButtonRelease-1> [::itcl::code $this continue_circle_pick $new_seg %x %y]
+#    bind $itk_component(coords).x <Return> [::itcl::code $this continue_circle $new_seg 1 0 0 0]
+#    bind $itk_component(coords).y <Return> [::itcl::code $this continue_circle $new_seg 1 0 0 0]
+#    bind $itk_component(coords).radius <Return> [::itcl::code $this continue_circle $new_seg 1 2 0 0]
 }
 
 
 ::itcl::body SketchEditFrame::start_line {_mx _my} {
-    set index [pick_vertex $_mx $_my]
-    if {$index != -1} {
-	set index1 $index
+    set mEscapeCreate 0
+
+    if {$mLastIndex != -1} {
+	set index [pick_vertex $_mx $_my]
+	if {$index == $mLastIndex} {
+	    return
+	}
+
+	set index1 $mLastIndex
+	set index2 $index1
+	set mLastIndex -1
+	start_line_guts $_mx $_my
     } else {
-	# screen coords
-	#show_coords $_mx $_my
-	set sx [expr {[$itk_component(canvas) canvasx $_mx] / $myscale}]
-	set sy [expr {-[$itk_component(canvas) canvasy $_my] / $myscale}]
+	set index [pick_vertex $_mx $_my]
+	if {$index != -1} {
+	    set index1 $index
+	} else {
+	    # screen coords
+	    #show_coords $_mx $_my
+	    set sx [expr {[$itk_component(canvas) canvasx $_mx] / $myscale}]
+	    set sy [expr {-[$itk_component(canvas) canvasy $_my] / $myscale}]
 
-	set index1 [llength $VL]
-	lappend VL "$sx $sy"
+	    set index1 [llength $VL]
+	    lappend VL "$sx $sy"
+	}
+
+	set index2 $index1
+
+	start_line_guts
     }
-
-    set index2 $index1
-
-    start_line_guts
 }
 
 
-::itcl::body SketchEditFrame::start_line_guts {} {
+::itcl::body SketchEditFrame::start_line_guts {{_mx ""} {_my ""}} {
     $itk_component(canvas) configure -cursor crosshair
     set new_seg [SketchLine \#auto $this $itk_component(canvas) "S $index1 E $index2"]
     lappend segments ::SketchEditFrame::$new_seg
@@ -1568,13 +1702,16 @@
     drawSegments
     clear_canvas_bindings
     set mIgnoreMotion 0
-    focus $itk_component(canvas)
-    bind $itk_component(canvas) <Escape> [code $this create_line]
-    bind $itk_component(canvas) <B1-Motion> [code $this continue_line $new_seg 0 1 %x %y]
-    bind $itk_component(canvas) <ButtonPress-1> [code $this continue_line_pick $new_seg 2 %x %y]
-    bind $itk_component(canvas) <ButtonRelease-1> [code $this continue_line_pick $new_seg 3 %x %y]
-#    bind $itk_component(coords).x <Return> [code $this continue_line $new_seg 2 0 0 0]
-#    bind $itk_component(coords).y <Return> [code $this continue_line $new_seg 2 0 0 0]
+
+    bind $itk_component(canvas) <B1-Motion> [::itcl::code $this continue_line $new_seg 0 1 %x %y]
+    bind $itk_component(canvas) <ButtonPress-1> [::itcl::code $this continue_line_pick $new_seg 1 %x %y]
+    bind $itk_component(canvas) <ButtonRelease-1> [::itcl::code $this continue_line_pick $new_seg 2 %x %y]
+#    bind $itk_component(coords).x <Return> [::itcl::code $this continue_line $new_seg 2 0 0 0]
+#    bind $itk_component(coords).y <Return> [::itcl::code $this continue_line $new_seg 2 0 0 0]
+
+    if {$_mx != "" && $_my != ""} {
+	continue_line_pick $new_seg 1 $_mx $_my
+    }
 }
 
 
@@ -1649,9 +1786,9 @@
     unhighlight_selected
 
     clear_canvas_bindings
-    bind $itk_component(canvas) <ButtonPress-1> [code $this seg_pick_highlight %x %y]
-    bind $itk_component(canvas) <Shift-ButtonPress-1> [code $this seg_delete %x %y 0]
-    bind $itk_component(canvas) <Control-Shift-ButtonPress-1> [code $this seg_delete %x %y 1]
+    bind $itk_component(canvas) <ButtonPress-1> [::itcl::code $this seg_pick_highlight %x %y]
+    bind $itk_component(canvas) <Shift-ButtonPress-1> [::itcl::code $this seg_delete %x %y 0]
+    bind $itk_component(canvas) <Control-Shift-ButtonPress-1> [::itcl::code $this seg_delete %x %y 1]
 }
 
 
@@ -1661,7 +1798,7 @@
 
     clear_canvas_bindings
     bind $itk_component(canvas) <ButtonPress-1> [::itcl::code $this vert_pick_highlight %x %y]
-    bind $itk_component(canvas) <Shift-ButtonPress-1> [code $this vert_delete %x %y]
+    bind $itk_component(canvas) <Shift-ButtonPress-1> [::itcl::code $this vert_delete %x %y]
 }
 
 
