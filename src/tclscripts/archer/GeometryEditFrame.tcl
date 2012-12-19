@@ -52,6 +52,7 @@
 	common EDIT_CLASS_TRANS 3
 
 	common mEditMode 0
+	common mPrevEditMode 0
 	common mEditClass $EDIT_CLASS_NONE
 	common mEditCommand ""
 	common mEditParam1 0
