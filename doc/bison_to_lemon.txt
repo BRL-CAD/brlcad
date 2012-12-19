@@ -92,7 +92,7 @@ If YYERRORSYMBOL is defined, then YYNOERRORRECOVER MUST NOT be defined. The diff
  Parser Resets on Fail| no		  | yes		 | yes
 
 Strategy:
-	The normal strategy is to ignore input tokens util valid input is
+	The normal strategy is to ignore input tokens until valid input is
 	found and parsing can continue. However, if YYERRORSYMBOL is defined,
 	the parser pops tokens from the stack until the special non-terminal
 	'error' can be shifted onto the stack and parsing can continue.

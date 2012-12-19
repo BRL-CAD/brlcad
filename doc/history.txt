@@ -60,7 +60,7 @@ In terms of geometrical representation of data, BRL-CAD supports:
 	Utah spline (Non-Uniform Rational B-Spline [NURB] Surface)
 	developed under NSF and DARPA sponsorship
 
-	a facetted data representation, (called PATCH),
+	a faceted data representation, (called PATCH),
 	developed by Falcon/Denver
 	Research Institute and used by the Navy and Air Force for
 	vulnerability and signature calculations (> 200 target

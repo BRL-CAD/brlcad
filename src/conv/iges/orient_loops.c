@@ -230,7 +230,7 @@ Orient_nurb_face_loops(fu)
 
 	/* if area is in +Z-direction loop encloses area counter-clockwise
 	 * and must be OT_SAME. if area is in -Z-direction, loop encloses
-	 * area in clockwise direction nad must be OT_OPPOOSITE
+	 * area in clockwise direction and must be OT_OPPOOSITE
 	 */
 	if ((loop_uv_orient == OT_SAME && !flipped) ||
 	    (loop_uv_orient == OT_OPPOSITE && flipped)) {

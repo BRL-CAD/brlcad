@@ -72,7 +72,7 @@ objects specified on the command line of the call to
 <emphasis remap='I'>rt,</emphasis>
 then the objectname "tank/turret/hatch1" or simply "turret/hatch1" would be used to
 animate the hatch. The tank itself would be referred to by the name,
-"/tank". Note that toplevel objects should be preceded by a slash.
+"/tank". Note that top-level objects should be preceded by a slash.
 If view animation is being performed, no objectname
 should be included.</para>
 

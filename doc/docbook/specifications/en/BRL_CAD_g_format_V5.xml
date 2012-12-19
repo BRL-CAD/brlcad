@@ -98,7 +98,7 @@
 	</listitem>
 	<listitem>
 	  <para>
-	    <emphasis>combinations</emphasis> - the nonminimal elements of the DAG,
+	    <emphasis>combinations</emphasis> - the non-minimal elements of the DAG,
 	    some of which are specially marked as regions. The maximal
 	    elements of the DAG are called tops.
 	  </para>
@@ -1549,7 +1549,7 @@ aname1 NULL value1 NULL ... anameN NULL valueN NULL NULL
 	  <listitem>
 	    <para>
 	      giftmater = For regions, GIFT compatibility. Integer. (Point of Discussion?????Should we use negative values for
-	      air codes, positive for nonair, so we can eliminate air codes?)
+	      air codes, positive for non-air, so we can eliminate air codes?)
 	    </para>
 	  </listitem>
 	  <listitem>

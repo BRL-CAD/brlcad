@@ -62,7 +62,7 @@ echo $TMP
 rm -f $2
 trap "rm -f $TMP; exit 1"  1 2 3 15
 
-# Check to see that the output file is writeable.  If not, complain and
+# Check to see that the output file is writable.  If not, complain and
 # abort
 
 if touch $2

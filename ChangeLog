@@ -48,7 +48,7 @@
 	  parent
 	  doc for changed paths)
 	  added missing AUTHOR, COPYRIGHT, and BUG REPORTS sections
-	  deleted any suprious, single quotation marks in header comments
+	  deleted any spurious, single quotation marks in header comments
 	  corrected internal file names where needed
 	  ensured AUTHOR, COPYRIGHT, and BUG REPORTS sections are at the
 	  end
@@ -188,7 +188,7 @@
 	  parent
 	  doc for changed paths)
 	  added missing AUTHOR, COPYRIGHT, and BUG REPORTS sections
-	  deleted any suprious, single quotation marks in header comments
+	  deleted any spurious, single quotation marks in header comments
 	  corrected internal file names where needed
 	  ensured AUTHOR, COPYRIGHT, and BUG REPORTS sections are at the
 	  end

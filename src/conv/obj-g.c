@@ -135,7 +135,7 @@ static int verbose = 0;
 #define GRP_GROUP    1 /* create bot for each obj file 'g' grouping */
 #define GRP_OBJECT   2 /* create bot for each obj file 'o' grouping */
 #define GRP_MATERIAL 3 /* create bot for each obj file 'usemtl' grouping */
-#define GRP_TEXTURE  4 /* create bot for eacg obj file 'usemap' grouping */
+#define GRP_TEXTURE  4 /* create bot for each obj file 'usemap' grouping */
 
 /* face type */
 #define FACE_V    1 /* polygonal faces only identified by vertices */
@@ -202,7 +202,7 @@ struct gfi_t {
     short int closure_status;         /* i.e. SURF_UNTESTED, SURF_CLOSED, SURF_OPEN */
     size_t tot_vertices;              /* sum of contents of num_vertices_arr. note: if the face_type
 				       * includes normals and/or texture vertices, each vertex must have
-				       * an associated normal and/or texture vertice. therefore this
+				       * an associated normal and/or texture vertices. therefore this
 				       * total is also the total of the associated normals and/or texture
 				       * vertices.
 				       */
