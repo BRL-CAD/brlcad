@@ -42,6 +42,11 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* add option to push/xpush to stop at the region level, to stop before
+  primitives, to stop after N levels, to stop before N levels.
+
+* consolidate push/xpush together
+
 * make rt_dirbuild()+rt_dirbuild() work without vomiting error
   messages about duplicate geometry.  should be able to open the same
   database multiple times without running into rt_uniresource
@@ -743,10 +748,6 @@ comp.r4 ID 5678 material code 5 LOS 75
   all supported dump formats (obj, dxf, etc.) optionally write out
   normals.  Consider adding an option to smoothly interpolate normals
   (per face or vertex).
-
-* add option to push/xpush to stop at the region level.
-
-* consolidate push/xpush together
 
 * modify g_qa to search for >1 region flag in a tree path.
 
