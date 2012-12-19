@@ -4365,7 +4365,7 @@ sedit(void)
 				      " \"BOT Flags\"",
 				      " \"Select the desired flags\"",
 				      " { {Use vertex normals} {Use single precision ray-tracing} }",
-				      " { {This selection indicates that surface normals at hit points should be interpolated from vertex normals} {This selection indicates that the prepped form of the BOT triangles should use sigle precision to save memory} } ",
+				      " { {This selection indicates that surface normals at hit points should be interpolated from vertex normals} {This selection indicates that the prepped form of the BOT triangles should use single precision to save memory} } ",
 				      (char *)NULL);
 		if (ret_tcl != TCL_OK) {
 		    bu_log("ERROR: cad_list_buts: %s\n", Tcl_GetStringResult(INTERP));

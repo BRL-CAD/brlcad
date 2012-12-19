@@ -82,7 +82,7 @@ persp_mat(mat_t m, fastf_t fovy, fastf_t aspect, fastf_t near1, fastf_t far1, fa
 /*
  *
  * Create a perspective matrix that transforms the +/1 viewing cube,
- * with the acutal eye position (not at Z=+1) specified in viewing coords,
+ * with the actual eye position (not at Z=+1) specified in viewing coords,
  * into a related space where the eye has been sheared onto the Z axis
  * and repositioned at Z=(0, 0, 1), with the same perspective field of view
  * as before.
