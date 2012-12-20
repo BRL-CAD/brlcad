@@ -66,12 +66,15 @@ extern "C++" {
     public:
 	dvec(double s);
 	dvec(const double* vals);
+	dvec(const float* vals);
 	dvec(const dvec<LEN>& p);
 
 	dvec<LEN>& operator=(const dvec<LEN>& p);
 	double operator[](int index) const;
 	void u_store(double* arr) const;
+	void u_store(float* arr) const;
 	void a_store(double* arr) const;
+	void a_store(float* arr) const;
 
 	bool operator==(const dvec<LEN>& b) const;
 
