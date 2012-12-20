@@ -1,8 +1,9 @@
 /* $NoKeywords: $ */
 /*
 //
-// Copyright (c) 1993-2007 Robert McNeel & Associates. All rights reserved.
-// Rhinoceros is a registered trademark of Robert McNeel & Assoicates.
+// Copyright (c) 1993-2012 Robert McNeel & Associates. All rights reserved.
+// OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
+// McNeel & Associates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
@@ -41,7 +42,7 @@ void ON_Group::Dump( ON_TextLog& dump ) const
   if ( !name )
     name = L"";
   dump.Print("group index = %d\n",m_group_index);
-  dump.Print("group name = \"%S\"\n",name);
+  dump.Print("group name = \"%ls\"\n",name);
 }
 
 ON_BOOL32 ON_Group::Write(

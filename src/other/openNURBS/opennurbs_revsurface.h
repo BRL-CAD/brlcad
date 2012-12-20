@@ -1,8 +1,9 @@
 /* $NoKeywords: $ */
 /*
 //
-// Copyright (c) 1993-2007 Robert McNeel & Associates. All rights reserved.
-// Rhinoceros is a registered trademark of Robert McNeel & Assoicates.
+// Copyright (c) 1993-2012 Robert McNeel & Associates. All rights reserved.
+// OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
+// McNeel & Associates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
@@ -156,11 +157,6 @@ public:
   // overrides of virtual ON_Surface functions
   //
   
-  ON_Mesh* CreateMesh( 
-             const ON_MeshParameters& mp,
-             ON_Mesh* mesh = NULL
-             ) const;
-
   ON_BOOL32 SetDomain( 
     int dir, // 0 sets first parameter's domain, 1 gets second parameter's domain
     double t0, 
@@ -348,7 +344,7 @@ public:
                   double* t,
                   int* hint=NULL,
                   int* dtype=NULL,
-                  double cos_angle_tolerance=0.99984769515639123915701155881391,
+                  double cos_angle_tolerance=ON_DEFAULT_ANGLE_TOLERANCE_COSINE,
                   double curvature_tolerance=ON_SQRT_EPSILON
                   ) const;
 
@@ -387,7 +383,7 @@ public:
     double point_tolerance=ON_ZERO_TOLERANCE,
     double d1_tolerance=ON_ZERO_TOLERANCE,
     double d2_tolerance=ON_ZERO_TOLERANCE,
-    double cos_angle_tolerance=0.99984769515639123915701155881391,
+    double cos_angle_tolerance=ON_DEFAULT_ANGLE_TOLERANCE_COSINE,
     double curvature_tolerance=ON_SQRT_EPSILON
     ) const;
 
@@ -505,39 +501,6 @@ public:
          ON_Surface*& west_or_south_side,
          ON_Surface*& east_or_north_side
          ) const;
-
-  /*
-  Description:
-    Get the parameters of the point on the surface that is closest to P.
-  Parameters:
-    P - [in] 
-            test point
-    s - [out]
-    t - [out] 
-            (*s,*t) = parameters of the surface point that 
-            is closest to P.
-    maximum_distance = 0.0 - [in] 
-            optional upper bound on the distance from P to 
-            the surface.  If you are only interested in 
-            finding a point Q on the surface when 
-            P.DistanceTo(Q) < maximum_distance, then set
-            maximum_distance to that value.
-    sdomain = 0 - [in] optional domain restriction
-    tdomain = 0 - [in] optional domain restriction
-  Returns:
-    True if successful.  If false, the values of *s and *t
-    are undefined.
-  See Also:
-    ON_Surface::GetLocalClosestPoint.
-  */
-  bool GetClosestPoint( 
-          const ON_3dPoint& P,
-          double* s,
-          double* t,
-          double maximum_distance = 0.0,
-          const ON_Interval* sdomain = 0,
-          const ON_Interval* tdomain = 0
-          ) const;
 
   int GetNurbForm( // returns 0: unable to create NURBS representation
                    //            with desired accuracy.

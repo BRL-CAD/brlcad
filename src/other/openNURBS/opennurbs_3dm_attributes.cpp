@@ -1,8 +1,9 @@
 /* $NoKeywords: $ */
 /*
 //
-// Copyright (c) 1993-2007 Robert McNeel & Associates. All rights reserved.
-// Rhinoceros is a registered trademark of Robert McNeel & Associates.
+// Copyright (c) 1993-2012 Robert McNeel & Associates. All rights reserved.
+// OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
+// McNeel & Associates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
@@ -48,7 +49,7 @@ void ON_3dmObjectAttributes::CopyHelper(const ON_3dmObjectAttributes& src)
 */
 
 /*
-ON_3dmObjectAttributes::ON_3dmObjectAttributes(const ON_3dmObjectAttributes& src)
+ON_3dmObjectAttributes::ON_3dmObjectAttributes(const ON_3dmObjectAttributes& src) 
                        : ON_Object(src)
 {
   Default();
@@ -149,8 +150,9 @@ void ON_3dmObjectAttributes::Default()
   m_name.Destroy();
   m_url.Destroy();
   m_layer_index = 0;
-  m_material_index = -1; // white diffuse
   m_linetype_index = -1; // continuous
+  m_material_index = -1; // white diffuse
+  m_rendering_attributes.Default();
   m_color = ON_Color(0,0,0);
   m_plot_color = ON_Color(0,0,0); // Do not change to ON_UNSET_COLOR
   m_display_order = 0;
@@ -589,6 +591,7 @@ bool ON_3dmObjectAttributes::WriteV5Helper( ON_BinaryArchive& file ) const
          || m_rendering_attributes.m_materials.Count() > 0
          || true != m_rendering_attributes.m_bCastsShadows
          || true != m_rendering_attributes.m_bReceivesShadows
+         || false != m_rendering_attributes.AdvancedTexturePreview()
          )
     {
       c = 5;
@@ -890,8 +893,15 @@ unsigned int ON_3dmObjectAttributes::SizeOf() const
 
 void ON_3dmObjectAttributes::Dump( ON_TextLog& dump ) const
 {
-  const wchar_t* s = m_name;
-  if ( !s ) s = L"";
+  const wchar_t* wsName = m_name;
+  if ( !wsName )
+    wsName = L"";
+  dump.Print("object name = \"%ls\"\n",wsName);
+
+  dump.Print("object uuid = ");
+  dump.Print(m_uuid);
+  dump.Print("\n");
+
   const char* sMode = "unknown";
   switch( Mode() )
   {
@@ -908,11 +918,8 @@ void ON_3dmObjectAttributes::Dump( ON_TextLog& dump ) const
     sMode = "unknown";
     break;
   }
-  dump.Print("object name = \"%S\"\n",s);
-  dump.Print("object uuid = ");
-  dump.Print(m_uuid);
-  dump.Print("\n");
-  dump.Print("object mode = %s\n",sMode);
+  dump.Print("object mode = %s\n",sMode); // sSMode is const char*
+
   dump.Print("object layer index = %d\n",m_layer_index);
   dump.Print("object material index = %d\n",m_material_index);
   const char* sMaterialSource = "unknown";
@@ -921,7 +928,7 @@ void ON_3dmObjectAttributes::Dump( ON_TextLog& dump ) const
   case ON::material_from_object: sMaterialSource = "object material"; break;
   case ON::material_from_parent: sMaterialSource = "parent material"; break;
   }
-  dump.Print("material source = %s\n",sMaterialSource);
+  dump.Print("material source = %s\n",sMaterialSource); // sMaterialSource is const char*
   const int group_count = GroupCount();
   if ( group_count > 0 ) {
     const int* group = GroupList();

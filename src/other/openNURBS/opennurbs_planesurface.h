@@ -1,8 +1,9 @@
 /* $NoKeywords: $ */
 /*
 //
-// Copyright (c) 1993-2007 Robert McNeel & Associates. All rights reserved.
-// Rhinoceros is a registered trademark of Robert McNeel & Assoicates.
+// Copyright (c) 1993-2012 Robert McNeel & Associates. All rights reserved.
+// OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
+// McNeel & Associates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
@@ -100,11 +101,6 @@ public:
 
   /////////////////////////////////////////////////////////////////
   // ON_Surface overrides
-
-  ON_Mesh* CreateMesh( 
-             const ON_MeshParameters& mp,
-             ON_Mesh* mesh = NULL
-             ) const;
 
   /*
   Description:
@@ -258,7 +254,7 @@ public:
                   double* t,
                   int* hint=NULL,
                   int* dtype=NULL,
-                  double cos_angle_tolerance=0.99984769515639123915701155881391,
+                  double cos_angle_tolerance=ON_DEFAULT_ANGLE_TOLERANCE_COSINE,
                   double curvature_tolerance=ON_SQRT_EPSILON
                   ) const;
 
@@ -297,7 +293,7 @@ public:
     double point_tolerance=ON_ZERO_TOLERANCE,
     double d1_tolerance=ON_ZERO_TOLERANCE,
     double d2_tolerance=ON_ZERO_TOLERANCE,
-    double cos_angle_tolerance=0.99984769515639123915701155881391,
+    double cos_angle_tolerance=ON_DEFAULT_ANGLE_TOLERANCE_COSINE,
     double curvature_tolerance=ON_SQRT_EPSILON
     ) const;
 
@@ -341,54 +337,6 @@ public:
          int dir,         
          double c
          ) const;
-
-  /*
-  Description:
-    Compute a 3d curve that is the composite of a 2d curve
-    and the surface map.
-  Parameters:
-    curve_2d - [in] a 2d curve whose image is in the surface's domain.
-    tolerance - [in] the maximum acceptable distance from the returned
-       3d curve to the image of curve_2d on the surface.
-    curve_2d_subdomain - [in] optional subdomain for curve_2d
-  Returns:
-    3d curve.
-  See Also:
-    ON_Surface::IsoCurve
-    ON_Surface::Pullback
-  Remarks:
-    Overrides virtual ON_Surface::Pushup.
-  */
-  ON_Curve* Pushup( const ON_Curve& curve_2d,
-                    double tolerance,
-                    const ON_Interval* curve_2d_subdomain = NULL
-                    ) const;
-
-  /*
-  Description:
-    Pull a 3d curve back to the surface's parameter space.
-  Parameters:
-    curve_3d - [in] a 3d curve
-    tolerance - [in] the maximum acceptable 3d distance between
-       from surface(curve_2d(t)) to the locus of points on the
-       surface that are closest to curve_3d.
-    curve_3d_subdomain - [in] optional subdomain for curve_3d
-    start_uv - [in] optional starting point (if known)
-    end_uv - [in] optional ending point (if known)
-  Returns:
-    2d curve.
-  See Also:
-    ON_Surface::IsoCurve
-    ON_Surface::Pushup
-  Remarks:
-    Overrides virtual ON_Surface::Pullback.
-  */
-  ON_Curve* Pullback( const ON_Curve& curve_3d,
-                    double tolerance,
-                    const ON_Interval* curve_3d_subdomain = NULL,
-                    ON_3dPoint start_uv = ON_UNSET_POINT,
-                    ON_3dPoint end_uv = ON_UNSET_POINT
-                    ) const;
 
   /*
   Description:
@@ -601,6 +549,62 @@ public:
   ON_Interval Extents(
          int dir
          ) const;
+
+  /*
+  Description:
+    Create a plane that contains the projection of a bounding box.
+  Parameters:
+    plane_equation - [in]
+    bbox - [in]
+    padding - [in]
+      amount of extra padding to add around the edges of the
+      plane.  Default is 0.0625
+  Returns:
+    true if successful
+  */
+  bool CreatePseudoInfinitePlane( 
+          ON_PlaneEquation plane_equation,
+          const ON_BoundingBox& bbox,
+          double padding = 0.0625
+          );
+
+  /*
+  Description:
+    Create a plane that contains the projection of a bounding box.
+  Parameters:
+    plane - [in]
+    bbox - [in]
+    padding - [in]
+      amount of extra padding to add around the edges of the
+      plane.  Default is 0.0625
+  Returns:
+    true if successful
+  */
+  bool CreatePseudoInfinitePlane( 
+          const ON_Plane& plane,
+          const ON_BoundingBox& bbox,
+          double padding = 0.0625
+          );
+
+  /*
+  Description:
+    Create a plane that contains the projection of a list of points.
+  Parameters:
+    plane - [in]
+    point_count - [in]
+    point_list - [in]
+    padding - [in]
+      amount of extra padding to add around the edges of the
+      plane.  Default is 0.0625
+  Returns:
+    true if successful
+  */
+  bool CreatePseudoInfinitePlane( 
+          const ON_Plane& plane,
+          int point_count,
+          const ON_3dPoint* point_list,
+          double padding = 0.0625
+          );
 
 protected:
   // evaluation domain (always increasing)

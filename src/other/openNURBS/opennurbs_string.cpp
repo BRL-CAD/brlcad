@@ -1,8 +1,9 @@
 /* $NoKeywords: $ */
 /*
 //
-// Copyright (c) 1993-2007 Robert McNeel & Associates. All rights reserved.
-// Rhinoceros is a registered trademark of Robert McNeel & Assoicates.
+// Copyright (c) 1993-2012 Robert McNeel & Associates. All rights reserved.
+// OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
+// McNeel & Associates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
@@ -600,6 +601,16 @@ unsigned int ON_String::SizeOf() const
   return (unsigned int)sz;
 }
 
+ON__UINT32 ON_String::DataCRC(ON__UINT32 current_remainder) const
+{
+  int string_length = Header()->string_length;
+  if ( string_length > 0 )
+  {
+    current_remainder = ON_CRC32(current_remainder,string_length*sizeof(*m_s),m_s);
+  }
+  return current_remainder;
+}
+
 int ON_String::Compare( const char* s ) const
 {
   int rc = 0;
@@ -724,7 +735,7 @@ bool ON_WildCardMatchNoCase(const char* s, const char* pattern)
       return true;
 
     while (*s) {
-      if ( ON_WildCardMatch(s,pattern) )
+      if ( ON_WildCardMatchNoCase(s,pattern) )
         return true;
       s++;
     }
@@ -763,7 +774,7 @@ bool ON_WildCardMatchNoCase(const char* s, const char* pattern)
     s++;
   }
   
-  return ON_WildCardMatch(s,pattern);
+  return ON_WildCardMatchNoCase(s,pattern);
 }
 
 bool ON_String::WildCardMatch( const char* pattern) const
@@ -1278,9 +1289,21 @@ void ON_CheckSum::Zero()
     m_crc[i] = 0;
 }
 
+const ON_CheckSum ON_CheckSum::UnsetCheckSum;
+
 bool ON_CheckSum::IsSet() const
 {
-  return ( m_size != 0 );
+  return ( 0 != m_size 
+           || 0 != m_time 
+           || 0 != m_crc[0]
+           || 0 != m_crc[1]
+           || 0 != m_crc[2]
+           || 0 != m_crc[3]
+           || 0 != m_crc[4]
+           || 0 != m_crc[5]
+           || 0 != m_crc[6]
+           || 0 != m_crc[7]
+           );           
 }
 
 bool ON_CheckSum::SetBufferCheckSum( 
@@ -1404,9 +1427,9 @@ bool ON::GetFileStats( FILE* fp,
       if (filesize)
         *filesize = (size_t)sb.st_size;
       if (create_time)
-        *create_time = (size_t)sb.st_ctime;
+        *create_time = (time_t)sb.st_ctime;
       if (lastmodify_time)
-        *lastmodify_time = (size_t)sb.st_mtime;
+        *lastmodify_time = (time_t)sb.st_mtime;
       rc = true;
     }
   }
@@ -1414,6 +1437,130 @@ bool ON::GetFileStats( FILE* fp,
   return rc;
 }
 
+bool ON::IsDirectory( const wchar_t* pathname )
+{
+  bool rc = false;
+
+  if ( 0 != pathname && 0 != pathname[0] )
+  {
+    ON_wString buffer;
+    const wchar_t* stail = pathname;
+    while ( 0 != *stail )
+      stail++;
+    stail--;
+    if ( '\\' == *stail || '/' == *stail ) 
+    {
+      const wchar_t trim[2] = {*stail,0};
+      buffer = pathname;
+      buffer.TrimRight(trim);
+      if ( buffer.Length() > 0 )
+        pathname = buffer;
+    }
+#if defined(ON_COMPILER_MSC)
+    // this works on Windows
+    struct _stat64 buf;
+    memset(&buf,0,sizeof(buf));
+    int stat_errno = _wstat64( pathname, &buf );
+    if ( 0 == stat_errno && 0 != (_S_IFDIR & buf.st_mode) )
+    {
+      rc = true;
+    }
+#else
+    ON_String s = pathname;
+    const char* utf8pathname = s;
+    rc = ON::IsDirectory(utf8pathname);
+#endif
+  }
+
+  return rc;
+}
+
+bool ON::IsDirectory( const char* utf8pathname )
+{
+  bool rc = false;
+
+  if ( 0 != utf8pathname && 0 != utf8pathname[0] )
+  {
+    ON_String buffer;
+    const char* stail = utf8pathname;
+    while ( 0 != *stail )
+      stail++;
+    stail--;
+    if ( '\\' == *stail || '/' == *stail ) 
+    {
+      const char trim[2] = {*stail,0};
+      buffer = utf8pathname;
+      buffer.TrimRight(trim);
+      if ( buffer.Length() > 0 )
+        utf8pathname = buffer;
+    }
+#if defined(ON_COMPILER_MSC)
+    // this works on Windows
+    struct _stat64 buf;
+    memset(&buf,0,sizeof(buf));
+    int stat_errno = _stat64( utf8pathname, &buf );
+    if ( 0 == stat_errno && 0 != (_S_IFDIR & buf.st_mode) )
+    {
+      rc = true;
+    }
+#else
+    // this works on Apple and gcc implentations.
+    struct stat buf;
+    memset(&buf,0,sizeof(buf));
+    int stat_errno = stat( utf8pathname, &buf );
+    if ( 0 == stat_errno && S_ISDIR(buf.st_mode) )
+    {
+      rc = true;
+    }
+#endif
+  }
+
+  return rc;
+}
+
+
+int ON::IsOpenNURBSFile( FILE* fp )
+{
+  ON_String sStartSectionComment;
+  int version = 0;
+  if ( 0 != fp )
+  {
+    ON_BinaryFile archive(ON::read3dm,fp);
+    if ( !archive.Read3dmStartSection(&version,sStartSectionComment) )
+      version = 0;
+  }
+  return version;
+}
+
+int ON::IsOpenNURBSFile( const wchar_t* pathname )
+{
+  int version = 0;
+  if ( 0 != pathname && 0 != pathname[0] )
+  {
+    FILE* fp = ON::OpenFile(pathname,L"rb");
+    if ( 0 != fp )
+    {
+      version = ON::IsOpenNURBSFile(fp);
+      ON::CloseFile(fp);
+    }
+  }
+  return version;
+}
+
+int ON::IsOpenNURBSFile( const char* utf8pathname )
+{
+  int version = 0;
+  if ( 0 != utf8pathname && 0 != utf8pathname[0] )
+  {
+    FILE* fp = ON::OpenFile(utf8pathname,"rb");
+    if ( 0 != fp )
+    {
+      version = ON::IsOpenNURBSFile(fp);
+      ON::CloseFile(fp);
+    }
+  }
+  return version;
+}
 
 bool ON_CheckSum::SetFileCheckSum( FILE* fp )
 {
@@ -1517,11 +1664,18 @@ bool ON_CheckSum::SetFileCheckSum( const wchar_t* filename )
 {
   bool rc = false;
   Zero();
-  FILE* fp = ON::OpenFile(filename,L"rb");
-  if ( fp )
+  if ( 0 == filename || 0 == filename[0] )
   {
-    rc = SetFileCheckSum(fp);
-    ON::CloseFile(fp);
+    rc = true;
+  }
+  else
+  {
+    FILE* fp = ON::OpenFile(filename,L"rb");
+    if ( fp )
+    {
+      rc = SetFileCheckSum(fp);
+      ON::CloseFile(fp);
+    }
   }
   return rc;
 }
@@ -1646,3 +1800,28 @@ bool ON_CheckSum::CheckFile(
   return rc;
 }
 
+void ON_CheckSum::Dump(ON_TextLog& text_log) const
+{
+  // Using %llu so this code is portable for both 32 and 64 bit
+  // builds on a wide range of compilers.
+
+  unsigned long long u; // 8 bytes in windows and gcc - should be at least as big
+                        // as a size_t or time_t.
+
+  text_log.Print("Checksum:");
+  if ( !IsSet() )
+    text_log.Print("zero (not set)\n");
+  else
+  {
+    text_log.PushIndent();
+    text_log.Print("\n");
+    u = (unsigned long long)m_size;
+    text_log.Print("Size: %llu bytes\n",u);
+    u = (unsigned long long)m_time;
+    text_log.Print("Last Modified Time: %u (seconds since January 1, 1970, UCT)\n",u);
+    text_log.Print("CRC List: %08x, %08x, %08x, %08x, %08x, %08x, %08x, %08x\n",
+                   m_crc[0],m_crc[1],m_crc[2],m_crc[3],m_crc[4],m_crc[5],m_crc[6],m_crc[7]
+                   );
+    text_log.PopIndent();
+  }
+}

@@ -1,8 +1,9 @@
 /* $NoKeywords: $ */
 /*
 //
-// Copyright (c) 1993-2007 Robert McNeel & Associates. All rights reserved.
-// Rhinoceros is a registered trademark of Robert McNeel & Assoicates.
+// Copyright (c) 1993-2012 Robert McNeel & Associates. All rights reserved.
+// OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
+// McNeel & Associates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
@@ -59,6 +60,27 @@
 //   ON_TEMPLATE template class ON_CLASS template<T>;
 //
 */
+
+#if defined(OPENNURBS_EXPORTS)
+// OPENNURBS_EXPORTS is Microsoft's prefered defined for building an opennurbs DLL.
+#if !defined(ON_DLL_EXPORTS)
+#define ON_DLL_EXPORTS
+#endif
+#if !defined(ON_COMPILING_OPENNURBS)
+#define ON_COMPILING_OPENNURBS
+#endif
+#endif
+
+#if defined(OPENNURBS_IMPORTS)
+// OPENNURBS_EXPORTS is Microsoft's prefered defined for linking with an opennurbs DLL.
+#if !defined(ON_DLL_IMPORTS)
+#define ON_DLL_IMPORTS
+#endif
+#endif
+
+#if defined(ON_DLL_EXPORTS) && defined(ON_DLL_IMPORTS)
+#error At most one of ON_DLL_EXPORTS and ON_DLL_IMPORTS can be defined.
+#endif
 
 /* export/import */
 #if defined(ON_DLL_EXPORTS)
@@ -139,6 +161,7 @@
 #define ON_DBL_MIN 2.22507385850720200e-308
 #endif
 
+// ON_EPSILON = 2^-52
 #if defined(DBL_EPSILON)
 #define ON_EPSILON DBL_EPSILON
 #else
@@ -146,6 +169,12 @@
 #endif
 #define ON_SQRT_EPSILON 1.490116119385000000e-8
 
+#if defined(FLT_EPSILON)
+#define ON_FLOAT_EPSILON FLT_EPSILON
+#else
+#define ON_FLOAT_EPSILON 1.192092896e-07
+#endif
+#define ON_SQRT_FLOAT_EPSILON 3.452669830725202719e-4
 
 /*
 // In cases where lazy evaluation of a double value is
@@ -228,17 +257,51 @@ ON_END_EXTERNC
 #define ON_UNSET_COLOR 0xFFFFFFFF
 
 /*
-// In rare cases when an absolute "zero" tolerance is
-// required, ON_ZERO_TOLERANCE is used to compare
-// numbers.  This number should be no smaller than
+// In cases when an absolute "zero" tolerance 
+// is required to compare model space coordinates,
+// ON_ZERO_TOLERANCE is used.  The value of
+// ON_ZERO_TOLERANCE should be no smaller than
 // ON_EPSILON and should be several orders of 
 // magnitude smaller than ON_SQRT_EPSILON
 // 
 */
-#define ON_ZERO_TOLERANCE 1.0e-12
+//#define ON_ZERO_TOLERANCE 1.0e-12
+// ON_ZERO_TOLERANCE = 2^-32
+#define ON_ZERO_TOLERANCE 2.3283064365386962890625e-10
+
+/*
+// In cases when an relative "zero" tolerance is
+// required for comparing model space coordinates, 
+// (fabs(a)+fabs(b))*ON_RELATIVE_TOLERANCE is used.
+// ON_RELATIVE_TOLERANCE should be larger than
+// ON_EPSILON and smaller than no larger than 
+// ON_ZERO_TOLERANCE*2^-10.
+// 
+*/
+// ON_RELATIVE_TOLERANCE = 2^-42
+#define ON_RELATIVE_TOLERANCE 2.27373675443232059478759765625e-13
+
+/*
+// Bugs in geometry calculations involving world coordinates 
+// values > ON_MAXIMUM_WORLD_COORDINATE_VALUE
+// will be a low priority.
+*/
+// ON_MAXIMUM_VALUE = 2^27
+#define ON_MAXIMUM_WORLD_COORDINATE_VALUE 1.34217728e8
+
+/*
+// The default test for deciding if a curvature value should be
+// treated as zero is 
+// length(curvature) <= ON_ZERO_CURVATURE_TOLERANCE.
+// ON_ZERO_CURVATURE_TOLERANCE must be set so that
+// ON_ZERO_CURVATURE_TOLERANCE >= sqrt(3)*ON_ZERO_TOLERANCE
+// so that K.IsTiny() = true implies |K| <= ON_ZERO_CURVATURE_TOLERANCE
+*/
+#define ON_ZERO_CURVATURE_TOLERANCE 1.0e-8
 
 /* default value for angle tolerances = 1 degree */
 #define ON_DEFAULT_ANGLE_TOLERANCE (ON_PI/180.0)
+#define ON_DEFAULT_ANGLE_TOLERANCE_COSINE 0.99984769515639123915701155881391
 #define ON_MINIMUM_ANGLE_TOLERANCE (ON_DEFAULT_ANGLE_TOLERANCE/10.0)
 
 // pair of integer indices.  This
@@ -266,10 +329,25 @@ struct tagON_3dex
 
 typedef struct tagON_3dex ON_3dex;
 
+
+// quadruplet of integer indices.  This
+// is intentionally a struct/typedef
+// rather than a class so that it
+// can be used in other structs.
+struct tagON_4dex
+{
+  int i;
+  int j;
+  int k;
+  int l;
+};
+
+typedef struct tagON_4dex ON_4dex;
+
 union ON_U
 {
   char      b[8]; // 8 bytes
-  ON__INT64 h;    // 64 bit "hyper" integer
+  ON__INT64 h;    // 64 bit integer
   ON__INT32 i;    // 32 bit integer
   int       j[2]; // two 32 bit integers
   void*     p;
@@ -306,7 +384,17 @@ public:
   //////////
   // McNeel subversion revsion used to build opennurbs
   static
-  const char* Revision();
+  const char* SourceRevision();
+
+  static
+  const char* DocumentationRevision();
+
+  static
+  const char* SourceBranch();
+
+  static
+  const char* DocumentationBranch();
+
 
   //// File open/close for DLL use ///////////////////////////////////////////////
 
@@ -355,6 +443,22 @@ public:
                      time_t* create_time,
                      time_t* lastmodify_time
                     );
+
+  /*
+  Returns true if pathname is a directory.
+  */
+  static bool IsDirectory( const wchar_t* pathname );
+  static bool IsDirectory( const char* utf8pathname );
+
+  /*
+  Returns
+    If the file is an opennurbs file, the version of the file
+    is returned (2,3,4,50,...).
+    If the file is not an opennurbs file, 0 is returned.
+  */
+  static int IsOpenNURBSFile( const wchar_t* pathname );
+  static int IsOpenNURBSFile( const char* utf8pathname );
+  static int IsOpenNURBSFile( FILE* fp );
 
   //// Dimension Types ///////////////////////////////////////////////////////////
   enum eAnnotationType
@@ -495,6 +599,51 @@ public:
       const class ON_3dmUnitsAndTolerances& us_to
       );
 
+
+  /*
+  Description:
+    Returns the string " : ".  This is the string Rhino uses
+    to separate reference model names from the root name for 
+    things like layer, block definition, material, linetype,
+    dimstyle and font names.  
+  See Also:
+    ON::NameReferenceDelimiterLength()
+    ON::IsNameReferenceDelimiter()
+  */
+  static const wchar_t* NameReferenceDelimiter();
+
+  /*
+  Description:
+    Returns the number of characters in the string returned
+    by ON::NameReferenceDelimiter().
+  See Also:
+    ON::NameReferenceDelimiterLength()
+    ON::IsNameReferenceDelimiter()
+  */
+  static unsigned int NameReferenceDelimiterLength();
+
+  /*
+  Description:
+    Test a string to see if its beginning matches the 
+    string returned by ON::NameReferenceDelimiter().
+  Parameters:
+    s - [in];
+      string to test.
+  Returns:
+    null:
+      The beginning of the string does not match ON::NameReferenceDelimiter().
+    non-null:
+      The beginning of the string matches ON::NameReferenceDelimiter(). The
+      returned pointer is the first character in s after the last character
+      of the delimiter.  Put another way, if the beginning of s matches
+      the string  ON::NameReferenceDelimiter(), then the returned pointer is
+      s + ON::NameReferenceDelimiterLength().
+  See Also:
+    ON::NameReferenceDelimiter()
+    ON::NameReferenceDelimiterLength()
+  */
+  static const wchar_t* IsNameReferenceDelimiter(const wchar_t* s);
+
   //// distance_display_mode ///////////////////////////////////
   enum distance_display_mode
   {
@@ -568,7 +717,8 @@ public:
     G1_locus_continuous =  9, // locus continuous unit tangent
     G2_locus_continuous = 10, // locus continuous unit tangent and curvature
 
-    Cinfinity_continuous = 11 // analytic discontinuity
+    Cinfinity_continuous = 11, // analytic discontinuity
+    Gsmooth_continuous = 12    // aesthetic discontinuity
   };
 
   /*
@@ -584,6 +734,15 @@ public:
     flavored values.
   */
   static continuity ParametricContinuity(int);
+
+  /*
+  Description:
+    Convert int to ON::continuity enum value and
+    convert the higher order flavored values to 
+    the corresponding C1 or G1 values needed to
+    test piecewise linear curves.
+  */
+  static continuity PolylineContinuity(int);
 
   //// curve_style ///////////////////////////////////////////////////////////////
   enum curve_style 
@@ -1057,16 +1216,35 @@ public:
     brep_face          =   3,
     brep_trim          =   4,
     brep_loop          =   5,
+
     mesh_vertex        =  11,
     meshtop_vertex     =  12,
     meshtop_edge       =  13,
     mesh_face          =  14,
+
     idef_part          =  21,
+
     polycurve_segment  =  31,
+
     pointcloud_point   =  41,
+
     group_member       =  51,
-    extrusion_bottom_profile = 61,
-    extrusion_top_profile    = 62,
+
+
+    extrusion_bottom_profile = 61, // 3d bottom profile curves
+                                   //   index identifies profile component
+    extrusion_top_profile    = 62, // 3d top profile curves
+                                   //   index identifies profile component
+    extrusion_wall_edge      = 63, // 3d wall edge curve
+                                   //   index/2: identifies profile component
+                                   //   index%2: 0 = start, 1 = end
+    extrusion_wall_surface   = 64, // side wall surfaces
+                                   //   index: identifies profile component
+    extrusion_cap_surface    = 65, // bottom and top cap surfaces
+                                   //   index: 0 = bottom, 1 = top
+    extrusion_path           = 66, // extrusion path (axis line)
+                                   //   index -1 = entire path, 0 = start point, 1 = endpoint
+
     dim_linear_point   = 100,
     dim_radial_point   = 101,
     dim_angular_point  = 102,
@@ -1148,7 +1326,6 @@ public:
   */
   bool IsBrepComponentIndex() const;
 
-
   /*
   Returns:
     True if m_type = idef_part and m_index >= 0.
@@ -1173,6 +1350,39 @@ public:
     and m_index >= 0.
   */
   bool IsExtrusionProfileComponentIndex() const;
+
+  /*
+  Returns:
+    True if m_type = extrusion_path and -1 <= m_index <= 1.
+  */
+  bool IsExtrusionPathComponentIndex() const;
+
+  /*
+  Returns:
+    True if m_type = extrusion_wall_edge and m_index >= 0.
+  */
+  bool IsExtrusionWallEdgeComponentIndex() const;
+
+  /*
+  Returns:
+    True if m_type = extrusion_wall_surface and m_index >= 0.
+  */
+  bool IsExtrusionWallSurfaceComponentIndex() const;
+
+  /*
+  Returns:
+    True if m_type = extrusion_wall_surface or extrusion_wall_edge
+    and m_index >= 0.
+  */
+  bool IsExtrusionWallComponentIndex() const;
+
+  /*
+  Returns:
+    True if m_type = extrusion_bottom_profile, extrusion_top_profile,
+    extrusion_wall_edge, extrusion_wall_surface, extrusion_cap_surface
+    or extrusion_path and m_index is reasonable.
+  */
+  bool IsExtrusionComponentIndex() const;
 
   /*
   Returns:
@@ -1205,10 +1415,14 @@ public:
     mesh_face          ON_Mesh.m_F[] array index
     idef_part          ON_InstanceDefinition.m_object_uuid[] array index
     polycurve_segment  ON_PolyCurve::m_segment[] array index
-    extrusion_bottom_profile 
-    extrusion_top_profile 
-                       Use ON_Extrusion::Bottom/TopProfile(index)
-                       to get a 3d profile curve.
+
+    extrusion_bottom_profile  Use ON_Extrusion::Profile3d() to get 3d profile curve
+    extrusion_top_profile     Use ON_Extrusion::Profile3d() to get 3d profile curve
+    extrusion_wall_edge       Use ON_Extrusion::WallEdge() to get 3d line curve
+    extrusion_wall_surface    Use ON_Extrusion::WallSurface() to get 3d wall surface
+    extrusion_cap_surface      0 = bottom cap, 1 = top cap
+    extrusion_path            -1 = entire path, 0 = start of path, 1 = end of path
+
     dim_linear_point   ON_LinearDimension2::POINT_INDEX
     dim_radial_point   ON_RadialDimension2::POINT_INDEX
     dim_angular_point  ON_AngularDimension2::POINT_INDEX
@@ -1364,12 +1578,7 @@ char* on_strrev(char*);
 
 /*
 Description:
-  Calls Windows ::WideCharToMultiByte() or does a hack 
-  UNICODE to ASCII conversion for other OSs
-See Also:
-  ON_SetStringConversionWindowsCodePage
-  ON_GetStringConversionWindowsCodePage
-  ON_String::operator=(const wchar_t*)  
+  Calls ON_ConvertWideCharToUTF8()
 */
 ON_DECL
 int on_WideCharToMultiByte(
@@ -1381,12 +1590,7 @@ int on_WideCharToMultiByte(
 
 /*
 Description:
-  Calls Windows ::WideCharToMultiByte() or does a hack 
-  ASCII to UNICODE conversion for other OSs
-See Also:
-  ON_SetStringConversionWindowsCodePage
-  ON_GetStringConversionWindowsCodePage
-  ON_wString::operator=(const char*)
+  Calls ON_ConvertUTF8ToWideChar()
 */
 ON_DECL
 int on_MultiByteToWideChar(
@@ -1396,7 +1600,110 @@ int on_MultiByteToWideChar(
     int          // cchWideChar
     );
 
+/*
+Description:
+  Find the locations in a path the specify the drive, directory,
+  file name and file extension.
+Parameters:
+  path - [in]
+    UTF-8 encoded string that is a legitimate path to a file.
+  drive - [out] (pass null if you don't need the drive)
+    If drive is not null and the path parameter begins with 
+    an A-Z or a-z followed by a colon ( : ) then the returned
+    value of *drive will equal the input value of path.
+  dir - [out] (pass null if you don't need the directory)
+    If dir is not null and the path parameter contains a
+    directory specification, then the returned value of *dir
+    will point to the character in path where the directory
+    specification begins.
+  fname - [out] (pass null if you don't need the file name)
+    If fname is not null and the path parameter contains a
+    file name specification, then the returned value of *fname
+    will point to the character in path where the file name
+    specification begins.
+  ext - [out] (pass null if you don't need the extension)
+    If ext is not null and the path parameter contains a
+    file extension specification, then the returned value of
+    *ext will point to the '.' character in path where the file
+    extension specification begins.
+Remarks:
+  This function will treat a front slash ( / ) and a back slash
+  ( \ ) as directory separators.  Because this function parses
+  file names store in .3dm files and the .3dm file may have been
+  written on a Windows computer and then read on a another
+  computer, it looks for a drive dpecification even when the
+  operating system is not Windows.
+  This function will not return an directory that does not
+  end with a trailing slash.
+  This function will not return an empty filename and a non-empty
+  extension.
+  This function parses the path string according to these rules.
+  It does not check the actual file system to see if the answer
+  is correct.
+See Also:
+  ON_String::SplitPath
+*/
+ON_DECL void on_splitpath(
+  const char* path,
+  const char** drive,
+  const char** dir,
+  const char** fname,
+  const char** ext
+  );
+
+/*
+Description:
+  Find the locations in a path the specify the drive, directory,
+  file name and file extension.
+Parameters:
+  path - [in]
+    UTF-8, UTF-16 or UTF-32 encoded wchar_t string that is a
+    legitimate path to a file.
+  drive - [out] (pass null if you don't need the drive)
+    If drive is not null and the path parameter begins with 
+    an A-Z or a-z followed by a colon ( : ) then the returned
+    value of *drive will equal the input value of path.
+  dir - [out] (pass null if you don't need the directory)
+    If dir is not null and the path parameter contains a
+    directory specification, then the returned value of *dir
+    will point to the character in path where the directory
+    specification begins.
+  fname - [out] (pass null if you don't need the file name)
+    If fname is not null and the path parameter contains a
+    file name specification, then the returned value of *fname
+    will point to the character in path where the file name
+    specification begins.
+  ext - [out] (pass null if you don't need the extension)
+    If ext is not null and the path parameter contains a
+    file extension specification, then the returned value of
+    *ext will point to the '.' character in path where the file
+    extension specification begins.
+Remarks:
+  This function will treat a front slash ( / ) and a back slash
+  ( \ ) as directory separators.  Because this function parses
+  file names store in .3dm files and the .3dm file may have been
+  written on a Windows computer and then read on a another
+  computer, it looks for a drive dpecification even when the
+  operating system is not Windows.
+  This function will not return an directory that does not
+  end with a trailing slash.
+  This function will not return an empty filename and a non-empty
+  extension.
+  This function parses the path string according to these rules.
+  It does not check the actual file system to see if the answer
+  is correct.
+See Also:
+  ON_wString::SplitPath
+*/
+ON_DECL void on_wsplitpath(
+  const wchar_t* path,
+  const wchar_t** drive,
+  const wchar_t** dir,
+  const wchar_t** fname,
+  const wchar_t** ext
+  );
+
 ON_END_EXTERNC
 
-#endif
 
+#endif

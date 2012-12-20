@@ -330,16 +330,6 @@ bool ON_Curve::GetClosestPoint(
   return false;
 }
 
-bool ON_Curve::GetTightBoundingBox( 
-		ON_BoundingBox&, 
-    int,
-		const ON_Xform*
-    ) const
-{
-  // The working function is part of the Rhino SDK.
-  return false;
-}
-
 int ON_Curve::IntersectSelf( 
         ON_SimpleArray<ON_X_EVENT>&,
         double,

@@ -1,8 +1,9 @@
 /* $NoKeywords: $ */
 /*
 //
-// Copyright (c) 1993-2008 Robert McNeel & Associates. All rights reserved.
-// Rhinoceros is a registered trademark of Robert McNeel & Assoicates.
+// Copyright (c) 1993-2012 Robert McNeel & Associates. All rights reserved.
+// OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
+// McNeel & Associates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
@@ -83,6 +84,8 @@ public:
     //   this class.  The location of m_value in memory,
     //   (&m_value) may change at any time.
     struct MAP_VALUE m_value;
+
+    void Dump(ON_TextLog&) const;
   };
 
   /*
@@ -331,6 +334,8 @@ public:
   */
   bool IsValid(ON_TextLog* textlog) const;
 
+  void Dump(ON_TextLog& text_log) const;
+
 private:
   // prohibit copy construction and operator=
   // no implementation
@@ -362,6 +367,7 @@ private:
     struct SN_ELEMENT* BinarySearchBlockHelper(unsigned int sn);
     static int CompareMaxSN(const void*,const void*);
     size_t ActiveElementEstimate(unsigned int sn0, unsigned int sn1) const;
+    void Dump(ON_TextLog&) const;
   };
 
   unsigned int m_maxsn; // largest sn stored anywhere

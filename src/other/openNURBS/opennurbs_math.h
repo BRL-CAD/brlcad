@@ -1,8 +1,9 @@
 /* $NoKeywords: $ */
 /*
 //
-// Copyright (c) 1993-2007 Robert McNeel & Associates. All rights reserved.
-// Rhinoceros is a registered trademark of Robert McNeel & Assoicates.
+// Copyright (c) 1993-2012 Robert McNeel & Associates. All rights reserved.
+// OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
+// McNeel & Associates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
@@ -331,6 +332,18 @@ bool ON_IsValid( double x );
 ON_DECL
 bool ON_IsValidFloat( float x );
 
+/*
+class ON_CLASS ON_TimeLimit
+{
+  ON_TimeLimit();
+  ON_TimeLimit(ON__UINT64 time_limit_seconds);
+  void SetTimeLimit(ON__UINT64 time_limit_seconds);
+  bool Continue() const;
+  bool IsSet() const;
+private:
+  ON__UINT64 m_time_limit[2];
+};
+*/
 
 // The ON_IS_FINITE and ON_IS_VALID defines are much faster
 // than calling ON_IsValid(), but need to be used when
@@ -366,9 +379,9 @@ bool ON_IsValidFloat( float x );
 // function to return true.
 
 #if defined(_GNU_SOURCE)
-#define ON_IS_FINITE(x) (isfinite(x)?true:false)
-// If your compiler does not have "isfinite()", try using "finite()".
+// if you are using an older version of gcc, use finite()
 //#define ON_IS_FINITE(x) (finite(x)?true:false)
+#define ON_IS_FINITE(x) (isfinite(x)?true:false)
 #else
 #define ON_IS_FINITE(x) (_finite(x)?true:false)
 #endif
@@ -702,15 +715,68 @@ ON_BOOL32 ON_TransformVectorList(
        const ON_Xform&
        );
 
+/*
+Parameters:
+  dim - [in]
+    >= 1
+  is_rat - [in]
+    true if the points are rational and points[dim] is the "weight"
+  pointA - [in]
+  pointB - [in]
+    point coordinates
+Returns:
+  True if the input is valid and for each coordinate pair,
+  |a-b| <= ON_ZERO_TOLERANCE 
+  or |a-b| <= (fabs(a)+fabs(b))*ON_RELATIVE_TOLERANCE.
+  False otherwise.
+*/
+ON_DECL
+bool ON_PointsAreCoincident(
+    int dim,
+    int is_rat,
+    const double* pointA,
+    const double* pointB
+    );
+
+/*
+Description
+  See ON_PointsAreCoincident() for a description of when opennurbs
+  considers two points to be conincident.
+Parameters:
+  dim - [in]
+    >= 1
+  is_rat - [in]
+    true if the points are rational and points[dim] is the "weight"
+  point_count - [in]
+    number of points >= 2
+  point_stride - [in]
+    >= (0 != is_rat) ? (dim+1) : dim
+  points - [in]
+    point coordinates
+Returns:
+  True if the first and last points are coincident and all other
+  points in the list are coincident with the previous point.
+  False if there are points that are not coincident or
+  point_count < 2 or other input parameters are invalid.
+*/
+ON_DECL
+bool ON_PointsAreCoincident(
+    int dim,
+    int is_rat,
+    int point_count,
+    int point_stride,
+    const double* points
+    );
+
 ON_DECL
 int ON_ComparePoint( // returns 
                               // -1: first < second
                               //  0: first == second
                               // +1: first > second
-          int,           // dim (>=0)
-          ON_BOOL32,          // true for rational CVs
-          const double*, // first CV
-          const double*  // secont CV
+          int dim,            // dim (>=0)
+          ON_BOOL32 israt,    // true for rational CVs
+          const double* cv0,  // first CV
+          const double* cv1   // secont CV
           );
 
 ON_DECL
@@ -1014,7 +1080,7 @@ ON_BOOL32 ON_EvJacobian(
         double, // ds o ds
         double, // ds o dt
         double, // dt o dt
-        double* // jacobian = determinant ( ds_o_ds ds_o_dt / ds_o_dt dt_o_dt )
+        double* // jacobian = determinant ( ds_o_ds dt_o_dt / ds_o_dt ds_o_dt )
         );
 
 /*
@@ -1102,6 +1168,14 @@ ON_BOOL32 ON_EvNormal(
         const ON_3dVector&, const ON_3dVector&, // first partials (Du,Dv)
         const ON_3dVector&, const ON_3dVector&, const ON_3dVector&, // optional second partials (Duu, Duv, Dvv)
         ON_3dVector& // unit normal returned here
+        );
+
+// returns false if first returned tangent is zero
+ON_DECL
+bool ON_EvTangent(
+        const ON_3dVector&, // first derivative
+        const ON_3dVector&, // second derivative
+        ON_3dVector&        // Unit tangent returned here
         );
 
 // returns false if first derivtive is zero
@@ -1200,23 +1274,39 @@ Parameters:
     Km and Kp should be curvatures evaluated at the same
     parameters using limits from below (minus) and above (plus).
     The assumption is that you have already compared the
-    tangents and consider to curve to be G1 at the point
-    in question.
+    points and tangents and consider to curve to be G1 at the
+    point in question.
   cos_angle_tolerance - [in]
-      Used to decide if Km and Kp are parallel.
-      If Km o Kp <= cos_angle_tolerance*|Km|*|Kp|,
-      then true is returned because Km and Kp are considered
-      not parallel.  Use something like cos(angle tolerance)
-      for this parameter.
-  curvature_tolerance - [in] (ignored if < 0.0)
-    If curvature_tolerance >= 0 and (Kp-Km).Length() <= curvature_tolerance,
-    then false is returned.
+    If the inut value of cos_angle_tolerance >= -1.0
+    and cos_angle_tolerance <= 1.0 and
+    Km o Kp < cos_angle_tolerance*|Km|*|Kp|, then
+    true is returned.  Otherwise it is assumed Km and Kp
+    are parallel. If the curve being tested is nonplanar,
+    then use something like cos(2*tangent angle tolerance)
+    for this parameter. If the curve being tested is planar,
+    then 0.0 will work fine.
+  curvature_tolerance - [in]
+    If |Kp-Km| <= curvature_tolerance,
+    then false is returned, otherwise other tests are used
+    to determing continuity.
   zero_curvature - [in] (ignored if < 2^-110 = 7.7037197787136e-34)
     If |K| <= zero_curvature, then K is treated as zero.
-  radius_tolerance - [in] (ignored if < 0.0)
-    If the unit directions of Km and Kp agree to 3 decimal places
-    and the difference between the radii of curvature are
-    <= radius_tolerance, then false is returned.
+    When in doubt, use ON_ZERO_CURVATURE_TOLERANCE.
+  radius_tolerance - [in]
+    If radius_tolerance >= 0.0 and the difference between the
+    radii of curvature is >= radius_tolerance, then true 
+    is returned.
+  relative_tolerance - [in]
+    If relative_tolerance > 0 and
+    |(|Km| - |Kp|)|/max(|Km|,|Kp|) > relative_tolerance,
+    then true is returned.  Note that if the curvatures are
+    nonzero and rm and rp are the radii of curvature, then
+    |(|Km| - |Kp|)|/max(|Km|,|Kp|) = |rm-rp|/max(rm,rp).
+    This means the relative_tolerance insures both the scalar
+    curvature and the radii of curvature agree to the specified
+    number of decimal places.
+    When in double use ON_RELATIVE_CURVATURE_TOLERANCE, which
+    is currently 0.05.
 Returns:
   False if the curvatures should be considered G2.
   True if the curvatures are different enough that the curve should be
@@ -1231,7 +1321,63 @@ bool ON_IsCurvatureDiscontinuity(
   double cos_angle_tolerance,
   double curvature_tolerance,
   double zero_curvature,
+  double radius_tolerance,
+  double relative_tolerance
+  );
+
+ON_DECL
+bool ON_IsCurvatureDiscontinuity( 
+  const ON_3dVector Km, 
+  const ON_3dVector Kp,
+  double cos_angle_tolerance,
+  double curvature_tolerance,
+  double zero_curvature,
   double radius_tolerance
+  );
+
+
+/*
+Description:
+  This function is used to test curvature continuity
+  in IsContinuous and GetNextDiscontinuity functions
+  when the continuity parameter is ON::G2_continuous.
+Parameters:
+  Km - [in]
+    Curve's vector curvature evaluated from below
+  Kp - [in]
+    Curve's vector curvature evaluated from below
+Returns:
+  True if the change from Km to Kp should be considered
+  G2 continuous.
+*/
+ON_DECL
+bool ON_IsG2CurvatureContinuous(
+  const ON_3dVector Km, 
+  const ON_3dVector Kp,
+  double cos_angle_tolerance,
+  double curvature_tolerance
+  );
+
+/*
+Description:
+  This function is used to test curvature continuity
+  in IsContinuous and GetNextDiscontinuity functions
+  when the continuity parameter is ON::Gsmooth_continuous.
+Parameters:
+  Km - [in]
+    Curve's vector curvature evaluated from below
+  Kp - [in]
+    Curve's vector curvature evaluated from below
+Returns:
+  True if the change from Km to Kp should be considered
+  Gsmooth continuous.
+*/
+ON_DECL
+bool ON_IsGsmoothCurvatureContinuous(
+  const ON_3dVector Km, 
+  const ON_3dVector Kp,
+  double cos_angle_tolerance,
+  double curvature_tolerance
   );
 
 /*
@@ -1242,10 +1388,10 @@ Parameters:
            comments for details.
   Pa - [in] point on curve A.
   D1a - [in] first derviative of curve A.
-  D1a - [in] second derviative of curve A.
+  D2a - [in] second derviative of curve A.
   Pb - [in] point on curve B.
   D1b - [in] first derviative of curve B.
-  D1b - [in] second derviative of curve B.
+  D3b - [in] second derviative of curve B.
   point_tolerance - [in] if the distance between two points is
       greater than point_tolerance, then the curve is not C0.
   d1_tolerance - [in] if the difference between two first derivatives is
@@ -1276,9 +1422,17 @@ ON_BOOL32 ON_IsContinuous(
   double point_tolerance=ON_ZERO_TOLERANCE,
   double d1_tolerance=ON_ZERO_TOLERANCE,
   double d2_tolerance=ON_ZERO_TOLERANCE,
-  double cos_angle_tolerance=0.99984769515639123915701155881391,
+  double cos_angle_tolerance=ON_DEFAULT_ANGLE_TOLERANCE_COSINE,
   double curvature_tolerance=ON_SQRT_EPSILON
   );
+
+
+ON_DECL
+bool ON_TuneupEvaluationParameter( 
+   int side,
+   double s0, double s1, // segment domain
+   double *s             // segment parameter
+   );
 
 
 ON_DECL
@@ -1287,176 +1441,8 @@ int ON_Compare2dex( const ON_2dex* a, const ON_2dex* b);
 ON_DECL
 int ON_Compare3dex( const ON_3dex* a, const ON_3dex* b);
 
-/*
-Description:
-  Sort an index array.
-Parameters
-  method - [in]
-    ON::heap_sort or ON::quick_sort
-  index - [out] 
-    Pass in an array of count integers.  The returned
-    index[] is a permutation of (0,1,..,count-1)
-    such that compare(B[index[i]],B[index[i+1]) <= 0
-    where B[i] = base + i*sizeof_element
-  base - [in]
-    array of count elements
-  count - [in]
-    number of elements in the index[] and base[] arrays
-  sizeof_element - [in]
-    number of bytes between consecutive elements in the
-    base[] array.
-  compare - [in]
-    Comparison function a la qsort().
-*/
 ON_DECL
-void ON_Sort( 
-        ON::sort_algorithm method,  // ON::heap_sort or ON::quick_sort, 
-        int* index,
-        const void* base,
-        size_t count,
-        size_t sizeof_element,
-        int (*compare)(const void*,const void*) // int compar(const void*,const void*)
-        );
-
-/*
-Description:
-  Sort an index array using a compare function
-  that takes an additional pointer that can be used to
-  pass extra informtation.
-Parameters
-  method - [in]
-    ON::heap_sort or ON::quick_sort
-  index - [out] 
-    Pass in an array of count integers.  The returned
-    index[] is a permutation of (0,1,..,count-1)
-    such that compare(B[index[i]],B[index[i+1]) <= 0
-    where B[i] = base + i*sizeof_element
-  base - [in]
-    array of count elements
-  count - [in]
-    number of elements in the index[] and base[] arrays
-  sizeof_element - [in]
-    number of bytes between consecutive elements in the
-    base[] array.
-  compare - [in]
-    Comparison function a la qsort().  The context parameter
-    is pass as the third argument.
-  context - [in]
-    pointer passed as the third argument to compare().
-*/
-ON_DECL
-void ON_Sort( 
-        ON::sort_algorithm method,  // ON::heap_sort or ON::quick_sort, 
-        int* index,
-        const void* base,
-        size_t count,
-        size_t sizeof_element,
-        int (*compare)(const void*,const void*,void*), // int compar(const void* a,const void* b, void* ptr)
-        void* context
-        );
-
-/*
-Description:
-  Quick sort an array
-Parameters
-  base - [in]
-    array of count elements
-  count - [in]
-    number of elements in the index[] and base[] arrays
-  sizeof_element - [in]
-    number of bytes between consecutive elements in the
-    base[] array.
-  compare - [in]
-    Comparison function a la qsort().  The context parameter
-    is pass as the third argument.
-  context - [in]
-    pointer passed as the third argument to compare().
-*/
-ON_DECL
-void ON_qsort( 
-        void* base,
-        size_t count,
-        size_t sizeof_element,
-        int (*compare)(const void*,const void*)
-        );
-
-/*
-Description:
-  Quick sort an array with a compare function
-  that takes an additional pointer that can be used to
-  pass extra informtation.
-Parameters
-  base - [in]
-    array of count elements
-  count - [in]
-    number of elements in the index[] and base[] arrays
-  sizeof_element - [in]
-    number of bytes between consecutive elements in the
-    base[] array.
-  compare - [in]
-    Comparison function a la qsort().  The context parameter
-    is passed as the first argument.
-  context - [in]
-    pointer passed as the first argument to compare().
-*/
-ON_DECL
-void ON_qsort( 
-        void* base,
-        size_t count,
-        size_t sizeof_element,
-        int (*compare)(void*,const void*,const void*),
-        void* context
-        );
-
-// heap sort array of doubles in place
-ON_DECL
-void ON_SortDoubleArray( 
-        ON::sort_algorithm, // ON::heap_sort or ON::quick_sort, 
-        double*,  // array of doubles
-        size_t    // length of array
-        );
-
-ON_DECL
-void ON_SortIntArray(
-        ON::sort_algorithm, // ON::heap_sort or ON::quick_sort, 
-        int*,     // array of doubles
-        size_t    // length of array
-        );
-
-ON_DECL
-void ON_SortUnsignedIntArray(
-        ON::sort_algorithm, // ON::heap_sort or ON::quick_sort, 
-        unsigned int*,      // array of doubles
-        size_t              // length of array
-        );
-
-ON_DECL
-void ON_SortStringArray(
-        ON::sort_algorithm, // ON::heap_sort or ON::quick_sort, 
-        char**,   // array of doubles
-        size_t    // length of array
-        );
-
-ON_DECL
-const int* ON_BinarySearchIntArray( 
-          int key, 
-          const int* base, 
-          size_t nel
-          );
-
-ON_DECL
-const unsigned int* ON_BinarySearchUnsignedIntArray( 
-          unsigned int key, 
-          const unsigned int* base, 
-          size_t nel
-          );
-
-ON_DECL
-const double* ON_BinarySearchDoubleArray( 
-          double key, 
-          const double* base, 
-          size_t nel
-          );
+int ON_Compare4dex( const ON_4dex* a, const ON_4dex* b);
 
 ON_DECL
 const ON_2dex* ON_BinarySearch2dexArray( 
@@ -2012,3 +1998,44 @@ ON_DECL bool ON_GetEllipseConicEquation(
       );
 
 #endif
+/*
+Descripton:
+  Return the length of a 2d vector (x,y)
+Returns:
+ sqrt(x^2 + y^2) calculated in as precisely and safely as possible.
+*/
+ON_DECL double ON_Length2d( double x, double y );
+
+/*
+Descripton:
+  Return the length of a 3d vector (x,y,z)
+Returns:
+ sqrt(x^2 + y^2 + z^2) calculated in as precisely and safely as possible.
+*/
+ON_DECL double ON_Length3d( double x, double y, double z );
+
+
+/*
+Description:
+  Convert a double x to the largest float f such that
+  the mathematical value of f is at most the value of x.
+Parameters:
+  x - [in]
+Returns
+  The largest float f such that the mathematical value
+  of f is at most the value of x.
+*/
+ON_DECL float ON_FloatFloor(double x);
+
+/*
+Description:
+  Convert a double x to the smallest float f such that
+  the mathematical value of f is at least the value of x.
+Parameters:
+  x - [in]
+Returns
+  The smallest float f such that the mathematical value
+  of f is at least the value of x.
+*/
+ON_DECL float ON_FloatCeil(double x);
+

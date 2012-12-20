@@ -1,8 +1,9 @@
 /* $NoKeywords: $ */
 /*
 //
-// Copyright (c) 1993-2007 Robert McNeel & Associates. All rights reserved.
-// Rhinoceros is a registered trademark of Robert McNeel & Associates.
+// Copyright (c) 1993-2012 Robert McNeel & Associates. All rights reserved.
+// OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
+// McNeel & Associates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
@@ -39,27 +40,26 @@ public:
   ON_Annotation2Text();
   ~ON_Annotation2Text();
 
-  void SetDefaults();
+  // 24 Sep 2010 Dale Lear
+  //    None of these were implmented and they don't make any sense.
+  //    ON_Annotation2Text is derived from ON_wString, not ON_Object.
+  //    I'm commenting out these functions and it doesn't break the
+  //    SDK because linking would fail for anybody trying to use
+  //    these functions.
 
-    // override virtual ON_Object::Dump function
-  void Dump( ON_TextLog& text_log ) const;
-
-  // override virtual ON_Object::Dump function
-  unsigned int SizeOf() const;
-
-  // override virtual ON_Object::Write function
-  ON_BOOL32 Write(ON_BinaryArchive& binary_archive) const;
-
-  // override virtual ON_Object::Read function
-  ON_BOOL32 Read(ON_BinaryArchive& binary_archive);
-
-  // override virtual ON_UserData::GetDescription function
-  ON_BOOL32 GetDescription( ON_wString& description );
-
-  // override virtual ON_UserData::Archive function
-  ON_BOOL32 Archive() const;
-
-
+  //////void SetDefaults();
+  //////  // override virtual ON_Object::Dump function
+  //////void Dump( ON_TextLog& text_log ) const;
+  //////// override virtual ON_Object::Dump function
+  //////unsigned int SizeOf() const;
+  //////// override virtual ON_Object::Write function
+  //////ON_BOOL32 Write(ON_BinaryArchive& binary_archive) const;
+  //////// override virtual ON_Object::Read function
+  //////ON_BOOL32 Read(ON_BinaryArchive& binary_archive);
+  //////// override virtual ON_UserData::GetDescription function
+  //////ON_BOOL32 GetDescription( ON_wString& description );
+  //////// override virtual ON_UserData::Archive function
+  //////ON_BOOL32 Archive() const; 
 
   ON_Annotation2Text& operator=(const char*);
   ON_Annotation2Text& operator=(const wchar_t*);
@@ -129,7 +129,7 @@ public:
   double MaskOffsetFactor() const;
   void SetMaskOffsetFactor(double offset);
 
-  ON_UUID  m_partent_uuid;   // uuid of the text using this extension
+  ON_UUID  m_parent_uuid;    // uuid of the text using this extension
 
   bool     m_bDrawMask;      // do or don't draw a mask
 
@@ -156,6 +156,14 @@ public:
   ON_DimensionExtra* DimensionExtension(class ON_LinearDimension2* pDim, bool bCreate);
   static const
   ON_DimensionExtra* DimensionExtension(const class ON_LinearDimension2* pDim, bool bCreate);
+  static
+  ON_DimensionExtra* DimensionExtension(class ON_RadialDimension2* pDim, bool bCreate);
+  static const 
+  ON_DimensionExtra* DimensionExtension(const class ON_RadialDimension2* pDim, bool bCreate);
+  static
+  ON_DimensionExtra* DimensionExtension(class ON_OrdinateDimension2* pDim, bool bCreate);
+  static const 
+  ON_DimensionExtra* DimensionExtension(const class ON_OrdinateDimension2* pDim, bool bCreate);
 
   void SetDefaults();
 
@@ -185,6 +193,17 @@ public:
   // -1: force outside
   int ArrowPosition() const;
   void SetArrowPosition( int position);
+
+  // For a dimension in page space that measures between points in model space
+  // of a detail view, this is the ratio of the page distance / model distance.
+  // When the dimension text is displayed, the distance measured in model space
+  // is multiplied by this number to get the value to display.
+  double DistanceScale() const;
+  void SetDistanceScale(double s);
+
+  // Basepont in modelspace coordinates for ordinate dimensions
+  void SetModelSpaceBasePoint(ON_3dPoint basepoint);
+  ON_3dPoint ModelSpaceBasePoint() const;
 
   //const wchar_t* ToleranceUpperString() const;
   //ON_wString& ToleranceUpperString();
@@ -227,6 +246,9 @@ public:
   // The strings that correspond to these rectangles are generated from
   // info in the dimstyle
   ON_RECT* m_text_rects;
+
+  double m_distance_scale;
+  ON_3dPoint m_modelspace_basepoint;
 };
 
 
@@ -488,6 +510,7 @@ public:
 
   /*
     Description:
+      
       Set or get the string value of the user text, with no substitution for "<>"
     Parameters:
       [in] const wchar_t* string   the new value for UserText
@@ -500,8 +523,98 @@ public:
       "<>" is the default for linear dimensions.
       Other dimensions include "<>" in their default string
   */
-  void SetUserText( const wchar_t*);
-  const ON_wString& UserText() const;
+
+  // OBSOLETE - call SetTextValue( text_value );
+  ON_DEPRECATED void SetUserText( const wchar_t* text_value );
+
+  // OBSOLETE - call TextValue( text_value );
+  ON_DEPRECATED const ON_wString& UserText() const;
+
+
+  /*
+  Description:
+    Gets the value of the annotation text.
+  Returns:
+    Value of the annotation text.
+  See Also:
+    ON_Annotation2Text::SetTextValue()
+    ON_Annotation2Text::SetTextFormula()
+    ON_Annotation2Text::TextFormula()    
+  Remarks:
+    This gets the literal value of the text, there is no
+    substitution for any "<>" substrings.  When a dimension
+    is drawn, any occurance of "<>" will be replaced
+    with the measured value for the dimension and formatted
+    according to the DimStyle settings.
+
+    Annotation text values can be constant or the result 
+    of evaluating text formula containing %<...>% 
+    expressions. The ...TextValue() functions set
+    and get the text's value.  The ...TextFormula()
+    functions get and set the text's formula.
+  */
+  const wchar_t* TextValue() const;
+
+  /*
+  Description:
+    Sets the value of the annotation text.  No changes
+    are made to the text_value string.
+  Parameters:
+    text_value - [in]
+  Returns:
+    Value of the annotation text.
+  See Also:
+    ON_Annotation2Text::SetTextFormula()
+    ON_Annotation2Text::TextValue()    
+    ON_Annotation2Text::TextFormula()    
+  Remarks:
+    Annotation text values can be constant or the result 
+    of evaluating text formula containing %<...>% 
+    expressions. The ...TextValue() functions set
+    and get the text's value.  The ...TextFormula()
+    functions get and set the text's formula.
+  */
+  void SetTextValue( const wchar_t* text_value );
+
+  /*
+  Description:
+    Gets the formula for the annotation text.
+  Parameters:
+    text_value - [in]
+  Returns:
+    Value of the annotation text.
+  See Also:
+    ON_Annotation2Text::SetTextValue()
+    ON_Annotation2Text::TextValue()    
+    ON_Annotation2Text::TextFormula()    
+  Remarks:
+    Annotation text values can be constant or the result 
+    of evaluating text formula containing %<...>% 
+    expressions. The ...TextValue() functions set
+    and get the text's value.  The ...TextFormula()
+    functions get and set the text's formula.
+  */
+  const wchar_t* TextFormula() const;
+
+  /*
+  Description:
+    Sets the formula for the annotation text.
+  Parameters:
+    text_value - [in]
+  Returns:
+    Value of the annotation text.
+  See Also:
+    ON_Annotation2Text::SetTextValue()
+    ON_Annotation2Text::Value()    
+    ON_Annotation2Text::Formula()    
+  Remarks:
+    Annotation text values can be constant or the result 
+    of evaluating text formula containing %<...>% 
+    expressions. The ...TextValue() functions set
+    and get the text's value.  The ...TextFormula()
+    functions get and set the text's formula.
+  */
+  void SetTextFormula( const wchar_t* s );
 
   /*
     Description:
@@ -743,10 +856,19 @@ public:
     Returns:
       True if text_xform is set.
   */
+  //bool GetTextXform( 
+  //    const ON_RECT gdi_text_rect,
+  //    const ON_Font& font,
+  //    const ON_DimStyle& dimstyle,
+  //    double dimscale,
+  //    const ON_Viewport* vp,
+  //    const ON_Xform* model_xform,
+  //    ON_Xform& text_xform  // output
+  //    ) const;
   bool GetTextXform(
       const ON_RECT gdi_text_rect,
       const ON_Font& font,
-      const ON_DimStyle& dimstyle,
+      const ON_DimStyle* dimstyle,
       double dimscale,
       const ON_Viewport* vp,
       const ON_Xform* model_xform,
@@ -851,6 +973,18 @@ public:
   // true: User has positioned text
   // false: use default location
   bool m_userpositionedtext;
+  // Added 13 Aug, 2010 - Lowell
+  // This determines whether the object will be scaled according to detail
+  // scale factor or by 1.0 in paperspace rather than by 
+  // dimscale or text scale.
+  // For the first try this will only be used on text and its
+  // here on the base class because it would fit and in case 
+  // its needed later on dimensions.
+  bool m_annotative_scale;
+private:
+  bool m_reserved_b1;
+  bool m_reserved_b2;
+public:
 
   // For dimensions, this is the ON_DimStyle index
   // For text, its the ON_Font index
@@ -1869,6 +2003,11 @@ public:
   // on each side of the tight rectangle around the text characters to the mask rectangle.
   double MaskOffsetFactor() const;
   void SetMaskOffsetFactor(double offset);
+  // Scale annotation according to detail scale factor in paperspace
+  // or by 1.0 in paperspace and not in a detail
+  // Otherwise, dimscale or text scale is used
+  bool AnnotativeScaling() const;
+  void SetAnnotativeScaling(bool b);
 
 };
 
@@ -1910,7 +2049,7 @@ public:
     // Do not change these enum values.  They are saved in files as the
     // ON_COMPONENT_INDEX.m_index value.
     //
-    // Indices of angular dimension definition points in
+    // Indices of leader definition points in
     // the m_points[] array
     arrow_pt_index  = 0, // arrow tip
 
@@ -2004,6 +2143,8 @@ public:
       const ON_3dmAnnotationSettings& settings,
       int dimstyle_index
       );
+// April 22, 2010 Lowell - Added to support right justified text on left pointing leader tails rr64292
+  bool GetTextDirection( ON_2dVector& text_dir ) const;
 
   bool GetArrowHeadDirection( ON_2dVector& arrowhead_dir ) const;
   bool GetArrowHeadTip( ON_2dPoint& arrowhead_tip ) const;

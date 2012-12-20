@@ -1,8 +1,9 @@
 /* $NoKeywords: $ */
 /*
 //
-// Copyright (c) 1993-2007 Robert McNeel & Associates. All rights reserved.
-// Rhinoceros is a registered trademark of Robert McNeel & Associates.
+// Copyright (c) 1993-2012 Robert McNeel & Associates. All rights reserved.
+// OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
+// McNeel & Associates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
@@ -164,10 +165,32 @@ bool ON_Arc::Create( // arc through 3 3d points
   const ON_3dPoint& R  // point R
   )
 {
-  ON_Circle c(P,Q,R);
+  ON_Circle c;
   double a = 0.0;
-  c.ClosestPointTo( R, &a );
-  return Create( c, ON_Interval(0.0,a) );
+
+  for (;;)
+  {
+
+    if ( !c.Create(P,Q,R) )
+      break;
+
+    if ( !c.ClosestPointTo( R, &a ) )
+      break;
+
+    if ( !(a > 0.0) )
+      break;
+    
+    if ( !Create( c, ON_Interval(0.0,a) ) )
+      break;
+
+    return true;
+  }
+
+  plane = ON_Plane::World_xy;
+  radius = 0.0;
+  m_angle.Set(0.0,0.0);
+
+  return false;
 }
 
 //////////
@@ -385,7 +408,9 @@ bool ON_ArcCurve::IsContinuous(
     case ON::C2_continuous:
     case ON::G1_continuous:
     case ON::G2_continuous:
-      rc = true;
+    case ON::Cinfinity_continuous:
+    case ON::Gsmooth_continuous:
+      // rc = true;
       break;
 
     case ON::C0_locus_continuous:
@@ -398,9 +423,6 @@ bool ON_ArcCurve::IsContinuous(
       // is locus continuous at start parameter.
       if ( t >= Domain()[1] )
         rc = false;
-      break;
-
-    case ON::Cinfinity_continuous:
       break;
     }
   }
@@ -423,6 +445,39 @@ double ON_Arc::Length() const
 {
   return fabs(AngleRadians()*radius);
 }
+
+double ON_Arc::SectorArea() const
+{
+  return fabs(0.5*AngleRadians()*radius*radius);
+}
+
+ON_3dPoint ON_Arc::SectorAreaCentroid() const
+{
+  double a = 0.5*fabs(AngleRadians());
+  double d = (a > 0.0) ? sin(a)/a : 0.0;
+  d *= 2.0*radius/3.0;
+  a = 0.5*(m_angle[1]+m_angle[0]);
+  return plane.PointAt(d*cos(a),d*sin(a));
+}
+
+double ON_Arc::SegmentArea() const
+{
+  double a = fabs(AngleRadians());
+  return (0.5*(a - sin(a))*radius*radius);
+}
+
+ON_3dPoint ON_Arc::SegmentAreaCentroid() const
+{
+  double a = fabs(AngleRadians());
+  double sin_halfa = sin(0.5*a);
+  double d = 3.0*(a - sin(a));
+  if ( d > 0.0 )
+    d = (sin_halfa*sin_halfa*sin_halfa)/d;
+  d *= 4.0*radius;
+  a = 0.5*(m_angle[1]+m_angle[0]);
+  return plane.PointAt(d*cos(a),d*sin(a));
+}
+
 
 /* moved to opennurbs_arccurve.cpp
 

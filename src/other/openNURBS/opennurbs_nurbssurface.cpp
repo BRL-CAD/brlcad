@@ -1,8 +1,9 @@
 /* $NoKeywords: $ */
 /*
 //
-// Copyright (c) 1993-2007 Robert McNeel & Associates. All rights reserved.
-// Rhinoceros is a registered trademark of Robert McNeel & Assoicates.
+// Copyright (c) 1993-2012 Robert McNeel & Associates. All rights reserved.
+// OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
+// McNeel & Associates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
@@ -893,7 +894,8 @@ ON_Curve* ON_NurbsSurface::IsoCurve(
   int i,j,k,Scvsize,span_index;
   double* Ncv;
   const double* Scv;
-  if ( dir == 0 || dir == 1 && IsValid() ) {
+  if ( (dir == 0 || dir == 1) && IsValid() )
+  {
     Scvsize = CVSize();
     ON_NurbsCurve* nurbscrv = new ON_NurbsCurve( m_dim, m_is_rat, m_order[dir], m_cv_count[dir] );
     memcpy( nurbscrv->m_knot, m_knot[dir], nurbscrv->KnotCount()*sizeof(*nurbscrv->m_knot) );
@@ -1312,11 +1314,23 @@ ON_NurbsSurface::IsClosed( int dir ) const
   bool bIsClosed = false;
   if ( dir >= 0 && dir <= 1 && m_dim > 0 )
   {
-    if ( ON_IsKnotVectorClamped( m_order[dir], m_cv_count[dir], m_knot[dir] ) ) {
-      if ( ON_IsPointGridClosed( m_dim, m_is_rat, m_cv_count[0], m_cv_count[1], m_cv_stride[0], m_cv_stride[1], m_cv, dir ) )
+    if ( ON_IsKnotVectorClamped( m_order[dir], m_cv_count[dir], m_knot[dir] ) )
+    {
+      const double* corners[4];
+      corners[0] = CV(0,0);
+      corners[(0==dir)?1:2] = CV(m_cv_count[0]-1,0);
+      corners[(0==dir)?2:1] = CV(0,m_cv_count[1]-1);
+      corners[3] = CV(m_cv_count[0]-1,m_cv_count[1]-1);
+      if (    ON_PointsAreCoincident(m_dim,m_is_rat,corners[0],corners[1])
+           && ON_PointsAreCoincident(m_dim,m_is_rat,corners[2],corners[3])
+           && ON_IsPointGridClosed( m_dim, m_is_rat, m_cv_count[0], m_cv_count[1], m_cv_stride[0], m_cv_stride[1], m_cv, dir ) 
+         )
+      {
         bIsClosed = true;
+      }
     }
-    else if ( IsPeriodic(dir) ) {
+    else if ( IsPeriodic(dir) )
+    {
       bIsClosed = true;
     }
   }
@@ -1370,7 +1384,7 @@ ON_NurbsSurface::IsPeriodic( int dir ) const
         cv1 = (dir)?CV(k,i1):CV(i1,k);
         for ( /*empty*/; i0 >= 0; i0--, i1-- ) 
         {
-          if ( ON_ComparePoint( m_dim, m_is_rat, cv0, cv1 ) )
+          if ( false == ON_PointsAreCoincident( m_dim, m_is_rat, cv0, cv1 ) )
             return false;
           cv0 -= m_cv_stride[dir];
           cv1 -= m_cv_stride[dir];      
@@ -1393,7 +1407,6 @@ bool ON_NurbsSurface::GetNextDiscontinuity(
                   double curvature_tolerance
                   ) const
 {
-  // 28 Jan 2004 - untested code
   int tmp_hint[2];
   int tmp_dtype=0;
 
@@ -1420,16 +1433,13 @@ bool ON_NurbsSurface::GetNextDiscontinuity(
   if ( !t )
     t = &tmp_t;
   
-  // 20 March 2003 Dale Lear:
-  //     Make this work for locus style queries
-  ON::continuity input_c = c;
   if ( c == ON::C0_continuous )
     return false;
 
   if ( c == ON::C0_locus_continuous )
   {
     return ON_Surface::GetNextDiscontinuity( 
-      dir, input_c, t0, t1, t, hint, dtype, 
+      dir, c, t0, t1, t, hint, dtype, 
       cos_angle_tolerance, curvature_tolerance );
   }
   if ( t0 == t1 )
@@ -1437,12 +1447,14 @@ bool ON_NurbsSurface::GetNextDiscontinuity(
 
   // First test for parametric discontinuities.  If none are found
   // then we will look for locus discontinuities at ends
-  c = ON::ParametricContinuity(c);
+  if ( m_order[dir] <= 2 )
+    c = ON::PolylineContinuity(c);  // no need to look a zero 2nd derivatives
+  const ON::continuity input_c = c; // saved so we can tell if "locus" needs to be dealt with
+  c = ON::ParametricContinuity(c);  // strips "locus" from c
 
-  ON_BOOL32 bEv2ndDer = (    (c == ON::C2_continuous || c == ON::G2_continuous)
-                     && m_order[dir] > 2);
-  ON_BOOL32 bTestKappa = ( bEv2ndDer && c == ON::G2_continuous );
-  ON_BOOL32 bTestTangent = ( bTestKappa || c == ON::G1_continuous || c == ON::G2_continuous );
+  bool bEv2ndDer    = ( c == ON::C2_continuous || c == ON::G2_continuous || c == ON::Gsmooth_continuous );
+  bool bTestKappa   = ( bEv2ndDer && c != ON::C2_continuous );
+  bool bTestTangent = ( bTestKappa || c == ON::G1_continuous );
 
   int delta_ki = 1;
   int delta = ((bEv2ndDer) ? 3 : 2) - m_order[dir];
@@ -1570,8 +1582,10 @@ bool ON_NurbsSurface::GetNextDiscontinuity(
             }
             else if ( bTestKappa )
             {
-              d = (Km-Kp).Length();
-              if ( d > curvature_tolerance )
+              bool bIsCurvatureContinuous = ( ON::Gsmooth_continuous == c)
+                ? ON_IsGsmoothCurvatureContinuous(Km,Kp,cos_angle_tolerance,curvature_tolerance)
+                : ON_IsG2CurvatureContinuous(Km,Kp,cos_angle_tolerance,curvature_tolerance);
+              if ( !bIsCurvatureContinuous )
               {
                 *dtype = 2;
                 *t = m_knot[dir][ki];
@@ -1628,10 +1642,9 @@ ON_NurbsSurface::IsSingular( // true if surface side is collapsed to a point
       ) const
 {
   bool rc = false;
-  int i0 = 0;
-  int i1 = 0;
-  int j0 = 0;
-  int j1 = 0;
+  const double* points = 0;
+  int point_count = 0;
+  int point_stride = 0;
 
   switch ( side ) 
   {
@@ -1639,10 +1652,9 @@ ON_NurbsSurface::IsSingular( // true if surface side is collapsed to a point
     rc = IsClamped(1,0)?true:false;
     if ( rc )
     {
-      i0 = 0;
-      i1 = CVCount(0);
-      j0 = 0;
-      j1 = 1;
+      points = CV(0,0);
+      point_count = m_cv_count[0];
+      point_stride = m_cv_stride[0];
     }
     break;
 
@@ -1650,10 +1662,9 @@ ON_NurbsSurface::IsSingular( // true if surface side is collapsed to a point
     rc = IsClamped(0,1)?true:false;
     if (rc)
     {
-      i0 = CVCount(0)-1;
-      i1 = CVCount(0);
-      j0 = 0;
-      j1 = CVCount(1);
+      points = CV(m_cv_count[0]-1,0);
+      point_count = m_cv_count[1];
+      point_stride = m_cv_stride[1];
     }
     break;
 
@@ -1661,10 +1672,9 @@ ON_NurbsSurface::IsSingular( // true if surface side is collapsed to a point
     rc  = IsClamped(1,1)?true:false;
     if (rc)
     {
-      i0 = 0;
-      i1 = CVCount(0);
-      j0 = CVCount(1)-1;
-      j1 = CVCount(1);
+      points = CV(0,m_cv_count[1]-1);
+      point_count = m_cv_count[0];
+      point_stride = m_cv_stride[0];
     }
     break;
 
@@ -1672,10 +1682,9 @@ ON_NurbsSurface::IsSingular( // true if surface side is collapsed to a point
     rc = IsClamped( 0, 0 )?true:false;
     if (rc) 
     {
-      i0 = 0;
-      i1 = 1;
-      j0 = 0;
-      j1 = CVCount(1);
+      points = CV(0,0);
+      point_count = m_cv_count[1];
+      point_stride = m_cv_stride[1];
     }
     break;
 
@@ -1685,23 +1694,8 @@ ON_NurbsSurface::IsSingular( // true if surface side is collapsed to a point
   }
 
   if (rc)
-  {
-    int i,j,k=0;
-    ON_3dPoint p[2];
-    double fuzz[2] = {0.0,0.0};
-    p[0].Zero();
-    p[1].Zero();
-    GetCV(i0,j0,p[k]);
-    fuzz[k] = p[k].Fuzz();
-    for ( i = i0; i < i1; i++ ) for ( j = j0; j < j1; j++ ) 
-    {
-      k = k?0:1;
-      GetCV( i, j, p[k] );
-      fuzz[k] = p[k].Fuzz();
-      if ( (p[0]-p[1]).MaximumCoordinate() > fuzz[0]+fuzz[1] )
-        return false;
-    }
-  }
+    rc = ON_PointsAreCoincident(m_dim,m_is_rat,point_count,point_stride,points);
+
   return rc;
 }
 
@@ -1935,7 +1929,7 @@ bool ON_NurbsSurface::IsContinuous(
     double point_tolerance, // default=ON_ZERO_TOLERANCE
     double d1_tolerance, // default==ON_ZERO_TOLERANCE
     double d2_tolerance, // default==ON_ZERO_TOLERANCE
-    double cos_angle_tolerance, // default==0.99984769515639123915701155881391
+    double cos_angle_tolerance, // default==ON_DEFAULT_ANGLE_TOLERANCE_COSINE
     double curvature_tolerance  // default==ON_SQRT_EPSILON
     ) const
 {
@@ -2608,7 +2602,13 @@ bool ON_MakeDegreesCompatible(
     rc = nurbs_curveB.IncreaseDegree( nurbs_curveA.Degree() )?true:false;
   else
     rc = nurbs_curveA.IncreaseDegree( nurbs_curveB.Degree() )?true:false;
+#if 1
+  /* Change from opennurbs version 20121024 */
+  return (nurbs_curveA.m_order == nurbs_curveB.m_order);
+#else
+  /* Fix from PCL's openNURBS - r6510 */
   return rc;
+#endif
 }
 
 static

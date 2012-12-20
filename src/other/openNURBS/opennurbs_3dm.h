@@ -1,8 +1,9 @@
 /* $NoKeywords: $ */
 /*
 //
-// Copyright (c) 1993-2007 Robert McNeel & Associates. All rights reserved.
-// Rhinoceros is a registered trademark of Robert McNeel & Associates.
+// Copyright (c) 1993-2012 Robert McNeel & Associates. All rights reserved.
+// OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
+// McNeel & Associates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
@@ -191,7 +192,7 @@
 #define TCODE_VIEW_VIEWPORT_USERDATA (TCODE_TABLEREC | TCODE_CRC   | 0x0D3B)
 
 /* records in bitmap table */
-#define TCODE_BITMAP_RECORD (TCODE_TABLEREC | TCODE_CRC | 0x0090) /* material table record derived from ON_Bitmap */
+#define TCODE_BITMAP_RECORD (TCODE_TABLEREC | TCODE_CRC | 0x0090) /* bitmap table record derived from ON_Bitmap */
 
 /* records in material table */
 #define TCODE_MATERIAL_RECORD (TCODE_TABLEREC | TCODE_CRC | 0x0040) /* material table record derived from ON_Material */
@@ -395,6 +396,8 @@
 #define TCODE_RHINOIO_OBJECT_DATA          (TCODE_OPENNURBS_OBJECT | 0xFFFE) /* obsolete - don't confuse with TCODE_OPENNURBS_OBJECT_DATA */
 #define TCODE_RHINOIO_OBJECT_END           (TCODE_OPENNURBS_OBJECT | 0xFFFF) /* obsolete - don't confuse with TCODE_OPENNURBS_OBJECT_END */
 
+/* OpenNURBS classes the require a unique tcode */
+#define TCODE_OPENNURBS_BUFFER (TCODE_OPENNURBS_OBJECT | TCODE_CRC | 0x0100) /* chunk stores ON_Buffer classes */
 
 /* legacy objects from Rhino 1.x */
 #define TCODE_LEGACY_ASM          (TCODE_LEGACY_GEOMETRY | 0x0001)

@@ -1,8 +1,9 @@
 /* $NoKeywords: $ */
 /*
 //
-// Copyright (c) 1993-2007 Robert McNeel & Associates. All rights reserved.
-// Rhinoceros is a registered trademark of Robert McNeel & Assoicates.
+// Copyright (c) 1993-2012 Robert McNeel & Associates. All rights reserved.
+// OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
+// McNeel & Associates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
@@ -14,6 +15,63 @@
 */
 
 #include "opennurbs.h"
+
+#if defined(ON_DLL_EXPORTS)
+// When compiling a Windows DLL opennurbs, we
+// statically link ./zlib/.../zlib....lib into
+// the opennurbs DLL.
+
+
+#define OPENNURBS_ZLIB_FILE_NAME "zlib.lib"
+
+//////////////////////////////////////////////////////////////
+//
+// OPENNURBS_ZLIB_OUTPUT_DIR is the directory containing zlib
+// relative to the "opennurbs" directory.  
+//
+// OPENNURBS_ZLIB_OUTPUT_DIR must not have a trailing slash
+//
+#define OPENNURBS_ZLIB_OUTPUT_ROOT_DIR "."
+
+
+#if defined(WIN64) && defined(_M_X64)
+
+// 64 bit Windows zlib linking instructions
+
+#if defined(NDEBUG)
+
+// release x64 libs
+#define OPENNURBS_CONFIGURATION_DIR "x64/Release"
+
+#else // _DEBUG
+
+// debug  x64 libs
+#define OPENNURBS_CONFIGURATION_DIR "x64/Debug"
+
+#endif // if NDEBUG else _DEBUG
+
+#elif defined(WIN32) && defined(_M_IX86)
+
+// 32 bit Windows zlib linking instructions
+
+#if defined(NDEBUG)
+
+// release 32 bit WIndows libs
+#define OPENNURBS_CONFIGURATION_DIR "Release"
+
+#else // _DEBUG
+
+// debug 32 bit WIndows libs
+#define OPENNURBS_CONFIGURATION_DIR "Debug"
+
+#endif // if NDEBUG else _DEBUG
+
+#endif // if WIN64 else WIN32
+
+#pragma comment(lib, "\"" OPENNURBS_ZLIB_OUTPUT_ROOT_DIR "/" OPENNURBS_CONFIGURATION_DIR "/" OPENNURBS_ZLIB_FILE_NAME "\"")
+
+#endif // ON_DLL_EXPORTS
+
 
 bool ON_BinaryArchive::WriteCompressedBuffer(
         size_t sizeof__inbuffer,  // sizeof uncompressed input data
@@ -239,7 +297,7 @@ size_t ON_BinaryArchive::WriteDeflate( // returns number of bytes written
     if ( zrc < 0 ) 
     {
       // Something went haywire - bail out.
-      ON_ERROR("ON_BinaryArchive::WriteDeflate - deflate failure");
+      ON_ERROR("ON_BinaryArchive::WriteDeflate - z_deflate failure");
       rc = false;
       break;
     }
@@ -437,7 +495,7 @@ bool ON_BinaryArchive::ReadInflate(
     if ( zrc < 0 ) 
     {
       // Something went haywire - bail out.
-      ON_ERROR("ON_BinaryArchive::ReadInflate - inflate failure");
+      ON_ERROR("ON_BinaryArchive::ReadInflate - z_inflate failure");
       rc = false;
       break;
     }
@@ -1097,7 +1155,7 @@ size_t ON_CompressedBuffer::DeflateHelper( // returns number of bytes written
     if ( zrc < 0 ) 
     {
       // Something went haywire - bail out.
-      ON_ERROR("ON_CompressedBuffer::DeflateHelper - deflate failure");
+      ON_ERROR("ON_CompressedBuffer::DeflateHelper - z_deflate failure");
       rc = false;
       break;
     }
@@ -1230,7 +1288,7 @@ bool ON_CompressedBuffer::InflateHelper(
     if ( zrc < 0 ) 
     {
       // Something went haywire - bail out.
-      ON_ERROR("ON_CompressedBuffer::InflateHelper - inflate failure");
+      ON_ERROR("ON_CompressedBuffer::InflateHelper - z_inflate failure");
       rc = false;
       break;
     }

@@ -1,8 +1,9 @@
 /* $NoKeywords: $ */
 /*
 //
-// Copyright (c) 1993-2007 Robert McNeel & Associates. All rights reserved.
-// Rhinoceros is a registered trademark of Robert McNeel & Associates.
+// Copyright (c) 1993-2012 Robert McNeel & Associates. All rights reserved.
+// OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
+// McNeel & Associates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
@@ -191,6 +192,10 @@ void ON_ArcCurve::Dump( ON_TextLog& dump ) const
   dump.Print( m_arc.plane.origin );
   dump.Print( "\nradius = %g\n",m_arc.radius);
   dump.Print( "length = %g\n",m_arc.Length());
+  ON_3dPoint start = PointAtStart();
+  ON_3dPoint end = PointAtEnd();
+  dump.Print( "start = "); dump.Print(start);
+  dump.Print( "\nend = "); dump.Print(end); dump.Print("\n");
   dump.PopIndent();
 }
 
@@ -464,8 +469,28 @@ ON_BOOL32 ON_ArcCurve::Evaluate( // returns false if unable to evaluate
     double rat = m_arc.DomainRadians().Length()/m_t.Length();
     double scale = 1.0;
     double a = m_arc.DomainRadians().ParameterAt( m_t.NormalizedParameterAt(t) );
-    double c = cos(a)*m_arc.radius;
-    double s = sin(a)*m_arc.radius;
+
+    // 12 July 2012 Dale Lear
+    //   When making a sphere with center (0,0,0) and radius = 1.0e9,
+    //   a = ON_PI = 3.1415926535897931, c = -1.0 and s = 1.2246467991473532e-016
+    //   so I'm adding the if ... statements to keep arc evaluations more precise
+    //   at multiples of 1/2 pi.
+    double c = cos(a);
+    double s = sin(a);
+    if ( fabs(c) < ON_EPSILON || fabs(s) > 1.0-ON_EPSILON )
+    {
+      c = 0.0;
+      s = s < 0.0 ? -1.0 : 1.0;
+    }
+    else if ( fabs(s) < ON_EPSILON || fabs(c) > 1.0-ON_EPSILON )
+    {
+      s = 0.0;
+      c = c < 0.0 ? -1.0 : 1.0;
+    }
+
+    c *= m_arc.radius;
+    s *= m_arc.radius;
+
     ON_3dPoint p = m_arc.plane.origin + c*m_arc.plane.xaxis + s*m_arc.plane.yaxis;
     v[0] = p.x;
     v[1] = p.y;
@@ -632,8 +657,8 @@ ON_BOOL32 ON_ArcCurve::Split(
     }
     if ( 0 == right_side && this != right_arc )
     {
-      right_arc = 0;
       delete right_arc;
+      right_arc = 0;
     }
   }
   return rc;
@@ -670,7 +695,7 @@ static ON_BOOL32 NurbsCurveArc ( const ON_Arc& arc, int dim, ON_NurbsCurve& nurb
   const double angle1 = dom[1];
   ON_3dPoint start_point = arc.StartPoint();
   //ON_3dPoint mid_point   = arc.PointAt(angle0 + 0.5*angle);
-  ON_3dPoint end_point   = arc.EndPoint();
+  ON_3dPoint end_point   = arc.IsCircle() ? start_point : arc.EndPoint();
 
   ON_4dPoint CV[9];
   double knot[10];
@@ -829,10 +854,20 @@ bool ON_Arc::GetRadianFromNurbFormParameter(double NurbParameter, double* Radian
 	double theta = atan2(y,x);
 
 	theta -= floor( (theta-dom[0])/(2*ON_PI)) * 2* ON_PI;
-	if( theta<dom[0])
-		theta = dom[0];
-	else if(theta>dom[1])
-		theta = dom[1];
+	if( theta<dom[0] || theta>dom[1])
+	{
+		// 24-May-2010 GBA 
+		// We got outside of the domain because of a numerical error somewhere.
+		// The only case that matters is because we are right near an endpoint.
+		// So we need to decide which endpoint to return.  (Other possibilities 
+		// are that the radius is way to small relative to the coordinates of the center.
+		// In this case the circle is just numerical noise around the center anyway.)
+		if( NurbParameter< (dom[0]+dom[1])/2.0)
+			theta = dom[0];
+		else 
+			theta = dom[1];
+	}
+
 
 	// Carefully handle the potential discontinuity of this function
 	//  when the domain is a full circle
@@ -979,129 +1014,6 @@ bool ON_Arc::GetNurbFormParameterFromRadian(double RadianParameter, double* Nurb
 	return true;
 
 }
-
-bool ON_ArcCurve::GetClosestPoint( const ON_3dPoint& test_point,
-        double* t,       // parameter of local closest point returned here
-        double maximum_distance,
-        const ON_Interval* sub_domain
-        ) const
-{
-  double a, s, d;
-  ON_Interval domain = Domain();
-  if (sub_domain)
-  {
-    if ( !sub_domain->IsIncreasing() )
-      return false;
-    domain.Intersection(*sub_domain);
-    if ( !domain.IsIncreasing() )
-      return false;
-  }
-
-
-  bool rc = m_arc.ClosestPointTo( test_point, &a );
-  if ( rc )
-  {
-    s = m_t.ParameterAt( m_arc.DomainRadians().NormalizedParameterAt(a) );
-    if ( sub_domain )
-    {
-      if ( s < sub_domain->Min() || s > sub_domain->Max())
-      {
-        double dist0 = test_point.DistanceTo(PointAt(domain[0]));
-        double dist1 = test_point.DistanceTo(PointAt(domain[1]));
-        s = domain[(dist0 <= dist1)?0:1];
-      }
-    }
-    if ( maximum_distance > 0.0 )
-    {
-      d = test_point.DistanceTo(PointAt(s));
-      if ( d > maximum_distance )
-        rc = false;
-    }
-    if (rc && t)
-      *t = s;
-  }
-  return rc;
-}
-
-ON_BOOL32 ON_ArcCurve::GetLength(
-        double* length,               // length returned here
-        double, // fractional_tolerance - formal parameter intentionally ignored in this virtual function
-        const ON_Interval* sub_domain // default = NULL
-        ) const
-{
-	if( sub_domain && sub_domain->IsDecreasing() )
-		return false;
-  else if ( sub_domain ) {
-		ON_Interval scratch_domain = m_t;
-		if( !scratch_domain.Intersection(*sub_domain))
-			return false;
-		else
-			sub_domain=&scratch_domain;
-    double a0 = m_arc.DomainRadians().ParameterAt(m_t.NormalizedParameterAt(sub_domain->Min()));
-    double a1 = m_arc.DomainRadians().ParameterAt(m_t.NormalizedParameterAt(sub_domain->Max()));
-    *length = fabs((a1-a0)*m_arc.radius);
-  }
-  else {
-    *length = m_arc.Length();
-  }
-  return true;
-}
-
-ON_BOOL32 ON_ArcCurve::GetNormalizedArcLengthPoint(
-        double s,
-        double* t,
-        double, // fractional_tolerance - formal parameter intentionally ignored in this virtual function
-        const ON_Interval* sub_domain
-        ) const
-{
-  ON_Interval domain = (sub_domain) ? *sub_domain : Domain();
-  *t = domain.ParameterAt(s);
-  return true;
-}
-
-ON_BOOL32 ON_ArcCurve::GetNormalizedArcLengthPoints(
-        int count,
-        const double* s,
-        double* t,
-        double, // absolute_tolerance   - formal parameter intentionally ignored in this virtual function
-        double, // fractional_tolerance - formal parameter intentionally ignored in this virtual function
-        const ON_Interval* sub_domain
-        ) const
-{
-  if ( count > 0 || s != NULL && t != NULL )
-  {
-    if ( !sub_domain )
-      sub_domain = &m_t;
-    int i;
-    for ( i = 0; i < count; i++ )
-    {
-      t[i] = sub_domain->ParameterAt( s[i] );
-    }
-  }
-  return true;
-}
-
-ON_BOOL32 ON_ArcCurve::GetLocalClosestPoint( const ON_3dPoint& test_point,
-        double seed_parameter,
-        double* t,
-        const ON_Interval* sub_domain
-        ) const
-{
-  if (!GetClosestPoint( test_point, t, 0.0, sub_domain ))
-    return false;
-
-  if (IsCircle() && (!sub_domain || sub_domain->Includes(Domain()))){
-    //if closest point is near seam, use seed do determine which side.
-    if (seed_parameter < Domain().ParameterAt(0.01) && *t > Domain().ParameterAt(0.99))
-      *t = Domain()[0];
-    else if (seed_parameter > Domain().ParameterAt(0.99) && *t < Domain().ParameterAt(0.01))
-      *t = Domain()[1];
-  }
-
-  return true;
-
-}
-
 
 int ON_ArcCurve::GetNurbForm( // returns 0: unable to create NURBS representation
                  //            with desired accuracy.

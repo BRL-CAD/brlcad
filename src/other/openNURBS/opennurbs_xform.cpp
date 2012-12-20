@@ -1,8 +1,9 @@
 /* $NoKeywords: $ */
 /*
 //
-// Copyright (c) 1993-2007 Robert McNeel & Associates. All rights reserved.
-// Rhinoceros is a registered trademark of Robert McNeel & Assoicates.
+// Copyright (c) 1993-2012 Robert McNeel & Associates. All rights reserved.
+// OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
+// McNeel & Associates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
@@ -44,14 +45,23 @@ static void SwapCol( double matrix[4][4], int j0, int j1 )
   t = *p0; *p0 = *p1; *p1 = t;
 }
 
-static void ScaleRow( double matrix[4][4], double c, int i )
-{
-  double* p = &matrix[i][0];
-  *p++ *= c;
-  *p++ *= c;
-  *p++ *= c;
-  *p   *= c;
-}
+//static void ScaleRow( double matrix[4][4], double c, int i )
+//{
+//  double* p = &matrix[i][0];
+//  *p++ *= c;
+//  *p++ *= c;
+//  *p++ *= c;
+//  *p   *= c;
+//}
+//
+//static void InvScaleRow( double matrix[4][4], double c, int i )
+//{
+//  double* p = &matrix[i][0];
+//  *p++ /= c;
+//  *p++ /= c;
+//  *p++ /= c;
+//  *p   /= c;
+//}
 
 static void AddCxRow( double matrix[4][4], double c, int i0, int i1 )
 {
@@ -126,9 +136,18 @@ static int Inv( const double* src, double dst[4][4], double* determinant, double
   if ( x > 0.0 ) {
     rank++;
 
-    c = d = 1.0/M[0][0];
-    M[0][1] *= c; M[0][2] *= c; M[0][3] *= c;
-    ScaleRow( I, c, 0 );
+    // 17 August 2011 Dale Lear
+    //   The result is slightly more accurate when using division
+    //   instead of multiplying by the inverse of M[0][0]. If there
+    //   is any speed penalty at this point in history, the accuracy
+    //   is more important than the additional clocks.
+    //c = d = 1.0/M[0][0];
+    //M[0][1] *= c; M[0][2] *= c; M[0][3] *= c;
+    //ScaleRow( I, c, 0 );
+    c = M[0][0];
+    M[0][1] /= c; M[0][2] /= c; M[0][3] /= c;
+    I[0][0] /= c; I[0][1] /= c; I[0][2] /= c; I[0][3] /= c;
+    d = 1.0/c;
 
     x *=  ON_EPSILON;
 
@@ -172,10 +191,19 @@ static int Inv( const double* src, double dst[4][4], double* determinant, double
     if ( x > 0.0 ) {
       rank++;
 
-      c = 1.0/M[1][1];
-      d *= c;
-      M[1][2] *= c; M[1][3] *= c;
-      ScaleRow( I, c, 1 );
+      // 17 August 2011 Dale Lear
+      //   The result is slightly more accurate when using division
+      //   instead of multiplying by the inverse of M[1][1]. If there
+      //   is any speed penalty at this point in history, the accuracy
+      //   is more important than the additional clocks.
+      //c = 1.0/M[1][1];
+      //d *= c;
+      //M[1][2] *= c; M[1][3] *= c;
+      //ScaleRow( I, c, 1 );
+      c = M[1][1];
+      M[1][2] /= c; M[1][3] /= c;
+      I[1][0] /= c; I[1][1] /= c; I[1][2] /= c; I[1][3] /= c;
+      d /= c;
 
       x *= ON_EPSILON;
       if (fabs(M[0][1]) >  x) {
@@ -218,10 +246,19 @@ static int Inv( const double* src, double dst[4][4], double* determinant, double
       if ( x > 0.0 ) {
         rank++;
 
-        c = 1.0/M[2][2];
-        d *= c;
-        M[2][3] *= c;
-        ScaleRow( I, c, 2 );
+        // 17 August 2011 Dale Lear
+        //   The result is slightly more accurate when using division
+        //   instead of multiplying by the inverse of M[2][2]. If there
+        //   is any speed penalty at this point in history, the accuracy
+        //   is more important than the additional clocks.
+        //c = 1.0/M[2][2];
+        //d *= c;
+        //M[2][3] *= c;
+        //ScaleRow( I, c, 2 );
+        c = M[2][2];
+        M[2][3] /= c;
+        I[2][0] /= c; I[2][1] /= c; I[2][2] /= c; I[2][3] /= c;
+        d /= c;
 
         x *= ON_EPSILON;
         if (fabs(M[0][2]) >  x) {
@@ -247,9 +284,17 @@ static int Inv( const double* src, double dst[4][4], double* determinant, double
         if ( x > 0.0 ) {
           rank++;
 
-          c = 1.0/M[3][3];
-          d *= c;
-          ScaleRow( I, c, 3 );
+          // 17 August 2011 Dale Lear
+          //   The result is slightly more accurate when using division
+          //   instead of multiplying by the inverse of M[3][3]. If there
+          //   is any speed penalty at this point in history, the accuracy
+          //   is more important than the additional clocks.
+          //c = 1.0/M[3][3];
+          //d *= c;
+          //ScaleRow( I, c, 3 );
+          c = M[3][3];
+          I[3][0] /= c; I[3][1] /= c; I[3][2] /= c; I[3][3] /= c;
+          d /= c;
 
           x *= ON_EPSILON;
           if (fabs(M[0][3]) >  x) {
@@ -814,23 +859,49 @@ bool ON_Xform::IsValid() const
 
 bool ON_Xform::IsIdentity( double zero_tolerance ) const
 {
+  // The code below will return false if m_xform[][] contains
+  // a nan value.
+  const double* v = &m_xform[0][0];
+  for ( int i = 0; i < 3; i++ )
+  {
+    if ( !(fabs(1.0 - *v++) <= zero_tolerance) )
+      return false;
+    if ( !(fabs(*v++) <= zero_tolerance) )
+      return false;
+    if ( !(fabs(*v++) <= zero_tolerance) )
+      return false;
+    if ( !(fabs(*v++) <= zero_tolerance) )
+      return false;
+    if ( !(fabs(*v++) <= zero_tolerance) )
+      return false;
+  }
+  if ( !(fabs( 1.0 - *v ) <= zero_tolerance) )
+    return false;
+  return true;
+}
+
+bool ON_Xform::IsNotIdentity( double zero_tolerance ) const
+{
+  // The code below will return false if m_xform[][] contains
+  // a nan value.
   const double* v = &m_xform[0][0];
   for ( int i = 0; i < 3; i++ )
   {
     if ( fabs(1.0 - *v++) > zero_tolerance )
-      return false;
-    if ( fabs(*v++) >  zero_tolerance )
-      return false;
-    if ( fabs(*v++) >  zero_tolerance )
-      return false;
-    if ( fabs(*v++) >  zero_tolerance )
-      return false;
-    if ( fabs(*v++) >  zero_tolerance )
-      return false;
+      return true;
+    if ( fabs(*v++) > zero_tolerance )
+      return true;
+    if ( fabs(*v++) > zero_tolerance )
+      return true;
+    if ( fabs(*v++) > zero_tolerance )
+      return true;
+    if ( fabs(*v++) > zero_tolerance )
+      return true;
   }
   if ( fabs( 1.0 - *v ) > zero_tolerance )
-    return false;
-  return true;
+    return true;
+
+  return false;
 }
 
 bool ON_Xform::IsTranslation( double zero_tolerance ) const
@@ -1131,29 +1202,57 @@ void ON_Xform::Rotation(
 {
   Identity();
 
-  // 29 June 2005 Dale Lear
-  //     Kill noise in input
-  if ( fabs(sin_angle) >= 1.0-ON_SQRT_EPSILON && fabs(cos_angle) <= ON_SQRT_EPSILON )
+  for(;;)
   {
-    cos_angle = 0.0;
-    if ( sin_angle < 0.0 ) sin_angle = -1.0; else sin_angle = 1.0;
-  }
-  else if ( fabs(cos_angle) >= 1.0-ON_SQRT_EPSILON && fabs(sin_angle) <= ON_SQRT_EPSILON )
-  {
-    sin_angle = 0.0;
-    if ( cos_angle < 0.0 ) cos_angle = -1.0; else cos_angle = 1.0;
-  }
-  else if ( fabs(cos_angle*cos_angle + sin_angle*sin_angle - 1.0) > ON_SQRT_EPSILON )
-  {
-    ON_2dVector cs(cos_angle,sin_angle);
-    cs.Unitize();
-    cos_angle = cs.x;
-    sin_angle = cs.y;
-  }
-  else
-  {
-    if ( cos_angle > 1.0 ) cos_angle = 1.0; else if (cos_angle < -1.0) cos_angle = -1.0;
-    if ( sin_angle > 1.0 ) sin_angle = 1.0; else if (sin_angle < -1.0) sin_angle = -1.0;
+    // 29 June 2005 Dale Lear
+    //     Kill noise in input
+    if ( fabs(sin_angle) >= 1.0-ON_SQRT_EPSILON && fabs(cos_angle) <= ON_SQRT_EPSILON )
+    {
+      cos_angle = 0.0;
+      sin_angle = (sin_angle < 0.0) ? -1.0 : 1.0; 
+      break;
+    }
+    
+    if ( fabs(cos_angle) >= 1.0-ON_SQRT_EPSILON && fabs(sin_angle) <= ON_SQRT_EPSILON )
+    {
+      cos_angle = (cos_angle < 0.0) ? -1.0 : 1.0; 
+      sin_angle = 0.0;
+      break;
+    }
+    
+    if ( fabs(cos_angle*cos_angle + sin_angle*sin_angle - 1.0) > ON_SQRT_EPSILON )
+    {
+      ON_2dVector cs(cos_angle,sin_angle);
+      if ( cs.Unitize() )
+      {
+        cos_angle = cs.x;
+        sin_angle = cs.y;
+        // no break here
+      }
+      else
+      {
+        ON_ERROR("sin_angle and cos_angle are both zero.");
+        cos_angle = 1.0;
+        sin_angle = 0.0;
+        break;
+      }
+    }
+
+    if ( fabs(cos_angle) > 1.0-ON_EPSILON || fabs(sin_angle) < ON_EPSILON )
+    {
+      cos_angle = (cos_angle < 0.0) ? -1.0 : 1.0; 
+      sin_angle = 0.0;
+      break;
+    }
+
+    if ( fabs(sin_angle) > 1.0-ON_EPSILON || fabs(cos_angle) < ON_EPSILON )
+    {
+      cos_angle = 0.0;
+      sin_angle = (sin_angle < 0.0) ? -1.0 : 1.0; 
+      break;
+    }
+
+    break;
   }
 
   if (sin_angle != 0.0 || cos_angle != 1.0) 
@@ -1520,19 +1619,27 @@ bool ON_Xform::CameraToClip(
       double near_dist, double far_dist
       )
 {
-  double d;
+  double dd;
 
   if ( left == right || bottom == top || near_dist == far_dist )
     return false;
 
   if ( !bPerspective ) {
     // parallel projection
-    d = 1.0/(left-right);
-    m_xform[0][0] = -2.0*d; m_xform[0][3] = (left+right)*d; m_xform[0][1] = m_xform[0][2] = 0.0;
-    d = 1.0/(bottom-top);
-    m_xform[1][1] = -2.0*d; m_xform[1][3] = (bottom+top)*d; m_xform[1][0] = m_xform[1][2] = 0.0;
-    d = 1.0/(far_dist-near_dist);
-    m_xform[2][2] = 2.0*d;  m_xform[2][3] = (far_dist+near_dist)*d;   m_xform[2][0] = m_xform[2][1] = 0.0;
+    //d = 1.0/(left-right);
+    //m_xform[0][0] = -2.0*d; m_xform[0][3] = (left+right)*d; m_xform[0][1] = m_xform[0][2] = 0.0;
+    //d = 1.0/(bottom-top);
+    //m_xform[1][1] = -2.0*d; m_xform[1][3] = (bottom+top)*d; m_xform[1][0] = m_xform[1][2] = 0.0;
+    //d = 1.0/(far_dist-near_dist);
+    //m_xform[2][2] = 2.0*d;  m_xform[2][3] = (far_dist+near_dist)*d;   m_xform[2][0] = m_xform[2][1] = 0.0;
+    //m_xform[3][0] = m_xform[3][1] = m_xform[3][2] = 0.0; m_xform[3][3] = 1.0;
+
+    dd = (left-right);
+    m_xform[0][0] = -2.0/dd; m_xform[0][3] = (left+right)/dd; m_xform[0][1] = m_xform[0][2] = 0.0;
+    dd = (bottom-top);
+    m_xform[1][1] = -2.0/dd; m_xform[1][3] = (bottom+top)/dd; m_xform[1][0] = m_xform[1][2] = 0.0;
+    dd = (far_dist-near_dist);
+    m_xform[2][2] = 2.0/dd;  m_xform[2][3] = (far_dist+near_dist)/dd;   m_xform[2][0] = m_xform[2][1] = 0.0;
     m_xform[3][0] = m_xform[3][1] = m_xform[3][2] = 0.0; m_xform[3][3] = 1.0;
   }
   else 
@@ -1556,19 +1663,34 @@ bool ON_Xform::CameraToClip(
     //   g(t): t -> (a*t - b)/(a - b*t)
     //
     // to the z coordinate after applying this transformation
-    d = 1.0/(right-left);
-    m_xform[0][0] = 2.0*near_dist*d; 
-    m_xform[0][2] = (right+left)*d; 
+    //d = 1.0/(right-left);
+    //m_xform[0][0] = 2.0*near_dist*d; 
+    //m_xform[0][2] = (right+left)*d; 
+    //m_xform[0][1] = m_xform[0][3] = 0.0;
+
+    //d = 1.0/(top-bottom);
+    //m_xform[1][1] = 2.0*near_dist*d; 
+    //m_xform[1][2] = (top+bottom)*d; 
+    //m_xform[1][0] = m_xform[1][3] = 0.0;
+
+    //d = 1.0/(far_dist-near_dist);
+    //m_xform[2][2] = (far_dist+near_dist)*d; 
+    //m_xform[2][3] = 2.0*near_dist*far_dist*d; 
+    //m_xform[2][0] = m_xform[2][1] = 0.0;
+
+    dd = (right-left);
+    m_xform[0][0] = 2.0*near_dist/dd; 
+    m_xform[0][2] = (right+left)/dd; 
     m_xform[0][1] = m_xform[0][3] = 0.0;
 
-    d = 1.0/(top-bottom);
-    m_xform[1][1] = 2.0*near_dist*d; 
-    m_xform[1][2] = (top+bottom)*d; 
+    dd = (top-bottom);
+    m_xform[1][1] = 2.0*near_dist/dd; 
+    m_xform[1][2] = (top+bottom)/dd; 
     m_xform[1][0] = m_xform[1][3] = 0.0;
 
-    d = 1.0/(far_dist-near_dist);
-    m_xform[2][2] = (far_dist+near_dist)*d; 
-    m_xform[2][3] = 2.0*near_dist*far_dist*d; 
+    dd = (far_dist-near_dist);
+    m_xform[2][2] = (far_dist+near_dist)/dd; 
+    m_xform[2][3] = 2.0*near_dist*far_dist/dd; 
     m_xform[2][0] = m_xform[2][1] = 0.0;
 
     m_xform[3][0] = m_xform[3][1] = m_xform[3][3] = 0.0; m_xform[3][2] = -1.0;
@@ -1584,7 +1706,7 @@ bool ON_Xform::ClipToCamera(
       )
 {
   // see comments in tl2_xform.h for details.
-  double d;
+  double dd;
   if ( left == right || bottom == top || near_dist == far_dist )
     return false;
 
@@ -1601,20 +1723,36 @@ bool ON_Xform::ClipToCamera(
     //    0         (t-b)/(2n)        0       (t+b)/(2n)
     //    0              0            0           -1
     //    0              0       (f-n)/(2fn)  (f+n)/(2fn)
-    d = 0.5/near_dist;
-    m_xform[0][0] = d*(right-left); 
-    m_xform[0][3] = d*(right+left); 
+    //d = 0.5/near_dist;
+    //m_xform[0][0] = d*(right-left); 
+    //m_xform[0][3] = d*(right+left); 
+    //m_xform[0][1] = m_xform[0][2] = 0.0;
+
+    //m_xform[1][1] = d*(top-bottom); 
+    //m_xform[1][3] = d*(top+bottom); 
+    //m_xform[1][0] = m_xform[1][2] = 0.0;
+
+    //m_xform[2][0] = m_xform[2][1] = m_xform[2][2] = 0.0; m_xform[2][3] = -1.0;
+
+    //d /= far_dist;
+    //m_xform[3][2] = d*(far_dist-near_dist); 
+    //m_xform[3][3] = d*(far_dist+near_dist); 
+    //m_xform[3][0] = m_xform[3][1] = 0.0;
+
+    dd = 2.0*near_dist;
+    m_xform[0][0] = (right-left)/dd; 
+    m_xform[0][3] = (right+left)/dd; 
     m_xform[0][1] = m_xform[0][2] = 0.0;
 
-    m_xform[1][1] = d*(top-bottom); 
-    m_xform[1][3] = d*(top+bottom); 
+    m_xform[1][1] = (top-bottom)/dd; 
+    m_xform[1][3] = (top+bottom)/dd; 
     m_xform[1][0] = m_xform[1][2] = 0.0;
 
     m_xform[2][0] = m_xform[2][1] = m_xform[2][2] = 0.0; m_xform[2][3] = -1.0;
 
-    d /= far_dist;
-    m_xform[3][2] = d*(far_dist-near_dist); 
-    m_xform[3][3] = d*(far_dist+near_dist); 
+    dd *= far_dist;
+    m_xform[3][2] = (far_dist-near_dist)/dd; 
+    m_xform[3][3] = (far_dist+near_dist)/dd; 
     m_xform[3][0] = m_xform[3][1] = 0.0;
   }
 
@@ -1665,13 +1803,13 @@ bool ON_Xform::ScreenToClip(
   ON_Xform c2s;
   bool rc = c2s.ClipToScreen( left, right, bottom, top, near_z, far_z );
   if (rc) {
-    m_xform[0][0] = 1.0/c2s[0][0]; m_xform[0][3] = -c2s[0][3]*m_xform[0][0];
+    m_xform[0][0] = 1.0/c2s[0][0]; m_xform[0][3] = -c2s[0][3]/c2s[0][0];
     m_xform[0][1] = m_xform[0][2] = 0.0;
 
-    m_xform[1][1] = 1.0/c2s[1][1]; m_xform[1][3] = -c2s[1][3]*m_xform[1][1];
+    m_xform[1][1] = 1.0/c2s[1][1]; m_xform[1][3] = -c2s[1][3]/c2s[1][1];
     m_xform[1][0] = m_xform[1][2] = 0.0;
 
-    m_xform[2][2] = 1.0/c2s[2][2]; m_xform[2][3] = -c2s[2][3]*m_xform[2][2];
+    m_xform[2][2] = 1.0/c2s[2][2]; m_xform[2][3] = -c2s[2][3]/c2s[2][2];
     m_xform[2][0] = m_xform[2][1] = 0.0;
 
     m_xform[3][0] = m_xform[3][1] = m_xform[3][2] = 0.0; 

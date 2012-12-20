@@ -1,8 +1,9 @@
 /* $NoKeywords: $ */
 /*
 //
-// Copyright (c) 1993-2007 Robert McNeel & Associates. All rights reserved.
-// Rhinoceros is a registered trademark of Robert McNeel & Associates.
+// Copyright (c) 1993-2012 Robert McNeel & Associates. All rights reserved.
+// OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
+// McNeel & Associates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
@@ -49,6 +50,38 @@ ON_UnitSystem& ON_UnitSystem::operator=(ON::unit_system us)
     m_custom_unit_name.Destroy();
   }
   return *this;
+}
+
+bool ON_UnitSystem::operator==(const ON_UnitSystem& other)
+{
+  if ( m_unit_system != other.m_unit_system )
+    return false;
+
+  if ( ON::custom_unit_system == m_unit_system )
+  {
+    if ( m_custom_unit_name.Compare(other.m_custom_unit_name) )
+      return false;
+    if ( !(m_custom_unit_scale == other.m_custom_unit_scale) )
+      return false;
+  }
+
+  return true;
+}
+
+bool ON_UnitSystem::operator!=(const ON_UnitSystem& other)
+{
+  if ( m_unit_system != other.m_unit_system )
+    return true;
+
+  if ( ON::custom_unit_system == m_unit_system )
+  {
+    if ( m_custom_unit_name.Compare(other.m_custom_unit_name) )
+      return true;
+    if ( m_custom_unit_scale != other.m_custom_unit_scale )
+      return true;
+  }
+
+  return false;
 }
 
 ON_UnitSystem::~ON_UnitSystem()
@@ -224,9 +257,15 @@ void ON_UnitSystem::Dump( ON_TextLog& dump ) const
 
   case ON::custom_unit_system:
     if ( m_custom_unit_name.Length() > 0 )
-      sUnitSystem.Format(L"%s (= %g meters)",
-                         m_custom_unit_name.Array(),
-                         m_custom_unit_scale);
+    {
+      const wchar_t* wsCustomUnitName = m_custom_unit_name.Array();
+      if ( 0 != wsCustomUnitName && 0 != wsCustomUnitName[0] )
+      {
+        sUnitSystem.Format("%ls (= %g meters)",
+                           wsCustomUnitName,
+                           m_custom_unit_scale);
+      }
+    }
     else
       sUnitSystem.Format("user defined unit (= %g meters)",m_custom_unit_scale);
     break;
@@ -234,7 +273,9 @@ void ON_UnitSystem::Dump( ON_TextLog& dump ) const
     sUnitSystem = "unknown unit system";
     break;
   }
-  dump.Print("Unit system: %S\n",sUnitSystem.Array());
+  const wchar_t* wsUnitSystem = sUnitSystem.Array();
+  if ( 0 != wsUnitSystem )
+    dump.Print("Unit system: %ls\n",wsUnitSystem);
 }
 
 void ON_3dmUnitsAndTolerances::Default()
@@ -390,6 +431,8 @@ void ON_3dmRenderSettings::Dump( ON_TextLog& text_log ) const
   text_log.Print("m_shadowmap_width = %d\n",m_shadowmap_width);
   text_log.Print("m_shadowmap_height = %d\n",m_shadowmap_height);
   text_log.Print("m_shadowmap_offset = %g\n",m_shadowmap_offset);
+
+  text_log.Print("m_bScaleBackgroundToFit = %s\n",m_bScaleBackgroundToFit?"true":"false");
 }
 
 void ON_3dmRenderSettings::Default()
@@ -397,6 +440,8 @@ void ON_3dmRenderSettings::Default()
   m_bCustomImageSize = false;
   m_image_width  = 800;
   m_image_height = 600;
+  m_bScaleBackgroundToFit = false;
+  memset(m_reserved1,0,sizeof(m_reserved1));
   m_image_dpi = 72.0;
   m_image_us = ON::inches;
 
@@ -406,7 +451,7 @@ void ON_3dmRenderSettings::Default()
   m_background_style = 0;
   m_background_color.SetRGB(160,160,160);
   m_background_bottom_color.SetRGB(160,160,160);
-  m_background_bitmap_filename.Empty();
+  m_background_bitmap_filename.Destroy();
 
   m_bUseHiddenLights = false;
 
@@ -436,6 +481,8 @@ void ON_3dmRenderSettings::Default()
   m_bUsesMeshEdgesAttr    = false;
   m_bUsesAnnotationAttr   = true;
   m_bUsesHiddenLightsAttr = true;
+
+  memset(m_reserved2,0,sizeof(m_reserved2));
 }
 
 ON_3dmRenderSettings::ON_3dmRenderSettings()
@@ -445,7 +492,7 @@ ON_3dmRenderSettings::ON_3dmRenderSettings()
 
 ON_3dmRenderSettings::~ON_3dmRenderSettings()
 {
-  m_background_bitmap_filename.Empty();
+  m_background_bitmap_filename.Destroy();
 }
 
 ON_3dmRenderSettings::ON_3dmRenderSettings(const ON_3dmRenderSettings& src )
@@ -460,6 +507,7 @@ ON_3dmRenderSettings& ON_3dmRenderSettings::operator=(const ON_3dmRenderSettings
     m_bCustomImageSize = src.m_bCustomImageSize;
     m_image_width = src.m_image_width;
     m_image_height = src.m_image_height;
+    m_bScaleBackgroundToFit = src.m_bScaleBackgroundToFit;
     m_image_dpi = src.m_image_dpi;
     m_image_us = src.m_image_us;
     m_ambient_light = src.m_ambient_light;
@@ -498,7 +546,8 @@ ON_3dmRenderSettings& ON_3dmRenderSettings::operator=(const ON_3dmRenderSettings
 bool ON_3dmRenderSettings::Write( ON_BinaryArchive& file ) const
 {
   int i;
-  const int version = 102;
+  // version 103: 11 November 2010
+  const int version = 103;
   bool rc = file.WriteInt( version );
   // version >= 100
   if (rc) rc = file.WriteInt( m_bCustomImageSize );
@@ -534,6 +583,10 @@ bool ON_3dmRenderSettings::Write( ON_BinaryArchive& file ) const
   if (rc) rc = file.WriteInt( i );
   // version >= 102 begins here
   if (rc) rc = file.WriteColor( m_background_bottom_color );
+
+  // version >= 103 begins here - added 11 November 2010
+  if (rc) rc = file.WriteBool( m_bScaleBackgroundToFit );
+
   return rc;
 }
 
@@ -597,12 +650,32 @@ bool ON_3dmRenderSettings::Read( ON_BinaryArchive& file )
         if (rc)
           m_image_us = ON::UnitSystem(i);
       }
+     
+      if (rc && version >= 102) 
+      {
+        rc = file.ReadColor( m_background_bottom_color );
+        if (rc && version >= 103)
+        {
+          rc = file.ReadBool( &m_bScaleBackgroundToFit );
+        }
+      }
     }
-    if (rc && version >= 102)
-      rc = file.ReadColor( m_background_bottom_color );
   }
   return rc;
 }
+
+bool ON_3dmRenderSettings::ScaleBackgroundToFit() const
+{
+  return m_bScaleBackgroundToFit;
+}
+
+void ON_3dmRenderSettings::SetScaleBackgroundToFit( bool bScaleBackgroundToFit )
+{
+  // The "? true : false" is here to prevent hacks from using a bool
+  // to store settings besides 1 and 0.
+  m_bScaleBackgroundToFit = bScaleBackgroundToFit?true:false;
+}
+
 
 //////////////////////////////////////////////////////////////////////////////////////////
 //
@@ -643,10 +716,10 @@ ON_3dmAnnotationSettings& ON_3dmAnnotationSettings::operator=(const ON_3dmAnnota
     m_textalign = src.m_textalign;
     m_resolution = src.m_resolution;
     m_facename = src.m_facename;
-
-    // added 12/28/05
-    m_dimdle = src.m_dimdle;
-    m_dimgap = src.m_dimgap;
+    m_world_view_text_scale = src.m_world_view_text_scale;
+    m_world_view_hatch_scale = src.m_world_view_hatch_scale;
+    m_bEnableAnnotationScaling = src.m_bEnableAnnotationScaling;
+    m_bEnableHatchScaling = src.m_bEnableHatchScaling;
   }
   return *this;
 }
@@ -658,6 +731,8 @@ void ON_3dmAnnotationSettings::Dump( ON_TextLog& text_log ) const
 
 void ON_3dmAnnotationSettings::Default()
 {
+  memset(this,0,sizeof(*this));
+
   m_dimscale = 1.0;       // model size / plotted size
   m_textheight = 1.0;
   m_dimexe = 1.0;
@@ -665,8 +740,6 @@ void ON_3dmAnnotationSettings::Default()
   m_arrowlength = 1.0;
   m_arrowwidth = 1.0;
   m_centermark = 1.0;
-  m_dimdle = 1.0;
-  m_dimgap = 1.0;
 
   m_dimunits = ON::no_unit_system;  // units used to measure the dimension
   m_arrowtype = 0;     // 0: filled narrow triangular arrow
@@ -678,10 +751,61 @@ void ON_3dmAnnotationSettings::Default()
                        // for decimal, digits past the decimal point
 
   m_facename.Destroy(); // [LF_FACESIZE] // windows font name
+
+  m_world_view_text_scale = 1.0f;
+  m_world_view_hatch_scale = 1.0f;
+  m_bEnableAnnotationScaling = 1;
+  m_bEnableHatchScaling = 1;
 }
+
+double ON_3dmAnnotationSettings::WorldViewTextScale() const
+{
+  return m_world_view_text_scale;
+}
+
+double ON_3dmAnnotationSettings::WorldViewHatchScale() const
+{
+  return m_world_view_hatch_scale;
+}
+
+void ON_3dmAnnotationSettings::SetWorldViewTextScale(double world_view_text_scale )
+{
+  if ( ON_IsValid(world_view_text_scale) && world_view_text_scale > 0.0 )
+    m_world_view_text_scale = (float)world_view_text_scale;
+}
+
+void ON_3dmAnnotationSettings::SetWorldViewHatchScale(double world_view_hatch_scale )
+{
+  if ( ON_IsValid(world_view_hatch_scale) && world_view_hatch_scale > 0.0 )
+    m_world_view_hatch_scale = (float)world_view_hatch_scale;
+}
+
+bool ON_3dmAnnotationSettings::IsAnnotationScalingEnabled() const
+{
+  return m_bEnableAnnotationScaling?true:false;
+}
+
+void ON_3dmAnnotationSettings::EnableAnnotationScaling( bool bEnable )
+{
+  m_bEnableAnnotationScaling = bEnable?1:0;
+}
+
+
+bool ON_3dmAnnotationSettings::IsHatchScalingEnabled() const
+{
+  return m_bEnableHatchScaling?true:false;
+}
+
+void ON_3dmAnnotationSettings::EnableHatchScaling( bool bEnable )
+{
+  m_bEnableHatchScaling = bEnable?1:0;
+}
+
 
 bool ON_3dmAnnotationSettings::Read( ON_BinaryArchive& file )
 {
+  Default();
+
   int major_version = 0;
   int minor_version = 0;
   bool rc = file.Read3dmChunkVersion(&major_version,&minor_version);
@@ -713,6 +837,32 @@ bool ON_3dmAnnotationSettings::Read( ON_BinaryArchive& file )
       if (rc) rc = file.ReadInt( &m_resolution );
 
       if (rc) rc = file.ReadString( m_facename );
+
+      // files that do not contain m_bEnableAnnotationScaling,
+      // set m_bEnableAnnotationScaling = false so the display 
+      // image does not change.
+      m_bEnableAnnotationScaling = 0;
+
+      // files that do not contain m_bEnableHatchScaling,
+      // set m_bEnableHatchScaling = false so the display
+      // image does not change.
+      m_bEnableHatchScaling = 0;
+
+      if ( minor_version >= 1 )
+      {
+        // Added 25 August 2010 chunk version 1.1
+        double d = m_world_view_text_scale;
+        if (rc) rc = file.ReadDouble(&d);
+        if (rc && ON_IsValid(d) && d >= 0.0 ) m_world_view_text_scale = (float)d;
+        if (rc) rc = file.ReadChar(&m_bEnableAnnotationScaling);
+        if ( minor_version >= 2 )
+        {
+          d = m_world_view_hatch_scale;
+          if (rc) rc = file.ReadDouble(&d);
+          if (rc && ON_IsValid(d) && d >= 0.0) m_world_view_hatch_scale = (float)d;
+          if (rc) rc = file.ReadChar(&m_bEnableHatchScaling);
+        }
+      }
     }
   }
   else {
@@ -724,8 +874,12 @@ bool ON_3dmAnnotationSettings::Read( ON_BinaryArchive& file )
 bool ON_3dmAnnotationSettings::Write( ON_BinaryArchive& file ) const
 {
   int i;
-  bool rc = file.Write3dmChunkVersion(1,0);
-  if (rc) rc = file.WriteDouble(m_dimscale);
+  bool rc = file.Write3dmChunkVersion(1,2);
+  // March 22, 2010 - Global DimScale abandoned and moved into DimStyles, so now
+  // in older files, the dimscale values are multiplied into the DimStyle lengths and
+  // DimScale is written as 1.0
+  if (rc) rc = file.WriteDouble(1.0);
+
   if (rc) rc = file.WriteDouble(m_textheight);
   if (rc) rc = file.WriteDouble(m_dimexe);
   if (rc) rc = file.WriteDouble(m_dimexo);
@@ -762,6 +916,16 @@ bool ON_3dmAnnotationSettings::Write( ON_BinaryArchive& file ) const
   if (rc) rc = file.WriteInt( m_resolution );
 
   if (rc) rc = file.WriteString( m_facename );
+
+  // Added 25 August 2010 chunk version 1.1
+  double d = m_world_view_text_scale;
+  if (rc) rc = file.WriteDouble(d);
+  if (rc) rc = file.WriteChar(m_bEnableAnnotationScaling);
+
+  // Added 14 January 2011 chunk version 1.2
+  d = m_world_view_hatch_scale;
+  if (rc) rc = file.WriteDouble(d);
+  if (rc) rc = file.WriteChar(m_bEnableHatchScaling);
 
   return rc;
 }
@@ -1488,9 +1652,9 @@ ON_3dmView::~ON_3dmView()
 
 void ON_3dmView::Dump( ON_TextLog& dump ) const
 {
-  const wchar_t* sViewName = m_name;
-  if ( !sViewName )
-    sViewName = L"";
+  const wchar_t* wsViewName = m_name;
+  if ( !wsViewName )
+    wsViewName = L"";
   ON::view_projection proj = m_vp.Projection();
 
 
@@ -1512,7 +1676,7 @@ void ON_3dmView::Dump( ON_TextLog& dump ) const
     sProjectionName = "unknown";
     break;
   }
-  dump.Print("Viewport: name = \"%S\" projection = %s\n",sViewName,sProjectionName);
+  dump.Print("Viewport: name = \"%ls\" projection = %s\n",wsViewName,sProjectionName);
 
   dump.PushIndent();
 
@@ -1898,7 +2062,7 @@ bool ON_3dmView::Write( ON_BinaryArchive& file ) const
     rc = file.BeginWrite3dmChunk( TCODE_VIEW_ATTRIBUTES, 0 );
     if (rc)
     {
-      rc = file.Write3dmChunkVersion( 1, 3 ); // (there are no 1.0 fields)
+      rc = file.Write3dmChunkVersion( 1, 4 ); // (there are no 1.0 fields)
 
       while(rc)
       {
@@ -1931,6 +2095,10 @@ bool ON_3dmView::Write( ON_BinaryArchive& file ) const
 
         // 7 March 2006 version 1.3 fields
         rc = file.WriteBool(m_bLockedProjection);
+        if (!rc) break;
+
+        // 12 December 2010 version 1.4
+        rc = file.WriteArray(m_clipping_planes);
         if (!rc) break;
 
         break;
@@ -2078,6 +2246,12 @@ bool ON_3dmView::Read( ON_BinaryArchive& file )
             {
               rc = file.ReadBool(&m_bLockedProjection);
               if (!rc) break;
+
+              if ( minor_version >= 4 )
+              {
+                rc = file.ReadArray(m_clipping_planes);
+                if (!rc) break;
+              }
             }
           }
 
@@ -2554,7 +2728,9 @@ ON_3dmIOSettings::ON_3dmIOSettings()
 void ON_3dmIOSettings::Default()
 {
   m_bSaveTextureBitmapsInFile = false;
-  m_idef_link_update = 0;
+  // 7 February 2011 - default changed to 1.
+  //m_idef_link_update = 0;
+  m_idef_link_update = 1;
 }
 
 
@@ -2579,6 +2755,12 @@ bool ON_3dmIOSettings::Read(ON_BinaryArchive& file)
     rc = file.ReadInt(&m_idef_link_update);
     if(!rc) break;
 
+    if ( 0 == m_idef_link_update && file.Archive3dmVersion() >= 5 )
+    {
+      // 7 February 2011 - old 0 value is no longer an option.
+      m_idef_link_update = 1;
+    }
+
     break;
   }
 
@@ -2598,7 +2780,13 @@ bool ON_3dmIOSettings::Write(ON_BinaryArchive& file) const
     rc = file.WriteBool(m_bSaveTextureBitmapsInFile);
     if(!rc) break;
 
-    rc = file.WriteInt(m_idef_link_update);
+    int i = m_idef_link_update;
+    if ( 0 == i && file.Archive3dmVersion() >= 5 )
+    {
+      // 7 February 2011 - old 0 value is no longer an option.
+      i = 1;
+    }
+    rc = file.WriteInt(i);
     if(!rc) break;
 
     break;
@@ -3744,7 +3932,7 @@ void ON_3dmSettings::Dump( ON_TextLog& dump ) const
   const wchar_t* model_URL = m_model_URL;
   if ( model_URL && *model_URL )
   {
-    dump.Print("Model URL: %S\n",model_URL);
+    dump.Print("Model URL: %ls\n",model_URL);
   }
   dump.Print("Model space units and tolerances:\n");
   dump.PushIndent();

@@ -1,8 +1,9 @@
 /* $NoKeywords: $ */
 /*
 //
-// Copyright (c) 1993-2007 Robert McNeel & Associates. All rights reserved.
-// Rhinoceros is a registered trademark of Robert McNeel & Assoicates.
+// Copyright (c) 1993-2012 Robert McNeel & Associates. All rights reserved.
+// OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
+// McNeel & Associates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
@@ -1090,57 +1091,6 @@ bool ON_BezierCage::IsSingular(		 // true if surface side is collapsed to a poin
 {
   ON_ERROR("TODO: fill in ON_BezierCage::IsSingular\n");
   return false;
-  /*
-  int i,j,k=0;
-  ON_3dPoint p[2];
-  double fuzz[2] = {0.0,0.0};
-  p[0].Zero();
-  p[1].Zero();
-  int i0 = 0;
-  int i1 = 0;
-  int j0 = 0;
-  int j1 = 0;
-  switch ( side ) {
-  case 0: // south
-      i0 = 0;
-      i1 = Order(0);
-      j0 = 0;
-      j1 = 1;
-    break;
-  case 1: // east
-      i0 = Order(0)-1;
-      i1 = Order(0);
-      j0 = 0;
-      j1 = Order(1);
-    break;
-  case 2: // north
-      i0 = 0;
-      i1 = Order(0);
-      j0 = Order(1)-1;
-      j1 = Order(1);
-    break;
-  case 3: // west
-      i0 = 0;
-      i1 = 1;
-      j0 = 0;
-      j1 = Order(1);
-    break;
-  default:
-    return false;
-    break;
-  }
-
-  GetCV(i0,j0,p[k]);
-  fuzz[k] = p[k].Fuzz();
-  for ( i = i0; i < i1; i++ ) for ( j = j0; j < j1; j++ ) {
-    k = (k+1)%2;
-    GetCV( i, j, p[k] );
-    fuzz[k] = p[k].Fuzz();
-    if ( (p[0]-p[1]).MaximumCoordinate() > fuzz[0]+fuzz[1] )
-      return false;
-  }
-  return true;
-  */
 }
 
 
@@ -1206,19 +1156,6 @@ ON_BezierCageMorph::ON_BezierCageMorph() : m_bValid(0)
 
 ON_BezierCageMorph::~ON_BezierCageMorph()
 {
-}
-
-ON_3dPoint ON_BezierCageMorph::MorphPoint( 
-          ON_3dPoint point 
-          ) const
-{
-  ON_3dPoint Q = point;
-  if ( m_bValid )
-  {
-    ON_3dPoint rst = m_xyz2rst*point;
-    Q = m_rst2xyz.PointAt(rst.x,rst.y,rst.z);
-  }
-  return Q;
 }
 
 bool ON_BezierCageMorph::Create(

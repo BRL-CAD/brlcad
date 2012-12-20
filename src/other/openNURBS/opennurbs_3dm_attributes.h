@@ -1,8 +1,9 @@
 /* $NoKeywords: $ */
 /*
 //
-// Copyright (c) 1993-2007 Robert McNeel & Associates. All rights reserved.
-// Rhinoceros is a registered trademark of Robert McNeel & Associates.
+// Copyright (c) 1993-2012 Robert McNeel & Associates. All rights reserved.
+// OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
+// McNeel & Associates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
@@ -186,10 +187,7 @@ public:
             0x20: linetype
             0x40: display order
   */
-#if defined(ON_COMPILER_MSC)
-  __declspec(deprecated)
-#endif
-  unsigned int ApplyParentalControl(
+  ON_DEPRECATED unsigned int ApplyParentalControl(
          const ON_3dmObjectAttributes& parent_attributes,
          unsigned int control_limits = 0xFFFFFFFF
          );
@@ -250,6 +248,62 @@ public:
   int m_material_index;
   ON_ObjectRenderingAttributes m_rendering_attributes;
 
+  //////////////////////////////////////////////////////////////////
+  //
+  // BEGIN: Per object mesh parameter support
+  //
+
+  /*
+  Parameters:
+    mp - [in]
+      per object mesh parameters
+  Returns:
+    True if successful.
+  */
+  bool SetCustomRenderMeshParameters(const class ON_MeshParameters& mp);
+
+  /*
+  Parameters:
+    bEnable - [in]
+      true to enable use of the per object mesh parameters.
+      false to disable use of the per object mesh parameters.
+  Returns:
+    False if the object doe not have per object mesh parameters
+    and bEnable was true.  Use SetMeshParameters() to set
+    per object mesh parameters.
+  Remarks:
+    Sets the value of ON_MeshParameters::m_bCustomSettingsDisabled 
+    to !bEnable
+  */
+  bool EnableCustomRenderMeshParameters(bool bEnable);
+
+  /*
+  Returns:
+    Null or a pointer to fragile mesh parameters.
+    If a non-null pointer is returned, copy it and use the copy.
+    * DO NOT SAVE THIS POINTER FOR LATER USE. A call to 
+      DeleteMeshParameters() will delete the class.
+    * DO NOT const_cast the returned pointer and change its
+      settings.  You must use either SetMeshParameters()
+      or EnableMeshParameters() to change settings.
+  Remarks:
+    If the value of ON_MeshParameters::m_bCustomSettingsDisabled is
+    true, then do no use these parameters to make a render mesh.
+  */
+  const ON_MeshParameters* CustomRenderMeshParameters() const;
+
+  /*
+  Description:
+    Deletes any per object mesh parameters.
+  */
+  void DeleteCustomRenderMeshParameters();
+
+  //
+  // END: Per object mesh parameter support
+  //
+  //////////////////////////////////////////////////////////////////
+
+
   /*
   Description:
     Determine if the simple material should come from
@@ -299,10 +353,11 @@ public:
   //
   //   @table
   //   value    number of isoparametric wires
-  //   0        boundary and knot wires
-  //   1        boundary and knot wires and, if there are no
+  //   -1       boundary wires
+  //    0       boundary and knot wires
+  //    1       boundary and knot wires and, if there are no
   //            interior knots, a single interior wire.
-  //   N>=2     boundary and knot wires and (N+1) interior wires
+  //   N>=2     boundary and knot wires and (N-1) interior wires
   int m_wire_density;
 
 
@@ -330,6 +385,8 @@ private:
   unsigned char m_material_source;    // ON::object_material_source values
   unsigned char m_linetype_source;    // ON::object_linetype_source values
 
+  unsigned char m_reserved_0;
+  
   ON_SimpleArray<int> m_group; // array of zero based group indices
 public:
 

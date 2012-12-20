@@ -1,8 +1,9 @@
 /* $NoKeywords: $ */
 /*
 //
-// Copyright (c) 1993-2007 Robert McNeel & Associates. All rights reserved.
-// Rhinoceros is a registered trademark of Robert McNeel & Assoicates.
+// Copyright (c) 1993-2012 Robert McNeel & Associates. All rights reserved.
+// OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
+// McNeel & Associates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
@@ -27,9 +28,10 @@ public:
 
   static const ON_Color UnsetColor; // 0xFFFFFFFF
 
-  // Default is black
+  // Default is R = 0, G = 0, B = 0, A = 0
 	ON_Color();
 
+  // Sets A = 0
 	ON_Color(
     int red,   // ( 0 to 255 )
     int green, // ( 0 to 255 )
@@ -40,14 +42,23 @@ public:
     int red,   // ( 0 to 255 )
     int green, // ( 0 to 255 )
     int blue,  // ( 0 to 255 )
-    int alpha  // ( 0 to 255 )
+    int alpha  // ( 0 to 255 )  (0 = opaque, 255 = transparent)
     );
 
-  // Construct from COLORREF
+  // Construct from Windows COLORREF
 	ON_Color(unsigned int);
 
-	// Conversion to COLORREF
+	// Conversion to Windows COLORREF
   operator unsigned int() const;	
+
+  /*
+  Description:
+    Call this function when the color is needed in a 
+    Windows COLORREF format with alpha = 0;
+  Returns
+    A Windows COLOREF with alpha = 0.
+  */
+  unsigned int WindowsRGB() const;
 
   // < 0 if this < arg, 0 ir this==arg, > 0 if this > arg
   int Compare( const ON_Color& ) const; 
@@ -55,12 +66,12 @@ public:
 	int Red()   const; // ( 0 to 255 )
 	int Green() const; // ( 0 to 255 )
 	int Blue()  const; // ( 0 to 255 )
-  int Alpha() const; // ( 0 to 255 )
+  int Alpha() const; // ( 0 to 255 ) (0 = opaque, 255 = transparent)
 
 	double FractionRed()   const; // ( 0.0 to 1.0 )
 	double FractionGreen() const; // ( 0.0 to 1.0 )
 	double FractionBlue()  const; // ( 0.0 to 1.0 )
-	double FractionAlpha() const; // ( 0.0 to 1.0 )
+	double FractionAlpha() const; // ( 0.0 to 1.0 ) (0.0 = opaque, 1.0 = transparent)
 
   void SetRGB(
     int red,   // red in range 0 to 255
@@ -75,18 +86,18 @@ public:
     );
 
   void SetAlpha(
-    int alpha // alpha in range 0 to 255
+    int alpha // alpha in range 0 to 255 (0 = opaque, 255 = transparent)
     );
 
   void SetFractionalAlpha(
-    double alpha // alpha in range 0.0 to 1.0
+    double alpha // alpha in range 0.0 to 1.0 (0.0 = opaque, 1.0 = transparent)
     );
 
   void SetRGBA(
     int red,   // red in range 0 to 255
     int green, // green in range 0 to 255
     int blue,  // blue in range 0 to 255
-    int alpha  // alpha in range 0 to 255
+    int alpha  // alpha in range 0 to 255 (0 = opaque, 255 = transparent)
     );
 
   // input args
@@ -94,7 +105,7 @@ public:
     double red,   // red in range 0.0 to 1.0
     double green, // green in range 0.0 to 1.0
     double blue,  // blue in range 0.0 to 1.0
-    double alpha  // alpha in range 0.0 to 1.0
+    double alpha  // alpha in range 0.0 to 1.0 (0.0 = opaque, 1.0 = transparent)
     );
 
   // Hue() returns an angle in the range 0 to 2*pi 
@@ -119,7 +130,8 @@ public:
 private:
   // m_color is in Windows COLORREF format.
   //
-  //  0x00bbggrr,  rr= red component 0-255, etc. (little endian order)
+  //  0xaabbggrr,  rr= red component 0-255, etc. (little endian order)
+  //               aa=0 means opaque, aa=255 means transparent.
 	unsigned int m_color;
 };
 

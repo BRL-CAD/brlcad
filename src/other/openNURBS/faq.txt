@@ -3,7 +3,7 @@
 
 Legal Stuff:
 
-  Copyright (c) 1993-2010 Robert McNeel & Associates. All Rights Reserved.
+  Copyright (c) 1993-2012 Robert McNeel & Associates. All Rights Reserved.
   Rhinoceros is a registered trademark of Robert McNeel & Associates.
 
   THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED
@@ -70,26 +70,31 @@ Supported compilers:
 
 Question:
 
-Can I use my brand X C++ compiler?
+  Can I use my brand X C++ compiler?
 
 Answer:
 
-The openNURBS toolkit has been successfully used with
+The C++ openNURBS toolkit has been tested with
 
-  Microsoft Visual C++ 2005 (VC 8.0) (32 and 64 bit Windows 7, Vista, XP )
+  Microsoft Visual Studio 2010 (VC 10.0 SP1) (Windows 7 Professional SP1)
+    To build opennurbs and the examples with Visual Studio 2010 SP1,
+	use the solution build_opennurbs_vs2010.sln.
 
-  gcc version 4.2.1 (Apple Inc. build 5646)
+  gcc version 4.2.1 (Apple Build 5658)
+    To build opennurbs and the examples with gcc use the makefile.
   
-  Apple XCode (MaxBook Pro + OSX)
+  Apple Xcode 4.5 (4G182) (OSX 10.8.2)
+    To build opennurbs and the examples with Xcode 4.5, use the
+	workspace build_opennurbs_xcode.workspace.
 
 The openNURBS C++ source code is clean and fairly simple.  You
 should be able to use any good C++ compiler that has 32-bit
-integers and 32-bit or 64-bit pointers.
+integers, 32-bit or 64-bit pointers, and wchar_t support.
 
-OpenNURBS uses UNICODE to store text information in
-3DM files.  At the time of this release, support for
-UNICODE / ASCII conversion on UNIX platforms is spotty
-at best.
+OpenNURBS uses UTF-16 to store text information in
+3DM files and provides tools for converting UTF-16
+strings to UTF-8 and UTF-32 strings. The ON_wString
+has wchar_t characters.
 
 Excellent compilers and make utilities are available from
 The Free Software Foundation <http://www.fsf.org>.  You have
@@ -102,24 +107,38 @@ compiler.
 
 ====================================================================
 
-Compiling the Open GL example:
+Microsoft Visual C++ 6.0 Users:
+  You are on your own.  Support for this compiler is no longer
+  provided.
 
-Carefully read the three paragraphs in the readme.txt file that cover
-example_gl.cpp.
+====================================================================
 
-1)
-Your system must have the Open GL header files and libraries,
-including the auxiliary library (usually contains the Open GL
-NURBS rendering stuff) and the utility library.  Consult your
-documentation or local GL whiz for details.
+Microsoft Visual Studio 2003 users:
+  You are on your own.  Support for this compiler is no longer
+  provided.
 
-2)
-To create the example_gl program you must compile two openNURBS
-toolkit files (example_gl.cpp and opennurbs_gl.cpp) and link both
-resulting objects with the openNURBS library and Open GL libraries.
-If you get unresolved references to ON_GL() functions, then you
-probably forgot compile opennurbs_gl.cpp or forgot to link with
-opennurbs_gl.o/obj.
+====================================================================
+
+Microsoft Visual Studio 2005 users:
+  You are on your own.  Support for this compiler is no longer
+  provided.
+
+====================================================================
+
+Microsoft Visual Studio 2010 users:
+  This is the current platform for opennurbs development.
+
+====================================================================
+
+The Open GL example:
+
+Past versions of opennurbs have included a crude version of an
+Open GL example.  The code for this example is still included in
+the current version, but we no longer provide support for using
+OpenGL with opennurbs.  Nothing has changed in opennurbs to with
+respect to using OpenGL; we simply do not have the resources to
+provide quality OpenGL support on the wide variety of platforms
+where opennurbs is used.
 
 ====================================================================
 

@@ -1,8 +1,9 @@
 /* $NoKeywords: $ */
 /*
 //
-// Copyright (c) 1993-2007 Robert McNeel & Associates. All rights reserved.
-// Rhinoceros is a registered trademark of Robert McNeel & Assoicates.
+// Copyright (c) 1993-2012 Robert McNeel & Associates. All rights reserved.
+// OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
+// McNeel & Associates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
@@ -217,8 +218,8 @@ public:
             FILE* fp = ON::OpenFile( sFileName, "rb");
 
             // for UNICODE file names
-            const wchar* sFileName = ....;
-            FILE* fp = ON::OpenFile( sFileName, L"rb");
+            const wchar_t* wsFileName = ....;
+            FILE* fp = ON::OpenFile( wsFileName, L"rb");
 
             bool bModelRead = false;
             bool bModelIsValid = false;
@@ -261,26 +262,41 @@ public:
   /*
   Description:
     Writes contents of this model to an openNURBS archive.
-    I STRONGLY suggested that you call Polish() before calling 
+    It is a good practice to call Polish() before calling 
     Write so that your file has all the "fluff" that makes it
     complete.  If the model is not valid, then Write will refuse
     to write it.
+
   Parameters:
-    archive - [in] archive to write to
-    version - [in] Version of the openNURBS archive to write.
-                   Must be 2, 3 or 4.  
-                   Rhino 2.x can read version 2 files.
-                   Rhino 3.x can read version 2 and 3 files.
-                   Rhino 4.x can read version 2, 3 and 4 files.
-                   Use version 4 when possible.
+    archive - [in]
+      archive to write to
+
+    version - [in] 
+      Version of the openNURBS archive to write.
+        0 default value and suggested.
+           When 0 is passed in, the value of ON_BinaryArchive::CurrentArchiveVersion()
+           is used.
+        2, 3, 4
+          If you pass in one of these values, some information 
+          in current data structures will not be saved in the
+          file. 
+          Rhino 2.x can read version 2 files.
+          Rhino 3.x can read version 2 and 3 files.
+          Rhino 4.x can read version 2, 3 and 4 files.
+          Rhino 5.x can read version 2, 3, 4, 5 and 50 files.
+          Rhino 5.x writes version 50 files.
+
     sStartSectionComment - [in] 
-                   Brief ASCII desciption of your app, today's date,
-                   etc.
-    error_log - [out] any archive writing errors are logged here.
+      Brief desciption of your app, today's date, etc.
+
+    error_log - [out]
+      any archive writing errors are logged here.
+
   Returns:
     True if archive is written with no error. 
     False if errors occur.
     Error details are logged in error_log.
+
   Example:
 
             model = ...;
@@ -302,8 +318,8 @@ public:
               FILE* fp = ON::OpenFile( sFileName, "wb");
 
               // for UNICODE file names
-              const wchar* sFileName = ....;
-              FILE* fp = ON::OpenFile( sFileName, L"wb");
+              const wchar_t* wsFileName = ....;
+              FILE* fp = ON::OpenFile( wsFileName, L"wb");
 
               bool ok = false;
               if ( 0 != fp )
@@ -326,21 +342,21 @@ public:
   */
   bool Write( 
          ON_BinaryArchive& archive,
-         int version = 5,
+         int version = 0,
          const char* sStartSectionComment = NULL,
          ON_TextLog* error_log = NULL
          );
 
   bool Write( 
          const char* filename,
-         int version = 5,
+         int version = 0,
          const char* sStartSectionComment = NULL,
          ON_TextLog* error_log = NULL
          );
 
   bool Write( 
          const wchar_t* filename,
-         int version = 5,
+         int version = 0,
          const char* sStartSectionComment = NULL,
          ON_TextLog* error_log = NULL
          );
@@ -651,6 +667,56 @@ public:
   virtual
   void GetUnusedLayerName( ON_wString& layer_name ) const;
 
+  /////////////////////////////////////////////////////////////////////
+  //
+  // BEGIN model document level user string tools
+  //
+
+  /*
+  Description:
+    Attach a user string to the document.
+  Parameters:
+    key - [in] id used to retrieve this string.
+    string_value - [in] 
+      If NULL, the string with this id will be removed.
+  Returns:
+    True if successful.
+  */
+  bool SetDocumentUserString( 
+    const wchar_t* key, 
+    const wchar_t* string_value 
+    );
+
+  /*
+  Description:
+    Get user string from the document.
+  Parameters:
+    key - [in] id used to retrieve the string.
+    string_value - [out]
+  Returns:
+    True if a string with id was found.
+  */
+  bool GetDocumentUserString( 
+    const wchar_t* key, 
+    ON_wString& string_value 
+    ) const;
+
+  /*
+  Description:
+    Get a list of all user strings in the document.
+  Parameters:
+    user_strings - [out]
+      user strings are appended to this list.
+  Returns:
+    Number of elements appended to the user_strings list.
+  */
+  int GetDocumentUserStrings( ON_ClassArray<ON_UserString>& user_strings ) const;
+
+  //
+  // END model document level user string tools
+  //
+  /////////////////////////////////////////////////////////////////////
+
 
   /////////////////////////////////////////////////////////////////////
   //
@@ -716,6 +782,21 @@ public:
     if you modify the m_object_table or m_idef_table.
   */
   void DestroyCache();
+
+  /////////////////////////////////////////////////////////////////////
+  //
+  // BEGIN Render Development Toolkit (RDK) information
+  //
+  static bool IsRDKDocumentInformation(const ONX_Model_UserData& docud);
+  static bool GetRDKDocumentInformation(const ONX_Model_UserData& docud,ON_wString& rdk_xml_document_data);
+
+  static bool IsRDKObjectInformation(const ON_UserData& objectud);
+  static bool GetRDKObjectInformation(const ON_Object& object,ON_wString& rdk_xml_object_data);
+  //
+  // END Render Development Toolkit (RDK) information
+  //
+  /////////////////////////////////////////////////////////////////////
+
 
 private:
   // prohibit use of copy construction and operator=

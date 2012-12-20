@@ -1,8 +1,9 @@
 /* $NoKeywords: $ */
 /*
 //
-// Copyright (c) 1993-2008 Robert McNeel & Associates. All rights reserved.
-// Rhinoceros is a registered trademark of Robert McNeel & Assoicates.
+// Copyright (c) 1993-2012 Robert McNeel & Associates. All rights reserved.
+// OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
+// McNeel & Associates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
@@ -14,6 +15,8 @@
 */
 
 #include "opennurbs.h"
+
+
 
 class ON_BrepRegionTopologyUserData : public ON_UserData
 {
@@ -756,12 +759,6 @@ unsigned int ON_BrepRegionTopology::SizeOf() const
   return m_FS.SizeOf() + m_R.SizeOf();
 }
 
-bool ON_BrepRegionTopology::Create(const ON_Brep* brep)
-{
-  return false;
-}
-
-
 ON_BrepFaceSide* ON_BrepFace::FaceSide(int dir) const
 {
   ON_BrepFaceSide* faceside = 0;
@@ -801,10 +798,9 @@ const ON_BrepRegionTopology& ON_Brep::RegionTopology() const
       delete ud;
     }
   }
-  if (rtop && rtop->m_FS.Count() != 2*m_F.Count() )
-  {
-    rtop->Create(this);
-  }
+
+  // no region toplogy is available in public opennurbs.
+
   return *rtop;
 }
 
@@ -911,7 +907,7 @@ ON_Brep* ON_Brep::SubBrep(
     if ( fi < 0 || fi >= m_F.Count() )
     {
       ON_ERROR("ON_Brep::SubBrep sub_fi[] has invalid indices");
-      return false;
+      return 0;
     }
     if ( fi > maxfi )
       maxfi = fi;
@@ -924,7 +920,7 @@ ON_Brep* ON_Brep::SubBrep(
         if ( subfi[j] == fi )
         {
           ON_ERROR("ON_Brep::SubBrep sub_fi[] has duplicate indices");
-          return false;
+          return 0;
         }
       }
     }
@@ -934,7 +930,7 @@ ON_Brep* ON_Brep::SubBrep(
     {
       const ON_BrepLoop* loop = face.Loop(fli);
       if ( !loop || this != loop->Brep() )
-        return false;
+        return 0;
       Lcount++;
       for ( lti = 0; lti < loop->m_ti.Count(); lti++ )
       {
@@ -956,7 +952,8 @@ ON_Brep* ON_Brep::SubBrep(
           Vmap[trim->m_vi[1]] = 1;
           Vcount++;
         }
-        if ( ON_BrepTrim::singular == trim->m_type )
+        if ( ON_BrepTrim::singular == trim->m_type ||
+             ON_BrepTrim::ptonsrf == trim->m_type)   // March 29, 2010 Lowell - Allow ptonsrf
         {
           if ( trim->m_ei >= 0 || trim->m_vi[0] != trim->m_vi[1] )
             return 0;
@@ -1012,7 +1009,9 @@ ON_Brep* ON_Brep::SubBrep(
       const ON_BrepVertex& vertex = m_V[i];
       ON_BrepVertex& sub_vertex = sub_brep->NewVertex(vertex.point,vertex.m_tolerance);
       Vmap[i] = sub_vertex.m_vertex_index;
-      sub_vertex.CopyUserData(vertex);      
+      sub_vertex.CopyUserData(vertex);
+      // March 29, 2010 Lowell - Copy user fields
+      memcpy(&sub_vertex.m_vertex_user, &vertex.m_vertex_user, sizeof(sub_vertex.m_vertex_user));
     }
     else
       Vmap[i] = -1;
@@ -1037,6 +1036,8 @@ ON_Brep* ON_Brep::SubBrep(
       ON_BrepEdge& sub_edge = sub_brep->NewEdge(sub_v0,sub_v1,sub_brep->m_C3.Count()-1,0,edge.m_tolerance);
       Emap[i] = sub_edge.m_edge_index;
       sub_edge.CopyUserData(edge);
+      // March 29, 2010 Lowell - Copy user fields
+      memcpy(&sub_edge.m_edge_user, &edge.m_edge_user, sizeof(sub_edge.m_edge_user));
     }
     else
       Emap[i] = -1;
@@ -1060,6 +1061,9 @@ ON_Brep* ON_Brep::SubBrep(
     sub_face.m_bbox = face.m_bbox;
     sub_face.m_domain[0] = face.m_domain[0];
     sub_face.m_domain[1] = face.m_domain[1];
+    // March 29, 2010 Lowell - Copy user fields
+    memcpy(&sub_face.m_face_user, &face.m_face_user, sizeof(sub_face.m_face_user));
+
     if ( bHaveBBox )
     {
       if ( sub_face.m_bbox.IsValid() )
@@ -1078,6 +1082,9 @@ ON_Brep* ON_Brep::SubBrep(
       ON_BrepLoop& sub_loop = sub_brep->NewLoop(loop.m_type,sub_face);
       sub_loop.CopyUserData(loop);
       sub_loop.m_pbox = loop.m_pbox;
+      // April 19, 2010 Lowell - Copy user fields
+      memcpy(&sub_loop.m_loop_user, &loop.m_loop_user, sizeof(sub_loop.m_loop_user));
+
       for ( lti = 0; lti < loop.m_ti.Count(); lti++ )
       {
         const ON_BrepTrim& trim = m_T[loop.m_ti[lti]];
@@ -1085,10 +1092,15 @@ ON_Brep* ON_Brep::SubBrep(
           return 0;
         if ( trim.m_ei >= 0 && Emap[trim.m_ei] < 0 )
           return 0;
-        ON_Curve* c2 = trim.DuplicateCurve();
-        if ( !c2 )
+        if(trim.m_c2i >= 0)
+        {
+          ON_Curve* c2 = trim.DuplicateCurve();
+          if ( !c2 )
+            return 0;
+          sub_brep->m_C2.Append(c2);
+        }
+        else if(trim.m_type != ON_BrepTrim::ptonsrf)
           return 0;
-        sub_brep->m_C2.Append(c2);
         if ( trim.m_ei >= 0 )
         {
           ON_BrepEdge& sub_edge = sub_brep->m_E[Emap[trim.m_ei]];
@@ -1098,6 +1110,14 @@ ON_Brep* ON_Brep::SubBrep(
         {
           ON_BrepVertex& sub_vertex = sub_brep->m_V[Vmap[trim.m_vi[0]]];
           sub_brep->NewSingularTrim(sub_vertex,sub_loop,trim.m_iso,sub_brep->m_C2.Count()-1);
+        }
+        // March 29, 2010 Lowell - copy ptonsrf type
+        else if ( ON_BrepTrim::ptonsrf == trim.m_type)
+        {
+          ON_BrepTrim& sub_trim = sub_brep->NewTrim(false, sub_loop, -1);
+          sub_trim.m_type = ON_BrepTrim::ptonsrf;
+          ON_BrepVertex& sub_vertex = sub_brep->m_V[Vmap[trim.m_vi[0]]];
+          sub_trim.m_vi[0] = sub_trim.m_vi[1] = sub_vertex.m_vertex_index;
         }
         else
         {
@@ -1112,6 +1132,9 @@ ON_Brep* ON_Brep::SubBrep(
         sub_trim.m_tolerance[1] = trim.m_tolerance[1];
         sub_trim.m_pbox = trim.m_pbox;
         sub_trim.m_iso = trim.m_iso;
+        // April 19, 2010 Lowell - Copy user fields
+        memcpy(&sub_trim.m_trim_user, &trim.m_trim_user, sizeof(sub_trim.m_trim_user));
+
         // Since we are extracting a subset of the original brep,
         // some mated edges could turn into boundary edges. The
         // call to NewTrim() above will correctly handle setting
@@ -1191,58 +1214,3 @@ ON_Brep* ON_BrepRegion::RegionBoundaryBrep( ON_Brep* brep ) const
   return brep;
 }
 
-
-bool ON_BrepRegion::AreaMassProperties(
-  ON_MassProperties& mp,
-  bool bArea,
-  bool bFirstMoments,
-  bool bSecondMoments,
-  bool bProductMoments,
-  double rel_tol,
-  double abs_tol
-  ) const
-{
-  // TODO - avoid call to RegionBoundaryBrep()
-  ON_Brep region_brep;
-  if ( !RegionBoundaryBrep(&region_brep) )
-    return false;
-  return region_brep.AreaMassProperties(mp, 
-        bArea, bFirstMoments, bSecondMoments, bProductMoments,
-        rel_tol, abs_tol
-       );
-}
-
-bool ON_BrepRegion::VolumeMassProperties(
-  ON_MassProperties& mp, 
-  bool bVolume,
-  bool bFirstMoments,
-  bool bSecondMoments,
-  bool bProductMoments,
-  ON_3dPoint base_point,
-  double rel_tol,
-  double abs_tol
-  ) const
-{
-  // TODO - avoid call to RegionBoundaryBrep()
-  ON_Brep region_brep;
-  if ( !RegionBoundaryBrep(&region_brep) )
-    return false;
-  return region_brep.VolumeMassProperties(mp,
-          bVolume, bFirstMoments, bSecondMoments, bProductMoments,
-          base_point, rel_tol, abs_tol
-          );
-}
-
-
-bool ON_BrepRegion::IsPointInside(
-        ON_3dPoint P, 
-        double tolerance,
-        bool bStrictlyInside
-        ) const
-{
-  // TODO - avoid call to RegionBoundaryBrep()
-  ON_Brep region_brep;
-  if ( !P.IsValid() || !RegionBoundaryBrep(&region_brep) )
-    return false;
-  return region_brep.IsPointInside(P,tolerance,bStrictlyInside);
-}

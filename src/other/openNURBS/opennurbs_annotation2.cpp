@@ -1,8 +1,9 @@
 /* $NoKeywords: $ */
 /*
 //
-// Copyright (c) 1993-2007 Robert McNeel & Associates. All rights reserved.
-// Rhinoceros is a registered trademark of Robert McNeel & Associates.
+// Copyright (c) 1993-2012 Robert McNeel & Associates. All rights reserved.
+// OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
+// McNeel & Associates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
@@ -14,6 +15,10 @@
 */
 
 #include "opennurbs.h"
+
+// This define is up here so anybody who want's to defeat the
+// bozo vaccine has to be doing it on purpose.
+#define BOZO_VACCINE_699FCC4262D4488c9109F1B7A37CE926
 
 // Added for v5 - 12-10-2009 LW
 ON_OBJECT_IMPLEMENT(ON_TextExtra,ON_UserData,"D90490A5-DB86-49f8-BDA1-9080B1F4E976");
@@ -63,7 +68,7 @@ ON_TextExtra* ON_TextExtra::TextExtension(const ON_TextEntity2* pText, bool bCre
 
 void ON_TextExtra::SetDefaults()
 {
-  m_partent_uuid = ON_nil_uuid;
+  m_parent_uuid = ON_nil_uuid;
 
   m_color_source = 0;
   m_mask_color = 0;
@@ -86,7 +91,7 @@ ON_BOOL32 ON_TextExtra::Write(ON_BinaryArchive& archive) const
 {
   bool rc = archive.BeginWrite3dmChunk(TCODE_ANONYMOUS_CHUNK,1,0);
 
-  if(rc) rc = archive.WriteUuid(m_partent_uuid);
+  if(rc) rc = archive.WriteUuid(m_parent_uuid);
   if(rc) rc = archive.WriteBool(m_bDrawMask);
   if(rc) rc = archive.WriteInt(m_color_source);
   if(rc) rc = archive.WriteColor(m_mask_color);
@@ -108,7 +113,7 @@ ON_BOOL32 ON_TextExtra::Read(ON_BinaryArchive& archive)
   if(major_version != 1)
     return false;
 
-  if(rc) rc = archive.ReadUuid(m_partent_uuid);
+  if(rc) rc = archive.ReadUuid(m_parent_uuid);
   if(rc) rc = archive.ReadBool(&m_bDrawMask);
   if(rc) rc = archive.ReadInt(&m_color_source);
   if(rc) rc = archive.ReadColor(m_mask_color);
@@ -135,12 +140,12 @@ ON_BOOL32 ON_TextExtra::Archive() const
 
 ON_UUID ON_TextExtra::ParentUUID() const
 {
-  return m_partent_uuid;
+  return m_parent_uuid;
 }
 
-void ON_TextExtra::SetParentUUID( ON_UUID partent_uuid)
+void ON_TextExtra::SetParentUUID( ON_UUID parent_uuid)
 {
-  m_partent_uuid = partent_uuid;
+  m_parent_uuid = parent_uuid;
 }
 
 bool ON_TextExtra::DrawTextMask() const
@@ -208,7 +213,7 @@ ON_DimensionExtra::~ON_DimensionExtra()
 {
 }
 
-ON_DimensionExtra* ON_DimensionExtra::DimensionExtension(ON_LinearDimension2* pDim, bool bCreate)
+static ON_DimensionExtra* AnnotationExtension(ON_Annotation2* pDim, bool bCreate)
 {
   ON_DimensionExtra* pExtra = 0;
   if(pDim)
@@ -230,10 +235,37 @@ ON_DimensionExtra* ON_DimensionExtra::DimensionExtension(ON_LinearDimension2* pD
   return pExtra;
 }
 
+ON_DimensionExtra* ON_DimensionExtra::DimensionExtension(ON_LinearDimension2* pDim, bool bCreate)
+{
+  return AnnotationExtension((ON_Annotation2*)pDim, bCreate);
+}
+
 const
 ON_DimensionExtra* ON_DimensionExtra::DimensionExtension(const ON_LinearDimension2* pDim, bool bCreate)
 {
   return DimensionExtension((ON_LinearDimension2*)pDim, bCreate);
+}
+
+ON_DimensionExtra* ON_DimensionExtra::DimensionExtension(ON_RadialDimension2* pDim, bool bCreate)
+{
+  return AnnotationExtension((ON_Annotation2*)pDim, bCreate);
+}
+
+const
+ON_DimensionExtra* ON_DimensionExtra::DimensionExtension(const ON_RadialDimension2* pDim, bool bCreate)
+{
+  return DimensionExtension((ON_RadialDimension2*)pDim, bCreate);
+}
+
+ON_DimensionExtra* ON_DimensionExtra::DimensionExtension(ON_OrdinateDimension2* pDim, bool bCreate)
+{
+  return AnnotationExtension((ON_Annotation2*)pDim, bCreate);
+}
+
+const
+ON_DimensionExtra* ON_DimensionExtra::DimensionExtension(const ON_OrdinateDimension2* pDim, bool bCreate)
+{
+  return DimensionExtension((ON_OrdinateDimension2*)pDim, bCreate);
 }
 
 void ON_DimensionExtra::SetDefaults()
@@ -242,6 +274,8 @@ void ON_DimensionExtra::SetDefaults()
 
   m_arrow_position = 0;
   m_text_rects = 0;
+  m_distance_scale = 1.0;
+  m_modelspace_basepoint = ON_origin;
 }
 
 void ON_DimensionExtra::Dump( ON_TextLog& text_log ) const
@@ -258,7 +292,9 @@ unsigned int ON_DimensionExtra::SizeOf() const
 
 ON_BOOL32 ON_DimensionExtra::Write(ON_BinaryArchive& archive) const
 {
-  bool rc = archive.BeginWrite3dmChunk(TCODE_ANONYMOUS_CHUNK,1,0);
+  int major_version = 1;
+  int minor_version = 1;
+  bool rc = archive.BeginWrite3dmChunk(TCODE_ANONYMOUS_CHUNK,major_version,minor_version);
 
   if(rc) rc = archive.WriteUuid( m_partent_uuid);
   if(rc) rc = archive.WriteInt( m_arrow_position);
@@ -273,6 +309,8 @@ ON_BOOL32 ON_DimensionExtra::Write(ON_BinaryArchive& archive) const
       rc = archive.WriteInt( 0);
 
   }
+  // 21 June 2010 Added distance scale, minor version 1
+  if(rc) rc = archive.WriteDouble(m_distance_scale);
 
   if(!archive.EndWrite3dmChunk())
     rc = false;
@@ -297,6 +335,12 @@ ON_BOOL32 ON_DimensionExtra::Read(ON_BinaryArchive& archive)
   if(rc) rc = archive.ReadInt( &rect_count);
   if( rc && rect_count)
     rc = archive.ReadInt( rect_count, (int*)m_text_rects);
+
+  // 21 June 2010 Added distance scale, minor version 1
+  if(minor_version > 0)
+  {
+    if(rc) rc = archive.ReadDouble(&m_distance_scale);
+  }
 
   if ( !archive.EndRead3dmChunk() )
     rc = false;
@@ -341,6 +385,27 @@ void ON_DimensionExtra::SetArrowPosition( int position)
   else
     m_arrow_position = 0;
 }
+
+double ON_DimensionExtra::DistanceScale() const
+{
+  return m_distance_scale;
+}
+
+void ON_DimensionExtra::SetDistanceScale(double s)
+{
+  m_distance_scale = s;
+}
+
+void ON_DimensionExtra::SetModelSpaceBasePoint(ON_3dPoint basepoint)
+{
+  m_modelspace_basepoint = basepoint;
+}
+
+ON_3dPoint ON_DimensionExtra::ModelSpaceBasePoint() const
+{
+  return m_modelspace_basepoint;
+}
+
 /*
 const wchar_t* ON_DimensionExtra::ToleranceUpperString() const
 {
@@ -470,28 +535,27 @@ void ON_Annotation2::SetIndex( int index)
   m_index = index;
 }
 
+
+
 void ON_Annotation2::Create()
 {
-  m_type = ON::dtNothing;
   m_textdisplaymode = ON::dtAboveLine;
-  m_plane = ON_xy_plane;
-  m_points.Empty();
-  m_usertext.Empty();
-  m_userpositionedtext = false;
   m_index = -1;
   m_textheight = 1.0;
-  m_justification = 0;
+  Destroy();
 }
 
 void ON_Annotation2::Destroy()
 {
   // 10-27-03 LW memory leak prevention
   m_points.Empty();
-  m_usertext.Empty();
+  SetTextValue(0);
+  SetTextFormula(0);
   m_type = ON::dtNothing;
   m_plane = ON_xy_plane;
   m_userpositionedtext = false;
   m_justification = 0;
+  m_annotative_scale = true;
 }
 
 void ON_Annotation2::EmergencyDestroy()
@@ -567,7 +631,8 @@ ON_Annotation2& ON_Annotation2::operator=(const ON_Annotation& src)
     SetPoint( 0, src.Point( i));
 
 
-  m_usertext = src.UserText();
+  SetTextValue(src.UserText());
+  SetTextFormula(0);
   m_userpositionedtext = src.UserPositionedText()?true:false;
   m_index = 0;
   m_textheight = 1.0;
@@ -705,6 +770,55 @@ bool ON_LinearDimension2::GetAnnotationBoundingBox(
   return (0!=bGrowBox);
 }
 */
+static bool WriteAnnotation2UserText_V4( ON_BinaryArchive& file, const ON_wString& s )
+{
+  bool rc;
+  ON_wString s4;
+  int len = s.Length();
+  
+  for(int i = 0; i < len; i++)
+  {
+    if(s[i] == '\r' || s[i] == '\n')
+    {
+      s4 += L'\r';
+      s4 += L'\n';
+      
+      // May 24, 2012  Tim - Fix for RR 100260.  If we use a while here we
+      // miss adding carriage returns where the user really meant to have a 
+      // blank line.  If we only check the next character and then continue on
+      // we preserve the blank lines.
+      if(i < len-1 && (s[i+1] == L'\r' || s[i+1] == L'\n'))
+        i++;
+      continue;
+    }
+    s4 += s[i];
+  }
+  rc = file.WriteString(s4);
+  return rc;
+}
+
+static bool WriteAnnotation2UserText_V5( ON_BinaryArchive& file, const ON_wString& s )
+{
+  bool rc;
+  rc = file.WriteString( s);
+  return rc;
+}
+
+//static int CountTextLines(const ON_wString& text)
+//{
+//  int len = text.Length();
+//  int lines = len > 0 ? 1 : 0;
+//  for(int i = 0; i < len; i++)
+//  {
+//    if(text[i] == L'\n' || text[i] == L'\r')
+//    {
+//      lines++;
+//      if(i < len-1 && text[i] == L'\r' && text[i+1] == L'\n')
+//        i++;
+//    }
+//  }
+//  return lines;
+//}
 
 ON_BOOL32 ON_Annotation2::Write( ON_BinaryArchive& file ) const
 {
@@ -722,7 +836,11 @@ ON_BOOL32 ON_Annotation2::Write( ON_BinaryArchive& file ) const
     //   I checked in this IO change.  The reason I can get
     //   away with this is that nobody except developers has
     //   a copy of V5 Rhino.
-    rc = file.BeginWrite3dmChunk(TCODE_ANONYMOUS_CHUNK,1,0);
+    // 28 Aug, 2010 - Lowell - changed minor version 0->1 to write
+    //   annotative scale flag
+    // 24 September 2010 Dale Lear 
+    //   I incremented chunk version to 1.2 and wrote the TextFormaula() string.
+    rc = file.BeginWrite3dmChunk(TCODE_ANONYMOUS_CHUNK,1,2);
     if (!rc)
       return false;
   }
@@ -744,7 +862,45 @@ ON_BOOL32 ON_Annotation2::Write( ON_BinaryArchive& file ) const
     rc = file.WriteInt( i);
     if ( !rc) break;
 
-    rc = file.WritePlane( m_plane);
+    // June 17, 2010 - Lowell - Added adjustment to position text
+    // a little better in pre-v5 files.
+    // There's no adjustment for right/left justify becasue we don't 
+    // know the width of the text here
+    // This doesn't change the size or position of any fields being
+    // written, but just adjusts the plane to tune up the alignment
+
+    // 16 Nov, 2011 - Lowell - Change text to bottom left justified for pre-v5 files rr94270
+    // This stuff is moved to CRhinoDoc::Write3DMHelper() so it will help with other file
+    // formats too
+    //ON_Plane plane = m_plane;
+    //if(file.Archive3dmVersion() <= 4 && m_type == ON::dtTextBlock)
+    //{
+    //  double height = m_textheight;
+    //  int lines = CountTextLines(m_usertext);
+    //  double linefeed = ON_Font::m_default_linefeed_ratio;
+
+    //  if(m_justification & tjBottom)
+    //  {
+    //    if(lines > 1)
+    //    {
+    //      ON_3dPoint p = plane.PointAt(0.0, -height * (lines-1) * linefeed);
+    //      plane.SetOrigin(p);
+    //    }
+    //  }
+    //  else if(m_justification & tjMiddle)
+    //  {
+    //    double h = height * (lines-1) * linefeed + height;
+    //    ON_3dPoint p = plane.PointAt(0.0, h * 0.5);
+    //    plane.SetOrigin(p);
+    //  }
+    //  else if(m_justification & tjTop)
+    //  {
+    //    ON_3dPoint p = plane.PointAt(0.0, -height);
+    //    plane.SetOrigin(p);
+    //  }
+    //}
+  
+    rc = file.WritePlane(m_plane);
     if ( !rc) break;
 
     ON_2dPointArray points = m_points;
@@ -791,14 +947,18 @@ ON_BOOL32 ON_Annotation2::Write( ON_BinaryArchive& file ) const
     rc = file.WriteArray( points);
     if ( !rc) break;
 
-    rc = file.WriteString( m_usertext);
+    // June 17, 2010 - Lowell - Added support for writing word-wrapped text
+    // to pre-v5 files with hard returns in place of wrapping markers
+    rc = ( file.Archive3dmVersion() <= 4 )
+       ? WriteAnnotation2UserText_V4(file,m_usertext)
+       : WriteAnnotation2UserText_V5(file,m_usertext);
     if ( !rc) break;
     // 7-9-03 lw removed extra text string getting written
 
     rc = file.WriteInt( bUserPositionedText );
     if ( !rc) break;
 
-    rc = file.WriteInt( m_index);
+    rc = file.WriteInt( m_index);  // font or dimstyle index
     if ( !rc) break;
 
     rc = file.WriteDouble( m_textheight);
@@ -814,7 +974,20 @@ ON_BOOL32 ON_Annotation2::Write( ON_BinaryArchive& file ) const
 
     // 18 October 2007 - Dale Lear added m_justification IO
     rc = file.WriteInt(m_justification);
-    if ( !rc) break;
+    if ( !rc) 
+      break;
+
+    // 28 Aug 2010 - Lowell - Added flag for whether text gets scaled in modelspace
+    rc = file.WriteBool(m_annotative_scale);
+    if(!rc)
+      break;
+
+    // 24 September 2010 Dale Lear 
+    //   I incremented chunk version to 1.2
+    ON_wString text_formula = TextFormula();
+    rc = file.WriteString(text_formula);
+    if(!rc)
+      break;
 
     // To write more ON_Annotation2 fields, increment the minor version
     // number and write the new information here.
@@ -842,6 +1015,14 @@ ON_BOOL32 ON_Annotation2::Read( ON_BinaryArchive& file )
   //             changes.
 
   Destroy();
+  
+  // If annotation is read from old files that do not contain
+  // the m_annotative_scale setting, then m_annotative_scale 
+  // must be false so the text behaves the way it did in old
+  // files.  The "Destroy()" function above can set m_annotative_scale
+  // any way that makes sense for new objects.
+  m_annotative_scale = false;
+  
   int major_version = 0;
   int minor_version = 0;
   bool rc = false;
@@ -939,6 +1120,24 @@ ON_BOOL32 ON_Annotation2::Read( ON_BinaryArchive& file )
 
     if ( minor_version <= 0 )
       break;
+
+    if(minor_version >= 1)
+    {
+      // 28 Aug, 2010 - Lowell - added reading annotative scale flag
+      rc = file.ReadBool(&m_annotative_scale);
+      if (!rc) break;
+
+      if ( minor_version >= 2 )
+      {
+        // 24 September 2010 Dale Lear 
+        //   I incremented chunk version to 1.2
+        ON_wString text_formula;
+        rc = file.ReadString(text_formula);
+        if(!rc) break;
+        SetTextFormula(text_formula);
+      }
+
+    }
 
     // Read new additions to ON_Annotation2 here
 
@@ -1366,7 +1565,17 @@ double ON_Annotation2::Height() const
 { return m_textheight; }
 
 void ON_Annotation2::SetType( ON::eAnnotationType type )
-{ m_type = type; }
+{ 
+  m_type = type;
+  if(type == ON::dtDimRadius)
+    SetTextValue(ON_RadialDimension2::DefaultRadiusText());
+  else if(type == ON::dtDimDiameter)
+    SetTextValue(ON_RadialDimension2::DefaultDiameterText());
+  else
+    SetTextValue(0);
+
+  SetTextFormula(0);
+}
 
 ON::eAnnotationType ON_Annotation2::Type() const
 { return m_type; }
@@ -1414,8 +1623,17 @@ ON_2dPoint ON_Annotation2::Point( int idx ) const
          : ON_2dPoint( 0.0, 0.0 );
 }
 
-void ON_Annotation2::SetUserText( const wchar_t* string ) {m_usertext = string; }
-const ON_wString& ON_Annotation2::UserText() const { return m_usertext; }
+void ON_Annotation2::SetUserText( const wchar_t* text_value )
+// ON_Annotation2::SetUserText is OBSOLETE - use ON_Annotation2::SetTextValue();
+{
+  SetTextValue( text_value );
+}
+
+const ON_wString& ON_Annotation2::UserText() const 
+// ON_Annotation2::UserText() is OBSOLETE - use ON_Annotation2::TextValue();
+{
+  return m_usertext; 
+}
 
 void ON_Annotation2::SetUserPositionedText( int bMoved )
 { m_userpositionedtext = bMoved?true:false; }
@@ -1465,18 +1683,25 @@ void ON_Annotation2::ConvertBack( ON_Annotation& target)
   target.SetTextDisplayMode( TextDisplayMode());
   target.SetPlane( Plane());
   target.SetPoints( Points());
-  target.SetUserText( UserText());
+  target.SetUserText( TextValue());
   target.SetDefaultText( DefaultText());
   target.SetUserPositionedText( UserPositionedText());
 }
 
 void ON_Annotation2::SetJustification( unsigned int justification)
 {
+  // SDKBREAK - move to ON_Leader virtual SetJustification
+  if(this->IsLeader())
+    m_justification = justification;
 }
 
 unsigned int ON_Annotation2::Justification()
 {
-  return 0;
+  // SDKBREAK - move to ON_Leader virtual Justification
+  if(this->IsLeader())
+    return   m_justification;
+  else
+    return 0;
 }
 
 
@@ -1495,7 +1720,8 @@ ON_LinearDimension2::ON_LinearDimension2()
   m_type = ON::dtDimLinear;
   m_textdisplaymode = ON::dtAboveLine;
   m_plane = ON_xy_plane;
-  m_usertext = DefaultText();
+  SetTextValue(DefaultText());
+  SetTextFormula(0);
   m_points.Reserve(ON_LinearDimension2::dim_pt_count);
   m_points.SetCount(ON_LinearDimension2::dim_pt_count);
   m_points.Zero();
@@ -1694,6 +1920,7 @@ ON_BOOL32 ON_LinearDimension2::GetBBox(
 
     uv.y = m_points[1].y;
     P.Append( m_plane.PointAt(uv.x,uv.y) );
+    bGrowBox = P.GetBBox(&bbox.m_min.x, &bbox.m_max.x, bGrowBox);
   }
 
   if ( bGrowBox )
@@ -2062,7 +2289,8 @@ bool ON_LinearDimension2::CreateFromV2(
       m_points.Append(ON_LinearDimension2::dim_pt_count,v2_ann.Points().Array());
       m_userpositionedtext = v2_ann.UserPositionedText();
       m_type = v2_ann.m_type;
-      m_usertext = v2_ann.UserText();
+      SetTextValue(v2_ann.UserText());
+      SetTextFormula(0);
 
       m_plane = v2_ann.m_plane;
       m_plane.UpdateEquation();
@@ -2171,12 +2399,10 @@ int ON_LinearDimension2::GetDimensionLineSegments(
   if( pDE)
     ForceArrows = pDE->ArrowPosition();
 
-  if(ForceArrows == 1)  // force inside
-  {
-    rc = 1;
-  }
-  else if(ForceArrows == -1 ||        // force outside
-          dimwidth < mindimwidth )    // arrowheads have to be "outside" - they won't fit inside even without text
+  // 19 Apr 2012 - Lowell - Fixed so forcing arrows inside won't cause the dim line to 
+  // draw through InLine text  rr103322
+  if(ForceArrows == -1 ||        // force outside
+     (dimwidth < mindimwidth  && ForceArrows != 1))    // arrowheads have to be "outside" - they won't fit inside even without text
   {
     t = arrowwidth + tailwidth;
     x[0] = x0;
@@ -2206,7 +2432,11 @@ int ON_LinearDimension2::GetDimensionLineSegments(
                          ? vp->CameraZ()
                          : m_plane.zaxis;
 
-    const double gdi_gap = fabs(textgap/gdi_to_plane_scale);
+    // 30 July 2012 - Lowell - Slightly shrink the text gap value
+    // so that text + gap won't intersect the dim line if when text
+    // is moved along the dim line. rr110504
+    double gdi_gap = fabs(textgap/gdi_to_plane_scale)-12;
+    if(gdi_gap < 0.0) gdi_gap = 0.0;
 
     R.Set(gdi_text_rect.left-gdi_gap,gdi_text_rect.bottom+gdi_gap,0.0);
     ray.from = gdi_to_world*R; ray.to = ray.from + vp_zaxis;
@@ -2364,7 +2594,8 @@ ON_RadialDimension2::ON_RadialDimension2()
 {
   m_type = ON::dtDimDiameter;
   m_textdisplaymode = ON::dtInLine;
-  m_usertext = DefaultDiameterText();
+  SetTextValue(DefaultDiameterText());
+  SetTextFormula(0);
   m_points.Reserve(ON_RadialDimension2::dim_pt_count);
   m_points.SetCount(ON_RadialDimension2::dim_pt_count);
   m_points.Zero();
@@ -2531,6 +2762,7 @@ ON_BOOL32 ON_RadialDimension2::GetBBox(
 
     uv = m_points[3];
     P.Append( m_plane.PointAt(uv.x,uv.y) );
+    bGrowBox = P.GetBBox(&bbox.m_min.x, &bbox.m_max.x, bGrowBox);
   }
 
   if ( bGrowBox )
@@ -2556,9 +2788,9 @@ bool ON_RadialDimension2::GetTightBoundingBox(
 		const ON_Xform* xform
     ) const
 {
-  if ( 5 == m_points.Count() )
+  if ( 4 == m_points.Count() )
   {
-    ON_3dPointArray P(5);
+    ON_3dPointArray P(4);
     ON_2dPoint uv;
 
     uv = m_points[0]; // + sign at center of dimension (usually at (0,0)
@@ -2731,7 +2963,8 @@ bool ON_RadialDimension2::CreateFromV2(
       m_points.Append(4,points.Array());
       m_plane = v2_ann.m_plane;
       m_plane.UpdateEquation();
-      m_usertext = v2_ann.UserText();
+      SetTextValue(v2_ann.UserText());
+      SetTextFormula(0);
       m_userpositionedtext = false;
       m_type = v2_ann.Type();
       m_textdisplaymode = ( 2 == settings.m_textalign )
@@ -2932,7 +3165,8 @@ ON_AngularDimension2::ON_AngularDimension2() : m_angle(0.0), m_radius(1.0)
 {
   m_type = ON::dtDimAngular;
   m_textdisplaymode = ON::dtAboveLine;
-  m_usertext = DefaultText();
+  SetTextValue(DefaultText());
+  SetTextFormula(0);
   m_points.Reserve(ON_AngularDimension2::dim_pt_count);
   m_points.SetCount(ON_AngularDimension2::dim_pt_count);
   m_points.Zero();
@@ -3402,7 +3636,8 @@ bool ON_AngularDimension2::CreateFromV2(
   m_angle = angle;
   m_radius = radius;
 
-  m_usertext = v2_ann.UserText();
+  SetTextValue(v2_ann.UserText());
+  SetTextFormula(0);
   m_userpositionedtext = bUserPositionedText;
 
   switch( settings.m_textalign)
@@ -3425,34 +3660,17 @@ bool ON_AngularDimension2::CreateFromV2(
 
 bool ON_AngularDimension2::CreateFromArc( const ON_Arc& arc )
 {
-  Destroy();
-  Create();
+  // June 9, 2010 - Lowell - Changed to call CreateFromPoints()
   bool rc = arc.IsValid();
   if (rc)
   {
-    double r = arc.Radius();
-    double a = arc.AngleRadians();
     ON_3dPoint C = arc.Center();
-    ON_3dVector X = arc.StartPoint() - C;
-    X.Unitize();
-    ON_3dVector Y = ON_CrossProduct( arc.plane.zaxis, X );
-    Y.Unitize();
+    ON_3dPoint S = arc.StartPoint();
+    ON_3dPoint E = arc.EndPoint();
+    ON_3dPoint M = arc.MidPoint();
+    ON_3dVector N = arc.Plane().zaxis;
 
-    m_type = ON::dtDimAngular;
-    m_plane = arc.plane;
-    m_plane.xaxis = X;
-    m_plane.yaxis = Y;
-    m_plane.UpdateEquation();
-
-    m_points.SetCapacity(4);
-    m_points.SetCount(4);
-    m_points[0].Set(0.0,0.0);
-    m_points[1].Set(r,0.0);
-    m_points[2].Set(r*cos(a),r*sin(a));
-    m_points[3].Set(r*cos(a/3.0),r*sin(a/3.0));
-
-    m_angle = a;
-    m_radius = r;
+    rc = CreateFromPoints(C, S, E, M, N);
   }
 
   return rc;
@@ -3763,13 +3981,17 @@ int ON_AngularDimension2::GetDimensionArcSegments(
   if ( sin_angle > 1.0 ) sin_angle = 1.0; else if (sin_angle < -1.0) sin_angle = -1.0;
   const double tailangle = 2.0*asin(sin_angle);
 
+  // June 7, 2010 - Lowell - Added some special handling for very small dimensions 
+  double arrow_angle = arrowangle + tailangle;
+  if(arrow_angle > ON_PI * 0.5)
+    arrow_angle = ON_PI * 0.5;
   if ( m_radius <= arrowwidth + tailwidth || m_radius*(a1-a0) < 2.0*(arrowwidth) + tailwidth )
   {
     // arc is tiny with respect to arrowhead size - arrowheads have to be "outside"
     // 2 arc segments, arrowheads outside
     a[0] = a0;
-    a[1] = a0 - arrowangle - tailangle;
-    a[2] = a1 + arrowangle + tailangle;
+    a[1] = a0 - arrow_angle;
+    a[2] = a1 + arrow_angle;
     a[3] = a1;
     a[4] = a0;
     a[5] = a1;
@@ -3786,8 +4008,8 @@ int ON_AngularDimension2::GetDimensionArcSegments(
   {
     // 2 arc segments, arrowheads outside
     a[0] = a0;
-    a[1] = a0 - arrowangle - tailangle;
-    a[2] = a1 + arrowangle + tailangle;
+    a[1] = a0 - arrow_angle;
+    a[2] = a1 + arrow_angle;
     a[3] = a1;
     a[4] = a0;
     a[5] = a1;
@@ -3806,12 +4028,12 @@ int ON_AngularDimension2::GetDimensionArcSegments(
     ? 2.0*asin(sin_angle)
     : 0.0;
 
-  if ( (a1-a0) <= 2.0*(arrowangle + tailangle) + textangle )
+  if ( (a1-a0) <= 2.0*(arrow_angle) + textangle )
   {
     // 2 arc segments, arrowheads outside
     a[0] = a0;
-    a[1] = a0 - arrowangle - tailangle;
-    a[2] = a1 + arrowangle + tailangle;
+    a[1] = a0 - arrow_angle;
+    a[2] = a1 + arrow_angle;
     a[3] = a1;
     a[4] = a0;
     a[5] = a1;
@@ -3838,7 +4060,11 @@ int ON_AngularDimension2::GetDimensionArcSegments(
                          ? vp->CameraZ()
                          : m_plane.zaxis;
 
-    const double gdi_gap = fabs(textgap/gdi_to_plane_scale);
+    // 30 July 2012 - Lowell - Slightly shrink the text gap value
+    // so that text + gap won't intersect the dim line if when text
+    // is moved along the dim line. rr110504
+    double gdi_gap = fabs(textgap/gdi_to_plane_scale)-12;
+    if(gdi_gap < 0.0) gdi_gap = 0.0;
 
     R.Set(gdi_text_rect.left-gdi_gap,gdi_text_rect.bottom+gdi_gap,0.0);
     ray.from = gdi_to_world*R; ray.to = ray.from + vp_zaxis;
@@ -3952,14 +4178,14 @@ int ON_AngularDimension2::GetDimensionArcSegments(
     if ( ON_UNSET_VALUE != aa0 && ON_UNSET_VALUE != aa1
         && a0 <= aa0 && aa0 < aa1 && aa1 <= a1 )
     {
-      t = arrowangle + tailangle;
+      t = arrow_angle;
       if ( aa0 < a0+t && aa1 > a1-t )
       {
         // text box hits both arrowheads
         // 2 arc segments, arrowheads outside
         a[0] = a0;
-        a[1] = a0 - arrowangle - tailangle;
-        a[2] = a1 + arrowangle + tailangle;
+        a[1] = a0 - arrow_angle;
+        a[2] = a1 + arrow_angle;
         a[3] = a1;
         a[4] = a0;
         a[5] = a1;
@@ -4061,7 +4287,7 @@ int ON_AngularDimension2::GetDimensionArcSegments(
     if( dimextension_angle != 0.0)
     {
       a[0] -= dimextension_angle;
-      a[1] += dimextension_angle;
+      a[3] += dimextension_angle;
     }
     bInside = true;
     rc = 2;
@@ -4089,7 +4315,8 @@ void ON_AngularDimension2::SetDimpointOffset(int index, double offset)
 ON_OrdinateDimension2::ON_OrdinateDimension2()
 {
   m_type = ON::dtDimOrdinate;
-  m_usertext = DefaultText();
+  SetTextValue(DefaultText());
+  SetTextFormula(0);
   m_direction = -1;  // undetermined direction
   m_points.Reserve(ON_OrdinateDimension2::dim_pt_count);
   m_points.SetCount(ON_OrdinateDimension2::dim_pt_count);
@@ -4361,6 +4588,7 @@ ON_BOOL32 ON_OrdinateDimension2::GetBBox( double* boxmin,
 
     P.Append( m_plane.PointAt( m_points[0].x, m_points[0].y));
     P.Append( m_plane.PointAt( m_points[1].x, m_points[1].y));
+    bGrowBox = P.GetBBox(&bbox.m_min.x, &bbox.m_max.x, bGrowBox);
   }
 
   if ( bGrowBox )
@@ -4537,6 +4765,15 @@ ON_BOOL32 ON_TextEntity2::IsValid( ON_TextLog* text_log ) const
       break;
     }
   }
+  // 9 Oct 2010 S. Baer
+  // With the addition of text formulas, the user text can be 0 length
+  if( !bValidText && count<1 )
+  {
+    const wchar_t* formula = TextFormula();
+    if( formula && formula[0] )
+      bValidText = true;
+  }
+
   if( !bValidText )
   {
     if( text_log )
@@ -4681,6 +4918,11 @@ ON_BOOL32 ON_TextEntity2::GetBBox(
   {
     ON_2dPoint uv = m_points[0];
     bbox.Set( m_plane.PointAt(uv.x,uv.y), bGrowBox );
+    bGrowBox = true;
+  }
+  else if ( 0 == m_points.Count() )
+  {
+    bbox.Set( m_plane.origin, bGrowBox );
     bGrowBox = true;
   }
 
@@ -4855,6 +5097,15 @@ void ON_TextEntity2::SetMaskOffsetFactor(double offset)
     pTE->SetMaskOffsetFactor(offset);
 }
 
+bool ON_TextEntity2::AnnotativeScaling() const
+{
+  return m_annotative_scale;
+}
+
+void ON_TextEntity2::SetAnnotativeScaling(bool b)
+{
+  m_annotative_scale = b;
+}
 
 
 
@@ -5133,6 +5384,32 @@ bool ON_Leader2::RemovePoint( int idx )
   return rc;
 }
 
+// April 22, 2010 Lowell - Added to support right justified text on left pointing leader tails rr64292
+bool ON_Leader2::GetTextDirection( ON_2dVector& text_dir ) const 
+{
+  bool rc = false;
+  const int point_count = m_points.Count();
+  if ( point_count < 2 )
+  {
+    text_dir.Set(-1.0,0.0);
+  }
+  else
+  {
+    int i; // 20 June 2011 Fixed textdir for leaders with 2 points. rr86801
+    for(i = point_count-1; i >= 1; i--)
+    {
+      text_dir = m_points[point_count-1] -  m_points[i-1];
+      if(text_dir.Unitize())
+      {
+        rc = true;
+        break;
+      }
+      text_dir.Set(-1.0,0.0);
+    }
+  }
+  return rc;
+}
+
 bool ON_Leader2::GetArrowHeadDirection( ON_2dVector& arrowhead_dir ) const
 {
   bool rc = false;
@@ -5240,7 +5517,8 @@ bool ON_Leader2::CreateFromV2(
     m_points.SetCount(0);
     m_points.Append(v2_ann.m_points.Count(),v2_ann.m_points.Array());
     ON_2dVector v = m_points[0];
-    m_usertext = v2_ann.UserText();
+    SetTextValue(v2_ann.UserText());
+    SetTextFormula(0);
     m_userpositionedtext = false;
     m_textdisplaymode = ( 2 == settings.m_textalign )
                       ? ON::dtHorizontal
@@ -5305,7 +5583,7 @@ ON_BOOL32 ON_TextDot::IsValid(
 
 void ON_TextDot::Dump( ON_TextLog& log) const
 {
-  log.Print("ON_TextDot \"%S\" at ",m_text.Array());
+  log.Print("ON_TextDot \"%ls\" at ",m_text.Array());
   log.Print( m_point);  // ON_Geometry 3d location
   log.Print("\n");
 }
@@ -5403,10 +5681,37 @@ const wchar_t* ON_TextDot::TextString() const
 
 void ON_TextDot::SetTextString( const wchar_t* string)
 {
+  m_text.Empty();
   if( string)
-    m_text = string;
-  else
-    m_text.Empty();
+  {
+    int len = (int)wcslen(string);
+    wchar_t* str = 0;
+    if(len > 0 && string[len-1] <= L' ')
+    {
+      // trim off trailing white space
+      str = (wchar_t*)onmalloc((len+1)*sizeof(wchar_t));
+      int j = 0;
+      for(int i = 0; i < len; i++)
+      {
+        if(string[i] == L'\r' || string[i] == L'\n')
+          continue;
+        str[j++] = string[i];
+      }
+      str[j] = 0;
+//      wcscpy(str, string);
+
+      for(int i = len-1; i >= 0 && str[i] <= L' '; i--)
+        str[i] = 0;
+    }
+    if(str)
+    {
+      if(wcslen(str) > 0)
+        m_text = str;
+      onfree(str);
+    }
+    else
+      m_text = string;
+  }
 }
 
 const wchar_t* ON_TextDot::FontFace() const
@@ -5525,33 +5830,35 @@ bool ON_Annotation2::GetTextXform(
       ) const
 {
   ON_ERROR("This function should not be used. Use the version that takes a model transform argument.");
+  return false;
 
-  const int gdi_height_of_I = font.HeightOfI();
-  const double dimstyle_textheight = dimstyle.TextHeight();
-  double dimstyle_textgap = dimstyle.TextGap();
-  const ON::eTextDisplayMode dimstyle_textalignment
-            =  ON::TextDisplayMode(dimstyle.TextAlignment()) ;
-  const ON_3dVector cameraX = (vp) ? vp->CameraX() : m_plane.xaxis;
-  const ON_3dVector cameraY = (vp) ? vp->CameraY() : m_plane.yaxis;
+  //const int gdi_height_of_I = font.HeightOfI();
+  //const double dimstyle_textheight = dimstyle.TextHeight();
+  //double dimstyle_textgap = dimstyle.TextGap();
+  //const ON::eTextDisplayMode dimstyle_textalignment 
+  //          =  ON::TextDisplayMode(dimstyle.TextAlignment()) ;
+  //const ON_3dVector cameraX = (vp) ? vp->CameraX() : m_plane.xaxis;
+  //const ON_3dVector cameraY = (vp) ? vp->CameraY() : m_plane.yaxis;
 
-  // SDKBREAK - Oct 4, 07 LW Hack to get correct text gap using
-  // multi-line tolerance text since GetTextXform doesn't do that.
-  if(( dimstyle.ToleranceStyle() == 2 || dimstyle.ToleranceStyle() == 3) &&
-    ( Type() == ON::dtDimLinear || Type() == ON::dtDimAligned))
-    dimstyle_textgap += dimstyle_textheight * 0.5;
+  //// SDKBREAK - Oct 4, 07 LW Hack to get correct text gap using 
+  //// multi-line tolerance text since GetTextXform doesn't do that.
+  //if(( dimstyle.ToleranceStyle() == 2 || dimstyle.ToleranceStyle() == 3) &&
+  //  ( Type() == ON::dtDimLinear || Type() == ON::dtDimAligned))
+  //  dimstyle_textgap += dimstyle_textheight * 0.5;
 
-  return GetTextXform(
-      gdi_text_rect,
-      gdi_height_of_I,
-      dimstyle_textheight, dimstyle_textgap, dimstyle_textalignment,
-      dimscale,
-      cameraX, cameraY,
-      xform
-      );
+  //return GetTextXform( 
+  //    gdi_text_rect,
+  //    gdi_height_of_I,
+  //    dimstyle_textheight, dimstyle_textgap, dimstyle_textalignment,
+  //    dimscale,
+  //    cameraX, cameraY, 
+  //    xform
+  //    );
 }
 
 // New function added Oct 30, 07 - LW
 // To use model xform to draw annotation in blocks correctly
+#if 0
 bool ON_Annotation2::GetTextXform(
       ON_RECT gdi_text_rect,
       const ON_Font& font,
@@ -5562,30 +5869,48 @@ bool ON_Annotation2::GetTextXform(
       ON_Xform& xform
       ) const
 {
-  const int gdi_height_of_I = font.HeightOfI();
-  const double dimstyle_textheight = dimstyle.TextHeight();
-  double dimstyle_textgap = dimstyle.TextGap();
-  const ON::eTextDisplayMode dimstyle_textalignment
-            =  ON::TextDisplayMode(dimstyle.TextAlignment()) ;
+  ON_ERROR("This function should not be used. Use the one below that takes a dimstyle pointer.");
+  return false;
+}
+#endif
+
+bool ON_Annotation2::GetTextXform( 
+      ON_RECT gdi_text_rect,
+      const ON_Font& font,
+      const ON_DimStyle* dimstyle,
+      double dimscale,
+      const ON_Viewport* vp,
+      const ON_Xform* model_xform,
+      ON_Xform& xform
+      ) const
+{
+  int gdi_height_of_I = font.HeightOfI();
+  const double textheight = dimstyle ? dimstyle->TextHeight() : m_textheight;
+  double textgap =  dimstyle ? dimstyle->TextGap() : 0.0;
+  const ON::eTextDisplayMode textalignment = dimstyle ? ON::TextDisplayMode(dimstyle->TextAlignment()) : ON::dtNormal;
   const ON_3dVector cameraX = (vp) ? vp->CameraX() : m_plane.xaxis;
   const ON_3dVector cameraY = (vp) ? vp->CameraY() : m_plane.yaxis;
 
-  // SDKBREAK - Oct 4, 07 LW Hack to get correct text gap using
-  // multi-line tolerance text since GetTextXform doesn't do that.
-  if(( dimstyle.ToleranceStyle() == 2 || dimstyle.ToleranceStyle() == 3) &&
-    ( Type() == ON::dtDimLinear || Type() == ON::dtDimAligned))
-    dimstyle_textgap += dimstyle_textheight * 0.5;
-
+  if(dimstyle)
+  {
+    // SDKBREAK - Oct 4, 07 LW Get correct text gap using 
+    // multi-line tolerance text since GetTextXform doesn't do that.
+    if(( dimstyle->ToleranceStyle() == 2 || dimstyle->ToleranceStyle() == 3) &&
+      ( Type() == ON::dtDimLinear || Type() == ON::dtDimAligned))
+        textgap += textheight * 0.5;
+  }
   return GetTextXform(
       gdi_text_rect,
       gdi_height_of_I,
-      dimstyle_textheight, dimstyle_textgap, dimstyle_textalignment,
+      textheight, textgap, textalignment,
       dimscale,
       cameraX, cameraY,
       model_xform,
       xform
       );
 }
+
+
 
 static bool GetLeaderEndAndDirection( const ON_Annotation2* pAnn,
                                      ON_2dPoint& E,
@@ -5676,338 +6001,350 @@ bool ON_Annotation2::GetTextXform(
       ) const
 {
   ON_ERROR("This function should not be used. Use the version that takes a model transform argument.");
-  const ON_Annotation2* ann = this;
+  return false;
 
-  const ON::eAnnotationType ann_type = ann->m_type;
+  //const ON_Annotation2* ann = this;
 
-  if ( 0 == gdi_height_of_I )
-  {
-    // Default to height of Ariel 'I'
-    gdi_height_of_I = (165*ON_Font::normal_font_height)/256;
-  }
+  //const ON::eAnnotationType ann_type = ann->m_type;
 
-  if ( 0.0 == dimscale )
-  {
-    dimscale = 1.0;
-  }
+  //if ( 0 == gdi_height_of_I )
+  //{
+  //  // Default to height of Ariel 'I'
+  //  gdi_height_of_I = (165*ON_Font::normal_font_height)/256;
+  //}
 
-  dimstyle_textheight *= dimscale;
-  dimstyle_textgap *= dimscale;
+  //if ( 0.0 == dimscale )
+  //{
+  //  dimscale = 1.0;
+  //}
 
-  double textheight = ( ON::dtTextBlock == ann_type )
-                    ? m_textheight*dimscale
-                    : dimstyle_textheight;
-  if ( 0.0 == textheight )
-    textheight = 1.0;
+  //dimstyle_textheight *= dimscale;
+  //dimstyle_textgap *= dimscale;
 
-  ON_3dVector cameraZ = ON_CrossProduct( cameraX, cameraY );
-  if ( fabs( 1.0 - cameraZ.Length() ) > ON_SQRT_EPSILON )
-  {
-    cameraZ.Unitize();
-  }
+  //double textheight = ( ON::dtTextBlock == ann_type )
+  //                  ? m_textheight*dimscale
+  //                  : dimstyle_textheight;
+  //if ( 0.0 == textheight )
+  //  textheight = 1.0;
 
-  // This xform is a scale from Windows gdi coordinates
-  // to annotation plane coordinates.
-  const double gdi_to_plane_scale = textheight/gdi_height_of_I;
-  ON_Xform gdi_to_plane(1.0);
-  gdi_to_plane.m_xform[0][0] =  gdi_to_plane_scale;
-  gdi_to_plane.m_xform[1][1] = -gdi_to_plane_scale;
+  //ON_3dVector cameraZ = ON_CrossProduct( cameraX, cameraY );
+  //if ( fabs( 1.0 - cameraZ.Length() ) > ON_SQRT_EPSILON )
+  //{
+  //  cameraZ.Unitize();
+  //}
 
-  // width and height of text line in Rhino units.
-  const double text_line_width  = gdi_to_plane_scale*(gdi_text_rect.right - gdi_text_rect.left);
-  //const double text_line_height = gdi_to_plane_scale*(gdi_text_rect.bottom - gdi_text_rect.top);
+  //// This xform is a scale from Windows gdi coordinates 
+  //// to annotation plane coordinates.
+  //const double gdi_to_plane_scale = textheight/gdi_height_of_I;
+  //ON_Xform gdi_to_plane(1.0);
+  //gdi_to_plane.m_xform[0][0] =  gdi_to_plane_scale;
+  //gdi_to_plane.m_xform[1][1] = -gdi_to_plane_scale;
 
-  if ( ON::dtTextBlock == ann_type )
-  {
-    // The orientation of the text is text blocks
-    // does not depend on the view or text alignment
-    // settings.  The position and orientation of
-    // the text in every other annotation depends on
-    // the view and text alignment settings.
-    //
-    // It simplifies the code for the rest of the
-    // annotation settings to quickly deal with text
-    // blocks here.
-    ON_Xform plane_to_world(1.0);
-    plane_to_world.Rotation(ON_xy_plane,ann->m_plane);
-    xform = plane_to_world*gdi_to_plane;
-    return true;
-  }
+  //// width and height of text line in Rhino units.
+  //const double text_line_width  = gdi_to_plane_scale*(gdi_text_rect.right - gdi_text_rect.left);
+  ////const double text_line_height = gdi_to_plane_scale*(gdi_text_rect.bottom - gdi_text_rect.top);
 
-
-  // text_position_mode
-  //   1 = linear, aligned, or angular dimension
-  //       (dimension definition determines center point of text box)
-  //   2 = radial, diameter, leader
-  //       (dimension definition determined end point of text box)
-  int position_style = 0;
-  switch( ann_type )
-  {
-  case ON::dtDimAligned:
-  case ON::dtDimLinear:
-  case ON::dtDimAngular:
-    // dimension definition determines center point of text box
-    position_style = 1;
-    break;
-
-  case ON::dtLeader:
-  case ON::dtDimRadius:
-  case ON::dtDimDiameter:
-  case ON::dtDimOrdinate:
-    // dimension definition determines end of text box
-    position_style = 2;
-    break;
-
-  case ON::dtTextBlock:
-  case ON::dtNothing:
-    break;
-  }
+  //if ( ON::dtTextBlock == ann_type )
+  //{
+  //  // The orientation of the text is text blocks
+  //  // does not depend on the view or text alignment
+  //  // settings.  The position and orientation of 
+  //  // the text in every other annotation depends on
+  //  // the view and text alignment settings.  
+  //  //
+  //  // It simplifies the code for the rest of the
+  //  // annotation settings to quickly deal with text
+  //  // blocks here.
+  //  ON_Xform plane_to_world(1.0);
+  //  plane_to_world.Rotation(ON_xy_plane,ann->m_plane);
+  //  xform = plane_to_world*gdi_to_plane;
+  //  return true;
+  //}
 
 
-  // This translation puts the center of the fist line of text at
-  // (0,0) in the annotation's plane.
-  if ( ON::dtHorizontal != dimstyle_textalignment || 1 == position_style )
-  {
-    gdi_to_plane.m_xform[0][3] = -0.5*text_line_width;
-  }
-  gdi_to_plane.m_xform[1][3] = -0.5*textheight;
+  //// text_position_mode
+  ////   1 = linear, aligned, or anglular dimension
+  ////       (dimension definition determines center point of text box)
+  ////   2 = radial, diameter, leader
+  ////       (dimension definition determined end point of text box)
+  //int position_style = 0;
+  //switch( ann_type )
+  //{
+  //case ON::dtDimAligned:
+  //case ON::dtDimLinear:
+  //case ON::dtDimAngular:
+  //  // dimension definition determines center point of text box
+  //  position_style = 1;
+  //  break;
 
-  if ( ON::dtHorizontal != dimstyle_textalignment )
-  {
-    if ( ((cameraZ*m_plane.zaxis) < -ON_SQRT_EPSILON) )
-    {
-      // Viewing dimension from the backside
-      ON_Xform flip(1.0);
-      switch ( position_style )
-      {
-      case 1: // ON::dtDimLinear, ON::dtDimAligned, ON::dtDimAngular
-        flip.m_xform[0][0] = -1.0;
-        flip.m_xform[0][3] = gdi_text_rect.left + gdi_text_rect.right;
-        break;
+  //case ON::dtLeader:
+  //case ON::dtDimRadius:
+  //case ON::dtDimDiameter:
+  //case ON::dtDimOrdinate:
+  //  // dimension definition determines end of text box
+  //  position_style = 2;
+  //  break;
 
-      case 2: // ON::dtDimDiameter, ON::dtDimRadius, ON::dtLeader
-        flip.m_xform[1][1] = -1.0;
-        flip.m_xform[1][3] = gdi_text_rect.top + gdi_text_rect.bottom;
-        break;
-      }
-      gdi_to_plane = gdi_to_plane*flip;
-    }
-  }
+  //case ON::dtTextBlock:
+  //case ON::dtNothing:
+  //  break;
+  //}
 
-  // text_centering_rotation rotates about the "center".  Angular,
-  // radial, and leader dimensions use this rotation.
-  ON_2dVector text_centering_rotation(1.0,0.0);
 
-  // text_centering_translation is a small translation deals with
-  // text that is above or to the right of the "center" point.
-  // It is no larger than dimstyle_gap + 1/2 the size of the
-  // text's bounding box.
-  ON_2dVector text_centering_translation(0.0,0.0);
+  //// This translation puts the center of the fist line of text at
+  //// (0,0) in the annotation's plane.
+  //if ( ON::dtHorizontal != dimstyle_textalignment || 1 == position_style )
+  //{
 
-  double x, y;
+  //  gdi_to_plane.m_xform[0][3] = -0.5*text_line_width;
+  //  gdi_to_plane.m_xform[0][3] = -0.5*text_line_width;
+  //}
+  //gdi_to_plane.m_xform[1][3] = -0.5*textheight;
 
-  if ( ON::dtHorizontal != dimstyle_textalignment )
-  {
-    if ( ON::dtDimLinear  == ann_type || ON::dtDimAligned == ann_type )
-    {
-      if ( ON::dtAboveLine == dimstyle_textalignment )
-      {
-        text_centering_translation.y =  0.5*textheight+dimstyle_textgap;
-      }
-      y =  ann->m_plane.yaxis*cameraY;
-      x = -ann->m_plane.yaxis*cameraX;
-      if ( fabs(y) <= ON_SQRT_EPSILON && fabs(x) > ON_SQRT_EPSILON )
-      {
-        y = x;
-      }
-      if ( y < 0.0 )
-      {
-        text_centering_translation.Reverse();
-        text_centering_rotation.Reverse(); // rotate 180 degrees
-      }
-    }
-    else if ( ON::dtDimAngular == ann_type )
-    {
-      // This transform rotates the text in the annotation plane.
-      const ON_AngularDimension2* angular_dim = ON_AngularDimension2::Cast(ann);
-      if ( 0 != angular_dim )
-      {
-        double a = 0.5*angular_dim->m_angle;
-        ON_2dVector R(cos(a),sin(a));
-        a -= 0.5*ON_PI;
-        text_centering_rotation.x = cos(a);
-        text_centering_rotation.y = sin(a);
-        ON_3dVector V = R.x*m_plane.xaxis + R.y*m_plane.yaxis;
-        x = V*cameraX;
-        y = V*cameraY;
-        if ( fabs(y) <= ON_SQRT_EPSILON && fabs(x) > ON_SQRT_EPSILON )
-        {
-          y = -x;
-        }
-        if ( y < 0.0 )
-        {
-          text_centering_rotation.Reverse(); // add another 180 degrees of rotation
-        }
+  //if ( ON::dtHorizontal != dimstyle_textalignment )
+  //{
+  //  if ( ((cameraZ*m_plane.zaxis) < -ON_SQRT_EPSILON) )
+  //  {
+  //    // Viewing dimension from the backside
+  //    ON_Xform flip(1.0);
+  //    switch ( position_style )
+  //    {
+  //    case 1: // ON::dtDimLinear, ON::dtDimAligned, ON::dtDimAngular
+  //      flip.m_xform[0][0] = -1.0;
+  //      flip.m_xform[0][3] = gdi_text_rect.left + gdi_text_rect.right;
+  //      break;
 
-        if ( ON::dtAboveLine == dimstyle_textalignment )
-        {
-          y = 0.5*textheight + dimstyle_textgap;
-          text_centering_translation.x = -y*text_centering_rotation.y;
-          text_centering_translation.y =  y*text_centering_rotation.x;
-        }
-      }
-    }
-    else if (    ON::dtDimDiameter == ann_type
-              || ON::dtDimRadius == ann_type
-              || ON::dtLeader == ann_type
-              || ON::dtDimOrdinate == ann_type)
-    {
-      ON_2dPoint E(0.0,0.0); // end point
-      ON_2dVector R(1.0,0.0); // unit vector from penultimate point to end point
-      GetLeaderEndAndDirection( this, E, R );
+  //    case 2: // ON::dtDimDiameter, ON::dtDimRadius, ON::dtLeader
+  //      flip.m_xform[1][1] = -1.0;
+  //      flip.m_xform[1][3] = gdi_text_rect.top + gdi_text_rect.bottom;
+  //      break;
+  //    }
+  //    gdi_to_plane = gdi_to_plane*flip;
+  //  }
+  //}
 
-      text_centering_rotation = R;
+  //// text_centering_rotation rotates about the "center".  Angular,
+  //// radial, and leader dimensions use this rotation.
+  //ON_2dVector text_centering_rotation(1.0,0.0);
 
-      text_centering_translation = (dimstyle_textgap + 0.5*text_line_width)*text_centering_rotation;
+  //// text_centering_translation is a small translation deals with
+  //// text that is above or to the right of the "center" point.  
+  //// It is no larger than dimstyle_gap + 1/2 the size of the
+  //// text's bounding box.
+  //ON_2dVector text_centering_translation(0.0,0.0);
 
-      ON_3dVector V = text_centering_rotation.x*m_plane.xaxis + text_centering_rotation.y*m_plane.yaxis;
-      x = V*cameraX;
-      y = V*cameraY;
-      if ( fabs(x) <= ON_SQRT_EPSILON && fabs(y) > ON_SQRT_EPSILON )
-      {
-        x = y;
-      }
-      if ( x < 0.0 )
-      {
-        text_centering_rotation.Reverse(); // rotate 180 degrees
-      }
-    }
-  }
+  //double x, y;
 
-  ON_Xform text_centering_xform(1.0);
-  text_centering_xform.m_xform[0][0] =  text_centering_rotation.x;
-  text_centering_xform.m_xform[0][1] = -text_centering_rotation.y;
-  text_centering_xform.m_xform[1][0] =  text_centering_rotation.y;
-  text_centering_xform.m_xform[1][1] =  text_centering_rotation.x;
-  // Since the translation happens after the rotation about (0,0),
-  // we can just tack it on here.
-  text_centering_xform.m_xform[0][3] =  text_centering_translation.x;
-  text_centering_xform.m_xform[1][3] =  text_centering_translation.y;
+  //if ( ON::dtHorizontal != dimstyle_textalignment )
+  //{
+  //  if ( ON::dtDimLinear  == ann_type || ON::dtDimAligned == ann_type )
+  //  {
+  //    if ( ON::dtAboveLine == dimstyle_textalignment )
+  //    {
+  //      text_centering_translation.y =  0.5*textheight+dimstyle_textgap;
+  //    }
+  //    y =  ann->m_plane.yaxis*cameraY;
+  //    x = -ann->m_plane.yaxis*cameraX;
+  //    if ( fabs(y) <= ON_SQRT_EPSILON && fabs(x) > ON_SQRT_EPSILON )
+  //    {
+  //      y = x;
+  //    }
+  //    if ( y < 0.0 )
+  //    {
+  //      text_centering_translation.Reverse();
+  //      text_centering_rotation.Reverse(); // rotate 180 degrees
+  //    }
+  //  }
+  //  else if ( ON::dtDimAngular == ann_type )
+  //  {
+  //    // This transform rotates the text in the annotation plane.
+  //    const ON_AngularDimension2* angular_dim = ON_AngularDimension2::Cast(ann);
+  //    if ( 0 != angular_dim )
+  //    {
+  //      double a = 0.5*angular_dim->m_angle;
+  //      ON_2dVector R(cos(a),sin(a));
+  //      a -= 0.5*ON_PI;
+  //      text_centering_rotation.x = cos(a);
+  //      text_centering_rotation.y = sin(a);
+  //      ON_3dVector V = R.x*m_plane.xaxis + R.y*m_plane.yaxis;
+  //      x = V*cameraX;
+  //      y = V*cameraY;
+  //      if ( fabs(y) <= ON_SQRT_EPSILON && fabs(x) > ON_SQRT_EPSILON )
+  //      {
+  //        y = -x;
+  //      }
+  //      if ( y < 0.0 )
+  //      {
+  //        text_centering_rotation.Reverse(); // add another 180 degrees of rotation
+  //      }
 
-  // This transform translates the text in the annotation plane
-  // It can be a large translation
-  ON_2dVector text_offset_translation(0.0,0.0); // CRhinoText::Offset() = text->Offset()
-  switch( ann_type )
-  {
-  case ON::dtDimLinear:
-  case ON::dtDimAligned:
-    if ( m_points.Count() >= ON_LinearDimension2::dim_pt_count )
-    {
-      const ON_LinearDimension2* linear_dim = ON_LinearDimension2::Cast(ann);
-      if ( linear_dim )
-      {
-        text_offset_translation = linear_dim->Dim2dPoint(ON_LinearDimension2::text_pivot_pt);
-      }
-    }
-    break;
+  //      if ( ON::dtAboveLine == dimstyle_textalignment )
+  //      {
+  //        y = 0.5*textheight + dimstyle_textgap;
+  //        text_centering_translation.x = -y*text_centering_rotation.y;
+  //        text_centering_translation.y =  y*text_centering_rotation.x;
+  //      }
+  //    }
+  //  }
+  //  else if (    ON::dtDimDiameter == ann_type 
+  //            || ON::dtDimRadius == ann_type 
+  //            || ON::dtLeader == ann_type 
+  //            || ON::dtDimOrdinate == ann_type)
+  //  {
+  //    ON_2dPoint E(0.0,0.0); // end point
+  //    ON_2dVector R(1.0,0.0); // unit vector from penultimate point to end point
+  //    GetLeaderEndAndDirection( this, E, R );
 
-  case ON::dtDimAngular:
-    if ( m_points.Count() >= ON_AngularDimension2::dim_pt_count )
-    {
-      const ON_AngularDimension2* angular_dim = ON_AngularDimension2::Cast(ann);
-      if ( angular_dim )
-      {
-        text_offset_translation = angular_dim->Dim2dPoint(ON_AngularDimension2::text_pivot_pt);
-      }
-    }
-    break;
+  //    text_centering_rotation = R;
 
-  case ON::dtDimDiameter:
-  case ON::dtDimRadius:
-    if ( m_points.Count() >= ON_RadialDimension2::dim_pt_count )
-    {
-      // No user positioned text on radial dimensions.
-      text_offset_translation = m_points[ON_RadialDimension2::tail_pt_index];
-    }
-    break;
+  //    text_centering_translation = (dimstyle_textgap + 0.5*text_line_width)*text_centering_rotation;
 
-  case ON::dtLeader:
-    if ( m_points.Count() > 0 )
-    {
-      // No user positioned text on leaders.
-      text_offset_translation = *m_points.Last();
-    }
-    break;
+  //    ON_3dVector V = text_centering_rotation.x*m_plane.xaxis + text_centering_rotation.y*m_plane.yaxis;
+  //    x = V*cameraX;
+  //    y = V*cameraY;
+  //    if ( fabs(x) <= ON_SQRT_EPSILON && fabs(y) > ON_SQRT_EPSILON )
+  //    {
+  //      x = y;
+  //    }
+  //    if ( x < 0.0 )
+  //    {
+  //      text_centering_rotation.Reverse(); // rotate 180 degrees
+  //    }
+  //  }
+  //}
 
-  case ON::dtDimOrdinate:
-    if ( m_points.Count() == 2 )
-    {
-      // No user positioned text on leaders.
-      text_offset_translation = m_points[1];
-    }
-    break;
+  //ON_Xform text_centering_xform(1.0);
+  //text_centering_xform.m_xform[0][0] =  text_centering_rotation.x;
+  //text_centering_xform.m_xform[0][1] = -text_centering_rotation.y;
+  //text_centering_xform.m_xform[1][0] =  text_centering_rotation.y;
+  //text_centering_xform.m_xform[1][1] =  text_centering_rotation.x;
+  //// Since the translation happens after the rotation about (0,0),
+  //// we can just tack it on here.
+  //text_centering_xform.m_xform[0][3] =  text_centering_translation.x;
+  //text_centering_xform.m_xform[1][3] =  text_centering_translation.y;
 
-  case ON::dtTextBlock:
-  case ON::dtNothing:
-    break;
-  }
+  //// This transform translates the text in the annotation plane
+  //// It can be a large translation
+  //ON_2dVector text_offset_translation(0.0,0.0); // CRhinoText::Offset() = text->Offset()
+  //switch( ann_type )
+  //{
+  //case ON::dtDimLinear:
+  //case ON::dtDimAligned:
+  //  if ( m_points.Count() >= ON_LinearDimension2::dim_pt_count )
+  //  {
+  //    const ON_LinearDimension2* linear_dim = ON_LinearDimension2::Cast(ann);
+  //    if ( linear_dim )
+  //    {
+  //      text_offset_translation = linear_dim->Dim2dPoint(ON_LinearDimension2::text_pivot_pt);
+  //    }
+  //  }
+  //  break;
 
-  ON_Xform plane_translation(1.0);
-  plane_translation.m_xform[0][3] = text_offset_translation.x;
-  plane_translation.m_xform[1][3] = text_offset_translation.y;
+  //case ON::dtDimAngular:
+  //  if ( m_points.Count() >= ON_AngularDimension2::dim_pt_count )
+  //  {
+  //    const ON_AngularDimension2* angular_dim = ON_AngularDimension2::Cast(ann);
+  //    if ( angular_dim )
+  //    {
+  //      text_offset_translation = angular_dim->Dim2dPoint(ON_AngularDimension2::text_pivot_pt);
+  //    }
+  //  }
+  //  break;
 
-  // this transform maps a point in the annotation plane to world coordinates
-  ON_Xform plane_to_world(1.0);
-  plane_to_world.Rotation(ON_xy_plane,ann->m_plane);
+  //case ON::dtDimDiameter:
+  //case ON::dtDimRadius:
+  //  if ( m_points.Count() >= ON_RadialDimension2::dim_pt_count )
+  //  {
+  //    // No user positioned text on radial dimensions.
+  //    text_offset_translation = m_points[ON_RadialDimension2::tail_pt_index];
+  //  }
+  //  break;
 
-  ON_Xform horizonal_xform(1.0);
-  if ( ON::dtHorizontal == dimstyle_textalignment )
-  {
-    ON_3dPoint fixed_point = ann->m_plane.PointAt(text_offset_translation.x,text_offset_translation.y);
-    horizonal_xform.Rotation(
-        fixed_point,
-        ann->m_plane.xaxis,
-        ann->m_plane.yaxis,
-        ann->m_plane.zaxis,
-        fixed_point,
-        cameraX,
-        cameraY,
-        cameraZ
-        );
+  //case ON::dtLeader:
+  //  if ( m_points.Count() > 0 )
+  //  {
+  //    // No user positioned text on leaders.
+  //    text_offset_translation = *m_points.Last();
+  //  }
+  //  break;
 
-    if ( 2 == position_style )
-    {
-      // leaders, radial, and diameter
-      ON_2dPoint E(0.0,0.0); // end point
-      ON_2dVector R(1.0,0.0); // unit vector from penultimate point to end point
-      GetLeaderEndAndDirection( this, E, R );
-      ON_3dVector V = R.x*m_plane.xaxis + R.y*m_plane.yaxis;
-      x = V*cameraX;
-      y = ( x > -ON_SQRT_EPSILON )
-        ? dimstyle_textgap
-        : -(dimstyle_textgap + text_line_width);
-      V = y*cameraX;
-      horizonal_xform.m_xform[0][3] += V.x;
-      horizonal_xform.m_xform[1][3] += V.y;
-      horizonal_xform.m_xform[2][3] += V.z;
-    }
-  }
+  //case ON::dtDimOrdinate:
+  //  if ( m_points.Count() == 2 )
+  //  {
+  //    // No user positioned text on leaders.
+  //    text_offset_translation = m_points[1];
+  //  }
+  //  break;
 
-  ON_Xform gdi_to_world;
-  gdi_to_world = horizonal_xform
-                * plane_to_world
-                * plane_translation
-                * text_centering_xform
-                * gdi_to_plane;
+  //case ON::dtTextBlock:
+  //case ON::dtNothing:
+  //  break;
+  //}
 
-  xform = gdi_to_world;
+  //ON_Xform plane_translation(1.0);
+  //plane_translation.m_xform[0][3] = text_offset_translation.x;
+  //plane_translation.m_xform[1][3] = text_offset_translation.y;
 
-  return true;
+  //// this transform maps a point in the annotation plane to world coordinates
+  //ON_Xform plane_to_world(1.0);
+  //plane_to_world.Rotation(ON_xy_plane,ann->m_plane);
+
+  //ON_Xform horizonal_xform(1.0);
+  //if ( ON::dtHorizontal == dimstyle_textalignment )
+  //{
+  //  ON_3dPoint fixed_point = ann->m_plane.PointAt(text_offset_translation.x,text_offset_translation.y);
+  //  horizonal_xform.Rotation( 
+  //      fixed_point,
+  //      ann->m_plane.xaxis,
+  //      ann->m_plane.yaxis,
+  //      ann->m_plane.zaxis,
+  //      fixed_point,
+  //      cameraX,
+  //      cameraY,
+  //      cameraZ
+  //      );
+
+  //  if ( 2 == position_style )
+  //  {
+  //    // leaders, radial, and diameter
+  //    ON_2dPoint E(0.0,0.0); // end point
+  //    ON_2dVector R(1.0,0.0); // unit vector from penultimate point to end point
+  //    GetLeaderEndAndDirection( this, E, R );
+  //    ON_3dVector V = R.x*m_plane.xaxis + R.y*m_plane.yaxis;
+  //    x = V*cameraX;
+  //    y = ( x > -ON_SQRT_EPSILON )
+  //      ? dimstyle_textgap
+  //      : -(dimstyle_textgap + text_line_width);
+  //    V = y*cameraX;
+  //    horizonal_xform.m_xform[0][3] += V.x;
+  //    horizonal_xform.m_xform[1][3] += V.y;
+  //    horizonal_xform.m_xform[2][3] += V.z;
+  //  }
+  //}
+
+  //ON_Xform gdi_to_world;
+  //gdi_to_world = horizonal_xform
+  //              * plane_to_world
+  //              * plane_translation
+  //              * text_centering_xform
+  //              * gdi_to_plane;
+
+  //xform = gdi_to_world;
+
+  //return true;
 }
 
-// New function added Oct 30, 07 - LW
+//static bool do_plane_translation = true;
+//static bool do_text_centering_xform = true;
+//static bool do_text_centering_rotation = true;
+//static bool do_text_centering_translation = true;
+//static bool do_mirror_flip = true;
+//static bool do_flip_x = true;
+//static bool do_flip_y = true;
+
+// New function added Oct 30, 07 - LW 
 // To use model xform to draw annotation in blocks correctly
-bool ON_Annotation2::GetTextXform(
+bool ON_Annotation2::GetTextXform( 
       ON_RECT gdi_text_rect,
       int gdi_height_of_I,
       double dimstyle_textheight,
@@ -6085,9 +6422,8 @@ bool ON_Annotation2::GetTextXform(
     return true;
   }
 
-
   // text_position_mode
-  //   1 = linear, aligned, or anglular dimension
+  //   1 = linear, aligned, or angular dimension
   //       (dimension definition determines center point of text box)
   //   2 = radial, diameter, leader
   //       (dimension definition determined end point of text box)
@@ -6102,6 +6438,12 @@ bool ON_Annotation2::GetTextXform(
     break;
 
   case ON::dtLeader:
+    if(ON::dtHorizontal == dimstyle_textalignment)
+      position_style = 1;
+    else
+      position_style = 2;
+    break;
+
   case ON::dtDimRadius:
   case ON::dtDimDiameter:
   case ON::dtDimOrdinate:
@@ -6114,12 +6456,14 @@ bool ON_Annotation2::GetTextXform(
     break;
   }
 
-
   // This translation puts the center of the fist line of text at
   // (0,0) in the annotation's plane.
   if ( ON::dtHorizontal != dimstyle_textalignment || 1 == position_style )
   {
-    gdi_to_plane.m_xform[0][3] = -0.5*text_line_width;
+    if((m_justification & tjRight) == tjRight)
+      gdi_to_plane.m_xform[0][3] = 0.5*text_line_width;
+    else
+      gdi_to_plane.m_xform[0][3] = -0.5*text_line_width;
   }
   gdi_to_plane.m_xform[1][3] = -0.5*textheight;
 
@@ -6137,8 +6481,8 @@ bool ON_Annotation2::GetTextXform(
         break;
 
       case 2: // ON::dtDimDiameter, ON::dtDimRadius, ON::dtLeader
-        flip.m_xform[1][1] = -1.0;
-        flip.m_xform[1][3] = gdi_text_rect.top + gdi_text_rect.bottom;
+            //flip.m_xform[1][1] = -1.0;
+            //flip.m_xform[1][3] = -(gdi_text_rect.top + gdi_text_rect.bottom);
         break;
       }
       gdi_to_plane = gdi_to_plane*flip;
@@ -6154,7 +6498,7 @@ bool ON_Annotation2::GetTextXform(
   // It is no larger than dimstyle_gap + 1/2 the size of the
   // text's bounding box.
   ON_2dVector text_centering_translation(0.0,0.0);
-
+  bool text_y_flip = false;
   double x, y;
 
   if ( ON::dtHorizontal != dimstyle_textalignment )
@@ -6229,23 +6573,38 @@ bool ON_Annotation2::GetTextXform(
         x = y;
       }
       if ( x < 0.0 )
-      {
         text_centering_rotation.Reverse(); // rotate 180 degrees
-      }
+
+      if(cameraZ * m_plane.zaxis < 0.0)
+        text_y_flip = true;
     }
+  }
+  else if(ann_type == ON::dtLeader)
+  {
+    if((m_justification & tjRight) == tjRight)
+      text_centering_translation.Set(-(dimstyle_textgap + 0.5*text_line_width), 0.0);
+    else if((m_justification & tjLeft) == tjLeft)
+      text_centering_translation.Set(dimstyle_textgap + 0.5*text_line_width, 0.0);
+
   }
 
   ON_Xform text_centering_xform(1.0);
   text_centering_xform.m_xform[0][0] =  text_centering_rotation.x;
   text_centering_xform.m_xform[0][1] = -text_centering_rotation.y;
   text_centering_xform.m_xform[1][0] =  text_centering_rotation.y;
-  text_centering_xform.m_xform[1][1] =  text_centering_rotation.x;
+
+  if(text_y_flip)
+    text_centering_xform.m_xform[1][1] =  -text_centering_rotation.x;
+  else
+    text_centering_xform.m_xform[1][1] =  text_centering_rotation.x;
+
   // Since the translation happens after the rotation about (0,0),
   // we can just tack it on here.
   text_centering_xform.m_xform[0][3] =  text_centering_translation.x;
   text_centering_xform.m_xform[1][3] =  text_centering_translation.y;
 
   // This transform translates the text in the annotation plane
+  // from the plane origin to the final location of the annotation text
   // It can be a large translation
   ON_2dVector text_offset_translation(0.0,0.0); // CRhinoText::Offset() = text->Offset()
   switch( ann_type )
@@ -6345,17 +6704,17 @@ bool ON_Annotation2::GetTextXform(
   }
 
   ON_Xform gdi_to_world;
+
   gdi_to_world = horizonal_xform
-                * plane_to_world
-                * plane_translation
-                * text_centering_xform
-                * gdi_to_plane;
+               * plane_to_world
+               * plane_translation
+               * text_centering_xform
+               * gdi_to_plane;
 
   xform = gdi_to_world;
 
   return true;
 }
-
 
 bool ON_Annotation2::GetTextPoint( ON_2dPoint& text_2d_point ) const
 {
@@ -6434,4 +6793,100 @@ bool ON_Annotation2::GetTextPoint( ON_2dPoint& text_2d_point ) const
 }
 
 
+////////////////////////////////////////////////////////////
+//
+// do not copy or export this class definition.
+//
+class /*NEVER PUT THIS CLASS IN THE SDK*/ ON_AnnotationTextFormula : public ON_UserData
+{
+#if !defined(BOZO_VACCINE_699FCC4262D4488c9109F1B7A37CE926)
+#error Never copy this class definition or put this definition in a header file!
+#endif
+  ON_OBJECT_DECLARE(ON_AnnotationTextFormula);
+public:
+  ON_AnnotationTextFormula();
+  ~ON_AnnotationTextFormula();
+  // NO! - do not add IO support to this userdata! // ON_BOOL32 Write(ON_BinaryArchive&) const;
+  // NO! - do not add IO support to this userdata! // ON_BOOL32 Read(ON_BinaryArchive&);
+  ON_BOOL32 GetDescription(ON_wString&);
+  // NO! - do not add IO support to this userdata! // ON_BOOL32 Archive() const; 
+  static ON_AnnotationTextFormula* Get(const ON_Annotation2*);
+  static void Set(ON_Annotation2*,const wchar_t* text_formula);
+
+  ON_wString m_text_formula;
+};
+
+#undef BOZO_VACCINE_699FCC4262D4488c9109F1B7A37CE926
+
+ON_OBJECT_IMPLEMENT(ON_AnnotationTextFormula,ON_UserData,"699FCC42-62D4-488c-9109-F1B7A37CE926");
+
+ON_AnnotationTextFormula::~ON_AnnotationTextFormula()
+{}
+
+ON_AnnotationTextFormula::ON_AnnotationTextFormula()
+{
+  m_userdata_uuid = ON_AnnotationTextFormula::m_ON_AnnotationTextFormula_class_id.Uuid();
+  m_application_uuid = ON_opennurbs5_id;
+  m_userdata_copycount = 1;
+}
+
+ON_BOOL32 ON_AnnotationTextFormula::GetDescription( ON_wString& description )
+{
+  description = "Annotation Text Formula";
+  return true;
+}
+
+ON_AnnotationTextFormula* ON_AnnotationTextFormula::Get(const ON_Annotation2* p)
+{
+  return (0 != p)
+         ? ON_AnnotationTextFormula::Cast(p->GetUserData(ON_AnnotationTextFormula::m_ON_AnnotationTextFormula_class_id.Uuid()))
+         : 0;
+}
+
+void ON_AnnotationTextFormula::Set(ON_Annotation2* p,const wchar_t* text_formula)
+{
+  if ( 0 != p )
+  {
+    ON_AnnotationTextFormula* tf = Get(p);
+    if ( 0 == text_formula || 0 == text_formula[0] )
+    {
+      if (0 != tf )
+        delete tf; 
+    }
+    else
+    {
+      if ( 0 == tf )
+      {
+        tf = new ON_AnnotationTextFormula();
+        p->AttachUserData(tf);
+      }
+      tf->m_text_formula = text_formula;
+    }
+  }
+}
+//
+// do not copy or export this class definition.
+//
+////////////////////////////////////////////////////////////
+
+void ON_Annotation2::SetTextValue( const wchar_t* text_value )
+{
+  m_usertext = text_value; 
+}
+
+const wchar_t* ON_Annotation2::TextValue() const
+{
+  return ((const wchar_t*)m_usertext);
+}
+
+void ON_Annotation2::SetTextFormula( const wchar_t* text_formula )
+{
+  ON_AnnotationTextFormula::Set(this,text_formula);
+}
+
+const wchar_t* ON_Annotation2::TextFormula() const
+{
+  const ON_AnnotationTextFormula* tf = ON_AnnotationTextFormula::Get(this);
+  return (0 != tf) ? ((const wchar_t*)tf->m_text_formula) : 0;
+}
 

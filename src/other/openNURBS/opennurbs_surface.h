@@ -1,8 +1,9 @@
 /* $NoKeywords: $ */
 /*
 //
-// Copyright (c) 1993-2007 Robert McNeel & Associates. All rights reserved.
-// Rhinoceros is a registered trademark of Robert McNeel & Assoicates.
+// Copyright (c) 1993-2012 Robert McNeel & Associates. All rights reserved.
+// OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
+// McNeel & Associates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
@@ -25,22 +26,6 @@
 class ON_Curve;
 class ON_NurbsSurface;
 class ON_SurfaceTree;
-
-/* $Header$ */
-/* $NoKeywords: $ */
-/*
-//
-// Copyright (c) 1993-2001 Robert McNeel & Associates. All rights reserved.
-// Rhinoceros is a registered trademark of Robert McNeel & Assoicates.
-//
-// THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
-// ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
-// MERCHANTABILITY ARE HEREBY DISCLAIMED.
-//				
-// For complete openNURBS copyright information see <http://www.opennurbs.org>.
-//
-////////////////////////////////////////////////////////////////
-*/
 
 ////////////////////////////////////////////////////////////////
 //
@@ -156,27 +141,6 @@ public:
 
   ////////////////////////////////////////////////////////////////////
   // surface interface
-
-  /*
-  Description:
-    Computes a polygon mesh approximation of the surface.    
-  Parameters:
-    mp - [in] meshing parameters
-    mesh - [in] if not NULL, the surface mesh will be put
-                into this mesh.
-  Returns:
-    A polygon mesh of the surface.
-  Remarks:
-    This virtual function works in the openNURBS that is
-    part of the Rhino SDK.  The source code for this 
-    functionallity is not provided in the free openNURBS
-    toolkit.
-  */
-  virtual
-  ON_Mesh* CreateMesh( 
-             const ON_MeshParameters& mp,
-             ON_Mesh* mesh = NULL
-             ) const;
 
   ON_BOOL32 GetDomain( 
          int dir,              // 0 gets first parameter, 1 gets second parameter
@@ -505,7 +469,7 @@ public:
                   double* t,
                   int* hint=NULL,
                   int* dtype=NULL,
-                  double cos_angle_tolerance=0.99984769515639123915701155881391,
+                  double cos_angle_tolerance=ON_DEFAULT_ANGLE_TOLERANCE_COSINE,
                   double curvature_tolerance=ON_SQRT_EPSILON
                   ) const;
 
@@ -543,7 +507,7 @@ public:
     double point_tolerance=ON_ZERO_TOLERANCE,
     double d1_tolerance=ON_ZERO_TOLERANCE,
     double d2_tolerance=ON_ZERO_TOLERANCE,
-    double cos_angle_tolerance=0.99984769515639123915701155881391,
+    double cos_angle_tolerance=ON_DEFAULT_ANGLE_TOLERANCE_COSINE,
     double curvature_tolerance=ON_SQRT_EPSILON
     ) const;
 
@@ -692,6 +656,7 @@ public:
          double c
          ) const;
 
+
   /*
   Description:
     Compute a 3d curve that is the composite of a 2d curve
@@ -713,30 +678,6 @@ public:
                     const ON_Interval* curve_2d_subdomain = NULL
                     ) const;
 
-  /*
-  Description:
-    Pull a 3d curve back to the surface's parameter space.
-  Parameters:
-    curve_3d - [in] a 3d curve
-    tolerance - [in] the maximum acceptable 3d distance between
-       from surface(curve_2d(t)) to the locus of points on the
-       surface that are closest to curve_3d.
-    curve_3d_subdomain - [in] optional subdomain for curve_3d
-    start_uv - [in] optional starting point (if known)
-    end_uv - [in] optional ending point (if known)
-  Returns:
-    2d curve.
-  See Also:
-    ON_Surface::IsoCurve
-    ON_Surface::Pushup
-  */
-  virtual
-  ON_Curve* Pullback( const ON_Curve& curve_3d,
-                    double tolerance,
-                    const ON_Interval* curve_3d_subdomain = NULL,
-                    ON_3dPoint start_uv = ON_UNSET_POINT,
-                    ON_3dPoint end_uv = ON_UNSET_POINT
-                    ) const;
 
   /*
   Description:
@@ -818,43 +759,9 @@ public:
          ON_Surface*& east_or_north_side
          ) const;
 
-  /*
-  Description:
-    Get the parameters of the point on the surface that is closest to P.
-  Parameters:
-    P - [in] 
-            test point
-    s - [out]
-    t - [out] 
-            (*s,*t) = parameters of the surface point that 
-            is closest to P.
-    maximum_distance = 0.0 - [in] 
-            optional upper bound on the distance from P to 
-            the surface.  If you are only interested in 
-            finding a point Q on the surface when 
-            P.DistanceTo(Q) < maximum_distance, then set
-            maximum_distance to that value.
-    sdomain = 0 - [in] optional domain restriction
-    tdomain = 0 - [in] optional domain restriction
-  Returns:
-    True if successful.  If false, the values of *s and *t
-    are undefined.
-  See Also:
-    ON_Surface::GetLocalClosestPoint.
-  */
-  virtual
-  bool GetClosestPoint( 
-          const ON_3dPoint& P,
-          double* s,
-          double* t,
-          double maximum_distance = 0.0,
-          const ON_Interval* sdomain = 0,
-          const ON_Interval* tdomain = 0
-          ) const;
-
   //////////
-  // Find parameters of the point on a surface that is locally closest to 
-  // the test_point.  The search for a local close point starts at 
+  // Find parameters of the point on a surface that is locally closest to
+  // the test_point.  The search for a local close point starts at
   // seed parameters. If a sub_domain parameter is not NULL, then
   // the search is restricted to the specified portion of the surface.
   //
@@ -867,30 +774,6 @@ public:
           const ON_Interval* = NULL, // first parameter sub_domain
           const ON_Interval* = NULL  // second parameter sub_domain
           ) const;
-
-
-  /*
-  Description:
-    Offset surface.
-  Parameters:
-    offset_distance - [in] offset distance
-    tolerance - [in] Some surfaces do not have an exact offset that
-      can be represented using the same class of surface definition.
-      In that case, the tolerance specifies the desired accuracy.
-    max_deviation - [out] If this parameter is not NULL, the maximum
-      deviation from the returned offset to the true offset is returned
-      here.  This deviation is zero except for cases where an exact
-      offset cannot be computed using the same class of surface definition.
-  Returns:
-    Offset surface.
-  */
-  virtual
-  ON_Surface* Offset(
-        double offset_distance, 
-        double tolerance, 
-        double* max_deviation = NULL
-        ) const;
-
 
   /*
   Description:
@@ -1001,8 +884,6 @@ public:
   // call DestroySurfaceTree().
   void DestroySurfaceTree();
 
-  const ON_SurfaceTree* SurfaceTree() const;
-
   virtual
   ON_SurfaceTree* CreateSurfaceTree() const;
 
@@ -1010,7 +891,7 @@ public:
   Description:
     Calculate area mass properties of the surface.
   Parameters:
-    mp - [out] 
+    mp - [out]
     bArea - [in] true to calculate area
     bFirstMoments - [in] true to calculate area first moments,
                          area and area centroid.
@@ -1033,13 +914,13 @@ public:
   Description:
     Calculate volume mass properties of the surface.
   Parameters:
-    mp - [out] 
+    mp - [out]
     bVolume - [in] true to calculate volume
     bFirstMoments - [in] true to calculate volume first moments,
                          volume, and volume centroid.
     bSecondMoments - [in] true to calculate volume second moments.
     bProductMoments - [in] true to calculate volume product moments.
-    base_point - [in] 
+    base_point - [in]
       If the surface is closed, then pass ON_UNSET_VALUE.
 
       This parameter is for expert users who are computing a
@@ -1047,25 +928,25 @@ public:
       breps, surfaces, and meshes.
 
       When computing the volume, volume centroid, or volume
-      first moments of a volume whose boundary is defined by 
-      several breps, surfaces, and meshes, pass the same 
-      base_point to each call to VolumeMassProperties.  
+      first moments of a volume whose boundary is defined by
+      several breps, surfaces, and meshes, pass the same
+      base_point to each call to VolumeMassProperties.
 
       When computing the volume second moments or volume product
       moments of a volume whose boundary is defined by several
-      breps, surfaces, and meshes, you MUST pass the entire 
-      volume's centroid as the base_point and the input mp 
+      breps, surfaces, and meshes, you MUST pass the entire
+      volume's centroid as the base_point and the input mp
       parameter must contain the results of a previous call
       to VolumeMassProperties(mp,true,true,false,false,base_point).
       In particular, in this case, you need to make two sets of
       calls; use first set to calculate the volume centroid and
-      the second set calculate the second moments and product 
+      the second set calculate the second moments and product
       moments.
   Returns:
     True if successful.
   */
   bool VolumeMassProperties(
-    ON_MassProperties& mp, 
+    ON_MassProperties& mp,
     bool bVolume = true,
     bool bFirstMoments = true,
     bool bSecondMoments = true,
@@ -1089,13 +970,13 @@ public:
       If the input intersection_tolerance <= 0.0, then 0.001 is used.
 
     overlap_tolerance - [in]
-      If positive, then overlap_tolerance must be 
-      >= intersection_tolerance and is used to test for 
-      overlapping regions. If the input 
-      overlap_tolerance <= 0.0, then 2*intersection_tolerance 
+      If positive, then overlap_tolerance must be
+      >= intersection_tolerance and is used to test for
+      overlapping regions. If the input
+      overlap_tolerance <= 0.0, then 2*intersection_tolerance
       is used.
 
-    fitting_tolerance - [in] 
+    fitting_tolerance - [in]
       If fitting_tolerance is > 0 and >= intersection_tolerance,
       then the intersection curves are fit to this tolerance.
       If input fitting_tolerance <= 0.0 or < intersection_tolerance,
@@ -1103,17 +984,17 @@ public:
 
     surfaceA_udomain - [in]
       optional restriction on surfaceA u domain
-    surfaceA_vdomain - [in] 
+    surfaceA_vdomain - [in]
       optional restriction on surfaceA v domain
 
     surfaceB_udomain - [in]
       optional restriction on surfaceB u domain
-    surfaceB_vdomain - [in] 
+    surfaceB_vdomain - [in]
       optional restriction on surfaceB v domain
   Returns:
-    Number of intersection events appended to x.
+     Number of intersection events appended to x.
   */
-  int IntersectSurface( 
+  int IntersectSurface(
           const ON_Surface* surfaceB,
           ON_ClassArray<ON_SSX_EVENT>& x,
           double intersection_tolerance = 0.0,
@@ -1127,10 +1008,10 @@ public:
 
   /*
   Description:
-    Create a cubic nurbs surface that interpolates a list of curves.    
+    Create a cubic nurbs surface that interpolates a list of curves.
 
   Parameters:
-    curve_count - [in]  >= 2 
+    curve_count - [in]  >= 2
       number of curves
 
     curve_list - [in]
@@ -1148,7 +1029,7 @@ public:
         ON_UNSET_VALUE: the intepolation knot vector is explicity specified.
           The knots in the interpolated direction are specified.  You must
           understand the mathematics of NURBS surfaces to use this option.
-          To specify an explicit knot vector for the interpolation, the 
+          To specify an explicit knot vector for the interpolation, the
           nurbs_suface parameter must be non-null, and nurbs_surface->m_knot[0]
           must be an array of length 4+curve_count, and
           (nurbs_surface->m_knot[0][2], ..., nurbs_surface->m_knot[0][curve_count+1])
@@ -1177,10 +1058,10 @@ public:
         parameter must be non-null, the nurbs_surface control
         points must be allocated, nurbs_surface->m_cv_count[0]
         must be curve_count+2, and the input curves must have nurbs
-        curve formats with the same number of control points as 
-        nurbs_surface->m_cv_count[1]. The values of the starting 
+        curve formats with the same number of control points as
+        nurbs_surface->m_cv_count[1]. The values of the starting
         shape points are specified in nurbs_surface->CV(1,...) and
-        the values of ending shape points are specified in 
+        the values of ending shape points are specified in
         nurbs_surface->CV(curve_count,...).
         N = curve_count
           ON::cubic_loft_ec_unit_tangent: unit tangent is specified
@@ -1203,7 +1084,7 @@ public:
     null.
 
   Example:
-    
+
     // EXAMPLE 1: Loft a surface through a list of curves
       ON_SimpleArray< const ON_Curve* > curve_list = ....;
       ON_NurbsSurface* srf = ON_Surface::CreateCubicLoft(
@@ -1211,14 +1092,14 @@ public:
                      curve_list,
                      0.5 // sqrt(chord length) spacing
                      );
-    
+
     // EXAMPLE 2: Create adjacent surfaces with an identical shared edge.
-      // First make two curve lists with 
+      // First make two curve lists with
       // curve_listA.Count() == curve_listB.Count() and
       // curve_listA[i]->PointAtEnd() == curve_listB[i]->PointAtStart()
       ON_SimpleArray< const ON_Curve* > curve_listA = ....;
       ON_SimpleArray< const ON_Curve* > curve_listB = ....;
-      curve_count = curve_listA.Count(); 
+      curve_count = curve_listA.Count();
       ON_NurbsSurface* srfA = 0;
       ON_NurbsSurface* srfB = 0;
       if ( curve_count == curve_listB.Count() )
@@ -1243,7 +1124,7 @@ public:
                          ON::cubic_loft_ec_quadratic,
                          srfB
                          ) )
-         {
+            {
            // clean up to prevent memory leaks
            delete srfB;
            srfB = 0;
@@ -1251,7 +1132,7 @@ public:
        }
      }
   */
-  static 
+  static
   class ON_NurbsSurface* CreateCubicLoft(
     int curve_count,
     const ON_Curve* const* curve_list,
@@ -1261,46 +1142,50 @@ public:
     ON::cubic_loft_end_condition end_shape   = ON::cubic_loft_ec_quadratic,
     class ON_NurbsSurface* nurbs_surface = 0
     );
-
-protected:
-  // Runtime only - ignored by Read()/Write()
-  ON_SurfaceTree* m_stree;
-
-protected:
-  // Helper for ON_Surface::Pullback overrides that does a segment-by-segment
-  // pullback.
-  ON_Curve* PullbackPolyCurve( 
-                  const ON_PolyCurve& polycurve_3d,
-                  double tolerance,
-                  const ON_Interval* curve_3d_subdomain,
-                  ON_3dPoint start_uv,
-                  ON_3dPoint end_uv
-                  ) const;
-
-  // Helper for ON_Surface::Pushup overrides that does a segment-by-segment
-  // pushup.
-  ON_Curve* PushupPolyCurve( const ON_PolyCurve& polycurve_2d,
-                    double tolerance,
-                    const ON_Interval* curve_2d_subdomain
-                    ) const;
-
-
-  // Helper for ON_Surface::Pullback overrides that handles "real" curve issues.
-  ON_Curve* PullbackCurveProxy( 
-                  const ON_CurveProxy& curveproxy_3d,
-                  double tolerance,
-                  const ON_Interval* curve_3d_subdomain,
-                  ON_3dPoint start_uv,
-                  ON_3dPoint end_uv
-                  ) const;
-
-  // Helper for ON_Surface::Pushup overrides that handles "real" curve issues.
-  ON_Curve* PushupCurveProxy( const ON_CurveProxy& curveproxy_2d,
-                    double tolerance,
-                    const ON_Interval* curve_2d_subdomain
-                    ) const;
 };
 
+class ON_CLASS ON_SurfaceProperties
+{
+  // Surface properties
+public:
+  // The constructor sets all fields to zero.
+  ON_SurfaceProperties();
+
+  /*
+  Parameters:
+    surface - [in]
+      If surface is not null, then it is used to set the surface properties.
+      If surface is null, then all surface properties are set to to zero.
+  Remarks:
+    Does not modify the value of m_tag.
+  */
+  void Set( const ON_Surface* surface );
+
+  bool m_bIsSet;           // True if Set() has been callled with a non-null surface.
+
+  bool m_bHasSingularity;  // true if at least one m_bSingular[] setting is true.
+  bool m_bIsSingular[4];   // m_bSingular[i] = ON_Surface::IsSingular(i)
+
+  bool m_bHasSeam;         // true if at least one m_bClosed[] setting is true.
+  bool m_bIsClosed[2];     // m_bClosed[i] = ON_Surface::IsClosed(i)
+
+private:
+  bool m_bReserved[7];
+
+public:
+  ON_Interval m_domain[2]; // m_domain[i] = ON_Surface.Domain(i)
+
+private:
+  unsigned char m_reserved[16];
+
+public:
+  // Last pointer passed to ON_SurfaceProperties::Set().
+  const ON_Surface* m_surface;
+
+  // The constructor sets this value to zero.
+  // Nothing in opennurbs modifies or uses this value.
+  ON__INT_PTR m_tag;
+};
 
 #if defined(ON_DLL_TEMPLATE)
 // This stuff is here because of a limitation in the way Microsoft
@@ -1327,7 +1212,5 @@ public:
                                      // duplicate copies the surfaces themselves
 };
 
-ON_DECL
-double ON_ClosestPointAngle(const ON_Line&, const ON_Curve&, ON_Interval,const ON_3dPoint&,ON_3dPoint&, double*, double* );
 
 #endif
