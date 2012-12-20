@@ -1760,6 +1760,7 @@ configure_file(${CONFIG_H_FILE} ${BRLCAD_BINARY_DIR}/include/brlcad_config.h)
 # Rules for the toplevel documentation files
 set(toplevel_DOCFILES
   AUTHORS
+  CHANGES
   COPYING
   HACKING
   INSTALL

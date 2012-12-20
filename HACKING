@@ -1111,10 +1111,10 @@ verified, validated, documented, synchronized, and tagged:
     Compile with both default settings and all dependencies enabled.
 
   * All user-visible changes should be documented in the NEWS file;
-    all API changes should be noted in the doc/deprecation.txt file
-    (or reverted).  The release number should appropriately reflect
-    the type of changes being released.  See the more specific release
-    steps noted below and VERSION NUMBERS & COMPATIBILITY.
+    all API changes should be noted in the CHANGES file (or reverted).
+    The release number should appropriately reflect the type of
+    changes being released.  See the more specific release steps noted
+    below and VERSION NUMBERS & COMPATIBILITY.
 
   * After successfully compiling and passing tests on at least two
     platforms, the sources get merged to the STABLE branch and tagged
@@ -1140,11 +1140,11 @@ documented, synchronized, and tagged release are as follows:
 0) All code is committed to SVN.  All commits have been reviewed.
 Notify developer mailing list of intention to release.
 
-    echo "Release preparations have begun.  Please refrain from disruptive commits until the release is tagged or 24-hours have passed, whichever first.  Ensure API changes are in doc/deprecation.txt, user-visible changes are in NEWS, and help with release testing." | mail -s "Release preparations commencing" brlcad-devel@lists.sourceforge.net -r "your@subscribed.address"
+    echo "Release preparations have begun.  Please refrain from disruptive commits until the release is tagged or 24-hours have passed, whichever first.  Ensure API changes are in CHANGES, user-visible changes are in NEWS, and help with release testing." | mail -s "Release preparations commencing" brlcad-devel@lists.sourceforge.net -r "your@subscribed.address"
 
 1) Update TODO and BUGS.  Verify all user-visible changes are in NEWS.
-Verify doc/deprecation.txt reflects all API and application changes.
-Make sure changes to usage/options are reflected in manual pages.
+Verify CHANGES reflects all API and application changes.  Make sure
+changes to usage/options are reflected in manual pages.
 
 2) Update or verify the version numbers in the include/conf version
 files, NEWS, and README.  Commit the changes to the source repository.

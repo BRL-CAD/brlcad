@@ -394,8 +394,8 @@ DEPRECATION NOTICE:
   bootstrap script is no longer necessary.
 
   This script along with the rest of the GNU Autotools build system is
-  a deprecated interface (see doc/deprecation.txt for details) subject
-  to removal in a future release of BRL-CAD and may not result in a
+  a deprecated interface (see the CHANGES file for details) subject to
+  removal in a future release of BRL-CAD and may not result in a
   complete build.
 
   Please read INSTALL for new build instructions.

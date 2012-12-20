@@ -87,6 +87,7 @@ documentationdir = $(BRLCAD_DATA)
 
 documentation_DATA = \
 	AUTHORS \
+	CHANGES \
 	COPYING \
 	HACKING \
 	INSTALL \

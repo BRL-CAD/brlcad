@@ -27,7 +27,6 @@ set(documentation_DATA
   BRL-CAD.bib
   cvs.txt
   description.txt
-  deprecation.txt
   flex_to_re2c.txt
   ged.tr
   history.txt

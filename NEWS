@@ -2310,8 +2310,8 @@ future.  For those situations, developers using the BRL-CAD libraries
 may need to update to new API features in order to link with newer
 versions of BRL-CAD.
 
-See the doc/deprecation.txt file for a transcript of features that are
-deprecated or have already become obsolete.
+See the CHANGES file for a transcript of features that are deprecated
+or have already become obsolete.
 
 ---
 See doc/history.txt for more historic information on BRL-CAD.  There

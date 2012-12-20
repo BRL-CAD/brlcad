@@ -1731,8 +1731,8 @@ THESE BREAK PROTOCOL OR ARE BACKWARDS-INCOMPATIBLE
 * add database support for constraints, expressions, parametric
   values, construction history, and timestamping.
 
-* see doc/deprecation.txt for items that have been marked as
-  deprecated or available to be removed as obsolete items.
+* see the CHANGES file for items that have been marked as deprecated
+  or available to be removed as obsolete items.
 
 * make struct rt_functab's ft_label bigger and/or dynamic (e.g. vls)
 
