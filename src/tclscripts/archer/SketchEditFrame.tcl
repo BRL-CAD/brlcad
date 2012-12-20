@@ -1194,7 +1194,7 @@
 ::itcl::body SketchEditFrame::end_bezier {_segment _cflag} {
     clear_canvas_bindings
 
-    set bi_len [llength $bezier_indices] 
+    set bi_len [llength $bezier_indices]
 
     if {$bi_len < 2} {
 	return
