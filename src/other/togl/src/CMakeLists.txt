@@ -88,16 +88,23 @@ IF(TOGL_WINDOWINGSYSTEM MATCHES "TOGL_X11")
 		Xmu/LookupCmap.c
 		Xmu/StdCmap.c
 		)
+    SET(TOGL_SRCS
+        glew/glew.c
+        ${TOGL_XMU_SRCS}
+        togl.c
+        toglProcAddr.c
+        toglStubLib.c
+        ${CMAKE_CURRENT_BINARY_DIR}/toglStubInit.c
+        )
+ELSE(TOGL_WINDOWINGSYSTEM MATCHES "TOGL_X11")
+    SET(TOGL_SRCS
+        ${TOGL_XMU_SRCS}
+        togl.c
+        toglProcAddr.c
+        toglStubLib.c
+        ${CMAKE_CURRENT_BINARY_DIR}/toglStubInit.c
+        )
 ENDIF(TOGL_WINDOWINGSYSTEM MATCHES "TOGL_X11")
-
-SET(TOGL_SRCS
-	glew/glew.c
-	${TOGL_XMU_SRCS}
-	togl.c
-	toglProcAddr.c
-	toglStubLib.c
-	${CMAKE_CURRENT_BINARY_DIR}/toglStubInit.c
-	)
 
 add_library(togl SHARED ${TOGL_SRCS})
 ADD_DEPENDENCIES(togl togl_stubs_gen)
