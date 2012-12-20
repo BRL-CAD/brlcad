@@ -110,6 +110,7 @@
 	variable move_start_x
 	variable move_start_y
 	variable curr_seg ""
+	variable curr_vertex ""
 	variable save_entry
 	variable angle
 	variable bezier_indices ""
@@ -1008,20 +1009,52 @@
 }
 
 
-::itcl::body SketchEditFrame::continue_move {_state _sx _sy} {
-    if {$_state != 2} {
-#	$this show_coords $_sx $_sy
-	set x [$itk_component(canvas) canvasx $_sx]
-	set y [$itk_component(canvas) canvasy $_sy]
+::itcl::body SketchEditFrame::continue_move {_state _mx _my} {
+    if {$curr_vertex != ""} {
+	set index [pick_vertex $_mx $_my p$curr_vertex]
+	if {$index == $curr_vertex} {
+	    set index -1
+	}
+    } else {
+	set index -1
+    }
+
+    set slist [vert_is_used $curr_vertex]
+    set slen [llength $slist]
+
+    if {$_state == 0 || $index == -1 || $slen != 1} {
+	set x [$itk_component(canvas) canvasx $_mx]
+	#	$this show_coords $_mx $_my
+	set y [$itk_component(canvas) canvasy $_my]
 	set dx [expr $x - $move_start_x]
 	set dy [expr $y - $move_start_y]
     } else {
-	set id [$itk_component(canvas) find withtag first_select]
-	set tags [$itk_component(canvas) gettags $id]
-	set index [string range [lindex $tags 0] 1 end]
-	set old_coords [$itk_component(canvas) coords $id]
-	set dx [expr { $x_coord * $myscale - ([lindex $old_coords 0] + [lindex $old_coords 2])/2.0}]
-	set dy [expr { -$y_coord * $myscale - ([lindex $old_coords 1] + [lindex $old_coords 3])/2.0}]
+	set item $slist
+	set type [$item get_type]
+	set vlist [$item get_verts]
+	set vindex [lsearch $vlist $curr_vertex]
+	switch -- $type {
+	    "SketchCArc" -
+	    "SketchLine" {
+		if {$vindex == 0} {
+		    $item set_vars S $index
+		} else {
+		    $item set_vars E $index
+		}
+	    }
+	    "SketchBezier" {
+		set vlist [lreplace $vlist $vindex $vindex $index]
+		$item set_vars P $vlist
+	    }
+	}
+
+	set VL [lreplace $VL $curr_vertex $curr_vertex]
+	fix_vertex_references $curr_vertex
+
+	set mEscapeCreate 1
+	set mLastIndex -1
+
+	return
     }
     $itk_component(canvas) move moving $dx $dy
 
@@ -1171,7 +1204,7 @@
 	$itk_component(canvas) delete ::SketchEditFrame::$_segment
 
 	set vindex [lindex $bezier_indices 0]
-	if {![vert_is_used $vindex]} {
+	if {[vert_is_used $vindex] == {}} {
 	    set VL [lreplace $VL $vindex $vindex]
 	    drawVertices
 	}
@@ -1309,6 +1342,8 @@
 		set curr_seg ""
 	    }
 	}
+
+	set curr_vertex ""
     } else {
 	# Strip off the first character
 	set item [string range $item 1 end]
@@ -1318,10 +1353,14 @@
 	if {[lsearch $ids $pid] == -1} {
 	    $itk_component(canvas) itemconfigure p$item -fill red -outline red
 	    $itk_component(canvas) addtag selected withtag p$item
+	    set curr_vertex $item
 	} else {
 	    $itk_component(canvas) itemconfigure p$item -fill black -outline black
 	    $itk_component(canvas) dtag p$item selected
+	    set curr_vertex ""
 	}
+
+	set curr_seg ""
     }
 }
 
@@ -1430,7 +1469,7 @@
     if {$_vflag} {
 	set unused_vindices {}
 	foreach vindex [lsort -integer -decreasing [$item get_verts]] {
-	    if {![vert_is_used $vindex]} {
+	    if {[vert_is_used $vindex] == {}} {
 		set VL [lreplace $VL $vindex $vindex]
 		lappend unused_vindices $vindex
 	    }
@@ -1608,7 +1647,7 @@
 	drawVertices
     }
 
-    set curr_seg [Sketch_bezier \#auto $this $itk_component(canvas) \
+    set curr_seg [SketchBezier \#auto $this $itk_component(canvas) \
 		     "D [expr [llength $bezier_indices] - 1] P [list $bezier_indices]"]
     lappend segments ::SketchEditFrame::$curr_seg
     $curr_seg draw ""
@@ -1644,7 +1683,7 @@
     set index2 $index1
 
     set radius 0.0
-    set new_seg [Sketch_carc \#auto $this $itk_component(canvas) "S $index1 E $index2 R -1 L 0 O 0"]
+    set new_seg [SketchCArc \#auto $this $itk_component(canvas) "S $index1 E $index2 R -1 L 0 O 0"]
     lappend segments ::SketchEditFrame::$new_seg
     set needs_saving 1
     continue_circle $new_seg 0 3 $_mx $_my
@@ -1688,7 +1727,6 @@
 	}
 
 	set index2 $index1
-
 	start_line_guts
     }
 }
@@ -1868,7 +1906,7 @@
     set index [pick_vertex $_sx $_sy]
     if {$index == -1} return
 
-    if {[vert_is_used $index]} {
+    if {[vert_is_used $index] != {}} {
 	$::ArcherCore::application putString \
 	    "Cannot delete a vertex being used by a segment."
 	$itk_component(canvas) dtag p$index selected
@@ -1882,13 +1920,15 @@
 
 
 ::itcl::body SketchEditFrame::vert_is_used {_vindex} {
+    set slist {}
     foreach seg $segments {
 	if {[$seg is_vertex_used $_vindex]} {
-	    $seg describe
-	    return 1
+	    #$seg describe
+	    lappend slist $seg
 	}
     }
-    return 0
+
+    return $slist
 }
 
 
@@ -1930,6 +1970,7 @@
 }
 
 
+# Fixme: This needs to inherit from a common base class
 class SketchCArc {
     private variable canv
     private variable editor
@@ -1977,6 +2018,10 @@ class SketchCArc {
 	if { $start_index == $index } {return 1}
 	if { $end_index == $index } {return 1}
 	return 0
+    }
+
+    method get_type {} {
+	return SketchCArc
     }
 
     method get_verts {} {
@@ -2174,6 +2219,7 @@ class SketchCArc {
 }
 
 
+# Fixme: This needs to inherit from a common base class
 class SketchBezier {
     private variable canv
     private variable editor
@@ -2193,6 +2239,10 @@ class SketchBezier {
 		P { set index_list $value }
 	    }
 	}
+    }
+
+    method get_type {} {
+	return SketchBezier
     }
 
     method get_verts {} {
@@ -2282,6 +2332,8 @@ class SketchBezier {
     }
 }
 
+
+# Fixme: This needs to inherit from a common base class
 class SketchLine {
     private variable canv
     private variable editor
@@ -2302,6 +2354,10 @@ class SketchLine {
 		E { set end_index $value }
 	    }
 	}
+    }
+
+    method get_type {} {
+	return SketchLine
     }
 
     method get_verts {} {
