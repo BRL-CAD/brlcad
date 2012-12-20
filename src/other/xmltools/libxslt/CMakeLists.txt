@@ -109,6 +109,7 @@ include_directories(
   ${CMAKE_CURRENT_SOURCE_DIR}/../libxml/include
   ${CMAKE_CURRENT_BINARY_DIR}/../include
   ${CMAKE_CURRENT_BINARY_DIR}/../include/libxslt
+  /usr/local/include
   )
 
 add_library(xslt SHARED ${libxslt_srcs})
