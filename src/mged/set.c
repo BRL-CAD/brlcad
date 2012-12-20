@@ -49,9 +49,9 @@ static void toggle_perspective(void);
 static void set_coords(void);
 static void set_rotate_about(void);
 
-static char *read_var(ClientData clientData, Tcl_Interp *interp, char *name1, char *name2, int flags);
-static char *write_var(ClientData clientData, Tcl_Interp *interp, char *name1, char *name2, int flags);
-static char *unset_var(ClientData clientData, Tcl_Interp *interp, char *name1, char *name2, int flags);
+static char *read_var(ClientData clientData, Tcl_Interp *interp, const char *name1, const char *name2, int flags);
+static char *write_var(ClientData clientData, Tcl_Interp *interp, const char *name1, const char *name2, int flags);
+static char *unset_var(ClientData clientData, Tcl_Interp *interp, const char *name1, const char *name2, int flags);
 
 void set_scroll_private(void);
 void set_absolute_tran(void);
@@ -168,7 +168,7 @@ nmg_eu_dist_set(void)
  **/
 
 static char *
-read_var(ClientData clientData, Tcl_Interp *interp, char *UNUSED(name1), char *UNUSED(name2), int flags)
+read_var(ClientData clientData, Tcl_Interp *interp, const char *UNUSED(name1), const char *UNUSED(name2), int flags)
     /* Contains pointer to bu_struct_parse entry */
 
 
@@ -198,7 +198,7 @@ read_var(ClientData clientData, Tcl_Interp *interp, char *UNUSED(name1), char *U
  **/
 
 static char *
-write_var(ClientData clientData, Tcl_Interp *interp, char *name1, char *name2, int flags)
+write_var(ClientData clientData, Tcl_Interp *interp, const char *name1, const char *name2, int flags)
 {
     struct bu_structparse *sp = (struct bu_structparse *)clientData;
     struct bu_vls str = BU_VLS_INIT_ZERO;
@@ -226,7 +226,7 @@ write_var(ClientData clientData, Tcl_Interp *interp, char *name1, char *name2, i
  **/
 
 static char *
-unset_var(ClientData clientData, Tcl_Interp *interp, char *name1, char *name2, int flags)
+unset_var(ClientData clientData, Tcl_Interp *interp, const char *name1, const char *name2, int flags)
 {
     struct bu_structparse *sp = (struct bu_structparse *)clientData;
 
