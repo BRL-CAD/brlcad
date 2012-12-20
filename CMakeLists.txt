@@ -1462,6 +1462,13 @@ else(JNI_FOUND AND JAVA_FOUND)
 endif(JNI_FOUND AND JAVA_FOUND)
 mark_as_advanced(BRLCAD_ENABLE_RTSERVER)
 
+# Mark X11 as available if it is enabled and we find Xlib.h
+if(BRLCAD_ENABLE_X11)
+  if(X11_Xlib_INCLUDE_PATH AND CONFIG_H_FILE)
+    set(HAVE_X11_XLIB_H 1)
+    CONFIG_H_APPEND(BRLCAD "#cmakedefine HAVE_X11_XLIB_H 1\n")
+  endif(X11_Xlib_INCLUDE_PATH AND CONFIG_H_FILE)
+endif(BRLCAD_ENABLE_X11)
 
 # math library
 BRLCAD_CHECK_LIBRARY(M m cos)
