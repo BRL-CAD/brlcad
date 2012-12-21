@@ -541,23 +541,18 @@
 
     switch -- $mEditMode \
 	$moveArbitrary {
-	    $itk_component(canvas) configure -cursor crosshair
 	    setup_move_arbitrary
 	} \
 	$createLine {
-	    $itk_component(canvas) configure -cursor crosshair
 	    create_line
 	} \
 	$createCircle {
-	    $itk_component(canvas) configure -cursor crosshair
 	    create_circle
 	} \
 	$createArc {
-	    $itk_component(canvas) configure -cursor crosshair
 	    create_arc
 	} \
 	$createBezier {
-	    $itk_component(canvas) configure -cursor crosshair
 	    create_bezier
 	}
 
@@ -1068,6 +1063,7 @@
 
 ::itcl::body SketchEditFrame::create_arc {} {
     set mEditMode $createArc
+    $itk_component(canvas) configure -cursor crosshair
 
     if {$mPrevEditMode == $createBezier} {
 	end_bezier $curr_seg 0
@@ -1089,6 +1085,7 @@
 
 ::itcl::body SketchEditFrame::create_bezier {} {
     set mEditMode $createBezier
+    $itk_component(canvas) configure -cursor crosshair
 
     if {$mPrevEditMode == $createBezier && !$mCallingFromEndBezier} {
 	end_bezier $curr_seg 0
@@ -1105,6 +1102,7 @@
 
 ::itcl::body SketchEditFrame::create_circle {} {
     set mEditMode $createCircle
+    $itk_component(canvas) configure -cursor crosshair
 
     if {$mPrevEditMode == $createBezier} {
 	end_bezier $curr_seg 0
@@ -1122,6 +1120,7 @@
 
 ::itcl::body SketchEditFrame::create_line {} {
     set mEditMode $createLine
+    $itk_component(canvas) configure -cursor crosshair
 
     if {$mPrevEditMode == $createBezier} {
 	end_bezier $curr_seg 0
@@ -1527,6 +1526,7 @@
 
 ::itcl::body SketchEditFrame::setup_move_arbitrary {} {
     set mEditMode $moveArbitrary
+    $itk_component(canvas) configure -cursor crosshair
 
     if {$mPrevEditMode == $createBezier} {
 	end_bezier $curr_seg 0
