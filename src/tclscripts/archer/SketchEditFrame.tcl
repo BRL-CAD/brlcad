@@ -80,13 +80,24 @@
     }
 
     protected {
-	variable segments {}
-	variable V
-	variable A
-	variable B
-	variable VL {}
-	variable SL {}
+	variable mSegments {}
+	variable mV
+	variable mA
+	variable mB
+	variable mVL {}
+	variable mSL {}
 
+	variable mVx ""
+	variable mVy ""
+	variable mVz ""
+	variable mAx ""
+	variable mAy ""
+	variable mAz ""
+	variable mBx ""
+	variable mBy ""
+	variable mBz ""
+
+	variable mDetailMode 0
 	variable mPickTol 11
 	variable mLastIndex -1
 	variable mEscapeCreate 1
@@ -142,6 +153,7 @@
 	method handleDetailPopup {_index _X _Y}
 	method handleEnter {_row _col}
 	method highlightCurrentSketchElements {}
+	method initCanvas {_gdata}
 	method initPointHighlight {}
 	method initSketchData {_gdata}
 	method loadTables {_gdata}
@@ -174,6 +186,7 @@
 	method pick_vertex {_mx _my {_tag ""}}
 	method seg_delete {_sx _sy _vflag}
 	method seg_pick_highlight {_sx _sy}
+	method set_canvas {}
 	method setup_move_arbitrary {}
 	method setup_move_segment {}
 	method setup_move_selected {}
@@ -237,7 +250,7 @@
     set myscale [expr {$myscale * $_sf}]
     $itk_component(canvas) scale all 0 0 $_sf $_sf
     drawSegments
-    $itk_component(canvas) configure -scrollregion [$itk_component(canvas) bbox all]
+#    $itk_component(canvas) configure -scrollregion [$itk_component(canvas) bbox all]
 }
 
 
@@ -252,7 +265,7 @@
 
 
 ::itcl::body SketchEditFrame::get_vlist {} {
-    return $VL
+    return $mVL
 }
 
 
@@ -309,91 +322,35 @@
 	return
     }
 
-    $::ArcherCore::application setCanvas $itk_component(canvas)
-    set segments {}
-    set VL {}
-    set SL {}
-    set needs_saving 0
-    $itk_component(canvas) delete all
-    initSketchData $_gdata
-    createSegments
-    drawSegments
-    clear_canvas_bindings
-    set mEscapeCreate 1
-    set mEditMode 0
-    set mPrevEditMode 0
-    set mLastIndex -1
+    set_canvas
 
-    update idletasks
-    set canv_height [winfo height $itk_component(canvas)]
-    set canv_width [winfo width $itk_component(canvas)]
-    set min_max [$itk_component(canvas) bbox all]
-    set tmp_scale1 [expr double($canv_width) / ([lindex $min_max 2] - [lindex $min_max 0] + 2.0 * $vert_radius)]
-    if { $tmp_scale1 < 0.0 } {set tmp_scale1 [expr -$tmp_scale1] }
-    set tmp_scale2 [expr double($canv_height) / ([lindex $min_max 3] - [lindex $min_max 1] + 2.0 * $vert_radius)]
-    if { $tmp_scale2 < 0.0 } {set tmp_scale2 [expr -$tmp_scale2] }
-    if { $tmp_scale1 < $tmp_scale2 } {
-	do_scale $tmp_scale1
-    } else {
-	do_scale $tmp_scale2
-    }
+    set V [bu_get_value_by_keyword V $_gdata]
+    set mVx [lindex $V 0]
+    set mVy [lindex $V 1]
+    set mVz [lindex $V 2]
+    set A [bu_get_value_by_keyword A $_gdata]
+    set mAx [lindex $A 0]
+    set mAy [lindex $A 1]
+    set mAz [lindex $A 2]
+    set B [bu_get_value_by_keyword B $_gdata]
+    set mBx [lindex $B 0]
+    set mBy [lindex $B 1]
+    set mBz [lindex $B 2]
 }
 
 
 ::itcl::body SketchEditFrame::updateGeometry {} {
-    # Not ready
-    return
-
     if {$itk_option(-mged) == "" ||
 	$itk_option(-geometryObject) == ""} {
 	return
     }
 
-    set pipe_spec {}
-    set pt {}
+    $itk_option(-mged) adjust $itk_option(-geometryObject) \
+	V [list $mVx $mVy $mVz] \
+	A [list $mAx $mAy $mAz] \
+	B [list $mBx $mBy $mBz]
 
-    foreach aname [lsort [array names mVertDetail]] {
-	set alist [split $aname ","]
-	if {[llength $alist] != 2} {
-	    continue
-	}
-
-	set row [lindex $alist 0]
-	if {$row == 0} {
-	    continue
-	}
-
-	set index [expr {$row - 1}]
-	set col [lindex $alist 1]
-	if {$col == 0} {
-	    continue
-	}
-
-	switch -- $col \
-	    $OD_COL {
-		lappend pipe_spec O$index $mVertDetail($row,$col)
-	    } \
-	    $ID_COL {
-		lappend pipe_spec I$index $mVertDetail($row,$col)
-	    } \
-	    $RADIUS_COL {
-		lappend pipe_spec R$index $mVertDetail($row,$col)
-	    } \
-	    $PX_COL - \
-	    $PY_COL {
-		lappend pt $mVertDetail($row,$col)
-	    } \
-	    $PZ_COL {
-		lappend pt $mVertDetail($row,$col)
-		lappend pipe_spec V$index $pt
-		set pt {}
-	    } \
-	    default {
-		$::ArcherCore::application putString "Encountered bad one - $mVertDetail($row,$col)"
-	    }
-    }
-
-    eval $itk_option(-mged) adjust $itk_option(-geometryObject) $pipe_spec
+#    write_sketch_to_db
     GeometryEditFrame::updateGeometry
 }
 
@@ -466,6 +423,104 @@
 	    -anchor w
     } {}
 
+    itk_component add sketchDMode {
+	::ttk::checkbutton $parent.sketchdmode \
+	    -command [::itcl::code $this set_canvas] \
+	    -text "Detail" \
+	    -variable [::itcl::scope mDetailMode]
+    } {}
+
+    # Create header labels
+    itk_component add sketchXL {
+	::ttk::label $parent.sketchXL \
+	    -text "X"
+    } {}
+    itk_component add sketchYL {
+	::ttk::label $parent.sketchYL \
+	    -text "Y"
+    } {}
+    itk_component add sketchZL {
+	::ttk::label $parent.sketchZL \
+	    -text "Z"
+    } {}
+
+    # create widgets for vertices
+    itk_component add sketchVL {
+	::ttk::label $parent.sketchVL \
+	    -text "V:" \
+	    -anchor e
+    } {}
+    itk_component add sketchVxE {
+	::ttk::entry $parent.sketchVxE \
+	    -textvariable [::itcl::scope mVx] \
+	    -validate key \
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
+    } {}
+    itk_component add sketchVyE {
+	::ttk::entry $parent.sketchVyE \
+	    -textvariable [::itcl::scope mVy] \
+	    -validate key \
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
+    } {}
+    itk_component add sketchVzE {
+	::ttk::entry $parent.sketchVzE \
+	    -textvariable [::itcl::scope mVz] \
+	    -validate key \
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
+    } {}
+    itk_component add sketchVUnitsL {
+	::ttk::label $parent.sketchVUnitsL \
+	    -textvariable [::itcl::scope itk_option(-units)] \
+	    -anchor e
+    } {}
+
+    itk_component add sketchAL {
+	::ttk::label $parent.sketchAL \
+	    -text "A:" \
+	    -anchor e
+    } {}
+    itk_component add sketchAxE {
+	::ttk::entry $parent.sketchAxE \
+	    -textvariable [::itcl::scope mAx] \
+	    -validate key \
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
+    } {}
+    itk_component add sketchAyE {
+	::ttk::entry $parent.sketchAyE \
+	    -textvariable [::itcl::scope mAy] \
+	    -validate key \
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
+    } {}
+    itk_component add sketchAzE {
+	::ttk::entry $parent.sketchAzE \
+	    -textvariable [::itcl::scope mAz] \
+	    -validate key \
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
+    } {}
+    itk_component add sketchBL {
+	::ttk::label $parent.sketchBL \
+	    -text "B:" \
+	    -anchor e
+    } {}
+    itk_component add sketchBxE {
+	::ttk::entry $parent.sketchBxE \
+	    -textvariable [::itcl::scope mBx] \
+	    -validate key \
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
+    } {}
+    itk_component add sketchByE {
+	::ttk::entry $parent.sketchByE \
+	    -textvariable [::itcl::scope mBy] \
+	    -validate key \
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
+    } {}
+    itk_component add sketchBzE {
+	::ttk::entry $parent.sketchBzE \
+	    -textvariable [::itcl::scope mBz] \
+	    -validate key \
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
+    } {}
+
     set row 0
     grid $itk_component(sketchType) \
 	-row $row \
@@ -476,6 +531,54 @@
 	-column 1 \
 	-columnspan 3 \
 	-sticky nsew
+    grid $itk_component(sketchDMode) \
+	-row $row \
+	-column 3 \
+	-columnspan 2 \
+	-sticky nse
+    incr row
+    grid x $itk_component(sketchXL) \
+	$itk_component(sketchYL) \
+	$itk_component(sketchZL) \
+	-row $row
+    incr row
+    grid $itk_component(sketchVL) \
+	$itk_component(sketchVxE) \
+	$itk_component(sketchVyE) \
+	$itk_component(sketchVzE) \
+	$itk_component(sketchVUnitsL) \
+	-row $row \
+	-sticky nsew
+    incr row
+    grid $itk_component(sketchAL) \
+	$itk_component(sketchAxE) \
+	$itk_component(sketchAyE) \
+	$itk_component(sketchAzE) \
+	-row $row \
+	-sticky nsew
+    incr row
+    grid $itk_component(sketchBL) \
+	$itk_component(sketchBxE) \
+	$itk_component(sketchByE) \
+	$itk_component(sketchBzE) \
+	-row $row \
+	-sticky nsew
+
+    grid columnconfigure $parent 1 -weight 1
+    grid columnconfigure $parent 2 -weight 1
+    grid columnconfigure $parent 3 -weight 1
+#    grid columnconfigure $parent 4 -weight 1
+
+    # Set up bindings
+    bind $itk_component(sketchVxE) <Return> [::itcl::code $this updateGeometryIfMod]
+    bind $itk_component(sketchVyE) <Return> [::itcl::code $this updateGeometryIfMod]
+    bind $itk_component(sketchVzE) <Return> [::itcl::code $this updateGeometryIfMod]
+    bind $itk_component(sketchAxE) <Return> [::itcl::code $this updateGeometryIfMod]
+    bind $itk_component(sketchAyE) <Return> [::itcl::code $this updateGeometryIfMod]
+    bind $itk_component(sketchAzE) <Return> [::itcl::code $this updateGeometryIfMod]
+    bind $itk_component(sketchBxE) <Return> [::itcl::code $this updateGeometryIfMod]
+    bind $itk_component(sketchByE) <Return> [::itcl::code $this updateGeometryIfMod]
+    bind $itk_component(sketchBzE) <Return> [::itcl::code $this updateGeometryIfMod]
 }
 
 
@@ -525,6 +628,56 @@
 	$itk_option(-geometryObject) == ""} {
 	return
     }
+
+    set gdata [$itk_option(-mged) get $itk_option(-geometryObject)]
+    set gdata [lrange $gdata 1 end]
+
+    set V [bu_get_value_by_keyword V $gdata]
+    set Vx [lindex $V 0]
+    set Vy [lindex $V 1]
+    set Vz [lindex $V 2]
+    set A [bu_get_value_by_keyword A $gdata]
+    set Ax [lindex $A 0]
+    set Ay [lindex $A 1]
+    set Az [lindex $A 2]
+    set B [bu_get_value_by_keyword B $gdata]
+    set Bx [lindex $B 0]
+    set By [lindex $B 1]
+    set Bz [lindex $B 2]
+
+    if {$mVx == ""  ||
+	$mVx == "-" ||
+	$mVy == ""  ||
+	$mVy == "-" ||
+	$mVz == ""  ||
+	$mVz == "-" ||
+	$mAx == ""  ||
+	$mAx == "-" ||
+	$mAy == ""  ||
+	$mAy == "-" ||
+	$mAz == ""  ||
+	$mAz == "-" ||
+	$mBx == ""  ||
+	$mBx == "-" ||
+	$mBy == ""  ||
+	$mBy == "-" ||
+	$mBz == ""  ||
+	$mBz == "-"} {
+	# Not valid
+	return
+    }
+
+    if {$Vx != $mVx ||
+	$Vy != $mVy ||
+	$Vz != $mVz ||
+	$Ax != $mAx ||
+	$Ay != $mAy ||
+	$Az != $mAz ||
+	$Bx != $mBx ||
+	$By != $mBy ||
+	$Bz != $mBz} {
+	updateGeometry
+    }
 }
 
 
@@ -565,12 +718,12 @@
 
 
 ::itcl::body SketchEditFrame::createSegments {} {
-    foreach seg $SL {
+    foreach seg $mSL {
 	set type [lindex $seg 0]
 	set seg [lrange $seg 1 end]
 	switch $type {
 	    line {
-		lappend segments ::SketchEditFrame::[SketchLine \#auto $this $itk_component(canvas) $seg]
+		lappend mSegments ::SketchEditFrame::[SketchLine \#auto $this $itk_component(canvas) $seg]
 	    }
 	    carc {
 		set index [lsearch -exact $seg R]
@@ -580,10 +733,10 @@
 		    set tmp_radius [expr {$tolocal * $tmp_radius}]
 		    set seg [lreplace $seg $index $index $tmp_radius]
 		}
-		lappend segments ::SketchEditFrame::[SketchCArc \#auto $this $itk_component(canvas) $seg]
+		lappend mSegments ::SketchEditFrame::[SketchCArc \#auto $this $itk_component(canvas) $seg]
 	    }
 	    bezier {
-		lappend segments ::SketchEditFrame::[SketchBezier \#auto $this $itk_component(canvas) $seg]
+		lappend mSegments ::SketchEditFrame::[SketchBezier \#auto $this $itk_component(canvas) $seg]
 	    }
 	    default {
 		$::ArcherCore::application putString "Curve segments of type '$type' are not yet handled"
@@ -606,7 +759,7 @@
     $itk_component(canvas) delete all
     drawVertices
     set first 1
-    foreach seg $segments {
+    foreach seg $mSegments {
 	if { $first } {
 	    set first 0
 	    $seg draw first_seg
@@ -614,14 +767,14 @@
 	    $seg draw ""
 	}
     }
-    $itk_component(canvas) configure -scrollregion [$itk_component(canvas) bbox all]
+#    $itk_component(canvas) configure -scrollregion [$itk_component(canvas) bbox all]
 }
 
 
 ::itcl::body SketchEditFrame::drawVertices {} {
     set index 0
     $itk_component(canvas) delete verts
-    foreach vert $VL {
+    foreach vert $mVL {
 	set xc [lindex $vert 0]
 	set yc [lindex $vert 1]
 	set x1 [expr {$myscale * $xc - $vert_radius}]
@@ -688,6 +841,39 @@
 }
 
 
+::itcl::body SketchEditFrame::initCanvas {_gdata} {
+    $::ArcherCore::application setCanvas $itk_component(canvas)
+
+    set mSegments {}
+    set mVL {}
+    set mSL {}
+    set needs_saving 0
+    $itk_component(canvas) delete all
+    initSketchData $_gdata
+    createSegments
+    drawSegments
+    clear_canvas_bindings
+    set mEscapeCreate 1
+    set mEditMode 0
+    set mPrevEditMode 0
+    set mLastIndex -1
+
+    update idletasks
+    set canv_height [winfo height $itk_component(canvas)]
+    set canv_width [winfo width $itk_component(canvas)]
+    set min_max [$itk_component(canvas) bbox all]
+    set tmp_scale1 [expr double($canv_width) / ([lindex $min_max 2] - [lindex $min_max 0] + 2.0 * $vert_radius)]
+    if { $tmp_scale1 < 0.0 } {set tmp_scale1 [expr -$tmp_scale1] }
+    set tmp_scale2 [expr double($canv_height) / ([lindex $min_max 3] - [lindex $min_max 1] + 2.0 * $vert_radius)]
+    if { $tmp_scale2 < 0.0 } {set tmp_scale2 [expr -$tmp_scale2] }
+    if { $tmp_scale1 < $tmp_scale2 } {
+	do_scale $tmp_scale1
+    } else {
+	do_scale $tmp_scale2
+    }
+}
+
+
 ::itcl::body SketchEditFrame::initPointHighlight {} {
     if {$itk_option(-mged) == ""} {
 	return
@@ -702,28 +888,28 @@
 	switch $key {
 	    V {
 		for { set index 0 } { $index < 3 } { incr index } {
-		    set V($index) [expr {$tolocal * [lindex $value $index]}]
+		    set mV($index) [expr {$tolocal * [lindex $value $index]}]
 		}
 	    }
 	    A {
 		for { set index 0 } { $index < 3 } { incr index } {
-		    set A($index) [expr {$tolocal * [lindex $value $index]}]
+		    set mA($index) [expr {$tolocal * [lindex $value $index]}]
 		}
 	    }
 	    B {
 		for { set index 0 } { $index < 3 } { incr index } {
-		    set B($index) [expr {$tolocal * [lindex $value $index]}]
+		    set mB($index) [expr {$tolocal * [lindex $value $index]}]
 		}
 	    }
 	    VL {
 		foreach vert $value {
 		    set x [expr {$tolocal * [lindex $vert 0]}]
 		    set y [expr {$tolocal * [lindex $vert 1]}]
-		    lappend VL "$x $y"
+		    lappend mVL "$x $y"
 		}
 	    }
 	    SL {
-		set SL $value
+		set mSL $value
 	    }
 	}
     }
@@ -834,7 +1020,7 @@
 	}
 	2 {
 	    # use radius entry widget
-	    set vert [lindex $VL $index1]
+	    set vert [lindex $mVL $index1]
 	    set ex [expr {[lindex $vert 0] + $radius}]
 	    set ey [lindex $vert 1]
 	}
@@ -850,18 +1036,18 @@
     if {$_coord_type != 3} {
 	if {$index1 == $index2} {
 	    # need to create a new vertex
-	    set index1 [llength $VL]
-	    lappend VL "$ex $ey"
+	    set index1 [llength $mVL]
+	    lappend mVL "$ex $ey"
 	    $_segment set_vars S $index1
 	} else {
-	    set VL [lreplace $VL $index1 $index1 "$ex $ey"]
+	    set mVL [lreplace $mVL $index1 $index1 "$ex $ey"]
 	}
     }
 
     $itk_component(canvas) delete ::SketchEditFrame::$_segment
     $_segment draw ""
     set radius [$_segment get_radius]
-    $itk_component(canvas) configure -scrollregion [$itk_component(canvas) bbox all]
+#    $itk_component(canvas) configure -scrollregion [$itk_component(canvas) bbox all]
     if {$_state} {
 	$itk_component(canvas) configure -cursor crosshair
 	create_circle
@@ -879,19 +1065,19 @@
 
 	if {$index1 == $index2} {
 	    # need to create a new vertex
-	    set index1 [llength $VL]
-	    lappend VL "$ex $ey"
+	    set index1 [llength $mVL]
+	    lappend mVL "$ex $ey"
 	}
     } else {
 	if {$index != $index1} {
 	    # At this point index1 refers to the last vertex in VL. Remove it.
-	    set VL [lreplace $VL end end]
+	    set mVL [lreplace $mVL end end]
 	    set index1 $index
 	} else {
 	    # Here we have to add a vertex
-	    set vert [lindex $VL $index]
-	    set index1 [llength $VL]
-	    lappend VL $vert
+	    set vert [lindex $mVL $index]
+	    set index1 [llength $mVL]
+	    lappend mVL $vert
 	}
     }
 
@@ -918,8 +1104,8 @@
 
 	    if {$_state == 1} {
 		# need to create a new vertex
-		set index2 [llength $VL]
-		lappend VL "$ex $ey"
+		set index2 [llength $mVL]
+		lappend mVL "$ex $ey"
 	    }
 	}
 	2 {
@@ -932,12 +1118,12 @@
     }
 
     if {$_coord_type != 2} {
-	set VL [lreplace $VL $index2 $index2 "$ex $ey"]
+	set mVL [lreplace $mVL $index2 $index2 "$ex $ey"]
     }
 
     $itk_component(canvas) delete ::SketchEditFrame::$_segment
     $_segment draw ""
-    $itk_component(canvas) configure -scrollregion [$itk_component(canvas) bbox all]
+#    $itk_component(canvas) configure -scrollregion [$itk_component(canvas) bbox all]
 
     if {$_state == 2} {
 	$itk_component(canvas) configure -cursor crosshair
@@ -962,12 +1148,12 @@
 	if {$index1 != $index2} {
 	    if {!$mIgnoreMotion} {
 		# Update the vertex
-		set VL [lreplace $VL $index2 $index2 "$ex $ey"]
+		set mVL [lreplace $mVL $index2 $index2 "$ex $ey"]
 	    }
 	} else {
 	    # Add a vertex
-	    set index2 [llength $VL]
-	    lappend VL "$ex $ey"
+	    set index2 [llength $mVL]
+	    lappend mVL "$ex $ey"
 	}
     } else {
 	if {$index != $index2} {
@@ -977,10 +1163,10 @@
 
 	    # If not a button press
 	    if {$_state != 1} {
-		set lastv [expr {[llength $VL] - 1}]
+		set lastv [expr {[llength $mVL] - 1}]
 
 		if {$lastv == $prevIndex2} {
-		    set VL [lreplace $VL end end]
+		    set mVL [lreplace $mVL end end]
 		}
 	    }
 	}
@@ -1030,7 +1216,7 @@
 	    }
 	}
 
-	set VL [lreplace $VL $curr_vertex $curr_vertex]
+	set mVL [lreplace $mVL $curr_vertex $curr_vertex]
 	fix_vertex_references $curr_vertex
 
 	set mEscapeCreate 1
@@ -1048,7 +1234,7 @@
 	set new_coords [$itk_component(canvas) coords $id]
 	set new_x [expr ([lindex $new_coords 0] + [lindex $new_coords 2])/(2.0 * $myscale)]
 	set new_y [expr -([lindex $new_coords 1] + [lindex $new_coords 3])/(2.0 * $myscale)]
-	set VL [lreplace $VL $index $index [concat $new_x $new_y]]
+	set mVL [lreplace $mVL $index $index [concat $new_x $new_y]]
     }
     redrawSegments
     if {$_state == 0} {
@@ -1161,8 +1347,8 @@
 
     set svlist {}
     foreach item $slist {
-	set index [lsearch $segments $item]
-	set segments [lreplace $segments $index $index]
+	set index [lsearch $mSegments $item]
+	set mSegments lreplace $mSegments $index $index]
 	$itk_component(canvas) delete $item
 
 	eval lappend svlist [$item get_verts]
@@ -1175,7 +1361,7 @@
     set unused_vindices {}
     foreach vindex $alist {
 	if {[vert_is_used $vindex] == {}} {
-	    set VL [lreplace $VL $vindex $vindex]
+	    set mVL [lreplace $mVL $vindex $vindex]
 	    lappend unused_vindices $vindex
 	}
     }
@@ -1191,8 +1377,8 @@
 	set ex [expr {[$itk_component(canvas) canvasx $_mx] / $myscale}]
 	set ey [expr {-[$itk_component(canvas) canvasy $_my] / $myscale}]
 
-	set index [llength $VL]
-	lappend VL "$ex $ey"
+	set index [llength $mVL]
+	lappend mVL "$ex $ey"
 	drawVertices
     }
 
@@ -1200,15 +1386,15 @@
     set mLastIndex $index2
 
     # calculate an initial radius
-    set s [lindex $VL $index1]
+    set s [lindex $mVL $index1]
     set sx [lindex $s 0]
     set sy [lindex $s 1]
-    set e [lindex $VL $index2]
+    set e [lindex $mVL $index2]
     set ex [lindex $e 0]
     set ey [lindex $e 1]
     set radius [::dist $sx $sy $ex $ey]
     set new_seg [SketchCArc \#auto $this $itk_component(canvas) "S $index1 E $index2 R $radius L 0 O 1"]
-    lappend segments ::SketchEditFrame::$new_seg
+    lappend mSegments ::SketchEditFrame::$new_seg
     set needs_saving 1
     drawSegments
 
@@ -1229,13 +1415,13 @@
     if {$bi_len < 2} {
 	return
     } elseif {$bi_len == 2 && [lindex $bezier_indices 0] == [lindex $bezier_indices 1]} {
-	set index [lsearch $segments ::SketchEditFrame::$_segment]
-	set segments [lreplace $segments $index $index]
+	set index [lsearch $mSegments ::SketchEditFrame::$_segment]
+	set mSegments [lreplace $mSegments $index $index]
 	$itk_component(canvas) delete ::SketchEditFrame::$_segment
 
 	set vindex [lindex $bezier_indices 0]
 	if {[vert_is_used $vindex] == {}} {
-	    set VL [lreplace $VL $vindex $vindex]
+	    set mVL [lreplace $mVL $vindex $vindex]
 	    drawVertices
 	}
 
@@ -1263,10 +1449,10 @@
     set cx 0.0
     set cy 0.0
 
-    set s_list [lindex $VL $index1]
+    set s_list [lindex $mVL $index1]
     set s(0) [lindex $s_list 0]
     set s(1) [lindex $s_list 1]
-    set e_list [lindex $VL $index2]
+    set e_list [lindex $mVL $index2]
     set e(0) [lindex $e_list 0]
     set e(1) [lindex $e_list 1]
     if {[circle_3pt $s(0) $s(1) $sx $sy $e(0) $e(1) cx cy]} {
@@ -1308,7 +1494,7 @@
 
 
 ::itcl::body SketchEditFrame::fix_vertex_references {_unused_vindices} {
-    foreach seg $segments {
+    foreach seg $mSegments {
 	$seg fix_vertex_reference $_unused_vindices
     }
     drawVertices
@@ -1404,8 +1590,8 @@
 	    set bezier_indices [lindex $bezier_indices 0]
 	    set needs_saving 1
 	}
-	lappend bezier_indices [llength $VL]
-	lappend VL "$sx $sy"
+	lappend bezier_indices [llength $mVL]
+	lappend mVL "$sx $sy"
 	drawVertices
     }
 
@@ -1481,15 +1667,15 @@
     set item [pick_segment $_mx $_my]
     if {$item == -1} return
 
-    set index [lsearch $segments $item]
-    set segments [lreplace $segments $index $index]
+    set index [lsearch $mSegments $item]
+    set mSegments [lreplace $mSegments $index $index]
     $itk_component(canvas) delete $item
 
     if {$_vflag} {
 	set unused_vindices {}
 	foreach vindex [lsort -integer -decreasing [$item get_verts]] {
 	    if {[vert_is_used $vindex] == {}} {
-		set VL [lreplace $VL $vindex $vindex]
+		set mVL [lreplace $mVL $vindex $vindex]
 		lappend unused_vindices $vindex
 	    }
 	}
@@ -1521,6 +1707,29 @@
     }
 
     tag_selected_verts
+}
+
+
+::itcl::body SketchEditFrame::set_canvas {} {
+    if {$mDetailMode} {
+	set gdata [lrange [$itk_option(-mged) get $itk_option(-geometryObject)] 1 end]
+	initCanvas $gdata
+
+	set i 1
+	foreach label $mEditLabels {
+	    $itk_component(editRB$i) configure -state normal
+	    incr i
+	}
+    } else {
+	$::ArcherCore::application restoreCanvas
+
+	set i 1
+	set mEditMode 0
+	foreach label $mEditLabels {
+	    $itk_component(editRB$i) configure -state disabled
+	    incr i
+	}
+    }
 }
 
 
@@ -1568,10 +1777,10 @@
     set sy [expr {-[$itk_component(canvas) canvasy $_my] / $myscale}]
     set cx 0.0
     set cy 0.0
-    set s_list [lindex $VL $index1]
+    set s_list [lindex $mVL $index1]
     set s(0) [lindex $s_list 0]
     set s(1) [lindex $s_list 1]
-    set e_list [lindex $VL $index2]
+    set e_list [lindex $mVL $index2]
     set e(0) [lindex $e_list 0]
     set e(1) [lindex $e_list 1]
     if {[circle_3pt $s(0) $s(1) $sx $sy $e(0) $e(1) cx cy]} {
@@ -1627,8 +1836,8 @@
 	    set sx [expr {[$itk_component(canvas) canvasx $_mx] / $myscale}]
 	    set sy [expr {-[$itk_component(canvas) canvasy $_my] / $myscale}]
 
-	    set index1 [llength $VL]
-	    lappend VL "$sx $sy"
+	    set index1 [llength $mVL]
+	    lappend mVL "$sx $sy"
 	    drawVertices
 	}
     }
@@ -1657,19 +1866,19 @@
 
 
 	if {$mLastIndex != -1} {
-	    set bezier_indices [list $mLastIndex [llength $VL]]
+	    set bezier_indices [list $mLastIndex [llength $mVL]]
 	} else {
-	    set bezier_indices [llength $VL]
+	    set bezier_indices [llength $mVL]
 	    lappend bezier_indices $bezier_indices
 	}
 
-	lappend VL "$sx $sy"
+	lappend mVL "$sx $sy"
 	drawVertices
     }
 
     set curr_seg [SketchBezier \#auto $this $itk_component(canvas) \
 		     "D [expr [llength $bezier_indices] - 1] P [list $bezier_indices]"]
-    lappend segments ::SketchEditFrame::$curr_seg
+    lappend mSegments ::SketchEditFrame::$curr_seg
     $curr_seg draw ""
 
     # setup to pick next bezier point
@@ -1696,15 +1905,15 @@
 	    set sy $y_coord
 	}
 
-	set index1 [llength $VL]
-	lappend VL "$sx $sy"
+	set index1 [llength $mVL]
+	lappend mVL "$sx $sy"
     }
 
     set index2 $index1
 
     set radius 0.0
     set new_seg [SketchCArc \#auto $this $itk_component(canvas) "S $index1 E $index2 R -1 L 0 O 0"]
-    lappend segments ::SketchEditFrame::$new_seg
+    lappend mSegments ::SketchEditFrame::$new_seg
     set needs_saving 1
     continue_circle $new_seg 0 3 $_mx $_my
     drawSegments
@@ -1742,8 +1951,8 @@
 	    set sx [expr {[$itk_component(canvas) canvasx $_mx] / $myscale}]
 	    set sy [expr {-[$itk_component(canvas) canvasy $_my] / $myscale}]
 
-	    set index1 [llength $VL]
-	    lappend VL "$sx $sy"
+	    set index1 [llength $mVL]
+	    lappend mVL "$sx $sy"
 	}
 
 	set index2 $index1
@@ -1755,7 +1964,7 @@
 ::itcl::body SketchEditFrame::start_line_guts {{_mx ""} {_my ""}} {
     $itk_component(canvas) configure -cursor crosshair
     set new_seg [SketchLine \#auto $this $itk_component(canvas) "S $index1 E $index2"]
-    lappend segments ::SketchEditFrame::$new_seg
+    lappend mSegments ::SketchEditFrame::$new_seg
     set needs_saving 1
     drawSegments
     clear_canvas_bindings
@@ -1930,7 +2139,7 @@
 	$itk_component(canvas) dtag p$index selected
 	$itk_component(canvas) itemconfigure p$index -outline black -fill black
     } else {
-	set VL [lreplace $VL $index $index]
+	set mVL [lreplace $mVL $index $index]
 	fix_vertex_references $index
 	write_sketch_to_db
     }
@@ -1939,7 +2148,7 @@
 
 ::itcl::body SketchEditFrame::vert_is_used {_vindex} {
     set slist {}
-    foreach seg $segments {
+    foreach seg $mSegments {
 	if {[$seg is_vertex_used $_vindex]} {
 	    #$seg describe
 	    lappend slist $seg
@@ -1968,14 +2177,14 @@
 
 
 ::itcl::body SketchEditFrame::write_sketch_to_db {} {
-    set out "V { [expr {$tobase * $V(0)}] [expr {$tobase * $V(1)}] [expr {$tobase * $V(2)}] }"
-    append out " A { [expr {$tobase * $A(0)}] [expr {$tobase * $A(1)}] [expr {$tobase * $A(2)}] }"
-    append out " B { [expr {$tobase * $B(0)}] [expr {$tobase * $B(1)}] [expr {$tobase * $B(2)}] } VL {"
-    foreach vert $VL {
+    set out "V { [expr {$tobase * $mV(0)}] [expr {$tobase * $mV(1)}] [expr {$tobase * $mV(2)}] }"
+    append out " A { [expr {$tobase * $mA(0)}] [expr {$tobase * $mA(1)}] [expr {$tobase * $mA(2)}] }"
+    append out " B { [expr {$tobase * $mB(0)}] [expr {$tobase * $mB(1)}] [expr {$tobase * $mB(2)}] } VL {"
+    foreach vert $mVL {
 	append out " { [expr {$tobase * [lindex $vert 0]}] [expr {$tobase * [lindex $vert 1]}] }"
     }
     append out " } SL {"
-    foreach seg $segments {
+    foreach seg $mSegments {
 	append out " [$seg serialize $tobase] "
     }
     append out " }"
@@ -2331,10 +2540,10 @@ class SketchBezier {
 	}
 
 	# calculate some segments
-	set segments [expr $count * 4]
+	set mSegments [expr $count * 4]
 	set points ""
-	for { set i 0 } { $i < $segments } { incr i } {
-	    set t [expr {1.0 - [expr [expr $segments - $i - 1.0] / [expr $segments - 1.0]]}]
+	for { set i 0 } { $i < $mSegments}  { incr i } {
+	    set t [expr {1.0 - [expr [expr $mSegments - $i - 1.0] / [expr $mSegments - 1.0]]}]
 	    lappend points [calc_bezier $count $coords $t]
 	}
 	set points [join $points]
