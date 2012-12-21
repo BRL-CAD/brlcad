@@ -96,7 +96,6 @@ opennurbs_polycurve.cpp
 opennurbs_polyedgecurve.cpp
 opennurbs_polyline.cpp
 opennurbs_polylinecurve.cpp
-opennurbs_precompiledheader.cpp
 opennurbs_rand.cpp
 opennurbs_revsurface.cpp
 opennurbs_rtree.cpp
