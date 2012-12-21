@@ -49,11 +49,6 @@ if(HAVE_TERMLIB)
 endif(HAVE_TERMLIB)
 BRLCAD_ADDEXEC(fbscanplot fbscanplot.c libfb)
 BRLCAD_ADDEXEC(fbstretch "fbstretch.c;ioutil.c" libfb)
-if(BRLCAD_ENABLE_TK)
-  BRLCAD_ADDEXEC(fbthreadtest fbthreadtest.c "libfb;${TCL_TK_LIBRARY}")
-  SET_TARGET_PROPERTIES(fbthreadtest PROPERTIES COMPILE_DEFINITIONS "IF_TK")
-  SET_TARGET_PROPERTIES(fbthreadtest PROPERTIES LINKER_LANGUAGE C)
-endif(BRLCAD_ENABLE_TK)
 if(HAVE_TERMLIB)
   BRLCAD_ADDEXEC(fbzoom fbzoom.c "libfb;libtermio")
 endif(HAVE_TERMLIB)
@@ -76,7 +71,8 @@ endif(CPP_DLL_DEFINES)
 
 BRLCAD_ADDEXEC(spm-fb spm-fb.c "libfb;libbn")
 
-CMAKEFILES(fbthreadtest.c)
+add_subdirectory(tests)
+
 CMAKEFILES(Makefile.am)
 
 # Local Variables:
