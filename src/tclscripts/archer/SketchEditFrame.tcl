@@ -41,13 +41,10 @@
 	common Z_COL 3
 
 	common moveArbitrary 1
-	common moveSelected 2
-	common selectPoints 3
-	common selectSegments 4
-	common createLine 5
-	common createCircle 6
-	common createArc 7
-	common createBezier 8
+	common createLine 2
+	common createCircle 3
+	common createArc 4
+	common createBezier 5
 
 	common EPSILON 0.00000000000000001
 
@@ -55,10 +52,7 @@
 	common mEdgeDetailHeadings {{} A B}
 	common mFaceDetailHeadings {{} A B C}
 	common mEditLabels {
-	    {Move Arbitrary}
-	    {Move Selected}
-	    {Select Points}
-	    {Select Segments}
+	    Move
 	    {Create Line}
 	    {Create Circle}
 	    {Create Arc}
@@ -164,6 +158,7 @@
 	method create_bezier {}
 	method create_circle {}
 	method create_line {}
+	method delete_selected {}
 	method end_arc {_mx _my}
 	method end_arc_radius_adjust {_segment _mx _my}
 	method end_bezier {_segment _cflag}
@@ -172,7 +167,7 @@
 	method escape_line {}
 	method fix_vertex_references {_unused_vindices}
 	method handle_escape {}
-	method item_pick_highlight {_sx _sy}
+	method item_pick_highlight {_mx _my}
 	method next_bezier {_segment _mx _my}
 	method pick_arbitrary {_mx _my}
 	method pick_segment {_mx _my}
@@ -180,7 +175,6 @@
 	method seg_delete {_sx _sy _vflag}
 	method seg_pick_highlight {_sx _sy}
 	method setup_move_arbitrary {}
-	method setup_move_point {}
 	method setup_move_segment {}
 	method setup_move_selected {}
 	method start_arc_radius_adjust {_segment _mx _my}
@@ -190,9 +184,9 @@
 	method start_line {_x _y}
 	method start_line_guts {{_mx ""} {_my ""}}
 	method start_move_arbitrary {_sx _sy _rflag}
-	method start_move_point {_sx _sy}
 	method start_move_segment {_sx _sy _rflag}
 	method start_move_selected {_sx _sy}
+	method start_move_selected2 {_sx _sy}
 	method start_seg_pick {}
 	method start_vert_pick {}
 	method tag_selected_verts {}
@@ -550,18 +544,6 @@
 	    $itk_component(canvas) configure -cursor crosshair
 	    setup_move_arbitrary
 	} \
-	$moveSelected {
-	    $itk_component(canvas) configure -cursor {}
-	    setup_move_selected
-	} \
-	$selectPoints {
-	    $itk_component(canvas) configure -cursor crosshair
-	    start_vert_pick
-	} \
-	$selectSegments {
-	    $itk_component(canvas) configure -cursor {}
-	    start_seg_pick
-	} \
 	$createLine {
 	    $itk_component(canvas) configure -cursor crosshair
 	    create_line
@@ -824,6 +806,10 @@
     bind $itk_component(canvas) <l> [::itcl::code $this create_line]
     bind $itk_component(canvas) <m> [::itcl::code $this setup_move_arbitrary]
 
+    bind $itk_component(canvas) <BackSpace> [::itcl::code $this delete_selected]
+    bind $itk_component(canvas) <d> [::itcl::code $this delete_selected]
+    bind $itk_component(canvas) <Delete> [::itcl::code $this delete_selected]
+
     bind $itk_component(canvas) <B1-Motion> {}
     bind $itk_component(canvas) <ButtonPress-1> {}
     bind $itk_component(canvas) <Shift-ButtonPress-1> {}
@@ -1033,6 +1019,7 @@
 	set type [$item get_type]
 	set vlist [$item get_verts]
 	set vindex [lsearch $vlist $curr_vertex]
+
 	switch -- $type {
 	    "SketchCArc" -
 	    "SketchLine" {
@@ -1152,6 +1139,50 @@
     }
 
     set mPrevEditMode $mEditMode
+}
+
+
+::itcl::body SketchEditFrame::delete_selected {} {
+    set selected [$itk_component(canvas) find withtag selected]
+    set slist {}
+    set vlist {}
+    foreach id $selected {
+	set tags [$itk_component(canvas) gettags $id]
+	set item [lindex $tags 0]
+	set type [lindex $tags 1]
+	switch $type {
+	    segs   {
+		lappend slist $item
+	    }
+	    verts  {
+		lappend vlist [string range $item 1 end]
+	    }
+	}
+    }
+
+    set svlist {}
+    foreach item $slist {
+	set index [lsearch $segments $item]
+	set segments [lreplace $segments $index $index]
+	$itk_component(canvas) delete $item
+
+	eval lappend svlist [$item get_verts]
+
+	::itcl::delete object $item
+    }
+
+    set alist [lsort -integer -decreasing -unique [eval lappend alist $vlist $svlist]]
+
+    set unused_vindices {}
+    foreach vindex $alist {
+	if {[vert_is_used $vindex] == {}} {
+	    set VL [lreplace $VL $vindex $vindex]
+	    lappend unused_vindices $vindex
+	}
+    }
+    fix_vertex_references $unused_vindices
+
+    write_sketch_to_db
 }
 
 
@@ -1290,15 +1321,6 @@
 	$moveArbitrary {
 	    # nothing yet
 	} \
-	$moveSelected {
-	    # nothing yet
-	} \
-	$selectPoints {
-	    # nothing yet
-	} \
-	$selectSegments {
-	    # nothing yet
-	} \
 	$createLine {
 	    set mEscapeCreate 1
 	    set mLastIndex -1
@@ -1320,8 +1342,8 @@
 }
 
 
-::itcl::body SketchEditFrame::item_pick_highlight {_sx _sy} {
-    set item [pick_arbitrary $_sx $_sy]
+::itcl::body SketchEditFrame::item_pick_highlight {_mx _my} {
+    set item [pick_arbitrary $_mx $_my]
     if {$item == -1} return
 
     set tags [$itk_component(canvas) gettags $item]
@@ -1337,6 +1359,7 @@
 	    set curr_seg $item
 	} else {
 	    $item unhighlight
+	    $item untag_verts moving
 
 	    if {$item == $curr_seg} {
 		set curr_seg ""
@@ -1345,23 +1368,22 @@
 
 	set curr_vertex ""
     } else {
-	# Strip off the first character
-	set item [string range $item 1 end]
-
-	set pid [$itk_component(canvas) find withtag p$item]
+	set pid [$itk_component(canvas) find withtag $item]
 
 	if {[lsearch $ids $pid] == -1} {
-	    $itk_component(canvas) itemconfigure p$item -fill red -outline red
-	    $itk_component(canvas) addtag selected withtag p$item
-	    set curr_vertex $item
+	    $itk_component(canvas) itemconfigure $item -fill red -outline red
+	    $itk_component(canvas) addtag selected withtag $item
+	    set curr_vertex [string range $item 1 end]
 	} else {
-	    $itk_component(canvas) itemconfigure p$item -fill black -outline black
-	    $itk_component(canvas) dtag p$item selected
+	    $itk_component(canvas) itemconfigure $item -fill black -outline black
+	    $itk_component(canvas) dtag $item selected
 	    set curr_vertex ""
 	}
 
 	set curr_seg ""
     }
+
+    tag_selected_verts
 }
 
 
@@ -1395,14 +1417,12 @@
 
 
 ::itcl::body SketchEditFrame::pick_arbitrary {_mx _my} {
-    set x [$itk_component(canvas) canvasx $_mx]
-    set y [$itk_component(canvas) canvasy $_my]
-    set item [$itk_component(canvas) find closest $x $y]
-    if {$item == ""} {
-	return -1
+    set item [pick_vertex $_mx $_my]
+    if {$item == -1} {
+	return [pick_segment $_mx $_my]
     }
 
-    return $item
+    return "p$item"
 }
 
 
@@ -1494,11 +1514,14 @@
 	set curr_seg $item
     } else {
 	$item unhighlight
+	$item untag_verts moving
 
 	if {$item == $curr_seg} {
 	    set curr_seg ""
 	}
     }
+
+    tag_selected_verts
 }
 
 
@@ -1515,15 +1538,12 @@
 
     clear_canvas_bindings
     bind $itk_component(canvas) <ButtonPress-1> [::itcl::code $this start_move_arbitrary %x %y 0]
-    bind $itk_component(canvas) <Shift-ButtonPress-1> [::itcl::code $this start_move_segment %x %y 1]
+#    bind $itk_component(canvas) <Shift-ButtonPress-1> [::itcl::code $this seg_pick_highlight %x %y]
+    bind $itk_component(canvas) <Control-ButtonPress-1> [::itcl::code $this start_move_selected %x %y]
+    bind $itk_component(canvas) <Shift-ButtonPress-1> [::itcl::code $this start_move_selected2 %x %y]
+    bind $itk_component(canvas) <r><ButtonPress-1> [::itcl::code $this start_move_segment %x %y 1]
 
     set mPrevEditMode $mEditMode
-}
-
-
-::itcl::body SketchEditFrame::setup_move_point {} {
-    clear_canvas_bindings
-    bind $itk_component(canvas) <ButtonPress-1> [::itcl::code $this start_move_point %x %y]
 }
 
 
@@ -1779,17 +1799,6 @@
 }
 
 
-::itcl::body SketchEditFrame::start_move_point {_sx _sy} {
-    $itk_component(canvas) dtag moving moving
-    unhighlight_selected
-
-    vert_pick_highlight $_sx $_sy
-    $itk_component(canvas) addtag moving withtag selected
-
-    start_move_selected $_sx $_sy
-}
-
-
 ::itcl::body SketchEditFrame::start_move_segment {_sx _sy _rflag} {
     $itk_component(canvas) dtag moving moving
     unhighlight_selected
@@ -1819,6 +1828,13 @@
 }
 
 
+::itcl::body SketchEditFrame::start_move_selected2 {_sx _sy} {
+    item_pick_highlight  $_sx $_sy
+#    seg_pick_highlight  $_sx $_sy
+    start_move_selected $_sx $_sy
+}
+
+
 ::itcl::body SketchEditFrame::start_seg_pick {} {
     $itk_component(canvas) dtag moving moving
     unhighlight_selected
@@ -1841,6 +1857,8 @@
 
 
 ::itcl::body SketchEditFrame::tag_selected_verts {} {
+    $itk_component(canvas) dtag moving moving
+
     $itk_component(canvas) addtag moving withtag selected
     set ids [$itk_component(canvas) find withtag selected]
     foreach id $ids {
@@ -2005,6 +2023,11 @@ class SketchCArc {
     method tag_verts { atag } {
 	$canv addtag $atag withtag p$start_index
 	$canv addtag $atag withtag p$end_index
+    }
+
+    method untag_verts { atag } {
+	$canv dtag p$start_index $atag
+	$canv dtag p$end_index $atag
     }
 
     method fix_vertex_reference { deleted_verts } {
@@ -2255,6 +2278,12 @@ class SketchBezier {
 	}
     }
 
+    method untag_verts { atag } {
+	foreach index $index_list {
+	    $canv dtag p$index $atag
+	}
+    }
+
     method fix_vertex_reference { deleted_verts } {
 	foreach del $deleted_verts {
 	    for { set index 0 } { $index < $num_points } { incr index } {
@@ -2367,6 +2396,11 @@ class SketchLine {
     method tag_verts { atag } {
 	$canv addtag $atag withtag p$start_index
 	$canv addtag $atag withtag p$end_index
+    }
+
+    method untag_verts { atag } {
+	$canv dtag p$start_index $atag
+	$canv dtag p$end_index $atag
     }
 
     method fix_vertex_reference { deleted_verts } {
