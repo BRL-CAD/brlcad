@@ -38,7 +38,7 @@
 
 
 /* declarations to support use of bu_getopt() */
-char *options = "hd:";
+char *options = "d";
 
 char *progname = "(noname)";
 #define DEBUG_NAMES 1
@@ -56,7 +56,7 @@ void usage(char *s)
 {
     if (s) (void)fputs(s, stderr);
 
-    (void) fprintf(stderr, "Usage: %s [ -%s ] [<] infile [> outfile]\n",
+    (void) fprintf(stderr, "Usage: %s [-%s] [<] geom.g [> file.dxf] [bot1 bot2 bot3...]\n",
 		   progname, options);
     bu_exit(1, NULL);
 }
@@ -81,9 +81,7 @@ int parse_args(int ac, char *av[])
     while ((c=bu_getopt(ac, av, options)) != -1)
 	switch (c) {
 	    case 'd'	: debug = strtol(bu_optarg, NULL, 16); break;
-	    case '?'	:
-	    case 'h'	:
-	    default		: usage("Bad or help flag specified\n"); break;
+	    default	: usage("Bad flag specified\n"); break;
 	}
 
     return bu_optind;
@@ -522,7 +520,7 @@ int main(int ac, char *av[])
     arg_count = parse_args(ac, av);
 
     if ((ac - arg_count) < 1) {
-	fprintf(stderr, "Usage: %s geom.g [file.dxf] [bot1 bot2 bot3...]\n", progname);
+	usage("");
 	return 1;
     }
 
