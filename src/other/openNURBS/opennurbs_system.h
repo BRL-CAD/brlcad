@@ -164,6 +164,11 @@
 
 /*
 // From windows.h openNURBS only needs definitions of ON_BOOL32, true,
+// and false, and a declarations of OutputDebugString(), and
+// WideCharToMultiByte().  These 
+// defines disable the inclusion of most of the Windows garbage.
+*/
+
 #if defined(ON_COMPILER_MSC1600)
 // include SKDDDKVer.h When using the v100 platform headers.
 // Including SDKDDKVer.h defines the highest available Windows platform.
@@ -172,15 +177,9 @@
 //#include <SDKDDKVer.h>
 #endif
 
-// and false, and a declarations of OutputDebugString(), and
-// WideCharToMultiByte().  These 
-// defines disable the inclusion of most of the Windows garbage.
-*/
-
 #if !defined(_WINDOWS_)
 /* windows.h has not been read - read just what we need */
 #define WIN32_LEAN_AND_MEAN  /* Exclude rarely-used stuff from Windows headers */
-#define NOMINMAX  /* Exclude the min() and max() macro */
 #include <windows.h>
 #endif
 
@@ -234,9 +233,13 @@
 extern "C" {
 #endif
 
-#include <stddef.h>
 #include <stdlib.h>
 #include <memory.h>
+#if defined(ON_COMPILER_XCODE)
+#include <malloc/malloc.h>
+#else
+#include <malloc.h>
+#endif
 #include <string.h>
 #include <math.h>
 #include <stdio.h>
@@ -262,14 +265,11 @@ extern "C" {
 // ON_CreateUuid calls Windows's ::UuidCreate() which
 // is declared in Rpcdce.h and defined in Rpcrt4.lib.
 #include <Rpc.h>
-#include <dirent.h>
 
-#endif /* ON_OS_WINDOWS */
+#endif
 
 #if defined(ON_COMPILER_GNU)
 #include <sys/types.h>
-#include <errno.h>
-
 #include <sys/stat.h>
 #include <wctype.h>
 #include <dirent.h>
@@ -280,7 +280,9 @@ extern "C" {
 
 #ifdef __cplusplus
 } /* extern "C" */
-#endif  
+#endif
+
+#include <errno.h>
 
 #if defined (cplusplus) || defined(_cplusplus) || defined(__cplusplus)
 // C++ system includes
@@ -336,8 +338,6 @@ typedef ON__UINT16 wchar_t;
 
 // As 64 bit compilers become more common, the definitions
 // of the next 6 typedefs may need to vary with compiler.
-// ON_MAX_SIZET = maximum value of a size_t type
-#define ON_MAX_SIZE_T 0xFFFFFFFFFFFFFFFF
 // As much as possible, the size of runtime types is left 
 // up to the compiler so performance and ease of use can 
 // be maximized.  In the rare cases where it is critical 
@@ -349,6 +349,8 @@ typedef ON__UINT16 wchar_t;
 // 64 bit (8 byte) pointers
 #define ON_SIZEOF_POINTER 8
 #define ON_64BIT_POINTER
+// ON_MAX_SIZET = maximum value of a size_t type
+#define ON_MAX_SIZE_T 0xFFFFFFFFFFFFFFFF
 #else
 // 32 bit (4 byte) pointers
 #define ON_SIZEOF_POINTER 4
@@ -406,7 +408,6 @@ typedef long long ON__INT64;
 // 64 bit unsigned integer
 typedef unsigned long long ON__UINT64;
 
-
 #else
 
 #error Verify that long long is a 64 bit integer with your compiler!
@@ -453,16 +454,7 @@ typedef unsigned int ON__UINT_PTR;
 // If ON_LITTLE_ENDIAN is defined, then the code will
 // is compiled assuming little endian byte order.
 //
-#if defined(ON_COMPILER_XCODE)
-/* using Apple's OSX Xcode compiler */
-
-#if (defined(__ppc__) || defined(__ppc64__))
-#define ON_BIG_ENDIAN
-#elif (defined (__i386__) || defined( __x86_64__ ))
-#define ON_LITTLE_ENDIAN
-#endif
 // If ON_BIG_ENDIAN is defined, then the code will
-#endif
 // is compiled assuming big endian byte order.
 //
 // If neither is defined, the endianess is determined at
@@ -480,7 +472,16 @@ typedef unsigned int ON__UINT_PTR;
 
 #endif
 
+#if defined(ON_COMPILER_XCODE)
+/* using Apple's OSX Xcode compiler */
 
+#if (defined(__ppc__) || defined(__ppc64__))
+#define ON_BIG_ENDIAN
+#elif (defined (__i386__) || defined( __x86_64__ ))
+#define ON_LITTLE_ENDIAN
+#endif
+
+#endif
 
 
 #if defined(ON_LITTLE_ENDIAN) && defined(ON_BIG_ENDIAN)
