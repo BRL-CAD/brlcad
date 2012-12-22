@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 <!-- lifted from troff+man by doclifter -->
-<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='g2asc1'>
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='asc2g'>
 <refmeta>
-    <refentrytitle>G2ASC
+    <refentrytitle>ASC2G
 </refentrytitle>
 <manvolnum>1</manvolnum>
 <refmiscinfo class='source'>BRL-CAD</refmiscinfo>
@@ -10,24 +10,24 @@
 </refmeta>
 
 <refnamediv>
-<refname>g2asc</refname>
-<refpurpose>convert a BRL-CAD mged geometry database from binary to ASCII form.</refpurpose>
+<refname>asc2g</refname>
+<refpurpose>convert a BRL-CAD mged geometry database from ASCII to binary form.</refpurpose>
 </refnamediv>
 <!-- body begins here -->
 <refsynopsisdiv xml:id='synopsis'>
 <cmdsynopsis>
-  <emphasis remap='B'><command>g2asc</command></emphasis>
-    <arg choice='plain'><replaceable>input.g</replaceable></arg>
-    <arg choice='plain'><replaceable>output.asc</replaceable></arg>
+  <emphasis remap='B'><command>asc2g</command></emphasis>
+    <arg choice='plain'><replaceable>input.asc</replaceable></arg>
+    <arg choice='plain'><replaceable>output.g</replaceable></arg>
     <sbr/>
 </cmdsynopsis>
 </refsynopsisdiv>
 
 
 <refsect1 xml:id='description'><title>DESCRIPTION</title>
-<para><emphasis remap='B'><command>g2asc</command></emphasis> is a utility provided by BRL-CAD used to convert <emphasis remap='I'><command>mged(1)</command></emphasis> geometry databases in binary format to ASCII form to be later converted back by <emphasis remap='I'><command>asc2g(1)</command></emphasis>. Databases in the new format will be converted to the new (Tcl script) ASCII format and databases in the old format will be converted to the old ASCII format (See <emphasis remap='B'>HISTORY</emphasis>).</para>
+<para><emphasis remap='B'><command>asc2g</command></emphasis> is a utility provided by BRL-CAD used to convert <emphasis remap='I'><command>mged(1)</command></emphasis> geometry databases in ASCII form outputted by <emphasis remap='I'><command>g2asc(1)</command></emphasis> to the new binary format. The utility will always create the new binary format, but it will accept either of the two ASCII formats (See <emphasis remap='B'>HISTORY</emphasis>).</para>
 
-<para>The local machine binary representation of a mged database is inherently non-portable. <emphasis remap='I'><command>g2asc</command></emphasis>, along with it's converse <emphasis remap='I'><command>asc2g</command></emphasis> are simple filters which convert between the binary form and an ASCII representation.</para>
+<para>The local machine binary representation of a mged database is inherently non-portable. <emphasis remap='I'><command>asc2g</command></emphasis>, along with it's converse <emphasis remap='I'><command>g2asc</command></emphasis> are simple filters which convert between the binary form and an ASCII representation.</para>
 
 <para>This was traditionally performed so the files could be transferred to another machine in a portable format.  Although no longer necessary for the current binary geometry database files that  are  created by  mged  ("v5"  format), the conversion process is still necessary if manipulating older ("v4" format) geometry database files.</para>
 
@@ -54,19 +54,19 @@
 
 
 <refsect1 xml:id='options'><title>OPTIONS</title>
-<para><emphasis remap='B'><command>g2asc</command></emphasis> does not take any options. However, you have to supply the input and output files.</para>
+<para><emphasis remap='B'><command>asc2g</command></emphasis> does not take any options. However, you have to supply the input and output files.</para>
 
 </refsect1>
 
 
 <refsect1 xml:id='files'><title>FILES</title>
-<para><emphasis remap='I'>input.g</emphasis> is a geometry database previously created using <emphasis remap='B'><command>mged</command></emphasis> and <emphasis remap='I'>output.asc</emphasis> is the name of the file in which the ASCII representation should be stored.</para>
+<para><emphasis remap='I'>input.asc</emphasis> is a file previously created using <emphasis remap='B'><command>g2asc</command></emphasis> and <emphasis remap='I'>output.g</emphasis> is the name of the file where the resulting binary database should be stored.</para>
 
 </refsect1>
 
 
 <refsect1 xml:id='see_also'><title>SEE ALSO</title>
-<para><citerefentry><refentrytitle>asc2g</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>brlcad</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>mged</refentrytitle><manvolnum>1</manvolnum></citerefentry></para>
+<para><citerefentry><refentrytitle>g2asc</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>brlcad</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>mged</refentrytitle><manvolnum>1</manvolnum></citerefentry></para>
 
 </refsect1>
 
@@ -99,7 +99,7 @@
 
 
 <refsect1 xml:id='copyright'><title>COPYRIGHT</title>
-<!-- <para><command>g2asc</command>, BRL-CAD and this man page are released under the <emphasis remap='B'>BSD Documentation License (BDL)</emphasis>, a content license similar to the FreeBSD Documentation License allowing flexible modification and redistribution of content.</para> -->
+<!-- <para><command>asc2g</command>, BRL-CAD and this man page are released under the <emphasis remap='B'>BSD Documentation License (BDL)</emphasis>, a content license similar to the FreeBSD Documentation License allowing flexible modification and redistribution of content.</para> -->
 <para>This software is Copyright (c) 1989-2012 by the United States Government as represented by U.S. Army Research Laboratory.</para>
 
 </refsect1>

@@ -8,6 +8,7 @@ set(docbook_man1_EN
   asc-nmg.xml
   asc-pl.xml
   asc2dsp.xml
+  asc2g.xml
   azel.xml
   bary.xml
   benchmark.xml
@@ -239,7 +240,6 @@ set(docbook_man1_EN
 # describe more than one command.  Those files need special
 # handling, since the CMake logic has no way to know about the
 # extra outputs without being told.
-set_source_files_properties(g2asc.xml PROPERTIES EXTRA_MAN_OUTPUTS "asc2g.1")
 set_source_files_properties(pix2asc.xml PROPERTIES EXTRA_MAN_OUTPUTS "asc2pix.1")
 
 DOCBOOK_TO_HTML(man1 docbook_man1_EN html/man1/en "")
