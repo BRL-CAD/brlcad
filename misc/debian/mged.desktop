@@ -7,3 +7,4 @@ Icon=mged
 Terminal=true
 Type=Application
 Categories=BRL-CAD;
+MimeType=application/brlcad-v4;application/brlcad-v5;

@@ -6,3 +6,4 @@ Exec=/usr/brlcad/bin/archer %f
 Icon=archer
 Type=Application
 Categories=BRL-CAD;
+MimeType=application/brlcad-v4;application/brlcad-v5;
