@@ -15,11 +15,10 @@
 </refnamediv>
 <!-- body begins here -->
 <refsynopsisdiv xml:id='synopsis'>
-<cmdsynopsis>
-  <emphasis remap='B'><command>asc2g</command></emphasis>
+<cmdsynopsis sepchar=" ">
+    <command>asc2g</command>
     <arg choice='plain'><replaceable>input.asc</replaceable></arg>
     <arg choice='plain'><replaceable>output.g</replaceable></arg>
-    <sbr/>
 </cmdsynopsis>
 </refsynopsisdiv>
 
