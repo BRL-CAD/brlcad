@@ -238,7 +238,7 @@ extern "C" {
 #if defined(ON_COMPILER_XCODE)
 #include <malloc/malloc.h>
 #else
-#include <malloc.h>
+#include <stdlib.h>
 #endif
 #include <string.h>
 #include <math.h>
