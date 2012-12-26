@@ -62,10 +62,10 @@ main (int argc, char **argv)
     char buf[BUF_LEN];
     char sarg[BUF_LEN];
     static char *fm[] = { "r", "w" };
-    double darg[6];
+    double darg[6] = {0.0};
     static FILE *fp[2];
     int i;
-    int iarg[6];
+    int iarg[6] = {0};
     int line_nm;
     int nm_args = 0;
 

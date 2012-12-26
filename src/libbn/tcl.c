@@ -871,7 +871,7 @@ bn_cmd_noise_slice(ClientData UNUSED(clientData),
 		for (xval = 0; xval < xdim; xval++) {
 		    pt[X] = xval * scale[X] + delta[X];
 
-		    val = bn_noise_fbm(pt, h_val, lacunarity, octaves);
+		    bn_noise_fbm(pt, h_val, lacunarity, octaves);
 
 		}
 	    }

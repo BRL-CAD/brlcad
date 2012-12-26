@@ -67,7 +67,6 @@
 #  include <sys/resource.h>
 #endif
 
-
 struct sockaddr_in sinme;
 struct sockaddr_in sinhim;
 struct sockaddr_in sindum;
@@ -658,6 +657,7 @@ main(int argc, char **argv)
 	(void)Nwrite(fd, buf, 4); /* rcvr end */
 	(void)Nwrite(fd, buf, 4); /* rcvr end */
     }
+    free(buf);
     fprintf(stderr, "ttcp%s: %s\n", trans?"-t":"-r", stats);
     if (cput <= 0.0) cput = 0.001;
     if (realt <= 0.0) realt = 0.001;

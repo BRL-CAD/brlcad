@@ -335,7 +335,6 @@ bn_poly_cubic_roots(register struct bn_complex *roots, register const struct bn_
 
 	if (a >= 0.0) {
 	    fact = 0.0;
-	    phi = 0.0;
 	    cs_phi = 1.0;		/* cos(phi); */
 	    sn_phi_s3 = 0.0;	/* sin(phi) * SQRT3; */
 	} else {
@@ -343,7 +342,6 @@ bn_poly_cubic_roots(register struct bn_complex *roots, register const struct bn_
 	    a *= -THIRD;
 	    fact = sqrt(a);
 	    if ((f = b * (-0.5) / (a*fact)) >= 1.0) {
-		phi = 0.0;
 		cs_phi = 1.0;		/* cos(phi); */
 		sn_phi_s3 = 0.0;	/* sin(phi) * SQRT3; */
 	    }  else if (f <= -1.0) {

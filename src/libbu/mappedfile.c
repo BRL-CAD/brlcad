@@ -269,7 +269,6 @@ bu_open_mapped_file(const char *name, const char *appl)
 	bu_semaphore_acquire(BU_SEM_SYSCALL);
 	(void)close(fd);
 	bu_semaphore_release(BU_SEM_SYSCALL);
-	fd = -1;
     }
 
     mp->uses = 1;
@@ -292,7 +291,6 @@ fail:
 	bu_semaphore_acquire(BU_SEM_SYSCALL);
 	(void)close(fd);
 	bu_semaphore_release(BU_SEM_SYSCALL);
-	fd = -1;
     }
 
     if (mp) {

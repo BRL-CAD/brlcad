@@ -430,7 +430,7 @@ main(int argc, char **argv)
     outbuf = bu_malloc(i, "outbuf");
 
     /* Here we go */
-    i = scale(stdout, inx, iny, outx, outy);
+    scale(stdout, inx, iny, outx, outy);
     bu_free(outbuf, "outbuf");
     bu_free(buffer, "buffer");
     return 0;

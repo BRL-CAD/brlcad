@@ -198,11 +198,9 @@ main (int argc, char **argv)
 	}
     switch (argc - bu_optind) {
 	case 0:
-	    inf_name = "stdin";
 	    infp = stdin;
 	    /* Break intentionally missing */
 	case 1:
-	    outf_name = "stdout";
 	    outfp = stdout;
 	    /* Break intentionally missing */
 	case 2:

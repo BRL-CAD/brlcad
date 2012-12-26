@@ -223,6 +223,8 @@ main(int argc, char **argv)
 	    perror("write");
     }
 
+    bu_free(obuf, "obuf alloc from malloc");
+
     fprintf(stderr, "\n");
 
     return 0;

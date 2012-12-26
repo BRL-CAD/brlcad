@@ -34,7 +34,6 @@ bu_hash(unsigned char *str, int len)
     unsigned long hash = 5381;
     int i, c;
 
-    c = *str;
     for (i=0; i<len; i++) {
 	c = *str;
 	hash = ((hash << 5) + hash) + c; /* hash * 33 + c */

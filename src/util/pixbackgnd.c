@@ -323,6 +323,9 @@ main(int argc, char **argv)
 	    flood(horiz_buf, vert_buf, vp, line);
     }
 
+    bu_free(horiz_buf, "horiz_buf alloc from malloc");
+    bu_free(vp, "vp");
+
     return 0;
 }
 

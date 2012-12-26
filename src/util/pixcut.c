@@ -317,7 +317,7 @@ main(int argc, char **argv)
     }
 
     while (row < base_y) {
-	result = fread(inbuf, num_bytes, org_width, input);
+	fread(inbuf, num_bytes, org_width, input);
 	row++;
     }
 /*

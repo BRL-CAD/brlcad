@@ -145,6 +145,8 @@ main(int argc, char **argv)
 	line_number++;
     }
 
+    bu_free(line2, "line2 alloc from malloc");
+
     return 0;
 }
 

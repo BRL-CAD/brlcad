@@ -183,7 +183,7 @@ void mk_trans_tbl(void)
 		case OR  : tmp=d; tmp |= (int)val[i]; d=tmp;break;
 		case AND : tmp=d; tmp &= (int)val[i]; d=tmp;break;
 		case XOR : tmp=d; tmp ^= (int)val[i]; d= tmp; break;
-		case TRUNC: tmp=((int)d/(int)val[i])*(int)val[i]; break;
+		/* case TRUNC: tmp=((int)d/(int)val[i])*(int)val[i]; break; */
 		default  : fprintf(stderr, "%s: error in op\n", progname);
 		    bu_exit (-1, NULL);
 		    break;

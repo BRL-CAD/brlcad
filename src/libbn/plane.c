@@ -118,7 +118,6 @@ bn_3pts_collinear(fastf_t *a, fastf_t *b, fastf_t *c, const struct bn_tol *tol)
     }
 
     if (mag_ca > max_len) {
-	max_len = mag_ca;
 	max_edge_no = 3;
     }
 
@@ -846,12 +845,10 @@ bn_isect_line2_lseg2(fastf_t *dist,
 	if (bn_pt2_pt2_equal(a, hit_pt, tol) ||
 	    bn_pt2_pt2_equal(a, hit2, tol)) {
 	    dist[1] = 0;
-	    ret = 1;	/* Intersect is at A */
 	}
 	if (bn_pt2_pt2_equal(b, hit_pt, tol) ||
 	    bn_pt2_pt2_equal(b, hit_pt, tol)) {
 	    dist[1] = 1;
-	    ret = 2;	/* Intersect is at B */
 	}
 
 	ret = bn_isect_pt2_lseg2(&ab_dist, a, b, hit_pt, tol);
@@ -1221,12 +1218,8 @@ bn_isect_line3_line3(fastf_t *pdist,        /* see above */
 	bu_bomb("bn_isect_line3_line3(): logic error, lines colinear but not parallel\n");
     }
 
-    if (parallel && !colinear) {
-	/* lines are parallel */
-	sc = d / pdir_mag_sq;
-	tc = 0.0;
+    if (parallel && !colinear)
 	return -2; /* no intersection, lines are parallel */
-    }
 
     if (parallel && colinear) {
 

@@ -136,6 +136,7 @@ main(int argc, char **argv)
 	    interp_lines(outy-1, outy, outy-2);
     }
     ret = write(1, (char *)outbuf, outsize);
+    bu_free(inbuf, "inbuf alloc from malloc");
     if (ret != outsize) {
 	perror("pixinterp2x write");
 	bu_exit (1, NULL);

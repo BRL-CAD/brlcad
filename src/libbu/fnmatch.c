@@ -217,7 +217,6 @@ charclassmatch(const char *pattern, char test, int *s)
 	c = *pattern++; /* next */
     }
     c = *pattern++;
-    if (c != ']') resultholder = -1;
     bu_vls_strncpy(&classname, pattern-counter-2, counter);
 
     ctclass = findclass(bu_vls_addr(&classname));

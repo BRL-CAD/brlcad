@@ -390,7 +390,7 @@ int bn_tri_tri_isect(point_t V0, point_t V1, point_t V2,
     bb=(float)FABS(D[1]);
     cc=(float)FABS(D[2]);
     if (bb>max) max=bb, index=1;
-    if (cc>max) max=cc, index=2;
+    if (cc>max) index=2;
 
     /* this is the simplified projection onto L*/
     vp0=V0[index];
@@ -551,7 +551,7 @@ int bn_tri_tri_isect_with_line(point_t V0, point_t V1, point_t V2,
     b=fabs(D[1]);
     c=fabs(D[2]);
     if (b>max) max=b, index=1;
-    if (c>max) max=c, index=2;
+    if (c>max) index=2;
 
     /* this is the simplified projection onto L*/
     vp0=V0[index];

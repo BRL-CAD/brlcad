@@ -118,7 +118,6 @@ main (int argc, char *argv[])
      */
     switch (argc - bu_optind) {
 	case 0:
-	    inf_name = "stdin";
 	    infd = 0;
 	    break;
 	case 1:

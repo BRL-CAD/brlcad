@@ -364,7 +364,6 @@ main(int argc, char **argv)
     }
 
     width = header.ras_width;
-    x = 0;
 
     switch (header.ras_depth) {
 	case 1:
@@ -440,7 +439,7 @@ main(int argc, char **argv)
 	    while ((header.ras_type == RT_BYTE_ENCODED) ?
 		   decoderead(buf, sizeof(*buf), scanbytes, fp) :
 		   fread(buf, sizeof(*buf), scanbytes, fp)) {
-		for (x=0; x < width; x++) {
+		for (x = 0; x < width && x < (int)sizeof(*buf); x++) {
 		    cmap_idx = buf[x];
 		    if (cmap_idx >= CMAP_MAX_INDEX) {
 			bu_log("Warning: Read invalid index %u.\n",

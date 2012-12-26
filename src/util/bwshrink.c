@@ -86,9 +86,8 @@ usample_image(int w, int h, unsigned char *buffer, int Factor)
     p = buffer;
 
     for (y=0; y < h; y += Factor)
-	for (x=0; x < w; x += Factor, p++) {
+	for (x=0; x < w; x += Factor, p++)
 	    p[0] = buffer[x + y * w];
-	}
 }
 
 
@@ -188,6 +187,7 @@ int main(int ac, char **av)
     if ((buffer = (unsigned char *)malloc(width*height)) == (unsigned char *)NULL) {
 	fprintf(stderr, "%s: cannot allocate input buffer\n",
 		      progname);
+        bu_free(buffer, "buffer alloc from malloc");
 	bu_exit (-1, NULL);
     }
 
@@ -195,6 +195,8 @@ int main(int ac, char **av)
     for (t=0; t < size && (c=read(0, (char *)&buffer[t], size-t)) >= 0; t += c) {
 	/* do nothing */;
     }
+
+    bu_free(buffer, "buffer alloc from malloc");
 
     if (c < 0) {
 	perror (filename);
@@ -210,6 +212,8 @@ int main(int ac, char **av)
 
     for (t=0; t < size && (c=write(1, (char *)&buffer[t], size-t)) >= 0;
 	 t += c);
+
+    bu_free(buffer, "buffer alloc from malloc");
 
     if (c < 0) {
 	perror("stdout");

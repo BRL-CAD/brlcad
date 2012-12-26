@@ -628,7 +628,6 @@ anim_dirn2mat(mat_t m, const vect_t dx2, const vect_t dn)
     vect_t dx;
 
     VMOVE(dx, dx2);
-    sign = 1.0;
     mag = MAGNITUDE(dx);
     if (mag < VDIVIDE_TOL) {
 	bu_log("anim_dirn2mat: Need non-zero vector");
@@ -647,7 +646,6 @@ anim_dirn2mat(mat_t m, const vect_t dx2, const vect_t dn)
 	if (mag < VDIVIDE_TOL) {
 	    /* use default */
 	    VSET(temp, 0.0, 1.0, 0.0);
-	    mag = 1.0;
 	} else {
 	    inv = 1.0/mag;
 	    temp[0] *= inv;

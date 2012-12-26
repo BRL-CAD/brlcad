@@ -153,6 +153,8 @@ usample_image(int scanlen, int Width, int Height, unsigned char *buffer, int Fac
 	    p[1] = buffer[t+1];
 	    p[2] = buffer[t+2];
 	}
+
+    bu_free(p, "p");
 }
 
 
@@ -250,9 +252,8 @@ int main(int ac, char **av)
 
     switch (method) {
 	case METH_BOXCAR : shrink_image(scanlen, width, height, buffer, factor); break;
-	case METH_UNDERSAMPLE : usample_image(scanlen, width, height, buffer, factor);
-	    break;
-	default: return -1;
+	case METH_UNDERSAMPLE : usample_image(scanlen, width, height, buffer, factor); break;
+	default: bu_free(buffer, "buffer alloc from malloc"); return -1;
     }
 
     write_image(width/factor, height/factor, buffer);
