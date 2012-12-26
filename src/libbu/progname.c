@@ -124,7 +124,7 @@ progname_argv0(void)
     }
 #endif
 
-    if (!argv0) {
+    if (!argv0 || *argv0 == '\0') {
 	argv0 = "(BRL-CAD)";
     }
 
@@ -182,7 +182,7 @@ bu_getprogname(void) {
     name = getprogname(); /* not malloc'd memory */
 #endif
 
-    if (!name) {
+    if (!name || *name == '\0') {
 	name = progname_argv0();
     }
 
