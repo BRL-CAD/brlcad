@@ -176,13 +176,10 @@ light_cvt_visible(register const struct bu_structparse *sdp, register const char
 	       LIGHT_O(lt_visible),
 	       LIGHT_O(lt_invisible));
     }
-    switch (sdp->sp_offset) {
-	case LIGHT_O(lt_invisible):
-	    lsp->lt_visible = !lsp->lt_invisible;
-	    break;
-	case LIGHT_O(lt_visible):
-	    lsp->lt_invisible = !lsp->lt_visible;
-	    break;
+    if(sdp->sp_offset == LIGHT_O(lt_invisible)) {
+        lsp->lt_visible = !lsp->lt_invisible;
+    } else if(sdp->sp_offset == LIGHT_O(lt_visible)) {
+        lsp->lt_invisible = !lsp->lt_visible;
     }
 }
 

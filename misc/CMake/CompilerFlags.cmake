@@ -257,7 +257,7 @@ BRLCAD_CHECK_C_FLAG(msse3 BUILD_TYPES Debug)
 # and use gnu99 here - c99 has problems on Linux.
 # BRLCAD_CHECK_C_FLAG("std=gnu1x")
 BRLCAD_CHECK_C_FLAG("std=gnu99" BUILD_TYPES Release VARS C99_FLAG)
-BRLCAD_CHECK_C_FLAG("std=gnu89" BUILD_TYPES Debug)
+BRLCAD_CHECK_C_FLAG("std=gnu99" BUILD_TYPES Debug VARS C99_FLAG)
 
 # Silence check for unused arguments (used to silence clang warnings about
 # unused options on the command line). By default clang generates a lot of

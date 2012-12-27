@@ -1162,7 +1162,7 @@ typedef struct bu_list bu_list_t;
  * Files using BU_LIST_MAIN_PTR will need to include stddef.h
  */
 #define BU_LIST_MAIN_PTR(_type, _ptr2, _name2)	\
-    ((struct _type *)(((char *)(_ptr2)) - offsetof(struct _type, _name2.magic)))
+    ((struct _type *)(((char *)(_ptr2)) - (offsetof(struct _type, _name2) + offsetof(struct bu_list, magic))))
 /** @} */
 
 
@@ -2090,13 +2090,8 @@ BU_EXPORT extern int bu_debug;
 /* FIXME - this is a temporary cast. The bu_structparse sp_offset member
  *         should be a size_t.
  */
-#ifndef offsetof
 #  define bu_offsetof(_t, _m) (size_t)(&(((_t *)0)->_m))
 #  define bu_offsetofarray(_t, _m) (size_t)((((_t *)0)->_m))
-#else
-#  define bu_offsetof(_t, _m) (long)offsetof(_t, _m)
-#  define bu_offsetofarray(_t, _m) (long)offsetof(_t, _m[0])
-#endif
 
 
 /**
