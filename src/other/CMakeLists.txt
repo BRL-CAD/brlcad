@@ -774,22 +774,31 @@ else(BRLCAD_LEVEL2)
 endif(BRLCAD_LEVEL2)
 
 
-# Bullet is not yet integrated as a src/other subbuild, but there is code
-# that will make use of it if it is available.  If that code becomes 
-# sufficiently useful, Bullet will be integrated.  In the meantime, locate
-# the find logic for that package here.
-
-# Bullet physics library
-if(BRLCAD_LEVEL2)
-  find_package(Bullet)
-  if(BULLET_FOUND)
-    CONFIG_H_APPEND(BRLCAD "#define HAVE_BULLET 1\n")
-  endif(BULLET_FOUND)
+# Bullet Physics Library.
+set(bullet_ALIASES ENABLE_BULLET)
+set(bullet_DESCRIPTION "
+Option for enabling and disabling compilation of the Bullet Physics Library
+provided with BRL-CAD's source code.  Default is AUTO, responsive
+to the toplevel BRLCAD_BUNDLED_LIBS option and testing first for a system
+version if BRLCAD_BUNDLED_LIBS is also AUTO.
+")
+THIRD_PARTY(bullet bullet "BRLCAD_LEVEL3" bullet_ALIASES bullet_DESCRIPTION)
+if(BRLCAD_BULLET_BUILD)
+  set(BULLET_INCLUDE_DIR "${BRLCAD_SOURCE_DIR}/src/other/bullet/src" CACHE STRING "directory with Bullet headers" FORCE)
+  set(BULLET_LIBRARIES "LinearMath;BulletDynamics;BulletSoftBody;BulletCollison" CACHE STRING "Bullet libs" FORCE) 
+  set(BULLET_FOUND ON CACHE BOOL "Bullet status" FORCE) 
+else(BRLCAD_BULLET_BUILD)
   # Let the rest of the package know the results
   set(BULLET_LIBRARIES "${BULLET_LIBRARIES}" CACHE STRING "Bullet libs" FORCE) 
   set(BULLET_FOUND "${BULLET_FOUND}" CACHE BOOL "Bullet status" FORCE) 
   mark_as_advanced(BULLET_INCLUDE_DIR)
-endif(BRLCAD_LEVEL2)
+endif(BRLCAD_BULLET_BUILD)
+if(BRLCAD_LEVEL3)
+  if(BULLET_FOUND OR BRLCAD_BULLET_BUILD)
+    CONFIG_H_APPEND(BRLCAD "#define HAVE_BULLET 1\n")
+  endif(BULLET_FOUND OR BRLCAD_BULLET_BUILD)
+endif(BRLCAD_LEVEL3)
+mark_as_advanced(BULLET_INCLUDE_DIR)
 
 # Adaptagrams is not yet integrated as a src/other subbuild, but there is code
 # that will make use of it if it is available.  If that code becomes 
