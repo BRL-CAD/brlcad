@@ -2094,7 +2094,6 @@ BU_EXPORT extern int bu_debug;
 #  define bu_offsetof(_t, _m) (size_t)(&(((_t *)0)->_m))
 #  define bu_offsetofarray(_t, _m) (size_t)((((_t *)0)->_m))
 #else
-#  pragma clang diagnostic ignored "-Wextended-offsetof"
 #  define bu_offsetof(_t, _m) (size_t)offsetof(_t, _m)
 #  define bu_offsetofarray(_t, _m) (size_t)offsetof(_t, _m[0])
 #endif
