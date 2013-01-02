@@ -71,7 +71,7 @@
 
 
 <refsect1 xml:id='diagnostics'><title>DIAGNOSTICS</title>
-<para>The diagnotics are intended to be self-explanatory. Any warning messages are written to standard error.</para>
+<para>The diagnostics are intended to be self-explanatory. Any warning messages are written to standard error.</para>
 
 </refsect1>
 
@@ -92,7 +92,7 @@
 
 <refsect1 xml:id='author'><title>AUTHOR</title>
 <para><emphasis remap='B'>Charles Michael Kennedy</emphasis></para>
-<para><emphasis remap='B'>Michael John Muuss</emphasis></para>  
+<para><emphasis remap='B'>Michael John Muuss</emphasis></para>
 
 </refsect1>
 
