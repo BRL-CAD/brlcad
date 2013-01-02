@@ -49,6 +49,16 @@
 
 #include "brep_debug.h"
 
+/* undefine "min" and "max" macros, if they exist, to prevent
+ * name conflicts with functions "std::min" and "std::max".
+ */ 
+#ifdef max
+#undef max
+#endif
+
+#ifdef min
+#undef min
+#endif
 
 #define BN_VMATH_PREFIX_INDICES 1
 #define ROOT_TOL 1.E-7
@@ -900,7 +910,10 @@ lines_intersect(double x1, double y1, double x2, double y2, double x3, double y3
 	double x = (B2*C1 - B1*C2)/det;
 	double y = (A1*C2 - A2*C1)/det;
 
-	if ((x >= std::min(x1, x2)) && (x <= std::max(x1, x2)) && (x >= std::min(x3, x4)) && (x <= std::max(x3, x4)) && (y >= std::min(y1, y2)) && (y <= std::max(y1, y2)) && (y >= std::min(y3, y4)) && (y <= std::max(y3, y4))) {
+	if ((x >= std::min<double>(x1, x2)) && (x <= std::max<double>(x1, x2)) && 
+	    (x >= std::min<double>(x3, x4)) && (x <= std::max<double>(x3, x4)) && 
+	    (y >= std::min<double>(y1, y2)) && (y <= std::max<double>(y1, y2)) && 
+	    (y >= std::min<double>(y3, y4)) && (y <= std::max<double>(y3, y4))) {
 	    return true;
 	}
 
