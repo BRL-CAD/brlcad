@@ -51,7 +51,7 @@
 
 /* undefine "min" and "max" macros, if they exist, to prevent
  * name conflicts with functions "std::min" and "std::max".
- */ 
+ */
 #ifdef max
 #undef max
 #endif
@@ -910,9 +910,9 @@ lines_intersect(double x1, double y1, double x2, double y2, double x3, double y3
 	double x = (B2*C1 - B1*C2)/det;
 	double y = (A1*C2 - A2*C1)/det;
 
-	if ((x >= std::min<double>(x1, x2)) && (x <= std::max<double>(x1, x2)) && 
-	    (x >= std::min<double>(x3, x4)) && (x <= std::max<double>(x3, x4)) && 
-	    (y >= std::min<double>(y1, y2)) && (y <= std::max<double>(y1, y2)) && 
+	if ((x >= std::min<double>(x1, x2)) && (x <= std::max<double>(x1, x2)) &&
+	    (x >= std::min<double>(x3, x4)) && (x <= std::max<double>(x3, x4)) &&
+	    (y >= std::min<double>(y1, y2)) && (y <= std::max<double>(y1, y2)) &&
 	    (y >= std::min<double>(y3, y4)) && (y <= std::max<double>(y3, y4))) {
 	    return true;
 	}
