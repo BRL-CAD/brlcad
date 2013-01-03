@@ -52,9 +52,9 @@ void find_q_pts(struct Mesh_Info *mesh) {
     for(f_it = mesh->face_pts.begin(); f_it != mesh->face_pts.end(); f_it++) {
 	ON_3dPoint p1, p2, p3;
 	l_it = (*f_it).second.begin();
-	p1 = *mesh->points_p0.At((*l_it));
-	p2 = *mesh->points_p0.At((*(l_it+1)));
-	p3 = *mesh->points_p0.At((*(l_it+2)));
+	p1 = *mesh->points_p0.At((int)(*l_it));
+	p2 = *mesh->points_p0.At((int)(*(l_it+1)));
+	p3 = *mesh->points_p0.At((int)(*(l_it+2)));
 	ON_3dPoint q((p1.x + p2.x + p3.x)/3, (p1.y + p2.y + p3.y)/3, (p1.z + p2.z + p3.z)/3);
 	mesh->points_q.Append(q);
     }
@@ -73,7 +73,7 @@ void point_inf(size_t p, struct Mesh_Info *mesh, ON_3dPointArray *p_a) {
     range = mesh->point_neighbors.equal_range(p);
     ON_3dPoint psum = ON_3dPoint(0,0,0);
     for(p_it = range.first; p_it != range.second; p_it++) {
-	psum = psum + *mesh->points_p0.At((*p_it).second);
+	psum = psum + *mesh->points_p0.At((int)(*p_it).second);
     }
     fastf_t alpha = alpha_n(n);
     //
@@ -81,7 +81,7 @@ void point_inf(size_t p, struct Mesh_Info *mesh, ON_3dPointArray *p_a) {
     //                 [pinf = ---------- * psum + -------- * p0]
     //                         3 an n + n          3 an + 1
     //
-    ON_3dPoint pinf = (3*alpha/((3*alpha+1)*n))*psum + 1/(3*alpha+1) * *mesh->points_p0.At(p);
+    ON_3dPoint pinf = (3*alpha/((3*alpha+1)*n))*psum + 1/(3*alpha+1) * *mesh->points_p0.At((int)p);
     p_a->Append(pinf);
 }
 
@@ -90,7 +90,7 @@ void point_subdiv(size_t m, size_t p, struct Mesh_Info *mesh, ON_3dPointArray *p
     size_t n = mesh->point_valence[p];
     point_inf(p, mesh, &mesh->points_inf);
     fastf_t gamma = pow((2/3 - alpha_n(n)),m);
-    ON_3dPoint subdiv_pt = gamma * *mesh->points_p0.At(p) + (1-gamma) * *mesh->points_inf.At(p);
+    ON_3dPoint subdiv_pt = gamma * *mesh->points_p0.At((int)p) + (1-gamma) * *mesh->points_inf.At((int)p);
     p_a->Append(subdiv_pt);
 }
 
@@ -343,7 +343,7 @@ struct Mesh_Info * iterate(struct rt_bot_internal *bot, struct Mesh_Info *prev_m
 
     // Relax old points here
     for(size_t pcnt = 0; pcnt < (size_t)starting_mesh->points_p0.Count(); pcnt++) {
-		mesh->points_p0.Append(*starting_mesh->points_p0.At(pcnt));
+		mesh->points_p0.Append(*starting_mesh->points_p0.At((int)pcnt));
 		mesh->iteration_of_insert[pcnt] = starting_mesh->iteration_of_insert[pcnt];
 #if 0
 	if (outer_pts.find(pcnt) == outer_pts.end()) {
@@ -363,7 +363,7 @@ struct Mesh_Info * iterate(struct rt_bot_internal *bot, struct Mesh_Info *prev_m
 #endif
     }
     for(f_it = starting_mesh->face_pts.begin(); f_it != starting_mesh->face_pts.end(); f_it++) {
-	mesh->points_p0.Append(starting_mesh->points_q[(*f_it).first]);
+	mesh->points_p0.Append(starting_mesh->points_q[(int)(*f_it).first]);
 	mesh->iteration_of_insert[mesh->points_p0.Count()-1] = mesh->iteration_cnt;
 	starting_mesh->index_in_next[(*f_it).first] = mesh->points_p0.Count()-1;
     }
@@ -466,7 +466,7 @@ int main(int argc, char *argv[])
 	int b = int(256*drand48() + 1.0);
 	for(f_it = mesh->face_pts.begin(); f_it != mesh->face_pts.end(); f_it++) {
 	    l_it = (*f_it).second.begin();
-	    plot_face(&mesh->points_p0[(*l_it)], &mesh->points_p0[(*(l_it+1))], &mesh->points_p0[(*(l_it+2))], r, g ,b, plot_file);
+	    plot_face(&mesh->points_p0[(int)(*l_it)], &mesh->points_p0[(int)(*(l_it+1))], &mesh->points_p0[(int)(*(l_it+2))], r, g ,b, plot_file);
 	}
 	fclose(plot_file);
     }
@@ -475,7 +475,7 @@ int main(int argc, char *argv[])
     // vertices
     ON_3dPointArray points_inf;
     for(size_t v = 0; v < (size_t)mesh->points_p0.Count(); v++) {
-        points_inf.Append(*mesh->points_p0.At(v));
+        points_inf.Append(*mesh->points_p0.At((int)v));
 	//point_inf(v, mesh, &points_inf);
     }
     // The subdivision process shrinks the bot relative to its original
@@ -485,14 +485,14 @@ int main(int argc, char *argv[])
     fastf_t scale = 0.0;
     for(size_t pcnt = 0; pcnt < bot_ip->num_vertices; pcnt++) {
 	ON_3dVector v1(ON_3dPoint(&bot_ip->vertices[pcnt*3]));
-	ON_3dVector v2(*points_inf.At(pcnt));
+	ON_3dVector v2(*points_inf.At((int)pcnt));
 	scale += 1 + (v1.Length() - v2.Length())/v1.Length();
     }
     scale = scale / bot_ip->num_vertices;
     for(size_t pcnt = 0; pcnt < (size_t)points_inf.Count(); pcnt++) {
-	ON_3dPoint p0(*points_inf.At(pcnt));
+	ON_3dPoint p0(*points_inf.At((int)pcnt));
 	ON_3dPoint p1 = p0 * scale;
-	*points_inf.At(pcnt) = p1;
+	*points_inf.At((int)pcnt) = p1;
     }
 
     wdbp = wdb_dbopen(dbip, RT_WDB_TYPE_DB_DISK);
@@ -500,9 +500,9 @@ int main(int argc, char *argv[])
     fastf_t *vertices = (fastf_t *)bu_malloc(sizeof(fastf_t) * points_inf.Count() * 3, "new verts");
     int *faces = (int *)bu_malloc(sizeof(int) * mesh->face_pts.size() * 3, "new faces");
     for(size_t v = 0; v < (size_t)points_inf.Count(); v++) {
-	vertices[v*3] = points_inf[v].x;
-	vertices[v*3+1] = points_inf[v].y;
-	vertices[v*3+2] = points_inf[v].z;
+	vertices[v*3] = points_inf[(int)v].x;
+	vertices[v*3+1] = points_inf[(int)v].y;
+	vertices[v*3+2] = points_inf[(int)v].z;
     }
     std::map<size_t, std::vector<size_t> >::iterator f_it;
     std::vector<size_t>::iterator l_it;

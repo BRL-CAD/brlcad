@@ -347,7 +347,7 @@ void plot_loop(std::vector<size_t> *edges, struct Manifold_Info *info, FILE *l_p
     int b = int(256*drand48() + 1.0);
     for (v_it = edges->begin(); v_it != edges->end(); v_it++) {
 	pl_color(l_plot, r, g, b);
-        ON_BrepEdge& edge = info->brep->m_E[(*v_it)];
+        ON_BrepEdge& edge = info->brep->m_E[(int)(*v_it)];
 	const ON_Curve* edge_curve = edge.EdgeCurveOf();
 	ON_Interval dom = edge_curve->Domain();
 	// XXX todo: dynamically sample the curve
@@ -518,7 +518,7 @@ void construct_patches(std::set<size_t> *faces, std::map< size_t, std::set<size_
 		get_connected_faces(info->bot, face_num, &(info->edge_to_face), &connected_faces);
 		for (cf_it = connected_faces.begin(); cf_it != connected_faces.end() ; cf_it++) {
 		    if(faces->find((*cf_it)) != faces->end()) {
-		    if(ON_DotProduct( *(*info).face_normals.At((start_face_num)),*(*info).face_normals.At((*cf_it)) ) > 0.5) {
+		    if(ON_DotProduct( *(*info).face_normals.At((int)(start_face_num)),*(*info).face_normals.At((int)(*cf_it)) ) > 0.5) {
 			face_queue.push((*cf_it));
 			faces->erase((*cf_it));
 }
@@ -556,7 +556,7 @@ void split_overlapping_patch(size_t face1, size_t face2, size_t orig_patch, std:
 	    get_connected_faces(info->bot, face_num_1, &(info->edge_to_face), &connected_faces);
 	    for (cf_it = connected_faces.begin(); cf_it != connected_faces.end() ; cf_it++) {
 		if(faces->find((*cf_it)) != faces->end() && (*patches)[new_patch_2].find(*cf_it) == (*patches)[new_patch_2].end()) {
-		    if(ON_DotProduct( *(*info).face_normals.At((start_face_num_1)),*(*info).face_normals.At((*cf_it)) ) > 0.5) {
+		    if(ON_DotProduct( *(*info).face_normals.At((int)(start_face_num_1)),*(*info).face_normals.At((int)(*cf_it)) ) > 0.5) {
 			face_queue_1.push((*cf_it));
 			faces->erase((*cf_it));
 		    }
@@ -573,7 +573,7 @@ void split_overlapping_patch(size_t face1, size_t face2, size_t orig_patch, std:
 	    get_connected_faces(info->bot, face_num_2, &(info->edge_to_face), &connected_faces);
 	    for (cf_it = connected_faces.begin(); cf_it != connected_faces.end(); cf_it++) {
 		if(faces->find((*cf_it)) != faces->end() && (*patches)[new_patch_1].find(*cf_it) == (*patches)[new_patch_1].end()) {
-		    if(ON_DotProduct( *(*info).face_normals.At((start_face_num_2)),*(*info).face_normals.At((*cf_it)) ) > 0.5) {
+		    if(ON_DotProduct( *(*info).face_normals.At(((int)start_face_num_2)),*(*info).face_normals.At((int)(*cf_it)) ) > 0.5) {
 		    face_queue_2.push((*cf_it));
 		    faces->erase((*cf_it));
 }
@@ -701,9 +701,9 @@ void bot_partition(struct Manifold_Info *info)
 	VCROSS(norm_dir, a, b);
 	VUNITIZE(norm_dir);
 	info->face_normals.Append(ON_3dVector(norm_dir[0], norm_dir[1], norm_dir[2]));
-	(*info).face_normals.At(i)->Unitize();
+	(*info).face_normals.At((int)i)->Unitize();
 	for (size_t j=0; j < (size_t)(*info).vectors.Count(); j++) {
-	    vdot = ON_DotProduct(*(*info).vectors.At(j), *(*info).face_normals.At(i));
+	    vdot = ON_DotProduct(*(*info).vectors.At((int)j), *(*info).face_normals.At((int)i));
 	    info->norm_results[std::make_pair(i, j)] = vdot;
 	    if (vdot > result) {
 		result_max = j;
@@ -782,7 +782,7 @@ void bot_partition(struct Manifold_Info *info)
 				    vect_t origin;
 				    size_t ok = 1;
 				    VMOVE(origin, &info->bot->vertices[info->bot->faces[(face_num)*3]*3]);
-				    ON_Plane plane(ON_3dPoint(origin[0], origin[1], origin[2]), *(*info).face_normals.At((face_num)));
+				    ON_Plane plane(ON_3dPoint(origin[0], origin[1], origin[2]), *(*info).face_normals.At((int)(face_num)));
 				    for (int pt = 0; pt < 3; pt++) {
 					point_t cpt;
 					VMOVE(cpt, &info->bot->vertices[info->bot->faces[((*cf_it))*3+pt]*3]);
@@ -1067,7 +1067,7 @@ void find_outer_loop(std::map<size_t, std::vector<size_t> > *loops, size_t *oute
 	    double boxmax[3] = {0.0, 0.0, 0.0};
 	    std::vector<size_t>::iterator v_it;
 	    for(v_it = (*l_it).second.begin(); v_it != (*l_it).second.end(); v_it++) {
-		ON_BrepEdge& edge = info->brep->m_E[(*v_it)];
+		ON_BrepEdge& edge = info->brep->m_E[(int)(*v_it)];
 		const ON_Curve* edge_curve = edge.EdgeCurveOf();
 		edge_curve->GetBBox((double *)&boxmin, (double *)&boxmax, 1);
 	    }
@@ -1090,7 +1090,7 @@ void find_outer_loop(std::map<size_t, std::vector<size_t> > *loops, size_t *oute
 // outer and inner trimming loops
 void build_loop(size_t patch_id, size_t loop_index, ON_BrepLoop::TYPE loop_type, std::map<size_t, std::vector<size_t> > *loops, struct Manifold_Info *info) {
 
-    ON_BrepFace& face = info->brep->m_F[patch_id];
+    ON_BrepFace& face = info->brep->m_F[(int)patch_id];
     // Start with outer loop
     ON_BrepLoop& loop = info->brep->NewLoop(loop_type, face);
     // build surface tree
@@ -1106,7 +1106,7 @@ void build_loop(size_t patch_id, size_t loop_index, ON_BrepLoop::TYPE loop_type,
     for(loop_it = loop_edges->begin(); loop_it != loop_edges->end(); loop_it++) {
 	size_t curr_edge = (*loop_it);
 	// Will we need to flip the trim?
-	ON_BrepEdge& edge = info->brep->m_E[curr_edge];
+	ON_BrepEdge& edge = info->brep->m_E[(int)curr_edge];
 	if(vert_prev != -1) {
 	    if (vert_prev == edge.m_vi[0]) {
 		trim_rev = false;
@@ -1189,7 +1189,7 @@ void find_loops(struct Manifold_Info *info)
 	FILE* ploopplot = fopen(bu_vls_addr(&name), "w");
 	std::set<size_t> curr_edges = (*p_it).second;
 	for (std::set<size_t>::iterator edge_it = curr_edges.begin(); edge_it != curr_edges.end(); edge_it++) {
-	    ON_BrepEdge& edge = info->brep->m_E[(*edge_it)];
+	    ON_BrepEdge& edge = info->brep->m_E[(int)(*edge_it)];
 	    if (edge.m_vi[0] == edge.m_vi[1]) {
 		size_t curr_loop = loops.size();
 		loops[curr_loop].push_back((*edge_it));
@@ -1206,12 +1206,12 @@ void find_loops(struct Manifold_Info *info)
 	    std::queue<size_t> edge_queue;
 	    edge_queue.push(*(curr_edges.begin()));
 	    curr_edges.erase(edge_queue.front());
-	    int vert_to_match = info->brep->m_E[edge_queue.front()].m_vi[0];
+	    int vert_to_match = info->brep->m_E[(int)edge_queue.front()].m_vi[0];
 	    while (!edge_queue.empty()) {
 		size_t curr_edge = edge_queue.front();
 		edge_queue.pop();
 		loops[curr_loop].push_back(curr_edge);
-		ON_BrepEdge& edge = info->brep->m_E[curr_edge];
+		ON_BrepEdge& edge = info->brep->m_E[(int)curr_edge];
                 if(vert_to_match == edge.m_vi[0]) {
                   vert_to_match = edge.m_vi[1];
                 } else {
@@ -1287,7 +1287,7 @@ void PatchToVector3d(struct rt_bot_internal *bot, size_t curr_patch, struct Mani
     std::set<size_t> *patch_edges = &(info->patch_edges[curr_patch]);
     std::set<size_t>::iterator pe_it;
     for (pe_it = patch_edges->begin(); pe_it != patch_edges->end(); pe_it++) {
-	ON_BrepEdge& edge = info->brep->m_E[(*pe_it)];
+	ON_BrepEdge& edge = info->brep->m_E[(int)(*pe_it)];
 	const ON_Curve* edge_curve = edge.EdgeCurveOf();
 	ON_Interval dom = edge_curve->Domain();
 	// XXX todo: dynamically sample the curve
@@ -1337,7 +1337,7 @@ void find_surfaces(struct Manifold_Info *info) {
 	ON_Interval udom = fit.m_nurbs.Domain(0);
 	ON_Interval vdom = fit.m_nurbs.Domain(1);
         ON_3dVector surf_norm = fit.m_nurbs.NormalAt(udom.ParameterAt(0.5), vdom.ParameterAt(0.5));
-	double vdot = ON_DotProduct(surf_norm, *info->face_normals.At(*(info->patches[(*p_it).first].begin())));
+	double vdot = ON_DotProduct(surf_norm, *info->face_normals.At((int)*(info->patches[(*p_it).first].begin())));
 	if (vdot < 0) {
             info->brep->FlipFace(face);
             info->brep2->FlipFace(*face2);
