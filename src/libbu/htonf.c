@@ -28,54 +28,78 @@
 
 #include "bu.h"
 
-/* 
- * a definition of convert_float: a function that takes a float and 
- * converts it to the format of the host/network 
- */
-HIDDEN void convert_float(register unsigned char *out, register const unsigned char *in, size_t count)
-{
-        register size_t i;
-        assert(sizeof(float) == SIZEOF_NETWORK_FLOAT);
-        switch (bu_byteorder()) {
-	        case BU_BIG_ENDIAN:
-                /*
-                 * First, the case where the system already operates in
-                 * IEEE format internally, using big-endian order. These
-                 * are the lucky ones.
-                 */
-                memcpy(out, in, count*SIZEOF_NETWORK_FLOAT);
-                return;
-                case BU_LITTLE_ENDIAN:
-                    /*
-                     * This machine uses IEEE, but in little-endian byte order
-                     */
-                    for (i=count; i > 0; i--) {
-                        *out++ = in[3];
-                        *out++ = in[2];
-                        *out++ = in[1];
-                        *out++ = in[0];
-                        in += SIZEOF_NETWORK_FLOAT;
-                    }
-                    return;
-                default:
-                    /* nada */
-                    break;
-        }
-        bu_bomb("ntohf.c: ERROR, no NtoHD conversion for this machine type\n");
-}
-
 
 void
 htonf(register unsigned char *out, register const unsigned char *in, size_t count)
 {
-convert_float(out,in,count);
+    register size_t i;
+
+    assert(sizeof(float) == SIZEOF_NETWORK_FLOAT);
+
+    switch (bu_byteorder()) {
+	case BU_BIG_ENDIAN:
+	    /*
+	     * First, the case where the system already operates in
+	     * IEEE format internally, using big-endian order.  These
+	     * are the lucky ones.
+	     */
+	    memcpy(out, in, count*SIZEOF_NETWORK_FLOAT);
+	    return;
+	case BU_LITTLE_ENDIAN:
+	    /*
+	     * This machine uses IEEE, but in little-endian byte order
+	     */
+	    for (i=count; i > 0; i--) {
+		*out++ = in[3];
+		*out++ = in[2];
+		*out++ = in[1];
+		*out++ = in[0];
+		in += SIZEOF_NETWORK_FLOAT;
+	    }
+	    return;
+	default:
+	    /* nada */
+	    break;
+    }
+
+    bu_bomb("ntohf.c:  ERROR, no NtoHD conversion for this machine type\n");
 }
 
 
 void
 ntohf(register unsigned char *out, register const unsigned char *in, size_t count)
 {
-convert_float(out,in,count);
+    register size_t i;
+
+    assert(sizeof(float) == SIZEOF_NETWORK_FLOAT);
+
+    switch (bu_byteorder()) {
+	case BU_BIG_ENDIAN:
+	    /*
+	     * First, the case where the system already operates in
+	     * IEEE format internally, using big-endian order.  These
+	     * are the lucky ones.
+	     */
+	    memcpy(out, in, count*SIZEOF_NETWORK_FLOAT);
+	    return;
+	case BU_LITTLE_ENDIAN:
+	    /*
+	     * This machine uses IEEE, but in little-endian byte order
+	     */
+	    for (i=count; i > 0; i--) {
+		*out++ = in[3];
+		*out++ = in[2];
+		*out++ = in[1];
+		*out++ = in[0];
+		in += SIZEOF_NETWORK_FLOAT;
+	    }
+	    return;
+	default:
+	    /* nada */
+	    break;
+    }
+
+    bu_bomb("ntohf.c:  ERROR, no NtoHD conversion for this machine type\n");
 }
 
 /*

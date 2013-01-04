@@ -107,7 +107,6 @@ struct pkg_conn {
     /* neg->read new hdr, 0->all here, >0 ->more to come */
     char *pkc_buf;				/**< @brief start of dynamic buf */
     char *pkc_curpos;				/**< @brief current position in pkg_buf */
-    void *pkc_server_data;			/**< @brief used to hold server data for callbacks */
 };
 #define PKC_NULL	((struct pkg_conn *)0)
 #define PKC_ERROR	((struct pkg_conn *)(-1L))

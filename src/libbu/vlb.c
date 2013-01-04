@@ -99,13 +99,6 @@ bu_vlb_buflen(struct bu_vlb *vlb)
     return vlb->nextByte;
 }
 
-size_t
-bu_vlb_capacity(struct bu_vlb *vlb)
-{
-    BU_CKMAG(vlb, BU_VLB_MAGIC, "magic for bu_vlb");
-    return vlb->bufCapacity;
-}
-
 
 void
 bu_vlb_free(struct bu_vlb *vlb)

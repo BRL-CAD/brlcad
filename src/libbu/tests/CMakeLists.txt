@@ -355,32 +355,6 @@ add_test(bu_vls_vprintf_test_55 tester_bu_vls_vprintf 55)
 add_test(bu_vls_vprintf_test_56 tester_bu_vls_vprintf 56)
 add_test(bu_vls_vprintf_test_57 tester_bu_vls_vprintf 57)
 
-#
-#  ************ vlb.c tests *************
-#
-# For tester_bu_vlb the format is:
-#
-# tester_bu_vlb [-i initSize] size ...
-#
-# Where size is the size of a memory block to be added to the array
-# The blocks will be allocated sequentially and filled with random data.
-#
-# Adding the -i option will specify an initial size to be allocated when the buffer is initialized.
-
-BRLCAD_ADDEXEC(tester_bu_vlb bu_vlb.c libbu NO_INSTALL LOCAL)
-
-add_test(bu_vlb_test_single	    tester_bu_vlb 1)
-add_test(bu_vlb_test_twice_single   tester_bu_vlb 1 1)
-add_test(bu_vlb_test_3		    tester_bu_vlb 1 2 3)
-add_test(bu_vlb_test_larger	    tester_bu_vlb 10 30)
-add_test(bu_vlb_test_very_large	    tester_bu_vlb 1000 2000 3000 4000 5000)
-add_test(bu_vlb_test_very_large_2   tester_bu_vlb 5000 4000 3000 2000 1000)
-add_test(bu_vlb_test_boundary_alloc tester_bu_vlb 511 1 1 256 255 512 1024)
-add_test(bu_vlb_test_many_writes    tester_bu_vlb 128 128 128 128 128 128 128 128 128 128 128 128 128 128 128 128)
-
-add_test(bu_vlb_test_large_init	    tester_bu_vlb -i 2048 1000 2000 3000 4000)
-add_test(bu_vlb_test_large_init_2   tester_bu_vlb -i 6500 4000 3000 2000 1000)
-
 # Local Variables:
 # tab-width: 8
 # mode: cmake

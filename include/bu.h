@@ -2091,12 +2091,10 @@ BU_EXPORT extern int bu_debug;
  *         should be a size_t.
  */
 #ifndef offsetof
-#  define bu_offsetof(_t, _m) (size_t)(&(((_t *)0)->_m))
-#  define bu_offsetofarray(_t, _m) (size_t)((((_t *)0)->_m))
-#else
-#  define bu_offsetof(_t, _m) (size_t)offsetof(_t, _m)
-#  define bu_offsetofarray(_t, _m) (size_t)offsetof(_t, _m[0])
+#  define offsetof(_t, _m) (size_t)(&(((_t *)0)->_m))
 #endif
+#define bu_offsetof(_t, _m) (size_t)offsetof(_t, _m)
+#define bu_offsetofarray(_t, _a, _d, _i) bu_offsetof(_t, _a) + sizeof(_d) * _i
 
 
 /**
@@ -5269,14 +5267,6 @@ BU_EXPORT extern unsigned char *bu_vlb_addr(struct bu_vlb *vlb);
  * @return The number of bytes written to the bu_vlb structure
  */
 BU_EXPORT extern size_t bu_vlb_buflen(struct bu_vlb *vlb);
-
-/**
- * Return the number of bytes allocated for the buffer of the bu_vlb structure
- *
- * @param vlb Pointer to the bu_vlb structure
- * @return The number of bytes allocated for the buffer of the bu_vlb structure
- */
-BU_EXPORT extern size_t bu_vlb_capacity(struct bu_vlb *vlb);
 
 /**
  * Free the memory allocated for the byte array in the bu_vlb
