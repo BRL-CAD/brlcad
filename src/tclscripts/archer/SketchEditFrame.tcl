@@ -62,7 +62,9 @@
 	common pi2 [expr {4.0 * asin( 1.0 )}]
 	common rad2deg  [expr {360.0 / $pi2}]
 
-	method do_scale {_sf}
+	method set_scale {_sf}
+	method do_scale {_sf {_epsilon 0.000001}}
+	method do_translate {_dx _dy}
 	method get_scale {}
 	method get_tobase {}
 	method get_vlist {}
@@ -97,12 +99,21 @@
 	variable mBy ""
 	variable mBz ""
 
+	variable mPrevMouseX 0
+	variable mPrevMouseY 0
+	variable mCanvasCenterX 1
+	variable mCanvasCenterY 1
+	variable mCanvasHeight 1
+	variable mCanvasInvWidth 1
+	variable mCanvasWidth 1
 	variable mDetailMode 0
 	variable mPickTol 11
 	variable mLastIndex -1
 	variable mEscapeCreate 1
 	variable mCallingFromEndBezier 0
 	variable myscale 1.0
+	variable mScrollCenterX 0
+	variable mScrollCenterY 0
 	variable vert_radius 3
 	variable tobase 1.0
 	variable tolocal 1.0
@@ -155,6 +166,7 @@
 	method highlightCurrentSketchElements {}
 	method initCanvas {_gdata}
 	method initPointHighlight {}
+	method initScrollRegion {}
 	method initSketchData {_gdata}
 	method loadTables {_gdata}
 	method redrawSegments {}
@@ -174,11 +186,12 @@
 	method end_arc {_mx _my}
 	method end_arc_radius_adjust {_segment _mx _my}
 	method end_bezier {_segment _cflag}
-	method escape_arc {}
-	method escape_bezier {_segment}
-	method escape_line {}
+	method end_scale {}
 	method fix_vertex_references {_unused_vindices}
+	method handle_configure {}
 	method handle_escape {}
+	method handle_scale {_mx _my}
+	method handle_translate {_mx _my}
 	method item_pick_highlight {_mx _my}
 	method next_bezier {_segment _mx _my}
 	method pick_arbitrary {_mx _my}
@@ -200,7 +213,9 @@
 	method start_move_segment {_sx _sy _rflag}
 	method start_move_selected {_sx _sy}
 	method start_move_selected2 {_sx _sy}
+	method start_scale {_mx _my}
 	method start_seg_pick {}
+	method start_translate {_mx _my}
 	method start_vert_pick {}
 	method tag_selected_verts {}
 	method unhighlight_selected {}
@@ -230,6 +245,7 @@
 
     bind $itk_component(canvas) <Enter> {::focus %W}
     bind $itk_component(canvas) <Escape> [::itcl::code $this handle_escape]
+    bind $itk_component(canvas) <Configure> [::itcl::code $this handle_configure]
 
     set tolocal [$::ArcherCore::application gedCmd base2local]
     set tobase [expr {1.0 / $tolocal}]
@@ -246,11 +262,60 @@
 
 
 
-::itcl::body SketchEditFrame::do_scale {_sf} {
-    set myscale [expr {$myscale * $_sf}]
-    $itk_component(canvas) scale all 0 0 $_sf $_sf
+::itcl::body SketchEditFrame::set_scale {_sf} {
+    set myscale $_sf
     drawSegments
-#    $itk_component(canvas) configure -scrollregion [$itk_component(canvas) bbox all]
+}
+
+
+::itcl::body SketchEditFrame::do_scale {_sf {_epsilon 0.000001}} {
+    if {$_sf < $_epsilon} {
+	return
+    }
+
+    set myscale [expr {$myscale * $_sf}]
+    drawSegments
+
+    set mScrollCenterX [expr {$mScrollCenterX * $_sf}]
+    set mScrollCenterY [expr {$mScrollCenterY * $_sf}]
+
+    set x1 [expr {$mScrollCenterX - $mCanvasCenterX}]
+    if {[expr {$mCanvasWidth%2}]} {
+	set x2 [expr {$mScrollCenterX + $mCanvasCenterX + 1}]
+    } else {
+	set x2 [expr {$mScrollCenterX + $mCanvasCenterX}]
+    }
+
+    set y1 [expr {$mScrollCenterY - $mCanvasCenterY}]
+    if {[expr {$mCanvasHeight%2}]} {
+	set y2 [expr {$mScrollCenterY + $mCanvasCenterY + 1}]
+    } else {
+	set y2 [expr {$mScrollCenterY + $mCanvasCenterY}]
+    }
+
+    $itk_component(canvas) configure -scrollregion [list $x1 $y1 $x2 $y2]
+}
+
+
+::itcl::body SketchEditFrame::do_translate {_dx _dy} {
+    set mScrollCenterX [expr {$mScrollCenterX + $_dx}]
+    set mScrollCenterY [expr {$mScrollCenterY + $_dy}]
+    
+    set x1 [expr {$mScrollCenterX - $mCanvasCenterX}]
+    if {[expr {$mCanvasWidth%2}]} {
+	set x2 [expr {$mScrollCenterX + $mCanvasCenterX + 1}]
+    } else {
+	set x2 [expr {$mScrollCenterX + $mCanvasCenterX}]
+    }
+
+    set y1 [expr {$mScrollCenterY - $mCanvasCenterY}]
+    if {[expr {$mCanvasHeight%2}]} {
+	set y2 [expr {$mScrollCenterY + $mCanvasCenterY + 1}]
+    } else {
+	set y2 [expr {$mScrollCenterY + $mCanvasCenterY}]
+    }
+
+    $itk_component(canvas) configure -scrollregion [list $x1 $y1 $x2 $y2]
 }
 
 
@@ -859,18 +924,25 @@
     set mLastIndex -1
 
     update idletasks
-    set canv_height [winfo height $itk_component(canvas)]
-    set canv_width [winfo width $itk_component(canvas)]
+
     set min_max [$itk_component(canvas) bbox all]
-    set tmp_scale1 [expr double($canv_width) / ([lindex $min_max 2] - [lindex $min_max 0] + 2.0 * $vert_radius)]
-    if { $tmp_scale1 < 0.0 } {set tmp_scale1 [expr -$tmp_scale1] }
-    set tmp_scale2 [expr double($canv_height) / ([lindex $min_max 3] - [lindex $min_max 1] + 2.0 * $vert_radius)]
-    if { $tmp_scale2 < 0.0 } {set tmp_scale2 [expr -$tmp_scale2] }
-    if { $tmp_scale1 < $tmp_scale2 } {
+    set tmp_scale1 [expr double($mCanvasWidth) / ([lindex $min_max 2] - [lindex $min_max 0] + 2.0 * $vert_radius)]
+    if {$tmp_scale1 < 0.0} {
+	set tmp_scale1 [expr -$tmp_scale1]
+    }
+
+    set tmp_scale2 [expr double($mCanvasHeight) / ([lindex $min_max 3] - [lindex $min_max 1] + 2.0 * $vert_radius)]
+    if {$tmp_scale2 < 0.0} {
+	set tmp_scale2 [expr -$tmp_scale2]
+    }
+
+    if {$tmp_scale1 < $tmp_scale2} {
 	do_scale $tmp_scale1
     } else {
 	do_scale $tmp_scale2
     }
+
+    initScrollRegion
 }
 
 
@@ -880,6 +952,60 @@
     }
 
     $itk_option(-mged) data_axes draw $mHighlightPoints
+}
+
+
+::itcl::body SketchEditFrame::initScrollRegion {} {
+    set bbox [$itk_component(canvas) bbox all]
+    set x1 [lindex $bbox 0]
+    set y1 [lindex $bbox 1]
+    set x2 [lindex $bbox 2]
+    set y2 [lindex $bbox 3]
+    set dx [expr {abs($x2 - $x1)}]
+    set dy [expr {abs($y2 - $y1)}]
+    if {$dx <= $mCanvasWidth} {
+	set extra [expr {$mCanvasWidth - $dx}]
+	set leftover [expr {int($extra * 0.5)}]
+	set x1 [expr {$x1 - $leftover}]
+	if {[expr {$extra%2}]} {
+	    set x2 [expr {$x2 + $leftover + 1}]
+	} else {
+	    set x2 [expr {$x2 + $leftover}]
+	}
+    } else {
+	set short [expr {$dx - $mCanvasWidth}]
+	set required [expr {int($short * 0.5)}]
+	set x1 [expr {$x1 + $required}]
+	if {[expr {$short%2}]} {
+	    set x2 [expr {$x2 - $required - 1}]
+	} else {
+	    set x2 [expr {$x2 - $required}]
+	}
+    }
+
+    if {$dy <= $mCanvasHeight} {
+	set extra [expr {$mCanvasHeight - $dy}]
+	set leftover [expr {int($extra * 0.5)}]
+	set y1 [expr {$y1 - $leftover}]
+	if {[expr {$extra%2}]} {
+	    set y2 [expr {$y2 + $leftover + 1}]
+	} else {
+	    set y2 [expr {$y2 + $leftover}]
+	}
+    } else {
+	set short [expr {$dy - $mCanvasHeight}]
+	set required [expr {int($short * 0.5)}]
+	set y1 [expr {$y1 + $required}]
+	if {[expr {$short%2}]} {
+	    set y2 [expr {$y2 - $required - 1}]
+	} else {
+	    set y2 [expr {$y2 - $required}]
+	}
+    }
+
+    $itk_component(canvas) configure -scrollregion [list $x1 $y1 $x2 $y2]
+    set mScrollCenterX [expr {$x2 - int(($x2 - $x1) * 0.5)}]
+    set mScrollCenterY [expr {$y2 - int(($y2 - $y1) * 0.5)}]
 }
 
 
@@ -991,12 +1117,14 @@
     bind $itk_component(canvas) <d> [::itcl::code $this delete_selected]
     bind $itk_component(canvas) <Delete> [::itcl::code $this delete_selected]
 
+    bind $itk_component(canvas) <Lock-Control-Shift-ButtonPress-1> [::itcl::code $this start_scale %x %y]
+    bind $itk_component(canvas) <Lock-Shift-ButtonPress-1> [::itcl::code $this start_translate %x %y]
+    bind $itk_component(canvas) <ButtonRelease-1> [::itcl::code $this end_scale]
+    bind $itk_component(canvas) <Control-Shift-B1-Motion> {}
     bind $itk_component(canvas) <B1-Motion> {}
     bind $itk_component(canvas) <ButtonPress-1> {}
     bind $itk_component(canvas) <Shift-ButtonPress-1> {}
-    bind $itk_component(canvas) <ButtonRelease-1> {}
-    bind $itk_component(canvas) <Shift-ButtonRelease-1> {}
-    bind $itk_component(canvas) <Control-Shift-ButtonPress-1> {}
+    bind $itk_component(canvas) <Control-Alt-ButtonPress-1> {}
 
     bind $itk_component(canvas) <ButtonRelease-2> {}
 
@@ -1053,6 +1181,9 @@
 	create_circle
 	drawVertices
 	write_sketch_to_db
+
+	bind $itk_component(canvas) <B1-Motion> {}
+	bind $itk_component(canvas) <ButtonRelease-1> [::itcl::code $this end_scale]
     }
 }
 
@@ -1129,6 +1260,9 @@
 	$itk_component(canvas) configure -cursor crosshair
 	create_line
 	write_sketch_to_db
+
+	bind $itk_component(canvas) <B1-Motion> {}
+	bind $itk_component(canvas) <ButtonRelease-1> [::itcl::code $this end_scale]
     }
 
     drawVertices
@@ -1243,6 +1377,9 @@
     } else {
 	$itk_component(canvas) configure -cursor crosshair
 	write_sketch_to_db
+
+	bind $itk_component(canvas) <B1-Motion> {}
+	bind $itk_component(canvas) <ButtonRelease-1> [::itcl::code $this end_scale]
     }
 }
 
@@ -1348,7 +1485,7 @@
     set svlist {}
     foreach item $slist {
 	set index [lsearch $mSegments $item]
-	set mSegments lreplace $mSegments $index $index]
+	set mSegments [lreplace $mSegments $index $index]
 	$itk_component(canvas) delete $item
 
 	eval lappend svlist [$item get_verts]
@@ -1490,6 +1627,14 @@
     $itk_component(canvas) configure -cursor crosshair
     drawSegments
     write_sketch_to_db
+
+    bind $itk_component(canvas) <B1-Motion> {}
+    bind $itk_component(canvas) <ButtonRelease-1> [::itcl::code $this end_scale]
+}
+
+
+::itcl::body SketchEditFrame::end_scale {} {
+    bind $itk_component(canvas) <Control-Shift-B1-Motion> {}
 }
 
 
@@ -1498,6 +1643,15 @@
 	$seg fix_vertex_reference $_unused_vindices
     }
     drawVertices
+}
+
+
+::itcl::body SketchEditFrame::handle_configure {} {
+    set mCanvasHeight [winfo height $itk_component(canvas)]
+    set mCanvasWidth [winfo width $itk_component(canvas)]
+    set mCanvasInvWidth [expr {1.0 / double($mCanvasWidth)}]
+    set mCanvasCenterX [expr {int($mCanvasWidth * 0.5)}]
+    set mCanvasCenterY [expr {int($mCanvasHeight * 0.5)}]
 }
 
 
@@ -1524,6 +1678,36 @@
 	    end_bezier $curr_seg 1
 	    set mLastIndex -1
 	}
+}
+
+
+::itcl::body SketchEditFrame::handle_scale {_mx _my} {
+    set dx [expr {$_mx - $mPrevMouseX}]
+    set dy [expr {$mPrevMouseY - $_my}]
+
+    set mPrevMouseX $_mx
+    set mPrevMouseY $_my
+
+    set sdx [expr {$mCanvasInvWidth * $dx * 2.0}]
+    set sdy [expr {$mCanvasInvWidth * $dy * 2.0}]
+    if {[expr {abs($sdx) > abs($sdy)}]} {
+	set sf [expr {1.0 + $sdx}]
+    } else {
+	set sf [expr {1.0 + $sdy}]
+    }
+
+    do_scale $sf
+}
+
+
+::itcl::body SketchEditFrame::handle_translate {_mx _my} {
+    set dx [expr {$mPrevMouseX - $_mx}]
+    set dy [expr {$mPrevMouseY - $_my}]
+
+    set mPrevMouseX $_mx
+    set mPrevMouseY $_my
+
+    do_translate $dx $dy
 }
 
 
@@ -1747,10 +1931,9 @@
 
     clear_canvas_bindings
     bind $itk_component(canvas) <ButtonPress-1> [::itcl::code $this start_move_arbitrary %x %y 0]
-#    bind $itk_component(canvas) <Shift-ButtonPress-1> [::itcl::code $this seg_pick_highlight %x %y]
     bind $itk_component(canvas) <Control-ButtonPress-1> [::itcl::code $this start_move_selected %x %y]
     bind $itk_component(canvas) <Shift-ButtonPress-1> [::itcl::code $this start_move_selected2 %x %y]
-    bind $itk_component(canvas) <r><ButtonPress-1> [::itcl::code $this start_move_segment %x %y 1]
+    bind $itk_component(canvas) <Control-Alt-ButtonPress-1> [::itcl::code $this start_move_segment %x %y 1]
 
     set mPrevEditMode $mEditMode
 }
@@ -2044,14 +2227,28 @@
 }
 
 
+::itcl::body SketchEditFrame::start_scale {_mx _my} {
+    set mPrevMouseX $_mx
+    set mPrevMouseY $_my
+    bind $itk_component(canvas) <Lock-Control-Shift-B1-Motion> [::itcl::code $this handle_scale %x %y]
+}
+
+
+::itcl::body SketchEditFrame::start_translate {_mx _my} {
+    set mPrevMouseX $_mx
+    set mPrevMouseY $_my
+    bind $itk_component(canvas) <Lock-Shift-B1-Motion> [::itcl::code $this handle_translate %x %y]
+}
+
+
 ::itcl::body SketchEditFrame::start_seg_pick {} {
     $itk_component(canvas) dtag moving moving
     unhighlight_selected
 
     clear_canvas_bindings
     bind $itk_component(canvas) <ButtonPress-1> [::itcl::code $this seg_pick_highlight %x %y]
-    bind $itk_component(canvas) <Shift-ButtonPress-1> [::itcl::code $this seg_delete %x %y 0]
-    bind $itk_component(canvas) <Control-Shift-ButtonPress-1> [::itcl::code $this seg_delete %x %y 1]
+#    bind $itk_component(canvas) <Shift-ButtonPress-1> [::itcl::code $this seg_delete %x %y 0]
+#    bind $itk_component(canvas) <Control-Shift-ButtonPress-1> [::itcl::code $this seg_delete %x %y 1]
 }
 
 
