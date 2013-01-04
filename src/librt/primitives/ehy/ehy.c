@@ -174,11 +174,10 @@ struct ehy_specific {
     fastf_t ehy_cprime;	/* c / |H| */
 };
 
-
 const struct bu_structparse rt_ehy_parse[] = {
-    { "%f", 3, "V",   bu_offsetof(struct rt_ehy_internal, ehy_V[X]),  BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    { "%f", 3, "H",   bu_offsetof(struct rt_ehy_internal, ehy_H[X]),  BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    { "%f", 3, "A",   bu_offsetof(struct rt_ehy_internal, ehy_Au[X]), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    { "%f", 3, "V",   bu_offsetofarray(struct rt_ehy_internal, ehy_V, point_t, X),  BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    { "%f", 3, "H",   bu_offsetofarray(struct rt_ehy_internal, ehy_H, vect_t, X),  BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    { "%f", 3, "A",   bu_offsetofarray(struct rt_ehy_internal, ehy_Au, vect_t, X), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     { "%f", 1, "r_1", bu_offsetof(struct rt_ehy_internal, ehy_r1),    BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     { "%f", 1, "r_2", bu_offsetof(struct rt_ehy_internal, ehy_r2),    BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     { "%f", 1, "c",   bu_offsetof(struct rt_ehy_internal, ehy_c),     BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },

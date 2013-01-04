@@ -54,7 +54,6 @@ struct txt_specific {
 };
 #define TX_NULL ((struct txt_specific *)0)
 #define TX_O(m) bu_offsetof(struct txt_specific, m)
-#define TX_AO(m) bu_offsetofarray(struct txt_specific, m)
 
 
 HIDDEN void txt_transp_hook(struct bu_structparse *ptab, char *name, char *cp, char *value);
@@ -63,7 +62,7 @@ HIDDEN int txt_load_datasource(struct txt_specific *texture, struct db_i *dbInst
 
 
 struct bu_structparse txt_parse[] = {
-    {"%d",	1, "transp",	bu_offsetofarray(struct txt_specific, tx_transp),	txt_transp_hook, NULL, NULL },
+    {"%d",	1, "transp",	TX_O(tx_transp),	txt_transp_hook, NULL, NULL },
     {"%V",	1, "file", TX_O(tx_name),		txt_source_hook, NULL, NULL },
     {"%V",	1, "obj", TX_O(tx_name),		txt_source_hook, NULL, NULL },
     {"%V",	1, "object", TX_O(tx_name),		txt_source_hook, NULL, NULL },
@@ -73,7 +72,7 @@ struct bu_structparse txt_parse[] = {
     {"%d",	1, "l",		TX_O(tx_n),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%d",	1, "trans_valid", TX_O(tx_trans_valid),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },/*compat*/
     {"%d",	1, "t",		TX_O(tx_trans_valid),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f",	2, "uv",	TX_AO(tx_scale), 	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",	2, "uv",	TX_O(tx_scale), 	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%d",	1, "m",		TX_O(tx_mirror),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"",	0, (char *)0,	0,			BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
@@ -693,9 +692,9 @@ struct ckr_specific {
 #define CKR_O(m) bu_offsetof(struct ckr_specific, m)
 
 struct bu_structparse ckr_parse[] = {
-    {"%d",	3, "a",	bu_offsetofarray(struct ckr_specific, ckr_a), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%d",	3, "b",	bu_offsetofarray(struct ckr_specific, ckr_b), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%g",	1, "s", bu_offsetof(struct ckr_specific, ckr_scale), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%d",	3, "a",	CKR_O(ckr_a), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%d",	3, "b",	CKR_O(ckr_b), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%g",	1, "s", CKR_O(ckr_scale), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"",	0, (char *)0,	0,			BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 

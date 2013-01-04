@@ -121,7 +121,6 @@ static struct camo_specific marble_defaults = {
 
 #define SHDR_NULL ((struct camo_specific *)0)
 #define SHDR_O(m) bu_offsetof(struct camo_specific, m)
-#define SHDR_AO(m) bu_offsetofarray(struct camo_specific, m)
 
 void color_fix(register const struct bu_structparse *sdp, register const char *name, char *base, const char *value);
 
@@ -130,13 +129,13 @@ struct bu_structparse camo_print_tab[] = {
     {"%g", 1, "H", 		SHDR_O(noise_h_val),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%g", 1, "octaves", 	SHDR_O(noise_octaves),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%g", 1, "size",		SHDR_O(noise_size),	bu_mm_cvt, NULL, NULL },
-    {"%f", 3, "vscale",		SHDR_AO(noise_vscale),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f", 3, "vscale",		SHDR_O(noise_vscale),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%g", 1, "thresh1",	SHDR_O(t1),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%g", 1, "thresh2",	SHDR_O(t2),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f", 3, "color1",		SHDR_AO(c1),		color_fix, NULL, NULL },
-    {"%f", 3, "color2",		SHDR_AO(c2),		color_fix, NULL, NULL },
-    {"%f", 3, "color3",		SHDR_AO(c3),		color_fix, NULL, NULL },
-    {"%f", 3, "delta",		SHDR_AO(noise_delta),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f", 3, "color1",		SHDR_O(c1),		color_fix, NULL, NULL },
+    {"%f", 3, "color2",		SHDR_O(c2),		color_fix, NULL, NULL },
+    {"%f", 3, "color3",		SHDR_O(c3),		color_fix, NULL, NULL },
+    {"%f", 3, "delta",		SHDR_O(noise_delta),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"",   0, (char *)0,		0,		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 
@@ -151,14 +150,14 @@ struct bu_structparse camo_parse[] = {
     {"%g", 1, "t2",		SHDR_O(t2),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%g", 1, "size",		SHDR_O(noise_size),	bu_mm_cvt, NULL, NULL },
     {"%g", 1, "s",		SHDR_O(noise_size),	bu_mm_cvt, NULL, NULL },
-    {"%f", 3, "vscale",		SHDR_AO(noise_vscale),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f", 3, "vs",		SHDR_AO(noise_vscale),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f", 3, "v",		SHDR_AO(noise_vscale),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f", 3, "c1",		SHDR_AO(c1),		color_fix, NULL, NULL },
-    {"%f", 3, "c2",		SHDR_AO(c2),		color_fix, NULL, NULL },
-    {"%f", 3, "c3",		SHDR_AO(c3),		color_fix, NULL, NULL },
-    {"%f", 3, "delta",		SHDR_AO(noise_delta),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f", 3, "d",		SHDR_AO(noise_delta),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f", 3, "vscale",		SHDR_O(noise_vscale),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f", 3, "vs",		SHDR_O(noise_vscale),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f", 3, "v",		SHDR_O(noise_vscale),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f", 3, "c1",		SHDR_O(c1),		color_fix, NULL, NULL },
+    {"%f", 3, "c2",		SHDR_O(c2),		color_fix, NULL, NULL },
+    {"%f", 3, "c3",		SHDR_O(c3),		color_fix, NULL, NULL },
+    {"%f", 3, "delta",		SHDR_O(noise_delta),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f", 3, "d",		SHDR_O(noise_delta),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"",   0, (char *)0,	0,			BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 

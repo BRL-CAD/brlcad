@@ -361,7 +361,6 @@ orient_hook(register const struct bu_structparse *UNUSED(sdp), register const ch
 
 
 #define IMG_O(m) bu_offsetof(struct img_specific, m)
-#define IMG_AO(m) bu_offsetofarray(struct img_specific, m)
 
 
 /** description of how to parse/print the arguments to the shader.
@@ -376,8 +375,8 @@ struct bu_structparse img_parse_tab[] = {
     {"%d",	1, "w",			IMG_O(i_width),		dimen_hook, NULL, NULL },
     {"%d",	1, "n",			IMG_O(i_height),	dimen_hook, NULL, NULL },
     {"%f",	1, "viewsize",		IMG_O(i_viewsize),	dimen_hook, NULL, NULL },
-    {"%f",	3, "eye_pt",		IMG_AO(i_eye_pt),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f",	4, "orientation",	IMG_AO(i_orient),	orient_hook, NULL, NULL },
+    {"%f",	3, "eye_pt",		IMG_O(i_eye_pt),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",	4, "orientation",	IMG_O(i_orient),	orient_hook, NULL, NULL },
     {"%c",	1, "through",		IMG_O(i_through),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%c",	1, "antialias",		IMG_O(i_antialias),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%c",	1, "behind",		IMG_O(i_behind),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
@@ -386,7 +385,7 @@ struct bu_structparse img_parse_tab[] = {
 };
 struct bu_structparse img_print_tab[] = {
     {"%p", 1, "img_parse_tab", bu_byteoffset(img_parse_tab[0]), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f",	4, "i_plane",		IMG_AO(i_plane),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",	4, "i_plane",		IMG_O(i_plane),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"",	0, (char *)0,		0,			BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 

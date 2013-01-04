@@ -49,8 +49,8 @@ struct bu_structparse polygon_desc[] = {
     {"%d", 1, "magic", bu_offsetof(struct polygon_header, magic), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%d", 1, "ident", bu_offsetof(struct polygon_header, ident), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%d", 1, "interior", bu_offsetof(struct polygon_header, interior), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f", 3, "normal", bu_offsetofarray(struct polygon_header, normal), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%c", 3, "color", bu_offsetofarray(struct polygon_header, color), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f", 3, "normal", bu_offsetof(struct polygon_header, normal), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%c", 3, "color", bu_offsetof(struct polygon_header, color), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%d", 1, "npts", bu_offsetof(struct polygon_header, npts), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"",   0, NULL, 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };

@@ -57,13 +57,12 @@ struct _rubber_band default_rubber_band = {
 
 
 #define RB_O(_m) bu_offsetof(struct _rubber_band, _m)
-#define RB_OA(_m) bu_offsetofarray(struct _rubber_band, _m)
 struct bu_structparse rubber_band_vparse[] = {
     {"%d",	1, "draw",	RB_O(rb_draw),		rb_set_dirty_flag, NULL, NULL },
     {"%d",	1, "linewidth",	RB_O(rb_linewidth),	rb_set_dirty_flag, NULL, NULL },
     {"%c",	1, "linestyle",	RB_O(rb_linestyle),	rb_set_dirty_flag, NULL, NULL },
-    {"%d",	2, "pos",	RB_OA(rb_pos),		set_rect, NULL, NULL },
-    {"%d",	2, "dim",	RB_OA(rb_dim),		set_rect, NULL, NULL },
+    {"%d",	2, "pos",	RB_O(rb_pos),		set_rect, NULL, NULL },
+    {"%d",	2, "dim",	RB_O(rb_dim),		set_rect, NULL, NULL },
     {"",	0, (char *)0,	0,			BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 

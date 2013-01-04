@@ -43,7 +43,6 @@
 
 
 #define LIGHT_O(m) bu_offsetof(struct light_specific, m)
-#define LIGHT_OA(m) bu_offsetofarray(struct light_specific, m)
 
 
 /** Heads linked list of lights */
@@ -73,7 +72,7 @@ struct bu_structparse light_print_tab[] = {
     {"%f",	1, "bright",	LIGHT_O(lt_intensity),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%f",	1, "angle",	LIGHT_O(lt_angle),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%f",	1, "fract",	LIGHT_O(lt_fraction),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f",	3, "target",	LIGHT_OA(lt_target),	aim_set, NULL, NULL },
+    {"%f",	3, "target",	LIGHT_O(lt_target),	aim_set, NULL, NULL },
     {"%d",	1, "shadows",	LIGHT_O(lt_shadows),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%d",	1, "infinite",	LIGHT_O(lt_infinite),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%d",	1, "visible",	LIGHT_O(lt_visible),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
@@ -95,9 +94,9 @@ struct bu_structparse light_parse[] = {
     {"%f",	1, "fract",	LIGHT_O(lt_fraction),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%f",	1, "f",		LIGHT_O(lt_fraction),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
 
-    {"%f",	3, "target",	LIGHT_OA(lt_target),	aim_set, NULL, NULL },
-    {"%f",	3, "t",		LIGHT_OA(lt_target),	aim_set, NULL, NULL },
-    {"%f",	3, "aim",	LIGHT_OA(lt_target),	aim_set, NULL, NULL },
+    {"%f",	3, "target",	LIGHT_O(lt_target),	aim_set, NULL, NULL },
+    {"%f",	3, "t",		LIGHT_O(lt_target),	aim_set, NULL, NULL },
+    {"%f",	3, "aim",	LIGHT_O(lt_target),	aim_set, NULL, NULL },
 
     {"%d",	1, "shadows",	LIGHT_O(lt_shadows),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%d",	1, "s",		LIGHT_O(lt_shadows),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
@@ -110,8 +109,8 @@ struct bu_structparse light_parse[] = {
 
     {"%d",	1, "invisible",	LIGHT_O(lt_invisible),	light_cvt_visible, NULL, NULL },
 
-    {"%f",	3, "pt",	LIGHT_OA(lt_parse_pt), light_pt_set, NULL, NULL },
-    {"%f",	6, "pn",	LIGHT_OA(lt_parse_pt), light_pt_set, NULL, NULL },
+    {"%f",	3, "pt",	LIGHT_O(lt_parse_pt), light_pt_set, NULL, NULL },
+    {"%f",	6, "pn",	LIGHT_O(lt_parse_pt), light_pt_set, NULL, NULL },
 
     {"",	0, (char *)0,	0,			BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };

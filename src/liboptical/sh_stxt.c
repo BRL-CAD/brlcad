@@ -64,8 +64,8 @@ struct stxt_specific {
 #define SOL_O(m) bu_offsetof(struct stxt_specific, m)
 
 struct bu_structparse stxt_parse[] = {
-    {"%d",	1, "transp",	bu_offsetofarray(struct stxt_specific, stx_transp),	stxt_transp_hook, NULL, NULL },
-    {"%s",	STX_NAME_LEN, "file",	bu_offsetofarray(struct stxt_specific, stx_file),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%d",	1, "transp",	SOL_O(stx_transp),	stxt_transp_hook, NULL, NULL },
+    {"%s",	STX_NAME_LEN, "file",	SOL_O(stx_file),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%d",	1, "w",			SOL_O(stx_w),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%d",	1, "n",			SOL_O(stx_n),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%d",	1, "d",			SOL_O(stx_d),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },

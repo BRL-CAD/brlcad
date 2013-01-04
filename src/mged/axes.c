@@ -62,16 +62,15 @@ struct _axes_state default_axes_state = {
 
 
 #define AX_O(_m) bu_offsetof(struct _axes_state, _m)
-#define AX_OA(_m) bu_offsetofarray(struct _axes_state, _m)
 struct bu_structparse axes_vparse[] = {
     {"%d", 1, "model_draw",	AX_O(ax_model_draw),		ax_set_dirty_flag, NULL, NULL },
     {"%d", 1, "model_size",	AX_O(ax_model_size),		ax_set_dirty_flag, NULL, NULL },
     {"%d", 1, "model_linewidth",AX_O(ax_model_linewidth),	ax_set_dirty_flag, NULL, NULL },
-    {"%f", 3, "model_pos",	AX_OA(ax_model_pos),		ax_set_dirty_flag, NULL, NULL },
+    {"%f", 3, "model_pos",	AX_O(ax_model_pos),		ax_set_dirty_flag, NULL, NULL },
     {"%d", 1, "view_draw",	AX_O(ax_view_draw),		ax_set_dirty_flag, NULL, NULL },
     {"%d", 1, "view_size",	AX_O(ax_view_size),		ax_set_dirty_flag, NULL, NULL },
     {"%d", 1, "view_linewidth",	AX_O(ax_view_linewidth),	ax_set_dirty_flag, NULL, NULL },
-    {"%d", 2, "view_pos",	AX_OA(ax_view_pos),		ax_set_dirty_flag, NULL, NULL },
+    {"%d", 2, "view_pos",	AX_O(ax_view_pos),		ax_set_dirty_flag, NULL, NULL },
     {"%d", 1, "edit_draw",	AX_O(ax_edit_draw),		ax_set_dirty_flag, NULL, NULL },
     {"%d", 1, "edit_size1",	AX_O(ax_edit_size1),		ax_set_dirty_flag, NULL, NULL },
     {"%d", 1, "edit_size2",	AX_O(ax_edit_size2),		ax_set_dirty_flag, NULL, NULL },

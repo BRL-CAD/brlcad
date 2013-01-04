@@ -105,9 +105,9 @@ hyp_internal_to_specific(struct rt_hyp_internal *hyp_in) {
 
 
 const struct bu_structparse rt_hyp_parse[] = {
-    { "%f", 3, "V",   bu_offsetof(struct rt_hyp_internal, hyp_Vi[X]), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    { "%f", 3, "H",   bu_offsetof(struct rt_hyp_internal, hyp_Hi[X]), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    { "%f", 3, "A",   bu_offsetof(struct rt_hyp_internal, hyp_A[X]), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    { "%f", 3, "V",   bu_offsetofarray(struct rt_hyp_internal, hyp_Vi, point_t, X), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    { "%f", 3, "H",   bu_offsetofarray(struct rt_hyp_internal, hyp_Hi, vect_t, X), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    { "%f", 3, "A",   bu_offsetofarray(struct rt_hyp_internal, hyp_A, vect_t, X), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     { "%f", 1, "b", bu_offsetof(struct rt_hyp_internal, hyp_b), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     { "%f", 1, "bnr",   bu_offsetof(struct rt_hyp_internal, hyp_bnr), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     { {'\0', '\0', '\0', '\0'}, 0, (char *)NULL, 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }

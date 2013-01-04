@@ -62,7 +62,7 @@ struct temp_specific {
 #define TX_O(m)	bu_offsetof(struct temp_specific, m)
 
 struct bu_structparse temp_parse[] = {
-    {"%s", TXT_NAME_LEN, "file", bu_offsetofarray(struct temp_specific, t_file), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%s", TXT_NAME_LEN, "file", TX_O(t_file), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%d", 1,		"w",		TX_O(t_w),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%d", 1,		"n",		TX_O(t_n),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%d", 1,		"l",		TX_O(t_n),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }, /*compat*/

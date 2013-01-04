@@ -145,7 +145,6 @@ HIDDEN void wood_setup_2(struct wood_specific *);
 
 #define WOOD_NULL ((struct wood_specific *)0)
 #define WOOD_O(m) bu_offsetof(struct wood_specific, m)
-#define WOOD_OA(m) bu_offsetofarray(struct wood_specific, m)
 
 #define EXPLICIT_VERTEX 1
 #define EXPLICIT_DIRECTION 2
@@ -168,10 +167,10 @@ struct bu_structparse wood_parse[] = {
     {"%d",	1, "ns",		WOOD_O(ns),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%f",	1, "jitter",		WOOD_O(jitter),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%f",	1, "j",			WOOD_O(jitter),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f",	3, "lt_rgb",		WOOD_OA(lt_rgb),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f",	3, "lt",		WOOD_OA(lt_rgb),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f",	3, "dk_rgb",		WOOD_OA(dk_rgb),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f",	3, "dk",		WOOD_OA(dk_rgb),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",	3, "lt_rgb",		WOOD_O(lt_rgb),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",	3, "lt",		WOOD_O(lt_rgb),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",	3, "dk_rgb",		WOOD_O(dk_rgb),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",	3, "dk",		WOOD_O(dk_rgb),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%f",	1, "spacing",		WOOD_O(spacing),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%f",	1, "s",			WOOD_O(spacing),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%f",	1, "scale",		WOOD_O(scale),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
@@ -180,16 +179,16 @@ struct bu_structparse wood_parse[] = {
     {"%f",	1, "p",			WOOD_O(phase),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%f",	1, "qd",		WOOD_O(qd),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%f",	1, "qp",		WOOD_O(qp),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f",	3, "dither",		WOOD_OA(dither),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f",	3, "di",		WOOD_OA(dither),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",	3, "dither",		WOOD_O(dither),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",	3, "di",		WOOD_O(dither),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%f",	1, "depth",		WOOD_O(depth),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%f",	1, "de",		WOOD_O(depth),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%f",	1, "dd",		WOOD_O(dd),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%f",	1, "dz",		WOOD_O(dz),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f",	3, "rotation",		WOOD_OA(rot),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f",	3, "r",			WOOD_OA(rot),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f",	3, "D",			WOOD_OA(D),		wood_D_set, NULL, NULL },
-    {"%f",	3, "V",			WOOD_OA(V),		wood_V_set, NULL, NULL },
+    {"%f",	3, "rotation",		WOOD_O(rot),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",	3, "r",			WOOD_O(rot),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",	3, "D",			WOOD_O(D),		wood_D_set, NULL, NULL },
+    {"%f",	3, "V",			WOOD_O(V),		wood_V_set, NULL, NULL },
     {"",	0, (char *)0,		0,			BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 

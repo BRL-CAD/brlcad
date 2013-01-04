@@ -370,11 +370,6 @@ if(APPLE)
   ADD_NEW_FLAG(EXE_LINKER SDK_FLAG ALL)
 endif(APPLE)
 
-if(CMAKE_C_COMPILER_ID MATCHES "Clang")
-  BRLCAD_CHECK_C_FLAG("Wno-extended-offsetof")
-  BRLCAD_CHECK_CXX_FLAG("Wno-extended-offsetof")
-endif(CMAKE_C_COMPILER_ID MATCHES "Clang")
-
 # Local Variables:
 # tab-width: 8
 # mode: cmake

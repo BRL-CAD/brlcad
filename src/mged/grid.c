@@ -60,11 +60,10 @@ struct _grid_state default_grid_state = {
 
 
 #define GRID_O(_m) bu_offsetof(struct _grid_state, _m)
-#define GRID_OA(_m) bu_offsetofarray(struct _grid_state, _m)
 struct bu_structparse grid_vparse[] = {
     {"%d", 1, "draw",	GRID_O(gr_draw),	set_grid_draw, NULL, NULL },
     {"%d", 1, "snap",	GRID_O(gr_snap),	grid_set_dirty_flag, NULL, NULL },
-    {"%f", 3, "anchor",	GRID_OA(gr_anchor),	grid_set_dirty_flag, NULL, NULL },
+    {"%f", 3, "anchor",	GRID_O(gr_anchor),	grid_set_dirty_flag, NULL, NULL },
     {"%f", 1, "rh",	GRID_O(gr_res_h),	set_grid_res, NULL, NULL },
     {"%f", 1, "rv",	GRID_O(gr_res_v),	set_grid_res, NULL, NULL },
     {"%d", 1, "mrh",	GRID_O(gr_res_major_h),	set_grid_res, NULL, NULL },

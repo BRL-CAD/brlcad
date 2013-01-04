@@ -97,7 +97,6 @@ struct _mged_variables default_mged_variables = {
 
 
 #define MV_O(_m) bu_offsetof(struct _mged_variables, _m)
-#define MV_OA(_m) bu_offsetofarray(struct _mged_variables, _m)
 #define LINE RT_MAXLINE
 struct bu_structparse mged_vparse[] = {
     {"%d", 1, "autosize",		MV_O(mv_autosize),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
@@ -128,9 +127,9 @@ struct bu_structparse mged_vparse[] = {
     {"%d", 1, "toggle_perspective",	MV_O(mv_toggle_perspective),	toggle_perspective, NULL, NULL },
     {"%g", 1, "nmg_eu_dist",		MV_O(mv_nmg_eu_dist),		nmg_eu_dist_set, NULL, NULL },
     {"%g", 1, "eye_sep_dist",		MV_O(mv_eye_sep_dist),		set_dirty_flag, NULL, NULL },
-    {"%s", LINE, "union_op",		MV_O(mv_union_lexeme[0]),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%s", LINE, "intersection_op",	MV_O(mv_intersection_lexeme[0]),BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%s", LINE, "difference_op",	MV_O(mv_difference_lexeme[0]),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%s", LINE, "union_op",		MV_O(mv_union_lexeme),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%s", LINE, "intersection_op",	MV_O(mv_intersection_lexeme),BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%s", LINE, "difference_op",	MV_O(mv_difference_lexeme),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"",   0, NULL,			0,				BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 

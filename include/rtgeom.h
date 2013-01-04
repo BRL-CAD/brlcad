@@ -69,7 +69,7 @@ struct rt_tor_internal {
  */
 struct rt_tgc_internal {
     uint32_t magic;
-    vect_t	v;
+    point_t	v;
     vect_t	h;
     vect_t	a;
     vect_t	b;

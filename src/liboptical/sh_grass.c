@@ -180,14 +180,13 @@ static const struct grass_specific grass_defaults = {
 
 #define SHDR_NULL ((struct grass_specific *)0)
 #define SHDR_O(m) bu_offsetof(struct grass_specific, m)
-#define SHDR_AO(m) bu_offsetofarray(struct grass_specific, m)
 
 /* description of how to parse/print the arguments to the shader
  * There is at least one line here for each variable in the shader specific
  * structure above
  */
 struct bu_structparse grass_print_tab[] = {
-    {"%g", 2, "cell",		SHDR_AO(cell),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%g", 2, "cell",		SHDR_O(cell),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%g", 1, "ppc",		SHDR_O(ppc),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%g", 1, "ppcd",		SHDR_O(ppcd),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%g", 1, "t",		SHDR_O(t),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
@@ -202,7 +201,7 @@ struct bu_structparse grass_print_tab[] = {
 };
 struct bu_structparse grass_parse_tab[] = {
     {"%p", 1, "grass_print_tab", bu_byteoffset(grass_print_tab[0]), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%g", 2, "c",			SHDR_AO(cell),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%g", 2, "c",			SHDR_O(cell),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%g", 1, "p",			SHDR_O(ppc),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%g", 1, "pd",			SHDR_O(ppcd),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%g", 1, "l",			SHDR_O(lacunarity),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },

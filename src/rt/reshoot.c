@@ -105,8 +105,8 @@ struct shot {
  * The parse table for a struct shot
  */
 static const struct bu_structparse shot_sp[] = {
-    { "%f", 3, "Pnt", bu_offsetofarray(struct shot, pt), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
-    { "%f", 3, "Dir", bu_offsetofarray(struct shot, dir), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+    { "%f", 3, "Pnt", bu_offsetof(struct shot, pt), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+    { "%f", 3, "Dir", bu_offsetof(struct shot, dir), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
     {"", 0, (char *)0, 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 

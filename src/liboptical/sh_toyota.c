@@ -79,8 +79,8 @@ struct bu_structparse toyota_parse[] = {
     {"%f", 1, "sun_sang",	CL_O(sun_sang),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%f", 1, "index_refrac", CL_O(index_refrac),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%f", 1, "atmos_trans", CL_O(atmos_trans),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f", 3, "Zenith",	bu_offsetofarray(struct toyota_specific, Zenith),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%s", 1, "material",	bu_offsetofarray(struct toyota_specific, material),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f", 3, "Zenith",	CL_O(Zenith),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%s", 1, "material",	CL_O(material),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%d", 1, "glass",	CL_O(glass),			BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"",   0, (char *)0,	0,			BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };

@@ -86,20 +86,19 @@ struct vrml_mat {
 };
 
 #define PL_O(_m)	bu_offsetof(struct vrml_mat, _m)
-#define PL_OA(_m)	bu_offsetofarray(struct vrml_mat, _m)
 
 struct bu_structparse vrml_mat_parse[]={
-    {"%s", TXT_NAME_SIZE, "ma_shader", PL_OA(shader),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%s", TXT_NAME_SIZE, "ma_shader", PL_O(shader),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%d", 1, "shine",		PL_O(shininess),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%d", 1, "sh",		PL_O(shininess),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%g", 1, "transmit",	PL_O(transparency),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%g", 1, "tr",		PL_O(transparency),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%f", 1, "angle",		PL_O(lt_angle),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%f", 1, "fract",		PL_O(lt_fraction),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f", 3, "aim",		PL_OA(lt_dir),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f", 3, "aim",		PL_O(lt_dir),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%d",  1, "w",         	PL_O(tx_w),             BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%d",  1, "n",         	PL_O(tx_n),             BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%s",  TXT_NAME_SIZE, "file", PL_OA(tx_file), 	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%s",  TXT_NAME_SIZE, "file", PL_O(tx_file), 	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"",    0, (char *)0,	0,			BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 

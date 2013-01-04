@@ -46,7 +46,7 @@ struct spm_specific {
 #define SP_O(m) bu_offsetof(struct spm_specific, m)
 
 struct bu_structparse spm_parse[] = {
-    {"%s",	SPM_NAME_LEN, "file",		bu_offsetofarray(struct spm_specific, sp_file),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%s",	SPM_NAME_LEN, "file",		SP_O(sp_file),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%d",	1, "w",		SP_O(sp_w),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%d",	1, "n",		SP_O(sp_w),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },	/*compat*/
     {"",	0, (char *)0,	0,		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }

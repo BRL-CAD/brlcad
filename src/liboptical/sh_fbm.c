@@ -58,7 +58,6 @@ static struct fbm_specific fbm_defaults = {
 
 #define FBM_NULL ((struct fbm_specific *)0)
 #define FBM_O(m) bu_offsetof(struct fbm_specific, m)
-#define FBM_AO(m) bu_offsetofarray(struct fbm_specific, m)
 
 struct bu_structparse fbm_parse[] = {
     {"%g", 1, "lacunarity",	FBM_O(lacunarity),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
@@ -70,7 +69,7 @@ struct bu_structparse fbm_parse[] = {
     {"%d", 1, "o", 		FBM_O(octaves),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%g", 1, "g",		FBM_O(gain),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%g", 1, "d",		FBM_O(distortion),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f", 3, "scale",		FBM_AO(scale),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f", 3, "scale",		FBM_O(scale),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"",   0, (char *)0,	0,			BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 

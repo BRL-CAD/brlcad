@@ -54,7 +54,7 @@ struct points_specific {
 #define POINTS_O(m) bu_offsetof(struct points_specific, m)
 
 struct bu_structparse points_parse[] = {
-    {"%s",	PT_NAME_LEN, "file", bu_offsetofarray(struct points_specific, pt_file),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%s",	PT_NAME_LEN, "file", POINTS_O(pt_file),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%d",	1, "size",		POINTS_O(pt_size),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%d",	1, "w",			POINTS_O(pt_size),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"",	0, (char *)0,		0,			BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
