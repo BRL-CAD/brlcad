@@ -300,7 +300,7 @@
 ::itcl::body SketchEditFrame::do_translate {_dx _dy} {
     set mScrollCenterX [expr {$mScrollCenterX + $_dx}]
     set mScrollCenterY [expr {$mScrollCenterY + $_dy}]
-    
+
     set x1 [expr {$mScrollCenterX - $mCanvasCenterX}]
     if {[expr {$mCanvasWidth%2}]} {
 	set x2 [expr {$mScrollCenterX + $mCanvasCenterX + 1}]
