@@ -5271,6 +5271,14 @@ BU_EXPORT extern unsigned char *bu_vlb_addr(struct bu_vlb *vlb);
 BU_EXPORT extern size_t bu_vlb_buflen(struct bu_vlb *vlb);
 
 /**
+ * Return the number of bytes allocated for the buffer of the bu_vlb structure
+ *
+ * @param vlb Pointer to the bu_vlb structure
+ * @return The number of bytes allocated for the buffer of the bu_vlb structure
+ */
+BU_EXPORT extern size_t bu_vlb_capacity(struct bu_vlb *vlb);
+
+/**
  * Free the memory allocated for the byte array in the bu_vlb
  * structure.  Also uninitializes the structure.
  *

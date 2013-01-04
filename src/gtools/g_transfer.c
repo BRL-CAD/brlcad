@@ -69,12 +69,27 @@ typedef struct _my_data_ {
 /* in-memory geometry database filled in by the server as it receives
  * geometry from the client.
  */
-struct db_i *DBIP = NULL;
+/*
+ * Struct DBIP = null;
+ * srv_argc = 0;
+ * char **srv_argv = NULL;
+ */
+typedef struct _server_data_ {
+	struct db_i *DBIP;
+	/* used by server to stash what it should shoot at */
+	int srv_argc;
+	char **srv_argv;
+} server_data;
 
-/* used by server to stash what it should shoot at */
-int srv_argc = 0;
-char **srv_argv = NULL;
 
+server_data*
+init_srv_data () {
+		server_data *stash = bu_malloc(sizeof *stash, "server data memory");
+		stash->DBIP = NULL;
+		stash->srv_argc = 0;
+		stash->srv_argv = NULL;
+		return stash;
+}
 
 /** print a usage statement when invoked with bad, help, or no arguments
  */
@@ -111,18 +126,18 @@ miss(struct application *UNUSED(ap))
 }
 
 void
-do_something() {
+do_something(server_data *stash) {
     /* shoot a ray at some geometry just to show that we can */
     struct application ap;
     struct rt_i *rtip;
     int i;
 
-    if (!DBIP) {
+    if (!stash->DBIP) {
 	return;
     }
 
     RT_APPLICATION_INIT(&ap);
-    rtip = rt_new_rti(DBIP); /* clone dbip */
+    rtip = rt_new_rti(stash->DBIP); /* clone dbip */
     if (!rtip) {
 	bu_log("Unable to create a database instance off of the raytrace instance\n");
 	return;
@@ -135,13 +150,13 @@ do_something() {
     VSET(ap.a_ray.r_dir, 0, 0, -1);
 
     /* shoot at any geometry specified */
-    for (i = 0; i < srv_argc; i++) {
-	if (rt_gettree(rtip, srv_argv[i]) != 0) {
-	    bu_log("Unable to validate %s for raytracing\n", srv_argv[i]);
+    for (i = 0; i < stash->srv_argc; i++) {
+	if (rt_gettree(rtip, stash->srv_argv[i]) != 0) {
+	    bu_log("Unable to validate %s for raytracing\n", stash->srv_argv[i]);
 	    continue;
 	}
 	rt_prep(rtip);
-	bu_log("Shooting at %s from (0, 0, 10000) in the (0, 0, -1) direction\n", srv_argv[i]);
+	bu_log("Shooting at %s from (0, 0, 10000) in the (0, 0, -1) direction\n", stash->srv_argv[i]);
 	(void)rt_shootray(&ap);
 	rt_clean(rtip);
     }
@@ -161,36 +176,41 @@ server_helo(struct pkg_conn *UNUSED(connection), char *buf)
 
 
 void
-server_args(struct pkg_conn *UNUSED(connection), char *buf)
+server_args(struct pkg_conn *connection, char *buf)
 {
     /* updates the srv_argc and srv_argv application globals used to
      * show that we can shoot at geometry in-memory.
      */
-    srv_argc++;
-    if (!srv_argv) {
-	srv_argv = bu_calloc(1, srv_argc * sizeof(char *), "server_args() srv_argv calloc");
+	server_data *stash;
+	stash = init_srv_data();
+	stash->srv_argc++;
+    if (!stash->srv_argv) {
+	stash->srv_argv = bu_calloc(1, stash->srv_argc * sizeof(char *), "server_args() srv_argv calloc");
     } else {
-	srv_argv = bu_realloc(srv_argv, srv_argc * sizeof(char *), "server_args() srv_argv realloc");
+	stash->srv_argv = bu_realloc(stash->srv_argv, stash->srv_argc * sizeof(char *), "server_args() srv_argv realloc");
     }
-    srv_argv[srv_argc - 1] = bu_calloc(1, strlen(buf)+1, "server_args() srv_argv[] calloc");
-    bu_strlcpy(srv_argv[srv_argc - 1], buf, strlen(buf)+1);
+    stash->srv_argv[stash->srv_argc - 1] = bu_calloc(1, strlen(buf)+1, "server_args() srv_argv[] calloc");
+    bu_strlcpy(stash->srv_argv[stash->srv_argc - 1], buf, strlen(buf)+1);
 
     bu_log("Planning to shoot at %s\n", buf);
-
+    connection->pkc_server_data = stash;;
     free(buf);
 }
 
 
 void
-server_geom(struct pkg_conn *UNUSED(connection), char *buf)
+server_geom(struct pkg_conn *connection, char *buf)
 {
     struct bu_external ext;
     struct db5_raw_internal raw;
     int flags;
 
-    if (DBIP == NULL) {
+    server_data *stash;
+    stash =(server_data*) connection->pkc_server_data;
+
+    if (stash->DBIP == NULL) {
 	/* first geometry received, initialize */
-	DBIP = db_open_inmem();
+	stash->DBIP = db_open_inmem();
     }
 
     if (db5_get_raw_internal_ptr(&raw, (const unsigned char *)buf) == NULL) {
@@ -206,27 +226,29 @@ server_geom(struct pkg_conn *UNUSED(connection), char *buf)
     ext.ext_buf = (uint8_t *)buf;
     ext.ext_nbytes = raw.object_length;
     flags = db_flags_raw_internal(&raw) | RT_DIR_INMEM;
-    wdb_export_external(DBIP->dbi_wdbp, &ext, (const char *)raw.name.ext_buf, flags, raw.minor_type);
+    wdb_export_external(stash->DBIP->dbi_wdbp, &ext, (const char *)raw.name.ext_buf, flags, raw.minor_type);
 
     bu_log("Received %s (MAJOR=%d, MINOR=%d)\n", raw.name.ext_buf, raw.major_type, raw.minor_type);
 }
 
 
 void
-server_ciao(struct pkg_conn *UNUSED(connection), char *buf)
+server_ciao(struct pkg_conn* connection, char *buf)
 {
-    bu_log("CIAO encountered\n");
+    server_data *stash;
 
+    bu_log("CIAO encountered\n");
+    stash = (server_data*) connection->pkc_server_data;
     /* shoot some rays just to show that we can if server was
      * invoked with specific geometry.
      */
-    do_something();
+    do_something(stash);
 
-    if (DBIP != NULL) {
+    if (stash->DBIP != NULL) {
 	/* uncomment to avoid an in-mem dbip close bug */
 	/* DBIP->dbi_fp = fopen("/dev/null", "rb");*/
-	db_close(DBIP);
-	DBIP = NULL;
+	db_close(stash->DBIP);
+	stash->DBIP = NULL;
     }
 
     free(buf);
