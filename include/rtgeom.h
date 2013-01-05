@@ -422,7 +422,7 @@ struct rt_hyp_internal {
  */
 struct rt_eto_internal {
     uint32_t eto_magic;
-    point_t	eto_V;	/**< @brief  eto vertex */
+    vect_t	eto_V;	/**< @brief  eto vertex */
     vect_t	eto_N;	/**< @brief  vector normal to plane of torus */
     vect_t	eto_C;	/**< @brief  vector along semi-major axis of ellipse */
     fastf_t	eto_r;	/**< @brief  scalar radius of rotation */
