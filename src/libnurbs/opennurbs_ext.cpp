@@ -585,8 +585,8 @@ CurveTree::subdivideCurve(const ON_Curve* curve, int adj_face_index, double min,
     points[0] = curve->PointAt(min);
     points[1] = curve->PointAt(max);
     point_t minpt, maxpt;
-    VSETALL(minpt, MAX_FASTF);
-    VSETALL(maxpt, -MAX_FASTF);
+    VSETALL(minpt, INFINITY);
+    VSETALL(maxpt, -INFINITY);
     for (int i = 0; i < 2; i++)
 	VMINMAX(minpt, maxpt, ((double*)points[i]));
     points[0]=ON_3dPoint(minpt);

@@ -167,10 +167,13 @@ rt_extrude_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const str
     /* apply the rotation matrix to all the vertices, and start
      * bounding box calculation
      */
-    if (vert_count)
-	extr->verts = (point_t *)bu_calloc(vert_count, sizeof(point_t), "extr->verts");
-    VSETALL((*min), MAX_FASTF);
-    VSETALL((*max), -MAX_FASTF);
+    if (vert_count) {
+	extr->verts = (point_t *)bu_calloc(vert_count, sizeof(point_t),
+		"extr->verts");
+    }
+    VSETALL((*min), INFINITY);
+    VSETALL((*max), -INFINITY);
+
     for (i=0; i<skt->vert_count; i++) {
 	VJOIN2(tmp, eip->V, skt->verts[i][0], eip->u_vec, skt->verts[i][1], eip->v_vec);
 	VMINMAX((*min), (*max), tmp);
@@ -411,10 +414,13 @@ rt_extrude_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip
     /* apply the rotation matrix to all the vertices, and start
      * bounding box calculation
      */
-    if (vert_count)
-	extr->verts = (point_t *)bu_calloc(vert_count, sizeof(point_t), "extr->verts");
-    VSETALL(stp->st_min, MAX_FASTF);
-    VSETALL(stp->st_max, -MAX_FASTF);
+    if (vert_count) {
+	extr->verts = (point_t *)bu_calloc(vert_count, sizeof(point_t),
+		"extr->verts");
+    }
+    VSETALL(stp->st_min, INFINITY);
+    VSETALL(stp->st_max, -INFINITY);
+
     for (i=0; i<skt->vert_count; i++) {
 	VJOIN2(tmp, eip->V, skt->verts[i][0], eip->u_vec, skt->verts[i][1], eip->v_vec);
 	VMINMAX(stp->st_min, stp->st_max, tmp);

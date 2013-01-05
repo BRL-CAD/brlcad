@@ -217,8 +217,8 @@ rt_rhc_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct 
     xip = (struct rt_rhc_internal *)ip->idb_ptr;
     RT_RHC_CK_MAGIC(xip);
 
-    VSETALL((*min), MAX_FASTF);
-    VSETALL((*max), -MAX_FASTF);
+    VSETALL((*min), INFINITY);
+    VSETALL((*max), -INFINITY);
 
     VCROSS(rvect, xip->rhc_H, xip->rhc_B);
     VREVERSE(rinv, rvect);

@@ -363,8 +363,8 @@ Usage: %s [-v] [-i] [-xX lvl] [-a abs_tess_tol] [-r rel_tess_tol] [-n norm_tess_
     bu_setprogname(argv[0]);
     bu_setlinebuf(stderr);
 
-    VSETALL(model_min, MAX_FASTF);
-    VREVERSE(model_max, model_min);
+    VSETALL(model_min, INFINITY);
+    VSETALL(model_max, -INFINITY);
 
     tree_state = rt_initial_tree_state;	/* struct copy */
     tree_state.ts_tol = &tol;

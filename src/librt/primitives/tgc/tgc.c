@@ -99,7 +99,8 @@ rt_tgc_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct 
     struct rt_tgc_internal *tip = (struct rt_tgc_internal *)ip->idb_ptr;
     RT_TGC_CK_MAGIC(tip);
 
-    VCROSS(work, tip->a, tip->b);
+    VSETALL((*min), INFINITY);
+    VSETALL((*max), -INFINITY);
 
     /* There are 8 corners to the bounding RPP */
     /* This may not be minimal, but does fully contain the TGC */

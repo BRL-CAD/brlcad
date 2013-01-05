@@ -427,8 +427,8 @@ inline void
 _BU_ATTR_ALWAYS_INLINE
 BANode<BA>::GetBBox(fastf_t* min, fastf_t* max) const
 {
-    VSETALL(min, MAX_FASTF);
-    VSETALL(max, -MAX_FASTF);
+    VSETALL(min, INFINITY);
+    VSETALL(max, -INFINITY);
     VMINMAX(min, max, m_start);
     VMINMAX(min, max, m_end);
 }

@@ -122,11 +122,15 @@ rt_nurb_grans(struct face_g_snurb *srf)
  */
 int
 rt_nurb_bbox(struct rt_db_internal *ip, point_t *min, point_t *max) {
+    int i;
     struct nurb_specific *nurbs = NULL;
     struct nurb_specific *next;
     struct rt_nurb_internal *sip;
+
     sip = (struct rt_nurb_internal *) ip->idb_ptr;
-    int i;
+    VSETALL((*min), INFINITY);
+    VSETALL((*max), -INFINITY);
+
     for (i = 0; i < sip->nsrf; i++) {
 	struct face_g_snurb * s;
 	struct nurb_specific * n;

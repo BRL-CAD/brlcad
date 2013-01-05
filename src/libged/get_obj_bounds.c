@@ -100,8 +100,8 @@ _ged_get_obj_bounds(struct ged *gedp,
     rt_prep(rtip);
 
     /* initialize RPP bounds */
-    VSETALL(rpp_min, MAX_FASTF);
-    VREVERSE(rpp_max, rpp_min);
+    VSETALL(rpp_min, INFINITY);
+    VSETALL(rpp_max, -INFINITY);
     for (i = 0; i < argc; i++) {
 	vect_t reg_min, reg_max;
 	const char *reg_name;

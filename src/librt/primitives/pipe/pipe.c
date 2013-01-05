@@ -475,8 +475,8 @@ rt_linear_pipe_prep(
     bn_mat_mul(lp->pipe_SoR, S, R);
     bn_mat_mul(lp->pipe_invRoS, Rinv, S);
 
-    VSETALL(lp->pipe_min, MAX_FASTF);
-    VSETALL(lp->pipe_max, -MAX_FASTF);
+    VSETALL(lp->pipe_min, INFINITY);
+    VSETALL(lp->pipe_max, -INFINITY);
 
     VJOIN2(work, pt1, od1, v1, od1, v2);
     PIPE_MM(work);

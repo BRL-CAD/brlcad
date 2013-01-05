@@ -63,6 +63,9 @@ rt_pg_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct b
     pgp = (struct rt_pg_internal *)ip->idb_ptr;
     RT_PG_CK_MAGIC(pgp);
 
+    VSETALL((*min), INFINITY);
+    VSETALL((*max), -INFINITY);
+
     for (p = 0; p < pgp->npoly; p++) {
 	vect_t work[3];
 

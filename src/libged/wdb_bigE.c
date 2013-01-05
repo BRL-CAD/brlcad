@@ -1753,8 +1753,8 @@ wdb_fix_halfs(struct dg_client_data *dgcdp)
 
     tol = &dgcdp->dgop->dgo_wdbp->wdb_tol;
 
-    VSETALL(max, -MAX_FASTF);
-    VSETALL(min, MAX_FASTF);
+    VSETALL(max, -INFINITY);
+    VSETALL(min, INFINITY);
 
     for (i = 0; i < BU_PTBL_END(&dgcdp->leaf_list); i++) {
 	union E_tree *tp;

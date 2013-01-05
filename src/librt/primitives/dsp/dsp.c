@@ -942,6 +942,8 @@ rt_dsp_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct 
     dsp->dsp_pl_dist[ZMID] = (fastf_t)dsp_min;
 
     /* compute enlarged bounding box and sphere */
+    VSETALL((*min), INFINITY);
+    VSETALL((*max), -INFINITY);
 
 #define BBOX_PT(_x, _y, _z) \
 	VSET(pt, (fastf_t)_x, (fastf_t)_y, (fastf_t)_z); \

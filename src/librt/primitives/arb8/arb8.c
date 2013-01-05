@@ -640,11 +640,17 @@ int
 rt_arb_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct bn_tol *UNUSED(tol)) {
     int i;
     struct rt_arb_internal *aip;
+
     aip = (struct rt_arb_internal *)ip->idb_ptr;
     RT_ARB_CK_MAGIC(aip);
+
+    VSETALL((*min), INFINITY);
+    VSETALL((*max), -INFINITY);
+
     for (i = 0; i < 8; i++) {
 	VMINMAX((*min), (*max), aip->pt[i]);
     }
+
     return 0;
 }
 

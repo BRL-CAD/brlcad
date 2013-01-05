@@ -133,8 +133,8 @@ rt_hyp_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct 
     VUNITIZE(hyp_Au);
     VCROSS(hyp_B, hyp_Au, hyp_H);
 
-    VSETALL((*min), MAX_FASTF);
-    VSETALL((*max), -MAX_FASTF);
+    VSETALL((*min), INFINITY);
+    VSETALL((*max), -INFINITY);
 
     VSCALE(hyp_B, hyp_B, xip->hyp_b);
     VREVERSE(hyp_An, xip->hyp_A);

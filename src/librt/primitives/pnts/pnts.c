@@ -79,6 +79,9 @@ rt_pnts_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct
 	return 0;
     }
 
+    VSETALL((*min), INFINITY);
+    VSETALL((*max), -INFINITY);
+
     if (pnts->scale > 0) {
 	/* we're making spheres out of these, so the bbox
 	 * has to take that into account */

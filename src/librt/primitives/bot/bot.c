@@ -198,8 +198,9 @@ rt_bot_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct 
     bot_ip = (struct rt_bot_internal *)ip->idb_ptr;
     RT_BOT_CK_MAGIC(bot_ip);
 
-    VSETALL((*min), MAX_FASTF);
-    VSETALL((*max), -MAX_FASTF);
+    VSETALL((*min), INFINITY);
+    VSETALL((*max), -INFINITY);
+
     for (vert_index = 0; vert_index < bot_ip->num_vertices; vert_index++) {
 	VMINMAX((*min), (*max), &bot_ip->vertices[vert_index]);
     }

@@ -491,8 +491,8 @@ rts_load_geometry( char *filename, int num_trees, char **objects )
     }
 
     /* initialize our overall bounding box */
-    VSETALL( rts_geometry[sessionid]->rts_mdl_min, MAX_FASTF );
-    VREVERSE( rts_geometry[sessionid]->rts_mdl_max, rts_geometry[sessionid]->rts_mdl_min );
+    VSETALL( rts_geometry[sessionid]->rts_mdl_min, INFINITY );
+    VSETALL( rts_geometry[sessionid]->rts_mdl_max, -INFINITY );
 
     /* for each RT instance, get its trees */
     for ( i=0; i<rts_geometry[sessionid]->rts_number_of_rtis; i++ ) {

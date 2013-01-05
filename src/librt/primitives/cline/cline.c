@@ -83,8 +83,8 @@ rt_cline_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struc
     else
 	max_tr = 0.0;
 
-    VSETALL((*min), MAX_FASTF);
-    VSETALL((*max), -MAX_FASTF);
+    VSETALL((*min), INFINITY);
+    VSETALL((*max), -INFINITY);
 
     VSETALL(rad, cline_ip->radius + max_tr);
     VADD2(work, cline_ip->v, rad);

@@ -206,8 +206,8 @@ rt_ehy_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct 
     VMOVE(ehy_A, xip->ehy_Au);
     VCROSS(ehy_B, ehy_A, ehy_H);
 
-    VSETALL((*min), MAX_FASTF);
-    VSETALL((*max), -MAX_FASTF);
+    VSETALL((*min), INFINITY);
+    VSETALL((*max), -INFINITY);
 
     VSCALE(ehy_A, ehy_A, xip->ehy_r1);
     VSCALE(ehy_B, ehy_B, xip->ehy_r2);

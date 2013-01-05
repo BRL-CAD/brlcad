@@ -203,8 +203,8 @@ rt_epa_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct 
     VMOVE(epa_A, xip->epa_Au);
     VCROSS(epa_B, epa_A, epa_H);
 
-    VSETALL((*min), MAX_FASTF);
-    VSETALL((*max), -MAX_FASTF);
+    VSETALL((*min), INFINITY);
+    VSETALL((*max), -INFINITY);
 
     VSCALE(epa_A, epa_A, xip->epa_r1);
     VSCALE(epa_B, epa_B, xip->epa_r2);

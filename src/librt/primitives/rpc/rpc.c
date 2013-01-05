@@ -208,8 +208,8 @@ rt_rpc_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct 
     xip = (struct rt_rpc_internal *)ip->idb_ptr;
     RT_RPC_CK_MAGIC(xip);
 
-    VSETALL((*min), MAX_FASTF);
-    VSETALL((*max), -MAX_FASTF);
+    VSETALL((*min), INFINITY);
+    VSETALL((*max), -INFINITY);
 
     VCROSS(rvect, xip->rpc_H, xip->rpc_B);
     VREVERSE(rinv, rvect);

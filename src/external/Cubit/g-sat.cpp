@@ -1166,8 +1166,8 @@ make_bot( nmgregion *r,
     point_t bot_cp;
 
     // initialize  bot_min and bot_max
-    VSETALL( bot_min, MAX_FASTF );
-    VSETALL( bot_max, -MAX_FASTF );
+    VSETALL( bot_min, INFINITY );
+    VSETALL( bot_max, -INFINITY );
 
     for( BU_LIST_FOR( s, shell, &r->s_hd ) ) {
 	faceuse *fu;

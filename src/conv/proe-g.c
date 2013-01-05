@@ -605,8 +605,8 @@ Convert_part(char *line)
 
     bot_fcurr = 0;
     BU_LIST_INIT(&head.l);
-    VSETALL(part_min, MAX_FASTF);
-    VSETALL(part_max, -MAX_FASTF);
+    VSETALL(part_min, INFINITY);
+    VSETALL(part_max, -INFINITY);
 
     clean_vert_tree(vert_tree_root);
 

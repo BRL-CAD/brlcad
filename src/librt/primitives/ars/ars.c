@@ -681,8 +681,8 @@ rt_ars_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct 
     arip = (struct rt_ars_internal *)ip->idb_ptr;
     RT_ARS_CK_MAGIC(arip);
 
-    VSETALL((*min), MAX_FASTF);
-    VSETALL((*max), -MAX_FASTF);
+    VSETALL((*min), INFINITY);
+    VSETALL((*max), -INFINITY);
 
     /*
      * Iterate over the curves.

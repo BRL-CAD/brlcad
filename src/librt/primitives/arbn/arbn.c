@@ -55,6 +55,9 @@ rt_arbn_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct
     aip = (struct rt_arbn_internal *)ip->idb_ptr;
     RT_ARBN_CK_MAGIC(aip);
 
+    VSETALL((*min), INFINITY);
+    VSETALL((*max), -INFINITY);
+
     /* Discover all vertices, use to calculate RPP */
     for (i=0; i<aip->neqn-2; i++) {
 	for (j=i+1; j<aip->neqn-1; j++) {

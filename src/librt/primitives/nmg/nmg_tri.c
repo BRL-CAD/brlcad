@@ -2667,8 +2667,8 @@ nmg_isect_pt_facet(struct vertex *v, struct vertex *v0, struct vertex *v1, struc
     }
 
     /* find facet bounding box */
-    VSETALL(bb_min, MAX_FASTF);
-    VSETALL(bb_max, -MAX_FASTF);
+    VSETALL(bb_min, INFINITY);
+    VSETALL(bb_max, -INFINITY);
     VMINMAX(bb_min, bb_max, p0);
     VMINMAX(bb_min, bb_max, p1);
     VMINMAX(bb_min, bb_max, p2);
