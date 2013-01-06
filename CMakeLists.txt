@@ -1442,10 +1442,6 @@ if(APPLE)
   mark_as_advanced(CoreFoundation_LIBRARIES Carbon_LIBRARIES Cocoa_LIBRARIES)
 endif(APPLE)
 
-# crypt library (needed on some platforms for enigma)
-FIND_LIBRARY(CRYPT_LIBRARY NAMES crypt)
-mark_as_advanced(CRYPT_LIBRARY)
-
 # Do some extra Java related checks.
 if(JNI_FOUND AND JAVA_FOUND)
   BRLCAD_INCLUDE_FILE(JavaVM/jni.h HAVE_JAVAVM_JNI_H)
