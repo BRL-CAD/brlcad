@@ -54,12 +54,12 @@
  * To find the intersection of a line with the surface of the rhc,
  * consider the parametric line L:
  *
- *  	L : { P(n) | P + t(n) . D }
+ * L : { P(n) | P + t(n) . D }
  *
  * Call W the actual point of intersection between L and the rhc.
  * Let W' be the point of intersection between L' and the unit rhc.
  *
- *  	L' : { P'(n) | P' + t(n) . D' }
+ * L' : { P'(n) | P' + t(n) . D' }
  *
  * W = invR(invS(W')) + V
  *
@@ -71,7 +71,7 @@
  *
  * Line L' hits the infinitely long canonical rhc at W' when
  *
- *	A * k**2 + B * k + C = 0
+ * A * k**2 + B * k + C = 0
  *
  * where
  *
@@ -150,7 +150,7 @@
  *
  * The solution W' is within an end plate IFF
  *
- *	(Wz' + c + 1)**2 - (Wy'**2 * (2*c + 1) >= c**2 and Wz' <= 1.0
+ * (Wz' + c + 1)**2 - (Wy'**2 * (2*c + 1) >= c**2 and Wz' <= 1.0
  *
  * The normal for a hit on the top plate is -Bunit.
  * The normal for a hit on the front plate is -Hunit, and
@@ -200,6 +200,7 @@ const struct bu_structparse rt_rhc_parse[] = {
     { "%f", 1, "c", bu_offsetof(struct rt_rhc_internal, rhc_c),    BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     { {'\0', '\0', '\0', '\0'}, 0, (char *)NULL, 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
+
 
 /**
  * R T _ R H C _ B B O X
@@ -582,31 +583,31 @@ rt_rhc_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
     VJOIN1(hitp->hit_point, rp->r_pt, hitp->hit_dist, rp->r_dir);
 
     switch (hitp->hit_surfno) {
-    case RHC_NORM_BODY:
-	c = rhc->rhc_cprime;
-	VSET(can_normal,
-	     0.0,
-	     hitp->hit_vpriv[Y] * (1.0 + 2.0 * c),
-	     -hitp->hit_vpriv[Z] - c - 1.0);
-	MAT4X3VEC(hitp->hit_normal, rhc->rhc_invRoS, can_normal);
-	VUNITIZE(hitp->hit_normal);
-	break;
+	case RHC_NORM_BODY:
+	    c = rhc->rhc_cprime;
+	    VSET(can_normal,
+		 0.0,
+		 hitp->hit_vpriv[Y] * (1.0 + 2.0 * c),
+		 -hitp->hit_vpriv[Z] - c - 1.0);
+	    MAT4X3VEC(hitp->hit_normal, rhc->rhc_invRoS, can_normal);
+	    VUNITIZE(hitp->hit_normal);
+	    break;
 
-    case RHC_NORM_TOP:
-	VREVERSE(hitp->hit_normal, rhc->rhc_Bunit);
-	break;
+	case RHC_NORM_TOP:
+	    VREVERSE(hitp->hit_normal, rhc->rhc_Bunit);
+	    break;
 
-    case RHC_NORM_FRT:
-	VREVERSE(hitp->hit_normal, rhc->rhc_Hunit);
-	break;
+	case RHC_NORM_FRT:
+	    VREVERSE(hitp->hit_normal, rhc->rhc_Hunit);
+	    break;
 
-    case RHC_NORM_BACK:
-	VMOVE(hitp->hit_normal, rhc->rhc_Hunit);
-	break;
+	case RHC_NORM_BACK:
+	    VMOVE(hitp->hit_normal, rhc->rhc_Hunit);
+	    break;
 
-    default:
-	bu_log("rt_rhc_norm: surfno=%d bad\n", hitp->hit_surfno);
-	break;
+	default:
+	    bu_log("rt_rhc_norm: surfno=%d bad\n", hitp->hit_surfno);
+	    break;
     }
 }
 
@@ -625,28 +626,28 @@ rt_rhc_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
 	(struct rhc_specific *)stp->st_specific;
 
     switch (hitp->hit_surfno) {
-    case RHC_NORM_BODY:
-	/* most nearly flat direction */
-	VMOVE(cvp->crv_pdir, rhc->rhc_Hunit);
-	cvp->crv_c1 = 0;
-	/* k = z'' / (1 + z'^2) ^ 3/2 */
-	b = rhc->rhc_b;
-	c = rhc->rhc_c;
-	y = hitp->hit_point[Y];
-	rsq = rhc->rhc_rsq;
-	zp1_sq = y * (b * b + 2 * b * c) / rsq;
-	zp1_sq *= zp1_sq / (c * c + y * y * (b * b + 2 * b * c) / rsq);
-	zp2 = c * c / (rsq * c * c + y * y * (b * b + 2 * b * c));
-	cvp->crv_c2 = zp2 / pow((1 + zp1_sq), 1.5);
-	break;
+	case RHC_NORM_BODY:
+	    /* most nearly flat direction */
+	    VMOVE(cvp->crv_pdir, rhc->rhc_Hunit);
+	    cvp->crv_c1 = 0;
+	    /* k = z'' / (1 + z'^2) ^ 3/2 */
+	    b = rhc->rhc_b;
+	    c = rhc->rhc_c;
+	    y = hitp->hit_point[Y];
+	    rsq = rhc->rhc_rsq;
+	    zp1_sq = y * (b * b + 2 * b * c) / rsq;
+	    zp1_sq *= zp1_sq / (c * c + y * y * (b * b + 2 * b * c) / rsq);
+	    zp2 = c * c / (rsq * c * c + y * y * (b * b + 2 * b * c));
+	    cvp->crv_c2 = zp2 / pow((1 + zp1_sq), 1.5);
+	    break;
 
-    case RHC_NORM_BACK:
-    case RHC_NORM_FRT:
-    case RHC_NORM_TOP:
-	/* any tangent direction */
-	bn_vec_ortho(cvp->crv_pdir, hitp->hit_normal);
-	cvp->crv_c1 = cvp->crv_c2 = 0;
-	break;
+	case RHC_NORM_BACK:
+	case RHC_NORM_FRT:
+	case RHC_NORM_TOP:
+	    /* any tangent direction */
+	    bn_vec_ortho(cvp->crv_pdir, hitp->hit_normal);
+	    cvp->crv_c1 = cvp->crv_c2 = 0;
+	    break;
     }
 }
 
@@ -680,25 +681,25 @@ rt_rhc_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct u
     MAT4X3VEC(pprime, rhc->rhc_SoR, work);
 
     switch (hitp->hit_surfno) {
-    case RHC_NORM_BODY:
-	/* Skin.  x, y coordinates define rotation.  radius = 1 */
-	len = sqrt(pprime[Y] * pprime[Y] + pprime[Z] * pprime[Z]);
-	uvp->uv_u = acos(pprime[Y] / len) * bn_invpi;
-	uvp->uv_v = -pprime[X];		/* height */
-	break;
+	case RHC_NORM_BODY:
+	    /* Skin.  x, y coordinates define rotation.  radius = 1 */
+	    len = sqrt(pprime[Y] * pprime[Y] + pprime[Z] * pprime[Z]);
+	    uvp->uv_u = acos(pprime[Y] / len) * bn_invpi;
+	    uvp->uv_v = -pprime[X];		/* height */
+	    break;
 
-    case RHC_NORM_FRT:
-    case RHC_NORM_BACK:
-	/* end plates - circular mapping, not seamless w/body, top */
-	len = sqrt(pprime[Y] * pprime[Y] + pprime[Z] * pprime[Z]);
-	uvp->uv_u = acos(pprime[Y] / len) * bn_invpi;
-	uvp->uv_v = len;	/* rim v = 1 for both plates */
-	break;
+	case RHC_NORM_FRT:
+	case RHC_NORM_BACK:
+	    /* end plates - circular mapping, not seamless w/body, top */
+	    len = sqrt(pprime[Y] * pprime[Y] + pprime[Z] * pprime[Z]);
+	    uvp->uv_u = acos(pprime[Y] / len) * bn_invpi;
+	    uvp->uv_v = len;	/* rim v = 1 for both plates */
+	    break;
 
-    case RHC_NORM_TOP:
-	uvp->uv_u = 1.0 - (pprime[Y] + 1.0) / 2.0;
-	uvp->uv_v = -pprime[X];		/* height */
-	break;
+	case RHC_NORM_TOP:
+	    uvp->uv_u = 1.0 - (pprime[Y] + 1.0) / 2.0;
+	    uvp->uv_v = -pprime[X];		/* height */
+	    break;
     }
 
     /* uv_du should be relative to rotation, uv_dv relative to height */
@@ -728,6 +729,7 @@ rt_rhc_class(void)
     return 0;
 }
 
+
 /* Our canonical hyperbola in the Y-Z plane has equation
  * z = +- (a/b) * sqrt(b^2 + y^2), and opens toward +Z and -Z with asymptote
  * origin at the origin.
@@ -755,11 +757,13 @@ rhc_hyperbola_b(fastf_t mag_b, fastf_t c, fastf_t r)
     return (c * r) / sqrt(mag_b * (mag_b + 2.0 * c));
 }
 
+
 static fastf_t
 rhc_hyperbola_y(fastf_t b, fastf_t c, fastf_t z)
 {
     return sqrt(b * b * (((z * z) / (c * c)) - 1.0));
 }
+
 
 /* The contour of an rhc in the plane B-R is the positive half of a hyperbola
  * with asymptote origin at ((|B| + c)Bu), opening toward -B. We can transform
@@ -804,16 +808,17 @@ rhc_hyperbolic_curve(fastf_t mag_b, fastf_t c, fastf_t r, int num_points)
     return curve;
 }
 
+
 /* plot half of a hyperbolic contour curve using the given (r, b) points (pts),
  * translation along H (rhc_H), and multiplier for r (rscale)
  */
 static void
 rhc_plot_hyperbolic_curve(
-	struct bu_list *vhead,
-	struct rhc_specific *rhc,
-	struct rt_pt_node *pts,
-	vect_t rhc_H,
-	fastf_t rscale)
+    struct bu_list *vhead,
+    struct rhc_specific *rhc,
+    struct rt_pt_node *pts,
+    vect_t rhc_H,
+    fastf_t rscale)
 {
     vect_t t, Ru, Bu;
     point_t p;
@@ -835,11 +840,12 @@ rhc_plot_hyperbolic_curve(
     }
 }
 
+
 static void
 rhc_plot_hyperbolas(
-	struct bu_list *vhead,
-	struct rt_rhc_internal *rhc,
-	struct rt_pt_node *pts)
+    struct bu_list *vhead,
+    struct rt_rhc_internal *rhc,
+    struct rt_pt_node *pts)
 {
     vect_t rhc_H;
     struct rhc_specific rhc_s;
@@ -862,6 +868,7 @@ rhc_plot_hyperbolas(
     rhc_plot_hyperbolic_curve(vhead, &rhc_s, pts, rhc_H, 1.0);
     rhc_plot_hyperbolic_curve(vhead, &rhc_s, pts, rhc_H, -1.0);
 }
+
 
 static void
 rhc_plot_curve_connections(
@@ -911,10 +918,11 @@ rhc_plot_curve_connections(
     }
 }
 
+
 static int
 rhc_curve_points(
-	struct rt_rhc_internal *rhc,
-	const struct rt_view_info *info)
+    struct rt_rhc_internal *rhc,
+    const struct rt_view_info *info)
 {
     fastf_t height, halfwidth, est_curve_length;
     point_t p0, p1;
@@ -929,6 +937,7 @@ rhc_curve_points(
 
     return est_curve_length / info->point_spacing;
 }
+
 
 int
 rt_rhc_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
@@ -995,6 +1004,7 @@ rt_rhc_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
     return 0;
 }
 
+
 /**
  * R T _ R H C _ P L O T
  */
@@ -1046,9 +1056,8 @@ rt_rhc_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
     /* To ensure normal tolerance, remain below this angle */
     if (ttol->norm > 0.0) {
 	ntol = ttol->norm;
-    } else
+    } else {
 	/* tolerate everything */
-    {
 	ntol = bn_pi;
     }
 
@@ -1146,7 +1155,8 @@ rt_mk_hyperbola(struct rt_pt_node *pts, fastf_t r, fastf_t b, fastf_t c, fastf_t
     discr = sqrt(B * B - 4 * A * C);
     z0 = (-B + discr) / (2. * A);
 
-    if (z0 + RHC_TOL >= -b) {	/* use top sheet of hyperboloid */
+    if (z0 + RHC_TOL >= -b) {
+	/* use top sheet of hyperboloid */
 	mpt[Z] = z0;
     } else {
 	mpt[Z] = (-B - discr) / (2. * A);
@@ -1266,9 +1276,8 @@ rt_rhc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     /* To ensure normal tolerance, remain below this angle */
     if (ttol->norm > 0.0) {
 	ntol = ttol->norm;
-    } else
+    } else {
 	/* tolerate everything */
-    {
 	ntol = bn_pi;
     }
 
@@ -1763,6 +1772,7 @@ rt_rhc_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)
     return 0;			/* OK */
 }
 
+
 static int
 rhc_is_valid(struct rt_rhc_internal *rhc)
 {
@@ -1791,6 +1801,7 @@ rhc_is_valid(struct rt_rhc_internal *rhc)
     return 1;
 }
 
+
 void
 rt_rhc_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 {
@@ -1803,21 +1814,21 @@ rt_rhc_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 	int i, j;
 
 	/**
-	* n is the number of divisions to use when using Simpson's
-	* composite rule below to approximate the integral.
-	*
-	* A value of n = 1000000 should be enough to ensure that the
-	* approximation is accurate to at least 10 decimal places.
-	* The accuracy of the approximation increases by about 2 d.p with
-	* each added 0 onto the end of the number (i.e. multiply by 10),
-	* so there is a compromise between accuracy and performance,
-	* although performance might only be an issue on old slow
-	* hardware.
-	*
-	* I wouldn't recommend setting this less than about
-	* 10000, because this might cause accuracy to be unsuitable for
-	* professional or mission critical use.
-	*/
+	 * n is the number of divisions to use when using Simpson's
+	 * composite rule below to approximate the integral.
+	 *
+	 * A value of n = 1000000 should be enough to ensure that the
+	 * approximation is accurate to at least 10 decimal places.
+	 * The accuracy of the approximation increases by about 2 d.p with
+	 * each added 0 onto the end of the number (i.e. multiply by 10),
+	 * so there is a compromise between accuracy and performance,
+	 * although performance might only be an issue on old slow
+	 * hardware.
+	 *
+	 * I wouldn't recommend setting this less than about
+	 * 10000, because this might cause accuracy to be unsuitable for
+	 * professional or mission critical use.
+	 */
 	int n = 1000000;
 
 	RT_CK_DB_INTERNAL(ip);
@@ -1846,6 +1857,7 @@ rt_rhc_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 	*area = 2 * A + 2 * rip->rhc_r * height + arclen * height;
     }
 }
+
 
 /*
  * Local Variables:
