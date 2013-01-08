@@ -1805,57 +1805,59 @@ rhc_is_valid(struct rt_rhc_internal *rhc)
 void
 rt_rhc_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 {
-    if (area != NULL && ip != NULL) {
-	struct rt_rhc_internal *rip;
-	fastf_t A, arclen, integralArea, a, b, magB, sqrt_ra, height;
+    struct rt_rhc_internal *rip;
+    fastf_t A, arclen, integralArea, a, b, magB, sqrt_ra, height;
 
-	fastf_t h;
-	fastf_t sumodds = 0, sumevens = 0, x = 0;
-	int i, j;
+    fastf_t h;
+    fastf_t sumodds = 0, sumevens = 0, x = 0;
+    int i, j;
 
-	/**
-	 * n is the number of divisions to use when using Simpson's
-	 * composite rule below to approximate the integral.
-	 *
-	 * A value of n = 1000000 should be enough to ensure that the
-	 * approximation is accurate to at least 10 decimal places.
-	 * The accuracy of the approximation increases by about 2 d.p with
-	 * each added 0 onto the end of the number (i.e. multiply by 10),
-	 * so there is a compromise between accuracy and performance,
-	 * although performance might only be an issue on old slow
-	 * hardware.
-	 *
-	 * I wouldn't recommend setting this less than about
-	 * 10000, because this might cause accuracy to be unsuitable for
-	 * professional or mission critical use.
-	 */
-	int n = 1000000;
+    /**
+     * n is the number of divisions to use when using Simpson's
+     * composite rule below to approximate the integral.
+     *
+     * A value of n = 1000000 should be enough to ensure that the
+     * approximation is accurate to at least 10 decimal places.  The
+     * accuracy of the approximation increases by about 2 d.p with
+     * each added 0 onto the end of the number (i.e. multiply by 10),
+     * so there is a compromise between accuracy and performance,
+     * although performance might only be an issue on old slow
+     * hardware.
+     *
+     * I wouldn't recommend setting this less than about 10000,
+     * because this might cause accuracy to be unsuitable for
+     * professional or mission critical use.
+     */
+    int n = 1000000;
 
-	RT_CK_DB_INTERNAL(ip);
-	rip = (struct rt_rhc_internal *)ip->idb_ptr;
-	RT_RHC_CK_MAGIC(rip);
-
-	b = rip->rhc_c;
-	magB = MAGNITUDE(rip->rhc_B);
-	height = MAGNITUDE(rip->rhc_H);
-	a = (rip->rhc_r * b) / sqrt(magB * (2 * rip->rhc_c + magB));
-	sqrt_ra = sqrt(rip->rhc_r * rip->rhc_r + b * b);
-	integralArea = (b / a) * ((2 * rip->rhc_r * sqrt_ra) / 2 + ((a * a) / 2) * (log(sqrt_ra + rip->rhc_r) - log(sqrt_ra - rip->rhc_r)));
-	A = 2 * rip->rhc_r * (rip->rhc_c + magB) - integralArea;
-
-	h = (2 * rip->rhc_r) / n;
-	for (i = 1; i <= (n / 2) - 1; i++) {
-	    x = -rip->rhc_r + 2 * i * h;
-	    sumodds += sqrt((b * b * x * x) / (a * a * x * x + pow(a, 4)) + 1);
-	}
-	for (j = 1; j <= (n / 2); j++) {
-	    x = -rip->rhc_r + (2 * j - 1) * h;
-	    sumevens += sqrt((b * b * x * x) / (a * a * x * x + pow(a, 4)) + 1);
-	}
-	arclen = (h / 3) * (sqrt((b * b * rip->rhc_r * rip->rhc_r) / (a * a * rip->rhc_r * rip->rhc_r + pow(a, 4)) + 1) + 2 * sumodds + 4 * sumevens + sqrt((b * b * rip->rhc_r * rip->rhc_r) / (a * a * rip->rhc_r * rip->rhc_r + pow(a, 4)) + 1));
-
-	*area = 2 * A + 2 * rip->rhc_r * height + arclen * height;
+    if (area == NULL || ip == NULL) {
+	return;
     }
+
+    RT_CK_DB_INTERNAL(ip);
+    rip = (struct rt_rhc_internal *)ip->idb_ptr;
+    RT_RHC_CK_MAGIC(rip);
+
+    b = rip->rhc_c;
+    magB = MAGNITUDE(rip->rhc_B);
+    height = MAGNITUDE(rip->rhc_H);
+    a = (rip->rhc_r * b) / sqrt(magB * (2 * rip->rhc_c + magB));
+    sqrt_ra = sqrt(rip->rhc_r * rip->rhc_r + b * b);
+    integralArea = (b / a) * ((2 * rip->rhc_r * sqrt_ra) / 2 + ((a * a) / 2) * (log(sqrt_ra + rip->rhc_r) - log(sqrt_ra - rip->rhc_r)));
+    A = 2 * rip->rhc_r * (rip->rhc_c + magB) - integralArea;
+
+    h = (2 * rip->rhc_r) / n;
+    for (i = 1; i <= (n / 2) - 1; i++) {
+	x = -rip->rhc_r + 2 * i * h;
+	sumodds += sqrt((b * b * x * x) / (a * a * x * x + pow(a, 4)) + 1);
+    }
+    for (j = 1; j <= (n / 2); j++) {
+	x = -rip->rhc_r + (2 * j - 1) * h;
+	sumevens += sqrt((b * b * x * x) / (a * a * x * x + pow(a, 4)) + 1);
+    }
+    arclen = (h / 3) * (sqrt((b * b * rip->rhc_r * rip->rhc_r) / (a * a * rip->rhc_r * rip->rhc_r + pow(a, 4)) + 1) + 2 * sumodds + 4 * sumevens + sqrt((b * b * rip->rhc_r * rip->rhc_r) / (a * a * rip->rhc_r * rip->rhc_r + pow(a, 4)) + 1));
+
+    *area = 2 * A + 2 * rip->rhc_r * height + arclen * height;
 }
 
 
