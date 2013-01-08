@@ -151,7 +151,7 @@ int parse_args(int ac, char **av)
 		break;
 	    case '?':
 	    default:
-		usage("bad command line option");
+		usage("bad command line option\n");
 		break;
 	}
 
@@ -329,7 +329,7 @@ int main(int ac, char **av)
     /* parse command flags, and make sure there are arguments
      * left over for processing.
      */
-    if (parse_args(ac, av) < ac) usage("Excess command line arguments");
+    if (parse_args(ac, av) < ac) usage("Excess command line arguments\n");
 
 
     /* build the wall
