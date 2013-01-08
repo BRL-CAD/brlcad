@@ -34,16 +34,16 @@
  * first step is mapping 2-bit values into sum of 2 1-bit values in
  * sneaky way.  this technique was taken from the University of
  * Kentucky's Aggregate Magic Algorithms collection.
+ *
+ * LLVM 3.2 complains about a static inline function here, so use a macro instead
  */
-static inline unsigned int
-count_ones32(register unsigned int x)
-{
-    x -= ((x >> 1) & 0x55555555);
-    x  = (((x >> 2) & 0x33333333) + (x & 0x33333333));
-    x  = (((x >> 4) + x) & 0x0f0f0f0f);
-    x += (x >> 8);
-    x += (x >> 16);
-    return x & 0x0000003f;
+#define COUNT_ONES32(x) { \
+    x -= ((x >> 1) & 0x55555555); \
+    x  = (((x >> 2) & 0x33333333) + (x & 0x33333333)); \
+    x  = (((x >> 4) + x) & 0x0f0f0f0f); \
+    x += (x >> 8); \
+    x += (x >> 16); \
+    x &= 0x0000003f; \
 }
 
 
@@ -52,16 +52,17 @@ count_ones32(register unsigned int x)
  * (SWAR) to compute a base-2 integer logarithm for a given integer.
  * this technique was taken from the University of Kentucky's
  * Aggregate Magic Algorithms collection.
+ *
+ * LLVM 3.2 complains about a static inline function here, so use a macro instead
  */
-static inline unsigned int
-floor_ilog2(register unsigned int x)
-{
-    x |= (x >> 1);
-    x |= (x >> 2);
-    x |= (x >> 4);
-    x |= (x >> 8);
-    x |= (x >> 16);
-    return count_ones32(x >> 1);
+#define FLOOR_ILOG2(x) { \
+    x |= (x >> 1); \
+    x |= (x >> 2); \
+    x |= (x >> 4); \
+    x |= (x >> 8); \
+    x |= (x >> 16); \
+    x >>= 1; \
+    COUNT_ONES32(x) \
 }
 
 
@@ -70,10 +71,14 @@ floor_ilog2(register unsigned int x)
  * users should not call this directly, instead calling the
  * BU_BITV_SHIFT macro instead.
  */
-unsigned int
+inline unsigned int
 bu_bitv_shift()
 {
-    return floor_ilog2(sizeof(bitv_t)*8);
+    size_t x = sizeof(bitv_t) * 8;
+
+    FLOOR_ILOG2(x)
+
+    return x;
 }
 
 
