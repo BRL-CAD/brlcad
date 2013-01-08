@@ -687,7 +687,7 @@ f_ShotHit(struct application *ap, struct partition *pt_headp, struct seg *UNUSED
 	    } else	  /* Interior burst point: no fuzing offset. */
 		VMOVE(burstpt, bp->pt_outhit->hit_point);
 
-	/* Only generate burst rays if nspallrays is greater then
+	/* Only generate burst rays if nspallrays is greater than
 	   zero. */
 	if (nspallrays < 1)
 	    return	1;

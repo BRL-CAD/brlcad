@@ -312,7 +312,7 @@ main(int argc, char *argv[])
 	       tree_state.ts_tol->dist, tree_state.ts_tol->perp);
     }
 
-    /* print the egg header shtuff, including the command line to execute it */
+    /* print the egg header stuff, including the command line to execute it */
     fprintf(gcvwriter.fp, "<CoordinateSystem> { Z-Up }\n\n");
     fprintf(gcvwriter.fp, "<Comment> {\n  \"%s", *argv);
     for (i=1; i<argc; i++)

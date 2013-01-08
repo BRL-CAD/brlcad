@@ -618,7 +618,7 @@ rt_shootrays(struct application_bundle *bundle)
      * callback functions differ from their general user defined
      * counterparts by detaching the ray hit partition list and
      * segment list and attaching it to a partition bundle. Users can
-     * define there own functions but should remember to hi-jack the
+     * define their own functions but should remember to hi-jack the
      * partition and segment list or the single ray handling function
      * will return memory allocated to these list prior to the bundle
      * b_hit() routine.

@@ -480,10 +480,10 @@ int main(int argc, char *argv[])
 	fprintf(stderr, ">> mesh count: %d\n", mesh_count);
     }
 
-    /* writeout header */
+    /* write out header */
     write_header(dbip);
 
-    /* writeout meshes */
+    /* write out meshes */
     write_mesh_data();
 
     /* finish */

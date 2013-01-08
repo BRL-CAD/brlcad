@@ -2771,7 +2771,7 @@ system_solve(struct ged *gedp, int pri, double delta, double epsilon)
 		      pri_weights[pri], new_eval);
     }
     /*
-     * if the new evaluation is worse then the original, back off
+     * if the new evaluation is worse than the original, back off
      * this modification, set the constraint such that this freedom
      * of this joint won't be used next time through part_solve.
      */
@@ -2977,7 +2977,7 @@ f_Jsolve(struct ged *gedp, int argc, char *argv[])
 
     for (count=0; count < loops; count++) {
 	/*
-	 * Clear all constrain flags.
+	 * Clear all constraint flags.
 	 */
 	for (BU_LIST_FOR(hp, hold, &hold_head)) {
 	    struct jointH *jh;
@@ -3009,7 +3009,7 @@ f_Jsolve(struct ged *gedp, int argc, char *argv[])
     if (count < loops) {
 	for (count = 0; count < loops; count++) {
 	    /*
-	     * Clear all constrain flags.
+	     * Clear all constraint flags.
 	     */
 	    for (BU_LIST_FOR(hp, hold, &hold_head)) {
 		struct jointH *jh;

@@ -22,7 +22,7 @@
  *
  * This routine creates an single NMG shell from an object by
  * raytracing and using the hit points as vertices in the shell.
- * Raytracing is doe in the Y-direction primarily. The -r option
+ * Raytracing is done in the Y-direction primarily. The -r option
  * requests raytracing in the X and Z directions to refine the shape
  * of the shell.
  *
@@ -593,7 +593,7 @@ shrink_hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUS
 	}
     }
 
-    /* Don't allow moving the vertex normalward more than a cell width.
+    /* Don't allow moving the vertex more than a cell width along the normal.
      * If the point should have been there, the original rays should have caught it.
      */
     if (hit1_v) {

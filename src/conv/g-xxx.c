@@ -208,7 +208,7 @@ region_start(struct db_tree_state *tsp,
  *      @param curtree
  *
  *      @return TREE_NULL if data in curtree was "stolen", otherwise db_walk_tree will
- *      clean up the dta in the union tree * that is returned
+ *      clean up the data in the union tree * that is returned
  *
  * If it wants to retain the data in curtree it can by returning TREE_NULL.  Otherwise
  * db_walk_tree will clean up the data in the union tree * that is returned.

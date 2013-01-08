@@ -9,7 +9,7 @@ RequestExecutionLevel user
 
 ;--------------------------------
 
-; Modurn User Interface
+; Modern User Interface
 !include "MUI.nsh"
 !include "FileFunc.nsh"
 !include "WordFunc.nsh"

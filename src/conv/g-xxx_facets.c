@@ -20,7 +20,7 @@
  */
 /** @file conv/g-xxx_facets.c
  *
- * Program to convert a BRL-CAD model (in a .g file) to a facetted
+ * Program to convert a BRL-CAD model (in a .g file) to a faceted
  * format by calling on the NMG booleans.  Based on g-stl.c.
  *
  */
@@ -216,7 +216,7 @@ main(int argc, char **argv)
     return 0;
 }
 
-/* routine to output the facetted NMG representation of a BRL-CAD region */
+/* routine to output the faceted NMG representation of a BRL-CAD region */
 static void
 output_nmg(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(region_id), int UNUSED(material_id))
 {

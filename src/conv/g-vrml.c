@@ -21,7 +21,7 @@
 /** @file conv/g-vrml.c
  *
  * Program to convert a BRL-CAD model (in a .g file) to a VRML (2.0)
- * facetted model by calling on the NMG booleans.
+ * faceted model by calling on the NMG booleans.
  *
  */
 
