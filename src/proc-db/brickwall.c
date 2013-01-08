@@ -50,7 +50,7 @@ int make_mortar=0;	/* put mortar between bricks */
 double tol=0.125;	/* minimum mortar thickness in in */
 double tol2;		/* minimum brick dimension allowed */
 int debug=0;
-double units_conv=25.4;	/* default to inches */
+double units_conv=25.4;	/* by default, units are converted internally from in to mm */
 char color[32] = "160 40 40";
 char mortar_color[32] = "190 190 190";
 /*
