@@ -21,8 +21,6 @@
  *
  * builds a brick wall.
  *
- * Options
- * h	help
  */
 
 #include "common.h"
@@ -366,9 +364,13 @@ int main(int ac, char **av)
 
     vert_bricks = (int)(wall_height / (brick_height+(horiz_spacing*0.5)));
 
+    if (vert_bricks > 1) {
     vert_spacing =
 	(wall_height - vert_bricks * brick_height) /
 	(vert_bricks - 1);
+    } else {
+    vert_spacing = 0;
+    }
 
 
     fprintf(stderr, "wall %d bricks wide,  %d bricks high\n",
