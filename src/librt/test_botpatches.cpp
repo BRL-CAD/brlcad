@@ -759,7 +759,7 @@ void bot_partition(struct Manifold_Info *info)
 	    face_queue.push(smallest_face);
 	    face_groups[info->face_to_plane[face_queue.front()]].erase(face_queue.front());
 	    size_t current_plane = info->face_to_plane[face_queue.front()];
-	    size_t start_face_num = face_queue.front();
+	    //size_t start_face_num = face_queue.front();
 	    while (!face_queue.empty()) {
 		size_t face_num = face_queue.front();
 		face_queue.pop();
@@ -1007,8 +1007,14 @@ void find_edges(struct Manifold_Info *info)
 		    ON_3dPoint pt_3d(&info->bot->vertices[(*v_it)]);
 		    curve_pnts.Append(pt_3d);
 		}
-		ON_NurbsCurve *curve_nurb =  interpolateLocalCubicCurve(curve_pnts);
-		int c3i = info->brep->AddEdgeCurve(curve_nurb);
+		ON_NurbsCurve *curve_nurb;
+                int c3i;
+		if (curve_pnts.Count() == 2) {
+		   c3i = info->brep->AddEdgeCurve(new ON_LineCurve(*(curve_pnts.First()), *(curve_pnts.Last())));
+		} else {
+		   curve_nurb = interpolateLocalCubicCurve(curve_pnts);
+		   c3i = info->brep->AddEdgeCurve(curve_nurb);
+		}
 		ON_BrepVertex& StartV = info->brep->m_V[vs_id];
 		StartV.m_tolerance = 1e-3;
 		ON_BrepVertex& EndV= info->brep->m_V[ve_id];
@@ -1104,8 +1110,6 @@ void build_loop(size_t patch_id, size_t loop_index, ON_BrepLoop::TYPE loop_type,
     int vert_prev = -1;
     //std::cout << "Patch " << patch_id << " loop edges: \n";
     bool trim_rev = false;
-    size_t pullback_failures = 0;
-    size_t pullback_successes = 0;
     for(loop_it = loop_edges->begin(); loop_it != loop_edges->end(); loop_it++) {
 	size_t curr_edge = (*loop_it);
 	// Will we need to flip the trim?
@@ -1135,8 +1139,10 @@ void build_loop(size_t patch_id, size_t loop_index, ON_BrepLoop::TYPE loop_type,
         int prev_trim_rev = 0;
         int istart = 1;
 
+	size_t pullback_failures;
 	if(loop_it == loop_edges->begin()) {
-            prev_trim_rev = trim_rev;
+	    pullback_failures = 0;
+	    prev_trim_rev = trim_rev;
 	    int found_first_pt = 0;
 	    while(!found_first_pt && istart < 50) {
 		pt_3d = edge_curve->PointAt(dom.ParameterAt((double)(istart-1)/(double)50));
@@ -1145,10 +1151,14 @@ void build_loop(size_t patch_id, size_t loop_index, ON_BrepLoop::TYPE loop_type,
 			curve_pnts_2d.Append(pt_2d);
 			loop_anchor = pt_2d;
 			found_first_pt = 1;
-		    }
+		    } else {
+                      istart++;
+                    }
 		} else {
+                  std::cout << "Pullback failure on first pt (" << patch_id << "," << (double)(istart-1)/(double)50 << "): " << pt_3d.x << "," << pt_3d.y << "," << pt_3d.z << "\n";
                   pullback_failures++;
-                }
+		  istart++;
+		}
 	    }
 	} else {
 	    curve_pnts_2d.Append(pt_2d_prev);
@@ -1164,6 +1174,7 @@ void build_loop(size_t patch_id, size_t loop_index, ON_BrepLoop::TYPE loop_type,
 			pt_2d_prev = pt_2d;
 		    }
 		} else {
+                  std::cout << "Pullback failure (" << patch_id << "," << (double)(i)/(double)50 << "): " << pt_3d.x << "," << pt_3d.y << "," << pt_3d.z << "\n";
                   pullback_failures++;
                 }
 	    }
@@ -1176,6 +1187,7 @@ void build_loop(size_t patch_id, size_t loop_index, ON_BrepLoop::TYPE loop_type,
 			pt_2d_prev = pt_2d;
 		    }
 		} else {
+                  std::cout << "Pullback failure (" << patch_id << "," << (double)(i)/(double)50 << "): " << pt_3d.x << "," << pt_3d.y << "," << pt_3d.z << "\n";
                   pullback_failures++;
                 }
 	    }
@@ -1184,7 +1196,6 @@ void build_loop(size_t patch_id, size_t loop_index, ON_BrepLoop::TYPE loop_type,
 	if(loop_it+1 == loop_edges->end()) {
 	    curve_pnts_2d.Append(loop_anchor);
 	}
-        if(pullback_failures) std::cout << "Warning: face " << patch_id << " has " << pullback_failures << " pullback failures\n";
 	//if(trim_rev) {curve_pnts_2d.Reverse();}
 	ON_Curve *trim_curve = interpolateCurve(curve_pnts_2d);
 	int c2i = info->brep->AddTrimCurve(trim_curve);
