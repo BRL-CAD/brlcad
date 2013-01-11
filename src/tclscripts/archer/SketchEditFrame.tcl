@@ -259,7 +259,7 @@
     bind $itk_component(canvas) <Configure> [::itcl::code $this handle_configure]
 
     set tolocal [$::ArcherCore::application gedCmd base2local]
-    set tobase [expr {1.0 / $tolocal}]
+    set tobase [$::ArcherCore::application gedCmd local2base]
 }
 
 # ------------------------------------------------------------
@@ -342,19 +342,6 @@
     }
 
     set_canvas
-
-    set V [bu_get_value_by_keyword V $_gdata]
-    set mVx [lindex $V 0]
-    set mVy [lindex $V 1]
-    set mVz [lindex $V 2]
-    set A [bu_get_value_by_keyword A $_gdata]
-    set mAx [lindex $A 0]
-    set mAy [lindex $A 1]
-    set mAz [lindex $A 2]
-    set B [bu_get_value_by_keyword B $_gdata]
-    set mBx [lindex $B 0]
-    set mBy [lindex $B 1]
-    set mBz [lindex $B 2]
 }
 
 
@@ -364,12 +351,12 @@
 	return
     }
 
-    $itk_option(-mged) adjust $itk_option(-geometryObject) \
+#    $itk_option(-mged) adjust $itk_option(-geometryObject) \
 	V [list $mVx $mVy $mVz] \
 	A [list $mAx $mAy $mAz] \
 	B [list $mBx $mBy $mBz]
+    write_sketch_to_db
 
-#    write_sketch_to_db
     GeometryEditFrame::updateGeometry
 }
 
@@ -965,12 +952,16 @@
     set mLastIndex -1
 
     set min_max [$itk_component(canvas) bbox segs verts]
-    set tmp_scale1 [expr double($mCanvasWidth) / ([lindex $min_max 2] - [lindex $min_max 0] + 2.0 * $vert_radius)]
+    if {[llength $min_max] != 4} {
+	set min_max {-1 -1 1 1}
+    }
+
+    set tmp_scale1 [expr {double($mCanvasWidth) / ([lindex $min_max 2] - [lindex $min_max 0])}]
     if {$tmp_scale1 < 0.0} {
 	set tmp_scale1 [expr -$tmp_scale1]
     }
 
-    set tmp_scale2 [expr double($mCanvasHeight) / ([lindex $min_max 3] - [lindex $min_max 1] + 2.0 * $vert_radius)]
+    set tmp_scale2 [expr {double($mCanvasHeight) / ([lindex $min_max 3] - [lindex $min_max 1])}]
     if {$tmp_scale2 < 0.0} {
 	set tmp_scale2 [expr -$tmp_scale2]
     }
@@ -998,6 +989,9 @@
 
 ::itcl::body SketchEditFrame::initScrollRegion {} {
     set bbox [$itk_component(canvas) bbox segs verts]
+    if {[llength $bbox] != 4} {
+	set bbox {-1 -1 1 1}
+    }
     set x1 [lindex $bbox 0]
     set y1 [lindex $bbox 1]
     set x2 [lindex $bbox 2]
