@@ -58,11 +58,15 @@ initialise_buffers(char *expected_buf)
 int
 compare_result(char *expected_buf, FILE *result_fd)
 {
+    size_t ret;
     char result_buf[BUFFER_SIZE];
     memset(result_buf, 0, BUFFER_SIZE);
 
     rewind(result_fd);
-    fread(result_buf, sizeof(char), BUFFER_SIZE, result_fd);
+    ret = fread(result_buf, sizeof(char), BUFFER_SIZE, result_fd);
+    if (ret < BUFFER_SIZE)
+	perror("fread");
+
     fclose(result_fd);
 
     return bu_strncmp(expected_buf, result_buf, BUFFER_SIZE) == 0;
@@ -72,11 +76,14 @@ compare_result(char *expected_buf, FILE *result_fd)
 int
 check_result_len(FILE *result_fd)
 {
+    size_t ret;
     char result_buf[BUFFER_SIZE+1];
     memset(result_buf, 0, BUFFER_SIZE+1);
 
     rewind(result_fd);
-    fread(result_buf, sizeof(char), BUFFER_SIZE, result_fd);
+    ret = fread(result_buf, sizeof(char), BUFFER_SIZE, result_fd);
+    if (ret < BUFFER_SIZE)
+	perror("fread");
     fclose(result_fd);
 
     return strlen(result_buf);
