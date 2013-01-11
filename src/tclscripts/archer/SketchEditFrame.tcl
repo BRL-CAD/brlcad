@@ -1149,9 +1149,9 @@
     set end_y [expr {[lindex $snap_2 1] * $myscale}]
     
     set ruler_x [$itk_component(canvas) canvasx 10]
-    set ruler_y [$itk_component(canvas) canvasy 20]
-    set ruler_start_x [$itk_component(canvas) canvasx 30]
-    set ruler_start_y [$itk_component(canvas) canvasy 30]
+    set ruler_y [$itk_component(canvas) canvasy 15]
+    set ruler_start_x [$itk_component(canvas) canvasx 50]
+    set ruler_start_y [$itk_component(canvas) canvasy 50]
 
     if {$_final} {
 	# Draw the rows
@@ -1165,7 +1165,7 @@
 	    }
 
 	    if {$y > $ruler_start_y} {
-		set t [format "%g" [expr {$y / $myscale}]]
+		set t [format "%.3f" [expr {$y / $myscale}]]
 		$itk_component(canvas) create text $ruler_x $y -text $t -anchor sw -fill black -tags "grid ruler"
 	    }
 	}
@@ -1181,7 +1181,7 @@
 	    }
 
 	    if {$x > $ruler_start_x} {
-		set t [format "%g" [expr {$x / $myscale}]]
+		set t [format "%.3f" [expr {$x / $myscale}]]
 		$itk_component(canvas) create text $x $ruler_y -text $t -anchor center -fill black -tags "grid ruler"
 	    }
 	}
