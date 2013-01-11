@@ -281,14 +281,10 @@ fb_cmd_close_existing(ClientData UNUSED(clientData), int argc, const char **argv
 
 
 void
-#if !defined(IF_X) && !defined(IF_WGL) && !defined(IF_OGL) && !defined(IF_TK)
-fb_configureWindow(FBIO *ifp, int UNUSED(width), int UNUSED(height))
-#else
 fb_configureWindow(FBIO *ifp, int width, int height)
-#endif
 {
     /* unknown/unset framebuffer */
-    if (!ifp || !ifp->if_name) {
+    if (!ifp || !ifp->if_name || width < 0 || height < 0) {
 	return;
     }
 
@@ -319,23 +315,24 @@ fb_configureWindow(FBIO *ifp, int width, int height)
 
 
 int
-#if !defined(IF_X) && !defined(IF_WGL) && !defined(IF_OGL) && !defined(IF_TK)
-fb_refresh(FBIO *ifp, int UNUSED(x), int UNUSED(y), int w, int h)
-#else
 fb_refresh(FBIO *ifp, int x, int y, int w, int h)
-#endif
 {
     int status=0;
 
-#if 1
-    if (w == 0 || h == 0)
-	return TCL_OK;
-#else
-    if (w <= 0 || h <= 0) {
+    /* what does negative mean? */
+    if (x < 0)
+	x = 0;
+    if (y < 0)
+	y = 0;
+    if (w < 0)
+	w = 0;
+    if (h < 0)
+	h = 0;
+
+    if (w == 0 || h == 0) {
 	/* nothing to refresh */
 	return TCL_OK;
     }
-#endif
 
     if (!ifp || !ifp->if_name) {
 	/* unset/unknown framebuffer */
