@@ -1091,6 +1091,9 @@ void find_outer_loop(std::map<size_t, std::vector<size_t> > *loops, size_t *oute
 void build_loop(size_t patch_id, size_t loop_index, ON_BrepLoop::TYPE loop_type, std::map<size_t, std::vector<size_t> > *loops, struct Manifold_Info *info) {
 
     ON_BrepFace& face = info->brep->m_F[(int)patch_id];
+    const ON_Surface *surface = face.SurfaceOf();
+    ON_Interval xdom = surface->Domain(0); 
+    ON_Interval ydom = surface->Domain(1); 
     // Start with outer loop
     ON_BrepLoop& loop = info->brep->NewLoop(loop_type, face);
     // build surface tree
@@ -1124,49 +1127,71 @@ void build_loop(size_t patch_id, size_t loop_index, ON_BrepLoop::TYPE loop_type,
 	ON_2dPointArray curve_pnts_2d;
 	const ON_Curve* edge_curve = edge.EdgeCurveOf();
 	ON_Interval dom = edge_curve->Domain();
-	// XXX todo: dynamically sample the curve - must use consistent method for all sampling, else
-	// surface may not contain points sought by curve
+
 	ON_3dPoint pt_3d = edge_curve->PointAt(dom.ParameterAt(0));
 	ON_2dPoint pt_2d;
+	ON_2dPoint loop_anchor;
 	ON_2dPoint pt_2d_prev;
-	if(get_closest_point(pt_2d, &face, pt_3d, st)) {
-	    curve_pnts_2d.Append(pt_2d);
-	    pt_2d_prev = *curve_pnts_2d.Last();
-	    pullback_successes++;
+        int prev_trim_rev = 0;
+        int istart = 1;
+
+	if(loop_it == loop_edges->begin()) {
+            prev_trim_rev = trim_rev;
+	    int found_first_pt = 0;
+	    while(!found_first_pt && istart < 50) {
+		pt_3d = edge_curve->PointAt(dom.ParameterAt((double)(istart-1)/(double)50));
+		if(get_closest_point(pt_2d, &face, pt_3d, st)) {
+		    if (xdom.Includes(pt_2d.x) && ydom.Includes(pt_2d.y)) {
+			curve_pnts_2d.Append(pt_2d);
+			loop_anchor = pt_2d;
+			found_first_pt = 1;
+		    }
+		} else {
+                  pullback_failures++;
+                }
+	    }
 	} else {
-	    pt_2d_prev = ON_2dPoint(INT_MAX, INT_MAX);
-	    pullback_failures++;
+	    curve_pnts_2d.Append(pt_2d_prev);
 	}
-	for (int i = 1; i < 50; i++) {
-	    pt_3d = edge_curve->PointAt(dom.ParameterAt((double)(i)/(double)50));
-	    if(get_closest_point(pt_2d, &face, pt_3d, st) && pt_2d != pt_2d_prev) {
-		curve_pnts_2d.Append(pt_2d);
-		pt_2d_prev = *curve_pnts_2d.Last();
-		pullback_successes++;
-	    } else {
-		if(pt_2d != pt_2d_prev)
-		    pullback_failures++;
+	// XXX todo: dynamically sample the curve - must use consistent method for all sampling, else
+	// surface may not contain points sought by curve
+	if(!trim_rev) {
+	    for (int i = istart; i < 50; i++) {
+		pt_3d = edge_curve->PointAt(dom.ParameterAt((double)(i)/(double)50));
+		if(get_closest_point(pt_2d, &face, pt_3d, st) && pt_2d != pt_2d_prev) {
+		    if (xdom.Includes(pt_2d.x) && ydom.Includes(pt_2d.y)) {
+			curve_pnts_2d.Append(pt_2d);
+			pt_2d_prev = pt_2d;
+		    }
+		} else {
+                  pullback_failures++;
+                } 
+	    }
+	} else {
+	    for (int i = 50; i > istart; i--) {
+		pt_3d = edge_curve->PointAt(dom.ParameterAt((double)(i)/(double)50));
+		if(get_closest_point(pt_2d, &face, pt_3d, st) && pt_2d != pt_2d_prev) {
+		    if (xdom.Includes(pt_2d.x) && ydom.Includes(pt_2d.y)) {
+			curve_pnts_2d.Append(pt_2d);
+			pt_2d_prev = pt_2d;
+		    }
+		} else {
+                  pullback_failures++;
+                } 
 	    }
 	}
-	pt_3d = edge_curve->PointAt(dom.ParameterAt(1.0));
-	if(get_closest_point(pt_2d, &face, pt_3d, st) && pt_2d != pt_2d_prev) {
-	    curve_pnts_2d.Append(pt_2d);
-	    pullback_successes++;
-	} else {
-	    if(pt_2d != pt_2d_prev)
-		pullback_failures++;
+        // For final curve, doesn't matter what last pullback is - we MUST force the loop to close.
+	if(loop_it+1 == loop_edges->end()) {
+	    curve_pnts_2d.Append(loop_anchor);
 	}
-        if(pullback_failures)
-	    std::cout << "Pullback to face " << patch_id << ": Successes: " << pullback_successes << ", Failures: " << pullback_failures << "\n";
-	if (pullback_successes >= 2) {
-	    if(trim_rev) curve_pnts_2d.Reverse();
-	    ON_Curve *trim_curve = interpolateCurve(curve_pnts_2d);
-	    int c2i = info->brep->AddTrimCurve(trim_curve);
-	    ON_BrepTrim& trim = info->brep->NewTrim(edge, trim_rev, loop, c2i);
-	    trim.m_type = ON_BrepTrim::mated;
-	    trim.m_tolerance[0] = 1e-3;
-	    trim.m_tolerance[1] = 1e-3;
-	}
+        if(pullback_failures) std::cout << "Warning: face " << patch_id << " has " << pullback_failures << " pullback failures\n";
+	//if(trim_rev) {curve_pnts_2d.Reverse();}
+	ON_Curve *trim_curve = interpolateCurve(curve_pnts_2d);
+	int c2i = info->brep->AddTrimCurve(trim_curve);
+	ON_BrepTrim& trim = info->brep->NewTrim(edge, trim_rev, loop, c2i);
+	trim.m_type = ON_BrepTrim::mated;
+	trim.m_tolerance[0] = 1e-3;
+	trim.m_tolerance[1] = 1e-3;
     }
     if (info->brep->LoopDirection(loop) != 1 && loop_type == ON_BrepLoop::outer) {
 	info->brep->FlipLoop(loop);
