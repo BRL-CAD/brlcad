@@ -1131,7 +1131,7 @@ brep_trim_info(struct brep_specific* bs, struct bu_vls *vls, int ti)
 	dump.Print("NURBS form of 2d_curve(trim)\n");
 	nc2->Dump(dump);
 	delete nc2;
-    
+
     ON_String ss = wstr;
     bu_vls_printf(vls, "%s\n", ss.Array());
     return 0;
@@ -1221,7 +1221,7 @@ brep_edge_info(struct brep_specific* bs, struct bu_vls *vls, int ei)
 	dump.Print("NURBS form of 3d_curve(edge) \n");
 	nc3->Dump(dump);
 	delete nc3;
-    
+
     ON_String ss = wstr;
     bu_vls_printf(vls, "%s\n", ss.Array());
     return 0;
@@ -1324,7 +1324,7 @@ brep_surface_plot(struct bu_vls *vls, struct brep_specific* bs, struct rt_brep_i
 	}
 
 	bu_vls_printf(vls, ON_String(wstr).Array());
-    
+
     return 0;
 }
 

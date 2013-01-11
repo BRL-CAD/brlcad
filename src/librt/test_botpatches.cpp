@@ -1092,8 +1092,8 @@ void build_loop(size_t patch_id, size_t loop_index, ON_BrepLoop::TYPE loop_type,
 
     ON_BrepFace& face = info->brep->m_F[(int)patch_id];
     const ON_Surface *surface = face.SurfaceOf();
-    ON_Interval xdom = surface->Domain(0); 
-    ON_Interval ydom = surface->Domain(1); 
+    ON_Interval xdom = surface->Domain(0);
+    ON_Interval ydom = surface->Domain(1);
     // Start with outer loop
     ON_BrepLoop& loop = info->brep->NewLoop(loop_type, face);
     // build surface tree
@@ -1165,7 +1165,7 @@ void build_loop(size_t patch_id, size_t loop_index, ON_BrepLoop::TYPE loop_type,
 		    }
 		} else {
                   pullback_failures++;
-                } 
+                }
 	    }
 	} else {
 	    for (int i = 50; i > istart; i--) {
@@ -1177,7 +1177,7 @@ void build_loop(size_t patch_id, size_t loop_index, ON_BrepLoop::TYPE loop_type,
 		    }
 		} else {
                   pullback_failures++;
-                } 
+                }
 	    }
 	}
         // For final curve, doesn't matter what last pullback is - we MUST force the loop to close.
