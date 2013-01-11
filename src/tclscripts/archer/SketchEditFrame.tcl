@@ -98,8 +98,8 @@
 
 	variable mAnchorX 0
 	variable mAnchorY 0
-	variable mDrawGrid 0
-	variable mSnapGrid 0
+	variable mDrawGrid 1
+	variable mSnapGrid 1
 	variable mMajorGridSpacing 5
 	variable mMinorGridSpacing 0.5
 	variable mPrevMouseX 0
@@ -174,7 +174,7 @@
 	method loadTables {_gdata}
 	method redrawSegments {}
 
-	method build_grid {_x1 _y1 _x2 _y2 _final_sizing}
+	method build_grid {_x1 _y1 _x2 _y2 _final_sizing {_adjust_spacing 1}}
 	method circle_3pt {_x1 _y1 _x2 _y2 _x3 _y3 _cx_out _cy_out}
 	method clear_canvas_bindings {}
 	method continue_circle {_segment _state _coord_type _mx _my}
@@ -186,7 +186,7 @@
 	method create_bezier {}
 	method create_circle {}
 	method create_line {}
-	method do_scale {_sf _gflag _final {_epsilon 0.000001}}
+	method do_scale {_sf _gflag _final {_adjust_spacing 1} {_epsilon 0.000001}}
 	method do_snap_sketch {_cx _cy}
 	method do_translate {_dx _dy _gflag _final}
 	method delete_selected {}
@@ -1099,7 +1099,7 @@
 }
 
 
-::itcl::body SketchEditFrame::build_grid {_x1 _y1 _x2 _y2 _final} {
+::itcl::body SketchEditFrame::build_grid {_x1 _y1 _x2 _y2 _final {_adjust_spacing 1}} {
     # delete previous grid
     $itk_component(canvas) delete grid
 
@@ -1108,22 +1108,25 @@
     }
 
     set spacing [expr {$mMinorGridSpacing * $myscale}]
-    if {$spacing < 4} {
-	return
+
+    if {$_adjust_spacing} {
+	if {$spacing < 10} {
+	    set mMinorGridSpacing [expr {$mMinorGridSpacing * 10}]
+	    set spacing [expr {$mMinorGridSpacing * $myscale}]
+	} elseif {$spacing > 100} {
+	    set mMinorGridSpacing [expr {$mMinorGridSpacing * 0.1}]
+	    set spacing [expr {$mMinorGridSpacing * $myscale}]
+	}
     }
 
     set major_spacing [expr {$spacing * $mMajorGridSpacing}]
-
-    set anchor_snap [do_snap_sketch $mAnchorX $mAnchorY]
-    set anchor_snap_x [lindex $anchor_snap 0]
-    set anchor_snap_y [lindex $anchor_snap 1]
 
     set snap_1 [do_snap_sketch [expr {$_x1 / $myscale}] [expr {$_y1 / $myscale}]]
     set snap_1_x [lindex $snap_1 0]
     set snap_1_y [lindex $snap_1 1]
 
-    set xsteps [expr {abs(round(($snap_1_x - $anchor_snap_x) / double($mMinorGridSpacing)))}]
-    set ysteps [expr {abs(round(($snap_1_y - $anchor_snap_y) / double($mMinorGridSpacing)))}]
+    set xsteps [expr {abs(round(($snap_1_x - $mAnchorX) / double($mMinorGridSpacing)))}]
+    set ysteps [expr {abs(round(($snap_1_y - $mAnchorY) / double($mMinorGridSpacing)))}]
 
     set xsteps [expr {$xsteps%$mMajorGridSpacing}]
     if {$xsteps} {
@@ -1144,6 +1147,11 @@
     set snap_2 [do_snap_sketch [expr {$_x2 / $myscale}] [expr {$_y2 / $myscale}]]
     set end_x [expr {[lindex $snap_2 0] * $myscale}]
     set end_y [expr {[lindex $snap_2 1] * $myscale}]
+    
+    set ruler_x [$itk_component(canvas) canvasx 10]
+    set ruler_y [$itk_component(canvas) canvasy 20]
+    set ruler_start_x [$itk_component(canvas) canvasx 30]
+    set ruler_start_y [$itk_component(canvas) canvasy 30]
 
     if {$_final} {
 	# Draw the rows
@@ -1155,6 +1163,11 @@
 		set y2 [expr {$y + 1}]
 		$itk_component(canvas) create oval $x $y $x $y -fill black -tags grid
 	    }
+
+	    if {$y > $ruler_start_y} {
+		set t [format "%g" [expr {$y / $myscale}]]
+		$itk_component(canvas) create text $ruler_x $y -text $t -anchor sw -fill black -tags "grid ruler"
+	    }
 	}
 
 	# Draw the columns
@@ -1165,6 +1178,11 @@
 		    $itk_component(canvas) create oval $x $y $x $y -fill black -tags grid
 		}
 		incr row
+	    }
+
+	    if {$x > $ruler_start_x} {
+		set t [format "%g" [expr {$x / $myscale}]]
+		$itk_component(canvas) create text $x $ruler_y -text $t -anchor center -fill black -tags "grid ruler"
 	    }
 	}
     } else {
@@ -1629,7 +1647,7 @@
 }
 
 
-::itcl::body SketchEditFrame::do_scale {_sf _gflag _final {_epsilon 0.000001}} {
+::itcl::body SketchEditFrame::do_scale {_sf _gflag _final {_adjust_spacing 1} {_epsilon 0.000001}} {
     if {$_sf < $_epsilon} {
 	return
     }
@@ -1657,7 +1675,7 @@
     $itk_component(canvas) configure -scrollregion [list $x1 $y1 $x2 $y2]
 
     if {$_gflag} {
-	build_grid $x1 $y1 $x2 $y2 $_final
+	build_grid $x1 $y1 $x2 $y2 $_final $_adjust_spacing
     }
 }
 
@@ -2557,7 +2575,7 @@
 	$mMajorGridSpacing != "0" &&
 	$mMinorGridSpacing != "" &&
 	$mMinorGridSpacing != "0"} {
-	do_scale 1.0 1 1
+	do_scale 1.0 1 1 0
     }
 }
 
