@@ -62,9 +62,6 @@
 	common pi2 [expr {4.0 * asin( 1.0 )}]
 	common rad2deg  [expr {360.0 / $pi2}]
 
-	method set_scale {_sf}
-	method do_scale {_sf {_epsilon 0.000001}}
-	method do_translate {_dx _dy}
 	method get_scale {}
 	method get_tobase {}
 	method get_vlist {}
@@ -99,6 +96,12 @@
 	variable mBy ""
 	variable mBz ""
 
+	variable mAnchorX 0
+	variable mAnchorY 0
+	variable mDrawGrid 0
+	variable mSnapGrid 0
+	variable mMajorGridSpacing 5
+	variable mMinorGridSpacing 0.5
 	variable mPrevMouseX 0
 	variable mPrevMouseY 0
 	variable mCanvasCenterX 1
@@ -171,6 +174,7 @@
 	method loadTables {_gdata}
 	method redrawSegments {}
 
+	method build_grid {_x1 _y1 _x2 _y2 _final_sizing}
 	method circle_3pt {_x1 _y1 _x2 _y2 _x3 _y3 _cx_out _cy_out}
 	method clear_canvas_bindings {}
 	method continue_circle {_segment _state _coord_type _mx _my}
@@ -182,6 +186,9 @@
 	method create_bezier {}
 	method create_circle {}
 	method create_line {}
+	method do_scale {_sf _gflag _final {_epsilon 0.000001}}
+	method do_snap_sketch {_cx _cy}
+	method do_translate {_dx _dy _gflag _final}
 	method delete_selected {}
 	method end_arc {_mx _my}
 	method end_arc_radius_adjust {_segment _mx _my}
@@ -190,9 +197,10 @@
 	method fix_vertex_references {_unused_vindices}
 	method handle_configure {}
 	method handle_escape {}
-	method handle_scale {_mx _my}
-	method handle_translate {_mx _my}
+	method handle_scale {_mx _my _final}
+	method handle_translate {_mx _my _final}
 	method item_pick_highlight {_mx _my}
+	method mouse_to_sketch {_mx _my}
 	method next_bezier {_segment _mx _my}
 	method pick_arbitrary {_mx _my}
 	method pick_segment {_mx _my}
@@ -219,6 +227,9 @@
 	method start_vert_pick {}
 	method tag_selected_verts {}
 	method unhighlight_selected {}
+	method updateGrid {}
+	method validateMajorGridSpacing {_spacing}
+	method validateMinorGridSpacing {_spacing}
 	method validatePickTol {_tol}
 	method vert_delete {_sx _sy}
 	method vert_is_used {_vindex}
@@ -260,63 +271,6 @@
 #                      PUBLIC METHODS
 # ------------------------------------------------------------
 
-
-
-::itcl::body SketchEditFrame::set_scale {_sf} {
-    set myscale $_sf
-    drawSegments
-}
-
-
-::itcl::body SketchEditFrame::do_scale {_sf {_epsilon 0.000001}} {
-    if {$_sf < $_epsilon} {
-	return
-    }
-
-    set myscale [expr {$myscale * $_sf}]
-    drawSegments
-
-    set mScrollCenterX [expr {$mScrollCenterX * $_sf}]
-    set mScrollCenterY [expr {$mScrollCenterY * $_sf}]
-
-    set x1 [expr {$mScrollCenterX - $mCanvasCenterX}]
-    if {[expr {$mCanvasWidth%2}]} {
-	set x2 [expr {$mScrollCenterX + $mCanvasCenterX + 1}]
-    } else {
-	set x2 [expr {$mScrollCenterX + $mCanvasCenterX}]
-    }
-
-    set y1 [expr {$mScrollCenterY - $mCanvasCenterY}]
-    if {[expr {$mCanvasHeight%2}]} {
-	set y2 [expr {$mScrollCenterY + $mCanvasCenterY + 1}]
-    } else {
-	set y2 [expr {$mScrollCenterY + $mCanvasCenterY}]
-    }
-
-    $itk_component(canvas) configure -scrollregion [list $x1 $y1 $x2 $y2]
-}
-
-
-::itcl::body SketchEditFrame::do_translate {_dx _dy} {
-    set mScrollCenterX [expr {$mScrollCenterX + $_dx}]
-    set mScrollCenterY [expr {$mScrollCenterY + $_dy}]
-
-    set x1 [expr {$mScrollCenterX - $mCanvasCenterX}]
-    if {[expr {$mCanvasWidth%2}]} {
-	set x2 [expr {$mScrollCenterX + $mCanvasCenterX + 1}]
-    } else {
-	set x2 [expr {$mScrollCenterX + $mCanvasCenterX}]
-    }
-
-    set y1 [expr {$mScrollCenterY - $mCanvasCenterY}]
-    if {[expr {$mCanvasHeight%2}]} {
-	set y2 [expr {$mScrollCenterY + $mCanvasCenterY + 1}]
-    } else {
-	set y2 [expr {$mScrollCenterY + $mCanvasCenterY}]
-    }
-
-    $itk_component(canvas) configure -scrollregion [list $x1 $y1 $x2 $y2]
-}
 
 
 ::itcl::body SketchEditFrame::get_scale {} {
@@ -666,6 +620,71 @@
 	incr i
     }
 
+    itk_component add drawgridCB {
+	::ttk::checkbutton $parent.drawgrid \
+	    -text "Draw Grid" \
+	    -variable [::itcl::scope mDrawGrid] \
+	    -command [::itcl::code $this updateGrid]
+    } {}
+
+    itk_component add snapgridCB {
+	::ttk::checkbutton $parent.snapgrid \
+	    -text "Snap Grid" \
+	    -variable [::itcl::scope mSnapGrid]
+    } {}
+
+    itk_component add anchorXL {
+	::ttk::label $parent.anchorxL \
+	    -anchor e \
+	    -text "Anchor X (mm)"
+    } {}
+    itk_component add anchorXE {
+	::ttk::entry $parent.anchorxE \
+	    -width 12 \
+	    -textvariable [::itcl::scope mAnchorX] \
+	    -validate key \
+	    -validatecommand  {::cadwidgets::Ged::validateDouble %P}
+    } {}
+
+    itk_component add anchorYL {
+	::ttk::label $parent.anchoryL \
+	    -anchor e \
+	    -text "Anchor Y (mm)"
+    } {}
+    itk_component add anchorYE {
+	::ttk::entry $parent.anchoryE \
+	    -width 12 \
+	    -textvariable [::itcl::scope mAnchorY] \
+	    -validate key \
+	    -validatecommand  {::cadwidgets::Ged::validateDouble %P}
+    } {}
+
+    itk_component add majorgridL {
+	::ttk::label $parent.majorgridL \
+	    -anchor e \
+	    -text "Major Grid Spacing (ticks)"
+    } {}
+    itk_component add majorgridE {
+	::ttk::entry $parent.majorgridE \
+	    -width 12 \
+	    -textvariable [::itcl::scope mMajorGridSpacing] \
+	    -validate key \
+	    -validatecommand [::itcl::code $this validateMajorGridSpacing %P]
+    } {}
+
+    itk_component add minorgridL {
+	::ttk::label $parent.minorgridL \
+	    -anchor e \
+	    -text "Minor Grid Spacing (mm)"
+    } {}
+    itk_component add minorgridE {
+	::ttk::entry $parent.minorgridE \
+	    -width 12 \
+	    -textvariable [::itcl::scope mMinorGridSpacing] \
+	    -validate key \
+	    -validatecommand [::itcl::code $this validateMinorGridSpacing %P]
+    } {}
+
     itk_component add picktolL {
 	::ttk::label $parent.picktolL \
 	    -anchor e \
@@ -682,9 +701,30 @@
     incr row
     grid rowconfigure $parent $row -weight 1
     incr row
-    grid $itk_component(picktolL) -column 0 -row $row -sticky e
+    grid $itk_component(drawgridCB) -column 0 -row $row -sticky w
+    incr row
+    grid $itk_component(snapgridCB) -column 0 -row $row -sticky w
+    incr row
+    grid $itk_component(anchorXL) -column 0 -row $row -sticky w
+    grid $itk_component(anchorXE) -column 1 -row $row -sticky ew
+    incr row
+    grid $itk_component(anchorYL) -column 0 -row $row -sticky w
+    grid $itk_component(anchorYE) -column 1 -row $row -sticky ew
+    incr row
+    grid $itk_component(majorgridL) -column 0 -row $row -sticky w
+    grid $itk_component(majorgridE) -column 1 -row $row -sticky ew
+    incr row
+    grid $itk_component(minorgridL) -column 0 -row $row -sticky w
+    grid $itk_component(minorgridE) -column 1 -row $row -sticky ew
+    incr row
+    grid $itk_component(picktolL) -column 0 -row $row -sticky w
     grid $itk_component(picktolE) -column 1 -row $row -sticky ew
     grid columnconfigure $parent 1 -weight 1
+
+    bind $itk_component(anchorXE) <Return> [::itcl::code $this updateGrid]
+    bind $itk_component(anchorYE) <Return> [::itcl::code $this updateGrid]
+    bind $itk_component(majorgridE) <Return> [::itcl::code $this updateGrid]
+    bind $itk_component(minorgridE) <Return> [::itcl::code $this updateGrid]
 }
 
 
@@ -821,7 +861,7 @@
 
 
 ::itcl::body SketchEditFrame::drawSegments {} {
-    $itk_component(canvas) delete all
+    $itk_component(canvas) delete segs verts
     drawVertices
     set first 1
     foreach seg $mSegments {
@@ -908,12 +948,13 @@
 
 ::itcl::body SketchEditFrame::initCanvas {_gdata} {
     $::ArcherCore::application setCanvas $itk_component(canvas)
+    ::update idletasks
 
+    set myscale 1.0
     set mSegments {}
     set mVL {}
     set mSL {}
     set needs_saving 0
-    $itk_component(canvas) delete all
     initSketchData $_gdata
     createSegments
     drawSegments
@@ -923,9 +964,7 @@
     set mPrevEditMode 0
     set mLastIndex -1
 
-    update idletasks
-
-    set min_max [$itk_component(canvas) bbox all]
+    set min_max [$itk_component(canvas) bbox segs verts]
     set tmp_scale1 [expr double($mCanvasWidth) / ([lindex $min_max 2] - [lindex $min_max 0] + 2.0 * $vert_radius)]
     if {$tmp_scale1 < 0.0} {
 	set tmp_scale1 [expr -$tmp_scale1]
@@ -937,12 +976,14 @@
     }
 
     if {$tmp_scale1 < $tmp_scale2} {
-	do_scale $tmp_scale1
+	set scale $tmp_scale1
     } else {
-	do_scale $tmp_scale2
+	set scale $tmp_scale2
     }
 
+    do_scale $scale 0 0
     initScrollRegion
+    do_scale 1.0 1 1
 }
 
 
@@ -956,7 +997,7 @@
 
 
 ::itcl::body SketchEditFrame::initScrollRegion {} {
-    set bbox [$itk_component(canvas) bbox all]
+    set bbox [$itk_component(canvas) bbox segs verts]
     set x1 [lindex $bbox 0]
     set y1 [lindex $bbox 1]
     set x2 [lindex $bbox 2]
@@ -1054,6 +1095,88 @@
 	set seg [lindex $tags 0]
 	$itk_component(canvas) delete $id
 	$seg draw [lrange $tags 2 end]
+    }
+}
+
+
+::itcl::body SketchEditFrame::build_grid {_x1 _y1 _x2 _y2 _final} {
+    # delete previous grid
+    $itk_component(canvas) delete grid
+
+    if {!$mDrawGrid} {
+	return
+    }
+
+    set spacing [expr {$mMinorGridSpacing * $myscale}]
+    if {$spacing < 4} {
+	return
+    }
+
+    set major_spacing [expr {$spacing * $mMajorGridSpacing}]
+
+    set anchor_snap [do_snap_sketch $mAnchorX $mAnchorY]
+    set anchor_snap_x [lindex $anchor_snap 0]
+    set anchor_snap_y [lindex $anchor_snap 1]
+
+    set snap_1 [do_snap_sketch [expr {$_x1 / $myscale}] [expr {$_y1 / $myscale}]]
+    set snap_1_x [lindex $snap_1 0]
+    set snap_1_y [lindex $snap_1 1]
+
+    set xsteps [expr {abs(round(($snap_1_x - $anchor_snap_x) / double($mMinorGridSpacing)))}]
+    set ysteps [expr {abs(round(($snap_1_y - $anchor_snap_y) / double($mMinorGridSpacing)))}]
+
+    set xsteps [expr {$xsteps%$mMajorGridSpacing}]
+    if {$xsteps} {
+	set xsteps [expr {($mMajorGridSpacing - $xsteps)}]
+	set start_x [expr {($snap_1_x * $myscale) - ($xsteps * $mMinorGridSpacing * $myscale)}]
+    } else {
+	set start_x [expr {$snap_1_x * $myscale}]
+    }
+
+    set ysteps [expr {$ysteps%$mMajorGridSpacing}]
+    if {$ysteps} {
+	set ysteps [expr {$mMajorGridSpacing - $ysteps}]
+	set start_y [expr {($snap_1_y * $myscale) - ($ysteps * $mMinorGridSpacing * $myscale)}]
+    } else {
+	set start_y [expr {$snap_1_y * $myscale}]
+    }
+
+    set snap_2 [do_snap_sketch [expr {$_x2 / $myscale}] [expr {$_y2 / $myscale}]]
+    set end_x [expr {[lindex $snap_2 0] * $myscale}]
+    set end_y [expr {[lindex $snap_2 1] * $myscale}]
+
+    if {$_final} {
+	# Draw the rows
+	for {set y $start_y} {$y <= $end_y} {set y [expr {$y + $major_spacing}]} {
+	    for {set x $start_x} {$x <= $end_x} {set x [expr {$x + $spacing}]} {
+		set x1 [expr {$x - 1}]
+		set y1 [expr {$y - 1}]
+		set x2 [expr {$x + 1}]
+		set y2 [expr {$y + 1}]
+		$itk_component(canvas) create oval $x $y $x $y -fill black -tags grid
+	    }
+	}
+
+	# Draw the columns
+	for {set x $start_x} {$x <= $end_x} {set x [expr {$x + $major_spacing}]} {
+	    set row 0
+	    for {set y $start_y} {$y <= $end_y} {set y [expr {$y + $spacing}]} {
+		if {[expr {$row%$mMajorGridSpacing}]} {
+		    $itk_component(canvas) create oval $x $y $x $y -fill black -tags grid
+		}
+		incr row
+	    }
+	}
+    } else {
+	# Draw the rows
+	for {set y $start_y} {$y <= $end_y} {set y [expr {$y + $major_spacing}]} {
+	    $itk_component(canvas) create line $start_x $y $end_x $y -fill black -tags grid
+	}
+
+	# Draw the columns
+	for {set x $start_x} {$x <= $end_x} {set x [expr {$x + $major_spacing}]} {
+	    $itk_component(canvas) create line $x $start_y $x $end_y -fill black -tags grid
+	}
     }
 }
 
@@ -1191,13 +1314,16 @@
 ::itcl::body SketchEditFrame::continue_circle_pick {_segment _mx _my} {
     set index [pick_vertex $_mx $_my]
     if {$index == -1} {
-	set ex [expr {[$itk_component(canvas) canvasx $_mx] / $myscale}]
-	set ey [expr {-[$itk_component(canvas) canvasy $_my] / $myscale}]
+	set elist [mouse_to_sketch $_mx $_my]
+	set ex [lindex $elist 0]
+	set ey [lindex $elist 1]
 
 	if {$index1 == $index2} {
 	    # need to create a new vertex
 	    set index1 [llength $mVL]
 	    lappend mVL "$ex $ey"
+	} else {
+	    set mVL [lreplace $mVL $index1 $index1 "$ex $ey"]
 	}
     } else {
 	if {$index != $index1} {
@@ -1254,7 +1380,6 @@
 
     $itk_component(canvas) delete ::SketchEditFrame::$_segment
     $_segment draw ""
-#    $itk_component(canvas) configure -scrollregion [$itk_component(canvas) bbox all]
 
     if {$_state == 2} {
 	$itk_component(canvas) configure -cursor crosshair
@@ -1276,9 +1401,16 @@
 	    $itk_component(canvas) configure -cursor {}
 	}
 
-	set ex [expr {[$itk_component(canvas) canvasx $_mx] / $myscale}]
-	set ey [expr {-[$itk_component(canvas) canvasy $_my] / $myscale}]
-
+	# If it's a button press
+	if {$_state == 1} {
+	    set ex [expr {[$itk_component(canvas) canvasx $_mx] / $myscale}]
+	    set ey [expr {-[$itk_component(canvas) canvasy $_my] / $myscale}]
+	} else {
+	    set slist [mouse_to_sketch $_mx $_my]
+	    set ex [lindex $slist 0]
+	    set ey [lindex $slist 1]
+	}
+	
 	if {$index1 != $index2} {
 	    if {!$mIgnoreMotion} {
 		# Update the vertex
@@ -1302,6 +1434,15 @@
 		if {$lastv == $prevIndex2} {
 		    set mVL [lreplace $mVL end end]
 		}
+	    }
+	} elseif {$_state == 2} {
+	    set slist [mouse_to_sketch $_mx $_my]
+	    set ex [lindex $slist 0]
+	    set ey [lindex $slist 1]
+
+	    if {!$mIgnoreMotion} {
+		# Update the vertex
+		set mVL [lreplace $mVL $index2 $index2 "$ex $ey"]
 	    }
 	}
     }
@@ -1360,17 +1501,41 @@
     }
     $itk_component(canvas) move moving $dx $dy
 
-    # actually move the vertices in the vertex list
     set ids [$itk_component(canvas) find withtag moving]
-    foreach id $ids {
-	set tags [$itk_component(canvas) gettags $id]
+    set len [llength $ids]
+    if {$len == 0} {
+	# This should not happen
+	return
+    }
+
+    # actually move the vertices in the vertex list
+    if {$_state != 0 && $len == 1} {
+	set tags [$itk_component(canvas) gettags $ids]
 	set index [string range [lindex $tags 0] 1 end]
-	set new_coords [$itk_component(canvas) coords $id]
+	set new_coords [$itk_component(canvas) coords $ids]
 	set new_x [expr ([lindex $new_coords 0] + [lindex $new_coords 2])/(2.0 * $myscale)]
 	set new_y [expr -([lindex $new_coords 1] + [lindex $new_coords 3])/(2.0 * $myscale)]
-	set mVL [lreplace $mVL $index $index [concat $new_x $new_y]]
+
+	if {$mSnapGrid} {
+	    set mVL [lreplace $mVL $index $index [do_snap_sketch $new_x $new_y]]
+	} else {
+	    set mVL [lreplace $mVL $index $index "$new_x $new_y"]
+	}
+
+	drawVertices
+    } else {
+	foreach id $ids {
+	    set tags [$itk_component(canvas) gettags $id]
+	    set index [string range [lindex $tags 0] 1 end]
+	    set new_coords [$itk_component(canvas) coords $id]
+	    set new_x [expr ([lindex $new_coords 0] + [lindex $new_coords 2])/(2.0 * $myscale)]
+	    set new_y [expr -([lindex $new_coords 1] + [lindex $new_coords 3])/(2.0 * $myscale)]
+	    set mVL [lreplace $mVL $index $index "$new_x $new_y"]
+	}
     }
+
     redrawSegments
+
     if {$_state == 0} {
 	set move_start_x $x
 	set move_start_y $y
@@ -1464,6 +1629,73 @@
 }
 
 
+::itcl::body SketchEditFrame::do_scale {_sf _gflag _final {_epsilon 0.000001}} {
+    if {$_sf < $_epsilon} {
+	return
+    }
+
+    set myscale [expr {$myscale * $_sf}]
+    drawSegments
+
+    set mScrollCenterX [expr {$mScrollCenterX * $_sf}]
+    set mScrollCenterY [expr {$mScrollCenterY * $_sf}]
+
+    set x1 [expr {$mScrollCenterX - $mCanvasCenterX}]
+    if {[expr {$mCanvasWidth%2}]} {
+	set x2 [expr {$mScrollCenterX + $mCanvasCenterX + 1}]
+    } else {
+	set x2 [expr {$mScrollCenterX + $mCanvasCenterX}]
+    }
+
+    set y1 [expr {$mScrollCenterY - $mCanvasCenterY}]
+    if {[expr {$mCanvasHeight%2}]} {
+	set y2 [expr {$mScrollCenterY + $mCanvasCenterY + 1}]
+    } else {
+	set y2 [expr {$mScrollCenterY + $mCanvasCenterY}]
+    }
+
+    $itk_component(canvas) configure -scrollregion [list $x1 $y1 $x2 $y2]
+
+    if {$_gflag} {
+	build_grid $x1 $y1 $x2 $y2 $_final
+    }
+}
+
+
+::itcl::body SketchEditFrame::do_snap_sketch {_x _y} {
+    set snap_x [expr {round(($_x - $mAnchorX) / double($mMinorGridSpacing)) * $mMinorGridSpacing + $mAnchorX}]
+    set snap_y [expr {round(($_y - $mAnchorY) / double($mMinorGridSpacing)) * $mMinorGridSpacing + $mAnchorY}]
+
+    return [format "%g %g" $snap_x $snap_y]
+}
+
+
+::itcl::body SketchEditFrame::do_translate {_dx _dy _gflag _final} {
+    set mScrollCenterX [expr {$mScrollCenterX + $_dx}]
+    set mScrollCenterY [expr {$mScrollCenterY + $_dy}]
+    
+    set x1 [expr {$mScrollCenterX - $mCanvasCenterX}]
+    if {[expr {$mCanvasWidth%2}]} {
+	set x2 [expr {$mScrollCenterX + $mCanvasCenterX + 1}]
+    } else {
+	set x2 [expr {$mScrollCenterX + $mCanvasCenterX}]
+    }
+
+    set y1 [expr {$mScrollCenterY - $mCanvasCenterY}]
+    if {[expr {$mCanvasHeight%2}]} {
+	set y2 [expr {$mScrollCenterY + $mCanvasCenterY + 1}]
+    } else {
+	set y2 [expr {$mScrollCenterY + $mCanvasCenterY}]
+    }
+
+    $itk_component(canvas) configure -scrollregion [list $x1 $y1 $x2 $y2]
+
+    if {$_gflag} {
+	build_grid $x1 $y1 $x2 $y2 $_final
+    }
+}
+
+
 ::itcl::body SketchEditFrame::delete_selected {} {
     set selected [$itk_component(canvas) find withtag selected]
     set slist {}
@@ -1511,8 +1743,9 @@
 ::itcl::body SketchEditFrame::end_arc {_mx _my} {
     set index [pick_vertex $_mx $_my]
     if {$index == -1} {
-	set ex [expr {[$itk_component(canvas) canvasx $_mx] / $myscale}]
-	set ey [expr {-[$itk_component(canvas) canvasy $_my] / $myscale}]
+	set elist [mouse_to_sketch $_mx $_my]
+	set ex [lindex $elist 0]
+	set ey [lindex $elist 1]
 
 	set index [llength $mVL]
 	lappend mVL "$ex $ey"
@@ -1580,9 +1813,10 @@
 
 ::itcl::body SketchEditFrame::end_arc_radius_adjust {_segment _mx _my} {
     # screen coordinates
-#    show_coords $_mx $_my
-    set sx [expr {[$itk_component(canvas) canvasx $_mx] / $myscale}]
-    set sy [expr {-[$itk_component(canvas) canvasy $_my] / $myscale}]
+    #show_coords $_mx $_my
+    set slist [mouse_to_sketch $_mx $_my]
+    set sx [lindex $slist 0]
+    set sy [lindex $slist 1]
     set cx 0.0
     set cy 0.0
 
@@ -1681,7 +1915,7 @@
 }
 
 
-::itcl::body SketchEditFrame::handle_scale {_mx _my} {
+::itcl::body SketchEditFrame::handle_scale {_mx _my _final} {
     set dx [expr {$_mx - $mPrevMouseX}]
     set dy [expr {$mPrevMouseY - $_my}]
 
@@ -1696,18 +1930,18 @@
 	set sf [expr {1.0 + $sdy}]
     }
 
-    do_scale $sf
+    do_scale $sf 1 $_final
 }
 
 
-::itcl::body SketchEditFrame::handle_translate {_mx _my} {
+::itcl::body SketchEditFrame::handle_translate {_mx _my _final} {
     set dx [expr {$mPrevMouseX - $_mx}]
     set dy [expr {$mPrevMouseY - $_my}]
 
     set mPrevMouseX $_mx
     set mPrevMouseY $_my
 
-    do_translate $dx $dy
+    do_translate $dx $dy 1 $_final
 }
 
 
@@ -1756,6 +1990,18 @@
 }
 
 
+::itcl::body SketchEditFrame::mouse_to_sketch {_mx _my} {
+    set x [expr {[$itk_component(canvas) canvasx $_mx] / $myscale}]
+    set y [expr {-[$itk_component(canvas) canvasy $_my] / $myscale}]
+
+    if {$mSnapGrid} {
+	return [do_snap_sketch $x $y]
+    }
+
+    return "$x $y"
+}
+
+
 ::itcl::body SketchEditFrame::next_bezier {_segment _mx _my} {
     set index [pick_vertex $_mx $_my]
     if {$index != -1} {
@@ -1767,8 +2013,9 @@
     } else {
 	# screen coords
 	#show_coords $_mx $_my
-	set sx [expr {[$itk_component(canvas) canvasx $_mx] / $myscale}]
-	set sy [expr {-[$itk_component(canvas) canvasy $_my] / $myscale}]
+	set slist [mouse_to_sketch $_mx $_my]
+	set sx [lindex $slist 0]
+	set sy [lindex $slist 1]
 
 	if {[llength $bezier_indices] == 2 && [lindex $bezier_indices 0] == [lindex $bezier_indices 1]} {
 	    set bezier_indices [lindex $bezier_indices 0]
@@ -1918,6 +2165,7 @@
 
 
 ::itcl::body SketchEditFrame::setup_move_arbitrary {} {
+    handle_escape
     set mEditMode $moveArbitrary
     $itk_component(canvas) configure -cursor crosshair
 
@@ -2016,8 +2264,9 @@
 	} else {
 	    # screen coords
 	    #show_coords $_mx $_my
-	    set sx [expr {[$itk_component(canvas) canvasx $_mx] / $myscale}]
-	    set sy [expr {-[$itk_component(canvas) canvasy $_my] / $myscale}]
+	    set slist [mouse_to_sketch $_mx $_my]
+	    set sx [lindex $slist 0]
+	    set sy [lindex $slist 1]
 
 	    set index1 [llength $mVL]
 	    lappend mVL "$sx $sy"
@@ -2044,8 +2293,9 @@
     } else {
 	# screen coords
 	#show_coords $_mx $_my
-	set sx [expr {[$itk_component(canvas) canvasx $_mx] / $myscale}]
-	set sy [expr {-[$itk_component(canvas) canvasy $_my] / $myscale}]
+	set slist [mouse_to_sketch $_mx $_my]
+	set sx [lindex $slist 0]
+	set sy [lindex $slist 1]
 
 
 	if {$mLastIndex != -1} {
@@ -2080,8 +2330,9 @@
 	if {$_coord_type == 1} {
 	    # screen coords
 	    #show_coords $_mx $_my
-	    set sx [expr {[$itk_component(canvas) canvasx $_mx] / $myscale}]
-	    set sy [expr {-[$itk_component(canvas) canvasy $_my] / $myscale}]
+	    set slist [mouse_to_sketch $_mx $_my]
+	    set sx [lindex $slist 0]
+	    set sy [lindex $slist 1]
 	} elseif {$_coord_type == 0} {
 	    # model coords
 	    set sx $x_coord
@@ -2131,11 +2382,9 @@
 	} else {
 	    # screen coords
 	    #show_coords $_mx $_my
-	    set sx [expr {[$itk_component(canvas) canvasx $_mx] / $myscale}]
-	    set sy [expr {-[$itk_component(canvas) canvasy $_my] / $myscale}]
 
 	    set index1 [llength $mVL]
-	    lappend mVL "$sx $sy"
+	    lappend mVL [mouse_to_sketch $_mx $_my]
 	}
 
 	set index2 $index1
@@ -2230,14 +2479,16 @@
 ::itcl::body SketchEditFrame::start_scale {_mx _my} {
     set mPrevMouseX $_mx
     set mPrevMouseY $_my
-    bind $itk_component(canvas) <Lock-Control-Shift-B1-Motion> [::itcl::code $this handle_scale %x %y]
+    bind $itk_component(canvas) <Lock-Control-Shift-B1-Motion> [::itcl::code $this handle_scale %x %y 0]
+    bind $itk_component(canvas) <Lock-Control-Shift-ButtonRelease-1> [::itcl::code $this handle_scale %x %y 1]
 }
 
 
 ::itcl::body SketchEditFrame::start_translate {_mx _my} {
     set mPrevMouseX $_mx
     set mPrevMouseY $_my
-    bind $itk_component(canvas) <Lock-Shift-B1-Motion> [::itcl::code $this handle_translate %x %y]
+    bind $itk_component(canvas) <Lock-Shift-B1-Motion> [::itcl::code $this handle_translate %x %y 0]
+    bind $itk_component(canvas) <Lock-Shift-ButtonRelease-1> [::itcl::code $this handle_translate %x %y 1]
 }
 
 
@@ -2296,6 +2547,53 @@
     }
     $itk_component(canvas) dtag selected selected
     $itk_component(canvas) dtag first_select first_select
+}
+
+
+::itcl::body SketchEditFrame::updateGrid {} {
+    if {$mAnchorX != "" &&
+	$mAnchorY != "" &&
+	$mMajorGridSpacing != "" &&
+	$mMajorGridSpacing != "0" &&
+	$mMinorGridSpacing != "" &&
+	$mMinorGridSpacing != "0"} {
+	do_scale 1.0 1 1
+    }
+}
+
+
+::itcl::body SketchEditFrame::validateMajorGridSpacing {_spacing} {
+    if {![::cadwidgets::Ged::validateDigit $_spacing]} {
+	return 0
+    }
+
+    if {$_spacing == ""} {
+	return 1
+    }
+
+    if {$_spacing == 0} {
+	return 0
+    }
+
+    return 1
+}
+
+
+::itcl::body SketchEditFrame::validateMinorGridSpacing {_spacing} {
+    if {![::cadwidgets::Ged::validateDouble $_spacing]} {
+	return 0
+    }
+
+    if {$_spacing == "" || $_spacing == "."} {
+	return 1
+    }
+
+    if {$_spacing == "-" ||
+	$_spacing < 0} {
+	return 0
+    }
+
+    return 1
 }
 
 
@@ -2380,6 +2678,7 @@
     foreach vert $mVL {
 	append out " { [expr {$tobase * [lindex $vert 0]}] [expr {$tobase * [lindex $vert 1]}] }"
     }
+
     append out " } SL {"
     foreach seg $mSegments {
 	append out " [$seg serialize $tobase] "
