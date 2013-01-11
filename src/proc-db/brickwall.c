@@ -88,7 +88,6 @@ int parse_args(int ac, char **av)
 
     /* get all the option flags from the command line */
     while ((c=bu_getopt(ac, av, options)) != -1)
-{printf("got c option= %c\n",c);
 	switch (c) {
 	    case 'c':
 		if ((c=sscanf(bu_optarg, "%d/%d/%d",
@@ -110,9 +109,7 @@ int parse_args(int ac, char **av)
 		units_conv = bu_units_conversion(bu_optarg);
 		break;
 	    case 'D':
-printf("before: debug %d\n",debug);
 		debug = !debug;
-printf("after: debug %d\n",debug);
 		break;
 	    case 't':
 		d=atof(bu_optarg);
@@ -155,7 +152,6 @@ printf("after: debug %d\n",debug);
 		usage("bad command line option\n");
 		break;
 	}
-}
 
     brick_width *= units_conv;
     brick_height *= units_conv;
@@ -334,9 +330,7 @@ int main(int ac, char **av)
     if (parse_args(ac, av) < ac) usage("Excess command line arguments\n");
 
 
-printf("in main: debug %d\n", debug);
     /* build the wall
-
 
        if (debug)
        fprintf(stderr,
