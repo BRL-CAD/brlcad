@@ -742,6 +742,16 @@ succint /** single-line */ comment.
  * This is a doxygen comment.
  */
 
+7) Line length
+
+We do not impose a fixed line length for source code.  Comments blocks
+are formatted to column 70.
+
+Long 'if' statements and function prototypes are okay.  Expressions
+and function arguments are sometimes separated one per line where it
+helps readability, but reducing the complexity of expressions and
+number of function arguments is usually better.
+
 
 DOCUMENTATION
 -------------
