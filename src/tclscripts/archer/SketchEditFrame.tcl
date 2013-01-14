@@ -28,6 +28,8 @@
 ::itcl::class SketchEditFrame {
     inherit GeometryEditFrame
 
+    itk_option define -units units Units ""
+
     constructor {args} {}
     destructor {}
 
@@ -80,9 +82,6 @@
 
     protected {
 	variable mSegments {}
-	variable mV
-	variable mA
-	variable mB
 	variable mVL {}
 	variable mSL {}
 
@@ -97,11 +96,14 @@
 	variable mBz ""
 
 	variable mAnchorX 0
+	variable mAnchorXLabel "Anchor X (mm)"
 	variable mAnchorY 0
+	variable mAnchorYLabel "Anchor Y (mm)"
 	variable mDrawGrid 1
 	variable mSnapGrid 1
 	variable mMajorGridSpacing 5
 	variable mMinorGridSpacing 0.5
+	variable mMinorGridSpacingLabel "Minor Grid Spacing (mm)"
 	variable mPrevMouseX 0
 	variable mPrevMouseY 0
 	variable mCanvasCenterX 1
@@ -160,6 +162,7 @@
 	method initEditState {}
 
 	method applyData {}
+	method bboxVerts {}
 	method createSegments {}
 	method detailBrowseCommand {_row _col}
 	method drawSegments {}
@@ -257,14 +260,24 @@
     bind $itk_component(canvas) <Enter> {::focus %W}
     bind $itk_component(canvas) <Escape> [::itcl::code $this handle_escape]
     bind $itk_component(canvas) <Configure> [::itcl::code $this handle_configure]
-
-    set tolocal [$::ArcherCore::application gedCmd base2local]
-    set tobase [$::ArcherCore::application gedCmd local2base]
 }
 
 # ------------------------------------------------------------
 #                        OPTIONS
 # ------------------------------------------------------------
+
+::itcl::configbody SketchEditFrame::units {
+    set mAnchorXLabel "Anchor X ($itk_option(-units))"
+    set mAnchorYLabel "Anchor Y ($itk_option(-units))"
+    set mMinorGridSpacingLabel "Minor Grid Spacing ($itk_option(-units))"
+
+    set tolocal [$::ArcherCore::application gedCmd base2local]
+    set tobase [$::ArcherCore::application gedCmd local2base]
+
+    if {$itk_option(-geometryObject) != ""} {
+	set_canvas
+    }
+}
 
 
 # ------------------------------------------------------------
@@ -623,7 +636,7 @@
     itk_component add anchorXL {
 	::ttk::label $parent.anchorxL \
 	    -anchor e \
-	    -text "Anchor X (mm)"
+	    -textvariable [::itcl::scope mAnchorXLabel]
     } {}
     itk_component add anchorXE {
 	::ttk::entry $parent.anchorxE \
@@ -636,7 +649,7 @@
     itk_component add anchorYL {
 	::ttk::label $parent.anchoryL \
 	    -anchor e \
-	    -text "Anchor Y (mm)"
+	    -textvariable [::itcl::scope mAnchorYLabel]
     } {}
     itk_component add anchorYE {
 	::ttk::entry $parent.anchoryE \
@@ -662,7 +675,7 @@
     itk_component add minorgridL {
 	::ttk::label $parent.minorgridL \
 	    -anchor e \
-	    -text "Minor Grid Spacing (mm)"
+	    -textvariable [::itcl::scope mMinorGridSpacingLabel]
     } {}
     itk_component add minorgridE {
 	::ttk::entry $parent.minorgridE \
@@ -809,6 +822,35 @@
 }
 
 
+::itcl::body SketchEditFrame::bboxVerts {} {
+    set minX [expr {pow(2,32) - 1}]
+    set minY $minX
+    set maxX [expr {-$minX - 1}]
+    set maxY $maxX 
+
+    foreach vert $mVL {
+	set xc [lindex $vert 0]
+	set yc [lindex $vert 1]
+	set x [expr {$myscale * $xc}]
+	set y [expr {-$myscale * $yc}]
+
+	if {$x < $minX} {
+	    set minX $x
+	} elseif {$x > $maxX} {
+	    set maxX $x
+	}
+
+	if {$y < $minY} {
+	    set minY $y
+	} elseif {$y > $maxY} {
+	    set maxY $y
+	}
+    }
+
+    return [list $minX $minY $maxX $maxY]
+}
+
+
 ::itcl::body SketchEditFrame::createSegments {} {
     foreach seg $mSL {
 	set type [lindex $seg 0]
@@ -951,17 +993,17 @@
     set mPrevEditMode 0
     set mLastIndex -1
 
-    set min_max [$itk_component(canvas) bbox segs verts]
+    set min_max [bboxVerts]
     if {[llength $min_max] != 4} {
 	set min_max {-1 -1 1 1}
     }
 
-    set tmp_scale1 [expr {double($mCanvasWidth) / ([lindex $min_max 2] - [lindex $min_max 0])}]
+    set tmp_scale1 [expr {double($mCanvasWidth) / ([lindex $min_max 2] - [lindex $min_max 0]) * 0.5}]
     if {$tmp_scale1 < 0.0} {
 	set tmp_scale1 [expr -$tmp_scale1]
     }
 
-    set tmp_scale2 [expr {double($mCanvasHeight) / ([lindex $min_max 3] - [lindex $min_max 1])}]
+    set tmp_scale2 [expr {double($mCanvasHeight) / ([lindex $min_max 3] - [lindex $min_max 1]) * 0.5}]
     if {$tmp_scale2 < 0.0} {
 	set tmp_scale2 [expr -$tmp_scale2]
     }
@@ -1048,18 +1090,33 @@
     foreach {key value} $_gdata {
 	switch $key {
 	    V {
-		for { set index 0 } { $index < 3 } { incr index } {
-		    set mV($index) [expr {$tolocal * [lindex $value $index]}]
+		if {[llength $value] == 3} {
+		    set mVx [expr {$tolocal * [lindex $value 0]}]
+		    set mVy [expr {$tolocal * [lindex $value 1]}]
+		    set mVz [expr {$tolocal * [lindex $value 2]}]
+		    #set mVx [format "%.8f" [expr {$tolocal * [lindex $value 0]}]]
+		    #set mVy [format "%.8f" [expr {$tolocal * [lindex $value 1]}]]
+		    #set mVz [format "%.8f" [expr {$tolocal * [lindex $value 2]}]]
 		}
 	    }
 	    A {
-		for { set index 0 } { $index < 3 } { incr index } {
-		    set mA($index) [expr {$tolocal * [lindex $value $index]}]
+		if {[llength $value] == 3} {
+		    set mAx [expr {$tolocal * [lindex $value 0]}]
+		    set mAy [expr {$tolocal * [lindex $value 1]}]
+		    set mAz [expr {$tolocal * [lindex $value 2]}]
+		    #set mAx [format "%.8f" [expr {$tolocal * [lindex $value 0]}]]
+		    #set mAy [format "%.8f" [expr {$tolocal * [lindex $value 1]}]]
+		    #set mAz [format "%.8f" [expr {$tolocal * [lindex $value 2]}]]
 		}
 	    }
 	    B {
-		for { set index 0 } { $index < 3 } { incr index } {
-		    set mB($index) [expr {$tolocal * [lindex $value $index]}]
+		if {[llength $value] == 3} {
+		    set mBx [expr {$tolocal * [lindex $value 0]}]
+		    set mBy [expr {$tolocal * [lindex $value 1]}]
+		    set mBz [expr {$tolocal * [lindex $value 2]}]
+		    #set mBx [format "%.8f" [expr {$tolocal * [lindex $value 0]}]]
+		    #set mBy [format "%.8f" [expr {$tolocal * [lindex $value 1]}]]
+		    #set mBz [format "%.8f" [expr {$tolocal * [lindex $value 2]}]]
 		}
 	    }
 	    VL {
@@ -1105,11 +1162,15 @@
 
     if {$_adjust_spacing} {
 	if {$spacing < 10} {
-	    set mMinorGridSpacing [expr {$mMinorGridSpacing * 10}]
-	    set spacing [expr {$mMinorGridSpacing * $myscale}]
+	    while {$spacing < 10} {
+		set mMinorGridSpacing [format "%.6f" [expr {$mMinorGridSpacing * 10}]]
+		set spacing [expr {$mMinorGridSpacing * $myscale}]
+	    }
 	} elseif {$spacing > 100} {
-	    set mMinorGridSpacing [expr {$mMinorGridSpacing * 0.1}]
-	    set spacing [expr {$mMinorGridSpacing * $myscale}]
+	    while {$spacing > 100} {
+		set mMinorGridSpacing [format "%.6f" [expr {$mMinorGridSpacing * 0.1}]]
+		set spacing [expr {$mMinorGridSpacing * $myscale}]
+	    }
 	}
     }
 
@@ -1139,8 +1200,8 @@
     }
 
     set snap_2 [do_snap_sketch [expr {$_x2 / $myscale}] [expr {$_y2 / $myscale}]]
-    set end_x [expr {[lindex $snap_2 0] * $myscale}]
-    set end_y [expr {[lindex $snap_2 1] * $myscale}]
+    set end_x [expr {([lindex $snap_2 0] + 1) * $myscale}]
+    set end_y [expr {([lindex $snap_2 1] + 1) * $myscale}]
 
     set ruler_x [$itk_component(canvas) canvasx 10]
     set ruler_y [$itk_component(canvas) canvasy 15]
@@ -1159,7 +1220,7 @@
 	    }
 
 	    if {$y > $ruler_start_y} {
-		set t [format "%.3f" [expr {$y / $myscale}]]
+		set t [format "%.4f" [expr {$y / $myscale}]]
 		$itk_component(canvas) create text $ruler_x $y -text $t -anchor sw -fill black -tags "grid ruler"
 	    }
 	}
@@ -1175,7 +1236,7 @@
 	    }
 
 	    if {$x > $ruler_start_x} {
-		set t [format "%.3f" [expr {$x / $myscale}]]
+		set t [format "%.4f" [expr {$x / $myscale}]]
 		$itk_component(canvas) create text $x $ruler_y -text $t -anchor center -fill black -tags "grid ruler"
 	    }
 	}
@@ -2154,8 +2215,9 @@
 
 
 ::itcl::body SketchEditFrame::set_canvas {} {
+    set gdata [lrange [$itk_option(-mged) get $itk_option(-geometryObject)] 1 end]
+
     if {$mDetailMode} {
-	set gdata [lrange [$itk_option(-mged) get $itk_option(-geometryObject)] 1 end]
 	initCanvas $gdata
 
 	set i 1
@@ -2165,6 +2227,7 @@
 	}
     } else {
 	$::ArcherCore::application restoreCanvas
+	initSketchData $gdata
 
 	set i 1
 	set mEditMode 0
@@ -2684,9 +2747,9 @@
 
 
 ::itcl::body SketchEditFrame::write_sketch_to_db {} {
-    set out "V { [expr {$tobase * $mV(0)}] [expr {$tobase * $mV(1)}] [expr {$tobase * $mV(2)}] }"
-    append out " A { [expr {$tobase * $mA(0)}] [expr {$tobase * $mA(1)}] [expr {$tobase * $mA(2)}] }"
-    append out " B { [expr {$tobase * $mB(0)}] [expr {$tobase * $mB(1)}] [expr {$tobase * $mB(2)}] } VL {"
+    set out "V { [expr {$tobase * $mVx}] [expr {$tobase * $mVy}] [expr {$tobase * $mVz}] }"
+    append out " A { [expr {$tobase * $mAx}] [expr {$tobase * $mAy}] [expr {$tobase * $mAz}] }"
+    append out " B { [expr {$tobase * $mBx}] [expr {$tobase * $mBy}] [expr {$tobase * $mBz}] } VL {"
     foreach vert $mVL {
 	append out " { [expr {$tobase * [lindex $vert 0]}] [expr {$tobase * [lindex $vert 1]}] }"
     }

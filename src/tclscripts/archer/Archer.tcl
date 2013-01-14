@@ -1730,6 +1730,10 @@ package provide Archer 1.0
 	set mGridAnchor "$X $Y $Z"
 	set mGridRh [expr {$sf * $mGridRh}]
 	set mGridRv [expr {$sf * $mGridRv}]
+
+	if {[info exists itk_component(sketchView)]} {
+	    $itk_component(sketchView) configure -units $mDbUnits
+	}
     }
 
     return $ret
@@ -7584,8 +7588,9 @@ proc title_node_handler {node} {
 	-mged $itk_component(ged) \
 	-labelFont $mFontText \
 	-boldLabelFont $mFontTextBold \
-	-entryFont $mFontText
-    $itk_component(sketchView) initGeometry $odata
+	-entryFont $mFontText \
+	-units $mDbUnits
+    #$itk_component(sketchView) initGeometry $odata
 
     pack $itk_component(sketchView) \
 	-expand yes \
