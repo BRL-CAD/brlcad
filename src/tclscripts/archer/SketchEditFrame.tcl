@@ -1141,7 +1141,7 @@
     set snap_2 [do_snap_sketch [expr {$_x2 / $myscale}] [expr {$_y2 / $myscale}]]
     set end_x [expr {[lindex $snap_2 0] * $myscale}]
     set end_y [expr {[lindex $snap_2 1] * $myscale}]
-    
+
     set ruler_x [$itk_component(canvas) canvasx 10]
     set ruler_y [$itk_component(canvas) canvasy 15]
     set ruler_start_x [$itk_component(canvas) canvasx 50]
@@ -1422,7 +1422,7 @@
 	    set ex [lindex $slist 0]
 	    set ey [lindex $slist 1]
 	}
-	
+
 	if {$index1 != $index2} {
 	    if {!$mIgnoreMotion} {
 		# Update the vertex
@@ -1685,7 +1685,7 @@
 ::itcl::body SketchEditFrame::do_translate {_dx _dy _gflag _final} {
     set mScrollCenterX [expr {$mScrollCenterX + $_dx}]
     set mScrollCenterY [expr {$mScrollCenterY + $_dy}]
-    
+
     set x1 [expr {$mScrollCenterX - $mCanvasCenterX}]
     if {[expr {$mCanvasWidth%2}]} {
 	set x2 [expr {$mScrollCenterX + $mCanvasCenterX + 1}]
