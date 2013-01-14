@@ -189,6 +189,14 @@
     # Nothing for now
 }
 
+::itcl::configbody GeometryEditFrame::units {
+    # Nothing for now
+}
+
+::itcl::configbody GeometryEditFrame::valueUnits {
+    # Nothing for now
+}
+
 
 # ------------------------------------------------------------
 #                      PUBLIC CLASS METHODS
