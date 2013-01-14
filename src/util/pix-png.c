@@ -165,7 +165,8 @@ write_png(FILE *outfp, unsigned char **scanlines, long int width, long int heigh
      * representing the value needed to un-do the 2.2 correction
      * auto-applied by PowerPoint for PC monitors.
      */
-    png_set_gAMA(png_p, info_p, out_gamma);
+    if (out_gamma > 0.0)
+	png_set_gAMA(png_p, info_p, out_gamma);
 
     png_write_info(png_p, info_p);
     png_write_image(png_p, scanlines);
