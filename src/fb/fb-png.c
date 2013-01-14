@@ -189,7 +189,7 @@ Usage: fb-png [-h -i -c] [-# nbytes/pixel] [-F framebuffer] [-g gamma]\n\
 		 PNG_FILTER_TYPE_DEFAULT);
 
     /* default to no gamma correction */
-    if (!(out_gamma < 0.0))
+    if (out_gamma > 0.0)
 	png_set_gAMA(png_p, info_p, out_gamma);
 
     png_write_info(png_p, info_p);
