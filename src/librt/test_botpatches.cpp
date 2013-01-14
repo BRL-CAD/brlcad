@@ -228,6 +228,32 @@ void fit_plane(size_t UNUSED(patch_id), std::set<size_t> *faces, struct Manifold
     }
 }
 
+// Check if a mesh is planar
+int planar_patch_test(size_t patch_id, std::set<size_t> *faces, struct Manifold_Info *info, fastf_t tol) {
+    if (faces->size() == 1) return 1;
+    if (faces->size() > 0) {
+	std::set<size_t> verts;
+	std::set<size_t>::iterator f_it, v_it;
+        fastf_t max_dist = 0.0;
+        ON_Plane best_fit_plane;
+        fit_plane(patch_id, faces, info, &best_fit_plane);
+	for(f_it = faces->begin(); f_it != faces->end(); f_it++) {
+	    verts.insert(info->bot->faces[(*f_it)*3+0]*3);
+	    verts.insert(info->bot->faces[(*f_it)*3+1]*3);
+	    verts.insert(info->bot->faces[(*f_it)*3+2]*3);
+	}
+	for(v_it = verts.begin(); v_it != verts.end(); v_it++) {
+	    point_t pt;
+	    VMOVE(pt, &info->bot->vertices[*v_it]);
+            fastf_t curr_dist = best_fit_plane.DistanceTo(ON_3dPoint(pt[0], pt[1], pt[2]));
+	    if (curr_dist > max_dist) max_dist = curr_dist;
+	}
+        if (max_dist < tol) return 1;
+        return 0;
+    } else {
+      return 0;
+    }
+}
 /**********************************************************************************
  *
  *   Debugging code for plotting structures commonly generated during fitting
@@ -1155,7 +1181,7 @@ void build_loop(size_t patch_id, size_t loop_index, ON_BrepLoop::TYPE loop_type,
                       istart++;
                     }
 		} else {
-                  std::cout << "Pullback failure on first pt (" << patch_id << "," << (double)(istart-1)/(double)50 << "): " << pt_3d.x << "," << pt_3d.y << "," << pt_3d.z << "\n";
+                  std::cout << "Pullback failure on first pt (" << patch_id << "," << curr_edge << "," << (double)(istart-1)/(double)50 << "): " << pt_3d.x << "," << pt_3d.y << "," << pt_3d.z << "\n";
                   pullback_failures++;
 		  istart++;
 		}
@@ -1174,7 +1200,7 @@ void build_loop(size_t patch_id, size_t loop_index, ON_BrepLoop::TYPE loop_type,
 			pt_2d_prev = pt_2d;
 		    }
 		} else {
-                  std::cout << "Pullback failure (" << patch_id << "," << (double)(i)/(double)50 << "): " << pt_3d.x << "," << pt_3d.y << "," << pt_3d.z << "\n";
+                  std::cout << "Pullback failure (" << patch_id <<  "," << curr_edge << "," << (double)(i)/(double)50 << "): " << pt_3d.x << "," << pt_3d.y << "," << pt_3d.z << "\n";
                   pullback_failures++;
                 }
 	    }
@@ -1187,7 +1213,7 @@ void build_loop(size_t patch_id, size_t loop_index, ON_BrepLoop::TYPE loop_type,
 			pt_2d_prev = pt_2d;
 		    }
 		} else {
-                  std::cout << "Pullback failure (" << patch_id << "," << (double)(i)/(double)50 << "): " << pt_3d.x << "," << pt_3d.y << "," << pt_3d.z << "\n";
+                  std::cout << "Pullback failure (" << patch_id <<  "," << curr_edge << "," << (double)(i)/(double)50 << "): " << pt_3d.x << "," << pt_3d.y << "," << pt_3d.z << "\n";
                   pullback_failures++;
                 }
 	    }
