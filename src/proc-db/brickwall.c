@@ -274,8 +274,6 @@ void gen_bricks(int horiz_bricks, int vert_bricks, double horiz_spacing, double 
 
     /* print the commands to make the wall */
 
-    fprintf(stdout, "\n\n");
-
     for (row=0; row < vert_bricks; ++row) {
 
 	if (row % 2) offset = brick_depth + horiz_spacing;
@@ -362,7 +360,7 @@ int main(int ac, char **av)
     }
 
 
-    vert_bricks = (int)(wall_height / (brick_height+(horiz_spacing*0.5)));
+    vert_bricks = (int)(wall_height / brick_height);
 
     if (vert_bricks > 1) {
     vert_spacing =
@@ -375,7 +373,7 @@ int main(int ac, char **av)
 
     fprintf(stderr, "wall %d bricks wide,  %d bricks high\n",
 		  horiz_bricks, vert_bricks);
-    fprintf(stderr, "distance between adjacent bricks %g\n",
+    fprintf(stderr, "horizontal distance between adjacent bricks %g\n",
 		  horiz_spacing / units_conv);
     fprintf(stderr, "distance between layers of bricks %g\n",
 		  vert_spacing / units_conv);
