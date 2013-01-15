@@ -42,6 +42,8 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* add option to rtedge to also show back-facing hidden edges
+
 * add option to push/xpush to stop at the region level, to stop before
   primitives, to stop after N levels, to stop before N levels.
 
