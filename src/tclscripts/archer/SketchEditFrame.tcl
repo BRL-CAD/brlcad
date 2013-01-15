@@ -1959,6 +1959,8 @@
     set mCanvasInvWidth [expr {1.0 / double($mCanvasWidth)}]
     set mCanvasCenterX [expr {int($mCanvasWidth * 0.5)}]
     set mCanvasCenterY [expr {int($mCanvasHeight * 0.5)}]
+
+    do_scale 1.0 1 1
 }
 
 
@@ -2228,6 +2230,7 @@
     } else {
 	$::ArcherCore::application restoreCanvas
 	initSketchData $gdata
+	createSegments
 
 	set i 1
 	set mEditMode 0
