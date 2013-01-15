@@ -1181,7 +1181,7 @@ void build_loop(size_t patch_id, size_t loop_index, ON_BrepLoop::TYPE loop_type,
                       istart++;
                     }
 		} else {
-                  std::cout << "Pullback failure on first pt (" << patch_id << "," << curr_edge << "," << (double)(istart-1)/(double)50 << "): " << pt_3d.x << "," << pt_3d.y << "," << pt_3d.z << "\n";
+                  std::cout << "Pullback failure on first pt (" << patch_id << "," << curr_edge << "," << (double)(istart-1)/(double)50 << "): " << pt_3d.x << " " << pt_3d.y << " " << pt_3d.z << "\n";
                   pullback_failures++;
 		  istart++;
 		}
@@ -1200,7 +1200,7 @@ void build_loop(size_t patch_id, size_t loop_index, ON_BrepLoop::TYPE loop_type,
 			pt_2d_prev = pt_2d;
 		    }
 		} else {
-                  std::cout << "Pullback failure (" << patch_id <<  "," << curr_edge << "," << (double)(i)/(double)50 << "): " << pt_3d.x << "," << pt_3d.y << "," << pt_3d.z << "\n";
+                  std::cout << "Pullback failure (" << patch_id <<  "," << curr_edge << "," << (double)(i)/(double)50 << "): " << pt_3d.x << " " << pt_3d.y << " " << pt_3d.z << "\n";
                   pullback_failures++;
                 }
 	    }
@@ -1213,7 +1213,7 @@ void build_loop(size_t patch_id, size_t loop_index, ON_BrepLoop::TYPE loop_type,
 			pt_2d_prev = pt_2d;
 		    }
 		} else {
-                  std::cout << "Pullback failure (" << patch_id <<  "," << curr_edge << "," << (double)(i)/(double)50 << "): " << pt_3d.x << "," << pt_3d.y << "," << pt_3d.z << "\n";
+                  std::cout << "Pullback failure (" << patch_id <<  "," << curr_edge << "," << (double)(i)/(double)50 << "): " << pt_3d.x << " " << pt_3d.y << " " << pt_3d.z << "\n";
                   pullback_failures++;
                 }
 	    }
@@ -1236,7 +1236,7 @@ void build_loop(size_t patch_id, size_t loop_index, ON_BrepLoop::TYPE loop_type,
     if (info->brep->LoopDirection(loop) != -1 && loop_type == ON_BrepLoop::inner) {
 	info->brep->FlipLoop(loop);
     }
-
+    delete st;
 }
 
 void find_loops(struct Manifold_Info *info)
@@ -1328,6 +1328,7 @@ void PatchToVector3d(struct rt_bot_internal *bot, size_t curr_patch, struct Mani
     std::set<size_t>::iterator f_it;
     std::set<size_t> verts;
     unsigned int i = 0;
+    ON_3dPointArray pnts;
     for (i = 0; i < bot->num_vertices; i++) {
 	//printf("v(%d): %f %f %f\n", i, V3ARGS(&bot->vertices[3*i]));
     }
@@ -1340,7 +1341,46 @@ void PatchToVector3d(struct rt_bot_internal *bot, size_t curr_patch, struct Mani
 	//printf("vert %d\n", (int)(*f_it));
 	//printf("vert(%d): %f %f %f\n", (int)(*f_it), V3ARGS(&bot->vertices[(*f_it)*3]));
 	data.push_back(ON_3dVector(V3ARGS(&bot->vertices[(*f_it)*3])));
+	pnts.Append(ON_3dPoint(V3ARGS(&bot->vertices[(*f_it)*3])));
     }
+
+    // Points on the edges of surfaces make problems for our current 2D uv pullback routine.
+    // Try to force the surface edges away from the actual patch boundaries by adding "extension"
+    // points to the fit.
+    ON_BoundingBox bbox;
+    pnts.GetTightBoundingBox(bbox);
+    fastf_t diagonal = bbox.Diagonal().Length();
+    ON_Plane best_fit_plane;
+    fit_plane(curr_patch, faces, info, &best_fit_plane);
+/*
+    fastf_t greatest_distance_to_plane = 0.0;
+    for (int j = 0; j < pnts.Count(); ++j) {
+	fastf_t dist = best_fit_plane.DistanceTo(pnts[j]);
+	if (dist > greatest_distance_to_plane) greatest_distance_to_plane = dist;
+    } 
+    ON_3dVector move = best_fit_plane.Normal();
+    double vdot = ON_DotProduct(move, *info->face_normals.At((int)*(info->patches[curr_patch].begin())));
+    if (vdot > 0.05) move.Reverse();
+    ON_3dPoint newcenter = best_fit_plane.Origin() + move * greatest_distance_to_plane;
+    best_fit_plane.SetOrigin(newcenter);
+*/
+    struct bu_vls filename;
+    bu_vls_init(&filename);
+    bu_vls_sprintf(&filename, "extensions_%d.pl", curr_patch);
+    FILE* edge_plot = fopen(bu_vls_addr(&filename), "w");
+    EdgeList patch_edges_extend;
+    EdgeList::iterator e_it;
+    point_t pt1, pt2;
+    VSET(pt1, best_fit_plane.Origin().x, best_fit_plane.Origin().y, best_fit_plane.Origin().z)
+	ON_Circle bounding_circle(best_fit_plane, diagonal);
+    for (int t = 0; t < 10; t++) {
+	data.push_back(ON_3dVector(bounding_circle.PointAt(t*36)));
+	VSET(pt2, bounding_circle.PointAt(t*36).x, bounding_circle.PointAt(t*36).y, bounding_circle.PointAt(t*36).z);
+
+	pdv_3move(edge_plot, pt1); 
+	pdv_3cont(edge_plot, pt2); 
+    }
+    fclose(edge_plot);
 
     // Edges are important for patch merging - tighten them by adding more edge
     // points than just the vertex points. Use points from the 3D NURBS edge curves
@@ -1391,6 +1431,7 @@ void find_surfaces(struct Manifold_Info *info) {
 	    fit.assemble(params);
 	    fit.solve();
 	}
+
         ON_BrepFace *face2 = info->brep2->NewFace(fit.m_nurbs);
         info->brep2->m_S.Append(new ON_NurbsSurface(fit.m_nurbs));
         int si = info->brep->AddSurface(new ON_NurbsSurface(fit.m_nurbs));
