@@ -2047,6 +2047,7 @@ package provide Archer 1.0
     if {![$itk_component(ged) exists $mSelectedObj]} {
 	$itk_component(ged) configure -primitiveLabels {}
 	initDbAttrView $mDbName
+	restoreCanvas
     }
 }
 

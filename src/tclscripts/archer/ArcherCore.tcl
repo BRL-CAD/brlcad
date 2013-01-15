@@ -2134,14 +2134,15 @@ namespace eval ArcherCore {
     set slave [grid slaves $itk_component(canvasF)]
     if {[llength $slave] == 1 && $slave != $itk_component(ged)} {
 	grid forget $slave
-    }
 
-    if {!$mViewOnly} {
-	grid $itk_component(ged) -row 0 -column 0 -columnspan 3 -sticky news
-    } else {
-	grid $itk_component(ged) -row 1 -column 0 -sticky news
+	if {!$mViewOnly} {
+	    grid $itk_component(ged) -row 0 -column 0 -columnspan 3 -sticky news
+	} else {
+	    grid $itk_component(ged) -row 1 -column 0 -sticky news
+	}
     }
 }
+
 
 ::itcl::body ArcherCore::setCanvas {_canvas} {
     if {![info exists itk_component(ged)]} {
