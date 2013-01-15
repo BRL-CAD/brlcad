@@ -826,7 +826,7 @@
     set minX [expr {pow(2,32) - 1}]
     set minY $minX
     set maxX [expr {-$minX - 1}]
-    set maxY $maxX 
+    set maxY $maxX
 
     foreach vert $mVL {
 	set xc [lindex $vert 0]
