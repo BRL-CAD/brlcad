@@ -3422,65 +3422,61 @@ namespace eval ArcherCore {
     $itk_component(ged) refresh_off
 
     catch {
-    if {[catch {gedCmd attr get \
-		    $tnode displayColor} displayColor]} {
-	switch -exact -- $state {
-	    "0" {
-		gedCmd configure -primitiveLabels $plnode
-		gedCmd draw -m0 -x$trans $node
+	if {[catch {gedCmd attr get \
+			$tnode displayColor} displayColor]} {
+	    switch -exact -- $state {
+		"0" {
+		    gedCmd draw -m0 -x$trans $node
+		}
+		"1" {
+		    gedCmd draw -m1 -x$trans $node
+		}
+		"2" {
+		    gedCmd draw -m2 -x$trans $node
+		}
+		"3" {
+		    gedCmd E $node
+		}
+		"4" {
+		    gedCmd draw -h $node
+		}
+		"-1" {
+		    gedCmd erase $node
+		}
 	    }
-	    "1" {
-		gedCmd configure -primitiveLabels $plnode
-		gedCmd draw -m1 -x$trans $node
-	    }
-	    "2" {
-		gedCmd configure -primitiveLabels $plnode
-		gedCmd draw -m2 -x$trans $node
-	    }
-	    "3" {
-		gedCmd configure -primitiveLabels $plnode
-		gedCmd E $node
-	    }
-	    "4" {
-		gedCmd configure -primitiveLabels $plnode
-		gedCmd draw -h $node
-	    }
-	    "-1" {
-		gedCmd configure -primitiveLabels {}
-		gedCmd erase $node
-	    }
-	}
-    } else {
-	switch -exact -- $state {
-	    "0" {
-		gedCmd configure -primitiveLabels $plnode
-		gedCmd draw -m0 -x$trans \
-		    -C$displayColor $node
-	    }
-	    "1" {
-		gedCmd configure -primitiveLabels $plnode
-		gedCmd draw -m1 -x$trans \
-		    -C$displayColor $node
-	    }
-	    "2" {
-		gedCmd configure -primitiveLabels $plnode
-		gedCmd draw -m2 -x$trans \
-		    -C$displayColor $node
-	    }
-	    "3" {
-		gedCmd configure -primitiveLabels $plnode
-		gedCmd E -C$displayColor $node
-	    }
-	    "4" {
-		gedCmd configure -primitiveLabels $plnode
-		gedCmd draw -h -C$displayColor $node
-	    }
-	    "-1" {
-		gedCmd configure -primitiveLabels {}
-		gedCmd erase $node
+	} else {
+	    switch -exact -- $state {
+		"0" {
+		    gedCmd draw -m0 -x$trans \
+			-C$displayColor $node
+		}
+		"1" {
+		    gedCmd draw -m1 -x$trans \
+			-C$displayColor $node
+		}
+		"2" {
+		    gedCmd draw -m2 -x$trans \
+			-C$displayColor $node
+		}
+		"3" {
+		    gedCmd E -C$displayColor $node
+		}
+		"4" {
+		    gedCmd draw -h -C$displayColor $node
+		}
+		"-1" {
+		    gedCmd erase $node
+		}
 	    }
 	}
     }
+
+    if {$node == $mSelectedObj} {
+	if {$state != -1} {
+	    gedCmd configure -primitiveLabels $plnode
+	} else {
+	    gedCmd configure -primitiveLabels {}
+	}
     }
 
     if {$mSavedCenter != "" && $mTreeMode > $TREE_MODE_TREE &&
@@ -5737,15 +5733,23 @@ namespace eval ArcherCore {
 	lappend tobjects [regsub {^/} $obj ""]
     }
 
+    set soi [lsearch $tobjects $mSelectedObj]
+
     if {[catch {eval gedCmd erase $options $tobjects} ret]} {
-	gedCmd configure -primitiveLabels {}
+	if {$soi != -1} {
+	    gedCmd configure -primitiveLabels {}
+	}
+
 	updateTreeDrawLists
 	SetNormalCursor $this
 
 	return $ret
     }
 
-    gedCmd configure -primitiveLabels {}
+    if {$soi != -1} {
+	gedCmd configure -primitiveLabels {}
+    }
+
     updateTreeDrawLists
     SetNormalCursor $this
 }
