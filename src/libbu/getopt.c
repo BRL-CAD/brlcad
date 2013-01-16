@@ -60,6 +60,14 @@ bu_getopt(int nargc, char * const nargv[], const char *ostr)
 	    ++bu_optind;
 	    return -1;
 	}
+	if (*place >= '0' && *place <= '9' && *(place+1) != '\0') {
+	    /* Not an option since an option can only be a single
+	     * character (a-z, A-Z, 0-9). Probably found a negative
+	     * number.
+	     */
+	    place = EMSG;
+	    return -1;
+	}
     } /* option letter okay? */
 
     bu_optopt = (int)*place++;
