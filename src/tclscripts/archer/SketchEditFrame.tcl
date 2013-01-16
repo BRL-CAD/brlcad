@@ -54,11 +54,11 @@
 	common mEdgeDetailHeadings {{} A B}
 	common mFaceDetailHeadings {{} A B C}
 	common mEditLabels {
-	    Move
-	    {Create Line}
-	    {Create Circle}
-	    {Create Arc}
-	    {Create Bezier}
+	    "Move\t\tm"
+	    "Create Line\tl"
+	    "Create Circle\tc"
+	    "Create Arc\t\ta"
+	    "Create Bezier\tb"
 	}
 
 	common pi2 [expr {4.0 * asin( 1.0 )}]
@@ -540,6 +540,35 @@
 	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
 
+    itk_component add sketchHintsKeyL {
+	::ttk::label $parent.sketchHintsKeyL \
+	    -text "
+Key and Button Hints:
+a\tArc Mode
+b\tBezier Mode
+c\tCircle Mode
+l\tLine Mode
+m\tMove Mode
+Escape\tNew Contour
+BSpace\tDelete Selected
+d\tDelete Selected
+Delete\tDelete Selected" \
+	    -anchor w
+    } {}
+
+    itk_component add sketchHintsBtnL {
+	::ttk::label $parent.sketchHintsBtnL \
+	    -text "
+Button-1
+\tUsed to move
+\tand create items
+Lock-Ctrl-Shift-Button-1
+\tScale View
+Lock-Shift-Button-1
+\tTranslate View" \
+	    -anchor w
+    } {}
+
     set row 0
     grid $itk_component(sketchType) \
 	-row $row \
@@ -580,6 +609,16 @@
 	$itk_component(sketchBxE) \
 	$itk_component(sketchByE) \
 	$itk_component(sketchBzE) \
+	-row $row \
+	-sticky nsew
+    incr row
+    grid $itk_component(sketchHintsKeyL) \
+	-columnspan 5 \
+	-row $row \
+	-sticky nsew
+    incr row
+    grid $itk_component(sketchHintsBtnL) \
+	-columnspan 5 \
 	-row $row \
 	-sticky nsew
 
@@ -1304,13 +1343,19 @@
 
 ::itcl::body SketchEditFrame::clear_canvas_bindings {} {
     bind $itk_component(canvas) <a> [::itcl::code $this create_arc]
+    bind $itk_component(canvas) <A> [::itcl::code $this create_arc]
     bind $itk_component(canvas) <b> [::itcl::code $this create_bezier]
+    bind $itk_component(canvas) <B> [::itcl::code $this create_bezier]
     bind $itk_component(canvas) <c> [::itcl::code $this create_circle]
+    bind $itk_component(canvas) <C> [::itcl::code $this create_circle]
     bind $itk_component(canvas) <l> [::itcl::code $this create_line]
+    bind $itk_component(canvas) <L> [::itcl::code $this create_line]
     bind $itk_component(canvas) <m> [::itcl::code $this setup_move_arbitrary]
+    bind $itk_component(canvas) <M> [::itcl::code $this setup_move_arbitrary]
 
     bind $itk_component(canvas) <BackSpace> [::itcl::code $this delete_selected]
     bind $itk_component(canvas) <d> [::itcl::code $this delete_selected]
+    bind $itk_component(canvas) <D> [::itcl::code $this delete_selected]
     bind $itk_component(canvas) <Delete> [::itcl::code $this delete_selected]
 
     bind $itk_component(canvas) <Lock-Control-Shift-ButtonPress-1> [::itcl::code $this start_scale %x %y]
