@@ -544,15 +544,16 @@
 	::ttk::label $parent.sketchHintsKeyL \
 	    -text "
 Key and Button Hints:
-a\tArc Mode
-b\tBezier Mode
-c\tCircle Mode
-l\tLine Mode
-m\tMove Mode
-Escape\tNew Contour
-BSpace\tDelete Selected
-d\tDelete Selected
-Delete\tDelete Selected" \
+a\tArc mode
+b\tBezier mode
+c\tCircle mode
+l\tLine mode
+m\tMove mode
+
+Escape\tNew contour
+BSpace\tDelete selected
+d\tDelete selected
+Delete\tDelete selected" \
 	    -anchor w
     } {}
 
@@ -560,12 +561,16 @@ Delete\tDelete Selected" \
 	::ttk::label $parent.sketchHintsBtnL \
 	    -text "
 Button-1
-\tUsed to move
-\tand create items
+\tUsed to select,
+\tmove and create
+\tsketch objects
+Shift-Button-1
+\tMulti-select while
+\tin move mode
 Lock-Ctrl-Shift-Button-1
-\tScale View
+\tScale view
 Lock-Shift-Button-1
-\tTranslate View" \
+\tTranslate view" \
 	    -anchor w
     } {}
 
