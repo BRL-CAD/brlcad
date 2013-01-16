@@ -243,6 +243,12 @@ bezier_to_carcs(const ON_BezierCurve& bezier, const struct bn_tol *tol, std::vec
 
 #define SKETCH_PT(idx) sketch_ip->verts[(idx)]
 
+#define DIST_PT2D_PT2D_SQ(_p1, _p2) \
+    (((_p2)[X] - (_p1)[X]) * ((_p2)[X] - (_p1)[X]) + \
+    ((_p2)[Y] - (_p1)[Y]) * ((_p2)[Y] - (_p1)[Y]))
+
+#define DIST_PT2D_PT2D(_p1, _p2) sqrt(DIST_PT2D_PT2D_SQ(_p1, _p2))
+
 /**
  * R T _ S K E T C H _ S U R F _ A R E A
  *
@@ -298,13 +304,13 @@ rt_sketch_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 	    csg = (struct carc_seg *)lng;
 	    if (csg->radius < 0) {
 		// calculate full circle area
-		carc_area += M_PI * DIST_PT_PT_SQ(SKETCH_PT(csg->start), SKETCH_PT(csg->end));
+		carc_area += M_PI * DIST_PT2D_PT2D_SQ(SKETCH_PT(csg->start), SKETCH_PT(csg->end));
 	    } else {
 		fastf_t theta, side_ratio;
 		// calculate area for polygon edge
 		poly_area += V2CROSS(SKETCH_PT(csg->start), SKETCH_PT(csg->end));
 		// calculate area for circular segment
-		side_ratio = DIST_PT_PT(SKETCH_PT(csg->start), SKETCH_PT(csg->end)) / (2.0 * csg->radius);
+		side_ratio = DIST_PT2D_PT2D(SKETCH_PT(csg->start), SKETCH_PT(csg->end)) / (2.0 * csg->radius);
 		theta = asin(side_ratio);
 		carc_area += 0.5 * csg->radius * csg->radius * (theta - side_ratio);
 	    }
