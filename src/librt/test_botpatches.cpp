@@ -1357,7 +1357,7 @@ void PatchToVector3d(struct rt_bot_internal *bot, size_t curr_patch, struct Mani
     for (int j = 0; j < pnts.Count(); ++j) {
 	fastf_t dist = best_fit_plane.DistanceTo(pnts[j]);
 	if (dist > greatest_distance_to_plane) greatest_distance_to_plane = dist;
-    } 
+    }
     ON_3dVector move = best_fit_plane.Normal();
     double vdot = ON_DotProduct(move, *info->face_normals.At((int)*(info->patches[curr_patch].begin())));
     if (vdot > 0.05) move.Reverse();
@@ -1377,8 +1377,8 @@ void PatchToVector3d(struct rt_bot_internal *bot, size_t curr_patch, struct Mani
 	data.push_back(ON_3dVector(bounding_circle.PointAt(t*36)));
 	VSET(pt2, bounding_circle.PointAt(t*36).x, bounding_circle.PointAt(t*36).y, bounding_circle.PointAt(t*36).z);
 
-	pdv_3move(edge_plot, pt1); 
-	pdv_3cont(edge_plot, pt2); 
+	pdv_3move(edge_plot, pt1);
+	pdv_3cont(edge_plot, pt2);
     }
     fclose(edge_plot);
 
