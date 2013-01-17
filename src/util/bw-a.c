@@ -22,7 +22,7 @@
  *
  * Convert a bw file into an ASCII bitmap.
  *
- * The output of bw-a can be feed to the X11 program atobm to generated
+ * The output of bw-a can be fed to the X11 program atobm to generate
  * a bitmap that X11 programs can use.
  *
  * It is assumed that the file is in inverse order.
