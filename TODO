@@ -1150,7 +1150,7 @@ comp.r4 ID 5678 material code 5 LOS 75
   for CNC/CAM style toolpath cutting descriptions (g-code files).
 
 * rtedge shoots twice as many rays as it needs to (shoots the 'below'
-  ray for each primary, only reusing current scanline cells.
+  ray for each primary, only reusing current scanline cells).
 
 * support for fillets and chamfers as object/combination operations
 
