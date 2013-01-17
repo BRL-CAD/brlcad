@@ -57,7 +57,7 @@
 #if defined(NDEBUG)
 
 // release 32 bit WIndows libs
-#define OPENNURBS_CONFIGURATION_DIR "Release"
+#define OPENNURBS_CONFIGURATION_DIR "../../../Release/lib"
 
 #else // _DEBUG
 
