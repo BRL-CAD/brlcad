@@ -46,13 +46,15 @@
 
 
 static long int file_width = 512L;
+static long int file_height = 512L;
+static long int squarefilesize = 512L;
 static int autosize = 0;
 static char *file_name;
 static FILE *infp;
 static int fileinput = 0;
 
 static char usage[] = "\
-Usage: bw-a [a] [-s squarefilesize] [-w file_width] [-n file_height]\n\
+Usage: bw-a [-a] [-s squarefilesize] [-w file_width] [-n file_height]\n\
 	[file.bw]\n";
 
 int
@@ -66,10 +68,11 @@ get_args(int argc, char **argv)
 		autosize = 1;
 		break;
 	    case 's':
-		file_width = atol(bu_optarg);
+		squarefilesize = atol(bu_optarg);
 		autosize = 0;
 		break;
 	    case 'n':
+		file_height = atol(bu_optarg);
 		autosize = 0;
 		break;
 	    case 'w':
