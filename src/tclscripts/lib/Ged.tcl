@@ -93,12 +93,18 @@ package provide cadwidgets::Ged 1.0
     itk_option define -scaleEnable scaleEnable ScaleEnable 0
     itk_option define -showViewingParams showViewingParams ShowViewingParams 0
     itk_option define -viewingParamsColor viewingParamsColor ViewingParamsColor Yellow
+    itk_option define -rayColorOdd rayColorOdd RayColor Cyan
+    itk_option define -rayColorEven rayColorEven RayColor Yellow
+    itk_option define -rayColorVoid rayColorVoid RayColor Magenta
 
     constructor {_gedOrFile args} {}
     destructor {}
 
     public {
 	common MEASURING_STICK "cad_measuring_stick"
+	common GED_RAY_ODD "ged_ray_odd"
+	common GED_RAY_EVEN "ged_ray_even"
+	common GED_RAY_VOID "ged_ray_void"
 
 	variable mGedFile ""
 
@@ -172,6 +178,7 @@ package provide cadwidgets::Ged 1.0
 	method dir2ae {args}
 	method dlist_on {args}
 	method draw {args}
+	method draw_ray {_start _partitions}
 	method dump {args}
 	method dup {args}
 	method E {args}
@@ -183,6 +190,7 @@ package provide cadwidgets::Ged 1.0
 	method edit {args}
 	method edmater {args}
 	method erase {args}
+	method erase_ray {}
 	method ev {args}
 	method expand {args}
 	method eye {args}
@@ -706,6 +714,7 @@ package provide cadwidgets::Ged 1.0
 	method set_outputHandler {args}
 	method fb_active {args}
 
+	proc color_to_tk {_color}
 	proc get_ged_color {_color}
 	proc get_rgb_color {_color}
 	proc get_vdraw_color {_color}
@@ -1359,6 +1368,69 @@ package provide cadwidgets::Ged 1.0
     eval $mGed draw $args
 }
 
+::itcl::body cadwidgets::Ged::draw_ray {_start _partitions} {
+    measure_line_erase
+    erase_ray
+
+    set odd_color [get_vdraw_color $itk_option(-rayColorOdd)]
+    set even_color [get_vdraw_color $itk_option(-rayColorEven)]
+    set void_color [get_vdraw_color $itk_option(-rayColorVoid)]
+
+    set count 1
+    set prev_o_pt ""
+    foreach partition $_partitions {
+	if {[catch {bu_get_value_by_keyword "region" $partition} region] ||
+	    [catch {bu_get_value_by_keyword "in" $partition} in] ||
+	    [catch {bu_get_value_by_keyword "point" $in} i_pt] ||
+	    [catch {bu_get_value_by_keyword "out" $partition} out] ||
+	    [catch {bu_get_value_by_keyword "point" $out} o_pt]} {
+	    return ""
+	}
+
+	if {$prev_o_pt == ""} {
+	    if {![vnear_zero [vsub2 $_start $i_pt] 0.000001]} {
+		# The first section drawn is void
+		$mGed vdraw open $GED_RAY_VOID
+		$mGed vdraw params color $void_color
+
+		eval $mGed vdraw write next 0 $_start
+		eval $mGed vdraw write next 1 $i_pt
+		$mGed vdraw send
+	    }
+
+	    # The first partition is odd
+	    $mGed vdraw open $GED_RAY_ODD
+	    $mGed vdraw params color $odd_color
+	} else {
+	    if {![vnear_zero [vsub2 $prev_o_pt $i_pt] 0.000001]} {
+		# Here we have a void
+		$mGed vdraw open $GED_RAY_VOID
+		$mGed vdraw params color $void_color
+
+		eval $mGed vdraw write next 0 $prev_o_pt
+		eval $mGed vdraw write next 1 $i_pt
+		$mGed vdraw send
+	    }
+
+	    if {[expr {$count%2}]} {
+		# Odd
+		$mGed vdraw open $GED_RAY_ODD
+		$mGed vdraw params color $odd_color
+	    } else {
+		# Even
+		$mGed vdraw open $GED_RAY_EVEN
+		$mGed vdraw params color $even_color
+	    }
+	}
+
+	eval $mGed vdraw write next 0 $i_pt
+	eval $mGed vdraw write next 1 $o_pt
+	$mGed vdraw send
+	set prev_o_pt $o_pt
+	incr count
+    }
+}
+
 ::itcl::body cadwidgets::Ged::dump {args} {
     eval $mGed dump $args
 }
@@ -1404,6 +1476,15 @@ package provide cadwidgets::Ged 1.0
 ::itcl::body cadwidgets::Ged::erase {args} {
     set mRayNeedGettrees 1
     eval $mGed erase $args
+}
+
+::itcl::body cadwidgets::Ged::erase_ray {} {
+    catch {$mGed vdraw vlist delete $GED_RAY_ODD}
+    catch {$mGed erase _VDRW$GED_RAY_ODD}
+    catch {$mGed vdraw vlist delete $GED_RAY_EVEN}
+    catch {$mGed erase _VDRW$GED_RAY_EVEN}
+    catch {$mGed vdraw vlist delete $GED_RAY_VOID}
+    catch {$mGed erase _VDRW$GED_RAY_VOID}
 }
 
 ::itcl::body cadwidgets::Ged::ev {args} {
@@ -4258,6 +4339,7 @@ package provide cadwidgets::Ged 1.0
 
     foreach dm {ur ul ll lr} {
 	bind $itk_component($dm) <$_part1_button> "[::itcl::code $this begin_view_measure $dm $_part1_button $_part2_button %x %y]; focus %W; break"
+	bind $itk_component($dm) <Control-Alt-$_part1_button> "[::itcl::code $this pane_mouse_ray $dm %x %y]"
     }
 }
 
@@ -4887,6 +4969,19 @@ package provide cadwidgets::Ged 1.0
 }
 
 
+::itcl::body cadwidgets::Ged::color_to_tk {_color} {
+    if {[catch {winfo rgb . $_color} rgb]} {
+	set rgb "255 255 255"
+    }
+
+    set r [expr {int([lindex $rgb 0] / 256.0)}]
+    set g [expr {int([lindex $rgb 1] / 256.0)}]
+    set b [expr {int([lindex $rgb 2] / 256.0)}]
+
+    return [rgb_to_tk $r $g $b]
+}
+
+
 ::itcl::body cadwidgets::Ged::get_ged_color {_color} {
     switch -- $_color {
 	"Grey" {
@@ -4980,7 +5075,7 @@ package provide cadwidgets::Ged 1.0
 	    return "00ff00"
 	}
 	"Magenta" {
-	    return "ff00ff"
+	    return "770077"
 	}
 	"Red" {
 	    return "ff0000"
