@@ -2834,6 +2834,27 @@ proc title_node_handler {node} {
 	$mColorListNoTriple
 
     buildComboBox $itk_component(generalF) \
+	rayColorOdd \
+	raycolorodd \
+	mRayColorOddPref \
+	"Ray Color (Odd):" \
+	$mColorListNoTriple
+
+    buildComboBox $itk_component(generalF) \
+	rayColorEven \
+	raycoloreven \
+	mRayColorEvenPref \
+	"Ray Color (Even):" \
+	$mColorListNoTriple
+
+    buildComboBox $itk_component(generalF) \
+	rayColorVoid \
+	raycolorvoid \
+	mRayColorVoidPref \
+	"Ray Color (Void):" \
+	$mColorListNoTriple
+
+    buildComboBox $itk_component(generalF) \
 	units \
 	units \
 	mDbUnits \
@@ -2938,6 +2959,15 @@ proc title_node_handler {node} {
     incr i
     grid $itk_component(viewingParamsColorL) -column 0 -row $i -sticky e
     grid $itk_component(viewingParamsColorF) -column 1 -row $i -sticky ew
+    incr i
+    grid $itk_component(rayColorOddL) -column 0 -row $i -sticky e
+    grid $itk_component(rayColorOddF) -column 1 -row $i -sticky ew
+    incr i
+    grid $itk_component(rayColorEvenL) -column 0 -row $i -sticky e
+    grid $itk_component(rayColorEvenF) -column 1 -row $i -sticky ew
+    incr i
+    grid $itk_component(rayColorVoidL) -column 0 -row $i -sticky e
+    grid $itk_component(rayColorVoidF) -column 1 -row $i -sticky ew
 
     # Disable tree attributes indefinitely
 #    incr i
@@ -8166,6 +8196,9 @@ proc title_node_handler {node} {
     gedCmd configure -primitiveLabelColor $mPrimitiveLabelColor
     gedCmd configure -scaleColor $mScaleColor
     gedCmd configure -viewingParamsColor $mViewingParamsColor
+    gedCmd configure -rayColorOdd $mRayColorOdd
+    gedCmd configure -rayColorEven $mRayColorEven
+    gedCmd configure -rayColorVoid $mRayColorVoid
 
     $itk_component(ged) fontsize $mDisplayFontSize
 }
@@ -8213,6 +8246,18 @@ proc title_node_handler {node} {
 
     if {$mViewingParamsColor != $mViewingParamsColorPref} {
 	set mViewingParamsColor $mViewingParamsColorPref
+    }
+
+    if {$mRayColorOdd != $mRayColorOddPref} {
+	set mRayColorOdd $mRayColorOddPref
+    }
+
+    if {$mRayColorEven != $mRayColorEvenPref} {
+	set mRayColorEven $mRayColorEvenPref
+    }
+
+    if {$mRayColorVoid != $mRayColorVoidPref} {
+	set mRayColorVoid $mRayColorVoidPref
     }
 
     if {$mScaleColor != $mScaleColorPref} {
@@ -8733,6 +8778,9 @@ proc title_node_handler {node} {
     set mPrimitiveLabelColorPref $mPrimitiveLabelColor
     set mScaleColorPref $mScaleColor
     set mViewingParamsColorPref $mViewingParamsColor
+    set mRayColorOddPref $mRayColorOdd
+    set mRayColorEvenPref $mRayColorEven
+    set mRayColorVoidPref $mRayColorVoid
     set mTreeAttrColumnsPref $mTreeAttrColumns
     set mEnableListViewAllAffectedPref $mEnableListViewAllAffected
     set mEnableAffectedNodeHighlightPref $mEnableAffectedNodeHighlight
@@ -8898,6 +8946,9 @@ proc title_node_handler {node} {
     puts $_pfile "set mPrimitiveLabelColor \"$mPrimitiveLabelColor\""
     puts $_pfile "set mScaleColor \"$mScaleColor\""
     puts $_pfile "set mViewingParamsColor \"$mViewingParamsColor\""
+    puts $_pfile "set mRayColorOdd \"$mRayColorOdd\""
+    puts $_pfile "set mRayColorEven \"$mRayColorEven\""
+    puts $_pfile "set mRayColorVoid \"$mRayColorVoid\""
     puts $_pfile "set mTreeAttrColumns \"$mTreeAttrColumns\""
     puts $_pfile "set mEnableListViewAllAffected $mEnableListViewAllAffected"
     puts $_pfile "set mEnableAffectedNodeHighlight $mEnableAffectedNodeHighlight"

@@ -436,6 +436,12 @@ namespace eval ArcherCore {
 	variable mMeasuringStickColor Yellow
 	variable mMeasuringStickColorPref ""
 	variable mMeasuringStickColorVDraw ffff00
+	variable mRayColorOdd Cyan
+	variable mRayColorOddPref ""
+	variable mRayColorEven Yellow
+	variable mRayColorEvenPref ""
+	variable mRayColorVoid Magenta
+	variable mRayColorVoidPref ""
 	variable mEnableBigE 0
 	variable mEnableBigEPref ""
 
@@ -882,6 +888,7 @@ namespace eval ArcherCore {
 	method compSelectGroupRemove {_plist}
 
 	method mrayCallback_cvo {_pane _start _target _partitions}
+	method mrayCallback_nirt {_pane _start _target _partitions}
 	method mrayCallback_pick {_pane _start _target _partitions}
 
 	method initViewMeasure {}
@@ -1170,6 +1177,10 @@ namespace eval ArcherCore {
     trace add variable [::itcl::scope mViewingParamsColor] write watchVar
     trace add variable [::itcl::scope mViewAxesColor] write watchVar
     trace add variable [::itcl::scope mViewAxesLabelColor] write watchVar
+
+    trace add variable [::itcl::scope mRayColorOdd] write watchVar
+    trace add variable [::itcl::scope mRayColorEven] write watchVar
+    trace add variable [::itcl::scope mRayColorVoid] write watchVar
 
     trace add variable [::itcl::scope mDisplayFontSize] write watchVar
 
@@ -3004,6 +3015,55 @@ namespace eval ArcherCore {
     $itk_component(ged) pane_center $_pane $point
 }
 
+
+::itcl::body ArcherCore::mrayCallback_nirt {_pane _start _target _partitions} {
+    #set size [$itk_component(ged) size]
+    #set cdim [$itk_component(ged) pane_rect $_pane cdim]
+    #set width [lindex $cdim 0]
+    #set height [lindex $cdim 1]
+
+    set b2l [$itk_component(ged) base2local]
+    set rad2deg [expr {180.0 / acos(-1.0)}]
+    set raydir [vunitize [vsub2 $_target $_start]]
+    set scaled_start [vscale $_start $b2l]
+
+    set rds "([format {%.4f %.4f %.4f} [lindex $raydir 0] [lindex $raydir 1] [lindex $raydir 2]])"
+    set ae [eval $itk_component(ged) dir2ae $raydir]
+    set aes "([format {%.2f %.2f} [lindex $ae 0] [lindex $ae 1]])"
+    set ors "([format {%.3f %.3f %.3f} [lindex $scaled_start 0] [lindex $scaled_start 1] [lindex $scaled_start 2]])"
+
+    putString "\nOrigin (x y z) = $ors"
+    putString "Direction (x y z) = $rds\t(az el) - $aes"
+    putString "Region Name\t\t\tEntry (x y z)\t\t\t\tLOS\tObliq_in"
+
+    # use the reverse ray direction for the cos calculation below
+    set raydir [vunitize [vsub2 $_start $_target]]
+
+    foreach partition $_partitions {
+	if {[catch {bu_get_value_by_keyword "region" $partition} region] ||
+	    [catch {bu_get_value_by_keyword "in" $partition} in] ||
+	    [catch {bu_get_value_by_keyword "normal" $in} hit_normal] ||
+	    [catch {bu_get_value_by_keyword "point" $in} i_pt] ||
+	    [catch {bu_get_value_by_keyword "out" $partition} out] ||
+	    [catch {bu_get_value_by_keyword "point" $out} o_pt]} {
+	    return ""
+	}
+
+	set hit_normal [vunitize $hit_normal]
+	set cosa [vdot $raydir $hit_normal]
+
+	set angle [format "%.3f" [expr {acos($cosa) * $rad2deg}]]
+	set los [format "%.2f" [expr {[vmagnitude [vsub2 $o_pt $i_pt]] * $b2l}]]
+	set i_pt [vscale $i_pt $b2l]
+	set i_pt [format "(%.3f %.3f %.3f)" [lindex $i_pt 0] [lindex $i_pt 1] [lindex $i_pt 2]]
+
+	putString "$region\t\t\t$i_pt\t\t\t\t$los\t$angle"
+    }
+
+    $itk_component(ged) draw_ray $_start $_partitions
+}
+
+
 ::itcl::body ArcherCore::mrayCallback_pick {_pane _start _target _partitions} {
     set partition [lindex $_partitions 0]
     if {$partition == {}} {
@@ -3063,7 +3123,9 @@ namespace eval ArcherCore {
 
 ::itcl::body ArcherCore::initViewMeasure {} {
     $itk_component(ged) clear_view_measure_callback_list
+    $itk_component(ged) clear_mouse_ray_callback_list
     $itk_component(ged) add_view_measure_callback [::itcl::code $this endViewMeasure]
+    $itk_component(ged) add_mouse_ray_callback [::itcl::code $this mrayCallback_nirt]
     $itk_component(ged) init_view_measure
     $itk_component(ged) init_button_no_op 2
 
@@ -6565,6 +6627,15 @@ namespace eval ArcherCore {
 	}
 	mViewingParamsColor {
 	    $itk_component(ged) configure -viewingParamsColor $mViewingParamsColor
+	}
+	mRayColorOdd {
+	    $itk_component(ged) configure -rayColorOdd $mRayColorOdd
+	}
+	mRayColorEven {
+	    $itk_component(ged) configure -rayColorEven $mRayColorEven
+	}
+	mRayColorVoid {
+	    $itk_component(ged) configure -rayColorVoid $mRayColorVoid
 	}
     }
 }
