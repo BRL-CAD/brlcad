@@ -251,7 +251,7 @@ comp.r4 ID 5678 material code 5 LOS 75
 
 * DocBook source: add xsl customizations for figure and table title
   positions, float centering, etc.; add automatic figure, table, and
-  other similar references; add separate html and fo image sizing and
+  other similar references; add separate html for image sizing and
   placement; remove unnecessary image markup; lift child namespaces to
   each document's root element.
 
