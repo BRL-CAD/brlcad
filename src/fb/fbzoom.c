@@ -49,7 +49,7 @@ int doKeyPad(void);
 #define MaxYPan (fb_getheight(fbp)-1)
 #define MinPan (0)
 
-static int PanFactor;			/* Speed with whitch to pan.	*/
+static int PanFactor;			/* Speed with which to pan.	*/
 static int xPan, yPan;			/* Pan Location.		*/
 static int xZoom, yZoom;		/* Zoom Factor.			*/
 static int new_xPan, new_yPan;
