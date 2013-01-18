@@ -135,7 +135,7 @@ number of handles:  3
   <para>
    Both of these examples produce the same result - a database called
    handle.g containing three handles of length 200mm, height 100mm, radius
-   20mm fo rthe rounding, and radius 10mm for the cylinders.
+   20mm for the rounding, and radius 10mm for the cylinders.
   </para>
 
 </refsection>
