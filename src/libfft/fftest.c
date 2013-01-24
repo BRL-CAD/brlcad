@@ -57,8 +57,11 @@ main(int ac, char *av[])
 	printf("Usage: %s\n", av[0]);
 
     for (i = 0; i < 64; i++) {
-	data[i].re = sin((double)2.0 * M_PI * i / 64.0);
-	data[i].re += 3 * cos((double)2.0 * M_PI * i / 32.0);
+/* Original and simplified expressions in next 4 lines of file you are reading. */
+/*	data[i].re = sin((double)2.0 * M_PI * i / 64.0); */
+	data[i].re = sin( M_PI * (double) i / 32.0);
+/*	data[i].re += 3 * cos((double)2.0 * M_PI * i / 32.0); */
+	data[i].re += 3 * cos( M_PI * (double) i / 16.0);
 	data[i].im = (double)0.0;
     }
 
