@@ -36,6 +36,7 @@
     public {
 	# Override what's in GeometryEditFrame
 	method initGeometry {gdata}
+	method initTranslate {}
 	method updateGeometry {}
 	method createGeometry {obj}
 	method p {obj args}
@@ -44,6 +45,31 @@
     protected {
 	common mRotationPointDialog ""
 	common mRotationPointCB ""
+
+	common moveEdge12 1
+	common moveEdge23 2
+	common moveEdge34 3
+	common moveEdge14 4
+	common moveEdge15 5
+	common moveEdge26 6
+	common moveEdge56 7
+	common moveEdge67 8
+	common moveEdge78 9
+	common moveEdge58 10
+	common moveEdge37 11
+	common moveEdge48 12
+	common moveFace1234 13
+	common moveFace5678 14
+	common moveFace1584 15
+	common moveFace2376 16
+	common moveFace1265 17
+	common moveFace4378 18
+	common rotateFace1234 19
+	common rotateFace5678 20
+	common rotateFace1584 21
+	common rotateFace2376 22
+	common rotateFace1265 23
+	common rotateFace4378 24
 
 	variable mV1x ""
 	variable mV1y ""
@@ -70,30 +96,7 @@
 	variable mV8y ""
 	variable mV8z ""
 
-	variable moveEdge12 1
-	variable moveEdge23 2
-	variable moveEdge34 3
-	variable moveEdge14 4
-	variable moveEdge15 5
-	variable moveEdge26 6
-	variable moveEdge56 7
-	variable moveEdge67 8
-	variable moveEdge78 9
-	variable moveEdge58 10
-	variable moveEdge37 11
-	variable moveEdge48 12
-	variable moveFace1234 13
-	variable moveFace5678 14
-	variable moveFace1584 15
-	variable moveFace2376 16
-	variable moveFace1265 17
-	variable moveFace4378 18
-	variable rotateFace1234 19
-	variable rotateFace5678 20
-	variable rotateFace1584 21
-	variable rotateFace2376 22
-	variable rotateFace1265 23
-	variable rotateFace4378 24
+	variable mCurrentArbFaces ""
 
 	# Methods used by the constructor
 	method buildMoveEdgePanel {parent}
@@ -109,7 +112,9 @@
 
 	method initEditState {}
 
+	method arbFaceMoveCallback {_face}
 	method buildRotationPointDialog {}
+	method endArbFaceMove {_dm _obj _mx _my}
 	method invokeRotationPointDialog {_choices}
     }
 
@@ -711,16 +716,16 @@
 ::itcl::body Arb8EditFrame::buildLowerPanel {} {
     set parent [$this childsite lower]
 
-    buildArrow $parent moveEdge "Move Edges" [::itcl::code $this buildMoveEdgePanel]
-    buildArrow $parent moveFace "Move Faces" [::itcl::code $this buildMoveFacePanel]
-    buildArrow $parent rotateFace "Rotate Faces" [::itcl::code $this buildRotateFacePanel]
+    buildArrow $parent moveEdgeArrow "Move Edges" [::itcl::code $this buildMoveEdgePanel]
+    buildArrow $parent moveFaceArrow "Move Faces" [::itcl::code $this buildMoveFacePanel]
+    buildArrow $parent rotateFaceArrow "Rotate Faces" [::itcl::code $this buildRotateFacePanel]
 
     set row 0
-    grid $itk_component(moveEdge) -row $row -column 0 -sticky nsew
+    grid $itk_component(moveEdgeArrow) -row $row -column 0 -sticky nsew
     incr row
-    grid $itk_component(moveFace) -row $row -column 0 -sticky nsew
+    grid $itk_component(moveFaceArrow) -row $row -column 0 -sticky nsew
     incr row
-    grid $itk_component(rotateFace) -row $row -column 0 -sticky nsew
+    grid $itk_component(rotateFaceArrow) -row $row -column 0 -sticky nsew
     grid columnconfigure $parent 0 -weight 1
 }
 
@@ -774,6 +779,12 @@
 
     GeometryEditFrame::initGeometry $gdata
 }
+
+
+::itcl::body Arb8EditFrame::initTranslate {} {
+    $::ArcherCore::application initFindArbFace $itk_option(-geometryObjectPath) 1 [::itcl::code $this arbFaceMoveCallback]
+}
+
 
 ::itcl::body Arb8EditFrame::updateGeometry {} {
     if {$itk_option(-mged) == "" ||
@@ -894,6 +905,7 @@
 
     return ""
 }
+
 
 
 # ------------------------------------------------------------
@@ -1197,6 +1209,42 @@
     GeometryEditFrame::initEditState
 }
 
+
+::itcl::body Arb8EditFrame::arbFaceMoveCallback {_face} {
+    switch -- $_face {
+	0 {
+	    set mEditMode $moveFace1234
+	}
+	1 {
+	    set mEditMode $moveFace5678
+	}
+	2 {
+	    set mEditMode $moveFace1584
+	}
+	3 {
+	    set mEditMode $moveFace2376
+	}
+	4 {
+	    set mEditMode $moveFace1265
+	}
+	5 {
+	    set mEditMode $moveFace4378
+	}
+    }
+
+    # Calling initEditState to set mEditParam1 in case a different face has been selected
+    initEditState
+
+    foreach dname {ul ur ll lr} {
+	set win [$itk_option(-mged) component $dname]
+	bind $win <ButtonRelease-1> "[::itcl::code $this endArbFaceMove $dname $itk_option(-geometryObject) %x %y]; break"
+    }
+
+    set last_mouse [$itk_option(-mged) get_prev_ged_mouse]
+    eval $itk_option(-mged) move_arb_face_mode $itk_option(-geometryObject) $mEditParam1 $last_mouse
+}
+
+
 ::itcl::body Arb8EditFrame::buildRotationPointDialog {} {
     if {$mRotationPointDialog != ""} {
 	return
@@ -1268,10 +1316,17 @@
     after idle "$dialog center"
 }
 
+
+::itcl::body Arb8EditFrame::endArbFaceMove {_dm _obj _mx _my} {
+    $::ArcherCore::application endObjTranslate $_dm $_obj $_mx $_my
+}
+
+
 ::itcl::body Arb8EditFrame::invokeRotationPointDialog {_choices} {
     $mRotationPointCB configure -values $_choices
     $mRotationPointDialog activate
 }
+
 
 
 # Local Variables:

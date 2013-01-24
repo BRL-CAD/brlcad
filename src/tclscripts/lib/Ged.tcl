@@ -211,6 +211,7 @@ package provide cadwidgets::Ged 1.0
 	method get_bot_edges {args}
 	method get_comb {args}
 	method get_eyemodel {args}
+	method get_prev_ged_mouse {args}
 	method get_prev_mouse {args}
 	method get_type {args}
 	method glob {args}
@@ -354,10 +355,12 @@ package provide cadwidgets::Ged 1.0
 	method pane_mouse_append_pipept {_pane args}
 	method pane_mouse_constrain_rot {_pane args}
 	method pane_mouse_constrain_trans {_pane args}
+	method pane_mouse_find_arb_face {_pane _arb _viewz _mx _my}
 	method pane_mouse_find_bot_edge {_pane _bot _viewz _mx _my}
 	method pane_mouse_find_bot_face {_pane _bot _viewz _mx _my}
 	method pane_mouse_find_botpt {_pane _bot _viewz _mx _my}
 	method pane_mouse_find_pipept {_pane args}
+	method pane_mouse_find_type_face {_pane _type _obj _viewz _mx _my _callback}
 	method pane_mouse_move_arb_edge {_pane args}
 	method pane_mouse_move_arb_face {_pane args}
 	method pane_mouse_move_botpt {_pane args}
@@ -631,10 +634,12 @@ package provide cadwidgets::Ged 1.0
 	method init_data_poly_cont {{_button 1}}
 	method init_data_poly_ell {{_button 1}}
 	method init_data_poly_rect {{_button 1} {_sflag 0}}
+	method init_find_arb_face {_obj {_button 1} {_viewz 1.0} {_callback {}}}
 	method init_find_bot_edge {_obj {_button 1} {_viewz 1.0} {_callback {}}}
 	method init_find_bot_face {_obj {_button 1} {_viewz 1.0} {_callback {}}}
 	method init_find_botpt {_obj {_button 1} {_viewz 1.0} {_callback {}}}
 	method init_find_pipept {_obj {_button 1} {_callback {}}}
+	method init_move_arb_face {_obj {_button 1} {_viewz 1.0} {_callback {}}}
 	method init_prepend_pipept {_obj {_button 1} {_callback {}}}
 	method init_view_bindings {{_type default}}
 	method init_view_center {{_button 1}}
@@ -708,6 +713,7 @@ package provide cadwidgets::Ged 1.0
 	method delete_view_rect_callback {_callback}
 
 	method set_data_point_callback {_callback}
+	method clear_arb_callbacks {}
 	method clear_bot_callbacks {}
 
 	#XXX Still needs to be resolved
@@ -730,6 +736,9 @@ package provide cadwidgets::Ged 1.0
 	variable mGed ""
 	variable mSharedGed 0
 	variable mHistoryCallback ""
+	variable mArbEdgeCallback ""
+	variable mArbFaceCallback ""
+	variable mArbPointCallback ""
 	variable mBotEdgeCallback ""
 	variable mBotFaceCallback ""
 	variable mBotPointCallback ""
@@ -760,6 +769,8 @@ package provide cadwidgets::Ged 1.0
 	variable mEndDataMoveCallbacks ""
 	variable mMouseDataCallbacks ""
 	variable mMouseRayCallbacks ""
+	variable mPrevGedMouseX 0
+	variable mPrevGedMouseY 0
 	variable mViewMeasureCallbacks ""
 	variable mViewRectCallbacks ""
 
@@ -1585,6 +1596,10 @@ package provide cadwidgets::Ged 1.0
     return $mLastMouseRayPos
 }
 
+::itcl::body cadwidgets::Ged::get_prev_ged_mouse {args} {
+    return "$mPrevGedMouseX $mPrevGedMouseY"
+}
+
 ::itcl::body cadwidgets::Ged::get_prev_mouse {args} {
     eval $mGed get_prev_mouse $itk_component($itk_option(-pane)) $args
 }
@@ -2338,6 +2353,16 @@ package provide cadwidgets::Ged 1.0
 }
 
 
+::itcl::body cadwidgets::Ged::pane_mouse_find_arb_face {_pane _arb _viewz _mx _my} {
+    set arb_type [get_type $_arb]
+    if {![regexp {arb[45678]} $arb_type]} {
+	return -1
+    }
+
+    return [pane_mouse_find_type_face $_pane $arb_type $_arb $_viewz $_mx $_my $mArbFaceCallback]
+}
+
+
 ::itcl::body cadwidgets::Ged::pane_mouse_find_bot_edge {_pane _bot _viewz _mx _my} {
     if {$_viewz < 0.0} {
 	set elist [eval $mGed mouse_find_bot_edge $itk_component($_pane) $_bot $_mx $_my]
@@ -2363,28 +2388,7 @@ package provide cadwidgets::Ged 1.0
 
 
 ::itcl::body cadwidgets::Ged::pane_mouse_find_bot_face {_pane _bot _viewz _mx _my} {
-    if {[get_type $_bot] != "bot"} {
-	return ""
-    }
-
-    set view [pane_screen2view $_pane $_mx $_my]
-    set target [eval pane_v2m_point $_pane $view]
-
-    set view [lreplace $view 2 2 $_viewz]
-    set start [eval pane_v2m_point $_pane $view]
-
-    set partitions [shoot_ray bot_ray $start "at" $target 1 1 1 1 $_bot]
-    set partition [lindex $partitions 0]
-    if {[catch {bu_get_value_by_keyword in $partition} in] ||
-	[catch {bu_get_value_by_keyword surfno $in} surfno]} {
-	return ""
-    }
-
-    if {$mBotFaceCallback != ""} {
-	catch {$mBotFaceCallback $surfno}
-    }
-
-    return $surfno
+    return [pane_mouse_find_type_face $_pane bot $_bot $_viewz $_mx $_my $mBotFaceCallback]
 }
 
 
@@ -2420,6 +2424,35 @@ package provide cadwidgets::Ged 1.0
     }
 
     return $i
+}
+
+
+::itcl::body cadwidgets::Ged::pane_mouse_find_type_face {_pane _type _obj _viewz _mx _my _callback} {
+    if {[get_type $_obj] != $_type} {
+	return ""
+    }
+
+    set mPrevGedMouseX $_mx
+    set mPrevGedMouseY $_my
+
+    set view [pane_screen2view $_pane $_mx $_my]
+    set target [eval pane_v2m_point $_pane $view]
+
+    set view [lreplace $view 2 2 $_viewz]
+    set start [eval pane_v2m_point $_pane $view]
+
+    set partitions [shoot_ray obj_ray $start "at" $target 1 1 1 1 $_obj]
+    set partition [lindex $partitions 0]
+    if {[catch {bu_get_value_by_keyword in $partition} in] ||
+	[catch {bu_get_value_by_keyword surfno $in} surfno]} {
+	set surfno ""
+    }
+
+    if {$_callback != ""} {
+	catch {$_callback $surfno}
+    }
+
+    return $surfno
 }
 
 
@@ -4233,6 +4266,18 @@ package provide cadwidgets::Ged 1.0
 }
 
 
+::itcl::body cadwidgets::Ged::init_find_arb_face {_obj {_button 1} {_viewz 1.0} {_callback {}}} {
+    measure_line_erase
+
+    set mArbFaceCallback $_callback
+
+    foreach dm {ur ul ll lr} {
+	bind $itk_component($dm) <$_button> "[::itcl::code $this pane_mouse_find_arb_face $dm $_obj $_viewz %x %y]; focus %W; break"
+	bind $itk_component($dm) <ButtonRelease-$_button> ""
+    }
+}
+
+
 ::itcl::body cadwidgets::Ged::init_find_bot_edge {_obj {_button 1} {_viewz 1.0} {_callback {}}} {
     measure_line_erase
 
@@ -4959,6 +5004,13 @@ package provide cadwidgets::Ged 1.0
 
 ::itcl::body cadwidgets::Ged::set_data_point_callback {_callback} {
     set mDataPointCallback $_callback
+}
+
+
+::itcl::body cadwidgets::Ged::clear_arb_callbacks {} {
+    set mArbEdgeCallback ""
+    set mArbFaceCallback ""
+    set mArbPointCallback ""
 }
 
 

@@ -153,6 +153,7 @@ package provide Archer 1.0
 
 	method importFg4Sections   {_slist _wlist _delta}
 	method initAppendPipePoint {_obj _button _callback}
+	method initFindArbFace {_obj _button _callback}
 	method initFindBotEdge {_obj _button _viewz _callback}
 	method initFindBotFace {_obj _button _callback}
 	method initFindBotPoint {_obj _button _viewz _callback}
@@ -194,6 +195,8 @@ package provide Archer 1.0
 
 	# Object Edit Management
 	method revert {}
+
+	method endObjTranslate {_dm _obj _mx _my}
     }
 
     protected {
@@ -296,9 +299,7 @@ package provide Archer 1.0
 	method endObjCenter {_obj}
 	method endObjRotate {_dm _obj}
 	method endObjScale {_dm _obj}
-	method endObjTranslate {_dm _obj _mx _my}
 	method handleObjCenter {_dm _obj _mx _my}
-
 
 	# Object Views Section
 	method buildArb4EditView {}
@@ -758,6 +759,18 @@ package provide Archer 1.0
     # things through to PipeEditFrame.
 
     $itk_component(ged) init_append_pipept $_obj $_button $_callback
+}
+
+
+::itcl::body Archer::initFindArbFace {_obj _button _callback} {
+    if {![info exists itk_component(ged)]} {
+	return
+    }
+
+    # This deselects the selected mouse mode in the primary toolbar
+    #set mDefaultBindingMode FIRST_FREE_BINDING_MODE
+
+    $itk_component(ged) init_find_arb_face $_obj $_button [expr {$mZClipFrontMax * $mZClipFront}] $_callback
 }
 
 
@@ -6238,6 +6251,10 @@ proc title_node_handler {node} {
 
     if {$GeometryEditFrame::mEditClass != $GeometryEditFrame::EDIT_CLASS_TRANS} {
 	initEdit
+    } elseif {[regexp {arb[45678]} $mSelectedObjType]} {
+	$itk_component($mSelectedObjType\View) initTranslate
+	$itk_component(ged) rect lwidth 0
+	return
     }
 
     if {$mSelectedObjType == "bot"} {

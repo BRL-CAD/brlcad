@@ -41,18 +41,18 @@
     }
 
     protected {
-	variable movePoint1 1
-	variable movePoint2 2
-	variable movePoint3 3
-	variable movePoint4 4
-	variable moveFace123 5
-	variable moveFace124 6
-	variable moveFace234 7
-	variable moveFace134 8
-	variable rotateFace123 9
-	variable rotateFace124 10
-	variable rotateFace234 11
-	variable rotateFace134 12
+	common movePoint1 1
+	common movePoint2 2
+	common movePoint3 3
+	common movePoint4 4
+	common moveFace123 5
+	common moveFace124 6
+	common moveFace234 7
+	common moveFace134 8
+	common rotateFace123 9
+	common rotateFace124 10
+	common rotateFace234 11
+	common rotateFace134 12
 
 	# Methods used by the constructor
 	method buildMoveEdgePanel {parent}
@@ -60,6 +60,7 @@
 	method buildRotateFacePanel {parent}
 
 	# Override what's in Arb8EditFrame
+	method arbFaceMoveCallback {_face}
 	method buildUpperPanel {}
 	method updateUpperPanel {normal disabled}
 
@@ -77,6 +78,36 @@
 ::itcl::body Arb4EditFrame::constructor {args} {
     eval itk_initialize $args
 }
+
+
+::itcl::body Arb4EditFrame::arbFaceMoveCallback {_face} {
+    switch -- $_face {
+	0 {
+	    set mEditMode $moveFace123
+	}
+	1 {
+	    set mEditMode $moveFace234
+	}
+	2 {
+	    set mEditMode $moveFace124
+	}
+	3 {
+	    set mEditMode $moveFace134
+	}
+    }
+
+    # Calling initEditState to set mEditParam1 in case a different face has been selected
+    initEditState
+
+    foreach dname {ul ur ll lr} {
+	set win [$itk_option(-mged) component $dname]
+	bind $win <ButtonRelease-1> "[::itcl::code $this endArbFaceMove $dname $itk_option(-geometryObject) %x %y]; break"
+    }
+
+    set last_mouse [$itk_option(-mged) get_prev_ged_mouse]
+    eval $itk_option(-mged) move_arb_face_mode $itk_option(-geometryObject) $mEditParam1 $last_mouse
+}
+
 
 ::itcl::body Arb4EditFrame::buildUpperPanel {} {
     set parent [$this childsite upper]

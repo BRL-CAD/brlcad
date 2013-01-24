@@ -41,26 +41,26 @@
     }
 
     protected {
-	variable moveEdge12 1
-	variable moveEdge23 2
-	variable moveEdge34 3
-	variable moveEdge14 4
-	variable moveEdge15 5
-	variable moveEdge25 6
-	variable moveEdge36 7
-	variable moveEdge46 8
-	variable movePoint5 9
-	variable movePoint6 10
-	variable moveFace1234 11
-	variable moveFace2365 12
-	variable moveFace1564 13
-	variable moveFace125 14
-	variable moveFace346 15
-	variable rotateFace1234 16
-	variable rotateFace2365 17
-	variable rotateFace1564 18
-	variable rotateFace125 19
-	variable rotateFace346 20
+	common moveEdge12 1
+	common moveEdge23 2
+	common moveEdge34 3
+	common moveEdge14 4
+	common moveEdge15 5
+	common moveEdge25 6
+	common moveEdge36 7
+	common moveEdge46 8
+	common movePoint5 9
+	common movePoint6 10
+	common moveFace1234 11
+	common moveFace2365 12
+	common moveFace1564 13
+	common moveFace125 14
+	common moveFace346 15
+	common rotateFace1234 16
+	common rotateFace2365 17
+	common rotateFace1564 18
+	common rotateFace125 19
+	common rotateFace346 20
 
 	# Methods used by the constructor
 	method buildMoveEdgePanel {parent}
@@ -68,6 +68,7 @@
 	method buildRotateFacePanel {parent}
 
 	# Override what's in Arb8EditFrame
+	method arbFaceMoveCallback {_face}
 	method buildUpperPanel {}
 	method updateUpperPanel {normal disabled}
 
@@ -85,6 +86,39 @@
 ::itcl::body Arb6EditFrame::constructor {args} {
     eval itk_initialize $args
 }
+
+
+::itcl::body Arb6EditFrame::arbFaceMoveCallback {_face} {
+    switch -- $_face {
+	0 {
+	    set mEditMode $moveFace1234
+	}
+	1 {
+	    set mEditMode $moveFace1564
+	}
+	2 {
+	    set mEditMode $moveFace2365
+	}
+	3 {
+	    set mEditMode $moveFace125
+	}
+	4 {
+	    set mEditMode $moveFace346
+	}
+    }
+
+    # Calling initEditState to set mEditParam1 in case a different face has been selected
+    initEditState
+
+    foreach dname {ul ur ll lr} {
+	set win [$itk_option(-mged) component $dname]
+	bind $win <ButtonRelease-1> "[::itcl::code $this endArbFaceMove $dname $itk_option(-geometryObject) %x %y]; break"
+    }
+
+    set last_mouse [$itk_option(-mged) get_prev_ged_mouse]
+    eval $itk_option(-mged) move_arb_face_mode $itk_option(-geometryObject) $mEditParam1 $last_mouse
+}
+
 
 ::itcl::body Arb6EditFrame::buildUpperPanel {} {
     set parent [$this childsite upper]
