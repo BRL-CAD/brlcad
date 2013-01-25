@@ -1161,11 +1161,11 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 		/* calculate plot vlists for solids */
 		for (BU_LIST_FOR(dgcdp->gdlp, ged_display_list, &(gedp->ged_gdp->gd_headDisplay))) {
 		    struct solid *sp = BU_LIST_FIRST(solid, &(dgcdp->gdlp->gdl_headSolid));
-		    struct bn_vlist *vp = BU_LIST_FIRST(bn_vlist, &(sp->s_vlist));
 
 		    /* skip if vlist has been previously created */
-		    if (vp->nused)
+		    if (BU_LIST_NON_EMPTY(&(sp->s_vlist))) {
 			continue;
+		    }
 
 		    av[0] = bu_vls_addr(&(dgcdp->gdlp->gdl_path));
 		    ret = db_walk_tree(gedp->ged_wdbp->dbip,
