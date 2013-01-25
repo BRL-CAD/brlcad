@@ -20,18 +20,24 @@
 ###
 #
 # The 'lc' command lists a set of codes (i.e. attributes) of regions
-# within a group/combination. The attributes listed are 'region_id',
-# 'material_id' and 'los' followed by 'region name'. If an attribute
-# is unset, it is reported as '--'. By default, the list is sorted in
-# ascending (a-z) order by 'region_id'. Sorting can be performed on
-# any column in ascending or descending (z-a) order. Duplicate
-# 'region_id' can be listed within a group/combination. Output can also
-# be saved to a file. Option '-d' specifies duplicate 'region_id'
-# should be listed. Options '-2', '-3', '-4' specify sort columns 2,
-# 3 or 4. Option '-z' specifies descending sort order. Option
-# '-f FileName' identifies output should be to a file and specifies the
-# file name. If the path is not included as part of the 'FileName' the
-# path will be the 'current directory'.
+# within a group/combination. Listed in columns are the following
+# 'region_id', 'material_id', 'los', 'region name', 'region parent'.
+# If a value is unset, it is reported as '--'.
+#
+# Option '-d' specifies to list only regions with duplicate 'region_id'.
+#
+# Option '-s' is the same as '-d' except some duplicates will not be
+# reported (i.e. skipped). Skipped duplicates will be those within the
+# specified group, that have the same parent and 'material_id'.
+#
+# Options '-2', '-3', '-4', '-5' specify to sort by column 2, 3, 4 or 5.
+#
+# Option '-z' specifies descending (z-a) sort order. By default, the
+# list is sorted in ascending (a-z) order by 'region_id'.
+#
+# Option '-f FileName' identifies output should be to a file and
+# specifies the file name. If the path is not included as part of the
+# 'FileName' the path will be the 'current directory'.
 #
 
 
@@ -39,12 +45,13 @@ proc lc {args} {
     set name_cnt 0
     set error_cnt 0
     set find_duplicates_flag_cnt 0
+    set skip_special_duplicates_flag_cnt 0
     set descending_sort_flag_cnt 0
     set file_name_flag_cnt 0
     set sort_column_flag_cnt 0
 
     if { [llength $args] == 0 } {
-	puts stdout "Usage: \[-d\] \[-z\] \[-2|-3|-4\] \[-f {FileName}\] {GroupName}"
+	puts stdout "Usage: \[-d|-s\] \[-z\] \[-2|-3|-4|-5\] \[-f {FileName}\] {GroupName}"
 	return
     }
 
@@ -52,9 +59,9 @@ proc lc {args} {
     foreach arg $args {
 	if { $arg == "-f" } {
 	    incr file_name_flag_cnt
-	} elseif { [string is integer $arg] && $arg <= -2 && $arg >= -4 } {
+	} elseif { [string is integer $arg] && $arg <= -2 && $arg >= -5 } {
 	    incr sort_column_flag_cnt
-	} elseif { $arg != "-d" && $arg != "-z" } {
+	} elseif { $arg != "-d" && $arg != "-z" && $arg != "-s"} {
 	    incr name_cnt
 	}
     }
@@ -87,6 +94,7 @@ proc lc {args} {
 
     # reset counts
     set find_duplicates_flag_cnt 0
+    set skip_special_duplicates_flag_cnt 0
     set descending_sort_flag_cnt 0
     set file_name_flag_cnt 0
     set sort_column_flag_cnt 0
@@ -111,11 +119,16 @@ proc lc {args} {
 	    set find_duplicates_flag_cnt 1
 	    continue
 	}
+	if { $arg == "-s" } {
+	    set find_duplicates_flag_cnt 1
+	    set skip_special_duplicates_flag_cnt 1
+	    continue
+	}
 	if { $arg == "-z" } {
 	    set descending_sort_flag_cnt 1
 	    continue
 	}
-	if { $arg <= -2 && $arg >= -4 } {
+	if { $arg <= -2 && $arg >= -5 } {
 	    set sort_column [expr abs($arg)]
 	    set sort_column_flag_cnt 1
 	    continue
@@ -151,6 +164,7 @@ proc lc {args} {
 	    puts stdout "Output filename: '$norm_name'"
 	}
     }
+
     if { $error_cnt > 0 } {
 	return
     }
@@ -161,21 +175,30 @@ proc lc {args} {
     }
 
     set objs {}
+
+    set group_name "/$group_name"
     set objs [search $group_name -type region]
 
     set lines {}
     set line ""
     foreach obj $objs {
-	if { [catch {set Xregion_id [lindex [attr show $obj region_id] 3]} tmp_msg] } {
+        set obj_name [file tail $obj]
+        set obj_parent [file tail [file dirname $obj]]
+
+	if { $obj_parent == "" } {
+	    set obj_parent "--"
+	}
+	if { [catch {set Xregion_id [lindex [attr show $obj_name region_id] 3]} tmp_msg] } {
 	    set Xregion_id "--"
 	}
-	if { [catch {set Xmaterial_id [lindex [attr show $obj material_id] 3]} tmp_msg] } {
+	if { [catch {set Xmaterial_id [lindex [attr show $obj_name material_id] 3]} tmp_msg] } {
 	    set Xmaterial_id "--"
 	}
-	if { [catch {set Xlos [lindex [attr show $obj los] 3]} tmp_msg] } {
+	if { [catch {set Xlos [lindex [attr show $obj_name los] 3]} tmp_msg] } {
 	    set Xlos "--"
 	}
-	set line "$Xregion_id $Xmaterial_id $Xlos $obj"
+
+	set line "$Xregion_id $Xmaterial_id $Xlos $obj_name $obj_parent"
 	lappend lines $line
     }
     unset objs
@@ -183,23 +206,65 @@ proc lc {args} {
     if { $find_duplicates_flag_cnt == 1 } {
 	set lines [lsort -dictionary -index 0 $lines]
 	set lines2 {}
-	set prev_id ""
-	set prev_line ""
-	set proc_seq 0
-	foreach line $lines {
-	    set cur_id [lindex $line 0]
-	    if { $cur_id == $prev_id } {
-		lappend lines2 $prev_line
-		set proc_seq 1
-	    } else {
-		if { $proc_seq == 1 } {
-		    lappend lines2 $prev_line
-		    set proc_seq 0
+	set idx1 0
+	set idx2 1
+
+	set list_len [llength $lines]
+
+	while {$idx1 < $list_len} {
+
+	    set prob_found 0
+
+	    while { ($idx2 < $list_len) && ([lindex [lindex $lines $idx1] 0] == [lindex [lindex $lines $idx2] 0])} {
+
+		if { $skip_special_duplicates_flag_cnt == 1 } {
+
+		    # Test if there are inconsistencies in the current list of regions (i.e. regions with same region_id). 
+		    # All of the regions with the same region_id must have the same parent and the material_id for each of
+		    # these regions must be the same.
+
+		    set idx3 $idx2
+
+		    while { ($idx3 < $list_len) && ([lindex [lindex $lines $idx1] 0] == [lindex [lindex $lines $idx3] 0])} {
+
+			if { ([lindex [lindex $lines $idx1] 4] != [lindex [lindex $lines $idx3] 4]) || ([lindex [lindex $lines $idx1] 1] != [lindex [lindex $lines $idx3] 1]) } {
+			    set prob_found 1
+			}
+			incr idx3
+		    }
 		}
+
+
+		if { !(($skip_special_duplicates_flag_cnt == 1) && ($prob_found == 0)) }  {
+
+		    set first_found 0
+		    set idx4 $idx2
+
+		    while { ($idx4 < $list_len) && ([lindex [lindex $lines $idx1] 0] == [lindex [lindex $lines $idx4] 0])} {
+			
+			if { $first_found == 0 } {
+			    set first_found 1
+			    lappend lines2 [lindex $lines $idx1]
+			    lappend lines2 [lindex $lines $idx4]
+			} else {
+			    lappend lines2 [lindex $lines $idx4]
+			}
+
+			incr idx4
+		    }
+		}
+
+		if { $skip_special_duplicates_flag_cnt == 1 } {
+		    set idx2 $idx3
+		} else {
+		    set idx2 $idx4
+		}
+
 	    }
-	    set prev_line $line
-	    set prev_id $cur_id
+	    set idx1 $idx2
+	    incr idx2
 	}
+
 	if { [llength $lines2] == 0 } {
 	    if { $file_name_set == 1 } {
 		puts $chan "Command args: '$args'"
@@ -220,15 +285,19 @@ proc lc {args} {
     set region_id_len_max 2
     set material_id_len_max 3
     set los_len_max 3
+    set obj_len_max 6
 
     # determine column widths
     foreach line $lines {
 	set region_id [lindex $line 0]
 	set material_id [lindex $line 1]
 	set los [lindex $line 2]
+	set obj [lindex $line 3]
 	set region_id_len [string length $region_id]
 	set material_id_len [string length $material_id]
 	set los_len [string length $los]
+	set obj_len [string length $obj]
+
 	if { $region_id_len > $region_id_len_max } {
 	    set region_id_len_max $region_id_len
 	}
@@ -238,10 +307,14 @@ proc lc {args} {
 	if { $los_len > $los_len_max } {
 	    set los_len_max $los_len
 	}
+	if { $obj_len > $obj_len_max } {
+	    set obj_len_max $obj_len
+	}
     }
     set w1 [expr ($region_id_len_max + 1)]
     set w2 [expr ($material_id_len_max + 1)]
     set w3 [expr ($los_len_max + 1)]
+    set w4 [expr ($obj_len_max + 1)]
 
     set lines2 {}
     foreach line $lines {
@@ -249,12 +322,13 @@ proc lc {args} {
 	set material_id [lindex $line 1]
 	set los [lindex $line 2]
 	set obj [lindex $line 3]
-	set line2 [format "%-*s %-*s %-*s %s" $w1 $region_id $w2 $material_id $w3 $los $obj]
+	set obj_parent [lindex $line 4]
+	set line2 [format "%-*s %-*s %-*s %-*s %s" $w1 $region_id $w2 $material_id $w3 $los $w4 $obj $obj_parent]
 	lappend lines2 $line2
     }
     unset lines
 
-    # convert columns from 1-4 to 0-3
+    # convert columns from 1-5 to 0-4
     set sort_column [expr ($sort_column - 1)]
 
     if { $descending_sort_flag_cnt == 1 } {
@@ -267,14 +341,14 @@ proc lc {args} {
     if { $file_name_set == 1 } {
 	puts $chan "Command args: '$args'"
 	puts $chan "List length: $list_len\n"
-	puts $chan [format "%-*s %-*s %-*s %s" $w1 "ID" $w2 "MAT" $w3 "LOS" "NAME"]
+	puts $chan [format "%-*s %-*s %-*s %-*s %s" $w1 "ID" $w2 "MAT" $w3 "LOS" $w4 "REGION" "PARENT"]
 	foreach line2 $lines2 {
 	    puts $chan "$line2"
 	}
 	close $chan
     } else {
 	puts stdout "List length: $list_len"
-	puts stdout [format "%-*s %-*s %-*s %s" $w1 "ID" $w2 "MAT" $w3 "LOS" "NAME"]
+	puts stdout [format "%-*s %-*s %-*s %-*s %s" $w1 "ID" $w2 "MAT" $w3 "LOS" $w4 "REGION" "PARENT"]
 	foreach line2 $lines2 {
 	    puts stdout "$line2"
 	}
