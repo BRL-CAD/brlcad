@@ -186,8 +186,8 @@ solid_append_vlist(struct solid *sp, struct bn_vlist *vlist)
 	sp->s_vlen = 0;
     }
 
-    BU_LIST_APPEND_LIST(&(sp->s_vlist), &(vlist->l));
     sp->s_vlen += vlist_total_commands(vlist);
+    BU_LIST_APPEND_LIST(&(sp->s_vlist), &(vlist->l));
 }
 
 static void
