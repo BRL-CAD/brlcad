@@ -8,12 +8,11 @@ example_read
 example_roundtrip
 example_userdata
 example_write
+examples_linking_pragmas.h
 faq.txt
 license.txt
 opennurbs.h
 opennurbs.rc
-opennurbs.sln
-opennurbs.vcproj
 opennurbs_3dm.h
 opennurbs_3dm_attributes.h
 opennurbs_3dm_properties.h
@@ -72,11 +71,11 @@ opennurbs_linestyle.h
 opennurbs_linetype.h
 opennurbs_lookup.h
 opennurbs_mapchan.h
+opennurbs_massprop.h
 opennurbs_material.h
 opennurbs_math.h
 opennurbs_matrix.h
 opennurbs_memory.h
-opennurbs_memory_new.cpp
 opennurbs_mesh.h
 opennurbs_nurbscurve.h
 opennurbs_nurbssurface.h
@@ -103,7 +102,6 @@ opennurbs_rendering.h
 opennurbs_revsurface.h
 opennurbs_rtree.h
 opennurbs_sphere.h
-opennurbs_staticlib.vcproj
 opennurbs_string.h
 opennurbs_sumsurface.h
 opennurbs_surface.h
@@ -119,8 +117,8 @@ opennurbs_uuid.h
 opennurbs_version.h
 opennurbs_viewport.h
 opennurbs_workspace.h
-opennurbs_x.cpp
 opennurbs_xform.h
+opennurbs_x.h
 opennurbs_zlib.h
 opennurbs_zlib_memory.cpp
 readme.txt
