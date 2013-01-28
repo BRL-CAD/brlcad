@@ -219,7 +219,7 @@ proc lc {args} {
 
 		if { $skip_special_duplicates_flag_cnt == 1 } {
 
-		    # Test if there are inconsistencies in the current list of regions (i.e. regions with same region_id). 
+		    # Test if there are inconsistencies in the current list of regions (i.e. regions with same region_id).
 		    # All of the regions with the same region_id must have the same parent and the material_id for each of
 		    # these regions must be the same.
 
@@ -241,7 +241,7 @@ proc lc {args} {
 		    set idx4 $idx2
 
 		    while { ($idx4 < $list_len) && ([lindex [lindex $lines $idx1] 0] == [lindex [lindex $lines $idx4] 0])} {
-			
+
 			if { $first_found == 0 } {
 			    set first_found 1
 			    lappend lines2 [lindex $lines $idx1]
