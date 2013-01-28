@@ -58,7 +58,8 @@ cap_squared(struct bu_list *head, fastf_t mean_outer_diameter, fastf_t wire_diam
     fastf_t pipe_bend, coil_radius;
     point_t pnt1, pnt2, pnt4, pnt6, pnt8;
 
-    coil_radius = mean_outer_diameter/2 - wire_diameter/2;
+/*  coil_radius = mean_outer_diameter/2 - wire_diameter/2; */
+    coil_radius = (mean_outer_diameter - wire_diameter)/2;
     pipe_bend = coil_radius;
 
     *need_subtraction += 0;
@@ -152,7 +153,8 @@ cap_ground(struct rt_wdb *file, struct bu_list *head, char *prefix, struct wmemb
     point_t origin, height, pnt1, pnt2, pnt4, pnt6, pnt8;
     struct bu_vls str1 = BU_VLS_INIT_ZERO;
 
-    coil_radius = mean_outer_diameter/2 - wire_diameter/2;
+/*  coil_radius = mean_outer_diameter/2 - wire_diameter/2; */
+    coil_radius = (mean_outer_diameter - wire_diameter)/2;
     pipe_bend = coil_radius;
 
     *need_subtraction += 1;
