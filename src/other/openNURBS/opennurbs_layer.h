@@ -25,11 +25,8 @@ public:
 
   ON_Layer();
   ~ON_Layer();
-
   // C++ default copy construction and operator= work fine.
-  // Do not add custom versions, but do declare them to avoid warnings
-  ON_Layer(const ON_Layer&);
-  ON_Layer& operator=(const ON_Layer&);
+  // Do not add custom versions.
 
   //////////////////////////////////////////////////////////////////////
   //
