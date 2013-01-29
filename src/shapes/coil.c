@@ -101,7 +101,8 @@ cap_squared_ground(struct rt_wdb *file, struct bu_list *head, char *prefix, stru
     point_t origin, height, pnt1, pnt2, pnt4, pnt6, pnt8;
     struct bu_vls str1 = BU_VLS_INIT_ZERO;
 
-    coil_radius = mean_outer_diameter/2 - wire_diameter/2;
+/*  coil_radius = mean_outer_diameter/2 - wire_diameter/2; */
+    coil_radius = (mean_outer_diameter - wire_diameter)/2;
     pipe_bend = coil_radius;
 
     *need_subtraction += 1;
@@ -211,7 +212,8 @@ helical_coil_plain(struct bu_list *head, fastf_t mean_outer_diameter, fastf_t wi
     fastf_t coil_radius, pipe_bend;
     point_t pnt2, pnt4, pnt6, pnt8;
 
-    coil_radius = mean_outer_diameter/2 - wire_diameter/2;
+/*  coil_radius = mean_outer_diameter/2 - wire_diameter/2; */
+    coil_radius = (mean_outer_diameter - wire_diameter)/2;
     pipe_bend = coil_radius;
 
     for (i = 0; i < nt; i++) {
