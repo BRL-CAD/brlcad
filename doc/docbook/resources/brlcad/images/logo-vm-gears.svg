@@ -15,7 +15,10 @@
    id="svg2"
    version="1.1"
    inkscape:version="0.48.0 r9654"
-   sodipodi:docname="logo-vm.svg">
+   sodipodi:docname="logo-vm-gears.svg"
+   inkscape:export-filename="/usr/src/tbrowde/brlcad-svn/brlcad/trunk/doc/docbook/resources/brlcad/images/logo-vm-gears.png"
+   inkscape:export-xdpi="90.616661"
+   inkscape:export-ydpi="90.616661">
   <defs
      id="defs4">
     <filter
@@ -888,7 +891,7 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title />
+        <dc:title></dc:title>
       </cc:Work>
     </rdf:RDF>
   </metadata>
