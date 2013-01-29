@@ -116,7 +116,12 @@ Extrudcon(int entityno, int curve, vect_t evect)
 	ellipse = 0;
     else {
 	q3 = a + c;
-	q1 = a*(c*f - e*e/4.0) - 0.5*b*(b*f/2.0 + e*d/4.0) + 0.5*d*(b*e/4.0 - d*c/2.0);
+/*	Next line has been simplified in three iterations shown here:
+ *	q1 = a*(c*f - e*e/4.0) -  0.5*b*(b*f/2.0 + e*d/4.0) +  0.5*d*(b*e/4.0 - d*c/2.0);
+ *	q1 = a*(c*f - e*e/4.0) - 0.25*b*(b*f     + e*d/2.0) + 0.25*d*(b*e/2.0 - d*c    );
+ *	q1 = a*(c*f - e*e/4.0) - 0.25*(b*b*f                                +   d*d*c  );
+ */
+	q1 = a*c*f - 0.25*(a*e*e + b*b*f + d*d*c  );
 	if (q1*q3 >= 0.0)
 	    ellipse = 0;
     }
