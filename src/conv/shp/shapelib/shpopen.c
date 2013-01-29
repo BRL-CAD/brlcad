@@ -396,7 +396,9 @@ void SHPWriteHeader( SHPHandle psSHP )
 /* -------------------------------------------------------------------- */
 /*      Prepare, and write .shx file header.                            */
 /* -------------------------------------------------------------------- */
-    i32 = (psSHP->nRecords * 2 * sizeof(int32) + 100)/2;   /* file size */
+/*  Simplified the next line:
+    i32 = (psSHP->nRecords * 2 * sizeof(int32) + 100)/2; */
+    i32 =  psSHP->nRecords * sizeof(int32) + 50;   /* file size */
     ByteCopy( &i32, abyHeader+24, 4 );
     if( !bBigEndian ) SwapWord( 4, abyHeader+24 );
 
@@ -591,7 +593,9 @@ SHPOpenLL( const char * pszLayer, const char * pszAccess, SAHooks *psHooks )
 
     psSHP->nRecords = pabyBuf[27] + pabyBuf[26] * 256
       + pabyBuf[25] * 256 * 256 + pabyBuf[24] * 256 * 256 * 256;
-    psSHP->nRecords = (psSHP->nRecords*2 - 100) / 8;
+/* Simplified the next line:
+    psSHP->nRecords = (psSHP->nRecords*2 - 100) / 8; */
+    psSHP->nRecords = (psSHP->nRecords   - 50 ) / 4;
 
     psSHP->nShapeType = pabyBuf[32];
 
