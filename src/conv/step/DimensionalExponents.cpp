@@ -1,14 +1,14 @@
-/*                 DimensionalExponents.cpp
+/*        D I M E N S I O N A L E X P O N E N T S . C P P
  * BRL-CAD
  *
- * Copyright (c) 1994-2010 DimensionalExponentsed States Government as represented by
+ * Copyright (c) 1994-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
- * This program is free software; you can redistribute it and/or
+ * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public License
  * version 2.1 as published by the Free Software Foundation.
  *
- * This program is distributed in the hope that it will be useful, but
+ * This library is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file step/DimensionalExponents.cpp
+/** @file DimensionalExponents.cpp
  *
  * Routines to convert STEP "DimensionalExponents" to BRL-CAD BREP
  * structures.
