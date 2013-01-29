@@ -117,16 +117,16 @@ extern int approximate_hyperbolic_curve(
 extern void
 ellipse_point_at_radian(
 	point_t result,
-	vect_t center,
-	vect_t axis_a,
-	vect_t axis_b,
+	const vect_t center,
+	const vect_t axis_a,
+	const vect_t axis_b,
 	fastf_t radian);
 
 extern void plot_ellipse(
 	struct bu_list *vhead,
-	vect_t t,
-	vect_t a,
-	vect_t b,
+	const vect_t t,
+	const vect_t a,
+	const vect_t b,
 	int num_points);
 
 __END_DECLS

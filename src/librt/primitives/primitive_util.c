@@ -340,9 +340,9 @@ approximate_hyperbolic_curve(struct rt_pt_node *pts, fastf_t a, fastf_t b, int n
 void
 ellipse_point_at_radian(
 	point_t result,
-	vect_t center,
-	vect_t axis_a,
-	vect_t axis_b,
+	const vect_t center,
+	const vect_t axis_a,
+	const vect_t axis_b,
 	fastf_t radian)
 {
     fastf_t cos_rad, sin_rad;
@@ -356,9 +356,9 @@ ellipse_point_at_radian(
 void
 plot_ellipse(
 	struct bu_list *vhead,
-	vect_t center,
-	vect_t axis_a,
-	vect_t axis_b,
+	const vect_t center,
+	const vect_t axis_a,
+	const vect_t axis_b,
 	int num_points)
 {
     int i;
