@@ -28,7 +28,11 @@
 #
 # Option '-s' is the same as '-d' except some duplicates will not be
 # reported (i.e. skipped). Skipped duplicates will be those within the
-# specified group, that have the same parent and 'material_id'.
+# specified group, that have the same parent, 'material_id' and 'los'.
+#
+# Option '-r' remove regions from the list in which their parent is
+# a region and the region is subtracted within the parent. The '-r'
+# option can be combined with any other option.
 #
 # Options '-2', '-3', '-4', '-5' specify to sort by column 2, 3, 4 or 5.
 #
@@ -40,18 +44,18 @@
 # 'FileName' the path will be the 'current directory'.
 #
 
-
 proc lc {args} {
     set name_cnt 0
     set error_cnt 0
     set find_duplicates_flag_cnt 0
     set skip_special_duplicates_flag_cnt 0
+    set skip_subtracted_regions_flag_cnt 0
     set descending_sort_flag_cnt 0
     set file_name_flag_cnt 0
     set sort_column_flag_cnt 0
 
     if { [llength $args] == 0 } {
-	puts stdout "Usage: \[-d|-s\] \[-z\] \[-2|-3|-4|-5\] \[-f {FileName}\] {GroupName}"
+	puts stdout "Usage: \[-d|-s|-r\] \[-z\] \[-2|-3|-4|-5\] \[-f {FileName}\] {GroupName}"
 	return
     }
 
@@ -61,7 +65,7 @@ proc lc {args} {
 	    incr file_name_flag_cnt
 	} elseif { [string is integer $arg] && $arg <= -2 && $arg >= -5 } {
 	    incr sort_column_flag_cnt
-	} elseif { $arg != "-d" && $arg != "-z" && $arg != "-s"} {
+	} elseif { $arg != "-d" && $arg != "-z" && $arg != "-s" && $arg != "-r"} {
 	    incr name_cnt
 	}
     }
@@ -95,6 +99,7 @@ proc lc {args} {
     # reset counts
     set find_duplicates_flag_cnt 0
     set skip_special_duplicates_flag_cnt 0
+    set skip_subtracted_regions_flag_cnt 0
     set descending_sort_flag_cnt 0
     set file_name_flag_cnt 0
     set sort_column_flag_cnt 0
@@ -122,6 +127,10 @@ proc lc {args} {
 	if { $arg == "-s" } {
 	    set find_duplicates_flag_cnt 1
 	    set skip_special_duplicates_flag_cnt 1
+	    continue
+	}
+	if { $arg == "-r" } {
+	    set skip_subtracted_regions_flag_cnt 1
 	    continue
 	}
 	if { $arg == "-z" } {
@@ -183,23 +192,27 @@ proc lc {args} {
     set line ""
     foreach obj $objs {
         set obj_name [file tail $obj]
-        set obj_parent [file tail [file dirname $obj]]
+	
+	if { $obj != $group_name } {
 
-	if { $obj_parent == "" } {
-	    set obj_parent "--"
-	}
-	if { [catch {set Xregion_id [lindex [attr show $obj_name region_id] 3]} tmp_msg] } {
-	    set Xregion_id "--"
-	}
-	if { [catch {set Xmaterial_id [lindex [attr show $obj_name material_id] 3]} tmp_msg] } {
-	    set Xmaterial_id "--"
-	}
-	if { [catch {set Xlos [lindex [attr show $obj_name los] 3]} tmp_msg] } {
-	    set Xlos "--"
-	}
+            set obj_parent [file tail [file dirname $obj]]
 
-	set line "$Xregion_id $Xmaterial_id $Xlos $obj_name $obj_parent"
-	lappend lines $line
+	    if { $obj_parent == "" } {
+		set obj_parent "--"
+	    }
+	    if { [catch {set Xregion_id [lindex [attr show $obj_name region_id] 3]} tmp_msg] } {
+		set Xregion_id "--"
+	    }
+	    if { [catch {set Xmaterial_id [lindex [attr show $obj_name material_id] 3]} tmp_msg] } {
+		set Xmaterial_id "--"
+	    }
+	    if { [catch {set Xlos [lindex [attr show $obj_name los] 3]} tmp_msg] } {
+		set Xlos "--"
+	    }
+
+	    set line "$Xregion_id $Xmaterial_id $Xlos $obj_name $obj_parent"
+	    lappend lines $line
+	}
     }
     unset objs
 
@@ -219,7 +232,7 @@ proc lc {args} {
 
 		if { $skip_special_duplicates_flag_cnt == 1 } {
 
-		    # Test if there are inconsistencies in the current list of regions (i.e. regions with same region_id).
+		    # Test if there are inconsistencies in the current list of regions (i.e. regions with same region_id). 
 		    # All of the regions with the same region_id must have the same parent and the material_id for each of
 		    # these regions must be the same.
 
@@ -227,13 +240,12 @@ proc lc {args} {
 
 		    while { ($idx3 < $list_len) && ([lindex [lindex $lines $idx1] 0] == [lindex [lindex $lines $idx3] 0])} {
 
-			if { ([lindex [lindex $lines $idx1] 4] != [lindex [lindex $lines $idx3] 4]) || ([lindex [lindex $lines $idx1] 1] != [lindex [lindex $lines $idx3] 1]) } {
+			if { ([lindex [lindex $lines $idx1] 4] != [lindex [lindex $lines $idx3] 4]) || ([lindex [lindex $lines $idx1] 1] != [lindex [lindex $lines $idx3] 1]) || ([lindex [lindex $lines $idx1] 2] != [lindex [lindex $lines $idx3] 2])} {
 			    set prob_found 1
 			}
 			incr idx3
 		    }
 		}
-
 
 		if { !(($skip_special_duplicates_flag_cnt == 1) && ($prob_found == 0)) }  {
 
@@ -241,7 +253,7 @@ proc lc {args} {
 		    set idx4 $idx2
 
 		    while { ($idx4 < $list_len) && ([lindex [lindex $lines $idx1] 0] == [lindex [lindex $lines $idx4] 0])} {
-
+			
 			if { $first_found == 0 } {
 			    set first_found 1
 			    lappend lines2 [lindex $lines $idx1]
@@ -280,6 +292,51 @@ proc lc {args} {
 	set lines $lines2
 	unset lines2
     }
+
+    # Remove from list subtracted regions inside regions
+    if { ([llength $lines] != 0) && ($skip_subtracted_regions_flag_cnt == 1) } {
+	
+	set lines2 {}
+
+	foreach line $lines {
+
+	    set obj [lindex $line 3]
+	    set obj_parent [lindex $line 4]
+	    set obj_parent_desc [split [l $obj_parent]]
+
+	    if { [lindex $obj_parent_desc 2] == "REGION" } {
+
+		set obj_parent_desc_len [llength $obj_parent_desc]
+		set idx1 0
+		set found_cnt 0
+		set found_skip 0
+
+		while { ($idx1 < $obj_parent_desc_len) } {
+		    
+		    if { [lindex $obj_parent_desc $idx1] == $obj } {
+			incr found_cnt
+
+			if { [lindex $obj_parent_desc [expr ($idx1 - 1)]] == "-" } {
+			    incr found_skip
+			}
+		    }
+		    incr idx1
+		}
+
+		if { $found_skip == 0 } {
+		    lappend lines2 $line
+		}
+
+	    } else {
+
+		lappend lines2 $line
+	    }
+	}
+
+	set lines $lines2
+	unset lines2
+    }
+    
 
     # minimum column width to accommodate column headers
     set region_id_len_max 2
