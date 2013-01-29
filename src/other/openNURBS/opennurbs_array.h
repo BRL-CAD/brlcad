@@ -416,6 +416,7 @@ class ON_CLASS ON_2dPointArray : public ON_SimpleArray<ON_2dPoint>
 public:
   // see ON_SimpleArray class definition comments for constructor documentation
   ON_2dPointArray();
+  ~ON_2dPointArray();
   ON_2dPointArray(int);
   ON_2dPointArray( const ON_2dPointArray& );
   ON_2dPointArray& operator=( const ON_2dPointArray& );
@@ -439,6 +440,7 @@ class ON_CLASS ON_2fPointArray : public ON_SimpleArray<ON_2fPoint>
 public:
   // see ON_SimpleArray class definition comments for constructor documentation
   ON_2fPointArray();
+  ~ON_2fPointArray();
   ON_2fPointArray(int);
   ON_2fPointArray(const ON_2fPointArray&);
   ON_2fPointArray& operator=( const ON_2fPointArray& );
@@ -461,6 +463,7 @@ class ON_CLASS ON_3dPointArray : public ON_SimpleArray<ON_3dPoint>
 public:
   // see ON_SimpleArray class definition comments for constructor documentation
   ON_3dPointArray();
+  ~ON_3dPointArray();
   ON_3dPointArray(int);
   ON_3dPointArray(const ON_SimpleArray<ON_3dPoint>&);
   ON_3dPointArray& operator=( const ON_3dPointArray& );
@@ -665,6 +668,7 @@ class ON_CLASS ON_3fPointArray : public ON_SimpleArray<ON_3fPoint>
 public:
   // see ON_SimpleArray class definition comments for constructor documentation
   ON_3fPointArray();
+  ~ON_3fPointArray();
   ON_3fPointArray(int);
   ON_3fPointArray(const ON_3fPointArray&);
   ON_3fPointArray& operator=( const ON_3fPointArray& );
@@ -689,6 +693,7 @@ class ON_CLASS ON_4dPointArray : public ON_SimpleArray<ON_4dPoint>
 public:
   // see ON_SimpleArray class definition comments for constructor documentation
   ON_4dPointArray();
+  ~ON_4dPointArray();
   ON_4dPointArray(int);
   ON_4dPointArray(const ON_4dPointArray&);
   ON_4dPointArray& operator=( const ON_4dPointArray& );
@@ -706,6 +711,7 @@ class ON_CLASS ON_4fPointArray : public ON_SimpleArray<ON_4fPoint>
 public:
   // see ON_SimpleArray class definition comments for constructor documentation
   ON_4fPointArray();
+  ~ON_4fPointArray();
   ON_4fPointArray(int);
   ON_4fPointArray(const ON_4fPointArray&);
   ON_4fPointArray& operator=( const ON_4fPointArray& );
@@ -723,6 +729,7 @@ class ON_CLASS ON_2dVectorArray : public ON_SimpleArray<ON_2dVector>
 public:
   // see ON_SimpleArray class definition comments for constructor documentation
   ON_2dVectorArray();
+  ~ON_2dVectorArray();
   ON_2dVectorArray(int);
   ON_2dVectorArray(const ON_2dVectorArray&);
   ON_2dVectorArray& operator=( const ON_2dVectorArray& );
@@ -746,6 +753,7 @@ class ON_CLASS ON_2fVectorArray : public ON_SimpleArray<ON_2fVector>
 public:
   // see ON_SimpleArray class definition comments for constructor documentation
   ON_2fVectorArray();
+  ~ON_2fVectorArray();
   ON_2fVectorArray(int);
   ON_2fVectorArray(const ON_2fVectorArray&);
   ON_2fVectorArray& operator=( const ON_2fVectorArray& );
@@ -768,6 +776,7 @@ class ON_CLASS ON_3dVectorArray : public ON_SimpleArray<ON_3dVector>
 {
 public:
   ON_3dVectorArray();
+  ~ON_3dVectorArray();
   ON_3dVectorArray(int);
   ON_3dVectorArray(const ON_3dVectorArray&);
   ON_3dVectorArray& operator=( const ON_3dVectorArray& );
@@ -789,6 +798,7 @@ class ON_CLASS ON_3fVectorArray : public ON_SimpleArray<ON_3fVector>
 {
 public:
   ON_3fVectorArray();
+  ~ON_3fVectorArray();
   ON_3fVectorArray(int);
   ON_3fVectorArray(const ON_3fVectorArray&);
   ON_3fVectorArray& operator=( const ON_3fVectorArray& );
