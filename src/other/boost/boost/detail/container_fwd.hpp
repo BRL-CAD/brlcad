@@ -69,7 +69,7 @@ namespace std
     template <class charT> struct char_traits;
 #endif
 
-    #if BOOST_CLANG
+    #if defined(BOOST_CLANG) && BOOST_CLANG
         template <class T> struct complex;
     #else
         template <class T> class complex;
