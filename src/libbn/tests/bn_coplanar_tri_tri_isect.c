@@ -1,7 +1,7 @@
 /*         B N _ C O P L A N A R _ T R I _ T R I _ ISECT . C
  * BRL-CAD
  *
- * Copyright (c) 2011-2012 United States Government as represented by
+ * Copyright (c) 2011-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
