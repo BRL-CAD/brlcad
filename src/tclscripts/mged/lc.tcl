@@ -192,7 +192,7 @@ proc lc {args} {
     set line ""
     foreach obj $objs {
         set obj_name [file tail $obj]
-	
+
 	if { $obj != $group_name } {
 
             set obj_parent [file tail [file dirname $obj]]
@@ -232,7 +232,7 @@ proc lc {args} {
 
 		if { $skip_special_duplicates_flag_cnt == 1 } {
 
-		    # Test if there are inconsistencies in the current list of regions (i.e. regions with same region_id). 
+		    # Test if there are inconsistencies in the current list of regions (i.e. regions with same region_id).
 		    # All of the regions with the same region_id must have the same parent and the material_id for each of
 		    # these regions must be the same.
 
@@ -253,7 +253,7 @@ proc lc {args} {
 		    set idx4 $idx2
 
 		    while { ($idx4 < $list_len) && ([lindex [lindex $lines $idx1] 0] == [lindex [lindex $lines $idx4] 0])} {
-			
+
 			if { $first_found == 0 } {
 			    set first_found 1
 			    lappend lines2 [lindex $lines $idx1]
@@ -295,7 +295,7 @@ proc lc {args} {
 
     # Remove from list subtracted regions inside regions
     if { ([llength $lines] != 0) && ($skip_subtracted_regions_flag_cnt == 1) } {
-	
+
 	set lines2 {}
 
 	foreach line $lines {
@@ -312,7 +312,7 @@ proc lc {args} {
 		set found_skip 0
 
 		while { ($idx1 < $obj_parent_desc_len) } {
-		    
+
 		    if { [lindex $obj_parent_desc $idx1] == $obj } {
 			incr found_cnt
 
@@ -336,7 +336,7 @@ proc lc {args} {
 	set lines $lines2
 	unset lines2
     }
-    
+
 
     # minimum column width to accommodate column headers
     set region_id_len_max 2
