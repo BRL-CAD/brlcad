@@ -28,12 +28,6 @@ set(libnurbs_ignored_files
   opennurbs_fit.h
   opennurbs_fit.cpp
   PullbackCurve.h
-  libnurbs_curvetree.cpp
-  libnurbs_surfacetreeutil.cpp
-  libnurbs_surfacetree.cpp
-  libnurbs_curvetree.h
-  libnurbs_surfacetreeutil.h
-  libnurbs_surfacetree.h
   )
 CMAKEFILES(${libnurbs_ignored_files})
 CMAKEFILES(Makefile.am)
