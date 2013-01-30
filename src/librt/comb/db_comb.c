@@ -388,7 +388,7 @@ rt_comb_import4(
     comb->inherit = (rp[0].c.c_inherit == DB_INH_HIGHER) ? 1 : 0;
     /* Automatic material table lookup here? */
     if (comb->region_flag)
-	bu_vls_printf(&comb->material, "gift%d", comb->GIFTmater);
+	bu_vls_printf(&comb->material, "gift%ld", comb->GIFTmater);
 
     if (rt_tree_array) bu_free((genptr_t)rt_tree_array, "rt_tree_array");
 
@@ -793,7 +793,7 @@ db_comb_describe(
 
     if (comb->region_flag) {
 	bu_vls_printf(str,
-		      "REGION id=%d (air=%d, los=%d, GIFTmater=%d) ",
+		      "REGION id=%ld (air=%ld, los=%ld, GIFTmater=%ld) ",
 		      comb->region_id,
 		      comb->aircode,
 		      comb->los,
