@@ -97,6 +97,8 @@ package provide cadwidgets::Ged 1.0
     itk_option define -rayColorEven rayColorEven RayColor Yellow
     itk_option define -rayColorVoid rayColorVoid RayColor Magenta
 
+    itk_option define -pixelTol pixelTol PixelTol 8
+
     constructor {_gedOrFile args} {}
     destructor {}
 
@@ -270,6 +272,7 @@ package provide cadwidgets::Ged 1.0
 	method mouse_append_pipept {args}
 	method mouse_constrain_rot {args}
 	method mouse_constrain_trans {args}
+	method mouse_find_arb_edge {_arb _mx _my _ptol}
 	method mouse_find_bot_edge {_bot _mx _my}
 	method mouse_find_botpt {_bot _mx _my}
 	method mouse_find_pipept {args}
@@ -355,6 +358,7 @@ package provide cadwidgets::Ged 1.0
 	method pane_mouse_append_pipept {_pane args}
 	method pane_mouse_constrain_rot {_pane args}
 	method pane_mouse_constrain_trans {_pane args}
+	method pane_mouse_find_arb_edge {_pane _arb _mx _my _ptol}
 	method pane_mouse_find_arb_face {_pane _arb _viewz _mx _my}
 	method pane_mouse_find_bot_edge {_pane _bot _viewz _mx _my}
 	method pane_mouse_find_bot_face {_pane _bot _viewz _mx _my}
@@ -634,12 +638,12 @@ package provide cadwidgets::Ged 1.0
 	method init_data_poly_cont {{_button 1}}
 	method init_data_poly_ell {{_button 1}}
 	method init_data_poly_rect {{_button 1} {_sflag 0}}
+	method init_find_arb_edge {_obj {_button 1} {_callback {}}}
 	method init_find_arb_face {_obj {_button 1} {_viewz 1.0} {_callback {}}}
 	method init_find_bot_edge {_obj {_button 1} {_viewz 1.0} {_callback {}}}
 	method init_find_bot_face {_obj {_button 1} {_viewz 1.0} {_callback {}}}
 	method init_find_botpt {_obj {_button 1} {_viewz 1.0} {_callback {}}}
 	method init_find_pipept {_obj {_button 1} {_callback {}}}
-	method init_move_arb_face {_obj {_button 1} {_viewz 1.0} {_callback {}}}
 	method init_prepend_pipept {_obj {_button 1} {_callback {}}}
 	method init_view_bindings {{_type default}}
 	method init_view_center {{_button 1}}
@@ -1033,6 +1037,12 @@ package provide cadwidgets::Ged 1.0
 
 ::itcl::configbody cadwidgets::Ged::viewingParamsColor {
     eval faceplate view_params color [get_rgb_color $itk_option(-viewingParamsColor)]
+}
+
+::itcl::configbody cadwidgets::Ged::pixelTol {
+    if {![string is digit $itk_option(-pixelTol)] || $itk_option(-pixelTol) < 1} {
+	error "-pixelTol must be a digit greater than 0"
+    }
 }
 
 
@@ -1909,8 +1919,12 @@ package provide cadwidgets::Ged 1.0
     eval $mGed mouse_constrain_trans $itk_component($itk_option(-pane)) $args
 }
 
+::itcl::body cadwidgets::Ged::mouse_find_arb_edge {_arb _mx _my _ptol} {
+    $mGed mouse_find_arb_edge $itk_component($itk_option(-pane)) $_arb $_mx $_my $_ptol
+}
+
 ::itcl::body cadwidgets::Ged::mouse_find_bot_edge {_bot _mx _my} {
-    eval $mGed mouse_find_bot_edge $itk_component($itk_option(-pane)) $args
+    $mGed mouse_find_bot_edge $itk_component($itk_option(-pane)) $_bot $_mx $_my
 }
 
 ::itcl::body cadwidgets::Ged::mouse_find_botpt {_bot _mx _my} {
@@ -2350,6 +2364,25 @@ package provide cadwidgets::Ged 1.0
 
 ::itcl::body cadwidgets::Ged::pane_mouse_constrain_trans {_pane args} {
     eval $mGed mouse_constrain_trans $itk_component($_pane) $args
+}
+
+
+::itcl::body cadwidgets::Ged::pane_mouse_find_arb_edge {_pane _arb _mx _my _ptol} {
+    set arb_type [get_type $_arb]
+    if {![regexp {arb[45678]} $arb_type]} {
+	return -1
+    }
+
+    set mPrevGedMouseX $_mx
+    set mPrevGedMouseY $_my
+
+    set elist [$mGed mouse_find_arb_edge $itk_component($_pane) $_arb $_mx $_my $_ptol]
+
+    if {$mArbEdgeCallback != ""} {
+	catch {$mArbEdgeCallback $elist}
+    }
+
+    return $elist
 }
 
 
@@ -4262,6 +4295,22 @@ package provide cadwidgets::Ged 1.0
     foreach dm {ur ul ll lr} {
 	bind $itk_component($dm) <$_button> "[::itcl::code $this begin_data_poly_rect]; $mGed poly_rect_mode $itk_component($dm) %x %y $_sflag; focus %W; break"
 	bind $itk_component($dm) <ButtonRelease-$_button> "[::itcl::code $this end_data_poly_rect $dm]; break"
+    }
+}
+
+
+::itcl::body cadwidgets::Ged::init_find_arb_edge {_obj {_button 1} {_callback {}}} {
+    measure_line_erase
+
+    set mArbEdgeCallback $_callback
+
+    set cdim [rect cdim]
+    set width [lindex $cdim 0]
+    set ptol [expr {[size] * [local2base] / double($width) * $itk_option(-pixelTol)}]
+
+    foreach dm {ur ul ll lr} {
+	bind $itk_component($dm) <$_button> "[::itcl::code $this pane_mouse_find_arb_edge $dm $_obj %x %y $ptol]; focus %W; break"
+	bind $itk_component($dm) <ButtonRelease-$_button> ""
     }
 }
 

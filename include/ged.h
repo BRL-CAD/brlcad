@@ -1101,6 +1101,11 @@ GED_EXPORT extern int ged_fb2pix(struct ged *gedp, int argc, const char *argv[])
 GED_EXPORT extern int ged_find(struct ged *gedp, int argc, const char *argv[]);
 
 /**
+ * Find the arb edge nearest the specified point in view coordinates.
+ */
+GED_EXPORT extern int ged_find_arb_edge_nearest_pt(struct ged *gedp, int argc, const char *argv[]);
+
+/**
  * Find the bot edge nearest the specified point in view coordinates.
  */
 GED_EXPORT extern int ged_find_bot_edge_nearest_pt(struct ged *gedp, int argc, const char *argv[]);
