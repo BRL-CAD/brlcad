@@ -1,3 +1,31 @@
+/*              T E S T _ B O T 2 N U R B S . C P P
+ * BRL-CAD
+ *
+ * Copyright (c) 2013 United States Government as represented by
+ * the U.S. Army Research Laboratory.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public License
+ * version 2.1 as published by the Free Software Foundation.
+ *
+ * This library is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this file; see the file named COPYING for more
+ * information.
+ */
+/** @file test_bot2nurbs.cpp
+ *
+ * This file contains the logic that takes an input BoT, breaks that
+ * BoT down into patches, fits surfaces to those patches, builds
+ * trimming loops for the surfaces based on NURBS curves fitted to
+ * patch edge segments, and assembles the result into a closed BREP.
+ *
+ */
+
 /*  TODO - Can't keep shifting the fitting plane for a triangle patch
  *  every time a triangle is added - too computationally expensive.
  *  Instead, need to make sure that the starting plane used for the

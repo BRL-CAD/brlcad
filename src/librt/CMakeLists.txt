@@ -250,8 +250,8 @@ set(librt_ignored_files
   librt_private.h
   namegen.c
   test_nurbsfit.cpp
-  test_botpatches.cpp
-  test_subdivision.cpp
+  test_bot2nurbs.cpp
+  test_root3-subd.cpp
   subd_test_bot.asc
   prcomb.c
   primitives/bot/btg.h
@@ -306,9 +306,9 @@ include_directories(
   ${CMAKE_CURRENT_SOURCE_DIR}/../libnurbs
   )
 
-#BRLCAD_ADDEXEC(test_botpatches test_botpatches.cpp "librt;libwdb;libnurbs;libbu" NOSTRICT NO_INSTALL)
+#BRLCAD_ADDEXEC(test_bot2nurbs test_bot2nurbs.cpp "librt;libwdb;libnurbs;libbu" NOSTRICT NO_INSTALL)
 #BRLCAD_ADDEXEC(test_nurbsfit test_nurbsfit.cpp "librt;libwdb;libnurbs;libbu" NOSTRICT NO_INSTALL)
-#BRLCAD_ADDEXEC(test_subdivision test_subdivision.cpp "librt;libwdb;libnurbs;libbu" NOSTRICT NO_INSTALL)
+#BRLCAD_ADDEXEC(test_root3-subd test_root3-subd.cpp "librt;libwdb;libnurbs;libbu" NOSTRICT NO_INSTALL)
 
 BRLCAD_ADDEXEC(test_dvec test_dvec.cpp "librt" NOSTRICT NO_INSTALL LOCAL)
 ADD_TEST(test_dvec test_dvec)
