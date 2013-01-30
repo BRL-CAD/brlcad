@@ -5453,7 +5453,7 @@ RT_EXPORT extern struct rt_db_internal *rt_mirror(struct db_i *dpip,
   struct db_traverse *dtp);
 */
 
-/* arb.c */
+/* arb8.c */
 RT_EXPORT extern int rt_arb_get_cgtype();		/* needs rt_arb_internal for arg list */
 RT_EXPORT extern int rt_arb_std_type(const struct rt_db_internal *ip,
 				     const struct bn_tol *tol);
@@ -5486,6 +5486,7 @@ RT_EXPORT extern int rt_arb_edit(struct bu_vls		*error_msg_ret,
 				 vect_t			pos_model,
 				 plane_t			planes[6],
 				 const struct bn_tol	*tol);
+RT_EXPORT extern int rt_arb_find_e_nearest_pt2(int *edge, int *vert1, int *vert2, const struct rt_db_internal *ip, const point_t pt2, const mat_t mat, fastf_t ptol);
 
 RT_EXPORT extern const int rt_arb_faces[5][24];
 RT_EXPORT extern short earb8[12][18];

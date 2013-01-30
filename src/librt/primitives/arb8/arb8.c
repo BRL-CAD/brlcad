@@ -153,6 +153,19 @@ const struct bu_structparse rt_arb_parse[] = {
     { {'\0', '\0', '\0', '\0'}, 0, (char *)NULL, 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 
+short local_arb6_edge_vertex_mapping[10][2] = {
+    {0,1},	/* edge 12 */
+    {1,2},	/* edge 23 */
+    {2,3},	/* edge 34 */
+    {0,3},	/* edge 14 */
+    {0,4},	/* edge 15 */
+    {1,4},	/* edge 25 */
+    {2,7},	/* edge 36 */
+    {3,7},	/* edge 46 */
+    {4,4},	/* point 5 */
+    {7,7},	/* point 6 */
+};
+
 
 /* rt_arb_get_cgtype(), rt_arb_std_type(), and rt_arb_centroid()
  * stolen from mged/arbs.c */
@@ -2338,6 +2351,174 @@ rt_arb_volume(fastf_t *vol, const struct rt_db_internal *ip)
     }
     *vol /= 6.0;
 }
+
+
+int
+rt_arb_get_edge_list(const struct rt_db_internal *ip, short (*edge_list[])[2])
+{
+    size_t edge_count=0;
+    int arb_type;
+    struct bn_tol tmp_tol;
+    struct rt_arb_internal *aip = (struct rt_arb_internal *)ip->idb_ptr;
+
+    RT_ARB_CK_MAGIC(aip);
+
+    /* set up tolerance for rt_arb_std_type */
+    tmp_tol.magic = BN_TOL_MAGIC;
+    tmp_tol.dist = 0.0001; /* to get old behavior of rt_arb_std_type() */
+    tmp_tol.dist_sq = tmp_tol.dist * tmp_tol.dist;
+    tmp_tol.perp = 1e-5;
+    tmp_tol.para = 1 - tmp_tol.perp;
+
+    /* get number of vertices in arb_type */
+    arb_type = rt_arb_std_type(ip, &tmp_tol);
+
+    switch (arb_type) {
+    case ARB8:
+	edge_count = 12;
+	(*edge_list) = arb8_edge_vertex_mapping;
+
+	break;
+    case ARB7:
+	edge_count = 12;
+	(*edge_list) = arb7_edge_vertex_mapping;
+
+	break;
+    case ARB6:
+	edge_count = 10;
+	(*edge_list) = local_arb6_edge_vertex_mapping;
+
+	break;
+    case ARB5:
+	edge_count = 9;
+	(*edge_list) = arb5_edge_vertex_mapping;
+
+	break;
+    case ARB4:
+	edge_count = 5;
+	(*edge_list) = arb4_edge_vertex_mapping;
+
+	break;
+    default:
+	return edge_count;
+    }
+
+    return edge_count;
+}
+
+
+int
+rt_arb_find_e_nearest_pt2(int *edge,
+			  int *vert1,
+			  int *vert2,
+			  const struct rt_db_internal *ip,
+			  const point_t pt2,
+			  const mat_t mat,
+			  const fastf_t ptol)
+{
+    int i;
+    fastf_t dist=MAX_FASTF, tmp_dist;
+    short (*edge_list)[2];
+    int edge_count=0;
+    struct bn_tol tol;
+    struct rt_arb_internal *aip = (struct rt_arb_internal *)ip->idb_ptr;
+
+    RT_ARB_CK_MAGIC(aip);
+    /* first build a list of edges */
+    if ((edge_count = rt_arb_get_edge_list(ip, &edge_list)) == 0)
+	return -1;
+
+    /* build a tolerance structure for the bn_dist routine */
+    tol.magic   = BN_TOL_MAGIC;
+    tol.dist    = 0.0;
+    tol.dist_sq = 0.0;
+    tol.perp    = 0.0;
+    tol.para    =  1.0;
+
+    /* now look for the closest edge */
+    for (i = 0; i < edge_count; i++) {
+	point_t p1, p2, pca;
+	vect_t p1_to_pca, p1_to_p2;
+	int ret;
+
+	MAT4X3PNT(p1, mat, aip->pt[edge_list[i][0]]);
+	p1[Z] = 0.0;
+
+	if (edge_list[i][0] == edge_list[i][1]) {
+	    tmp_dist = bn_dist_pt3_pt3(pt2, p1);
+
+	    if (tmp_dist < ptol) {
+		*vert1 = edge_list[i][0] + 1;
+		*vert2 = *vert1;
+		*edge = i + 1;
+
+		return 0;
+	    }
+
+	    ret = 4;
+	} else {
+	    MAT4X3PNT(p2, mat, aip->pt[edge_list[i][1]]);
+	    p2[Z] = 0.0;
+	    ret = bn_dist_pt2_lseg2(&tmp_dist, pca, p1, p2, pt2, &tol);
+	}
+
+	if (ret < 3 || tmp_dist < dist) {
+	    switch (ret) {
+	    case 0:
+		dist = 0.0;
+		if (tmp_dist < 0.5) {
+		    *vert1 = edge_list[i][0] + 1;
+		    *vert2 = edge_list[i][1] + 1;
+		} else {
+		    *vert1 = edge_list[i][1] + 1;
+		    *vert2 = edge_list[i][0] + 1;
+		}
+		*edge = i + 1;
+		break;
+	    case 1:
+		dist = 0.0;
+		*vert1 = edge_list[i][0] + 1;
+		*vert2 = edge_list[i][1] + 1;
+		*edge = i + 1;
+		break;
+	    case 2:
+		dist = 0.0;
+		*vert1 = edge_list[i][1] + 1;
+		*vert2 = edge_list[i][0] + 1;
+		*edge = i + 1;
+		break;
+	    case 3:
+		dist = tmp_dist;
+		*vert1 = edge_list[i][0] + 1;
+		*vert2 = edge_list[i][1] + 1;
+		*edge = i + 1;
+		break;
+	    case 4:
+		dist = tmp_dist;
+		*vert1 = edge_list[i][1] + 1;
+		*vert2 = edge_list[i][0] + 1;
+		*edge = i + 1;
+		break;
+	    case 5:
+		dist = tmp_dist;
+		V2SUB2(p1_to_pca, pca, p1);
+		V2SUB2(p1_to_p2, p2, p1);
+		if (MAG2SQ(p1_to_pca) / MAG2SQ(p1_to_p2) < 0.25) {
+		    *vert1 = edge_list[i][0] + 1;
+		    *vert2 = edge_list[i][1] + 1;
+		} else {
+		    *vert1 = edge_list[i][1] + 1;
+		    *vert2 = edge_list[i][0] + 1;
+		}
+		*edge = i + 1;
+		break;
+	    }
+	}
+    }
+
+    return 0;
+}
+
 
 
 /** @} */
