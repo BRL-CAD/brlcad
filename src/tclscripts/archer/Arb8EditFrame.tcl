@@ -112,9 +112,10 @@
 
 	method initEditState {}
 
+	method arbEdgeMoveCallback {_edge_data}
 	method arbFaceMoveCallback {_face}
 	method buildRotationPointDialog {}
-	method endArbFaceMove {_dm _obj _mx _my}
+	method endArbObjMove {_dm _obj _mx _my}
 	method invokeRotationPointDialog {_choices}
     }
 
@@ -782,7 +783,29 @@
 
 
 ::itcl::body Arb8EditFrame::initTranslate {} {
-    $::ArcherCore::application initFindArbFace $itk_option(-geometryObjectPath) 1 [::itcl::code $this arbFaceMoveCallback]
+    switch -- $mEditMode \
+	$moveEdge12 - \
+	$moveEdge23 - \
+	$moveEdge34 - \
+	$moveEdge14 - \
+	$moveEdge15 - \
+	$moveEdge26 - \
+	$moveEdge56 - \
+	$moveEdge67 - \
+	$moveEdge78 - \
+	$moveEdge58 - \
+	$moveEdge37 - \
+	$moveEdge48 {
+	    $::ArcherCore::application initFindArbEdge $itk_option(-geometryObjectPath) 1 [::itcl::code $this arbEdgeMoveCallback]
+	} \
+	$moveFace1234 - \
+	$moveFace5678 - \
+	$moveFace1584 - \
+	$moveFace2376 - \
+	$moveFace1265 - \
+	$moveFace4378 {
+	    $::ArcherCore::application initFindArbFace $itk_option(-geometryObjectPath) 1 [::itcl::code $this arbFaceMoveCallback]
+	}
 }
 
 
@@ -1210,6 +1233,22 @@
 }
 
 
+::itcl::body Arb8EditFrame::arbEdgeMoveCallback {_edge_data} {
+    set mEditMode [lindex $_edge_data 0]
+
+    # Calling initEditState to set mEditParam1 in case a different face has been selected
+    initEditState
+
+    foreach dname {ul ur ll lr} {
+	set win [$itk_option(-mged) component $dname]
+	bind $win <ButtonRelease-1> "[::itcl::code $this endArbObjMove $dname $itk_option(-geometryObject) %x %y]; break"
+    }
+
+    set last_mouse [$itk_option(-mged) get_prev_ged_mouse]
+    eval $itk_option(-mged) move_arb_edge_mode $itk_option(-geometryObject) $mEditParam1 $last_mouse
+}
+
+
 ::itcl::body Arb8EditFrame::arbFaceMoveCallback {_face} {
     switch -- $_face {
 	0 {
@@ -1237,7 +1276,7 @@
 
     foreach dname {ul ur ll lr} {
 	set win [$itk_option(-mged) component $dname]
-	bind $win <ButtonRelease-1> "[::itcl::code $this endArbFaceMove $dname $itk_option(-geometryObject) %x %y]; break"
+	bind $win <ButtonRelease-1> "[::itcl::code $this endArbObjMove $dname $itk_option(-geometryObject) %x %y]; break"
     }
 
     set last_mouse [$itk_option(-mged) get_prev_ged_mouse]
@@ -1317,7 +1356,7 @@
 }
 
 
-::itcl::body Arb8EditFrame::endArbFaceMove {_dm _obj _mx _my} {
+::itcl::body Arb8EditFrame::endArbObjMove {_dm _obj _mx _my} {
     $::ArcherCore::application endObjTranslate $_dm $_obj $_mx $_my
 }
 

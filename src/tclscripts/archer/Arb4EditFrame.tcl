@@ -35,6 +35,7 @@
 
     public {
 	# Override what's in GeometryEditFrame
+	method initTranslate {}
 	method updateGeometry {}
 	method createGeometry {obj}
 	method p {obj args}
@@ -44,15 +45,15 @@
 	common movePoint1 1
 	common movePoint2 2
 	common movePoint3 3
-	common movePoint4 4
-	common moveFace123 5
-	common moveFace124 6
-	common moveFace234 7
-	common moveFace134 8
-	common rotateFace123 9
-	common rotateFace124 10
-	common rotateFace234 11
-	common rotateFace134 12
+	common movePoint4 5
+	common moveFace123 6
+	common moveFace124 7
+	common moveFace234 8
+	common moveFace134 9
+	common rotateFace123 10
+	common rotateFace124 11
+	common rotateFace234 12
+	common rotateFace134 13
 
 	# Methods used by the constructor
 	method buildMoveEdgePanel {parent}
@@ -101,7 +102,7 @@
 
     foreach dname {ul ur ll lr} {
 	set win [$itk_option(-mged) component $dname]
-	bind $win <ButtonRelease-1> "[::itcl::code $this endArbFaceMove $dname $itk_option(-geometryObject) %x %y]; break"
+	bind $win <ButtonRelease-1> "[::itcl::code $this endArbObjMove $dname $itk_option(-geometryObject) %x %y]; break"
     }
 
     set last_mouse [$itk_option(-mged) get_prev_ged_mouse]
@@ -457,6 +458,24 @@
 # ------------------------------------------------------------
 #                      PUBLIC METHODS
 # ------------------------------------------------------------
+
+
+::itcl::body Arb4EditFrame::initTranslate {} {
+    switch -- $mEditMode \
+	$movePoint1 - \
+	$movePoint2 - \
+	$movePoint2 - \
+	$movePoint4 {
+	    $::ArcherCore::application initFindArbEdge $itk_option(-geometryObjectPath) 1 [::itcl::code $this arbEdgeMoveCallback]
+	} \
+	$moveFace123 - \
+	$moveFace124 - \
+	$moveFace234 - \
+	$moveFace134 {
+	    $::ArcherCore::application initFindArbFace $itk_option(-geometryObjectPath) 1 [::itcl::code $this arbFaceMoveCallback]
+	}
+}
+
 
 ::itcl::body Arb4EditFrame::updateGeometry {} {
     if {$itk_option(-mged) == "" ||

@@ -35,6 +35,7 @@
 
     public {
 	# Override what's in GeometryEditFrame
+	method initTranslate {}
 	method updateGeometry {}
 	method createGeometry {obj}
 	method p {obj args}
@@ -112,7 +113,7 @@
 
     foreach dname {ul ur ll lr} {
 	set win [$itk_option(-mged) component $dname]
-	bind $win <ButtonRelease-1> "[::itcl::code $this endArbFaceMove $dname $itk_option(-geometryObject) %x %y]; break"
+	bind $win <ButtonRelease-1> "[::itcl::code $this endArbObjMove $dname $itk_option(-geometryObject) %x %y]; break"
     }
 
     set last_mouse [$itk_option(-mged) get_prev_ged_mouse]
@@ -602,6 +603,31 @@
 # ------------------------------------------------------------
 #                      PUBLIC METHODS
 # ------------------------------------------------------------
+
+
+::itcl::body Arb6EditFrame::initTranslate {} {
+    switch -- $mEditMode \
+	$moveEdge12 - \
+	$moveEdge23 - \
+	$moveEdge34 - \
+	$moveEdge14 - \
+	$moveEdge15 - \
+	$moveEdge25 - \
+	$moveEdge36 - \
+	$moveEdge46 - \
+	$movePoint5 - \
+	$movePoint6 {
+	    $::ArcherCore::application initFindArbEdge $itk_option(-geometryObjectPath) 1 [::itcl::code $this arbEdgeMoveCallback]
+	} \
+	$moveFace1234 - \
+	$moveFace2365 - \
+	$moveFace1564 - \
+	$moveFace125 - \
+	$moveFace346 {
+	    $::ArcherCore::application initFindArbFace $itk_option(-geometryObjectPath) 1 [::itcl::code $this arbFaceMoveCallback]
+	}
+}
+
 
 ::itcl::body Arb6EditFrame::updateGeometry {} {
     if {$itk_option(-mged) == "" ||

@@ -35,6 +35,7 @@
 
     public {
 	# Override what's in Arb8EditFrame
+	method initTranslate {}
 	method updateGeometry {}
 	method createGeometry {obj}
 	method p {obj args}
@@ -68,6 +69,7 @@
 	method buildRotateFacePanel {parent}
 
 	# Override what's in Arb8EditFrame
+	method arbEdgeMoveCallback {_edge_data}
 	method arbFaceMoveCallback {_face}
 	method buildUpperPanel {}
 	method updateUpperPanel {normal disabled}
@@ -88,6 +90,43 @@
 }
 
 
+::itcl::body Arb7EditFrame::arbEdgeMoveCallback {_edge_data} {
+    .archer0 putString "Arb7EditFrame::arbEdgeMoveCallback:  _edge_data - $_edge_data"
+    Arb8EditFrame::arbEdgeMoveCallback $_edge_data
+    return
+
+    set emode [lindex $_edge_data 0]
+    set e1 [lindex $_edge_data 1]
+
+    switch -- $emode {
+	5 -
+	7 -
+	10 -
+	11 {
+	    if {$e1 == 5} {
+		set mEditMode $movePoint5
+	    } else {
+		set mEditMode $emode
+	    }
+	}
+	default {
+	    set mEditMode $emode
+	}
+    }
+
+    # Calling initEditState to set mEditParam1 in case a different face has been selected
+    initEditState
+
+    foreach dname {ul ur ll lr} {
+	set win [$itk_option(-mged) component $dname]
+	bind $win <ButtonRelease-1> "[::itcl::code $this endArbObjMove $dname $itk_option(-geometryObject) %x %y]; break"
+    }
+
+    set last_mouse [$itk_option(-mged) get_prev_ged_mouse]
+    eval $itk_option(-mged) move_arb_edge_mode $itk_option(-geometryObject) $mEditParam1 $last_mouse
+}
+
+
 ::itcl::body Arb7EditFrame::arbFaceMoveCallback {_face} {
     switch -- $_face {
 	0 {
@@ -103,7 +142,7 @@
 
     foreach dname {ul ur ll lr} {
 	set win [$itk_option(-mged) component $dname]
-	bind $win <ButtonRelease-1> "[::itcl::code $this endArbFaceMove $dname $itk_option(-geometryObject) %x %y]; break"
+	bind $win <ButtonRelease-1> "[::itcl::code $this endArbObjMove $dname $itk_option(-geometryObject) %x %y]; break"
     }
 
     set last_mouse [$itk_option(-mged) get_prev_ged_mouse]
@@ -653,6 +692,30 @@
 # ------------------------------------------------------------
 #                      PUBLIC METHODS
 # ------------------------------------------------------------
+
+
+::itcl::body Arb7EditFrame::initTranslate {} {
+    switch -- $mEditMode \
+	$moveEdge12 - \
+	$moveEdge23 - \
+	$moveEdge34 - \
+	$moveEdge14 - \
+	$moveEdge15 - \
+	$moveEdge26 - \
+	$moveEdge56 - \
+	$moveEdge67 - \
+	$moveEdge37 - \
+	$moveEdge57 - \
+	$moveEdge45 - \
+	$movePoint5 {
+	    $::ArcherCore::application initFindArbEdge $itk_option(-geometryObjectPath) 1 [::itcl::code $this arbEdgeMoveCallback]
+	} \
+	$moveFace1234 - \
+	$moveFace2376 {
+	    $::ArcherCore::application initFindArbFace $itk_option(-geometryObjectPath) 1 [::itcl::code $this arbFaceMoveCallback]
+	}
+}
+
 
 ::itcl::body Arb7EditFrame::updateGeometry {} {
     if {$itk_option(-mged) == "" ||
