@@ -125,9 +125,9 @@ typedef struct _vdsTri {
  */
 typedef struct _vdsNode {
     /* 3 bitfields (32 bits total): */
-    int 		depth: 16;	/* depth of node in vertex tree */
-    int			nsubtris: 14;	/* size of node->subtris[] array*/
-    vdsNodeStatus	status: 2;	/* is node currently active?	*/
+    char 		depth;		/* depth of node in vertex tree */
+    int			nsubtris;	/* size of node->subtris[] array*/
+    vdsNodeStatus	status;		/* is node currently active?	*/
 
     vdsBoundingVolume 	bound;		/* bounding volume of triangles	*
 				     * supported by the node	*/
