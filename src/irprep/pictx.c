@@ -37,6 +37,8 @@
 #include<X11/Xlib.h>
 #include<X11/Xutil.h>
 
+#include "bu.h"
+
 int
 main(void)
 {
@@ -47,6 +49,7 @@ main(void)
     char group[26];		/*  Group names.  */
     int ngrp;			/*  Number of groups.  */
     int i, j, k;			/*  Loop counters.  */
+    int matched;
 
     /*  Find option.  */
     printf("This takes a BRL-CAD mged model with a PRISM\n");
@@ -57,13 +60,13 @@ main(void)
     printf("\t1 - raytrace, store, & showtherm file\n");
     printf("\t2 - showtherm file\n");
     (void)fflush(stdout);
-    scanf("%d", &ichoice);
 
-    while ( (ichoice !=0 ) && (ichoice != 1) &&(ichoice != 2) )
+    matched = scanf("%d", &ichoice);
+    while ( (matched != 1) || ( (ichoice != 0) && (ichoice != 1) && (ichoice != 2) ) )
     {
 	printf("Your choice was not 0, 1, or 2, enter again!!\n");
 	(void)fflush(stdout);
-	scanf("%d", &ichoice);
+	matched = scanf("%d", &ichoice);
     }
 
     if ( (ichoice == 0) || (ichoice == 1) )
@@ -83,11 +86,23 @@ main(void)
 	/*  Find name of .g file to be used.  */
 	printf("Enter .g file to be raytraced (15 char max).\n\t");
 	(void)fflush(stdout);
-	scanf("%15s", gfile);
+
+	matched = scanf("%15s", gfile);
+	if (matched != 1)
+	{
+	    bu_exit(EXIT_FAILURE, "ERROR: input failure");
+	}
+
 	/*  Find number of groups to be raytraced.  */
 	printf("Enter the number of groups to be raytraced.\n\t");
 	(void)fflush(stdout);
-	scanf("%d", &ngrp);
+
+	matched = scanf("%d", &ngrp);
+	if (matched != 1)
+	{
+	    bu_exit(EXIT_FAILURE, "ERROR: input failure");
+	}
+
 	/*  Read each group & put it in the variable showtherm.  */
 	j = 0;
 	while ( (gfile[j] != '\0') && (i < 123) )
@@ -100,7 +115,13 @@ main(void)
 	{
 	    printf("Enter group %d (25 char max).\n\t", j);
 	    (void)fflush(stdout);
-	    scanf("%25s", group);
+
+	    matched = scanf("%25s", group);
+	    if (matched != 1)
+	    {
+		bu_exit(EXIT_FAILURE, "ERROR: input failure");
+	    }
+
 	    showtherm[i] = ' ';
 	    i++;
 	    k = 0;
@@ -124,7 +145,10 @@ main(void)
 	/*  temperature for each region.  */
 	printf("\nThe program showtherm is now being run.\n\n");
 	(void)fflush(stdout);
-	system(showtherm);
+	if (system(showtherm) == -1)
+	{
+	    bu_exit(EXIT_FAILURE, "ERROR: attempt to call \"showtherm\" program failed.");
+	}
     }
 
     if ( (ichoice == 1) || (ichoice == 2) )
@@ -136,7 +160,10 @@ main(void)
 	printf("for enter the name of the file that was just\n");
 	printf("stored.\n\n");
 	(void)fflush(stdout);
-	system(irX);
+	if (system(irX) == -1)
+	{
+	    bu_exit(EXIT_FAILURE, "ERROR: attempt to call \"showtherm\" program failed.");
+	}
     }
 
     return 0;
