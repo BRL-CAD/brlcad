@@ -13,7 +13,6 @@
 #include <string.h>
 #include <stdio.h>
 #include <math.h>
-#include <malloc.h>
 #include <assert.h>
 
 #include "vds.h"
