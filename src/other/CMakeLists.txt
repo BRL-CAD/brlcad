@@ -788,6 +788,7 @@ if(BRLCAD_LEVEL2)
   testing first for a system version if BRLCAD_BUNDLED_LIBS is also AUTO.
 ")
   THIRD_PARTY(libvds libvds "" libvds_ALIASES libvds_DESCRIPTION NOSYS)
+  set(LIBVDS_INCLUDE_DIR "${BRLCAD_SOURCE_DIR}/src/other/libvds" CACHE STRING "Directory containing libvds headers." FORCE)
 endif(BRLCAD_LEVEL2)
 
 # Bullet is not yet integrated as a src/other subbuild, but there is code

@@ -136,7 +136,7 @@ set(VDS_HDRS
 ## Note that assertions are suppressed when VDS_DEBUGPRINT is not defined
 #add_definitions(-DVDS_DEBUGPRINT)
 
-add_library(vds SHARED ${CORE_SRCS})
+add_library(libvds SHARED ${CORE_SRCS})
 
 add_library(stdvds SHARED ${STD_SRCS})
 
