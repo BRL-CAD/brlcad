@@ -1264,7 +1264,6 @@ namespace eval ArcherCore {
 	updateSaveMode
     }
 
-    gedCmd configure -primitiveLabels {}
     switch -- $tflag {
 	0 {
 	    # Do nothing
