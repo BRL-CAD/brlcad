@@ -446,7 +446,7 @@ nmg_get_2d_vertex(fastf_t *v2d, struct vertex *v, struct nmg_inter_struct *is, c
 	oldmax = is->maxindex;
 	m = nmg_find_model(&v->magic);
 	NMG_CK_MODEL(m);
-	bu_log("nmg_get_2d_vertex:  v=x%x, v->index=%d, is->maxindex=%d, m->maxindex=%d\n",
+	bu_log("nmg_get_2d_vertex:  v=x%x, v->index=%ld, is->maxindex=%d, m->maxindex=%ld\n",
 	       v, v->index, is->maxindex, m->maxindex);
 	if (v->index >= m->maxindex) {
 	    /* Really off the end */
@@ -456,7 +456,7 @@ nmg_get_2d_vertex(fastf_t *v2d, struct vertex *v, struct nmg_inter_struct *is, c
 	/* Need to extend array, it's grown. */
 	is->maxindex = m->maxindex * 4;
 	if (rt_g.NMG_debug & DEBUG_POLYSECT) {
-	    bu_log("nmg_get_2d_vertex() extending vert2d array from %d to %d points (m max=%d)\n",
+	    bu_log("nmg_get_2d_vertex() extending vert2d array from %d to %d points (m max=%ld)\n",
 		   oldmax, is->maxindex, m->maxindex);
 	}
 	is->vert2d = (fastf_t *)bu_realloc((char *)is->vert2d,

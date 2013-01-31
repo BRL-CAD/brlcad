@@ -2099,7 +2099,7 @@ rt_bot_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, co
 	    if (argv[0][2] == '\0') {
 		(void)Tcl_ListObjGetElements(brlcad_interp, obj, &len, &obj_array);
 		if ((size_t)len != bot->num_faces || len <= 0) {
-		    bu_vls_printf(logstr, "Only %ld face normals? Must provide normals for all faces!!!", len);
+		    bu_vls_printf(logstr, "Only %d face normals? Must provide normals for all faces!!!", len);
 		    Tcl_DecrRefCount(obj);
 		    return BRLCAD_ERROR;
 		}
