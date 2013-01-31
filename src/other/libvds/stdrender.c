@@ -1,7 +1,7 @@
 /**
  * @memo	Simple example routines for rendering the vertex tree.
  * @name	Standard callbacks: rendering nodes
- * 
+ *
  * 		Standard routines for rendering the active triangle list
  *		associated with a vdsNode.  The user may provide a custom
  *		rendering function to be called	on each node, or may choose
@@ -10,9 +10,9 @@
  * <b>Note</b>:	The rendering callback is responsible for updating the
  *		node->proxies field when a node representing a triangle
  *		corner is folded or unfolded.  When writing a custom rendering
- *		callback, be sure to call \Ref{vdsUpdateTriProxies} on each 
+ *		callback, be sure to call \Ref{vdsUpdateTriProxies} on each
  *		triangle before rendering it.<p>
- * 
+ *
  * @see		stdrender.c
  */
 /*@{*/
@@ -27,7 +27,7 @@ unsigned int vdsTrisDrawn = 0;
 
 /** Returns the number of triangles rendered since last call.
  * 		Returns the number of tris drawn since the last call to
- *		vdsCountTrisDrawn().  If called once per frame, provides a 
+ *		vdsCountTrisDrawn().  If called once per frame, provides a
  *		counter of the number of triangles drawn each frame.<p>
  *
  * <b>Note</b>: Counters are updated in the rendering callbacks below.  User-
@@ -53,8 +53,7 @@ void vdsRenderWireframe(const vdsNode *node)
     glDisable(GL_COLOR_MATERIAL);
     glColor3ub(0, 0, 0);
     glBegin(GL_TRIANGLES);
-    while (t != NULL)
-    {
+    while (t != NULL) {
 	vdsUpdateTriProxies(t);			/* Required */
 	vdsTrisDrawn ++;
 	GL_VERTEX3V(t->proxies[0]->coord);
@@ -77,8 +76,7 @@ void vdsRenderShaded(const vdsNode *node)
     glDisable(GL_LIGHTING);
     glDisable(GL_COLOR_MATERIAL);
     glBegin(GL_TRIANGLES);
-    while (t != NULL)
-    {
+    while (t != NULL) {
 	vdsUpdateTriProxies(t);			/* Required */
 	vdsTrisDrawn ++;
 	glColor3ubv(t->color[0]);
@@ -109,8 +107,7 @@ void vdsRenderShadedLit(const vdsNode *node)
     glEnable(GL_LIGHTING);
     glEnable(GL_COLOR_MATERIAL);
     glBegin(GL_TRIANGLES);
-    while (t != NULL)
-    {
+    while (t != NULL) {
 	vdsUpdateTriProxies(t);			/* Required */
 	vdsTrisDrawn ++;
 	GL_NORMAL3V(t->normal[0]);
@@ -143,8 +140,7 @@ void vdsRenderLit(const vdsNode *node)
     glEnable(GL_LIGHTING);
     glDisable(GL_COLOR_MATERIAL);
     glBegin(GL_TRIANGLES);
-    while (t != NULL)
-    {
+    while (t != NULL) {
 	vdsUpdateTriProxies(t);			/* Required */
 	vdsTrisDrawn ++;
 	GL_NORMAL3V(t->normal[0]);
@@ -176,14 +172,14 @@ void vdsRenderLit(const vdsNode *node)
   INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES, INCLUDING
   LOST PROFITS, ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS
   DOCUMENTATION, EVEN IF THE UNIVERSITY OF VIRGINIA AND/OR THE
-  AUTHOR OF THIS SOFTWARE HAVE BEEN ADVISED OF THE POSSIBILITY OF 
+  AUTHOR OF THIS SOFTWARE HAVE BEEN ADVISED OF THE POSSIBILITY OF
   SUCH DAMAGES.
 
   The author of the vdslib software library may be contacted at:
 
   US Mail:             Dr. David Patrick Luebke
-                       Department of Computer Science
-                       Thornton Hall, University of Virginia
+		       Department of Computer Science
+		       Thornton Hall, University of Virginia
 		       Charlottesville, VA 22903
 
   Phone:               (804)924-1021

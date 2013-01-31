@@ -2,8 +2,8 @@
  * @memo	Routines for rendering the vertex tree.
  * @name 	Rendering the current simplification
  *
- * 		These routines traverse a vdsNode tree, using user-specified 
- *		callbacks to cull and render the active triangle list 
+ * 		These routines traverse a vdsNode tree, using user-specified
+ *		callbacks to cull and render the active triangle list
  *		associated with each node.<p>
  *
  * @see		render.c
@@ -30,25 +30,18 @@
  */
 static vdsNode *firstActiveAncestor(vdsNodeId id, vdsNode *proxy)
 {
-    if (proxy->status == Inactive)
-    {
-	do
-	{
+    if (proxy->status == Inactive) {
+	do {
 	    proxy = proxy->parent;
-	}
-	while (proxy->status == Inactive);
+	} while (proxy->status == Inactive);
 	return proxy;	/* proxy->status is now Boundary */
-    }
-    else
-    {
-	while (proxy->status != Boundary)
-	{
+    } else {
+	while (proxy->status != Boundary) {
 	    /* proxy->status is Active; walk down id->path to find Boundary */
 	    register int whichchild = PATH_BRANCH(id.path, proxy->depth);
 
 	    proxy = proxy->children;
-	    while (whichchild > 0)
-	    {
+	    while (whichchild > 0) {
 		proxy = proxy->sibling;
 		whichchild --;
 	    }
@@ -68,32 +61,29 @@ static vdsNode *firstActiveAncestor(vdsNodeId id, vdsNode *proxy)
  */
 void vdsUpdateTriProxies(vdsTri *t)
 {
-    if (t->proxies[0]->status != Boundary)
-    {
+    if (t->proxies[0]->status != Boundary) {
 	t->proxies[0] = firstActiveAncestor(t->corners[0].id, t->proxies[0]);
     }
-    if (t->proxies[1]->status != Boundary)
-    {
+    if (t->proxies[1]->status != Boundary) {
 	t->proxies[1] = firstActiveAncestor(t->corners[1].id, t->proxies[1]);
     }
-    if (t->proxies[2]->status != Boundary)
-    {
+    if (t->proxies[2]->status != Boundary) {
 	t->proxies[2] = firstActiveAncestor(t->corners[2].id, t->proxies[2]);
     }
 }
 
-/** Traverses the vertex tree, culling and rendering nodes according to 
+/** Traverses the vertex tree, culling and rendering nodes according to
  *  user-specified callbacks.
  * 		Traverses the vdsNode tree, calling a user-specified
  *		function to render the active triangle list stored with
- *		each node (via the node->vistris linked list).  
- *		Maintaining multiple lists (one per node) allows for 
+ *		each node (via the node->vistris linked list).
+ *		Maintaining multiple lists (one per node) allows for
  *		visibility culling, again via a user-specified callback.
- *		This callback should take a vdsNode and return 0 (the node 
- *		is completely invisible), 1 (the node may be partially 
+ *		This callback should take a vdsNode and return 0 (the node
+ *		is completely invisible), 1 (the node may be partially
  *		visible), or 2 (the node is completely visible).<p>
  * <b>Note:</b>	Culling is only done down to level VDS_CULLDEPTH of the
- *		tree, and only nodes at or above VDS_CULLDEPTH have an 
+ *		tree, and only nodes at or above VDS_CULLDEPTH have an
  *		associated vistri list.  There ought to be a more elegant
  *		way to indicate whether a node is cullable.  A 1-bit flag?
  * @param	node 	The vdsNode being considered for rendering.
@@ -105,17 +95,13 @@ void vdsRenderTree(vdsNode *node, vdsRenderFunction render,
 		   vdsVisibilityFunction visible)
 {
     vdsNode *child;
-    
-    if (visible != NULL)
-    {
+
+    if (visible != NULL) {
 	int visibility = visible(node);
-	if (visibility == 0)
-	{
+	if (visibility == 0) {
 	    /* Node invisible, return */
 	    return;
-	}
-	else if (visibility == 2)
-	{
+	} else if (visibility == 2) {
 	    /* Node completely visible, turn off visibility checking */
 	    visible = NULL;
 	}
@@ -123,13 +109,11 @@ void vdsRenderTree(vdsNode *node, vdsRenderFunction render,
     /* If we got this far, node is visible.  Render it */
     render(node);
     /* If node is at VDS_CULLDEPTH, children have no vistris, so can return */
-    if (node->depth == VDS_CULLDEPTH)
-    {
+    if (node->depth == VDS_CULLDEPTH) {
 	return;
     }
     child = node->children;
-    while (child != NULL)
-    {
+    while (child != NULL) {
 	vdsRenderTree(child, render, visible);
 	child = child->sibling;
     }
@@ -153,14 +137,14 @@ void vdsRenderTree(vdsNode *node, vdsRenderFunction render,
   INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES, INCLUDING
   LOST PROFITS, ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS
   DOCUMENTATION, EVEN IF THE UNIVERSITY OF VIRGINIA AND/OR THE
-  AUTHOR OF THIS SOFTWARE HAVE BEEN ADVISED OF THE POSSIBILITY OF 
+  AUTHOR OF THIS SOFTWARE HAVE BEEN ADVISED OF THE POSSIBILITY OF
   SUCH DAMAGES.
 
   The author of the vdslib software library may be contacted at:
 
   US Mail:             Dr. David Patrick Luebke
-                       Department of Computer Science
-                       Thornton Hall, University of Virginia
+		       Department of Computer Science
+		       Thornton Hall, University of Virginia
 		       Charlottesville, VA 22903
 
   Phone:               (804)924-1021

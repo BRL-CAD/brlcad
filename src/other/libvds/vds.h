@@ -1,7 +1,7 @@
 /**
  * @memo	Some important macros used to configure VDSlib.
  * @name	VDSlib macros
- * 
+ *
  * These macros are defined in the main header file for the view-dependent
  * simplification library.  \Ref{VDS_MAXDEGREE} sets the maximum degree of
  * the vertex tree.  For example, a tree built by octree-style clustering
@@ -16,7 +16,7 @@
  * used by VDSlib (i.e., vdsFloats) double-precision.  This is highly
  * recommended if you are dealing with complex models; on many modern
  * architectures double-precision arithmetic is the faster option anyway.
- * 
+ *
  * @see vds.h */
 /*@{*/
 
@@ -30,11 +30,11 @@ extern "C" {
 #include <stdio.h>
 
 /** VDS_MAXDEGREE defines the maximum degree of vertex tree nodes	*/
-#define VDS_MAXDEGREE 8		
+#define VDS_MAXDEGREE 8
 /** VDS_CULLDEPTH defines the depth to which the vertex tree is culled	*/
-#define VDS_CULLDEPTH 4		
+#define VDS_CULLDEPTH 4
 
-/** Define VDS_DOUBLE_PRECISION to make everything double precision */ 
+/** Define VDS_DOUBLE_PRECISION to make everything double precision */
 #define VDS_DOUBLE_PRECISION
 
 #ifdef VDS_DOUBLE_PRECISION
@@ -66,8 +66,7 @@ typedef unsigned int vdsNodePath;
 #endif
 
 /* Label node as Active (unfolded), Inactive (folded), or on the Boundary: */
-typedef enum _vdsNodeStatus
-{
+typedef enum _vdsNodeStatus {
     Boundary = 0,			/* Set Boundary to 0 for speed 	*/
     Inactive,
     Active
@@ -80,43 +79,38 @@ typedef enum _vdsNodeStatus
  *		than optimal.  Two possible improvements: <ll>
  *		<li>Following Hoppe's "Efficient Implementation of Progressive
  *		    Meshes", center the bounding sphere on node->coord.  This
- *		    saves storing 3 floats per node, at the cost of more 
+ *		    saves storing 3 floats per node, at the cost of more
  *		    conservative visibility and screenspace-extent tests.
  *		<li>Use a tighter bounding volume (AABBs? OBBs? Ellipsoids?).
  *		    There is a tradeoff here between storage and accuracy.</ll>
  */
-typedef struct _vdsBoundingVolume
-{
+typedef struct _vdsBoundingVolume {
     vdsVec3	center;			/* center of the sphere 	*/
     vdsFloat 	radius;			/* size of the sphere		*/
 } vdsBoundingVolume;
 
-typedef void * vdsNodeData;		/* hook for user data		*/
+typedef void *vdsNodeData;		/* hook for user data		*/
 
-typedef struct _vdsNodeId
-{
+typedef struct _vdsNodeId {
     vdsNodePath	path;			/* path down tree to node	*/
     char 	depth;			/* 1 byte depth info for now	*/
 } vdsNodeId;
 
-typedef union
-{
-    vdsNodeId		id;		/* node depth, path down tree	*/
-    int			index;		/* leaf node index; used during	*
-					 * vertex tree construction	*/
-} vdsTriCorner;			
+typedef union {
+    vdsNodeId	id;	/* node depth, path down tree	*/
+    int		index;	/* leaf node index; used during	vertex tree construction */
+} vdsTriCorner;
 
 /*
  * Note on vdsTri: should use Hoppe's "wedge" structures or something similar
  * to avoid replicating colors and normals at every triangle corner.  Would
  * this be hard keep memory-coherent in an out-of-core implementation?
  */
-typedef struct _vdsTri
-{
+typedef struct _vdsTri {
     vdsTriCorner	corners[3];	/* leaf nodes corresponding to 	*
-					 * 3 original corner vertices	*/ 
+				     * 3 original corner vertices	*/
     struct _vdsNode	*proxies[3];	/* nodes representing corners;	*
-					 * i.e., the FAA of each corner	*/
+				     * i.e., the FAA of each corner	*/
     struct _vdsNode	*node;		/* smallest node containing tri	*/
     vdsVec3		normal[3];	/* normal for the tri		*/
     vdsByte3		color[3];	/* RGB for the tri's corners	*/
@@ -129,18 +123,17 @@ typedef struct _vdsTri
  * saving 32 bits, and center bounding volume on coord to eliminate
  * a vdsVec3, saving 96-192 bits (depending on VDS_DOUBLE_PRECISION)
  */
-typedef struct _vdsNode
-{
-                                        /* 3 bitfields (32 bits total): */
-    int 		depth:16;	/* depth of node in vertex tree */
-    int			nsubtris:14;	/* size of node->subtris[] array*/
-    vdsNodeStatus	status:2;	/* is node currently active?	*/
+typedef struct _vdsNode {
+    /* 3 bitfields (32 bits total): */
+    int 		depth: 16;	/* depth of node in vertex tree */
+    int			nsubtris: 14;	/* size of node->subtris[] array*/
+    vdsNodeStatus	status: 2;	/* is node currently active?	*/
 
     vdsBoundingVolume 	bound;		/* bounding volume of triangles	*
-					 * supported by the node	*/
+				     * supported by the node	*/
     vdsVec3		coord;		/* coordinate of node's proxy	*/
     vdsTri		*vistris;	/* linked list of visible tris 	*
-					 * contained by this node	*/
+				     * contained by this node	*/
     vdsNodeData		data;		/* auxiliary node data		*/
     struct _vdsNode	*next;		/* next node in boundary path	*/
     struct _vdsNode	*prev;		/* prev node in boundary path	*/
@@ -189,19 +182,19 @@ extern void vdsFoldSubtree(vdsNode *);
 /* Routines for rendering the vertex tree (render.c) */
 extern void vdsUpdateTriProxies(vdsTri *t);
 extern void vdsRenderTree(vdsNode *node, vdsRenderFunction render,
-			  vdsVisibilityFunction visible);
+		  vdsVisibilityFunction visible);
 
 /* Routines for building the vertex tree (build.c) */
 extern void vdsBeginVertexTree();
 extern void vdsBeginGeometry();
 extern vdsNode *vdsAddNode(vdsFloat x, vdsFloat y, vdsFloat z);
 extern vdsTri *vdsAddTri(int v0, int v1, int v2,
-			 vdsVec3 n0, vdsVec3 n1, vdsVec3 n2,
-			 vdsByte3 c0, vdsByte3 c1, vdsByte3 c2);
+		 vdsVec3 n0, vdsVec3 n1, vdsVec3 n2,
+		 vdsByte3 c0, vdsByte3 c1, vdsByte3 c2);
 extern void vdsNewObject();
 extern vdsNode *vdsEndGeometry();
 extern vdsNode *vdsClusterNodes(int nnodes, vdsNode **nodes,
-				vdsFloat x, vdsFloat y, vdsFloat z);
+		vdsFloat x, vdsFloat y, vdsFloat z);
 extern vdsNode *vdsEndVertexTree();
 
 /* Routines for reading and writing the vertex tree (file.c) */
@@ -271,14 +264,14 @@ extern void vdsFreeTree(vdsNode *node);
   INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES, INCLUDING
   LOST PROFITS, ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS
   DOCUMENTATION, EVEN IF THE UNIVERSITY OF VIRGINIA AND/OR THE
-  AUTHOR OF THIS SOFTWARE HAVE BEEN ADVISED OF THE POSSIBILITY OF 
+  AUTHOR OF THIS SOFTWARE HAVE BEEN ADVISED OF THE POSSIBILITY OF
   SUCH DAMAGES.
 
   The author of the vdslib software library may be contacted at:
 
   US Mail:             Dr. David Patrick Luebke
-                       Department of Computer Science
-                       Thornton Hall, University of Virginia
+		       Department of Computer Science
+		       Thornton Hall, University of Virginia
 		       Charlottesville, VA 22903
 
   Phone:               (804)924-1021

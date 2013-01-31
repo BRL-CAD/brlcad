@@ -1,16 +1,16 @@
-/**		
+/**
  * @memo	Routines for constructing the VDSlib vertex tree.
  * @name 	Building the vertex tree
- * 
+ *
  * These routines provide a flexible interface for specifying the geometry
  * of the original model, and for constructing the VDSlib vertex tree upon
  * the vertices of that underlying high-resolution model.<p>
- * 
+ *
  * Building a vertex tree begins with a call to \Ref{vdsBeginVertexTree}()
  * and ends with a call to \Ref{vdsEndVertexTree}().  The building process
  * consists of two stages: specifying geometry and clustering nodes.  All
  * geometry must be specified before node clustering begins.  <p>
- * 
+ *
  * Use \Ref{vdsBeginGeometry}() to signal the beginning of the first
  * stage.  Geometry (in VDSlib parlance) consists of a list of
  * <i>nodes</i>, or vertices in the original model, and a list of
@@ -20,7 +20,7 @@
  * triangle must be added before that triangle can be added.  When all
  * geometry has been specified, call \Ref{vdsEndGeometry}() to move on to
  * the next stage.<p>
- * 
+ *
  * The vertex clustering stage simply consists of calls to
  * \Ref{vdsClusterNodes}().  This function takes several nodes (up to
  * \Ref{VDS_MAXDEGREE}) and clusters them together, assigning the nodes as
@@ -32,15 +32,15 @@
  * into a single tree.  This is the <i>vertex tree</i>, the fundamental
  * data structure of VDSlib.  Note that the vertices of the original
  * (highest-resolution) model, specified by the user in the first stage,
- * form the leaf nodes of the vertex tree.  Each internal node thus represents 
- * some subset of the original vertices, approximating those vertices with 
+ * form the leaf nodes of the vertex tree.  Each internal node thus represents
+ * some subset of the original vertices, approximating those vertices with
  * a single point.  <p>
- * 
+ *
  * Once the vertex tree has been built with successive calls to
  * \Ref{vdsClusterNodes}(), the user calls \Ref{vdsEndVertexTree}() to
  * finalize it.  The finished vertex tree is now ready for run-time
  * maintainance and rendering. <p>
- * 
+ *
  * @see		build.c
  */
 /*@{*/
@@ -77,7 +77,7 @@ void vdsBeginVertexTree()
 }
 
 /** Initialize the geometry structures.
- * 		Must be called before calling vdsAddNode() and vdsAddTri(), 
+ * 		Must be called before calling vdsAddNode() and vdsAddTri(),
  *		and must be followed by vdsEndGeometry().
  */
 void vdsBeginGeometry()
@@ -96,7 +96,7 @@ void vdsBeginGeometry()
  * 		When all geometry (tris & verts) has been added, this
  *		function prepares the builder for the next phase (merging
  *		nodes into a tree).  Must be called after vdsBeginGeometry(),
- *		after all vdsAddNode() and vdsAddTri() calls, and before any 
+ *		after all vdsAddNode() and vdsAddTri() calls, and before any
  *		vdsClusterNodes() calls.
  * @return	A pointer to an array containing all leaf nodes, in case the
  *		application wants to use this information during clustering.
@@ -140,8 +140,8 @@ void vdsNewObject()
  * @param	y 	The Y coordinate of the vertex
  * @param	z 	The Z coordinate of the vertex
  * @return	A pointer to the created node, in case the user wishes to
- *		create a vertex->data field. <b>NOTE</b>: This pointer is 
- *		only guaranteed valid until the next call to vdsAddNode() 
+ *		create a vertex->data field. <b>NOTE</b>: This pointer is
+ *		only guaranteed valid until the next call to vdsAddNode()
  *		or vdsEndGeometry().
  *
  * <b>Note:</b>	vdsAddNode() must be called between vdsBeginGeometry()
@@ -155,9 +155,8 @@ vdsNode *vdsAddNode(vdsFloat x, vdsFloat y, vdsFloat z)
     nodearray[vdsNumnodes].coord[2] = z;
     vdsNumnodes++;
     /* Resize array if necessary */
-    if (vdsNumnodes == maxnodes)
-    {
-	vdsNode *tmparray = (vdsNode *) calloc(maxnodes*2, sizeof(vdsNode));
+    if (vdsNumnodes == maxnodes) {
+	vdsNode *tmparray = (vdsNode *) calloc(maxnodes * 2, sizeof(vdsNode));
 
 	memcpy(tmparray, nodearray, vdsNumnodes * sizeof(vdsNode));
 	free(nodearray);
@@ -175,8 +174,8 @@ vdsNode *vdsAddNode(vdsFloat x, vdsFloat y, vdsFloat z)
  *		Note that the vertices index by the triangle must already have
  *		been added via vdsAddNode().
  * @return	A pointer to the created vdsTri struct, in case the user
- *		wishes to create a tri->data field. <b>NOTE</b>: This pointer 
- *		is only guaranteed valid until the next call to vdsAddTri() 
+ *		wishes to create a tri->data field. <b>NOTE</b>: This pointer
+ *		is only guaranteed valid until the next call to vdsAddTri()
  *		or vdsEndGeometry().
  *
  * <b>Note:</b>	vdsAddTri() must be called between vdsBeginGeometry()
@@ -201,8 +200,7 @@ vdsTri *vdsAddTri(int v0, int v1, int v2,
     BYTE3_COPY(triarray[vdsNumtris].color[2], c2);
     vdsNumtris ++;
     /* Resize array if necessary */
-    if (vdsNumtris == maxtris)
-    {
+    if (vdsNumtris == maxtris) {
 	vdsTri *tmparray = (vdsTri *) calloc(maxtris * 2, sizeof(vdsTri));
 
 	memcpy(tmparray, triarray, vdsNumtris * sizeof(vdsTri));
@@ -224,7 +222,7 @@ vdsTri *vdsAddTri(int v0, int v1, int v2,
  *		This pointer is only valid until the vdsEndVertexTree() call.
  */
 vdsNode *vdsClusterNodes(int nnodes, vdsNode **nodes,
-			 vdsFloat x, vdsFloat y, vdsFloat z)
+		 vdsFloat x, vdsFloat y, vdsFloat z)
 {
     int i;
     vdsNode *parent = (vdsNode *) calloc(1, sizeof(vdsNode));
@@ -233,14 +231,13 @@ vdsNode *vdsClusterNodes(int nnodes, vdsNode **nodes,
     assert(nodes[0] != NULL);
     parent->children = nodes[0];
     parent->children->parent = parent;
-    for (i=1;i<nnodes;i++)
-    {
+    for (i = 1; i < nnodes; i++) {
 	assert(nodes[i] != NULL);
 	assert(nodes[i]->parent == NULL);
 	nodes[i]->parent = parent;
-	nodes[i-1]->sibling = nodes[i];
+	nodes[i - 1]->sibling = nodes[i];
     }
-    nodes[nnodes-1]->sibling = NULL;
+    nodes[nnodes - 1]->sibling = NULL;
     parent->coord[0] = x;
     parent->coord[1] = y;
     parent->coord[2] = z;
@@ -254,18 +251,12 @@ vdsNode *vdsClusterNodes(int nnodes, vdsNode **nodes,
  */
 static int idEqual(vdsNodeId n1, vdsNodeId n2)
 {
-    if (n1.depth != n2.depth)
-    {
+    if (n1.depth != n2.depth) {
 	return 0;
-    }
-    else
-    {
-	if (n1.path != n2.path)
-	{
+    } else {
+	if (n1.path != n2.path) {
 	    return 0;
-	}
-	else
-	{
+	} else {
 	    return 1;
 	}
     }
@@ -282,7 +273,7 @@ static int idEqual(vdsNodeId n1, vdsNodeId n2)
  */
 static int assignNodeIds(vdsNode *node, vdsNodeId nodeId, vdsNodeId *idArray)
 {
-    int i,j;
+    int i, j;
     vdsNode *child;
     vdsNodeId childId;
     static int maxdepth = 0;
@@ -292,8 +283,7 @@ static int assignNodeIds(vdsNode *node, vdsNodeId nodeId, vdsNodeId *idArray)
     node->depth = nodeId.depth;
     j = 0;
     child = node->children;
-    while (child != NULL)
-    {
+    while (child != NULL) {
 	childId.depth = nodeId.depth + 1;
 	PATH_COPY(childId.path, nodeId.path);
 	PATH_SET_BRANCH(childId.path, nodeId.depth, j);
@@ -304,16 +294,19 @@ static int assignNodeIds(vdsNode *node, vdsNodeId nodeId, vdsNodeId *idArray)
     }
     /*
      * If this is a leaf node (i.e., a vertex in original model) store its
-     * NodeId in idArray[].  Later we will convert tri->corners to reference 
+     * NodeId in idArray[].  Later we will convert tri->corners to reference
      * these nodes by NodeId rather than index in nodearray[].
      */
-    if (j == 0)	
-    {
+    if (j == 0) {
 	int index = node - nodearray;		/* pointer arithmetic */
 	idArray[index] = nodeId;
     }
-    if (j > maxdegree) { maxdegree = j; }
-    if (nodeId.depth > maxdepth) { maxdepth = nodeId.depth; }
+    if (j > maxdegree) {
+	maxdegree = j;
+    }
+    if (nodeId.depth > maxdepth) {
+	maxdepth = nodeId.depth;
+    }
     assert (maxdegree <= VDS_MAXDEGREE);
     assert(maxdepth <= VDS_MAXDEPTH);
 
@@ -322,19 +315,17 @@ static int assignNodeIds(vdsNode *node, vdsNodeId nodeId, vdsNodeId *idArray)
 
 /*
  * Function:	verifyRootedTree
- * Description:	Verifies that all the leaf nodes in nodearray belong to a 
+ * Description:	Verifies that all the leaf nodes in nodearray belong to a
  *		tree rooted at root.  Must be called after assignNodeIds().
  */
 static void verifyRootedTree(vdsNode *root)
 {
     int i;
     vdsNode *node;
-    
-    for (i=0;i<vdsNumnodes;i++)
-    {
+
+    for (i = 0; i < vdsNumnodes; i++) {
 	node = &nodearray[i];
-	if (node->depth == 0 && node != root)
-	{
+	if (node->depth == 0 && node != root) {
 	    fprintf(stderr, "\tError: leaf node #%d is not part of the same\n"
 		    "\trooted tree as previous nodes\n", i);
 	    exit(1);
@@ -347,14 +338,13 @@ static void verifyRootedTree(vdsNode *root)
  * Description:	Processes the tris in triarray and assigns each as the subtri
  *		of the deepest node in the vertex tree to cluster two or more
  *		corners of the triangle.  Subtris are stored temporarily in
- *		the node->vistris linked list.  
+ *		the node->vistris linked list.
  */
 static void computeSubtris(vdsNode *root)
 {
     int i;
 
-    for (i=0;i<vdsNumtris;i++)
-    {
+    for (i = 0; i < vdsNumtris; i++) {
 	vdsTri *t = &triarray[i];
 	vdsNodeId c0, c1, c2;		/* The 3 corners of the triangle */
 	vdsNodeId com01, com02, com12;	/* Common ancestor of c0c1,c1c2,c0c2*/
@@ -367,35 +357,28 @@ static void computeSubtris(vdsNode *root)
 	com02 = vdsFindCommonId(c0, c2, VDS_MAXDEPTH);
 	com12 = vdsFindCommonId(c1, c2, VDS_MAXDEPTH);
 	/* t is a subtri of the deepest common ancestor of its corner nodes */
-	if (com01.depth >= com02.depth)
-	{
-	    if (com01.depth >= com12.depth)
-	    {
+	if (com01.depth >= com02.depth) {
+	    if (com01.depth >= com12.depth) {
 		N = vdsFindNode(com01, root);
-	    }
-	    else
-	    {
+	    } else {
 		N = vdsFindNode(com12, root);
 	    }
-	}
-	else
-	{
-	    if (com02.depth >= com12.depth)
-	    {
+	} else {
+	    if (com02.depth >= com12.depth) {
 		N = vdsFindNode(com02, root);
-	    }
-	    else
-	    {
+	    } else {
 		N = vdsFindNode(com12, root);
 	    }
 	}
 	/* t is a subtri of node N; add it to the N->vistris linked list */
 	t->next = N->vistris;
-	if (t->next != NULL) { t->next->prev = t; }
+	if (t->next != NULL) {
+	    t->next->prev = t;
+	}
 	N->vistris = t;
 	N->nsubtris++;
     }
-    
+
 }
 
 /*
@@ -416,40 +399,38 @@ static vdsNode *moveTrisToNodes(vdsNode *N)
     vdsNode *newN, *child;
 
     /* Reallocate node and adjust child pointers */
-    newN = (vdsNode *) malloc(sizeof(vdsNode)+N->nsubtris*sizeof(vdsTri));
+    newN = (vdsNode *) malloc(sizeof(vdsNode) + N->nsubtris * sizeof(vdsTri));
     memcpy(newN, N, sizeof(vdsNode));
     child = N->children;
     numchildren = 0;
-    while (child != NULL)
-    {
+    while (child != NULL) {
 	child->parent = newN;
 	numchildren++;
 	child = child->sibling;
     }
     /* Adjust parent's pointer to this node */
-    if (N->parent != NULL)
-    {
+    if (N->parent != NULL) {
 	vdsNode *pp = N->parent->children;
 
-	if (pp == N)
-	{
+	if (pp == N) {
 	    N->parent->children = newN;
-	}
-	else
-	{
-	    while (pp->sibling != N) { pp = pp->sibling; }
+	} else {
+	    while (pp->sibling != N) {
+		pp = pp->sibling;
+	    }
 	    pp->sibling = newN;
 	}
     }
     /* Don't try to free leaf nodes, which belong to nodearray */
-    if (numchildren) { free(N); }
+    if (numchildren) {
+	free(N);
+    }
     N = newN;
     /* Copy node->vistris list into node->subtris[]; clear linked list ptrs */
     t = N->vistris;
     N->vistris = NULL;
     whichtri = 0;
-    while (t != NULL)
-    {
+    while (t != NULL) {
 	N->subtris[whichtri] = *t;
 	whichtri++;
 	nextt = t->next;
@@ -458,8 +439,7 @@ static vdsNode *moveTrisToNodes(vdsNode *N)
     }
     /* Recurse on children nodes */
     child = N->children;
-    while (child != NULL)
-    {
+    while (child != NULL) {
 	/* since moveTrisToNodes() reallocates nodes, have to reset child */
 	child = moveTrisToNodes(child);
 	child = child->sibling;
@@ -484,26 +464,25 @@ static void computeInternalBounds(vdsNode *node)
     vdsNode *child = node->children;
     int numchildren = 0;
     vdsFloat maxdist = 0;
-    vdsVec3 center = {0,0,0};
-    
+    vdsVec3 center = {0, 0, 0};
+
     /* If node is a leaf, just return */
-    if (child == NULL) { return; }
-    
-    while (child != NULL)
-    {
+    if (child == NULL) {
+	return;
+    }
+
+    while (child != NULL) {
 	computeInternalBounds(child);	/* Recurse to compute child sphere */
-	VEC3_ADD(center,center,child->bound.center);
+	VEC3_ADD(center, center, child->bound.center);
 	child = child->sibling;
 	numchildren++;
     }
-    VEC3_SCALE(center,  1.0/(vdsFloat)numchildren, center);
+    VEC3_SCALE(center,  1.0 / (vdsFloat)numchildren, center);
     child = node->children;
-    while(child != NULL)
-    {
+    while (child != NULL) {
 	vdsFloat dist =
 	    VEC3_DISTANCE(center, child->bound.center) + child->bound.radius;
-	if (dist > maxdist)
-	{
+	if (dist > maxdist) {
 	    maxdist = dist;
 	}
 	child = child->sibling;
@@ -516,7 +495,7 @@ static void computeInternalBounds(vdsNode *node)
  *
  * Algorithm:	For the moment, uses a very simple, crude way of estimating
  *		bounding spheres: spins through triarray and for each leaf
- *		node, computes an axis-aligned bounding box that completely 
+ *		node, computes an axis-aligned bounding box that completely
  *		contains all triangles associated with that node.  From this
  *		AABB bounding spheres are calculated for each leaf node, then
  *		a recursive postorder traversal builds bounding spheres for
@@ -524,25 +503,24 @@ static void computeInternalBounds(vdsNode *node)
  */
 static void assignNodeBounds(vdsNode *root)
 {
-    typedef struct { vdsVec3 min, max; } Box;
+    typedef struct {
+	vdsVec3 min, max;
+    } Box;
     Box *boxes;
     int i, j, k;
 
     boxes = (Box *) malloc(vdsNumnodes * sizeof(Box));
-    for (i=0;i<vdsNumnodes;i++)
-    {
+    for (i = 0; i < vdsNumnodes; i++) {
 	VEC3_COPY(boxes[i].min, nodearray[i].coord);
 	VEC3_COPY(boxes[i].max, nodearray[i].coord);
     }
-    for (i=0;i<vdsNumtris;i++)		/* iterate over tris */
-    {
+    for (i = 0; i < vdsNumtris; i++) {	/* iterate over tris */
 	vdsTri *t = &triarray[i];
 	vdsNode *c0 = &nodearray[t->corners[0].index];
 	vdsNode *c1 = &nodearray[t->corners[1].index];
 	vdsNode *c2 = &nodearray[t->corners[2].index];
-	
-	for (j=0;j<3;j++)		/* iterate over corners of tri */
-	{
+
+	for (j = 0; j < 3; j++) {	/* iterate over corners of tri */
 	    int cindex = t->corners[j].index;
 	    vdsNode *corner = &nodearray[cindex];
 	    /* Some effort wasted here testing each corner against itself: */
@@ -555,10 +533,9 @@ static void assignNodeBounds(vdsNode *root)
 	}
     }
     /* Calculate bounding spheres from leaf nodes' bounding boxes */
-    for (i=0;i<vdsNumnodes;i++)
-    {
+    for (i = 0; i < vdsNumnodes; i++) {
 	vdsNode *N = &nodearray[i];
-	
+
 	VEC3_AVERAGE(N->bound.center, boxes[i].min, boxes[i].max);
 	N->bound.radius = VEC3_DISTANCE(boxes[i].min, boxes[i].max) / 2.0;
     }
@@ -572,7 +549,7 @@ static void assignNodeBounds(vdsNode *root)
  *		by vdsAddNode()) merged to form a single hierarchy of vdsNodes,
  *		call vdsEndVertexTree() to process the hierarchy and produce
  *		a finished vertex tree, ready for simplification/rendering.<p>
- * 
+ *
  * Tasks:	Performs the following tasks, in order:		<p><ll>
  *		<li> Computes node paths and ids
  *		<li> Verifies that node hierarchy forms a single rooted tree
@@ -590,14 +567,16 @@ static void assignNodeBounds(vdsNode *root)
 vdsNode *vdsEndVertexTree()
 {
     vdsNode *root;
-    vdsNodeId rootId = {0,0};
+    vdsNodeId rootId = {0, 0};
     vdsNodeId *ids;
     int maxdepth;
-    int i,j;
-    
+    int i, j;
+
     assert(openflag == 1);
     root = &nodearray[0];
-    while (root->parent != NULL) { root = root->parent; }
+    while (root->parent != NULL) {
+	root = root->parent;
+    }
     VDS_DEBUG(("Assigning node ids..."));
     ids = (vdsNodeId *) calloc(vdsNumtris, sizeof(vdsNodeId));
     maxdepth = assignNodeIds(root, rootId, ids);
@@ -610,8 +589,7 @@ vdsNode *vdsEndVertexTree()
     VDS_DEBUG(("Done.\n"));
     VDS_DEBUG(("Converting triangles to reference nodes by ID..."));
     /* Convert tris to reference node IDs, rather than indices */
-    for (i=0;i<vdsNumtris;i++)
-    {
+    for (i = 0; i < vdsNumtris; i++) {
 	vdsTri *T = &triarray[i];
 
 	T->corners[0].id = ids[T->corners[0].index];
@@ -637,7 +615,7 @@ vdsNode *vdsEndVertexTree()
     root->status = Boundary;		/* root initially on boundary	    */
     root->next = root->prev = root;	/* root always on boundary path	    */
     VDS_DEBUG(("Done.\nVertex tree complete! Maximum depth = %d\n", maxdepth));
-    
+
     openflag = 0;
     return root;
 }
@@ -660,14 +638,14 @@ vdsNode *vdsEndVertexTree()
   INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES, INCLUDING
   LOST PROFITS, ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS
   DOCUMENTATION, EVEN IF THE UNIVERSITY OF VIRGINIA AND/OR THE
-  AUTHOR OF THIS SOFTWARE HAVE BEEN ADVISED OF THE POSSIBILITY OF 
+  AUTHOR OF THIS SOFTWARE HAVE BEEN ADVISED OF THE POSSIBILITY OF
   SUCH DAMAGES.
 
   The author of the vdslib software library may be contacted at:
 
   US Mail:             Dr. David Patrick Luebke
-                       Department of Computer Science
-                       Thornton Hall, University of Virginia
+		       Department of Computer Science
+		       Thornton Hall, University of Virginia
 		       Charlottesville, VA 22903
 
   Phone:               (804)924-1021

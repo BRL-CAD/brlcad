@@ -2,8 +2,8 @@
  * @memo	Macros for examining and changing the path to a vdsNode.
  * @name 	Manipulating vdsNodePath structures.
  *
- * 		These preprocessor macros manipulate vdsNodePath, the bit 
- *		vector that encapsulates the path from the root of a vertex 
+ * 		These preprocessor macros manipulate vdsNodePath, the bit
+ *		vector that encapsulates the path from the root of a vertex
  *		tree to a node.<p><dl>
  *
  * <dd>Details:	For a binary tree, each bit represents a branch.  For an 8-way
@@ -39,7 +39,7 @@
 /** Set a particular branch within a vdsNodePath.
  * 		Takes a vdsNodePath P representing node N, a depth D,
  *		and a branch number B.  If node A is the ancestor of N at
- *		depth D, sets P to indicate that A->children[B] is the 
+ *		depth D, sets P to indicate that A->children[B] is the
  *		ancestor of N at depth D+1.<p>
  * Note:	B is assumed to be <= VDS_MAXDEGREE; no checking is done
  */

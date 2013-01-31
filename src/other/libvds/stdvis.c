@@ -47,20 +47,17 @@ int vdsSimpleVisibility(const vdsNode *node)
     distance = VEC3_LENGTH(D);
     invDistance = 1.0 / distance;
 
-    if (distance < node->bound.radius)
-    {
+    if (distance < node->bound.radius) {
 	return 1;			/* eyept is within node's sphere */
     }
     phi = atan(node->bound.radius * invDistance);
     DdotV = - VEC3_DOT(D, vdsLookVec);
     theta = acos(DdotV * invDistance);
-    
-    if (theta - phi > vdsFOV/2.0)	
-    {
+
+    if (theta - phi > vdsFOV / 2.0) {
 	return 0;			/* node completely outside view cone */
     }
-    if (theta + phi < vdsFOV/2.0)
-    {
+    if (theta + phi < vdsFOV / 2.0) {
 	return 2;			/* node completely inside view cone */
     }
     return 1;				/* node partly intersects view cone */
@@ -84,14 +81,14 @@ int vdsSimpleVisibility(const vdsNode *node)
   INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES, INCLUDING
   LOST PROFITS, ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS
   DOCUMENTATION, EVEN IF THE UNIVERSITY OF VIRGINIA AND/OR THE
-  AUTHOR OF THIS SOFTWARE HAVE BEEN ADVISED OF THE POSSIBILITY OF 
+  AUTHOR OF THIS SOFTWARE HAVE BEEN ADVISED OF THE POSSIBILITY OF
   SUCH DAMAGES.
 
   The author of the vdslib software library may be contacted at:
 
   US Mail:             Dr. David Patrick Luebke
-                       Department of Computer Science
-                       Thornton Hall, University of Virginia
+		       Department of Computer Science
+		       Thornton Hall, University of Virginia
 		       Charlottesville, VA 22903
 
   Phone:               (804)924-1021

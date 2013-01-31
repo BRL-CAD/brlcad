@@ -1,9 +1,9 @@
 /**
  * @memo	Common routines and globals used by the standard callbacks.
  * @name 	Standard callbacks: common routines and variables
- * 		
- * 		Common functions and global variables used by the standard 
- *		routines provided by the view-dependent simplification 
+ *
+ * 		Common functions and global variables used by the standard
+ *		routines provided by the view-dependent simplification
  *		package.<p>
  *
  * @see		stdvds.c
@@ -51,7 +51,7 @@ void vdsSetViewpoint(vdsVec3 viewpt)
 }
 
 /** Tell VDSlib the current "look vector".
- * 		This is the view direction expressed as a normalized vector.  
+ * 		This is the view direction expressed as a normalized vector.
  *		Used by the standard simplification and visibility callbacks.
  */
 void vdsSetLookVec(vdsVec3 look)
@@ -60,10 +60,10 @@ void vdsSetLookVec(vdsVec3 look)
 }
 
 /** Set the simplification threshold for the standard simplification callback.
- *		This threshold corresponds to a fraction of the angular field 
- *		of view (as specified by \Ref{vdsSetFOV}). The standard 
- *		simplification callback directs nodes whose on-screen extent 
- * 		exceeds this fraction to be unfolded, while nodes smaller 
+ *		This threshold corresponds to a fraction of the angular field
+ *		of view (as specified by \Ref{vdsSetFOV}). The standard
+ *		simplification callback directs nodes whose on-screen extent
+ * 		exceeds this fraction to be unfolded, while nodes smaller
  *		on screen than the threshold are folded.
  * @param	thresh	the fraction of the angular field-of-view below
  *			which nodes should be folded.
@@ -91,14 +91,14 @@ void vdsSetThreshold(vdsFloat thresh)
   INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES, INCLUDING
   LOST PROFITS, ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS
   DOCUMENTATION, EVEN IF THE UNIVERSITY OF VIRGINIA AND/OR THE
-  AUTHOR OF THIS SOFTWARE HAVE BEEN ADVISED OF THE POSSIBILITY OF 
+  AUTHOR OF THIS SOFTWARE HAVE BEEN ADVISED OF THE POSSIBILITY OF
   SUCH DAMAGES.
 
   The author of the vdslib software library may be contacted at:
 
   US Mail:             Dr. David Patrick Luebke
-                       Department of Computer Science
-                       Thornton Hall, University of Virginia
+		       Department of Computer Science
+		       Thornton Hall, University of Virginia
 		       Charlottesville, VA 22903
 
   Phone:               (804)924-1021

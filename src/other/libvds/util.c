@@ -6,7 +6,7 @@
  * 		view-dependent simplification library.  Basic users of the
  * 		library will probably only care about functions such as
  * 		\Ref{vdsFreeTree}().<p>
- * 
+ *
  * @see util.c */
 /*@{*/
 
@@ -28,19 +28,17 @@ vdsNode *vdsFindNode(vdsNodeId id, vdsNode *root)
 {
     vdsNode *tmp = root;
     int tmpdepth = 0;
-    
-    while (tmpdepth < id.depth)
-    {
-	register int whichchild = PATH_BRANCH(id.path,tmpdepth);
+
+    while (tmpdepth < id.depth) {
+	register int whichchild = PATH_BRANCH(id.path, tmpdepth);
 
 	tmp = tmp->children;
-	while (whichchild > 0)
-	{
+	while (whichchild > 0) {
 	    assert(tmp != NULL);
 	    tmp = tmp->sibling;
-	    whichchild --;
+	    --whichchild;
 	}
-	tmpdepth++;
+	++tmpdepth;
     }
     return tmp;
 }
@@ -49,35 +47,31 @@ vdsNode *vdsFindNode(vdsNodeId id, vdsNode *root)
  * 		Given two node IDs, returns the ID of the first common
  *		ancestor of the two nodes.  Strictly based on manipulation
  *		of the IDs; no node structures are actually used, so the
- *		nodes in question need not be present in memory.  
+ *		nodes in question need not be present in memory.
  * @param	id1 		The ID of the first node.
  * @param	id2 		The ID of the second node.
- * @param	maxdepth	If the nodes share a common ancestor with 
- *				depth greater than maxdepth, the common 
+ * @param	maxdepth	If the nodes share a common ancestor with
+ *				depth greater than maxdepth, the common
  *				ancestor with depth=maxdepth is returned.
  */
 vdsNodeId vdsFindCommonId(vdsNodeId id1, vdsNodeId id2, int maxdepth)
 {
-    vdsNodeId common = {0,0};
+    vdsNodeId common = {0, 0};
     int i, maxcommondepth;
     vdsNodePath bitmask = VDS_BITMASK;
-    
+
     maxcommondepth = (id1.depth < id2.depth) ? id1.depth : id2.depth;
     maxcommondepth = (maxdepth < maxcommondepth) ? maxdepth : maxcommondepth;
     assert(maxcommondepth <= VDS_MAXDEPTH);
 
     common.depth = 0;
-    for (i=0;i<maxcommondepth;i++)
-    {
-	if ((id1.path & bitmask) == (id2.path & bitmask))
-	{
+    for (i = 0; i < maxcommondepth; i++) {
+	if ((id1.path & bitmask) == (id2.path & bitmask)) {
 	    /* paths are identical at bits covered by bitmask */
 	    common.path |= id1.path & bitmask;
-	    common.depth = i+1;
+	    common.depth = i + 1;
 	    bitmask <<= VDS_NUMBITS;
-	}
-	else
-	{
+	} else {
 	    break;
 	}
     }
@@ -102,9 +96,8 @@ void vdsComputeTriNodes(vdsNode *node, vdsNode *root)
     vdsNodeId commonId;
     vdsNode *common;
     vdsNode *child;
-    
-    for (i=0;i < node->nsubtris; i++)
-    {
+
+    for (i = 0; i < node->nsubtris; i++) {
 	t = &node->subtris[i];
 	c0 = t->corners[0].id;
 	c1 = t->corners[1].id;
@@ -116,8 +109,7 @@ void vdsComputeTriNodes(vdsNode *node, vdsNode *root)
 	t->proxies[0] = t->proxies[1] = t->proxies[2] = root;
     }
     child = node->children;
-    while (child != NULL)
-    {
+    while (child != NULL) {
 	vdsComputeTriNodes(child, root);
 	child = child->sibling;
     }
@@ -132,15 +124,11 @@ void vdsPrintNodeId(const vdsNodeId *id)
 {
     int i;
     vdsNodePath tmppath = id->path;
-    
-    if (id->depth == 0)
-    {
+
+    if (id->depth == 0) {
 	printf("<root>\n");
-    }
-    else
-    {
-	for (i=0; i < id->depth; i++)
-	{
+    } else {
+	for (i = 0; i < id->depth; i++) {
 	    putchar((char) (tmppath & VDS_BITMASK) + '0');
 	    tmppath >>= VDS_NUMBITS;
 	}
@@ -158,15 +146,11 @@ void vdsSprintNodeId(char *str, const vdsNodeId *id)
 {
     int i;
     vdsNodePath tmppath = id->path;
-    
-    if (id->depth == 0)
-    {
+
+    if (id->depth == 0) {
 	strcpy(str, "<root>");
-    }
-    else
-    {
-	for (i=0; i < id->depth; i++)
-	{
+    } else {
+	for (i = 0; i < id->depth; i++) {
 	    str[i] = (tmppath & VDS_BITMASK) + '0';
 	    tmppath >>= VDS_NUMBITS;
 	}
@@ -189,22 +173,18 @@ void vdsStatTree(vdsNode *root, int *nodes, int *leaves, int *tris)
     *nodes = *leaves = *tris = 0;
     childnodes = childleaves = childtris = 0;
     /* If the child is internal, recursivily count its children's nodes */
-    if (child != NULL)
-    {
-	while (child != NULL)
-	{
-	    vdsStatTree(child, &childnodes, &childleaves, &childtris); 
+    if (child != NULL) {
+	while (child != NULL) {
+	    vdsStatTree(child, &childnodes, &childleaves, &childtris);
 	    *nodes += childnodes;
 	    *leaves += childleaves;
 	    *tris += childtris;
 	    child = child->sibling;
-	} 
+	}
 	/* don't forget to count this node: */
 	*nodes += 1;
 	*tris += root->nsubtris;
-    }
-    else
-    {
+    } else {
 	*nodes = 1;
 	*leaves = 1;
 	/* leaf nodes have no subtris */
@@ -240,10 +220,9 @@ void vdsFreeTree(vdsNode *node)
 {
     vdsNode *child = node->children;
 
-    while (child != NULL)
-    {
+    while (child != NULL) {
 	vdsNode *sibling = child->sibling;
-	
+
 	vdsFreeTree(child);
 	child = sibling;
     }
@@ -269,14 +248,14 @@ void vdsFreeTree(vdsNode *node)
   INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES, INCLUDING
   LOST PROFITS, ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS
   DOCUMENTATION, EVEN IF THE UNIVERSITY OF VIRGINIA AND/OR THE
-  AUTHOR OF THIS SOFTWARE HAVE BEEN ADVISED OF THE POSSIBILITY OF 
+  AUTHOR OF THIS SOFTWARE HAVE BEEN ADVISED OF THE POSSIBILITY OF
   SUCH DAMAGES.
 
   The author of the vdslib software library may be contacted at:
 
   US Mail:             Dr. David Patrick Luebke
-                       Department of Computer Science
-                       Thornton Hall, University of Virginia
+		       Department of Computer Science
+		       Thornton Hall, University of Virginia
 		       Charlottesville, VA 22903
 
   Phone:               (804)924-1021

@@ -1,14 +1,14 @@
 /**
  * @memo	Routines for reading and writing vertex trees.
- * @name 	Vertex tree file I/O 
- * 
+ * @name 	Vertex tree file I/O
+ *
  * These routines provide a mechanism for saving a VDS vertex tree to a
  * terse binary file format, and reading it back.  This file format is a
  * bit rough at the moment.  For example, it does not deal with differences
  * between big-endian and little-endian machines, so files created on one
  * architecture may not run on another architecture.  Expect file I/O to
  * change and improve with following versions of the library.<p>
- * 
+ *
  * @see file.c */
 /*@{*/
 
@@ -29,10 +29,10 @@ static vdsNode *readChildren(FILE *f, vdsNode *parent, vdsNodeDataReader get);
 static void writeChildren(FILE *f, vdsNode *parent, vdsNodeDataWriter put);
 
 /** Read a vertex tree from a VDS binary file.
- * 		The user may specify a vdsNodeDataReader function 
- *		<b>readdata()</b> if the vertex tree was written with 
- *		custom data in the node->data field.  If <b>readdata()</b> 
- *		is NULL, the node->data field is simply copied 
+ * 		The user may specify a vdsNodeDataReader function
+ *		<b>readdata()</b> if the vertex tree was written with
+ *		custom data in the node->data field.  If <b>readdata()</b>
+ *		is NULL, the node->data field is simply copied
  *		byte-for-byte into memory.
  * @param	f 		The file to be read.
  * @param	readdata	A vdsNodeDataReader function callback to read
@@ -45,17 +45,17 @@ vdsNode *vdsReadTree(FILE *f, vdsNodeDataReader readdata)
     int major, minor;
     int numnodes, numverts, numtris;
     vdsNode *root, *currentnode, *lastnode, *parent;
-    
+
     assert(f != NULL);
     if (fscanf(f, "VDS Vertex Tree file format version %d.%d\n",
-	       &major, &minor) != 2)
-    {
-	fprintf(stderr, "Error reading line 1 of input file.\n"); exit(1);
+	       &major, &minor) != 2) {
+	fprintf(stderr, "Error reading line 1 of input file.\n");
+	exit(1);
     }
     if (fscanf(f, "Total nodes: %d\nVertices: %d\nTriangles: %d\n",
-	       &numnodes, &numverts, &numtris) != 3)
-    {
-	fprintf(stderr, "Error reading lines 2-4 of input file.\n"); exit(1);
+	       &numnodes, &numverts, &numtris) != 3) {
+	fprintf(stderr, "Error reading lines 2-4 of input file.\n");
+	exit(1);
     }
     /* Read the tree, starting with the root node */
     root = readNode(f, readdata);
@@ -82,19 +82,18 @@ static vdsNode *readChildren(FILE *f, vdsNode *parent, vdsNodeDataReader get)
     assert(parent != NULL);
     firstnode = readNode(f, get);
     node = firstnode;
-    while (node != NULL)
-    {
+    while (node != NULL) {
 	node->parent = parent;
 	node->depth = parent->depth + 1;
 	/* Unless its NULL, overwrite node->sibling (which is garbage) */
-	if (node->sibling != NULL) { node->sibling = readNode(f, get); }
+	if (node->sibling != NULL) {
+	    node->sibling = readNode(f, get);
+	}
 	node = node->sibling;
     }
     node = firstnode;
-    while (node != NULL)
-    {
-	if (node->children != NULL)
-	{
+    while (node != NULL) {
+	if (node->children != NULL) {
 	    node->children = readChildren(f, node, get);
 	}
 	node = node->sibling;
@@ -134,25 +133,22 @@ static vdsNode *readNode(FILE *f, vdsNodeDataReader getdata)
     fread(&numsubtris, sizeof(numsubtris), 1, f);
     node->nsubtris = numsubtris;
     node = (vdsNode *) realloc(node, sizeof(vdsNode) +
-			       numsubtris * sizeof(vdsTri));
+		       numsubtris * sizeof(vdsTri));
     fread(&node->subtris[0], sizeof(vdsTri), numsubtris, f);
     /* Now get the associated node data if user has provided a function */
-    if (getdata == NULL)
-    {
+    if (getdata == NULL) {
 	fread(&node->data, sizeof(vdsNodeData), 1, f);
-    }
-    else
-    {
-	node->data = getdata(f);	
+    } else {
+	node->data = getdata(f);
     }
     return node;
 }
 
 /** Writes a vertex tree to a VDS binary file.
  * 		Writes a vertex tree to the specified file.  The user may
- *		specify a vdsNodeDataWriter function <b>writedata()</b> if the 
- *		vertex tree was written with custom data in the node->data 
- *		field.  If <b>writedata()</b> is NULL, the contents of the 
+ *		specify a vdsNodeDataWriter function <b>writedata()</b> if the
+ *		vertex tree was written with custom data in the node->data
+ *		field.  If <b>writedata()</b> is NULL, the contents of the
  *		node->data field are simply copied byte-for-byte into the file.
  * @param	f 	The file to which the tree is written
  * @param	root		The root of the vertex tree to be written.
@@ -164,7 +160,7 @@ void vdsWriteTree(FILE *f, vdsNode *root, vdsNodeDataWriter writedata)
 {
     int numnodes, numverts, numtris;
     vdsNode *child;
-    
+
     assert(f != NULL);
     fprintf(f, "VDS Vertex Tree file format version %d.%d\n", MAJOR, MINOR);
     vdsStatTree(root, &numnodes, &numverts, &numtris);
@@ -188,16 +184,13 @@ static void writeChildren(FILE *f, vdsNode *parent, vdsNodeDataWriter put)
     vdsNode *child;
 
     child = parent->children;
-    while (child != NULL)
-    {
+    while (child != NULL) {
 	writeNode(f, child, put);
 	child = child->sibling;
     }
     child = parent->children;
-    while (child != NULL)
-    {
-	if (child->children != NULL)
-	{
+    while (child != NULL) {
+	if (child->children != NULL) {
 	    writeChildren(f, child, put);
 	}
 	child = child->sibling;
@@ -217,8 +210,7 @@ static void writeNode(FILE *f, vdsNode *node, vdsNodeDataWriter putdata)
     fwrite(&node->bound, sizeof(vdsBoundingVolume), 1, f);
     fwrite(&node->coord, sizeof(vdsVec3), 1, f);
     child = node->children;
-    while (child != NULL)
-    {
+    while (child != NULL) {
 	numchildren ++;
 	child = child->sibling;
     }
@@ -230,12 +222,9 @@ static void writeNode(FILE *f, vdsNode *node, vdsNodeDataWriter putdata)
     fwrite(&numsubtris, sizeof(numsubtris), 1, f);
     fwrite(&node->subtris[0], sizeof(vdsTri), numsubtris, f);
     /* Now write associated node data using user-supplied function (if any) */
-    if (putdata == NULL)
-    {
+    if (putdata == NULL) {
 	fwrite(&node->data, sizeof(vdsNodeData), 1, f);
-    }
-    else
-    {
+    } else {
 	putdata(f, node);
     }
 }
@@ -263,8 +252,8 @@ static void writeNode(FILE *f, vdsNode *node, vdsNodeDataWriter putdata)
   The author of the vdslib software library may be contacted at:
 
   US Mail:             Dr. David Patrick Luebke
-                       Department of Computer Science
-                       Thornton Hall, University of Virginia
+		       Department of Computer Science
+		       Thornton Hall, University of Virginia
 		       Charlottesville, VA 22903
 
   Phone:               (804)924-1021
