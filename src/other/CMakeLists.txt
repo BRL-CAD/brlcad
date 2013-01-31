@@ -786,7 +786,7 @@ if(BRLCAD_LEVEL2)
   triangle simplification library provided with BRL-CAD's source code.  Default is
   AUTO, responsive to the toplevel BRLCAD_BUNDLED_LIBS option and
   testing first for a system version if BRLCAD_BUNDLED_LIBS is also AUTO.
-  ")
+")
   THIRD_PARTY(libvds libvds "" libvds_ALIASES libvds_DESCRIPTION NOSYS)
 endif(BRLCAD_LEVEL2)
 
