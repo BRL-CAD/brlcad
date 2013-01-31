@@ -1,0 +1,13 @@
+SET(libvds_ignore_files
+COPYING
+README
+docs
+docs/fold.png
+docs/intro.html
+geom.h
+path.h
+stdvds.h
+vds.h
+vdsprivate.h
+vector.h
+)
