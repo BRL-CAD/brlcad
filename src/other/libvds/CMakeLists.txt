@@ -25,13 +25,13 @@
 # BRL-CAD software package.
 # Minimum required version of CMake
 CMAKE_MINIMUM_REQUIRED(VERSION 2.8.3)
-IF(COMMAND CMAKE_POLICY)
-   CMAKE_POLICY(SET CMP0003 NEW)
-   CMAKE_POLICY(SET CMP0007 OLD)
-   IF(${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION}.${CMAKE_PATCH_VERSION} VERSION_GREATER 2.8.3)
-      CMAKE_POLICY(SET CMP0017 OLD)
-   ENDIF(${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION}.${CMAKE_PATCH_VERSION} VERSION_GREATER 2.8.3)
-ENDIF(COMMAND CMAKE_POLICY)
+if(COMMAND CMAKE_POLICY)
+  CMAKE_POLICY(SET CMP0003 NEW)
+  CMAKE_POLICY(SET CMP0007 OLD)
+  if(${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION}.${CMAKE_PATCH_VERSION} VERSION_GREATER 2.8.3)
+    CMAKE_POLICY(SET CMP0017 OLD)
+  endif(${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION}.${CMAKE_PATCH_VERSION} VERSION_GREATER 2.8.3)
+endif(COMMAND CMAKE_POLICY)
 
 # set CMake project name
 PROJECT(VDS)
@@ -42,39 +42,39 @@ PROJECT(VDS)
 # identifying the necessity of setting CMAKE_INSTALL_NAME_DIR on OSX.
 
 # use, i.e. don't skip the full RPATH for the build tree
-SET(CMAKE_SKIP_BUILD_RPATH  FALSE)
+set(CMAKE_SKIP_BUILD_RPATH  FALSE)
 
 # when building, don't use the install RPATH already
 # (but later on when installing)
-SET(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE)
+set(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE)
 
 # the RPATH/INSTALL_NAME_DIR to be used when installing
 if (NOT APPLE)
-   SET(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib:\$ORIGIN/../lib")
+  set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib:\$ORIGIN/../lib")
 endif(NOT APPLE)
-SET(CMAKE_INSTALL_NAME_DIR "${CMAKE_INSTALL_PREFIX}/lib")
+set(CMAKE_INSTALL_NAME_DIR "${CMAKE_INSTALL_PREFIX}/lib")
 
 # add the automatically determined parts of the RPATH which point to
 # directories outside the build tree to the install RPATH
-SET(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
+set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 
 #---------------------------------------------------------------------
 # Output directories - this is where built library and executable
 # files will be placed after building but prior to install.
-IF(NOT CMAKE_LIBRARY_OUTPUT_DIRECTORY)
-	IF(WIN32)
-		SET(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${VDS_BINARY_DIR}/bin	CACHE INTERNAL "Single output directory for building all libraries.")
-	ELSE(WIN32)
-		SET(CMAKE_LIBRARY_OUTPUT_DIRECTORY
-			${VDS_BINARY_DIR}/lib CACHE INTERNAL "Single output directory for building all	libraries.")
-	ENDIF(WIN32)
-ENDIF(NOT CMAKE_LIBRARY_OUTPUT_DIRECTORY)
-IF(NOT CMAKE_ARCHIVE_OUTPUT_DIRECTORY)
-	SET(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${VDS_BINARY_DIR}/lib CACHE INTERNAL "Single output directory for building all archives.")
-ENDIF(NOT CMAKE_ARCHIVE_OUTPUT_DIRECTORY)
-IF(NOT CMAKE_RUNTIME_OUTPUT_DIRECTORY)
-	SET(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${VDS_BINARY_DIR}/bin CACHE INTERNAL "Single output directory for building all	executables.")
-ENDIF(NOT CMAKE_RUNTIME_OUTPUT_DIRECTORY)
+if(NOT CMAKE_LIBRARY_OUTPUT_DIRECTORY)
+  if(WIN32)
+    set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${VDS_BINARY_DIR}/bin	CACHE INTERNAL "Single output directory for building all libraries.")
+  else(WIN32)
+    set(CMAKE_LIBRARY_OUTPUT_DIRECTORY
+      ${VDS_BINARY_DIR}/lib CACHE INTERNAL "Single output directory for building all	libraries.")
+  endif(WIN32)
+endif(NOT CMAKE_LIBRARY_OUTPUT_DIRECTORY)
+if(NOT CMAKE_ARCHIVE_OUTPUT_DIRECTORY)
+  set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${VDS_BINARY_DIR}/lib CACHE INTERNAL "Single output directory for building all archives.")
+endif(NOT CMAKE_ARCHIVE_OUTPUT_DIRECTORY)
+if(NOT CMAKE_RUNTIME_OUTPUT_DIRECTORY)
+  set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${VDS_BINARY_DIR}/bin CACHE INTERNAL "Single output directory for building all	executables.")
+endif(NOT CMAKE_RUNTIME_OUTPUT_DIRECTORY)
 
 
 #---------------------------------------------------------------------
@@ -83,53 +83,54 @@ ENDIF(NOT CMAKE_RUNTIME_OUTPUT_DIRECTORY)
 # including this one.)
 
 # The location in which to install executables.
-IF(NOT BIN_DIR)
-   SET(BIN_DIR bin)
-ENDIF(NOT BIN_DIR)
+if(NOT BIN_DIR)
+  set(BIN_DIR bin)
+endif(NOT BIN_DIR)
 
 # The location in which to install header files.
-IF(NOT INCLUDE_DIR)
-   SET(INCLUDE_DIR include)
-ENDIF(NOT INCLUDE_DIR)
+if(NOT INCLUDE_DIR)
+  set(INCLUDE_DIR include)
+endif(NOT INCLUDE_DIR)
 
 # The location in which to install libraries.
-IF(NOT LIB_DIR)
-   IF(NOT WIN32)
-      SET(LIB_DIR lib)
-   ELSE(NOT WIN32)
-      SET(LIB_DIR bin)
-   ENDIF(NOT WIN32)
-ENDIF(NOT LIB_DIR)
+if(NOT LIB_DIR)
+  if(NOT WIN32)
+    set(LIB_DIR lib)
+  else(NOT WIN32)
+    set(LIB_DIR bin)
+  endif(NOT WIN32)
+endif(NOT LIB_DIR)
 
 # The location in which to install Manual pages
-IF(NOT MAN_DIR)
-   SET(MAN_DIR man)
-ENDIF(NOT MAN_DIR)
+if(NOT MAN_DIR)
+  set(MAN_DIR man)
+endif(NOT MAN_DIR)
 
 #---------------------------------------------------------------------
 
-SET(CORE_SRCS
-	build.c
-	dynamic.c
-	render.c
-	util.c
-	file.c
-	)
+set(CORE_SRCS
+  build.c
+  cluster.c
+  dynamic.c
+  render.c
+  util.c
+  file.c
+  )
 
-SET(STD_SRCS
-	stdvds.c
-	stdfold.c
-	stdvis.c
-	stdrender.c
-	)
+set(STD_SRCS
+  stdvds.c
+  stdfold.c
+  stdvis.c
+  stdrender.c
+  )
 
-SET(VDS_HDRS
-	vds.h
-	vdsprivate.h
-	path.h
-	vector.h
-	stdvds.h
-	)
+set(VDS_HDRS
+  vds.h
+  vdsprivate.h
+  path.h
+  vector.h
+  stdvds.h
+  )
 
 
 ## Include -DVDS_DEBUGPRINT for verbose operation.
@@ -140,4 +141,11 @@ add_library(vds SHARED ${CORE_SRCS})
 
 add_library(stdvds SHARED ${STD_SRCS})
 
-ADD_SUBDIRECTORY(polyview)
+add_subdirectory(polyview)
+
+# Local Variables:
+# tab-width: 8
+# mode: cmake
+# indent-tabs-mode: t
+# End:
+# ex: shiftwidth=2 tabstop=8
