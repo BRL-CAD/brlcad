@@ -1563,7 +1563,7 @@ Make_shell(void)
     }
 
     bu_log("Bounding box of output: (%g %g %g) <-> (%g %g %g)\n", V3ARGS(r->ra_p->min_pt), V3ARGS(r->ra_p->max_pt));
-    bu_log("%d facets\n", face_count);
+    bu_log("%ld facets\n", face_count);
 
     if (bot)
 	mk_bot_from_nmg(fd_out, "shell", s);
