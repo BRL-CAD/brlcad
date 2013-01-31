@@ -773,6 +773,22 @@ else(BRLCAD_LEVEL2)
   CMAKEFILES(clipper)
 endif(BRLCAD_LEVEL2)
 
+# VDSlib - A View-Dependent Simplification and Rendering Library 
+# For the moment, this is marked NOSYS - it's possible that some
+# Debian systems would have 0.9 of vdslib installed, but it's
+# unmaintained and we're likely to be making changes.  If our
+# own copy of VDSlib ever spins back off into its own project,
+# revisit the NOSYS
+if(BRLCAD_LEVEL2)
+  set(libvds_ALIASES ENABLE_VDS)
+  set(libvds_DESCRIPTION "
+  Option for enabling and disabling compilation of the libvds
+  triangle simplification library provided with BRL-CAD's source code.  Default is
+  AUTO, responsive to the toplevel BRLCAD_BUNDLED_LIBS option and
+  testing first for a system version if BRLCAD_BUNDLED_LIBS is also AUTO.
+  ")
+  THIRD_PARTY(libvds libvds "" libvds_ALIASES libvds_DESCRIPTION NOSYS)
+endif(BRLCAD_LEVEL2)
 
 # Bullet is not yet integrated as a src/other subbuild, but there is code
 # that will make use of it if it is available.  If that code becomes 

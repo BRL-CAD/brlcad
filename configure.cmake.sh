@@ -174,6 +174,10 @@ do
                                   shift;;
      --disable-step-class-libraries)                options="$options -DBRLCAD_SCL=SYSTEM";
                                   shift;;
+     --enable-vds)                options="$options -DBRLCAD_LIBVDS=BUNDLED";
+                                  shift;;
+     --disable-vds)                options="$options -DBRLCAD_LIBVDS=SYSTEM";
+                                  shift;;
      --prefix=*)   	          inputstr=$1;
 				  options="$options -DCMAKE_INSTALL_PREFIX=${inputstr#--prefix=}";
 				  shift;;
