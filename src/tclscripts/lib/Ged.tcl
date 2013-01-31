@@ -1894,7 +1894,7 @@ package provide cadwidgets::Ged 1.0
 }
 
 ::itcl::body cadwidgets::Ged::edit_motion_delta_callback {args} {
-    eval $mGed edit_motion_delta_callback $args
+    eval $mGed edit_motion_delta_callback $itk_component($itk_option(-pane)) $args
 }
 
 ::itcl::body cadwidgets::Ged::edit_motion_delta_callback_all {args} {
