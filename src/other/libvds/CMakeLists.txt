@@ -121,7 +121,6 @@ set(STD_SRCS
   stdvds.c
   stdfold.c
   stdvis.c
-  stdrender.c
   )
 
 set(VDS_HDRS

@@ -1,7 +1,6 @@
 #ifndef GEOM_H
 #define GEOM_H
 
-#include <GL/gl.h>
 #include "vds.h"
 
 typedef struct Face {
@@ -27,11 +26,11 @@ typedef struct Object {
     int nf;                    /* Number of faces in array. */
     triangle *t;               /* Array of triangles. */
     int nt;                    /* Number of triangles in array. */
-    GLfloat mat_ambient[4];    /* Material ambient property. */
-    GLfloat mat_diffuse[4];    /* Material diffuse property. */
-    GLfloat mat_specular[4];   /* Material specular property. */
-    GLfloat mat_emission[4];   /* Material emission property. */
-    GLfloat mat_shininess;     /* Material shininess property. */
+    float mat_ambient[4];    /* Material ambient property. */
+    float mat_diffuse[4];    /* Material diffuse property. */
+    float mat_specular[4];   /* Material specular property. */
+    float mat_emission[4];   /* Material emission property. */
+    float mat_shininess;     /* Material shininess property. */
     float xdim;             /* Object x dimension. */
     float ydim;             /* Object y dimension. */
     float zdim;             /* Object z dimension. */
