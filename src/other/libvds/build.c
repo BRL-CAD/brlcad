@@ -298,8 +298,6 @@ static int assignNodeIds(vdsNode *node, vdsNodeId nodeId, vdsNodeId *idArray)
      */
     if (j == 0) {
 	int index = node - nodearray;		/* pointer arithmetic */
-
-	assert(index < vdsNumnodes);
 	idArray[index] = nodeId;
     }
     if (j > maxdegree) {
@@ -579,7 +577,7 @@ vdsNode *vdsEndVertexTree()
 	root = root->parent;
     }
     VDS_DEBUG(("Assigning node ids..."));
-    ids = (vdsNodeId *) calloc(vdsNumnodes, sizeof(vdsNodeId));
+    ids = (vdsNodeId *) calloc(vdsNumtris, sizeof(vdsNodeId));
     maxdepth = assignNodeIds(root, rootId, ids);
     VDS_DEBUG(("Done.\n"));
     VDS_DEBUG(("Verifying that all nodes form a single rooted tree..."));
@@ -592,20 +590,10 @@ vdsNode *vdsEndVertexTree()
     /* Convert tris to reference node IDs, rather than indices */
     for (i = 0; i < vdsNumtris; i++) {
 	vdsTri *T = &triarray[i];
-	int c0, c1, c2;
 
-	c0 = T->corners[0].index;
-	c1 = T->corners[1].index;
-	c2 = T->corners[2].index;
-
-	assert(c0 < vdsNumnodes && c0 >= 0);
-	assert(c1 < vdsNumnodes && c1 >= 0);
-	assert(c2 < vdsNumnodes && c2 >= 0);
-
-	T->corners[0].id = ids[c0];
-	T->corners[1].id = ids[c1];
-	T->corners[2].id = ids[c2];
-
+	T->corners[0].id = ids[T->corners[0].index];
+	T->corners[1].id = ids[T->corners[1].index];
+	T->corners[2].id = ids[T->corners[2].index];
 	assert(! idEqual(T->corners[0].id, T->corners[1].id) &&
 	       ! idEqual(T->corners[1].id, T->corners[2].id) &&
 	       ! idEqual(T->corners[2].id, T->corners[0].id));
