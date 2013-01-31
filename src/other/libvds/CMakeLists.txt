@@ -141,8 +141,6 @@ add_library(vds SHARED ${CORE_SRCS})
 
 add_library(stdvds SHARED ${STD_SRCS})
 
-add_subdirectory(polyview)
-
 # Local Variables:
 # tab-width: 8
 # mode: cmake
