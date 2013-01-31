@@ -493,6 +493,19 @@ rt_bot_class(const struct soltab *stp, const fastf_t *min, const fastf_t *max, c
     return 0;
 }
 
+int
+rt_bot_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
+{
+    struct rt_bot_internal *bot;
+
+    BU_CK_LIST_HEAD(info->vhead);
+    RT_CK_DB_INTERNAL(ip);
+
+    bot = (struct rt_bot_internal *)ip->idb_ptr;
+    RT_BOT_CK_MAGIC(bot);
+
+    return 0;
+}
 
 /**
  * R T _ B O T _ P L O T

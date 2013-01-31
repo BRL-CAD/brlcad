@@ -1397,7 +1397,7 @@ const struct rt_functab rt_functab[] = {
 	rt_bot_class,
 	rt_bot_free,
 	rt_bot_plot,
-	NULL,
+	rt_bot_adaptive_plot,
 	NULL,
 	rt_bot_tess,
 	NULL,
