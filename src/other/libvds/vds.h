@@ -208,6 +208,9 @@ extern void vdsSprintNodeId(char *str, const vdsNodeId *id);
 extern void vdsStatTree(vdsNode *root, int *nodes, int *leaves, int *tris);
 extern void vdsFreeTree(vdsNode *node);
 
+/* (cluster.c) */
+extern vdsNode *vdsClusterOctree(vdsNode **nodes, int nnodes, int depth);
+
 /*
  * The following macros relate to the maximum degree of the vertex tree,
  * which dictates the maximum depth and the number of bits stored per branch.

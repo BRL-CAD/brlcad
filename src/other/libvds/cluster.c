@@ -13,19 +13,19 @@
 
 
 /*
- * Function:	clusterOctree
+ * Function:	vdsClusterOctree
  * Description:	Builds an octree over the given leaf nodes using
  *		vdsClusterNodes().  Takes an array <nodes> of vdsNode pointers
  *		that represent vertices in the original model (i.e., leaf nodes
  *		in the vertex tree to be generated).  This array is partitioned
  *		into eight subarrays by splitting across the x, y, and z
  *		midplanes of the tightest-fitting bounding cube, and
- *		clusterOctree() is called recursively on each subarray.
+ *		vdsClusterOctree() is called recursively on each subarray.
  *		Finally, vdsClusterNodes() is called on the 2-8 nodes returned
- *		by these recursive calls, and clusterOctree returns the newly
+ *		by these recursive calls, and vdsClusterOctree returns the newly
  *		created internal node.
  */
-vdsNode *clusterOctree(vdsNode **nodes, int nnodes, int depth)
+vdsNode *vdsClusterOctree(vdsNode **nodes, int nnodes, int depth)
 {
     vdsNode *thisnode;
     vdsNode *children[8] = {NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL};
@@ -94,7 +94,7 @@ vdsNode *clusterOctree(vdsNode **nodes, int nnodes, int depth)
 		children[nchildren] = childnodes[i][0];
 	    } else {		/* 2 or more nodes in octant; recurse*/
 		children[nchildren] =
-		    clusterOctree(childnodes[i], nchildnodes[i], depth + 1);
+		    vdsClusterOctree(childnodes[i], nchildnodes[i], depth + 1);
 	    }
 	    nchildren++;
 	}
