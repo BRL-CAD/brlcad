@@ -28,7 +28,6 @@ bin_PROGRAMS = \
 	fbpoint \
 	fbscanplot \
 	fbstretch \
-	fbthreadtest \
 	fbzoom \
 	gif-fb \
 	gif2fb \
@@ -134,10 +133,6 @@ fbscanplot_SOURCES = fbscanplot.c
 fbstretch_LDADD = ${FB}
 fbstretch_SOURCES = fbstretch.c ioutil.c
 
-fbthreadtest_CFLAGS = -DIF_TK $(TK_CPPFLAGS)
-fbthreadtest_LDADD = ${FB} ${TK}
-fbthreadtest_SOURCES = fbthreadtest.c
-
 fbzoom_LDADD = ${FB} ${TERMIO}
 fbzoom_SOURCES = fbzoom.c
 
@@ -214,7 +209,6 @@ FAST_OBJECTS = \
 	$(fbpoint_OBJECTS) \
 	$(fbscanplot_OBJECTS) \
 	$(fbstretch_OBJECTS) \
-	$(fbthreadtest_OBJECTS) \
 	$(fbzoom_OBJECTS) \
 	$(gif_fb_OBJECTS) \
 	$(gif2fb_OBJECTS) \

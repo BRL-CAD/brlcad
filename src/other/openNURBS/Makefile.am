@@ -99,7 +99,6 @@ ON_INC = \
 	opennurbs_texture_mapping.h \
 	opennurbs_torus.h \
 	opennurbs_unicode.h \
-	opennurbs_unix.h \
 	opennurbs_userdata.h \
 	opennurbs_uuid.h \
 	opennurbs_version.h \
