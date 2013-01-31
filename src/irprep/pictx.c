@@ -162,7 +162,7 @@ main(void)
 	(void)fflush(stdout);
 	if (system(irX) == -1)
 	{
-	    bu_exit(EXIT_FAILURE, "ERROR: attempt to call \"showtherm\" program failed.");
+	    bu_exit(EXIT_FAILURE, "ERROR: attempt to call \"irX\" program failed.");
 	}
     }
 
