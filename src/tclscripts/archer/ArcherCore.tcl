@@ -3532,7 +3532,7 @@ namespace eval ArcherCore {
 	}
     }
 
-    if {$node == $mSelectedObj} {
+    if {$node == $mSelectedObjPath} {
 	if {$state != -1} {
 	    gedCmd configure -primitiveLabels $plnode
 	} else {
@@ -5730,15 +5730,23 @@ namespace eval ArcherCore {
 	lappend tobjects [regsub {^/} $obj ""]
     }
 
+    set soi [lsearch $tobjects $mSelectedObjPath]
+
     if {[catch {eval gedCmd draw $options $tobjects} ret]} {
-	gedCmd configure -primitiveLabels {}
+	if {$soi != -1} {
+	    gedCmd configure -primitiveLabels $mSelectedObjPath
+	}
+
 	updateTreeDrawLists
 	SetNormalCursor $this
 
 	return $ret
     }
 
-    gedCmd configure -primitiveLabels {}
+    if {$soi != -1} {
+	gedCmd configure -primitiveLabels $mSelectedObjPath
+    }
+
     updateTreeDrawLists
     if {$wflag} {
 	SetNormalCursor $this
@@ -5794,7 +5802,7 @@ namespace eval ArcherCore {
 	lappend tobjects [regsub {^/} $obj ""]
     }
 
-    set soi [lsearch $tobjects $mSelectedObj]
+    set soi [lsearch $tobjects $mSelectedObjPath]
 
     if {[catch {eval gedCmd erase $options $tobjects} ret]} {
 	if {$soi != -1} {
