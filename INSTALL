@@ -656,7 +656,7 @@ Aliases:  ENABLE_SCL, ENABLE_STEP, ENABLE_STEP_CLASS_LIBRARIES
   triangle simplification library provided with BRL-CAD's source code.  Default is
   AUTO, responsive to the toplevel BRLCAD_BUNDLED_LIBS option and
   testing first for a system version if BRLCAD_BUNDLED_LIBS is also AUTO.
-
+  
 Aliases:  ENABLE_VDS
 
 

@@ -8,7 +8,6 @@
 #include <math.h>
 #include <assert.h>
 
-#include "geom.h"
 #include "vds.h"
 #include "vector.h"
 
@@ -110,48 +109,4 @@ vdsNode *clusterOctree(vdsNode **nodes, int nnodes, int depth)
 	}
     }
     return thisnode;
-}
-
-/*
- * Function:	generateVertexTree
- * Description:	Given the triangles and vertices listed in the object <obj>,
- * 		generates obj->vertexTree.  Calls vdsAddNode() on all vertices
- *		in obj->v, vdsAddTri() on all triangles in obj->t, and calls
- *		clusterOctree() to cluster the nodes with vdsClusterNodes().
- *		Lastly, calls vdsEndVertexTree() to finalize the vertex tree.
- */
-void generateVertexTree(object *obj)
-{
-    vdsNode *leafnodes;
-    vdsNode **leafptrs;
-    int i;
-
-    vdsBeginVertexTree();
-    vdsBeginGeometry();
-    for (i = 0; i < obj->nv; i++) {
-	vdsAddNode(obj->v[i].coord[0], obj->v[i].coord[1], obj->v[i].coord[2]);
-    }
-    for (i = 0; i < obj->nt; i++) {
-	vdsByte3 grey = {190, 190, 190};
-	triangle *t = &obj->t[i];
-	vdsVec3 n0, n1, n2;
-	vertex *v0, *v1, *v2;
-
-	v0 = &obj->v[t->verts[0] - 1];
-	v1 = &obj->v[t->verts[1] - 1];
-	v2 = &obj->v[t->verts[2] - 1];
-	VEC3_COPY(n0, v0->hasNormal ? v0->normal : t->normal);
-	VEC3_COPY(n1, v1->hasNormal ? v1->normal : t->normal);
-	VEC3_COPY(n2, v2->hasNormal ? v2->normal : t->normal);
-	vdsAddTri(t->verts[0] - 1, t->verts[1] - 1, t->verts[2] - 1,
-		  n0, n1, n2, grey, grey, grey);
-    }
-    leafnodes = vdsEndGeometry();
-    leafptrs = (vdsNode **) malloc(sizeof(vdsNode *) * obj->nv);
-    for (i = 0; i < obj->nv; i++) {
-	leafptrs[i] = &leafnodes[i];
-    }
-    clusterOctree(leafptrs, obj->nv, 0);
-    obj->vertexTree = vdsEndVertexTree();
-    free(leafptrs);
 }

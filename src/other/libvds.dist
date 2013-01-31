@@ -4,7 +4,6 @@ README
 docs
 docs/fold.png
 docs/intro.html
-geom.h
 path.h
 stdvds.h
 vds.h
