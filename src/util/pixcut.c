@@ -317,7 +317,11 @@ main(int argc, char **argv)
     }
 
     while (row < base_y) {
-	fread(inbuf, num_bytes, org_width, input);
+	result = fread(inbuf, num_bytes, org_width, input);
+	if (result != org_width) {
+	    perror("pixcut: fread");
+	    bu_exit (3, NULL);
+	}
 	row++;
     }
 /*
