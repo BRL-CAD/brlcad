@@ -1611,6 +1611,8 @@ rt_bot_find_e_nearest_pt2(
 
 	MAT4X3PNT(p1, mat, &bot->vertices[ edge_list[i*2+0]*3]);
 	MAT4X3PNT(p2, mat, &bot->vertices[ edge_list[i*2+1]*3]);
+	p1[Z] = 0.0;
+	p2[Z] = 0.0;
 
 	ret = bn_dist_pt2_lseg2(&tmp_dist, pca, p1, p2, pt2, &tol);
 
