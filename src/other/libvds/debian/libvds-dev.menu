@@ -1,6 +1,0 @@
-?package(libvds-dev):\
-        needs="x11" \
-        section="Apps/Viewers" \
-        hints="Math" \
-        title="VDSlib Polyview" \
-        command="/usr/bin/polyview"
