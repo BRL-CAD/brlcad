@@ -86,7 +86,9 @@ frame .f_bottom \n");
 
     bu_vls_printf(s, "\
 label .l_top -text {Crash details and system information:} \n\
-label .l_bottom -text {Please describe what you were doing when the problem occurred:} \n\
+label .l_bottom -text {Please describe what you were doing when the problem occurred:} \n");
+
+    bu_vls_printf(s, "\
 label .l_info -justify left -text {Help improve BRL-CAD by sending us diagnostic and usage information.  You will not be contacted in response to this report.  See http://brlcad.org in order to manually submit a bug report, feature request, or code contribution.  By selecting \"Send to BRL-CAD developers...\" you're agree to let us use this information in order to improve our products and services.} \n\
 .l_info configure -wraplength 500 \n");
 
