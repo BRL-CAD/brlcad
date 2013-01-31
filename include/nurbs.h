@@ -371,7 +371,7 @@ template<class BA>
 inline void
 BANode<BA>::addChild(BANode<BA>* child)
 {
-    if (child) {
+    if (LIKELY(child != NULL)) {
 	m_children.push_back(child);
     }
 }
@@ -1015,7 +1015,7 @@ public:
  inline void
  BVNode<BV>::addChild(BVNode<BV>* child)
  {
-     if (child) {
+     if (LIKELY(child != NULL)) {
 	 m_children.push_back(child);
      }
  }
@@ -1085,7 +1085,7 @@ public:
      double tfar = DBL_MAX;
      bool untrimmedresult = true;
      for (int i = 0; i < 3; i++) {
-	 if (ON_NearZero(ray.m_dir[i])) {
+	 if (UNLIKELY(ON_NearZero(ray.m_dir[i]))) {
 	     if (ray.m_origin[i] < m_node.m_min[i] || ray.m_origin[i] > m_node.m_max[i]) {
 		 untrimmedresult = false;
 	     }
@@ -1101,7 +1101,7 @@ public:
 	     */
 	 }
      }
-     if (tnear_opt != NULL && tfar_opt != NULL) {
+     if (LIKELY(tnear_opt != NULL && tfar_opt != NULL)) {
 	 *tnear_opt = tnear; *tfar_opt = tfar;
      }
      if (isLeaf()) {
@@ -1442,11 +1442,10 @@ BVNode<BV>::prepTrims()
 
     m_trims_above.clear();
 
-    if (ct != NULL)
+    if (LIKELY(ct != NULL))
 	ct->getLeavesAbove(m_trims_above, m_u, m_v);
 
     m_trims_above.sort(sortY);
-
 
     if (!m_trims_above.empty()) {
 	i = m_trims_above.begin();
