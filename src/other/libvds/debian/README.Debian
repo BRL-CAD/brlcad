@@ -1,0 +1,17 @@
+vdslib for Debian
+-----------------
+
+vdslib is the view-dependent simplification library, developed by
+Dr. David Patrick Luebke.  For this Debian package I have modified the
+example polyview program to get it to compile with FLTk (free,
+available in main as libfltk1 and libfltk-dev) instead of XForms
+(non-free, available as libforms0.89 and libforms-dev).  I have also
+added extern "C" { ... } linkage specifications to vds' headers.  The
+doc++ is not included at the moment.  I have requested Dr. Luebke to
+include the required files to generate the documentation in the
+upstream tarball.
+
+The package is compiled with VDS_MAXDEGREE defined as 8 (i.e.,
+supports octrees) and VDS_DOUBLE_PRECISION.
+
+ -- Marcelo E. Magallon <mmagallo@debian.org>, Sun, 20 Feb 2000 12:49:36 +0100

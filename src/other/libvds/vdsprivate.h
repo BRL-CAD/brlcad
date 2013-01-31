@@ -12,6 +12,10 @@
 #ifndef VDS_PRIVATE_H
 #define VDS_PRIVATE_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #ifdef INSTRUMENT
 #define STAT(x) x
 #else
@@ -38,6 +42,10 @@ extern void vdsUpdateTriNormal(vdsTri *t);
 extern vdsNode *vdsFindNode(vdsNodeId id, vdsNode *root);
 extern vdsNodeId vdsFindCommonId(vdsNodeId id1, vdsNodeId id2, int maxdepth);
 extern void vdsComputeTriNodes(vdsNode *node, vdsNode *root);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif 		/* VDS_PRIVATE_H */
 

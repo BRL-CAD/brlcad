@@ -13,10 +13,11 @@
 #include <string.h>
 #include <stdlib.h>
 
+#include "FL/forms.H"
+
 #include "trackball.h"
 #include "geom.h"
 #include "poly.h"
-#include "forms.h"
 #include "polyviewctrl.h"
 
 #include "vds.h"
@@ -154,7 +155,7 @@ void cb_load(FL_OBJECT *obj, long argument) {
     const char *fname;
     FILE *loadfile;
 
-    fname = fl_show_fselector("Load vertex tree from file...","","*.vds","");
+    fname = fl_show_file_selector("Load vertex tree from file...","","*.vds","");
     if (fname == NULL) { return; }
     loadfile = fopen(fname, "r");
     if (loadfile == NULL)
@@ -172,7 +173,7 @@ void cb_save(FL_OBJECT *obj, long argument) {
     const char *fname;
     FILE *savefile;
 
-    fname = fl_show_fselector("Save vertex tree to file...","","*.vds","");
+    fname = fl_show_file_selector("Save vertex tree to file...","","*.vds","");
     if (fname == NULL) { return; }
     savefile = fopen(fname, "w");
     if (savefile == NULL)

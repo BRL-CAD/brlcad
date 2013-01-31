@@ -8,6 +8,10 @@
 #ifndef _VECTOR_H
 #define _VECTOR_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define VEC3_EQUAL(a,b) ((a)[0]==(b)[0]&&(a)[1]==(b)[1]&&(a)[2]==(b)[2])
 
 #define VEC3_COPY(dst,src) ((dst)[0]=(src)[0], \
@@ -70,4 +74,9 @@
 #define BYTE3_COPY(dst,src) ((dst)[0]=(src)[0], \
                             (dst)[1]=(src)[1], \
                             (dst)[2]=(src)[2])
+
+#ifdef __cplusplus
+}
+#endif
+
 #endif /* _VECTOR_H */

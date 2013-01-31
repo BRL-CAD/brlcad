@@ -5,6 +5,14 @@
  *		and for deciding when to fold and unfold nodes.  You need
  *		only #include this file if using these standard routines.
  */
+
+#ifndef _STDVDS_h_
+#define _STDVDS_h_
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "vds.h"
 
 #ifdef VDS_DOUBLE_PRECISION
@@ -41,5 +49,9 @@ extern void vdsRenderShadedLit(const vdsNode *node);
 extern void vdsRenderLit(const vdsNode *node);
 extern unsigned int vdsCountTrisDrawn();
 
+#ifdef __cplusplus
+}
+#endif
 
+#endif /* _STDVDS_h_ */
 

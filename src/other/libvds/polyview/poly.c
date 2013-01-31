@@ -21,6 +21,8 @@ void read_poly_body(object *o);
 int read_poly_vertex(vertex *v);
 int read_poly_face(face *f);
 
+int yylex(void);
+
 /* Routine prints an error message in the appropriate format. */
 void poly_error(char *msg) {
     fprintf(stderr,"[%s]:%d  %s.\n",curFileName,pLineNo,msg);

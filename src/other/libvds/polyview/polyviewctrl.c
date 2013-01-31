@@ -1,6 +1,6 @@
 /* Form definition file generated with fdesign. */
 
-#include "forms.h"
+#include "FL/forms.H"
 #include <stdlib.h>
 #include "polyviewctrl.h"
 
@@ -76,29 +76,29 @@ FD_PolyViewCtrl *create_form_PolyViewCtrl(void)
     fl_set_slider_value(obj, 0.2);
   obj = fl_add_text(FL_NORMAL_TEXT,10,10,190,20,"Material Properties");
     fl_set_object_lsize(obj,FL_NORMAL_SIZE);
-    fl_set_object_lalign(obj,FL_ALIGN_CENTER|FL_ALIGN_INSIDE);
+    fl_set_object_lalign(obj,FL_ALIGN_CENTER);
     fl_set_object_lstyle(obj,FL_NORMAL_STYLE+FL_EMBOSSED_STYLE);
   obj = fl_add_text(FL_NORMAL_TEXT,10,30,30,20,"Amb");
-    fl_set_object_lalign(obj,FL_ALIGN_CENTER|FL_ALIGN_INSIDE);
+    fl_set_object_lalign(obj,FL_ALIGN_CENTER);
   obj = fl_add_text(FL_NORMAL_TEXT,130,30,30,20,"Emis");
-    fl_set_object_lalign(obj,FL_ALIGN_CENTER|FL_ALIGN_INSIDE);
+    fl_set_object_lalign(obj,FL_ALIGN_CENTER);
   obj = fl_add_text(FL_NORMAL_TEXT,50,30,30,20,"Dif");
-    fl_set_object_lalign(obj,FL_ALIGN_CENTER|FL_ALIGN_INSIDE);
+    fl_set_object_lalign(obj,FL_ALIGN_CENTER);
   obj = fl_add_text(FL_NORMAL_TEXT,90,30,30,20,"Spec");
-    fl_set_object_lalign(obj,FL_ALIGN_CENTER|FL_ALIGN_INSIDE);
+    fl_set_object_lalign(obj,FL_ALIGN_CENTER);
   obj = fl_add_text(FL_NORMAL_TEXT,210,20,50,30,"Global\nLight");
-    fl_set_object_lalign(obj,FL_ALIGN_CENTER|FL_ALIGN_INSIDE);
+    fl_set_object_lalign(obj,FL_ALIGN_CENTER);
     fl_set_object_lstyle(obj,FL_NORMAL_STYLE+FL_EMBOSSED_STYLE);
   obj = fl_add_text(FL_NORMAL_TEXT,170,30,30,20,"Shiny");
-    fl_set_object_lalign(obj,FL_ALIGN_CENTER|FL_ALIGN_INSIDE);
+    fl_set_object_lalign(obj,FL_ALIGN_CENTER);
   obj = fl_add_text(FL_NORMAL_TEXT,10,140,30,20,"RGB");
-    fl_set_object_lalign(obj,FL_ALIGN_LEFT|FL_ALIGN_INSIDE);
+    fl_set_object_lalign(obj,FL_ALIGN_LEFT);
   obj = fl_add_text(FL_NORMAL_TEXT,50,140,30,20,"RGB");
-    fl_set_object_lalign(obj,FL_ALIGN_LEFT|FL_ALIGN_INSIDE);
+    fl_set_object_lalign(obj,FL_ALIGN_LEFT);
   obj = fl_add_text(FL_NORMAL_TEXT,90,140,30,20,"RGB");
-    fl_set_object_lalign(obj,FL_ALIGN_LEFT|FL_ALIGN_INSIDE);
+    fl_set_object_lalign(obj,FL_ALIGN_LEFT);
   obj = fl_add_text(FL_NORMAL_TEXT,130,140,30,20,"RGB");
-    fl_set_object_lalign(obj,FL_ALIGN_LEFT|FL_ALIGN_INSIDE);
+    fl_set_object_lalign(obj,FL_ALIGN_LEFT);
   fdui->sld_mat_shiny = obj = fl_add_valslider(FL_VERT_BROWSER_SLIDER,170,50,30,90,"");
     fl_set_object_callback(obj,cb_mat_shiny,0);
     fl_set_slider_bounds(obj, 100, 0);
@@ -106,7 +106,7 @@ FD_PolyViewCtrl *create_form_PolyViewCtrl(void)
     fl_set_slider_size(obj, 0.11);
     fl_set_slider_step(obj, 0.05);
   obj = fl_add_text(FL_NORMAL_TEXT,220,200,30,20,"RGB");
-    fl_set_object_lalign(obj,FL_ALIGN_LEFT|FL_ALIGN_INSIDE);
+    fl_set_object_lalign(obj,FL_ALIGN_LEFT);
   fdui->light_pos = obj = fl_add_positioner(FL_NORMAL_POSITIONER,270,30,100,100,"");
     fl_set_object_boxtype(obj,FL_FRAME_BOX);
     fl_set_object_color(obj,FL_COL1,FL_GREEN);
@@ -116,14 +116,14 @@ FD_PolyViewCtrl *create_form_PolyViewCtrl(void)
     fl_set_positioner_xvalue(obj, 0);
     fl_set_positioner_yvalue(obj, 0);
   obj = fl_add_text(FL_NORMAL_TEXT,270,10,100,20,"Light Position");
-    fl_set_object_lalign(obj,FL_ALIGN_CENTER|FL_ALIGN_INSIDE);
+    fl_set_object_lalign(obj,FL_ALIGN_CENTER);
     fl_set_object_lstyle(obj,FL_NORMAL_STYLE+FL_EMBOSSED_STYLE);
   fdui->sld_zoom = obj = fl_add_slider(FL_VERT_BROWSER_SLIDER,380,30,20,190,"");
     fl_set_object_callback(obj,cb_zoom,0);
     fl_set_slider_bounds(obj, 1, -1);
     fl_set_slider_value(obj, 0);
   obj = fl_add_text(FL_NORMAL_TEXT,370,10,40,20,"Zoom");
-    fl_set_object_lalign(obj,FL_ALIGN_CENTER|FL_ALIGN_INSIDE);
+    fl_set_object_lalign(obj,FL_ALIGN_CENTER);
     fl_set_object_lstyle(obj,FL_NORMAL_STYLE+FL_EMBOSSED_STYLE);
 
   fdui->grp_render_mode = fl_bgn_group();
@@ -148,7 +148,7 @@ FD_PolyViewCtrl *create_form_PolyViewCtrl(void)
   fdui->btn_vds = obj = fl_add_lightbutton(FL_PUSH_BUTTON,100,195,90,20,"VDS Enable");
     fl_set_object_callback(obj,cb_vds,0);
   obj = fl_add_text(FL_NORMAL_TEXT,20,195,70,20,"Threshold");
-    fl_set_object_lalign(obj,FL_ALIGN_LEFT|FL_ALIGN_INSIDE);
+    fl_set_object_lalign(obj,FL_ALIGN_LEFT);
     fl_set_object_lstyle(obj,FL_BOLD_STYLE);
   fdui->btn_reset = obj = fl_add_button(FL_NORMAL_BUTTON,410,175,50,20,"Reset");
     fl_set_object_callback(obj,cb_reset,0);
@@ -160,7 +160,7 @@ FD_PolyViewCtrl *create_form_PolyViewCtrl(void)
     fl_set_object_callback(obj,cb_save,0);
   fl_end_form();
 
-  fdui->PolyViewCtrl->fdui = fdui;
+/*  fdui->PolyViewCtrl->fdui = fdui; */
 
   return fdui;
 }

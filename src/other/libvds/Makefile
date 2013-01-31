@@ -12,9 +12,9 @@ DBGOPT = -g -DVDS_DEBUGPRINT
 # DBGOPT = -O2
 
 ## Set these to the directories where binaries, libraries, and include files go
-INST_BIN_DIR = /home/gfx/bin/$(OSTYPE)
-INST_LIB_DIR = /home/gfx/lib/$(OSTYPE)
-INST_INC_DIR = /home/gfx/include
+INST_BIN_DIR = $(DESTDIR)/usr/bin
+INST_LIB_DIR = $(DESTDIR)/usr/lib
+INST_INC_DIR = $(DESTDIR)/usr/include
 
 ## Edit the CC, CFLAGS, AR, and RANLIB compilation variables for your own
 ## system and preferences.
@@ -28,8 +28,8 @@ DOC = doc++
 ## Set GLINC and GLLIB if necessary to specify where OpenGL include files 
 ## and libraries can be found (only needed for libstdvds.a)
 ##
-GLINC = /usr/local/include
-GLLIB = /usr/local/lib
+GLINC = /usr/X11R6/include
+GLLIB = /usr/X11R6/lib
 
 ##
 ## You shouldn't typically need to modify anything below this point.
@@ -74,8 +74,8 @@ install: all
 	@ echo "Installing VDSlib compiled with $(DBGOPT)"
 	cp libvds.a libstdvds.a $(INST_LIB_DIR)
 	cp vds.h stdvds.h $(INST_INC_DIR)
-	@ echo "Compiling clean version of polyview"
-	cd polyview; make clobber polyview
+#	@ echo "Compiling clean version of polyview"
+#	cd polyview; make clobber polyview
 	@ echo "Installing polyview binary to $(INST_BIN_DIR)"
 	cp polyview/polyview $(INST_BIN_DIR)
 	@ echo "Done. Don't forget to recompile any apps that depend on VDSlib"

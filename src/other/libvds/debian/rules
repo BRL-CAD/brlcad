@@ -1,0 +1,80 @@
+#!/usr/bin/make -f
+# GNU copyright 2000 by Marcelo E. Magallon
+# Based on sample debian/rules that uses debhelper.
+# GNU copyright 1997 to 1999 by Joey Hess.
+
+# Uncomment this to turn on verbose mode.
+#export DH_VERBOSE=1
+
+# This is the debhelper compatability version to use.
+export DH_COMPAT=2
+
+# version=0.9
+# major=0
+
+build: build-stamp
+build-stamp:
+	dh_testdir
+
+	$(MAKE)
+	$(MAKE) -C polyview clobber
+	tar czf polyview.tar.gz polyview
+	$(MAKE) -C polyview
+
+	touch build-stamp
+
+clean:
+	dh_testdir
+	dh_testroot
+	rm -f build-stamp
+
+	-$(MAKE) -C polyview clobber
+	-$(RM) polyview.tar.gz 
+	-$(MAKE) clobber
+
+	dh_clean
+	-$(RM) debian/buildinfo
+
+install: build
+	dh_testdir
+	dh_testroot
+	dh_clean -k
+	dh_installdirs usr/bin usr/include usr/lib
+
+	# Add here commands to install the package into debian/tmp.
+	$(MAKE) install DESTDIR=`pwd`/debian/libvds-dev
+
+# Build architecture-independent files here.
+binary-indep: build install
+# We have nothing to do by default.
+
+# Build architecture-dependent files here.
+binary-arch: build install
+#	dh_testversion
+	dh_testdir
+	dh_testroot
+#
+# build libvdslib${major} package by moving files from vdslib-dev
+#
+#	dh_movefiles -plibvds$(major)             \
+#		usr/lib/libvds.so.$(major)        \
+#		usr/lib/libvds.so.$(version)
+
+	dh_buildinfo generate install
+	dh_installdocs
+	dh_installexamples polyview.tar.gz polyview/cat.poly
+	dh_installmenu
+	dh_installmanpages
+	dh_installchangelogs 
+	dh_strip
+	dh_compress
+	dh_fixperms
+#	dh_makeshlibs
+	dh_installdeb
+	dh_shlibdeps
+	dh_gencontrol
+	dh_md5sums
+	dh_builddeb
+
+binary: binary-indep binary-arch
+.PHONY: build clean binary-indep binary-arch binary install

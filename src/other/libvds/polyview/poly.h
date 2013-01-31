@@ -1,6 +1,7 @@
 #include "geom.h"
 
 void read_poly(char *fname, object *o);
+void generateVertexTree(object *obj);
 
 /***************************************************************************\
 

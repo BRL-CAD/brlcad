@@ -7,16 +7,16 @@ CC = cc
 #
 VDSDIR = ..
 VDSINC = -I$(VDSDIR)
-GFXINC = -I/home/gfx/include
+GFXINC = -I/usr/X11R6/include
 CFLAGS = $(OPTFLAG) $(VDSINC) $(GFXINC)
 #
 #	Linker flags
 #
-XLIBS = -L/usr/X11R6/lib -lXmu -lX11 -lXmu -lXext -lXt
-GL_LIBDIR = -L/home/gfx/lib/$(OSTYPE) 
-GL_LIBS = $(GL_LIBDIR) -L/usr/local/lib -lglut -lGL -lGLU
+XLIBS = -L/usr/X11R6/lib -lXi -lX11 -lXext -lXt
+GL_LIBDIR =  
+GL_LIBS = $(GL_LIBDIR) -lglut -lGL -lGLU
 VDSLIBS = -L$(VDSDIR) -lvds -lstdvds
-LIBS = $(VDSLIBS) $(GL_LIBS) -lforms $(XLIBS) -lm 
+LIBS = $(VDSLIBS) $(GL_LIBS) -lfltk -lfltk_forms $(XLIBS) -lm 
 
 OBJS = polyview.o polyviewctrl.o trackball.o polylex.o \
        poly.o geom.o invmatrix.o cluster.o
@@ -37,13 +37,13 @@ PURIFY = purify
 .SUFFIXES: .o .c
 
 .c.o :
-	$(CC) $(CFLAGS) -c $<
+	$(CXX) $(CFLAGS) -c $<
 
 # Rest of the rules.
 default: polyview 
  
 polyview: $(OBJS) ${VDSDIR}/libvds.a
-	$(CC) $(CFLAGS) -o $@ $(OBJS) $(LIBS)
+	$(CXX) $(CFLAGS) -o $@ $(OBJS) $(LIBS)
 
 purify: $(OBJS) ${VDSDIR}/libvds.a
 	$(PURIFY) $(CC) $(CFLAGS) -o $@ $(OBJS) $(LIBS)

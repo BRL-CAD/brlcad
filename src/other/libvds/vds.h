@@ -22,6 +22,11 @@
 
 #ifndef _VDS_H
 #define _VDS_H
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <stdio.h>
 
 /** VDS_MAXDEGREE defines the maximum degree of vertex tree nodes	*/
@@ -240,6 +245,10 @@ extern void vdsFreeTree(vdsNode *node);
 #    endif
 #else
 #    error "Only values of 2, 4, and 8 supported for VDS_MAXDEGREE"
+#endif
+
+#ifdef __cplusplus
+}
 #endif
 
 #endif		/* _VDS_H */

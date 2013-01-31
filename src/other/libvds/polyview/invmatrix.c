@@ -15,6 +15,7 @@ from "Graphics Gems", Academic Press, 1990
  *         det A
  */
 
+#include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
 
