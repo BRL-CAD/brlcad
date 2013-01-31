@@ -366,7 +366,7 @@ tthrm_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, c
 	    /* make sure we don't have any "infinity" values */
 	    for (i=0; i < 4; i++) {
 		if (fv[i] > MAX_FASTF || fv[i] < -MAX_FASTF) {
-		    bu_log("%s:%d seg %d node %d coord %d out of bounds: %g\n",
+		    bu_log("%s:%d seg %ld node %d coord %d out of bounds: %g\n",
 			   __FILE__, __LINE__, tseg, node, i, fv[i]);
 		    bu_bomb("choke, gasp, *croak*\n");
 		}

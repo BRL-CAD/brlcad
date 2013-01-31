@@ -200,7 +200,7 @@ tree_solids(union tree *tp, struct tree_bark *tb, int op, struct resource *resp)
 			   tb->name);
 
 		if (rdebug&RDEBUG_SHADE)
-		    bu_log(" got a primitive type %d \"%s\".  This primitive ain't no ellipse bucko!\n",
+		    bu_log(" got a primitive type %ld \"%s\".  This primitive ain't no ellipse bucko!\n",
 			   sol_id, rt_functab[sol_id].ft_name);
 
 		break;
@@ -210,7 +210,7 @@ tree_solids(union tree *tp, struct tree_bark *tb, int op, struct resource *resp)
 	    ell_p = (struct rt_ell_internal *)dbint->ip.idb_ptr;
 
 	    if (rdebug&RDEBUG_SHADE)
-		bu_log(" got a primitive type %d \"%s\"\n",
+		bu_log(" got a primitive type %ld \"%s\"\n",
 		       sol_id,
 		       rt_functab[sol_id].ft_name);
 
