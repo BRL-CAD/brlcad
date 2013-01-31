@@ -571,7 +571,7 @@ db5_sync_attr_to_comb(struct rt_comb_internal *comb, const struct bu_attribute_v
 	if (endptr == bu_vls_addr(&newval) + strlen(bu_vls_addr(&newval))) {
 	    comb->aircode = attr_num_val;
 	} else {
-	    bu_log("WARNING: [%s] has invalid aircode value [%s]\naircode remains at %d\n", name, bu_vls_addr(&newval), comb->aircode);
+	    bu_log("WARNING: [%s] has invalid aircode value [%s]\naircode remains at %ld\n", name, bu_vls_addr(&newval), comb->aircode);
 	}
     } else {
 	/* not air */
@@ -663,7 +663,7 @@ db5_sync_comb_to_attr(struct bu_attribute_value_set *avs, const struct rt_comb_i
 
     /* Region ID */
     if (comb->region_flag) {
-	bu_vls_sprintf(&newval, "%d", comb->region_id);
+	bu_vls_sprintf(&newval, "%ld", comb->region_id);
 	(void)bu_avs_add_vls(avs, db5_standard_attribute(ATTR_REGION_ID), &newval);
     } else {
 	bu_avs_remove(avs, db5_standard_attribute(ATTR_REGION_ID));
@@ -671,7 +671,7 @@ db5_sync_comb_to_attr(struct bu_attribute_value_set *avs, const struct rt_comb_i
 
     /* Material ID */
     if (comb->GIFTmater != 0) {
-	bu_vls_sprintf(&newval, "%d", comb->GIFTmater);
+	bu_vls_sprintf(&newval, "%ld", comb->GIFTmater);
 	(void)bu_avs_add_vls(avs, db5_standard_attribute(ATTR_MATERIAL_ID), &newval);
     } else {
 	bu_avs_remove(avs, db5_standard_attribute(ATTR_MATERIAL_ID));
@@ -679,7 +679,7 @@ db5_sync_comb_to_attr(struct bu_attribute_value_set *avs, const struct rt_comb_i
 
     /* Air */
     if (comb->aircode) {
-	bu_vls_sprintf(&newval, "%d", comb->aircode);
+	bu_vls_sprintf(&newval, "%ld", comb->aircode);
 	(void)bu_avs_add_vls(avs, db5_standard_attribute(ATTR_AIR), &newval);
     } else {
 	bu_avs_remove(avs, db5_standard_attribute(ATTR_AIR));
@@ -687,7 +687,7 @@ db5_sync_comb_to_attr(struct bu_attribute_value_set *avs, const struct rt_comb_i
 
     /* LOS */
     if (comb->los) {
-	bu_vls_sprintf(&newval, "%d", comb->los);
+	bu_vls_sprintf(&newval, "%ld", comb->los);
 	(void)bu_avs_add_vls(avs, db5_standard_attribute(ATTR_LOS), &newval);
     } else {
 	bu_avs_remove(avs, db5_standard_attribute(ATTR_LOS));

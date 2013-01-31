@@ -714,7 +714,7 @@ db_follow_path(
     if (RT_G_DEBUG&DEBUG_TREEWALK) {
 	char *sofar = db_path_to_string(total_path);
 	char *toofar = db_path_to_string(new_path);
-	bu_log("db_follow_path() total_path='%s', tsp=x%x, new_path='%s', noisy=%d, depth=%d\n",
+	bu_log("db_follow_path() total_path='%s', tsp=x%x, new_path='%s', noisy=%d, depth=%ld\n",
 	       sofar, tsp, toofar, noisy, depth);
 	bu_free(sofar, "path string");
 	bu_free(toofar, "path string");

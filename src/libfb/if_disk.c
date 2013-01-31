@@ -205,7 +205,7 @@ dsk_read(FBIO *ifp, int x, int y, unsigned char *pixelp, size_t count)
 	    }
 	    if (fd != 0) {
 		/* This happens all the time reading from pipes */
-		fb_log("disk_buffer_read(fd=%d): y=%d read of %ld got %d bytes\n",
+		fb_log("disk_buffer_read(fd=%d): y=%d read of %ld got %ld bytes\n",
 		       fd, y, (long)todo, got);
 	    }
 	}

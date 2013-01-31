@@ -365,7 +365,7 @@ db_pr_dir(const struct db_i *dbip)
 		flags = "COM";
 	    else
 		flags = "Bad";
-	    bu_log("x%.8x %s %s=x%.8x len=%.5zu use=%.2d nref=%.2d %s",
+	    bu_log("x%.8x %s %s=x%.8x len=%.5zu use=%.2ld nref=%.2ld %s",
 		   dp,
 		   flags,
 		   dp->d_flags & RT_DIR_INMEM ? "  ptr " : "d_addr",

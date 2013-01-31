@@ -50,7 +50,7 @@ rt_pr_soltab(register const struct soltab *stp)
 	bu_log("stp=x%x, id=%d.\n", stp, id);
 	bu_bomb("rt_pr_soltab:  bad id");
     }
-    bu_log("------------ %s (bit %d) %s ------------\n",
+    bu_log("------------ %s (bit %ld) %s ------------\n",
 	   stp->st_dp->d_namep, stp->st_bit,
 	   rt_functab[id].ft_name);
     VPRINT("Bound Sph CENTER", stp->st_center);
@@ -75,7 +75,7 @@ rt_pr_region(register const struct region *rp)
     RT_CK_REGION(rp);
 
     bu_log("REGION %s (bit %d)\n", rp->reg_name, rp->reg_bit);
-    bu_log("instnum=%d, id=%d, air=%d, gift_material=%d, los=%d\n",
+    bu_log("instnum=%ld, id=%d, air=%d, gift_material=%d, los=%d\n",
 	   rp->reg_instnum,
 	   rp->reg_regionid, rp->reg_aircode,
 	   rp->reg_gmater, rp->reg_los);
@@ -95,7 +95,7 @@ rt_pr_region(register const struct region *rp)
 	bu_log("Shader '%s'\n", rp->reg_mater.ma_shader);
 
     rt_pr_tree_vls(&v, rp->reg_treetop);
-    bu_log("%s %d %s\n", rp->reg_name,
+    bu_log("%s %ld %s\n", rp->reg_name,
 	   rp->reg_instnum, bu_vls_addr(&v));
     bu_vls_free(&v);
 }
@@ -332,7 +332,7 @@ rt_pr_tree(register const union tree *tp, int lvl)
 	    return;
 
 	case OP_SOLID:
-	    bu_log("SOLID %s (bit %d)\n",
+	    bu_log("SOLID %s (bit %ld)\n",
 		   tp->tr_a.tu_stp->st_dp->d_namep,
 		   tp->tr_a.tu_stp->st_bit);
 	    return;
@@ -606,7 +606,7 @@ rt_pr_tree_val(register const union tree *tp, const struct partition *partp, int
 		    bu_log("%s", tp->tr_a.tu_stp->st_dp->d_namep);
 		    break;
 		case 2:
-		    bu_log("%d", tp->tr_a.tu_stp->st_bit);
+		    bu_log("%ld", tp->tr_a.tu_stp->st_bit);
 		    break;
 	    }
 	    break;

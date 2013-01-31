@@ -335,7 +335,7 @@ nmg_m_reindex(struct model *m, register long int newindex)
 	}
 
     NMG_CK_MODEL(m);
-    if (m->index != 0) bu_log("nmg_m_reindex() m->index=%d\n", m->index);
+    if (m->index != 0) bu_log("nmg_m_reindex() m->index=%ld\n", m->index);
     if (newindex < 0) bu_log("nmg_m_reindex() newindex(%ld) < 0\n", newindex);
 
     /* First pass:  set high bits */
@@ -462,7 +462,7 @@ nmg_m_reindex(struct model *m, register long int newindex)
 #undef ASSIGN_VU
 
     if (rt_g.NMG_debug & DEBUG_BASIC) {
-	bu_log("nmg_m_reindex() oldmax=%d, new%d=>%d\n",
+	bu_log("nmg_m_reindex() oldmax=%ld, new%ld=>%ld\n",
 	       m->maxindex, m->index, newindex);
     }
     m->maxindex = newindex;

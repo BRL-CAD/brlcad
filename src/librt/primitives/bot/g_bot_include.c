@@ -1191,7 +1191,7 @@ XGLUE(rt_bot_piece_shot_, TRI_TYPE)(struct rt_piecestate *psp, struct rt_pieceli
 
 	if (BU_BITTEST(psp->shot, piecenum)) {
 	    if (debug_shoot)
-		bu_log("%s piece %d already shot\n",
+		bu_log("%s piece %ld already shot\n",
 		       stp->st_name, piecenum);
 
 	    resp->re_piece_ndup++;
@@ -1201,7 +1201,7 @@ XGLUE(rt_bot_piece_shot_, TRI_TYPE)(struct rt_piecestate *psp, struct rt_pieceli
 	/* Shoot a ray */
 	BU_BITSET(psp->shot, piecenum);
 	if (debug_shoot)
-	    bu_log("%s piece %d ...\n", stp->st_name, piecenum);
+	    bu_log("%s piece %ld ...\n", stp->st_name, piecenum);
 
 	/* Now intersect with each piece, which means intersecting with
 	 * each triangle that makes up the piece.
@@ -1265,7 +1265,7 @@ XGLUE(rt_bot_piece_shot_, TRI_TYPE)(struct rt_piecestate *psp, struct rt_pieceli
 	    hp->hit_surfno = trip->tri_surfno;
 	    hp->hit_rayp = &ap->a_ray;
 	    if (debug_shoot)
-		bu_log("%s piece %d surfno %d ... HIT %g\n",
+		bu_log("%s piece %ld surfno %d ... HIT %g\n",
 		       stp->st_name, piecenum, trip->tri_surfno, hp->hit_dist);
 	} /* for (trinum...) */
     } /* for (;sol_piece_subscr_p...) */

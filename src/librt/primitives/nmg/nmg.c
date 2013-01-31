@@ -907,7 +907,7 @@ rt_nmg_import4_fastf(const unsigned char *base, struct nmg_exp_counts *ecnt, lon
     double *scanp;
 
     if (ecnt[subscript].byte_offset <= 0 || ecnt[subscript].kind != NMG_KIND_DOUBLE_ARRAY) {
-	bu_log("subscript=%d, byte_offset=%d, kind=%d (expected %d)\n",
+	bu_log("subscript=%ld, byte_offset=%ld, kind=%d (expected %d)\n",
 	       subscript, ecnt[subscript].byte_offset,
 	       ecnt[subscript].kind, NMG_KIND_DOUBLE_ARRAY);
 	bu_bomb("rt_nmg_import4_fastf() bad ecnt table\n");
@@ -918,7 +918,7 @@ rt_nmg_import4_fastf(const unsigned char *base, struct nmg_exp_counts *ecnt, lon
     if (ntohl(*(uint32_t*)cp) != DISK_DOUBLE_ARRAY_MAGIC) {
 	bu_log("magic mis-match, got x%x, s/b x%x, file %s, line %d\n",
 	       ntohl(*(uint32_t*)cp), DISK_DOUBLE_ARRAY_MAGIC, __FILE__, __LINE__);
-	bu_log("subscript=%d, byte_offset=%d\n",
+	bu_log("subscript=%ld, byte_offset=%ld\n",
 	       subscript, ecnt[subscript].byte_offset);
 	bu_bomb("rt_nmg_import4_fastf() bad magic\n");
     }
@@ -928,7 +928,7 @@ rt_nmg_import4_fastf(const unsigned char *base, struct nmg_exp_counts *ecnt, lon
 
     count = ntohl(*(uint32_t*)(cp + 4));
     if (count != len || count < 0) {
-	bu_log("rt_nmg_import4_fastf() subscript=%d, expected len=%d, got=%d\n",
+	bu_log("rt_nmg_import4_fastf() subscript=%ld, expected len=%d, got=%d\n",
 	       subscript, len, count);
 	bu_bomb("rt_nmg_import4_fastf()\n");
     }
@@ -1004,12 +1004,12 @@ reindex(genptr_t p, struct nmg_exp_counts *ecnt)
 	} else {
 	    ret = ecnt[idx].new_subscript;
 	    if (ecnt[idx].kind < 0) {
-		bu_log("reindex(p=x%x), p->index=%d, ret=%d, kind=%d\n", p, idx, ret, ecnt[idx].kind);
+		bu_log("reindex(p=x%x), p->index=%ld, ret=%ld, kind=%d\n", p, idx, ret, ecnt[idx].kind);
 		bu_bomb("reindex() This index not found in ecnt[]\n");
 	    }
 	    /* ret == 0 on suppressed loop_g ptrs, etc. */
 	    if (ret < 0 || ret > ecnt[0].byte_offset) {
-		bu_log("reindex(p=x%x) %s, p->index=%d, ret=%d, maxindex=%d\n",
+		bu_log("reindex(p=x%x) %s, p->index=%ld, ret=%ld, maxindex=%ld\n",
 		       p,
 		       bu_identify_magic(*(uint32_t *)p),
 		       idx, ret, ecnt[0].byte_offset);
