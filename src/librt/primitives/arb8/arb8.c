@@ -170,9 +170,9 @@ short local_arb4_edge_vertex_mapping[6][2] = {
     {0,1},	/* edge 12 */
     {1,2},	/* edge 23 */
     {2,0},	/* edge 31 */
-    {0,3},	/* edge 14 */
-    {1,3},	/* edge 24 */
-    {2,3},	/* edge 34 */
+    {0,4},	/* edge 14 */
+    {1,4},	/* edge 24 */
+    {2,4},	/* edge 34 */
 };
 
 
