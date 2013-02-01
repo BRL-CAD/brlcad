@@ -68,7 +68,7 @@ main(int argc, char **argv)
 	return 2;
     }
     if (nlines > UINT32_MAX) {
-	bu_log("ERROR: not ready to handle images bigger than %ld bytes square.", UINT32_MAX);
+	bu_log("ERROR: not ready to handle images bigger than %x bytes square.", UINT32_MAX);
 	printUsage();
 	return 3;
     }
