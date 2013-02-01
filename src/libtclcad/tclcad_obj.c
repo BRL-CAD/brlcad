@@ -947,6 +947,7 @@ static struct to_cmdtab to_cmds[] = {
     {"dbfind",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_find},
     {"dbip",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_dbip},
     {"dbot_dump",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_dbot_dump},
+    {"debuglib",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_debuglib},
     {"decompose",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_decompose},
     {"delay",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_delay},
     {"delete_pipept",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_delete_pipept},
@@ -12105,7 +12106,7 @@ to_edit_redraw(struct ged *gedp,
     size_t i;
     register struct ged_display_list *gdlp;
     register struct ged_display_list *next_gdlp;
-    struct db_full_path fullpath, subpath;
+    struct db_full_path subpath;
     int ret = GED_OK;
 
     if (argc != 2)
@@ -12121,6 +12122,8 @@ to_edit_redraw(struct ged *gedp,
 	for (i = 0; i < subpath.fp_len; ++i) {
 	    gdlp = BU_LIST_NEXT(ged_display_list, &gedp->ged_gdp->gd_headDisplay);
 	    while (BU_LIST_NOT_HEAD(gdlp, &gedp->ged_gdp->gd_headDisplay)) {
+		register struct solid *curr_sp;
+
 		next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
 
 		if (gdlp->gdl_wflag) {
@@ -12128,8 +12131,8 @@ to_edit_redraw(struct ged *gedp,
 		    continue;
 		}
 
-		if (db_string_to_path(&fullpath, gedp->ged_wdbp->dbip, bu_vls_addr(&gdlp->gdl_path)) == 0) {
-		    if (db_full_path_search(&fullpath, subpath.fp_names[i])) {
+		FOR_ALL_SOLIDS(curr_sp, &gdlp->gdl_headSolid) {
+		    if (db_full_path_search(&curr_sp->s_fullpath, subpath.fp_names[i])) {
 			register struct ged_display_list *last_gdlp;
 			register struct solid *sp;
 			char mflag[8];
@@ -12162,11 +12165,12 @@ to_edit_redraw(struct ged *gedp,
 			BU_LIST_DEQUEUE(&last_gdlp->l);
 			BU_LIST_INSERT(&next_gdlp->l, &last_gdlp->l);
 			last_gdlp->gdl_wflag = 1;
-		    }
 
-		    db_free_full_path(&fullpath);
+			goto end;
+		    }
 		}
 
+	    end:
 		gdlp = next_gdlp;
 	    }
 	}
