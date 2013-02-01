@@ -69,7 +69,6 @@
 	method buildRotateFacePanel {parent}
 
 	# Override what's in Arb8EditFrame
-	method arbEdgeMoveCallback {_edge_data}
 	method arbFaceMoveCallback {_face}
 	method buildUpperPanel {}
 	method updateUpperPanel {normal disabled}
@@ -87,43 +86,6 @@
 
 ::itcl::body Arb7EditFrame::constructor {args} {
     eval itk_initialize $args
-}
-
-
-::itcl::body Arb7EditFrame::arbEdgeMoveCallback {_edge_data} {
-    .archer0 putString "Arb7EditFrame::arbEdgeMoveCallback:  _edge_data - $_edge_data"
-    Arb8EditFrame::arbEdgeMoveCallback $_edge_data
-    return
-
-    set emode [lindex $_edge_data 0]
-    set e1 [lindex $_edge_data 1]
-
-    switch -- $emode {
-	5 -
-	7 -
-	10 -
-	11 {
-	    if {$e1 == 5} {
-		set mEditMode $movePoint5
-	    } else {
-		set mEditMode $emode
-	    }
-	}
-	default {
-	    set mEditMode $emode
-	}
-    }
-
-    # Calling initEditState to set mEditParam1 in case a different face has been selected
-    initEditState
-
-    foreach dname {ul ur ll lr} {
-	set win [$itk_option(-mged) component $dname]
-	bind $win <ButtonRelease-1> "[::itcl::code $this endArbObjMove $dname $itk_option(-geometryObject) %x %y]; break"
-    }
-
-    set last_mouse [$itk_option(-mged) get_prev_ged_mouse]
-    eval $itk_option(-mged) move_arb_edge_mode $itk_option(-geometryObject) $mEditParam1 $last_mouse
 }
 
 

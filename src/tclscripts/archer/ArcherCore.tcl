@@ -6282,11 +6282,12 @@ namespace eval ArcherCore {
 }
 
 ::itcl::body ArcherCore::Z {args} {
-    eval gedWrapper clear 0 0 0 1 $args
+    eval zap $args
 }
 
 ::itcl::body ArcherCore::zap {args} {
     eval gedWrapper clear 0 0 0 1 $args
+    gedCmd configure -primitiveLabels {}
 }
 
 
