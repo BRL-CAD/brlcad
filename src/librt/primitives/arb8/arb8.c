@@ -166,6 +166,15 @@ short local_arb6_edge_vertex_mapping[10][2] = {
     {7,7},	/* point 6 */
 };
 
+short local_arb4_edge_vertex_mapping[6][2] = {
+    {0,1},	/* edge 12 */
+    {1,2},	/* edge 23 */
+    {2,0},	/* edge 31 */
+    {0,3},	/* edge 14 */
+    {1,3},	/* edge 24 */
+    {2,3},	/* edge 34 */
+};
+
 
 /* rt_arb_get_cgtype(), rt_arb_std_type(), and rt_arb_centroid()
  * stolen from mged/arbs.c */
@@ -1873,7 +1882,7 @@ rt_arb_tnurb(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
  * This is an analog of rt_arb_calc_planes().
  */
 int
-rt_arb_calc_points(struct rt_arb_internal *arb, int cgtype, const plane_t planes[6], const struct bn_tol *UNUSED(tol))
+rt_arb_calc_points(struct rt_arb_internal *arb, int cgtype, const plane_t planes[6], const struct bn_tol *tol)
 {
     int i;
     point_t pt[8];
@@ -1888,11 +1897,67 @@ rt_arb_calc_points(struct rt_arb_internal *arb, int cgtype, const plane_t planes
 	}
     }
 
-    /* Move new points to arb */
+    /* Move new points to arb tol->dist))*/
     for (i=0; i<8; i++) {
 	VMOVE(arb->pt[i], pt[i]);
     }
+
+    if (rt_arb_check_points(arb, cgtype, tol) < 0)
+	return -1;
+
     return 0;					/* success */
+}
+
+
+int
+rt_arb_check_points(struct rt_arb_internal *arb, int cgtype, const struct bn_tol *tol)
+{
+    register int i;
+
+    switch (cgtype) {
+        case ARB8:
+	    for (i=0; i<12; ++i) {
+		if (VNEAR_EQUAL(arb->pt[arb8_edge_vertex_mapping[i][0]],
+				arb->pt[arb8_edge_vertex_mapping[i][1]],
+				tol->dist))
+		    return -1;
+	    }
+	    break;
+        case ARB7:
+	    for (i=0; i<11; ++i) {
+		if (VNEAR_EQUAL(arb->pt[arb7_edge_vertex_mapping[i][0]],
+				arb->pt[arb7_edge_vertex_mapping[i][1]],
+				tol->dist))
+		    return -1;
+	    }
+	    break;
+        case ARB6:
+	    for (i=0; i<8; ++i) {
+		if (VNEAR_EQUAL(arb->pt[local_arb6_edge_vertex_mapping[i][0]],
+				arb->pt[local_arb6_edge_vertex_mapping[i][1]],
+				tol->dist))
+		    return -1;
+	    }
+	    break;
+        case ARB5:
+	    for (i=0; i<8; ++i) {
+		if (VNEAR_EQUAL(arb->pt[arb5_edge_vertex_mapping[i][0]],
+				arb->pt[arb5_edge_vertex_mapping[i][1]],
+				tol->dist))
+		    return -1;
+	    }
+	    break;
+        case ARB4:
+	    for (i=0; i<6; ++i) {
+		if (VNEAR_EQUAL(arb->pt[local_arb4_edge_vertex_mapping[i][0]],
+				arb->pt[local_arb4_edge_vertex_mapping[i][1]],
+				tol->dist))
+		    return -1;
+	    }
+	    break;
+    }
+
+    return 0;
 }
 
 
@@ -2278,6 +2343,9 @@ rt_arb_edit(struct bu_vls *error_msg_ret,
 		VMOVE(arb->pt[i], arb->pt[4])
 		    break;
     }
+
+    if (rt_arb_check_points(arb, arb_type, tol) < 0)
+	goto err;
 
     return 0;		/* OK */
 
