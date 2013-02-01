@@ -1089,20 +1089,16 @@ f_Cursor_Module()
 				    dw = FMAX(dx, dy);
 #define Pixel2Grid(x_) ((x_)/((fastf_t)fbiop->if_width/grid_sz))
 #define Grid2Model(x_) ((x_)*cell_sz)
+				    x_translate = (xx0+mx     - grid_sz)/2.0;
+				    x_translate = Grid2Model(x_translate);
+				    y_translate = (yy0+my     - grid_sz)/2.0;
+				    y_translate = Grid2Model(y_translate);
 				    scale = dw / (fastf_t)(grid_sz);
 				    if (out_windowing) {
 					scale = 1.0 / scale;
-					x_translate = (xx0+mx     - grid_sz)/2.0;
-					x_translate = Grid2Model(x_translate);
-					y_translate = (yy0+my     - grid_sz)/2.0;
-					y_translate = Grid2Model(y_translate);
 					x_grid_offset -= x_translate * scale;
 					y_grid_offset -= y_translate * scale;
 				    } else {
-					x_translate = (xx0+mx     - grid_sz)/2.0;
-					x_translate = Grid2Model(x_translate);
-					y_translate = (yy0+my     - grid_sz)/2.0;
-					y_translate = Grid2Model(y_translate);
 					x_grid_offset += x_translate;
 					y_grid_offset += y_translate;
 				    }
