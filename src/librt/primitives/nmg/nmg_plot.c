@@ -1840,7 +1840,7 @@ nmg_show_broken_classifier_stuff(uint32_t *p, char **classlist, int all_new, int
 	broken_tab_len = m->maxindex+1;
     } else {
 	if (broken_tab_len < m->maxindex+1) {
-	    bu_log("nmg_show_broken_classifier_stuff() maxindex increased! was %d, now %d\n",
+	    bu_log("nmg_show_broken_classifier_stuff() maxindex increased! was %d, now %ld\n",
 		   broken_tab_len, m->maxindex+1);
 	    broken_tab = (long *)bu_realloc((char *)broken_tab,
 					    (m->maxindex+1) * sizeof(long),

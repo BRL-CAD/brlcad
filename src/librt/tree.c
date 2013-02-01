@@ -243,7 +243,7 @@ _rt_gettree_region_end(struct db_tree_state *tsp, const struct db_full_path *pat
     }
 
     if (RT_G_DEBUG & DEBUG_REGIONS) {
-	bu_log("Add Region %s instnum %d\n",
+	bu_log("Add Region %s instnum %ld\n",
 	       rp->reg_name, rp->reg_instnum);
     }
 
@@ -368,8 +368,8 @@ _rt_find_identical_solid(const matp_t mat, struct directory *dp, struct rt_i *rt
 	     */
 	    if (RT_G_DEBUG & DEBUG_SOLIDS) {
 		bu_log(mat ?
-		       "%s re-referenced %d\n" :
-		       "%s re-referenced %d (identity mat)\n",
+		       "%s re-referenced %ld\n" :
+		       "%s re-referenced %ld (identity mat)\n",
 		       dp->d_namep, stp->st_uses);
 	    }
 
@@ -570,7 +570,7 @@ _rt_gettree_leaf(struct db_tree_state *tsp, const struct db_full_path *pathp, st
 
     if (RT_G_DEBUG&DEBUG_SOLIDS) {
 	struct bu_vls str = BU_VLS_INIT_ZERO;
-	bu_log("\n---Primitive %d: %s\n", stp->st_bit, dp->d_namep);
+	bu_log("\n---Primitive %ld: %s\n", stp->st_bit, dp->d_namep);
 
 	/* verbose=1, mm2local=1.0 */
 	ret = -1;

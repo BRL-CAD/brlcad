@@ -920,7 +920,7 @@ plot_cell(long int *cell, struct grass_ray *r, struct grass_specific *grass_sp)
     CK_grass_SP(grass_sp);
 
     CELL_POS(cell_pos, grass_sp, cell);
-    bu_log("plotting cell %d, %d (%g, %g) %g %g\n",
+    bu_log("plotting cell %ld, %ld (%g, %g) %g %g\n",
 	   V2ARGS(cell), V2ARGS(cell_pos), V2ARGS(grass_sp->cell));
 
     bu_semaphore_acquire(BU_SEM_SYSCALL);
@@ -1101,7 +1101,7 @@ do_cells(long int *cell_num, struct grass_ray *r, short int flags, struct shadew
 	    cell[Y] = cell_num[Y] + y;
 
 	    if (rdebug&RDEBUG_SHADE)
-		bu_log("checking relative cell %2d, %2d at(%d, %d)\n",
+		bu_log("checking relative cell %2d, %2d at(%ld, %ld)\n",
 		       x, y, V2ARGS(cell));
 
 	    isect_cell(cell, r, swp, out_dist, grass_sp, curr_dist);
@@ -1307,7 +1307,7 @@ grass_render(struct application *ap, const struct partition *pp, struct shadewor
 	    if (rdebug&RDEBUG_SHADE) {
 		bu_log("dist:%g (%g %g %g)\n", curr_dist,
 		       V3ARGS(curr_pt));
-		bu_log("cell num: %d %d\n", V2ARGS(cell_num));
+		bu_log("cell num: %ld %ld\n", V2ARGS(cell_num));
 	    }
 	    CELL_POS(cell_pos, grass_sp, cell_num);
 

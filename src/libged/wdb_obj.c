@@ -7420,7 +7420,7 @@ wdb_whatid_cmd(struct rt_wdb *wdbp,
     comb = (struct rt_comb_internal *)intern.idb_ptr;
 
     bu_vls_init(&vls);
-    bu_vls_printf(&vls, "%d", comb->region_id);
+    bu_vls_printf(&vls, "%ld", comb->region_id);
     rt_db_free_internal(&intern);
     Tcl_AppendResult(wdbp->wdb_interp, bu_vls_addr(&vls), (char *)NULL);
     bu_vls_free(&vls);

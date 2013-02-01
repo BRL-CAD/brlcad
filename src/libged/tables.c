@@ -409,7 +409,7 @@ ged_tables(struct ged *gedp, int argc, const char *argv[])
 	fprintf(tabptr, "\n\nNumber Primitives = %ld  Number Regions = %ld\n",
 		      numsol, numreg);
 
-	bu_vls_printf(gedp->ged_result_str, "Processed %d Primitives and %d Regions\n",
+	bu_vls_printf(gedp->ged_result_str, "Processed %ld Primitives and %ld Regions\n",
 		      numsol, numreg);
 
 	(void)fclose(tabptr);
@@ -419,7 +419,7 @@ ged_tables(struct ged *gedp, int argc, const char *argv[])
 	fprintf(tabptr, "* 9999999\n* 9999999\n* 9999999\n* 9999999\n* 9999999\n");
 	(void)fclose(tabptr);
 
-	bu_vls_printf(gedp->ged_result_str, "Processed %d Regions\n", numreg);
+	bu_vls_printf(gedp->ged_result_str, "Processed %ld Regions\n", numreg);
 
 	/* make ordered idents - tries newer gnu 'sort' syntax if not successful */
 	bu_vls_strcpy(&cmd, sortcmd_orig);

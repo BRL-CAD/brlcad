@@ -554,7 +554,7 @@ nmg_m_struct_count(register struct nmg_struct_counts *ctr, const struct model *m
 
 #define NMG_UNIQ_INDEX(_p, _type)	\
 	if ((_p)->index > m->maxindex) { \
-		bu_log("x%x (%s) has index %d, m->maxindex=%d\n", (_p), \
+		bu_log("x%x (%s) has index %ld, m->maxindex=%ld\n", (_p), \
 			bu_identify_magic(*((uint32_t *)(_p))), (_p)->index, m->maxindex); \
 		bu_bomb("nmg_m_struct_count index overflow\n"); \
 	} \

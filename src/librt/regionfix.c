@@ -126,7 +126,7 @@ rt_regionfix(struct rt_i *rtip)
 		if (newid == 0) bu_log("%s, line %d Warning:  new id = 0\n", file, linenum);
 	    }
 	    if (RT_G_DEBUG&DEBUG_INSTANCE) {
-		bu_log("%s instance %d:  region id changed from %d to %d\n",
+		bu_log("%s instance %ld:  region id changed from %d to %d\n",
 		       rp->reg_name, rp->reg_instnum,
 		       oldid, newid);
 	    }

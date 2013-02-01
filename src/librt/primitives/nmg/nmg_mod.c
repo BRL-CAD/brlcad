@@ -1717,7 +1717,7 @@ nmg_face_fix_radial_parity(struct faceuse *fu, const struct bn_tol *tol)
     }
 
     if (rt_g.NMG_debug & DEBUG_BASIC) {
-	bu_log("nmg_face_fix_radial_parity(fu=x%x) returns %d\n", fu, count);
+	bu_log("nmg_face_fix_radial_parity(fu=x%x) returns %ld\n", fu, count);
     }
 
     return count;

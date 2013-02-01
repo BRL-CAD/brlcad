@@ -487,7 +487,7 @@ nmg_get_2d_vertex(fastf_t *v2d, struct vertex *v, struct nmg_inter_struct *is, c
 	fastf_t dist;
 	NMG_GET_FU_PLANE(n, fu);
 	dist = DIST_PT_PLANE(vg->coord, n);
-	bu_log("nmg_get_2d_vertex ERROR #%d (%g %g %g) becomes (%g, %g)\n\t%g != zero, dist3d=%g, %g*tol\n",
+	bu_log("nmg_get_2d_vertex ERROR #%ld (%g %g %g) becomes (%g, %g)\n\t%g != zero, dist3d=%g, %g*tol\n",
 	       v->index, V3ARGS(vg->coord), V3ARGS(pt),
 	       dist, dist/is->tol.dist);
 	if (!NEAR_ZERO(dist, is->tol.dist) &&
@@ -500,7 +500,7 @@ nmg_get_2d_vertex(fastf_t *v2d, struct vertex *v, struct nmg_inter_struct *is, c
     }
 
     if (rt_g.NMG_debug & DEBUG_POLYSECT) {
-	bu_log("2d #%d (%g %g %g) becomes (%g, %g) %g\n",
+	bu_log("2d #%ld (%g %g %g) becomes (%g, %g) %g\n",
 	       v->index, V3ARGS(vg->coord), V3ARGS(pt));
     }
 }
