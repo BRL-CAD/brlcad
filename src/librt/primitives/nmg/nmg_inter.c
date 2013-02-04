@@ -4029,7 +4029,7 @@ nmg_isect_eu_fu(struct nmg_inter_struct *is, struct bu_ptbl *verts, struct edgeu
     if (UNLIKELY(rt_g.NMG_debug & DEBUG_POLYSECT)) {
 	bu_log("Intersect vertices along eu x%x:\n", eu);
 	for (i=0; i<BU_PTBL_END(&inters); i++)
-	    bu_log("%d x%x %g\n", i+1, BU_PTBL_GET(&inters, i), inter_dist[i]);
+	    bu_log("%d x%ld %g\n", i+1, BU_PTBL_GET(&inters, i), inter_dist[i]);
     }
 
     while (1) {
@@ -5502,7 +5502,7 @@ nmg_cut_lu_into_coplanar_and_non(struct loopuse *lu, fastf_t *pl, struct nmg_int
 	if (rt_g.NMG_debug & DEBUG_POLYSECT) {
 	    bu_log("After sorting:\n");
 	    for (i=0; i<BU_PTBL_END(&cut_list); i++)
-		bu_log("v=x%x, dist=%g\n", BU_PTBL_GET(&cut_list, i), dist_array[i]);
+		bu_log("v=x%ld, dist=%g\n", BU_PTBL_GET(&cut_list, i), dist_array[i]);
 	}
 
 	bu_free((char *)dist_array, "distance array");
