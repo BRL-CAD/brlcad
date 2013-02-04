@@ -1356,7 +1356,7 @@ void PatchToVector3d(struct rt_bot_internal *bot, size_t curr_patch, struct Mani
     std::set<size_t>::iterator f_it;
     std::set<size_t> verts;
     unsigned int i = 0;
-    ON_3dPointArray pnts;
+    //ON_3dPointArray pnts;
     for (i = 0; i < bot->num_vertices; i++) {
 	//printf("v(%d): %f %f %f\n", i, V3ARGS(&bot->vertices[3*i]));
     }
@@ -1369,7 +1369,7 @@ void PatchToVector3d(struct rt_bot_internal *bot, size_t curr_patch, struct Mani
 	//printf("vert %d\n", (int)(*f_it));
 	//printf("vert(%d): %f %f %f\n", (int)(*f_it), V3ARGS(&bot->vertices[(*f_it)*3]));
 	data.push_back(ON_3dVector(V3ARGS(&bot->vertices[(*f_it)*3])));
-        pnts.Append(ON_3dPoint(V3ARGS(&bot->vertices[(*f_it)*3])));
+        //pnts.Append(ON_3dPoint(V3ARGS(&bot->vertices[(*f_it)*3])));
     }
 
 #if 0
