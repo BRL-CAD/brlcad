@@ -382,8 +382,8 @@ Leader_to_vlist(entno, vhead)
 	    v2[0] = v3[1];
 	    v2[1] = (-v3[0]);
 
-	    tmp[0] = v1[0] + v2[0]*b/2.0 + v3[0]*a/2.0;
-	    tmp[1] = v1[1] + v2[1]*b/2.0 + v3[1]*a/2.0;
+	    tmp[0] = v1[0] + (v2[0]*b + v3[0]*a)/2.0;
+	    tmp[1] = v1[1] + (v2[1]*b + v3[1]*a)/2.0;
 	    tmp[2] = v1[2];
 	    MAT4X3PNT(tmp3, *dir[entno]->rot, tmp);
 	    RT_ADD_VLIST(vhead, tmp3, BN_VLIST_LINE_MOVE);

@@ -625,7 +625,9 @@ rt_rpc_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct u
 	    uvp->uv_v = len;	/* rim v = 1 for both plates */
 	    break;
 	case RPC_NORM_TOP:
-	    uvp->uv_u = 1.0 - (pprime[Y] + 1.0)/2.0;
+    	/* Simplified next line:
+	    uvp->uv_u = 1.0 - (pprime[Y] + 1.0)/2.0; */
+	    uvp->uv_u = 0.5 - pprime[Y]/2.0;
 	    uvp->uv_v = -pprime[X];		/* height */
 	    break;
     }
