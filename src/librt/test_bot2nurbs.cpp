@@ -1209,9 +1209,9 @@ void build_loop(size_t patch_id, size_t loop_index, ON_BrepLoop::TYPE loop_type,
                       istart++;
                     }
 		} else {
-                  std::cout << "Pullback failure on first pt (" << patch_id << "," << curr_edge << "," << (double)(istart-1)/(double)50 << "): " << pt_3d.x << " " << pt_3d.y << " " << pt_3d.z << "\n";
-                  pullback_failures++;
-		  istart++;
+		    std::cout << "Pullback failure on first pt (" << patch_id << "," << curr_edge << "," << (double)(istart-1)/(double)50 << "): " << pt_3d.x << "," << pt_3d.y << "," << pt_3d.z << "\n";
+		    pullback_failures++;
+		    istart++;
 		}
 	    }
 	} else {
@@ -1228,9 +1228,9 @@ void build_loop(size_t patch_id, size_t loop_index, ON_BrepLoop::TYPE loop_type,
 			pt_2d_prev = pt_2d;
 		    }
 		} else {
-                  std::cout << "Pullback failure (" << patch_id <<  "," << curr_edge << "," << (double)(i)/(double)50 << "): " << pt_3d.x << " " << pt_3d.y << " " << pt_3d.z << "\n";
-                  pullback_failures++;
-                }
+		    std::cout << "Pullback failure (" << patch_id <<  "," << curr_edge << "," << (double)(i)/(double)50 << "): " << pt_3d.x << "," << pt_3d.y << "," << pt_3d.z << "\n";
+		    pullback_failures++;
+		}
 	    }
 	} else {
 	    for (int i = 50; i > istart; i--) {
@@ -1241,8 +1241,8 @@ void build_loop(size_t patch_id, size_t loop_index, ON_BrepLoop::TYPE loop_type,
 			pt_2d_prev = pt_2d;
 		    }
 		} else {
-                  std::cout << "Pullback failure (" << patch_id <<  "," << curr_edge << "," << (double)(i)/(double)50 << "): " << pt_3d.x << " " << pt_3d.y << " " << pt_3d.z << "\n";
-                  pullback_failures++;
+		    std::cout << "Pullback failure (" << patch_id <<  "," << curr_edge << "," << (double)(i)/(double)50 << "): " << pt_3d.x << "," << pt_3d.y << "," << pt_3d.z << "\n";
+		    pullback_failures++;
                 }
 	    }
 	}
@@ -1369,9 +1369,10 @@ void PatchToVector3d(struct rt_bot_internal *bot, size_t curr_patch, struct Mani
 	//printf("vert %d\n", (int)(*f_it));
 	//printf("vert(%d): %f %f %f\n", (int)(*f_it), V3ARGS(&bot->vertices[(*f_it)*3]));
 	data.push_back(ON_3dVector(V3ARGS(&bot->vertices[(*f_it)*3])));
-	pnts.Append(ON_3dPoint(V3ARGS(&bot->vertices[(*f_it)*3])));
+        pnts.Append(ON_3dPoint(V3ARGS(&bot->vertices[(*f_it)*3])));
     }
 
+#if 0
     // Points on the edges of surfaces make problems for our current 2D uv pullback routine.
     // Try to force the surface edges away from the actual patch boundaries by adding "extension"
     // points to the fit.
@@ -1380,7 +1381,7 @@ void PatchToVector3d(struct rt_bot_internal *bot, size_t curr_patch, struct Mani
     fastf_t diagonal = bbox.Diagonal().Length();
     ON_Plane best_fit_plane;
     fit_plane(curr_patch, faces, info, &best_fit_plane);
-/*
+
     fastf_t greatest_distance_to_plane = 0.0;
     for (int j = 0; j < pnts.Count(); ++j) {
 	fastf_t dist = best_fit_plane.DistanceTo(pnts[j]);
@@ -1391,7 +1392,7 @@ void PatchToVector3d(struct rt_bot_internal *bot, size_t curr_patch, struct Mani
     if (vdot > 0.05) move.Reverse();
     ON_3dPoint newcenter = best_fit_plane.Origin() + move * greatest_distance_to_plane;
     best_fit_plane.SetOrigin(newcenter);
-*/
+
     struct bu_vls filename;
     bu_vls_init(&filename);
     bu_vls_sprintf(&filename, "extensions_%d.pl", curr_patch);
@@ -1409,6 +1410,7 @@ void PatchToVector3d(struct rt_bot_internal *bot, size_t curr_patch, struct Mani
 	pdv_3cont(edge_plot, pt2);
     }
     fclose(edge_plot);
+#endif
 
     // Edges are important for patch merging - tighten them by adding more edge
     // points than just the vertex points. Use points from the 3D NURBS edge curves
@@ -1459,7 +1461,6 @@ void find_surfaces(struct Manifold_Info *info) {
 	    fit.assemble(params);
 	    fit.solve();
 	}
-
         ON_BrepFace *face2 = info->brep2->NewFace(fit.m_nurbs);
         info->brep2->m_S.Append(new ON_NurbsSurface(fit.m_nurbs));
         int si = info->brep->AddSurface(new ON_NurbsSurface(fit.m_nurbs));
@@ -1561,9 +1562,14 @@ int main(int argc, char *argv[])
     if (mk_brep(wdbp, bu_vls_addr(&bname), info.brep) == 0) {
 	bu_log("Generated brep object %s\n", bu_vls_addr(&bname));
     }
-    bu_vls_sprintf(&bname, "%s_brep2", argv[2]);
-    if (mk_brep(wdbp, bu_vls_addr(&bname), info.brep2) == 0) {
-	bu_log("Generated brep object %s\n", bu_vls_addr(&bname));
+
+    // For debugging, generate individual face BReps
+    for (int fc = 0; fc < info.brep->m_F.Count(); fc++) {
+	ON_Brep *brep_face = info.brep->DuplicateFace(fc, false); 
+	bu_vls_sprintf(&bname, "%s_face_%d", argv[2], fc);
+	if (mk_brep(wdbp, bu_vls_addr(&bname), brep_face) == 0) {
+	    bu_log("Generated brep object %s\n", bu_vls_addr(&bname));
+	}
     }
 
 
