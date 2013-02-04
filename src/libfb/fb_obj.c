@@ -230,7 +230,7 @@ fbo_cursor_tcl(void *clientData, int argc, const char **argv)
     }
 
     if (sscanf(argv[4], "%d", &y) != 1) {
-	bu_log("fb_cursor: bad y value - ", argv[4]);
+	bu_log("fb_cursor: bad y value - %s", argv[4]);
 	return BRLCAD_ERROR;
     }
 
@@ -628,13 +628,13 @@ fbo_rect_tcl(void *clientData, int argc, const char **argv)
     }
 
     if (sscanf(argv[2], "%d", &xmin) != 1) {
-	bu_log("fb_rect: bad xmin value - ",
+	bu_log("fb_rect: bad xmin value - %s",
 			 argv[2], (char *)NULL);
 	return BRLCAD_ERROR;
     }
 
     if (sscanf(argv[3], "%d", &ymin) != 1) {
-	bu_log("fb_rect: bad ymin value - ",
+	bu_log("fb_rect: bad ymin value - %s",
 			 argv[3], (char *)NULL);
 	return BRLCAD_ERROR;
     }
@@ -667,7 +667,7 @@ fbo_rect_tcl(void *clientData, int argc, const char **argv)
      * For now must be in the form of rrr ggg bbb.
      */
     if (fbo_tcllist2color(argv[6], pixel) == BRLCAD_ERROR) {
-	bu_log("fb_rect: invalid color spec: ", argv[6]);
+	bu_log("fb_rect: invalid color spec: %s", argv[6]);
 	return BRLCAD_ERROR;
     }
 
@@ -820,14 +820,14 @@ fbo_open_tcl(void *UNUSED(clientData), Tcl_Interp *interp, int argc, const char 
 		break;
 	    case '?':
 	    default:
-		bu_log("fb_open: bad option - ",
+		bu_log("fb_open: bad option - %s",
 				 bu_optarg, (char *)NULL);
 		return BRLCAD_ERROR;
 	}
     }
 
     if ((ifp = fb_open(argv[2], width, height)) == FBIO_NULL) {
-	bu_log("fb_open: bad device - ", argv[2], (char *)NULL);
+	bu_log("fb_open: bad device - %s", argv[2], (char *)NULL);
 	return BRLCAD_ERROR;
     }
 
