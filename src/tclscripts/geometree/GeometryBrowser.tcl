@@ -520,7 +520,7 @@ body GeometryBrowser::getNodeChildren { { node "" } { updateLists "no" }} {
 
 	# figure out what title to put in the label space.  XXX we could use
 	# the format command to generate a nicely formatted paragraph, but
-	# it's behavior is not consistent.  Plus... the titles could potentially
+	# its behavior is not consistent.  Plus... the titles could potentially
 	# be huge and we'd still need to trim, so just trim short anyways.
 	set titleLabel ""
 	if [ catch { title } tit ] {

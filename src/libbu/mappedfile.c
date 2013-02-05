@@ -195,7 +195,7 @@ bu_open_mapped_file(const char *name, const char *appl)
 	perror(real_path);
 
     if (mp->buf != MAP_FAILED) {
-	/* OK, it's memory mapped in! */
+	/* OK, its memory mapped in! */
 	mp->is_mapped = 1;
 	/* It's safe to close the fd now, the manuals say */
     } else

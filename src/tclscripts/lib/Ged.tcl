@@ -3474,7 +3474,7 @@ package provide cadwidgets::Ged 1.0
 }
 
 # Create a new arrow with both points the same.
-# Go into data move mode for this arrow and it's second point.
+# Go into data move mode for this arrow and its second point.
 #
 ::itcl::body cadwidgets::Ged::begin_data_arrow {_pane _x _y} {
     set mLastMousePos "$_x $_y"

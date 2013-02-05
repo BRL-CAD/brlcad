@@ -1729,7 +1729,7 @@ proc set_light_values { shader_str id } {
     do_light_icon $id
 
 }
-# Since the scale appends a value to the end of it's args, we can't
+# Since the scale appends a value to the end of its args, we can't
 # use do_shader_apply directly for scale widgets  That's why we have this
 # wrapper proc
 proc light_scale {shade_var id icon val args} {

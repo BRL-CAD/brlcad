@@ -195,7 +195,7 @@ proc ::hv3::compare_focusable {orig L R} {
 }
 
 # Called when <Tab> or <Shift-Tab> is pressed when the html widget or
-# one of it's form controls has the focus. This makes sure the stacking
+# one of its form controls has the focus. This makes sure the stacking
 # order of the controls within the Html widget is correct for
 # html traversal rules (i.e. the "tabindex" attribute).
 #
@@ -496,7 +496,7 @@ namespace eval ::hv3::forms::entrycontrol {
 
     pack $O(myWidget) -expand true -fill both
 
-    # If this is a password entry field, obscure it's contents
+    # If this is a password entry field, obscure its contents
     set zType [string tolower [$node attr -default "" type]]
     if {$zType eq "password" } { $O(myWidget) configure -show * }
 

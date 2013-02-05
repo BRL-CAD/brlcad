@@ -118,7 +118,7 @@ namespace eval ::hv3::request {
     set O(-hv3) ""
 
     # The protocol implementation sets this option to contain the
-    # HTTP header (or it's equivalent). The format is a serialised array.
+    # HTTP header (or its equivalent). The format is a serialised array.
     # Example:
     #
     #     {Set-Cookie safe-search=on Location http://www.google.com}
