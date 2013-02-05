@@ -1328,7 +1328,7 @@ nmg_check_radial(const struct edgeuse *eu, const struct bn_tol *tol)
 	/* if that radial edgeuse doesn't have the
 	 * correct orientation, print & bomb
 	 * If radial (eur) is my (virtual, this-shell) mate (eu1),
-	 * then it's ok, a mis-match is to be expected.
+	 * then it's OK, a mis-match is to be expected.
 	 */
 	NMG_CK_LOOPUSE(eur->up.lu_p);
 	fu = eur->up.lu_p->up.fu_p;
