@@ -1316,8 +1316,6 @@ light_vis(struct light_obs_stuff *los, char *flags)
 
     if (rdebug & RDEBUG_LIGHT) bu_log("light_vis\n");
 
-retry:
-
     /* compute the light direction */
     if (los->lsp->lt_infinite) {
 	/* Infinite lights are point sources, no fuzzy penumbra */
@@ -1578,27 +1576,8 @@ retry:
     if (rdebug & RDEBUG_LIGHT)
 	bu_log("shooting level %d from %d\n", sub_ap.a_level, __LINE__);
 
+    /* see if weare in the dark. */
     shot_status = rt_shootray(&sub_ap);
-    if (rdebug & RDEBUG_LIGHT)
-	bu_log("shot_status: %d\n", shot_status);
-
-    if (shot_status < 0 && !(los->lsp->lt_infinite)) {
-	if (los->lsp->lt_pt_count > 0) {
-	    if (rdebug & RDEBUG_LIGHT) {
-		bu_log("was pt %d\n (%g %g %g) normal %g %g %g\n", k,
-		       V3ARGS(los->lsp->lt_sample_pts[k].lp_pt),
-		       V3ARGS(los->lsp->lt_sample_pts[k].lp_norm));
-	    }
-	} else {
-	    if (rdebug & RDEBUG_LIGHT) {
-		bu_log("was radius: %g of (%g) angle: %g\n",
-		       radius, los->lsp->lt_radius, angle);
-
-		bu_log("re-shooting\n");
-	    }
-	    goto retry;
-	}
-    }
 
     if (shot_status > 0) {
 	/* light visible */
