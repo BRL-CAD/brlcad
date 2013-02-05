@@ -129,7 +129,7 @@
 	::ttk::frame $parent.upper
     } {}
 
-    # Repack parent so it's anchor to the north
+    # Repack parent so its anchor is to the north
     pack $parent \
 	-expand yes \
 	-fill both \
@@ -140,7 +140,7 @@
 	::ttk::frame $parent.lower
     } {}
 
-    # Repack parent so it's anchor to the north
+    # Repack parent so its anchor is to the north
     pack $parent \
 	-expand yes \
 	-fill both \
