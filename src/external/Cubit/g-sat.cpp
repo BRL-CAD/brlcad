@@ -1321,7 +1321,7 @@ booltree_evaluate( tree *tp, resource *resp )
 	    bu_log("booltree_evaluate: bad op %d\n", tp->tr_op);
 	    return 0;
     }
-    /* Handle a boolean operation node.  First get it's leaves. */
+    /* Handle a boolean operation node.  First get its leaves. */
     tl = booltree_evaluate(tp->tr_b.tb_left, resp);
     tr = booltree_evaluate(tp->tr_b.tb_right, resp);
 

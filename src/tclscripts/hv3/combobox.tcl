@@ -606,7 +606,7 @@ proc ::combobox::HandleEvent {w event args} {
 	    if {[winfo ismapped $widgets(dropdown)]} {
 		set D [lindex $args 0]
 		# the '120' number in the following expression has
-		# it's genesis in the tk bind manpage, which suggests
+		# its genesis in the tk bind manpage, which suggests
 		# that the smallest value of %D for mousewheel events
 		# will be 120. The intent is to scroll one line at a time.
 		$widgets(listbox) yview scroll [expr {-($D/120)}] units

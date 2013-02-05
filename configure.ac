@@ -4065,7 +4065,7 @@ dnl configure tkhtml
 if test "x$build_brlcad_tkhtml" = "xyes" ; then
     ac_configure_args="$ac_configure_args --exec-prefix=\"$bc_prefix\""
     # this is a hack to all tkhtml to see when the tk headers are in odd
-    # places. it seems to ignore the CPPFLAGS in it's configure phase.
+    # places. it seems to ignore the CPPFLAGS in its configure phase.
     if test ! "x$TKINCDIR" = "x" ; then
 	    ac_configure_args="$ac_configure_args --with-tkinclude=$TKINCDIR"
     fi

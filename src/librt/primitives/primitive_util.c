@@ -193,7 +193,7 @@ approximate_parabolic_curve(struct rt_pt_node *pts, fastf_t p, int num_new_point
 	max_error = 0.0;
 
 	/* Find the least accurate line segment, and calculate a new parabola
-	 * point to insert between it's endpoints.
+	 * point to insert between its endpoints.
 	 */
 	while (node->next != NULL) {
 	    VMOVE(p0, node->p);
@@ -294,7 +294,7 @@ approximate_hyperbolic_curve(struct rt_pt_node *pts, fastf_t a, fastf_t b, int n
 	max_error = 0.0;
 
 	/* Find the least accurate line segment, and calculate a new hyperbola
-	 * point to insert between it's endpoints.
+	 * point to insert between its endpoints.
 	 */
 	while (node->next != NULL) {
 	    VMOVE(p0, node->p);

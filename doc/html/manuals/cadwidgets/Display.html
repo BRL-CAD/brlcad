@@ -164,7 +164,7 @@ to this object's list of drawable geometry objects.
 </DD>
 <P>
 <DT><I>pathName</I> <A NAME="attach_view"><B>attach_view</B></A></DT>
-<DD>Cause this object to observe it's view (i.e. whenever the view changes, this
+<DD>Cause this object to observe its view (i.e. whenever the view changes, this
 object is notified).
 </DD>
 <P>
@@ -177,13 +177,13 @@ object is notified).
 <DT><I>pathName</I> <A NAME="autoview"><B>autoview</B></A> ?<I>gindex</I>?</DT>
 <DD>
 The first order of business is to decide which drawable geometry
-object in the list will be used to invoke it's
+object in the list will be used to invoke its
 <A HREF="../librt/dg_obj.html#get_autoview">get_autoview</A> method.
 If <I>-geo gindex</I> is specified, then use that as an index into the
 list of drawable geometry objects in order to determine the drawable
 geometry object. Otherwise, use the first drawable geometry object in the list.
 Once found, the drawable geometry object's get_autoview method is called
-to obtain optimal viewing parameters for it's geometry.
+to obtain optimal viewing parameters for its geometry.
 These parameters are then used to set this object's view.
 </DD>
 <P>
@@ -197,11 +197,11 @@ object (i.e. <I>dg</I>).
 </DD>
 <P>
 <DT><I>pathName</I> <A NAME="detach_view"><B>detach_view</B></A></DT>
-<DD>Cause this object to stop observing it's view.
+<DD>Cause this object to stop observing its view.
 </DD>
 <P>
 <DT><I>pathName</I> <A NAME="refresh"><B>refresh</B></A></DT>
-<DD>Causes this object to draw it's list of drawable geometry objects.
+<DD>Causes this object to draw its list of drawable geometry objects.
 </DD>
 <P>
 <DT><I>pathName</I> <A NAME="remove"><B>remove</B></A> ?<I>glist</I>?</DT>
@@ -212,7 +212,7 @@ from this object's list of drawable geometry objects.
 <DT><I>pathName</I> <A NAME="rt"><B>rt</B></A> ?<I>-geo gindex</I>? ?<I>args</I>?</DT>
 <DD>
 The first order of business is to decide which drawable geometry
-object in the list will be used to invoke it's
+object in the list will be used to invoke its
 <A HREF="../librt/dg_obj.html#rt">rt</A> method.
 If <I>-geo gindex</I> is specified, then use that as an index into the
 list of drawable geometry objects in order to determine the drawable
@@ -225,7 +225,7 @@ first argument.
 <DT><I>pathName</I> <A NAME="rtcheck"><B>rtcheck</B></A> ?<I>-geo gindex</I>? ?<I>args</I>?</DT>
 <DD>
 The first order of business is to decide which drawable geometry
-object in the list will be used to invoke it's
+object in the list will be used to invoke its
 <A HREF="../librt/dg_obj.html#rtcheck">rtcheck</A> method.
 If <I>-geo gindex</I> is specified, then use that as an index into the
 list of drawable geometry objects in order to determine the drawable

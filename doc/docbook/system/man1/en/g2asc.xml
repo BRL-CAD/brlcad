@@ -26,7 +26,7 @@
 <refsect1 xml:id='description'><title>DESCRIPTION</title>
 <para><emphasis remap='B'><command>g2asc</command></emphasis> is a utility provided by BRL-CAD used to convert <emphasis remap='I'><command>mged(1)</command></emphasis> geometry databases in binary format to ASCII form to be later converted back by <emphasis remap='I'><command>asc2g(1)</command></emphasis>. Databases in the new format will be converted to the new (Tcl script) ASCII format and databases in the old format will be converted to the old ASCII format (See <emphasis remap='B'>HISTORY</emphasis>).</para>
 
-<para>The local machine binary representation of a mged database is inherently non-portable. <emphasis remap='I'><command>g2asc</command></emphasis>, along with it's converse <emphasis remap='I'><command>asc2g</command></emphasis> are simple filters which convert between the binary form and an ASCII representation.</para>
+<para>The local machine binary representation of a mged database is inherently non-portable. <emphasis remap='I'><command>g2asc</command></emphasis>, along with its converse <emphasis remap='I'><command>asc2g</command></emphasis> are simple filters which convert between the binary form and an ASCII representation.</para>
 
 <para>This was traditionally performed so the files could be transferred to another machine in a portable format.  Although no longer necessary for the current binary geometry database files that  are  created by  mged  ("v5"  format), the conversion process is still necessary if manipulating older ("v4" format) geometry database files.</para>
 

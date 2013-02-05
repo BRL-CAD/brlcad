@@ -1267,7 +1267,7 @@ namespace eval ::hv3::hv3 {
 
     # Destroy the components. We don't need to destroy the scrolled
     # html component because it is a Tk widget - it is automatically
-    # destroyed when it's parent widget is.
+    # destroyed when its parent widget is.
     catch { $O(mySelectionManager) destroy }
     catch { $O(myDynamicManager)   destroy }
     catch { $O(myHyperlinkManager) destroy }
@@ -1329,7 +1329,7 @@ namespace eval ::hv3::hv3 {
   # The argument download-handle contains a configured request. This
   # method initiates the request.
   #
-  # This method is used by hv3 and it's component objects (i.e. code in
+  # This method is used by hv3 and its component objects (i.e. code in
   # hv3_object_handler). Also the dom code, for XMLHTTPRequest.
   #
   proc makerequest {me downloadHandle} {            # PRIVATE

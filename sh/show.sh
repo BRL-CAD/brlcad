@@ -58,7 +58,7 @@ fi
 eval `pixinfo.sh $FILE` # sets BASE, SUFFIX, WIDTH, HEIGHT
 
 # Since we don't have an easy (fast) way to query the current framebuffer
-# for it's current size without opening a window, if the user isn't
+# for its current size without opening a window, if the user isn't
 # using a full-screen fbserv, they need to set a pair of environment
 # variables to tell us what the maximum target image size is.
 if test "$FB_WIDTH" = "" ; then
