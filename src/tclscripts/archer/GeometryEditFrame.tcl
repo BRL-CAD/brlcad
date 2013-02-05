@@ -69,6 +69,7 @@
 	method updateGeometry {}
 	method createGeometry {obj}
 
+	method moveElement {_dm _obj _vx _vy _ocenter}
 	method p {obj args}
     }
 
@@ -280,6 +281,12 @@
 
     return 1
 }
+
+
+::itcl::body GeometryEditFrame::moveElement {_dm _obj _vx _vy _ocenter} {
+    $itk_option(-mged) $mEditCommand $_obj $mEditParam1 $_ocenter
+}
+
 
 ::itcl::body GeometryEditFrame::p {obj args} {
 }

@@ -84,10 +84,10 @@
 	method initGeometry {_gdata}
 	method updateGeometry {}
 	method createGeometry {_name}
+	method moveElement {_dm _obj _vx _vy _ocenter}
 	method p {obj args}
 
 	method moveBotEdgeMode {_dname _obj _x _y}
-	method moveBotElement {_dname _obj _vx _vy}
 	method moveBotFaceMode {_dname _obj _x _y}
 	method moveBotPt {_dname _obj _vx _vy}
 	method moveBotPtMode {_dname _obj _viewz _x _y}
@@ -338,6 +338,20 @@
 }
 
 
+::itcl::body BotEditFrame::moveElement {_dname _obj _vx _vy _ocenter} {
+    switch -- $mEditMode \
+	$movePoints {
+	    moveBotPt $_dname $_obj $_vx $_vy
+	} \
+	$moveEdge {
+	    $::ArcherCore::application putString "This mode is not ready for edges."
+	} \
+	$moveFace {
+	    $::ArcherCore::application putString "This mode is not ready for faces."
+	}
+}
+
+
 ::itcl::body BotEditFrame::p {obj args} {
     if {[llength $args] != 1 || ![string is double $args]} {
 	return "Usage: p sf"
@@ -383,20 +397,6 @@
 
     set plist [$itk_component(vertTab) getSelectedRows]
     moveBotPts $_dname $_obj $_x $_y $plist
-}
-
-
-::itcl::body BotEditFrame::moveBotElement {_dname _obj _vx _vy} {
-    switch -- $mEditMode \
-	$movePoints {
-	    moveBotPt $_dname $_obj $_vx $_vy
-	} \
-	$moveEdge {
-	    $::ArcherCore::application putString "This mode is not ready for edges."
-	} \
-	$moveFace {
-	    $::ArcherCore::application putString "This mode is not ready for faces."
-	}
 }
 
 
