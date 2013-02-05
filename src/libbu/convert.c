@@ -532,7 +532,7 @@ bu_cv_w_cookie(genptr_t out, int outcookie, size_t size, genptr_t in,  int incoo
 	    return number_done;
 
 	    /*
-	     * Well it's still the same format but the conversion are
+	     * Well it's still the same format but the conversions are
 	     * different.  Only one of the *vert variables can be HOST
 	     * therefore if inIsHost != HOST then outIsHost must be
 	     * host format.
