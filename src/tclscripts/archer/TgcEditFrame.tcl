@@ -38,6 +38,7 @@
 	method initGeometry {gdata}
 	method updateGeometry {}
 	method createGeometry {obj}
+	method moveTgcElement {_dm _obj _vx _vy}
 	method p {obj args}
     }
 
@@ -171,6 +172,28 @@
 	C {0.0 0.0 0.0} \
 	D {0.0 0.0 0.0}
 }
+
+
+::itcl::body TgcEditFrame::moveTgcElement {_dm _obj _vx _vy} {
+    set param1 [string tolower $GeometryEditFrame::mEditParam1]
+    switch -- $param1 {
+	h -
+	hr {
+	    set h [$itk_option(-mged) get $itk_option(-geometryObject) H]
+	    set v [$itk_option(-mged) get $itk_option(-geometryObject) V]
+	    set model_h [::vadd2 $h $v]
+	    set view_h [$itk_option(-mged) pane_m2v_point $_dm $model_h]
+	    set vz [lindex $view_h 2]
+	    set new_view_h [list $_vx $_vy $vz]
+	    set new_model_h [$itk_option(-mged) pane_v2m_point $_dm $new_view_h]
+	    $itk_option(-mged) ptranslate $_obj $GeometryEditFrame::mEditParam1 $new_model_h
+	}
+	default {
+	    $::ArcherCore::application putString "TgcEditFrame:moveTgcElement: bad parameter - $mEditParam1"
+	}
+    }
+}
+
 
 ::itcl::body TgcEditFrame::p {obj args} {
     switch -- $GeometryEditFrame::mEditClass \

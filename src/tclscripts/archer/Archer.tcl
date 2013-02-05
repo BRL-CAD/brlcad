@@ -6418,6 +6418,8 @@ proc title_node_handler {node} {
 		    } else {
 			eval gedCmd ocenter $_obj $new_ocenter
 		    }
+		} elseif {$mSelectedObjType == "tgc"} {
+		    $itk_component(tgcView) moveTgcElement $_dm $_obj $vx $vy
 		} else {
 		    $itk_component(ged) $GeometryEditFrame::mEditCommand $_obj $GeometryEditFrame::mEditParam1 $new_ocenter
 		}
