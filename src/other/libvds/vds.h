@@ -161,9 +161,9 @@ typedef struct _vdsNode {
  * 	vdsNodeDataReader:	read node->data contents from a file
  *		Returns:		allocated vdsNodeData structure
  */
-typedef void (*vdsRenderFunction) (const vdsNode *);
+typedef void (*vdsRenderFunction) (const vdsNode *, void *);
 typedef int (*vdsVisibilityFunction) (const vdsNode *);
-typedef int (*vdsFoldCriterion) (const vdsNode *);
+typedef int (*vdsFoldCriterion) (const vdsNode *, void *);
 typedef void (*vdsNodeDataWriter) (FILE *f, const vdsNode *);
 typedef vdsNodeData (*vdsNodeDataReader) (FILE *f);
 
@@ -172,8 +172,8 @@ typedef vdsNodeData (*vdsNodeDataReader) (FILE *f);
  */
 
 /* Routines for maintaining the vertex tree (dynamic.c) */
-extern void vdsAdjustTreeBoundary(vdsNode *, vdsFoldCriterion);
-extern void vdsAdjustTreeTopDown(vdsNode *, vdsFoldCriterion);
+extern void vdsAdjustTreeBoundary(vdsNode *, vdsFoldCriterion, void *);
+extern void vdsAdjustTreeTopDown(vdsNode *, vdsFoldCriterion, void *);
 /* Low-level vertex tree maintainance routines; not need by most users: */
 extern void vdsFoldNode(vdsNode *);
 extern void vdsUnfoldNode(vdsNode *);
@@ -182,7 +182,7 @@ extern void vdsFoldSubtree(vdsNode *);
 /* Routines for rendering the vertex tree (render.c) */
 extern void vdsUpdateTriProxies(vdsTri *t);
 extern void vdsRenderTree(vdsNode *node, vdsRenderFunction render,
-		  vdsVisibilityFunction visible);
+		  vdsVisibilityFunction visible, void *udata);
 
 /* Routines for building the vertex tree (build.c) */
 extern void vdsBeginVertexTree();

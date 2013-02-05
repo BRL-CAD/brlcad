@@ -274,7 +274,7 @@ void vdsUnfoldAncestors(vdsNode *node)
  * @param	root 		root of tree whose boundary is to be adjusted
  * @param	foldtest	returns 1 if node should be folded, 0 otherwise
  */
-void vdsAdjustTreeBoundary(vdsNode *root, vdsFoldCriterion foldtest)
+void vdsAdjustTreeBoundary(vdsNode *root, vdsFoldCriterion foldtest, void *udata)
 {
     vdsNode *current;			/* node currently being tested	*/
     vdsNode *parent = NULL;		/* parent of current node	*/
@@ -291,7 +291,7 @@ void vdsAdjustTreeBoundary(vdsNode *root, vdsFoldCriterion foldtest)
 	if (parent != lastparent) {
 	    lastparent = parent;
 	    /* Test parent: should it be folded? */
-	    if (foldtest(parent)) {
+	    if (foldtest(parent, udata)) {
 		vdsFoldSubtree(parent);
 		/* Now parent is on the boundary; check it next */
 		current = parent;
@@ -302,7 +302,7 @@ void vdsAdjustTreeBoundary(vdsNode *root, vdsFoldCriterion foldtest)
 	 * Don't need to fold parent.  If current node can be unfolded,
 	 * should we do so, or leave on the boundary?
 	 */
-	if (current->children != NULL && foldtest(current) == 0) {
+	if (current->children != NULL && foldtest(current, udata) == 0) {
 	    vdsUnfoldNode(current);
 	    /* Now node->children are on the boundary; check them */
 	    current = current->children;
@@ -323,17 +323,17 @@ void vdsAdjustTreeBoundary(vdsNode *root, vdsFoldCriterion foldtest)
  * @param	node 		the root of the (sub)tree to be adjusted
  * @param	foldtest() 	returns 1 if node should be folded, 0 otherwise
  */
-void vdsAdjustTreeTopDown(vdsNode *node, vdsFoldCriterion foldtest)
+void vdsAdjustTreeTopDown(vdsNode *node, vdsFoldCriterion foldtest, void *udata)
 {
     vdsNode *child = node->children;
 
     if (node->status == Active) {
-	if (foldtest(node) == 1) {
+	if (foldtest(node, udata) == 1) {
 	    vdsFoldSubtree(node);
 	    return;
 	}
     } else { /* node->status == Boundary */
-	if (foldtest(node) == 0) {
+	if (foldtest(node, udata) == 0) {
 	    vdsUnfoldNode(node);
 	} else {
 	    return;
@@ -343,7 +343,7 @@ void vdsAdjustTreeTopDown(vdsNode *node, vdsFoldCriterion foldtest)
     while (child != NULL) {
 	/* Can't fold or unfold leaf nodes */
 	if (child->children != NULL) {
-	    vdsAdjustTreeTopDown(child, foldtest);
+	    vdsAdjustTreeTopDown(child, foldtest, udata);
 	}
 	child = child->sibling;
     }

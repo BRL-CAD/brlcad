@@ -92,7 +92,7 @@ void vdsUpdateTriProxies(vdsTri *t)
  *		        of a node.  NULL if the node is to be assumed visible.
  */
 void vdsRenderTree(vdsNode *node, vdsRenderFunction render,
-		   vdsVisibilityFunction visible)
+		   vdsVisibilityFunction visible, void *udata)
 {
     vdsNode *child;
 
@@ -107,14 +107,14 @@ void vdsRenderTree(vdsNode *node, vdsRenderFunction render,
 	}
     }
     /* If we got this far, node is visible.  Render it */
-    render(node);
+    render(node, udata);
     /* If node is at VDS_CULLDEPTH, children have no vistris, so can return */
     if (node->depth == VDS_CULLDEPTH) {
 	return;
     }
     child = node->children;
     while (child != NULL) {
-	vdsRenderTree(child, render, visible);
+	vdsRenderTree(child, render, visible, udata);
 	child = child->sibling;
     }
 }
