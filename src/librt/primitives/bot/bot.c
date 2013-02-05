@@ -42,6 +42,8 @@
 #include "raytrace.h"
 #include "bot.h"
 
+#include "vds.h"
+
 #define GLUE(_a, _b)      _a ## _b
 #define XGLUE(_a, _b) GLUE(_a, _b)
 
@@ -493,16 +495,132 @@ rt_bot_class(const struct soltab *stp, const fastf_t *min, const fastf_t *max, c
     return 0;
 }
 
+vdsNode *
+build_vertex_tree(struct rt_bot_internal *bot)
+{
+    size_t i, node_indices, tri_indices;
+    vect_t normal = {1.0, 0.0, 0.0};
+    unsigned char color[] = {255, 0 , 0};
+    vdsNode *leaf_nodes;
+    vdsNode **node_list;
+    
+    node_indices = bot->num_vertices * 3;
+    tri_indices = bot->num_faces * 3;
+
+    vdsBeginVertexTree();
+    vdsBeginGeometry();
+
+    /* create nodes */
+    for (i = 0; i < node_indices; i += 3) {
+	vdsAddNode(bot->vertices[i], bot->vertices[i + 1], bot->vertices[i + 2]);
+    }
+
+    /* create triangles */
+    for (i = 0; i < tri_indices; i += 3) {
+        vdsAddTri(bot->faces[i], bot->faces[i + 1], bot->faces[i + 2],
+		normal, normal, normal, color, color, color);
+    }
+
+    leaf_nodes = vdsEndGeometry();
+
+    node_list = (vdsNode **)bu_malloc(bot->num_vertices * sizeof(vdsNode *), "node_list");
+    for (i = 0; i < bot->num_vertices; ++i) {
+	node_list[i] = &leaf_nodes[i];
+    }
+
+    vdsClusterOctree(node_list, bot->num_vertices, 0);
+    bu_free(node_list, "node_list");
+
+    return vdsEndVertexTree();
+}
+
+
+struct bot_fold_data {
+    vdsNode *root;
+    fastf_t point_spacing;
+};
+
+static int
+should_fold(const vdsNode *node, void *udata)
+{
+    int i, num_edges, short_edges, short_spaces;
+    fastf_t dist_01, dist_12, dist_20;
+    vdsNode *corner_nodes[3];
+    struct bot_fold_data *fold_data = (struct bot_fold_data *)udata;
+
+    if (node->nsubtris < 1) {
+	return 0;
+    }
+
+    num_edges = node->nsubtris * 3;
+    short_edges = short_spaces = 0;
+
+    for (i = 0; i < node->nsubtris; ++i) {
+	/* get the three nodes corresponding to the three corner */
+	corner_nodes[0] = vdsFindNode(node->subtris[i].corners[0].id, fold_data->root);
+	corner_nodes[1] = vdsFindNode(node->subtris[i].corners[1].id, fold_data->root);
+	corner_nodes[2] = vdsFindNode(node->subtris[i].corners[2].id, fold_data->root);
+
+	dist_01 = DIST_PT_PT(corner_nodes[0]->coord, corner_nodes[1]->coord);
+	dist_12 = DIST_PT_PT(corner_nodes[1]->coord, corner_nodes[2]->coord);
+	dist_20 = DIST_PT_PT(corner_nodes[2]->coord, corner_nodes[0]->coord);
+
+	/* check triangle edge point spacing against target point spacing */
+	if (dist_01 < fold_data->point_spacing) {
+	    ++short_edges;
+	}
+	if (dist_12 < fold_data->point_spacing) {
+	    ++short_edges;
+	}
+	if (dist_20 < fold_data->point_spacing) {
+	    ++short_edges;
+	}
+    }
+
+    if (((fastf_t)short_edges / num_edges) > .5) {
+	return 1;
+    }
+
+    return 0;
+}
+
+static void
+plot_node(const vdsNode *node, void *udata)
+{
+    vdsTri *t = node->vistris;
+    struct bu_list *vhead = (struct bu_list *)udata;
+
+    while (t != NULL) {
+	vdsUpdateTriProxies(t);
+	RT_ADD_VLIST(vhead, t->proxies[2]->coord, BN_VLIST_LINE_MOVE);
+	RT_ADD_VLIST(vhead, t->proxies[0]->coord, BN_VLIST_LINE_DRAW);
+	RT_ADD_VLIST(vhead, t->proxies[1]->coord, BN_VLIST_LINE_DRAW);
+	RT_ADD_VLIST(vhead, t->proxies[2]->coord, BN_VLIST_LINE_DRAW);
+	t = t->next;
+    }
+}
+
 int
 rt_bot_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
 {
+    vdsNode *vertex_tree;
     struct rt_bot_internal *bot;
+    struct bot_fold_data fold_data;
 
     BU_CK_LIST_HEAD(info->vhead);
     RT_CK_DB_INTERNAL(ip);
 
     bot = (struct rt_bot_internal *)ip->idb_ptr;
     RT_BOT_CK_MAGIC(bot);
+
+    vertex_tree = build_vertex_tree(bot);
+
+    fold_data.root = vertex_tree;
+    fold_data.point_spacing = info->point_spacing;
+
+    vdsAdjustTreeTopDown(vertex_tree, should_fold, (void *)&fold_data);
+    vdsRenderTree(vertex_tree, plot_node, NULL, (void *)info->vhead);
+    vdsFreeTree(vertex_tree);
 
     return 0;
 }
