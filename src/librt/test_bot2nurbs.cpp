@@ -1565,7 +1565,7 @@ int main(int argc, char *argv[])
 
     // For debugging, generate individual face BReps
     for (int fc = 0; fc < info.brep->m_F.Count(); fc++) {
-	ON_Brep *brep_face = info.brep->DuplicateFace(fc, false); 
+	ON_Brep *brep_face = info.brep->DuplicateFace(fc, false);
 	bu_vls_sprintf(&bname, "%s_face_%d", argv[2], fc);
 	if (mk_brep(wdbp, bu_vls_addr(&bname), brep_face) == 0) {
 	    bu_log("Generated brep object %s\n", bu_vls_addr(&bname));
