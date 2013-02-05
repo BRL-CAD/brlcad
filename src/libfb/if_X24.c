@@ -3594,8 +3594,8 @@ X24_help(FBIO *ifp)
 
     fb_log("\nCurrent internal state:\n");
     fb_log("	xi_depth=%d\n", xi->xi_depth);
-    fb_log("	xi_mode=%d\n", xi->xi_mode);
-    fb_log("	xi_flags=%d\n", xi->xi_flags);
+    fb_log("	xi_mode=%lu\n", xi->xi_mode);
+    fb_log("	xi_flags=%lu\n", xi->xi_flags);
     fb_log("	xi_xwidth=%d\n", xi->xi_xwidth);
     fb_log("	xi_xheight=%d\n", xi->xi_xheight);
 
@@ -3605,12 +3605,12 @@ X24_help(FBIO *ifp)
     switch (xi->xi_visinfo.class) {
 	case DirectColor:
 	    fb_log("\tDirectColor: Alterable RGB maps, pixel RGB subfield indices\n");
-	    fb_log("\tRGB Masks: 0x%x 0x%x 0x%x\n", xi->xi_visinfo.red_mask,
+	    fb_log("\tRGB Masks: 0x%lu 0x%lu 0x%lu\n", xi->xi_visinfo.red_mask,
 		   xi->xi_visinfo.green_mask, xi->xi_visinfo.blue_mask);
 	    break;
 	case TrueColor:
 	    fb_log("\tTrueColor: Fixed RGB maps, pixel RGB subfield indices\n");
-	    fb_log("\tRGB Masks: 0x%x 0x%x 0x%x\n", xi->xi_visinfo.red_mask,
+	    fb_log("\tRGB Masks: 0x%lu 0x%lu 0x%lu\n", xi->xi_visinfo.red_mask,
 		   xi->xi_visinfo.green_mask, xi->xi_visinfo.blue_mask);
 	    break;
 	case PseudoColor:
