@@ -138,7 +138,17 @@ set(VDS_HDRS
 
 add_library(libvds SHARED ${CORE_SRCS})
 
+install(TARGETS libvds
+	RUNTIME DESTINATION ${BIN_DIR}
+	LIBRARY DESTINATION ${LIB_DIR}
+	ARCHIVE DESTINATION ${LIB_DIR})
+
 add_library(stdvds SHARED ${STD_SRCS})
+
+install(TARGETS stdvds
+	RUNTIME DESTINATION ${BIN_DIR}
+	LIBRARY DESTINATION ${LIB_DIR}
+	ARCHIVE DESTINATION ${LIB_DIR})
 
 # Local Variables:
 # tab-width: 8
