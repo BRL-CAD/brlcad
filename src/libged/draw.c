@@ -1160,6 +1160,12 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 
 		/* calculate plot vlists for solids */
 		for (i = 0; i < argc; ++i) {
+		    dgcdp->gdlp = ged_addToDisplay(gedp, argv[i]);
+
+		    if (dgcdp->gdlp == GED_DISPLAY_LIST_NULL) {
+			continue;
+		    }
+
 		    av[0] = (char *)argv[i];
 		    ret = db_walk_tree(gedp->ged_wdbp->dbip,
 				       ac,
