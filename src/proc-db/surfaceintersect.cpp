@@ -344,8 +344,8 @@ Face_X_Event::Render_Curves()
  * @brief Intersect 2 curves appending ON_X_EVENTS to the array x for
  * the intersections returns the number of ON_X_EVENTS appended
  *
- * This is not a great implementation of this function it's limited in
- * that it will only find point intersections, not overlaps. Overlaps,
+ * This is not a great implementation of this function; it's limited in
+ * that it will only find point intersections, not overlaps. Overlaps
  * will come out as long strings of points, and will probably take a
  * long time to compute.
  */
