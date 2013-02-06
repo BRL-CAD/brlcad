@@ -58,7 +58,7 @@ vdsNode *vdsClusterOctree(vdsNode **nodes, int nnodes, int depth)
     VEC3_SCALE(average, 1.0 / (float) nnodes, average);
     VEC3_AVERAGE(center, min, max);
     if (VEC3_EQUAL(min, max)) {
-	printf("Coincident vertices; partitioning among child nodes.\n");
+	/* vertices coincide, just partition evenly among children */
 	for (i = 0; i < nnodes; i++) {
 	    int index = i % VDS_MAXDEGREE;
 	    childnodes[index][nchildnodes[index]] = nodes[i];
