@@ -39,6 +39,7 @@
 	method initTranslate {}
 	method updateGeometry {}
 	method createGeometry {obj}
+	method moveElement {_dm _obj _vx _vy _ocenter}
 	method p {obj args}
     }
 
@@ -843,6 +844,82 @@
 	V7 [list $mXmax $mYmax $mZmax] \
 	V8 [list $mXmin $mYmax $mZmax]
 }
+
+
+::itcl::body Arb8EditFrame::moveElement {_dm _obj _vx _vy _ocenter} {
+    switch -- $mEditMode \
+	$moveEdge12 {
+	    set ptA [$itk_option(-mged) get $_obj V1]
+	    set ptB [$itk_option(-mged) get $_obj V2]
+	    set pt [::vscale [vadd2 $ptA $ptB] 0.5]
+	} \
+	$moveEdge23 {
+	    set ptA [$itk_option(-mged) get $_obj V2]
+	    set ptB [$itk_option(-mged) get $_obj V3]
+	    set pt [::vscale [vadd2 $ptA $ptB] 0.5]
+	} \
+	$moveEdge34 {
+	    set ptA [$itk_option(-mged) get $_obj V3]
+	    set ptB [$itk_option(-mged) get $_obj V4]
+	    set pt [::vscale [vadd2 $ptA $ptB] 0.5]
+	} \
+	$moveEdge14 {
+	    set ptA [$itk_option(-mged) get $_obj V1]
+	    set ptB [$itk_option(-mged) get $_obj V4]
+	    set pt [::vscale [vadd2 $ptA $ptB] 0.5]
+	} \
+	$moveEdge15 {
+	    set ptA [$itk_option(-mged) get $_obj V1]
+	    set ptB [$itk_option(-mged) get $_obj V5]
+	    set pt [::vscale [vadd2 $ptA $ptB] 0.5]
+	} \
+	$moveEdge26 {
+	    set ptA [$itk_option(-mged) get $_obj V2]
+	    set ptB [$itk_option(-mged) get $_obj V6]
+	    set pt [::vscale [vadd2 $ptA $ptB] 0.5]
+	} \
+	$moveEdge56 {
+	    set ptA [$itk_option(-mged) get $_obj V5]
+	    set ptB [$itk_option(-mged) get $_obj V6]
+	    set pt [::vscale [vadd2 $ptA $ptB] 0.5]
+	} \
+	$moveEdge67 {
+	    set ptA [$itk_option(-mged) get $_obj V6]
+	    set ptB [$itk_option(-mged) get $_obj V7]
+	    set pt [::vscale [vadd2 $ptA $ptB] 0.5]
+	} \
+	$moveEdge78 {
+	    set ptA [$itk_option(-mged) get $_obj V7]
+	    set ptB [$itk_option(-mged) get $_obj V8]
+	    set pt [::vscale [vadd2 $ptA $ptB] 0.5]
+	} \
+	$moveEdge58 {
+	    set ptA [$itk_option(-mged) get $_obj V5]
+	    set ptB [$itk_option(-mged) get $_obj V8]
+	    set pt [::vscale [vadd2 $ptA $ptB] 0.5]
+	} \
+	$moveEdge37 {
+	    set ptA [$itk_option(-mged) get $_obj V3]
+	    set ptB [$itk_option(-mged) get $_obj V7]
+	    set pt [::vscale [vadd2 $ptA $ptB] 0.5]
+	} \
+	$moveEdge48 {
+	    set ptA [$itk_option(-mged) get $_obj V4]
+	    set ptB [$itk_option(-mged) get $_obj V8]
+	    set pt [::vscale [vadd2 $ptA $ptB] 0.5]
+	} \
+	default {
+	    $itk_option(-mged) $mEditCommand $_obj $mEditParam1 $_ocenter
+	    return
+	}
+
+    set vpt [$itk_option(-mged) pane_m2v_point $_dm $pt]
+    set vz [lindex $vpt 2]
+    set new_vpt [list $_vx $_vy $vz]
+    set new_ocenter [$itk_option(-mged) pane_v2m_point $_dm $new_vpt]
+    $itk_option(-mged) $mEditCommand $_obj $mEditParam1 $new_ocenter
+}
+
 
 ::itcl::body Arb8EditFrame::p {obj args} {
     if {[llength $args] != 3 ||
