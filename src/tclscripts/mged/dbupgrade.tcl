@@ -37,8 +37,8 @@ several new features.
 
 To convert an older geometry file to the new format click the
 \"upgrade\" button below.  The existing file will be saved with an
-extension of \"R4\" added to the filename.  The upgraded file will be
-given the original filename.
+extension of \".R4.g\" added to the filename.  The upgraded file will
+be given the original filename.
 
 The primary benefits of the new file format to the user include:
 
@@ -148,8 +148,8 @@ proc dbupgrade {args} {
 	}
     }
 
-    set dbname $dbupgrade_priv(dbname)
-    set tmp_dbname $dbupgrade_priv(tmp_dbname)
+    set dbname "$dbupgrade_priv(dbname)"
+    set tmp_dbname "$dbupgrade_priv(tmp_dbname)"
     set overwrite 0
 
     if {[llength $args] == 0} {
@@ -210,10 +210,10 @@ proc dbupgrade {args} {
 		    # restore original database
 		    puts "dbupgrade cancelled.  Reopening database \[$dbname\]"
 
-		    opendb $dbname y
+		    opendb "$dbname" y
 
 		    # remove tmp file
-		    file delete $tmp_dbname
+		    file delete "$tmp_dbname"
 
 		    unset dbupgrade_priv(dbname)
 		    return
@@ -223,20 +223,22 @@ proc dbupgrade {args} {
     }
 
     # open this tmp database file in order to close the current database
-    opendb $tmp_dbname y
+    opendb "$tmp_dbname" y
+
+    set suffix ".R4.g"
 
     # find unused file name to hold the original database.
-    if {![file exists $dbname\R4]} {
+    if {![file exists "$dbname$suffix"]} {
 	# use name without numeric suffix
-	set db_orig $dbname\R4
+	set db_orig "$dbname$suffix"
     } else {
-	# make sure $dname\R4 is not a directory
-	if {[file type $dbname\R4] == "directory"} {
+	# make sure $dname$suffix is not a directory
+	if {[file type "$dbname$suffix"] == "directory"} {
 	    # restore original database
-	    opendb $dbname y
+	    opendb "$dbname" y
 
 	    unset dbupgrade_priv(dbname)
-	    error "dbupgrade: $dbname\R4 already exists and is a directory!"
+	    error "dbupgrade: $dbname$suffix already exists and is a directory!"
 	}
 
 	# when overwrite is 0, the user hasn't been prompted to overwrite yet
@@ -244,13 +246,13 @@ proc dbupgrade {args} {
 	    # not a directory, so prompt the user about overwriting
 	    if {[info exists .cad_dialog]} {
 		set result [cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen)\
-				"About to overwrite $dbname\R4"\
-				"Would you like to overwrite $dbname\R4"\
+				"About to overwrite $dbname$suffix"\
+				"Would you like to overwrite $dbname$suffix"\
 				"" 0 Overwrite Cancel]
 
 		if {$result == 1} {
 		    # restore original database
-		    opendb $dbname y
+		    opendb "$dbname" y
 
 		    unset dbupgrade_priv(dbname)
 		    return
@@ -258,59 +260,61 @@ proc dbupgrade {args} {
 
 	    } else {
 		set_more_default n
-		error "more arguments needed::overwrite $dbname\R4 \[y|n\]? \[default: n\] "
+		error "more arguments needed::overwrite $dbname$suffix \[y|n\]? \[default: n\] "
 	    }
 	}
 
-	set db_orig $dbname\R4
+	set db_orig "$dbname$suffix"
     }
 
     # rename the original database
-    file rename -force $dbname $db_orig
+    file rename -force "$dbname" "$db_orig"
 
     # get file permissions from original
-    set perms [file attributes $db_orig -permissions]
+    if {$::tcl_platform(platform) eq {windows} } {
+	# windows doesn't understand -permissions
+	set perms [file attributes "$db_orig" -readonly]
+    } else {
+	set perms [file attributes "$db_orig" -permissions]
+    }
 
     # make original read-only
-    file attributes $db_orig -permissions 0440
+    if {$::tcl_platform(platform) eq {windows} } {
+	# windows doesn't understand -permissions
+	file attributes "$db_orig" -readonly 1
+    } else {
+	file attributes "$db_orig" -permissions 0440
+    }
 
     # dbupgrade converts the original database to the current db format
     set dbupgrade_cmd [file join [bu_brlcad_root "bin"] dbupgrade]
-    catch {exec $dbupgrade_cmd $db_orig $dbname} ret
+    catch {exec "$dbupgrade_cmd" "$db_orig" "$dbname"} ret
 
-    if {[file exists $dbname]} {
-	#XXX There may eventually need to be more checks, but
-	#    for now assume that everything converted properly.
-
-	# set file permissions
-	file attributes $dbname -permissions $perms
-
-	opendb $dbname y
-
-	# remove tmp file
-	file delete $tmp_dbname
-
-	unset dbupgrade_priv(dbname)
-	return
-    } else {
+    if {![file exists "$dbname"]} {
 	# Something went wrong with the conversion, so
 	# put things back the way they were.
 
 	# rename original to previous name
-	file rename -force $db_orig $dbname
+	file rename -force "$db_orig" "$dbname"
 
-	# reset file permissions
-	file attributes $dbname -permissions $perms
-
-	# reopen original database
-	opendb $dbname y
-
-	# remove tmp file
-	file delete $tmp_dbname
-
-	unset dbupgrade_priv(dbname)
 	error "dbupgrade: $ret\nreopening $dbname"
     }
+
+    # set file permissions to match original state
+    if {$::tcl_platform(platform) eq {windows} } {
+	# windows doesn't understand -permissions
+	file attributes "$dbname" -readonly $perms
+    } else {
+	file attributes "$dbname" -permissions $perms
+    }
+
+    # reopen original or new db
+    opendb "$dbname" y
+
+    # remove tmp file
+    file delete "$tmp_dbname"
+
+    unset dbupgrade_priv(dbname)
 }
 
 
