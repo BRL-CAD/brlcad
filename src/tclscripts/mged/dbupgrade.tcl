@@ -271,19 +271,18 @@ proc dbupgrade {args} {
     file rename -force "$dbname" "$db_orig"
 
     # get file permissions from original
-    if {$::tcl_platform(platform) eq {windows} } {
+    if {catch {set perms [file attributes "$db_orig" -permissions]}} {
 	# windows doesn't understand -permissions
-	set perms [file attributes "$db_orig" -readonly]
-    } else {
-	set perms [file attributes "$db_orig" -permissions]
+	if {catch {set perms [file attributes "$db_orig" -readonly]}} {
+	    # wtf
+	    set perms 0
+	}
     }
 
     # make original read-only
-    if {$::tcl_platform(platform) eq {windows} } {
+    if {catch {file attributes "$db_orig" -permissions 0440}} {
 	# windows doesn't understand -permissions
-	file attributes "$db_orig" -readonly 1
-    } else {
-	file attributes "$db_orig" -permissions 0440
+	catch {file attributes "$db_orig" -readonly 1} result
     }
 
     # dbupgrade converts the original database to the current db format
@@ -301,18 +300,16 @@ proc dbupgrade {args} {
     }
 
     # set file permissions to match original state
-    if {$::tcl_platform(platform) eq {windows} } {
+    if {catch {file attributes "$dbname" -permissions $perms}} {
 	# windows doesn't understand -permissions
-	file attributes "$dbname" -readonly $perms
-    } else {
-	file attributes "$dbname" -permissions $perms
+	catch {file attributes "$dbname" -readonly $perms} result
     }
 
     # reopen original or new db
     opendb "$dbname" y
 
     # remove tmp file
-    file delete "$tmp_dbname"
+    catch {file delete "$tmp_dbname"} result
 
     unset dbupgrade_priv(dbname)
 }
