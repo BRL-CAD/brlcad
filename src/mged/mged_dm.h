@@ -154,6 +154,7 @@ struct _mged_variables {
     char	mv_union_lexeme[1024];
     char	mv_intersection_lexeme[1024];
     char	mv_difference_lexeme[1024];
+    int		mv_adaptive_plot;
 };
 
 

@@ -553,10 +553,12 @@ append_solid_to_display_list(
 static union tree *
 wireframe_leaf(struct db_tree_state *tsp, const struct db_full_path *pathp, struct rt_db_internal *ip, genptr_t client_data)
 {
+    int plot_status;
     union tree *curtree;
     struct bu_list vhead;
     struct solid *sp, *curr_sp;
     struct _ged_client_data *dgcdp = (struct _ged_client_data *)client_data;
+    struct ged_view *gvp;
 
     RT_CK_DB_INTERNAL(ip);
     RT_CK_TESS_TOL(tsp->ts_ttol);
@@ -591,9 +593,30 @@ wireframe_leaf(struct db_tree_state *tsp, const struct db_full_path *pathp, stru
     /* calculate plot */
     BU_LIST_INIT(&vhead);
 
-    if (!ip->idb_meth->ft_plot
-	|| ip->idb_meth->ft_plot(&vhead, ip, tsp->ts_ttol, tsp->ts_tol, NULL) < 0)
-    {
+    plot_status = -1;
+    gvp = dgcdp->gedp->ged_gvp;
+    if (gvp->gv_adaptive_plot && ip->idb_meth->ft_adaptive_plot) {
+	struct rt_view_info info;
+
+	info.vhead = &vhead;
+	info.tol = tsp->ts_tol;
+
+	info.point_spacing = sp->s_size / 16.0;
+	info.curve_spacing = sp->s_size / 2.0;
+
+	if (ip->idb_minor_type == ID_BOT) {
+	    struct rt_bot_internal *bot = (struct rt_bot_internal *)ip->idb_ptr;
+
+	    info.point_spacing = sp->s_size / (bot->num_faces / 12.0);
+	}
+
+	plot_status = ip->idb_meth->ft_adaptive_plot(ip, &info);
+    } else if (ip->idb_meth->ft_plot) {
+	plot_status = ip->idb_meth->ft_plot(&vhead, ip, tsp->ts_ttol,
+		tsp->ts_tol, NULL);
+    }
+
+    if (plot_status < 0) {
 	bu_vls_printf(dgcdp->gedp->ged_result_str, "%s: plot failure\n",
 		DB_FULL_PATH_CUR_DIR(pathp)->d_namep);
 

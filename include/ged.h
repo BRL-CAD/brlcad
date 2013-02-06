@@ -531,6 +531,7 @@ struct ged_view {
     struct ged_other_state 	gv_view_params;
     struct ged_other_state 	gv_view_scale;
     struct ged_rect_state 	gv_rect;
+    int				gv_adaptive_plot;
 };
 
 
