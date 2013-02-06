@@ -282,7 +282,7 @@ proc dbupgrade {args} {
     # make original read-only
     if {catch {file attributes "$db_orig" -permissions 0440}} {
 	# windows doesn't understand -permissions
-	catch {file attributes "$db_orig" -readonly 1} result
+	catch {file attributes "$db_orig" -readonly 1}
     }
 
     # dbupgrade converts the original database to the current db format
@@ -302,14 +302,14 @@ proc dbupgrade {args} {
     # set file permissions to match original state
     if {catch {file attributes "$dbname" -permissions $perms}} {
 	# windows doesn't understand -permissions
-	catch {file attributes "$dbname" -readonly $perms} result
+	catch {file attributes "$dbname" -readonly $perms}
     }
 
     # reopen original or new db
     opendb "$dbname" y
 
     # remove tmp file
-    catch {file delete "$tmp_dbname"} result
+    catch {file delete "$tmp_dbname"}
 
     unset dbupgrade_priv(dbname)
 }
