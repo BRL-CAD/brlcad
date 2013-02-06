@@ -78,6 +78,7 @@
     protected {
 	variable mDetail
 	variable mCurrentPipePoint 1
+	variable mPrevPipeObject ""
 
 	# Methods used by the constructor
 	# override methods in GeometryEditFrame
@@ -168,9 +169,9 @@
 
     GeometryEditFrame::initGeometry $gdata
 
-    if {$itk_option(-geometryObject) != $mPrevGeometryObject} {
+    if {$itk_option(-geometryObject) != $mPrevPipeObject} {
 	set mCurrentPipePoint 1
-	set mPrevGeometryObject $itk_option(-geometryObject)
+	set mPrevPipeObject $itk_option(-geometryObject)
     }
     pipePointSelectCallback [expr {$mCurrentPipePoint - 1}]
 }
@@ -309,21 +310,18 @@
 
 ::itcl::body PipeEditFrame::buildLowerPanel {} {
     set parent [$this childsite lower]
-    set i 1
+    set row 1
     foreach label $mEditLabels {
-	itk_component add editRB$i {
-	    ::ttk::radiobutton $parent.editRB$i \
+	itk_component add editRB$row {
+	    ::ttk::radiobutton $parent.editRB$row \
 		-variable [::itcl::scope mEditMode] \
-		-value $i \
+		-value $row \
 		-text $label \
 		-command [::itcl::code $this initEditState]
 	} {}
 
-	pack $itk_component(editRB$i) \
-	    -anchor w \
-	    -expand yes
-
-	incr i
+	grid $itk_component(editRB$row) -row $row -column 0 -sticky nsew
+	incr row
     }
 }
 
