@@ -42,6 +42,10 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* mged's dbupgrade command is useless, fix it.
+
+* merge conv-vg2g into dbupgrade
+
 * add the ability for search to filter objects based on whether
   they are being unioned, intersected or subtracted from a parent
 
@@ -542,8 +546,6 @@ comp.r4 ID 5678 material code 5 LOS 75
 
 * add support for a custom unit conversion factor to the units command
   (e.g. 'units 9.3120223' or 'units metertons 9.3120223')
-
-* merge conv-vg2g into dbupgrade
 
 * usage statistics.  similar to the eclipse Usage Data Collector, keep
   track of which BRL-CAD command-line commands and MGED/libged
