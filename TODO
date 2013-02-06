@@ -111,15 +111,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 * make libbn/plot3.c functions parallel-safe so callers do not have to
   manually wrap with bu_semaphore_acquire().
 
-* implement 3dm-g support for ON_InstanceRef entities.  These are
-  instances of existing geometry that have prescribed referencing edit
-  behavior and can have their own matrices.  Basically, they're combs
-  that should sometimes reference copies of geometry and sometimes not
-  (there's a flag).  unveiled via sf bug report 3575774 where the
-  geometry export from solidworks was predominantly references
-  resulting in a load of geometry missing after import and objects in
-  the wrong position.
-
 * fix ged 'joint' command, need to figure out how libged should handle
   non-object additions to the wireframe (or maybe they should be
   objects, but not mged's faked solids ala cvt_vlblock_to_solids()).
@@ -475,8 +466,6 @@ comp.r4 ID 5678 material code 5 LOS 75
 
 * deprecate dbcp and merge functionality (and improved
   double-buffering) with the buffer tool.
-
-* make the converters export all top-level objects by default
 
 * rename all the g_* tools sans "_" [save until 7.22]
 
@@ -973,8 +962,6 @@ comp.r4 ID 5678 material code 5 LOS 75
 
 * give bot-bldxf the axe (reconcile and merge with bot_dump)
 
-* implement support for exporting sketch objects via g-iges
-
 * implement mged object name globbing similar to tclsh's globbing
   (i.e. via a globbing command and quoting globs that use []).  testing
   shows db_glob doesn't seem to behave correctly, at least not like
@@ -1049,9 +1036,6 @@ comp.r4 ID 5678 material code 5 LOS 75
 
 * preserve an arb8 as an arb8 (instead of writing as arb6 or arb5) and
   similarly for the other arb# sizes
-
-* validate primitives during export so that it is guaranteed that
-  illegal primitives will not be written to file
 
 * implement a region anointment command where the user can turn an
   assembly into a region and change all lower or higher regions into
@@ -1170,8 +1154,6 @@ comp.r4 ID 5678 material code 5 LOS 75
 
 * investigate why g-iges followed by iges-g on a single box results in
   permuted vertex lists
-
-* add xml, nff, bzw, pov, blend geometry import and export support
 
 * add support for filesystem-based geometry collections
 
@@ -1407,6 +1389,24 @@ missing on Windows due to needing lex.
 
 CONVERTERS
 ----------
+
+* implement 3dm-g support for ON_InstanceRef entities.  These are
+  instances of existing geometry that have prescribed referencing edit
+  behavior and can have their own matrices.  Basically, they're combs
+  that should sometimes reference copies of geometry and sometimes not
+  (there's a flag).  unveiled via sf bug report 3575774 where the
+  geometry export from solidworks was predominantly references
+  resulting in a load of geometry missing after import and objects in
+  the wrong position.
+
+* make the converters export all top-level objects by default
+
+* implement support for exporting sketch objects via g-iges
+
+* validate primitives during export so that it is guaranteed that
+  illegal primitives will not be written to file
+
+* add csv, xml, nff, bzw, pov, blend geometry import and export support
 
 * finish obj-g importer.  need to test more inputs and make sure all
   geometry is preserved on import in some form.  make sure new libobj
