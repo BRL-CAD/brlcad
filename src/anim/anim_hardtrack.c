@@ -345,7 +345,7 @@ main(int argc, char *argv[])
     MAT_IDN(m_rev_axes);
 
     if (!get_args(argc, argv)) {
-	fprintf(stderr, "anim_hardtrack: argument error.");
+	fprintf(stderr, "anim_hardtrack: argument error.\n");
 	return -1;
     }
 
