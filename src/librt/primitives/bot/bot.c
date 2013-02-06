@@ -1880,7 +1880,7 @@ rt_bot_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const cha
 			  V3ARGS(&bot->vertices[i*3]));
 	bu_vls_strcat(logstr, "} F {");
 	for (i = 0; i < bot->num_faces; i++)
-	    bu_vls_printf(logstr, " { %lu %lu %lu }",
+	    bu_vls_printf(logstr, " { %d %d %d }",
 			  V3ARGS(&bot->faces[i*3]));
 	bu_vls_strcat(logstr, "}");
 	if (bot->mode == RT_BOT_PLATE || bot->mode == RT_BOT_PLATE_NOCOS) {
@@ -1897,7 +1897,7 @@ rt_bot_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const cha
 	    }
 	    bu_vls_printf(logstr, "} fn {");
 	    for (i = 0; i < bot->num_faces; i++) {
-		bu_vls_printf(logstr, " { %lu %lu %lu }", V3ARGS(&bot->face_normals[i*3]));
+		bu_vls_printf(logstr, " { %d %d %d }", V3ARGS(&bot->face_normals[i*3]));
 	    }
 	    bu_vls_printf(logstr, "}");
 	}
@@ -1926,7 +1926,7 @@ rt_bot_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const cha
 	} else if (!bu_strncmp(attr, "fn", 2)) {
 	    if (attr[2] == '\0') {
 		for (i = 0; i < bot->num_faces; i++) {
-		    bu_vls_printf(logstr, " { %lu %lu %lu }", V3ARGS(&bot->face_normals[i*3]));
+		    bu_vls_printf(logstr, " { %d %d %d }", V3ARGS(&bot->face_normals[i*3]));
 		}
 		status = BRLCAD_OK;
 	    } else {
@@ -1935,7 +1935,7 @@ rt_bot_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const cha
 		    bu_vls_printf(logstr, "Specified face index [%ld] is out of range", li);
 		    status = BRLCAD_ERROR;
 		} else {
-		    bu_vls_printf(logstr, "%lu %lu %lu", V3ARGS(&bot->face_normals[li*3]));
+		    bu_vls_printf(logstr, "%d %d %d", V3ARGS(&bot->face_normals[li*3]));
 		    status = BRLCAD_OK;
 		}
 	    }
@@ -1994,7 +1994,7 @@ rt_bot_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const cha
 	    /* Retrieve one face, as vertex indices */
 	    if (attr[1] == '\0') {
 		for (i = 0; i < bot->num_faces; i++)
-		    bu_vls_printf(logstr, " { %lu %lu %lu }",
+		    bu_vls_printf(logstr, " { %d %d %d }",
 				  V3ARGS(&bot->faces[i*3]));
 		status = BRLCAD_OK;
 	    } else {
@@ -2003,7 +2003,7 @@ rt_bot_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const cha
 		    bu_vls_printf(logstr, "face number [%ld] out of range (0..%zu)", li, bot->num_faces-1);
 		    status = BRLCAD_ERROR;
 		} else {
-		    bu_vls_printf(logstr, "%lu %lu %lu",
+		    bu_vls_printf(logstr, "%d %d %d",
 				  V3ARGS(&bot->faces[li*3]));
 		    status = BRLCAD_OK;
 		}
