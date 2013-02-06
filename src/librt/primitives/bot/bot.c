@@ -503,7 +503,7 @@ build_vertex_tree(struct rt_bot_internal *bot)
     unsigned char color[] = {255, 0 , 0};
     vdsNode *leaf_nodes;
     vdsNode **node_list;
-    
+
     node_indices = bot->num_vertices * 3;
     tri_indices = bot->num_faces * 3;
 
