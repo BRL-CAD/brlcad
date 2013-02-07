@@ -9,6 +9,10 @@
  * @see		stdvds.c
  */
 /*@{*/
+
+/* For M_PI on Windows */
+#define _USE_MATH_DEFINES
+
 #include <math.h>
 #include <assert.h>
 
