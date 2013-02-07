@@ -517,6 +517,7 @@
     set odata [lrange [$itk_option(-mged) get $itk_option(-geometryObject)] 1 end]
     set mCurrentPipePoint [expr {int([llength $odata] * 0.125)}]
     initGeometry $odata
+    $::ArcherCore::application setSave
 }
 
 ::itcl::body PipeEditFrame::pipePointDeleteCallback {_pindex} {
@@ -535,6 +536,7 @@
     }
 
     initGeometry $odata
+    $::ArcherCore::application setSave
 }
 
 
@@ -564,6 +566,7 @@
     set odata [lrange [$itk_option(-mged) get $itk_option(-geometryObject)] 1 end]
     set mCurrentPipePoint 1
     initGeometry $odata
+    $::ArcherCore::application setSave
 }
 
 ::itcl::body PipeEditFrame::pipePointSelectCallback {_pindex} {
