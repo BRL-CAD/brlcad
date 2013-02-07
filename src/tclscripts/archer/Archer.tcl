@@ -158,7 +158,7 @@ package provide Archer 1.0
 	method initFindBotEdge {_obj _button _viewz _callback}
 	method initFindBotFace {_obj _button _callback}
 	method initFindBotPoint {_obj _button _viewz _callback}
-	method initFindPipePoint {_obj _button _callback}
+	method initFindPipePoint {_obj _button _callback {_dflag 0}}
 	method initPrependPipePoint {_obj _button _callback}
 
 	# General
@@ -823,13 +823,15 @@ package provide Archer 1.0
 }
 
 
-::itcl::body Archer::initFindPipePoint {_obj _button _callback} {
+::itcl::body Archer::initFindPipePoint {_obj _button _callback {_dflag 0}} {
     if {![info exists itk_component(ged)]} {
 	return
     }
 
     # This deselects the selected mouse mode in the primary toolbar
-    set mDefaultBindingMode FIRST_FREE_BINDING_MODE
+    if {$_dflag} {
+	set mDefaultBindingMode FIRST_FREE_BINDING_MODE
+    }
 
     # For the moment, the callback being used here is from PipeEditFrame. At some point,
     # Archer may want to provide the callback in order to do something before passing
@@ -6264,7 +6266,7 @@ proc title_node_handler {node} {
 
     if {$GeometryEditFrame::mEditClass != $GeometryEditFrame::EDIT_CLASS_TRANS} {
 	initEdit
-    } elseif {[regexp {arb[45678]} $mSelectedObjType]} {
+    } elseif {[regexp {arb[45678]} $mSelectedObjType] || $mSelectedObjType == "pipe"} {
 	$itk_component($mSelectedObjType\View) initTranslate
 	$itk_component(ged) rect lwidth 0
 	return

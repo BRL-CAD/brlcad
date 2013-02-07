@@ -70,6 +70,7 @@
 
 	# Override what's in GeometryEditFrame
 	method initGeometry {gdata}
+	method initTranslate {}
 	method updateGeometry {}
 	method createGeometry {_name}
 	method p {obj args}
@@ -91,10 +92,12 @@
 
 	method applyData {}
 	method detailBrowseCommand {_row _col}
+	method endPipePointMove {_dm _obj _mx _my}
 	method handleDetailPopup {_index _X _Y}
 	method handleEnter {_row _col}
 	method pipePointAppendCallback {}
 	method pipePointDeleteCallback {_pindex}
+	method pipePointMoveCallback {_pindex}
 	method pipePointPrependCallback {}
 	method pipePointSelectCallback {_pindex}
 	method singleSelectCallback {_pindex}
@@ -176,6 +179,18 @@
     pipePointSelectCallback [expr {$mCurrentPipePoint - 1}]
 }
 
+
+::itcl::body PipeEditFrame::initTranslate {} {
+    switch -- $mEditMode \
+	$movePoint {
+	    $::ArcherCore::application initFindPipePoint $itk_option(-geometryObjectPath) 1 [::itcl::code $this pipePointMoveCallback]
+	} \
+	default {
+	    $::ArcherCore::application putString "PipeEditFrame::initTranslate: bad mode - $mEditMode, only movePoint allowed!"
+	}
+}
+
+
 ::itcl::body PipeEditFrame::updateGeometry {} {
     if {$itk_option(-mged) == "" ||
 	$itk_option(-geometryObject) == ""} {
@@ -249,6 +264,7 @@
 	I1 $id \
 	R1 $br
 }
+
 
 ::itcl::body PipeEditFrame::p {obj args} {
     if {[llength $args] != 1 || ![string is double $args]} {
@@ -392,18 +408,19 @@
 	    set mEditCommand ""
 	    set mEditClass ""
 	    set mEditParam1 ""
-	    $::ArcherCore::application initFindPipePoint $itk_option(-geometryObjectPath) 1 [::itcl::code $this pipePointSelectCallback]
+	    $::ArcherCore::application initFindPipePoint $itk_option(-geometryObjectPath) 1 [::itcl::code $this pipePointSelectCallback] 1
 	} \
 	$movePoint {
 	    set mEditCommand move_pipept
 	    set mEditClass $EDIT_CLASS_TRANS
-	    set mEditParam1 $seg_i
+	    set mEditLastTransMode $::ArcherCore::OBJECT_TRANSLATE_MODE
+	    set mEditParam1 ""
 	} \
 	$deletePoint {
 	    set mEditCommand ""
 	    set mEditClass ""
 	    set mEditParam1 ""
-	    $::ArcherCore::application initFindPipePoint $itk_option(-geometryObjectPath) 1 [::itcl::code $this pipePointDeleteCallback]
+	    $::ArcherCore::application initFindPipePoint $itk_option(-geometryObjectPath) 1 [::itcl::code $this pipePointDeleteCallback] 1
 	} \
 	$appendPoint {
 	    set mEditCommand ""
@@ -471,6 +488,12 @@
     $itk_component(detailTab) see $_row,$_col
 }
 
+
+::itcl::body PipeEditFrame::endPipePointMove {_dm _obj _mx _my} {
+    $::ArcherCore::application endObjTranslate $_dm $_obj $_mx $_my
+}
+
+
 ::itcl::body PipeEditFrame::handleDetailPopup {_index _X _Y} {
 }
 
@@ -514,6 +537,25 @@
     initGeometry $odata
 }
 
+
+::itcl::body PipeEditFrame::pipePointMoveCallback {_pindex} {
+    if {$itk_option(-mged) == ""} {
+	return
+    }
+
+    pipePointSelectCallback $_pindex
+
+    foreach dname {ul ur ll lr} {
+	set win [$itk_option(-mged) component $dname]
+	bind $win <ButtonRelease-1> "[::itcl::code $this endPipePointMove $dname $itk_option(-geometryObject) %x %y]; break"
+    }
+
+    set last_mouse [$itk_option(-mged) get_prev_ged_mouse]
+    set seg_i [expr {$mCurrentPipePoint - 1}]
+    eval $itk_option(-mged) move_pipept_mode $itk_option(-geometryObject) $seg_i $last_mouse
+}
+
+
 ::itcl::body PipeEditFrame::pipePointPrependCallback {} {
     if {$itk_option(-mged) == ""} {
 	return
@@ -525,6 +567,7 @@
 }
 
 ::itcl::body PipeEditFrame::pipePointSelectCallback {_pindex} {
+    set mEditParam1 $_pindex
     incr _pindex
     set mCurrentPipePoint $_pindex
     $itk_component(detailTab) selectSingleRow $_pindex

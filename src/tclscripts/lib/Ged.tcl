@@ -275,7 +275,7 @@ package provide cadwidgets::Ged 1.0
 	method mouse_find_arb_edge {_arb _mx _my _ptol}
 	method mouse_find_bot_edge {_bot _mx _my}
 	method mouse_find_botpt {_bot _mx _my}
-	method mouse_find_pipept {args}
+	method mouse_find_pipept {_pipe _mx _my}
 	method mouse_move_arb_edge {args}
 	method mouse_move_arb_face {args}
 	method mouse_move_pipept {args}
@@ -363,7 +363,7 @@ package provide cadwidgets::Ged 1.0
 	method pane_mouse_find_bot_edge {_pane _bot _viewz _mx _my}
 	method pane_mouse_find_bot_face {_pane _bot _viewz _mx _my}
 	method pane_mouse_find_botpt {_pane _bot _viewz _mx _my}
-	method pane_mouse_find_pipept {_pane args}
+	method pane_mouse_find_pipept {_pane _pipe _mx _my}
 	method pane_mouse_find_type_face {_pane _type _obj _viewz _mx _my _callback}
 	method pane_mouse_move_arb_edge {_pane args}
 	method pane_mouse_move_arb_face {_pane args}
@@ -1920,19 +1920,31 @@ package provide cadwidgets::Ged 1.0
 }
 
 ::itcl::body cadwidgets::Ged::mouse_find_arb_edge {_arb _mx _my _ptol} {
+    set mPrevGedMouseX $_mx
+    set mPrevGedMouseY $_my
+
     $mGed mouse_find_arb_edge $itk_component($itk_option(-pane)) $_arb $_mx $_my $_ptol
 }
 
 ::itcl::body cadwidgets::Ged::mouse_find_bot_edge {_bot _mx _my} {
+    set mPrevGedMouseX $_mx
+    set mPrevGedMouseY $_my
+
     $mGed mouse_find_bot_edge $itk_component($itk_option(-pane)) $_bot $_mx $_my
 }
 
 ::itcl::body cadwidgets::Ged::mouse_find_botpt {_bot _mx _my} {
+    set mPrevGedMouseX $_mx
+    set mPrevGedMouseY $_my
+
     eval $mGed mouse_find_botpt $itk_component($itk_option(-pane)) $_bot $_mx $_my
 }
 
-::itcl::body cadwidgets::Ged::mouse_find_pipept {args} {
-    eval $mGed mouse_find_pipept $itk_component($itk_option(-pane)) $args
+::itcl::body cadwidgets::Ged::mouse_find_pipept {_pipe _mx _my} {
+    set mPrevGedMouseX $_mx
+    set mPrevGedMouseY $_my
+
+    $mGed mouse_find_pipept $itk_component($itk_option(-pane)) $_pipe $_mx $_my
 }
 
 ::itcl::body cadwidgets::Ged::mouse_move_arb_edge {args} {
@@ -2392,11 +2404,17 @@ package provide cadwidgets::Ged 1.0
 	return -1
     }
 
+    set mPrevGedMouseX $_mx
+    set mPrevGedMouseY $_my
+
     return [pane_mouse_find_type_face $_pane $arb_type $_arb $_viewz $_mx $_my $mArbFaceCallback]
 }
 
 
 ::itcl::body cadwidgets::Ged::pane_mouse_find_bot_edge {_pane _bot _viewz _mx _my} {
+    set mPrevGedMouseX $_mx
+    set mPrevGedMouseY $_my
+
     if {$_viewz < 0.0} {
 	set elist [eval $mGed mouse_find_bot_edge $itk_component($_pane) $_bot $_mx $_my]
     } else {
@@ -2421,11 +2439,17 @@ package provide cadwidgets::Ged 1.0
 
 
 ::itcl::body cadwidgets::Ged::pane_mouse_find_bot_face {_pane _bot _viewz _mx _my} {
+    set mPrevGedMouseX $_mx
+    set mPrevGedMouseY $_my
+
     return [pane_mouse_find_type_face $_pane bot $_bot $_viewz $_mx $_my $mBotFaceCallback]
 }
 
 
 ::itcl::body cadwidgets::Ged::pane_mouse_find_botpt {_pane _bot _viewz _mx _my} {
+    set mPrevGedMouseX $_mx
+    set mPrevGedMouseY $_my
+
     if {$_viewz < 0.0} {
 	set i [$mGed mouse_find_botpt $itk_component($_pane) $_bot $_mx $_my]
     } else {
@@ -2449,8 +2473,11 @@ package provide cadwidgets::Ged 1.0
 }
 
 
-::itcl::body cadwidgets::Ged::pane_mouse_find_pipept {_pane args} {
-    set i [eval $mGed mouse_find_pipept $itk_component($_pane) $args]
+::itcl::body cadwidgets::Ged::pane_mouse_find_pipept {_pane _pipe _mx _my} {
+    set i [$mGed mouse_find_pipept $itk_component($_pane) $_pipe $_mx $_my]
+
+    set mPrevGedMouseX $_mx
+    set mPrevGedMouseY $_my
 
     if {$mPipePointCallback != ""} {
 	catch {$mPipePointCallback $i}
