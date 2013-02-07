@@ -154,6 +154,18 @@ install(TARGETS stdvds
 	LIBRARY DESTINATION ${LIB_DIR}
 	ARCHIVE DESTINATION ${LIB_DIR})
 
+if(BUILD_STATIC_LIBS)
+  add_library(libvds-static STATIC ${CORE_SRCS})
+  if(CMAKE_CL_64)
+    set_target_properties(libvds-static PROPERTIES STATIC_LIBRARY_FLAGS "/machine:x64")
+  endif(CMAKE_CL_64)
+
+  add_library(stdvds-static STATIC ${STD_SRCS})
+  if(CMAKE_CL_64)
+    set_target_properties(stdvds-static PROPERTIES STATIC_LIBRARY_FLAGS "/machine:x64")
+  endif(CMAKE_CL_64)
+endif(BUILD_STATIC_LIBS)
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake
