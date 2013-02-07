@@ -1894,11 +1894,20 @@ rt_pipe_uv(
 void
 rt_pipe_free(struct soltab *stp)
 {
-    if (!stp) {
-	return;
-    }
+    if (stp != NULL) {
+	struct bu_list *head = (struct bu_list *)stp->st_specific;
 
-    /* FIXME: make sure we're not leaking memory here */
+	if (head != 0) {
+	    struct id_pipe *p;
+
+	    while (BU_LIST_WHILE(p, id_pipe, head)) {
+		BU_LIST_DEQUEUE(&(p->l));
+		bu_free(p, "rt_pipe_free:p");
+	    }
+
+	    bu_free(head, "rt_pipe_free:head");
+	}
+    }
 }
 
 
