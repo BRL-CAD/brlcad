@@ -136,6 +136,10 @@ set(VDS_HDRS
 ## Note that assertions are suppressed when VDS_DEBUGPRINT is not defined
 #add_definitions(-DVDS_DEBUGPRINT)
 
+if(MSVC)
+   add_definitions(-DVDS_DLL_EXPORTS)
+endif(MSVC)
+
 add_library(libvds SHARED ${CORE_SRCS})
 
 install(TARGETS libvds

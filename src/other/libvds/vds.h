@@ -27,6 +27,18 @@
 extern "C" {
 #endif
 
+#ifndef VDS_EXPORT
+#  if defined(VDS_DLL_EXPORTS) && defined(VDS_DLL_IMPORTS)
+#    error "Only VDS_DLL_EXPORTS or VDS_DLL_IMPORTS can be defined, not both."
+#  elif defined(VDS_DLL_EXPORTS)
+#    define VDS_EXPORT __declspec(dllexport)
+#  elif defined(VDS_DLL_IMPORTS)
+#    define VDS_EXPORT __declspec(dllimport)
+#  else
+#    define VDS_EXPORT
+#  endif
+#endif
+
 #include <stdio.h>
 
 /** VDS_MAXDEGREE defines the maximum degree of vertex tree nodes	*/
@@ -172,44 +184,44 @@ typedef vdsNodeData (*vdsNodeDataReader) (FILE *f);
  */
 
 /* Routines for maintaining the vertex tree (dynamic.c) */
-extern void vdsAdjustTreeBoundary(vdsNode *, vdsFoldCriterion, void *);
-extern void vdsAdjustTreeTopDown(vdsNode *, vdsFoldCriterion, void *);
+VDS_EXPORT extern void vdsAdjustTreeBoundary(vdsNode *, vdsFoldCriterion, void *);
+VDS_EXPORT extern void vdsAdjustTreeTopDown(vdsNode *, vdsFoldCriterion, void *);
 /* Low-level vertex tree maintainance routines; not need by most users: */
-extern void vdsFoldNode(vdsNode *);
-extern void vdsUnfoldNode(vdsNode *);
-extern void vdsFoldSubtree(vdsNode *);
+VDS_EXPORT extern void vdsFoldNode(vdsNode *);
+VDS_EXPORT extern void vdsUnfoldNode(vdsNode *);
+VDS_EXPORT extern void vdsFoldSubtree(vdsNode *);
 
 /* Routines for rendering the vertex tree (render.c) */
-extern void vdsUpdateTriProxies(vdsTri *t);
-extern void vdsRenderTree(vdsNode *node, vdsRenderFunction render,
+VDS_EXPORT extern void vdsUpdateTriProxies(vdsTri *t);
+VDS_EXPORT extern void vdsRenderTree(vdsNode *node, vdsRenderFunction render,
 		  vdsVisibilityFunction visible, void *udata);
 
 /* Routines for building the vertex tree (build.c) */
-extern void vdsBeginVertexTree();
-extern void vdsBeginGeometry();
-extern vdsNode *vdsAddNode(vdsFloat x, vdsFloat y, vdsFloat z);
-extern vdsTri *vdsAddTri(int v0, int v1, int v2,
+VDS_EXPORT extern void vdsBeginVertexTree();
+VDS_EXPORT extern void vdsBeginGeometry();
+VDS_EXPORT extern vdsNode *vdsAddNode(vdsFloat x, vdsFloat y, vdsFloat z);
+VDS_EXPORT extern vdsTri *vdsAddTri(int v0, int v1, int v2,
 		 vdsVec3 n0, vdsVec3 n1, vdsVec3 n2,
 		 vdsByte3 c0, vdsByte3 c1, vdsByte3 c2);
-extern void vdsNewObject();
-extern vdsNode *vdsEndGeometry();
-extern vdsNode *vdsClusterNodes(int nnodes, vdsNode **nodes,
+VDS_EXPORT extern void vdsNewObject();
+VDS_EXPORT extern vdsNode *vdsEndGeometry();
+VDS_EXPORT extern vdsNode *vdsClusterNodes(int nnodes, vdsNode **nodes,
 		vdsFloat x, vdsFloat y, vdsFloat z);
-extern vdsNode *vdsEndVertexTree();
+VDS_EXPORT extern vdsNode *vdsEndVertexTree();
 
 /* Routines for reading and writing the vertex tree (file.c) */
-extern vdsNode *vdsReadTree(FILE *f, vdsNodeDataReader readdata);
-extern void vdsWriteTree(FILE *f, vdsNode *root, vdsNodeDataWriter writedata);
+VDS_EXPORT extern vdsNode *vdsReadTree(FILE *f, vdsNodeDataReader readdata);
+VDS_EXPORT extern void vdsWriteTree(FILE *f, vdsNode *root, vdsNodeDataWriter writedata);
 
 /* Assorted useful routines (util.c) */
-extern vdsNode *vdsFindNode(vdsNodeId id, vdsNode *root);
-extern void vdsPrintNodeId(const vdsNodeId *id);
-extern void vdsSprintNodeId(char *str, const vdsNodeId *id);
-extern void vdsStatTree(vdsNode *root, int *nodes, int *leaves, int *tris);
-extern void vdsFreeTree(vdsNode *node);
+VDS_EXPORT extern vdsNode *vdsFindNode(vdsNodeId id, vdsNode *root);
+VDS_EXPORT extern void vdsPrintNodeId(const vdsNodeId *id);
+VDS_EXPORT extern void vdsSprintNodeId(char *str, const vdsNodeId *id);
+VDS_EXPORT extern void vdsStatTree(vdsNode *root, int *nodes, int *leaves, int *tris);
+VDS_EXPORT extern void vdsFreeTree(vdsNode *node);
 
 /* (cluster.c) */
-extern vdsNode *vdsClusterOctree(vdsNode **nodes, int nnodes, int depth);
+VDS_EXPORT extern vdsNode *vdsClusterOctree(vdsNode **nodes, int nnodes, int depth);
 
 /*
  * The following macros relate to the maximum degree of the vertex tree,
