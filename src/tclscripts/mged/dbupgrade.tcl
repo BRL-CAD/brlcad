@@ -271,16 +271,16 @@ proc dbupgrade {args} {
     file rename -force "$dbname" "$db_orig"
 
     # get file permissions from original
-    if {catch {set perms [file attributes "$db_orig" -permissions]}} {
+    if { [catch {set perms [file attributes "$db_orig" -permissions]}] } {
 	# windows doesn't understand -permissions
-	if {catch {set perms [file attributes "$db_orig" -readonly]}} {
+	if { [catch {set perms [file attributes "$db_orig" -readonly]}] } {
 	    # wtf
 	    set perms 0
 	}
     }
 
     # make original read-only
-    if {catch {file attributes "$db_orig" -permissions 0440}} {
+    if { [catch {file attributes "$db_orig" -permissions 0440}] } {
 	# windows doesn't understand -permissions
 	catch {file attributes "$db_orig" -readonly 1}
     }
@@ -300,7 +300,7 @@ proc dbupgrade {args} {
     }
 
     # set file permissions to match original state
-    if {catch {file attributes "$dbname" -permissions $perms}} {
+    if { [catch {file attributes "$dbname" -permissions $perms}] } {
 	# windows doesn't understand -permissions
 	catch {file attributes "$dbname" -readonly $perms}
     }
