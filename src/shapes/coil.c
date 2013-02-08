@@ -381,7 +381,10 @@ ReadArgs(int argc, char **argv, struct bu_list *sections, fastf_t *mean_outer_di
 		BU_LIST_INSERT(&(*sections), &((*coil_data).l));
 		break;
 	    default:
-/* On next line, bu_optopt is available here as a global; it replaces c, which only output '?'. */
+		/* since c (bu_getopt() return value) holds '?',
+		 * instead print bu_optopt global which holds the
+		 * parsed character.
+		 */
 		bu_log("%s: illegal option -- %c\n", bu_getprogname(), bu_optopt);
 		bu_log("Usage: coil [-d mean_outer_diameter] [-w wire_diameter] [-h helix_angle] [-p pitch]\n");
 		bu_log("            [-n number_of_turns] [-s start_cap_type] [-e end_cap_type]\n");
