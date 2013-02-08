@@ -80,11 +80,6 @@
 #  define O_BINARY 0
 #endif
 
-/* account for badness in Tcl regex header */
-#ifdef regfree
-#  undef regfree
-#endif
-
 /* the S_IS* macros should replace the S_IF*'s
    already defined in C99 compliant compilers
    this is the work-around for older compilers */
