@@ -54,6 +54,7 @@ set(docbook_mann_EN
   db.xml
   db_glob.xml
   dbconcat.xml
+  dbupgrade.xml
   debugbu.xml
   debugdir.xml
   debuglib.xml
