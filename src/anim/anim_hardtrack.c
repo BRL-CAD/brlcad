@@ -230,7 +230,7 @@ get_args(int argc, char **argv)
 	    default:
 /* Commented off the next line because variable c would be storing '?' and
    there is a "define tell(s)" in src/libbu/getopt.c which provides the
-   illegal-option character. */
+   illegal-option character before we arrive here. */
 /*		fprintf(stderr, "Unknown option: -%c\n", c); */
 		return 0;
 	}
