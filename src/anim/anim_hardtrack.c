@@ -228,7 +228,10 @@ get_args(int argc, char **argv)
 		get_circumf = 1;
 		break;
 	    default:
-		fprintf(stderr, "Unknown option: -%c\n", c);
+/* Commented off the next line because variable c would be storing '?' and
+   there is a "define tell(s)" in src/libbu/getopt.c which provides the
+   illegal-option character. */
+/*		fprintf(stderr, "Unknown option: -%c\n", c); */
 		return 0;
 	}
     }
