@@ -136,10 +136,6 @@ set(VDS_HDRS
 ## Note that assertions are suppressed when VDS_DEBUGPRINT is not defined
 #add_definitions(-DVDS_DEBUGPRINT)
 
-if(MSVC)
-   add_definitions(-DVDS_DLL_EXPORTS)
-endif(MSVC)
-
 add_library(libvds SHARED ${CORE_SRCS})
 
 install(TARGETS libvds
@@ -153,6 +149,10 @@ install(TARGETS stdvds
 	RUNTIME DESTINATION ${BIN_DIR}
 	LIBRARY DESTINATION ${LIB_DIR}
 	ARCHIVE DESTINATION ${LIB_DIR})
+
+if(MSVC)
+   set_property(TARGET libvds APPEND PROPERTY COMPILE_DEFINITIONS "VDS_DLL_EXPORTS")
+endif(MSVC)
 
 if(BUILD_STATIC_LIBS)
   add_library(libvds-static STATIC ${CORE_SRCS})
