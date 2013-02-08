@@ -281,21 +281,27 @@
     if {[llength $args] != 1 || ![string is double $args]} {
 	return "Usage: p sf"
     }
-#XXX Need to update this method
-    return
+
+    set seg_i [expr {$mCurrentPipePoint - 1}]
 
     switch -- $mEditMode \
-	$setA {
-	    $::ArcherCore::application p_pscale $obj a $args
+	$setPipeBend {
+	    $::ArcherCore::application p_pscale $obj B $args
 	} \
-	$setB {
-	    $::ArcherCore::application p_pscale $obj b $args
+	$setPipeID {
+	    $::ArcherCore::application p_pscale $obj I $args
 	} \
-	$setC {
-	    $::ArcherCore::application p_pscale $obj c $args
+	$setPipeOD {
+	    $::ArcherCore::application p_pscale $obj O $args
 	} \
-	$setABC {
-	    $::ArcherCore::application p_pscale $obj abc $args
+	$setPointBend {
+	    $::ArcherCore::application p_pscale $obj b$seg_i $args
+	} \
+	$setPointID {
+	    $::ArcherCore::application p_pscale $obj i$seg_i $args
+	} \
+	$setPointOD {
+	    $::ArcherCore::application p_pscale $obj o$seg_i $args
 	}
 
     return ""
