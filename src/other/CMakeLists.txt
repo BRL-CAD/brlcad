@@ -1,50 +1,54 @@
-#---------------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 # Local Copies of External Libraries
 #
-# BRL-CAD depends on a variety of external libraries and tools - rather than
-# fail if those requirements are not satisfied, we build local copies at need.
+# BRL-CAD depends on a variety of external libraries and tools -
+# rather than fail if those requirements are not satisfied, we build
+# local copies at need.
 #
-# There are three overall approaches to the handling of these dependencies:
+# There are three overall approaches to the handling of these
+# dependencies:
 #
-# 1.  Auto  - detect system libraries and use them if suitable, otherwise
-#     build and use the local copy.  This is the default approach.
+# 1.  Auto - detect system libraries and use them if suitable,
+#     otherwise build and use the local copy.  This is the default
+#     approach.
 #
-# 2.  Bundled - regardless of system conditions, build and use all bundled
-#     libraries.
+# 2.  Bundled - regardless of system conditions, build and use all
+#     bundled libraries.
 #
 # 3.  System - fail to build if the system libraries do not satisfy
-#     requirements.  This is primarily useful for distributions that want
-#     to ensure packages are using external libraries.
+#     requirements.  This is primarily useful for distributions that
+#     want to ensure packages are using external libraries.
 #
-# In addition to the broad toplevel control, individual libraries can also
-# be overridden - for example, if the toplevel setting is for Bundled libs,
-# it is still possible to request a system library in individual cases.
+# In addition to the broad toplevel control, individual libraries can
+# also be overridden - for example, if the toplevel setting is for
+# Bundled libs, it is still possible to request a system library in
+# individual cases.
 #
-#---------------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 
 # Quiet all warnings in this directory
 if(BRLCAD_DISABLE_SRC_OTHER_WARN)
   add_definitions(-w)
 endif(BRLCAD_DISABLE_SRC_OTHER_WARN)
 
-# Ideally we wouldn't need this, but in a few cases we're using BRL-CAD's
-# include dirs.
+# Ideally we wouldn't need this, but in a few cases we're using
+# BRL-CAD's include dirs.
 include_directories(
   ${BRLCAD_BINARY_DIR}/include
   ${BRLCAD_SOURCE_DIR}/include
   )
 
-# Most third party items have a list calling out files for distcheck - these
-# are stored in files in the dlists directory.  Ignore that directory for
-# distcheck
+# Most third party items have a list calling out files for distcheck -
+# these are stored in files in the dlists directory.  Ignore that
+# directory for distcheck
 file(GLOB dlists "*.dist")
 FOREACH(ITEM ${dlists})
   get_filename_component(dlist ${ITEM} NAME)
   CMAKEFILES(${dlist})
 ENDFOREACH(ITEM ${dlists})
 
-# For lower build levels, some of the third party components are not needed.
-# define some variables we can use for testing.
+# For lower build levels, some of the third party components are not
+# needed.  define some variables we can use for testing.
 set(BRLCAD_LEVEL2 0)
 set(BRLCAD_LEVEL3 0)
 if(NOT BRLCAD_ENABLE_TARGETS)
@@ -71,37 +75,39 @@ include(${BRLCAD_CMAKE_DIR}/ThirdParty.cmake)
 # libregex library -  often needed by tools, so do this one first.
 set(regex_ALIASES ENABLE_REGEX)
 set(regex_DESCRIPTION "
-Option for enabling and disabling compilation of the Regular Expression Library
-provided with BRL-CAD's source distribution.  Default is AUTO, responsive to the
-toplevel BRLCAD_BUNDLED_LIBS option and testing first for a system version if
-BRLCAD_BUNDLED_LIBS is also AUTO.
+Option for enabling and disabling compilation of the Regular
+Expression Library provided with BRL-CAD's source distribution.
+Default is AUTO, responsive to the toplevel BRLCAD_BUNDLED_LIBS option
+and testing first for a system version if BRLCAD_BUNDLED_LIBS is also
+AUTO.
 ")
 THIRD_PARTY(regex libregex "" regex_ALIASES regex_DESCRIPTION)
 BRLCAD_INCLUDE_FILE(regex.h HAVE_REGEX_H)
 
 CHECK_LIBRARY_EXISTS(c regcomp "" HAVE_LIBC_REGEX)
 if(BUILD_SHARED_LIBS AND HAVE_LIBC_REGEX AND "${BRLCAD_REGEX}" MATCHES "BUNDLED")
-  # Our tests indicate that the system libc defines regex symbols, but we're
-  # sill building with our local libregex.
+  # Our tests indicate that the system libc defines regex symbols, but
+  # we're still building with our local libregex.
   #
-  # Platform differences in default linker behavior make it difficult to
-  # guarantee that our libregex symbols will override libc. We'll avoid
-  # the issue by renaming our libregex symbols to be incompatible with libc.
+  # Platform differences in default linker behavior make it difficult
+  # to guarantee that our libregex symbols will override libc. We'll
+  # avoid the issue by renaming our libregex symbols to be
+  # incompatible with libc.
 
-  # First we add definitions to our config file to rename all of the regex
-  # function calls in our first-party code.
+  # First we add definitions to our config file to rename all of the
+  # regex function calls in our first-party code.
   CONFIG_H_APPEND(BRLCAD "#define regcomp  libregex_regcomp\n")
   CONFIG_H_APPEND(BRLCAD "#define regerror libregex_regerror\n")
   CONFIG_H_APPEND(BRLCAD "#define regexec  libregex_regexec\n")
   CONFIG_H_APPEND(BRLCAD "#define regfree  libregex_regfree\n")
 
-  # Second, we add the same definitions to libregex to rename the function
-  # declarations and definitions to match the calls.
+  # Second, we add the same definitions to libregex to rename the
+  # function declarations and definitions to match the calls.
   #
-  # Note that this is necessary despite the fact that libregex/regex.h includes
-  # common.h. Our config file is intentionally omitted from common.h until
-  # after the third party dirs are processed, so the above definitions don't
-  # affect libregex.
+  # Note that this is necessary despite the fact that libregex/regex.h
+  # includes common.h. Our config file is intentionally omitted from
+  # common.h until after the third party dirs are processed, so the
+  # above definitions don't affect libregex.
   set_property(DIRECTORY libregex APPEND PROPERTY COMPILE_DEFINITIONS regcomp=libregex_regcomp)
   set_property(DIRECTORY libregex APPEND PROPERTY COMPILE_DEFINITIONS regerror=libregex_regerror)
   set_property(DIRECTORY libregex APPEND PROPERTY COMPILE_DEFINITIONS regexec=libregex_regexec)
@@ -111,10 +117,10 @@ endif(BUILD_SHARED_LIBS AND HAVE_LIBC_REGEX AND "${BRLCAD_REGEX}" MATCHES "BUNDL
 # Same deal for zlib Library - common requirement, deal with it up front
 set(zlib_ALIASES ENABLE_ZLIB ENABLE_LIBZ)
 set(zlib_DESCRIPTION "
-Option for enabling and disabling compilation of the zlib
-library provided with BRL-CAD's source distribution.  Default is AUTO, responsive to
-the toplevel BRLCAD_BUNDLED_LIBS option and testing first for a system version if
-BRLCAD_BUNDLED_LIBS is also AUTO.
+Option for enabling and disabling compilation of the zlib library
+provided with BRL-CAD's source distribution.  Default is AUTO,
+responsive to the toplevel BRLCAD_BUNDLED_LIBS option and testing
+first for a system version if BRLCAD_BUNDLED_LIBS is also AUTO.
 ")
 THIRD_PARTY(zlib libz "" zlib_ALIASES zlib_DESCRIPTION)
 DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/libz/CTestTestfile.cmake)
@@ -125,35 +131,37 @@ DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/libz/CTestTestfile.cmake)
 # Local Copies of Tools
 #---------------------------------------------------------------------------------
 
-# Because we sometimes need to override system versions of tools, it is
-# essential that the variables containing the executable to be run for
-# each of the following tools use full paths - if just the name of the
-# target is used, there is a chance that name is the same as the executable
-# name itself.  In that case, if the system executable is in the path, it
-# may get called instead of resolving to the compiled exectuable associated
-# with the CMake target.  (Information from the CMake devs indicates this is
-# not expected behavior, but at some point during the development efforts
-# a problem apparently related to this came up.)  On single configuration
-# systems we can reference specify the full path to the binary directory
-# at CMake configure time, but this isn't possible for multi-configuration
-# systems like Visual Studio since that path changes at run-time.  For those
-# situations, CMake provides a variable CMAKE_CFG_INTDIR that will insert the
-# correct logic for config-dependent paths.
+# Because we sometimes need to override system versions of tools, it
+# is essential that the variables containing the executable to be run
+# for each of the following tools use full paths - if just the name of
+# the target is used, there is a chance that name is the same as the
+# executable name itself.  In that case, if the system executable is
+# in the path, it may get called instead of resolving to the compiled
+# exectuable associated with the CMake target.  (Information from the
+# CMake devs indicates this is not expected behavior, but at some
+# point during the development efforts a problem apparently related to
+# this came up.)  On single configuration systems we can reference
+# specify the full path to the binary directory at CMake configure
+# time, but this isn't possible for multi-configuration systems like
+# Visual Studio since that path changes at run-time.  For those
+# situations, CMake provides a variable CMAKE_CFG_INTDIR that will
+# insert the correct logic for config-dependent paths.
 
-# For those wanting to use a system version of the LEMON parser generator
-# from sqlite, remember that the presence of /usr/bin/lemon is not enough.
-# LEMON needs a template file, lempar.c, and by default it needs it in
-# the same directory as /usr/bin/lemon.  The typical approach to avoiding
-# that requirement is to patch lemon, like this Gentoo ebuild:
+# For those wanting to use a system version of the LEMON parser
+# generator from sqlite, remember that the presence of /usr/bin/lemon
+# is not enough.  LEMON needs a template file, lempar.c, and by
+# default it needs it in the same directory as /usr/bin/lemon.  The
+# typical approach to avoiding that requirement is to patch lemon,
+# like this Gentoo ebuild:
 #
 # http://gentoo-overlays.zugaina.org/gentoo-zh/portage/dev-util/lemon/
 #
 # LEMON packages for other major Linux/BSD distros will do the same.
 # BRL-CAD's FindLEMON.cmake macros will look for the template file in
 # the executable directory first, and if not there will check in
-# /usr/share/lemon (the location used by several distributions.)
-# If your distribution has a working lemon with the lempar.c template
-# file in a custom location, specify the full path to the  template
+# /usr/share/lemon (the location used by several distributions.)  If
+# your distribution has a working lemon with the lempar.c template
+# file in a custom location, specify the full path to the template
 # with the variable LEMON_TEMPLATE - something like:
 #
 # cmake .. -DLEMON_TEMPLATE=/etc/lemon/lempar.c
@@ -164,9 +172,9 @@ DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/libz/CTestTestfile.cmake)
 set(lemon_ALIASES ENABLE_LEMON)
 set(lemon_DESCRIPTION "
 Option for enabling and disabling compilation of the lemon parser
-provided with BRL-CAD's source distribution.  Default is AUTO, responsive to the
-toplevel BRLCAD_BUNDLED_LIBS option and testing first for a system version if
-BRLCAD_BUNDLED_LIBS is also AUTO.
+provided with BRL-CAD's source distribution.  Default is AUTO,
+responsive to the toplevel BRLCAD_BUNDLED_LIBS option and testing
+first for a system version if BRLCAD_BUNDLED_LIBS is also AUTO.
 ")
 if("${BRLCAD_BUNDLED_LIBS}" STREQUAL "BUNDLED" OR "${BRLCAD_LEMON}" MATCHES "BUNDLED")
   set(LEMON_TEMPLATE "${BRLCAD_SOURCE_DIR}/src/other/lemon/lempar.c")
@@ -181,15 +189,17 @@ endif(NOT COMMAND LEMON_TARGET)
 
 set(re2c_ALIASES ENABLE_RE2C)
 set(re2c_DESCRIPTION "
-Option for enabling and disabling compilation of the re2c scanner utility
-provided with BRL-CAD's source distribution.  Default is AUTO, responsive to the
-toplevel BRLCAD_BUNDLED_LIBS option and testing first for a system version if
-BRLCAD_BUNDLED_LIBS is also AUTO.
+Option for enabling and disabling compilation of the re2c scanner
+utility provided with BRL-CAD's source distribution.  Default is AUTO,
+responsive to the toplevel BRLCAD_BUNDLED_LIBS option and testing
+first for a system version if BRLCAD_BUNDLED_LIBS is also AUTO.
 ")
 THIRD_PARTY_EXECUTABLE(re2c re2c "BRLCAD_LEVEL2" re2c_ALIASES re2c_DESCRIPTION)
 DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/re2c/Makefile)
+
 # Unless some parent logic has already defined the macro, we need to
 # load RE2C_Util to be able to define RE2C targets.
+
 if(NOT COMMAND RE2C_TARGET)
   include(${BRLCAD_SOURCE_DIR}/misc/CMake/RE2C_Util.cmake)
 endif(NOT COMMAND RE2C_TARGET)
@@ -204,10 +214,11 @@ SET(PERPLEX_TEMPLATE "${CMAKE_CURRENT_SOURCE_DIR}/perplex/perplex_template.c" CA
 
 set(perplex_ALIASES ENABLE_PERPLEX)
 set(perplex_DESCRIPTION "
-Option for enabling and disabling compilation of the perplex scanner generator
-provided with BRL-CAD's source distribution.  Default is AUTO, responsive to the
-toplevel BRLCAD_BUNDLED_LIBS option and testing first for a system version if
-BRLCAD_BUNDLED_LIBS is also AUTO.  perplex requires a working re2c.
+Option for enabling and disabling compilation of the perplex scanner
+generator provided with BRL-CAD's source distribution.  Default is
+AUTO, responsive to the toplevel BRLCAD_BUNDLED_LIBS option and
+testing first for a system version if BRLCAD_BUNDLED_LIBS is also
+AUTO.  perplex requires a working re2c.
 ")
 THIRD_PARTY_EXECUTABLE(perplex perplex "BRLCAD_LEVEL2" perplex_ALIASES perplex_DESCRIPTION NOSYS)
 # Unless some parent logic has already defined the macro, we need to
@@ -222,10 +233,11 @@ DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/perplex/Makefile)
 set(xsltproc_ALIASES ENABLE_XSLTPROC)
 set(xsltproc_DESCRIPTION "
 Option for enabling and disabling compilation of the xsltproc XML
-transformation utility provided with BRL-CAD's source distribution.  Used
-for DocBook documentation processing.  Default is AUTO, responsive to the
-toplevel BRLCAD_BUNDLED_LIBS option and testing first for a system version if
-BRLCAD_BUNDLED_LIBS is also AUTO.  Depends on BRLCAD_EXTRADOCS.
+transformation utility provided with BRL-CAD's source distribution.
+Used for DocBook documentation processing.  Default is AUTO,
+responsive to the toplevel BRLCAD_BUNDLED_LIBS option and testing
+first for a system version if BRLCAD_BUNDLED_LIBS is also AUTO.
+Depends on BRLCAD_EXTRADOCS.
 ")
 THIRD_PARTY_EXECUTABLE(xsltproc xmltools "BRLCAD_EXTRADOCS;BRLCAD_LEVEL3" xsltproc_ALIASES xsltproc_DESCRIPTION)
 
@@ -236,30 +248,30 @@ set(xmllint_ALIASES ENABLE_XMLLINT)
 set(xmllint_DESCRIPTION "
 Option for enabling and disabling compilation of the xmllint XML
 validation utility provided with BRL-CAD's source distribution.  Used
-for DocBook documentation validation.  Default is AUTO, responsive to the
-toplevel BRLCAD_BUNDLED_LIBS option and testing first for a system version if
-BRLCAD_BUNDLED_LIBS is also AUTO.
+for DocBook documentation validation.  Default is AUTO, responsive to
+the toplevel BRLCAD_BUNDLED_LIBS option and testing first for a system
+version if BRLCAD_BUNDLED_LIBS is also AUTO.
 ")
 THIRD_PARTY_EXECUTABLE(xmllint xmltools "BRLCAD_EXTRADOCS_VALIDATE;BRLCAD_LEVEL3" xmllint_ALIASES xmllint_DESCRIPTION)
 DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/xmltools/include)
 
-#---------------------------------------------------------------------------------
+# --------------------------------------------------------------------
 # Third Party Sources
-#---------------------------------------------------------------------------------
-# Ignore the boost subdir - it's only used for the boost headers and is not
-# compiled
+# --------------------------------------------------------------------
+# Ignore the boost subdir - it's only used for the boost headers and
+# is not compiled
 CMAKEFILES(boost)
 
-# The incrtTcl subdirectory isn't directly referenced, but its subdirectories
-# are used - mark incrTcl as ignored
+# The incrtTcl subdirectory isn't directly referenced, but its
+# subdirectories are used - mark incrTcl as ignored
 CMAKEFILES(incrTcl)
 
 # Ignore the osl subdir
 CMAKEFILES(osl)
 
-# libtermlib Library
-#Only on WIN32 will the combination of the build search tests and
-#libtermlib fail to find a valid term, so set variables accordingly
+# libtermlib Library Only on WIN32 will the combination of the build
+# search tests and libtermlib fail to find a valid term, so set
+# variables accordingly
 if(NOT WIN32)
   set(HAVE_TERMLIB ON CACHE BOOL "Have some termlib" FORCE)
 ELSE(NOT WIN32)
@@ -272,10 +284,11 @@ mark_as_advanced(HAVE_TERMLIB)
 set(termlib_ALIASES ENABLE_TERMLIB)
 set(termlib_DESCRIPTION "
 Option for enabling and disabling compilation of the termlib library
-provided with BRL-CAD's source distribution.  Default is AUTO, responsive to the
-toplevel BRLCAD_BUNDLED_LIBS option and testing first for a system version if
-BRLCAD_BUNDLED_LIBS is also AUTO. (Except when building with Visual Studio,
-where it is disabled. Windows does not support the termlib API.)
+provided with BRL-CAD's source distribution.  Default is AUTO,
+responsive to the toplevel BRLCAD_BUNDLED_LIBS option and testing
+first for a system version if BRLCAD_BUNDLED_LIBS is also
+AUTO. (Except when building with Visual Studio, where it is
+disabled. Windows does not support the termlib API.)
 ")
 THIRD_PARTY(termlib libtermlib "HAVE_TERMLIB;BRLCAD_LEVEL2" termlib_ALIASES termlib_DESCRIPTION)
 if(BRLCAD_TERMLIB_BUILD)
@@ -283,12 +296,15 @@ if(BRLCAD_TERMLIB_BUILD)
   mark_as_advanced(HAVE_TERMCAP_H)
 endif(BRLCAD_TERMLIB_BUILD)
 
-# libpng Library - Checks for ZLIB, so need to handle libpng AFTER zlib to set the variables
-# if using a local copy of zlib.  If not using a local copy of zlib, FindZLIB results will
-# be identical in both cases so there is no danger of harming the libpng setup.  The PNG
-# CMake system needs some options set and some variables translated to fit BRL-CAD's
-# standard assumptions, so handle that here as well.
-# BRL-CAD needs PNG's IO - turn it on (i.e. turn off the disabling flags)
+# libpng Library - Checks for ZLIB, so need to handle libpng AFTER
+# zlib to set the variables if using a local copy of zlib.  If not
+# using a local copy of zlib, FindZLIB results will be identical in
+# both cases so there is no danger of harming the libpng setup.  The
+# PNG CMake system needs some options set and some variables
+# translated to fit BRL-CAD's standard assumptions, so handle that
+# here as well.  BRL-CAD needs PNG's IO - turn it on (i.e. turn off
+# the disabling flags)
+
 set(PNG_NO_CONSOLE_IO OFF CACHE BOOL "Option to disable Console IO in PNG" FORCE)
 mark_as_advanced(PNG_NO_CONSOLE_IO)
 set(PNG_NO_STDIO OFF CACHE BOOL "Option to disable STDIO in PNG" FORCE)
@@ -301,19 +317,24 @@ set(CMAKE_INSTALL_LIBDIR ${LIB_DIR})
 set(png_ALIASES ENABLE_PNG)
 set(png_DESCRIPTION "
 Option for enabling and disabling compilation of the Portable Network
-Graphics library provided with BRL-CAD's source distribution.  Default is
-AUTO, responsive to the toplevel BRLCAD_BUNDLED_LIBS option and testing
-first for a system version if BRLCAD_BUNDLED_LIBS is also AUTO.
+Graphics library provided with BRL-CAD's source distribution.  Default
+is AUTO, responsive to the toplevel BRLCAD_BUNDLED_LIBS option and
+testing first for a system version if BRLCAD_BUNDLED_LIBS is also
+AUTO.
 ")
 THIRD_PARTY(png libpng "BRLCAD_LEVEL2" png_ALIASES png_DESCRIPTION)
 if(BRLCAD_PNG_BUILD)
-  # PNG_LIB_NAME doesn't automatically propagate to toplevel due to scoping of CMake variables -
-  # use get_directory_property to recover the value and place it in the CACHE
+  # PNG_LIB_NAME doesn't automatically propagate to toplevel due to
+  # scoping of CMake variables - use get_directory_property to recover
+  # the value and place it in the CACHE
+
   get_directory_property(PNG_LIBRARY DIRECTORY libpng DEFINITION PNG_LIB_NAME)
   set(PNG_LIBRARY "${PNG_LIBRARY}" CACHE STRING "libpng name for targets" FORCE)
 ELSE(BRLCAD_PNG_BUILD)
-  # The PNG CMake file seems to set PNG_PNG_INCLUDE_DIR rather than PNG_INCLUDE_DIR, so
-  # a generic macro won't pick up the setting - handle it here
+  # The PNG CMake file seems to set PNG_PNG_INCLUDE_DIR rather than
+  # PNG_INCLUDE_DIR, so a generic macro won't pick up the setting -
+  # handle it here.
+
   set(PNG_INCLUDE_DIR ${PNG_PNG_INCLUDE_DIR} CACHE STRING "PNG include directory" FORCE)
 endif(BRLCAD_PNG_BUILD)
 DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/libpng/CTestTestfile.cmake)
@@ -334,15 +355,16 @@ mark_as_advanced(PNG_TESTS)
 mark_as_advanced(uname_executable)
 
 
-# libutahrle Library - The directory to perform ADD_SUBDIRECTORY on and the
-# include directory for utahrle are different, so override the macro's setting
-# of UTAHRLE_INCLUDE_DIR here.
+# libutahrle Library - The directory to perform ADD_SUBDIRECTORY on
+# and the include directory for utahrle are different, so override the
+# macro's setting of UTAHRLE_INCLUDE_DIR here.
+
 set(utahrle_ALIASES ENABLE_UTAHRLE)
 set(utahrle_DESCRIPTION "
-Option for enabling and disabling compilation of the Utah Raster Toolkit
-library provided with BRL-CAD's source code.  Default is AUTO, responsive
-to the toplevel BRLCAD_BUNDLED_LIBS option and testing first for a system
-version if BRLCAD_BUNDLED_LIBS is also AUTO.
+Option for enabling and disabling compilation of the Utah Raster
+Toolkit library provided with BRL-CAD's source code.  Default is AUTO,
+responsive to the toplevel BRLCAD_BUNDLED_LIBS option and testing
+first for a system version if BRLCAD_BUNDLED_LIBS is also AUTO.
 ")
 THIRD_PARTY(utahrle libutahrle "BRLCAD_LEVEL3" utahrle_ALIASES utahrle_DESCRIPTION NOSYS)
 if(BRLCAD_UTAHRLE_BUILD)
@@ -353,19 +375,21 @@ if(BRLCAD_UTAHRLE_BUILD)
 endif(BRLCAD_UTAHRLE_BUILD)
 
 
-# URTToolkit
-# Programs, not a library - needs libutahrle, but the "check for system install" logic
-# will be different here.  Ignore for now, revisit later.
+# URTToolkit - Programs, not a library - needs libutahrle, but the
+# "check for system install" logic will be different here.  Ignore for
+# now, revisit later.
+
 if(BRLCAD_LEVEL3)
   add_subdirectory(URToolkit)
 endif(BRLCAD_LEVEL3)
 include(${CMAKE_CURRENT_SOURCE_DIR}/URToolkit.dist)
 CMAKEFILES_IN_DIR(URToolkit_ignore_files URToolkit)
 
-# Tcl/Tk presents a number of complexities for BRL-CAD and CMake.  BRL-CAD requires
-# far more knowledge of the details of a Tcl/Tk installation than most programs,
-# which unfortunately means the standard FindTCL.cmake is not sufficient. We have our
-# own FindTCL routine which handles Tcl/Tk and its stubs, so trigger this using
+# Tcl/Tk presents a number of complexities for BRL-CAD and CMake.
+# BRL-CAD requires far more knowledge of the details of a Tcl/Tk
+# installation than most programs, which unfortunately means the
+# standard FindTCL.cmake is not sufficient. We have our own FindTCL
+# routine which handles Tcl/Tk and its stubs, so trigger this using
 # the THIRD_PARTY macro for TCL.
 
 include(${BRLCAD_SOURCE_DIR}/misc/CMake/TCL_PKGINDEX.cmake)
@@ -383,9 +407,9 @@ endif(BRLCAD_ENABLE_TK)
 set(tcl_ALIASES ENABLE_TCL)
 set(tcl_DESCRIPTION "
 Option for enabling and disabling compilation of the Tcl library
-provided with BRL-CAD's source code.  Default is AUTO, responsive
-to the toplevel BRLCAD_BUNDLED_LIBS option and testing first for
-a system version if BRLCAD_BUNDLED_LIBS is also AUTO.
+provided with BRL-CAD's source code.  Default is AUTO, responsive to
+the toplevel BRLCAD_BUNDLED_LIBS option and testing first for a system
+version if BRLCAD_BUNDLED_LIBS is also AUTO.
 ")
 
 THIRD_PARTY(tcl tcl "" tcl_ALIASES tcl_DESCRIPTION)
@@ -461,15 +485,16 @@ include(${BRLCAD_CMAKE_DIR}/ThirdParty_TCL.cmake)
 # The first package to settle is Tk itself
 set(tk_ALIASES ENABLE_TK)
 set(tk_DESCRIPTION "
-Option for enabling and disabling compilation of the Tk library provided
-with BRL-CAD's source code.  Default is AUTO, responsive to the BRLCAD_TCL
-option and testing first for a system version if BRLCAD_BUNDLED_LIBS is also
-AUTO. Option for enabling and disabling compilation of the Tk graphics package
-for Tcl provided with BRL-CAD's source distribution.  Default is AUTO,
-auto-enabling if the BRLCAD_TCL option is set to BUNDLED and testing first for
-a system version if BRLCAD_TCL is set to AUTO or SYSTEM.  If BRLCAD_TK is
-set to BUNDLED, local copy is built even if a system version is present.
-This option also depends on BRLCAD_ENABLE_TK being ON.
+Option for enabling and disabling compilation of the Tk library
+provided with BRL-CAD's source code.  Default is AUTO, responsive to
+the BRLCAD_TCL option and testing first for a system version if
+BRLCAD_BUNDLED_LIBS is also AUTO. Option for enabling and disabling
+compilation of the Tk graphics package for Tcl provided with BRL-CAD's
+source distribution.  Default is AUTO, auto-enabling if the BRLCAD_TCL
+option is set to BUNDLED and testing first for a system version if
+BRLCAD_TCL is set to AUTO or SYSTEM.  If BRLCAD_TK is set to BUNDLED,
+local copy is built even if a system version is present.  This option
+also depends on BRLCAD_ENABLE_TK being ON.
 ")
 THIRD_PARTY_TCL_PACKAGE(Tk tk "${TCL_TCLSH_EXECUTABLE}" "tcl" "BRLCAD_ENABLE_TK;BRLCAD_LEVEL2" "tk" tk_ALIASES tk_DESCRIPTION)
 if(BRLCAD_TK_BUILD)
@@ -521,7 +546,9 @@ mark_as_advanced(TK_SYSTEM_GRAPHICS)
 mark_as_advanced(TK_WISH)
 mark_as_advanced(TK_ENABLE_XFT)
 
-# Now that Tcl/Tk is settled, define the HAVE_TK flag for the config.h file
+# Now that Tcl/Tk is settled, define the HAVE_TK flag for the config.h
+# file
+
 if(BRLCAD_ENABLE_TK)
   set(HAVE_TK 1 CACHE STRING "C level Tk flag" FORCE)
   CONFIG_H_APPEND(BRLCAD "#cmakedefine HAVE_TK\n")
@@ -530,11 +557,13 @@ ELSE(BRLCAD_ENABLE_TK)
 endif(BRLCAD_ENABLE_TK)
 mark_as_advanced(HAVE_TK)
 
-# Tcl/Tk extensions need a variety of settings provided for them - take care
-# of those here.  Because system Tcl/Tk installations are not guaranteed to have
-# what is needed in the way of headers, go ahead and assign includedir settings based
-# on the local sources even if system versions are enabled.  Ugly, but an
-# unfortunate consequence of current Tcl/Tk coding styles
+# Tcl/Tk extensions need a variety of settings provided for them -
+# take care of those here.  Because system Tcl/Tk installations are
+# not guaranteed to have what is needed in the way of headers, go
+# ahead and assign includedir settings based on the local sources even
+# if system versions are enabled.  Ugly, but an unfortunate
+# consequence of current Tcl/Tk coding styles
+
 set(TCL_SRC_PREFIX ${CMAKE_CURRENT_SOURCE_DIR}/tcl)
 set(TK_SRC_PREFIX ${CMAKE_CURRENT_SOURCE_DIR}/tk)
 set(ITCL_SRC_PREFIX ${CMAKE_CURRENT_SOURCE_DIR}/incrTcl/itcl)
@@ -581,11 +610,12 @@ endif(BRLCAD_ENABLE_TK)
 # First up, look for IncrTcl's Itcl.
 set(itcl_ALIASES ENABLE_ITCL)
 set(itcl_DESCRIPTION "
-Option for enabling and disabling compilation of the IncrTcl package for
-Tcl objects provided with BRL-CAD's source distribution.  Default is AUTO,
-auto-enabling if the BRLCAD_TCL option is set to BUNDLED and testing first for
-a system version if BRLCAD_TCL is set to AUTO or SYSTEM.  If BRLCAD_ITCL is
-set to BUNDLED, local copy is built even if a system version is present.
+Option for enabling and disabling compilation of the IncrTcl package
+for Tcl objects provided with BRL-CAD's source distribution.  Default
+is AUTO, auto-enabling if the BRLCAD_TCL option is set to BUNDLED and
+testing first for a system version if BRLCAD_TCL is set to AUTO or
+SYSTEM.  If BRLCAD_ITCL is set to BUNDLED, local copy is built even if
+a system version is present.
 ")
 THIRD_PARTY_TCL_PACKAGE(Itcl incrTcl/itcl "${TCL_TCLSH_EXECUTABLE}" "tcl" "BRLCAD_LEVEL2" "itcl" itcl_ALIASES itcl_DESCRIPTION)
 if(BRLCAD_ITCL_BUILD)
@@ -614,12 +644,13 @@ mark_as_advanced(ITCL_VERSION)
 # Look for IncrTcl's Itk.
 set(itk_ALIASES ENABLE_ITK)
 set(itk_DESCRIPTION "
-Option for enabling and disabling compilation of the IncrTcl itk package for
-Tk objects provided with BRL-CAD's source distribution.  Default is AUTO,
-auto-enabling if the BRLCAD_TCL option is set to BUNDLED and testing first for
-a system version if BRLCAD_TCL is set to AUTO or SYSTEM.  If BRLCAD_ITCL is
-set to BUNDLED, local copy is built even if a system version is present.  This
-package will be disabled if BRLCAD_ENABLE_TK is OFF.
+Option for enabling and disabling compilation of the IncrTcl itk
+package for Tk objects provided with BRL-CAD's source distribution.
+Default is AUTO, auto-enabling if the BRLCAD_TCL option is set to
+BUNDLED and testing first for a system version if BRLCAD_TCL is set to
+AUTO or SYSTEM.  If BRLCAD_ITCL is set to BUNDLED, local copy is built
+even if a system version is present.  This package will be disabled if
+BRLCAD_ENABLE_TK is OFF.
 ")
 THIRD_PARTY_TCL_PACKAGE(Itk incrTcl/itk "${TCL_WISH_EXECUTABLE}" "tcl;itcl;tk" "BRLCAD_ENABLE_TK;BRLCAD_LEVEL3" "itk" itk_ALIASES itk_DESCRIPTION)
 if(BRLCAD_ITK_BUILD)
@@ -639,17 +670,19 @@ endif(BRLCAD_ITK_BUILD)
 mark_as_advanced(ITK_VERSION)
 mark_as_advanced(ITK_LIBRARY)
 
-# For now only turn on Togl for X11, but will need it everywhere eventually.  Will need
-# some logic to both look for package require and the C library, as both APIs will be needed.
+# For now only turn on Togl for X11, but will need it everywhere
+# eventually.  Will need some logic to both look for package require
+# and the C library, as both APIs will be needed.
+
 set(togl_ALIASES ENABLE_TOGL)
 set(togl_DESCRIPTION "
 Option for enabling and disabling compilation of the Togl package for
-Tcl/Tk OpenGL support provided with BRL-CAD's source distribution.  Default is AUTO,
-auto-enabling if the BRLCAD_TCL option is set to BUNDLED and testing first for
-a system version if BRLCAD_TCL is set to AUTO or SYSTEM.  If BRLCAD_ITCL is
-set to BUNDLED, local copy is built even if a system version is present.  This
-package will be disabled if either BRLCAD_ENABLE_OPENGL or BRLCAD_ENABLE_TK
-are OFF.
+Tcl/Tk OpenGL support provided with BRL-CAD's source distribution.
+Default is AUTO, auto-enabling if the BRLCAD_TCL option is set to
+BUNDLED and testing first for a system version if BRLCAD_TCL is set to
+AUTO or SYSTEM.  If BRLCAD_ITCL is set to BUNDLED, local copy is built
+even if a system version is present.  This package will be disabled if
+either BRLCAD_ENABLE_OPENGL or BRLCAD_ENABLE_TK are OFF.
 ")
 THIRD_PARTY_TCL_PACKAGE(Togl togl "${TCL_WISH_EXECUTABLE}" "tcl;tk" "BRLCAD_ENABLE_TK;BRLCAD_ENABLE_OPENGL;BRLCAD_ENABLE_X11;BRLCAD_LEVEL3" "togl" togl_ALIASES togl_DESCRIPTION)
 if(BRLCAD_TOGL_BUILD)
@@ -673,12 +706,13 @@ mark_as_advanced(TOGL_INCLUDE_DIRS)
 
 set(iwidgets_ALIASES ENABLE_IWIDGETS)
 set(iwidgets_DESCRIPTION "
-Option for enabling and disabling compilation of the IWidgets Tk widget
-package provided with BRL-CAD's source distribution.  Default is AUTO,
-auto-enabling if the BRLCAD_TCL option is set to BUNDLED and testing first
-for a system version if BRLCAD_TCL is set to AUTO or SYSTEM.  If BRLCAD_ITCL
-is set to BUNDLED, local copy is built even if a system version is present.
-This package will be disabled if BRLCAD_ENABLE_TK is OFF.
+Option for enabling and disabling compilation of the IWidgets Tk
+widget package provided with BRL-CAD's source distribution.  Default
+is AUTO, auto-enabling if the BRLCAD_TCL option is set to BUNDLED and
+testing first for a system version if BRLCAD_TCL is set to AUTO or
+SYSTEM.  If BRLCAD_ITCL is set to BUNDLED, local copy is built even if
+a system version is present.  This package will be disabled if
+BRLCAD_ENABLE_TK is OFF.
 ")
 THIRD_PARTY_TCL_PACKAGE(Iwidgets iwidgets "${TCL_WISH_EXECUTABLE}" "tcl;tk;itcl;itk" "BRLCAD_ENABLE_TK;BRLCAD_LEVEL3" "" iwidgets_ALIASES iwidgets_DESCRIPTION)
 if(BRLCAD_IWIDGETS_BUILD)
@@ -693,12 +727,13 @@ mark_as_advanced(IWIDGETS_VERSION)
 
 set(tkhtml_ALIASES ENABLE_TKHTML)
 set(tkhtml_DESCRIPTION "
-Option for enabling and disabling compilation of the Tkhtml HTML viewing
-package provided with BRL-CAD's source distribution.  Default is AUTO,
-auto-enabling if the BRLCAD_TCL option is set to BUNDLED and testing first
-for a system version if BRLCAD_TCL is set to AUTO or SYSTEM.  If BRLCAD_ITCL
-is set to BUNDLED, local copy is built even if a system version is present.
-This package will be disabled if BRLCAD_ENABLE_TK is OFF.
+Option for enabling and disabling compilation of the Tkhtml HTML
+viewing package provided with BRL-CAD's source distribution.  Default
+is AUTO, auto-enabling if the BRLCAD_TCL option is set to BUNDLED and
+testing first for a system version if BRLCAD_TCL is set to AUTO or
+SYSTEM.  If BRLCAD_ITCL is set to BUNDLED, local copy is built even if
+a system version is present.  This package will be disabled if
+BRLCAD_ENABLE_TK is OFF.
 ")
 THIRD_PARTY_TCL_PACKAGE(Tkhtml tkhtml "${TCL_WISH_EXECUTABLE}" "tcl;tk" "BRLCAD_ENABLE_TK;BRLCAD_LEVEL3" "" tkhtml_ALIASES tkhtml_DESCRIPTION)
 DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/tkhtml/pkgIndex.tcl)
@@ -714,12 +749,13 @@ CMAKEFILES(sqlite3)
 
 set(tkpng_ALIASES ENABLE_TKPNG)
 set(tkpng_DESCRIPTION "
-Option for enabling and disabling compilation of the tkpng PNG image viewing
-package provided with BRL-CAD's source distribution.  Default is AUTO,
-auto-enabling if the BRLCAD_TCL option is set to BUNDLED and testing first
-for a system version if BRLCAD_TCL is set to AUTO or SYSTEM.  If BRLCAD_ITCL
-is set to BUNDLED, local copy is built even if a system version is present.
-This package will be disabled if BRLCAD_ENABLE_TK is OFF.
+Option for enabling and disabling compilation of the tkpng PNG image
+viewing package provided with BRL-CAD's source distribution.  Default
+is AUTO, auto-enabling if the BRLCAD_TCL option is set to BUNDLED and
+testing first for a system version if BRLCAD_TCL is set to AUTO or
+SYSTEM.  If BRLCAD_ITCL is set to BUNDLED, local copy is built even if
+a system version is present.  This package will be disabled if
+BRLCAD_ENABLE_TK is OFF.
 ")
 THIRD_PARTY_TCL_PACKAGE(tkpng tkpng "${TCL_WISH_EXECUTABLE}" "tcl;tk" "BRLCAD_ENABLE_TK;BRLCAD_LEVEL3" "" tkpng_ALIASES tkpng_DESCRIPTION)
 DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/tkpng/pkgIndex.tcl)
@@ -727,12 +763,13 @@ DISTCLEAN(${CMAKE_BINARY_DIR}/lib/tkpng0.8)
 
 set(tktable_ALIASES ENABLE_TKTABLE)
 set(tktable_DESCRIPTION "
-Option for enabling and disabling compilation of the Tktable graphical table
-widget package provided with BRL-CAD's source distribution.  Default is AUTO,
-auto-enabling if the BRLCAD_TCL option is set to BUNDLED and testing first
-for a system version if BRLCAD_TCL is set to AUTO or SYSTEM.  If BRLCAD_ITCL
-is set to BUNDLED, local copy is built even if a system version is present.
-This package will be disabled if BRLCAD_ENABLE_TK is OFF.
+Option for enabling and disabling compilation of the Tktable graphical
+table widget package provided with BRL-CAD's source distribution.
+Default is AUTO, auto-enabling if the BRLCAD_TCL option is set to
+BUNDLED and testing first for a system version if BRLCAD_TCL is set to
+AUTO or SYSTEM.  If BRLCAD_ITCL is set to BUNDLED, local copy is built
+even if a system version is present.  This package will be disabled if
+BRLCAD_ENABLE_TK is OFF.
 ")
 THIRD_PARTY_TCL_PACKAGE(Tktable tktable "${TCL_WISH_EXECUTABLE}" "tcl;tk" "BRLCAD_ENABLE_TK;BRLCAD_LEVEL3" "" tktable_ALIASES tktable_DESCRIPTION)
 DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/tktable/pkgIndex.tcl)
@@ -742,10 +779,10 @@ DISTCLEAN(${CMAKE_BINARY_DIR}/lib/Tktable2.10)
 # OpenNURBS Library
 set(opennurbs_ALIASES ENABLE_OPENNURBS)
 set(opennurbs_DESCRIPTION "
-Option for enabling and disabling compilation of the openNURBS
-library provided with BRL-CAD's source code.  Default is
-AUTO, responsive to the toplevel BRLCAD_BUNDLED_LIBS option and
-testing first for a system version if BRLCAD_BUNDLED_LIBS is also AUTO.
+Option for enabling and disabling compilation of the openNURBS library
+provided with BRL-CAD's source code.  Default is AUTO, responsive to
+the toplevel BRLCAD_BUNDLED_LIBS option and testing first for a system
+version if BRLCAD_BUNDLED_LIBS is also AUTO.
 ")
 THIRD_PARTY(openNURBS openNURBS "" opennurbs_ALIASES opennurbs_DESCRIPTION NOSYS)
 
@@ -765,8 +802,8 @@ set(SCL_BUILD_TYPE "${CMAKE_BUILD_TYPE}")
 set(scl_ALIASES ENABLE_SCL ENABLE_STEP ENABLE_STEP_CLASS_LIBRARIES)
 set(scl_DESCRIPTION "
 Option for enabling and disabling compilation of the NIST Step Class
-Libraries provided with BRL-CAD's source code.  Default is
-AUTO, responsive to the toplevel BRLCAD_BUNDLED_LIBS option and testing
+Libraries provided with BRL-CAD's source code.  Default is AUTO,
+responsive to the toplevel BRLCAD_BUNDLED_LIBS option and testing
 first for a system version if BRLCAD_BUNDLED_LIBS is also AUTO.
 ")
 THIRD_PARTY(scl step "LEMON_EXECUTABLE;PERPLEX_EXECUTABLE;BRLCAD_LEVEL3"  scl_ALIASES scl_DESCRIPTION NOSYS)
@@ -802,28 +839,29 @@ else(BRLCAD_LEVEL2)
   CMAKEFILES(clipper)
 endif(BRLCAD_LEVEL2)
 
-# VDSlib - A View-Dependent Simplification and Rendering Library 
-# For the moment, this is marked NOSYS - it's possible that some
-# Debian systems would have 0.9 of vdslib installed, but it's
-# unmaintained and we're likely to be making changes.  If our
-# own copy of VDSlib ever spins back off into its own project,
-# revisit the NOSYS
+# VDSlib - A View-Dependent Simplification and Rendering Library For
+# the moment, this is marked NOSYS - it's possible that some Debian
+# systems would have 0.9 of vdslib installed, but it's unmaintained
+# and we're likely to be making changes.  If our own copy of VDSlib
+# ever spins back off into its own project, revisit the NOSYS
+
 if(BRLCAD_LEVEL2)
   set(libvds_ALIASES ENABLE_VDS)
   set(libvds_DESCRIPTION "
-  Option for enabling and disabling compilation of the libvds
-  triangle simplification library provided with BRL-CAD's source code.  Default is
-  AUTO, responsive to the toplevel BRLCAD_BUNDLED_LIBS option and
-  testing first for a system version if BRLCAD_BUNDLED_LIBS is also AUTO.
+Option for enabling and disabling compilation of the libvds triangle
+simplification library provided with BRL-CAD's source code.  Default
+is AUTO, responsive to the toplevel BRLCAD_BUNDLED_LIBS option and
+testing first for a system version if BRLCAD_BUNDLED_LIBS is also
+AUTO.
 ")
   THIRD_PARTY(libvds libvds "" libvds_ALIASES libvds_DESCRIPTION NOSYS)
   set(LIBVDS_INCLUDE_DIR "${BRLCAD_SOURCE_DIR}/src/other/libvds" CACHE STRING "Directory containing libvds headers." FORCE)
 endif(BRLCAD_LEVEL2)
 
-# Bullet is not yet integrated as a src/other subbuild, but there is code
-# that will make use of it if it is available.  If that code becomes 
-# sufficiently useful, Bullet will be integrated.  In the meantime, locate
-# the find logic for that package here.
+# Bullet is not yet integrated as a src/other subbuild, but there is
+# code that will make use of it if it is available.  If that code
+# becomes sufficiently useful, Bullet will be integrated.  In the
+# meantime, locate the find logic for that package here.
 
 # Bullet physics library
 if(BRLCAD_LEVEL2)
@@ -837,10 +875,10 @@ if(BRLCAD_LEVEL2)
   mark_as_advanced(BULLET_INCLUDE_DIR)
 endif(BRLCAD_LEVEL2)
 
-# Adaptagrams is not yet integrated as a src/other subbuild, but there is code
-# that will make use of it if it is available.  If that code becomes 
-# sufficiently useful, Adaptagrams will be integrated.  In the meantime, locate
-# the find logic for that package here.
+# Adaptagrams is not yet integrated as a src/other subbuild, but there
+# is code that will make use of it if it is available.  If that code
+# becomes sufficiently useful, Adaptagrams will be integrated.  In the
+# meantime, locate the find logic for that package here.
 
 # Adaptagrams library
 if(BRLCAD_LEVEL2)
@@ -853,27 +891,25 @@ if(BRLCAD_LEVEL2)
 endif(BRLCAD_LEVEL2)
 
 
-# The jama/tnt headers are installed by default - BRL-CAD requires the altered headers
-# to build (I think?)
+# The jama/tnt headers are installed by default - BRL-CAD requires the
+# altered headers to build (I think?)
 add_subdirectory(tnt)
 set(TNT_INCLUDE_DIR "${BRLCAD_SOURCE_DIR}/src/other/tnt" CACHE STRING "Directory containing tnt headers" FORCE)
 CMAKEFILES(tnt)
 mark_as_advanced(TNT_INCLUDE_DIR)
 
-# Eigen is used for advanced linear algebra functionality
-# It consists entirely of headers and does not need to be
-# installed.
+# Eigen is used for advanced linear algebra functionality It consists
+# entirely of headers and does not need to be installed.
 #
 # TODO - replace jama/tnt with Eigen
 #
 CMAKEFILES(Eigen)
 
-# jove editor - technically this isn't a library,
-# but traditionally it's grouped into the "enable-all"
-# logic. Almost certainly won't build on Windows, and
-# it's not worth trying to make it do so.  Defaults to
-# on if BRLCAD_BUNDLED_LIBS is set to Bundled before
-# the first run of CMake, otherwise defaults to off.
+# jove editor - technically this isn't a library, but traditionally
+# it's grouped into the "enable-all" logic. Almost certainly won't
+# build on Windows, and it's not worth trying to make it do so.
+# Defaults to on if BRLCAD_BUNDLED_LIBS is set to Bundled before the
+# first run of CMake, otherwise defaults to off.
 if(BRLCAD_ENABLE_JOVE)
   if(NOT WIN32)
     add_subdirectory(jove)
