@@ -116,7 +116,10 @@ pipe_scale_od(struct rt_pipe_internal *pipeip, fastf_t scale)
     }
 
     for (BU_LIST_FOR(ps, wdb_pipept, &pipeip->pipe_segs_head))
-	ps->pp_od *= scale;
+	if (scale > 0.0)
+	    ps->pp_od *= scale;
+	else
+	    ps->pp_od = -scale;
 }
 
 
