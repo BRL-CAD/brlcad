@@ -595,7 +595,7 @@ wireframe_leaf(struct db_tree_state *tsp, const struct db_full_path *pathp, stru
 
     plot_status = -1;
     gvp = dgcdp->gedp->ged_gvp;
-    if (gvp->gv_adaptive_plot && ip->idb_meth->ft_adaptive_plot) {
+    if (gvp && gvp->gv_adaptive_plot && ip->idb_meth->ft_adaptive_plot) {
 	struct rt_view_info info;
 
 	info.vhead = &vhead;
