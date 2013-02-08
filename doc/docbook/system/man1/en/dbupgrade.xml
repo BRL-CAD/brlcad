@@ -32,12 +32,13 @@ then converting it to the current database version.  Output is then saved to the
 <emphasis remap='I'>output.g</emphasis>
 file.</para>
 
-<para>Note that this tool does not automatically “fix” an existing (v4
+<para>Note that this tool will attempt to automatically 'fix' an existing (v4
 format) binary database that was transferred from a
-binary-incompatible platform.  However, if you run
+binary-incompatible platform.  However, this process may be imperfect - the best approach (if 
+the original platform on which the file was created is available) is to run
 <command>dbupgrade</command>
-on the file before transferring from that platform, the upgraded
-output file will be platform independent.</para>
+on the file before transferring from the originating platform.  Once upgraded the output file will be 
+platform independent regardless of the platform on which the upgrade was done.</para>
 
 <para>Running
 <command>dbupgrade</command>
@@ -45,8 +46,8 @@ removes the need to run
 <citerefentry><refentrytitle>g2asc</refentrytitle><manvolnum>1</manvolnum></citerefentry>
 and
 <citerefentry><refentrytitle>asc2g</refentrytitle><manvolnum>1</manvolnum></citerefentry>
-on a database.  The latest BRL-CAD geometry database format is
-platform independent.</para>
+on a database to move it between computers (historically this was a way to work around the platform specific nature of v4 files.)
+The latest BRL-CAD geometry database format is platform independent.</para>
 </refsect1>
 
 <refsect1 xml:id='see_also'><title>SEE ALSO</title>
