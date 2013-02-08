@@ -2212,6 +2212,16 @@ bu_shader_to_key_eq(const char *in, struct bu_vls *vls)
 
     shader = parse_list_elem(in, 0);
     params = parse_list_elem(in, 1);
+    
+    if(!shader){
+	bu_log("bu_shader_to_key_eq: Error: failed to parse shader.\n");
+	return 1;
+    }
+ 
+    if(!params){
+	bu_log("bu_shader_to_key_eq: Error: failed to locate valid shader parameters!\n");
+	return 1;
+    }
 
     if (BU_STR_EQUAL(shader, "envmap")) {
 	/* environment map */
