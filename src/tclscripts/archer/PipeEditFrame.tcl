@@ -73,6 +73,7 @@
 	method initTranslate {}
 	method updateGeometry {}
 	method createGeometry {_name}
+	method moveElement {_dm _obj _vx _vy _ocenter}
 	method p {obj args}
     }
 
@@ -263,6 +264,16 @@
 	O1 $od \
 	I1 $id \
 	R1 $br
+}
+
+
+::itcl::body PipeEditFrame::moveElement {_dm _obj _vx _vy _ocenter} {
+    set seg_i [expr {$mCurrentPipePoint - 1}]
+    set pt [$itk_option(-mged) get $_obj V$seg_i]
+    set vpt [$itk_option(-mged) pane_m2v_point $_dm $pt]
+    set vz [lindex $vpt 2]
+    set mpt [$itk_option(-mged) pane_v2m_point $_dm [list $_vx $_vy $vz]]
+    $itk_option(-mged) move_pipept $_obj $seg_i $mpt
 }
 
 
