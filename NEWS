@@ -21,6 +21,7 @@ changes made.  See document footer for additional details.
 * added support for editing 2D sketch objects in archer - Bob Parker
 * fixed File->New deprecation error in archer - Sean Morrison
 * improved Linux platform application and file icons - Jordi Sayol
+* quell pix-png gAMA chunk warning defaulting to unset - Sean Morrison
 * fixed mged interactive object translation keypoint bug - Bob Parker
 * fixed corrupted tessellation pipe export bug - Richard Weiss
 * output from g-var no longer prints 'fwrite' messages - Sean Morrison
