@@ -309,6 +309,13 @@ make_coil(struct rt_wdb (*file), char *prefix, struct bu_list *sections, int sta
     mk_pipe_free(&head);
 }
 
+void usage()
+{
+		bu_log("Usage: coil [-d mean_outer_diameter] [-w wire_diameter] [-h helix_angle] [-p pitch]\n");
+		bu_log("            [-n number_of_turns] [-s start_cap_type] [-e end_cap_type]\n");
+		bu_log("            [-S coil_data_structure] [-l overall_length] [-L]\n");
+}
+
 
 /* Process command line arguments */
 int
@@ -386,15 +393,12 @@ ReadArgs(int argc, char **argv, struct bu_list *sections, fastf_t *mean_outer_di
 		 * parsed character.
 		 */
 		bu_log("%s: illegal option -- %c\n", bu_getprogname(), bu_optopt);
-		bu_log("Usage: coil [-d mean_outer_diameter] [-w wire_diameter] [-h helix_angle] [-p pitch]\n");
-		bu_log("            [-n number_of_turns] [-s start_cap_type] [-e end_cap_type]\n");
-		bu_log("            [-S coil_data_structure] [-l overall_length] [-L]\n");
+		usage();
 		bu_exit(EXIT_SUCCESS, NULL);
 	}
     }
     return bu_optind;
 }
-
 
 int
 main(int ac, char *av[])
@@ -459,6 +463,11 @@ main(int ac, char *av[])
 	if (nt == 0) {
 	    nt = 30;
 	}
+
+    	if (ac == 1) {
+		bu_log("NOTICE: command can run with no arguments.\n");
+    		usage();
+    	}
 
 	coil_data = (struct coil_data_t *) bu_malloc(sizeof(struct coil_data_t), "coil data structure");
 	coil_data->nt = nt;
