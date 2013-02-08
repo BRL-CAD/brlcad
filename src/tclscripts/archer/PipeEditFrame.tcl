@@ -151,17 +151,21 @@
 
 	switch -regexp -- $attr {
 	    {[Vv][0-9]+} {
+		set val [format "%.6f %.6f %.6f" [lindex $val 0] [lindex $val 1] [lindex $val 2]]
 		set mDetail($index,$PX_COL) [lindex $val 0]
 		set mDetail($index,$PY_COL) [lindex $val 1]
 		set mDetail($index,$PZ_COL) [lindex $val 2]
 	    }
 	    {[Oo][0-9]+} {
+		set val [format "%.6f" $val]
 		set mDetail($index,$OD_COL) $val
 	    }
 	    {[Ii][0-9]+} {
+		set val [format "%.6f" $val]
 		set mDetail($index,$ID_COL) $val
 	    }
 	    {[Rr][0-9]+} {
+		set val [format "%.6f" $val]
 		set mDetail($index,$RADIUS_COL) $val
 	    }
 	    default {
