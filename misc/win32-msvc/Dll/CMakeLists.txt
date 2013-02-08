@@ -42,6 +42,7 @@ target_link_libraries(BrlcadCore
   librt-static
   libnurbs-static
   libsysv-static
+  libvds-static
   libwdb-static
   zlib-static
   openNURBS
@@ -106,6 +107,7 @@ target_link_libraries(brlcad
   librt-static
   libnurbs-static
   libsysv-static
+  libvds-static
   libwdb-static
   zlib-static
   openNURBS
