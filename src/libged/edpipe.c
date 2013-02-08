@@ -606,11 +606,15 @@ _ged_append_pipept_common(struct ged *gedp, int argc, const char *argv[], struct
     struct rt_db_internal intern;
     struct rt_pipe_internal *pipeip;
     mat_t mat;
+    point_t view_ps_pt;
+    point_t view_pp_coord;
     point_t ps_pt;
+    struct wdb_pipept *prevpp;
     double scan[3];
     char *last;
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
+    GED_CHECK_VIEW(gedp, GED_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
@@ -648,7 +652,7 @@ _ged_append_pipept_common(struct ged *gedp, int argc, const char *argv[], struct
 	return GED_ERROR;
     }
     /* convert from double to fastf_t */
-    VMOVE(ps_pt, scan);
+    VMOVE(view_ps_pt, scan);
 
     if (wdb_import_from_path2(gedp->ged_result_str, &intern, argv[1], gedp->ged_wdbp, mat) == GED_ERROR)
 	return GED_ERROR;
@@ -662,6 +666,17 @@ _ged_append_pipept_common(struct ged *gedp, int argc, const char *argv[], struct
     }
 
     pipeip = (struct rt_pipe_internal *)intern.idb_ptr;
+
+    /* use the view z from the first or last pipe point, depending on whether we're appending or prepending */
+    if (func == _ged_add_pipept)
+	prevpp = BU_LIST_LAST(wdb_pipept, &pipeip->pipe_segs_head);
+    else
+	prevpp = BU_LIST_FIRST(wdb_pipept, &pipeip->pipe_segs_head);
+
+    MAT4X3PNT(view_pp_coord, gedp->ged_gvp->gv_model2view, prevpp->pp_coord);
+    view_ps_pt[Z] = view_pp_coord[Z];
+    MAT4X3PNT(ps_pt, gedp->ged_gvp->gv_view2model, view_ps_pt);
+
     if ((*func)(pipeip, (struct wdb_pipept *)NULL, ps_pt) == (struct wdb_pipept *)NULL) {
 	rt_db_free_internal(&intern);
 	bu_vls_printf(gedp->ged_result_str, "%s: cannot move point there", argv[0]);

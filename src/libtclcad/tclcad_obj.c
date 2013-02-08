@@ -6191,7 +6191,6 @@ to_mouse_append_pipept_common(struct ged *gedp,
     fastf_t inv_width;
     fastf_t inv_height;
     fastf_t inv_aspect;
-    point_t model;
     point_t view;
     struct bu_vls pt_vls = BU_VLS_INIT_ZERO;
     struct ged_dm_view *gdvp;
@@ -6240,9 +6239,7 @@ to_mouse_append_pipept_common(struct ged *gedp,
     if (gedp->ged_gvp->gv_grid.ggs_snap)
 	ged_snap_to_grid(gedp, &view[X], &view[Y]);
 
-    MAT4X3PNT(model, gdvp->gdv_view->gv_view2model, view);
-
-    bu_vls_printf(&pt_vls, "%lf %lf %lf", model[X], model[Y], model[Z]);
+    bu_vls_printf(&pt_vls, "%lf %lf %lf", view[X], view[Y], view[Z]);
 
     gedp->ged_gvp = gdvp->gdv_view;
     av[0] = (char *)argv[0];
