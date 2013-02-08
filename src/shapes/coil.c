@@ -381,7 +381,7 @@ ReadArgs(int argc, char **argv, struct bu_list *sections, fastf_t *mean_outer_di
 		BU_LIST_INSERT(&(*sections), &((*coil_data).l));
 		break;
 	    default:
-		bu_log("%s: illegal option -- %c\n", bu_getprogname(), c);
+		bu_log("%s: illegal option -- %c\n", bu_getprogname(), bu_optopt);
 		bu_log("Usage: coil [-d mean_outer_diameter] [-w wire_diameter] [-h helix_angle] [-p pitch]\n");
 		bu_log("            [-n number_of_turns] [-s start_cap_type] [-e end_cap_type]\n");
 		bu_log("            [-S coil_data_structure] [-l overall_length] [-L]\n");
