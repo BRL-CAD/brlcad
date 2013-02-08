@@ -96,8 +96,10 @@ main(int argc, char **argv)
 
 #define rand_num(p)	(BN_UNIF_DOUBLE(p)+0.5)
 
-    if (argc > 0)
+    if (argc > 0){
 	bu_log("Usage: %s\n", argv[0]);
+    	bu_log("(Command proceeds, ignoring all arguments.)\n");
+    }
 
     BU_LIST_INIT(&head.l);
 
