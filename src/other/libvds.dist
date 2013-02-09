@@ -1,4 +1,5 @@
 SET(libvds_ignore_files
+Makefile.am
 COPYING
 README
 docs
