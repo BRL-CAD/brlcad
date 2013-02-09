@@ -16,17 +16,17 @@ noinst_HEADERS = \
 	vdsprivate.h
 
 include_HEADERS = \
-	path.h
-	stdvds.h
-	vds.h
-	vdsprivate.h
+	path.h \
+	stdvds.h \
+	vds.h \
+	vdsprivate.h \
 	vector.h
 
 EXTRA_DIST = \
-	CMakeLists.txt
-	COPYING
-	README
-	docs/fold.png
+	CMakeLists.txt \
+	COPYING \
+	README \
+	docs/fold.png \
 	docs/intro.html
 
 include $(top_srcdir)/misc/Makefile.defs
