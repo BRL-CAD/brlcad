@@ -68,18 +68,6 @@ char *options_str = "[-A A|a|b|c|e|g|m|o|p|v|w] [-a az] [-d] [-e el] [-f density
 #define ANALYSIS_MOMENTS 512
 #define ANALYSIS_PLOT_OVERLAPS 1024
 
-#ifndef HUGE
-#  ifdef MAXFLT
-#    define HUGE MAXFLOAT
-#  else
-#    ifdef DBL_MAX
-#      define HUGE DBL_MAX
-#    else
-#      define HUGE ((float)3.40282346638528860e+38)
-#    endif
-#  endif
-#endif
-
 /* Note: struct parsing requires no space after the commas.  take care
  * when formatting this file.  if the compile breaks here, it means
  * that spaces got inserted incorrectly.
@@ -2128,8 +2116,8 @@ summary_reports(struct cstate *state)
 	    double *wv;
 	    bu_vls_printf(_ged_current_gedp->ged_result_str, "\tregions:\n");
 	    for (BU_LIST_FOR (regp, region, &(state->rtip->HeadRegion))) {
-		double low = HUGE;
-		double hi = -HUGE;
+		double low = INFINITY;
+		double hi = -INFINITY;
 
 		avg_mass = 0.0;
 
@@ -2256,8 +2244,8 @@ summary_reports(struct cstate *state)
 
 	    bu_vls_printf(_ged_current_gedp->ged_result_str, "\tregions:\n");
 	    for (BU_LIST_FOR (regp, region, &(state->rtip->HeadRegion))) {
-		double low = HUGE;
-		double hi = -HUGE;
+		double low = INFINITY;
+		double hi = -INFINITY;
 		avg_mass = 0.0;
 
 		for (view=0; view < num_views; view++) {
