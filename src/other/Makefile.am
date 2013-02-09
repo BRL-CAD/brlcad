@@ -113,6 +113,8 @@ else !BUILD_TNT
 TNTDIR=
 endif
 
+VDSDIR=libvds
+
 
 if ONLY_BENCHMARK
 SUBDIRS = \
@@ -153,7 +155,8 @@ SUBDIRS = \
 	${TKHTMLDIR} \
 	${TKTABLEDIR} \
 	${OPENNURBSDIR} \
-	${TNTDIR}
+	${TNTDIR} \
+        ${VDSDIR}
 
 endif
 # end ONLY_RTS
@@ -210,6 +213,7 @@ EXTRA_DIST = \
 	tktable.dist \
 	togl.dist \
 	URToolkit.dist \
+	libvds.dist \
 	xmltools \
 	xmltools.dist
 
@@ -222,6 +226,7 @@ DIST_SUBDIRS = \
 	libregex \
 	libtermlib \
 	libutahrle \
+	libvds \
 	libz \
 	openNURBS \
 	tcl \

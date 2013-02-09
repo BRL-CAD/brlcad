@@ -2466,6 +2466,10 @@ fi
 AC_SUBST(REGEX)
 AC_SUBST(REGEX_CPPFLAGS)
 
+LIBVDS='${top_builddir}/src/other/libvds/libvds.la'
+LIBVDS_CPPFLAGS='-I${top_srcdir}/src/other/libvds'
+AC_SUBST(LIBVDS)
+AC_SUBST(LIBVDS_CPPFLAGS)
 
 dnl *** libz ***
 dnl See if zlib library support works
@@ -3935,7 +3939,7 @@ FFT_LIBS="${LIBM}"
 ANALYZE_LIBS="${RT} ${RT_LIBS} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS}"
 BU_LIBS="${TCL} ${PNG} ${LIBZ} ${LIBM} ${LIBMALLOC} ${LIBTHREAD}"
 BN_LIBS="${BU} ${BU_LIBS} ${TCL} ${LIBM}"
-RT_LIBS="${BN} ${BN_LIBS} ${BU} ${BU_LIBS} ${REGEX} ${LIBM} ${SYSV} ${OPENNURBS}"
+RT_LIBS="${BN} ${BN_LIBS} ${BU} ${BU_LIBS} ${REGEX} ${LIBM} ${SYSV} ${OPENNURBS} ${LIBVDS}"
 ICV_LIBS="{BN} ${BN_LIBS} ${BU} ${BU_LIBS}"
 GCV_LIBS="${RT} ${RT_LIBS} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS}"
 GED_LIBS="${WDB} ${RT} ${RT_LIBS} ${ICV} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS} ${PNG} ${TCL} ${REGEX} ${ANALYZE}"
@@ -4229,6 +4233,7 @@ AC_CONFIG_FILES([
 	src/other/libtermlib/Makefile
 	src/other/libutahrle/Makefile
 	src/other/libutahrle/include/Makefile
+	src/other/libvds/Makefile
 	src/other/libz/Makefile
 	src/other/openNURBS/Makefile
 	src/other/tcl/Makefile

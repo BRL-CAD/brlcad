@@ -18,7 +18,8 @@ test_dvec_LDADD = \
 AM_CPPFLAGS = \
 	${REGEX_CPPFLAGS} \
 	${TCL_CPPFLAGS} \
-	${BREP_CPPFLAGS}
+	${BREP_CPPFLAGS} \
+	${LIBVDS_CPPFLAGS}
 
 AM_CFLAGS = ${STRICT_FLAGS}
 
@@ -326,7 +327,7 @@ if BUILD_REGEX
 DEPADD = src/other/libregex
 endif
 
-DEPENDS = src/libbn src/libsysv src/libnurbs src/other/openNURBS ${DEPADD}
+DEPENDS = src/libbn src/libsysv src/libnurbs src/other/openNURBS src/other/libvds ${DEPADD}
 
 include $(top_srcdir)/misc/Makefile.defs
 
