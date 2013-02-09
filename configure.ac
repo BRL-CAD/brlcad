@@ -2160,7 +2160,7 @@ else
 fi
 AC_SUBST(NOWARN)
 if test "x$bc_build_warnings" != "xno" ; then
-	BC_COMPILER_AND_LINKER_RECOGNIZES([-pedantic -W -Wall -Wundef -Wfloat-equal -Wshadow -Winline -Wno-long-long], [warning])
+	BC_COMPILER_AND_LINKER_RECOGNIZES([-pedantic -W -Wall -Wundef -Wfloat-equal -Wshadow -Winline -Wno-long-long -Wno-variadic-macros], [warning])
 	# XXX also of interest
 	# -Wunreachable-code -Wmissing-declarations -Wmissing-prototypes -Wstrict-prototypes -ansi
 	# -Wstrict-prototypes -Wold-style-definition -Wshorten-64-to-32 -Wmissing-field-initializers
@@ -2178,10 +2178,10 @@ fi
 
 dnl we are more strict on clean dirs by default (no-long-long needed due to tcl.h)
 if test "x$bc_build_strict" = "xyes" ; then
-   BC_COMPILER_AND_LINKER_RECOGNIZES([-w -pedantic -W -Wall -Wundef -Wfloat-equal -Wshadow -Winline -Wno-long-long -Werror], [strict], [no])
+   BC_COMPILER_AND_LINKER_RECOGNIZES([-w -pedantic -W -Wall -Wundef -Wfloat-equal -Wshadow -Winline -Wno-long-long -Werror -Wno-variadic-macros], [strict], [no])
    if test "x$bc_strict_works" = "xyes" ; then
        # do not include -w as that was just to suppress any test warnings
-       STRICT_FLAGS="-pedantic -W -Wall -Wundef -Wfloat-equal -Wshadow -Winline -Wno-long-long  -Werror"
+       STRICT_FLAGS="-pedantic -W -Wall -Wundef -Wfloat-equal -Wshadow -Winline -Wno-long-long -Wno-variadic-macros -Werror"
        AC_SUBST(STRICT_FLAGS)
        AC_DEFINE([STRICT_FLAGS], [1], [Define to 1 if strict standards compliance compilation is enabled.])
    fi
