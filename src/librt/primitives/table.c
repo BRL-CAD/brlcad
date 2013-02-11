@@ -1871,7 +1871,7 @@ const struct rt_functab rt_functab[] = {
 	rt_generic_get,
 	rt_generic_adjust,
 	rt_generic_form,
-	NULL,
+	rt_revolve_make,
 	NULL,
 	rt_revolve_bbox,
 	NULL,

@@ -56,6 +56,30 @@ extern int rt_sketch_contains(struct rt_sketch_internal *, point2d_t);
 extern void rt_sketch_bounds(struct rt_sketch_internal *, fastf_t *);
 
 /**
+ * Routine to make a new REVOLVE solid. The only purpose of this routine
+ * is to initialize the internal to legal values (e.g., vls)
+ */
+void
+rt_revolve_make(const struct rt_functab *ftp, struct rt_db_internal *intern)
+{
+    struct rt_revolve_internal *rev;
+
+    intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
+    intern->idb_type = ID_REVOLVE;
+    BU_ASSERT(&rt_functab[intern->idb_type] == ftp);
+
+    intern->idb_meth = ftp;
+    rev = (struct rt_revolve_internal *)bu_calloc(sizeof(struct rt_revolve_internal), 1,
+					      "rt_revolve_internal");
+    intern->idb_ptr = (genptr_t)rev;
+    rev->magic = RT_REVOLVE_INTERNAL_MAGIC;
+
+    BU_VLS_INIT(&rev->sketch_name);
+    rev->skt = NULL;
+}
+
+
+/**
  * R T _ R E V O L V E _ B B O X
  *
  * Calculate a bounding RPP around a sketch
@@ -75,12 +99,16 @@ rt_revolve_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const str
     rip = (struct rt_revolve_internal *)ip->idb_ptr;
     RT_REVOLVE_CK_MAGIC(rip);
 
+    /* if there's no sketch, there's no bounding box */
+    if (!rip->skt || rip->skt->vert_count < 1) {
+	return -1;
+    }
+
     /* count the number of times an endpoint is used:
      * if even, the point is ok
      * if odd, the point is at the end of a path
      */
-    if (rip->skt->vert_count)
-	endcount = (int *)bu_calloc(rip->skt->vert_count, sizeof(int), "endcount");
+    endcount = (int *)bu_calloc(rip->skt->vert_count, sizeof(int), "endcount");
     nseg = rip->skt->curve.count;
 
     for (i=0; i<nseg; i++) {
@@ -158,8 +186,7 @@ rt_revolve_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const str
     (*min)[Z] = center[Z] - radius;
     (*max)[Z] = center[Z] + radius;
 
-    if (rip->skt->vert_count)
-	bu_free(endcount, "endcount");
+    bu_free(endcount, "endcount");
 
     return 0;			/* OK */
 }
@@ -196,6 +223,11 @@ rt_revolve_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip
     rip = (struct rt_revolve_internal *)ip->idb_ptr;
     RT_REVOLVE_CK_MAGIC(rip);
 
+    /* if there's no sketch, there's nothing to do */
+    if (!rip->skt || rip->skt->vert_count < 1) {
+	return -1;
+    }
+
     stp->st_id = ID_REVOLVE;
     stp->st_meth = &rt_functab[ID_REVOLVE];
 
@@ -227,9 +259,7 @@ rt_revolve_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip
      * if even, the point is ok
      * if odd, the point is at the end of a path
      */
-    if (rev->skt->vert_count) {
-	endcount = (int *)bu_calloc(rev->skt->vert_count, sizeof(int), "endcount");
-    }
+    endcount = (int *)bu_calloc(rev->skt->vert_count, sizeof(int), "endcount");
     nseg = rev->skt->curve.count;
 
     for (i=0; i<nseg; i++) {
