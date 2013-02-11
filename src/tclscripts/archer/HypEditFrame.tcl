@@ -140,7 +140,7 @@
 	V [list $mCenterX $mCenterY $mCenterZ] \
 	H [list 0 0 $mDelta] \
 	A [list 0 [expr {$mDelta * 0.5}] 0] \
-	b [expr {$mDelta * 0.25} \
+	b [expr {$mDelta * 0.25}] \
 	bnr [expr {$mDelta * 0.1}]
 }
 
@@ -413,7 +413,7 @@
 
 ::itcl::body HypEditFrame::buildLowerPanel {} {
     set parent [$this childsite lower]
-
+    set row 0
     set alist [list H set Set HV set Set A set Set B set Set C set Set H rot Rotate]
     foreach {attribute op opLabel} $alist {
 	itk_component add $op$attribute {
@@ -424,9 +424,8 @@
 		-command [::itcl::code $this initEditState]
 	} {}
 
-	pack $itk_component($op$attribute) \
-	    -anchor w \
-	    -expand yes
+	grid $itk_component($op$attribute) -row $row -column 0 -sticky nsew
+	incr row
     }
 }
 
