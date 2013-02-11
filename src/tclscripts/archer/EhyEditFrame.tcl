@@ -421,7 +421,7 @@
 
 ::itcl::body EhyEditFrame::buildLowerPanel {} {
     set parent [$this childsite lower]
-
+    set row 0
     foreach attribute {H A B C} {
 	itk_component add set$attribute {
 	    ::ttk::radiobutton $parent.set_$attribute \
@@ -431,9 +431,8 @@
 		-command [::itcl::code $this initEditState]
 	} {}
 
-	pack $itk_component(set$attribute) \
-	    -anchor w \
-	    -expand yes
+	grid $itk_component(set$attribute) -row $row -column 0 -sticky nsew
+	incr row
     }
 }
 
