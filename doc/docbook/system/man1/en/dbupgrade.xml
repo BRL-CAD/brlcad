@@ -34,10 +34,10 @@ file.</para>
 
 <para>Note that this tool will attempt to automatically 'fix' an existing (v4
 format) binary database that was transferred from a
-binary-incompatible platform.  However, this process may be imperfect - the best approach (if 
+binary-incompatible platform.  However, this process may be imperfect - the best approach (if
 the original platform on which the file was created is available) is to run
 <command>dbupgrade</command>
-on the file before transferring from the originating platform.  Once upgraded the output file will be 
+on the file before transferring from the originating platform.  Once upgraded the output file will be
 platform independent regardless of the platform on which the upgrade was done.</para>
 
 <para>Running
