@@ -3737,6 +3737,8 @@ namespace eval ArcherCore {
 	gedCmd light_all $mLighting
     }
 
+    gedCmd refresh_all
+
     SetNormalCursor $this
 }
 
