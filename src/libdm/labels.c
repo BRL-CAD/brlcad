@@ -272,11 +272,9 @@ dm_label_primitive(struct rt_wdb *wdbp,
 #if 0
 	    /* New way only */
 	    {
-#ifndef NO_MAGIC_CHECKING
 		struct model *m =
 		    (struct model *) ip->idb_ptr;
 		NMG_CK_MODEL(m);
-#endif
 
 		if (es_eu) {
 		    point_t cent;
@@ -298,16 +296,12 @@ dm_label_primitive(struct rt_wdb *wdbp,
 	    break;
 	case DB5_MINORTYPE_BRLCAD_ARBN:
 	    break;
-	case DB5_MINORTYPE_BRLCAD_PIPE:
-	    /*XXX Needs work */
+	case DB5_MINORTYPE_BRLCAD_PIPE: {
 #if 0
-	    {
-#ifndef NO_MAGIC_CHECKING
 		struct rt_pipe_internal *pipe =
 		    (struct rt_pipe_internal *)ip->idb_ptr;
 
 		RT_PIPE_CK_MAGIC(pipe);
-#endif
 
 		if (es_pipept) {
 		    BU_CKMAG(es_pipept, WDB_PIPESEG_MAGIC, "wdb_pipept");
@@ -315,8 +309,8 @@ dm_label_primitive(struct rt_wdb *wdbp,
 		    MAT4X3PNT(pos_view, xform, es_pipept->pp_coord);
 		    POINT_LABEL_STR(pos_view, "pt");
 		}
-	    }
 #endif
+	    }
 
 	    break;
 	case DB5_MINORTYPE_BRLCAD_PARTICLE: {
@@ -513,7 +507,34 @@ dm_label_primitive(struct rt_wdb *wdbp,
 	}
 
 	    break;
-	case DB5_MINORTYPE_BRLCAD_GRIP:
+	case DB5_MINORTYPE_BRLCAD_HYP: {
+	    struct rt_hyp_internal *hyp =
+		(struct rt_hyp_internal *)ip->idb_ptr;
+	    vect_t vB;
+
+	    RT_HYP_CK_MAGIC(hyp);
+
+	    MAT4X3PNT(pos_view, xform, hyp->hyp_Vi);
+	    POINT_LABEL(pos_view, 'V');
+
+	    VADD2(work, hyp->hyp_Vi, hyp->hyp_Hi);
+	    MAT4X3PNT(pos_view, xform, work);
+	    POINT_LABEL(pos_view, 'H');
+
+	    VADD2(work, hyp->hyp_Vi, hyp->hyp_A);
+	    MAT4X3PNT(pos_view, xform, work);
+	    POINT_LABEL(pos_view, 'A');
+
+	    VCROSS(vB, hyp->hyp_A, hyp->hyp_Hi);
+	    VUNITIZE(vB);
+	    VSCALE(vB, vB, hyp->hyp_b);
+	    VADD2(work, hyp->hyp_Vi, vB);
+	    MAT4X3PNT(pos_view, xform, work);
+	    POINT_LABEL(pos_view, 'B');
+	}
+
+	    break;
+        case DB5_MINORTYPE_BRLCAD_GRIP:
 	    break;
 	case DB5_MINORTYPE_BRLCAD_JOINT:
 	    break;
