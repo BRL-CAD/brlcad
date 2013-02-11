@@ -169,8 +169,8 @@
 	H [list 0 0 [expr {$mDelta * 3.0}]] \
 	A [list $mDelta 0 0] \
 	B [list 0 $mDelta 0] \
-	C {0.0 0.0 0.0} \
-	D {0.0 0.0 0.0}
+	C [list $mDelta 0 0] \
+	D [list 0 $mDelta 0]
 }
 
 
