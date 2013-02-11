@@ -5000,7 +5000,7 @@ proc title_node_handler {node} {
 	-command [::itcl::code $this createObj extrude]
     $itk_component(primitiveMenu) add command \
 	-image $mImage_halfLabeled \
-	-command [::itcl::code $this createObj hyp]
+	-command [::itcl::code $this createObj half]
     $itk_component(primitiveMenu) add command \
 	-image $mImage_hypLabeled \
 	-command [::itcl::code $this createObj hyp]
