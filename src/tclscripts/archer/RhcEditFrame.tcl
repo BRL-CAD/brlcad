@@ -206,19 +206,19 @@
 	::ttk::entry $parent.rhcVxE \
 	    -textvariable [::itcl::scope mVx] \
 	    -validate key \
-	    - {::cadwidgets::Ged::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add rhcVyE {
 	::ttk::entry $parent.rhcVyE \
 	    -textvariable [::itcl::scope mVy] \
 	    -validate key \
-	    - {::cadwidgets::Ged::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add rhcVzE {
 	::ttk::entry $parent.rhcVzE \
 	    -textvariable [::itcl::scope mVz] \
 	    -validate key \
-	    - {::cadwidgets::Ged::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add rhcVUnitsL {
 	::ttk::label $parent.rhcVUnitsL \
@@ -235,21 +235,21 @@
 	    -textvariable [::itcl::scope mHx] \
 	    -state disabled \
 	    -validate key \
-	    - {::cadwidgets::Ged::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add rhcHyE {
 	::ttk::entry $parent.rhcHyE \
 	    -textvariable [::itcl::scope mHy] \
 	    -state disabled \
 	    -validate key \
-	    - {::cadwidgets::Ged::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add rhcHzE {
 	::ttk::entry $parent.rhcHzE \
 	    -textvariable [::itcl::scope mHz] \
 	    -state disabled \
 	    -validate key \
-	    - {::cadwidgets::Ged::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add rhcHUnitsL {
 	::ttk::label $parent.rhcHUnitsL \
@@ -266,21 +266,21 @@
 	    -textvariable [::itcl::scope mBx] \
 	    -state disabled \
 	    -validate key \
-	    - {::cadwidgets::Ged::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add rhcByE {
 	::ttk::entry $parent.rhcByE \
 	    -textvariable [::itcl::scope mBy] \
 	    -state disabled \
 	    -validate key \
-	    - {::cadwidgets::Ged::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add rhcBzE {
 	::ttk::entry $parent.rhcBzE \
 	    -textvariable [::itcl::scope mBz] \
 	    -state disabled \
 	    -validate key \
-	    - {::cadwidgets::Ged::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add rhcBUnitsL {
 	::ttk::label $parent.rhcBUnitsL \
@@ -296,7 +296,7 @@
 	::ttk::entry $parent.rhcRE \
 	    -textvariable [::itcl::scope mR] \
 	    -validate key \
-	    - {::cadwidgets::Ged::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add rhcRUnitsL {
 	::ttk::label $parent.rhcRUnitsL \
@@ -312,7 +312,7 @@
 	::ttk::entry $parent.rhcCE \
 	    -textvariable [::itcl::scope mC] \
 	    -validate key \
-	    - {::cadwidgets::Ged::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add rhcCUnitsL {
 	::ttk::label $parent.rhcCUnitsL \
@@ -394,7 +394,7 @@
 
 ::itcl::body RhcEditFrame::buildLowerPanel {} {
     set parent [$this childsite lower]
-
+    set row 0
     foreach attribute {B H r c} {
 	itk_component add set$attribute {
 	    ::ttk::radiobutton $parent.set_$attribute \
@@ -404,9 +404,8 @@
 		-command [::itcl::code $this initEditState]
 	} {}
 
-	pack $itk_component(set$attribute) \
-	    -anchor w \
-	    -expand yes
+	grid $itk_component(set$attribute) -row $row -column 0 -sticky nsew
+	incr row
     }
 }
 
