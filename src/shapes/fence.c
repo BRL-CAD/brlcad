@@ -131,7 +131,7 @@ void argumentHelp(FILE *fp, char *progname, char *message)
     }
     fflush(stdout);
 
-    fprintf(fp, "Usage Format: \n%s %s\n\n", progname, \
+    fprintf(fp, "Usage: %s %s\n\n", progname, \
 	    "-[ivdonuhHlLrRjatTbBcCfpmwseEgGxXzZ]" \
 	);
     fprintf(fp, "\t-[ivd]\n\t\tspecifies interactive, verbose, and/or debug modes\n");
