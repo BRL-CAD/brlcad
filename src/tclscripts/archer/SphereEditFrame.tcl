@@ -33,9 +33,14 @@
     constructor {args} {}
     destructor {}
 
-    #Override's for EllEditFrame
     public {
+	#Override's for EllEditFrame
 	method createGeometry {obj}
+	method p {_obj args}
+    }
+
+    protected {
+	method buildLowerPanel {}
     }
 
     private {}
@@ -51,6 +56,7 @@
     $itk_component(ellType) configure -text "Sphere:"
 }
 
+
 ::itcl::body SphereEditFrame::createGeometry {obj} {
     if {![GeometryEditFrame::createGeometry $obj]} {
 	return
@@ -61,6 +67,42 @@
 	A [list $mDelta 0 0] \
 	B [list 0 $mDelta 0] \
 	C [list 0 0 $mDelta]
+}
+
+
+::itcl::body SphereEditFrame::p {_obj args} {
+    if {[llength $args] != 1 || ![string is double $args]} {
+	return "Usage: p sf"
+    }
+
+    switch -- $mEditMode \
+	$setABC {
+	    $::ArcherCore::application p_pscale $_obj abc $args
+	}
+
+    return ""
+}
+
+
+# ------------------------------------------------------------
+#                      PROTECTED METHODS
+# ------------------------------------------------------------
+
+::itcl::body SphereEditFrame::buildLowerPanel {} {
+    set parent [$this childsite lower]
+    set row 0
+    foreach attribute {ABC} {
+	itk_component add set$attribute {
+	    ::ttk::radiobutton $parent.set_$attribute \
+		-variable [::itcl::scope mEditMode] \
+		-value [subst $[subst set$attribute]] \
+		-text "Set $attribute" \
+		-command [::itcl::code $this initEditState]
+	} {}
+
+	grid $itk_component(set$attribute) -row $row -column 0 -sticky nsew
+	incr row
+    }
 }
 
 
