@@ -31,10 +31,10 @@ was successfully preserved.
 
 <para>
 Starting with v5, the geometry file format is platform independent. For v4 .g files, however,
-there is a potential problem in that the floating point storage format within the file 
-is platform dependent.  Consequently the safest way to upgrade a v4 file is to run 
+there is a potential problem in that the floating point storage format within the file
+is platform dependent.  Consequently the safest way to upgrade a v4 file is to run
 <command>dbupgrade</command> on the file before transferring it from
-the platform on which it was created.  If that system is no longer available, the 
+the platform on which it was created.  If that system is no longer available, the
 <command>dbupgrade</command> will attempt to automatically 'fix' an existing (v4
 format) binary database that was transferred from a binary-incompatible platform.
 </para>
@@ -76,7 +76,7 @@ Historical Model (units=in)
 upgrade, cancel, or help? [default: help] <userinput>upgrade</userinput>
 <prompt>mged&gt; </prompt><userinput>q</userinput>
 <prompt>bash4.0$ </prompt><userinput>ls</userinput>
-model.g model.g.R4.g 
+model.g model.g.R4.g
 </computeroutput>
 </literallayout>
 </example>
