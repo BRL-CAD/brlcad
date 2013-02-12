@@ -460,6 +460,8 @@ namespace eval ArcherCore {
 	variable mLightingModePref ""
 	variable mDisplayListMode 0
 	variable mDisplayListModePref ""
+	variable mWireframeMode 0
+	variable mWireframeModePref ""
 
 	variable mGridAnchor "0 0 0"
 	variable mGridAnchorXPref ""
@@ -5419,6 +5421,7 @@ namespace eval ArcherCore {
     updatePerspective 0
     doLighting
     gedCmd dlist_on $mDisplayListMode
+    gedCmd lod_on $mWireframeMode
 
     $itk_component(ged) refresh_on
     $itk_component(ged) refresh_all

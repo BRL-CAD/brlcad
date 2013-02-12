@@ -249,6 +249,7 @@ package provide cadwidgets::Ged 1.0
 	method listeval {args}
 	method loadview {args}
 	method local2base {}
+	method lod_on {args}
 	method log {args}
 	method lookat {args}
 	method ls {args}
@@ -1752,6 +1753,10 @@ package provide cadwidgets::Ged 1.0
 
 ::itcl::body cadwidgets::Ged::local2base {} {
     eval $mGed local2base
+}
+
+::itcl::body cadwidgets::Ged::lod_on {args} {
+    eval $mGed lod_on $args
 }
 
 ::itcl::body cadwidgets::Ged::log {args} {

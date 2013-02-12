@@ -526,6 +526,7 @@ package provide Archer 1.0
     }
 
     gedCmd dlist_on $mDisplayListMode
+    gedCmd lod_on $mWireframeMode
 
 
     bind [namespace tail $this] <Configure> [::itcl::code $this handleConfigure]
@@ -2751,11 +2752,15 @@ proc title_node_handler {node} {
 	    -value $LIGHT_MODE_FRONT_AND_BACK_LIGHT \
 	    -variable [::itcl::scope mLightingModePref]
     } {}
-
     itk_component add dlistModeCB {
 	::ttk::checkbutton $parent.dlistModeCB \
 	    -text "Use Display Lists" \
 	    -variable [::itcl::scope mDisplayListModePref]
+    } {}
+    itk_component add wireframeModeCB {
+	::ttk::checkbutton $parent.wireframeModeCB \
+	    -text "Use LOD Wireframes" \
+	    -variable [::itcl::scope mWireframeModePref]
     } {}
 
     set i 0
@@ -2789,8 +2794,9 @@ proc title_node_handler {node} {
     incr i
     grid $itk_component(dlistModeCB) -columnspan 2 -column 0 -row $i -sticky sw
     grid rowconfigure $parent $i -weight 1
-
     grid columnconfigure $parent 1 -weight 1
+    incr i
+    grid $itk_component(wireframeModeCB) -columnspan 2 -column 0 -row $i -sticky sw
 
     set i 0
     grid $parent -column 0 -row $i -sticky nsew
@@ -8196,6 +8202,12 @@ proc title_node_handler {node} {
 	set rflag 1
     }
 
+    if {$mWireframeModePref != $mWireframeMode} {
+	set mWireframeMode $mWireframeModePref
+	gedCmd lod_on $mWireframeMode
+	set rflag 1
+    }
+
     $itk_component(ged) refresh_on
     if {$rflag} {
 	$itk_component(ged) refresh_all
@@ -8860,6 +8872,7 @@ proc title_node_handler {node} {
     set mZClipFrontPref $mZClipFront
     set mLightingModePref $mLightingMode
     set mDisplayListModePref $mDisplayListMode
+    set mWireframeModePref $mWireframeMode
 
     $itk_component(preferencesDialog) center [namespace tail $this]
     ::update
@@ -9021,6 +9034,7 @@ proc title_node_handler {node} {
     puts $_pfile "set mZClipFront $mZClipFront"
     puts $_pfile "set mLightingMode $mLightingMode"
     puts $_pfile "set mDisplayListMode $mDisplayListMode"
+    puts $_pfile "set mWireframeMode $mWireframeMode"
 
     puts $_pfile "set mHPaneFraction1 $mHPaneFraction1"
     puts $_pfile "set mHPaneFraction2 $mHPaneFraction2"
