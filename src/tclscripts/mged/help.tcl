@@ -313,8 +313,8 @@ set mged_help_data(size)	$helplib_data(vo_size)
 set mged_help_data(solids)	{{file object(s)}	{make ascii summary of solid parameters}}
 set mged_help_data(sph-part)	{{sph1name sph2name newname}	{create a part from two sph's}}
 set mged_help_data(status)	{{[state|Viewscale|base2local|local2base|
-				   toViewcenter|Viewrot|model2view|view2model|
-				   model2objview|objview2model|help]}	{get view status}}
+	toViewcenter|Viewrot|model2view|view2model|
+	model2objview|objview2model|help]}	{get view status}}
 set mged_help_data(summary)	$helplib_data(wdb_summary)
 set mged_help_data(sv)		$helplib_data(vo_slew)
 set mged_help_data(sync)	{{}	{forces UNIX sync}}
