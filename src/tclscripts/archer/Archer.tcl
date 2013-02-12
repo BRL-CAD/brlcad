@@ -4862,12 +4862,12 @@ proc title_node_handler {node} {
     $itk_component(arbsMenu) add command \
 	-image $mImage_arb4Labeled \
 	-command [::itcl::code $this createObj arb4]
-    $itk_component(arbsMenu) add command \
+#    $itk_component(arbsMenu) add command \
 	-label rpp \
 	-command [::itcl::code $this createObj arb8]
     $itk_component(arbsMenu) add separator
     $itk_component(arbsMenu) add command \
-	-image $mImage_arb5Labeled \
+	-image $mImage_arbnLabeled \
 	-command [::itcl::code $this createObj arbn]
 
     itk_component add conesCylsMenu {
@@ -5008,6 +5008,7 @@ proc title_node_handler {node} {
 	-image $mImage_metaballLabeled \
 	-command [::itcl::code $this createObj metaball]
     $itk_component(primitiveMenu) add command \
+	-image $mImage_partLabeled \
 	-label part \
 	-command [::itcl::code $this createObj part]
     $itk_component(primitiveMenu) add command \
