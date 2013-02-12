@@ -807,7 +807,7 @@ namespace eval ArcherCore {
 	method fillTree          {_pnode _ctext _flat {_allow_multiple 0}}
 	method fillTreeColumns   {_cnode _ctext}
 	method isRegion          {_cgdata}
-	method loadMenu          {_menu _node _nodeType}
+	method loadMenu          {_menu _node _nodeType _node_id}
 	method findTreeChildNodes {_pnode}
 	method findTreeParentNodes {_cnode}
 	method getCNodesFromCText {_pnode _text}
@@ -836,7 +836,7 @@ namespace eval ArcherCore {
 	method getTreeMembers  {_tlist {_mlist {}}}
 	method getTreeOp {_parent _child}
 	method renderComp        {_node}
-	method render             {_node _state _trans _updateTree {_wflag 1}}
+	method render             {_node _state _trans _updateTree {_wflag 1} {_node_id ""}}
 	method selectDisplayColor  {_node}
 	method setDisplayColor	   {_node _rgb}
 	method selectTransparency  {_node}
@@ -3468,16 +3468,16 @@ namespace eval ArcherCore {
 }
 
 
-::itcl::body ArcherCore::render {node state trans updateTree {wflag 1}} {
-    if {$wflag} {
+::itcl::body ArcherCore::render {_node _state _trans _updateTree {_wflag 1} {_node_id ""}} {
+    if {$_wflag} {
 	SetWaitCursor $this
     }
 
-    set tnode [file tail $node]
+    set tnode [file tail $_node]
     set saveGroundPlane 0
 
     if {$mShowPrimitiveLabels} {
-	set plnode $node
+	set plnode $_node
     } else {
 	set plnode {}
     }
@@ -3487,55 +3487,55 @@ namespace eval ArcherCore {
     catch {
 	if {[catch {gedCmd attr get \
 			$tnode displayColor} displayColor]} {
-	    switch -exact -- $state {
+	    switch -exact -- $_state {
 		"0" {
-		    gedCmd draw -m0 -x$trans $node
+		    gedCmd draw -m0 -x$_trans $_node
 		}
 		"1" {
-		    gedCmd draw -m1 -x$trans $node
+		    gedCmd draw -m1 -x$_trans $_node
 		}
 		"2" {
-		    gedCmd draw -m2 -x$trans $node
+		    gedCmd draw -m2 -x$_trans $_node
 		}
 		"3" {
-		    gedCmd E $node
+		    gedCmd E $_node
 		}
 		"4" {
-		    gedCmd draw -h $node
+		    gedCmd draw -h $_node
 		}
 		"-1" {
-		    gedCmd erase $node
+		    gedCmd erase $_node
 		}
 	    }
 	} else {
-	    switch -exact -- $state {
+	    switch -exact -- $_state {
 		"0" {
-		    gedCmd draw -m0 -x$trans \
-			-C$displayColor $node
+		    gedCmd draw -m0 -x$_trans \
+			-C$displayColor $_node
 		}
 		"1" {
-		    gedCmd draw -m1 -x$trans \
-			-C$displayColor $node
+		    gedCmd draw -m1 -x$_trans \
+			-C$displayColor $_node
 		}
 		"2" {
-		    gedCmd draw -m2 -x$trans \
-			-C$displayColor $node
+		    gedCmd draw -m2 -x$_trans \
+			-C$displayColor $_node
 		}
 		"3" {
-		    gedCmd E -C$displayColor $node
+		    gedCmd E -C$displayColor $_node
 		}
 		"4" {
-		    gedCmd draw -h -C$displayColor $node
+		    gedCmd draw -h -C$displayColor $_node
 		}
 		"-1" {
-		    gedCmd erase $node
+		    gedCmd erase $_node
 		}
 	    }
 	}
     }
 
-    if {$node == $mSelectedObjPath} {
-	if {$state != -1} {
+    if {$_node == $mSelectedObjPath} {
+	if {$_state != -1} {
 	    gedCmd configure -primitiveLabels $plnode
 	} else {
 	    gedCmd configure -primitiveLabels {}
@@ -3579,12 +3579,16 @@ namespace eval ArcherCore {
 	showGroundPlane
     }
 
-    if {$updateTree} {
+    if {$_updateTree} {
 	updateTreeDrawLists
     }
 
-    if {$wflag} {
+    if {$_wflag} {
 	SetNormalCursor $this
+    }
+
+    if {$_node_id != ""} {
+	$itk_component(newtree) selection set $_node_id
     }
 }
 
@@ -3957,7 +3961,7 @@ namespace eval ArcherCore {
     return 0
 }
 
-::itcl::body ArcherCore::loadMenu {_menu _node _nodeType} {
+::itcl::body ArcherCore::loadMenu {_menu _node _nodeType _node_id} {
     # destroy old menu
     if [winfo exists $_menu.color] {
 	$_menu.color delete 0 end
@@ -3978,14 +3982,14 @@ namespace eval ArcherCore {
     if {$_nodeType == "leaf"} {
 	$_menu add radiobutton -label "Wireframe" \
 	    -indicatoron 1 -value 0 -variable [::itcl::scope mRenderMode] \
-	    -command [::itcl::code $this render $_node 0 1 1]
+	    -command [::itcl::code $this render $_node 0 1 1 1 $_node_id]
 
 	$_menu add radiobutton -label "Shaded" \
 	    -indicatoron 1 -value 1 -variable [::itcl::scope mRenderMode] \
-	    -command [::itcl::code $this render $_node 1 1 1]
+	    -command [::itcl::code $this render $_node 1 1 1 1 $_node_id]
 	$_menu add radiobutton -label "Hidden Line" \
 	    -indicatoron 1 -value 2 -variable [::itcl::scope mRenderMode] \
-	    -command [::itcl::code $this render $_node 4 1 1]
+	    -command [::itcl::code $this render $_node 4 1 1 1 $_node_id]
 
 	if {$mEnableBigE} {
 	    $_menu add radiobutton \
@@ -3993,7 +3997,7 @@ namespace eval ArcherCore {
 		-indicatoron 1 \
 		-value 3 \
 		-variable [::itcl::scope mRenderMode] \
-		-command [::itcl::code $this render $_node 3 1 1]
+		-command [::itcl::code $this render $_node 3 1 1 1 $_node_id]
 	}
 
 	$_menu add radiobutton -label "Off" \
@@ -4001,17 +4005,17 @@ namespace eval ArcherCore {
 	    -command [::itcl::code $this render $_node -1 1 1]
     } else {
 	$_menu add command -label "Wireframe" \
-	    -command [::itcl::code $this render $_node 0 1 1]
+	    -command [::itcl::code $this render $_node 0 1 1 1 $_node_id]
 
 	$_menu add command -label "Shaded" \
-	    -command [::itcl::code $this render $_node 1 1 1]
+	    -command [::itcl::code $this render $_node 1 1 1 1 $_node_id]
 	$_menu add command -label "Hidden Line" \
-	    -command [::itcl::code $this render $_node 4 1 1]
+	    -command [::itcl::code $this render $_node 4 1 1 1 $_node_id]
 
 	if {$mEnableBigE} {
 	    $_menu add command \
 		-label "Evaluated" \
-		-command [::itcl::code $this render $_node 3 1 1]
+		-command [::itcl::code $this render $_node 3 1 1 1 $_node_id]
 	}
 
 	$_menu add command -label "Off" \
@@ -4407,7 +4411,7 @@ namespace eval ArcherCore {
 
     set path [getTreePath $item $text]
 
-    loadMenu $itk_component(newtreepopup) $path $nodeType
+    loadMenu $itk_component(newtreepopup) $path $nodeType $item
     tk_popup $itk_component(newtreepopup) $_X $_Y
 }
 
