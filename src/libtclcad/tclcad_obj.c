@@ -858,6 +858,7 @@ HIDDEN int to_dm_func(struct ged *gedp,
 
 /* Utility Functions */
 HIDDEN int to_close_fbs(struct ged_dm_view *gdvp);
+HIDDEN void to_dm_get_display_image(struct ged *gedp, unsigned char **idata);
 HIDDEN void to_fbs_callback();
 HIDDEN int to_open_fbs(struct ged_dm_view *gdvp, Tcl_Interp *interp);
 
@@ -12481,6 +12482,9 @@ to_dm_func(struct ged *gedp,
     /* Copy argv into av while skipping argv[1] (i.e. the view name) */
     gedp->ged_gvp = gdvp->gdv_view;
     gedp->ged_dmp = (void *)gdvp->gdv_dmp;
+    gedp->ged_dm_width = gdvp->gdv_dmp->dm_width;
+    gedp->ged_dm_height = gdvp->gdv_dmp->dm_height;
+    gedp->ged_dm_get_display_image = to_dm_get_display_image;
     gedp->ged_refresh_clientdata = (void *)gdvp;
     av[0] = (char *)argv[0];
     ac = argc-1;
@@ -12518,6 +12522,13 @@ to_close_fbs(struct ged_dm_view *gdvp)
     gdvp->gdv_fbs.fbs_fbp = FBIO_NULL;
 
     return TCL_OK;
+}
+
+HIDDEN void to_dm_get_display_image(struct ged *gedp, unsigned char **idata)
+{
+    if (gedp->ged_dmp) {
+	DM_GET_DISPLAY_IMAGE(((struct dm *)gedp->ged_dmp), idata);
+    }
 }
 
 /*

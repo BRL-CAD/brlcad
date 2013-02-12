@@ -59,6 +59,11 @@ ged_screen_grab(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
+    if (gedp->ged_dm_get_display_image == NULL) {
+	bu_vls_printf(gedp->ged_result_str, "Bad display function pointer.");
+	return GED_ERROR;
+    }
+
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_VIEW(gedp, GED_ERROR);
     GED_CHECK_DRAWABLE(gedp, GED_ERROR);
@@ -80,6 +85,12 @@ ged_screen_grab(struct ged *gedp, int argc, const char *argv[])
 
     width = gedp->ged_dm_width;
     height = gedp->ged_dm_height;
+
+    if (width <= 0 || height <= 0) {
+	bu_vls_printf(gedp->ged_result_str, "%s: invalid screen dimensions.", argv[1]);
+	return GED_ERROR;
+    }
+
     bytes_per_pixel = 3;
     bytes_per_line = width * bytes_per_pixel;
 
