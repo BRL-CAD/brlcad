@@ -37,8 +37,6 @@
 int
 ged_group(struct ged *gedp, int argc, const char *argv[])
 {
-    struct directory *dp;
-    int i;
     static const char *usage = "gname object(s)";
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
@@ -59,17 +57,7 @@ ged_group(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-    /* get objects to add to group */
-    for (i = 2; i < argc; i++) {
-	if ((dp = db_lookup(gedp->ged_wdbp->dbip, argv[i], LOOKUP_NOISY)) != RT_DIR_NULL) {
-	    if (_ged_combadd(gedp, dp, (char *)argv[1], 0,
-			     WMOP_UNION, 0, 0) == RT_DIR_NULL)
-		return GED_ERROR;
-	}  else
-	    bu_vls_printf(gedp->ged_result_str, "skip member %s\n", argv[i]);
-    }
-
-    return GED_OK;
+    return _ged_combadd2(gedp, (char *)argv[1], argc-2, argv+2, 0, WMOP_UNION, 0, 0);
 }
 
 

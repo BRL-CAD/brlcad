@@ -138,6 +138,14 @@ extern struct directory *_ged_combadd(struct ged *gedp,
 				      int relation,
 				      int ident,
 				      int air);
+extern int _ged_combadd2(struct ged *gedp,
+			 char *combname,
+			 int argc,
+			 const char *argv[],
+			 int region_flag,
+			 int relation,
+			 int ident,
+			 int air);
 
 /* defined in draw.c */
 extern void _ged_cvt_vlblock_to_solids(struct ged *gedp,
