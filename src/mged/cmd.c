@@ -2046,6 +2046,11 @@ cmd_blast(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interpreter), int ar
 int
 cmd_draw(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interpreter), int argc, const char *argv[])
 {
+    struct ged_view *gvp = gedp->ged_gvp;
+
+    gvp->gv_x_samples = dmp->dm_width;
+    gvp->gv_y_samples = dmp->dm_height;
+
     return edit_com(argc, argv, 1, 1);
 }
 

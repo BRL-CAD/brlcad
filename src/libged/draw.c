@@ -597,18 +597,32 @@ wireframe_leaf(struct db_tree_state *tsp, const struct db_full_path *pathp, stru
     gvp = dgcdp->gedp->ged_gvp;
     if (gvp && gvp->gv_adaptive_plot && ip->idb_meth->ft_adaptive_plot) {
 	struct rt_view_info info;
+	fastf_t view_aspect, x_size, y_size;
+	fastf_t avg_view_size, avg_view_samples;
 
 	info.vhead = &vhead;
 	info.tol = tsp->ts_tol;
 
-	info.point_spacing = sp->s_size / 16.0;
-	info.curve_spacing = sp->s_size / 2.0;
+	view_aspect = (fastf_t)gvp->gv_x_samples / gvp->gv_y_samples;
+	x_size = gvp->gv_size;
+	y_size = x_size / view_aspect;
 
-	if (ip->idb_minor_type == ID_BOT) {
-	    struct rt_bot_internal *bot = (struct rt_bot_internal *)ip->idb_ptr;
+	avg_view_size = (x_size + y_size) / 2.0;
+	avg_view_samples = (gvp->gv_x_samples + gvp->gv_y_samples) / 2.0;
 
-	    info.point_spacing = sp->s_size / (bot->num_faces / 12.0);
+	/* normally, use sample spacing as point spacing */
+	info.point_spacing = avg_view_size / avg_view_samples;
+
+	if (avg_view_size < sp->s_size) {
+	    /* If the solid is larger than the view, it is probably
+	     * only partly visible and likely isn't the primary focus
+	     * of the user. We'll cap the point spacing and avoid
+	     * wasting effort.
+	     */
+	    info.point_spacing = sp->s_size / avg_view_samples;
 	}
+
+	info.curve_spacing = sp->s_size / 2.0;
 
 	plot_status = ip->idb_meth->ft_adaptive_plot(ip, &info);
     } else if (ip->idb_meth->ft_plot) {
@@ -960,6 +974,7 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
     int i;
     int ac = 1;
     char *av[2];
+    int autoview = 1;
 
     RT_CHECK_DBI(gedp->ged_wdbp->dbip);
 
@@ -1088,9 +1103,11 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 			dgcdp->transparency = 1.0;
 
 		    break;
+		case 'R':
+		    autoview = 0;
+		    break;
 		case 'A':
 		case 'o':
-		case 'R':
 		    /* nothing to do, handled by edit_com wrapper on the front-end */
 		    break;
 		default:
@@ -1179,6 +1196,17 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 				       wireframe_region_end,
 				       append_solid_to_display_list,
 				       (genptr_t)dgcdp);
+		}
+
+		/* We need to know the view size in order to choose
+		 * appropriate input values for the adaptive plot
+		 * routines. Unless we're keeping the current view,
+		 * we need to autoview now so we have the correct
+		 * view size for plotting.
+		 */
+		if (autoview) {
+		    const char *autoview_args[2] = {"autoview", '\0'};
+		    ged_autoview(gedp, 1, autoview_args);
 		}
 
 		/* calculate plot vlists for solids */

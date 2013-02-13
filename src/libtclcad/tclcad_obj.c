@@ -12122,6 +12122,7 @@ to_autoview_func(struct ged *gedp,
     int ret;
     char *av[2];
     int aflag = 0;
+    struct ged_dm_view *gdvp;
 
     av[0] = "who";
     av[1] = (char *)0;
@@ -12129,6 +12130,13 @@ to_autoview_func(struct ged *gedp,
 
     if (ret == GED_OK && strlen(bu_vls_addr(gedp->ged_result_str)) == 0)
 	aflag = 1;
+
+    for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
+	if (to_is_viewable(gdvp)) {
+	    gedp->ged_gvp->gv_x_samples = gdvp->gdv_dmp->dm_width;
+	    gedp->ged_gvp->gv_y_samples = gdvp->gdv_dmp->dm_height;
+	}
+    }
 
     ret = (*func)(gedp, argc, (const char **)argv);
 
