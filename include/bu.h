@@ -4115,22 +4115,41 @@ BU_EXPORT extern void bu_parallel(void (*func)(int ncpu, genptr_t arg), int ncpu
  * offset from the beginning of the structure, and a pointer to an
  * optional "hooked" function that is called whenever that structure
  * element is changed.
- *
- * @par There are four basic operations supported:
- * @arg	print	struct elements to ASCII
- * @arg	parse	ASCII to struct elements
- * @arg	export	struct elements to machine-independent binary
- * @arg	import	machine-independent binary to struct elements
- *
  */
 
 /**
+ * ASCII to struct elements.
+ *
+ * Parse the structure element description in the vls string "vls"
+ * according to the structure description in "parsetab"
+ *
+ * @return <0 failure
+ * @return  0 OK
+ */
+BU_EXPORT extern int bu_struct_parse(const struct bu_vls *in_vls,
+				     const struct bu_structparse *desc,
+				     const char *base);
+
+/**
+ * struct elements to ASCII.
+ */
+BU_EXPORT extern void bu_struct_print(const char *title,
+				      const struct bu_structparse *parsetab,
+				      const char *base);
+
+/**
+ * struct elements to machine-independent binary.
+ *
+ * copies ext data to base
  */
 BU_EXPORT extern int bu_struct_export(struct bu_external *ext,
 				      const genptr_t base,
 				      const struct bu_structparse *imp);
 
 /**
+ * machine-independent binary to struct elements.
+ *
+ * copies ext data to base
  */
 BU_EXPORT extern int bu_struct_import(genptr_t base,
 				      const struct bu_structparse *imp,
@@ -4164,23 +4183,6 @@ BU_EXPORT extern size_t bu_struct_get(struct bu_external *ext,
  */
 BU_EXPORT extern void bu_struct_wrap_buf(struct bu_external *ext,
 					 genptr_t buf);
-
-/**
- * Parse the structure element description in the vls string "vls"
- * according to the structure description in "parsetab"
- *
- * @return <0 failure
- * @return  0 OK
- */
-BU_EXPORT extern int bu_struct_parse(const struct bu_vls *in_vls,
-				     const struct bu_structparse *desc,
-				     const char *base);
-
-/**
- */
-BU_EXPORT extern void bu_struct_print(const char *title,
-				      const struct bu_structparse *parsetab,
-				      const char *base);
 
 /**
  * This differs from bu_struct_print in that this output is less
