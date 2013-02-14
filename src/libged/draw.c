@@ -598,7 +598,7 @@ wireframe_leaf(struct db_tree_state *tsp, const struct db_full_path *pathp, stru
     if (gvp && gvp->gv_adaptive_plot && ip->idb_meth->ft_adaptive_plot) {
 	struct rt_view_info info;
 	fastf_t view_aspect, x_size, y_size;
-	fastf_t avg_view_size, avg_view_samples;
+	fastf_t avg_view_size, avg_view_samples, avg_sample_spacing;
 
 	info.vhead = &vhead;
 	info.tol = tsp->ts_tol;
@@ -609,17 +609,71 @@ wireframe_leaf(struct db_tree_state *tsp, const struct db_full_path *pathp, stru
 
 	avg_view_size = (x_size + y_size) / 2.0;
 	avg_view_samples = (gvp->gv_x_samples + gvp->gv_y_samples) / 2.0;
+	avg_sample_spacing = avg_view_size / avg_view_samples;
 
-	/* normally, use sample spacing as point spacing */
-	info.point_spacing = avg_view_size / avg_view_samples;
+	if (ip->idb_minor_type == ID_BOT) {
+	    /* for bots, use sample spacing as point spacing */
+	    info.point_spacing = avg_sample_spacing;
+	} else {
+	    fastf_t radius;
+	    point_t p1, p2;
 
-	if (avg_view_size < sp->s_size) {
-	    /* If the solid is larger than the view, it is probably
-	     * only partly visible and likely isn't the primary focus
-	     * of the user. We'll cap the point spacing and avoid
-	     * wasting effort.
+	    /* Now, for the sake of simplicity we're going to make
+	     * several assumptions:
+	     *  - our samples represent a grid of square pixels
+	     *  - we're plotting an implicit solid
+	     *  - the solid's bounding box is a cube
+	     *  - a circle with a diameter half the width of the
+	     *    bounding box is a good proxy for the kind of curves
+	     *    that will be plotted
+	     *  - sp->s_size is the bbox diagonal and only a slight
+	     *    overestimate of the width of the bounding box
 	     */
-	    info.point_spacing = sp->s_size / avg_view_samples;
+	    radius = sp->s_size / 4.0;
+	    if (avg_view_size < sp->s_size) {
+		/* If the solid is larger than the view, it is
+		 * probably only partly visible and likely isn't the
+		 * primary focus of the user. We'll cap the point
+		 * spacing and avoid wasting effort.
+		 */
+		radius = avg_view_size / 4.0;
+	    }
+
+	    /* We imagine our representative circlar curve lying in
+	     * the XY plane centered at the origin.
+	     *
+	     * Suppose we're viewing the circle head on, and that the
+	     * apex of the curve (0, radius) lies just inside the
+	     * top edge of a pixel. Here we place a plotted point p1.
+	     *
+	     * As we continue clockwise around the circle we pass
+	     * through neigboring pixels in the same row, until we
+	     * vertically drop a distance equal to the pixel spacing,
+	     * in which case we just barely enter a pixel in the next
+	     * row. Here we place a plotted point p2 (y = radius -
+	     * avg_sample_spacing).
+	     *
+	     * In theory the line segment between p1 and p2 passes
+	     * through all the same pixels that the actual curve does,
+	     * and thus produces the exact same rasterization as if
+	     * the curve between p1 and p2 was approximated with an
+	     * infinite number of line segments.
+	     *
+	     * We assume that the distance between p1 and p2 is the
+	     * maxiumum point sampling distance we can use for the
+	     * curve which will give a perfect rasterization, i.e.
+	     * the same rasterization as if we chose a point distance
+	     * of 0.
+	    */
+	    p1[Z] = p2[Z] = 0.0;
+
+	    p1[X] = 0.0;
+	    p1[Y] = radius;
+
+	    p2[Y] = radius - (avg_sample_spacing);
+	    p2[X] = sqrt(radius * radius - p2[Y] * p2[Y]);
+
+	    info.point_spacing = DIST_PT_PT(p1, p2);
 	}
 
 	info.curve_spacing = sp->s_size / 2.0;
