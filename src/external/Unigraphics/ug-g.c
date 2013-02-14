@@ -1150,7 +1150,7 @@ get_cone_data( tag_t feat_tag, int n_exps, tag_t *exps, char **descs, double uni
     (void)get_exp_value( "Height", n_exps, exps, descs, &ht );
 
     if ( half_angle > 0.0 ) {
-	half_angle *= M_PI / 180.0;
+	half_angle *= DEG2RAD;
     } else {
 	half_angle = atan2( (base_diam - top_diam)/2.0, ht );
     }
@@ -1313,7 +1313,7 @@ conv_extrusion( tag_t feat_tag, char *part_name, char *refset_name, char *inst_n
 	bu_log( "Failed to get taper angle for extrusion\n" );
 	return (char *)NULL;
     }
-    taper_angle = tmp * M_PI / 180.0;
+    taper_angle = tmp * DEG2RAD;
 
     if ( taper_angle != 0.0 ) {
 	bu_log( "Cannot handle tapered extrusions yet\n" );
@@ -1478,8 +1478,8 @@ conv_extrusion( tag_t feat_tag, char *part_name, char *refset_name, char *inst_n
 		csg = (struct carc_seg *)bu_malloc( sizeof( struct carc_seg ), "carc seg" );
 		DO_INDENT;
 		bu_log( "Arc centered at (%g %g %g), start angle = %g end angle = %g, radius = %g\n",
-			V3ARGS( arc_data.arc_center ), arc_data.start_angle*180.0/M_PI,
-			arc_data.end_angle*180.0/M_PI, arc_data.radius );
+			V3ARGS( arc_data.arc_center ), arc_data.start_angle*RAD2DEG,
+			arc_data.end_angle*RAD2DEG, arc_data.radius );
 		csg->magic = CURVE_CARC_MAGIC;
 		csg->radius = arc_data.radius * units_conv;
 		if ( arc_data.end_angle > arc_data.start_angle ) {
@@ -2275,7 +2275,7 @@ do_rect_pocket(
 	bu_log( "Failed to get taper angle for rectangular pocket.\n" );
 	return 1;
     }
-    angle = tmp * M_PI / 180.0;
+    angle = tmp * DEG2RAD;
 
     DO_INDENT;
     bu_log( "rect pocket: ylen = %g, zlen = %g, depth = %g, c_radius = %g, f_radius = %g, angle = %g\n",
@@ -2743,7 +2743,7 @@ do_cyl_pocket(
 	bu_log( "Failed to get taper angle for cylindrical pocket.\n" );
 	return 1;
     }
-    angle = tmp * M_PI / 180.0;
+    angle = tmp * DEG2RAD;
     radius2 = radius1 - ht * tan( angle );
     if ( radius2 < MIN_RADIUS ) {
 	radius2 = MIN_RADIUS;
@@ -3009,7 +3009,7 @@ do_rect_pad(
 	bu_log( "Failed to get taper angle for rectangular pad.\n" );
 	return 1;
     }
-    angle = tmp * M_PI / 180.0;
+    angle = tmp * DEG2RAD;
 
     d = depth * tan( angle );
     c_radius_end = c_radius - d;
@@ -3682,7 +3682,7 @@ do_dove_tail_slot( tag_t feat_tag,
 	bu_log( "Failed to get angle for dove-tail slot.\n" );
 	return 1;
     }
-    angle = tmp * M_PI / 180.0;
+    angle = tmp * DEG2RAD;
     if ( !thru_flag ) {
 	if ( get_exp_value( "Length", n_exps, exps, descs, &tmp ) ) {
 	    bu_log( "Failed to get length for dove-tail slot.\n" );
@@ -4458,7 +4458,7 @@ convert_a_feature( tag_t feat_tag,
 	    failed = 1;
 	    goto out;
 	}
-	ang = tmp * M_PI / 180.0;
+	ang = tmp * DEG2RAD;
 	radius2 = radius1 - ht * tan( ang );
 	if ( radius2 < MIN_RADIUS ) {
 	    radius2 = MIN_RADIUS;
@@ -5690,7 +5690,7 @@ int parse_args(int ac, char *av[])
 	    case 'o'	: output_file = strdup( bu_optarg ); break;
 	    case 'd'	: debug = atoi(bu_optarg); break;
 	    case 't'	: surf_tol = atof( bu_optarg ); break;
-	    case 'a'	: ang_tol = atof( bu_optarg ) * M_PI / 180.0; break;
+	    case 'a'	: ang_tol = atof( bu_optarg ) * DEG2RAD; break;
 	    case 'n'	: part_name_file = bu_optarg; use_part_name_hash = 1; break;
 	    case 'R'	: use_refset_name = bu_optarg; break;
 	    case 'c'	: min_chamfer = atof( bu_optarg ); break;
