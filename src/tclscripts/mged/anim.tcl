@@ -2059,7 +2059,7 @@ proc sketch_text_do_script {wout win rows slist} {
 
     foreach script $slist {
 	if {$script != ""} {
-	    regsub -all {@pi} $script 3.14159265358979323846 temp2
+	    regsub -all {@pi} $script M_PI temp2
 	    regsub -all {@e} $temp2 2.7182818284590452354 temp
 	    regsub -all {(@)([in])} $temp {$column(\2)} \
 		script

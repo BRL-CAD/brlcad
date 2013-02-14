@@ -4037,7 +4037,7 @@ package provide cadwidgets::Ged 1.0
     }
 
     set cos [vdot $A $B]
-    set angle [format "%.2f" [expr {acos($cos) * (180.0 / 3.141592653589793)}]]
+    set angle [format "%.2f" [expr {acos($cos) * RAD2DEG}]]
 
     if {[llength $mViewMeasureCallbacks] == 0} {
 	set mstring "Measured Distance (Leg 2):  $delta [$mGed units -s]\nMeasured Angle:  $angle"
