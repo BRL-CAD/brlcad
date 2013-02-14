@@ -1959,7 +1959,7 @@ drawMtext( char *text, int attachPoint, int UNUSED(drawingDirection), double tex
     int maxLineLen=0;
     double scale = 1.0;
     double xdel = 0.0, ydel = 0.0;
-    double radians = rotationAngle * M_PI / 180.0;
+    double radians = rotationAngle * DEG2RAD;
     char *copyOfText = bu_calloc( (unsigned int)strlen( text )+1, 1, "copyOfText" );
 
     BU_LIST_INIT( &vhead );
@@ -2240,7 +2240,7 @@ process_mtext_entities_code( int code )
 	    coord = (code / 10) - 1;
 	    xAxisDirection[coord] = atof( line );
 	    if ( code == 31 ) {
-		rotationAngle = atan2( xAxisDirection[Y], xAxisDirection[X] ) * 180.0 / M_PI;
+		rotationAngle = atan2( xAxisDirection[Y], xAxisDirection[X] ) * RAD2DEG;
 	    }
 	    break;
 	case 40:
@@ -2563,8 +2563,8 @@ process_arc_entities_code( int code )
 
 	    /* calculate arc at origin first */
 	    num_segs = (end_angle - start_angle) / 360.0 * segs_per_circle;
-	    start_angle *= M_PI / 180.0;
-	    end_angle *= M_PI / 180.0;
+	    start_angle *= DEG2RAD;
+	    end_angle *= DEG2RAD;
 	    if ( verbose ) {
 		bu_log( "arc has %d segs\n", num_segs );
 	    }
