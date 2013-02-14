@@ -19,6 +19,7 @@ changes made.  See document footer for additional details.
 * fixed mged 'dbupgrade' -permissions error on windows - Sean Morrison
 * fixed infinite loop raytracing subtracted lights - Sean Morrison
 * added hyp centroid and volume output to 'analyze' - Aaron Keesing
+* added support for wireframe drawing of 'hyp' labels - Bob Parker
 * fixed random number SMP bug affecting rt and adrt - Sean Morrison
 * added support for editing 2D sketch objects in archer - Bob Parker
 * fixed File->New deprecation error in archer - Sean Morrison
