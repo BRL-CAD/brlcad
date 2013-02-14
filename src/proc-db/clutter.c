@@ -38,8 +38,6 @@
 
 #define STRSIZ 64
 
-mat_t identity;
-double degtorad = 0.0174532925199433;
 double sin60;
 
 struct mtab {
@@ -97,8 +95,7 @@ main(int argc, char **argv)
 #define rand_num(p)	(BN_UNIF_DOUBLE(p)+0.5)
 
     if (argc > 0){
-	bu_log("Usage: %s\n", argv[0]);
-    	bu_log("(Command proceeds, ignoring all arguments.)\n");
+	bu_exit(1, "Usage: %s\n", argv[0]);
     }
 
     BU_LIST_INIT(&head.l);
@@ -116,7 +113,6 @@ main(int argc, char **argv)
     rgb[0] = 240;	/* gold/brown */
     rgb[1] = 180;
     rgb[2] = 64;
-    MAT_IDN(identity);
 
     mk_region1(outfp, "plane.r", "plane", NULL, NULL, rgb);
 
