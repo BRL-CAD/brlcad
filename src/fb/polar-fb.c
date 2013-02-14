@@ -401,7 +401,7 @@ main (int argc, char **argv)
 
 /* Initialize things */
     ProgName = *argv;
-    angle_cvt = Deg2Rad = M_PI / 180.0;
+    angle_cvt = Deg2Rad = DEG2RAD;
     FB_Name = "";
     Interior = BI_RINGS;
     Color[C_BKGRND][RED] = Color[C_BKGRND][GRN] = Color[C_BKGRND][BLU] = 255;

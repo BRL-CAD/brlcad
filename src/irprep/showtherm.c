@@ -513,8 +513,8 @@ int main(int argc, char **argv)
 	ret = scanf("%lf %lf", &az, &el);
 	if (ret == 0)
 	    perror("scanf");
-	alpha = az * M_PI / 180.;
-	beta = (-el) * M_PI / 180.;
+	alpha = az * DEG2RAD;
+	beta = (-el) * DEG2RAD;
 	calpha = cos(alpha);
 	salpha = sin(alpha);
 	cbeta = cos(beta);

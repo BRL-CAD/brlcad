@@ -96,7 +96,7 @@ double radians(double a)
 
     double b;	/*  Angle in radians.  */
 
-    b = a * M_PI / 180.;
+    b = a * DEG2RAD;
 
     return b;
 

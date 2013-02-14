@@ -92,9 +92,7 @@ main(int argc, char **argv)
     BU_LIST_INIT(&head.l);
 
     MAT_IDN(identity);
-/*  Simplify the expression for sine of 60 degrees. */
-/*  sin60 = sin(60.0 * M_PI / 180.0); */
-    sin60 = sin(M_PI / 3.0);
+    sin60 = sin(60.0 * DEG2RAD);
 
     outfp = wdb_fopen("room.g");
     mk_id(outfp, "Procedural Rooms");
