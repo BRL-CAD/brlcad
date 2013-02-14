@@ -39,7 +39,7 @@
 #include "opennurbs.h"
 
 #ifndef M_PI
-#  define M_PI 3.14159265358979323846
+#  define M_PI 3.14159265358979323846264338328
 #endif
 
 void plot_face(ON_3dPoint *pt1, ON_3dPoint *pt2, ON_3dPoint *pt3, int r, int g, int b, FILE *c_plot)
