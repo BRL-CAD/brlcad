@@ -639,7 +639,7 @@ wireframe_leaf(struct db_tree_state *tsp, const struct db_full_path *pathp, stru
 		radius = avg_view_size / 4.0;
 	    }
 
-	    /* We imagine our representative circlar curve lying in
+	    /* We imagine our representative circular curve lying in
 	     * the XY plane centered at the origin.
 	     *
 	     * Suppose we're viewing the circle head on, and that the
@@ -647,7 +647,7 @@ wireframe_leaf(struct db_tree_state *tsp, const struct db_full_path *pathp, stru
 	     * top edge of a pixel. Here we place a plotted point p1.
 	     *
 	     * As we continue clockwise around the circle we pass
-	     * through neigboring pixels in the same row, until we
+	     * through neighboring pixels in the same row, until we
 	     * vertically drop a distance equal to the pixel spacing,
 	     * in which case we just barely enter a pixel in the next
 	     * row. Here we place a plotted point p2 (y = radius -
@@ -660,7 +660,7 @@ wireframe_leaf(struct db_tree_state *tsp, const struct db_full_path *pathp, stru
 	     * infinite number of line segments.
 	     *
 	     * We assume that the distance between p1 and p2 is the
-	     * maxiumum point sampling distance we can use for the
+	     * maximum point sampling distance we can use for the
 	     * curve which will give a perfect rasterization, i.e.
 	     * the same rasterization as if we chose a point distance
 	     * of 0.
