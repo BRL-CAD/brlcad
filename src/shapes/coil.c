@@ -40,6 +40,8 @@
 
 #define D2R(x) (x * DEG2RAD)
 #define DEFAULT_COIL_FILENAME "coil.g"
+#define DEFAULT_COIL_OBJECT "coil"
+
 
 struct coil_data_t {
     struct bu_list l;
@@ -311,9 +313,9 @@ make_coil(struct rt_wdb (*file), char *prefix, struct bu_list *sections, int sta
 
 void usage()
 {
-		bu_log("Usage: coil [-d mean_outer_diameter] [-w wire_diameter] [-h helix_angle] [-p pitch]\n");
-		bu_log("            [-n number_of_turns] [-s start_cap_type] [-e end_cap_type]\n");
-		bu_log("            [-S coil_data_structure] [-l overall_length] [-L]\n");
+    bu_log("Usage: coil [-d mean_outer_diameter] [-w wire_diameter] [-h helix_angle] [-p pitch]\n");
+    bu_log("            [-n number_of_turns] [-s start_cap_type] [-e end_cap_type]\n");
+    bu_log("            [-S coil_data_structure] [-l overall_length] [-L]\n");
 }
 
 
@@ -372,8 +374,7 @@ ReadArgs(int argc, char **argv, struct bu_list *sections, fastf_t *mean_outer_di
 		*overall_length = lngth;
 		break;
 	    case 'S':
-		coil_data = (struct coil_data_t *)
-		    bu_malloc(sizeof(struct coil_data_t), "coil data structure");
+		coil_data = (struct coil_data_t *)bu_malloc(sizeof(struct coil_data_t), "coil data structure");
 		sscanf(bu_optarg, "%d%c%f%c%f%c%f%c%f%c%d", &d1, &s1, &d2, &s2, &d3, &s3, &d4, &s4, &d5, &s5, &d6);
 		coil_data->nt = d1;
 		coil_data->od = d2;
@@ -394,17 +395,19 @@ ReadArgs(int argc, char **argv, struct bu_list *sections, fastf_t *mean_outer_di
 		 */
 		bu_log("%s: illegal option -- %c\n", bu_getprogname(), bu_optopt);
 		usage();
-		bu_exit(EXIT_SUCCESS, NULL);
+		bu_exit(EXIT_FAILURE, NULL);
 	}
     }
     return bu_optind;
 }
 
+
 int
 main(int ac, char *av[])
 {
+    const char *filename = NULL;
+
     struct rt_wdb *db_fp = NULL;
-    struct bu_vls name = BU_VLS_INIT_ZERO;
     struct bu_vls str = BU_VLS_INIT_ZERO;
     fastf_t mean_outer_diameter, wire_diameter, overall_length, nominal_length;
     fastf_t helix_angle, pitch;
@@ -435,8 +438,12 @@ main(int ac, char *av[])
 
     if (BU_LIST_IS_EMPTY(&sections)) {
 
+    	if (ac == 1) {
+	    bu_log("Creating a coil with default parameters.\n");
+    	}
+
 	if (mean_outer_diameter < 0 || wire_diameter < 0 || helix_angle < 0 || pitch < 0 || nt < 0 || start_cap_type < 0 || end_cap_type < 0)
-	    bu_exit(-1, " Error - negative value in one or more arguments supplied to coil");
+	    bu_exit(1, "ERROR: negative value in one or more arguments supplied to coil");
 
 	if (ZERO(wire_diameter) && ZERO(mean_outer_diameter)) {
 	    mean_outer_diameter = 1000;
@@ -456,18 +463,13 @@ main(int ac, char *av[])
 	}
 
 	if (pitch < wire_diameter) {
-	    bu_log("Warning - pitch less than wire diameter.  Setting pitch to wire diameter: %f mm\n", wire_diameter);
+	    bu_log("WARNING:  Pitch less than wire diameter.  Setting pitch to wire diameter: %f mm\n", wire_diameter);
 	    pitch = wire_diameter;
 	}
 
 	if (nt == 0) {
 	    nt = 30;
 	}
-
-    	if (ac == 1) {
-		bu_log("NOTICE: command can run with no arguments.\n");
-    		usage();
-    	}
 
 	coil_data = (struct coil_data_t *) bu_malloc(sizeof(struct coil_data_t), "coil data structure");
 	coil_data->nt = nt;
@@ -485,7 +487,7 @@ main(int ac, char *av[])
     /* If hard clamping the length, have to check some things and maybe clamp some values */
 
     if (!ZERO(overall_length)) {
-	bu_log("NOTE:  Length clamping overrides other specified values. If supplied values are\n"
+	bu_log("Note:  Length clamping overrides other specified values. If supplied values are\n"
 	       "inconsistent with specified length, they will be overridden in this order:\n\n"
 	       "When Shrinking:  pitch, number of turns, wire diameter\n"
 	       "When Expanding:  number of turns, pitch\n\n");
@@ -538,31 +540,25 @@ main(int ac, char *av[])
 	}
     }
 
-    /* Generate Name - this needs some thought for multiple section coils*/
-    bu_vls_printf(&name, "coil");
-
-
-    /* Create file name if supplied, else use "string.g" */
+    /* make sure file doesn't already exist and opens for writing */
     if (av[bu_optind]) {
-	if (!bu_file_exists(av[bu_optind], NULL)) {
-	    db_fp = wdb_fopen(av[bu_optind]);
-	} else {
-	    bu_exit(-1, "Error - refusing to overwrite pre-existing file %s", av[bu_optind]);
-	}
+	filename = av[bu_optind];
+    } else {
+	filename = DEFAULT_COIL_FILENAME;
     }
-    if (!av[bu_optind]) {
-	if (!bu_file_exists(DEFAULT_COIL_FILENAME, NULL)) {
-	    db_fp = wdb_fopen(DEFAULT_COIL_FILENAME);
-	} else {
-	    bu_exit(-1, "Error - no filename supplied and coil.g exists.");
-	}
+    if (!bu_file_exists(filename, NULL)) {
+	bu_exit(2, "ERROR: refusing to overwrite pre-existing file %s", filename);
+    }
+    db_fp = wdb_fopen(filename);
+    if (!db_fp) {
+	bu_exit(2, "ERROR: unable to open %s for writing", filename);
     }
 
-    bu_log("Making coil...\n");
-    make_coil(db_fp, bu_vls_addr(&name), &sections, start_cap_type, end_cap_type);
+    /* do it. */
+    bu_log("Writing %s object to file %s\n", DEFAULT_COIL_OBJECT, filename);
+    make_coil(db_fp, DEFAULT_COIL_OBJECT, &sections, start_cap_type, end_cap_type);
 
     bu_vls_free(&str);
-    bu_vls_free(&name);
 
     /* Close database */
     wdb_close(db_fp);
