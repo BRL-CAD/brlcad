@@ -229,7 +229,6 @@ ged_persp_mat(mat_t m,
 {
     mat_t m2, tran;
 
-/*  fovy *= 3.1415926535/180.0; */
     fovy *= DEG2RAD;
 
     MAT_IDN(m2);

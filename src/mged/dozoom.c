@@ -61,7 +61,6 @@ persp_mat(mat_t m, fastf_t fovy, fastf_t aspect, fastf_t near1, fastf_t far1, fa
 {
     mat_t m2, tra;
 
-/*  fovy *= 3.1415926535/180.0; */
     fovy *= DEG2RAD;
 
     MAT_IDN(m2);
