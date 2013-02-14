@@ -55,7 +55,7 @@ main(int argc, char **argv)
     depth = atoi(argv[1]);
 /*  Simplify the expression for sine of 60 degrees. */
 /*  sin60 = sin(60.0 * 3.14159265358979323846264 / 180.0); */
-    sin60 = sin(3.14159265358979323846264 / 3.0);
+    sin60 = sin(60.0 * DEG2RAD);
 
     outfp = wdb_fopen("pyramid.g");
 

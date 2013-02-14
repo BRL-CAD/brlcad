@@ -37,7 +37,7 @@
 #include "wdb.h"
 
 
-#define D2R(x) (((x)/180)*3.14159265358979)
+#define D2R(x) (x*DEG2RAD)
 #define MATXPNT(d, m, v) {						\
 	double _i = 1.0/((m)[12]*(v)[0] + (m)[13]*(v)[1] + (m)[14]*(v)[2] + (m)[15]*1); \
 	(d)[0] = ((m)[0]*(v)[0] + (m)[1]*(v)[1] + (m)[2]*(v)[2] + (m)[3])*_i; \
