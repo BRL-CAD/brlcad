@@ -52,39 +52,39 @@
     }
 
 
-#define BU_GETPUT_MAGIC_1 0x15cb
-#define BU_GETPUT_MAGIC_2 0xbc51
-#define BU_INIT_GETPUT_1(_p) {						\
+#define PARSE_MAGIC_1 0x15cb
+#define PARSE_MAGIC_2 0xbc51
+#define PARSE_INIT_GETPUT_1(_p) {						\
 	BU_CK_EXTERNAL(_p);						\
-	((unsigned char *) _p->ext_buf)[1] = (BU_GETPUT_MAGIC_1 & 0xFF); \
-	((unsigned char *) _p->ext_buf)[0] = (BU_GETPUT_MAGIC_1 >> 8) & 0xFF; \
+	((unsigned char *) _p->ext_buf)[1] = (PARSE_MAGIC_1 & 0xFF); \
+	((unsigned char *) _p->ext_buf)[0] = (PARSE_MAGIC_1 >> 8) & 0xFF; \
     }
-#define BU_INIT_GETPUT_2(_p, _l) {					\
+#define PARSE_INIT_GETPUT_2(_p, _l) {					\
 	BU_CK_EXTERNAL(_p);						\
-	((unsigned char *) _p->ext_buf)[_l-1] = (BU_GETPUT_MAGIC_2 & 0xFF); \
-	((unsigned char *) _p->ext_buf)[_l-2] = (BU_GETPUT_MAGIC_2 >> 8) & 0xFF; \
+	((unsigned char *) _p->ext_buf)[_l-1] = (PARSE_MAGIC_2 & 0xFF); \
+	((unsigned char *) _p->ext_buf)[_l-2] = (PARSE_MAGIC_2 >> 8) & 0xFF; \
     }
 
 
-#define BU_CK_GETPUT(_p) {						\
+#define PARSE_CK_GETPUT(_p) {						\
 	register unsigned long _i;					\
 	register size_t _len;						\
 	BU_CK_EXTERNAL(_p);						\
 	if (UNLIKELY(!(_p->ext_buf))) {					\
-	    bu_log("ERROR: BU_CK_GETPUT null ext_buf, file %s, line %d\n", \
+	    bu_log("ERROR: PARSE_CK_GETPUT null ext_buf, file %s, line %d\n", \
 		   __FILE__, __LINE__);					\
 	    bu_bomb("NULL pointer");					\
 	}								\
 	if (UNLIKELY(_p->ext_nbytes < 6)) {				\
-	    bu_log("ERROR: BU_CK_GETPUT buffer only %zu bytes, file %s, line %d\n", \
+	    bu_log("ERROR: PARSE_CK_GETPUT buffer only %zu bytes, file %s, line %d\n", \
 		   _p->ext_nbytes, __FILE__, __LINE__);			\
 	    bu_bomb("getput buffer too small");				\
 	}								\
 	_i = (((unsigned char *)(_p->ext_buf))[0] << 8) |		\
 	    ((unsigned char *)(_p->ext_buf))[1];			\
-	if (UNLIKELY(_i != BU_GETPUT_MAGIC_1)) {			\
-	    bu_log("ERROR: BU_CK_GETPUT buffer %p, magic1 s/b %x, was %s(0x%lx), file %s, line %d\n", \
-		   (void *)_p->ext_buf, BU_GETPUT_MAGIC_1,		\
+	if (UNLIKELY(_i != PARSE_MAGIC_1)) {			\
+	    bu_log("ERROR: PARSE_CK_GETPUT buffer %p, magic1 s/b %x, was %s(0x%lx), file %s, line %d\n", \
+		   (void *)_p->ext_buf, PARSE_MAGIC_1,		\
 		   bu_identify_magic(_i), _i, __FILE__, __LINE__);	\
 	    bu_bomb("Bad getput buffer");				\
 	}								\
@@ -94,16 +94,16 @@
 	    ((size_t)((unsigned char *)(_p->ext_buf))[4] << 8) |	\
 	    (size_t)((unsigned char *)(_p->ext_buf))[5];		\
 	if (UNLIKELY(_len > _p->ext_nbytes)) {				\
-	    bu_log("ERROR: BU_CK_GETPUT buffer %p, expected len=%zu, ext_nbytes=%zu, file %s, line %d\n", \
+	    bu_log("ERROR: PARSE_CK_GETPUT buffer %p, expected len=%zu, ext_nbytes=%zu, file %s, line %d\n", \
 		   (void *)_p->ext_buf, (size_t)_len, _p->ext_nbytes,	\
 		   __FILE__, __LINE__);					\
 	    bu_bomb("Bad getput buffer");				\
 	}								\
 	_i = (((unsigned char *)(_p->ext_buf))[_len-2] << 8) |		\
 	    ((unsigned char *)(_p->ext_buf))[_len-1];			\
-	if (UNLIKELY(_i != BU_GETPUT_MAGIC_2)) {			\
-	    bu_log("ERROR: BU_CK_GETPUT buffer %p, magic2 s/b %x, was %s(0x%lx), file %s, line %d\n", \
-		   (void *)_p->ext_buf, BU_GETPUT_MAGIC_2,		\
+	if (UNLIKELY(_i != PARSE_MAGIC_2)) {			\
+	    bu_log("ERROR: PARSE_CK_GETPUT buffer %p, magic2 s/b %x, was %s(0x%lx), file %s, line %d\n", \
+		   (void *)_p->ext_buf, PARSE_MAGIC_2,		\
 		   bu_identify_magic(_i), _i, __FILE__, __LINE__);	\
 	    bu_bomb("Bad getput buffer");				\
 	}								\
@@ -127,7 +127,7 @@ bu_struct_export(struct bu_external *ext, const genptr_t base, const struct bu_s
 
     ext->ext_nbytes = 480;
     ext->ext_buf = (genptr_t)bu_malloc(ext->ext_nbytes, "bu_struct_export output ext->ext_buf");
-    BU_INIT_GETPUT_1(ext);
+    PARSE_INIT_GETPUT_1(ext);
     cp = (char *) ext->ext_buf + 6; /* skip magic and length */
     ep = cp + ext->ext_nbytes;
 
@@ -279,7 +279,7 @@ bu_struct_export(struct bu_external *ext, const genptr_t base, const struct bu_s
     ((char *)ext->ext_buf)[4] = (char)(i >> 8);
     ((char *)ext->ext_buf)[3] = (char)(i >>16);
     ((char *)ext->ext_buf)[2] = (char)(i >>24);
-    BU_INIT_GETPUT_2(ext, i);
+    PARSE_INIT_GETPUT_2(ext, i);
     ext->ext_nbytes = i;	/* XXX this changes nbytes if i < 480 ? */
     return 1;
 }
@@ -298,7 +298,7 @@ bu_struct_import(genptr_t base, const struct bu_structparse *imp, const struct b
     if (UNLIKELY(base == GENPTR_NULL || !ext))
 	return -1;
 
-    BU_CK_GETPUT(ext);
+    PARSE_CK_GETPUT(ext);
 
     cp = (unsigned char *)ext->ext_buf+6;
     bytes_used = 0;
@@ -453,7 +453,7 @@ bu_struct_put(FILE *fp, const struct bu_external *ext)
     if (UNLIKELY(!fp || !ext))
 	return 0;
 
-    BU_CK_GETPUT(ext);
+    PARSE_CK_GETPUT(ext);
 
     return fwrite(ext->ext_buf, 1, ext->ext_nbytes, fp);
 }
@@ -493,9 +493,9 @@ bu_struct_get(struct bu_external *ext, FILE *fp)
 	| (((unsigned char *)(ext->ext_buf))[4] << 8)
 	| (((unsigned char *)(ext->ext_buf))[5]);
 
-    if (UNLIKELY(i != BU_GETPUT_MAGIC_1)) {
+    if (UNLIKELY(i != PARSE_MAGIC_1)) {
 	bu_log("ERROR: bad getput buffer header %p, s/b %x, was %s(0x%lx), file %s, line %d\n",
-	       (void *)ext->ext_buf, BU_GETPUT_MAGIC_1,
+	       (void *)ext->ext_buf, PARSE_MAGIC_1,
 	       bu_identify_magic(i), (long int)i, __FILE__, __LINE__);
 	bu_bomb("bad getput buffer");
     }
@@ -518,9 +518,9 @@ bu_struct_get(struct bu_external *ext, FILE *fp)
     i = (((unsigned char *)(ext->ext_buf))[len-2] << 8)
 	| ((unsigned char *)(ext->ext_buf))[len-1];
 
-    if (UNLIKELY(i != BU_GETPUT_MAGIC_2)) {
+    if (UNLIKELY(i != PARSE_MAGIC_2)) {
 	bu_log("ERROR: bad getput buffer %p, s/b %x, was %s(0x%lx), file %s, line %d\n",
-	       (void *)ext->ext_buf, BU_GETPUT_MAGIC_2,
+	       (void *)ext->ext_buf, PARSE_MAGIC_2,
 	       bu_identify_magic(i), (long int)i, __FILE__, __LINE__);
 	ext->ext_nbytes = 0;
 	bu_free(ext->ext_buf, "bu_struct_get full buffer");
@@ -549,18 +549,18 @@ bu_struct_wrap_buf(struct bu_external *ext, genptr_t buf)
 	((long)((unsigned char *)(ext->ext_buf))[3] << 16) |
 	((long)((unsigned char *)(ext->ext_buf))[4] << 8) |
 	((long)((unsigned char *)(ext->ext_buf))[5]);
-    if (UNLIKELY(i != BU_GETPUT_MAGIC_1)) {
+    if (UNLIKELY(i != PARSE_MAGIC_1)) {
 	bu_log("ERROR: bad getput buffer header %p, s/b %x, was %s(0x%lx), file %s, line %d\n",
-	       (void *)ext->ext_buf, BU_GETPUT_MAGIC_1,
+	       (void *)ext->ext_buf, PARSE_MAGIC_1,
 	       bu_identify_magic(i), i, __FILE__, __LINE__);
 	bu_bomb("bad getput buffer");
     }
     ext->ext_nbytes = len;
     i = (((unsigned char *)(ext->ext_buf))[len-2] <<8) |
 	((unsigned char *)(ext->ext_buf))[len-1];
-    if (UNLIKELY(i != BU_GETPUT_MAGIC_2)) {
+    if (UNLIKELY(i != PARSE_MAGIC_2)) {
 	bu_log("ERROR: bad getput buffer %p, s/b %x, was %s(0x%lx), file %s, line %d\n",
-	       (void *)ext->ext_buf, BU_GETPUT_MAGIC_2,
+	       (void *)ext->ext_buf, PARSE_MAGIC_2,
 	       bu_identify_magic(i), i, __FILE__, __LINE__);
 	bu_bomb("Bad getput buffer");
     }
