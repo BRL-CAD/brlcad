@@ -429,7 +429,7 @@ int main(int argc, char **argv)
 	     */
 
 	    /*  Elevation and azimuth for finding a vector in a plane.  */
-	    elev = M_PI / 2. - phi;
+	    elev = M_PI_2 - phi;
 	    az = theta;
 	    /*
 	     *	   printf("elevation:  %f, azimuth:  %f\n", elev, az);

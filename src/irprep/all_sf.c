@@ -364,7 +364,7 @@ int main(int argc, char **argv)
 	    strtdir[Z] = rho * cos(phi);
 
 	    /*  Elevation & azimuth for finding a vector in a plane.  */
-	    elev = M_PI / 2. - phi;
+	    elev = M_PI_2 - phi;
 	    az = theta;
 
 	    /*  Find vector in yz-plane.  */
