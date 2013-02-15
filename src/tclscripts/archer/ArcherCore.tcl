@@ -3540,6 +3540,17 @@ namespace eval ArcherCore {
 	} else {
 	    gedCmd configure -primitiveLabels {}
 	}
+    } else {
+	set soi -1
+	set tmpObjPath [file dirname $mSelectedObjPath]
+	while {$soi == -1 && $tmpObjPath != "."} {
+	    set soi [lsearch $_node $tmpObjPath]
+	    set tmpObjPath [file dirname $tmpObjPath]
+	}
+
+	if {$soi != -1} {
+	    gedCmd configure -primitiveLabels {}
+	}
     }
 
     if {$mSavedCenter != "" && $mTreeMode > $TREE_MODE_TREE &&
@@ -5812,6 +5823,11 @@ namespace eval ArcherCore {
     }
 
     set soi [lsearch $tobjects $mSelectedObjPath]
+    set tmpObjPath [file dirname $mSelectedObjPath]
+    while {$soi == -1 && $tmpObjPath != "."} {
+	set soi [lsearch $tobjects $tmpObjPath]
+	set tmpObjPath [file dirname $tmpObjPath]
+    }
 
     if {[catch {eval gedCmd erase $options $tobjects} ret]} {
 	if {$soi != -1} {
