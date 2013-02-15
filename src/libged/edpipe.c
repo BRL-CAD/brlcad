@@ -102,6 +102,7 @@ edpipe_scale(fastf_t d, fastf_t scale)
     return (d * scale);
 }
 
+
 void
 pipe_scale_od(struct rt_pipe_internal *pipeip, fastf_t scale)
 {
@@ -382,9 +383,11 @@ _ged_add_pipept(struct rt_pipe_internal *pipeip, struct wdb_pipept *pp, const po
     newpp->pp_bendradius = last->pp_bendradius;
     VMOVE(newpp->pp_coord, new_pt);
 
-    if (pp) { /* append after current point */
+    if (pp) {
+	/* append after current point */
 	BU_LIST_APPEND(&pp->l, &newpp->l);
-    } else { /* add to end of pipe solid */
+    } else {
+	/* add to end of pipe solid */
 	BU_LIST_INSERT(&pipeip->pipe_segs_head, &newpp->l);
     }
 
@@ -434,9 +437,11 @@ _ged_ins_pipept(struct rt_pipe_internal *pipeip, struct wdb_pipept *pp, const po
     newpp->pp_bendradius = first->pp_bendradius;
     VMOVE(newpp->pp_coord, new_pt);
 
-    if (pp) { /* insert before current point */
+    if (pp) {
+	/* insert before current point */
 	BU_LIST_INSERT(&pp->l, &newpp->l);
-    } else { /* add to start of pipe */
+    } else {
+	/* add to start of pipe */
 	BU_LIST_APPEND(&pipeip->pipe_segs_head, &newpp->l);
     }
 
@@ -485,14 +490,15 @@ _ged_delete_pipept(struct wdb_pipept *ps)
 #if 0
 	Tcl_AppendResult(INTERP, "Cannot delete this point, it will result in an illegal pipe\n", (char *)NULL);
 #endif
-	if (next)
-	    BU_LIST_INSERT(&next->l, &ps->l)
-		else if (prev)
-		    BU_LIST_APPEND(&prev->l, &ps->l)
-			else
-			    BU_LIST_INSERT(&head->l, &ps->l)
+	if (next) {
+	    BU_LIST_INSERT(&next->l, &ps->l);
+	} else if (prev) {
+	    BU_LIST_APPEND(&prev->l, &ps->l);
+	} else {
+	    BU_LIST_INSERT(&head->l, &ps->l);
+	}
 
-				return ps;
+	return ps;
     } else
 	bu_free((genptr_t)ps, "_ged_delete_pipept: ps");
 
@@ -535,8 +541,9 @@ _ged_scale_pipe(struct ged *gedp, struct rt_pipe_internal *pipeip, const char *a
 
     RT_PIPE_CK_MAGIC(pipeip);
 
+    /* encode rflag as a negative scale so we don't have to pass it */
     if (!rflag && sf > 0)
-	sf *= -1.0;
+	sf = -sf;
 
     switch (attribute[0]) {
 	case 'b':
@@ -695,6 +702,7 @@ ged_append_pipept(struct ged *gedp, int argc, const char *argv[])
 {
     return _ged_append_pipept_common(gedp, argc, argv, _ged_add_pipept);
 }
+
 
 int
 ged_delete_pipept(struct ged *gedp, int argc, const char *argv[])
