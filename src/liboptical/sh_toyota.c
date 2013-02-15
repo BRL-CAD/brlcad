@@ -1653,7 +1653,7 @@ skylight_spectral_dist(fastf_t lambda, fastf_t *Zenith, fastf_t *Sky_elmt, fastf
 	/* to a given luminance.  Units: K */
 	x, y;	/* 1931 CIE chromaticity coordinates. */
 
-    sun_alt = 90 - acos(VDOT(Sun, Zenith))*180/M_PI;
+    sun_alt = 90 - acos(VDOT(Sun, Zenith))*RAD2DEG;
     lz = zenith_luminance(sun_alt, t_vl);
     /* Get luminance distribution */
     switch (weather) {
@@ -2176,7 +2176,7 @@ background_light(fastf_t lambda, struct toyota_specific *ts, fastf_t *Refl, fast
      VSETALL(Sky_elmnt, 0.0);
 
 /* Angular spread between vectors used in solid angle integration. */
-#define SPREAD (10*M_PI/180)
+#define SPREAD (10*DEG2RAD)
 
     /* Differential solid angle. */
     del_omega = M_PI*sin(SPREAD/2)*sin(SPREAD/2);
@@ -2348,7 +2348,7 @@ toyota_render(register struct application *ap, const struct partition *UNUSED(pp
 
 	/* Direct sunlight contribution. */
 	direct_sunlight =
-	    1./M_PI
+	    M_1_PI
 	    * reflectance(ts->wavelength, acos(i_dot_n)*bn_radtodeg,
 			  ts->refl, ts->refl_lines)
 	    * sun_radiance(ts->wavelength, ts->alpha, ts->beta,
