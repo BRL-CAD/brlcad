@@ -107,7 +107,7 @@ void smoothBot
 	if (rt_db_get_internal(&intern, dp, wdbp->dbip, 0, &rt_uniresource) == ID_BOT) {
 	    rt_bot_internal* bot = static_cast<rt_bot_internal*>(intern.idb_ptr);
 
-	    rt_bot_smooth(bot, name, wdbp->dbip, M_PI / 4.);
+	    rt_bot_smooth(bot, name, wdbp->dbip, M_PI_4);
 
 	    if (rt_db_put_internal(dp, wdbp->dbip, &intern, &rt_uniresource) < 0) {
 		bu_bomb("Database write failure in smoothBot\n");
