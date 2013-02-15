@@ -106,6 +106,9 @@
 	variable mCurrentBotEdges ""
 	variable mCurrentBotFaces ""
 	variable mFrontPointsOnly 1
+	variable mMaxVertThreshold 30
+	variable mIgnoreMaxVertThreshold 0
+	variable mShowTables 1
 	variable mHighlightPoints 1
 	variable mHighlightPointSize 1.0
 	variable mHighlightPointColor {255 255 255}
@@ -132,13 +135,16 @@
 	method highlightCurrentBotElements {}
 	method initPointHighlight {}
 	method loadTables {_gdata}
+	method manageTables {}
 	method multiEdgeSelectCallback {}
 	method multiFaceSelectCallback {}
 	method multiPointSelectCallback {}
+	method reloadTables {}
 	method selectCurrentBotPoints {{_findEdges 1}}
 	method syncTablesWrtPoints {{_findEdges 1}}
 	method syncTablesWrtEdges {}
 	method syncTablesWrtFaces {}
+	method updatePointSize {}
 	method validateDetailEntry {_row _col _newval _clientdata}
 	method validatePointSize {_size}
     }
@@ -573,28 +579,6 @@
     pack $itk_component(vertTab) -expand yes -fill both
     pack $itk_component(edgeTab) -expand yes -fill both
     pack $itk_component(faceTab) -expand yes -fill both
-
-    set row 0
-    grid $itk_component(botType) \
-	-row $row \
-	-column 0 \
-	-sticky nsew
-    grid $itk_component(botName) \
-	-row $row \
-	-column 1 \
-	-columnspan 3 \
-	-sticky nsew
-    incr row
-    grid $itk_component(vertTabLF) -row $row -sticky nsew -columnspan 2
-    grid rowconfigure $parent $row -weight 1
-    incr row
-    grid $itk_component(edgeTabLF) -row $row -sticky nsew -columnspan 2
-    grid rowconfigure $parent $row -weight 1
-    incr row
-    grid $itk_component(faceTabLF) -row $row -sticky nsew -columnspan 2
-    grid rowconfigure $parent $row -weight 1
-
-    grid columnconfigure $parent 1 -weight 1
 }
 
 
@@ -623,11 +607,30 @@
 	    -command [::itcl::code $this initEditState] \
 	    -variable [::itcl::scope mFrontPointsOnly]
     } {}
+    itk_component add ignoreMaxVertThreshCB {
+	::ttk::checkbutton $parent.ignoreMaxVertThreshCB \
+	    -text "Always Show Tables" \
+	    -command [::itcl::code $this reloadTables] \
+	    -variable [::itcl::scope mIgnoreMaxVertThreshold]
+    } {}
     itk_component add hlPointsCB {
 	::ttk::checkbutton $parent.hlPointsCB \
 	    -text "Highlight Points" \
 	    -command [::itcl::code $this highlightCurrentBotElements] \
 	    -variable [::itcl::scope mHighlightPoints]
+    } {}
+
+    itk_component add maxVertThreshL {
+	::ttk::label $parent.maxVertThreshL \
+	    -anchor e \
+	    -text "Max Vert Threshold"
+    } {}
+    itk_component add maxVertThreshE {
+	::ttk::entry $parent.maxVertThreshE \
+	    -width 12 \
+	    -textvariable [::itcl::scope mMaxVertThreshold] \
+	    -validate key \
+	    -validatecommand {::cadwidgets::Ged::validateDigit %P}
     } {}
 
     itk_component add pointSizeL {
@@ -643,12 +646,20 @@
 	    -validatecommand [::itcl::code $this validatePointSize %P]
     } {}
 
+    bind $itk_component(maxVertThreshE) <Return> [::itcl::code $this reloadTables]
+    bind $itk_component(pointSizeE) <Return> [::itcl::code $this updatePointSize]
+
     incr row
     grid rowconfigure $parent $row -weight 1
+    incr row
+    grid $itk_component(ignoreMaxVertThreshCB) -row $row -column 0 -sticky w
     incr row
     grid $itk_component(frontPointOnlyCB) -row $row -column 0 -sticky w
     incr row
     grid $itk_component(hlPointsCB) -row $row -column 0 -sticky w
+    incr row
+    grid $itk_component(maxVertThreshL) -column 0 -row $row -sticky e
+    grid $itk_component(maxVertThreshE) -column 1 -row $row -sticky ew
     incr row
     grid $itk_component(pointSizeL) -column 0 -row $row -sticky e
     grid $itk_component(pointSizeE) -column 1 -row $row -sticky ew
@@ -997,6 +1008,20 @@
     set mEdgeDetail(active) ""
     set mFaceDetail(active) ""
 
+    set vl [$itk_option(-mged) get $itk_option(-geometryObject) V]
+    set vlen [llength $vl]
+    if {$mIgnoreMaxVertThreshold || $vlen <= $mMaxVertThreshold} {
+	set mShowTables 1
+    } else {
+	set mShowTables 0
+    }
+
+    manageTables
+
+    if {!$mShowTables} {
+	return
+    }
+
     set col 0
     foreach heading $mVertDetailHeadings {
 	set mVertDetail(0,$col) $heading
@@ -1080,6 +1105,39 @@
 }
 
 
+::itcl::body BotEditFrame::manageTables {} {
+    if {$mShowTables} {
+	set parent [$this childsite]
+
+	set row 0
+	grid $itk_component(botType) \
+	    -row $row \
+	    -column 0 \
+	    -sticky nsew
+	grid $itk_component(botName) \
+	    -row $row \
+	    -column 1 \
+	    -columnspan 3 \
+	    -sticky nsew
+	incr row
+	grid $itk_component(vertTabLF) -row $row -sticky nsew -columnspan 2
+	grid rowconfigure $parent $row -weight 1
+	incr row
+	grid $itk_component(edgeTabLF) -row $row -sticky nsew -columnspan 2
+	grid rowconfigure $parent $row -weight 1
+	incr row
+	grid $itk_component(faceTabLF) -row $row -sticky nsew -columnspan 2
+	grid rowconfigure $parent $row -weight 1
+
+	grid columnconfigure $parent 1 -weight 1
+    } else {
+	grid forget $itk_component(vertTabLF)
+	grid forget $itk_component(edgeTabLF)
+	grid forget $itk_component(faceTabLF)
+    }
+}
+
+
 ::itcl::body BotEditFrame::multiEdgeSelectCallback {} {
     set mCurrentBotEdges [$itk_component(edgeTab) getSelectedRows]
     syncTablesWrtEdges
@@ -1095,6 +1153,12 @@
 ::itcl::body BotEditFrame::multiPointSelectCallback {} {
     set mCurrentBotPoints [$itk_component(vertTab) getSelectedRows]
     syncTablesWrtPoints
+}
+
+
+::itcl::body BotEditFrame::reloadTables {} {
+    set gdata [lrange [$itk_option(-mged) get $itk_option(-geometryObject)] 1 end]
+    loadTables $gdata
 }
 
 
@@ -1280,6 +1344,15 @@
 }
 
 
+::itcl::body BotEditFrame::updatePointSize {} {
+    if {$mHighlightPointSize != "" && $mHighlightPointSize != "."} {
+	$itk_option(-mged) data_axes size $mHighlightPointSize
+    } else {
+	$itk_option(-mged) data_axes size 0
+    }
+}
+
+
 ::itcl::body BotEditFrame::validateDetailEntry {_row _col _newval _clientdata} {
     return 0
 
@@ -1293,20 +1366,20 @@
 
 ::itcl::body BotEditFrame::validatePointSize {_size} {
     if {$_size == "."} {
-	$itk_option(-mged) data_axes size 0
-
 	return 1
     }
 
     if {[string is double $_size]} {
-	if {$_size == "" || $_size < 0} {
-	    set sz 0
-	} else {
-	    set sz $_size
+	# Need to check is first
+	if {$_size == ""} {
+	    return 1
 	}
 
-	$itk_option(-mged) data_axes size $sz
+	if {$_size < 0} {
+	    return 0
+	}
 
+	# Everything else is OK
 	return 1
     }
 
