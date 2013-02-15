@@ -182,7 +182,7 @@ void get_vertex(struct rt_bot_internal *bot, int idx, float *dest)
 
     if (yup) {
 	/* perform 90deg x-axis rotation */
-	float q = -(M_PI/2.0f);
+	float q = -(M_PI_2);
 	float y = dest[1];
 	float z = dest[2];
 	dest[1] = y * cos(q) - z * sin(q);
