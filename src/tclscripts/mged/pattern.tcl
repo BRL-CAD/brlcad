@@ -709,12 +709,12 @@ proc pattern_sph { args } {
 	    }
 	    "-start_az" {
 		incr index
-		set start_az [expr [lindex $args $index] * $M_PI / 180.0]
+		set start_az [expr [lindex $args $index] * $DEG2RAD]
 		incr index
 	    }
 	    "-start_el" {
 		incr index
-		set start_el [expr [lindex $args $index] * $M_PI / 180.0]
+		set start_el [expr [lindex $args $index] * $DEG2RAD]
 		incr index
 	    }
 	    "-center_pat" {
@@ -752,13 +752,13 @@ proc pattern_sph { args } {
 	    }
 	    "-daz" {
 		incr index
-		set delta_az [expr [lindex $args $index] * $M_PI / 180.0]
+		set delta_az [expr [lindex $args $index] * $DEG2RAD]
 		incr index
 	    }
 
 	    "-del" {
 		incr index
-		set delta_el [expr [lindex $args $index] * $M_PI / 180.0]
+		set delta_el [expr [lindex $args $index] * $DEG2RAD]
 		incr index
 	    }
 	    "-dr" {
@@ -771,7 +771,7 @@ proc pattern_sph { args } {
 		set tmp_list [lindex $args $index ]
 		set list_az {}
 		foreach az $tmp_list {
-		    lappend list_az [expr {$az * $M_PI / 180.0}]
+		    lappend list_az [expr {$az * $DEG2RAD}]
 		}
 		incr index
 	    }
@@ -780,7 +780,7 @@ proc pattern_sph { args } {
 		set tmp_list [lindex $args $index ]
 		set list_el {}
 		foreach el $tmp_list {
-		    lappend list_el [expr {$el * $M_PI / 180.0}]
+		    lappend list_el [expr {$el * $DEG2RAD}]
 		}
 		incr index
 	    }
@@ -890,11 +890,11 @@ proc pattern_sph { args } {
 		incr az_index
 		set mat1 [mat_deltas_vec [mat_idn] [vreverse $center_obj]]
 		if { $rot_az && $rot_el } {
-		    set mat2 [mat_mul [mat_ae [expr $az * 180.0 / $M_PI] [expr $el * 180.0 / $M_PI]] $mat1]
+		    set mat2 [mat_mul [mat_ae [expr $az * $RAD2DEG] [expr $el * $RAD2DEG]] $mat1]
 		} elseif { $rot_az } {
-		    set mat2 [mat_mul [mat_ae [expr $az * 180.0 / $M_PI] 0] $mat1]
+		    set mat2 [mat_mul [mat_ae [expr $az * $RAD2DEG] 0] $mat1]
 		} elseif { $rot_el } {
-		    set mat2 [mat_mul [mat_ae 0 [expr $el * 180.0 / $M_PI]] $mat1]
+		    set mat2 [mat_mul [mat_ae 0 [expr $el * $RAD2DEG]] $mat1]
 		} else {
 		    set mat2 $mat1
 		}
@@ -1037,7 +1037,7 @@ proc pattern_cyl { args } {
 	    }
 	    "-start_az" {
 		incr index
-		set start_az [expr [lindex $args $index] * $M_PI / 180.0]
+		set start_az [expr [lindex $args $index] * $DEG2RAD]
 		incr index
 	    }
 	    "-start_az_dir" {
@@ -1071,7 +1071,7 @@ proc pattern_cyl { args } {
 	    }
 	    "-daz" {
 		incr index
-		set delta_az [expr [lindex $args $index] * $M_PI / 180.0]
+		set delta_az [expr [lindex $args $index] * $DEG2RAD]
 		incr index
 	    }
 	    "-laz" {
@@ -1079,7 +1079,7 @@ proc pattern_cyl { args } {
 		set tmp_list [lindex $args $index ]
 		set list_az {}
 		foreach az $tmp_list {
-		    lappend list_az [expr {$az * $M_PI / 180.0}]
+		    lappend list_az [expr {$az * $DEG2RAD}]
 		}
 		incr index
 	    }
