@@ -90,6 +90,18 @@ split_pipept(struct bu_list *UNUSED(pipe_hd), struct wdb_pipept *UNUSED(ps), fas
 }
 
 
+static fastf_t
+edpipe_scale(fastf_t d, fastf_t scale)
+{
+    if (scale < 0.0) {
+	/* negative value sets the scale */
+	return (-scale);
+    }
+
+    /* positive value gets multiplied */
+    return (d * scale);
+}
+
 void
 pipe_scale_od(struct rt_pipe_internal *pipeip, fastf_t scale)
 {
@@ -101,10 +113,8 @@ pipe_scale_od(struct rt_pipe_internal *pipeip, fastf_t scale)
     for (BU_LIST_FOR(ps, wdb_pipept, &pipeip->pipe_segs_head)) {
 	fastf_t tmp_od;
 
-	if (scale < 0.0)
-	    tmp_od = (-scale);
-	else
-	    tmp_od = ps->pp_od*scale;
+	tmp_od = edpipe_scale(ps->pp_od, scale);
+
 	if (ps->pp_id > tmp_od) {
 	    /* Silently ignore */
 	    return;
@@ -115,11 +125,9 @@ pipe_scale_od(struct rt_pipe_internal *pipeip, fastf_t scale)
 	}
     }
 
-    for (BU_LIST_FOR(ps, wdb_pipept, &pipeip->pipe_segs_head))
-	if (scale > 0.0)
-	    ps->pp_od *= scale;
-	else
-	    ps->pp_od = -scale;
+    for (BU_LIST_FOR(ps, wdb_pipept, &pipeip->pipe_segs_head)) {
+	ps->pp_od = edpipe_scale(ps->pp_od, scale);
+    }
 }
 
 
@@ -134,10 +142,8 @@ pipe_scale_id(struct rt_pipe_internal *pipeip, fastf_t scale)
     for (BU_LIST_FOR(ps, wdb_pipept, &pipeip->pipe_segs_head)) {
 	fastf_t tmp_id;
 
-	if (scale > 0.0)
-	    tmp_id = ps->pp_id*scale;
-	else
-	    tmp_id = (-scale);
+	tmp_id = edpipe_scale(ps->pp_id, scale);
+
 	if (ps->pp_od < tmp_id) {
 	    /* Silently ignore */
 	    return;
@@ -149,10 +155,7 @@ pipe_scale_id(struct rt_pipe_internal *pipeip, fastf_t scale)
     }
 
     for (BU_LIST_FOR(ps, wdb_pipept, &pipeip->pipe_segs_head)) {
-	if (scale > 0.0)
-	    ps->pp_id *= scale;
-	else
-	    ps->pp_id = (-scale);
+	ps->pp_id = edpipe_scale(ps->pp_id, scale);
     }
 }
 
@@ -164,13 +167,11 @@ pipe_seg_scale_od(struct wdb_pipept *ps, fastf_t scale)
 
     BU_CKMAG(ps, WDB_PIPESEG_MAGIC, "pipe segment");
 
+    tmp_od = edpipe_scale(ps->pp_od, scale);
+
     /* need to check that the new OD is not less than ID
      * of any affected segment.
      */
-    if (scale < 0.0)
-	tmp_od = (-scale);
-    else
-	tmp_od = scale*ps->pp_od;
     if (ps->pp_id > tmp_od) {
 #if 0
 	Tcl_AppendResult(INTERP, "Cannot make OD smaller than ID\n", (char *)NULL);
@@ -184,10 +185,7 @@ pipe_seg_scale_od(struct wdb_pipept *ps, fastf_t scale)
 	return;
     }
 
-    if (scale > 0.0)
-	ps->pp_od *= scale;
-    else
-	ps->pp_od = (-scale);
+    ps->pp_od = edpipe_scale(ps->pp_od, scale);
 }
 
 
@@ -198,11 +196,9 @@ pipe_seg_scale_id(struct wdb_pipept *ps, fastf_t scale)
 
     BU_CKMAG(ps, WDB_PIPESEG_MAGIC, "pipe segment");
 
+    tmp_id = edpipe_scale(ps->pp_id, scale);
+
     /* need to check that the new ID is not greater than OD */
-    if (scale > 0.0)
-	tmp_id = scale*ps->pp_id;
-    else
-	tmp_id = (-scale);
     if (ps->pp_od < tmp_id) {
 #if 0
 	Tcl_AppendResult(INTERP, "Cannot make ID greater than OD\n", (char *)NULL);
@@ -216,10 +212,7 @@ pipe_seg_scale_id(struct wdb_pipept *ps, fastf_t scale)
 	return;
     }
 
-    if (scale > 0.0)
-	ps->pp_id *= scale;
-    else
-	ps->pp_id = (-scale);
+    ps->pp_id = edpipe_scale(ps->pp_id, scale);
 }
 
 
@@ -237,10 +230,8 @@ pipe_seg_scale_radius(struct wdb_pipept *ps, fastf_t scale)
 
     /* make sure we can make this change */
     old_radius = ps->pp_bendradius;
-    if (scale > 0.0)
-	ps->pp_bendradius *= scale;
-    else
-	ps->pp_bendradius = (-scale);
+
+    ps->pp_bendradius = edpipe_scale(ps->pp_bendradius, scale);
 
     if (ps->pp_bendradius < ps->pp_od * 0.5) {
 #if 0
@@ -295,10 +286,7 @@ pipe_scale_radius(struct rt_pipe_internal *pipeip, fastf_t scale)
 
     /* make the desired editing changes to the copy */
     for (BU_LIST_FOR(new_ps, wdb_pipept, &head)) {
-	if (scale < 0.0)
-	    new_ps->pp_bendradius = (-scale);
-	else
-	    new_ps->pp_bendradius *= scale;
+	new_ps->pp_bendradius = edpipe_scale(new_ps->pp_bendradius, scale);
     }
 
     /* check if the copy is O.K. */
@@ -321,10 +309,7 @@ pipe_scale_radius(struct rt_pipe_internal *pipeip, fastf_t scale)
 
     /* make changes to the original */
     for (BU_LIST_FOR(old_ps, wdb_pipept, &pipeip->pipe_segs_head)) {
-	if (scale < 0.0)
-	    old_ps->pp_bendradius = (-scale);
-	else
-	    old_ps->pp_bendradius *= scale;
+	old_ps->pp_bendradius = edpipe_scale(old_ps->pp_bendradius, scale);
     }
 }
 
