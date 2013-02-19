@@ -38,6 +38,7 @@ set M_2_PI	0.63661977236758134307553505349
 set M_2_SQRTPI	1.12837916709551257389615890312
 set M_SQRT2	1.41421356237309504880168872421
 set M_SQRT1_2	0.70710678118654752440084436210
+set DEG2RAD	0.017453292519943295769236907684
 
 proc init_vmath {} {
     # this routine does nothing except ensure that the above global variables get set
@@ -486,13 +487,13 @@ proc quat_from_rot {r x y z} {
 }
 
 proc quat_from_rot_deg {r x y z} {
-    global M_PI
-    return [quat_from_vrot [expr $r * ( $M_PI / 180.0 )] [list $x $y $z]]
+    global DEG2RAD
+    return [quat_from_vrot [expr $r * $DEG2RAD ] [list $x $y $z]]
 }
 
 proc quat_from_vrot_deg {r v} {
-    global M_PI
-    return [quat_from_vrot [expr $r * ($M_PI / 180.0) ] $v]
+    global DEG2RAD
+    return [quat_from_vrot [expr $r *$DEG2RAD ] $v]
 }
 
 
