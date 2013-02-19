@@ -345,6 +345,7 @@ namespace eval ArcherCore {
 	variable mPasteActive 0
 	variable mMultiPane 0
 	variable mTransparency 0
+	variable mAllowDataClear 1
 
 	variable mHPaneFraction1 80
 	variable mHPaneFraction2 20
@@ -3539,6 +3540,11 @@ namespace eval ArcherCore {
 	    gedCmd configure -primitiveLabels $plnode
 	} else {
 	    gedCmd configure -primitiveLabels {}
+
+	    if {$mAllowDataClear} {
+		gedCmd data_axes points {}
+		gedCmd data_lines points {}
+	    }
 	}
     } else {
 	set soi -1
@@ -3550,6 +3556,11 @@ namespace eval ArcherCore {
 
 	if {$soi != -1} {
 	    gedCmd configure -primitiveLabels {}
+
+	    if {$mAllowDataClear} {
+		gedCmd data_axes points {}
+		gedCmd data_lines points {}
+	    }
 	}
     }
 
@@ -5842,6 +5853,11 @@ namespace eval ArcherCore {
 
     if {$soi != -1} {
 	gedCmd configure -primitiveLabels {}
+
+	if {$mAllowDataClear} {
+	    gedCmd data_axes points {}
+	    gedCmd data_lines points {}
+	}
     }
 
     updateTreeDrawLists

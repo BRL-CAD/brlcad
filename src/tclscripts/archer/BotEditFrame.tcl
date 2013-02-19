@@ -75,12 +75,12 @@
 	    {Split Face}
 	}
 
-	method clearEditState {{_clearModeOnly 0}}
 	method clearAllTables {}
 	method selectBotPts {_plist}
 	method setMoveMode {{_tflag 0}}
 
 	# Override what's in GeometryEditFrame
+	method clearEditState {{_clearModeOnly 0}}
 	method initGeometry {_gdata}
 	method updateGeometry {}
 	method createGeometry {_name}
@@ -172,18 +172,6 @@
 
 
 
-::itcl::body BotEditFrame::clearEditState {{_clearModeOnly 0}} {
-    set mEditMode 0
-
-    if {$_clearModeOnly} {
-	return
-    }
-
-    clearAllTables
-    set itk_option(-prevGeometryObject) ""
-}
-
-
 ::itcl::body BotEditFrame::clearAllTables {} {
     $itk_option(-mged) data_axes points {}
     $itk_option(-mged) data_lines points {}
@@ -234,6 +222,18 @@
 }
 
 
+::itcl::body BotEditFrame::clearEditState {{_clearModeOnly 0}} {
+    set mEditMode 0
+
+    if {$_clearModeOnly} {
+	return
+    }
+
+    clearAllTables
+    set itk_option(-prevGeometryObject) ""
+}
+
+
 ## - initGeometry
 #
 # Initialize the variables containing the object's specification.
@@ -253,10 +253,10 @@
 	set mCurrentBotEdges ""
 	set mCurrentBotFaces ""
 	set itk_option(-prevGeometryObject) $itk_option(-geometryObject)
-
-	$itk_component(edgeTab) unselectAllRows
-	$itk_component(faceTab) unselectAllRows
     }
+
+    $itk_component(edgeTab) unselectAllRows
+    $itk_component(faceTab) unselectAllRows
 
     selectCurrentBotPoints
 }
@@ -957,7 +957,6 @@
     if {$itk_option(-mged) == ""} {
 	return
     }
-
 
     set hpoints {}
     foreach index $mCurrentBotPoints {

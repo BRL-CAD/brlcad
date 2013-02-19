@@ -290,6 +290,8 @@ package provide Archer 1.0
 	method initMode {{_updateFractions 0}}
 
 	# Object Edit Section
+	method clearEditState {{_clearModeOnly 0}}
+	method getEditView {}
 	method initEdit {{_initEditMode 1}}
 
 	# Object Edit VIA Mouse Section
@@ -1684,11 +1686,6 @@ package provide Archer 1.0
     set mDbTitle [$itk_component(ged) title]
     set mDbUnits [$itk_component(ged) units -s]
 
-    # Reset the bot edit panel
-    if {[info exists itk_component(botView)]} {
-	$itk_component(botView) clearEditState
-    }
-
     if {!$mViewOnly} {
 	initDbAttrView $mTarget
 	applyPreferences
@@ -2002,28 +1999,19 @@ package provide Archer 1.0
 
 
 ::itcl::body Archer::beginViewRotate {} {
-    if {[info exists itk_component(botView)]} {
-	$itk_component(botView) clearEditState
-    }
-
+    clearEditState
     ArcherCore::beginViewRotate
 }
 
 
 ::itcl::body Archer::beginViewScale {} {
-    if {[info exists itk_component(botView)]} {
-	$itk_component(botView) clearEditState
-    }
-
+    clearEditState
     ArcherCore::beginViewScale
 }
 
 
 ::itcl::body Archer::beginViewTranslate {} {
-    if {[info exists itk_component(botView)]} {
-	$itk_component(botView) clearEditState
-    }
-
+    clearEditState
     ArcherCore::beginViewTranslate
 }
 
@@ -2168,23 +2156,20 @@ package provide Archer 1.0
 		    }
 	    }
 	}
+
+	clearEditState
     }
 }
 
 
 ::itcl::body Archer::initCompPick {} {
-    if {[info exists itk_component(botView)]} {
-	$itk_component(botView) clearEditState
-    }
-
+    clearEditState
     ArcherCore::initCompPick
 }
 
 
 ::itcl::body Archer::initCompSelect {} {
-    if {[info exists itk_component(botView)]} {
-	$itk_component(botView) clearEditState 1
-    }
+    clearEditState 1
 
     if {$mCompSelectMode != $COMP_SELECT_LIST_MODE &&
 	$mCompSelectMode != $COMP_SELECT_LIST_PARTIAL_MODE &&
@@ -2259,10 +2244,7 @@ package provide Archer 1.0
 
 
 ::itcl::body Archer::initViewCenterMode {} {
-    if {[info exists itk_component(botView)]} {
-	$itk_component(botView) clearEditState
-    }
-
+    clearEditState
     ArcherCore::initViewCenterMode
 }
 
@@ -6015,6 +5997,191 @@ proc title_node_handler {node} {
 ################################### Object Edit Section ###################################
 
 
+::itcl::body Archer::clearEditState {{_clearModeOnly 0}} {
+    set editView [getEditView]
+
+    if {$editView != ""} {
+	$editView clearEditState $_clearModeOnly
+    }
+}
+
+
+::itcl::body Archer::getEditView {} {
+    switch -- $mSelectedObjType {
+	"arb4" {
+	    if {![info exists itk_component(arb4View)]} {
+		buildArb4EditView
+	    }
+
+	    return $itk_component(arb4View)
+	}
+	"arb5" {
+	    if {![info exists itk_component(arb5View)]} {
+		buildArb5EditView
+	    }
+
+	    return $itk_component(arb5View)
+	}
+	"arb6" {
+	    if {![info exists itk_component(arb6View)]} {
+		buildArb6EditView
+	    }
+
+	    return $itk_component(arb6View)
+	}
+	"arb7" {
+	    if {![info exists itk_component(arb7View)]} {
+		buildArb7EditView
+	    }
+
+	    return $itk_component(arb7View)
+	}
+	"arb8" {
+	    if {![info exists itk_component(arb8View)]} {
+		buildArb8EditView
+	    }
+
+	    return $itk_component(arb8View)
+	}
+	"bot" {
+	    if {![info exists itk_component(botView)]} {
+		buildBotEditView
+	    }
+
+	    return $itk_component(botView)
+	}
+	"comb" {
+	    if {![info exists itk_component(combView)]} {
+		buildCombEditView
+	    }
+
+	    return $itk_component(combView)
+	}
+	"ell" {
+	    if {![info exists itk_component(ellView)]} {
+		buildEllEditView
+	    }
+
+	    return $itk_component(ellView)
+	}
+	"ehy" {
+	    if {![info exists itk_component(ehyView)]} {
+		buildEhyEditView
+	    }
+
+	    return $itk_component(ehyView)
+	}
+	"epa" {
+	    if {![info exists itk_component(epaView)]} {
+		buildEpaEditView
+	    }
+
+	    return $itk_component(epaView)
+	}
+	"eto" {
+	    if {![info exists itk_component(etoView)]} {
+		buildEtoEditView
+	    }
+
+	    return $itk_component(etoView)
+	}
+	"extrude" {
+	    if {![info exists itk_component(extrudeView)]} {
+		buildExtrudeEditView
+	    }
+
+	    return $itk_component(extrudeView)
+	}
+	"grip" {
+	    if {![info exists itk_component(gripView)]} {
+		buildGripEditView
+	    }
+
+	    return $itk_component(gripView)
+	}
+	"half" {
+	    if {![info exists itk_component(halfView)]} {
+		buildHalfEditView
+	    }
+
+	    return $itk_component(halfView)
+	}
+	"hyp" {
+	    if {![info exists itk_component(hypView)]} {
+		buildHypEditView
+	    }
+
+	    return $itk_component(hypView)
+	}
+	"part" {
+	    if {![info exists itk_component(partView)]} {
+		buildPartEditView
+	    }
+
+	    return $itk_component(partView)
+	}
+	"pipe" {
+	    if {![info exists itk_component(pipeView)]} {
+		buildPipeEditView
+	    }
+
+	    return $itk_component(pipeView)
+	}
+	"rpc" {
+	    if {![info exists itk_component(rpcView)]} {
+		buildRpcEditView
+	    }
+
+	    return $itk_component(rpcView)
+	}
+	"rhc" {
+	    if {![info exists itk_component(rhcView)]} {
+		buildRhcEditView
+	    }
+
+	    return $itk_component(rhcView)
+	}
+	"sketch" {
+	    if {![info exists itk_component(sketchView)]} {
+		buildSketchEditView
+	    }
+
+	    return $itk_component(sketchView)
+	}
+	"sph" {
+	    if {![info exists itk_component(sphView)]} {
+		buildSphereEditView
+	    }
+
+	    return $itk_component(sphView)
+	}
+	"superell" {
+	    if {![info exists itk_component(superellView)]} {
+		buildSuperellEditView
+	    }
+
+	    return $itk_component(superellView)
+	}
+	"tgc" {
+	    if {![info exists itk_component(tgcView)]} {
+		buildTgcEditView
+	    }
+
+	    return $itk_component(tgcView)
+	}
+	"tor" {
+	    if {![info exists itk_component(torView)]} {
+		buildTorusEditView
+	    }
+
+	    return $itk_component(torView)
+	}
+    }
+
+    return ""
+}
+
+
 ::itcl::body Archer::initEdit {{_initEditMode 1}} {
     if {[catch {gedCmd get_type $mSelectedObj} mSelectedObjType]} {
 	if {![info exists itk_component(invalidView)]} {
@@ -6037,152 +6204,27 @@ proc title_node_handler {node} {
 	set GeometryEditFrame::mEditPCommand ""
     }
 
-    switch -- $mSelectedObjType {
-	"arb4" {
-	    if {![info exists itk_component(arb4View)]} {
-		buildArb4EditView
-	    }
-	    initArb4EditView $odata
-	}
-	"arb5" {
-	    if {![info exists itk_component(arb5View)]} {
-		buildArb5EditView
-	    }
-	    initArb5EditView $odata
-	}
-	"arb6" {
-	    if {![info exists itk_component(arb6View)]} {
-		buildArb6EditView
-	    }
-	    initArb6EditView $odata
-	}
-	"arb7" {
-	    if {![info exists itk_component(arb7View)]} {
-		buildArb7EditView
-	    }
-	    initArb7EditView $odata
-	}
-	"arb8" {
-	    if {![info exists itk_component(arb8View)]} {
-		buildArb8EditView
-	    }
-	    initArb8EditView $odata
-	}
-	"bot" {
-	    if {![info exists itk_component(botView)]} {
-		buildBotEditView
-	    }
-	    initBotEditView $odata
-	}
-	"comb" {
-	    if {![info exists itk_component(combView)]} {
-		buildCombEditView
-	    }
-	    initCombEditView $odata
-	}
-	"ell" {
-	    if {![info exists itk_component(ellView)]} {
-		buildEllEditView
-	    }
-	    initEllEditView $odata
-	}
-	"ehy" {
-	    if {![info exists itk_component(ehyView)]} {
-		buildEhyEditView
-	    }
-	    initEhyEditView $odata
-	}
-	"epa" {
-	    if {![info exists itk_component(epaView)]} {
-		buildEpaEditView
-	    }
-	    initEpaEditView $odata
-	}
-	"eto" {
-	    if {![info exists itk_component(etoView)]} {
-		buildEtoEditView
-	    }
-	    initEtoEditView $odata
-	}
-	"extrude" {
-	    if {![info exists itk_component(extrudeView)]} {
-		buildExtrudeEditView
-	    }
-	    initExtrudeEditView $odata
-	}
-	"grip" {
-	    if {![info exists itk_component(gripView)]} {
-		buildGripEditView
-	    }
-	    initGripEditView $odata
-	}
-	"half" {
-	    if {![info exists itk_component(halfView)]} {
-		buildHalfEditView
-	    }
-	    initHalfEditView $odata
-	}
-	"hyp" {
-	    if {![info exists itk_component(hypView)]} {
-		buildHypEditView
-	    }
-	    initHypEditView $odata
-	}
-	"part" {
-	    if {![info exists itk_component(partView)]} {
-		buildPartEditView
-	    }
-	    initPartEditView $odata
-	}
-	"pipe" {
-	    if {![info exists itk_component(pipeView)]} {
-		buildPipeEditView
-	    }
-	    initPipeEditView $odata
-	}
-	"rpc" {
-	    if {![info exists itk_component(rpcView)]} {
-		buildRpcEditView
-	    }
-	    initRpcEditView $odata
-	}
-	"rhc" {
-	    if {![info exists itk_component(rhcView)]} {
-		buildRhcEditView
-	    }
-	    initRhcEditView $odata
-	}
-	"sketch" {
-	    if {![info exists itk_component(sketchView)]} {
-		buildSketchEditView
-	    }
-	    initSketchEditView $odata
-	}
-	"sph" {
-	    if {![info exists itk_component(sphView)]} {
-		buildSphereEditView
-	    }
-	    initSphereEditView $odata
-	}
-	"superell" {
-	    if {![info exists itk_component(superellView)]} {
-		buildSuperellEditView
-	    }
-	    initSuperellEditView $odata
-	}
-	"tgc" {
-	    if {![info exists itk_component(tgcView)]} {
-		buildTgcEditView
-	    }
-	    initTgcEditView $odata
-	}
-	"tor" {
-	    if {![info exists itk_component(torView)]} {
-		buildTorusEditView
-	    }
-	    initTorusEditView $odata
-	}
+    if {$mAllowDataClear} {
+	gedCmd data_axes points {}
+	gedCmd data_lines points {}
     }
+
+    set editView [getEditView]
+    if {$editView == ""} {
+	return
+    }
+
+    $editView configure \
+	-geometryObject $mSelectedObj \
+	-geometryObjectPath $mSelectedObjPath \
+	-geometryChangedCallback [::itcl::code $this updateObjEditView] \
+	-mged $itk_component(ged) \
+	-labelFont $mFontText \
+	-boldLabelFont $mFontTextBold \
+	-entryFont $mFontText
+    $editView initGeometry $odata
+
+    pack $editView -expand yes -fill both
 }
 
 
@@ -6197,9 +6239,7 @@ proc title_node_handler {node} {
 	return
     }
 
-    if {[info exists itk_component(botView)]} {
-	$itk_component(botView) clearEditState
-    }
+    clearEditState
 
     if {$GeometryEditFrame::mEditClass != $GeometryEditFrame::EDIT_CLASS_ROT} {
 	initEdit
@@ -6236,9 +6276,7 @@ proc title_node_handler {node} {
 	return
     }
 
-    if {[info exists itk_component(botView)]} {
-	$itk_component(botView) clearEditState
-    }
+    clearEditState
 
     if {$GeometryEditFrame::mEditClass != $GeometryEditFrame::EDIT_CLASS_SCALE} {
 	initEdit
@@ -6323,7 +6361,7 @@ proc title_node_handler {node} {
 	set mNumSelectedBotPts [$itk_component(botView) setMoveMode]
 
 	if {$mNumSelectedBotPts != 1} {
-	    $itk_component(botView) clearEditState
+	    clearEditState
 	}
     }
 

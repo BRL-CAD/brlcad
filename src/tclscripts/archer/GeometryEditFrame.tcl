@@ -63,6 +63,7 @@
 	proc validateColorComp {c}
 	proc validateColor {color}
 
+	method clearEditState {{_clearModeOnly 0}}
 	method childsite {{site upper}}
 
 	method initGeometry {gdata}
@@ -238,6 +239,12 @@
 #                      PUBLIC METHODS
 # ------------------------------------------------------------
 
+
+::itcl::body GeometryEditFrame::clearEditState {{_clearModeOnly 0}} {
+    # Nothing for now
+}
+
+
 ::itcl::body GeometryEditFrame::childsite {{site upper}} {
     switch -- $site {
 	"lower" {
@@ -308,6 +315,8 @@
 }
 
 ::itcl::body GeometryEditFrame::initEditState {} {
+    set itk_option(-prevGeometryObject) $itk_option(-geometryObject)
+
     if {$mEditClass == $EDIT_CLASS_ROT} {
 	$::ArcherCore::application setDefaultBindingMode $::ArcherCore::OBJECT_ROTATE_MODE
     } elseif {$mEditClass == $EDIT_CLASS_SCALE} {
