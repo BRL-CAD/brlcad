@@ -62,7 +62,6 @@ int mged_etran(char coords, vect_t tvec);
 int mged_mtran(const fastf_t *tvec);
 int mged_otran(const fastf_t *tvec);
 int mged_vtran(const fastf_t *tvec);
-int mged_tran(fastf_t *tvec);
 
 
 extern vect_t curr_e_axes_pos;
@@ -3862,27 +3861,6 @@ mged_vtran(const vect_t tvec)
     set_absolute_model_tran();
 
     return TCL_OK;
-}
-
-
-int
-mged_tran(vect_t tvec)
-{
-    if ((STATE == ST_S_EDIT || STATE == ST_O_EDIT) &&
-	mged_variables->mv_transform == 'e') {
-	return mged_etran(mged_variables->mv_coords, tvec);
-    }
-
-    /* apply to View */
-    if (mged_variables->mv_coords == 'm') {
-	return mged_mtran(tvec);
-    }
-
-    if (mged_variables->mv_coords == 'o') {
-	return mged_otran(tvec);
-    }
-
-    return mged_vtran(tvec);
 }
 
 
