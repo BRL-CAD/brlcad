@@ -30,8 +30,18 @@
 # section box. To start grouper use the command 'grouper' or 'gr' and
 # to finish use 'done_grouper' or 'dg'. The center mouse button is used
 # to create the selection box. Primitives in the group will be
-# displayed in yellow.
+# displayed in yellow. The '-p' places the primitive parent in the group
+# instead of the primitive. With the '-p' option, if the primitive does
+# not have a parent (i.e. is in the root) it will be ignored.
 #
+
+
+namespace eval grouper_v2 {
+
+namespace export gr
+namespace export grouper
+namespace export dg
+namespace export done_grouper
 
 set GroupNameGlobal ""
 set GrouperRunning 0
@@ -43,10 +53,11 @@ set fb_all_orig ""
 set listen_orig ""
 set objs {}
 set erase_status ""
+set parent_only 0
 
 proc gr_remdup { GroupName } {
 
-    set ItemList [search $GroupName]
+    set ItemList [search $GroupName -maxdepth 1]
     set ItemList [lrange $ItemList 1 end]
 
     set ItemList [lsort -unique $ItemList]
@@ -69,6 +80,10 @@ proc gr_remdup { GroupName } {
 
 
 proc gr_getObjInRectangle {} {
+
+    variable parent_only
+    set objs2 {}
+
     set size [dm size]
     set sizeX [lindex $size 0].0
     set sizeY [lindex $size 1].0
@@ -104,27 +119,91 @@ proc gr_getObjInRectangle {} {
 	return "no_result"
     }
 
-    foreach obj $objs {
-	set obj2 [file tail $obj]
-	lappend objs2 $obj2
-	unset obj2
+    if { $parent_only != 1 } {
+	foreach obj $objs {
+	    set obj2 [file tail $obj]
+	    lappend objs2 $obj2
+	}
+    } else {
+	foreach obj $objs {
+	    set obj2 [file tail [file dirname $obj]]
+	    # skip objects with no parent
+	    if { $obj2 != "" } {
+		lappend objs2 $obj2
+	    } 
+	}
+    }
+
+    if { $objs2 == {} } {
+	return "no_result"
     }
 
     return $objs2
 }
 
 
-proc gr { GroupName Boolean { ListLimit 0 } } {
-    grouper $GroupName $Boolean $ListLimit
+proc gr { args } {
+    grouper $args
 }
 
 
-proc grouper { GroupName Boolean { ListLimit 0 } } {
+proc grouper { args } {
+
     global mged_gui mged_default mged_players
-    global GrouperRunning
+
+    variable GrouperRunning
+    variable parent_only
+    variable draw_orig
+    variable pos_orig
+    variable dim_orig
+    variable fb_orig
+    variable fb_all_orig
+    variable listen_orig
+
+    set GroupName ""
+    set Boolean ""
+    set ListLimit 0
+    set parent_only 0
+    set usage_msg "Usage: {GroupName} {+|-} \[ListLimit\] \[-p\]"
 
     if {$GrouperRunning == 1} {
 	return "Grouper already running, use the 'dg' command to exit grouper before restarting."
+    }
+
+    set args [join $args]
+    set args_cnt [llength $args]
+
+    if { $args_cnt < 2 || $args_cnt > 4 } {
+	puts stdout "$usage_msg"
+	return
+    }
+
+    set listlimit_flag_cnt 0
+    set boolean_flag_cnt 0
+    set groupname_flag_cnt 0
+    set invalid_flag_cnt 0
+
+    foreach arg $args {
+	if { $arg == "-p" } {
+	    set parent_only 1
+	} elseif { [string is integer $arg] && $arg > 0 } {
+	    incr listlimit_flag_cnt
+	    set ListLimit $arg
+	} elseif { ($arg == "+" || $arg == "-") && ($arg != $Boolean) } {
+	    incr boolean_flag_cnt
+	    set Boolean $arg
+	} elseif { ([string index $arg 0] != "-") && ![string is integer $arg] } {
+	    incr groupname_flag_cnt
+	    set GroupName $arg
+	} else {
+	    puts stdout "Invalid parameter: \"$arg\""
+	    incr invalid_flag_cnt
+	}
+    }
+
+    if { $groupname_flag_cnt != 1 || $boolean_flag_cnt != 1 || $listlimit_flag_cnt > 1 || $invalid_flag_cnt != 0} {
+	puts stdout "$usage_msg"
+	return
     }
 
     set GrouperRunning 1
@@ -136,16 +215,12 @@ proc grouper { GroupName Boolean { ListLimit 0 } } {
 	}
     }
 
-    if {$Boolean != "+" && $Boolean != "-" } {
-	set GrouperRunning 0
-	return "Please provide a Boolean of either + or -"
-    }
-    uplevel #0 {set draw_orig [rset r draw]}
-    uplevel #0 {set pos_orig [rset r pos]}
-    uplevel #0 {set dim_orig [rset r dim]}
-    uplevel #0 {set fb_orig [rset var fb]}
-    uplevel #0 {set fb_all_orig [rset var fb_all]}
-    uplevel #0 {set listen_orig [rset var listen]}
+    set draw_orig [rset r draw]
+    set pos_orig [rset r pos]
+    set dim_orig [rset r dim]
+    set fb_orig [rset var fb]
+    set fb_all_orig [rset var fb_all]
+    set listen_orig [rset var listen]
 
     set mged_gui($id,mouse_behavior) p
     set_mouse_behavior $id
@@ -153,7 +228,7 @@ proc grouper { GroupName Boolean { ListLimit 0 } } {
     rset vars fb 0
     rset r draw 1
 
-    bind $mged_gui($id,active_dm) <ButtonRelease-2> " winset $mged_gui($id,active_dm); dm idle; do_grouper $GroupName $Boolean $ListLimit"
+    bind $mged_gui($id,active_dm) <ButtonRelease-2> " winset $mged_gui($id,active_dm); dm idle; ::grouper_v2::do_grouper $GroupName $Boolean $ListLimit"
     bind $mged_gui($id,active_dm) <Control-ButtonRelease-2> " winset $mged_gui($id,active_dm); dm idle; done_grouper"
 
     # highlight in yellow current group
@@ -165,20 +240,27 @@ proc grouper { GroupName Boolean { ListLimit 0 } } {
 
 proc do_grouper { GroupName Boolean ListLimit } {
 
-    uplevel #0 set GroupNameGlobal $GroupName
-    global objs
-    global erase_status
+    variable objs
+    variable GroupNameGlobal
+
+    set GroupNameGlobal $GroupName
 
     # Temporarily erase group from display while getting objects in rectangle"
-    after 1 {if { [search -name $GroupNameGlobal] != "" } { set erase_status [erase $GroupNameGlobal] } else { set erase_status 1 }}
+    after 1 {
+	if { [search -name $::grouper_v2::GroupNameGlobal] != "" } {
+	    set ::grouper_v2::erase_status [erase $::grouper_v2::GroupNameGlobal]
+	} else {
+ 	    set ::grouper_v2::erase_status 1
+	} 
+    }
 
     # Wait for the group to be erased from the display before we continue
-    vwait erase_status
+    vwait ::grouper_v2::erase_status
 
-    after 1 {set objs [gr_getObjInRectangle]}
+    after 1 {set ::grouper_v2::objs [::grouper_v2::gr_getObjInRectangle]}
 
     puts stdout "Selection running ..."
-    vwait objs
+    vwait ::grouper_v2::objs
 
     if { $objs == "invalid_selection" } {
 	puts stdout "Invalid selection (zero area selection box)."
@@ -205,7 +287,7 @@ proc do_grouper { GroupName Boolean ListLimit } {
 	set grp_obj_list_before ""
 	set grp_obj_list_len_before 0
     } else {
-	set grp_obj_list_before [search $GroupName]
+	set grp_obj_list_before [search $GroupName -maxdepth 1]
 	set grp_obj_list_len_before [expr [llength $grp_obj_list_before] - 1]
     }
 
@@ -227,9 +309,10 @@ proc do_grouper { GroupName Boolean ListLimit } {
 	set grp_obj_list_after ""
 	set grp_obj_list_len_after 0
     } else {
-	set grp_obj_list_after [search $GroupName]
+	set grp_obj_list_after [search $GroupName -maxdepth 1]
 	set grp_obj_list_len_after [expr [llength $grp_obj_list_after] - 1]
     }
+
 
     if { $grp_obj_list_len_after > $grp_obj_list_len_before } {
 	set objcnt_chng [expr $grp_obj_list_len_after - $grp_obj_list_len_before]
@@ -284,20 +367,21 @@ proc dg {} {
 
 
 proc done_grouper {} {
+
     global mged_gui mged_default mged_players
-    global GroupNameGlobal
-    global GrouperRunning
-    global draw_orig
-    global pos_orig
-    global dim_orig
-    global fb_orig
-    global fb_all_orig
-    global listen_orig
+
+    variable GroupNameGlobal
+    variable GrouperRunning
+    variable draw_orig
+    variable pos_orig
+    variable dim_orig
+    variable fb_orig
+    variable fb_all_orig
+    variable listen_orig
 
     if {$GrouperRunning != 1} {
 	return "Grouper not running."
     }
-
 
     for {set i 0} {1} {incr i} {
 	set id [subst $mged_default(id)]_$i
@@ -313,7 +397,9 @@ proc done_grouper {} {
     bind $mged_gui($id,active_dm) <ButtonRelease-2> ""
 
     # remove yellow highlights from the display
-    erase $GroupNameGlobal
+    if { [search -name $GroupNameGlobal] != "" } {
+	erase $GroupNameGlobal
+    }
     set GrouperRunning 0
 
     # return display to state before grouper changed it
@@ -326,6 +412,10 @@ proc done_grouper {} {
 
     puts stdout "Grouper done."
 }
+
+}
+
+namespace import ::grouper_v2::*
 
 
 # Local Variables:
