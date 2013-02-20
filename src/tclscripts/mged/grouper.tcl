@@ -34,7 +34,10 @@
 # instead of the primitive. With the '-p' option, if the primitive does
 # not have a parent (i.e. is in the root) it will be ignored.
 #
-
+# NOTE: This command will not function as expected if a selected object
+#       has matrices applied. The xpush command can resolve this
+#       limitation.
+#
 
 namespace eval grouper_v2 {
 
@@ -54,6 +57,9 @@ set listen_orig ""
 set objs {}
 set erase_status ""
 set parent_only 0
+set center_orig ""
+set size_orig ""
+set ae_orig ""
 
 proc gr_remdup { GroupName } {
 
@@ -159,6 +165,9 @@ proc grouper { args } {
     variable fb_orig
     variable fb_all_orig
     variable listen_orig
+    variable center_orig
+    variable size_orig
+    variable ae_orig
 
     set GroupName ""
     set Boolean ""
@@ -221,6 +230,9 @@ proc grouper { args } {
     set fb_orig [rset var fb]
     set fb_all_orig [rset var fb_all]
     set listen_orig [rset var listen]
+    set center_orig [center]
+    set size_orig [size]
+    set ae_orig [ae]
 
     set mged_gui($id,mouse_behavior) p
     set_mouse_behavior $id
@@ -234,6 +246,9 @@ proc grouper { args } {
     # highlight in yellow current group
     if { [search -name $GroupName] != "" } {
 	e -C255/255/0 $GroupName
+	center $center_orig
+	size $size_orig
+	ae $ae_orig
     }
 }
 
@@ -242,8 +257,14 @@ proc do_grouper { GroupName Boolean ListLimit } {
 
     variable objs
     variable GroupNameGlobal
+    variable center_orig
+    variable size_orig
+    variable ae_orig
 
     set GroupNameGlobal $GroupName
+    set center_orig [center]
+    set size_orig [size]
+    set ae_orig [ae]
 
     # Temporarily erase group from display while getting objects in rectangle"
     after 1 {
@@ -267,6 +288,9 @@ proc do_grouper { GroupName Boolean ListLimit } {
 	# highlight in yellow current group
 	if { [search -name $GroupName] != "" } {
 	    e -C255/255/0 $GroupName
+	    center $center_orig
+	    size $size_orig
+	    ae $ae_orig
 	}
 	return
     }
@@ -276,6 +300,9 @@ proc do_grouper { GroupName Boolean ListLimit } {
 	# highlight in yellow current group
 	if { [search -name $GroupName] != "" } {
 	    e -C255/255/0 $GroupName
+	    center $center_orig
+	    size $size_orig
+	    ae $ae_orig
 	}
 	return
     }
@@ -355,6 +382,9 @@ proc do_grouper { GroupName Boolean ListLimit } {
     # highlight in yellow current group
     if { [search -name $GroupName] != "" } {
 	e -C255/255/0 $GroupName
+	center $center_orig
+	size $size_orig
+	ae $ae_orig
     }
 
     puts stdout "Selection complete."
