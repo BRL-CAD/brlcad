@@ -107,6 +107,7 @@ package provide cadwidgets::Ged 1.0
 	common GED_RAY_ODD "ged_ray_odd"
 	common GED_RAY_EVEN "ged_ray_even"
 	common GED_RAY_VOID "ged_ray_void"
+	common GED_RAD2DEG [expr {180.0 / 3.141592653589793}]
 
 	variable mGedFile ""
 
@@ -4037,7 +4038,7 @@ package provide cadwidgets::Ged 1.0
     }
 
     set cos [vdot $A $B]
-    set angle [format "%.2f" [expr {acos($cos) * RAD2DEG}]]
+    set angle [format "%.2f" [expr {acos($cos) * $GED_RAD2DEG}]]
 
     if {[llength $mViewMeasureCallbacks] == 0} {
 	set mstring "Measured Distance (Leg 2):  $delta [$mGed units -s]\nMeasured Angle:  $angle"
