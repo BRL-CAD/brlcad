@@ -2119,7 +2119,9 @@ if test "x$bc_use_debug" != "xno" ; then
 	dnl best-practice error checking on certain libc functions
 	dnl (e.g., memcpy), and provides run-time checks on buffer
 	dnl lengths and memory regions.
-	BC_COMPILER_AND_LINKER_RECOGNIZES([-D_FORTIFY_SOURCE=2])
+	dnl
+	dnl XXX Can only add with optimization with newer glibc
+	dnl 	BC_COMPILER_AND_LINKER_RECOGNIZES([-D_FORTIFY_SOURCE=2])
 fi
 
 dnl optimization flags
