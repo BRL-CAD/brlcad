@@ -1669,6 +1669,11 @@ package provide Archer 1.0
 	} else {
 	    $itk_component(ged) open $mTargetCopy
 	}
+
+	if {$mAllowDataClear} {
+	    gedCmd data_axes points {}
+	    gedCmd data_lines points {}
+	}
     } else {
 	initGed
 
