@@ -2847,12 +2847,6 @@ output_to_nmg(struct ga_t *ga,
     NMG_CK_REGION(r);
     NMG_CK_SHELL(s);
 
-    /* initialize tables */
-    bu_ptbl_init(&faces, 64, " &faces ");
-
-    verts = (struct vertex **)bu_calloc(gfi->tot_vertices, sizeof(struct vertex *), "verts");
-    memset((void *)verts, 0, sizeof(struct vertex *) * gfi->tot_vertices);
-
     /* begin bomb protection */
     if (BU_SETJUMP) {
 	BU_UNSETJUMP; /* relinquish bomb protection */
@@ -2862,8 +2856,8 @@ output_to_nmg(struct ga_t *ga,
 	 */
 	rt_g.NMG_debug = NMG_debug; /* restore mode */
 
-	bu_ptbl_reset(&faces);
-	bu_free(verts, "verts");
+	if (verts)
+	    bu_free(verts, "verts");
 
 	if (m != (struct model *)NULL) {
 	    /* sanity check */
@@ -2875,6 +2869,12 @@ output_to_nmg(struct ga_t *ga,
 
 	return 2; /* return code 2 indicates nmg bomb occurred */
     }
+
+    /* initialize tables */
+    bu_ptbl_init(&faces, 64, " &faces ");
+
+    verts = (struct vertex **)bu_calloc(gfi->tot_vertices, sizeof(struct vertex *), "verts");
+    memset((void *)verts, 0, sizeof(struct vertex *) * gfi->tot_vertices);
 
     shell_vert_idx = 0;
     NMG_CK_SHELL(s);
