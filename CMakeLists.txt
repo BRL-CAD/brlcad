@@ -1384,11 +1384,13 @@ if(NOT MSVC)
   include(${BRLCAD_CMAKE_DIR}/BRLCAD_CompilerFlags.cmake)
 endif(NOT MSVC)
 
-# If doing a debug build, set _FORTIFY_SOURCE to 2. Provides
-# compile-time best-practice error checking on certain libc
-# functions (e.g., memcpy), and provides run-time checks on buffer
-# lengths and memory regions.
-if(${BRLCAD_DEBUG_BUILD} MATCHES "ON")
+# If doing an optimized build, set _FORTIFY_SOURCE to 2.  Provides
+# compile-time best-practice error checking on certain libc functions
+# (e.g., memcpy), and provides run-time checks on buffer lengths and
+# memory regions.  Unfortunately, glibc-1.6 made _FORTIFY_SOURCE spew
+# an unquellable warning if optimization is disabled so we can't tie
+# the flag to debug builds.
+if(${BRLCAD_OPTIMIZED_BUILD} MATCHES "ON")
   CONFIG_H_APPEND(BRLCAD "#define _FORTIFY_SOURCE 2\n")
 endif(${BRLCAD_DEBUG_BUILD} MATCHES "ON")
 
