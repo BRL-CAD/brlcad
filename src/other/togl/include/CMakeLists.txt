@@ -5,3 +5,4 @@ SET(TOGL_HDRS
 	)
 install(FILES ${TOGL_HDRS} DESTINATION include/togl)
 install(FILES GL/glew.h DESTINATION include/GL)
+install(FILES GL/glu.h DESTINATION include/GL)
