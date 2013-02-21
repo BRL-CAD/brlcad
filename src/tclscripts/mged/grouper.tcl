@@ -136,7 +136,7 @@ proc gr_getObjInRectangle {} {
 	    # skip objects with no parent
 	    if { $obj2 != "" } {
 		lappend objs2 $obj2
-	    } 
+	    }
 	}
     }
 
@@ -272,7 +272,7 @@ proc do_grouper { GroupName Boolean ListLimit } {
 	    set ::grouper_v2::erase_status [erase $::grouper_v2::GroupNameGlobal]
 	} else {
  	    set ::grouper_v2::erase_status 1
-	} 
+	}
     }
 
     # Wait for the group to be erased from the display before we continue
