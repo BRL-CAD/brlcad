@@ -6720,6 +6720,10 @@ proc title_node_handler {node} {
 	    -borderwidth 1 \
 	    -relief sunken
     } {}
+
+    # Force initialization of GeometryEditFrame
+    GeometryEditFrame $parent.tmpgef
+    rename $parent.tmpgef ""
 }
 
 
@@ -9102,6 +9106,9 @@ proc title_node_handler {node} {
     puts $_pfile "set mShowGrid $mShowGrid"
     puts $_pfile "set mSnapGrid $mSnapGrid"
     puts $_pfile "set mShowADC $mShowADC"
+
+    puts $_pfile "set GeometryEditFrame::mHighlightPoints $GeometryEditFrame::mHighlightPoints"
+    puts $_pfile "set GeometryEditFrame::mHighlightPointSize $GeometryEditFrame::mHighlightPointSize"
 }
 
 
