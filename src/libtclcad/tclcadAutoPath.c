@@ -180,10 +180,12 @@ tclcad_auto_path(Tcl_Interp *interp)
     char pathsep[2] = { BU_PATH_SEPARATOR, '\0' };
 
     struct bu_vls tcl = BU_VLS_INIT_ZERO;
-    struct bu_vls tk = BU_VLS_INIT_ZERO;
     struct bu_vls itcl = BU_VLS_INIT_ZERO;
+#ifdef HAVE_TK
+    struct bu_vls tk = BU_VLS_INIT_ZERO;
     struct bu_vls itk = BU_VLS_INIT_ZERO;
     struct bu_vls iwidgets = BU_VLS_INIT_ZERO;
+#endif
 
     if (!interp) {
 	/* nothing to do */
@@ -191,10 +193,12 @@ tclcad_auto_path(Tcl_Interp *interp)
     }
 
     bu_vls_printf(&tcl, "tcl%s", TCL_VERSION);
-    bu_vls_printf(&tk, "tk%s", TK_VERSION);
     bu_vls_printf(&itcl, "itcl%s", ITCL_VERSION);
+#ifdef HAVE_TK
+    bu_vls_printf(&tk, "tk%s", TK_VERSION);
     bu_vls_printf(&itk, "itk%s", ITK_VERSION);
     bu_vls_printf(&iwidgets, "iwidgets%s", IWIDGETS_VERSION);
+#endif
 
     root = bu_brlcad_root("", 1);
     bu_vls_printf(&root_buf, "%s", root);
@@ -419,6 +423,13 @@ tclcad_auto_path(Tcl_Interp *interp)
     }
 
     which_argv = NULL;
+    bu_vls_free(&tcl);
+    bu_vls_free(&itcl);
+#ifdef HAVE_TK
+    bu_vls_free(&tk);
+    bu_vls_free(&itk);
+    bu_vls_free(&iwidgets);
+#endif
     bu_vls_free(&auto_path);
     bu_vls_free(&lappend);
     bu_vls_free(&root_buf);
