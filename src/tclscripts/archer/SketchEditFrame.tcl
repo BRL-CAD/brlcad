@@ -750,9 +750,6 @@ Lock-Shift-Button-1
     set mCurrentSketchPoints ""
     set mCurrentSketchEdges ""
     set mCurrentSketchFaces ""
-    $itk_component(vertTab) unselectAllRows
-    $itk_component(edgeTab) unselectAllRows
-    $itk_component(faceTab) unselectAllRows
 }
 
 
