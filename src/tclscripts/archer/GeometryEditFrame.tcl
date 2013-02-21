@@ -59,6 +59,9 @@
 	common mEditParam2 0
 	common mEditLastTransMode $::ArcherCore::OBJECT_CENTER_MODE
 	common mEditPCommand ""
+	common mHighlightPoints 1
+	common mHighlightPointSize 1.0
+	common mHighlightPointColor {255 255 255}
 
 	proc validateColorComp {c}
 	proc validateColor {color}
@@ -94,12 +97,15 @@
 	method updateUpperPanel {normal disabled}
 	method updateGeometryIfMod {}
 
+	method clearAllTables {}
 	method initEditState {}
 
 	method buildComboBox {parent name1 name2 varName text listOfChoices}
 	method buildArrow {parent prefix text buildViewFunc}
-	method toggleArrow {arrow view args}
 	method getView {}
+	method toggleArrow {arrow view args}
+	method updatePointSize {}
+	method validatePointSize {_size}
     }
 
     private {
@@ -241,7 +247,14 @@
 
 
 ::itcl::body GeometryEditFrame::clearEditState {{_clearModeOnly 0}} {
-    # Nothing for now
+    set mEditMode 0
+
+    if {$_clearModeOnly} {
+	return
+    }
+
+    clearAllTables
+    set itk_option(-prevGeometryObject) ""
 }
 
 
@@ -314,6 +327,11 @@
 ::itcl::body GeometryEditFrame::updateGeometryIfMod {} {
 }
 
+
+::itcl::body GeometryEditFrame::clearAllTables {} {
+}
+
+
 ::itcl::body GeometryEditFrame::initEditState {} {
     set itk_option(-prevGeometryObject) $itk_option(-geometryObject)
 
@@ -370,17 +388,6 @@
 							  -column 1 -sticky nsew]
 }
 
-itcl::body GeometryEditFrame::toggleArrow {arrow view args} {
-    set state [$arrow cget -togglestate]
-    switch -- $state {
-	closed {
-	    grid forget $view
-	}
-	open {
-	    eval grid $view $args
-	}
-    }
-}
 
 ::itcl::body GeometryEditFrame::getView {} {
     if {$itk_option(-mged) == ""} {
@@ -407,6 +414,53 @@ itcl::body GeometryEditFrame::toggleArrow {arrow view args} {
     set mZmin [expr {$mCenterZ - $mDelta}]
     set mZmax [expr {$mCenterZ + $mDelta}]
 }
+
+
+itcl::body GeometryEditFrame::toggleArrow {arrow view args} {
+    set state [$arrow cget -togglestate]
+    switch -- $state {
+	closed {
+	    grid forget $view
+	}
+	open {
+	    eval grid $view $args
+	}
+    }
+}
+
+
+::itcl::body GeometryEditFrame::updatePointSize {} {
+    if {$mHighlightPointSize != "" && $mHighlightPointSize != "."} {
+	$itk_option(-mged) data_axes size $mHighlightPointSize
+    } else {
+	$itk_option(-mged) data_axes size 0
+    }
+}
+
+
+::itcl::body GeometryEditFrame::validatePointSize {_size} {
+    if {$_size == "."} {
+	return 1
+    }
+
+    if {[string is double $_size]} {
+	# Need to check is first
+	if {$_size == ""} {
+	    return 1
+	}
+
+	if {$_size < 0} {
+	    return 0
+	}
+
+	# Everything else is OK
+	return 1
+    }
+
+    return 0
+}
+
+
 
 # Local Variables:
 # mode: Tcl

@@ -75,12 +75,10 @@
 	    {Split Face}
 	}
 
-	method clearAllTables {}
 	method selectBotPts {_plist}
 	method setMoveMode {{_tflag 0}}
 
 	# Override what's in GeometryEditFrame
-	method clearEditState {{_clearModeOnly 0}}
 	method initGeometry {_gdata}
 	method updateGeometry {}
 	method createGeometry {_name}
@@ -109,9 +107,6 @@
 	variable mMaxVertThreshold 30
 	variable mIgnoreMaxVertThreshold 0
 	variable mShowTables 1
-	variable mHighlightPoints 1
-	variable mHighlightPointSize 1.0
-	variable mHighlightPointColor {255 255 255}
 
 	# Methods used by the constructor
 	# override methods in GeometryEditFrame
@@ -119,8 +114,9 @@
 	method buildLowerPanel
 
 	# Override what's in GeometryEditFrame
-	method updateGeometryIfMod {}
+	method clearAllTables {}
 	method initEditState {}
+	method updateGeometryIfMod {}
 
 	method applyData {}
 	method botEdgesSelectCallback {_edge {_sync 1}}
@@ -144,9 +140,7 @@
 	method syncTablesWrtPoints {{_findEdges 1}}
 	method syncTablesWrtEdges {}
 	method syncTablesWrtFaces {}
-	method updatePointSize {}
 	method validateDetailEntry {_row _col _newval _clientdata}
-	method validatePointSize {_size}
     }
 
     private {}
@@ -170,19 +164,6 @@
 #                      PUBLIC METHODS
 # ------------------------------------------------------------
 
-
-
-::itcl::body BotEditFrame::clearAllTables {} {
-    $itk_option(-mged) data_axes points {}
-    $itk_option(-mged) data_lines points {}
-
-    set mCurrentBotPoints ""
-    set mCurrentBotEdges ""
-    set mCurrentBotFaces ""
-    $itk_component(vertTab) unselectAllRows
-    $itk_component(edgeTab) unselectAllRows
-    $itk_component(faceTab) unselectAllRows
-}
 
 
 ::itcl::body BotEditFrame::selectBotPts {_plist} {
@@ -219,18 +200,6 @@
     }
 
     return $len
-}
-
-
-::itcl::body BotEditFrame::clearEditState {{_clearModeOnly 0}} {
-    set mEditMode 0
-
-    if {$_clearModeOnly} {
-	return
-    }
-
-    clearAllTables
-    set itk_option(-prevGeometryObject) ""
 }
 
 
@@ -617,7 +586,7 @@
 	::ttk::checkbutton $parent.hlPointsCB \
 	    -text "Highlight Points" \
 	    -command [::itcl::code $this highlightCurrentBotElements] \
-	    -variable [::itcl::scope mHighlightPoints]
+	    -variable ::GeometryEditFrame::mHighlightPoints
     } {}
 
     itk_component add maxVertThreshL {
@@ -667,58 +636,16 @@
 }
 
 
-::itcl::body BotEditFrame::updateGeometryIfMod {} {
-    if {$itk_option(-mged) == "" ||
-	$itk_option(-geometryObject) == ""} {
-	return
-    }
+::itcl::body BotEditFrame::clearAllTables {} {
+    $itk_option(-mged) data_axes points {}
+    $itk_option(-mged) data_lines points {}
 
-    set doUpdate 0
-    set gdata [$itk_option(-mged) get $itk_option(-geometryObject)]
-    set gdata [lrange $gdata 1 end]
-
-    foreach {attr val} $gdata {
-	if {![regexp {^[VOIRvoir]([0-9]+)$} $attr all index]} {
-	    puts "Encountered bad one - $attr"
-	    continue
-	}
-
-	incr index
-
-	switch -regexp -- $attr {
-	    {[Vv][0-9]+} {
-		if {$mVertDetail($index,$PX_COL) != [lindex $val 0] ||
-		    $mVertDetail($index,$PY_COL) != [lindex $val 1] ||
-		    $mVertDetail($index,$PZ_COL) != [lindex $val 2]} {
-		    set doUpdate 1
-		}
-	    }
-	    {[Oo][0-9]+} {
-		if {$mVertDetail($index,$OD_COL) != $val} {
-		    set doUpdate 1
-		}
-	    }
-	    {[Ii][0-9]+} {
-		if {$mVertDetail($index,$ID_COL) != $val} {
-		    set doUpdate 1
-		}
-	    }
-	    {[Rr][0-9]+} {
-		if {$mVertDetail($index,$RADIUS_COL) != $val} {
-		    set doUpdate 1
-		}
-	    }
-	    default {
-		# Shouldn't get here
-		puts "Encountered bad one - $attr"
-	    }
-	}
-
-	if {$doUpdate} {
-	    updateGeometry
-	    return
-	}
-    }
+    set mCurrentBotPoints ""
+    set mCurrentBotEdges ""
+    set mCurrentBotFaces ""
+    $itk_component(vertTab) unselectAllRows
+    $itk_component(edgeTab) unselectAllRows
+    $itk_component(faceTab) unselectAllRows
 }
 
 
@@ -796,6 +723,61 @@
 	}
 
     GeometryEditFrame::initEditState
+}
+
+
+::itcl::body BotEditFrame::updateGeometryIfMod {} {
+    if {$itk_option(-mged) == "" ||
+	$itk_option(-geometryObject) == ""} {
+	return
+    }
+
+    set doUpdate 0
+    set gdata [$itk_option(-mged) get $itk_option(-geometryObject)]
+    set gdata [lrange $gdata 1 end]
+
+    foreach {attr val} $gdata {
+	if {![regexp {^[VOIRvoir]([0-9]+)$} $attr all index]} {
+	    puts "Encountered bad one - $attr"
+	    continue
+	}
+
+	incr index
+
+	switch -regexp -- $attr {
+	    {[Vv][0-9]+} {
+		if {$mVertDetail($index,$PX_COL) != [lindex $val 0] ||
+		    $mVertDetail($index,$PY_COL) != [lindex $val 1] ||
+		    $mVertDetail($index,$PZ_COL) != [lindex $val 2]} {
+		    set doUpdate 1
+		}
+	    }
+	    {[Oo][0-9]+} {
+		if {$mVertDetail($index,$OD_COL) != $val} {
+		    set doUpdate 1
+		}
+	    }
+	    {[Ii][0-9]+} {
+		if {$mVertDetail($index,$ID_COL) != $val} {
+		    set doUpdate 1
+		}
+	    }
+	    {[Rr][0-9]+} {
+		if {$mVertDetail($index,$RADIUS_COL) != $val} {
+		    set doUpdate 1
+		}
+	    }
+	    default {
+		# Shouldn't get here
+		puts "Encountered bad one - $attr"
+	    }
+	}
+
+	if {$doUpdate} {
+	    updateGeometry
+	    return
+	}
+    }
 }
 
 
@@ -1343,15 +1325,6 @@
 }
 
 
-::itcl::body BotEditFrame::updatePointSize {} {
-    if {$mHighlightPointSize != "" && $mHighlightPointSize != "."} {
-	$itk_option(-mged) data_axes size $mHighlightPointSize
-    } else {
-	$itk_option(-mged) data_axes size 0
-    }
-}
-
-
 ::itcl::body BotEditFrame::validateDetailEntry {_row _col _newval _clientdata} {
     return 0
 
@@ -1361,30 +1334,6 @@
 
     return [::cadwidgets::Ged::validateDouble $_newval]
 }
-
-
-::itcl::body BotEditFrame::validatePointSize {_size} {
-    if {$_size == "."} {
-	return 1
-    }
-
-    if {[string is double $_size]} {
-	# Need to check is first
-	if {$_size == ""} {
-	    return 1
-	}
-
-	if {$_size < 0} {
-	    return 0
-	}
-
-	# Everything else is OK
-	return 1
-    }
-
-    return 0
-}
-
 
 
 # Local Variables:

@@ -69,8 +69,6 @@
 	method get_vlist {}
 	method set_radius {_radius}
 
-	method clearEditState {{_clearModeOnly 0}}
-	method clearAllTables {}
 	method selectSketchPts {_plist}
 
 	# Override what's in GeometryEditFrame
@@ -158,8 +156,9 @@
 	method buildLowerPanel
 
 	# Override what's in GeometryEditFrame
-	method updateGeometryIfMod {}
+	method clearAllTables {}
 	method initEditState {}
+	method updateGeometryIfMod {}
 
 	method applyData {}
 	method bboxVerts {}
@@ -303,31 +302,6 @@
 
 ::itcl::body SketchEditFrame::set_radius {_radius} {
     set radius $_radius
-}
-
-
-::itcl::body SketchEditFrame::clearEditState {{_clearModeOnly 0}} {
-    set mEditMode 0
-
-    if {$_clearModeOnly} {
-	return
-    }
-
-    clearAllTables
-    set itk_option(-prevGeometryObject) ""
-}
-
-
-::itcl::body SketchEditFrame::clearAllTables {} {
-    $itk_option(-mged) data_axes points {}
-    $itk_option(-mged) data_lines points {}
-
-    set mCurrentSketchPoints ""
-    set mCurrentSketchEdges ""
-    set mCurrentSketchFaces ""
-    $itk_component(vertTab) unselectAllRows
-    $itk_component(edgeTab) unselectAllRows
-    $itk_component(faceTab) unselectAllRows
 }
 
 
@@ -772,6 +746,51 @@ Lock-Shift-Button-1
 }
 
 
+::itcl::body SketchEditFrame::clearAllTables {} {
+    $itk_option(-mged) data_axes points {}
+    $itk_option(-mged) data_lines points {}
+
+    set mCurrentSketchPoints ""
+    set mCurrentSketchEdges ""
+    set mCurrentSketchFaces ""
+    $itk_component(vertTab) unselectAllRows
+    $itk_component(edgeTab) unselectAllRows
+    $itk_component(faceTab) unselectAllRows
+}
+
+
+::itcl::body SketchEditFrame::initEditState {} {
+    if {$itk_option(-mged) == ""} {
+	return
+    }
+
+    set mEditPCommand [::itcl::code $this p]
+    set mEditParam1 ""
+    set mEditCommand ""
+    set mEditClass ""
+    highlightCurrentSketchElements
+
+    switch -- $mEditMode \
+	$moveArbitrary {
+	    setup_move_arbitrary
+	} \
+	$createLine {
+	    create_line
+	} \
+	$createCircle {
+	    create_circle
+	} \
+	$createArc {
+	    create_arc
+	} \
+	$createBezier {
+	    create_bezier
+	}
+
+    GeometryEditFrame::initEditState
+}
+
+
 ::itcl::body SketchEditFrame::updateGeometryIfMod {} {
     if {$itk_option(-mged) == "" ||
 	$itk_option(-geometryObject) == ""} {
@@ -827,38 +846,6 @@ Lock-Shift-Button-1
 	$Bz != $mBz} {
 	updateGeometry
     }
-}
-
-
-::itcl::body SketchEditFrame::initEditState {} {
-    if {$itk_option(-mged) == ""} {
-	return
-    }
-
-    set mEditPCommand [::itcl::code $this p]
-    set mEditParam1 ""
-    set mEditCommand ""
-    set mEditClass ""
-    highlightCurrentSketchElements
-
-    switch -- $mEditMode \
-	$moveArbitrary {
-	    setup_move_arbitrary
-	} \
-	$createLine {
-	    create_line
-	} \
-	$createCircle {
-	    create_circle
-	} \
-	$createArc {
-	    create_arc
-	} \
-	$createBezier {
-	    create_bezier
-	}
-
-    GeometryEditFrame::initEditState
 }
 
 

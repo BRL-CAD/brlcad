@@ -68,6 +68,8 @@
 	    {Set Pipe Bend}
 	}
 
+	method clearAllTables {}
+
 	# Override what's in GeometryEditFrame
 	method initGeometry {gdata}
 	method initTranslate {}
@@ -79,7 +81,7 @@
 
     protected {
 	variable mDetail
-	variable mCurrentPipePoint 1
+	variable mCurrentPipePoint 0
 	variable mPrevPipeObject ""
 
 	# Methods used by the constructor
@@ -96,6 +98,7 @@
 	method endPipePointMove {_dm _obj _mx _my}
 	method handleDetailPopup {_index _X _Y}
 	method handleEnter {_row _col}
+	method highlightCurrentPipePoint {}
 	method pipePointAppendCallback {}
 	method pipePointDeleteCallback {_pindex}
 	method pipePointMoveCallback {_pindex}
@@ -125,6 +128,16 @@
 # ------------------------------------------------------------
 #                      PUBLIC METHODS
 # ------------------------------------------------------------
+
+
+::itcl::body PipeEditFrame::clearAllTables {} {
+    $itk_option(-mged) data_axes points {}
+    $itk_option(-mged) data_lines points {}
+
+    set mCurrentPipePoint 0
+    $itk_component(detailTab) unselectAllRows
+}
+
 
 ## - initGeometry
 #
@@ -177,11 +190,12 @@
 
     GeometryEditFrame::initGeometry $gdata
 
-    if {$itk_option(-geometryObject) != $mPrevPipeObject} {
-	set mCurrentPipePoint 1
-	set mPrevPipeObject $itk_option(-geometryObject)
+    if {$itk_option(-geometryObject) != $itk_option(-prevGeometryObject)} {
+	set mCurrentPipePoint 0
+	set itk_option(-prevGeometryObject) $itk_option(-geometryObject)
+    } elseif {$mCurrentPipePoint > 0} {
+	pipePointSelectCallback [expr {$mCurrentPipePoint - 1}]
     }
-    pipePointSelectCallback [expr {$mCurrentPipePoint - 1}]
 }
 
 
@@ -360,6 +374,37 @@
 	grid $itk_component(editRB$row) -row $row -column 0 -sticky nsew
 	incr row
     }
+
+    itk_component add hlPointsCB {
+	::ttk::checkbutton $parent.hlPointsCB \
+	    -text "Highlight Points" \
+	    -command [::itcl::code $this highlightCurrentPipePoint] \
+	    -variable ::GeometryEditFrame::mHighlightPoints
+    } {}
+
+    itk_component add pointSizeL {
+	::ttk::label $parent.pointSizeL \
+	    -anchor e \
+	    -text "Highlight Point Size"
+    } {}
+    itk_component add pointSizeE {
+	::ttk::entry $parent.pointSizeE \
+	    -width 12 \
+	    -textvariable [::itcl::scope mHighlightPointSize] \
+	    -validate key \
+	    -validatecommand [::itcl::code $this validatePointSize %P]
+    } {}
+
+    bind $itk_component(pointSizeE) <Return> [::itcl::code $this updatePointSize]
+
+    incr row
+    grid rowconfigure $parent $row -weight 1
+    incr row
+    grid $itk_component(hlPointsCB) -row $row -column 0 -sticky w
+    incr row
+    grid $itk_component(pointSizeL) -column 0 -row $row -sticky e
+    grid $itk_component(pointSizeE) -column 1 -row $row -sticky ew
+    grid columnconfigure $parent 1 -weight 1
 }
 
 ::itcl::body PipeEditFrame::updateGeometryIfMod {} {
@@ -530,6 +575,22 @@
     updateGeometryIfMod
 }
 
+
+::itcl::body PipeEditFrame::highlightCurrentPipePoint {} {
+    $itk_option(-mged) refresh_off
+    set hlcolor [$::ArcherCore::application getRgbColor [$itk_option(-mged) cget -primitiveLabelColor]]
+    $itk_option(-mged) data_axes draw $mHighlightPoints
+    $itk_option(-mged) data_axes size $mHighlightPointSize
+    eval $itk_option(-mged) data_axes color $hlcolor
+    $itk_option(-mged) refresh_on
+
+    set seg_i [expr {$mCurrentPipePoint - 1}]
+    set pt [$itk_option(-mged) get $itk_option(-geometryObjectPath) V$seg_i]
+
+    $itk_option(-mged) data_axes points [list $pt]
+}
+
+
 ::itcl::body PipeEditFrame::pipePointAppendCallback {} {
     if {$itk_option(-mged) == ""} {
 	return
@@ -595,6 +656,7 @@
     incr _pindex
     set mCurrentPipePoint $_pindex
     $itk_component(detailTab) selectSingleRow $_pindex
+    highlightCurrentPipePoint
 }
 
 ::itcl::body PipeEditFrame::singleSelectCallback {_pindex} {
