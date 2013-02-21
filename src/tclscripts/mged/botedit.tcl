@@ -18,14 +18,6 @@
 # information.
 #
 ###
-# manually sourcing dependencies for now
-if {[catch {
-    set script [file join [bu_brlcad_data "tclscripts"] boteditor botEditor.tcl]
-    source $script
-} errMsg] > 0} {
-    puts "Couldn't load \"$script\"\n$errMsg"
-    exit
-}
 
 proc bot_askforname {parent screen} {
     if {[cad_input_dialog $parent.botname $screen "BoT to Edit"\

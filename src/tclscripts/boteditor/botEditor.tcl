@@ -29,18 +29,6 @@ package require Tk
 package require Itcl
 package require Itk
 
-# manually sourcing dependencies for now
-if {[catch {
-    set script [file join [bu_brlcad_data "tclscripts"] boteditor botPropertyBox.tcl]
-    source $script
-
-    set script [file join [bu_brlcad_data "tclscripts"] boteditor botTools.tcl]
-    source $script
-} errMsg] > 0} {
-    puts "Couldn't load \"$script\"\n$errMsg"
-    exit
-}
-
 ::itcl::class BotEditor {
     inherit ::itk::Toplevel
 

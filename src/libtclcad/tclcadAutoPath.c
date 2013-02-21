@@ -247,6 +247,7 @@ tclcad_auto_path(Tcl_Interp *interp)
 	join_path(&auto_path, data, "tclscripts", "graph", NULL);
 	join_path(&auto_path, data, "tclscripts", "rtwizard", NULL);
 	join_path(&auto_path, data, "tclscripts", "archer", NULL);
+	join_path(&auto_path, data, "tclscripts", "boteditor", NULL);
     }
 
     /* are we running uninstalled? */
@@ -270,6 +271,7 @@ tclcad_auto_path(Tcl_Interp *interp)
 	join_path(&auto_path, srcpath, "src", "tclscripts", "graph", NULL);
 	join_path(&auto_path, srcpath, "src", "tclscripts", "rtwizard", NULL);
 	join_path(&auto_path, srcpath, "src", "tclscripts", "archer", NULL);
+	join_path(&auto_path, srcpath, "src", "tclscripts", "boteditor", NULL);
     }
 
     /* add search paths for dist invocation */
@@ -293,6 +295,7 @@ tclcad_auto_path(Tcl_Interp *interp)
 	    join_path(&auto_path, srcpath, "..", "src", "tclscripts", "graph", NULL);
 	    join_path(&auto_path, srcpath, "..", "src", "tclscripts", "rtwizard", NULL);
 	    join_path(&auto_path, srcpath, "..", "src", "tclscripts", "archer", NULL);
+	    join_path(&auto_path, srcpath, "..", "src", "tclscripts", "boteditor", NULL);
 	}
     }
 
