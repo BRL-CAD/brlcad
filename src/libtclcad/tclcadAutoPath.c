@@ -319,6 +319,7 @@ tclcad_auto_path(Tcl_Interp *interp)
 	join_path(&auto_path, data, "tclscripts", "graph", NULL);
 	join_path(&auto_path, data, "tclscripts", "rtwizard", NULL);
 	join_path(&auto_path, data, "tclscripts", "archer", NULL);
+	join_path(&auto_path, data, "tclscripts", "boteditor", NULL);
     }
 
     /*    printf("AUTO_PATH IS %s\n", bu_vls_addr(&auto_path)); */
