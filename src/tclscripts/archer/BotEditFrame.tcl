@@ -888,6 +888,8 @@
     set mCurrentBotPoints $_pindex
     $itk_component(vertTab) selectSingleRow $_pindex
     $itk_component(vertTab) see "$_pindex,0"
+
+    highlightCurrentBotElements
 }
 
 
