@@ -468,6 +468,7 @@
 
     set mEditPCommand [::itcl::code $this p]
     set seg_i [expr {$mCurrentPipePoint - 1}]
+    highlightCurrentPipePoint
 
     switch -- $mEditMode \
 	$selectPoint {
@@ -577,6 +578,11 @@
 
 
 ::itcl::body PipeEditFrame::highlightCurrentPipePoint {} {
+    if {$itk_option(-mged) == "" ||
+	[$itk_option(-mged) how $itk_option(-geometryObjectPath)] < 0} {
+	return
+    }
+
     $itk_option(-mged) refresh_off
     set hlcolor [$::ArcherCore::application getRgbColor [$itk_option(-mged) cget -primitiveLabelColor]]
     $itk_option(-mged) data_axes draw $mHighlightPoints
