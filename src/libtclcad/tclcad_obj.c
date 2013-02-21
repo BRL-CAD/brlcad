@@ -12119,16 +12119,29 @@ to_autoview_func(struct ged *gedp,
 		 const char *UNUSED(usage),
 		 int UNUSED(maxargs))
 {
+    size_t i;
     int ret;
     char *av[2];
     int aflag = 0;
+    int rflag = 0;
     struct ged_dm_view *gdvp;
 
     av[0] = "who";
     av[1] = (char *)0;
     ret = ged_who(gedp, 1, (const char **)av);
 
-    if (ret == GED_OK && strlen(bu_vls_addr(gedp->ged_result_str)) == 0)
+    for (i = 1; i < (size_t)argc; ++i) {
+	if (argv[i][0] != '-') {
+	    break;
+	}
+
+	if (argv[i][1] == 'R' && argv[i][2] == '\0') {
+	    rflag = 1;
+	    break;
+	}
+    }
+
+    if (!rflag && ret == GED_OK && strlen(bu_vls_addr(gedp->ged_result_str)) == 0)
 	aflag = 1;
 
     for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
