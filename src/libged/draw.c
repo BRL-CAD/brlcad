@@ -1492,8 +1492,15 @@ ged_draw_guts(struct ged *gedp, int argc, const char *argv[], int kind)
 	char *ptr_o=NULL;
 	char *c;
 
-	if (*argv[i] != '-')
+	if (*argv[i] != '-') {
+    	    /* Done checking options. If our display is non-empty,
+	     * add -R to keep current view.
+	     */
+	    if (BU_LIST_NON_EMPTY(&gedp->ged_gdp->gd_headDisplay)) {
+		bu_vls_strcat(&vls, " -R");
+	    }
 	    break;
+	}
 
 	ptr_A=strchr(argv[i], 'A');
 	if (ptr_A)
@@ -1601,7 +1608,13 @@ ged_draw_guts(struct ged *gedp, int argc, const char *argv[], int kind)
 	bu_vls_free(&vls);
 	bu_free((char *)new_argv, "ged_draw_guts new_argv");
     } else {
+	int empty_display;
 	bu_vls_free(&vls);
+
+	empty_display = 1;
+	if (BU_LIST_NON_EMPTY(&gedp->ged_gdp->gd_headDisplay)) {
+	    empty_display = 0;
+	}
 
 	/* First, delete any mention of these objects.
 	 * Silently skip any leading options (which start with minus signs).
@@ -1614,7 +1627,27 @@ ged_draw_guts(struct ged *gedp, int argc, const char *argv[], int kind)
 	    ged_erasePathFromDisplay(gedp, argv[i], 0);
 	}
 
-	_ged_drawtrees(gedp, argc, argv, kind, (struct _ged_client_data *)0);
+	/* if our display is non-empty add -R to keep current view */
+	if (!empty_display) {
+	    int new_argc;
+	    char **new_argv;
+
+	    new_argc = argc + 1;
+	    new_argv = (char **)bu_malloc(new_argc * sizeof(char *), "ged_draw_guts new_argv");
+
+	    new_argv[0] = bu_strdup("-R");
+	    for (i = 0; i < (size_t)argc; ++i) {
+		new_argv[i + 1] = bu_strdup(argv[i]);
+	    }
+
+	    _ged_drawtrees(gedp, new_argc, (const char **)new_argv, kind, (struct _ged_client_data *)0);
+
+	    for (i = 0; i < (size_t)new_argc; ++i) {
+		bu_free(new_argv[i], "ged_draw_guts new_argv");
+	    }
+	} else {
+	    _ged_drawtrees(gedp, argc, argv, kind, (struct _ged_client_data *)0);
+	}
     }
 
     return GED_OK;
