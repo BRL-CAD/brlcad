@@ -936,7 +936,8 @@
 
 
 ::itcl::body BotEditFrame::highlightCurrentBotElements {} {
-    if {$itk_option(-mged) == ""} {
+    if {$itk_option(-mged) == "" ||
+	[$itk_option(-mged) how $itk_option(-geometryObjectPath)] < 0} {
 	return
     }
 
