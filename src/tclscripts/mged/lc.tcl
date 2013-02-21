@@ -44,7 +44,10 @@
 # 'FileName' the path will be the 'current directory'.
 #
 
+set lc_done_flush 0
+
 proc lc {args} {
+    global lc_done_flush
     set name_cnt 0
     set error_cnt 0
     set find_duplicates_flag_cnt 0
@@ -408,6 +411,8 @@ proc lc {args} {
 	puts stdout [format "%-*s %-*s %-*s %-*s %s" $w1 "ID" $w2 "MAT" $w3 "LOS" $w4 "REGION" "PARENT"]
 	foreach line2 $lines2 {
 	    puts stdout "$line2"
+	    after 1 { set lc_done_flush [flush stdout] }
+	    vwait lc_done_flush
 	}
     }
 
