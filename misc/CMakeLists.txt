@@ -48,18 +48,12 @@ BRLCAD_ADDDATA(nsis/archer.ico icons)
 find_package(Doxygen)
 if(DOXYGEN_FOUND)
   configure_file(Doxyfile.in ${CMAKE_BINARY_DIR}/CMakeTmp/Doxyfile @ONLY)
-  if(BRLCAD_BUILD_DOXYGEN_DOCS)
-    add_custom_command(
-      OUTPUT ${CMAKE_BINARY_DIR}/doc/doxygen_output/html/index.html
-      COMMAND ${DOXYGEN_EXECUTABLE} ${CMAKE_BINARY_DIR}/CMakeTmp/Doxyfile
-      WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/doc
-      )
-    add_custom_target(dox DEPENDS ${CMAKE_BINARY_DIR}/doc/doxygen_output/html/index.html)
-  endif(BRLCAD_BUILD_DOXYGEN_DOCS)
-else(DOXYGEN_FOUND)
-  if(BRLCAD_BUILD_DOXYGEN_DOCS)
-    message("Doxygen build requested but doxygen not found, disabling")
-  endif(BRLCAD_BUILD_DOXYGEN_DOCS)
+  add_custom_command(
+    OUTPUT ${CMAKE_BINARY_DIR}/doc/doxygen_output/html/index.html
+    COMMAND ${DOXYGEN_EXECUTABLE} ${CMAKE_BINARY_DIR}/CMakeTmp/Doxyfile
+    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/doc
+    )
+  add_custom_target(dox DEPENDS ${CMAKE_BINARY_DIR}/doc/doxygen_output/html/index.html)
 endif(DOXYGEN_FOUND)
 
 set(misc_ignore_files
