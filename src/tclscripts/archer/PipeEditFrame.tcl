@@ -579,7 +579,8 @@
 
 ::itcl::body PipeEditFrame::highlightCurrentPipePoint {} {
     if {$itk_option(-mged) == "" ||
-	[$itk_option(-mged) how $itk_option(-geometryObjectPath)] < 0} {
+	[$itk_option(-mged) how $itk_option(-geometryObjectPath)] < 0 ||
+	$mCurrentPipePoint < 1} {
 	return
     }
 
