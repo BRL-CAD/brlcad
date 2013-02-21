@@ -26,6 +26,7 @@
 
 #include "common.h"
 
+#include <stdarg.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -94,6 +95,36 @@ path_to_src(const char *path)
     return NULL;
 }
 
+/* Appends a new path to the path list, preceded by BU_PATH_SEPARATOR.
+ *
+ * The path is specified as a sequence of string arguments, one per
+ * directory, terminated by a (const char *)NULL argument.
+ *
+ * BU_DIR_SEPARATOR is inserted between the string arguments (but not
+ * before or after the path).
+ */
+static void
+join_path(struct bu_vls *path_list, ...)
+{
+    va_list ap;
+    const char *dir;
+
+    bu_vls_putc(path_list, BU_PATH_SEPARATOR);
+
+    va_start(ap, path_list);
+
+    dir = va_arg(ap, const char *);
+    while (dir != NULL) {
+	bu_vls_printf(path_list, "%s", dir);
+
+	dir = va_arg(ap, const char *);
+	if (dir != NULL) {
+	    bu_vls_putc(path_list, BU_DIR_SEPARATOR);
+	}
+    }
+    va_end(ap);
+}
+
 /**
  * Set up the Tcl auto_path for locating various necessary BRL-CAD
  * scripting resources. Detect whether the current invocation is from
@@ -148,10 +179,22 @@ tclcad_auto_path(Tcl_Interp *interp)
 
     char pathsep[2] = { BU_PATH_SEPARATOR, '\0' };
 
+    struct bu_vls tcl = BU_VLS_INIT_ZERO;
+    struct bu_vls tk = BU_VLS_INIT_ZERO;
+    struct bu_vls itcl = BU_VLS_INIT_ZERO;
+    struct bu_vls itk = BU_VLS_INIT_ZERO;
+    struct bu_vls iwidgets = BU_VLS_INIT_ZERO;
+
     if (!interp) {
 	/* nothing to do */
 	return;
     }
+
+    bu_vls_printf(&tcl, "tcl%s", TCL_VERSION);
+    bu_vls_printf(&tk, "tk%s", TK_VERSION);
+    bu_vls_printf(&itcl, "itcl%s", ITCL_VERSION);
+    bu_vls_printf(&itk, "itk%s", ITK_VERSION);
+    bu_vls_printf(&iwidgets, "iwidgets%s", IWIDGETS_VERSION);
 
     root = bu_brlcad_root("", 1);
     bu_vls_printf(&root_buf, "%s", root);
@@ -182,38 +225,24 @@ tclcad_auto_path(Tcl_Interp *interp)
     /* are we running from an installed binary? if so add to path */
     if (bu_file_exists(buffer, NULL) && bu_same_file(buffer, which_argv)) {
 	from_installed = 1;
-	bu_vls_printf(&auto_path, "%c%s%clib",
-		      BU_PATH_SEPARATOR, root, BU_DIR_SEPARATOR);
-	bu_vls_printf(&auto_path, "%c%s%clib%ctcl%s",
-		      BU_PATH_SEPARATOR, root, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, TCL_VERSION);
+	join_path(&auto_path, root, "lib", NULL);
+	join_path(&auto_path, root, "lib", bu_vls_addr(&tcl), NULL);
 #ifdef HAVE_TK
-	bu_vls_printf(&auto_path, "%c%s%clib%ctk%s",
-		      BU_PATH_SEPARATOR, root, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, TK_VERSION);
+	join_path(&auto_path, root, "lib", bu_vls_addr(&tk), NULL);
 #endif
-	bu_vls_printf(&auto_path, "%c%s%clib%citcl%s",
-		      BU_PATH_SEPARATOR, root, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, ITCL_VERSION);
+	join_path(&auto_path, root, "lib", bu_vls_addr(&itcl), NULL);
 #ifdef HAVE_TK
-	bu_vls_printf(&auto_path, "%c%s%clib%citk%s",
-		      BU_PATH_SEPARATOR, root, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, ITK_VERSION);
-	bu_vls_printf(&auto_path, "%c%s%clib%ciwidgets%s",
-		      BU_PATH_SEPARATOR, root, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, IWIDGETS_VERSION);
+	join_path(&auto_path, root, "lib", bu_vls_addr(&itk), NULL);
+	join_path(&auto_path, root, "lib", bu_vls_addr(&iwidgets), NULL);
 #endif
-	bu_vls_printf(&auto_path, "%c%s%ctclscripts",
-		      BU_PATH_SEPARATOR, data, BU_DIR_SEPARATOR);
-	bu_vls_printf(&auto_path, "%c%s%ctclscripts%clib",
-		      BU_PATH_SEPARATOR, data, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR);
-	bu_vls_printf(&auto_path, "%c%s%ctclscripts%cutil",
-		      BU_PATH_SEPARATOR, data, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR);
-	bu_vls_printf(&auto_path, "%c%s%ctclscripts%cmged",
-		      BU_PATH_SEPARATOR, data, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR);
-	bu_vls_printf(&auto_path, "%c%s%ctclscripts%cgeometree",
-		      BU_PATH_SEPARATOR, data, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR);
-	bu_vls_printf(&auto_path, "%c%s%ctclscripts%cgraph",
-		      BU_PATH_SEPARATOR, data, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR);
-	bu_vls_printf(&auto_path, "%c%s%ctclscripts%crtwizard",
-		      BU_PATH_SEPARATOR, data, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR);
-	bu_vls_printf(&auto_path, "%c%s%ctclscripts%carcher",
-		      BU_PATH_SEPARATOR, data, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR);
+	join_path(&auto_path, data, "tclscripts", NULL);
+	join_path(&auto_path, data, "tclscripts", "lib", NULL);
+	join_path(&auto_path, data, "tclscripts", "util", NULL);
+	join_path(&auto_path, data, "tclscripts", "mged", NULL);
+	join_path(&auto_path, data, "tclscripts", "geometree", NULL);
+	join_path(&auto_path, data, "tclscripts", "graph", NULL);
+	join_path(&auto_path, data, "tclscripts", "rtwizard", NULL);
+	join_path(&auto_path, data, "tclscripts", "archer", NULL);
     }
 
     /* are we running uninstalled? */
@@ -221,38 +250,22 @@ tclcad_auto_path(Tcl_Interp *interp)
 
     /* add search paths for source invocation */
     if (srcpath) {
-	bu_vls_printf(&auto_path, "%c%s%csrc%cother%ctcl%cunix",
-		      BU_PATH_SEPARATOR, srcpath, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR);
-	bu_vls_printf(&auto_path, "%c%s%csrc%cother%ctcl%clibrary",
-		      BU_PATH_SEPARATOR, srcpath, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR);
-	bu_vls_printf(&auto_path, "%c%s%csrc%cother%ctk%cunix",
-		      BU_PATH_SEPARATOR, srcpath, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR);
-	bu_vls_printf(&auto_path, "%c%s%csrc%cother%ctk%clibrary",
-		      BU_PATH_SEPARATOR, srcpath, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR);
-	bu_vls_printf(&auto_path, "%c%s%csrc%cother%cincrTcl",
-		      BU_PATH_SEPARATOR, srcpath, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR);
-	bu_vls_printf(&auto_path, "%c%s%csrc%cother%cincrTcl%citcl%clibrary",
-		      BU_PATH_SEPARATOR, srcpath, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR);
-	bu_vls_printf(&auto_path, "%c%s%csrc%cother%cincrTcl%citk%clibrary",
-		      BU_PATH_SEPARATOR, srcpath, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR);
-	bu_vls_printf(&auto_path, "%c%s%csrc%cother%ciwidgets",
-		      BU_PATH_SEPARATOR, srcpath, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR);
-	bu_vls_printf(&auto_path, "%c%s%csrc%ctclscripts",
-		      BU_PATH_SEPARATOR, srcpath, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR);
-	bu_vls_printf(&auto_path, "%c%s%csrc%ctclscripts%clib",
-		      BU_PATH_SEPARATOR, srcpath, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR);
-	bu_vls_printf(&auto_path, "%c%s%csrc%ctclscripts%cutil",
-		      BU_PATH_SEPARATOR, srcpath, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR);
-	bu_vls_printf(&auto_path, "%c%s%csrc%ctclscripts%cmged",
-		      BU_PATH_SEPARATOR, srcpath, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR);
-	bu_vls_printf(&auto_path, "%c%s%csrc%ctclscripts%cgeometree",
-		      BU_PATH_SEPARATOR, srcpath, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR);
-	bu_vls_printf(&auto_path, "%c%s%csrc%ctclscripts%cgraph",
-		      BU_PATH_SEPARATOR, srcpath, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR);
-	bu_vls_printf(&auto_path, "%c%s%csrc%ctclscripts%crtwizard",
-		      BU_PATH_SEPARATOR, srcpath, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR);
-	bu_vls_printf(&auto_path, "%c%s%csrc%ctclscripts%carcher",
-		      BU_PATH_SEPARATOR, srcpath, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR);
+	join_path(&auto_path, srcpath, "src", "other", "tcl", "unix", NULL);
+	join_path(&auto_path, srcpath, "src", "other", "tcl", "library", NULL);
+	join_path(&auto_path, srcpath, "src", "other", "tk", "unix", NULL);
+	join_path(&auto_path, srcpath, "src", "other", "tk", "library", NULL);
+	join_path(&auto_path, srcpath, "src", "other", "incrTcl", NULL);
+	join_path(&auto_path, srcpath, "src", "other", "incrTcl", "itcl", "library", NULL);
+	join_path(&auto_path, srcpath, "src", "other", "incrTcl", "itk", "library", NULL);
+	join_path(&auto_path, srcpath, "src", "other", "iwidgets", NULL);
+	join_path(&auto_path, srcpath, "src", "tclscripts", NULL);
+	join_path(&auto_path, srcpath, "src", "tclscripts", "lib", NULL);
+	join_path(&auto_path, srcpath, "src", "tclscripts", "util", NULL);
+	join_path(&auto_path, srcpath, "src", "tclscripts", "mged", NULL);
+	join_path(&auto_path, srcpath, "src", "tclscripts", "geometree", NULL);
+	join_path(&auto_path, srcpath, "src", "tclscripts", "graph", NULL);
+	join_path(&auto_path, srcpath, "src", "tclscripts", "rtwizard", NULL);
+	join_path(&auto_path, srcpath, "src", "tclscripts", "archer", NULL);
     }
 
     /* add search paths for dist invocation */
@@ -260,75 +273,45 @@ tclcad_auto_path(Tcl_Interp *interp)
 	snprintf(buffer, MAX_BUF, "%s%c..%csrc%cother%ctcl%cunix",
 		 srcpath, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR);
 	if (bu_file_exists(buffer, NULL)) {
-	    bu_vls_printf(&auto_path, "%c%s%c..%csrc%cother%ctcl%cunix",
-			  BU_PATH_SEPARATOR, srcpath, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR);
-	    bu_vls_printf(&auto_path, "%c%s%c..%csrc%cother%ctcl%clibrary",
-			  BU_PATH_SEPARATOR, srcpath, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR);
-	    bu_vls_printf(&auto_path, "%c%s%c..%csrc%cother%ctk%cunix",
-			  BU_PATH_SEPARATOR, srcpath, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR);
-	    bu_vls_printf(&auto_path, "%c%s%c..%csrc%cother%ctk%clibrary",
-			  BU_PATH_SEPARATOR, srcpath, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR);
-	    bu_vls_printf(&auto_path, "%c%s%c..%csrc%cother%cincrTcl",
-			  BU_PATH_SEPARATOR, srcpath, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR);
-	    bu_vls_printf(&auto_path, "%c%s%c..%csrc%cother%cincrTcl%citcl%clibrary",
-			  BU_PATH_SEPARATOR, srcpath, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR);
-	    bu_vls_printf(&auto_path, "%c%s%c..%csrc%cother%cincrTcl%citk%clibrary",
-			  BU_PATH_SEPARATOR, srcpath, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR);
-	    bu_vls_printf(&auto_path, "%c%s%c..%csrc%cother%ciwidgets",
-			  BU_PATH_SEPARATOR, srcpath, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR);
-	    bu_vls_printf(&auto_path, "%c%s%c..%csrc%ctclscripts",
-			  BU_PATH_SEPARATOR, srcpath, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR);
-	    bu_vls_printf(&auto_path, "%c%s%c..%csrc%ctclscripts%clib",
-			  BU_PATH_SEPARATOR, srcpath, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR);
-	    bu_vls_printf(&auto_path, "%c%s%c..%csrc%ctclscripts%cutil",
-			  BU_PATH_SEPARATOR, srcpath, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR);
-	    bu_vls_printf(&auto_path, "%c%s%c..%csrc%ctclscripts%cmged",
-			  BU_PATH_SEPARATOR, srcpath, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR);
-	    bu_vls_printf(&auto_path, "%c%s%c..%csrc%ctclscripts%cgeometree",
-			  BU_PATH_SEPARATOR, srcpath, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR);
-	    bu_vls_printf(&auto_path, "%c%s%c..%csrc%ctclscripts%cgraph",
-			  BU_PATH_SEPARATOR, srcpath, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR);
-	    bu_vls_printf(&auto_path, "%c%s%c..%csrc%ctclscripts%crtwizard",
-			  BU_PATH_SEPARATOR, srcpath, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR);
-	    bu_vls_printf(&auto_path, "%c%s%c..%csrc%ctclscripts%carcher",
-			  BU_PATH_SEPARATOR, srcpath, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR);
+	    join_path(&auto_path, srcpath, "..", "src", "other", "tcl", "unix", NULL);
+	    join_path(&auto_path, srcpath, "..", "src", "other", "tcl", "library", NULL);
+	    join_path(&auto_path, srcpath, "..", "src", "other", "tk", "unix", NULL);
+	    join_path(&auto_path, srcpath, "..", "src", "other", "tk", "library", NULL);
+	    join_path(&auto_path, srcpath, "..", "src", "other", "incrTcl", NULL);
+	    join_path(&auto_path, srcpath, "..", "src", "other", "incrTcl", "itcl", "library", NULL);
+	    join_path(&auto_path, srcpath, "..", "src", "other", "incrTcl", "itk", "library", NULL);
+	    join_path(&auto_path, srcpath, "..", "src", "other", "iwidgets", NULL);
+	    join_path(&auto_path, srcpath, "..", "src", "tclscripts", NULL);
+	    join_path(&auto_path, srcpath, "..", "src", "tclscripts", "lib", NULL);
+	    join_path(&auto_path, srcpath, "..", "src", "tclscripts", "util", NULL);
+	    join_path(&auto_path, srcpath, "..", "src", "tclscripts", "mged", NULL);
+	    join_path(&auto_path, srcpath, "..", "src", "tclscripts", "geometree", NULL);
+	    join_path(&auto_path, srcpath, "..", "src", "tclscripts", "graph", NULL);
+	    join_path(&auto_path, srcpath, "..", "src", "tclscripts", "rtwizard", NULL);
+	    join_path(&auto_path, srcpath, "..", "src", "tclscripts", "archer", NULL);
 	}
     }
 
     /* be sure to check installation paths even if we aren't running from there */
     if (!from_installed) {
-	bu_vls_printf(&auto_path, "%c%s%clib",
-		      BU_PATH_SEPARATOR, root, BU_DIR_SEPARATOR);
-	bu_vls_printf(&auto_path, "%c%s%clib%ctcl%s",
-		      BU_PATH_SEPARATOR, root, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, TCL_VERSION);
+	join_path(&auto_path, root, "lib", NULL);
+	join_path(&auto_path, root, "lib", bu_vls_addr(&tcl), NULL);
 #ifdef HAVE_TK
-	bu_vls_printf(&auto_path, "%c%s%clib%ctk%s",
-		      BU_PATH_SEPARATOR, root, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, TK_VERSION);
+	join_path(&auto_path, root, "lib", bu_vls_addr(&tk), NULL);
 #endif
-	bu_vls_printf(&auto_path, "%c%s%clib%citcl%s",
-		      BU_PATH_SEPARATOR, root, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, ITCL_VERSION);
+	join_path(&auto_path, root, "lib", bu_vls_addr(&itcl), NULL);
 #ifdef HAVE_TK
-	bu_vls_printf(&auto_path, "%c%s%clib%citk%s",
-		      BU_PATH_SEPARATOR, root, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, ITK_VERSION);
-	bu_vls_printf(&auto_path, "%c%s%clib%ciwidgets%s",
-		      BU_PATH_SEPARATOR, root, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, IWIDGETS_VERSION);
+	join_path(&auto_path, root, "lib", bu_vls_addr(&itk), NULL);
+	join_path(&auto_path, root, "lib", bu_vls_addr(&iwidgets), NULL);
 #endif
-	bu_vls_printf(&auto_path, "%c%s%ctclscripts",
-		      BU_PATH_SEPARATOR, data, BU_DIR_SEPARATOR);
-	bu_vls_printf(&auto_path, "%c%s%ctclscripts%clib",
-		      BU_PATH_SEPARATOR, data, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR);
-	bu_vls_printf(&auto_path, "%c%s%ctclscripts%cutil",
-		      BU_PATH_SEPARATOR, data, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR);
-	bu_vls_printf(&auto_path, "%c%s%ctclscripts%cmged",
-		      BU_PATH_SEPARATOR, data, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR);
-	bu_vls_printf(&auto_path, "%c%s%ctclscripts%cgeometree",
-		      BU_PATH_SEPARATOR, data, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR);
-	bu_vls_printf(&auto_path, "%c%s%ctclscripts%cgraph",
-		      BU_PATH_SEPARATOR, data, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR);
-	bu_vls_printf(&auto_path, "%c%s%ctclscripts%crtwizard",
-		      BU_PATH_SEPARATOR, data, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR);
-	bu_vls_printf(&auto_path, "%c%s%ctclscripts%carcher",
-		      BU_PATH_SEPARATOR, data, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR);
+	join_path(&auto_path, data, "tclscripts", NULL);
+	join_path(&auto_path, data, "tclscripts", "lib", NULL);
+	join_path(&auto_path, data, "tclscripts", "util", NULL);
+	join_path(&auto_path, data, "tclscripts", "mged", NULL);
+	join_path(&auto_path, data, "tclscripts", "geometree", NULL);
+	join_path(&auto_path, data, "tclscripts", "graph", NULL);
+	join_path(&auto_path, data, "tclscripts", "rtwizard", NULL);
+	join_path(&auto_path, data, "tclscripts", "archer", NULL);
     }
 
     /*    printf("AUTO_PATH IS %s\n", bu_vls_addr(&auto_path)); */
