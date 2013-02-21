@@ -146,9 +146,6 @@
 	variable mCurrentSketchEdges ""
 	variable mCurrentSketchFaces ""
 	variable mFrontPointsOnly 1
-	variable mHighlightPoints 1
-	variable mHighlightPointSize 1.0
-	variable mHighlightPointColor {255 255 255}
 
 	# Methods used by the constructor
 	# override methods in GeometryEditFrame

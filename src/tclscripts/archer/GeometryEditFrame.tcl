@@ -61,7 +61,6 @@
 	common mEditPCommand ""
 	common mHighlightPoints 1
 	common mHighlightPointSize 1.0
-	common mHighlightPointColor {255 255 255}
 
 	proc validateColorComp {c}
 	proc validateColor {color}
