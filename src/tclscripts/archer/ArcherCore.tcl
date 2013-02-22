@@ -3901,9 +3901,24 @@ namespace eval ArcherCore {
     }
     fillTreeColumns $cnode $_ctext
 
-    if {!$_flat && $ctype == "comb"} {
-	set tree [getTreeFromGData $cgdata]
-	set mlist [getTreeMembers $tree]
+    if {!$_flat} {
+	set mlist ""
+	switch -- $ctype {
+	    "comb" {
+		set tree [getTreeFromGData $cgdata]
+		set mlist [getTreeMembers $tree]
+	    }
+	    "dsp" -
+	    "ebm" -
+	    "vol" {
+		set mlist [$itk_component(ged) get $_ctext file]
+	    }
+	    "extrude" -
+	    "revolve" {
+		set mlist [$itk_component(ged) get $_ctext sk_name]
+	    }
+	}
+
 	if {$mlist != ""} {
 	    removeTreeNodeTag $cnode $TREE_OPENED_TAG
 	    $itk_component(newtree) item $cnode -open false
@@ -4377,7 +4392,13 @@ namespace eval ArcherCore {
     set cgdata [$itk_component(ged) get $ctext]
     set ctype [lindex $cgdata 0]
 
-    if {$ctype == "comb" && [info exists mPNode2CList($cnode)]} {
+    if {($ctype == "comb" ||
+	 $ctype == "dsp" ||
+	 $ctype == "ebm" ||
+	 $ctype == "extrude" ||
+	 $ctype == "revolve" ||
+	 $ctype == "vol") &&
+	[info exists mPNode2CList($cnode)]} {
 	# If this node has never been opened ...
 	if {[addTreeNodeTag $cnode $TREE_OPENED_TAG]} {
 	    # Remove placeholder
@@ -4385,32 +4406,62 @@ namespace eval ArcherCore {
 	    $itk_component(newtree) delete $placeholder
 	    unset mPNode2CList($cnode)
 
-	    set tree [getTreeFromGData $cgdata]
-	    foreach gctext [getTreeMembers $tree] {
-		if {[catch {$itk_component(ged) get $gctext} gcgdata]} {
-		    set op [getTreeOp $ctext $gctext]
-		    set img [getTreeImage $gctext "invalid" $op]
+	    switch -- $ctype {
+		"comb" {
+		    set tree [getTreeFromGData $cgdata]
+		    foreach gctext [getTreeMembers $tree] {
+			if {[catch {$itk_component(ged) get $gctext} gcgdata]} {
+			    set op [getTreeOp $ctext $gctext]
+			    set img [getTreeImage $gctext "invalid" $op]
 
+			    set gcnode [$itk_component(newtree) insert $cnode end \
+					    -tags $TREE_POPUP_TAG \
+					    -text $gctext \
+					    -image $img]
+
+			    fillTreeColumns $gcnode $gctext
+
+			    lappend mText2Node($gctext) [list $gcnode $cnode]
+			    set mNode2Text($gcnode) $gctext
+			    lappend mPNode2CList($cnode) [list $gctext $gcnode]
+			    set mCNode2PList($gcnode) [list $ctext $cnode]
+
+			    continue
+			}
+
+			# Add gchild members
+			if {$mEnableListView} {
+			    fillTree $cnode $gctext 1 1
+			} else {
+			    fillTree $cnode $gctext 0 0
+			}
+		    }
+		}
+		"dsp" -
+		"ebm" -
+		"vol" {
+		    set gctext [$itk_component(ged) get $ctext file]
 		    set gcnode [$itk_component(newtree) insert $cnode end \
 				    -tags $TREE_POPUP_TAG \
 				    -text $gctext \
-				    -image $img]
-
+				    -image $mImage_other]
 		    fillTreeColumns $gcnode $gctext
 
 		    lappend mText2Node($gctext) [list $gcnode $cnode]
 		    set mNode2Text($gcnode) $gctext
 		    lappend mPNode2CList($cnode) [list $gctext $gcnode]
 		    set mCNode2PList($gcnode) [list $ctext $cnode]
-
-		    continue
 		}
+		"extrude" -
+		"revolve" {
+		    set gctext [$itk_component(ged) get $ctext sk_name]
 
-		# Add gchild members
-		if {$mEnableListView} {
-		    fillTree $cnode $gctext 1 1
-		} else {
-		    fillTree $cnode $gctext 0 0
+		    # Add gchild members
+		    if {$mEnableListView} {
+			fillTree $cnode $gctext 1 1
+		    } else {
+			fillTree $cnode $gctext 0 0
+		    }
 		}
 	    }
 	}
