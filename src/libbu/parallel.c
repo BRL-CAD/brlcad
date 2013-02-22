@@ -20,21 +20,21 @@
 
 #include "common.h"
 
-#include <stdio.h>
 #include <stdlib.h>
 #include <ctype.h>
 #include <math.h>
 #include <string.h>
 #include <signal.h>
 
-#include "bu.h"
+#ifdef HAVE_SYS_TIME_H
+#  include <sys/time.h>
+#endif
 
 #ifdef HAVE_SYS_RESOURCE_H
 #  include <sys/resource.h>
 #endif
 
 #ifdef linux
-#  include <sys/time.h>
 #  include <sys/types.h>
 #  ifdef HAVE_SYS_WAIT_H
 #    include <sys/wait.h>
@@ -46,7 +46,6 @@
 #if defined(__FreeBSD__) || defined(__OpenBSD__)
 #  include <sys/types.h>
 #  include <sys/param.h>
-#  include <sys/time.h>
 #  include <sys/sysctl.h>
 #  ifdef HAVE_SYS_WAIT_H
 #    include <sys/wait.h>
@@ -56,7 +55,6 @@
 
 #ifdef __APPLE__
 #  include <sys/types.h>
-#  include <sys/time.h>
 #  ifdef HAVE_SYS_WAIT_H
 #    include <sys/wait.h>
 #  endif
@@ -136,8 +134,6 @@ static struct sched_param bu_param;
 #  include <sys/sysadmin.h>
 #endif
 
-#include "bio.h"
-
 /*
  * multithreading support for SunOS 5.X / Solaris 2.x
  */
@@ -155,6 +151,11 @@ static struct sched_param bu_param;
 #  include <pthread.h>
 #  define rt_thread_t pthread_t
 #endif
+
+#include "bio.h"
+
+#include "bu.h"
+
 
 #ifdef CRAY
 static struct taskcontrol {
