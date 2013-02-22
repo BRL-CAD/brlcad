@@ -2713,7 +2713,7 @@ rt_extrude_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const
 	bu_vls_printf(logstr, "%.25g %.25g %.25g", V3ARGS(extr->u_vec));
     else if (*attr == 'B')
 	bu_vls_printf(logstr, "%.25g %.25g %.25g", V3ARGS(extr->v_vec));
-    else if (*attr == 'S')
+    else if (*attr == 'S' || BU_STR_EQUAL(attr, "sk_name"))
 	bu_vls_printf(logstr, "%s", extr->sketch_name);
     else {
 	bu_vls_strcat(logstr, "ERROR: unrecognized attribute, must be V, H, A, B, or S!");
@@ -2775,7 +2775,7 @@ rt_extrude_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc
 	    VSCALE(extr->u_vec, extr->u_vec, len);
 	} else if (*argv[0] =='K') {
 	    extr->keypoint = atoi(argv[1]);
-	} else if (*argv[0] == 'S') {
+	} else if (*argv[0] == 'S' || BU_STR_EQUAL(argv[0], "sk_name")) {
 	    if (extr->sketch_name)
 		bu_free((char *)extr->sketch_name, "rt_extrude_tcladjust: sketch_name");
 	    extr->sketch_name = bu_strdup(argv[1]);
