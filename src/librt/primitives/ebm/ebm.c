@@ -1601,7 +1601,7 @@ rt_ebm_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const cha
 	for (i=0; i<16; i++)
 	    bu_vls_printf(logstr, " %.25g", ebm->mat[i]);
 	bu_vls_printf(logstr, " }");
-    } else if (BU_STR_EQUAL(attr, "F")) {
+    } else if (BU_STR_EQUAL(attr, "F") || BU_STR_EQUAL(attr, "file")) {
 	bu_vls_printf(logstr, "%s", ebm->file);
     } else if (BU_STR_EQUAL(attr, "W")) {
 	bu_vls_printf(logstr, "%zu", ebm->xdim);
@@ -1644,7 +1644,7 @@ rt_ebm_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, co
     RT_EBM_CK_MAGIC(ebm);
 
     while (argc >= 2) {
-	if (BU_STR_EQUAL(argv[0], "F")) {
+	if (BU_STR_EQUAL(argv[0], "F") || BU_STR_EQUAL(argv[0], "file")) {
 	    if (strlen(argv[1]) >= RT_EBM_NAME_LEN) {
 		bu_vls_printf(logstr, "ERROR: File name too long");
 		return BRLCAD_ERROR;
