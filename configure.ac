@@ -1566,6 +1566,7 @@ AC_CHECK_HEADERS( \
 	sys/mman.h \
 	sys/param.h \
 	sys/prctl.h \
+	sys/resource.h \
 	sys/select.h \
 	sys/socket.h \
 	sys/stat.h \
