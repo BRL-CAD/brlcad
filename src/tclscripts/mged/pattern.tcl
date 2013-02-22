@@ -624,7 +624,7 @@ proc pattern_rect { args } {
 
 
 proc pattern_sph { args } {
-    global DEG2RAD M_PI M_PI_2 local2base
+    global DEG2RAD RAD2DEG M_PI M_PI_2 local2base
 
     init_vmath
     set usage "pattern_sph \[-top | -regions | -primitives\] \[-g group_name\] \[-s source_string replacement_string\] \
