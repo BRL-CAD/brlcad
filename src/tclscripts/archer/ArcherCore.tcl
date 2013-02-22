@@ -4483,6 +4483,13 @@ namespace eval ArcherCore {
     }
 
     set path [getTreePath $item $text]
+    set dirname [file dirname $path]
+    if {$dirname != "."} {
+	set type [$itk_component(ged) get_type $dirname]
+	if {$type == "dsp" || $type == "ebm" || $type == "extrude" || $type == "revolve" || $type == "vol"} {
+	    return
+	}
+    }
 
     loadMenu $itk_component(newtreepopup) $path $nodeType $item
     tk_popup $itk_component(newtreepopup) $_X $_Y
