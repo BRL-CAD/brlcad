@@ -2300,6 +2300,55 @@ namespace eval ArcherCore {
     if {![catch {set clists $mPNode2CList($_pnode)}]} {
 
 	set pgdata [$itk_component(ged) get $ptext]
+	set ptype [lindex $pgdata 0]
+
+	if {$ptype == "dsp" ||
+	    $ptype == "ebm" ||
+	    $ptype == "extrude" ||
+	    $ptype == "revolve" ||
+	    $ptype == "vol"} {
+
+	    set clist [lindex $clists 0]
+	    set old_ctext [lindex $clist 0]
+	    set cnode [lindex $clist 1]
+
+	    if {$old_ctext == $TREE_PLACEHOLDER_TAG} {
+		return
+	    }
+
+	    switch -- $ptype {
+		"dsp" -
+		"ebm" -
+		"vol" {
+		    set ctext [$itk_component(ged) get $ptext file]
+		}
+		"extrude" -
+		"revolve" {
+		    set ctext [$itk_component(ged) get $ptext sk_name]
+		}
+	    }
+
+	    if {$old_ctext != $ctext} {
+		set clist [list $ctext $cnode]
+		set clists [list $clist]
+		set mPNode2CList($_pnode) $clists
+		set mNode2Text($cnode) $ctext
+		$itk_component(newtree) item $cnode -text $ctext
+
+		set nlist [list $cnode $_pnode]
+		lappend mText2Node($ctext) $nlist
+
+		set i [lsearch -index 0 $mText2Node($old_ctext) $cnode]
+		if {$i == -1} {
+		    return
+		}
+
+		set mText2Node($old_ctext) [lreplace $mText2Node($old_ctext) $i $i]
+	    }
+
+	    return
+	}
+
 	set tree [getTreeFromGData $pgdata]
 	set mlist [getTreeMembers $tree]
 
@@ -2419,6 +2468,7 @@ namespace eval ArcherCore {
     } else {
 	set pgdata [$itk_component(ged) get $ptext]
 	set ptype [lindex $pgdata 0]
+
 	if {$ptype == "comb"} {
 	    set tree [getTreeFromGData $pgdata]
 	    set mlist [getTreeMembers $tree]
@@ -2427,6 +2477,14 @@ namespace eval ArcherCore {
 		$itk_component(newtree) item $_pnode -open false
 		addTreePlaceholder $_pnode
 	    }
+	} elseif {$ptype == "dsp" ||
+		  $ptype == "ebm" ||
+		  $ptype == "extrude" ||
+		  $ptype == "revolve" ||
+		  $ptype == "vol"} {
+	    removeTreeNodeTag $_pnode $TREE_OPENED_TAG
+	    $itk_component(newtree) item $_pnode -open false
+	    addTreePlaceholder $_pnode
 	}
     }
 }
@@ -5574,7 +5632,33 @@ namespace eval ArcherCore {
 }
 
 ::itcl::body ArcherCore::adjust {args} {
-    eval gedWrapper adjust 0 1 1 1 $args
+    set arg0 [lindex $args 0]
+
+    if {[catch {$itk_component(ged) get_type $arg0} type]} {
+	return
+    }
+
+    if {$type == "extrude" || $type == "revolve"} {
+	set arg1 [lindex $args 1]
+
+	if {$arg1 == "S" || $arg1 == "sk_name"} {
+	    set tflag 2
+	} else {
+	    set tflag 1
+	}
+    } elseif {$type == "dsp" || $type == "ebm" || $type == "vol"} {
+	set arg1 [lindex $args 1]
+
+	if {$arg1 == "F" || $arg1 == "file"} {
+	    set tflag 2
+	} else {
+	    set tflag 1
+	}
+    } else {
+	    set tflag 1
+    }
+
+    eval gedWrapper adjust 0 1 1 $tflag $args
 }
 
 ::itcl::body ArcherCore::arced {args} {
