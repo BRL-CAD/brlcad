@@ -778,9 +778,9 @@ struct mem_map {
 #define	RT_DBNHASH		1024	/**< @brief size of hash table */
 
 #if	((RT_DBNHASH)&((RT_DBNHASH)-1)) != 0
-#define	RT_DBHASH(sum)	((unsigned)(sum) % (RT_DBNHASH))
+#define	RT_DBHASH(sum)	((size_t)(sum) % (RT_DBNHASH))
 #else
-#define	RT_DBHASH(sum)	((unsigned)(sum) & ((RT_DBNHASH)-1))
+#define	RT_DBHASH(sum)	((size_t)(sum) & ((RT_DBNHASH)-1))
 #endif
 
 
