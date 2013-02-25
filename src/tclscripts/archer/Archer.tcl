@@ -4209,6 +4209,8 @@ proc title_node_handler {node} {
 	set pobj $mSelectedObjPath
     }
 
+    set rflag 1
+
     switch -- [lindex $args 0] {
 	"orotate" {
 	    if {$argslen != 4} {
@@ -4237,6 +4239,7 @@ proc title_node_handler {node} {
 		}
 	    } else {
 		set cmd "orotate $pobj $rx $ry $rz"
+		set rflag 0
 	    }
 	}
 	"otranslate" {
@@ -4261,6 +4264,7 @@ proc title_node_handler {node} {
 		}
 	    } else {
 		set cmd "otranslate $pobj $dx $dy $dz"
+		set rflag 0
 	    }
 	}
 	"oscale" {
@@ -4288,6 +4292,7 @@ proc title_node_handler {node} {
 		}
 	    } else {
 		set cmd "oscale $pobj $sf"
+		set rflag 0
 	    }
 	}
 	default {
@@ -4296,7 +4301,10 @@ proc title_node_handler {node} {
     }
 
     eval $cmd
-    redrawObj $pobj 0
+
+    if {$rflag} {
+	redrawObj $mSelectedObjPath 0
+    }
 }
 
 
