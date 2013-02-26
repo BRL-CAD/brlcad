@@ -162,7 +162,7 @@ _ged_combadd2(struct ged *gedp,
     size_t node_count;
     size_t actual_count;
     size_t curr_count;
-    int i = 0;
+    int i;
 
     if (argc < 1)
 	return GED_ERROR;
@@ -205,21 +205,8 @@ _ged_combadd2(struct ged *gedp,
 	    comb->region_flag = 0;
 	}
 
-	for (; i < argc; ++i) {
-	    if ((objp = db_lookup(gedp->ged_wdbp->dbip, argv[i], LOOKUP_NOISY)) == RT_DIR_NULL) {
-		bu_vls_printf(gedp->ged_result_str, "skip member %s\n", argv[i]);
-		continue;
-	    }
-
-	    RT_GET_TREE(tp, &rt_uniresource);
-	    tp->tr_l.tl_op = OP_DB_LEAF;
-	    tp->tr_l.tl_name = bu_strdup(objp->d_namep);
-	    tp->tr_l.tl_mat = (matp_t)NULL;
-	    comb->tree = tp;
-
-	    ++i;
+	if (argc > 0)
 	    goto addmembers;
-	}
 
 	GED_DB_PUT_INTERNAL(gedp, dp, &intern, &rt_uniresource, 0);
 	return GED_OK;
@@ -261,7 +248,7 @@ addmembers:
 	comb->tree = TREE_NULL;
     }
 
-    for (; i < argc; ++i) {
+    for (i = 0; i < argc; ++i) {
 	if ((objp = db_lookup(gedp->ged_wdbp->dbip, argv[i], LOOKUP_NOISY)) == RT_DIR_NULL) {
 	    bu_vls_printf(gedp->ged_result_str, "skip member %s\n", argv[i]);
 	    continue;
