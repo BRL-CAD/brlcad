@@ -217,12 +217,12 @@ view_2init(struct application *UNUSED(ap), char *UNUSED(framename))
     r.h.id = 1;
     r.h.iview = 1;
     r.h.miview = - r.h.iview;
-    VSET(temp, 0.0, 0.0, -1.414);	/* Point we are looking at */
+    VSET(temp, 0.0, 0.0, -M_SQRT2);	/* Point we are looking at */
     MAT4X3PNT(aimpt, view2model, temp);
     r.h.cx = aimpt[0];		/* aimpoint */
     r.h.cy = aimpt[1];
     r.h.cz = aimpt[2];
-    r.h.back = 1.414*viewsize/2.0;	/* backoff */
+    r.h.back = M_SQRT1_2*viewsize;	/* backoff */
     r.h.e = elevation;
     r.h.a = azimuth;
     r.h.vert = viewsize;

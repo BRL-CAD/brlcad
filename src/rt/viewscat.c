@@ -162,11 +162,11 @@ view_2init( struct application *ap )
     totali = 0.0;
     totalq = 0.0;
 
-    VSET(temp, 0.0, 0.0, -1.414 );
+    VSET(temp, 0.0, 0.0, -M_SQRT2);
     MAT4X3PNT( aimpt, view2model, temp);
     bu_log("aim point %f %f %f\n", aimpt[0], aimpt[1], aimpt[2]);
     bu_log("viewsize %f\n", viewsize);
-    backoff = 1.414 * viewsize/2.0;
+    backoff = M_SQRT1_2*viewsize;
     bu_log("backoff %f\n", backoff);
 
 #ifdef SAR

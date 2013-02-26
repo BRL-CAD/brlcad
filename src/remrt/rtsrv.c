@@ -628,7 +628,7 @@ ph_matrix(struct pkg_conn *UNUSED(pc), char *buf)
     hypersample = 0;
     jitter = 0;
     rt_perspective = 0;
-    eye_backoff = 1.414;
+    eye_backoff = M_SQRT2;
     aspect = 1;
     stereo = 0;
     use_air = 0;

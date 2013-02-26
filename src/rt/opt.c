@@ -80,7 +80,7 @@ fastf_t		cell_width = (fastf_t)0.0;		/* model space grid cell width */
 fastf_t		cell_height = (fastf_t)0.0;	/* model space grid cell height */
 int		cell_newsize = 0;		/* new grid cell size */
 point_t		eye_model = {(fastf_t)0.0, (fastf_t)0.0, (fastf_t)0.0};		/* model-space location of eye */
-fastf_t         eye_backoff = (fastf_t)1.414;	/* dist from eye to center */
+fastf_t         eye_backoff = (fastf_t)M_SQRT2;	/* dist from eye to center */
 mat_t		Viewrotscale = { (fastf_t)0.0, (fastf_t)0.0, (fastf_t)0.0, (fastf_t)0.0,
 				 (fastf_t)0.0, (fastf_t)0.0, (fastf_t)0.0, (fastf_t)0.0,
 				 (fastf_t)0.0, (fastf_t)0.0, (fastf_t)0.0, (fastf_t)0.0,
