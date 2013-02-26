@@ -862,7 +862,7 @@ nmg_break_3edge_at_plane(const fastf_t *hit_pt, struct faceuse *fu2, struct nmg_
 	VSUB2(vb, eu1->eumate_p->vu_p->v_p->vg_p->coord, hit_pt);
 	VUNITIZE(va);
 	VUNITIZE(vb);
-	if (VDOT(va, vb) <= 0.7071) {
+	if (VDOT(va, vb) <= M_SQRT1_2) {
 	    bu_bomb("nmg_break_3edge_at_plane() eu1 changes direction?\n");
 	}
     }
