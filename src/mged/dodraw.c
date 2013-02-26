@@ -1154,6 +1154,21 @@ cmd_redraw_vlist(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, co
     return TCL_OK;
 }
 
+int
+redraw_visible_objects(void)
+{
+    int ret, ac = 1;
+    char *av[] = {NULL, NULL};
+
+    av[0] = "redraw";
+    ret = ged_redraw(gedp, ac, (const char **)av);
+
+    if (ret == GED_ERROR) {
+	return TCL_ERROR;
+    }
+
+    return TCL_OK;
+}
 
 /*
  * Local Variables:

@@ -88,6 +88,19 @@ common_dm(int argc, const char *argv[])
 	return TCL_OK;
 
     if (BU_STR_EQUAL(argv[0], "idle")) {
+
+	/* redraw after scaling */
+	if (mged_variables->mv_adaptive_plot &&
+	    (am_mode == AMM_SCALE ||
+	     am_mode == AMM_CON_SCALE_X ||
+	     am_mode == AMM_CON_SCALE_Y ||
+	     am_mode == AMM_CON_SCALE_Z))
+	{
+	    if (redraw_visible_objects() == TCL_ERROR) {
+		return TCL_ERROR;
+	    }
+	}
+
 	am_mode = AMM_IDLE;
 	scroll_active = 0;
 	if (rubber_band->rb_active) {

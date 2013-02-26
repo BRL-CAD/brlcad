@@ -2655,9 +2655,14 @@ mged_zoom(double val)
 	set_absolute_tran();
     }
 
+    ret = TCL_OK;
+    if (mged_variables->mv_adaptive_plot) {
+	ret = redraw_visible_objects();
+    }
+
     view_state->vs_flag = 1;
 
-    return TCL_OK;
+    return ret;
 }
 
 
