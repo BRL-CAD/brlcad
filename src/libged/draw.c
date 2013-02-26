@@ -1731,6 +1731,218 @@ end:
     return gdlp;
 }
 
+/* re-calculate a leaf's vlist based on its existing state */
+static union tree *
+redraw_leaf(
+	struct db_tree_state *tsp,
+	const struct db_full_path *pathp,
+	struct rt_db_internal *ip,
+	genptr_t client_data)
+{
+    union tree *curtree;
+    struct solid *sp, *curr_sp;
+    struct _ged_client_data *dgcdp = (struct _ged_client_data *)client_data;
+
+    RT_CK_DB_INTERNAL(ip);
+    RT_CK_TESS_TOL(tsp->ts_ttol);
+    BN_CK_TOL(tsp->ts_tol);
+    RT_CK_RESOURCE(tsp->ts_resp);
+
+    if (!dgcdp) {
+	return TREE_NULL;
+    }
+
+    /* find this path's solid struct */
+    sp = NULL;
+    for (BU_LIST_FOR(curr_sp, solid, &(dgcdp->gdlp->gdl_headSolid))) {
+	if (db_identical_full_paths(pathp, &(curr_sp->s_fullpath))) {
+	    sp = curr_sp;
+	    break;
+	}
+    }
+
+    if (sp == NULL) {
+	return TREE_NULL;
+    }
+
+    /* release existing vlist */
+    RT_FREE_VLIST(&sp->s_vlist);
+
+    /* use the solid's dmode to determine how to replot it */
+    dgcdp->dmode = sp->s_dmode;
+
+    if (sp->s_dmode == _GED_WIREFRAME) {
+	return wireframe_leaf(tsp, pathp, ip, client_data);
+    } else {
+	/* plot for shaded display */
+	struct bu_list vhead;
+	int is_db5_bot, is_db5_poly;
+
+	BU_LIST_INIT(&vhead);
+
+	is_db5_bot = is_db5_poly = 0;
+	if (ip->idb_major_type == DB5_MAJORTYPE_BRLCAD) {
+	    if (ip->idb_minor_type == DB5_MINORTYPE_BRLCAD_BOT) {
+		is_db5_bot = 1;
+	    } else if (ip->idb_minor_type == DB5_MINORTYPE_BRLCAD_POLY) {
+		is_db5_poly = 1;
+	    }
+	}
+
+	/* bots and polys have their own routines for this */
+	if (is_db5_bot) {
+	    (void)rt_bot_plot_poly(&vhead, ip, tsp->ts_ttol, tsp->ts_tol);
+	    _ged_drawH_part2(0, &vhead, pathp, tsp, sp, dgcdp);
+	} if (is_db5_poly) {
+	    (void)rt_pg_plot_poly(&vhead, ip, tsp->ts_ttol, tsp->ts_tol);
+	    _ged_drawH_part2(0, &vhead, pathp, tsp, sp, dgcdp);
+	} else if (sp->s_dmode == _GED_SHADED_MODE_ALL) {
+	    /* if we're shading another kind of solid, we'll use nmg
+	     * tessellation
+	     */
+	    char *av[] = {NULL, NULL};
+	    int ret, ac, ncpu = 1;
+	    struct model *nmg_model;
+	    struct ged *gedp;
+
+	    gedp = dgcdp->gedp;
+	    nmg_model = nmg_mm();
+	    gedp->ged_wdbp->wdb_initial_tree_state.ts_m = &nmg_model;
+
+	    if (dgcdp->draw_edge_uses) {
+		bu_vls_printf(gedp->ged_result_str, "drawing edge uses (-u)\n");
+		dgcdp->draw_edge_uses_vbp = rt_vlblock_init();
+	    }
+
+	    av[0] = db_path_to_string(pathp);
+	    ac = 1;
+	    ret = db_walk_tree(gedp->ged_wdbp->dbip,
+			       ac,
+			       (const char **)av,
+			       ncpu,
+			       &gedp->ged_wdbp->wdb_initial_tree_state,
+			       NULL,
+			       draw_nmg_region_end,
+			       nmg_booltree_leaf_tess,
+			       (genptr_t)dgcdp);
+
+	    if (dgcdp->draw_edge_uses) {
+		_ged_cvt_vlblock_to_solids(gedp, dgcdp->draw_edge_uses_vbp, "_EDGEUSES_", 0);
+		rt_vlblock_free(dgcdp->draw_edge_uses_vbp);
+		dgcdp->draw_edge_uses_vbp = (struct bn_vlblock *)NULL;
+	    }
+
+	    /* Destroy NMG */
+	    nmg_km(nmg_model);
+
+	    if (ret < 0) {
+		return TREE_NULL;
+	    }
+	}
+    }
+
+    RT_GET_TREE(curtree, tsp->ts_resp);
+    curtree->tr_op = OP_NOP;
+
+    return curtree;
+}
+
+int
+ged_redraw(struct ged *gedp, int argc, const char *argv[])
+{
+    struct _ged_client_data *dgcdp;
+    struct ged_display_list *gdlp;
+    int ret, ac, ncpu;
+    char *av[] = {NULL, NULL};
+
+    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
+    GED_CHECK_DRAWABLE(gedp, GED_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    RT_CHECK_DBI(gedp->ged_wdbp->dbip);
+
+    bu_vls_trunc(gedp->ged_result_str, 0);
+
+    BU_GET(dgcdp, struct _ged_client_data);
+    dgcdp->gedp = gedp;
+
+    ac = ncpu = 1;
+
+    if (argc == 1) {
+	/* redraw everything */
+	for (BU_LIST_FOR(gdlp, ged_display_list, &gedp->ged_gdp->gd_headDisplay)) {
+	    dgcdp->gdlp = gdlp;
+
+	    av[0] = bu_vls_addr(&gdlp->gdl_path);
+	    ret = db_walk_tree(gedp->ged_wdbp->dbip,
+			       ac,
+			       (const char **)av,
+			       ncpu,
+			       &gedp->ged_wdbp->wdb_initial_tree_state,
+			       NULL,
+			       wireframe_region_end,
+			       redraw_leaf,
+			       (genptr_t)dgcdp);
+	    if (ret < 0) {
+		return GED_ERROR;
+	    }
+	}
+    } else {
+	int i;
+	struct db_full_path obj_path, dl_path;
+
+	/* redraw the specificied paths */
+	for (i = 1; i < argc; ++i) {
+	    if (db_string_to_path(&obj_path, gedp->ged_wdbp->dbip, argv[i]) < 0) {
+		bu_vls_printf(gedp->ged_result_str,
+			"%s: %s is not a valid path\n", argv[0], argv[i]);
+		return GED_ERROR;
+	    }
+
+	    /* find the display list whose path matches/contains this path */
+	    av[0] = NULL;
+	    dgcdp->gdlp = NULL;
+
+	    for (BU_LIST_FOR(gdlp, ged_display_list, &gedp->ged_gdp->gd_headDisplay)) {
+
+		db_string_to_path(&dl_path, gedp->ged_wdbp->dbip,
+			bu_vls_addr(&gdlp->gdl_path));
+
+		if (db_full_path_match_top(&dl_path, &obj_path)) {
+		    dgcdp->gdlp = gdlp;
+		    break;
+		}
+	    }
+
+	    if (dgcdp->gdlp == NULL) {
+		bu_vls_printf(gedp->ged_result_str,
+			"%s: %s is not being displayed\n", argv[0], argv[i]);
+		return GED_ERROR;
+	    }
+
+	    /* redraw the display list path */
+	    av[0] = bu_vls_addr(&dgcdp->gdlp->gdl_path);
+	    ret = db_walk_tree(gedp->ged_wdbp->dbip,
+			       ac,
+			       (const char **)av,
+			       ncpu,
+			       &gedp->ged_wdbp->wdb_initial_tree_state,
+			       NULL,
+			       wireframe_region_end,
+			       redraw_leaf,
+			       (genptr_t)dgcdp);
+
+	    if (ret < 0) {
+		bu_vls_printf(gedp->ged_result_str,
+			"%s: %s redraw failure\n", argv[0], argv[i]);
+		return GED_ERROR;
+	    }
+	}
+    }
+
+    BU_PUT(dgcdp, struct _ged_client_data);
+
+    return GED_OK;
+}
 
 /*
  * Local Variables:

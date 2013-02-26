@@ -1874,6 +1874,11 @@ GED_EXPORT extern int ged_unhide(struct ged *gedp, int argc, const char *argv[])
 GED_EXPORT extern int ged_units(struct ged *gedp, int argc, const char *argv[]);
 
 /**
+ * Recalculate plots for displayed objects.
+ */
+GED_EXPORT extern int ged_redraw(struct ged *gedp, int argc, const char *argv[]);
+
+/**
  * Convert the specified view point to a model point.
  */
 GED_EXPORT extern int ged_v2m_point(struct ged *gedp, int argc, const char *argv[]);
