@@ -2904,8 +2904,8 @@ rt_tgc_tnurb(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
     return 0;
 }
 
-
-#define RAT  .707107
+/* RAT was defined to be .707107 */
+#define RAT  M_SQRT1_2
 
 fastf_t nmg_tgc_unitcircle[36] = {
     1.0, 0.0, 0.0, 1.0,
