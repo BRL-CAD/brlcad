@@ -639,16 +639,16 @@ rt_ell_16pts(fastf_t *ov,
 {
     static fastf_t c, d, e, f, g, h;
 
-    e = h = .92388;	/* cos(22.5) */
-    c = d = .707107;	/* cos(45) */
-    g = f = .382683;	/* cos(67.5) */
+    e = h = .92388;	/* cos(22.5 degrees) */
+    c = d = M_SQRT1_2;	/* cos(45 degrees) */
+    g = f = .382683;	/* cos(67.5 degrees) */
 
     /*
      * For angle theta, compute surface point as
      *
      * V + cos(theta) * A + sin(theta) * B
      *
-     * note that sin(theta) is cos(90-theta).
+     * note that sin(theta) is cos(90-theta), with arguments in degrees.
      */
 
     VADD2(ELLOUT(1), V, A);
