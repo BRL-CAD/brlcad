@@ -205,11 +205,7 @@ _ged_combadd2(struct ged *gedp,
 	    comb->region_flag = 0;
 	}
 
-	if (argc > 0)
-	    goto addmembers;
-
-	GED_DB_PUT_INTERNAL(gedp, dp, &intern, &rt_uniresource, 0);
-	return GED_OK;
+	goto addmembers;
     } else if (!(dp->d_flags & RT_DIR_COMB)) {
 	bu_vls_printf(gedp->ged_result_str, "%s exists, but is not a combination\n", dp->d_namep);
 	return GED_ERROR;
