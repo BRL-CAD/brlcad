@@ -250,8 +250,8 @@ addmembers:
     }
 
     /* make space for an extra leaf */
-    curr_count = db_tree_nleaves(comb->tree) + 1;
-    node_count = curr_count + argc - 1;
+    curr_count = db_tree_nleaves(comb->tree);
+    node_count = curr_count + argc;
     tree_list = (struct rt_tree_array *)bu_calloc(node_count, sizeof(struct rt_tree_array), "tree list");
 
     /* flatten tree */
@@ -270,22 +270,22 @@ addmembers:
 	/* insert new member at end */
 	switch (relation) {
 	case '+':
-	    tree_list[curr_count - 1].tl_op = OP_INTERSECT;
+	    tree_list[curr_count].tl_op = OP_INTERSECT;
 	    break;
 	case '-':
-	    tree_list[curr_count - 1].tl_op = OP_SUBTRACT;
+	    tree_list[curr_count].tl_op = OP_SUBTRACT;
 	    break;
 	default:
 	    if (relation != 'u') {
 		bu_vls_printf(gedp->ged_result_str, "unrecognized relation (assume UNION)\n");
 	    }
-	    tree_list[curr_count - 1].tl_op = OP_UNION;
+	    tree_list[curr_count].tl_op = OP_UNION;
 	    break;
 	}
 
 	/* make new leaf node, and insert at end of list */
 	RT_GET_TREE(tp, &rt_uniresource);
-	tree_list[curr_count-1].tl_tree = tp;
+	tree_list[curr_count].tl_tree = tp;
 	tp->tr_l.tl_op = OP_DB_LEAF;
 	tp->tr_l.tl_name = bu_strdup(objp->d_namep);
 	tp->tr_l.tl_mat = (matp_t)NULL;
