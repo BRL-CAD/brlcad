@@ -54,7 +54,8 @@ fastf_t circle_knots[N_CIRCLE_KNOTS] = {
     4,	4,	4
 };
 
-#define IRT2 0.70710678	/* 1/sqrt(2) */
+/* IRT2 had been defined to be 0.70710678 /*
+#define IRT2 M_SQRT1_2	/* 1/sqrt(2) */
 #define NCOLS 9
 /* When scaling, multiply only XYZ, not W */
 fastf_t polyline[NCOLS*4] = {
