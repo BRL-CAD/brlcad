@@ -419,6 +419,16 @@ plotUVDomain2d(ON_BrepFace &face, struct bn_vlblock *vbp)
 
     vhead = rt_vlblock_find(vbp, PURERED);
 
+	double width,height;
+    ON_BoundingBox loop_bb;
+    ON_BoundingBox trim_bb;
+#ifndef RESETDOMAIN
+	if (face.GetSurfaceSize(&width,&height)) {
+	    face.SetDomain(0,0.0,width);
+	    face.SetDomain(1,0.0,height);
+
+	}
+#endif
     surf->GetDomain(0, &umin, &umax);
     surf->GetDomain(1, &vmin, &vmax);
     // add a little offset so we can see the boundary curves
@@ -619,7 +629,7 @@ plotsurfacenormals(ON_Surface &surf, struct bn_vlblock *vbp, int gridres)
 
 
 void
-plotsurfaceknots(ON_Surface &surf, struct bn_vlblock *vbp)
+plotsurfaceknots(ON_Surface &surf, struct bn_vlblock *vbp, bool dim3d)
 {
     register struct bu_list *vhead;
     fastf_t pt1[3], pt2[3];
@@ -630,14 +640,25 @@ plotsurfaceknots(ON_Surface &surf, struct bn_vlblock *vbp)
     fastf_t *spanv = NULL;
     spanu = new fastf_t[spanu_cnt+1];
     spanv = new fastf_t[spanv_cnt+1];
+
+#ifndef RESETDOMAIN
+    double width,height;
+    if (surf.GetSurfaceSize(&width,&height)) {
+	surf.SetDomain(0,0.0,width);
+	surf.SetDomain(1,0.0,height);
+
+    }
+#endif
+
     surf.GetSpanVector(0, spanu);
     surf.GetSpanVector(1, spanv);
 
-    vhead = rt_vlblock_find(vbp, YELLOW);
+    vhead = rt_vlblock_find(vbp, GREEN);
 
     ON_Interval udom = surf.Domain(0);
     ON_Interval vdom = surf.Domain(1);
 
+    if (dim3d) {
     for (int u = 0; u <= spanu_cnt; u++) {
 	for (int v = 0; v <= spanv_cnt; v++) {
 	    ON_3dPoint p = surf.PointAt(spanu[u], spanv[v]);
@@ -648,6 +669,15 @@ plotsurfaceknots(ON_Surface &surf, struct bn_vlblock *vbp)
 	    VADD2(pt2, pt1, pt2);
 	    RT_ADD_VLIST(vhead, pt1, BN_VLIST_LINE_MOVE);
 	    RT_ADD_VLIST(vhead, pt2, BN_VLIST_LINE_DRAW);
+	    }
+	}
+    } else {
+	for (int u = 0; u <= spanu_cnt; u++) {
+	    for (int v = 0; v <= spanv_cnt; v++) {
+		ON_3dPoint p = surf.PointAt(spanu[u], spanv[v]);
+		VSET(pt1, spanu[u], spanv[v], 0.0);
+		RT_ADD_VLIST(vhead, pt1, BN_VLIST_POINT_DRAW);
+	    }
 	}
     }
     return;
@@ -1346,13 +1376,13 @@ brep_surface_normal_plot(struct bu_vls *vls, struct brep_specific* bs, struct rt
 	if (index == -1) {
 	    for (index = 0; index < brep->m_S.Count(); index++) {
 		ON_Surface *surf = brep->m_S[index];
-		plotsurfaceknots(*surf, vbp);
+		plotsurfaceknots(*surf, vbp, true);
 		plotsurfacenormals(*surf, vbp, plotres);
 	    }
 	} else if (index < brep->m_S.Count()) {
 	    ON_Surface *surf = brep->m_S[index];
 	    surf->Dump(tl);
-	    plotsurfaceknots(*surf, vbp);
+	    plotsurfaceknots(*surf, vbp, true);
 	    plotsurfacenormals(*surf, vbp, plotres);
 	}
 
@@ -1362,7 +1392,7 @@ brep_surface_normal_plot(struct bu_vls *vls, struct brep_specific* bs, struct rt
 
 
 int
-brep_surface_knot_plot(struct bu_vls *vls, struct brep_specific* bs, struct rt_brep_internal*, struct bn_vlblock *vbp, int index)
+brep_surface_knot_plot(struct bu_vls *vls, struct brep_specific* bs, struct rt_brep_internal*, struct bn_vlblock *vbp, int index, bool dim3d)
 {
     ON_wString wstr;
     ON_TextLog tl(wstr);
@@ -1378,12 +1408,12 @@ brep_surface_knot_plot(struct bu_vls *vls, struct brep_specific* bs, struct rt_b
 	if (index == -1) {
 	    for (index = 0; index < brep->m_S.Count(); index++) {
 		ON_Surface *surf = brep->m_S[index];
-		plotsurfaceknots(*surf, vbp);
+		plotsurfaceknots(*surf, vbp, dim3d);
 	    }
 	} else if (index < brep->m_S.Count()) {
 	    ON_Surface *surf = brep->m_S[index];
 	    surf->Dump(tl);
-	    plotsurfaceknots(*surf, vbp);
+	    plotsurfaceknots(*surf, vbp, dim3d);
 	}
 
 	bu_vls_printf(vls, ON_String(wstr).Array());
@@ -2562,10 +2592,15 @@ brep_command(struct bu_vls *vls, struct brep_specific* bs, struct rt_brep_intern
 		    ret = brep_surface_normal_plot(vls, bs, bi, vbp, i,
 						   plotres);
 		}
+	    } else if (BU_STR_EQUAL(part, "KN2d")) {
+		snprintf(commtag, 64, "_BC_KN2d_");
+		for (int i = startindex; i <= endindex; i++) {
+		    ret = brep_surface_knot_plot(vls, bs, bi, vbp, i, false);
+		}
 	    } else if (BU_STR_EQUAL(part, "KN")) {
 		snprintf(commtag, 64, "_BC_KN_");
 		for (int i = startindex; i <= endindex; i++) {
-		    ret = brep_surface_knot_plot(vls, bs, bi, vbp, i);
+		    ret = brep_surface_knot_plot(vls, bs, bi, vbp, i, true);
 		}
 	    } else if (BU_STR_EQUAL(part, "F")) {
 		snprintf(commtag, 64, "_BC_F_");
