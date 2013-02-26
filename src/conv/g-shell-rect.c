@@ -1115,7 +1115,7 @@ refine_hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUS
 
     VSUB2(diff, hit_pt, ref_data->mid_pt);
     dist = MAGNITUDE(diff);
-    if (dist <= use_tolerance || dist > 1.4142 * cell_size)
+    if (dist <= use_tolerance || dist > M_SQRT2 * cell_size)
 	return 0;
 
     if (fd_plot) {
