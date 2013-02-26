@@ -1249,7 +1249,7 @@ brep_facetrim_plot(struct bu_vls *vls, struct brep_specific* bs, struct rt_brep_
 		    plotUVDomain2d(face, vbp);
 		plottrim(face, vbp, plotres, dim3d);
 	    }
-	} else if (index < brep->m_S.Count()) {
+	} else if (index < brep->m_F.Count()) {
 	    ON_BrepFaceArray& faces = brep->m_F;
 	    if (index < faces.Count()) {
 		ON_BrepFace& face = faces[index];
@@ -1284,7 +1284,7 @@ brep_trim_direction_plot(struct bu_vls *vls, struct brep_specific* bs, struct rt
 		ON_BrepFace& face = brep->m_F[index];
 		plottrimdirection(face, vbp, plotres);
 	    }
-	} else if (index < brep->m_S.Count()) {
+	} else if (index < brep->m_F.Count()) {
 	    ON_BrepFaceArray& faces = brep->m_F;
 	    if (index < faces.Count()) {
 		ON_BrepFace& face = faces[index];
@@ -2071,7 +2071,7 @@ brep_isosurface_plot(struct bu_vls *vls, struct brep_specific* bs, struct rt_bre
 #endif
 		delete st;
 	    }
-	} else if (index < brep->m_S.Count()) {
+	} else if (index < brep->m_F.Count()) {
 	    ON_BrepFaceArray& faces = brep->m_F;
 	    if (index < faces.Count()) {
 		ON_BrepFace& face = faces[index];
@@ -2111,7 +2111,7 @@ brep_surfaceleafs_plot(struct bu_vls *vls, struct brep_specific* bs, struct rt_b
 		SurfaceTree* st = new SurfaceTree(&face);
 		plotsurfaceleafs(st, vbp, dim3d);
 	    }
-	} else if (index < brep->m_S.Count()) {
+	} else if (index < brep->m_F.Count()) {
 	    ON_BrepFaceArray& faces = brep->m_F;
 	    if (index < faces.Count()) {
 		ON_BrepFace& face = faces[index];
@@ -2145,7 +2145,7 @@ brep_trimleafs_plot(struct bu_vls *vls, struct brep_specific* bs, struct rt_brep
 		SurfaceTree* st = new SurfaceTree(&face);
 		plottrimleafs(st, vbp, dim3d);
 	    }
-	} else if (index < brep->m_S.Count()) {
+	} else if (index < brep->m_F.Count()) {
 	    ON_BrepFaceArray& faces = brep->m_F;
 	    if (index < faces.Count()) {
 		ON_BrepFace& face = faces[index];
