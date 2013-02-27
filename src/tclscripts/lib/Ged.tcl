@@ -2758,10 +2758,6 @@ package provide cadwidgets::Ged 1.0
     eval $mGed scale_mode $itk_component($_pane) $args
 }
 
-::itcl::body cadwidgets::Ged::pane_scale_mode {_pane args} {
-    eval $mGed scale_mode $itk_component($_pane) $args
-}
-
 ::itcl::body cadwidgets::Ged::pane_screen2view {_pane args} {
     eval $mGed screen2view $itk_component($_pane) $args
 }
