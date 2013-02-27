@@ -1890,7 +1890,7 @@ ged_redraw(struct ged *gedp, int argc, const char *argv[])
 	int i;
 	struct db_full_path obj_path, dl_path;
 
-	/* redraw the specificied paths */
+	/* redraw the specified paths */
 	for (i = 1; i < argc; ++i) {
 	    if (db_string_to_path(&obj_path, gedp->ged_wdbp->dbip, argv[i]) < 0) {
 		bu_vls_printf(gedp->ged_result_str,
