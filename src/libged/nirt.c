@@ -111,7 +111,7 @@ ged_nirt(struct ged *gedp, int argc, const char *argv[])
 
     const char *bin = NULL;
     char nirt[256] = {0};
-    int args;
+    size_t args;
 
     /* for bu_fgets space trimming */
     struct bu_vls v = BU_VLS_INIT_ZERO;
@@ -401,7 +401,8 @@ ged_nirt(struct ged *gedp, int argc, const char *argv[])
     si.hStdError   = pipe_err[1];
     si.wShowWindow = SW_HIDE;
 
-    bu_vls_strcat(line1, gedp->ged_gdp->gd_rt_cmd[0]);
+    bu_vls_strcat(&line1, gedp->ged_gdp->gd_rt_cmd[0]);
+    bu_vls_strcat(&line1, " ");
 
     for (i = 1; i < gedp->ged_gdp->gd_rt_cmd_len; i++) {
 	/* skip commands */
@@ -410,6 +411,7 @@ ged_nirt(struct ged *gedp, int argc, const char *argv[])
 	} else {
 	    /* append other arguments (i.e. options, file and obj(s)) */
 	    bu_vls_strcat(&line1, gedp->ged_gdp->gd_rt_cmd[i]);
+	    bu_vls_strcat(&line1, " ");
 	}
     }
 
