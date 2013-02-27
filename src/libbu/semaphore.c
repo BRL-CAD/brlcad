@@ -24,7 +24,17 @@
 #include <stdio.h>
 #include <ctype.h>
 #include <math.h>
+
+#include "bio.h"
 #include "bu.h"
+
+#if defined(_WIN32) && !defined(__CYGWIN__)
+struct bu_semaphores {
+    uint32_t magic;
+    HANDLE m;
+};
+# define DEFINED_BU_SEMAPHORES 1
+#endif
 
 #ifdef CRAY
 # include <sys/category.h>
@@ -309,6 +319,17 @@ bu_semaphore_init(unsigned int nsemaphores)
     }
 #	endif
 
+#	if defined(_WIN32) && !defined(__CYGWIN__)
+    for (i=0; i < nsemaphores; i++) {
+	bu_semaphores[i].magic = BU_SEMAPHORE_MAGIC;
+	bu_semaphores[i].m = CreateMutex(NULL, FALSE, NULL);
+	if (bu_semaphores[i].m == NULL) {
+	    fprintf(stderr, "bu_semaphore_init(): CreateMutex() failed on [%d]\n", i);
+	    bu_bomb("fatal semaphore acquisition failure");
+	}
+    }
+#	endif
+
     /*
      * This should be last thing done before returning, so that
      * any subroutines called (e.g. bu_calloc()) won't think that
@@ -405,6 +426,12 @@ bu_semaphore_acquire(unsigned int i)
 	bu_bomb("fatal semaphore acquisition failure");
     }
 #	endif
+#	if defined(_WIN32) && !defined(__CYGWIN__)
+    if (WaitForSingleObject(bu_semaphores[i].m, INFINITE)) {
+	fprintf(stderr, "bu_semaphore_acquire(): WaitForSingleObject() failed on [%d]\n", i);
+	bu_bomb("fatal semaphore acquisition failure");
+    }
+#	endif
 
 #endif
 }
@@ -469,6 +496,13 @@ bu_semaphore_release(unsigned int i)
 #	if defined(HAVE_PTHREAD_H) && !defined (sgi)
     if (pthread_mutex_unlock(&bu_semaphores[i].mu)) {
 	fprintf(stderr, "bu_semaphore_acquire(): pthread_mutex_unlock() failed on [%d]\n", i);
+	bu_bomb("fatal semaphore acquisition failure");
+    }
+#	endif
+
+#	if defined(_WIN32) && !defined(__CYGWIN__)
+    if (!ReleaseMutex(bu_semaphores[i].m)) {
+	fprintf(stderr, "bu_semaphore_acquire(): ReleaseMutex() failed on [%d]\n", i);
 	bu_bomb("fatal semaphore acquisition failure");
     }
 #	endif
