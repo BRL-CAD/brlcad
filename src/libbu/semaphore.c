@@ -427,7 +427,7 @@ bu_semaphore_acquire(unsigned int i)
     }
 #	endif
 #	if defined(_WIN32) && !defined(__CYGWIN__)
-    if (WaitForSingleObject(bu_semaphores[i].m, INFINITE)) {
+    if (WaitForSingleObject(bu_semaphores[i].m, INFINITE) == WAIT_FAILED) {
 	fprintf(stderr, "bu_semaphore_acquire(): WaitForSingleObject() failed on [%d]\n", i);
 	bu_bomb("fatal semaphore acquisition failure");
     }
