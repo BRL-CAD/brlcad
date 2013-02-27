@@ -1,0 +1,6 @@
+set(libp2t_ignored_files
+	AUTHORS
+	LICENSE
+	README
+	testbed
+	  )

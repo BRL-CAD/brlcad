@@ -890,6 +890,19 @@ if(BRLCAD_LEVEL2)
   set(ADAPTAGRAMS_FOUND "${ADAPTAGRAMS_FOUND}" CACHE BOOL "Adaptagrams status" FORCE) 
 endif(BRLCAD_LEVEL2)
 
+# Poly2Tri CDT library
+if(BRLCAD_LEVEL2)
+  add_subdirectory(poly2tri)
+  include(${CMAKE_CURRENT_SOURCE_DIR}/poly2tri.dist)
+  CMAKEFILES_IN_DIR(poly2tri_ignore_files poly2tri)
+  DISTCLEAN(${CMAKE_CURRENT_SOURCE_DIR}/poly2tri/Makefile)
+  set(P2T_LIBRARY "p2t" CACHE STRING "Poly2Tri library" FORCE)
+  set(P2T_INCLUDE_DIR "${BRLCAD_SOURCE_DIR}/src/other/poly2tri" CACHE STRING "Directory containing poly2tri header" FORCE)
+  mark_as_advanced(P2T_LIBRARY)
+  mark_as_advanced(P2T_INCLUDE_DIR)
+else(BRLCAD_LEVEL2)
+  CMAKEFILES(poly2tri)
+endif(BRLCAD_LEVEL2)
 
 # The jama/tnt headers are installed by default - BRL-CAD requires the
 # altered headers to build (I think?)
