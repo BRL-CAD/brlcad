@@ -49,10 +49,10 @@ main(int argc, char **argv)
 	bu_exit(1, "usage: bwrect infile outfile (I prompt!)\n");
     }
     if ((ifp = fopen(argv[1], "r")) == NULL) {
-	bu_exit(2, "pixrect: can't open %s\n", argv[1]);
+	bu_exit(2, "pixrect: can't open %s for reading\n", argv[1]);
     }
     if ((ofp = fopen(argv[2], "w")) == NULL) {
-	bu_exit(3, "pixrect: can't open %s\n", argv[1]);
+	bu_exit(3, "pixrect: can't open %s for writing\n", argv[2]);
     }
 
     /* Get info */
