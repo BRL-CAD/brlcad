@@ -91,9 +91,7 @@ ged_nirt(struct ged *gedp, int argc, const char *argv[])
     STARTUPINFO si;
     PROCESS_INFORMATION pi;
     SECURITY_ATTRIBUTES sa;
-    char name[1024] = {0};
-    char line1[2048] = {0};
-    size_t rem = 2048;
+    struct bu_vls line1 = BU_VLS_INIT_ZERO;
 #endif
     int use_input_orig = 0;
     vect_t center_model;
@@ -403,28 +401,19 @@ ged_nirt(struct ged *gedp, int argc, const char *argv[])
     si.hStdError   = pipe_err[1];
     si.wShowWindow = SW_HIDE;
 
-    snprintf(line1, rem, "%s ", gedp->ged_gdp->gd_rt_cmd[0]);
-    rem -= strlen(line1) - 1;
+    bu_vls_strcat(line1, gedp->ged_gdp->gd_rt_cmd[0]);
 
     for (i = 1; i < gedp->ged_gdp->gd_rt_cmd_len; i++) {
 	/* skip commands */
-	if (BU_STR_EQUAL(gedp->ged_gdp->gd_rt_cmd[i], "-e"))
+	if (BU_STR_EQUAL(gedp->ged_gdp->gd_rt_cmd[i], "-e")) {
 	    ++i;
-	else {
+	} else {
 	    /* append other arguments (i.e. options, file and obj(s)) */
-	    snprintf(name, 1024, "\"%s\" ", gedp->ged_gdp->gd_rt_cmd[i]);
-	    if (rem - strlen(name) < 1) {
-		bu_log("Ran out of buffer space!");
-		bu_free(gedp->ged_gdp->gd_rt_cmd, "free gd_rt_cmd");
-		gedp->ged_gdp->gd_rt_cmd = NULL;
-		return TCL_ERROR;
-	    }
-	    bu_strlcat(line1, name, sizeof(line1));
-	    rem -= strlen(name);
+	    bu_vls_strcat(&line1, gedp->ged_gdp->gd_rt_cmd[i]);
 	}
     }
 
-    CreateProcess(NULL, line1, NULL, NULL, TRUE,
+    CreateProcess(NULL, bu_vls_addr(&line1), NULL, NULL, TRUE,
 		  DETACHED_PROCESS, NULL, NULL,
 		  &si, &pi);
 
@@ -553,6 +542,7 @@ ged_nirt(struct ged *gedp, int argc, const char *argv[])
     /* Wait for program to finish */
     WaitForSingleObject(pi.hProcess, INFINITE);
 
+    bu_vls_free(&line1);
 #endif
 
     gdlp = BU_LIST_NEXT(ged_display_list, &gedp->ged_gdp->gd_headDisplay);
