@@ -67,8 +67,10 @@ main (int argc, char **argv)
 	    bu_exit(1, "bwthresh: Threshold[%d] value %d out of range.  Need 0 <= value <= 255\n",
 		    i, thresh_val[i]);
 	}
-	if ((i > 0) && (thresh_val[i] <= thresh_val[i - 1])) {
-	    bu_exit(1, "bwthresh: Threshold values not strictly increasing\n");
+	if (i > 0) {
+	    if (thresh_val[i] <= thresh_val[i - 1]) {
+	        bu_exit(1, "bwthresh: Threshold values not strictly increasing\n");
+	    }
 	}
 	bin_color[i] = 256 * i / nm_threshs;
     }
