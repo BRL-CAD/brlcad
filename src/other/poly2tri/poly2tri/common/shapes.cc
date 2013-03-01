@@ -248,6 +248,17 @@ Triangle* Triangle::NeighborCW(Point& point)
   return neighbors_[0];
 }
 
+// The neighbor across to given point
+Triangle* Triangle::NeighborAcross(Point& opoint)
+{
+  if (&opoint == points_[0]) {
+    return neighbors_[0];
+  } else if (&opoint == points_[1]) {
+    return neighbors_[1];
+  }
+  return neighbors_[2];
+}
+
 // The neighbor counter-clockwise to given point
 Triangle* Triangle::NeighborCCW(Point& point)
 {
@@ -341,17 +352,6 @@ void Triangle::SetDelunayEdgeCW(Point& p, bool e)
   } else {
     delaunay_edge[0] = e;
   }
-}
-
-// The neighbor across to given point
-Triangle& Triangle::NeighborAcross(Point& opoint)
-{
-  if (&opoint == points_[0]) {
-    return *neighbors_[0];
-  } else if (&opoint == points_[1]) {
-    return *neighbors_[1];
-  }
-  return *neighbors_[2];
 }
 
 void Triangle::DebugPrint()

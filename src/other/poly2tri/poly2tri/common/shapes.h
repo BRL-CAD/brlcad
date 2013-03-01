@@ -176,6 +176,7 @@ int EdgeIndex(const Point* p1, const Point* p2);
 
 Triangle* NeighborCW(Point& point);
 Triangle* NeighborCCW(Point& point);
+Triangle* NeighborAcross(Point& opoint);
 bool GetConstrainedEdgeCCW(Point& p);
 bool GetConstrainedEdgeCW(Point& p);
 void SetConstrainedEdgeCCW(Point& p, bool ce);
@@ -200,8 +201,6 @@ void ClearDelunayEdges();
 
 inline bool IsInterior();
 inline void IsInterior(bool b);
-
-Triangle& NeighborAcross(Point& opoint);
 
 void DebugPrint();
 
