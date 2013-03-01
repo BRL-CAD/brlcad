@@ -19,12 +19,17 @@
 <refsynopsisdiv xml:id="synopsis">
   <cmdsynopsis sepchar=" ">
     <command>lc</command>
-       <arg choice="opt" rep="norepeat">-d</arg>
+       <group choice="opt" rep="norepeat">
+	 <arg choice="plain" rep="norepeat">-d</arg>
+	 <arg choice="plain" rep="norepeat">-s</arg>
+	 <arg choice="plain" rep="norepeat">-r</arg>
+       </group>
        <arg choice="opt" rep="norepeat">-z</arg>
        <group choice="opt" rep="norepeat">
 	 <arg choice="plain" rep="norepeat">-2</arg>
 	 <arg choice="plain" rep="norepeat">-3</arg>
 	 <arg choice="plain" rep="norepeat">-4</arg>
+	 <arg choice="plain" rep="norepeat">-5</arg>
        </group>
        <group choice="opt" rep="norepeat">
 	 <arg choice="plain" rep="norepeat">-f</arg>
@@ -37,14 +42,10 @@
 </refsynopsisdiv>
 
 <refsection xml:id="description"><title>DESCRIPTION</title>
- <para>The 'lc' command lists a set of codes (i.e. attributes) of regions
- within a group/combination. The attributes listed are 'region_id',
- 'material_id' and 'los' followed by 'region name'. If an attribute
- is unset, it is reported as '--'. By default, the list is sorted in
- ascending (a-z) order by 'region_id'. Sorting can be performed on
- any column in ascending or descending (z-a) order. Duplicate
- 'region_id' can be listed within a group/combination. Output can also
- be saved to a file.</para>
+ <para>The 'lc' command lists a set of codes (i.e. attributes) of
+ regions within a group/combination. Listed in columns are the
+ following 'region_id', 'material_id', 'los', 'region name',
+ 'region parent'. If a value is unset, it is reported as '--'.</para>
 </refsection>
 
   <refsection xml:id="options"><title>OPTIONS</title>
@@ -53,7 +54,28 @@
       <term><option>-d</option></term>
       <listitem>
 	<para>
-	  Specifies duplicate 'region_id' should be listed.
+	  Specifies to list only regions with duplicate 'region_id'.
+	</para>
+      </listitem>
+    </varlistentry>
+    <varlistentry>
+      <term><option>-s</option></term>
+      <listitem>
+	<para>
+	  Same as '-d' except some duplicates will not be reported
+	  (i.e. skipped). Skipped duplicates will be those within the
+	  specified group, that have the same parent, 'material_id' and
+	  'los'.
+	</para>
+      </listitem>
+    </varlistentry>
+    <varlistentry>
+      <term><option>-r</option></term>
+      <listitem>
+	<para>
+	  Remove regions from the list in which their parent is a region
+	  and the region is subtracted within the parent. The '-r' option
+	  can be combined with any other option.
 	</para>
       </listitem>
     </varlistentry>
@@ -69,9 +91,10 @@
       <term><option>-2</option></term>
       <term><option>-3</option></term>
       <term><option>-4</option></term>
+      <term><option>-5</option></term>
       <listitem>
 	<para>
-	  Specifies sort column 2, 3 or 4.
+	  Specifies sort column 2, 3, 4 or 5.
 	</para>
       </listitem>
     </varlistentry>
