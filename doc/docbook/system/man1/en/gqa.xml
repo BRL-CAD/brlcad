@@ -446,6 +446,14 @@
 	</listitem>
       </varlistentry>
       <varlistentry>
+	<term><option>-q</option></term>
+	<listitem>
+	  <para>
+	    Quiets (suppresses) the "was not hit" reporting.
+	  </para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
 	<term><option>-r</option></term>
 	<listitem>
 	  <para>
