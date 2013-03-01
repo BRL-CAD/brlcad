@@ -41,7 +41,7 @@
 #include "ProMode.h"
 #include "ProMdl.h"
 #include "ProFaminstance.h"
-#include "pd_prototype.h"
+#include "pd_proto_deprecated.h"
 #include "ProPart.h"
 #include "ProSolid.h"
 #include "ProSkeleton.h"

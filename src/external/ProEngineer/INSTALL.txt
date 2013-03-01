@@ -1,17 +1,13 @@
 ---
 
-This is a build of a Pro/ENGINEER plugin that exports geometry in
-polygonal format for use with BRL-CAD.  The export plugin has a
-variety of options, but should be relatively self-explanatory.
+This is a build of the Creo Parametric 2.0 plugin (64-bit) that exports
+geometry in polygonal format for use with BRL-CAD.  The export plugin
+has a variety of options, but should be relatively self-explanatory.
+The build interfaces with the Pro/Toolkit plugin interface.  This build
+was compiled on Windows 7.
 
-Builds are available for different versions of Pro/ENGINEER Wildfire
-in 32-bit and 64-bit format.  The builds interface with the
-Pro/Toolkit plugin interface.  The 64-bit builds were compiled on
-Windows Vista.  See the INSTALL.txt file for more details and
-assumptions for this particular build of the ProE-BRL plugin.
-
-To inform Pro/ENGINEER about the Pro/Toolkit code that produces ASCII
-file, you need to create a "protk.dat" file as follows:
+To inform Creo Parametric 2.0 about the Pro/Toolkit code that produces a
+BRL-CAD ASCII file, you need to create a "protk.dat" file as follows:
 
 line 1:name proe-brl
 line 2:startup spawn
@@ -21,36 +17,52 @@ line 5:revision 2001
 line 6:description Export facetization of displayed model to BRL-CAD
 line 7:end
 
-See "protk.dat" in this directory for an example.  The exec_file must
-include the name of the executable file, and the text_dir must include
-the name of the "text" directory.  In the "text" directory
-Pro/ENGINEER will look for a subdirectory named "usascii" for a file
-named "usermsg.txt".  The "text" directory in this directory should be
-used or at least copied verbatim to where you want to use it.
+The easiest thing to do is modify the "protk.dat" file found in this directory.
+The exec_file must include the name of the executable file (i.e., proe-brl.dll), and
+the text_dir must include the name of the "text" directory.
 
-The "protk.dat" file must be located where Pro/ENGINEER will look for
-it.  Pro/ENGINEER will look in your current directory and in
-Pro/ENGINEER's "text" directory (as well as a few other places).
+-------- Begin Example protk.dat --------
+name proe-brl
+startup dll
+exec_file C:/Program Files (x86)/PTC/Creo 2.0/Common Files/M020/x86e_win64/obj/proe-brl.dll
+text_dir C:/Program Files (x86)/PTC/Creo 2.0/Common Files/M020/text
+revision 7.22.1
+description Convert currently displayed model to BRL-CAD
+end
+--------  End Example protk.dat  --------
 
-The resource files (i.e. proe_brl.res, proe_brl_error.res and
-proe_brl_gen_error.res) also need to be installed where Pro/ENGINEER
-can find them.  Pro/ENGINEER will look in its text/resource directory.
-It will also look in the resource directory that's in the text
-directory specified by text_dir in the protk.dat file (see
-line4:text_dir above).
+Place the edited "protk.dat" file in the following directory:
+   "C:\Program Files (x86)\PTC\Creo 2.0\Common Files\M020\protoolkit".
+Place the "usermsg.txt" file in the following directory:
+   "C:\Program Files (x86)\PTC\Creo 2.0\Common Files\M020\text\usascii"
+Place the resource files (i.e. proe_brl.res, proe_brl_error.res and
+proe_brl_gen_error.res) in the following directory:
+   "C:\Program Files (x86)\PTC\Creo 2.0\Common Files\M020\text\resource"
+Lastly, place the plugin and associated dll's (i.e., proe-brl.dll, libbu.dll,
+libbn.dll and tcl.dll) in the following directory:
+   "C:\Program Files (x86)\PTC\Creo 2.0\Common Files\M020\x86e_win64\obj"
 
-If the "protk.dat" file, the "proe-brl" executable, and the
-"usermsg.txt" files are installed properly, you will see the message
-"Installation of Proe-BRL converter succeeded" in the Pro/ENGINEER
-message window when Pro/E starts.
+Note - the installation point may vary, depending on your installation. In the
+examples above the installation point is "C:\Program Files (x86)\PTC\Creo 2.0".
 
-Once installed, the Pro/ENGINEER to BRL-CAD conversion is a two step
-process.  First, in Pro/ENGINEER, you must select "Proe-brl" under the
-"File" menu.  You will be prompted for an output file name, a starting
-region ident number, a maximum allowed error for the facetization
-approximation, and an angle control. The recommended value for the
-angle control is 0.5.  After all prompts have been satisfied, the
-currently displayed model will be output to a file in BRL-CAD ACSII
-format (actually a Tcl script). The output file can then be converted
-to BRL-CAD by using "asc2g" or by sourcing the file in MGED using the
-"source" command.
+To activate the plugin, do the following:
+1) Start Creo Parametric.
+2) On the Home tab, in the Utilities group, click Auxiliary Applications or click
+   Tools > Auxiliary Applications. The Auxiliary Applications dialog box opens.
+3) Click Register to register the protk.dat file. The Register auxiliary
+   application dialog box opens.
+4) Browse to the full path of the protk.dat file, select and click the "Open" button.
+5) This adds the plugin to the "Auxiliary Applications" dialog. Select and click the
+   "Start" button to load the plugin into Creo's "Tools/File" menu found in the "Tools" tab.
+   If the above mentioned files are installed properly, you will see the message
+   "Application "proe-brl started successfully" in the Creo Parametric 2.0 message window
+   at the bottom.
+6) Select Proe-BRL from this menu to launch.
+
+After launch, you need to enter an output file name, a starting
+region ident number, a maximum and minimum allowed error for the facetization
+approximation, and a maximum and minimum angle control. The recommended value for the
+angle control is 0.5.  Select the "Go" button at the bottom to output the
+currently displayed model to a file in BRL-CAD ACSII format (actually a Tcl script).
+The output file can then be converted to BRL-CAD by using "asc2g" or by sourcing the
+file in MGED using the "source" command.
