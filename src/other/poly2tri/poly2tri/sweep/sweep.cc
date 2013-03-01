@@ -57,15 +57,37 @@ void Sweep::SweepPoints(SweepContext& tcx)
     }
   }
 }
+Triangle* Sweep::FindInternalTriangle(Triangle* ext_tri)
+{
+	Triangle* t = NULL;
 
+	if (ext_tri != NULL) {
+		if (ext_tri->constrained_edge[0]) {
+			return ext_tri->GetNeighbor(0);
+		} else if (ext_tri->constrained_edge[1]) {
+			return ext_tri->GetNeighbor(1);
+		} else if (ext_tri->constrained_edge[2]) {
+			return ext_tri->GetNeighbor(2);
+		} else {
+			ext_tri->IsChecked(true);
+			for(int i=0; i<3; i++) {
+				Triangle* n = ext_tri->GetNeighbor(i);
+				if ((n != NULL) && (!n->IsChecked())) {
+					t = FindInternalTriangle(n);
+					if (t != NULL)
+						break;
+				}
+			}
+		}
+	}
+	return t;
+}
 void Sweep::FinalizationPolygon(SweepContext& tcx)
 {
   // Get an Internal triangle to start with
   Triangle* t = tcx.front()->head()->next->triangle;
   Point* p = tcx.front()->head()->next->point;
-  while (!t->GetConstrainedEdgeCW(*p)) {
-    t = t->NeighborCCW(*p);
-  }
+  t = FindInternalTriangle(tcx.af_tail_->triangle);
 
   // Collect interior triangles constrained by edges
   tcx.MeshClean(*t);

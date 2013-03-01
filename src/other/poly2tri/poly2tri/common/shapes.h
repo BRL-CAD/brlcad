@@ -202,6 +202,9 @@ void ClearDelunayEdges();
 inline bool IsInterior();
 inline void IsInterior(bool b);
 
+inline bool IsChecked();
+inline void IsChecked(bool b);
+
 void DebugPrint();
 
 private:
@@ -213,6 +216,8 @@ Triangle* neighbors_[3];
 
 /// Has this triangle been marked as an interior triangle?
 bool interior_;
+/// Has this triangle been checked as an interior triangle?
+bool checked_;
 };
 
 inline bool cmp(const Point* a, const Point* b)
@@ -315,6 +320,16 @@ inline bool Triangle::IsInterior()
 inline void Triangle::IsInterior(bool b)
 {
   interior_ = b;
+}
+
+inline bool Triangle::IsChecked()
+{
+  return checked_;
+}
+
+inline void Triangle::IsChecked(bool b)
+{
+	checked_ = b;
 }
 
 }

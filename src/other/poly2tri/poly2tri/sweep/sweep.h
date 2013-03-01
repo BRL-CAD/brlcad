@@ -274,6 +274,8 @@ private:
      */
   void FlipScanEdgeEvent(SweepContext& tcx, Point& ep, Point& eq, Triangle& flip_triangle, Triangle& t, Point& p);
 
+  Triangle* FindInternalTriangle(Triangle* ext_tri);
+
   void FinalizationPolygon(SweepContext& tcx);
 
   std::vector<Node*> nodes_;
