@@ -52,7 +52,7 @@ class SweepContext {
 public:
 
 /// Constructor
-SweepContext(std::vector<Point*> polyline);
+SweepContext(std::vector<Point*> &polyline);
 /// Destructor
 ~SweepContext();
 
@@ -70,7 +70,7 @@ Node& LocateNode(Point& point);
 
 void RemoveNode(Node* node);
 
-void CreateAdvancingFront(std::vector<Node*> nodes);
+void CreateAdvancingFront(std::vector<Node*> &nodes);
 
 /// Try to map a node to all sides of this triangle that don't have a neighbor
 void MapTriangleToNodes(Triangle& t);
@@ -83,7 +83,7 @@ Point* GetPoints();
 
 void RemoveFromMap(Triangle* triangle);
 
-void AddHole(std::vector<Point*> polyline);
+void AddHole(std::vector<Point*> &polyline);
 
 void AddPoint(Point* point);
 
@@ -91,8 +91,8 @@ AdvancingFront* front();
 
 void MeshClean(Triangle& triangle);
 
-std::vector<Triangle*> GetTriangles();
-std::list<Triangle*> GetMap();
+std::vector<Triangle*>& GetTriangles();
+std::list<Triangle*>& GetMap();
 
 std::vector<Edge*> edge_list;
 
@@ -147,7 +147,7 @@ Point* tail_;
 Node *af_head_, *af_middle_, *af_tail_;
 
 void InitTriangulation();
-void InitEdges(std::vector<Point*> polyline);
+void InitEdges(std::vector<Point*> &polyline);
 
 };
 

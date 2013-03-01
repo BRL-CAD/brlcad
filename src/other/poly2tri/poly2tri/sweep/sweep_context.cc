@@ -34,12 +34,12 @@
 
 namespace p2t {
 
-SweepContext::SweepContext(std::vector<Point*> polyline) : points_(polyline)
+SweepContext::SweepContext(std::vector<Point*> &polyline) : points_(polyline)
 {
   InitEdges(points_);
 }
 
-void SweepContext::AddHole(std::vector<Point*> polyline)
+void SweepContext::AddHole(std::vector<Point*> &polyline)
 {
   InitEdges(polyline);
   for(unsigned int i = 0; i < polyline.size(); i++) {
@@ -51,12 +51,12 @@ void SweepContext::AddPoint(Point* point) {
   points_.push_back(point);
 }
 
-std::vector<Triangle*> SweepContext::GetTriangles()
+std::vector<Triangle*>& SweepContext::GetTriangles()
 {
   return triangles_;
 }
 
-std::list<Triangle*> SweepContext::GetMap()
+std::list<Triangle*>& SweepContext::GetMap()
 {
   return map_;
 }
@@ -89,7 +89,7 @@ void SweepContext::InitTriangulation()
 
 }
 
-void SweepContext::InitEdges(std::vector<Point*> polyline)
+void SweepContext::InitEdges(std::vector<Point*> &polyline)
 {
   size_t num_points = polyline.size();
   for (size_t i = 0; i < num_points; i++) {
@@ -114,10 +114,9 @@ Node& SweepContext::LocateNode(Point& point)
   return *front_->LocateNode(point.x);
 }
 
-void SweepContext::CreateAdvancingFront(std::vector<Node*> nodes)
+void SweepContext::CreateAdvancingFront(std::vector<Node*> &nodes)
 {
 
-  (void) nodes;
   // Initial triangle
   Triangle* triangle = new Triangle(*points_[0], *tail_, *head_);
 
@@ -191,7 +190,7 @@ SweepContext::~SweepContext()
      for(unsigned int i = 0; i < edge_list.size(); i++) {
         delete edge_list[i];
     }
-
+    points_.clear();
 }
 
 }
