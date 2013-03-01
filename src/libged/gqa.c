@@ -53,8 +53,8 @@
 
 
 /* bu_getopt() options */
-char *options = "A:a:de:f:g:Gn:N:pP:rS:s:t:U:u:vV:W:";
-char *options_str = "[-A A|a|b|c|e|g|m|o|p|v|w] [-a az] [-d] [-e el] [-f densityFile] [-g spacing|upper, lower|upper-lower] [-G] [-n nhits] [-N nviews] [-p] [-P ncpus] [-r] [-S nsamples] [-t overlap_tol] [-U useair] [-u len_units vol_units wt_units] [-v] [-V volume_tol] [-W weight_tol]";
+char *options = "A:a:de:f:g:Gn:N:pP:qrS:s:t:U:u:vV:W:";
+char *options_str = "[-A A|a|b|c|e|g|m|o|p|v|w] [-a az] [-d] [-e el] [-f densityFile] [-g spacing|upper, lower|upper-lower] [-G] [-n nhits] [-N nviews] [-p] [-P ncpus] [-q] [-r] [-S nsamples] [-t overlap_tol] [-U useair] [-u len_units vol_units wt_units] [-v] [-V volume_tol] [-W weight_tol]";
 
 #define ANALYSIS_VOLUME 1
 #define ANALYSIS_WEIGHT 2
@@ -99,6 +99,7 @@ static int num_objects; /* number of objects specified on command line */
 static int max_cpus;
 static int num_views;
 static int verbose;
+static int quiet_missed_report;
 
 static int plot_files;	/* Boolean: Should we produce plot files? */
 static FILE *plot_weight;
@@ -638,6 +639,9 @@ parse_args(int ac, char *av[])
 	    case 'P':
 		/* cannot ask for more cpu's than the machine has */
 		if ((c=atoi(bu_optarg)) > 0 && c <= max_cpus) ncpu = c;
+		break;
+	    case 'q':
+		quiet_missed_report = 1;
 		break;
 	    case 'r':
 		print_per_region_stats = 1;
@@ -1974,9 +1978,9 @@ terminate_check(struct cstate *state)
 		    if (hits < require_num_hits) {
 			all_hit = 0;
 			if (verbose) {
-			    if (hits == 0) {
+			    if (hits == 0 && !quiet_missed_report) {
 				bu_vls_printf(_ged_current_gedp->ged_result_str, "%s was not hit\n", regp->reg_name);
-			    } else {
+			    } else if (hits) {
 				bu_vls_printf(_ged_current_gedp->ged_result_str, "%s hit only %zu times (< %zu)\n",
 					      regp->reg_name, hits, require_num_hits);
 			    }
@@ -2300,7 +2304,7 @@ summary_reports(struct cstate *state)
 	RT_CK_REGION(regp);
 	hits = (size_t)((struct per_region_data *)regp->reg_udata)->hits;
 	if (hits < require_num_hits) {
-	    if (hits == 0) {
+	    if (hits == 0 && !quiet_missed_report) {
 		is_overlap_only_hit = 0;
 		if (analysis_flags & ANALYSIS_OVERLAPS) {
 		    /* If the region is in the overlap list, it has
@@ -2323,7 +2327,7 @@ summary_reports(struct cstate *state)
 		if (!is_overlap_only_hit) {
 		    bu_vls_printf(_ged_current_gedp->ged_result_str, "%s was not hit\n", regp->reg_name);
 		}
-	    } else {
+	    } else if (hits) {
 		bu_vls_printf(_ged_current_gedp->ged_result_str, "%s hit only %zu times (< %zu)\n",
 			      regp->reg_name, hits, require_num_hits);
 	    }
@@ -2379,6 +2383,7 @@ ged_gqa(struct ged *gedp, int argc, const char *argv[])
     num_objects = 0;
     num_views = 3;
     verbose = 0;
+    quiet_missed_report = 0;
     plot_files = 0;
     plot_weight = (FILE *)0;
     plot_volume = (FILE *)0;
