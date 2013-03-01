@@ -22,8 +22,8 @@
        <group choice="opt" rep="norepeat">
 	 <arg choice="plain" rep="norepeat">-d</arg>
 	 <arg choice="plain" rep="norepeat">-s</arg>
-	 <arg choice="plain" rep="norepeat">-r</arg>
        </group>
+       <arg choice="opt" rep="norepeat">-r</arg>
        <arg choice="opt" rep="norepeat">-z</arg>
        <group choice="opt" rep="norepeat">
 	 <arg choice="plain" rep="norepeat">-2</arg>
