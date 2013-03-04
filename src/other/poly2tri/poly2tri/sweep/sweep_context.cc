@@ -147,7 +147,7 @@ void SweepContext::CreateAdvancingFront(std::vector<Node*> &nodes)
 
   af_head_ = new Node(*triangle->GetPoint(1), *triangle);
   af_middle_ = new Node(*triangle->GetPoint(0), *triangle);
-  af_tail_ = new Node(*triangle->GetPoint(2));
+  af_tail_ = new Node(*triangle->GetPoint(2), *triangle);
   front_ = new AdvancingFront(*af_head_, *af_tail_);
 
   // TODO: More intuitive if head is middles next and not previous?
