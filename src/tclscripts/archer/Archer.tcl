@@ -2915,6 +2915,19 @@ proc title_node_handler {node} {
 	"Comp Select Mode:" \
 	$COMP_SELECT_MODE_NAMES
 
+    itk_component add rtbotmintieL {
+	::ttk::label $itk_component(generalF).rtbotmintieL \
+	    -anchor e \
+	    -text "rt_bot_mintie"
+    } {}
+    itk_component add rtbotmintieE {
+	::ttk::entry $itk_component(generalF).rtbotmintieE \
+	    -width 12 \
+	    -textvariable [::itcl::scope mRtBotMintiePref] \
+	    -validate key \
+	    -validatecommand {::cadwidgets::Ged::validateDigit %P}
+    } {}
+
     itk_component add affectedTreeNodesModeCB {
 	::ttk::checkbutton $itk_component(generalF).affectedTreeNodesModeCB \
 	    -text "Highlight Affected Tree/List Nodes" \
@@ -3001,6 +3014,9 @@ proc title_node_handler {node} {
     incr i
     grid $itk_component(selGroupModeL) -column 0 -row $i -sticky e
     grid $itk_component(selGroupModeF) -column 1 -row $i -sticky ew
+    incr i
+    grid $itk_component(rtbotmintieL) -column 0 -row $i -sticky e
+    grid $itk_component(rtbotmintieE) -column 1 -row $i -sticky ew
     incr i
     set i [buildOtherGeneralPreferences $i]
     grid $itk_component(affectedTreeNodesModeCB) \
@@ -8425,6 +8441,10 @@ proc title_node_handler {node} {
 	units $mDbUnits
     }
 
+    if {$mRtBotMintiePref != $mRtBotMintie} {
+	set mRtBotMintie $mRtBotMintiePref
+    }
+
     if {$mCompSelectGroupPref != $mCompSelectGroup} {
 	set mCompSelectGroup $mCompSelectGroupPref
     }
@@ -8878,6 +8898,7 @@ proc title_node_handler {node} {
     set mEnableAffectedNodeHighlightPref $mEnableAffectedNodeHighlight
     set mSeparateCommandWindowPref $mSeparateCommandWindow
     set mDbUnits [gedCmd units -s]
+    set mRtBotMintiePref $mRtBotMintie
     set mCompSelectGroupPref $mCompSelectGroup
 
     # Convert mCompSelectMode to a string for the preferences panel
@@ -9046,6 +9067,7 @@ proc title_node_handler {node} {
     puts $_pfile "set mEnableListViewAllAffected $mEnableListViewAllAffected"
     puts $_pfile "set mEnableAffectedNodeHighlight $mEnableAffectedNodeHighlight"
     puts $_pfile "set mSeparateCommandWindow $mSeparateCommandWindow"
+    puts $_pfile "set mRtBotMintie $mRtBotMintie"
     puts $_pfile "set mCompSelectGroup $mCompSelectGroup"
     puts $_pfile "set mCompSelectMode $mCompSelectMode"
 

@@ -402,6 +402,9 @@ namespace eval ArcherCore {
 	variable mSeparateCommandWindowPref ""
 	variable mSepCmdPrefix "sepcmd_"
 
+	variable mRtBotMintie 0
+	variable mRtBotMintiePref ""
+
 	variable mCompPickMode $COMP_PICK_TREE_SELECT_MODE
 	variable mCompSelectMode $COMP_SELECT_LIST_MODE
 	variable mCompSelectModePref ""
@@ -1186,6 +1189,7 @@ namespace eval ArcherCore {
     trace add variable [::itcl::scope mRayColorVoid] write watchVar
 
     trace add variable [::itcl::scope mDisplayFontSize] write watchVar
+    trace add variable [::itcl::scope mRtBotMintie] write watchVar
 
     eval itk_initialize $args
 
@@ -6773,6 +6777,8 @@ namespace eval ArcherCore {
 }
 
 ::itcl::body ArcherCore::watchVar {_name1 _name2 _op} {
+    global rt_bot_mintie
+
     if {![info exists itk_component(ged)]} {
 	return
     }
@@ -6832,6 +6838,9 @@ namespace eval ArcherCore {
 	}
 	mRayColorVoid {
 	    $itk_component(ged) configure -rayColorVoid $mRayColorVoid
+	}
+	mRtBotMintie {
+	    set rt_bot_mintie $mRtBotMintie
 	}
     }
 }
