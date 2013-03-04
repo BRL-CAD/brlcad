@@ -33,6 +33,7 @@
 #define SWEEP_CONTEXT_H
 
 #include <list>
+#include <set>
 #include <vector>
 #include <cstddef>
 
@@ -88,6 +89,7 @@ void AddOuterLoop(std::vector<Point*> &polyline);
 void AddHole(std::vector<Point*> &polyline);
 
 void AddPoint(Point* point);
+Point* AddPointCheckForDuplicates(Point* point);
 
 AdvancingFront* front();
 
@@ -128,6 +130,11 @@ struct EdgeEvent {
   }
 };
 
+struct lessthanpoint{
+public:
+    bool operator() (const Point* a, const Point* b) const;
+};
+
 Basin basin;
 EdgeEvent edge_event;
 
@@ -138,6 +145,7 @@ friend class Sweep;
 std::vector<Triangle*> triangles_;
 std::list<Triangle*> map_;
 std::vector<Point*> points_;
+std::set<Point*,lessthanpoint> points_set_;
 
 // Advancing front
 AdvancingFront* front_;

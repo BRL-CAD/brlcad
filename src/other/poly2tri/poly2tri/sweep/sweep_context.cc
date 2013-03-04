@@ -34,39 +34,73 @@
 
 namespace p2t {
 
+bool SweepContext::lessthanpoint::operator() (const Point* a, const Point* b) const
+{
+    if (a->y < b->y) {
+	return true;
+    } else if (a->y == b->y) {
+	return (a->x < b->x);
+    }
+    return false;
+}
+
 SweepContext::SweepContext()
 {
   basin = Basin();
   edge_event = EdgeEvent();
 }
 
-SweepContext::SweepContext(std::vector<Point*> &polyline) : points_(polyline)
+SweepContext::SweepContext(std::vector<Point*> &polyline)
 {
+  std::vector<Point*> polylineunique;
 
   basin = Basin();
   edge_event = EdgeEvent();
 
-  InitEdges(points_);
+  for(unsigned int i = 0; i < polyline.size(); i++) {
+    Point *p = AddPointCheckForDuplicates(polyline[i]);
+    polylineunique.push_back(p);
+  }
+  InitEdges(polylineunique);
+
 }
 
 void SweepContext::AddOuterLoop(std::vector<Point*> &polyline)
 {
-  InitEdges(polyline);
+  std::vector<Point*> polylineunique;
   for(unsigned int i = 0; i < polyline.size(); i++) {
-    points_.push_back(polyline[i]);
+    Point *p = AddPointCheckForDuplicates(polyline[i]);
+    polylineunique.push_back(p);
   }
+  InitEdges(polylineunique);
+
 }
 
 void SweepContext::AddHole(std::vector<Point*> &polyline)
 {
-  InitEdges(polyline);
+  std::vector<Point*> polylineunique;
   for(unsigned int i = 0; i < polyline.size(); i++) {
-    points_.push_back(polyline[i]);
+    Point *p = AddPointCheckForDuplicates(polyline[i]);
+    polylineunique.push_back(p);
   }
+  InitEdges(polylineunique);
 }
 
 void SweepContext::AddPoint(Point* point) {
   points_.push_back(point);
+}
+
+Point* SweepContext::AddPointCheckForDuplicates(Point* point) {
+    std::pair<std::set<Point*,lessthanpoint>::iterator,bool> result;
+
+    result = points_set_.insert(point);
+    if (result.second) {
+	points_.push_back(point);
+	return point;
+    }
+    Point* found_point = *points_set_.find(point);
+    delete point;
+    return found_point;
 }
 
 std::vector<Triangle*>& SweepContext::GetTriangles()
@@ -214,6 +248,7 @@ SweepContext::~SweepContext()
         delete edge_list[i];
     }
     points_.clear();
+    points_set_.clear();
 }
 
 }
