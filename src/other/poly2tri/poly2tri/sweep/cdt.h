@@ -53,12 +53,20 @@ public:
    *
    * @param polyline
    */
+  CDT();
   CDT(std::vector<Point*> &polyline);
 
    /**
    * Destructor - clean up memory
    */
   ~CDT();
+  
+  /**
+   * Add outer loop
+   *
+   * @param polyline
+   */
+  void AddOuterLoop(std::vector<Point*> &polyline);
 
   /**
    * Add a hole
@@ -74,10 +82,12 @@ public:
    */
   void AddPoint(Point* point);
 
+  std::vector<Point*>& GetPoints();
+
   /**
    * Triangulate - do this AFTER you've added the polyline, holes, and Steiner points
    */
-  void Triangulate();
+  void Triangulate(bool finalize = true, int num_points = -1);
 
   /**
    * Get CDT triangles

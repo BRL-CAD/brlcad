@@ -37,17 +37,19 @@
 namespace p2t {
 
 // Triangulate simple polygon with holes
-void Sweep::Triangulate(SweepContext& tcx)
+void Sweep::Triangulate(SweepContext& tcx, bool finalize, int num_points)
 {
   tcx.InitTriangulation();
   tcx.CreateAdvancingFront(nodes_);
   // Sweep points; build mesh
-  SweepPoints(tcx);
+  SweepPoints(tcx,num_points);
   // Clean up
-  FinalizationPolygon(tcx);
+  if (finalize) {
+    FinalizationPolygon(tcx);
+  }
 }
 
-void Sweep::SweepPoints(SweepContext& tcx)
+void Sweep::SweepPoints(SweepContext& tcx, int num_points)
 {
   for (size_t i = 1; i < tcx.point_count(); i++) {
     Point& point = *tcx.GetPoint(i);

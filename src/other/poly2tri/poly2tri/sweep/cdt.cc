@@ -32,12 +32,22 @@
 
 namespace p2t {
 
+CDT::CDT()
+{
+  sweep_context_ = new SweepContext();
+  sweep_ = new Sweep;
+}
+
 CDT::CDT(std::vector<Point*> &polyline)
 {
   sweep_context_ = new SweepContext(polyline);
   sweep_ = new Sweep;
 }
 
+void CDT::AddOuterLoop(std::vector<Point*> &polyline)
+{
+  sweep_context_->AddOuterLoop(polyline);
+}
 void CDT::AddHole(std::vector<Point*> &polyline)
 {
   sweep_context_->AddHole(polyline);
@@ -47,9 +57,13 @@ void CDT::AddPoint(Point* point) {
   sweep_context_->AddPoint(point);
 }
 
-void CDT::Triangulate()
+std::vector<Point*>& CDT::GetPoints() {
+  return sweep_context_->GetPoints();
+}
+
+void CDT::Triangulate(bool finalize, int num_points)
 {
-  sweep_->Triangulate(*sweep_context_);
+  sweep_->Triangulate(*sweep_context_, finalize, num_points);
 }
 
 std::vector<p2t::Triangle*>& CDT::GetTriangles()

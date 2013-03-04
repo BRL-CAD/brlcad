@@ -34,9 +34,27 @@
 
 namespace p2t {
 
+SweepContext::SweepContext()
+{
+  basin = Basin();
+  edge_event = EdgeEvent();
+}
+
 SweepContext::SweepContext(std::vector<Point*> &polyline) : points_(polyline)
 {
+
+  basin = Basin();
+  edge_event = EdgeEvent();
+
   InitEdges(points_);
+}
+
+void SweepContext::AddOuterLoop(std::vector<Point*> &polyline)
+{
+  InitEdges(polyline);
+  for(unsigned int i = 0; i < polyline.size(); i++) {
+    points_.push_back(polyline[i]);
+  }
 }
 
 void SweepContext::AddHole(std::vector<Point*> &polyline)
@@ -101,6 +119,11 @@ void SweepContext::InitEdges(std::vector<Point*> &polyline)
 Point* SweepContext::GetPoint(size_t index)
 {
   return points_[index];
+}
+
+std::vector<Point*>& SweepContext::GetPoints()
+{
+  return points_;
 }
 
 void SweepContext::AddToMap(Triangle* triangle)

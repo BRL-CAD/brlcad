@@ -58,7 +58,7 @@ public:
    *
    * @param tcx
    */
-  void Triangulate(SweepContext& tcx);
+  void Triangulate(SweepContext& tcx, bool finalize = true, int num_points = -1);
 
   /**
    * Destructor - clean up memory
@@ -72,7 +72,7 @@ private:
    *
    * @param tcx
    */
-  void SweepPoints(SweepContext& tcx);
+  void SweepPoints(SweepContext& tcx, int num_points = -1);
 
   /**
    * Find closes node to the left of the new point and

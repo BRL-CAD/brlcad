@@ -52,6 +52,7 @@ class SweepContext {
 public:
 
 /// Constructor
+	SweepContext();
 SweepContext(std::vector<Point*> &polyline);
 /// Destructor
 ~SweepContext();
@@ -79,10 +80,11 @@ void AddToMap(Triangle* triangle);
 
 Point* GetPoint(size_t index);
 
-Point* GetPoints();
+std::vector<Point*>& GetPoints();
 
 void RemoveFromMap(Triangle* triangle);
 
+void AddOuterLoop(std::vector<Point*> &polyline);
 void AddHole(std::vector<Point*> &polyline);
 
 void AddPoint(Point* point);
