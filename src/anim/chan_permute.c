@@ -70,6 +70,12 @@ main(int argc, char *argv[])
     struct unit *x, *y;
     Word *arrayd;
 
+    if (argc == 1) {
+        fprintf(stderr,
+        "Usage: channel -i infile1 id id id ... [-i infile2 ...] -o outfile1 id id ... [-o outfile2 ...]\n");
+ 	bu_exit(-1, NULL);
+    }
+
     i=j=icount = ocount = maxlength = 0;
     for (i=1;i<argc;i++) {
 	if (!bu_strncmp(argv[i], ihead, 2)) {
