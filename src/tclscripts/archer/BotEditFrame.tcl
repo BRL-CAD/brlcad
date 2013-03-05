@@ -130,7 +130,7 @@
 	method handleEnter {_row _col}
 	method highlightCurrentBotElements {}
 	method initPointHighlight {}
-	method loadTables {_gdata}
+	method loadTables {_gdata {_lflag 1}}
 	method manageTables {}
 	method multiEdgeSelectCallback {}
 	method multiFaceSelectCallback {}
@@ -213,8 +213,6 @@
 	return
     }
 
-    loadTables $_gdata
-
     GeometryEditFrame::initGeometry $_gdata
 
     if {$itk_option(-geometryObject) != $itk_option(-prevGeometryObject)} {
@@ -222,7 +220,12 @@
 	set mCurrentBotEdges ""
 	set mCurrentBotFaces ""
 	set itk_option(-prevGeometryObject) $itk_option(-geometryObject)
+	set lflag 1
+    } else {
+	set lflag 0
     }
+
+    loadTables $_gdata $lflag
 
     $itk_component(edgeTab) unselectAllRows
     $itk_component(faceTab) unselectAllRows
@@ -983,15 +986,7 @@
 }
 
 
-::itcl::body BotEditFrame::loadTables {_gdata} {
-    unset mVertDetail
-    unset mEdgeDetail
-    unset mFaceDetail
-
-    set mVertDetail(active) ""
-    set mEdgeDetail(active) ""
-    set mFaceDetail(active) ""
-
+::itcl::body BotEditFrame::loadTables {_gdata {_lflag 1}} {
     set vl [$itk_option(-mged) get $itk_option(-geometryObject) V]
     set vlen [llength $vl]
     if {$mIgnoreMaxVertThreshold || $vlen <= $mMaxVertThreshold} {
@@ -1002,9 +997,36 @@
 
     manageTables
 
-    if {!$mShowTables} {
+    if {!$_lflag} {
+	set mPointList {}
+	foreach {attr val} $_gdata {
+	    switch -- $attr {
+		"V" {
+		    set index 1
+		    foreach item $val {
+			set mVertDetail($index,$SELECT_COL) ""
+			set mVertDetail($index,$X_COL) [lindex $item 0]
+			set mVertDetail($index,$Y_COL) [lindex $item 1]
+			set mVertDetail($index,$Z_COL) [lindex $item 2]
+			incr index
+
+			lappend mPointList $item
+		    }
+		}
+	    }
+	}
+
 	return
     }
+
+    SetWaitCursor $::ArcherCore::application
+    unset mVertDetail
+    unset mEdgeDetail
+    unset mFaceDetail
+
+    set mVertDetail(active) ""
+    set mEdgeDetail(active) ""
+    set mFaceDetail(active) ""
 
     set col 0
     foreach heading $mVertDetailHeadings {
@@ -1027,7 +1049,6 @@
     set mPointList {}
     set mEdgeList {}
     set mFaceList {}
-    set tmpFaceList {}
     foreach {attr val} $_gdata {
 	switch -- $attr {
 	    "mode" {
@@ -1049,7 +1070,6 @@
 		}
 	    }
 	    "F" {
-		set tmpFaceList $val
 		set index 1
 		foreach item $val {
 		    set mFaceDetail($index,$SELECT_COL) ""
@@ -1086,6 +1106,8 @@
 	}
 	incr index
     }
+
+    SetNormalCursor $::ArcherCore::application
 }
 
 
@@ -1142,7 +1164,7 @@
 
 ::itcl::body BotEditFrame::reloadTables {} {
     set gdata [lrange [$itk_option(-mged) get $itk_option(-geometryObject)] 1 end]
-    loadTables $gdata
+    loadTables $gdata 0
 }
 
 
