@@ -5779,6 +5779,7 @@ to_idle_mode(struct ged *gedp,
 	     int UNUSED(maxargs))
 {
     struct ged_dm_view *gdvp;
+    int mode, need_refresh = 0;
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -5804,8 +5805,19 @@ to_idle_mode(struct ged *gedp,
 	return GED_ERROR;
     }
 
+    mode = gdvp->gdv_view->gv_mode;
 
-    if (gdvp->gdv_view->gv_mode != TCLCAD_POLY_CONTOUR_MODE || gdvp->gdv_view->gv_data_polygons.gdps_cflag == 0) {
+    if (gdvp->gdv_view->gv_adaptive_plot && mode == TCLCAD_SCALE_MODE) {
+	char *av[] = {"redraw", NULL};
+
+	ged_redraw(gedp, 1, (const char **)av);
+
+	need_refresh = 1;
+    }
+
+    if (mode != TCLCAD_POLY_CONTOUR_MODE ||
+	gdvp->gdv_view->gv_data_polygons.gdps_cflag == 0)
+    {
 	struct bu_vls bindings = BU_VLS_INIT_ZERO;
 
 	bu_vls_printf(&bindings, "bind %V <Motion> {}",
@@ -5815,8 +5827,9 @@ to_idle_mode(struct ged *gedp,
     }
 
     if (gdvp->gdv_view->gv_grid.ggs_snap &&
-	(gdvp->gdv_view->gv_mode == TCLCAD_TRANSLATE_MODE ||
-	 gdvp->gdv_view->gv_mode == TCLCAD_CONSTRAINED_TRANSLATE_MODE)) {
+	(mode == TCLCAD_TRANSLATE_MODE ||
+	 mode == TCLCAD_CONSTRAINED_TRANSLATE_MODE))
+    {
 	char *av[3];
 
 	gedp->ged_gvp = gdvp->gdv_view;
@@ -5829,7 +5842,11 @@ to_idle_mode(struct ged *gedp,
 	    Tcl_Eval(current_top->to_interp, bu_vls_addr(&gdvp->gdv_callback));
 	}
 
-	to_refresh_view(gdvp);
+	need_refresh = 1;
+    }
+
+    if (need_refresh) {
+	to_refresh_all_views(current_top);
     }
 
     gdvp->gdv_view->gv_mode = TCLCAD_IDLE_MODE;
