@@ -1913,6 +1913,9 @@ ged_redraw(struct ged *gedp, int argc, const char *argv[])
 		}
 	    }
 
+	    db_free_full_path(&dl_path);
+	    db_free_full_path(&obj_path);
+
 	    if (dgcdp->gdlp == NULL) {
 		bu_vls_printf(gedp->ged_result_str,
 			"%s: %s is not being displayed\n", argv[0], argv[i]);
