@@ -105,7 +105,7 @@ private:
    * @return
    */
   Node& NewFrontTriangle(SweepContext& tcx, Point& point, Node& node);
-
+  void UpdateNodeAngleCircum(Node& n);
   /**
    * Adds a triangle to the advancing front to fill a hole.
    * @param tcx
@@ -143,6 +143,7 @@ private:
    * @return true if d is inside circle, false if on circle edge
    */
   bool Incircle(Point& pa, Point& pb, Point& pc, Point& pd);
+  bool Circumcircle(const Point& pa, const Point& pb, const Point& pc, Point& center, double& radius);
 
   /**
    * Rotates a triangle pair one vertex CW
@@ -167,6 +168,7 @@ private:
    * @param tcx
    * @param n
    */
+  void CheckCircleEvent(SweepContext& tcx, double currentheight);
   void FillAdvancingFront(SweepContext& tcx, Node& n);
 
   // Decision-making about when to Fill hole.

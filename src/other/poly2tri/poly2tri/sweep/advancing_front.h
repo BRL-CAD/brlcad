@@ -47,12 +47,15 @@ struct Node {
   Node* prev;
 
   double value;
+  double angle;
+  bool circum;
+  double circumheight;
 
-  Node(Point& p) : point(&p), triangle(NULL), next(NULL), prev(NULL), value(p.x)
+  Node(Point& p) : point(&p), triangle(NULL), next(NULL), prev(NULL), value(p.x), circum(false)
   {
   }
 
-  Node(Point& p, Triangle& t) : point(&p), triangle(&t), next(NULL), prev(NULL), value(p.x)
+  Node(Point& p, Triangle& t) : point(&p), triangle(&t), next(NULL), prev(NULL), value(p.x), circum(false)
   {
   }
 

@@ -28,6 +28,7 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+#include <float.h>
 #include <stdexcept>
 #include "sweep.h"
 #include "sweep_context.h"
@@ -51,8 +52,13 @@ void Sweep::Triangulate(SweepContext& tcx, bool finalize, int num_points)
 
 void Sweep::SweepPoints(SweepContext& tcx, int num_points)
 {
-  for (size_t i = 1; i < tcx.point_count(); i++) {
+  double currentheight = tcx.GetPoint(0)->y;
+  for (size_t i = 1; (i < tcx.point_count()) && (i <= num_points); i++) {
     Point& point = *tcx.GetPoint(i);
+    if (point.y > currentheight) {
+      CheckCircleEvent(tcx,point.y);
+      currentheight = point.y;
+    }
     Node* node = &PointEvent(tcx, point);
     for (size_t j = 0; j < point.edge_list.size(); j++) {
       EdgeEvent(tcx, point.edge_list[j], node);
@@ -213,11 +219,38 @@ Node& Sweep::NewFrontTriangle(SweepContext& tcx, Point& point, Node& node)
   node.next->prev = new_node;
   node.next = new_node;
 
+  if (new_node->next)
+    UpdateNodeAngleCircum(*new_node->next);
+    
+  UpdateNodeAngleCircum(*new_node);
+  
+  if (new_node->prev)
+    UpdateNodeAngleCircum(*new_node->prev);
+
   if (!Legalize(tcx, *triangle)) {
     tcx.MapTriangleToNodes(*triangle);
   }
 
   return *new_node;
+}
+
+void Sweep::UpdateNodeAngleCircum(Node& n)
+{
+  if (n.next && n.prev) {
+    Point* nextPoint = n.next->point;
+    Point* prevPoint = n.prev->point;
+
+    n.angle = Angle(*n.point, *nextPoint, *prevPoint);
+
+    if ((n.angle > 0) && (n.angle < M_PI)) {
+      Point center;
+      double radius;
+      n.circum = Circumcircle(*n.point, *nextPoint, *prevPoint, center, radius);
+      if (n.circum) {
+        n.circumheight = center.y + radius;
+      }
+    }
+  }
 }
 
 void Sweep::Fill(SweepContext& tcx, Node& node)
@@ -234,6 +267,11 @@ void Sweep::Fill(SweepContext& tcx, Node& node)
   // Update the advancing front
   node.prev->next = node.next;
   node.next->prev = node.prev;
+  if (node.next)
+    UpdateNodeAngleCircum(*node.next);
+    
+  if (node.prev)
+    UpdateNodeAngleCircum(*node.prev);
 
   // If it was legalized the triangle has already been mapped
   if (!Legalize(tcx, *triangle)) {
@@ -242,11 +280,27 @@ void Sweep::Fill(SweepContext& tcx, Node& node)
 
 }
 
+void Sweep::CheckCircleEvent(SweepContext& tcx, double currentheight)
+{
+  Node *node = tcx.front()->head();
+
+  while (node->next) {
+    // if HoleAngle exceeds 90 degrees then break.
+    if (node->circum && (node->circumheight < currentheight)) {
+      Fill(tcx, *node);
+      node = node->prev;
+    } else {
+      node = node->next;
+    }
+  }
+}
+
 void Sweep::FillAdvancingFront(SweepContext& tcx, Node& n)
 {
 
   // Fill right holes
   Node* node = n.next;
+  Node* leftboundnode = NULL;
 
   while (node->next) {
     // if HoleAngle exceeds 90 degrees then break.
@@ -265,6 +319,25 @@ void Sweep::FillAdvancingFront(SweepContext& tcx, Node& n)
     node = node->prev;
   }
 
+  node = n.prev;
+  if (node->point->x < n.point->x) {
+    node = node->prev;
+    while (node) {
+      // if HoleAngle exceeds 90 degrees then break.
+      if (node->point->x >= n.point->x) {
+        leftboundnode = node;
+      }
+      node = node->prev;
+    }
+    if (leftboundnode) {
+      node = n.prev;
+      while (node != leftboundnode) {
+        Fill(tcx, *node);
+        node = node->prev;
+      }
+    }
+  }
+
   // Fill right basins
   if (n.next && n.next->next) {
     double angle = BasinAngle(n);
@@ -279,7 +352,7 @@ bool Sweep::LargeHole_DontFill(Node* node) {
 
   Node* nextNode = node->next;
   Node* prevNode = node->prev;
-  if (!AngleExceeds90Degrees(node->point, nextNode->point, prevNode->point))
+  if (!AngleExceedsPlus90DegreesOrIsNegative(node->point, nextNode->point, prevNode->point))
           return false;
 
   // Check additional points on front.
@@ -412,6 +485,32 @@ bool Sweep::Legalize(SweepContext& tcx, Triangle& t)
     }
   }
   return false;
+}
+
+bool Sweep::Circumcircle(const Point& a, const Point& b, const Point& c, Point& center, double &radius)
+{
+  double cross_product = Cross(a - b,b - c);
+
+  if (cross_product > DBL_MIN) {
+    double cp2 = cross_product * cross_product;
+    double dotp_a = Dot(a - b,a - c);
+    double dotp_b = Dot(b - a,b - c);
+    double dotp_c = Dot(c - a,c - b);
+    double ablen = (a -b).Length();
+    double bclen = (b-c).Length();
+    double calen = (c-a).Length();
+
+    radius = ablen * bclen * calen / (2.0 * cross_product);
+
+    double alpha = bclen * bclen * dotp_a / (2.0 * cp2);
+    double beta = calen * calen * dotp_b / (2.0 * cp2);
+    double gamma = ablen * ablen * dotp_c / (2.0 * cp2);
+
+    center = alpha * a + beta * b + gamma * c;
+  } else {
+    return  false;
+  }
+  return true;
 }
 
 bool Sweep::Incircle(Point& pa, Point& pb, Point& pc, Point& pd)
