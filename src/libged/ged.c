@@ -83,12 +83,11 @@ ged_close(struct ged *gedp)
 
     if (gedp->ged_gdp != GED_DRAWABLE_NULL) {
 	qray_free(gedp->ged_gdp);
-	bu_free((genptr_t)gedp->ged_gdp, "struct ged_drawable");
-	gedp->ged_gdp = GED_DRAWABLE_NULL;
+	BU_PUT(gedp->ged_gdp, struct ged_drawable);
     }
 
     ged_free(gedp);
-    bu_free((genptr_t)gedp, "struct ged");
+    BU_PUT(gedp, struct ged);
 }
 
 
@@ -103,18 +102,18 @@ ged_free(struct ged *gedp)
 
     if (gedp->ged_log) {
 	bu_vls_free(gedp->ged_log);
-	bu_free(gedp->ged_log, "release ged_log");
+	BU_PUT(gedp->ged_log, struct bu_vls);
 	gedp->ged_log = NULL; /* sanity */
     }
 
     if (gedp->ged_result_str) {
 	bu_vls_free(gedp->ged_result_str);
-	bu_free(gedp->ged_result_str, "release ged_result_str");
+	BU_PUT(gedp->ged_result_str, struct bu_vls);
 	gedp->ged_result_str = NULL; /* sanity */
     }
 
     if (gedp->ged_gdp) {
-	bu_free(gedp->ged_gdp, "release ged_gdp");
+	BU_PUT(gedp->ged_gdp, struct ged_drawable);
 	gedp->ged_gdp = NULL; /* sanity */
     }
 }
