@@ -913,7 +913,6 @@ SET(TCL_OSX_SRCS
 
 SET(TCL_WIN_SRCS
   win/tcl.rc
-  win/tclAppInit.c
   win/tclWin32Dll.c
   win/tclWinChan.c
   win/tclWinConsole.c
@@ -946,7 +945,6 @@ SET_PROPERTY(SOURCE win/tclWinInit.c APPEND PROPERTY COMPILE_DEFINITIONS TCL_LIB
 SET_PROPERTY(SOURCE win/tclWinInit.c APPEND PROPERTY COMPILE_DEFINITIONS TCL_PACKAGE_PATH="${CMAKE_INSTALL_PREFIX}/lib")
 
 SET(TCL_UNIX_SRCS
-  unix/tclAppInit.c
   unix/tclUnixChan.c
   unix/tclUnixEvent.c
   unix/tclUnixFCmd.c
