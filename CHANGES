@@ -68,7 +68,9 @@ new names should be listed for reference.
 7.22
 ----
 raytrace.h librt
-	nmg_model_break_e_on_v -> nmg_break_e_on_v [deprecation 7.22.1]
+	nmg_model_break_e_on_v -> nmg_break_e_on_v [deprecation 7.22]
+	RT_GET_TREE -> BU_GET [deprecation 7.22]
+	RT_FREE_TREE -> BU_PUT [deprecation 7.22]
 bu.h
         bu_parse_mm() [deprecated 7.22]
 librtserver
