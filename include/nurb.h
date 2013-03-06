@@ -81,12 +81,19 @@
 #define NMG_CK_CNURB(_p)	BU_CKMAG(_p, NMG_EDGE_G_CNURB_MAGIC, "cnurb")
 #define NMG_CK_SNURB(_p)	BU_CKMAG(_p, NMG_FACE_G_SNURB_MAGIC, "snurb")
 
-#define GET_CNURB(p/*, m*/) 		{BU_GET(p, struct edge_g_cnurb); \
+/* DEPRECATED */
+#define GET_CNURB(p/*, m*/) { \
+	(p) = (struct edge_g_cnurb *)bu_calloc(1, sizeof(struct edge_g_cnurb), "alloc cnurb"); \
 	/* NMG_INCR_INDEX(p, m); */ \
-	BU_LIST_INIT( &(p)->l ); (p)->l.magic = NMG_EDGE_G_CNURB_MAGIC; }
-#define GET_SNURB(p/*, m*/) 		{BU_GET(p, struct face_g_snurb); \
+	BU_LIST_INIT( &(p)->l ); (p)->l.magic = NMG_EDGE_G_CNURB_MAGIC; \
+}
+
+/* DEPRECATED */
+#define GET_SNURB(p/*, m*/) { \
+	(p) = (struct face_g_snurb *)bu_calloc(1, sizeof(struct face_g_snurb), "alloc snurb"); \
 	/* NMG_INCR_INDEX(p, m); */ \
-	BU_LIST_INIT( &(p)->l ); (p)->l.magic = NMG_FACE_G_SNURB_MAGIC; }
+	BU_LIST_INIT( &(p)->l ); (p)->l.magic = NMG_FACE_G_SNURB_MAGIC; \
+}
 
 
 /* ----- Internal structures ----- */
