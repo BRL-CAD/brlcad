@@ -92,11 +92,7 @@ db5_scan(
 	    (*handler)(dbip, &raw, addr, client_data);
 	    nrec++;
 	    if (raw.buf) {
-#if 1
-		bu_pool_put((void *)raw.buf, (size_t)raw.object_length);
-#else
 		bu_free(raw.buf, "raw v5 object");
-#endif
 		raw.buf = NULL;
 	    }
 	}
