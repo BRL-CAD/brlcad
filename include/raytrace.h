@@ -1225,6 +1225,8 @@ union tree {
  * pointer (during RT_FREE_TREE) as a single-linked list using the
  * tb_left field.  Requests for new nodes are pulled first from that
  * list or allocated fresh if needed.
+ *
+ * DEPRECATED, use BU_GET()
  */
 #define RT_GET_TREE(_tp, _res) { \
 	if (((_tp) = (_res)->re_tree_hd) != TREE_NULL) { \
@@ -1245,6 +1247,8 @@ union tree {
  * actually freeing the nodes, they are added to a single-linked list
  * in rt_tree_hd down the tb_left field.  Requests for new nodes (via
  * RT_GET_TREE()) pull from this list instead of allocating new nodes.
+ *
+ * DEPRECATED, use BU_PUT()
  */
 #define RT_FREE_TREE(_tp, _res) { \
 	(_tp)->tr_b.tb_left = (_res)->re_tree_hd; \
