@@ -32,6 +32,7 @@ libbu_nil_la_SOURCES = \
 	getopt.c \
 	globals.c \
 	hash.c \
+	heap.c \
 	hist.c \
 	hook.c \
 	htond.c \
