@@ -783,9 +783,9 @@ BU_EXPORT extern bu_endian_t bu_byteorder(void);
  while (BU_LIST_WHILE(entry, my_structure, &(my_list->l))) {
    bu_log("Entry value is %d\n", entry->my_data);
    BU_LIST_DEQUEUE(&(entry->l));
-   bu_free(entry, "free my_structure entry");
+   BU_PUT(entry, struct my_structure);
  }
- bu_free(my_list, "free my_structure list head");
+ BU_PUT(my_list, struct my_structure);
 
  --- END EXAMPLE ---
  @endcode
