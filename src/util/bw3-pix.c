@@ -64,7 +64,7 @@ main(int argc, char **argv)
     FILE *rfp, *bfp, *gfp;
 
     if (argc != 4 || isatty(fileno(stdout))) {
-	bu_exit(1, "usage: bw3-pix redin greenin bluein > file.pix (- stdin, . skip)\n");
+	bu_exit(1, "Usage: bw3-pix redin greenin bluein > file.pix (- stdin, . skip)\n");
     }
 
     open_file(&rfp, argv[1]);
