@@ -549,7 +549,7 @@ struct vertexuse_a_cnurb {
  */
 #define NMG_FREESTRUCT(ptr, str) { \
     memset((char *)(ptr), 0, sizeof(struct str)); \
-    BU_PUT((char *)(ptr), struct str); \
+    BU_PUT((ptr), struct str); \
     (ptr) = NULL; \
 }
 
