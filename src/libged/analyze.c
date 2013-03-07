@@ -84,7 +84,7 @@ struct poly_face
 
 #define POLY_FACE_INIT_ZERO { { 0, 0, 0, 0, 0 }, 0, NULL, HINIT_ZERO, 0.0 }
 
-#define ADD_PT(face, pt) VMOVE((face).pts[(face).npts++], (pt))
+#define ADD_PT(face, pt) { VMOVE((face).pts[(face).npts], (pt)); (face).npts++; }
 
 /* structures and subroutines for analyze pretty printing */
 
@@ -843,7 +843,7 @@ analyze_arb8(struct ged *gedp, const struct rt_db_internal *ip)
     int cgtype;     /* COMGEOM arb type: # of vertices */
     table_t table;  /* holds table data from child functions */
     fastf_t tot_vol = 0.0, tot_area = 0.0;
-    point_t center_pt;
+    point_t center_pt = VINIT_ZERO;
     struct poly_face face = POLY_FACE_INIT_ZERO;
     struct rt_arb_internal earb;
     struct rt_arb_internal *arb = (struct rt_arb_internal *)ip->idb_ptr;
