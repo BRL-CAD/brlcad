@@ -84,7 +84,7 @@ wdb_dbopen(struct db_i *dbip, int mode)
     if (rt_uniresource.re_magic != RESOURCE_MAGIC)
 	rt_init_resource(&rt_uniresource, 0, NULL);
 
-    BU_GET(wdbp, struct rt_wdb);
+    BU_ALLOC(wdbp, struct rt_wdb);
     wdb_init(wdbp, dbip, mode);
 
     return wdbp;
