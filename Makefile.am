@@ -36,7 +36,7 @@
 
 AUTOMAKE_OPTIONS = 1.8 dist-zip dist-bzip2
 ACLOCAL_AMFLAGS = -I m4
-DISTCHECK_CONFIGURE_FLAGS = --enable-all
+DISTCHECK_CONFIGURE_FLAGS = --enable-all --enable-png-build
 
 required_dirs = \
 	include \
