@@ -3388,7 +3388,7 @@ nmg_radial_join_eu_NEW(struct edgeuse *eu1, struct edgeuse *eu2, const struct bn
     bu_ptbl_free(&shell_tbl);
     while (BU_LIST_WHILE(rad, nmg_radial, &list1)) {
 	BU_LIST_DEQUEUE(&rad->l);
-	bu_free((char *)rad, "nmg_radial");
+	BU_PUT(rad, struct nmg_radial);
     }
     return;
 }
@@ -3494,7 +3494,7 @@ nmg_s_radial_harmonize(struct shell *s, const struct bn_tol *tol)
 	/* Release the storage */
 	while (BU_LIST_WHILE(rad, nmg_radial, &list)) {
 	    BU_LIST_DEQUEUE(&rad->l);
-	    bu_free((char *)rad, "nmg_radial");
+	    BU_PUT(rad, struct nmg_radial);
 	}
     }
 
