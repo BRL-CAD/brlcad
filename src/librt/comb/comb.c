@@ -480,7 +480,7 @@ rt_comb_import5(struct rt_db_internal *ip, const struct bu_external *ep,
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_COMBINATION;
     ip->idb_meth = &rt_functab[ID_COMBINATION];
-    BU_GET(comb, struct rt_comb_internal);
+    comb = bu_malloc(sizeof(struct rt_comb_internal), "comb");
     RT_COMB_INTERNAL_INIT(comb);
 
     ip->idb_ptr = (genptr_t)comb;
