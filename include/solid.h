@@ -71,7 +71,7 @@ struct solid  {
 
 #define GET_SOLID(p, fp) { \
 	if (BU_LIST_IS_EMPTY(fp)) { \
-		BU_GET(p, struct solid); \
+		(p) = (struct solid *)bu_calloc(1, sizeof(struct solid), "get solid"); \
 		db_full_path_init(&(p)->s_fullpath); \
 	} else { \
 		p = BU_LIST_NEXT(solid, fp); \
