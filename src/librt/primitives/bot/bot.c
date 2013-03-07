@@ -194,7 +194,9 @@ rt_bot_prep_pieces(struct bot_specific *bot,
 int
 rt_bot_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct bn_tol *UNUSED(tol)) {
     struct rt_bot_internal *bot_ip;
-    size_t vert_index;
+    size_t tri_index;
+    point_t p1, p2, p3;
+    size_t pt1, pt2, pt3;
 
     RT_CK_DB_INTERNAL(ip);
     bot_ip = (struct rt_bot_internal *)ip->idb_ptr;
@@ -203,8 +205,16 @@ rt_bot_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct 
     VSETALL((*min), INFINITY);
     VSETALL((*max), -INFINITY);
 
-    for (vert_index = 0; vert_index < bot_ip->num_vertices; vert_index++) {
-	VMINMAX((*min), (*max), &bot_ip->vertices[vert_index]);
+    for (tri_index = 0; tri_index < bot_ip->num_faces; tri_index++) {
+        pt1 = bot_ip->faces[tri_index*3];
+        pt2 = bot_ip->faces[tri_index*3 + 1];
+        pt3 = bot_ip->faces[tri_index*3 + 2];
+        VMOVE(p1, &bot_ip->vertices[pt1*3]);
+        VMOVE(p2, &bot_ip->vertices[pt2*3]);
+        VMOVE(p3, &bot_ip->vertices[pt3*3]);
+	VMINMAX((*min), (*max), p1);
+	VMINMAX((*min), (*max), p2);
+	VMINMAX((*min), (*max), p3);
     }
 
     /* Prevent the RPP from being 0 thickness */
@@ -536,6 +546,8 @@ build_vertex_tree(struct rt_bot_internal *bot)
 
 
 struct bot_fold_data {
+    double dmin;
+    double dmax;
     vdsNode *root;
     fastf_t point_spacing;
 };
@@ -551,6 +563,12 @@ should_fold(const vdsNode *node, void *udata)
     if (node->nsubtris < 1) {
 	return 0;
     }
+
+    // If it's really small, fold
+    if (fold_data->dmax < fold_data->point_spacing) return 1;
+
+    // Long, thin objects shouldn't disappear
+    if (fold_data->dmax/fold_data->dmin > 5.0 && node->nsubtris < 30) return 0;
 
     num_edges = node->nsubtris * 3;
     short_edges = short_spaces = 0;
@@ -577,7 +595,7 @@ should_fold(const vdsNode *node, void *udata)
 	}
     }
 
-    if (((fastf_t)short_edges / num_edges) > .5) {
+    if (((fastf_t)short_edges / num_edges) > .2 && node->nsubtris > 10) {
 	return 1;
     }
 
@@ -603,6 +621,10 @@ plot_node(const vdsNode *node, void *udata)
 int
 rt_bot_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
 {
+    double d1, d2, d3;
+    point_t min;
+    point_t max;
+
     vdsNode *vertex_tree;
     struct rt_bot_internal *bot;
     struct bot_fold_data fold_data;
@@ -617,6 +639,16 @@ rt_bot_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
 
     fold_data.root = vertex_tree;
     fold_data.point_spacing = info->point_spacing;
+    (void)rt_bot_bbox(ip, &min, &max, NULL);
+    d1 = max[0] - min[0];
+    d2 = max[1] - min[1];
+    d3 = max[2] - min[2];
+    fold_data.dmin = d1;
+    if (d2 < fold_data.dmin) fold_data.dmin = d2;
+    if (d3 < fold_data.dmin) fold_data.dmin = d3;
+    fold_data.dmax = d1;
+    if (d2 > fold_data.dmax) fold_data.dmax = d2;
+    if (d3 > fold_data.dmax) fold_data.dmax = d3;
 
     vdsAdjustTreeTopDown(vertex_tree, should_fold, (void *)&fold_data);
     vdsRenderTree(vertex_tree, plot_node, NULL, (void *)info->vhead);
