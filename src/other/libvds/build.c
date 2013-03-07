@@ -586,7 +586,12 @@ vdsNode *vdsEndVertexTree()
     verifyRootedTree(root);
     VDS_DEBUG(("Done.\n"));
     VDS_DEBUG(("Assigning node->bound for all nodes..."));
+#if 0
+    /* This is a very expensive operation. Only calculate bounds if
+     * you actually intend to use them.
+     */
     assignNodeBounds(root);
+#endif
     VDS_DEBUG(("Done.\n"));
     VDS_DEBUG(("Converting triangles to reference nodes by ID..."));
     /* Convert tris to reference node IDs, rather than indices */
