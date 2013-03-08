@@ -51,7 +51,6 @@ libbu_nil_la_SOURCES = \
 	observer.c \
 	parallel.c \
 	parse.c \
-	pool.c \
 	printb.c \
 	process.c \
 	progname.c \

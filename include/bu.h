@@ -3863,13 +3863,6 @@ BU_EXPORT extern void bu_ck_malloc_ptr(genptr_t ptr, const char *str);
  */
 BU_EXPORT extern int bu_mem_barriercheck();
 
-
-/** OBE, being removed. */
-BU_EXPORT extern void *bu_pool_get(size_t elem_byte_size);
-/** OBE, being removed. */
-BU_EXPORT extern void bu_pool_put(void *ptr, size_t elem_byte_size);
-
-
 /**
  * really fast heap-based memory allocation intended for "small"
  * allocation sizes (e.g., single structs).
