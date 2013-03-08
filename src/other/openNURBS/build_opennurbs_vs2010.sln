@@ -1,51 +1,48 @@
 ﻿
-Microsoft Visual Studio Solution File, Format Version 9.00
-# Visual Studio 2005
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "opennurbs_staticlib", "opennurbs_staticlib.vcproj", "{AA514D07-9579-4CF7-AD53-FCECC27D29AA}"
+Microsoft Visual Studio Solution File, Format Version 11.00
+# Visual Studio 2010
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "opennurbs", "opennurbs.vcxproj", "{8EFA275F-4147-4274-8C5E-38063E39310D}"
 	ProjectSection(ProjectDependencies) = postProject
-		{D0233115-CB47-4AD5-8EA5-0361964496DD} = {D0233115-CB47-4AD5-8EA5-0361964496DD}
+		{4D11F62B-AA30-4657-987D-33C1F21EF2ED} = {4D11F62B-AA30-4657-987D-33C1F21EF2ED}
 	EndProjectSection
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "example_brep", "example_brep\example_brep.vcproj", "{765B902B-4562-4035-8BBF-EBAB2A9602A3}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "zlib", "zlib\zlib.vcxproj", "{4D11F62B-AA30-4657-987D-33C1F21EF2ED}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "opennurbs_staticlib", "opennurbs_staticlib.vcxproj", "{AA514D07-9579-4CF7-AD53-FCECC27D29AA}"
+	ProjectSection(ProjectDependencies) = postProject
+		{4D11F62B-AA30-4657-987D-33C1F21EF2ED} = {4D11F62B-AA30-4657-987D-33C1F21EF2ED}
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "examples", "examples", "{6C39DC30-8101-4BB8-AFF2-8ECD33A63686}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "example_brep", "example_brep\example_brep.vcxproj", "{765B902B-4562-4035-8BBF-EBAB2A9602A3}"
 	ProjectSection(ProjectDependencies) = postProject
 		{AA514D07-9579-4CF7-AD53-FCECC27D29AA} = {AA514D07-9579-4CF7-AD53-FCECC27D29AA}
+		{8EFA275F-4147-4274-8C5E-38063E39310D} = {8EFA275F-4147-4274-8C5E-38063E39310D}
 	EndProjectSection
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "example_dump", "example_dump\example_dump.vcproj", "{611C3B35-385D-4F63-8F91-77F54BA3C41E}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "example_read", "example_read\example_read.vcxproj", "{14A32F02-5A5D-49F7-9156-7EA3608C5900}"
 	ProjectSection(ProjectDependencies) = postProject
 		{AA514D07-9579-4CF7-AD53-FCECC27D29AA} = {AA514D07-9579-4CF7-AD53-FCECC27D29AA}
+		{8EFA275F-4147-4274-8C5E-38063E39310D} = {8EFA275F-4147-4274-8C5E-38063E39310D}
 	EndProjectSection
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "example_gl", "example_gl\example_gl.vcproj", "{E1AFEDC5-62A5-4CE0-BC87-70FE6555982C}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "example_roundtrip", "example_roundtrip\example_roundtrip.vcxproj", "{0AFC8D30-5E7B-429D-82D2-F26868BF3CA6}"
 	ProjectSection(ProjectDependencies) = postProject
 		{AA514D07-9579-4CF7-AD53-FCECC27D29AA} = {AA514D07-9579-4CF7-AD53-FCECC27D29AA}
+		{8EFA275F-4147-4274-8C5E-38063E39310D} = {8EFA275F-4147-4274-8C5E-38063E39310D}
 	EndProjectSection
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "example_read", "example_read\example_read.vcproj", "{14A32F02-5A5D-49F7-9156-7EA3608C5900}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "example_userdata", "example_userdata\example_userdata.vcxproj", "{F6FC693F-2EDB-4DEC-936A-C15BE1195EC4}"
 	ProjectSection(ProjectDependencies) = postProject
 		{AA514D07-9579-4CF7-AD53-FCECC27D29AA} = {AA514D07-9579-4CF7-AD53-FCECC27D29AA}
+		{8EFA275F-4147-4274-8C5E-38063E39310D} = {8EFA275F-4147-4274-8C5E-38063E39310D}
 	EndProjectSection
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "example_roundtrip", "example_roundtrip\example_roundtrip.vcproj", "{0AFC8D30-5E7B-429D-82D2-F26868BF3CA6}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "example_write", "example_write\example_write.vcxproj", "{75A90363-D54A-4C56-B4FC-900E7540331C}"
 	ProjectSection(ProjectDependencies) = postProject
 		{AA514D07-9579-4CF7-AD53-FCECC27D29AA} = {AA514D07-9579-4CF7-AD53-FCECC27D29AA}
-	EndProjectSection
-EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "example_userdata", "example_userdata\example_userdata.vcproj", "{F6FC693F-2EDB-4DEC-936A-C15BE1195EC4}"
-	ProjectSection(ProjectDependencies) = postProject
-		{AA514D07-9579-4CF7-AD53-FCECC27D29AA} = {AA514D07-9579-4CF7-AD53-FCECC27D29AA}
-	EndProjectSection
-EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "example_write", "example_write\example_write.vcproj", "{75A90363-D54A-4C56-B4FC-900E7540331C}"
-	ProjectSection(ProjectDependencies) = postProject
-		{AA514D07-9579-4CF7-AD53-FCECC27D29AA} = {AA514D07-9579-4CF7-AD53-FCECC27D29AA}
-	EndProjectSection
-EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "zlib", "zlib\zlib.vcproj", "{D0233115-CB47-4AD5-8EA5-0361964496DD}"
-EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "opennurbs", "opennurbs.vcproj", "{39172035-CC5F-4140-9118-E1A9AD311FC7}"
-	ProjectSection(ProjectDependencies) = postProject
-		{D0233115-CB47-4AD5-8EA5-0361964496DD} = {D0233115-CB47-4AD5-8EA5-0361964496DD}
+		{8EFA275F-4147-4274-8C5E-38063E39310D} = {8EFA275F-4147-4274-8C5E-38063E39310D}
 	EndProjectSection
 EndProject
 Global
@@ -56,6 +53,22 @@ Global
 		Release|x64 = Release|x64
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{8EFA275F-4147-4274-8C5E-38063E39310D}.Debug|Win32.ActiveCfg = Debug|Win32
+		{8EFA275F-4147-4274-8C5E-38063E39310D}.Debug|Win32.Build.0 = Debug|Win32
+		{8EFA275F-4147-4274-8C5E-38063E39310D}.Debug|x64.ActiveCfg = Debug|x64
+		{8EFA275F-4147-4274-8C5E-38063E39310D}.Debug|x64.Build.0 = Debug|x64
+		{8EFA275F-4147-4274-8C5E-38063E39310D}.Release|Win32.ActiveCfg = Release|Win32
+		{8EFA275F-4147-4274-8C5E-38063E39310D}.Release|Win32.Build.0 = Release|Win32
+		{8EFA275F-4147-4274-8C5E-38063E39310D}.Release|x64.ActiveCfg = Release|x64
+		{8EFA275F-4147-4274-8C5E-38063E39310D}.Release|x64.Build.0 = Release|x64
+		{4D11F62B-AA30-4657-987D-33C1F21EF2ED}.Debug|Win32.ActiveCfg = Debug|Win32
+		{4D11F62B-AA30-4657-987D-33C1F21EF2ED}.Debug|Win32.Build.0 = Debug|Win32
+		{4D11F62B-AA30-4657-987D-33C1F21EF2ED}.Debug|x64.ActiveCfg = Debug|x64
+		{4D11F62B-AA30-4657-987D-33C1F21EF2ED}.Debug|x64.Build.0 = Debug|x64
+		{4D11F62B-AA30-4657-987D-33C1F21EF2ED}.Release|Win32.ActiveCfg = Release|Win32
+		{4D11F62B-AA30-4657-987D-33C1F21EF2ED}.Release|Win32.Build.0 = Release|Win32
+		{4D11F62B-AA30-4657-987D-33C1F21EF2ED}.Release|x64.ActiveCfg = Release|x64
+		{4D11F62B-AA30-4657-987D-33C1F21EF2ED}.Release|x64.Build.0 = Release|x64
 		{AA514D07-9579-4CF7-AD53-FCECC27D29AA}.Debug|Win32.ActiveCfg = Debug|Win32
 		{AA514D07-9579-4CF7-AD53-FCECC27D29AA}.Debug|Win32.Build.0 = Debug|Win32
 		{AA514D07-9579-4CF7-AD53-FCECC27D29AA}.Debug|x64.ActiveCfg = Debug|x64
@@ -72,22 +85,6 @@ Global
 		{765B902B-4562-4035-8BBF-EBAB2A9602A3}.Release|Win32.Build.0 = Release|Win32
 		{765B902B-4562-4035-8BBF-EBAB2A9602A3}.Release|x64.ActiveCfg = Release|x64
 		{765B902B-4562-4035-8BBF-EBAB2A9602A3}.Release|x64.Build.0 = Release|x64
-		{611C3B35-385D-4F63-8F91-77F54BA3C41E}.Debug|Win32.ActiveCfg = Debug|Win32
-		{611C3B35-385D-4F63-8F91-77F54BA3C41E}.Debug|Win32.Build.0 = Debug|Win32
-		{611C3B35-385D-4F63-8F91-77F54BA3C41E}.Debug|x64.ActiveCfg = Debug|x64
-		{611C3B35-385D-4F63-8F91-77F54BA3C41E}.Debug|x64.Build.0 = Debug|x64
-		{611C3B35-385D-4F63-8F91-77F54BA3C41E}.Release|Win32.ActiveCfg = Release|Win32
-		{611C3B35-385D-4F63-8F91-77F54BA3C41E}.Release|Win32.Build.0 = Release|Win32
-		{611C3B35-385D-4F63-8F91-77F54BA3C41E}.Release|x64.ActiveCfg = Release|x64
-		{611C3B35-385D-4F63-8F91-77F54BA3C41E}.Release|x64.Build.0 = Release|x64
-		{E1AFEDC5-62A5-4CE0-BC87-70FE6555982C}.Debug|Win32.ActiveCfg = Debug|Win32
-		{E1AFEDC5-62A5-4CE0-BC87-70FE6555982C}.Debug|Win32.Build.0 = Debug|Win32
-		{E1AFEDC5-62A5-4CE0-BC87-70FE6555982C}.Debug|x64.ActiveCfg = Debug|x64
-		{E1AFEDC5-62A5-4CE0-BC87-70FE6555982C}.Debug|x64.Build.0 = Debug|x64
-		{E1AFEDC5-62A5-4CE0-BC87-70FE6555982C}.Release|Win32.ActiveCfg = Release|Win32
-		{E1AFEDC5-62A5-4CE0-BC87-70FE6555982C}.Release|Win32.Build.0 = Release|Win32
-		{E1AFEDC5-62A5-4CE0-BC87-70FE6555982C}.Release|x64.ActiveCfg = Release|x64
-		{E1AFEDC5-62A5-4CE0-BC87-70FE6555982C}.Release|x64.Build.0 = Release|x64
 		{14A32F02-5A5D-49F7-9156-7EA3608C5900}.Debug|Win32.ActiveCfg = Debug|Win32
 		{14A32F02-5A5D-49F7-9156-7EA3608C5900}.Debug|Win32.Build.0 = Debug|Win32
 		{14A32F02-5A5D-49F7-9156-7EA3608C5900}.Debug|x64.ActiveCfg = Debug|x64
@@ -120,24 +117,15 @@ Global
 		{75A90363-D54A-4C56-B4FC-900E7540331C}.Release|Win32.Build.0 = Release|Win32
 		{75A90363-D54A-4C56-B4FC-900E7540331C}.Release|x64.ActiveCfg = Release|x64
 		{75A90363-D54A-4C56-B4FC-900E7540331C}.Release|x64.Build.0 = Release|x64
-		{D0233115-CB47-4AD5-8EA5-0361964496DD}.Debug|Win32.ActiveCfg = Debug|Win32
-		{D0233115-CB47-4AD5-8EA5-0361964496DD}.Debug|Win32.Build.0 = Debug|Win32
-		{D0233115-CB47-4AD5-8EA5-0361964496DD}.Debug|x64.ActiveCfg = Debug|x64
-		{D0233115-CB47-4AD5-8EA5-0361964496DD}.Debug|x64.Build.0 = Debug|x64
-		{D0233115-CB47-4AD5-8EA5-0361964496DD}.Release|Win32.ActiveCfg = Release|Win32
-		{D0233115-CB47-4AD5-8EA5-0361964496DD}.Release|Win32.Build.0 = Release|Win32
-		{D0233115-CB47-4AD5-8EA5-0361964496DD}.Release|x64.ActiveCfg = Release|x64
-		{D0233115-CB47-4AD5-8EA5-0361964496DD}.Release|x64.Build.0 = Release|x64
-		{39172035-CC5F-4140-9118-E1A9AD311FC7}.Debug|Win32.ActiveCfg = Debug|Win32
-		{39172035-CC5F-4140-9118-E1A9AD311FC7}.Debug|Win32.Build.0 = Debug|Win32
-		{39172035-CC5F-4140-9118-E1A9AD311FC7}.Debug|x64.ActiveCfg = Debug|x64
-		{39172035-CC5F-4140-9118-E1A9AD311FC7}.Debug|x64.Build.0 = Debug|x64
-		{39172035-CC5F-4140-9118-E1A9AD311FC7}.Release|Win32.ActiveCfg = Release|Win32
-		{39172035-CC5F-4140-9118-E1A9AD311FC7}.Release|Win32.Build.0 = Release|Win32
-		{39172035-CC5F-4140-9118-E1A9AD311FC7}.Release|x64.ActiveCfg = Release|x64
-		{39172035-CC5F-4140-9118-E1A9AD311FC7}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{765B902B-4562-4035-8BBF-EBAB2A9602A3} = {6C39DC30-8101-4BB8-AFF2-8ECD33A63686}
+		{14A32F02-5A5D-49F7-9156-7EA3608C5900} = {6C39DC30-8101-4BB8-AFF2-8ECD33A63686}
+		{0AFC8D30-5E7B-429D-82D2-F26868BF3CA6} = {6C39DC30-8101-4BB8-AFF2-8ECD33A63686}
+		{F6FC693F-2EDB-4DEC-936A-C15BE1195EC4} = {6C39DC30-8101-4BB8-AFF2-8ECD33A63686}
+		{75A90363-D54A-4C56-B4FC-900E7540331C} = {6C39DC30-8101-4BB8-AFF2-8ECD33A63686}
 	EndGlobalSection
 EndGlobal
