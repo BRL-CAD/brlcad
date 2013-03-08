@@ -1785,79 +1785,21 @@ redraw_leaf(
 	return TREE_NULL;
     }
 
-    /* release existing vlist */
-    RT_FREE_VLIST(&sp->s_vlist);
-
     /* use the solid's dmode to determine how to replot it */
     dgcdp->dmode = sp->s_dmode;
 
     if (sp->s_dmode == _GED_WIREFRAME) {
+	/* replot wireframe */
+	if (BU_LIST_NON_EMPTY(&sp->s_vlist)) {
+	    RT_FREE_VLIST(&sp->s_vlist);
+	}
 	return wireframe_leaf(tsp, pathp, ip, client_data);
     } else {
-	/* plot for shaded display */
-	struct bu_list vhead;
-	int is_db5_bot, is_db5_poly;
-
-	BU_LIST_INIT(&vhead);
-
-	is_db5_bot = is_db5_poly = 0;
-	if (ip->idb_major_type == DB5_MAJORTYPE_BRLCAD) {
-	    if (ip->idb_minor_type == DB5_MINORTYPE_BRLCAD_BOT) {
-		is_db5_bot = 1;
-	    } else if (ip->idb_minor_type == DB5_MINORTYPE_BRLCAD_POLY) {
-		is_db5_poly = 1;
-	    }
-	}
-
-	/* bots and polys have their own routines for this */
-	if (is_db5_bot) {
-	    (void)rt_bot_plot_poly(&vhead, ip, tsp->ts_ttol, tsp->ts_tol);
-	    _ged_drawH_part2(0, &vhead, pathp, tsp, sp, dgcdp);
-	} if (is_db5_poly) {
-	    (void)rt_pg_plot_poly(&vhead, ip, tsp->ts_ttol, tsp->ts_tol);
-	    _ged_drawH_part2(0, &vhead, pathp, tsp, sp, dgcdp);
-	} else if (sp->s_dmode == _GED_SHADED_MODE_ALL) {
-	    /* if we're shading another kind of solid, we'll use nmg
-	     * tessellation
-	     */
-	    char *av[] = {NULL, NULL};
-	    int ret, ac, ncpu = 1;
-	    struct model *nmg_model;
-	    struct ged *gedp;
-
-	    gedp = dgcdp->gedp;
-	    nmg_model = nmg_mm();
-	    gedp->ged_wdbp->wdb_initial_tree_state.ts_m = &nmg_model;
-
-	    if (dgcdp->draw_edge_uses) {
-		bu_vls_printf(gedp->ged_result_str, "drawing edge uses (-u)\n");
-		dgcdp->draw_edge_uses_vbp = rt_vlblock_init();
-	    }
-
-	    av[0] = db_path_to_string(pathp);
-	    ac = 1;
-	    ret = db_walk_tree(gedp->ged_wdbp->dbip,
-			       ac,
-			       (const char **)av,
-			       ncpu,
-			       &gedp->ged_wdbp->wdb_initial_tree_state,
-			       NULL,
-			       draw_nmg_region_end,
-			       nmg_booltree_leaf_tess,
-			       (genptr_t)dgcdp);
-
-	    if (dgcdp->draw_edge_uses) {
-		_ged_cvt_vlblock_to_solids(gedp, dgcdp->draw_edge_uses_vbp, "_EDGEUSES_", 0);
-		rt_vlblock_free(dgcdp->draw_edge_uses_vbp);
-		dgcdp->draw_edge_uses_vbp = (struct bn_vlblock *)NULL;
-	    }
-
-	    /* Destroy NMG */
-	    nmg_km(nmg_model);
-
-	    if (ret < 0) {
-		return TREE_NULL;
-	    }
+	/* non-wireframe replot - let's not and say we did */
+	if (dgcdp->gedp->ged_create_vlist_callback !=
+	    GED_CREATE_VLIST_CALLBACK_PTR_NULL)
+	{
+	    (*dgcdp->gedp->ged_create_vlist_callback)(sp);
 	}
     }
 
