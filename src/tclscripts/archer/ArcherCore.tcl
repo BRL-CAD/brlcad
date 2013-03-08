@@ -3848,17 +3848,20 @@ namespace eval ArcherCore {
 		      -title "Export Geometry to PNG" \
 		      -initialdir $mLastSelectedDir -filetypes $typelist]
 
-    if {$filename != ""} {
-	set mLastSelectedDir [file dirname $finename]
-
-	#XXX Hack! Hack! Hack!
-	#XXX The png command below needs to be modified to draw
-	#XXX into an off screen buffer to avoid occlusion
-	raise .
-
-	update
-	after idle [::itcl::code $this png $filename]
+    if {$filename == ""} {
+	return
     }
+
+    set mLastSelectedDir [file dirname $filename]
+
+    #XXX Hack! Hack! Hack!
+    #XXX The png command below needs to be modified to draw
+    #XXX into an off screen buffer to avoid occlusion
+    ::update idletasks
+    after 1000
+    refreshDisplay
+
+    $itk_component(ged) png $filename
 }
 
 ::itcl::body ArcherCore::setActivePane {_pane} {

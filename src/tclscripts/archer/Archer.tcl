@@ -3876,6 +3876,11 @@ proc title_node_handler {node} {
 	-label "Refresh" \
 	-command [::itcl::code $this refreshDisplay] \
 	-state disabled
+    $itk_component(${_prefix}displaymenu) add separator
+    $itk_component(${_prefix}displaymenu) add command \
+	-label "Save as png ..." \
+	-command [::itcl::code $this doPng] \
+	-state disabled
 
     buildModesMenu $_prefix
     updateUtilityMenu
@@ -5342,6 +5347,9 @@ proc title_node_handler {node} {
 		-helpstr "Clear the display"
 	    command refresh -label "Refresh" \
 		-helpstr "Refresh the display"
+	    separator sep1
+	    command save_png -label "Save as png ..." \
+		-helpstr "Save the display as png"
 	}
 
     $itk_component(menubar) menuconfigure .display.standard \
@@ -5388,6 +5396,9 @@ proc title_node_handler {node} {
 	-state disabled
     $itk_component(menubar) menuconfigure .display.refresh \
 	-command [::itcl::code $this refreshDisplay] \
+	-state disabled
+    $itk_component(menubar) menuconfigure .display.save_png \
+	-command [::itcl::code $this doPng] \
 	-state disabled
 }
 
@@ -5934,6 +5945,7 @@ proc title_node_handler {node} {
 		$itk_component(${prefix}displaymenu) entryconfigure "Center..." -state normal
 		$itk_component(${prefix}displaymenu) entryconfigure "Clear" -state normal
 		$itk_component(${prefix}displaymenu) entryconfigure "Refresh" -state normal
+		$itk_component(${prefix}displaymenu) entryconfigure "Save as png ..." -state normal
 
 		$itk_component(${prefix}modesmenu) entryconfigure "Active Pane" -state normal
 		$itk_component(${prefix}modesmenu) entryconfigure "Quad View" -state normal
@@ -5962,6 +5974,7 @@ proc title_node_handler {node} {
 	    $itk_component(menubar) menuconfigure .display.center -state normal
 	    $itk_component(menubar) menuconfigure .display.clear -state normal
 	    $itk_component(menubar) menuconfigure .display.refresh -state normal
+	    $itk_component(menubar) menuconfigure .display.save_png -state normal
 
 	    $itk_component(menubar) menuconfigure .modes.activepane -state normal
 	    $itk_component(menubar) menuconfigure .modes.quad -state normal
