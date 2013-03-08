@@ -548,10 +548,14 @@ struct vertexuse_a_cnurb {
  * OBSOLETE
  */
 #define NMG_FREESTRUCT(ptr, str) { \
-    memset((char *)(ptr), 0, sizeof(struct str)); \
-    BU_PUT((ptr), struct str); \
+    BU_PUT(ptr, struct str); \
     (ptr) = NULL; \
 }
+#if 0
+    memset((char *)(ptr), 0, sizeof(struct str)); \
+    BU_PUT((ptr), struct str); \
+
+#endif
 
 
 /*
@@ -564,7 +568,7 @@ struct vertexuse_a_cnurb {
 #define NMG_INCR_INDEX(_p, _m)	\
 	NMG_CK_MODEL(_m); (_p)->index = ((_m)->maxindex)++
 
-#if 1
+#if 0
 #define GET_REGION(p, m)            {p = (struct nmgregion *)bu_pool_get(sizeof(struct nmgregion)); NMG_INCR_INDEX(p, m);}
 #define GET_REGION_A(p, m)          {p = (struct nmgregion_a *)bu_pool_get(sizeof(struct nmgregion_a)); NMG_INCR_INDEX(p, m);}
 #define GET_SHELL(p, m)             {p = (struct shell *)bu_pool_get(sizeof(struct shell)); NMG_INCR_INDEX(p, m);}
@@ -610,7 +614,7 @@ struct vertexuse_a_cnurb {
 #define GET_VERTEXUSE_A_CNURB(p, m) {NMG_GETSTRUCT(p, vertexuse_a_cnurb); NMG_INCR_INDEX(p, m);}
 #endif
 
-#if 1
+#if 0
 #define FREE_MODEL(p)             NMG_FREESTRUCT(p, model)
 #define FREE_REGION(p)            {bu_pool_put((void *)p, sizeof(struct nmgregion));}
 #define FREE_REGION_A(p)          {bu_pool_put((void *)p, sizeof(struct nmgregion_a));}
