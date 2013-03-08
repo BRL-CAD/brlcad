@@ -29,8 +29,11 @@
 
 #include <math.h>
 
-#include "raytrace.h"
+/* Needed for fastf_t definition */
+#include "bu.h"
 
+/* Needed for VUNITIZE_TOL and NEAR_ZERO */
+#include "vmath.h"
 
 extern "C++" {
 #include <iostream>
