@@ -128,7 +128,6 @@ opennurbs_uuid.cpp
 opennurbs_viewport.cpp
 opennurbs_workspace.cpp
 opennurbs_wstring.cpp
-opennurbs_x.cpp
 opennurbs_xform.cpp
 opennurbs_zlib.cpp
   )
@@ -234,7 +233,6 @@ opennurbs_uuid.h
 opennurbs_version.h
 opennurbs_viewport.h
 opennurbs_workspace.h
-opennurbs_x.h
 opennurbs_xform.h
 opennurbs_zlib.h
   )
