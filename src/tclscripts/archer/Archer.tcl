@@ -1639,6 +1639,7 @@ package provide Archer 1.0
 
     set mTarget $_target
     set mDbType "BRL-CAD"
+    set mCopyObj ""
 
     if {![catch {$mTarget ls}]} {
 	set mDbShared 1
@@ -7227,7 +7228,6 @@ proc title_node_handler {node} {
     set mSelectedObjPath ""
     set mSelectedObj ""
     set mSelectedObjType ""
-    set mPasteActive 0
 
     # The scrollmode options are needed so that the
     # scrollbars dynamically appear/disappear. Sheesh!

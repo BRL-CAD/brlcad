@@ -55,6 +55,8 @@ namespace eval ArcherCore {
 	common TREE_POPUP_TAG "popup"
 	common TREE_OPENED_TAG "opened"
 	common TREE_PLACEHOLDER_TAG "placeholder"
+	common TREE_POPUP_TYPE_NODE "node"
+	common TREE_POPUP_TYPE_NULL "null"
 
 	common TREE_MODE_TREE 0
 	common TREE_MODE_COLOR_OBJECTS 1
@@ -342,7 +344,6 @@ namespace eval ArcherCore {
 	variable mSelectedObjPath ""
 	variable mSelectedObj ""
 	variable mSelectedObjType ""
-	variable mPasteActive 0
 	variable mMultiPane 0
 	variable mTransparency 0
 	variable mAllowDataClear 1
@@ -393,6 +394,7 @@ namespace eval ArcherCore {
 	variable mPrevTreeMode $TREE_MODE_TREE
 	variable mPrevTreeMode2 $TREE_MODE_COLOR_OBJECTS
 	variable mToolViewChange 0
+	variable mTreePopupBusy 0
 
 	variable mSavedCenter ""
 	variable mSavedViewEyePt ""
@@ -786,6 +788,7 @@ namespace eval ArcherCore {
 	variable mNodePDrawList
 	variable mNodeDrawList
 	variable mAffectedNodeList ""
+	variable mCopyObj ""
 
 	variable mCoreCmdLevel 0
 
@@ -812,6 +815,7 @@ namespace eval ArcherCore {
 	method fillTreeColumns   {_cnode _ctext}
 	method isRegion          {_cgdata}
 	method loadMenu          {_menu _node _nodeType _node_id}
+	method loadTopMenu          {_menu}
 	method findTreeChildNodes {_pnode}
 	method findTreeParentNodes {_cnode}
 	method getCNodesFromCText {_pnode _text}
@@ -821,7 +825,7 @@ namespace eval ArcherCore {
 	method getTreePath {_node {_path ""}}
 	method handleTreeClose {}
 	method handleTreeOpen {}
-	method handleTreePopup {_x _y _X _Y}
+	method handleTreePopup {_type _x _y _X _Y}
 	method handleTreeSelect {}
 	method addTreeNodeTag {_node _tag}
 	method removeTreeNodeTag {_node _tag}
@@ -870,9 +874,12 @@ namespace eval ArcherCore {
 	method showADC     {}
 
 	# private mged commands
-	method alterObj          {_operation _obj}
-	method deleteObj         {_obj}
-	method doCopyOrMove      {_top _obj _cmd}
+	method deleteObj     {_obj}
+	method doCopy        {_obj}
+	method doPaste       {_pobj _obj}
+	method doRename      {_top _obj}
+	method doTopPaste    {_obj}
+	method renameObj     {_obj}
 
 	method buildPrimaryToolbar {}
 
@@ -1625,10 +1632,11 @@ namespace eval ArcherCore {
 	    -show tree
     } {}
 
+    bind $itk_component(newtree) <Button-3> [::itcl::code $this handleTreePopup $TREE_POPUP_TYPE_NULL %x %y %X %Y]
     bind $itk_component(newtree) <<TreeviewSelect>> [::itcl::code $this handleTreeSelect]
     bind $itk_component(newtree) <<TreeviewOpen>> [::itcl::code $this handleTreeOpen]
     bind $itk_component(newtree) <<TreeviewClose>> [::itcl::code $this handleTreeClose]
-    $itk_component(newtree) tag bind $TREE_POPUP_TAG <Button-3> [::itcl::code $this handleTreePopup %x %y %X %Y]
+    $itk_component(newtree) tag bind $TREE_POPUP_TAG <Button-3> [::itcl::code $this handleTreePopup TREE_POPUP_TYPE_NODE %x %y %X %Y]
     $itk_component(newtree) tag configure $TREE_FULLY_DISPLAYED_TAG \
 	-foreground red \
 	-font TkHeadingFont
@@ -2675,43 +2683,6 @@ namespace eval ArcherCore {
 # ------------------------------------------------------------
 #                     MGED COMMANDS
 # ------------------------------------------------------------
-::itcl::body ArcherCore::alterObj {operation comp} {
-    if {[winfo exists .alter]} {
-	destroy .alter
-    }
-
-    set top [toplevel .alter]
-    wm withdraw $top
-    wm transient $top $itk_interior
-    set x [expr [winfo rootx $itk_interior] + 100]
-    set y [expr [winfo rooty $itk_interior] + 100]
-    wm geometry $top +$x+$y
-
-    set entry [::iwidgets::entryfield $top.entry -textbackground $SystemWindow -width 20]
-    pack $entry -fill x -padx 3 -pady 2
-
-    set cmd ""
-    switch -- $operation {
-	"Copy" {
-	    wm title $top "Copy $comp"
-	    set cmd "cp"
-	    $entry configure -labeltext "New Component:"
-	}
-	"Rename" {
-	    wm title $top "Rename $comp"
-	    set cmd "mvall"
-	    $entry configure -labeltext "New Name:"
-	}
-    }
-
-    set cancel [button $top.cancel -text "Cancel" -width 7 -command "destroy $top"]
-    set ok [button $top.ok -text "OK" -width 7 -command [::itcl::code $this doCopyOrMove $top $comp $cmd]]
-    pack $cancel -side right -anchor e -padx 3 -pady 2
-    pack $ok -side right -anchor e -padx 3 -pady 2
-
-    set_focus $top $entry
-    tkwait window $top
-}
 
 ::itcl::body ArcherCore::deleteObj {comp} {
     if {[do_question "Are you sure you wish to delete `$comp'."] == "no"} {
@@ -2752,17 +2723,131 @@ namespace eval ArcherCore {
     SetNormalCursor $this
 }
 
-::itcl::body ArcherCore::doCopyOrMove {top comp cmd} {
+
+::itcl::body ArcherCore::doCopy {_obj} {
+    set mCopyObj $_obj
+}
+
+
+::itcl::body ArcherCore::doPaste {_pobj _obj} {
+    if {$_pobj == ""} {
+	doTopPaste $_obj
+    } else {
+	if {[$itk_component(ged) get_type $_pobj] != "comb"} {
+	    doTopPaste $_obj
+	    return
+	}
+
+	set isregion [$itk_component(ged) get $_pobj region]
+
+	set plist [$itk_component(ged) dbfind $_obj]
+	if {[lsearch $plist $_pobj] != -1} {
+	    set newobj [doTopPaste $_obj]
+
+	    if {$isregion} {
+		r $_pobj u $newobj
+	    } else {
+		g $_pobj $newobj
+	    }
+	} else {
+	    if {$isregion} {
+		r $_pobj u $_obj
+	    } else {
+		g $_pobj $_obj
+	    }
+	}
+    }
+}
+
+
+::itcl::body ArcherCore::doRename {_top _obj} {
+    set newobj [string trim [$_top.entry get]]
+    wm withdraw $_top
+    if {[catch {gedCmd mvall $_obj $newobj} msg]} {
+	putString $msg
+	destroy $_top
+	return
+    }
+
+    SetWaitCursor $this
+
     set mNeedSave 1
     updateSaveMode
-    SetWaitCursor $this
-    set comp2 [string trim [$top.entry get]]
-    wm withdraw $top
-    gedCmd $cmd $comp
-    syncTree
+    rebuildTree
+
+    if {$mSelectedObj == $_obj} {
+	set obj $newobj
+	set dir [file dirname $mSelectedObjPath]
+	set path "$dir/$newobj"
+    } else {
+	set obj $mSelectedObj
+	set path $mSelectedObjPath
+    }
+
+    if {$mEnableListView} {
+	selectTreePath $obj
+    } else {
+	selectTreePath $path
+    }
+
+    destroy $_top
     SetNormalCursor $this
-    destroy $top
 }
+
+
+::itcl::body ArcherCore::doTopPaste {_obj} {
+    set i 1
+    set newobj "$_obj\.$i"
+    while {[$itk_component(ged) exists $newobj]} {
+	incr i
+	set newobj "$_obj\.$i"
+    }
+
+    cp $_obj $newobj
+    return $newobj
+}
+
+
+::itcl::body ArcherCore::renameObj {_obj} {
+    if {[winfo exists .alter]} {
+	destroy .alter
+    }
+
+    if {$_obj == $mCopyObj} {
+	set mCopyObj ""
+    }
+
+    set top [::toplevel .alter]
+    wm withdraw $top
+    wm transient $top $itk_interior
+    set x [winfo pointerx $itk_interior]
+    set y [winfo pointery $itk_interior]
+    wm geometry $top +$x+$y
+
+    set entry [::iwidgets::entryfield $top.entry -textbackground $SystemWindow -width 20]
+    $entry insert 0 $_obj
+    pack $entry -fill x -padx 3 -pady 2
+
+    wm title $top "Rename $_obj"
+    $entry configure -labeltext "New Name:"
+
+    set oframe [::frame $top.oframe -bg black]
+    set ok [::button $oframe.ok -text "OK" -width 7 -command [::itcl::code $this doRename $top $_obj]]
+    pack $ok -padx 1 -pady 1
+
+    set cancel [::button $top.cancel -text "Cancel" -width 7 -command "destroy $top"]
+    pack $cancel -side right -anchor e -padx 3 -pady 2
+    pack $oframe -side right -anchor e -padx 3 -pady 2
+
+    set entryc [$entry component entry]
+    $entryc selection range 0 end
+    focus $entryc
+    bind $entryc <Return> "$ok invoke"
+
+    wm deiconify $top
+    tkwait window $top
+}
+
 
 ::itcl::body ArcherCore::buildPrimaryToolbar {} {
     # tool bar
@@ -4061,6 +4146,8 @@ namespace eval ArcherCore {
 }
 
 ::itcl::body ArcherCore::loadMenu {_menu _node _nodeType _node_id} {
+    set mCurrTreeMenuNode $_node_id
+
     # destroy old menu
     if [winfo exists $_menu.color] {
 	$_menu.color delete 0 end
@@ -4121,15 +4208,28 @@ namespace eval ArcherCore {
 	    -command [::itcl::code $this render $_node -1 1 1]
     }
 
-    #XXX need to copy over
-    #    $_menu add separator
-    #    $_menu add command -label "Copy" \
-	#	    -command [::itcl::code $this alterObj "Copy" $mSelectedComp]
-    #    $_menu add command -label "Rename" \
-	#	    -command [::itcl::code $this alterObj "Rename" $mSelectedComp]
-    #    $_menu add command -label "Delete" \
-	#	    -command [::itcl::code $this deleteObj $mSelectedComp]
+    set nodeList [split $_node /]
+    set nodeLen [llength $nodeList]
 
+    #XXX need to copy over
+    $_menu add separator
+    $_menu add command -label "Copy" \
+	-command [::itcl::code $this doCopy [file tail $_node]]
+    if {$mCopyObj != ""} {
+	$_menu add command -label "Paste" \
+	    -command [::itcl::code $this doPaste [file tail $_node] $mCopyObj]
+    }
+    $_menu add command -label "Kill" \
+	-command [::itcl::code $this kill [file tail $_node]]
+    $_menu add command -label "Killall" \
+	-command [::itcl::code $this killall [file tail $_node]]
+    $_menu add command -label "Rename" \
+	-command [::itcl::code $this renameObj [file tail $_node]]
+
+    if {$nodeLen > 1} {
+	$_menu add command -label "Remove" \
+	    -command [::itcl::code $this rm [lindex $nodeList end-1] [lindex $nodeList end]]
+    }
 
     $_menu add separator
 
@@ -4221,6 +4321,26 @@ namespace eval ArcherCore {
     bind $color <<MenuSelect>> \
 	[::itcl::code $this colorMenuStatusCB %W]
 }
+
+
+::itcl::body ArcherCore::loadTopMenu {_menu} {
+    # destroy old menu
+    if {[winfo exists $_menu.color]} {
+	$_menu.color delete 0 end
+	destroy $_menu.color
+    }
+    if {[winfo exists $_menu.trans]} {
+	$_menu.trans delete 0 end
+	destroy $_menu.trans
+    }
+    $_menu delete 0 end
+
+    if {$mCopyObj != ""} {
+	$_menu add command -label "Paste" \
+	    -command [::itcl::code $this doPaste "" $mCopyObj]
+    }
+}
+
 
 ::itcl::body ArcherCore::findTreeChildNodes {_pnode} {
     if {![info exists mPNode2CList($_pnode)]} {
@@ -4533,7 +4653,22 @@ namespace eval ArcherCore {
     SetNormalCursor $this
 }
 
-::itcl::body ArcherCore::handleTreePopup {_x _y _X _Y} {
+::itcl::body ArcherCore::handleTreePopup {_type _x _y _X _Y} {
+    if {$mTreePopupBusy} {
+	set mTreePopupBusy 0
+	return
+    }
+
+    if {$_type == $TREE_POPUP_TYPE_NULL} {
+	loadTopMenu $itk_component(newtreepopup)
+	tk_popup $itk_component(newtreepopup) $_X $_Y
+
+	return
+    }
+
+    # Relies on this routine being called twice when a popup is invoked over a node
+    set mTreePopupBusy 1
+
     set item [$itk_component(newtree) identify row $_x $_y]
     set text [$itk_component(newtree) item $item -text]
     set img [$itk_component(newtree) item $item -image]
@@ -4960,14 +5095,15 @@ namespace eval ArcherCore {
 ::itcl::body ArcherCore::Load {target} {
     SetWaitCursor $this
     if {$mNeedSave} {
-	if {![askToSave]} {
-	    set mNeedSave 0
-	    updateSaveMode
-	}
+	askToSave
     }
+
+    set mNeedSave 0
+    updateSaveMode
 
     set mTarget $target
     set mDbType "BRL-CAD"
+    set mCopyObj ""
 
     if {![catch {$mTarget ls}]} {
 	set mDbShared 1
@@ -5027,7 +5163,6 @@ namespace eval ArcherCore {
     set mSelectedObjPath ""
     set mSelectedObj ""
     set mSelectedObjType ""
-    set mPasteActive 0
 
     if {!$mViewOnly} {
 	gedCmd size [expr {$mGroundPlaneSize * 1.5 * [gedCmd base2local]}]
