@@ -3854,6 +3854,37 @@ BU_EXPORT extern void bu_ck_malloc_ptr(genptr_t ptr, const char *str);
  *   0	all is OK;
  */
 BU_EXPORT extern int bu_mem_barriercheck();
+
+
+/** OBE, being removed. */
+BU_EXPORT extern void *bu_pool_get(size_t elem_byte_size);
+/** OBE, being removed. */
+BU_EXPORT extern void bu_pool_put(void *ptr, size_t elem_byte_size);
+
+
+/**
+ * really fast heap-based memory allocation intended for "small"
+ * allocation sizes (e.g., single structs).
+ *
+ * the implementation allocates chunks of memory ('pages') in order to
+ * substantially reduce calls to system malloc.  it has a nice
+ * property of having O(1) constant time complexity and profiles
+ * significantly faster than system malloc().
+ *
+ * release memory with bu_heap_put() only.
+ */
+BU_EXPORT extern void *bu_heap_get(size_t sz);
+
+/**
+ * counterpart to bu_heap_get() for releasing fast heap-based memory
+ * allocations.
+ *
+ * the implementation may do nothing, relying on free-on-exit, or may
+ * mark deallocations for reuse.  pass a NULL pointer and zero size to
+ * force compaction of any unused memory.
+ */
+BU_EXPORT extern void bu_heap_put(void *ptr, size_t sz);
+
 /** @} */
 
 /** @addtogroup log */
@@ -6223,12 +6254,6 @@ BU_EXPORT extern int bu_dlclose(void *handle);
 BU_EXPORT extern const char *bu_dlerror();
 
 /** @} file */
-
-/**
- * Definitions for memory pool "get" and "free" functions.
- */
-BU_EXPORT extern void *bu_pool_get(size_t elem_byte_size);
-BU_EXPORT extern void bu_pool_put(void *ptr, size_t elem_byte_size);
 
 /** @file libbu/ctype.c
  *
