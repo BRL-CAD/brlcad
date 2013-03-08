@@ -56,7 +56,6 @@
 #include "opennurbs_plane.h"          // simple 3d plane
 #include "opennurbs_circle.h"         // simple 3d circle
 #include "opennurbs_ellipse.h"        // simple 3d ellipse
-#include "opennurbs_x.h"              // intersection events
 #include "opennurbs_line.h"           // simple line
 #include "opennurbs_polyline.h"       // simple polyline
 #include "opennurbs_cylinder.h"       // simple 3d elliptical cylinder
