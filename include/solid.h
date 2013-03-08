@@ -58,6 +58,7 @@ struct solid  {
 				 *	      3 - shaded (booleans evaluated)
 				 */
     int s_hiddenLine;         	/**< @brief  1 - hidden line */
+    mat_t s_mat;		/**< @brief mat to use for internal lookup */
 };
 
 

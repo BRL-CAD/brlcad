@@ -433,7 +433,7 @@ append_solid_to_display_list(
 	char *sofar = db_path_to_string(pathp);
 
 	bu_vls_printf(dgcdp->gedp->ged_result_str,
-		"wireframe_leaf(%s) path='%s'\n",
+		"append_solid_to_display_list(%s) path='%s'\n",
 		ip->idb_meth->ft_name, sofar);
 
 	bu_free((genptr_t)sofar, "path string");
@@ -532,6 +532,7 @@ append_solid_to_display_list(
     sp->s_transparency = dgcdp->transparency;
     sp->s_dmode = dgcdp->dmode;
     sp->s_hiddenLine = dgcdp->hiddenLine;
+    MAT_COPY(sp->s_mat, tsp->ts_mat);
 
     /* append solid to display list */
     bu_semaphore_acquire(RT_SEM_MODEL);
@@ -635,56 +636,27 @@ solid_point_spacing(struct ged_view *gvp, struct solid *sp)
     return DIST_PT_PT(p1, p2);
 }
 
-/**
- * G E D _ W I R E F R A M E _ L E A F
- *
- * This routine must be prepared to run in parallel.
- */
-static union tree *
-wireframe_leaf(struct db_tree_state *tsp, const struct db_full_path *pathp, struct rt_db_internal *ip, genptr_t client_data)
+static fastf_t
+draw_solid_wireframe(struct ged *gedp, struct solid *sp)
 {
-    int plot_status;
-    union tree *curtree;
+    int ret;
     struct bu_list vhead;
-    struct solid *sp, *curr_sp;
-    struct _ged_client_data *dgcdp = (struct _ged_client_data *)client_data;
     struct ged_view *gvp;
+    struct rt_db_internal dbintern;
+    struct rt_db_internal *ip = &dbintern;
+    struct db_tree_state *tsp = &gedp->ged_wdbp->wdb_initial_tree_state;
 
-    RT_CK_DB_INTERNAL(ip);
-    RT_CK_TESS_TOL(tsp->ts_ttol);
-    BN_CK_TOL(tsp->ts_tol);
-    RT_CK_RESOURCE(tsp->ts_resp);
-
-    if (!dgcdp) {
-	return TREE_NULL;
-    }
-
-    /* find this path's solid struct */
-    /* TODO: should replace this with a table lookup */
-    sp = NULL;
-    for (BU_LIST_FOR(curr_sp, solid, &(dgcdp->gdlp->gdl_headSolid))) {
-	if (db_identical_full_paths(pathp, &(curr_sp->s_fullpath))) {
-	    sp = curr_sp;
-	    break;
-	}
-    }
-
-    if (sp == NULL) {
-	bu_vls_printf(dgcdp->gedp->ged_result_str, "%s: plot failure\n",
-		DB_FULL_PATH_CUR_DIR(pathp)->d_namep);
-
-	return TREE_NULL;
-    }
-
-    /* move sp to back of the list to speed up future searches */
-    BU_LIST_DEQUEUE(&sp->l);
-    BU_LIST_INSERT(&(dgcdp->gdlp->gdl_headSolid), &sp->l);
-
-    /* calculate plot */
     BU_LIST_INIT(&vhead);
+    ret = -1;
 
-    plot_status = -1;
-    gvp = dgcdp->gedp->ged_gvp;
+    ret = rt_db_get_internal(ip, DB_FULL_PATH_CUR_DIR(&sp->s_fullpath),
+	    gedp->ged_wdbp->dbip, sp->s_mat, &rt_uniresource);
+
+    if (ret < 0) {
+	return -1;
+    }
+
+    gvp = gedp->ged_gvp;
     if (gvp && gvp->gv_adaptive_plot && ip->idb_meth->ft_adaptive_plot) {
 	struct rt_view_info info;
 
@@ -698,31 +670,29 @@ wireframe_leaf(struct db_tree_state *tsp, const struct db_full_path *pathp, stru
 	}
 	info.curve_spacing = sp->s_size / 2.0;
 
-	plot_status = ip->idb_meth->ft_adaptive_plot(ip, &info);
+	ret = ip->idb_meth->ft_adaptive_plot(ip, &info);
     } else if (ip->idb_meth->ft_plot) {
-	plot_status = ip->idb_meth->ft_plot(&vhead, ip, tsp->ts_ttol,
+	ret = ip->idb_meth->ft_plot(&vhead, ip, tsp->ts_ttol,
 		tsp->ts_tol, NULL);
     }
 
-    if (plot_status < 0) {
-	bu_vls_printf(dgcdp->gedp->ged_result_str, "%s: plot failure\n",
-		DB_FULL_PATH_CUR_DIR(pathp)->d_namep);
+    rt_db_free_internal(ip);
 
-	return TREE_NULL;		/* ERROR */
+    if (ret < 0) {
+	bu_vls_printf(gedp->ged_result_str, "%s: plot failure\n",
+		DB_FULL_PATH_CUR_DIR(&sp->s_fullpath)->d_namep);
+
+	return -1;
     }
 
     /* add plot to solid */
     solid_append_vlist(sp, (struct bn_vlist *)&vhead);
 
-    if (dgcdp->gedp->ged_create_vlist_callback != GED_CREATE_VLIST_CALLBACK_PTR_NULL) {
-	(*dgcdp->gedp->ged_create_vlist_callback)(sp);
+    if (gedp->ged_create_vlist_callback != GED_CREATE_VLIST_CALLBACK_PTR_NULL) {
+	(*gedp->ged_create_vlist_callback)(sp);
     }
 
-    /* Indicate success by returning something other than TREE_NULL */
-    RT_GET_TREE(curtree, tsp->ts_resp);
-    curtree->tr_op = OP_NOP;
-
-    return curtree;
+    return 0;
 }
 
 
@@ -1284,23 +1254,10 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 		}
 
 		/* calculate plot vlists for solids */
+		av[0] = "redraw";
 		for (i = 0; i < argc; ++i) {
-		    dgcdp->gdlp = ged_addToDisplay(gedp, argv[i]);
-
-		    if (dgcdp->gdlp == GED_DISPLAY_LIST_NULL) {
-			continue;
-		    }
-
-		    av[0] = (char *)argv[i];
-		    ret = db_walk_tree(gedp->ged_wdbp->dbip,
-				       ac,
-				       (const char **)av,
-				       ncpu,
-				       &gedp->ged_wdbp->wdb_initial_tree_state,
-				       NULL,
-				       wireframe_region_end,
-				       wireframe_leaf,
-				       (genptr_t)dgcdp);
+		    av[1] = (char *)argv[i];
+		    ged_redraw(gedp, 2, (const char **)av);
 		}
 	    }
 	    break;
@@ -1751,71 +1708,33 @@ end:
     return gdlp;
 }
 
-/* re-calculate a leaf's vlist based on its existing state */
-static union tree *
-redraw_leaf(
-	struct db_tree_state *tsp,
-	const struct db_full_path *pathp,
-	struct rt_db_internal *ip,
-	genptr_t client_data)
+static int
+redraw_solid(struct ged *gedp, struct solid *sp)
 {
-    union tree *curtree;
-    struct solid *sp, *curr_sp;
-    struct _ged_client_data *dgcdp = (struct _ged_client_data *)client_data;
-
-    RT_CK_DB_INTERNAL(ip);
-    RT_CK_TESS_TOL(tsp->ts_ttol);
-    BN_CK_TOL(tsp->ts_tol);
-    RT_CK_RESOURCE(tsp->ts_resp);
-
-    if (!dgcdp) {
-	return TREE_NULL;
-    }
-
-    /* find this path's solid struct */
-    sp = NULL;
-    for (BU_LIST_FOR(curr_sp, solid, &(dgcdp->gdlp->gdl_headSolid))) {
-	if (db_identical_full_paths(pathp, &(curr_sp->s_fullpath))) {
-	    sp = curr_sp;
-	    break;
-	}
-    }
-
-    if (sp == NULL) {
-	return TREE_NULL;
-    }
-
-    /* use the solid's dmode to determine how to replot it */
-    dgcdp->dmode = sp->s_dmode;
-
     if (sp->s_dmode == _GED_WIREFRAME) {
 	/* replot wireframe */
 	if (BU_LIST_NON_EMPTY(&sp->s_vlist)) {
 	    RT_FREE_VLIST(&sp->s_vlist);
 	}
-	return wireframe_leaf(tsp, pathp, ip, client_data);
+	return draw_solid_wireframe(gedp, sp);
     } else {
 	/* non-wireframe replot - let's not and say we did */
-	if (dgcdp->gedp->ged_create_vlist_callback !=
+	if (gedp->ged_create_vlist_callback !=
 	    GED_CREATE_VLIST_CALLBACK_PTR_NULL)
 	{
-	    (*dgcdp->gedp->ged_create_vlist_callback)(sp);
+	    (*gedp->ged_create_vlist_callback)(sp);
 	}
     }
 
-    RT_GET_TREE(curtree, tsp->ts_resp);
-    curtree->tr_op = OP_NOP;
-
-    return curtree;
+    return 0;
 }
 
 int
 ged_redraw(struct ged *gedp, int argc, const char *argv[])
 {
-    struct _ged_client_data *dgcdp;
+    int ret;
+    struct solid *sp;
     struct ged_display_list *gdlp;
-    int ret, ac, ncpu;
-    char *av[] = {NULL, NULL};
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_DRAWABLE(gedp, GED_ERROR);
@@ -1824,53 +1743,58 @@ ged_redraw(struct ged *gedp, int argc, const char *argv[])
 
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-    BU_GET(dgcdp, struct _ged_client_data);
-    dgcdp->gedp = gedp;
-
-    ac = ncpu = 1;
-
     if (argc == 1) {
 	/* redraw everything */
-	for (BU_LIST_FOR(gdlp, ged_display_list, &gedp->ged_gdp->gd_headDisplay)) {
-	    dgcdp->gdlp = gdlp;
-
-	    av[0] = bu_vls_addr(&gdlp->gdl_path);
-	    ret = db_walk_tree(gedp->ged_wdbp->dbip,
-			       ac,
-			       (const char **)av,
-			       ncpu,
-			       &gedp->ged_wdbp->wdb_initial_tree_state,
-			       NULL,
-			       wireframe_region_end,
-			       redraw_leaf,
-			       (genptr_t)dgcdp);
-	    if (ret < 0) {
-		return GED_ERROR;
+	for (BU_LIST_FOR(gdlp, ged_display_list,
+	     &gedp->ged_gdp->gd_headDisplay))
+	{
+	    for (BU_LIST_FOR(sp, solid, &gdlp->gdl_headSolid)) {
+		ret = redraw_solid(gedp, sp);
+		if (ret < 0) {
+		    bu_vls_printf(gedp->ged_result_str,
+			    "%s: %s redraw failure\n", argv[0],
+			    DB_FULL_PATH_CUR_DIR(&sp->s_fullpath)->d_namep);
+		    return GED_ERROR;
+		}
 	    }
 	}
     } else {
-	int i;
+	int i, found_path;
 	struct db_full_path obj_path, dl_path;
 
 	/* redraw the specified paths */
 	for (i = 1; i < argc; ++i) {
-	    if (db_string_to_path(&obj_path, gedp->ged_wdbp->dbip, argv[i]) < 0) {
+	    ret = db_string_to_path(&obj_path, gedp->ged_wdbp->dbip, argv[i]);
+	    if (ret < 0) {
 		bu_vls_printf(gedp->ged_result_str,
 			"%s: %s is not a valid path\n", argv[0], argv[i]);
 		return GED_ERROR;
 	    }
 
-	    /* find the display list whose path matches/contains this path */
-	    av[0] = NULL;
-	    dgcdp->gdlp = NULL;
-
-	    for (BU_LIST_FOR(gdlp, ged_display_list, &gedp->ged_gdp->gd_headDisplay)) {
-
-		db_string_to_path(&dl_path, gedp->ged_wdbp->dbip,
+	    found_path = 0;
+	    for (BU_LIST_FOR(gdlp, ged_display_list,
+		 &gedp->ged_gdp->gd_headDisplay))
+	    {
+		ret = db_string_to_path(&dl_path, gedp->ged_wdbp->dbip,
 			bu_vls_addr(&gdlp->gdl_path));
+		if (ret < 0) {
+		    bu_vls_printf(gedp->ged_result_str,
+			    "%s: %s is not a valid path\n", argv[0],
+			    bu_vls_addr(&gdlp->gdl_path));
+		    return GED_ERROR;
+		}
 
+		/* this display list path matches/contains the redraw path */
 		if (db_full_path_match_top(&dl_path, &obj_path)) {
-		    dgcdp->gdlp = gdlp;
+		    found_path = 1;
+		    for (BU_LIST_FOR(sp, solid, &gdlp->gdl_headSolid)) {
+			ret = redraw_solid(gedp, sp);
+			if (ret < 0) {
+			    bu_vls_printf(gedp->ged_result_str,
+				    "%s: %s redraw failure\n", argv[0], argv[i]);
+			    return GED_ERROR;
+			}
+		    }
 		    break;
 		}
 	    }
@@ -1878,33 +1802,14 @@ ged_redraw(struct ged *gedp, int argc, const char *argv[])
 	    db_free_full_path(&dl_path);
 	    db_free_full_path(&obj_path);
 
-	    if (dgcdp->gdlp == NULL) {
+	    if (!found_path) {
 		bu_vls_printf(gedp->ged_result_str,
 			"%s: %s is not being displayed\n", argv[0], argv[i]);
 		return GED_ERROR;
 	    }
 
-	    /* redraw the display list path */
-	    av[0] = bu_vls_addr(&dgcdp->gdlp->gdl_path);
-	    ret = db_walk_tree(gedp->ged_wdbp->dbip,
-			       ac,
-			       (const char **)av,
-			       ncpu,
-			       &gedp->ged_wdbp->wdb_initial_tree_state,
-			       NULL,
-			       wireframe_region_end,
-			       redraw_leaf,
-			       (genptr_t)dgcdp);
-
-	    if (ret < 0) {
-		bu_vls_printf(gedp->ged_result_str,
-			"%s: %s redraw failure\n", argv[0], argv[i]);
-		return GED_ERROR;
-	    }
 	}
     }
-
-    BU_PUT(dgcdp, struct _ged_client_data);
 
     return GED_OK;
 }
