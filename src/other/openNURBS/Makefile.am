@@ -117,7 +117,6 @@ ON_SRC = \
 	opennurbs_array.cpp \
 	opennurbs_base32.cpp \
 	opennurbs_base64.cpp \
-	opennurbs_basic.cpp \
 	opennurbs_beam.cpp \
 	opennurbs_bezier.cpp \
 	opennurbs_beziervolume.cpp \
