@@ -59,7 +59,6 @@ ON_INC = \
 	opennurbs_linetype.h \
 	opennurbs_lookup.h \
 	opennurbs_mapchan.h \
-	opennurbs_massprop.h \
 	opennurbs_material.h \
 	opennurbs_math.h \
 	opennurbs_matrix.h \
@@ -166,7 +165,6 @@ ON_SRC = \
 	opennurbs_linecurve.cpp \
 	opennurbs_linetype.cpp \
 	opennurbs_lookup.cpp \
-	opennurbs_massprop.cpp \
 	opennurbs_material.cpp \
 	opennurbs_math.cpp \
 	opennurbs_matrix.cpp \
