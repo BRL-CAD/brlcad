@@ -247,7 +247,11 @@ BU_EXPORT extern Tcl_Interp *brlcad_interp;
  * are relatively large, infrequently allocated, or otherwise don't
  * need to be fast.
  */
+#if 0
+#define BU_GET(_ptr, _type) _ptr = (_type *)bu_heap_get(sizeof(_type))
+#else
 #define BU_GET(_ptr, _type) _ptr = (_type *)bu_calloc(1, sizeof(_type), #_type " (BU_GET) " BU_FLSTR)
+#endif
 
 /**
  * Handy dynamic memory deallocator macro.  Deallocated memory has the
@@ -257,7 +261,11 @@ BU_EXPORT extern Tcl_Interp *brlcad_interp;
  * Memory acquired with bu_malloc()/bu_calloc() should be returned
  * with bu_free(), NOT with BU_PUT().
  */
+#if 0
+#define BU_PUT(_ptr, _type) *(uint8_t *)(_ptr) = /*zap*/ 0; bu_heap_put(_ptr, sizeof(_type)); _ptr = NULL
+#else
 #define BU_PUT(_ptr, _type) *(uint8_t *)(_ptr) = /*zap*/ 0; bu_free(_ptr, #_type " (BU_PUT) " BU_FLSTR); _ptr = NULL
+#endif
 
 /**
  * Convenience macro for allocating a single structure on the heap.
@@ -6254,6 +6262,7 @@ BU_EXPORT extern int bu_dlclose(void *handle);
 BU_EXPORT extern const char *bu_dlerror();
 
 /** @} file */
+
 
 /** @file libbu/ctype.c
  *
