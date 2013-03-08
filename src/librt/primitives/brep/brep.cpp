@@ -42,7 +42,6 @@
 
 #include "brep.h"
 #include "dvec.h"
-#include "nurbs.h"
 
 #include "raytrace.h"
 #include "rtgeom.h"

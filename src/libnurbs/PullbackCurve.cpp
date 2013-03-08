@@ -37,8 +37,6 @@
 #include "jama_lu.h"
 #include "brep.h"
 
-#include "nurbs.h"
-
 /* interface header */
 #include "PullbackCurve.h"
 

@@ -44,7 +44,7 @@
 #include "raytrace.h"
 #include "rtgeom.h"
 #include "vmath.h"
-#include "nurbs.h"
+#include "brep.h"
 
 
 /* returns the incenter of the inscribed circle inside the triangle defined by

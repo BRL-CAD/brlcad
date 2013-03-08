@@ -54,7 +54,7 @@
 #include "opennurbs.h"
 #include "opennurbs_fit.h"
 #include <Eigen/SVD>
-#include "nurbs.h"
+#include "brep.h"
 
 typedef std::pair<size_t, size_t> Edge;
 typedef std::map< size_t, std::set<Edge> > VertToEdge;

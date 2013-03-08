@@ -38,9 +38,6 @@
 #include "brep.h"
 #include "dvec.h"
 
-#include "nurbs.h"
-
-
 #define RANGE_HI 0.55
 #define RANGE_LO 0.45
 #define UNIVERSAL_SAMPLE_COUNT 1001

@@ -94,7 +94,7 @@ class SDAI_Application_instance;
 #include "AdvancedBrepShapeRepresentation.h"
 #include "PullbackCurve.h"
 
-#include "nurbs.h"
+#include "brep.h"
 
 
 ON_Brep *
