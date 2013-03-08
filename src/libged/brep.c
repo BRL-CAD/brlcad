@@ -35,6 +35,8 @@
 
 #include "./ged_private.h"
 
+/* TODO - get rid of the need for brep_specific at this level */
+#include "../librt/primitives/brep/brep_local.h"
 
 #if 1
 RT_EXPORT extern int brep_command(struct bu_vls *vls, struct brep_specific* bs, struct rt_brep_internal* bi, struct bn_vlblock *vbp, int argc, const char *argv[], char *commtag);

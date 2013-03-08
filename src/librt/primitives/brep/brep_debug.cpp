@@ -45,6 +45,7 @@
 #include "rtgeom.h"
 #include "wdb.h"
 
+#include "brep_local.h"
 
 #ifdef __cplusplus
 extern "C" {

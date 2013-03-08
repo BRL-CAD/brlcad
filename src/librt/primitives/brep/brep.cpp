@@ -46,6 +46,7 @@
 #include "raytrace.h"
 #include "rtgeom.h"
 
+#include "brep_local.h"
 #include "brep_debug.h"
 
 /* undefine "min" and "max" macros, if they exist, to prevent
@@ -64,7 +65,6 @@
 
 /* uncomment to enable debug plotting */
 /* #define PLOTTING 1 */
-
 
 #ifdef __cplusplus
 extern "C" {

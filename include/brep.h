@@ -107,16 +107,6 @@ typedef struct _brep_cdbitem {
     int dummy; /* MS Visual C hack which can be removed if the struct contains something meaningful */
 } brep_cdbitem;
 
-/**
- * The b-rep specific data structure for caching the prepared
- * acceleration data structure.
- */
-struct brep_specific {
-    ON_Brep* brep;
-    BrepBoundingVolume* bvh;
-};
-
-
 __END_DECLS
 
 #ifdef __cplusplus
