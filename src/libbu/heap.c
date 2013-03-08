@@ -28,19 +28,22 @@
 #include "bu.h"
 
 
-#define BINS 64
-#define PAGESIZE (BINS * 1024)
+#define BINS 256
+#define PAGESIZE (BINS * 4096)
 
 /** heaps is an array of lists containing pages of memory binned per requested allocation size */
-static char **heaps[BINS] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+static char **heaps[BINS] = {0};
 
 /** pages is an array of counts for how many heap pages have been allocated per each heaps[] size */
-static size_t pages[BINS] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+static size_t pages[BINS] = {0};
 
 /** used is an array of lists to count how much memory has been used (allocated) per page */
-static size_t *used[BINS] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+static size_t *used[BINS] = {0};
 
-static size_t alloc[BINS] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+/** keep track of our allocation counts for reporting stats */
+static size_t alloc[BINS] = {0};
+
+/** keep track of allocation sizes outside our supported range */
 static size_t misses = 0;
 
 
@@ -50,6 +53,7 @@ bu_heap_print()
     size_t i, j;
     size_t allocations = 0;
     size_t total_pages = 0;
+    size_t total_alloc = 0;
 
     bu_log("=======================\n"
 	   "Memory Heap Information\n"
@@ -63,13 +67,15 @@ bu_heap_print()
 	if (allocations > 0)
 	    bu_log("%04ld [%02ld] => %ld\n", i, pages[i], allocations);
 	total_pages += pages[i];
+	total_alloc += allocations;
     }
     bu_log("-----------------------\n"
 	   "size [pages] => allocs\n"
 	   "Heap range: 1-%ld bytes\n"
 	   "Page size: %ld bytes\n"
 	   "Pages: %ld (%.2lfMB)\n"
-	   "=======================\n", BINS, PAGESIZE, total_pages, (double)(total_pages * PAGESIZE) / (1024.0*1024.0));
+	   "%ld hits, %ld misses\n"
+	   "=======================\n", BINS, PAGESIZE, total_pages, (double)(total_pages * PAGESIZE) / (1024.0*1024.0), total_alloc, misses);
 }
 
 
@@ -82,6 +88,7 @@ bu_heap_get(size_t sz)
 
     if (sz > BINS || sz == 0) {
 	misses++;
+	bu_log("missed size %ld\n", sz);
 	return bu_calloc(1, sz, "heap calloc");
     }
 
