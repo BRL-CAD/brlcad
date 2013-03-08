@@ -237,7 +237,6 @@ ON_EXTRA = \
 EXTRA_DIST = \
 	${ON_EXTRA} \
 	example_brep \
-	example_dump \
 	example_gl \
 	example_read \
 	example_roundtrip \
