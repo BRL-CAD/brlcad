@@ -76,7 +76,6 @@
 #include "opennurbs_mapchan.h"
 #include "opennurbs_rendering.h"
 #include "opennurbs_archive.h"        // binary arcive objects for serialization to file, memory blocks, etc.
-#include "opennurbs_massprop.h"       // mass properties values
 #include "opennurbs_arc.h"            // simple 3d circular arc
 #include "opennurbs_object.h"         // virtual base class for all openNURBS objects
 #include "opennurbs_userdata.h"       // class for attaching persistent user information to openNURBS objects
