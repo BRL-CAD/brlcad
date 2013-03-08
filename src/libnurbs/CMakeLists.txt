@@ -1,5 +1,5 @@
-# Include directories needed by libnurbs users
-set(NURBS_INCLUDE_DIRS
+# Include directories needed by libbrep users
+set(BREP_INCLUDE_DIRS
   ${BRLCAD_BINARY_DIR}/include
   ${BRLCAD_SOURCE_DIR}/include
   ${BU_INCLUDE_DIRS}
@@ -9,50 +9,50 @@ set(NURBS_INCLUDE_DIRS
   )
 
 # locally used but not needed by users of the library
-set(NURBS_LOCAL_INCLUDE_DIRS
+set(BREP_LOCAL_INCLUDE_DIRS
   ${CMAKE_CURRENT_SOURCE_DIR}
   ${REGEX_INCLUDE_DIR}
   ${TNT_INCLUDE_DIR}
   ${BRLCAD_SOURCE_DIR}/src/other/Eigen
   )
 
-BRLCAD_LIB_INCLUDE_DIRS(nurbs NURBS_INCLUDE_DIRS NURBS_LOCAL_INCLUDE_DIRS)
+BRLCAD_LIB_INCLUDE_DIRS(brep BREP_INCLUDE_DIRS BREP_LOCAL_INCLUDE_DIRS)
 
-set(LIBNURBS_SOURCES
+set(LIBBREP_SOURCES
   opennurbs_ext.cpp
   #opennurbs_fit.cpp
   PullbackCurve.cpp
   )
 
-set(libnurbs_ignored_files
+set(libbrep_ignored_files
   opennurbs_fit.h
   opennurbs_fit.cpp
   PullbackCurve.h
   )
-CMAKEFILES(${libnurbs_ignored_files})
+CMAKEFILES(${libbrep_ignored_files})
 CMAKEFILES(Makefile.am)
 
-# Initialize libnurbs_DEFINES in case of reconfiguration
-set(libnurbs_DEFINES "")
+# Initialize libbrep_DEFINES in case of reconfiguration
+set(libbrep_DEFINES "")
 
-# Set libnurbs compile definitions
-get_property(libnurbs_DEFINES GLOBAL PROPERTY libnurbs_DEFINES)
-list(APPEND libnurbs_DEFINES "OBJ_BREP=1")
+# Set libbrep compile definitions
+get_property(libbrep_DEFINES GLOBAL PROPERTY libbrep_DEFINES)
+list(APPEND libbrep_DEFINES "OBJ_BREP=1")
 if(CPP_DLL_DEFINES)
-  list(APPEND libnurbs_DEFINES "ON_DLL_IMPORTS")
+  list(APPEND libbrep_DEFINES "ON_DLL_IMPORTS")
 endif(CPP_DLL_DEFINES)
-set_property(GLOBAL PROPERTY libnurbs_DEFINES "${libnurbs_DEFINES}")
+set_property(GLOBAL PROPERTY libbrep_DEFINES "${libbrep_DEFINES}")
 
-BRLCAD_ADDLIB(libnurbs "${LIBNURBS_SOURCES}" "libbn;libbu;${OPENNURBS_LIBRARY};${ZLIB_LIBRARY};${WINSOCK_LIB};${RPCRT_LIB};${STDCXX_LIBRARIES}" NOSTRICTCXX)
+BRLCAD_ADDLIB(libbrep "${LIBBREP_SOURCES}" "libbn;libbu;${OPENNURBS_LIBRARY};${ZLIB_LIBRARY};${WINSOCK_LIB};${RPCRT_LIB};${STDCXX_LIBRARIES}" NOSTRICTCXX)
 
 if(BUILD_STATIC_LIBS)
-  set_property(TARGET libnurbs-static APPEND PROPERTY COMPILE_DEFINITIONS "OBJ_BREP=1")
+  set_property(TARGET libbrep-static APPEND PROPERTY COMPILE_DEFINITIONS "OBJ_BREP=1")
 endif(BUILD_STATIC_LIBS)
 
-set_target_properties(libnurbs PROPERTIES VERSION 20.0.1 SOVERSION 20)
+set_target_properties(libbrep PROPERTIES VERSION 20.0.1 SOVERSION 20)
 if(CPP_DLL_DEFINES)
   if(BRLCAD_BUILD_STATIC_LIBS AND BRLCAD_ENABLE_BRLCAD_LIBRARY)
-    SET_PROPERTY(TARGET libnurbs-static APPEND PROPERTY COMPILE_DEFINITIONS "ON_DLL_IMPORTS")
+    SET_PROPERTY(TARGET libbrep-static APPEND PROPERTY COMPILE_DEFINITIONS "ON_DLL_IMPORTS")
   endif(BRLCAD_BUILD_STATIC_LIBS AND BRLCAD_ENABLE_BRLCAD_LIBRARY)
 endif(CPP_DLL_DEFINES)
 

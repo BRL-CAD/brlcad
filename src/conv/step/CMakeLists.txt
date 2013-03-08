@@ -26,7 +26,7 @@ include_directories(
   ${BRLCAD_SOURCE_DIR}/src/other/step/src/test
   ${CMAKE_BINARY_DIR}/src/other/step/include
   ${TNT_INCLUDE_DIR}
-  ${BRLCAD_SOURCE_DIR}/src/libnurbs #Temporary until headers reworked
+  ${BRLCAD_SOURCE_DIR}/src/libbrep #Temporary until headers reworked
   )
 
 set(SCHEMA_FILE ${BRLCAD_SOURCE_DIR}/src/other/step/data/ap203/ap203.exp)
@@ -469,7 +469,7 @@ set(stepg_LIBS
   libwdb
   librt
   libbu
-  libnurbs
+  libbrep
   steputils
   stepeditor
   stepdai

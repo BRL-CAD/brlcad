@@ -285,7 +285,7 @@ else(MSVC)
   set(LIBRT_SOURCES ${LIBRT_SOURCES} timer42.c)
 endif(MSVC)
 
-BRLCAD_ADDLIB(librt "${LIBRT_SOURCES}" "${LIBVDS_LIBRARY};libbn;libbu;${OPENNURBS_LIBRARY};libnurbs;${REGEX_LIBRARY};${ZLIB_LIBRARY};${WINSOCK_LIB};${RPCRT_LIB};${STDCXX_LIBRARIES}" NOSTRICTCXX)
+BRLCAD_ADDLIB(librt "${LIBRT_SOURCES}" "${LIBVDS_LIBRARY};libbn;libbu;${OPENNURBS_LIBRARY};libbrep;${REGEX_LIBRARY};${ZLIB_LIBRARY};${WINSOCK_LIB};${RPCRT_LIB};${STDCXX_LIBRARIES}" NOSTRICTCXX)
 if(BUILD_STATIC_LIBS)
   SET_PROPERTY(TARGET librt-static APPEND PROPERTY COMPILE_DEFINITIONS "OBJ_BREP=1")
 endif(BUILD_STATIC_LIBS)
@@ -305,12 +305,12 @@ CMAKEFILES(Makefile.am)
 
 include_directories(
   ${CMAKE_SOURCE_DIR}/src/other/Eigen
-  ${CMAKE_CURRENT_SOURCE_DIR}/../libnurbs
+  ${CMAKE_CURRENT_SOURCE_DIR}/../libbrep
   )
 
-#BRLCAD_ADDEXEC(test_bot2nurbs test_bot2nurbs.cpp "librt;libwdb;libnurbs;libbu" NOSTRICT NO_INSTALL)
-#BRLCAD_ADDEXEC(test_nurbsfit test_nurbsfit.cpp "librt;libwdb;libnurbs;libbu" NOSTRICT NO_INSTALL)
-#BRLCAD_ADDEXEC(test_root3-subd test_root3-subd.cpp "librt;libwdb;libnurbs;libbu" NOSTRICT NO_INSTALL)
+#BRLCAD_ADDEXEC(test_bot2nurbs test_bot2nurbs.cpp "librt;libwdb;libbrep;libbu" NOSTRICT NO_INSTALL)
+#BRLCAD_ADDEXEC(test_nurbsfit test_nurbsfit.cpp "librt;libwdb;libbrep;libbu" NOSTRICT NO_INSTALL)
+#BRLCAD_ADDEXEC(test_root3-subd test_root3-subd.cpp "librt;libwdb;libbrep;libbu" NOSTRICT NO_INSTALL)
 
 BRLCAD_ADDEXEC(test_dvec test_dvec.cpp "librt" NOSTRICT NO_INSTALL LOCAL)
 ADD_TEST(test_dvec test_dvec)
