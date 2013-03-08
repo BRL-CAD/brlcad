@@ -2,7 +2,6 @@ SET(openNURBS_ignore_files
 BRL-CAD_changes.txt
 Makefile.am
 example_brep
-example_dump
 example_gl
 example_read
 example_roundtrip
@@ -10,10 +9,19 @@ example_userdata
 example_write
 faq.txt
 license.txt
+build_opennurbs_vs2010.sln
+build_opennurbs_xcode.xcworkspace
+build_opennurbs_xcode.xcworkspace/contents.xcworkspacedata
+examples_linking_pragmas.h
+opennurbs.vcxproj
+opennurbs.vcxproj.filters
+opennurbs_brep_changesrf.cpp
+opennurbs_brep_kinky.cpp
+opennurbs_staticlib.vcxproj
+opennurbs_staticlib.vcxproj.filters
+opennurbs_x.h
 opennurbs.h
 opennurbs.rc
-opennurbs.sln
-opennurbs.vcproj
 opennurbs_3dm.h
 opennurbs_3dm_attributes.h
 opennurbs_3dm_properties.h
@@ -76,7 +84,6 @@ opennurbs_material.h
 opennurbs_math.h
 opennurbs_matrix.h
 opennurbs_memory.h
-opennurbs_memory_new.cpp
 opennurbs_mesh.h
 opennurbs_nurbscurve.h
 opennurbs_nurbssurface.h
@@ -103,7 +110,6 @@ opennurbs_rendering.h
 opennurbs_revsurface.h
 opennurbs_rtree.h
 opennurbs_sphere.h
-opennurbs_staticlib.vcproj
 opennurbs_string.h
 opennurbs_sumsurface.h
 opennurbs_surface.h

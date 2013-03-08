@@ -1,6 +1,16 @@
-set(libp2t_ignored_files
-	AUTHORS
-	LICENSE
-	README
-	testbed
-	  )
+set(poly2tri_ignore_files
+AUTHORS
+LICENSE
+README.md
+poly2tri/common/shapes.h
+poly2tri/common/utils.h
+poly2tri/poly2tri.h
+poly2tri/sweep/advancing_front.h
+poly2tri/sweep/cdt.h
+poly2tri/sweep/sweep.h
+poly2tri/sweep/sweep_context.h
+readme.txt
+testbed
+waf
+wscript
+)
