@@ -93,6 +93,8 @@
 /* Private headers */
 #include "tclcad_private.h"
 
+#include "brlcad_version.h"
+
 #define TO_UNLIMITED -1
 
 /*
@@ -1252,8 +1254,15 @@ static struct to_cmdtab to_cmds[] = {
 int
 Go_Init(Tcl_Interp *interp)
 {
+    struct bu_vls version_str;
+
     if (library_initialized(0))
 	return TCL_OK;
+
+    bu_vls_init(&version_str);
+    bu_vls_printf(&version_str, "set brlcad_version \"%s\"", brlcad_version());
+    (void)Tcl_Eval(interp, bu_vls_addr(&version_str));
+    bu_vls_free(&version_str);
 
     /*XXX Use of brlcad_interp is temporary */
     brlcad_interp = interp;

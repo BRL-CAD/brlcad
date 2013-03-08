@@ -251,10 +251,11 @@ proc main {} {
     global env
     global tcl_platform
     global argv
+    global brlcad_version
 
     if {$::ArcherCore::inheritFromToplevel} {
 	set ::ArcherCore::application [Archer .\#auto]
-	wm title $::ArcherCore::application "Archer"
+	wm title $::ArcherCore::application "Archer $brlcad_version"
 	if {$tcl_platform(os) == "Windows NT"} {
 	    wm iconbitmap $::ArcherCore::application -default \
 		[file join [bu_brlcad_data "icons"] archer.ico]
@@ -273,7 +274,7 @@ proc main {} {
 	wm geometry $::ArcherCore::application "$width\x$height+0+0"
 	wm protocol $::ArcherCore::application WM_DELETE_WINDOW {exitArcher $::ArcherCore::application}
     } else {
-	wm title . "Archer"
+	wm title . "Archer $brlcad_version"
 	if {$tcl_platform(os) == "Windows NT"} {
 	    wm iconbitmap . -default \
 		[file join [bu_brlcad_data "html"] manuals archer archer.ico]
