@@ -570,7 +570,7 @@ view_avg_sample_spacing(struct ged_view *gvp)
 }
 
 static fastf_t
-solid_point_spacing(struct ged_view *gvp, struct solid *sp)
+solid_point_spacing(struct ged_view *gvp, fastf_t solid_width)
 {
     fastf_t radius, avg_view_size, avg_sample_spacing;
     point_t p1, p2;
@@ -581,16 +581,11 @@ solid_point_spacing(struct ged_view *gvp, struct solid *sp)
     /* Now, for the sake of simplicity we're going to make
      * several assumptions:
      *  - our samples represent a grid of square pixels
-     *  - we're plotting an implicit solid
-     *  - the solid's bounding box is a cube
-     *  - a circle with a diameter half the width of the
-     *    bounding box is a good proxy for the kind of curves
-     *    that will be plotted
-     *  - sp->s_size is the bbox diagonal and only a slight
-     *    overestimate of the width of the bounding box
+     *  - a circle with a diameter half the width of the solid is a
+     *    good proxy for the kind of curve that will be plotted
      */
-    radius = sp->s_size / 4.0;
-    if (avg_view_size < sp->s_size) {
+    radius = solid_width / 4.0;
+    if (avg_view_size < solid_width) {
 	/* If the solid is larger than the view, it is
 	 * probably only partly visible and likely isn't the
 	 * primary focus of the user. We'll cap the point
@@ -663,11 +658,37 @@ draw_solid_wireframe(struct ged *gedp, struct solid *sp)
 	info.vhead = &vhead;
 	info.tol = tsp->ts_tol;
 
-	if (ip->idb_minor_type == ID_BOT) {
-	    info.point_spacing = view_avg_sample_spacing(gvp);
+	if (ip->idb_major_type == DB5_MAJORTYPE_BRLCAD) {
+	    switch (ip->idb_minor_type) {
+		case DB5_MINORTYPE_BRLCAD_TGC: {
+		    struct rt_tgc_internal *tgc;
+		    fastf_t avg_diameter;
+		    fastf_t tgc_mag_a, tgc_mag_b, tgc_mag_c, tgc_mag_d;
+
+		    RT_CK_DB_INTERNAL(ip);
+		    tgc = (struct rt_tgc_internal *)ip->idb_ptr;
+		    RT_TGC_CK_MAGIC(tgc);
+
+		    tgc_mag_a = MAGNITUDE(tgc->a);
+		    tgc_mag_b = MAGNITUDE(tgc->b);
+		    tgc_mag_c = MAGNITUDE(tgc->c);
+		    tgc_mag_d = MAGNITUDE(tgc->d);
+
+		    avg_diameter = tgc_mag_a + tgc_mag_b + tgc_mag_c + tgc_mag_d;
+		    avg_diameter /= 2.0;
+		    info.point_spacing = solid_point_spacing(gvp, avg_diameter);
+		}
+		    break;
+		case DB5_MINORTYPE_BRLCAD_BOT:
+		    info.point_spacing = view_avg_sample_spacing(gvp);
+		    break;
+		default:
+		    info.point_spacing = solid_point_spacing(gvp, sp->s_size);
+	    }
 	} else {
-	    info.point_spacing = solid_point_spacing(gvp, sp);
+	    info.point_spacing = solid_point_spacing(gvp, sp->s_size);
 	}
+
 	info.curve_spacing = sp->s_size / 2.0;
 
 	ret = ip->idb_meth->ft_adaptive_plot(ip, &info);
