@@ -44,7 +44,6 @@ ON_INC = \
 	opennurbs_fsp.h \
 	opennurbs_fsp_defs.h \
 	opennurbs_geometry.h \
-	opennurbs_gl.h \
 	opennurbs_group.h \
 	opennurbs_hatch.h \
 	opennurbs_hsort_template.h \
@@ -63,7 +62,6 @@ ON_INC = \
 	opennurbs_material.h \
 	opennurbs_math.h \
 	opennurbs_matrix.h \
-	opennurbs_memory.h \
 	opennurbs_mesh.h \
 	opennurbs_nurbscurve.h \
 	opennurbs_nurbssurface.h \
@@ -146,6 +144,7 @@ ON_SRC = \
 	opennurbs_defines.cpp \
 	opennurbs_detail.cpp \
 	opennurbs_dimstyle.cpp \
+	opennurbs_dll.cpp \
 	opennurbs_ellipse.cpp \
 	opennurbs_embedded_file.cpp \
 	opennurbs_error.cpp \
@@ -215,8 +214,7 @@ ON_SRC = \
 	opennurbs_wstring.cpp \
 	opennurbs_x.cpp \
 	opennurbs_xform.cpp \
-	opennurbs_zlib.cpp \
-	opennurbs_zlib_memory.cpp
+	opennurbs_zlib.cpp
 
 nurbincludedir = $(includedir)/openNURBS
 nurbinclude_HEADERS = $(ON_INC)
@@ -231,15 +229,16 @@ libopenNURBS_la_LIBADD = libopenNURBS_nil.la
 
 ON_EXTRA = \
 	opennurbs.rc \
-	opennurbs_dll.cpp \
-	opennurbs_dll_resource.h \
+	opennurbs_basic.cpp \
+	opennurbs_brep_changesrf.cpp \
+	opennurbs_brep_kinky.cpp \
 	opennurbs_gl.cpp \
-	opennurbs_precompiledheader.cpp
+	opennurbs_precompiledheader.cpp \
+	opennurbs_zlib_memory.cpp
 
 EXTRA_DIST = \
 	${ON_EXTRA} \
 	example_brep \
-	example_dump \
 	example_gl \
 	example_read \
 	example_roundtrip \
@@ -249,6 +248,8 @@ EXTRA_DIST = \
 	BRL-CAD_changes.txt \
 	faq.txt \
 	license.txt \
+	opennurbs_dll_resource.h \
+	opennurbs_gl.h \
 	readme.txt \
         CMakeLists.txt
 

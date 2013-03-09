@@ -1,17 +1,23 @@
-/* $Header$ */
 /* $NoKeywords: $ */
+/*
 //
-// Copyright (c) 1993-1998 Robert McNeel & Associates. All rights reserved.
-// Rhinoceros is a registered trademark of Robert McNeel & Assoicates.
+// Copyright (c) 1993-2011 Robert McNeel & Associates. All rights reserved.
+// OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
+// McNeel & Assoicates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
 // MERCHANTABILITY ARE HEREBY DISCLAIMED.
 //				
+// For complete openNURBS copyright information see <http://www.opennurbs.org>.
+//
 ////////////////////////////////////////////////////////////////
+*/
 
+// uncomment the "ON_DLL_IMPORTS" define to use opennurbs as a Windows DLL
+//#define ON_DLL_IMPORTS
 #include "../opennurbs.h"
-#include "../opennurbs_staticlib_linking_pragmas.h"
+#include "../examples_linking_pragmas.h"
 
 // This example demonstrates two things:
 //
@@ -627,8 +633,7 @@ int main()
     = "OpenNURBS example showing how to create and write a simple b-rep";
 
 
-  int version = 4; // File can be read by Rhino 4 and Rhino 5
-  //int version = 5; // File can be read by Rhino 5
+  int version = 0; // version will be ON_BinaryArchive::CurrentArchiveVersion()
   model.Polish();
   const char* filename = "my_brep.3dm";
   bool rc = model.Write( filename, 

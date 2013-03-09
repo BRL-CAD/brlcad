@@ -2,7 +2,6 @@ SET(openNURBS_ignore_files
 BRL-CAD_changes.txt
 Makefile.am
 example_brep
-example_dump
 example_gl
 example_read
 example_roundtrip
@@ -11,6 +10,17 @@ example_write
 examples_linking_pragmas.h
 faq.txt
 license.txt
+build_opennurbs_vs2010.sln
+build_opennurbs_xcode.xcworkspace
+build_opennurbs_xcode.xcworkspace/contents.xcworkspacedata
+examples_linking_pragmas.h
+opennurbs.vcxproj
+opennurbs.vcxproj.filters
+opennurbs_brep_changesrf.cpp
+opennurbs_brep_kinky.cpp
+opennurbs_staticlib.vcxproj
+opennurbs_staticlib.vcxproj.filters
+opennurbs_x.h
 opennurbs.h
 opennurbs.rc
 opennurbs_3dm.h

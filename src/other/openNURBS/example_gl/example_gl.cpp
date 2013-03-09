@@ -1,33 +1,47 @@
-/* $Header$ */
 /* $NoKeywords: $ */
+/*
 //
-// Copyright (c) 1993-1998 Robert McNeel & Associates. All rights reserved.
-// Rhinoceros is a registered trademark of Robert McNeel & Assoicates.
+// Copyright (c) 1993-2011 Robert McNeel & Associates. All rights reserved.
+// OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
+// McNeel & Assoicates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
 // MERCHANTABILITY ARE HEREBY DISCLAIMED.
 //				
+// For complete openNURBS copyright information see <http://www.opennurbs.org>.
+//
 ////////////////////////////////////////////////////////////////
+*/
 
+// uncomment the "ON_DLL_IMPORTS" define to use opennurbs as a Windows DLL
+//#define ON_DLL_IMPORTS
 #include "../opennurbs.h"
+#include "../examples_linking_pragmas.h"
+
 #include "../opennurbs_gl.h"
-#include "../opennurbs_staticlib_linking_pragmas.h"
 
 #if defined(ON_COMPILER_MSC)
 
+#if ( _MSC_VER != 1400 )
 // Tested compilers:
-//   Microsoft Developer Studio 6.0
 //   Microsoft Visual Studio 2005
-//   Support for other Windows compilers is not available.
+//   Support for other compilers is not available.
+#error The OpenGL example is not supported on this compiler.
+// NOTE:
+//   Visual Studio 2005 / 8.0 was the last version of Visual
+//   studio to install the libraries and header files for
+//   Open GL auxillary functions.
+#endif
 
 #include <GL/GLaux.h>   // Open GL auxillary functions
+
 #define ON_EXAMPLE_GL_USE_GLAUX
 
 #elif defined(ON_COMPILER_XCODE)
 
 // Tested compilers:
-//   Apple XCode 2.4.1
+//   Apple Xcode 2.4.1
 //   Support for other Apple compilers is not available.
 #include <GLUT/glut.h>   // Open GL auxillary functions
 #define ON_EXAMPLE_GL_USE_GLUT
@@ -213,11 +227,11 @@ void MY_GL_CALLBACK myGLUT_SpecialKeyEvent( int ch, int x, int y );    // for au
 // If you are using Apple's Xcode and you get a compile error
 // on the typedef below, then try using the commented out typedef.
 //
-// Apple's Xcode 2.4 likes this typedef with the (...)
-//typedef void (CALLBACK* RHINO_GL_NURBS_ERROR)(...);
+// Apple's Xcode 2.4 likes this typedef witht the (...)
+typedef void (CALLBACK* RHINO_GL_NURBS_ERROR)(...);
 //
-// Apple's Xcode 3.2 likes this typedef without the ()
-typedef void (CALLBACK* RHINO_GL_NURBS_ERROR)();
+// Apple's Xcode 3.2 likes this typedef witht the (...)
+//typedef void (CALLBACK* RHINO_GL_NURBS_ERROR)();
 #endif
 
 }

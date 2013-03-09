@@ -9923,6 +9923,172 @@ ON_BrepEdge* ON_Brep::CombineContiguousEdges(
   return &m_E[edge.m_edge_index];
 }
 
+bool ON_Brep::GetTrimParameter(
+                               int,     // trim_index          - formal parameter intentionally ignored in this virtual function
+                               double,  // edge_t              - formal parameter intentionally ignored in this virtual function
+                               double*, // trim_t              - formal parameter intentionally ignored in this virtual function
+                               bool     // bOkToBuildTrimPline - formal parameter intentionally ignored in this virtual function
+                               ) const
+{
+  // Rhino overrides this virtual function and makes it work
+  return false;
+}
+
+bool ON_Brep::GetEdgeParameter(
+                               int,    // trim_index - formal parameter intentionally ignored in this virtual function
+                               double, // trim_t     - formal parameter intentionally ignored in this virtual function
+                               double* // edge_t     - formal parameter intentionally ignored in this virtual function
+                               ) const
+{
+  // Rhino overrides this virtual function and makes it work
+  return false;
+}
+
+bool ON_Brep::SplitEdge(int eid, 
+                        double t3d, 
+                        const ON_SimpleArray<double>& t2d,
+                        int vid,
+                        bool bSetTrimBoxesAndFlags
+                        )
+{
+  if ( eid > 0 )
+    {
+      // adjust eid from possible component index to true edge index
+      const ON_BrepEdge* edge = Edge(eid);
+      if ( !edge || edge->m_edge_index < 0 )
+        return false;
+      eid = edge->m_edge_index;
+    }
+  if ( vid > 0 )
+    {
+      // adjust vid from possible component index to true edge index
+      const ON_BrepVertex* vertex = Vertex(vid);
+      if ( !vertex || vertex->m_vertex_index < 0 )
+        vid = -1;
+      else
+        vid = vertex->m_vertex_index;
+    }
+
+  if (vid == m_E[eid].m_vi[0] || vid == m_E[eid].m_vi[1])
+    return true;
+  if (t2d.Count() != m_E[eid].m_ti.Count())
+    return false;
+  m_E.Reserve(m_E.Count() + 1);
+  ON_BrepEdge& Edge = m_E[eid];
+  m_T.Reserve(m_T.Count()+t2d.Count());
+
+  if (vid < 0){
+    ON_3dPoint P = Edge.PointAt(t3d);
+    ON_BrepVertex& NewV= NewVertex(P);
+    vid = NewV.m_vertex_index;
+  }
+
+  ON_BrepVertex& NewV= m_V[vid];
+
+  //new edge is to right of t3d
+  ON_BrepEdge& NewE = NewEdge(NewV, m_V[Edge.m_vi[1]], Edge.m_c3i);
+  NewE.ON_CurveProxy::operator = (Edge);
+  ON_BrepVertex& OldV = m_V[Edge.m_vi[1]];
+  int i;
+  for (i=0; i<OldV.EdgeCount(); i++){
+    if (OldV.m_ei[i] == eid){
+      OldV.m_ei.Remove(i);
+      break;
+    }
+  }
+
+  Edge.m_vi[1] = vid;
+  NewV.m_ei.Append(eid);
+
+
+
+  //NewE.m_domain.m_t[1] = Edge.m_domain[1];
+  //Edge.m_domain.m_t[1] = t3d;
+  //NewE.m_domain.m_t[0] = t3d;
+
+  NewE.ON_CurveProxy::Trim(ON_Interval(t3d, Edge.Domain()[1]));
+  Edge.ON_CurveProxy::Trim(ON_Interval(Edge.Domain()[0], t3d));
+
+  /*
+  double real_t3d = Edge.RealCurveParameter(t3d);
+  ON_Interval NewE_dom( real_t3d,Edge.ProxyCurveDomain()[1]);
+  ON_Interval Edge_dom( Edge.ProxyCurveDomain()[0],real_t3d);
+  NewE.SetProxyCurveDomain( NewE_dom );
+  Edge.SetProxyCurveDomain( Edge_dom );
+  NewE.SetDomain( t3d,Edge.Domain()[1] );
+  Edge.SetDomain( Edge.Domain()[0],t3d );
+  */
+
+  NewE.m_tolerance = Edge.m_tolerance;
+
+  for (i=0; i<Edge.m_ti.Count(); i++){
+    ON_BrepTrim& T = m_T[Edge.m_ti[i]];
+    T.m_pline.Destroy();
+    T.m_pbox.Destroy();
+    if (T.m_bRev3d) T.m_vi[0] = vid;
+    else T.m_vi[1] = vid;
+    ON_BrepTrim& NewT = NewTrim(NewE, T.m_bRev3d, T.m_c2i);
+    NewT.m_pline.Destroy();
+    NewT.m_pbox.Destroy();
+    NewT.ON_CurveProxy::operator =(T);
+    NewT.m_type = T.m_type;
+    NewT.m_iso = T.m_iso;
+    NewT.m_tolerance[0] = T.m_tolerance[0];
+    NewT.m_tolerance[1] = T.m_tolerance[1];
+    ON_BrepLoop& Loop = m_L[T.m_li];
+    Loop.m_pbox.Destroy();
+    NewT.m_li = T.m_li;
+    int tid = 0;
+    int j;
+    for (j=0; j<Loop.m_ti.Count(); j++){
+      if (Loop.m_ti[j] == T.m_trim_index){
+        tid = j;
+        break;
+      }
+    }
+
+    ON_Interval left(T.Domain()[0],t2d[i]);
+    ON_Interval right(t2d[i],T.Domain()[1]);
+
+    if (!T.m_bRev3d)
+      {
+        //NewT.m_t.m_t[1] = T.m_t[1];
+        //T.m_t.m_t[1] = NewT.m_t.m_t[0] = t2d[i];
+        T.Trim(left);
+        NewT.Trim(right);
+
+        //insert NewT in Loop after T
+        Loop.m_ti.Insert(tid+1, NewT.m_trim_index);
+      }
+    else 
+      {
+        //NewT.m_t.m_t[0] = T.m_t[0];
+        //T.m_t.m_t[0] = NewT.m_t.m_t[1] = t2d[i];
+        NewT.Trim(left);
+        T.Trim(right);
+
+        //insert NewT in Loop before T
+        Loop.m_ti.Insert(tid, NewT.m_trim_index);
+      }
+
+    if (bSetTrimBoxesAndFlags && T.m_iso == ON_Surface::not_iso){
+      SetTrimIsoFlags(T);
+      SetTrimIsoFlags(NewT);
+    }
+
+  }
+
+  if ( bSetTrimBoxesAndFlags )
+    {
+      for (i=0; i<Edge.m_ti.Count(); i++){
+        ON_BrepLoop& L = m_L[m_T[Edge.m_ti[i]].m_li];
+        SetTrimBoundingBoxes(L, true);
+      }
+    }
+
+  return true;
+}
+
 bool ON_Brep::CombineCoincidentEdges(ON_BrepEdge& edge0, ON_BrepEdge& edge1)
 {
   bool rc = false;
@@ -10043,6 +10209,173 @@ bool ON_Brep::CombineCoincidentEdges(ON_BrepEdge& edge0, ON_BrepEdge& edge1)
       }
     }
   }
+  return rc;
+}
+
+bool ON_Brep::JoinEdges( 
+                        ON_BrepEdge& edge, 
+                        ON_BrepEdge& other_edge,
+                        double join_tolerance,
+          ON_BOOL32 bCheckFaceOrientaion
+                         )
+{
+  double tol = ( join_tolerance == 0.0 ) ? ON_ZERO_TOLERANCE : join_tolerance;
+
+  // since this is a user level function, do lots of checking
+  // for bogus input.
+
+  if ( edge.Brep() != this || other_edge.Brep() != this )
+    return false;
+
+  if ( edge.m_edge_index == other_edge.m_edge_index )
+    return false;
+
+  if ( tol <= 0.0 )
+    return false;
+
+  int i, j, ei, vi, ti;
+  for ( i = 0; i < 2; i++ )
+    {
+      const ON_BrepEdge& e = i?other_edge:edge;
+      ei = e.m_edge_index;
+      if (ei < 0 || ei >= m_E.Count() )
+        return false;
+      if ( &e != m_E.Array() + ei )
+        return false;
+      for ( j = 0; j < 2; j++ )
+        {
+          vi = e.m_vi[j];
+          if ( vi < 0 || vi >= m_V.Count() )
+            return false;
+        }
+      for ( j = 0; j < e.m_ti.Count(); j++ )
+        {
+          ti = e.m_ti[j];
+          if ( ti < 0 || ei >= m_T.Count() )
+            return false;
+          const ON_BrepTrim& trim = m_T[ti];
+          if ( trim.m_trim_index != ti )
+            return false;
+          if ( trim.m_ei != e.m_edge_index )
+            return false;
+        }
+    }
+
+  ON_BrepVertex& v0 = m_V[edge.m_vi[0]];
+  ON_BrepVertex& v1 = m_V[edge.m_vi[1]];
+  ON_BrepVertex& other_v0 = m_V[other_edge.m_vi[0]];
+  ON_BrepVertex& other_v1 = m_V[other_edge.m_vi[1]];
+
+  const ON_BOOL32 bClosedEdge = (v0.m_vertex_index == v1.m_vertex_index) ? true : false;
+
+  // both edges must be closed or both must be open
+  if ( other_v0.m_vertex_index != other_v1.m_vertex_index && bClosedEdge)
+    return false;
+  if ( other_v0.m_vertex_index == other_v1.m_vertex_index && !bClosedEdge )
+    return false;
+
+  // bOppositeDir = true if edge and other_edge run in opposite directions.
+  ON_BOOL32 bOppositeDir = false;
+  if ( bClosedEdge )
+    {
+      // If these checks make your join fail, then you either need to
+      // become an expert brep user and surgically apply
+      // CombineCoincidentEdges and CombineCoincidentVertices,
+      // or you need to do a better job of computing join_tolerance.
+      double x = v0.point.DistanceTo( other_v0.point );
+      if ( x > tol )
+        return false;
+      double ot1, ot2;
+      ON_Interval e_dom = edge.Domain();
+      double t1 = e_dom.ParameterAt(1.0/3.0);
+      double t2 = e_dom.ParameterAt(2.0/3.0);
+      ON_3dPoint P1 = edge.PointAt(t1);
+      ON_3dPoint P2 = edge.PointAt(t2);
+      if ( !other_edge.GetClosestPoint( P1, &ot1, tol ) )
+        return false;
+      if ( !other_edge.GetClosestPoint( P2, &ot2, tol ) )
+        return false;
+      if ( ot1 < ot2 )
+        bOppositeDir = false;
+      else if ( ot1 > ot2 )
+        bOppositeDir = true;
+      else
+        return false;      
+    }
+  else
+    {
+      // If these checks make your join fail, then you either need to
+      // become an expert brep user and surgically apply
+      // CombineCoincidentEdges and CombineCoincidentVertices,
+      // or you need to do a better job of computing join_tolerance.
+      double x = v0.point.DistanceTo( v1.point );
+      if ( x <= join_tolerance )
+        return false;
+      x = other_v0.point.DistanceTo( other_v1.point );
+      if ( x <= join_tolerance )
+        return false;
+      double d0 = v0.point.DistanceTo( other_v0.point );
+      double d1 = v1.point.DistanceTo( other_v1.point );
+      double r0 = v0.point.DistanceTo( other_v1.point );
+      double r1 = v1.point.DistanceTo( other_v0.point );
+
+      // 0.71 is used because it is < 1 and a bit bigger than 1/sqrt(2).
+      if ( d0 <= tol && d1 <= tol && d0 < 0.71*r0 && d1 < 0.71*r1 )
+        bOppositeDir = false;
+      else if ( r0 <= tol && r1 <= tol && r0 < 0.71*d0 && r1 < 0.71*d1 )
+        bOppositeDir = true;
+      else
+        return false;
+    }
+
+  if ( bOppositeDir )
+    other_edge.Reverse();
+
+  if ( bCheckFaceOrientaion
+       && edge.m_ti.Count() == 1 
+       && other_edge.m_ti.Count() == 1 
+       )
+    {
+      const ON_BrepTrim& trim = m_T[edge.m_ti[0]];
+      const ON_BrepTrim& other_trim = m_T[other_edge.m_ti[0]];
+      int fi = trim.FaceIndexOf();
+      int other_fi = other_trim.FaceIndexOf();
+      if (fi >= 0 && other_fi >= 0 && fi != other_fi)
+        {
+          bool same_trim_rev = (trim.m_bRev3d == other_trim.m_bRev3d) ? true : false;
+          bool same_face_rev = (m_F[fi].m_bRev == m_F[other_fi].m_bRev) ? true : false;
+          if (same_trim_rev == same_face_rev) 
+            {
+              // 29 May 2003 Chuck and Dale L - RR 10297
+              //     Changed
+              // FlipFace(m_F[other_fi])
+              //   to the following component flipper.
+              Clear_user_i();
+              LabelConnectedComponent(other_fi,1);
+              if ( 0 == m_F[fi].m_face_user.i && 1 == m_F[other_fi].m_face_user.i )
+                {
+                  int j;
+                  for ( j = m_F.Count()-1; j >= 0; j-- )
+                    {
+                      if( 1 == m_F[j].m_face_user.i )
+                        FlipFace(m_F[j]);
+                    }
+                }
+              Clear_user_i();
+            }
+        }
+    }
+  
+  // since we may have flipped other_edge, get these values again
+  int other_vi0 = other_edge.m_vi[0];
+  int other_vi1 = other_edge.m_vi[1];
+  bool rc = true;
+  if ( v0.m_vertex_index != other_vi0 )
+    rc = CombineCoincidentVertices( v0, m_V[other_vi0] );
+  if ( rc && !bClosedEdge && v1.m_vertex_index != other_vi1 )
+    rc = CombineCoincidentVertices( v1, m_V[other_vi1] );
+  if ( rc  )
+    rc = CombineCoincidentEdges( edge, other_edge );
   return rc;
 }
 
