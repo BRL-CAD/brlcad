@@ -1,7 +1,5 @@
-// uncomment the "ON_DLL_IMPORTS" define to use opennurbs as a Windows DLL
-//#define ON_DLL_IMPORTS
 #include "../opennurbs.h"
-#include "../examples_linking_pragmas.h"
+#include "../opennurbs_staticlib_linking_pragmas.h"
 
 int main( int argc, const char *argv[] )
 {
@@ -107,7 +105,9 @@ int main( int argc, const char *argv[] )
     }
     */
 
-    int version = 0; // write current Rhino file
+    // create a text dump of the model
+    int version = 4; // File can be read by Rhino 4 and Rhino 5
+    //int version = 5; // File can be read by Rhino 5
 
     ON_String outfile = sFileName;
     int len = outfile.Length() - 4;

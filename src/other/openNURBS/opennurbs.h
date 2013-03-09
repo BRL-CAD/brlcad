@@ -56,6 +56,7 @@
 #include "opennurbs_plane.h"          // simple 3d plane
 #include "opennurbs_circle.h"         // simple 3d circle
 #include "opennurbs_ellipse.h"        // simple 3d ellipse
+#include "opennurbs_x.h"              // intersection events
 #include "opennurbs_line.h"           // simple line
 #include "opennurbs_polyline.h"       // simple polyline
 #include "opennurbs_cylinder.h"       // simple 3d elliptical cylinder
@@ -75,6 +76,7 @@
 #include "opennurbs_mapchan.h"
 #include "opennurbs_rendering.h"
 #include "opennurbs_archive.h"        // binary arcive objects for serialization to file, memory blocks, etc.
+#include "opennurbs_massprop.h"       // mass properties values
 #include "opennurbs_arc.h"            // simple 3d circular arc
 #include "opennurbs_object.h"         // virtual base class for all openNURBS objects
 #include "opennurbs_userdata.h"       // class for attaching persistent user information to openNURBS objects

@@ -8,22 +8,6 @@ IF(NOT DEFINED BUILD_STATIC_LIBS)
   set(BUILD_STATIC_LIBS ON)
 ENDIF(NOT DEFINED BUILD_STATIC_LIBS)
 
-# these are files no longer in opennurbs but retained for reference
-set(OPENNURBS_REF
-opennurbs_basic.cpp
-opennurbs_brep_changesrf.cpp
-opennurbs_brep_kinky.cpp
-)
-
-# these are files we turn off because we don't use them and they incur
-# some cost to enable (e.g., they require OpenGL)
-set(OPENNURBS_OFF
-opennurbs_gl.cpp
-opennurbs_gl.h
-opennurbs_precompiledheader.cpp
-opennurbs_zlib_memory.cpp
-)
-
 set(OPENNURBS_SOURCES
 opennurbs_3dm_attributes.cpp
 opennurbs_3dm_properties.cpp
@@ -36,6 +20,7 @@ opennurbs_archive.cpp
 opennurbs_array.cpp
 opennurbs_base32.cpp
 opennurbs_base64.cpp
+opennurbs_basic.cpp
 opennurbs_beam.cpp
 opennurbs_bezier.cpp
 opennurbs_beziervolume.cpp
@@ -84,6 +69,7 @@ opennurbs_linetype.cpp
 opennurbs_lookup.cpp
 opennurbs_material.cpp
 opennurbs_math.cpp
+opennurbs_massprop.cpp
 opennurbs_matrix.cpp
 opennurbs_memory.c
 opennurbs_memory_util.c
@@ -128,6 +114,7 @@ opennurbs_uuid.cpp
 opennurbs_viewport.cpp
 opennurbs_workspace.cpp
 opennurbs_wstring.cpp
+opennurbs_x.cpp
 opennurbs_xform.cpp
 opennurbs_zlib.cpp
   )
@@ -175,6 +162,7 @@ opennurbs_fpoint.h
 opennurbs_fsp.h
 opennurbs_fsp_defs.h
 opennurbs_geometry.h
+opennurbs_gl.h
 opennurbs_group.h
 opennurbs_hatch.h
 opennurbs_hsort_template.h
@@ -189,6 +177,7 @@ opennurbs_linestyle.h
 opennurbs_linetype.h
 opennurbs_lookup.h
 opennurbs_mapchan.h
+opennurbs_massprop.h
 opennurbs_material.h
 opennurbs_math.h
 opennurbs_matrix.h
@@ -233,10 +222,14 @@ opennurbs_uuid.h
 opennurbs_version.h
 opennurbs_viewport.h
 opennurbs_workspace.h
+opennurbs_x.h
 opennurbs_xform.h
 opennurbs_zlib.h
   )
 
+SET(ON_DLL_HEADERS
+  opennurbs_dll_resource.h
+  )
 
 INCLUDE(CheckIncludeFiles)
 CHECK_INCLUDE_FILE(emmintrin.h HAVE_EMMINTRIN_H)
@@ -273,6 +266,7 @@ if (MSVC)
     -DON_COMPILING_OPENNURBS
     -DON_DLL_EXPORTS
     )
+  SET(OPENNURBS_HEADERS "${OPENNURBS_HEADERS};${ON_DLL_HEADERS}")
 else (MSVC)
   add_definitions(
     -DON_COMPILING_OPENNURBS

@@ -44,6 +44,7 @@ ON_INC = \
 	opennurbs_fsp.h \
 	opennurbs_fsp_defs.h \
 	opennurbs_geometry.h \
+	opennurbs_gl.h \
 	opennurbs_group.h \
 	opennurbs_hatch.h \
 	opennurbs_hsort_template.h \
@@ -58,9 +59,11 @@ ON_INC = \
 	opennurbs_linetype.h \
 	opennurbs_lookup.h \
 	opennurbs_mapchan.h \
+	opennurbs_massprop.h \
 	opennurbs_material.h \
 	opennurbs_math.h \
 	opennurbs_matrix.h \
+	opennurbs_memory.h \
 	opennurbs_mesh.h \
 	opennurbs_nurbscurve.h \
 	opennurbs_nurbssurface.h \
@@ -117,6 +120,7 @@ ON_SRC = \
 	opennurbs_array.cpp \
 	opennurbs_base32.cpp \
 	opennurbs_base64.cpp \
+	opennurbs_basic.cpp \
 	opennurbs_beam.cpp \
 	opennurbs_bezier.cpp \
 	opennurbs_beziervolume.cpp \
@@ -142,7 +146,6 @@ ON_SRC = \
 	opennurbs_defines.cpp \
 	opennurbs_detail.cpp \
 	opennurbs_dimstyle.cpp \
-	opennurbs_dll.cpp \
 	opennurbs_ellipse.cpp \
 	opennurbs_embedded_file.cpp \
 	opennurbs_error.cpp \
@@ -163,6 +166,7 @@ ON_SRC = \
 	opennurbs_linecurve.cpp \
 	opennurbs_linetype.cpp \
 	opennurbs_lookup.cpp \
+	opennurbs_massprop.cpp \
 	opennurbs_material.cpp \
 	opennurbs_math.cpp \
 	opennurbs_matrix.cpp \
@@ -211,7 +215,8 @@ ON_SRC = \
 	opennurbs_wstring.cpp \
 	opennurbs_x.cpp \
 	opennurbs_xform.cpp \
-	opennurbs_zlib.cpp
+	opennurbs_zlib.cpp \
+	opennurbs_zlib_memory.cpp
 
 nurbincludedir = $(includedir)/openNURBS
 nurbinclude_HEADERS = $(ON_INC)
@@ -226,16 +231,15 @@ libopenNURBS_la_LIBADD = libopenNURBS_nil.la
 
 ON_EXTRA = \
 	opennurbs.rc \
-	opennurbs_basic.cpp \
-	opennurbs_brep_changesrf.cpp \
-	opennurbs_brep_kinky.cpp \
+	opennurbs_dll.cpp \
+	opennurbs_dll_resource.h \
 	opennurbs_gl.cpp \
-	opennurbs_precompiledheader.cpp \
-	opennurbs_zlib_memory.cpp
+	opennurbs_precompiledheader.cpp
 
 EXTRA_DIST = \
 	${ON_EXTRA} \
 	example_brep \
+	example_dump \
 	example_gl \
 	example_read \
 	example_roundtrip \
@@ -245,8 +249,6 @@ EXTRA_DIST = \
 	BRL-CAD_changes.txt \
 	faq.txt \
 	license.txt \
-	opennurbs_dll_resource.h \
-	opennurbs_gl.h \
 	readme.txt \
         CMakeLists.txt
 
