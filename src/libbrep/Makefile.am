@@ -1,7 +1,7 @@
 
-lib_LTLIBRARIES = libnurbs.la
+lib_LTLIBRARIES = libbrep.la
 noinst_LTLIBRARIES = \
-	libnurbs_nil.la
+	libbrep_nil.la
 
 # cannot set per-target CPPFLAGS until automake 1.7+
 AM_CPPFLAGS = \
@@ -13,16 +13,16 @@ AM_CPPFLAGS = \
 
 AM_CFLAGS = ${STRICT_FLAGS}
 
-libnurbs_nil_la_SOURCES = \
+libbrep_nil_la_SOURCES = \
 	PullbackCurve.cpp \
 	opennurbs_ext.cpp
 
-libnurbs_nil_la_LIBADD = ${OPENNURBS}
+libbrep_nil_la_LIBADD = ${OPENNURBS}
 
-libnurbs_la_SOURCES =
-libnurbs_la_LDFLAGS = -version-info 20:1 -no-undefined -Wc,${FEXCEPTIONS}
-libnurbs_la_LIBADD = \
-	libnurbs_nil.la \
+libbrep_la_SOURCES =
+libbrep_la_LDFLAGS = -version-info 20:1 -no-undefined -Wc,${FEXCEPTIONS}
+libbrep_la_LIBADD = \
+	libbrep_nil.la \
 	${NURBS_LIBS}
 
 noinst_HEADERS = \

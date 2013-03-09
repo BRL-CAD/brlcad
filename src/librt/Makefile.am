@@ -327,7 +327,7 @@ if BUILD_REGEX
 DEPADD = src/other/libregex
 endif
 
-DEPENDS = src/libbn src/libsysv src/libnurbs src/other/openNURBS src/other/libvds ${DEPADD}
+DEPENDS = src/libbn src/libsysv src/libbrep src/other/openNURBS src/other/libvds ${DEPADD}
 
 include $(top_srcdir)/misc/Makefile.defs
 

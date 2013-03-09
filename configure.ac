@@ -3919,7 +3919,7 @@ ICV='${top_builddir}/src/libicv/libicv.la'
 GCV='${top_builddir}/src/libgcv/libgcv.la'
 GED='${top_builddir}/src/libged/libged.la'
 MULTISPECTRAL='${top_builddir}/src/libmultispectral/libmultispectral.la'
-NURBS='${top_builddir}/src/libnurbs/libnurbs.la'
+NURBS='${top_builddir}/src/libbrep/libbrep.la'
 OPTICAL='${top_builddir}/src/liboptical/liboptical.la'
 ORLE='${top_builddir}/src/liborle/liborle.la'
 PC='${top_builddir}/src/libpc/libpc.la'
@@ -4189,7 +4189,7 @@ AC_CONFIG_FILES([
 	src/libged/Makefile
 	src/libicv/Makefile
 	src/libmultispectral/Makefile
-	src/libnurbs/Makefile
+	src/libbrep/Makefile
 	src/liboptical/Makefile
 	src/liborle/Makefile
 	src/libpc/Makefile
