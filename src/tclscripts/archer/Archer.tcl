@@ -2099,7 +2099,9 @@ package provide Archer 1.0
 
 
 ::itcl::body Archer::handleTreeSelect {} {
-    ::ArcherCore::handleTreeSelect
+    if {[::ArcherCore::handleTreeSelect]} {
+	return
+    }
 
     if {!$mViewOnly} {
 	if {$mObjViewMode == $OBJ_ATTR_VIEW_MODE} {

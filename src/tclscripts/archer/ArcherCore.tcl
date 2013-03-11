@@ -402,6 +402,7 @@ namespace eval ArcherCore {
 	variable mPrevTreeMode2 $TREE_MODE_COLOR_OBJECTS
 	variable mToolViewChange 0
 	variable mTreePopupBusy 0
+	variable mDoubleClickActive 0
 
 	variable mSavedCenter ""
 	variable mSavedViewEyePt ""
@@ -4034,6 +4035,8 @@ namespace eval ArcherCore {
 
 
 ::itcl::body ArcherCore::dblClick {_x _y} {
+    set mDoubleClickActive 1
+
     set item [$itk_component(newtree) identify row $_x $_y]
     set obj [$itk_component(newtree) item $item -text]
     set path [getTreePath $item $obj]
@@ -4725,6 +4728,11 @@ namespace eval ArcherCore {
 }
 
 ::itcl::body ArcherCore::handleTreeSelect {} {
+    if {$mDoubleClickActive} {
+	set mDoubleClickActive 0
+	return 1
+    }
+
     foreach anode $mAffectedNodeList {
 	removeTreeNodeTag $anode $TREE_AFFECTED_TAG
     }
@@ -4733,13 +4741,17 @@ namespace eval ArcherCore {
     set snode [$itk_component(newtree) selection]
 
     if {$snode == ""} {
-	return
+	return 1
     }
 
     set mPrevSelectedObjPath $mSelectedObjPath
     set mPrevSelectedObj $mSelectedObj
     set mSelectedObjPath [getTreePath $snode]
     set mSelectedObj $mNode2Text($snode)
+
+    if {$mPrevSelectedObjPath == $mSelectedObjPath} {
+	return 1
+    }
 
     # label the object if it's being drawn
     set mRenderMode [gedCmd how $mSelectedObjPath]
@@ -4753,7 +4765,7 @@ namespace eval ArcherCore {
     }
 
     if {!$mEnableAffectedNodeHighlight} {
-	return
+	return 0
     }
 
     if {$mEnableListView} {
@@ -4819,6 +4831,8 @@ namespace eval ArcherCore {
 	    }
 	}
     }
+
+    return 0
 }
 
 ::itcl::body ArcherCore::addTreeNodeTag {_node _tag} {

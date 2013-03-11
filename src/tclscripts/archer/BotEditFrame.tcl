@@ -581,7 +581,7 @@
     } {}
     itk_component add ignoreMaxVertThreshCB {
 	::ttk::checkbutton $parent.ignoreMaxVertThreshCB \
-	    -text "Always Show Tables" \
+	    -text "Always Allow Edit" \
 	    -command [::itcl::code $this reloadTables] \
 	    -variable [::itcl::scope mIgnoreMaxVertThreshold]
     } {}
@@ -995,7 +995,9 @@
 	set mShowTables 0
     }
 
-    manageTables
+    if {![manageTables]} {
+	return
+    }
 
     if {!$_lflag} {
 	set mPointList {}
@@ -1136,10 +1138,28 @@
 	grid rowconfigure $parent $row -weight 1
 
 	grid columnconfigure $parent 1 -weight 1
+
+	set i 1
+	foreach label $mEditLabels {
+	    $itk_component(editRB$i) configure -state normal
+	    incr i
+	}
+
+	return 1
     } else {
+	clearEditState
+
 	grid forget $itk_component(vertTabLF)
 	grid forget $itk_component(edgeTabLF)
 	grid forget $itk_component(faceTabLF)
+
+	set i 1
+	foreach label $mEditLabels {
+	    $itk_component(editRB$i) configure -state disabled
+	    incr i
+	}
+
+	return 0
     }
 }
 
@@ -1164,7 +1184,7 @@
 
 ::itcl::body BotEditFrame::reloadTables {} {
     set gdata [lrange [$itk_option(-mged) get $itk_option(-geometryObject)] 1 end]
-    loadTables $gdata 0
+    loadTables $gdata
 }
 
 
