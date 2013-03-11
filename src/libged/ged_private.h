@@ -51,6 +51,7 @@ __BEGIN_DECLS
 #define _GED_SHADED_MODE_BOTS 1
 #define _GED_SHADED_MODE_ALL  2
 #define _GED_BOOL_EVAL        3
+#define _GED_HIDDEN_LINE      4
 
 #define _GED_TREE_AFLAG 0x01
 #define _GED_TREE_CFLAG 0x02
