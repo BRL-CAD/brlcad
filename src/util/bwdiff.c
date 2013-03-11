@@ -62,7 +62,6 @@ open_file(FILE **fp, char *name)
 	*fp = fopen("/dev/null", "r");
     else if ((*fp = fopen(name, "r")) == NULL)
 	bu_exit(2, "bwdiff: Can't open \"%s\"\n", name);
-    return;
 }
 
 
