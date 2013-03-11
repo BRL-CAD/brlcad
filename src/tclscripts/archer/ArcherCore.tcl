@@ -77,6 +77,13 @@ namespace eval ArcherCore {
 	common OBJECT_CENTER_MODE 10
 	common FIRST_FREE_BINDING_MODE 11
 
+	common DISPLAY_MODE_OFF -1
+	common DISPLAY_MODE_WIREFRAME 0
+	common DISPLAY_MODE_SHADED 1
+	common DISPLAY_MODE_SHADED_ALL 2
+	common DISPLAY_MODE_EVALUATED 3
+	common DISPLAY_MODE_HIDDEN 4
+
 	common MATRIX_ABOVE_MODE 0
 	common MATRIX_BELOW_MODE 1
 
@@ -414,18 +421,6 @@ namespace eval ArcherCore {
 	variable mCompSelectGroupPref ""
 	variable mCompSelectGroupList ""
 
-	variable mPerspective 0
-	variable mPerspectivePref 0
-
-	variable mZClipBack 100.0
-	variable mZClipBackPref 100.0
-	variable mZClipFront 100.0
-	variable mZClipFrontPref 100.0
-	variable mZClipBackMax 1000
-	variable mZClipBackMaxPref 1000
-	variable mZClipFrontMax 1000
-	variable mZClipFrontMaxPref 1000
-
 	variable mBindingMode Default
 	variable mBindingModePref ""
 	variable mBackground "0 0 0"
@@ -462,12 +457,27 @@ namespace eval ArcherCore {
 	variable mDisplayFontSizePref ""
 	variable mDisplayFontSizes {}
 
+	variable mPerspective 0
+	variable mPerspectivePref 0
+
+	variable mZClipBack 100.0
+	variable mZClipBackPref 100.0
+	variable mZClipFront 100.0
+	variable mZClipFrontPref 100.0
+	variable mZClipBackMax 1000
+	variable mZClipBackMaxPref 1000
+	variable mZClipFrontMax 1000
+	variable mZClipFrontMaxPref 1000
+
 	variable mLightingMode 1
 	variable mLightingModePref ""
 	variable mDisplayListMode 0
 	variable mDisplayListModePref ""
 	variable mWireframeMode 0
 	variable mWireframeModePref ""
+
+	variable mDefaultDisplayMode $DISPLAY_MODE_WIREFRAME
+	variable mDefaultDisplayModePref ""
 
 	variable mGridAnchor "0 0 0"
 	variable mGridAnchorXPref ""
@@ -811,6 +821,7 @@ namespace eval ArcherCore {
 	method bot_split2 {_bot}
 
 	# tree commands
+	method dblClick {_x _y}
 	method fillTree          {_pnode _ctext _flat {_allow_multiple 0}}
 	method fillTreeColumns   {_cnode _ctext}
 	method isRegion          {_cgdata}
@@ -1637,6 +1648,7 @@ namespace eval ArcherCore {
     bind $itk_component(newtree) <<TreeviewOpen>> [::itcl::code $this handleTreeOpen]
     bind $itk_component(newtree) <<TreeviewClose>> [::itcl::code $this handleTreeClose]
     $itk_component(newtree) tag bind $TREE_POPUP_TAG <Button-3> [::itcl::code $this handleTreePopup TREE_POPUP_TYPE_NODE %x %y %X %Y]
+    $itk_component(newtree) tag bind $TREE_POPUP_TAG <Double-1> [::itcl::code $this dblClick %x %y]
     $itk_component(newtree) tag configure $TREE_FULLY_DISPLAYED_TAG \
 	-foreground red \
 	-font TkHeadingFont
@@ -3635,50 +3647,48 @@ namespace eval ArcherCore {
     catch {
 	if {[catch {gedCmd attr get \
 			$tnode displayColor} displayColor]} {
-	    switch -exact -- $_state {
-		"0" {
+	    switch -exact -- $_state \
+		$DISPLAY_MODE_WIREFRAME {
 		    gedCmd draw -m0 -x$_trans $_node
-		}
-		"1" {
+		} \
+		$DISPLAY_MODE_SHADED {
 		    gedCmd draw -m1 -x$_trans $_node
-		}
-		"2" {
+		} \
+		$DISPLAY_MODE_SHADED_ALL {
 		    gedCmd draw -m2 -x$_trans $_node
-		}
-		"3" {
+		} \
+		$DISPLAY_MODE_EVALUATED {
 		    gedCmd E $_node
-		}
-		"4" {
+		} \
+		$DISPLAY_MODE_HIDDEN {
 		    gedCmd draw -h $_node
-		}
-		"-1" {
+		} \
+		$DISPLAY_MODE_OFF {
 		    gedCmd erase $_node
 		}
-	    }
 	} else {
-	    switch -exact -- $_state {
-		"0" {
+	    switch -exact -- $_state \
+		$DISPLAY_MODE_WIREFRAME {
 		    gedCmd draw -m0 -x$_trans \
 			-C$displayColor $_node
-		}
-		"1" {
+		} \
+		$DISPLAY_MODE_SHADED {
 		    gedCmd draw -m1 -x$_trans \
 			-C$displayColor $_node
-		}
-		"2" {
+		} \
+		$DISPLAY_MODE_SHADED_ALL {
 		    gedCmd draw -m2 -x$_trans \
 			-C$displayColor $_node
-		}
-		"3" {
+		} \
+		$DISPLAY_MODE_EVALUATED {
 		    gedCmd E -C$displayColor $_node
-		}
-		"4" {
+		} \
+		$DISPLAY_MODE_HIDDEN {
 		    gedCmd draw -h -C$displayColor $_node
-		}
-		"-1" {
+		} \
+		$DISPLAY_MODE_OFF {
 		    gedCmd erase $_node
 		}
-	    }
 	}
     }
 
@@ -3757,7 +3767,11 @@ namespace eval ArcherCore {
     }
 
     if {$_node_id != ""} {
-	$itk_component(newtree) selection set $_node_id
+	set snode [$itk_component(newtree) selection]
+
+	if {$snode != $_node_id} {
+	    $itk_component(newtree) selection set $_node_id
+	}
     }
 }
 
@@ -4018,6 +4032,21 @@ namespace eval ArcherCore {
 #                     PROTECTED TREE COMMANDS
 # ------------------------------------------------------------
 
+
+::itcl::body ArcherCore::dblClick {_x _y} {
+    set item [$itk_component(newtree) identify row $_x $_y]
+    set obj [$itk_component(newtree) item $item -text]
+    set path [getTreePath $item $obj]
+
+    set rdata [gedCmd how -b $path]
+    if {$rdata == -1} {
+	render $path $mDefaultDisplayMode 1 1 1 $item
+    } else {
+	erase $path
+    }
+}
+
+
 ::itcl::body ArcherCore::fillTree {_pnode _ctext _flat {_allow_multiple 0}} {
     global no_tree_decorate
 
@@ -4164,21 +4193,21 @@ namespace eval ArcherCore {
 
     set mRenderMode [gedCmd how $_node]
     # do this in case "ev" was used from the command line
-    if {!$mEnableBigE && 2 < $mRenderMode} {
+    if {!$mEnableBigE && $mRenderMode == 3} {
 	set mRenderMode 0
     }
 
     if {$_nodeType == "leaf"} {
 	$_menu add radiobutton -label "Wireframe" \
 	    -indicatoron 1 -value 0 -variable [::itcl::scope mRenderMode] \
-	    -command [::itcl::code $this render $_node 0 1 1 1 $_node_id]
+	    -command [::itcl::code $this render $_node $DISPLAY_MODE_WIREFRAME 1 1 1 $_node_id]
 
 	$_menu add radiobutton -label "Shaded" \
-	    -indicatoron 1 -value 1 -variable [::itcl::scope mRenderMode] \
-	    -command [::itcl::code $this render $_node 1 1 1 1 $_node_id]
-	$_menu add radiobutton -label "Hidden Line" \
 	    -indicatoron 1 -value 2 -variable [::itcl::scope mRenderMode] \
-	    -command [::itcl::code $this render $_node 4 1 1 1 $_node_id]
+	    -command [::itcl::code $this render $_node $DISPLAY_MODE_SHADED_ALL 1 1 1 $_node_id]
+	$_menu add radiobutton -label "Hidden Line" \
+	    -indicatoron 1 -value 4 -variable [::itcl::scope mRenderMode] \
+	    -command [::itcl::code $this render $_node $DISPLAY_MODE_HIDDEN 1 1 1 $_node_id]
 
 	if {$mEnableBigE} {
 	    $_menu add radiobutton \
@@ -4186,29 +4215,29 @@ namespace eval ArcherCore {
 		-indicatoron 1 \
 		-value 3 \
 		-variable [::itcl::scope mRenderMode] \
-		-command [::itcl::code $this render $_node 3 1 1 1 $_node_id]
+		-command [::itcl::code $this render $_node $DISPLAY_MODE_EVALUATED 1 1 1 $_node_id]
 	}
 
 	$_menu add radiobutton -label "Off" \
 	    -indicatoron 1 -value -1 -variable [::itcl::scope mRenderMode] \
-	    -command [::itcl::code $this render $_node -1 1 1]
+	    -command [::itcl::code $this render $_node $DISPLAY_MODE_OFF 1 1]
     } else {
 	$_menu add command -label "Wireframe" \
-	    -command [::itcl::code $this render $_node 0 1 1 1 $_node_id]
+	    -command [::itcl::code $this render $_node $DISPLAY_MODE_WIREFRAME 1 1 1 $_node_id]
 
 	$_menu add command -label "Shaded" \
-	    -command [::itcl::code $this render $_node 1 1 1 1 $_node_id]
+	    -command [::itcl::code $this render $_node $DISPLAY_MODE_SHADED_ALL 1 1 1 $_node_id]
 	$_menu add command -label "Hidden Line" \
-	    -command [::itcl::code $this render $_node 4 1 1 1 $_node_id]
+	    -command [::itcl::code $this render $_node $DISPLAY_MODE_HIDDEN 1 1 1 $_node_id]
 
 	if {$mEnableBigE} {
 	    $_menu add command \
 		-label "Evaluated" \
-		-command [::itcl::code $this render $_node 3 1 1 1 $_node_id]
+		-command [::itcl::code $this render $_node $DISPLAY_MODE_EVALUATED 1 1 1 $_node_id]
 	}
 
 	$_menu add command -label "Off" \
-	    -command [::itcl::code $this render $_node -1 1 1]
+	    -command [::itcl::code $this render $_node $DISPLAY_MODE_OFF 1 1]
     }
 
     set nodeList [split $_node /]

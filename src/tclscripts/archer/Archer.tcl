@@ -222,7 +222,6 @@ package provide Archer 1.0
 	method buildCommandView {}
 	method checkIfSelectedObjExists {}
 	method compSelectCallback {_mstring}
-	method dblClick {_tags}
 	method handleTreeSelect {}
 	method initCompPick {}
 	method initCompSelect {}
@@ -2099,45 +2098,6 @@ package provide Archer 1.0
 }
 
 
-::itcl::body Archer::dblClick {tags} {
-    return
-
-    set element [split $tags ":"]
-    if {[llength $element] > 1} {
-	set element [lindex $element 1]
-    }
-
-    set node [$itk_component(tree) query -path $element]
-    set type [$itk_component(tree) query -nodetype $element]
-
-    set mPrevSelectedObjPath $mSelectedObjPath
-    set mPrevSelectedObj $mSelectedObj
-    set mSelectedObjPath $node
-    set mSelectedObj [$itk_component(tree) query -text $element]
-
-    if {$mPrevSelectedObj != $mSelectedObj} {
-	if {!$mViewOnly} {
-	    if {$mObjViewMode == $OBJ_ATTR_VIEW_MODE} {
-		initObjAttrView
-	    } else {
-		initObjEditView
-	    }
-	}
-
-	set mPrevSelectedObjPath $mSelectedObjPath
-	set mPrevSelectedObj $mSelectedObj
-    }
-
-    $itk_component(tree) selection clear
-    $itk_component(tree) selection set $tags
-
-    switch -- $type {
-	"leaf"   -
-	"branch" {renderComp $node}
-    }
-}
-
-
 ::itcl::body Archer::handleTreeSelect {} {
     ::ArcherCore::handleTreeSelect
 
@@ -2740,6 +2700,36 @@ proc title_node_handler {node} {
 	    -value $LIGHT_MODE_FRONT_AND_BACK_LIGHT \
 	    -variable [::itcl::scope mLightingModePref]
     } {}
+
+    itk_component add displayModeL {
+	::ttk::label $parent.displayModeL \
+	    -anchor e \
+	    -text "Default Display Mode:"
+    } {}
+    itk_component add displayModeF {
+	::ttk::frame $parent.displayModeF \
+	    -relief sunken \
+	    -borderwidth 1
+    } {}
+    itk_component add displayModeWireRB {
+	::ttk::radiobutton $itk_component(displayModeF).displayModeWireRB \
+	    -text "Wireframe" \
+	    -value $DISPLAY_MODE_WIREFRAME \
+	    -variable [::itcl::scope mDefaultDisplayModePref]
+    } {}
+    itk_component add displayModeShadedRB {
+	::ttk::radiobutton $itk_component(displayModeF).displayModeShadedRB \
+	    -text "Shaded" \
+	    -value $DISPLAY_MODE_SHADED_ALL \
+	    -variable [::itcl::scope mDefaultDisplayModePref]
+    } {}
+    itk_component add displayModeHiddenRB {
+	::ttk::radiobutton $itk_component(displayModeF).displayModeHiddenRB \
+	    -text "Hidden" \
+	    -value $DISPLAY_MODE_HIDDEN \
+	    -variable [::itcl::scope mDefaultDisplayModePref]
+    } {}
+
     itk_component add dlistModeCB {
 	::ttk::checkbutton $parent.dlistModeCB \
 	    -text "Use Display Lists" \
@@ -2762,6 +2752,13 @@ proc title_node_handler {node} {
     grid columnconfigure $itk_component(lightModeF) 0 -weight 1
 
     set i 0
+    grid $itk_component(displayModeWireRB) -row $i -sticky nsew
+    incr i
+    grid $itk_component(displayModeShadedRB) -row $i -sticky nsew
+    incr i
+    grid $itk_component(displayModeHiddenRB) -row $i -sticky nsew
+
+    set i 0
     grid $itk_component(perspectiveL) -column 0 -row $i -sticky se
     grid $itk_component(perspectiveS) -column 1 -row $i -sticky ew
     incr i
@@ -2779,6 +2776,9 @@ proc title_node_handler {node} {
     incr i
     grid $itk_component(lightModeL) -column 0 -row $i -sticky ne
     grid $itk_component(lightModeF) -column 1 -row $i -sticky ew
+    incr i
+    grid $itk_component(displayModeL) -column 0 -row $i -sticky ne
+    grid $itk_component(displayModeF) -column 1 -row $i -sticky ew
     incr i
     grid $itk_component(dlistModeCB) -columnspan 2 -column 0 -row $i -sticky sw
     grid rowconfigure $parent $i -weight 1
@@ -8280,6 +8280,10 @@ proc title_node_handler {node} {
 	set rflag 1
     }
 
+    if {$mDefaultDisplayModePref != $mDefaultDisplayMode} {
+	set mDefaultDisplayMode $mDefaultDisplayModePref
+    }
+
     if {$mDisplayListModePref != $mDisplayListMode} {
 	set mDisplayListMode $mDisplayListModePref
 	gedCmd dlist_on $mDisplayListMode
@@ -8960,6 +8964,7 @@ proc title_node_handler {node} {
     set mZClipBackPref $mZClipBack
     set mZClipFrontPref $mZClipFront
     set mLightingModePref $mLightingMode
+    set mDefaultDisplayModePref $mDefaultDisplayMode
     set mDisplayListModePref $mDisplayListMode
     set mWireframeModePref $mWireframeMode
 
@@ -9123,6 +9128,7 @@ proc title_node_handler {node} {
     puts $_pfile "set mZClipBack $mZClipBack"
     puts $_pfile "set mZClipFront $mZClipFront"
     puts $_pfile "set mLightingMode $mLightingMode"
+    puts $_pfile "set mDefaultDisplayMode $mDefaultDisplayMode"
     puts $_pfile "set mDisplayListMode $mDisplayListMode"
     puts $_pfile "set mWireframeMode $mWireframeMode"
 
