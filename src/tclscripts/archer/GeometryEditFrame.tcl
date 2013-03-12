@@ -65,7 +65,7 @@
 	proc validateColorComp {c}
 	proc validateColor {color}
 
-	method clearEditState {{_clearModeOnly 0}}
+	method clearEditState {{_clearModeOnly 0} {_initFlag 0}}
 	method childsite {{site upper}}
 
 	method initGeometry {gdata}
@@ -245,7 +245,7 @@
 # ------------------------------------------------------------
 
 
-::itcl::body GeometryEditFrame::clearEditState {{_clearModeOnly 0}} {
+::itcl::body GeometryEditFrame::clearEditState {{_clearModeOnly 0} {_initFlag 0}} {
     set mEditMode 0
 
     if {$_clearModeOnly} {
@@ -254,6 +254,12 @@
 
     clearAllTables
     set itk_option(-prevGeometryObject) ""
+
+    if {$_initFlag} {
+	set mEditParam1 ""
+	set mEditCommand ""
+	initEditState
+    }
 }
 
 

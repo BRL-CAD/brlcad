@@ -251,6 +251,7 @@ package provide Archer 1.0
 	method doAboutArcher {}
 	method doarcherHelp {}
 	method handleConfigure {}
+	method handleDisplayEscape {_dm}
 	method launchDisplayMenuBegin {_dm _m _x _y}
 	method launchDisplayMenuEnd {}
 	method fbActivePaneCallback {_pane}
@@ -2208,6 +2209,10 @@ package provide Archer 1.0
     ArcherCore::initGed
     activateMenusEtc
     setActivePane ur
+
+    foreach dm {ul ur ll lr} {
+	$itk_component(ged) pane_bind $dm <Escape> [::itcl::code $this handleDisplayEscape $dm]
+    }
 }
 
 
@@ -4118,6 +4123,16 @@ proc title_node_handler {node} {
     }
 
     bind [namespace tail $this] <Configure> {}
+}
+
+::itcl::body Archer::handleDisplayEscape {_dm} {
+    set editView [getEditView]
+
+    if {$editView == ""} {
+	return
+    }
+
+    $editView clearEditState 0 1
 }
 
 ::itcl::body Archer::launchDisplayMenuBegin {_dm _m _x _y} {
@@ -6321,8 +6336,6 @@ proc title_node_handler {node} {
 	return
     }
 
-    clearEditState
-
     if {$GeometryEditFrame::mEditClass != $GeometryEditFrame::EDIT_CLASS_SCALE} {
 	initEdit
     }
@@ -6356,7 +6369,7 @@ proc title_node_handler {node} {
 
     if {$GeometryEditFrame::mEditClass != $GeometryEditFrame::EDIT_CLASS_TRANS} {
 	initEdit
-    } elseif {[regexp {arb[45678]} $mSelectedObjType] || $mSelectedObjType == "pipe"} {
+    } elseif {$GeometryEditFrame::mEditMode > 0 && ([regexp {arb[45678]} $mSelectedObjType] || $mSelectedObjType == "pipe")} {
 	$itk_component($mSelectedObjType\View) initTranslate
 	$itk_component(ged) rect lwidth 0
 	return

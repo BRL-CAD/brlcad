@@ -4749,10 +4749,6 @@ namespace eval ArcherCore {
     set mSelectedObjPath [getTreePath $snode]
     set mSelectedObj $mNode2Text($snode)
 
-    if {$mPrevSelectedObjPath == $mSelectedObjPath} {
-	return 1
-    }
-
     # label the object if it's being drawn
     set mRenderMode [gedCmd how $mSelectedObjPath]
 
@@ -4762,6 +4758,10 @@ namespace eval ArcherCore {
 	} else {
 	    gedCmd configure -primitiveLabels {}
 	}
+    }
+
+    if {$mPrevSelectedObjPath == $mSelectedObjPath} {
+	return 1
     }
 
     if {!$mEnableAffectedNodeHighlight} {
@@ -6384,7 +6384,7 @@ namespace eval ArcherCore {
 ::itcl::body ArcherCore::oscale {args} {
     set result [eval gedWrapper oscale 0 0 1 0 $args]
 
-    if {[llength $args] == 5} {
+    if {[llength $args] == 2} {
 	redrawObj [lindex $args 0] 0
     }
 
