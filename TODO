@@ -44,8 +44,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 
 * upgrade to 1.6 libpng
 
-* mged's dbupgrade command is useless, fix it.
-
 * merge conv-vg2g into dbupgrade
 
 * add the ability for search to filter objects based on whether
