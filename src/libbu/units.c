@@ -290,7 +290,7 @@ bu_units_strings_vls()
     struct bu_vls *vlsp;
     double prev_val = 0.0;
 
-    BU_GET(vlsp, struct bu_vls);
+    BU_ALLOC(vlsp, struct bu_vls);
     bu_vls_init(vlsp);
     for (tp=bu_units_length_tab; tp->name[0]; tp++) {
 	if (ZERO(prev_val - tp->val))
