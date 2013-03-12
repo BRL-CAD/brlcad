@@ -18,8 +18,6 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
-* test dbupgrade from within mged (spaces in name and permissions)
-
 * test arbn v5 import/export (make sure plane equations are not
   corrupted).
 
