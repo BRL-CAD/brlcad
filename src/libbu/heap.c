@@ -17,27 +17,64 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file heap.c
- *
- * Brief description
- *
- */
 
 #include "common.h"
 
 #include "bu.h"
 
 
+/**
+ * This number specifies the range of byte sizes to support for fast
+ * memory allocations.  Any request outside this range will get passed
+ * to bu_calloc().
+ *
+ * 1-to-BINS byte size allocations are allocated in PAGESIZE chunks as
+ * they are requested.  There's minimal penalty for making this
+ * arbitrarily large except where there are very few allocations (each
+ * size will allocate at least one page).  PAGESIZE should be some
+ * multiple larger than BINS.
+ */
 #define BINS 256
+
+/**
+ * This specifies how much memory we should preallocate for each
+ * allocation size.  Note that this number should be some multiple of
+ * BINS and system page size in order to be useful.  Ideally sized to
+ * keep the allocation size with the most requests down to
+ * single-digit page counts.  Testing showed a 1M page size was very
+ * effective at eliminating allocation overhead.
+ *
+ * Embedded or memory-constrained environments probably want to set
+ * this a lot smaller than the default.
+ */
 #define PAGESIZE (BINS * 4096)
 
-/** heaps is an array of lists containing pages of memory binned per requested allocation size */
+/**
+ * heaps is an array of lists containing pages of memory binned per
+ * requested allocation size.
+ *
+ * heaps:
+ * [0] [1] [2] [3] ... [BINS-1]
+ *   \   \   \
+ *    oo  o   oooo      'o' is a PAGESIZE allocation of memory
+ */
 static char **heaps[BINS] = {0};
 
-/** pages is an array of counts for how many heap pages have been allocated per each heaps[] size */
+/**
+ * pages is an array of counts for how many heap pages have been
+ * allocated per each heaps[] size.
+ *
+ * pages:
+ * [0] [1] [2] [3] ... [BINS-1]
+ *   \   \   \
+ *    2   1   4
+ */
 static size_t pages[BINS] = {0};
 
-/** used is an array of lists to count how much memory has been used (allocated) per page */
+/**
+ * used is an array of lists to count how much memory has been used
+ * (allocated) per page.
+ */
 static size_t *used[BINS] = {0};
 
 /** keep track of our allocation counts for reporting stats */
@@ -45,6 +82,11 @@ static size_t alloc[BINS] = {0};
 
 /** keep track of allocation sizes outside our supported range */
 static size_t misses = 0;
+
+/* sanity */
+#if PAGESIZE < BINS
+#  error "ERROR: heap page size cannot be smaller than bin size"
+#endif
 
 
 void
