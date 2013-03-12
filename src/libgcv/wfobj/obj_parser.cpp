@@ -143,7 +143,7 @@ static void destroyScanner(yyscan_t *scanner)
     struct extra_t *extra =
 	static_cast<struct extra_t*>(obj_parser_get_extra(*scanner));
 
-    free(extra);
+    BU_PUT(extra, struct extra_t);
     obj_parser_set_extra(*scanner, NULL);
 
     obj_parser_lex_destroy(*scanner);
