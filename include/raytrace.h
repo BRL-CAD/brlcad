@@ -1220,7 +1220,7 @@ union tree {
  * magic number is set to RT_TREE_MAGIC and all other members are
  * zero-initialized.
  *
- * This is a malloc-efficient replacement for BU_GET(tp, union tree).
+ * This is a malloc-efficient BU_ALLOC(tp, union tree) replacement.
  * Previously used tree nodes are stored in the provided resource
  * pointer (during RT_FREE_TREE) as a single-linked list using the
  * tb_left field.  Requests for new nodes are pulled first from that
@@ -1234,7 +1234,7 @@ union tree {
 	    (_tp)->tr_b.tb_left = TREE_NULL;		 \
 	    (_res)->re_tree_get++;			 \
 	} else {					 \
-	    BU_GET(_tp, union tree);			 \
+	    BU_ALLOC(_tp, union tree);			 \
 	    (_res)->re_tree_malloc++;			 \
 	}						 \
 	RT_TREE_INIT((_tp));				 \
