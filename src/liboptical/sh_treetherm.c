@@ -606,7 +606,7 @@ tthrm_render(struct application *ap, const struct partition *pp, struct shadewor
 	bu_log(
 	    "----------------------------- W A R N I N G -----------------------------\n\
 %s:%d distance %g between origin of particle and thermal node centroid is\n\
-too large.  Probable mis-match between geometry and thermal data\n"
+too large.  Probable mis-match between geometry and thermal data\n",
 	    __FILE__, __LINE__, dist);
 	bu_bomb("");
     }
