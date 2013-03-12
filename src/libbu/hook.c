@@ -55,7 +55,7 @@ bu_hook_delete(struct bu_hook_list *hlp, bu_hook_t func, genptr_t clientdata)
 	if (cur->hookfunc == func && cur->clientdata == clientdata) {
 	    struct bu_hook_list *old = BU_LIST_PLAST(bu_hook_list, cur);
 	    BU_LIST_DEQUEUE(&(cur->l));
-	    bu_free((genptr_t)cur, "bu_hook_delete");
+	    BU_PUT(cur , struct bu_hook_list);
 	    cur = old;
 	}
     }
@@ -96,7 +96,7 @@ bu_hook_delete_all(struct bu_hook_list *hlp)
 
     while(BU_LIST_WHILE(cur, bu_hook_list, &hlp->l)) {
 	BU_LIST_DEQUEUE(&(cur->l));
-	bu_free((genptr_t)cur, "bu_hook_delete_all");
+	BU_PUT(cur, struct bu_hook_list);
     }
 }
 
