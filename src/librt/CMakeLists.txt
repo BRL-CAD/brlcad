@@ -261,6 +261,7 @@ set(librt_ignored_files
   primitives/bot/tie.c
   primitives/bot/tie_kdtree.c
   primitives/brep/brep_debug.h
+  primitives/brep/brep_local.h
   primitives/dsp/dsp.h
   primitives/fixpt.h
   primitives/metaball/metaball.h
