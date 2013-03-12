@@ -79,7 +79,7 @@ temp_close_files(void)
 	    bu_file_delete(bu_vls_addr(&popped->fn));
 	    bu_vls_free(&popped->fn);
 	}
-	bu_free(popped, "free bu_temp_file node");
+	BU_PUT(popped, "free bu_temp_file node");
     }
 
     /* free the head */
@@ -91,7 +91,7 @@ temp_close_files(void)
 	bu_file_delete(bu_vls_addr(&TF->fn));
 	bu_vls_free(&TF->fn);
     }
-    bu_free(TF, "free bu_temp_file head");
+    BU_PUT(TF, "free bu_temp_file head");
 }
 
 

@@ -141,7 +141,7 @@ bu_open_mapped_file(const char *name, const char *appl)
     /* done iterating over mapped file list */
     bu_semaphore_release(BU_SEM_MAPPEDFILE);
 
-    /* necessary in case we take a 'fail' path before BU_GET() */
+    /* necessary in case we take a 'fail' path before BU_ALLOC() */
     mp = NULL;
 
     /* File is not yet mapped or has changed, open file read only if
@@ -176,7 +176,7 @@ bu_open_mapped_file(const char *name, const char *appl)
 #endif /* HAVE_SYS_STAT_H */
 
     /* Optimistically assume that things will proceed OK */
-    BU_GET(mp, struct bu_mapped_file);
+    BU_ALLOC(mp, struct bu_mapped_file);
     mp->name = bu_strdup(real_path);
     if (appl) mp->appl = bu_strdup(appl);
 
