@@ -589,9 +589,7 @@ ps_open(Tcl_Interp *interp, int argc, const char *argv[])
     struct dm *dmp;
     Tcl_Obj *obj;
 
-    BU_GET(dmp, struct dm);
-    if (dmp == DM_NULL)
-	return DM_NULL;
+    BU_ALLOC(dmp, struct dm);
 
     *dmp = dm_ps;  /* struct copy */
     dmp->dm_interp = interp;

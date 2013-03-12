@@ -220,10 +220,7 @@ wgl_open(Tcl_Interp *interp, int argc, char *argv[])
 	return DM_NULL;
     }
 
-    BU_GET(dmp, struct dm);
-    if (dmp == DM_NULL) {
-	return DM_NULL;
-    }
+    BU_ALLOC(dmp, struct dm);
 
     *dmp = dm_wgl; /* struct copy */
     dmp->dm_interp = interp;

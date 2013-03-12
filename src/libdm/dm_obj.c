@@ -3142,7 +3142,7 @@ dmo_open_tcl(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char *
     }
 
     /* acquire dm_obj struct */
-    BU_GET(dmop, struct dm_obj);
+    BU_ALLOC(dmop, struct dm_obj);
 
     /* initialize dm_obj */
     bu_vls_init(&dmop->dmo_name);

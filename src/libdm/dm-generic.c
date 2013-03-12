@@ -79,9 +79,7 @@ null_open(Tcl_Interp *interp, int argc, const char *argv[])
     if (argc < 0 || !argv)
 	return DM_NULL;
 
-    BU_GET(dmp, struct dm);
-    if (dmp == DM_NULL)
-	return DM_NULL;
+    BU_ALLOC(dmp, struct dm);
 
     *dmp = dm_null;
     dmp->dm_interp = interp;
