@@ -148,7 +148,7 @@ arbin(struct ged *gedp,
       plane_t planes[6])
 {
     struct rt_arb_internal *arb = (struct rt_arb_internal *)ip->idb_ptr;
-    point_t center_pt;
+    point_t center_pt = VINIT_ZERO;
     int num_pts=8;	/* number of points to solve using rt_arb_3face_intersect */
     int i;
 
