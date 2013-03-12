@@ -732,7 +732,7 @@ get_coord_sys(void)
 	return;
     }
 
-    BU_GET(cs, struct coord_sys);
+    BU_ALLOC(cs, struct coord_sys);
 
     switch (form) {
 	case 1:
@@ -755,7 +755,7 @@ get_coord_sys(void)
 	    if (!strlen(curr_rec[5]))
 		break;
 
-	    BU_GET(cs, struct coord_sys);
+	    BU_ALLOC(cs, struct coord_sys);
 	    cs->type = type;
 	    cs->cid = atoi(curr_rec[5]);
 	    gid = atoi(curr_rec[6]);
@@ -1231,7 +1231,7 @@ main(int argc, char **argv)
 	} else if (!bu_strncmp(curr_rec[0], "PBAR", 4)) {
 	    struct pbar *pb;
 
-	    BU_GET(pb, struct pbar);
+	    BU_ALLOC(pb, struct pbar);
 
 	    pb->pid = atoi(curr_rec[1]);
 	    pb->mid = atoi(curr_rec[2]);
@@ -1241,7 +1241,7 @@ main(int argc, char **argv)
 
 	    BU_LIST_INSERT(&pbar_head.l, &pb->l);
 	} else if (!bu_strncmp(curr_rec[0], "PSHELL", 6)) {
-	    BU_GET(psh, struct pshell);
+	    BU_ALLOC(psh, struct pshell);
 
 	    psh->s = (struct shell *)NULL;
 	    psh->pid = atoi(curr_rec[1]);

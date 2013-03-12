@@ -606,7 +606,7 @@ gettree_leaf(struct db_tree_state *tsp, const struct db_full_path *pathp, struct
 	;
     }
 
-    BU_GET(stp, struct soltab);
+    BU_ALLOC(stp, struct soltab);
     stp->l.magic = RT_SOLTAB_MAGIC;
     stp->st_id = ip->idb_type;
     stp->st_dp = dp;
@@ -690,7 +690,7 @@ gettree_leaf(struct db_tree_state *tsp, const struct db_full_path *pathp, struct
     bu_vls_free(&sol);
 
 found_it:
-    BU_GET(curtree, union tree);
+    BU_ALLOC(curtree, union tree);
     RT_TREE_INIT(curtree);
     curtree->tr_op = OP_SOLID;
     curtree->tr_a.tu_stp = stp;

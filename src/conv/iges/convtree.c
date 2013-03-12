@@ -105,7 +105,7 @@ Convtree()
 	if (att_de == 0)
 	    brl_att.region_flag = 1;
 
-	BU_GET(comb, struct rt_comb_internal);
+	BU_ALLOC(comb, struct rt_comb_internal);
 	RT_COMB_INTERNAL_INIT(comb);
 
 	comb->tree = ptr;
