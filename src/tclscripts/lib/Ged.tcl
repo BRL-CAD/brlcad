@@ -329,6 +329,7 @@ package provide cadwidgets::Ged 1.0
 	method pane_aet {_pane args}
 	method pane_arot {_pane args}
 	method pane_autoview {_pane args}
+	method pane_bind {_pane _event _script}
 	method pane_center {_pane args}
 	method pane_constrain_rmode {_pane args}
 	method pane_constrain_tmode {_pane args}
@@ -2159,6 +2160,10 @@ package provide cadwidgets::Ged 1.0
 
 ::itcl::body cadwidgets::Ged::pane_autoview {_pane args} {
     eval $mGed autoview $itk_component($_pane) $args
+}
+
+::itcl::body cadwidgets::Ged::pane_bind {_pane _event _script} {
+    bind $itk_component($_pane) $_event $_script
 }
 
 ::itcl::body cadwidgets::Ged::pane_center {_pane args} {
