@@ -165,6 +165,18 @@
 #define sys_errlist _sys_errlist
 #define sys_nerr _sys_nerr
 
+
+/* #if defined(SIZEOF_VOID_P) && SIZEOF_VOID_P == 8 */
+/* #  define fseek _fseeki64 */
+/* #  define fstat _fstati64 */
+/* #  define ftell _ftelli64 */
+/* #  define lseek _lseeki64 */
+/* #  define stat _stati64 */
+/* #else */
+/* #  define stat _stat */
+/* ... */
+/* #endif */
+
 #define fmax __max
 #define ioctl ioctlsocket
 
@@ -180,6 +192,8 @@ typedef void (*sig_t)(int);
  * types
  */
 
+/* #if defined(SIZEOF_VOID_P) && SIZEOF_VOID_P == 8 */
+/* #define off_t int64_t*/
 #define off_t _off_t
 
 typedef int pid_t;
