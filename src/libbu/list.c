@@ -80,7 +80,7 @@ bu_list_free(struct bu_list *hd)
 
     while (BU_LIST_WHILE(p, bu_list, hd)) {
 	BU_LIST_DEQUEUE(p);
-	bu_free((genptr_t)p, "struct bu_list");
+	BU_PUT(p, struct bu_list);
     }
 }
 
