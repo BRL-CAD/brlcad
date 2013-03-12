@@ -965,12 +965,12 @@ combdump(void)	/* Print out Combination record information */
     while (BU_LIST_WHILE(mp, mchain, &head)) {
 	membdump(&mp->r);
 	BU_LIST_DEQUEUE(&mp->l);
-	bu_free((char *)mp, "mchain");
+	BU_PUT(mp, struct mchain);
     }
 
     if (ret_mp) {
 	memcpy((char *)&record, (char *)&ret_mp->r, sizeof(record));
-	bu_free((char *)ret_mp, "mchain");
+	BU_PUT(ret_mp, struct mchain);
 	return 1;
     }
     return 0;
