@@ -291,12 +291,12 @@ wdb_show_seg(struct bu_list *seg, int str)
     struct seg *ptr;
 
     if (!seg)
-	bu_log("%s - NULL seg list\n", str);
+	bu_log("%d - NULL seg list\n", str);
     else {
 	if (BU_LIST_IS_EMPTY(seg))
-	    bu_log("%s - empty\n", str);
+	    bu_log("%d - empty\n", str);
 	else {
-	    bu_log("%s:\n", str);
+	    bu_log("%d:\n", str);
 	    for (BU_LIST_FOR(ptr, seg, seg)) {
 		if (ptr->seg_stp == ON_SURF)
 		    bu_log("\t %g to %g (ON_SURF)\n", ptr->seg_in.hit_dist, ptr->seg_out.hit_dist);

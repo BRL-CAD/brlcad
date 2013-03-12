@@ -2364,7 +2364,7 @@ bu_fwrite_external(FILE *fp, const struct bu_external *ep)
     size_t got;
 
     if (UNLIKELY(fp == NULL)) {
-	bu_log("INTERNAL ERROR: NULL file pointer encountered in %s:%ld\n", __FILE__, __LINE__);
+	bu_log("INTERNAL ERROR: NULL file pointer encountered in %s:%d\n", __FILE__, __LINE__);
 	return -1;
     }
 
@@ -2388,7 +2388,7 @@ bu_hexdump_external(FILE *fp, const struct bu_external *ep, const char *str)
     size_t i, j, k;
 
     if (UNLIKELY(fp == NULL)) {
-	bu_log("INTERNAL ERROR: NULL file pointer encountered in %s:%ld\n", __FILE__, __LINE__);
+	bu_log("INTERNAL ERROR: NULL file pointer encountered in %s:%d\n", __FILE__, __LINE__);
 	return;
     }
 

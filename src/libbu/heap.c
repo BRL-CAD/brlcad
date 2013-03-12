@@ -113,8 +113,8 @@ bu_heap_print()
     }
     bu_log("-----------------------\n"
 	   "size [pages] => allocs\n"
-	   "Heap range: 1-%ld bytes\n"
-	   "Page size: %ld bytes\n"
+	   "Heap range: 1-%d bytes\n"
+	   "Page size: %d bytes\n"
 	   "Pages: %ld (%.2lfMB)\n"
 	   "%ld hits, %ld misses\n"
 	   "=======================\n", BINS, PAGESIZE, total_pages, (double)(total_pages * PAGESIZE) / (1024.0*1024.0), total_alloc, misses);
