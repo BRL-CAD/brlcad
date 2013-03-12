@@ -273,7 +273,7 @@ dousage(void)
     int i;
 
     fputs(usage, stderr);
-    fputs("Possible arguments for type (-f):\n",stderr);
+    fputs("Possible arguments for -f (type):\n",stderr);
     i = 0;
     while (kernel[i].name != NULL) {
 	fprintf(stderr, "  %-10s%s\n", kernel[i].uname, kernel[i].name);
