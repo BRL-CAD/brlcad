@@ -29,7 +29,8 @@
 struct brep_specific {
     ON_Brep* brep;
     BrepBoundingVolume* bvh;
-};  
+};
+
 
 /*
  * Local Variables:
