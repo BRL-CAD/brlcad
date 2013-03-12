@@ -345,11 +345,15 @@ void
 rt_arb_centroid(point_t *cent, const struct rt_db_internal *ip)
 {
 
-    struct rt_arb_internal *aip = (struct rt_arb_internal *)ip->idb_ptr;
+    struct rt_arb_internal *aip;
     struct bn_tol tmp_tol;
     int arb_type = -1;
     int i;
     fastf_t x_avg, y_avg, z_avg;
+
+    if (!cent || !ip)
+	return;
+    aip = (struct rt_arb_internal *)ip->idb_ptr;
     RT_ARB_CK_MAGIC(aip);
 
     /* set up tolerance for rt_arb_std_type */
