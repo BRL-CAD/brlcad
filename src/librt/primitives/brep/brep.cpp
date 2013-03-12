@@ -46,8 +46,8 @@
 #include "raytrace.h"
 #include "rtgeom.h"
 
-#include "brep_local.h"
-#include "brep_debug.h"
+#include "./brep_local.h"
+#include "./brep_debug.h"
 
 /* undefine "min" and "max" macros, if they exist, to prevent
  * name conflicts with functions "std::min" and "std::max".
