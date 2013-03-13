@@ -8310,11 +8310,14 @@ proc title_node_handler {node} {
     if {$mWireframeModePref != $mWireframeMode} {
 	set mWireframeMode $mWireframeModePref
 	gedCmd lod_on $mWireframeMode
-	set rflag 1
+	set wflag 1
     }
 
     $itk_component(ged) refresh_on
-    if {$rflag} {
+
+    if {$wflag} {
+	redrawWho
+    } elseif {$rflag} {
 	$itk_component(ged) refresh_all
     }
 }

@@ -1554,12 +1554,17 @@ namespace eval ArcherCore {
 }
 
 ::itcl::body ArcherCore::redrawWho {} {
+    $itk_component(ged) refresh_off
+
     foreach obj [gedCmd who] {
 	set rdata [gedCmd how -b $obj]
 	set rmode [lindex $rdata 0]
 	set rtrans [lindex $rdata 1]
 	gedCmd draw -m$rmode -x$rtrans $obj
     }
+
+    $itk_component(ged) refresh_on
+    $itk_component(ged) refresh_all
 }
 
 
