@@ -532,8 +532,11 @@ struct ged_view {
     struct ged_other_state 	gv_view_scale;
     struct ged_rect_state 	gv_rect;
     int				gv_adaptive_plot;
+    int				gv_redraw_on_zoom;
     int				gv_x_samples;
     int				gv_y_samples;
+    fastf_t			gv_point_scale;
+    fastf_t			gv_curve_scale;
 };
 
 
@@ -1294,6 +1297,11 @@ GED_EXPORT extern int ged_list(struct ged *gedp, int argc, const char *argv[]);
  * Load the view
  */
 GED_EXPORT extern int ged_loadview(struct ged *gedp, int argc, const char *argv[]);
+
+/**
+ * Configure Level of Detail drawing.
+ */
+GED_EXPORT extern int ged_lod(struct ged *gedp, int argc, const char *argv[]);
 
 /**
  * Used to control logging.

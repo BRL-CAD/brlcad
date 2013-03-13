@@ -119,6 +119,7 @@ libged_nil_la_SOURCES = \
 	label.c \
 	list.c \
 	loadview.c \
+	lod.c \
 	log.c \
 	lookat.c \
 	ls.c \

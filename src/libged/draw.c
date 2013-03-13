@@ -691,6 +691,9 @@ draw_solid_wireframe(struct ged *gedp, struct solid *sp)
 
 	info.curve_spacing = sp->s_size / 2.0;
 
+	info.point_spacing /= gvp->gv_point_scale;
+	info.curve_spacing /= gvp->gv_curve_scale;
+
 	ret = ip->idb_meth->ft_adaptive_plot(ip, &info);
     } else if (ip->idb_meth->ft_plot) {
 	ret = ip->idb_meth->ft_plot(&vhead, ip, tsp->ts_ttol,
