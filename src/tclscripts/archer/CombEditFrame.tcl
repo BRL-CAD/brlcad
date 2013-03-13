@@ -799,12 +799,7 @@
 	set cellEmpty 0
     }
 
-    if {$cellEmpty} {
-	$itk_component(combMembersMenu) add command \
-	    -label "Append Row" \
-	    -command [::itcl::code $this appendRow $_type]
-    } else {
-
+    if {!$cellEmpty} {
 	if {$col == 0} {
 	    if {[subst $[subst mMemberData$tname\($_index\)]] == "*"} {
 		$itk_component(combMembersMenu) add command \
@@ -841,10 +836,6 @@
 	    $itk_component(combMembersOpMenu) add command \
 		-label "Subtraction" \
 		-command "$itk_component(combMembers$tname) setTableVal $_index -"
-	} elseif {$col == 2} {
-#	    $itk_component(combMembersMenu) add command \
-		-label "Select Name" \
-		-command [::itcl::code $this selectName $_type]
 	} elseif {($_type == 0 && 6 <= $col && $col <= 8) ||
 		  ($_type == 1 && 6 <= $col && $col <= 8)} {
 	    $itk_component(combMembersMenu) add command \
@@ -859,8 +850,6 @@
 		-label "Set Keypoint (View Center)" \
 		-command [::itcl::code $this setKeypointVC $tname $row 7]
 	}
-
-	addMemberCreationMenuEntries $_type $row
     }
 
     tk_popup $itk_component(combMembersMenu) $_X $_Y
@@ -1078,7 +1067,7 @@
 	return 1
     }
 
-    if {[string is double $_newval]} {
+    if {[string is double $_newval] || $_newval == "." || $_newval == "-"} {
 	syncColumn $_tname $_row $_col $_newval
 	return 1
     }
