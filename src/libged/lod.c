@@ -53,7 +53,8 @@ ged_lod(struct ged *gedp, int argc, const char *argv[])
 
     /* must be wanting help */
     if (argc < 2) {
-	printUsage = 1;
+	bu_vls_printf(gedp->ged_result_str, "Usage:\n%s", usage);
+	return GED_HELP;
     }
 
     gvp = gedp->ged_gvp;
