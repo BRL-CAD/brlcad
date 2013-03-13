@@ -2711,6 +2711,7 @@ db_tree_parse(struct bu_vls *vls, const char *str, struct resource *resp)
 	    tp->tr_b.tb_op = OP_UNION;
 	    goto binary;
 	case 'n':
+	case '+':
 	    /* Binary: Intersection */
 	    RT_GET_TREE(tp, resp);
 	    tp->tr_b.tb_op = OP_INTERSECT;
