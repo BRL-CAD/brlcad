@@ -162,7 +162,7 @@ add_solid(const struct directory *dp,
     }
 
     /* get the soltab stuff */
-    BU_GET(eptr->l.stp, struct soltab);
+    BU_ALLOC(eptr->l.stp, struct soltab);
     eptr->l.stp->l.magic = RT_SOLTAB_MAGIC;
     eptr->l.stp->l2.magic = RT_SOLTAB2_MAGIC;
     eptr->l.stp->st_dp = dp;
@@ -1034,7 +1034,7 @@ classify_seg(struct seg *segp, struct soltab *shoot, struct xray *rp, struct _ge
 
     memset(&rd, 0, sizeof(struct ray_data));
 
-    BU_GET(rd.seghead, struct seg);
+    BU_ALLOC(rd.seghead, struct seg);
     BU_LIST_INIT(&rd.seghead->l);
 
     mid_dist = (segp->seg_in.hit_dist + segp->seg_out.hit_dist) / 2.0;
@@ -1137,7 +1137,7 @@ shoot_and_plot(point_t start_pt,
 
     memset(&rd, 0, sizeof(struct ray_data));
 
-    BU_GET(rd.seghead, struct seg);
+    BU_ALLOC(rd.seghead, struct seg);
     BU_LIST_INIT(&rd.seghead->l);
 
     VMOVE(rp.r_pt, start_pt);
@@ -1993,7 +1993,7 @@ fix_halfs(struct _ged_client_data *dgcdp)
 	nmg_close_shell(s, tol);
 	nmg_rebound(tp->l.m, tol);
 
-	BU_GET(pg, struct rt_pg_internal);
+	BU_ALLOC(pg, struct rt_pg_internal);
 
 	if (!nmg_to_poly(tp->l.m, pg, tol)) {
 	    bu_free((char *)pg, "rt_pg_internal");
@@ -2050,7 +2050,8 @@ ged_E(struct ged *gedp, int argc, const char *argv[])
     if (bu_debug&BU_DEBUG_MEM_CHECK && bu_mem_barriercheck())
 	bu_log("Error at start of 'E'\n");
 
-    BU_GET(dgcdp, struct _ged_client_data);
+    /* XXX: where is this released? */
+    BU_ALLOC(dgcdp, struct _ged_client_data);
     dgcdp->gedp = gedp;
     dgcdp->do_polysolids = 0;
     dgcdp->wireframe_color_override = 0;

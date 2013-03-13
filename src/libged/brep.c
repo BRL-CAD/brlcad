@@ -247,7 +247,7 @@ ged_brep(struct ged *gedp, int argc, const char *argv[])
 	return GED_OK;
     }
 
-    BU_GET(stp, struct soltab);
+    BU_ALLOC(stp, struct soltab);
 
     if (argc == 2) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s\n", argv[0], usage);

@@ -616,7 +616,7 @@ ged_comb_std(struct ged *gedp, int argc, const char *argv[])
 	int flags;
 
 	flags = RT_DIR_COMB;
-	BU_GET(comb, struct rt_comb_internal);
+	BU_ALLOC(comb, struct rt_comb_internal);
 	RT_COMB_INTERNAL_INIT(comb);
 
 	comb->tree = final_tree;
