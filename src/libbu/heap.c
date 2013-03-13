@@ -107,7 +107,7 @@ bu_heap_print()
 	    allocations += used[i][j] / (i+1);
 	}
 	if (allocations > 0)
-	    bu_log("%04ld [%02ld] => %ld\n", i, pages[i], allocations);
+	    bu_log("%04zd [%02zd] => %zd\n", i, pages[i], allocations);
 	total_pages += pages[i];
 	total_alloc += allocations;
     }
@@ -115,8 +115,8 @@ bu_heap_print()
 	   "size [pages] => allocs\n"
 	   "Heap range: 1-%d bytes\n"
 	   "Page size: %d bytes\n"
-	   "Pages: %ld (%.2lfMB)\n"
-	   "%ld hits, %ld misses\n"
+	   "Pages: %zd (%.2lfMB)\n"
+	   "%zd hits, %zd misses\n"
 	   "=======================\n", BINS, PAGESIZE, total_pages, (double)(total_pages * PAGESIZE) / (1024.0*1024.0), total_alloc, misses);
 }
 
@@ -130,7 +130,7 @@ bu_heap_get(size_t sz)
 
     if (sz > BINS || sz == 0) {
 	misses++;
-	bu_log("missed size %ld\n", sz);
+	bu_log("missed size %zd\n", sz);
 	return bu_calloc(1, sz, "heap calloc");
     }
 
@@ -194,7 +194,7 @@ int main (int ac, char *av[])
 
     for (i=0; i<1024*1024*50; i++) {
 	size_t sz = (((double)rand() / (double)(RAND_MAX-1)) * (double)BINS) + 1;
-	printf("allocating %d: %ld\n", i, sz);
+	bu_log("allocating %d: %zd\n", i, sz);
 #ifdef USE_MALLOC
 	ptr = malloc(sz);
 #else
@@ -203,7 +203,7 @@ int main (int ac, char *av[])
 	allocalls++;
 
 	if (i%3==0) {
-	    printf("freeing sz=%ld allocation\n", sz);
+	    bu_log("freeing sz=%zd allocation\n", sz);
 #ifdef USE_MALLOC
 	    free(ptr);
 #else
@@ -229,7 +229,7 @@ int main (int ac, char *av[])
 #endif
     freecalls++;
 
-    printf("calls: %ld, free: %ld\n", allocalls, freecalls);
+    bu_log("calls: %zd, free: %zd\n", allocalls, freecalls);
 
     return 0;
 }
