@@ -9500,6 +9500,9 @@ to_new_view(struct ged *gedp,
     ged_view_init(new_gdvp->gdv_view);
     BU_LIST_INSERT(&current_top->to_gop->go_head_views.l, &new_gdvp->l);
 
+    new_gdvp->gdv_view->gv_point_scale = 1.0;
+    new_gdvp->gdv_view->gv_curve_scale = 1.0;
+
     new_gdvp->gdv_fbs.fbs_listener.fbsl_fbsp = &new_gdvp->gdv_fbs;
     new_gdvp->gdv_fbs.fbs_listener.fbsl_fd = -1;
     new_gdvp->gdv_fbs.fbs_listener.fbsl_port = -1;

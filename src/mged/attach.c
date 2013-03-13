@@ -754,6 +754,9 @@ dm_var_init(struct dm_list *initial_dm_list)
     *view_state->vs_gvp = *initial_dm_list->dml_view_state->vs_gvp;	/* struct copy */
     view_state->vs_gvp->gv_clientData = (genptr_t)view_state;
     view_state->vs_gvp->gv_adaptive_plot = 0;
+    view_state->vs_gvp->gv_redraw_on_zoom = 0;
+    view_state->vs_gvp->gv_point_scale = 1.0;
+    view_state->vs_gvp->gv_curve_scale = 1.0;
     view_state->vs_rc = 1;
     view_ring_init(curr_dm_list->dml_view_state, (struct _view_state *)NULL);
 
