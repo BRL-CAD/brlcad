@@ -90,7 +90,9 @@ common_dm(int argc, const char *argv[])
     if (BU_STR_EQUAL(argv[0], "idle")) {
 
 	/* redraw after scaling */
-	if (mged_variables->mv_adaptive_plot &&
+	if (gedp && gedp->ged_gvp &&
+	    gedp->ged_gvp->gv_adaptive_plot &&
+	    gedp->ged_gvp->gv_redraw_on_zoom &&
 	    (am_mode == AMM_SCALE ||
 	     am_mode == AMM_CON_SCALE_X ||
 	     am_mode == AMM_CON_SCALE_Y ||

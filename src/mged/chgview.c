@@ -2656,7 +2656,9 @@ mged_zoom(double val)
     }
 
     ret = TCL_OK;
-    if (mged_variables->mv_adaptive_plot) {
+    if (gedp->ged_gvp && gedp->ged_gvp->gv_adaptive_plot &&
+	gedp->ged_gvp->gv_redraw_on_zoom)
+    {
 	ret = redraw_visible_objects();
     }
 

@@ -41,7 +41,6 @@ extern void fbserv_set_port(void);
 
 extern void set_perspective(void);
 
-static void set_adaptive_plot(void);
 static void set_dirty_flag(void);
 static void nmg_eu_dist_set(void);
 static void set_dlist(void);
@@ -94,7 +93,6 @@ struct _mged_variables default_mged_variables = {
     /* mv_union lexeme */	"u",
     /* mv_intersection lexeme */"n",
     /* mv_difference lexeme */	"-",
-    /* mv_adaptive_plot */	0
 };
 
 
@@ -132,15 +130,8 @@ struct bu_structparse mged_vparse[] = {
     {"%s", LINE, "union_op",		MV_O(mv_union_lexeme),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%s", LINE, "intersection_op",	MV_O(mv_intersection_lexeme),BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%s", LINE, "difference_op",	MV_O(mv_difference_lexeme),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%d", 1, "adaptive_plot",		MV_O(mv_adaptive_plot),	set_adaptive_plot, NULL, NULL },
     {"",   0, NULL,			0,				BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
-
-static void
-set_adaptive_plot(void)
-{
-    gedp->ged_gvp->gv_adaptive_plot = mged_variables->mv_adaptive_plot;
-}
 
 static void
 set_dirty_flag(void)
