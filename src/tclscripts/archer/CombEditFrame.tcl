@@ -277,6 +277,7 @@
 	return
     }
 
+    $::ArcherCore::application syncTree
     GeometryEditFrame::updateGeometry
 }
 
@@ -681,6 +682,8 @@
     incr dtype 2
     catch {eval $itk_option(-mged) combmem -r $dtype $itk_option(-geometryObject) [regsub -all {\n} $mdata " "]}
     GeometryEditFrame::updateGeometry
+
+    $::ArcherCore::application syncTree
 
     # Restore table row selection state
     set row 1
