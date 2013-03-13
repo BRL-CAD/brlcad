@@ -236,7 +236,7 @@ _ged_get_obj_bounds2(struct ged *gedp,
     struct directory *dp;
     struct rt_db_internal intern;
     struct rt_i *rtip;
-    struct soltab *stp;
+    struct soltab st;
     mat_t imat;
 
     /* initialize RPP bounds */
@@ -255,25 +255,25 @@ _ged_get_obj_bounds2(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    BU_GET(stp, struct soltab);
-    stp->l.magic = RT_SOLTAB_MAGIC;
-    stp->l2.magic = RT_SOLTAB2_MAGIC;
-    stp->st_dp = dp;
+    memset(&st, 0, sizeof(struct soltab));
+
+    st.l.magic = RT_SOLTAB_MAGIC;
+    st.l2.magic = RT_SOLTAB2_MAGIC;
+    st.st_dp = dp;
     MAT_IDN(imat);
-    stp->st_matp = imat;
-    stp->st_meth = intern.idb_meth;
+    st.st_matp = imat;
+    st.st_meth = intern.idb_meth;
 
     /* Get bounds from internal object */
-    VMOVE(stp->st_min, rpp_min);
-    VMOVE(stp->st_max, rpp_max);
+    VMOVE(st.st_min, rpp_min);
+    VMOVE(st.st_max, rpp_max);
     if (intern.idb_meth->ft_prep)
-	intern.idb_meth->ft_prep(stp, &intern, rtip);
-    VMOVE(rpp_min, stp->st_min);
-    VMOVE(rpp_max, stp->st_max);
+	intern.idb_meth->ft_prep(&st, &intern, rtip);
+    VMOVE(rpp_min, st.st_min);
+    VMOVE(rpp_max, st.st_max);
 
     rt_free_rti(rtip);
     rt_db_free_internal(&intern);
-    bu_free((char *)stp, "struct soltab");
 
     return GED_OK;
 }
