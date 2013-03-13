@@ -8270,6 +8270,7 @@ proc title_node_handler {node} {
 
 ::itcl::body Archer::applyDisplayPreferencesIfDiff {} {
     set rflag 0
+    set wflag 0
     $itk_component(ged) refresh_off
 
     if {$mZClipBackMaxPref != $mZClipBackMax ||
