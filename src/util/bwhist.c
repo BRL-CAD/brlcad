@@ -39,7 +39,7 @@ long bin[256];
 int verbose = 0;
 FBIO *fbp;
 
-static char *Usage = "usage: bwhist [-v] [file.bw]\n";
+static char *Usage = "Usage: bwhist [-v] [file.bw]\n";
 
 
 int
