@@ -618,7 +618,6 @@
     unset mMemberDataRotArb
     unset mMemberDataTra
     unset mMemberDataSca
-#    unset mMemberData
 
     set col 0
     foreach heading $mMemberHeadingsRotAet {
@@ -645,11 +644,6 @@
 	set mMemberDataSca(0,$col) $heading
 	incr col
     }
-#    set col 0
-#    foreach heading $mMemberHeadings {
-#	set mMemberData(0,$col) $heading
-#	incr col
-#    }
 }
 
 ::itcl::body CombEditFrame::clearMemberDataTable {_tname} {
@@ -1048,10 +1042,6 @@
 	    set mMemberData$_tname\($row,$_col\) $_val
 	}
     }
-
-#    puts "CombEditFrame::syncColumn: set column $_col values to $_val"
-#    puts "CombEditFrame::syncColumn: anames - $anames"
-#    puts "CombEditFrame::syncColumn: colnames - $colnames"
 }
 
 ::itcl::body CombEditFrame::validateTableEntry {_row _col _newval _tname} {
