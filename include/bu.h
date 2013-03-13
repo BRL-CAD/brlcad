@@ -264,7 +264,7 @@ BU_EXPORT extern Tcl_Interp *brlcad_interp;
 #if 0
 #define BU_PUT(_ptr, _type) *(uint8_t *)(_ptr) = /*zap*/ 0; bu_heap_put(_ptr, sizeof(_type)); _ptr = NULL
 #else
-#define BU_PUT(_ptr, _type) { *(uint8_t *)(_ptr) = /*zap*/ 0; bu_free(_ptr, #_type " (BU_PUT) " BU_FLSTR); _ptr = NULL; }
+#define BU_PUT(_ptr, _type) do { *(uint8_t *)(_ptr) = /*zap*/ 0; bu_free(_ptr, #_type " (BU_PUT) " BU_FLSTR); _ptr = NULL; } while(0)
 #endif
 
 /**
