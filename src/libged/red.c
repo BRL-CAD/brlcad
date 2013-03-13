@@ -475,7 +475,7 @@ build_comb(struct ged *gedp, struct directory *dp, struct bu_vls *target_name)
 			"build_comb: unrecognized relation (assume UNION)\n");
 		    rt_tree_array[tree_index].tl_op = OP_UNION;
 	    }
-	    BU_GET(tp, union tree);
+	    BU_ALLOC(tp, union tree);
 	    RT_TREE_INIT(tp);
 	    rt_tree_array[tree_index].tl_tree = tp;
 	    tp->tr_l.tl_op = OP_DB_LEAF;

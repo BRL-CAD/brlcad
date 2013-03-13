@@ -48,7 +48,7 @@ _gcv_cleanup(int state, union tree *tp)
      */
     db_free_tree(tp, &rt_uniresource); /* Does an nmg_kr() */
 
-    BU_GET(tp, union tree);
+    BU_ALLOC(tp, union tree);
     RT_TREE_INIT(tp);
     tp->tr_op = OP_NOP;
     return tp;

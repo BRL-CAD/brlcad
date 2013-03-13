@@ -801,7 +801,7 @@ rt_cut_it(register struct rt_i *rtip, int ncpu)
     if (ncpu < 1) ncpu = 1; /* sanity */
 
     /* Make a list of all solids into one special boxnode, then refine. */
-    BU_GET(finp, union cutter);
+    BU_ALLOC(finp, union cutter);
     finp->cut_type = CUT_BOXNODE;
     VMOVE(finp->bn.bn_min, rtip->mdl_min);
     VMOVE(finp->bn.bn_max, rtip->mdl_max);

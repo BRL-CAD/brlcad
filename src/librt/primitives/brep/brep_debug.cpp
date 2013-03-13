@@ -2275,7 +2275,7 @@ int brep_conversion_tree(struct db_i *db, union tree *oldtree, union tree *newtr
 	case OP_GUARD:
 	case OP_XNOP:
 	    /* convert left */
-	    BU_GET(newtree->tr_b.tb_left, union tree);
+	    BU_ALLOC(newtree->tr_b.tb_left, union tree);
 	    RT_TREE_INIT(newtree->tr_b.tb_left);
 	    ret = brep_conversion_tree(db, oldtree->tr_b.tb_left, newtree->tr_b.tb_left, suffix, wdbp, local2mm);
 	    if (!ret) {

@@ -162,14 +162,14 @@ make_hole(struct rt_wdb *wdbp,		/* database to be modified */
 	comb = (struct rt_comb_internal *)intern.idb_ptr;
 
 	/* Build a new "subtract" node (will be the root of the new tree) */
-	BU_GET(tree, union tree);
+	BU_ALLOC(tree, union tree);
 	RT_TREE_INIT(tree);
 	tree->tr_b.tb_op = OP_SUBTRACT;
 	tree->tr_b.tb_left = comb->tree;	/* subtract from the original tree */
 	comb->tree = tree;
 
 	/* Build a node for the RCC to be subtracted */
-	BU_GET(tree, union tree);
+	BU_ALLOC(tree, union tree);
 	RT_TREE_INIT(tree);
 	tree->tr_l.tl_op = OP_DB_LEAF;
 	tree->tr_l.tl_mat = NULL;
@@ -298,7 +298,7 @@ make_hole_in_prepped_regions(struct rt_wdb *wdbp,	/* database to be modified */
 	RT_CK_REGION(rp);
 
 	/* create a tree node for the subtraction operation, this will be the new tree root */
-	BU_GET(treep, union tree);
+	BU_ALLOC(treep, union tree);
 	RT_TREE_INIT(treep);
 	treep->tr_b.tb_op = OP_SUBTRACT;
 	treep->tr_b.tb_left = rp->reg_treetop;	/* subtract from the old treetop */
@@ -308,7 +308,7 @@ make_hole_in_prepped_regions(struct rt_wdb *wdbp,	/* database to be modified */
 	rp->reg_treetop = treep;
 
 	/* create a tree node for the new RCC */
-	BU_GET(treep, union tree);
+	BU_ALLOC(treep, union tree);
 	RT_TREE_INIT(treep);
 	treep->tr_a.tu_op = OP_SOLID;
 	treep->tr_a.tu_stp = stp;
