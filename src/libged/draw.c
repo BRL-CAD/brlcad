@@ -1035,7 +1035,7 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
     int nmg_use_tnurbs = 0;
     int enable_fastpath = 0;
     struct model *nmg_model;
-    struct _ged_client_data *dgcdp;
+    struct _ged_client_data dgcdp;
     int i;
     int ac = 1;
     char *av[2];
@@ -1051,35 +1051,34 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 
     /* options are already parsed into _dgcdp */
     if (_dgcdp != (struct _ged_client_data *)0) {
-	BU_GET(dgcdp, struct _ged_client_data);
-	*dgcdp = *_dgcdp;            /* struct copy */
+	dgcdp = *_dgcdp;            /* struct copy */
     } else {
 
-	BU_GET(dgcdp, struct _ged_client_data);
-	dgcdp->gedp = gedp;
+	memset(&dgcdp, 0, sizeof(struct _ged_client_data));
+	dgcdp.gedp = gedp;
 
 	/* Initial values for options, must be reset each time */
-	dgcdp->draw_nmg_only = 0;	/* no booleans */
-	dgcdp->nmg_triangulate = 1;
-	dgcdp->draw_wireframes = 0;
-	dgcdp->draw_normals = 0;
-	dgcdp->draw_solid_lines_only = 0;
-	dgcdp->draw_no_surfaces = 0;
-	dgcdp->shade_per_vertex_normals = 0;
-	dgcdp->draw_edge_uses = 0;
-	dgcdp->wireframe_color_override = 0;
-	dgcdp->fastpath_count = 0;
+	dgcdp.draw_nmg_only = 0;	/* no booleans */
+	dgcdp.nmg_triangulate = 1;
+	dgcdp.draw_wireframes = 0;
+	dgcdp.draw_normals = 0;
+	dgcdp.draw_solid_lines_only = 0;
+	dgcdp.draw_no_surfaces = 0;
+	dgcdp.shade_per_vertex_normals = 0;
+	dgcdp.draw_edge_uses = 0;
+	dgcdp.wireframe_color_override = 0;
+	dgcdp.fastpath_count = 0;
 
 	/* default color - red */
-	dgcdp->wireframe_color[0] = 255;
-	dgcdp->wireframe_color[1] = 0;
-	dgcdp->wireframe_color[2] = 0;
+	dgcdp.wireframe_color[0] = 255;
+	dgcdp.wireframe_color[1] = 0;
+	dgcdp.wireframe_color[2] = 0;
 
 	/* default transparency - opaque */
-	dgcdp->transparency = 1.0;
+	dgcdp.transparency = 1.0;
 
 	/* -1 indicates flag not set */
-	dgcdp->shaded_mode_override = -1;
+	dgcdp.shaded_mode_override = -1;
 
 	enable_fastpath = 0;
 
@@ -1088,37 +1087,37 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 	while ((c = bu_getopt(argc, (char * const *)argv, "dfhm:nqstuvwx:C:STP:A:oR")) != -1) {
 	    switch (c) {
 		case 'u':
-		    dgcdp->draw_edge_uses = 1;
+		    dgcdp.draw_edge_uses = 1;
 		    break;
 		case 's':
-		    dgcdp->draw_solid_lines_only = 1;
+		    dgcdp.draw_solid_lines_only = 1;
 		    break;
 		case 't':
 		    nmg_use_tnurbs = 1;
 		    break;
 		case 'v':
-		    dgcdp->shade_per_vertex_normals = 1;
+		    dgcdp.shade_per_vertex_normals = 1;
 		    break;
 		case 'w':
-		    dgcdp->draw_wireframes = 1;
+		    dgcdp.draw_wireframes = 1;
 		    break;
 		case 'S':
-		    dgcdp->draw_no_surfaces = 1;
+		    dgcdp.draw_no_surfaces = 1;
 		    break;
 		case 'T':
-		    dgcdp->nmg_triangulate = 0;
+		    dgcdp.nmg_triangulate = 0;
 		    break;
 		case 'n':
-		    dgcdp->draw_normals = 1;
+		    dgcdp.draw_normals = 1;
 		    break;
 		case 'P':
 		    ncpu = atoi(bu_optarg);
 		    break;
 		case 'q':
-		    dgcdp->do_not_draw_nmg_solids_during_debugging = 1;
+		    dgcdp.do_not_draw_nmg_solids_during_debugging = 1;
 		    break;
 		case 'd':
-		    dgcdp->draw_nmg_only = 1;
+		    dgcdp.draw_nmg_only = 1;
 		    break;
 		case 'f':
 		    enable_fastpath = 1;
@@ -1140,32 +1139,32 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 			if (g < 0 || g > 255) g = 255;
 			if (b < 0 || b > 255) b = 255;
 
-			dgcdp->wireframe_color_override = 1;
-			dgcdp->wireframe_color[0] = r;
-			dgcdp->wireframe_color[1] = g;
-			dgcdp->wireframe_color[2] = b;
+			dgcdp.wireframe_color_override = 1;
+			dgcdp.wireframe_color[0] = r;
+			dgcdp.wireframe_color[1] = g;
+			dgcdp.wireframe_color[2] = b;
 		    }
 		    break;
 		case 'h':
-		    dgcdp->hiddenLine = 1;
-		    dgcdp->shaded_mode_override = _GED_SHADED_MODE_ALL;
+		    dgcdp.hiddenLine = 1;
+		    dgcdp.shaded_mode_override = _GED_SHADED_MODE_ALL;
 		    break;
 		case 'm':
 		    /* clamp it to [-infinity, 2] */
-		    dgcdp->shaded_mode_override = atoi(bu_optarg);
-		    if (2 < dgcdp->shaded_mode_override)
-			dgcdp->shaded_mode_override = 2;
+		    dgcdp.shaded_mode_override = atoi(bu_optarg);
+		    if (2 < dgcdp.shaded_mode_override)
+			dgcdp.shaded_mode_override = 2;
 
 		    break;
 		case 'x':
-		    dgcdp->transparency = atof(bu_optarg);
+		    dgcdp.transparency = atof(bu_optarg);
 
 		    /* clamp it to [0, 1] */
-		    if (dgcdp->transparency < 0.0)
-			dgcdp->transparency = 0.0;
+		    if (dgcdp.transparency < 0.0)
+			dgcdp.transparency = 0.0;
 
-		    if (1.0 < dgcdp->transparency)
-			dgcdp->transparency = 1.0;
+		    if (1.0 < dgcdp.transparency)
+			dgcdp.transparency = 1.0;
 
 		    break;
 		case 'R':
@@ -1178,7 +1177,6 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 		default:
 		    {
 			bu_vls_printf(gedp->ged_result_str, "unrecognized option - %c\n", c);
-			bu_free((genptr_t)dgcdp, "_ged_drawtrees: dgcdp");
 			--drawtrees_depth;
 			return GED_ERROR;
 		    }
@@ -1189,17 +1187,17 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 
 	switch (kind) {
 	    case 1:
-		if (gedp->ged_gdp->gd_shaded_mode && dgcdp->shaded_mode_override < 0) {
-		    dgcdp->dmode = gedp->ged_gdp->gd_shaded_mode;
-		} else if (0 <= dgcdp->shaded_mode_override)
-		    dgcdp->dmode = dgcdp->shaded_mode_override;
+		if (gedp->ged_gdp->gd_shaded_mode && dgcdp.shaded_mode_override < 0) {
+		    dgcdp.dmode = gedp->ged_gdp->gd_shaded_mode;
+		} else if (0 <= dgcdp.shaded_mode_override)
+		    dgcdp.dmode = dgcdp.shaded_mode_override;
 		else
-		    dgcdp->dmode = _GED_WIREFRAME;
+		    dgcdp.dmode = _GED_WIREFRAME;
 
 		break;
 	    case 2:
 	    case 3:
-		dgcdp->dmode = _GED_BOOL_EVAL;
+		dgcdp.dmode = _GED_BOOL_EVAL;
 		break;
 	}
 
@@ -1208,7 +1206,6 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
     switch (kind) {
 	default:
 	    bu_vls_printf(gedp->ged_result_str, "ERROR, bad kind\n");
-	    bu_free((genptr_t)dgcdp, "_ged_drawtrees: dgcdp");
 	    --drawtrees_depth;
 	    return -1;
 	case 1:		/* Wireframes */
@@ -1223,12 +1220,12 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 	     * If shaded_mode is _GED_SHADED_MODE_ALL, everything except pipe solids
 	     * are drawn as shaded polygons.
 	     */
-	    if (_GED_SHADED_MODE_BOTS <= dgcdp->dmode && dgcdp->dmode <= _GED_SHADED_MODE_ALL) {
+	    if (_GED_SHADED_MODE_BOTS <= dgcdp.dmode && dgcdp.dmode <= _GED_SHADED_MODE_ALL) {
 		for (i = 0; i < argc; ++i) {
 		    if (drawtrees_depth == 1)
-			dgcdp->gdlp = ged_addToDisplay(gedp, argv[i]);
+			dgcdp.gdlp = ged_addToDisplay(gedp, argv[i]);
 
-		    if (dgcdp->gdlp == GED_DISPLAY_LIST_NULL)
+		    if (dgcdp.gdlp == GED_DISPLAY_LIST_NULL)
 			continue;
 
 		    av[0] = (char *)argv[i];
@@ -1240,14 +1237,14 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 				       NULL,
 				       draw_check_region_end,
 				       draw_check_leaf,
-				       (genptr_t)dgcdp);
+				       (genptr_t)&dgcdp);
 		}
 	    } else {
 		/* create solids */
 		for (i = 0; i < argc; ++i) {
-		    dgcdp->gdlp = ged_addToDisplay(gedp, argv[i]);
+		    dgcdp.gdlp = ged_addToDisplay(gedp, argv[i]);
 
-		    if (dgcdp->gdlp == GED_DISPLAY_LIST_NULL) {
+		    if (dgcdp.gdlp == GED_DISPLAY_LIST_NULL) {
 			continue;
 		    }
 
@@ -1260,7 +1257,7 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 				       NULL,
 				       wireframe_region_end,
 				       append_solid_to_display_list,
-				       (genptr_t)dgcdp);
+				       (genptr_t)&dgcdp);
 		}
 
 		/* We need to know the view size in order to choose
@@ -1284,7 +1281,6 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 	    break;
 	case 2:		/* Big-E */
 	    bu_vls_printf(gedp->ged_result_str, "drawtrees:  can't do big-E here\n");
-	    bu_free((genptr_t)dgcdp, "_ged_drawtrees: dgcdp");
 	    --drawtrees_depth;
 	    return -1;
 	case 3:
@@ -1292,16 +1288,16 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 		/* NMG */
 		nmg_model = nmg_mm();
 		gedp->ged_wdbp->wdb_initial_tree_state.ts_m = &nmg_model;
-		if (dgcdp->draw_edge_uses) {
+		if (dgcdp.draw_edge_uses) {
 		    bu_vls_printf(gedp->ged_result_str, "Doing the edgeuse thang (-u)\n");
-		    dgcdp->draw_edge_uses_vbp = rt_vlblock_init();
+		    dgcdp.draw_edge_uses_vbp = rt_vlblock_init();
 		}
 
 		for (i = 0; i < argc; ++i) {
 		    if (drawtrees_depth == 1)
-			dgcdp->gdlp = ged_addToDisplay(gedp, argv[i]);
+			dgcdp.gdlp = ged_addToDisplay(gedp, argv[i]);
 
-		    if (dgcdp->gdlp == GED_DISPLAY_LIST_NULL)
+		    if (dgcdp.gdlp == GED_DISPLAY_LIST_NULL)
 			continue;
 
 		    av[0] = (char *)argv[i];
@@ -1313,13 +1309,13 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 				       enable_fastpath ? draw_nmg_region_start : 0,
 				       draw_nmg_region_end,
 				       nmg_use_tnurbs ? nmg_booltree_leaf_tnurb : nmg_booltree_leaf_tess,
-				       (genptr_t)dgcdp);
+				       (genptr_t)&dgcdp);
 		}
 
-		if (dgcdp->draw_edge_uses) {
-		    _ged_cvt_vlblock_to_solids(gedp, dgcdp->draw_edge_uses_vbp, "_EDGEUSES_", 0);
-		    rt_vlblock_free(dgcdp->draw_edge_uses_vbp);
-		    dgcdp->draw_edge_uses_vbp = (struct bn_vlblock *)NULL;
+		if (dgcdp.draw_edge_uses) {
+		    _ged_cvt_vlblock_to_solids(gedp, dgcdp.draw_edge_uses_vbp, "_EDGEUSES_", 0);
+		    rt_vlblock_free(dgcdp.draw_edge_uses_vbp);
+		    dgcdp.draw_edge_uses_vbp = (struct bn_vlblock *)NULL;
 		}
 
 		/* Destroy NMG */
@@ -1330,12 +1326,10 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 
     --drawtrees_depth;
 
-    if (dgcdp->fastpath_count) {
+    if (dgcdp.fastpath_count) {
 	bu_log("%d region%s rendered through polygon fastpath\n",
-	       dgcdp->fastpath_count, dgcdp->fastpath_count == 1 ? "" : "s");
+	       dgcdp.fastpath_count, dgcdp.fastpath_count == 1 ? "" : "s");
     }
-
-    bu_free((genptr_t)dgcdp, "_ged_drawtrees: dgcdp");
 
     if (ret < 0)
 	return -1;
