@@ -79,7 +79,7 @@ struct _ged_obj_material {
 
 
 static int using_dbot_dump;
-struct bu_list HeadObjMaterials;
+struct bu_list HeadObjMaterials = BU_LIST_INIT_ZERO;
 struct bu_vls obj_materials_file = BU_VLS_INIT_ZERO;
 FILE *obj_materials_fp;
 int num_obj_materials;
@@ -160,7 +160,7 @@ free_obj_materials() {
     while (BU_LIST_WHILE(gomp, _ged_obj_material, &HeadObjMaterials)) {
 	BU_LIST_DEQUEUE(&gomp->l);
 	bu_vls_free(&gomp->name);
-	bu_free(gomp, "_ged_obj_material");
+	BU_PUT(gomp, struct _ged_obj_material);
     }
 }
 
@@ -990,14 +990,13 @@ ged_bot_dump(struct ged *gedp, int argc, const char *argv[])
 	int ac = 1;
 	int ncpu = 1;
 	char *av[2];
-	struct _ged_bot_dump_client_data *gbdcdp;
+	struct _ged_bot_dump_client_data gbdcdp = {NULL, NULL, 0, NULL};
 
 	av[1] = (char *)0;
-	BU_GET(gbdcdp, struct _ged_bot_dump_client_data);
-	gbdcdp->gedp = gedp;
-	gbdcdp->fp = fp;
-	gbdcdp->fd = fd;
-	gbdcdp->file_ext = file_ext;
+	gbdcdp.gedp = gedp;
+	gbdcdp.fp = fp;
+	gbdcdp.fd = fd;
+	gbdcdp.file_ext = file_ext;
 
 	for (i = 0; i < argc; ++i) {
 	    av[0] = (char *)argv[i];
@@ -1009,10 +1008,8 @@ ged_bot_dump(struct ged *gedp, int argc, const char *argv[])
 			       0,
 			       0,
 			       bot_dump_leaf,
-			       (genptr_t)gbdcdp);
+			       (genptr_t)&gbdcdp);
 	}
-
-	bu_free((genptr_t)gbdcdp, "ged_bot_dump: gbdcdp");
     }
 
 
