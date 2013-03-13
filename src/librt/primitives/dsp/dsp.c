@@ -4140,7 +4140,7 @@ get_obj_data(struct rt_dsp_internal *dsp_ip, const struct db_i *dbip)
     size_t got;
     int ret;
 
-    BU_GET(dsp_ip->dsp_bip, struct rt_db_internal);
+    BU_ALLOC(dsp_ip->dsp_bip, struct rt_db_internal);
 
     ret = rt_retrieve_binunif (dsp_ip->dsp_bip, dbip, bu_vls_addr(&dsp_ip->dsp_name));
     if (ret)

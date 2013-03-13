@@ -663,7 +663,7 @@ wdb_combadd(struct db_i *dbip,
 	    return RT_DIR_NULL;
 	}
 
-	BU_GET(comb, struct rt_comb_internal);
+	BU_ALLOC(comb, struct rt_comb_internal);
 	intern.idb_ptr = (genptr_t)comb;
 	RT_COMB_INTERNAL_INIT(comb);
 
@@ -8607,7 +8607,7 @@ wdb_nmg_simplify_cmd(struct rt_wdb *wdbp,
     if ((do_arb || do_all) && shell_count == 1) {
 	struct rt_arb_internal *arb_int;
 
-	BU_GET(arb_int, struct rt_arb_internal);
+	BU_ALLOC(arb_int, struct rt_arb_internal);
 
 	if (nmg_to_arb(m, arb_int)) {
 	    new_intern.idb_ptr = (genptr_t)(arb_int);
@@ -8645,7 +8645,7 @@ wdb_nmg_simplify_cmd(struct rt_wdb *wdbp,
     if ((do_tgc || do_all) && !success && shell_count == 1) {
 	struct rt_tgc_internal *tgc_int;
 
-	BU_GET(tgc_int, struct rt_tgc_internal);
+	BU_ALLOC(tgc_int, struct rt_tgc_internal);
 
 	if (nmg_to_tgc(m, tgc_int, &wdbp->wdb_tol)) {
 	    new_intern.idb_ptr = (genptr_t)(tgc_int);

@@ -1989,7 +1989,7 @@ wdb_fix_halfs(struct dg_client_data *dgcdp)
 	nmg_close_shell(s, tol);
 	nmg_rebound(tp->l.m, tol);
 
-	BU_GET(pg, struct rt_pg_internal);
+	BU_ALLOC(pg, struct rt_pg_internal);
 
 	if (!nmg_to_poly(tp->l.m, pg, tol)) {
 	    bu_free((char *)pg, "rt_pg_internal");

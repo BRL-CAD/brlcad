@@ -689,7 +689,7 @@ ebm_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern)
 {
     struct rt_ebm_internal *ebm;
 
-    BU_GET(ebm, struct rt_ebm_internal);
+    BU_ALLOC(ebm, struct rt_ebm_internal);
     intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     intern->idb_type = ID_EBM;
     intern->idb_meth = &rt_functab[ID_EBM];
@@ -716,7 +716,7 @@ submodel_in(struct ged *UNUSED(gedp), const char **cmd_argvs, struct rt_db_inter
 {
     struct rt_submodel_internal *sip;
 
-    BU_GET(sip, struct rt_submodel_internal);
+    BU_ALLOC(sip, struct rt_submodel_internal);
     intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     intern->idb_type = ID_SUBMODEL;
     intern->idb_meth = &rt_functab[ID_SUBMODEL];
@@ -742,7 +742,7 @@ dsp_in_v4(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *inter
 {
     struct rt_dsp_internal *dsp;
 
-    BU_GET(dsp, struct rt_dsp_internal);
+    BU_ALLOC(dsp, struct rt_dsp_internal);
     intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     intern->idb_type = ID_DSP;
     intern->idb_meth = &rt_functab[ID_DSP];
@@ -779,7 +779,7 @@ dsp_in_v5(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *inter
 {
     struct rt_dsp_internal *dsp;
 
-    BU_GET(dsp, struct rt_dsp_internal);
+    BU_ALLOC(dsp, struct rt_dsp_internal);
     intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     intern->idb_type = ID_DSP;
     intern->idb_meth = &rt_functab[ID_DSP];
@@ -839,7 +839,7 @@ hf_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern)
 {
     struct rt_hf_internal *hf;
 
-    BU_GET(hf, struct rt_hf_internal);
+    BU_ALLOC(hf, struct rt_hf_internal);
     intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     intern->idb_type = ID_HF;
     intern->idb_meth = &rt_functab[ID_HF];
@@ -900,7 +900,7 @@ vol_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern)
 {
     struct rt_vol_internal *vol;
 
-    BU_GET(vol, struct rt_vol_internal);
+    BU_ALLOC(vol, struct rt_vol_internal);
     intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     intern->idb_type = ID_VOL;
     intern->idb_meth = &rt_functab[ID_VOL];

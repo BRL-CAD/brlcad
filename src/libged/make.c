@@ -623,7 +623,7 @@ ged_make(struct ged *gedp, int argc, const char *argv[])
 	internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	internal.idb_type = ID_BOT;
 	internal.idb_meth = &rt_functab[ID_BOT];
-	BU_GET(bot_ip, struct rt_bot_internal);
+	BU_ALLOC(bot_ip, struct rt_bot_internal);
 	internal.idb_ptr = (genptr_t)bot_ip;
 	bot_ip = (struct rt_bot_internal *)internal.idb_ptr;
 	bot_ip->magic = RT_BOT_INTERNAL_MAGIC;

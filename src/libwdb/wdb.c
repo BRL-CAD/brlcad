@@ -56,7 +56,7 @@ mk_half(struct rt_wdb *wdbp, const char *name, const fastf_t *norm, fastf_t d)
 {
     struct rt_half_internal *half;
 
-    BU_GET(half, struct rt_half_internal);
+    BU_ALLOC(half, struct rt_half_internal);
     half->magic = RT_HALF_INTERNAL_MAGIC;
     VMOVE(half->eqn, norm);
     half->eqn[3] = d;
@@ -75,7 +75,7 @@ mk_grip(
 {
     struct rt_grip_internal *grip;
 
-    BU_GET(grip, struct rt_grip_internal);
+    BU_ALLOC(grip, struct rt_grip_internal);
     grip->magic = RT_GRIP_INTERNAL_MAGIC;
     VMOVE(grip->center, center);
     VMOVE(grip->normal, normal);
@@ -240,7 +240,7 @@ mk_arb8(struct rt_wdb *wdbp, const char *name, const fastf_t *pts)
     int i;
     struct rt_arb_internal *arb;
 
-    BU_GET(arb, struct rt_arb_internal);
+    BU_ALLOC(arb, struct rt_arb_internal);
     arb->magic = RT_ARB_INTERNAL_MAGIC;
     for (i=0; i < 8; i++) {
 	VMOVE(arb->pt[i], &pts[i*3]);
@@ -255,7 +255,7 @@ mk_sph(struct rt_wdb *wdbp, const char *name, const fastf_t *center, fastf_t rad
 {
     struct rt_ell_internal *ell;
 
-    BU_GET(ell, struct rt_ell_internal);
+    BU_ALLOC(ell, struct rt_ell_internal);
     ell->magic = RT_ELL_INTERNAL_MAGIC;
     VMOVE(ell->v, center);
     VSET(ell->a, radius, 0, 0);
@@ -271,7 +271,7 @@ mk_ell(struct rt_wdb *wdbp, const char *name, const fastf_t *center, const fastf
 {
     struct rt_ell_internal *ell;
 
-    BU_GET(ell, struct rt_ell_internal);
+    BU_ALLOC(ell, struct rt_ell_internal);
     ell->magic = RT_ELL_INTERNAL_MAGIC;
     VMOVE(ell->v, center);
     VMOVE(ell->a, a);
@@ -287,7 +287,7 @@ mk_hyp(struct rt_wdb *wdbp, const char *name, const point_t vertex, const vect_t
 {
     struct rt_hyp_internal *hyp;
 
-    BU_GET(hyp, struct rt_hyp_internal);
+    BU_ALLOC(hyp, struct rt_hyp_internal);
     hyp->hyp_magic = RT_HYP_INTERNAL_MAGIC;
 
 
@@ -337,7 +337,7 @@ mk_tor(struct rt_wdb *wdbp, const char *name, const fastf_t *center, const fastf
 {
     struct rt_tor_internal *tor;
 
-    BU_GET(tor, struct rt_tor_internal);
+    BU_ALLOC(tor, struct rt_tor_internal);
     tor->magic = RT_TOR_INTERNAL_MAGIC;
     VMOVE(tor->v, center);
     VMOVE(tor->h, inorm);
@@ -374,7 +374,7 @@ mk_tgc(struct rt_wdb *wdbp, const char *name, const fastf_t *base, const fastf_t
 {
     struct rt_tgc_internal *tgc;
 
-    BU_GET(tgc, struct rt_tgc_internal);
+    BU_ALLOC(tgc, struct rt_tgc_internal);
     tgc->magic = RT_TGC_INTERNAL_MAGIC;
     VMOVE(tgc->v, base);
     VMOVE(tgc->h, height);
@@ -463,7 +463,7 @@ mk_rpc(
 {
     struct rt_rpc_internal *rpc;
 
-    BU_GET(rpc, struct rt_rpc_internal);
+    BU_ALLOC(rpc, struct rt_rpc_internal);
     rpc->rpc_magic = RT_RPC_INTERNAL_MAGIC;
 
     VMOVE(rpc->rpc_V, vert);
@@ -487,7 +487,7 @@ mk_rhc(
 {
     struct rt_rhc_internal *rhc;
 
-    BU_GET(rhc, struct rt_rhc_internal);
+    BU_ALLOC(rhc, struct rt_rhc_internal);
     rhc->rhc_magic = RT_RHC_INTERNAL_MAGIC;
 
     VMOVE(rhc->rhc_V, vert);
@@ -512,7 +512,7 @@ mk_epa(
 {
     struct rt_epa_internal *epa;
 
-    BU_GET(epa, struct rt_epa_internal);
+    BU_ALLOC(epa, struct rt_epa_internal);
     epa->epa_magic = RT_EPA_INTERNAL_MAGIC;
 
     VMOVE(epa->epa_V, vert);
@@ -538,7 +538,7 @@ mk_ehy(
 {
     struct rt_ehy_internal *ehy;
 
-    BU_GET(ehy, struct rt_ehy_internal);
+    BU_ALLOC(ehy, struct rt_ehy_internal);
     ehy->ehy_magic = RT_EHY_INTERNAL_MAGIC;
 
     VMOVE(ehy->ehy_V, vert);
@@ -564,7 +564,7 @@ mk_eto(
 {
     struct rt_eto_internal *eto;
 
-    BU_GET(eto, struct rt_eto_internal);
+    BU_ALLOC(eto, struct rt_eto_internal);
     eto->eto_magic = RT_ETO_INTERNAL_MAGIC;
 
     VMOVE(eto->eto_V, vert);
@@ -589,7 +589,7 @@ mk_metaball(
     struct rt_metaball_internal *mb;
     size_t i;
 
-    BU_GET(mb, struct rt_metaball_internal);
+    BU_ALLOC(mb, struct rt_metaball_internal);
     mb->magic = RT_METABALL_INTERNAL_MAGIC;
     mb->threshold = threshold > 0 ? threshold : 1.0;
     mb->method = method >= 0 ? method : 2;	/* default to Blinn blob */
@@ -800,7 +800,7 @@ mk_binunif (
     }
 
     /* loading from data already in memory */
-    BU_GET(binunif, struct rt_binunif_internal);
+    BU_ALLOC(binunif, struct rt_binunif_internal);
     binunif->magic = RT_BINUNIF_INTERNAL_MAGIC;
     binunif->type = minor_type;
     binunif->count = count;

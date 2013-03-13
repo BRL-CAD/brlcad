@@ -2298,7 +2298,7 @@ int brep_conversion_tree(struct db_i *db, union tree *oldtree, union tree *newtr
 		dir = db_lookup(db, oldname, LOOKUP_QUIET);
 		if (dir != RT_DIR_NULL) {
 		    rt_db_internal *intern;
-		    BU_GET(intern, struct rt_db_internal);
+		    BU_ALLOC(intern, struct rt_db_internal);
 		    rt_db_get_internal(intern, dir, db, bn_mat_identity, &rt_uniresource);
 		    if (BU_STR_EQUAL(intern->idb_meth->ft_name, "ID_COMBINATION")) {
 			ret = brep_conversion_comb(intern, tmpname, suffix, wdbp, local2mm);
@@ -2340,7 +2340,7 @@ int brep_conversion_tree(struct db_i *db, union tree *oldtree, union tree *newtr
 		    }
 		    if (brep != NULL) {
 			rt_brep_internal *bi;
-			BU_GET(bi, struct rt_brep_internal);
+			BU_ALLOC(bi, struct rt_brep_internal);
 			bi->magic = RT_BREP_INTERNAL_MAGIC;
 			bi->brep = *brep;
 			ret = wdb_export(wdbp, tmpname, (genptr_t)bi, ID_BREP, local2mm);

@@ -44,7 +44,7 @@ mk_constraint(struct rt_wdb *wdbp, const char *name, const char *UNUSED(expr))
     RT_DB_INTERNAL_INIT(&intern);
 
     /* Create a fresh new object for export */
-    BU_GET(constraint, struct rt_constraint_internal);
+    BU_ALLOC(constraint, struct rt_constraint_internal);
     constraint->magic = RT_CONSTRAINT_MAGIC;
     constraint->id = constraint->type = 0;
     BU_VLS_INIT(&constraint->expression);

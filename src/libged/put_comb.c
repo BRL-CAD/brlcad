@@ -539,7 +539,7 @@ ged_put_comb(struct ged *gedp, int argc, const char *argv[])
 	comb->tree = NULL;
     } else {
 	/* make an empty combination structure */
-	BU_GET(comb, struct rt_comb_internal);
+	BU_ALLOC(comb, struct rt_comb_internal);
 	if (comb == NULL)
 	    bu_bomb("Unable to allocate comb memory");
 	RT_COMB_INTERNAL_INIT(comb);

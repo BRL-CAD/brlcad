@@ -47,7 +47,7 @@ rt_superell_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_t
 
     // First, create brep of an ellipsoid
     struct rt_ell_internal *eip;
-    BU_GET(eip, struct rt_ell_internal);
+    BU_ALLOC(eip, struct rt_ell_internal);
     eip->magic = RT_ELL_INTERNAL_MAGIC;
     VMOVE(eip->v, sip->v);
     VMOVE(eip->a, sip->a);

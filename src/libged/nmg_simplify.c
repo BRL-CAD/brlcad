@@ -164,7 +164,7 @@ ged_nmg_simplify(struct ged *gedp, int argc, const char *argv[])
 	struct rt_arb_internal *arb_int;
 
 	RT_DB_INTERNAL_INIT(&new_intern);
-	BU_GET(arb_int, struct rt_arb_internal);
+	BU_ALLOC(arb_int, struct rt_arb_internal);
 
 	new_intern.idb_ptr = (genptr_t)(arb_int);
 	new_intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
@@ -194,7 +194,7 @@ ged_nmg_simplify(struct ged *gedp, int argc, const char *argv[])
 	struct rt_tgc_internal *tgc_int;
 
 	RT_DB_INTERNAL_INIT(&new_intern);
-	BU_GET(tgc_int, struct rt_tgc_internal);
+	BU_ALLOC(tgc_int, struct rt_tgc_internal);
 
 	new_intern.idb_ptr = (genptr_t)(tgc_int);
 	new_intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
@@ -219,7 +219,7 @@ ged_nmg_simplify(struct ged *gedp, int argc, const char *argv[])
 	struct rt_pg_internal *poly_int;
 
 	RT_DB_INTERNAL_INIT(&new_intern);
-	BU_GET(poly_int, struct rt_pg_internal);
+	BU_ALLOC(poly_int, struct rt_pg_internal);
 
 	new_intern.idb_ptr = (genptr_t)(poly_int);
 	new_intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;

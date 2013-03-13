@@ -167,7 +167,7 @@ tree_solids(union tree *tp, struct tree_bark *tb, int op, struct resource *resp)
 	    vect_t v;
 	    int ret;
 
-	    BU_GET(dbint, struct reg_db_internals);
+	    BU_ALLOC(dbint, struct reg_db_internals);
 	    BU_LIST_INIT_MAGIC(&(dbint->l), DBINT_MAGIC);
 
 	    if (tp->tr_a.tu_stp->st_matp)

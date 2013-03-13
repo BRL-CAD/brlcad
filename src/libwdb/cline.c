@@ -49,7 +49,7 @@ mk_cline(
 {
     struct rt_cline_internal *cli;
 
-    BU_GET(cli, struct rt_cline_internal);
+    BU_ALLOC(cli, struct rt_cline_internal);
     cli->magic = RT_CLINE_INTERNAL_MAGIC;
     VMOVE(cli->v, V);
     VMOVE(cli->h, height);

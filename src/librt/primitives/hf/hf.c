@@ -131,7 +131,7 @@ rt_hf_to_dsp(struct rt_db_internal *db_intern)
 	return -1;
     }
 
-    BU_GET(dsp, struct rt_dsp_internal);
+    BU_ALLOC(dsp, struct rt_dsp_internal);
     bu_vls_init(&dsp->dsp_name);
     bu_vls_strcat(&dsp->dsp_name, hip->dfile);
     dsp->dsp_xcnt = hip->w;

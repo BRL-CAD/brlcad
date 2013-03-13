@@ -298,7 +298,7 @@ rt_comb_import4(
     ip->idb_type = ID_COMBINATION;
     ip->idb_meth = &rt_functab[ID_COMBINATION];
 
-    BU_GET(comb, struct rt_comb_internal);
+    BU_ALLOC(comb, struct rt_comb_internal);
     RT_COMB_INTERNAL_INIT(comb);
 
     comb->tree = tree;

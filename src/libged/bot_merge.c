@@ -62,7 +62,7 @@ ged_bot_merge(struct ged *gedp, int argc, const char *argv[])
     bots = bu_calloc(sizeof(struct rt_bot_internal), argc, "bot internal");
 
     /* create a new bot */
-    BU_GET(bots[0], struct rt_bot_internal);
+    BU_ALLOC(bots[0], struct rt_bot_internal);
     bots[0]->mode = 0;
     bots[0]->orientation = RT_BOT_UNORIENTED;
     bots[0]->bot_flags = 0;

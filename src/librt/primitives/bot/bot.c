@@ -1580,7 +1580,7 @@ rt_bot_xform(struct rt_db_internal *op, const fastf_t *mat, struct rt_db_interna
 
     if (op != ip && !release) {
 	RT_DB_INTERNAL_INIT(op);
-	BU_GET(botop, struct rt_bot_internal);
+	BU_ALLOC(botop, struct rt_bot_internal);
 	botop->magic = RT_BOT_INTERNAL_MAGIC;
 	botop->mode = botip->mode;
 	botop->orientation = botip->orientation;
@@ -4954,7 +4954,7 @@ rt_bot_create(struct rt_bot_internal *bot, struct tri_pts *newTpp)
     struct tri_pts *tpp;
     struct rt_bot_internal *newbot;
 
-    BU_GET(newbot, struct rt_bot_internal);
+    BU_ALLOC(newbot, struct rt_bot_internal);
 
     newbot->num_faces = 0;
     for (BU_LIST_FOR(tpp, tri_pts, &newTpp->l)) {

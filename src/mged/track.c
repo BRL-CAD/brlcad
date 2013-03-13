@@ -592,7 +592,7 @@ wrobj(char name[], int flags)
 	    {
 		struct rt_arb_internal *arb;
 
-		BU_GET(arb, struct rt_arb_internal);
+		BU_ALLOC(arb, struct rt_arb_internal);
 
 		arb->magic = RT_ARB_INTERNAL_MAGIC;
 
@@ -610,7 +610,7 @@ wrobj(char name[], int flags)
 	    {
 		struct rt_tgc_internal *tgc;
 
-		BU_GET(tgc, struct rt_tgc_internal);
+		BU_ALLOC(tgc, struct rt_tgc_internal);
 
 		tgc->magic = RT_TGC_INTERNAL_MAGIC;
 
