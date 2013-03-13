@@ -538,6 +538,11 @@
 	    set mEditClass $EDIT_CLASS_TRANS
 	    set mEditLastTransMode $::ArcherCore::OBJECT_TRANSLATE_MODE
 	    set mEditParam1 h
+	} \
+	default {
+	    set mEditCommand ""
+	    set mEditPCommand ""
+	    set mEditParam1 ""
 	}
 
     GeometryEditFrame::initEditState

@@ -462,10 +462,6 @@
 }
 
 ::itcl::body PipeEditFrame::initEditState {} {
-#    set mEditCommand pscale
-#    set mEditClass $EDIT_CLASS_SCALE
-#    configure -valueUnits "mm"
-
     set mEditPCommand [::itcl::code $this p]
     set seg_i [expr {$mCurrentPipePoint - 1}]
     highlightCurrentPipePoint
@@ -539,6 +535,11 @@
 	    set mEditPCommand [::itcl::code $this p]
 	    set mEditClass $EDIT_CLASS_SCALE
 	    set mEditParam1 B
+	} \
+	default {
+	    set mEditCommand ""
+	    set mEditPCommand ""
+	    set mEditParam1 ""
 	}
 
     GeometryEditFrame::initEditState

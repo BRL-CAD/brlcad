@@ -1304,6 +1304,11 @@
 	    set mEditParam2 3
 	    invokeRotationPointDialog {3 4 7 8}
 	    updateUpperPanel {3 4 7 8} {1 2 5 6}
+	} \
+	default {
+	    set mEditCommand ""
+	    set mEditPCommand ""
+	    set mEditParam1 ""
 	}
 
     GeometryEditFrame::initEditState

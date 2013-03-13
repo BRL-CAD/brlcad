@@ -5185,6 +5185,8 @@ namespace eval ArcherCore {
 	    gedCmd data_axes points {}
 	    gedCmd data_lines points {}
 	}
+
+	gedCmd configure -primitiveLabels {}
     } else {
 	initGed
 

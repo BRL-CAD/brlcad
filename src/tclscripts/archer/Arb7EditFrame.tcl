@@ -1046,6 +1046,11 @@
 	    set mEditParam2 5
 	    configure -valueUnits "deg"
 	    updateUpperPanel {5} {1 2 3 4 6 7}
+	} \
+	default {
+	    set mEditCommand ""
+	    set mEditPCommand ""
+	    set mEditParam1 ""
 	}
 
     GeometryEditFrame::initEditState

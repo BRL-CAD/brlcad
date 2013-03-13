@@ -653,10 +653,6 @@
 
 
 ::itcl::body BotEditFrame::initEditState {} {
-#    set mEditCommand pscale
-#    set mEditClass $EDIT_CLASS_SCALE
-#    configure -valueUnits "mm"
-
     if {$itk_option(-mged) == ""} {
 	return
     }
@@ -723,6 +719,11 @@
 	    set mEditCommand ""
 	    set mEditClass ""
 	    $::ArcherCore::application initFindBotFace $itk_option(-geometryObjectPath) 1 [::itcl::code $this botFaceSplitCallback]
+	} \
+	default {
+	    set mEditCommand ""
+	    set mEditPCommand ""
+	    set mEditParam1 ""
 	}
 
     GeometryEditFrame::initEditState

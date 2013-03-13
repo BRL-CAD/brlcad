@@ -477,22 +477,30 @@
 
 ::itcl::body RhcEditFrame::initEditState {} {
     set mEditCommand pscale
-    set mEditClass $EDIT_CLASS_SCALE
     set mEditPCommand [::itcl::code $this p]
     configure -valueUnits "mm"
 
     switch -- $mEditMode \
 	$setB {
 	    set mEditParam1 b
+	    set mEditClass $EDIT_CLASS_SCALE
 	} \
 	$setH {
 	    set mEditParam1 h
+	    set mEditClass $EDIT_CLASS_SCALE
 	} \
 	$setr {
 	    set mEditParam1 r
+	    set mEditClass $EDIT_CLASS_SCALE
 	} \
 	$setc {
 	    set mEditParam1 c
+	    set mEditClass $EDIT_CLASS_SCALE
+	} \
+	default {
+	    set mEditCommand ""
+	    set mEditPCommand ""
+	    set mEditParam1 ""
 	}
 
     GeometryEditFrame::initEditState

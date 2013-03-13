@@ -696,97 +696,88 @@
 
 ::itcl::body TgcEditFrame::initEditState {} {
     set mEditPCommand [::itcl::code $this p]
+    configure -valueUnits "mm"
 
     switch -- $mEditMode \
 	$setA {
 	    set mEditCommand pscale
 	    set mEditClass $EDIT_CLASS_SCALE
 	    set mEditParam1 a
-	    configure -valueUnits "mm"
 	} \
 	$setB {
 	    set mEditCommand pscale
 	    set mEditClass $EDIT_CLASS_SCALE
 	    set mEditParam1 b
-	    configure -valueUnits "mm"
 	} \
 	$setC {
 	    set mEditCommand pscale
 	    set mEditClass $EDIT_CLASS_SCALE
 	    set mEditParam1 c
-	    configure -valueUnits "mm"
 	} \
 	$setD {
 	    set mEditCommand pscale
 	    set mEditClass $EDIT_CLASS_SCALE
 	    set mEditParam1 d
-	    configure -valueUnits "mm"
 	} \
 	$setAB {
 	    set mEditCommand pscale
 	    set mEditClass $EDIT_CLASS_SCALE
 	    set mEditParam1 ab
-	    configure -valueUnits "mm"
 	} \
 	$setCD {
 	    set mEditCommand pscale
 	    set mEditClass $EDIT_CLASS_SCALE
 	    set mEditParam1 cd
-	    configure -valueUnits "mm"
 	} \
 	$setABCD {
 	    set mEditCommand pscale
 	    set mEditClass $EDIT_CLASS_SCALE
 	    set mEditParam1 abcd
-	    configure -valueUnits "mm"
 	} \
 	$setH {
 	    set mEditCommand pscale
 	    set mEditClass $EDIT_CLASS_SCALE
 	    set mEditParam1 h
-	    configure -valueUnits "mm"
 	} \
 	$setHCD {
 	    set mEditCommand pscale
 	    set mEditClass $EDIT_CLASS_SCALE
 	    set mEditParam1 hcd
-	    configure -valueUnits "mm"
 	} \
 	$setHV {
 	    set mEditCommand pscale
 	    set mEditClass $EDIT_CLASS_SCALE
 	    set mEditParam1 hv
-	    configure -valueUnits "mm"
 	} \
 	$setHVAB {
 	    set mEditCommand pscale
 	    set mEditClass $EDIT_CLASS_SCALE
 	    set mEditParam1 hvab
-	    configure -valueUnits "mm"
 	} \
 	$rotH {
 	    set mEditCommand protate
 	    set mEditClass $EDIT_CLASS_ROT
 	    set mEditParam1 h
-	    configure -valueUnits "mm"
 	} \
 	$rotAB {
 	    set mEditCommand protate
 	    set mEditClass $EDIT_CLASS_ROT
 	    set mEditParam1 hab
-	    configure -valueUnits "mm"
 	} \
 	$moveHR {
 	    set mEditCommand ptranslate
 	    set mEditClass $EDIT_CLASS_TRANS
 	    set mEditParam1 hr
-	    configure -valueUnits "mm"
 	} \
 	$moveH {
 	    set mEditCommand ptranslate
 	    set mEditClass $EDIT_CLASS_TRANS
 	    set mEditParam1 h
-	    configure -valueUnits "mm"
+	} \
+	default {
+	    set mEditCommand ""
+	    set mEditPCommand ""
+	    set mEditParam1 ""
 	}
 
     GeometryEditFrame::initEditState

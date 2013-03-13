@@ -256,8 +256,6 @@
     set itk_option(-prevGeometryObject) ""
 
     if {$_initFlag} {
-	set mEditParam1 ""
-	set mEditCommand ""
 	initEditState
     }
 }

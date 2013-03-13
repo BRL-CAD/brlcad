@@ -409,19 +409,26 @@
 
 ::itcl::body PartEditFrame::initEditState {} {
     set mEditCommand pscale
-    set mEditClass $EDIT_CLASS_SCALE
     set mEditPCommand [::itcl::code $this p]
     configure -valueUnits "mm"
 
     switch -- $mEditMode \
 	$setH {
 	    set mEditParam1 H
+	    set mEditClass $EDIT_CLASS_SCALE
 	} \
 	$setr_v {
 	    set mEditParam1 v
+	    set mEditClass $EDIT_CLASS_SCALE
 	} \
 	$setr_h {
 	    set mEditParam1 h
+	    set mEditClass $EDIT_CLASS_SCALE
+	} \
+	default {
+	    set mEditCommand ""
+	    set mEditPCommand ""
+	    set mEditParam1 ""
 	}
 
     GeometryEditFrame::initEditState

@@ -758,7 +758,8 @@ Lock-Shift-Button-1
 	return
     }
 
-    set mEditPCommand [::itcl::code $this p]
+#    set mEditPCommand [::itcl::code $this p]
+    set mEditPCommand ""
     set mEditParam1 ""
     set mEditCommand ""
     set mEditClass ""
