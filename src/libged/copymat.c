@@ -46,7 +46,7 @@ ged_copymat(struct ged *gedp, int argc, const char *argv[])
     struct directory *dp;
     struct rt_comb_internal *comb;
     struct rt_db_internal intern;
-    struct animate *anp;
+    struct animate anp;
     union tree *tp;
     static const char *usage = "a/b c/d";
 
@@ -80,16 +80,16 @@ ged_copymat(struct ged *gedp, int argc, const char *argv[])
 	}
     }
 
-    BU_GET(anp, struct animate);
-    anp->magic = ANIMATE_MAGIC;
+    memset(&anp, 0, sizeof(struct animate));
+    anp.magic = ANIMATE_MAGIC;
 
     ts = gedp->ged_wdbp->wdb_initial_tree_state;	/* struct copy */
     ts.ts_dbip = gedp->ged_wdbp->dbip;
     ts.ts_resp = &rt_uniresource;
     MAT_IDN(ts.ts_mat);
-    db_full_path_init(&anp->an_path);
+    db_full_path_init(&anp.an_path);
     if (child == NULL
-	|| db_follow_path_for_state(&ts, &(anp->an_path), argv[1], LOOKUP_NOISY) < 0)
+	|| db_follow_path_for_state(&ts, &(anp.an_path), argv[1], LOOKUP_NOISY) < 0)
     {
 	bu_vls_printf(gedp->ged_result_str, "%s: cannot follow path for arc: '%s'\n", argv[0], argv[1]);
 	return GED_ERROR;
