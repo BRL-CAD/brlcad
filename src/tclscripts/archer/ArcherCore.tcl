@@ -5760,7 +5760,12 @@ namespace eval ArcherCore {
     updatePerspective 0
     doLighting
     gedCmd dlist_on $mDisplayListMode
-    gedCmd lod_on $mWireframeMode
+
+    if {$mWireframeMode} {
+	gedCmd lod on
+    } else {
+	gedCmd lod off
+    }
 
     $itk_component(ged) refresh_on
     $itk_component(ged) refresh_all

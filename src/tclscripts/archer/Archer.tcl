@@ -528,7 +528,12 @@ package provide Archer 1.0
     }
 
     gedCmd dlist_on $mDisplayListMode
-    gedCmd lod_on $mWireframeMode
+
+    if {$mWireframeMode} {
+	gedCmd lod on
+    } else {
+	gedCmd lod off
+    }
 
 
     bind [namespace tail $this] <Configure> [::itcl::code $this handleConfigure]
@@ -8310,7 +8315,12 @@ proc title_node_handler {node} {
 
     if {$mWireframeModePref != $mWireframeMode} {
 	set mWireframeMode $mWireframeModePref
-	gedCmd lod_on $mWireframeMode
+
+	if {$mWireframeMode} {
+	    gedCmd lod on
+	} else {
+	    gedCmd lod off
+	}
 	set wflag 1
     }
 

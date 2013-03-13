@@ -304,7 +304,7 @@ HIDDEN int to_local2base(struct ged *gedp,
 			 ged_func_ptr func,
 			 const char *usage,
 			 int maxargs);
-HIDDEN int to_lod_on(struct ged *gedp,
+HIDDEN int to_lod(struct ged *gedp,
 		     int argc,
 		     const char *argv[],
 		     ged_func_ptr func,
@@ -1031,7 +1031,7 @@ static struct to_cmdtab to_cmds[] = {
     {"listeval",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_pathsum},
     {"loadview",	"filename", 3, to_view_func, ged_loadview},
     {"local2base",	(char *)0, TO_UNLIMITED, to_local2base, GED_FUNC_PTR_NULL},
-    {"lod_on",	"[0|1]", TO_UNLIMITED, to_lod_on, GED_FUNC_PTR_NULL},
+    {"lod",	(char *)0, TO_UNLIMITED, to_lod, ged_lod},
     {"log",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_log},
     {"lookat",	"x y z", 5, to_view_func_plus, ged_lookat},
     {"ls",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_ls},
@@ -5816,7 +5816,10 @@ to_idle_mode(struct ged *gedp,
 
     mode = gdvp->gdv_view->gv_mode;
 
-    if (gdvp->gdv_view->gv_adaptive_plot && mode == TCLCAD_SCALE_MODE) {
+    if (gdvp->gdv_view->gv_adaptive_plot &&
+	gdvp->gdv_view->gv_redraw_on_zoom &&
+	mode == TCLCAD_SCALE_MODE)
+    {
 	char *av[] = {"redraw", NULL};
 
 	ged_redraw(gedp, 1, (const char **)av);
@@ -6055,39 +6058,18 @@ to_local2base(struct ged *gedp,
 }
 
 HIDDEN int
-to_lod_on(struct ged *gedp,
+to_lod(struct ged *gedp,
 	    int argc,
 	    const char *argv[],
-	    ged_func_ptr UNUSED(func),
+	    ged_func_ptr func,
 	    const char *UNUSED(usage),
 	    int UNUSED(maxargs))
 {
-    int on;
     struct ged_dm_view *gdvp;
 
-    /* initialize result */
-    bu_vls_trunc(gedp->ged_result_str, 0);
-
-    if (2 < argc) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s", argv[0]);
-	return GED_ERROR;
-    }
-
-    /* Get lod_on state */
-    if (argc == 1) {
-	gdvp = BU_LIST_FIRST(ged_dm_view, &current_top->to_gop->go_head_views.l);
-	bu_vls_printf(gedp->ged_result_str, "%d", gdvp->gdv_view->gv_adaptive_plot);
-	return GED_OK;
-    }
-
-    /* Set lod_on state */
-    if (bu_sscanf(argv[1], "%d", &on) != 1) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s", argv[0]);
-	return GED_ERROR;
-    }
-
     for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
-	gdvp->gdv_view->gv_adaptive_plot = on;
+	gedp->ged_gvp = gdvp->gdv_view;
+	(*func)(gedp, argc, (const char **)argv);
     }
 
     return GED_OK;

@@ -250,7 +250,7 @@ package provide cadwidgets::Ged 1.0
 	method listeval {args}
 	method loadview {args}
 	method local2base {}
-	method lod_on {args}
+	method lod {args}
 	method log {args}
 	method lookat {args}
 	method ls {args}
@@ -1757,8 +1757,8 @@ package provide cadwidgets::Ged 1.0
     eval $mGed local2base
 }
 
-::itcl::body cadwidgets::Ged::lod_on {args} {
-    eval $mGed lod_on $args
+::itcl::body cadwidgets::Ged::lod {args} {
+    eval $mGed lod $args
 }
 
 ::itcl::body cadwidgets::Ged::log {args} {
@@ -5515,6 +5515,7 @@ package provide cadwidgets::Ged 1.0
     $help add listen		{{[n]} {get/set the port to listen on for rt applications}}
     $help add listeval		{{} {lists 'evaluated' path solids}}
     $help add loadview		{{file} {loads a view from file}}
+    $help add lod		{{} {configure Level of Detail drawing}}
     $help add log		{{get|start|stop} {used to control logging}}
     $help add lookat		{{x y z} {adjust view to look at given coordinates}}
     $help add ls		{{[-a -c -r -s]} {table of contents}}
