@@ -1708,7 +1708,7 @@ ged_addToDisplay(struct ged *gedp,
 	gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
     }
 
-    BU_GET(gdlp, struct ged_display_list);
+    BU_ALLOC(gdlp, struct ged_display_list);
     BU_LIST_INIT(&gdlp->l);
     BU_LIST_INSERT(&gedp->ged_gdp->gd_headDisplay, &gdlp->l);
     BU_LIST_INIT(&gdlp->gdl_headSolid);
