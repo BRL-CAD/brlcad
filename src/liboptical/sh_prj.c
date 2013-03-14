@@ -592,7 +592,7 @@ prj_free(genptr_t cp)
 	bu_vls_vlsfree(&img_sp->i_name);
 
 	BU_LIST_DEQUEUE(&img_sp->l);
-	bu_free((genptr_t)img_sp, "img_specific");
+	BU_PUT(img_sp, struct img_specific);
     }
 
     if (prj_sp->prj_plfd) {
@@ -601,7 +601,7 @@ prj_free(genptr_t cp)
 	bu_semaphore_release(BU_SEM_SYSCALL);
     }
 
-    bu_free(cp, "prj_specific");
+    BU_PUT(cp, struct prj_specific);
 }
 HIDDEN const double cs = (1.0/255.0);
 HIDDEN const point_t delta = {0.5, 0.5, 0.0};

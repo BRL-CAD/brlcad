@@ -386,7 +386,7 @@ gauss_free(genptr_t cp)
 	bu_free((genptr_t)p, "gauss reg_db_internals");
     }
 
-    bu_free(cp, "gauss_specific");
+    BU_PUT(cp, struct gauss_specific);
 }
 
 

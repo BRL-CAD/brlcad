@@ -434,7 +434,7 @@ HIDDEN void osl_free(genptr_t cp)
 {
     register struct osl_specific *osl_sp =
 	(struct osl_specific *)cp;
-    bu_free(cp, "osl_specific");
+    BU_PUT(cp, struct osl_specific);
 
 #if 0
     bu_semaphore_acquire(BU_SEM_SYSCALL);

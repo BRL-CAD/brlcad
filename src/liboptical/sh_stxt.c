@@ -183,7 +183,7 @@ stxt_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, co
 
     /** Get input values **/
     if (bu_struct_parse(matparm, stxt_parse, (char *)stp) < 0) {
-	bu_free((genptr_t)stp, "stxt_specific");
+	BU_PUT(stp, struct stxt_specific);
 	return -1;
     }
     /*** DEFAULT SIZE OF STXT FILES ***/
@@ -216,7 +216,7 @@ stxt_free(genptr_t cp)
 
     if (stp->stx_pixels)
 	bu_free(stp->stx_pixels, "solid texture pixel array");
-    bu_free(cp, "stx_specific");
+    BU_PUT(cp, struct stx_specific);
 }
 
 

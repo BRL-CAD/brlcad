@@ -205,7 +205,7 @@ scloud_print(register struct region *rp, genptr_t dp)
 HIDDEN void
 scloud_free(genptr_t cp)
 {
-    bu_free(cp, "scloud_specific");
+    BU_PUT(cp, struct scloud_specific);
 }
 
 

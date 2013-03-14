@@ -301,7 +301,7 @@ flat_print(register struct region *rp, genptr_t dp) {
  */
 HIDDEN void
 flat_free(genptr_t cp) {
-    bu_free(cp, "flat_specific");
+    BU_PUT(cp, struct flat_specific);
 }
 
 

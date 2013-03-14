@@ -582,7 +582,7 @@ light_free(genptr_t cp)
 	bu_free(lsp->lt_sample_pts, "free light samples array");
     }
     lsp->l.magic = 0;	/* sanity */
-    bu_free((genptr_t)lsp, "light_specific");
+    BU_PUT(lsp, struct light_specific);
 }
 
 

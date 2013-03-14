@@ -119,7 +119,7 @@ phong_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, c
     pp->mfp = mfp;
 
     if (bu_struct_parse(matparm, phong_parse, (char *)pp) < 0) {
-	bu_free((genptr_t)pp, "phong_specific");
+	BU_PUT(pp, struct phong_specific);
 	return -1;
     }
 
@@ -152,7 +152,7 @@ mirror_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, 
     pp->mfp = mfp;
 
     if (bu_struct_parse(matparm, phong_parse, (char *)pp) < 0) {
-	bu_free((genptr_t)pp, "phong_specific");
+	BU_PUT(pp, struct phong_specific);
 	return -1;
     }
 
@@ -186,7 +186,7 @@ glass_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, c
     pp->mfp = mfp;
 
     if (bu_struct_parse(matparm, phong_parse, (char *)pp) < 0) {
-	bu_free((genptr_t)pp, "phong_specific");
+	BU_PUT(pp, struct phong_specific);
 	return -1;
     }
 
@@ -212,7 +212,7 @@ phong_print(register struct region *rp, genptr_t dp)
 HIDDEN void
 phong_free(genptr_t cp)
 {
-    bu_free(cp, "phong_specific");
+    BU_PUT(cp, struct phong_specific);
 }
 
 

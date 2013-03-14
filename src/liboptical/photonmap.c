@@ -367,7 +367,7 @@ GetMaterial(char *MS, vect_t spec, fastf_t *refi, fastf_t *transmit)
     struct phong_specific *phong_sp;
     struct bu_vls matparm = BU_VLS_INIT_ZERO;
 
-    phong_sp = (struct phong_specific*)bu_malloc(sizeof(struct phong_specific), "phong specific");
+    BU_GET(phong_sp, struct phong_specific);
 
     /* Initialize spec and refi */
     spec[0] = spec[1] = spec[2] = *refi = *transmit = 0;
@@ -382,10 +382,7 @@ GetMaterial(char *MS, vect_t spec, fastf_t *refi, fastf_t *transmit)
 	phong_sp->reflect = 0.0;
 	phong_sp->refrac_index = 1.0;
 	phong_sp->extinction = 0.0;
-	/*
-	  BU_GET(phong_sp, struct phong_specific);
-	  memcpy(phong_sp, &phong_defaults, sizeof(struct phong_specific));
-	*/
+
 	MS += 7;
 	bu_vls_printf(&matparm, "%s", MS);
 	if (bu_struct_parse(&matparm, phong_parse, (char *)phong_sp) < 0)
@@ -418,10 +415,6 @@ GetMaterial(char *MS, vect_t spec, fastf_t *refi, fastf_t *transmit)
 	phong_sp->refrac_index = 1.65;
 	phong_sp->extinction = 0.0;
 
-	/*
-	  BU_GET(phong_sp, struct phong_specific);
-	  memcpy(phong_sp, &phong_defaults, sizeof(struct phong_specific));
-	*/
 	MS += 5; /* move pointer past "pm " (3 characters) */
 	bu_vls_printf(&matparm, "%s", MS);
 	if (bu_struct_parse(&matparm, phong_parse, (char *)phong_sp) < 0)
@@ -442,7 +435,7 @@ GetMaterial(char *MS, vect_t spec, fastf_t *refi, fastf_t *transmit)
 	*/
     }
 
-    bu_free(phong_sp, "phong_specific");
+    BU_PUT(phong_sp, struct phong_specific);
 }
 
 

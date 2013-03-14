@@ -286,7 +286,7 @@ fire_print(register struct region *rp, genptr_t dp)
 HIDDEN void
 fire_free(genptr_t cp)
 {
-    bu_free(cp, "fire_specific");
+    BU_PUT(cp, struct fire_specific);
 }
 
 

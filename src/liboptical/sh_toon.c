@@ -163,7 +163,7 @@ toon_print(register struct region *rp, genptr_t dp)
 HIDDEN void
 toon_free(genptr_t cp)
 {
-    bu_free(cp, "toon_specific");
+    BU_PUT(cp, struct toon_specific);
 }
 
 

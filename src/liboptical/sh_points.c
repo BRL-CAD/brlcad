@@ -105,7 +105,7 @@ points_setup(register struct region *UNUSED(rp), struct bu_vls *matparm, genptr_
     ptp->pt_file[0] = '\0';
     ptp->pt_size = -1;
     if (bu_struct_parse(matparm, points_parse, (char *)ptp) < 0) {
-	bu_free((genptr_t)ptp, "points_specific");
+	BU_PUT(ptp, struct points_specific);
 	return -1;
     }
     if (ptp->pt_size < 0)
@@ -146,7 +146,7 @@ points_setup(register struct region *UNUSED(rp), struct bu_vls *matparm, genptr_
 
     return 1;
 fail:
-    bu_free((genptr_t)ptp, "points_specific");
+    BU_PUT(ptp, struct points_specific);
     return -1;
 }
 

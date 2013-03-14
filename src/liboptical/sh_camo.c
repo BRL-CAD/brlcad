@@ -302,7 +302,7 @@ camo_print(register struct region *rp, genptr_t dp)
 HIDDEN void
 camo_free(genptr_t cp)
 {
-    bu_free(cp, "camo_specific");
+    BU_PUT(cp, struct camo_specific);
 }
 
 

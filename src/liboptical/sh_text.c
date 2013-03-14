@@ -626,7 +626,7 @@ txt_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, con
 
     /* load given values */
     if (bu_struct_parse(matparm, txt_parse, (char *)tp) < 0) {
-	bu_free((genptr_t)tp, "txt_specific");
+	BU_PUT(tp, struct txt_specific);
 	return -1;
     }
 
@@ -679,7 +679,7 @@ txt_free(genptr_t cp)
     if (tp->tx_mp) bu_close_mapped_file(tp->tx_mp);
     tp->tx_binunifp = GENPTR_NULL; /* sanity */
     tp->tx_mp = GENPTR_NULL; /* sanity */
-    bu_free(cp, "txt_specific");
+    BU_PUT(cp, struct txt_specific);
 }
 
 
@@ -749,7 +749,7 @@ ckr_setup(register struct region *UNUSED(rp), struct bu_vls *matparm, genptr_t *
     ckp->ckr_b[0] = ckp->ckr_b[1] = ckp->ckr_b[2] = 0;
     ckp->ckr_scale = 2.0;
     if (bu_struct_parse(matparm, ckr_parse, (char *)ckp) < 0) {
-	bu_free((genptr_t)ckp, "ckr_specific");
+	BU_PUT(ckp, struct ckr_specific);
 	return -1;
     }
     ckp->ckr_a[0] &= 0x0ff;
@@ -778,7 +778,7 @@ ckr_print(register struct region *rp, genptr_t UNUSED(dp))
 HIDDEN void
 ckr_free(genptr_t cp)
 {
-    bu_free(cp, "ckr_specific");
+    BU_PUT(cp, struct ckr_specific);
 }
 
 

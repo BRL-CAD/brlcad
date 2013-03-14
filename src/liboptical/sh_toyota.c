@@ -183,7 +183,7 @@ toyota_setup(register struct region *UNUSED(rp), struct bu_vls *matparm, genptr_
     VSET(tp->Zenith, 0., 0., 1.);
 
     if (bu_struct_parse(matparm, toyota_parse, (char *)tp) < 0) {
-	bu_free((genptr_t)tp, "toyota_specific");
+	BU_PUT(tp, struct toyota_specific);
 	return -1;
     }
 
@@ -283,7 +283,7 @@ HIDDEN void
 toyota_free(genptr_t cp)
 {
     /* need to free cp->refl */
-    bu_free(cp, "toyota_specific");
+    BU_PUT(cp, struct toyota_specific);
 }
 
 

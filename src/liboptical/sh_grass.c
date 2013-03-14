@@ -567,7 +567,7 @@ grass_print(register struct region *rp, genptr_t dp)
 HIDDEN void
 grass_free(genptr_t cp)
 {
-    bu_free(cp, "grass_specific");
+    BU_PUT(cp, struct grass_specific);
 }
 
 

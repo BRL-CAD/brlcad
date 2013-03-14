@@ -169,7 +169,7 @@ air_free(genptr_t cp)
 {
     if (rdebug&RDEBUG_SHADE)
 	bu_log("air_free(%s:%d)\n", __FILE__, __LINE__);
-    bu_free(cp, "air_specific");
+    BU_PUT(cp, struct air_specific);
 }
 
 

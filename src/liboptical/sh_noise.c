@@ -272,7 +272,7 @@ noise_print(register struct region *rp, genptr_t dp)
 HIDDEN void
 noise_free(genptr_t cp)
 {
-    bu_free(cp, "noise_specific");
+    BU_PUT(cp, struct noise_specific);
 }
 #define RESCALE_NOISE(n) n += 1.0
 

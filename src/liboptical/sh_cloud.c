@@ -150,7 +150,7 @@ cloud_print(register struct region *rp, genptr_t dp)
 HIDDEN void
 cloud_free(genptr_t cp)
 {
-    bu_free(cp, "cloud_specific");
+    BU_PUT(cp, struct cloud_specific);
 }
 
 

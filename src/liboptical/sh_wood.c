@@ -300,7 +300,7 @@ wood_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, co
      */
 
     if (bu_struct_parse(matparm, wood_parse, (char *)wd) < 0) {
-	bu_free((genptr_t)wd, "wood_specific");
+	BU_PUT(wd, struct wood_specific);
 	return -1;
     }
 
@@ -481,7 +481,7 @@ wood_free(genptr_t cp)
     if (Wood_Chain == wd) {
 /* bu_log ("wood_free(%s):  Releasing region (at head).\n", wd->rp->reg_name); */
 	Wood_Chain = wd->forw;
-	bu_free((genptr_t)wd, "wood_specific");
+	BU_PUT(wd, struct wood_specific);
 	return;
     }
 
@@ -489,12 +489,12 @@ wood_free(genptr_t cp)
 	if (wc->forw == wd) {
 /* bu_log("wood_free(%s):  Releasing region.\n", wd->rp->reg_name); */
 	    wc->forw = wd->forw;
-	    bu_free((genptr_t)wd, "wood_specific");
+	    BU_PUT(wd, struct wood_specific);
 	    return;
 	}
     }
 
-    bu_free((genptr_t)wd, "wood_specific");
+    BU_PUT(wd, struct wood_specific);
 }
 
 

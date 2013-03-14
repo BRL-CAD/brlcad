@@ -132,7 +132,8 @@ void new_image(register const struct bu_structparse *UNUSED(sdp),	/*struct desc*
     struct bbd_specific *bbd_sp = (struct bbd_specific *)base;
     struct bbd_img *bbdi;
 
-    BU_GET(bbdi, struct bbd_img);
+    /* XXX - looks like we don't release this memory */
+    BU_ALLOC(bbdi, struct bbd_img);
 
     bbdi->img_mf = bu_open_mapped_file_with_path(
 	bbd_sp->rtip->rti_dbip->dbi_filepath,
@@ -306,7 +307,7 @@ bbd_print(struct region *rp, genptr_t dp)
 HIDDEN void
 bbd_free(genptr_t cp)
 {
-    bu_free(cp, "bbd_specific");
+    BU_PUT(cp, struct bbd_specific);
 }
 
 

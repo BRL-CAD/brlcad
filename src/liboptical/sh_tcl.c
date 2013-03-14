@@ -189,7 +189,7 @@ tcl_print(register struct region *rp, genptr_t dp)
 HIDDEN void
 tcl_free(genptr_t cp)
 {
-    bu_free(cp, "tcl_specific");
+    BU_PUT(cp, struct tcl_specific);
 }
 
 

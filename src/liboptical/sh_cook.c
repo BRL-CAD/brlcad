@@ -140,7 +140,7 @@ cook_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, co
     pp->rd[2] = fresnel(0.0, pp->n[2]) / bn_pi;
 
     if (bu_struct_parse(matparm, cook_parse, (char *)pp) < 0) {
-	bu_free((genptr_t)pp, "cook_specific");
+	BU_PUT(pp, struct cook_specific);
 	return -1;
     }
 
@@ -249,7 +249,7 @@ cook_print(register struct region *rp, genptr_t dp)
 HIDDEN void
 cook_free(genptr_t cp)
 {
-    bu_free(cp, "cook_specific");
+    BU_PUT(cp, struct cook_specific);
 }
 
 

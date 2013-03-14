@@ -101,7 +101,7 @@ spm_mfree(genptr_t cp)
     if (spm->sp_map)
 	bn_spm_free(spm->sp_map);
     spm->sp_map = BN_SPM_MAP_NULL;
-    bu_free(cp, "spm_specific");
+    BU_PUT(cp, struct spm_specific);
 }
 
 
@@ -127,7 +127,7 @@ spm_setup(register struct region *UNUSED(rp), struct bu_vls *matparm, genptr_t *
     spp->sp_file[0] = '\0';
     spp->sp_w = -1;
     if (bu_struct_parse(matparm, spm_parse, (char *)spp) < 0) {
-	bu_free((genptr_t)spp, "spm_specific");
+	BU_PUT(spp, struct spm_specific);
 	return -1;
     }
     if (spp->sp_w < 0) spp->sp_w = 512;

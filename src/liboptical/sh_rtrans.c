@@ -126,7 +126,7 @@ rtrans_print(register struct region *rp, genptr_t dp)
 HIDDEN void
 rtrans_free(genptr_t cp)
 {
-    bu_free(cp, "rtrans_specific");
+    BU_PUT(cp, struct rtrans_specific);
 }
 
 

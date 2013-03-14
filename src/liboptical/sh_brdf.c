@@ -120,7 +120,7 @@ brdf_setup(register struct region *UNUSED(rp), struct bu_vls *matparm, genptr_t 
     pp->rms_slope = 0.05;
 
     if (bu_struct_parse(matparm, brdf_parse, (char *)pp) < 0) {
-	bu_free((genptr_t)pp, "brdf_specific");
+	BU_PUT(pp, struct brdf_specific);
 	return -1;
     }
 
@@ -145,7 +145,7 @@ brdf_print(register struct region *rp, genptr_t dp)
 HIDDEN void
 brdf_free(genptr_t cp)
 {
-    bu_free(cp, "brdf_specific");
+    BU_PUT(cp, struct brdf_specific);
 }
 
 

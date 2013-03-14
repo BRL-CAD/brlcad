@@ -130,7 +130,7 @@ fbm_print(register struct region *rp, genptr_t dp)
 HIDDEN void
 fbm_free(genptr_t cp)
 {
-    bu_free(cp, "fbm_specific");
+    BU_PUT(cp, struct fbm_specific);
 }
 
 

@@ -239,7 +239,7 @@ xxx_print(register struct region *rp, genptr_t dp)
 HIDDEN void
 xxx_free(genptr_t cp)
 {
-    bu_free(cp, "xxx_specific");
+    BU_PUT(cp, struct xxx_specific);
 }
 
 
