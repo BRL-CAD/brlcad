@@ -19,8 +19,8 @@
  */
 /** @file libmultispectral/sh_temp.c
  *
- *  Temperature map lookup.
- *  Based upon liboptical/sh_text.c
+ * Temperature map lookup.
+ * Based upon liboptical/sh_text.c
  *
  */
 
@@ -35,7 +35,7 @@
 #include "optical.h"
 
 
-extern struct region	env_region;		/* import from view.c */
+extern struct region env_region;		/* import from view.c */
 
 HIDDEN int temp_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dp, const struct mfuncs *mfp, struct rt_i *rtip);
 HIDDEN int temp_render(struct application *ap, const struct partition *pp, struct shadework *swp, genptr_t dp);
@@ -51,15 +51,16 @@ struct mfuncs temp_mfuncs[] = {
     {0,		(char *)0,	0,		0,		0,	0,		0,		0,		0 }
 };
 
+
 #define TXT_NAME_LEN 128
 struct temp_specific {
-    char	t_file[TXT_NAME_LEN];	/* Filename */
-    int	t_w;		/* Width of texture in pixels */
-    int	t_n;		/* Number of scanlines */
-    struct bu_mapped_file	*mp;
+    char t_file[TXT_NAME_LEN];	/* Filename */
+    int t_w;		/* Width of texture in pixels */
+    int t_n;		/* Number of scanlines */
+    struct bu_mapped_file *mp;
 };
-#define TX_NULL	((struct temp_specific *)0)
-#define TX_O(m)	bu_offsetof(struct temp_specific, m)
+#define TX_NULL ((struct temp_specific *)0)
+#define TX_O(m) bu_offsetof(struct temp_specific, m)
 
 struct bu_structparse temp_parse[] = {
     {"%s", TXT_NAME_LEN, "file", TX_O(t_file), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
@@ -69,14 +70,15 @@ struct bu_structparse temp_parse[] = {
     {"",   0,		(char *)0,	0,			BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 
+
 /*
- *  			T X T _ R E N D E R
+ * T X T _ R E N D E R
  *
- *  Given a u, v coordinate within the texture ( 0 <= u, v <= 1.0 ),
- *  return a pointer to the relevant pixel.
+ * Given a u, v coordinate within the texture (0 <= u, v <= 1.0),
+ * return a pointer to the relevant pixel.
  *
- *  Note that .pix files are stored left-to-right, bottom-to-top,
- *  which works out very naturally for the indexing scheme.
+ * Note that .pix files are stored left-to-right, bottom-to-top,
+ * which works out very naturally for the indexing scheme.
  */
 HIDDEN int
 temp_render(struct application *ap, const struct partition *pp, struct shadework *swp, genptr_t dp)
@@ -87,29 +89,29 @@ temp_render(struct application *ap, const struct partition *pp, struct shadework
     int dx, dy;
     register fastf_t temp = 0;
 
-    if ( rdebug & RDEBUG_SHADE )
-	bu_log( "in temp_render(): du=%g, dv=%g\n", swp->sw_uv.uv_du, swp->sw_uv.uv_dv );
+    if (rdebug & RDEBUG_SHADE)
+	bu_log("in temp_render(): du=%g, dv=%g\n", swp->sw_uv.uv_du, swp->sw_uv.uv_dv);
     /*
      * If no texture file present, or if
      * texture isn't and can't be read, give debug colors
      * Set temp in degK to be the sum of the X&Y screen coordinates.
      */
-    if ( tp->t_file[0] == '\0' || !tp->mp )  {
+    if (tp->t_file[0] == '\0' || !tp->mp) {
 	swp->sw_temperature = ap->a_x + ap->a_y;
-	if ( swp->sw_reflect > 0 || swp->sw_transmit > 0 )
-	    (void)rr_render( ap, pp, swp );
+	if (swp->sw_reflect > 0 || swp->sw_transmit > 0)
+	    (void)rr_render(ap, pp, swp);
 	return 1;
     }
 
     /* u is left->right index, v is line number bottom->top */
     /* Don't filter more than 1/8 of the texture for 1 pixel! */
-    if ( swp->sw_uv.uv_du > 0.125 )  swp->sw_uv.uv_du = 0.125;
-    if ( swp->sw_uv.uv_dv > 0.125 )  swp->sw_uv.uv_dv = 0.125;
+    if (swp->sw_uv.uv_du > 0.125) swp->sw_uv.uv_du = 0.125;
+    if (swp->sw_uv.uv_dv > 0.125) swp->sw_uv.uv_dv = 0.125;
 
-    if ( swp->sw_uv.uv_du < 0 || swp->sw_uv.uv_dv < 0 )  {
-	bu_log("temp_render uv=%g,%g, du dv=%g %g seg=%s\n",
+    if (swp->sw_uv.uv_du < 0 || swp->sw_uv.uv_dv < 0) {
+	bu_log("temp_render uv=%g, %g, du dv=%g %g seg=%s\n",
 	       swp->sw_uv.uv_u, swp->sw_uv.uv_v, swp->sw_uv.uv_du, swp->sw_uv.uv_dv,
-	       pp->pt_inseg->seg_stp->st_name );
+	       pp->pt_inseg->seg_stp->st_name);
 	swp->sw_uv.uv_du = swp->sw_uv.uv_dv = 0;
     }
 
@@ -117,23 +119,22 @@ temp_render(struct application *ap, const struct partition *pp, struct shadework
     xmax = swp->sw_uv.uv_u + swp->sw_uv.uv_du;
     ymin = swp->sw_uv.uv_v - swp->sw_uv.uv_dv;
     ymax = swp->sw_uv.uv_v + swp->sw_uv.uv_dv;
-    if ( xmin < 0 )  xmin = 0;
-    if ( ymin < 0 )  ymin = 0;
-    if ( xmax > 1 )  xmax = 1;
-    if ( ymax > 1 )  ymax = 1;
+    if (xmin < 0) xmin = 0;
+    if (ymin < 0) ymin = 0;
+    if (xmax > 1) xmax = 1;
+    if (ymax > 1) ymax = 1;
 
-    if ( rdebug & RDEBUG_SHADE )
-	bu_log( "footprint in texture space is (%g %g) <-> (%g %g)\n",
-		xmin * (tp->t_w-1), ymin * (tp->t_n-1),
-		xmax * (tp->t_w-1), ymax * (tp->t_n-1) );
+    if (rdebug & RDEBUG_SHADE)
+	bu_log("footprint in texture space is (%g %g) <-> (%g %g)\n",
+	       xmin * (tp->t_w-1), ymin * (tp->t_n-1),
+	       xmax * (tp->t_w-1), ymax * (tp->t_n-1));
 
     dx = (int)(xmax * (tp->t_w-1)) - (int)(xmin * (tp->t_w-1));
     dy = (int)(ymax * (tp->t_n-1)) - (int)(ymin * (tp->t_n-1));
 
-    if ( rdebug & RDEBUG_SHADE )
-	bu_log( "\tdx = %d, dy = %d\n", dx, dy );
-    if ( dx == 0 && dy == 0 )
-    {
+    if (rdebug & RDEBUG_SHADE)
+	bu_log("\tdx = %d, dy = %d\n", dx, dy);
+    if (dx == 0 && dy == 0) {
 	/* No averaging necessary */
 
 	register unsigned char *cp;
@@ -142,11 +143,9 @@ temp_render(struct application *ap, const struct partition *pp, struct shadework
 	cp = ((unsigned char *)(tp->mp->buf)) +
 	    (int)(ymin * (tp->t_n-1)) * tp->t_w * 8 +
 	    (int)(xmin * (tp->t_w-1)) * 8;
-	ntohd( (unsigned char *)&ttemp, cp, 1 );
+	ntohd((unsigned char *)&ttemp, cp, 1);
 	temp += ttemp;
-    }
-    else
-    {
+    } else {
 	/* Calculate weighted average of cells in footprint */
 
 	fastf_t tot_area=0.0;
@@ -165,49 +164,46 @@ temp_render(struct application *ap, const struct partition *pp, struct shadework
 	start_col = xstart;
 	stop_col = xstop;
 
-	if ( rdebug & RDEBUG_SHADE )
-	{
-	    bu_log( "\thit in texture space = (%g %g)\n", swp->sw_uv.uv_u * (tp->t_w-1), swp->sw_uv.uv_v * (tp->t_n-1) );
-	    bu_log( "\t averaging from  (%g %g) to (%g %g)\n", xstart, ystart, xstop, ystop );
-	    bu_log( "\tcontributions to average:\n" );
+	if (rdebug & RDEBUG_SHADE) {
+	    bu_log("\thit in texture space = (%g %g)\n", swp->sw_uv.uv_u * (tp->t_w-1), swp->sw_uv.uv_v * (tp->t_n-1));
+	    bu_log("\t averaging from (%g %g) to (%g %g)\n", xstart, ystart, xstop, ystop);
+	    bu_log("\tcontributions to average:\n");
 	}
 
-	for ( line = start_line; line <= stop_line; line++ )
-	{
+	for (line = start_line; line <= stop_line; line++) {
 	    register unsigned char *cp;
 	    fastf_t line_factor;
 	    fastf_t line_upper, line_lower;
 
 	    line_upper = line + 1.0;
-	    if ( line_upper > ystop )
+	    if (line_upper > ystop)
 		line_upper = ystop;
 	    line_lower = line;
-	    if ( line_lower < ystart )
+	    if (line_lower < ystart)
 		line_lower = ystart;
 	    line_factor = line_upper - line_lower;
 	    cp = ((unsigned char *)(tp->mp->buf)) +
 		line * tp->t_w * 8 + (int)(xstart) * 8;
 
-	    for ( col = start_col; col <= stop_col; col++ )
-	    {
+	    for (col = start_col; col <= stop_col; col++) {
 		fastf_t col_upper, col_lower;
 		double ttemp;
 
 		col_upper = col + 1.0;
-		if ( col_upper > xstop )
+		if (col_upper > xstop)
 		    col_upper = xstop;
 		col_lower = col;
-		if ( col_lower < xstart )
+		if (col_lower < xstart)
 		    col_lower = xstart;
 		cell_area = line_factor * (col_upper - col_lower);
 		tot_area += cell_area;
 
-		ntohd( (unsigned char *)&ttemp, cp, 1 );
+		ntohd((unsigned char *)&ttemp, cp, 1);
 
-		if ( rdebug & RDEBUG_SHADE )
-		    bu_log( "\t %g weight=%g (from col=%d line=%d)\n",
-			    ttemp,
-			    cell_area, col, line );
+		if (rdebug & RDEBUG_SHADE)
+		    bu_log("\t %g weight=%g (from col=%d line=%d)\n",
+			   ttemp,
+			   cell_area, col, line);
 
 		temp += ttemp * cell_area;
 	    }
@@ -215,61 +211,63 @@ temp_render(struct application *ap, const struct partition *pp, struct shadework
 	temp /= tot_area;
     }
 
-    if ( rdebug & RDEBUG_SHADE )
-	bu_log( " average temp: %g\n", temp );
+    if (rdebug & RDEBUG_SHADE)
+	bu_log(" average temp: %g\n", temp);
 
     swp->sw_temperature = temp;
 
-    if ( swp->sw_reflect > 0 || swp->sw_transmit > 0 )
-	(void)rr_render( ap, pp, swp );
+    if (swp->sw_reflect > 0 || swp->sw_transmit > 0)
+	(void)rr_render(ap, pp, swp);
     return 1;
 }
 
+
 /*
- *			T X T _ S E T U P
+ * T X T _ S E T U P
  */
 HIDDEN int
 temp_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, const struct mfuncs *mfp, struct rt_i *UNUSED(rtip))
 
 
-    /* New since 4.4 release */
+/* New since 4.4 release */
 {
     register struct temp_specific *tp;
     size_t pixelbytes = 8;
 
-    BU_CK_VLS( matparm );
+    BU_CK_VLS(matparm);
     BU_GET(tp, struct temp_specific);
     *dpp = tp;
 
     tp->t_file[0] = '\0';
     tp->t_w = tp->t_n = -1;
-    if ( bu_struct_parse( matparm, temp_parse, (char *)tp ) < 0 )  {
-	bu_free( (char *)tp, "temp_specific" );
+    if (bu_struct_parse(matparm, temp_parse, (char *)tp) < 0) {
+	BU_PUT(tp, struct temp_specific);
 	return -1;
     }
-    if ( tp->t_w < 0 )  tp->t_w = 512;
-    if ( tp->t_n < 0 )  tp->t_n = tp->t_w;
+    if (tp->t_w < 0) tp->t_w = 512;
+    if (tp->t_n < 0) tp->t_n = tp->t_w;
 
-    if ( tp->t_file[0] == '\0' )  return -1;	/* FAIL, no file */
-    if ( !(tp->mp = bu_open_mapped_file( tp->t_file, NULL )) )
+    if (tp->t_file[0] == '\0') return -1;	/* FAIL, no file */
+    if (!(tp->mp = bu_open_mapped_file(tp->t_file, NULL)))
 	return -1;				/* FAIL */
 
     /* Ensure file is large enough */
-    if ( tp->mp->buflen < tp->t_w * tp->t_n * pixelbytes )  {
+    if (tp->mp->buflen < tp->t_w * tp->t_n * pixelbytes) {
 	bu_log("\ntemp_setup() ERROR %s %s needs %zu bytes, '%s' only has %zu\n",
 	       rp->reg_name,
 	       mfp->mf_name,
 	       tp->t_w * tp->t_n * pixelbytes,
 	       tp->mp->name,
-	       tp->mp->buflen );
+	       tp->mp->buflen);
 	return -1;				/* FAIL */
     }
 
     return 1;				/* OK */
 }
 
+
 /*
- *			T X T _ P R I N T
+ * T X T _ P R I N T
  */
 HIDDEN void
 temp_print(register struct region *rp, genptr_t UNUSED(dp))
@@ -277,8 +275,9 @@ temp_print(register struct region *rp, genptr_t UNUSED(dp))
     bu_struct_print(rp->reg_name, temp_parse, (char *)rp->reg_udata);
 }
 
+
 /*
- *			T X T _ F R E E
+ * T X T _ F R E E
  */
 HIDDEN void
 temp_free(genptr_t cp)
@@ -286,9 +285,11 @@ temp_free(genptr_t cp)
     struct temp_specific *tp =
 	(struct temp_specific *)cp;
 
-    if ( tp->mp )  bu_close_mapped_file( tp->mp );
-    bu_free( cp, "temp_specific" );
+    if (tp->mp)
+	bu_close_mapped_file(tp->mp);
+    BU_PUT(cp, struct temp_specific);
 }
+
 
 /*
  * Local Variables:
