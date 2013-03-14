@@ -143,7 +143,7 @@ pc_getconstraint_struct(struct pc_constrnt **c, int nargs)
 {
     BU_GET(*c, struct pc_constrnt);
     bu_vls_init(&((*c)->name));
-    (*c)->args = (const char **) malloc(nargs *sizeof(char *));
+    (*c)->args = (const char **)bu_calloc(nargs, sizeof(char *), "constraint args");
     (*c)->ctype = PC_DB_BYSTRUCT;
 }
 
@@ -211,7 +211,7 @@ pc_free_constraint(struct pc_constrnt *c)
     if (c->ctype == PC_DB_BYEXPR)
 	bu_vls_free(&(c->data.expression));
     if (c->ctype == PC_DB_BYSTRUCT)
-	free(c->args);
+	bu_free(c->args, "constraint args");
 }
 
 
@@ -235,13 +235,13 @@ pc_free_pcset(struct pc_pc_set *pcs)
 	BU_LIST_DEQUEUE(&(par->l));
 	bu_free(par, "free parameter");
     }
-    bu_free(pcs->ps, "free parameter");
+    BU_PUT(pcs->ps, struct pc_param);
     while (BU_LIST_WHILE(con, pc_constrnt, &(pcs->cs->l))) {
 	pc_free_constraint(con);
 	BU_LIST_DEQUEUE(&(con->l));
-	bu_free(con, "free constraint");
+	BU_PUT(con, struct pc_constrnt);
     }
-    bu_free(pcs->cs, "free constraint");
+    BU_PUT(pcs->cs, struct pc_constrnt);
 }
 
 
