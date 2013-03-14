@@ -3555,7 +3555,7 @@ main(int argc, char **argv)
      */
 
     if (patchfile != (char *)0) {
-	if ((fd = open(patchfile, 0664)) < 0) {
+	if ((fd = open(patchfile, O_RDONLY)) < 0) {
 	    perror(patchfile);
 	    bu_exit(1, "ERROR: unable to open patchfile (%s)\n", patchfile);
 	}
