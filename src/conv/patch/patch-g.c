@@ -59,7 +59,9 @@
 #include "rtgeom.h"
 #include "raytrace.h"
 #include "wdb.h"
+
 #include "./patch-g.h"
+
 
 #define ABS(_x)	((_x > 0.0)? _x : (-_x))
 
@@ -1139,7 +1141,7 @@ proc_triangle(int cnt)
      */
     l = 1;
 
-    for (k=1; k<10000; k++) {
+    for (k=1; k<MAX_INPUTS; k++) {
 	if (list[k].flag == 1) {
 	    list[k].flag = 0;
 	    XVAL[l] = list[k].x;
@@ -1392,7 +1394,7 @@ proc_plate(int cnt)
 
 	/* make list of thicknesses */
 	nthicks = 0;
-	for (k=1; k<10000; k++) {
+	for (k=1; k<MAX_INPUTS; k++) {
 	    int found_thick;
 
 	    if (list[k].flag == 1) {
@@ -1411,7 +1413,7 @@ proc_plate(int cnt)
 		    }
 		}
 		if (!found_thick) {
-		    if (nthicks >= MAX_THICKNESSES) {
+		    if (nthicks > MAX_INPUTS) {
 			bu_log("Component #%d has too many different thicknesses\n", in[0].cc);
 			bu_log("\t skipping component\n");
 			return;
@@ -1428,7 +1430,7 @@ proc_plate(int cnt)
 	 */
 	l = 1;
 
-	for (k=1; k<10000; k++) {
+	for (k=1; k<MAX_INPUTS; k++) {
 	    if (list[k].flag == 1) {
 		list[k].flag = 0;
 		XVAL[l] = list[k].x;
@@ -2943,7 +2945,7 @@ proc_rod(int cnt)
      * array here. list[0] will not hold anything, so don't look */
 
     l = 0;
-    for (k=1; k<10000; k++) {
+    for (k=1; k<MAX_INPUTS; k++) {
 	if (list[k].flag == 1) {
 	    list[k].flag = 0;
 	    XVAL[l] = list[k].x;
@@ -3351,7 +3353,7 @@ add_to_list(struct subtract_list *slist, int outsolid, int insolid, int inmirror
 {
 
     if (slist == NULL) {
-	slist = (struct subtract_list *)bu_malloc(sizeof(struct subtract_list), "add_to_list: slist");
+	BU_ALLOC(slist, struct subtract_list);
 	slist->outsolid = outsolid;
 	slist->insolid = insolid;
 	slist->inmirror = inmirror;
@@ -3373,13 +3375,19 @@ main(int argc, char **argv)
     int fd, nread;
     FILE *gfp=NULL;
     FILE *mfp=NULL;
-    char buf[99], s[132+2];
+
     int c;
     int j = 1;
     int i;
     int done;
     int stop, num;
     char name[NAMESIZE+1];
+
+    /* These sizes are dictated by the specific format output by the
+     * 'rpatch' tool.  They are fixed-column files, so we read into
+     * fixed-size buffers.
+     */
+    char buf[99], s[132+2];
 
     /* intentionally double for scan */
     double scan[3];

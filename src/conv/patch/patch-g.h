@@ -17,9 +17,12 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file patch-g.h
- *
- */
+
+#include "vmath.h"
+
+#define MAX_INPUTS 20000
+#define NAMESIZE 16
+
 
 struct input {
     fastf_t x;
@@ -35,7 +38,7 @@ struct input {
     int vc;
     int prevsurf_type;
     char surf_mode;
-} in[10000];
+} in[MAX_INPUTS];
 
 struct patch_verts {
     struct vertex *vp;
@@ -58,13 +61,12 @@ struct patches{
     fastf_t thick;
 };
 
-#define NAMESIZE 16
 struct names{
     char ug[NAMESIZE+1];
     char lg[NAMESIZE+1];
     int eqlos;
     int matcode;
-} nm[9999];
+} nm[MAX_INPUTS];
 
 struct subtract_list{
     int outsolid;
@@ -77,7 +79,7 @@ point_t pt[4];
 fastf_t vertice[5][3];
 fastf_t first[5][3];
 point_t ce[4];
-point_t Centroid;	/* object, description centroids */
+point_t Centroid;			/* object, description centroids */
 unsigned char rgb[3];
 int debug = 0;
 float mmtin = 25.4;
@@ -92,34 +94,29 @@ char space[2];
 
 int numobj = 0;
 int nflg = 1;
-int aflg = 1;		/* use phantom armor */
-int num_unions = 5;	/* number of unions per region */
+int aflg = 1;				/* use phantom armor */
+int num_unions = 5;			/* number of unions per region */
 char *title = "Untitled MGED database";	/* database title */
-char *top_level = "all"; /* top-level node name in the database */
-int rev_norms = 0;	/* reverse normals for plate mode triangles */
-int polysolid = 0;	/* convert triangle-facetted objects to polysolids */
-int arb6 = 0;		/* flag: convert plate-mode objects to arb6s */
+char *top_level = "all";		/* top-level node name in the database */
+int rev_norms = 0;			/* reverse normals for plate mode triangles */
+int polysolid = 0;			/* convert triangle-facetted objects to polysolids */
+int arb6 = 0;				/* flag: convert plate-mode objects to arb6s */
 
 char *patchfile;
 char *labelfile=NULL;
 char *matfile;
 
-/* Maximum number of different thicknesses for a single plate mode
- * solid.
- */
-#define MAX_THICKNESSES 500
-
-fastf_t thicks[MAX_THICKNESSES];	/* array of unique plate thicknesses */
+fastf_t thicks[MAX_INPUTS];		/* array of unique plate thicknesses */
 int nthicks;				/* number of unique plate thicknesses
 					   for a single plate mode solid */
 
-struct patches list[15000];
-fastf_t XVAL[1500];
-fastf_t YVAL[1500];
-fastf_t ZVAL[1500];
-int mirror[1500];
-fastf_t RADIUS[1500];
-fastf_t thk[1500];
+struct patches list[MAX_INPUTS];
+fastf_t XVAL[MAX_INPUTS];
+fastf_t YVAL[MAX_INPUTS];
+fastf_t ZVAL[MAX_INPUTS];
+int mirror[MAX_INPUTS];
+fastf_t RADIUS[MAX_INPUTS];
+fastf_t thk[MAX_INPUTS];
 
 struct wmember head;			/* solids for current region */
 struct wmember heada;			/* for component, regions on one side */
