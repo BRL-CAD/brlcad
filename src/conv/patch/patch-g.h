@@ -45,11 +45,13 @@ struct patch_verts {
     point_t coord;
 };
 
+
 struct patch_faces
 {
     struct faceuse *fu;
     fastf_t thick;
 };
+
 
 struct patches{
     fastf_t x;
@@ -60,6 +62,7 @@ struct patches{
     int mirror;
     fastf_t thick;
 };
+
 
 struct names{
     char ug[NAMESIZE+1];
@@ -74,6 +77,7 @@ struct subtract_list{
     int inmirror;
     struct subtract_list *next;
 };
+
 
 point_t pt[4];
 fastf_t vertice[5][3];

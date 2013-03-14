@@ -75,7 +75,7 @@ static void
 usage(int status, const char *argv0)
 {
     bu_log("Usage: %s [options] model.g\n", argv0);
-    bu_log("	-f fastgen.rp	specify pre-processed fastgen file (default stdin)\n");
+    bu_log("	-f fastgen.rp	specify pre-processed FASTGEN file (default stdin)\n");
     bu_log("	-a		process phantom armor?\n");
     bu_log("	-n		process volume mode as plate mode?\n");
     bu_log("	-u #		number of union operations per region (default 5)\n");
@@ -92,7 +92,7 @@ usage(int status, const char *argv0)
     bu_log("	-X #		librt NMG debug flags\n");
     bu_log("	-T #		distance tolerance (inches) (two points within this distance are the same point)\n");
     bu_log("	-A #		parallel tolerance (if A dot B (unit vectors) is less than this value, they are perpendicular)\n");
-    bu_log("Note: fastgen.rp is the pre-processed (through rpatch) fastgen file\n\n");
+    bu_log("Note: fastgen.rp is the pre-processed (through rpatch) FASTGEN file\n\n");
     if (status == 0)
 	exit(0);
     bu_exit(status, "Exit status %d\n", status);
@@ -290,10 +290,10 @@ nmg_patch_coplanar_face_merge(struct shell *s, int *face_count, struct patch_fac
     for (BU_LIST_FOR (fu1, faceuse, &s->fu_hd)) {
 	plane_t n1;
 
-	if (BU_LIST_NEXT_IS_HEAD(fu1, &s->fu_hd))  break;
+	if (BU_LIST_NEXT_IS_HEAD(fu1, &s->fu_hd)) break;
 	f1 = fu1->f_p;
 	NMG_CK_FACE(f1);
-	if (NMG_INDEX_TEST(flags1, f1))  continue;
+	if (NMG_INDEX_TEST(flags1, f1)) continue;
 	NMG_INDEX_SET(flags1, f1);
 
 	fg1 = f1->g.plane_p;
@@ -323,7 +323,7 @@ nmg_patch_coplanar_face_merge(struct shell *s, int *face_count, struct patch_fac
 
 	    f2 = fu2->f_p;
 	    NMG_CK_FACE(f2);
-	    if (NMG_INDEX_TEST(flags2, f2))  continue;
+	    if (NMG_INDEX_TEST(flags2, f2)) continue;
 	    NMG_INDEX_SET(flags2, f2);
 
 	    fg2 = f2->g.plane_p;
@@ -336,7 +336,7 @@ nmg_patch_coplanar_face_merge(struct shell *s, int *face_count, struct patch_fac
 
 		/* Compare distances from origin */
 		dist = n1[W] - n2[W];
-		if (!NEAR_ZERO(dist, tol->dist))  continue;
+		if (!NEAR_ZERO(dist, tol->dist)) continue;
 
 		/*
 		 * Compare angle between normals.  Can't just use
@@ -344,7 +344,7 @@ nmg_patch_coplanar_face_merge(struct shell *s, int *face_count, struct patch_fac
 		 * in the same direction.
 		 */
 		dist = VDOT(n1, n2);
-		if (!(dist >= tol->para))  continue;
+		if (!(dist >= tol->para)) continue;
 	    }
 
 	    /* Find the entry for fu2 in p_faces */
@@ -406,6 +406,7 @@ nmg_patch_coplanar_face_merge(struct shell *s, int *face_count, struct patch_fac
 	       (void *)s, (void *)tol, simplify);
     }
 }
+
 
 int
 Build_solid(int l, char *name, char *mirror_name, int plate_mode, fastf_t *centroid, fastf_t thickness, fastf_t *pl1, struct bn_tol *tol)
@@ -1091,6 +1092,7 @@ proc_region(char *name1)
     last_cc = in[0].cc;
 }
 
+
 /*
  * Process Volume Mode triangular facetted solids
  */
@@ -1222,6 +1224,7 @@ proc_triangle(int cnt)
     last_cc = in[cnt-1].cc;
 }
 
+
 void
 Get_ave_plane(fastf_t *pl, int num_pts, fastf_t *x, fastf_t *y, fastf_t *z)
 {
@@ -1340,6 +1343,7 @@ Get_ave_plane(fastf_t *pl, int num_pts, fastf_t *x, fastf_t *y, fastf_t *z)
 	}
     }
 }
+
 
 /*
  * Process Plate Mode triangular surfaces
@@ -1521,8 +1525,9 @@ proc_plate(int cnt)
     last_cc = in[cnt-1].cc;
 }
 
+
 /*
- * Process fastgen wedge shape - also process hollow wedges.
+ * Process FASTGEN wedge shape - also process hollow wedges.
  */
 void
 proc_wedge(int cnt)
@@ -1662,7 +1667,7 @@ proc_wedge(int cnt)
     if ((count % num_unions) != 0)
 	proc_region(name);
 
-    /* Mirror Processing - duplicates above code!   */
+    /* Mirror Processing - duplicates above code! */
     ret = 0;
     for (k=0; k <= (cnt-1) && in[k].mirror != 0; k+=4) {
 
@@ -1773,8 +1778,9 @@ proc_wedge(int cnt)
     last_cc = in[cnt-1].cc;
 }
 
+
 /*
- * Process fastgen spheres - can handle hollowness
+ * Process FASTGEN spheres - can handle hollowness
  */
 void
 proc_sphere(int cnt)
@@ -1896,8 +1902,9 @@ proc_sphere(int cnt)
     last_cc = in[cnt-1].cc;
 }
 
+
 /*
- * Process fastgen box code
+ * Process FASTGEN box code
  */
 void
 proc_box(int cnt)
@@ -2017,7 +2024,7 @@ proc_box(int cnt)
 	proc_region(name);
 
 
-    /* Mirror Processing - duplicates above code!   */
+    /* Mirror Processing - duplicates above code! */
 
     for (k=0; k <= (cnt-1) && in[k].mirror != 0; k+=4) {
 	VSET(pt8[0], in[k].x, -in[k].y, in[k].z);
@@ -2100,6 +2107,7 @@ proc_box(int cnt)
     last_cc = in[cnt-1].cc;
 }
 
+
 /*
  * Donuts
  *
@@ -2129,8 +2137,8 @@ proc_donut(int cnt)
     char scratch_name3[NAMESIZE+1];
     char scratch_name4[NAMESIZE+1];
 
-    for (k=0; k<cnt-1; k += 6)	/* for each donut */
-    {
+    for (k=0; k<cnt-1; k += 6) {
+	/* for each donut */
 	if (EQUAL(in[k].x, in[k+1].x)
 	    && EQUAL(in[k].y, in[k+1].y)
 	    && EQUAL(in[k].z, in[k+1].z))
@@ -2217,8 +2225,8 @@ proc_donut(int cnt)
 
 	/* in some cases we won't even need the two basic TRC's */
 	make_basic_solids = 1;
-	if (in[k].surf_mode == '-') /* plate mode */
-	{
+	if (in[k].surf_mode == '-') {
+	    /* plate mode */
 	    if (magh3 > 0.0 && end_code == 4)
 		make_basic_solids = 0;
 	    else if (magh4 > 0.0 && end_code == 5)
@@ -2257,8 +2265,8 @@ proc_donut(int cnt)
 	    }
 	}
 
-	if (in[k].surf_mode != '-')	/* volume mode */
-	{
+	if (in[k].surf_mode != '-') {
+	    /* volume mode */
 	    fastf_t dot3, dot4;
 
 	    dot3 = VDOT(h3, h1);
@@ -2827,7 +2835,7 @@ proc_cylin(int cnt)
     if ((count % num_unions) != 0 && (BU_LIST_NEXT_NOT_HEAD(&head, &head.l)))
 	proc_region(name);
 
-    /* Mirror Processing - duplicates above code!   */
+    /* Mirror Processing - duplicates above code! */
 
     for (k=0; k < (cnt-1); k+=3) {
 
@@ -2896,8 +2904,9 @@ proc_cylin(int cnt)
     last_cc = in[cnt-1].cc;
 }
 
+
 /*
- * Process fastgen rod mode
+ * Process FASTGEN rod mode
  */
 void
 proc_rod(int cnt)
@@ -3012,7 +3021,7 @@ proc_rod(int cnt)
 	proc_region(name);
     }
 
-    /* Mirror Processing - duplicates above code!    */
+    /* Mirror Processing - duplicates above code! */
 
     for (k=1; k < (l-1); k++) {
 
@@ -3215,8 +3224,7 @@ proc_label(char *label_file)
 }
 
 
-/* P T _ I N S I D E
- *
+/*
  * Returns 1 if point a is inside the cylinder defined by base, top,
  * rad1, rad2.  Returns 0 if not.
  */
@@ -3263,8 +3271,7 @@ pt_inside(point_t a, point_t base, point_t top, double rad1, double rad2)
 }
 
 
-/* I N S I D E _ C Y L
- *
+/*
  * Returns 1 if the cylinder starting at in[j] is inside (for solid
  * subtraction) the cylinder described at in[i], 0 otherwise.
  *
@@ -3343,8 +3350,6 @@ get_subtract(int cnt)
 
 
 /**
- * A D D _ T O _ L I S T
- *
  * Add the inside, outside cylinder numbers to the subtraction list
  * slist.
  */
@@ -3365,9 +3370,6 @@ add_to_list(struct subtract_list *slist, int outsolid, int insolid, int inmirror
 }
 
 
-/**
- * M A I N
- */
 int
 main(int argc, char **argv)
 {
@@ -3459,7 +3461,7 @@ main(int argc, char **argv)
 		polysolid = 1;
 		break;
 
-	    case 'f':  /* fastgen source file data */
+	    case 'f':  /* FASTGEN source file data */
 
 		patchfile = bu_optarg;
 		break;
@@ -3578,12 +3580,12 @@ main(int argc, char **argv)
 	}
     }
 
-    /* This is the primary processing section to input fastgen data
+    /* This is the primary processing section to input FASTGEN data
      * and manufacture related mged elements.  Previous editions of
-     * PATCH failed to process the final element after hitting EOF so
-     * I moved the read statement into the for loop and made a check
-     * flag "done" to verify that all elements are processed prior to
-     * falling out of the "for".
+     * patch-g failed to process the final element after hitting EOF
+     * so the read statement was moved into the for loop and made a
+     * check flag "done" to verify that all elements are processed
+     * prior to falling out of the "for".
      */
 
     /* FASTGEN targets are always in inches */
@@ -3603,14 +3605,14 @@ main(int argc, char **argv)
 	    if ((stop=fscanf(gfp, "%4d", &num)) == 1) {
 		size_t ret;
 		if (num < 0 || num >= MAX_INPUTS) {
-		   bu_log("num value out of range!\n");
+		    bu_log("num value out of range!\n");
 		} else {
-		  ret = fscanf(gfp, "%16s %16s", nm[num].ug, nm[num].lg); /* NAMESIZE */
-		  if (ret < 2)
-		    bu_log("Unexpected error reading label file\n");
+		    ret = fscanf(gfp, "%16s %16s", nm[num].ug, nm[num].lg); /* NAMESIZE */
+		    if (ret < 2)
+			bu_log("Unexpected error reading label file\n");
 
-		  while ((fgetc(gfp)) != '\n')
-		    ;
+		    while ((fgetc(gfp)) != '\n')
+			;
 		}
 	    } else {
 		if (stop == EOF) {
