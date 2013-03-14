@@ -3598,9 +3598,11 @@ main(int argc, char **argv)
     if (labelfile != NULL) {
 	while (done != 0) {
 
+	    /* FIXME: this assumes unix-style label files */
+
 	    if ((stop=fscanf(gfp, "%4d", &num)) == 1) {
 		size_t ret;
-		if (num < 0 || num > 9999) {
+		if (num < 0 || num >= MAX_INPUTS) {
 		   bu_log("num value out of range!\n");
 		} else {
 		  ret = fscanf(gfp, "%16s %16s", nm[num].ug, nm[num].lg); /* NAMESIZE */
@@ -3647,6 +3649,12 @@ main(int argc, char **argv)
     }
 
     for (i = done = 0; !done; i++) {
+
+	/* FIXME: this assumes unix-style input files but a carriage
+	 * return would represent one more byte.  should be using
+	 * bu_fgets() even if the lines are fixed length.
+	 */
+
 	nread = read(fd, buf, sizeof(buf));     /* read one line of file into a buffer */
 
 	if (nread > 0) {
