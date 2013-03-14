@@ -12462,6 +12462,13 @@ to_view_func_common(struct ged *gedp,
     /* Keep the view's perspective in sync with its corresponding display manager */
     gdvp->gdv_dmp->dm_perspective = gdvp->gdv_view->gv_perspective;
 
+    if (gdvp->gdv_view->gv_adaptive_plot &&
+	gdvp->gdv_view->gv_redraw_on_zoom)
+    {
+	char *gr_av[] = {"redraw", NULL};
+	ged_redraw(gedp, 1, (const char **)gr_av);
+    }
+
     if (ret == GED_OK) {
 	if (cflag && 0 < bu_vls_strlen(&gdvp->gdv_callback)) {
 	    struct bu_vls save_result = BU_VLS_INIT_ZERO;
