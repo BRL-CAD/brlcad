@@ -79,15 +79,15 @@ typedef struct _on_brep_placeholder {
 /* Use vector operations? For debugging */
 #define DO_VECTOR 1
 
-#ifndef NURBS_EXPORT
+#ifndef BREP_EXPORT
 #  if defined(NURBS_DLL_EXPORTS) && defined(NURBS_DLL_IMPORTS)
 #    error "Only NURBS_DLL_EXPORTS or NURBS_DLL_IMPORTS can be defined, not both."
 #  elif defined(NURBS_DLL_EXPORTS)
-#    define NURBS_EXPORT __declspec(dllexport)
+#    define BREP_EXPORT __declspec(dllexport)
 #  elif defined(NURBS_DLL_IMPORTS)
-#    define NURBS_EXPORT __declspec(dllimport)
+#    define BREP_EXPORT __declspec(dllimport)
 #  else
-#    define NURBS_EXPORT
+#    define BREP_EXPORT
 #  endif
 #endif
 
@@ -186,13 +186,13 @@ public:
     }
 };
 
-NURBS_EXPORT void brep_get_plane_ray(ON_Ray& r, plane_ray& pr);
-NURBS_EXPORT void brep_r(const ON_Surface* surf, plane_ray& pr, pt2d_t uv, ON_3dPoint& pt, ON_3dVector& su, ON_3dVector& sv, pt2d_t R);
-NURBS_EXPORT void brep_newton_iterate(plane_ray& pr, pt2d_t R, ON_3dVector& su, ON_3dVector& sv, pt2d_t uv, pt2d_t out_uv);
-NURBS_EXPORT void brep_newton_iterate(const ON_Surface* UNUSED(surf), plane_ray& pr, pt2d_t R, ON_3dVector& su, ON_3dVector& sv, pt2d_t uv, pt2d_t out_uv);
-NURBS_EXPORT void utah_ray_planes(const ON_Ray &r, ON_3dVector &p1, double &p1d, ON_3dVector &p2, double &p2d);
+BREP_EXPORT void brep_get_plane_ray(ON_Ray& r, plane_ray& pr);
+BREP_EXPORT void brep_r(const ON_Surface* surf, plane_ray& pr, pt2d_t uv, ON_3dPoint& pt, ON_3dVector& su, ON_3dVector& sv, pt2d_t R);
+BREP_EXPORT void brep_newton_iterate(plane_ray& pr, pt2d_t R, ON_3dVector& su, ON_3dVector& sv, pt2d_t uv, pt2d_t out_uv);
+BREP_EXPORT void brep_newton_iterate(const ON_Surface* UNUSED(surf), plane_ray& pr, pt2d_t R, ON_3dVector& su, ON_3dVector& sv, pt2d_t uv, pt2d_t out_uv);
+BREP_EXPORT void utah_ray_planes(const ON_Ray &r, ON_3dVector &p1, double &p1d, ON_3dVector &p2, double &p2d);
 
-NURBS_EXPORT bool ON_NearZero(double x, double tolerance = ON_ZERO_TOLERANCE);
+BREP_EXPORT bool ON_NearZero(double x, double tolerance = ON_ZERO_TOLERANCE);
 
 /* Maximum per-surface BVH depth */
 #define BREP_MAX_FT_DEPTH 8
@@ -829,7 +829,7 @@ extern bool sortY(BRNode* first, BRNode* second);
 
 //--------------------------------------------------------------------------------
 // CurveTree declaration
-class NURBS_EXPORT CurveTree {
+class BREP_EXPORT CurveTree {
 public:
     CurveTree(const ON_BrepFace* face);
     ~CurveTree();
@@ -1580,7 +1580,7 @@ BVNode<BV>::prepTrims()
 
 //--------------------------------------------------------------------------------
 // SurfaceTree declaration
-class NURBS_EXPORT SurfaceTree {
+class BREP_EXPORT SurfaceTree {
 private:
     bool m_removeTrimmed;
 
@@ -1716,7 +1716,7 @@ extern ON_Curve* pullback_curve(ON_BrepFace* face,
  * (SPM '08). ACM, New York, NY, USA, 257-268. DOI=10.1145/1364901.1364937
  * http://doi.acm.org/10.1145/1364901.1364937
  */
-extern NURBS_EXPORT int surface_surface_intersection(const ON_Surface* surfA,
+extern BREP_EXPORT int surface_surface_intersection(const ON_Surface* surfA,
 					const ON_Surface* surfB,
 					ON_SimpleArray<ON_NurbsCurve*> &intersect3d,
 					ON_SimpleArray<ON_NurbsCurve*> &intersect_uv2d,
@@ -1736,22 +1736,22 @@ typedef struct pbc_data {
     bool order_reversed;
 } PBCData;
 
-extern NURBS_EXPORT PBCData*
+extern BREP_EXPORT PBCData*
 pullback_samples(const brlcad::SurfaceTree* surfacetree,
                  const ON_Curve* curve,
                  double tolerance = 1.0e-6,
                  double flatness = 1.0e-3);
 
-extern NURBS_EXPORT bool
+extern BREP_EXPORT bool
 check_pullback_data(std::list<PBCData*> &pbcs);
 
-extern NURBS_EXPORT ON_Curve*
+extern BREP_EXPORT ON_Curve*
 interpolateCurve(ON_2dPointArray& samples);
 
-extern NURBS_EXPORT int
+extern BREP_EXPORT int
 check_pullback_singularity_bridge(const ON_Surface *surf, const ON_2dPoint &p1, const ON_2dPoint &p2);
 
-extern NURBS_EXPORT ON_NurbsCurve*
+extern BREP_EXPORT ON_NurbsCurve*
 interpolateLocalCubicCurve(const ON_3dPointArray &Q);
 }
 #endif
