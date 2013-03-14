@@ -366,42 +366,42 @@ ged_make_pnts(struct ged *gedp, int argc, const char *argv[])
     /* empty list head */
     switch (type) {
 	case RT_PNT_TYPE_PNT:
-	    BU_GET(headPoint, struct pnt);
+	    BU_ALLOC(headPoint, struct pnt);
 	    BU_LIST_INIT(&(((struct pnt *)headPoint)->l));
 	    num_doubles_per_point = 3;
 	    break;
 	case RT_PNT_TYPE_COL:
-	    BU_GET(headPoint, struct pnt_color);
+	    BU_ALLOC(headPoint, struct pnt_color);
 	    BU_LIST_INIT(&(((struct pnt_color *)headPoint)->l));
 	    num_doubles_per_point = 6;
 	    break;
 	case RT_PNT_TYPE_SCA:
-	    BU_GET(headPoint, struct pnt_scale);
+	    BU_ALLOC(headPoint, struct pnt_scale);
 	    BU_LIST_INIT(&(((struct pnt_scale *)headPoint)->l));
 	    num_doubles_per_point = 4;
 	    break;
 	case RT_PNT_TYPE_NRM:
-	    BU_GET(headPoint, struct pnt_normal);
+	    BU_ALLOC(headPoint, struct pnt_normal);
 	    BU_LIST_INIT(&(((struct pnt_normal *)headPoint)->l));
 	    num_doubles_per_point = 6;
 	    break;
 	case RT_PNT_TYPE_COL_SCA:
-	    BU_GET(headPoint, struct pnt_color_scale);
+	    BU_ALLOC(headPoint, struct pnt_color_scale);
 	    BU_LIST_INIT(&(((struct pnt_color_scale *)headPoint)->l));
 	    num_doubles_per_point = 7;
 	    break;
 	case RT_PNT_TYPE_COL_NRM:
-	    BU_GET(headPoint, struct pnt_color_normal);
+	    BU_ALLOC(headPoint, struct pnt_color_normal);
 	    BU_LIST_INIT(&(((struct pnt_color_normal *)headPoint)->l));
 	    num_doubles_per_point = 9;
 	    break;
 	case RT_PNT_TYPE_SCA_NRM:
-	    BU_GET(headPoint, struct pnt_scale_normal);
+	    BU_ALLOC(headPoint, struct pnt_scale_normal);
 	    BU_LIST_INIT(&(((struct pnt_scale_normal *)headPoint)->l));
 	    num_doubles_per_point = 7;
 	    break;
 	case RT_PNT_TYPE_COL_SCA_NRM:
-	    BU_GET(headPoint, struct pnt_color_scale_normal);
+	    BU_ALLOC(headPoint, struct pnt_color_scale_normal);
 	    BU_LIST_INIT(&(((struct pnt_color_scale_normal *)headPoint)->l));
 	    num_doubles_per_point = 10;
 	    break;
@@ -422,28 +422,28 @@ ged_make_pnts(struct ged *gedp, int argc, const char *argv[])
 	/* allocate memory for single point structure for current point-cloud type */
 	switch (type) {
 	    case RT_PNT_TYPE_PNT:
-		BU_GET(point, struct pnt);
+		BU_ALLOC(point, struct pnt);
 		break;
 	    case RT_PNT_TYPE_COL:
-		BU_GET(point, struct pnt_color);
+		BU_ALLOC(point, struct pnt_color);
 		break;
 	    case RT_PNT_TYPE_SCA:
-		BU_GET(point, struct pnt_scale);
+		BU_ALLOC(point, struct pnt_scale);
 		break;
 	    case RT_PNT_TYPE_NRM:
-		BU_GET(point, struct pnt_normal);
+		BU_ALLOC(point, struct pnt_normal);
 		break;
 	    case RT_PNT_TYPE_COL_SCA:
-		BU_GET(point, struct pnt_color_scale);
+		BU_ALLOC(point, struct pnt_color_scale);
 		break;
 	    case RT_PNT_TYPE_COL_NRM:
-		BU_GET(point, struct pnt_color_normal);
+		BU_ALLOC(point, struct pnt_color_normal);
 		break;
 	    case RT_PNT_TYPE_SCA_NRM:
-		BU_GET(point, struct pnt_scale_normal);
+		BU_ALLOC(point, struct pnt_scale_normal);
 		break;
 	    case RT_PNT_TYPE_COL_SCA_NRM:
-		BU_GET(point, struct pnt_color_scale_normal);
+		BU_ALLOC(point, struct pnt_color_scale_normal);
 		break;
 	}
 

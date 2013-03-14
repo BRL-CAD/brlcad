@@ -263,7 +263,7 @@ ged_push(struct ged *gedp, int argc, const char *argv[])
 	    bu_free((genptr_t)gpip, "Push ident");
 	}
 	rt_g.debug = old_debug;
-	bu_free((genptr_t)gpdp, "ged_push: gpdp");
+	BU_PUT(gpdp, struct push_data);
 	bu_vls_printf(gedp->ged_result_str, "ged_push:\tdb_walk_tree failed or there was a solid moving\n\tin two or more directions");
 	return GED_ERROR;
     }
@@ -315,7 +315,7 @@ ged_push(struct ged *gedp, int argc, const char *argv[])
 
     rt_g.debug = old_debug;
     push_error = gpdp->push_error;
-    bu_free((genptr_t)gpdp, "ged_push: gpdp");
+    BU_PUT(gpdp, struct ged_push);
 
     return push_error ? GED_ERROR : GED_OK;
 }

@@ -583,14 +583,14 @@ ged_make(struct ged *gedp, int argc, const char *argv[])
 	pipe_ip = (struct rt_pipe_internal *)internal.idb_ptr;
 	pipe_ip->pipe_magic = RT_PIPE_INTERNAL_MAGIC;
 	BU_LIST_INIT(&pipe_ip->pipe_segs_head);
-	BU_GET(ps, struct wdb_pipept);
+	BU_ALLOC(ps, struct wdb_pipept);
 	ps->l.magic = WDB_PIPESEG_MAGIC;
 	VSET(ps->pp_coord, origin[X], origin[Y], origin[Z]-0.5*scale);
 	ps->pp_od = 0.25*scale;
 	ps->pp_id = 0.25*ps->pp_od;
 	ps->pp_bendradius = ps->pp_od;
 	BU_LIST_INSERT(&pipe_ip->pipe_segs_head, &ps->l);
-	BU_GET(ps, struct wdb_pipept);
+	BU_ALLOC(ps, struct wdb_pipept);
 	ps->l.magic = WDB_PIPESEG_MAGIC;
 	VSET(ps->pp_coord, origin[X], origin[Y], origin[Z]+0.5*scale);
 	ps->pp_od = 0.25*scale;
@@ -612,10 +612,10 @@ ged_make(struct ged *gedp, int argc, const char *argv[])
 	pnts_ip->type = RT_PNT_TYPE_PNT;
 	pnts_ip->scale = 0;
 
-	BU_GET(pnts_ip->point, struct pnt);
+	BU_ALLOC(pnts_ip->point, struct pnt);
 	headPoint = pnts_ip->point;
 	BU_LIST_INIT(&headPoint->l);
-	BU_GET(point, struct pnt);
+	BU_ALLOC(point, struct pnt);
 	VSET(point->v, origin[X], origin[Y], origin[Z]);
 	BU_LIST_PUSH(&headPoint->l, &point->l);
 
