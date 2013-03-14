@@ -2658,35 +2658,35 @@ pnts_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *in
     /* empty list head */
     switch (type) {
 	case RT_PNT_TYPE_PNT:
-	    BU_GET(headPoint, struct pnt);
+	    BU_ALLOC(headPoint, struct pnt);
 	    BU_LIST_INIT(&(((struct pnt *)headPoint)->l));
 	    break;
 	case RT_PNT_TYPE_COL:
-	    BU_GET(headPoint, struct pnt_color);
+	    BU_ALLOC(headPoint, struct pnt_color);
 	    BU_LIST_INIT(&(((struct pnt_color *)headPoint)->l));
 	    break;
 	case RT_PNT_TYPE_SCA:
-	    BU_GET(headPoint, struct pnt_scale);
+	    BU_ALLOC(headPoint, struct pnt_scale);
 	    BU_LIST_INIT(&(((struct pnt_scale *)headPoint)->l));
 	    break;
 	case RT_PNT_TYPE_NRM:
-	    BU_GET(headPoint, struct pnt_normal);
+	    BU_ALLOC(headPoint, struct pnt_normal);
 	    BU_LIST_INIT(&(((struct pnt_normal *)headPoint)->l));
 	    break;
 	case RT_PNT_TYPE_COL_SCA:
-	    BU_GET(headPoint, struct pnt_color_scale);
+	    BU_ALLOC(headPoint, struct pnt_color_scale);
 	    BU_LIST_INIT(&(((struct pnt_color_scale *)headPoint)->l));
 	    break;
 	case RT_PNT_TYPE_COL_NRM:
-	    BU_GET(headPoint, struct pnt_color_normal);
+	    BU_ALLOC(headPoint, struct pnt_color_normal);
 	    BU_LIST_INIT(&(((struct pnt_color_normal *)headPoint)->l));
 	    break;
 	case RT_PNT_TYPE_SCA_NRM:
-	    BU_GET(headPoint, struct pnt_scale_normal);
+	    BU_ALLOC(headPoint, struct pnt_scale_normal);
 	    BU_LIST_INIT(&(((struct pnt_scale_normal *)headPoint)->l));
 	    break;
 	case RT_PNT_TYPE_COL_SCA_NRM:
-	    BU_GET(headPoint, struct pnt_color_scale_normal);
+	    BU_ALLOC(headPoint, struct pnt_color_scale_normal);
 	    BU_LIST_INIT(&(((struct pnt_color_scale_normal *)headPoint)->l));
 	    break;
     }
@@ -2699,14 +2699,14 @@ pnts_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *in
 	/* bu_log("%d: [%s, %s, %s]\n", ((i-5)/3)+1, argv[i], argv[i+1], argv[i+2]); */
 	switch (type) {
 	    case RT_PNT_TYPE_PNT:
-		BU_GET(point, struct pnt);
+		BU_ALLOC(point, struct pnt);
 		((struct pnt *)point)->v[X] = strtod(argv[i + 0], NULL) * local2base;
 		((struct pnt *)point)->v[Y] = strtod(argv[i + 1], NULL) * local2base;
 		((struct pnt *)point)->v[Z] = strtod(argv[i + 2], NULL) * local2base;
 		BU_LIST_PUSH(&(((struct pnt *)headPoint)->l), &((struct pnt *)point)->l);
 		break;
 	    case RT_PNT_TYPE_COL:
-		BU_GET(point, struct pnt_color);
+		BU_ALLOC(point, struct pnt_color);
 		((struct pnt_color *)point)->v[X] = strtod(argv[i + 0], NULL) * local2base;
 		((struct pnt_color *)point)->v[Y] = strtod(argv[i + 1], NULL) * local2base;
 		((struct pnt_color *)point)->v[Z] = strtod(argv[i + 2], NULL) * local2base;
@@ -2717,7 +2717,7 @@ pnts_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *in
 		BU_LIST_PUSH(&(((struct pnt_color *)headPoint)->l), &((struct pnt_color *)point)->l);
 		break;
 	    case RT_PNT_TYPE_SCA:
-		BU_GET(point, struct pnt_scale);
+		BU_ALLOC(point, struct pnt_scale);
 		((struct pnt_scale *)point)->v[X] = strtod(argv[i + 0], NULL) * local2base;
 		((struct pnt_scale *)point)->v[Y] = strtod(argv[i + 1], NULL) * local2base;
 		((struct pnt_scale *)point)->v[Z] = strtod(argv[i + 2], NULL) * local2base;
@@ -2725,7 +2725,7 @@ pnts_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *in
 		BU_LIST_PUSH(&(((struct pnt_scale *)headPoint)->l), &((struct pnt_scale *)point)->l);
 		break;
 	    case RT_PNT_TYPE_NRM:
-		BU_GET(point, struct pnt_normal);
+		BU_ALLOC(point, struct pnt_normal);
 		((struct pnt_normal *)point)->v[X] = strtod(argv[i + 0], NULL) * local2base;
 		((struct pnt_normal *)point)->v[Y] = strtod(argv[i + 1], NULL) * local2base;
 		((struct pnt_normal *)point)->v[Z] = strtod(argv[i + 2], NULL) * local2base;
@@ -2735,7 +2735,7 @@ pnts_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *in
 		BU_LIST_PUSH(&(((struct pnt_normal *)headPoint)->l), &((struct pnt_normal *)point)->l);
 		break;
 	    case RT_PNT_TYPE_COL_SCA:
-		BU_GET(point, struct pnt_color_scale);
+		BU_ALLOC(point, struct pnt_color_scale);
 		((struct pnt_color_scale *)point)->v[X] = strtod(argv[i + 0], NULL) * local2base;
 		((struct pnt_color_scale *)point)->v[Y] = strtod(argv[i + 1], NULL) * local2base;
 		((struct pnt_color_scale *)point)->v[Z] = strtod(argv[i + 2], NULL) * local2base;
@@ -2747,7 +2747,7 @@ pnts_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *in
 		BU_LIST_PUSH(&(((struct pnt_color_scale *)headPoint)->l), &((struct pnt_color_scale *)point)->l);
 		break;
 	    case RT_PNT_TYPE_COL_NRM:
-		BU_GET(point, struct pnt_color_normal);
+		BU_ALLOC(point, struct pnt_color_normal);
 		((struct pnt_color_normal *)point)->v[X] = strtod(argv[i + 0], NULL) * local2base;
 		((struct pnt_color_normal *)point)->v[Y] = strtod(argv[i + 1], NULL) * local2base;
 		((struct pnt_color_normal *)point)->v[Z] = strtod(argv[i + 2], NULL) * local2base;
@@ -2761,7 +2761,7 @@ pnts_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *in
 		BU_LIST_PUSH(&(((struct pnt_color_normal *)headPoint)->l), &((struct pnt_color_normal *)point)->l);
 		break;
 	    case RT_PNT_TYPE_SCA_NRM:
-		BU_GET(point, struct pnt_scale_normal);
+		BU_ALLOC(point, struct pnt_scale_normal);
 		((struct pnt_scale_normal *)point)->v[X] = strtod(argv[i + 0], NULL) * local2base;
 		((struct pnt_scale_normal *)point)->v[Y] = strtod(argv[i + 1], NULL) * local2base;
 		((struct pnt_scale_normal *)point)->v[Z] = strtod(argv[i + 2], NULL) * local2base;
@@ -2772,7 +2772,7 @@ pnts_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *in
 		BU_LIST_PUSH(&(((struct pnt_scale_normal *)headPoint)->l), &((struct pnt_scale_normal *)point)->l);
 		break;
 	    case RT_PNT_TYPE_COL_SCA_NRM:
-		BU_GET(point, struct pnt_color_scale_normal);
+		BU_ALLOC(point, struct pnt_color_scale_normal);
 		((struct pnt_color_scale_normal *)point)->v[X] = strtod(argv[i + 0], NULL) * local2base;
 		((struct pnt_color_scale_normal *)point)->v[Y] = strtod(argv[i + 1], NULL) * local2base;
 		((struct pnt_color_scale_normal *)point)->v[Z] = strtod(argv[i + 2], NULL) * local2base;
