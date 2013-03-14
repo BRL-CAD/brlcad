@@ -61,7 +61,9 @@ package require Itk
 
     eval itk_initialize $args
 
-    pack [LODDialog $itk_interior.lodDialog 0] -expand true -fill both
+    pack [LODDialog $itk_interior.lodDialog 0 -cmdprefix $_archer] \
+	-expand true \
+	-fill both
 }
 
 ::itcl::body LODUtility::destructor {} {

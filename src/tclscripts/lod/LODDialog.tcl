@@ -20,6 +20,13 @@
 ###
 # Group of widgets for configuring Level of Detail drawing.
 #
+# Usage: LODDialog <instance name> <lodon> [-cmdprefix <Archer instance name>]
+#
+# If lodon is true, the "use lod" checkbutton will be pre selected.
+#
+# The -cmdprefix option is used when this class is instanced in Archer,
+# where the ged commands are methods of the Archer mega-widget instance.
+#
 
 package require Tk
 package require Itcl
@@ -32,13 +39,22 @@ package require Itk
 
     public {
 	variable lodon 0
+	variable redrawOnZoom 0
 	variable pointsScale 1.0
 	variable curvesScale 1.0
 
 	method disableLODWidgets {}
 	method updatePointsValue {newVal}
 	method updateCurvesValue {newVal}
+	method redrawOnZoom {}
+	method redraw {}
     }
+
+    private {
+	method lod {args}
+    }
+
+    itk_option define -cmdprefix cmdprefix CmdPrefix "" {}
 }
 
 ::itcl::body LODDialog::constructor {_lodon args} {
@@ -70,7 +86,7 @@ package require Itk
 
     itk_component add pointsScale {
 	ttk::scale $itk_component(lodFrame).pointsScale \
-	    -from 0.0 \
+	    -from 0.1 \
 	    -to 1.5 \
 	    -value $pointsScale \
 	    -command "$this updatePointsValue"
@@ -94,8 +110,8 @@ package require Itk
 
     itk_component add curvesScale {
 	ttk::scale $itk_component(lodFrame).curvesScale \
-	    -from 1.0 \
-	    -to 10.0 \
+	    -from 1 \
+	    -to 50 \
 	    -value $curvesScale \
 	    -command "$this updateCurvesValue"
     } {}
@@ -113,12 +129,15 @@ package require Itk
 
     itk_component add updateButton {
 	ttk::button $itk_component(lodFrame).updateButton \
-	    -text "Redraw Wireframes"
+	    -text "Redraw Wireframes" \
+	    -command "$this redraw"
     } {}
 
     itk_component add zoomUpdateCheckbutton {
 	ttk::checkbutton $itk_component(lodFrame).zoomUpdateCheckbutton \
-	    -text "Redraw Wireframes After Every Zoom"
+	    -text "Redraw Wireframes After Every Zoom" \
+	    -variable [::itcl::scope redrawOnZoom] \
+	    -command "$this redrawOnZoom"
     } {}
 
     disableLODWidgets
@@ -153,6 +172,14 @@ package require Itk
     grid rowconfigure $itk_component(lodFrame) 7 -weight 1
 }
 
+::itcl::body LODDialog::lod {args} {
+    set prefix $itk_option(-cmdprefix)
+
+    if {$prefix != ""} {
+	eval $prefix gedCmd lod $args
+    }
+}
+
 ::itcl::body LODDialog::disableLODWidgets {} {
     if {$lodon} {
 	$itk_component(lodFrame).pointsLabel state !disabled
@@ -163,6 +190,7 @@ package require Itk
 	$itk_component(lodFrame).curvesLabel state !disabled
 	$itk_component(lodFrame).updateButton state !disabled
 	$itk_component(lodFrame).zoomUpdateCheckbutton state !disabled
+	lod on
     } else {
 	$itk_component(lodFrame).pointsLabel state disabled
 	$itk_component(lodFrame).pointsScale state disabled
@@ -172,14 +200,34 @@ package require Itk
 	$itk_component(lodFrame).curvesLabel state disabled
 	$itk_component(lodFrame).updateButton state disabled
 	$itk_component(lodFrame).zoomUpdateCheckbutton state disabled
+	lod off
     }
 }
 
 ::itcl::body LODDialog::updatePointsValue {newVal} {
     set pointsScale [format %.1f $newVal]
+    lod scale points $pointsScale
 }
 
 ::itcl::body LODDialog::updateCurvesValue {newVal} {
     set curvesScale [tcl::mathfunc::round $newVal]
+    lod scale curves $curvesScale
 }
 
+::itcl::body LODDialog::redrawOnZoom {} {
+    if {$redrawOnZoom} {
+	lod redraw onzoom
+    } else {
+	lod redraw off
+    }
+}
+
+::itcl::body LODDialog::redraw {} {
+    set prefix $itk_option(-cmdprefix)
+
+    if {$prefix != ""} {
+	foreach obj [eval $prefix gedCmd who] {
+	    eval $prefix gedCmd redraw $obj
+	}
+    }
+}
