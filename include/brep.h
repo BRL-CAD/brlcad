@@ -80,11 +80,11 @@ typedef struct _on_brep_placeholder {
 #define DO_VECTOR 1
 
 #ifndef BREP_EXPORT
-#  if defined(NURBS_DLL_EXPORTS) && defined(NURBS_DLL_IMPORTS)
-#    error "Only NURBS_DLL_EXPORTS or NURBS_DLL_IMPORTS can be defined, not both."
-#  elif defined(NURBS_DLL_EXPORTS)
+#  if defined(BREP_DLL_EXPORTS) && defined(BREP_DLL_IMPORTS)
+#    error "Only BREP_DLL_EXPORTS or BREP_DLL_IMPORTS can be defined, not both."
+#  elif defined(BREP_DLL_EXPORTS)
 #    define BREP_EXPORT __declspec(dllexport)
-#  elif defined(NURBS_DLL_IMPORTS)
+#  elif defined(BREP_DLL_IMPORTS)
 #    define BREP_EXPORT __declspec(dllimport)
 #  else
 #    define BREP_EXPORT
