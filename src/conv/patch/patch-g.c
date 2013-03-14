@@ -66,11 +66,6 @@
 #define ABS(_x)	((_x > 0.0)? _x : (-_x))
 
 
-static struct bn_tol TOL;
-static int scratch_num;
-
-struct rt_wdb *outfp;
-
 static void
 usage(int status, const char *argv0)
 {
@@ -78,10 +73,10 @@ usage(int status, const char *argv0)
     bu_log("	-f fastgen.rp	specify pre-processed FASTGEN file (default stdin)\n");
     bu_log("	-a		process phantom armor?\n");
     bu_log("	-n		process volume mode as plate mode?\n");
-    bu_log("	-u #		number of union operations per region (default 5)\n");
+    bu_log("	-u #		number of union operations per region (default %d)\n", num_unions);
     bu_log("	-c \"x y z\"	center of object in inches (for some surface normal calculations)\n");
-    bu_log("	-t title	optional title (default \"Untitled MGED database\")\n");
-    bu_log("	-o object_name	optional top-level name (no spaces)(default \"all\")\n");
+    bu_log("	-t title	optional title (default \"%s\")\n", title);
+    bu_log("	-o object_name	optional top-level name (no spaces)(default \"%s\")\n", top_level);
     bu_log("	-p		write volume and plate mode components as polysolids\n");
     bu_log("	-6		process plate mode triangles as ARB6 solids (overrides '-p' for triangles)\n");
     bu_log("	-i group.file	specify group labels source file\n");
@@ -3402,7 +3397,20 @@ main(int argc, char **argv)
     BU_LIST_INIT(&heade.l);
     BU_LIST_INIT(&headf.l);
 
-    memset((char *)list, 0, sizeof(list));
+    /* NOTE: there's definitely a better smarter way to create
+     * appropriately sized containers for processing, but this at
+     * least pulls memory from the heap instead of corruption-prone
+     * static globals or stack frame data.
+     */
+
+    list = (struct patches *)bu_calloc(MAX_INPUTS, sizeof(struct patches), "patches");
+    XVAL = (fastf_t *)bu_calloc(MAX_INPUTS, sizeof(fastf_t), "XVAL");
+    YVAL = (fastf_t *)bu_calloc(MAX_INPUTS, sizeof(fastf_t), "YVAL");
+    ZVAL = (fastf_t *)bu_calloc(MAX_INPUTS, sizeof(fastf_t), "ZVAL");
+    thicks = (fastf_t *)bu_calloc(MAX_INPUTS, sizeof(fastf_t), "thicks");
+    RADIUS = (fastf_t *)bu_calloc(MAX_INPUTS, sizeof(fastf_t), "RADIUS");
+    thk = (fastf_t *)bu_calloc(MAX_INPUTS, sizeof(fastf_t), "thk");
+    mirror = (int *)bu_calloc(MAX_INPUTS, sizeof(int), "mirror");
 
     /* initialize tolerance structure */
     TOL.magic = BN_TOL_MAGIC;
@@ -3820,6 +3828,10 @@ main(int argc, char **argv)
 	mk_lcomb(outfp, name, &headf, 0, "", "", 0, 0);
     }
 
+    /* if we get this far, we're done processing.  anything else is
+     * just diagnostic. */
+    bu_log("Done.\n");
+
     /* check for non-empty lists */
     if (BU_LIST_NON_EMPTY(&head.l)) {
 	struct wmember *wp;
@@ -3890,8 +3902,18 @@ main(int argc, char **argv)
 	}
     }
 
+    /* release our memory buffers */
+    bu_free(list, "patches");
+    bu_free(XVAL, "XVAL");
+    bu_free(YVAL, "YVAL");
+    bu_free(ZVAL, "ZVAL");
+    bu_free(thicks, "thicks");
+    bu_free(RADIUS, "RADIUS");
+    bu_free(thk, "thk");
+    bu_free(mirror, "mirror");
+
     return 0;
-}	/* END MAIN PROGRAM */
+}
 
 
 /*

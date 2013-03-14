@@ -100,7 +100,7 @@ int numobj = 0;
 int nflg = 1;
 int aflg = 1;				/* use phantom armor */
 int num_unions = 5;			/* number of unions per region */
-char *title = "Untitled MGED database";	/* database title */
+char *title = "patch-g conversion";	/* database title */
 char *top_level = "all";		/* top-level node name in the database */
 int rev_norms = 0;			/* reverse normals for plate mode triangles */
 int polysolid = 0;			/* convert triangle-facetted objects to polysolids */
@@ -110,17 +110,18 @@ char *patchfile;
 char *labelfile=NULL;
 char *matfile;
 
-fastf_t thicks[MAX_INPUTS];		/* array of unique plate thicknesses */
+struct patches *list = NULL;
+fastf_t *XVAL = NULL;
+fastf_t *YVAL = NULL;
+fastf_t *ZVAL = NULL;
+
+fastf_t *thicks = NULL;			/* array of unique plate thicknesses */
 int nthicks;				/* number of unique plate thicknesses
 					   for a single plate mode solid */
+fastf_t *RADIUS = NULL;
+fastf_t *thk = NULL;
 
-struct patches list[MAX_INPUTS];
-fastf_t XVAL[MAX_INPUTS];
-fastf_t YVAL[MAX_INPUTS];
-fastf_t ZVAL[MAX_INPUTS];
-int mirror[MAX_INPUTS];
-fastf_t RADIUS[MAX_INPUTS];
-fastf_t thk[MAX_INPUTS];
+int *mirror = NULL;
 
 struct wmember head;			/* solids for current region */
 struct wmember heada;			/* for component, regions on one side */
@@ -129,6 +130,12 @@ struct wmember headc;			/* second level grouping ? */
 struct wmember headd;			/* current thousand series group */
 struct wmember heade;			/* group containing everything */
 struct wmember headf;			/* check solids group */
+
+struct bn_tol TOL;
+int scratch_num;
+
+struct rt_wdb *outfp;
+
 
 /*
  * Local Variables:
