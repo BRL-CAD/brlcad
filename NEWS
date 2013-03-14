@@ -13,6 +13,8 @@ changes made.  See document footer for additional details.
 --- 2013-03-XX  Release 7.24.0                                     ---
 ----------------------------------------------------------------------
 
+* fixed patch-g -f input file permissions failure - Sean Morrison
+* improved large file support for the patch-g importer - Sean Morrison
 * openNURBS updated to version 5.0 (2012-10-24) - Richard Weiss
 * improved BoT mesh editing interface in archer - Bob Parker
 * fixed crash when running screengrab in archer - Nick Reed
