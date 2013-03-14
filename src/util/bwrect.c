@@ -46,7 +46,7 @@ main(int argc, char **argv)
     size_t ret;
 
     if (argc < 3) {
-	bu_exit(1, "usage: bwrect infile outfile (I prompt!)\n");
+	bu_exit(1, "Usage: bwrect infile outfile (I prompt!)\n");
     }
     if ((ifp = fopen(argv[1], "r")) == NULL) {
 	bu_exit(2, "bwrect: can't open %s for reading\n", argv[1]);

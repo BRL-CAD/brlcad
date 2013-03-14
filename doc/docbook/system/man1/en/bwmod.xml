@@ -43,7 +43,7 @@ high and low, if any, are reported to standard error on completion.</para>
 <para>If the
 <option>-c</option>
 option is specified, then intermediate results are stored as signed characters, though
-The command line arguments remain in floating point
+the command line arguments remain in floating point
 format.
 This is useful when one wishes to take advantage of wrap-around
 characteristics of binary mathematics.</para>
@@ -68,7 +68,7 @@ to take to absolute value of each pixel.
 <!-- .br -->
 <option>-e </option><replaceable>val</replaceable>
 to exponentiate, i.e. raise each pixel to the power
-<emphasis remap='I'>val.</emphasis>
+<emphasis remap='I'>val</emphasis>.
 <!-- .br -->
 <option>-r </option><replaceable>val</replaceable>
 to take the
