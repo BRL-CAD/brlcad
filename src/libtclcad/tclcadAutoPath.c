@@ -248,6 +248,7 @@ tclcad_auto_path(Tcl_Interp *interp)
 	join_path(&auto_path, data, "tclscripts", "rtwizard", NULL);
 	join_path(&auto_path, data, "tclscripts", "archer", NULL);
 	join_path(&auto_path, data, "tclscripts", "boteditor", NULL);
+	join_path(&auto_path, data, "tclscripts", "lod", NULL);
     }
 
     /* are we running uninstalled? */
@@ -272,6 +273,7 @@ tclcad_auto_path(Tcl_Interp *interp)
 	join_path(&auto_path, srcpath, "src", "tclscripts", "rtwizard", NULL);
 	join_path(&auto_path, srcpath, "src", "tclscripts", "archer", NULL);
 	join_path(&auto_path, srcpath, "src", "tclscripts", "boteditor", NULL);
+	join_path(&auto_path, srcpath, "src", "tclscripts", "lod", NULL);
     }
 
     /* add search paths for dist invocation */
@@ -320,6 +322,7 @@ tclcad_auto_path(Tcl_Interp *interp)
 	join_path(&auto_path, data, "tclscripts", "rtwizard", NULL);
 	join_path(&auto_path, data, "tclscripts", "archer", NULL);
 	join_path(&auto_path, data, "tclscripts", "boteditor", NULL);
+	join_path(&auto_path, data, "tclscripts", "lod", NULL);
     }
 
     /*    printf("AUTO_PATH IS %s\n", bu_vls_addr(&auto_path)); */

@@ -26,6 +26,7 @@ scripts = \
 	HalfEditFrame.tcl \
 	HypEditFrame.tcl \
 	LoadArcherLibs.tcl \
+	LODUtility.tcl \
 	PartEditFrame.tcl \
 	PipeEditFrame.tcl \
 	Plugin.tcl \

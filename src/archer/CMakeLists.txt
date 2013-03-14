@@ -66,14 +66,16 @@ BRLCAD_ADDDATA(plugins/Core/README plugins/archer/Core)
 BRLCAD_ADDDATA(plugins/Commands/README plugins/archer/Command)
 
 set(archer_utility_FILES
-  plugins/Utility/botUtilityP.tcl
   plugins/Utility/attrGroupsDisplayUtilityP.tcl
+  plugins/Utility/botUtilityP.tcl
+  plugins/Utility/lodUtilityP.tcl
   plugins/Utility/README
   )
 BRLCAD_ADDDATA(archer_utility_FILES plugins/archer/Utility)
 
-BRLCAD_ADDDATA(plugins/Utility/botUtilityP/BotUtilityP.tcl plugins/archer/Utility/botUtilityP)
 BRLCAD_ADDDATA(plugins/Utility/attrGroupsDisplayUtilityP/AttrGroupsDisplayUtilityP.tcl	plugins/archer/Utility/attrGroupsDisplayUtilityP)
+BRLCAD_ADDDATA(plugins/Utility/botUtilityP/BotUtilityP.tcl plugins/archer/Utility/botUtilityP)
+BRLCAD_ADDDATA(plugins/Utility/lodUtilityP/LODUtilityP.tcl plugins/archer/Utility/lodUtilityP)
 
 set(archer_wizard_FILES
   plugins/Wizards/humanwizard.tcl
@@ -95,6 +97,7 @@ set(archer_ignore_files
   plugins/Core
   plugins/Utility/attrGroupsDisplayUtilityP
   plugins/Utility/botUtilityP
+  plugins/Utility/lodUtilityP
   plugins/Wizards/humanwizard
   plugins/Wizards/tankwizard
   plugins/Wizards/tirewizard

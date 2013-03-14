@@ -23,6 +23,7 @@ set(archer_TCLSCRIPTS
   HalfEditFrame.tcl
   HypEditFrame.tcl
   LoadArcherLibs.tcl
+  LODUtility.tcl
   PartEditFrame.tcl
   PipeEditFrame.tcl
   Plugin.tcl

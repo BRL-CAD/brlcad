@@ -6,6 +6,7 @@ SUBDIRS = \
 	igraph \
 	hv3 \
 	lib \
+	lod \
 	mged \
 	pl-dm \
 	rtwizard \
