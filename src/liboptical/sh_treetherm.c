@@ -487,7 +487,7 @@ tthrm_free(genptr_t cp)
     tthrm_sp->tt_name[0] = '\0';
     tthrm_sp->magic = 0;
 
-    bu_free(cp, "tthrm_specific");
+    BU_PUT(cp, struct tthrm_specific);
 }
 
 
