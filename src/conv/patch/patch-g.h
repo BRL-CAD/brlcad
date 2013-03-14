@@ -21,7 +21,7 @@
 #include "vmath.h"
 
 #define MAX_INPUTS 20000
-#define NAMESIZE 16
+#define NAMESIZE 256
 
 
 struct input {
