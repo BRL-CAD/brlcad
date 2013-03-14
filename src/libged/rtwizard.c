@@ -224,10 +224,10 @@ ged_rtwizard(struct ged *gedp, int argc, const char *argv[])
     int args;
     quat_t quat;
     vect_t eye_model;
-    struct bu_vls perspective_vls;
-    struct bu_vls size_vls;
-    struct bu_vls orient_vls;
-    struct bu_vls eye_vls;
+    struct bu_vls perspective_vls = BU_VLS_INIT_ZERO;
+    struct bu_vls size_vls = BU_VLS_INIT_ZERO;
+    struct bu_vls orient_vls = BU_VLS_INIT_ZERO;
+    struct bu_vls eye_vls = BU_VLS_INIT_ZERO;
 
     const char *bin;
     char rt[256] = {0};
@@ -260,11 +260,6 @@ ged_rtwizard(struct ged *gedp, int argc, const char *argv[])
 
     _ged_rt_set_eye_model(gedp, eye_model);
     quat_mat2quat(quat, gedp->ged_gvp->gv_rotation);
-
-    bu_vls_init(&perspective_vls);
-    bu_vls_init(&size_vls);
-    bu_vls_init(&orient_vls);
-    bu_vls_init(&eye_vls);
 
     bu_vls_printf(&size_vls, "%.15e", gedp->ged_gvp->gv_size);
     bu_vls_printf(&orient_vls, "%.15e %.15e %.15e %.15e", V4ARGS(quat));
