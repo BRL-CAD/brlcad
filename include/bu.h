@@ -264,15 +264,21 @@ BU_EXPORT extern Tcl_Interp *brlcad_interp;
 #if 0
 #define BU_PUT(_ptr, _type) *(uint8_t *)(_ptr) = /*zap*/ 0; bu_heap_put(_ptr, sizeof(_type)); _ptr = NULL
 #else
-#define BU_PUT(_ptr, _type) do { *(uint8_t *)(_ptr) = /*zap*/ 0; bu_free(_ptr, #_type " (BU_PUT) " BU_FLSTR); _ptr = NULL; } while(0)
+#define BU_PUT(_ptr, _type) do { *(uint8_t *)(_ptr) = /*zap*/ 0; bu_free(_ptr, #_type " (BU_PUT) " BU_FLSTR); _ptr = NULL; } while (0)
 #endif
 
 /**
  * Convenience macro for allocating a single structure on the heap.
  * Not intended for performance-critical code.  Release memory
- * acquired with bu_free().
+ * acquired with bu_free() or BU_FREE() to dealloc and set NULL.
  */
 #define BU_ALLOC(_ptr, _type) _ptr = (_type *)bu_calloc(1, sizeof(_type), #_type " (BU_ALLOC) " BU_FLSTR)
+
+/**
+ * Convenience macro for deallocating a single structure allocated on
+ * the heap (with bu_malloc(), bu_calloc(), BU_ALLOC()).
+ */
+#define BU_FREE(_ptr, _type) do { bu_free(_ptr, #_type " (BU_FREE) " BU_FLSTR); _ptr = (_type *)NULL; } while (0)
 
 
 /**
