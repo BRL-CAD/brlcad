@@ -88,10 +88,9 @@
 
 #include "common.h"
 
-/* for sqrt(), sin(), cos(), rint(), etc. */
-#ifdef WIN32
-# define _USE_MATH_DEFINES
-#endif
+/* for sqrt(), sin(), cos(), rint(), M_PI and more on Windows */
+#define _USE_MATH_DEFINES 1
+
 #include <math.h>
 
 /* for floating point tolerances and other math constants */
