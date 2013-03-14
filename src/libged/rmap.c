@@ -129,12 +129,12 @@ ged_rmap(struct ged *gedp, int argc, const char *argv[])
 
 	    BU_LIST_DEQUEUE(&inp->l);
 	    bu_vls_free(&inp->name);
-	    bu_free((genptr_t)inp, "ged_rmap: inp");
+	    BU_PUT(inp, struct _ged_id_names);
 	}
 	bu_vls_printf(gedp->ged_result_str, " } "); /* , itnp->id); */
 
 	BU_LIST_DEQUEUE(&itnp->l);
-	bu_free((genptr_t)itnp, "ged_rmap: itnp");
+	BU_PUT(itnp, struct _ged_id_to_names);
     }
 
     return GED_OK;

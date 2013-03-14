@@ -116,6 +116,7 @@ _ged_run_rtwizard(struct ged *gedp)
 
     (void)fclose(fp_in);
 
+    /* must be BU_GET() to match release in _ged_rt_output_handler */
     BU_GET(run_rtp, struct ged_run_rt);
     BU_LIST_INIT(&run_rtp->l);
     BU_LIST_APPEND(&gedp->ged_gdp->gd_headRunRt.l, &run_rtp->l);
@@ -123,6 +124,7 @@ _ged_run_rtwizard(struct ged *gedp)
     run_rtp->fd = pipe_err[0];
     run_rtp->pid = pid;
 
+    /* must be BU_GET() to match release in _ged_rt_output_handler */
     BU_GET(drcdp, struct _ged_rt_client_data);
     drcdp->gedp = gedp;
     drcdp->rrtp = run_rtp;
@@ -187,6 +189,7 @@ _ged_run_rtwizard(struct ged *gedp)
 
     (void)fclose(fp_in);
 
+    /* must be BU_GET() to match release in _ged_rt_output_handler */
     BU_GET(run_rtp, struct ged_run_rt);
     BU_LIST_INIT(&run_rtp->l);
     BU_LIST_APPEND(&gedp->ged_gdp->gd_headRunRt.l, &run_rtp->l);
@@ -197,6 +200,7 @@ _ged_run_rtwizard(struct ged *gedp)
     run_rtp->aborted=0;
     run_rtp->chan = Tcl_MakeFileChannel(run_rtp->fd, TCL_READABLE);
 
+    /* must be BU_GET() to match release in _ged_rt_output_handler */
     BU_GET(drcdp, struct _ged_rt_client_data);
     drcdp->gedp = gedp;
     drcdp->rrtp = run_rtp;

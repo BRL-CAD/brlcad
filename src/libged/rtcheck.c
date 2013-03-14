@@ -140,8 +140,7 @@ rtcheck_vector_handler(ClientData clientData, int UNUSED(mask))
 	    _ged_wait_status(rtcp->gedp->ged_result_str, retcode);
 	}
 
-	/* free rtcp */
-	bu_free((genptr_t)rtcp, "rtcheck_vector_handler: rtcp");
+	BU_PUT(rtcp, struct ged_rtcheck);
 
 	return;
     }
@@ -173,7 +172,7 @@ rtcheck_output_handler(ClientData clientData, int UNUSED(mask))
 	if (rtcop->gedp->ged_gdp->gd_rtCmdNotify != (void (*)())0)
 	    rtcop->gedp->ged_gdp->gd_rtCmdNotify(0);
 
-	bu_free((genptr_t)rtcop, "rtcheck_output_handler: rtcop");
+	BU_PUT(rtcop, struct rtcheck_output);
 	return;
     }
 
@@ -219,8 +218,7 @@ rtcheck_vector_handler(ClientData clientData, int mask)
 	/* wait for the forked process */
 	WaitForSingleObject( rtcp->hProcess, INFINITE );
 
-	/* free rtcp */
-	bu_free((genptr_t)rtcp, "rtcheck_vector_handler: rtcp");
+	BU_PUT(rtcp, struct ged_rtcheck);
 
 	return;
     }
@@ -253,7 +251,7 @@ rtcheck_output_handler(ClientData clientData, int mask)
 	if (rtcop->gedp->ged_gdp->gd_rtCmdNotify != (void (*)(int))0)
 	    rtcop->gedp->ged_gdp->gd_rtCmdNotify(0);
 
-	bu_free((genptr_t)rtcop, "rtcheck_output_handler: rtcop");
+	BU_PUT(rtcop, struct rtcheck_output);
 
 	return;
     }

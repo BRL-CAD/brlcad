@@ -287,9 +287,8 @@ _ged_rt_output_handler(ClientData clientData, int UNUSED(mask))
 
 	/* free run_rtp */
 	BU_LIST_DEQUEUE(&run_rtp->l);
-	bu_free((genptr_t)run_rtp, "_ged_rt_output_handler: run_rtp");
-
-	bu_free((genptr_t)drcdp, "_ged_rt_output_handler: drcdp");
+	BU_PUT(run_rtp, struct ged_run_rt);
+	BU_PUT(drcdp, struct _ged_rt_client_data);
 
 	return;
     }
