@@ -172,7 +172,7 @@ wdb_add_solid(const struct directory *dp,
     }
 
     /* get the soltab stuff */
-    BU_GET(eptr->l.stp, struct soltab);
+    BU_ALLOC(eptr->l.stp, struct soltab);
     eptr->l.stp->l.magic = RT_SOLTAB_MAGIC;
     eptr->l.stp->l2.magic = RT_SOLTAB2_MAGIC;
     eptr->l.stp->st_dp = dp;
@@ -1044,7 +1044,7 @@ wdb_classify_seg(struct seg *seg, struct soltab *shoot, struct xray *rp, struct 
 
     memset(&rd, 0, sizeof(struct ray_data));
 
-    BU_GET(rd.seghead, struct seg);
+    BU_ALLOC(rd.seghead, struct seg);
     BU_LIST_INIT(&rd.seghead->l);
 
     mid_dist = (seg->seg_in.hit_dist + seg->seg_out.hit_dist) / 2.0;
@@ -1147,7 +1147,7 @@ wdb_shoot_and_plot(point_t start_pt,
 
     memset(&rd, 0, sizeof(struct ray_data));
 
-    BU_GET(rd.seghead, struct seg);
+    BU_ALLOC(rd.seghead, struct seg);
     BU_LIST_INIT(&rd.seghead->l);
 
     VMOVE(rp.r_pt, start_pt)
@@ -2041,7 +2041,7 @@ dgo_E_cmd(struct dg_obj *dgop,
     if (bu_debug&BU_DEBUG_MEM_CHECK && bu_mem_barriercheck())
 	bu_log("Error at start of 'E'\n");
 
-    BU_GET(dgcdp, struct dg_client_data);
+    BU_ALLOC(dgcdp, struct dg_client_data);
     dgcdp->dgop = dgop;
     dgcdp->interp = dgop->interp;
     dgcdp->do_polysolids = 0;

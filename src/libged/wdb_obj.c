@@ -2490,7 +2490,7 @@ wdb_rt_gettrees_cmd(struct rt_wdb *wdbp,
      * which in this case would trash rt_uniresource.
      * Once on the rti_resources list, rt_clean() will clean 'em up.
      */
-    BU_GET(resp, struct resource);
+    BU_ALLOC(resp, struct resource);
     rt_init_resource(resp, 0, rtip);
     BU_ASSERT_PTR(BU_PTBL_GET(&rtip->rti_resources, 0), !=, NULL);
 
@@ -5640,7 +5640,7 @@ wdb_rmap_cmd(struct rt_wdb *wdbp,
 		if ((comb->region_id == itnp->id) ||
 		    (comb->aircode != 0 && -comb->aircode == itnp->id)) {
 		    /* add region name to our name list for this region */
-		    BU_GET(inp, struct wdb_id_names);
+		    BU_ALLOC(inp, struct wdb_id_names);
 		    bu_vls_init(&inp->name);
 		    bu_vls_strcpy(&inp->name, dp->d_namep);
 		    BU_LIST_INSERT(&itnp->headName.l, &inp->l);
@@ -5651,7 +5651,7 @@ wdb_rmap_cmd(struct rt_wdb *wdbp,
 
 	    if (!found) {
 		/* create new id_to_names node */
-		BU_GET(itnp, struct wdb_id_to_names);
+		BU_ALLOC(itnp, struct wdb_id_to_names);
 		if (0 < comb->region_id)
 		    itnp->id = comb->region_id;
 		else
@@ -5660,7 +5660,7 @@ wdb_rmap_cmd(struct rt_wdb *wdbp,
 		BU_LIST_INIT(&itnp->headName.l);
 
 		/* add region name to our name list for this region */
-		BU_GET(inp, struct wdb_id_names);
+		BU_ALLOC(inp, struct wdb_id_names);
 		bu_vls_init(&inp->name);
 		bu_vls_strcpy(&inp->name, dp->d_namep);
 		BU_LIST_INSERT(&itnp->headName.l, &inp->l);
@@ -5786,7 +5786,7 @@ wdb_which_cmd(struct rt_wdb *wdbp,
 
 		/* id not found */
 		if (BU_LIST_IS_HEAD(itnp, &headIdName.l)) {
-		    BU_GET(itnp, struct wdb_id_to_names);
+		    BU_ALLOC(itnp, struct wdb_id_to_names);
 		    itnp->id = start;
 		    BU_LIST_INSERT(&headIdName.l, &itnp->l);
 		    BU_LIST_INIT(&itnp->headName.l);
@@ -5811,7 +5811,7 @@ wdb_which_cmd(struct rt_wdb *wdbp,
 
 		    /* id not found */
 		    if (BU_LIST_IS_HEAD(itnp, &headIdName.l)) {
-			BU_GET(itnp, struct wdb_id_to_names);
+			BU_ALLOC(itnp, struct wdb_id_to_names);
 			itnp->id = id;
 			BU_LIST_INSERT(&headIdName.l, &itnp->l);
 			BU_LIST_INIT(&itnp->headName.l);
@@ -5838,7 +5838,7 @@ wdb_which_cmd(struct rt_wdb *wdbp,
 		if ((!isAir && comb->region_id == itnp->id) ||
 		    (isAir && comb->aircode == itnp->id)) {
 		    /* add region name to our name list for this region */
-		    BU_GET(inp, struct wdb_id_names);
+		    BU_ALLOC(inp, struct wdb_id_names);
 		    bu_vls_init(&inp->name);
 		    bu_vls_strcpy(&inp->name, dp->d_namep);
 		    BU_LIST_INSERT(&itnp->headName.l, &inp->l);
@@ -6694,7 +6694,7 @@ wdb_push_cmd(struct rt_wdb *wdbp,
 
     RT_CHECK_DBI(wdbp->dbip);
 
-    BU_GET(wpdp, struct wdb_push_data);
+    BU_ALLOC(wpdp, struct wdb_push_data);
     wpdp->interp = wdbp->wdb_interp;
     wpdp->push_error = 0;
     wpdp->pi_head.magic = WDB_MAGIC_PUSH_ID;

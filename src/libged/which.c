@@ -183,11 +183,11 @@ ged_which(struct ged *gedp, int argc, const char *argv[])
 
 	    BU_LIST_DEQUEUE(&inp->l);
 	    bu_vls_free(&inp->name);
-	    bu_free((genptr_t)inp, "which: inp");
+	    BU_PUT(inp, struct _ged_id_names);
 	}
 
 	BU_LIST_DEQUEUE(&itnp->l);
-	bu_free((genptr_t)itnp, "which: itnp");
+	BU_PUT(itnp, struct _ged_id_to_names);
     }
 
     return GED_OK;

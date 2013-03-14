@@ -1101,7 +1101,7 @@ track_mk_freemembers(struct bu_list *headp)
 	WDB_CK_WMEMBER(wp);
 	BU_LIST_DEQUEUE(&wp->l);
 	bu_free((char *)wp->wm_name, "wm_name");
-	bu_free((char *)wp, "wmember");
+	BU_PUT(wp, struct wmember);
     }
 }
 

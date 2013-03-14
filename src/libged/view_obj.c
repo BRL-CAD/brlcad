@@ -59,7 +59,7 @@ vo_deleteProc(void *clientData)
 
     bu_vls_free(&vop->vo_name);
     BU_LIST_DEQUEUE(&vop->l);
-    bu_free((genptr_t)vop, "vo_deleteProc: vop");
+    BU_PUT(vop, struct view_obj);
 }
 
 

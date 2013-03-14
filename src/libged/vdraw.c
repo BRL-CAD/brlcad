@@ -721,7 +721,7 @@ vdraw_vlist(void *data, int argc, const char *argv[])
 		}
 	    }
 	    RT_FREE_VLIST(&(rcp2->vdc_vhd));
-	    bu_free((genptr_t) rcp2, "vd_curve");
+	    BU_PUT(rcp2, struct vd_curve);
 	    return GED_OK;
 	default:
 	    bu_vls_printf(gedp->ged_result_str, "%s %s: unknown option to vdraw vlist", argv[0], argv[1]);
