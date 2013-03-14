@@ -40,10 +40,12 @@ package require Itk
     public {
 	variable lodon 0
 	variable redrawOnZoom 0
+	variable liveUpdate
 	variable pointsScale 1.0
 	variable curvesScale 1.0
 
 	method disableLODWidgets {}
+	method disableUpdateButton {}
 	method updatePointsValue {newVal}
 	method updateCurvesValue {newVal}
 	method redrawOnZoom {}
@@ -133,6 +135,13 @@ package require Itk
 	    -command "$this redraw"
     } {}
 
+    itk_component add liveUpdateCheckbutton {
+	ttk::checkbutton $itk_component(lodFrame).liveUpdateCheckbutton \
+	    -text "Live Update" \
+	    -variable [::itcl::scope liveUpdate] \
+	    -command "$this disableUpdateButton"
+    } {}
+
     itk_component add zoomUpdateCheckbutton {
 	ttk::checkbutton $itk_component(lodFrame).zoomUpdateCheckbutton \
 	    -text "Redraw Wireframes After Every Zoom" \
@@ -163,6 +172,8 @@ package require Itk
 	-stick nesw
     grid $itk_component(lodFrame).updateButton     - \
 	-sticky sw -padx 3 -pady 3
+    grid $itk_component(lodFrame).liveUpdateCheckbutton \
+	-sticky w -padx 3 -pady 3
     grid $itk_component(lodFrame).zoomUpdateCheckbutton \
 	-sticky w -padx 3 -pady 3
 
@@ -189,6 +200,7 @@ package require Itk
 	$itk_component(lodFrame).curvesScale state !disabled
 	$itk_component(lodFrame).curvesLabel state !disabled
 	$itk_component(lodFrame).updateButton state !disabled
+	$itk_component(lodFrame).liveUpdateCheckbutton state !disabled
 	$itk_component(lodFrame).zoomUpdateCheckbutton state !disabled
 	lod on
     } else {
@@ -199,19 +211,36 @@ package require Itk
 	$itk_component(lodFrame).curvesScale state disabled
 	$itk_component(lodFrame).curvesLabel state disabled
 	$itk_component(lodFrame).updateButton state disabled
+	$itk_component(lodFrame).liveUpdateCheckbutton state disabled
 	$itk_component(lodFrame).zoomUpdateCheckbutton state disabled
 	lod off
+    }
+}
+
+::itcl::body LODDialog::disableUpdateButton {} {
+    if {$liveUpdate} {
+	$itk_component(lodFrame).updateButton state disabled
+    } else {
+	$itk_component(lodFrame).updateButton state !disabled
     }
 }
 
 ::itcl::body LODDialog::updatePointsValue {newVal} {
     set pointsScale [format %.1f $newVal]
     lod scale points $pointsScale
+
+    if {$liveUpdate} {
+	redraw
+    }
 }
 
 ::itcl::body LODDialog::updateCurvesValue {newVal} {
     set curvesScale [tcl::mathfunc::round $newVal]
     lod scale curves $curvesScale
+
+    if {$liveUpdate} {
+	redraw
+    }
 }
 
 ::itcl::body LODDialog::redrawOnZoom {} {
@@ -227,7 +256,7 @@ package require Itk
 
     if {$prefix != ""} {
 	foreach obj [eval $prefix gedCmd who] {
-	    eval $prefix gedCmd redraw $obj
+	    eval $prefix gedCmd draw $obj
 	}
     }
 }
