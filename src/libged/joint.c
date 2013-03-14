@@ -361,8 +361,9 @@ static void
 free_joint(struct joint *jp)
 {
     free_arc(&jp->path);
-    if (jp->name) bu_free((genptr_t)jp->name, "joint name");
-    bu_free((genptr_t)jp, "joint structure");
+    if (jp->name)
+	bu_free((genptr_t)jp->name, "joint name");
+    BU_PUT(jp, struct joint);
 }
 
 static void
@@ -386,11 +387,11 @@ free_hold(struct hold *hp)
     while (BU_LIST_WHILE(jh, jointH, &hp->j_head)) {
 	jh->p->uses--;
 	BU_LIST_DEQUEUE(&jh->l);
-	bu_free((genptr_t) jh, "joint handle");
+	BU_PUT(jh, struct jointH);
     }
     if (hp->joint) bu_free((genptr_t)hp->joint, "hold joint name");
     if (hp->name) bu_free((genptr_t)hp->name, "hold name");
-    bu_free((genptr_t)hp, "hold struct");
+    BU_PUT(hp, struct hold);
 }
 
 static void
@@ -1881,7 +1882,7 @@ int
 f_Jload(struct ged *gedp, int argc, const char *argv[])
 {
     FILE *fip;
-    struct bu_vls *instring;
+    struct bu_vls instring = BU_VLS_INIT_ZERO;
     union bu_lex_token token;
     int no_unload = 0, no_apply=0, no_mesh=0;
     int c;
@@ -1914,9 +1915,6 @@ f_Jload(struct ged *gedp, int argc, const char *argv[])
     base2mm = dbip->dbi_base2local;
     mm2base = dbip->dbi_local2base;
 
-    BU_GET(instring, struct bu_vls);
-    bu_vls_init(instring);
-
     while (argc) {
 	fip = fopen(*argv, "rb");
 	if (fip == NULL) {
@@ -1931,22 +1929,22 @@ f_Jload(struct ged *gedp, int argc, const char *argv[])
 	lex_line = 0;
 	lex_name = *argv;
 
-	while (get_token(gedp, &token, fip, instring, animkeys, animsyms) != EOF) {
+	while (get_token(gedp, &token, fip, &instring, animkeys, animsyms) != EOF) {
 	    if (token.type == BU_LEX_KEYWORD) {
 		if (token.t_key.value == KEY_JOINT) {
-		    if (parse_joint(gedp, fip, instring)) {
+		    if (parse_joint(gedp, fip, &instring)) {
 			jp = BU_LIST_LAST(joint, &joint_head);
 			if (!no_apply) joint_move(gedp, jp);
 		    }
 		} else if (token.t_key.value == KEY_CON) {
-		    (void)parse_hold(gedp, fip, instring);
+		    (void)parse_hold(gedp, fip, &instring);
 		} else if (token.t_key.value == KEY_UNITS) {
-		    (void)parse_units(gedp, fip, instring);
+		    (void)parse_units(gedp, fip, &instring);
 		} else {
-		    parse_error(gedp, instring, "joint load: syntax error.");
+		    parse_error(gedp, &instring, "joint load: syntax error.");
 		}
 	    } else {
-		parse_error(gedp, instring, "joint load: syntax error.");
+		parse_error(gedp, &instring, "joint load: syntax error.");
 	    }
 	    if (token.type == BU_LEX_IDENT) {
 		bu_free(token.t_id.value, "unit token");
@@ -2642,7 +2640,7 @@ reject_move(struct ged *gedp)
 	ssp->jp->dirs[ssp->freedom-3].current = ssp->old;
     }
     joint_move(gedp, ssp->jp);
-    bu_free((genptr_t)ssp, "struct solve_stack");
+    BU_PUT(ssp, struct solve_stack);
 }
 
 /* Constraint system solver.
@@ -3162,21 +3160,18 @@ joint_move(struct ged *gedp, struct joint *jp)
     if (!anp || anp->magic != ANIMATE_MAGIC) {
 	char *sofar;
 	struct directory *dp = NULL;
-	BU_GET(anp, struct animate);
+	BU_ALLOC(anp, struct animate); /* may be free'd by librt */
 	anp->magic = ANIMATE_MAGIC;
 	db_full_path_init(&anp->an_path);
 	anp->an_path.fp_len = jp->path.arc_last+1;
 	anp->an_path.fp_maxlen= jp->path.arc_last+1;
-	anp->an_path.fp_names = (struct directory **)
-	    bu_malloc(sizeof(struct directory *)*anp->an_path.fp_maxlen,
-		      "full path");
+	anp->an_path.fp_names = (struct directory **)bu_malloc(sizeof(struct directory *)*anp->an_path.fp_maxlen, "full path");
 	for (i=0; i<= jp->path.arc_last; i++) {
-	    dp = anp->an_path.fp_names[i] = db_lookup(dbip,
-						      jp->path.arc[i], LOOKUP_NOISY);
+	    dp = anp->an_path.fp_names[i] = db_lookup(dbip, jp->path.arc[i], LOOKUP_NOISY);
 	    if (!dp) {
 		anp->an_path.fp_len = i;
 		db_free_full_path(&anp->an_path);
-		bu_free((genptr_t)anp, "struct animate");
+		bu_free(anp, "struct animate");
 		return;
 	    }
 	}
