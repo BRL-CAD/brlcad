@@ -5107,6 +5107,24 @@ to_init_default_bindings(struct ged_dm_view *gdvp)
 		  &current_top->to_gop->go_name,
 		  &gdvp->gdv_name,
 		  &gdvp->gdv_dmp->dm_pathName);
+#ifdef DM_X
+    bu_vls_printf(&bindings, "bind %V <4> {%V zoom %V 1.1; break}; ",
+		  &gdvp->gdv_dmp->dm_pathName,
+		  &current_top->to_gop->go_name,
+		  &gdvp->gdv_name);
+    bu_vls_printf(&bindings, "bind %V <5> {%V zoom %V 0.9; break}; ",
+		  &gdvp->gdv_dmp->dm_pathName,
+		  &current_top->to_gop->go_name,
+		  &gdvp->gdv_name);
+#endif
+#ifdef DM_WGL
+    bu_vls_printf(&bindings, "bind %V <MouseWheel> {if {%%D < 0} {%V zoom %V 0.9} else {%V zoom %V 1.1}; break}; ",
+		  &gdvp->gdv_dmp->dm_pathName,
+		  &current_top->to_gop->go_name,
+		  &gdvp->gdv_name,
+		  &current_top->to_gop->go_name,
+		  &gdvp->gdv_name);
+#endif
 
     /* Idle Mode */
     bu_vls_printf(&bindings, "bind %V <ButtonRelease> {%V idle_mode %V; break}; ",
