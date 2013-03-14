@@ -291,7 +291,7 @@ ged_open(const char *dbtype, const char *filename, int existing_only)
 	if (dbip == DBI_NULL) {
 	    int i;
 
-	    BU_GET(dbip, struct db_i);
+	    BU_ALLOC(dbip, struct db_i);
 	    dbip->dbi_eof = (off_t)-1L;
 	    dbip->dbi_fp = NULL;
 	    dbip->dbi_mf = NULL;
