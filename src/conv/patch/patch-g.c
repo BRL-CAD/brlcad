@@ -3403,6 +3403,8 @@ main(int argc, char **argv)
      * static globals or stack frame data.
      */
 
+    in = (struct input *)bu_calloc(MAX_INPUTS, sizeof(struct input), "inputs");
+    nm = (struct names *)bu_calloc(MAX_INPUTS, sizeof(struct names), "names");
     list = (struct patches *)bu_calloc(MAX_INPUTS, sizeof(struct patches), "patches");
     XVAL = (fastf_t *)bu_calloc(MAX_INPUTS, sizeof(fastf_t), "XVAL");
     YVAL = (fastf_t *)bu_calloc(MAX_INPUTS, sizeof(fastf_t), "YVAL");
@@ -3903,6 +3905,8 @@ main(int argc, char **argv)
     }
 
     /* release our memory buffers */
+    bu_free(in, "inputs");
+    bu_free(nm, "names");
     bu_free(list, "patches");
     bu_free(XVAL, "XVAL");
     bu_free(YVAL, "YVAL");

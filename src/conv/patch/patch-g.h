@@ -20,8 +20,14 @@
 
 #include "vmath.h"
 
-#define MAX_INPUTS 20000
+/* structures are currently using approximately this much memory:
+ *
+ *   ((NAMESIZE * 2) + 320) * MAX_INPUTS
+ *
+ * which is approximately 80MB with 256 and 100000 respectively
+ */
 #define NAMESIZE 256
+#define MAX_INPUTS 100000
 
 
 struct input {
@@ -38,7 +44,7 @@ struct input {
     int vc;
     int prevsurf_type;
     char surf_mode;
-} in[MAX_INPUTS];
+} *in = NULL;
 
 struct patch_verts {
     struct vertex *vp;
@@ -69,7 +75,7 @@ struct names{
     char lg[NAMESIZE+1];
     int eqlos;
     int matcode;
-} nm[MAX_INPUTS];
+} *nm = NULL;
 
 struct subtract_list{
     int outsolid;
@@ -106,9 +112,9 @@ int rev_norms = 0;			/* reverse normals for plate mode triangles */
 int polysolid = 0;			/* convert triangle-facetted objects to polysolids */
 int arb6 = 0;				/* flag: convert plate-mode objects to arb6s */
 
-char *patchfile;
-char *labelfile=NULL;
-char *matfile;
+char *patchfile = NULL;
+char *labelfile = NULL;
+char *matfile = NULL;
 
 struct patches *list = NULL;
 fastf_t *XVAL = NULL;
