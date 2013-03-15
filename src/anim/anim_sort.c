@@ -82,11 +82,11 @@ main(int argc, char *argv[])
 	fprintf(stderr, "Get_args error\n");
 
     /* copy any lines preceding the first "start" command */
-    last_pos = ftell(stdin);
+    last_pos = bu_ftell(stdin);
     while (bu_fgets(line, MAXLEN, stdin)!=NULL) {
 	if (bu_strncmp(line, "start", 5)) {
 	    printf("%s", line);
-	    last_pos = ftell(stdin);
+	    last_pos = bu_ftell(stdin);
 	} else
 	    break;
     }
@@ -116,9 +116,9 @@ main(int argc, char *argv[])
 	number = -1;
 	success = 0; /* tells whether or not any frames have been found which have the current frame number*/
 	if (incremental) {
-	    fseek(stdin, 0L, 0);
+	    bu_fseek(stdin, 0, 0);
 	} else {
-	    fseek(stdin, last_pos, 0);
+	    bu_fseek(stdin, last_pos, 0);
 	}
 
 	reserve = MAXLEN*MAXLINES;
@@ -141,7 +141,7 @@ main(int argc, char *argv[])
 		    printf("%s", line);
 		    if (!suppressed) printf("clean;\n");
 		    success = 1;
-		    last_pos = ftell(stdin);
+		    last_pos = bu_ftell(stdin);
 		}
 		/* print contents until next "end" */
 		while (bu_fgets(line, MAXLEN, stdin)!=NULL) {

@@ -86,7 +86,7 @@ fill_buffer(int y)
     if (buf_start < 0) buf_start = 0;
 
     if (file_pos != buf_start * scanlen) {
-	if (fseek(buffp, buf_start * scanlen, 0) < 0) {
+	if (bu_fseek(buffp, buf_start * scanlen, 0) < 0) {
 	    bu_exit(3, "pixscale: Can't seek to input pixel! y=%d\n", y);
 	}
 	file_pos = buf_start * scanlen;

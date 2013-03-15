@@ -165,7 +165,7 @@ display_Temps(int xmin, int ymin)
 static int
 get_IR(int x, int y, int *fahp, FILE *fp)
 {
-    if ( fseek( fp, (long)((y*IR_DATA_WID + x) * sizeof(int)), 0 ) != 0 )
+    if ( bu_fseek( fp, (y*IR_DATA_WID + x)*sizeof(int), 0 ) != 0 )
 	return	0;
     else
 	if ( fread( (char *) fahp, (int) sizeof(int), 1, fp ) != 1 )

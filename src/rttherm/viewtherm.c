@@ -236,7 +236,7 @@ view_pixel(struct application *app)
 	/* XXX This writes an array of structures out, including magic */
 	/* XXX in machine-specific format */
 	bu_semaphore_acquire(BU_SEM_SYSCALL);
-	if (fseek(outfp, app->a_y*(long)width*BN_SIZEOF_TABDATA(spectrum), 0) != 0)
+	if (bu_fseek(outfp, app->a_y*width*BN_SIZEOF_TABDATA(spectrum), 0) != 0)
 	    bu_log("fseek error\n");
 	count = fwrite(scanline[app->a_y].sl_buf,
 		       BN_SIZEOF_TABDATA(spectrum), width, outfp);

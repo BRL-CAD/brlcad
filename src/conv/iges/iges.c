@@ -766,7 +766,7 @@ w_start_global(
     bu_vls_printf(&str, ", %g, 100000.0, 7HUnknown, 7HUnknown, 9, 0" ,
 		  RT_LEN_TOL);
 
-    if (stat(db_name, &db_stat)) {
+    if (bu_stat(db_name, &db_stat)) {
 	bu_log("Cannot stat %s\n", db_name);
 	perror(prog_name);
 	bu_vls_strcat(&str, ", 15H00000101.000000;");

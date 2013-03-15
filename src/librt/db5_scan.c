@@ -84,7 +84,7 @@ db5_scan(
 	    goto fatal;
 	}
 	for (;;) {
-	    addr = ftell(dbip->dbi_fp);
+	    addr = bu_ftell(dbip->dbi_fp);
 	    if ((got = db5_get_raw_internal_fp(&raw, dbip->dbi_fp)) < 0) {
 		if (got == -1) break;		/* EOF */
 		goto fatal;
@@ -96,7 +96,7 @@ db5_scan(
 		raw.buf = NULL;
 	    }
 	}
-	dbip->dbi_eof = ftell(dbip->dbi_fp);
+	dbip->dbi_eof = bu_ftell(dbip->dbi_fp);
 	rewind(dbip->dbi_fp);
     }
 

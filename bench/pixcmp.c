@@ -205,7 +205,7 @@ main(int argc, char *argv[])
     }
 
     /* skip requested pixels/bytes in FILE1 */
-    if (f1_skip && fseek(f1, f1_skip, SEEK_SET)) {
+    if (f1_skip && bu_fseek(f1, f1_skip, SEEK_SET)) {
 	bu_log("ERROR: Unable to seek %ld %s%s in FILE1\n",
 	       f1_skip,
 	       print_bytes?"byte":"pixel",
@@ -215,7 +215,7 @@ main(int argc, char *argv[])
     }
 
     /* skip requested pixels in FILE2 */
-    if (f2_skip && fseek(f2, f2_skip, SEEK_SET)) {
+    if (f2_skip && bu_fseek(f2, f2_skip, SEEK_SET)) {
 	bu_log("ERROR: Unable to seek %ld %s%s in FILE2\n",
 	       f1_skip,
 	       print_bytes?"byte":"pixel",

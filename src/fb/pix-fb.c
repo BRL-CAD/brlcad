@@ -194,7 +194,7 @@ skipbytes(int fd, off_t num)
     int n, try;
 
     if (fileinput) {
-	(void)lseek(fd, (off_t)num, 1);
+	(void)bu_lseek(fd, num, 1);
 	return 0;
     }
 

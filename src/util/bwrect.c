@@ -76,7 +76,7 @@ main(int argc, char **argv)
     /* Move all points */
     for (row = 0+yorig; row < ynum+yorig; row++) {
 	offset = row * linelen + xorig;
-	fseek(ifp, offset, 0);
+	bu_fseek(ifp, offset, 0);
 	ret = fread(buf, sizeof(*buf), xnum, ifp);
 	if (ret == 0) {
 	    perror("fread");

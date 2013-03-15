@@ -101,7 +101,7 @@ main(int argc, char **argv)
 	    }
 	}
 
-	lseek(fd, 0L, 0);		/* rewind(fp); */
+	bu_lseek(fd, 0, 0);		/* rewind(fp); */
 
 
 	/* This section uses the maximum and the minimum values found to

@@ -46,7 +46,7 @@ main(int argc, char **argv)
       bu_exit(EXIT_FAILURE, NULL);
   }
 
-  if (stat(argv[1], &sb)) {
+  if (bu_stat(argv[1], &sb)) {
       bu_log("Error - file %s not stat successfully\n", argv[1]);
       bu_exit(EXIT_FAILURE, NULL);
   }

@@ -95,7 +95,7 @@ main(int argc, char *argv[])
     }
 
     /* All input read, regurgitate it all on stdout */
-    if (lseek(tfd, 0L, 0) < 0) {
+    if (bu_lseek(tfd, 0, 0) < 0) {
 	perror("buffer: lseek");
 	goto err;
     }

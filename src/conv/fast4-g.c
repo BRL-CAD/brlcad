@@ -2161,7 +2161,7 @@ skip_section(void)
     long section_start;
 
     /* skip to start of next section */
-    section_start = ftell(fpin);
+    section_start = bu_ftell(fpin);
     if (section_start < 0L) {
 	bu_exit(1, "Error: couldn't get input file's current file position.\n");
     }
@@ -2172,7 +2172,7 @@ skip_section(void)
 	       bu_strncmp(line, "WALL", 4) &&
 	       bu_strncmp(line, "VEHICLE", 7))
 	{
-	    section_start = ftell(fpin);
+	    section_start = bu_ftell(fpin);
 	    if (section_start < 0L) {
 		bu_exit(1, "Error: couldn't get input file's current file position.\n");
 	    }
@@ -2181,7 +2181,7 @@ skip_section(void)
 	}
     }
     /* seek to start of the section */
-    fseek(fpin, section_start, SEEK_SET);
+    bu_fseek(fpin, section_start, SEEK_SET);
 }
 
 

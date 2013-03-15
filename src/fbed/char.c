@@ -73,7 +73,7 @@ do_line(int xpos, int ypos, const char* line, RGBpixel (*menu_border))
 	char_id = (int) line[char_count] & 0377;
 
 	/* locate the bitmap for the character in the file */
-	if ( fseek( font.ffdes, (long)(SWABV(font.dir[char_id].addr)+font.offset), 0 )
+	if ( bu_fseek( font.ffdes, SWABV(font.dir[char_id].addr)+font.offset, 0 )
 	     == EOF
 	    )
 	{

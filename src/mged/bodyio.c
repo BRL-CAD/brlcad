@@ -130,7 +130,7 @@ cmd_import_body(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, con
     /*
      * How much data do we have to suck in?
      */
-    if (fstat(fd, &stat_buf) < 0) {
+    if (bu_fstat(fd, &stat_buf) < 0) {
 	bu_vls_printf(&vls, "Cannot get status of file %s\n", argv[2]);
 	Tcl_SetResult(interp, bu_vls_addr(&vls), TCL_VOLATILE);
 	bu_vls_free(&vls);

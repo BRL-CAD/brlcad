@@ -164,7 +164,7 @@ fill_buffer(int y)
     buf_start = y - buflines/2;
     if (buf_start < 0) buf_start = 0;
 
-    if (fseek(buffp, buf_start * scanlen, 0) < 0) {
+    if (bu_fseek(buffp, buf_start * scanlen, 0) < 0) {
 	fprintf(stderr, "bwscale: Can't seek to input pixel!\n");
 	/* bu_exit (3, NULL); */
     }

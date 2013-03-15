@@ -204,7 +204,7 @@ main(int argc, char **argv)
     /* Move all points */
     for (row = 0 + yorig; row < ynum + yorig; row++) {
 	offset = (row * linelen + xorig) * bytes_per_pixel;
-	fseek(ifp, offset, 0);
+	bu_fseek(ifp, offset, 0);
 	ret = fread(buf, sizeof(*buf), outbytes, ifp);
 	if (ret < (size_t)outbytes)
 	    perror("fread");

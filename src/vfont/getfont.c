@@ -98,7 +98,7 @@ get_font(const char* fontname, void (*vfont_log)(const char *fmt, ...))
     /* Addresses of characters in the file are relative to point in
      * the file after the directory, so grab the current position.
      */
-    font.offset = ftell(font.ffdes);
+    font.offset = bu_ftell(font.ffdes);
 
     return font;
 }

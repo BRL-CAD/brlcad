@@ -71,9 +71,9 @@ main(int argc, char **argv)
 	bu_exit(2, "%s: can't open \"%s\"\n", argv0, argv[1]);
     }
     yelfp = fopen(argv[1], "r");
-    fseek(yelfp, (long)(50*sizeof(yelline)), 0);
+    bu_fseek(yelfp, 50*sizeof(yelline), 0);
     cyafp = fopen(argv[1], "r");
-    fseek(cyafp, (long)(100*sizeof(cyaline)), 0);
+    bu_fseek(cyafp, 100*sizeof(cyaline), 0);
 
     line = 0;
     while ((int)fread(&cyaline, sizeof(cyaline), 1, cyafp) > 0) {

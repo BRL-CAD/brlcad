@@ -350,7 +350,7 @@ main(int argc, char **argv)
 		xout = (nyin - 1) - lasty;
 		outbyte = ((yout * nyin) + xout) * pixbytes;
 		if (outplace != outbyte) {
-		    if (fseek(ofp, outbyte, SEEK_SET) < 0) {
+		    if (bu_fseek(ofp, outbyte, SEEK_SET) < 0) {
 			ret = 3;
 			perror("fseek");
 			bu_log("ERROR: %s can't seek on output (ofp=%p, outbyte=%ld)\n", bu_getprogname(), (void *)ofp, outbyte);
@@ -376,7 +376,7 @@ main(int argc, char **argv)
 		xout = yin;
 		outbyte = ((yout * nyin) + xout) * pixbytes;
 		if (outplace != outbyte) {
-		    if (fseek(ofp, outbyte, SEEK_SET) < 0) {
+		    if (bu_fseek(ofp, outbyte, SEEK_SET) < 0) {
 			ret = 3;
 			perror("fseek");
 			bu_log("ERROR: %s can't seek on output (ofp=%p, outbyte=%ld)\n", bu_getprogname(), (void *)ofp, outbyte);
@@ -394,7 +394,7 @@ main(int argc, char **argv)
 		yout = (nyin - 1) - y + 1;
 		outbyte = yout * scanbytes;
 		if (outplace != outbyte) {
-		    if (fseek(ofp, outbyte, SEEK_SET) < 0) {
+		    if (bu_fseek(ofp, outbyte, SEEK_SET) < 0) {
 			ret = 3;
 			perror("fseek");
 			bu_log("ERROR: %s can't seek on output (ofp=%p, outbyte=%ld)\n", bu_getprogname(), (void *)ofp, outbyte);

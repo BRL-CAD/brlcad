@@ -68,7 +68,7 @@ Recsize()
     if (k == (-1))	/* We didn't encounter an early EOF */
 	k = NRECS;
 
-    if (fseek(fd, 0L, 0)) {
+    if (bu_fseek(fd, 0, 0)) {
 	/* rewind file */
 	bu_log("Cannot rewind file\n");
 	perror("Recsize");

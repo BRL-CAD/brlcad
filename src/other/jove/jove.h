@@ -402,7 +402,7 @@ extern int	UpdModLine,	/* Whether we want to update the mode line */
  * It is also delcared in <sys/types.h>
  */
 #if defined(BSD) && BSD <= 43
-extern long	lseek();
+extern long	bu_lseek();
 #endif
 
 extern disk_line put_line();

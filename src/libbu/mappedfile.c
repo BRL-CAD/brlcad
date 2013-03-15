@@ -91,7 +91,7 @@ bu_open_mapped_file(const char *name, const char *appl)
 
 #ifdef HAVE_SYS_STAT_H
 		bu_semaphore_acquire(BU_SEM_SYSCALL);
-		ret = fstat(fd, &sb);
+		ret = bu_fstat(fd, &sb);
 		bu_semaphore_release(BU_SEM_SYSCALL);
 
 		if (ret < 0) {
@@ -161,7 +161,7 @@ bu_open_mapped_file(const char *name, const char *appl)
     }
 
     bu_semaphore_acquire(BU_SEM_SYSCALL);
-    ret = fstat(fd, &sb);
+    ret = bu_fstat(fd, &sb);
     bu_semaphore_release(BU_SEM_SYSCALL);
 
     if (UNLIKELY(ret < 0)) {

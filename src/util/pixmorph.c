@@ -453,7 +453,7 @@ main(int argc, char **argv)
     } else {
 	struct stat sb;
 
-	if (stat(picAname, &sb) < 0) {
+	if (bu_stat(picAname, &sb) < 0) {
 	    perror("pixmorph: unable to stat file:");
 	    return 1;
 	}

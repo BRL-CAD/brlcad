@@ -43,13 +43,13 @@ Findp()
 
     saverec = currec;	/* save current record number */
 
-    if (fseek(fd, 0L, 2)) {
+    if (bu_fseek(fd, 0, 2)) {
 	/* go to end of file */
 	bu_log("Cannot seek to end of file\n");
 	perror("Findp");
 	bu_exit(1, NULL);
     }
-    offset = ftell(fd);	/* get file length */
+    offset = bu_ftell(fd);	/* get file length */
     rec2 = offset/reclen;	/* calculate record number for last record */
     Readrec(rec2);	/* read last record into "card" buffer */
     dstart = 0;

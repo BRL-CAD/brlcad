@@ -769,7 +769,7 @@ bu_parallel(void (*func)(int, genptr_t), int ncpu, genptr_t arg)
 #  endif /* ardent */
 
 #  ifdef SGI_4D
-    stdin_pos = ftell(stdin);
+    stdin_pos = bu_ftell(stdin);
     stdin_save = *(stdin);		/* struct copy */
     parallel_nthreads_started = 1;
     parallel_nthreads_finished = 1;
@@ -873,7 +873,7 @@ bu_parallel(void (*func)(int, genptr_t), int ncpu, genptr_t arg)
 	    }
 	}
     }
-    if (UNLIKELY(ftell(stdin) != stdin_pos)) {
+    if (UNLIKELY(bu_ftell(stdin) != stdin_pos)) {
 	/*
 	 * Gross SGI bug: when a thread is finished, it returns to the
 	 * stack frame created by sproc(), which just calls exit(0),
@@ -885,12 +885,12 @@ bu_parallel(void (*func)(int, genptr_t), int ncpu, genptr_t arg)
 	 */
 	bu_log("\nWarning:  stdin file pointer has been corrupted by SGI multi-processor bug!\n");
 	if (UNLIKELY(bu_debug & BU_DEBUG_PARALLEL)) {
-	    bu_log("Original position was x%x, now position is x%x!\n", stdin_pos, ftell(stdin));
+	    bu_log("Original position was x%x, now position is x%x!\n", stdin_pos, bu_ftell(stdin));
 	    parallel_pr_FILE("saved stdin", &stdin_save);
 	    parallel_pr_FILE("current stdin", stdin);
 	}
-	fseek(stdin, stdin_pos, SEEK_SET);
-	if (UNLIKELY(ftell(stdin) != stdin_pos)) {
+	bu_fseek(stdin, stdin_pos, SEEK_SET);
+	if (UNLIKELY(bu_ftell(stdin) != stdin_pos)) {
 	    bu_log("WARNING: fseek() did not recover proper position.\n");
 	} else {
 	    bu_log("It was fixed by fseek()\n");

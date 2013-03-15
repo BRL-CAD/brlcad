@@ -3967,7 +3967,7 @@ sedit(void)
 		fname = get_file_name(bu_vls_addr(&dsp->dsp_name));
 		if (! fname) break;
 
-		if (stat(fname, &stat_buf)) {
+		if (bu_stat(fname, &stat_buf)) {
 		    bu_vls_printf(&message, "Cannot get status of file %s\n", fname);
 		    Tcl_SetResult(INTERP, bu_vls_addr(&message), TCL_VOLATILE);
 		    bu_vls_free(&message);
@@ -3998,7 +3998,7 @@ sedit(void)
 		RT_EBM_CK_MAGIC(ebm);
 
 		if (inpara == 2) {
-		    if (stat(ebm->file, &stat_buf)) {
+		    if (bu_stat(ebm->file, &stat_buf)) {
 			Tcl_AppendResult(INTERP, "Cannot get status of file ", ebm->file, (char *)NULL);
 			mged_print_result(TCL_ERROR);
 			return;
@@ -4034,7 +4034,7 @@ sedit(void)
 		if (fname) {
 		    struct bu_vls message = BU_VLS_INIT_ZERO;
 
-		    if (stat(fname, &stat_buf)) {
+		    if (bu_stat(fname, &stat_buf)) {
 			bu_vls_printf(&message, "Cannot get status of file %s\n", fname);
 			Tcl_SetResult(INTERP, bu_vls_addr(&message), TCL_VOLATILE);
 			bu_vls_free(&message);
@@ -4107,7 +4107,7 @@ sedit(void)
 		RT_VOL_CK_MAGIC(vol);
 
 		if (inpara == 3) {
-		    if (stat(vol->file, &stat_buf)) {
+		    if (bu_stat(vol->file, &stat_buf)) {
 			Tcl_AppendResult(INTERP, "Cannot get status of file ", vol->file, (char *)NULL);
 			mged_print_result(TCL_ERROR);
 			return;
@@ -4196,7 +4196,7 @@ sedit(void)
 		if (fname) {
 		    struct bu_vls message = BU_VLS_INIT_ZERO;
 
-		    if (stat(fname, &stat_buf)) {
+		    if (bu_stat(fname, &stat_buf)) {
 			bu_vls_printf(&message, "Cannot get status of file %s\n", fname);
 			Tcl_SetResult(INTERP, bu_vls_addr(&message), TCL_VOLATILE);
 			bu_vls_free(&message);

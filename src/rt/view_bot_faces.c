@@ -195,7 +195,7 @@ view_2init(struct application *ap, char *framename)
 
 #ifdef HAVE_SYS_STAT_H
     /* read in any existing data */
-    if (outfp != NULL && stat(framename, &sb) >= 0 && sb.st_size > 0) {
+    if (outfp != NULL && bu_stat(framename, &sb) >= 0 && sb.st_size > 0) {
 	Tcl_HashEntry *entry;
 	char *bot_name;
 	struct bu_ptbl *faces=NULL;

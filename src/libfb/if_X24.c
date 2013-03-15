@@ -2073,9 +2073,9 @@ X24_getmem(FBIO *ifp)
 		fd = open(BS_NAME, O_RDWR | O_CREAT | O_BINARY, 0666);
 		if (fd < 0)
 		    fb_log("X24_getmem: can't create fb file, using private memory instead, errno %d\n", errno);
-		else if (lseek(fd, size, SEEK_SET) < 0)
+		else if (bu_lseek(fd, size, SEEK_SET) < 0)
 		    fb_log("X24_getmem: can't seek fb file, using private memory instead, errno %d\n", errno);
-		else if (lseek(fd, 0, SEEK_SET) < 0)
+		else if (bu_lseek(fd, 0, SEEK_SET) < 0)
 		    fb_log("X24_getmem: can't seek fb file, using private memory instead, errno %d\n", errno);
 		else if ((mem = mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0)) == (char *) -1)
 		    fb_log("X24_getmem: can't mmap fb file, using private memory instead, errno %d\n", errno);

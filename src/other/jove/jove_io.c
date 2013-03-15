@@ -421,7 +421,7 @@ DoWriteReg(app)
 		if (io == -1)
 			io = creat(fname, Dfltmode);
 		else
-			dolseek(io, 0L, 2);
+			dolseek(io, 0, 2);
 	} else
 		io = creat(fname, Dfltmode);
 	if (io == -1)
@@ -501,7 +501,7 @@ char	*fname;
 		if (io == -1)
 			io = creat(fname, Dfltmode);
 		else
-			dolseek(io, 0L, 2);
+			dolseek(io, 0, 2);
 	} else {
 		register char	*yorn;
 
@@ -673,12 +673,7 @@ InsFile()
 }
 
 void
-dolseek(fd, offset, whence)
-#if defined(__bsdi__) || defined(__NetBSD__)
-off_t	offset;
-#else
-long	offset;
-#endif
+dolseek(int fd, off_t offset, int whence)
 {
 	if (lseek(fd, offset, whence) == -1)
 		complain("lseek failed");
@@ -855,7 +850,7 @@ int	(*iofcn)();
 		return;
 	}
 #endif
-	ignore(lseek(tmpfd, (long) (unsigned) b * (long)BSIZ, 0));
+	ignore(lseek(tmpfd, (off_t)b * (off_t)BSIZ, 0));
 	if ((*iofcn)(tmpfd, buf, BSIZ) != BSIZ)
 		error("IO error");
 }

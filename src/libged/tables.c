@@ -84,7 +84,7 @@ tables_sol_number(const matp_t matrix, char *name, int *old, long *numsol)
     MAT_COPY(idbuf1.i_mat, matrix);
 
     for (i = 0; i < *numsol; i++) {
-	(void)lseek(rd_idfd, i*(long)sizeof identt, 0);
+	(void)bu_lseek(rd_idfd, i*sizeof(identt), 0);
 	readval = read(rd_idfd, &idbuf2, sizeof identt);
 
 	if (readval < 0) {
@@ -101,7 +101,7 @@ tables_sol_number(const matp_t matrix, char *name, int *old, long *numsol)
     (*numsol)++;
     idbuf1.i_index = *numsol;
 
-    (void)lseek(idfd, (off_t)0L, 2);
+    (void)bu_lseek(idfd, 0, 2);
     i = write(idfd, &idbuf1, sizeof identt);
     if (i < 0)
 	perror("write");

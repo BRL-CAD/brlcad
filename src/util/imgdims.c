@@ -137,7 +137,7 @@ main (int argc, char **argv)
 	bu_exit(1, "image file [%s] does not exist\n", argument);
     }
 
-    if ((stat(argument, &stat_buf) != 0)
+    if ((bu_stat(argument, &stat_buf) != 0)
 	&& (!grab_number(argument, &nm_bytes)))
     {
 	bu_log("Cannot find file '%s'\n", argument);
