@@ -12466,7 +12466,11 @@ to_view_func_common(struct ged *gedp,
 	gdvp->gdv_view->gv_redraw_on_zoom)
     {
 	char *gr_av[] = {"redraw", NULL};
+
 	ged_redraw(gedp, 1, (const char **)gr_av);
+
+	gdvp->gdv_view->gv_x_samples = gdvp->gdv_dmp->dm_width;
+	gdvp->gdv_view->gv_y_samples = gdvp->gdv_dmp->dm_height;
     }
 
     if (ret == GED_OK) {
