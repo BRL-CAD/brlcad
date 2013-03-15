@@ -40,7 +40,7 @@ ged_lod(struct ged *gedp, int argc, const char *argv[])
 {
     struct ged_view *gvp;
     int printUsage = 0;
-    static const char *usage = "lod (on|off)\n"
+    static const char *usage = "lod (on|off|enabled)\n"
 			       "lod scale (points|curves) <factor>\n"
 			       "lod redraw (off|onzoom)\n";
 
@@ -72,6 +72,9 @@ ged_lod(struct ged *gedp, int argc, const char *argv[])
     } else if (argc == 1 && BU_STR_EQUAL(argv[0], "off")) {
 	/* lod off */
 	gvp->gv_adaptive_plot = 0;
+    } else if (argc == 1 && BU_STR_EQUAL(argv[0], "enabled")) {
+	/* lod enabled - return on state */
+	bu_vls_printf(gedp->ged_result_str, "%d", gvp->gv_adaptive_plot);
     } else if (BU_STR_EQUAL(argv[0], "scale")) {
 	if (argc == 2 || argc == 3) {
 	    if (BU_STR_EQUAL(argv[1], "points")) {

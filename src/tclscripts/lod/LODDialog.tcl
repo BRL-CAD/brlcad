@@ -35,14 +35,14 @@ package require Itk
 ::itcl::class LODDialog {
     inherit ::itk::Widget
 
-    constructor {_lodon args} {}
+    constructor {args} {}
 
     public {
 	variable lodon 0
 	variable redrawOnZoom 0
 	variable liveUpdate 0
 	variable pointsScale 1.0
-	variable curvesScale 1.0
+	variable curvesScale 1
 
 	method disableLODWidgets {}
 	method disableUpdateButton {}
@@ -59,10 +59,16 @@ package require Itk
     itk_option define -cmdprefix cmdprefix CmdPrefix "" {}
 }
 
-::itcl::body LODDialog::constructor {_lodon args} {
+::itcl::body LODDialog::constructor {args} {
     eval itk_initialize $args
 
-    set lodon $_lodon
+    set lodon [lod enabled]
+    set pointsScale [format %.1f [lod scale points]]
+    set curvesScale [format %.0f [lod scale curves]]
+
+    if {[lod redraw] == "onzoom"} {
+	set redrawOnZoom 1
+    }
 
     # CREATE WIDGETS
     itk_component add lodFrame {
