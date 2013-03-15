@@ -40,7 +40,7 @@ package require Itk
     public {
 	variable lodon 0
 	variable redrawOnZoom 0
-	variable liveUpdate
+	variable liveUpdate 0
 	variable pointsScale 1.0
 	variable curvesScale 1.0
 
