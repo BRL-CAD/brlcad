@@ -45,7 +45,6 @@ package require Itk
 	variable curvesScale 1
 
 	method disableLODWidgets {}
-	method disableUpdateButton {}
 	method updatePointsValue {newVal}
 	method updateCurvesValue {newVal}
 	method redrawOnZoom {}
@@ -137,15 +136,14 @@ package require Itk
 
     itk_component add updateButton {
 	ttk::button $itk_component(lodFrame).updateButton \
-	    -text "Redraw Wireframes" \
+	    -text "Update Wireframes" \
 	    -command "$this redraw"
     } {}
 
     itk_component add liveUpdateCheckbutton {
 	ttk::checkbutton $itk_component(lodFrame).liveUpdateCheckbutton \
 	    -text "Live Update" \
-	    -variable [::itcl::scope liveUpdate] \
-	    -command "$this disableUpdateButton"
+	    -variable [::itcl::scope liveUpdate]
     } {}
 
     itk_component add zoomUpdateCheckbutton {
@@ -164,6 +162,8 @@ package require Itk
 	-sticky nw -padx 3 -pady 3
     grid $itk_component(lodFrame).separator1        - \
 	-sticky ew -padx 6 -pady 6
+    grid $itk_component(lodFrame).updateButton     - \
+	-sticky sw -padx 3 -pady 3
     grid $itk_component(lodFrame).pointsLabel      - \
 	-sticky w -padx 3 -pady 3
     grid $itk_component(lodFrame).pointsScale      $itk_component(lodFrame).pointsValueLabel \
@@ -176,8 +176,6 @@ package require Itk
 	-sticky e -padx 3 -pady 3
     grid $itk_component(lodFrame).spacerFrame2     - \
 	-stick nesw
-    grid $itk_component(lodFrame).updateButton     - \
-	-sticky sw -padx 3 -pady 3
     grid $itk_component(lodFrame).liveUpdateCheckbutton \
 	-sticky w -padx 3 -pady 3
     grid $itk_component(lodFrame).zoomUpdateCheckbutton \
@@ -205,7 +203,6 @@ package require Itk
 	$itk_component(lodFrame).curvesLabel state !disabled
 	$itk_component(lodFrame).curvesScale state !disabled
 	$itk_component(lodFrame).curvesLabel state !disabled
-	$itk_component(lodFrame).updateButton state !disabled
 	$itk_component(lodFrame).liveUpdateCheckbutton state !disabled
 	$itk_component(lodFrame).zoomUpdateCheckbutton state !disabled
 	lod on
@@ -216,18 +213,9 @@ package require Itk
 	$itk_component(lodFrame).curvesLabel state disabled
 	$itk_component(lodFrame).curvesScale state disabled
 	$itk_component(lodFrame).curvesLabel state disabled
-	$itk_component(lodFrame).updateButton state disabled
 	$itk_component(lodFrame).liveUpdateCheckbutton state disabled
 	$itk_component(lodFrame).zoomUpdateCheckbutton state disabled
 	lod off
-    }
-}
-
-::itcl::body LODDialog::disableUpdateButton {} {
-    if {$liveUpdate} {
-	$itk_component(lodFrame).updateButton state disabled
-    } else {
-	$itk_component(lodFrame).updateButton state !disabled
     }
 }
 
