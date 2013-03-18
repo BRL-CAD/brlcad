@@ -529,7 +529,7 @@ dofile(FILE *fp)
 		fprintf(stderr, "plrot: unrecognized command '%c' (0x%x)\n",
 			(isascii(c) && isprint(c)) ? c : '?',
 			c);
-		fprintf(stderr, "plrot: ftell = %ld\n", bu_ftell(fp));
+		fprintf(stderr, "plrot: ftell = %lld\n", (long long)bu_ftell(fp));
 		putchar(c);
 		break;
 	}
