@@ -52,7 +52,7 @@ opposite of the
 program.</para>
 
 <para>The program reads the entire image into memory,
-and then scales the image down by
+and then scales the image down
 to 1/factor the original size in both dimensions.</para>
 
 
