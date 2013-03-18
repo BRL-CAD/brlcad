@@ -332,9 +332,9 @@ bu_fseek(FILE *stream, off_t offset, int origin)
     int ret;
 
 #if defined(_WIN32) || defined(WIN32) && (SIZEOF_VOID_P != SIZEOF_LONG)
-    ret = _fseeki64(stream, offset, origin); 
+    ret = _fseeki64(stream, offset, origin);
 #else
-    ret = fseek(stream, offset, origin); 
+    ret = fseek(stream, offset, origin);
 #endif
 
     return ret;
@@ -347,12 +347,12 @@ bu_lseek(int fd, off_t offset, int origin)
 
 #if defined(_WIN32) || defined(WIN32) && (SIZEOF_VOID_P != SIZEOF_LONG)
     /* windows 64bit */
-    ret = _lseeki64(fd, offset, origin); 
+    ret = _lseeki64(fd, offset, origin);
 #elif defined(_WIN32) || defined(WIN32) && (SIZEOF_VOID_P == SIZEOF_LONG)
     /* windows 32bit */
-    ret = _lseek(fd, offset, origin); 
+    ret = _lseek(fd, offset, origin);
 #else
-    ret = lseek(fd, offset, origin); 
+    ret = lseek(fd, offset, origin);
 #endif
 
     return ret;
@@ -365,9 +365,9 @@ bu_ftell(FILE *stream)
 
 #if defined(_WIN32) || defined(WIN32) && (SIZEOF_VOID_P != SIZEOF_LONG)
     /* windows 64bit */
-    ret = _ftelli64(stream); 
+    ret = _ftelli64(stream);
 #else
-    ret = ftell(stream); 
+    ret = ftell(stream);
 #endif
 
     return ret;
@@ -380,12 +380,12 @@ bu_fstat(int fd, genptr_t buffer)
 
 #if defined(_WIN32) || defined(WIN32) && (SIZEOF_VOID_P != SIZEOF_LONG)
     /* windows 64bit */
-    ret = _fstat64(fd, (struct __stat64 *)buffer); 
+    ret = _fstat64(fd, (struct __stat64 *)buffer);
 #elif defined(_WIN32) || defined(WIN32) && (SIZEOF_VOID_P == SIZEOF_LONG)
     /* windows 32bit */
-    ret = _fstat32(fd, (struct __stat32 *)buffer); 
+    ret = _fstat32(fd, (struct __stat32 *)buffer);
 #else
-    ret = fstat(fd, (struct stat *)buffer); 
+    ret = fstat(fd, (struct stat *)buffer);
 #endif
 
     return ret;
@@ -398,12 +398,12 @@ bu_stat(const char *path, genptr_t buffer)
 
 #if defined(_WIN32) || defined(WIN32) && (SIZEOF_VOID_P != SIZEOF_LONG)
     /* windows 64bit */
-    ret = _stat64(path, (struct __stat64 *)buffer); 
+    ret = _stat64(path, (struct __stat64 *)buffer);
 #elif defined(_WIN32) || defined(WIN32) && (SIZEOF_VOID_P == SIZEOF_LONG)
     /* windows 32bit */
-    ret = _stat32(path, (struct __stat32 *)buffer); 
+    ret = _stat32(path, (struct __stat32 *)buffer);
 #else
-    ret = stat(path, (struct stat *)buffer); 
+    ret = stat(path, (struct stat *)buffer);
 #endif
 
     return ret;

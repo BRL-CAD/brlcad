@@ -117,7 +117,8 @@ get_args(int argc, char **argv, FILE **ifp, FILE **ofp, double *angle)
 		break;
 
 	    default:		/* '?' */
-		bu_log("ERROR: %s encountered unrecognized '-%c' option\n", bu_getprogname(), c);
+/* Disabled next line; illegal-option message is already provided, and "c" variable would only show '?'. */
+/*		bu_log("ERROR: %s encountered unrecognized '-%c' option\n", bu_getprogname(), c); */
 		return 0;
 	}
     }
