@@ -123,7 +123,6 @@
 /* #define filelength _filelength */
 #define isatty _isatty
 #define locking _locking
-#define lseek _lseek
 /* #define mktemp _mktemp */
 #define open _open
 #define unlink _unlink
@@ -148,7 +147,6 @@
 #define execvp _execvp
 #define fdopen _fdopen
 #define fileno _fileno
-#define fstat _fstat
 #define getpid _getpid
 #define hypot _hypot
 #define isascii __isascii
@@ -158,12 +156,20 @@
 #define snprintf _snprintf
 #define snprintf _snprintf
 #define sopen _sopen
-#define stat _stat
 #define strcasecmp _stricmp
 #define strncasecmp _strnicmp
 #define strdup _strdup
 #define sys_errlist _sys_errlist
 #define sys_nerr _sys_nerr
+
+
+#if defined(_WIN32) || defined(WIN32) && (SIZEOF_VOID_P != SIZEOF_LONG)
+#  define stat __stat64
+#elif defined(_WIN32) || defined(WIN32) && (SIZEOF_VOID_P == SIZEOF_LONG)
+#  define stat __stat32
+#else
+#  define stat _stat
+#endif
 
 
 /* #if defined(SIZEOF_VOID_P) && SIZEOF_VOID_P == 8 */
@@ -192,9 +198,7 @@ typedef void (*sig_t)(int);
  * types
  */
 
-/* #if defined(SIZEOF_VOID_P) && SIZEOF_VOID_P == 8 */
-/* #define off_t int64_t*/
-#define off_t _off_t
+#define off_t ptrdiff_t
 
 typedef int pid_t;
 typedef int socklen_t;

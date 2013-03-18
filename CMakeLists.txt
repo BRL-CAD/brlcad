@@ -753,11 +753,6 @@ CONFIG_H_APPEND(BRLCAD "/**** Define statements for CMake ****/\n")
 CONFIG_H_APPEND(BRLCAD "#ifndef __CONFIG_H__\n")
 CONFIG_H_APPEND(BRLCAD "#define __CONFIG_H__\n")
 
-# If we're building on Windows, start off with the config_win.h file
-if(WIN32)
-  CONFIG_H_APPEND(BRLCAD "#include \"config_win_cmake.h\"\n")
-endif(WIN32)
-
 # Set up some of the define statements for path information and other basics
 CONFIG_H_APPEND(BRLCAD "#define PACKAGE \"brlcad\"\n")
 CONFIG_H_APPEND(BRLCAD "#define PACKAGE_BUGREPORT \"http://brlcad.org\"\n")
@@ -1748,6 +1743,11 @@ if(NOT BRLCAD_ENABLE_TARGETS OR "${BRLCAD_ENABLE_TARGETS}" GREATER 2)
 else(NOT BRLCAD_ENABLE_TARGETS OR "${BRLCAD_ENABLE_TARGETS}" GREATER 2)
   CMAKEFILES(doc pix bench regress db)
 endif(NOT BRLCAD_ENABLE_TARGETS OR "${BRLCAD_ENABLE_TARGETS}" GREATER 2)
+
+# If we're building on Windows, use config_win.h file
+if(WIN32)
+  CONFIG_H_APPEND(BRLCAD "#include \"config_win_cmake.h\"\n")
+endif(WIN32)
 
 # Now that all the tests are done, configure the brlcad_config.h file:
 CONFIG_H_APPEND(BRLCAD "#endif /* __CONFIG_H__ */\n")
