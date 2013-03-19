@@ -47,6 +47,7 @@ set(mged_TCLSCRIPTS
   lc.tcl
   lgt_mat.tcl
   list.tcl
+  lodconfig.tcl
   make_solid.tcl
   man.tcl
   menu.tcl

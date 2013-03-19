@@ -1938,6 +1938,11 @@ hoc_register_menu_data "Create" "$ptype..." "Make a $ptype" $ksl
     hoc_register_menu_data "Tools" "Geometry Browser" "Geometry Browser"\
 	{ { summary "Tool for browsing the geometry in a database." } }
 
+    .$id.menubar.tools add command -label "LOD Configuration" -underline 0\
+	-command "lodconfig"
+    hoc_register_menu_data "Tools" "LOD5 Configuration" "LOD Configuration"\
+	{ { summary "A tool for configuring Level of Detail drawing." } }
+
     .$id.menubar.tools add command -label "Overlap Tool" -underline 0\
 	-command "overlap_tool $id"
     hoc_register_menu_data "Tools" "Overlap Tool" "Overlap Tool"\

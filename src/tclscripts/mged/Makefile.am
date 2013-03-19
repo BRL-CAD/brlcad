@@ -58,6 +58,7 @@ scripties = \
 	lc.tcl \
 	lgt_mat.tcl \
 	list.tcl \
+	lodconfig.tcl \
 	make_solid.tcl \
 	menu.tcl \
 	mged.tcl \

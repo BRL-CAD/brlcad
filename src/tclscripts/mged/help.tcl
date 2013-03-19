@@ -203,6 +203,7 @@ set mged_help_data(labelvert)	{{object[s]}	{label vertices of wireframes of obje
 set mged_help_data(listeval)	$helplib_data(wdb_listeval)
 set mged_help_data(loadtk)	{{[DISPLAY]}	{initializes the Tk window library}}
 set mged_help_data(loadview)	{{file}	{load view from raytrace script file}}
+set mged_help_data(lod)		{{} {configure Level of Detail drawing}}
 set mged_help_data(lookat)	$helplib_data(vo_lookat)
 set mged_help_data(ls)		$helplib_data(wdb_ls)
 set mged_help_data(lm)          {{[-l] value [value value...]} {DEPRECATED: list all regions that have a MUVES_Component attribute with any of the listed values}}
