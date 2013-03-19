@@ -264,7 +264,7 @@ db_parse_1anim(struct db_i *dbip, int argc, const char *argv[])
 	return (struct animate *)NULL;
     }
 
-    BU_GET(anp, struct animate);
+    BU_ALLOC(anp, struct animate);
     anp->magic = ANIMATE_MAGIC;
 
     db_init_db_tree_state(&ts, dbip, &rt_uniresource);

@@ -51,7 +51,7 @@ db_open_inmem(void)
     register struct db_i *dbip = DBI_NULL;
     register int i;
 
-    BU_GET(dbip, struct db_i);
+    BU_ALLOC(dbip, struct db_i);
     dbip->dbi_eof = (off_t)-1L;
     dbip->dbi_fp = NULL;
     dbip->dbi_mf = NULL;
