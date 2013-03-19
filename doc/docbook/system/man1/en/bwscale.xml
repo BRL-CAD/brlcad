@@ -29,6 +29,7 @@
     <arg choice="opt" rep="norepeat">-N <replaceable>out_height</replaceable></arg>
     <arg choice="opt" rep="norepeat">-h </arg>
     <arg choice="opt" rep="norepeat"><replaceable>infile.bw</replaceable></arg>
+    <arg choice='plain'><replaceable>&gt;</replaceable></arg>
     <arg choice="plain" rep="norepeat"><replaceable>outfile.bw</replaceable></arg>
 </cmdsynopsis>
 </refsynopsisdiv>
