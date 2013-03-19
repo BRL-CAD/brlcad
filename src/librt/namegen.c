@@ -129,8 +129,8 @@ contains_number(char *substring)
 static void
 test_regex(char *name, int style)
 {
-    struct formatting_style *standard1;
-    struct formatting_style *standard2;
+    struct formatting_style standard1 = {BU_VLS_INIT_ZERO, 0};
+    struct formatting_style standard2 = {BU_VLS_INIT_ZERO, 0};
 
     regex_t compiled_regex;
     regmatch_t *result_locations;
@@ -139,30 +139,28 @@ test_regex(char *name, int style)
 
     int *iterators;
 
-    BU_GET(standard1, struct formatting_style);
-    bu_vls_init(&(standard1->regex_spec));
-    bu_vls_strcat(&(standard1->regex_spec), "([rcs][.])?([^0-9^.]*)?([0-9]*)?([.][oicb])?([0-9]*)?([+u-])?([0-9]*)?");
-    standard1->pos_of_type_id_char = 1;
+    bu_vls_init(&(standard1.regex_spec));
+    bu_vls_strcat(&(standard1.regex_spec), "([rcs][.])?([^0-9^.]*)?([0-9]*)?([.][oicb])?([0-9]*)?([+u-])?([0-9]*)?");
+    standard1.pos_of_type_id_char = 1;
 
-    BU_GET(standard2, struct formatting_style);
-    bu_vls_init(&(standard2->regex_spec));
-    bu_vls_strcat(&(standard2->regex_spec), "([^0-9^.]*)?([0-9]*)?([^.]*)?([.][rcs])?([0-9]*)?([+u-])?([0-9]*)?");
-    standard2->pos_of_type_id_char = 5;
+    bu_vls_init(&(standard2.regex_spec));
+    bu_vls_strcat(&(standard2.regex_spec), "([^0-9^.]*)?([0-9]*)?([^.]*)?([.][rcs])?([0-9]*)?([+u-])?([0-9]*)?");
+    standard2.pos_of_type_id_char = 5;
 
     if (style == 1) {
-	ret = regcomp(&compiled_regex, bu_vls_addr(&(standard1->regex_spec)), REG_EXTENDED);
+	ret = regcomp(&compiled_regex, bu_vls_addr(&(standard1.regex_spec)), REG_EXTENDED);
 	if (ret != 0) {
 	    perror("regcomp");
 	}
-	components = count_format_blocks(bu_vls_addr(&(standard1->regex_spec)));
+	components = count_format_blocks(bu_vls_addr(&(standard1.regex_spec)));
     }
 
     if (style == 2) {
-	ret = regcomp(&compiled_regex, bu_vls_addr(&(standard2->regex_spec)), REG_EXTENDED);
+	ret = regcomp(&compiled_regex, bu_vls_addr(&(standard2.regex_spec)), REG_EXTENDED);
 	if (ret != 0) {
 	    perror("regcomp");
 	}
-	components = count_format_blocks(bu_vls_addr(&(standard2->regex_spec)));
+	components = count_format_blocks(bu_vls_addr(&(standard2.regex_spec)));
     }
 
     result_locations = (regmatch_t *)bu_calloc(components + 1, sizeof(regmatch_t), "array to hold answers from regex");
