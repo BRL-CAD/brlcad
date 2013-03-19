@@ -652,7 +652,7 @@ bu_parallel(void (*func)(int, genptr_t), int ncpu, genptr_t arg)
 #  endif
 
 #  ifdef sgi
-    long stdin_pos;
+    off_t stdin_pos;
     FILE stdin_save;
     int worker_pid_tbl[MAX_PSW] = {0};
 #  endif

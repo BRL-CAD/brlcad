@@ -73,7 +73,7 @@ main(int argc, char *argv[])
 {
     int length, frame_number, number, success, maxnum;
     int first_frame, spread, reserve;
-    long last_pos;
+    off_t last_pos;
     char line[MAXLEN];
     char pbuffer[MAXLEN*MAXLINES];
 

@@ -43,9 +43,9 @@
 #define MAXBUFBYTES 1024*1024	/* max bytes to malloc in buffer space */
 
 unsigned char *buffer;
-size_t scanlen;			/* length of infile scanlines */
-size_t buflines;		/* Number of lines held in buffer */
-int buf_start = -1000;		/* First line in buffer */
+ssize_t scanlen;			/* length of infile scanlines */
+ssize_t buflines;		/* Number of lines held in buffer */
+off_t buf_start = -1000;	/* First line in buffer */
 
 unsigned long xnum, ynum;	/* Number of pixels in new file */
 float ulx, uly, urx, ury, lrx, lry, llx, lly;	/* Corners of original file */
@@ -106,7 +106,7 @@ main(int argc, char **argv)
 {
     float x1, y1, x2, y2, x, y;
     size_t row, col;
-    size_t yindex;
+    ssize_t yindex;
     char value;
     size_t ret;
 

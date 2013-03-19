@@ -44,11 +44,11 @@
 
 unsigned char *outbuf;
 unsigned char *buffer;
-int scanlen;			/* length of infile (and buffer) scanlines */
-int buflines;			/* Number of lines held in buffer */
-int buf_start = -1000;		/* First line in buffer */
+ssize_t scanlen;		/* length of infile (and buffer) scanlines */
+ssize_t buflines;		/* Number of lines held in buffer */
+off_t buf_start = -1000;	/* First line in buffer */
 
-int bufy;				/* y coordinate in buffer */
+ssize_t bufy;				/* y coordinate in buffer */
 FILE *buffp;
 static char *file_name;
 
@@ -180,7 +180,7 @@ fill_buffer(int y)
  * XXX - CHECK FILE SIZE
  */
 void
-init_buffer(int len)
+init_buffer(size_t len)
 {
     int max;
 

@@ -48,7 +48,7 @@ Usage: pixrot [-f -b -r -i -#bytes] [-s squaresize]\n\
 /* 4 times bigger than typ. screen */
 /*#define MAXBUFBYTES (1280*1024*3*4) */
 #define MAXBUFBYTES (12288*16384*2)
-int buflines, scanbytes;
+ssize_t buflines, scanbytes;
 int firsty = -1;	/* first "y" scanline in buffer */
 int lasty = -1;	/* last "y" scanline in buffer */
 unsigned char *buffer;
@@ -142,7 +142,7 @@ int
 main(int argc, char **argv)
 {
     int x, y, j;
-    long outbyte, outplace;
+    off_t outbyte, outplace;
     size_t ret;
 
     if (!get_args(argc, argv) || isatty(fileno(stdout))) {

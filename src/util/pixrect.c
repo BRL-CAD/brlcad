@@ -187,7 +187,7 @@ int
 main(int argc, char **argv)
 {
     int row;
-    long offset;
+    off_t offset;
     size_t ret;
 
     if (!get_args(argc, argv)) {

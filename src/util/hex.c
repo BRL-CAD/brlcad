@@ -40,7 +40,7 @@
 static char *options = "o:";
 static char *progname = "(noname)";
 
-static long offset=0;	 /* offset from beginning of file from which to start */
+static off_t offset=0;	 /* offset from beginning of file from which to start */
 
 #define DUMPLEN 16    /* number of bytes to dump on one line */
 
@@ -49,10 +49,10 @@ static long offset=0;	 /* offset from beginning of file from which to start */
  */
 void dump(FILE *fd)
 {
-    int i;
+    size_t i;
     char *p;
-    int bytes;
-    long addr = 0L;
+    size_t bytes;
+    off_t addr = 0;
     static char buf[DUMPLEN];    /* input buffer */
 
     if (offset != 0) {
@@ -129,7 +129,7 @@ main(int ac, char **av)
     int c, optlen, files;
     FILE *fd;
     char *eos;
-    long newoffset;
+    off_t newoffset;
 
     progname = *av;
 

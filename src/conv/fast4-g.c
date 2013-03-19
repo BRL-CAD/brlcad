@@ -2158,11 +2158,11 @@ make_bot_object(void)
 static void
 skip_section(void)
 {
-    long section_start;
+    off_t section_start;
 
     /* skip to start of next section */
     section_start = bu_ftell(fpin);
-    if (section_start < 0L) {
+    if (section_start < 0) {
 	bu_exit(1, "Error: couldn't get input file's current file position.\n");
     }
 
@@ -2173,7 +2173,7 @@ skip_section(void)
 	       bu_strncmp(line, "VEHICLE", 7))
 	{
 	    section_start = bu_ftell(fpin);
-	    if (section_start < 0L) {
+	    if (section_start < 0) {
 		bu_exit(1, "Error: couldn't get input file's current file position.\n");
 	    }
 	    if (!get_line())

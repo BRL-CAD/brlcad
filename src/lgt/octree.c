@@ -361,7 +361,7 @@ write_Octree(Octree *parentp, FILE *fp)
 {
     PtList	*ptp;
     F_Hdr_Ptlist	hdr_ptlist;
-    long		addr = bu_ftell( fp );
+    off_t		addr = bu_ftell( fp );
 
     if (addr < 0) {
 	bu_log("Error: couldn't get input file's current file position.\n");

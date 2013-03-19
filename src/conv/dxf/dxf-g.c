@@ -59,7 +59,7 @@ struct insert_data {
 struct state_data {
     struct bu_list l;
     struct block_list *curr_block;
-    long file_offset;
+    off_t file_offset;
     int state;
     int sub_state;
     mat_t xform;
@@ -104,7 +104,7 @@ struct layer {
 struct block_list {
     struct bu_list l;
     char *block_name;
-    long offset;
+    off_t offset;
     char handle[17];
     point_t base;
 };
@@ -1228,7 +1228,7 @@ process_insert_entities_code(int code)
 		curr_state->sub_state = UNKNOWN_ENTITY_STATE;
 		if (verbose) {
 		    bu_log("Changing state for INSERT\n");
-		    bu_log("seeked to %ld\n", curr_state->curr_block->offset);
+		    bu_log("seeked to %zd\n", curr_state->curr_block->offset);
 		    bn_mat_print("state xform", curr_state->xform);
 		}
 	    }
@@ -2506,7 +2506,7 @@ process_dimension_entities_code(int code)
 		    curr_state->sub_state = UNKNOWN_ENTITY_STATE;
 		    if (verbose) {
 			bu_log("Changing state for INSERT\n");
-			bu_log("seeked to %ld\n", curr_state->curr_block->offset);
+			bu_log("seeked to %zd\n", curr_state->curr_block->offset);
 		    }
 		    layers[curr_layer]->dimension_count++;
 		}

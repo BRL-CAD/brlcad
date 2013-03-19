@@ -47,15 +47,15 @@
 #include "bn.h"
 
 
-size_t buflines, scanbytes;
+ssize_t buflines, scanbytes;
 ssize_t firsty = -1;	/* first "y" scanline in buffer */
 ssize_t lasty = -1;	/* last "y" scanline in buffer */
 unsigned char *bp;
 unsigned char *obp;
 
-size_t nxin = 512;
-size_t nyin = 512;
-size_t yin, xout, yout;
+ssize_t nxin = 512;
+ssize_t nyin = 512;
+ssize_t yin, xout, yout;
 int plus90, minus90, reverse, invert;
 size_t pixbytes = 1;
 
@@ -176,7 +176,8 @@ fill_buffer(FILE *ifp, unsigned char *buf)
 static void
 reverse_buffer(unsigned char *buf)
 {
-    size_t i, j;
+    ssize_t i;
+    size_t j;
     unsigned char *p1, *p2, temp;
 
     for (i = 0; i < buflines; i++) {
@@ -288,14 +289,15 @@ main(int argc, char **argv)
 
     char usage[] = "Usage: bwrot [-rifb | -a angle] [-s squaresize] [-w width] [-n height] [-o output.bw] input.bw [> output.bw]\n";
 
-    size_t x, y, j;
+    ssize_t x, y;
+    size_t j;
     int ret = 0;
-    long outbyte, outplace;
+    off_t outbyte, outplace;
     FILE *ifp, *ofp;
     unsigned char *obuf;
     unsigned char *buffer;
     double angle = 0.0;
-    size_t io;
+    ssize_t io;
 
     ifp = stdin;
     ofp = stdout;
@@ -354,7 +356,7 @@ main(int argc, char **argv)
 		    if (bu_fseek(ofp, outbyte, SEEK_SET) < 0) {
 			ret = 3;
 			perror("fseek");
-			bu_log("ERROR: %s can't seek on output (ofp=%p, outbyte=%ld)\n", bu_getprogname(), (void *)ofp, outbyte);
+			bu_log("ERROR: %s can't seek on output (ofp=%p, outbyte=%zd)\n", bu_getprogname(), (void *)ofp, outbyte);
 			goto done;
 		    }
 		    outplace = outbyte;
@@ -380,7 +382,7 @@ main(int argc, char **argv)
 		    if (bu_fseek(ofp, outbyte, SEEK_SET) < 0) {
 			ret = 3;
 			perror("fseek");
-			bu_log("ERROR: %s can't seek on output (ofp=%p, outbyte=%ld)\n", bu_getprogname(), (void *)ofp, outbyte);
+			bu_log("ERROR: %s can't seek on output (ofp=%p, outbyte=%zd)\n", bu_getprogname(), (void *)ofp, outbyte);
 			goto done;
 		    }
 		    outplace = outbyte;
@@ -398,7 +400,7 @@ main(int argc, char **argv)
 		    if (bu_fseek(ofp, outbyte, SEEK_SET) < 0) {
 			ret = 3;
 			perror("fseek");
-			bu_log("ERROR: %s can't seek on output (ofp=%p, outbyte=%ld)\n", bu_getprogname(), (void *)ofp, outbyte);
+			bu_log("ERROR: %s can't seek on output (ofp=%p, outbyte=%zd)\n", bu_getprogname(), (void *)ofp, outbyte);
 			goto done;
 		    }
 		    outplace = outbyte;

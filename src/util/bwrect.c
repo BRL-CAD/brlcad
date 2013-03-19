@@ -42,7 +42,7 @@ main(int argc, char **argv)
 {
     FILE *ifp, *ofp;
     int row;
-    long offset;
+    off_t offset;
     size_t ret;
 
     if (argc < 3) {

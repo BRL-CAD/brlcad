@@ -74,7 +74,7 @@ usage(const char *name)
 
 
 HIDDEN void
-handle_i_opt(const char *arg, long *skip1, long *skip2)
+handle_i_opt(const char *arg, off_t *skip1, off_t *skip2)
 {
     const char *endptr = arg;
     if ((arg == NULL) || ((skip1 == NULL) && (skip2 == NULL))) {
@@ -127,8 +127,8 @@ main(int argc, char *argv[])
     int list_pixel_values = 0;
     int print_bytes = 0;
     int silent = 0;
-    long f1_skip = 0;
-    long f2_skip = 0;
+    off_t f1_skip = 0;
+    off_t f2_skip = 0;
 
     long int bytes = 0;
 
@@ -206,7 +206,7 @@ main(int argc, char *argv[])
 
     /* skip requested pixels/bytes in FILE1 */
     if (f1_skip && bu_fseek(f1, f1_skip, SEEK_SET)) {
-	bu_log("ERROR: Unable to seek %ld %s%s in FILE1\n",
+	bu_log("ERROR: Unable to seek %zd %s%s in FILE1\n",
 	       f1_skip,
 	       print_bytes?"byte":"pixel",
 	       f1_skip==1?"":"s");
@@ -216,7 +216,7 @@ main(int argc, char *argv[])
 
     /* skip requested pixels in FILE2 */
     if (f2_skip && bu_fseek(f2, f2_skip, SEEK_SET)) {
-	bu_log("ERROR: Unable to seek %ld %s%s in FILE2\n",
+	bu_log("ERROR: Unable to seek %zd %s%s in FILE2\n",
 	       f1_skip,
 	       print_bytes?"byte":"pixel",
 	       f1_skip==1?"":"s");

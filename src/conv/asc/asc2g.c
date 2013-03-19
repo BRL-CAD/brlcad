@@ -1061,7 +1061,7 @@ polyhbld(void)
 {
     char	*cp;
     char	*name;
-    long	startpos;
+    off_t	startpos;
     size_t	nlines;
     struct rt_pg_internal	*pg;
     struct rt_db_internal	intern;

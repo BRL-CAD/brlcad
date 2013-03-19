@@ -77,8 +77,8 @@ do_line(int xpos, int ypos, char *line)
 	     == EOF
 	    )
 	{
-	    bu_log( "fseek() to %ld failed.\n",
-		    (long)(SWABV(font.dir[char_id].addr) + font.offset)
+	    bu_log( "fseek() to %zd failed.\n",
+		    (SWABV(font.dir[char_id].addr) + font.offset)
 		);
 	    return;
 	}

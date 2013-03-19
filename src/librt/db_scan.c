@@ -77,8 +77,8 @@ db_scan(struct db_i *dbip, int (*handler) (struct db_i *, const char *, off_t, s
     union record record;	/* Initial record, holds name */
     union record rec2;		/* additional record(s) */
     register off_t addr;	/* start of current rec */
-    register long here;		/* intermediate positions */
-    register long next;		/* start of next rec */
+    register off_t here;		/* intermediate positions */
+    register off_t next;		/* start of next rec */
     register int nrec;		/* # records for this solid */
     register int totrec;	/* # records for database */
     register long j;
@@ -102,16 +102,16 @@ db_scan(struct db_i *dbip, int (*handler) (struct db_i *, const char *, off_t, s
     }
 
     here = -1;
-    addr = (off_t)0L;
+    addr = 0;
 
     totrec = 0;
     while (1) {
 	nrec = 0;
 	if (bu_fseek(dbip->dbi_fp, next, 0) != 0) {
-	    bu_log("db_scan:  fseek(offset=%ld) failure\n", next);
+	    bu_log("db_scan:  fseek(offset=%zd) failure\n", next);
 	    return -1;
 	}
-	addr = (off_t)next;
+	addr = next;
 
 	if (fread((char *)&record, sizeof record, 1, dbip->dbi_fp) != 1
 	    || feof(dbip->dbi_fp))
@@ -346,7 +346,7 @@ db_scan(struct db_i *dbip, int (*handler) (struct db_i *, const char *, off_t, s
     if (next < 0)
 	dbip->dbi_eof = -1;
     else
-	dbip->dbi_eof = (off_t)next;
+	dbip->dbi_eof = next;
     rewind(dbip->dbi_fp);
 
     return 0;			/* OK */

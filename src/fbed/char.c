@@ -77,8 +77,8 @@ do_line(int xpos, int ypos, const char* line, RGBpixel (*menu_border))
 	     == EOF
 	    )
 	{
-	    fb_log( "fseek() to %ld failed.\n",
-		    (long)(SWABV(font.dir[char_id].addr) + font.offset)
+	    fb_log( "fseek() to %zd failed.\n",
+		    (SWABV(font.dir[char_id].addr) + font.offset)
 		);
 	    return;
 	}

@@ -65,7 +65,7 @@ struct dispatch {
 
 struct vfont {
     FILE		*ffdes;		/* File pointer for current font.	*/
-    long		offset;		/* Current offset to character data.	*/
+    off_t		offset;		/* Current offset to character data.	*/
     struct header	hdr;		/* Header for font file.		*/
     struct dispatch	dir[256];	/* Directory for character font.	*/
     int			width;		/* Current character width.		*/

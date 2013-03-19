@@ -65,7 +65,7 @@ db_read(const struct db_i *dbip, genptr_t addr, size_t count, off_t offset)
     }
     if (offset+count > (size_t)dbip->dbi_eof) {
 	/* Attempt to read off the end of the file */
-	bu_log("db_read(%s) ERROR offset=%d, count=%zu, dbi_eof=%d\n",
+	bu_log("db_read(%s) ERROR offset=%zd, count=%zu, dbi_eof=%zd\n",
 	       dbip->dbi_filename,
 	       offset, count, dbip->dbi_eof);
 	return -1;
