@@ -634,8 +634,7 @@ rt_epa_free(struct soltab *stp)
     struct epa_specific *epa =
 	(struct epa_specific *)stp->st_specific;
 
-
-    bu_free((char *)epa, "epa_specific");
+    BU_PUT(epa, struct epa_specific);
 }
 
 

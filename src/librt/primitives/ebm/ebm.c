@@ -1099,7 +1099,7 @@ rt_ebm_free(struct soltab *stp)
     BU_CK_MAPPED_FILE(ebmp->ebm_i.mp);
     bu_close_mapped_file(ebmp->ebm_i.mp);
 
-    bu_free((char *)ebmp, "rt_ebm_specific");
+    BU_PUT(ebmp, struct rt_ebm_specific);
 }
 
 

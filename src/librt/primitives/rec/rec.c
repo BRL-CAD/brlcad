@@ -897,7 +897,7 @@ rt_rec_free(struct soltab *stp)
     struct rec_specific *rec =
 	(struct rec_specific *)stp->st_specific;
 
-    bu_free((char *)rec, "rec_specific");
+    BU_PUT(rec, struct rec_specific);
 }
 
 

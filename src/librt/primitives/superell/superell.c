@@ -641,7 +641,7 @@ rt_superell_free(struct soltab *stp)
     struct superell_specific *superell =
 	(struct superell_specific *)stp->st_specific;
 
-    bu_free((char *)superell, "superell_specific");
+    BU_PUT(superell, struct superell_specific);
 }
 
 

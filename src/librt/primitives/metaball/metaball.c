@@ -871,7 +871,7 @@ rt_metaball_ifree(struct rt_db_internal *ip)
     if (metaball->metaball_ctrl_head.magic != 0)
 	while (BU_LIST_WHILE(mbpt, wdb_metaballpt, &metaball->metaball_ctrl_head)) {
 	    BU_LIST_DEQUEUE(&(mbpt->l));
-	    bu_free((char *)mbpt, "wdb_metaballpt");
+	    BU_PUT(mbpt, struct wdb_metaballpt);
 	}
     bu_free(ip->idb_ptr, "metaball ifree");
     ip->idb_ptr = GENPTR_NULL;

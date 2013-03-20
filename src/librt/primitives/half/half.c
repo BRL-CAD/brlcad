@@ -395,7 +395,7 @@ rt_hlf_free(struct soltab *stp)
     register struct half_specific *halfp =
 	(struct half_specific *)stp->st_specific;
 
-    bu_free((char *)halfp, "half_specific");
+    BU_PUT(halfp, struct half_specific);
 }
 
 

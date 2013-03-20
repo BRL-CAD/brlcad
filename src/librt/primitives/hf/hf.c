@@ -339,8 +339,8 @@ rt_hf_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     if (fabs(dot) >tol->perp) {
 	/* not perpendicular, bad hf */
 	bu_log("Hf(%s): X not perpendicular to Y.\n", stp->st_name);
-	bu_free((genptr_t)hf, "struct hf");
-	stp->st_specific = (genptr_t) 0;
+	BU_PUT(hf, struct hf_specific);
+	stp->st_specific = (struct hf_specific *)NULL;
 	return 1;	/* BAD */
     }
     VCROSS(hf->hf_N, hf->hf_X, hf->hf_Y);
@@ -1657,7 +1657,7 @@ rt_hf_free(struct soltab *stp)
 	bu_close_mapped_file(hf->hf_mp);
 	hf->hf_mp = (struct bu_mapped_file *)0;
     }
-    bu_free((char *)hf, "hf_specific");
+    BU_PUT(hf, struct hf_specific);
 }
 
 

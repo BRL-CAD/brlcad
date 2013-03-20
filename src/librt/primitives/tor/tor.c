@@ -932,7 +932,7 @@ rt_tor_free(struct soltab *stp)
     register struct tor_specific *tor =
 	(struct tor_specific *)stp->st_specific;
 
-    bu_free((char *)tor, "tor_specific");
+    BU_PUT(tor, struct tor_specific);
 }
 
 

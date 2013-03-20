@@ -185,7 +185,7 @@ rt_nurb_bbox(struct rt_db_internal *ip, point_t *min, point_t *max) {
 	    rt_nurb_free_snurb(s, (struct resource *)NULL);
 	}
 	rt_nurb_free_snurb(nurbs->srf, (struct resource *)NULL);	/* original surf */
-	bu_free((char *)nurbs, "nurb_specific");
+	BU_PUT(nurbs, struct nurb_specific);
     }
 
     return 0;
@@ -594,7 +594,7 @@ rt_nurb_free(register struct soltab *stp)
 	    rt_nurb_free_snurb(s, (struct resource *)NULL);
 	}
 	rt_nurb_free_snurb(nurb->srf, (struct resource *)NULL);	/* original surf */
-	bu_free((char *)nurb, "nurb_specific");
+	BU_PUT(nurb, struct nurb_specific);
     }
     return;
 #endif /* CONVERT_TO_BREP */

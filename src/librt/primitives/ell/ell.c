@@ -614,7 +614,7 @@ rt_ell_free(register struct soltab *stp)
     register struct ell_specific *ell =
 	(struct ell_specific *)stp->st_specific;
 
-    bu_free((char *)ell, "ell_specific");
+    BU_PUT(ell, struct ell_specific);
 }
 
 

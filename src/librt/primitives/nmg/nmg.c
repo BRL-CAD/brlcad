@@ -298,7 +298,7 @@ rt_nmg_free(struct soltab *stp)
 	(struct nmg_specific *)stp->st_specific;
 
     nmg_km(nmg->nmg_model);
-    bu_free((char *)nmg, "nmg_specific");
+    BU_PUT(nmg, struct nmg_specific);
     stp->st_specific = NULL; /* sanity */
 }
 

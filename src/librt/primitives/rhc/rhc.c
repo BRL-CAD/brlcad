@@ -716,7 +716,7 @@ rt_rhc_free(struct soltab *stp)
     struct rhc_specific *rhc =
 	(struct rhc_specific *)stp->st_specific;
 
-    bu_free((char *)rhc, "rhc_specific");
+    BU_PUT(rhc, struct rhc_specific);
 }
 
 

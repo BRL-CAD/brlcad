@@ -1532,7 +1532,7 @@ rt_tgc_free(struct soltab *stp)
     register struct tgc_specific *tgc =
 	(struct tgc_specific *)stp->st_specific;
 
-    bu_free((char *)tgc, "tgc_specific");
+    BU_PUT(tgc, struct tgc_specific);
 }
 
 

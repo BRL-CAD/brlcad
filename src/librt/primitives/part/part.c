@@ -894,7 +894,7 @@ rt_part_free(register struct soltab *stp)
     register struct part_specific *part =
 	(struct part_specific *)stp->st_specific;
 
-    bu_free((char *)part, "part_specific");
+    BU_PUT(part, struct part_specific);
     stp->st_specific = GENPTR_NULL;
 }
 

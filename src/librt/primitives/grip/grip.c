@@ -202,7 +202,7 @@ rt_grp_free(struct soltab *stp)
 {
     struct grip_specific *gripp = (struct grip_specific *)stp->st_specific;
 
-    bu_free((char *)gripp, "grip_specific");
+    BU_PUT(gripp, struct grip_specific);
 }
 
 
