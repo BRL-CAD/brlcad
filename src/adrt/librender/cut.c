@@ -229,11 +229,7 @@ render_cut_init(render_t *render, const char *buf)
     render->work = render_cut_work;
     render->free = render_cut_free;
 
-    render->data = (render_cut_t *)bu_malloc(sizeof(render_cut_t), "render_cut_init");
-    if (!render->data) {
-	perror("render->data");
-	exit(1);
-    }
+    BU_ALLOC(render->data, render_cut_t);
     d = (render_cut_t *)render->data;
 
     VMOVE(d->ray_pos, ray_pos);

@@ -169,11 +169,8 @@ render_path_init(render_t *render, const char *samples)
 
     render->work = render_path_work;
     render->free = render_path_free;
-    render->data = (render_path_t *)bu_malloc(sizeof(render_path_t), "render_path_init");
-    if (!render->data) {
-	perror("render->data");
-	exit(1);
-    }
+
+    BU_ALLOC(render->data, render_path_t);
     d = (render_path_t *)render->data;
     d->samples = atoi(samples);	/* TODO: make this more robust */
     d->inv_samples = 1.0 / d->samples;

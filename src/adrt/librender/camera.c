@@ -592,16 +592,16 @@ render_camera_render(render_camera_t *camera, struct tie_s *tie, camera_tile_t *
 struct render_shader_s *
 render_shader_register(const char *name, int (*init)(render_t *, const char *))
 {
-	struct render_shader_s *shader = (struct render_shader_s *)bu_malloc(sizeof(struct render_shader_s), "shader");
-	if(shader == NULL)
-		return NULL;
-	/* should probably search shader list for dups */
-	shader->name = name;
-	shader->init = init;
-	shader->next = shaders;
-	shader->dlh = NULL;
-	shaders = shader;
-	return shader;
+    struct render_shader_s *shader;
+    BU_ALLOC(shader, struct render_shader_s);
+
+    /* should probably search shader list for dups */
+    shader->name = name;
+    shader->init = init;
+    shader->next = shaders;
+    shader->dlh = NULL;
+    shaders = shader;
+    return shader;
 }
 
 const char *

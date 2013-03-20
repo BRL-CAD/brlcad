@@ -84,7 +84,8 @@ render_flos_init(render_t *render, const char *frag_pos)
 
     render->work = render_flos_work;
     render->free = render_flos_free;
-    render->data = (struct render_flos_s *)bu_malloc(sizeof(struct render_flos_s), "render_flos_init");
+
+    BU_ALLOC(render->data, struct render_flos_s);
     d = (struct render_flos_s *)render->data;
     sscanf(frag_pos, "#(%lf %lf %lf)", &scan[0], &scan[1], &scan[2]);
     /* convert from double to fastf_t */

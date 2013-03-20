@@ -334,12 +334,14 @@ isst_init(ClientData UNUSED(clientData), Tcl_Interp *interp, int objc, Tcl_Obj *
 	return TCL_ERROR;
     }
 
-    isst = (struct isst_s *)bu_calloc(1, sizeof(struct isst_s), "allocate isst struct");
+    BU_ALLOC(isst, struct isst_s);
     isst->ui = 0;
     isst->uic = 0;
-    isst->tie = (struct tie_s *)bu_calloc(1,sizeof(struct tie_s), "tie");
+
+    BU_ALLOC(isst->tie, struct tie_s);
     TIENET_BUFFER_INIT(isst->buffer_image);
     render_camera_init(&isst->camera, bu_avail_cpus());
+
     isst->camera.type = RENDER_CAMERA_PERSPECTIVE;
     isst->camera.fov = 25;
 
