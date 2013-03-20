@@ -216,7 +216,7 @@ stxt_free(genptr_t cp)
 
     if (stp->stx_pixels)
 	bu_free(stp->stx_pixels, "solid texture pixel array");
-    BU_PUT(cp, struct stx_specific);
+    BU_PUT(cp, struct stxt_specific);
 }
 
 
