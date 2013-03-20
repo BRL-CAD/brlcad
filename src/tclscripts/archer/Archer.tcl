@@ -302,7 +302,7 @@ package provide Archer 1.0
 	method endObjCenter {_obj}
 	method endObjRotate {_dm _obj}
 	method endObjScale {_dm _obj}
-	method handleObjCenter {_dm _obj _mx _my}
+	method handleObjCenter {_dm _obj _mx _my {_dosnap 1} {_viewz ""}}
 
 	# Object Views Section
 	method buildArb4EditView {}
@@ -1546,7 +1546,7 @@ package provide Archer 1.0
 		    return "Usage: p rx ry rz"
 		}
 
-		set err [catch {eval gedCmd orotate $mSelectedObj $args} ret]
+		set err [catch {eval editMotionDeltaCallback orotate $args} ret]
 	    } \
 	    $OBJECT_TRANSLATE_MODE {
 		if {[llength $args] != 3 ||
@@ -1556,14 +1556,14 @@ package provide Archer 1.0
 		    return "Usage: p tx ty tz"
 		}
 
-		set err [catch {eval gedCmd otranslate $mSelectedObj $args} ret]
+		set err [catch {eval editMotionDeltaCallback otranslate $args} ret]
 	    } \
 	    $OBJECT_SCALE_MODE {
 		if {[llength $args] != 1 || ![string is double $args]} {
 		    return "Usage: p sf"
 		}
 
-		set err [catch {eval gedCmd oscale $mSelectedObj $args} ret]
+		set err [catch {eval editMotionDeltaCallback oscale $args} ret]
 	    } \
 	    $OBJECT_CENTER_MODE {
 		if {[llength $args] != 3 ||
@@ -1573,7 +1573,11 @@ package provide Archer 1.0
 		    return "Usage: p cx cy cz"
 		}
 
-		set err [catch {eval gedCmd ocenter $mSelectedObj $args} ret]
+		set mpt [::vscale $args [$itk_component(ged) local2base]]
+		set vpt [$itk_component(ged) m2v_point $mpt]
+		set spt [$itk_component(ged) view2screen $vpt]
+		set pane [$itk_component(ged) cget -pane]
+		set err [catch {eval handleObjCenter $pane $mSelectedObjPath $spt 0 [lindex $vpt 2]} ret]
 	    } \
 	    default {
 		return "Nothing appropriate."
@@ -6499,10 +6503,10 @@ proc title_node_handler {node} {
 }
 
 
-::itcl::body Archer::handleObjCenter {_dm _obj _mx _my} {
+::itcl::body Archer::handleObjCenter {_dm _obj _mx _my {_dosnap 1} {_viewz ""}} {
     set ocenter [gedCmd ocenter $_obj]
-    set ocenter [vscale $ocenter [gedCmd local2base]]
-    set ovcenter [eval gedCmd pane_m2v_point $_dm $ocenter]
+    set ocenter_base [vscale $ocenter [gedCmd local2base]]
+    set ovcenter [eval gedCmd pane_m2v_point $_dm $ocenter_base]
 
     # This is the updated view center (i.e. we keep the original view Z)
     set vcenter [gedCmd pane_screen2view $_dm $_mx $_my]
@@ -6510,10 +6514,17 @@ proc title_node_handler {node} {
     set vx [lindex $vcenter 0]
     set vy [lindex $vcenter 1]
 
-    set vl [gedCmd pane_snap_view $_dm $vx $vy]
-    set vx [lindex $vl 0]
-    set vy [lindex $vl 1]
-    set vcenter [list $vx $vy [lindex $ovcenter 2]]
+    if {$_dosnap} {
+	set vl [gedCmd pane_snap_view $_dm $vx $vy]
+	set vx [lindex $vl 0]
+	set vy [lindex $vl 1]
+    }
+
+    if {$_viewz != ""} {
+	set vcenter [list $vx $vy $_viewz]
+    } else {
+	set vcenter [list $vx $vy [lindex $ovcenter 2]]
+    }
 
     set new_ocenter [vscale [eval gedCmd pane_v2m_point $_dm $vcenter] [gedCmd base2local]]
 
