@@ -980,11 +980,12 @@ bn_mat_arb_rot(mat_t m, const point_t pt, const vect_t dir, const fastf_t ang)
 matp_t
 bn_mat_dup(const mat_t in)
 {
-    matp_t out;
+    mat_t *out;
 
-    out = (matp_t) bu_malloc(sizeof(mat_t), "bn_mat_dup");
-    memcpy((char *)out, (const char *)in, sizeof(mat_t));
-    return out;
+    BU_ALLOC(out, mat_t);
+    MAT_COPY(*out, in);
+
+    return (matp_t)out;
 }
 
 
