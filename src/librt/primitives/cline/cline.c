@@ -441,7 +441,7 @@ rt_cline_free(register struct soltab *stp)
 
     if (stp) RT_CK_SOLTAB(stp);
 
-    bu_free((char *)cline, "cline_specific");
+    BU_PUT(cline, struct cline_specific);
 }
 
 
@@ -1167,7 +1167,7 @@ rt_cline_to_pipe(struct rt_pipe_internal *pipep, const struct rt_db_internal *ip
     pipep->pipe_count = 1;
 
     BU_LIST_INIT(&pipep->pipe_segs_head);
-    BU_GET(point, struct wdb_pipept);
+    BU_ALLOC(point, struct wdb_pipept);
     point->pp_bendradius = 0.0;
     VMOVE(point->pp_coord, cip->v);
     point->l.magic = WDB_PIPESEG_MAGIC;
@@ -1175,7 +1175,7 @@ rt_cline_to_pipe(struct rt_pipe_internal *pipep, const struct rt_db_internal *ip
     point->pp_id = (cip->radius - cip->thickness) * 2;
     BU_LIST_APPEND(&pipep->pipe_segs_head, &point->l);
 
-    BU_GET(point2, struct wdb_pipept);
+    BU_ALLOC(point2, struct wdb_pipept);
     point2->pp_bendradius = 0.0;
     VADD2(point2->pp_coord, cip->v, cip->h);
     point2->l.magic = WDB_PIPESEG_MAGIC;
