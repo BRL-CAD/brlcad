@@ -732,7 +732,9 @@ rt_vol_ifree(struct rt_db_internal *ip)
     vip = (struct rt_vol_internal *)ip->idb_ptr;
     RT_VOL_CK_MAGIC(vip);
 
-    if (vip->map) bu_free((char *)vip->map, "vol bitmap");
+    /* should be stolen by vol_specific, but check just in case */
+    if (vip->map)
+	bu_free((char *)vip->map, "vol bitmap");
 
     vip->magic = 0;			/* sanity */
     vip->map = (unsigned char *)0;
@@ -936,8 +938,12 @@ rt_vol_free(struct soltab *stp)
     register struct rt_vol_specific *volp =
 	(struct rt_vol_specific *)stp->st_specific;
 
-    bu_free((char *)volp->vol_i.map, "vol_map");
-    bu_free((char *)volp, "rt_vol_specific");
+    /* specific steals map from vip, release here */
+    if (volp->vol_i.map) {
+	bu_free((char *)volp->vol_i.map, "vol_map");
+	volp->vol_i.map = NULL; /* sanity */
+    }
+    BU_PUT(volp, struct rt_vol_specific);
 }
 
 
