@@ -72,12 +72,12 @@ struct solid  {
 
 #define GET_SOLID(p, fp) { \
 	if (BU_LIST_IS_EMPTY(fp)) { \
-		(p) = (struct solid *)bu_calloc(1, sizeof(struct solid), "get solid"); \
-		db_full_path_init(&(p)->s_fullpath); \
+	    BU_ALLOC((p), struct solid); \
+	    db_full_path_init(&(p)->s_fullpath); \
 	} else { \
-		p = BU_LIST_NEXT(solid, fp); \
-		BU_LIST_DEQUEUE(&((p)->l)); \
-		(p)->s_fullpath.fp_len = 0; \
+	    p = BU_LIST_NEXT(solid, fp); \
+	    BU_LIST_DEQUEUE(&((p)->l)); \
+	    (p)->s_fullpath.fp_len = 0; \
 	} \
 	BU_LIST_INIT( &((p)->s_vlist) ); }
 

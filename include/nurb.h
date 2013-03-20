@@ -83,14 +83,14 @@
 
 /* DEPRECATED */
 #define GET_CNURB(p/*, m*/) { \
-	(p) = (struct edge_g_cnurb *)bu_calloc(1, sizeof(struct edge_g_cnurb), "alloc cnurb"); \
+	BU_ALLOC((p) struct edge_g_cnurb); \
 	/* NMG_INCR_INDEX(p, m); */ \
 	BU_LIST_INIT( &(p)->l ); (p)->l.magic = NMG_EDGE_G_CNURB_MAGIC; \
 }
 
 /* DEPRECATED */
 #define GET_SNURB(p/*, m*/) { \
-	(p) = (struct face_g_snurb *)bu_calloc(1, sizeof(struct face_g_snurb), "alloc snurb"); \
+	BU_ALLOC((p), struct face_g_snurb); \
 	/* NMG_INCR_INDEX(p, m); */ \
 	BU_LIST_INIT( &(p)->l ); (p)->l.magic = NMG_FACE_G_SNURB_MAGIC; \
 }

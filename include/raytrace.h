@@ -639,7 +639,7 @@ struct partition {
 	    BU_LIST_DEQUEUE((struct bu_list *)(p)); \
 	    bu_ptbl_reset(&(p)->pt_seglist); \
 	} else { \
-	    (p) = (struct partition *)bu_calloc(1, sizeof(struct partition), "struct partition"); \
+	    BU_ALLOC((p), struct partition); \
 	    (p)->pt_magic = PT_MAGIC; \
 	    bu_ptbl_init(&(p)->pt_seglist, 42, "pt_seglist ptbl"); \
 	    (res)->re_partlen++; \
@@ -842,8 +842,8 @@ struct db_i {
  * Construction should be done only by using RT_GET_DIRECTORY()
  * Destruction should be done only by using db_dirdelete().
  *
- * Special note: In order to reduce the overhead of calling
- * bu_malloc() (really bu_strdup()) to stash the name in d_namep, we
+ * Special note: In order to reduce the overhead of acquiring heap
+ * memory (e.g., via bu_strdup()) to stash the name in d_namep, we
  * carry along enough storage for small names right in the structure
  * itself (d_shortname).  Thus, d_namep should never be assigned to
  * directly, it should always be accessed using RT_DIR_SET_NAMEP() and
@@ -1611,12 +1611,8 @@ struct pixel_ext {
  *  initialization, you should create a zeroed-out structure, and then
  *  assign the intended values at runtime.  A zeroed structure can be
  *  obtained at compile time with "static struct application
- *  zero_ap;", or at run time by using "memset((char *)ap, 0,
- *  sizeof(struct application));" or bu_calloc(1, sizeof(struct
- *  application), "application"); While this practice may not work on
- *  machines where "all bits off" does not signify a floating point
- *  zero, BRL-CAD does not support any such machines, so this is a
- *  moot issue.
+ *  zero_ap;", or at run time by using memset(), bu_calloc(), or
+ *  BU_ALLOC().
  */
 struct application {
     uint32_t a_magic;
@@ -2344,7 +2340,7 @@ struct ray_data {
 #define NMG_GET_HITMISS(_p, _ap) { \
 	(_p) = BU_LIST_FIRST(hitmiss, &((_ap)->a_resource->re_nmgfree)); \
 	if (BU_LIST_IS_HEAD((_p), &((_ap)->a_resource->re_nmgfree))) \
-	    (_p) = (struct hitmiss *)bu_calloc(1, sizeof(struct hitmiss), "hitmiss "BU_FLSTR); \
+	    BU_ALLOC(_p), struct hitmiss); \
 	else \
 	    BU_LIST_DEQUEUE(&((_p)->l)); \
     }

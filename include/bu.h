@@ -1975,8 +1975,8 @@ typedef struct bu_vls bu_vls_t;
 /**
  * returns truthfully whether a bu_vls struct has been initialized.
  * is not reliable unless the struct has been allocated with
- * bu_calloc() or a previous call to bu_vls_init() or BU_VLS_INIT()
- * has been made.
+ * BU_ALLOC(), bu_calloc(), or a previous call to bu_vls_init() or
+ * BU_VLS_INIT() has been made.
  */
 #define BU_VLS_IS_INITIALIZED(_vp) (((struct bu_vls *)(_vp) != BU_VLS_NULL) && ((_vp)->vls_magic == BU_VLS_MAGIC))
 
@@ -2030,8 +2030,8 @@ typedef struct bu_vlb bu_vlb_t;
 /**
  * returns truthfully whether a bu_vlb struct has been initialized.
  * is not reliable unless the struct has been allocated with
- * bu_calloc() or a previous call to bu_vlb_init() or BU_VLB_INIT()
- * has been made.
+ * BU_ALLOC(), bu_calloc(), or a previous call to bu_vlb_init() or
+ * BU_VLB_INIT() has been made.
  */
 #define BU_VLB_IS_INITIALIZED(_vp) (((struct bu_vlb *)(_vp) != BU_VLB_NULL) && ((_vp)->magic == BU_VLB_MAGIC))
 
@@ -3547,10 +3547,10 @@ BU_EXPORT extern int bu_list_len(const struct bu_list *hd);
 BU_EXPORT extern void bu_list_reverse(struct bu_list *hd);
 
 /**
- * Given a list of structures allocated with bu_malloc() enrolled
- * on a bu_list head, walk the list and free the structures.
- * This routine can only be used when the structures have no interior
- * pointers.
+ * Given a list of structures allocated with bu_malloc() or
+ * bu_calloc() enrolled on a bu_list head, walk the list and free the
+ * structures.  This routine can only be used when the structures have
+ * no interior pointers.
  */
 BU_EXPORT extern void bu_list_free(struct bu_list *hd);
 
@@ -3773,7 +3773,7 @@ BU_EXPORT extern int bu_sscanf(const char *src, const char *fmt, ...) _BU_ATTR_S
  * with standardized error checking, optional memory-use logging, and
  * optional run-time pointer and memory corruption testing.
  *
- * The bu_malloc() routines can't use bu_log() because that uses the
+ * The bu_*alloc() routines can't use bu_log() because that uses the
  * bu_vls() routines which depend on bu_malloc().  So it goes direct
  * to stderr, semaphore protected.
  *
@@ -3844,9 +3844,9 @@ BU_EXPORT extern void bu_prmem(const char *str);
 BU_EXPORT extern int bu_malloc_len_roundup(int nbytes);
 
 /**
- * For a given pointer allocated by bu_malloc(), check the magic
- * number stored after the allocation area when BU_DEBUG_MEM_CHECK is
- * set.
+ * For a given pointer allocated by bu_malloc(), bu_calloc(), or
+ * BU_ALLOC() check the magic number stored after the allocation area
+ * when BU_DEBUG_MEM_CHECK is set.
  *
  * This is the individual version of bu_mem_barriercheck().
  *

@@ -4108,7 +4108,7 @@ struct bn_vlist  {
 #define BN_GET_VLIST(_free_hd, p) {\
 	(p) = BU_LIST_FIRST(bn_vlist, (_free_hd)); \
 	if (BU_LIST_IS_HEAD((p), (_free_hd))) { \
-	    (p) = (struct bn_vlist *)bu_malloc(sizeof(struct bn_vlist), "bn_vlist"); \
+	    BU_ALLOC((p), struct bn_vlist); \
 	    (p)->l.magic = BN_VLIST_MAGIC; \
 	} else { \
 	    BU_LIST_DEQUEUE(&((p)->l)); \
