@@ -5017,7 +5017,7 @@ rt_bot_split(struct rt_bot_internal *bot)
 
     RT_BOT_CK_MAGIC(bot);
 
-    BU_GET(headRblp, struct rt_bot_list);
+    BU_ALLOC(headRblp, struct rt_bot_list);
     BU_LIST_INIT(&headRblp->l);
 
     /* Nothing to do */
@@ -5052,13 +5052,13 @@ rt_bot_split(struct rt_bot_internal *bot)
 
 	    if (BU_LIST_NON_EMPTY(&headTp.l)) {
 		/* Create a new bot */
-		BU_GET(rblp, struct rt_bot_list);
+		BU_ALLOC(rblp, struct rt_bot_list);
 		rblp->bot = rt_bot_create(bot, &usedTp);
 		BU_LIST_APPEND(&headRblp->l, &rblp->l);
 	    }
 	} else {
 	    /* Create a new bot */
-	    BU_GET(rblp, struct rt_bot_list);
+	    BU_ALLOC(rblp, struct rt_bot_list);
 	    rblp->bot = rt_bot_create(bot, &usedTp);
 	    BU_LIST_APPEND(&headRblp->l, &rblp->l);
 	}
@@ -5098,7 +5098,7 @@ rt_bot_patches(struct rt_bot_internal *bot)
 
     RT_BOT_CK_MAGIC(bot);
 
-    BU_GET(headRblp, struct rt_bot_list);
+    BU_ALLOC(headRblp, struct rt_bot_list);
     BU_LIST_INIT(&headRblp->l);
 
     /* Nothing to do */
@@ -5169,37 +5169,37 @@ rt_bot_patches(struct rt_bot_internal *bot)
     }
     if (BU_LIST_NON_EMPTY(&xplus.l)) {
 	/* Create a new bot */
-	BU_GET(rblp, struct rt_bot_list);
+	BU_ALLOC(rblp, struct rt_bot_list);
 	rblp->bot = rt_bot_create(bot, &xplus);
 	BU_LIST_APPEND(&headRblp->l, &rblp->l);
     }
     if (BU_LIST_NON_EMPTY(&xminus.l)) {
 	/* Create a new bot */
-	BU_GET(rblp, struct rt_bot_list);
+	BU_ALLOC(rblp, struct rt_bot_list);
 	rblp->bot = rt_bot_create(bot, &xminus);
 	BU_LIST_APPEND(&headRblp->l, &rblp->l);
     }
     if (BU_LIST_NON_EMPTY(&yplus.l)) {
 	/* Create a new bot */
-	BU_GET(rblp, struct rt_bot_list);
+	BU_ALLOC(rblp, struct rt_bot_list);
 	rblp->bot = rt_bot_create(bot, &yplus);
 	BU_LIST_APPEND(&headRblp->l, &rblp->l);
     }
     if (BU_LIST_NON_EMPTY(&yminus.l)) {
 	/* Create a new bot */
-	BU_GET(rblp, struct rt_bot_list);
+	BU_ALLOC(rblp, struct rt_bot_list);
 	rblp->bot = rt_bot_create(bot, &yminus);
 	BU_LIST_APPEND(&headRblp->l, &rblp->l);
     }
     if (BU_LIST_NON_EMPTY(&zplus.l)) {
 	/* Create a new bot */
-	BU_GET(rblp, struct rt_bot_list);
+	BU_ALLOC(rblp, struct rt_bot_list);
 	rblp->bot = rt_bot_create(bot, &zplus);
 	BU_LIST_APPEND(&headRblp->l, &rblp->l);
     }
     if (BU_LIST_NON_EMPTY(&zminus.l)) {
 	/* Create a new bot */
-	BU_GET(rblp, struct rt_bot_list);
+	BU_ALLOC(rblp, struct rt_bot_list);
 	rblp->bot = rt_bot_create(bot, &zminus);
 	BU_LIST_APPEND(&headRblp->l, &rblp->l);
     }
