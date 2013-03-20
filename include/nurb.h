@@ -83,7 +83,7 @@
 
 /* DEPRECATED */
 #define GET_CNURB(p/*, m*/) { \
-	BU_ALLOC((p) struct edge_g_cnurb); \
+	BU_ALLOC((p), struct edge_g_cnurb); \
 	/* NMG_INCR_INDEX(p, m); */ \
 	BU_LIST_INIT( &(p)->l ); (p)->l.magic = NMG_EDGE_G_CNURB_MAGIC; \
 }
