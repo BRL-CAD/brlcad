@@ -390,7 +390,7 @@ Part_import( int id_start )
 
     VSETALL( rgb, 128 );
 
-    part = (struct obj_info *)bu_calloc( 1, sizeof( struct obj_info ), "part" );
+    BU_ALLOC(part, struct obj_info);
     part->obj_type = PART_TYPE;
     part->obj_id = id_start;
     while ( bu_fgets( line, MAX_LINE_SIZE, fd_in ) ) {
@@ -521,8 +521,8 @@ Assembly_import( int id_start )
     int id_end, member_id;
     size_t i;
 
-    this_assem = (struct obj_info *)bu_calloc( 1, sizeof( struct obj_info ),
-					       "this_assem" );
+    BU_ALLOC(this_assem, struct obj_info);
+
     this_assem->obj_type = ASSEMBLY_TYPE;
     this_assem->obj_id = id_start;
     this_assem->part_count = 0;

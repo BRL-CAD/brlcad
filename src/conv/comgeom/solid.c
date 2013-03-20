@@ -589,8 +589,7 @@ getsolid(void)
 	 */
 	BU_LIST_INIT(&head);
 	for (i = 0; i < numpts; i++) {
-	    /* malloc a new structure */
-	    ps = (struct wdb_pipept *)bu_malloc(sizeof(struct wdb_pipept), "ps");
+	    BU_ALLOC(ps struct wdb_pipept);
 
 	    ps->l.magic = WDB_PIPESEG_MAGIC;
 	    VMOVE(ps->pp_coord, &pts[i*3]);	/* 3 pts at a time */

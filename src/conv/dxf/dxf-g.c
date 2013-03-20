@@ -3020,7 +3020,7 @@ nmg_wire_edges_to_sketch(struct model *m)
     struct vert_root *vr;
     size_t idx;
 
-    skt = bu_calloc(1, sizeof(struct rt_sketch_internal), "rt_sketch_internal");
+    BU_ALLOC(skt, struct rt_sketch_internal);
     skt->magic = RT_SKETCH_INTERNAL_MAGIC;
     VSET(skt->V, 0.0, 0.0, 0.0);
     VSET(skt->u_vec, 1.0, 0.0, 0.0);

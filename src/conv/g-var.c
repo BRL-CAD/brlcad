@@ -89,13 +89,13 @@ void mesh_tracker(struct db_i *dbip, struct directory *dp, genptr_t UNUSED(ptr))
     }
     /* track bot */
     if (NULL == curr) {
-	head = (struct mesh *)bu_malloc(sizeof(struct mesh), dp->d_namep);
+	BU_ALLOC(head, struct mesh);
 	head->name = dp->d_namep;
 	head->bot = (struct rt_bot_internal *)internal.idb_ptr;
 	head->next = NULL;
 	curr = head;
     } else {
-	curr->next = (struct mesh *)bu_malloc(sizeof(struct mesh), dp->d_namep);
+	BU_ALLOC(curr->next, struct mesh);
 	curr = curr->next;
 	curr->name = dp->d_namep;
 	curr->bot = (struct rt_bot_internal *)internal.idb_ptr;

@@ -322,7 +322,7 @@ sktbld(void)
 	    bu_exit(1, "ERROR: not enough vertices for sketch (%s)\n", name);
     }
 
-    skt = (struct rt_sketch_internal *)bu_calloc(1, sizeof(struct rt_sketch_internal), "sketch");
+    BU_ALLOC(skt, struct rt_sketch_internal);
     skt->magic = RT_SKETCH_INTERNAL_MAGIC;
     VMOVE(skt->V, V);
     VMOVE(skt->u_vec, u);
@@ -344,13 +344,13 @@ sktbld(void)
 	cp = buf + 2;
 	switch (*cp) {
 	    case LSEG:
-		lsg = (struct line_seg *)bu_malloc(sizeof(struct line_seg), "line segment");
+		BU_ALLOC(lsg, struct line_seg);
 		sscanf(cp+1, "%d %d %d", &crv->reverse[j], &lsg->start, &lsg->end);
 		lsg->magic = CURVE_LSEG_MAGIC;
 		crv->segment[j] = lsg;
 		break;
 	    case CARC:
-		csg = (struct carc_seg *)bu_malloc(sizeof(struct carc_seg), "arc segment");
+		BU_ALLOC(csg, struct carc_seg);
 		sscanf(cp+1, "%d %d %d %lf %d %d", &crv->reverse[j], &csg->start, &csg->end,
 		       &radius, &csg->center_is_left, &csg->orientation);
 		csg->radius = radius;
@@ -358,7 +358,7 @@ sktbld(void)
 		crv->segment[j] = csg;
 		break;
 	    case NURB:
-		nsg = (struct nurb_seg *)bu_malloc(sizeof(struct nurb_seg), "nurb segment");
+		BU_ALLOC(nsg, struct nurb_seg);
 		sscanf(cp+1, "%d %d %d %d %d", &crv->reverse[j], &nsg->order, &nsg->pt_type,
 		       &nsg->k.k_size, &nsg->c_size);
 		nsg->k.knots = (fastf_t *)bu_calloc(nsg->k.k_size, sizeof(fastf_t), "knots");
@@ -1347,7 +1347,7 @@ pipebld(void)
     while (bu_strncmp (buf, "END_PIPE", 8)) {
 	double id, od, x, y, z, bendradius;
 
-	sp = (struct wdb_pipept *)bu_malloc(sizeof(struct wdb_pipept), "pipe");
+	BU_ALLOC(sp, struct wdb_pipept);
 
 	sscanf(buf, "%le %le %le %le %le %le",
 		     &id, &od,

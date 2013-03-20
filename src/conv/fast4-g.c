@@ -502,7 +502,7 @@ Insert_region_name(char *name, int reg_id)
     }
 
     /* Add to tree for entire model */
-    new_ptr = (struct name_tree *)bu_malloc(sizeof(struct name_tree), "Insert_region_name: new_ptr");
+    BU_ALLOC(new_ptr, struct name_tree);
     new_ptr->rleft = (struct name_tree *)NULL;
     new_ptr->rright = (struct name_tree *)NULL;
     new_ptr->nleft = (struct name_tree *)NULL;
@@ -655,7 +655,7 @@ Insert_name(struct name_tree **root, char *name, int inner)
 	return;
     }
 
-    new_ptr = (struct name_tree *)bu_malloc(sizeof(struct name_tree), "Insert_name: new_ptr");
+    BU_ALLOC(new_ptr, struct name_tree);
 
     new_ptr->name = bu_strdup(name);
     new_ptr->nleft = (struct name_tree *)NULL;
@@ -818,13 +818,13 @@ f4_do_compsplt(void)
     z = atof(field) * 25.4;
 
     if (compsplt_root == NULL) {
-	compsplt_root = (struct compsplt *)bu_calloc(1, sizeof(struct compsplt), "compsplt_root");
+	BU_ALLOC(compsplt_root, struct compsplt);
 	splt = compsplt_root;
     } else {
 	splt = compsplt_root;
 	while (splt->next)
 	    splt = splt->next;
-	splt->next = (struct compsplt *)bu_calloc(1, sizeof(struct compsplt), "compsplt_root");
+	BU_ALLOC(splt->next, struct compsplt);
 	splt = splt->next;
     }
     splt->next = (struct compsplt *)NULL;
@@ -1772,7 +1772,7 @@ Add_holes(int type, int gr, int comp, struct hole_list *ptr)
     }
 
     if (!hole_root) {
-	hole_root = (struct holes *)bu_malloc(sizeof(struct holes), "Add_holes: hole_root");
+	BU_ALLOC(hole_root, struct holes);
 	hole_root->group = gr;
 	hole_root->component = comp;
 	hole_root->type = type;
@@ -1804,7 +1804,7 @@ Add_holes(int type, int gr, int comp, struct hole_list *ptr)
 	    list->next = ptr;
 	}
     } else {
-	prev->next = (struct holes *)bu_malloc(sizeof(struct holes), "Add_holes: hole_ptr->next");
+	BU_ALLOC(prev->next, struct holes);
 	hole_ptr = prev->next;
 	hole_ptr->group = gr;
 	hole_ptr->component = comp;
@@ -1870,10 +1870,10 @@ f4_do_hole_wall(int type)
 		bu_log("Hole or wall card references itself (ignoring): (%s)\n", line);
 	    } else {
 		if (list_ptr) {
-		    list_ptr->next = (struct hole_list *)bu_malloc(sizeof(struct hole_list), "f4_do_hole_wall: list_ptr");
+		    BU_ALLOC(list_ptr->next, struct hole_list);
 		    list_ptr = list_ptr->next;
 		} else {
-		    list_ptr = (struct hole_list *)bu_malloc(sizeof(struct hole_list), "f4_do_hole_wall: list_ptr");
+		    BU_ALLOC(list_ptr, struct hole_list);
 		    list_start = list_ptr;
 		}
 

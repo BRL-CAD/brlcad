@@ -153,7 +153,7 @@ dup_bot(struct rt_bot_internal *bot_in)
 
     RT_BOT_CK_MAGIC(bot_in);
 
-    bot = (struct rt_bot_internal *)bu_calloc(1, sizeof(struct rt_bot_internal), "dup bot");
+    BU_ALLOC(bot, struct rt_bot_internal);
 
     bot->magic = bot_in->magic;
     bot->mode = bot_in->mode;
