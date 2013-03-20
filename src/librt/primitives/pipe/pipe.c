@@ -331,7 +331,7 @@ rt_bend_pipe_prep(
     fastf_t max_or;
     fastf_t max_r;
 
-    bp = (struct bend_pipe *)bu_malloc(sizeof(struct bend_pipe), "rt_bend_pipe_prep:bp");
+    BU_GET(bp, struct bend_pipe);
 
     bp->pipe_is_bend = 1;
     bp->bend_or = od * 0.5;
@@ -368,7 +368,7 @@ rt_bend_pipe_prep(
     VMOVE(&R[8], bp->bend_N);
 
     if (bn_mat_inverse(bp->bend_invR, R) == 0) {
-	bu_free(bp, "rt_bend_pipe_prep:bp");
+	BU_PUT(bp, struct bend_pipe);
 	return 0; /* there is nothing to bend, that's OK */
     }
 
@@ -409,7 +409,7 @@ rt_bend_pipe_prep(
     if (head) {
 	BU_LIST_INSERT(head, &bp->l);
     } else {
-	bu_free(bp, "free pipe bbox bp struct");
+	BU_PUT(bp, struct bend_pipe);
     }
 
     return 0;
@@ -433,7 +433,7 @@ rt_linear_pipe_prep(
     vect_t seg_ht;
     vect_t v1, v2;
 
-    lp = (struct lin_pipe *)bu_malloc(sizeof(struct lin_pipe), "rt_bend_pipe_prep:pipe");
+    BU_GET(lp, struct lin_pipe);
 
     VMOVE(lp->pipe_V, pt1);
 
@@ -657,7 +657,7 @@ rt_pipe_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     pip = (struct rt_pipe_internal *)ip->idb_ptr;
     RT_PIPE_CK_MAGIC(pip);
 
-    head = (struct bu_list *)bu_malloc(sizeof(struct bu_list), "rt_pipe_prep:head");
+    BU_GET(head, struct bu_list);
     stp->st_specific = (genptr_t)head;
     BU_LIST_INIT(head);
 
@@ -1902,10 +1902,14 @@ rt_pipe_free(struct soltab *stp)
 
 	    while (BU_LIST_WHILE(p, id_pipe, head)) {
 		BU_LIST_DEQUEUE(&(p->l));
-		bu_free(p, "rt_pipe_free:p");
+		if (p->pipe_is_bend) {
+		    BU_PUT(p, struct linear_pipe);
+		} else {
+		    BU_PUT(p, struct bend_pipe);
+		}
 	    }
 
-	    bu_free(head, "rt_pipe_free:head");
+	    BU_PUT(head, struct bu_list);
 	}
     }
 }
@@ -4057,7 +4061,7 @@ rt_pipe_import4(
 	VMOVE(tmp.pp_coord, scan); /* convert double to fastf_t */
 
 	/* Apply modeling transformations */
-	BU_GET(ptp, struct wdb_pipept);
+	BU_ALLOC(ptp, struct wdb_pipept);
 	ptp->l.magic = WDB_PIPESEG_MAGIC;
 	MAT4X3PNT(ptp->pp_coord, mat, tmp.pp_coord);
 	ptp->pp_id = tmp.pp_id / mat[15];
@@ -4215,7 +4219,7 @@ rt_pipe_import5(
     }
     for (i = 0; i < double_count; i += 6) {
 	/* Apply modeling transformations */
-	BU_GET(ptp, struct wdb_pipept);
+	BU_ALLOC(ptp, struct wdb_pipept);
 	ptp->l.magic = WDB_PIPESEG_MAGIC;
 	MAT4X3PNT(ptp->pp_coord, mat, &vec[i]);
 	ptp->pp_id =		vec[i + 3] / mat[15];
@@ -4626,7 +4630,7 @@ rt_pipe_adjust(
 	if (seg_no == num_segs) {
 	    struct wdb_pipept *new_pt;
 
-	    new_pt = (struct wdb_pipept *)bu_calloc(1, sizeof(struct wdb_pipept), "New pipe segment");
+	    BU_ALLOC(new_pt, struct wdb_pipept);
 	    if (num_segs > 0) {
 		ptp = BU_LIST_LAST(wdb_pipept, &pip->pipe_segs_head);
 		*new_pt = *ptp;		/* struct copy */
