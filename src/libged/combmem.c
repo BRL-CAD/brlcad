@@ -468,7 +468,7 @@ combmem_get(struct ged *gedp, int argc, const char *argv[], enum etypes etype)
     (_rt_tree_array)[(_tree_index)].tl_tree = (_tp); \
 		    (_tp)->tr_l.tl_op = OP_DB_LEAF; \
 		    (_tp)->tr_l.tl_name = bu_strdup(_name); \
-			 (_tp)->tr_l.tl_mat = (matp_t)bu_calloc(16, sizeof(fastf_t), "combmem_set: mat");
+			 (_tp)->tr_l.tl_mat = (matp_t)bu_calloc(1, sizeof(mat_t), "combmem_set: mat");
 
 
 #define COMBMEM_SET_PART_IV(_gedp, _comb, _tree_index, _intern, _final_tree, _node_count, _dp, _rt_tree_array, _old_intern, _old_rt_tree_array, _old_ntp) \
