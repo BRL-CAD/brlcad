@@ -600,7 +600,7 @@ rt_hyp_free(struct soltab *stp)
     struct hyp_specific *hyp =
 	(struct hyp_specific *)stp->st_specific;
 
-    bu_free((char *)hyp, "hyp_specific");
+    BU_PUT(hyp, struct hyp_specific);
 }
 
 
@@ -612,7 +612,7 @@ rt_hyp_plot(struct bu_list *vhead, struct rt_db_internal *incoming, const struct
 {
     int i, j;		/* loop indices */
     struct rt_hyp_internal *hyp_in;
-    struct hyp_specific *hyp_ip;
+    struct hyp_specific *hyp;
     vect_t majorAxis[8],	/* vector offsets along major axis */
 	minorAxis[8],		/* vector offsets along minor axis */
 	heightAxis[7],		/* vector offsets for layers */
@@ -628,12 +628,12 @@ rt_hyp_plot(struct bu_list *vhead, struct rt_db_internal *incoming, const struct
     hyp_in = (struct rt_hyp_internal *)incoming->idb_ptr;
     RT_HYP_CK_MAGIC(hyp_in);
 
-    hyp_ip = hyp_internal_to_specific(hyp_in);
+    hyp = hyp_internal_to_specific(hyp_in);
 
-    VCROSS(Bunit, hyp_ip->hyp_H, hyp_ip->hyp_Au);
+    VCROSS(Bunit, hyp->hyp_H, hyp->hyp_Au);
     VUNITIZE(Bunit);
 
-    VMOVE(heightAxis[0], hyp_ip->hyp_H);
+    VMOVE(heightAxis[0], hyp->hyp_H);
     VSCALE(heightAxis[1], heightAxis[0], 0.5);
     VSCALE(heightAxis[2], heightAxis[0], 0.25);
     VSETALL(heightAxis[3], 0);
@@ -643,10 +643,10 @@ rt_hyp_plot(struct bu_list *vhead, struct rt_db_internal *incoming, const struct
 
     for (i = 0; i < 7; i++) {
 	/* determine Z height depending on i */
-	scale = sqrt(MAGSQ(heightAxis[i])*(hyp_ip->hyp_c * hyp_ip->hyp_c)/(hyp_ip->hyp_r1 * hyp_ip->hyp_r1) + 1);
+	scale = sqrt(MAGSQ(heightAxis[i])*(hyp->hyp_c * hyp->hyp_c)/(hyp->hyp_r1 * hyp->hyp_r1) + 1);
 
 	/* calculate vectors for offset */
-	VSCALE(majorAxis[0], hyp_ip->hyp_Au, hyp_ip->hyp_r1 * scale);
+	VSCALE(majorAxis[0], hyp->hyp_Au, hyp->hyp_r1 * scale);
 	VSCALE(majorAxis[1], majorAxis[0], cos22_5);
 	VSCALE(majorAxis[2], majorAxis[0], M_SQRT1_2);
 	VSCALE(majorAxis[3], majorAxis[0], cos67_5);
@@ -655,7 +655,7 @@ rt_hyp_plot(struct bu_list *vhead, struct rt_db_internal *incoming, const struct
 	VREVERSE(majorAxis[6], majorAxis[1]);
 	VREVERSE(majorAxis[7], majorAxis[0]);
 
-	VSCALE(minorAxis[0], Bunit, hyp_ip->hyp_r2 * scale);
+	VSCALE(minorAxis[0], Bunit, hyp->hyp_r2 * scale);
 	VSCALE(minorAxis[1], minorAxis[0], cos22_5);
 	VSCALE(minorAxis[2], minorAxis[0], M_SQRT1_2);
 	VSCALE(minorAxis[3], minorAxis[0], cos67_5);
@@ -665,22 +665,22 @@ rt_hyp_plot(struct bu_list *vhead, struct rt_db_internal *incoming, const struct
 	VREVERSE(minorAxis[7], minorAxis[0]);
 
 	/* calculate ellipse */
-	VADD3(ell[ 0], hyp_ip->hyp_V, heightAxis[i], majorAxis[0]);
-	VADD4(ell[ 1], hyp_ip->hyp_V, heightAxis[i], majorAxis[1], minorAxis[3]);
-	VADD4(ell[ 2], hyp_ip->hyp_V, heightAxis[i], majorAxis[2], minorAxis[2]);
-	VADD4(ell[ 3], hyp_ip->hyp_V, heightAxis[i], majorAxis[3], minorAxis[1]);
-	VADD3(ell[ 4], hyp_ip->hyp_V, heightAxis[i], minorAxis[0]);
-	VADD4(ell[ 5], hyp_ip->hyp_V, heightAxis[i], majorAxis[4], minorAxis[1]);
-	VADD4(ell[ 6], hyp_ip->hyp_V, heightAxis[i], majorAxis[5], minorAxis[2]);
-	VADD4(ell[ 7], hyp_ip->hyp_V, heightAxis[i], majorAxis[6], minorAxis[3]);
-	VADD3(ell[ 8], hyp_ip->hyp_V, heightAxis[i], majorAxis[7]);
-	VADD4(ell[ 9], hyp_ip->hyp_V, heightAxis[i], majorAxis[6], minorAxis[4]);
-	VADD4(ell[10], hyp_ip->hyp_V, heightAxis[i], majorAxis[5], minorAxis[5]);
-	VADD4(ell[11], hyp_ip->hyp_V, heightAxis[i], majorAxis[4], minorAxis[6]);
-	VADD3(ell[12], hyp_ip->hyp_V, heightAxis[i], minorAxis[7]);
-	VADD4(ell[13], hyp_ip->hyp_V, heightAxis[i], majorAxis[3], minorAxis[6]);
-	VADD4(ell[14], hyp_ip->hyp_V, heightAxis[i], majorAxis[2], minorAxis[5]);
-	VADD4(ell[15], hyp_ip->hyp_V, heightAxis[i], majorAxis[1], minorAxis[4]);
+	VADD3(ell[ 0], hyp->hyp_V, heightAxis[i], majorAxis[0]);
+	VADD4(ell[ 1], hyp->hyp_V, heightAxis[i], majorAxis[1], minorAxis[3]);
+	VADD4(ell[ 2], hyp->hyp_V, heightAxis[i], majorAxis[2], minorAxis[2]);
+	VADD4(ell[ 3], hyp->hyp_V, heightAxis[i], majorAxis[3], minorAxis[1]);
+	VADD3(ell[ 4], hyp->hyp_V, heightAxis[i], minorAxis[0]);
+	VADD4(ell[ 5], hyp->hyp_V, heightAxis[i], majorAxis[4], minorAxis[1]);
+	VADD4(ell[ 6], hyp->hyp_V, heightAxis[i], majorAxis[5], minorAxis[2]);
+	VADD4(ell[ 7], hyp->hyp_V, heightAxis[i], majorAxis[6], minorAxis[3]);
+	VADD3(ell[ 8], hyp->hyp_V, heightAxis[i], majorAxis[7]);
+	VADD4(ell[ 9], hyp->hyp_V, heightAxis[i], majorAxis[6], minorAxis[4]);
+	VADD4(ell[10], hyp->hyp_V, heightAxis[i], majorAxis[5], minorAxis[5]);
+	VADD4(ell[11], hyp->hyp_V, heightAxis[i], majorAxis[4], minorAxis[6]);
+	VADD3(ell[12], hyp->hyp_V, heightAxis[i], minorAxis[7]);
+	VADD4(ell[13], hyp->hyp_V, heightAxis[i], majorAxis[3], minorAxis[6]);
+	VADD4(ell[14], hyp->hyp_V, heightAxis[i], majorAxis[2], minorAxis[5]);
+	VADD4(ell[15], hyp->hyp_V, heightAxis[i], majorAxis[1], minorAxis[4]);
 
 	/* draw ellipse */
 	RT_ADD_VLIST(vhead, ell[15], BN_VLIST_LINE_MOVE);
@@ -703,6 +703,8 @@ rt_hyp_plot(struct bu_list *vhead, struct rt_db_internal *incoming, const struct
 
     }
 
+    BU_PUT(hyp, struct hyp_specific);
+
     return 0;
 }
 
@@ -718,7 +720,8 @@ int
 rt_hyp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
 {
     fastf_t c, dtol, f, mag_a, mag_h, ntol, r1, r2, r3, cprime;
-    fastf_t **ellipses, theta_new;
+    fastf_t **ellipses = NULL;
+    fastf_t theta_new;
     int *pts_dbl, face, i, j, nseg;
     int jj, nell;
     mat_t invRoS;
@@ -1118,13 +1121,18 @@ rt_hyp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     nmg_shell_coplanar_face_merge(s, tol, 1);
 
     /* free mem */
-    bu_free((char *)outfaceuses, "faceuse []");
+    if (outfaceuses)
+	bu_free((char *)outfaceuses, "faceuse []");
     for (i = 0; i < nell; i++) {
-	bu_free((char *)ellipses[i], "pts ell");
-	bu_free((char *)vells[i], "vertex []");
+	if (ellipses)
+	    bu_free((char *)ellipses[i], "pts ell");
+	if (vells)
+	    bu_free((char *)vells[i], "vertex []");
     }
-    bu_free((char *)ellipses, "fastf_t ell[]");
-    bu_free((char *)vells, "vertex [][]");
+    if (ellipses)
+	bu_free((char *)ellipses, "fastf_t ell[]");
+    if (vells)
+	bu_free((char *)vells, "vertex [][]");
 
     /* Assign vertexuse normals */
     nmg_vertex_tabulate(&vert_tab, &s->l.magic);
@@ -1166,17 +1174,25 @@ rt_hyp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     }
 
     bu_ptbl_free(&vert_tab);
+    BU_PUT(xip, struct hyp_specific);
     return 0;
 
  fail:
     /* free mem */
-    bu_free((char *)outfaceuses, "faceuse []");
+    if (xip)
+	BU_PUT(xip, struct hyp_specific);
+    if (outfaceuses)
+	bu_free((char *)outfaceuses, "faceuse []");
     for (i = 0; i < nell; i++) {
-	bu_free((char *)ellipses[i], "pts ell");
-	bu_free((char *)vells[i], "vertex []");
+	if (ellipses)
+	    bu_free((char *)ellipses[i], "pts ell");
+	if (vells)
+	    bu_free((char *)vells[i], "vertex []");
     }
-    bu_free((char *)ellipses, "fastf_t ell[]");
-    bu_free((char *)vells, "vertex [][]");
+    if (ellipses)
+	bu_free((char *)ellipses, "fastf_t ell[]");
+    if (vells)
+	bu_free((char *)vells, "vertex [][]");
 
     return -1;
 }
