@@ -315,7 +315,7 @@ ged_push(struct ged *gedp, int argc, const char *argv[])
 
     rt_g.debug = old_debug;
     push_error = gpdp->push_error;
-    BU_PUT(gpdp, struct ged_push);
+    BU_PUT(gpdp, struct push_data);
 
     return push_error ? GED_ERROR : GED_OK;
 }
