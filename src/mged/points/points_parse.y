@@ -24,8 +24,6 @@
  * one point per line.  This is the format output, for example, by
  * the ArcSecond Vulcan scanner.
  *
- * Author -
- *   Christopher Sean Morrison
  */
 
 %{
@@ -55,8 +53,6 @@
  * one point per line.  This is the format output, for example, by
  * the ArcSecond Vulcan scanner.
  *
- * Author -
- *   Christopher Sean Morrison
  */
 
 #include "common.h"

@@ -22,8 +22,6 @@
  *
  * Data structures for the comma-separated value point file parser.
  *
- * Author -
- *   Christopher Sean Morrison
  */
 
 /* private header */

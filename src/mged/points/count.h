@@ -22,8 +22,6 @@
  *
  * Basic counting structure and functions.
  *
- * Author -
- *   Christopher Sean Morrison
  */
 
 #ifndef __COUNT_H__
