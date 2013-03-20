@@ -19,7 +19,6 @@
  */
 
 
-
 #include "common.h"
 
 #include <stdlib.h>
@@ -34,7 +33,6 @@
 #include "rtgeom.h"
 #include "raytrace.h"
 #include "wdb.h"
-
 
 
 struct rt_wdb *
@@ -61,7 +59,6 @@ wdb_fopen(const char *filename)
     if ( filename == NULL ) return RT_WDB_NULL;
     return wdb_fopen_v(filename, 5);
 }
-
 
 
 struct rt_wdb *
@@ -92,7 +89,6 @@ wdb_dbopen(struct db_i *dbip, int mode)
 }
 
 
-
 int
 wdb_import(struct rt_wdb *wdbp,	struct rt_db_internal *internp,	const char *name, const mat_t mat)
 {
@@ -104,7 +100,6 @@ wdb_import(struct rt_wdb *wdbp,	struct rt_db_internal *internp,	const char *name
 
     return rt_db_get_internal(internp, dp, wdbp->dbip, mat, &rt_uniresource);
 }
-
 
 
 int
@@ -220,7 +215,6 @@ wdb_export_external(
 }
 
 
-
 int
 wdb_put_internal(
     struct rt_wdb *wdbp,
@@ -266,7 +260,6 @@ out:
     rt_db_free_internal(ip);
     return ret;
 }
-
 
 
 int
@@ -337,7 +330,6 @@ wdb_init(struct rt_wdb *wdbp, struct db_i *dbip, int mode)
 }
 
 
-
 void
 wdb_close(struct rt_wdb *wdbp)
 {
@@ -367,7 +359,6 @@ wdb_close(struct rt_wdb *wdbp)
     bu_free((genptr_t)wdbp, "struct rt_wdb");
     wdbp = NULL;
 }
-
 
 
 int
@@ -435,7 +426,6 @@ wdb_import_from_path2(struct bu_vls *logstr, struct rt_db_internal *ip, const ch
 
     return BRLCAD_OK;
 }
-
 
 
 int

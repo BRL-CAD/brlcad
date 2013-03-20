@@ -124,7 +124,6 @@ static OPTION options[] = {
 };
 
 
-
 void
 db_free_full_path_list(struct db_full_path_list *path_list)
 {

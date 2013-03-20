@@ -1488,7 +1488,7 @@ ged_draw_guts(struct ged *gedp, int argc, const char *argv[], int kind)
 	char *c;
 
 	if (*argv[i] != '-') {
-    	    /* Done checking options. If our display is non-empty,
+	    /* Done checking options. If our display is non-empty,
 	     * add -R to keep current view.
 	     */
 	    if (BU_LIST_NON_EMPTY(&gedp->ged_gdp->gd_headDisplay)) {

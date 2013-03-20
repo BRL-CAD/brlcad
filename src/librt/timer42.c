@@ -43,7 +43,6 @@ static void tvsub(struct timeval *tdiff, struct timeval *t1, struct timeval *t0)
 static void psecs(long int l, struct bu_vls *vp);
 
 
-
 void
 rt_prep_timer(void)
 {
@@ -51,7 +50,6 @@ rt_prep_timer(void)
     getrusage(RUSAGE_SELF, &ru0);
     getrusage(RUSAGE_CHILDREN, &ru0c);
 }
-
 
 
 double
@@ -213,7 +211,6 @@ psecs(long int l, struct bu_vls *vp)
 }
 
 
-
 double
 rt_read_timer(char *str, int len)
 {
@@ -233,7 +230,6 @@ rt_read_timer(char *str, int len)
 
     return cpu;
 }
-
 
 
 /*

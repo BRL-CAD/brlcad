@@ -206,12 +206,12 @@ rt_bot_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct 
     VSETALL((*max), -INFINITY);
 
     for (tri_index = 0; tri_index < bot_ip->num_faces; tri_index++) {
-        pt1 = bot_ip->faces[tri_index*3];
-        pt2 = bot_ip->faces[tri_index*3 + 1];
-        pt3 = bot_ip->faces[tri_index*3 + 2];
-        VMOVE(p1, &bot_ip->vertices[pt1*3]);
-        VMOVE(p2, &bot_ip->vertices[pt2*3]);
-        VMOVE(p3, &bot_ip->vertices[pt3*3]);
+	pt1 = bot_ip->faces[tri_index*3];
+	pt2 = bot_ip->faces[tri_index*3 + 1];
+	pt3 = bot_ip->faces[tri_index*3 + 2];
+	VMOVE(p1, &bot_ip->vertices[pt1*3]);
+	VMOVE(p2, &bot_ip->vertices[pt2*3]);
+	VMOVE(p3, &bot_ip->vertices[pt3*3]);
 	VMINMAX((*min), (*max), p1);
 	VMINMAX((*min), (*max), p2);
 	VMINMAX((*min), (*max), p3);
@@ -527,7 +527,7 @@ build_vertex_tree(struct rt_bot_internal *bot)
 
     /* create triangles */
     for (i = 0; i < tri_indices; i += 3) {
-        vdsAddTri(bot->faces[i], bot->faces[i + 1], bot->faces[i + 2],
+	vdsAddTri(bot->faces[i], bot->faces[i + 1], bot->faces[i + 2],
 		normal, normal, normal, color, color, color);
     }
 

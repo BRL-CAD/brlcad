@@ -61,7 +61,7 @@ getRegionByName(struct voxelRegion *head, const char *regionName) {
 	    else {
 		BU_ALLOC(ret, struct voxelRegion);
 		head->nextRegion = ret;
-	        ret->regionName  = bu_strdup(regionName);
+		ret->regionName  = bu_strdup(regionName);
 	    }
 	}
     }

@@ -761,7 +761,6 @@ _ged_select_botpts(struct ged *gedp, struct rt_bot_internal *botip, double vx, d
 }
 
 
-
 /*
  * Local Variables:
  * mode: C

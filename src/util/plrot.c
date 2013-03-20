@@ -279,7 +279,7 @@ get_args(int argc, char **argv)
 		break;
 	    case 'S':
 		sscanf(bu_optarg, "%lf %lf %lf %lf %lf %lf",
-                       &mtmp[0], &mtmp[1], &mtmp[2],
+		       &mtmp[0], &mtmp[1], &mtmp[2],
 		       &mtmp[3], &mtmp[4], &mtmp[5]);
 		VSET(forced_space_min, mtmp[0], mtmp[1], mtmp[2]);
 		VSET(forced_space_max, mtmp[3], mtmp[4], mtmp[5]);

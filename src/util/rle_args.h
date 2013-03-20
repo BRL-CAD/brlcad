@@ -37,4 +37,3 @@ get_args(int argc, char **argv, rle_hdr *outrle, FILE** infp, char** infile, int
  * End:
  * ex: shiftwidth=4 tabstop=8
  */
-

@@ -482,11 +482,11 @@ main(int argc, char **argv)
     if (pa == NULL || pb == NULL || wa == NULL ||  wb == NULL ||
 	morph == NULL) {
 	fprintf(stderr, "pixmorph: memory allocation failure\n");
-        bu_free(pa, "pa alloc from malloc");
-        bu_free(pb, "pb alloc from malloc");
-        bu_free(wa, "wa alloc from malloc");
-        bu_free(wb, "wb alloc from malloc");
-        bu_free(morph, "morph alloc from malloc");
+	bu_free(pa, "pa alloc from malloc");
+	bu_free(pb, "pb alloc from malloc");
+	bu_free(wa, "wa alloc from malloc");
+	bu_free(wb, "wb alloc from malloc");
+	bu_free(morph, "morph alloc from malloc");
 	return 1;
     }
 

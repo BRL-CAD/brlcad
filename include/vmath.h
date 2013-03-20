@@ -434,18 +434,18 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
 
 /** Clamp a 3D vector to zero if within tolerance of zero. */
 #define VCLAMP(a) { \
-        if (ZERO((a)[X])) (a)[X] = 0.0; \
-        if (ZERO((a)[Y])) (a)[Y] = 0.0; \
-        if (ZERO((a)[Z])) (a)[Z] = 0.0; \
+	if (ZERO((a)[X])) (a)[X] = 0.0; \
+	if (ZERO((a)[Y])) (a)[Y] = 0.0; \
+	if (ZERO((a)[Z])) (a)[Z] = 0.0; \
 }
 
 
 /** Clamp a 4D vector to zero if within tolerance of zero. */
 #define HCLAMP(a) { \
-        if (ZERO((a)[X])) (a)[X] = 0.0; \
-        if (ZERO((a)[Y])) (a)[Y] = 0.0; \
-        if (ZERO((a)[Z])) (a)[Z] = 0.0; \
-        if (ZERO((a)[H])) (a)[H] = 0.0; \
+	if (ZERO((a)[X])) (a)[X] = 0.0; \
+	if (ZERO((a)[Y])) (a)[Y] = 0.0; \
+	if (ZERO((a)[Z])) (a)[Z] = 0.0; \
+	if (ZERO((a)[H])) (a)[H] = 0.0; \
 }
 
 
@@ -1700,7 +1700,7 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
        ((_l1)[X] > (_h2)[X] + (_t) || \
 	(_l1)[Y] > (_h2)[Y] + (_t) || \
 	(_l1)[Z] > (_h2)[Z] + (_t) || \
-        (_l2)[X] > (_h1)[X] + (_t) || \
+	(_l2)[X] > (_h1)[X] + (_t) || \
 	(_l2)[Y] > (_h1)[Y] + (_t) || \
 	(_l2)[Z] > (_h1)[Z] + (_t))
 

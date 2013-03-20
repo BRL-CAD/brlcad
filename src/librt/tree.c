@@ -19,7 +19,6 @@
  */
 
 
-
 #include "common.h"
 
 #include <stddef.h>
@@ -602,7 +601,6 @@ found_it:
 }
 
 
-
 void
 rt_free_soltab(struct soltab *stp)
 {
@@ -698,7 +696,6 @@ _rt_tree_kill_dead_solid_refs(union tree *tp)
     }
     return;
 }
-
 
 
 int
@@ -860,13 +857,11 @@ again:
 }
 
 
-
 int
 rt_gettrees_and_attrs(struct rt_i *rtip, const char **attrs, int argc, const char **argv, int ncpus)
 {
     return rt_gettrees_muves(rtip, attrs, argc, argv, ncpus);
 }
-
 
 
 int
@@ -900,7 +895,6 @@ rt_gettrees(struct rt_i *rtip, int argc, const char **argv, int ncpus)
 	return -1;
     }
 }
-
 
 
 int
@@ -990,7 +984,6 @@ top:
 }
 
 
-
 struct soltab *
 rt_find_solid(const struct rt_i *rtip, const char *name)
 {
@@ -1008,7 +1001,6 @@ rt_find_solid(const struct rt_i *rtip, const char *name)
     } RT_VISIT_ALL_SOLTABS_END
 	  return RT_SOLTAB_NULL;
 }
-
 
 
 void

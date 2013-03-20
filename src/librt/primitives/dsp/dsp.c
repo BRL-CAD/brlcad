@@ -4088,7 +4088,7 @@ get_file_data(struct rt_dsp_internal *dsp_ip, const struct db_i *dbip)
 				      bu_vls_addr(&dsp_ip->dsp_name), "dsp");
     if (!mf) {
 	bu_log("mapped file open failure: %s%c%s\n",
-               *dbip->dbi_filepath,BU_DIR_SEPARATOR,bu_vls_addr(&dsp_ip->dsp_name));
+	       *dbip->dbi_filepath,BU_DIR_SEPARATOR,bu_vls_addr(&dsp_ip->dsp_name));
 	return 0;
     }
 

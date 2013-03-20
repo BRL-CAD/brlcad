@@ -19,7 +19,6 @@
  */
 
 
-
 #include <stdio.h>
 
 /* Standard System V stuff */
@@ -59,7 +58,6 @@ rt_read_timer(char *str, int len)
     bu_strlcpy(str, line, len);
     return usert;
 }
-
 
 
 /*

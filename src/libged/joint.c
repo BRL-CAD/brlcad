@@ -409,7 +409,7 @@ f_Junload(struct ged *gedp, int argc, const char *argv[])
 
     if (dbip == DBI_NULL) {
 	/* initialize result */
-        bu_vls_trunc(gedp->ged_result_str, 0);
+	bu_vls_trunc(gedp->ged_result_str, 0);
 	bu_vls_printf(gedp->ged_result_str, "A database is not open!\n");
 	return GED_ERROR;
     }

@@ -154,7 +154,7 @@ main(int argc, char **argv)
 
     /* Write RLE header, ncolors=3, bgflag=0 */
     if (rle_whdr(outfp, 3, 0, 0, RGBPIXEL_NULL) == -1) {
-        bu_free(scan_buf, "scan_buf alloc form malloc");
+	bu_free(scan_buf, "scan_buf alloc form malloc");
 	return 1;
     }
 
@@ -165,14 +165,14 @@ main(int argc, char **argv)
 	ret = fread((char *)scan_buf, sizeof(RGBpixel), file_width, infp);
 	if (ret != file_width) {
 	    (void) fprintf(stderr, "read of %lu pixels on line %lu failed!\n", (unsigned long)file_width, (unsigned long)y);
-            bu_free(scan_buf, "scan_buf alloc form malloc");
+	    bu_free(scan_buf, "scan_buf alloc form malloc");
 	    return 1;
 	}
 
 	if (rle_encode_ln(outfp, scan_buf) == -1) {
-            bu_free(scan_buf, "scan_buf alloc form malloc");
+	    bu_free(scan_buf, "scan_buf alloc form malloc");
 	    return 1;
-        }
+	}
     }
 
     bu_free(scan_buf, "scan_buf alloc form malloc");

@@ -106,7 +106,7 @@ void usage(void)
 {
     (void) fprintf(stderr,
 "Usage: %s [-u] [-h] [-w width] [-n scanlines] [-s squaresize]\n\
-                [-f shrink_factor] [bwfile] > bwfile\n", progname);
+		[-f shrink_factor] [bwfile] > bwfile\n", progname);
     bu_exit (1, NULL);
 }
 
@@ -187,7 +187,7 @@ int main(int ac, char **av)
     if ((buffer = (unsigned char *)malloc(width*height)) == (unsigned char *)NULL) {
 	fprintf(stderr, "%s: cannot allocate input buffer\n",
 		      progname);
-        bu_free(buffer, "buffer alloc from malloc");
+	bu_free(buffer, "buffer alloc from malloc");
 	bu_exit (-1, NULL);
     }
 

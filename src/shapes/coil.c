@@ -438,9 +438,9 @@ main(int ac, char *av[])
 
     if (BU_LIST_IS_EMPTY(&sections)) {
 
-    	if (ac == 1) {
+	if (ac == 1) {
 	    bu_log("Creating a coil with default parameters.\n");
-    	}
+	}
 
 	if (mean_outer_diameter < 0 || wire_diameter < 0 || helix_angle < 0 || pitch < 0 || nt < 0 || start_cap_type < 0 || end_cap_type < 0)
 	    bu_exit(1, "ERROR: negative value in one or more arguments supplied to coil");

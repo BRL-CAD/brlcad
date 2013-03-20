@@ -454,7 +454,7 @@ BANode<BA>::removeChild(BANode<BA>* child)
 	if (*i == child) {
 	    delete *i;
 	    m_children.erase(i);
-        }
+	}
     }
 }
 
@@ -1738,9 +1738,9 @@ typedef struct pbc_data {
 
 extern BREP_EXPORT PBCData*
 pullback_samples(const brlcad::SurfaceTree* surfacetree,
-                 const ON_Curve* curve,
-                 double tolerance = 1.0e-6,
-                 double flatness = 1.0e-3);
+		 const ON_Curve* curve,
+		 double tolerance = 1.0e-6,
+		 double flatness = 1.0e-3);
 
 extern BREP_EXPORT bool
 check_pullback_data(std::list<PBCData*> &pbcs);

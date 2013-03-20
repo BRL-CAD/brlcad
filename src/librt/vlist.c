@@ -19,7 +19,6 @@
  */
 
 
-
 #include "common.h"
 
 #include <stdio.h>
@@ -67,13 +66,11 @@ bn_vlblock_init(struct bu_list *free_vlist_hd, /**< where to get/put free vlists
 }
 
 
-
 struct bn_vlblock *
 rt_vlblock_init(void)
 {
     return bn_vlblock_init(&rt_g.rtg_vlfree, 32);
 }
-
 
 
 void
@@ -94,7 +91,6 @@ rt_vlblock_free(struct bn_vlblock *vbp)
     bu_free((char *)vbp, "bn_vlblock");
 
 }
-
 
 
 struct bu_list *
@@ -163,7 +159,6 @@ rt_vlblock_find(struct bn_vlblock *vbp, int r, int g, int b)
 }
 
 
-
 int
 rt_ck_vlist(const struct bu_list *vhead)
 {
@@ -209,7 +204,6 @@ rt_ck_vlist(const struct bu_list *vhead)
 }
 
 
-
 void
 rt_vlist_copy(struct bu_list *dest, const struct bu_list *src)
 {
@@ -225,7 +219,6 @@ rt_vlist_copy(struct bu_list *dest, const struct bu_list *src)
 	}
     }
 }
-
 
 
 void
@@ -246,13 +239,11 @@ bn_vlist_cleanup(struct bu_list *hd)
 }
 
 
-
 void
 rt_vlist_cleanup(void)
 {
     bn_vlist_cleanup(&rt_g.rtg_vlfree);
 }
-
 
 
 void
@@ -369,7 +360,6 @@ rt_vlist_export(struct bu_vls *vls, struct bu_list *hp, const char *name)
 }
 
 
-
 void
 rt_vlist_import(struct bu_list *hp, struct bu_vls *namevls, const unsigned char *buf)
 {
@@ -404,7 +394,6 @@ rt_vlist_import(struct bu_list *hp, struct bu_vls *namevls, const unsigned char 
 }
 
 
-
 void
 rt_plot_vlblock(FILE *fp, const struct bn_vlblock *vbp)
 {
@@ -422,7 +411,6 @@ rt_plot_vlblock(FILE *fp, const struct bn_vlblock *vbp)
 	rt_vlist_to_uplot(fp, &(vbp->head[i]));
     }
 }
-
 
 
 void
@@ -804,7 +792,6 @@ rt_process_uplot_value(register struct bu_list **vhead,
 }
 
 
-
 int
 rt_uplot_to_vlist(struct bn_vlblock *vbp, register FILE *fp, double char_size, int mode)
 {
@@ -829,7 +816,6 @@ rt_uplot_to_vlist(struct bn_vlblock *vbp, register FILE *fp, double char_size, i
 
     return 0;
 }
-
 
 
 void

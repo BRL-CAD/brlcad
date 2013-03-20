@@ -757,7 +757,6 @@ WDB_EXPORT WDB_EXTERN(int mk_submodel, (struct rt_wdb *fp, const char *name, con
 					const char *treetop, int meth));
 
 
-
 /*----------------------------------------------------------------------*/
 
 

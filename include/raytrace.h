@@ -2730,7 +2730,6 @@ RT_EXPORT extern struct soltab *rt_find_solid(const struct rt_i *rtip,
  */
 
 
-
 /**
  *
  */
@@ -3238,7 +3237,6 @@ RT_EXPORT extern struct rt_wdb *wdb_dbopen(struct db_i *dbip,
 					   int mode);
 
 
-
 /**
  * Returns -
  *  0 and modified *internp;
@@ -3269,8 +3267,6 @@ RT_EXPORT extern int wdb_export_external(struct rt_wdb *wdbp,
 					 unsigned char minor_type);
 
 
-
-
 /**
  * Convert the internal representation of a solid to the external one,
  * and write it into the database.
@@ -3291,8 +3287,6 @@ RT_EXPORT extern int wdb_put_internal(struct rt_wdb *wdbp,
 				      const char *name,
 				      struct rt_db_internal *ip,
 				      double local2mm);
-
-
 
 
 /**
@@ -3343,7 +3337,6 @@ RT_EXPORT extern int wdb_import_from_path(struct bu_vls *logstr,
 					  struct rt_db_internal *ip,
 					  const char *path,
 					  struct rt_wdb *wdb);
-
 
 
 /**
@@ -3807,7 +3800,6 @@ RT_EXPORT extern int db5_realloc(struct db_i *dbip,
 				 struct bu_external *ep);
 
 
-
 /**
  * D B 5 _ E X P O R T _ O B J E C T 3
  *
@@ -3826,7 +3818,6 @@ RT_EXPORT extern void db5_export_object3(struct bu_external *out,
 					 int			minor,
 					 int			a_zzz,
 					 int			b_zzz);
-
 
 
 /**
@@ -3858,7 +3849,6 @@ RT_EXPORT extern int rt_db_cvt_to_external5(struct bu_external *ext,
 					    const int major);
 
 
-
 /*
  * D B _ W R A P _ V 5 _ E X T E R N A L
  *
@@ -3866,7 +3856,6 @@ RT_EXPORT extern int rt_db_cvt_to_external5(struct bu_external *ext,
  */
 RT_EXPORT extern int db_wrap_v5_external(struct bu_external *ep,
 					 const char *name);
-
 
 
 /**
@@ -3887,7 +3876,6 @@ RT_EXPORT extern int rt_db_get_internal5(struct rt_db_internal	*ip,
 					 const struct db_i	*dbip,
 					 const mat_t		mat,
 					 struct resource		*resp);
-
 
 
 /**
@@ -3973,7 +3961,6 @@ RT_EXPORT extern size_t db5_decode_length(size_t *lenp,
 RT_EXPORT extern int db5_select_length_encoding(size_t len);
 
 
-
 /**
  * D B 5 _ I M P O R T _ C O L O R _ T A B L E
  */
@@ -4016,7 +4003,6 @@ RT_EXPORT extern void db5_export_attributes(struct bu_external *ap,
 					    const struct bu_attribute_value_set *avs);
 
 
-
 /**
  * D B 5 _ G E T _ R A W _ I N T E R N A L _ F P
  *
@@ -4042,7 +4028,6 @@ RT_EXPORT extern int db5_header_is_valid(const unsigned char *hp);
 RT_EXPORT extern int db5_fwrite_ident(FILE *,
 				      const char *,
 				      double);
-
 
 
 /**
@@ -4621,7 +4606,6 @@ RT_EXPORT extern int rt_comb_import5(struct rt_db_internal *ip, const struct bu_
 RT_EXPORT extern int rt_extrude_import5(struct rt_db_internal *ip, const struct bu_external *ep, const mat_t mat, const struct db_i *dbip, struct resource *resp);
 
 
-
 /**
  * "open" an in-memory-only database instance.  this initializes a
  * dbip for use, creating an inmem dbi_wdbp as the means to add
@@ -4837,7 +4821,6 @@ RT_EXPORT extern int db_rename(struct db_i *,
 			       const char *newname);
 
 
-
 /**
  * D B _ U P D A T E _ N R E F
  *
@@ -4847,7 +4830,6 @@ RT_EXPORT extern int db_rename(struct db_i *,
  */
 RT_EXPORT extern void db_update_nref(struct db_i *dbip,
 				     struct resource *resp);
-
 
 
 /**
@@ -4867,7 +4849,6 @@ RT_EXPORT extern void db_update_nref(struct db_i *dbip,
  */
 DEPRECATED RT_EXPORT extern int db_regexp_match(const char *pattern,
 						const char *string);
-
 
 
 /**
@@ -5399,7 +5380,6 @@ RT_EXPORT extern int rt_fwrite_internal(FILE *fp,
 					const struct rt_db_internal *ip,
 					double conv2mm);
 RT_EXPORT extern void rt_db_free_internal(struct rt_db_internal *ip);
-
 
 
 /**
@@ -6025,7 +6005,6 @@ RT_EXPORT extern int rt_uplot_to_vlist(struct bn_vlblock *vbp,
 				       FILE *fp,
 				       double char_size,
 				       int mode);
-
 
 
 /**
@@ -6840,7 +6819,6 @@ RT_EXPORT extern int rt_tcl_cutter(ClientData clientData,
 				   const char *const*argv);
 
 
-
 /**
  * Format a hit in a TCL-friendly format.
  *
@@ -6955,7 +6933,6 @@ RT_EXPORT extern int tcl_obj_to_fastf_array(Tcl_Interp *interp,
 					    Tcl_Obj *list,
 					    fastf_t **array,
 					    int *array_len);
-
 
 
 /**
@@ -7712,7 +7689,7 @@ RT_EXPORT extern int nmg_break_e_on_v(const uint32_t *magic_p,
 				      const struct bn_tol *tol);
 /* DEPRECATED: use nmg_break_e_on_v */
 RT_EXPORT extern int nmg_model_break_e_on_v(const uint32_t *magic_p,
-				            const struct bn_tol *tol);
+					    const struct bn_tol *tol);
 RT_EXPORT extern int nmg_model_fuse(struct model *m,
 				    const struct bn_tol *tol);
 

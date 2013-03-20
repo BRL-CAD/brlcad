@@ -92,7 +92,6 @@ db5_write_free(struct db_i *dbip, struct directory *dp, size_t length)
 }
 
 
-
 int
 db5_realloc(struct db_i *dbip, struct directory *dp, struct bu_external *ep)
 {

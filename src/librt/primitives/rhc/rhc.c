@@ -422,7 +422,7 @@ rt_rhc_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct 
 
 	a = dprime[Z] * dprime[Z] - dprime[Y] * dprime[Y] * (1 + 2 * x);
 	b = 2 * ((pprime[Z] + x + 1) * dprime[Z]
-	         - (2 * x + 1) * dprime[Y] * pprime[Y]);
+		 - (2 * x + 1) * dprime[Y] * pprime[Y]);
 	c = (pprime[Z] + x + 1) * (pprime[Z] + x + 1)
 	    - (2 * x + 1) * pprime[Y] * pprime[Y] - x * x;
 
@@ -430,7 +430,7 @@ rt_rhc_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct 
 	    disc = b * b - 4 * a * c;
 
 	    if (disc <= 0) {
-	        goto check_plates;
+		goto check_plates;
 	    }
 
 	    disc = sqrt(disc);
@@ -445,38 +445,38 @@ rt_rhc_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct 
 	    VJOIN1(hitp->hit_vpriv, pprime, k1, dprime);		/* hit' */
 
 	    if (hitp->hit_vpriv[X] >= -1.0
-	        && hitp->hit_vpriv[X] <= 0.0
-	        && hitp->hit_vpriv[Z] >= -1.0
-	        && hitp->hit_vpriv[Z] <= 0.0) {
-	        hitp->hit_magic = RT_HIT_MAGIC;
-	        hitp->hit_dist = k1;
-	        hitp->hit_surfno = RHC_NORM_BODY;	/* compute N */
-	        hitp++;
+		&& hitp->hit_vpriv[X] <= 0.0
+		&& hitp->hit_vpriv[Z] >= -1.0
+		&& hitp->hit_vpriv[Z] <= 0.0) {
+		hitp->hit_magic = RT_HIT_MAGIC;
+		hitp->hit_dist = k1;
+		hitp->hit_surfno = RHC_NORM_BODY;	/* compute N */
+		hitp++;
 	    }
 
 	    VJOIN1(hitp->hit_vpriv, pprime, k2, dprime);		/* hit' */
 
 	    if (hitp->hit_vpriv[X] >= -1.0
-	        && hitp->hit_vpriv[X] <= 0.0
-	        && hitp->hit_vpriv[Z] >= -1.0
-	        && hitp->hit_vpriv[Z] <= 0.0) {
-	        hitp->hit_magic = RT_HIT_MAGIC;
-	        hitp->hit_dist = k2;
-	        hitp->hit_surfno = RHC_NORM_BODY;	/* compute N */
-	        hitp++;
+		&& hitp->hit_vpriv[X] <= 0.0
+		&& hitp->hit_vpriv[Z] >= -1.0
+		&& hitp->hit_vpriv[Z] <= 0.0) {
+		hitp->hit_magic = RT_HIT_MAGIC;
+		hitp->hit_dist = k2;
+		hitp->hit_surfno = RHC_NORM_BODY;	/* compute N */
+		hitp++;
 	    }
 	} else if (!NEAR_ZERO(b, RT_PCOEF_TOL)) {
 	    k1 = -c / b;
 	    VJOIN1(hitp->hit_vpriv, pprime, k1, dprime);		/* hit' */
 
 	    if (hitp->hit_vpriv[X] >= -1.0
-	        && hitp->hit_vpriv[X] <= 0.0
-	        && hitp->hit_vpriv[Z] >= -1.0
-	        && hitp->hit_vpriv[Z] <= 0.0) {
-	        hitp->hit_magic = RT_HIT_MAGIC;
-	        hitp->hit_dist = k1;
-	        hitp->hit_surfno = RHC_NORM_BODY;	/* compute N */
-	        hitp++;
+		&& hitp->hit_vpriv[X] <= 0.0
+		&& hitp->hit_vpriv[Z] >= -1.0
+		&& hitp->hit_vpriv[Z] <= 0.0) {
+		hitp->hit_magic = RT_HIT_MAGIC;
+		hitp->hit_dist = k1;
+		hitp->hit_surfno = RHC_NORM_BODY;	/* compute N */
+		hitp++;
 	    }
 	}
     }
@@ -1096,7 +1096,7 @@ rt_rhc_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 
     /* Draw the front */
     RT_ADD_VLIST(vhead, &front[(n - 1)*ELEMENTS_PER_VECT],
-	         BN_VLIST_LINE_MOVE);
+		 BN_VLIST_LINE_MOVE);
 
     for (i = 0; i < n; i++) {
 	RT_ADD_VLIST(vhead, &front[i * ELEMENTS_PER_VECT], BN_VLIST_LINE_DRAW);
@@ -1415,15 +1415,15 @@ rt_rhc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	    NMG_CK_FACEUSE(fu);
 
 	    if (fu->f_p == outfaceuses[0]->f_p ||
-	        fu->f_p == outfaceuses[1]->f_p ||
-	        fu->f_p == outfaceuses[n + 1]->f_p) {
-	        continue;    /* skip flat faces */
+		fu->f_p == outfaceuses[1]->f_p ||
+		fu->f_p == outfaceuses[n + 1]->f_p) {
+		continue;    /* skip flat faces */
 	    }
 
 	    if (fu->orientation == OT_SAME) {
-	        nmg_vertexuse_nv(vu, norms[i]);
+		nmg_vertexuse_nv(vu, norms[i]);
 	    } else if (fu->orientation == OT_OPPOSITE) {
-	        nmg_vertexuse_nv(vu, rev_norm);
+		nmg_vertexuse_nv(vu, rev_norm);
 	    }
 	}
 
@@ -1436,15 +1436,15 @@ rt_rhc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	    NMG_CK_FACEUSE(fu);
 
 	    if (fu->f_p == outfaceuses[0]->f_p ||
-	        fu->f_p == outfaceuses[1]->f_p ||
-	        fu->f_p == outfaceuses[n + 1]->f_p) {
-	        continue;    /* skip flat faces */
+		fu->f_p == outfaceuses[1]->f_p ||
+		fu->f_p == outfaceuses[n + 1]->f_p) {
+		continue;    /* skip flat faces */
 	    }
 
 	    if (fu->orientation == OT_SAME) {
-	        nmg_vertexuse_nv(vu, norms[i]);
+		nmg_vertexuse_nv(vu, norms[i]);
 	    } else if (fu->orientation == OT_OPPOSITE) {
-	        nmg_vertexuse_nv(vu, rev_norm);
+		nmg_vertexuse_nv(vu, rev_norm);
 	    }
 	}
     }

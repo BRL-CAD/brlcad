@@ -33,14 +33,12 @@ static clock_t start;
 time_t time0;
 
 
-
 void
 rt_prep_timer(void)
 {
     start = clock();
     time(&time0);
 }
-
 
 
 double
@@ -97,7 +95,6 @@ rt_read_timer(char *str, int len)
 
     return cpu;
 }
-
 
 
 /*

@@ -27,7 +27,6 @@
 #include "brlcad_version.h"
 
 
-
 const char *
 rt_version(void)
 {

@@ -56,7 +56,6 @@ rt_prep_timer(void)
 }
 
 
-
 double
 rt_get_timer(struct bu_vls *vp, double *elapsed)
 {
@@ -101,7 +100,6 @@ rt_get_timer(struct bu_vls *vp, double *elapsed)
 }
 
 
-
 double
 rt_read_timer(char *str, int len)
 {
@@ -121,7 +119,6 @@ rt_read_timer(char *str, int len)
 
     return cpu;
 }
-
 
 
 /*

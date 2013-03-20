@@ -19,7 +19,6 @@
  */
 
 
-
 #include "common.h"
 
 #include <stdio.h>
@@ -265,7 +264,6 @@ rt_poly_deflate(register bn_poly_t *oldP, register bn_complex_t *root)
      */
     bn_poly_synthetic_division(oldP, &rem, oldP, &divisor);
 }
-
 
 
 int

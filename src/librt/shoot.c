@@ -847,7 +847,6 @@ rt_plot_cell(const union cutter *cutp, const struct rt_shootray_status *ssp, str
 }
 
 
-
 int
 rt_shootray(register struct application *ap)
 {
@@ -1566,7 +1565,6 @@ out:
 }
 
 
-
 const union cutter *
 rt_cell_n_on_ray(register struct application *ap, int n)
 
@@ -1804,7 +1802,6 @@ rt_zero_res_stats(struct resource *resp)
 }
 
 
-
 void
 rt_add_res_stats(register struct rt_i *rtip, register struct resource *resp)
 {
@@ -1902,7 +1899,6 @@ rt_shootray_simple(struct application *a, point_t origin, vect_t direction)
 
     return (struct partition *)a->a_uptr;
 }
-
 
 
 /*

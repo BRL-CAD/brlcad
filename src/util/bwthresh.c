@@ -69,7 +69,7 @@ main (int argc, char **argv)
 	}
 	if (i > 0) {
 	    if (thresh_val[i] <= thresh_val[i - 1]) {
-	        bu_exit(1, "bwthresh: Threshold values not strictly increasing\n");
+		bu_exit(1, "bwthresh: Threshold values not strictly increasing\n");
 	    }
 	}
 	bin_color[i] = 256 * i / nm_threshs;

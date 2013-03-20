@@ -174,7 +174,7 @@ void usage(void)
 {
     (void) fprintf(stderr,
 "Usage: %s [-u] [-h] [-w width] [-n scanlines] [-s squaresize]\n\
-                 [-f shrink_factor] [pixfile] > pixfile\n", progname);
+		 [-f shrink_factor] [pixfile] > pixfile\n", progname);
     bu_exit (1, NULL);
 }
 

@@ -19,7 +19,6 @@
  */
 
 
-
 #include "common.h"
 
 #include <stdlib.h>
@@ -74,7 +73,6 @@ static struct dbcmdstruct rt_tcl_rt_cmds[] = {
 };
 
 
-
 int
 rt_tcl_parse_ray(Tcl_Interp *interp, struct xray *rp, const char *const*argv)
 {
@@ -106,7 +104,6 @@ rt_tcl_parse_ray(Tcl_Interp *interp, struct xray *rp, const char *const*argv)
     VUNITIZE(rp->r_dir);
     return TCL_OK;
 }
-
 
 
 void
@@ -211,7 +208,6 @@ rt_tcl_rt_cutter(ClientData clientData, Tcl_Interp *interp, int argc, const char
     rt_tcl_pr_cutter(interp, cutp);
     return TCL_OK;
 }
-
 
 
 void
@@ -602,7 +598,6 @@ rt_tcl_rt_set(ClientData clientData, Tcl_Interp *interp, int argc, const char *c
 }
 
 
-
 int
 rt_tcl_rt(ClientData clientData, Tcl_Interp *interp, int argc, const char **argv)
 {
@@ -662,7 +657,6 @@ db_tcl_tree_parse(Tcl_Interp *interp, const char *str, struct resource *resp)
 
     return tp;
 }
-
 
 
 int
@@ -737,7 +731,6 @@ rt_tcl_import_from_path(Tcl_Interp *interp, struct rt_db_internal *ip, const cha
 }
 
 
-
 void
 rt_tcl_setup(Tcl_Interp *interp)
 {
@@ -748,7 +741,6 @@ rt_tcl_setup(Tcl_Interp *interp)
 
     Tcl_LinkVar(interp, "rt_bot_mintie", (char *)&rt_bot_mintie, TCL_LINK_WIDE_INT);
 }
-
 
 
 int
@@ -780,7 +772,6 @@ Rt_Init(Tcl_Interp *interp)
 /* TCL-oriented C support for LIBRT */
 
 
-
 void
 db_full_path_appendresult(Tcl_Interp *interp, const struct db_full_path *pp)
 {
@@ -792,7 +783,6 @@ db_full_path_appendresult(Tcl_Interp *interp, const struct db_full_path *pp)
 	Tcl_AppendResult(interp, "/", pp->fp_names[i]->d_namep, (char *)NULL);
     }
 }
-
 
 
 int
@@ -821,7 +811,6 @@ tcl_obj_to_int_array(Tcl_Interp *interp, Tcl_Obj *list, int **array, int *array_
 }
 
 
-
 int
 tcl_list_to_int_array(Tcl_Interp *interp, char *char_list, int **array, int *array_len)
 {
@@ -834,7 +823,6 @@ tcl_list_to_int_array(Tcl_Interp *interp, char *char_list, int **array, int *arr
 
     return ret;
 }
-
 
 
 int
@@ -862,7 +850,6 @@ tcl_obj_to_fastf_array(Tcl_Interp *interp, Tcl_Obj *list, fastf_t **array, int *
 
     return len < *array_len ? len : *array_len;
 }
-
 
 
 int

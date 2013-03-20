@@ -25,7 +25,6 @@
 #include "raytrace.h"
 
 
-
 int
 rt_matrix_transform(struct rt_db_internal *output, const mat_t matrix, struct rt_db_internal *input, int freeflag, struct db_i *dbip, struct resource *resource)
 {

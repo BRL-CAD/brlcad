@@ -1616,4 +1616,3 @@ nmg_boolean(union tree *tp, struct model *m, const struct bn_tol *tol, struct re
  * End:
  * ex: shiftwidth=4 tabstop=8
  */
-

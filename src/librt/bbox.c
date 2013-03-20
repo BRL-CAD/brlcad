@@ -142,7 +142,6 @@ _rt_getregion(struct rt_i *rtip, const char *reg_name)
 }
 
 
-
 int
 rt_rpp_region(struct rt_i *rtip, const char *reg_name, fastf_t *min_rpp, fastf_t *max_rpp)
 {

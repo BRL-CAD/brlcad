@@ -19,7 +19,6 @@
  */
 
 
-
 #include "common.h"
 
 #include <stdlib.h>
@@ -31,7 +30,6 @@
 
 #include "vmath.h"
 #include "raytrace.h"
-
 
 
 void

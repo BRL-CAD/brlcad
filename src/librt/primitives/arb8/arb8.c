@@ -1823,7 +1823,7 @@ rt_arb_check_points(struct rt_arb_internal *arb, int cgtype, const struct bn_tol
     register int i;
 
     switch (cgtype) {
-        case ARB8:
+	case ARB8:
 	    for (i=0; i<12; ++i) {
 		if (VNEAR_EQUAL(arb->pt[arb8_edge_vertex_mapping[i][0]],
 				arb->pt[arb8_edge_vertex_mapping[i][1]],
@@ -1831,7 +1831,7 @@ rt_arb_check_points(struct rt_arb_internal *arb, int cgtype, const struct bn_tol
 		    return -1;
 	    }
 	    break;
-        case ARB7:
+	case ARB7:
 	    for (i=0; i<11; ++i) {
 		if (VNEAR_EQUAL(arb->pt[arb7_edge_vertex_mapping[i][0]],
 				arb->pt[arb7_edge_vertex_mapping[i][1]],
@@ -1839,7 +1839,7 @@ rt_arb_check_points(struct rt_arb_internal *arb, int cgtype, const struct bn_tol
 		    return -1;
 	    }
 	    break;
-        case ARB6:
+	case ARB6:
 	    for (i=0; i<8; ++i) {
 		if (VNEAR_EQUAL(arb->pt[local_arb6_edge_vertex_mapping[i][0]],
 				arb->pt[local_arb6_edge_vertex_mapping[i][1]],
@@ -1847,7 +1847,7 @@ rt_arb_check_points(struct rt_arb_internal *arb, int cgtype, const struct bn_tol
 		    return -1;
 	    }
 	    break;
-        case ARB5:
+	case ARB5:
 	    for (i=0; i<8; ++i) {
 		if (VNEAR_EQUAL(arb->pt[arb5_edge_vertex_mapping[i][0]],
 				arb->pt[arb5_edge_vertex_mapping[i][1]],
@@ -1855,7 +1855,7 @@ rt_arb_check_points(struct rt_arb_internal *arb, int cgtype, const struct bn_tol
 		    return -1;
 	    }
 	    break;
-        case ARB4:
+	case ARB4:
 	    for (i=0; i<6; ++i) {
 		if (VNEAR_EQUAL(arb->pt[local_arb4_edge_vertex_mapping[i][0]],
 				arb->pt[local_arb4_edge_vertex_mapping[i][1]],
@@ -2494,7 +2494,6 @@ rt_arb_find_e_nearest_pt2(int *edge,
 
     return 0;
 }
-
 
 
 /** @} */

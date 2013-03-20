@@ -189,13 +189,13 @@ get_bb(struct ged *gedp, struct simulation_params *sim_params)
 
 	    /* Get its BB */
 	    if (rt_bound_internal(gedp->ged_wdbp->dbip, current_node->dp, rpp_min, rpp_max) == 0) {
-	        bu_log("get_bb: Got the BB for \"%s\" as \
+		bu_log("get_bb: Got the BB for \"%s\" as \
 					min {%f %f %f} max {%f %f %f}\n", current_node->dp->d_namep,
 		    V3ARGS(rpp_min),
 		    V3ARGS(rpp_max));
 	    } else {
-	        bu_log("get_bb: ERROR Could not get the BB\n");
-	        return GED_ERROR;
+		bu_log("get_bb: ERROR Could not get the BB\n");
+		return GED_ERROR;
 	    }
 
 	    VMOVE(current_node->bb_min, rpp_min);
