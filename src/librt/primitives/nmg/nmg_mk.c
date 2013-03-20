@@ -229,15 +229,6 @@
  * Returns -
  * (struct model *)
  *
- * Method:
- *
- * Use BU_GET() to allocate memory and then set all components.
- * BU_GET() is used instead of the standard GET_*() macros because
- * they all expect a model pointer to get the maxindex from.  Here we
- * simply set maxindex to 1.
- *
- * N.B.:
- *
  * "maxindex" is a misnomer.  It is the value of the NEXT index
  * assigned.  This allows "ptab"s to be allocated easily using maxindex
  * and the index value of the structures to be the actual index into
@@ -248,7 +239,7 @@ nmg_mm(void)
 {
     struct model *m;
 
-    BU_GET(m, struct model);
+    NMG_GETSTRUCT(m, model);
 
     BU_LIST_INIT(&m->r_hd);
     m->index = 0;
