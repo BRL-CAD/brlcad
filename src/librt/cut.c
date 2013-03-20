@@ -918,7 +918,7 @@ rt_cut_it(register struct rt_i *rtip, int ncpu)
 	    bu_bomb("rt_cut_it: unknown space partitioning method\n");
     }
 
-    BU_PUT(finp, union cutter);
+    bu_free(finp, "union cutter");
 
     /* Measure the depth of tree, find max # of RPPs in a cut node */
 
