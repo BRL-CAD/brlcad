@@ -876,7 +876,7 @@ dsp_layers(struct dsp_specific *dsp, unsigned short *d_min, unsigned short *d_ma
 int
 rt_dsp_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct bn_tol *UNUSED(tol)) {
     struct rt_dsp_internal *dsp_ip;
-    register struct dsp_specific *dsp;
+    struct dsp_specific ds;
     unsigned short dsp_min, dsp_max;
     point_t pt, bbpt;
 
@@ -911,35 +911,34 @@ rt_dsp_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct 
 	    break;
     }
 
-
-    BU_GET(dsp, struct dsp_specific);
+    memset(&ds, 0, sizeof(struct dsp_specific));
 
     /* this works ok, because the mapped file keeps track of the
      * number of uses.  However, the binunif interface does not.
      * We'll have to copy the data for that one.
      */
-    dsp->dsp_i = *dsp_ip;		/* struct copy */
+    ds.dsp_i = *dsp_ip;		/* struct copy */
 
     /* this keeps the binary internal object from being freed */
     dsp_ip->dsp_bip = (struct rt_db_internal *)NULL;
 
 
-    dsp->xsiz = dsp_ip->dsp_xcnt-1;	/* size is # cells or values-1 */
-    dsp->ysiz = dsp_ip->dsp_ycnt-1;	/* size is # cells or values-1 */
+    ds.xsiz = dsp_ip->dsp_xcnt-1;	/* size is # cells or values-1 */
+    ds.ysiz = dsp_ip->dsp_ycnt-1;	/* size is # cells or values-1 */
 
 
     /* compute the multi-resolution bounding boxes */
-    dsp_layers(dsp, &dsp_min, &dsp_max);
+    dsp_layers(&ds, &dsp_min, &dsp_max);
 
 
     /* record the distance to each of the bounding planes */
-    dsp->dsp_pl_dist[XMIN] = 0.0;
-    dsp->dsp_pl_dist[XMAX] = (fastf_t)dsp->xsiz;
-    dsp->dsp_pl_dist[YMIN] = 0.0;
-    dsp->dsp_pl_dist[YMAX] = (fastf_t)dsp->ysiz;
-    dsp->dsp_pl_dist[ZMIN] = 0.0;
-    dsp->dsp_pl_dist[ZMAX] = (fastf_t)dsp_max;
-    dsp->dsp_pl_dist[ZMID] = (fastf_t)dsp_min;
+    ds.dsp_pl_dist[XMIN] = 0.0;
+    ds.dsp_pl_dist[XMAX] = (fastf_t)ds.xsiz;
+    ds.dsp_pl_dist[YMIN] = 0.0;
+    ds.dsp_pl_dist[YMAX] = (fastf_t)ds.ysiz;
+    ds.dsp_pl_dist[ZMIN] = 0.0;
+    ds.dsp_pl_dist[ZMAX] = (fastf_t)dsp_max;
+    ds.dsp_pl_dist[ZMID] = (fastf_t)dsp_min;
 
     /* compute enlarged bounding box and sphere */
     VSETALL((*min), INFINITY);
@@ -961,21 +960,19 @@ rt_dsp_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct 
 
 #undef BBOX_PT
 
-    switch (dsp->dsp_i.dsp_datasrc) {
+    switch (ds.dsp_i.dsp_datasrc) {
 	case RT_DSP_SRC_V4_FILE:
 	case RT_DSP_SRC_FILE:
-	    if (dsp->dsp_i.dsp_mp) {
-		BU_CK_MAPPED_FILE(dsp->dsp_i.dsp_mp);
-		bu_close_mapped_file(dsp->dsp_i.dsp_mp);
-	    } else if (dsp->dsp_i.dsp_buf) {
-		bu_free(dsp->dsp_i.dsp_buf, "dsp fake data");
+	    if (ds.dsp_i.dsp_mp) {
+		BU_CK_MAPPED_FILE(ds.dsp_i.dsp_mp);
+		bu_close_mapped_file(ds.dsp_i.dsp_mp);
+	    } else if (ds.dsp_i.dsp_buf) {
+		bu_free(ds.dsp_i.dsp_buf, "dsp fake data");
 	    }
 	    break;
 	case RT_DSP_SRC_OBJ:
 	    break;
     }
-
-    bu_free((char *)dsp, "bbox dsp");
 
     return 0;
 }
@@ -3174,7 +3171,7 @@ rt_dsp_free(register struct soltab *stp)
 	    break;
     }
 
-    bu_free((char *)dsp, "dsp_specific");
+    BU_PUT(dsp, struct dsp_specific);
 }
 
 
