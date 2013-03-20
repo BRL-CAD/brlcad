@@ -2340,7 +2340,7 @@ struct ray_data {
 #define NMG_GET_HITMISS(_p, _ap) { \
 	(_p) = BU_LIST_FIRST(hitmiss, &((_ap)->a_resource->re_nmgfree)); \
 	if (BU_LIST_IS_HEAD((_p), &((_ap)->a_resource->re_nmgfree))) \
-	    BU_ALLOC(_p), struct hitmiss); \
+	    BU_ALLOC((_p), struct hitmiss); \
 	else \
 	    BU_LIST_DEQUEUE(&((_p)->l)); \
     }
