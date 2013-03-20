@@ -590,7 +590,6 @@ plot_open(Tcl_Interp *interp, int argc, const char *argv[])
     *dmp = dm_plot; /* struct copy */
     dmp->dm_interp = interp;
 
-    dmp->dm_vars.priv_vars = (genptr_t)bu_calloc(1, sizeof(struct plot_vars), "plot_open: plot_vars");
     BU_ALLOC(dmp->dm_vars.priv_vars, struct plot_vars);
 
     obj = Tcl_GetObjResult(interp);
