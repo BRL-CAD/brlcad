@@ -1213,7 +1213,7 @@ rt_revolve_free(struct soltab *stp)
     struct revolve_specific *revolve =
 	(struct revolve_specific *)stp->st_specific;
     bu_free(revolve->ends, "endcount");
-    bu_free((char *)revolve, "revolve_specific");
+    BU_PUT(revolve, struct revolve_specific);
 }
 
 

@@ -646,7 +646,7 @@ rt_rpc_free(struct soltab *stp)
     struct rpc_specific *rpc =
 	(struct rpc_specific *)stp->st_specific;
 
-    bu_free((char *)rpc, "rpc_specific");
+    BU_PUT(rpc, struct rpc_specific);
 }
 
 

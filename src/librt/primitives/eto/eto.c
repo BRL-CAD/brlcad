@@ -732,7 +732,7 @@ rt_eto_free(struct soltab *stp)
     struct eto_specific *eto =
 	(struct eto_specific *)stp->st_specific;
 
-    bu_free((char *)eto, "eto_specific");
+    BU_PUT(eto, struct eto_specific);
 }
 
 

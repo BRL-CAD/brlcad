@@ -406,7 +406,7 @@ rt_sph_free(register struct soltab *stp)
     register struct sph_specific *sph =
 	(struct sph_specific *)stp->st_specific;
 
-    bu_free((char *)sph, "sph_specific");
+    BU_PUT(sph, struct sph_specific);
 }
 
 

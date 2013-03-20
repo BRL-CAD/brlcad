@@ -184,7 +184,7 @@ rt_pgface(struct soltab *stp, fastf_t *ap, fastf_t *bp, fastf_t *cp, const struc
     m4 = MAGNITUDE(trip->tri_wn);
     if (m1 < tol->dist || m2 < tol->dist ||
 	m3 < tol->dist || m4 < tol->dist) {
-	bu_free((char *)trip, "getstruct tri_specific");
+	BU_PUT(trip, struct tri_specific);
 	if (RT_G_DEBUG & DEBUG_ARB8)
 	    bu_log("pg(%s): degenerate facet\n", stp->st_name);
 	return 0;			/* BAD */
@@ -466,7 +466,7 @@ rt_pg_free(struct soltab *stp)
     while (trip != TRI_NULL) {
 	struct tri_specific *nexttri = trip->tri_forw;
 
-	bu_free((char *)trip, "pg tri_specific");
+	BU_PUT(trip, struct tri_specific);
 	trip = nexttri;
     }
 }

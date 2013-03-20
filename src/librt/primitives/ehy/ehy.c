@@ -657,8 +657,7 @@ rt_ehy_free(struct soltab *stp)
     struct ehy_specific *ehy =
 	(struct ehy_specific *)stp->st_specific;
 
-
-    bu_free((char *)ehy, "ehy_specific");
+    BU_PUT(ehy, struct ehy_specific);
 }
 
 
