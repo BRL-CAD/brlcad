@@ -34,7 +34,7 @@ void
 texture_stack_init(struct texture_s *texture) {
     struct texture_stack_s *td;
 
-    texture->data = bu_malloc(sizeof(struct texture_stack_s), "texture data");
+    BU_ALLOC(texture->data, struct texture_stack_s);
     texture->free = texture_stack_free;
     texture->work = (texture_work_t *)texture_stack_work;
 

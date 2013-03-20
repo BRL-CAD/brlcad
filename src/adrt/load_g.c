@@ -177,7 +177,8 @@ nmg_to_adrt_regstart(struct db_tree_state *ts, const struct db_full_path *path, 
 
     mesh->texture = NULL;
     mesh->flags = 0;
-    mesh->attributes = (struct adrt_mesh_attributes_s *)bu_malloc(sizeof(struct adrt_mesh_attributes_s), "adrt mesh attributes");
+
+    BU_ALLOC(mesh->attributes, struct adrt_mesh_attributes_s);
     mesh->matid = ts->ts_gmater;
 
     rt_comb_get_color(rgb, rci);
@@ -232,7 +233,8 @@ nmg_to_adrt_gcvwrite(struct nmgregion *r, const struct db_full_path *pathp, int 
 
     mesh->texture = NULL;
     mesh->flags = 0;
-    mesh->attributes = (struct adrt_mesh_attributes_s *)bu_malloc(sizeof(struct adrt_mesh_attributes_s), "adrt mesh attributes");
+
+    BU_ALLOC(mesh->attributes, struct adrt_mesh_attributes_s);
     mesh->matid = material_id;
 
     VMOVE(mesh->attributes->color.v, color);

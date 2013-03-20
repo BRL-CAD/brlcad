@@ -34,7 +34,7 @@ void
 texture_clouds_init(struct texture_s *texture, tfloat size, int octaves, int absolute, vect_t scale, vect_t translate) {
     struct texture_clouds_s *td;
 
-    texture->data = bu_malloc(sizeof(struct texture_clouds_s), "cloud data");
+    BU_ALLOC(texture->data, struct texture_clouds_s);
     texture->free = texture_clouds_free;
     texture->work = (texture_work_t *)texture_clouds_work;
 

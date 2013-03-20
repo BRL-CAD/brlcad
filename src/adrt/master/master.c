@@ -360,7 +360,7 @@ master_networking (void *ptr)
     }
 
     /* initialize socket list */
-    master.socklist = (master_socket_t *)bu_malloc(sizeof(master_socket_t), "master socket list");
+    BU_ALLOC(master.socklist, master_socket_t);
     master.socklist->next = NULL;
     master.socklist->prev = NULL;
     master.socklist->num = master_socket;
@@ -424,7 +424,8 @@ master_networking (void *ptr)
 		if (new_socket >= 0)
 		{
 		    tmp = master.socklist;
-		    master.socklist = (master_socket_t *)bu_malloc(sizeof(master_socket_t), "master socket connection");
+
+		    BU_ALLOC(master.socklist, master_socket_t);
 		    master.socklist->num = new_socket;
 		    master.socklist->controller = master.active_connections ? 0 : 1;
 		    master.socklist->active = 1;

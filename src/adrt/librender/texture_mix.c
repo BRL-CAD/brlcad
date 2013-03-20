@@ -34,7 +34,7 @@ void
 texture_mix_init(struct texture_s *texture, struct texture_s *texture1, struct texture_s *texture2, fastf_t coef) {
     struct texture_mix_s *td;
 
-    texture->data = bu_malloc(sizeof(struct texture_mix_s), "texture data");
+    BU_ALLOC(texture->data, struct texture_mix_s);
     texture->free = texture_mix_free;
     texture->work = (texture_work_t *)texture_mix_work;
 

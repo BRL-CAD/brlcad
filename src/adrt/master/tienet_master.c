@@ -181,7 +181,8 @@ void tienet_master_init(int port, void fcb_result(tienet_buffer_t *result), char
     tienet_master_port = port;
     tienet_master_verbose = verbose;
     tienet_master_buffer_size = buffer_size;
-    tienet_master_buffer = (tienet_master_data_t *)bu_malloc(sizeof(tienet_master_data_t) * tienet_master_buffer_size, "initial tienet buffer");
+
+    BU_ALLOC(tienet_master_buffer, tienet_master_data_t)
 
     tienet_master_fcb_result = fcb_result;
     tienet_master_active_slaves = 0;
@@ -409,7 +410,8 @@ void tienet_master_connect_slaves(fd_set *readfds)
 
 			    /* Append to select list */
 			    tmp = tienet_master_socket_list;
-			    tienet_master_socket_list = (tienet_master_socket_t *)bu_malloc(sizeof(tienet_master_socket_t), "socket list");
+
+			    BU_ALLOC(tienet_master_socket_list, tienet_master_socket_t);
 			    tienet_master_socket_list->next = tmp;
 			    tienet_master_socket_list->prev = NULL;
 			    tienet_master_socket_list->work.data = NULL;
@@ -466,7 +468,7 @@ void* tienet_master_listener(void *ptr)
     }
 
     /* Set first socket as master, rest are slaves - LIFO Stack - Always gets processed last */
-    tienet_master_socket_list = (tienet_master_socket_t *)bu_malloc(sizeof(tienet_master_socket_t), "socket list");
+    BU_ALLOC(tienet_master_socket_list, tienet_master_socket_t);
     tienet_master_socket_list->next = NULL;
     tienet_master_socket_list->prev = NULL;
     tienet_master_socket_list->work.data = NULL;
@@ -512,7 +514,8 @@ void* tienet_master_listener(void *ptr)
 			if (tienet_master_verbose)
 			    printf ("The slave %s has connected on port: %d, sock_num: %d\n", inet_ntoa(slave.sin_addr), tienet_master_port, slave_socket);
 			tmp = tienet_master_socket_list;
-			tienet_master_socket_list = (tienet_master_socket_t *)bu_malloc(sizeof(tienet_master_socket_t), "master socket list");
+
+			BU_ALLOC(tienet_master_socket_list, tienet_master_socket_t);
 			tienet_master_socket_list->next = tmp;
 			tienet_master_socket_list->prev = NULL;
 			tienet_master_socket_list->work.data = NULL;

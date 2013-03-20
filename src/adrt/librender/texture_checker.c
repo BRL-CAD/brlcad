@@ -34,7 +34,7 @@ void
 texture_checker_init(struct texture_s *texture, int tile) {
     struct texture_checker_s   *td;
 
-    texture->data = bu_malloc(sizeof(struct texture_checker_s), "checker data");
+    BU_ALLOC(texture->data, struct texture_checker_s);
     texture->free = texture_checker_free;
     texture->work = (texture_work_t *)texture_checker_work;
 

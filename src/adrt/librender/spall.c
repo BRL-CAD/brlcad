@@ -198,11 +198,7 @@ render_spall_init(render_t *render, const char *buf)
 		    &scan);
     angle = scan; /* double to fastf_t */
 
-    render->data = (struct render_spall_s *)bu_malloc(sizeof(struct render_spall_s), "render_spall_init");
-    if (!render->data) {
-	perror("render->data");
-	exit(1);
-    }
+    BU_ALLOC(render->data, struct render_spall_s);
     d = (struct render_spall_s *)render->data;
 
     VMOVE(d->ray_pos, ray_pos);

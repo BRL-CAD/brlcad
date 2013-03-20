@@ -85,7 +85,8 @@ render_surfel_init(render_t *render, const char *buf)
 
     render->work = render_surfel_work;
     render->free = render_surfel_free;
-    render->data = (render_surfel_t *)bu_malloc(sizeof(render_surfel_t), "render data");
+
+    BU_ALLOC(render->data, render_surfel_t);
     d = (render_surfel_t *)render->data;
     d->num = 0;
     d->list = NULL;

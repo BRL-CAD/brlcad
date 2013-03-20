@@ -34,7 +34,7 @@ void
 texture_gradient_init(struct texture_s *texture, int axis) {
     struct texture_gradient_s *td;
 
-    texture->data = bu_malloc(sizeof(struct texture_gradient_s), "gradient data");
+    BU_ALLOC(texture->data, struct texture_gradient_s);
     texture->free = texture_gradient_free;
     texture->work = (texture_work_t *)texture_gradient_work;
 

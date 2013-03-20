@@ -37,7 +37,7 @@ void
 texture_image_init(struct texture_s *texture, short w, short h, unsigned char *image) {
     struct texture_image_s *td;
 
-    texture->data = bu_malloc(sizeof(struct texture_image_s), "texture data");
+    BU_ALLOC(texture->data, struct texture_image_s);
     texture->free = texture_image_free;
     texture->work = (texture_work_t *)texture_image_work;
 

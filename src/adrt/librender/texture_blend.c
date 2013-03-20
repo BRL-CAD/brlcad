@@ -33,7 +33,7 @@ void
 texture_blend_init(struct texture_s *texture, vect_t color1, vect_t color2) {
     struct texture_blend_s *sd;
 
-    texture->data = bu_malloc(sizeof(struct texture_blend_s), "texture data");
+    BU_ALLOC(texture->data, struct texture_blend_s);
     texture->free = texture_blend_free;
     texture->work = (texture_work_t *)texture_blend_work;
 
