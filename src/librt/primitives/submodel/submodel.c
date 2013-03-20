@@ -171,7 +171,7 @@ rt_submodel_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rti
      * rt_gettrees() will pluck the 0th resource out of the rtip table.
      * rt_submodel_shot() will get additional resources as needed.
      */
-    BU_GET(resp, struct resource);
+    BU_ALLOC(resp, struct resource);
     BU_PTBL_SET(&sub_rtip->rti_resources, 0, resp);
     rt_init_resource(resp, 0, sub_rtip);
 
@@ -495,7 +495,7 @@ rt_submodel_shot(struct soltab *stp, struct xray *rp, struct application *ap, st
     BU_ASSERT_LONG(cpu, <, BU_PTBL_END(restbl));
     if ((resp = (struct resource *)BU_PTBL_GET(restbl, cpu)) == NULL) {
 	/* First ray for this cpu for this submodel, alloc up */
-	BU_GET(resp, struct resource);
+	BU_ALLOC(resp, struct resource);
 	BU_PTBL_SET(restbl, cpu, resp);
 	rt_init_resource(resp, cpu, submodel->rtip);
     }
@@ -627,7 +627,7 @@ rt_submodel_free(struct soltab *stp)
 
     rt_free_rti(submodel->rtip);
 
-    bu_free((genptr_t)submodel, "submodel_specific");
+    BU_PUT(submodel, struct submodel_specific);
 }
 
 
