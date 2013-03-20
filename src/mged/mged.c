@@ -1286,7 +1286,7 @@ main(int argc, char *argv[])
     memset((void *)&head_dm_list, 0, sizeof(struct dm_list));
     BU_LIST_INIT(&head_dm_list.l);
 
-    BU_GET(curr_dm_list, struct dm_list);
+    BU_ALLOC(curr_dm_list, struct dm_list);
     BU_LIST_APPEND(&head_dm_list.l, &curr_dm_list->l);
     netfd = -1;
 
@@ -1294,7 +1294,7 @@ main(int argc, char *argv[])
     BU_LIST_INIT(&curr_dm_list->dml_p_vlist);
     predictor_init();
 
-    BU_GET(dmp, struct dm);
+    BU_ALLOC(dmp, struct dm);
     *dmp = dm_null;
     bu_vls_init(&pathName);
     bu_vls_init(&tkName);
@@ -1302,32 +1302,32 @@ main(int argc, char *argv[])
     bu_vls_strcpy(&pathName, "nu");
     bu_vls_strcpy(&tkName, "nu");
 
-    BU_GET(rubber_band, struct _rubber_band);
+    BU_ALLOC(rubber_band, struct _rubber_band);
     *rubber_band = default_rubber_band;		/* struct copy */
 
-    BU_GET(mged_variables, struct _mged_variables);
+    BU_ALLOC(mged_variables, struct _mged_variables);
     *mged_variables = default_mged_variables;	/* struct copy */
 
-    BU_GET(color_scheme, struct _color_scheme);
+    BU_ALLOC(color_scheme, struct _color_scheme);
     *color_scheme = default_color_scheme;	/* struct copy */
 
-    BU_GET(grid_state, struct _grid_state);
+    BU_ALLOC(grid_state, struct _grid_state);
     *grid_state = default_grid_state;		/* struct copy */
 
-    BU_GET(axes_state, struct _axes_state);
+    BU_ALLOC(axes_state, struct _axes_state);
     *axes_state = default_axes_state;		/* struct copy */
 
-    BU_GET(adc_state, struct _adc_state);
+    BU_ALLOC(adc_state, struct _adc_state);
     adc_state->adc_rc = 1;
     adc_state->adc_a1 = adc_state->adc_a2 = 45.0;
 
-    BU_GET(menu_state, struct _menu_state);
+    BU_ALLOC(menu_state, struct _menu_state);
     menu_state->ms_rc = 1;
 
-    BU_GET(dlist_state, struct _dlist_state);
+    BU_ALLOC(dlist_state, struct _dlist_state);
     dlist_state->dl_rc = 1;
 
-    BU_GET(view_state, struct _view_state);
+    BU_ALLOC(view_state, struct _view_state);
     view_state->vs_rc = 1;
     view_ring_init(curr_dm_list->dml_view_state, (struct _view_state *)NULL);
     MAT_IDN(view_state->vs_ModelDelta);
@@ -2759,7 +2759,7 @@ f_opendb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *a
      * that hooks into a libged callback.
      */
     if (!gedp) {
-	BU_GET(gedp, struct ged);
+	BU_ALLOC(gedp, struct ged);
     }
 
     /* initialize a separate wdbp for libged to manage */

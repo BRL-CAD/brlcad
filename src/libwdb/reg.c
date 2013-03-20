@@ -204,7 +204,7 @@ mk_addmember(
 {
     struct wmember *wp;
 
-    BU_GET(wp, struct wmember);
+    BU_ALLOC(wp, struct wmember);
     wp->l.magic = WMEMBER_MAGIC;
     wp->wm_name = bu_strdup(name);
     switch (op) {

@@ -108,7 +108,7 @@ mk_add_pipe_pt(
 
     BU_CKMAG(headp, WDB_PIPESEG_MAGIC, "pipe point");
 
-    BU_GET(newpp, struct wdb_pipept);
+    BU_ALLOC(newpp, struct wdb_pipept);
     newpp->l.magic = WDB_PIPESEG_MAGIC;
     newpp->pp_od = od;
     newpp->pp_id = id;
