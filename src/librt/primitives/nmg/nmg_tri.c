@@ -4279,7 +4279,8 @@ insert_above(struct loopuse *lu, struct loopuse_tree_node *node, const struct bn
     }
 
     NMG_CK_LOOPUSE(lu);
-    BU_GET(new_node, struct loopuse_tree_node);
+    /* XXX -  where is this released? */
+    BU_ALLOC(new_node, struct loopuse_tree_node);
     BU_LIST_INIT(&(new_node->l));
     new_node->l.magic = 0;
     new_node->lu = lu;
@@ -4390,7 +4391,8 @@ insert_node(struct loopuse *lu, struct bu_list *head,
     }
 
     if (!found || (result2 == NMG_CLASS_AinB)) {
-	BU_GET(new_node, struct loopuse_tree_node);
+	/* XXX -  where is this released? */
+	BU_ALLOC(new_node, struct loopuse_tree_node);
 	BU_LIST_INIT(&(new_node->l));
 	/* unset magic from BU_LIST_HEAD_MAGIC to zero since this node
 	 * is not going to be a head
@@ -4424,7 +4426,8 @@ nmg_build_loopuse_tree(struct faceuse *fu, struct loopuse_tree_node **root, cons
     NMG_CK_FACEUSE(fu);
 
     /* create initial head node */
-    BU_GET(*root, struct loopuse_tree_node);
+    /* XXX -  where is this released? */
+    BU_ALLOC(*root, struct loopuse_tree_node);
     BU_LIST_INIT(&((*root)->l));
     BU_LIST_INIT(&((*root)->children_hd));
     (*root)->parent = (struct loopuse_tree_node *)NULL;
