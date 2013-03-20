@@ -152,8 +152,7 @@ cmd_import_body(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, con
     }
     switch (major_code) {
     case DB5_MAJORTYPE_BINARY_UNIF:
-	bip = bu_malloc(sizeof(struct rt_binunif_internal),
-			"rt_binunif_internal");
+	BU_ALLOC(bip, struct rt_binunif_internal);
 	bip->magic = RT_BINUNIF_INTERNAL_MAGIC;
 	bip->type = minor_code;
 	bip->u.uint8 = (unsigned char *) bu_malloc((size_t)stat_buf.st_size, "binunif");

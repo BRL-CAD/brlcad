@@ -2494,7 +2494,7 @@ wdb_rt_gettrees_cmd(struct rt_wdb *wdbp,
     rt_init_resource(resp, 0, rtip);
     BU_ASSERT_PTR(BU_PTBL_GET(&rtip->rti_resources, 0), !=, NULL);
 
-    ap = (struct application *)bu_malloc(sizeof(struct application), "wdb_rt_gettrees_cmd: ap");
+    BU_ALLOC(ap, struct application);
     RT_APPLICATION_INIT(ap);
     ap->a_magic = RT_AP_MAGIC;
     ap->a_resource = resp;
@@ -6639,7 +6639,7 @@ wdb_push_leaf(struct db_tree_state *tsp,
 /*
  * This is the first time we have seen this solid.
  */
-    pip = (struct wdb_push_id *) bu_malloc(sizeof(struct wdb_push_id), "Push ident");
+    BU_ALLOC(pip, struct wdb_push_id);
     pip->magic = WDB_MAGIC_PUSH_ID;
     pip->pi_dir = dp;
     MAT_COPY(pip->pi_mat, tsp->ts_mat);
@@ -6942,7 +6942,7 @@ Make_new_name(struct db_i *dbip,
     j = 0;
     for (use_no=0; use_no<dp->d_uses; use_no++) {
 	j++;
-	use = (struct object_use *)bu_malloc(sizeof(struct object_use), "Make_new_name: use");
+	BU_ALLOC(use, struct object_use);
 
 	/* set xform for this object_use to all zeros */
 	MAT_ZERO(use->xform);
@@ -7823,7 +7823,7 @@ wdb_make_bb_cmd(struct rt_wdb *wdbp,
     ged_free(&ged);
 
     /* build bounding RPP */
-    arb = (struct rt_arb_internal *)bu_malloc(sizeof(struct rt_arb_internal), "arb");
+    BU_ALLOC(arb, struct rt_arb_internal);
     VMOVE(arb->pt[0], rpp_min);
     VSET(arb->pt[1], rpp_min[X], rpp_min[Y], rpp_max[Z]);
     VSET(arb->pt[2], rpp_min[X], rpp_max[Y], rpp_max[Z]);
@@ -8664,7 +8664,7 @@ wdb_nmg_simplify_cmd(struct rt_wdb *wdbp,
     if ((do_poly || do_all) && !success) {
 	struct rt_pg_internal *poly_int;
 
-	poly_int = (struct rt_pg_internal *)bu_malloc(sizeof(struct rt_pg_internal), "f_nmg_simplify: poly_int");
+	BU_ALLOC(poly_int, struct rt_pg_internal);
 
 	if (nmg_to_poly(m, poly_int, &wdbp->wdb_tol)) {
 	    new_intern.idb_ptr = (genptr_t)(poly_int);

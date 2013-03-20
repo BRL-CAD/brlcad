@@ -134,7 +134,9 @@ HIDDEN int img_load_datasource(struct img_specific *image, struct db_i *dbInstan
 		return -1;
 	    }
 	} else {
-	    struct rt_db_internal *dbip=(struct rt_db_internal *)bu_malloc(sizeof(struct rt_db_internal), "img_load_datasource");
+	    struct rt_db_internal *dbip;
+
+	    BU_ALLOC(dbip, struct rt_db_internal);
 
 	    RT_DB_INTERNAL_INIT(dbip);
 	    RT_CK_DB_INTERNAL(dbip);

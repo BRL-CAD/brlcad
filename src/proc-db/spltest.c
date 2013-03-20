@@ -121,7 +121,7 @@ main(int argc, char *argv[])
     VSET(c, 10, 10,  10);
     VSET(d,  0, 10,  0);
 
-    si = (struct rt_nurb_internal *)bu_malloc(sizeof(struct rt_nurb_internal), "spltest rt_nurb_internal");
+    BU_ALLOC(si, struct rt_nurb_internal);
     si->magic = RT_NURB_INTERNAL_MAGIC;
     si->nsrf = 0;
     si->srfs = (struct face_g_snurb **)bu_malloc(sizeof(struct face_g_snurb *)*100, "allocate snurb ptrs");

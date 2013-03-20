@@ -351,8 +351,7 @@ map_vu_to_2d(struct vertexuse *vu, struct bu_list *tbl2d, fastf_t *mat, struct f
     /* if this vertexuse has already been transformed, we're done */
     if (find_pt2d(tbl2d, vu)) return;
 
-
-    np = (struct pt2d *)bu_calloc(1, sizeof(struct pt2d), "pt2d struct");
+    BU_ALLOC(np, struct pt2d);
     np->coord[2] = 0.0;
     np->vu_p = vu;
     BU_LIST_MAGIC_SET(&np->l, NMG_PT2D_MAGIC);
@@ -414,7 +413,7 @@ map_vu_to_2d(struct vertexuse *vu, struct bu_list *tbl2d, fastf_t *mat, struct f
 	}
 
 	/* add vertexuse to list */
-	p = (struct pt2d *)bu_calloc(1, sizeof(struct pt2d), "pt2d");
+	BU_ALLOC(p, struct pt2d);
 	p->vu_p = vu_p;
 	VMOVE(p->coord, np->coord);
 	BU_LIST_MAGIC_SET(&p->l, NMG_PT2D_MAGIC);
@@ -457,8 +456,7 @@ nmg_flatten_face(struct faceuse *fu, fastf_t *TformMat, const struct bn_tol *tol
 
     NMG_CK_FACEUSE(fu);
 
-    tbl2d = (struct bu_list *)bu_calloc(1, sizeof(struct bu_list),
-					"2D coordinate list");
+    BU_ALLOC(tbl2d, struct bu_list);
 
     /* we use the 0 index entry in the table as the head of the sorted
      * list of vertices.  This is safe since the 0 index is always for
@@ -700,7 +698,7 @@ poly_start_vertex(struct pt2d *pt, struct bu_list *tbl2d, struct bu_list *tlist)
 	bu_log("%g %g is polygon start vertex\n",
 	       pt->coord[X], pt->coord[Y]);
 
-    new_trap = (struct trap *)bu_calloc(sizeof(struct trap), 1, "new poly_start trap");
+    BU_ALLOC(new_trap, struct trap);
     new_trap->top = pt;
     new_trap->bot = (struct pt2d *)NULL;
     new_trap->e_left = pt->vu_p->up.eu_p;
@@ -781,7 +779,7 @@ poly_side_vertex(struct pt2d *pt, struct pt2d *tbl2d, struct bu_list *tlist)
     tp->bot = pt;
 
     /* create new trapezoid with other (not upper) edge */
-    new_trap = (struct trap *)bu_calloc(sizeof(struct trap), 1, "new side trap");
+    BU_ALLOC(new_trap, struct trap);
     BU_LIST_MAGIC_SET(&new_trap->l, NMG_TRAP_MAGIC);
     new_trap->top = pt;
     new_trap->bot = (struct pt2d *)NULL;
@@ -975,7 +973,7 @@ hole_start_vertex(struct pt2d *pt, struct bu_list *tbl2d, struct bu_list *tlist)
     tp->bot = pt;
     /* create new left and right trapezoids */
 
-    new_trap = (struct trap *)bu_calloc(sizeof(struct trap), 1, "New hole start trapezoids");
+    BU_ALLOC(new_trap, struct trap);
     new_trap->top = pt;
     new_trap->bot = (struct pt2d *)NULL;
     new_trap->e_left = tp->e_left;
@@ -983,7 +981,7 @@ hole_start_vertex(struct pt2d *pt, struct bu_list *tbl2d, struct bu_list *tlist)
     BU_LIST_MAGIC_SET(&new_trap->l, NMG_TRAP_MAGIC);
     BU_LIST_APPEND(&tp->l, &new_trap->l);
 
-    new_trap = (struct trap *)bu_calloc(sizeof(struct trap), 1, "New hole start trapezoids");
+    BU_ALLOC(new_trap, struct trap);
     new_trap->top = pt;
     new_trap->bot = (struct pt2d *)NULL;
     new_trap->e_left = pt->vu_p->up.eu_p;
@@ -1068,7 +1066,7 @@ hole_end_vertex(struct pt2d *pt, struct bu_list *tbl2d, struct bu_list *tlist)
 
     /* start one new trapezoid */
 
-    tp = (struct trap *)bu_calloc(1, sizeof(struct pt2d), "pt2d struct");
+    BU_ALLOC(tp, struct trap);
     tp->top = pt;
     tp->bot = (struct pt2d *)NULL;
     if (tpnext->e_left == eunext) {
@@ -1150,8 +1148,7 @@ map_new_vertexuse(struct bu_list *tbl2d, struct vertexuse *vu_p)
 	return;
     }
     /* allocate memory for new 2D point */
-    new_pt2d = (struct pt2d *)
-	bu_calloc(1, sizeof(struct pt2d), "pt2d struct");
+    BU_ALLOC(new_pt2d, struct pt2d);
 
     /* find another use of the same vertex that is already mapped */
     for (BU_LIST_FOR(vu, vertexuse, &vu_p->v_p->vu_hd)) {

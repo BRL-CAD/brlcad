@@ -4284,7 +4284,8 @@ rt_dsp_import4(struct rt_db_internal *ip, const struct bu_external *ep, register
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_DSP;
     ip->idb_meth = &rt_functab[ID_DSP];
-    ip->idb_ptr = bu_malloc(sizeof(struct rt_dsp_internal), "rt_dsp_internal");
+    BU_ALLOC(ip->idb_ptr, struct rt_dsp_internal);
+
     dsp_ip = (struct rt_dsp_internal *)ip->idb_ptr;
     dsp_ip->magic = RT_DSP_INTERNAL_MAGIC;
 
@@ -4410,8 +4411,9 @@ rt_dsp_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_DSP;
     ip->idb_meth = &rt_functab[ID_DSP];
-    dsp_ip = ip->idb_ptr = bu_malloc(sizeof(struct rt_dsp_internal), "rt_dsp_internal");
-    memset(dsp_ip, 0, sizeof(*dsp_ip));
+    BU_ALLOC(ip->idb_ptr, struct rt_dsp_internal);
+
+    dsp_ip = ip->idb_ptr;
     BU_VLS_INIT(&dsp_ip->dsp_name);
 
     dsp_ip->magic = RT_DSP_INTERNAL_MAGIC;
@@ -4857,7 +4859,7 @@ rt_dsp_make(const struct rt_functab *ftp, struct rt_db_internal *intern)
     BU_ASSERT(&rt_functab[intern->idb_type] == ftp);
     intern->idb_meth = ftp;
 
-    dsp =(struct rt_dsp_internal *)bu_calloc(sizeof(struct rt_dsp_internal), 1, "rt_dsp_internal");
+    BU_ALLOC(dsp, struct rt_dsp_internal);
 
     intern->idb_ptr = (genptr_t)dsp;
     dsp->magic = RT_DSP_INTERNAL_MAGIC;

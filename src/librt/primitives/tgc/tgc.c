@@ -1570,7 +1570,8 @@ rt_tgc_import4(struct rt_db_internal *ip, const struct bu_external *ep, register
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_TGC;
     ip->idb_meth = &rt_functab[ID_TGC];
-    ip->idb_ptr = bu_malloc(sizeof(struct rt_tgc_internal), "rt_tgc_internal");
+    BU_ALLOC(ip->idb_ptr, struct rt_tgc_internal);
+
     tip = (struct rt_tgc_internal *)ip->idb_ptr;
     tip->magic = RT_TGC_INTERNAL_MAGIC;
 
@@ -1649,7 +1650,7 @@ rt_tgc_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_TGC;
     ip->idb_meth = &rt_functab[ID_TGC];
-    ip->idb_ptr = bu_malloc(sizeof(struct rt_tgc_internal), "rt_tgc_internal");
+    BU_ALLOC(ip->idb_ptr, struct rt_tgc_internal);
 
     tip = (struct rt_tgc_internal *)ip->idb_ptr;
     tip->magic = RT_TGC_INTERNAL_MAGIC;

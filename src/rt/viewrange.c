@@ -134,18 +134,12 @@ view_2init(struct application *ap, char *UNUSED(framename))
     }
 
 
-    /* malloc() a buffer that has room for as many struct cell 's
-     * as the incoming file is wide (width).
-     * Rather than using malloc(), though, bu_malloc() is used.  This
-     * has the advantage of inbuild error-checking and automatic aborting
-     * if there is no memory.  Also, bu_malloc() takes a string as its
-     * final parameter: this tells the user exactly where memory ran out.
+    /* allocate a buffer that has room with as many struct cell as the
+     * incoming file is wide (width).
      */
-
 
     cellp = (struct cell *)bu_malloc(sizeof(struct cell) * width,
 				     "cell buffer" );
-
 
     /* Obtain the maximum distance within the model to use as the
      * background distance.  Also get the coordinates of the model's

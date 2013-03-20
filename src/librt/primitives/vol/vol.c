@@ -429,7 +429,8 @@ rt_vol_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_VOL;
     ip->idb_meth = &rt_functab[ID_VOL];
-    ip->idb_ptr = bu_calloc(1, sizeof(struct rt_vol_internal), "rt_vol_internal");
+    BU_ALLOC(ip->idb_ptr, struct rt_vol_internal);
+
     vip = (struct rt_vol_internal *)ip->idb_ptr;
     vip->magic = RT_VOL_INTERNAL_MAGIC;
 
@@ -566,7 +567,8 @@ rt_vol_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_VOL;
     ip->idb_meth = &rt_functab[ID_VOL];
-    ip->idb_ptr = bu_calloc(1, sizeof(struct rt_vol_internal), "rt_vol_internal");
+    BU_ALLOC(ip->idb_ptr, struct rt_vol_internal);
+
     vip = (struct rt_vol_internal *)ip->idb_ptr;
     vip->magic = RT_VOL_INTERNAL_MAGIC;
 

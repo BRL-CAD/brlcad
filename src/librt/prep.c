@@ -1241,8 +1241,8 @@ rt_find_path(struct db_i *dbip,
 	    db_add_node_to_full_path(*curr_path, dp);
 	    if (dp == end) {
 		bu_ptbl_ins(paths, (long *)(*curr_path));
-		newpath = (struct db_full_path *)bu_malloc(sizeof(struct db_full_path),
-							   "newpath");
+		BU_ALLOC(newpath, struct db_full_path);
+
 		db_full_path_init(newpath);
 		db_dup_full_path(newpath, (*curr_path));
 		(*curr_path) = newpath;
@@ -1291,7 +1291,7 @@ rt_find_paths(struct db_i *dbip,
     struct db_full_path *path;
     struct rt_comb_internal *comb;
 
-    path = (struct db_full_path *)bu_malloc(sizeof(struct db_full_path), "path");
+    BU_ALLOC(path, struct db_full_path);
     db_full_path_init(path);
     db_add_node_to_full_path(path, start);
 
@@ -1549,8 +1549,8 @@ rt_unprep(struct rt_i *rtip, struct rt_reprep_obj_list *objs, struct resource *r
 	struct db_tree_state *tree_state;
 	char *obj_name;
 
-	tree_state = (struct db_tree_state *)bu_malloc(sizeof(struct db_tree_state),
-						       "tree_state");
+	BU_ALLOC(tree_state, struct db_tree_state);
+
 	*tree_state = rt_initial_tree_state;	/* struct copy */
 	tree_state->ts_dbip = rtip->rti_dbip;
 	tree_state->ts_resp = resp;

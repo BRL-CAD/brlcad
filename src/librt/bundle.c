@@ -631,14 +631,14 @@ rt_shootrays(struct application_bundle *bundle)
     if (!bundle->b_ap.a_miss)
 	bundle->b_ap.a_miss = bundle_miss;
 
-    pb = (struct partition_bundle *)bu_calloc(1, sizeof(struct partition_bundle), "partition bundle");
+    BU_ALLOC(pb, struct partition_bundle);
     pb->ap = &bundle->b_ap;
     pb->hits = pb->misses = 0;
 
     bundle->b_uptr = (genptr_t)pb;
 
     for (BU_LIST_FOR (r, xrays, &bundle->b_rays.l)) {
-	ray_ap = (struct application *)bu_calloc(1, sizeof(struct application), "ray application structure");
+	BU_ALLOC(ray_ap, struct application);
 	*ray_ap = bundle->b_ap; /* structure copy */
 
 	ray_ap->a_ray = r->ray;

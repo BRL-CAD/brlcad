@@ -65,7 +65,7 @@ _add_toplevel(struct db_full_path_list *path_list, int local)
 {
     struct db_full_path_list *new_entry;
     BU_ALLOC(new_entry, struct db_full_path_list);
-    new_entry->path = (struct db_full_path *) bu_malloc(sizeof(struct db_full_path), "new full path");
+    BU_ALLOC(new_entry->path, struct db_full_path);
     db_full_path_init(new_entry->path);
     new_entry->path->fp_maxlen = 0;
     new_entry->local = local;
@@ -84,7 +84,7 @@ _gen_toplevel(struct db_i *dbip, struct db_full_path_list *path_list, struct db_
 	    if (dp->d_nref == 0 && !(dp->d_flags & RT_DIR_HIDDEN) && (dp->d_addr != RT_DIR_PHONY_ADDR)) {
 	      if (!db_string_to_path(dfp, dbip, dp->d_namep)) {
 		BU_ALLOC(new_entry, struct db_full_path_list);
-		new_entry->path = (struct db_full_path *) bu_malloc(sizeof(struct db_full_path), "new full path");
+		BU_ALLOC(new_entry->path, struct db_full_path);
 		db_full_path_init(new_entry->path);
 		db_dup_full_path(new_entry->path, (const struct db_full_path *)dfp);
 		new_entry->local = local;
@@ -178,7 +178,7 @@ ged_search(struct ged *gedp, int argc, const char *argv_orig[])
 			    return GED_ERROR;
 			} else {
 			    BU_ALLOC(new_entry, struct db_full_path_list);
-			    new_entry->path = (struct db_full_path *) bu_malloc(sizeof(struct db_full_path), "new full path");
+			    BU_ALLOC(new_entry->path, struct db_full_path);
 			    db_full_path_init(new_entry->path);
 			    db_dup_full_path(new_entry->path, (const struct db_full_path *)&dfp);
 			    if (argv[plan_argv][0] == '/' && !islocal) {
@@ -261,7 +261,7 @@ ged_search(struct ged *gedp, int argc, const char *argv_orig[])
 		    db_free_full_path_list(local_list);
 		} else {
 		    BU_ALLOC(new_entry, struct db_full_path_list);
-		    new_entry->path = (struct db_full_path *) bu_malloc(sizeof(struct db_full_path), "new full path");
+		    BU_ALLOC(new_entry->path, struct db_full_path);
 		    db_full_path_init(new_entry->path);
 		    db_dup_full_path(new_entry->path, entry->path);
 		    BU_LIST_PUSH(&(dispatch_list->l), &(new_entry->l));

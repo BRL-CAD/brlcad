@@ -1072,13 +1072,10 @@ check_hitstate(struct bu_list *hd, struct ray_data *rd)
     }
     if (BU_LIST_IS_HEAD(a_hit, hd)) return 1;
 
-    a_tbl = (struct bu_ptbl *)
-	bu_calloc(1, sizeof(struct bu_ptbl), "a_tbl");
+    BU_ALLOC(a_tbl, struct bu_ptbl);
     bu_ptbl_init(a_tbl, 64, "a_tbl");
 
-
-    next_tbl = (struct bu_ptbl *)
-	bu_calloc(1, sizeof(struct bu_ptbl), "next_tbl");
+    BU_ALLOC(next_tbl, struct bu_ptbl);
     bu_ptbl_init(next_tbl, 64, "next_tbl");
 
     /* check the state transition on the rest of the hit points */

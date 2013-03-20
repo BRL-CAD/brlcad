@@ -786,7 +786,7 @@ make_ellipse4(struct rt_pt_node *pts, fastf_t a, fastf_t b, fastf_t dtol, fastf_
     /* split segment at widest point if not within error tolerances */
     if (dist > dtol || theta0 > ntol || theta1 > ntol) {
 	/* split segment */
-	newpt = (struct rt_pt_node *)bu_malloc(sizeof(struct rt_pt_node), "rt_pt_node");
+	BU_ALLOC(newpt, struct rt_pt_node);
 	VMOVE(newpt->p, mpt);
 	newpt->next = pts->next;
 	pts->next = newpt;
@@ -816,9 +816,10 @@ make_ellipse(int *n, fastf_t a, fastf_t b, fastf_t dtol, fastf_t ntol)
     point_t *ell;
     struct rt_pt_node *ell_quad, *oldpos, *pos;
 
-    ell_quad = (struct rt_pt_node *)bu_malloc(sizeof(struct rt_pt_node), "rt_pt_node");
+    BU_ALLOC(ell_quad, struct rt_pt_node);
     VSET(ell_quad->p, b, 0., 0.);
-    ell_quad->next = (struct rt_pt_node *)bu_malloc(sizeof(struct rt_pt_node), "rt_pt_node");
+
+    BU_ALLOC(ell_quad->next, struct rt_pt_node);
     VSET(ell_quad->next->p, 0., a, 0.);
     ell_quad->next->next = NULL;
 
@@ -1343,7 +1344,8 @@ rt_eto_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_ETO;
     ip->idb_meth = &rt_functab[ID_ETO];
-    ip->idb_ptr = bu_malloc(sizeof(struct rt_eto_internal), "rt_eto_internal");
+    BU_ALLOC(ip->idb_ptr, struct rt_eto_internal);
+
     tip = (struct rt_eto_internal *)ip->idb_ptr;
     tip->eto_magic = RT_ETO_INTERNAL_MAGIC;
 
@@ -1447,7 +1449,7 @@ rt_eto_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_ETO;
     ip->idb_meth = &rt_functab[ID_ETO];
-    ip->idb_ptr = bu_malloc(sizeof(struct rt_eto_internal), "rt_eto_internal");
+    BU_ALLOC(ip->idb_ptr, struct rt_eto_internal);
 
     tip = (struct rt_eto_internal *)ip->idb_ptr;
     tip->eto_magic = RT_ETO_INTERNAL_MAGIC;

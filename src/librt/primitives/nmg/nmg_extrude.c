@@ -325,7 +325,7 @@ nmg_start_new_loop(struct edgeuse *start_eu, struct loopuse *lu1, struct loopuse
     NMG_CK_LOOPUSE(lu2);
 
     /* create a table to hold eu pointers for a new loop */
-    new_lu_tab = (struct bu_ptbl *)bu_malloc(sizeof(struct bu_ptbl), "nmg_start_new_loop: new_lu_tab");
+    BU_ALLOC(new_lu_tab, struct bu_ptbl);
     bu_ptbl_init(new_lu_tab, 64, " new_lu_tab ");
 
     /* add this table to the list of loops */

@@ -76,7 +76,7 @@ append_union(struct bu_list *hp)
 
     BU_CK_LIST_HEAD(hp);
 
-    tok = (struct tokens *)bu_malloc(sizeof(struct tokens), "tok");
+    BU_ALLOC(tok, struct tokens);
     tok->type = TOK_UNION;
     tok->tp = (union tree *)NULL;
     BU_LIST_INSERT(hp, &tok->l);
@@ -90,7 +90,7 @@ append_inter(struct bu_list *hp)
 
     BU_CK_LIST_HEAD(hp);
 
-    tok = (struct tokens *)bu_malloc(sizeof(struct tokens), "tok");
+    BU_ALLOC(tok, struct tokens);
     tok->type = TOK_INTER;
     tok->tp = (union tree *)NULL;
     BU_LIST_INSERT(hp, &tok->l);
@@ -104,7 +104,7 @@ append_subtr(struct bu_list *hp)
 
     BU_CK_LIST_HEAD(hp);
 
-    tok = (struct tokens *)bu_malloc(sizeof(struct tokens), "tok");
+    BU_ALLOC(tok, struct tokens);
     tok->type = TOK_SUBTR;
     tok->tp = (union tree *)NULL;
     BU_LIST_INSERT(hp, &tok->l);
@@ -118,7 +118,7 @@ append_lparen(struct bu_list *hp)
 
     BU_CK_LIST_HEAD(hp);
 
-    tok = (struct tokens *)bu_malloc(sizeof(struct tokens), "tok");
+    BU_ALLOC(tok, struct tokens);
     tok->type = TOK_LPAREN;
     tok->tp = (union tree *)NULL;
     BU_LIST_INSERT(hp, &tok->l);
@@ -132,7 +132,7 @@ append_rparen(struct bu_list *hp)
 
     BU_CK_LIST_HEAD(hp);
 
-    tok = (struct tokens *)bu_malloc(sizeof(struct tokens), "tok");
+    BU_ALLOC(tok, struct tokens);
     tok->type = TOK_RPAREN;
     tok->tp = (union tree *)NULL;
     BU_LIST_INSERT(hp, &tok->l);
@@ -218,7 +218,7 @@ add_operand(struct ged *gedp, struct bu_list *hp, char *name)
     node->tr_l.tl_name = (char *)bu_malloc(name_len+1, "node name");
     bu_strlcpy(node->tr_l.tl_name, name, name_len+1);
 
-    tok = (struct tokens *)bu_malloc(sizeof(struct tokens), "tok");
+    BU_ALLOC(tok, struct tokens);
     tok->type = TOK_TREE;
     tok->tp = node;
     BU_LIST_INSERT(hp, &tok->l);

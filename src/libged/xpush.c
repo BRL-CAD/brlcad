@@ -151,7 +151,7 @@ Make_new_name(struct db_i *dbip,
     j = 0;
     for (use_no=0; use_no<dp->d_uses; use_no++) {
 	j++;
-	use = (struct object_use *)bu_malloc(sizeof(struct object_use), "Make_new_name: use");
+	BU_ALLOC(use, struct object_use);
 
 	/* set xform for this object_use to all zeros */
 	MAT_ZERO(use->xform);

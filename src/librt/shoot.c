@@ -1838,23 +1838,26 @@ rt_shootray_simple_hit(struct application *a, struct partition *PartHeadp, struc
 
     for (pp = PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw) {
 	if(p) {
-	    c->pt_forw = bu_malloc(sizeof(struct partition), "shootray simple");
+	    BU_ALLOC(c->pt_forw, struct partition);
 	    c->pt_forw->pt_back = c;
 	    c = c->pt_forw;
 	} else {
-	    c = p = bu_malloc(sizeof(struct partition), "shootray simple");
+	    BU_ALLOC(p, struct partition);
+	    c = p;
 	    c->pt_forw = NULL;
 	    c->pt_back = NULL;
 	}
 	/* partial deep copy of  the partition */
 	c->pt_magic = pp->pt_magic;
 	c->pt_inseg = NULL;
-	c->pt_inhit = bu_malloc(sizeof(struct hit), "shootray simple inhit");
+
+	BU_ALLOC(c->pt_inhit, struct hit);
 	c->pt_inhit->hit_magic = pp->pt_inhit->hit_magic;
 	c->pt_inhit->hit_dist = pp->pt_inhit->hit_dist;
 	c->pt_inhit->hit_surfno = pp->pt_inhit->hit_surfno;
 	c->pt_outseg = NULL;
-	c->pt_outhit = bu_malloc(sizeof(struct hit), "shootray simple inhit");
+
+	BU_ALLOC(c->pt_outhit, struct hit);
 	c->pt_outhit->hit_magic = pp->pt_outhit->hit_magic;
 	c->pt_outhit->hit_dist = pp->pt_outhit->hit_dist;
 	c->pt_outhit->hit_surfno = pp->pt_outhit->hit_surfno;

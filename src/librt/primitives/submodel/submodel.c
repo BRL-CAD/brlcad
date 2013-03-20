@@ -826,7 +826,8 @@ rt_submodel_import4(struct rt_db_internal *ip, const struct bu_external *ep, con
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_SUBMODEL;
     ip->idb_meth = &rt_functab[ID_SUBMODEL];
-    ip->idb_ptr = bu_malloc(sizeof(struct rt_submodel_internal), "rt_submodel_internal");
+    BU_ALLOC(ip->idb_ptr, struct rt_submodel_internal);
+
     sip = (struct rt_submodel_internal *)ip->idb_ptr;
     sip->magic = RT_SUBMODEL_INTERNAL_MAGIC;
     sip->dbip = dbip;
@@ -912,7 +913,8 @@ rt_submodel_import5(struct rt_db_internal *ip, const struct bu_external *ep, con
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_SUBMODEL;
     ip->idb_meth = &rt_functab[ID_SUBMODEL];
-    ip->idb_ptr = bu_malloc(sizeof(struct rt_submodel_internal), "rt_submodel_internal");
+    BU_ALLOC(ip->idb_ptr, struct rt_submodel_internal);
+
     sip = (struct rt_submodel_internal *)ip->idb_ptr;
     sip->magic = RT_SUBMODEL_INTERNAL_MAGIC;
     sip->dbip = dbip;

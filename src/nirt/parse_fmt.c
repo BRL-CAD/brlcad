@@ -250,7 +250,7 @@ parse_fmt(const char *uoutspec, int outcom_type)
     while (*uos != '"') {
 	nm_cs = 0;
 	/* Allocate storage for the next item in the output list */
-	oip = (outitem *) bu_malloc(sizeof(outitem), "output item");
+	BU_ALLOC(oip, outitem);
 	oip->next = OUTITEM_NULL;
 
 	for (up = uos; *uos != '"'; ++uos) {

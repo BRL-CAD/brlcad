@@ -105,7 +105,7 @@ nmg_shell_coplanar_face_merge(struct shell *s, const struct bn_tol *tol, const i
     struct faceuse *prev_fu;
     struct face_g_plane *fg1, *fg2;
 
-    flags = (char *)bu_calloc(sizeof(char), (s->r_p->m_p->maxindex) * 2,
+    flags = (char *)bu_calloc((s->r_p->m_p->maxindex) * 2, sizeof(char),
 			      "nmg_shell_coplanar_face_merge flags[]");
 
     /* Visit each face in the shell */

@@ -719,8 +719,8 @@ ehy_hyperbolic_curve(fastf_t mag_h, fastf_t c, fastf_t r, int num_points)
     int count;
     struct rt_pt_node *curve;
 
-    curve = (struct rt_pt_node *)bu_malloc(sizeof(struct rt_pt_node), "rt_pt_node");
-    curve->next = (struct rt_pt_node *)bu_malloc(sizeof(struct rt_pt_node), "rt_pt_node");
+    BU_ALLOC(curve, struct rt_pt_node);
+    BU_ALLOC(curve->next, struct rt_pt_node);
 
     curve->next->next = NULL;
     VSET(curve->p,       0, 0, -mag_h);
@@ -992,8 +992,9 @@ rt_ehy_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
      */
 
     /* approximate positive half of hyperbola along semi-minor axis */
-    pts_b = (struct rt_pt_node *)bu_malloc(sizeof(struct rt_pt_node), "rt_pt_node");
-    pts_b->next = (struct rt_pt_node *)bu_malloc(sizeof(struct rt_pt_node), "rt_pt_node");
+    BU_ALLOC(pts_b, struct rt_pt_node);
+    BU_ALLOC(pts_b->next, struct rt_pt_node);
+
     pts_b->next->next = NULL;
     VSET(pts_b->p,       0, 0, -mag_h);
     VSET(pts_b->next->p, 0, r2, 0);
@@ -1006,14 +1007,14 @@ rt_ehy_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
     /* construct positive half of hyperbola along semi-major axis of
      * ehy using same z coords as hyperbola along semi-minor axis
      */
-    pts_a = (struct rt_pt_node *)bu_malloc(sizeof(struct rt_pt_node), "rt_pt_node");
+    BU_ALLOC(pts_a, struct rt_pt_node);
     VMOVE(pts_a->p, pts_b->p);	/* 1st pt is the apex */
     pts_a->next = NULL;
     pos_b = pts_b->next;
     pos_a = pts_a;
     while (pos_b) {
 	/* copy node from b_hyperbola to a_hyperbola */
-	pos_a->next = (struct rt_pt_node *)bu_malloc(sizeof(struct rt_pt_node), "rt_pt_node");
+	BU_ALLOC(pos_a->next, struct rt_pt_node);
 	pos_a = pos_a->next;
 	pos_a->p[Z] = pos_b->p[Z];
 	/* at given z, find y on hyperbola */
@@ -1054,14 +1055,14 @@ rt_ehy_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 	/* construct hyperbola along semi-major axis of ehy using same
 	 * z coords as parab along semi-minor axis
 	 */
-	pts_b = (struct rt_pt_node *)bu_malloc(sizeof(struct rt_pt_node), "rt_pt_node");
+	BU_ALLOC(pts_b, struct rt_pt_node);
 	pts_b->p[Z] = pts_a->p[Z];
 	pts_b->next = NULL;
 	pos_a = pts_a->next;
 	pos_b = pts_b;
 	while (pos_a) {
 	    /* copy node from a_hyperbola to b_hyperbola */
-	    pos_b->next = (struct rt_pt_node *)bu_malloc(sizeof(struct rt_pt_node), "rt_pt_node");
+	    BU_ALLOC(pos_b->next, struct rt_pt_node);
 	    pos_b = pos_b->next;
 	    pos_b->p[Z] = pos_a->p[Z];
 	    /* at given z, find y on hyperbola */
@@ -1268,8 +1269,9 @@ rt_ehy_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
      */
 
     /* approximate positive half of hyperbola along semi-minor axis */
-    pts_b = (struct rt_pt_node *)bu_malloc(sizeof(struct rt_pt_node), "rt_pt_node");
-    pts_b->next = (struct rt_pt_node *)bu_malloc(sizeof(struct rt_pt_node), "rt_pt_node");
+    BU_ALLOC(pts_b, struct rt_pt_node);
+    BU_ALLOC(pts_b->next, struct rt_pt_node);
+
     pts_b->next->next = NULL;
     VSET(pts_b->p,       0, 0, -mag_h);
     VSET(pts_b->next->p, 0, r2, 0);
@@ -1282,14 +1284,14 @@ rt_ehy_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     /* construct positive half of hyperbola along semi-major axis of
      * ehy using same z coords as parab along semi-minor axis
      */
-    pts_a = (struct rt_pt_node *)bu_malloc(sizeof(struct rt_pt_node), "rt_pt_node");
+    BU_ALLOC(pts_a, struct rt_pt_node);
     VMOVE(pts_a->p, pts_b->p);	/* 1st pt is the apex */
     pts_a->next = NULL;
     pos_b = pts_b->next;
     pos_a = pts_a;
     while (pos_b) {
 	/* copy node from b_hyperbola to a_hyperbola */
-	pos_a->next = (struct rt_pt_node *)bu_malloc(sizeof(struct rt_pt_node), "rt_pt_node");
+	BU_ALLOC(pos_a->next, struct rt_pt_node);
 	pos_a = pos_a->next;
 	pos_a->p[Z] = pos_b->p[Z];
 	/* at given z, find y on hyperbola */
@@ -1329,14 +1331,14 @@ rt_ehy_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	/* construct hyperbola along semi-major axis of ehy using same
 	 * z coords as parab along semi-minor axis
 	 */
-	pts_b = (struct rt_pt_node *)bu_malloc(sizeof(struct rt_pt_node), "rt_pt_node");
+	BU_ALLOC(pts_b, struct rt_pt_node);
 	pts_b->p[Z] = pts_a->p[Z];
 	pts_b->next = NULL;
 	pos_a = pts_a->next;
 	pos_b = pts_b;
 	while (pos_a) {
 	    /* copy node from a_hyperbola to b_hyperbola */
-	    pos_b->next = (struct rt_pt_node *)bu_malloc(sizeof(struct rt_pt_node), "rt_pt_node");
+	    BU_ALLOC(pos_b->next, struct rt_pt_node);
 	    pos_b = pos_b->next;
 	    pos_b->p[Z] = pos_a->p[Z];
 	    /* at given z, find y on hyperbola */
@@ -1664,7 +1666,8 @@ rt_ehy_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_EHY;
     ip->idb_meth = &rt_functab[ID_EHY];
-    ip->idb_ptr = bu_malloc(sizeof(struct rt_ehy_internal), "rt_ehy_internal");
+    BU_ALLOC(ip->idb_ptr, struct rt_ehy_internal);
+
     xip = (struct rt_ehy_internal *)ip->idb_ptr;
     xip->ehy_magic = RT_EHY_INTERNAL_MAGIC;
 
@@ -1796,7 +1799,7 @@ rt_ehy_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_EHY;
     ip->idb_meth = &rt_functab[ID_EHY];
-    ip->idb_ptr = bu_malloc(sizeof(struct rt_ehy_internal), "rt_ehy_internal");
+    BU_ALLOC(ip->idb_ptr, struct rt_ehy_internal);
 
     xip = (struct rt_ehy_internal *)ip->idb_ptr;
     xip->ehy_magic = RT_EHY_INTERNAL_MAGIC;

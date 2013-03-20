@@ -143,9 +143,7 @@ rt_gen_elliptical_grid(struct xrays *rays, const struct xray *center_ray, const 
     for (y=gridsize * (-bcpr); y <= b; y=y+gridsize) {
 	for (x= gridsize * (-acpr); x <= a; x=x+gridsize) {
 	    if (((x*x)/(a*a) + (y*y)/(b*b)) < 1) {
-		xrayp = (struct xrays *)bu_calloc(sizeof(struct xrays),
-						  1,
-						  "bundled ray");
+		BU_ALLOC(xrayp, struct xrays);
 		VJOIN2(xrayp->ray.r_pt, C, x, a_dir, y, b_dir);
 		VMOVE(xrayp->ray.r_dir, dir);
 		xrayp->ray.index = count++;

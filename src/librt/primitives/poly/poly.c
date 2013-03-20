@@ -705,7 +705,8 @@ rt_pg_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fas
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_POLY;
     ip->idb_meth = &rt_functab[ID_POLY];
-    ip->idb_ptr = bu_malloc(sizeof(struct rt_pg_internal), "rt_pg_internal");
+    BU_ALLOC(ip->idb_ptr, struct rt_pg_internal);
+
     pgp = (struct rt_pg_internal *)ip->idb_ptr;
     pgp->magic = RT_PG_INTERNAL_MAGIC;
 

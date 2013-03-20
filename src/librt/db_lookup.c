@@ -403,7 +403,7 @@ db_lookup_by_attr(struct db_i *dbip, int dir_flags, struct bu_attribute_value_se
 	attr_count = 0;
     }
 
-    tbl = (struct bu_ptbl *)bu_calloc(sizeof(struct bu_ptbl), 1, "wdb_get_by_attr ptbl");
+    BU_ALLOC(tbl, struct bu_ptbl);
     bu_ptbl_init(tbl, 128, "wdb_get_by_attr ptbl_init");
 
     FOR_ALL_DIRECTORY_START(dp, dbip) {

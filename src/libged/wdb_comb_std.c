@@ -80,7 +80,7 @@ wdb_append_union(struct bu_list *hp)
 
     BU_CK_LIST_HEAD(hp);
 
-    tok = (struct tokens *)bu_malloc(sizeof(struct tokens), "tok");
+    BU_ALLOC(tok, struct tokens);
     tok->type = WDB_TOK_UNION;
     tok->tp = (union tree *)NULL;
     BU_LIST_INSERT(hp, &tok->l);
@@ -94,7 +94,7 @@ wdb_append_inter(struct bu_list *hp)
 
     BU_CK_LIST_HEAD(hp);
 
-    tok = (struct tokens *)bu_malloc(sizeof(struct tokens), "tok");
+    BU_ALLOC(tok, struct tokens);
     tok->type = WDB_TOK_INTER;
     tok->tp = (union tree *)NULL;
     BU_LIST_INSERT(hp, &tok->l);
@@ -108,7 +108,7 @@ wdb_append_subtr(struct bu_list *hp)
 
     BU_CK_LIST_HEAD(hp);
 
-    tok = (struct tokens *)bu_malloc(sizeof(struct tokens), "tok");
+    BU_ALLOC(tok, struct tokens);
     tok->type = WDB_TOK_SUBTR;
     tok->tp = (union tree *)NULL;
     BU_LIST_INSERT(hp, &tok->l);
@@ -122,7 +122,7 @@ wdb_append_lparen(struct bu_list *hp)
 
     BU_CK_LIST_HEAD(hp);
 
-    tok = (struct tokens *)bu_malloc(sizeof(struct tokens), "tok");
+    BU_ALLOC(tok, struct tokens);
     tok->type = WDB_TOK_LPAREN;
     tok->tp = (union tree *)NULL;
     BU_LIST_INSERT(hp, &tok->l);
@@ -136,7 +136,7 @@ wdb_append_rparen(struct bu_list *hp)
 
     BU_CK_LIST_HEAD(hp);
 
-    tok = (struct tokens *)bu_malloc(sizeof(struct tokens), "tok");
+    BU_ALLOC(tok, struct tokens);
     tok->type = WDB_TOK_RPAREN;
     tok->tp = (union tree *)NULL;
     BU_LIST_INSERT(hp, &tok->l);
@@ -224,7 +224,7 @@ wdb_add_operand(Tcl_Interp *interp, struct bu_list *hp, char *name)
     node->tr_l.tl_name = (char *)bu_malloc(name_len+1, "node name");
     bu_strlcpy(node->tr_l.tl_name, name, name_len+1);
 
-    tok = (struct tokens *)bu_malloc(sizeof(struct tokens), "tok");
+    BU_ALLOC(tok, struct tokens);
     tok->type = WDB_TOK_TREE;
     tok->tp = node;
     BU_LIST_INSERT(hp, &tok->l);

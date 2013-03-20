@@ -68,8 +68,8 @@ history_record(
     if (BU_STR_EQUAL(bu_vls_addr(cmdp), "\n"))
 	return;
 
-    new_hist = (struct mged_hist *)bu_malloc(sizeof(struct mged_hist),
-					     "mged history");
+    BU_ALLOC(new_hist, struct mged_hist);
+
     bu_vls_init(&(new_hist->mh_command));
     bu_vls_vlscat(&(new_hist->mh_command), cmdp);
     new_hist->mh_start = *start;

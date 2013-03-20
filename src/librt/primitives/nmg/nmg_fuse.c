@@ -659,7 +659,8 @@ nmg_split_trim(const struct edge_g_cnurb *cnrb, const struct face_g_snurb *snrb,
     NMG_CK_EDGE_G_CNURB(cnrb);
     NMG_CK_FACE_G_SNURB(snrb);
     BN_CK_TOL(tol);
-    pt_new = (struct pt_list *)bu_malloc(sizeof(struct pt_list), "g_split_trim: pt_new");
+
+    BU_ALLOC(pt_new, struct pt_list);
     pt_new->t = t;
 
     if (pt_new->t < pt0->t || pt_new->t > pt1->t) {
@@ -700,12 +701,12 @@ nmg_eval_trim_to_tol(const struct edge_g_cnurb *cnrb, const struct face_g_snurb 
 	bu_log("nmg_eval_trim_to_tol(cnrb=x%x, snrb=x%x, t0=%g, t1=%g) START\n",
 	       cnrb, snrb, t0, t1);
 
-    pt0 = (struct pt_list *)bu_malloc(sizeof(struct pt_list), "nmg_eval_trim_to_tol: pt0 ");
+    BU_ALLOC(pt0, struct pt_list);
     pt0->t = t0;
     nmg_eval_trim_curve(cnrb, snrb, pt0->t, pt0->xyz);
     BU_LIST_INSERT(head, &pt0->l);
 
-    pt1 = (struct pt_list *)bu_malloc(sizeof(struct pt_list), "nmg_eval_trim_to_tol: pt1 ");
+    BU_ALLOC(pt1, struct pt_list);
     pt1->t = t1;
     nmg_eval_trim_curve(cnrb, snrb, pt1->t, pt1->xyz);
     BU_LIST_INSERT(head, &pt1->l);
@@ -730,7 +731,7 @@ nmg_split_linear_trim(const struct face_g_snurb *snrb, const fastf_t *uvw1, cons
     if (snrb)
 	NMG_CK_FACE_G_SNURB(snrb);
     BN_CK_TOL(tol);
-    pt_new = (struct pt_list *)bu_malloc(sizeof(struct pt_list), "g_split_trim: pt_new");
+    BU_ALLOC(pt_new, struct pt_list);
     pt_new->t = 0.5*(pt0->t + pt1->t);
 
     VBLEND2(uvw_sub, 1.0 - pt_new->t, uvw1, pt_new->t, uvw2);
@@ -771,12 +772,12 @@ nmg_eval_linear_trim_to_tol(const struct edge_g_cnurb *cnrb, const struct face_g
 	bu_log("nmg_eval_linear_trim_to_tol(cnrb=x%x, snrb=x%x, uvw1=(%g %g %g), uvw2=(%g %g %g)) START\n",
 	       cnrb, snrb, V3ARGS(uvw1), V3ARGS(uvw2));
 
-    pt0 = (struct pt_list *)bu_malloc(sizeof(struct pt_list), "nmg_eval_linear_trim_to_tol: pt0 ");
+    BU_ALLOC(pt0, struct pt_list);
     pt0->t = 0.0;
     nmg_eval_linear_trim_curve(snrb, uvw1, pt0->xyz);
     BU_LIST_INSERT(head, &pt0->l);
 
-    pt1 = (struct pt_list *)bu_malloc(sizeof(struct pt_list), "nmg_eval_linear_trim_to_tol: pt1 ");
+    BU_ALLOC(pt1, struct pt_list);
     pt1->t = 1.0;
     nmg_eval_linear_trim_curve(snrb, uvw2, pt1->xyz);
     BU_LIST_INSERT(head, &pt1->l);

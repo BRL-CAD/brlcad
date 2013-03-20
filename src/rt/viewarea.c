@@ -447,10 +447,10 @@ rayhit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(s
 	    if (rtarea_compute_centers) {
 
 		/* create a new 'exposed' point_list record */
-		temp_point_list = (struct point_list *) bu_malloc(sizeof(struct point_list), "Point list allocation");
+		BU_ALLOC(temp_point_list, struct point_list);
 
 		/* create a new 'presented' point_list record */
-		temp_presented_point_list = (struct point_list *) bu_malloc(sizeof(struct point_list), "Presented Point list allocation");
+		BU_ALLOC(temp_presented_point_list, struct point_list);
 
 		/* initialize new 'exposed' point_list record */
 		temp_point_list->next = (struct point_list *) NULL;
@@ -592,7 +592,7 @@ rayhit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(s
 		cell->num_hit_points++;
 
 		/* allocate memory for point_list structure */
-		temp_point_list = (struct point_list *) bu_malloc(sizeof(struct point_list), "Point list allocation");
+		BU_ALLOC(temp_point_list, struct point_list);
 
 		/* compute hit point */
 		VJOIN1(pp->pt_inhit->hit_point, ap->a_ray.r_pt, pp->pt_inhit->hit_dist, ap->a_ray.r_dir);
@@ -676,8 +676,10 @@ print_region_area_list(size_t *count, struct rt_i *rtip, area_type_t type)
     register struct area *cell = (struct area *)NULL;
     size_t cumulative = 0;
 
-    struct area_list *listHead = (struct area_list *)bu_malloc(sizeof(struct area_list), "print_area_list area list node allocation");
+    struct area_list *listHead;
     struct area_list *listp;
+
+    BU_ALLOC(listHead, struct area_list);
     listHead->cell = (struct area *)NULL;
     listHead->next = (struct area_list *)NULL;
 
@@ -699,7 +701,7 @@ print_region_area_list(size_t *count, struct rt_i *rtip, area_type_t type)
 		    listp = listp->next;
 		}
 
-		newNode = (struct area_list *)bu_malloc(sizeof(struct area_list), "print_area_list area list node allocation");
+		BU_ALLOC(newNode, struct area_list);
 		newNode->cell = cell;
 		newNode->next = (struct area_list *)NULL;
 
@@ -803,8 +805,10 @@ print_assembly_area_list(struct rt_i *rtip, size_t max_depth, area_type_t type)
     register struct area *cell = (struct area *)NULL;
     size_t count = 0;
 
-    struct area_list *listHead = (struct area_list *)bu_malloc(sizeof(struct area_list), "print_area_list area list node allocation");
+    struct area_list *listHead;
     struct area_list *listp;
+
+    BU_ALLOC(listHead, struct area_list);
     listHead->cell = (struct area *)NULL;
     listHead->next = (struct area_list *)NULL;
 
@@ -838,7 +842,7 @@ print_assembly_area_list(struct rt_i *rtip, size_t max_depth, area_type_t type)
 		listp = listp->next;
 	    }
 
-	    newNode = (struct area_list *)bu_malloc(sizeof(struct area_list), "print_area_list area list node allocation");
+	    BU_ALLOC(newNode, struct area_list);
 	    newNode->cell = cellp;
 	    newNode->next = (struct area_list *)NULL;
 

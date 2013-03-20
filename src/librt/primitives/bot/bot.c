@@ -930,7 +930,8 @@ rt_bot_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_BOT;
     ip->idb_meth = &rt_functab[ID_BOT];
-    ip->idb_ptr = bu_malloc(sizeof(struct rt_bot_internal), "rt_bot_internal");
+    BU_ALLOC(ip->idb_ptr, struct rt_bot_internal);
+
     bot_ip = (struct rt_bot_internal *)ip->idb_ptr;
     bot_ip->magic = RT_BOT_INTERNAL_MAGIC;
 
@@ -1102,7 +1103,7 @@ rt_bot_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_BOT;
     ip->idb_meth = &rt_functab[ID_BOT];
-    ip->idb_ptr = bu_calloc(1, sizeof(struct rt_bot_internal), "rt_bot_internal");
+    BU_ALLOC(ip->idb_ptr, struct rt_bot_internal);
 
     bip = (struct rt_bot_internal *)ip->idb_ptr;
     bip->magic = RT_BOT_INTERNAL_MAGIC;
@@ -2862,8 +2863,7 @@ buildEdgeTable(struct rt_bot_internal *bot, struct bot_edge ***edges)
 	    /* make new list */
 	    if (edge == (struct bot_edge*)NULL) {
 
-		edge = (struct bot_edge*)bu_calloc(1, sizeof(struct bot_edge),
-			"edges[from]");
+		BU_ALLOC(edge, struct bot_edge);
 		(*edges)[from] = edge;
 	    }
 
@@ -2883,9 +2883,7 @@ buildEdgeTable(struct rt_bot_internal *bot, struct bot_edge ***edges)
 		}
 
 		/* this edge is new - append a new entry for it */
-		edge->next = (struct bot_edge*)bu_calloc(1, sizeof(struct bot_edge),
-			"edge->next");
-
+		BU_ALLOC(edge->next, struct bot_edge);
 		edge = edge->next;
 	    }
 

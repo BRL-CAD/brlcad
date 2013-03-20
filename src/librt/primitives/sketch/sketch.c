@@ -840,8 +840,8 @@ seg_to_vlist(struct bu_list *vhead, const struct rt_tess_tol *ttol, fastf_t *V, 
 
 
 	    /* Create an initial bezier_2d_list */
-	    bezier_hd = (struct bezier_2d_list *)bu_malloc(sizeof(struct bezier_2d_list),
-							   "g_sketch.c: bezier_hd");
+	    BU_ALLOC(bezier_hd, struct bezier_2d_list);
+
 	    BU_LIST_INIT(&bezier_hd->l);
 	    bezier_hd->ctl = (point2d_t *)bu_calloc(bsg->degree + 1, sizeof(point2d_t),
 						    "g_sketch.c: bezier_hd->ctl");
@@ -989,7 +989,8 @@ rt_sketch_import4(struct rt_db_internal *ip, const struct bu_external *ep, const
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_SKETCH;
     ip->idb_meth = &rt_functab[ID_SKETCH];
-    ip->idb_ptr = bu_calloc(1, sizeof(struct rt_sketch_internal), "rt_sketch_internal");
+    BU_ALLOC(ip->idb_ptr, struct rt_sketch_internal);
+
     sketch_ip = (struct rt_sketch_internal *)ip->idb_ptr;
     sketch_ip->magic = RT_SKETCH_INTERNAL_MAGIC;
 
@@ -1039,7 +1040,7 @@ rt_sketch_import4(struct rt_db_internal *ip, const struct bu_external *ep, const
 	ptr += SIZEOF_NETWORK_LONG;
 	switch (magic) {
 	    case CURVE_LSEG_MAGIC:
-		lsg = (struct line_seg *)bu_malloc(sizeof(struct line_seg), "lsg");
+		BU_ALLOC(lsg, struct line_seg);
 		lsg->magic = magic;
 		lsg->start = ntohl(*(uint32_t *)ptr);
 		ptr += SIZEOF_NETWORK_LONG;
@@ -1048,7 +1049,7 @@ rt_sketch_import4(struct rt_db_internal *ip, const struct bu_external *ep, const
 		sketch_ip->curve.segment[seg_no] = (genptr_t)lsg;
 		break;
 	    case CURVE_CARC_MAGIC:
-		csg = (struct carc_seg *)bu_malloc(sizeof(struct carc_seg), "csg");
+		BU_ALLOC(csg, struct carc_seg);
 		csg->magic = magic;
 		csg->start = ntohl(*(uint32_t *)ptr);
 		ptr += SIZEOF_NETWORK_LONG;
@@ -1064,7 +1065,7 @@ rt_sketch_import4(struct rt_db_internal *ip, const struct bu_external *ep, const
 		sketch_ip->curve.segment[seg_no] = (genptr_t)csg;
 		break;
 	    case CURVE_NURB_MAGIC:
-		nsg = (struct nurb_seg *)bu_malloc(sizeof(struct nurb_seg), "nsg");
+		BU_ALLOC(nsg, struct nurb_seg);
 		nsg->magic = magic;
 		nsg->order = ntohl(*(uint32_t *)ptr);
 		ptr += SIZEOF_NETWORK_LONG;
@@ -1109,7 +1110,7 @@ rt_sketch_import4(struct rt_db_internal *ip, const struct bu_external *ep, const
 		sketch_ip->curve.segment[seg_no] = (genptr_t)nsg;
 		break;
 	    case CURVE_BEZIER_MAGIC:
-		bsg = (struct bezier_seg *)bu_malloc(sizeof(struct bezier_seg), "bsg");
+		BU_ALLOC(bsg, struct bezier_seg);
 		bsg->magic = magic;
 		bsg->degree = ntohl(*(uint32_t *)ptr);
 		ptr += SIZEOF_NETWORK_LONG;
@@ -1378,7 +1379,8 @@ rt_sketch_import5(struct rt_db_internal *ip, const struct bu_external *ep, const
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_SKETCH;
     ip->idb_meth = &rt_functab[ID_SKETCH];
-    ip->idb_ptr = bu_calloc(1, sizeof(struct rt_sketch_internal), "rt_sketch_internal");
+    BU_ALLOC(ip->idb_ptr, struct rt_sketch_internal);
+
     sketch_ip = (struct rt_sketch_internal *)ip->idb_ptr;
     sketch_ip->magic = RT_SKETCH_INTERNAL_MAGIC;
 
@@ -1432,7 +1434,7 @@ rt_sketch_import5(struct rt_db_internal *ip, const struct bu_external *ep, const
 	ptr += SIZEOF_NETWORK_LONG;
 	switch (magic) {
 	    case CURVE_LSEG_MAGIC:
-		lsg = (struct line_seg *)bu_malloc(sizeof(struct line_seg), "lsg");
+		BU_ALLOC(lsg, struct line_seg);
 		lsg->magic = magic;
 		lsg->start = ntohl(*(uint32_t *)ptr);
 		ptr += SIZEOF_NETWORK_LONG;
@@ -1441,7 +1443,7 @@ rt_sketch_import5(struct rt_db_internal *ip, const struct bu_external *ep, const
 		sketch_ip->curve.segment[seg_no] = (genptr_t)lsg;
 		break;
 	    case CURVE_CARC_MAGIC:
-		csg = (struct carc_seg *)bu_malloc(sizeof(struct carc_seg), "csg");
+		BU_ALLOC(csg, struct carc_seg);
 		csg->magic = magic;
 		csg->start = ntohl(*(uint32_t *)ptr);
 		ptr += SIZEOF_NETWORK_LONG;
@@ -1457,7 +1459,7 @@ rt_sketch_import5(struct rt_db_internal *ip, const struct bu_external *ep, const
 		sketch_ip->curve.segment[seg_no] = (genptr_t)csg;
 		break;
 	    case CURVE_NURB_MAGIC:
-		nsg = (struct nurb_seg *)bu_malloc(sizeof(struct nurb_seg), "nsg");
+		BU_ALLOC(nsg, struct nurb_seg);
 		nsg->magic = magic;
 		nsg->order = ntohl(*(uint32_t *)ptr);
 		ptr += SIZEOF_NETWORK_LONG;
@@ -1501,7 +1503,7 @@ rt_sketch_import5(struct rt_db_internal *ip, const struct bu_external *ep, const
 		sketch_ip->curve.segment[seg_no] = (genptr_t)nsg;
 		break;
 	    case CURVE_BEZIER_MAGIC:
-		bsg = (struct bezier_seg *)bu_malloc(sizeof(struct bezier_seg), "bsg");
+		BU_ALLOC(bsg, struct bezier_seg);
 		bsg->magic = magic;
 		bsg->degree = ntohl(*(uint32_t *)ptr);
 		ptr += SIZEOF_NETWORK_LONG;
@@ -2060,19 +2062,19 @@ rt_copy_curve(struct rt_curve *crv_out, const struct rt_curve *crv_in)
 	switch (*lng) {
 	    case CURVE_LSEG_MAGIC:
 		lsg_in = (struct line_seg *)lng;
-		lsg_out = (struct line_seg *)bu_malloc(sizeof(struct line_seg), "line_seg");
+		BU_ALLOC(lsg_out, struct line_seg);
 		crv_out->segment[j] = (genptr_t)lsg_out;
 		*lsg_out = *lsg_in;
 		break;
 	    case CURVE_CARC_MAGIC:
 		csg_in = (struct carc_seg *)lng;
-		csg_out = (struct carc_seg *)bu_malloc(sizeof(struct carc_seg), "carc_seg");
+		BU_ALLOC(csg_out, struct carc_seg);
 		crv_out->segment[j] = (genptr_t)csg_out;
 		*csg_out = *csg_in;
 		break;
 	    case CURVE_NURB_MAGIC:
 		nsg_in = (struct nurb_seg *)lng;
-		nsg_out = (struct nurb_seg *)bu_malloc(sizeof(struct nurb_seg), "nurb_seg");
+		BU_ALLOC(nsg_out, struct nurb_seg);
 		crv_out->segment[j] = (genptr_t)nsg_out;
 		*nsg_out = *nsg_in;
 		nsg_out->ctl_points = (int *)bu_calloc(nsg_in->c_size, sizeof(int), "nsg_out->ctl_points");
@@ -2090,7 +2092,7 @@ rt_copy_curve(struct rt_curve *crv_out, const struct rt_curve *crv_in)
 		break;
 	    case CURVE_BEZIER_MAGIC:
 		bsg_in = (struct bezier_seg *)lng;
-		bsg_out = (struct bezier_seg *)bu_malloc(sizeof(struct bezier_seg), "bezier_seg");
+		BU_ALLOC(bsg_out, struct bezier_seg);
 		crv_out->segment[j] = (genptr_t)bsg_out;
 		*bsg_out = *bsg_in;
 		bsg_out->ctl_points = (int *)bu_calloc(bsg_out->degree + 1,
@@ -2121,7 +2123,7 @@ rt_copy_sketch(const struct rt_sketch_internal *sketch_ip)
 	bu_mem_barriercheck();
     }
 
-    out = (struct rt_sketch_internal *) bu_malloc(sizeof(struct rt_sketch_internal), "rt_sketch_internal");
+    BU_ALLOC(out, struct rt_sketch_internal);
     *out = *sketch_ip;	/* struct copy */
 
     if (out->vert_count)
@@ -2312,7 +2314,7 @@ get_tcl_curve(Tcl_Interp *interp, struct rt_curve *crv, Tcl_Obj *seg_list)
 	if (BU_STR_EQUAL(type, "line")) {
 	    struct line_seg *lsg;
 
-	    lsg = (struct line_seg *)bu_calloc(1, sizeof(struct line_seg), "lsg");
+	    BU_ALLOC(lsg, struct line_seg);
 	    for (k=1; k<seg_len; k += 2) {
 		ret=Tcl_ListObjIndex(interp, seg, k, &seg_elem);
 		if (ret)
@@ -2338,7 +2340,7 @@ get_tcl_curve(Tcl_Interp *interp, struct rt_curve *crv, Tcl_Obj *seg_list)
 	    struct bezier_seg *bsg;
 	    int num_points;
 
-	    bsg = (struct bezier_seg *)bu_calloc(1, sizeof(struct bezier_seg), "bsg");
+	    BU_ALLOC(bsg, struct bezier_seg);
 	    for (k=1; k<seg_len; k+= 2) {
 
 		ret=Tcl_ListObjIndex(interp, seg, k, &seg_elem);
@@ -2373,7 +2375,7 @@ get_tcl_curve(Tcl_Interp *interp, struct rt_curve *crv, Tcl_Obj *seg_list)
 	    struct carc_seg *csg;
 	    double tmp;
 
-	    csg = (struct carc_seg *)bu_calloc(1, sizeof(struct carc_seg), "csg");
+	    BU_ALLOC(csg, struct carc_seg);
 	    for (k=1; k<seg_len; k += 2) {
 		ret=Tcl_ListObjIndex(interp, seg, k, &seg_elem);
 		if (ret)
@@ -2408,7 +2410,7 @@ get_tcl_curve(Tcl_Interp *interp, struct rt_curve *crv, Tcl_Obj *seg_list)
 	} else if (BU_STR_EQUAL(type, "nurb")) {
 	    struct nurb_seg *nsg;
 
-	    nsg = (struct nurb_seg *)bu_calloc(1, sizeof(struct nurb_seg), "nsg");
+	    BU_ALLOC(nsg, struct nurb_seg);
 	    for (k=1; k<seg_len; k += 2) {
 		ret=Tcl_ListObjIndex(interp, seg, k, &seg_elem);
 		if (ret)

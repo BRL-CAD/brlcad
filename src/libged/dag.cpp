@@ -670,7 +670,7 @@ _ged_graph_positions(struct ged *gedp)
 {
     struct _ged_dag_data *dag;
 
-    dag = (struct _ged_dag_data *) bu_malloc(sizeof(_ged_dag_data), "DAG structure");
+    BU_ALLOC(dag, struct _ged_dag_data);
     dag->router = new Avoid::Router(Avoid::PolyLineRouting);
 
     /* Get the name, type and position within the graph for each object. */
@@ -692,7 +692,7 @@ _ged_graph_show(struct ged *gedp)
 {
     struct _ged_dag_data *dag;
 
-    dag = (struct _ged_dag_data *) bu_malloc(sizeof(_ged_dag_data), "DAG structure");
+    BU_ALLOC(dag, struct _ged_dag_data);
     dag->router = new Avoid::Router(Avoid::PolyLineRouting);
 
     /* Get the name, type and position within the graph for each object. */

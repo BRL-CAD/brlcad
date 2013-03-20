@@ -199,7 +199,7 @@ rt_metaball_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rti
     RT_METABALL_CK_MAGIC(mb);
 
     /* generate a copy of the metaball */
-    nmb = bu_malloc(sizeof(struct rt_metaball_internal), "rt_metaball_prep: nmb");
+    BU_ALLOC(nmb, struct rt_metaball_internal);
     nmb->magic = RT_METABALL_INTERNAL_MAGIC;
     BU_LIST_INIT(&nmb->metaball_ctrl_head);
     nmb->threshold = mb->threshold;
@@ -207,7 +207,7 @@ rt_metaball_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rti
 
     /* and copy the list of control points */
     for (BU_LIST_FOR(mbpt, wdb_metaballpt, &mb->metaball_ctrl_head)) {
-	nmbpt = (struct wdb_metaballpt *)bu_malloc(sizeof(struct wdb_metaballpt), "rt_metaball_prep: nmbpt");
+	BU_ALLOC(nmbpt, struct wdb_metaballpt);
 	nmbpt->fldstr = mbpt->fldstr;
 	if (mbpt->fldstr < minfstr)
 	    minfstr = mbpt->fldstr;
@@ -724,11 +724,13 @@ rt_metaball_import5(struct rt_db_internal *ip, const struct bu_external *ep, reg
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_METABALL;
     ip->idb_meth = &rt_functab[ID_METABALL];
-    ip->idb_ptr = bu_malloc(sizeof(struct rt_metaball_internal), "rt_metaball_internal");
+    BU_ALLOC(ip->idb_ptr, struct rt_metaball_internal);
+
     mb = (struct rt_metaball_internal *)ip->idb_ptr;
     mb->magic = RT_METABALL_INTERNAL_MAGIC;
     mb->method = ntohl(*(uint32_t *)(ep->ext_buf + SIZEOF_NETWORK_LONG));
     mb->threshold = buf[0];
+
     BU_LIST_INIT(&mb->metaball_ctrl_head);
     if (mat == NULL) mat = bn_mat_identity;
     for (i=1; i<=metaball_count*5; i+=5) {

@@ -110,11 +110,9 @@ mk_solid(char *name, fastf_t dist)
 {
     struct sol_name_dist *sp;
 
-    sp = (struct sol_name_dist *)
-	bu_malloc(sizeof(struct sol_name_dist), "solid");
+    BU_ALLOC(sp, struct sol_name_dist);
     sp->magic = SOL_NAME_DIST_MAGIC;
-    sp->name = (char *)
-	bu_malloc(strlen(name)+1, "solid name");
+    sp->name = (char *)bu_malloc(strlen(name)+1, "solid name");
     bu_strlcpy(sp->name, name, strlen(name)+1);
     sp->dist = dist;
     return sp;

@@ -1677,8 +1677,8 @@ isect_2D_loop_ray(point2d_t pta, point2d_t dir, struct bu_ptbl *loop, struct loo
 		if (code == 0) {
 		    /* edge is collinear with ray */
 		    /* add two intersections, one at each end vertex */
-		    inter = (struct loop_inter *)bu_calloc(sizeof(struct loop_inter), 1,
-							   "loop intersection");
+		    BU_ALLOC(inter, struct loop_inter);
+
 		    inter->which_loop = which_loop;
 		    inter->vert_index = lsg->start;
 		    inter->dist = dist[0];
@@ -1689,8 +1689,8 @@ isect_2D_loop_ray(point2d_t pta, point2d_t dir, struct bu_ptbl *loop, struct loo
 			inter->next = (*root);
 			(*root) = inter;
 		    }
-		    inter = (struct loop_inter *)bu_calloc(sizeof(struct loop_inter), 1,
-							   "loop intersection");
+		    BU_ALLOC(inter, struct loop_inter);
+
 		    inter->which_loop = which_loop;
 		    inter->vert_index = lsg->end;
 		    inter->dist = dist[1];
@@ -1699,8 +1699,8 @@ isect_2D_loop_ray(point2d_t pta, point2d_t dir, struct bu_ptbl *loop, struct loo
 		    (*root) = inter;
 		} else if (code == 1) {
 		    /* hit at start vertex */
-		    inter = (struct loop_inter *)bu_calloc(sizeof(struct loop_inter), 1,
-							   "loop intersection");
+		    BU_ALLOC(inter, struct loop_inter);
+
 		    inter->which_loop = which_loop;
 		    inter->vert_index = lsg->start;
 		    inter->dist = dist[0];
@@ -1713,8 +1713,8 @@ isect_2D_loop_ray(point2d_t pta, point2d_t dir, struct bu_ptbl *loop, struct loo
 		    }
 		} else if (code == 2) {
 		    /* hit at end vertex */
-		    inter = (struct loop_inter *)bu_calloc(sizeof(struct loop_inter), 1,
-							   "loop intersection");
+		    BU_ALLOC(inter, struct loop_inter);
+
 		    inter->which_loop = which_loop;
 		    inter->vert_index = lsg->end;
 		    inter->dist = dist[0];
@@ -1727,8 +1727,8 @@ isect_2D_loop_ray(point2d_t pta, point2d_t dir, struct bu_ptbl *loop, struct loo
 		    }
 		} else {
 		    /* hit on edge, not at a vertex */
-		    inter = (struct loop_inter *)bu_calloc(sizeof(struct loop_inter), 1,
-							   "loop intersection");
+		    BU_ALLOC(inter, struct loop_inter);
+
 		    inter->which_loop = which_loop;
 		    inter->vert_index = -1;
 		    inter->dist = dist[0];
@@ -1759,8 +1759,8 @@ isect_2D_loop_ray(point2d_t pta, point2d_t dir, struct bu_ptbl *loop, struct loo
 		    if (code <= 0)
 			break;
 		    for (j=0; j<code; j++) {
-			inter = (struct loop_inter *)bu_calloc(sizeof(struct loop_inter), 1,
-							       "loop intersection");
+			BU_ALLOC(inter, struct loop_inter);
+
 			inter->which_loop = which_loop;
 			inter->vert_index = -1;
 			inter->dist = dist[j];
@@ -1814,8 +1814,8 @@ isect_2D_loop_ray(point2d_t pta, point2d_t dir, struct bu_ptbl *loop, struct loo
 		    if (code <= 0)
 			break;
 		    for (j=0; j<code; j++) {
-			inter = (struct loop_inter *)bu_calloc(sizeof(struct loop_inter), 1,
-							       "loop intersection");
+			BU_ALLOC(inter, struct loop_inter);
+
 			inter->which_loop = which_loop;
 			inter->vert_index = -1;
 			inter->dist = dist[j];
@@ -1840,8 +1840,8 @@ isect_2D_loop_ray(point2d_t pta, point2d_t dir, struct bu_ptbl *loop, struct loo
 		for (j=0; j<code; j++) {
 		    V2SUB2(diff, intercept[j], pta);
 		    dist[0] = sqrt(MAG2SQ(diff));
-		    inter = (struct loop_inter *)bu_calloc(sizeof(struct loop_inter), 1,
-							   "loop intersection");
+		    BU_ALLOC(inter, struct loop_inter);
+
 		    inter->which_loop = which_loop;
 		    inter->vert_index = -1;
 		    inter->dist = dist[0];
@@ -2049,7 +2049,7 @@ rt_extrude_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip
 	if (used_seg[i])
 	    continue;
 
-	aloop = (struct bu_ptbl *)bu_calloc(1, sizeof(struct bu_ptbl), "aloop");
+	BU_ALLOC(aloop, struct bu_ptbl);
 	bu_ptbl_init(aloop, 5, "aloop");
 
 	bu_ptbl_ins(aloop, (long *)crv->segment[i]);
@@ -2097,7 +2097,7 @@ rt_extrude_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip
     containing_loops = (struct bu_ptbl **)bu_calloc(BU_PTBL_END(&loops),
 						    sizeof(struct bu_ptbl *), "containing_loops");
     for (i=0; i<(size_t)BU_PTBL_END(&loops); i++) {
-	containing_loops[i] = (struct bu_ptbl *)bu_calloc(1, sizeof(struct bu_ptbl), "containing_loops[i]");
+	BU_ALLOC(containing_loops[i], struct bu_ptbl);
 	bu_ptbl_init(containing_loops[i], BU_PTBL_END(&loops), "containing_loops[i]");
     }
 
@@ -2334,7 +2334,8 @@ rt_extrude_import4(struct rt_db_internal *ip, const struct bu_external *ep, cons
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_EXTRUDE;
     ip->idb_meth = &rt_functab[ID_EXTRUDE];
-    ip->idb_ptr = bu_malloc(sizeof(struct rt_extrude_internal), "rt_extrude_internal");
+    BU_ALLOC(ip->idb_ptr, struct rt_extrude_internal);
+
     extrude_ip = (struct rt_extrude_internal *)ip->idb_ptr;
     extrude_ip->magic = RT_EXTRUDE_INTERNAL_MAGIC;
 
@@ -2500,7 +2501,8 @@ rt_extrude_import5(struct rt_db_internal *ip, const struct bu_external *ep, cons
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_EXTRUDE;
     ip->idb_meth = &rt_functab[ID_EXTRUDE];
-    ip->idb_ptr = bu_malloc(sizeof(struct rt_extrude_internal), "rt_extrude_internal");
+    BU_ALLOC(ip->idb_ptr, struct rt_extrude_internal);
+
     extrude_ip = (struct rt_extrude_internal *)ip->idb_ptr;
     extrude_ip->magic = RT_EXTRUDE_INTERNAL_MAGIC;
 
@@ -2635,7 +2637,7 @@ rt_extrude_xform(
 
     if (op != ip) {
 	RT_DB_INTERNAL_INIT(op);
-	eop = (struct rt_extrude_internal *)bu_malloc(sizeof(struct rt_extrude_internal), "eop");
+	BU_ALLOC(eop, struct rt_extrude_internal);
 	eop->magic = RT_EXTRUDE_INTERNAL_MAGIC;
 	eop->sketch_name = bu_strdup(eip->sketch_name);
 	op->idb_ptr = (genptr_t)eop;

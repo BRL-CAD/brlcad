@@ -301,7 +301,7 @@ rt_memfree(struct mem_map **pp, size_t size, off_t addr)
 
 	default:		/* No matches; allocate and insert */
 	    if ((tmap=rt_mem_freemap) == MAP_NULL)
-		tmap = (struct mem_map *)bu_malloc(sizeof(struct mem_map), "struct mem_map " BU_FLSTR);
+		BU_ALLOC(tmap, struct mem_map);
 	    else
 		rt_mem_freemap = rt_mem_freemap->m_nxtp;	/* Click one off */
 

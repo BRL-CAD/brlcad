@@ -184,8 +184,9 @@ read_data(void)
 void
 process_sphere(int id, fastf_t *center, double rad, int sph_type)
 {
-    struct sphere * newsph = (struct sphere *)
-	bu_malloc(sizeof (struct sphere), "newsph");
+    struct sphere *newsph;
+    BU_ALLOC(newsph, struct sphere);
+
     char nm[128], nm1[128];
     unsigned char rgb[3];
     struct wmember reg_head;

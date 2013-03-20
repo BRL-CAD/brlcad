@@ -165,7 +165,8 @@ overlap(struct application *ap, struct partition *pp, struct region *reg1, struc
 	struct overlap_list *prev_ol = (struct overlap_list *)0;
 	struct overlap_list *op;		/* overlap list */
 	struct overlap_list *new_op;
-	new_op =(struct overlap_list *)bu_malloc(sizeof(struct overlap_list), "overlap list");
+
+	BU_ALLOC(new_op, struct overlap_list);
 
 	/* look for it in our list */
 	bu_semaphore_acquire(BU_SEM_SYSCALL);

@@ -788,8 +788,8 @@ rhc_hyperbolic_curve(fastf_t mag_b, fastf_t c, fastf_t r, int num_points)
 	return NULL;
     }
 
-    curve = (struct rt_pt_node *)bu_malloc(sizeof(struct rt_pt_node), "rt_pt_node");
-    curve->next = (struct rt_pt_node *)bu_malloc(sizeof(struct rt_pt_node), "rt_pt_node");
+    BU_ALLOC(curve, struct rt_pt_node);
+    BU_ALLOC(curve->next, struct rt_pt_node);
 
     curve->next->next = NULL;
     VSET(curve->p,       0, 0, -mag_b);
@@ -1062,8 +1062,9 @@ rt_rhc_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
     }
 
     /* initial hyperbola approximation is a single segment */
-    pts = (struct rt_pt_node *)bu_malloc(sizeof(struct rt_pt_node), "rt_pt_node");
-    pts->next = (struct rt_pt_node *)bu_malloc(sizeof(struct rt_pt_node), "rt_pt_node");
+    BU_ALLOC(pts, struct rt_pt_node);
+    BU_ALLOC(pts->next, struct rt_pt_node);
+
     pts->next->next = NULL;
     VSET(pts->p,       0, -rh, 0);
     VSET(pts->next->p, 0,  rh, 0);
@@ -1194,7 +1195,7 @@ rt_mk_hyperbola(struct rt_pt_node *pts, fastf_t r, fastf_t b, fastf_t c, fastf_t
     /* split segment at widest point if not within error tolerances */
     if (dist > dtol || theta0 > ntol || theta1 > ntol) {
 	/* split segment */
-	newpt = (struct rt_pt_node *)bu_malloc(sizeof(struct rt_pt_node), "rt_pt_node");
+	BU_ALLOC(newpt, struct rt_pt_node);
 	VMOVE(newpt->p, mpt);
 	newpt->next = pts->next;
 	pts->next = newpt;
@@ -1282,8 +1283,9 @@ rt_rhc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     }
 
     /* initial hyperbola approximation is a single segment */
-    pts = (struct rt_pt_node *)bu_malloc(sizeof(struct rt_pt_node), "rt_pt_node");
-    pts->next = (struct rt_pt_node *)bu_malloc(sizeof(struct rt_pt_node), "rt_pt_node");
+    BU_ALLOC(pts, struct rt_pt_node);
+    BU_ALLOC(pts->next, struct rt_pt_node);
+
     pts->next->next = NULL;
     VSET(pts->p,       0, -rh, 0);
     VSET(pts->next->p, 0,  rh, 0);
@@ -1497,7 +1499,8 @@ rt_rhc_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_RHC;
     ip->idb_meth = &rt_functab[ID_RHC];
-    ip->idb_ptr = bu_malloc(sizeof(struct rt_rhc_internal), "rt_rhc_internal");
+    BU_ALLOC(ip->idb_ptr, struct rt_rhc_internal);
+
     xip = (struct rt_rhc_internal *)ip->idb_ptr;
     xip->rhc_magic = RT_RHC_INTERNAL_MAGIC;
 
@@ -1611,7 +1614,7 @@ rt_rhc_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_RHC;
     ip->idb_meth = &rt_functab[ID_RHC];
-    ip->idb_ptr = bu_malloc(sizeof(struct rt_rhc_internal), "rt_rhc_internal");
+    BU_ALLOC(ip->idb_ptr, struct rt_rhc_internal);
 
     xip = (struct rt_rhc_internal *)ip->idb_ptr;
     xip->rhc_magic = RT_RHC_INTERNAL_MAGIC;

@@ -228,7 +228,7 @@ nmg_class_pt_vu(struct fpi *fpi, struct vertexuse *vu)
      */
     VSUB2(delta, vu->v_p->vg_p->coord, fpi->pt);
 
-    ved = (struct ve_dist *) bu_malloc(sizeof(struct ve_dist), "ve_dist structure");
+    BU_ALLOC(ved, struct ve_dist);
     ved->magic_p = &vu->v_p->magic;
     ved->dist = MAGNITUDE(delta);
     if (ved->dist < fpi->tol->dist_sq) {
@@ -575,7 +575,7 @@ nmg_class_pt_eu(struct fpi *fpi, struct edgeuse *eu, struct edge_info *edge_list
 	tmp_tol.dist_sq = 0.0;
     }
 
-    ved = (struct ve_dist *)bu_malloc(sizeof(struct ve_dist), "ve_dist structure");
+    BU_ALLOC(ved, struct ve_dist);
     ved->magic_p = &eu->e_p->magic;
     ved->status = bn_distsq_pt3_lseg3(&ved->dist,
 				      eu->vu_p->v_p->vg_p->coord,
@@ -600,7 +600,7 @@ nmg_class_pt_eu(struct fpi *fpi, struct edgeuse *eu, struct edge_info *edge_list
     /* Add a struct for this edgeuse to the loop's list of dist-sorted
      * edgeuses.
      */
-    ei = (struct edge_info *)bu_malloc(sizeof(struct edge_info), "struct edge_info");
+    BU_ALLOC(ei, struct edge_info);
     ei->ved_p = ved;
     ei->eu_p = eu;
     BU_LIST_MAGIC_SET(&ei->l, NMG_EDGE_INFO_MAGIC);
@@ -622,7 +622,7 @@ nmg_class_pt_eu(struct fpi *fpi, struct edgeuse *eu, struct edge_info *edge_list
 	     * other uses of this vertex will claim the point is within
 	     * tolerance without re-computing
 	     */
-	    ed = (struct ve_dist *)bu_malloc(sizeof(struct ve_dist), "ve_dist structure");
+	    BU_ALLOC(ed, struct ve_dist);
 	    ed->magic_p = &ved->v1->magic;
 	    ed->status = ved->status;
 	    ed->v1 = ed->v2 = ved->v1;
@@ -643,7 +643,7 @@ nmg_class_pt_eu(struct fpi *fpi, struct edgeuse *eu, struct edge_info *edge_list
 	     * other uses of this vertex will claim the point is within
 	     * tolerance without re-computing
 	     */
-	    ed = (struct ve_dist *)bu_malloc(sizeof(struct ve_dist), "ve_dist structure");
+	    BU_ALLOC(ed, struct ve_dist);
 	    ed->magic_p = &ved->v2->magic;
 	    ed->status = ved->status;
 	    ed->v1 = ed->v2 = ved->v2;

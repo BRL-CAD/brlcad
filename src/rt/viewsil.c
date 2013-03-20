@@ -87,8 +87,7 @@ view_init(register struct application *UNUSED(ap), char *UNUSED(file), char *UNU
 	rt_g.rtg_parallel = 0;
 	bu_log("rtsil: Can't do parallel yet, using one CPU\n");
     }
-    scanbuf = (unsigned char *)
-	bu_malloc( width, "scanline buffer" );
+    scanbuf = (unsigned char *)bu_malloc( width, "scanline buffer" );
     return 0;		/* no framebuffer needed */
 }
 

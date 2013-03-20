@@ -123,7 +123,7 @@ add_regions(struct ged *gedp, struct simulation_params *sim_params)
 
 
 	    /* Add to simulation list */
-	    current_node = (struct rigid_body *)bu_malloc(sizeof(struct rigid_body), "rigid_body: current_node");
+	    BU_ALLOC(current_node, struct rigid_body);
 	    current_node->index = sim_params->num_bodies;
 	    current_node->rb_namep = bu_strdup(bu_vls_addr(&dp_name_vls));
 	    current_node->dp = ndp;

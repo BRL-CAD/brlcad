@@ -224,8 +224,7 @@ approximate_parabolic_curve(struct rt_pt_node *pts, fastf_t p, int num_new_point
 	}
 
 	/* insert new point between endpoints of the least accurate segment */
-	new_node = (struct rt_pt_node *)bu_malloc(sizeof(struct rt_pt_node),
-		    "rt_pt_node");
+	BU_ALLOC(new_node, struct rt_pt_node);
 	VMOVE(new_node->p, new_point);
 	new_node->next = worst_node->next;
 	worst_node->next = new_node;
@@ -327,8 +326,7 @@ approximate_hyperbolic_curve(struct rt_pt_node *pts, fastf_t a, fastf_t b, int n
 	}
 
 	/* insert new point between endpoints of the least accurate segment */
-	new_node = (struct rt_pt_node *)bu_malloc(sizeof(struct rt_pt_node),
-		    "rt_pt_node");
+	BU_ALLOC(new_node, struct rt_pt_node);
 	VMOVE(new_node->p, new_point);
 	new_node->next = worst_node->next;
 	worst_node->next = new_node;

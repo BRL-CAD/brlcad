@@ -124,10 +124,10 @@ Readpoints(void)
     printf("X Y Z (^D for end): ");
     while (scanf("%lf%lf%lf", &x, &y, &z) ==  3) {
 	if (ptr == NULL) {
-	    ptr = (struct points *)bu_malloc(sizeof(struct points), "ptr");
+	    BU_ALLOC(ptr, struct points);
 	    root = ptr;
 	} else {
-	    ptr->next = (struct points *)bu_malloc(sizeof(struct points), "ptr->next");
+	    BU_ALLOC(ptr->next, struct points);
 	    ptr = ptr->next;
 	}
 	ptr->next = NULL;

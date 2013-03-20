@@ -69,8 +69,8 @@ rt_revolve_make(const struct rt_functab *ftp, struct rt_db_internal *intern)
     BU_ASSERT(&rt_functab[intern->idb_type] == ftp);
 
     intern->idb_meth = ftp;
-    rev = (struct rt_revolve_internal *)bu_calloc(sizeof(struct rt_revolve_internal), 1,
-					      "rt_revolve_internal");
+    BU_ALLOC(rev, struct rt_revolve_internal);
+
     intern->idb_ptr = (genptr_t)rev;
     rev->magic = RT_REVOLVE_INTERNAL_MAGIC;
 
@@ -1515,7 +1515,8 @@ rt_revolve_import5(struct rt_db_internal *ip, const struct bu_external *ep, cons
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_REVOLVE;
     ip->idb_meth = &rt_functab[ID_REVOLVE];
-    ip->idb_ptr = bu_malloc(sizeof(struct rt_revolve_internal), "rt_revolve_internal");
+    BU_ALLOC(ip->idb_ptr, struct rt_revolve_internal);
+
     rip = (struct rt_revolve_internal *)ip->idb_ptr;
     rip->magic = RT_REVOLVE_INTERNAL_MAGIC;
 
@@ -1591,7 +1592,7 @@ rt_revolve_xform(
 
     if (op != ip) {
 	RT_DB_INTERNAL_INIT(op);
-	rop = (struct rt_revolve_internal *)bu_malloc(sizeof(struct rt_revolve_internal), "rop");
+	BU_ALLOC(rop, struct rt_revolve_internal);
 	rop->magic = RT_REVOLVE_INTERNAL_MAGIC;
 	bu_vls_init(&rop->sketch_name);
 	bu_vls_vlscat(&rop->sketch_name, &rip->sketch_name);

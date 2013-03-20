@@ -56,7 +56,7 @@ void enqueue_site (struct bu_list *sl, fastf_t x, fastf_t y, fastf_t z)
 
     BU_CK_LIST_HEAD(sl);
 
-    sp = (struct site *) bu_malloc(sizeof(struct site), "site structure");
+    BU_ALLOC(sp, struct site);
     sp->s_magic = SITE_MAGIC;
     sp->s_x = x;
     sp->s_y = y;

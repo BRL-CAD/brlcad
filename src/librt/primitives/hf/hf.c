@@ -1979,7 +1979,8 @@ rt_hf_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fas
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_HF;
     ip->idb_meth = &rt_functab[ID_HF];
-    ip->idb_ptr = bu_calloc(1, sizeof(struct rt_hf_internal), "rt_hf_internal");
+    BU_ALLOC(ip->idb_ptr, struct rt_hf_internal);
+
     xip = (struct rt_hf_internal *)ip->idb_ptr;
     xip->magic = RT_HF_INTERNAL_MAGIC;
 

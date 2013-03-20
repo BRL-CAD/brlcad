@@ -42,20 +42,25 @@ extern "C" {
 extern "C" void
 rt_ebm_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *tol)
 {
-    struct rt_db_internal *tmp_internal = (struct rt_db_internal *) bu_malloc(sizeof(struct rt_db_internal), "allocate structure");
-    RT_DB_INTERNAL_INIT(tmp_internal);
+    struct rt_db_internal *tmp_internal;
     struct rt_tess_tol ttmptol;
+
+    BU_ALLOC(tmp_internal, struct rt_db_internal);
+    RT_DB_INTERNAL_INIT(tmp_internal);
+
     ttmptol.abs = 0;
     ttmptol.rel = 0.01;
     ttmptol.norm = 0;
-    const struct rt_tess_tol *ttol = &ttmptol;
 
+    const struct rt_tess_tol *ttol = &ttmptol;
     struct model *ebmm = nmg_mm();
     struct nmgregion *ebmr;
+
     tmp_internal->idb_ptr = (genptr_t)ip->idb_ptr;
     rt_ebm_tess(&ebmr, ebmm, tmp_internal, ttol, tol);
     tmp_internal->idb_ptr = (genptr_t)ebmm;
     rt_nmg_brep(b, tmp_internal, tol);
+
     FREE_MODEL(ebmm);
     bu_free(tmp_internal, "free temporary rt_db_internal");
 }

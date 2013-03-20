@@ -68,7 +68,7 @@ struct pixel *mk_pixel (unsigned char *color)
     int i;
     struct pixel *pp;
 
-    pp = (struct pixel *) bu_malloc(sizeof(struct pixel), "pixel");
+    BU_ALLOC(pp, struct pixel);
 
     pp->p_magic = PIXEL_MAGIC;
     pp->p_color = (unsigned char *)

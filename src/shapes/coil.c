@@ -374,7 +374,7 @@ ReadArgs(int argc, char **argv, struct bu_list *sections, fastf_t *mean_outer_di
 		*overall_length = lngth;
 		break;
 	    case 'S':
-		coil_data = (struct coil_data_t *)bu_malloc(sizeof(struct coil_data_t), "coil data structure");
+		BU_ALLOC(coil_data, struct coil_data_t);
 		sscanf(bu_optarg, "%d%c%f%c%f%c%f%c%f%c%d", &d1, &s1, &d2, &s2, &d3, &s3, &d4, &s4, &d5, &s5, &d6);
 		coil_data->nt = d1;
 		coil_data->od = d2;
@@ -471,7 +471,7 @@ main(int ac, char *av[])
 	    nt = 30;
 	}
 
-	coil_data = (struct coil_data_t *) bu_malloc(sizeof(struct coil_data_t), "coil data structure");
+	BU_ALLOC(coil_data, struct coil_data_t);
 	coil_data->nt = nt;
 	coil_data->od = mean_outer_diameter;
 	coil_data->wd = wire_diameter;

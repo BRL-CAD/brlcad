@@ -494,8 +494,7 @@ view_init(struct application *ap, char *file, char *UNUSED(obj), int minus_o, in
 	occlusion_apps = bu_calloc(npsw, sizeof(struct application *),
 				   "occlusion application structure array");
 	for (i=0; i<npsw; ++i) {
-	    occlusion_apps[i] = bu_malloc(sizeof(struct application), "occlusion_application structure");
-
+	    BU_ALLOC(occlusion_apps[i], struct application);
 	    RT_APPLICATION_INIT(occlusion_apps[i]);
 
 	    occlusion_apps[i]->a_rt_i = occlusion_rtip;
@@ -616,7 +615,7 @@ view_2init(struct application *UNUSED(ap), char *UNUSED(framename))
      */
     for (i = 0; i < npsw; ++i) {
 	if (saved[i] == NULL)
-	    saved[i] = (struct cell *) bu_calloc(1, sizeof(struct cell), "saved cell info");
+	    BU_ALLOC(saved[i], struct cell);
 	if (writeable[i] == NULL)
 	    writeable[i] = (unsigned char *) bu_calloc(1, per_processor_chunk, "writeable pixel flag buffer");
 	if (scanline[i] == NULL)

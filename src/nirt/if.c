@@ -278,8 +278,7 @@ if_overlap(struct application *ap, struct partition *pp, struct region *reg1, st
 {
     overlap *new_ovlp;
 
-    /* N. B. bu_malloc() only returns on successful allocation */
-    new_ovlp = (overlap *) bu_malloc(sizeof(overlap), "new_ovlp");
+    BU_ALLOC(new_ovlp, overlap);
 
     new_ovlp->ap = ap;
     new_ovlp->pp = pp;

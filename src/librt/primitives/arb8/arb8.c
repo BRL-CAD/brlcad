@@ -1250,7 +1250,8 @@ rt_arb_import4(struct rt_db_internal *ip, const struct bu_external *ep, register
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_ARB8;
     ip->idb_meth = &rt_functab[ID_ARB8];
-    ip->idb_ptr = bu_malloc(sizeof(struct rt_arb_internal), "rt_arb_internal");
+    BU_ALLOC(ip->idb_ptr, struct rt_arb_internal);
+
     aip = (struct rt_arb_internal *)ip->idb_ptr;
     aip->magic = RT_ARB_INTERNAL_MAGIC;
 
@@ -1331,7 +1332,7 @@ rt_arb_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_ARB8;
     ip->idb_meth = &rt_functab[ID_ARB8];
-    ip->idb_ptr = bu_malloc(sizeof(struct rt_arb_internal), "rt_arb_internal");
+    BU_ALLOC(ip->idb_ptr, struct rt_arb_internal);
 
     aip = (struct rt_arb_internal *)ip->idb_ptr;
     aip->magic = RT_ARB_INTERNAL_MAGIC;

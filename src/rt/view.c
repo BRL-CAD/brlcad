@@ -1455,12 +1455,14 @@ view_init(struct application *UNUSED(ap), char *UNUSED(file), char *UNUSED(obj),
 	struct rt_functab *functab;
 	struct directory *dp;
 
-	kut_soltab = bu_calloc(1, sizeof(struct soltab), "kut_soltab");
+	BU_ALLOC(kut_soltab, struct soltab);
 	kut_soltab->l.magic = RT_SOLTAB_MAGIC;
-	dp = bu_calloc(1, sizeof(struct directory), "kut dp");
+
+	BU_ALLOC(dp, struct directory);
 	dp->d_namep = bu_strdup("fake kut primitive");
 	kut_soltab->st_dp = dp;
-	functab = bu_calloc(1, sizeof(struct rt_functab), "kut_soltab->st_meth");
+
+	BU_ALLOC(functab, struct rt_functab);
 	functab->magic = RT_FUNCTAB_MAGIC;
 	functab->ft_norm = kut_ft_norm;
 	kut_soltab->st_meth = functab;

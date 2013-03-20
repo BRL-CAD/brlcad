@@ -1895,7 +1895,7 @@ isect_ray_snurb_face(struct ray_data *rd, struct faceuse *fu, struct face_g_snur
 	    if (u >= srf->u.knots[0] && u <= srf->u.knots[srf->u.k_size-1] &&
 		v >= srf->v.knots[0] && v <= srf->v.knots[srf->v.k_size-1])
 	    {
-		hp = (struct rt_nurb_uv_hit *)bu_calloc(1, sizeof(struct rt_nurb_uv_hit), "struct rt_nurb_uv_hit");
+		BU_ALLOC(hp, struct rt_nurb_uv_hit);
 		hp->next = (struct rt_nurb_uv_hit *)NULL;
 		hp->sub = 0;
 		hp->u = u;

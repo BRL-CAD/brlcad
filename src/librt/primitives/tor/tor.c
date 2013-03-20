@@ -1436,7 +1436,8 @@ rt_tor_import4(struct rt_db_internal *ip, const struct bu_external *ep, register
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_TOR;
     ip->idb_meth = &rt_functab[ID_TOR];
-    ip->idb_ptr = bu_malloc(sizeof(struct rt_tor_internal), "rt_tor_internal");
+    BU_ALLOC(ip->idb_ptr, struct rt_tor_internal);
+
     tip = (struct rt_tor_internal *)ip->idb_ptr;
     tip->magic = RT_TOR_INTERNAL_MAGIC;
 
@@ -1638,9 +1639,9 @@ rt_tor_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_TOR;
     ip->idb_meth = &rt_functab[ID_TOR];
-    ip->idb_ptr = bu_malloc(sizeof(struct rt_tor_internal), "rt_tor_internal");
-    tip = (struct rt_tor_internal *)ip->idb_ptr;
+    BU_ALLOC(ip->idb_ptr, struct rt_tor_internal);
 
+    tip = (struct rt_tor_internal *)ip->idb_ptr;
     tip->magic = RT_TOR_INTERNAL_MAGIC;
 
     ntohd((unsigned char *)&rec, ep->ext_buf, 2*3+2);

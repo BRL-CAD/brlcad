@@ -129,7 +129,7 @@ points_setup(register struct region *UNUSED(rp), struct bu_vls *matparm, genptr_
 	if (buf[0] == '#')
 	    continue;		/* comment */
 
-	pp = (struct points *)bu_calloc(1, sizeof(struct points), "point");
+	BU_ALLOC(pp, struct points);
 	sscanf(buf, "%lf%lf%lf", &u, &v, &mag);
 	pp->u = u;
 	pp->v = v;

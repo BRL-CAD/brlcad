@@ -983,7 +983,7 @@ wdb_eval_etree(union E_tree *eptr,
     switch (eptr->l.op) {
 	case OP_DB_LEAF:
 	case OP_SOLID:
-	    A = (struct bu_list *)bu_malloc(sizeof(struct bu_list), "bu_list");
+	    BU_ALLOC(A, struct bu_list);
 	    BU_LIST_INIT(A);
 	    BU_LIST_INSERT_LIST(A, &eptr->l.seghead);
 
@@ -1646,8 +1646,9 @@ wdb_Eplot(union E_tree *eptr,
 		    }
 
 		    /* build a segment list for each solid */
-		    A = (struct bu_list *)bu_calloc(1, sizeof(struct bu_list), "A");
-		    B = (struct bu_list *)bu_calloc(1, sizeof(struct bu_list), "B");
+		    BU_ALLOC(A, struct bu_list);
+		    BU_ALLOC(B, struct bu_list);
+
 		    BU_LIST_INIT(A);
 		    BU_LIST_INIT(B);
 
@@ -2092,7 +2093,7 @@ dgo_E_cmd(struct dg_obj *dgop,
 
     dgo_eraseobjpath(dgop, argc, argv, LOOKUP_QUIET, 0);
 
-    dgcdp->ap = (struct application *)bu_malloc(sizeof(struct application), "Big E app");
+    BU_ALLOC(dgcdp->ap, struct application);
     RT_APPLICATION_INIT(dgcdp->ap);
     dgcdp->ap->a_resource = &rt_uniresource;
     rt_uniresource.re_magic = RESOURCE_MAGIC;

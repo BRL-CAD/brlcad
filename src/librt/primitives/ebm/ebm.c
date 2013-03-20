@@ -529,7 +529,8 @@ rt_ebm_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_EBM;
     ip->idb_meth = &rt_functab[ID_EBM];
-    ip->idb_ptr = bu_calloc(1, sizeof(struct rt_ebm_internal), "rt_ebm_internal");
+    BU_ALLOC(ip->idb_ptr, struct rt_ebm_internal);
+
     eip = (struct rt_ebm_internal *)ip->idb_ptr;
     eip->magic = RT_EBM_INTERNAL_MAGIC;
 
@@ -674,7 +675,8 @@ rt_ebm_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_EBM;
     ip->idb_meth = &rt_functab[ID_EBM];
-    ip->idb_ptr = bu_calloc(1, sizeof(struct rt_ebm_internal), "rt_ebm_internal");
+    BU_ALLOC(ip->idb_ptr, struct rt_ebm_internal);
+
     eip = (struct rt_ebm_internal *)ip->idb_ptr;
     eip->magic = RT_EBM_INTERNAL_MAGIC;
 
@@ -1212,7 +1214,7 @@ rt_ebm_edge(int x_1, int y_1, int x_2, int y_2, int left, struct ebm_edge *edges
 {
     struct ebm_edge *new_edge;
 
-    new_edge = (struct ebm_edge *)bu_malloc(sizeof(struct ebm_edge), "rt_ebm_tess: new_edge");
+    BU_ALLOC(new_edge, struct ebm_edge);
 
     /* make all edges go from lower values to larger */
     if (y_1 < y_2 || x_1 < x_2) {
@@ -1708,8 +1710,8 @@ rt_ebm_make(const struct rt_functab *ftp, struct rt_db_internal *intern)
     BU_ASSERT(&rt_functab[intern->idb_type] == ftp);
 
     intern->idb_meth = ftp;
-    ebm = (struct rt_ebm_internal *)bu_calloc(sizeof(struct rt_ebm_internal), 1,
-					      "rt_ebm_internal");
+    BU_ALLOC(ebm, struct rt_ebm_internal);
+
     intern->idb_ptr = (genptr_t)ebm;
     ebm->magic = RT_EBM_INTERNAL_MAGIC;
     MAT_IDN(ebm->mat);

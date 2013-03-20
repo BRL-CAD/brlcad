@@ -842,7 +842,7 @@ MakeExtrude(struct rt_wdb (*file), char *suffix, point2d_t *verts,
 
     /* Insert all line segments except the last one */
     for (i = 0; i < vertcount-1; i++) {
-	lsg = (struct line_seg *)bu_malloc(sizeof(struct line_seg), "sketch: lsg");
+	BU_ALLOC(lsg, struct line_seg);
 	lsg->magic = CURVE_LSEG_MAGIC;
 	lsg->start = i;
 	lsg->end = i + 1;
@@ -850,7 +850,7 @@ MakeExtrude(struct rt_wdb (*file), char *suffix, point2d_t *verts,
     }
 
     /* Connect the last connected vertex to the first vertex */
-    lsg = (struct line_seg *)bu_malloc(sizeof(struct line_seg), "sketch: lsg");
+    BU_ALLOC(lsg, struct line_seg);
     lsg->magic = CURVE_LSEG_MAGIC;
     lsg->start = vertcount - 1;
     lsg->end = 0;

@@ -116,7 +116,7 @@ rayhit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(s
     bu_semaphore_acquire(BU_SEM_LISTS);
     entry = Tcl_CreateHashEntry(&bots, pp->pt_inseg->seg_stp->st_dp->d_namep, &newPtr);
     if (newPtr) {
-	faces = (struct bu_ptbl *)bu_malloc(sizeof(struct bu_ptbl), "faces");
+	BU_ALLOC(faces, struct bu_ptbl);
 	bu_ptbl_init(faces, 128, "faces");
 	Tcl_SetHashValue(entry, (char *)faces);
     } else {
@@ -224,8 +224,7 @@ view_2init(struct application *ap, char *framename)
 		}
 		entry = Tcl_CreateHashEntry(&bots, bot_name, &newPtr);
 		if (newPtr) {
-		    faces = (struct bu_ptbl *)bu_calloc(1, sizeof(struct bu_ptbl),
-							"bot_faces");
+		    BU_ALLOC(faces, struct bu_ptbl);
 		    bu_ptbl_init(faces, 128, "bot faces");
 		    Tcl_SetHashValue(entry, (char *)faces);
 		} else {

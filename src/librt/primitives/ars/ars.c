@@ -170,7 +170,8 @@ rt_ars_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_ARS;
     ip->idb_meth = &rt_functab[ID_ARS];
-    ip->idb_ptr = bu_malloc(sizeof(struct rt_ars_internal), "rt_ars_internal");
+    BU_ALLOC(ip->idb_ptr, struct rt_ars_internal);
+
     ari = (struct rt_ars_internal *)ip->idb_ptr;
     ari->magic = RT_ARS_INTERNAL_MAGIC;
 
@@ -326,7 +327,7 @@ rt_ars_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_ARS;
     ip->idb_meth = &rt_functab[ID_ARS];
-    ip->idb_ptr = bu_malloc(sizeof(struct rt_ars_internal), "rt_ars_internal");
+    BU_ALLOC(ip->idb_ptr, struct rt_ars_internal);
 
     ari = (struct rt_ars_internal *)ip->idb_ptr;
     ari->magic = RT_ARS_INTERNAL_MAGIC;

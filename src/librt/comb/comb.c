@@ -480,7 +480,8 @@ rt_comb_import5(struct rt_db_internal *ip, const struct bu_external *ep,
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_COMBINATION;
     ip->idb_meth = &rt_functab[ID_COMBINATION];
-    comb = bu_malloc(sizeof(struct rt_comb_internal), "comb");
+
+    BU_ALLOC(comb, struct rt_comb_internal);
     RT_COMB_INTERNAL_INIT(comb);
 
     ip->idb_ptr = (genptr_t)comb;
@@ -503,8 +504,8 @@ rt_comb_import5(struct rt_db_internal *ip, const struct bu_external *ep,
 	/* This tree is all union operators, import it as a balanced tree */
 	struct bu_ptbl *tbl1, *tbl2;
 
-	tbl1 = (struct bu_ptbl *)bu_malloc(sizeof(struct bu_ptbl), "rt_comb_import5: tbl1");
-	tbl2 = (struct bu_ptbl *)bu_malloc(sizeof(struct bu_ptbl), "rt_comb_import5: tbl2");
+	BU_ALLOC(tbl1, struct bu_ptbl);
+	BU_ALLOC(tbl2, struct bu_ptbl);
 
 	/* insert all the leaf nodes into a bu_ptbl */
 	bu_ptbl_init(tbl1, nleaf, "rt_comb_import5: tbl");
@@ -1102,8 +1103,7 @@ rt_comb_make(const struct rt_functab *UNUSED(ftp), struct rt_db_internal *intern
     intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     intern->idb_type = ID_COMBINATION;
     intern->idb_meth = &rt_functab[ID_COMBINATION];
-    intern->idb_ptr = bu_calloc(sizeof(struct rt_comb_internal), 1,
-				"rt_comb_internal");
+    BU_ALLOC(intern->idb_ptr, struct rt_comb_internal);
 
     comb = (struct rt_comb_internal *)intern->idb_ptr;
     RT_COMB_INTERNAL_INIT(comb);

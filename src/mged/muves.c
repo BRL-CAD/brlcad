@@ -285,7 +285,7 @@ f_read_muves(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const 
 
 		    /* if name doesn't exist, create a new list */
 		    if (BU_LIST_IS_HEAD(&new_comp->l, &muves_comp_head.l)) {
-			new_comp = (struct muves_comp *)bu_malloc(sizeof(struct muves_comp), "new_comp");
+			BU_ALLOC(new_comp, struct muves_comp);
 			BU_LIST_INIT(&new_comp->l);
 			length = strlen(ptr);
 			new_comp->muves_name = (char *)bu_malloc(length+1, "muves_comp.name");
@@ -328,7 +328,7 @@ f_read_muves(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const 
 		    continue;
 
 		/* this region is part of the current MUVES component */
-		comp = (struct cad_comp_list *)bu_malloc(sizeof(struct cad_comp_list), "comp");
+		BU_ALLOC(comp, struct cad_comp_list);
 		comp->dp = regions[i].dp;
 		BU_LIST_INSERT(&new_comp->comp_head.l, &comp->l);
 	    }
@@ -412,7 +412,7 @@ f_read_muves(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const 
 		size_t length;
 
 		/* need to create a new system */
-		new_sys = (struct muves_sys *)bu_malloc(sizeof(struct muves_sys), "new_sys");
+		BU_ALLOC(new_sys, struct muves_sys);
 		length = strlen(&line[i]);
 		new_sys->muves_name = (char *)bu_malloc(length+1, "new_sys->muves_name");
 		bu_strlcpy(new_sys->muves_name, &line[i], length+1);
@@ -500,7 +500,7 @@ f_read_muves(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const 
 		continue;
 	    }
 
-	    member = (struct member_list *)bu_malloc(sizeof(struct member_list), "member");
+	    BU_ALLOC(member, struct member_list);
 	    member->object_type = MUVES_TYPE_UNKNOWN;
 	    for (BU_LIST_FOR(sys, muves_sys, &muves_sys_head.l)) {
 		if (BU_STR_EQUAL(ptr, sys->muves_name)) {

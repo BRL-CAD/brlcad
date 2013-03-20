@@ -103,7 +103,7 @@ extract(ClipperLib::ExPolygons &clipper_polys, fastf_t sf, matp_t mat)
 	/* Add the outer and the holes */
 	num_contours += clipper_polys[i].holes.size() + 1;
 
-    result_poly = (ged_polygon *)bu_calloc(1, sizeof(ged_polygon), "result_poly");
+    BU_ALLOC(result_poly, ged_polygon);
     result_poly->gp_num_contours = num_contours;
 
     if (num_contours < 1)
@@ -264,7 +264,8 @@ ged_export_polygon(struct ged *gedp, ged_data_polygon_state *gdpsp, size_t polyg
     internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
     internal.idb_type = ID_SKETCH;
     internal.idb_meth = &rt_functab[ID_SKETCH];
-    internal.idb_ptr = (genptr_t)bu_malloc(sizeof(struct rt_sketch_internal), "rt_sketch_internal");
+
+    BU_ALLOC(internal.idb_ptr, struct rt_sketch_internal);
     sketch_ip = (struct rt_sketch_internal *)internal.idb_ptr;
     sketch_ip->magic = RT_SKETCH_INTERNAL_MAGIC;
     sketch_ip->vert_count = num_verts;
@@ -307,7 +308,7 @@ ged_export_polygon(struct ged *gedp, ged_data_polygon_state *gdpsp, size_t polyg
 	    V2MOVE(sketch_ip->verts[n], vdiff);
 
 	    if (k) {
-		lsg = (struct line_seg *)bu_calloc(1, sizeof(struct line_seg), "segment");
+		BU_ALLOC(lsg, struct line_seg);
 		sketch_ip->curve.segment[n-1] = (genptr_t)lsg;
 		lsg->magic = CURVE_LSEG_MAGIC;
 		lsg->start = n-1;
@@ -318,7 +319,7 @@ ged_export_polygon(struct ged *gedp, ged_data_polygon_state *gdpsp, size_t polyg
 	}
 
 	if (k) {
-	    lsg = (struct line_seg *)bu_calloc(1, sizeof(struct line_seg), "segment");
+	    BU_ALLOC(lsg, struct line_seg);
 	    sketch_ip->curve.segment[n-1] = (genptr_t)lsg;
 	    lsg->magic = CURVE_LSEG_MAGIC;
 	    lsg->start = n-1;
@@ -409,14 +410,14 @@ ged_import_polygon(struct ged *gedp, const char *sname)
 
 	if (!unused_snode->used) {
 	    ++ncontours;
-	    curr_cnode = (struct contour_node *)bu_calloc(1, sizeof(struct contour_node), "curr_cnode");
+	    BU_ALLOC(curr_cnode, struct contour_node);
 	    BU_LIST_INSERT(&HeadContourNodes, &curr_cnode->l);
 	    BU_LIST_INIT(&curr_cnode->head);
 	    BU_LIST_INSERT(&curr_cnode->head, &unused_snode->l);
 	}
     }
 
-    gpp = (ged_polygon *)bu_calloc(1, sizeof(ged_polygon), "poly");
+    BU_ALLOC(gpp, ged_polygon);
     gpp->gp_num_contours = ncontours;
     gpp->gp_hole = (int *)bu_calloc(ncontours, sizeof(int), "gp_hole");
     gpp->gp_contour = (ged_poly_contour *)bu_calloc(ncontours, sizeof(ged_poly_contour), "gp_contour");

@@ -259,7 +259,7 @@ ged_brep(struct ged *gedp, int argc, const char *argv[])
     }
 
     if ((bs = (struct brep_specific*)stp->st_specific) == NULL) {
-	bs = (struct brep_specific*)bu_malloc(sizeof(struct brep_specific), "brep_specific");
+	BU_ALLOC(bs, struct brep_specific);
 	bs->brep = bi->brep;
 	bi->brep = NULL;
 	stp->st_specific = (genptr_t)bs;

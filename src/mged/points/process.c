@@ -382,7 +382,7 @@ process_multi_group(point_line_t **plta, int count, double tolerance) {
 	/* if this is the first point of a group, allocate and initialize */
 	if (!prev_plt) {
 	    prev_plt = &(*plta)[i];
-	    pltg = (point_line_t *) bu_malloc(sizeof(point_line_t), "begin point_line_t subgroup");
+	    BU_ALLOC(pltg, point_line_t);
 	    COPY_POINT_LINE_T(*pltg, *prev_plt);
 	    marker = 0;
 	    continue;

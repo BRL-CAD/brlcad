@@ -302,7 +302,8 @@ rt_grp_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_GRIP;
     ip->idb_meth = &rt_functab[ID_GRIP];
-    ip->idb_ptr = bu_malloc(sizeof(struct rt_grip_internal), "rt_grip_internal");
+    BU_ALLOC(ip->idb_ptr, struct rt_grip_internal);
+
     gip = (struct rt_grip_internal *)ip->idb_ptr;
     gip->magic = RT_GRIP_INTERNAL_MAGIC;
 
@@ -382,7 +383,7 @@ rt_grp_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_GRIP;
     ip->idb_meth = &rt_functab[ID_GRIP];
-    ip->idb_ptr = bu_malloc(sizeof(struct rt_grip_internal), "rt_grip_internal");
+    BU_ALLOC(ip->idb_ptr, struct rt_grip_internal);
 
     gip = (struct rt_grip_internal *)ip->idb_ptr;
     gip->magic = RT_GRIP_INTERNAL_MAGIC;

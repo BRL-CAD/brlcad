@@ -152,14 +152,14 @@ BuildTree(struct Photon *EList, int ESize, struct PNode *Root)
     /* With Left and Right if either contain any photons then repeat this process */
     /* if (LInd) bu_log("Left Branch\n");*/
     if (LInd) {
-	Root->L = (struct PNode*)bu_calloc(1, sizeof(struct PNode), "Root left");
+	BU_ALLOC(Root->L, struct PNode);
 	Root->L->L = 0;
 	Root->L->R = 0;
 	BuildTree(LList, LInd, Root->L);
     }
     /* if (RInd) bu_log("Right Branch\n");*/
     if (RInd) {
-	Root->R = (struct PNode*)bu_calloc(1, sizeof(struct PNode), "Root right");
+	BU_ALLOC(Root->R, struct PNode);
 	Root->R->L = 0;
 	Root->R->R = 0;
 	BuildTree(RList, RInd, Root->R);
@@ -1020,8 +1020,7 @@ Irradiance(int pid, struct Photon *P, struct application *ap)
     int i, j, M, N;
     double theta, phi, Coef;
 
-
-    lap = (struct application*)bu_malloc(sizeof(struct application), "app");
+    BU_ALLOC(lap, struct application);
     RT_APPLICATION_INIT(lap);
     lap->a_rt_i = ap->a_rt_i;
     lap->a_hit = ap->a_hit;
@@ -1145,12 +1144,13 @@ IrradianceThread(int pid, genptr_t arg)
 void
 Initialize(int MAP, int MapSize)
 {
-    PMap[MAP] = (struct PhotonMap*)bu_malloc(sizeof(struct PhotonMap), "PhotoMap");
+    BU_ALLOC(PMap[MAP], struct PhotonMap);
     PMap[MAP]->MaxPhotons = MapSize;
-    PMap[MAP]->Root = (struct PNode*)bu_malloc(sizeof(struct PNode), "PNode");
+
+    BU_ALLOC(PMap[MAP]->Root, struct PNode);
     PMap[MAP]->StoredPhotons = 0;
     if (MapSize > 0)
-	Emit[MAP] = (struct Photon*)bu_malloc(sizeof(struct Photon)*MapSize, "Photon");
+	BU_ALLOC(Emit[MAP], struct Photon);
     else
 	Emit[MAP] = NULL;
 }
@@ -1477,7 +1477,7 @@ BuildPhotonMap(struct application *ap, point_t eye_pos, int cpus, int width, int
 	    Map = (char*)bu_calloc(width*height, sizeof(char), "Map");
 	    IC = (struct IrradCache*)bu_malloc(sizeof(struct IrradCache)*width*height, "IrradCache");
 	    for (i = 0; i < width*height; i++) {
-		IC[i].List = (struct IrradNode*)bu_malloc(sizeof(struct IrradNode), "IrradNode");
+		BU_ALLOC(IC[i].List, struct IrradNode);
 		IC[i].Num = 0;
 	    }
 	}

@@ -353,7 +353,7 @@ ged_make_pnts(struct ged *gedp, int argc, const char *argv[])
     internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
     internal.idb_type = ID_PNTS;
     internal.idb_meth = &rt_functab[ID_PNTS];
-    internal.idb_ptr = (genptr_t) bu_malloc(sizeof(struct rt_pnts_internal), "rt_pnts_internal");
+    BU_ALLOC(internal.idb_ptr, struct rt_pnts_internal);
 
     /* init internal structure */
     pnts = (struct rt_pnts_internal *) internal.idb_ptr;

@@ -287,7 +287,7 @@ int parse_args(int ac, char **av)
 		if (ZERO(ol_hd.ex)) {
 		    usage("set wall dim before openings\n");
 		} else if (sscanf(bu_optarg, "%lf, %lf, %lf, %lf", &dx, &dy, &width, &height) == 4) {
-		    op = (struct opening *)bu_calloc(1, sizeof(struct opening), "calloc opening");
+		    BU_ALLOC(op, struct opening);
 		    BU_LIST_INSERT(&ol_hd.l, &op->l);
 		    op->sx = dx * unit_conv;
 		    op->sz = dy * unit_conv;
@@ -365,7 +365,7 @@ h_segs(double sz, double ez, struct boardseg *seglist, double sx, double ex)
     struct opening *op;
     struct boardseg *seg, *sp;
 
-    seg = (struct boardseg *)bu_calloc(1, sizeof(struct boardseg), "initial seg");
+    BU_ALLOC(seg, struct boardseg);
     seg->s = sx;
     seg->e = ex;
     /* trim opening to X bounds of wall */
@@ -407,7 +407,7 @@ h_segs(double sz, double ez, struct boardseg *seglist, double sx, double ex)
 		     * segment.  We must divide the segment into
 		     * 2 segments
 		     */
-		    sp = (struct boardseg *)bu_calloc(1, sizeof(struct boardseg), "alloc boardseg");
+		    BU_ALLOC(sp, struct boardseg);
 		    sp->s = seg->s;
 		    sp->e = op->sx;
 		    seg->s = op->ex;
@@ -701,7 +701,7 @@ frame(struct rt_wdb *fd)
     mk_id(fd, "A wall");
 
     /* find the segments of the base-board */
-    s_hd = (struct boardseg *)bu_calloc(1, sizeof(struct boardseg), "s_hd");
+    BU_ALLOC(s_hd, struct boardseg);
     BU_LIST_INIT(&(s_hd->l));
 
     h_segs(0.0, bd_thin, s_hd, 0.0, WALL_WIDTH);

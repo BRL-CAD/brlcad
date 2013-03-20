@@ -386,7 +386,8 @@ main(int argc, char **argv)
 
 	    default:
 	    {
-		struct reg_hit *rh = bu_calloc(1, sizeof (struct reg_hit), "");
+		struct reg_hit *rh;
+		BU_ALLOC(rh, struct reg_hit);
 		BU_VLS_INIT(&rh->regname);
 		BU_VLS_INIT(&rh->in_primitive);
 		BU_VLS_INIT(&rh->out_primitive);

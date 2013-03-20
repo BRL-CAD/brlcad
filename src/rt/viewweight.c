@@ -129,7 +129,7 @@ hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segp
 	part_count++;
 	/* add the datapoint structure in and then calculate it
 	   in parallel, the region structures are a shared resource */
-	dp = (struct datapoint *)bu_malloc(sizeof(struct datapoint), "dp");
+	BU_ALLOC(dp, struct datapoint);
 	bu_semaphore_acquire(BU_SEM_SYSCALL);
 	addp = reg->reg_udata;
 	reg->reg_udata = (genptr_t)dp;
@@ -214,7 +214,7 @@ view_init(struct application *ap, char *UNUSED(file), char *UNUSED(obj),
 
     i = maxm(strlen(curdir), strlen(homedir)) + strlen(DENSITY_FILE) + 2;
     /* densityfile is global to this file and will be used later (and then freed) */
-    densityfile = bu_calloc((unsigned int)i, 1, "densityfile");
+    densityfile = bu_calloc((unsigned int)i, sizeof(char), "densityfile");
 
     snprintf(densityfile, i, "%s/%s", curdir, DENSITY_FILE);
 
@@ -422,7 +422,7 @@ view_end(struct application *ap)
 	    weight *= conversion;
 	    total_weight += weight;
 
-	    ptr = (fastf_t *)bu_malloc(sizeof(fastf_t), "ptr");
+	    BU_ALLOC(ptr, fastf_t);
 	    *ptr = weight;
 	    /* FIXME: shouldn't the existing reg_udata be bu_free'd first (see previous loop) */
 	    /* FIXME: isn't the region list a "shared resource"? if so, can we use reg_udata so cavalierly? */

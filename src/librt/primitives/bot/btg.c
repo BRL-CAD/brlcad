@@ -46,10 +46,7 @@ void *
 bottie_allocn_double(unsigned long long ntri)
 {
     struct tie_s *tie;
-    tie = bu_malloc(sizeof(struct tie_s), "TIE");
-    if(tie == NULL)
-	return NULL;
-
+    BU_ALLOC(tie, struct tie_s);
     tie_init1(tie, ntri, TIE_KDTREE_FAST);
     return tie;
 }

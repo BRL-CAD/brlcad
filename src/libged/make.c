@@ -145,7 +145,7 @@ ged_make(struct ged *gedp, int argc, const char *argv[])
 	internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	internal.idb_type = ID_ARB8;
 	internal.idb_meth = &rt_functab[ID_ARB8];
-	internal.idb_ptr = (genptr_t)bu_malloc(sizeof(struct rt_arb_internal), "rt_arb_internal");
+	BU_ALLOC(internal.idb_ptr, struct rt_arb_internal);
 	arb_ip = (struct rt_arb_internal *)internal.idb_ptr;
 	arb_ip->magic = RT_ARB_INTERNAL_MAGIC;
 	VSET(arb_ip->pt[0] ,
@@ -168,7 +168,7 @@ ged_make(struct ged *gedp, int argc, const char *argv[])
 	internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	internal.idb_type = ID_ARB8;
 	internal.idb_meth = &rt_functab[ID_ARB8];
-	internal.idb_ptr = (genptr_t)bu_malloc(sizeof(struct rt_arb_internal), "rt_arb_internal");
+	BU_ALLOC(internal.idb_ptr, struct rt_arb_internal);
 	arb_ip = (struct rt_arb_internal *)internal.idb_ptr;
 	arb_ip->magic = RT_ARB_INTERNAL_MAGIC;
 	VSET(arb_ip->pt[0] ,
@@ -190,7 +190,7 @@ ged_make(struct ged *gedp, int argc, const char *argv[])
 	internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	internal.idb_type = ID_ARB8;
 	internal.idb_meth = &rt_functab[ID_ARB8];
-	internal.idb_ptr = (genptr_t)bu_malloc(sizeof(struct rt_arb_internal), "rt_arb_internal");
+	BU_ALLOC(internal.idb_ptr, struct rt_arb_internal);
 	arb_ip = (struct rt_arb_internal *)internal.idb_ptr;
 	arb_ip->magic = RT_ARB_INTERNAL_MAGIC;
 	VSET(arb_ip->pt[0],
@@ -215,7 +215,7 @@ ged_make(struct ged *gedp, int argc, const char *argv[])
 	internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	internal.idb_type = ID_ARB8;
 	internal.idb_meth = &rt_functab[ID_ARB8];
-	internal.idb_ptr = (genptr_t)bu_malloc(sizeof(struct rt_arb_internal), "rt_arb_internal");
+	BU_ALLOC(internal.idb_ptr, struct rt_arb_internal);
 	arb_ip = (struct rt_arb_internal *)internal.idb_ptr;
 	arb_ip->magic = RT_ARB_INTERNAL_MAGIC;
 	VSET(arb_ip->pt[0] ,
@@ -238,7 +238,7 @@ ged_make(struct ged *gedp, int argc, const char *argv[])
 	internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	internal.idb_type = ID_ARB8;
 	internal.idb_meth = &rt_functab[ID_ARB8];
-	internal.idb_ptr = (genptr_t)bu_malloc(sizeof(struct rt_arb_internal), "rt_arb_internal");
+	BU_ALLOC(internal.idb_ptr, struct rt_arb_internal);
 	arb_ip = (struct rt_arb_internal *)internal.idb_ptr;
 	arb_ip->magic = RT_ARB_INTERNAL_MAGIC;
 	VSET(arb_ip->pt[0] ,
@@ -263,7 +263,7 @@ ged_make(struct ged *gedp, int argc, const char *argv[])
 	internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	internal.idb_type = ID_ARBN;
 	internal.idb_meth = &rt_functab[ID_ARBN];
-	internal.idb_ptr = (genptr_t)bu_malloc(sizeof(struct rt_arbn_internal), "rt_arbn_internal");
+	BU_ALLOC(internal.idb_ptr, struct rt_arbn_internal);
 	arbn_ip = (struct rt_arbn_internal *)internal.idb_ptr;
 	arbn_ip->magic = RT_ARBN_INTERNAL_MAGIC;
 	arbn_ip->neqn = 8;
@@ -298,7 +298,7 @@ ged_make(struct ged *gedp, int argc, const char *argv[])
 	internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	internal.idb_type = ID_ARS;
 	internal.idb_meth = &rt_functab[ID_ARS];
-	internal.idb_ptr = (genptr_t)bu_malloc(sizeof(struct rt_ars_internal), "rt_ars_internal");
+	BU_ALLOC(internal.idb_ptr, struct rt_ars_internal);
 	ars_ip = (struct rt_ars_internal *)internal.idb_ptr;
 	ars_ip->magic = RT_ARS_INTERNAL_MAGIC;
 	ars_ip->ncurves = 3;
@@ -348,7 +348,7 @@ ged_make(struct ged *gedp, int argc, const char *argv[])
 	internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	internal.idb_type = ID_ELL;
 	internal.idb_meth = &rt_functab[ID_ELL];
-	internal.idb_ptr = (genptr_t)bu_malloc(sizeof(struct rt_ell_internal), "rt_ell_internal");
+	BU_ALLOC(internal.idb_ptr, struct rt_ell_internal);
 	ell_ip = (struct rt_ell_internal *)internal.idb_ptr;
 	ell_ip->magic = RT_ELL_INTERNAL_MAGIC;
 	VSET(ell_ip->v, origin[X], origin[Y], origin[Z]);
@@ -360,7 +360,7 @@ ged_make(struct ged *gedp, int argc, const char *argv[])
 	internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	internal.idb_type = ID_GRIP;
 	internal.idb_meth = &rt_functab[ID_GRIP];
-	internal.idb_ptr = (genptr_t)bu_malloc(sizeof(struct rt_grip_internal), "rt_grp_internal");
+	BU_ALLOC(internal.idb_ptr, struct rt_grip_internal);
 	grp_ip = (struct rt_grip_internal *) internal.idb_ptr;
 	grp_ip->magic = RT_GRIP_INTERNAL_MAGIC;
 	VSET(grp_ip->center, origin[X], origin[Y],
@@ -371,7 +371,7 @@ ged_make(struct ged *gedp, int argc, const char *argv[])
 	internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	internal.idb_type = ID_ELL;
 	internal.idb_meth = &rt_functab[ID_ELL];
-	internal.idb_ptr = (genptr_t)bu_malloc(sizeof(struct rt_ell_internal), "rt_ell_internal");
+	BU_ALLOC(internal.idb_ptr, struct rt_ell_internal);
 	ell_ip = (struct rt_ell_internal *)internal.idb_ptr;
 	ell_ip->magic = RT_ELL_INTERNAL_MAGIC;
 	VSET(ell_ip->v, origin[X], origin[Y], origin[Z]);
@@ -382,7 +382,7 @@ ged_make(struct ged *gedp, int argc, const char *argv[])
 	internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	internal.idb_type = ID_ELL;
 	internal.idb_meth = &rt_functab[ID_ELL];
-	internal.idb_ptr = (genptr_t)bu_malloc(sizeof(struct rt_ell_internal), "rt_ell_internal");
+	BU_ALLOC(internal.idb_ptr, struct rt_ell_internal);
 	ell_ip = (struct rt_ell_internal *)internal.idb_ptr;
 	ell_ip->magic = RT_ELL_INTERNAL_MAGIC;
 	VSET(ell_ip->v, origin[X], origin[Y], origin[Z]);
@@ -393,7 +393,7 @@ ged_make(struct ged *gedp, int argc, const char *argv[])
 	internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	internal.idb_type = ID_TOR;
 	internal.idb_meth = &rt_functab[ID_TOR];
-	internal.idb_ptr = (genptr_t)bu_malloc(sizeof(struct rt_tor_internal), "rt_tor_internal");
+	BU_ALLOC(internal.idb_ptr, struct rt_tor_internal);
 	tor_ip = (struct rt_tor_internal *)internal.idb_ptr;
 	tor_ip->magic = RT_TOR_INTERNAL_MAGIC;
 	VSET(tor_ip->v, origin[X], origin[Y], origin[Z]);
@@ -407,7 +407,7 @@ ged_make(struct ged *gedp, int argc, const char *argv[])
 	internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	internal.idb_type = ID_TGC;
 	internal.idb_meth = &rt_functab[ID_TGC];
-	internal.idb_ptr = (genptr_t)bu_malloc(sizeof(struct rt_tgc_internal), "rt_tgc_internal");
+	BU_ALLOC(internal.idb_ptr, struct rt_tgc_internal);
 	tgc_ip = (struct rt_tgc_internal *)internal.idb_ptr;
 	tgc_ip->magic = RT_TGC_INTERNAL_MAGIC;
 	VSET(tgc_ip->v, origin[X], origin[Y], origin[Z]-0.5*scale);
@@ -420,7 +420,7 @@ ged_make(struct ged *gedp, int argc, const char *argv[])
 	internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	internal.idb_type = ID_TGC;
 	internal.idb_meth = &rt_functab[ID_TGC];
-	internal.idb_ptr = (genptr_t)bu_malloc(sizeof(struct rt_tgc_internal), "rt_tgc_internal");
+	BU_ALLOC(internal.idb_ptr, struct rt_tgc_internal);
 	tgc_ip = (struct rt_tgc_internal *)internal.idb_ptr;
 	tgc_ip->magic = RT_TGC_INTERNAL_MAGIC;
 	VSET(tgc_ip->v, origin[X], origin[Y], origin[Z]-0.5*scale);
@@ -433,7 +433,7 @@ ged_make(struct ged *gedp, int argc, const char *argv[])
 	internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	internal.idb_type = ID_TGC;
 	internal.idb_meth = &rt_functab[ID_TGC];
-	internal.idb_ptr = (genptr_t)bu_malloc(sizeof(struct rt_tgc_internal), "rt_tgc_internal");
+	BU_ALLOC(internal.idb_ptr, struct rt_tgc_internal);
 	tgc_ip = (struct rt_tgc_internal *)internal.idb_ptr;
 	tgc_ip->magic = RT_TGC_INTERNAL_MAGIC;
 	VSET(tgc_ip->v, origin[X], origin[Y], origin[Z]- 0.5*scale);
@@ -446,7 +446,7 @@ ged_make(struct ged *gedp, int argc, const char *argv[])
 	internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	internal.idb_type = ID_TGC;
 	internal.idb_meth = &rt_functab[ID_TGC];
-	internal.idb_ptr = (genptr_t)bu_malloc(sizeof(struct rt_tgc_internal), "rt_tgc_internal");
+	BU_ALLOC(internal.idb_ptr, struct rt_tgc_internal);
 	tgc_ip = (struct rt_tgc_internal *)internal.idb_ptr;
 	tgc_ip->magic = RT_TGC_INTERNAL_MAGIC;
 	VSET(tgc_ip->v, origin[X], origin[Y], origin[Z]-0.5*scale);
@@ -459,7 +459,7 @@ ged_make(struct ged *gedp, int argc, const char *argv[])
 	internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	internal.idb_type = ID_TGC;
 	internal.idb_meth = &rt_functab[ID_TGC];
-	internal.idb_ptr = (genptr_t)bu_malloc(sizeof(struct rt_tgc_internal), "rt_tgc_internal");
+	BU_ALLOC(internal.idb_ptr, struct rt_tgc_internal);
 	tgc_ip = (struct rt_tgc_internal *)internal.idb_ptr;
 	tgc_ip->magic = RT_TGC_INTERNAL_MAGIC;
 	VSET(tgc_ip->v, origin[X], origin[Y], origin[Z]- 0.5*scale);
@@ -472,7 +472,7 @@ ged_make(struct ged *gedp, int argc, const char *argv[])
 	internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	internal.idb_type = ID_HALF;
 	internal.idb_meth = &rt_functab[ID_HALF];
-	internal.idb_ptr = (genptr_t)bu_malloc(sizeof(struct rt_half_internal), "rt_half_internal");
+	BU_ALLOC(internal.idb_ptr, struct rt_half_internal);
 	half_ip = (struct rt_half_internal *)internal.idb_ptr;
 	half_ip->magic = RT_HALF_INTERNAL_MAGIC;
 	VSET(half_ip->eqn, 0.0, 0.0, 1.0);
@@ -481,7 +481,7 @@ ged_make(struct ged *gedp, int argc, const char *argv[])
 	internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	internal.idb_type = ID_RPC;
 	internal.idb_meth = &rt_functab[ID_RPC];
-	internal.idb_ptr = (genptr_t)bu_malloc(sizeof(struct rt_rpc_internal), "rt_rpc_internal");
+	BU_ALLOC(internal.idb_ptr, struct rt_rpc_internal);
 	rpc_ip = (struct rt_rpc_internal *)internal.idb_ptr;
 	rpc_ip->rpc_magic = RT_RPC_INTERNAL_MAGIC;
 	VSET(rpc_ip->rpc_V, origin[X], origin[Y]-scale*0.25, origin[Z]-scale*0.5);
@@ -492,7 +492,7 @@ ged_make(struct ged *gedp, int argc, const char *argv[])
 	internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	internal.idb_type = ID_RHC;
 	internal.idb_meth = &rt_functab[ID_RHC];
-	internal.idb_ptr = (genptr_t)bu_malloc(sizeof(struct rt_rhc_internal), "rt_rhc_internal");
+	BU_ALLOC(internal.idb_ptr, struct rt_rhc_internal);
 	rhc_ip = (struct rt_rhc_internal *)internal.idb_ptr;
 	rhc_ip->rhc_magic = RT_RHC_INTERNAL_MAGIC;
 	VSET(rhc_ip->rhc_V, origin[X], origin[Y]-0.25*scale, origin[Z]-0.25*scale);
@@ -504,7 +504,7 @@ ged_make(struct ged *gedp, int argc, const char *argv[])
 	internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	internal.idb_type = ID_EPA;
 	internal.idb_meth = &rt_functab[ID_EPA];
-	internal.idb_ptr = (genptr_t)bu_malloc(sizeof(struct rt_epa_internal), "rt_epa_internal");
+	BU_ALLOC(internal.idb_ptr, struct rt_epa_internal);
 	epa_ip = (struct rt_epa_internal *)internal.idb_ptr;
 	epa_ip->epa_magic = RT_EPA_INTERNAL_MAGIC;
 	VSET(epa_ip->epa_V, origin[X], origin[Y], origin[Z]-scale*0.5);
@@ -516,7 +516,7 @@ ged_make(struct ged *gedp, int argc, const char *argv[])
 	internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	internal.idb_type = ID_EHY;
 	internal.idb_meth = &rt_functab[ID_EHY];
-	internal.idb_ptr = (genptr_t)bu_malloc(sizeof(struct rt_ehy_internal), "rt_ehy_internal");
+	BU_ALLOC(internal.idb_ptr, struct rt_ehy_internal);
 	ehy_ip = (struct rt_ehy_internal *)internal.idb_ptr;
 	ehy_ip->ehy_magic = RT_EHY_INTERNAL_MAGIC;
 	VSET(ehy_ip->ehy_V, origin[X], origin[Y], origin[Z]-scale*0.5);
@@ -530,7 +530,7 @@ ged_make(struct ged *gedp, int argc, const char *argv[])
 	internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	internal.idb_type = ID_ETO;
 	internal.idb_meth = &rt_functab[ID_ETO];
-	internal.idb_ptr = (genptr_t)bu_malloc(sizeof(struct rt_eto_internal), "rt_eto_internal");
+	BU_ALLOC(internal.idb_ptr, struct rt_eto_internal);
 	eto_ip = (struct rt_eto_internal *)internal.idb_ptr;
 	eto_ip->eto_magic = RT_ETO_INTERNAL_MAGIC;
 	VSET(eto_ip->eto_V, origin[X], origin[Y], origin[Z]);
@@ -550,7 +550,7 @@ ged_make(struct ged *gedp, int argc, const char *argv[])
 	internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	internal.idb_type = ID_PARTICLE;
 	internal.idb_meth = &rt_functab[ID_PARTICLE];
-	internal.idb_ptr = (genptr_t)bu_malloc(sizeof(struct rt_part_internal), "rt_part_internal");
+	BU_ALLOC(internal.idb_ptr, struct rt_part_internal);
 	part_ip = (struct rt_part_internal *)internal.idb_ptr;
 	part_ip->part_magic = RT_PART_INTERNAL_MAGIC;
 	VSET(part_ip->part_V, origin[X], origin[Y], origin[Z]-scale*0.25);
@@ -579,7 +579,7 @@ ged_make(struct ged *gedp, int argc, const char *argv[])
 	internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	internal.idb_type = ID_PIPE;
 	internal.idb_meth = &rt_functab[ID_PIPE];
-	internal.idb_ptr = (genptr_t)bu_malloc(sizeof(struct rt_pipe_internal), "rt_pipe_internal");
+	BU_ALLOC(internal.idb_ptr, struct rt_pipe_internal);
 	pipe_ip = (struct rt_pipe_internal *)internal.idb_ptr;
 	pipe_ip->pipe_magic = RT_PIPE_INTERNAL_MAGIC;
 	BU_LIST_INIT(&pipe_ip->pipe_segs_head);
@@ -651,7 +651,7 @@ ged_make(struct ged *gedp, int argc, const char *argv[])
 	internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	internal.idb_type = ID_EXTRUDE;
 	internal.idb_meth = &rt_functab[ID_EXTRUDE];
-	internal.idb_ptr = (genptr_t)bu_malloc(sizeof(struct rt_extrude_internal), "rt_extrude_internal");
+	BU_ALLOC(internal.idb_ptr, struct rt_extrude_internal);
 	extrude_ip = (struct rt_extrude_internal *)internal.idb_ptr;
 	extrude_ip->magic = RT_EXTRUDE_INTERNAL_MAGIC;
 	VSET(extrude_ip->V, origin[X], origin[Y], origin[Z]);
@@ -682,7 +682,7 @@ ged_make(struct ged *gedp, int argc, const char *argv[])
 	internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	internal.idb_type = ID_SKETCH;
 	internal.idb_meth = &rt_functab[ID_SKETCH];
-	internal.idb_ptr = (genptr_t)bu_malloc(sizeof(struct rt_sketch_internal), "rt_sketch_internal");
+	BU_ALLOC(internal.idb_ptr, struct rt_sketch_internal);
 	sketch_ip = (struct rt_sketch_internal *)internal.idb_ptr;
 	sketch_ip->magic = RT_SKETCH_INTERNAL_MAGIC;
 	VSET(sketch_ip->u_vec, 1.0, 0.0, 0.0);
@@ -716,7 +716,7 @@ ged_make(struct ged *gedp, int argc, const char *argv[])
 	    sketch_ip->curve.reverse = (int *)bu_calloc(sketch_ip->curve.count, sizeof(int), "sketch_ip->curve.reverse");
 	    sketch_ip->curve.segment = (genptr_t *)bu_calloc(sketch_ip->curve.count, sizeof(genptr_t), "sketch_ip->curve.segment");
 
-	    csg = (struct carc_seg *)bu_calloc(1, sizeof(struct carc_seg), "segment");
+	    BU_ALLOC(csg, struct carc_seg);
 	    sketch_ip->curve.segment[0] = (genptr_t)csg;
 	    csg->magic = CURVE_CARC_MAGIC;
 	    csg->start = 4;
@@ -725,31 +725,31 @@ ged_make(struct ged *gedp, int argc, const char *argv[])
 	    csg->center_is_left = 1;
 	    csg->orientation = 0;
 
-	    lsg = (struct line_seg *)bu_calloc(1, sizeof(struct line_seg), "segment");
+	    BU_ALLOC(lsg, struct line_seg);
 	    sketch_ip->curve.segment[1] = (genptr_t)lsg;
 	    lsg->magic = CURVE_LSEG_MAGIC;
 	    lsg->start = 0;
 	    lsg->end = 1;
 
-	    lsg = (struct line_seg *)bu_calloc(1, sizeof(struct line_seg), "segment");
+	    BU_ALLOC(lsg, struct line_seg);
 	    sketch_ip->curve.segment[2] = (genptr_t)lsg;
 	    lsg->magic = CURVE_LSEG_MAGIC;
 	    lsg->start = 1;
 	    lsg->end = 2;
 
-	    lsg = (struct line_seg *)bu_calloc(1, sizeof(struct line_seg), "segment");
+	    BU_ALLOC(lsg, struct line_seg);
 	    sketch_ip->curve.segment[3] = (genptr_t)lsg;
 	    lsg->magic = CURVE_LSEG_MAGIC;
 	    lsg->start = 2;
 	    lsg->end = 3;
 
-	    lsg = (struct line_seg *)bu_calloc(1, sizeof(struct line_seg), "segment");
+	    BU_ALLOC(lsg, struct line_seg);
 	    sketch_ip->curve.segment[4] = (genptr_t)lsg;
 	    lsg->magic = CURVE_LSEG_MAGIC;
 	    lsg->start = 3;
 	    lsg->end = 4;
 
-	    csg = (struct carc_seg *)bu_calloc(1, sizeof(struct carc_seg), "segment");
+	    BU_ALLOC(csg, struct carc_seg);
 	    sketch_ip->curve.segment[5] = (genptr_t)csg;
 	    csg->magic = CURVE_CARC_MAGIC;
 	    csg->start = 6;
@@ -774,7 +774,7 @@ ged_make(struct ged *gedp, int argc, const char *argv[])
 	internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	internal.idb_type = ID_SUPERELL;
 	internal.idb_meth = &rt_functab[ID_SUPERELL];
-	internal.idb_ptr = (genptr_t)bu_malloc(sizeof(struct rt_superell_internal), "rt_superell_internal");
+	BU_ALLOC(internal.idb_ptr, struct rt_superell_internal);
 	superell_ip = (struct rt_superell_internal *)internal.idb_ptr;
 	superell_ip->magic = RT_SUPERELL_INTERNAL_MAGIC;
 	VSET(superell_ip->v, origin[X], origin[Y], origin[Z]);
@@ -806,7 +806,7 @@ ged_make(struct ged *gedp, int argc, const char *argv[])
 	internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	internal.idb_type = ID_METABALL;
 	internal.idb_meth = &rt_functab[ID_METABALL];
-	internal.idb_ptr = (genptr_t)bu_malloc(sizeof(struct rt_metaball_internal), "rt_metaball_internal");
+	BU_ALLOC(internal.idb_ptr, struct rt_metaball_internal);
 	metaball_ip = (struct rt_metaball_internal *)internal.idb_ptr;
 	metaball_ip->magic = RT_METABALL_INTERNAL_MAGIC;
 	metaball_ip->threshold = 1.0;

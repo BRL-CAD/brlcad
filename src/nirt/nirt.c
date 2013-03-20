@@ -234,8 +234,7 @@ enqueue_script(struct bu_list *qp, int type, char *string)
 
     BU_CK_LIST_HEAD(qp);
 
-    srp = (struct script_rec *)
-	bu_malloc(sizeof(struct script_rec), "script record");
+    BU_ALLOC(srp, struct script_rec);
     srp->sr_magic = SCRIPT_REC_MAGIC;
     srp->sr_type = type;
     bu_vls_init(&(srp->sr_script));

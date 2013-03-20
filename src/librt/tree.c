@@ -722,7 +722,7 @@ rt_gettrees_muves(struct rt_i *rtip, const char **attrs, int argc, const char **
 
     if (argc <= 0) return -1;	/* FAIL */
 
-    tbl = (Tcl_HashTable *)bu_malloc(sizeof(Tcl_HashTable), "rtip->Orca_hash_tbl");
+    BU_ALLOC(tbl, Tcl_HashTable);
     Tcl_InitHashTable(tbl, TCL_ONE_WORD_KEYS);
     rtip->Orca_hash_tbl = (genptr_t)tbl;
 

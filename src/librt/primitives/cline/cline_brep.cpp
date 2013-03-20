@@ -47,7 +47,7 @@ rt_cline_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol 
     cip = (struct rt_cline_internal *)ip->idb_ptr;
     RT_CLINE_CK_MAGIC(cip);
 
-    pip = (struct rt_pipe_internal *)bu_malloc(sizeof(struct rt_pipe_internal), "pipe internal");
+    BU_ALLOC(pip, struct rt_pipe_internal);
     rt_cline_to_pipe(pip, ip);
 
     struct rt_db_internal tmp_internal;

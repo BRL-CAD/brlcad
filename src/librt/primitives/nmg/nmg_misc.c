@@ -830,8 +830,7 @@ nmg_find_outer_and_void_shells(struct nmgregion *r, struct bu_ptbl ***shells, co
     *shells = (struct bu_ptbl **)bu_calloc(BU_PTBL_END(outer_shells), sizeof(struct bu_ptbl *) ,
 					   "nmg_find_outer_and_void_shells: shells");
     for (i=0; i<BU_PTBL_END(outer_shells); i++) {
-	(*shells)[i] = (struct bu_ptbl *)bu_malloc(sizeof(struct bu_ptbl) ,
-						   "nmg_find_outer_and_void_shells: shells[]");
+	BU_ALLOC((*shells)[i], struct bu_ptbl);
 
 	bu_ptbl_init((*shells)[i], 64, "(*shells)[i]");
 	BU_CK_PTBL((*shells)[i]);
@@ -5211,7 +5210,7 @@ nmg_get_edge_lines(struct vertex *new_v, struct bu_ptbl *int_faces, const struct
 	    struct intersect_fus *i_fus;
 
 	    /* create and initialize an intersect_fus struct for this edge */
-	    i_fus = (struct intersect_fus *)bu_malloc(sizeof(struct intersect_fus), "nmg_get_edge_lines: i_fus");
+	    BU_ALLOC(i_fus, struct intersect_fus);
 	    i_fus->fu[0] = NULL;
 	    i_fus->fu[1] = fu;
 	    i_fus->eu = eu;
@@ -5295,7 +5294,7 @@ nmg_get_edge_lines(struct vertex *new_v, struct bu_ptbl *int_faces, const struct
 	fu2 = nmg_find_fu_of_eu(eu->radial_p);
 
 	/* initialize the intersect structure for this edge */
-	i_fus = (struct intersect_fus *)bu_malloc(sizeof(struct intersect_fus), "nmg_inside_vert: intersection list");
+	BU_ALLOC(i_fus, struct intersect_fus);
 	i_fus->fu[0] = fu1;
 	if (eu->radial_p == eu->eumate_p) {
 	    i_fus->fu[1] = (struct faceuse *)NULL;
@@ -11025,7 +11024,7 @@ nmg_bot(struct shell *s, const struct bn_tol *tol)
     nmg_face_tabulate(&nmg_faces, &s->l.magic);
 
     /* now build the BOT */
-    bot = (struct rt_bot_internal *)bu_calloc(1, sizeof(struct rt_bot_internal), "BOT from NMG");
+    BU_ALLOC(bot, struct rt_bot_internal);
 
     bot->magic = RT_BOT_INTERNAL_MAGIC;
     bot->mode = RT_BOT_SOLID;

@@ -508,7 +508,7 @@ rt_hlf_xform(
 
     if (op != ip) {
 	RT_DB_INTERNAL_INIT(op);
-	hop = (struct rt_half_internal *)bu_malloc(sizeof(struct rt_half_internal), "hop");
+	BU_ALLOC(hop, struct rt_half_internal);
 	hop->magic = RT_HALF_INTERNAL_MAGIC;
 	op->idb_ptr = (genptr_t)hop;
 	op->idb_meth = &rt_functab[ID_HALF];
@@ -589,7 +589,8 @@ rt_hlf_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_HALF;
     ip->idb_meth = &rt_functab[ID_HALF];
-    ip->idb_ptr = bu_malloc(sizeof(struct rt_half_internal), "rt_half_internal");
+    BU_ALLOC(ip->idb_ptr, struct rt_half_internal);
+
     hip = (struct rt_half_internal *)ip->idb_ptr;
     hip->magic = RT_HALF_INTERNAL_MAGIC;
 
@@ -678,7 +679,7 @@ rt_hlf_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_HALF;
     ip->idb_meth = &rt_functab[ID_HALF];
-    ip->idb_ptr = bu_malloc(sizeof(struct rt_half_internal), "rt_half_internal");
+    BU_ALLOC(ip->idb_ptr, struct rt_half_internal);
 
     hip = (struct rt_half_internal *)ip->idb_ptr;
     hip->magic = RT_HALF_INTERNAL_MAGIC;

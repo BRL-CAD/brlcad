@@ -848,7 +848,8 @@ rt_arbn_import4(struct rt_db_internal *ip, const struct bu_external *ep, const f
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_ARBN;
     ip->idb_meth = &rt_functab[ID_ARBN];
-    ip->idb_ptr = bu_malloc(sizeof(struct rt_arbn_internal), "rt_arbn_internal");
+    BU_ALLOC(ip->idb_ptr, struct rt_arbn_internal);
+
     aip = (struct rt_arbn_internal *)ip->idb_ptr;
     aip->magic = RT_ARBN_INTERNAL_MAGIC;
     aip->neqn = ntohl(*(uint32_t *)rp->n.n_neqn);
@@ -986,7 +987,7 @@ rt_arbn_import5(struct rt_db_internal *ip, const struct bu_external *ep, const f
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_ARBN;
     ip->idb_meth = &rt_functab[ID_ARBN];
-    ip->idb_ptr = bu_malloc(sizeof(struct rt_arbn_internal), "rt_arbn_internal");
+    BU_ALLOC(ip->idb_ptr, struct rt_arbn_internal);
 
     aip = (struct rt_arbn_internal *)ip->idb_ptr;
     aip->magic = RT_ARBN_INTERNAL_MAGIC;

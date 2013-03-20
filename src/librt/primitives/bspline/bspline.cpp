@@ -777,7 +777,8 @@ rt_nurb_import4(struct rt_db_internal *ip, const struct bu_external *ep, registe
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_BSPLINE;
     ip->idb_meth = &rt_functab[ID_BSPLINE];
-    ip->idb_ptr = bu_malloc(sizeof(struct rt_nurb_internal), "rt_nurb_internal");
+    BU_ALLOC(ip->idb_ptr, struct rt_nurb_internal);
+
     sip = (struct rt_nurb_internal *)ip->idb_ptr;
     sip->magic = RT_NURB_INTERNAL_MAGIC;
 
@@ -1141,7 +1142,8 @@ rt_nurb_import5(struct rt_db_internal *ip, const struct bu_external *ep, registe
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_BSPLINE;
     ip->idb_meth = &rt_functab[ID_BSPLINE];
-    ip->idb_ptr = bu_malloc(sizeof(struct rt_nurb_internal), "rt_nurb_internal");
+    BU_ALLOC(ip->idb_ptr, struct rt_nurb_internal);
+
     sip = (struct rt_nurb_internal *)ip->idb_ptr;
     sip->magic = RT_NURB_INTERNAL_MAGIC;
 

@@ -3445,11 +3445,11 @@ mesh_leaf(struct db_tree_state *UNUSED(tsp), const struct db_full_path *pathp, s
 /*
  * Get the grip structure.
  */
-    newGrip = (struct artic_grips *)bu_malloc(sizeof(struct artic_grips),
-					      "artic_grip");
+    BU_ALLOC(newGrip, struct artic_grips);
     newGrip->l.magic = MAGIC_A_GRIP;
     VMOVE(newGrip->vert, gip->center);
     newGrip->dir = dp;
+
     for (BU_LIST_FOR(newJoint, artic_joints, &artic_head)) {
 	if (newJoint->joint == jp) {
 	    BU_LIST_APPEND(&newJoint->head, &(newGrip->l));
@@ -3459,10 +3459,10 @@ mesh_leaf(struct db_tree_state *UNUSED(tsp), const struct db_full_path *pathp, s
 /*
  * we need a new joint thingie.
  */
-    newJoint = (struct artic_joints *)bu_malloc(sizeof(struct artic_joints),
-						"Artic Joint");
+    BU_ALLOC(newJoint, struct artic_joints);
     newJoint->l.magic = MAGIC_A_JOINT;
     newJoint->joint = jp;
+
     BU_LIST_INIT(&newJoint->head);
     BU_LIST_APPEND(&artic_head, &(newJoint->l));
     BU_LIST_APPEND(&newJoint->head, &(newGrip->l));

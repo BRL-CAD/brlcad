@@ -850,7 +850,8 @@ rt_cline_import4(struct rt_db_internal *ip, const struct bu_external *ep, const 
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_CLINE;
     ip->idb_meth = &rt_functab[ID_CLINE];
-    ip->idb_ptr = bu_malloc(sizeof(struct rt_cline_internal), "rt_cline_internal");
+    BU_ALLOC(ip->idb_ptr, struct rt_cline_internal);
+
     cline_ip = (struct rt_cline_internal *)ip->idb_ptr;
     cline_ip->magic = RT_CLINE_INTERNAL_MAGIC;
     if (mat == NULL) mat = bn_mat_identity;
@@ -934,7 +935,7 @@ rt_cline_import5(struct rt_db_internal *ip, const struct bu_external *ep, regist
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_CLINE;
     ip->idb_meth = &rt_functab[ID_CLINE];
-    ip->idb_ptr = bu_malloc(sizeof(struct rt_cline_internal), "rt_cline_internal");
+    BU_ALLOC(ip->idb_ptr, struct rt_cline_internal);
 
     cline_ip = (struct rt_cline_internal *)ip->idb_ptr;
     cline_ip->magic = RT_CLINE_INTERNAL_MAGIC;

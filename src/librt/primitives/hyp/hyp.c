@@ -793,15 +793,15 @@ rt_hyp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
      */
 
     /* calculate major axis hyperbola */
-    pts_a = (struct rt_pt_node *)bu_malloc(sizeof(struct rt_pt_node), "rt_pt_node");
+    BU_ALLOC(pts_a, struct rt_pt_node);
 
     /* set base, center, and top points */
     pos_a = pts_a;
     VSET(pos_a->p, sqrt((mag_h*mag_h) * (c*c) + (r1*r1)), 0, -mag_h);
-    pos_a->next = (struct rt_pt_node *)bu_malloc(sizeof(struct rt_pt_node), "rt_pt_node");
+    BU_ALLOC(pos_a->next, struct rt_pt_node);
     pos_a = pos_a->next;
     VSET(pos_a->p, r1, 0, 0);
-    pos_a->next = (struct rt_pt_node *)bu_malloc(sizeof(struct rt_pt_node), "rt_pt_node");
+    BU_ALLOC(pos_a->next, struct rt_pt_node);
     pos_a = pos_a->next;
     VSET(pos_a->p, sqrt((mag_h*mag_h) * (c*c) + (r1*r1)), 0, mag_h);
     pos_a->next = NULL;
@@ -853,7 +853,7 @@ rt_hyp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 
 		if (dist > dtol || ang0 > ntol || ang2 > ntol) {
 		    /* split segment */
-		    add = (struct rt_pt_node *)bu_malloc(sizeof(struct rt_pt_node), "rt_pt_node");
+		    BU_ALLOC(add, struct rt_pt_node);
 		    VMOVE(add->p, p1);
 		    add->next = pos_a->next;
 		    pos_a->next = add;
@@ -867,7 +867,7 @@ rt_hyp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     }
 
     /* calculate minor axis hyperbola */
-    pts_b = (struct rt_pt_node *)bu_malloc(sizeof(struct rt_pt_node), "rt_pt_node");
+    BU_ALLOC(pts_b, struct rt_pt_node);
 
     pos_a = pts_a;
     pos_b = pts_b;
@@ -878,7 +878,7 @@ rt_hyp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	pos_b->p[Y] = r2 * sqrt(pos_b->p[Z] * pos_b->p[Z]/(r3*r3) + 1.0);
 	pos_a = pos_a->next;
 	if (pos_a) {
-	    pos_b->next = (struct rt_pt_node *)bu_malloc(sizeof(struct rt_pt_node), "rt_pt_node");
+	    BU_ALLOC(pos_b->next, struct rt_pt_node);
 	    pos_b = pos_b->next;
 	} else {
 	    pos_b->next = NULL;
@@ -1225,7 +1225,8 @@ rt_hyp_import5(struct rt_db_internal *ip, const struct bu_external *ep, const ma
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_HYP;
     ip->idb_meth = &rt_functab[ID_HYP];
-    ip->idb_ptr = bu_malloc(sizeof(struct rt_hyp_internal), "rt_hyp_internal");
+    BU_ALLOC(ip->idb_ptr, struct rt_hyp_internal);
+
     hyp_ip = (struct rt_hyp_internal *)ip->idb_ptr;
     hyp_ip->hyp_magic = RT_HYP_INTERNAL_MAGIC;
 

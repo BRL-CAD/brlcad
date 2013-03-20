@@ -2313,7 +2313,10 @@ int brep_conversion_tree(struct db_i *db, union tree *oldtree, union tree *newtr
 		    }
 		    // It's a primitive. If it's a b-rep object, just duplicate it. Otherwise call the
 		    // function to convert it to b-rep.
-		    ON_Brep** brep = (ON_Brep**)bu_malloc(sizeof(ON_Brep*), "ON_Brep*");
+		    ON_Brep** brep;
+
+		    BU_ALLOC(brep, ON_Brep*);
+
 		    if (BU_STR_EQUAL(intern->idb_meth->ft_name, "ID_BREP")) {
 			*brep = ((struct rt_brep_internal *)intern->idb_ptr)->brep->Duplicate();
 		    } else {
@@ -2394,12 +2397,13 @@ brep_conversion_comb(struct rt_db_internal *old_internal, char *name, char *suff
     }
     RT_CK_TREE(comb_internal->tree);
     union tree *oldtree = comb_internal->tree;
-
     rt_comb_internal *new_internal;
-    new_internal = (struct rt_comb_internal*)bu_malloc(sizeof(struct rt_comb_internal), "rt_comb_internal");
+
+    BU_ALLOC(new_internal, struct rt_comb_internal);
     *new_internal = *comb_internal;
-    new_internal->tree = (union tree*)bu_malloc(sizeof(union tree), "tree");
+    BU_ALLOC(new_internal->tree, union tree);
     RT_TREE_INIT(new_internal->tree);
+
     union tree *newtree = new_internal->tree;
 
     ret = brep_conversion_tree(wdbp->dbip, oldtree, newtree, suffix, wdbp, local2mm);

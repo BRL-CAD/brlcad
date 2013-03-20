@@ -376,7 +376,7 @@ rt_pnts_import5(struct rt_db_internal *internal, const struct bu_external *exter
     internal->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     internal->idb_type = ID_PNTS;
     internal->idb_meth = &rt_functab[ID_PNTS];
-    internal->idb_ptr = bu_malloc(sizeof(struct rt_pnts_internal), "rt_pnts_internal");
+    BU_ALLOC(internal->idb_ptr, struct rt_pnts_internal);
 
     /* initialize internal structure */
     pnts = (struct rt_pnts_internal *) internal->idb_ptr;

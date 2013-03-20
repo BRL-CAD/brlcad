@@ -1480,7 +1480,8 @@ rt_part_import4(struct rt_db_internal *ip, const struct bu_external *ep, registe
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_PARTICLE;
     ip->idb_meth = &rt_functab[ID_PARTICLE];
-    ip->idb_ptr = bu_malloc(sizeof(struct rt_part_internal), "rt_part_internal");
+    BU_ALLOC(ip->idb_ptr, struct rt_part_internal);
+
     part = (struct rt_part_internal *)ip->idb_ptr;
     part->part_magic = RT_PART_INTERNAL_MAGIC;
 
@@ -1601,7 +1602,7 @@ rt_part_import5(struct rt_db_internal *ip, const struct bu_external *ep, registe
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_PARTICLE;
     ip->idb_meth = &rt_functab[ID_PARTICLE];
-    ip->idb_ptr = bu_malloc(sizeof(struct rt_part_internal), "rt_part_internal");
+    BU_ALLOC(ip->idb_ptr, struct rt_part_internal);
 
     part = (struct rt_part_internal *)ip->idb_ptr;
     part->part_magic = RT_PART_INTERNAL_MAGIC;

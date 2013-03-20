@@ -4033,7 +4033,8 @@ rt_pipe_import4(
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_PIPE;
     ip->idb_meth = &rt_functab[ID_PIPE];
-    ip->idb_ptr = bu_malloc(sizeof(struct rt_pipe_internal), "rt_pipe_internal");
+    BU_ALLOC(ip->idb_ptr, struct rt_pipe_internal);
+
     pip = (struct rt_pipe_internal *)ip->idb_ptr;
     pip->pipe_magic = RT_PIPE_INTERNAL_MAGIC;
     pip->pipe_count = ntohl(*(uint32_t *)rp->pwr.pwr_pt_count);
@@ -4197,7 +4198,7 @@ rt_pipe_import5(
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_PIPE;
     ip->idb_meth = &rt_functab[ID_PIPE];
-    ip->idb_ptr = bu_malloc(sizeof(struct rt_pipe_internal), "rt_pipe_internal");
+    BU_ALLOC(ip->idb_ptr, struct rt_pipe_internal);
 
     pip = (struct rt_pipe_internal *)ip->idb_ptr;
     pip->pipe_magic = RT_PIPE_INTERNAL_MAGIC;

@@ -173,7 +173,7 @@ ged_rfarb(struct ged *gedp, int argc, const char *argv[])
     internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
     internal.idb_type = ID_ARB8;
     internal.idb_meth = &rt_functab[ID_ARB8];
-    internal.idb_ptr = (genptr_t)bu_malloc(sizeof(struct rt_arb_internal), "rt_arb_internal");
+    BU_ALLOC(internal.idb_ptr, struct rt_arb_internal);
     aip = (struct rt_arb_internal *)internal.idb_ptr;
     aip->magic = RT_ARB_INTERNAL_MAGIC;
 

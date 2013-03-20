@@ -57,7 +57,7 @@ static void incr_token(int id)
 
 	/* add new */
 	if (t->next == NULL) {
-	    t->next = bu_calloc(1, sizeof(token_t), "incr_token()");
+	    BU_ALLOC(t->next, token_t);
 	    t->next->id = id;
 	    t->next->count = 1;
 	    return;
@@ -75,7 +75,7 @@ void tabulate(long int id, const char *text)
 
     /* allocate and initialize on first use */
     if (!counter) {
-	counter = bu_malloc(sizeof(counter_t), "count()");
+	BU_ALLOC(counter, counter_t);
 	INIT_COUNTER_T(*counter);
     }
 

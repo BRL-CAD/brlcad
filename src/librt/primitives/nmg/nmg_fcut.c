@@ -2227,9 +2227,9 @@ find_loop_to_cut(int *index1, int *index2, int prior_start, int prior_end, int n
 
 		    if (!match_lu) {
 			match_lu = next_lu;
-			cuts = (struct bu_ptbl *)bu_malloc(sizeof(struct bu_ptbl), "cuts");
+			BU_ALLOC(cuts, struct bu_ptbl);
 			bu_ptbl_init(cuts, 64, " cuts");
-			lcut = (struct loop_cuts *)bu_malloc(sizeof(struct loop_cuts), "lcut");
+			BU_ALLOC(lcut, struct loop_cuts);
 			lcut->lu = match_lu;
 			bu_ptbl_ins(cuts, (long *)lcut);
 			continue;
@@ -2265,7 +2265,7 @@ find_loop_to_cut(int *index1, int *index2, int prior_start, int prior_end, int n
 			}
 			if (!found) {
 			    done = 0;
-			    lcut = (struct loop_cuts *)bu_malloc(sizeof(struct loop_cuts), "lcut");
+			    BU_ALLOC(lcut, struct loop_cuts);
 			    lcut->lu = match_lu;
 			    bu_ptbl_ins(cuts, (long *)lcut);
 			}

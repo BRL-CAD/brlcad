@@ -825,7 +825,8 @@ rt_superell_import4(struct rt_db_internal *ip, const struct bu_external *ep, con
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_SUPERELL;
     ip->idb_meth = &rt_functab[ID_SUPERELL];
-    ip->idb_ptr = bu_malloc(sizeof(struct rt_superell_internal), "rt_superell_internal");
+    BU_ALLOC(ip->idb_ptr, struct rt_superell_internal);
+
     eip = (struct rt_superell_internal *)ip->idb_ptr;
     eip->magic = RT_SUPERELL_INTERNAL_MAGIC;
 
@@ -914,7 +915,7 @@ rt_superell_import5(struct rt_db_internal *ip, const struct bu_external *ep, con
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_SUPERELL;
     ip->idb_meth = &rt_functab[ID_SUPERELL];
-    ip->idb_ptr = bu_malloc(sizeof(struct rt_superell_internal), "rt_superell_internal");
+    BU_ALLOC(ip->idb_ptr, struct rt_superell_internal);
 
     eip = (struct rt_superell_internal *)ip->idb_ptr;
     eip->magic = RT_SUPERELL_INTERNAL_MAGIC;

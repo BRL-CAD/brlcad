@@ -395,7 +395,7 @@ rt_brep_prep(struct soltab *stp, struct rt_db_internal* ip, struct rt_i* rtip)
     RT_BREP_CK_MAGIC(bi);
 
     if ((bs = (struct brep_specific*)stp->st_specific) == NULL) {
-	bs = (struct brep_specific*)bu_malloc(sizeof(struct brep_specific), "brep_specific");
+	BU_ALLOC(bs, struct brep_specific);
 	bs->brep = bi->brep;
 	bi->brep = NULL;
 	stp->st_specific = (genptr_t)bs;
@@ -2961,7 +2961,7 @@ rt_brep_import5(struct rt_db_internal *ip, const struct bu_external *ep, const f
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_BREP;
     ip->idb_meth = &rt_functab[ID_BREP];
-    ip->idb_ptr = bu_malloc(sizeof(struct rt_brep_internal), "rt_brep_internal");
+    BU_ALLOC(ip->idb_ptr, struct rt_brep_internal);
 
     bi = (struct rt_brep_internal*)ip->idb_ptr;
     bi->magic = RT_BREP_INTERNAL_MAGIC;
@@ -3615,7 +3615,7 @@ rt_brep_boolean(struct rt_db_internal *out, const struct rt_db_internal *ip1, co
 
     // make the final rt_db_internal
     struct rt_brep_internal *bip_out;
-    bip_out = (struct rt_brep_internal *)bu_malloc(sizeof(struct rt_brep_internal), "allocate structure");
+    BU_ALLOC(bip_out, struct rt_brep_internal);
     bip_out->magic = RT_BREP_INTERNAL_MAGIC;
     bip_out->brep = brep_out;
     RT_DB_INTERNAL_INIT(out);

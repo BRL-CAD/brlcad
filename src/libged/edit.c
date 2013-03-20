@@ -649,8 +649,7 @@ edit_arg_duplicate_in_place(struct edit_arg *const dest,
 	db_dup_full_path(dest->object, src->object);
     }
     if (src->vector) {
-	dest->vector = (vect_t *)bu_malloc(sizeof(vect_t),
-					   "vect_t block for edit_arg_duplicate_in_place()");
+	BU_ALLOC(dest->vector, vect_t);
 	(*dest->vector)[0] = (*src->vector)[0];
 	(*dest->vector)[1] = (*src->vector)[1];
 	(*dest->vector)[2] = (*src->vector)[2];
@@ -874,8 +873,7 @@ edit_arg_to_coord(struct ged *gedp, struct edit_arg *const arg, vect_t *coord)
     if (arg->vector) {
 	VADD2(**dest, *arg->vector, obj_coord);
     } else {
-	*dest = (vect_t *)bu_malloc(sizeof(vect_t),
-				    "vect_t block for edit_arg_to_coord()");
+	BU_ALLOC(*dest, vect_t);
 	VMOVE(**dest, obj_coord);
     }
 
@@ -1860,8 +1858,7 @@ edit_str_to_arg(struct ged *gedp, const char *str, struct edit_arg *arg,
 	return GED_ERROR;
     }
     if (!arg->vector)
-	arg->vector = (vect_t *)bu_malloc(sizeof(vect_t),
-					  "vect_t block for edit_str_to_arg");
+	BU_ALLOC(arg->vector, vect_t);
 
     /* Attempt to interpret/record the number as the next unset X, Y,
      * or Z coordinate/position.

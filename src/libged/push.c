@@ -153,7 +153,7 @@ push_leaf(struct db_tree_state *tsp,
 /*
  * This is the first time we have seen this solid.
  */
-    gpip = (struct push_id *) bu_malloc(sizeof(struct push_id), "Push ident");
+    BU_ALLOC(gpip, struct push_id);
     gpip->magic = PUSH_MAGIC_ID;
     gpip->pi_dir = dp;
     MAT_COPY(gpip->pi_mat, tsp->ts_mat);

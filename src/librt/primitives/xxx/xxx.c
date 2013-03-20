@@ -309,7 +309,8 @@ rt_xxx_import5(struct rt_db_internal *ip, const struct bu_external *ep, const ma
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_XXX;
     ip->idb_meth = &rt_functab[ID_XXX];
-    ip->idb_ptr = bu_malloc(sizeof(struct rt_xxx_internal), "rt_xxx_internal");
+    BU_ALLOC(ip->idb_ptr, struct rt_xxx_internal);
+
     xxx_ip = (struct rt_xxx_internal *)ip->idb_ptr;
     xxx_ip->magic = RT_XXX_INTERNAL_MAGIC;
 
@@ -353,7 +354,6 @@ rt_xxx_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
     BU_CK_EXTERNAL(ep);
     ep->ext_nbytes = SIZEOF_NETWORK_DOUBLE * ELEMENTS_PER_VECT;
     ep->ext_buf = (genptr_t)bu_calloc(1, ep->ext_nbytes, "xxx external");
-
 
     /* Since libwdb users may want to operate in units other than mm,
      * we offer the opportunity to scale the solid (to get it into mm)

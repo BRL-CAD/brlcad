@@ -986,7 +986,8 @@ bot_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *int
     intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     intern->idb_type = ID_BOT;
     intern->idb_meth = &rt_functab[ID_BOT];
-    bot = (struct rt_bot_internal *)bu_calloc(1, sizeof(struct rt_bot_internal), "rt_bot_internal");
+
+    BU_ALLOC(bot, struct rt_bot_internal);
     intern->idb_ptr = (genptr_t)bot;
     bot->magic = RT_BOT_INTERNAL_MAGIC;
     bot->num_vertices = num_verts;
@@ -1058,8 +1059,8 @@ arbn_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *in
     intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     intern->idb_type = ID_ARBN;
     intern->idb_meth = &rt_functab[ID_ARBN];
-    intern->idb_ptr = (genptr_t)bu_malloc(sizeof(struct rt_arbn_internal),
-					  "rt_arbn_internal");
+
+    BU_ALLOC(intern->idb_ptr, struct rt_arbn_internal);
     arbn = (struct rt_arbn_internal *)intern->idb_ptr;
     arbn->magic = RT_ARBN_INTERNAL_MAGIC;
     arbn->neqn = num_planes;
@@ -1110,14 +1111,15 @@ pipe_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *in
     intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     intern->idb_type = ID_PIPE;
     intern->idb_meth = &rt_functab[ID_PIPE];
-    intern->idb_ptr = (genptr_t)bu_malloc(sizeof(struct rt_pipe_internal), "rt_pipe_internal");
+
+    BU_ALLOC(intern->idb_ptr, struct rt_pipe_internal);
     pipeip = (struct rt_pipe_internal *)intern->idb_ptr;
     pipeip->pipe_magic = RT_PIPE_INTERNAL_MAGIC;
     BU_LIST_INIT(&pipeip->pipe_segs_head);
     for (i = 4; i < argc; i += 6) {
 	struct wdb_pipept *pipept;
 
-	pipept = (struct wdb_pipept *)bu_malloc(sizeof(struct wdb_pipept), "wdb_pipept");
+	BU_ALLOC(pipept, struct wdb_pipept);
 	pipept->pp_coord[0] = atof(argv[i]) * gedp->ged_wdbp->dbip->dbi_local2base;
 	pipept->pp_coord[1] = atof(argv[i+1]) * gedp->ged_wdbp->dbip->dbi_local2base;
 	pipept->pp_coord[2] = atof(argv[i+2]) * gedp->ged_wdbp->dbip->dbi_local2base;
@@ -1245,7 +1247,8 @@ ars_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *int
     intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     intern->idb_type = ID_ARS;
     intern->idb_meth = &rt_functab[ID_ARS];
-    intern->idb_ptr = (genptr_t)bu_malloc(sizeof(struct rt_ars_internal), "rt_ars_internal");
+
+    BU_ALLOC(intern->idb_ptr, struct rt_ars_internal);
     arip = (struct rt_ars_internal *)intern->idb_ptr;
     arip->magic = RT_ARS_INTERNAL_MAGIC;
     arip->pts_per_curve = num_pts;
@@ -1253,13 +1256,10 @@ ars_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *int
     ncurves_minus_one = arip->ncurves - 1;
     total_points = arip->ncurves * arip->pts_per_curve;
 
-    arip->curves = (fastf_t **)bu_malloc(
-	(arip->ncurves+1) * sizeof(fastf_t *), "ars curve ptrs");
+    arip->curves = (fastf_t **)bu_malloc((arip->ncurves+1) * sizeof(fastf_t *), "ars curve ptrs");
     for (i = 0; i < arip->ncurves+1; i++) {
 	/* Leave room for first point to be repeated */
-	arip->curves[i] = (fastf_t *)bu_malloc(
-	    (arip->pts_per_curve+1) * sizeof(point_t),
-	    "ars curve");
+	arip->curves[i] = (fastf_t *)bu_malloc((arip->pts_per_curve+1) * sizeof(point_t), "ars curve");
     }
 
     /* fill in the point of the first row */
@@ -1336,8 +1336,7 @@ arb_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern)
     intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     intern->idb_type = ID_ARB8;
     intern->idb_meth = &rt_functab[ID_ARB8];
-    intern->idb_ptr = (genptr_t)bu_malloc(sizeof(struct rt_arb_internal),
-					  "rt_arb_internal");
+    BU_ALLOC(intern->idb_ptr, struct rt_arb_internal);
     aip = (struct rt_arb_internal *)intern->idb_ptr;
     aip->magic = RT_ARB_INTERNAL_MAGIC;
 
@@ -1415,8 +1414,7 @@ ell_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern)
     intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     intern->idb_type = ID_ELL;
     intern->idb_meth = &rt_functab[ID_ELL];
-    intern->idb_ptr = (genptr_t)bu_malloc(sizeof(struct rt_ell_internal),
-					  "rt_ell_internal");
+    BU_ALLOC(intern->idb_ptr, struct rt_ell_internal);
     eip = (struct rt_ell_internal *)intern->idb_ptr;
     eip->magic = RT_ELL_INTERNAL_MAGIC;
 
@@ -1488,8 +1486,7 @@ tor_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern)
     intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     intern->idb_type = ID_TOR;
     intern->idb_meth = &rt_functab[ID_TOR];
-    intern->idb_ptr = (genptr_t)bu_malloc(sizeof(struct rt_tor_internal),
-					  "rt_tor_internal");
+    BU_ALLOC(intern->idb_ptr, struct rt_tor_internal);
     tip = (struct rt_tor_internal *)intern->idb_ptr;
     tip->magic = RT_TOR_INTERNAL_MAGIC;
 
@@ -1528,8 +1525,7 @@ tgc_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern)
     intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     intern->idb_type = ID_TGC;
     intern->idb_meth = &rt_functab[ID_TGC];
-    intern->idb_ptr = (genptr_t)bu_malloc(sizeof(struct rt_tgc_internal),
-					  "rt_tgc_internal");
+    BU_ALLOC(intern->idb_ptr, struct rt_tgc_internal);
     tip = (struct rt_tgc_internal *)intern->idb_ptr;
     tip->magic = RT_TGC_INTERNAL_MAGIC;
 
@@ -1578,8 +1574,7 @@ rcc_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern)
     intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     intern->idb_type = ID_TGC;
     intern->idb_meth = &rt_functab[ID_TGC];
-    intern->idb_ptr = (genptr_t)bu_malloc(sizeof(struct rt_tgc_internal),
-					  "rt_tgc_internal");
+    BU_ALLOC(intern->idb_ptr, struct rt_tgc_internal);
     tip = (struct rt_tgc_internal *)intern->idb_ptr;
     tip->magic = RT_TGC_INTERNAL_MAGIC;
 
@@ -1622,8 +1617,7 @@ tec_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern)
     intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     intern->idb_type = ID_TGC;
     intern->idb_meth = &rt_functab[ID_TGC];
-    intern->idb_ptr = (genptr_t)bu_malloc(sizeof(struct rt_tgc_internal),
-					  "rt_tgc_internal");
+    BU_ALLOC(intern->idb_ptr, struct rt_tgc_internal);
     tip = (struct rt_tgc_internal *)intern->idb_ptr;
     tip->magic = RT_TGC_INTERNAL_MAGIC;
 
@@ -1662,8 +1656,7 @@ rec_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern)
     intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     intern->idb_type = ID_TGC;
     intern->idb_meth = &rt_functab[ID_TGC];
-    intern->idb_ptr = (genptr_t)bu_malloc(sizeof(struct rt_tgc_internal),
-					  "rt_tgc_internal");
+    BU_ALLOC(intern->idb_ptr, struct rt_tgc_internal);
     tip = (struct rt_tgc_internal *)intern->idb_ptr;
     tip->magic = RT_TGC_INTERNAL_MAGIC;
 
@@ -1702,8 +1695,7 @@ trc_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern)
     intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     intern->idb_type = ID_TGC;
     intern->idb_meth = &rt_functab[ID_TGC];
-    intern->idb_ptr = (genptr_t)bu_malloc(sizeof(struct rt_tgc_internal),
-					  "rt_tgc_internal");
+    BU_ALLOC(intern->idb_ptr, struct rt_tgc_internal);
     tip = (struct rt_tgc_internal *)intern->idb_ptr;
     tip->magic = RT_TGC_INTERNAL_MAGIC;
 
@@ -1750,8 +1742,7 @@ box_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern)
     intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     intern->idb_type = ID_ARB8;
     intern->idb_meth = &rt_functab[ID_ARB8];
-    intern->idb_ptr = (genptr_t)bu_malloc(sizeof(struct rt_arb_internal),
-					  "rt_arb_internal");
+    BU_ALLOC(intern->idb_ptr, struct rt_arb_internal);
     aip = (struct rt_arb_internal *)intern->idb_ptr;
     aip->magic = RT_ARB_INTERNAL_MAGIC;
 
@@ -1883,8 +1874,7 @@ part_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern)
     intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     intern->idb_type = ID_PARTICLE;
     intern->idb_meth = &rt_functab[ID_PARTICLE];
-    intern->idb_ptr = (genptr_t)bu_malloc(sizeof(struct rt_part_internal),
-					  "rt_part_internal");
+    BU_ALLOC(intern->idb_ptr, struct rt_part_internal);
     part_ip = (struct rt_part_internal *)intern->idb_ptr;
     part_ip->part_magic = RT_PART_INTERNAL_MAGIC;
 
@@ -1919,8 +1909,7 @@ rpc_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern)
     intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     intern->idb_type = ID_RPC;
     intern->idb_meth = &rt_functab[ID_RPC];
-    intern->idb_ptr = (genptr_t)bu_malloc(sizeof(struct rt_rpc_internal),
-					  "rt_rpc_internal");
+    BU_ALLOC(intern->idb_ptr, struct rt_rpc_internal);
     rip = (struct rt_rpc_internal *)intern->idb_ptr;
     rip->rpc_magic = RT_RPC_INTERNAL_MAGIC;
 
@@ -1955,8 +1944,7 @@ rhc_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern)
     intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     intern->idb_type = ID_RHC;
     intern->idb_meth = &rt_functab[ID_RHC];
-    intern->idb_ptr = (genptr_t)bu_malloc(sizeof(struct rt_rhc_internal),
-					  "rt_rhc_internal");
+    BU_ALLOC(intern->idb_ptr, struct rt_rhc_internal);
     rip = (struct rt_rhc_internal *)intern->idb_ptr;
     rip->rhc_magic = RT_RHC_INTERNAL_MAGIC;
 
@@ -1992,8 +1980,7 @@ epa_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern)
     intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     intern->idb_type = ID_EPA;
     intern->idb_meth = &rt_functab[ID_EPA];
-    intern->idb_ptr = (genptr_t)bu_malloc(sizeof(struct rt_epa_internal),
-					  "rt_epa_internal");
+    BU_ALLOC(intern->idb_ptr, struct rt_epa_internal);
     rip = (struct rt_epa_internal *)intern->idb_ptr;
     rip->epa_magic = RT_EPA_INTERNAL_MAGIC;
 
@@ -2034,8 +2021,7 @@ ehy_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern)
     intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     intern->idb_type = ID_EHY;
     intern->idb_meth = &rt_functab[ID_EHY];
-    intern->idb_ptr = (genptr_t)bu_malloc(sizeof(struct rt_ehy_internal),
-					  "rt_ehy_internal");
+    BU_ALLOC(intern->idb_ptr, struct rt_ehy_internal);
     rip = (struct rt_ehy_internal *)intern->idb_ptr;
     rip->ehy_magic = RT_EHY_INTERNAL_MAGIC;
 
@@ -2086,8 +2072,7 @@ hyp_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern)
     intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     intern->idb_type = ID_HYP;
     intern->idb_meth = &rt_functab[ID_HYP];
-    intern->idb_ptr = (genptr_t)bu_malloc(sizeof(struct rt_hyp_internal),
-					  "rt_hyp_internal");
+    BU_ALLOC(intern->idb_ptr, struct rt_hyp_internal);
     rip = (struct rt_hyp_internal *)intern->idb_ptr;
     rip->hyp_magic = RT_HYP_INTERNAL_MAGIC;
 
@@ -2151,8 +2136,7 @@ eto_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern)
     intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     intern->idb_type = ID_ETO;
     intern->idb_meth = &rt_functab[ID_ETO];
-    intern->idb_ptr = (genptr_t)bu_malloc(sizeof(struct rt_eto_internal),
-					  "rt_eto_internal");
+    BU_ALLOC(intern->idb_ptr, struct rt_eto_internal);
     eip = (struct rt_eto_internal *)intern->idb_ptr;
     eip->eto_magic = RT_ETO_INTERNAL_MAGIC;
 
@@ -2195,8 +2179,7 @@ extrude_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *inte
     intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     intern->idb_type = ID_EXTRUDE;
     intern->idb_meth = &rt_functab[ID_EXTRUDE];
-    intern->idb_ptr = (genptr_t)bu_malloc(sizeof(struct rt_extrude_internal),
-					  "rt_extrude_internal");
+    BU_ALLOC(intern->idb_ptr, struct rt_extrude_internal);
     eip = (struct rt_extrude_internal *)intern->idb_ptr;
     eip->magic = RT_EXTRUDE_INTERNAL_MAGIC;
 
@@ -2243,8 +2226,7 @@ revolve_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *inte
     intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     intern->idb_type = ID_REVOLVE;
     intern->idb_meth = &rt_functab[ID_REVOLVE];
-    intern->idb_ptr = (genptr_t)bu_calloc(1, sizeof(struct rt_revolve_internal),
-					  "rt_revolve_internal");
+    BU_ALLOC(intern->idb_ptr, struct rt_revolve_internal);
     rip = (struct rt_revolve_internal *)intern->idb_ptr;
     rip->magic = RT_REVOLVE_INTERNAL_MAGIC;
 
@@ -2293,8 +2275,7 @@ grip_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern)
     intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     intern->idb_type = ID_GRIP;
     intern->idb_meth = &rt_functab[ID_GRIP];
-    intern->idb_ptr = (genptr_t)bu_malloc(sizeof(struct rt_grip_internal),
-					  "rt_grip_internal");
+    BU_ALLOC(intern->idb_ptr, struct rt_grip_internal);
     gip = (struct rt_grip_internal *)intern->idb_ptr;
     gip->magic = RT_GRIP_INTERNAL_MAGIC;
 
@@ -2324,8 +2305,7 @@ superell_in(struct ged *gedp, char *cmd_argvs[], struct rt_db_internal *intern)
 
     intern->idb_type = ID_SUPERELL;
     intern->idb_meth = &rt_functab[ID_SUPERELL];
-    intern->idb_ptr = (genptr_t)bu_malloc(sizeof(struct rt_superell_internal),
-					  "rt_superell_internal");
+    BU_ALLOC(intern->idb_ptr, struct rt_superell_internal);
     eip = (struct rt_superell_internal *)intern->idb_ptr;
     eip->magic = RT_SUPERELL_INTERNAL_MAGIC;
 
@@ -2403,7 +2383,8 @@ metaball_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal
     intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     intern->idb_type = ID_METABALL;
     intern->idb_meth = &rt_functab[ID_METABALL];
-    intern->idb_ptr = (genptr_t)bu_malloc(sizeof(struct rt_metaball_internal), "rt_metaball_internal");
+
+    BU_ALLOC(intern->idb_ptr, struct rt_metaball_internal);
     metaball = (struct rt_metaball_internal *)intern->idb_ptr;
     metaball->magic = RT_METABALL_INTERNAL_MAGIC;
     metaball->threshold = threshold;
@@ -2418,7 +2399,7 @@ metaball_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal
     for (i = 6; i < argc; i += 4) {
 	struct wdb_metaballpt *metaballpt;
 
-	metaballpt = (struct wdb_metaballpt *)bu_malloc(sizeof(struct wdb_metaballpt), "wdb_metaballpt");
+	BU_ALLOC(metaballpt, struct wdb_metaballpt);
 	metaballpt->coord[0] = atof(argv[i]) * gedp->ged_wdbp->dbip->dbi_local2base;
 	metaballpt->coord[1] = atof(argv[i+1]) * gedp->ged_wdbp->dbip->dbi_local2base;
 	metaballpt->coord[2] = atof(argv[i+2]) * gedp->ged_wdbp->dbip->dbi_local2base;
@@ -2645,7 +2626,7 @@ pnts_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *in
     intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     intern->idb_type = ID_PNTS;
     intern->idb_meth = &rt_functab[ID_PNTS];
-    intern->idb_ptr = (genptr_t) bu_malloc(sizeof(struct rt_pnts_internal), "rt_pnts_internal");
+    BU_ALLOC(intern->idb_ptr, struct rt_pnts_internal);
 
     /* init internal structure */
     pnts = (struct rt_pnts_internal *) intern->idb_ptr;

@@ -13453,7 +13453,7 @@ to_rt_gettrees_application(struct ged *gedp,
     rt_init_resource(resp, 0, rtip);
     BU_ASSERT_PTR(BU_PTBL_GET(&rtip->rti_resources, 0), !=, NULL);
 
-    ap = (struct application *)bu_malloc(sizeof(struct application), "to_rt_gettrees: ap");
+    BU_ALLOC(ap, struct application);
     RT_APPLICATION_INIT(ap);
     ap->a_magic = RT_AP_MAGIC;
     ap->a_resource = resp;

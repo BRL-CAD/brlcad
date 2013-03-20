@@ -149,7 +149,9 @@ txt_load_datasource(struct txt_specific *texture, struct db_i *dbInstance, const
 		return -1;
 	    }
 	} else {
-	    struct rt_db_internal *dbip=(struct rt_db_internal *)bu_malloc(sizeof(struct rt_db_internal), "txt_load_datasource");
+	    struct rt_db_internal *dbip;
+
+	    BU_ALLOC(dbip, struct rt_db_internal);
 
 	    RT_DB_INTERNAL_INIT(dbip);
 	    RT_CK_DB_INTERNAL(dbip);
