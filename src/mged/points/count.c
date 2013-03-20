@@ -44,7 +44,7 @@ static void incr_token(int id)
 
     /* allocate and initialize on first use */
     if (!counter) {
-	counter = bu_malloc(sizeof(counter_t), "count()");
+	BU_ALLOC(counter, counter_t);
 	INIT_COUNTER_T(*counter);
     }
 
