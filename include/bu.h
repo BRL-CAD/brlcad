@@ -236,16 +236,16 @@ BU_EXPORT extern Tcl_Interp *brlcad_interp;
 
 
 /**
- * Fast dynamic memory allocation macro for small allocations.  Memory
- * is automatically initialized to zero and, similar to bu_calloc(),
- * is guaranteed to return non-NULL (or bu_bomb()).
+ * Fast dynamic memory allocation macro for small pointer allocations.
+ * Memory is automatically initialized to zero and, similar to
+ * bu_calloc(), is guaranteed to return non-NULL (or bu_bomb()).
  *
  * Memory acquired with BU_GET() should be returned with BU_PUT(), NOT
  * with bu_free().
  *
- * Use BU_ALLOC() for dynamically allocating single structures that
- * are relatively large, infrequently allocated, or otherwise don't
- * need to be fast.
+ * Use BU_ALLOC() for dynamically allocating structures that are
+ * relatively large, infrequently allocated, or otherwise don't need
+ * to be fast.
  */
 #if 0
 #define BU_GET(_ptr, _type) _ptr = (_type *)bu_heap_get(sizeof(_type))
@@ -262,7 +262,7 @@ BU_EXPORT extern Tcl_Interp *brlcad_interp;
  * with bu_free(), NOT with BU_PUT().
  */
 #if 0
-#define BU_PUT(_ptr, _type) *(uint8_t *)(_ptr) = /*zap*/ 0; bu_heap_put(_ptr, #SO(_type)); _ptr = NULL
+#define BU_PUT(_ptr, _type) *(uint8_t *)(_type *)(_ptr) = /*zap*/ 0; bu_heap_put(_ptr, sizeof(_type)); _ptr = NULL
 #else
 #define BU_PUT(_ptr, _type) do { *(uint8_t *)(_type *)(_ptr) = /*zap*/ 0; bu_free(_ptr, #_type " (BU_PUT) " BU_FLSTR); _ptr = NULL; } while (0)
 #endif
