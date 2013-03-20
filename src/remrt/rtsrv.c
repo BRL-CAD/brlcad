@@ -376,7 +376,7 @@ main(int argc, char **argv)
 		    bu_log("bad list element, type=%d\n", lp->type );
 		    return 33;
 	    }
-	    bu_free( (char *)lp, "struct pkg_queue" );
+	    BU_PUT(lp, struct pkg_queue);
 	}
     }
 
