@@ -1516,7 +1516,7 @@ allocate_per_region_data(struct cstate *state, int start, int ac, const char *av
     /* build data structures for the list of objects the user
      * specified on the command line
      */
-    obj_tbl = bu_calloc(sizeof(struct per_obj_data), num_objects, "report tables");
+    obj_tbl = bu_calloc(num_objects, sizeof(struct per_obj_data), "report tables");
     for (i = 0; i < num_objects; i++) {
 	obj_tbl[i].o_name = (char *)av[start+i];
 	obj_tbl[i].o_len = bu_calloc(num_views, sizeof(double), "o_len");
