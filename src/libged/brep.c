@@ -213,7 +213,6 @@ ged_brep(struct ged *gedp, int argc, const char *argv[])
 	    bu_strlcat(bname_suffix, suffix, strlen(solid_name)+strlen(suffix)+1);
 	    if (db_lookup(gedp->ged_wdbp->dbip, bname_suffix, LOOKUP_QUIET) != RT_DIR_NULL) {
 		bu_vls_printf(gedp->ged_result_str, "%s already exists.", bname_suffix);
-		bu_free(brep, "ON_Brep*");
 		bu_free(bname, "char");
 		bu_free(bname_suffix, "char");
 		if (argc > 2) bu_free(suffix, "char");
@@ -224,24 +223,22 @@ ged_brep(struct ged *gedp, int argc, const char *argv[])
 	} else {
 	    if (db_lookup(gedp->ged_wdbp->dbip, bname, LOOKUP_QUIET) != RT_DIR_NULL) {
 		bu_vls_printf(gedp->ged_result_str, "%s already exists.", bname);
-		bu_free(brep, "ON_Brep*");
 		bu_free(bname, "char");
 		if (argc > 2) bu_free(suffix, "char");
 		return GED_OK;
 	    }
-	    ret = brep_conversion(&intern, brep);
+	    ret = brep_conversion(&intern, &brep);
 	    if (ret == -1) {
 		bu_vls_printf(gedp->ged_result_str, "%s doesn't have a brep-conversion function yet. Type: %s", solid_name, intern.idb_meth->ft_label);
-	    } else if (*brep == NULL) {
+	    } else if (brep == NULL) {
 		bu_vls_printf(gedp->ged_result_str, "%s cannot be converted to brep correctly.", solid_name);
 	    } else {
-		ret = mk_brep(gedp->ged_wdbp, bname, *brep);
+		ret = mk_brep(gedp->ged_wdbp, bname, brep);
 		if (ret == 0) {
 		    bu_vls_printf(gedp->ged_result_str, "%s is made.", bname);
 		}
 	    }
 	}
-	bu_free(brep, "ON_Brep*");
 	bu_free(bname, "char");
 	if (argc > 2) bu_free(suffix, "char");
 	return GED_OK;
