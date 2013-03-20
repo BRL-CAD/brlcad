@@ -262,9 +262,9 @@ BU_EXPORT extern Tcl_Interp *brlcad_interp;
  * with bu_free(), NOT with BU_PUT().
  */
 #if 0
-#define BU_PUT(_ptr, _type) *(uint8_t *)(_ptr) = /*zap*/ 0; bu_heap_put(_ptr, sizeof(_type)); _ptr = NULL
+#define BU_PUT(_ptr, _type) *(uint8_t *)(_ptr) = /*zap*/ 0; bu_heap_put(_ptr, #SO(_type)); _ptr = NULL
 #else
-#define BU_PUT(_ptr, _type) do { *(uint8_t *)(_ptr) = /*zap*/ 0; bu_free(_ptr, #_type " (BU_PUT) " BU_FLSTR); _ptr = NULL; } while (0)
+#define BU_PUT(_ptr, _type) do { *(uint8_t *)(_ptr) = /*zap*/ 0; bu_free(_ptr, #_type " (BU_PUT) " BU_FLSTR); _ptr = (_type *)sizeof(_type); _ptr = NULL; } while (0)
 #endif
 
 /**
@@ -5372,8 +5372,9 @@ BU_EXPORT extern size_t bu_strlcpym(char *dst, const char *src, size_t size, con
 #define bu_strlcpy(dst, src, size) bu_strlcpym(dst, src, size, BU_FLSTR)
 
 /**
- * Given a string, allocate enough memory to hold it using bu_malloc(),
- * duplicate the strings, returns a pointer to the new string.
+ * Given a string, allocate enough memory to hold it using
+ * bu_malloc(), duplicate the strings, returns a pointer to the new
+ * string.
  *
  * bu_strdup() is a macro that includes the current file name and line
  * number that can be used when bu debugging is enabled.
