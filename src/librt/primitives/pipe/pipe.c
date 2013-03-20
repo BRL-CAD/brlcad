@@ -1903,7 +1903,7 @@ rt_pipe_free(struct soltab *stp)
 	    while (BU_LIST_WHILE(p, id_pipe, head)) {
 		BU_LIST_DEQUEUE(&(p->l));
 		if (p->pipe_is_bend) {
-		    BU_PUT(p, struct linear_pipe);
+		    BU_PUT(p, struct lin_pipe);
 		} else {
 		    BU_PUT(p, struct bend_pipe);
 		}
