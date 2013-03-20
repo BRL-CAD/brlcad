@@ -137,8 +137,6 @@ static int	bot=0;
 #define	YES		'y'
 #define UNKNOWN		'\0'
 
-#define GET_PART	(struct local_part *)bu_calloc(1, sizeof(struct local_part), "get_part")
-#define	GET_END		(struct end_pt *)bu_calloc(1, sizeof(struct end_pt), "get_end")
 
 #define	MAKE_FACE(_ep0, _ep1, _ep2, _s)	{\
 	struct faceuse *_fu; \
@@ -1586,9 +1584,10 @@ hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segs
     if (NEAR_ZERO(part_len, tol.dist))
 	return 0;
 
-    lpart = GET_PART;
-    lpart->in = GET_END;
-    lpart->out = GET_END;
+    BU_ALLOC(lpart, struct local_part);
+    BU_ALLOC(lpart->in, struct end_pt);
+    BU_ALLOC(lpart->out, struct end_pt);
+
     lpart->is_void = NO;
     lpart->in->v = (struct vertex *)NULL;
 
