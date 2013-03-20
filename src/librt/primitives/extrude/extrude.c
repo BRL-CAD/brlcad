@@ -98,7 +98,7 @@ int
 rt_extrude_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct bn_tol *tol)
 {
     struct rt_extrude_internal *eip;
-    struct extrude_specific *extr;
+    struct extrude_specific extr;
     struct rt_sketch_internal *skt;
     vect_t tmp, xyz[3];
     fastf_t tmp_f, ldir[3];
@@ -118,37 +118,37 @@ rt_extrude_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const str
 	return -1;
     }
 
-    BU_GET(extr, struct extrude_specific);
+    memset(&extr, 0, sizeof(struct extrude_specific));
 
-    VMOVE(extr->unit_h, eip->h);
-    VUNITIZE(extr->unit_h);
+    VMOVE(extr.unit_h, eip->h);
+    VUNITIZE(extr.unit_h);
 
     /* the length of the u_vec is used for scaling radii of circular
      * arcs the u_vec and the v_vec must have the same length
      */
-    extr->uv_scale = MAGNITUDE(eip->u_vec);
+    extr.uv_scale = MAGNITUDE(eip->u_vec);
 
     /* build a transformation matrix to rotate extrusion vector to
      * z-axis
      */
     VSET(tmp, 0, 0, 1);
-    bn_mat_fromto(extr->rot, eip->h, tmp, tol);
+    bn_mat_fromto(extr.rot, eip->h, tmp, tol);
 
     /* and translate to origin */
-    extr->rot[MDX] = -VDOT(eip->V, &extr->rot[0]);
-    extr->rot[MDY] = -VDOT(eip->V, &extr->rot[4]);
-    extr->rot[MDZ] = -VDOT(eip->V, &extr->rot[8]);
+    extr.rot[MDX] = -VDOT(eip->V, &extr.rot[0]);
+    extr.rot[MDY] = -VDOT(eip->V, &extr.rot[4]);
+    extr.rot[MDZ] = -VDOT(eip->V, &extr.rot[8]);
 
     /* and save the inverse */
-    bn_mat_inv(extr->irot, extr->rot);
+    bn_mat_inv(extr.irot, extr.rot);
 
     /* calculate plane equations of top and bottom planes */
-    VCROSS(extr->pl1, eip->u_vec, eip->v_vec);
-    VUNITIZE(extr->pl1);
-    extr->pl1[W] = VDOT(extr->pl1, eip->V);
-    VMOVE(extr->pl2, extr->pl1);
+    VCROSS(extr.pl1, eip->u_vec, eip->v_vec);
+    VUNITIZE(extr.pl1);
+    extr.pl1[W] = VDOT(extr.pl1, eip->V);
+    VMOVE(extr.pl2, extr.pl1);
     VADD2(tmp, eip->V, eip->h);
-    extr->pl2[W] = VDOT(extr->pl2, tmp);
+    extr.pl2[W] = VDOT(extr.pl2, tmp);
 
     vert_count = skt->vert_count;
     /* count how many additional vertices we will need for arc centers */
@@ -168,8 +168,8 @@ rt_extrude_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const str
      * bounding box calculation
      */
     if (vert_count) {
-	extr->verts = (point_t *)bu_calloc(vert_count, sizeof(point_t),
-		"extr->verts");
+	extr.verts = (point_t *)bu_calloc(vert_count, sizeof(point_t),
+		"extr.verts");
     }
     VSETALL((*min), INFINITY);
     VSETALL((*max), -INFINITY);
@@ -177,50 +177,50 @@ rt_extrude_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const str
     for (i=0; i<skt->vert_count; i++) {
 	VJOIN2(tmp, eip->V, skt->verts[i][0], eip->u_vec, skt->verts[i][1], eip->v_vec);
 	VMINMAX((*min), (*max), tmp);
-	MAT4X3PNT(extr->verts[i], extr->rot, tmp);
+	MAT4X3PNT(extr.verts[i], extr.rot, tmp);
 	VADD2(tmp, tmp, eip->h);
 	VMINMAX((*min), (*max), tmp);
     }
     curr_vert = skt->vert_count;
 
     /* and the u, v vectors */
-    MAT4X3VEC(extr->u_vec, extr->rot, eip->u_vec);
-    MAT4X3VEC(extr->v_vec, extr->rot, eip->v_vec);
+    MAT4X3VEC(extr.u_vec, extr.rot, eip->u_vec);
+    MAT4X3VEC(extr.v_vec, extr.rot, eip->v_vec);
 
     /* calculate the rotated pl1 */
-    VCROSS(extr->pl1_rot, extr->u_vec, extr->v_vec);
-    VUNITIZE(extr->pl1_rot);
-    extr->pl1_rot[W] = VDOT(extr->pl1_rot, extr->verts[0]);
+    VCROSS(extr.pl1_rot, extr.u_vec, extr.v_vec);
+    VUNITIZE(extr.pl1_rot);
+    extr.pl1_rot[W] = VDOT(extr.pl1_rot, extr.verts[0]);
 
     VSET(tmp, 0, 0, 1)
-	tmp_f = VDOT(tmp, extr->unit_h);
+	tmp_f = VDOT(tmp, extr.unit_h);
     if (tmp_f < 0.0)
 	tmp_f = -tmp_f;
     tmp_f -= 1.0;
     if (NEAR_ZERO(tmp_f, SQRT_SMALL_FASTF)) {
-	VSET(extr->rot_axis, 1.0, 0.0, 0.0);
-	VSET(extr->perp, 0.0, 1.0, 0.0);
+	VSET(extr.rot_axis, 1.0, 0.0, 0.0);
+	VSET(extr.perp, 0.0, 1.0, 0.0);
     } else {
-	VCROSS(extr->rot_axis, tmp, extr->unit_h);
-	VUNITIZE(extr->rot_axis);
-	if (MAGNITUDE(extr->rot_axis) < SQRT_SMALL_FASTF) {
-	    VSET(extr->rot_axis, 1.0, 0.0, 0.0);
-	    VSET(extr->perp, 0.0, 1.0, 0.0);
+	VCROSS(extr.rot_axis, tmp, extr.unit_h);
+	VUNITIZE(extr.rot_axis);
+	if (MAGNITUDE(extr.rot_axis) < SQRT_SMALL_FASTF) {
+	    VSET(extr.rot_axis, 1.0, 0.0, 0.0);
+	    VSET(extr.perp, 0.0, 1.0, 0.0);
 	} else {
-	    VCROSS(extr->perp, extr->rot_axis, extr->pl1_rot);
-	    VUNITIZE(extr->perp);
+	    VCROSS(extr.perp, extr.rot_axis, extr.pl1_rot);
+	    VUNITIZE(extr.perp);
 	}
     }
 
     /* copy the curve */
-    rt_copy_curve(&extr->crv, &skt->curve);
+    rt_copy_curve(&extr.crv, &skt->curve);
 
     VSET(xyz[X], 1, 0, 0);
     VSET(xyz[Y], 0, 1, 0);
     VSET(xyz[Z], 0, 0, 1);
 
     for (i=X; i<=Z; i++) {
-	VCROSS(tmp, extr->unit_h, xyz[i]);
+	VCROSS(tmp, extr.unit_h, xyz[i]);
 	ldir[i] = MAGNITUDE(tmp);
     }
 
@@ -229,7 +229,7 @@ rt_extrude_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const str
      */
     for (i=0; i<skt->curve.count; i++) {
 	struct carc_seg *csg=(struct carc_seg *)skt->curve.segment[i];
-	struct carc_seg *csg_extr=(struct carc_seg *)extr->crv.segment[i];
+	struct carc_seg *csg_extr=(struct carc_seg *)extr.crv.segment[i];
 	point_t center;
 
 	if (csg->magic != CURVE_CARC_MAGIC)
@@ -271,10 +271,10 @@ rt_extrude_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const str
 	    VJOIN2(end, eip->V, skt->verts[csg->end][0], eip->u_vec, skt->verts[csg->end][1], eip->v_vec);
 	    VBLEND2(mid, 0.5, start, 0.5, end);
 	    VSUB2(s_to_m, mid, start);
-	    VCROSS(bisector, extr->pl1, s_to_m);
+	    VCROSS(bisector, extr.pl1, s_to_m);
 	    VUNITIZE(bisector);
 	    magsq_s2m = MAGSQ(s_to_m);
-	    csg_extr->radius = csg->radius * extr->uv_scale;
+	    csg_extr->radius = csg->radius * extr.uv_scale;
 	    if (magsq_s2m > csg_extr->radius*csg_extr->radius) {
 		fastf_t max_radius;
 
@@ -296,7 +296,7 @@ rt_extrude_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const str
 	    } else {
 		VJOIN1(center, mid, -dist, bisector);
 	    }
-	    MAT4X3PNT(extr->verts[curr_vert], extr->rot, center);
+	    MAT4X3PNT(extr.verts[curr_vert], extr.rot, center);
 	    csg_extr->center = curr_vert;
 	    curr_vert++;
 
@@ -315,10 +315,9 @@ rt_extrude_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const str
 	}
     }
 
-    if (extr->verts)
-	 bu_free((char *)extr->verts, "extrude->verts");
-    rt_curve_free(&(extr->crv));
-    bu_free((char *)extr, "extrude_specific");
+    if (extr.verts)
+	 bu_free((char *)extr.verts, "extrude->verts");
+    rt_curve_free(&(extr.crv));
 
     return 0;              /* OK */
 }
@@ -1346,7 +1345,7 @@ rt_extrude_free(struct soltab *stp)
     if (extrude->verts)
 	bu_free((char *)extrude->verts, "extrude->verts");
     rt_curve_free(&(extrude->crv));
-    bu_free((char *)extrude, "extrude_specific");
+    BU_PUT(extrude, struct extrude_specific);
 }
 
 
