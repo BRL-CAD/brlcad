@@ -174,7 +174,7 @@ rt_vshootray(struct application *ap)
     solidbits = rt_get_solidbitv(rtip->nsolids, ap->a_resource);
 
     if (BU_LIST_IS_EMPTY(&ap->a_resource->re_region_ptbl)) {
-	BU_GET(regionbits, struct bu_ptbl);
+	BU_ALLOC(regionbits, struct bu_ptbl);
 	bu_ptbl_init(regionbits, 7, "rt_shootray() regionbits ptbl");
     } else {
 	regionbits = BU_LIST_FIRST(bu_ptbl, &ap->a_resource->re_region_ptbl);

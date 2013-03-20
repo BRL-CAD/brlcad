@@ -25,7 +25,7 @@ struct bn_tol *
 rt_tol_default(struct bn_tol *tol)
 {
     if (!tol) {
-	BU_GET(tol, struct bn_tol);
+	BU_ALLOC(tol, struct bn_tol);
 	BN_TOL_INIT(tol);
     }
 

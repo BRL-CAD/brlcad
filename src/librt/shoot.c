@@ -600,7 +600,7 @@ rt_advance_to_next_cell(register struct rt_shootray_status *ssp)
 	    case CUT_NUGRIDNODE: {
 		struct rt_shootray_status *old;
 
-		BU_GET(old, struct rt_shootray_status);
+		BU_ALLOC(old, struct rt_shootray_status);
 		*old = *ssp;	/* struct copy */
 
 		/* Descend into node */
@@ -965,7 +965,7 @@ rt_shootray(register struct application *ap)
     solidbits = rt_get_solidbitv(rtip->nsolids, resp);
 
     if (BU_LIST_IS_EMPTY(&resp->re_region_ptbl)) {
-	BU_GET(regionbits, struct bu_ptbl);
+	BU_ALLOC(regionbits, struct bu_ptbl);
 	bu_ptbl_init(regionbits, 7, "rt_shootray() regionbits ptbl");
     } else {
 	regionbits = BU_LIST_FIRST(bu_ptbl, &resp->re_region_ptbl);

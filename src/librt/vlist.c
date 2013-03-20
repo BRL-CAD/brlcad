@@ -45,7 +45,7 @@ bn_vlblock_init(struct bu_list *free_vlist_hd, /**< where to get/put free vlists
     if (!BU_LIST_IS_INITIALIZED(free_vlist_hd))
 	BU_LIST_INIT(free_vlist_hd);
 
-    BU_GET(vbp, struct bn_vlblock);
+    BU_ALLOC(vbp, struct bn_vlblock);
     vbp->magic = BN_VLBLOCK_MAGIC;
     vbp->free_vlist_hd = free_vlist_hd;
     vbp->max = max_ent;

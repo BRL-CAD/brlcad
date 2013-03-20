@@ -160,7 +160,7 @@ _rt_gettree_region_end(struct db_tree_state *tsp, const struct db_full_path *pat
 	return curtree;
     }
 
-    BU_GET(rp, struct region);
+    BU_ALLOC(rp, struct region);
     rp->l.magic = RT_REGION_MAGIC;
     rp->reg_regionid = tsp->ts_regionid;
     rp->reg_is_fastgen = tsp->ts_is_fastgen;
@@ -386,7 +386,7 @@ _rt_find_identical_solid(const matp_t mat, struct directory *dp, struct rt_i *rt
      * now, while still inside the critical section, because they are
      * searched on, above.
      */
-    BU_GET(stp, struct soltab);
+    BU_ALLOC(stp, struct soltab);
     stp->l.magic = RT_SOLTAB_MAGIC;
     stp->l2.magic = RT_SOLTAB2_MAGIC;
     stp->st_rtip = rtip;
