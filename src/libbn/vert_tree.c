@@ -78,7 +78,7 @@ create_vert_tree()
 {
     struct vert_root *tree;
 
-    tree = (struct vert_root *)bu_calloc( 1, sizeof( struct vert_root ), "vert_tree_root" );
+    BU_ALLOC(tree, struct vert_root);
     tree->magic = VERT_TREE_MAGIC;
     tree->tree_type = TREE_TYPE_VERTS;
     tree->the_tree = (union vert_tree *)NULL;
@@ -94,7 +94,7 @@ create_vert_tree_w_norms()
 {
     struct vert_root *tree;
 
-    tree = (struct vert_root *)bu_calloc( 1, sizeof( struct vert_root ), "vert_tree_root" );
+    BU_ALLOC(tree, struct vert_root);
     tree->magic = VERT_TREE_MAGIC;
     tree->tree_type = TREE_TYPE_VERTS_AND_NORMS;
     tree->the_tree = (union vert_tree *)NULL;
@@ -227,7 +227,7 @@ Add_vert( double x, double y, double z, struct vert_root *vert_root, fastf_t loc
     VMOVE( &vert_root->the_array[vert_root->curr_vert*3], vertex );
 
     /* add to the tree also */
-    new_leaf = (union vert_tree *)bu_malloc( sizeof( union vert_tree ), "new_leaf" );
+    BU_ALLOC(new_leaf, union vert_tree);
     new_leaf->vleaf.type = VERT_LEAF;
     new_leaf->vleaf.index = vert_root->curr_vert++;
     if ( !vert_root->the_tree ) {
@@ -235,7 +235,7 @@ Add_vert( double x, double y, double z, struct vert_root *vert_root, fastf_t loc
 	vert_root->the_tree = new_leaf;
     } else if ( ptr && ptr->type == VERT_LEAF ) {
 	/* search above ended at a leaf, need to add a node above this leaf and the new leaf */
-	new_node = (union vert_tree *)bu_malloc( sizeof( union vert_tree ), "new_node" );
+	BU_ALLOC(new_node, union vert_tree);
 	new_node->vnode.type = VERT_NODE;
 
 	/* select the cutting coord based on the biggest difference */
@@ -354,7 +354,7 @@ Add_vert_and_norm( double x, double y, double z, double nx, double ny, double nz
     VMOVE( &vert_root->the_array[vert_root->curr_vert*6+3], &vertex[3] );
 
     /* add to the tree also */
-    new_leaf = (union vert_tree *)bu_malloc( sizeof( union vert_tree ), "new_leaf" );
+    BU_ALLOC(new_leaf, union vert_tree);
     new_leaf->vleaf.type = VERT_LEAF;
     new_leaf->vleaf.index = vert_root->curr_vert++;
     if ( !vert_root->the_tree ) {
@@ -365,7 +365,7 @@ Add_vert_and_norm( double x, double y, double z, double nx, double ny, double nz
 	int i;
 
 	/* search above ended at a leaf, need to add a node above this leaf and the new leaf */
-	new_node = (union vert_tree *)bu_malloc( sizeof( union vert_tree ), "new_node" );
+	BU_ALLOC(new_node, union vert_tree);
 	new_node->vnode.type = VERT_NODE;
 
 	/* select the cutting coord based on the biggest difference */

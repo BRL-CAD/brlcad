@@ -195,7 +195,7 @@ struct g_lint_seg *create_segment(void)
 {
     struct g_lint_seg *sp;
 
-    sp = bu_malloc(sizeof(struct g_lint_seg), "g_lint segment structure");
+    BU_ALLOC(sp, struct g_lint_seg);
     sp->gls_magic = G_LINT_SEG_MAGIC;
     sp->gls_length = -1.0;
     sp->gls_next = G_LINT_SEG_NULL;
@@ -230,7 +230,7 @@ struct g_lint_ovlp *create_overlap(struct region *r1, struct region *r2)
     BU_CKMAG(r1, RT_REGION_MAGIC, "region structure");
     BU_CKMAG(r2, RT_REGION_MAGIC, "region structure");
 
-    op = bu_malloc(sizeof(struct g_lint_ovlp), "g_lint overlap structure");
+    BU_ALLOC(op, struct g_lint_ovlp);
     op->glo_magic = G_LINT_OVLP_MAGIC;
     op->glo_cum_length = 0.0;
     op->glo_segs = op->glo_seg_last = G_LINT_SEG_NULL;

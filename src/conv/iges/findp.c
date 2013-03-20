@@ -77,7 +77,7 @@ Findp()
 						  "IGES directory*");
 
 	for (i = 0; i < totentities; i++) {
-	    dir[i] = (struct iges_directory *)bu_malloc(sizeof(struct iges_directory), "IGES directory");
+	    BU_ALLOC(dir[i], struct iges_directory);
 	    dir[i]->name = (char *)NULL;
 	    dir[i]->trans = (-1);
 	}

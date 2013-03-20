@@ -535,7 +535,7 @@ Get_views_visible(entno)
 
     Readint(&no_of_views, "");
     Readint(&no_of_entities, "");
-    vv = (struct views_visible *)bu_malloc(sizeof(struct views_visible), "Get_views_visible: vv");
+    BU_ALLOC(vv, struct views_visible);
     vv->de = entno * 2 + 1;
     vv->no_of_views = no_of_views;
     vv->view_de = (int *)bu_calloc(no_of_views, sizeof(int), "Get_views_visible: vv->view_de");

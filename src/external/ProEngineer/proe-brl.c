@@ -794,8 +794,7 @@ add_to_empty_list( char *name )
     }
 
     if ( empty_parts_root == NULL ) {
-	empty_parts_root = (struct empty_parts *)bu_malloc( sizeof( struct empty_parts ),
-							    "empty parts root");
+	BU_ALLOC(empty_parts_root, struct empty_parts);
 	ptr = empty_parts_root;
     } else {
 	ptr = empty_parts_root;
@@ -807,8 +806,7 @@ add_to_empty_list( char *name )
 	    ptr = ptr->next;
 	}
 	if ( !found ) {
-	    ptr->next = (struct empty_parts *)bu_malloc( sizeof( struct empty_parts ),
-							 "empty parts node");
+	    BU_ALLOC(ptr->next, struct empty_parts);
 	    ptr = ptr->next;
 	}
     }
@@ -1341,11 +1339,11 @@ Subtract_hole()
 	if ( diameter < min_hole_diameter )
 	    return 1;
 	if ( !csg_root ) {
-	    csg_root = (struct csg_ops *)bu_malloc( sizeof( struct csg_ops ), "csg root" );
+	    BU_ALLOC(csg_root, struct csg_ops);
 	    csg = csg_root;
 	    csg->next = NULL;
 	} else {
-	    csg = (struct csg_ops *)bu_malloc( sizeof( struct csg_ops ), "csg op" );
+	    BU_ALLOC(csg, struct csg_ops);
 	    csg->next = csg_root;
 	    csg_root = csg;
 	}
@@ -1390,11 +1388,11 @@ Subtract_hole()
 	if ( add_cbore == PRO_HLE_ADD_CBORE ) {
 
 	    if ( !csg_root ) {
-		csg_root = (struct csg_ops *)bu_malloc( sizeof( struct csg_ops ), "csg root" );
+		BU_ALLOC(csg_root, struct csg_ops);
 		csg = csg_root;
 		csg->next = NULL;
 	    } else {
-		csg = (struct csg_ops *)bu_malloc( sizeof( struct csg_ops ), "csg op" );
+		BU_ALLOC(csg, struct csg_ops);
 		csg->next = csg_root;
 		csg_root = csg;
 	    }
@@ -1428,11 +1426,11 @@ Subtract_hole()
 	    double cs_radius=cs_diam / 2.0;
 
 	    if ( !csg_root ) {
-		csg_root = (struct csg_ops *)bu_malloc( sizeof( struct csg_ops ), "csg root" );
+		BU_ALLOC(csg_root, struct csg_ops);
 		csg = csg_root;
 		csg->next = NULL;
 	    } else {
-		csg = (struct csg_ops *)bu_malloc( sizeof( struct csg_ops ), "csg op" );
+		BU_ALLOC(csg, struct csg_ops);
 		csg->next = csg_root;
 		csg_root = csg;
 	    }
@@ -1467,11 +1465,11 @@ Subtract_hole()
 	}
 
 	if ( !csg_root ) {
-	    csg_root = (struct csg_ops *)bu_malloc( sizeof( struct csg_ops ), "csg root" );
+	    BU_ALLOC(csg_root, struct csg_ops);
 	    csg = csg_root;
 	    csg->next = NULL;
 	} else {
-	    csg = (struct csg_ops *)bu_malloc( sizeof( struct csg_ops ), "csg op" );
+	    BU_ALLOC(csg, struct csg_ops);
 	    csg->next = csg_root;
 	    csg_root = csg;
 	}
@@ -1505,11 +1503,11 @@ Subtract_hole()
 	    double tip_depth;
 
 	    if ( !csg_root ) {
-		csg_root = (struct csg_ops *)bu_malloc( sizeof( struct csg_ops ), "csg root" );
+		BU_ALLOC(csg_root, struct csg_ops);
 		csg = csg_root;
 		csg->next = NULL;
 	    } else {
-		csg = (struct csg_ops *)bu_malloc( sizeof( struct csg_ops ), "csg op" );
+		BU_ALLOC(csg, struct csg_ops);
 		csg->next = csg_root;
 		csg_root = csg;
 	    }
@@ -2587,13 +2585,11 @@ assembly_comp( ProFeature *feat, ProError status, ProAppData app_data )
 	    prev = member;
 	    member = member->next;
 	}
-	member->next = (struct asm_member *)bu_malloc( sizeof( struct asm_member ), "asm member" );
+	BU_ALLOC(member->next, struct asm_member);
 	prev = member;
 	member = member->next;
     } else {
-	curr_assem->members = (struct asm_member *)bu_malloc(
-	    sizeof( struct asm_member ),
-	    "asm member");
+	BU_ALLOC(curr_assem->members, struct asm_member);
 	member = curr_assem->members;
     }
 

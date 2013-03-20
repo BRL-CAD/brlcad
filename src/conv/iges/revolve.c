@@ -149,13 +149,11 @@ revolve(int entityno)
 	fastf_t h1;
 
 	if (trcs == NULL) {
-	    trcs = (struct trclist *)bu_malloc(sizeof(struct trclist),
-					       "Revolve: trcs");
+	    BU_ALLOC(trcs, struct trclist);
 	    trcptr = trcs;
 	    prev = NULL;
 	} else if (trcptr->name[0] != '\0') {
-	    trcptr->next = (struct trclist *)bu_malloc(sizeof(struct trclist),
-						       "Revolve: trcptr->next");
+	    BU_ALLOC(trcptr->next, struct trclist);
 	    prev = trcptr;
 	    trcptr = trcptr->next;
 	} else prev = NULL;
@@ -419,15 +417,13 @@ Addsub(trc, ptr)
     struct subtracts *subp;
 
     if (trc->subtr == NULL) {
-	trc->subtr = (struct subtracts *)bu_malloc(sizeof(struct subtracts),
-						   "Revolve: trc->subtr");
+	BU_ALLOC(trc->subtr, struct subtracts);
 	subp = trc->subtr;
     } else {
 	subp = trc->subtr;
 	while (subp->next != NULL)
 	    subp = subp->next;
-	subp->next = (struct subtracts *)bu_malloc(sizeof(struct subtracts),
-						   "Revolve: subp->next");
+	BU_ALLOC(subp->next, struct subtracts);
 	subp = subp->next;
     }
 

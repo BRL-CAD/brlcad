@@ -42,8 +42,7 @@ cmdhist_record(struct bu_cmdhist_obj *chop, struct bu_vls *cmdp, struct timeval 
     if (UNLIKELY(BU_STR_EQUAL(bu_vls_addr(cmdp), eol)))
 	return;
 
-    new_hist = (struct bu_cmdhist *)bu_malloc(sizeof(struct bu_cmdhist),
-					      "mged history");
+    BU_ALLOC(new_hist, struct bu_cmdhist);
     bu_vls_init(&new_hist->h_command);
     bu_vls_vlscat(&new_hist->h_command, cmdp);
     new_hist->h_start = *start;

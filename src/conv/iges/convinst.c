@@ -127,7 +127,7 @@ Convinst()
 		   but the original instanced object does too,
 		   these matrices need to be combined */
 
-		rot = (mat_t *)bu_malloc(sizeof(mat_t), "Convinst: rot");
+		BU_ALLOC(rot, mat_t);
 #if defined(USE_BN_MULT_)
 		/* o <= a X b */
 		bn_mat_mul(*rot, *(dir[i]->rot), *(dir[pointer]->rot));

@@ -27,8 +27,8 @@
 
 #include <stdio.h>
 
+#include "bu.h"
 #include "vmath.h"
-#include "raytrace.h"		/* for declaration of bu_calloc() */
 
 
 static fastf_t *knots = (fastf_t *)NULL;

@@ -56,7 +56,7 @@ struct bn_unif *
 bn_unif_init(long int setseed, int method)
 {
     struct bn_unif *p;
-    p = (struct bn_unif *) bu_malloc(sizeof(struct bn_unif), "bn_unif");
+    BU_ALLOC(p, struct bn_unif);
     p->msr_longs = (long *) bu_malloc(BN_MSR_MAXTBL*sizeof(long), "msr long table");
     p->msr_doubles=(double *) bu_malloc(BN_MSR_MAXTBL*sizeof(double), "msr double table");
     p->msr_seed = 1;
@@ -171,7 +171,7 @@ bn_gauss_init(long int setseed, int method)
     if (method != 0)
 	bu_bomb("Method not yet supported in bn_unif_init()");
 
-    p = (struct bn_gauss *) bu_malloc(sizeof(struct bn_gauss), "bn_msr_gauss");
+    BU_ALLOC(p, struct bn_gauss);
     p->msr_gausses=(double *) bu_malloc(BN_MSR_MAXTBL*sizeof(double), "msr gauss table");
     p->msr_gauss_doubles=(double *) bu_malloc(BN_MSR_MAXTBL*sizeof(double), "msr gauss doubles");
     p->msr_gauss_seed = 1;

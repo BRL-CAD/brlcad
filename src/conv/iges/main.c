@@ -208,7 +208,7 @@ main(int argc, char *argv [])
 
     Initstack();	/* Initialize node stack */
 
-    identity = (mat_t *)bu_malloc(sizeof(mat_t), "main: identity");
+    BU_ALLOC(identity, mat_t);
     for (i = 0; i < 16; i++) {
 	if (!(i%5))
 	    (*identity)[i] = 1.0;
@@ -227,7 +227,8 @@ main(int argc, char *argv [])
     argv += bu_optind;
 
     BU_LIST_INIT(&iges_list.l);
-    curr_file = (struct file_list *)bu_malloc(sizeof(struct file_list), "iges-g: curr_file");
+
+    BU_ALLOC(curr_file, struct file_list);
     if (solid_name)
 	bu_strlcpy(curr_file->obj_name, Make_unique_brl_name(solid_name), NAMESIZE+1);
     else

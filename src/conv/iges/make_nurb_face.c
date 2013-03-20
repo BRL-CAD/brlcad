@@ -77,8 +77,8 @@ Add_nurb_loop_to_face(struct shell *s, struct faceuse *fu, int loop_entityno)
 	    struct iges_param_curve *crv;
 
 	    Readint(&k, "");	/* ignore iso-parametric flag */
-	    new_crv = (struct iges_param_curve *)bu_malloc(sizeof(struct iges_param_curve),
-							   "Add_nurb_loop_to_face: new_crv");
+	    BU_ALLOC(new_crv, struct iges_param_curve);
+
 	    if (edge_uses[i].root == (struct iges_param_curve *)NULL)
 		edge_uses[i].root = new_crv;
 	    else {

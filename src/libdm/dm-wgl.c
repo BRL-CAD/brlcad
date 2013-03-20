@@ -225,18 +225,8 @@ wgl_open(Tcl_Interp *interp, int argc, char *argv[])
     *dmp = dm_wgl; /* struct copy */
     dmp->dm_interp = interp;
 
-    dmp->dm_vars.pub_vars = (genptr_t)bu_calloc(1, sizeof(struct dm_xvars), "wgl_open: dm_xvars");
-    if (dmp->dm_vars.pub_vars == (genptr_t)NULL) {
-	bu_free(dmp, "wgl_open: dmp");
-	return DM_NULL;
-    }
-
-    dmp->dm_vars.priv_vars = (genptr_t)bu_calloc(1, sizeof(struct wgl_vars), "wgl_open: wgl_vars");
-    if (dmp->dm_vars.priv_vars == (genptr_t)NULL) {
-	bu_free(dmp->dm_vars.pub_vars, "wgl_open: dmp->dm_vars.pub_vars");
-	bu_free(dmp, "wgl_open: dmp");
-	return DM_NULL;
-    }
+    BU_ALLOC(dmp->dm_vars.pub_vars, struct dm_xvars);
+    BU_ALLOC(dmp->dm_vars.priv_vars, struct wgl_vars);
 
     dmp->dm_vp = &default_viewscale;
 

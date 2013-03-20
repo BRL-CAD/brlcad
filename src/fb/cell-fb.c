@@ -576,8 +576,7 @@ mk_locrec(fastf_t h, fastf_t v)
 {
     struct locrec *lrp;
 
-    lrp = (struct locrec *)
-	bu_malloc(sizeof(struct locrec), "location record");
+    BU_ALLOC(lrp, struct locrec);
     lrp->l.magic = LOCREC_MAGIC;
     lrp->h = h;
     lrp->v = v;

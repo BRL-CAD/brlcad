@@ -179,7 +179,7 @@ dup_bot( struct rt_bot_internal *bot_in )
 
     RT_BOT_CK_MAGIC( bot_in );
 
-    bot = (struct rt_bot_internal *)bu_malloc( sizeof( struct rt_bot_internal ), "dup bot" );
+    BU_ALLOC(bot, struct rt_bot_internal);
 
     *bot = *bot_in;	/* struct copy */
 

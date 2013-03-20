@@ -80,12 +80,12 @@ capture_hit(register struct application *ap, struct partition *partHeadp, struct
     struct part *add;
 
     /* initialize list of partitions */
-    ((struct fitness_state *)ap->a_uptr)->ray[ap->a_user] = bu_malloc(sizeof(struct part), "part");
+    BU_ALLOC(((struct fitness_state *)ap->a_uptr)->ray[ap->a_user], struct part);
     BU_LIST_INIT(&((struct fitness_state *)ap->a_uptr)->ray[ap->a_user]->l);
 
     /* save ray */
     for (pp = partHeadp->pt_forw; pp != partHeadp; pp = pp->pt_forw) {
-	add = bu_malloc(sizeof(struct part), "part");
+	BU_ALLOC(add, struct part);
 	add->inhit_dist = pp->pt_inhit->hit_dist;
 	add->outhit_dist = pp->pt_outhit->hit_dist;
 	BU_LIST_INSERT(&((struct fitness_state *)ap->a_uptr)->ray[ap->a_user]->l, &add->l);

@@ -76,8 +76,8 @@ Make_planar_face(struct shell *s, int entityno, int face_orient)
 	    struct iges_param_curve *crv;
 
 	    Readint(&k, "");	/* ignore iso-parametric flag */
-	    new_crv = (struct iges_param_curve *)bu_malloc(sizeof(struct iges_param_curve),
-							   "Make_planar_face: new_crv");
+
+	    BU_ALLOC(new_crv, struct iges_param_curve);
 	    if (edge_list[i].root == (struct iges_param_curve *)NULL)
 		edge_list[i].root = new_crv;
 	    else {

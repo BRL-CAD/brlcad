@@ -63,7 +63,8 @@ Bubbleup(root)
 	    } else if (ptr->op == Intersect) {
 		/* (a+(buc)) => (a+b)u(a+c)	*/
 		retval = 0;
-		ptr2 = (struct node *)bu_malloc(sizeof(struct node), "Bubbleup: ptr2");
+
+		BU_ALLOC(ptr2, struct node);
 		ptr1 = ptr->right;
 		ptra = ptr->left;
 		ptrb = ptr->right->left;
@@ -89,7 +90,8 @@ Bubbleup(root)
 		ptrb = ptr->left->right;
 		ptrc = ptr->right;
 		ptr1 = ptr->left;
-		ptr2 = (struct node *)bu_malloc(sizeof(struct node), "Bubbleup: ptr2");
+
+		BU_ALLOC(ptr2, struct node);
 		ptr->op = Union;
 		ptr->right = ptr2;
 		ptr2->op = op;

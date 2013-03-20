@@ -48,7 +48,8 @@ Arrange(root)
 		ptrb = ptr->right->left;
 		ptrc = ptr->right->right;
 		ptr1 = ptr->right;
-		ptr2 = (struct node *)bu_malloc(sizeof(struct node), "Arrange: ptr2");
+
+		BU_ALLOC(ptr2, struct node);
 		ptr->left = ptr2;
 		ptr1->left = ptra;
 		ptr2->left = Copytree(ptra, ptr2);

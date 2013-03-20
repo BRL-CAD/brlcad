@@ -716,14 +716,14 @@ ogl_open(Tcl_Interp *interp, int argc, char **argv)
     dmp->dm_bytes_per_pixel = sizeof(GLuint);
     dmp->dm_bits_per_channel = 8;
 
-    dmp->dm_vars.pub_vars = (genptr_t)bu_calloc(1, sizeof(struct dm_xvars), "ogl_open: dm_xvars");
+    BU_ALLOC(dmp->dm_vars.pub_vars, struct dm_xvars);
     if (dmp->dm_vars.pub_vars == (genptr_t)NULL) {
 	bu_free(dmp, "ogl_open: dmp");
 	return DM_NULL;
     }
     pubvars = (struct dm_xvars *)dmp->dm_vars.pub_vars;
 
-    dmp->dm_vars.priv_vars = (genptr_t)bu_calloc(1, sizeof(struct ogl_vars), "ogl_open: ogl_vars");
+    BU_ALLOC(dmp->dm_vars.priv_vars, struct ogl_vars);
     if (dmp->dm_vars.priv_vars == (genptr_t)NULL) {
 	bu_free(dmp->dm_vars.pub_vars, "ogl_open: dmp->dm_vars.pub_vars");
 	bu_free(dmp, "ogl_open: dmp");

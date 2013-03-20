@@ -148,7 +148,7 @@ Makedir()
 		       dir[entcount]->direct, dir[entcount]->name);
 		dir[entcount]->rot = NULL;
 	    } else {
-		dir[entcount]->rot = (mat_t *)bu_malloc(sizeof(mat_t), "Makedir:matrix");
+		BU_ALLOC(dir[entcount]->rot, mat_t);
 		Readmatrix(dir[entcount]->param, *dir[entcount]->rot);
 	    }
 	} else /* set to NULL */

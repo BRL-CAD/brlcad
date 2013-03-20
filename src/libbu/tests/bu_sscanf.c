@@ -184,8 +184,8 @@ test_sscanf(int type, const char *src, const char *fmt) {
 
     /* call sscanf and bu_sscanf with appropriately cast pointers */
 #define SSCANF_TYPE(type) \
-    val = bu_malloc(sizeof(type), "test_sscanf val"); \
-    bu_val = bu_malloc(sizeof(type), "test_sscanf bu_val"); \
+    BU_ALLOC(val, type); \
+    BU_ALLOC(bu_val, type); \
 \
     ret = sscanf(src, fmt, (type*)val); \
     bu_ret = bu_sscanf(src, fmt, (type*)bu_val); \

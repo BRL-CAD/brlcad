@@ -1162,7 +1162,7 @@ find_intersections(fu, mid_pt, ray_dir, hit_list)
 		continue;
 	    }
 
-	    myhit = (struct snurb_hit *)bu_malloc(sizeof(struct snurb_hit), "myhit");
+	    BU_ALLOC(myhit, struct snurb_hit);
 	    BU_LIST_INIT(&myhit->l);
 	    myhit->f = f;
 

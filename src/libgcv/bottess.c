@@ -315,7 +315,7 @@ bot2soup(struct rt_bot_internal *bot, const struct bn_tol *tol)
     if(bot->orientation != RT_BOT_CCW)
 	bu_bomb("Bad orientation out of nmg_bot\n");
 
-    s = bu_malloc(sizeof(struct soup_s), "bot soup");
+    BU_ALLOC(s, struct soup_s);
     s->magic = SOUP_MAGIC;
     s->nfaces = 0;
     s->maxfaces = ceil(bot->num_faces / (double)faces_per_page) * faces_per_page;

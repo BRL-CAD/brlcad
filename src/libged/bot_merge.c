@@ -59,7 +59,7 @@ ged_bot_merge(struct ged *gedp, int argc, const char *argv[])
 	return GED_HELP;
     }
 
-    bots = bu_calloc(argc, sizeof(struct rt_bot_internal), "bot internal");
+    BU_ALLOC(bots, struct rt_bot_internal);
 
     /* create a new bot */
     BU_ALLOC(bots[0], struct rt_bot_internal);

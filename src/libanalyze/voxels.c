@@ -59,7 +59,7 @@ getRegionByName(struct voxelRegion *head, const char *regionName) {
 	    if(bu_strcmp(head->regionName ,regionName) == 0) /* is it the last one on the list? */
 		ret = head;
 	    else {
-		ret              = bu_calloc(1, sizeof(struct voxelRegion), "newRegion");
+		BU_ALLOC(ret, struct voxelRegion);
 		head->nextRegion = ret;
 	        ret->regionName  = bu_strdup(regionName);
 	    }

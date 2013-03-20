@@ -202,7 +202,7 @@ add_to_obj_list( char *name )
 {
     struct obj_list *ptr;
 
-    ptr = (struct obj_list *)bu_malloc( sizeof( struct obj_list ), "obj_list" );
+    BU_ALLOC(ptr, struct obj_list);
     fprintf( stderr, "In add_to_obj_list(%s), &ptr = x%x, name=x%x, brlcad_objs_root = x%x, ptr = x%x\n",
 	     name, &ptr, name, brlcad_objs_root, ptr );
     ptr->next = brlcad_objs_root;
@@ -719,7 +719,7 @@ make_curve_particles( tag_t guide_curve, fastf_t outer_diam, fastf_t inner_diam,
 	UF_func( UF_EVAL_evaluate( evaluator, 0, t, tmp_pt, NULL ) );
 
 	VSCALE( tmp_pt, tmp_pt, units_conv );
-	pt = (struct pt_list *)bu_malloc( sizeof( struct pt_list ), "struct pt_list" );
+	BU_ALLOC(pt, struct pt_list);
 	BU_LIST_INIT( &pt->l );
 	pt->t = t;
 	MAT4X3PNT( pt->pt, curr_xform, tmp_pt );
@@ -774,7 +774,7 @@ make_curve_particles( tag_t guide_curve, fastf_t outer_diam, fastf_t inner_diam,
 		continue;
 	    }
 
-	    newlist = (struct pt_list *)bu_malloc( sizeof( struct pt_list), "struct pt_list" );
+	    BU_ALLOC(newlist, struct pt_list);
 	    BU_LIST_INIT( &newlist->l );
 	    newlist->t = t;
 	    VMOVE( newlist->pt, this_pt );
@@ -1375,7 +1375,7 @@ conv_extrusion( tag_t feat_tag, char *part_name, char *refset_name, char *inst_n
 
     seg_count = num_curves;
 
-    skt = (struct rt_sketch_internal *)bu_calloc( 1, sizeof( struct rt_sketch_internal ), "sketch" );
+    BU_ALLOC(skt, struct rt_sketch_internal);
     skt->magic = RT_SKETCH_INTERNAL_MAGIC;
     skt->curve.seg_count = seg_count;
     skt->curve.reverse = (int *)bu_calloc( seg_count, sizeof( int ), "sketch reverse flags" );
@@ -1417,7 +1417,7 @@ conv_extrusion( tag_t feat_tag, char *part_name, char *refset_name, char *inst_n
 	    bu_log( "Illegal tag for curve (%d)\n", curves[j] );
 	    bu_free( (char *)z_coords, "z_coords" );
 	    for ( i=j+1; i<num_curves; i++ ) {
-		lsg = (struct line_seg *)bu_malloc( sizeof( struct line_seg ), "fake line seg" );
+		BU_ALLOC(lsg, struct line_seg);
 		lsg->magic = CURVE_LSEG_MAGIC;
 		skt->curve.segment[i] = (genptr_t)lsg;
 	    }
@@ -1439,7 +1439,7 @@ conv_extrusion( tag_t feat_tag, char *part_name, char *refset_name, char *inst_n
 		DO_INDENT;
 		bu_log( "Line from (%g %g %g) to (%g %g %g)\n",
 			V3ARGS( line_data.start_point ), V3ARGS( line_data.end_point ) );
-		lsg = (struct line_seg *)bu_malloc( sizeof( struct line_seg ), "line seg" );
+		BU_ALLOC(lsg, struct line_seg);
 		skt->curve.segment[j] = (genptr_t)lsg;
 		lsg->magic = CURVE_LSEG_MAGIC;
 		UF_MTX3_vec_multiply( line_data.start_point, csys, pt );
@@ -1456,7 +1456,7 @@ conv_extrusion( tag_t feat_tag, char *part_name, char *refset_name, char *inst_n
 		    /* for simplicity, malloc up the rest of a sketch internal object for freeing */
 		    bu_free( (char *)z_coords, "z_coords" );
 		    for ( i=j+1; i<num_curves; i++ ) {
-			lsg = (struct line_seg *)bu_malloc( sizeof( struct line_seg ), "fake line seg" );
+			BU_ALLOC(lsg, struct line_seg);
 			lsg->magic = CURVE_LSEG_MAGIC;
 			skt->curve.segment[i] = (genptr_t)lsg;
 		    }
@@ -1475,7 +1475,7 @@ conv_extrusion( tag_t feat_tag, char *part_name, char *refset_name, char *inst_n
 		break;
 	    case UF_circle_type:
 		UF_func( UF_CURVE_ask_arc_data( curves[j], &arc_data ) );
-		csg = (struct carc_seg *)bu_malloc( sizeof( struct carc_seg ), "carc seg" );
+		BU_ALLOC(csg, struct carc_seg);
 		DO_INDENT;
 		bu_log( "Arc centered at (%g %g %g), start angle = %g end angle = %g, radius = %g\n",
 			V3ARGS( arc_data.arc_center ), arc_data.start_angle*RAD2DEG,
@@ -1529,7 +1529,7 @@ conv_extrusion( tag_t feat_tag, char *part_name, char *refset_name, char *inst_n
 		    /* for simplicity, malloc up the rest of a sketch internal object for freeing */
 		    bu_free( (char *)z_coords, "z_coords" );
 		    for ( i=j+1; i<num_curves; i++ ) {
-			lsg = (struct line_seg *)bu_malloc( sizeof( struct line_seg ), "fake line seg" );
+			BU_ALLOC(lsg, struct line_seg);
 			lsg->magic = CURVE_LSEG_MAGIC;
 			skt->curve.segment[i] = (genptr_t)lsg;
 		    }
@@ -1551,7 +1551,7 @@ conv_extrusion( tag_t feat_tag, char *part_name, char *refset_name, char *inst_n
 		/* for simplicity, malloc up the rest of a sketch internal object for freeing */
 		bu_free( (char *)z_coords, "z_coords" );
 		for ( i=j; i<num_curves; i++ ) {
-		    lsg = (struct line_seg *)bu_malloc( sizeof( struct line_seg ), "fake line seg" );
+		    BU_ALLOC(lsg, struct line_seg);
 		    lsg->magic = CURVE_LSEG_MAGIC;
 		    skt->curve.segment[i] = (genptr_t)lsg;
 		}
@@ -1583,7 +1583,7 @@ conv_extrusion( tag_t feat_tag, char *part_name, char *refset_name, char *inst_n
 	    /* for simplicity, malloc up the rest of a sketch internal object for freeing */
 	    bu_free( (char *)z_coords, "z_coords" );
 	    for ( i=j+1; i<num_curves; i++ ) {
-		lsg = (struct line_seg *)bu_malloc( sizeof( struct line_seg ), "fake line seg" );
+		BU_ALLOC(lsg, struct line_seg);
 		lsg->magic = CURVE_LSEG_MAGIC;
 		skt->curve.segment[i] = (genptr_t)lsg;
 	    }
@@ -5164,10 +5164,10 @@ convert_reference_set( tag_t node, char *p_name, char *refset_name, char *inst_n
 
 	UF_free(members);
 	if ( !ref_root ) {
-	    ref_root = (struct refset_list *)bu_malloc( sizeof( struct refset_list ), "ref_root" );
+	    BU_ALLOC(ref_root, struct refset_list);
 	    ref_ptr = ref_root;
 	} else {
-	    ref_ptr->next = (struct refset_list *)bu_malloc( sizeof( struct refset_list ), "ref_root" );
+	    BU_ALLOC(ref_ptr->next, struct refset_list);
 	    ref_ptr = ref_ptr->next;
 	}
 	ref_ptr->next = NULL;

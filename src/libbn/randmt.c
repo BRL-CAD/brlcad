@@ -65,9 +65,7 @@ bn_randmt_state_create()
 {
     struct _internal_state_s *is;
 
-    is = bu_malloc(sizeof(struct _internal_state_s), "Mersenne Twister state");
-    if(is == NULL)
-	return NULL;
+    BU_ALLOC(is, struct _internal_state_s);
     is->magic = MERSENNE_MAGIC;
     is->mti = N+1;
     return (void *)is;

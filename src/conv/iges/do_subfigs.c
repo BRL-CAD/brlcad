@@ -185,8 +185,7 @@ Do_subfigs()
 
 		if (!found) {
 		    /* Need to add this one to the list */
-		    list_ptr = (struct file_list *)bu_malloc(sizeof(struct file_list),
-							     "Do_subfigs: list_ptr");
+		    BU_ALLOC(list_ptr, struct file_list);
 
 		    list_ptr->file_name = file_name;
 		    if (no_of_members == 1)

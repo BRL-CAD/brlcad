@@ -254,18 +254,8 @@ rtgl_open(Tcl_Interp *interp, int argc, char **argv)
     dmp->dm_interp = interp;
     dmp->dm_lineWidth = 1;
 
-    dmp->dm_vars.pub_vars = (genptr_t)bu_calloc(1, sizeof(struct dm_xvars), "rtgl_open: dm_xvars");
-    if (dmp->dm_vars.pub_vars == (genptr_t)NULL) {
-	bu_free(dmp, "rtgl_open: dmp");
-	return DM_NULL;
-    }
-
-    dmp->dm_vars.priv_vars = (genptr_t)bu_calloc(1, sizeof(struct rtgl_vars), "rtgl_open: rtgl_vars");
-    if (dmp->dm_vars.priv_vars == (genptr_t)NULL) {
-	bu_free(dmp->dm_vars.pub_vars, "rtgl_open: dmp->dm_vars.pub_vars");
-	bu_free(dmp, "rtgl_open: dmp");
-	return DM_NULL;
-    }
+    BU_ALLOC(dmp->dm_vars.pub_vars, struct dm_xvars);
+    BU_ALLOC(dmp->dm_vars.priv_vars, struct rtgl_vars);
 
     dmp->dm_vp = &default_viewscale;
 
@@ -1142,7 +1132,7 @@ addInfo(struct application *app, struct hit *hit, struct soltab *soltab, char fl
     if (newColor) {
 
 	/* create new color bin */
-	bin = bu_malloc(sizeof(struct colorBin), "dm-rtgl.c: addInfo");
+	BU_ALLOC(bin, struct colorBin);
 	VMOVE(bin->color, partColor);
 
 	/* create bin list head */

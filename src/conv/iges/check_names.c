@@ -51,7 +51,7 @@ Add_brl_name(name)
     }
 
     /* add this name to the list */
-    ptr = (struct name_list *)bu_calloc(1, sizeof(struct name_list), "Add_brl_name: ptr");
+    BU_ALLOC(ptr, struct name_list);
     bu_strlcpy(ptr->name, name, namelen+1);
     ptr->next = name_root;
     name_root = ptr;

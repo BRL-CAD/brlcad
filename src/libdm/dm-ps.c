@@ -594,11 +594,7 @@ ps_open(Tcl_Interp *interp, int argc, const char *argv[])
     *dmp = dm_ps;  /* struct copy */
     dmp->dm_interp = interp;
 
-    dmp->dm_vars.priv_vars = (genptr_t)bu_calloc(1, sizeof(struct ps_vars), "ps_open: ps_vars");
-    if (dmp->dm_vars.priv_vars == (genptr_t)NULL) {
-	bu_free((genptr_t)dmp, "ps_open: dmp");
-	return DM_NULL;
-    }
+    BU_ALLOC(dmp->dm_vars.priv_vars, struct ps_vars);
 
     obj = Tcl_GetObjResult(interp);
     if (Tcl_IsShared(obj))

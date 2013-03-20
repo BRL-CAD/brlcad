@@ -162,7 +162,8 @@ ged_bb(struct ged *gedp, int argc, const char *argv[])
 	struct directory *dp;
 	struct rt_arb_internal *arb;
 	struct rt_db_internal new_intern;
-	arb = (struct rt_arb_internal *)bu_malloc(sizeof(struct rt_arb_internal), "arb");
+
+	BU_ALLOC(arb, struct rt_arb_internal);
 	VMOVE(arb->pt[0], rpp_min);
 	VSET(arb->pt[1], rpp_min[X], rpp_min[Y], rpp_max[Z]);
 	VSET(arb->pt[2], rpp_min[X], rpp_max[Y], rpp_max[Z]);

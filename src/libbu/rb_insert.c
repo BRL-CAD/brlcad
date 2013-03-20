@@ -184,16 +184,15 @@ bu_rb_insert(struct bu_rb_tree *tree, void *data)
     /*
      * Make a new package and add it to the list of all packages.
      */
-    package = (struct bu_rb_package *)
-	bu_malloc(sizeof(struct bu_rb_package), "red-black package");
+    BU_ALLOC(package, struct bu_rb_package);
     package->rbp_node = (struct bu_rb_node **)
 	bu_malloc(nm_orders * sizeof(struct bu_rb_node *),
 		  "red-black package nodes");
-    rblp = (struct bu_rb_list *)
-	bu_malloc(sizeof(struct bu_rb_list),
-		  "red-black list element");
+
+    BU_ALLOC(rblp, struct bu_rb_list);
     rblp->rbl_magic = BU_RB_LIST_MAGIC;
     rblp->rbl_package = package;
+
     BU_LIST_PUSH(&(tree->rbt_packages.l), rblp);
     package->rbp_list_pos = rblp;
 
@@ -220,11 +219,11 @@ bu_rb_insert(struct bu_rb_tree *tree, void *data)
     node->rbn_package = (struct bu_rb_package **)
 	bu_malloc(nm_orders * sizeof(struct bu_rb_package *),
 		  "red-black packages");
-    rblp = (struct bu_rb_list *)
-	bu_malloc(sizeof(struct bu_rb_list),
-		  "red-black list element");
+
+    BU_ALLOC(rblp, struct bu_rb_list);
     rblp->rbl_magic = BU_RB_LIST_MAGIC;
     rblp->rbl_node = node;
+
     BU_LIST_PUSH(&(tree->rbt_nodes.l), rblp);
     node->rbn_list_pos = rblp;
 

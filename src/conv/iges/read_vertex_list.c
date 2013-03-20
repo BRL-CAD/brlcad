@@ -47,8 +47,7 @@ Read_vertex_list(int vert_de)
 	return (struct iges_vertex_list *)NULL;
     }
 
-    vertex_list = (struct iges_vertex_list *)bu_malloc(sizeof(struct iges_vertex_list)  ,
-						       "Read_vertex_list: iges_vertex_list");
+    BU_ALLOC(vertex_list, struct iges_vertex_list);
 
     vertex_list->vert_de = vert_de;
     vertex_list->next = NULL;

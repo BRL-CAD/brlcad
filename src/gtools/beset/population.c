@@ -246,7 +246,7 @@ pop_find_nodes(	union tree *tp)
 	    n1 = pop_find_nodes(tp->tr_b.tb_left);
 	    if (n1 == crossover_node) {
 		if (tp->tr_b.tb_left->tr_op & crossover_op) {
-		    add = bu_malloc(sizeof(struct node), "node");
+		    BU_ALLOC(add, struct node);
 		    add->s_parent = &tp->tr_b.tb_left;
 		    add->s_child = tp->tr_b.tb_left;
 		    BU_LIST_INSERT(&node->l, &add->l);
@@ -257,7 +257,7 @@ pop_find_nodes(	union tree *tp)
 	    n2 = pop_find_nodes(tp->tr_b.tb_right);
 	    if (n2 == crossover_node) {
 		if (tp->tr_b.tb_right->tr_op & crossover_op) {
-		    add = bu_malloc(sizeof(struct node), "node");
+		    BU_ALLOC(add, struct node);
 		    add->s_parent = &tp->tr_b.tb_right;
 		    add->s_child = tp->tr_b.tb_right;
 		    BU_LIST_INSERT(&node->l, &add->l);
@@ -428,7 +428,7 @@ pop_gop(int gop, char *parent1_id, char *parent2_id, char *child1_id, char *chil
 		bu_exit(EXIT_FAILURE, "Failed to read parent2");
 	    parent2 = (struct rt_comb_internal *)in2.idb_ptr;
 
-	    node = bu_malloc(sizeof(struct node), "node");
+	    BU_ALLOC(node, struct node);
 	    BU_LIST_INIT(&node->l);
 	    chosen_node = NULL;
 
@@ -447,7 +447,7 @@ pop_gop(int gop, char *parent1_id, char *parent2_id, char *child1_id, char *chil
 		if (crossover_op & MASK)crossover_op = MASK;
 		crossover_node = db_count_tree_nodes(crossover_point, 0);
 		if (pop_find_nodes(parent2->tree) == crossover_node) {
-		    add = bu_malloc(sizeof(struct node), "node");
+		    BU_ALLOC(add, struct node);
 		    add->s_parent = &parent2->tree;
 		    add->s_child = parent2->tree;
 		    BU_LIST_INSERT(&node->l, &add->l);

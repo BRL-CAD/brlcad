@@ -1044,7 +1044,7 @@ collect_grouping_faces_indexes(struct ga_t *ga,
 	 */
 	if (found && (numFacesFound == 0)) {
 	    /* allocate memory for gfi structure */
-	    *gfi = (struct gfi_t *)bu_calloc(1, sizeof(struct gfi_t), "gfi");
+	    BU_ALLOC((*gfi), struct gfi_t);
 
 	    /* initialize gfi structure */
 	    (*gfi)->index_arr_faces = (void *)NULL;

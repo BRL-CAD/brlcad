@@ -88,7 +88,7 @@ bu_vls_vlsinit(void)
 {
     struct bu_vls *vp;
 
-    vp = (struct bu_vls *)bu_malloc(sizeof(struct bu_vls), "bu_vls_vlsinit struct");
+    BU_ALLOC(vp, struct bu_vls);
     bu_vls_init(vp);
 
     return vp;

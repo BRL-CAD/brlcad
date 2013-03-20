@@ -172,7 +172,7 @@ Add_new_name(char *name, unsigned int obj, int type)
 
 
     /* Add a new name */
-    ptr = (struct name_conv_list *)bu_calloc(1, sizeof(struct name_conv_list), "Add_new_name: prev->next");
+    BU_ALLOC(ptr, struct name_conv_list);
     ptr->next = (struct name_conv_list *)NULL;
     ptr->brlcad_name = bu_strdup(name);
     ptr->obj = obj;

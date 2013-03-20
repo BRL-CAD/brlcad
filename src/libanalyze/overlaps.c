@@ -58,7 +58,7 @@ add_unique_pair(struct region_pair *list, /* list to add into */
 	}
     }
     /* didn't find it in the list.  Add it */
-    rpair = bu_malloc(sizeof(struct region_pair), "region_pair");
+    BU_ALLOC(rpair, struct region_pair);
     rpair->r.r1 = r1;
     rpair->r2 = r2;
     rpair->count = 1;

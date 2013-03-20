@@ -62,7 +62,7 @@ bn_spm_init(int N, int elsize)
     int i, nx, total, idx;
     register bn_spm_map_t *mapp;
 
-    mapp = (bn_spm_map_t *)bu_malloc(sizeof(bn_spm_map_t), "bn_spm_map_t");
+    BU_ALLOC(mapp, bn_spm_map_t);
     if (mapp == BN_SPM_MAP_NULL)
 	return BN_SPM_MAP_NULL;
     memset((char *)mapp, 0, sizeof(bn_spm_map_t));

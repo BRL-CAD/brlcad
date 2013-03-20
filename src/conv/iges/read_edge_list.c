@@ -47,8 +47,7 @@ Read_edge_list(struct iges_edge_use *edge)
 	return (struct iges_edge_list *)NULL;
     }
 
-    edge_list = (struct iges_edge_list *)bu_malloc(sizeof(struct iges_edge_list)  ,
-						   "Read_edge_list: iges_edge_list");
+    BU_ALLOC(edge_list, struct iges_edge_list);
 
     edge_list->edge_de = edge->edge_de;
     edge_list->next = NULL;

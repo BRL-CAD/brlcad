@@ -192,7 +192,7 @@ ged_brep(struct ged *gedp, int argc, const char *argv[])
 
 	char *bname;
 	char *suffix;
-	ON_Brep** brep = (ON_Brep**)bu_malloc(sizeof(ON_Brep*), "ON_Brep*");
+	ON_Brep* brep = NULL;
 	int ret;
 	if (argc > 2) {
 	    bname = (char*)bu_malloc(strlen(argv[2])+1, "char");

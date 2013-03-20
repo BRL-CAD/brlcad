@@ -51,9 +51,10 @@
 struct bn_multipoly *
 bn_multipoly_new(int dgrs, int dgrt)
 {
-    struct bn_multipoly *newmp = bu_malloc(sizeof(struct bn_multipoly), FAILSTR);
+    struct bn_multipoly *newmp;
     int    i, s, t;
 
+    BU_ALLOC(newmp, struct bn_multipoly);
     newmp->cf = bu_malloc(dgrs * sizeof(double *), FAILSTR);
 
     for (i = 0; i < dgrs; i++) {

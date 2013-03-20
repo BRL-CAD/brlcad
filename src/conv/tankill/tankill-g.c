@@ -74,7 +74,7 @@ Add_solid(int comp_code_num)
     /* if list is empty, start one */
     if ( id_root == NULL )
     {
-	id_root = (struct comp_idents *)bu_malloc( sizeof( struct comp_idents ), "tankill-g: idents list" );
+	BU_ALLOC(id_root, struct comp_idents);
 	id_root->next = (struct comp_idents *)NULL;
 	id_root->ident = comp_code_num;
 	id_root->no_of_solids = 1;
@@ -96,7 +96,7 @@ Add_solid(int comp_code_num)
 	else
 	{
 	    /* make a new entry for this component */
-	    ptr->next = (struct comp_idents *)bu_malloc( sizeof( struct comp_idents ), "tankill-g: idents list " );
+	    BU_ALLOC(ptr->next, struct comp_idents);
 	    ptr = ptr->next;
 	    ptr->next = NULL;
 	    ptr->ident = comp_code_num;

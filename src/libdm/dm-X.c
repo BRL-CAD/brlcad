@@ -447,19 +447,10 @@ X_open_dm(Tcl_Interp *interp, int argc, char **argv)
     *dmp = dm_X; /* struct copy */
     dmp->dm_interp = interp;
 
-    dmp->dm_vars.pub_vars = (genptr_t)bu_calloc(1, sizeof(struct dm_xvars), "X_open_dm: dm_xvars");
-    if (dmp->dm_vars.pub_vars == (genptr_t)NULL) {
-	bu_free((genptr_t)dmp, "X_open_dm: dmp");
-	return DM_NULL;
-    }
+    BU_ALLOC(dmp->dm_vars.pub_vars, struct dm_xvars);
     pubvars = (struct dm_xvars *)dmp->dm_vars.pub_vars;
 
-    dmp->dm_vars.priv_vars = (genptr_t)bu_calloc(1, sizeof(struct x_vars), "X_open_dm: x_vars");
-    if (dmp->dm_vars.priv_vars == (genptr_t)NULL) {
-	bu_free((genptr_t)dmp->dm_vars.pub_vars, "X_open_dm: dmp->dm_vars.pub_vars");
-	bu_free((genptr_t)dmp, "X_open_dm: dmp");
-	return DM_NULL;
-    }
+    BU_ALLOC(dmp->dm_vars.priv_vars, struct x_vars);
     privars = (struct x_vars *)dmp->dm_vars.priv_vars;
 
     bu_vls_init(&dmp->dm_pathName);

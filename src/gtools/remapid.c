@@ -356,7 +356,7 @@ mk_curr_id(int region_id)
 {
     struct curr_id *cip;
 
-    cip = (struct curr_id *) bu_malloc(sizeof(struct curr_id), "curr_id");
+    BU_ALLOC(cip, struct curr_id);
 
     cip->ci_magic = CURR_ID_MAGIC;
     cip->ci_id = region_id;
@@ -475,7 +475,7 @@ mk_remap_reg(char *region_name)
 {
     struct remap_reg *rp;
 
-    rp = (struct remap_reg *) bu_malloc(sizeof(struct remap_reg), "remap_reg");
+    BU_ALLOC(rp, struct remap_reg);
 
     rp->rr_magic = REMAP_REG_MAGIC;
 
@@ -714,7 +714,7 @@ db_init(char *db_name)
     FOR_ALL_DIRECTORY_START(dp, dbip) {
 	if (!(dp->d_flags & RT_DIR_REGION))
 	    continue;
-	ip = (struct rt_db_internal *) bu_malloc(sizeof(struct rt_db_internal), "rt_db_internal");
+	BU_ALLOC(ip, struct rt_db_internal);
 	if (rt_db_get_internal(ip, dp, dbip, (fastf_t *) NULL, &rt_uniresource) < 0) {
 	    bu_log("remapid: rt_db_get_internal(%s) failed.  ",
 		   dp->d_namep);

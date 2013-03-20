@@ -611,6 +611,7 @@ gettree_leaf(struct db_tree_state *tsp, const struct db_full_path *pathp, struct
     stp->st_id = ip->idb_type;
     stp->st_dp = dp;
     if (mat) {
+	/* stupid matp_t */
 	stp->st_matp = (matp_t)bu_malloc(sizeof(mat_t), "st_matp");
 	MAT_COPY(stp->st_matp, mat);
     } else {

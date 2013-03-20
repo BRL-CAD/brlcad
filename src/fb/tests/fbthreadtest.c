@@ -78,7 +78,7 @@ TclThreadIncrement(
     Tcl_ThreadId threadId = (Tcl_ThreadId) id;
     TestEvent *testevt;
 
-    testevt = (TestEvent *) bu_malloc(sizeof(TestEvent), "test event");
+    BU_ALLOC(testevt, TestEvent);
     testevt->header.proc = TestEventProc;
     testevt->testnum = increment;
     Tcl_ThreadQueueEvent(threadId, (Tcl_Event *)testevt, TCL_QUEUE_TAIL);
