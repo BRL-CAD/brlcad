@@ -74,7 +74,7 @@ XGLUE(rt_botface_w_normals_, TRI_TYPE)(struct soltab *stp,
 	|| m3 < tol->dist_sq
 	|| m4 < tol->dist_sq)
     {
-	bu_free((char *)trip, "getstruct tri_specific");
+	BU_PUT(trip, XGLUE(tri_specific_, TRI_TYPE));
 
 	if (RT_G_DEBUG & DEBUG_SHOOT) {
 	    bu_log("%s: degenerate facet #%zu\n",
@@ -1364,7 +1364,6 @@ XGLUE(rt_bot_free_, TRI_TYPE)(struct bot_specific *bot)
 	bu_free((char *)bot->bot_facearray, "bot_facearray");
 	bot->bot_facearray = NULL;
     }
-
     if (bot->bot_thickness) {
 	bu_free((char *)bot->bot_thickness, "bot_thickness");
 	bot->bot_thickness = NULL;
@@ -1373,6 +1372,7 @@ XGLUE(rt_bot_free_, TRI_TYPE)(struct bot_specific *bot)
 	bu_free((char *)bot->bot_facemode, "bot_facemode");
 	bot->bot_facemode = NULL;
     }
+
     ptr = bot->bot_facelist;
     while (ptr) {
 	tri = ptr->tri_forw;
@@ -1380,12 +1380,12 @@ XGLUE(rt_bot_free_, TRI_TYPE)(struct bot_specific *bot)
 	    if (ptr->tri_normals) {
 		bu_free((char *)ptr->tri_normals, "bot tri_specific normals");
 	    }
-	    bu_free((char *)ptr, "bot tri_specific");
+	    BU_PUT(ptr, XGLUE(tri_specific_, TRI_TYPE));
 	}
 	ptr = tri;
     }
     bot->bot_facelist = NULL;
-    bu_free((char *)bot, "bot_specific");
+    BU_PUT(bot, struct bot_specific);
 }
 
 
