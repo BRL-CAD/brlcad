@@ -87,7 +87,7 @@ cho_deleteProc(ClientData clientData)
     bu_vls_free(&chop->cho_head.h_command);
 
     BU_LIST_DEQUEUE(&chop->l);
-    bu_free((genptr_t)chop, "cho_deleteProc: chop");
+    BU_PUT(chop, struct bu_cmdhist_obj);
 }
 
 
