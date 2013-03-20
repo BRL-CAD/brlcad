@@ -88,8 +88,8 @@ rt_cut_one_axis(struct bu_ptbl *boxes, struct rt_i *rtip, int axis, int min, int
     if (min == max) {
 	/* Down to one cell, generate a boxnode */
 	slice = min;
-	box = (union cutter *)bu_calloc(1, sizeof(union cutter),
-					"union cutter");
+	BU_ALLOC(box, union cutter);
+
 	box->bn.bn_type = CUT_BOXNODE;
 	box->bn.bn_len = 0;
 	box->bn.bn_maxlen = rtip->nsolids;
@@ -115,8 +115,8 @@ rt_cut_one_axis(struct bu_ptbl *boxes, struct rt_i *rtip, int axis, int min, int
 
     cur = (min + max + 1) / 2;
     /* Recurse on both sides, then build a cutnode */
-    box = (union cutter *)bu_calloc(1, sizeof(union cutter),
-				    "union cutter");
+    BU_ALLOC(box, union cutter);
+
     box->cn.cn_type = CUT_CUTNODE;
     box->cn.cn_axis = axis;
     box->cn.cn_point = nuginfop->nu_axis[axis][cur].nu_spos;
@@ -1204,9 +1204,7 @@ rt_ct_populate_box(union cutter *outp, const union cutter *inp, struct rt_i *rti
 	return success;
     }
 
-    outp->bn.bn_piecelist = (struct rt_piecelist *) bu_calloc(
-	sizeof(struct rt_piecelist), inp->bn.bn_piecelen,
-	"rt_piecelist");
+    outp->bn.bn_piecelist = (struct rt_piecelist *) bu_calloc(inp->bn.bn_piecelen, sizeof(struct rt_piecelist), "rt_piecelist");
     outp->bn.bn_maxpiecelen = inp->bn.bn_piecelen;
 
     for (i = inp->bn.bn_piecelen-1; i >= 0; i--) {
