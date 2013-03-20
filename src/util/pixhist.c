@@ -73,7 +73,7 @@ main(int argc, char **argv)
 
     /* check usage */
     if (argc > 1 || isatty(fileno(fp))) {
-	bu_exit(1, "usage: pixhist [-v] [file.pix]\n");
+	bu_exit(1, "Usage: pixhist [-v] [file.pix]\n");
     }
 
     while ((i = fread(&ibuf[0], sizeof(*ibuf), sizeof(ibuf), fp)) > 0) {

@@ -45,7 +45,7 @@ static void Output(double result), Usage(void);
 static void
 Usage(void) 				/* print usage message */
 {
-    printf("usage: cad_parea[ -i input][ -o output]\n");
+    printf("Usage: cad_parea[ -i input][ -o output]\n");
 }
 
 

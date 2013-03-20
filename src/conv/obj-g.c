@@ -22,7 +22,7 @@
  * This is a program to convert a WaveFront Object file to a BRL-CAD
  * database file.
  *
- * Example usage: obj-g -u mm input.obj output.g
+ * Usage: obj-g -u mm input.obj output.g
  *
  * Recommended Improvements (not already listed in function comments):
  * - Support obj file texture vertices and materials

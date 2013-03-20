@@ -175,8 +175,8 @@ proc apply_lgt_mat { args } {
 proc make_lgt_light { args } {
     set num_args [llength $args]
     if { $num_args != 1 && $num_args != 4 } {
-	puts "ERROR: usage:"
-	puts "\tmake_lgt_light light_region [x y z]"
+	puts "ERROR: invalid number or arguments"
+	puts "Usage: make_lgt_light light_region [x y z]"
 	return
     }
 

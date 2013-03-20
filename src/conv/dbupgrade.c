@@ -27,8 +27,6 @@
  * and converts it to the current database version.  This code is
  * intended to be upgraded as new database versions are
  * created. Currently, only db version 4 can be upgraded.
- *
- * Example usage: dbupgrade input.g output.g
  */
 
 #include "common.h"

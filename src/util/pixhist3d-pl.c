@@ -46,7 +46,7 @@ struct pix_element {
 };
 
 
-static const char *Usage = "usage: pixhist3d-pl [file.pix] | plot\n";
+static const char *Usage = "Usage: pixhist3d-pl [file.pix] | plot\n";
 
 int
 main(int argc, char **argv)

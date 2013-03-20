@@ -98,7 +98,7 @@ static int
 Usage(void) 				/* print usage message */
 {
     return
-	fprintf(stderr, "usage: cad_boundp[ -i input][ -o output][ -t tolerance][ -v]");
+	fprintf(stderr, "Usage: cad_boundp[ -i input][ -o output][ -t tolerance][ -v]");
 }
 
 

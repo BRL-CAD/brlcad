@@ -49,7 +49,7 @@ int verbose = 0;
 long bin[256];		/* Histogram bins */
 
 
-static const char *Usage = "usage: bwstat [-v] [file.bw]\n";
+static const char *Usage = "Usage: bwstat [-v] [file.bw]\n";
 
 /*
  * Display the histogram values.

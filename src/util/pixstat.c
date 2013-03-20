@@ -102,7 +102,7 @@ main(int argc, char **argv)
 
     /* check usage */
     if (argc > 1 || isatty(fileno(fp))) {
-	bu_exit(1, "usage: pixstat [-v] [file.pix]\n");
+	bu_exit(1, "Usage: pixstat [-v] [file.pix]\n");
     }
 
     /*

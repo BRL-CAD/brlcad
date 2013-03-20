@@ -415,7 +415,7 @@ main(int argc, char **argv)
 		 &warpfrac, &dissolvefrac, &autosize, &pa_width, &pa_height) == 0
 	|| isatty(fileno(stdout))) {
 	fprintf(stderr,
-		"usage: pixmorph [-w width] [-n height] picA.pix picB.pix linesfile warpfrac dissolvefrac > out.pix\n");
+		"Usage: pixmorph [-w width] [-n height] picA.pix picB.pix linesfile warpfrac dissolvefrac > out.pix\n");
 	return 1;
     }
 

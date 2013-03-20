@@ -1244,7 +1244,7 @@ proc ::combobox::WidgetProc {w command args} {
 		set index [lindex $args 0]
 		set result [Select $widgets(this) $index]
 	    } else {
-		error "usage: $w select index"
+		error "Usage: $w select index"
 	    }
 	}
 

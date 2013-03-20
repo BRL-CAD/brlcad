@@ -57,7 +57,7 @@ unsigned char ibuf[8*1024*3];
 
 void disp_array(long int (*v)[256], int xoff, int yoff);
 
-static const char *Usage = "usage: pixhist3d [file.pix]\n";
+static const char *Usage = "Usage: pixhist3d [file.pix]\n";
 
 int
 main(int argc, char **argv)

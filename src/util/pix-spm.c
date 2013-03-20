@@ -40,7 +40,7 @@ main(int argc, char **argv)
     bn_spm_map_t *mp;
 
     if (argc != 3) {
-	bu_exit(1, "usage: pix-spm file.pix size > file.spm\n");
+	bu_exit(1, "Usage: pix-spm file.pix size > file.spm\n");
     }
 
     size = atoi(argv[2]);

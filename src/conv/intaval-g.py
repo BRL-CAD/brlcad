@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 #
-# usage:  intaval-g.py intaval_file mged_cmds
-#
+# Usage: intaval-g.py intaval_file mged_cmds
 #
 
 import sys
@@ -15,7 +14,7 @@ def mashup(l):
     return s
 
 if len(sys.argv) < 3 or len(sys.argv) > 4:
-    print 'usage:  %s intaval_input.geom mged_output.tcl [input.matl]' % (sys.argv[0])
+    print 'Usage: %s intaval_input.geom mged_output.tcl [input.matl]' % (sys.argv[0])
     sys.exit()
 
 # open the file

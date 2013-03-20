@@ -19,13 +19,13 @@
  */
 /** @file fitness.c
  *
- * Compare rays of source and population
- * usage: global variable struct fitness_state *fstate must exist
+ * Compare rays of source and population.
+ *
+ * Usage: global variable struct fitness_state *fstate must exist
  *	fit_prep(db, rows, cols);
  *	fit_store(source_object);
  *	int linear_difference = fit_diff(test_object);
  *	fit_clear();
- * Author - Ben Poole
  *
  */
 

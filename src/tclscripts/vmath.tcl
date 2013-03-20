@@ -730,7 +730,7 @@ proc vzeron { n } {
 
 #extension of vadd
 #add arbitrary number of vectors of length n
-# usage: vaddn $v1 $v2 $v3 ... $vm $n
+# Usage: vaddn $v1 $v2 $v3 ... $vm $n
 proc vaddn args {
     set cur_length [llength $args]
     if { $cur_length==1 } then {

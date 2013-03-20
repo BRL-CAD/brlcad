@@ -46,7 +46,7 @@ main(int argc, char **argv)
     size_t ret;
 
     if (argc != 4 || isatty(fileno(stdin))) {
-	bu_exit(1, "usage: pix-bw3 redout greenout blueout < file.pix\n");
+	bu_exit(1, "Usage: pix-bw3 redout greenout blueout < file.pix\n");
     }
 
     rfp = fopen(argv[1], "w");
