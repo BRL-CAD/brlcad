@@ -125,6 +125,7 @@ EXTRA_DIST = \
 	proe-brl-notes.txt \
 	proe-brl.dll.config \
 	protk.dat.in \
+	msvc10 \
 	win32-msvc8/proe \
 	win32-msvc8/proe-brl-3.0/proe-brl-3.0.vcproj \
 	win32-msvc8/proe-brl-4.0/proe-brl-4.0.vcproj \
