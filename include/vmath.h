@@ -1775,6 +1775,57 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
 	(_e) = atan2(-((_d)[Z]), sqrt((_d)[X]*(_d)[X] + (_d)[Y]*(_d)[Y])) * -RAD2DEG; \
 }
 
+
+/** Swap two 3D vectors */
+#define VSWAP(_a, _b) do { \
+	fastf_t _t; \
+	_t = (_a)[X]; \
+	(_a)[X] = (_b)[X]; \
+	(_b)[X] = _t; \
+	_t = (_a)[Y]; \
+	(_a)[Y] = (_b)[Y]; \
+	(_b)[Y] = _t; \
+	_t = (_a)[Z]; \
+	(_a)[Z] = (_b)[Z]; \
+	(_b)[Z] = _t; \
+    } while (0)
+
+/** Swap two 2D vectors */
+#define V2SWAP(_a, _b) do { \
+	fastf_t _t; \
+	_t = (_a)[X]; \
+	(_a)[X] = (_b)[X]; \
+	(_b)[X] = _t; \
+	_t = (_a)[Y]; \
+	(_a)[Y] = (_b)[Y]; \
+	(_b)[Y] = _t; \
+    } while (0)
+
+/** Swap two 4D vectors */
+#define HSWAP(_a, _b) do { \
+	fastf_t _t; \
+	_t = (_a)[X]; \
+	(_a)[X] = (_b)[X]; \
+	(_b)[X] = _t; \
+	_t = (_a)[Y]; \
+	(_a)[Y] = (_b)[Y]; \
+	(_b)[Y] = _t; \
+	_t = (_a)[Z]; \
+	(_a)[Z] = (_b)[Z]; \
+	(_b)[Z] = _t; \
+	_t = (_a)[W]; \
+	(_a)[W] = (_b)[W]; \
+	(_b)[W] = _t; \
+    } while (0)
+
+/** Swap two 4x4 matrices */
+#define MAT_SWAP(_a, _b) do { \
+	mat_t _t; \
+	MAT_COPY(_t, (_a)); \
+	MAT_COPY((_a), (_b)); \
+	MAT_COPY((_b), _t); \
+    } while (0)
+
 /*** Macros suitable for declaration statement initialization. ***/
 
 /**
