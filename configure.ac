@@ -4151,6 +4151,7 @@ AC_CONFIG_FILES([
 	src/archer/plugins/Utility/Makefile
 	src/archer/plugins/Utility/attrGroupsDisplayUtilityP/Makefile
 	src/archer/plugins/Utility/botUtilityP/Makefile
+	src/archer/plugins/Utility/lodUtilityP/Makefile
 	src/archer/plugins/Wizards/Makefile
 	src/archer/plugins/Wizards/humanwizard/Makefile
 	src/archer/plugins/Wizards/tankwizard/Makefile
