@@ -648,7 +648,7 @@ Option for enabling and disabling compilation of the IncrTcl itk
 package for Tk objects provided with BRL-CAD's source distribution.
 Default is AUTO, auto-enabling if the BRLCAD_TCL option is set to
 BUNDLED and testing first for a system version if BRLCAD_TCL is set to
-AUTO or SYSTEM.  If BRLCAD_ITCL is set to BUNDLED, local copy is built
+AUTO or SYSTEM.  If BRLCAD_ITK is set to BUNDLED, local copy is built
 even if a system version is present.  This package will be disabled if
 BRLCAD_ENABLE_TK is OFF.
 ")
@@ -680,7 +680,7 @@ Option for enabling and disabling compilation of the Togl package for
 Tcl/Tk OpenGL support provided with BRL-CAD's source distribution.
 Default is AUTO, auto-enabling if the BRLCAD_TCL option is set to
 BUNDLED and testing first for a system version if BRLCAD_TCL is set to
-AUTO or SYSTEM.  If BRLCAD_ITCL is set to BUNDLED, local copy is built
+AUTO or SYSTEM.  If BRLCAD_TOGL is set to BUNDLED, local copy is built
 even if a system version is present.  This package will be disabled if
 either BRLCAD_ENABLE_OPENGL or BRLCAD_ENABLE_TK are OFF.
 ")
@@ -710,7 +710,7 @@ Option for enabling and disabling compilation of the IWidgets Tk
 widget package provided with BRL-CAD's source distribution.  Default
 is AUTO, auto-enabling if the BRLCAD_TCL option is set to BUNDLED and
 testing first for a system version if BRLCAD_TCL is set to AUTO or
-SYSTEM.  If BRLCAD_ITCL is set to BUNDLED, local copy is built even if
+SYSTEM.  If BRLCAD_IWIDGETS is set to BUNDLED, local copy is built even if
 a system version is present.  This package will be disabled if
 BRLCAD_ENABLE_TK is OFF.
 ")
@@ -731,7 +731,7 @@ Option for enabling and disabling compilation of the Tkhtml HTML
 viewing package provided with BRL-CAD's source distribution.  Default
 is AUTO, auto-enabling if the BRLCAD_TCL option is set to BUNDLED and
 testing first for a system version if BRLCAD_TCL is set to AUTO or
-SYSTEM.  If BRLCAD_ITCL is set to BUNDLED, local copy is built even if
+SYSTEM.  If BRLCAD_TKHTML is set to BUNDLED, local copy is built even if
 a system version is present.  This package will be disabled if
 BRLCAD_ENABLE_TK is OFF.
 ")
@@ -753,7 +753,7 @@ Option for enabling and disabling compilation of the tkpng PNG image
 viewing package provided with BRL-CAD's source distribution.  Default
 is AUTO, auto-enabling if the BRLCAD_TCL option is set to BUNDLED and
 testing first for a system version if BRLCAD_TCL is set to AUTO or
-SYSTEM.  If BRLCAD_ITCL is set to BUNDLED, local copy is built even if
+SYSTEM.  If BRLCAD_TKPNG is set to BUNDLED, local copy is built even if
 a system version is present.  This package will be disabled if
 BRLCAD_ENABLE_TK is OFF.
 ")
@@ -767,7 +767,7 @@ Option for enabling and disabling compilation of the Tktable graphical
 table widget package provided with BRL-CAD's source distribution.
 Default is AUTO, auto-enabling if the BRLCAD_TCL option is set to
 BUNDLED and testing first for a system version if BRLCAD_TCL is set to
-AUTO or SYSTEM.  If BRLCAD_ITCL is set to BUNDLED, local copy is built
+AUTO or SYSTEM.  If BRLCAD_TKTABLE is set to BUNDLED, local copy is built
 even if a system version is present.  This package will be disabled if
 BRLCAD_ENABLE_TK is OFF.
 ")
@@ -775,6 +775,22 @@ THIRD_PARTY_TCL_PACKAGE(Tktable tktable "${TCL_WISH_EXECUTABLE}" "tcl;tk" "BRLCA
 DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/tktable/pkgIndex.tcl)
 DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/tktable/tktable_cfg.h)
 DISTCLEAN(${CMAKE_BINARY_DIR}/lib/Tktable2.10)
+
+#set(tktreectrl_ALIASES ENABLE_TKTREECTRL)
+#set(tktreectrl_DESCRIPTION "
+#Option for enabling and disabling compilation of the TkTreeCtrl graphical
+#table widget package provided with BRL-CAD's source distribution.
+#Default is AUTO, auto-enabling if the BRLCAD_TCL option is set to
+#BUNDLED and testing first for a system version if BRLCAD_TCL is set to
+#AUTO or SYSTEM.  If BRLCAD_TKTREECTRL is set to BUNDLED, local copy is built
+#even if a system version is present.  This package will be disabled if
+#BRLCAD_ENABLE_TK is OFF.
+#")
+#THIRD_PARTY_TCL_PACKAGE(tktreectrl tktreectrl "${TCL_WISH_EXECUTABLE}" "tcl;tk"
+#  "BRLCAD_ENABLE_TK;BRLCAD_LEVEL3" "" tktreectrl_ALIASES tktreectrl_DESCRIPTION)
+#DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/tktreectrl/pkgIndex.tcl)
+#DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/tktreectrl/tktreectrl_cfg.h)
+#DISTCLEAN(${CMAKE_BINARY_DIR}/lib/TkTreeCtrl2.4)
 
 # OpenNURBS Library
 set(opennurbs_ALIASES ENABLE_OPENNURBS)
