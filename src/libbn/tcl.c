@@ -335,8 +335,8 @@ bn_math_cmd(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	if (Tcl_GetDouble(interp, argv[3], &d) != TCL_OK) goto error;
 	if (bn_decode_vect(e, argv[4]) < 3) goto error;
 
-	VBLEND2(a, b, c, d, e)
-	    bn_encode_vect(&result, a);
+	VBLEND2(a, b, c, d, e);
+	bn_encode_vect(&result, a);
 
     } else if (math_func == bn_mat_ae) {
 	mat_t o;
