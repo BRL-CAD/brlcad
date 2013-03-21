@@ -10,8 +10,6 @@
  *
  * See the file "license.terms" for information on usage and redistribution of
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
- *
- * RCS: $Id$
  */
 
 #ifndef _TKINT
@@ -866,6 +864,8 @@ typedef struct {
 				 * allocated with ckalloc(). */
     int charValueLen;		/* Length of string in charValuePtr when that
 				 * is non-NULL. */
+    KeySym keysym;		/* Key symbol computed after input methods
+				 * have been invoked */
 } TkKeyEvent;
 
 /*
@@ -970,6 +970,8 @@ MODULE_SCOPE Tk_PhotoImageFormat tkImgFmtPPM;
 MODULE_SCOPE TkMainInfo		*tkMainWindowList;
 MODULE_SCOPE Tk_ImageType	tkPhotoImageType;
 MODULE_SCOPE Tcl_HashTable	tkPredefBitmapTable;
+
+MODULE_SCOPE CONST char *const tkWebColors[20];
 
 #include "tkIntDecls.h"
 
@@ -1179,6 +1181,16 @@ MODULE_SCOPE void	TkUnderlineCharsInContext(Display *display,
 			    int firstByte, int lastByte);
 MODULE_SCOPE void	TkpGetFontAttrsForChar(Tk_Window tkwin, Tk_Font tkfont,
 			    Tcl_UniChar c, struct TkFontAttributes *faPtr);
+#ifdef __WIN32__
+#define TkParseColor XParseColor
+#else
+MODULE_SCOPE Status TkParseColor (Display * display,
+				Colormap map, CONST char* spec,
+				XColor * colorPtr);
+#endif
+#ifdef HAVE_XFT
+MODULE_SCOPE void	TkUnixSetXftClipRegion(TkRegion clipRegion);
+#endif
 
 /*
  * Unsupported commands.

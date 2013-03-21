@@ -10,13 +10,13 @@
  *
  * See the file "license.terms" for information on usage and redistribution of
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
- *
- * RCS: @(#) $Id$
  */
 
 #include "tkInt.h"
 
-#if !( defined(__WIN32__) || defined(MAC_OSX_TK))
+#ifdef __WIN32__
+#include "tkWinInt.h"
+#elif !defined(MAC_OSX_TK)
 #include "tkUnixInt.h"
 #endif
 
@@ -65,14 +65,14 @@ TCL_DECLARE_MUTEX(windowMutex)
  * on internal windows: these events are generated internally.
  */
 
-static XWindowChanges defChanges = {
+static const XWindowChanges defChanges = {
     0, 0, 1, 1, 0, 0, Above
 };
 #define ALL_EVENTS_MASK \
     KeyPressMask|KeyReleaseMask|ButtonPressMask|ButtonReleaseMask| \
     EnterWindowMask|LeaveWindowMask|PointerMotionMask|ExposureMask| \
     VisibilityChangeMask|PropertyChangeMask|ColormapChangeMask
-static XSetWindowAttributes defAtts= {
+static const XSetWindowAttributes defAtts= {
     None,			/* background_pixmap */
     0,				/* background_pixel */
     CopyFromParent,		/* border_pixmap */
@@ -95,89 +95,88 @@ static XSetWindowAttributes defAtts= {
  * the C functions that execute them.
  */
 
+#define ISSAFE 1
+#define PASSMAINWINDOW 2
+#define NOOBJPROC 4
+#define WINMACONLY 8
+
 typedef struct {
-    char *name;			/* Name of command. */
-    Tcl_CmdProc *cmdProc;	/* Command's string-based function. */
-    Tcl_ObjCmdProc *objProc;	/* Command's object-based function. */
-    int isSafe;			/* If !0, this command will be exposed in a
-				 * safe interpreter. Otherwise it will be
-				 * hidden in a safe interpreter. */
-    int passMainWindow;		/* 0 means provide NULL clientData to command
-				 * function; 1 means pass main window as
-				 * clientData to command function. */
+    const char *name;			/* Name of command. */
+    Tcl_ObjCmdProc *objProc;	/* Command's object- (or string-) based function. */
+    int flags;
 } TkCmd;
 
-static TkCmd commands[] = {
+static const TkCmd commands[] = {
     /*
      * Commands that are part of the intrinsics:
      */
 
-    {"bell",		NULL,			Tk_BellObjCmd,		0, 1},
-    {"bind",		NULL,			Tk_BindObjCmd,		1, 1},
-    {"bindtags",	NULL,			Tk_BindtagsObjCmd,	1, 1},
-    {"clipboard",	NULL,			Tk_ClipboardObjCmd,	0, 1},
-    {"destroy",		NULL,			Tk_DestroyObjCmd,	1, 1},
-    {"event",		NULL,			Tk_EventObjCmd,		1, 1},
-    {"focus",		NULL,			Tk_FocusObjCmd,		1, 1},
-    {"font",		NULL,			Tk_FontObjCmd,		1, 1},
-    {"grab",		NULL,			Tk_GrabObjCmd,		0, 1},
-    {"grid",		NULL,			Tk_GridObjCmd,		1, 1},
-    {"image",		NULL,			Tk_ImageObjCmd,		1, 1},
-    {"lower",		NULL,			Tk_LowerObjCmd,		1, 1},
-    {"option",		NULL,			Tk_OptionObjCmd,	1, 1},
-    {"pack",		NULL,			Tk_PackObjCmd,		1, 1},
-    {"place",		NULL,			Tk_PlaceObjCmd,		1, 0},
-    {"raise",		NULL,			Tk_RaiseObjCmd,		1, 1},
-    {"selection",	NULL,			Tk_SelectionObjCmd,	0, 1},
-    {"tk",		NULL,			Tk_TkObjCmd,		1, 1},
-    {"tkwait",		NULL,			Tk_TkwaitObjCmd,	1, 1},
-    {"update",		NULL,			Tk_UpdateObjCmd,	1, 1},
-    {"winfo",		NULL,			Tk_WinfoObjCmd,		1, 1},
-    {"wm",		NULL,			Tk_WmObjCmd,		0, 1},
+    {"bell",		Tk_BellObjCmd,		PASSMAINWINDOW},
+    {"bind",		Tk_BindObjCmd,		PASSMAINWINDOW|ISSAFE},
+    {"bindtags",	Tk_BindtagsObjCmd,	PASSMAINWINDOW|ISSAFE},
+    {"clipboard",	Tk_ClipboardObjCmd,	PASSMAINWINDOW},
+    {"destroy",		Tk_DestroyObjCmd,	PASSMAINWINDOW|ISSAFE},
+    {"event",		Tk_EventObjCmd,		PASSMAINWINDOW|ISSAFE},
+    {"focus",		Tk_FocusObjCmd,		PASSMAINWINDOW|ISSAFE},
+    {"font",		Tk_FontObjCmd,		PASSMAINWINDOW|ISSAFE},
+    {"grab",		Tk_GrabObjCmd,		PASSMAINWINDOW},
+    {"grid",		Tk_GridObjCmd,		PASSMAINWINDOW|ISSAFE},
+    {"image",		Tk_ImageObjCmd,		PASSMAINWINDOW|ISSAFE},
+    {"lower",		Tk_LowerObjCmd,		PASSMAINWINDOW|ISSAFE},
+    {"option",		Tk_OptionObjCmd,	PASSMAINWINDOW|ISSAFE},
+    {"pack",		Tk_PackObjCmd,		PASSMAINWINDOW|ISSAFE},
+    {"place",		Tk_PlaceObjCmd,		ISSAFE},
+    {"raise",		Tk_RaiseObjCmd,		PASSMAINWINDOW|ISSAFE},
+    {"selection",	Tk_SelectionObjCmd,	PASSMAINWINDOW},
+    {"tk",		Tk_TkObjCmd,		PASSMAINWINDOW|ISSAFE},
+    {"tkwait",		Tk_TkwaitObjCmd,	PASSMAINWINDOW|ISSAFE},
+    {"update",		Tk_UpdateObjCmd,	PASSMAINWINDOW|ISSAFE},
+    {"winfo",		Tk_WinfoObjCmd,		PASSMAINWINDOW|ISSAFE},
+    {"wm",		Tk_WmObjCmd,		PASSMAINWINDOW},
 
     /*
      * Default widget class commands.
      */
 
-    {"button",		NULL,			Tk_ButtonObjCmd,	1, 0},
-    {"canvas",		NULL,			Tk_CanvasObjCmd,	1, 1},
-    {"checkbutton",	NULL,			Tk_CheckbuttonObjCmd,	1, 0},
-    {"entry",		NULL,			Tk_EntryObjCmd,		1, 0},
-    {"frame",		NULL,			Tk_FrameObjCmd,		1, 0},
-    {"label",		NULL,			Tk_LabelObjCmd,		1, 0},
-    {"labelframe",	NULL,			Tk_LabelframeObjCmd,	1, 0},
-    {"listbox",		NULL,			Tk_ListboxObjCmd,	1, 0},
-    {"menubutton",	NULL,			Tk_MenubuttonObjCmd,	1, 0},
-    {"message",		NULL,			Tk_MessageObjCmd,	1, 0},
-    {"panedwindow",	NULL,			Tk_PanedWindowObjCmd,	1, 0},
-    {"radiobutton",	NULL,			Tk_RadiobuttonObjCmd,	1, 0},
-    {"scale",		NULL,			Tk_ScaleObjCmd,		1, 0},
-    {"scrollbar",	Tk_ScrollbarCmd,	NULL,			1, 1},
-    {"spinbox",		NULL,			Tk_SpinboxObjCmd,	1, 0},
-    {"text",		NULL,			Tk_TextObjCmd,		1, 1},
-    {"toplevel",	NULL,			Tk_ToplevelObjCmd,	0, 0},
+    {"button",		Tk_ButtonObjCmd,	ISSAFE},
+    {"canvas",		Tk_CanvasObjCmd,	PASSMAINWINDOW|ISSAFE},
+    {"checkbutton",	Tk_CheckbuttonObjCmd,	ISSAFE},
+    {"entry",		Tk_EntryObjCmd,		ISSAFE},
+    {"frame",		Tk_FrameObjCmd,		ISSAFE},
+    {"label",		Tk_LabelObjCmd,		ISSAFE},
+    {"labelframe",	Tk_LabelframeObjCmd,	ISSAFE},
+    {"listbox",		Tk_ListboxObjCmd,	ISSAFE},
+    {"menubutton",	Tk_MenubuttonObjCmd,	ISSAFE},
+    {"message",		Tk_MessageObjCmd,	ISSAFE},
+    {"panedwindow",	Tk_PanedWindowObjCmd,	ISSAFE},
+    {"radiobutton",	Tk_RadiobuttonObjCmd,	ISSAFE},
+    {"scale",		Tk_ScaleObjCmd,		ISSAFE},
+    {"scrollbar",	(Tcl_ObjCmdProc *) Tk_ScrollbarCmd,	NOOBJPROC|PASSMAINWINDOW|ISSAFE},
+    {"spinbox",		Tk_SpinboxObjCmd,	ISSAFE},
+    {"text",		Tk_TextObjCmd,		PASSMAINWINDOW|ISSAFE},
+    {"toplevel",	Tk_ToplevelObjCmd,	0},
 
     /*
      * Classic widget class commands.
      */
 
-    {"::tk::button",	NULL,			Tk_ButtonObjCmd,	1, 0},
-    {"::tk::canvas",	NULL,			Tk_CanvasObjCmd,	1, 1},
-    {"::tk::checkbutton",NULL,			Tk_CheckbuttonObjCmd,	1, 0},
-    {"::tk::entry",	NULL,			Tk_EntryObjCmd,		1, 0},
-    {"::tk::frame",	NULL,			Tk_FrameObjCmd,		1, 0},
-    {"::tk::label",	NULL,			Tk_LabelObjCmd,		1, 0},
-    {"::tk::labelframe",NULL,			Tk_LabelframeObjCmd,	1, 0},
-    {"::tk::listbox",	NULL,			Tk_ListboxObjCmd,	1, 0},
-    {"::tk::menubutton",NULL,			Tk_MenubuttonObjCmd,	1, 0},
-    {"::tk::message",	NULL,			Tk_MessageObjCmd,	1, 0},
-    {"::tk::panedwindow",NULL,			Tk_PanedWindowObjCmd,	1, 0},
-    {"::tk::radiobutton",NULL,			Tk_RadiobuttonObjCmd,	1, 0},
-    {"::tk::scale",	NULL,			Tk_ScaleObjCmd,		1, 0},
-    {"::tk::scrollbar",	Tk_ScrollbarCmd,	NULL,			1, 1},
-    {"::tk::spinbox",	NULL,			Tk_SpinboxObjCmd,	1, 0},
-    {"::tk::text",	NULL,			Tk_TextObjCmd,		1, 1},
-    {"::tk::toplevel",	NULL,			Tk_ToplevelObjCmd,	0, 0},
+    {"::tk::button",	Tk_ButtonObjCmd,	ISSAFE},
+    {"::tk::canvas",	Tk_CanvasObjCmd,	PASSMAINWINDOW|ISSAFE},
+    {"::tk::checkbutton",Tk_CheckbuttonObjCmd,	ISSAFE},
+    {"::tk::entry",	Tk_EntryObjCmd,		ISSAFE},
+    {"::tk::frame",	Tk_FrameObjCmd,		ISSAFE},
+    {"::tk::label",	Tk_LabelObjCmd,		ISSAFE},
+    {"::tk::labelframe",Tk_LabelframeObjCmd,	ISSAFE},
+    {"::tk::listbox",	Tk_ListboxObjCmd,	ISSAFE},
+    {"::tk::menubutton",Tk_MenubuttonObjCmd,	ISSAFE},
+    {"::tk::message",	Tk_MessageObjCmd,	ISSAFE},
+    {"::tk::panedwindow",Tk_PanedWindowObjCmd,	ISSAFE},
+    {"::tk::radiobutton",Tk_RadiobuttonObjCmd,	ISSAFE},
+    {"::tk::scale",	Tk_ScaleObjCmd,		ISSAFE},
+    {"::tk::scrollbar",	(Tcl_ObjCmdProc *) Tk_ScrollbarCmd,			NOOBJPROC|PASSMAINWINDOW|ISSAFE},
+    {"::tk::spinbox",	Tk_SpinboxObjCmd,	ISSAFE},
+    {"::tk::text",	Tk_TextObjCmd,		PASSMAINWINDOW|ISSAFE},
+    {"::tk::toplevel",	Tk_ToplevelObjCmd,	0},
 
     /*
      * Standard dialog support. Note that the Unix/X11 platform implements
@@ -185,11 +184,11 @@ static TkCmd commands[] = {
      */
 
 #if defined(__WIN32__) || defined(MAC_OSX_TK)
-    {"tk_chooseColor",	NULL,			Tk_ChooseColorObjCmd,	0, 1},
-    {"tk_chooseDirectory", NULL,		Tk_ChooseDirectoryObjCmd,0,1},
-    {"tk_getOpenFile",	NULL,			Tk_GetOpenFileObjCmd,	0, 1},
-    {"tk_getSaveFile",	NULL,			Tk_GetSaveFileObjCmd,	0, 1},
-    {"tk_messageBox",	NULL,			Tk_MessageBoxObjCmd,	0, 1},
+    {"tk_chooseColor",	Tk_ChooseColorObjCmd,	PASSMAINWINDOW},
+    {"tk_chooseDirectory", Tk_ChooseDirectoryObjCmd,WINMACONLY|PASSMAINWINDOW},
+    {"tk_getOpenFile",	Tk_GetOpenFileObjCmd,	WINMACONLY|PASSMAINWINDOW},
+    {"tk_getSaveFile",	Tk_GetSaveFileObjCmd,	WINMACONLY|PASSMAINWINDOW},
+    {"tk_messageBox",	Tk_MessageBoxObjCmd,	PASSMAINWINDOW},
 #endif
 
     /*
@@ -198,9 +197,9 @@ static TkCmd commands[] = {
 
 #if defined(MAC_OSX_TK)
     {"::tk::unsupported::MacWindowStyle",
-			NULL,			TkUnsupported1ObjCmd,	1, 1},
+			TkUnsupported1ObjCmd,	PASSMAINWINDOW|ISSAFE},
 #endif
-    {NULL,		NULL,			NULL,			0, 0}
+    {NULL,		NULL,			0}
 };
 
 /*
@@ -864,7 +863,7 @@ TkCreateMainWindow(
     Tcl_HashEntry *hPtr;
     register TkMainInfo *mainPtr;
     register TkWindow *winPtr;
-    register TkCmd *cmdPtr;
+    register const TkCmd *cmdPtr;
     ClientData clientData;
     ThreadSpecificData *tsdPtr = (ThreadSpecificData *)
 	    Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
@@ -948,23 +947,29 @@ TkCreateMainWindow(
 
     isSafe = Tcl_IsSafe(interp);
     for (cmdPtr = commands; cmdPtr->name != NULL; cmdPtr++) {
-	if ((cmdPtr->cmdProc == NULL) && (cmdPtr->objProc == NULL)) {
+	if (cmdPtr->objProc == NULL) {
 	    Tcl_Panic("TkCreateMainWindow: builtin command with NULL string and object procs");
 	}
-	if (cmdPtr->passMainWindow) {
+#if defined(__WIN32__) && !defined(STATIC_BUILD)
+	if ((cmdPtr->flags & WINMACONLY) && tclStubsPtr->reserved9) {
+	    /* We are running on Cygwin, so don't use the win32 dialogs */
+	    continue;
+	}
+#endif
+	if (cmdPtr->flags & PASSMAINWINDOW) {
 	    clientData = (ClientData) tkwin;
 	} else {
 	    clientData = (ClientData) NULL;
 	}
-	if (cmdPtr->cmdProc != NULL) {
-	    Tcl_CreateCommand(interp, cmdPtr->name, cmdPtr->cmdProc,
-		    clientData, (void (*) _ANSI_ARGS_((ClientData))) NULL);
+	if (cmdPtr->flags & NOOBJPROC) {
+	    Tcl_CreateCommand(interp, cmdPtr->name,
+		    (Tcl_CmdProc *) cmdPtr->objProc, clientData, NULL);
 	} else {
 	    Tcl_CreateObjCommand(interp, cmdPtr->name, cmdPtr->objProc,
 		    clientData, NULL);
 	}
 	if (isSafe) {
-	    if (!(cmdPtr->isSafe)) {
+	    if (!(cmdPtr->flags & ISSAFE)) {
 		Tcl_HideCommand(interp, cmdPtr->name, cmdPtr->name);
 	    }
 	}
@@ -1506,7 +1511,7 @@ Tk_DestroyWindow(
 	}
 	winPtr->mainPtr->refCount--;
 	if (winPtr->mainPtr->refCount == 0) {
-	    register TkCmd *cmdPtr;
+	    register const TkCmd *cmdPtr;
 
 	    /*
 	     * We just deleted the last window in the application. Delete the
@@ -2826,6 +2831,51 @@ DeleteWindowsExitProc(
     tsdPtr->initialized = 0;
 }
 
+#if defined(__WIN32__) && !defined(__WIN64__)
+
+static HMODULE tkcygwindll = NULL;
+
+/*
+ * Run Tk_MainEx from libtk8.?.dll
+ *
+ * This function is only ever called from wish8.4.exe, the cygwin
+ * port of Tcl. This means that the system encoding is utf-8,
+ * so we don't have to do any encoding conversions.
+ */
+int
+TkCygwinMainEx(argc, argv, appInitProc, interp)
+    int argc;				/* Number of arguments. */
+    char **argv;			/* Array of argument strings. */
+    Tcl_AppInitProc *appInitProc;	/* Application-specific initialization
+					 * procedure to call after most
+					 * initialization but before starting
+					 * to execute commands. */
+    Tcl_Interp *interp;
+{
+    char name[MAX_PATH];
+    int len;
+    void (*sym)(int, char **, Tcl_AppInitProc *, Tcl_Interp *);
+
+    /* construct "<path>/libtk8.?.dll", from "<path>/tk8?.dll" */
+	len = GetModuleFileName(Tk_GetHINSTANCE(), name, MAX_PATH);
+	name[len-2] = '.';
+	name[len-1] = name[len-5];
+	strcpy(name+len, ".dll");
+	memcpy(name+len-8, "libtk8", 6);
+
+	tkcygwindll = LoadLibrary(name);
+	if (!tkcygwindll) {
+	    /* dll is not present */
+	    return 0;
+	}
+	sym = (void (*)(int, char **, Tcl_AppInitProc *, Tcl_Interp *)) GetProcAddress(tkcygwindll, "Tk_MainEx");
+	if (!sym) {
+		return 0;
+	}
+	sym(argc, argv, appInitProc, interp);
+    return 1;
+}
+#endif
 /*
  *----------------------------------------------------------------------
  *
@@ -2853,6 +2903,16 @@ int
 Tk_Init(
     Tcl_Interp *interp)		/* Interpreter to initialize. */
 {
+#if defined(__WIN32__) && !defined(__WIN64__)
+    if (tkcygwindll) {
+	int (*sym)(Tcl_Interp *);
+
+	sym = (int (*)(Tcl_Interp *)) GetProcAddress(tkcygwindll, "Tk_Init");
+	if (sym) {
+	    return sym(interp);
+	}
+    }
+#endif
     return Initialize(interp);
 }
 
@@ -2916,6 +2976,16 @@ Tk_SafeInit(
      * checked at several places to differentiate the two initialisations.
      */
 
+#if defined(__WIN32__) && !defined(__WIN64__)
+    if (tkcygwindll) {
+	int (*sym)(Tcl_Interp *);
+
+	sym = (int (*)(Tcl_Interp *)) GetProcAddress(tkcygwindll, "Tk_SafeInit");
+	if (sym) {
+	    return sym(interp);
+	}
+    }
+#endif
     return Initialize(interp);
 }
 
@@ -3211,9 +3281,7 @@ Initialize(
 
     Tcl_SetMainLoop(Tk_MainLoop);
 
-#ifdef Tk_InitStubs
 #undef Tk_InitStubs
-#endif
 
     Tk_InitStubs(interp, TK_VERSION, 1);
 

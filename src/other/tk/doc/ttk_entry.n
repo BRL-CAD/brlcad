@@ -6,9 +6,6 @@
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 '\" 
-'\" SOURCE: entry.n, r1.12
-'\" RCS: @(#) $Id$
-'\" 
 .so man.macros
 .TH ttk::entry n 8.5 Tk "Tk Themed Widget"
 .BS
@@ -68,7 +65,7 @@ Specifies one of three states for the entry,
 \fBnormal\fR, \fBdisabled\fR, or \fBreadonly\fR.
 See \fBWIDGET STATES\fR, below.
 .OP \-textvariable textVariable Variable
-Specifies the name of a variable whose value is linked 
+Specifies the name of a global variable whose value is linked 
 to the entry widget's contents.
 Whenever the variable changes value, the widget's contents are updated,
 and vice versa.

@@ -2,8 +2,6 @@ Tk 8.5 for Windows
 
 Originally by Scott Stanton while at Sun Microsystems Labs
 
-RCS: @(#) $Id$
-
 This is the directory where you configure and compile the Windows
 version of Tk.  This directory also contains source files for Tk
 that are specific to Microsoft Windows.  The rest of this file

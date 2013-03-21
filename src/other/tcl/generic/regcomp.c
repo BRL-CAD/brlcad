@@ -2131,7 +2131,7 @@ stdump(
 
 /*
  - stid - identify a subtree node for dumping
- ^ static char *stid(struct subre *, char *, size_t);
+ ^ static const char *stid(struct subre *, char *, size_t);
  */
 static const char *			/* points to buf or constant string */
 stid(

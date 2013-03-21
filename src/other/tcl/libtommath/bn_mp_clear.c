@@ -38,7 +38,3 @@ mp_clear (mp_int * a)
   }
 }
 #endif
-
-/* $Source$ */
-/* $Revision$ */
-/* $Date$ */

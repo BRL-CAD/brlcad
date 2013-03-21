@@ -10,8 +10,6 @@
  *
  * See the file "license.terms" for information on usage and redistribution of
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
- *
- *  RCS: @(#) $Id$
  */
 
 #include "tkInt.h"
@@ -2385,7 +2383,7 @@ ExpandPercents(
 	    string = numStorage;
 	    goto doString;
 	case 'k':
-	    if (flags & KEY) {
+	    if ((flags & KEY) && (eventPtr->type != MouseWheelEvent)) {
 		number = eventPtr->xkey.keycode;
 		goto doNumber;
 	    }
@@ -2504,7 +2502,7 @@ ExpandPercents(
 	    }
 	    goto doNumber;
 	case 'A':
-	    if (flags & KEY) {
+	    if ((flags & KEY) && (eventPtr->type != MouseWheelEvent)) {
 		Tcl_DStringFree(&buf);
 		string = TkpGetString(winPtr, eventPtr, &buf);
 	    }
@@ -2525,7 +2523,7 @@ ExpandPercents(
 	     * This is used only by the MouseWheel event.
 	     */
 
-	    if (flags & KEY) {
+	    if ((flags & KEY) && (eventPtr->type == MouseWheelEvent)) {
 		number = eventPtr->xkey.keycode;
 		goto doNumber;
 	    }
@@ -2534,7 +2532,7 @@ ExpandPercents(
 	    number = (int) eventPtr->xany.send_event;
 	    goto doNumber;
 	case 'K':
-	    if (flags & KEY) {
+	    if ((flags & KEY) && (eventPtr->type != MouseWheelEvent)) {
 		char *name = TkKeysymToString(keySym);
 
 		if (name != NULL) {
@@ -2543,7 +2541,7 @@ ExpandPercents(
 	    }
 	    goto doString;
 	case 'N':
-	    if (flags & KEY) {
+	    if ((flags & KEY) && (eventPtr->type != MouseWheelEvent)) {
 		number = (int) keySym;
 		goto doNumber;
 	    }
@@ -2583,33 +2581,13 @@ ExpandPercents(
 	}
 	case 'X':
 	    if (flags & KEY_BUTTON_MOTION_CROSSING) {
-		Tk_Window tkwin;
-		int x, y;
-		int width, height;
-
 		number = eventPtr->xkey.x_root;
-		tkwin = Tk_IdToWindow(eventPtr->xany.display,
-			eventPtr->xany.window);
-		if (tkwin != NULL) {
-		    Tk_GetVRootGeometry(tkwin, &x, &y, &width, &height);
-		    number -= x;
-		}
 		goto doNumber;
 	    }
 	    goto doString;
 	case 'Y':
 	    if (flags & KEY_BUTTON_MOTION_CROSSING) {
-		Tk_Window tkwin;
-		int x, y;
-		int width, height;
-
 		number = eventPtr->xkey.y_root;
-		tkwin = Tk_IdToWindow(eventPtr->xany.display,
-			eventPtr->xany.window);
-		if (tkwin != NULL) {
-		    Tk_GetVRootGeometry(tkwin, &x, &y, &width, &height);
-		    number -= y;
-		}
 		goto doNumber;
 	    }
 	    goto doString;

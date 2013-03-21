@@ -30,7 +30,3 @@ void mp_zero (mp_int * a)
   }
 }
 #endif
-
-/* $Source$ */
-/* $Revision$ */
-/* $Date$ */

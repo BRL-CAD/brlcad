@@ -1,4 +1,4 @@
-/* $Id$
+/*
  * Copyright (c) 2003, Joe English
  *
  * Core widget utilities.

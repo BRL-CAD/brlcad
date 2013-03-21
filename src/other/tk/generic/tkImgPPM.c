@@ -12,8 +12,6 @@
  * Author: Paul Mackerras (paulus@cs.anu.edu.au),
  *	Department of Computer Science,
  *	Australian National University.
- *
- * RCS: @(#) $Id$
  */
 
 #include "tkInt.h"

@@ -3,8 +3,6 @@
 ::  This is an example batchfile for building everything. Please
 ::  edit this (or make your own) for your needs and wants using
 ::  the instructions for calling makefile.vc found in makefile.vc
-::
-::  RCS: @(#) $Id$
 
 set SYMBOLS=
 
@@ -25,18 +23,27 @@ goto OPTIONS_DONE
 :: reset errorlevel
 cd > nul
 
-:: We need to run the development environment batch script that comes
-:: with developer studio (v4,5,6,7,etc...)  All have it.  These paths
-:: might not be correct.  You may need to edit these.
+:: You might have installed your developer studio to add itself to the
+:: path or have already run vcvars32.bat.  Testing these envars proves
+:: cl.exe and friends are in your path.
 ::
-if not defined MSDevDir (
-    call "C:\Program Files\Microsoft Developer Studio\vc98\bin\vcvars32.bat"
-    ::call "C:\Program Files\Microsoft Developer Studio\vc\bin\vcvars32.bat"
-    ::call c:\dev\devstudio60\vc98\bin\vcvars32.bat
-    if errorlevel 1 goto no_vcvars
-)
+if defined VCINSTALLDIR  (goto :startBuilding)
+if defined MSDEVDIR      (goto :startBuilding)
+if defined MSVCDIR       (goto :startBuilding)
+if defined MSSDK         (goto :startBuilding)
+if defined WINDOWSSDKDIR (goto :startBuilding)
 
+:: We need to run the development environment batch script that comes
+:: with developer studio (v4,5,6,7,etc...)  All have it.  This path
+:: might not be correct.  You should call it yourself prior to running
+:: this batchfile.
+::
+call "C:\Program Files\Microsoft Developer Studio\vc98\bin\vcvars32.bat"
+if errorlevel 1 (goto no_vcvars)
 
+:startBuilding
+
+echo.
 echo Sit back and have a cup of coffee while this grinds through ;)
 echo You asked for *everything*, remember?
 echo.
@@ -56,47 +63,19 @@ if "%TCLDIR%" == "" set TCLDIR=..\..\tcl
 
 :: Build the normal stuff along with the help file.
 ::
-set OPTS=none
-if not %SYMBOLS%.==. set OPTS=symbols
-nmake -nologo -f makefile.vc release winhelp OPTS=%OPTS% %1
-if errorlevel 1 goto error
-
-:: Build the static core, dlls and shell.
-::
-set OPTS=static
-if not %SYMBOLS%.==. set OPTS=symbols,static
-nmake -nologo -f makefile.vc release OPTS=%OPTS% %1
-if errorlevel 1 goto error
-
-:: Build the special static libraries that use the dynamic runtime.
-::
-set OPTS=static,msvcrt
-if not %SYMBOLS%.==. set OPTS=symbols,static,msvcrt
-nmake -nologo -f makefile.vc core OPTS=%OPTS% %1
-if errorlevel 1 goto error
-
-:: Build the core and shell for thread support.
-::
 set OPTS=threads
 if not %SYMBOLS%.==. set OPTS=symbols,threads
 nmake -nologo -f makefile.vc release OPTS=%OPTS% %1
 if errorlevel 1 goto error
 
-:: Build a static, thread support core library (no shell).
-::
-set OPTS=static,threads
-if not %SYMBOLS%.==. set OPTS=symbols,static,threads
-nmake -nologo -f makefile.vc core OPTS=%OPTS% %1
-if errorlevel 1 goto error
-
-:: Build the special static libraries the use the dynamic runtime,
-:: but now with thread support.
+:: Build the static core and shell.
 ::
 set OPTS=static,msvcrt,threads
 if not %SYMBOLS%.==. set OPTS=symbols,static,msvcrt,threads
-nmake -nologo -f makefile.vc core OPTS=%OPTS% %1
+nmake -nologo -f makefile.vc shell OPTS=%OPTS% %1
 if errorlevel 1 goto error
 
+set OPTS=
 set SYMBOLS=
 goto end
 
@@ -105,16 +84,16 @@ echo *** BOOM! ***
 goto end
 
 :no_vcvars
-echo vcvars32.bat not found.  You'll need to edit this batch script.
+echo vcvars32.bat was not run prior to this batchfile, nor are the MS tools in your path.
 goto out
 
 :help
 title buildall.vc.bat help message
 echo usage:
-echo   %0           : builds Tk for all build types (do this first)
-echo   %0 install   : installs all the release builds (do this second)
-echo   %0 symbols   : builds Tk for all debugging build types.
-echo   %0 symbols install  : install all the debug builds
+echo   %0                 : builds Tk for all build types (do this first)
+echo   %0 install         : installs all the release builds (do this second)
+echo   %0 symbols         : builds Tk for all debugging build types
+echo   %0 symbols install : install all the debug builds
 echo.
 goto out
 

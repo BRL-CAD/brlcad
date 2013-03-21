@@ -11,8 +11,6 @@
  *
  * See the file "license.terms" for information on usage and redistribution of
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
- *
- * RCS: @(#) $Id$
  */
 
 #include "tclInt.h"
@@ -47,11 +45,8 @@ MODULE_SCOPE void	TclSetEnv(const char *name, const char *value);
 MODULE_SCOPE void	TclUnsetEnv(const char *name);
 
 #if defined(__CYGWIN__)
-/* On Cygwin, the environment is imported from the Cygwin DLL. */
-     DLLIMPORT extern int cygwin_posix_to_win32_path_list_buf_size(char *value);
-     DLLIMPORT extern void cygwin_posix_to_win32_path_list(char *buf, char *value);
-#    define putenv TclCygwinPutenv
-static void		TclCygwinPutenv(char *string);
+    static void TclCygwinPutenv(char *string);
+#   define putenv TclCygwinPutenv
 #endif
 
 /*
@@ -701,6 +696,7 @@ TclFinalizeEnvironment(void)
  * fork) and the Windows environment (in case the application TCL code calls
  * exec, which calls the Windows CreateProcess function).
  */
+DLLIMPORT extern void __stdcall SetEnvironmentVariableA(const char*, const char *);
 
 static void
 TclCygwinPutenv(
@@ -755,15 +751,11 @@ TclCygwinPutenv(
 	 */
 
 	if (strcmp(name, "Path") == 0) {
-#ifdef __WIN32__
-	    SetEnvironmentVariable("PATH", NULL);
-#endif
+	    SetEnvironmentVariableA("PATH", NULL);
 	    unsetenv("PATH");
 	}
 
-#ifdef __WIN32__
-	SetEnvironmentVariable(name, value);
-#endif
+	SetEnvironmentVariableA(name, value);
     } else {
 	char *buf;
 
@@ -771,9 +763,7 @@ TclCygwinPutenv(
 	 * Eliminate any Path variable, to prevent any confusion.
 	 */
 
-#ifdef __WIN32__
-	SetEnvironmentVariable("Path", NULL);
-#endif
+	SetEnvironmentVariableA("Path", NULL);
 	unsetenv("Path");
 
 	if (value == NULL) {
@@ -781,14 +771,12 @@ TclCygwinPutenv(
 	} else {
 	    int size;
 
-	    size = cygwin_posix_to_win32_path_list_buf_size(value);
+	    size = cygwin_conv_path_list(0, value, NULL, 0);
 	    buf = alloca(size + 1);
-	    cygwin_posix_to_win32_path_list(value, buf);
+	    cygwin_conv_path_list(0, value, buf, size);
 	}
 
-#ifdef __WIN32__
-	SetEnvironmentVariable(name, buf);
-#endif
+	SetEnvironmentVariableA(name, buf);
     }
 }
 #endif /* __CYGWIN__ */

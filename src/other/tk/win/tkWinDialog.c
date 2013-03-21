@@ -7,9 +7,6 @@
  *
  * See the file "license.terms" for information on usage and redistribution of
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
- *
- * RCS: @(#) $Id$
- *
  */
 
 #define WINVER        0x0500   /* Requires Windows 2K definitions */
@@ -595,7 +592,8 @@ GetFileNameW(
     OFNData ofnData;
     int cdlgerr;
     int filterIndex = 0, result = TCL_ERROR, winCode, oldMode, i, multi = 0;
-    char *extension = NULL, *filter = NULL, *title = NULL;
+    int confirmOverwrite = 1;
+    char *extension = NULL, *title = NULL;
     Tk_Window tkwin = (Tk_Window) clientData;
     HWND hWnd;
     Tcl_Obj *filterObj = NULL, *initialTypeObj = NULL, *typeVariableObj = NULL;
@@ -604,20 +602,37 @@ GetFileNameW(
     Tcl_Encoding unicodeEncoding = TkWinGetUnicodeEncoding();
     ThreadSpecificData *tsdPtr = (ThreadSpecificData *)
 	    Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
-    static CONST char *saveOptionStrings[] = {
-	"-defaultextension", "-filetypes", "-initialdir", "-initialfile",
-	"-parent", "-title", "-typevariable", NULL
-    };
-    static CONST char *openOptionStrings[] = {
-	"-defaultextension", "-filetypes", "-initialdir", "-initialfile",
-	"-multiple", "-parent", "-title", "-typevariable", NULL
-    };
-    CONST char **optionStrings;
-
     enum options {
-	FILE_DEFAULT,	FILE_TYPES,	FILE_INITDIR,	FILE_INITFILE,
-	FILE_MULTIPLE,	FILE_PARENT,	FILE_TITLE,     FILE_TYPEVARIABLE
+	FILE_DEFAULT, FILE_TYPES, FILE_INITDIR, FILE_INITFILE, FILE_PARENT,
+	FILE_TITLE, FILE_TYPEVARIABLE, FILE_MULTIPLE, FILE_CONFIRMOW
     };
+    struct Options {
+	CONST char *name;
+	enum options value;
+    };
+    static CONST struct Options saveOptions[] = {
+	{"-confirmoverwrite",	FILE_CONFIRMOW},
+	{"-defaultextension",	FILE_DEFAULT},
+	{"-filetypes",		FILE_TYPES},
+	{"-initialdir",		FILE_INITDIR},
+	{"-initialfile",	FILE_INITFILE},
+	{"-parent",		FILE_PARENT},
+	{"-title",		FILE_TITLE},
+	{"-typevariable",	FILE_TYPEVARIABLE},
+	{NULL,			FILE_DEFAULT/*ignored*/ }
+    };
+    static CONST struct Options openOptions[] = {
+	{"-defaultextension",	FILE_DEFAULT},
+	{"-filetypes",		FILE_TYPES},
+	{"-initialdir",		FILE_INITDIR},
+	{"-initialfile",	FILE_INITFILE},
+	{"-multiple",		FILE_MULTIPLE},
+	{"-parent",		FILE_PARENT},
+	{"-title",		FILE_TITLE},
+	{"-typevariable",	FILE_TYPEVARIABLE},
+	{NULL,			FILE_DEFAULT/*ignored*/ }
+    };
+    CONST struct Options *options = open ? openOptions : saveOptions;
 
     file[0] = '\0';
     ZeroMemory(&ofnData, sizeof(OFNData));
@@ -628,49 +643,22 @@ GetFileNameW(
      * Parse the arguments.
      */
 
-    if (open) {
-	optionStrings = openOptionStrings;
-    } else {
-	optionStrings = saveOptionStrings;
-    }
-
     for (i = 1; i < objc; i += 2) {
 	int index;
 	char *string;
-	Tcl_Obj *optionPtr, *valuePtr;
+	Tcl_Obj *valuePtr = objv[i + 1];
 
-	optionPtr = objv[i];
-	valuePtr = objv[i + 1];
-
-	if (Tcl_GetIndexFromObj(interp, optionPtr, optionStrings,
-		"option", 0, &index) != TCL_OK) {
+	if (Tcl_GetIndexFromObjStruct(interp, objv[i], options,
+		sizeof(struct Options), "option", 0, &index) != TCL_OK) {
 	    goto end;
-	}
-
-	/*
-	 * We want to maximize code sharing between the open and save file
-	 * dialog implementations; in particular, the switch statement below.
-	 * We use different sets of option strings from the GetIndexFromObj
-	 * call above, but a single enumeration for both. The save file dialog
-	 * doesn't support -multiple, but it falls in the middle of the
-	 * enumeration. Ultimately, this means that when the index found by
-	 * GetIndexFromObj is >= FILE_MULTIPLE, when doing a save file dialog,
-	 * we have to increment the index, so that it matches the open file
-	 * dialog enumeration.
-	 */
-
-	if (!open && index >= FILE_MULTIPLE) {
-	    index++;
-	}
-	if (i + 1 == objc) {
-	    string = Tcl_GetString(optionPtr);
-	    Tcl_AppendResult(interp, "value for \"", string, "\" missing",
-		    NULL);
+	} else if (i + 1 == objc) {
+	    Tcl_AppendResult(interp, "value for \"", options[index].name,
+		    "\" missing", NULL);
 	    goto end;
 	}
 
 	string = Tcl_GetString(valuePtr);
-	switch ((enum options) index) {
+	switch (options[index].value) {
 	case FILE_DEFAULT:
 	    if (string[0] == '.') {
 		string++;
@@ -696,11 +684,6 @@ GetFileNameW(
 		    sizeof(file), NULL, NULL, NULL);
 	    Tcl_DStringFree(&ds);
 	    break;
-	case FILE_MULTIPLE:
-	    if (Tcl_GetBooleanFromObj(interp, valuePtr, &multi) != TCL_OK) {
-		return TCL_ERROR;
-	    }
-	    break;
 	case FILE_PARENT:
 	    tkwin = Tk_NameToWindow(interp, string, tkwin);
 	    if (tkwin == NULL) {
@@ -715,6 +698,17 @@ GetFileNameW(
 	    initialTypeObj = Tcl_ObjGetVar2(interp, typeVariableObj, NULL,
 		    TCL_GLOBAL_ONLY);
 	    break;
+	case FILE_MULTIPLE:
+	    if (Tcl_GetBooleanFromObj(interp, valuePtr, &multi) != TCL_OK) {
+		return TCL_ERROR;
+	    }
+	    break;
+	case FILE_CONFIRMOW:
+	    if (Tcl_GetBooleanFromObj(interp, valuePtr,
+		    &confirmOverwrite) != TCL_OK) {
+		return TCL_ERROR;
+	    }
+	    break;
 	}
     }
 
@@ -722,7 +716,6 @@ GetFileNameW(
 	    &filterIndex) != TCL_OK) {
 	goto end;
     }
-    filter = Tcl_DStringValue(&utfFilterString);
 
     Tk_MakeWindowExist(tkwin);
     hWnd = Tk_GetHWND(Tk_WindowId(tkwin));
@@ -738,13 +731,13 @@ GetFileNameW(
     ofn.lpstrFile = (WCHAR *) file;
     ofn.nMaxFile = TK_MULTI_MAX_PATH;
     ofn.Flags = OFN_HIDEREADONLY | OFN_PATHMUSTEXIST | OFN_NOCHANGEDIR
-	    | OFN_EXPLORER | OFN_ENABLEHOOK;
+	    | OFN_EXPLORER | OFN_ENABLEHOOK| OFN_ENABLESIZING;
     ofn.lpfnHook = (LPOFNHOOKPROC) OFNHookProcW;
     ofn.lCustData = (LPARAM) &ofnData;
 
     if (open != 0) {
 	ofn.Flags |= OFN_FILEMUSTEXIST;
-    } else {
+    } else if (confirmOverwrite) {
 	ofn.Flags |= OFN_OVERWRITEPROMPT;
     }
     if (tsdPtr->debugFlag != 0) {
@@ -853,6 +846,11 @@ GetFileNameW(
     if ((winCode != 0)
 	    || ((cdlgerr == FNERR_BUFFERTOOSMALL)
 		    && (ofn.Flags & OFN_ALLOWMULTISELECT))) {
+	int gotFilename = 0;	/* Flag for tracking whether we have any
+				 * filename at all. For details, see
+				 * http://stackoverflow.com/q/9227859/301832
+				 */
+
 	if (ofn.Flags & OFN_ALLOWMULTISELECT) {
 	    /*
 	     * The result in dynFileBuffer contains many items, separated by
@@ -889,6 +887,7 @@ GetFileNameW(
 		    Tcl_AppendToObj(fullnameObj, "/", -1);
 		    Tcl_AppendToObj(fullnameObj, Tcl_DStringValue(&filenameBuf),
 			    Tcl_DStringLength(&filenameBuf));
+		    gotFilename = 1;
 		    Tcl_DStringFree(&filenameBuf);
 		    Tcl_ListObjAppendElement(NULL, returnList, fullnameObj);
 		}
@@ -902,18 +901,19 @@ GetFileNameW(
 		Tcl_ListObjAppendElement(NULL, returnList,
 			Tcl_NewStringObj(Tcl_DStringValue(&ds),
 				Tcl_DStringLength(&ds)));
+		gotFilename |= (Tcl_DStringLength(&ds) > 0);
 	    }
 	    Tcl_SetObjResult(interp, returnList);
 	    Tcl_DStringFree(&ds);
 	} else {
 	    Tcl_AppendResult(interp, ConvertExternalFilename(unicodeEncoding,
 		    (char *) ofn.lpstrFile, &ds), NULL);
+	    gotFilename = (Tcl_DStringLength(&ds) > 0);
 	    Tcl_DStringFree(&ds);
 	}
 	result = TCL_OK;
-	if ((ofn.nFilterIndex > 0) &&
-		Tcl_GetCharLength(Tcl_GetObjResult(interp)) > 0 &&
-		typeVariableObj && filterObj) {
+	if ((ofn.nFilterIndex > 0) && gotFilename && typeVariableObj
+		&& filterObj) {
 	    int listObjc, count;
 	    Tcl_Obj **listObjv = NULL;
 	    Tcl_Obj **typeInfo = NULL;
@@ -1026,17 +1026,20 @@ OFNHookProcW(
 	    dirsize = SendMessageW(hdlg, CDM_GETFOLDERPATH, 0, 0);
 	    buffersize = (selsize + dirsize + 1) * 2;
 
-	    if (selsize > 1) {
+	    /*
+	     * Just empty the buffer if dirsize indicates an error [Bug 3071836]
+	     */
+	    if ((selsize > 1) && (dirsize > 0)) {
 		if (ofnData->dynFileBufferSize < buffersize) {
 		    buffer = (WCHAR *) ckrealloc((char *) buffer, buffersize);
 		    ofnData->dynFileBufferSize = buffersize;
 		    ofnData->dynFileBuffer = (char *) buffer;
 		}
 
-		SendMessageW(hdlg, CDM_GETFOLDERPATH, dirsize, (int) buffer);
+		SendMessageW(hdlg, CDM_GETFOLDERPATH, dirsize, (LPARAM) buffer);
 		buffer += dirsize;
 
-		SendMessageW(hdlg, CDM_GETSPEC, selsize, (int) buffer);
+		SendMessageW(hdlg, CDM_GETSPEC, selsize, (LPARAM) buffer);
 
 		/*
 		 * If there are multiple files, delete the quotes and change
@@ -1133,7 +1136,7 @@ GetFileNameA(
     OFNData ofnData;
     int cdlgerr;
     int filterIndex = 0, result = TCL_ERROR, winCode, oldMode, i, multi = 0;
-    char *extension = NULL, *filter = NULL, *title = NULL;
+    char *extension = NULL, *title = NULL;
     Tk_Window tkwin = (Tk_Window) clientData;
     HWND hWnd;
     Tcl_Obj *filterObj = NULL, *initialTypeObj = NULL, *typeVariableObj = NULL;
@@ -1258,7 +1261,6 @@ GetFileNameA(
 	    &filterIndex) != TCL_OK) {
 	goto end;
     }
-    filter = Tcl_DStringValue(&utfFilterString);
 
     Tk_MakeWindowExist(tkwin);
     hWnd = Tk_GetHWND(Tk_WindowId(tkwin));
@@ -1572,16 +1574,19 @@ OFNHookProcA(
 	    dirsize = SendMessage(hdlg, CDM_GETFOLDERPATH, 0, 0);
 	    buffersize = selsize + dirsize + 1;
 
-	    if (selsize > 1) {
+	    /*
+	     * Just empty the buffer if dirsize indicates an error [Bug 3071836]
+	     */
+	    if ((selsize > 1) && (dirsize > 0)) {
 		if (ofnData->dynFileBufferSize < buffersize) {
 		    buffer = ckrealloc(buffer, buffersize);
 		    ofnData->dynFileBufferSize = buffersize;
 		    ofnData->dynFileBuffer = buffer;
 		}
 
-		SendMessage(hdlg, CDM_GETFOLDERPATH, dirsize, (int) buffer);
+		SendMessage(hdlg, CDM_GETFOLDERPATH, dirsize, (LPARAM) buffer);
 		buffer += dirsize;
-		SendMessage(hdlg, CDM_GETSPEC, selsize, (int) buffer);
+		SendMessage(hdlg, CDM_GETSPEC, selsize, (LPARAM) buffer);
 
 		/*
 		 * If there are multiple files, delete the quotes and change
@@ -2365,6 +2370,9 @@ Tk_MessageBoxObjCmd(
 	}
     }
 
+    while (!Tk_IsTopLevel(parent)) {
+	parent = Tk_Parent(parent);
+    }
     Tk_MakeWindowExist(parent);
     hWnd = Tk_GetHWND(Tk_WindowId(parent));
 
@@ -2394,7 +2402,7 @@ Tk_MessageBoxObjCmd(
 	flags = buttonFlagMap[defaultBtnIdx];
     }
 
-    flags |= icon | type | MB_SYSTEMMODAL;
+    flags |= icon | type | MB_TASKMODAL | MB_SETFOREGROUND;
 
     tmpObj = messageObj ? Tcl_DuplicateObj(messageObj)
 	    : Tcl_NewUnicodeObj(NULL, 0);

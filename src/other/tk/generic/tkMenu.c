@@ -11,8 +11,6 @@
  *
  * See the file "license.terms" for information on usage and redistribution of
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
- *
- * RCS: @(#) $Id$
  */
 
 /*
@@ -99,9 +97,9 @@ TCL_DECLARE_MUTEX(menuMutex)
  * to update code in TkpMenuInit that changes the font string entry.
  */
 
-char *tkMenuStateStrings[] = {"active", "normal", "disabled", NULL};
+const char *tkMenuStateStrings[] = {"active", "normal", "disabled", NULL};
 
-static CONST char *menuEntryTypeStrings[] = {
+static const char *menuEntryTypeStrings[] = {
     "cascade", "checkbutton", "command", "radiobutton", "separator", NULL
 };
 
@@ -110,7 +108,7 @@ static CONST char *menuEntryTypeStrings[] = {
  * is used with the "enum compound" declaration in tkMenu.h
  */
 
-static char *compoundStrings[] = {
+static const char *compoundStrings[] = {
     "bottom", "center", "left", "none", "right", "top", NULL
 };
 
@@ -231,7 +229,7 @@ static const Tk_OptionSpec tkTearoffEntryConfigSpecs[] = {
     {TK_OPTION_END}
 };
 
-static const Tk_OptionSpec *specsArray[] = {
+static const Tk_OptionSpec *const specsArray[] = {
     tkCascadeEntryConfigSpecs, tkCheckButtonEntryConfigSpecs,
     tkBasicMenuEntryConfigSpecs, tkRadioButtonEntryConfigSpecs,
     tkSeparatorEntryConfigSpecs, tkTearoffEntryConfigSpecs
@@ -310,7 +308,7 @@ static const Tk_OptionSpec tkMenuConfigSpecs[] = {
  * with MenuWidgetObjCmd.
  */
 
-static CONST char *menuOptions[] = {
+static const char *menuOptions[] = {
     "activate", "add", "cget", "clone", "configure", "delete", "entrycget",
     "entryconfigure", "index", "insert", "invoke", "post", "postcascade",
     "type", "unpost", "xposition", "yposition", NULL
@@ -329,12 +327,12 @@ enum options {
 static int		CloneMenu(TkMenu *menuPtr, Tcl_Obj *newMenuName,
 			    Tcl_Obj *newMenuTypeString);
 static int		ConfigureMenu(Tcl_Interp *interp, TkMenu *menuPtr,
-			    int objc, Tcl_Obj *CONST objv[]);
+			    int objc, Tcl_Obj *const objv[]);
 static int		ConfigureMenuCloneEntries(Tcl_Interp *interp,
 			    TkMenu *menuPtr, int index,
-			    int objc, Tcl_Obj *CONST objv[]);
+			    int objc, Tcl_Obj *const objv[]);
 static int		ConfigureMenuEntry(TkMenuEntry *mePtr,
-			    int objc, Tcl_Obj *CONST objv[]);
+			    int objc, Tcl_Obj *const objv[]);
 static void		DeleteMenuCloneEntries(TkMenu *menuPtr,
 			    int first, int last);
 static void		DestroyMenuHashTable(ClientData clientData,
@@ -349,17 +347,17 @@ static int		MenuDoXPosition(Tcl_Interp *interp,
 			    TkMenu *menuPtr, Tcl_Obj *objPtr);
 static int		MenuAddOrInsert(Tcl_Interp *interp,
 			    TkMenu *menuPtr, Tcl_Obj *indexPtr, int objc,
-			    Tcl_Obj *CONST objv[]);
+			    Tcl_Obj *const objv[]);
 static int		MenuCmd(ClientData clientData, Tcl_Interp *interp,
-			    int objc, Tcl_Obj *CONST objv[]);
+			    int objc, Tcl_Obj *const objv[]);
 static void		MenuCmdDeletedProc(ClientData clientData);
 static TkMenuEntry *	MenuNewEntry(TkMenu *menuPtr, int index, int type);
 static char *		MenuVarProc(ClientData clientData,
-			    Tcl_Interp *interp, CONST char *name1,
-			    CONST char *name2, int flags);
+			    Tcl_Interp *interp, const char *name1,
+			    const char *name2, int flags);
 static int		MenuWidgetObjCmd(ClientData clientData,
 			    Tcl_Interp *interp, int objc,
-			    Tcl_Obj *CONST objv[]);
+			    Tcl_Obj *const objv[]);
 static void		MenuWorldChanged(ClientData instanceData);
 static int		PostProcessEntry(TkMenuEntry *mePtr);
 static void		RecursivelyDeleteMenu(TkMenu *menuPtr);
@@ -456,7 +454,7 @@ MenuCmd(
     ClientData clientData,	/* Main window associated with interpreter. */
     Tcl_Interp *interp,		/* Current interpreter. */
     int objc,			/* Number of arguments. */
-    Tcl_Obj *CONST objv[])	/* Argument strings. */
+    Tcl_Obj *const objv[])	/* Argument strings. */
 {
     Tk_Window tkwin = Tk_MainWindow(interp);
     Tk_Window newWin;
@@ -464,7 +462,7 @@ MenuCmd(
     TkMenuReferences *menuRefPtr;
     int i, index, toplevel;
     char *windowName;
-    static CONST char *typeStringList[] = {"-type", NULL};
+    static const char *typeStringList[] = {"-type", NULL};
     TkMenuOptionTables *optionTablesPtr = (TkMenuOptionTables *) clientData;
 
     if (objc < 2) {
@@ -669,7 +667,7 @@ MenuWidgetObjCmd(
     ClientData clientData,	/* Information about menu widget. */
     Tcl_Interp *interp,		/* Current interpreter. */
     int objc,			/* Number of arguments. */
-    Tcl_Obj *CONST objv[])	/* Argument strings. */
+    Tcl_Obj *const objv[])	/* Argument strings. */
 {
     register TkMenu *menuPtr = (TkMenu *) clientData;
     register TkMenuEntry *mePtr;
@@ -1555,7 +1553,7 @@ ConfigureMenu(
     register TkMenu *menuPtr,	/* Information about widget; may or may not
 				 * already have values for some fields. */
     int objc,			/* Number of valid entries in argv. */
-    Tcl_Obj *CONST objv[])	/* Arguments. */
+    Tcl_Obj *const objv[])	/* Arguments. */
 {
     int i;
     TkMenu *menuListPtr, *cleanupPtr;
@@ -1921,7 +1919,7 @@ ConfigureMenuEntry(
     register TkMenuEntry *mePtr,/* Information about menu entry; may or may
 				 * not already have values for some fields. */
     int objc,			/* Number of valid entries in argv. */
-    Tcl_Obj *CONST objv[])	/* Arguments. */
+    Tcl_Obj *const objv[])	/* Arguments. */
 {
     TkMenu *menuPtr = mePtr->menuPtr;
     Tk_SavedOptions errorStruct;
@@ -1986,7 +1984,7 @@ ConfigureMenuCloneEntries(
     TkMenu *menuPtr,		/* Information about whole menu. */
     int index,			/* Index of mePtr within menuPtr's entries. */
     int objc,			/* Number of valid entries in argv. */
-    Tcl_Obj *CONST objv[])	/* Arguments. */
+    Tcl_Obj *const objv[])	/* Arguments. */
 {
     TkMenuEntry *mePtr;
     TkMenu *menuListPtr;
@@ -2355,7 +2353,7 @@ MenuAddOrInsert(
     Tcl_Obj *indexPtr,		/* Object describing index at which to insert.
 				 * NULL means insert at end. */
     int objc,			/* Number of elements in objv. */
-    Tcl_Obj *CONST objv[])	/* Arguments to command: first arg is type of
+    Tcl_Obj *const objv[])	/* Arguments to command: first arg is type of
 				 * entry, others are config options. */
 {
     int type, index;
@@ -2493,13 +2491,13 @@ static char *
 MenuVarProc(
     ClientData clientData,	/* Information about menu entry. */
     Tcl_Interp *interp,		/* Interpreter containing variable. */
-    CONST char *name1,		/* First part of variable's name. */
-    CONST char *name2,		/* Second part of variable's name. */
+    const char *name1,		/* First part of variable's name. */
+    const char *name2,		/* Second part of variable's name. */
     int flags)			/* Describes what just happened. */
 {
     TkMenuEntry *mePtr = (TkMenuEntry *) clientData;
     TkMenu *menuPtr;
-    CONST char *value;
+    const char *value;
     char *name;
     char *onValue;
 

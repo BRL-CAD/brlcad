@@ -1,11 +1,8 @@
 README:  Tcl
-    This is the Tcl 8.5.9 source distribution.
-    Tcl/Tk is also available through NetCVS:
+    This is the Tcl 8.5.13 source distribution.
 	http://tcl.sourceforge.net/
     You can get any source release of Tcl from the file distributions
     link at the above URL.
-
-RCS: @(#) $Id$
 
 Contents
 --------
@@ -14,10 +11,10 @@ Contents
     3. Compiling and installing Tcl
     4. Development tools
     5. Tcl newsgroup
-    6. Tcl contributed archive
-    7. Tcl Resource Center
-    8. Mailing lists
-    9. Support and Training
+    6. The Tcler's Wiki
+    7. Mailing lists
+    8. Support and Training
+    9. Tracking Development
     10. Thank You
 
 1. Introduction
@@ -30,7 +27,7 @@ Tcl can also be used for a variety of web-related tasks and for creating
 powerful command languages for applications.
 
 Tcl is maintained, enhanced, and distributed freely by the Tcl community.
-The home for Tcl/Tk sources and bug/patch database is on SourceForge:
+The home for Tcl/Tk releases and bug/patch database is on SourceForge:
 
 	http://tcl.sourceforge.net/
 
@@ -52,13 +49,17 @@ The home page for this release, including new features, is
 
 Detailed release notes can be found at the file distributions page
 by clicking on the relevant version.
-	http://sourceforge.net/project/showfiles.php?group_id=10894
+	http://sourceforge.net/projects/tcl/files/
 
 Information about Tcl itself can be found at
-	http://www.tcl.tk/scripting/
+	http://www.tcl.tk/about/
 
 There have been many Tcl books on the market.  Many are mentioned in the Wiki:
-	http://wiki.tcl.tk/book
+	http://wiki.tcl.tk/_/ref?N=25206
+
+To view the complete set of reference manual entries for Tcl 8.5 online,
+visit the URL:
+	http://www.tcl.tk/man/tcl8.5/
 
 2a. Unix Documentation
 ----------------------
@@ -170,6 +171,12 @@ see the following Web site for links to other organizations that offer
 Tcl/Tk training:
 
 	http://wiki.tcl.tk/training
+
+9. Tracking Development
+-----------------------
+
+Tcl is developed in public.  To keep an eye on how Tcl is changing, see
+	http://core.tcl.tk/
 
 10. Thank You
 -------------

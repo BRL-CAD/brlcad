@@ -1,6 +1,4 @@
 /*
- * $Id$
- *
  * Copyright 2004, Joe English.
  *
  * Usage:

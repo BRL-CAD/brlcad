@@ -70,7 +70,3 @@
 #endif
 
 #endif
-
-/* $Source$ */
-/* $Revision$ */
-/* $Date$ */

@@ -7,8 +7,6 @@
  *
  * See the file "license.terms" for information on usage and redistribution of
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
- *
- * RCS: @(#) $Id$
  */
 
 #include "tkUnixInt.h"
@@ -35,6 +33,16 @@ typedef struct {
     XftDraw *ftDraw;
     XftColor color;
 } UnixFtFont;
+
+/*
+ * Used to describe the current clipping box. Can't be passed normally because
+ * the information isn't retrievable from the GC.
+ */
+
+typedef struct ThreadSpecificData {
+    Region clipRegion;		/* The clipping region, or None. */
+} ThreadSpecificData;
+static Tcl_ThreadDataKey dataKey;
 
 /*
  * Package initialization:
@@ -714,6 +722,8 @@ Tk_DrawChars(
     int clen, nspec, xStart = x;
     XftGlyphFontSpec specs[NUM_SPEC];
     XGlyphInfo metrics;
+    ThreadSpecificData *tsdPtr = (ThreadSpecificData *)
+            Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
 
     if (fontPtr->ftDraw == 0) {
 #if DEBUG_FONTSEL
@@ -739,6 +749,9 @@ Tk_DrawChars(
 	fontPtr->color.color.blue = xcolor.blue;
 	fontPtr->color.color.alpha = 0xffff;
 	fontPtr->color.pixel = values.foreground;
+    }
+    if (tsdPtr->clipRegion != None) {
+	XftDrawSetClip(fontPtr->ftDraw, tsdPtr->clipRegion);
     }
     nspec = 0;
     while (numBytes > 0 && x <= maxCoord && y <= maxCoord) {
@@ -777,6 +790,9 @@ Tk_DrawChars(
     if (nspec) {
 	XftDrawGlyphFontSpec(fontPtr->ftDraw, &fontPtr->color, specs, nspec);
     }
+    if (tsdPtr->clipRegion != None) {
+	XftDrawSetClip(fontPtr->ftDraw, None);
+    }
 
   doUnderlineStrikeout:
     if (fontPtr->font.fa.underline != 0) {
@@ -790,4 +806,14 @@ Tk_DrawChars(
 		(unsigned) (x - xStart),
 		(unsigned) fontPtr->font.underlineHeight);
     }
+}
+
+void
+TkUnixSetXftClipRegion(
+    TkRegion clipRegion)	/* The clipping region to install. */
+{
+    ThreadSpecificData *tsdPtr = (ThreadSpecificData *)
+            Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
+
+    tsdPtr->clipRegion = (Region) clipRegion;
 }

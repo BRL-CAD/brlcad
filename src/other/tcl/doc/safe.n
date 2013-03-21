@@ -4,8 +4,6 @@
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 '\" 
-'\" RCS: @(#) $Id$
-'\" 
 .so man.macros
 .TH "Safe Tcl" n 8.0 Tcl "Tcl Built-In Commands"
 .BS
@@ -69,7 +67,7 @@ The following commands are provided in the master interpreter:
 \fB::safe::interpCreate\fR ?\fIslave\fR? ?\fIoptions...\fR?
 Creates a safe interpreter, installs the aliases described in the section
 \fBALIASES\fR and initializes the auto-loading and package mechanism as
-specified by the supplied \fBoptions\fR.
+specified by the supplied \fIoptions\fR.
 See the \fBOPTIONS\fR section below for a description of the
 optional arguments.
 If the \fIslave\fR argument is omitted, a name will be generated.

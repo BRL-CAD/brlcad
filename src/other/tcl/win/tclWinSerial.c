@@ -10,8 +10,6 @@
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
  * Serial functionality implemented by Rolf.Schroedter@dlr.de
- *
- * RCS: @(#) $Id$
  */
 
 #include "tclWinInt.h"
@@ -1435,9 +1433,7 @@ TclWinSerialReopen(
     CONST TCHAR *name,
     DWORD access)
 {
-    ThreadSpecificData *tsdPtr;
-
-    tsdPtr = SerialInit();
+    SerialInit();
 
     /*
      * Multithreaded I/O needs the overlapped flag set otherwise
@@ -1503,7 +1499,7 @@ TclWinOpenSerialChannel(
      * are shared between multiple channels (stdin/stdout).
      */
 
-    wsprintfA(channelName, "file%lx", (int) infoPtr);
+    sprintf(channelName, "file%" TCL_I_MODIFIER "x", (size_t)infoPtr);
 
     infoPtr->channel = Tcl_CreateChannel(&serialChannelType, channelName,
 	    (ClientData) infoPtr, permissions);

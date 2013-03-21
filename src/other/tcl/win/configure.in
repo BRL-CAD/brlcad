@@ -2,11 +2,9 @@
 # This file is an input file used by the GNU "autoconf" program to
 # generate the file "configure", which is run during Tcl installation
 # to configure the system for the local environment.
-#
-# RCS: @(#) $Id$
 
 AC_INIT(../generic/tcl.h)
-AC_PREREQ(2.52)
+AC_PREREQ(2.59)
 
 # The following define is needed when building with Cygwin since newer
 # versions of autoconf incorrectly set SHELL to /bin/bash instead of
@@ -16,19 +14,17 @@ SHELL=/bin/sh
 TCL_VERSION=8.5
 TCL_MAJOR_VERSION=8
 TCL_MINOR_VERSION=5
-TCL_PATCH_LEVEL=".9"
+TCL_PATCH_LEVEL=".13"
 VER=$TCL_MAJOR_VERSION$TCL_MINOR_VERSION
 
 TCL_DDE_VERSION=1.3
 TCL_DDE_MAJOR_VERSION=1
 TCL_DDE_MINOR_VERSION=3
-TCL_DDE_PATCH_LEVEL="2"
 DDEVER=$TCL_DDE_MAJOR_VERSION$TCL_DDE_MINOR_VERSION
 
 TCL_REG_VERSION=1.2
 TCL_REG_MAJOR_VERSION=1
 TCL_REG_MINOR_VERSION=2
-TCL_REG_PATCH_LEVEL="1"
 REGVER=$TCL_REG_MAJOR_VERSION$TCL_REG_MINOR_VERSION
 
 #------------------------------------------------------------------------
@@ -58,257 +54,15 @@ AC_PROG_CC
 AC_C_INLINE
 AC_HEADER_STDC
 
-# To properly support cross-compilation, one would
-# need to use these tool checks instead of
-# the ones below and reconfigure with
-# autoconf 2.50. You can also just set
-# the CC, AR, RANLIB, and RC environment
-# variables if you want to cross compile.
-dnl AC_CHECK_TOOL(AR, ar)
-dnl AC_CHECK_TOOL(RANLIB, ranlib)
-dnl AC_CHECK_TOOL(RC, windres)
-
-if test "${GCC}" = "yes" ; then
-    AC_CHECK_PROG(AR, ar, ar)
-    AC_CHECK_PROG(RANLIB, ranlib, ranlib)
-    AC_CHECK_PROG(RC, windres, windres)
-
-    if test "${AR}" = "" ; then
-	AC_MSG_ERROR([Required archive tool 'ar' not found on PATH.])
-    fi
-    if test "${RANLIB}" = "" ; then
-	AC_MSG_ERROR([Required archive index tool 'ranlib' not found on PATH.])
-    fi
-    if test "${RC}" = "" ; then
-	AC_MSG_ERROR([Required resource tool 'windres' not found on PATH.])
-    fi
-fi
+AC_CHECK_TOOL(AR, ar)
+AC_CHECK_TOOL(RANLIB, ranlib)
+AC_CHECK_TOOL(RC, windres)
 
 #--------------------------------------------------------------------
 # Checks to see if the make program sets the $MAKE variable.
 #--------------------------------------------------------------------
 
 AC_PROG_MAKE_SET
-
-#--------------------------------------------------------------------
-# Perform additinal compiler tests.
-#--------------------------------------------------------------------
-
-dnl Currently AC_CYGWIN is disabled since it invokes AC_CANONICAL_HOST
-dnl under autoconf 2.5X.
-dnl
-dnl AC_CYGWIN
-
-AC_CACHE_CHECK(for Cygwin version of gcc,
-    ac_cv_cygwin,
-AC_TRY_COMPILE([
-#ifdef __CYGWIN__
-#error cygwin
-#endif
-],
-[],
-        ac_cv_cygwin=no,
-        ac_cv_cygwin=yes)
-)
-if test "$ac_cv_cygwin" = "yes" ; then
-    AC_MSG_ERROR([Compiling under Cygwin is not currently supported.
-A maintainer for the Cygwin port of Tcl/Tk is needed. See the README
-file for information about building with Mingw.])
-fi
-
-
-AC_CACHE_CHECK(for SEH support in compiler,
-    tcl_cv_seh,
-AC_TRY_RUN([
-#define WIN32_LEAN_AND_MEAN
-#include <windows.h>
-#undef WIN32_LEAN_AND_MEAN
-
-int main(int argc, char** argv) {
-    int a, b = 0;
-    __try {
-        a = 666 / b;
-    }
-    __except (EXCEPTION_EXECUTE_HANDLER) {
-        return 0;
-    }
-    return 1;
-}
-],
-        tcl_cv_seh=yes,
-        tcl_cv_seh=no,
-        tcl_cv_seh=no)
-)
-if test "$tcl_cv_seh" = "no" ; then
-    AC_DEFINE(HAVE_NO_SEH, 1,
-            [Defined when mingw does not support SEH])
-fi
-
-#
-# Check to see if the excpt.h include file provided contains the
-# definition for EXCEPTION_DISPOSITION; if not, which is the case
-# with Cygwin's version as of 2002-04-10, define it to be int, 
-# sufficient for getting the current code to work.
-#
-AC_CACHE_CHECK(for EXCEPTION_DISPOSITION support in include files,
-    tcl_cv_eh_disposition,
-AC_TRY_COMPILE([
-#define WIN32_LEAN_AND_MEAN
-#include <windows.h>
-#undef WIN32_LEAN_AND_MEAN
-],
-[
-  EXCEPTION_DISPOSITION x;
-],
-        tcl_cv_eh_disposition=yes,
-        tcl_cv_eh_disposition=no)
-)
-if test "$tcl_cv_eh_disposition" = "no" ; then
-    AC_DEFINE(EXCEPTION_DISPOSITION, int,
-            [Defined when cygwin/mingw does not support EXCEPTION DISPOSITION])
-fi
-
-
-# Check to see if the winsock2.h include file provided contains
-# typedefs like LPFN_ACCEPT and friends.
-#
-AC_CACHE_CHECK(for LPFN_ACCEPT support in winsock2.h,
-    tcl_cv_lpfn_decls,
-AC_TRY_COMPILE([
-#define WIN32_LEAN_AND_MEAN
-#include <windows.h>
-#undef WIN32_LEAN_AND_MEAN
-#include <winsock2.h>
-],
-[
-  LPFN_ACCEPT accept;
-],
-        tcl_cv_lpfn_decls=yes,
-        tcl_cv_lpfn_decls=no)
-)
-if test "$tcl_cv_lpfn_decls" = "no" ; then
-    AC_DEFINE(HAVE_NO_LPFN_DECLS, 1,
-            [Defined when cygwin/mingw does not support LPFN_ACCEPT and friends.])
-fi
-
-# Check to see if winnt.h defines CHAR, SHORT, and LONG
-# even if VOID has already been #defined. The win32api
-# used by mingw and cygwin is known to do this.
-
-AC_CACHE_CHECK(for winnt.h that ignores VOID define,
-    tcl_cv_winnt_ignore_void,
-AC_TRY_COMPILE([
-#define VOID void
-#define WIN32_LEAN_AND_MEAN
-#include <windows.h>
-#undef WIN32_LEAN_AND_MEAN
-],
-[
-  CHAR c;
-  SHORT s;
-  LONG l;
-],
-        tcl_cv_winnt_ignore_void=yes,
-        tcl_cv_winnt_ignore_void=no)
-)
-if test "$tcl_cv_winnt_ignore_void" = "yes" ; then
-    AC_DEFINE(HAVE_WINNT_IGNORE_VOID, 1,
-            [Defined when cygwin/mingw ignores VOID define in winnt.h])
-fi
-
-# Check to see if malloc.h is missing the alloca function
-# declaration. This is known to be a problem with Mingw.
-# If we compiled without the function declaration, it
-# would work but we would get a warning message from gcc.
-# If we add the function declaration ourselves, it
-# would not compile correctly because the _alloca
-# function expects the argument to be passed in a
-# register and not on the stack. Instead, we just
-# call it from inline asm code.
-
-AC_CACHE_CHECK(for alloca declaration in malloc.h,
-    tcl_cv_malloc_decl_alloca,
-AC_TRY_COMPILE([
-#include <malloc.h>
-],
-[
-  size_t arg = 0;
-  void* ptr;
-  ptr = alloca;
-  ptr = alloca(arg);
-],
-        tcl_cv_malloc_decl_alloca=yes,
-        tcl_cv_malloc_decl_alloca=no)
-)
-if test "$tcl_cv_malloc_decl_alloca" = "no" &&
-   test "${GCC}" = "yes" ; then
-    AC_DEFINE(HAVE_ALLOCA_GCC_INLINE, 1,
-            [Defined when gcc should use inline ASM to call alloca.])
-fi
-
-# See if the compiler supports casting to a union type.
-# This is used to stop gcc from printing a compiler
-# warning when initializing a union member.
-
-AC_CACHE_CHECK(for cast to union support,
-    tcl_cv_cast_to_union,
-AC_TRY_COMPILE([],
-[
-  union foo { int i; double d; };
-  union foo f = (union foo) (int) 0;
-],
-        tcl_cv_cast_to_union=yes,
-        tcl_cv_cast_to_union=no)
-)
-if test "$tcl_cv_cast_to_union" = "yes"; then
-    AC_DEFINE(HAVE_CAST_TO_UNION, 1,
-            [Defined when compiler supports casting to union type.])
-fi
-
-
-# See if declarations like FINDEX_INFO_LEVELS are
-# missing from winbase.h. This is known to be
-# a problem with VC++ 5.2.
-
-AC_CACHE_CHECK(for FINDEX_INFO_LEVELS in winbase.h,
-    tcl_cv_findex_enums,
-AC_TRY_COMPILE([
-#define WIN32_LEAN_AND_MEAN
-#include <windows.h>
-#undef WIN32_LEAN_AND_MEAN
-],
-[
-  FINDEX_INFO_LEVELS i;
-  FINDEX_SEARCH_OPS j;
-],
-        tcl_cv_findex_enums=yes,
-        tcl_cv_findex_enums=no)
-)
-if test "$tcl_cv_findex_enums" = "no"; then
-    AC_DEFINE(HAVE_NO_FINDEX_ENUMS, 1,
-            [Defined when enums are missing from winbase.h])
-fi
-
-# See if MWMO_ALERTABLE is missing from winuser.h
-# This is known to be a problem with Mingw.
-
-AC_CACHE_CHECK(for MWMO_ALERTABLE in winuser.h,
-    tcl_cv_mwmo_alertable,
-AC_TRY_COMPILE([
-#define WIN32_LEAN_AND_MEAN
-#include <windows.h>
-#undef WIN32_LEAN_AND_MEAN
-],
-[
-  int i = MWMO_ALERTABLE;
-],
-        tcl_cv_mwmo_alertable=yes,
-        tcl_cv_mwmo_alertable=no)
-)
-if test "$tcl_cv_mwmo_alertable" = "no"; then
-    AC_DEFINE(HAVE_NO_MWMO_ALERTABLE, 1,
-            [Defined when MWMO_ALERTABLE is missing from winuser.h])
-fi
 
 #--------------------------------------------------------------------
 # Determines the correct binary file extension (.o, .obj, .exe etc.)
@@ -337,15 +91,73 @@ SC_TCL_CFG_ENCODING
 SC_ENABLE_SHARED
 
 #--------------------------------------------------------------------
-# The statements below define a collection of compile flags.  This 
+# The statements below define a collection of compile flags.  This
 # macro depends on the value of SHARED_BUILD, and should be called
 # after SC_ENABLE_SHARED checks the configure switches.
 #--------------------------------------------------------------------
 
 SC_CONFIG_CFLAGS
 
+AC_CHECK_TYPE([intptr_t], [
+    AC_DEFINE([HAVE_INTPTR_T], 1, [Do we have the intptr_t type?])], [
+    AC_CACHE_CHECK([for pointer-size signed integer type], tcl_cv_intptr_t, [
+    for tcl_cv_intptr_t in "int" "long" "long long" none; do
+	if test "$tcl_cv_intptr_t" != none; then
+	    AC_COMPILE_IFELSE([AC_LANG_BOOL_COMPILE_TRY([AC_INCLUDES_DEFAULT],
+		    [[sizeof (void *) <= sizeof ($tcl_cv_intptr_t)]])],
+		[tcl_ok=yes], [tcl_ok=no])
+	    test "$tcl_ok" = yes && break; fi
+    done])
+    if test "$tcl_cv_intptr_t" != none; then
+	AC_DEFINE_UNQUOTED([intptr_t], [$tcl_cv_intptr_t], [Signed integer
+	   type wide enough to hold a pointer.])
+    fi
+])
+AC_CHECK_TYPE([uintptr_t], [
+    AC_DEFINE([HAVE_UINTPTR_T], 1, [Do we have the uintptr_t type?])], [
+    AC_CACHE_CHECK([for pointer-size unsigned integer type], tcl_cv_uintptr_t, [
+    for tcl_cv_uintptr_t in "unsigned int" "unsigned long" "unsigned long long" \
+	    none; do
+	if test "$tcl_cv_uintptr_t" != none; then
+	    AC_COMPILE_IFELSE([AC_LANG_BOOL_COMPILE_TRY([AC_INCLUDES_DEFAULT],
+		    [[sizeof (void *) <= sizeof ($tcl_cv_uintptr_t)]])],
+		[tcl_ok=yes], [tcl_ok=no])
+	    test "$tcl_ok" = yes && break; fi
+    done])
+    if test "$tcl_cv_uintptr_t" != none; then
+	AC_DEFINE_UNQUOTED([uintptr_t], [$tcl_cv_uintptr_t], [Unsigned integer
+	   type wide enough to hold a pointer.])
+    fi
+])
 #--------------------------------------------------------------------
-# Set the default compiler switches based on the --enable-symbols 
+# Perform additinal compiler tests.
+#--------------------------------------------------------------------
+
+# See if declarations like FINDEX_INFO_LEVELS are
+# missing from winbase.h. This is known to be
+# a problem with VC++ 5.2.
+
+AC_CACHE_CHECK(for FINDEX_INFO_LEVELS in winbase.h,
+    tcl_cv_findex_enums,
+AC_TRY_COMPILE([
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+#undef WIN32_LEAN_AND_MEAN
+],
+[
+  FINDEX_INFO_LEVELS i;
+  FINDEX_SEARCH_OPS j;
+],
+        tcl_cv_findex_enums=yes,
+        tcl_cv_findex_enums=no)
+)
+if test "$tcl_cv_findex_enums" = "no"; then
+    AC_DEFINE(HAVE_NO_FINDEX_ENUMS, 1,
+            [Defined when enums are missing from winbase.h])
+fi
+
+#--------------------------------------------------------------------
+# Set the default compiler switches based on the --enable-symbols
 # option.  This macro depends on C flags, and should be called
 # after SC_CONFIG_CFLAGS macro is called.
 #--------------------------------------------------------------------
@@ -511,11 +323,9 @@ AC_SUBST(TCL_PACKAGE_PATH)
 AC_SUBST(TCL_DDE_VERSION)
 AC_SUBST(TCL_DDE_MAJOR_VERSION)
 AC_SUBST(TCL_DDE_MINOR_VERSION)
-AC_SUBST(TCL_DDE_PATCH_LEVEL)
 AC_SUBST(TCL_REG_VERSION)
 AC_SUBST(TCL_REG_MAJOR_VERSION)
 AC_SUBST(TCL_REG_MINOR_VERSION)
-AC_SUBST(TCL_REG_PATCH_LEVEL)
 
 AC_SUBST(RC)
 AC_SUBST(RC_OUT)
@@ -526,3 +336,7 @@ AC_SUBST(RC_DEFINES)
 AC_SUBST(RES)
 
 AC_OUTPUT(Makefile tclConfig.sh tcl.hpj)
+
+dnl Local Variables:
+dnl mode: autoconf;
+dnl End:

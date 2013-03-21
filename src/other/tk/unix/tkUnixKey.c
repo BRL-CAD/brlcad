@@ -8,11 +8,10 @@
  *
  * See the file "license.terms" for information on usage and redistribution of
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
- *
- * RCS: @(#) $Id$
  */
 
 #include "tkInt.h"
+#include <X11/XKBlib.h>
 
 /*
  * Prototypes for local functions defined in this file:
@@ -43,7 +42,7 @@ Tk_SetCaretPos(
     if (   dispPtr->caret.winPtr == winPtr
 	&& dispPtr->caret.x == x
 	&& dispPtr->caret.y == y
-	&& dispPtr->caret.height == height) 
+	&& dispPtr->caret.height == height)
     {
 	return;
     }
@@ -117,7 +116,7 @@ TkpGetString(
 #ifdef TK_USE_INPUT_METHODS
     if ((winPtr->dispPtr->flags & TK_DISPLAY_USE_IM)
 	    && (winPtr->inputContext != NULL)
-	    && (eventPtr->type == KeyPress)) 
+	    && (eventPtr->type == KeyPress))
     {
 	Status status;
 
@@ -125,13 +124,13 @@ TkpGetString(
 	Tcl_DStringSetLength(dsPtr, TCL_DSTRING_STATIC_SIZE-1);
 	len = Xutf8LookupString(winPtr->inputContext, &eventPtr->xkey,
 		Tcl_DStringValue(dsPtr), Tcl_DStringLength(dsPtr),
-		NULL, &status);
+		&kePtr->keysym, &status);
 
 	if (status == XBufferOverflow) { /* Expand buffer and try again */
 	    Tcl_DStringSetLength(dsPtr, len);
 	    len = Xutf8LookupString(winPtr->inputContext, &eventPtr->xkey,
-		    Tcl_DStringValue(dsPtr), Tcl_DStringLength(dsPtr), 
-		    NULL, &status);
+		    Tcl_DStringValue(dsPtr), Tcl_DStringLength(dsPtr),
+		    &kePtr->keysym, &status);
 	}
 	if ((status != XLookupChars) && (status != XLookupBoth)) {
 	    len = 0;
@@ -146,8 +145,8 @@ TkpGetString(
 	Tcl_DStringSetLength(&buf, TCL_DSTRING_STATIC_SIZE-1);
 
 	len = XmbLookupString(winPtr->inputContext, &eventPtr->xkey,
-		Tcl_DStringValue(&buf), Tcl_DStringLength(&buf), NULL,
-		&status);
+		Tcl_DStringValue(&buf), Tcl_DStringLength(&buf),
+                &kePtr->keysym, &status);
 
 	/*
 	 * If the buffer wasn't big enough, grow the buffer and try again.
@@ -156,7 +155,7 @@ TkpGetString(
 	if (status == XBufferOverflow) {
 	    Tcl_DStringSetLength(&buf, len);
 	    len = XmbLookupString(winPtr->inputContext, &eventPtr->xkey,
-		    Tcl_DStringValue(&buf), len, NULL, &status);
+		    Tcl_DStringValue(&buf), len, &kePtr->keysym, &status);
 	}
 	if ((status != XLookupChars) && (status != XLookupBoth)) {
 	    len = 0;
@@ -181,7 +180,7 @@ TkpGetString(
 	Tcl_DStringInit(&buf);
 	Tcl_DStringSetLength(&buf, TCL_DSTRING_STATIC_SIZE-1);
 	len = XLookupString(&eventPtr->xkey, Tcl_DStringValue(&buf),
-		TCL_DSTRING_STATIC_SIZE, 0, 0);
+		TCL_DSTRING_STATIC_SIZE, &kePtr->keysym, 0);
 	Tcl_DStringValue(&buf)[len] = '\0';
 
 	if (len == 1) {
@@ -213,8 +212,8 @@ TkpGetString(
 
 /*
  * When mapping from a keysym to a keycode, need information about the
- * modifier state that should be used so that when they call XKeycodeToKeysym
- * taking into account the xkey.state, they will get back the original keysym.
+ * modifier state to be used so that when they call XkbKeycodeToKeysym taking
+ * into account the xkey.state, they will get back the original keysym.
  */
 
 void
@@ -236,7 +235,7 @@ TkpSetKeycodeAndState(
     }
     if (keycode != 0) {
 	for (state = 0; state < 4; state++) {
-	    if (XKeycodeToKeysym(display, keycode, state) == keySym) {
+	    if (XkbKeycodeToKeysym(display, keycode, 0, state) == keySym) {
 		if (state & 1) {
 		    eventPtr->xkey.state |= ShiftMask;
 		}
@@ -279,6 +278,29 @@ TkpGetKeySym(
 {
     KeySym sym;
     int index;
+    TkKeyEvent* kePtr = (TkKeyEvent*) eventPtr;
+
+#ifdef TK_USE_INPUT_METHODS
+    /*
+     * If input methods are active, we may already have determined a keysym.
+     * Return it.
+     */
+
+    if (eventPtr->type == KeyPress && dispPtr
+	    && (dispPtr->flags & TK_DISPLAY_USE_IM)) {
+	if (kePtr->charValuePtr == NULL) {
+	    Tcl_DString ds;
+	    TkWindow *winPtr = (TkWindow *)
+		Tk_IdToWindow(eventPtr->xany.display, eventPtr->xany.window);
+	    Tcl_DStringInit(&ds);
+	    (void) TkpGetString(winPtr, eventPtr, &ds);
+	    Tcl_DStringFree(&ds);
+	}
+	if (kePtr->charValuePtr != NULL) {
+	    return kePtr->keysym;
+	}
+    }
+#endif
 
     /*
      * Refresh the mapping information if it's stale
@@ -303,7 +325,8 @@ TkpGetKeySym(
 	    && (eventPtr->xkey.state & LockMask))) {
 	index += 1;
     }
-    sym = XKeycodeToKeysym(dispPtr->display, eventPtr->xkey.keycode, index);
+    sym = XkbKeycodeToKeysym(dispPtr->display, eventPtr->xkey.keycode, 0,
+	    index);
 
     /*
      * Special handling: if the key was shifted because of Lock, but lock is
@@ -317,8 +340,8 @@ TkpGetKeySym(
 		|| ((sym >= XK_Agrave) && (sym <= XK_Odiaeresis))
 		|| ((sym >= XK_Ooblique) && (sym <= XK_Thorn)))) {
 	    index &= ~1;
-	    sym = XKeycodeToKeysym(dispPtr->display, eventPtr->xkey.keycode,
-		    index);
+	    sym = XkbKeycodeToKeysym(dispPtr->display, eventPtr->xkey.keycode,
+		    0, index);
 	}
     }
 
@@ -328,8 +351,8 @@ TkpGetKeySym(
      */
 
     if ((index & 1) && (sym == NoSymbol)) {
-	sym = XKeycodeToKeysym(dispPtr->display, eventPtr->xkey.keycode,
-		index & ~1);
+	sym = XkbKeycodeToKeysym(dispPtr->display, eventPtr->xkey.keycode,
+		0, index & ~1);
     }
     return sym;
 }
@@ -378,7 +401,7 @@ TkpInitKeymapInfo(
 	if (*codePtr == 0) {
 	    continue;
 	}
-	keysym = XKeycodeToKeysym(dispPtr->display, *codePtr, 0);
+	keysym = XkbKeycodeToKeysym(dispPtr->display, *codePtr, 0, 0);
 	if (keysym == XK_Shift_Lock) {
 	    dispPtr->lockUsage = LU_SHIFT;
 	    break;
@@ -404,7 +427,7 @@ TkpInitKeymapInfo(
 	if (*codePtr == 0) {
 	    continue;
 	}
-	keysym = XKeycodeToKeysym(dispPtr->display, *codePtr, 0);
+	keysym = XkbKeycodeToKeysym(dispPtr->display, *codePtr, 0, 0);
 	if (keysym == XK_Mode_switch) {
 	    dispPtr->modeModMask |= ShiftMask << (i/modMapPtr->max_keypermod);
 	}

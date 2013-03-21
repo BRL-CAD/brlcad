@@ -1,5 +1,4 @@
-/* $Id$
- *
+/*
  * Copyright (c) 2003, Joe English
  *
  * Default implementation for themed elements.

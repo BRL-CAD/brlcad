@@ -9,8 +9,6 @@
  *
  * See the file "license.terms" for information on usage and redistribution of
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
- *
- * RCS: @(#) $Id$
  */
 
 #include "tclInt.h"
@@ -101,9 +99,16 @@ typedef struct ThreadSpecificData {
 				 * from these pointers. You must hold the
 				 * notifierMutex lock before accessing these
 				 * fields. */
+#ifdef __CYGWIN__
+    void *event;     /* Any other thread alerts a notifier
+	 * that an event is ready to be processed
+	 * by sending this event. */
+    void *hwnd;			/* Messaging window. */
+#else /* !__CYGWIN__ */
     Tcl_Condition waitCV;	/* Any other thread alerts a notifier that an
 				 * event is ready to be processed by signaling
 				 * this condition variable. */
+#endif /* __CYGWIN__ */
     int eventReady;		/* True if an event is ready to be processed.
 				 * Used as condition flag together with waitCV
 				 * above. */
@@ -207,6 +212,48 @@ static int	FileHandlerEventProc(Tcl_Event *evPtr, int flags);
  *----------------------------------------------------------------------
  */
 
+#if defined(TCL_THREADS) && defined(__CYGWIN__)
+
+typedef struct {
+    void *hwnd;
+    unsigned int *message;
+    int wParam;
+    int lParam;
+    int time;
+    int x;
+    int y;
+} MSG;
+
+typedef struct {
+  unsigned int style;
+  void *lpfnWndProc;
+  int cbClsExtra;
+  int cbWndExtra;
+  void *hInstance;
+  void *hIcon;
+  void *hCursor;
+  void *hbrBackground;
+  void *lpszMenuName;
+  void *lpszClassName;
+} WNDCLASS;
+
+extern unsigned char __stdcall PeekMessageW(MSG *, void *, int, int, int);
+extern unsigned char __stdcall GetMessageW(MSG *, void *, int, int);
+extern unsigned char __stdcall TranslateMessage(const MSG *);
+extern int __stdcall DispatchMessageW(const MSG *);
+extern void __stdcall PostQuitMessage(int);
+extern void * __stdcall CreateWindowExW(void *, void *, void *, DWORD, int, int, int, int, void *, void *, void *, void *);
+extern unsigned char __stdcall DestroyWindow(void *);
+extern unsigned char __stdcall PostMessageW(void *, unsigned int, void *, void *);
+extern void *__stdcall RegisterClassW(const WNDCLASS *);
+extern DWORD __stdcall DefWindowProcW(void *, int, void *, void *);
+extern void *__stdcall CreateEventW(void *, unsigned char, unsigned char, void *);
+extern void __stdcall CloseHandle(void *);
+extern void __stdcall MsgWaitForMultipleObjects(DWORD, void *, unsigned char, DWORD, DWORD);
+extern unsigned char __stdcall ResetEvent(void *);
+
+#endif
+
 ClientData
 Tcl_InitNotifier(void)
 {
@@ -293,7 +340,7 @@ Tcl_FinalizeNotifier(
 	 */
 
 	if (write(triggerPipe, "q", 1) != 1) {
-		    Tcl_Panic("Tcl_FinalizeNotifier: unable to write q to triggerPipe");
+	    Tcl_Panic("Tcl_FinalizeNotifier: unable to write q to triggerPipe");
 	}
 	close(triggerPipe);
 	while(triggerPipe >= 0) {
@@ -310,7 +357,11 @@ Tcl_FinalizeNotifier(
      * Clean up any synchronization objects in the thread local storage.
      */
 
+#ifdef __CYGWIN__
+    CloseHandle(tsdPtr->event);
+#else /* __CYGWIN__ */
     Tcl_ConditionFinalize(&(tsdPtr->waitCV));
+#endif /* __CYGWIN__ */
 
     Tcl_MutexUnlock(&notifierMutex);
 #endif
@@ -343,7 +394,11 @@ Tcl_AlertNotifier(
     ThreadSpecificData *tsdPtr = (ThreadSpecificData *) clientData;
     Tcl_MutexLock(&notifierMutex);
     tsdPtr->eventReady = 1;
+#ifdef __CYGWIN__
+    PostMessageW(tsdPtr->hwnd, 1024, 0, 0);
+#else
     Tcl_ConditionNotify(&tsdPtr->waitCV);
+#endif
     Tcl_MutexUnlock(&notifierMutex);
 #endif
 }
@@ -643,6 +698,31 @@ FileHandlerEventProc(
     return 1;
 }
 
+#if defined(TCL_THREADS) && defined(__CYGWIN__)
+
+static DWORD __stdcall
+NotifierProc(
+    void *hwnd,
+    unsigned int message,
+    void *wParam,
+    void *lParam)
+{
+    ThreadSpecificData *tsdPtr = TCL_TSD_INIT(&dataKey);
+
+    if (message != 1024) {
+	return DefWindowProcW(hwnd, message, wParam, lParam);
+    }
+
+    /*
+     * Process all of the runnable events.
+     */
+
+	tsdPtr->eventReady = 1;
+    Tcl_ServiceAll();
+    return 0;
+}
+#endif /* __CYGWIN__ */
+
 /*
  *----------------------------------------------------------------------
  *
@@ -671,6 +751,9 @@ Tcl_WaitForEvent(
     Tcl_Time vTime;
 #ifdef TCL_THREADS
     int waitForFiles;
+# ifdef __CYGWIN__
+    MSG msg;
+# endif
 #else
     /*
      * Impl. notes: timeout & timeoutPtr are used if, and only if threads are
@@ -758,6 +841,29 @@ Tcl_WaitForEvent(
 	tsdPtr->pollState = 0;
     }
 
+#ifdef __CYGWIN__
+	if (!tsdPtr->hwnd) {
+		WNDCLASS class;
+
+	    class.style = 0;
+	    class.cbClsExtra = 0;
+	    class.cbWndExtra = 0;
+	    class.hInstance = TclWinGetTclInstance();
+	    class.hbrBackground = NULL;
+	    class.lpszMenuName = NULL;
+	    class.lpszClassName = L"TclNotifier";
+	    class.lpfnWndProc = NotifierProc;
+	    class.hIcon = NULL;
+	    class.hCursor = NULL;
+
+	    RegisterClassW(&class);
+	    tsdPtr->hwnd = CreateWindowExW(NULL, class.lpszClassName, class.lpszClassName,
+		    0, 0, 0, 0, 0, NULL, NULL, TclWinGetTclInstance(), NULL);
+	    tsdPtr->event = CreateEventW(NULL, 1 /* manual */,
+		    0 /* !signaled */, NULL);
+    }
+
+#endif
     if (waitForFiles) {
 	/*
 	 * Add the ThreadSpecificData structure of this thread to the list of
@@ -773,8 +879,8 @@ Tcl_WaitForEvent(
 	waitingListPtr = tsdPtr;
 	tsdPtr->onList = 1;
 
-	if (write(triggerPipe, "", 1) != 1) {
-		Tcl_Panic("Tcl_WaitForEvent: unable to write to triggerPipe");
+	if ((write(triggerPipe, "", 1) == -1) && (errno != EAGAIN)) {
+	    Tcl_Panic("Tcl_WaitForEvent: unable to write to triggerPipe");
 	}
     }
 
@@ -783,9 +889,40 @@ Tcl_WaitForEvent(
     FD_ZERO(&(tsdPtr->readyMasks.exceptional));
 
     if (!tsdPtr->eventReady) {
+#ifdef __CYGWIN__
+	if (!PeekMessageW(&msg, NULL, 0, 0, 0)) {
+	    DWORD timeout;
+	    if (timePtr) {
+		timeout = timePtr->sec * 1000 + timePtr->usec / 1000;
+	    } else {
+		timeout = 0xFFFFFFFF;
+	    }
+	    Tcl_MutexUnlock(&notifierMutex);
+	    MsgWaitForMultipleObjects(1, &tsdPtr->event, 0, timeout, 1279);
+	    Tcl_MutexLock(&notifierMutex);
+	}
+#else
 	Tcl_ConditionWait(&tsdPtr->waitCV, &notifierMutex, timePtr);
+#endif
     }
     tsdPtr->eventReady = 0;
+
+#ifdef __CYGWIN__
+    while (PeekMessageW(&msg, NULL, 0, 0, 0)) {
+	/*
+	 * Retrieve and dispatch the message.
+	 */
+	DWORD result = GetMessageW(&msg, NULL, 0, 0);
+	if (result == 0) {
+	    PostQuitMessage(msg.wParam);
+	    /* What to do here? */
+	} else if (result != (DWORD)-1) {
+	    TranslateMessage(&msg);
+	    DispatchMessageW(&msg);
+	}
+    }
+    ResetEvent(tsdPtr->event);
+#endif
 
     if (waitForFiles && tsdPtr->onList) {
 	/*
@@ -805,8 +942,8 @@ Tcl_WaitForEvent(
 	}
 	tsdPtr->nextPtr = tsdPtr->prevPtr = NULL;
 	tsdPtr->onList = 0;
-	if (write(triggerPipe, "", 1) != 1) {
-		Tcl_Panic("Tcl_WaitForEvent: unable to write to triggerPipe");
+	if ((write(triggerPipe, "", 1) == -1) && (errno != EAGAIN)) {
+	    Tcl_Panic("Tcl_WaitForEvent: unable to write to triggerPipe");
 	}
     }
 
@@ -919,6 +1056,12 @@ NotifierThreadProc(
     }
     if (TclUnixSetBlockingMode(fds[1], TCL_MODE_NONBLOCKING) < 0) {
 	Tcl_Panic("NotifierThreadProc: could not make trigger pipe non blocking");
+    }
+    if (fcntl(receivePipe, F_SETFD, FD_CLOEXEC) < 0) {
+	Tcl_Panic("NotifierThreadProc: could not make receive pipe close-on-exec");
+    }
+    if (fcntl(fds[1], F_SETFD, FD_CLOEXEC) < 0) {
+	Tcl_Panic("NotifierThreadProc: could not make trigger pipe close-on-exec");
     }
 
     /*
@@ -1044,7 +1187,11 @@ NotifierThreadProc(
 		    tsdPtr->onList = 0;
 		    tsdPtr->pollState = 0;
 		}
-		Tcl_ConditionNotify(&tsdPtr->waitCV);
+#ifdef __CYGWIN__
+	    PostMessageW(tsdPtr->hwnd, 1024, 0, 0);
+#else /* __CYGWIN__ */
+	    Tcl_ConditionNotify(&tsdPtr->waitCV);
+#endif /* __CYGWIN__ */
 	    }
 	}
 	Tcl_MutexUnlock(&notifierMutex);

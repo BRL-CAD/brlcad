@@ -8,7 +8,41 @@
  * See the file "license.terms" for information on usage and redistribution of
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * RCS: @(#) $Id$
+ * -----------------------------------------------------------------------
+ *
+ * General information on how this module works.
+ *
+ * - Each Tcl-thread with its sockets maintains an internal window to receive
+ *   socket messages from the OS.
+ *
+ * - To ensure that message reception is always running this window is
+ *   actually owned and handled by an internal thread. This we call the
+ *   co-thread of Tcl's thread.
+ *
+ * - The whole structure is set up by InitSockets() which is called for each
+ *   Tcl thread. The implementation of the co-thread is in SocketThread(),
+ *   and the messages are handled by SocketProc(). The connection between
+ *   both is not directly visible, it is done through a Win32 window class.
+ *   This class is initialized by InitSockets() as well, and used in the
+ *   creation of the message receiver windows.
+ *
+ * - An important thing to note is that *both* thread and co-thread have
+ *   access to the list of sockets maintained in the private TSD data of the
+ *   thread. The co-thread was given access to it upon creation through the
+ *   new thread's client-data.
+ *
+ *   Because of this dual access the TSD data contains an OS mutex, the
+ *   "socketListLock", to mediate exclusion between thread and co-thread.
+ *
+ *   The co-thread's access is all in SocketProc(). The thread's access is
+ *   through SocketEventProc() (1) and the functions called by it.
+ *
+ *   (Ad 1) This is the handler function for all queued socket events, which
+ *          all the OS messages are translated to through the EventSource (2)
+ *          driven by the OS messages.
+ *
+ *   (Ad 2) The main functions for this are SocketSetupProc() and
+ *          SocketCheckProc().
  */
 
 #include "tclWinInt.h"
@@ -31,7 +65,6 @@
 
 #undef getservbyname
 #undef getsockopt
-#undef ntohs
 #undef setsockopt
 
 /*
@@ -97,7 +130,7 @@ typedef struct SocketInfo {
  * socket event occurs.
  */
 
-typedef struct SocketEvent {
+typedef struct {
     Tcl_Event header;		/* Information that is standard for all
 				 * events. */
     SOCKET socket;		/* Socket descriptor that is ready. Used to
@@ -125,7 +158,7 @@ typedef struct SocketEvent {
 #define SOCKET_PENDING		(1<<3)	/* A message has been sent for this
 					 * socket */
 
-typedef struct ThreadSpecificData {
+typedef struct {
     HWND hwnd;			/* Handle to window for socket messages. */
     HANDLE socketThread;	/* Thread handling the window */
     Tcl_ThreadId threadId;	/* Parent thread. */
@@ -427,14 +460,13 @@ TclpFinalizeSockets(void)
     if (tsdPtr != NULL) {
 	if (tsdPtr->socketThread != NULL) {
 	    if (tsdPtr->hwnd != NULL) {
-		PostMessage(tsdPtr->hwnd, SOCKET_TERMINATE, 0, 0);
-
-		/*
-		 * Wait for the thread to exit. This ensures that we are
-		 * completely cleaned up before we leave this function.
-		 */
-
-		WaitForSingleObject(tsdPtr->readyEvent, INFINITE);
+		if (PostMessage(tsdPtr->hwnd, SOCKET_TERMINATE, 0, 0)) {
+		    /*
+		     * Wait for the thread to exit. This ensures that we are
+		     * completely cleaned up before we leave this function.
+		     */
+		    WaitForSingleObject(tsdPtr->readyEvent, INFINITE);
+		}
 		tsdPtr->hwnd = NULL;
 	    }
 	    CloseHandle(tsdPtr->socketThread);
@@ -934,7 +966,7 @@ CreateSocket(
      * Set kernel space buffering
      */
 
-    TclSockMinimumBuffers((int) sock, TCP_BUFFER_SIZE);
+    TclSockMinimumBuffers((void *)sock, TCP_BUFFER_SIZE);
 
     if (server) {
 	/*
@@ -1095,7 +1127,7 @@ CreateSocketAddress(
 
     ZeroMemory(sockaddrPtr, sizeof(SOCKADDR_IN));
     sockaddrPtr->sin_family = AF_INET;
-    sockaddrPtr->sin_port = htons((u_short) (port & 0xFFFF));
+    sockaddrPtr->sin_port = htons((unsigned short) (port & 0xFFFF));
     if (host == NULL) {
 	addr.s_addr = INADDR_ANY;
     } else {
@@ -1239,7 +1271,7 @@ Tcl_OpenTcpClient(
 	return NULL;
     }
 
-    wsprintfA(channelName, "sock%d", infoPtr->socket);
+    sprintf(channelName, "sock%" TCL_I_MODIFIER "u", (size_t)infoPtr->socket);
 
     infoPtr->channel = Tcl_CreateChannel(&tcpChannelType, channelName,
 	    (ClientData) infoPtr, (TCL_READABLE | TCL_WRITABLE));
@@ -1292,7 +1324,7 @@ Tcl_MakeTcpClientChannel(
      * Set kernel space buffering and non-blocking.
      */
 
-    TclSockMinimumBuffers((int) sock, TCP_BUFFER_SIZE);
+    TclSockMinimumBuffers(sock, TCP_BUFFER_SIZE);
 
     infoPtr = NewSocketInfo((SOCKET) sock);
 
@@ -1304,7 +1336,7 @@ Tcl_MakeTcpClientChannel(
     SendMessage(tsdPtr->hwnd, SOCKET_SELECT,
 	    (WPARAM) SELECT, (LPARAM) infoPtr);
 
-    wsprintfA(channelName, "sock%d", infoPtr->socket);
+    sprintf(channelName, "sock%" TCL_I_MODIFIER "u", (size_t)infoPtr->socket);
     infoPtr->channel = Tcl_CreateChannel(&tcpChannelType, channelName,
 	    (ClientData) infoPtr, (TCL_READABLE | TCL_WRITABLE));
     Tcl_SetChannelOption(NULL, infoPtr->channel, "-translation", "auto crlf");
@@ -1357,7 +1389,7 @@ Tcl_OpenTcpServer(
     infoPtr->acceptProc = acceptProc;
     infoPtr->acceptProcData = acceptProcData;
 
-    wsprintfA(channelName, "sock%d", infoPtr->socket);
+    sprintf(channelName, "sock%" TCL_I_MODIFIER "u", (size_t)infoPtr->socket);
 
     infoPtr->channel = Tcl_CreateChannel(&tcpChannelType, channelName,
 	    (ClientData) infoPtr, 0);
@@ -1409,6 +1441,12 @@ TcpAccept(
 	    &len);
 
     /*
+     * Protect access to sockets (acceptEventCount, readyEvents) in socketList
+     * by the lock.  Fix for SF Tcl Bug 3056775.
+     */
+    WaitForSingleObject(tsdPtr->socketListLock, INFINITE);
+
+    /*
      * Clear the ready mask so we can detect the next connection request. Note
      * that connection requests are level triggered, so if there is a request
      * already pending, a new event will be generated.
@@ -1417,6 +1455,8 @@ TcpAccept(
     if (newSocket == INVALID_SOCKET) {
 	infoPtr->acceptEventCount = 0;
 	infoPtr->readyEvents &= ~(FD_ACCEPT);
+
+	SetEvent(tsdPtr->socketListLock);
 	return;
     }
 
@@ -1431,6 +1471,8 @@ TcpAccept(
     if (infoPtr->acceptEventCount <= 0) {
 	infoPtr->readyEvents &= ~(FD_ACCEPT);
     }
+
+    SetEvent(tsdPtr->socketListLock);
 
     /*
      * Win-NT has a misfeature that sockets are inherited in child processes
@@ -1453,7 +1495,7 @@ TcpAccept(
     SendMessage(tsdPtr->hwnd, SOCKET_SELECT,
 	    (WPARAM) SELECT, (LPARAM) newInfoPtr);
 
-    wsprintfA(channelName, "sock%d", newInfoPtr->socket);
+    sprintf(channelName, "sock%" TCL_I_MODIFIER "u", (size_t)newInfoPtr->socket);
     newInfoPtr->channel = Tcl_CreateChannel(&tcpChannelType, channelName,
 	    (ClientData) newInfoPtr, (TCL_READABLE | TCL_WRITABLE));
     if (Tcl_SetChannelOption(NULL, newInfoPtr->channel, "-translation",
@@ -1748,8 +1790,10 @@ TcpSetOptionProc(
     const char *optionName,	/* Name of the option to set. */
     const char *value)		/* New value for option. */
 {
+#ifdef TCL_FEATURE_KEEPALIVE_NAGLE
     SocketInfo *infoPtr;
     SOCKET sock;
+#endif
 
     /*
      * Check that WinSock is initialized; do not call it if not, to prevent
@@ -1764,10 +1808,10 @@ TcpSetOptionProc(
 	return TCL_ERROR;
     }
 
+#ifdef TCL_FEATURE_KEEPALIVE_NAGLE
     infoPtr = (SocketInfo *) instanceData;
     sock = infoPtr->socket;
 
-#ifdef TCL_FEATURE_KEEPALIVE_NAGLE
     if (!strcasecmp(optionName, "-keepalive")) {
 	BOOL val = FALSE;
 	int boolVar, rtn;
@@ -2385,22 +2429,18 @@ InitializeHostName(
 	Tcl_DStringInit(&ds);
 	if (TclpHasSockets(NULL) == TCL_OK) {
 	    /*
-	     * Buffer length of 255 copied slavishly from previous version of
-	     * this routine. Presumably there's a more "correct" macro value
-	     * for a properly sized buffer for a gethostname() call.
-	     * Maintainers are welcome to supply it.
+	     * The buffer size of 256 is recommended by the MSDN page that
+	     * documents gethostname() as being always adequate.
 	     */
 
 	    Tcl_DString inDs;
 
 	    Tcl_DStringInit(&inDs);
-	    Tcl_DStringSetLength(&inDs, 255);
+	    Tcl_DStringSetLength(&inDs, 256);
 	    if (gethostname(Tcl_DStringValue(&inDs),
-			    Tcl_DStringLength(&inDs)) == 0) {
-		Tcl_DStringSetLength(&ds, 0);
-	    } else {
-		Tcl_ExternalToUtfDString(NULL,
-			Tcl_DStringValue(&inDs), -1, &ds);
+		    Tcl_DStringLength(&inDs)) == 0) {
+		Tcl_ExternalToUtfDString(NULL, Tcl_DStringValue(&inDs), -1,
+			&ds);
 	    }
 	    Tcl_DStringFree(&inDs);
 	}
@@ -2433,12 +2473,8 @@ InitializeHostName(
  */
 
 int
-TclWinGetSockOpt(
-    int s,
-    int level,
-    int optname,
-    char * optval,
-    int FAR *optlen)
+TclWinGetSockOpt(SOCKET s, int level, int optname, char *optval,
+	int *optlen)
 {
     /*
      * Check that WinSock is initialized; do not call it if not, to prevent
@@ -2450,15 +2486,11 @@ TclWinGetSockOpt(
 	return SOCKET_ERROR;
     }
 
-    return getsockopt((SOCKET)s, level, optname, optval, optlen);
+    return getsockopt(s, level, optname, optval, optlen);
 }
 
 int
-TclWinSetSockOpt(
-    int s,
-    int level,
-    int optname,
-    const char * optval,
+TclWinSetSockOpt(SOCKET s, int level, int optname, const char *optval,
     int optlen)
 {
     /*
@@ -2471,12 +2503,11 @@ TclWinSetSockOpt(
 	return SOCKET_ERROR;
     }
 
-    return setsockopt((SOCKET)s, level, optname, optval, optlen);
+    return setsockopt(s, level, optname, optval, optlen);
 }
 
-u_short
-TclWinNToHS(
-    u_short netshort)
+char *
+TclpInetNtoa(struct in_addr addr)
 {
     /*
      * Check that WinSock is initialized; do not call it if not, to prevent
@@ -2485,10 +2516,10 @@ TclWinNToHS(
      */
 
     if (!SocketsEnabled()) {
-	return (u_short) -1;
+        return NULL;
     }
 
-    return ntohs(netshort);
+    return inet_ntoa(addr);
 }
 
 struct servent *

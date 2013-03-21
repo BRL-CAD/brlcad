@@ -27,14 +27,17 @@ AC_DEFUN([SC_PATH_TCLCONFIG], [
     else
 	TCL_BIN_DIR_DEFAULT=../../tcl/win
     fi
-    
+
     AC_ARG_WITH(tcl, [  --with-tcl=DIR          use Tcl 8.5 binaries from DIR],
 	    TCL_BIN_DIR=$withval, TCL_BIN_DIR=`cd $TCL_BIN_DIR_DEFAULT; pwd`)
     if test ! -d $TCL_BIN_DIR; then
 	AC_MSG_ERROR(Tcl directory $TCL_BIN_DIR does not exist)
     fi
     if test ! -f $TCL_BIN_DIR/tclConfig.sh; then
-	AC_MSG_ERROR(There is no tclConfig.sh in $TCL_BIN_DIR:  perhaps you did not specify the Tcl *build* directory (not the toplevel Tcl directory) or you forgot to configure Tcl?)
+	if test ! -f $TCL_BIN_DIR/../unix/tclConfig.sh; then
+	    AC_MSG_ERROR(There is no tclConfig.sh in $TCL_BIN_DIR:  perhaps you did not specify the Tcl *build* directory (not the toplevel Tcl directory) or you forgot to configure Tcl?)
+	fi
+	TCL_BIN_DIR=`cd ${TCL_BIN_DIR}/../unix; pwd`
     fi
     AC_MSG_RESULT($TCL_BIN_DIR/tclConfig.sh)
 ])
@@ -67,7 +70,7 @@ AC_DEFUN([SC_PATH_TKCONFIG], [
     else
 	TK_BIN_DIR_DEFAULT=../../tk/win
     fi
-    
+
     AC_ARG_WITH(tk, [  --with-tk=DIR          use Tk 8.5 binaries from DIR],
 	    TK_BIN_DIR=$withval, TK_BIN_DIR=`cd $TK_BIN_DIR_DEFAULT; pwd`)
     if test ! -d $TK_BIN_DIR; then
@@ -86,7 +89,7 @@ AC_DEFUN([SC_PATH_TKCONFIG], [
 #	Load the tclConfig.sh file.
 #
 # Arguments:
-#	
+#
 #	Requires the following vars to be set:
 #		TCL_BIN_DIR
 #
@@ -158,7 +161,7 @@ AC_DEFUN([SC_LOAD_TCLCONFIG], [
 #	Currently a no-op for Windows
 #
 # Arguments:
-#	
+#
 #	Requires the following vars to be set:
 #		TK_BIN_DIR
 #
@@ -191,7 +194,7 @@ AC_DEFUN([SC_LOAD_TKCONFIG], [
 #
 # Arguments:
 #	none
-#	
+#
 # Results:
 #
 #	Adds the following arguments to configure:
@@ -208,7 +211,7 @@ AC_DEFUN([SC_LOAD_TKCONFIG], [
 AC_DEFUN([SC_ENABLE_SHARED], [
     AC_MSG_CHECKING([how to build libraries])
     AC_ARG_ENABLE(shared,
-	[  --enable-shared         build and link with shared libraries [--enable-shared]],
+	[  --enable-shared         build and link with shared libraries (default: on)],
     [tcl_ok=$enableval], [tcl_ok=yes])
 
     if test "${enable_shared+set}" = set; then
@@ -235,7 +238,7 @@ AC_DEFUN([SC_ENABLE_SHARED], [
 #
 # Arguments:
 #	none
-#	
+#
 # Results:
 #
 #	Adds the following arguments to configure:
@@ -247,7 +250,7 @@ AC_DEFUN([SC_ENABLE_SHARED], [
 
 AC_DEFUN([SC_ENABLE_THREADS], [
     AC_MSG_CHECKING(for building with threads)
-    AC_ARG_ENABLE(threads, [  --enable-threads        build with threads],
+    AC_ARG_ENABLE(threads, [  --enable-threads        build with threads (default: off)],
 	[tcl_ok=$enableval], [tcl_ok=no])
 
     if test "$tcl_ok" = "yes"; then
@@ -273,11 +276,11 @@ AC_DEFUN([SC_ENABLE_THREADS], [
 #
 # Arguments:
 #	none
-#	
+#
 #	Requires the following vars to be set in the Makefile:
 #		CFLAGS_DEBUG
 #		CFLAGS_OPTIMIZE
-#	
+#
 # Results:
 #
 #	Adds the following arguments to configure:
@@ -294,12 +297,13 @@ AC_DEFUN([SC_ENABLE_THREADS], [
 
 AC_DEFUN([SC_ENABLE_SYMBOLS], [
     AC_MSG_CHECKING([for build with symbols])
-    AC_ARG_ENABLE(symbols, [  --enable-symbols        build with debugging symbols [--disable-symbols]],    [tcl_ok=$enableval], [tcl_ok=no])
+    AC_ARG_ENABLE(symbols, [  --enable-symbols        build with debugging symbols (default: off)],    [tcl_ok=$enableval], [tcl_ok=no])
 # FIXME: Currently, LDFLAGS_DEFAULT is not used, it should work like CFLAGS_DEFAULT.
     if test "$tcl_ok" = "no"; then
 	CFLAGS_DEFAULT='$(CFLAGS_OPTIMIZE)'
 	LDFLAGS_DEFAULT='$(LDFLAGS_OPTIMIZE)'
 	DBGX=""
+	AC_DEFINE(NDEBUG, 1, [Is no debugging enabled?])
 	AC_MSG_RESULT([no])
 
 	AC_DEFINE(TCL_CFG_OPTIMIZED)
@@ -313,15 +317,14 @@ AC_DEFUN([SC_ENABLE_SYMBOLS], [
     fi
     AC_SUBST(CFLAGS_DEFAULT)
     AC_SUBST(LDFLAGS_DEFAULT)
-    AC_DEFINE(TCL_CFG_DEBUG)
 
     if test "$tcl_ok" = "mem" -o "$tcl_ok" = "all"; then
-	AC_DEFINE(TCL_MEM_DEBUG)
+	AC_DEFINE(TCL_MEM_DEBUG, 1, [Is memory debugging enabled?])
     fi
 
     if test "$tcl_ok" = "compile" -o "$tcl_ok" = "all"; then
-	AC_DEFINE(TCL_COMPILE_DEBUG)
-	AC_DEFINE(TCL_COMPILE_STATS)
+	AC_DEFINE(TCL_COMPILE_DEBUG, 1, [Is bytecode debugging enabled?])
+	AC_DEFINE(TCL_COMPILE_STATS, 1, [Are bytecode statistics enabled?])
     fi
 
     if test "$tcl_ok" != "yes" -a "$tcl_ok" != "no"; then
@@ -373,6 +376,7 @@ AC_DEFUN([SC_ENABLE_SYMBOLS], [
 #		MAKE_DLL
 #
 #		LIBSUFFIX
+#		LIBFLAGSUFFIX
 #		LIBPREFIX
 #		LIBRARIES
 #		EXESUFFIX
@@ -406,6 +410,43 @@ AC_DEFUN([SC_CONFIG_CFLAGS], [
 
     SHLIB_SUFFIX=".dll"
 
+    # MACHINE is IX86 for LINK, but this is used by the manifest,
+    # which requires x86|amd64|ia64.
+    MACHINE="X86"
+
+    if test "$GCC" = "yes"; then
+
+      AC_CACHE_CHECK(for cross-compile version of gcc,
+	ac_cv_cross,
+	AC_TRY_COMPILE([
+	    #ifndef __WIN32__
+		#error cross-compiler
+	    #endif
+	], [],
+	ac_cv_cross=no,
+	ac_cv_cross=yes)
+      )
+
+      if test "$ac_cv_cross" = "yes"; then
+	case "$do64bit" in
+	    amd64|x64|yes)
+		CC="x86_64-w64-mingw32-gcc"
+		LD="x86_64-w64-mingw32-ld"
+		AR="x86_64-w64-mingw32-ar"
+		RANLIB="x86_64-w64-mingw32-ranlib"
+		RC="x86_64-w64-mingw32-windres"
+	    ;;
+	    *)
+		CC="i686-w64-mingw32-gcc"
+		LD="i686-w64-mingw32-ld"
+		AR="i686-w64-mingw32-ar"
+		RANLIB="i686-w64-mingw32-ranlib"
+		RC="i686-w64-mingw32-windres"
+	    ;;
+	esac
+      fi
+    fi
+
     # Check for a bug in gcc's windres that causes the
     # compile to fail when a Windows native path is
     # passed into windres. The mingw toolchain requires
@@ -431,7 +472,7 @@ AC_DEFUN([SC_CONFIG_CFLAGS], [
 	cyg_conftest=
     fi
 
-    if test "$CYGPATH" = "echo" || test "$ac_cv_cygwin" = "yes"; then
+    if test "$CYGPATH" = "echo"; then
         DEPARG='"$<"'
     else
         DEPARG='"$(shell $(CYGPATH) $<)"'
@@ -439,11 +480,24 @@ AC_DEFUN([SC_CONFIG_CFLAGS], [
 
     # set various compiler flags depending on whether we are using gcc or cl
 
+    if test "${GCC}" = "yes" ; then
+	AC_CACHE_CHECK(for mingw32 version of gcc,
+	    ac_cv_win32,
+	    AC_TRY_COMPILE([
+		#ifdef __WIN32__
+		    #error win32
+		#endif
+	    ], [],
+	    ac_cv_win32=no,
+	    ac_cv_win32=yes)
+	)
+	if test "$ac_cv_win32" != "yes"; then
+	    AC_MSG_ERROR([${CC} cannot produce win32 executables.])
+	fi
+    fi
+
     AC_MSG_CHECKING([compiler flags])
     if test "${GCC}" = "yes" ; then
-	if test "$do64bit" != "no" ; then
-	    AC_MSG_WARN([64bit mode not supported with GCC on Windows])
-	fi
 	SHLIB_LD=""
 	SHLIB_LD_LIBS=""
 	LIBS="-lws2_32"
@@ -460,31 +514,8 @@ AC_DEFUN([SC_CONFIG_CFLAGS], [
 	MAKE_EXE="\${CC} -o \[$]@"
 	LIBPREFIX="lib"
 
-	#if test "$ac_cv_cygwin" = "yes"; then
-	#    extra_cflags="-mno-cygwin"
-	#    extra_ldflags="-mno-cygwin"
-	#else
-	#    extra_cflags=""
-	#    extra_ldflags=""
-	#fi
-
-	if test "$ac_cv_cygwin" = "yes"; then
-	  touch ac$$.c
-	  if ${CC} -c -mwin32 ac$$.c >/dev/null 2>&1; then
-	    case "$extra_cflags" in
-	      *-mwin32*) ;;
-	      *) extra_cflags="-mwin32 $extra_cflags" ;;
-	    esac
-	    case "$extra_ldflags" in
-	      *-mwin32*) ;;
-	      *) extra_ldflags="-mwin32 $extra_ldflags" ;;
-	    esac
-	  fi
-	  rm -f ac$$.o ac$$.c
-	else
-	  extra_cflags=''
-	  extra_ldflags=''
-	fi
+	extra_cflags="-pipe"
+	extra_ldflags="-pipe"
 
 	if test "${SHARED_BUILD}" = "0" ; then
 	    # static
@@ -537,7 +568,7 @@ AC_DEFUN([SC_CONFIG_CFLAGS], [
 	CC_OBJNAME="-o \[$]@"
 	CC_EXENAME="-o \[$]@"
 
-	# Specify linker flags depending on the type of app being 
+	# Specify linker flags depending on the type of app being
 	# built -- Console vs. Window.
 	#
 	# ORIGINAL COMMENT:
@@ -548,14 +579,37 @@ AC_DEFUN([SC_CONFIG_CFLAGS], [
 	# cross compiling. Remove this -e workaround once we
 	# require a gcc that does not have this bug.
 	#
-	# MK NOTE: Tk should use a different mechanism. This causes 
+	# MK NOTE: Tk should use a different mechanism. This causes
 	# interesting problems, such as wish dying at startup.
 	#LDFLAGS_WINDOW="-mwindows -e _WinMain@16 ${extra_ldflags}"
 	LDFLAGS_CONSOLE="-mconsole ${extra_ldflags}"
 	LDFLAGS_WINDOW="-mwindows ${extra_ldflags}"
 
-	# gcc under Windows supports only 32bit builds
-	MACHINE="X86"
+	case "$do64bit" in
+	    amd64|x64|yes)
+		MACHINE="AMD64" ; # assume AMD64 as default 64-bit build
+		AC_MSG_RESULT([   Using 64-bit $MACHINE mode])
+		;;
+	    ia64)
+		MACHINE="IA64"
+		AC_MSG_RESULT([   Using 64-bit $MACHINE mode])
+		;;
+	    *)
+		AC_TRY_COMPILE([
+		    #ifndef _WIN64
+			#error 32-bit
+		    #endif
+		], [],
+			tcl_win_64bit=yes,
+			tcl_win_64bit=no
+		)
+		if test "$tcl_win_64bit" = "yes" ; then
+			do64bit=amd64
+			MACHINE="AMD64"
+			AC_MSG_RESULT([   Using 64-bit $MACHINE mode])
+		fi
+		;;
+	esac
     else
 	if test "${SHARED_BUILD}" = "0" ; then
 	    # static
@@ -583,12 +637,9 @@ AC_DEFUN([SC_CONFIG_CFLAGS], [
 	# users of tclConfig.sh that may build shared or static.
 	DLLSUFFIX="\${DBGX}.dll"
 
- 	# This is a 2-stage check to make sure we have the 64-bit SDK
- 	# We have to know where the SDK is installed.
+	# This is a 2-stage check to make sure we have the 64-bit SDK
+	# We have to know where the SDK is installed.
 	# This magic is based on MS Platform SDK for Win2003 SP1 - hobbs
-	# MACHINE is IX86 for LINK, but this is used by the manifest,
-	# which requires x86|amd64|ia64.
-	MACHINE="X86"
 	if test "$do64bit" != "no" ; then
 	    if test "x${MSSDK}x" = "xx" ; then
 		MSSDK="C:/Progra~1/Microsoft Platform SDK"
@@ -596,14 +647,14 @@ AC_DEFUN([SC_CONFIG_CFLAGS], [
 	    MSSDK=`echo "$MSSDK" | sed -e 's!\\\!/!g'`
 	    PATH64=""
 	    case "$do64bit" in
-	      amd64|x64|yes)
-		MACHINE="AMD64" ; # assume AMD64 as default 64-bit build
-		PATH64="${MSSDK}/Bin/Win64/x86/AMD64"
-		;;
-	      ia64)
-		MACHINE="IA64"
-		PATH64="${MSSDK}/Bin/Win64"
-		;;
+		amd64|x64|yes)
+		    MACHINE="AMD64" ; # assume AMD64 as default 64-bit build
+		    PATH64="${MSSDK}/Bin/Win64/x86/AMD64"
+		    ;;
+		ia64)
+		    MACHINE="IA64"
+		    PATH64="${MSSDK}/Bin/Win64"
+		    ;;
 	    esac
 	    if test ! -d "${PATH64}" ; then
 		AC_MSG_WARN([Could not find 64-bit $MACHINE SDK to enable 64bit mode])
@@ -756,14 +807,14 @@ AC_DEFUN([SC_CONFIG_CFLAGS], [
 
 	EXTRA_CFLAGS=""
 	CFLAGS_WARNING="-W3"
-	LDFLAGS_DEBUG="-debug:full"
+	LDFLAGS_DEBUG="-debug"
 	LDFLAGS_OPTIMIZE="-release"
-	
+
 	# Specify the CC output file names based on the target name
 	CC_OBJNAME="-Fo\[$]@"
 	CC_EXENAME="-Fe\"\$(shell \$(CYGPATH) '\[$]@')\""
 
-	# Specify linker flags depending on the type of app being 
+	# Specify linker flags depending on the type of app being
 	# built -- Console vs. Window.
 	if test "$doWince" != "no" -a "${TARGETCPU}" != "X86"; then
 	    LDFLAGS_CONSOLE="-link ${lflags}"
@@ -776,6 +827,101 @@ AC_DEFUN([SC_CONFIG_CFLAGS], [
 
     if test "$do64bit" != "no" ; then
 	AC_DEFINE(TCL_CFG_DO64BIT)
+    fi
+
+    if test "${GCC}" = "yes" ; then
+	AC_CACHE_CHECK(for SEH support in compiler,
+	    tcl_cv_seh,
+	AC_TRY_RUN([
+	    #define WIN32_LEAN_AND_MEAN
+	    #include <windows.h>
+	    #undef WIN32_LEAN_AND_MEAN
+
+	    int main(int argc, char** argv) {
+		int a, b = 0;
+		__try {
+		    a = 666 / b;
+		}
+		__except (EXCEPTION_EXECUTE_HANDLER) {
+		    return 0;
+		}
+		return 1;
+	    }
+	],
+	    tcl_cv_seh=yes,
+	    tcl_cv_seh=no,
+	    tcl_cv_seh=no)
+	)
+	if test "$tcl_cv_seh" = "no" ; then
+	    AC_DEFINE(HAVE_NO_SEH, 1,
+		    [Defined when mingw does not support SEH])
+	fi
+
+	#
+	# Check to see if the excpt.h include file provided contains the
+	# definition for EXCEPTION_DISPOSITION; if not, which is the case
+	# with Cygwin's version as of 2002-04-10, define it to be int,
+	# sufficient for getting the current code to work.
+	#
+	AC_CACHE_CHECK(for EXCEPTION_DISPOSITION support in include files,
+	    tcl_cv_eh_disposition,
+	    AC_TRY_COMPILE([
+#	    define WIN32_LEAN_AND_MEAN
+#	    include <windows.h>
+#	    undef WIN32_LEAN_AND_MEAN
+	    ],[
+		EXCEPTION_DISPOSITION x;
+	    ],
+		tcl_cv_eh_disposition=yes,
+		tcl_cv_eh_disposition=no)
+	)
+	if test "$tcl_cv_eh_disposition" = "no" ; then
+	AC_DEFINE(EXCEPTION_DISPOSITION, int,
+		[Defined when cygwin/mingw does not support EXCEPTION DISPOSITION])
+	fi
+
+	# Check to see if winnt.h defines CHAR, SHORT, and LONG
+	# even if VOID has already been #defined. The win32api
+	# used by mingw and cygwin is known to do this.
+
+	AC_CACHE_CHECK(for winnt.h that ignores VOID define,
+	    tcl_cv_winnt_ignore_void,
+	    AC_TRY_COMPILE([
+		#define VOID void
+		#define WIN32_LEAN_AND_MEAN
+		#include <windows.h>
+		#undef WIN32_LEAN_AND_MEAN
+	    ], [
+		CHAR c;
+		SHORT s;
+		LONG l;
+	    ],
+        tcl_cv_winnt_ignore_void=yes,
+        tcl_cv_winnt_ignore_void=no)
+	)
+	if test "$tcl_cv_winnt_ignore_void" = "yes" ; then
+	    AC_DEFINE(HAVE_WINNT_IGNORE_VOID, 1,
+		    [Defined when cygwin/mingw ignores VOID define in winnt.h])
+	fi
+
+	# See if the compiler supports casting to a union type.
+	# This is used to stop gcc from printing a compiler
+	# warning when initializing a union member.
+
+	AC_CACHE_CHECK(for cast to union support,
+	    tcl_cv_cast_to_union,
+	    AC_TRY_COMPILE([],
+	    [
+		  union foo { int i; double d; };
+		  union foo f = (union foo) (int) 0;
+	    ],
+	    tcl_cv_cast_to_union=yes,
+	    tcl_cv_cast_to_union=no)
+	)
+	if test "$tcl_cv_cast_to_union" = "yes"; then
+	    AC_DEFINE(HAVE_CAST_TO_UNION, 1,
+		    [Defined when compiler supports casting to union type.])
+	fi
     fi
 
     # DL_LIBS is empty, but then we match the Unix version
@@ -808,7 +954,7 @@ AC_DEFUN([SC_WITH_TCL], [
     else
 	TCL_BIN_DEFAULT=../../tcl8.5/win
     fi
-    
+
     AC_ARG_WITH(tcl, [  --with-tcl=DIR          use Tcl 8.5 binaries from DIR],
 	    TCL_BIN_DIR=$withval, TCL_BIN_DIR=`cd $TCL_BIN_DEFAULT; pwd`)
     if test ! -d $TCL_BIN_DIR; then
@@ -913,7 +1059,7 @@ AC_DEFUN([SC_BUILD_TCLSH], [
 #--------------------------------------------------------------------
 
 AC_DEFUN([SC_TCL_CFG_ENCODING], [
-    AC_ARG_WITH(encoding, [  --with-encoding              encoding for configuration values], with_tcencoding=${withval})
+    AC_ARG_WITH(encoding, [  --with-encoding         encoding for configuration values], with_tcencoding=${withval})
 
     if test x"${with_tcencoding}" != x ; then
 	AC_DEFINE_UNQUOTED(TCL_CFGVAL_ENCODING,"${with_tcencoding}")

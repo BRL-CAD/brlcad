@@ -7,8 +7,6 @@
 #
 # See the file "license.terms" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-#
-# SCCS: @(#) httpd 1.2 98/02/20 14:51:59
 
 #set httpLog 1
 
@@ -176,6 +174,14 @@ proc httpdRespond { sock } {
 	*post* {
 	    set html "Got [string length $data(query)] bytes"
 	    set type text/plain
+	}
+	*headers* {
+	    set html ""
+	    set type text/plain
+	    foreach {key value} $data(meta) {
+		append html [list $key $value] "\n"
+	    }
+	    set html [string trim $html]
 	}
 	default {
 	    set type text/html

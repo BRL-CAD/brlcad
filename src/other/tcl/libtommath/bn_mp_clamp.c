@@ -38,7 +38,3 @@ mp_clamp (mp_int * a)
   }
 }
 #endif
-
-/* $Source$ */
-/* $Revision$ */
-/* $Date$ */

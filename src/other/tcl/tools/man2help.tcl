@@ -5,9 +5,6 @@
 # entries.
 #
 # Copyright (c) 1996 by Sun Microsystems, Inc.
-#
-# RCS: @(#) $Id$
-# 
 
 #
 # PASS 1

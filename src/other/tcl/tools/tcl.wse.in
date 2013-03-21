@@ -12,7 +12,7 @@ item: Global
   Log Pathname=%MAINDIR%\INSTALL.LOG
   Message Font=MS Sans Serif
   Font Size=8
-  Disk Label=tcl8.5.9
+  Disk Label=tcl8.5.13
   Disk Filename=setup
   Patch Flags=0000000000000001
   Patch Threshold=85
@@ -1063,12 +1063,12 @@ item: If/While Statement
 end
 item: Install File
   Source=${__TCLBASEDIR__}\library\msgcat\pkgIndex.tcl
-  Destination=%MAINDIR%\lib\tcl%VER%\msgcat1.4\pkgIndex.tcl
+  Destination=%MAINDIR%\lib\tcl%VER%\msgcat1.5\pkgIndex.tcl
   Flags=0000000010000010
 end
 item: Install File
   Source=${__TCLBASEDIR__}\library\msgcat\msgcat.tcl
-  Destination=%MAINDIR%\lib\tcl%VER%\msgcat1.4\msgcat.tcl
+  Destination=%MAINDIR%\lib\tcl%VER%\msgcat1.5\msgcat.tcl
   Flags=0000000010000010
 end
 item: Install File

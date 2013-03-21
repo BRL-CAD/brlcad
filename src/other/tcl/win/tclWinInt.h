@@ -7,8 +7,6 @@
  *
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
- *
- * RCS: @(#) $Id$
  */
 
 #ifndef _TCLWININT
@@ -35,6 +33,12 @@
 #endif
 #ifndef VER_PLATFORM_WIN32_CE
 #define VER_PLATFORM_WIN32_CE 3
+#endif
+
+#ifdef _WIN64
+#         define TCL_I_MODIFIER        "I"
+#else
+#         define TCL_I_MODIFIER        ""
 #endif
 
 /*

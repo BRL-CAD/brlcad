@@ -28,7 +28,3 @@ mp_exch (mp_int * a, mp_int * b)
   *b = t;
 }
 #endif
-
-/* $Source$ */
-/* $Revision$ */
-/* $Date$ */

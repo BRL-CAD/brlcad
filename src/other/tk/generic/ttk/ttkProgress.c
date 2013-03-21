@@ -1,5 +1,4 @@
-/* $Id$
- *
+/*
  * Copyright (c) Joe English, Pat Thoyts, Michael Kirkham
  *
  * ttk::progressbar widget.
@@ -69,6 +68,8 @@ static Tk_OptionSpec ProgressbarOptionSpecs[] =
     {TK_OPTION_INT, "-phase", "phase", "Phase",
 	"0", Tk_Offset(Progressbar,progress.phaseObj), -1,
 	0, 0, 0 },
+
+    WIDGET_TAKEFOCUS_FALSE,
     WIDGET_INHERIT_OPTIONS(ttkCoreOptionSpecs)
 };
 

@@ -6,8 +6,6 @@
 # Copyright (c) 1997 Sun Microsystems, Inc.
 # Copyright (c) 1998-1999 by Scriptics Corporation.
 # Copyright (c) 1998-1999 ActiveState Corporation.
-#
-# RCS: @(#) $Id$
 
 package require tcltest 2.1
 eval tcltest::configure $argv
@@ -199,7 +197,7 @@ test winDialog-5.6 {GetFileName: Tcl_GetIndexFromObj() == TCL_OK} {nt testwineve
 test winDialog-5.7 {GetFileName: valid option, but missing value} {nt} {
     list [catch {tk_getOpenFile -initialdir bar -title} msg] $msg
 } {1 {value for "-title" missing}}
-test winDialog-5.8 {GetFileName: extension begins with .} {nt testwinevent} {
+test winDialog-5.8 {GetFileName: extension begins with .} {nt testwinevent knownBug} {
 #    if (string[0] == '.') {
 #	string++;
 #    }
@@ -211,7 +209,7 @@ test winDialog-5.8 {GetFileName: extension begins with .} {nt testwinevent} {
     }
     string totitle $x
 } [string totitle [file join [pwd] bar.foo]]
-test winDialog-5.9 {GetFileName: extension doesn't begin with .} {nt testwinevent} {
+test winDialog-5.9 {GetFileName: extension doesn't begin with .} {nt testwinevent knownBug} {
     start {set x [tk_getSaveFile -defaultextension foo -title Save]}
     then {
 	SetText 0x480 bar
@@ -344,7 +342,7 @@ test winDialog-5.23 {GetFileName: call GetSaveFileName} {nt testwinevent english
     set x
 } {&Save}
 if {[info exists ::env(TEMP)]} {
-test winDialog-5.24 {GetFileName: convert \ to /} {nt testwinevent} {
+test winDialog-5.24 {GetFileName: convert \ to /} {nt testwinevent knownBug} {
     start {set x [tk_getSaveFile -title Back]}
     then {
 	SetText 0x480 [file nativename \

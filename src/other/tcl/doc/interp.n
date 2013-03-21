@@ -5,8 +5,6 @@
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 '\" 
-'\" RCS: @(#) $Id$
-'\" 
 .so man.macros
 .TH interp n 7.6 Tcl "Tcl Built-In Commands"
 .BS
@@ -167,6 +165,44 @@ the slaves for its master;  an error occurs if a slave interpreter by the
 given name already exists in this master.
 The initial recursion limit of the slave interpreter is set to the
 current recursion limit of its parent interpreter.
+.TP
+\fBinterp\fR \fBdebug \fIpath\fR ?\fI\-frame\fR ?\fIbool\fR??
+.
+Controls whether frame-level stack information is captured in the
+slave interpreter identified by \fIpath\fR.  If no arguments are
+given, option and current setting are returned.  If \fI\-frame\fR
+is given, the debug setting is set to the given boolean if provided
+and the current setting is returned.
+This only effects the output of \fBinfo frame\fR, in that exact
+frame-level information for command invocation at the bytecode level
+is only captured with this setting on.
+.PP
+.RS
+For example, with code like
+.PP
+.CS
+\fBproc\fR mycontrol {... script} {
+  ...
+  \fBuplevel\fR 1 $script
+  ...
+}
+
+\fBproc\fR dosomething {...} {
+  ...
+  mycontrol {
+    somecode
+  }
+}
+.CE
+.PP
+the standard setting will provide a relative line number for the
+command \fBsomecode\fR and the relevant frame will be of type
+\fBeval\fR. With frame-debug active on the other hand the tracking
+extends so far that the system will be able to determine the file and
+absolute line number of this command, and return a frame of type
+\fBsource\fR. This more exact information is paid for with slower
+execution of all commands.
+.RE
 .TP
 \fBinterp\fR \fBdelete \fR?\fIpath ...?\fR
 Deletes zero or more interpreters given by the optional \fIpath\fR

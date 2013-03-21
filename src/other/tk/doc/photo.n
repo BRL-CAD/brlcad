@@ -9,8 +9,6 @@
 '\"	    Department of Computer Science,
 '\"	    Australian National University.
 '\"
-'\" RCS: @(#) $Id$
-'\" 
 .so man.macros
 .TH photo n 4.0 Tk "Tk Built-In Commands"
 .BS
@@ -212,9 +210,14 @@ the specified color.
 Specifies the name of the image file format handler to be used.
 Specifically, this subcommand searches
 for the first handler whose name matches an initial substring of
-\fIformat-name\fR and which has the capability to read this image data.
-If this option is not given, this subcommand uses the first
-handler that has the capability to read the image data.
+\fIformat-name\fR and which has the capability to write a string
+containing this image data.
+If this option is not given, this subcommand uses a format that
+consists of a list (one element per row) of lists (one element per
+pixel/column) of colors in
+.QW \fB#\fIrrggbb\fR
+format (where \fIrr\fR is a pair of hexadecimal digits for the red
+channel, \fIgg\fR for green, and \fIbb\fR for blue).
 .TP
 \fB\-from \fIx1 y1 x2 y2\fR
 Specifies a rectangular region of \fIimageName\fR to be returned.

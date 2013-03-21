@@ -2,8 +2,6 @@
 #
 # This demonstration script creates a canvas widget showing a 2-D
 # plot with data points that can be dragged with the mouse.
-#
-# RCS: @(#) $Id$
 
 if {![info exists widgetDemo]} {
     error "This script should be run from the \"widget\" demo."

@@ -9,8 +9,6 @@
  *
  * See the file "license.terms" for information on usage and redistribution of
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
- *
- * RCS: @(#) $Id$
  */
 
 #include "tclInt.h"
@@ -758,6 +756,7 @@ FreeRegexpInternalRep(
     if (--(regexpRepPtr->refCount) <= 0) {
 	FreeRegexp(regexpRepPtr);
     }
+    objPtr->typePtr = NULL;
 }
 
 /*

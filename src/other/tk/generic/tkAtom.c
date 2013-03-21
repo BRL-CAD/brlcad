@@ -11,8 +11,6 @@
  *
  * See the file "license.terms" for information on usage and redistribution of
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
- *
- * RCS: @(#) $Id$
  */
 
 #include "tkInt.h"
@@ -22,7 +20,7 @@
  * those found in xatom.h
  */
 
-static char * atomNameArray[] = {
+static const char *atomNameArray[] = {
     "PRIMARY",		"SECONDARY",		"ARC",
     "ATOM",		"BITMAP",		"CARDINAL",
     "COLORMAP",		"CURSOR",		"CUT_BUFFER0",
@@ -95,11 +93,11 @@ Tk_InternAtom(
 	Atom atom;
 
 	atom = XInternAtom(dispPtr->display, name, False);
-	Tcl_SetHashValue(hPtr, atom);
-	hPtr2 = Tcl_CreateHashEntry(&dispPtr->atomTable, (char*) atom, &isNew);
+	Tcl_SetHashValue(hPtr, INT2PTR(atom));
+	hPtr2 = Tcl_CreateHashEntry(&dispPtr->atomTable, INT2PTR(atom), &isNew);
 	Tcl_SetHashValue(hPtr2, Tcl_GetHashKey(&dispPtr->nameTable, hPtr));
     }
-    return (Atom) Tcl_GetHashValue(hPtr);
+    return (Atom) PTR2INT(Tcl_GetHashValue(hPtr));
 }
 
 /*
@@ -137,7 +135,7 @@ Tk_GetAtomName(
 	AtomInit(dispPtr);
     }
 
-    hPtr = Tcl_FindHashEntry(&dispPtr->atomTable, (char *) atom);
+    hPtr = Tcl_FindHashEntry(&dispPtr->atomTable, INT2PTR(atom));
     if (hPtr == NULL) {
 	char *name;
 	Tk_ErrorHandler handler;
@@ -153,12 +151,12 @@ Tk_GetAtomName(
 	}
 	Tk_DeleteErrorHandler(handler);
 	hPtr = Tcl_CreateHashEntry(&dispPtr->nameTable, name, &isNew);
-	Tcl_SetHashValue(hPtr, atom);
+	Tcl_SetHashValue(hPtr, INT2PTR(atom));
 	if (mustFree) {
 	    XFree(name);
 	}
 	name = Tcl_GetHashKey(&dispPtr->nameTable, hPtr);
-	hPtr = Tcl_CreateHashEntry(&dispPtr->atomTable, (char *) atom, &isNew);
+	hPtr = Tcl_CreateHashEntry(&dispPtr->atomTable, INT2PTR(atom), &isNew);
 	Tcl_SetHashValue(hPtr, name);
     }
     return Tcl_GetHashValue(hPtr);
@@ -192,19 +190,19 @@ AtomInit(
     Tcl_InitHashTable(&dispPtr->atomTable, TCL_ONE_WORD_KEYS);
 
     for (atom = 1; atom <= XA_LAST_PREDEFINED; atom++) {
-	char *name;
+	const char *name;
 	int isNew;
 
-	hPtr = Tcl_FindHashEntry(&dispPtr->atomTable, (char *) atom);
+	hPtr = Tcl_FindHashEntry(&dispPtr->atomTable, INT2PTR(atom));
 	if (hPtr != NULL) {
 	    continue;
 	}
 
 	name = atomNameArray[atom - 1];
 	hPtr = Tcl_CreateHashEntry(&dispPtr->nameTable, name, &isNew);
-	Tcl_SetHashValue(hPtr, atom);
+	Tcl_SetHashValue(hPtr, INT2PTR(atom));
 	name = Tcl_GetHashKey(&dispPtr->nameTable, hPtr);
-	hPtr = Tcl_CreateHashEntry(&dispPtr->atomTable, (char *) atom, &isNew);
+	hPtr = Tcl_CreateHashEntry(&dispPtr->atomTable, INT2PTR(atom), &isNew);
 	Tcl_SetHashValue(hPtr, name);
     }
 }

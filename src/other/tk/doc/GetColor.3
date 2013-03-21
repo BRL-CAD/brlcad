@@ -5,8 +5,6 @@
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 '\" 
-'\" RCS: @(#) $Id$
-'\" 
 .so man.macros
 .TH Tk_AllocColorFromObj 3 8.1 Tk "Tk Library Procedures"
 .BS
@@ -89,8 +87,9 @@ to use to display the color.  Each \fIR\fR, \fIG\fR, or \fIB\fR
 represents a single hexadecimal digit.  The four forms permit
 colors to be specified with 4-bit, 8-bit, 12-bit or 16-bit values.
 When fewer than 16 bits are provided for each color, they represent
-the most significant bits of the color.  For example, #3a7 is the
-same as #3000a0007000.
+the most significant bits of the color, while the lower unfilled
+bits will be repeatedly replicated from the available higher bits.
+For example, #3a7 is the same as #3333aaaa7777.
 .PP
 \fBTk_AllocColorFromObj\fR returns a pointer to
 an XColor structure;  the structure indicates the exact intensities of

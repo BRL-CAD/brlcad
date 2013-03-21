@@ -5,8 +5,6 @@
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 '\" 
-'\" RCS: @(#) $Id$
-'\" 
 .so man.macros
 .TH wm n 8.5 Tk "Tk Built-In Commands"
 .BS
@@ -262,6 +260,15 @@ If \fInewGeometry\fR is specified as an empty string then any
 existing user-specified geometry for \fIwindow\fR is cancelled, and
 the window will revert to the size requested internally by its
 widgets.
+.PP
+Note that this is related to \fBwinfo geometry\fR, but not the same. That can
+only query the geometry, and always reflects Tk's current understanding of the
+actual size and location of \fIwindow\fR, whereas \fBwm geometry\fR allows
+both setting and querying of the \fIwindow manager\fR's understanding of the
+size and location of the window. This can vary significantly, for example to
+reflect the addition of decorative elements to \fIwindow\fR such as title
+bars, and window managers are not required to precisely follow the requests
+made through this command.
 .RE
 .TP
 \fBwm grid \fIwindow\fR ?\fIbaseWidth baseHeight widthInc heightInc\fR?

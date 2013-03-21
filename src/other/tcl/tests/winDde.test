@@ -8,8 +8,6 @@
 #
 # See the file "license.terms" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-#
-# RCS: @(#) $Id$
 
 if {[lsearch [namespace children] ::tcltest] == -1} {
     package require tcltest 2
@@ -17,17 +15,13 @@ if {[lsearch [namespace children] ::tcltest] == -1} {
     namespace import -force ::tcltest::*
 }
 
+testConstraint dde 0
 if {[testConstraint win]} {
-    if [catch {
-	# Is the dde extension already static to this shell?
-	if [catch {load {} Dde; set ::ddelib {}}] {
-	    # try the location given to use on the commandline to tcltest
+    if {![catch {
 	    ::tcltest::loadTestedCommands
-	    load $::ddelib Dde
-	}
+	    package require dde
+	    set ::ddelib [lindex [package ifneeded dde 1.3.3] 1]}]} {
 	testConstraint dde 1
-    }] {
-	testConstraint dde 0
     }
 }
 
@@ -38,14 +32,12 @@ if {[testConstraint win]} {
 
 set scriptName [makeFile {} script1.tcl]
 
-proc createChildProcess { ddeServerName {handler {}}} {
+proc createChildProcess {ddeServerName {handler {}}} {
     file delete -force $::scriptName
 
     set f [open $::scriptName w+]
     puts $f [list set ddeServerName $ddeServerName]
-    if {$::ddelib != ""} {
-	puts $f [list load $::ddelib Dde]
-    }
+    puts $f [list load $::ddelib dde]
     puts $f {
         # DDE child server -
         #

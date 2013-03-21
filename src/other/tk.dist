@@ -12,7 +12,6 @@ doc
 generic/README
 generic/default.h
 generic/ks_names.h
-generic/prolog.ps
 generic/tk.decls
 generic/tk.h
 generic/tk3d.h

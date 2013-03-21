@@ -7,8 +7,6 @@
 #	of Tcl.  It is NOT supported and you should not rely
 #	on it.  If your code does rely on this package you
 #	may directly incorporate this code into your application.
-#
-# RCS: @(#) $Id$
 
 package require Tcl 8.2
 # When this version number changes, update the pkgIndex.tcl file

@@ -8,8 +8,6 @@
  *
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
- *
- * RCS: @(#) $Id$
  */
 
 #include "tkWinInt.h"
@@ -118,27 +116,21 @@ TkpDisplayWarning(
     CONST char *msg,		/* Message to be displayed. */
     CONST char *title)		/* Title of warning. */
 {
-    Tcl_DString msgString, titleString;
-    Tcl_Encoding unicodeEncoding = TkWinGetUnicodeEncoding();
+#define TK_MAX_WARN_LEN 1024
+    WCHAR msgString[TK_MAX_WARN_LEN + 5];
+    WCHAR titleString[TK_MAX_WARN_LEN + 1];
 
+    MultiByteToWideChar(CP_UTF8, 0, msg, -1, msgString, TK_MAX_WARN_LEN);
+    MultiByteToWideChar(CP_UTF8, 0, title, -1, titleString, TK_MAX_WARN_LEN);
     /*
      * Truncate MessageBox string if it is too long to not overflow the screen
      * and cause possible oversized window error.
      */
-
-#define TK_MAX_WARN_LEN (1024 * sizeof(WCHAR))
-    Tcl_UtfToExternalDString(unicodeEncoding, msg, -1, &msgString);
-    Tcl_UtfToExternalDString(unicodeEncoding, title, -1, &titleString);
-    if (Tcl_DStringLength(&msgString) > TK_MAX_WARN_LEN) {
-	Tcl_DStringSetLength(&msgString, TK_MAX_WARN_LEN);
-	Tcl_DStringAppend(&msgString, (char *) L" ...", 4 * sizeof(WCHAR));
-    }
-    MessageBoxW(NULL, (WCHAR *) Tcl_DStringValue(&msgString),
-	    (WCHAR *) Tcl_DStringValue(&titleString),
+	memcpy(msgString + TK_MAX_WARN_LEN, L" ...", 5 * sizeof(WCHAR));
+    titleString[TK_MAX_WARN_LEN] = L'\0';
+    MessageBoxW(NULL, msgString, titleString,
 	    MB_OK | MB_ICONEXCLAMATION | MB_SYSTEMMODAL
 	    | MB_SETFOREGROUND | MB_TOPMOST);
-    Tcl_DStringFree(&msgString);
-    Tcl_DStringFree(&titleString);
 }
 
 /*

@@ -8,8 +8,6 @@
  *
  * See the file "license.terms" for information on usage and redistribution of
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
- *
- * RCS: @(#) $Id$
  */
 
 #include "tclWinInt.h"
@@ -52,7 +50,7 @@ enum {
     WIN_SYSTEM_ATTRIBUTE
 };
 
-static int attributeArray[] = {FILE_ATTRIBUTE_ARCHIVE, FILE_ATTRIBUTE_HIDDEN,
+static const int attributeArray[] = {FILE_ATTRIBUTE_ARCHIVE, FILE_ATTRIBUTE_HIDDEN,
 	0, FILE_ATTRIBUTE_READONLY, 0, FILE_ATTRIBUTE_SYSTEM};
 
 
@@ -177,7 +175,7 @@ DoRenameFile(
     CONST TCHAR *nativeDst)	/* New pathname for file or directory
 				 * (native). */
 {
-#ifdef HAVE_NO_SEH
+#if defined(HAVE_NO_SEH) && !defined(_WIN64)
     EXCEPTION_REGISTRATION registration;
 #endif
     DWORD srcAttr, dstAttr;
@@ -569,7 +567,7 @@ DoCopyFile(
     CONST TCHAR *nativeSrc,	/* Pathname of file to be copied (native). */
     CONST TCHAR *nativeDst)	/* Pathname of file to copy to (native). */
 {
-#ifdef HAVE_NO_SEH
+#if defined(HAVE_NO_SEH) && !defined(_WIN64)
     EXCEPTION_REGISTRATION registration;
 #endif
     int retval = -1;

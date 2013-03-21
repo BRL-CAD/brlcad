@@ -5,12 +5,10 @@
  *	the configuration package.
  *
  * Copyright (c) 1997 by Sun Microsystems, Inc.
- * Copyright 2001, Apple Computer, Inc.
+ * Copyright 2001, Apple Inc.
  *
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
- *
- * RCS: @(#) $Id$
  */
 
 #include "tkInt.h"
@@ -38,8 +36,8 @@
 Tcl_Obj *
 TkpGetSystemDefault(
     Tk_Window tkwin,			/* A window to use. */
-    CONST char *dbName,			/* The option database name. */
-    CONST char *className)		/* The name of the option class. */
+    const char *dbName,			/* The option database name. */
+    const char *className)		/* The name of the option class. */
 {
     return NULL;
 }

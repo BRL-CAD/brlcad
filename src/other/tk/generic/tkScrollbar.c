@@ -10,8 +10,6 @@
  *
  * See the file "license.terms" for information on usage and redistribution of
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
- *
- * RCS: @(#) $Id$
  */
 
 #include "tkInt.h"
@@ -28,11 +26,14 @@ static Tk_CustomOption orientOption = {
     (ClientData) NULL
 };
 
+/* non-const space for "-width" default value for scrollbars */
+char tkDefScrollbarWidth[TCL_INTEGER_SPACE] = DEF_SCROLLBAR_WIDTH;
+
 /*
  * Information used for argv parsing.
  */
 
-Tk_ConfigSpec tkpScrollbarConfigSpecs[] = {
+static Tk_ConfigSpec configSpecs[] = {
     {TK_CONFIG_BORDER, "-activebackground", "activeBackground", "Foreground",
 	DEF_SCROLLBAR_ACTIVE_BG_COLOR, Tk_Offset(TkScrollbar, activeBorder),
 	TK_CONFIG_COLOR_ONLY},
@@ -89,7 +90,7 @@ Tk_ConfigSpec tkpScrollbarConfigSpecs[] = {
 	DEF_SCROLLBAR_TROUGH_MONO, Tk_Offset(TkScrollbar, troughColorPtr),
 	TK_CONFIG_MONO_ONLY},
     {TK_CONFIG_PIXELS, "-width", "width", "Width",
-	DEF_SCROLLBAR_WIDTH, Tk_Offset(TkScrollbar, width), 0},
+	tkDefScrollbarWidth, Tk_Offset(TkScrollbar, width), 0},
     {TK_CONFIG_END, NULL, NULL, NULL, NULL, 0, 0}
 };
 
@@ -283,15 +284,15 @@ ScrollbarWidgetCmd(
 	    goto error;
 	}
 	result = Tk_ConfigureValue(interp, scrollPtr->tkwin,
-		tkpScrollbarConfigSpecs, (char *) scrollPtr, argv[2], 0);
+		configSpecs, (char *) scrollPtr, argv[2], 0);
     } else if ((c == 'c') && (strncmp(argv[1], "configure", length) == 0)
 	    && (length >= 2)) {
 	if (argc == 2) {
 	    result = Tk_ConfigureInfo(interp, scrollPtr->tkwin,
-		    tkpScrollbarConfigSpecs, (char *) scrollPtr, NULL, 0);
+		    configSpecs, (char *) scrollPtr, NULL, 0);
 	} else if (argc == 3) {
 	    result = Tk_ConfigureInfo(interp, scrollPtr->tkwin,
-		    tkpScrollbarConfigSpecs, (char *) scrollPtr, argv[2], 0);
+		    configSpecs, (char *) scrollPtr, argv[2], 0);
 	} else {
 	    result = ConfigureScrollbar(interp, scrollPtr, argc-2, argv+2,
 		    TK_CONFIG_ARGV_ONLY);
@@ -531,7 +532,7 @@ ConfigureScrollbar(
     CONST char **argv,		/* Arguments. */
     int flags)			/* Flags to pass to Tk_ConfigureWidget. */
 {
-    if (Tk_ConfigureWidget(interp, scrollPtr->tkwin, tkpScrollbarConfigSpecs,
+    if (Tk_ConfigureWidget(interp, scrollPtr->tkwin, configSpecs,
 	    argc, argv, (char *) scrollPtr, flags) != TCL_OK) {
 	return TCL_ERROR;
     }
@@ -606,7 +607,7 @@ TkScrollbarEventProc(
 	 * Tk_FreeOptions handle all the standard option-related stuff.
 	 */
 
-	Tk_FreeOptions(tkpScrollbarConfigSpecs, (char *) scrollPtr,
+	Tk_FreeOptions(configSpecs, (char *) scrollPtr,
 		scrollPtr->display, 0);
 	Tcl_EventuallyFree((ClientData) scrollPtr, TCL_DYNAMIC);
     } else if (eventPtr->type == ConfigureNotify) {

@@ -67,8 +67,6 @@
 .\"	Print an open parenthesis, arg1 in quotes, then arg2 normally
 .\"	(for trailing punctuation) and then a closing parenthesis.
 .\"
-.\" RCS: @(#) $Id$
-.\"
 .\"	# Set up traps and other miscellaneous stuff for Tcl/Tk man pages.
 .if t .wh -1.3i ^B
 .nr ^l \n(.l

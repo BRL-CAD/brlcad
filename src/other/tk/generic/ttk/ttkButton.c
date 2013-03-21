@@ -1,4 +1,4 @@
-/* $Id$
+/*
  * Copyright (c) 2003, Joe English
  *
  * label, button, checkbutton, radiobutton, and menubutton widgets.
@@ -244,6 +244,7 @@ static Tk_OptionSpec LabelOptionSpecs[] =
 	NULL, Tk_Offset(Label, label.wrapLengthObj), -1,
 	TK_OPTION_NULL_OK,0,GEOMETRY_CHANGED /*SB: SIZE_CHANGED*/ },
 
+    WIDGET_TAKEFOCUS_FALSE,
     WIDGET_INHERIT_OPTIONS(BaseOptionSpecs)
 };
 
@@ -301,14 +302,13 @@ typedef struct
  */
 static Tk_OptionSpec ButtonOptionSpecs[] =
 {
-    WIDGET_TAKES_FOCUS,
-
     {TK_OPTION_STRING, "-command", "command", "Command",
 	"", Tk_Offset(Button, button.commandObj), -1, 0,0,0},
     {TK_OPTION_STRING_TABLE, "-default", "default", "Default",
 	"normal", Tk_Offset(Button, button.defaultStateObj), -1,
 	0, (ClientData) ttkDefaultStrings, DEFAULTSTATE_CHANGED},
 
+    WIDGET_TAKEFOCUS_TRUE,
     WIDGET_INHERIT_OPTIONS(BaseOptionSpecs)
 };
 
@@ -412,8 +412,6 @@ typedef struct
  */
 static Tk_OptionSpec CheckbuttonOptionSpecs[] =
 {
-    WIDGET_TAKES_FOCUS,
-
     {TK_OPTION_STRING, "-variable", "variable", "Variable",
 	"", Tk_Offset(Checkbutton, checkbutton.variableObj), -1,
 	TK_OPTION_DONT_SET_DEFAULT,0,0},
@@ -427,6 +425,7 @@ static Tk_OptionSpec CheckbuttonOptionSpecs[] =
 	"", Tk_Offset(Checkbutton, checkbutton.commandObj), -1,
 	0,0,0},
 
+    WIDGET_TAKEFOCUS_TRUE,
     WIDGET_INHERIT_OPTIONS(BaseOptionSpecs)
 };
 
@@ -613,8 +612,6 @@ typedef struct
  */
 static Tk_OptionSpec RadiobuttonOptionSpecs[] =
 {
-    WIDGET_TAKES_FOCUS,
-
     {TK_OPTION_STRING, "-variable", "variable", "Variable",
 	"::selectedButton", Tk_Offset(Radiobutton, radiobutton.variableObj),-1,
 	0,0,0},
@@ -625,6 +622,7 @@ static Tk_OptionSpec RadiobuttonOptionSpecs[] =
 	"", Tk_Offset(Radiobutton, radiobutton.commandObj), -1,
 	0,0,0},
 
+    WIDGET_TAKEFOCUS_TRUE,
     WIDGET_INHERIT_OPTIONS(BaseOptionSpecs)
 };
 
@@ -789,14 +787,13 @@ static const char *const directionStrings[] = {
 };
 static Tk_OptionSpec MenubuttonOptionSpecs[] =
 {
-    WIDGET_TAKES_FOCUS,
-
     {TK_OPTION_STRING, "-menu", "menu", "Menu",
 	"", Tk_Offset(Menubutton, menubutton.menuObj), -1, 0,0,0},
     {TK_OPTION_STRING_TABLE, "-direction", "direction", "Direction",
 	"below", Tk_Offset(Menubutton, menubutton.directionObj), -1,
 	0,(ClientData)directionStrings,GEOMETRY_CHANGED},
 
+    WIDGET_TAKEFOCUS_TRUE,
     WIDGET_INHERIT_OPTIONS(BaseOptionSpecs)
 };
 

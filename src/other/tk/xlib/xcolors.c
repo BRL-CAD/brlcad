@@ -5,857 +5,227 @@
  *	and pixel values.
  *
  * Copyright (c) 1996 by Sun Microsystems, Inc.
+ * Copyright (c) 2012 by Jan Nijtmans
  *
  * See the file "license.terms" for information on usage and redistribution of
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
- *
- * RCS: @(#) $Id$
  */
 
-#include <tkInt.h>
+#include "tkInt.h"
 
 /*
- * This value will be set to the number of colors in the color table
- * the first time it is needed.
+ * Index array. For each of the characters 'a'-'y', this table gives the first color
+ * starting with that character in the xColors table.
  */
+static const unsigned char az[] = {0, 5, 13, 21, 45, 46, 50, 60, 62, 65, 66,
+	67, 91, 106, 109, 115, 126, 127, 130, 144, 149, 150, 152, 155, 156, 158};
 
-static int numXColors = 0;
-
-/*
- * Forward declarations for functions used only in this file.
- */
-
-static int	FindColor(const char *name, XColor *colorPtr);
-
 /*
  * Define an array that defines the mapping from color names to RGB values.
- * Note that this array must be kept sorted alphabetically so that the binary
- * search used in XParseColor will succeed.
+ * Note that this array must be kept sorted alphabetically so that the
+ * binary search used in XParseColor will succeed.
+ *
+ * Each color definition consists of exactly 32 characters, and starts with
+ * the color name, but without its first character (that character can be
+ * reproduced from the az index array). The last byte holds the number
+ * of additional color variants. For example "azure1" up to "azure4" are
+ * handled by the same table entry as "azure". From the last byte backwards,
+ * each group of 3 bytes contain the rgb values of the main color and
+ * the available variants.
+ *
+ * The colors gray and grey have more than 8 variants. gray1 up to gray8
+ * are handled by this table, above that is handled especially.
  */
 
-typedef struct {
-    char *name;
-    unsigned char red, green, blue;
-} XColorEntry;
+typedef char elem[32];
 
-static XColorEntry xColors[] = {
-     { "alice blue", 240, 248, 255 },
-     { "AliceBlue", 240, 248, 255 },
-     { "antique white", 250, 235, 215 },
-     { "AntiqueWhite", 250, 235, 215 },
-     { "AntiqueWhite1", 255, 239, 219 },
-     { "AntiqueWhite2", 238, 223, 204 },
-     { "AntiqueWhite3", 205, 192, 176 },
-     { "AntiqueWhite4", 139, 131, 120 },
-     { "aquamarine", 127, 255, 212 },
-     { "aquamarine1", 127, 255, 212 },
-     { "aquamarine2", 118, 238, 198 },
-     { "aquamarine3", 102, 205, 170 },
-     { "aquamarine4", 69, 139, 116 },
-     { "azure", 240, 255, 255 },
-     { "azure1", 240, 255, 255 },
-     { "azure2", 224, 238, 238 },
-     { "azure3", 193, 205, 205 },
-     { "azure4", 131, 139, 139 },
-     { "beige", 245, 245, 220 },
-     { "bisque", 255, 228, 196 },
-     { "bisque1", 255, 228, 196 },
-     { "bisque2", 238, 213, 183 },
-     { "bisque3", 205, 183, 158 },
-     { "bisque4", 139, 125, 107 },
-     { "black", 0, 0, 0 },
-     { "blanched almond", 255, 235, 205 },
-     { "BlanchedAlmond", 255, 235, 205 },
-     { "blue", 0, 0, 255 },
-     { "blue violet", 138, 43, 226 },
-     { "blue1", 0, 0, 255 },
-     { "blue2", 0, 0, 238 },
-     { "blue3", 0, 0, 205 },
-     { "blue4", 0, 0, 139 },
-     { "BlueViolet", 138, 43, 226 },
-     { "brown", 165, 42, 42 },
-     { "brown1", 255, 64, 64 },
-     { "brown2", 238, 59, 59 },
-     { "brown3", 205, 51, 51 },
-     { "brown4", 139, 35, 35 },
-     { "burlywood", 222, 184, 135 },
-     { "burlywood1", 255, 211, 155 },
-     { "burlywood2", 238, 197, 145 },
-     { "burlywood3", 205, 170, 125 },
-     { "burlywood4", 139, 115, 85 },
-     { "cadet blue", 95, 158, 160 },
-     { "CadetBlue", 95, 158, 160 },
-     { "CadetBlue1", 152, 245, 255 },
-     { "CadetBlue2", 142, 229, 238 },
-     { "CadetBlue3", 122, 197, 205 },
-     { "CadetBlue4", 83, 134, 139 },
-     { "chartreuse", 127, 255, 0 },
-     { "chartreuse1", 127, 255, 0 },
-     { "chartreuse2", 118, 238, 0 },
-     { "chartreuse3", 102, 205, 0 },
-     { "chartreuse4", 69, 139, 0 },
-     { "chocolate", 210, 105, 30 },
-     { "chocolate1", 255, 127, 36 },
-     { "chocolate2", 238, 118, 33 },
-     { "chocolate3", 205, 102, 29 },
-     { "chocolate4", 139, 69, 19 },
-     { "coral", 255, 127, 80 },
-     { "coral1", 255, 114, 86 },
-     { "coral2", 238, 106, 80 },
-     { "coral3", 205, 91, 69 },
-     { "coral4", 139, 62, 47 },
-     { "cornflower blue", 100, 149, 237 },
-     { "CornflowerBlue", 100, 149, 237 },
-     { "cornsilk", 255, 248, 220 },
-     { "cornsilk1", 255, 248, 220 },
-     { "cornsilk2", 238, 232, 205 },
-     { "cornsilk3", 205, 200, 177 },
-     { "cornsilk4", 139, 136, 120 },
-     { "cyan", 0, 255, 255 },
-     { "cyan1", 0, 255, 255 },
-     { "cyan2", 0, 238, 238 },
-     { "cyan3", 0, 205, 205 },
-     { "cyan4", 0, 139, 139 },
-     { "dark blue", 0, 0, 139 },
-     { "dark cyan", 0, 139, 139 },
-     { "dark goldenrod", 184, 134, 11 },
-     { "dark gray", 169, 169, 169 },
-     { "dark green", 0, 100, 0 },
-     { "dark grey", 169, 169, 169 },
-     { "dark khaki", 189, 183, 107 },
-     { "dark magenta", 139, 0, 139 },
-     { "dark olive green", 85, 107, 47 },
-     { "dark orange", 255, 140, 0 },
-     { "dark orchid", 153, 50, 204 },
-     { "dark red", 139, 0, 0 },
-     { "dark salmon", 233, 150, 122 },
-     { "dark sea green", 143, 188, 143 },
-     { "dark slate blue", 72, 61, 139 },
-     { "dark slate gray", 47, 79, 79 },
-     { "dark slate grey", 47, 79, 79 },
-     { "dark turquoise", 0, 206, 209 },
-     { "dark violet", 148, 0, 211 },
-     { "DarkBlue", 0, 0, 139 },
-     { "DarkCyan", 0, 139, 139 },
-     { "DarkGoldenrod", 184, 134, 11 },
-     { "DarkGoldenrod1", 255, 185, 15 },
-     { "DarkGoldenrod2", 238, 173, 14 },
-     { "DarkGoldenrod3", 205, 149, 12 },
-     { "DarkGoldenrod4", 139, 101, 8 },
-     { "DarkGray", 169, 169, 169 },
-     { "DarkGreen", 0, 100, 0 },
-     { "DarkGrey", 169, 169, 169 },
-     { "DarkKhaki", 189, 183, 107 },
-     { "DarkMagenta", 139, 0, 139 },
-     { "DarkOliveGreen", 85, 107, 47 },
-     { "DarkOliveGreen1", 202, 255, 112 },
-     { "DarkOliveGreen2", 188, 238, 104 },
-     { "DarkOliveGreen3", 162, 205, 90 },
-     { "DarkOliveGreen4", 110, 139, 61 },
-     { "DarkOrange", 255, 140, 0 },
-     { "DarkOrange1", 255, 127, 0 },
-     { "DarkOrange2", 238, 118, 0 },
-     { "DarkOrange3", 205, 102, 0 },
-     { "DarkOrange4", 139, 69, 0 },
-     { "DarkOrchid", 153, 50, 204 },
-     { "DarkOrchid1", 191, 62, 255 },
-     { "DarkOrchid2", 178, 58, 238 },
-     { "DarkOrchid3", 154, 50, 205 },
-     { "DarkOrchid4", 104, 34, 139 },
-     { "DarkRed", 139, 0, 0 },
-     { "DarkSalmon", 233, 150, 122 },
-     { "DarkSeaGreen", 143, 188, 143 },
-     { "DarkSeaGreen1", 193, 255, 193 },
-     { "DarkSeaGreen2", 180, 238, 180 },
-     { "DarkSeaGreen3", 155, 205, 155 },
-     { "DarkSeaGreen4", 105, 139, 105 },
-     { "DarkSlateBlue", 72, 61, 139 },
-     { "DarkSlateGray", 47, 79, 79 },
-     { "DarkSlateGray1", 151, 255, 255 },
-     { "DarkSlateGray2", 141, 238, 238 },
-     { "DarkSlateGray3", 121, 205, 205 },
-     { "DarkSlateGray4", 82, 139, 139 },
-     { "DarkSlateGrey", 47, 79, 79 },
-     { "DarkTurquoise", 0, 206, 209 },
-     { "DarkViolet", 148, 0, 211 },
-     { "deep pink", 255, 20, 147 },
-     { "deep sky blue", 0, 191, 255 },
-     { "DeepPink", 255, 20, 147 },
-     { "DeepPink1", 255, 20, 147 },
-     { "DeepPink2", 238, 18, 137 },
-     { "DeepPink3", 205, 16, 118 },
-     { "DeepPink4", 139, 10, 80 },
-     { "DeepSkyBlue", 0, 191, 255 },
-     { "DeepSkyBlue1", 0, 191, 255 },
-     { "DeepSkyBlue2", 0, 178, 238 },
-     { "DeepSkyBlue3", 0, 154, 205 },
-     { "DeepSkyBlue4", 0, 104, 139 },
-     { "dim gray", 105, 105, 105 },
-     { "dim grey", 105, 105, 105 },
-     { "DimGray", 105, 105, 105 },
-     { "DimGrey", 105, 105, 105 },
-     { "dodger blue", 30, 144, 255 },
-     { "DodgerBlue", 30, 144, 255 },
-     { "DodgerBlue1", 30, 144, 255 },
-     { "DodgerBlue2", 28, 134, 238 },
-     { "DodgerBlue3", 24, 116, 205 },
-     { "DodgerBlue4", 16, 78, 139 },
-     { "firebrick", 178, 34, 34 },
-     { "firebrick1", 255, 48, 48 },
-     { "firebrick2", 238, 44, 44 },
-     { "firebrick3", 205, 38, 38 },
-     { "firebrick4", 139, 26, 26 },
-     { "floral white", 255, 250, 240 },
-     { "FloralWhite", 255, 250, 240 },
-     { "forest green", 34, 139, 34 },
-     { "ForestGreen", 34, 139, 34 },
-     { "gainsboro", 220, 220, 220 },
-     { "ghost white", 248, 248, 255 },
-     { "GhostWhite", 248, 248, 255 },
-     { "gold", 255, 215, 0 },
-     { "gold1", 255, 215, 0 },
-     { "gold2", 238, 201, 0 },
-     { "gold3", 205, 173, 0 },
-     { "gold4", 139, 117, 0 },
-     { "goldenrod", 218, 165, 32 },
-     { "goldenrod1", 255, 193, 37 },
-     { "goldenrod2", 238, 180, 34 },
-     { "goldenrod3", 205, 155, 29 },
-     { "goldenrod4", 139, 105, 20 },
-     { "gray", 190, 190, 190 },
-     { "gray0", 0, 0, 0 },
-     { "gray1", 3, 3, 3 },
-     { "gray10", 26, 26, 26 },
-     { "gray100", 255, 255, 255 },
-     { "gray11", 28, 28, 28 },
-     { "gray12", 31, 31, 31 },
-     { "gray13", 33, 33, 33 },
-     { "gray14", 36, 36, 36 },
-     { "gray15", 38, 38, 38 },
-     { "gray16", 41, 41, 41 },
-     { "gray17", 43, 43, 43 },
-     { "gray18", 46, 46, 46 },
-     { "gray19", 48, 48, 48 },
-     { "gray2", 5, 5, 5 },
-     { "gray20", 51, 51, 51 },
-     { "gray21", 54, 54, 54 },
-     { "gray22", 56, 56, 56 },
-     { "gray23", 59, 59, 59 },
-     { "gray24", 61, 61, 61 },
-     { "gray25", 64, 64, 64 },
-     { "gray26", 66, 66, 66 },
-     { "gray27", 69, 69, 69 },
-     { "gray28", 71, 71, 71 },
-     { "gray29", 74, 74, 74 },
-     { "gray3", 8, 8, 8 },
-     { "gray30", 77, 77, 77 },
-     { "gray31", 79, 79, 79 },
-     { "gray32", 82, 82, 82 },
-     { "gray33", 84, 84, 84 },
-     { "gray34", 87, 87, 87 },
-     { "gray35", 89, 89, 89 },
-     { "gray36", 92, 92, 92 },
-     { "gray37", 94, 94, 94 },
-     { "gray38", 97, 97, 97 },
-     { "gray39", 99, 99, 99 },
-     { "gray4", 10, 10, 10 },
-     { "gray40", 102, 102, 102 },
-     { "gray41", 105, 105, 105 },
-     { "gray42", 107, 107, 107 },
-     { "gray43", 110, 110, 110 },
-     { "gray44", 112, 112, 112 },
-     { "gray45", 115, 115, 115 },
-     { "gray46", 117, 117, 117 },
-     { "gray47", 120, 120, 120 },
-     { "gray48", 122, 122, 122 },
-     { "gray49", 125, 125, 125 },
-     { "gray5", 13, 13, 13 },
-     { "gray50", 127, 127, 127 },
-     { "gray51", 130, 130, 130 },
-     { "gray52", 133, 133, 133 },
-     { "gray53", 135, 135, 135 },
-     { "gray54", 138, 138, 138 },
-     { "gray55", 140, 140, 140 },
-     { "gray56", 143, 143, 143 },
-     { "gray57", 145, 145, 145 },
-     { "gray58", 148, 148, 148 },
-     { "gray59", 150, 150, 150 },
-     { "gray6", 15, 15, 15 },
-     { "gray60", 153, 153, 153 },
-     { "gray61", 156, 156, 156 },
-     { "gray62", 158, 158, 158 },
-     { "gray63", 161, 161, 161 },
-     { "gray64", 163, 163, 163 },
-     { "gray65", 166, 166, 166 },
-     { "gray66", 168, 168, 168 },
-     { "gray67", 171, 171, 171 },
-     { "gray68", 173, 173, 173 },
-     { "gray69", 176, 176, 176 },
-     { "gray7", 18, 18, 18 },
-     { "gray70", 179, 179, 179 },
-     { "gray71", 181, 181, 181 },
-     { "gray72", 184, 184, 184 },
-     { "gray73", 186, 186, 186 },
-     { "gray74", 189, 189, 189 },
-     { "gray75", 191, 191, 191 },
-     { "gray76", 194, 194, 194 },
-     { "gray77", 196, 196, 196 },
-     { "gray78", 199, 199, 199 },
-     { "gray79", 201, 201, 201 },
-     { "gray8", 20, 20, 20 },
-     { "gray80", 204, 204, 204 },
-     { "gray81", 207, 207, 207 },
-     { "gray82", 209, 209, 209 },
-     { "gray83", 212, 212, 212 },
-     { "gray84", 214, 214, 214 },
-     { "gray85", 217, 217, 217 },
-     { "gray86", 219, 219, 219 },
-     { "gray87", 222, 222, 222 },
-     { "gray88", 224, 224, 224 },
-     { "gray89", 227, 227, 227 },
-     { "gray9", 23, 23, 23 },
-     { "gray90", 229, 229, 229 },
-     { "gray91", 232, 232, 232 },
-     { "gray92", 235, 235, 235 },
-     { "gray93", 237, 237, 237 },
-     { "gray94", 240, 240, 240 },
-     { "gray95", 242, 242, 242 },
-     { "gray96", 245, 245, 245 },
-     { "gray97", 247, 247, 247 },
-     { "gray98", 250, 250, 250 },
-     { "gray99", 252, 252, 252 },
-     { "green", 0, 255, 0 },
-     { "green yellow", 173, 255, 47 },
-     { "green1", 0, 255, 0 },
-     { "green2", 0, 238, 0 },
-     { "green3", 0, 205, 0 },
-     { "green4", 0, 139, 0 },
-     { "GreenYellow", 173, 255, 47 },
-     { "grey", 190, 190, 190 },
-     { "grey0", 0, 0, 0 },
-     { "grey1", 3, 3, 3 },
-     { "grey10", 26, 26, 26 },
-     { "grey100", 255, 255, 255 },
-     { "grey11", 28, 28, 28 },
-     { "grey12", 31, 31, 31 },
-     { "grey13", 33, 33, 33 },
-     { "grey14", 36, 36, 36 },
-     { "grey15", 38, 38, 38 },
-     { "grey16", 41, 41, 41 },
-     { "grey17", 43, 43, 43 },
-     { "grey18", 46, 46, 46 },
-     { "grey19", 48, 48, 48 },
-     { "grey2", 5, 5, 5 },
-     { "grey20", 51, 51, 51 },
-     { "grey21", 54, 54, 54 },
-     { "grey22", 56, 56, 56 },
-     { "grey23", 59, 59, 59 },
-     { "grey24", 61, 61, 61 },
-     { "grey25", 64, 64, 64 },
-     { "grey26", 66, 66, 66 },
-     { "grey27", 69, 69, 69 },
-     { "grey28", 71, 71, 71 },
-     { "grey29", 74, 74, 74 },
-     { "grey3", 8, 8, 8 },
-     { "grey30", 77, 77, 77 },
-     { "grey31", 79, 79, 79 },
-     { "grey32", 82, 82, 82 },
-     { "grey33", 84, 84, 84 },
-     { "grey34", 87, 87, 87 },
-     { "grey35", 89, 89, 89 },
-     { "grey36", 92, 92, 92 },
-     { "grey37", 94, 94, 94 },
-     { "grey38", 97, 97, 97 },
-     { "grey39", 99, 99, 99 },
-     { "grey4", 10, 10, 10 },
-     { "grey40", 102, 102, 102 },
-     { "grey41", 105, 105, 105 },
-     { "grey42", 107, 107, 107 },
-     { "grey43", 110, 110, 110 },
-     { "grey44", 112, 112, 112 },
-     { "grey45", 115, 115, 115 },
-     { "grey46", 117, 117, 117 },
-     { "grey47", 120, 120, 120 },
-     { "grey48", 122, 122, 122 },
-     { "grey49", 125, 125, 125 },
-     { "grey5", 13, 13, 13 },
-     { "grey50", 127, 127, 127 },
-     { "grey51", 130, 130, 130 },
-     { "grey52", 133, 133, 133 },
-     { "grey53", 135, 135, 135 },
-     { "grey54", 138, 138, 138 },
-     { "grey55", 140, 140, 140 },
-     { "grey56", 143, 143, 143 },
-     { "grey57", 145, 145, 145 },
-     { "grey58", 148, 148, 148 },
-     { "grey59", 150, 150, 150 },
-     { "grey6", 15, 15, 15 },
-     { "grey60", 153, 153, 153 },
-     { "grey61", 156, 156, 156 },
-     { "grey62", 158, 158, 158 },
-     { "grey63", 161, 161, 161 },
-     { "grey64", 163, 163, 163 },
-     { "grey65", 166, 166, 166 },
-     { "grey66", 168, 168, 168 },
-     { "grey67", 171, 171, 171 },
-     { "grey68", 173, 173, 173 },
-     { "grey69", 176, 176, 176 },
-     { "grey7", 18, 18, 18 },
-     { "grey70", 179, 179, 179 },
-     { "grey71", 181, 181, 181 },
-     { "grey72", 184, 184, 184 },
-     { "grey73", 186, 186, 186 },
-     { "grey74", 189, 189, 189 },
-     { "grey75", 191, 191, 191 },
-     { "grey76", 194, 194, 194 },
-     { "grey77", 196, 196, 196 },
-     { "grey78", 199, 199, 199 },
-     { "grey79", 201, 201, 201 },
-     { "grey8", 20, 20, 20 },
-     { "grey80", 204, 204, 204 },
-     { "grey81", 207, 207, 207 },
-     { "grey82", 209, 209, 209 },
-     { "grey83", 212, 212, 212 },
-     { "grey84", 214, 214, 214 },
-     { "grey85", 217, 217, 217 },
-     { "grey86", 219, 219, 219 },
-     { "grey87", 222, 222, 222 },
-     { "grey88", 224, 224, 224 },
-     { "grey89", 227, 227, 227 },
-     { "grey9", 23, 23, 23 },
-     { "grey90", 229, 229, 229 },
-     { "grey91", 232, 232, 232 },
-     { "grey92", 235, 235, 235 },
-     { "grey93", 237, 237, 237 },
-     { "grey94", 240, 240, 240 },
-     { "grey95", 242, 242, 242 },
-     { "grey96", 245, 245, 245 },
-     { "grey97", 247, 247, 247 },
-     { "grey98", 250, 250, 250 },
-     { "grey99", 252, 252, 252 },
-     { "honeydew", 240, 255, 240 },
-     { "honeydew1", 240, 255, 240 },
-     { "honeydew2", 224, 238, 224 },
-     { "honeydew3", 193, 205, 193 },
-     { "honeydew4", 131, 139, 131 },
-     { "hot pink", 255, 105, 180 },
-     { "HotPink", 255, 105, 180 },
-     { "HotPink1", 255, 110, 180 },
-     { "HotPink2", 238, 106, 167 },
-     { "HotPink3", 205, 96, 144 },
-     { "HotPink4", 139, 58, 98 },
-     { "indian red", 205, 92, 92 },
-     { "IndianRed", 205, 92, 92 },
-     { "IndianRed1", 255, 106, 106 },
-     { "IndianRed2", 238, 99, 99 },
-     { "IndianRed3", 205, 85, 85 },
-     { "IndianRed4", 139, 58, 58 },
-     { "ivory", 255, 255, 240 },
-     { "ivory1", 255, 255, 240 },
-     { "ivory2", 238, 238, 224 },
-     { "ivory3", 205, 205, 193 },
-     { "ivory4", 139, 139, 131 },
-     { "khaki", 240, 230, 140 },
-     { "khaki1", 255, 246, 143 },
-     { "khaki2", 238, 230, 133 },
-     { "khaki3", 205, 198, 115 },
-     { "khaki4", 139, 134, 78 },
-     { "lavender", 230, 230, 250 },
-     { "lavender blush", 255, 240, 245 },
-     { "LavenderBlush", 255, 240, 245 },
-     { "LavenderBlush1", 255, 240, 245 },
-     { "LavenderBlush2", 238, 224, 229 },
-     { "LavenderBlush3", 205, 193, 197 },
-     { "LavenderBlush4", 139, 131, 134 },
-     { "lawn green", 124, 252, 0 },
-     { "LawnGreen", 124, 252, 0 },
-     { "lemon chiffon", 255, 250, 205 },
-     { "LemonChiffon", 255, 250, 205 },
-     { "LemonChiffon1", 255, 250, 205 },
-     { "LemonChiffon2", 238, 233, 191 },
-     { "LemonChiffon3", 205, 201, 165 },
-     { "LemonChiffon4", 139, 137, 112 },
-     { "light blue", 173, 216, 230 },
-     { "light coral", 240, 128, 128 },
-     { "light cyan", 224, 255, 255 },
-     { "light goldenrod", 238, 221, 130 },
-     { "light goldenrod yellow", 250, 250, 210 },
-     { "light gray", 211, 211, 211 },
-     { "light green", 144, 238, 144 },
-     { "light grey", 211, 211, 211 },
-     { "light pink", 255, 182, 193 },
-     { "light salmon", 255, 160, 122 },
-     { "light sea green", 32, 178, 170 },
-     { "light sky blue", 135, 206, 250 },
-     { "light slate blue", 132, 112, 255 },
-     { "light slate gray", 119, 136, 153 },
-     { "light slate grey", 119, 136, 153 },
-     { "light steel blue", 176, 196, 222 },
-     { "light yellow", 255, 255, 224 },
-     { "LightBlue", 173, 216, 230 },
-     { "LightBlue1", 191, 239, 255 },
-     { "LightBlue2", 178, 223, 238 },
-     { "LightBlue3", 154, 192, 205 },
-     { "LightBlue4", 104, 131, 139 },
-     { "LightCoral", 240, 128, 128 },
-     { "LightCyan", 224, 255, 255 },
-     { "LightCyan1", 224, 255, 255 },
-     { "LightCyan2", 209, 238, 238 },
-     { "LightCyan3", 180, 205, 205 },
-     { "LightCyan4", 122, 139, 139 },
-     { "LightGoldenrod", 238, 221, 130 },
-     { "LightGoldenrod1", 255, 236, 139 },
-     { "LightGoldenrod2", 238, 220, 130 },
-     { "LightGoldenrod3", 205, 190, 112 },
-     { "LightGoldenrod4", 139, 129, 76 },
-     { "LightGoldenrodYellow", 250, 250, 210 },
-     { "LightGray", 211, 211, 211 },
-     { "LightGreen", 144, 238, 144 },
-     { "LightGrey", 211, 211, 211 },
-     { "LightPink", 255, 182, 193 },
-     { "LightPink1", 255, 174, 185 },
-     { "LightPink2", 238, 162, 173 },
-     { "LightPink3", 205, 140, 149 },
-     { "LightPink4", 139, 95, 101 },
-     { "LightSalmon", 255, 160, 122 },
-     { "LightSalmon1", 255, 160, 122 },
-     { "LightSalmon2", 238, 149, 114 },
-     { "LightSalmon3", 205, 129, 98 },
-     { "LightSalmon4", 139, 87, 66 },
-     { "LightSeaGreen", 32, 178, 170 },
-     { "LightSkyBlue", 135, 206, 250 },
-     { "LightSkyBlue1", 176, 226, 255 },
-     { "LightSkyBlue2", 164, 211, 238 },
-     { "LightSkyBlue3", 141, 182, 205 },
-     { "LightSkyBlue4", 96, 123, 139 },
-     { "LightSlateBlue", 132, 112, 255 },
-     { "LightSlateGray", 119, 136, 153 },
-     { "LightSlateGrey", 119, 136, 153 },
-     { "LightSteelBlue", 176, 196, 222 },
-     { "LightSteelBlue1", 202, 225, 255 },
-     { "LightSteelBlue2", 188, 210, 238 },
-     { "LightSteelBlue3", 162, 181, 205 },
-     { "LightSteelBlue4", 110, 123, 139 },
-     { "LightYellow", 255, 255, 224 },
-     { "LightYellow1", 255, 255, 224 },
-     { "LightYellow2", 238, 238, 209 },
-     { "LightYellow3", 205, 205, 180 },
-     { "LightYellow4", 139, 139, 122 },
-     { "lime green", 50, 205, 50 },
-     { "LimeGreen", 50, 205, 50 },
-     { "linen", 250, 240, 230 },
-     { "magenta", 255, 0, 255 },
-     { "magenta1", 255, 0, 255 },
-     { "magenta2", 238, 0, 238 },
-     { "magenta3", 205, 0, 205 },
-     { "magenta4", 139, 0, 139 },
-     { "maroon", 176, 48, 96 },
-     { "maroon1", 255, 52, 179 },
-     { "maroon2", 238, 48, 167 },
-     { "maroon3", 205, 41, 144 },
-     { "maroon4", 139, 28, 98 },
-     { "medium aquamarine", 102, 205, 170 },
-     { "medium blue", 0, 0, 205 },
-     { "medium orchid", 186, 85, 211 },
-     { "medium purple", 147, 112, 219 },
-     { "medium sea green", 60, 179, 113 },
-     { "medium slate blue", 123, 104, 238 },
-     { "medium spring green", 0, 250, 154 },
-     { "medium turquoise", 72, 209, 204 },
-     { "medium violet red", 199, 21, 133 },
-     { "MediumAquamarine", 102, 205, 170 },
-     { "MediumBlue", 0, 0, 205 },
-     { "MediumOrchid", 186, 85, 211 },
-     { "MediumOrchid1", 224, 102, 255 },
-     { "MediumOrchid2", 209, 95, 238 },
-     { "MediumOrchid3", 180, 82, 205 },
-     { "MediumOrchid4", 122, 55, 139 },
-     { "MediumPurple", 147, 112, 219 },
-     { "MediumPurple1", 171, 130, 255 },
-     { "MediumPurple2", 159, 121, 238 },
-     { "MediumPurple3", 137, 104, 205 },
-     { "MediumPurple4", 93, 71, 139 },
-     { "MediumSeaGreen", 60, 179, 113 },
-     { "MediumSlateBlue", 123, 104, 238 },
-     { "MediumSpringGreen", 0, 250, 154 },
-     { "MediumTurquoise", 72, 209, 204 },
-     { "MediumVioletRed", 199, 21, 133 },
-     { "midnight blue", 25, 25, 112 },
-     { "MidnightBlue", 25, 25, 112 },
-     { "mint cream", 245, 255, 250 },
-     { "MintCream", 245, 255, 250 },
-     { "misty rose", 255, 228, 225 },
-     { "MistyRose", 255, 228, 225 },
-     { "MistyRose1", 255, 228, 225 },
-     { "MistyRose2", 238, 213, 210 },
-     { "MistyRose3", 205, 183, 181 },
-     { "MistyRose4", 139, 125, 123 },
-     { "moccasin", 255, 228, 181 },
-     { "navajo white", 255, 222, 173 },
-     { "NavajoWhite", 255, 222, 173 },
-     { "NavajoWhite1", 255, 222, 173 },
-     { "NavajoWhite2", 238, 207, 161 },
-     { "NavajoWhite3", 205, 179, 139 },
-     { "NavajoWhite4", 139, 121, 94 },
-     { "navy", 0, 0, 128 },
-     { "navy blue", 0, 0, 128 },
-     { "NavyBlue", 0, 0, 128 },
-     { "old lace", 253, 245, 230 },
-     { "OldLace", 253, 245, 230 },
-     { "olive drab", 107, 142, 35 },
-     { "OliveDrab", 107, 142, 35 },
-     { "OliveDrab1", 192, 255, 62 },
-     { "OliveDrab2", 179, 238, 58 },
-     { "OliveDrab3", 154, 205, 50 },
-     { "OliveDrab4", 105, 139, 34 },
-     { "orange", 255, 165, 0 },
-     { "orange red", 255, 69, 0 },
-     { "orange1", 255, 165, 0 },
-     { "orange2", 238, 154, 0 },
-     { "orange3", 205, 133, 0 },
-     { "orange4", 139, 90, 0 },
-     { "OrangeRed", 255, 69, 0 },
-     { "OrangeRed1", 255, 69, 0 },
-     { "OrangeRed2", 238, 64, 0 },
-     { "OrangeRed3", 205, 55, 0 },
-     { "OrangeRed4", 139, 37, 0 },
-     { "orchid", 218, 112, 214 },
-     { "orchid1", 255, 131, 250 },
-     { "orchid2", 238, 122, 233 },
-     { "orchid3", 205, 105, 201 },
-     { "orchid4", 139, 71, 137 },
-     { "pale goldenrod", 238, 232, 170 },
-     { "pale green", 152, 251, 152 },
-     { "pale turquoise", 175, 238, 238 },
-     { "pale violet red", 219, 112, 147 },
-     { "PaleGoldenrod", 238, 232, 170 },
-     { "PaleGreen", 152, 251, 152 },
-     { "PaleGreen1", 154, 255, 154 },
-     { "PaleGreen2", 144, 238, 144 },
-     { "PaleGreen3", 124, 205, 124 },
-     { "PaleGreen4", 84, 139, 84 },
-     { "PaleTurquoise", 175, 238, 238 },
-     { "PaleTurquoise1", 187, 255, 255 },
-     { "PaleTurquoise2", 174, 238, 238 },
-     { "PaleTurquoise3", 150, 205, 205 },
-     { "PaleTurquoise4", 102, 139, 139 },
-     { "PaleVioletRed", 219, 112, 147 },
-     { "PaleVioletRed1", 255, 130, 171 },
-     { "PaleVioletRed2", 238, 121, 159 },
-     { "PaleVioletRed3", 205, 104, 137 },
-     { "PaleVioletRed4", 139, 71, 93 },
-     { "papaya whip", 255, 239, 213 },
-     { "PapayaWhip", 255, 239, 213 },
-     { "peach puff", 255, 218, 185 },
-     { "PeachPuff", 255, 218, 185 },
-     { "PeachPuff1", 255, 218, 185 },
-     { "PeachPuff2", 238, 203, 173 },
-     { "PeachPuff3", 205, 175, 149 },
-     { "PeachPuff4", 139, 119, 101 },
-     { "peru", 205, 133, 63 },
-     { "pink", 255, 192, 203 },
-     { "pink1", 255, 181, 197 },
-     { "pink2", 238, 169, 184 },
-     { "pink3", 205, 145, 158 },
-     { "pink4", 139, 99, 108 },
-     { "plum", 221, 160, 221 },
-     { "plum1", 255, 187, 255 },
-     { "plum2", 238, 174, 238 },
-     { "plum3", 205, 150, 205 },
-     { "plum4", 139, 102, 139 },
-     { "powder blue", 176, 224, 230 },
-     { "PowderBlue", 176, 224, 230 },
-     { "purple", 160, 32, 240 },
-     { "purple1", 155, 48, 255 },
-     { "purple2", 145, 44, 238 },
-     { "purple3", 125, 38, 205 },
-     { "purple4", 85, 26, 139 },
-     { "red", 255, 0, 0 },
-     { "red1", 255, 0, 0 },
-     { "red2", 238, 0, 0 },
-     { "red3", 205, 0, 0 },
-     { "red4", 139, 0, 0 },
-     { "rosy brown", 188, 143, 143 },
-     { "RosyBrown", 188, 143, 143 },
-     { "RosyBrown1", 255, 193, 193 },
-     { "RosyBrown2", 238, 180, 180 },
-     { "RosyBrown3", 205, 155, 155 },
-     { "RosyBrown4", 139, 105, 105 },
-     { "royal blue", 65, 105, 225 },
-     { "RoyalBlue", 65, 105, 225 },
-     { "RoyalBlue1", 72, 118, 255 },
-     { "RoyalBlue2", 67, 110, 238 },
-     { "RoyalBlue3", 58, 95, 205 },
-     { "RoyalBlue4", 39, 64, 139 },
-     { "saddle brown", 139, 69, 19 },
-     { "SaddleBrown", 139, 69, 19 },
-     { "salmon", 250, 128, 114 },
-     { "salmon1", 255, 140, 105 },
-     { "salmon2", 238, 130, 98 },
-     { "salmon3", 205, 112, 84 },
-     { "salmon4", 139, 76, 57 },
-     { "sandy brown", 244, 164, 96 },
-     { "SandyBrown", 244, 164, 96 },
-     { "sea green", 46, 139, 87 },
-     { "SeaGreen", 46, 139, 87 },
-     { "SeaGreen1", 84, 255, 159 },
-     { "SeaGreen2", 78, 238, 148 },
-     { "SeaGreen3", 67, 205, 128 },
-     { "SeaGreen4", 46, 139, 87 },
-     { "seashell", 255, 245, 238 },
-     { "seashell1", 255, 245, 238 },
-     { "seashell2", 238, 229, 222 },
-     { "seashell3", 205, 197, 191 },
-     { "seashell4", 139, 134, 130 },
-     { "sienna", 160, 82, 45 },
-     { "sienna1", 255, 130, 71 },
-     { "sienna2", 238, 121, 66 },
-     { "sienna3", 205, 104, 57 },
-     { "sienna4", 139, 71, 38 },
-     { "sky blue", 135, 206, 235 },
-     { "SkyBlue", 135, 206, 235 },
-     { "SkyBlue1", 135, 206, 255 },
-     { "SkyBlue2", 126, 192, 238 },
-     { "SkyBlue3", 108, 166, 205 },
-     { "SkyBlue4", 74, 112, 139 },
-     { "slate blue", 106, 90, 205 },
-     { "slate gray", 112, 128, 144 },
-     { "slate grey", 112, 128, 144 },
-     { "SlateBlue", 106, 90, 205 },
-     { "SlateBlue1", 131, 111, 255 },
-     { "SlateBlue2", 122, 103, 238 },
-     { "SlateBlue3", 105, 89, 205 },
-     { "SlateBlue4", 71, 60, 139 },
-     { "SlateGray", 112, 128, 144 },
-     { "SlateGray1", 198, 226, 255 },
-     { "SlateGray2", 185, 211, 238 },
-     { "SlateGray3", 159, 182, 205 },
-     { "SlateGray4", 108, 123, 139 },
-     { "SlateGrey", 112, 128, 144 },
-     { "snow", 255, 250, 250 },
-     { "snow1", 255, 250, 250 },
-     { "snow2", 238, 233, 233 },
-     { "snow3", 205, 201, 201 },
-     { "snow4", 139, 137, 137 },
-     { "spring green", 0, 255, 127 },
-     { "SpringGreen", 0, 255, 127 },
-     { "SpringGreen1", 0, 255, 127 },
-     { "SpringGreen2", 0, 238, 118 },
-     { "SpringGreen3", 0, 205, 102 },
-     { "SpringGreen4", 0, 139, 69 },
-     { "steel blue", 70, 130, 180 },
-     { "SteelBlue", 70, 130, 180 },
-     { "SteelBlue1", 99, 184, 255 },
-     { "SteelBlue2", 92, 172, 238 },
-     { "SteelBlue3", 79, 148, 205 },
-     { "SteelBlue4", 54, 100, 139 },
-     { "tan", 210, 180, 140 },
-     { "tan1", 255, 165, 79 },
-     { "tan2", 238, 154, 73 },
-     { "tan3", 205, 133, 63 },
-     { "tan4", 139, 90, 43 },
-     { "thistle", 216, 191, 216 },
-     { "thistle1", 255, 225, 255 },
-     { "thistle2", 238, 210, 238 },
-     { "thistle3", 205, 181, 205 },
-     { "thistle4", 139, 123, 139 },
-     { "tomato", 255, 99, 71 },
-     { "tomato1", 255, 99, 71 },
-     { "tomato2", 238, 92, 66 },
-     { "tomato3", 205, 79, 57 },
-     { "tomato4", 139, 54, 38 },
-     { "turquoise", 64, 224, 208 },
-     { "turquoise1", 0, 245, 255 },
-     { "turquoise2", 0, 229, 238 },
-     { "turquoise3", 0, 197, 205 },
-     { "turquoise4", 0, 134, 139 },
-     { "violet", 238, 130, 238 },
-     { "violet red", 208, 32, 144 },
-     { "VioletRed", 208, 32, 144 },
-     { "VioletRed1", 255, 62, 150 },
-     { "VioletRed2", 238, 58, 140 },
-     { "VioletRed3", 205, 50, 120 },
-     { "VioletRed4", 139, 34, 82 },
-     { "wheat", 245, 222, 179 },
-     { "wheat1", 255, 231, 186 },
-     { "wheat2", 238, 216, 174 },
-     { "wheat3", 205, 186, 150 },
-     { "wheat4", 139, 126, 102 },
-     { "white", 255, 255, 255 },
-     { "white smoke", 245, 245, 245 },
-     { "WhiteSmoke", 245, 245, 245 },
-     { "yellow", 255, 255, 0 },
-     { "yellow green", 154, 205, 50 },
-     { "yellow1", 255, 255, 0 },
-     { "yellow2", 238, 238, 0 },
-     { "yellow3", 205, 205, 0 },
-     { "yellow4", 139, 139, 0 },
-     { "YellowGreen", 154, 205, 50 },
-     { NULL, 0, 0, 0 }
+static const elem xColors[] = {
+    /* Colors starting with 'a' */
+    "liceBlue\0                   \360\370\377",
+    "ntiqueWhite\0    \213\203\170\315\300\260\356\337\314\377\357\333\372\353\327\4",
+    "qua\0                        \000\377\377",
+    "quamarine\0      \105\213\164\146\315\252\166\356\306\177\377\324\177\377\324\4",
+    "zure\0           \203\213\213\301\315\315\340\356\356\360\377\377\360\377\377\4",
+    /* Colors starting with 'b' */
+    "eige\0                       \365\365\334",
+    "isque\0          \213\175\153\315\267\236\356\325\267\377\344\304\377\344\304\4",
+    "lack\0                       \000\000\000",
+    "lanchedAlmond\0              \377\353\315",
+    "lue\0            \000\000\213\000\000\315\000\000\356\000\000\377\000\000\377\4",
+    "lueViolet\0                  \212\053\342",
+    "rown\0           \213\043\043\315\063\063\356\073\073\377\100\100\245\052\052\4",
+    "urlywood\0       \213\163\125\315\252\175\356\305\221\377\323\233\336\270\207\4",
+    /* Colors starting with 'c' */
+    "adetBlue\0       \123\206\213\172\305\315\216\345\356\230\365\377\137\236\240\4",
+    "hartreuse\0      \105\213\000\146\315\000\166\356\000\177\377\000\177\377\000\4",
+    "hocolate\0       \213\105\023\315\146\035\356\166\041\377\177\044\322\151\036\4",
+    "oral\0           \213\076\057\315\133\105\356\152\120\377\162\126\377\177\120\4",
+    "ornflowerBlue\0              \144\225\355",
+    "ornsilk\0        \213\210\170\315\310\261\356\350\315\377\370\334\377\370\334\4",
+    "rimson\0                     \334\024\074",
+    "yan\0            \000\213\213\000\315\315\000\356\356\000\377\377\000\377\377\4",
+    /* Colors starting with 'd' */
+    "arkBlue\0                    \000\000\213",
+    "arkCyan\0                    \000\213\213",
+    "arkGoldenrod\0   \213\145\010\315\225\014\356\255\016\377\271\017\270\206\013\4",
+    "arkGray\0                    \251\251\251",
+    "arkGreen\0                   \000\144\000",
+    "arkGrey\0                    \251\251\251",
+    "arkKhaki\0                   \275\267\153",
+    "arkMagenta\0                 \213\000\213",
+    "arkOliveGreen\0  \156\213\075\242\315\132\274\356\150\312\377\160\125\153\057\4",
+    "arkOrange\0      \213\105\000\315\146\000\356\166\000\377\177\000\377\214\000\4",
+    "arkOrchid\0      \150\042\213\232\062\315\262\072\356\277\076\377\231\062\314\4",
+    "arkRed\0                     \213\000\000",
+    "arkSalmon\0                  \351\226\172",
+    "arkSeaGreen\0    \151\213\151\233\315\233\264\356\264\301\377\301\217\274\217\4",
+    "arkSlateBlue\0               \110\075\213",
+    "arkSlateGray\0   \122\213\213\171\315\315\215\356\356\227\377\377\057\117\117\4",
+    "arkSlateGrey\0               \057\117\117",
+    "arkTurquoise\0               \000\316\321",
+    "arkViolet\0                  \224\000\323",
+    "eepPink\0        \213\012\120\315\020\166\356\022\211\377\024\223\377\024\223\4",
+    "eepSkyBlue\0     \000\150\213\000\232\315\000\262\356\000\277\377\000\277\377\4",
+    "imGray\0                     \151\151\151",
+    "imGrey\0                     \151\151\151",
+    "odgerBlue\0      \020\116\213\030\164\315\034\206\356\036\220\377\036\220\377\4",
+    /* Colors starting with 'e' */
+    "\377" /* placeholder */,
+    /* Colors starting with 'f' */
+    "irebrick\0       \213\032\032\315\046\046\356\054\054\377\060\060\262\042\042\4",
+    "loralWhite\0                 \377\372\360",
+    "orestGreen\0                 \042\213\042",
+    "uchsia\0                     \377\000\377",
+    /* Colors starting with 'g' */
+    "ainsboro\0                   \334\334\334",
+    "hostWhite\0                  \370\370\377",
+    "old\0            \213\165\000\315\255\000\356\311\000\377\327\000\377\327\000\4",
+    "oldenrod\0       \213\151\024\315\233\035\356\264\042\377\301\045\332\245\040\4",
+    "ray\0\024\024\024\022\022\022\017\017\017\015\015\015\012\012\012"
+	    "\010\010\010\005\005\005\003\003\003\276\276\276\10",
+    "ray0\0                       \000\000\000",
+    "reen\0           \000\213\000\000\315\000\000\356\000\000\377\000\000\377\000\4",
+    "reenYellow\0                 \255\377\057",
+    "rey\0\024\024\024\022\022\022\017\017\017\015\015\015\012\012\012"
+	    "\010\010\010\005\005\005\003\003\003\276\276\276\10",
+    "rey0\0                       \000\000\000",
+    /* Colors starting with 'h' */
+    "oneydew\0        \203\213\203\301\315\301\340\356\340\360\377\360\360\377\360\4",
+    "otPink\0         \213\072\142\315\140\220\356\152\247\377\156\264\377\151\264\4",
+    /* Colors starting with 'i' */
+    "ndianRed\0       \213\072\072\315\125\125\356\143\143\377\152\152\315\134\134\4",
+    "ndigo\0                      \113\000\202",
+    "vory\0           \213\213\203\315\315\301\356\356\340\377\377\360\377\377\360\4",
+    /* Colors starting with 'j' */
+    "\377" /* placeholder */,
+    /* Colors starting with 'k' */
+    "haki\0           \213\206\116\315\306\163\356\346\205\377\366\217\360\346\214\4",
+    /* Colors starting with 'l' */
+    "avender\0                    \346\346\372",
+    "avenderBlush\0   \213\203\206\315\301\305\356\340\345\377\360\365\377\360\365\4",
+    "awnGreen\0                   \174\374\000",
+    "emonChiffon\0    \213\211\160\315\311\245\356\351\277\377\372\315\377\372\315\4",
+    "ightBlue\0       \150\203\213\232\300\315\262\337\356\277\357\377\255\330\346\4",
+    "ightCoral\0                  \360\200\200",
+    "ightCyan\0       \172\213\213\264\315\315\321\356\356\340\377\377\340\377\377\4",
+    "ightGoldenrod\0  \213\201\114\315\276\160\356\334\202\377\354\213\356\335\202\4",
+    "ightGoldenrodYellow\0        \372\372\322",
+    "ightGray\0                   \323\323\323",
+    "ightGreen\0                  \220\356\220",
+    "ightGrey\0                   \323\323\323",
+    "ightPink\0       \213\137\145\315\214\225\356\242\255\377\256\271\377\266\301\4",
+    "ightSalmon\0     \213\127\102\315\201\142\356\225\162\377\240\172\377\240\172\4",
+    "ightSeaGreen\0               \040\262\252",
+    "ightSkyBlue\0    \140\173\213\215\266\315\244\323\356\260\342\377\207\316\372\4",
+    "ightSlateBlue\0              \204\160\377",
+    "ightSlateGray\0              \167\210\231",
+    "ightSlateGrey\0              \167\210\231",
+    "ightSteelBlue\0  \156\173\213\242\265\315\274\322\356\312\341\377\260\304\336\4",
+    "ightYellow\0     \213\213\172\315\315\264\356\356\321\377\377\340\377\377\340\4",
+    "ime\0                        \000\377\000",
+    "imeGreen\0                   \062\315\062",
+    "inen\0                       \372\360\346",
+    /* Colors starting with 'm' */
+    "agenta\0         \213\000\213\315\000\315\356\000\356\377\000\377\377\000\377\4",
+    "aroon\0          \213\034\142\315\051\220\356\060\247\377\064\263\260\060\140\4",
+    "ediumAquamarine\0            \146\315\252",
+    "ediumBlue\0                  \000\000\315",
+    "ediumOrchid\0    \172\067\213\264\122\315\321\137\356\340\146\377\272\125\323\4",
+    "ediumPurple\0    \135\107\213\211\150\315\237\171\356\253\202\377\223\160\333\4",
+    "ediumSeaGreen\0              \074\263\161",
+    "ediumSlateBlue\0             \173\150\356",
+    "ediumSpringGreen\0           \000\372\232",
+    "ediumTurquoise\0             \110\321\314",
+    "ediumVioletRed\0             \307\025\205",
+    "idnightBlue\0                \031\031\160",
+    "intCream\0                   \365\377\372",
+    "istyRose\0       \213\175\173\315\267\265\356\325\322\377\344\341\377\344\341\4",
+    "occasin\0                    \377\344\265",
+    /* Colors starting with 'n' */
+    "avajoWhite\0     \213\171\136\315\263\213\356\317\241\377\336\255\377\336\255\4",
+    "avy\0                        \000\000\200",
+    "avyBlue\0                    \000\000\200",
+    /* Colors starting with 'o' */
+    "ldLace\0                     \375\365\346",
+    "live\0                       \200\200\000",
+    "liveDrab\0       \151\213\042\232\315\062\263\356\072\300\377\076\153\216\043\4",
+    "range\0          \213\132\000\315\205\000\356\232\000\377\245\000\377\245\000\4",
+    "rangeRed\0       \213\045\000\315\067\000\356\100\000\377\105\000\377\105\000\4",
+    "rchid\0          \213\107\211\315\151\311\356\172\351\377\203\372\332\160\326\4",
+    /* Colors starting with 'p' */
+    "aleGoldenrod\0               \356\350\252",
+    "aleGreen\0       \124\213\124\174\315\174\220\356\220\232\377\232\230\373\230\4",
+    "aleTurquoise\0   \146\213\213\226\315\315\256\356\356\273\377\377\257\356\356\4",
+    "aleVioletRed\0   \213\107\135\315\150\211\356\171\237\377\202\253\333\160\223\4",
+    "apayaWhip\0                  \377\357\325",
+    "eachPuff\0       \213\167\145\315\257\225\356\313\255\377\332\271\377\332\271\4",
+    "eru\0                        \315\205\077",
+    "ink\0            \213\143\154\315\221\236\356\251\270\377\265\305\377\300\313\4",
+    "lum\0            \213\146\213\315\226\315\356\256\356\377\273\377\335\240\335\4",
+    "owderBlue\0                  \260\340\346",
+    "urple\0          \125\032\213\175\046\315\221\054\356\233\060\377\240\040\360\4",
+    /* Colors starting with 'q' */
+    "\377" /* placeholder */,
+    /* Colors starting with 'r' */
+    "ed\0             \213\000\000\315\000\000\356\000\000\377\000\000\377\000\000\4",
+    "osyBrown\0       \213\151\151\315\233\233\356\264\264\377\301\301\274\217\217\4",
+    "oyalBlue\0       \047\100\213\072\137\315\103\156\356\110\166\377\101\151\341\4",
+    /* Colors starting with 's' */
+    "addleBrown\0                 \213\105\023",
+    "almon\0          \213\114\071\315\160\124\356\202\142\377\214\151\372\200\162\4",
+    "andyBrown\0                  \364\244\140",
+    "eaGreen\0        \056\213\127\103\315\200\116\356\224\124\377\237\056\213\127\4",
+    "eashell\0        \213\206\202\315\305\277\356\345\336\377\365\356\377\365\356\4",
+    "ienna\0          \213\107\046\315\150\071\356\171\102\377\202\107\240\122\055\4",
+    "ilver\0                      \300\300\300",
+    "kyBlue\0         \112\160\213\154\246\315\176\300\356\207\316\377\207\316\353\4",
+    "lateBlue\0       \107\074\213\151\131\315\172\147\356\203\157\377\152\132\315\4",
+    "lateGray\0       \154\173\213\237\266\315\271\323\356\306\342\377\160\200\220\4",
+    "lateGrey\0                   \160\200\220",
+    "now\0            \213\211\211\315\311\311\356\351\351\377\372\372\377\372\372\4",
+    "pringGreen\0     \000\213\105\000\315\146\000\356\166\000\377\177\000\377\177\4",
+    "teelBlue\0       \066\144\213\117\224\315\134\254\356\143\270\377\106\202\264\4",
+    /* Colors starting with 't' */
+    "an\0             \213\132\053\315\205\077\356\232\111\377\245\117\322\264\214\4",
+    "eal\0                        \000\200\200",
+    "histle\0         \213\173\213\315\265\315\356\322\356\377\341\377\330\277\330\4",
+    "omato\0          \213\066\046\315\117\071\356\134\102\377\143\107\377\143\107\4",
+    "urquoise\0       \000\206\213\000\305\315\000\345\356\000\365\377\100\340\320\4",
+    /* Colors starting with 'u' */
+    "\377" /* placeholder */,
+    /* Colors starting with 'v' */
+    "iolet\0                      \356\202\356",
+    "ioletRed\0       \213\042\122\315\062\170\356\072\214\377\076\226\320\040\220\4",
+    /* Colors starting with 'w' */
+    "heat\0           \213\176\146\315\272\226\356\330\256\377\347\272\365\336\263\4",
+    "hite\0                       \377\377\377",
+    "hiteSmoke\0                  \365\365\365",
+    /* Colors starting with 'x' */
+    "\377" /* placeholder */,
+    /* Colors starting with 'y' */
+    "ellow\0          \213\213\000\315\315\000\356\356\000\377\377\000\377\377\000\4",
+    "ellowGreen\0                 \232\315\062\0"
 };
-
-/*
- *----------------------------------------------------------------------
- *
- * FindColor --
- *
- *	This routine finds the color entry that corresponds to the specified
- *	color.
- *
- * Results:
- *	Returns non-zero on success. The RGB values of the XColor will be
- *	initialized to the proper values on success.
- *
- * Side effects:
- *	None.
- *
- *----------------------------------------------------------------------
- */
-
-static int
-FindColor(
-    const char *name,
-    XColor *colorPtr)
-{
-    int l, u, r, i = 0;
-
-    /*
-     * Count the number of elements in the color array if we haven't done so
-     * yet.
-     */
-
-    if (numXColors == 0) {
-	XColorEntry *ePtr;
-	for (ePtr = xColors; ePtr->name != NULL; ePtr++) {
-	    numXColors++;
-	}
-    }
-
-    /*
-     * Perform a binary search on the sorted array of colors.
-     */
-
-    l = 0;
-    u = numXColors - 1;
-    while (l <= u) {
-	i = (l + u) / 2;
-	r = strcasecmp(name, xColors[i].name);
-	if (r == 0) {
-	    break;
-	} else if (r < 0) {
-	    u = i-1;
-	} else {
-	    l = i+1;
-	}
-    }
-    if (l > u) {
-	return 0;
-    }
-    colorPtr->red = ((xColors[i].red << 8) | xColors[i].red);
-    colorPtr->green = ((xColors[i].green << 8) | xColors[i].green);
-    colorPtr->blue = ((xColors[i].blue << 8) | xColors[i].blue);
-    return 1;
-}
 
 /*
  *----------------------------------------------------------------------
@@ -873,6 +243,82 @@ FindColor(
  *----------------------------------------------------------------------
  */
 
+#if defined(__WIN32__) && !defined(__CYGWIN__)
+#   ifdef NO_STRTOI64
+/* This version only handles hex-strings without 0x prefix */
+static __int64
+_strtoi64(const char *spec, char **p, int base)
+{
+    __int64 result = 0;
+    char c;
+    while ((c = *spec)) {
+	if ((c >= '0') && (c <= '9')) {
+	    c -= '0';
+	} else if ((c >= 'A') && (c <= 'F')) {
+	    c += (10 - 'A');
+	} else if ((c >= 'a') && (c <= 'f')) {
+	    c += (10 - 'a');
+	} else {
+	    break;
+	}
+	result = (result << 4) + c;
+	++spec;
+    }
+    *p = (char *) spec;
+    return result;
+}
+#   endif
+#else
+#   define _strtoi64 strtoll
+#endif
+
+static int colorcmp(const char *spec, const char *pname, int *special) {
+    int r;
+    int c, d;
+    int notequal = 0;
+    int num = 0;
+    do {
+	d = *pname++;
+	c = (*spec == ' ');
+	if (c) {
+	    spec++;
+	}
+	if ((unsigned)(d - 'A') <= (unsigned)('Z' - 'A')) {
+	    d += 'a' - 'A';
+	} else if (c) {
+	    /* A space doesn't match a lowercase, but we don't know
+	     * yet whether we should return a negative or positive
+	     * number. That depends on what follows. */
+	    notequal = 1;
+	}
+	c = *spec++;
+	if ((unsigned)(c - 'A') <= (unsigned)('Z' - 'A')) {
+	    c += 'a' - 'A';
+	} else if (((unsigned)(c - '1') <= (unsigned)('9' - '1'))) {
+	    if (d == '0') {
+	    	d += 10;
+	    } else if (!d) {
+		num = c - '0';
+		while ((unsigned)((c = *spec++) - '0') <= (unsigned)('9' - '0')) {
+		    num = num * 10 + c - '0';
+		}
+	    }
+	}
+	r = c - d;
+    } while(!r && d);
+    if (!r && notequal) {
+	/* Strings are equal, but difference in spacings only. We should still
+	 * report not-equal, so "burly wood" is not a valid color */
+	r = 1;
+    }
+    *special = num;
+    return r;
+}
+
+#define RED(p) ((unsigned char)(p)[0])
+#define GREEN(p) ((unsigned char)(p)[1])
+#define BLUE(p) ((unsigned char)(p)[2])
+
 Status
 XParseColor(
     Display *display,
@@ -881,27 +327,79 @@ XParseColor(
     XColor *colorPtr)
 {
     if (spec[0] == '#') {
-	char fmt[16];
-	int i, red, green, blue;
+	char *p;
+	Tcl_WideInt value = _strtoi64(++spec, &p, 16);
 
-	if ((i = (int) strlen(spec+1))%3) {
+	switch ((int)(p-spec)) {
+	case 3:
+	    colorPtr->red = (unsigned short) (((value >> 8) & 0xf) * 0x1111);
+	    colorPtr->green = (unsigned short) (((value >> 4) & 0xf) * 0x1111);
+	    colorPtr->blue = (unsigned short) ((value & 0xf) * 0x1111);
+	    break;
+	case 6:
+	    colorPtr->red = (unsigned short) (((value >> 16) & 0xff) | ((value >> 8) & 0xff00));
+	    colorPtr->green = (unsigned short) (((value >> 8) & 0xff) | (value & 0xff00));
+	    colorPtr->blue = (unsigned short) ((value & 0xff) | (value << 8));
+	    break;
+	case 9:
+	    colorPtr->red = (unsigned short) (((value >> 32) & 0xf) | ((value >> 20) & 0xfff0));
+	    colorPtr->green = (unsigned short) (((value >> 20) & 0xf) | ((value >> 8) & 0xfff0));
+	    colorPtr->blue = (unsigned short) (((value >> 8) & 0xf) | (value << 4));
+	    break;
+	case 12:
+	    colorPtr->red = (unsigned short) (value >> 32);
+	    colorPtr->green = (unsigned short) (value >> 16);
+	    colorPtr->blue = (unsigned short) value;
+	    break;
+	default:
 	    return 0;
 	}
-	i /= 3;
-
-	sprintf(fmt, "%%%dx%%%dx%%%dx", i, i, i);
-	if (sscanf(spec+1, fmt, &red, &green, &blue) != 3) {
-	    return 0;
-	}
-	colorPtr->red = (((unsigned short) red) << (4 * (4 - i)))
-		| ((unsigned short) red);
-	colorPtr->green = (((unsigned short) green) << (4 * (4 - i)))
-		| ((unsigned short) green);
-	colorPtr->blue = (((unsigned short) blue) << (4 * (4 - i)))
-		| ((unsigned short) blue);
     } else {
-	if (!FindColor(spec, colorPtr)) {
+	int size, num;
+	const elem *p;
+	const char *q;
+	/*
+	 * Perform a binary search on the sorted array of colors.
+	 * size = current size of search range
+	 * p    = pointer to current element being considered.
+	 */
+	int r = (spec[0] - 'A') & 0xdf;
+	if (r >= (int) sizeof(az) - 1) {
 	    return 0;
+	}
+	size = az[r + 1] - az[r];
+	p = &xColors[(az[r + 1] + az[r]) >> 1];
+	r = colorcmp(spec + 1, *p, &num);
+
+	while (r != 0) {
+	    if (r < 0) {
+		size = (size >> 1);
+		p -= ((size + 1) >> 1);
+	    } else {
+		--size;
+		size = (size >> 1);
+		p += ((size + 2) >> 1);
+	    }
+	    if (!size) {
+		return 0;
+	    }
+	    r = colorcmp(spec + 1, *p, &num);
+	}
+	if (num > (*p)[31]) {
+	    if (((*p)[31] != 8) || num > 100)
+	    	return 0;
+	    num = (num * 255 + 50) / 100;
+	    if ((num == 230) || (num == 128)) {
+	    	/* Those two entries have a deviation i.r.t the table */
+		num--;
+	    }
+	    num |= (num << 8);
+	    colorPtr->red = colorPtr->green = colorPtr->blue = num;
+	} else {
+	    q = *p + 28 - num * 3;
+	    colorPtr->red = ((RED(q) << 8) | RED(q));
+	    colorPtr->green = ((GREEN(q) << 8) | GREEN(q));
+	    colorPtr->blue = ((BLUE(q) << 8) | BLUE(q));
 	}
     }
     colorPtr->pixel = TkpGetPixel(colorPtr);
@@ -910,6 +408,49 @@ XParseColor(
     return 1;
 }
 
+
+#if 0
+int main() {
+    XColor color;
+    char buf[32];
+    int charindex;
+    int i, result;
+    int repeat = 1;
+    int num, maxnum;
+    char *end;
+
+    while (repeat--) {
+	buf[0] = 'a';
+	charindex = 1;
+	for (i = 0; i < sizeof(xColors)/sizeof(xColors[0]); ++i) {
+	    while (i >= az[charindex]) {
+		++charindex;
+		++(buf[0]);
+	    }
+	    strcpy(buf + 1, xColors[i]);
+	    end = buf + strlen(buf);
+	    num = 0;
+	    result = XParseColor(0, 0, buf, &color);
+	    printf("%3d %3d %3d\t\t%s\n", color.red >> 8, color.green >> 8, color.blue >> 8, buf);
+	    maxnum = xColors[i][31];
+	    if (maxnum == 8) maxnum = 100;
+	    while (result && ++num <= maxnum) {
+	    	sprintf(end, "%d", num);
+		result = XParseColor(0, 0, buf, &color);
+		printf("%3d %3d %3d\t\t%s\n", color.red >> 8, color.green >> 8, color.blue >> 8, buf);
+	    }
+	    if (!result) {
+		break;
+	    }
+	}
+    }
+    if (!result) {
+	printf("NOT OK: %s\n", buf);
+    } else {
+	printf("OK\n");
+    }
+}
+#endif
 /*
  * Local Variables:
  * mode: c

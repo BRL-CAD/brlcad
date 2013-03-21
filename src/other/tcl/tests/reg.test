@@ -8,8 +8,6 @@
 # to read this file, ignoring the Tcl-isms.)
 #
 # Copyright (c) 1998, 1999 Henry Spencer.  All rights reserved.
-#
-# RCS: @(#) $Id$
 
 if {[lsearch [namespace children] ::tcltest] == -1} {
     package require tcltest 2
@@ -176,14 +174,32 @@ namespace eval RETest {
 	return $ret
     }
 
+    # Share the generation of the list of test constraints so it is
+    # done the same on all routes.
+    proc TestConstraints {flags} {
+	set constraints [list testregexp]
+
+	variable regBug
+	if {$regBug} {
+	    # This will trigger registration as a skipped test
+	    lappend constraints knownBug
+	}
+
+	# Tcl locale stuff doesn't do the ch/xy test fakery yet
+	if {[string match *+* $flags]} {
+	    # This will trigger registration as a skipped test
+	    lappend constraints localeRegexp
+	}
+
+	return $constraints
+    }
+
     # match expected, internal routine that does the work
     # parameters like the "real" routines except they don't have "opts",
     #  which is a possibly-empty list of switches for the regexp match attempt
     # The ! flag is used to indicate expected match failure (for REG_EXPECT,
     #  which wants argument testing even in the event of failure).
     proc MatchExpected {opts testid flags re target args} {
-	variable regBug
-
 	# if &, test as both BRE and ARE
 	if {[string match *&* $flags]} {
 	    set f [string map {& {}} $flags]
@@ -192,18 +208,7 @@ namespace eval RETest {
 	    return
 	}
 
-	set constraints [list testregexp]
-
-	if {$regBug} {
-	    # This will register as a skipped test
-	    lappend constraints knownBug
-	}
-
-	# Tcl locale stuff doesn't do the ch/xy test fakery yet
-	if {[string match *+* $flags]} {
-	    # This will register as a skipped test
-	    lappend constraints localeRegexp
-	}
+	set constraints [TestConstraints $flags]
 
 	set f [TestFlags $flags]
 	set infoflags [TestInfoFlags $flags]
@@ -254,13 +259,7 @@ namespace eval RETest {
 	    return
 	}
 
-	set constraints [list testregexp]
-
-	# Tcl locale stuff doesn't do the ch/xy test fakery yet
-	if {[string match *+* $flags]} {
-	    # This will register as a skipped test
-	    lappend constraints localeRegexp
-	}
+	set constraints [TestConstraints $flags]
 
 	set cmd [list testregexp -about {*}[TestFlags $flags] $re]
 	::tcltest::test [TestNum $testid error] [TestDesc $testid error] \
@@ -270,6 +269,7 @@ namespace eval RETest {
 
     # match failure expected
     proc expectNomatch {testid flags re target args} {
+	variable regBug
 	# if &, test as both ARE and BRE
 	if {[string match *&* $flags]} {
 	    set f [string map {& {}} $flags]
@@ -278,13 +278,7 @@ namespace eval RETest {
 	    return
 	}
 
-	set constraints [list testregexp]
-
-	# Tcl locale stuff doesn't do the ch/xy test fakery yet
-	if {[string match *+* $flags]} {
-	    # This will register as a skipped test
-	    lappend constraints localeRegexp
-	}
+	set constraints [TestConstraints $flags]
 
 	set f [TestFlags $flags]
 	set infoflags [TestInfoFlags $flags]
@@ -333,7 +327,7 @@ namespace eval RETest {
     }
 }
 namespace import RETest::*
-
+
 ######## the tests themselves ########
 
 # support functions and preliminary misc.
@@ -662,6 +656,9 @@ expectMatch	14.17 RP	{a([bc])(\1*)}	ab	ab	b	""
 expectError	14.18 -		{a((b)\1)}	ESUBREG
 expectError	14.19 -		{a(b)c\2}	ESUBREG
 expectMatch	14.20 bR	{a\(b*\)c\1}	abbcbb	abbcbb	bb
+expectMatch	14.21 RP	{^([bc])\1*$}	bbb	bbb	b
+expectMatch	14.22 RP	{^([bc])\1*$}	ccc	ccc	c
+knownBug expectNomatch 14.23 R	{^([bc])\1*$}	bcb
 
 
 doing 15 "octal escapes vs back references"
@@ -1071,7 +1068,11 @@ test reg-33.13 {Bug 1810264 - infinite loop} {
 test reg-33.14 {Bug 1810264 - super-expensive expression} nonPortable {
     regexp {(x{200}){200}$y} {x}
 } 0
-
+
 # cleanup
 ::tcltest::cleanupTests
 return
+
+# Local Variables:
+# mode: tcl
+# End:

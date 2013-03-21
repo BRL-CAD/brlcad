@@ -2,8 +2,6 @@
 #
 # This demonstration script creates a text widget that describes
 # the basic editing functions.
-#
-# RCS: @(#) $Id$
 
 if {![info exists widgetDemo]} {
     error "This script should be run from the \"widget\" demo."
@@ -69,11 +67,11 @@ cursor.  Control-t transposes the two characters on either side of the
 insertion cursor.  Control-z undoes the last editing action performed,
 and }
 
-switch $tcl_platform(platform) {
-    "unix" {
+switch [tk windowingsystem] {
+    "aqua" - "x11" {
 	$w.text insert end "Control-Shift-z"
     }
-    "windows" {
+    "win32" {
 	$w.text insert end "Control-y"
     }
 }

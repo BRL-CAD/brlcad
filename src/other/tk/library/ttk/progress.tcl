@@ -1,6 +1,4 @@
 #
-# $Id$
-#
 # Ttk widget set: progress bar utilities.
 #
 

@@ -5,8 +5,6 @@
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 '\" 
-'\" RCS: @(#) $Id$
-'\" 
 .so man.macros
 .TH text n 8.5 Tk "Tk Built-In Commands"
 .BS
@@ -42,8 +40,9 @@ should be drawn as a character-sized rectangular block.  If false
 .VE 8.5
 .OP \-endline endLine EndLine
 .VS 8.5
-Specifies an integer line index representing the last line of the
-underlying textual data store that should be contained in the widget.
+Specifies an integer line index representing the line of the underlying
+textual data store that should be just after the last line contained in
+the widget.
 This allows a text widget to reflect only a portion of a larger piece
 of text.   Instead of an integer, the empty string can be provided to
 this configuration option, which will configure the widget to end
@@ -2294,8 +2293,8 @@ match, the text widget will return the wrong result.  In practice this is
 a rare problem, but it can occur, for example:
 .CS
 pack [text .t]
-\.t insert 1.0 "aaaa\enbbbb\encccc\enbbbb\enaaaa\en"
-\.t search \-regexp \-\- {(a+|b+\enc+\enb+)+\ena+} 1.0
+\&.t insert 1.0 "aaaa\enbbbb\encccc\enbbbb\enaaaa\en"
+\&.t search \-regexp \-\- {(a+|b+\enc+\enb+)+\ena+} 1.0
 .CE
 will not find a match when one exists of 19
 characters starting from the first
@@ -2312,8 +2311,8 @@ possible match which might cover large portions of the widget.
 For example:
 .CS
 pack [text .t]
-\.t insert 1.0 "aaaa\enbbbb\enbbbb\enbbbb\enbbbb\\n"
-\.t search \-regexp \-backward \-\- {b+\en|a+\en(b+\en)+} end
+\&.t insert 1.0 "aaaa\enbbbb\enbbbb\enbbbb\enbbbb\\n"
+\&.t search \-regexp \-backward \-\- {b+\en|a+\en(b+\en)+} end
 .CE
 matches at
 .QW 5.0

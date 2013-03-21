@@ -1,24 +1,21 @@
-#------------------------------------------------------------------------------
+#------------------------------------------------------------- -*- makefile -*-
 # makefile.vc --
 #
 #	Microsoft Visual C++ makefile for use with nmake.exe v1.62+ (VC++ 5.0+)
 #
 # See the file "license.terms" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-# 
+#
 # Copyright (c) 1995-1996 Sun Microsystems, Inc.
 # Copyright (c) 1998-2000 Ajuba Solutions.
 # Copyright (c) 2001-2005 ActiveState Corporation.
 # Copyright (c) 2001-2004 David Gravereaux.
-#
-#------------------------------------------------------------------------------
-# RCS: @(#) $Id$
+# Copyright (c) 2003-2008 Pat Thoyts.
 #------------------------------------------------------------------------------
 
-# Check to see we are configured to build with MSVC (MSDEVDIR or MSVCDIR)
-# or with the MS Platform SDK (MSSDK). Visual Studio .NET 2003 and 2005 define
-# VCINSTALLDIR instead.
-!if !defined(MSDEVDIR) && !defined(MSVCDIR) && !defined(MSSDK) && !defined(VCINSTALLDIR)
+# Check to see we are configured to build with MSVC (MSDEVDIR, MSVCDIR or
+# VCINSTALLDIR) or with the MS Platform SDK (MSSDK or WindowsSDKDir)
+!if !defined(MSDEVDIR) && !defined(MSVCDIR) && !defined(VCINSTALLDIR) && !defined(MSSDK) && !defined(WINDOWSSDKDIR)
 MSG = ^
 You need to run vcvars32.bat from Developer Studio or setenv.bat from the^
 Platform SDK first to setup the environment.  Jump to this line to read^
@@ -45,23 +42,28 @@ the build instructions.
 #     turn on the 64-bit compiler, if your SDK has it.
 #
 # 3)  Targets are:
-#	release  -- builds the core, the shell. (default)
-#	core     -- Only builds the core.
-#	all      -- builds everything.
-#	test     -- builds and runs the test suite.
-#	tktest   -- just builds the binaries for the test suite.
-#	install  -- installs the built binaries and libraries to $(INSTALLDIR)
+#	release  -- Builds the core, the shell. (default)
+#	dlls     -- Just builds the windows extensions.
+#	shell    -- Just builds the shell and the core.
+#	core     -- Only builds the core [tkXX.(dll|lib)].
+#	all      -- Builds everything.
+#	test     -- Builds and runs the test suite.
+#	tktest   -- Just builds the binaries for the test suite.
+#	install  -- Installs the built binaries and libraries to $(INSTALLDIR)
 #		    as the root of the install tree.
-#	cwish    -- builds a console version of wish.
-#	clean    -- removes the contents of $(TMP_DIR)
-#	hose     -- removes the contents of $(TMP_DIR) and $(OUT_DIR)
-#	genstubs -- rebuilds the Stubs table and support files (dev only).
+#	cwish    -- Builds a console version of wish.
+#	tidy/clean/hose -- varying levels of cleaning.
+#	genstubs -- Rebuilds the Stubs table and support files (dev only).
 #	depend   -- Generates an accurate set of source dependancies for this
 #		    makefile.  Helpful to avoid problems when the sources are
 #		    refreshed and you rebuild, but can "overbuild" when common
 #		    headers like tkInt.h just get small changes.
-#	winhelp  -- builds the windows .hlp file for Tcl from the troff man
-#		    files.
+#	htmlhelp -- Builds a Windows .chm help file for Tcl and Tk from the
+#		    troff manual pages found in $(ROOT)\doc. You need to
+#		    have installed the HTML Help Compiler package from Microsoft
+#		    to produce the .chm file.
+#	winhelp  -- Builds the windows .hlp file for Tcl from the troff man
+#		    files found in $(ROOT)\doc.
 #
 # 4)  Macros usable on the commandline:
 #	TCLDIR=<path>
@@ -74,60 +76,65 @@ the build instructions.
 #		Sets where to install Tcl from the built binaries.
 #		C:\Progra~1\Tcl is assumed when not specified.
 #
-#	OPTS=static,msvcrt,linkexten,threads,symbols,profile,unchecked,none
+#	OPTS=loimpact,msvcrt,nothreads,noxp,pdbs,profile,square,static,staticpkg,symbols,unchecked,none
 #		Sets special options for the core.  The default is for none.
 #		Any combination of the above may be used (comma separated).
 #		'none' will over-ride everything to nothing.
 #
-#		static   = Builds a static library of the core instead of a
-#			   dll.  The shell will be static (and large), as well.
-#		msvcrt   = Effects the static option only to switch it from
+#		loimpact = Adds a flag for how NT treats the heap to keep memory
+#			   in use, low.  This is said to impact alloc performance.
+#		msvcrt   = Affects the static option only to switch it from
 #			   using libcmt(d) as the C runtime [by default] to
 #			   msvcrt(d). This is useful for static embedding
 #			   support.
-#		staticpkg= Affects the static option only to switch wishXX.exe
-#			   to have the dde and reg extension linked inside it.
-#		threads  = Turns on full multithreading support.
-#		thrdalloc= Use the thread allocator (shared global free pool).
-#		symbols  = Adds symbols for step debugging.
-#		profile  = Adds profiling hooks.  Map file is assumed.
-#		loimpact = Adds a flag for how NT treats the heap to keep
-#			   memory in use, low.  This is said to impact alloc
-#			   performance.
-#		unchecked= Allows a symbols build to not use the debug
-#			   enabled runtime (msvcrt.dll not msvcrtd.dll
-#			   or libcmt.lib not libcmtd.lib).
-#               noxp     = If you do not have the uxtheme.h header then you
+#		nothreads= Turns off full multithreading support.
+#		noxp     = If you do not have the uxtheme.h header then you
 #                          cannot include support for XP themeing.
 #		square   = Include the demo square widget.
+#		static   = Builds a static library of the core instead of a
+#			   dll.  The shell will be static (and large), as well.
+#		staticpkg= Affects the static option only to switch wishXX.exe
+#			   to have the dde and reg extension linked inside it.
+#		pdbs     = Build detached symbols for release builds.
+#		profile  = Adds profiling hooks.  Map file is assumed.
+#		thrdalloc = Use the thread allocator (shared global free pool)
+#			   This is the default on threaded builds.
+#		tclalloc = Use the old non-thread allocator
+#		symbols  = Debug build. Links to the debug C runtime, disables
+#			   optimizations and creates pdb symbols files.
+#		unchecked = Allows a symbols build to not use the debug
+#			   enabled runtime (msvcrt.dll not msvcrtd.dll
+#			   or libcmt.lib not libcmtd.lib).
 #
-#	STATS=memdbg,compdbg,none
+#	STATS=compdbg,memdbg,none
 #		Sets optional memory and bytecode compiler debugging code added
 #		to the core.  The default is for none.  Any combination of the
 #		above may be used (comma separated).  'none' will over-ride
 #		everything to nothing.
 #
-#		memdbg   = Enables the debugging memory allocator.
 #		compdbg  = Enables byte compilation logging.
+#		memdbg   = Enables the debugging memory allocator.
 #
-#	CHECKS=nodep,fullwarn,none
+#	CHECKS=64bit,fullwarn,nodep,none
 #		Sets special macros for checking compatability.
 #
-#		nodep	 = Turns off compatability macros to ensure Tk isn't
-#			    being built with deprecated functions. 
+#		64bit    = Enable 64bit portability warnings (if available)
 #		fullwarn = Builds with full compiler and link warnings enabled.
 #			    Very verbose.
+#		nodep	 = Turns off compatability macros to ensure the core
+#			    isn't being built with deprecated functions.
 #
-#	MACHINE=(IX86|IA64|AMD64|ALPHA)
+#	MACHINE=(ALPHA|AMD64|IA64|IX86)
 #		Set the machine type used for the compiler, linker, and
 #		resource compiler.  This hook is needed to tell the tools
 #		when alternate platforms are requested.  IX86 is the default
-#		when not specified.
+#		when not specified. If the CPU environment variable has been
+#		set (ie: recent Platform SDK) then MACHINE is set from CPU.
 #
 #	TMP_DIR=<path>
 #	OUT_DIR=<path>
 #		Hooks to allow the intermediate and output directories to be
-#		changed.  $(OUT_DIR) is assumed to be 
+#		changed.  $(OUT_DIR) is assumed to be
 #		$(BINROOT)\(Release|Debug) based on if symbols are requested.
 #		$(TMP_DIR) will de $(OUT_DIR)\<buildtype> by default.
 #
@@ -175,7 +182,7 @@ Please `cd` to its location first.
 !error $(MSG)
 !endif
 
-PROJECT	= tk
+PROJECT = tk
 !include "rules.vc"
 
 !if $(TCLINSTALL)
@@ -206,8 +213,8 @@ TTK_SQUARE_WIDGET   = 0
 STUBPREFIX = $(PROJECT)stub
 WISHNAMEPREFIX = wish
 
-BINROOT		= .
-ROOT		= ..
+BINROOT		= $(MAKEDIR)	# originally .
+ROOT		= $(MAKEDIR)\..	# originally ..
 
 TK_LIBRARY	= $(ROOT)\library
 
@@ -355,7 +362,7 @@ TKOBJS = \
 	$(TMP_DIR)\tkStubInit.obj \
 	$(TMP_DIR)\tkStubLib.obj \
 	$(TMP_DIR)\tkWindow.obj \
-        $(TTK_OBJS) \
+	$(TTK_OBJS) \
 !if !$(STATIC_BUILD)
 	$(TMP_DIR)\tk.res
 !endif
@@ -396,7 +403,8 @@ TTK_OBJS = \
         $(TMP_DIR)\ttkStubInit.obj
 
 TKSTUBOBJS = \
-	$(TMP_DIR)\tkStubLib.obj $(TMP_DIR)\ttkStubLib.obj
+	$(TMP_DIR)\tkStubLib.obj \
+	$(TMP_DIR)\ttkStubLib.obj
 
 
 WINDIR          = $(ROOT)\win
@@ -421,7 +429,7 @@ CONFIG_DEFS     =-DSTDC_HEADERS=1 -DHAVE_SYS_TYPES_H=1 -DHAVE_SYS_STAT_H=1 \
 		 -DTTK_SQUARE_WIDGET=1 \
 !endif
 
-TK_DEFINES	=-DBUILD_ttk $(OPTDEFINES)  $(CONFIG_DEFS)
+TK_DEFINES	=-DBUILD_ttk $(OPTDEFINES)  $(CONFIG_DEFS) -Dinline=__inline
 
 #---------------------------------------------------------------------
 # Compile flags
@@ -434,6 +442,9 @@ TK_DEFINES	=-DBUILD_ttk $(OPTDEFINES)  $(CONFIG_DEFS)
 cdebug	= $(OPTIMIZATIONS)
 !else
 cdebug	=
+!endif
+!if $(SYMBOLS)
+cdebug = $(cdebug) -Zi
 !endif
 !else if "$(MACHINE)" == "IA64" || "$(MACHINE)" == "AMD64"
 ### Warnings are too many, can't support warnings into errors.
@@ -466,15 +477,17 @@ CON_CFLAGS	= $(cdebug) $(cflags) $(crt) -DCONSOLE
 WISH_CFLAGS	= $(BASE_CFLAGS) $(TK_DEFINES)
 STUB_CFLAGS     = $(cflags) $(cdebug) $(TK_DEFINES)
 
-
 #---------------------------------------------------------------------
 # Link flags
 #---------------------------------------------------------------------
 
 !if $(DEBUG)
-ldebug	= -debug:full -debugtype:cv
+ldebug	= -debug -debugtype:cv
 !else
 ldebug	= -release -opt:ref -opt:icf,3
+!if $(SYMBOLS)
+ldebug	= $(ldebug) -debug -debugtype:cv
+!endif
 !endif
 
 ### Declarations common to all linker options
@@ -516,7 +529,7 @@ guilibs	  = $(baselibs) gdi32.lib
 #---------------------------------------------------------------------
 
 !if "$(TESTPAT)" != ""
-TESTFLAGS   = $(TESTFLAGS) -file $(TESTPAT)
+TESTFLAGS = $(TESTFLAGS) -file $(TESTPAT)
 !endif
 
 
@@ -544,9 +557,10 @@ test-classic: setup $(TKTEST) $(TKLIB) $(CAT32)
 	@set PATH=$(_TCLDIR)\win\$(BUILDDIRTOP);$(PATH)
 !endif
 !if "$(OS)" == "Windows_NT"  || "$(MSVCDIR)" == "IDE"
-	$(TKTEST) "$(ROOT)/tests/all.tcl" $(TESTFLAGS) | $(CAT32)
+	$(DEBUGGER) $(TKTEST) "$(ROOT:\=/)/tests/all.tcl" $(TESTFLAGS) | $(CAT32)
 !else
-	$(TKTEST) "$(ROOT)/tests/all.tcl" $(TESTFLAGS) | $(CAT32)
+	$(DEBUGGER) $(TKTEST) "$(ROOT:\=/)/tests/all.tcl" $(TESTFLAGS) > tests.log
+	type tests.log | more
 !endif
 
 test-ttk: setup $(TKTEST) $(TKLIB) $(CAT32)
@@ -559,9 +573,10 @@ test-ttk: setup $(TKTEST) $(TKLIB) $(CAT32)
 	@set PATH=$(_TCLDIR)\win\$(BUILDDIRTOP);$(PATH)
 !endif
 !if "$(OS)" == "Windows_NT"  || "$(MSVCDIR)" == "IDE"
-	$(TKTEST) "$(ROOT)/tests/ttk/all.tcl" $(TESTFLAGS) | $(CAT32)
+	$(DEBUGGER) $(TKTEST) "$(ROOT:\=/)/tests/ttk/all.tcl" $(TESTFLAGS) | $(CAT32)
 !else
-	$(TKTEST) "$(ROOT)/tests/ttk/all.tcl" $(TESTFLAGS) | $(CAT32)
+	$(DEBUGGER) $(TKTEST) "$(ROOT:\=/)/tests/ttk/all.tcl" $(TESTFLAGS) > tests.log
+	type tests.log | more
 !endif
 
 runtest: setup $(TKTEST) $(TKLIB) $(CAT32)
@@ -573,7 +588,7 @@ runtest: setup $(TKTEST) $(TKLIB) $(CAT32)
 !else
 	@set PATH=$(_TCLDIR)\win\$(BUILDDIRTOP);$(PATH)
 !endif
-	$(TKTEST) 
+	$(DEBUGGER) $(TKTEST)
 
 rundemo: setup $(TKTEST) $(TKLIB) $(CAT32)
 	@set TCL_LIBRARY=$(TCL_LIBRARY:\=/)
@@ -584,7 +599,7 @@ rundemo: setup $(TKTEST) $(TKLIB) $(CAT32)
 !else
 	@set PATH=$(_TCLDIR)\win\$(BUILDDIRTOP);$(PATH)
 !endif
-	$(TKTEST) $(ROOT)\library\demos\widget
+	$(TKTEST) $(ROOT:\=/)\library\demos\widget
 
 shell: setup $(WISH)
 	@set TCL_LIBRARY=$(TCL_LIBRARY:\=/)
@@ -595,7 +610,7 @@ shell: setup $(WISH)
 !else
 	@set PATH=$(_TCLDIR)\win\$(BUILDDIRTOP);$(PATH)
 !endif
-	$(WISH) <<
+	$(DEBUGGER) $(WISH) <<
 	console show
 <<
 
@@ -657,9 +672,8 @@ $(CAT32): $(_TCLDIR)\win\cat.c
 	$(link32) $(conlflags) -out:$@ -stack:16384 $(TMP_DIR)\cat.obj $(baselibs)
 	$(_VC_MANIFEST_EMBED_EXE)
 
-
 #---------------------------------------------------------------------
-# Regenerate the stubs files.
+# Regenerate the stubs files.  [Development use only]
 #---------------------------------------------------------------------
 
 genstubs:
@@ -673,8 +687,48 @@ genstubs:
 
 
 #---------------------------------------------------------------------
-# Regenerate the windows help files.
+# Build the Windows HTML help file.
 #---------------------------------------------------------------------
+
+# NOTE: you can define HHC on the command-line to override this
+!ifndef HHC
+HHC=""%ProgramFiles%\HTML Help Workshop\hhc.exe""
+!endif
+HTMLDIR=$(ROOT)\html
+HTMLBASE=TclTk$(VERSION)
+HHPFILE=$(HTMLDIR)\$(HTMLBASE).hhp
+CHMFILE=$(HTMLDIR)\$(HTMLBASE).chm
+
+htmlhelp: chmsetup $(CHMFILE)
+
+$(CHMFILE): $(DOCDIR)\*
+	@$(TCLSH) $(TOOLSDIR)\tcltk-man2html.tcl
+	@echo Compiling HTML help project
+	@$(HHC) <<$(HHPFILE) >NUL
+[OPTIONS]
+Compatibility=1.1 or later
+Compiled file=$(HTMLBASE).chm
+Display compile progress=no
+Error log file=$(HTMLBASE).log
+Language=0x409 English (United States)
+Title=Tcl/Tk $(DOT_VERSION) Help
+[FILES]
+contents.htm
+docs.css
+Keywords
+TclCmd
+TclLib
+TkCmd
+TkLib
+UserCmd
+<<
+
+chmsetup:
+	@if not exist $(HTMLDIR)\nul mkdir $(HTMLDIR)
+
+#-------------------------------------------------------------------------
+# Build the old-style Windows .hlp file
+#-------------------------------------------------------------------------
 
 HLPBASE		= $(PROJECT)$(TK_VERSION)
 HELPFILE	= $(OUT_DIR)\$(HLPBASE).hlp
@@ -724,8 +778,8 @@ CreateButton(3, "Wiki", ExecFile("http://wiki.tcl.tk"))
 CreateButton(4, "FAQ", ExecFile("http://www.purl.org/NET/Tcl-FAQ/"))
 <<
 	cd $(MAKEDIR)
-	$(CPY) "$(DOCTMP_DIR)\$(@B).hlp" "$(OUT_DIR)"
-	$(CPY) "$(DOCTMP_DIR)\$(@B).cnt" "$(OUT_DIR)"
+	@$(CPY) "$(DOCTMP_DIR)\$(@B).hlp" "$(OUT_DIR)"
+	@$(CPY) "$(DOCTMP_DIR)\$(@B).cnt" "$(OUT_DIR)"
 
 $(MAN2TCL): $(TCLTOOLSDIR)\$$(@B).c
 	$(cc32) $(TK_CFLAGS) -Fo$(@D)\ $(TCLTOOLSDIR)\$(@B).c
@@ -799,11 +853,15 @@ $(TMP_DIR)\tkStubLib.obj : $(GENERICDIR)\tkStubLib.c
 $(TMP_DIR)\wish.exe.manifest: $(WINDIR)\wish.exe.manifest.in
 	@nmakehlp -s << $** >$@
 @MACHINE@	  $(MACHINE:IX86=X86)
-@TK_WIN_VERSION@  $(TK_MAJOR_VERSION).$(TK_MINOR_VERSION).0.0
+@TK_WIN_VERSION@  $(TK_DOTVERSION).0.0
 <<
 
 #---------------------------------------------------------------------
-# Generate the makefile depedancies.
+# Generate the source dependencies.  Having dependency rules will
+# improve incremental build accuracy without having to resort to a
+# full rebuild just because some non-global header file like
+# tclCompile.h was changed.  These rules aren't needed when building
+# from scratch.
 #---------------------------------------------------------------------
 
 depend:
@@ -811,7 +869,7 @@ depend:
 	@echo Build tclsh first!
 !else
 	set TCL_LIBRARY=$(TCL_LIBRARY)
-	$(TCLSH) $(TCLTOOLSDIR)\mkdepend.tcl -vc32 -out:"$(OUT_DIR)\depend.mk" \
+	$(TCLSH) $(TCLTOOLSDIR:\=/)/mkdepend.tcl -vc32 -out:"$(OUT_DIR)\depend.mk" \
 		-passthru:"-DBUILD_tk $(TK_INCLUDES)" $(GENERICDIR),$$(GENERICDIR) \
 		$(WINDIR),$$(WINDIR) $(TTKDIR),$$(TTKDIR) $(XLIBDIR),$$(XLIBDIR) \
 		$(BITMAPDIR),$$(BITMAPDIR) @<<
@@ -819,9 +877,8 @@ $(TKOBJS)
 <<
 !endif
 
-
 #---------------------------------------------------------------------
-# Dedependency rules
+# Dependency rules
 #---------------------------------------------------------------------
 
 $(TMP_DIR)\tk.res: \
@@ -831,7 +888,7 @@ $(TMP_DIR)\tk.res: \
 
 !if exist("$(OUT_DIR)\depend.mk")
 !include "$(OUT_DIR)\depend.mk"
-!message *** Dependency rules in effect.
+!message *** Dependency rules in use.
 !else
 !message *** Dependency rules are not being used.
 !endif
@@ -897,8 +954,13 @@ install-binaries:
 !if !$(STATIC_BUILD)
 	@echo creating package index
 	@type << > $(OUT_DIR)\pkgIndex.tcl
-if {[catch {package present Tcl 8.5.0}]} { return }
-package ifneeded Tk $(TK_PATCH_LEVEL) [list load [file join $$dir .. .. bin $(TKLIBNAME)] Tk]
+if {[catch {package present Tcl $(TK_DOTVERSION).0}]} { return }
+if {($$::tcl_platform(platform) eq "unix") && ([info exists ::env(DISPLAY)]
+	|| ([info exists ::argv] && ("-display" in $$::argv)))} {
+    package ifneeded Tk $(TK_PATCH_LEVEL) [list load [file join $$dir .. .. bin libtk$(TK_DOTVERSION).dll] Tk]
+} else {
+    package ifneeded Tk $(TK_PATCH_LEVEL) [list load [file join $$dir .. .. bin $(TKLIBNAME)] Tk]
+}
 <<
 	@$(CPY) $(OUT_DIR)\pkgIndex.tcl "$(SCRIPT_INSTALL_DIR)\"
 !endif
@@ -959,6 +1021,8 @@ clean:
 	@if exist $(WINDIR)\vercl.i del $(WINDIR)\vercl.i
 	@echo Cleaning $(WINDIR)\versions.vc ...
 	@if exist $(WINDIR)\versions.vc del $(WINDIR)\versions.vc
+
+realclean: hose
 
 hose:
 	@echo Hosing $(OUT_DIR)\* ...

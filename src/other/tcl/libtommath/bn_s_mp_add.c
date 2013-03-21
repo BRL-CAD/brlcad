@@ -103,7 +103,3 @@ s_mp_add (mp_int * a, mp_int * b, mp_int * c)
   return MP_OKAY;
 }
 #endif
-
-/* $Source$ */
-/* $Revision$ */
-/* $Date$ */

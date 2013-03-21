@@ -51,7 +51,3 @@ int mp_expt_d (mp_int * a, mp_digit b, mp_int * c)
   return MP_OKAY;
 }
 #endif
-
-/* $Source$ */
-/* $Revision$ */
-/* $Date$ */

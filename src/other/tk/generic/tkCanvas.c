@@ -11,8 +11,6 @@
  *
  * See the file "license.terms" for information on usage and redistribution of
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
- *
- * RCS: @(#) $Id$
  */
 
 /* #define USE_OLD_TAG_SEARCH 1 */
@@ -1409,6 +1407,7 @@ CanvasWidgetCmd(
 	    if (itemPtr == NULL) {
 		Tcl_AppendResult(interp, "tag \"", Tcl_GetString(objv[3]),
 			"\" doesn't match any items", NULL);
+		result = TCL_ERROR;
 		goto done;
 	    }
 	    itemPtr = itemPtr->prevPtr;

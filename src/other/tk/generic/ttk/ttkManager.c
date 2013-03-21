@@ -1,5 +1,4 @@
-/* $Id$
- *
+/*
  * Copyright 2005, Joe English.  Freely redistributable.
  *
  * Support routines for geometry managers.
@@ -528,7 +527,7 @@ void Ttk_ReorderSlave(Ttk_Manager *mgr, int fromIndex, int toIndex)
  */
 int Ttk_Maintainable(Tcl_Interp *interp, Tk_Window slave, Tk_Window master)
 {
-    Tk_Window ancestor = master, parent = Tk_Parent(slave), sibling = NULL;
+    Tk_Window ancestor = master, parent = Tk_Parent(slave);
 
     if (Tk_IsTopLevel(slave) || slave == master) {
 	goto badWindow;
@@ -538,7 +537,6 @@ int Ttk_Maintainable(Tcl_Interp *interp, Tk_Window slave, Tk_Window master)
 	if (Tk_IsTopLevel(ancestor)) {
 	    goto badWindow;
 	}
-	sibling = ancestor;
 	ancestor = Tk_Parent(ancestor);
     }
 

@@ -6,8 +6,6 @@
  * Copyright (c) 1995-1997 Sun Microsystems, Inc.
  * Copyright (c) 1999 by Scriptics Corporation.
  * All rights reserved.
- *
- * RCS: @(#) $Id$
  */
 
 #include "tclInt.h"
@@ -33,26 +31,53 @@
 #	include <dlfcn.h>
 #   endif
 #endif
+
+#ifdef __CYGWIN__
+DLLIMPORT extern __stdcall unsigned char GetVersionExA(void *);
+DLLIMPORT extern __stdcall void GetSystemInfo(void *);
+
+#define NUMPLATFORMS 4
+static const char *const platforms[NUMPLATFORMS] = {
+    "Win32s", "Windows 95", "Windows NT", "Windows CE"
+};
+
+#define NUMPROCESSORS 11
+static const char *const  processors[NUMPROCESSORS] = {
+    "intel", "mips", "alpha", "ppc", "shx", "arm", "ia64", "alpha64", "msil",
+    "amd64", "ia32_on_win64"
+};
+
+typedef struct _SYSTEM_INFO {
+  union {
+    DWORD  dwOemId;
+    struct {
+      int wProcessorArchitecture;
+      int wReserved;
+    };
+  };
+  DWORD     dwPageSize;
+  void *lpMinimumApplicationAddress;
+  void *lpMaximumApplicationAddress;
+  void *dwActiveProcessorMask;
+  DWORD     dwNumberOfProcessors;
+  DWORD     dwProcessorType;
+  DWORD     dwAllocationGranularity;
+  int      wProcessorLevel;
+  int      wProcessorRevision;
+} SYSTEM_INFO;
+
+typedef struct _OSVERSIONINFOA {
+  DWORD dwOSVersionInfoSize;
+  DWORD dwMajorVersion;
+  DWORD dwMinorVersion;
+  DWORD dwBuildNumber;
+  DWORD dwPlatformId;
+  char szCSDVersion[128];
+} OSVERSIONINFOA;
+#endif
+
 #ifdef HAVE_COREFOUNDATION
-/* Ew.  Incompatibility between newer gcc versions
- * in Macports and assumptions made by Apple headers.
- * http://gcc.gnu.org/bugzilla/show_bug.cgi?id=44981
- * Fake it by pretending to be gcc 4.0 when __APPLE_CC__
- * is less than or equal to 5600 - we'll see what that 
- * breaks, but it at least builds.
- */
-# if defined(__APPLE_CC__)
-#   if !(__APPLE_CC__ > 5600)
-#     define GNUC_MINOR_TMP __GNUC_MINOR__
-#     undef __GNUC_MINOR__
-#     define __GNUC_MINOR__ 0
-#     include <CoreFoundation/CoreFoundation.h>
-#     undef __GNUC_MINOR__
-#     define __GNUC_MINOR__ GNUC_MINOR_TMP
-#   else
-#     include <CoreFoundation/CoreFoundation.h>
-#   endif
-# endif
+#include <CoreFoundation/CoreFoundation.h>
 #endif
 
 /*
@@ -784,7 +809,11 @@ void
 TclpSetVariables(
     Tcl_Interp *interp)
 {
-#ifndef NO_UNAME
+#ifdef __CYGWIN__
+    SYSTEM_INFO sysInfo;
+    OSVERSIONINFOA osInfo;
+    char buffer[TCL_INTEGER_SPACE * 2];
+#elif !defined(NO_UNAME)
     struct utsname name;
 #endif
     int unameOK;
@@ -893,7 +922,25 @@ TclpSetVariables(
 #endif
 
     unameOK = 0;
-#ifndef NO_UNAME
+#ifdef __CYGWIN__
+	unameOK = 1;
+    osInfo.dwOSVersionInfoSize = sizeof(OSVERSIONINFOA);
+    GetVersionExA(&osInfo);
+    GetSystemInfo(&sysInfo);
+
+    if (osInfo.dwPlatformId < NUMPLATFORMS) {
+	Tcl_SetVar2(interp, "tcl_platform", "os",
+		platforms[osInfo.dwPlatformId], TCL_GLOBAL_ONLY);
+    }
+    sprintf(buffer, "%d.%d", osInfo.dwMajorVersion, osInfo.dwMinorVersion);
+    Tcl_SetVar2(interp, "tcl_platform", "osVersion", buffer, TCL_GLOBAL_ONLY);
+    if (sysInfo.wProcessorArchitecture < NUMPROCESSORS) {
+	Tcl_SetVar2(interp, "tcl_platform", "machine",
+		processors[sysInfo.wProcessorArchitecture],
+		TCL_GLOBAL_ONLY);
+    }
+
+#elif !defined NO_UNAME
     if (uname(&name) >= 0) {
 	CONST char *native;
 
@@ -1112,9 +1159,19 @@ TclpGetCStackParams(
 	if (stackGrowsDown) {
 	    tsdPtr->stackBound = (int *) ((char *)tsdPtr->outerVarPtr -
 		    stackSize);
+	    if (tsdPtr->stackBound > tsdPtr->outerVarPtr) {
+	    	/* Overflow, that should never happen, just set it to NULL.
+	    	 * See [Bug #3166410] */
+	    	tsdPtr->stackBound = NULL;
+	    }
 	} else {
 	    tsdPtr->stackBound = (int *) ((char *)tsdPtr->outerVarPtr +
 		    stackSize);
+	    if (tsdPtr->stackBound < tsdPtr->outerVarPtr) {
+	    	/* Overflow, that should never happen, just set it to NULL.
+	    	 * See [Bug #3166410] */
+	    	tsdPtr->stackBound = NULL;
+	    }
 	}
     }
 

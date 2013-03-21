@@ -8,15 +8,11 @@
  *
  * See the file "license.terms" for information on usage and redistribution of
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
- *
- * RCS: @(#) $Id$
  */
 
 #include "tclInt.h"
 
 #ifdef TCL_THREADS
-
-#include "pthread.h"
 
 typedef struct ThreadSpecificData {
     char nabuf[16];
@@ -726,7 +722,7 @@ TclpFinalizeCondition(
 /*
  *----------------------------------------------------------------------
  *
- * TclpReaddir, TclpLocaltime, TclpGmtime, TclpInetNtoa --
+ * TclpReaddir, TclpInetNtoa --
  *
  *	These procedures replace core C versions to be used in a threaded
  *	environment.

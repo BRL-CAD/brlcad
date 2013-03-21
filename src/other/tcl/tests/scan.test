@@ -10,8 +10,6 @@
 #
 # See the file "license.terms" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-#
-# RCS: @(#) $Id$
 
 if {[lsearch [namespace children] ::tcltest] == -1} {
     package require tcltest 2
@@ -751,11 +749,11 @@ testConstraint ieeeFloatingPoint [testIEEE]
 
 # scan infinities - not working
 
-test scan-14.1 {infinity} ieeeFloatingPoint {
+test scan-14.1 {infinity} {
     scan Inf %g d
     set d
 } Inf
-test scan-14.2 {infinity} ieeeFloatingPoint {
+test scan-14.2 {infinity} {
     scan -Inf %g d
     set d
 } -Inf

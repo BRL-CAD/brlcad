@@ -1,8 +1,6 @@
 # combo.tcl --
 #
 # This demonstration script creates several combobox widgets.
-#
-# RCS: @(#) $Id$
 
 if {![info exists widgetDemo]} {
     error "This script should be run from the \"widget\" demo."

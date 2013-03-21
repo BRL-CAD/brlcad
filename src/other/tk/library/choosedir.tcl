@@ -4,8 +4,6 @@
 #
 # Copyright (c) 1998-2000 by Scriptics Corporation.
 # All rights reserved.
-# 
-# RCS: @(#) $Id$
 
 # Make sure the tk::dialog namespace, in which all dialogs should live, exists
 namespace eval ::tk::dialog {}
@@ -91,7 +89,7 @@ proc ::tk::dialog::file::chooseDir:: {args} {
 
     # Withdraw the window, then update all the geometry information
     # so we know how big it wants to be, then center the window in the
-    # display and de-iconify it.
+    # display (Motif style) and de-iconify it.
 
     ::tk::PlaceWindow $w widget $data(-parent)
     wm title $w $data(-title)

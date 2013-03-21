@@ -12,8 +12,6 @@
 #
 # See the file "license.terms" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-#
-# RCS: @(#) $Id$
 
 if {[catch {package require tcltest 2}]} {
     chan puts stderr "Skipping tests in [info script].  tcltest 2 required."
@@ -3858,7 +3856,7 @@ test chan-io-32.3 {Tcl_Read, negative byte count} {
     set l [list [catch {chan read $f -1} msg] $msg]
     chan close $f
     set l
-} {1 {bad argument "-1": should be "nonewline"}}
+} {1 {expected non-negative integer but got "-1"}}
 test chan-io-32.4 {Tcl_Read, positive byte count} {
     set f [open $path(longfile) r]
     set x [chan read $f 1024]

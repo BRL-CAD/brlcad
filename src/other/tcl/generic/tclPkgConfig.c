@@ -8,8 +8,6 @@
  *
  * See the file "license.terms" for information on usage and redistribution of
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
- *
- * RCS: @(#) $Id$
  */
 
 /* Note, the definitions in this module are influenced by the following C
@@ -24,7 +22,7 @@
  * - TCL_COMPILE_STATS		OSCMa bytecode compiler statistics.
  *
  * - TCL_CFG_DO64BIT		NSCMdt tcl is compiled for a 64bit system.
- * - TCL_CFG_DEBUG		NSCMdt tcl is compiled with symbol info on.
+ * - NDEBUG		NSCMdt tcl is compiled with symbol info off.
  * - TCL_CFG_OPTIMIZED		NSCMdt tcl is compiled with cc optimizations on
  * - TCL_CFG_PROFILED		NSCMdt tcl is compiled with profiling info.
  *
@@ -72,7 +70,7 @@
 #  define CFG_64		"0"
 #endif
 
-#ifdef TCL_CFG_DEBUG
+#ifndef NDEBUG
 #  define CFG_DEBUG		"1"
 #else
 #  define CFG_DEBUG		"0"

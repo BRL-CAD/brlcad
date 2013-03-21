@@ -1,6 +1,4 @@
 /*
- * $Id$
- *
  * Copyright (C) 2004 Joe English
  *
  * "clam" theme; inspired by the XFCE family of Gnome themes.

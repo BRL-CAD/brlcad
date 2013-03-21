@@ -6,8 +6,6 @@
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 '\" 
-'\" RCS: @(#) $Id$
-'\" 
 .so man.macros
 .TH "http" n 2.7 http "Tcl Bundled Packages"
 .BS
@@ -51,7 +49,8 @@ http \- Client-side implementation of the HTTP/1.1 protocol
 .SH DESCRIPTION
 .PP
 The \fBhttp\fR package provides the client side of the HTTP/1.1
-protocol.  The package implements the GET, POST, and HEAD operations
+protocol, as defined in RFC 2616.
+The package implements the GET, POST, and HEAD operations
 of HTTP/1.1.  It allows configuration of a proxy host to get through
 firewalls.  The package is compatible with the \fBSafesock\fR security
 policy, so it can be used by untrusted applets to do URL fetching from

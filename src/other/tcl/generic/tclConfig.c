@@ -8,8 +8,6 @@
  *
  * See the file "license.terms" for information on usage and redistribution of
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
- *
- * RCS: @(#) $Id$
  */
 
 #include "tclInt.h"
@@ -215,7 +213,7 @@ QueryConfigObjCmd(
     Tcl_Obj *pkgName = cdPtr->pkg;
     Tcl_Obj *pDB, *pkgDict, *val, *listPtr;
     int n, index;
-    static CONST char *subcmdStrings[] = {
+    static const char *subcmdStrings[] = {
 	"get", "list", NULL
     };
     enum subcmds {
@@ -275,19 +273,13 @@ QueryConfigObjCmd(
 	}
 
 	if (n) {
-	    List *listRepPtr = (List *)
-		    listPtr->internalRep.twoPtrValue.ptr1;
 	    Tcl_DictSearch s;
-	    Tcl_Obj *key, **vals;
-	    int done, i = 0;
-
-	    listRepPtr->elemCount = n;
-	    vals = &listRepPtr->elements;
+	    Tcl_Obj *key;
+	    int done;
 
 	    for (Tcl_DictObjFirst(interp, pkgDict, &s, &key, NULL, &done);
 		    !done; Tcl_DictObjNext(&s, &key, NULL, &done)) {
-		vals[i++] = key;
-		Tcl_IncrRefCount(key);
+		Tcl_ListObjAppendElement(NULL, listPtr, key);
 	    }
 	}
 

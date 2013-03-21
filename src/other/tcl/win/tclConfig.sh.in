@@ -8,8 +8,6 @@
 # out for themselves.
 #
 # The information in this file is specific to a single platform.
-#
-# RCS: @(#) $Id$
 
 TCL_DLL_FILE="@TCL_DLL_FILE@"
 

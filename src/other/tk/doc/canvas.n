@@ -5,8 +5,6 @@
 '\"
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-'\" 
-'\" RCS: @(#) $Id$
 '\"
 .so man.macros
 .TH canvas n 8.3 Tk "Tk Built-In Commands"
@@ -1289,9 +1287,9 @@ This option defaults to \fBcenter\fR.
 .TP
 \fB\-background \fIcolor\fR
 .TP
-\fB\-activebackground \fIbitmap\fR
+\fB\-activebackground \fIcolor\fR
 .TP
-\fB\-disabledbackground \fIbitmap\fR
+\fB\-disabledbackground \fIcolor\fR
 Specifies the color to use for each of the bitmap's
 .QW 0
 valued pixels in its normal, active and disabled states.
@@ -1311,9 +1309,9 @@ disabled states.
 .TP
 \fB\-foreground \fIcolor\fR
 .TP
-\fB\-activeforeground \fIbitmap\fR
+\fB\-activeforeground \fIcolor\fR
 .TP
-\fB\-disabledforeground \fIbitmap\fR
+\fB\-disabledforeground \fIcolor\fR
 Specifies the color to use for each of the bitmap's
 .QW 1
 valued pixels in its normal, active and disabled states.

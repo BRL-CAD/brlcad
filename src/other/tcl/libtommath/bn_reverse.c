@@ -33,7 +33,3 @@ bn_reverse (unsigned char *s, int len)
   }
 }
 #endif
-
-/* $Source$ */
-/* $Revision$ */
-/* $Date$ */

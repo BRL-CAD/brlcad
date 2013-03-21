@@ -8,8 +8,6 @@
  *
  * See the file "license.terms" for information on usage and redistribution of
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
- *
- * RCS: @(#) $Id$
  */
 
 #include "tkWinInt.h"
@@ -61,7 +59,7 @@ Tk_GetPixmap(
     screen = &display->screens[0];
     planes = 1;
     if (depth == screen->root_depth) {
-	planes = (int) screen->ext_data;
+	planes = PTR2INT(screen->ext_data);
 	depth /= planes;
     }
     newTwdPtr->bitmap.handle =

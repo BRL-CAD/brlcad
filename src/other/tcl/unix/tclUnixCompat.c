@@ -5,9 +5,6 @@
  *
  * See the file "license.terms" for information on usage and redistribution of
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
- *
- * RCS: @(#) $Id$
- *
  */
 
 #include "tclInt.h"
@@ -16,8 +13,10 @@
 #include <errno.h>
 #include <string.h>
 
-/* See also: SC_BLOCKING_STYLE in unix/tcl.m4
+/*
+ * See also: SC_BLOCKING_STYLE in unix/tcl.m4
  */
+
 #ifdef	USE_FIONBIO
 #   ifdef HAVE_SYS_FILIO_H
 #	include	<sys/filio.h>	/* For FIONBIO. */
@@ -26,39 +25,6 @@
 #	include	<sys/ioctl.h>
 #   endif
 #endif	/* USE_FIONBIO */
-
-/*
- *---------------------------------------------------------------------------
- *
- * TclUnixSetBlockingMode --
- *
- *	Set the blocking mode of a file descriptor.
- *
- * Results:
- *
- *	0 on success, -1 (with errno set) on error.
- *
- *---------------------------------------------------------------------------
- */
-int
-TclUnixSetBlockingMode(
-    int fd,		/* File descriptor */
-    int mode)		/* TCL_MODE_BLOCKING or TCL_MODE_NONBLOCKING */
-{
-#ifndef USE_FIONBIO
-    int flags = fcntl(fd, F_GETFL);
-
-    if (mode == TCL_MODE_BLOCKING) {
-	flags &= ~O_NONBLOCK;
-    } else {
-	flags |= O_NONBLOCK;
-    }
-    return fcntl(fd, F_SETFL, flags);
-#else /* USE_FIONBIO */
-    int state = (mode == TCL_MODE_NONBLOCKING);
-    return ioctl(fd, FIONBIO, &state);
-#endif /* !USE_FIONBIO */
-}
 
 /*
  * Used to pad structures at size'd boundaries
@@ -85,10 +51,22 @@ TclUnixSetBlockingMode(
 
 typedef struct ThreadSpecificData {
     struct passwd pwd;
+#if defined(HAVE_GETPWNAM_R_5) || defined(HAVE_GETPWUID_R_5)
+#define NEED_PW_CLEANER 1
+    char *pbuf;
+    int pbuflen;
+#else
     char pbuf[2048];
+#endif
 
     struct group grp;
+#if defined(HAVE_GETGRNAM_R_5) || defined(HAVE_GETGRGID_R_5)
+#define NEED_GR_CLEANER 1
+    char *gbuf;
+    int gbuflen;
+#else
     char gbuf[2048];
+#endif
 
 #if !defined(HAVE_MTSAFE_GETHOSTBYNAME) || !defined(HAVE_MTSAFE_GETHOSTBYADDR)
     struct hostent hent;
@@ -121,16 +99,67 @@ static Tcl_Mutex compatLock;
 #undef NEED_COPYPWD
 #undef NEED_COPYSTRING
 
+#if !defined(HAVE_GETGRNAM_R_5) && !defined(HAVE_GETGRNAM_R_4)
+#define NEED_COPYGRP 1
+static int		CopyGrp(struct group *tgtPtr, char *buf, int buflen);
+#endif
+
+#if !defined(HAVE_GETPWNAM_R_5) && !defined(HAVE_GETPWNAM_R_4)
+#define NEED_COPYPWD 1
+static int		CopyPwd(struct passwd *tgtPtr, char *buf, int buflen);
+#endif
+
 static int		CopyArray(char **src, int elsize, char *buf,
 			    int buflen);
-static int		CopyGrp(struct group *tgtPtr, char *buf, int buflen);
 static int		CopyHostent(struct hostent *tgtPtr, char *buf,
 			    int buflen);
-static int		CopyPwd(struct passwd *tgtPtr, char *buf, int buflen);
-static int		CopyString(CONST char *src, char *buf, int buflen);
+static int		CopyString(const char *src, char *buf, int buflen);
 
 #endif
+
+#ifdef NEED_PW_CLEANER
+static void		FreePwBuf(ClientData ignored);
+#endif
+#ifdef NEED_GR_CLEANER
+static void		FreeGrBuf(ClientData ignored);
+#endif
 #endif /* TCL_THREADS */
+
+/*
+ *---------------------------------------------------------------------------
+ *
+ * TclUnixSetBlockingMode --
+ *
+ *	Set the blocking mode of a file descriptor.
+ *
+ * Results:
+ *
+ *	0 on success, -1 (with errno set) on error.
+ *
+ *---------------------------------------------------------------------------
+ */
+
+int
+TclUnixSetBlockingMode(
+    int fd,			/* File descriptor */
+    int mode)			/* Either TCL_MODE_BLOCKING or
+				 * TCL_MODE_NONBLOCKING. */
+{
+#ifndef USE_FIONBIO
+    int flags = fcntl(fd, F_GETFL);
+
+    if (mode == TCL_MODE_BLOCKING) {
+	flags &= ~O_NONBLOCK;
+    } else {
+	flags |= O_NONBLOCK;
+    }
+    return fcntl(fd, F_SETFL, flags);
+#else /* USE_FIONBIO */
+    int state = (mode == TCL_MODE_NONBLOCKING);
+
+    return ioctl(fd, FIONBIO, &state);
+#endif /* !USE_FIONBIO */
+}
 
 /*
  *---------------------------------------------------------------------------
@@ -161,14 +190,38 @@ TclpGetPwNam(
 #if defined(HAVE_GETPWNAM_R_5)
     struct passwd *pwPtr = NULL;
 
-    return (getpwnam_r(name, &tsdPtr->pwd, tsdPtr->pbuf, sizeof(tsdPtr->pbuf),
-		       &pwPtr) == 0 && pwPtr != NULL) ? &tsdPtr->pwd : NULL;
+    /*
+     * How to allocate a buffer of the right initial size. If you want the
+     * gory detail, see http://www.opengroup.org/austin/docs/austin_328.txt
+     * and weep.
+     */
+
+    if (tsdPtr->pbuf == NULL) {
+	tsdPtr->pbuflen = (int) sysconf(_SC_GETPW_R_SIZE_MAX);
+	if (tsdPtr->pbuflen < 1) {
+	    tsdPtr->pbuflen = 1024;
+	}
+	tsdPtr->pbuf = ckalloc(tsdPtr->pbuflen);
+	Tcl_CreateThreadExitHandler(FreePwBuf, NULL);
+    }
+    while (1) {
+	int e = getpwnam_r(name, &tsdPtr->pwd, tsdPtr->pbuf, tsdPtr->pbuflen,
+		&pwPtr);
+
+	if (e == 0) {
+	    break;
+	} else if (e != ERANGE) {
+	    return NULL;
+	}
+	tsdPtr->pbuflen *= 2;
+	tsdPtr->pbuf = ckrealloc(tsdPtr->pbuf, tsdPtr->pbuflen);
+    }
+    return (pwPtr != NULL ? &tsdPtr->pwd : NULL);
 
 #elif defined(HAVE_GETPWNAM_R_4)
     return getpwnam_r(name, &tsdPtr->pwd, tsdPtr->pbuf, sizeof(tsdPtr->pbuf));
 
 #else
-#define NEED_COPYPWD 1
     struct passwd *pwPtr;
 
     Tcl_MutexLock(&compatLock);
@@ -217,14 +270,38 @@ TclpGetPwUid(
 #if defined(HAVE_GETPWUID_R_5)
     struct passwd *pwPtr = NULL;
 
-    return (getpwuid_r(uid, &tsdPtr->pwd, tsdPtr->pbuf, sizeof(tsdPtr->pbuf),
-		       &pwPtr) == 0 && pwPtr != NULL) ? &tsdPtr->pwd : NULL;
+    /*
+     * How to allocate a buffer of the right initial size. If you want the
+     * gory detail, see http://www.opengroup.org/austin/docs/austin_328.txt
+     * and weep.
+     */
+
+    if (tsdPtr->pbuf == NULL) {
+	tsdPtr->pbuflen = (int) sysconf(_SC_GETPW_R_SIZE_MAX);
+	if (tsdPtr->pbuflen < 1) {
+	    tsdPtr->pbuflen = 1024;
+	}
+	tsdPtr->pbuf = ckalloc(tsdPtr->pbuflen);
+	Tcl_CreateThreadExitHandler(FreePwBuf, NULL);
+    }
+    while (1) {
+	int e = getpwuid_r(uid, &tsdPtr->pwd, tsdPtr->pbuf, tsdPtr->pbuflen,
+		&pwPtr);
+
+	if (e == 0) {
+	    break;
+	} else if (e != ERANGE) {
+	    return NULL;
+	}
+	tsdPtr->pbuflen *= 2;
+	tsdPtr->pbuf = ckrealloc(tsdPtr->pbuf, tsdPtr->pbuflen);
+    }
+    return (pwPtr != NULL ? &tsdPtr->pwd : NULL);
 
 #elif defined(HAVE_GETPWUID_R_4)
     return getpwuid_r(uid, &tsdPtr->pwd, tsdPtr->pbuf, sizeof(tsdPtr->pbuf));
 
 #else
-#define NEED_COPYPWD 1
     struct passwd *pwPtr;
 
     Tcl_MutexLock(&compatLock);
@@ -243,6 +320,29 @@ TclpGetPwUid(
     return NULL;		/* Not reached. */
 #endif /* TCL_THREADS */
 }
+
+/*
+ *---------------------------------------------------------------------------
+ *
+ * FreePwBuf --
+ *
+ *	Helper that is used to dispose of space allocated and referenced from
+ *	the ThreadSpecificData for user entries. (Darn that baroque POSIX
+ *	reentrant interface.)
+ *
+ *---------------------------------------------------------------------------
+ */
+
+#ifdef NEED_PW_CLEANER
+static void
+FreePwBuf(
+    ClientData ignored)
+{
+    ThreadSpecificData *tsdPtr = TCL_TSD_INIT(&dataKey);
+
+    ckfree(tsdPtr->pbuf);
+}
+#endif /* NEED_PW_CLEANER */
 
 /*
  *---------------------------------------------------------------------------
@@ -270,17 +370,41 @@ TclpGetGrNam(
 #else
     ThreadSpecificData *tsdPtr = TCL_TSD_INIT(&dataKey);
 
-#if defined(HAVE_GETGRNAM_R_5)
+#ifdef HAVE_GETGRNAM_R_5
     struct group *grPtr = NULL;
 
-    return (getgrnam_r(name, &tsdPtr->grp, tsdPtr->gbuf, sizeof(tsdPtr->gbuf),
-		       &grPtr) == 0 && grPtr != NULL) ? &tsdPtr->grp : NULL;
+    /*
+     * How to allocate a buffer of the right initial size. If you want the
+     * gory detail, see http://www.opengroup.org/austin/docs/austin_328.txt
+     * and weep.
+     */
+
+    if (tsdPtr->gbuf == NULL) {
+	tsdPtr->gbuflen = (int) sysconf(_SC_GETGR_R_SIZE_MAX);
+	if (tsdPtr->gbuflen < 1) {
+	    tsdPtr->gbuflen = 1024;
+	}
+	tsdPtr->gbuf = ckalloc(tsdPtr->gbuflen);
+	Tcl_CreateThreadExitHandler(FreeGrBuf, NULL);
+    }
+    while (1) {
+	int e = getgrnam_r(name, &tsdPtr->grp, tsdPtr->gbuf, tsdPtr->gbuflen,
+		&grPtr);
+
+	if (e == 0) {
+	    break;
+	} else if (e != ERANGE) {
+	    return NULL;
+	}
+	tsdPtr->gbuflen *= 2;
+	tsdPtr->gbuf = ckrealloc(tsdPtr->gbuf, tsdPtr->gbuflen);
+    }
+    return (grPtr != NULL ? &tsdPtr->grp : NULL);
 
 #elif defined(HAVE_GETGRNAM_R_4)
     return getgrnam_r(name, &tsdPtr->grp, tsdPtr->gbuf, sizeof(tsdPtr->gbuf));
 
 #else
-#define NEED_COPYGRP 1
     struct group *grPtr;
 
     Tcl_MutexLock(&compatLock);
@@ -329,14 +453,38 @@ TclpGetGrGid(
 #if defined(HAVE_GETGRGID_R_5)
     struct group *grPtr = NULL;
 
-    return (getgrgid_r(gid, &tsdPtr->grp, tsdPtr->gbuf, sizeof(tsdPtr->gbuf),
-		       &grPtr) == 0 && grPtr != NULL) ? &tsdPtr->grp : NULL;
+    /*
+     * How to allocate a buffer of the right initial size. If you want the
+     * gory detail, see http://www.opengroup.org/austin/docs/austin_328.txt
+     * and weep.
+     */
+
+    if (tsdPtr->gbuf == NULL) {
+	tsdPtr->gbuflen = (int) sysconf(_SC_GETGR_R_SIZE_MAX);
+	if (tsdPtr->gbuflen < 1) {
+	    tsdPtr->gbuflen = 1024;
+	}
+	tsdPtr->gbuf = ckalloc(tsdPtr->gbuflen);
+	Tcl_CreateThreadExitHandler(FreeGrBuf, NULL);
+    }
+    while (1) {
+	int e = getgrgid_r(gid, &tsdPtr->grp, tsdPtr->gbuf, tsdPtr->gbuflen,
+		&grPtr);
+
+	if (e == 0) {
+	    break;
+	} else if (e != ERANGE) {
+	    return NULL;
+	}
+	tsdPtr->gbuflen *= 2;
+	tsdPtr->gbuf = ckrealloc(tsdPtr->gbuf, tsdPtr->gbuflen);
+    }
+    return (grPtr != NULL ? &tsdPtr->grp : NULL);
 
 #elif defined(HAVE_GETGRGID_R_4)
     return getgrgid_r(gid, &tsdPtr->grp, tsdPtr->gbuf, sizeof(tsdPtr->gbuf));
 
 #else
-#define NEED_COPYGRP 1
     struct group *grPtr;
 
     Tcl_MutexLock(&compatLock);
@@ -355,6 +503,29 @@ TclpGetGrGid(
     return NULL;		/* Not reached. */
 #endif /* TCL_THREADS */
 }
+
+/*
+ *---------------------------------------------------------------------------
+ *
+ * FreeGrBuf --
+ *
+ *	Helper that is used to dispose of space allocated and referenced from
+ *	the ThreadSpecificData for group entries. (Darn that baroque POSIX
+ *	reentrant interface.)
+ *
+ *---------------------------------------------------------------------------
+ */
+
+#ifdef NEED_GR_CLEANER
+static void
+FreeGrBuf(
+    ClientData ignored)
+{
+    ThreadSpecificData *tsdPtr = TCL_TSD_INIT(&dataKey);
+
+    ckfree(tsdPtr->gbuf);
+}
+#endif /* NEED_GR_CLEANER */
 
 /*
  *---------------------------------------------------------------------------
@@ -772,7 +943,7 @@ CopyArray(
 #ifdef NEED_COPYSTRING
 static int
 CopyString(
-    CONST char *src,	/* String to copy. */
+    const char *src,		/* String to copy. */
     char *buf,			/* Buffer to copy into. */
     int buflen)			/* Size of buffer. */
 {
@@ -789,6 +960,43 @@ CopyString(
     return len;
 }
 #endif /* NEED_COPYSTRING */
+
+/*
+ *------------------------------------------------------------------------
+ *
+ * TclWinCPUID --
+ *
+ *	Get CPU ID information on an Intel box under UNIX (either Linux or Cygwin)
+ *
+ * Results:
+ *	Returns TCL_OK if successful, TCL_ERROR if CPUID is not supported.
+ *
+ * Side effects:
+ *	If successful, stores EAX, EBX, ECX and EDX registers after the CPUID
+ *	instruction in the four integers designated by 'regsPtr'
+ *
+ *----------------------------------------------------------------------
+ */
+
+int
+TclWinCPUID(
+    unsigned int index,		/* Which CPUID value to retrieve. */
+    unsigned int *regsPtr)	/* Registers after the CPUID. */
+{
+    int status = TCL_ERROR;
+
+    /* See: <http://en.wikipedia.org/wiki/CPUID> */
+#if defined(HAVE_CPUID)
+    __asm__ __volatile__("mov %%ebx, %%edi     \n\t" /* save %ebx */
+                 "cpuid            \n\t"
+                 "mov %%ebx, %%esi   \n\t" /* save what cpuid just put in %ebx */
+                 "mov %%edi, %%ebx  \n\t" /* restore the old %ebx */
+                 : "=a"(regsPtr[0]), "=S"(regsPtr[1]), "=c"(regsPtr[2]), "=d"(regsPtr[3])
+                 : "a"(index) : "edi");
+    status = TCL_OK;
+#endif
+    return status;
+}
 
 /*
  * Local Variables:

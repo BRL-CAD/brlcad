@@ -6,8 +6,6 @@
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 '\" 
-'\" RCS: @(#) $Id$
-'\" 
 .so man.macros
 .TH regsub n 8.3 Tcl "Tcl Built-In Commands"
 .BS
@@ -161,15 +159,18 @@ Insert double-quotes around the first instance of the word
 Convert all non-ASCII and Tcl-significant characters into \eu escape
 sequences by using \fBregsub\fR and \fBsubst\fR in combination:
 .CS
-# This RE is just a character class for everything "bad"
-set RE {[][{};#\e\e\e$\es\eu0080-\euffff]}
+# This RE is just a character class for almost everything "bad"
+set RE {[][{};#\e\e\e$ \er\et\eu0080-\euffff]}
 
 # We will substitute with a fragment of Tcl script in brackets
 set substitution {[format \e\e\e\eu%04x [scan "\e\e&" %c]]}
 
 # Now we apply the substitution to get a subst-string that
-# will perform the computational parts of the conversion.
-set quoted [subst [\fBregsub\fR -all $RE $string $substitution]]
+# will perform the computational parts of the conversion. Note
+# that newline is handled specially through \fBstring map\fR since
+# backslash-newline is a special sequence.
+set quoted [subst [string map {\en {\e\eu000a}} \e
+        [\fBregsub\fR -all $RE $string $substitution]]]
 .CE
 .SH "SEE ALSO"
 regexp(n), re_syntax(n), subst(n),

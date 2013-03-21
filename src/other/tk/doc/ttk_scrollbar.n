@@ -5,9 +5,6 @@
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 '\" 
-'\" SOURCE: tk/doc/scrollbar.n, r1.4
-'\" RCS: @(#) $Id$
-'\" 
 .so man.macros
 .TH ttk::scrollbar n 8.5 Tk "Tk Themed Widget"
 .BS

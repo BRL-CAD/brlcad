@@ -10,8 +10,6 @@
  *
  * See the file "license.terms" for information on usage and redistribution of
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
- *
- * RCS: @(#) $Id$
  */
 
 #include "tkInt.h"
@@ -664,12 +662,12 @@ AdjustStartEndRefs(
 	if (textPtr->start != NULL) {
 	    count--;
 	    treePtr->startEnd[count] = textPtr->start;
-	    treePtr->startEndRef[count] = treePtr->sharedTextPtr->peers;
+	    treePtr->startEndRef[count] = textPtr;
 	}
 	if (textPtr->end != NULL) {
 	    count--;
 	    treePtr->startEnd[count] = textPtr->end;
-	    treePtr->startEndRef[count] = treePtr->sharedTextPtr->peers;
+	    treePtr->startEndRef[count] = textPtr;
 	}
     }
 }
@@ -1076,7 +1074,7 @@ TkBTreeInsertChars(
 	    curPtr->nextPtr = segPtr;
 	}
 	segPtr->size = chunkSize;
-	strncpy(segPtr->body.chars, string, (size_t) chunkSize);
+	memcpy(segPtr->body.chars, string, (size_t) chunkSize);
 	segPtr->body.chars[chunkSize] = 0;
 
 	if (eol[-1] != '\n') {
@@ -1611,7 +1609,7 @@ TkBTreeFindLine(
     }
 
     /*
-     * Check for the any start/end offset for this text widget.
+     * Check for any start/end offset for this text widget.
      */
 
     if (textPtr != NULL) {
@@ -1993,12 +1991,37 @@ TkBTreeLinesTo(
 	    index += nodePtr2->numLines;
 	}
     }
-    if (textPtr != NULL && textPtr->start != NULL) {
-	index -= TkBTreeLinesTo(NULL, textPtr->start);
+    if (textPtr != NULL) {
+        /* 
+         * The index to return must be relative to textPtr, not to the entire
+         * tree. Take care to never return a negative index when linePtr
+         * denotes a line before -startline, or an index larger than the
+         * number of lines in textPtr when linePtr is a line past -endline.
+         */
+
+        int indexStart, indexEnd;
+
+        if (textPtr->start != NULL) {
+            indexStart = TkBTreeLinesTo(NULL, textPtr->start);
+        } else {
+            indexStart = 0;
+        }
+        if (textPtr->end != NULL) {
+            indexEnd = TkBTreeLinesTo(NULL, textPtr->end);
+        } else {
+            indexEnd = TkBTreeNumLines(textPtr->sharedTextPtr->tree, NULL);
+        }
+        if (index < indexStart) {
+            index = 0;
+        } else if (index > indexEnd) {
+            index = TkBTreeNumLines(textPtr->sharedTextPtr->tree, textPtr);
+        } else {
+            index -= indexStart;
+        }
     }
     return index;
 }
-
+
 /*
  *----------------------------------------------------------------------
  *
@@ -4550,12 +4573,13 @@ CharSplitProc(
     newPtr1->typePtr = &tkTextCharType;
     newPtr1->nextPtr = newPtr2;
     newPtr1->size = index;
-    strncpy(newPtr1->body.chars, segPtr->body.chars, (size_t) index);
+    memcpy(newPtr1->body.chars, segPtr->body.chars, (size_t) index);
     newPtr1->body.chars[index] = 0;
     newPtr2->typePtr = &tkTextCharType;
     newPtr2->nextPtr = segPtr->nextPtr;
     newPtr2->size = segPtr->size - index;
-    strcpy(newPtr2->body.chars, segPtr->body.chars + index);
+    memcpy(newPtr2->body.chars, segPtr->body.chars + index, newPtr2->size);
+    newPtr2->body.chars[newPtr2->size] = 0;
     ckfree((char *) segPtr);
     return newPtr1;
 }
@@ -4596,8 +4620,9 @@ CharCleanupProc(
     newPtr->typePtr = &tkTextCharType;
     newPtr->nextPtr = segPtr2->nextPtr;
     newPtr->size = segPtr->size + segPtr2->size;
-    strcpy(newPtr->body.chars, segPtr->body.chars);
-    strcpy(newPtr->body.chars + segPtr->size, segPtr2->body.chars);
+    memcpy(newPtr->body.chars, segPtr->body.chars, segPtr->size);
+    memcpy(newPtr->body.chars + segPtr->size, segPtr2->body.chars, segPtr2->size);
+    newPtr->body.chars[newPtr->size] = 0;
     ckfree((char *) segPtr);
     ckfree((char *) segPtr2);
     return newPtr;

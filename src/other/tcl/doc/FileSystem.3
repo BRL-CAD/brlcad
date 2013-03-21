@@ -4,8 +4,6 @@
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 '\" 
-'\" RCS: @(#) $Id$
-'\" 
 .so man.macros
 .TH Filesystem 3 8.4 Tcl "Tcl Library Procedures"
 .BS
@@ -445,8 +443,8 @@ directories named in the path leading to the file.  The stat structure
 includes info regarding device, inode (always 0 on Windows),
 privilege mode, nlink (always 1 on Windows), user id (always 0 on
 Windows), group id (always 0 on Windows), rdev (same as device on
-Windows), size, last access time, last modification time, and creation
-time.
+Windows), size, last access time, last modification time, and
+last metadata change time.
 .PP
 If \fIpath\fR exists, \fBTcl_FSLstat\fR returns 0 and the stat structure
 is filled with data.  Otherwise, -1 is returned, and no stat info is
@@ -503,8 +501,8 @@ directories named in the path leading to the file.  The stat structure
 includes info regarding device, inode (always 0 on Windows),
 privilege mode, nlink (always 1 on Windows), user id (always 0 on
 Windows), group id (always 0 on Windows), rdev (same as device on
-Windows), size, last access time, last modification time, and creation
-time.
+Windows), size, last access time, last modification time, and
+last metadata change time.
 .PP
 If \fIpath\fR exists, \fBTcl_FSStat\fR returns 0 and the stat structure
 is filled with data.  Otherwise, -1 is returned, and no stat info is
@@ -523,7 +521,7 @@ In addition, if \fIinterp\fR is non-NULL, \fBTcl_FSOpenFileChannel\fR
 leaves an error message in \fIinterp\fR's result after any error.
 .PP
 The newly created channel is not registered in the supplied interpreter; to
-register it, use \fBTcl_RegisterChannel\fR, described below.
+register it, use \fBTcl_RegisterChannel\fR.
 If one of the standard channels, \fBstdin, stdout\fR or \fBstderr\fR was
 previously closed, the act of creating the new channel also assigns it as a
 replacement for the standard channel.
@@ -1078,8 +1076,8 @@ to all directories named in the path leading to the file.  The stat
 structure includes info regarding device, inode (always 0 on Windows),
 privilege mode, nlink (always 1 on Windows), user id (always 0 on
 Windows), group id (always 0 on Windows), rdev (same as device on
-Windows), size, last access time, last modification time, and creation
-time.
+Windows), size, last access time, last modification time, and
+last metadata change time.
 .PP
 If the file represented by \fIpathPtr\fR exists, the
 \fBTcl_FSStatProc\fR returns 0 and the stat structure is filled with
@@ -1133,8 +1131,9 @@ In addition, if \fIinterp\fR is non-NULL, the
 \fBTcl_FSOpenFileChannelProc\fR leaves an error message in \fIinterp\fR's
 result after any error.
 .PP
-The newly created channel is not registered in the supplied
-interpreter; to register it, use \fBTcl_RegisterChannel\fR. If one of
+The newly created channel must not registered in the supplied
+interpreter; that task is up to the caller of
+\fBTcl_FSOpenFileChannel\fR (if necessary). If one of
 the standard channels, \fBstdin, stdout\fR or \fBstderr\fR was
 previously closed, the act of creating the new channel also assigns it
 as a replacement for the standard channel.

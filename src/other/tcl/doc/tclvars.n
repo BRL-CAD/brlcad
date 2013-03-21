@@ -5,8 +5,6 @@
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 '\" 
-'\" RCS: @(#) $Id$
-'\" 
 .so man.macros
 .TH tclvars n 8.0 Tcl "Tcl Built-In Commands"
 .BS
@@ -49,6 +47,43 @@ Tcl are left unmodified.  Setting an env array variable to blank is the
 same as unsetting it as this is the behavior of the underlying Windows OS.
 It should be noted that relying on an existing and empty environment variable
 will not work on Windows and is discouraged for cross-platform usage.
+.PP
+The following elements of \fBenv\fR are special to Tcl:
+.TP
+\fBenv(HOME)\fR
+.
+This environment variable, if set, gives the location of the directory
+considered to be the current user's home directory, and to which a
+call of \fBcd\fR without arguments or with just
+.QW ~
+as an argument will change into. Most platforms set this correctly by
+default; it does not normally need to be set by user code.
+.TP
+\fBenv(TCL_LIBRARY)\fR
+.
+If set, then it specifies the location of the directory containing
+library scripts (the value of this variable will be
+assigned to the \fBtcl_library\fR variable and therefore returned by
+the command \fBinfo library\fR).  If this variable is not set then
+a default value is used.
+.RS
+.PP
+Note that this environment variable should \fInot\fR normally be set.
+.RE
+.TP
+\fBenv(TCLLIBPATH)\fR
+.
+If set, then it must contain a valid Tcl list giving directories to
+search during auto-load operations.  Directories must be specified in 
+Tcl format, using
+.QW /
+as the path separator, regardless of platform.
+This variable is only used when initializing the \fBauto_path\fR variable.
+.TP
+\fBenv(TCL_INTERP_DEBUG_FRAME)\fR
+.
+If existing, it has the same effect as running \fBinterp debug {} -frame 1\fR
+as the very first command of each new Tcl interpreter.
 .RE
 .TP
 \fBerrorCode\fR
@@ -262,9 +297,9 @@ is same as the result of evaluating \fIsizeof(void*)\fR in C.)
 .RE
 .TP
 \fBtcl_precision\fR
+.
 This variable controls the number of digits to generate
 when converting floating-point values to strings.  It defaults
-.VS 8.5
 to 0.  \fIApplications should not change this value;\fR it is
 provided for compatibility with legacy code.
 .PP
@@ -278,24 +313,42 @@ will convert as \fI1.4\fR rather than \fI1.3999999999999999\fR
 even though the latter is nearer to the exact value of the
 binary number.
 .RE
-.VE 8.5
 .PP
 .RS
-17 digits is
+If \fBtcl_precision\fR is not zero, then when Tcl converts a floating
+point number, it creates a decimal representation of at most 
+\fBtcl_precision\fR significant digits; the result may be shorter if
+the shorter result represents the original number exactly. If no
+result of at most \fBtcl_precision\fR digits is an exact representation
+of the original number, the one that is closest to the original
+number is chosen.
+If the original number lies precisely between two equally accurate
+decimal representations, then the one with an even value for the least
+significant digit is chosen; for instance, if \fBtcl_precision\fR is 3, then
+0.3125 will convert to 0.312, not 0.313, while 0.6875 will convert to
+0.688, not 0.687. Any string of trailing zeroes that remains is trimmed.
+.RE
+.PP
+.RS
+a \fBtcl_precision\fR value of 17 digits is
 .QW perfect
 for IEEE floating-point in that it allows
 double-precision values to be converted to strings and back to
-binary with no loss of information.  However, using 17 digits prevents
-any rounding, which produces longer, less intuitive results.  For example,
-\fBexpr {1.4}\fR returns 1.3999999999999999 with \fBtcl_precision\fR
-set to 17, vs. 1.4 if \fBtcl_precision\fR is 12.
+binary with no loss of information. For this reason, you will often
+see it as a value in legacy code that must run on Tcl versions before
+8.5. It is no longer recommended; as noted above, a zero value is the
+preferred method.
 .RE
 .PP
 .RS
 All interpreters in a thread share a single \fBtcl_precision\fR value:
 changing it in one interpreter will affect all other interpreters as
-well.  However, safe interpreters are not allowed to modify the
+well.  Safe interpreters are not allowed to modify the
 variable.
+.RE
+.PP
+.RS
+Valid values for \fBtcl_precision\fR range from 0 to 17.
 .RE
 .TP
 \fBtcl_rcFileName\fR

@@ -32,8 +32,7 @@
  *
  * See the file "license.terms" for information on usage and redistribution of
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
- *
- * RCS: @(#) $Id$ */
+ */
 
 #include "tclInt.h"
 #include "tommath.h"
@@ -1380,7 +1379,7 @@ AppendUnicodeToUnicodeRep(
     numChars = stringPtr->numChars + appendNumChars;
     stringCheckLimits(numChars);
 
-    if (STRING_UALLOC(numChars) >= stringPtr->uallocated) {
+    if (STRING_UALLOC(numChars) > stringPtr->uallocated) {
 	/*
 	 * Protect against case where unicode points into the existing
 	 * stringPtr->unicode array.  Force it to follow any relocations
@@ -1388,7 +1387,7 @@ AppendUnicodeToUnicodeRep(
 	 */
 	int offset = -1;
 	if (unicode >= stringPtr->unicode && unicode <= stringPtr->unicode 
-		+ 1 + stringPtr->uallocated / sizeof(Tcl_UniChar)) {
+		+ stringPtr->uallocated / sizeof(Tcl_UniChar)) {
 	    offset = unicode - stringPtr->unicode;
 	}
 	
@@ -2759,6 +2758,7 @@ TclStringObjReverse(
 	    source[i++] = tmp;
 	}
 	Tcl_InvalidateStringRep(objPtr);
+	stringPtr->allocated = 0;
 	return objPtr;
     }
 
@@ -3056,6 +3056,7 @@ FreeStringInternalRep(
     Tcl_Obj *objPtr)		/* Object with internal rep to free. */
 {
     ckfree((char *) GET_STRING(objPtr));
+    objPtr->typePtr = NULL;
 }
 
 /*

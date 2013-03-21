@@ -66,7 +66,3 @@ void mp_rshd (mp_int * a, int b)
   a->used -= b;
 }
 #endif
-
-/* $Source$ */
-/* $Revision$ */
-/* $Date$ */

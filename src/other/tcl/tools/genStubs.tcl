@@ -9,8 +9,6 @@
 #
 # See the file "license.terms" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-#
-# RCS: @(#) $Id$
 
 package require Tcl 8.4
 
@@ -18,7 +16,7 @@ namespace eval genStubs {
     # libraryName --
     #
     #	The name of the entire library.  This value is used to compute
-    #	the USE_*_STUB_PROCS macro and the name of the init file.
+    #	the USE_*_STUBS macro and the name of the init file.
 
     variable libraryName "UNKNOWN"
 
@@ -34,6 +32,22 @@ namespace eval genStubs {
     #	The name of the interface currently being defined.
 
     variable curName "UNKNOWN"
+
+    # scspec --
+    #
+    #	Storage class specifier for external function declarations.
+    #	Normally "EXTERN", may be set to something like XYZAPI
+    #
+    variable scspec "EXTERN"
+
+    # epoch, revision --
+    #
+    #	The epoch and revision numbers of the interface currently being defined.
+    #   (@@@TODO: should be an array mapping interface names -> numbers)
+    #
+
+    variable epoch {}
+    variable revision 0
 
     # hooks --
     #
@@ -96,6 +110,27 @@ proc genStubs::interface {name} {
     return
 }
 
+# genStubs::scspec --
+#
+#	Define the storage class macro used for external function declarations.
+#	Typically, this will be a macro like XYZAPI or EXTERN that
+#	expands to either DLLIMPORT or DLLEXPORT, depending on whether
+#	-DBUILD_XYZ has been set.
+#
+proc genStubs::scspec {value} {
+    variable scspec $value
+}
+
+# genStubs::epoch --
+#
+#	Define the epoch number for this library.  The epoch
+#	should be incrememented when a release is made that
+#	contains incompatible changes to the public API.
+#
+proc genStubs::epoch {value} {
+    variable epoch $value
+}
+
 # genStubs::hooks --
 #
 #	This function defines the subinterface hooks for the current
@@ -134,11 +169,18 @@ proc genStubs::hooks {names} {
 proc genStubs::declare {args} {
     variable stubs
     variable curName
+    variable revision
 
-    if {[llength $args] != 3} {
+    incr revision
+    if {[llength $args] == 2} {
+	lassign $args index decl
+	set platformList generic
+    } elseif {[llength $args] == 3} {
+	lassign $args index platformList decl
+    } else {
 	puts stderr "wrong # args: declare $args"
+	return
     }
-    lassign $args index platformList decl
 
     # Check for duplicate declarations, then add the declaration and
     # bump the lastNum counter if necessary.
@@ -148,6 +190,8 @@ proc genStubs::declare {args} {
 	    puts stderr "Duplicate entry: declare $args"
 	}
     }
+    regsub -all const $decl CONST decl
+    regsub -all _XCONST $decl _Xconst decl
     regsub -all "\[ \t\n\]+" [string trim $decl] " " decl
     set decl [parseDecl $decl]
 
@@ -176,14 +220,9 @@ proc genStubs::declare {args} {
 #	None.
 
 proc genStubs::export {args} {
-    variable stubs
-    variable curName
-
     if {[llength $args] != 1} {
 	puts stderr "wrong # args: export $args"
     }
-    lassign $args decl
-
     return
 }
 
@@ -207,6 +246,7 @@ proc genStubs::rewriteFile {file text} {
     }
     set in [open ${file} r]
     set out [open ${file}.new w]
+    fconfigure $out -translation lf
 
     while {![eof $in]} {
 	set line [gets $in]
@@ -241,18 +281,26 @@ proc genStubs::rewriteFile {file text} {
 # Results:
 #	Returns the original text inside an appropriate #ifdef.
 
-proc genStubs::addPlatformGuard {plat iftxt {eltxt {}}} {
+proc genStubs::addPlatformGuard {plat iftxt {eltxt {}} {withCygwin 0}} {
     set text ""
     switch $plat {
 	win {
-	    append text "#ifdef __WIN32__ /* WIN */\n${iftxt}"
+	    append text "#if defined(__WIN32__)"
+	    if {$withCygwin} {
+		append text " || defined(__CYGWIN__)"
+	    }
+	    append text " /* WIN */\n${iftxt}"
 	    if {$eltxt ne ""} {
 		append text "#else /* WIN */\n${eltxt}"
 	    }
 	    append text "#endif /* WIN */\n"
 	}
 	unix {
-	    append text "#if !defined(__WIN32__) && !defined(MAC_OSX_TCL)\
+	    append text "#if !defined(__WIN32__)"
+	    if {$withCygwin} {
+		append text " && !defined(__CYGWIN__)"
+	    }
+	    append text " && !defined(MAC_OSX_TCL)\
 		    /* UNIX */\n${iftxt}"
 	    if {$eltxt ne ""} {
 		append text "#else /* UNIX */\n${eltxt}"
@@ -274,7 +322,11 @@ proc genStubs::addPlatformGuard {plat iftxt {eltxt {}}} {
 	    append text "#endif /* AQUA */\n"
 	}
 	x11 {
-	    append text "#if !(defined(__WIN32__) || defined(MAC_OSX_TK))\
+	    append text "#if !(defined(__WIN32__)"
+	    if {$withCygwin} {
+		append text " || defined(__CYGWIN__)"
+	    }
+	    append text " || defined(MAC_OSX_TK))\
 		    /* X11 */\n${iftxt}"
 	    if {$eltxt ne ""} {
 		append text "#else /* X11 */\n${eltxt}"
@@ -302,10 +354,9 @@ proc genStubs::addPlatformGuard {plat iftxt {eltxt {}}} {
 #	None.
 
 proc genStubs::emitSlots {name textVar} {
-    variable stubs
     upvar $textVar text
 
-    forAllStubs $name makeSlot 1 text {"    void *reserved$i;\n"}
+    forAllStubs $name makeSlot 1 text {"    VOID *reserved$i;\n"}
     return
 }
 
@@ -407,10 +458,14 @@ proc genStubs::parseArg {arg} {
 #	Returns the formatted declaration string.
 
 proc genStubs::makeDecl {name decl index} {
+    variable scspec
     lassign $decl rtype fname args
 
     append text "/* $index */\n"
-    set line "EXTERN $rtype"
+    if {$rtype != "void"} {
+	regsub -all void $rtype VOID rtype
+    }
+    set line "$scspec $rtype"
     set count [expr {2 - ([string length $line] / 8)}]
     append line [string range "\t\t\t" 0 $count]
     set pad [expr {24 - [string length $line]}]
@@ -418,7 +473,7 @@ proc genStubs::makeDecl {name decl index} {
 	append line " "
 	set pad 0
     }
-    if {$args == ""} {
+    if {$args eq ""} {
 	append line $fname
 	append text $line
 	append text ";\n"
@@ -426,9 +481,10 @@ proc genStubs::makeDecl {name decl index} {
     }
     append line $fname
 
+    regsub -all void $args VOID args
     set arg1 [lindex $args 0]
     switch -exact $arg1 {
-	void {
+	VOID {
 	    append line "(void)"
 	}
 	TCL_VARARGS {
@@ -497,79 +553,12 @@ proc genStubs::makeMacro {name decl index} {
     set lfname [string tolower [string index $fname 0]]
     append lfname [string range $fname 1 end]
 
-    set text "#ifndef $fname\n#define $fname"
+    set text "#ifndef $fname\n#define $fname \\\n\t("
     if {$args == ""} {
-	append text " \\\n\t(*${name}StubsPtr->$lfname)"
-	append text " /* $index */\n#endif\n"
-	return $text
+	append text "*"
     }
-    append text " \\\n\t(${name}StubsPtr->$lfname)"
+    append text "${name}StubsPtr->$lfname)"
     append text " /* $index */\n#endif\n"
-    return $text
-}
-
-# genStubs::makeStub --
-#
-#	Emits a stub function definition.
-#
-# Arguments:
-#	name	The interface name.
-#	decl	The function declaration.
-#	index	The slot index for this function.
-#
-# Results:
-#	Returns the formatted stub function definition.
-
-proc genStubs::makeStub {name decl index} {
-    lassign $decl rtype fname args
-
-    set lfname [string tolower [string index $fname 0]]
-    append lfname [string range $fname 1 end]
-
-    append text "/* Slot $index */\n" $rtype "\n" $fname
-
-    set arg1 [lindex $args 0]
-
-    if {![string compare $arg1 "TCL_VARARGS"]} {
-	lassign [lindex $args 1] type argName
-	append text " ($type$argName, ...)\n\{\n"
-	append text "    " $type " var;\n    va_list argList;\n"
-	if {[string compare $rtype "void"]} {
-	    append text "    " $rtype " resultValue;\n"
-	}
-	append text "\n    var = (" $type ") (va_start(argList, " \
-		$argName "), " $argName ");\n\n    "
-	if {[string compare $rtype "void"]} {
-	    append text "resultValue = "
-	}
-	append text "(" $name "StubsPtr->" $lfname "VA)(var, argList);\n"
-	append text "    va_end(argList);\n"
-	if {[string compare $rtype "void"]} {
-	    append text "return resultValue;\n"
-	}
-	append text "\}\n\n"
-	return $text
-    }
-
-    if {![string compare $arg1 "void"]} {
-	set argList "()"
-	set argDecls ""
-    } else {
-	set argList ""
-	set sep "("
-	foreach arg $args {
-	    append argList $sep [lindex $arg 1]
-	    append argDecls "    " [lindex $arg 0] " " \
-		    [lindex $arg 1] [lindex $arg 2] ";\n"
-	    set sep ", "
-	}
-	append argList ")"
-    }
-    append text $argList "\n" $argDecls "{\n    "
-    if {[string compare $rtype "void"]} {
-	append text "return "
-    }
-    append text "(" $name "StubsPtr->" $lfname ")" $argList ";\n}\n\n"
     return $text
 }
 
@@ -596,14 +585,18 @@ proc genStubs::makeSlot {name decl index} {
 	append text $rtype " *" $lfname "; /* $index */\n"
 	return $text
     }
-    if {[string range $rtype end-7 end] == "CALLBACK"} {
-	append text [string trim [string range $rtype 0 end-8]] " (CALLBACK *" $lfname ") "
+    if {$rtype ne "void"} {
+	regsub -all void $rtype VOID rtype
+    }
+    if {[string range $rtype end-8 end] == "__stdcall"} {
+	append text [string trim [string range $rtype 0 end-9]] " (__stdcall *" $lfname ") "
     } else {
 	append text $rtype " (*" $lfname ") "
     }
+    regsub -all void $args VOID args
     set arg1 [lindex $args 0]
     switch -exact $arg1 {
-	void {
+	VOID {
 	    append text "(void)"
 	}
 	TCL_VARARGS {
@@ -678,7 +671,7 @@ proc genStubs::makeInit {name decl index} {
 # Results:
 #	None.
 
-proc genStubs::forAllStubs {name slotProc onAll textVar \
+proc genStubs::forAllStubs {name slotProc onAll textVar
 	{skipString {"/* Slot $i is reserved */\n"}}} {
     variable stubs
     upvar $textVar text
@@ -824,7 +817,7 @@ proc genStubs::forAllStubs {name slotProc onAll textVar \
 		    eval {append temp} $skipString
 		}
 	    }
-	    append text [addPlatformGuard $plat $temp]
+	    append text [addPlatformGuard $plat $temp {} true]
 	}
 	## win ##
 	if {$block(win)} {
@@ -838,7 +831,7 @@ proc genStubs::forAllStubs {name slotProc onAll textVar \
 		    eval {append temp} $skipString
 		}
 	    }
-	    append text [addPlatformGuard $plat $temp]
+	    append text [addPlatformGuard $plat $temp {} true]
 	}
 	## macosx ##
 	if {$block(macosx) && !$block(aqua) && !$block(x11)} {
@@ -910,7 +903,7 @@ proc genStubs::forAllStubs {name slotProc onAll textVar \
 			} else {
 			    eval {set etxt} $skipString
 			    append temp [addPlatformGuard $plat [$slotProc \
-				    $name $stubs($name,$plat,$i) $i] $etxt]
+				    $name $stubs($name,$plat,$i) $i] $etxt true]
 			}
 			set emit 1
 			break
@@ -920,7 +913,7 @@ proc genStubs::forAllStubs {name slotProc onAll textVar \
 		    eval {append temp} $skipString
 		}
 	    }
-	    append text [addPlatformGuard x11 $temp]
+	    append text [addPlatformGuard x11 $temp {} true]
 	}
     }
 }
@@ -937,7 +930,6 @@ proc genStubs::forAllStubs {name slotProc onAll textVar \
 #	None.
 
 proc genStubs::emitDeclarations {name textVar} {
-    variable stubs
     upvar $textVar text
 
     append text "\n/*\n * Exported function declarations:\n */\n\n"
@@ -957,7 +949,6 @@ proc genStubs::emitDeclarations {name textVar} {
 #	None.
 
 proc genStubs::emitMacros {name textVar} {
-    variable stubs
     variable libraryName
     upvar $textVar text
 
@@ -987,9 +978,18 @@ proc genStubs::emitMacros {name textVar} {
 proc genStubs::emitHeader {name} {
     variable outDir
     variable hooks
+    variable epoch
+    variable revision
 
     set capName [string toupper [string index $name 0]]
     append capName [string range $name 1 end]
+
+    if {$epoch != ""} {
+	set CAPName [string toupper $name]
+	append text "\n"
+	append text "#define ${CAPName}_STUBS_EPOCH $epoch\n"
+	append text "#define ${CAPName}_STUBS_REVISION $revision\n"
+    }
 
     emitDeclarations $name text
 
@@ -1004,40 +1004,23 @@ proc genStubs::emitHeader {name} {
     }
     append text "\ntypedef struct ${capName}Stubs {\n"
     append text "    int magic;\n"
+    if {$epoch != ""} {
+	append text "    int epoch;\n"
+	append text "    int revision;\n"
+    }
     append text "    struct ${capName}StubHooks *hooks;\n\n"
 
     emitSlots $name text
 
-    append text "} ${capName}Stubs;\n"
+    append text "} ${capName}Stubs;\n\n"
 
-    append text "\n#ifdef __cplusplus\nextern \"C\" {\n#endif\n"
+    append text "#ifdef __cplusplus\nextern \"C\" {\n#endif\n"
     append text "extern ${capName}Stubs *${name}StubsPtr;\n"
     append text "#ifdef __cplusplus\n}\n#endif\n"
 
     emitMacros $name text
 
     rewriteFile [file join $outDir ${name}Decls.h] $text
-    return
-}
-
-# genStubs::emitStubs --
-#
-#	This function emits the body of the <name>Stubs.c file for
-#	the specified interface.
-#
-# Arguments:
-#	name	The name of the interface being emitted.
-#
-# Results:
-#	None.
-
-proc genStubs::emitStubs {name} {
-    variable outDir
-
-    append text "\n/*\n * Exported stub functions:\n */\n\n"
-    forAllStubs $name makeStub 0 text
-
-    rewriteFile [file join $outDir ${name}Stubs.c] $text
     return
 }
 
@@ -1053,8 +1036,8 @@ proc genStubs::emitStubs {name} {
 #	Returns the formatted output.
 
 proc genStubs::emitInit {name textVar} {
-    variable stubs
     variable hooks
+    variable epoch
     upvar $textVar text
 
     set capName [string toupper [string index $name 0]]
@@ -1071,6 +1054,11 @@ proc genStubs::emitInit {name textVar} {
     }
     append text "\n${capName}Stubs ${name}Stubs = \{\n"
     append text "    TCL_STUB_MAGIC,\n"
+    if {$epoch != ""} {
+	set CAPName [string toupper $name]
+	append text "    ${CAPName}_STUBS_EPOCH,\n"
+	append text "    ${CAPName}_STUBS_REVISION,\n"
+    }
     if {[info exists hooks($name)]} {
 	append text "    &${name}StubHooks,\n"
     } else {

@@ -15,8 +15,6 @@
  *
  * See the file "license.terms" for information on usage and redistribution of
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
- *
- * RCS: @(#) $Id$
  */
 
 /*
@@ -76,7 +74,7 @@ TkInitXId(
     TkDisplay *dispPtr)		/* Tk's information about the display. */
 {
     dispPtr->idStackPtr = NULL;
-    dispPtr->defaultAllocProc = (XID (*) _ANSI_ARGS_((Display *display)))
+    dispPtr->defaultAllocProc = (XID (*) (Display *display))
 	    dispPtr->display->resource_alloc;
     dispPtr->display->resource_alloc = AllocXId;
     dispPtr->windowStackPtr = NULL;

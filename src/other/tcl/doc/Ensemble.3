@@ -4,8 +4,6 @@
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 '\" 
-'\" RCS: @(#) $Id$
-'\" 
 '\" This documents the C API introduced in TIP#235
 '\" 
 .so man.macros
@@ -150,6 +148,8 @@ code (TCL_OK, or TCL_ERROR if the token does not refer to an
 ensemble) and the dictionary obtained from
 \fBTcl_GetEnsembleMappingDict\fR should always be treated as immutable
 even if it is unshared.
+All command names in prefixes set via \fBTcl_SetEnsembleMappingDict\fR
+must be fully qualified.
 .TP
 \fBsubcommand list\fR (read-write)
 A list of all the subcommand names for the ensemble, or NULL if this

@@ -1,5 +1,4 @@
-/* $Id$
- *
+/*
  * text, image, and label elements.
  *
  * The label element combines text and image elements,
@@ -8,7 +7,7 @@
  */
 
 #include <tcl.h>
-#include <tk.h>
+#include <tkInt.h>
 #include "ttkTheme.h"
 
 /*----------------------------------------------------------------------
@@ -129,10 +128,10 @@ static void TextDraw(TextElement *text, Tk_Window tkwin, Drawable d, Ttk_Box b)
 {
     XColor *color = Tk_GetColorFromObj(tkwin, text->foregroundObj);
     int underline = -1;
-    int lastChar = -1;
     XGCValues gcValues;
     GC gc1, gc2;
     Tk_Anchor anchor = TK_ANCHOR_CENTER;
+    TkRegion clipRegion = NULL;
 
     gcValues.font = Tk_FontId(text->tkfont);
     gcValues.foreground = color->pixel;
@@ -148,21 +147,32 @@ static void TextDraw(TextElement *text, Tk_Window tkwin, Drawable d, Ttk_Box b)
 
     /*
      * Clip text if it's too wide:
-     * @@@ BUG: This will overclip multi-line text.
      */
     if (b.width < text->width) {
-	lastChar = Tk_PointToChar(text->textLayout, b.width, 1) + 1;
+	XRectangle rect;
+
+	clipRegion = TkCreateRegion();
+	rect.x = b.x;
+	rect.y = b.y;
+	rect.width = b.width + (text->embossed ? 1 : 0);
+	rect.height = b.height + (text->embossed ? 1 : 0);
+	TkUnionRectWithRegion(&rect, clipRegion, clipRegion);
+	TkSetRegion(Tk_Display(tkwin), gc1, clipRegion);
+	TkSetRegion(Tk_Display(tkwin), gc2, clipRegion);
+#ifdef HAVE_XFT
+	TkUnixSetXftClipRegion(clipRegion);
+#endif
     }
 
     if (text->embossed) {
 	Tk_DrawTextLayout(Tk_Display(tkwin), d, gc2,
-	    text->textLayout, b.x+1, b.y+1, 0/*firstChar*/, lastChar);
+	    text->textLayout, b.x+1, b.y+1, 0/*firstChar*/, -1/*lastChar*/);
     }
     Tk_DrawTextLayout(Tk_Display(tkwin), d, gc1,
-	    text->textLayout, b.x, b.y, 0/*firstChar*/, lastChar);
+	    text->textLayout, b.x, b.y, 0/*firstChar*/, -1/*lastChar*/);
 
     Tcl_GetIntFromObj(NULL, text->underlineObj, &underline);
-    if (underline >= 0 && (lastChar == -1 || underline <= lastChar)) {
+    if (underline >= 0) {
 	if (text->embossed) {
 	    Tk_UnderlineTextLayout(Tk_Display(tkwin), d, gc2,
 		text->textLayout, b.x+1, b.y+1, underline);
@@ -171,6 +181,14 @@ static void TextDraw(TextElement *text, Tk_Window tkwin, Drawable d, Ttk_Box b)
 	    text->textLayout, b.x, b.y, underline);
     }
 
+    if (clipRegion != NULL) {
+#ifdef HAVE_XFT
+	TkUnixSetXftClipRegion(None);
+#endif
+	XSetClipMask(Tk_Display(tkwin), gc1, None);
+	XSetClipMask(Tk_Display(tkwin), gc2, None);
+	TkDestroyRegion(clipRegion);
+    }
     Tk_FreeGC(Tk_Display(tkwin), gc1);
     Tk_FreeGC(Tk_Display(tkwin), gc2);
 }
@@ -326,10 +344,14 @@ static void ImageDraw(
      * stipple the image.
      * @@@ Possibly: Don't do disabled-stippling at all;
      * @@@ it's ugly and out of fashion.
+     * Do not stipple at all under Aqua, just draw the image: it shows up 
+     * as a white rectangle otherwise.
      */
     if (state & TTK_STATE_DISABLED) {
 	if (TtkSelectImage(image->imageSpec, 0ul) == image->tkimg) {
+#ifndef MAC_OSX_TK
 	    StippleOver(image, tkwin, d, b.x,b.y);
+#endif
 	}
     }
 }

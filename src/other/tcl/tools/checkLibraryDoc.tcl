@@ -18,8 +18,6 @@
 #
 # Copyright (c) 1998-1999 by Scriptics Corporation.
 # All rights reserved.
-# 
-# RCS: @(#) $Id$
 
 
 lappend auto_path "c:/program\ files/tclpro1.2/win32-ix86/bin"

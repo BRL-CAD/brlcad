@@ -15,8 +15,6 @@
 		};
 		sourceControlManager = F944EB9C08F798180049FDD4 /* Source Control */;
 		userBuildSettings = {
-			AUTOCONF = "/usr/local/bin/autoconf-2.59";
-			AUTOHEADER = "/usr/local/bin/autoheader-2.59";
 			CODE_SIGN_IDENTITY = "";
 			SYMROOT = "${SRCROOT}/../../build/tk";
 			TCL_SRCROOT = "${SRCROOT}/../../tcl";
@@ -95,6 +93,11 @@
 				active = YES;
 				name = TCLLIBPATH;
 				value = /Library/Tcl;
+			},
+			{
+				active = YES;
+				name = TK_SRCROOT;
+				value = "${TK_SRCROOT}";
 			},
 			{
 				active = NO;

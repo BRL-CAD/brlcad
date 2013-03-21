@@ -26,7 +26,3 @@ int mp_init_set (mp_int * a, mp_digit b)
   return err;
 }
 #endif
-
-/* $Source$ */
-/* $Revision$ */
-/* $Date$ */

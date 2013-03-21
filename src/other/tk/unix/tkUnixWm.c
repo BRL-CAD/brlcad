@@ -11,8 +11,6 @@
  *
  * See the file "license.terms" for information on usage and redistribution of
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
- *
- * RCS: @(#) $Id$
  */
 
 #include "tkUnixInt.h"
@@ -384,7 +382,7 @@ static int		WmDeiconifyCmd(Tk_Window tkwin, TkWindow *winPtr,
 static int		WmFocusmodelCmd(Tk_Window tkwin, TkWindow *winPtr,
 			    Tcl_Interp *interp, int objc,
 			    Tcl_Obj *CONST objv[]);
-static int		WmForgetCmd(Tk_Window tkwin, TkWindow *winPtr, 
+static int		WmForgetCmd(Tk_Window tkwin, TkWindow *winPtr,
 			    Tcl_Interp *interp, int objc,
 			    Tcl_Obj *CONST objv[]);
 static int		WmFrameCmd(Tk_Window tkwin, TkWindow *winPtr,
@@ -420,7 +418,7 @@ static int		WmIconpositionCmd(Tk_Window tkwin, TkWindow *winPtr,
 static int		WmIconwindowCmd(Tk_Window tkwin, TkWindow *winPtr,
 			    Tcl_Interp *interp, int objc,
 			    Tcl_Obj *CONST objv[]);
-static int		WmManageCmd(Tk_Window tkwin, TkWindow *winPtr, 
+static int		WmManageCmd(Tk_Window tkwin, TkWindow *winPtr,
 			    Tcl_Interp *interp, int objc,
 			    Tcl_Obj *CONST objv[]);
 static int		WmMaxsizeCmd(Tk_Window tkwin, TkWindow *winPtr,
@@ -990,7 +988,7 @@ TkWmSetClass(
  *
  * Tk_WmObjCmd --
  *
- *	This function is invoked to process the "wm" Tcl command. 
+ *	This function is invoked to process the "wm" Tcl command.
  *
  *----------------------------------------------------------------------
  */
@@ -3020,7 +3018,7 @@ WmProtocolCmd(
 	protPtr->nextPtr = wmPtr->protPtr;
 	wmPtr->protPtr = protPtr;
 	protPtr->interp = interp;
-	strcpy(protPtr->command, cmd);
+	memcpy(protPtr->command, cmd, cmdLength + 1);
     }
     if (!(wmPtr->flags & WM_NEVER_MAPPED)) {
 	UpdateWmProtocols(wmPtr);
@@ -5413,7 +5411,7 @@ SetNetWmType(TkWindow *winPtr, Tcl_Obj *typePtr)
  * GetNetWmType --
  *
  *	Read the extended window manager type hint from a window
- *	and return as a list of names suitable for use with 
+ *	and return as a list of names suitable for use with
  *	SetNetWmType.
  *
  *----------------------------------------------------------------------
@@ -6351,7 +6349,7 @@ TkWmStackorderToplevel(
 		*window_ptr++ = childWinPtr;
 	    }
 	}
-	/* ASSERT: window_ptr - windows == table.numEntries 
+	/* ASSERT: window_ptr - windows == table.numEntries
 	 * (#matched toplevel windows == #children) [Bug 1789819]
 	 */
 	*window_ptr = NULL;
@@ -6755,7 +6753,14 @@ TkSetTransientFor(Tk_Window tkwin, Tk_Window parent)
     if (parent == None) {
 	parent = Tk_Parent(tkwin);
 	while (!Tk_IsTopLevel(parent))
-	    parent = Tk_Parent(tkwin);
+	    parent = Tk_Parent(parent);
+    }
+    /*
+     * Prevent crash due to incomplete initialization, or other problems.
+     * [Bugs 3554026, 3561016]
+     */
+    if (((TkWindow *)parent)->wmInfoPtr->wrapperPtr == NULL) {
+	CreateWrapper(((TkWindow *)parent)->wmInfoPtr);
     }
     XSetTransientForHint(Tk_Display(tkwin),
 	((TkWindow *)tkwin)->wmInfoPtr->wrapperPtr->window,
@@ -7301,7 +7306,7 @@ TkpWmSetState(
  *----------------------------------------------------------------------
  */
 
-static void 
+static void
 RemapWindows(winPtr, parentPtr)
      TkWindow *winPtr;
      TkWindow *parentPtr;

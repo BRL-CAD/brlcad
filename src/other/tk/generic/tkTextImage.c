@@ -8,8 +8,6 @@
  *
  * See the file "license.terms" for information on usage and redistribution of
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
- *
- * RCS: @(#) $Id$
  */
 
 #include "tkPort.h"
@@ -71,7 +69,7 @@ static const Tk_SegType tkTextEmbImageType = {
  * Definitions for alignment values:
  */
 
-static char *alignStrings[] = {
+static const char *alignStrings[] = {
     "baseline", "bottom", "center", "top", NULL
 };
 

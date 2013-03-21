@@ -1,7 +1,3 @@
-#
-# $Id$
-#
-
 package require Tk 8.5
 package require tcltest ; namespace import -force tcltest::*
 loadTestedCommands

@@ -2,8 +2,6 @@
 #
 # This demonstration script creates a text widget that illustrates the
 # various display styles that may be set for tags.
-#
-# RCS: @(#) $Id$
 
 if {![info exists widgetDemo]} {
     error "This script should be run from the \"widget\" demo."

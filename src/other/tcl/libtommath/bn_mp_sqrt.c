@@ -140,8 +140,3 @@ E2: mp_clear(&t1);
 }
 
 #endif
-
-/* $Source$ */
-/* Based on Tom's 1.3 */
-/* $Revision$ */
-/* $Date$ */

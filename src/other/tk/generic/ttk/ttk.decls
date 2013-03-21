@@ -1,7 +1,3 @@
-#
-# $Id$
-#
-
 library 	ttk
 interface 	ttk
 epoch  		0

@@ -86,9 +86,3 @@ int mp_read_radix (mp_int * a, const char *str, int radix)
   return MP_OKAY;
 }
 #endif
-
-/* $Source$ */
-/* Tom's revision is 1.4. */
-/* $Revision$ */
-/* $Date$ */
-

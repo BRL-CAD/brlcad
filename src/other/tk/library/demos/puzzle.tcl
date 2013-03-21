@@ -2,8 +2,6 @@
 #
 # This demonstration script creates a 15-puzzle game using a collection
 # of buttons.
-#
-# RCS: @(#) $Id$
 
 if {![info exists widgetDemo]} {
     error "This script should be run from the \"widget\" demo."

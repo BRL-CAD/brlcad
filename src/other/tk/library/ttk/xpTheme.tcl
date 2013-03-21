@@ -1,6 +1,4 @@
 #
-# $Id$
-#
 # Settings for 'xpnative' theme
 #
 

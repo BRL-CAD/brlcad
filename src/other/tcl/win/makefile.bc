@@ -137,7 +137,7 @@ BINROOT		= ..
 !IF "$(NODEBUG)" == "1"
 TMPDIRNAME	= Release
 DBGX		=
-SYMDEFINES	=
+SYMDEFINES	= -DNDEBUG
 !ELSE
 TMPDIRNAME	= Debug
 #DBGX		= d
@@ -428,10 +428,10 @@ install-libraries:
 	-@$(MKDIR) "$(SCRIPT_INSTALL_DIR)\opt0.4"
 	-@copy "$(ROOT)\library\opt\optparse.tcl" "$(SCRIPT_INSTALL_DIR)\opt0.4"
 	-@copy "$(ROOT)\library\opt\pkgIndex.tcl" "$(SCRIPT_INSTALL_DIR)\opt0.4"
-	@echo installing msgcat1.4
-	-@$(MKDIR) "$(SCRIPT_INSTALL_DIR)\msgcat1.4"
-	-@copy "$(ROOT)\library\msgcat\msgcat.tcl"   "$(SCRIPT_INSTALL_DIR)\msgcat1.4"
-	-@copy "$(ROOT)\library\msgcat\pkgIndex.tcl" "$(SCRIPT_INSTALL_DIR)\msgcat1.4"
+	@echo installing msgcat1.5
+	-@$(MKDIR) "$(SCRIPT_INSTALL_DIR)\msgcat1.5"
+	-@copy "$(ROOT)\library\msgcat\msgcat.tcl"   "$(SCRIPT_INSTALL_DIR)\msgcat1.5"
+	-@copy "$(ROOT)\library\msgcat\pkgIndex.tcl" "$(SCRIPT_INSTALL_DIR)\msgcat1.5"
 	@echo installing tcltest2.3
 	-@$(MKDIR) "$(SCRIPT_INSTALL_DIR)\tcltest2.3"
 	-@copy "$(ROOT)\library\tcltest\tcltest.tcl"   "$(SCRIPT_INSTALL_DIR)\tcltest2.3"

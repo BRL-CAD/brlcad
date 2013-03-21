@@ -1,8 +1,6 @@
 # This file creates a visual test for colormaps and the WM_COLORMAP_WINDOWS
 # property.  It is part of the Tk visual test suite, which is invoked
 # via the "visual" script.
-#
-# RCS: @(#) $Id$
 
 catch {destroy .t}
 toplevel .t -colormap new

@@ -855,6 +855,7 @@ SET(TCL_TOMMATH_SRCS
   libtommath/bn_mp_cmp.c
   libtommath/bn_mp_cmp_d.c
   libtommath/bn_mp_cmp_mag.c
+  libtommath/bn_mp_cnt_lsb.c
   libtommath/bn_mp_copy.c
   libtommath/bn_mp_count_bits.c
   libtommath/bn_mp_div.c
@@ -869,6 +870,7 @@ SET(TCL_TOMMATH_SRCS
   libtommath/bn_mp_init_copy.c
   libtommath/bn_mp_init_multi.c
   libtommath/bn_mp_init_set.c
+  libtommath/bn_mp_init_set_int.c
   libtommath/bn_mp_init_size.c
   libtommath/bn_mp_karatsuba_mul.c
   libtommath/bn_mp_karatsuba_sqr.c
@@ -886,6 +888,7 @@ SET(TCL_TOMMATH_SRCS
   libtommath/bn_mp_read_radix.c
   libtommath/bn_mp_rshd.c
   libtommath/bn_mp_set.c
+  libtommath/bn_mp_set_int.c
   libtommath/bn_mp_shrink.c
   libtommath/bn_mp_sqr.c
   libtommath/bn_mp_sqrt.c

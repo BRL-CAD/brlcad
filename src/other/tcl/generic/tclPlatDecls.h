@@ -5,8 +5,6 @@
  *
  * Copyright (c) 1998-1999 by Scriptics Corporation.
  * All rights reserved.
- *
- * RCS: @(#) $Id$
  */
 
 #ifndef _TCLPLATDECLS
@@ -24,21 +22,16 @@
 #endif
 
 /*
- *  Pull in the typedef of TCHAR for windows.
+ * TCHAR is needed here for win32, so if it is not defined yet do it here.
+ * This way, we don't need to include <tchar.h> just for one define.
  */
-#if defined(__CYGWIN__)
-    typedef char TCHAR;
-#elif defined(__WIN32__) && !defined(_TCHAR_DEFINED)
-#   include <tchar.h>
-#   ifndef _TCHAR_DEFINED
-	/* Borland seems to forget to set this. */
-        typedef _TCHAR TCHAR;
-#	define _TCHAR_DEFINED
+#if (defined(_WIN32) || defined(__CYGWIN__)) && !defined(_TCHAR_DEFINED)
+#   if defined(_UNICODE)
+	typedef wchar_t TCHAR;
+#   else
+	typedef char TCHAR;
 #   endif
-#   if defined(_MSC_VER) && defined(__STDC__)
-	/* MSVC++ misses this. */
-	typedef _TCHAR TCHAR;
-#   endif
+#   define _TCHAR_DEFINED
 #endif
 
 /* !BEGIN!: Do not edit below this line. */
@@ -47,7 +40,7 @@
  * Exported function declarations:
  */
 
-#ifdef __WIN32__ /* WIN */
+#if defined(__WIN32__) || defined(__CYGWIN__) /* WIN */
 #ifndef Tcl_WinUtfToTChar_TCL_DECLARED
 #define Tcl_WinUtfToTChar_TCL_DECLARED
 /* 0 */
@@ -84,7 +77,7 @@ typedef struct TclPlatStubs {
     int magic;
     struct TclPlatStubHooks *hooks;
 
-#ifdef __WIN32__ /* WIN */
+#if defined(__WIN32__) || defined(__CYGWIN__) /* WIN */
     TCHAR * (*tcl_WinUtfToTChar) (CONST char *str, int len, Tcl_DString *dsPtr); /* 0 */
     char * (*tcl_WinTCharToUtf) (CONST TCHAR *str, int len, Tcl_DString *dsPtr); /* 1 */
 #endif /* WIN */
@@ -108,7 +101,7 @@ extern TclPlatStubs *tclPlatStubsPtr;
  * Inline function declarations:
  */
 
-#ifdef __WIN32__ /* WIN */
+#if defined(__WIN32__) || defined(__CYGWIN__) /* WIN */
 #ifndef Tcl_WinUtfToTChar
 #define Tcl_WinUtfToTChar \
 	(tclPlatStubsPtr->tcl_WinUtfToTChar) /* 0 */

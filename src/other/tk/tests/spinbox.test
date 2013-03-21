@@ -3,8 +3,6 @@
 #
 # Copyright (c) 1998-2000 by Scriptics Corporation.
 # All rights reserved.
-#
-# RCS: @(#) $Id$
 
 package require tcltest 2.1
 eval tcltest::configure $argv
@@ -465,7 +463,7 @@ test spinbox-3.69 {SpinboxWidgetCmd procedure, "xview" widget command} {
 test spinbox-3.70 {SpinboxWidgetCmd procedure, "xview" widget command} {
     .e xview moveto 0.5
     format {%.6f %.6f} {*}[.e xview]
-} {0.505376 0.72043}
+} {0.505376 0.720430}
 test spinbox-3.71 {SpinboxWidgetCmd procedure, "xview" widget command} {
     list [catch {.e xview scroll 24} msg] $msg
 } {1 {wrong # args: should be ".e xview scroll number units|pages"}}

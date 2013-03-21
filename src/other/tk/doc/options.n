@@ -5,8 +5,6 @@
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 '\" 
-'\" RCS: @(#) $Id$
-'\" 
 .so man.macros
 .TH options n 4.4 Tk "Tk Built-In Commands"
 .BS
@@ -293,7 +291,7 @@ Specifies a string to be displayed inside the widget.  The way in which
 the string is displayed depends on the particular widget and may be
 determined by other options, such as \fBanchor\fR or \fBjustify\fR.
 .OP \-textvariable textVariable Variable
-Specifies the name of a variable.  The value of the variable is a text
+Specifies the name of a global variable.  The value of the variable is a text
 string to be displayed inside the widget;  if the variable value changes
 then the widget will automatically update itself to reflect the new value.
 The way in which the string is displayed in the widget depends on the

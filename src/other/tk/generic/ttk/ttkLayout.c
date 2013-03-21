@@ -4,8 +4,6 @@
  * Generic layout processing.
  *
  * Copyright (c) 2003 Joe English.  Freely redistributable.
- *
- * $Id$
  */
 
 #include <string.h>

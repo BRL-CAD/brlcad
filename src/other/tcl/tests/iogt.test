@@ -9,8 +9,6 @@
 # Copyright (c) 2000 Ajuba Solutions.
 # Copyright (c) 2000 Andreas Kupries.
 # All rights reserved.
-# 
-# RCS: @(#) $Id$
 
 if {[catch {package require tcltest 2.1}]} {
     puts stderr "Skipping tests in [info script].  tcltest 2.1 required."

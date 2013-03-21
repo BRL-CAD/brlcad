@@ -97,7 +97,7 @@ typedef int celt;		/* Type to hold chr, or NOCELT */
 #define	NOCELT (-1)		/* Celt value which is not valid chr */
 #define	CHR(c) (UCHAR(c))	/* Turn char literal into chr literal */
 #define	DIGITVAL(c) ((c)-'0')	/* Turn chr digit into its value */
-#if TCL_UTF_MAX > 3
+#if TCL_UTF_MAX > 4
 #define	CHRBITS	32		/* Bits in a chr; must not use sizeof */
 #define	CHR_MIN	0x00000000	/* Smallest and largest chr; the value */
 #define	CHR_MAX	0xffffffff	/* CHR_MAX-CHR_MIN+1 should fit in uchr */
