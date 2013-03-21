@@ -77,7 +77,7 @@ void dump(FILE *fd)
     while ((bytes=fread(buf, 1, sizeof(buf), fd)) > 0) {
 
 	/* print the offset into the file */
-	printf("%08llx", (int64_t)addr);
+	printf("%08llx", (unsigned long long)addr);
 
 	/* produce the hexadecimal dump */
 	for (i=0, p=buf; i < DUMPLEN; ++i) {
