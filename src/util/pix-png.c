@@ -190,7 +190,7 @@ main(int argc, char *argv[])
     size_t file_width = 512; /* default input width */
     size_t file_height = 512; /* default input height */
 
-    char usage[] = "Usage: pix-png [-a] [-w file_width] [-n file_height]\n\
+    char usage[] = "Usage: pix-png [-a] [-w file_width] [-n file_height] [-g gamma]\n\
 	[-s square_file_size] [-o file.png] [file.pix] [> file.png]\n";
 
     bu_setprogname(argv[0]);
