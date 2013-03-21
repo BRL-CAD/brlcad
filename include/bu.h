@@ -6260,10 +6260,16 @@ BU_EXPORT extern void *bu_dlopen(const char *path, int mode);
 BU_EXPORT extern void *bu_dlsym(void *path, const char *symbol);
 BU_EXPORT extern int bu_dlclose(void *handle);
 BU_EXPORT extern const char *bu_dlerror();
+
+/** NEW: Do not use. */
 BU_EXPORT extern int bu_fseek(FILE *stream, off_t offset, int origin);
+/** NEW: Do not use. */
 BU_EXPORT extern off_t bu_lseek(int fd, off_t offset, int origin);
+/** NEW: Do not use. */
 BU_EXPORT extern off_t bu_ftell(FILE *stream);
+/** NEW: Do not use. */
 BU_EXPORT extern int bu_fstat(int fd, genptr_t buffer);
+/** NEW: Do not use. */
 BU_EXPORT extern int bu_stat(const char *path, genptr_t buffer);
 
 /** @} file */
