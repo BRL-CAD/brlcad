@@ -49,6 +49,15 @@
 
 extern int rt_rec_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip);
 
+static void rt_tgc_rotate(fastf_t *A, fastf_t *B, fastf_t *Hv, fastf_t *Rot, fastf_t *Inv, struct tgc_specific *tgc);
+static void rt_tgc_shear(const fastf_t *vect, int axis, fastf_t *Shr, fastf_t *Trn, fastf_t *Inv);
+static void rt_tgc_scale(fastf_t a, fastf_t b, fastf_t h, fastf_t *Scl, fastf_t *Inv);
+static void nmg_tgc_disk(struct faceuse *fu, fastf_t *rmat, fastf_t height, int flip);
+static void nmg_tgc_nurb_cyl(struct faceuse *fu, fastf_t *top_mat, fastf_t *bot_mat);
+
+void rt_pt_sort(register fastf_t *t, int npts);
+
+
 struct tgc_specific {
     vect_t tgc_V;		/* Vector to center of base of TGC */
     fastf_t tgc_sH;		/* magnitude of sheared H vector */
@@ -67,16 +76,6 @@ struct tgc_specific {
 };
 
 
-static void rt_tgc_rotate(fastf_t *A, fastf_t *B, fastf_t *Hv, fastf_t *Rot, fastf_t *Inv, struct tgc_specific *tgc);
-static void rt_tgc_shear(const fastf_t *vect, int axis, fastf_t *Shr, fastf_t *Trn, fastf_t *Inv);
-static void rt_tgc_scale(fastf_t a, fastf_t b, fastf_t h, fastf_t *Scl, fastf_t *Inv);
-static void nmg_tgc_disk(struct faceuse *fu, fastf_t *rmat, fastf_t height, int flip);
-static void nmg_tgc_nurb_cyl(struct faceuse *fu, fastf_t *top_mat, fastf_t *bot_mat);
-void rt_pt_sort(register fastf_t *t, int npts);
-
-#define VLARGE 1000000.0
-#define ALPHA(x, y, c, d)	((x)*(x)*(c) + (y)*(y)*(d))
-
 const struct bu_structparse rt_tgc_parse[] = {
     { "%f", 3, "V", bu_offsetofarray(struct rt_tgc_internal, v, point_t, X), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     { "%f", 3, "H", bu_offsetofarray(struct rt_tgc_internal, h, vect_t, X), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
@@ -86,6 +85,68 @@ const struct bu_structparse rt_tgc_parse[] = {
     { "%f", 3, "D", bu_offsetofarray(struct rt_tgc_internal, d, vect_t, X), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     { {'\0', '\0', '\0', '\0'}, 0, (char *)NULL, 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
+
+
+fastf_t nmg_tgc_unitcircle[36] = {
+    1.0, 0.0, 0.0, 1.0,
+    RAT, -RAT, 0.0, RAT,
+    0.0, -1.0, 0.0, 1.0,
+    -RAT, -RAT, 0.0, RAT,
+    -1.0, 0.0, 0.0, 1.0,
+    -RAT, RAT, 0.0, RAT,
+    0.0, 1.0, 0.0, 1.0,
+    RAT, RAT, 0.0, RAT,
+    1.0, 0.0, 0.0, 1.0
+};
+
+
+fastf_t nmg_uv_unitcircle[27] = {
+    1.0,   .5,  1.0,
+    RAT,  RAT,  RAT,
+    .5,   1.0,  1.0,
+    0.0,  RAT,  RAT,
+    0.0,   .5,  1.0,
+    0.0,  0.0,  RAT,
+    .5,   0.0,  1.0,
+    RAT,  0.0,  RAT,
+    1.0,   .5,  1.0
+};
+
+
+#define VLARGE 1000000.0
+#define MAX_RATIO 10.0	/* maximum allowed height-to-width ration for triangles */
+#define RAT  M_SQRT1_2
+
+#define OUT 0
+#define IN 1
+
+/* hit_surfno is set to one of these */
+#define TGC_NORM_BODY (1)	/* compute normal */
+#define TGC_NORM_TOP (2)	/* copy tgc_N */
+#define TGC_NORM_BOT (3)	/* copy reverse tgc_N */
+
+#define RT_TGC_SEG_MISS(SEG)	(SEG).seg_stp=RT_SOLTAB_NULL
+#define VEXCHANGE(a, b, tmp) { VMOVE(tmp, a); VMOVE(a, b); VMOVE(b, tmp); }
+#define ALPHA(x, y, c, d)	((x)*(x)*(c) + (y)*(y)*(d))
+
+/* determines the class of tgc given vector magnitudes a, b, c, d */
+#define GET_TGC_TYPE(type, a, b, c, d) \
+{ \
+    if (EQUAL((a), (b)) && EQUAL((c), (d))) { \
+	if (EQUAL((a), (c))) { \
+	    (type) = RCC; \
+	} else { \
+	    (type) = TRC; \
+	} \
+    } else { \
+	if (EQUAL((a), (c)) && EQUAL((b), (d))) { \
+	    (type) = REC; \
+	} else { \
+	    (type) = TEC; \
+	} \
+    } \
+}
+
 
 /**
  * R T _ T G C _ B B O X
@@ -208,7 +269,6 @@ rt_tgc_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 	 */
 	VADD2(tip->v, tip->v, tip->h);
 	VREVERSE(tip->h, tip->h);
-#define VEXCHANGE(a, b, tmp) { VMOVE(tmp, a); VMOVE(a, b); VMOVE(b, tmp); }
 	VEXCHANGE(tip->a, tip->c, work);
 	VEXCHANGE(tip->b, tip->d, work);
 	bu_log("NOTE: tgc(%s): degenerate end exchanged\n", stp->st_name);
@@ -492,11 +552,6 @@ rt_tgc_print(register const struct soltab *stp)
     bu_log("(|B|**2)/(|D|**2) = %f\n", tgc->tgc_BBdDD);
 }
 
-
-/* hit_surfno is set to one of these */
-#define TGC_NORM_BODY (1)	/* compute normal */
-#define TGC_NORM_TOP (2)	/* copy tgc_N */
-#define TGC_NORM_BOT (3)	/* copy reverse tgc_N */
 
 /**
  * R T _ T G C _ S H O T
@@ -906,8 +961,6 @@ rt_tgc_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 }
 
 
-#define RT_TGC_SEG_MISS(SEG)	(SEG).seg_stp=RT_SOLTAB_NULL
-
 /**
  * R T _ T G C _ V S H O T
  *
@@ -1166,11 +1219,9 @@ rt_tgc_vshot(struct soltab **stp, register struct xray **rp, struct seg *segp, i
 
 	/* Now, k[0] > k[npts-1] */
 
-	/* General Cone may have 4 intersections, but *
-	 * Truncated Cone may only have 2.		*/
-
-#define OUT 0
-#define IN 1
+	/* General Cone may have 4 intersections, but Truncated Cone
+	 * may only have 2.
+	 */
 
 	/* Truncation Procedure
 	 *
@@ -2138,8 +2189,6 @@ struct tgc_pts
 };
 
 
-#define MAX_RATIO 10.0	/* maximum allowed height-to-width ration for triangles */
-
 /* version using tolerances */
 int
 rt_tgc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
@@ -2976,34 +3025,6 @@ rt_tgc_tnurb(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
     return 0;
 }
 
-/* RAT was defined to be .707107 */
-#define RAT  M_SQRT1_2
-
-fastf_t nmg_tgc_unitcircle[36] = {
-    1.0, 0.0, 0.0, 1.0,
-    RAT, -RAT, 0.0, RAT,
-    0.0, -1.0, 0.0, 1.0,
-    -RAT, -RAT, 0.0, RAT,
-    -1.0, 0.0, 0.0, 1.0,
-    -RAT, RAT, 0.0, RAT,
-    0.0, 1.0, 0.0, 1.0,
-    RAT, RAT, 0.0, RAT,
-    1.0, 0.0, 0.0, 1.0
-};
-
-
-fastf_t nmg_uv_unitcircle[27] = {
-    1.0,   .5,  1.0,
-    RAT,  RAT,  RAT,
-    .5,   1.0,  1.0,
-    0.0,  RAT,  RAT,
-    0.0,   .5,  1.0,
-    0.0,  0.0,  RAT,
-    .5,   0.0,  1.0,
-    RAT,  0.0,  RAT,
-    1.0,   .5,  1.0
-};
-
 
 static void
 nmg_tgc_disk(struct faceuse *fu, fastf_t *rmat, fastf_t height, int flip)
@@ -3272,25 +3293,6 @@ rt_tgc_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)
     if (ip) RT_CK_DB_INTERNAL(ip);
 
     return 0;			/* OK */
-}
-
-
-/* determines the class of tgc given vector magnitudes a, b, c, d */
-#define GET_TGC_TYPE(type, a, b, c, d) \
-{ \
-    if (EQUAL((a), (b)) && EQUAL((c), (d))) { \
-	if (EQUAL((a), (c))) { \
-	    (type) = RCC; \
-	} else { \
-	    (type) = TRC; \
-	} \
-    } else { \
-	if (EQUAL((a), (c)) && EQUAL((b), (d))) { \
-	    (type) = REC; \
-	} else { \
-	    (type) = TEC; \
-	} \
-    } \
 }
 
 
