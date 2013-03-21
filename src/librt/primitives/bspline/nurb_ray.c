@@ -459,15 +459,15 @@ rt_nurb_intersect(const struct face_g_snurb *srf, fastf_t *plane1, fastf_t *plan
 			fastf_t inv_w;
 
 			inv_w = 1.0 / p1[coords-1];
-			VSCALE(p1, p1, inv_w)
+			VSCALE(p1, p1, inv_w);
 
-			    inv_w = 1.0 / p2[coords-1];
-			VSCALE(p2, p2, inv_w)
-			    }
+			inv_w = 1.0 / p2[coords-1];
+			VSCALE(p2, p2, inv_w);
+		    }
 
-		    VSUB2(diff, p1, p2)
-			bu_log("Precision of hit point = %g (%f %f %f) <-> (%f %f %f)\n",
-			       MAGNITUDE(diff), V3ARGS(p1), V3ARGS(p2));
+		    VSUB2(diff, p1, p2);
+		    bu_log("Precision of hit point = %g (%f %f %f) <-> (%f %f %f)\n",
+			   MAGNITUDE(diff), V3ARGS(p1), V3ARGS(p2));
 		}
 
 		hit = (struct rt_nurb_uv_hit *) bu_malloc(

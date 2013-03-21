@@ -1218,19 +1218,19 @@ rt_ell_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	    vect_t norm_opp;
 
 	    NMG_CK_VERTEX(strips[i].vp[j]);
-	    VREVERSE(norm_opp, strips[i].norms[j])
+	    VREVERSE(norm_opp, strips[i].norms[j]);
 
-		for (BU_LIST_FOR(vu, vertexuse, &strips[i].vp[j]->vu_hd)) {
-		    fu = nmg_find_fu_of_vu(vu);
-		    NMG_CK_FACEUSE(fu);
-		    /* get correct direction of normals depending on
-		     * faceuse orientation
-		     */
-		    if (fu->orientation == OT_SAME)
-			nmg_vertexuse_nv(vu, strips[i].norms[j]);
-		    else if (fu->orientation == OT_OPPOSITE)
-			nmg_vertexuse_nv(vu, norm_opp);
-		}
+	    for (BU_LIST_FOR(vu, vertexuse, &strips[i].vp[j]->vu_hd)) {
+		fu = nmg_find_fu_of_vu(vu);
+		NMG_CK_FACEUSE(fu);
+		/* get correct direction of normals depending on
+		 * faceuse orientation
+		 */
+		if (fu->orientation == OT_SAME)
+		    nmg_vertexuse_nv(vu, strips[i].norms[j]);
+		else if (fu->orientation == OT_OPPOSITE)
+		    nmg_vertexuse_nv(vu, norm_opp);
+	    }
 	}
     }
 
