@@ -52,8 +52,8 @@
 #define MEDIUM_SKY 1
 #define OVERCAST_SKY 2
 
-/* Sometimes found in <math.h> */
 #define MIKE_TOL	.000001
+
 
 /* Local information */
 struct toyota_specific {
@@ -119,21 +119,18 @@ struct mfuncs toyota_mfuncs[] = {
 
 #define RI_AIR 1.0    /* Refractive index of air.		*/
 
-/*
- * T O Y O T A _ S E T U P
- *
- * These should be measured values, but since we're lazy
- * let's use values Toyota carefully measured in Japan one day.
+/**
+ * These should be measured values, but since we're lazy let's use
+ * values Toyota carefully measured in Japan one day.
  *
  * Data measured:	11:28am, October 20, 1989 (Friday)
  *
- * Location:	Toyota-city, Aichi-prefecture, Japan
- * at 35d 2'55.07" North, 137d 9'45.26" East
+ * Location: Toyota-city, Aichi-prefecture, Japan at 35d 2'55.07"
+ * North, 137d 9'45.26" East
  *
- * Measuring Instruments: Precision pyrheliometer (Model MS-52 made
- * by Eko Co., Ltd.), Sun-photo meter (Model MS-110
- * made by Eko Co., Ltd.), Luminance meter
- * (MINOLTA CS-100)
+ * Measuring Instruments: Precision pyrheliometer (Model MS-52 made by
+ * Eko Co., Ltd.), Sun-photo meter (Model MS-110 made by Eko Co.,
+ * Ltd.), Luminance meter (MINOLTA CS-100)
  */
 HIDDEN int
 toyota_setup(register struct region *UNUSED(rp), struct bu_vls *matparm, genptr_t *dpp, const struct mfuncs *UNUSED(mfp), struct rt_i *UNUSED(rtip))
@@ -158,13 +155,13 @@ toyota_setup(register struct region *UNUSED(rp), struct bu_vls *matparm, genptr_
     tp->weather = CLEAR_SKY;/* no clouds */
 
     /*            / 2*M_PI  / arctan(rs/d)
-     * sun_sang = |       |
-     *	      |       |     sin(theta) d-theta d-phi
-     *	     /       /
+     * sun_sang = |         |
+     *	          |         |     sin(theta) d-theta d-phi
+     *	          /         /
      *
      *	    = 2*M_PI*(1 - cos(arctan(rs/d)))
      *
-     *          = 2*M_PI*(1 - cos(arctan(695300/149000000)))
+     *      = 2*M_PI*(1 - cos(arctan(695300/149000000)))
      *
      *	    = 2*M_PI*(1 - cos(.00466640908179121739))
      *
@@ -222,9 +219,6 @@ toyota_setup(register struct region *UNUSED(rp), struct bu_vls *matparm, genptr_
 }
 
 
-/*
- * M I R R O R _ S E T U P
- */
 HIDDEN int
 tmirror_setup(register struct region *UNUSED(rp), struct bu_vls *matparm, genptr_t *dpp, const struct mfuncs *UNUSED(mfp), struct rt_i *UNUSED(rtip))
 
@@ -244,9 +238,6 @@ tmirror_setup(register struct region *UNUSED(rp), struct bu_vls *matparm, genptr
 }
 
 
-/*
- * G L A S S _ S E T U P
- */
 HIDDEN int
 tglass_setup(register struct region *UNUSED(rp), struct bu_vls *matparm, genptr_t *dpp, const struct mfuncs *UNUSED(mfp), struct rt_i *UNUSED(rtip))
 
@@ -266,9 +257,6 @@ tglass_setup(register struct region *UNUSED(rp), struct bu_vls *matparm, genptr_
 }
 
 
-/*
- * T O Y O T A _ P R I N T
- */
 HIDDEN void
 toyota_print(register struct region *rp, genptr_t dp)
 {
@@ -276,9 +264,6 @@ toyota_print(register struct region *rp, genptr_t dp)
 }
 
 
-/*
- * T O Y O T A _ F R E E
- */
 HIDDEN void
 toyota_free(genptr_t cp)
 {
@@ -287,9 +272,7 @@ toyota_free(genptr_t cp)
 }
 
 
-/*
- * A I R _ M A S S
- *
+/**
  * Return the relative optical air mass as a function of solar
  * altitude.  See Kasten, Fritz "Archiv fuer Meterologie Geophysik
  * und Bioklimateorie, Ser. B", Vol. 14, p. 14, 1966, A New Table and
@@ -309,9 +292,7 @@ air_mass(fastf_t air_gamma)
 }
 
 
-/*
- * Z E N I T H _ L U M I N A N C E
- *
+/**
  * Return sky luminance at its zenith.
  *
  * DON'T KNOW HOW TO DO THIS YET!!!
@@ -328,9 +309,7 @@ zenith_luminance(fastf_t UNUSED(sun_alt), fastf_t UNUSED(t_vl))
 }
 
 
-/*
- * O V E R C A S T _ S K Y _ L U M
- *
+/**
  * CIE Standard sky luminance function.  Sky covered with clouds
  * so thick that the sun cannot be seen.
  * Luminance units: cd/m^2
@@ -348,12 +327,10 @@ overcast_sky_lum(fastf_t lz, fastf_t *Zenith, fastf_t *Sky_elmt)
 }
 
 
-/* H O M O G E N O U S _ S K Y _ L U M
- *
+/**
  * Intermediate homogeneous sky light luminance function.  Sky in
- * which weather homogeneously changes between clear and overcast skies
- * without clouds scattered in the sky.
- * Luminance units: cd/m^2
+ * which weather homogeneously changes between clear and overcast
+ * skies without clouds scattered in the sky.  Luminance units: cd/m^2
  *
  * DON'T KNOW HOW TO DO THIS YET!!!
  * SENT LETTER TO CIE & TOYOTA JULY 7, 1992
@@ -367,9 +344,7 @@ homogenous_sky_lum(fastf_t *UNUSED(Sky_elmt), fastf_t *UNUSED(Sun), fastf_t UNUS
 }
 
 
-/*
- * C L E A R _ S K Y _ L U M
- *
+/**
  * CIE Standard sky luminance function.  Sky free from clouds.
  * Luminance units: cd/m^2
  *
@@ -406,17 +381,14 @@ clear_sky_lum(fastf_t lz, fastf_t *Sky_elmt, fastf_t *Sun, fastf_t *Zenith)
 }
 
 
-/*
- * A T M O S _ I R R A D I A N C E
- *
+/**
  * Table of solar irradiance values taken from WMO - No. 590,
  * "Commission for Instruments and Methods of Observation", Abridged
- * Final Report of the Eighth Session, Mexico City, 19-30 October 1981,
- * pp. 71-5.
+ * Final Report of the Eighth Session, Mexico City, 19-30 October
+ * 1981, pp. 71-5.
  *
- * Return the solar spectral irradiance through the atmosphere
- * for a given wavelength of light.
- * Units: W/m^2
+ * Return the solar spectral irradiance through the atmosphere for a
+ * given wavelength of light.  Units: W/m^2
  */
 fastf_t
 atmos_irradiance(fastf_t lambda)
@@ -1533,14 +1505,12 @@ ozone_absorption(fastf_t lambda)
 }
 
 
-/*
- * S P E C T R A L _ D I S T _ T A B L E
- *
+/**
  * Do a table lookup to get data on spectral irradiance of daylight.
  * Table taken from Judd, D B; MacAdam, D L; Wyszecki, G J; Journal
- * for Optical Science of America, Vol. 54, 1964, "Spectral Distribution
- * of Typical Daylight as a Function of Correlated Color Temperature, "
- * pp. 1031-40.
+ * for Optical Science of America, Vol. 54, 1964, "Spectral
+ * Distribution of Typical Daylight as a Function of Correlated Color
+ * Temperature, " pp. 1031-40.
  */
 void
 spectral_dist_table(fastf_t lambda, fastf_t *e_mean, fastf_t *v1, fastf_t *v2)
@@ -1622,14 +1592,12 @@ spectral_dist_table(fastf_t lambda, fastf_t *e_mean, fastf_t *v1, fastf_t *v2)
 }
 
 
-/*
- * S K Y _ L I G H T _ S P E C T R A L _ D I S T
- *
+/**
  * Return sky light spectral distribution for a sky element.  Because
  * to date there is no decisive research on the spectral distribution
- * of sky light, the CIE synthesized daylight expression is used.
- * See Judd, D B; MacAdam, D L; Wyszecki, G J; Journal for Optical
- * Science of America, Vol. 54, 1964, p. 1031.
+ * of sky light, the CIE synthesized daylight expression is used.  See
+ * Judd, D B; MacAdam, D L; Wyszecki, G J; Journal for Optical Science
+ * of America, Vol. 54, 1964, p. 1031.
  *
  * Units: W/m^2/nm/sr
  */
@@ -1721,11 +1689,8 @@ skylight_spectral_dist(fastf_t lambda, fastf_t *Zenith, fastf_t *Sky_elmt, fastf
 }
 
 
-/*
- * S U N _ R A D I A N C E
- *
- * Calculate spectral radiance of sun on ground.
- * Units: W/m^2/nm/sr.
+/**
+ * Calculate spectral radiance of sun on ground.  Units: W/m^2/nm/sr.
  */
 fastf_t
 sun_radiance(fastf_t lambda, fastf_t alpha, fastf_t beta, fastf_t sun_alt, fastf_t sun_sang)
@@ -1759,13 +1724,11 @@ sun_radiance(fastf_t lambda, fastf_t alpha, fastf_t beta, fastf_t sun_alt, fastf
 }
 
 
-/*
- * F R E S N E L _ R E F L
- *
+/**
  * Return reflectance of a material with only regular (specular)
- * reflectance using Fresnel's equations.  For materials other
- * than glass, it is better to measure the specular reflectance
- * since usually it will not follow Fresnel's formula.
+ * reflectance using Fresnel's equations.  For materials other than
+ * glass, it is better to measure the specular reflectance since
+ * usually it will not follow Fresnel's formula.
  *
  * Note: This works only for unpolarized light.  For polarized
  * skylight, the formula must be extended.
@@ -1808,9 +1771,7 @@ fresnel_refl(fastf_t cos_eps, fastf_t n1, fastf_t n2)
 }
 
 
-/*
- * A B S O R P _ C O E F F
- *
+/**
  * For each type of material which has had its absorption coefficient
  * measured, linear interpolation between data points is used to
  * return the absorption coefficient for a given wavelength.
@@ -1872,9 +1833,7 @@ absorp_coeff(fastf_t lambda, char *material)
 }
 
 
-/*
- * R E F L E C T A N C E
- *
+/**
  * For each type of material which has had its spectral reflectance
  * measured, linear interpolation between data points is used to
  * return the reflectance factor for a given wavelength and a given
@@ -1967,19 +1926,16 @@ out:
 }
 
 
-/*
- * L A M B D A _ T O _ R G B
+/**
+ * Given a wavelength in nm of light, return its rgb approximation.
  *
- * Given a wavelength in nm of light, return its rgb
- * approximation.
- *
- * Taken from Wyszecki, Guenter; Stiles, WS; "Color Science:
- * Concepts and Methods, Quantitative Data and Formulae, " John
- * Wiley and Sons, 1982, pp. 615, table taken from pp. 806-7.
+ * Taken from Wyszecki, Guenter; Stiles, WS; "Color Science: Concepts
+ * and Methods, Quantitative Data and Formulae, " John Wiley and Sons,
+ * 1982, pp. 615, table taken from pp. 806-7.
  *
  * They, in turn, took the data from Vos, J J, Colorimetric and
- * photometric properties of a 2 degree fundamental observer,
- * "Color Res. & Appl. 3", 125 (1978).
+ * photometric properties of a 2 degree fundamental observer, "Color
+ * Res. & Appl. 3", 125 (1978).
  *
  * Table row: wavelength, x_bar(lambda), y_bar(lambda), z_bar(lambda).
  */
@@ -2137,9 +2093,7 @@ lambda_to_rgb(fastf_t lambda, fastf_t irrad, fastf_t *rgb)
 }
 
 
-/*
- * B A C K G R O U N D _ L I G H T
- *
+/**
  * Calculate radiance of background light.  For a given wavelength,
  * non-zero reflectance values for a range of incident light angles
  * determine the solid angle of contributing background light.
@@ -2274,11 +2228,10 @@ background_light(fastf_t lambda, struct toyota_specific *ts, fastf_t *Refl, fast
 }
 
 
-/*
- * T O Y O T A _ R E N D E R
+/**
+ * Lighting model developed by Toyota.  "Technique makes it possible
+ * to:
  *
- * Lighting model developed by Toyota.  "Technique makes it
- * possible to:
  * (1) Generate an image as if it is an actual object.
  * (2) Render any material and color.
  * (3) Render the appearance at any place and time under
