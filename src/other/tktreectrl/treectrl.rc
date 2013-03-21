@@ -1,0 +1,12 @@
+//
+// This enables themed headers in XP by trying to use comctl32 v6.
+//
+
+#ifndef RT_MANIFEST
+#define RT_MANIFEST     24
+#endif
+#ifndef ISOLATIONAWARE_MANIFEST_RESOURCE_ID
+#define ISOLATIONAWARE_MANIFEST_RESOURCE_ID 2
+#endif
+ISOLATIONAWARE_MANIFEST_RESOURCE_ID RT_MANIFEST "treectrl.dll.manifest"
+

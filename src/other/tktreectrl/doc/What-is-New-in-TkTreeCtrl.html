@@ -1,0 +1,3604 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+
+
+
+
+  <meta content="text/html; charset=ISO-8859-1" http-equiv="content-type"><title>What's New in TkTreeCtrl</title>
+  <meta content="Tim Baker" name="author"></head><body>
+<h1>What's New in TkTreeCtrl 2.4.1</h1>
+<h2>Bug Fixes</h2>
+<ul>
+  <li>[BUG 3421503] Creating a new treectrl widget would crash the application if the default value of either of the <span style="font-weight: bold;">-buttonbitmap</span> or <span style="font-weight: bold;">-buttonimage</span> options was changed using the Tk option database.</li>
+  <li>[BUG 3421503] Random crashes could result when using hidden columns due to writing past the end of an array.<br>
+  </li>
+</ul>
+<hr style="width: 100%; height: 2px;"><h1>What's New in TkTreeCtrl 2.4</h1><span style="font-weight: bold;">Changes since 2.4b2:<br>
+</span>
+<ul>
+  <li>There were no changes since 2.4b2.</li>
+</ul>
+<span style="font-weight: bold;">Changes since 2.4b1:</span><br>
+<ul>
+  <li>Fixed the header config option <span style="font-weight: bold;">-text</span> being treated like a per-state option.</li>
+  <li>Fixed rectangle and 3D border drawing on X11 due to 16-bit
+coordinates.&nbsp; When items or headers were very wide, rectangles and
+borders wouldn't be drawn correctly.</li>
+  <li>Fixed dragging headers in locked columns not displaying correctly.</li>
+  <li>Fixed [identify] when right-locked headers were drawn over
+left-locked headers, the point was reported as being in the left-locked
+headers.</li>
+  <li>Fixed a library-script error when dragging headers when only locked columns were visible.</li>
+  <li>Fixed <span style="font-weight: bold;">-canvaspady</span> being ignored when only locked columns were visible.</li>
+  <li>Fixed the column-resize proxy line going past the right edge of a column when resizing right-locked columns.</li>
+  <li>Right-locked columns are always resized by their left edge
+now.&nbsp; Previously, only the leftmost and rightmost right-locked
+columns were resized by their left edge, which was inconsistent and
+weird.</li>
+  <li>If an instance element was displaying its master's <span style="font-weight: bold;">-textvariable</span> string, the instance element would not be redisplayed when that <span style="font-weight: bold;">-textvariable</span> variable was modified.</li>
+  <li>The spans of dragged headers are restricted to the range of
+dragged columns, and the spans of non-dragged headers are terminated if
+they reach the first dragged column.</li>
+  <li>Improved column-spanning behavior.&nbsp; See "Column Spanning" below.</li>
+  <li>Fixed widget borders not being redrawn if an &lt;Expose&gt; event didn't also overlap the content area.</li>
+  <li>Fixed the <span style="font-weight: bold;">-background</span> and <span style="font-weight: bold;">-borderwidth</span> header options being ignored in the tail column.</li>
+  <li>Fixed a few memory leaks with the new column header code.<br>
+  </li>
+
+</ul>
+<h2>Header Command</h2>
+
+
+
+<table style="text-align: left; width: 100%;" border="1" cellpadding="2" cellspacing="2">
+<tbody><tr><th style="background-color: rgb(255, 255, 204); width: 50%;">New<br>
+</th><th style="background-color: rgb(204, 255, 255);">Comment</th></tr><tr>
+      <td style="vertical-align: top;">header create<br>
+      </td>
+      <td style="vertical-align: top;">Creates a new row of column headers.&nbsp; The result is a unique ID for that header-row.<br>
+</td></tr><tr>
+      <td style="vertical-align: top;">header delete<br>
+      </td>
+      <td style="vertical-align: top;">Deletes one or more header-rows.&nbsp; The top header-row, created when a treectrl is created, cannot be deleted.<br>
+      </td>
+    </tr>
+    <tr>
+      <td colspan="1" rowspan="1" style="vertical-align: top;">header cget<br>
+header configure<br>
+      </td>
+      <td colspan="1" rowspan="1" style="vertical-align: top;">These commands work on both entire header-rows and individual columns within header-rows.&nbsp; The <span style="font-weight: bold;">column configure</span> command may also be used to configure column headers in the top header-row.<br>
+      </td>
+    </tr>
+    <tr>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">header bbox<br>
+header compare<br>
+header count<br>
+header element<br>
+header id<br>
+header image<br>
+header span<br>
+header state<br>
+header style<br>
+header text<br>
+header tag<br>
+      </td>
+      <td style="vertical-align: top;">These commands have the same syntax as the <span style="font-weight: bold;">item</span> subcommands of the same name.<br>
+Header-rows are actually implemented as items.<br>
+      <br>
+The <span style="font-weight: bold;">header image</span> and <span style="font-weight: bold;">header text</span>
+commands will change either the first image or text element in a custom
+style assigned to a column header, or the -image and -text options of a
+column header when no custom style is assigned.<br>
+      <br>
+The <span style="font-weight: bold;">header state</span> command operates on header states, which are distinct from item states. See the updated section called STATES in the manual.<br>
+      </td>
+    </tr>
+    <tr>
+      <td colspan="1" rowspan="1" style="vertical-align: top;">header dragcget<br>
+header dragconfigure<br>
+      </td>
+      <td colspan="1" rowspan="1" style="vertical-align: top;">Same as the <span style="font-weight: bold;">column dragcget</span> and <span style="font-weight: bold;">column dragconfigure</span> commands.<br>
+      <br>
+The visual feedback when dragging column headers has changed.&nbsp; As
+a result, the following options are deprecated and have no effect:<br>
+      <ul>
+        <li>-imagecolor</li>
+        <li>-indicatorcolor</li>
+        <li>-indicatorside</li>
+      </ul>
+
+      </td>
+    </tr>
+    <tr>
+    </tr>
+</tbody>
+</table>
+<h2>Column Configuration Options<br>
+</h2>
+<table style="text-align: left; width: 100%;" border="1" cellpadding="2" cellspacing="2">
+<tbody><tr><th style="background-color: rgb(255, 255, 204); width: 50%;">Option<br>
+</th><th style="background-color: rgb(204, 255, 255);">Comment</th></tr><tr>
+      <td style="vertical-align: top;">
+      <dl class="options">
+<dt><b class="option"><b class="option">-arrow</b></b> <i class="arg">direction</i></dt><dt><b class="option"><b class="option">-arrowbitmap</b></b> <i class="arg">bitmap</i></dt><dt><b class="option"><b class="option">-arrowgravity</b></b> <i class="arg">direction</i></dt><dt><b class="option"><b class="option">-arrowimage</b></b> <i class="arg">image</i></dt><dt><b class="option"><b class="option">-arrowpadx</b></b> <i class="arg">amount</i></dt><dt><b class="option"><b class="option">-arrowpady</b></b> <i class="arg">amount</i></dt><dt><b class="option"><b class="option">-arrowside</b></b> <i class="arg">side</i></dt><dt><b class="option"><b class="option">-background</b></b> <i class="arg">color</i></dt><dt><b class="option"><b class="option">-bitmap</b></b> <i class="arg">bitmap</i></dt><dt><b class="option"><b class="option">-borderwidth</b></b> <i class="arg">size</i></dt><dt><b class="option"><b class="option">-button</b></b> <i class="arg">boolean</i></dt><dt><b class="option"><b class="option">-font</b></b> <i class="arg">fontName</i></dt><dt><b class="option"><b class="option">-image</b></b> <i class="arg">image</i></dt><dt><b class="option"><b class="option">-imagepadx</b></b> <i class="arg">amount</i></dt><dt><b class="option"><b class="option">-imagepady</b></b> <i class="arg">amount</i></dt><dt><b class="option"><b class="option">-justify</b></b> <i class="arg">justification</i></dt><dt><b class="option"><b class="option">-state</b></b> <i class="arg">state</i></dt><dt><b class="option"><b class="option">-text</b></b> <i class="arg">text</i></dt><dt><b class="option"><b class="option">-textcolor</b></b> <i class="arg">color</i></dt><dt><b class="option"><b class="option">-textlines</b></b> <i class="arg">count</i></dt><dt><b class="option"><b class="option">-textpadx</b></b> <i class="arg">amount</i></dt><dt><b class="option"><b class="option">-textpady</b></b> <i class="arg">amount</i></dt>
+      </dl>
+      </td>
+      <td colspan="1" rowspan="1" style="vertical-align: top;">All
+these options related to column headers are no longer a part of a
+column itself.&nbsp; Instead, these options were moved to the new
+column header API.<br>
+      <br>
+These options can still be accessed using <span style="font-weight: bold;">column cget</span> and <span style="font-weight: bold;">column configure</span>, but only for the top row of column headers.<br>
+      <br>
+To access these options in header-rows other than the top row, use the <span style="font-weight: bold;">header cget</span> and <span style="font-weight: bold;">header configure</span> command.<br>
+      </td>
+      
+    </tr>
+</tbody>
+</table>
+<h2>Element Command</h2>
+
+
+
+<table style="text-align: left; width: 100%;" border="1" cellpadding="2" cellspacing="2">
+
+
+<tbody><tr><th style="background-color: rgb(255, 255, 204); width: 50%;">Arguments Changed<br>
+</th><th style="background-color: rgb(204, 255, 255);">Comment</th></tr><tr>
+      <td style="vertical-align: top;">element create<br>
+element cget<br>
+      </td>
+      <td style="vertical-align: top;">The new option <span style="font-weight: bold;">-statedomain</span> accepts a value of <span style="font-weight: bold;">item</span> or <span style="font-weight: bold;">header</span>.&nbsp; The default value is <span style="font-weight: bold;">item</span>.&nbsp;
+This option is used to distinguish between elements used in items and
+elements used in column headers, since items and headers have a
+different
+set of state flags.&nbsp; The value of this option cannot&nbsp; be changed.<br>
+      </td>
+    </tr>
+</tbody>
+</table>
+
+
+<h2><span style="font-weight: bold;"></span></h2>
+
+
+
+<h2>Item Command</h2>
+
+
+<table style="text-align: left; width: 100%;" border="1" cellpadding="2" cellspacing="2">
+<tbody><tr><th style="background-color: rgb(255, 255, 204); width: 50%;">New<br>
+</th><th style="background-color: rgb(204, 255, 255);">Comment</th></tr><tr>
+      <td style="vertical-align: top;">item state define<br>
+item state linkage<br>
+item state names<br>
+item state undefine<br>
+
+      </td>
+      <td style="vertical-align: top;">All the old subcommands of the widget <span style="font-weight: bold;">state</span> command are now in the updated <span style="font-weight: bold;">item state</span>
+command.&nbsp; This was done because items and headers have a different
+set of states.&nbsp; Defining new header states is done using the new <span style="font-weight: bold;">header state</span> command.<br>
+</td></tr></tbody>
+</table>
+<h2>Style Command</h2>
+<table style="text-align: left; width: 100%;" border="1" cellpadding="2" cellspacing="2">
+<tbody><tr><th style="background-color: rgb(255, 255, 204); width: 50%;">Arguments Changed<br>
+</th><th style="background-color: rgb(204, 255, 255);">Comment</th></tr><tr>
+      <td style="vertical-align: top;">style create<br>
+style cget<br>
+      </td>
+      <td style="vertical-align: top;">The new option <span style="font-weight: bold;">-statedomain</span> accepts a value of <span style="font-weight: bold;">item</span> or <span style="font-weight: bold;">header</span>.&nbsp; The default value is <span style="font-weight: bold;">item</span>.&nbsp;
+This option is used to distinguish between styles used in items and
+styles used in column headers, since items and headers have a different
+set of state flags.&nbsp; The value of this option cannot&nbsp; be changed.<br>
+      </td>
+    </tr><tr>
+      <td style="vertical-align: top;">style layout<br>
+      </td>
+      <td style="vertical-align: top;">A new style layout option was added called <span style="font-weight: bold;">-center</span>.&nbsp; The -center option allows one or more elements to be centered within a style.<br>
+      </td>
+    </tr>
+
+</tbody>
+</table>
+<h2><span style="font-weight: bold;"></span></h2>
+<h2>TreeCtrl Command</h2>
+
+
+<table style="text-align: left; width: 100%;" border="1" cellpadding="2" cellspacing="2">
+<tbody><tr><th style="background-color: rgb(255, 255, 204); width: 50%;">Arguments/Result Changed<br>
+</th><th style="background-color: rgb(204, 255, 255);">Comment</th></tr><tr>
+      <td style="vertical-align: top;">bbox<br>
+</td>
+      <td style="vertical-align: top;">Three new areas are defined, <span style="font-weight: bold;">header.left</span>, <span style="font-weight: bold;">header.none</span>, and <span style="font-weight: bold;">header.right,</span>
+to get the bounds of the different groups of locked/unlocked column
+headers.&nbsp; The words after "header." are each possible value of the
+column option -lock.<br>
+</td></tr><tr>
+      <td style="vertical-align: top;">identify<br>
+      </td>
+      <td style="vertical-align: top;">To make the result of this
+command easier to use, especially with the new column header code, a
+new option was added that sets the elements of an array variable rather
+than returning the result as a list.<br>
+      <pre style="margin-left: 40px;">.t identify -array id $x $y</pre>
+The above call will alter the array variable named "id" with info about what is under the given coordinates.<br>
+      </td>
+    </tr>
+</tbody>
+</table>
+<h2>TreeCtrl Configuration Options</h2>
+
+
+
+
+
+  
+
+    
+<table style="text-align: left; width: 100%;" border="1" cellpadding="2" cellspacing="2">
+
+<tbody><tr>
+
+      <th style="background-color: rgb(255, 255, 204); width: 50%;">New</th>
+
+      <th style="background-color: rgb(204, 255, 255);">Comment</th>
+
+    </tr>
+
+    <tr>
+      <td style="vertical-align: top;">-headerfont<br>
+      </td>
+      <td style="vertical-align: top;">This
+is the font used for drawing text in column headers.&nbsp; The default
+value is TkHeadingFont where that font is defined (usually on Tk 8.5+),
+otherwise it is the default listbox font.&nbsp; On Mac OS X,
+TkHeadingFont is the small system font used for drawing text in the
+fixed-height headers.<br>
+      <span style="color: red;">This new option results in a different default look to column text on X11, where TkHeadingFont is a bold font</span>.<br>
+</td></tr><tr>
+      <td style="vertical-align: top;">-headerfg<br>
+-headerforeground<br>
+      </td>
+      <td style="vertical-align: top;">This is the foreground text
+color used when drawing text in column headers.&nbsp; On Gtk+, the
+system theme may override this color.<br>
+      </td>
+    </tr>
+</tbody>
+</table><h2>Headers</h2>
+
+
+The treectrl widget now supports multiple rows of column headers.&nbsp;
+In the documentation, an entire row of column headers is referred to as
+a header-row.<br>
+<ul>
+  <li>There is always one header-row with the unique ID "0".&nbsp; It may
+also be referred to using the header description "first". This top
+header-row cannot be deleted.</li>
+  <li>Configuring column header options (such as -image and -text) in the top header-row can be done using <span style="font-weight: bold;">column configure</span>, the same as in previous versions. To configure column header options in specific header-rows, the <span style="font-weight: bold;">header configure</span> command must be used.<br>
+  </li>
+  <li>Column spanning is supported using the <span style="font-weight: bold;">header span</span> command.</li>
+  <li>The appearance of column headers may be customized using styles.
+When creating elements and styles for use in column headers, the
+"-statedomain header" option must be used.<span style="font-family: monospace;"></span>
+<pre>.t element create MyHeaderElement text -statedomain header<br>.t style create MyHeaderStyle -statedomain header</pre>
+  </li>
+</ul>
+<h2>Element Changes</h2>
+<ul>
+  <li>There is a brand-new element type called <span style="font-weight: bold;">header</span> which displays a themed (or non-themed) column header background and sort arrow.<br>
+</li>
+  <li>To support the new column header code - which is implemented using
+styles - bitmap, image, and text elements are offset by 1,1 pixels
+when displayed in a column header that is in the "pressed" state.</li>
+
+  <li>The default color of text elements in column headers is -headerforeground, not -foreground.</li>
+  <li>The default font of text elements in column headers is -headerfont, not -font.<br>
+  </li>
+</ul>
+<h2>
+Event Changes
+</h2>
+<ul>
+  <li>The <span style="font-weight: bold;">&lt;ColumnDrag&gt;</span> and <span style="font-weight: bold;">&lt;Header&gt;</span> events have a new<span style="font-weight: bold;"></span> substitution character, <span style="font-weight: bold;">%H</span>, which is replaced by the unique ID of the header-row involved.</li>
+  <li>A new event, <span style="font-weight: bold;">&lt;ColumnDrag-indicator&gt;</span>, is generated whenever the place to drop a dragged column header is updated.</li>
+  <li>A new event, <span style="font-weight: bold;">&lt;Header-state&gt;</span>, is generated whenever the state of an individual column header is changed during mouse-pointer events.<br>
+  </li>
+</ul>
+<h2>Column Spanning</h2>Previously, a style spanning more than one
+column would request all of its width in the first column of the span.
+Now, a style distributes its width across all the visible columns in a
+span, taking into account the <span style="font-weight: bold;">-minwidth</span>, <span style="font-weight: bold;">-width</span>, and <span style="font-weight: bold;">-maxwidth</span> column options.<br>
+<br>
+Also, when calculating the needed height of an item or header, spans
+were ignored.&nbsp; Only the width of the first column in a span was
+considered when calculating the needed height of a style.&nbsp; As a
+result, an item might appear much taller than it needed when lines of
+text were wrapping.<br>
+<h2>Demo Changes</h2>
+
+<ul>
+  <li>A new demo called "Headers" was added to demonstrate multiple rows
+of column headers and customizing the appearance of column headers
+using styles.</li>
+  <li>The "Column Spanning" demo was updated to take advantage of the new column-spanning algorithm.&nbsp; Previously, the <span style="font-weight: bold;">-width</span>
+option of each column needed to be set to the width of the "Span 1"
+style, otherwise the columns would have been as wide as the widest
+style in that column, and resizing columns caused gaps to appear
+between styles.</li>
+  <li>The three "Gradients" demos were updated to take advantage of the new column-spanning algorithm.&nbsp; Previously, the <span style="font-weight: bold;">-width</span>
+of the text elements displaying long lines of descriptive text was set
+to the total width of the columns.&nbsp; If the text was allowed to
+wrap, the height of the items would be wrong since spans were
+ignored.&nbsp; Now the text wraps nicely when columns are resized.<br>
+  </li>
+
+</ul><hr style="width: 100%; height: 2px;"><h1>What's New in TkTreeCtrl 2.3.2</h1>
+<h2>Bug Fixes</h2>
+<ul>
+  <li>Fixed a bug where elements could expand too much, due to not accounting for the padding of elements in a -union correctly.</li>
+  <li>Build fix: don't use GNU Make conditionals in the Makefile.&nbsp;
+Instead, parts of the name of the archive created by the 'dist-win'
+target are calculated in configure.ac.<br>
+  </li>
+  <li>Build fix: make sure $MATH_LIBS (including -lm on AIX) is added to the list of link libraries on Unix platforms.</li>
+  <li>Build fix: removed trailing commas from some enum declarations to make strict C89 compilers happy (i.e., AIX).</li>
+  <li>Build fix: the Mac OS X SDK prior to version 10.5 does not have CGFloat defined.</li>
+  <li>Build fix: the Microsoft Platform SDK does not include
+&lt;vsstyle.h&gt;, unlike the Windows SDK, therefore that header file
+is no longer used.<br>
+  </li>
+</ul>
+<hr style="width: 100%; height: 2px;"><h1>What's New in TkTreeCtrl 2.3.1</h1>
+<h2>Style Configuration Options</h2>
+
+
+<table style="text-align: left; width: 100%;" border="1" cellpadding="2" cellspacing="2">
+<tbody><tr><th style="background-color: rgb(255, 255, 204); width: 50%;">New</th><th style="background-color: rgb(204, 255, 255);">Comment</th></tr><tr>
+      <td style="vertical-align: top;">-buttony<br>
+      </td>
+      <td style="vertical-align: top;">This
+option allows you to specify the distance from the top of an item that
+the expand/collapse button is drawn.&nbsp; When the value of this
+option is unspecified, the button is centered vertically in the item.<br>
+</td></tr></tbody>
+</table>
+<h2>Demo Changes</h2>
+<ul>
+  <li>The Style Editor now has 2 scale widgets to make testing the -expand and -squeeze layout options easier.</li>
+  <li>Rewrote the "Outlook Express (Folders)" demo to use a single item style instead of 4 different styles.<br>
+  </li>
+
+  <li>Fixed an off-by-1 error in the placement of the iMovie demo name-editing entry widget.</li>
+
+</ul>
+<h2>Bug Fixes</h2>
+<ul>
+  <li>64bit: Fixed pointer truncation leading to crashes when memory allocations exceeded 4GB.</li>
+  <li>64bit: Lots of casting to quiet MSVC compiler warnings.</li>
+  <li>64bit: Fixed shellicon debug build failure when using MSVC.<br>
+  </li>
+  <li>Removed the use of &lt;gdiplus.h&gt; which broke MinGW-w64 builds and MinGW32 cross-compilation.</li>
+  <li>Fixed panic() when running the X11 debug build.</li>
+  <li>Use Tcl_PrintDouble() and Tcl_NewDoubleObj() instead of the %g
+specifier to fix a bug reported on comp.lang.tcl where the floating
+point numbers passed to the scrollbar command contained a comma (due to
+a locale issue).<br>
+  </li>
+  <li>Hit-testing of buttons now considers the vertical placement and
+size of buttons. Previously, the [identify] command would report that
+the given coordinates were over a button no matter how tall the item
+was.</li>
+  <li>Mac OS X: Column header layout was broken, resulting in incorrect
+justification of the header bitmap/image/text as well as the sort arrow
+being drawn overtop the bitmap/image/text. </li>
+  <li>The needed width of all item styles in a column was not being recalculated when deleting items.</li>
+  <li>The needed width of column headers was not being recalculated when the -usetheme option changed.<br>
+  </li>
+
+  <li>Some commands, such as [item bbox], would return incorrect
+results if called after a column was resized but before the next
+display update.</li>
+  <li>The calculation of the minimum size needed by a style was broken
+when -squeeze layout was used except for -squeeze=x -orient=horizontal.</li>
+  <li>The -itembackground colors were not being drawn when a transparent -backgroundimage was used.</li>
+</ul>
+
+<hr style="width: 100%; height: 2px;">
+<h1>What's New in TkTreeCtrl 2.3</h1>
+
+<span style="font-weight: bold;">Changes since 2.3b1</span>
+<ul>
+  <li>Removed the <span style="font-weight: bold;">gradient api</span> command.</li>
+  <li>New option <span style="font-weight: bold;">-enabled</span> may be passed to the <span style="font-weight: bold;">item create</span> command.<br>
+  </li>
+  <li>The Escape key cancels any drag-and-drop in progress with the TreeCtrlFileList bindings.</li>
+  <li>With <span style="font-weight: bold;">-selectmode</span>=single the marquee is not used with the TreeCtrlFileList bindings.</li>
+  <li>Fixed the &lt;Escape&gt; key causing an error when the last visible item was selected.</li>
+  <li>Updated the documentation to include <span style="font-weight: bold;">-gridleftcolor</span> and <span style="font-weight: bold;">-gridrightcolor</span>.</li>
+  <li>Added a section to the documentation titled THE CANVAS and linked to that section wherever the canvas is mentioned.<br>
+  </li>
+</ul>
+<h2>Column Configuration Options</h2>
+
+<table style="text-align: left; width: 100%;" border="1" cellpadding="2" cellspacing="2">
+<tbody><tr>
+<th style="background-color: rgb(255, 255, 204); width: 50%;">New<br>
+</th><th style="background-color: rgb(204, 255, 255);">Comment</th></tr>
+    <tr>
+      <td style="vertical-align: top;">-gridleftcolor<br>
+-gridrightcolor<br>
+      </td>
+      <td style="vertical-align: top;">So-called "grid lines". These
+two options specify a color or gradient to draw on the left and/or
+right edge of the column.&nbsp; The lines are drawn overtop an item's
+style and down in the whitespace region below any items.<br>
+      </td>
+    </tr>
+<tr><th style="background-color: rgb(255, 255, 204); width: 50%;">Usage Changed<br>
+</th><th style="background-color: rgb(204, 255, 255);">How it changed<br>
+</th></tr><tr>
+      <td style="vertical-align: top;">-itembackground<br>
+      </td>
+      <td style="vertical-align: top;">Item background colors can be a Tk color or a gradient name.<br>
+      <br>
+Item background colors are now
+drawn below items in the whitespace region even when item wrapping is
+being used.&nbsp; Previously item background colors were not drawn
+below items when wrapping was used.<br>
+      </td>
+    </tr>
+<tr>
+      <td style="vertical-align: top;">-textcolor<br>
+      </td>
+      <td style="vertical-align: top;">This is now a per-state option, just like the -background option, <span style="color: red;">which may be incompatible</span>.&nbsp;
+If you previously specified a Tk color name with a space in it, such as
+"light blue", then you will need to make the value a proper list:<br>
+      <pre style="margin-left: 40px;">$T column configure $C -textcolor [list "light blue"]</pre>
+When this option is unspecified (the default), the system theme can
+specify the color.&nbsp; Currently that behavior is only used with the
+Gtk+ build of treectrl.<br>
+      </td>
+    </tr>
+</tbody>
+</table>
+<h2>Item Command</h2>
+
+<table style="text-align: left; width: 100%;" border="1" cellpadding="2" cellspacing="2">
+<tbody><tr><th style="background-color: rgb(255, 255, 204); width: 50%;">New<br>
+</th><th style="background-color: rgb(204, 255, 255);">Comment</th></tr><tr>
+      <td style="vertical-align: top;">buttonstate<br>
+      </td>
+      <td style="vertical-align: top;">The value of this option can be <span style="font-weight: bold;">active</span>, <span style="font-weight: bold;">normal</span> or <span style="font-weight: bold;">pressed</span>.&nbsp;
+This is used to change the appearance of the expand/collapse
+buttons.&nbsp; On Gtk+ the buttons change appearance when the mouse
+pointer is over them and when they are clicked.&nbsp; On Mac OS X the
+buttons change appearance when they are clicked.&nbsp; On MS Windows
+the buttons change appearance when the mouse pointer is over them, but
+only when the Explorer theme is used (see the new <span style="font-weight: bold;">theme setwindowtheme</span> command).<br>
+      </td>
+    </tr>
+    <tr>
+<th style="background-color: rgb(255, 255, 204); width: 50%;">Arguments Changed<br>
+</th><th style="background-color: rgb(204, 255, 255);">What changed<br>
+</th></tr>
+    <tr>
+      <td style="vertical-align: top;">create<br>
+      </td>
+      <td style="vertical-align: top;">New option <span style="font-weight: bold;">-enabled</span>.<br>
+      </td>
+    </tr>
+<tr>
+      <td style="vertical-align: top;">collapse<br>
+expand<br>
+toggle<br>
+      </td>
+      <td style="vertical-align: top;">A new option <span style="font-weight: bold;">-animate</span>
+was added to support animated disclosure triangles on Gtk+ and Mac OS
+X.&nbsp; The library scripts pass the -animate option when clicking on
+a button, but not when toggling items using the keyboard.<br>
+      </td>
+    </tr>
+</tbody>
+</table>
+<h2>Marquee Configuration Options</h2>
+<table style="text-align: left; width: 100%;" border="1" cellpadding="2" cellspacing="2">
+<tbody><tr><th style="background-color: rgb(255, 255, 204); width: 50%;">New</th><th style="background-color: rgb(204, 255, 255);">Comment</th></tr><tr>
+      <td style="vertical-align: top;">-fill<br>
+      </td>
+      <td style="vertical-align: top;">Specifies the fill color for the
+selection rectangle.&nbsp; The value can be a Tk color or a gradient
+name or an empty string (the default).&nbsp; When this option isn't an
+empty string the dotted outline is not drawn.&nbsp; By specifying the
+name of a semi-transparent gradient a modern-looking selection
+rectangle can be achieved.<br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">-outline<br>
+      </td>
+      <td style="vertical-align: top;">Specifies the outline color for
+the selection rectangle.&nbsp; The value can be a Tk color, a gradient name, or an empty
+string which is the default.&nbsp; When this option isn't an empty
+string the dotted outline is not drawn.<br>
+      </td>
+    </tr>
+</tbody>
+</table>
+<h2>Style Layout Options</h2>
+<table style="text-align: left; width: 100%;" border="1" cellpadding="2" cellspacing="2">
+<tbody><tr><th style="background-color: rgb(255, 255, 204); width: 50%;">Behavior Changed<br>
+</th><th style="background-color: rgb(204, 255, 255);">What changed<br>
+</th></tr><tr>
+      <td style="vertical-align: top;">-union<br>
+      </td>
+      <td style="vertical-align: top;">Previously, nesting <span style="font-weight: bold;">-union</span> elements had undefined behavior.&nbsp; Now it is ok to include an element with -union layout in another element's -union list.<br>
+      </td>
+    </tr>
+</tbody>
+</table>
+<h2><span style="font-weight: bold;"></span>TreeCtrl Configuration Options</h2>
+
+
+
+
+  
+
+    
+<table style="text-align: left; width: 100%;" border="1" cellpadding="2" cellspacing="2">
+<tbody><tr>
+
+      <th style="background-color: rgb(255, 255, 204); width: 50%;">New</th>
+
+      <th style="background-color: rgb(204, 255, 255);">Comment</th>
+
+    </tr>
+
+    <tr>
+      <td style="vertical-align: top;">-bgimage<br>
+      </td>
+      <td style="vertical-align: top;">This is a synonym for the -backgroundimage option.<br>
+      </td>
+    </tr>
+<tr>
+
+      <td>-bgimageanchor</td>
+
+      <td>Controls
+the alignment of the -backgroundimage.&nbsp; The value is a standard Tk
+anchor position such as "nw", "se" or "center", etc.&nbsp; The image is
+aligned to the content area when the image doesn't scroll, otherwise
+the image is aligned to the canvas.&nbsp; The default is "nw".<br>
+</td></tr><tr>
+      <td style="vertical-align: top;">-bgimageopaque<br>
+      </td>
+      <td style="vertical-align: top;">A boolean that indicates whether
+or not the -backgroundimage is partially transparent.&nbsp; This is
+needed because there is no way to tell in Tk whether an image contains
+transparency.&nbsp; The default is true, so if you use a transparent
+-backgroundimage you must set this to false.<br>
+      </td>
+    </tr>
+<tr>
+      <td style="vertical-align: top;">-bgimagescroll<br>
+      </td>
+      <td style="vertical-align: top;">Controls whether the
+-backgroundimage scrolls along with the items or remains locked in
+place.&nbsp; The value can be an emptry string for no scrolling, "x"
+for horizontal scrolling only, "y" for vertical scrolling only, or "xy"
+(the default) for scrolling in both directions.<br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">-bgimagetile<br>
+      </td>
+      <td style="vertical-align: top;">Controls whether the
+-backgroundimage is tiled along the x and y axes.&nbsp; The value can
+be "", "x", "y" or "xy" (the default).<br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">-buttontracking<br>
+      </td>
+      <td style="vertical-align: top;">On Mac OS X and Gtk+ the
+expand/collapse buttons don't toggle when they are clicked, only when
+the mouse button is released over them, like regular pushbuttons.&nbsp;
+The value of this option is a boolean; when true the buttons toggle
+when the mouse button is released, when false the buttons toggle when
+clicked.&nbsp; The default is true on Mac OS X and Gtk+, false on Win32 and X11.<br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">-canvaspadx<br>
+-canvaspady<br>
+      </td>
+      <td style="vertical-align: top;">These options allow whitespace
+margins around the edges of the canvas.&nbsp; This is useful for 2D
+views where you don't want the items to butt against the window
+borders.&nbsp; The value of each option is a list of one or two screen
+distances specifying the width of the left/right margins and the height
+of the top/bottom margins respectively.<br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">-itemgapx<br>
+-itemgapy<br>
+      </td>
+      <td style="vertical-align: top;">These options allow whitespace gaps between adjacent items.&nbsp;
+This is useful for 2D views such as an icon view in a file browser or
+an image thumbnail list.&nbsp; The value of each option is a screen
+distance defaulting to zero.<br>
+      </td>
+    </tr><tr>
+      <td style="vertical-align: top;">-xscrollsmoothing<br>
+-yscrollsmoothing<br>
+      </td>
+      <td style="vertical-align: top;">When these options are set to
+true and the xview or yview commands are called to scroll by "units",
+scrolling occurs according to the -xscrollincrement or
+-yscrollincrement options, and all other scrolling is done as if the
+-xscrollincrement or -yscrollincrement options were set to 1.&nbsp; The
+effect is that when dragging the scrollbar thumb scrolling is very
+smooth, but when clicking the scrollbar buttons scrolling is done in
+coarser increments.<br>
+      </td>
+    </tr>
+<tr>
+<th style="background-color: rgb(255, 255, 204); width: 50%;">Usage
+Changed</th><th style="background-color: rgb(204, 255, 255);">How
+it changed</th></tr>
+    <tr>
+      <td style="vertical-align: top;">-columnresizemode<br>
+      </td>
+      <td style="vertical-align: top;">The default value is "realtime", it used to be "proxy".<br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">-showlines<br>
+      </td>
+      <td style="vertical-align: top;">The default value is false on Mac OS X and Gtk+, true on Win32 and X11.<br>
+      </td>
+    </tr>
+<tr>
+      <td style="vertical-align: top;">-usetheme<br>
+      </td>
+      <td style="vertical-align: top;">The default value is now true.&nbsp; <span style="color: red;">Complete reversal from previous versions, head for the hills.</span><br>
+      </td>
+    </tr>
+
+</tbody>
+</table>
+<h2>TreeCtrl Command</h2>
+
+
+
+
+  
+
+    
+<table style="text-align: left; width: 100%;" border="1" cellpadding="2" cellspacing="2">
+<tbody><tr>
+
+      <th style="background-color: rgb(255, 255, 204); width: 50%;">New</th>
+
+      <th style="background-color: rgb(204, 255, 255);">Comment</th>
+
+    </tr>
+
+    <tr>
+
+      <td>gradient</td>
+
+      <td>Linear
+gradients!&nbsp; There are a number of issues when using gradients, see
+the demos and the relevant sections in the manual page for more info.<br>
+</td></tr><tr>
+      <td style="vertical-align: top;">theme<br>
+      </td>
+      <td style="vertical-align: top; font-weight: bold;"><span style="font-weight: normal;">The <span style="font-weight: bold;">theme platform</span> command returns the API used to draw themed parts of the treectrl.</span><br>
+      <ul>
+        <li><span style="font-weight: normal;">On Mac OS X the result
+is always <span style="font-weight: bold;">aqua</span>.</span></li>
+        <li><span style="font-weight: normal;">On MS Windows the result is <span style="font-weight: bold;">visualstyles</span> if the
+uxtheme.dll was loaded and visual themes are in use, otherwise <span style="font-weight: bold;">X11</span> is
+returned to indicate the Tk Xlib calls are drawing the themed parts.</span></li>
+        <li><span style="font-weight: normal;">On Unix systems the result is <span style="font-weight: bold;">gtk</span> if the Gtk+ version of treectrl
+was built, otherwise <span style="font-weight: bold;">X11</span> is returned.</span></li>
+      </ul>
+      <span style="font-weight: normal;">MS Windows only: The <span style="font-weight: bold;">theme setwindowtheme</span> command takes the name of an application whose theme should be used.&nbsp; If you call...<br>
+      </span>
+      <pre style="margin-left: 40px;"><span style="font-weight: normal;">$T theme setwindowtheme "Explorer"</span></pre>
+      <pre><span style="font-weight: normal;"></span></pre>
+      <span style="font-weight: normal;">...on Windows 7 the disclosure triangles of the Explorer file browser will be used rather than +/- buttons.<br>
+      </span></td>
+    </tr>
+</tbody>
+</table>
+<h2>Gtk+ Theme</h2>
+<ul>
+  <li>Pass <span style="font-weight: bold;">--enable-gtk</span>=yes to
+configure to build a Gtk+ version of treectrl.&nbsp; This requires
+proper pkg-config setup for the gtk+-2.0 and gdk-pixbuf-xlib-2.0
+libraries.</li>
+  <li>Leave the column option <span style="font-weight: bold;">-textcolor</span>={} so the theme colors will be used for column header labels.<br>
+  </li>
+  <li>Leave the new widget option <span style="font-weight: bold;">-buttontracking</span>=yes for native behavior when clicking buttons.<br>
+  </li>
+  <li>BUG: Currently the theme does not change when the system theme changes.<br>
+  </li>
+</ul>
+<h2>Rect Element</h2>
+<ul>
+  <li>Rounded rectangles can be drawn using the new <span style="font-weight: bold;">rect</span> element configuration options <span style="font-weight: bold;">-rx</span> and <span style="font-weight: bold;">-ry</span>.&nbsp;
+These options specify the radius of the corners as screen
+distances.&nbsp; The values are restricted to a maximum of half the
+width or height of the rectangle when being displayed.</li>
+  <li>The <span style="font-weight: bold;">-open</span> option is now
+per-state.&nbsp; See the "Outlook Express (Newsgroup)" demo where the
+active outline of the selection rectangle appears to span across
+columns.&nbsp; In previous versions that required 3 different styles.</li>
+  <li>The <span style="font-weight: bold;">-fill</span> and <span style="font-weight: bold;">-outline</span> options can be a Tk color or a gradient.<br>
+  </li>
+
+</ul>
+<h2>Library Scripts</h2>
+<ul>
+  <li>The treectrl window gets the focus after a &lt;ButtonPress-2&gt; event begins scan-dragging.</li>
+  <li>The Escape key cancels any drag-and-drop in progress with the TreeCtrlFileList bindings.</li>
+  <li>With <span style="font-weight: bold;">-selectmode</span>=single the marquee is not used with the TreeCtrlFileList bindings.<br>
+  </li>
+
+
+  
+  <li>Added some hackery to the TreeCtrlFileList bindings for emulating the complicated selection behavior of Windows 7 Explorer:<br>
+    <ul>
+      <li>Added TreeCtrl::FileListEmulateWin7 to indicate the Windows 7 behavior should be used.</li>
+      <li>Added TreeCtrl::SetSensitiveMarquee, just like
+TreeCtrl::SetSensitive but indicates which elements respond to the
+selection rectangle. Typically this is the same as the elements passed
+toTreeCtrl::SetSensitive with the addition of the selection rectangle elements.</li>
+    </ul>
+  </li>
+
+</ul>
+<h2>Build Changes</h2>
+
+<ul>
+  <li>Added macosx/ unix/ and win/ subdirectories with platform-specific code in each.<br>
+  </li>
+  <li>The <span style="font-weight: bold;">--enable-cocoa</span>
+configure option was removed when building on Mac OS X.&nbsp; Instead
+the configure script determines whether Tk was built using the Cocoa
+API by examining the TK_LIBS variable.</li>
+  <li>Cross-compiling on a Unix host using the MingW toolchain should
+work out-of-the-box now.&nbsp; If the <span style="font-weight: bold;">--host</span> configure option contains
+"mingw32" then TEA_PLATFORM is set to "windows".</li>
+  <li>The 'make clean' target does a better job cleaning what it
+should.&nbsp; It doesn't remove the .manifest file generated by
+configure (make distclean does that), only the linker-generated
+.manifest when building with MSVC is removed.&nbsp; Resource file
+objects are cleaned as well.</li>
+  <li>Various tweaks were made to allow building using the Visual Studio 2008 compiler.<br>
+  </li>
+  <li>Updated to TEA 3.9.</li>
+</ul>
+<h2>Shellicon Package</h2>
+<ul>
+  <li>The shellicon package is used to display native file and folder icons on MS Windows.&nbsp; It was updated with a new option <span style="font-weight: bold;">-useselected</span>.&nbsp; The value of <span style="font-weight: bold;">-useselected</span> may be <span style="font-weight: bold;">always</span>, <span style="font-weight: bold;">auto</span> or <span style="font-weight: bold;">never</span> to control whether the selected version of an icon should be drawn.&nbsp; The default is <span style="font-weight: bold;">auto</span> meaning draw the selected icon if the item is selected.</li>
+</ul>
+<h2>Demo Changes</h2>
+<ul>
+  <li>Added "Explorer (Details, Win7)" and "Explorer (Large Icons,
+Win7)" demos which very closely match the appearance and behavior of
+the Windows 7 file explorer.&nbsp; These demos use gradients, rounded
+rectangles and the new -canvaspadx, -canvaspady, -itemgapx and
+-itemgapy options.</li>
+  <li>New demos "Gradients", "Gradients II" and "Gradients II" demonstrate and describe various gradient features.<br>
+  </li>
+  <li>The "Column Spanning" demo uses gradients.</li>
+  <li>The ::tk::mac::iconBitmap is used where available for native filesystem icons on Mac OS X.<br>
+  </li>
+  <li>Fixed a bug with increasing/decreasing the font size if the font size was negative (i.e. on X11).</li>
+  <li>New options were added to the context menu: -bgimageanchor,
+-bgimageopaque, -bgimagescroll, -bgimagetile, -buttontracking,
+-xscrollsmoothing and -yscrollsmoothing.<br>
+  </li>
+
+</ul>
+<h2>Bug Fixes</h2>
+<ul>
+  <li>Fixed non-themed expand/collapse buttons being one pixel too large on Mac OS X.</li>
+  <li>Fixed dotted line and dotted rectangle drawing on Mac OS X.</li>
+  <li>Fixed the column option -<span style="font-weight: bold;">arrowpady</span> being broken for -arrowimage, -arrowbitmap and when themed arrows were drawn. It only worked when the X11 fallback was used.</li>
+  <li>Fix
+"Bug 3104147 - Error after widget was destroyed".&nbsp; Various [after]
+callbacks did not check that the treectrl still existed.</li>
+  <li>Fix
+"Bug 3104148 - column "202" doesn't exist".&nbsp; Check that the
+previously-highlighted column exists before configuring its state in
+MotionInHeader.</li>
+  <li>Fixed &lt;Left&gt; and &lt;Right&gt; arrow keys not moving to adjacent items when some items had -<span style="font-weight: bold;">wrap</span>=true.</li>
+  <li>Fixed error with autoscanning when the content area was completely obscurred by locked columns.</li>
+  <li>Fixed the ordering of some entries in the treectrl option table.</li>
+  <li>Fixed the &lt;Escape&gt; key causing an error when the last visible item was selected.<br>
+  </li>
+
+</ul>
+
+
+
+<hr style="width: 100%; height: 2px;">
+<h1>What's New in TkTreeCtrl 2.2.10</h1>
+
+
+<h2>TreeCtrl Configuration Options</h2>
+
+<table style="text-align: left; width: 100%;" border="1" cellpadding="2" cellspacing="2">
+
+  <tbody>
+
+    <tr>
+
+      <th style="background-color: rgb(255, 255, 204); width: 50%;">Ignored</th>
+
+      <th style="background-color: rgb(204, 255, 255);">Comment</th>
+
+    </tr>
+
+    <tr>
+
+      <td>-doublebuffer</td>
+
+      <td>This option no longer has any effect but was left in to
+avoid incompatibilities.
+&nbsp;Instead, the amount of double-buffering is chosen depending
+on
+the platform. &nbsp;Modern platforms such as Mac OS X double-buffer
+each toplevel whereas older platforms such as Windows XP do not.</td>
+
+    </tr>
+
+  </tbody>
+</table>
+
+<h2>Text Element Options</h2>
+
+<table style="text-align: left; width: 100%;" border="1" cellpadding="2" cellspacing="2">
+
+  <tbody>
+
+    <tr>
+
+      <th style="background-color: rgb(255, 255, 204); width: 50%;">New</th>
+
+      <th style="background-color: rgb(204, 255, 255);">Comment</th>
+
+    </tr>
+
+    <tr>
+
+      <td>-lmargin1</td>
+
+      <td>Specifies how much the first line of text should be
+indented.<br>
+
+      </td>
+
+    </tr>
+
+    <tr>
+
+      <td>-lmargin2</td>
+
+      <td>Specifies how much the 2nd or greater lines should be
+indented when a line of text wraps.</td>
+
+    </tr>
+
+  </tbody>
+</table>
+
+<h2>Mac OS X support for Tk 8.6</h2>
+
+Tk 8.6 dropped support for the Carbon API in favor of the modern Cocoa
+API on Mac OS X. TkTreeCtrl was updated to build using either Carbon
+(Tk 8.4/8.5) or Cocoa (Tk 8.6). If you are using the back-port of the
+Cocoa version with Tk 8.5 you can pass the <span style="font-weight: bold;">--enable-cocoa=yes</span>
+configure option when configuring TkTreeCtrl.<br>
+
+<h2>Build Changes</h2>
+
+<ul>
+
+  <li>Updated to TEA version 3.7 which supports
+the&nbsp;MODULE_SCOPE
+macro. &nbsp;As a result, private symbols are not exported by the
+treectrl shared library on platforms that support it (i.e., gcc's <span style="font-style: italic;">__visibility__("hidden")</span>).</li>
+
+</ul>
+
+<h2>Bug Fixes</h2>
+
+<ul>
+
+  <li>Fixed a crash&nbsp;during error processing in [item
+create] due to missing return statements for the -count and -height
+options.</li>
+
+  <li>Fixed a bug where all item styles would be lost when
+deleting the
+3rd or greater column. This bug affected any item that never had a
+column record allocated for the 3rd or greater column (usually because
+no style had been assigned).</li>
+
+  <li>Fixed a crash in the [item span] command when specifying
+"all" for the item description.</li>
+
+  <li>The pkgIndex.tcl file correctly handles installation
+directories with space or bracket characters.</li>
+
+  <li>Removed C++ style comments and a spurious semicolon for C89
+AIX compliance. [BUG 2886595]<br>
+
+  </li>
+
+  <li>Fixed [item sort -decreasing] not being a "stable" sort.
+[BUG ID 2909930]</li>
+  <li>Fixed flickering of the dragimage under Windows 7; this requires more doublebuffering than WinXP even with Aero.</li>
+  <li>Use more double-buffering on the dragimage to fix flickering/slowness (tested on Ubuntu VM).<br>
+  </li>
+  <li>Fixed drawing of column/row proxy lines where XOR isn't supported (i.e. MacOSX Cocoa).</li>
+  <li>Fixed the loupe (screen capture) command under Windows 7; tested on Win7 x64 (with and without Aero) and on WinXP x32.</li>
+  <li>Fixed an X server error caused by adding a bad rectangle to an
+XRegion while processing &lt;Expose&gt; events.&nbsp; This would show
+up with -doublebuffer=window while resizing the window. [BUG 3015429]<br>
+  </li>
+
+
+
+</ul>
+
+<h2>Demo Changes</h2>
+
+<ul>
+
+  <li>The "Layout" demo uses the new Text element option
+-lmargin2.</li>
+  <li>Fixed an undefined-variable error when double-clicking between column headers on X11 in the "Random" demo.</li>
+  <li>Fixed the resizing of items containing child windows when the
+Tile theme changes in the "Big List" demo.&nbsp; Also added some
+comments.</li>
+  <li>Disabled the dynamic-appearing scrollbars under X11 where I saw some infinite looping.<br>
+  </li>
+
+
+</ul>
+
+<hr style="width: 100%; height: 2px;">
+<h1>What's New in TkTreeCtrl 2.2.9</h1>
+
+<h2>TreeCtrl Command</h2>
+
+<table style="text-align: left; width: 100%;" border="1" cellpadding="2" cellspacing="2">
+
+  <tbody>
+
+    <tr>
+
+      <th style="background-color: rgb(255, 255, 204); width: 50%;">Arguments/Result
+Changed</th>
+
+      <th style="background-color: rgb(204, 255, 255);">What
+changed</th>
+
+    </tr>
+
+    <tr>
+
+      <td>see</td>
+
+      <td>OLD: $T see $item<br>
+
+NEW: $T see $item ?$column? ?-center xy?<br>
+
+You can specify a particular column to scroll into view horizontally.<br>
+
+The -center option will center the item/column in the window instead of
+performing the minimal amount of scrolling to bring it into view at the
+edge of the window.<br>
+
+      </td>
+
+    </tr>
+
+  </tbody>
+</table>
+
+<h2>Item Configuration Options</h2>
+
+<table style="text-align: left; width: 100%;" border="1" cellpadding="2" cellspacing="2">
+
+  <tbody>
+
+    <tr>
+
+      <th style="background-color: rgb(255, 255, 204); width: 50%;">New</th>
+
+      <th style="background-color: rgb(204, 255, 255);">Comment</th>
+
+    </tr>
+
+    <tr>
+
+      <td>-wrap</td>
+
+      <td>When this option is true an item will be the first in a
+horizontal (when the treectrl option <span style="font-weight: bold;">-orient=</span>horizontal)
+or a vertical (when the treectrl option <span style="font-weight: bold;">-orient</span>=vertical)
+range of items. &nbsp;See the new "iMovie (Wrap)" demo.<br>
+
+      </td>
+
+    </tr>
+
+  </tbody>
+</table>
+
+<h2>Bug Fixes</h2>
+
+<ul>
+
+  <li>Fixed a compile error on SunOS due to DUMP_ALLOC being
+defined in the system headers.</li>
+
+  <li>Fixed a bug that caused a panic in B_IncrementFind when
+calling
+the [see] command before the widget had displayed itself for the first
+time.</li>
+
+  <li>Fixed a library script error when attempting to drag a
+column header when the window was so small the items weren't visible.</li>
+
+  <li>Fixed two cases where the whitespace would not be properly
+erased when items being deleted caused scrolling.</li>
+
+  <li>Fixed column headers being drawn overtop of the bottom edge
+of window borders if the window was very short.</li>
+
+</ul>
+
+<h2>Demo Changes</h2>
+
+<ul>
+
+  <li>Added the "iMovie (Wrap)" demo to demonstrate the new item
+option <span style="font-weight: bold;">-wrap</span>.</li>
+
+</ul>
+
+<hr style="width: 100%; height: 2px;">
+<h1>What's New in TkTreeCtrl 2.2.8</h1>
+
+<h2>Bug Fixes</h2>
+
+<ul>
+
+  <li>Fixed a bug that caused a panic in Range_ItemUnderPoint.
+Thanks to SF.net user 'nobody' who found the problem.</li>
+
+  <li>Fixed reading an uninitialized variable when calculating
+column header layout.</li>
+
+</ul>
+
+<hr style="width: 100%; height: 2px;">
+<h1>What's New in TkTreeCtrl 2.2.7</h1>
+
+<h2>TreeCtrl Configuration Options</h2>
+
+<table style="text-align: left; width: 100%;" border="1" cellpadding="2" cellspacing="2">
+
+  <tbody>
+
+    <tr>
+
+      <th style="background-color: rgb(255, 255, 204); width: 50%;">New</th>
+
+      <th style="background-color: rgb(204, 255, 255);">Comment</th>
+
+    </tr>
+
+    <tr>
+
+      <td>-showrootchildbuttons</td>
+
+      <td>Similar to <span style="font-weight: bold;">-showrootlines</span>,
+this boolean option controls the display of expand/collapse buttons
+next to child items of the root item.<br>
+
+      </td>
+
+    </tr>
+
+  </tbody>
+</table>
+
+<h2>Indentation change/fix</h2>
+
+<div style="margin-left: 40px;">Previously with <span style="font-weight: bold;">-showroot</span>=0, <span style="font-weight: bold;">-showbuttons</span>=0, and <span style="font-weight: bold;">-showrootlines</span>=0
+there was still an extra level of indentation displayed to the left of
+the root's children.&nbsp;The only way to remove all indentation
+from the
+root's children was to set <span style="font-weight: bold;">-showlines</span>=0
+as well. &nbsp;This is no longer the case and now behaves
+as expected. With the new <span style="font-weight: bold;">-showrootchildbuttons</span>
+option it is now possible to remove all indentation from the root's
+children without affecting the display of buttons/lines on deeper items.</div>
+
+<h2>Library Script Changes</h2>
+
+<h3 style="margin-left: 40px;">treectrl.tcl:</h3>
+
+<ul>
+
+  <li>The &lt;Left&gt; and &lt;Right&gt; key
+bindings will collapse and expand the active item if&nbsp;<span style="font-weight: bold;">-orient</span>=vertical and
+    <span style="font-weight: bold;">-wrap</span>={}.
+&nbsp;Otherwise the previous behavior of setting the active item to
+an adjacent item is used.</li>
+
+</ul>
+
+<h2>Bug Fixes</h2>
+
+<ul>
+
+  <li>Fixed corruption/crash with ".t column configure -foo" with
+no option value if -foo is an invalid option.</li>
+
+</ul>
+
+<hr style="width: 100%; height: 2px;">
+<h1>What's New in TkTreeCtrl 2.2.6</h1>
+
+<h2>Bug Fixes</h2>
+
+<ul>
+
+  <li>Fixed ".t item bbox" returning bogus values when asking for
+the
+bounds of a column or element in a list with many items (integer
+overflow).</li>
+
+  <li>Fixed a segfault on Win64 machines when the system theme
+changed.</li>
+
+  <li>Fixed a panic on Win64 when drawing the the marquee and
+drag-image dotted rectangles due to a too-small struct.</li>
+
+</ul>
+
+<hr style="width: 100%; height: 2px;">
+<h1>What's New in TkTreeCtrl 2.2.5</h1>
+
+<p>
+Issues regarding the incompatibility of 8.4 built TkTreeCtrl working in
+8.5
+were resolved. The Mac OS X API issues noted for 2.2.4 remain (they
+relate to difficult to reconcile core drawing changes).
+</p>
+
+<p>
+A Windows DLL manifest is now embedded to address native theme drawing
+issues.
+</p>
+
+<hr style="width: 100%; height: 2px;">
+<h1>What's New in TkTreeCtrl 2.2.4</h1>
+
+<h2>NOTE regarding Tk version compatibility</h2>
+
+<p>
+Under Mac OSX some internal changes to Tk 8.4.15 and Tk 8.4.17 result
+in
+incompatibilities:
+</p>
+
+<ul>
+
+  <li>This version of TkTreeCtrl built for Tk 8.4.15 will work
+with Tk 8.4.15 and 8.4.16 only<span style="font-weight: bold;">
+    </span>(under Mac OSX).</li>
+
+  <li>This version of TkTreeCtrl built for Tk 8.4.17 will work
+with Tk 8.4.17 only (under Mac OSX).</li>
+
+</ul>
+
+<h2>TreeCtrl Configuration Options</h2>
+
+<table style="text-align: left; width: 100%;" border="1" cellpadding="2" cellspacing="2">
+
+  <tbody>
+
+    <tr>
+
+      <th style="background-color: rgb(255, 255, 204); width: 50%;">New</th>
+
+      <th style="background-color: rgb(204, 255, 255);">Comment</th>
+
+    </tr>
+
+    <tr>
+
+      <td>-columntagexpr<br>
+
+-itemtagexpr</td>
+
+      <td>These boolean options can be used to turn off tag
+expressions in column descriptions and item descriptions.
+&nbsp;When the value of these options is false the
+characters&nbsp;(', ')', '&amp;', '|', '^'
+and '!' have no special significance when using tags in column/item
+descriptions.&nbsp;This is useful for applications which may have
+arbitrary tags applied to columns or items.</td>
+
+    </tr>
+
+  </tbody>
+</table>
+
+<h2>Bug Fixes</h2>
+
+<ul>
+
+  <li>Fixed partially-exposed transparent photo images not being
+redrawn when scrolling under X11.</li>
+
+  <li>Fixed potential crash with Windows theme if the system
+theme was changed.</li>
+
+  <li>Fixed "<span style="font-family: monospace;">.t
+item cget -button</span>" always returning 0 when the value of
+this option wasn't <span style="font-weight: bold;">auto</span>.</li>
+
+  <li>Fixed a drawing issue under Mac OSX where parts of the
+window would not be erased properly under Tk 8.4.15+ and Tk 8.5a7+.</li>
+
+  <li>Fixed crashes under Mac OSX with Tk 8.4.17 and Tk 8.5.0.</li>
+
+  <li>Fixed an old bug caused by a MSVC compiler optimization bug
+that
+stopped items being redrawn when the only change in appearance was the
+expand/collapse button needing to be redrawn.</li>
+
+</ul>
+
+<h2>Misc Changes</h2>
+
+<ul>
+
+  <li>Changed the&nbsp;<span style="font-weight: bold;">item
+sort</span> code to be a "stable" sort. This means that the
+pre-sort order of two equal items is used as a tie-breaker.</li>
+
+</ul>
+
+<h2>Demo Changes</h2>
+
+<ul>
+
+  <li>Added "Increase Font Size" and "Decrease Font Size" menu
+commands. &nbsp;Also the Console font is not changed when running
+under Tk 8.5.</li>
+
+</ul>
+
+<hr style="width: 100%; height: 2px;">
+<h1>What's New in TkTreeCtrl 2.2.3</h1>
+
+<h2>Build Changes</h2>
+
+<ul>
+
+  <li>When building with configure on Windows the
+--enable-shellicon option will run configure in the shellicon/
+subdirectory.</li>
+
+  <li>'make dist' will create the source distribution
+tktreectrl-VERSION.tar.gz.</li>
+
+  <li>'make dist-win' will create the Windows binary distribution
+tktreectrl-VERSION-win32.zip.</li>
+
+</ul>
+
+<h2>Bug Fixes</h2>
+
+<ul>
+
+  <li>Fixed flickering when redrawing the borders with
+"-doublebuffer window" when the widget was resized or parts of it were
+exposed.</li>
+
+  <li>Fixed undefined reference to&nbsp;vsnprintf when
+building with the MS compiler under Windows; it should be _vsnprintf.</li>
+
+  <li>Fixed a symbol conflict with Python 2.5 on ELF-based
+systems which also defines a symbol "Ellipsis".</li>
+
+</ul>
+
+<hr style="width: 100%; height: 2px;">
+<h1>What's New in TkTreeCtrl 2.2.2</h1>
+
+<h2>Column Configuration Options</h2>
+
+<table style="text-align: left; width: 100%;" border="1" cellpadding="2" cellspacing="2">
+
+  <tbody>
+
+    <tr>
+
+      <th style="background-color: rgb(255, 255, 204); width: 50%;">New</th>
+
+      <th style="background-color: rgb(204, 255, 255);">Comment</th>
+
+    </tr>
+
+    <tr>
+
+      <td>-itemjustify</td>
+
+      <td>This option allows item styles to be justified
+separately
+from the&nbsp;image/text in the column header. If the value of this
+option is unspecified (the default), then item styles are justified
+according to the <span style="font-weight: bold;">-justify</span>
+option of the column.</td>
+
+    </tr>
+
+  </tbody>
+</table>
+
+<h2>Item Configuration Options</h2>
+
+<table style="text-align: left; width: 100%;" border="1" cellpadding="2" cellspacing="2">
+
+  <tbody>
+
+    <tr>
+
+      <th style="background-color: rgb(255, 255, 204); width: 50%;">Usage
+Changed</th>
+
+      <th style="background-color: rgb(204, 255, 255);">How
+it changed</th>
+
+    </tr>
+
+    <tr>
+
+      <td>-button</td>
+
+      <td>The value of this option can now be the word <span style="font-weight: bold;">auto</span> (or any
+abbreviation) in which case a button is drawn only when the item has at
+least one child item with its item option <span style="font-weight: bold;">-visible</span> set to true.</td>
+
+    </tr>
+
+  </tbody>
+</table>
+
+<h2>Style Layout Changes</h2>
+
+<ul>
+
+  <li>The element option <span style="font-weight: bold;">-draw</span>
+of every element type is now deprecated. Use the new style layout
+option <span style="font-weight: bold;">-draw</span>
+instead.</li>
+
+  <li>The new per-state style layout option <span style="font-weight: bold;">-visible</span>
+controls the visibility of an element. When the value of this option
+evaluates to false for a given state, the element consumes no space in
+the layout and is not displayed. If none of the elements surrounded by
+an element with <span style="font-weight: bold;">-union</span>
+layout are visible, then the element with <span style="font-weight: bold;">-union</span> layout is not
+displayed.</li>
+
+</ul>
+
+<h2>Item Descriptions</h2>
+
+<ul>
+
+  <li>The index argument to the <span style="font-weight: bold;">child</span> and <span style="font-weight: bold;">sibling</span> modifiers
+can now take the form "end?-integer?".</li>
+
+</ul>
+
+<div style="margin-left: 40px;">
+<pre>.t item id "root child end-1" ; # get the second-to-last child of the root item<br></pre>
+
+</div>
+
+<h2>Bug Fixes</h2>
+
+<ul>
+
+  <li>Text elements were requesting some height from the style
+layout
+when displaying an empty string. If you were depending on this
+behaviour, it is suggested that you set the height of the text element
+using the <span style="font-weight: bold;">-minheight</span>
+or <span style="font-weight: bold;">-height</span>
+style layout options.</li>
+
+  <li>Window elements might not be scrolled along with the rest
+of the
+list if the area needing to be redrawn due to scrolling was obscurred
+by other windows. This could only happen on Win32.</li>
+
+  <li>The ellipsis "..." in text elements is now always displayed
+if
+the text element has less space than is needed to display its string.
+Previously the ellipsis would disappear when there wasn't room for a
+single character plus the ellipsis.</li>
+
+  <li>Fixed a layout bug with multi-line text elements when the
+unsqueezed element did not require a multi-line layout but the squeezed
+element did.</li>
+
+</ul>
+
+<hr style="width: 100%; height: 2px;">
+<h1>What's New in TkTreeCtrl 2.2.1</h1>
+
+<h2>Bug Fixes</h2>
+
+<ul>
+
+  <li>Fixed panic with -xscrollincrement=0, -showheader=yes, no
+visible items and headers wider than the window.</li>
+
+  <li>Fixed the wrong loop variable being used when calculating
+onscreen columns for an item which resulted in a random crash.</li>
+
+  <li>Fixed a crash when invalidating a column of an item if the
+column wasn't the first in a span.</li>
+
+  <li>Fixed a leak on X11 where the clipping region was not being
+freed after drawing dotted rectangles.</li>
+
+</ul>
+
+<hr style="width: 100%; height: 2px;">
+<h1>What's New in TkTreeCtrl 2.2</h1>
+
+<h2>TreeCtrl Configuration Options</h2>
+
+<table style="text-align: left; width: 100%;" border="1" cellpadding="2" cellspacing="2">
+
+  <tbody>
+
+    <tr>
+
+      <th style="background-color: rgb(255, 255, 204); width: 50%;">Deprecated</th>
+
+      <th style="background-color: rgb(204, 255, 255);">What
+to use
+instead</th>
+
+    </tr>
+
+    <tr>
+
+      <td>-defaultstyle</td>
+
+      <td>The -itemstyle option of a column.</td>
+
+    </tr>
+
+  </tbody>
+</table>
+
+<h2>TreeCtrl Command</h2>
+
+<table style="text-align: left; width: 100%;" border="1" cellpadding="2" cellspacing="2">
+
+  <tbody>
+
+    <tr>
+
+      <th style="background-color: rgb(255, 255, 204); width: 50%;">Arguments/Result
+Changed</th>
+
+      <th style="background-color: rgb(204, 255, 255);">What
+changed</th>
+
+    </tr>
+
+    <tr>
+
+      <td>contentbox</td>
+
+      <td>The return value is an empty string if the
+content area is totally obscurred by column headers, borders, and/or
+locked columns. Typically this will only happen if the window is too
+small.</td>
+
+    </tr>
+
+    <tr>
+
+      <td>selection get</td>
+
+      <td>Accepts 2 optional arguments to allow in-place <span style="font-weight: bold;">lindex</span> and <span style="font-weight: bold;">lrange</span> queries of
+the selection. For example:<br>
+
+      <pre>.t selection get 0&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ; # the first selected item<br>.t selection get end&nbsp;&nbsp;&nbsp;&nbsp; ; # the last selected item<br>.t selection get 1 end-1 ; # every selected item except the first and last</pre>
+
+      </td>
+
+    </tr>
+
+    <tr>
+
+      <th style="background-color: rgb(255, 255, 204); width: 50%;">New</th>
+
+      <th style="background-color: rgb(204, 255, 255);">Comment</th>
+
+    </tr>
+
+    <tr>
+
+      <td>bbox</td>
+
+      <td>Returns the bounding box of different areas of the
+window. For example:<br>
+
+      <pre style="margin-left: 40px;">.t bbox</pre>
+
+will return the bounds of the window, and:<br>
+
+      <pre style="margin-left: 40px;">.t bbox header</pre>
+
+will return the bounds of the column headers, and:<br>
+
+      <pre style="margin-left: 40px;">.t bbox content</pre>
+
+will return the same result as the [contentbox] command, and:<br>
+
+      <pre style="margin-left: 40px;">.t bbox left<br>.t bbox right</pre>
+
+will return the bounds of the left-locked and right-locked columns.</td>
+
+    </tr>
+
+  </tbody>
+</table>
+
+<h2>Column Configuration Options</h2>
+
+<table style="text-align: left; width: 100%;" border="1" cellpadding="2" cellspacing="2">
+
+  <tbody>
+
+    <tr>
+
+      <th style="background-color: rgb(255, 255, 204); width: 50%;">Renamed<br>
+
+      </th>
+
+      <th style="background-color: rgb(204, 255, 255);">New
+name</th>
+
+    </tr>
+
+    <tr>
+
+      <td>-tag</td>
+
+      <td>-tags</td>
+
+    </tr>
+
+    <tr>
+
+      <th style="background-color: rgb(255, 255, 204); width: 50%;">New</th>
+
+      <th style="background-color: rgb(204, 255, 255);">Comment</th>
+
+    </tr>
+
+    <tr>
+
+      <td>-lock</td>
+
+      <td>This option allows columns to stick to the left or
+right edge
+of the window. Locked columns can scroll vertically but not
+horizontally. Valid values for this option are <span style="font-weight: bold;">none</span> (the default), <span style="font-weight: bold;">left</span> or <span style="font-weight: bold;">right</span>.</td>
+
+    </tr>
+
+    <tr>
+
+      <td>-itemstyle</td>
+
+      <td>Specifies the name of a style to set in this column for
+newly-created items. This option replaces the treectrl option
+-defaultstyle.</td>
+
+    </tr>
+
+    <tr>
+
+      <td>-uniform</td>
+
+      <td colspan="1" rowspan="2">These two options
+operate the same as the grid geometry manager options of the same name.
+For example:<br>
+
+      <pre style="margin-left: 40px;">.t column configure&nbsp;0 -uniform a<br>.t column configure 1 -uniform a</pre>
+
+will give columns 0 and 1 the same requested width, whichever is the
+larger of the two columns. And:<br>
+
+      <pre style="margin-left: 40px;">.t column configure 0 -uniform a -weight 2<br>.t column configure 1 -uniform a</pre>
+
+will give column 0 twice the maximum of the requested widths of columns
+0 and 1. And:<br>
+
+      <pre style="margin-left: 40px;">.t column configure 0 -expand yes -weight 2<br>.t column configure 1 -expand yes</pre>
+
+will give column 0 twice the extra space as column 1.</td>
+
+    </tr>
+
+    <tr>
+
+      <td>-weight</td>
+
+    </tr>
+
+  </tbody>
+</table>
+
+<h2>Column Command</h2>
+
+<table style="text-align: left; width: 100%;" border="1" cellpadding="2" cellspacing="2">
+
+  <tbody>
+
+    <tr>
+
+      <th style="background-color: rgb(255, 255, 204); width: 50%;">Arguments/Result
+Changed</th>
+
+      <th style="background-color: rgb(204, 255, 255);">What
+changed</th>
+
+    </tr>
+
+    <tr>
+
+      <td>column count</td>
+
+      <td>Takes an optional column-description argument; the
+result is
+the number of columns that match the column description. For example:<br>
+
+      <pre>.t column count visible</pre>
+
+will return the number of columns whose -visible option is true, and:<br>
+
+      <pre>.t column count {tag a^b}</pre>
+
+will return the number of columns with either tag "a" or "b", but not
+both.</td>
+
+    </tr>
+
+    <tr>
+
+      <th style="background-color: rgb(255, 255, 204); width: 50%;">New</th>
+
+      <th style="background-color: rgb(204, 255, 255);">Comment</th>
+
+    </tr>
+
+    <tr>
+
+      <td>column tag add</td>
+
+      <td colspan="1" rowspan="4">Columns can have
+a list of tag names. Previously only a single tag was allowed. The <span style="font-weight: bold;">tail</span> column no
+longer has the word "tail" as a tag, but it is still referred to by the
+word "tail" in column descriptions. </td>
+
+    </tr>
+
+    <tr>
+
+      <td>column tag expr</td>
+
+    </tr>
+
+    <tr>
+
+      <td>column tag names</td>
+
+    </tr>
+
+    <tr>
+
+      <td>column tag remove</td>
+
+    </tr>
+
+  </tbody>
+</table>
+
+<h2>Item Configuration Options</h2>
+
+<table style="text-align: left; width: 100%;" border="1" cellpadding="2" cellspacing="2">
+
+  <tbody>
+
+    <tr>
+
+      <th style="background-color: rgb(255, 255, 204); width: 50%;">New</th>
+
+      <th style="background-color: rgb(204, 255, 255);">Comment</th>
+
+    </tr>
+
+    <tr>
+
+      <td>-tags</td>
+
+      <td>Tags are textual labels applied to items to group them.
+Tags
+do not affect the appearance or behaviour of items. Tags can be used in
+item descriptions to operate on multiple items. More information can be
+found in the <a href="treectrl.html#item_tags">man page</a>.</td>
+
+    </tr>
+
+  </tbody>
+</table>
+
+<h2>Item Command</h2>
+
+<table style="text-align: left; width: 100%;" border="1" cellpadding="2" cellspacing="2">
+
+  <tbody>
+
+    <tr>
+
+      <th style="background-color: rgb(255, 255, 204); width: 50%;">Arguments/Result
+Changed</th>
+
+      <th style="background-color: rgb(204, 255, 255);">What
+changed</th>
+
+    </tr>
+
+    <tr>
+
+      <td>item count</td>
+
+      <td>Takes an optional item-description argument; the result
+is the number of items that match the item description. For example:<br>
+
+      <pre>.t item count visible</pre>
+
+will return the number of items that are displayed (i.e., those
+whose ancestors are all expanded, -visible options are true, etc), and:<br>
+
+      <pre>.t item count {tag a^b}</pre>
+
+will return the number of items with either tag "a" or "b", but not
+both.</td>
+
+    </tr>
+
+    <tr>
+
+      <td>item create</td>
+
+      <td>New option <span style="font-weight: bold;">-tags</span>
+specifies an initial list of tags for created items.</td>
+
+    </tr>
+
+    <tr>
+
+      <td>item id</td>
+
+      <td>Returns a list of item ids if the item description
+matches multiple items. For example:<br>
+
+      <pre>.t item id all</pre>
+
+will return a list of ids for all items, and:<br>
+
+      <pre>.t item id "$item children"</pre>
+
+will return the ids of every child of an item.</td>
+
+    </tr>
+
+    <tr>
+
+      <th style="background-color: rgb(255, 255, 204); width: 50%;">New</th>
+
+      <th style="background-color: rgb(204, 255, 255);">Comment</th>
+
+    </tr>
+
+    <tr>
+
+      <td>item descendants</td>
+
+      <td>Returns the ids of the children, grandchildren, etc of
+an item.</td>
+
+    </tr>
+
+    <tr>
+
+      <td>item enabled</td>
+
+      <td>Gets and sets the <span style="font-weight: bold;">enabled</span>
+state for items. All items are enabled when first created. Disabled
+items cannot be selected, and are ignored by the default key-navigation
+and mouse bindings.</td>
+
+    </tr>
+
+    <tr>
+
+      <td>item tag add</td>
+
+      <td>Add tags to items. For example:<br>
+
+      <pre>.t item tag add all {a b c}</pre>
+
+will add tags "a", "b" and "c" to every item.<br>
+
+      </td>
+
+    </tr>
+
+    <tr>
+
+      <td>item tag expr</td>
+
+      <td>Evaluate a tag expression against items. For example:<br>
+
+      <pre>.t item tag expr $item a</pre>
+
+returns 1 if&nbsp;an item has tag "a". Also:<br>
+
+      <pre>.t item tag expr $item a||b</pre>
+
+returns 1 if &nbsp;an item has tag "a" or "b".</td>
+
+    </tr>
+
+    <tr>
+
+      <td>item tag names</td>
+
+      <td>Return a list of tag names assigned to items. For
+example:<br>
+
+      <pre>.t item tag names $item</pre>
+
+returns the tag list for an item, and:<br>
+
+      <pre>.t item tag names all</pre>
+
+returns every tag assigned to any item.</td>
+
+    </tr>
+
+    <tr>
+
+      <td>item tag remove</td>
+
+      <td>Remove tags from items. For example:<br>
+
+      <pre>.t item tag remove all {b c}</pre>
+
+will remove tags "b" and "c" from any items that have them.</td>
+
+    </tr>
+
+  </tbody>
+</table>
+
+<h2>Text Element</h2>
+
+The new option <span style="font-weight: bold;">-underline</span>
+draws an underline under a single character of the displayed text.<br>
+
+<h2>Window Element</h2>
+
+Window elements can now be properly clipped so they don't draw over the
+column header, borders, or outside the bounds of the item
+columns they occupy. This is accomplished by making the window you want
+to display a child of a borderless frame widget, and setting the new <span style="font-weight: bold;">-clip</span> option of the
+window element to TRUE. So if your program displays a canvas widget in
+a window element, you would change this code:<br>
+
+<pre style="margin-left: 40px;">set canvas [canvas .t.canvas ...]<br>.t item element configure $item $column myElement -window $canvas</pre>
+
+to this:<br>
+
+<pre style="margin-left: 40px;">set frame [frame .t.clip -borderwidth 0]<br>set canvas [canvas $frame.canvas ...]<br>.t item element configure $item $column myElement -window $frame -clip yes</pre>
+
+The <span style="font-weight: bold;">-clip</span>
+option tells the window element to manage the geometry of both the <span style="font-weight: bold;">-window</span>
+widget (i.e,
+the frame) and its first child widget (i.e., the canvas). In this case,
+the frame widget is kept sized and positioned so that it is never
+out-of-bounds. You can see this in the "Big List" and "Firefox Privacy"
+demos.
+<h2>Item Descriptions</h2>
+
+New keywords were added to allow multiple items to be specified by an <a href="treectrl.html#item_description">item description</a>:<br>
+
+<ul>
+
+  <li>The keyword <span style="font-weight: bold;">list</span>
+specifies a list of other item descriptions:
+    <pre>.t item id "list [list $a $b $c]"</pre>
+
+  </li>
+
+  <li>The keyword <span style="font-weight: bold;">range</span>
+operates like the <span style="font-weight: bold;">item
+range</span> command:
+    <pre>.t item id "range $first $last"</pre>
+
+  </li>
+
+</ul>
+
+New modifiers were added to match multiple items:
+<ul>
+
+  <li>The modifier <span style="font-weight: bold;">ancestors</span>
+operates like the <span style="font-weight: bold;">item
+ancestors</span> command:
+    <pre>.t item id "$item ancestors"</pre>
+
+  </li>
+
+  <li>The modifier <span style="font-weight: bold;">children</span>
+operates like the <span style="font-weight: bold;">item
+children</span> command:
+    <pre>.t item id "$item children"</pre>
+
+  </li>
+
+  <li>The modifier <span style="font-weight: bold;">descendants</span>
+operates like the <span style="font-weight: bold;">item
+descendants</span> command:
+    <pre>.t item id "$item descendants"</pre>
+
+  </li>
+
+</ul>
+
+New qualifiers were added to refine which items are matched:<br>
+
+<ul>
+
+  <li>The qualifier <span style="font-weight: bold;">depth</span>
+matches items at a given depth in the heirarchy:</li>
+
+</ul>
+
+<div style="margin-left: 40px;">
+<pre>.t item id "all depth 2" ; # find all items that are children of the root's children<br>.t item id "depth 2" ; # ditto</pre>
+
+</div>
+
+<ul>
+
+  <li>The qualifier <span style="font-weight: bold;">!visible</span>
+matches items that are not displayed:
+    <pre>.t item id "first !visible" ; # find the first item that is not displayed</pre>
+
+  </li>
+
+  <li>The qualifier <span style="font-weight: bold;">state</span>
+matches items that have certain states set (or not set if '!' is used):
+    <pre>.t item id "first state&nbsp;{selected !open}" ; # find the first item that is selected and collapsed</pre>
+
+  </li>
+
+  <li>The qualifier <span style="font-weight: bold;">tag</span>
+matches items that meet a tag expression:
+    <pre>.t item id "$item children tag {a &amp;&amp; !b}" ; # find children of $item that have tag "a" but not tag "b"</pre>
+
+  </li>
+
+</ul>
+
+<br>
+
+The keyword <span style="font-weight: bold;">all</span>
+may now be followed by a list of qualifiers. For example:<br>
+
+<pre style="margin-left: 40px;">.t item id "all !visible state myState" ; # find every item that is not displayed with user-defined state "myState"</pre>
+
+A list of qualifiers may be used as the first part of an item
+description. This gives the same result as&nbsp; "all" followed by
+the
+qualifiers. For example:<br>
+
+<div style="margin-left: 40px;">
+<pre>.t item id "!visible state myState" ; # same as the previous example</pre>
+
+</div>
+
+<h2>Column Descriptions</h2>
+
+New keywords <span style="font-weight: bold;">list</span>
+and
+<span style="font-weight: bold;">range</span><span style="font-weight: bold;"></span> can be used to
+match multiple columns.<br>
+
+New qualifiers <span style="font-weight: bold;">state</span>,
+<span style="font-weight: bold;">tag</span>, <span style="font-weight: bold;">!tail</span> and <span style="font-weight: bold;">!visible</span> can be used
+to restrict which columns are specified.<br>
+
+The keyword <span style="font-weight: bold;">all</span>
+may be followed by a list of qualifiers.<br>
+
+A list of qualifiers may used as the first part of a column
+description. This gives the same result as&nbsp; "all" followed by
+the
+qualifiers.
+<h2>Multi-item and multi-column commands</h2>
+
+Many commands can now operate on multiple items and/or columns by using
+the improved item descriptions and column descriptions mentioned above.
+For example:
+<div style="margin-left: 40px;">
+<pre>.t column configure "range 1 10" -tags {a b c}<br>.t column delete "tag a"<br>.t column id "tag {a || b}"<br>.t item configure "depth 1" -button yes<br>.t item count visible<br>.t item element configure "root children" all elem1 -text "Hello"<br>.t item id "visible"<br>.t item image all all image1<br>.t item style map "tag {a &amp;&amp; !b}" "tag c" style2 {style1.elem1 style2.elem2}<br>.t item style set all all style1<br>.t item state forcolumn all all state1<br>.t item state set "tag current" ~mouseover<br>.t item remove "state selected"<br>.t item span "range 1 10" "range 10 last" 2<br>.t item text "root children" all "Hello"</pre>
+
+</div>
+
+<h2>Demo Changes</h2>
+
+<ul>
+
+  <li>New demo "My Computer". Demonstrates disabled items used as
+headers.</li>
+
+  <li>New demo "Column Locking". Demonstrates columns that do not
+scroll horizontally.</li>
+
+  <li>The "Big List" and "Firefox Privacy" demos were changed to
+use the new <span style="font-weight: bold;">-clip</span>
+option of window elements.</li>
+
+</ul>
+
+<h2>Misc Changes</h2>
+
+<ul>
+
+  <li>The tail column header will not be drawn if the tail
+column's <span style="font-weight: bold;">-visible</span>
+option is false. This can look nicer with some themes.</li>
+
+  <li>The <span style="font-weight: bold;">-itembackground</span>
+colors for a column are now extended below any items in the simplest
+(and most typical) case where the treectrl's <span style="font-weight: bold;">-orient</span> option is
+vertical and <span style="font-weight: bold;">-wrap</span>
+option is unspecified. The height of the rows is determined by the <span style="font-weight: bold;">-itemheight</span> or <span style="font-weight: bold;">-minitemheight</span>
+options; if neither of those options is specified, then <span style="font-weight: bold;">-itembackground</span>
+colors are not drawn below the items.</li>
+
+  <li>If <span style="font-weight: bold;">-itembackground</span>
+colors are specified for the tail column, then they are drawn.</li>
+
+  <li>Memory usage is improved, especially for text elements.</li>
+
+</ul>
+
+<h2>Bug Fixes</h2>
+
+<ul>
+
+  <li><span style="font-weight: bold;">item create</span>:
+Fixed bug where <span style="font-weight: bold;">-nextsibling</span>
+and <span style="font-weight: bold;">-prevsibling</span>
+options could specify an orphan item.</li>
+
+  <li><span style="font-weight: bold;">item delete</span>:
+Stopped items possibly being double-deleted by nested calls through <span style="font-weight: bold;">&lt;Selection&gt;</span>
+and <span style="font-weight: bold;">&lt;ItemDelete&gt;</span>
+binding scripts.</li>
+
+  <li><span style="font-weight: bold;">item expand</span>,&nbsp;<span style="font-weight: bold;">item collapse</span>,&nbsp;<span style="font-weight: bold;">item toggle</span>: Only
+operate on items which exist when the command is called, not any that
+might get created by <span style="font-weight: bold;">&lt;Expand&gt;</span>
+or <span style="font-weight: bold;">&lt;Collapse&gt;</span>
+binding scripts.</li>
+
+  <li>Fixed a crash and a redisplay problem when a master element
+was
+configured with a -textvariable and the associated variable changed.</li>
+
+  <li>When a style with window elements spanned more than one
+column, the window might be improperly sized during display updates.</li>
+
+  <li>Windows in window elements would not always be unmapped if
+columns or items were hidden, or if the span of an item-column changed.</li>
+
+  <li>The disclosure triangles (i.e., the item buttons) are drawn
+without a white background under OSX.</li>
+
+</ul>
+
+<hr style="width: 100%; height: 2px;">
+<h1>What's New in TkTreeCtrl 2.1.1</h1>
+
+<h2>Column Command</h2>
+
+<table style="text-align: left; width: 100%;" border="1" cellpadding="2" cellspacing="2">
+
+  <tbody>
+
+    <tr>
+
+      <th style="background-color: rgb(255, 255, 204); width: 50%;">Arguments/Result
+Changed</th>
+
+      <th style="background-color: rgb(204, 255, 255);">What
+changed</th>
+
+    </tr>
+
+    <tr>
+
+      <td>column delete<br>
+
+      </td>
+
+      <td>Added an optional second argument allowing a range of
+columns to be deleted.</td>
+
+    </tr>
+
+  </tbody>
+</table>
+
+<h2>Bug Fixes</h2>
+
+<ul>
+
+  <li>The <span style="font-weight: bold;">item sort</span>
+command
+will be much faster in many cases. There was a silly error in the
+pivot-finding code of quicksort which resulted in the slow-down.</li>
+
+  <li>A&nbsp;column header will be redisplayed if an image in
+the header is altered.</li>
+
+  <li>Fixed bus errors on some Unix systems due to alignment
+problems.</li>
+
+</ul>
+
+<h2>Other Changes</h2>
+
+<ul>
+
+  <li>The Tk caret is now positioned over the active item when it
+changes. The Tk caret is used for the Magnifier accessibility
+application and IME on Windows, as well as XIM under Unix.</li>
+
+  <li>Improved the appearance of the column headers under OSX.</li>
+
+  <li>Added &lt;MouseWheel&gt; support to OSX.</li>
+
+  <li>Changing the -visible option of an item could be slow if
+any
+items were selected. That is because non-visible items may not be part
+of the selection. A change was made so that changes to the selection
+caused by modifying the -visible option of an item do not occur until
+the next display update.</li>
+
+</ul>
+
+<h2>Demo Changes</h2>
+
+<ul>
+
+  <li>New demo "Column Spanning". Demonstrates a 100-column list
+where styles span from 1 to 20 columns each.</li>
+
+  <li>The&nbsp;<span style="font-weight: bold;">loupe</span>
+command (which performs screen capture to an image) is now implemented
+on Windows and OSX thanks to Jeff Hobbs.</li>
+
+  <li>The screen-magnifier image now resizes with the "loupe"
+window.</li>
+
+</ul>
+
+<hr style="width: 100%; height: 2px;">
+<h1>What's New in TkTreeCtrl 2.1</h1>
+
+This version should be backwards compatible with 2.0, except for a few
+obscure changes.<br>
+
+<h2>TreeCtrl Configuration Options</h2>
+
+<table style="text-align: left; width: 100%;" border="1" cellpadding="2" cellspacing="2">
+
+  <tbody>
+
+    <tr>
+
+      <th style="background-color: rgb(255, 255, 204); width: 50%;">New</th>
+
+      <th style="background-color: rgb(204, 255, 255);">Comment</th>
+
+    </tr>
+
+    <tr>
+
+      <td>-itemwidth</td>
+
+      <td><br>
+
+      </td>
+
+    </tr>
+
+    <tr>
+
+      <td>-itemwidthequal</td>
+
+      <td>Deprecates the column -widthhack option.</td>
+
+    </tr>
+
+    <tr>
+
+      <td>-itemwidthmultiple</td>
+
+      <td>Deprecates the column -stepwidth option.</td>
+
+    </tr>
+
+  </tbody>
+</table>
+
+<h2>Column Configuration Options</h2>
+
+<table style="text-align: left; width: 100%;" border="1" cellpadding="2" cellspacing="2">
+
+  <tbody>
+
+    <tr>
+
+      <th style="background-color: rgb(255, 255, 204); width: 50%;">Deprecated</th>
+
+      <th style="background-color: rgb(204, 255, 255);">What
+to use
+instead</th>
+
+    </tr>
+
+    <tr>
+
+      <td>-stepwidth</td>
+
+      <td>treectrl's -itemwidthmultiple option</td>
+
+    </tr>
+
+    <tr>
+
+      <td>-widthhack</td>
+
+      <td>treectrl's -itemwidthequal option</td>
+
+    </tr>
+
+  </tbody>
+</table>
+
+<h2>Element Command</h2>
+
+<table style="text-align: left; width: 100%;" border="1" cellpadding="2" cellspacing="2">
+
+  <tbody>
+
+    <tr>
+
+      <th style="background-color: rgb(255, 255, 204); width: 50%;">New</th>
+
+      <th style="background-color: rgb(204, 255, 255);">Comment</th>
+
+    </tr>
+
+    <tr>
+
+      <td>element perstate</td>
+
+      <td>Like [item element perstate].</td>
+
+    </tr>
+
+  </tbody>
+</table>
+
+<h2>Item Configuration Options</h2>
+
+<table style="text-align: left; width: 100%;" border="1" cellpadding="2" cellspacing="2">
+
+  <tbody>
+
+    <tr>
+
+      <th style="background-color: rgb(255, 255, 204); width: 50%;">New</th>
+
+      <th style="background-color: rgb(204, 255, 255);">Comment</th>
+
+    </tr>
+
+    <tr>
+
+      <td>-height</td>
+
+      <td>Overrides the treectrl's -itemheight option</td>
+
+    </tr>
+
+  </tbody>
+</table>
+
+<h2>Item Command</h2>
+
+<table style="text-align: left; width: 100%;" border="1" cellpadding="2" cellspacing="2">
+
+  <tbody>
+
+    <tr>
+
+      <th style="background-color: rgb(255, 255, 204);">Deprecated</th>
+
+      <th style="background-color: rgb(204, 255, 255);">What
+to use
+instead</th>
+
+    </tr>
+
+    <tr>
+
+      <td>item element actual</td>
+
+      <td>item element perstate</td>
+
+    </tr>
+
+    <tr>
+
+      <td>item complex</td>
+
+      <td>item element configure</td>
+
+    </tr>
+
+    <tr>
+
+      <th style="background-color: rgb(255, 255, 204);">Behaviour
+Changed</th>
+
+      <th style="background-color: rgb(204, 255, 255);">What
+changed</th>
+
+    </tr>
+
+    <tr>
+
+      <td>item bbox</td>
+
+      <td>No longer returns an error if no style had been
+assigned to the column.</td>
+
+    </tr>
+
+    <tr>
+
+      <td>item state forcolumn</td>
+
+      <td>No longer returns an error if no style had been
+assigned to the column.</td>
+
+    </tr>
+
+    <tr>
+
+      <td>item style set</td>
+
+      <td>Does nothing when replacing a style with the same
+style.
+Previously the old style was freed before assigning the new style,
+losing the element config info if the old and new styles were the same.<br>
+
+      <span style="color: rgb(255, 0, 0);">Potential
+incompatibility</span></td>
+
+    </tr>
+
+    <tr>
+
+      <th style="background-color: rgb(255, 255, 204); width: 50%;">Arguments/Result
+Changed</th>
+
+      <th style="background-color: rgb(204, 255, 255);">What
+changed</th>
+
+    </tr>
+
+    <tr>
+
+      <td>item create</td>
+
+      <td>Added options: -count -height, -nextsibling, -open,
+-parent,
+-prevsibling, and -returnid. Multiple items may be created with one
+call using the -count option.</td>
+
+    </tr>
+
+    <tr>
+
+      <td>item element configure</td>
+
+      <td>Multiple elements in multiple columns may be configured
+with
+a single call. Use '+' to separate elements, and ',' to separate
+columns. See the docs.</td>
+
+    </tr>
+
+    <tr>
+
+      <td>item style set</td>
+
+      <td>When no column is specified, returns a list of one
+style name
+per column. Previously, the list would have less values than the number
+of columns if no styles had ever been assigned to the rightmost
+column(s).<br>
+
+      <span style="color: rgb(255, 0, 0);">Potential
+incompatibility</span></td>
+
+    </tr>
+
+    <tr>
+
+      <td>item text</td>
+
+      <td>When no column is specified, returns a list of one
+string per column.</td>
+
+    </tr>
+
+    <tr>
+
+      <th style="background-color: rgb(255, 255, 204); width: 50%;">New</th>
+
+      <th style="background-color: rgb(204, 255, 255);">Comment</th>
+
+    </tr>
+
+    <tr>
+
+      <td>item image</td>
+
+      <td>Partner to the [item text] command.</td>
+
+    </tr>
+
+    <tr>
+
+      <td>item element perstate</td>
+
+      <td>Not really new, just renamed from [item element actual]
+to
+better describe what it does. Accepts a new optional argument which
+specifies the state to use when determining the value of the per-state
+option.<br>
+
+      <br>
+
+The following options no longer return a default value if the per-state
+option itself does not have a value specified:<br>
+
+      <ul>
+
+        <li>bitmap -foreground, -background</li>
+
+        <li>border -relief</li>
+
+        <li>text -fill, -font</li>
+
+      </ul>
+
+      <span style="color: rgb(255, 0, 0);">Potential
+incompatibility</span></td>
+
+    </tr>
+
+    <tr>
+
+      <td>item span</td>
+
+      <td>A style may now be displayed over multiple adjacent
+columns.<br>
+
+      </td>
+
+    </tr>
+
+  </tbody>
+</table>
+
+<h2><span style="font-weight: bold;"></span>Notify
+Command</h2>
+
+<table style="text-align: left; width: 100%;" border="1" cellpadding="2" cellspacing="2">
+
+  <tbody>
+
+    <tr>
+
+      <th style="background-color: rgb(255, 255, 204); width: 50%;">New</th>
+
+      <th style="background-color: rgb(204, 255, 255);">Comment</th>
+
+    </tr>
+
+    <tr>
+
+      <td>notify unbind<br>
+
+      </td>
+
+      <td>Let's you unbind all scripts from an object with one
+call.</td>
+
+    </tr>
+
+  </tbody>
+</table>
+
+<h2>Style Layout Changes</h2>
+
+<ul>
+
+  <li>Column justification will now affect the position of
+elements in 2 situations which previously had no effect (<span style="color: rgb(255, 0, 0);">Potential incompatibility</span>):</li>
+
+</ul>
+
+<ol style="margin-left: 40px;">
+
+  <li>If a -detach element had a fixed width larger than the
+other elements.</li>
+
+  <li>If an element had -iexpand x specified as well as
+-maxwidth, leaving some space available.</li>
+
+</ol>
+
+<h2>Element Changes</h2>
+
+<ul>
+
+  <li>Bitmap, image and text elements are drawn clipped if given
+less space than they need.</li>
+
+  <li>Fixed line wrapping of text elements. It did not work for
+single lines of text at all (<span style="color: rgb(255, 0, 0);">Potential
+incompatibility</span>).</li>
+
+  <li>The text -wrap option can now be <span style="font-weight: bold;">none</span> to disable line
+wrapping.</li>
+
+</ul>
+
+<h2>Event Changes</h2>
+
+<ul>
+
+  <li>The new static event <span style="font-weight: bold;">&lt;ItemVisibility&gt;</span>
+is generated when items become visible on screen and when items are no
+longer visible on screen.
+This event allows you to create really big lists by only assigning
+styles when items are about to be displayed. See the EVENTS AND SCRIPT
+SUBSTITUTIONS section in the help
+file, and the new demo "Big List".</li>
+
+</ul>
+
+<h2>Other Changes</h2>
+
+<ul>
+
+  <li>On WinXP, the column header sort arrow is drawn like
+Explorer draws it if <span style="font-weight: bold;">-usetheme</span>
+is true.</li>
+
+</ul>
+
+<h2>Demo Changes</h2>
+
+<ul>
+
+  <li>New demo "Big List". Demonstrates the new <span style="font-weight: bold;">&lt;ItemVisibility&gt;</span>
+event, using &lt;Expand-before&gt; to add items on demand, and
+column spanning.</li>
+
+  <li>The context menu has a <span style="font-weight: bold;">Span</span>
+submenu that lets you manipulate column spanning in items. See
+the&nbsp;<span style="font-weight: bold;">item span</span>
+command in the help file.</li>
+
+  <li>Under WinXP, the "Explorer" demos will use the new <span style="font-weight: bold;">shellicon</span>
+extension if available. This extension allows a treectrl to display
+file/folder icons using the Win32 Shell API. It may work on other
+versions of Windows but it hasn't been tested.</li>
+
+</ul>
+
+<hr style="width: 100%; height: 2px;">
+<h1>What's New in TkTreeCtrl 2.0</h1>
+
+<h2>TreeCtrl Configuration Options</h2>
+
+<table style="text-align: left; width: 100%;" border="1" cellpadding="2" cellspacing="2">
+
+  <tbody>
+
+    <tr>
+
+      <th style="background-color: rgb(255, 255, 204); width: 50%;">Replaced</th>
+
+      <th style="background-color: rgb(204, 255, 255);">What
+to use
+instead</th>
+
+    </tr>
+
+    <tr>
+
+      <td>-openbuttonimage</td>
+
+      <td>-buttonimage</td>
+
+    </tr>
+
+    <tr>
+
+      <td>-closedbuttonimage</td>
+
+      <td>-buttonimage</td>
+
+    </tr>
+
+    <tr>
+
+      <td>-openbuttonbitmap</td>
+
+      <td>-buttonbitmap</td>
+
+    </tr>
+
+    <tr>
+
+      <td>-closedbuttonbitmap</td>
+
+      <td>-buttonbitmap</td>
+
+    </tr>
+
+    <tr>
+
+      <th style="background-color: rgb(255, 255, 204); width: 50%;">Usage
+Changed</th>
+
+      <th style="background-color: rgb(204, 255, 255);">How
+it changed</th>
+
+    </tr>
+
+    <tr>
+
+      <td>-backgroundmode</td>
+
+      <td>The values "index" and "visindex" are deprecated. The
+value
+"order" should be used instead of "index", and
+"ordervisible" should be used instead of "visindex". This brings
+agreement with the new "item order" command which replaces the "item
+index" command.</td>
+
+    </tr>
+
+    <tr>
+
+      <td>-treecolumn</td>
+
+      <td>This used to be any integer value which may or may not
+have
+corresponded to an actual column. Now the value must be a valid column
+description, or an empty string to indicate no column should display
+buttons/lines.</td>
+
+    </tr>
+
+    <tr>
+
+      <th style="background-color: rgb(255, 255, 204);">New</th>
+
+      <td><br>
+</td>
+
+    </tr>
+
+    <tr>
+
+      <td>-backgroundimage</td>
+
+      <td><br>
+</td>
+
+    </tr>
+
+    <tr>
+
+      <td>-columnprefix</td>
+
+      <td><br>
+</td>
+
+    </tr>
+
+    <tr>
+
+      <td>-columnresizemode</td>
+
+      <td><br>
+</td>
+
+    </tr>
+
+    <tr>
+
+      <td>-itemprefix</td>
+
+      <td><br>
+</td>
+
+    </tr>
+
+    <tr>
+
+      <td>-minitemheight</td>
+
+      <td><br>
+</td>
+
+    </tr>
+
+    <tr>
+
+      <td>-usetheme</td>
+
+      <td><br>
+</td>
+
+    </tr>
+
+  </tbody>
+</table>
+
+<h2>TreeCtrl Commands</h2>
+
+<table style="text-align: left; width: 100%;" border="1" cellpadding="2" cellspacing="2">
+
+  <tbody>
+
+    <tr>
+
+      <th style="width: 50%; background-color: rgb(255, 255, 204);">Deprecated</th>
+
+      <th style="background-color: rgb(204, 255, 255);">What
+to use
+instead</th>
+
+    </tr>
+
+    <tr>
+
+      <td>compare</td>
+
+      <td>item compare</td>
+
+    </tr>
+
+    <tr>
+
+      <td>index</td>
+
+      <td>item id</td>
+
+    </tr>
+
+    <tr>
+
+      <td>numcolumns</td>
+
+      <td>column count</td>
+
+    </tr>
+
+    <tr>
+
+      <td>numitems</td>
+
+      <td>item count</td>
+
+    </tr>
+
+    <tr>
+
+      <td>range</td>
+
+      <td>item range</td>
+
+    </tr>
+
+  </tbody>
+</table>
+
+<h2>Column Configuration Options</h2>
+
+<table style="text-align: left; width: 100%;" border="1" cellpadding="2" cellspacing="2">
+
+  <tbody>
+
+    <tr>
+
+      <th style="background-color: rgb(255, 255, 204); width: 50%;">Removed</th>
+
+      <th style="background-color: rgb(204, 255, 255);">What
+to use
+instead</th>
+
+    </tr>
+
+    <tr>
+
+      <td>-relief<br>
+
+      </td>
+
+      <td>-state</td>
+
+    </tr>
+
+    <tr>
+
+      <td>-sunken</td>
+
+      <td>-state</td>
+
+    </tr>
+
+    <tr>
+
+      <th style="background-color: rgb(255, 255, 204);">Renamed<br>
+
+      </th>
+
+      <th style="background-color: rgb(204, 255, 255);">New
+name</th>
+
+    </tr>
+
+    <tr>
+
+      <td>-arrowpad</td>
+
+      <td>-arrowpadx</td>
+
+    </tr>
+
+    <tr>
+
+      <th style="background-color: rgb(255, 255, 204);">Usage
+Changed</th>
+
+      <th style="background-color: rgb(204, 255, 255);">How
+it changed</th>
+
+    </tr>
+
+    <tr>
+
+      <td>-background</td>
+
+      <td>This is now a per-state option. See COLUMNS in the help
+file
+for valid state names.</td>
+
+    </tr>
+
+    <tr>
+
+      <th style="background-color: rgb(255, 255, 204);">New<br>
+
+      </th>
+
+      <td><br>
+</td>
+
+    </tr>
+
+    <tr>
+
+      <td>-arrowbitmap<br>
+
+      </td>
+
+      <td><br>
+</td>
+
+    </tr>
+
+    <tr>
+
+      <td>-arrowimage</td>
+
+      <td><br>
+</td>
+
+    </tr>
+
+    <tr>
+
+      <td>-arrowpady</td>
+
+      <td><br>
+</td>
+
+    </tr>
+
+    <tr>
+
+      <td>-maxwidth</td>
+
+      <td><br>
+</td>
+
+    </tr>
+
+    <tr>
+
+      <td>-resize</td>
+
+      <td><br>
+</td>
+
+    </tr>
+
+    <tr>
+
+      <td>-state</td>
+
+      <td><br>
+</td>
+
+    </tr>
+
+    <tr>
+
+      <td>-textlines</td>
+
+      <td><br>
+</td>
+
+    </tr>
+
+  </tbody>
+</table>
+
+<h2>Column Command</h2>
+
+<table style="text-align: left; width: 100%;" border="1" cellpadding="2" cellspacing="2">
+
+  <tbody>
+
+    <tr>
+
+      <th style="background-color: rgb(255, 255, 204);">Deprecated</th>
+
+      <th style="background-color: rgb(204, 255, 255);">What
+to use
+instead</th>
+
+    </tr>
+
+    <tr>
+
+      <td>column index</td>
+
+      <td>column id</td>
+
+    </tr>
+
+    <tr>
+
+      <th style="background-color: rgb(255, 255, 204); width: 50%;">Arguments/Result
+Changed</th>
+
+      <th style="background-color: rgb(204, 255, 255);">What
+changed</th>
+
+    </tr>
+
+    <tr>
+
+      <td>column configure<br>
+
+      </td>
+
+      <td>A column description of "all" is allowed if at least
+one
+option-value pair is given.<br>
+
+      </td>
+
+    </tr>
+
+    <tr>
+
+      <td>column create</td>
+
+      <td>The result is a unique identifier. Previously the
+result was
+an
+index in the list of columns.</td>
+
+    </tr>
+
+    <tr>
+
+      <td>column delete</td>
+
+      <td>A column description of "all" is allowed.</td>
+
+    </tr>
+
+    <tr>
+
+      <th style="background-color: rgb(255, 255, 204);">New</th>
+
+      <th style="background-color: rgb(204, 255, 255);">Comment</th>
+
+    </tr>
+
+    <tr>
+
+      <td>column compare</td>
+
+      <td><br>
+</td>
+
+    </tr>
+
+    <tr>
+
+      <td>column count</td>
+
+      <td>replaces "numcolumns"</td>
+
+    </tr>
+
+    <tr>
+
+      <td>column dragconfigure</td>
+
+      <td><br>
+</td>
+
+    </tr>
+
+    <tr>
+
+      <td>column dragcget</td>
+
+      <td><br>
+</td>
+
+    </tr>
+
+    <tr>
+
+      <td>column id</td>
+
+      <td>replaces "column index"</td>
+
+    </tr>
+
+    <tr>
+
+      <td>column list</td>
+
+      <td><br>
+</td>
+
+    </tr>
+
+    <tr>
+
+      <td>column order</td>
+
+      <td><br>
+</td>
+
+    </tr>
+
+  </tbody>
+</table>
+
+<h2>Item Command</h2>
+
+<table style="text-align: left; width: 100%;" border="1" cellpadding="2" cellspacing="2">
+
+  <tbody>
+
+    <tr>
+
+      <th style="background-color: rgb(255, 255, 204);">Removed</th>
+
+      <th style="background-color: rgb(204, 255, 255);">What
+to use
+instead</th>
+
+    </tr>
+
+    <tr>
+
+      <td>item index</td>
+
+      <td>item order</td>
+
+    </tr>
+
+    <tr>
+
+      <th style="background-color: rgb(255, 255, 204); width: 50%;">New</th>
+
+      <th style="background-color: rgb(204, 255, 255);">Comment</th>
+
+    </tr>
+
+    <tr>
+
+      <td>item compare</td>
+
+      <td>replaces "compare"</td>
+
+    </tr>
+
+    <tr>
+
+      <td>item count</td>
+
+      <td>replaces "numitems"</td>
+
+    </tr>
+
+    <tr>
+
+      <td>item id</td>
+
+      <td>replaces "index"</td>
+
+    </tr>
+
+    <tr>
+
+      <td>item order</td>
+
+      <td>replaces "item index"</td>
+
+    </tr>
+
+    <tr>
+
+      <td>item range</td>
+
+      <td>replaces "range"</td>
+
+    </tr>
+
+  </tbody>
+</table>
+
+<h2>Notify Command</h2>
+
+<table style="text-align: left; width: 100%;" border="1" cellpadding="2" cellspacing="2">
+
+  <tbody>
+
+    <tr>
+
+      <th style="background-color: rgb(255, 255, 204); width: 50%;">Arguments/Result
+Changed</th>
+
+      <th style="background-color: rgb(204, 255, 255);">What
+changed</th>
+
+    </tr>
+
+    <tr>
+
+      <td>notify generate<br>
+
+      </td>
+
+      <td>Added optional <span style="font-style: italic;">percentsCommand</span>
+argument</td>
+
+    </tr>
+
+    <tr>
+
+      <td>notify install</td>
+
+      <td>Old syntax (supported but deprecated):<br>
+
+      <pre style="margin-left: 40px;"><span style="font-weight: bold;">notify install event</span> <span style="font-style: italic;">eventName</span></pre>
+
+      <pre style="margin-left: 40px;"><span style="font-weight: bold;">notify install detail</span> <span style="font-style: italic;">eventName</span> <span style="font-style: italic;">detail</span></pre>
+
+New syntax:<br>
+
+      <pre style="margin-left: 40px;"><span style="font-weight: bold;">notify install</span> &lt;<span style="font-style: italic;">eventName</span>&gt;</pre>
+
+      <pre style="margin-left: 40px;"><span style="font-weight: bold;">notify install</span> &lt;<span style="font-style: italic;">eventName</span>-<span style="font-style: italic;">detail</span>&gt;</pre>
+
+      </td>
+
+    </tr>
+
+    <tr>
+
+      <td>notify linkage</td>
+
+      <td>Old syntax (supported but deprecated):<br>
+
+      <div style="margin-left: 40px;">
+      <pre><span style="font-weight: bold;">notify linkage</span> <span style="font-style: italic;">eventName</span></pre>
+
+      <pre><span style="font-weight: bold;">notify linkage</span> <span style="font-style: italic;">eventName</span> <span style="font-style: italic;">detail</span></pre>
+
+      </div>
+
+New syntax:<br>
+
+      <div style="margin-left: 40px;">
+      <pre><span style="font-weight: bold;">notify linkage</span> &lt;<span style="font-style: italic;">eventName</span>&gt;</pre>
+
+      <pre><span style="font-weight: bold;">notify linkage</span> &lt;<span style="font-style: italic;">eventName</span>-<span style="font-style: italic;">detail</span>&gt;</pre>
+
+      </div>
+
+      </td>
+
+    </tr>
+
+    <tr>
+
+      <td>notify uninstall</td>
+
+      <td>see <span style="font-weight: bold;">notify
+install</span>
+above</td>
+
+    </tr>
+
+  </tbody>
+</table>
+
+<h2>Style Layout Options</h2>
+
+<table style="text-align: left; width: 100%;" border="1" cellpadding="2" cellspacing="2">
+
+  <tbody>
+
+    <tr>
+
+      <th style="background-color: rgb(255, 255, 204);">Usage
+Changed</th>
+
+      <th style="background-color: rgb(204, 255, 255);">How
+it changed</th>
+
+    </tr>
+
+    <tr>
+
+      <td>-iexpand</td>
+
+      <td>Two new flags "x' and "y" are allowed. Previously, only
+the
+-ipadx and -ipady padding could be expanded by this option. The new xy
+flags expand the display area of the element, not the padding. To
+update your code, you will probably want to change this:<br>
+
+      <div style="margin-left: 40px;">
+      <pre>$T style layout $S $E -iexpand we</pre>
+
+      </div>
+
+to this:<br>
+
+      <div style="margin-left: 40px;">
+      <pre>$T style layout $S $E -iexpand x<br></pre>
+
+      </div>
+
+Keep in mind that -union elements are not affected by -iexpand xy,
+since the size of a -union element is determined by the elements it
+surrounds.</td>
+
+    </tr>
+
+    <tr>
+
+      <th style="width: 50%; background-color: rgb(255, 255, 204);">New<br>
+
+      </th>
+
+      <td><br>
+</td>
+
+    </tr>
+
+    <tr>
+
+      <td>-height</td>
+
+      <td><br>
+</td>
+
+    </tr>
+
+    <tr>
+
+      <td>-maxheight</td>
+
+      <td><br>
+</td>
+
+    </tr>
+
+    <tr>
+
+      <td>-maxwidth</td>
+
+      <td><br>
+</td>
+
+    </tr>
+
+    <tr>
+
+      <td>-minheight</td>
+
+      <td><br>
+</td>
+
+    </tr>
+
+    <tr>
+
+      <td>-minwidth</td>
+
+      <td><br>
+</td>
+
+    </tr>
+
+    <tr>
+
+      <td>-sticky</td>
+
+      <td><br>
+</td>
+
+    </tr>
+
+    <tr>
+
+      <td>-width</td>
+
+      <td><br>
+</td>
+
+    </tr>
+
+  </tbody>
+</table>
+
+<h2>Element Changes</h2>
+
+<ul>
+
+  <li>A new element type&nbsp;<span style="font-weight: bold;">window</span>
+was added.
+See the new demo "Firefox Privacy" and the ELEMENTS section in the help
+file.</li>
+
+  <li>All element types have a new
+per-state boolean option called <span style="font-weight: bold;">-draw</span>.</li>
+
+  <li>The <span style="font-weight: bold;">text</span>
+element type
+has a new option called <span style="font-weight: bold;">-textvariable</span>.
+See the new demo
+"Textvariable" and the ELEMENTS section in the help file.</li>
+
+</ul>
+
+<h2>Event Changes</h2>
+
+<ul>
+
+  <li>2 new %-substitution characters <span style="font-weight: bold;">%P</span>
+and <span style="font-weight: bold;">%?</span> are
+allowed in binding
+scripts. See the EVENTS AND SCRIPT SUBSTITUTIONS section in the help
+file.</li>
+
+  <li>The new static event <span style="font-weight: bold;">&lt;ItemDelete&gt;</span>
+is generated when items are deleted. See the EVENTS AND SCRIPT
+SUBSTITUTIONS section in the help file.</li>
+
+</ul>
+
+<h2>Library Script Changes</h2>
+
+<h3 style="margin-left: 40px;">filelist-bindings.tcl:</h3>
+
+<ul>
+
+  <li>The Priv(edit) variable, which is used to specify which
+text
+elements may be edited, now has the same format as Priv(sensitive).
+Previously only elements in the first column could be edited.</li>
+
+  <li>3 new commands in the TreeCtrl namespace should be used to
+access
+the Priv(dragimage), Priv(edit) and Priv(sensitive) variables. The
+commands are SetDragImage, SetEditable and SetSensitive.</li>
+
+  <li>Two new dynamic events <span style="font-weight: bold;">&lt;Edit-begin&gt;</span>
+and <span style="font-weight: bold;">&lt;Edit-end&gt;</span>
+are
+generated when editing a file name.</li>
+
+</ul>
+
+<h3 style="margin-left: 40px;">treectrl.tcl:</h3>
+
+<ul>
+
+  <li>On OSX/Aqua, the Command key is used to perform
+discontinuous
+selection. Previously the Control key was used but Command is specified
+by Apple's user-interface guidelines.</li>
+
+</ul>
+
+<h2>Other Changes</h2>
+
+<ul>
+
+  <li>On WinXP, the column headers and open/close buttons are
+drawn
+using the system theme if <span style="font-weight: bold;">-usetheme</span>
+is true. The sort arrow is drawn the old-fashioned way.</li>
+
+  <li>On OSX/Aqua,&nbsp; the column headers and open/close
+buttons are
+drawn
+using the system theme if <span style="font-weight: bold;">-usetheme</span>
+is true. The sort arrow will be drawn by the Appearance Manager as
+well. This will override the <span style="font-weight: bold;">-arrowside</span>
+and <span style="font-weight: bold;">-arrowgravity</span>
+options.</li>
+
+  <li>Columns can be moved by drag-and-drop. See <span style="font-weight: bold;">column dragconfigure</span>
+in the help
+file.</li>
+
+  <li>Columns can be specified in new ways. See the COLUMN
+DESCRIPTION
+section in the help file.</li>
+
+  <li>Added new section DYNAMIC EVENTS to the help file.</li>
+
+  <li>Added new section PER-STATE OPTIONS to the help file.</li>
+
+  <li>The new style layout option <span style="font-weight: bold;">-indent</span>
+allows elements to be displayed in the button/line area. See the <span style="font-weight: bold;">style layout</span> command
+in the help
+file and the new demo "Firefox Privacy".</li>
+
+  <li>The new item description <span style="font-weight: bold;">end</span>
+is equivalent to <span style="font-weight: bold;">last</span>.</li>
+
+  <li><span style="color: rgb(255, 0, 0);">If you
+have version 1.1
+installed, replace the old pkgIndex.tcl file with the one from this
+version (but replace the version number 2.0 with 1.1).<span style="color: rgb(0, 0, 0);"> Otherwise the old pkgIndex.tcl
+file will
+set the TREECTRL_LIBRARY variable which will override where the library
+scripts are found.</span></span></li>
+
+</ul>
+
+<h2>Demo Changes</h2>
+
+<ul>
+
+  <li>New demo "Firefox Privacy". Demonstrates the new <span style="font-weight: bold;">window</span> element type
+and <span style="font-weight: bold;">-indent</span>
+style layout option.</li>
+
+  <li>New demo "Textvariable". Demonstrates the new <span style="font-weight: bold;">-textvariable</span> option
+of the <span style="font-weight: bold;">text</span>
+element.</li>
+
+  <li>Added a new Event Browser window to display events
+generated by
+the main treectrl widget.</li>
+
+  <li>The context menu can be popped up in all the demo lists. A
+&lt;Control-ButtonPress-1&gt; binding for this was added under
+OSX/Aqua.</li>
+
+  <li>In the "Explorer" demos, the file name is hidden while
+editing
+the file name.</li>
+
+</ul>
+
+</body></html>
