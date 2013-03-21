@@ -8,6 +8,7 @@
  * Copyright (c) 2003 ActiveState Corporation
  */
 
+#include "config.h"
 #include "tkPort.h"
 #include "default.h"
 #include "tclInt.h"

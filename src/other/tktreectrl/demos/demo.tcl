@@ -934,8 +934,8 @@ proc MakeMainWindow {} {
 	}
     }
 
-    panedwindow .pw2 -orient horizontal -borderwidth 0 -sashwidth 6
-    panedwindow .pw1 -orient vertical -borderwidth 0 -sashwidth 6
+    ::tk::panedwindow .pw2 -orient horizontal -borderwidth 0 -sashwidth 6
+    ::tk::panedwindow .pw1 -orient vertical -borderwidth 0 -sashwidth 6
 
     # Tree + scrollbar: demos
     TreePlusScrollbarsInAFrame .f1 1 1
