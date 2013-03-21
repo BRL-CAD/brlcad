@@ -76,10 +76,10 @@ main(int argc, char *argv[])
 	    break;
 
 	sscanf( str, "%f %f %f %f", &a, &b, &c, &d );
-	QSET( pl, a, b, c, d )
+	QSET( pl, a, b, c, d );
 
-	    if ( npts > 2 )
-		printf( "%10d%3d%7.0f%5d%5d", old_id, face_type, 0.0, 1, npts );
+	if ( npts > 2 )
+	    printf( "%10d%3d%7.0f%5d%5d", old_id, face_type, 0.0, 1, npts );
 
 	for ( i=0; i<npts; i++ )
 	{

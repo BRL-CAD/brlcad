@@ -1120,12 +1120,12 @@ rt_arb_uv(struct application *ap, struct soltab *stp, register struct hit *hitp,
     r = ap->a_rbeam + ap->a_diverge * hitp->hit_dist;
     min_r_U = r * ofp->arb_Ulen;
     min_r_V = r * ofp->arb_Vlen;
-    VREVERSE(rev_dir, ap->a_ray.r_dir)
-	norm = &arbp->arb_face[hitp->hit_surfno].peqn[0];
+    VREVERSE(rev_dir, ap->a_ray.r_dir);
+    norm = &arbp->arb_face[hitp->hit_surfno].peqn[0];
     dot_N = VDOT(rev_dir, norm);
-    VJOIN1(UV_dir, rev_dir, -dot_N, norm)
-	VUNITIZE(UV_dir)
-	uvp->uv_du = r * VDOT(UV_dir, ofp->arb_U) / dot_N;
+    VJOIN1(UV_dir, rev_dir, -dot_N, norm);
+    VUNITIZE(UV_dir);
+    uvp->uv_du = r * VDOT(UV_dir, ofp->arb_U) / dot_N;
     uvp->uv_dv = r * VDOT(UV_dir, ofp->arb_V) / dot_N;
     if (uvp->uv_du < 0.0)
 	uvp->uv_du = -uvp->uv_du;
@@ -2248,8 +2248,8 @@ rt_arb_edit(struct bu_vls *error_msg_ret,
 	case ARB4:
 	    VMOVE(arb->pt[3], arb->pt[0]);
 	    for (i=5; i<8; i++)
-		VMOVE(arb->pt[i], arb->pt[4])
-		    break;
+		VMOVE(arb->pt[i], arb->pt[4]);
+	    break;
     }
 
     if (rt_arb_check_points(arb, arb_type, tol) < 0)
