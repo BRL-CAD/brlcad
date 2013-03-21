@@ -47,17 +47,6 @@
 #include "../../librt_private.h"
 
 
-extern int rt_rec_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip);
-
-static void rt_tgc_rotate(fastf_t *A, fastf_t *B, fastf_t *Hv, fastf_t *Rot, fastf_t *Inv, struct tgc_specific *tgc);
-static void rt_tgc_shear(const fastf_t *vect, int axis, fastf_t *Shr, fastf_t *Trn, fastf_t *Inv);
-static void rt_tgc_scale(fastf_t a, fastf_t b, fastf_t h, fastf_t *Scl, fastf_t *Inv);
-static void nmg_tgc_disk(struct faceuse *fu, fastf_t *rmat, fastf_t height, int flip);
-static void nmg_tgc_nurb_cyl(struct faceuse *fu, fastf_t *top_mat, fastf_t *bot_mat);
-
-void rt_pt_sort(register fastf_t *t, int npts);
-
-
 struct tgc_specific {
     vect_t tgc_V;		/* Vector to center of base of TGC */
     fastf_t tgc_sH;		/* magnitude of sheared H vector */
@@ -76,41 +65,15 @@ struct tgc_specific {
 };
 
 
-const struct bu_structparse rt_tgc_parse[] = {
-    { "%f", 3, "V", bu_offsetofarray(struct rt_tgc_internal, v, point_t, X), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    { "%f", 3, "H", bu_offsetofarray(struct rt_tgc_internal, h, vect_t, X), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    { "%f", 3, "A", bu_offsetofarray(struct rt_tgc_internal, a, vect_t, X), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    { "%f", 3, "B", bu_offsetofarray(struct rt_tgc_internal, b, vect_t, X), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    { "%f", 3, "C", bu_offsetofarray(struct rt_tgc_internal, c, vect_t, X), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    { "%f", 3, "D", bu_offsetofarray(struct rt_tgc_internal, d, vect_t, X), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    { {'\0', '\0', '\0', '\0'}, 0, (char *)NULL, 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
-};
+extern int rt_rec_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip);
 
+static void rt_tgc_rotate(fastf_t *A, fastf_t *B, fastf_t *Hv, fastf_t *Rot, fastf_t *Inv, struct tgc_specific *tgc);
+static void rt_tgc_shear(const fastf_t *vect, int axis, fastf_t *Shr, fastf_t *Trn, fastf_t *Inv);
+static void rt_tgc_scale(fastf_t a, fastf_t b, fastf_t h, fastf_t *Scl, fastf_t *Inv);
+static void nmg_tgc_disk(struct faceuse *fu, fastf_t *rmat, fastf_t height, int flip);
+static void nmg_tgc_nurb_cyl(struct faceuse *fu, fastf_t *top_mat, fastf_t *bot_mat);
 
-fastf_t nmg_tgc_unitcircle[36] = {
-    1.0, 0.0, 0.0, 1.0,
-    RAT, -RAT, 0.0, RAT,
-    0.0, -1.0, 0.0, 1.0,
-    -RAT, -RAT, 0.0, RAT,
-    -1.0, 0.0, 0.0, 1.0,
-    -RAT, RAT, 0.0, RAT,
-    0.0, 1.0, 0.0, 1.0,
-    RAT, RAT, 0.0, RAT,
-    1.0, 0.0, 0.0, 1.0
-};
-
-
-fastf_t nmg_uv_unitcircle[27] = {
-    1.0,   .5,  1.0,
-    RAT,  RAT,  RAT,
-    .5,   1.0,  1.0,
-    0.0,  RAT,  RAT,
-    0.0,   .5,  1.0,
-    0.0,  0.0,  RAT,
-    .5,   0.0,  1.0,
-    RAT,  0.0,  RAT,
-    1.0,   .5,  1.0
-};
+void rt_pt_sort(register fastf_t *t, int npts);
 
 
 #define VLARGE 1000000.0
@@ -146,6 +109,43 @@ fastf_t nmg_uv_unitcircle[27] = {
 	} \
     } \
 }
+
+
+const struct bu_structparse rt_tgc_parse[] = {
+    { "%f", 3, "V", bu_offsetofarray(struct rt_tgc_internal, v, point_t, X), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    { "%f", 3, "H", bu_offsetofarray(struct rt_tgc_internal, h, vect_t, X), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    { "%f", 3, "A", bu_offsetofarray(struct rt_tgc_internal, a, vect_t, X), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    { "%f", 3, "B", bu_offsetofarray(struct rt_tgc_internal, b, vect_t, X), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    { "%f", 3, "C", bu_offsetofarray(struct rt_tgc_internal, c, vect_t, X), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    { "%f", 3, "D", bu_offsetofarray(struct rt_tgc_internal, d, vect_t, X), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    { {'\0', '\0', '\0', '\0'}, 0, (char *)NULL, 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
+};
+
+
+static const fastf_t nmg_tgc_unitcircle[36] = {
+    1.0, 0.0, 0.0, 1.0,
+    RAT, -RAT, 0.0, RAT,
+    0.0, -1.0, 0.0, 1.0,
+    -RAT, -RAT, 0.0, RAT,
+    -1.0, 0.0, 0.0, 1.0,
+    -RAT, RAT, 0.0, RAT,
+    0.0, 1.0, 0.0, 1.0,
+    RAT, RAT, 0.0, RAT,
+    1.0, 0.0, 0.0, 1.0
+};
+
+
+static const fastf_t nmg_uv_unitcircle[27] = {
+    1.0,   .5,  1.0,
+    RAT,  RAT,  RAT,
+    .5,   1.0,  1.0,
+    0.0,  RAT,  RAT,
+    0.0,   .5,  1.0,
+    0.0,  0.0,  RAT,
+    .5,   0.0,  1.0,
+    RAT,  0.0,  RAT,
+    1.0,   .5,  1.0
+};
 
 
 /**
