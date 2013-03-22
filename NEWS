@@ -13,6 +13,7 @@ changes made.  See document footer for additional details.
 --- 2013-03-XX  Release 7.24.0                                     ---
 ----------------------------------------------------------------------
 
+* jove removed, see jove.emacs for compatibility bindings - Cliff Yapp
 * added gqa -q quiet option to suppress 'was not hit' - Richard Weiss
 * level-of-detail mged configuration dialog, under Tools - Nick Reed
 * added level-of-detail wireframe support to mged/archer - Nick Reed
