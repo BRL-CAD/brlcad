@@ -35,6 +35,7 @@ ON_INC = \
 	opennurbs_defines.h \
 	opennurbs_detail.h \
 	opennurbs_dimstyle.h \
+	opennurbs_dll_resource.h \
 	opennurbs_ellipse.h \
 	opennurbs_error.h \
 	opennurbs_evaluate_nurbs.h \
@@ -62,6 +63,7 @@ ON_INC = \
 	opennurbs_material.h \
 	opennurbs_math.h \
 	opennurbs_matrix.h \
+        opennurbs_memory.h \
 	opennurbs_mesh.h \
 	opennurbs_nurbscurve.h \
 	opennurbs_nurbssurface.h \

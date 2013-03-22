@@ -4259,6 +4259,7 @@ AC_CONFIG_FILES([
 	src/tclscripts/geometree/Makefile
 	src/tclscripts/igraph/Makefile
 	src/tclscripts/hv3/Makefile
+	src/tclscripts/lod/Makefile
 	src/tclscripts/lib/Makefile
 	src/tclscripts/mged/Makefile
 	src/tclscripts/pl-dm/Makefile
