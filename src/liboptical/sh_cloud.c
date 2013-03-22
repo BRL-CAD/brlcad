@@ -63,6 +63,7 @@ struct mfuncs cloud_mfuncs[] = {
 
 #define NUMSINES 4
 
+
 /*
  * C L O U D _ T E X T U R E
  *
@@ -75,6 +76,21 @@ cloud_texture(register fastf_t x, register fastf_t y, fastf_t Contrast, fastf_t 
     fastf_t Px, Py, Fx, Fy, C;
     fastf_t t1, t2, k;
 
+    /* NOTE: we intentionally multiply by a truncated 0.707
+     * (truncating to three decimal places) so we get consistent
+     * results across single and double-precision computation.
+     *
+     * Not truncating is an option, but the benchmark results would
+     * need to be recomputed (they have background clouds) and the
+     * single-precision sensitivity would need to be tested.
+     *
+     * Factor compounding with and without truncation (M_SQRT1_2):
+     *                    .707     .7071067811...
+     *                    .499     .4999999998...
+     *                    .352     .3535533904...
+     */
+    static const fastf_t seven0seven = (int)(M_SQRT1_2*1000.0)/1000.0;
+
     t1 = t2 = 0;
 
     /*
@@ -85,7 +101,9 @@ cloud_texture(register fastf_t x, register fastf_t y, fastf_t Contrast, fastf_t 
     Fy = bn_twopi * initFy;
     Px = bn_halfpi * bn_tab_sin(0.5 * Fy * y);
     Py = bn_halfpi * bn_tab_sin(0.5 * Fx * x);
-    C = 1.0;	/* ??? */
+
+    /* unattenuated starting factor */
+    C = 1.0;
 
     for (i = 0; i < NUMSINES; i++) {
 	/*
@@ -102,7 +120,11 @@ cloud_texture(register fastf_t x, register fastf_t y, fastf_t Contrast, fastf_t 
 	Py = bn_halfpi * bn_tab_sin(Fx * x);
 	Fx *= 2.0;
 	Fy *= 2.0;
-	C *= 0.707;
+
+	/* next iteration is multiplied by a diminishing sqrt(1/2)
+	 * factor, see above note regarding precision.
+	 */
+	C *= seven0seven;
     }
 
     /* Choose a magic k! */
