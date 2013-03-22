@@ -209,7 +209,7 @@ override the ../brlcad-install default.  Build types are a convenient way
 to bundle sets of settings, but they do not prevent overrides if a more
 custom setup is needed.
 
-By default, all components and functionality will be built.  
+By default, all components and functionality will be built.
 Note that BRL-CAD does require and include several 3rd party
 components.  If your system does not include a sufficient version of
 those required 3rd party components, they will be automatically

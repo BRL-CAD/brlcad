@@ -117,10 +117,10 @@ _ged_editit(char *editstring, const char *filename)
 	    editor = bu_which(VIM_EDITOR);
 	}
 
-	/* still unset? As a last resort, go with vi - 
-         * vi is part of the POSIX standard, which is as 
-         * close as we can get currently to an editor 
-         * that should always be present:  
+	/* still unset? As a last resort, go with vi -
+         * vi is part of the POSIX standard, which is as
+         * close as we can get currently to an editor
+         * that should always be present:
          * http://pubs.opengroup.org/onlinepubs/9699919799/utilities/vi.html */
 	if (!editor || editor[0] == '\0') {
 	    editor = bu_which(VI_EDITOR);

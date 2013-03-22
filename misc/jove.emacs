@@ -202,7 +202,7 @@ go to the current line."
   (delete-region (point-min) (point-max)))
 
 (setq shell-mode-hook
-    '((lambda () 
+    '((lambda ()
 	(setq shell-prompt-regexp "[a-z.]*[%$#] \\|(dbx) ")
 	(setq comint-input-ring-size 64)
 	(setq shell-completion-fignore '("~" "#" "%" ".class" ".o"))

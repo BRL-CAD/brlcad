@@ -937,7 +937,7 @@ get_editor_string(struct bu_vls *editstring)
      * need a terminal supplied via an xterm and some will not. */
 
 
-    /* If we're in classic mode on Windows, we have a problem - 
+    /* If we're in classic mode on Windows, we have a problem -
      * 64 bit versions of Windows no longer ship EDIT, so there isn't
      * a standard console editor to fire up.  Best we can do is try for EDIT,
      * and if not found hope one of the unix console editors is available.*/
@@ -947,7 +947,7 @@ get_editor_string(struct bu_vls *editstring)
 	if (editpath) {
 	    snprintf(buffer, RT_MAXLINE, "%s", editpath);
 	    editor = buffer;
-	} 
+	}
     }
 
     if (classic_mged) {
@@ -958,7 +958,7 @@ get_editor_string(struct bu_vls *editstring)
 	 * gui, regardless of EDITOR settings. In this situation, emacs
 	 * will be invoked with the -nw option.
 	 *
-	 * Standard:  emacs, vim, vi, ed 
+	 * Standard:  emacs, vim, vi, ed
 	 * Windows: EDIT, if available
 	 *
 	 * terminal and terminal_opt remain unset
