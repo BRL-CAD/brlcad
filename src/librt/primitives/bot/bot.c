@@ -564,10 +564,10 @@ should_fold(const vdsNode *node, void *udata)
 	return 0;
     }
 
-    // If it's really small, fold
+    /* If it's really small, fold */
     if (fold_data->dmax < fold_data->point_spacing) return 1;
 
-    // Long, thin objects shouldn't disappear
+    /* Long, thin objects shouldn't disappear */
     if (fold_data->dmax/fold_data->dmin > 5.0 && node->nsubtris < 30) return 0;
 
     num_edges = node->nsubtris * 3;

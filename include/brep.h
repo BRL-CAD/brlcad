@@ -176,7 +176,7 @@ public:
     bool IntersectRay(const ON_Ray& v, ON_2dPoint& isect) const
     {
 	double uxv, q_pxv;
-	// consider parallel and collinear cases
+	/* consider parallel and collinear cases */
 	if (ZERO(uxv = V2CROSS(m_dir, v.m_dir))
 	    || (ZERO(q_pxv = V2CROSS(v.m_origin - m_origin, v.m_dir)))) {
 	    return false;
@@ -225,7 +225,7 @@ BREP_EXPORT bool ON_NearZero(double x, double tolerance = ON_ZERO_TOLERANCE);
 #define BREP_EDGE_MISS_TOLERANCE 5e-3
 #define BREP_SAME_POINT_TOLERANCE 1e-6
 
-// FIXME: debugging crapola (clean up later)
+/* FIXME: debugging crapola (clean up later) */
 #define ON_PRINT4(p) "[" << (p)[0] << ", " << (p)[1] << ", " << (p)[2] << ", " << (p)[3] << "]"
 #define ON_PRINT3(p) "(" << (p)[0] << ", " << (p)[1] << ", " << (p)[2] << ")"
 #define ON_PRINT2(p) "(" << (p)[0] << ", " << (p)[1] << ")"
@@ -235,9 +235,9 @@ BREP_EXPORT bool ON_NearZero(double x, double tolerance = ON_ZERO_TOLERANCE);
 #define TRACE(s)
 #define TRACE1(s)
 #define TRACE2(s)
-//#define TRACE(s) std::cerr << s << std::endl;
-//#define TRACE1(s) std::cerr << s << std::endl;
-//#define TRACE2(s) std::cerr << s << std::endl;
+/*#define TRACE(s) std::cerr << s << std::endl;*/
+/*#define TRACE1(s) std::cerr << s << std::endl;*/
+/*#define TRACE2(s) std::cerr << s << std::endl;*/
 
 namespace brlcad {
 
@@ -349,9 +349,9 @@ BANode<BA>::BANode(const ON_Curve* curve, int adj_face_index, const BA& node,
 {
     m_start = curve->PointAt(m_t[0]);
     m_end = curve->PointAt(m_t[1]);
-    // check for vertical segments they can be removed
-    // from trims above (can't tell direction and don't
-    // need
+    /* check for vertical segments they can be removed
+     * from trims above (can't tell direction and don't
+     * need */
     m_Horizontal = false;
     m_Vertical = false;
 
@@ -412,7 +412,7 @@ BANode<BA>::BANode(const BA& node) : m_node(node)
 template<class BA>
 BANode<BA>::~BANode()
 {
-    // delete the children
+    /* delete the children */
     for (size_t i = 0; i < m_children.size(); i++) {
 	delete m_children[i];
     }
@@ -538,7 +538,7 @@ BANode<BA>::isTrimmed(const ON_2dPoint& uv, double &trimdist) const
 {
     point_t bmin, bmax;
     BANode<BA>::GetBBox(bmin, bmax);
-    if ((bmin[X] <= uv[X]) && (uv[X] <= bmax[X])) { //if check trim and in BBox
+    if ((bmin[X] <= uv[X]) && (uv[X] <= bmax[X])) { /*if check trim and in BBox*/
 	fastf_t v = getCurveEstimateOfV(uv[X], 0.0000001);
 	trimdist = v - uv[Y];
 	if (uv[Y] <= v) {
@@ -589,27 +589,27 @@ ON_2dPoint
 BANode<BA>::getClosestPointEstimate(const ON_3dPoint& pt, ON_Interval& u, ON_Interval& v)
 {
     if (isLeaf()) {
-	double uvs[5][2] = {{m_u.Min(), m_v.Min()},  // include the corners for an easy refinement
+	double uvs[5][2] = {{m_u.Min(), m_v.Min()},  /* include the corners for an easy refinement */
 			    {m_u.Max(), m_v.Min()},
 			    {m_u.Max(), m_v.Max()},
 			    {m_u.Min(), m_v.Max()},
-			    {m_u.Mid(), m_v.Mid()}}; // include the estimate
+			    {m_u.Mid(), m_v.Mid()}}; /* include the estimate */
 	ON_3dPoint corners[5];
 	const ON_Surface* surf = m_face->SurfaceOf();
 
 	u = m_u;
 	v = m_v;
 
-	// ??? should we pass these in from SurfaceTree::curveBBox() to avoid this recalculation?
+	/* ??? should we pass these in from SurfaceTree::curveBBox() to avoid this recalculation? */
 	if (!surf->EvPoint(uvs[0][0], uvs[0][1], corners[0]) ||
 	    !surf->EvPoint(uvs[1][0], uvs[1][1], corners[1]) ||
 	    !surf->EvPoint(uvs[2][0], uvs[2][1], corners[2]) ||
 	    !surf->EvPoint(uvs[3][0], uvs[3][1], corners[3])) {
-	    throw new std::exception(); // FIXME
+	    throw new std::exception(); /* FIXME */
 	}
 	corners[4] = BANode<BA>::m_estimate;
 
-	// find the point on the curve closest to pt
+	/* find the point on the curve closest to pt */
 	size_t mini = 0;
 	double mindist = pt.DistanceTo(corners[mini]);
 	double tmpdist;
@@ -668,7 +668,7 @@ BANode<BA>::getCurveEstimateOfV(fastf_t u, fastf_t tol) const
     }
 
     fastf_t dU = B[X] - A[X];
-    if (NEAR_ZERO(dU, tol)) {  //vertical
+    if (NEAR_ZERO(dU, tol)) {  /*vertical*/
 	return A[Y];
     }
 
@@ -706,7 +706,7 @@ BANode<BA>::getCurveEstimateOfV(fastf_t u, fastf_t tol) const
     }
 
     dU = B[X] - A[X];
-    if (NEAR_ZERO(dU, tol)) {  //vertical
+    if (NEAR_ZERO(dU, tol)) {  /*vertical*/
 	return A[Y];
     }
 
@@ -723,7 +723,7 @@ BANode<BA>::getCurveEstimateOfV(fastf_t u, fastf_t tol) const
 	    VMOVE(B, p);
 	}
 	dU = B[X] - A[X];
-	if (NEAR_ZERO(dU, tol)) {  //vertical
+	if (NEAR_ZERO(dU, tol)) {  /*vertical*/
 	    return A[Y];
 	}
 
@@ -761,7 +761,7 @@ BANode<BA>::getCurveEstimateOfU(fastf_t v, fastf_t tol) const
     }
 
     fastf_t dV = B[Y] - A[Y];
-    if (NEAR_ZERO(dV, tol)) {  //horizontal
+    if (NEAR_ZERO(dV, tol)) {  /*horizontal*/
 	return A[X];
     }
 
@@ -791,7 +791,7 @@ BANode<BA>::getCurveEstimateOfU(fastf_t v, fastf_t tol) const
     }
 
     dV = B[Y] - A[Y];
-    if (NEAR_ZERO(dV, tol)) {  //horizontal
+    if (NEAR_ZERO(dV, tol)) {  /*horizontal*/
 	return A[X];
     }
 
@@ -808,7 +808,7 @@ BANode<BA>::getCurveEstimateOfU(fastf_t v, fastf_t tol) const
 	    VMOVE(B, p);
 	}
 	dV = B[Y] - A[Y];
-	if (NEAR_ZERO(dV, tol)) {  //horizontal
+	if (NEAR_ZERO(dV, tol)) {  /*horizontal*/
 	    return A[X];
 	}
 	dT = Tb - Ta;
@@ -827,8 +827,8 @@ BANode<BA>::getCurveEstimateOfU(fastf_t v, fastf_t tol) const
 extern bool sortX(BRNode* first, BRNode* second);
 extern bool sortY(BRNode* first, BRNode* second);
 
-//--------------------------------------------------------------------------------
-// CurveTree declaration
+/*--------------------------------------------------------------------------------
+ *CurveTree declaration*/
 class BREP_EXPORT CurveTree {
 public:
     CurveTree(const ON_BrepFace* face);
@@ -871,8 +871,8 @@ private:
 };
 
 
-//--------------------------------------------------------------------------------
-// Bounding volume hierarchy classes
+/*--------------------------------------------------------------------------------
+ * Bounding volume hierarchy classes */
 
 template<class BV>
 class BVNode {
@@ -886,73 +886,73 @@ public:
 
     ~BVNode();
 
-    // List of all children of a given node
+    /* List of all children of a given node */
     typedef std::vector<BVNode<BV>*> ChildList;
     ChildList m_children;
 
-    // Curve Tree associated with the parent Surface Tree
+    /* Curve Tree associated with the parent Surface Tree */
     CurveTree* m_ctree;
 
-    // Bounding Box
+    /* Bounding Box */
     BV m_node;
 
-    // Test if this node is a leaf node in the hierarchy
+    /* Test if this node is a leaf node in the hierarchy */
     bool isLeaf();
 
-    // Return all leaves below this node that are leaf nodes
+    /* Return all leaves below this node that are leaf nodes */
     void getLeaves(std::list<BVNode<BV>*>& out_leaves);
 
-    // Functions to add and remove child nodes from this node.
+    /* Functions to add and remove child nodes from this node. */
     void addChild(const BV& child);
     void addChild(BVNode<BV>* child);
     void removeChild(const BV& child);
     void removeChild(BVNode<BV>* child);
 
-    // Report the depth of this node in the hierarchy
+    /* Report the depth of this node in the hierarchy */
     int depth();
 
-    // Get 2 points defining a bounding box
-    //
-    //                _  max  _
-    //        _   -       +      -  _
-    //     *  _           +         _  *
-    //     |      -   _   + _   -      |
-    //     |             *+            |
-    //     |             |+            |
-    //     |          _  |+   _        |
-    //     |  _   -      |       -  _  |
-    //     *  _          |          _  *
-    //            -   _  |  _   -
-    //                  min
-    //
+    /* Get 2 points defining a bounding box
+      
+                      _  max  _
+              _   -       +      -  _
+           *  _           +         _  *
+           |      -   _   + _   -      |
+           |             *+            |
+           |             |+            |
+           |          _  |+   _        |
+           |  _   -      |       -  _  |
+           *  _          |          _  *
+                  -   _  |  _   -
+                        min
+    */ 
     void GetBBox(float* min, float* max);
     void GetBBox(double* min, double* max);
 
-    // Surface Information
+    /* Surface Information */
     const ON_BrepFace* m_face;
     ON_Interval m_u;
     ON_Interval m_v;
 
-    // Trimming Flags
+    /* Trimming Flags */
     bool m_checkTrim;
     bool m_trimmed;
 
-    // Point used for closeness testing - usually
-    // based on evaluation of the curve/surface at
-    // the center of the parametric domain
+    /* Point used for closeness testing - usually
+       based on evaluation of the curve/surface at
+       the center of the parametric domain */
     ON_3dPoint m_estimate;
 
-    // Normal at the m_estimate point
+    /* Normal at the m_estimate point */
     ON_3dVector m_normal;
 
-    // Test whether a ray intersects the 3D bounding volume
-    // of the node - if so, and node is not a leaf node, query
-    // children.  If leaf node, and intersects, add to list.
+    /* Test whether a ray intersects the 3D bounding volume
+       of the node - if so, and node is not a leaf node, query
+       children.  If leaf node, and intersects, add to list. */
     bool intersectedBy(ON_Ray& ray, double* tnear = 0, double* tfar = 0);
     bool intersectsHierarchy(ON_Ray& ray, std::list<BVNode<ON_BoundingBox>*>& results);
 
-    // Report if a given uv point is within the uv boundaries
-    // defined by a node.
+    /* Report if a given uv point is within the uv boundaries
+       defined by a node. */
     bool containsUV(const ON_2dPoint& uv);
 
 
@@ -970,15 +970,14 @@ public:
      BVNode<BV>* closer(const ON_3dPoint& pt, BVNode<BV>* left, BVNode<BV>* right);
      std::list<BRNode*> m_trims_above;
      std::list<BRNode*> m_trims_vertical;
- //		std::list<BRNode*> m_trims_right;
  };
 
 
  typedef BVNode<ON_BoundingBox> BBNode;
 
 
- //--------------------------------------------------------------------------------
- // Template Implementation
+ /*--------------------------------------------------------------------------------
+    Template Implementation*/
  template<class BV>
  inline
  BVNode<BV>::BVNode()
@@ -1056,7 +1055,7 @@ public:
 
  template<class BV>
  BVNode<BV>::~BVNode() {
-     // delete the children
+     /* delete the children */
      for (size_t i = 0; i < m_children.size(); i++) {
 	 delete m_children[i];
      }
@@ -1152,7 +1151,7 @@ public:
 	 } else {
 	     double t1 = (m_node.m_min[i]-ray.m_origin[i]) / ray.m_dir[i];
 	     double t2 = (m_node.m_max[i]-ray.m_origin[i]) / ray.m_dir[i];
-	     if (t1 > t2) { double tmp = t1; t1 = t2; t2 = tmp; } // swap
+	     if (t1 > t2) { double tmp = t1; t1 = t2; t2 = tmp; } /* swap */
 	     if (t1 > tnear) tnear = t1;
 	     if (t2 < tfar) tfar = t2;
 	     if (tnear > tfar) /* box is missed */ untrimmedresult = false;
@@ -1255,23 +1254,23 @@ public:
      if (isLeaf()) {
 	 double uvs[5][2] = {{m_u.Min(), m_v.Min()}, {m_u.Max(), m_v.Min()},
 			     {m_u.Max(), m_v.Max()}, {m_u.Min(), m_v.Max()},
-			     {m_u.Mid(), m_v.Mid()}}; // include the estimate
+			     {m_u.Mid(), m_v.Mid()}}; /* include the estimate */
 	 ON_3dPoint corners[5];
 	 const ON_Surface* surf = m_face->SurfaceOf();
 
 	 u = m_u;
 	 v = m_v;
 
-	 // ??? pass these in from SurfaceTree::surfaceBBox() to avoid this recalculation?
+	 /* ??? pass these in from SurfaceTree::surfaceBBox() to avoid this recalculation? */
 	 if (!surf->EvPoint(uvs[0][0], uvs[0][1], corners[0]) ||
 	     !surf->EvPoint(uvs[1][0], uvs[1][1], corners[1]) ||
 	     !surf->EvPoint(uvs[2][0], uvs[2][1], corners[2]) ||
 	     !surf->EvPoint(uvs[3][0], uvs[3][1], corners[3])) {
-	     throw new std::exception(); // FIXME
+	     throw new std::exception(); /* FIXME */
 	 }
 	 corners[4] = BVNode<BV>::m_estimate;
 
-	 // find the point on the surface closest to pt
+	 /* find the point on the surface closest to pt */
 	 size_t mini = 0;
 	 double mindist = pt.DistanceTo(corners[mini]);
 	 double tmpdist;
@@ -1310,7 +1309,7 @@ public:
 	 if ((pt.x >= (min[0])) && (pt.x <= (max[0])) &&
 	     (pt.y >= (min[1])) && (pt.y <= (max[1])) &&
 	     (pt.z >= (min[2])) && (pt.z <= (max[2]))) {
-	     // falls within BBox so put in list
+	     /* falls within BBox so put in list*/
 	     out.push_back(this);
 	     return 1;
 	 }
@@ -1340,7 +1339,7 @@ public:
 
 	if (trims.empty()) {
 	    return 1;
-	} else {//find closest BB
+	} else {/*find closest BB */
 	    std::list<BRNode*>::iterator i;
 	    BRNode* vclosest = NULL;
 	    BRNode* uclosest = NULL;
@@ -1361,7 +1360,7 @@ public:
 		if (br->m_Vertical) {
 		    if ((br->m_v[0] <= uv[Y]) && (br->m_v[1] >= uv[Y])) {
 			double dist = fabs(uv[X] - br->m_v[0]);
-			if (!verticalTrim) { //haven't seen vertical trim yet
+			if (!verticalTrim) { /* haven't seen vertical trim yet */
 			    verticalTrim = true;
 			    vdist = dist;
 			    vclosest = br;
@@ -1456,7 +1455,7 @@ BVNode<BV>::getTrimsAbove(const ON_2dPoint& uv, std::list<BRNode*>& out_leaves) 
     for (std::list<BRNode*>::const_iterator i = m_trims_above.begin(); i != m_trims_above.end(); i++) {
 	BRNode* br = dynamic_cast<BRNode*>(*i);
 	br->GetBBox(bmin, bmax);
-	dist = 0.000001; //0.03*DIST_PT_PT(bmin, bmax);
+	dist = 0.000001; /*0.03*DIST_PT_PT(bmin, bmax);*/
 	if ((uv[X] > bmin[X]-dist) && (uv[X] < bmax[X]+dist))
 	    out_leaves.push_back(br);
     }
@@ -1495,7 +1494,7 @@ BVNode<BV>::prepTrims()
     CurveTree* ct = m_ctree;
     std::list<BRNode*>::iterator i;
     BRNode* br;
-    //	point_t surfmin, surfmax;
+    /*	point_t surfmin, surfmax; */
     point_t curvemin, curvemax;
     double dist = 0.000001;
     bool trim_already_assigned = false;
@@ -1511,36 +1510,36 @@ BVNode<BV>::prepTrims()
 	i = m_trims_above.begin();
 	while (i != m_trims_above.end()) {
 	    br = dynamic_cast<BRNode*>(*i);
-	    if (br->m_Vertical) { // check V to see if trim possibly overlaps
+	    if (br->m_Vertical) { /* check V to see if trim possibly overlaps */
 		br->GetBBox(curvemin, curvemax);
-		if (curvemin[Y]-dist <= m_v[1]) { //possibly contains trim can't rule out check closer
+		if (curvemin[Y]-dist <= m_v[1]) { /*possibly contains trim can't rule out check closer*/
 		    m_checkTrim = true;
 		    trim_already_assigned = true;
 		    i++;
 		} else {
 		    i = m_trims_above.erase(i);
 		}
-		//i = m_trims_above.erase(i);
-		//i++;
+		/*i = m_trims_above.erase(i);
+		  i++;*/
 	    } else {
 		i++;
 	    }
 	}
     }
 
-    if (!trim_already_assigned) { // already contains possible vertical trim
+    if (!trim_already_assigned) { /* already contains possible vertical trim */
 	if (m_trims_above.empty() /*|| m_trims_right.empty()*/) {
 	    m_trimmed = true;
 	    m_checkTrim = false;
-	} else if (!m_trims_above.empty()) {//trimmed above check contains
+	} else if (!m_trims_above.empty()) {/*trimmed above check contains*/
 	    i = m_trims_above.begin();
 	    br = dynamic_cast<BRNode*>(*i);
 	    br->GetBBox(curvemin, curvemax);
-	    dist = 0.000001; //0.03*DIST_PT_PT(curvemin, curvemax);
+	    dist = 0.000001; /*0.03*DIST_PT_PT(curvemin, curvemax);*/
 	    if (curvemin[Y]-dist > m_v[1]) {
 		i++;
 
-		if (i == m_trims_above.end()) { //easy only trim in above list
+		if (i == m_trims_above.end()) { /*easy only trim in above list*/
 		    if (br->m_XIncreasing) {
 			m_trimmed=true;
 			m_checkTrim=false;
@@ -1548,12 +1547,12 @@ BVNode<BV>::prepTrims()
 			m_trimmed=false;
 			m_checkTrim=false;
 		    }
-		} else { //check for trim bbox overlap TODO: look for multiple overlaps
+		} else { /*check for trim bbox overlap TODO: look for multiple overlaps*/
 		    BRNode* bs;
 		    bs = dynamic_cast<BRNode*>(*i);
 		    point_t smin, smax;
 		    bs->GetBBox(smin, smax);
-		    if ((smin[Y] >= curvemax[Y]) || (smin[X] >= curvemax[X]) || (smax[X] <= curvemin[X])) { //can determine inside/outside without closer inspection
+		    if ((smin[Y] >= curvemax[Y]) || (smin[X] >= curvemax[X]) || (smax[X] <= curvemin[X])) { /*can determine inside/outside without closer inspection*/
 			if (br->m_XIncreasing) {
 			    m_trimmed=true;
 			    m_checkTrim=false;
@@ -1566,10 +1565,10 @@ BVNode<BV>::prepTrims()
 		    }
 		}
 	    } else {
-		//m_contains_trim = true; //will have to check for trim at shotline
+		/*m_contains_trim = true; will have to check for trim at shotline*/
 		m_checkTrim = true;
 	    }
-	} else {// something wrong here
+	} else {/* something wrong here */
 	    bu_log("Error prepping trims");
 	    return false;
 	}
@@ -1578,8 +1577,8 @@ BVNode<BV>::prepTrims()
 }
 
 
-//--------------------------------------------------------------------------------
-// SurfaceTree declaration
+/*--------------------------------------------------------------------------------
+   SurfaceTree declaration */
 class BREP_EXPORT SurfaceTree {
 private:
     bool m_removeTrimmed;

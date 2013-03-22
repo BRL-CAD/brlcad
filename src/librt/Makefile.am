@@ -5,7 +5,7 @@ noinst_LTLIBRARIES = \
 	librt_xxx.la
 
 BREP_CPPFLAGS = ${SSE} -DOBJ_BREP=1 ${TNT_CPPFLAGS} ${OPENNURBS_CPPFLAGS}
-BREP_LIBADD = ${OPENNURBS} ${NURBS} ${NURBS_LIBS}
+BREP_LIBADD = ${OPENNURBS} ${BREP} ${BREP_LIBS}
 
 test_dvec_SOURCES = test_dvec.cpp
 # cannot set per-target CPPFLAGS until automake 1.7+

@@ -3880,7 +3880,7 @@ ICV='${top_builddir}/src/libicv/libicv.la'
 GCV='${top_builddir}/src/libgcv/libgcv.la'
 GED='${top_builddir}/src/libged/libged.la'
 MULTISPECTRAL='${top_builddir}/src/libmultispectral/libmultispectral.la'
-NURBS='${top_builddir}/src/libbrep/libbrep.la'
+BREP='${top_builddir}/src/libbrep/libbrep.la'
 OPTICAL='${top_builddir}/src/liboptical/liboptical.la'
 ORLE='${top_builddir}/src/liborle/liborle.la'
 PC='${top_builddir}/src/libpc/libpc.la'
@@ -3903,7 +3903,7 @@ FFT_LIBS="${LIBM}"
 ANALYZE_LIBS="${RT} ${RT_LIBS} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS}"
 BU_LIBS="${TCL} ${PNG} ${LIBZ} ${LIBM} ${LIBMALLOC} ${LIBTHREAD}"
 BN_LIBS="${BU} ${BU_LIBS} ${TCL} ${LIBM}"
-RT_LIBS="${BN} ${BN_LIBS} ${BU} ${BU_LIBS} ${REGEX} ${LIBM} ${SYSV} ${OPENNURBS} ${LIBVDS}"
+RT_LIBS="${BN} ${BN_LIBS} ${BU} ${BU_LIBS} ${REGEX} ${LIBM} ${SYSV} ${OPENNURBS} ${BREP} ${LIBVDS}"
 ICV_LIBS="{BN} ${BN_LIBS} ${BU} ${BU_LIBS}"
 GCV_LIBS="${RT} ${RT_LIBS} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS}"
 GED_LIBS="${WDB} ${RT} ${RT_LIBS} ${ICV} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS} ${PNG} ${TCL} ${REGEX} ${ANALYZE}"
@@ -3911,7 +3911,7 @@ WDB_LIBS="${RT} ${RT_LIBS} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS}"
 FB_LIBS="${BU} ${BU_LIBS} ${PKG} ${PKG_LIBS} ${TCL}" # additional/optional FB_LIBS: ${TK} ${X_LIBS} ${LIBGL}
 OPTICAL_LIBS="${RT} ${RT_LIBS} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS} ${TCL}"
 MULTISPECTRAL_LIBS="${OPTICAL} ${OPTICAL_LIBS} ${RT} ${RT_LIBS} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS}"
-NURBS_LIBS="${LIBSTDCXX} ${BU} ${BU_LIBS} ${BN} ${BN_LIBS}"
+BREP_LIBS="${LIBSTDCXX} ${BU} ${BU_LIBS} ${BN} ${BN_LIBS}"
 PC_LIBS="${LIBSTDCXX} ${BU} ${BU_LIBS}"
 if test "x$build_against_x11" = "xno" ; then
     if test "x$bc_build_aquatk" = "xyes" ; then
@@ -3938,7 +3938,7 @@ AC_SUBST(ICV)
 AC_SUBST(GCV)
 AC_SUBST(GED)
 AC_SUBST(MULTISPECTRAL)
-AC_SUBST(NURBS)
+AC_SUBST(BREP)
 AC_SUBST(OPTICAL)
 AC_SUBST(ORLE)
 AC_SUBST(PKG)
@@ -3963,7 +3963,7 @@ AC_SUBST(ICV_LIBS)
 AC_SUBST(GCV_LIBS)
 AC_SUBST(GED_LIBS)
 AC_SUBST(MULTISPECTRAL_LIBS)
-AC_SUBST(NURBS_LIBS)
+AC_SUBST(BREP_LIBS)
 AC_SUBST(OPTICAL_LIBS)
 AC_SUBST(ORLE_LIBS)
 AC_SUBST(PC_LIBS)
