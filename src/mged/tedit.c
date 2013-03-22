@@ -942,7 +942,7 @@ get_editor_string(struct bu_vls *editstring)
      * a standard console editor to fire up.  Best we can do is try for EDIT,
      * and if not found hope one of the unix console editors is available.*/
     if (classic_mged && (BU_STR_EQUAL(os, "Windows 95") || BU_STR_EQUAL(os, "Windows NT"))) {
-	const char *editpath = bu_which("edit", 1);
+	const char *editpath = bu_which("edit");
 	editor = "EDIT";
 	if (editpath) {
 	    snprintf(buffer, RT_MAXLINE, "%s", editpath);
