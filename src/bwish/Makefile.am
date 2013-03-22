@@ -24,6 +24,7 @@ bin_PROGRAMS = \
 	${BWISH}
 
 bwish_CFLAGS = \
+	${STD_C99_FLAGS} \
 	${STRICT_FLAGS} \
 	-DBWISH=1 \
 	${X_CFLAGS} \
@@ -45,6 +46,7 @@ bwish_SOURCES = \
 bwish_LDADD = ${blib_LIBS}
 
 btclsh_CFLAGS = \
+	${STD_C99_FLAGS} \
 	${STRICT_FLAGS} \
 	${ITCL_CPPFLAGS} \
 	${TCL_CPPFLAGS}

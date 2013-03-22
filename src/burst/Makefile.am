@@ -20,6 +20,7 @@ burst_SOURCES = \
 	ui.c
 
 burst_CFLAGS = \
+	${STD_C99_FLAGS} \
 	${STRICT_FLAGS} \
 	${TERMLIB_CPPFLAGS} \
 	${TCL_CPPFLAGS}

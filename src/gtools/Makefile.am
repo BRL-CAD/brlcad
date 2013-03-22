@@ -10,6 +10,7 @@ noinst_PROGRAMS = \
 	g_transfer
 
 AM_CPPFLAGS = \
+	${STD_C99_FLAGS} \
 	${STRICT_FLAGS} \
 	${TCL_CPPFLAGS}
 

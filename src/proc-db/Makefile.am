@@ -4,7 +4,7 @@ proc_db_libs = ${WDB} ${WDB_LIBS}
 LDADD = ${proc_db_libs}
 
 AM_CPPFLAGS = ${TCL_CPPFLAGS}
-AM_CFLAGS = ${STRICT_FLAGS}
+AM_CFLAGS = ${STD_C99_FLAGS} ${STRICT_FLAGS}
 
 bin_PROGRAMS = \
 	bottest \
