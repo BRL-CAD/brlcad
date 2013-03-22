@@ -2400,9 +2400,9 @@ rt_tgc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	cos_m_1_sq = (cos_ang - 1.0)*(cos_ang - 1.0);
 	sin_sq = sin_ang*sin_ang;
 
-	VJOIN2(ha, tip->h, 1.0, tip->c, -1.0, tip->a)
-	    VJOIN2(hb, tip->h, 1.0, tip->d, -1.0, tip->b)
-	    len_ha = MAGNITUDE(ha);
+	VJOIN2(ha, tip->h, 1.0, tip->c, -1.0, tip->a);
+	VJOIN2(hb, tip->h, 1.0, tip->d, -1.0, tip->b);
+	len_ha = MAGNITUDE(ha);
 	len_hb = MAGNITUDE(hb);
 
 	while (max_ratio > MAX_RATIO) {

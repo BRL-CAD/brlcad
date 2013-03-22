@@ -297,18 +297,18 @@ find_pipept_nearest_pt(const struct bu_list *pipe_hd, const point_t pt)
     tmp_tol.para = 1.0 - tmp_tol.perp;
 
     /* get a direction vector in model space corresponding to z-direction in view */
-    VSET(work, 0.0, 0.0, 1.0)
-	MAT4X3VEC(dir, view_state->vs_gvp->gv_view2model, work)
+    VSET(work, 0.0, 0.0, 1.0);
+    MAT4X3VEC(dir, view_state->vs_gvp->gv_view2model, work);
 
-	for (BU_LIST_FOR(ps, wdb_pipept, pipe_hd)) {
-	    fastf_t dist;
+    for (BU_LIST_FOR(ps, wdb_pipept, pipe_hd)) {
+	fastf_t dist;
 
-	    dist = bn_dist_line3_pt3(pt, dir, ps->pp_coord);
-	    if (dist < min_dist) {
-		min_dist = dist;
-		nearest = ps;
-	    }
+	dist = bn_dist_line3_pt3(pt, dir, ps->pp_coord);
+	if (dist < min_dist) {
+	    min_dist = dist;
+	    nearest = ps;
 	}
+    }
     return nearest;
 }
 

@@ -75,7 +75,7 @@ test_tri_intersections()
     point_t t0[3], t1[3], p0, p1; \
     VSET(t0[0],t00x,t00y,t00z); VSET(t0[1],t01x,t01y,t01z); VSET(t0[2],t02x,t02y,t02z); \
     VSET(t1[0],t10x,t10y,t10z); VSET(t1[1],t11x,t11y,t11z); VSET(t1[2],t12x,t12y,t12z); \
-    VSET(p0,p0x,p0y,p0z); VSET(p1,p1x,p1y,p1z) \
+    VSET(p0,p0x,p0y,p0z); VSET(p1,p1x,p1y,p1z); \
     count += test_intersection(suc, t0, t1, p0, p1); }
 
     TRY(1,0,0,0,0,1,0,0,0,1,-1,0,0.5,0,1,0.5,1,0,0.5,0,0,.5,0,.5,.5);	/* ep ef */

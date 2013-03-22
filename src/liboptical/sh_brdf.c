@@ -271,8 +271,8 @@ brdf_render(register struct application *ap, const struct partition *pp, struct 
 	    /* Calculate specular reflectance. */
 	    if (ZERO(ps->rms_sq))
 		continue;
-	    VADD2(h_dir, to_eye, to_light)
-		VUNITIZE(h_dir);
+	    VADD2(h_dir, to_eye, to_light);
+	    VUNITIZE(h_dir);
 	    cos_tmp = VDOT(h_dir, swp->sw_hit.hit_normal);
 	    if (cos_tmp <= 0.0)
 		continue;

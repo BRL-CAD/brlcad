@@ -3713,9 +3713,9 @@ nmg_fix_normals(struct shell *s_orig, const struct bn_tol *tol)
 
 	    NMG_GET_FU_NORMAL(normal, fu);
 	    if (reversed)
-		VREVERSE(normal, normal)
+		VREVERSE(normal, normal);
 
-		    NMG_GET_FU_NORMAL(normal_in_s, fu_in_s);
+	    NMG_GET_FU_NORMAL(normal_in_s, fu_in_s);
 
 	    if (VDOT(normal, normal_in_s) < 0.0) {
 		nmg_reverse_face_and_radials(fu_in_s, tol);

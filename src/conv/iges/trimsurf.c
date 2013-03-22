@@ -1238,8 +1238,8 @@ adjust_flips(hit_list, ray_dir)
 	    hit->f->flip = !(hit->f->flip);
 	    for (BU_LIST_FOR(tmp, snurb_hit, hit_list)) {
 		if (tmp->f == hit->f) {
-		    VREVERSE(tmp->norm, tmp->norm)
-			}
+		    VREVERSE(tmp->norm, tmp->norm);
+		}
 	    }
 	}
 

@@ -216,15 +216,15 @@ dm_label_primitive(struct rt_wdb *wdbp,
 
 	    RT_ARS_CK_MAGIC(ars);
 
-	    MAT4X3PNT(pos_view, xform, ars->curves[0])
+	    MAT4X3PNT(pos_view, xform, ars->curves[0]);
 
-		if (ars_crv >= 0 && ars_col >= 0) {
-		    point_t ars_pt;
+	    if (ars_crv >= 0 && ars_col >= 0) {
+		point_t ars_pt;
 
-		    VMOVE(work, &ars->curves[ars_crv][ars_col*3]);
-		    MAT4X3PNT(ars_pt, xform, work);
-		    POINT_LABEL_STR(ars_pt, "pt");
-		}
+		VMOVE(work, &ars->curves[ars_crv][ars_col*3]);
+		MAT4X3PNT(ars_pt, xform, work);
+		POINT_LABEL_STR(ars_pt, "pt");
+	    }
 	}
 	    POINT_LABEL(pos_view, 'V');
 

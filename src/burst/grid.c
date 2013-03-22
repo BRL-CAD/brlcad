@@ -1532,16 +1532,16 @@ burstPoint(struct application *ap, fastf_t *normal, fastf_t *bpt)
        axis. */
     if (cantwarhead) {
 	VADD2(a_burst.a_ray.r_dir, a_burst.a_ray.r_dir, cantdelta);
-	VUNITIZE(a_burst.a_ray.r_dir)
-	    }
+	VUNITIZE(a_burst.a_ray.r_dir);
+    }
     /* If a deflected cone is specified (the default) the spall cone
        axis is half way between the main penetrator axis and exit
        normal of the spalling component.
     */
     if (deflectcone) {
 	VADD2(a_burst.a_ray.r_dir, a_burst.a_ray.r_dir, normal);
-	VUNITIZE(a_burst.a_ray.r_dir)
-	    }
+	VUNITIZE(a_burst.a_ray.r_dir);
+    }
     VMOVE(a_burst.a_ray.r_pt, bpt);
 
     comphi = 0.0; /* Initialize global for concurrent access. */

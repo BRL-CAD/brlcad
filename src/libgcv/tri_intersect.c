@@ -276,32 +276,32 @@ gcv_tri_tri_intersect_with_isectline(struct soup_s *UNUSED(left), struct soup_s 
 
     if (isect2[0] < isect1[0]) {
 	if (smallest1 == 0)
-	    VMOVE(isectpt[0], isectpointA1)
+	    VMOVE(isectpt[0], isectpointA1);
 	else
-	    VMOVE(isectpt[0], isectpointA2)
-		if (isect2[1] < isect1[1])
-		    if (smallest2 == 0)
-			VMOVE(isectpt[1], isectpointB2)
-		    else
-			VMOVE(isectpt[1], isectpointB1)
-		else if (smallest1 == 0)
-		    VMOVE(isectpt[1], isectpointA2)
-		else
-		    VMOVE(isectpt[1], isectpointA1)
+	    VMOVE(isectpt[0], isectpointA2);
+	if (isect2[1] < isect1[1])
+	    if (smallest2 == 0)
+		VMOVE(isectpt[1], isectpointB2);
+	    else
+		VMOVE(isectpt[1], isectpointB1);
+	else if (smallest1 == 0)
+	    VMOVE(isectpt[1], isectpointA2);
+	else
+	    VMOVE(isectpt[1], isectpointA1);
     } else {
 	if (smallest2 == 0)
-	    VMOVE(isectpt[0], isectpointB1)
+	    VMOVE(isectpt[0], isectpointB1);
 	else
-	    VMOVE(isectpt[0], isectpointB2)
-		if (isect2[1] > isect1[1])
-		    if (smallest1 == 0)
-			VMOVE(isectpt[1], isectpointA2)
-		    else
-			VMOVE(isectpt[1], isectpointA1)
-		else if (smallest2 == 0)
-		    VMOVE(isectpt[1], isectpointB2)
-		else
-		    VMOVE(isectpt[1], isectpointB1)
+	    VMOVE(isectpt[0], isectpointB2);
+	if (isect2[1] > isect1[1])
+	    if (smallest1 == 0)
+		VMOVE(isectpt[1], isectpointA2);
+	    else
+		VMOVE(isectpt[1], isectpointA1);
+	else if (smallest2 == 0)
+	    VMOVE(isectpt[1], isectpointB2);
+	else
+	    VMOVE(isectpt[1], isectpointB1);
     }
     return 1;
 }

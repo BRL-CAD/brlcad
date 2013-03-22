@@ -598,9 +598,9 @@ wrobj(char name[], int flags)
 
 		VMOVE(arb->pt[0], &sol.s_values[0]);
 		for (i=1; i<8; i++)
-		    VADD2(arb->pt[i], &sol.s_values[i*3], arb->pt[0])
+		    VADD2(arb->pt[i], &sol.s_values[i*3], arb->pt[0]);
 
-			intern.idb_ptr = (genptr_t)arb;
+		intern.idb_ptr = (genptr_t)arb;
 		intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 		intern.idb_type = ID_ARB8;
 		intern.idb_meth = &rt_functab[ID_ARB8];

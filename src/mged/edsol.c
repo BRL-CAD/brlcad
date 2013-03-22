@@ -4091,8 +4091,8 @@ sedit(void)
 		    mged_print_result(TCL_ERROR);
 		    return;
 		} else if (es_scale > 0.0) {
-		    VSCALE(vol->cellsize, vol->cellsize, es_scale)
-			es_scale = 0.0;
+		    VSCALE(vol->cellsize, vol->cellsize, es_scale);
+		    es_scale = 0.0;
 		}
 	    }
 	    break;
@@ -4972,8 +4972,8 @@ sedit(void)
 			MAT4X3PNT(work, es_invmat, es_para);
 			VSUB2(cli->h, work, cli->v);
 		    } else
-			VSUB2(cli->h, es_para, cli->v)
-			    }
+			VSUB2(cli->h, es_para, cli->v);
+		}
 		/* check for zero H vector */
 		if (MAGNITUDE(cli->h) <= SQRT_SMALL_FASTF) {
 		    Tcl_AppendResult(INTERP, "Zero H vector not allowed, resetting to +Z\n",
@@ -6556,18 +6556,18 @@ sedit(void)
 		tmp_tol.para = 1.0 - tmp_tol.perp;
 
 		/* get a direction vector in model space corresponding to z-direction in view */
-		VSET(work, 0.0, 0.0, 1.0)
-		    MAT4X3VEC(dir, view_state->vs_gvp->gv_view2model, work)
+		VSET(work, 0.0, 0.0, 1.0);
+		MAT4X3VEC(dir, view_state->vs_gvp->gv_view2model, work);
 
-		    for (BU_LIST_FOR(ps, wdb_metaballpt, &metaball->metaball_ctrl_head)) {
-			fastf_t dist;
+		for (BU_LIST_FOR(ps, wdb_metaballpt, &metaball->metaball_ctrl_head)) {
+		    fastf_t dist;
 
-			dist = bn_dist_line3_pt3(new_pt, dir, ps->coord);
-			if (dist < min_dist) {
-			    min_dist = dist;
-			    nearest = ps;
-			}
+		    dist = bn_dist_line3_pt3(new_pt, dir, ps->coord);
+		    if (dist < min_dist) {
+			min_dist = dist;
+			nearest = ps;
 		    }
+		}
 
 		es_metaballpt = nearest;
 
@@ -8355,15 +8355,15 @@ label_edited_solid(
 
 		RT_ARS_CK_MAGIC(ars);
 
-		MAT4X3PNT(pos_view, xform, ars->curves[0])
+		MAT4X3PNT(pos_view, xform, ars->curves[0]);
 
-		    if (es_ars_crv >= 0 && es_ars_col >= 0) {
-			point_t ars_pt;
+		if (es_ars_crv >= 0 && es_ars_col >= 0) {
+		    point_t ars_pt;
 
-			VMOVE(work, &ars->curves[es_ars_crv][es_ars_col*3]);
-			MAT4X3PNT(ars_pt, xform, work);
-			POINT_LABEL_STR(ars_pt, "pt");
-		    }
+		    VMOVE(work, &ars->curves[es_ars_crv][es_ars_col*3]);
+		    MAT4X3PNT(ars_pt, xform, work);
+		    POINT_LABEL_STR(ars_pt, "pt");
+		}
 	    }
 	    POINT_LABEL(pos_view, 'V');
 	    break;

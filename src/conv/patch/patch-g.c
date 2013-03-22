@@ -468,10 +468,10 @@ Build_solid(int l, char *name, char *mirror_name, int plate_mode, fastf_t *centr
 		VMOVE(&pts[1*3], verts[k+1].coord);
 		VMOVE(&pts[4*3], verts[k+2].coord);
 		VMOVE(&pts[5*3], &pts[4*3]);
-		VJOIN1(&pts[3*3], &pts[0*3], thickness, norm)
-		    VJOIN1(&pts[2*3], &pts[1*3], thickness, norm)
-		    VJOIN1(&pts[6*3], &pts[4*3], thickness, norm)
-		    VMOVE(&pts[7*3], &pts[6*3]);
+		VJOIN1(&pts[3*3], &pts[0*3], thickness, norm);
+		VJOIN1(&pts[2*3], &pts[1*3], thickness, norm);
+		VJOIN1(&pts[6*3], &pts[4*3], thickness, norm);
+		VMOVE(&pts[7*3], &pts[6*3]);
 		snprintf(tmp_name, NAMESIZE+1, "%s_%d", name, k);
 		mk_arb8(outfp, tmp_name, pts);
 		mk_addmember(tmp_name, &tmp_head.l, NULL, WMOP_UNION);

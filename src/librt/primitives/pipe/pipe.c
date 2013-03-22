@@ -2889,7 +2889,7 @@ tesselate_pipe_linear(
 		j = 0;
 	    }
 
-	    VMOVE(pt, pt_next)
+	    VMOVE(pt, pt_next);
 	    xnew = x * cos_del - y * sin_del;
 	    ynew = x * sin_del + y * cos_del;
 	    x = xnew;
@@ -3209,7 +3209,7 @@ tesselate_pipe_linear(
 		j = 0;
 	    }
 
-	    VMOVE(pt, pt_next)
+	    VMOVE(pt, pt_next);
 	    xnew = x * cos_del - y * sin_del;
 	    ynew = x * sin_del + y * cos_del;
 	    x = xnew;

@@ -823,7 +823,7 @@ vertex_neighborhood(struct ray_data *rd, struct vertexuse *vu_p, struct hitmiss 
 		nmg_find_eu_leftvec(leftA, vu->up.eu_p);
 		VSUB2(edge_vect, eu->vu_p->v_p->vg_p->coord, vu->v_p->vg_p->coord);
 		VUNITIZE(edge_vect);
-		VJOIN1(pointA, vu->v_p->vg_p->coord, dimen, edge_vect)
+		VJOIN1(pointA, vu->v_p->vg_p->coord, dimen, edge_vect);
 
 		eu = vu->up.eu_p;
 		do {
@@ -833,13 +833,13 @@ vertex_neighborhood(struct ray_data *rd, struct vertexuse *vu_p, struct hitmiss 
 		nmg_find_eu_leftvec(leftB, eu);
 		VSUB2(edge_vect, eu->vu_p->v_p->vg_p->coord, vu->v_p->vg_p->coord);
 		VUNITIZE(edge_vect);
-		VJOIN1(pointB, vu->v_p->vg_p->coord, dimen, edge_vect)
+		VJOIN1(pointB, vu->v_p->vg_p->coord, dimen, edge_vect);
 
 
-		    if (rt_g.NMG_debug & DEBUG_RT_ISECT) {
-			VPRINT("\tLeftA", leftA);
-			VPRINT("\tLeftB", leftB);
-		    }
+		if (rt_g.NMG_debug & DEBUG_RT_ISECT) {
+		    VPRINT("\tLeftA", leftA);
+		    VPRINT("\tLeftB", leftB);
+		}
 		/* find distance of face to North Pole */
 		get_pole_dist_to_face(rd, vu,
 				      North_Pole, North_pl_pt, &North_dist, North_pca,

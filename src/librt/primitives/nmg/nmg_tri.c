@@ -1825,9 +1825,9 @@ cut_mapped_loop(struct bu_list *tbl2d, struct pt2d *p1, struct pt2d *p2, const i
 	fu = nmg_find_fu_of_vu(p1->vu_p);
 	NMG_CK_FACEUSE(fu);
 	if (fu->orientation == OT_OPPOSITE)
-	    VREVERSE(ot_same_normal, ot_same_normal)
+	    VREVERSE(ot_same_normal, ot_same_normal);
 
-		VREVERSE(ot_opposite_normal, ot_same_normal);
+	VREVERSE(ot_opposite_normal, ot_same_normal);
 
 	/* look for new vertexuses in new_lu and old_lu */
 	for (BU_LIST_FOR(vu, vertexuse, &p1->vu_p->v_p->vu_hd)) {
@@ -1859,9 +1859,9 @@ cut_mapped_loop(struct bu_list *tbl2d, struct pt2d *p1, struct pt2d *p2, const i
 	fu = nmg_find_fu_of_vu(p2->vu_p);
 	NMG_CK_FACEUSE(fu);
 	if (fu->orientation == OT_OPPOSITE)
-	    VREVERSE(ot_same_normal, ot_same_normal)
+	    VREVERSE(ot_same_normal, ot_same_normal);
 
-		VREVERSE(ot_opposite_normal, ot_same_normal);
+	VREVERSE(ot_opposite_normal, ot_same_normal);
 
 	/* look for new vertexuses in new_lu and old_lu */
 	for (BU_LIST_FOR(vu, vertexuse, &p2->vu_p->v_p->vu_hd)) {

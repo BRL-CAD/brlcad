@@ -1150,15 +1150,15 @@ wdb_shoot_and_plot(point_t start_pt,
     BU_ALLOC(rd.seghead, struct seg);
     BU_LIST_INIT(&rd.seghead->l);
 
-    VMOVE(rp.r_pt, start_pt)
-	VMOVE(rp.r_dir, dir)
-	/* Compute the inverse of the direction cosines */
-	if (!ZERO(rp.r_dir[X])) {
-	    rd.rd_invdir[X]=1.0/rp.r_dir[X];
-	} else {
-	    rd.rd_invdir[X] = INFINITY;
-	    rp.r_dir[X] = 0.0;
-	}
+    VMOVE(rp.r_pt, start_pt);
+    VMOVE(rp.r_dir, dir);
+    /* Compute the inverse of the direction cosines */
+    if (!ZERO(rp.r_dir[X])) {
+	rd.rd_invdir[X]=1.0/rp.r_dir[X];
+    } else {
+	rd.rd_invdir[X] = INFINITY;
+	rp.r_dir[X] = 0.0;
+    }
     if (!ZERO(rp.r_dir[Y])) {
 	rd.rd_invdir[Y]=1.0/rp.r_dir[Y];
     } else {
@@ -1319,17 +1319,17 @@ wdb_shoot_and_plot(point_t start_pt,
 		continue;
 
 	    dgcdp->nvectors++;
-	    VJOIN1(pt, rp.r_pt, seg->seg_in.hit_dist, rp.r_dir)
+	    VJOIN1(pt, rp.r_pt, seg->seg_in.hit_dist, rp.r_dir);
 
 #ifdef debug
-		bu_log("\t\tDRAW (%g %g %g)", V3ARGS(pt));
+	    bu_log("\t\tDRAW (%g %g %g)", V3ARGS(pt));
 #endif
 
 	    RT_ADD_VLIST(vhead, pt, BN_VLIST_LINE_MOVE);
-	    VJOIN1(pt, rp.r_pt, seg->seg_out.hit_dist, rp.r_dir)
+	    VJOIN1(pt, rp.r_pt, seg->seg_out.hit_dist, rp.r_dir);
 
 #ifdef debug
-		bu_log("<->(%g %g %g)\n", V3ARGS(pt));
+	    bu_log("<->(%g %g %g)\n", V3ARGS(pt));
 #endif
 
 	    RT_ADD_VLIST(vhead, pt, BN_VLIST_LINE_DRAW);

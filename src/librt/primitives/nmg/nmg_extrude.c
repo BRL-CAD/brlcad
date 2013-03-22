@@ -615,12 +615,12 @@ nmg_fix_overlapping_loops(struct shell *s, const struct bn_tol *tol)
 	    /* use midpoint to determine if edgeuse is in or out of
 	     * lu2
 	     */
-	    VBLEND2(mid_pt, 0.5, v1->vg_p->coord, 0.5, v2->vg_p->coord)
+	    VBLEND2(mid_pt, 0.5, v1->vg_p->coord, 0.5, v2->vg_p->coord);
 
-		if (nmg_classify_pt_loop(mid_pt, lu2, tol) == NMG_CLASS_AoutB) {
-		    start_eu = eu1;
-		    break;
-		}
+	    if (nmg_classify_pt_loop(mid_pt, lu2, tol) == NMG_CLASS_AoutB) {
+		start_eu = eu1;
+		break;
+	    }
 	}
 
 	if (!start_eu) {

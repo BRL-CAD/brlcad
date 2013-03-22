@@ -2610,7 +2610,7 @@ nmg_isect_two_face2p_jra(struct nmg_inter_struct *is, struct faceuse *fu1, struc
 		    hitv = eu1->eumate_p->vu_p->v_p;
 		    VMOVE(hit_pt, hitv->vg_p->coord);
 		} else {
-		    VJOIN1(hit_pt, vg1a->coord, dist[hit_no], vt1_3d)
+		    VJOIN1(hit_pt, vg1a->coord, dist[hit_no], vt1_3d);
 		    if ((hit_vu = nmg_find_pt_in_face(fu2, hit_pt, &is->tol))) {
 			hitv = hit_vu->v_p;
 		    } else if ((hit_vu = nmg_find_pt_in_face(fu1, hit_pt, &is->tol))) {
@@ -2658,9 +2658,9 @@ nmg_isect_two_face2p_jra(struct nmg_inter_struct *is, struct faceuse *fu1, struc
 		    if (hitv != prev_eu->vu_p->v_p && hitv != next_eu->eumate_p->vu_p->v_p) {
 			if (UNLIKELY(rt_g.NMG_debug & DEBUG_POLYSECT)) {
 			    vect_t tmp1, tmp2;
-			    VSUB2(tmp1, hit_pt, eu2->vu_p->v_p->vg_p->coord)
-				VSUB2(tmp2, hit_pt, eu2->eumate_p->vu_p->v_p->vg_p->coord)
-				bu_log("Splitting eu2 x%x\n",  eu2);
+			    VSUB2(tmp1, hit_pt, eu2->vu_p->v_p->vg_p->coord);
+			    VSUB2(tmp2, hit_pt, eu2->eumate_p->vu_p->v_p->vg_p->coord);
+			    bu_log("Splitting eu2 x%x\n",  eu2);
 			    bu_log("Distance to hit_pt = %g from vu1, %g from vu2\n",
 				   MAGNITUDE(tmp1), MAGNITUDE(tmp2));
 			}
@@ -5443,8 +5443,8 @@ nmg_cut_lu_into_coplanar_and_non(struct loopuse *lu, fastf_t *pl, struct nmg_int
 		fastf_t tmp_dist;
 
 		v2 = (struct vertex *)BU_PTBL_GET(&cut_list, j);
-		VSUB2(diff, v1->vg_p->coord, v2->vg_p->coord)
-		    tmp_dist = MAGSQ(diff);
+		VSUB2(diff, v1->vg_p->coord, v2->vg_p->coord);
+		tmp_dist = MAGSQ(diff);
 		if (tmp_dist > max_dist) {
 		    max_dist = tmp_dist;
 		    end1 = v1;
@@ -5470,8 +5470,8 @@ nmg_cut_lu_into_coplanar_and_non(struct loopuse *lu, fastf_t *pl, struct nmg_int
 		continue;
 	    }
 
-	    VSUB2(diff, v1->vg_p->coord, end1->vg_p->coord)
-		dist_array[i] = MAGSQ(diff);
+	    VSUB2(diff, v1->vg_p->coord, end1->vg_p->coord);
+	    dist_array[i] = MAGSQ(diff);
 	}
 
 	/* sort vertices according to distance array */

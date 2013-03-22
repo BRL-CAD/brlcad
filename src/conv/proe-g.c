@@ -383,17 +383,17 @@ Convert_assy(char *line)
 	    if (!ZERO(scale - 1.0)) {
 		inv_scale = 1.0/scale;
 		for (j=0; j<3; j++)
-		    HSCALE(&wmem->wm_mat[j*4], &wmem->wm_mat[j*4], inv_scale)
+		    HSCALE(&wmem->wm_mat[j*4], &wmem->wm_mat[j*4], inv_scale);
 
-			/* clamp rotation elements to fabs(1.0) */
-			for (j=0; j<3; j++) {
-			    for (i=0; i<3; i++) {
-				if (wmem->wm_mat[j*4 + i] > 1.0)
-				    wmem->wm_mat[j*4 + i] = 1.0;
-				else if (wmem->wm_mat[j*4 + i] < -1.0)
-				    wmem->wm_mat[j*4 + i] = -1.0;
-			    }
-			}
+		/* clamp rotation elements to fabs(1.0) */
+		for (j=0; j<3; j++) {
+		    for (i=0; i<3; i++) {
+			if (wmem->wm_mat[j*4 + i] > 1.0)
+			    wmem->wm_mat[j*4 + i] = 1.0;
+			else if (wmem->wm_mat[j*4 + i] < -1.0)
+			    wmem->wm_mat[j*4 + i] = -1.0;
+		    }
+		}
 
 		if (top_level)
 		    wmem->wm_mat[15] *= (inv_scale/conv_factor);

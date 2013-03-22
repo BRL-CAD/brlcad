@@ -844,16 +844,16 @@ nmg_2_vrml(FILE *fp, const struct db_full_path *pathp, struct model *m, struct m
 	VSCALE( pt_meters, vg->coord, scale_factor );
 
 	if ( is_light )
-	    VADD2( ave_pt, ave_pt, pt_meters )
-		if ( first )
-		{
-		    if ( !is_light )
-			fprintf( fp, " %10.10e %10.10e %10.10e, ", V3ARGS(pt_meters));
-		    first = 0;
-		}
-		else
-		    if ( !is_light )
-			fprintf( fp, "%10.10e %10.10e %10.10e, ", V3ARGS( pt_meters ));
+	    VADD2( ave_pt, ave_pt, pt_meters );
+	if ( first )
+	{
+	    if ( !is_light )
+		fprintf( fp, " %10.10e %10.10e %10.10e, ", V3ARGS(pt_meters));
+	    first = 0;
+	}
+	else
+	    if ( !is_light )
+		fprintf( fp, "%10.10e %10.10e %10.10e, ", V3ARGS( pt_meters ));
     }
 
     /* close point */

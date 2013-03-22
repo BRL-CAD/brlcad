@@ -605,8 +605,8 @@ seg_to_vlist(struct bu_list *vhead, const struct rt_tess_tol *ttol, fastf_t *V, 
 		V2MOVE(end2d, sketch_ip->verts[csg->end]);
 		mid_pt[0] = (start2d[0] + end2d[0]) * 0.5;
 		mid_pt[1] = (start2d[1] + end2d[1]) * 0.5;
-		V2SUB2(s2m, mid_pt, start2d)
-		    dir[0] = -s2m[1];
+		V2SUB2(s2m, mid_pt, start2d);
+		dir[0] = -s2m[1];
 		dir[1] = s2m[0];
 		s2m_len_sq =  s2m[0]*s2m[0] + s2m[1]*s2m[1];
 		if (s2m_len_sq <= SMALL_FASTF) {
@@ -622,10 +622,10 @@ seg_to_vlist(struct bu_list *vhead, const struct rt_tess_tol *ttol, fastf_t *V, 
 		dir[0] = dir[0] / tmp_len;
 		dir[1] = dir[1] / tmp_len;
 		tmp_len = sqrt(len_sq);
-		V2JOIN1(center2d, mid_pt, tmp_len, dir)
+		V2JOIN1(center2d, mid_pt, tmp_len, dir);
 
-		    /* check center location */
-		    cross_z = (end2d[X] - start2d[X])*(center2d[Y] - start2d[Y]) -
+		/* check center location */
+		cross_z = (end2d[X] - start2d[X])*(center2d[Y] - start2d[Y]) -
 		    (end2d[Y] - start2d[Y])*(center2d[X] - start2d[X]);
 		if (!(cross_z > 0.0 && csg->center_is_left))
 		    V2JOIN1(center2d, mid_pt, -tmp_len, dir);
@@ -739,8 +739,8 @@ seg_to_vlist(struct bu_list *vhead, const struct rt_tess_tol *ttol, fastf_t *V, 
 			    min_pt[1] = tmp_pt[1];
 		    }
 
-		    V2SUB2(diff, max_pt, min_pt)
-			tmp_epsilon = ttol->rel * sqrt(MAG2SQ(diff));
+		    V2SUB2(diff, max_pt, min_pt);
+		    tmp_epsilon = ttol->rel * sqrt(MAG2SQ(diff));
 		    if (tmp_epsilon < epsilon)
 			epsilon = tmp_epsilon;
 
@@ -831,8 +831,8 @@ seg_to_vlist(struct bu_list *vhead, const struct rt_tess_tol *ttol, fastf_t *V, 
 			min_pt[1] = tmp_pt[1];
 		}
 
-		V2SUB2(diff, max_pt, min_pt)
-		    tmp_epsilon = ttol->rel * sqrt(MAG2SQ(diff));
+		V2SUB2(diff, max_pt, min_pt);
+		tmp_epsilon = ttol->rel * sqrt(MAG2SQ(diff));
 		if (tmp_epsilon < epsilon)
 		    epsilon = tmp_epsilon;
 

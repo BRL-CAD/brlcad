@@ -228,8 +228,8 @@ editarb(vect_t pos_model)
 	    break;
 
 	case ARB7:
-	    VMOVE(arb->pt[7], arb->pt[4])
-		break;
+	    VMOVE(arb->pt[7], arb->pt[4]);
+	    break;
 
 	case ARB6:
 	    VMOVE(arb->pt[5], arb->pt[4]);
@@ -238,14 +238,14 @@ editarb(vect_t pos_model)
 
 	case ARB5:
 	    for (i=5; i<8; i++)
-		VMOVE(arb->pt[i], arb->pt[4])
-		    break;
+		VMOVE(arb->pt[i], arb->pt[4]);
+	    break;
 
 	case ARB4:
 	    VMOVE(arb->pt[3], arb->pt[0]);
 	    for (i=5; i<8; i++)
-		VMOVE(arb->pt[i], arb->pt[4])
-		    break;
+		VMOVE(arb->pt[i], arb->pt[4]);
+	    break;
     }
 
     return 0;		/* OK */
@@ -784,9 +784,9 @@ ext4to6(int pt1, int pt2, int pt3, struct rt_arb_internal *arb)
 
     /* copy to the original record */
     for (i=0; i<8; i++)
-	VMOVE(arb->pt[i], pts[i])
+	VMOVE(arb->pt[i], pts[i]);
+}
 
-	    }
 
 /* Permute command - permute the vertex labels of an ARB
  * Format: permute tuple */

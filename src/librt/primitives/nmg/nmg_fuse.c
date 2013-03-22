@@ -2504,8 +2504,8 @@ nmg_is_crack_outie(const struct edgeuse *eu, const struct bn_tol *tol)
 	NMG_CK_FACEUSE(fu);
 	NMG_GET_FU_PLANE(pl, fu);
 	dist = DIST_PT_PLANE(midpt, pl);
-	VJOIN1(midpt, midpt, -dist, pl)
-	    dist = fabs(DIST_PT_PLANE(midpt, pl));
+	VJOIN1(midpt, midpt, -dist, pl);
+	dist = fabs(DIST_PT_PLANE(midpt, pl));
 	if (dist > SMALL_FASTF) {
 	    tmp_tol.dist = dist*2.0;
 	    tmp_tol.dist_sq = tmp_tol.dist * tmp_tol.dist;

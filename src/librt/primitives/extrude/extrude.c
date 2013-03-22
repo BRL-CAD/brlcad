@@ -192,8 +192,8 @@ rt_extrude_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const str
     VUNITIZE(extr.pl1_rot);
     extr.pl1_rot[W] = VDOT(extr.pl1_rot, extr.verts[0]);
 
-    VSET(tmp, 0, 0, 1)
-	tmp_f = VDOT(tmp, extr.unit_h);
+    VSET(tmp, 0, 0, 1);
+    tmp_f = VDOT(tmp, extr.unit_h);
     if (tmp_f < 0.0)
 	tmp_f = -tmp_f;
     tmp_f -= 1.0;
@@ -438,8 +438,8 @@ rt_extrude_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip
     VUNITIZE(extr->pl1_rot);
     extr->pl1_rot[W] = VDOT(extr->pl1_rot, extr->verts[0]);
 
-    VSET(tmp, 0, 0, 1)
-	tmp_f = VDOT(tmp, extr->unit_h);
+    VSET(tmp, 0, 0, 1);
+    tmp_f = VDOT(tmp, extr->unit_h);
     if (tmp_f < 0.0)
 	tmp_f = -tmp_f;
     tmp_f -= 1.0;
@@ -1780,8 +1780,8 @@ isect_2D_loop_ray(point2d_t pta, point2d_t dir, struct bu_ptbl *loop, struct loo
 		    V2MOVE(end2d, ip->verts[csg->end]);
 		    mid_pt[0] = (start2d[0] + end2d[0]) * 0.5;
 		    mid_pt[1] = (start2d[1] + end2d[1]) * 0.5;
-		    V2SUB2(s2m, mid_pt, start2d)
-			tmp_dir[0] = -s2m[1];
+		    V2SUB2(s2m, mid_pt, start2d);
+		    tmp_dir[0] = -s2m[1];
 		    tmp_dir[1] = s2m[0];
 		    s2m_len_sq =  s2m[0]*s2m[0] + s2m[1]*s2m[1];
 		    if (s2m_len_sq <= SMALL_FASTF) {
