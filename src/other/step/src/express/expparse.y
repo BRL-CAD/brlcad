@@ -875,7 +875,7 @@ enumeration_type ::= TOK_ENUMERATION TOK_OF nested_id_list(A).
         /* 1st visibility */
         DICT_define(CURRENT_SCOPE->symbol_table, x->symbol.name,
             (Generic)x, &x->symbol, OBJ_EXPRESSION);
-        DICTdefine(PREVIOUS_SCOPE->symbol_table, x->symbol.name,
+        DICTdefine(PREVIOUS_SCOPE->enum_table, x->symbol.name,
             (Generic)x, &x->symbol, OBJ_EXPRESSION);
         SYMBOL_destroy(tmp);
     } LISTod;
