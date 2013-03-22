@@ -185,21 +185,21 @@ main(int argc, char **argv)
     }
 
     if (fread(header, 8, 1, fp_in) != 1) {
-	bu_exit(EXIT_FAILURE,  "ERROR: Failed while reading file header!!!\n");
+	bu_exit(EXIT_FAILURE,  "png-fb: ERROR: Failed while reading file header!!!\n");
     }
 
     if (png_sig_cmp((png_bytep)header, 0, 8)) {
-	bu_exit(EXIT_FAILURE,  "This is not a PNG file!!!\n");
+	bu_exit(EXIT_FAILURE,  "png-fb: This is not a PNG file!!!\n");
     }
 
     png_p = png_create_read_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
     if (!png_p) {
-	bu_exit(EXIT_FAILURE,  "png_create_read_struct() failed!!\n");
+	bu_exit(EXIT_FAILURE,  "png-fb: png_create_read_struct() failed!!\n");
     }
 
     info_p = png_create_info_struct(png_p);
     if (!info_p) {
-	bu_exit(EXIT_FAILURE,  "png_create_info_struct() failed!!\n");
+	bu_exit(EXIT_FAILURE,  "png-fb: png_create_info_struct() failed!!\n");
     }
 
     png_init_io(png_p, fp_in);
