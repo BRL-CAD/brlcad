@@ -60,7 +60,6 @@ _ged_editit(char *editstring, const char *filename)
     const char *editor = (char *)NULL;
     const char *editor_opt = (char *)NULL;
     const char *file = (const char *)filename;
-    char buffer[RT_MAXLINE] = {0};
 
 #if defined(SIGINT) && defined(SIGQUIT)
     void (*s2)();

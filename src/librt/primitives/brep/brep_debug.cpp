@@ -675,7 +675,6 @@ plotsurfaceknots(ON_Surface &surf, struct bn_vlblock *vbp, bool dim3d)
     } else {
 	for (int u = 0; u <= spanu_cnt; u++) {
 	    for (int v = 0; v <= spanv_cnt; v++) {
-		ON_3dPoint p = surf.PointAt(spanu[u], spanv[v]);
 		VSET(pt1, spanu[u], spanv[v], 0.0);
 		RT_ADD_VLIST(vhead, pt1, BN_VLIST_POINT_DRAW);
 	    }
