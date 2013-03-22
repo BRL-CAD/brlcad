@@ -28,7 +28,7 @@
  * tables. Usage:
  *
 
- channel -i infile1 id id id ... [-i infile2 ...] -o outfile1 id id ... [-o outfile2 ...]
+ chan_permute -i infile1 id id id ... [-i infile2 ...] -o outfile1 id id ... [-o outfile2 ...]
 
  *
  * where infiles are files to be read from, outfiles are files to be
@@ -72,7 +72,7 @@ main(int argc, char *argv[])
 
     if (argc == 1) {
 	fprintf(stderr,
-	"Usage: channel -i infile1 id id id ... [-i infile2 ...] -o outfile1 id id ... [-o outfile2 ...]\n");
+	"Usage: chan_permute -i infile1 id id id ... [-i infile2 ...] -o outfile1 id id ... [-o outfile2 ...]\n");
 	bu_exit(-1, NULL);
     }
 
