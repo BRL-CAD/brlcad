@@ -63,6 +63,8 @@ int
 get_args(int argc, char **argv, size_t *width, size_t *height, FILE **infp, FILE **outfp)
 {
     int c;
+    int ttyin = 0;
+    int ttyout = 0;
 
     while ((c = bu_getopt(argc, argv, "ag:s:w:n:o:h?")) != -1) {
 	switch (c) {
@@ -112,14 +114,18 @@ get_args(int argc, char **argv, size_t *width, size_t *height, FILE **infp, FILE
 	fileinput++;
     }
 
-    if (isatty(fileno(*infp))) {
+    if (isatty(fileno(*infp)))
+    	ttyin = 1;
+    if (isatty(fileno(*outfp)))
+    	ttyout = 1;
+    if (ttyin && ttyout && argc == 1)
+	return 0; /* usage */ /* running the command with no arguments (AND no file pipes) */
+    if (ttyin)
 	bu_log("ERROR: %s will not read pix data from a tty\n", bu_getprogname());
-	return 0; /* usage */
-    }
-    if (isatty(fileno(*outfp))) {
+    if (ttyout)
 	bu_log("ERROR: %s will not write png data to a tty\n", bu_getprogname());
+    if ( ttyin || ttyout )
 	return 0; /* usage */
-    }
     if (argc > ++bu_optind) {
 	bu_log("%s: excess argument(s) ignored\n", bu_getprogname());
     }
