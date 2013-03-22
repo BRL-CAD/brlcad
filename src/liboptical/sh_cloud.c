@@ -102,7 +102,7 @@ cloud_texture(register fastf_t x, register fastf_t y, fastf_t Contrast, fastf_t 
 	Py = bn_halfpi * bn_tab_sin(Fx * x);
 	Fx *= 2.0;
 	Fy *= 2.0;
-	C *= M_SQRT1_2;
+	C *= 0.707;
     }
 
     /* Choose a magic k! */
