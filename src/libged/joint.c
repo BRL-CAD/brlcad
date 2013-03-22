@@ -2070,7 +2070,6 @@ f_Jsave(struct ged *gedp, int argc, const char *argv[])
 
     for (BU_LIST_FOR(jp, joint, &joint_head)) {
 	fprintf(fop, "joint %s {\n", jp->name);
-	/* } for jove */
 	if (jp->path.type == ARC_PATH) {
 	    fprintf(fop, "\tpath = %s", jp->path.arc[0]);
 	    for (i=1;i<jp->path.arc_last;i++) {

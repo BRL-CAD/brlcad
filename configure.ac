@@ -344,9 +344,6 @@ BC_ARG_ENABLE([build_tktable], [tktable-build], [Build the included tktable], [y
 # force enable/disable building of tnt
 BC_ARG_ENABLE([build_tnt], [tnt-install], [Install the included Template Numerical Toolkit], [auto])
 
-# jove
-BC_ARG_ENABLE([build_jove], [jove-build], [Enable compilation of jove (optional)], [no])
-
 # endgame framework simulation module
 BC_ARG_ENABLE([build_ef], [ef-build], [Enable compilation of Endgame Framework module (optional)], [no])
 
@@ -558,9 +555,6 @@ BC_ARG_ALIAS([build_tnt], [template-numerical-toolkit])
 BC_ARG_ALIAS([build_tnt], [template-numerical-toolkit-build])
 BC_ARG_ALIAS([build_tnt], [template-numerical-toolkit-install])
 
-# jove aliases (help uses jove-build)
-BC_ARG_ALIAS([build_jove], [jove])
-
 # endgame framework module aliases (help uses ef-build)
 BC_ARG_ALIAS([build_ef], [ef])
 BC_ARG_ALIAS([build_ef], [endgameframework])
@@ -709,9 +703,6 @@ if test "x$set_everything" != "x" ; then
 	if test "x$bc_build_tnt_set" = "xno" ; then
 		bc_build_tnt="$set_everything"
 	fi
-	if test "x$bc_build_jove_set" = "xno" ; then
-		bc_build_jove="$set_everything"
-	fi
 	# Singe the Endgame Framework "simulation module" will only
 	# compile if you have it installed, don't enable it even if
 	# requesting everything.  fine to disable, though.
@@ -841,9 +832,6 @@ AC_MSG_RESULT($bc_build_termlib)
 
 AC_MSG_CHECKING(whether to build the Template Numerical Toolkit)
 AC_MSG_RESULT($bc_build_tnt)
-
-AC_MSG_CHECKING(whether to compile jove or not)
-AC_MSG_RESULT($bc_build_jove)
 
 AC_MSG_CHECKING(whether to compile the Endgame Framework module)
 AC_MSG_RESULT($bc_build_ef)
@@ -1012,18 +1000,6 @@ int main() { return 0; }
 fi
 
 AC_FUNC_ALLOCA
-
-dnl if building jove wasn't specifically requested and wasn't
-dnl disabled, see if there is either emacs or jove available.
-dnl i.e. auto for jove is dependent on what is installed
-BCEDITOR=""
-if test "x$bc_build_jove" = "xauto" ; then
-    AC_PATH_PROG(BCEDITOR, emacs, , $PATH)
-    if test "x$BCEDITOR" = "x" ; then
-	AC_PATH_PROG(BCEDITOR, jove, , $PATH)
-    fi
-fi
-
 
 dnl ***************************
 dnl *** Check for libraries ***
@@ -3477,20 +3453,6 @@ else
 fi
 
 
-dnl *** Jove compilation ***
-build_brlcad_jove=no
-if test "x$bc_build_jove" = "xyes" ; then
-    build_brlcad_jove=yes
-elif test "x$bc_build_jove" = "xno" ; then
-    build_brlcad_jove=no	# body for the sake of body
-else
-    # enable jove if no suitable system emacs/jove was found
-    if test "x$BCEDITOR" = "x" ; then
-	build_brlcad_jove=yes
-    fi
-fi
-
-
 dnl *** Java interface compilation ***
 build_against_java=no
 if test "x$bc_with_java" != "xno" ; then
@@ -3825,7 +3787,6 @@ AM_CONDITIONAL(BUILD_OPENNURBS, [test "x$build_brlcad_opennurbs" = "xyes"])
 AM_CONDITIONAL(BUILD_BOOST, [test "x$ac_cv_header_limits" = "xyes" && test "x$ac_cv_header_istream" = "xyes"])
 AM_CONDITIONAL(BUILD_TERMLIB, [test "x$build_brlcad_termlib" = "xyes"])
 AM_CONDITIONAL(BUILD_TNT, [test "x$build_brlcad_tnt" = "xyes"])
-AM_CONDITIONAL(BUILD_JOVE, [test "x$build_brlcad_jove" = "xyes"])
 AM_CONDITIONAL(BUILD_CUBIT, [test "x$bc_build_cubit" = "xyes"])
 AM_CONDITIONAL(BUILD_UG, [test "x$bc_build_ug" = "xyes"])
 
@@ -4231,8 +4192,6 @@ AC_CONFIG_FILES([
 	src/other/iwidgets/generic/Makefile
 	src/other/iwidgets/iwidgets.tcl
 	src/other/iwidgets/pkgIndex.tcl
-	src/other/jove/Makefile
-	src/other/jove/teach-jove
 	src/other/libregex/Makefile
 	src/other/libtermlib/Makefile
 	src/other/libutahrle/Makefile

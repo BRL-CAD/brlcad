@@ -42,8 +42,9 @@
 #define WIN_EDITOR "\"c:/Program Files/Windows NT/Accessories/wordpad\""
 #define MAC_EDITOR "/Applications/TextEdit.app/Contents/MacOS/TextEdit"
 #define EMACS_EDITOR "emacs"
+#define NANO_EDITOR "nano"
 #define VIM_EDITOR "vim"
-#define JOVE_EDITOR "jove"
+#define VI_EDITOR "vi"
 
 int
 _ged_editit(char *editstring, const char *filename)
@@ -107,19 +108,23 @@ _ged_editit(char *editstring, const char *filename)
 	    editor = bu_which(EMACS_EDITOR);
 	}
 
+	/* still unset? try nano */
+	if (!editor || editor[0] == '\0') {
+	    editor = bu_which(NANO_EDITOR);
+	}
+
 	/* still unset? try vim */
 	if (!editor || editor[0] == '\0') {
 	    editor = bu_which(VIM_EDITOR);
 	}
 
-	/* still unset? default to jove */
+	/* still unset? As a last resort, go with vi - 
+         * vi is part of the POSIX standard, which is as 
+         * close as we can get currently to an editor 
+         * that should always be present:  
+         * http://pubs.opengroup.org/onlinepubs/9699919799/utilities/vi.html */
 	if (!editor || editor[0] == '\0') {
-	    const char *jovepath = bu_brlcad_root("bin/jove", 1);
-	    editor = JOVE_EDITOR;
-	    if (jovepath) {
-		snprintf(buffer, RT_MAXLINE, "%s", jovepath);
-		editor = buffer;
-	    }
+	    editor = bu_which(VI_EDITOR);
 	}
     }
 

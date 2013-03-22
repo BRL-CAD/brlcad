@@ -1,4 +1,0 @@
-#! /bin/sh
-# @(#)$Header$ (BRL)
-
-exec @BRLCAD_ROOT@/bin/jove @BRLCAD_DATA@/jove/teach-jove

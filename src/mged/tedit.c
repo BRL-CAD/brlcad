@@ -54,7 +54,6 @@ extern int classic_mged;
 #define WIN_EDITOR "\"c:/Program Files/Windows NT/Accessories/wordpad\""
 #define MAC_EDITOR "/Applications/TextEdit.app/Contents/MacOS/TextEdit"
 #define EMACS_EDITOR "emacs"
-#define JOVE_EDITOR "jove"
 #define VIM_EDITOR "vim"
 #define VI_EDITOR "vi"
 #define NANO_EDITOR "nano"
@@ -916,11 +915,6 @@ get_editor_string(struct bu_vls *editstring)
 	editor = bu_which(VIM_EDITOR);
     }
 
-    /* still unset? try vi */
-    if (!editor) {
-	editor = bu_which(VI_EDITOR);
-    }
-
     /* still unset? try nano */
     if (!editor) {
 	editor = bu_which(NANO_EDITOR);
@@ -931,14 +925,9 @@ get_editor_string(struct bu_vls *editstring)
 	editor = bu_which(ED_EDITOR);
     }
 
-    /* still unset? default to jove */
+    /* still unset? as a last resort, try vi */
     if (!editor) {
-	const char *jovepath = bu_brlcad_root("bin/jove", 1);
-	editor = JOVE_EDITOR;
-	if (jovepath) {
-	    snprintf(buffer, RT_MAXLINE, "%s", jovepath);
-	    editor = buffer;
-	}
+	editor = bu_which(VI_EDITOR);
     }
 
     /* There are two possible situations for MGED - in classic mode
@@ -948,14 +937,17 @@ get_editor_string(struct bu_vls *editstring)
      * need a terminal supplied via an xterm and some will not. */
 
 
-    /* If we're in classic mode on Windows, go with jove */
+    /* If we're in classic mode on Windows, we have a problem - 
+     * 64 bit versions of Windows no longer ship EDIT, so there isn't
+     * a standard console editor to fire up.  Best we can do is try for EDIT,
+     * and if not found hope one of the unix console editors is available.*/
     if (classic_mged && (BU_STR_EQUAL(os, "Windows 95") || BU_STR_EQUAL(os, "Windows NT"))) {
-	const char *jovepath = bu_brlcad_root("bin/jove", 1);
-	editor = JOVE_EDITOR;
-	if (jovepath) {
-	    snprintf(buffer, RT_MAXLINE, "%s", jovepath);
+	const char *editpath = bu_which("edit", 1);
+	editor = "EDIT";
+	if (editpath) {
+	    snprintf(buffer, RT_MAXLINE, "%s", editpath);
 	    editor = buffer;
-	}
+	} 
     }
 
     if (classic_mged) {
@@ -966,8 +958,8 @@ get_editor_string(struct bu_vls *editstring)
 	 * gui, regardless of EDITOR settings. In this situation, emacs
 	 * will be invoked with the -nw option.
 	 *
-	 * Standard:  emacs, vim, vi, ed, jove
-	 * Windows: jove
+	 * Standard:  emacs, vim, vi, ed 
+	 * Windows: EDIT, if available
 	 *
 	 * terminal and terminal_opt remain unset
 	 */
@@ -994,7 +986,6 @@ get_editor_string(struct bu_vls *editstring)
 	which = bu_which(ED_EDITOR);
 	if (which)
 	    count += BU_STR_EQUAL(editor, which);
-	count += BU_STR_EQUAL(editor, JOVE_EDITOR);
 	count += BU_STR_EQUAL(editor, MAC_EDITOR);
 	if (count > 0) {
 	    /* start with emacs... */
@@ -1014,14 +1005,6 @@ get_editor_string(struct bu_vls *editstring)
 	    }
 	    if (!editor) {
 		editor = bu_which(ED_EDITOR);
-	    }
-	    if (!editor) {
-		const char *binpath = bu_brlcad_root("bin", 1);
-		editor = JOVE_EDITOR;
-		if (binpath) {
-		    snprintf(buffer, RT_MAXLINE, "%s/%s", binpath, editor);
-		    editor = buffer;
-		}
 	    }
 	}
     } else {
@@ -1071,11 +1054,6 @@ get_editor_string(struct bu_vls *editstring)
 		    terminal_opt = "-e";
 	    }
 	    if (BU_STR_EQUAL(editor, ED_EDITOR)) {
-		terminal = bu_which(XTERM_COMMAND);
-		if (terminal)
-		    terminal_opt = "-e";
-	    }
-	    if (BU_STR_EQUAL(editor, JOVE_EDITOR)) {
 		terminal = bu_which(XTERM_COMMAND);
 		if (terminal)
 		    terminal_opt = "-e";

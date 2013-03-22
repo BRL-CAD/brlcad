@@ -17,12 +17,6 @@ else !BUILD_PNG
 PNGDIR=
 endif
 
-if BUILD_JOVE
-JOVEDIR=jove
-else !BUILD_JOVE
-JOVEDIR=
-endif
-
 if BUILD_URT
 URTDIR=URToolkit
 UTAHRLEDIR=libutahrle
@@ -174,7 +168,6 @@ EXTRA_DIST = \
 	itcl.dist \
 	itk.dist \
 	iwidgets.dist \
-	jove.dist \
 	lemon \
 	lemon.dist \
 	libpng \
@@ -222,7 +215,6 @@ DIST_SUBDIRS = \
 	URToolkit \
 	incrTcl \
 	iwidgets \
-	jove \
 	libregex \
 	libtermlib \
 	libutahrle \

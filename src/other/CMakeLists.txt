@@ -934,25 +934,6 @@ mark_as_advanced(TNT_INCLUDE_DIR)
 #
 CMAKEFILES(Eigen)
 
-# jove editor - technically this isn't a library, but traditionally
-# it's grouped into the "enable-all" logic. Almost certainly won't
-# build on Windows, and it's not worth trying to make it do so.
-# Defaults to on if BRLCAD_BUNDLED_LIBS is set to Bundled before the
-# first run of CMake, otherwise defaults to off.
-if(BRLCAD_ENABLE_JOVE)
-  if(NOT WIN32)
-    add_subdirectory(jove)
-    include(${CMAKE_CURRENT_SOURCE_DIR}/jove.dist)
-    CMAKEFILES_IN_DIR(jove_ignore_files jove)
-  ELSE(NOT WIN32)
-    MESSAGE("jove was requested, but does not build on Windows - disabling")
-    set(BRLCAD_ENABLE_JOVE OFF CACHE BOOL "jove disabled on WIN32" FORCE)
-    CMAKEFILES(jove)
-  endif(NOT WIN32)
-ELSE(BRLCAD_ENABLE_JOVE)
-  CMAKEFILES(jove)
-endif(BRLCAD_ENABLE_JOVE)
-
 if(BRLCAD_ENABLE_OSL)
   add_subdirectory(osl)
 endif(BRLCAD_ENABLE_OSL)

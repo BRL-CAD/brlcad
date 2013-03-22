@@ -207,8 +207,6 @@ include/fb.h
 	FB_WPIXEL -> fb_wpixel [deprecated 7.14]
 src/gtools
 	g_[toolname] -> g[toolname] [deprecated 7.14]
-src/other/jove
-	jove -> emacs [deprecated 7.14]
 include/raytrace.h
 	rt_fdiff -> NEAR_ZERO [deprecated 7.14]
 	rt_reldiff -> NEAR_ZERO [deprecated 7.14]
@@ -251,6 +249,10 @@ include/raytrace.h
 ************
 * OBSOLETE *
 ************
+7.24.0
+------
+src/other/jove
+	jove -> emacs [deprecated 7.14]
 
 7.22.0
 ------

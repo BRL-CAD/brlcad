@@ -1078,11 +1078,6 @@ if(BRLCAD_ENABLE_AQUA)
   set(OPENGL_USE_AQUA ON CACHE STRING "Aqua enabled - use Aqua OpenGL" FORCE)
 endif(BRLCAD_ENABLE_AQUA)
 
-
-# Enable JOVE.
-option(BRLCAD_ENABLE_JOVE "Enable jove editor build." OFF)
-mark_as_advanced(BRLCAD_ENABLE_JOVE)
-
 #----------------------------------------------------------------------
 # The following are fine-grained options for enabling/disabling compiler
 # and source code definition settings.  Typically these are set to
