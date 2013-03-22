@@ -6663,7 +6663,7 @@ namespace eval ArcherCore {
 }
 
 ::itcl::body ArcherCore::xpush {args} {
-    eval gedWrapper xpush 0 0 1 0 $args
+    eval gedWrapper xpush 0 0 1 2 $args
 }
 
 ::itcl::body ArcherCore::Z {args} {
