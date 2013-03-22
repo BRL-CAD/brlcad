@@ -70,6 +70,7 @@ set(misc_ignore_files
   debian
   doxygen_structure
   flawfinder
+  jove.emacs
   libtool.m4
   macosx
   nsis

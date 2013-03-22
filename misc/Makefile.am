@@ -18,6 +18,7 @@ EXTRA_DIST = \
 	CMake \
 	CMakeLists.txt \
 	Description.txt \
+        jove.emacs \
 	Doxyfile \
 	Doxyfile.in \
 	Makefile.defs \
