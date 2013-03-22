@@ -75,12 +75,16 @@
  * storage, distinct from the input parameters, except where noted.
  *
  * When writing macros like this, it is very important that any
- * variables which are declared within code blocks inside a macro
- * start with an underscore.  This (hopefully) minimizes any name
- * conflicts with user-provided parameters.  For example:
+ * variables declared within a macro code blocks start with an
+ * underscore in order to (hopefully) minimize any name conflicts with
+ * user-provided parameters, such as _f in the following example:
  *
- * { register double _f; stuff; }
+ * #define ABC() do { register double _f; do stuff; } while (0)
  *
+ * All of the macros that introduce a scope like the preceeding
+ * example are written as do { } while (0) loops in order to require
+ * callers provide a trailing semicolon (e.g., ABC();).  This helps
+ * preserve source code formatting.
  */
 
 #ifndef __VMATH_H__
