@@ -41,8 +41,7 @@
 
 #define PI_DIV_3 (M_PI/3.0)
 
-/* SQRT3 had been defined as 1.732050808 */
-#define SQRT3			M_SQRT3
+#define SQRT3			1.732050808
 #define THIRD			0.333333333333333333333333333
 #define INV_TWENTYSEVEN		0.037037037037037037037037037
 #define CUBEROOT(a)	(((a) >= 0.0) ? pow(a, THIRD) : -pow(-(a), THIRD))
