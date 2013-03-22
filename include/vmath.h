@@ -433,20 +433,20 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
 
 
 /** Clamp a 3D vector to zero if within tolerance of zero. */
-#define VCLAMP(a) { \
+#define VCLAMP(a) do { \
 	if (ZERO((a)[X])) (a)[X] = 0.0; \
 	if (ZERO((a)[Y])) (a)[Y] = 0.0; \
 	if (ZERO((a)[Z])) (a)[Z] = 0.0; \
-}
+    } while (0)
 
 
 /** Clamp a 4D vector to zero if within tolerance of zero. */
-#define HCLAMP(a) { \
+#define HCLAMP(a) do { \
 	if (ZERO((a)[X])) (a)[X] = 0.0; \
 	if (ZERO((a)[Y])) (a)[Y] = 0.0; \
 	if (ZERO((a)[Z])) (a)[Z] = 0.0; \
 	if (ZERO((a)[H])) (a)[H] = 0.0; \
-}
+    } while (0)
 
 
 /** @brief Compute distance from a point to a plane. */
@@ -460,11 +460,11 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
 #define DIST_PT_PT(_a, _b) sqrt(DIST_PT_PT_SQ(_a, _b))
 
 /** @brief set translation values of 4x4 matrix with x, y, z values. */
-#define MAT_DELTAS(_m, _x, _y, _z) { \
+#define MAT_DELTAS(_m, _x, _y, _z) do { \
 	(_m)[MDX] = (_x); \
 	(_m)[MDY] = (_y); \
 	(_m)[MDZ] = (_z); \
-}
+    } while (0)
 
 /** @brief set translation values of 4x4 matrix from a vector. */
 #define MAT_DELTAS_VEC(_m, _v)	\
@@ -478,143 +478,143 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
 	MAT_DELTAS(_m, -(_v)[X], -(_v)[Y], -(_v)[Z])
 
 /** @brief get translation values of 4x4 matrix to a vector. */
-#define MAT_DELTAS_GET(_v, _m) { \
+#define MAT_DELTAS_GET(_v, _m) do { \
 	(_v)[X] = (_m)[MDX]; \
 	(_v)[Y] = (_m)[MDY]; \
 	(_v)[Z] = (_m)[MDZ]; \
-}
+    } while (0)
 
 /**
  * @brief get translation values of 4x4 matrix to a vector,
  * reversed.
  */
-#define MAT_DELTAS_GET_NEG(_v, _m) { \
+#define MAT_DELTAS_GET_NEG(_v, _m) do { \
 	(_v)[X] = -(_m)[MDX]; \
 	(_v)[Y] = -(_m)[MDY]; \
 	(_v)[Z] = -(_m)[MDZ]; \
-}
+    } while (0)
 
 /**
  * @brief increment translation elements in a 4x4 matrix with x, y, z
  * values.
  */
-#define MAT_DELTAS_ADD(_m, _x, _y, _z) { \
+#define MAT_DELTAS_ADD(_m, _x, _y, _z) do { \
 	(_m)[MDX] += (_x); \
 	(_m)[MDY] += (_y); \
 	(_m)[MDZ] += (_z); \
-}
+    } while (0)
 
 /**
  * @brief increment translation elements in a 4x4 matrix from a
  * vector.
  */
-#define MAT_DELTAS_ADD_VEC(_m, _v) { \
+#define MAT_DELTAS_ADD_VEC(_m, _v) do { \
 	(_m)[MDX] += (_v)[X]; \
 	(_m)[MDY] += (_v)[Y]; \
 	(_m)[MDZ] += (_v)[Z]; \
-}
+    } while (0)
 
 /**
  * @brief decrement translation elements in a 4x4 matrix with x, y, z
  * values.
  */
-#define MAT_DELTAS_SUB(_m, _x, _y, _z) { \
+#define MAT_DELTAS_SUB(_m, _x, _y, _z) do { \
 	(_m)[MDX] -= (_x); \
 	(_m)[MDY] -= (_y); \
 	(_m)[MDZ] -= (_z); \
-}
+    } while (0)
 
 /**
  * @brief decrement translation elements in a 4x4 matrix from a
  * vector.
  */
-#define MAT_DELTAS_SUB_VEC(_m, _v) { \
+#define MAT_DELTAS_SUB_VEC(_m, _v) do { \
 	(_m)[MDX] -= (_v)[X]; \
 	(_m)[MDY] -= (_v)[Y]; \
 	(_m)[MDZ] -= (_v)[Z]; \
-}
+    } while (0)
 
 /**
  * @brief decrement translation elements in a 4x4 matrix with x, y, z
  * values.
  */
-#define MAT_DELTAS_MUL(_m, _x, _y, _z) { \
+#define MAT_DELTAS_MUL(_m, _x, _y, _z) do { \
 	(_m)[MDX] *= (_x); \
 	(_m)[MDY] *= (_y); \
 	(_m)[MDZ] *= (_z); \
-}
+    } while (0)
 
 /**
  * @brief decrement translation elements in a 4x4 matrix from a
  * vector.
  */
-#define MAT_DELTAS_MUL_VEC(_m, _v) { \
+#define MAT_DELTAS_MUL_VEC(_m, _v) do { \
 	(_m)[MDX] *= (_v)[X]; \
 	(_m)[MDY] *= (_v)[Y]; \
 	(_m)[MDZ] *= (_v)[Z]; \
-}
+    } while (0)
 
 /** @brief set scale of 4x4 matrix from xyz. */
-#define MAT_SCALE(_m, _x, _y, _z) { \
+#define MAT_SCALE(_m, _x, _y, _z) do { \
 	(_m)[MSX] = _x; \
 	(_m)[MSY] = _y; \
 	(_m)[MSZ] = _z; \
-}
+    } while (0)
 
 /** @brief set scale of 4x4 matrix from vector. */
-#define MAT_SCALE_VEC(_m, _v) { \
+#define MAT_SCALE_VEC(_m, _v) do { \
 	(_m)[MSX] = (_v)[X]; \
 	(_m)[MSY] = (_v)[Y]; \
 	(_m)[MSZ] = (_v)[Z]; \
-}
+    } while (0)
 
 /** @brief set uniform scale of 4x4 matrix from scalar. */
 #define MAT_SCALE_ALL(_m, _s) (_m)[MSA] = (_s)
 
 /** @brief add to scaling elements in a 4x4 matrix from xyz. */
-#define MAT_SCALE_ADD(_m, _x, _y, _z) { \
+#define MAT_SCALE_ADD(_m, _x, _y, _z) do { \
 	(_m)[MSX] += _x; \
 	(_m)[MSY] += _y; \
 	(_m)[MSZ] += _z; \
-}
+    } while (0)
 
 /** @brief add to scaling elements in a 4x4 matrix from vector. */
-#define MAT_SCALE_ADD_VEC(_m, _v) { \
+#define MAT_SCALE_ADD_VEC(_m, _v) do { \
 	(_m)[MSX] += (_v)[X]; \
 	(_m)[MSY] += (_v)[Y]; \
 	(_m)[MSZ] += (_v)[Z]; \
-}
+    } while (0)
 
 /** @brief subtract from scaling elements in a 4x4 matrix from xyz. */
-#define MAT_SCALE_SUB(_m, _x, _y, _z) { \
+#define MAT_SCALE_SUB(_m, _x, _y, _z) do { \
 	(_m)[MSX] -= _x; \
 	(_m)[MSY] -= _y; \
 	(_m)[MSZ] -= _z; \
-}
+    } while (0)
 
 /**
  * @brief subtract from scaling elements in a 4x4 matrix from
  * vector.
  */
-#define MAT_SCALE_SUB_VEC(_m, _v) { \
+#define MAT_SCALE_SUB_VEC(_m, _v) do { \
 	(_m)[MSX] -= (_v)[X]; \
 	(_m)[MSY] -= (_v)[Y]; \
 	(_m)[MSZ] -= (_v)[Z]; \
-}
+    } while (0)
 
 /** @brief multiply scaling elements in a 4x4 matrix from xyz. */
-#define MAT_SCALE_MUL(_m, _x, _y, _z) { \
+#define MAT_SCALE_MUL(_m, _x, _y, _z) do { \
 	(_m)[MSX] *= _x; \
 	(_m)[MSY] *= _y; \
 	(_m)[MSZ] *= _z; \
-}
+    } while (0)
 
 /** @brief multiply scaling elements in a 4x4 matrix from vector. */
-#define MAT_SCALE_MUL_VEC(_m, _v) { \
+#define MAT_SCALE_MUL_VEC(_m, _v) do { \
 	(_m)[MSX] *= (_v)[X]; \
 	(_m)[MSY] *= (_v)[Y]; \
 	(_m)[MSZ] *= (_v)[Z]; \
-}
+    } while (0)
 
 
 /**
@@ -624,23 +624,23 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
 
 
 /** @brief Zero a matrix. */
-#define MAT_ZERO(m) { \
+#define MAT_ZERO(m) do { \
 	(m)[0] = (m)[1] = (m)[2] = (m)[3] = \
 	(m)[4] = (m)[5] = (m)[6] = (m)[7] = \
 	(m)[8] = (m)[9] = (m)[10] = (m)[11] = \
 	(m)[12] = (m)[13] = (m)[14] = (m)[15] = 0.0; \
-}
+    } while (0)
 
 /** @brief Set matrix to identity. */
-#define MAT_IDN(m) { \
+#define MAT_IDN(m) do { \
 	(m)[1] = (m)[2] = (m)[3] = (m)[4] = \
 	(m)[6] = (m)[7] = (m)[8] = (m)[9] = \
 	(m)[11] = (m)[12] = (m)[13] = (m)[14] = 0.0; \
 	(m)[0] = (m)[5] = (m)[10] = (m)[15] = 1.0; \
-}
+    } while (0)
 
 /** @brief set t to the transpose of matrix m */
-#define MAT_TRANSPOSE(t, m) { \
+#define MAT_TRANSPOSE(t, m) do { \
 	(t)[0] = (m)[0]; \
 	(t)[4] = (m)[1]; \
 	(t)[8] = (m)[2]; \
@@ -657,10 +657,10 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
 	(t)[7] = (m)[13]; \
 	(t)[11] = (m)[14]; \
 	(t)[15] = (m)[15]; \
-}
+    } while (0)
 
 /** @brief Copy a matrix. */
-#define MAT_COPY(d, s) { \
+#define MAT_COPY(d, s) do { \
 	(d)[0] = (s)[0]; \
 	(d)[1] = (s)[1]; \
 	(d)[2] = (s)[2]; \
@@ -677,321 +677,321 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
 	(d)[13] = (s)[13]; \
 	(d)[14] = (s)[14]; \
 	(d)[15] = (s)[15]; \
-}
+    } while (0)
 
 /** @brief Set 3D vector at `a' to have coordinates `b', `c', and `d'. */
-#define VSET(a, b, c, d) { \
+#define VSET(a, b, c, d) do { \
 	(a)[X] = (b); \
 	(a)[Y] = (c); \
 	(a)[Z] = (d); \
-}
+    } while (0)
 
 /** @brief Set 2D vector at `a' to have coordinates `b' and `c'. */
-#define V2SET(a, b, c) { \
+#define V2SET(a, b, c) do { \
 	(a)[X] = (b); \
 	(a)[Y] = (c); \
-}
+    } while (0)
 
 /** @brief Set 4D vector at `a' to homogeneous coordinates `b', `c', `d', and `e'. */
-#define HSET(a, b, c, d, e) { \
+#define HSET(a, b, c, d, e) do { \
 	(a)[X] = (b); \
 	(a)[Y] = (c); \
 	(a)[Z] = (d); \
 	(a)[H] = (e); \
-}
+    } while (0)
 
 
 /** @brief Set all elements of 3D vector to same scalar value. */
-#define VSETALL(a, s) { \
+#define VSETALL(a, s) do { \
 	(a)[X] = (a)[Y] = (a)[Z] = (s); \
-}
+    } while (0)
 
 /** @brief Set 2D vector elements to same scalar value. */
-#define V2SETALL(a, s) { \
+#define V2SETALL(a, s) do { \
 	(a)[X] = (a)[Y] = (s); \
-}
+    } while (0)
 
 /** @brief Set 4D vector elements to same scalar value. */
-#define HSETALL(a, s) { \
+#define HSETALL(a, s) do { \
 	(a)[X] = (a)[Y] = (a)[Z] = (a)[H] = (s); \
-}
+    } while (0)
 
 
 /** @brief Set all elements of N-vector to same scalar value. */
-#define VSETALLN(v, s, n) { \
+#define VSETALLN(v, s, n) do { \
 	register int _j; \
 	for (_j=0; _j<n; _j++) v[_j]=(s); \
-}
+    } while (0)
 
 
 /** @brief Transfer 3D vector at `b' to vector at `a'. */
-#define VMOVE(a, b) { \
+#define VMOVE(a, b) do { \
 	(a)[X] = (b)[X]; \
 	(a)[Y] = (b)[Y]; \
 	(a)[Z] = (b)[Z]; \
-}
+    } while (0)
 
 /** @brief Move a 2D vector. */
-#define V2MOVE(a, b) { \
+#define V2MOVE(a, b) do { \
 	(a)[X] = (b)[X]; \
 	(a)[Y] = (b)[Y]; \
-}
+    } while (0)
 
 /** @brief Move a homogeneous 4-tuple. */
-#define HMOVE(a, b) { \
+#define HMOVE(a, b) do { \
 	(a)[X] = (b)[X]; \
 	(a)[Y] = (b)[Y]; \
 	(a)[Z] = (b)[Z]; \
 	(a)[W] = (b)[W]; \
-}
+    } while (0)
 
 /** @brief Transfer vector of length `n' at `b' to vector at `a'. */
-#define VMOVEN(a, b, n) { \
+#define VMOVEN(a, b, n) do { \
 	register int _vmove; \
 	for (_vmove = 0; _vmove < (n); _vmove++) { \
 		(a)[_vmove] = (b)[_vmove]; \
 	} \
-}
+    } while (0)
 
 
 /** @brief Reverse the direction of 3D vector `b' and store it in `a'. */
-#define VREVERSE(a, b) { \
+#define VREVERSE(a, b) do { \
 	(a)[X] = -(b)[X]; \
 	(a)[Y] = -(b)[Y]; \
 	(a)[Z] = -(b)[Z]; \
-}
+    } while (0)
 
 /** @brief Reverse the direction of 2D vector `b' and store it in `a'. */
-#define V2REVERSE(a, b) { \
+#define V2REVERSE(a, b) do { \
 	(a)[X] = -(b)[X]; \
 	(a)[Y] = -(b)[Y]; \
-}
+    } while (0)
 
 /**
  * @brief Same as VREVERSE, but for a 4-tuple.  Also useful on plane_t
  * objects.
  */
-#define HREVERSE(a, b) { \
+#define HREVERSE(a, b) do { \
 	(a)[X] = -(b)[X]; \
 	(a)[Y] = -(b)[Y]; \
 	(a)[Z] = -(b)[Z]; \
 	(a)[W] = -(b)[W]; \
-}
+    } while (0)
 
 /** @brief Add 3D vectors at `b' and `c', store result at `a'. */
-#define VADD2(a, b, c) { \
+#define VADD2(a, b, c) do { \
 	(a)[X] = (b)[X] + (c)[X]; \
 	(a)[Y] = (b)[Y] + (c)[Y]; \
 	(a)[Z] = (b)[Z] + (c)[Z]; \
-}
+    } while (0)
 
 /** @brief Add 2D vectors at `b' and `c', store result at `a'. */
-#define V2ADD2(a, b, c) { \
+#define V2ADD2(a, b, c) do { \
 	(a)[X] = (b)[X] + (c)[X]; \
 	(a)[Y] = (b)[Y] + (c)[Y]; \
-}
+    } while (0)
 
 /** @brief Add 4D vectors at `b' and `c', store result at `a'. */
-#define HADD2(a, b, c) { \
+#define HADD2(a, b, c) do { \
 	(a)[X] = (b)[X] + (c)[X]; \
 	(a)[Y] = (b)[Y] + (c)[Y]; \
 	(a)[Z] = (b)[Z] + (c)[Z]; \
 	(a)[W] = (b)[W] + (c)[W]; \
-}
+    } while (0)
 
 /**
  * @brief Add vectors of length `n' at `b' and `c', store result at
  * `a'.
  */
-#define VADD2N(a, b, c, n) { \
+#define VADD2N(a, b, c, n) do { \
 	register int _vadd2; \
 	for (_vadd2 = 0; _vadd2 < (n); _vadd2++) { \
 		(a)[_vadd2] = (b)[_vadd2] + (c)[_vadd2]; \
 	} \
-}
+    } while (0)
 
 
 /**
  * @brief Subtract 3D vector at `c' from vector at `b', store result at
  * `a'.
  */
-#define VSUB2(a, b, c) { \
+#define VSUB2(a, b, c) do { \
 	(a)[X] = (b)[X] - (c)[X]; \
 	(a)[Y] = (b)[Y] - (c)[Y]; \
 	(a)[Z] = (b)[Z] - (c)[Z]; \
-}
+    } while (0)
 
 /**
  * @brief Subtract 2D vector at `c' from vector at `b', store result at
  * `a'.
  */
-#define V2SUB2(a, b, c) { \
+#define V2SUB2(a, b, c) do { \
 	(a)[X] = (b)[X] - (c)[X]; \
 	(a)[Y] = (b)[Y] - (c)[Y]; \
-}
+    } while (0)
 
 /**
  * @brief Subtract 4D vector at `c' from vector at `b', store result at
  * `a'.
  */
-#define HSUB2(a, b, c) { \
+#define HSUB2(a, b, c) do { \
 	(a)[X] = (b)[X] - (c)[X]; \
 	(a)[Y] = (b)[Y] - (c)[Y]; \
 	(a)[Z] = (b)[Z] - (c)[Z]; \
 	(a)[W] = (b)[W] - (c)[W]; \
-}
+    } while (0)
 
 /**
  * @brief Subtract `n' length vector at `c' from vector at `b', store
  * result at `a'.
  */
-#define VSUB2N(a, b, c, n) { \
+#define VSUB2N(a, b, c, n) do { \
 	register int _vsub2; \
 	for (_vsub2 = 0; _vsub2 < (n); _vsub2++) { \
 		(a)[_vsub2] = (b)[_vsub2] - (c)[_vsub2]; \
 	} \
-}
+    } while (0)
 
 
 /** @brief 3D Vectors:  A = B - C - D */
-#define VSUB3(a, b, c, d) { \
+#define VSUB3(a, b, c, d) do { \
 	(a)[X] = (b)[X] - (c)[X] - (d)[X]; \
 	(a)[Y] = (b)[Y] - (c)[Y] - (d)[Y]; \
 	(a)[Z] = (b)[Z] - (c)[Z] - (d)[Z]; \
-}
+    } while (0)
 
 /** @brief 2D Vectors:  A = B - C - D */
-#define V2SUB3(a, b, c, d) { \
+#define V2SUB3(a, b, c, d) do { \
 	(a)[X] = (b)[X] - (c)[X] - (d)[X]; \
 	(a)[Y] = (b)[Y] - (c)[Y] - (d)[Y]; \
-}
+    } while (0)
 
 /** @brief 4D Vectors:  A = B - C - D */
-#define HSUB3(a, b, c, d) { \
+#define HSUB3(a, b, c, d) do { \
 	(a)[X] = (b)[X] - (c)[X] - (d)[X]; \
 	(a)[Y] = (b)[Y] - (c)[Y] - (d)[Y]; \
 	(a)[Z] = (b)[Z] - (c)[Z] - (d)[Z]; \
 	(a)[W] = (b)[W] - (c)[W] - (d)[W]; \
-}
+    } while (0)
 
 /** @brief Vectors:  A = B - C - D for vectors of length `n'. */
-#define VSUB3N(a, b, c, d, n) { \
+#define VSUB3N(a, b, c, d, n) do { \
 	register int _vsub3; \
 	for (_vsub3 = 0; _vsub3 < (n); _vsub3++) { \
 		(a)[_vsub3] = (b)[_vsub3] - (c)[_vsub3] - (d)[_vsub3]; \
 	} \
-}
+    } while (0)
 
 
 /** @brief Add 3 3D vectors at `b', `c', and `d', store result at `a'. */
-#define VADD3(a, b, c, d) { \
+#define VADD3(a, b, c, d) do { \
 	(a)[X] = (b)[X] + (c)[X] + (d)[X]; \
 	(a)[Y] = (b)[Y] + (c)[Y] + (d)[Y]; \
 	(a)[Z] = (b)[Z] + (c)[Z] + (d)[Z]; \
-}
+    } while (0)
 
 /** @brief Add 3 2D vectors at `b', `c', and `d', store result at `a'. */
-#define V2ADD3(a, b, c, d) { \
+#define V2ADD3(a, b, c, d) do { \
 	(a)[X] = (b)[X] + (c)[X] + (d)[X]; \
 	(a)[Y] = (b)[Y] + (c)[Y] + (d)[Y]; \
-}
+    } while (0)
 
 /** @brief Add 3 4D vectors at `b', `c', and `d', store result at `a'. */
-#define HADD3(a, b, c, d) { \
+#define HADD3(a, b, c, d) do { \
 	(a)[X] = (b)[X] + (c)[X] + (d)[X]; \
 	(a)[Y] = (b)[Y] + (c)[Y] + (d)[Y]; \
 	(a)[Z] = (b)[Z] + (c)[Z] + (d)[Z]; \
 	(a)[W] = (b)[W] + (c)[W] + (d)[W]; \
-}
+    } while (0)
 
 /**
  * @brief Add 3 vectors of length `n' at `b', `c', and `d', store
  * result at `a'.
  */
-#define VADD3N(a, b, c, d, n) { \
+#define VADD3N(a, b, c, d, n) do { \
 	register int _vadd3; \
 	for (_vadd3 = 0; _vadd3 < (n); _vadd3++) { \
 		(a)[_vadd3] = (b)[_vadd3] + (c)[_vadd3] + (d)[_vadd3]; \
 	} \
-}
+    } while (0)
 
 
 /**
  * @brief Add 4 vectors at `b', `c', `d', and `e', store result at
  * `a'.
  */
-#define VADD4(a, b, c, d, e) { \
+#define VADD4(a, b, c, d, e) do { \
 	(a)[X] = (b)[X] + (c)[X] + (d)[X] + (e)[X]; \
 	(a)[Y] = (b)[Y] + (c)[Y] + (d)[Y] + (e)[Y]; \
 	(a)[Z] = (b)[Z] + (c)[Z] + (d)[Z] + (e)[Z]; \
-}
+    } while (0)
 
 /**
  * @brief Add 4 2D vectors at `b', `c', `d', and `e', store result at
  * `a'.
  */
-#define V2ADD4(a, b, c, d, e) { \
+#define V2ADD4(a, b, c, d, e) do { \
 	(a)[X] = (b)[X] + (c)[X] + (d)[X] + (e)[X]; \
 	(a)[Y] = (b)[Y] + (c)[Y] + (d)[Y] + (e)[Y]; \
-}
+    } while (0)
 
 /**
  * @brief Add 4 4D vectors at `b', `c', `d', and `e', store result at
  * `a'.
  */
-#define HADD4(a, b, c, d, e) { \
+#define HADD4(a, b, c, d, e) do { \
 	(a)[X] = (b)[X] + (c)[X] + (d)[X] + (e)[X]; \
 	(a)[Y] = (b)[Y] + (c)[Y] + (d)[Y] + (e)[Y]; \
 	(a)[Z] = (b)[Z] + (c)[Z] + (d)[Z] + (e)[Z]; \
 	(a)[W] = (b)[W] + (c)[W] + (d)[W] + (e)[W]; \
-}
+    } while (0)
 
 /**
  * @brief Add 4 `n' length vectors at `b', `c', `d', and `e', store
  * result at `a'.
  */
-#define VADD4N(a, b, c, d, e, n) { \
+#define VADD4N(a, b, c, d, e, n) do { \
 	register int _vadd4; \
 	for (_vadd4 = 0; _vadd4 < (n); _vadd4++) { \
 		(a)[_vadd4] = (b)[_vadd4] + (c)[_vadd4] + (d)[_vadd4] + (e)[_vadd4]; \
 	} \
-}
+    } while (0)
 
 
 /** @brief Scale 3D vector at `b' by scalar `c', store result at `a'. */
-#define VSCALE(a, b, c) { \
+#define VSCALE(a, b, c) do { \
 	(a)[X] = (b)[X] * (c); \
 	(a)[Y] = (b)[Y] * (c); \
 	(a)[Z] = (b)[Z] * (c); \
-}
+    } while (0)
 
 /** @brief Scale 2D vector at `b' by scalar `c', store result at `a'. */
-#define V2SCALE(a, b, c) { \
+#define V2SCALE(a, b, c) do { \
 	(a)[X] = (b)[X] * (c); \
 	(a)[Y] = (b)[Y] * (c); \
-}
+    } while (0)
 
 /** @brief Scale 4D vector at `b' by scalar `c', store result at `a'. */
-#define HSCALE(a, b, c) { \
+#define HSCALE(a, b, c) do { \
 	(a)[X] = (b)[X] * (c); \
 	(a)[Y] = (b)[Y] * (c); \
 	(a)[Z] = (b)[Z] * (c); \
 	(a)[W] = (b)[W] * (c); \
-}
+    } while (0)
 
 /**
  * @brief Scale vector of length `n' at `b' by scalar `c', store
  * result at `a'
  */
-#define VSCALEN(a, b, c, n) { \
+#define VSCALEN(a, b, c, n) do { \
 	register int _vscale; \
 	for (_vscale = 0; _vscale < (n); _vscale++) { \
 		(a)[_vscale] = (b)[_vscale] * (c); \
 	} \
-}
+    } while (0)
 
 /** @brief Normalize vector `a' to be a unit vector. */
-#define VUNITIZE(a) { \
+#define VUNITIZE(a) do { \
 	register double _f = MAGSQ(a); \
 	if (! NEAR_EQUAL(_f, 1.0, VUNITIZE_TOL)) { \
 		_f = sqrt(_f); \
@@ -1002,98 +1002,98 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
 			(a)[X] *= _f; (a)[Y] *= _f; (a)[Z] *= _f; \
 		} \
 	} \
-}
+    } while (0)
 
 /** @brief If vector magnitude is too small, return an error code. */
-#define VUNITIZE_RET(a, ret) { \
+#define VUNITIZE_RET(a, ret) do { \
 	register double _f; \
 	_f = MAGNITUDE(a); \
 	if (_f < VDIVIDE_TOL) return ret; \
 	_f = 1.0/_f; \
 	(a)[X] *= _f; (a)[Y] *= _f; (a)[Z] *= _f; \
-}
+    } while (0)
 
 /**
  * @brief Find the sum of two points, and scale the result.  Often
  * used to find the midpoint.
  */
-#define VADD2SCALE(o, a, b, s) { \
+#define VADD2SCALE(o, a, b, s) do { \
 			(o)[X] = ((a)[X] + (b)[X]) * (s); \
 			(o)[Y] = ((a)[Y] + (b)[Y]) * (s); \
 			(o)[Z] = ((a)[Z] + (b)[Z]) * (s); \
-}
+    } while (0)
 
-#define VADD2SCALEN(o, a, b, n) { \
+#define VADD2SCALEN(o, a, b, n) do { \
 	register int _vadd2scale; \
 	for (_vadd2scale = 0; \
 	_vadd2scale < (n); \
 	_vadd2scale++) { \
 		(o)[_vadd2scale] = ((a)[_vadd2scale] + (b)[_vadd2scale]) * (s); \
 	} \
-}
+    } while (0)
 
 /**
  * @brief Find the difference between two points, and scale result.
  * Often used to compute bounding sphere radius given rpp points.
  */
-#define VSUB2SCALE(o, a, b, s) { \
+#define VSUB2SCALE(o, a, b, s) do { \
 			(o)[X] = ((a)[X] - (b)[X]) * (s); \
 			(o)[Y] = ((a)[Y] - (b)[Y]) * (s); \
 			(o)[Z] = ((a)[Z] - (b)[Z]) * (s); \
-}
+    } while (0)
 
-#define VSUB2SCALEN(o, a, b, n) { \
+#define VSUB2SCALEN(o, a, b, n) do { \
 	register int _vsub2scale; \
 	for (_vsub2scale = 0; \
 	_vsub2scale < (n); \
 	_vsub2scale++) { \
 		(o)[_vsub2scale] = ((a)[_vsub2scale] - (b)[_vsub2scale]) * (s); \
 	} \
-}
+    } while (0)
 
 
 /** @brief Combine together several vectors, scaled by a scalar. */
-#define VCOMB3(o, a, b, c, d, e, f) { \
+#define VCOMB3(o, a, b, c, d, e, f) do { \
 	(o)[X] = (a) * (b)[X] + (c) * (d)[X] + (e) * (f)[X]; \
 	(o)[Y] = (a) * (b)[Y] + (c) * (d)[Y] + (e) * (f)[Y]; \
 	(o)[Z] = (a) * (b)[Z] + (c) * (d)[Z] + (e) * (f)[Z]; \
-}
+    } while (0)
 
-#define VCOMB3N(o, a, b, c, d, e, f, n) { \
+#define VCOMB3N(o, a, b, c, d, e, f, n) do { \
 	register int _vcomb3; \
 	for (_vcomb3 = 0; \
 	_vcomb3 < (n); \
 	_vcomb3++) { \
 		(o)[_vcomb3] = (a) * (b)[_vcomb3] + (c) * (d)[_vcomb3] + (e) * (f)[_vcomb3]; \
 	} \
-}
+    } while (0)
 
-#define VCOMB2(o, a, b, c, d) { \
+#define VCOMB2(o, a, b, c, d) do { \
 	(o)[X] = (a) * (b)[X] + (c) * (d)[X]; \
 	(o)[Y] = (a) * (b)[Y] + (c) * (d)[Y]; \
 	(o)[Z] = (a) * (b)[Z] + (c) * (d)[Z]; \
-}
+    } while (0)
 
-#define VCOMB2N(o, a, b, c, d, n) { \
+#define VCOMB2N(o, a, b, c, d, n) do { \
 	register int _vcomb2; \
 	for (_vcomb2 = 0; \
 	_vcomb2 < (n); \
 	_vcomb2++) { \
 		(o)[_vcomb2] = (a) * (b)[_vcomb2] + (c) * (d)[_vcomb2]; \
 	} \
-}
+    } while (0)
 
-#define VJOIN4(a, b, c, d, e, f, g, h, i, j) { \
+#define VJOIN4(a, b, c, d, e, f, g, h, i, j) do { \
 	(a)[X] = (b)[X] + (c)*(d)[X] + (e)*(f)[X] + (g)*(h)[X] + (i)*(j)[X]; \
 	(a)[Y] = (b)[Y] + (c)*(d)[Y] + (e)*(f)[Y] + (g)*(h)[Y] + (i)*(j)[Y]; \
 	(a)[Z] = (b)[Z] + (c)*(d)[Z] + (e)*(f)[Z] + (g)*(h)[Z] + (i)*(j)[Z]; \
-}
+    } while (0)
 
-#define VJOIN3(a, b, c, d, e, f, g, h) { \
+#define VJOIN3(a, b, c, d, e, f, g, h) do { \
 	(a)[X] = (b)[X] + (c)*(d)[X] + (e)*(f)[X] + (g)*(h)[X]; \
 	(a)[Y] = (b)[Y] + (c)*(d)[Y] + (e)*(f)[Y] + (g)*(h)[Y]; \
 	(a)[Z] = (b)[Z] + (c)*(d)[Z] + (e)*(f)[Z] + (g)*(h)[Z]; \
-}
+    } while (0)
 
 
 /**
@@ -1102,11 +1102,11 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
  * scalar `c' times vector at `d' plus
  * scalar `e' times vector at `f'
  */
-#define VJOIN2(a, b, c, d, e, f) { \
+#define VJOIN2(a, b, c, d, e, f) do { \
 	(a)[X] = (b)[X] + (c) * (d)[X] + (e) * (f)[X]; \
 	(a)[Y] = (b)[Y] + (c) * (d)[Y] + (e) * (f)[Y]; \
 	(a)[Z] = (b)[Z] + (c) * (d)[Z] + (e) * (f)[Z]; \
-}
+    } while (0)
 
 /**
  * @brief Compose 2D vector at `a' of:
@@ -1114,10 +1114,10 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
  * scalar `c' times vector at `d' plus
  * scalar `e' times vector at `f'
  */
-#define V2JOIN2(a, b, c, d, e, f) { \
+#define V2JOIN2(a, b, c, d, e, f) do { \
 	(a)[X] = (b)[X] + (c) * (d)[X] + (e) * (f)[X]; \
 	(a)[Y] = (b)[Y] + (c) * (d)[Y] + (e) * (f)[Y]; \
-}
+    } while (0)
 
 /**
  * @brief Compose 4D vector at `a' of:
@@ -1125,49 +1125,49 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
  * scalar `c' times vector at `d' plus
  * scalar `e' times vector at `f'
  */
-#define HJOIN2(a, b, c, d, e, f) { \
+#define HJOIN2(a, b, c, d, e, f) do { \
 	(a)[X] = (b)[X] + (c) * (d)[X] + (e) * (f)[X]; \
 	(a)[Y] = (b)[Y] + (c) * (d)[Y] + (e) * (f)[Y]; \
 	(a)[Z] = (b)[Z] + (c) * (d)[Z] + (e) * (f)[Z]; \
 	(a)[W] = (b)[W] + (c) * (d)[W] + (e) * (f)[W]; \
-}
+    } while (0)
 
-#define VJOIN2N(a, b, c, d, e, f, n) { \
+#define VJOIN2N(a, b, c, d, e, f, n) do { \
 	register int _vjoin2; \
 	for (_vjoin2 = 0; \
 	_vjoin2 < (n); \
 	_vjoin2++) { \
 		(a)[_vjoin2] = (b)[_vjoin2] + (c) * (d)[_vjoin2] + (e) * (f)[_vjoin2]; \
 	} \
-}
+    } while (0)
 
 
-#define VJOIN1(a, b, c, d) { \
+#define VJOIN1(a, b, c, d) do { \
 	(a)[X] = (b)[X] + (c) * (d)[X]; \
 	(a)[Y] = (b)[Y] + (c) * (d)[Y]; \
 	(a)[Z] = (b)[Z] + (c) * (d)[Z]; \
-}
+    } while (0)
 
-#define V2JOIN1(a, b, c, d) { \
+#define V2JOIN1(a, b, c, d) do { \
 	(a)[X] = (b)[X] + (c) * (d)[X]; \
 	(a)[Y] = (b)[Y] + (c) * (d)[Y]; \
-}
+    } while (0)
 
-#define HJOIN1(a, b, c, d) { \
+#define HJOIN1(a, b, c, d) do { \
 	(a)[X] = (b)[X] + (c) * (d)[X]; \
 	(a)[Y] = (b)[Y] + (c) * (d)[Y]; \
 	(a)[Z] = (b)[Z] + (c) * (d)[Z]; \
 	(a)[W] = (b)[W] + (c) * (d)[W]; \
-}
+    } while (0)
 
-#define VJOIN1N(a, b, c, d, n) { \
+#define VJOIN1N(a, b, c, d, n) do { \
 	register int _vjoin1; \
 	for (_vjoin1 = 0; \
 	_vjoin1 < (n); \
 	_vjoin1++) { \
 		(a)[_vjoin1] = (b)[_vjoin1] + (c) * (d)[_vjoin1]; \
 	} \
-}
+    } while (0)
 
 
 /**
@@ -1175,20 +1175,20 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
  * scalar `b' times vector at `c' plus
  * scalar `d' times vector at `e'
  */
-#define VBLEND2(a, b, c, d, e) { \
+#define VBLEND2(a, b, c, d, e) do { \
 	(a)[X] = (b) * (c)[X] + (d) * (e)[X]; \
 	(a)[Y] = (b) * (c)[Y] + (d) * (e)[Y]; \
 	(a)[Z] = (b) * (c)[Z] + (d) * (e)[Z]; \
-}
+    } while (0)
 
-#define VBLEND2N(a, b, c, d, e, n) { \
+#define VBLEND2N(a, b, c, d, e, n) do { \
 	register int _vblend2; \
 	for (_vblend2 = 0; \
 	_vblend2 < (n); \
 	_vblend2++) { \
 		(a)[_vblend2] = (b) * (c)[_vblend2] + (d) * (e)[_vblend2]; \
 	} \
-}
+    } while (0)
 
 
 /**
@@ -1196,10 +1196,10 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
  * vector `c' is the component of `a' parallel to `b'
  *     "    `d' "   "     "      "   "  orthogonal "   "
  */
-#define VPROJECT(a, b, c, d) { \
+#define VPROJECT(a, b, c, d) do { \
     VSCALE(c, b, VDOT(a, b) / VDOT(b, b)); \
     VSUB2(d, a, c); \
-}
+    } while (0)
 
 /** @brief Return scalar magnitude squared of vector at `a' */
 #define MAGSQ(a)	((a)[X]*(a)[X] + (a)[Y]*(a)[Y] + (a)[Z]*(a)[Z])
@@ -1223,11 +1223,11 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
  * result vector points "out" of the plane.  This outward pointing
  * normal is the BRL-CAD convention.
  */
-#define VCROSS(a, b, c) { \
+#define VCROSS(a, b, c) do { \
 	(a)[X] = (b)[Y] * (c)[Z] - (b)[Z] * (c)[Y]; \
 	(a)[Y] = (b)[Z] * (c)[X] - (b)[X] * (c)[Z]; \
 	(a)[Z] = (b)[X] * (c)[Y] - (b)[Y] * (c)[X]; \
-}
+    } while (0)
 
 /**
  * Return the analog of a cross product for 2D vectors `a' and `b'
@@ -1314,30 +1314,30 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
 #endif
 
 /** @brief Vector element multiplication.  Really: diagonal matrix X vect. */
-#define VELMUL(a, b, c) { \
+#define VELMUL(a, b, c) do { \
 	(a)[X] = (b)[X] * (c)[X]; \
 	(a)[Y] = (b)[Y] * (c)[Y]; \
 	(a)[Z] = (b)[Z] * (c)[Z]; \
-}
+    } while (0)
 
-#define VELMUL3(a, b, c, d) { \
+#define VELMUL3(a, b, c, d) do { \
 	(a)[X] = (b)[X] * (c)[X] * (d)[X]; \
 	(a)[Y] = (b)[Y] * (c)[Y] * (d)[Y]; \
 	(a)[Z] = (b)[Z] * (c)[Z] * (d)[Z]; \
-}
+    } while (0)
 
 /** @brief Similar to VELMUL. */
-#define VELDIV(a, b, c) { \
+#define VELDIV(a, b, c) do { \
 	(a)[0] = (b)[0] / (c)[0]; \
 	(a)[1] = (b)[1] / (c)[1]; \
 	(a)[2] = (b)[2] / (c)[2]; \
-}
+    } while (0)
 
 /**
  * @brief Given a direction vector, compute the inverses of each element.
  * When division by zero would have occurred, mark inverse as INFINITY.
  */
-#define VINVDIR(_inv, _dir) { \
+#define VINVDIR(_inv, _dir) do { \
 	if ((_dir)[X] < -SQRT_SMALL_FASTF || (_dir)[X] > SQRT_SMALL_FASTF) { \
 		(_inv)[X]=1.0/(_dir)[X]; \
 	} else { \
@@ -1356,111 +1356,111 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
 		(_dir)[Z] = 0.0; \
 		(_inv)[Z] = INFINITY; \
 	} \
-    }
+    } while (0)
 
 /**
  * @brief Apply the 3x3 part of a mat_t to a 3-tuple.  This rotates a
  * vector without scaling it (changing its length).
  */
-#define MAT3X3VEC(o, mat, vec) { \
+#define MAT3X3VEC(o, mat, vec) do { \
 	(o)[X] = (mat)[X]*(vec)[X]+(mat)[Y]*(vec)[Y] + (mat)[ 2]*(vec)[Z]; \
 	(o)[Y] = (mat)[4]*(vec)[X]+(mat)[5]*(vec)[Y] + (mat)[ 6]*(vec)[Z]; \
 	(o)[Z] = (mat)[8]*(vec)[X]+(mat)[9]*(vec)[Y] + (mat)[10]*(vec)[Z]; \
-}
+    } while (0)
 
 /** @brief Multiply a 3-tuple by the 3x3 part of a mat_t. */
-#define VEC3X3MAT(o, i, m) { \
+#define VEC3X3MAT(o, i, m) do { \
 	(o)[X] = (i)[X]*(m)[X] + (i)[Y]*(m)[4] + (i)[Z]*(m)[8]; \
 	(o)[Y] = (i)[X]*(m)[1] + (i)[Y]*(m)[5] + (i)[Z]*(m)[9]; \
 	(o)[Z] = (i)[X]*(m)[2] + (i)[Y]*(m)[6] + (i)[Z]*(m)[10]; \
-}
+    } while (0)
 
 /** @brief Apply the 3x3 part of a mat_t to a 2-tuple (Z part=0). */
-#define MAT3X2VEC(o, mat, vec) { \
+#define MAT3X2VEC(o, mat, vec) do { \
 	(o)[X] = (mat)[0]*(vec)[X] + (mat)[Y]*(vec)[Y]; \
 	(o)[Y] = (mat)[4]*(vec)[X] + (mat)[5]*(vec)[Y]; \
 	(o)[Z] = (mat)[8]*(vec)[X] + (mat)[9]*(vec)[Y]; \
-}
+    } while (0)
 
 /** @brief Multiply a 2-tuple (Z=0) by the 3x3 part of a mat_t. */
-#define VEC2X3MAT(o, i, m) { \
+#define VEC2X3MAT(o, i, m) do { \
 	(o)[X] = (i)[X]*(m)[0] + (i)[Y]*(m)[4]; \
 	(o)[Y] = (i)[X]*(m)[1] + (i)[Y]*(m)[5]; \
 	(o)[Z] = (i)[X]*(m)[2] + (i)[Y]*(m)[6]; \
-}
+    } while (0)
 
 /**
  * @brief Apply a 4x4 matrix to a 3-tuple which is an absolute Point
  * in space.  Output and input points should be separate arrays.
  */
-#define MAT4X3PNT(o, m, i) { \
+#define MAT4X3PNT(o, m, i) do { \
 	register double _f; \
 	_f = 1.0/((m)[12]*(i)[X] + (m)[13]*(i)[Y] + (m)[14]*(i)[Z] + (m)[15]); \
 	(o)[X]=((m)[0]*(i)[X] + (m)[1]*(i)[Y] + (m)[ 2]*(i)[Z] + (m)[3]) * _f; \
 	(o)[Y]=((m)[4]*(i)[X] + (m)[5]*(i)[Y] + (m)[ 6]*(i)[Z] + (m)[7]) * _f; \
 	(o)[Z]=((m)[8]*(i)[X] + (m)[9]*(i)[Y] + (m)[10]*(i)[Z] + (m)[11])* _f; \
-}
+    } while (0)
 
 /**
  * @brief Multiply an Absolute 3-Point by a full 4x4 matrix.  Output
  * and input points should be separate arrays.
  */
-#define PNT3X4MAT(o, i, m) { \
+#define PNT3X4MAT(o, i, m) do { \
 	register double _f; \
 	_f = 1.0/((i)[X]*(m)[3] + (i)[Y]*(m)[7] + (i)[Z]*(m)[11] + (m)[15]); \
 	(o)[X]=((i)[X]*(m)[0] + (i)[Y]*(m)[4] + (i)[Z]*(m)[8] + (m)[12]) * _f; \
 	(o)[Y]=((i)[X]*(m)[1] + (i)[Y]*(m)[5] + (i)[Z]*(m)[9] + (m)[13]) * _f; \
 	(o)[Z]=((i)[X]*(m)[2] + (i)[Y]*(m)[6] + (i)[Z]*(m)[10] + (m)[14])* _f; \
-}
+    } while (0)
 
 /**
  * @brief Multiply an Absolute hvect_t 4-Point by a full 4x4 matrix.
  * Output and input points should be separate arrays.
  */
-#define MAT4X4PNT(o, m, i) { \
+#define MAT4X4PNT(o, m, i) do { \
 	(o)[X]=(m)[ 0]*(i)[X] + (m)[ 1]*(i)[Y] + (m)[ 2]*(i)[Z] + (m)[ 3]*(i)[H]; \
 	(o)[Y]=(m)[ 4]*(i)[X] + (m)[ 5]*(i)[Y] + (m)[ 6]*(i)[Z] + (m)[ 7]*(i)[H]; \
 	(o)[Z]=(m)[ 8]*(i)[X] + (m)[ 9]*(i)[Y] + (m)[10]*(i)[Z] + (m)[11]*(i)[H]; \
 	(o)[H]=(m)[12]*(i)[X] + (m)[13]*(i)[Y] + (m)[14]*(i)[Z] + (m)[15]*(i)[H]; \
-}
+    } while (0)
 
 /**
  * @brief Apply a 4x4 matrix to a 3-tuple which is a relative Vector
  * in space. This macro can scale the length of the vector if [15] !=
  * 1.0.  Output and input vectors should be separate arrays.
  */
-#define MAT4X3VEC(o, m, i) { \
+#define MAT4X3VEC(o, m, i) do { \
 	register double _f; \
 	_f = 1.0/((m)[15]); \
 	(o)[X] = ((m)[0]*(i)[X] + (m)[1]*(i)[Y] + (m)[ 2]*(i)[Z]) * _f; \
 	(o)[Y] = ((m)[4]*(i)[X] + (m)[5]*(i)[Y] + (m)[ 6]*(i)[Z]) * _f; \
 	(o)[Z] = ((m)[8]*(i)[X] + (m)[9]*(i)[Y] + (m)[10]*(i)[Z]) * _f; \
-}
+    } while (0)
 
-#define MAT4XSCALOR(o, m, i) { \
+#define MAT4XSCALOR(o, m, i) do { \
 	(o) = (i) / (m)[15]; \
-}
+    } while (0)
 
 /**
  * @brief Multiply a Relative 3-Vector by most of a 4x4 matrix.
  * Output and input vectors should be separate arrays.
  */
-#define VEC3X4MAT(o, i, m) { \
+#define VEC3X4MAT(o, i, m) do { \
 	register double _f; \
 	_f = 1.0/((m)[15]); \
 	(o)[X] = ((i)[X]*(m)[0] + (i)[Y]*(m)[4] + (i)[Z]*(m)[8]) * _f; \
 	(o)[Y] = ((i)[X]*(m)[1] + (i)[Y]*(m)[5] + (i)[Z]*(m)[9]) * _f; \
 	(o)[Z] = ((i)[X]*(m)[2] + (i)[Y]*(m)[6] + (i)[Z]*(m)[10]) * _f; \
-}
+    } while (0)
 
 /** @brief Multiply a Relative 2-Vector by most of a 4x4 matrix. */
-#define VEC2X4MAT(o, i, m) { \
+#define VEC2X4MAT(o, i, m) do { \
 	register double _f; \
 	_f = 1.0/((m)[15]); \
 	(o)[X] = ((i)[X]*(m)[0] + (i)[Y]*(m)[4]) * _f; \
 	(o)[Y] = ((i)[X]*(m)[1] + (i)[Y]*(m)[5]) * _f; \
 	(o)[Z] = ((i)[X]*(m)[2] + (i)[Y]*(m)[6]) * _f; \
-}
+    } while (0)
 
 /** @brief Test a vector for non-unit length. */
 #define BN_VEC_NON_UNIT_LEN(_vec)	\
@@ -1475,27 +1475,27 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
 
 #define V_MAX(r, s) if ((r) < (s)) r = (s)
 
-#define VMIN(r, s) { \
+#define VMIN(r, s) do { \
 	V_MIN((r)[X], (s)[X]); V_MIN((r)[Y], (s)[Y]); V_MIN((r)[Z], (s)[Z]); \
-}
+    } while (0)
 
-#define VMAX(r, s) { \
+#define VMAX(r, s) do { \
 	V_MAX((r)[X], (s)[X]); V_MAX((r)[Y], (s)[Y]); V_MAX((r)[Z], (s)[Z]); \
-}
+    } while (0)
 
-#define VMINMAX(min, max, pt) { \
+#define VMINMAX(min, max, pt) do { \
 	VMIN((min), (pt)); VMAX((max), (pt)); \
-}
+    } while (0)
 
 /**
  * @brief Divide out homogeneous parameter from hvect_t, creating
  * vect_t.
  */
-#define HDIVIDE(a, b) { \
+#define HDIVIDE(a, b) do { \
 	(a)[X] = (b)[X] / (b)[H]; \
 	(a)[Y] = (b)[Y] / (b)[H]; \
 	(a)[Z] = (b)[Z] / (b)[H]; \
-}
+    } while (0)
 
 /**
  * @brief Some 2-D versions of the 3-D macros given above.
@@ -1539,22 +1539,22 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
  * Alternatively, in degrees:
  * QUAT_FROM_ROT_DEG(quat, 180.0, 1.0, 0.0, 0.0, 0.0);
  */
-#define QUAT_FROM_ROT(q, r, x, y, z) { \
+#define QUAT_FROM_ROT(q, r, x, y, z) do { \
 	register fastf_t _rot = (r) * 0.5; \
 	QSET(q, x, y, z, cos(_rot)); \
 	VUNITIZE(q); \
 	_rot = sin(_rot); /* _rot is really just a temp variable now */ \
 	VSCALE(q, q, _rot); \
-}
+    } while (0)
 
-#define QUAT_FROM_VROT(q, r, v) { \
+#define QUAT_FROM_VROT(q, r, v) do { \
 	register fastf_t _rot = (r) * 0.5; \
 	VMOVE(q, v); \
 	VUNITIZE(q); \
 	(q)[W] = cos(_rot); \
 	_rot = sin(_rot); /* _rot is really just a temp variable now */ \
 	VSCALE(q, q, _rot); \
-}
+    } while (0)
 
 #define QUAT_FROM_VROT_DEG(q, r, v) \
 	QUAT_FROM_VROT(q, ((r)*DEG2RAD), v)
@@ -1567,58 +1567,58 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
  * @brief Set quaternion at `a' to have coordinates `b', `c', `d', and
  * `e'.
  */
-#define QSET(a, b, c, d, e) { \
+#define QSET(a, b, c, d, e) do { \
 	(a)[X] = (b); \
 	(a)[Y] = (c); \
 	(a)[Z] = (d); \
 	(a)[W] = (e); \
-}
+    } while (0)
 
 /** @brief Transfer quaternion at `b' to quaternion at `a'. */
-#define QMOVE(a, b) { \
+#define QMOVE(a, b) do { \
 	(a)[X] = (b)[X]; \
 	(a)[Y] = (b)[Y]; \
 	(a)[Z] = (b)[Z]; \
 	(a)[W] = (b)[W]; \
-}
+    } while (0)
 
 /** @brief Add quaternions at `b' and `c', store result at `a'. */
-#define QADD2(a, b, c) { \
+#define QADD2(a, b, c) do { \
 	(a)[X] = (b)[X] + (c)[X]; \
 	(a)[Y] = (b)[Y] + (c)[Y]; \
 	(a)[Z] = (b)[Z] + (c)[Z]; \
 	(a)[W] = (b)[W] + (c)[W]; \
-}
+    } while (0)
 
 /**
  * @brief Subtract quaternion at `c' from quaternion at `b', store
  * result at `a'.
  */
-#define QSUB2(a, b, c) { \
+#define QSUB2(a, b, c) do { \
 	(a)[X] = (b)[X] - (c)[X]; \
 	(a)[Y] = (b)[Y] - (c)[Y]; \
 	(a)[Z] = (b)[Z] - (c)[Z]; \
 	(a)[W] = (b)[W] - (c)[W]; \
-}
+    } while (0)
 
 /**
  * @brief Scale quaternion at `b' by scalar `c', store result at
  * `a'.
  */
-#define QSCALE(a, b, c) { \
+#define QSCALE(a, b, c) do { \
 	(a)[X] = (b)[X] * (c); \
 	(a)[Y] = (b)[Y] * (c); \
 	(a)[Z] = (b)[Z] * (c); \
 	(a)[W] = (b)[W] * (c); \
-}
+    } while (0)
 
 /** @brief Normalize quaternion 'a' to be a unit quaternion. */
-#define QUNITIZE(a) { \
+#define QUNITIZE(a) do { \
 	register double _f; \
 	_f = QMAGNITUDE(a); \
 	if (_f < VDIVIDE_TOL) _f = 0.0; else _f = 1.0/_f; \
 	(a)[X] *= _f; (a)[Y] *= _f; (a)[Z] *= _f; (a)[W] *= _f; \
-}
+    } while (0)
 
 /** @brief Return scalar magnitude squared of quaternion at `a'. */
 #define QMAGSQ(a) \
@@ -1640,30 +1640,30 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
  * VCROSS(temp, b, c);
  * VJOIN2(a, temp, b[W], c, c[W], b);
  */
-#define QMUL(a, b, c) { \
+#define QMUL(a, b, c) do { \
 	(a)[W] = (b)[W]*(c)[W] - (b)[X]*(c)[X] - (b)[Y]*(c)[Y] - (b)[Z]*(c)[Z]; \
 	(a)[X] = (b)[W]*(c)[X] + (b)[X]*(c)[W] + (b)[Y]*(c)[Z] - (b)[Z]*(c)[Y]; \
 	(a)[Y] = (b)[W]*(c)[Y] + (b)[Y]*(c)[W] + (b)[Z]*(c)[X] - (b)[X]*(c)[Z]; \
 	(a)[Z] = (b)[W]*(c)[Z] + (b)[Z]*(c)[W] + (b)[X]*(c)[Y] - (b)[Y]*(c)[X]; \
-}
+    } while (0)
 
 /** @brief Conjugate quaternion */
-#define QCONJUGATE(a, b) { \
+#define QCONJUGATE(a, b) do { \
 	(a)[X] = -(b)[X]; \
 	(a)[Y] = -(b)[Y]; \
 	(a)[Z] = -(b)[Z]; \
 	(a)[W] =  (b)[W]; \
-}
+    } while (0)
 
 /** @brief Multiplicative inverse quaternion */
-#define QINVERSE(a, b) { \
+#define QINVERSE(a, b) do { \
 	register double _f = QMAGSQ(b); \
 	if (_f < VDIVIDE_TOL) _f = 0.0; else _f = 1.0/_f; \
 	(a)[X] = -(b)[X] * _f; \
 	(a)[Y] = -(b)[Y] * _f; \
 	(a)[Z] = -(b)[Z] * _f; \
 	(a)[W] =  (b)[W] * _f; \
-}
+    } while (0)
 
 /**
  * @brief Blend into quaternion `a'
@@ -1671,12 +1671,12 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
  * scalar `b' times quaternion at `c' plus
  * scalar `d' times quaternion at `e'
  */
-#define QBLEND2(a, b, c, d, e) { \
+#define QBLEND2(a, b, c, d, e) do { \
 	(a)[X] = (b) * (c)[X] + (d) * (e)[X]; \
 	(a)[Y] = (b) * (c)[Y] + (d) * (e)[Y]; \
 	(a)[Z] = (b) * (c)[Z] + (d) * (e)[Z]; \
 	(a)[W] = (b) * (c)[W] + (d) * (e)[W]; \
-}
+    } while (0)
 
 /**
  * Macros for dealing with 3-D "extents", aka bounding boxes, that are
@@ -1762,18 +1762,18 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
 	(_lo1)[Z] >= (_lo2)[Z] && (_hi1)[Z] <= (_hi2)[Z])
 
 /** Convert an azimuth/elevation to a direction vector. */
-#define V3DIR_FROM_AZEL(_d, _a, _e) { \
+#define V3DIR_FROM_AZEL(_d, _a, _e) do { \
 	register fastf_t _c_e = cos(_e); \
 	(_d)[X] = cos(_a) * _c_e; \
 	(_d)[Y] = sin(_a) * _c_e; \
 	(_d)[Z] = sin(_e); \
-}
+    } while (0)
 
 /** Convert a direction vector to azimuth/elevation (in radians). */
-#define AZEL_FROM_V3DIR(_a, _e, _d) { \
+#define AZEL_FROM_V3DIR(_a, _e, _d) do { \
 	(_a) = ((NEAR_ZERO((_d)[X], SMALL_FASTF)) && (NEAR_ZERO((_d)[Y], SMALL_FASTF))) ? 0.0 : atan2(-((_d)[Y]), -((_d)[X])) * -RAD2DEG; \
 	(_e) = atan2(-((_d)[Z]), sqrt((_d)[X]*(_d)[X] + (_d)[Y]*(_d)[Y])) * -RAD2DEG; \
-}
+    } while (0)
 
 
 /** Swap two 3D vectors */
