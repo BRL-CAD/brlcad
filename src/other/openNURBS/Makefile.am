@@ -109,6 +109,10 @@ ON_INC = \
 	opennurbs_zlib.h
 
 ON_SRC = \
+	opennurbs_basic.cpp \
+	opennurbs_brep_changesrf.cpp \
+	opennurbs_brep_kinky.cpp \
+	opennurbs_x.cpp \
 	opennurbs_3dm_attributes.cpp \
 	opennurbs_3dm_properties.cpp \
 	opennurbs_3dm_settings.cpp \
@@ -229,9 +233,6 @@ libopenNURBS_la_LIBADD = libopenNURBS_nil.la
 
 ON_EXTRA = \
 	opennurbs.rc \
-	opennurbs_basic.cpp \
-	opennurbs_brep_changesrf.cpp \
-	opennurbs_brep_kinky.cpp \
 	opennurbs_gl.cpp \
 	opennurbs_precompiledheader.cpp \
 	opennurbs_zlib_memory.cpp
