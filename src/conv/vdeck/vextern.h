@@ -77,6 +77,7 @@ extern int	ndir, nns, nnr;
 
 extern int			delsol, delreg;
 extern char			buff[];
+extern off_t			savsol;
 
 extern jmp_buf		env;
 #define EPSILON		0.0001
