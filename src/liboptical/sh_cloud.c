@@ -61,9 +61,6 @@ struct mfuncs cloud_mfuncs[] = {
 };
 
 
-#define NUMSINES 4
-
-
 /*
  * C L O U D _ T E X T U R E
  *
@@ -105,7 +102,10 @@ cloud_texture(register fastf_t x, register fastf_t y, fastf_t Contrast, fastf_t 
     /* unattenuated starting factor */
     C = 1.0;
 
-    for (i = 0; i < NUMSINES; i++) {
+/* we iterate in pi/2 steps to 2pi */
+#define TWO_PI_OVER_PI_OVER_TWO 4
+
+    for (i = 0; i < TWO_PI_OVER_PI_OVER_TWO; i++) {
 	/*
 	 * Compute one term of each summation.
 	 */
@@ -118,8 +118,8 @@ cloud_texture(register fastf_t x, register fastf_t y, fastf_t Contrast, fastf_t 
 	 */
 	Px = bn_halfpi * bn_tab_sin(Fy * y);
 	Py = bn_halfpi * bn_tab_sin(Fx * x);
-	Fx *= 2.0;
-	Fy *= 2.0;
+	Fx *= 2;
+	Fy *= 2;
 
 	/* next iteration is multiplied by a diminishing sqrt(1/2)
 	 * factor, see above note regarding precision.
@@ -129,7 +129,7 @@ cloud_texture(register fastf_t x, register fastf_t y, fastf_t Contrast, fastf_t 
 
     /* Choose a magic k! */
     /* Compute max possible summation */
-    k =  NUMSINES * 2 * NUMSINES;
+    k =  TWO_PI_OVER_PI_OVER_TWO * 2 * TWO_PI_OVER_PI_OVER_TWO;
 
     return t1 * t2 / k;
 }
