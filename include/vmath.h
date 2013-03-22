@@ -107,66 +107,66 @@
 __BEGIN_DECLS
 
 #ifndef M_
-#  define M_		XXX /**< */
+#  define M_		XXX /**< all with 36-digits of precision */
 #endif
 
 #ifndef M_1_PI
-#  define M_1_PI	0.31830988618379067153776752675 /**< 1/pi */
+#  define M_1_PI	0.318309886183790671537767526745028724  /**< 1/pi */
 #endif
 #ifndef M_2_PI
-#  define M_2_PI	0.63661977236758134307553505349 /**< 2/pi */
+#  define M_2_PI	0.636619772367581343075535053490057448  /**< 2/pi */
 #endif
 #ifndef M_2_SQRTPI
-#  define M_2_SQRTPI	1.12837916709551257389615890312 /**< 2/sqrt(pi) */
+#  define M_2_SQRTPI	1.12837916709551257389615890312154517   /**< 2/sqrt(pi) */
 #endif
 #ifndef M_E
-#  define M_E		2.71828182845904523536028747135 /**< e */
+#  define M_E		2.71828182845904523536028747135266250   /**< e */
 #endif
 #ifndef M_EULER
-#  define M_EULER	0.57721566490153286060651209008 /**< Euler's constant */
+#  define M_EULER	0.577215664901532860606512090082402431   /**< Euler's constant */
 #endif
 #ifndef M_LOG2E
-#  define M_LOG2E	1.44269504088896340735992468100 /**< log_2(e) */
+#  define M_LOG2E	1.44269504088896340735992468100189214   /**< log_2(e) */
 #endif
 #ifndef M_LOG10E
-#  define M_LOG10E	0.43429448190325182765112891892 /**< log_10(e) */
-#endif
-#ifndef M_LN10
-#  define M_LN10	2.30258509299404568401799145468 /**< log_e(10) */
+#  define M_LOG10E	0.434294481903251827651128918916605082  /**< log_10(e) */
 #endif
 #ifndef M_LN2
-#  define M_LN2		0.69314718055994530941723212146 /**< log_e(2) */
+#  define M_LN2		0.693147180559945309417232121458176568  /**< log_e(2) */
+#endif
+#ifndef M_LN10
+#  define M_LN10	2.30258509299404568401799145468436421   /**< log_e(10) */
 #endif
 #ifndef M_LNPI
-#  define M_LNPI	1.14472988584940017414342735135 /**< log_e(pi) */
+#  define M_LNPI	1.14472988584940017414342735135305871   /** log_e(pi) */
 #endif
 #ifndef M_PI
-#  define M_PI		3.14159265358979323846264338328 /**< pi */
+#  define M_PI		3.14159265358979323846264338327950288 /**< pi */
 #endif
 #ifndef M_PI_2
-#  define M_PI_2	1.57079632679489661923132169164 /**< pi/2 */
+#  define M_PI_2	1.57079632679489661923132169163975144   /**< pi/2 */
 #endif
 #ifndef M_PI_4
-#  define M_PI_4	0.78539816339744830966156608458 /**< pi/4 */
+#  define M_PI_4	0.785398163397448309615660845819875721  /**< pi/4 */
 #endif
 #ifndef M_SQRT1_2
-#  define M_SQRT1_2	0.70710678118654752440084436210 /**< sqrt(1/2) */
+#  define M_SQRT1_2	0.707106781186547524400844362104849039  /**< 1/sqrt(2) */
 #endif
 #ifndef M_SQRT2
-#  define M_SQRT2	1.41421356237309504880168872421 /**< sqrt(2) */
+#  define M_SQRT2	1.41421356237309504880168872420969808   /**< sqrt(2) */
 #endif
 #ifndef M_SQRT3
-#  define M_SQRT3	1.73205080756887729352744634151 /**< sqrt(3) */
+#  define M_SQRT3	1.73205080756887729352744634150587237   /**< sqrt(3) */
 #endif
 #ifndef M_SQRTPI
-#  define M_SQRTPI	1.77245385090551602729816748334 /**< sqrt(pi) */
+#  define M_SQRTPI	1.77245385090551602729816748334114518   /**< sqrt(pi) */
 #endif
 
 #ifndef DEG2RAD
-#  define DEG2RAD	0.017453292519943295769236907684 /**< pi/180 */
+#  define DEG2RAD	0.0174532925199432957692369076848861271 /**< pi/180 */
 #endif
 #ifndef RAD2DEG
-#  define RAD2DEG	57.295779513082320876798154814105 /**< 180/pi */
+#  define RAD2DEG	57.2957795130823208767981548141051703   /**< 180/pi */
 #endif
 
 
