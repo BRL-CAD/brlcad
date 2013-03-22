@@ -110,6 +110,7 @@ typedef struct _brep_cdbitem {
 __END_DECLS
 
 #ifdef __cplusplus
+extern "C++" {
 
 class plane_ray {
 public:
@@ -1754,6 +1755,7 @@ check_pullback_singularity_bridge(const ON_Surface *surf, const ON_2dPoint &p1, 
 extern BREP_EXPORT ON_NurbsCurve*
 interpolateLocalCubicCurve(const ON_3dPointArray &Q);
 
+} /* extern C++ */
 #endif
 
 #endif  /* BREP_H */
