@@ -37,14 +37,11 @@
 #include "bn.h"
 
 
-#define Max(a, b)		((a) > (b) ? (a) : (b))
+#define CUBEROOT(a)	(((a) > 0.0) ? pow(a, THIRD) : -pow(-(a), THIRD))
 
-#define PI_DIV_3 (M_PI/3.0)
 
-#define SQRT3			1.732050808
-#define THIRD			0.333333333333333333333333333
-#define INV_TWENTYSEVEN		0.037037037037037037037037037
-#define CUBEROOT(a)	(((a) >= 0.0) ? pow(a, THIRD) : -pow(-(a), THIRD))
+static const fastf_t THIRD = 1.0 / 3.0;
+static const fastf_t TWENTYSEVENTH = 1.0 / 27.0;
 
 static const struct bn_poly bn_Zero_poly = { BN_POLY_MAGIC, 0, {0.0} };
 static int bn_expecting_fpe = 0;
@@ -301,11 +298,11 @@ bn_poly_cubic_roots(register struct bn_complex *roots, register const struct bn_
     c1_3rd = c1 * THIRD;
     a = eqn->cf[2] - c1*c1_3rd;
     if (abs(a) > SQRT_MAX_FASTF)  return 0;	/* FAIL */
-    b = (2.0*c1*c1*c1 - 9.0*c1*eqn->cf[2] + 27.0*eqn->cf[3])*INV_TWENTYSEVEN;
+    b = (2.0*c1*c1*c1 - 9.0*c1*eqn->cf[2] + 27.0*eqn->cf[3])*TWENTYSEVENTH;
     if (abs(b) > SQRT_MAX_FASTF)  return 0;	/* FAIL */
 
     if ((delta = a*a) > SQRT_MAX_FASTF) return 0;	/* FAIL */
-    delta = b*b*0.25 + delta*a*INV_TWENTYSEVEN;
+    delta = b*b*0.25 + delta*a*TWENTYSEVENTH;
 
     if (delta > 0.0) {
 	fastf_t r_delta, A, B;
@@ -321,7 +318,7 @@ bn_poly_cubic_roots(register struct bn_complex *roots, register const struct bn_
 	roots[2].re = roots[1].re = -0.5 * (roots[0].re = A + B);
 
 	roots[0].im = 0.0;
-	roots[2].im = -(roots[1].im = (A - B)*SQRT3*0.5);
+	roots[2].im = -(roots[1].im = (A - B)*M_SQRT3*0.5);
     } else if (ZERO(delta)) {
 	fastf_t b_2;
 	b_2 = -0.5 * b;
@@ -336,22 +333,22 @@ bn_poly_cubic_roots(register struct bn_complex *roots, register const struct bn_
 	if (a >= 0.0) {
 	    fact = 0.0;
 	    cs_phi = 1.0;		/* cos(phi); */
-	    sn_phi_s3 = 0.0;	/* sin(phi) * SQRT3; */
+	    sn_phi_s3 = 0.0;	/* sin(phi) * M_SQRT3; */
 	} else {
 	    register fastf_t f;
 	    a *= -THIRD;
 	    fact = sqrt(a);
 	    if ((f = b * (-0.5) / (a*fact)) >= 1.0) {
 		cs_phi = 1.0;		/* cos(phi); */
-		sn_phi_s3 = 0.0;	/* sin(phi) * SQRT3; */
+		sn_phi_s3 = 0.0;	/* sin(phi) * M_SQRT3; */
 	    }  else if (f <= -1.0) {
-		phi = PI_DIV_3;
+		phi = M_PI_3;
 		cs_phi = cos(phi);
-		sn_phi_s3 = sin(phi) * SQRT3;
+		sn_phi_s3 = sin(phi) * M_SQRT3;
 	    }  else  {
 		phi = acos(f) * THIRD;
 		cs_phi = cos(phi);
-		sn_phi_s3 = sin(phi) * SQRT3;
+		sn_phi_s3 = sin(phi) * M_SQRT3;
 	    }
 	}
 
