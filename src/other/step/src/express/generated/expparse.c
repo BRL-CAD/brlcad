@@ -188,7 +188,7 @@ void parserInitState()
     yyexpresult->symbol.filename = yyexpresult->u.express->filename;
     yyexpresult->symbol.line = 1;
 }
-#line 2474 "expparse.y"
+#line 2476 "expparse.y"
 
 static void
 yyerror(const char *yytext, char *string)
@@ -291,7 +291,7 @@ typedef union {
   Statement yy522;
 } YYMINORTYPE;
 #ifndef YYSTACKDEPTH
-#define YYSTACKDEPTH 100
+#define YYSTACKDEPTH 200
 #endif
 #define ParseARG_SDECL  parse_data_t parseData ;
 #define ParseARG_PDECL , parse_data_t parseData 
@@ -1841,7 +1841,7 @@ static void yyStackOverflow(yyParser *yypParser, YYMINORTYPE *yypMinor){
    while( yypParser->yyidx>=0 ) yy_pop_parser_stack(yypParser);
    /* Here code is inserted which will execute if the parser
    ** stack every overflows */
-#line 2469 "expparse.y"
+#line 2471 "expparse.y"
 
     fprintf(stderr, "Express parser experienced stack overflow.\n");
     fprintf(stderr, "Last token had value %x\n", yypMinor->yy0.val);
