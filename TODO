@@ -51,8 +51,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 * test/fix patch-g on windows.  the input file read loops assume
   unix-style files resulting in parser errors.
 
-* upgrade to 1.6 libpng
-
 * merge conv-vg2g into dbupgrade
 
 * add the ability for search to filter objects based on whether

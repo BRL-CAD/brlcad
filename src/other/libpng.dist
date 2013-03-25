@@ -24,7 +24,5 @@ projects
 scripts
 test-pngtest.sh
 libpng-manual.txt
-test-pngvalid-full.sh
-test-pngvalid-simple.sh
 Makefile.am
 )
