@@ -1,6 +1,7 @@
 # Makefile.am:
 #   Source file for Makefile.in (and hence Makefile)
 #
+ACLOCAL_AMFLAGS = -I ../../../m4
 
 PNGLIB_BASENAME= libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@
 
@@ -273,3 +274,5 @@ uninstall-hook:
 	rm -f '$(DESTDIR)$(libdir)/libpng.sl'
 	rm -f '$(DESTDIR)$(libdir)/libpng.dylib'
 	rm -f '$(DESTDIR)$(libdir)/libpng.dll.a'
+
+depends:
