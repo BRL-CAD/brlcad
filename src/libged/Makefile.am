@@ -282,7 +282,7 @@ libged_nil_la_SOURCES = \
 
 AM_CFLAGS = \
         ${STD_C99_FLAGS} \
-	${STRICT_FLAGS} 
+	${STRICT_FLAGS}
 
 # cannot set per-target CPPFLAGS until automake 1.7+
 AM_CPPFLAGS = \
