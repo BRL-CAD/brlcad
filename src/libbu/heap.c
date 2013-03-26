@@ -34,7 +34,7 @@
  * size will allocate at least one page).  PAGESIZE should be some
  * multiple larger than BINS.
  */
-#define BINS 256
+#define BINS 1024
 
 /**
  * This specifies how much memory we should preallocate for each
@@ -47,7 +47,7 @@
  * Embedded or memory-constrained environments probably want to set
  * this a lot smaller than the default.
  */
-#define PAGESIZE (BINS * 4096)
+#define PAGESIZE (BINS * 1024)
 
 /**
  * heaps is an array of lists containing pages of memory binned per
@@ -130,8 +130,14 @@ bu_heap_get(size_t sz)
 
     if (sz > BINS || sz == 0) {
 	misses++;
-	if (bu_debug)
+
+	if (bu_debug) {
 	    bu_log("DEBUG: heap size %zd out of range\n", sz);
+
+	    if (bu_debug & (BU_DEBUG_COREDUMP | BU_DEBUG_MEM_CHECK)) {
+		bu_bomb("Intentionally bombing due to BU_DEBUG_COREDUMP and BU_DEBUG_MEM_CHECK\n");
+	    }
+	}
 	return bu_calloc(1, sz, "heap calloc");
     }
 
