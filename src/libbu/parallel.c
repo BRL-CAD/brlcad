@@ -165,6 +165,11 @@ static struct taskcontrol {
 } bu_taskcontrol[MAX_PSW];
 #endif
 
+struct thread_data {
+    void (*user_func)(int, genptr_t);
+    genptr_t user_arg;
+    int cpu_id;
+};
 
 void
 bu_nice_set(int newnice)
@@ -569,6 +574,12 @@ static int parallel_nthreads_finished = 0;	/* # threads properly finished */
 static genptr_t parallel_arg;	/* User's arg to his threads */
 static void (*parallel_func)(int, genptr_t);	/* user function to run in parallel */
 
+HIDDEN void
+parallel_interface_arg(struct thread_data *user_thread_data)
+{
+    bu_set_affinity();
+    (*((*user_thread_data).user_func))((*user_thread_data).cpu_id, (*user_thread_data).user_arg);
+}
 
 /**
  * Interface layer between bu_parallel and the user's function.
@@ -586,13 +597,18 @@ static void (*parallel_func)(int, genptr_t);	/* user function to run in parallel
 HIDDEN void
 parallel_interface(void)
 {
-    register int cpu;		/* our CPU (thread) number */
+    struct thread_data user_thread_data_pi;
+
+    bu_set_affinity();
+
+    user_thread_data_pi.user_func = parallel_func;
+    user_thread_data_pi.user_arg  = parallel_arg; 
 
     bu_semaphore_acquire(BU_SEM_SYSCALL);
-    cpu = parallel_nthreads_started++;
+    user_thread_data_pi.cpu_id = parallel_nthreads_started++;
     bu_semaphore_release(BU_SEM_SYSCALL);
 
-    (*parallel_func)(cpu, parallel_arg);
+    parallel_interface_arg(&user_thread_data_pi);
 
     bu_semaphore_acquire(BU_SEM_SYSCALL);
     parallel_nthreads_finished++;
@@ -608,6 +624,7 @@ parallel_interface(void)
     if (cpu) _exit(0);
 #  endif /* SGI */
 }
+
 #endif /* PARALLEL */
 
 #ifdef SGI_4D
@@ -639,6 +656,8 @@ bu_parallel(void (*func)(int, genptr_t), int ncpu, genptr_t arg)
     (*func)(0, arg);
 
 #else
+
+    struct thread_data *user_thread_data_bu;
     int avail_cpus = 1;
 
 #  if defined(alliant) && !defined(i860) && !__STDC__
@@ -691,6 +710,15 @@ bu_parallel(void (*func)(int, genptr_t), int ncpu, genptr_t arg)
     parallel_nthreads_finished = 0;
     parallel_func = func;
     parallel_arg = arg;
+
+    user_thread_data_bu = (struct thread_data *)bu_calloc(ncpu, sizeof(*user_thread_data_bu), "struct thread_data *user_thread_data_bu");
+
+    /* Fill in the data of user_thread_data_bu structures of all threads */
+    for(x = 0; x < ncpu; x++) {
+	(user_thread_data_bu + x)->user_func = func;
+	(user_thread_data_bu + x)->user_arg  = arg;
+	(user_thread_data_bu + x)->cpu_id    = x;
+    }
 
     /* if we're in debug mode, allow additional cpus */
     if (!(bu_debug & BU_DEBUG_PARALLEL)) {
@@ -929,11 +957,11 @@ bu_parallel(void (*func)(int, genptr_t), int ncpu, genptr_t arg)
     /* Create the threads */
     for (x = 0; x < ncpu; x++) {
 
-	if (thr_create(0, 0, (void *(*)(void *))parallel_interface, 0, 0, &thread)) {
+	if (thr_create(0, 0, (void *(*)(void *))parallel_interface_arg, (user_thread_data_bu + x), 0, &thread)) {
 	    fprintf(stderr, "ERROR: bu_parallel: thr_create(0x0, 0x0, 0x%x, 0x0, 0, 0x%x) failed on processor %d\n",
-		    parallel_interface, &thread, x);
+		    parallel_interface_arg, &thread, x);
 	    bu_log("ERROR: bu_parallel: thr_create(0x0, 0x0, 0x%x, 0x0, 0, 0x%x) failed on processor %d\n",
-		   parallel_interface, &thread, x);
+		   parallel_interface_arg, &thread, x);
 	    /* Not much to do, lump it */
 	} else {
 	    if (UNLIKELY(bu_debug & BU_DEBUG_PARALLEL))
@@ -1004,17 +1032,17 @@ bu_parallel(void (*func)(int, genptr_t), int ncpu, genptr_t arg)
 	pthread_attr_init(&attrs);
 	pthread_attr_setstacksize(&attrs, 10*1024*1024);
 
-	if (pthread_create(&thread, &attrs, (void *(*)(void *))parallel_interface, NULL)) {
-	    fprintf(stderr, "ERROR: bu_parallel: thr_create(0x0, 0x0, 0x%lx, 0x0, 0, 0x%lx) failed on processor %d\n",
-		    (unsigned long int)parallel_interface, (unsigned long int)&thread, x);
-	    bu_log("ERROR: bu_parallel: thr_create(0x0, 0x0, 0x%lx, 0x0, 0, %p) failed on processor %d\n",
-		   (unsigned long int)parallel_interface, (void *)&thread, x);
+	if (pthread_create(&thread, &attrs, (void *(*)(void *))parallel_interface_arg, (user_thread_data_bu + x))) {
+	    fprintf(stderr, "ERROR: bu_parallel: pthread_create(0x0, 0x0, 0x%lx, 0x0, 0, 0x%lx) failed on processor %d\n",
+		    (unsigned long int)parallel_interface_arg, (unsigned long int)&thread, x);
+	    bu_log("ERROR: bu_parallel: pthread_create(0x0, 0x0, 0x%lx, 0x0, 0, %p) failed on processor %d\n",
+		   (unsigned long int)parallel_interface_arg, (void *)&thread, x);
 	    /* Not much to do, lump it */
 	} else {
 	    if (UNLIKELY(bu_debug & BU_DEBUG_PARALLEL)) {
 		bu_log("bu_parallel(): created thread: (thread: %p) (loop:%d) (nthreadc:%d)\n",
 		       (void*)thread, x, nthreadc);
-	    }
+		}
 
 	    thread_tbl[nthreadc] = thread;
 	    nthreadc++;
@@ -1079,13 +1107,15 @@ bu_parallel(void (*func)(int, genptr_t), int ncpu, genptr_t arg)
     /* Create the Win32 threads */
 
     for( int i = 0; i < ncpu; i++){
+
 	hThreadArray[i] = CreateThread(
 	    NULL,
 	    0,
 	    (LPVOID)parallel_interface,
-	    NULL,
+	    (user_thread_data_bu + x),
 	    0,
 	    &dwThreadIdArray[i]);
+
 	if (hThreadArray[i] == NULL) {
 	    bu_log("bu_parallel(): Error in CreateThread");
 	    bu_exit();
@@ -1136,6 +1166,8 @@ bu_parallel(void (*func)(int, genptr_t), int ncpu, genptr_t arg)
     }
 #  endif
     bu_pid_of_initiating_thread = 0;	/* No threads any more */
+
+    bu_free(user_thread_data_bu, "struct thread_data *user_thread_data_bu");
 
 #endif /* PARALLEL */
 

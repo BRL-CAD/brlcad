@@ -431,6 +431,18 @@ typedef void *genptr_t;
 
 
 /*----------------------------------------------------------------------*/
+
+/** @file affinity.c
+ *
+ * Contains utility to set affinity mask of a thread to the CPU set it
+ * is currently running on.
+ *
+ */
+
+BU_EXPORT extern int bu_set_affinity(void);
+
+/*----------------------------------------------------------------------*/
+
 /** @addtogroup conv */
 /** @ingroup data */
 /** @{*/
