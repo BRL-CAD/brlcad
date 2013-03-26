@@ -62,7 +62,6 @@
 extern void update_grids(fastf_t sf);		/* in grid.c */
 extern void set_localunit_TclVar(void);		/* in chgmodel.c */
 extern void init_qray(void);			/* in qray.c */
-extern int gui_setup(const char *dstr);		/* in attach.c */
 extern int mged_default_dlist;			/* in attach.c */
 extern int classic_mged;
 struct cmd_list head_cmd_list;
