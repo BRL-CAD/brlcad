@@ -717,9 +717,9 @@ bu_parallel(void (*func)(int, genptr_t), int ncpu, genptr_t arg)
 
     /* Fill in the data of user_thread_data_bu structures of all threads */
     for(x = 0; x < ncpu; x++) {
-	(user_thread_data_bu + x)->user_func = func;
-	(user_thread_data_bu + x)->user_arg  = arg;
-	(user_thread_data_bu + x)->cpu_id    = x;
+	user_thread_data_bu[x].user_func = func;
+	user_thread_data_bu[x].user_arg  = arg;
+	user_thread_data_bu[x].cpu_id    = x;
     }
 
     /* if we're in debug mode, allow additional cpus */
@@ -959,7 +959,7 @@ bu_parallel(void (*func)(int, genptr_t), int ncpu, genptr_t arg)
     /* Create the threads */
     for (x = 0; x < ncpu; x++) {
 
-	if (thr_create(0, 0, (void *(*)(void *))parallel_interface_arg, (user_thread_data_bu + x), 0, &thread)) {
+	if (thr_create(0, 0, (void *(*)(void *))parallel_interface_arg, &user_thread_data_bu[x], 0, &thread)) {
 	    fprintf(stderr, "ERROR: bu_parallel: thr_create(0x0, 0x0, 0x%x, 0x0, 0, 0x%x) failed on processor %d\n",
 		    parallel_interface_arg, &thread, x);
 	    bu_log("ERROR: bu_parallel: thr_create(0x0, 0x0, 0x%x, 0x0, 0, 0x%x) failed on processor %d\n",
@@ -1034,7 +1034,7 @@ bu_parallel(void (*func)(int, genptr_t), int ncpu, genptr_t arg)
 	pthread_attr_init(&attrs);
 	pthread_attr_setstacksize(&attrs, 10*1024*1024);
 
-	if (pthread_create(&thread, &attrs, (void *(*)(void *))parallel_interface_arg, (user_thread_data_bu + x))) {
+	if (pthread_create(&thread, &attrs, (void *(*)(void *))parallel_interface_arg, &user_thread_data_bu[x])) {
 	    fprintf(stderr, "ERROR: bu_parallel: pthread_create(0x0, 0x0, 0x%lx, 0x0, 0, 0x%lx) failed on processor %d\n",
 		    (unsigned long int)parallel_interface_arg, (unsigned long int)&thread, x);
 	    bu_log("ERROR: bu_parallel: pthread_create(0x0, 0x0, 0x%lx, 0x0, 0, %p) failed on processor %d\n",
@@ -1114,7 +1114,7 @@ bu_parallel(void (*func)(int, genptr_t), int ncpu, genptr_t arg)
 	    NULL,
 	    0,
 	    (LPVOID)parallel_interface,
-	    (user_thread_data_bu + x),
+	    &user_thread_data_bu[x],
 	    0,
 	    &dwThreadIdArray[i]);
 
