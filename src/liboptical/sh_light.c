@@ -582,7 +582,7 @@ light_free(genptr_t cp)
 	bu_free(lsp->lt_sample_pts, "free light samples array");
     }
     lsp->l.magic = 0;	/* sanity */
-    BU_PUT(lsp, struct light_specific);
+    bu_free(lsp, "struct light_specific");
 }
 
 
@@ -601,7 +601,7 @@ light_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, c
 
     BU_CK_VLS(matparm);
 
-    BU_GET(lsp, struct light_specific);
+    BU_ALLOC(lsp, struct light_specific);
     BU_LIST_INIT_MAGIC(&(lsp->l), LIGHT_MAGIC);
 
     lsp->lt_intensity = 1.0;	/* Lumens */
