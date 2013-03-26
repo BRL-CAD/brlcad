@@ -66,7 +66,7 @@ get_args(int argc, char **argv, size_t *width, size_t *height, FILE **infp, FILE
     int ttyin = 0;
     int ttyout = 0;
 
-    while ((c = bu_getopt(argc, argv, "ag:s:w:n:o:")) != -1) {
+    while ((c = bu_getopt(argc, argv, "ag:s:w:n:o:h?")) != -1) {
 	switch (c) {
 	    case 'a':
 		autosize = 1;
@@ -94,6 +94,11 @@ get_args(int argc, char **argv, size_t *width, size_t *height, FILE **infp, FILE
 		}
 		break;
 	    }
+
+	    case '?':
+	    case 'h':
+	    default: /* help */
+		return 0;
 	}
     }
 
