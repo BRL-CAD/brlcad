@@ -1805,6 +1805,8 @@ ged_redraw(struct ged *gedp, int argc, const char *argv[])
 		/* this display list path matches/contains the redraw path */
 		if (db_full_path_match_top(&dl_path, &obj_path)) {
 		    found_path = 1;
+		    db_free_full_path(&dl_path);
+
 		    for (BU_LIST_FOR(sp, solid, &gdlp->gdl_headSolid)) {
 			ret = redraw_solid(gedp, sp);
 			if (ret < 0) {
@@ -1815,9 +1817,9 @@ ged_redraw(struct ged *gedp, int argc, const char *argv[])
 		    }
 		    break;
 		}
+		db_free_full_path(&dl_path);
 	    }
 
-	    db_free_full_path(&dl_path);
 	    db_free_full_path(&obj_path);
 
 	    if (!found_path) {
@@ -1825,7 +1827,6 @@ ged_redraw(struct ged *gedp, int argc, const char *argv[])
 			"%s: %s is not being displayed\n", argv[0], argv[i]);
 		return GED_ERROR;
 	    }
-
 	}
     }
 
