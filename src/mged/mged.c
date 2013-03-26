@@ -84,20 +84,6 @@
 #  define COMMAND_LINE_EDITING 1
 #endif
 
-#ifdef DEBUG
-#  ifndef _WIN32
-#    ifndef LOGFILE
-#      define LOGFILE "mged.log"	/* usage log */
-#    endif
-#  else
-#    ifndef LOGFILE
-#      define LOGFILE "C:\\mged.log"		/* usage log */
-#    endif
-#  endif
-#else
-#  define LOGFILE "/dev/null"
-#endif
-
 #define SPACES "                                                                                                                                                                                                                                                                                                           "
 
 
