@@ -120,12 +120,23 @@ extern struct _rubber_band default_rubber_band;
 /* should only be accessed via INTERP define in mged.h */
 Tcl_Interp *ged_interp = (Tcl_Interp *)NULL;
 
-int pipe_out[2];
-int pipe_err[2];
+/* these two file decriptors are where we store fileno(stdout) and
+ * fileno(stderr) during graphical startup so that we may restore them
+ * when we're done (which is needed so atexit() calls to bu_log() will
+ * still work).
+ */
+static int stdfd[2] = {1, 2};
+
+/* FIXME: these are problematic globals */
 struct ged *gedp = GED_NULL;
 struct db_i *dbip = DBI_NULL;	/* database instance pointer */
 struct rt_wdb *wdbp = RT_WDB_NULL;
+
+/* called by numerous functions to indicate truthfully whether the
+ * views need to be redrawn.
+ */
 int update_views = 0;
+
 int (*cmdline_hook)() = NULL;
 jmp_buf jmp_env;		/* For non-local gotos */
 double frametime;		/* time needed to draw last frame */
@@ -1024,13 +1035,18 @@ mged_process_char(char ch)
 }
 
 
-
 /*
  * M A I N
  */
 int
 main(int argc, char *argv[])
 {
+    /* pipes used for setting up read/write channels during graphical
+     * initialization.
+     */
+    int pipe_out[2];
+    int pipe_err[2];
+
     int rateflag = 0;
     int c;
     int read_only_flag=0;
@@ -1447,12 +1463,15 @@ main(int argc, char *argv[])
 	 */
 
 	if (classic_mged) {
+	    /* start up a text command console */
 
 	    if (!run_in_foreground && use_pipe) {
 		notify_parent_done(parent_pipe[1]);
 	    }
 
 	} else {
+	    /* start up the GUI */
+
 	    struct bu_vls vls = BU_VLS_INIT_ZERO;
 	    int status;
 
@@ -1505,8 +1524,10 @@ main(int argc, char *argv[])
 
 	    } else {
 
-		/* close out stdout/stderr as we're proceeding in GUI mode */
 #ifdef HAVE_PIPE
+		/* we're going to close out stdout/stderr as we
+		 * proceed in GUI mode, so create some pipes.
+		 */
 		result = pipe(pipe_out);
 		if (result == -1)
 		    perror("pipe");
@@ -1515,6 +1536,9 @@ main(int argc, char *argv[])
 		    perror("pipe");
 #endif  /* HAVE_PIPE */
 
+		/* since we're in GUI mode, display any bu_bomb()
+		 * calls in text dialog windows.
+		 */
 		bu_bomb_add_hook(mged_bomb_hook, INTERP);
 	    } /* status -- gui initialized */
 	} /* classic */
@@ -1585,32 +1609,48 @@ main(int argc, char *argv[])
 #endif
     } else {
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
+	int sout = fileno(stdout);
+	int serr = fileno(stderr);
+
+	/* stash stdout */
+	stdfd[0] = dup(sout);
+	if (stdfd[0] == -1)
+	    perror("dup");
+
+	/* stash stderr */
+	stdfd[1] = dup(serr);
+	if (stdfd[1] == -1)
+	    perror("dup");
 
 	bu_vls_printf(&vls, "output_hook output_callback");
 	Tcl_Eval(INTERP, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 
+/* FIXME: windows has dup() and dup2(), so this should work there too */
 #if !defined(_WIN32) || defined(__CYGWIN__)
 	{
 	    ClientData outpipe, errpipe;
 
-	    /* Redirect stdout */
-	    (void)close(1);
+	    (void)close(fileno(stdout));
+
+	    /* since we just closed stdout, fd 1 is what dup() should return */
 	    result = dup(pipe_out[1]);
 	    if (result == -1)
 		perror("dup");
-	    (void)close(pipe_out[1]);
+	    (void)close(pipe_out[1]); /* only a write pipe */
 
-	    /* Redirect stderr */
-	    (void)close(2);
+	    (void)close(fileno(stderr));
+
+	    /* since we just closed stderr, fd 2 is what dup() should return */
 	    result = dup(pipe_err[1]);
 	    if (result == -1)
 		perror("dup");
-	    (void)close(pipe_err[1]);
+	    (void)close(pipe_err[1]); /* only a write pipe */
 
 	    outpipe = (ClientData)(size_t)pipe_out[0];
 	    chan = Tcl_MakeFileChannel(outpipe, TCL_READABLE);
 	    Tcl_CreateChannelHandler(chan, TCL_READABLE, std_out_or_err, outpipe);
+
 	    errpipe = (ClientData)(size_t)pipe_err[0];
 	    chan = Tcl_MakeFileChannel(errpipe, TCL_READABLE);
 	    Tcl_CreateChannelHandler(chan, TCL_READABLE, std_out_or_err, errpipe);
@@ -2431,6 +2471,7 @@ mged_finish(int exitcode)
     char place[64];
     struct dm_list *p;
     struct cmd_list *c;
+    int ret;
 
     (void)sprintf(place, "exit_status=%d", exitcode);
 
@@ -2457,8 +2498,15 @@ mged_finish(int exitcode)
     /* no longer send bu_log() output to Tcl */
     bu_log_delete_hook(gui_output, (genptr_t)INTERP);
 
-    /* restore stdout/stderr */
-    /* !!! */
+    /* restore stdout/stderr just in case anyone tries to write before
+     * we finally exit (e.g., an atexit() callback).
+     */
+    ret = dup2(stdfd[0], fileno(stdout));
+    if (ret == -1)
+	perror("dup2");
+    ret = dup2(stdfd[1], fileno(stderr));
+    if (ret == -1)
+	perror("dup2");
 
     /* Be certain to close the database cleanly before exiting */
     Tcl_Preserve((ClientData)INTERP);
