@@ -432,13 +432,16 @@ typedef void *genptr_t;
 
 /*----------------------------------------------------------------------*/
 
-/** @file affinity.c
+/**
+ * Set affinity mask of current thread to the CPU set it is currently
+ * running on. If it is not running on any CPUs in the set, it is
+ * migrated to CPU 0 by default.
  *
- * Contains utility to set affinity mask of a thread to the CPU set it
- * is currently running on.
+ * Return:
+ *  0 on Suceess
+ * -1 on Failure
  *
  */
-
 BU_EXPORT extern int bu_set_affinity(void);
 
 /*----------------------------------------------------------------------*/

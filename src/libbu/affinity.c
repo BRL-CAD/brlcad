@@ -18,12 +18,7 @@
  * information.
  */
 
-/** @file affinity.c
- *
- * Contains utility to set affinity mask of a thread to the CPU set it
- * is currently running on.
- *
- */
+#include "common.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -32,16 +27,7 @@
 #  include <pthread.h>
 #endif
 
-/**
- * Set affinity mask of current thread to the CPU set it is currently
- * running on. If it is not running on any CPUs in the set, it is
- * migrated to CPU 0 by default.
- *
- * Return:
- *  0 on Suceess
- * -1 on Failure
- *
- */
+
 int
 bu_set_affinity(void)
 {
