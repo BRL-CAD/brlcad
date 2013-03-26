@@ -630,11 +630,9 @@ static void addRenameTypedefs( Schema schema, FILE * classes )
             strncpy( nm, SelectName( TYPEget_name( t ) ), BUFSIZ - 1 );
             strncpy( basenm, SelectName( TYPEget_name( i ) ), BUFSIZ - 1 );
             fprintf( classes, "typedef %s %s;\n", basenm, nm );
-            fprintf( classes, "typedef       %s *       %s_ptr;\n", nm, nm );
-            fprintf( classes, "typedef const %s * const_%s_ptr;\n", nm, nm );
+            fprintf( classes, "typedef %s * %s_ptr;\n", nm, nm );
             fprintf( classes, "typedef %s_agg %s_agg;\n", basenm, nm );
-            fprintf( classes, "typedef       %s_agg *       %s_agg_ptr;\n", nm, nm );
-            fprintf( classes, "typedef const %s_agg * const_%s_agg_ptr;\n", nm, nm );
+            fprintf( classes, "typedef %s_agg * %s_agg_ptr;\n", nm, nm );
         }
     }
     SCOPEod
@@ -670,10 +668,8 @@ static void addAggrTypedefs( Schema schema, FILE * classes )
             strncpy( nm, ClassName( TYPEget_name( t ) ), BUFSIZ );
             fprintf( classes, "typedef %s        %s;\n",
                      TYPEget_ctype( t ), nm );
-            fprintf( classes, "typedef       %s *       %sH;\n", nm, nm );
-            fprintf( classes, "typedef const %s * const_%sH;\n", nm, nm );
-            fprintf( classes, "typedef       %s *       %s_ptr;\n", nm, nm );
-            fprintf( classes, "typedef const %s * const_%s_ptr;\n", nm, nm );
+            fprintf( classes, "typedef %s *        %sH;\n", nm, nm );
+            fprintf( classes, "typedef %s *        %s_ptr;\n", nm, nm );
         }
     }
     SCOPEod

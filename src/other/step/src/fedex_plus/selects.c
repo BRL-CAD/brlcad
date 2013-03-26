@@ -759,8 +759,7 @@ TYPEselect_inc_print( const Type type, FILE * f ) {
     fprintf( f, "\ninline SDAI_Select * create_%s () { return new %s; }\n", n, n );
 
     /* DAR - moved from SCOPEPrint() */
-    fprintf( f, "typedef       %s *       %sH;\n", n, n );
-    fprintf( f, "typedef const %s * const_%sH;\n", n, n );
+    fprintf( f, "typedef %s * %sH;\n", n, n );
     fprintf( f, "typedef %s_ptr %s_var;\n\n", n, n );
 
     /*  print things for aggregate class  */
@@ -1997,8 +1996,7 @@ TYPEselect_print( Type t, FILES * files, Schema schema ) {
         }
         strncpy( nm, SelectName( TYPEget_name( t ) ), BUFSIZ );
         strncpy( tdnm, TYPEtd_name( t ), BUFSIZ );
-        fprintf( inc, "typedef       %s *       %sH;\n", nm, nm );
-        fprintf( inc, "typedef const %s * const_%sH;\n", nm, nm );
+        fprintf( inc, "typedef %s *        %sH;\n", nm, nm );
         fprintf( inc, "typedef %s_ptr *    %s_var;\n", nm, nm );
         /* Below are specialized create functions for the renamed sel type (both
         // single and aggregate).  The functions call the original sel's con-

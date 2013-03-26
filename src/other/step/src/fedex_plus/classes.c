@@ -601,19 +601,6 @@ char * TYPEget_express_type( const Type t ) {
 
 }
 
-int isReferenceType( Class_Of_Type class ) {
-    if( ( class == string_ )  ||
-            ( class == logical_ ) ||
-            ( class == boolean_ ) ||
-            ( class == real_ )    ||
-            ( class == integer_ ) ||
-            ( class == enumeration_ ) ) {
-        return 0;
-    }
-
-    return 1;
-}
-
 /**************************************************************//**
  ** Procedure:  ATTRsign_access_method
  ** Parameters:  const Variable a --  attribute to print
@@ -630,23 +617,14 @@ int isReferenceType( Class_Of_Type class ) {
 void ATTRsign_access_methods( Variable a, FILE * file ) {
 
     Type t = VARget_type( a );
-    Class_Of_Type class;
     char ctype [BUFSIZ];
     char attrnm [BUFSIZ];
 
     generate_attribute_func_name( a, attrnm );
 
-    class = TYPEget_type( t );
-
     strncpy( ctype, AccessType( t ), BUFSIZ );
-
-    if( isReferenceType( class ) ) {
-	fprintf( file, "        const_%s %s() const;\n", ctype, attrnm );
-    } else {
-	fprintf( file, "        %s %s() const;\n", ctype, attrnm );
-    }
+    fprintf( file, "        %s %s() const;\n", ctype, attrnm );
     fprintf( file, "        void %s (const %s x);\n\n", attrnm, ctype );
-
     return;
 }
 
@@ -669,20 +647,15 @@ void ATTRsign_access_methods( Variable a, FILE * file ) {
 void ATTRprint_access_methods_get_head( const char * classnm, Variable a,
                                    FILE * file ) {
     Type t = VARget_type( a );
-    Class_Of_Type class = TYPEget_type( t );
     char ctype [BUFSIZ];   /*  return type of the get function  */
     char funcnm [BUFSIZ];  /*  name of member function  */
 
     generate_attribute_func_name( a, funcnm );
 
+    /* ///////////////////////////////////////////////// */
+
     strncpy( ctype, AccessType( t ), BUFSIZ );
-
-    if( isReferenceType( class ) ) {
-	fprintf( file, "\nconst_%s %s::%s() const ", ctype, classnm, funcnm );
-    } else {
-	fprintf( file, "\n%s %s::%s() const ", ctype, classnm, funcnm );
-    }
-
+    fprintf( file, "\n%s %s::%s( ) const ", ctype, classnm, funcnm );
     return;
 }
 
@@ -2621,8 +2594,6 @@ void ENTITYprint_new( Entity entity, FILES * files, Schema schema, int externMap
     fprintf( files->classes, "typedef %s *          %sH;\n", n, n );
     fprintf( files->classes, "typedef %s *          %s_ptr;\n", n, n );
     fprintf( files->classes, "typedef %s_ptr        %s_var;\n", n, n );
-    fprintf( files->classes, "typedef const %s *          const_%sH;\n", n, n );
-    fprintf( files->classes, "typedef const %s *          const_%s_ptr;\n", n, n );
     fprintf( files->classes, "#define %s__set         SDAI_DAObject__set\n", n );
     fprintf( files->classes, "#define %s__set_var     SDAI_DAObject__set_var\n", n );
 }
@@ -2750,7 +2721,6 @@ void TYPEenum_inc_print( const Type type, FILE * inc ) {
     fprintf( inc, "};\n" );
 
     fprintf( inc, "\ntypedef %s * %s_ptr;\n", n, n );
-    fprintf( inc, "\ntypedef const %s * const_%s_ptr;\n", n, n );
 
 
     /*  Print ObjectStore Access Hook function  */
@@ -2774,7 +2744,6 @@ void TYPEenum_inc_print( const Type type, FILE * inc ) {
     fprintf( inc, "};\n" );
 
     fprintf( inc, "\ntypedef %s_agg * %s_agg_ptr;\n", n, n );
-    fprintf( inc, "\ntypedef const %s_agg * const_%s_agg_ptr;\n", n, n );
 
     /* DAS brandnew below */
 
@@ -3062,12 +3031,8 @@ void TYPEprint_typedefs( Type t, FILE * classes ) {
             strncpy( nm, SelectName( TYPEget_name( t ) ), BUFSIZ );
             fprintf( classes, "class %s;\n", nm );
             fprintf( classes, "typedef %s * %s_ptr;\n", nm, nm );
-            fprintf( classes, "typedef const %s * const_%s_ptr;\n", nm, nm );
             fprintf( classes, "class %s_agg;\n", nm );
             fprintf( classes, "typedef %s_agg * %s_agg_ptr;\n", nm, nm );
-            fprintf( classes, "typedef const %s_agg * const_%s_agg_ptr;\n", nm, nm );
-            fprintf( classes, "typedef       class %s_agg *       class_%s_agg_ptr;\n", nm, nm );
-            fprintf( classes, "typedef const class %s_agg * const_class_%s_agg_ptr;\n", nm, nm );
         }
     } else {
         if( TYPEis_aggregate( t ) ) {
@@ -3089,10 +3054,8 @@ void TYPEprint_typedefs( Type t, FILE * classes ) {
             strncpy( nm, ClassName( TYPEget_name( t ) ), BUFSIZ );
             fprintf( classes, "typedef %s         %s;\n", TYPEget_ctype( t ), nm );
             if( TYPEis_aggregate( t ) ) {
-                fprintf( classes, "typedef       %s *       %sH;\n", nm, nm );
-                fprintf( classes, "typedef const %s * const_%sH;\n", nm, nm );
-                fprintf( classes, "typedef       %s *       %s_ptr;\n", nm, nm );
-                fprintf( classes, "typedef const %s * const_%s_ptr;\n", nm, nm );
+                fprintf( classes, "typedef %s *         %sH;\n", nm, nm );
+                fprintf( classes, "typedef %s *         %s_ptr;\n", nm, nm );
                 fprintf( classes, "typedef %s_ptr         %s_var;\n", nm, nm );
             }
         }
@@ -3278,7 +3241,6 @@ void TYPEprint_descriptions( const Type type, FILES * files, Schema schema ) {
         printEnumCreateHdr( files->inc, type );
         printEnumCreateBody( files->lib, type );
         fprintf( files->inc, "typedef       %s_agg *       %s_agg_ptr;\n", nm, nm );
-        fprintf( files->inc, "typedef const %s_agg * const_%s_agg_ptr;\n", nm, nm );
         printEnumAggrCrHdr( files->inc, type );
         printEnumAggrCrBody( files->lib, type );
         return;

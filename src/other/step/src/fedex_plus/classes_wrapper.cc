@@ -295,8 +295,7 @@ void SCOPEPrint( Scope scope, FILES * files, Schema schema, Express model,
 
         fprintf( files->inc, "\n};\n" );
 
-        fprintf( files->inc, "\n\ntypedef       SdaiModel_contents_%s *       SdaiModel_contents_%s_ptr;\n", SCHEMAget_name( schema ), SCHEMAget_name( schema ) );
-        fprintf( files->inc, "\n\ntypedef const SdaiModel_contents_%s * const_SdaiModel_contents_%s_ptr;\n", SCHEMAget_name( schema ), SCHEMAget_name( schema ) );
+        fprintf( files->inc, "\n\ntypedef SdaiModel_contents_%s * SdaiModel_contents_%s_ptr;\n", SCHEMAget_name( schema ), SCHEMAget_name( schema ) );
         fprintf( files->inc, "typedef SdaiModel_contents_%s_ptr SdaiModel_contents_%s_var;\n", SCHEMAget_name( schema ), SCHEMAget_name( schema ) );
 
         fprintf( files -> inc,
