@@ -444,6 +444,9 @@ int is_dm_null(void);
 int mged_attach(struct w_dm *wp, int argc, const char *argv[]);
 void mged_link_vars(struct dm_list *p);
 void mged_slider_free_vls(struct dm_list *p);
+int gui_setup(const char *dstr);
+int gui_output(genptr_t clientData, genptr_t str);
+
 
 /* buttons.c */
 void btn_head_menu(int i, int menu, int item);
