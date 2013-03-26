@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2004-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
- * 
+ *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public License
  * version 2.1 as published by the Free Software Foundation.
@@ -32,63 +32,70 @@
 #  include <pthread.h>
 #endif
 
-/*
- * bu_set_affinity
- * 
- * Set affinity mask of current thread to the CPU set it is currently 
+/**
+ * Set affinity mask of current thread to the CPU set it is currently
  * running on. If it is not running on any CPUs in the set, it is
  * migrated to CPU 0 by default.
- * 
- * Return: 0 on Suceess
- *         -1 on Failure
- * 
+ *
+ * Return:
+ *  0 on Suceess
+ * -1 on Failure
+ *
  */
 int
 bu_set_affinity(void)
 {
 #if defined(_GNU_SOURCE) && defined(HAVE_PTHREAD_H)
-	
+
     int cpulim = bu_avail_cpus();    /* Max number of CPUs available for the process */
     int status;                      /* Status of thread setting/getting */
     int cpu = 0;                     /* Default CPU number */
     int j;                           /* Variable for iteration. */
 
-    cpu_set_t cpuset;                          /* CPU set structure. Defined in sched.h */
-    pthread_t curr_thread = pthread_self();	   /* Get current thread */
+    cpu_set_t cpuset;				/* CPU set structure. Defined in sched.h */
+    pthread_t curr_thread = pthread_self();	/* Get current thread */
 
     CPU_ZERO(&cpuset);
 
-    for(j = 0; j < cpulim; j++) {    /* Set affinity mask to include CPUs 0 to max available CPU */
+    for(j = 0; j < cpulim; j++) {
+	/* Set affinity mask to include CPUs 0 to max available CPU */
 	CPU_SET(j, &cpuset);
     }
-    
-    status = pthread_getaffinity_np(curr_thread, sizeof(cpu_set_t), &cpuset);    /* Check current affinity mask assigned to thread */
 
-    if(status != 0) {    /* Error in getting affinity mask */
+    /* Check current affinity mask assigned to thread */
+    status = pthread_getaffinity_np(curr_thread, sizeof(cpu_set_t), &cpuset);
+
+    if(status != 0) {
+	/* Error in getting affinity mask */
 	return -1;
     }
-	
-    for(j = 0; j < CPU_SETSIZE; j++) {    /* Check which set has been returned by pthread_get_affinity */
+
+    for(j = 0; j < CPU_SETSIZE; j++) {
+	/* Check which set has been returned by pthread_get_affinity */
 	if(CPU_ISSET(j, &cpuset)) {
-	cpu = j;
-	break;	/* Break loop since CPU affinity mask has been found */
+	    /* found affinity mask */
+	    cpu = j;
+	    break;
 	}
     }
 
+    /* Clear CPU set and assign CPUs */
     CPU_ZERO(&cpuset);
-    CPU_SET(cpu, &cpuset);        /* Clear CPU set and assign CPUs */
+    CPU_SET(cpu, &cpuset);
 
-    status = pthread_setaffinity_np(curr_thread, sizeof(cpu_set_t), &cpuset);        /* Set affinity mask of the current */
-                                                                                     /* thread to CPU set pointed by cpuset */
- 
-    if(status != 0) {    /* Error in setting affinity mask */
+    /* set affinity mask of current thread */
+    status = pthread_setaffinity_np(curr_thread, sizeof(cpu_set_t), &cpuset);
+
+    if(status != 0) {
+	/* Error in setting affinity mask */
 	return -1;
     }
 
 #endif
 
-	return 0;
+    return 0;
 }
+
 
 /*
  * Local Variables:
