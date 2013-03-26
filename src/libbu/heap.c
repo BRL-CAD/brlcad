@@ -58,6 +58,7 @@
  *   \   \   \
  *    oo  o   oooo      'o' is a PAGESIZE allocation of memory
  */
+#if 0
 static char **heaps[BINS] = {0};
 
 /**
@@ -82,34 +83,48 @@ static size_t alloc[BINS] = {0};
 
 /** keep track of allocation sizes outside our supported range */
 static size_t misses = 0;
-
-/* sanity */
-#if PAGESIZE < BINS
-#  error "ERROR: heap page size cannot be smaller than bin size"
 #endif
+
+
+struct bins {
+    char **heaps;
+    size_t pages;
+    size_t *used;
+    size_t alloc;
+};
+
+struct cpus {
+    struct bins *bin;
+    size_t misses;
+} *per_cpu = NULL;
 
 
 void
 bu_heap_print()
 {
-    size_t i, j;
+    size_t h, i, j;
+    size_t misses = 0;
     size_t allocations = 0;
     size_t total_pages = 0;
     size_t total_alloc = 0;
+    size_t ncpu = bu_avail_cpus();
 
     bu_log("=======================\n"
 	   "Memory Heap Information\n"
 	   "-----------------------\n");
 
-    for (i=0; i < BINS; i++) {
-	allocations = 0;
-	for (j=0; j < pages[i]; j++) {
-	    allocations += used[i][j] / (i+1);
+    for (h=0; h < ncpu; h++) {
+	for (i=0; i < BINS; i++) {
+	    allocations = 0;
+	    for (j=0; j < per_cpu[h].bin[i].pages; j++) {
+		allocations += per_cpu[h].bin[i].used[j] / (i+1);
+	    }
+	    if (allocations > 0)
+		bu_log("%04zd [%02zd] => %zd\n", i, per_cpu[h].bin[i].pages, allocations);
+	    total_pages += per_cpu[h].bin[i].pages;
+	    total_alloc += allocations;
 	}
-	if (allocations > 0)
-	    bu_log("%04zd [%02zd] => %zd\n", i, pages[i], allocations);
-	total_pages += pages[i];
-	total_alloc += allocations;
+	misses += per_cpu[h].misses;
     }
     bu_log("-----------------------\n"
 	   "size [pages] => allocs\n"
@@ -127,9 +142,26 @@ bu_heap_get(size_t sz)
     char *ret;
     register size_t smo = sz-1;
     static int printit = 0;
+    int oncpu;
+    struct bins *bin;
+
+    /* init per-cpu structures */
+    if (!per_cpu) {
+	size_t i;
+	size_t ncpus = bu_avail_cpus();
+	per_cpu = bu_calloc(ncpus, sizeof(struct cpus), "struct cpus");
+	for (i=0; i<ncpus; i++)
+	    per_cpu[i].bin = bu_calloc(BINS, sizeof(struct bins), "struct bins");
+    }
+
+#if 0
+    oncpu = bu_parallel_id();
+#else
+    oncpu = 0;
+#endif
 
     if (sz > BINS || sz == 0) {
-	misses++;
+	per_cpu[oncpu].misses++;
 
 	if (bu_debug) {
 	    bu_log("DEBUG: heap size %zd out of range\n", sz);
@@ -141,35 +173,38 @@ bu_heap_get(size_t sz)
 	return bu_calloc(1, sz, "heap calloc");
     }
 
-    alloc[smo]++;
+    bin = &per_cpu[oncpu].bin[smo];
+
+    bin->alloc++;
+    /* alloc[smo]++; */
 
     /* init */
-    if (!pages[smo]) {
+    if (!bin->pages) {
 
 	if (bu_debug && printit==0) {
 	    atexit(bu_heap_print);
 	    printit++;
 	}
 
-	pages[smo]++;
-	heaps[smo] = (char **)bu_malloc(1 * sizeof(char *), "heap malloc heaps[]");
-	heaps[smo][0] = (char *)bu_calloc(1, PAGESIZE, "heap calloc heaps[][0]");
-	used[smo] = (size_t *)bu_malloc(1 * sizeof(size_t), "heap malloc used[]");
-	used[smo][0] = 0;
+	bin->pages++;
+	bin->heaps = (char **)bu_malloc(1 * sizeof(char *), "heap malloc heaps[]");
+	bin->heaps[0] = (char *)bu_calloc(1, PAGESIZE, "heap calloc heaps[][0]");
+	bin->used = (size_t *)bu_malloc(1 * sizeof(size_t), "heap malloc used[]");
+	bin->used[0] = 0;
     }
 
     /* grow */
-    if (used[smo][pages[smo]-1]+sz > PAGESIZE) {
-	pages[smo]++;
-	heaps[smo] = (char **)bu_realloc(heaps[smo], pages[smo] * sizeof(char *), "heap realloc heaps[]");
-	heaps[smo][pages[smo]-1] = (char *)bu_calloc(1, PAGESIZE, "heap calloc heaps[][]");
-	used[smo] = (size_t *)bu_realloc(used[smo], pages[smo] * sizeof(size_t), "heap realloc used[]");
-	used[smo][pages[smo]-1] = 0;
+    if (bin->used[bin->pages-1]+sz > PAGESIZE) {
+	bin->pages++;
+	bin->heaps = (char **)bu_realloc(bin->heaps, bin->pages * sizeof(char *), "heap realloc heaps[]");
+	bin->heaps[bin->pages-1] = (char *)bu_calloc(1, PAGESIZE, "heap calloc heaps[][]");
+	bin->used = (size_t *)bu_realloc(bin->used, bin->pages * sizeof(size_t), "heap realloc used[]");
+	bin->used[bin->pages-1] = 0;
     }
 
     /* give */
-    ret = &(heaps[smo][pages[smo]-1][used[smo][pages[smo]-1]]);
-    used[smo][pages[smo]-1] += sz;
+    ret = &(bin->heaps[bin->pages-1][bin->used[bin->pages-1]]);
+    bin->used[bin->pages-1] += sz;
 
     return (void *)ret;
 }
@@ -241,8 +276,14 @@ int main (int ac, char *av[])
     return 0;
 }
 
-
 #endif
+
+
+/* sanity */
+#if PAGESIZE < BINS
+#  error "ERROR: heap page size cannot be smaller than bin size"
+#endif
+
 
 /*
  * Local Variables:
