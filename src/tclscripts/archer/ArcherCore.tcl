@@ -461,6 +461,9 @@ namespace eval ArcherCore {
 	variable mPerspective 0
 	variable mPerspectivePref 0
 
+	variable mMaxCombMembersShown 200
+	variable mMaxCombMembersShownPref ""
+
 	variable mZClipBack 100.0
 	variable mZClipBackPref 100.0
 	variable mZClipFront 100.0
@@ -853,7 +856,7 @@ namespace eval ArcherCore {
 	# db/display commands
 	method getNodeChildren  {_node}
 	method getTreeFromGData  {_gdata}
-	method getTreeMembers  {_tlist {_mlist {}}}
+	method getTreeMembers  {_comb}
 	method getTreeOp {_parent _child}
 	method renderComp        {_node}
 	method render             {_node _state _trans _updateTree {_wflag 1} {_node_id ""}}
@@ -2379,8 +2382,7 @@ namespace eval ArcherCore {
 	    return
 	}
 
-	set tree [getTreeFromGData $pgdata]
-	set mlist [getTreeMembers $tree]
+	set mlist [getTreeMembers $ptext]
 
 	# Reconcile clists (i.e. the tree's view)
 	# with mlist (i.e. the database's view).
@@ -2469,8 +2471,7 @@ namespace eval ArcherCore {
 				}
 
 			    } else {
-				set ctree [getTreeFromGData $cgdata]
-				set cmlist [getTreeMembers $ctree]
+				set cmlist [getTreeMembers $ctext]
 				if {$cmlist != ""} {
 				    removeTreeNodeTag $cnode $TREE_OPENED_TAG
 				    $itk_component(newtree) item $cnode -open false
@@ -2500,8 +2501,7 @@ namespace eval ArcherCore {
 	set ptype [lindex $pgdata 0]
 
 	if {$ptype == "comb"} {
-	    set tree [getTreeFromGData $pgdata]
-	    set mlist [getTreeMembers $tree]
+	    set mlist [getTreeMembers $ptext]
 	    if {$mlist != ""} {
 		removeTreeNodeTag $_pnode $TREE_OPENED_TAG
 		$itk_component(newtree) item $_pnode -open false
@@ -3091,9 +3091,8 @@ namespace eval ArcherCore {
     if {[llength $add_list] > 0} {
 	eval group $mCompSelectGroup $add_list
 
-	set tree [$itk_component(ged) get $mCompSelectGroup tree]
-	if {[llength $tree] > 0} {
-	    set tlist [getTreeMembers $tree]
+	set tlist [getTreeMembers $mCompSelectGroup]
+	if {[llength $tlist] > 0} {
 	    putString "$mCompSelectGroup now contains:"
 	    putString "\t$tlist"
 	}
@@ -3114,9 +3113,10 @@ namespace eval ArcherCore {
 	    return ""
 	}
 
-	set tree [$itk_component(ged) get $mCompSelectGroup tree]
-	if {[llength $tree] > 0} {
-	    set mCompSelectGroupList [getTreeMembers $tree]
+	#set tree [$itk_component(ged) get $mCompSelectGroup tree]
+	set tlist [getTreeMembers $mCompSelectGroup]
+	if {[llength $tlist] > 0} {
+	    set mCompSelectGroupList $tlist
 	}
     }
 
@@ -3146,9 +3146,8 @@ namespace eval ArcherCore {
     if {[llength $rem_list] > 0} {
 	eval rm $mCompSelectGroup $rem_list
 
-	set tree [$itk_component(ged) get $mCompSelectGroup tree]
-	if {[llength $tree] > 0} {
-	    set tlist [getTreeMembers $tree]
+	set tlist [getTreeMembers $mCompSelectGroup]
+	if {[llength $tlist] > 0} {
 	    putString "$mCompSelectGroup now contains:"
 	    putString "\t$tlist"
 	} else {
@@ -3555,11 +3554,12 @@ namespace eval ArcherCore {
 	return {}
     }
 
-    if {[catch {gedCmd get $node tree} tlist]} {
+
+    if {[catch {getTreeMembers $node} tlist]} {
 	return {}
     }
 
-    return [getTreeMembers $tlist]
+    return $tlist
 }
 
 ::itcl::body ArcherCore::getTreeFromGData {_gdata} {
@@ -3572,22 +3572,25 @@ namespace eval ArcherCore {
     return {}
 }
 
-::itcl::body ArcherCore::getTreeMembers {_tlist {_mlist {}}} {
-    set len [llength $_tlist]
-    set op [lindex $_tlist 0]
-    if {$op == "l"} {
-	set name [lindex $_tlist 1]
-	lappend _mlist $name
-	return $_mlist
+
+::itcl::body ArcherCore::getTreeMembers {_comb} {
+    if {![$itk_component(ged) exists $_comb]} {
+	return ""
     }
 
-    if {$len == 3} {
-	set _mlist [getTreeMembers [lindex $_tlist 1] $_mlist]
-	set _mlist [getTreeMembers [lindex $_tlist 2] $_mlist]
-	return $_mlist
+    set i 0
+
+    set tlist {}
+    foreach item [regsub -all {/R} [lrange [split [$itk_component(ged) tree -d 1 $_comb] "\n"] 1 end-1] ""] {
+	lappend tlist [lindex $item 1]
+	incr i
+
+	if {$i >= $mMaxCombMembersShown} {
+	    break
+	}
     }
 
-    return $_mlist
+    return $tlist
 }
 
 
@@ -4092,8 +4095,7 @@ namespace eval ArcherCore {
 	set mlist ""
 	switch -- $ctype {
 	    "comb" {
-		set tree [getTreeFromGData $cgdata]
-		set mlist [getTreeMembers $tree]
+		set mlist [getTreeMembers $_ctext]
 	    }
 	    "dsp" -
 	    "ebm" -
@@ -4630,8 +4632,8 @@ namespace eval ArcherCore {
 
 	    switch -- $ctype {
 		"comb" {
-		    set tree [getTreeFromGData $cgdata]
-		    foreach gctext [getTreeMembers $tree] {
+		    #set tree [getTreeFromGData $cgdata]
+		    foreach gctext [getTreeMembers $ctext] {
 			if {[catch {$itk_component(ged) get $gctext} gcgdata]} {
 			    set op [getTreeOp $ctext $gctext]
 			    set img [getTreeImage $gctext "invalid" $op]
