@@ -130,7 +130,8 @@ bu_heap_get(size_t sz)
 
     if (sz > BINS || sz == 0) {
 	misses++;
-	bu_log("missed size %zd\n", sz);
+	if (bu_debug)
+	    bu_log("DEBUG: heap size %zd out of range\n", sz);
 	return bu_calloc(1, sz, "heap calloc");
     }
 
@@ -139,7 +140,7 @@ bu_heap_get(size_t sz)
     /* init */
     if (!pages[smo]) {
 
-	if (printit==0) {
+	if (bu_debug && printit==0) {
 	    atexit(bu_heap_print);
 	    printit++;
 	}
