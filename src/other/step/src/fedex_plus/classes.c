@@ -1525,7 +1525,9 @@ void LIBstructor_print( Entity entity, FILE * file, Schema schema ) {
         list = ENTITYget_supertypes( entity );
         if( ! LISTempty( list ) ) {
 	    if( LISTget_length( list ) > 1) {
+                fprintf( file, "#if 1\n" );
                 fprintf( file, "    int attrFlags[3];\n" );
+                fprintf( file, "#endif\n" );
 	    }
 
             LISTdo( list, e, Entity )
@@ -1744,7 +1746,9 @@ void LIBstructor_print_w_args( Entity entity, FILE * file, Schema schema ) {
         list = ENTITYget_supertypes( entity );
         if( ! LISTempty( list ) ) {
 	    if( LISTget_length( list ) > 1) {
+                fprintf( file, "#if 0\n" );
                 fprintf( file, "    int attrFlags[3];\n" );
+                fprintf( file, "#endif\n" );
 	    }
 
             LISTdo( list, e, Entity )
