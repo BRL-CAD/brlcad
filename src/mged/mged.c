@@ -120,7 +120,7 @@ extern struct _rubber_band default_rubber_band;
 /* should only be accessed via INTERP define in mged.h */
 Tcl_Interp *ged_interp = (Tcl_Interp *)NULL;
 
-/* these two file decriptors are where we store fileno(stdout) and
+/* these two file descriptors are where we store fileno(stdout) and
  * fileno(stderr) during graphical startup so that we may restore them
  * when we're done (which is needed so atexit() calls to bu_log() will
  * still work).
