@@ -1048,13 +1048,13 @@ main(int argc, char *argv[])
     int c;
     int read_only_flag=0;
 
+    int stdfd[2] = {0, 0};
     int parent_pipe[2] = {0, 0};
     int use_pipe = 0;
     int run_in_foreground=1;
 
     Tcl_Channel chan;
     struct timeval timeout;
-    FILE *out = stdout;
 
 #if !defined(_WIN32) || defined(__CYGWIN__)
     fd_set read_set;
@@ -1142,11 +1142,6 @@ main(int argc, char *argv[])
     argc -= bu_optind;
     argv += bu_optind;
 
-    if (bu_debug > 0)
-	out = fopen("/tmp/stdout", "w+"); /* I/O testing */
-    if (!out)
-	out = stdout;
-
     if (argc > 1) {
 	/* if there is more than a file name remaining, mged is not interactive */
 	interactive = 0;
@@ -1160,7 +1155,7 @@ main(int argc, char *argv[])
 	FD_SET(fileno(stdin), &read_set);
 	result = select(fileno(stdin)+1, &read_set, NULL, NULL, &timeout);
 	if (bu_debug > 0)
-	    fprintf(out, "DEBUG: select result: %d, stdin read: %d\n", result, FD_ISSET(fileno(stdin), &read_set));
+	    fprintf(stdout, "DEBUG: select result: %d, stdin read: %d\n", result, FD_ISSET(fileno(stdin), &read_set));
 
 	if (result > 0 && FD_ISSET(fileno(stdin), &read_set)) {
 	    /* stdin pending, probably not interactive */
@@ -1171,7 +1166,7 @@ main(int argc, char *argv[])
 	    FD_SET(fileno(stdin), &exception_set);
 	    result = select(fileno(stdin)+1, NULL, NULL, &exception_set, &timeout);
 	    if (bu_debug > 0)
-		fprintf(out, "DEBUG: select result: %d, stdin exception: %d\n", result, FD_ISSET(fileno(stdin), &exception_set));
+		fprintf(stdout, "DEBUG: select result: %d, stdin exception: %d\n", result, FD_ISSET(fileno(stdin), &exception_set));
 
 	    /* see if there's valid input waiting (more reliable than select) */
 	    if (result > 0 && FD_ISSET(fileno(stdin), &exception_set)) {
@@ -1183,7 +1178,7 @@ main(int argc, char *argv[])
 
 		result = poll(&pfd, 1, 100);
 		if (bu_debug > 0)
-		    fprintf(out, "DEBUG: poll result: %d, revents: %d\n", result, pfd.revents);
+		    fprintf(stdout, "DEBUG: poll result: %d, revents: %d\n", result, pfd.revents);
 
 		if (pfd.revents & POLLNVAL) {
 		    interactive = 1;
@@ -1200,14 +1195,10 @@ main(int argc, char *argv[])
 	} /* read_set */
 #endif
 
-	if (bu_debug && out != stdout) {
-	    fflush(out);
-	    fclose(out);
-	}
     } /* argc > 1 */
 
     if (bu_debug > 0)
-	fprintf(out, "DEBUG: interactive=%d, classic_mged=%d\n", interactive, classic_mged);
+	fprintf(stdout, "DEBUG: interactive=%d, classic_mged=%d\n", interactive, classic_mged);
 
 
 #if defined(SIGPIPE) && defined(SIGINT)
@@ -2476,6 +2467,12 @@ mged_finish(int exitcode)
 	bu_vls_free(&c->cl_name);
 	bu_vls_free(&c->cl_more_default);
     }
+
+    /* no longer send bu_log() output to Tcl */
+    bu_log_delete_hook(gui_output, (genptr_t)INTERP);
+
+    /* restore stdout/stderr */
+    /* !!! */
 
     /* Be certain to close the database cleanly before exiting */
     Tcl_Preserve((ClientData)INTERP);
