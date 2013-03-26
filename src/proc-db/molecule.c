@@ -185,11 +185,11 @@ void
 process_sphere(int id, fastf_t *center, double rad, int sph_type)
 {
     struct sphere *newsph;
-    BU_ALLOC(newsph, struct sphere);
-
     char nm[128], nm1[128];
     unsigned char rgb[3];
     struct wmember reg_head;
+
+    BU_ALLOC(newsph, struct sphere);
 
     rgb[0] = atom_list[sph_type].red;
     rgb[1] = atom_list[sph_type].green;
