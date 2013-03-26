@@ -291,7 +291,7 @@ typedef union {
   Statement yy522;
 } YYMINORTYPE;
 #ifndef YYSTACKDEPTH
-#define YYSTACKDEPTH 200
+#define YYSTACKDEPTH 0
 #endif
 #define ParseARG_SDECL  parse_data_t parseData ;
 #define ParseARG_PDECL , parse_data_t parseData 
@@ -1582,7 +1582,7 @@ static void yyGrowStack(yyParser *p){
   int newSize;
   yyStackEntry *pNew;
 
-  newSize = p->yystksz*2 + 100;
+  newSize = p->yystksz*2 + 256;
   pNew = realloc(p->yystack, newSize*sizeof(pNew[0]));
   if( pNew ){
     p->yystack = pNew;

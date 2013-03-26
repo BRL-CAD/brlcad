@@ -2466,7 +2466,7 @@ while_control(A) ::= TOK_WHILE expression(B).
     fprintf(stderr, "Last token (type %d) had value %x\n", yymajor, yyminor.yy0.val);
 }
 
-%stack_size 200
+%stack_size 0
 
 %stack_overflow {
     fprintf(stderr, "Express parser experienced stack overflow.\n");
