@@ -156,6 +156,8 @@ static struct sched_param bu_param;
 
 #include "bu.h"
 
+#include "./parallel.h"
+
 
 #ifdef CRAY
 static struct taskcontrol {
@@ -577,7 +579,7 @@ static void (*parallel_func)(int, genptr_t);	/* user function to run in parallel
 HIDDEN void
 parallel_interface_arg(struct thread_data *user_thread_data)
 {
-    bu_set_affinity();
+    parallel_set_affinity();
     (*((*user_thread_data).user_func))((*user_thread_data).cpu_id, (*user_thread_data).user_arg);
 }
 
@@ -599,7 +601,7 @@ parallel_interface(void)
 {
     struct thread_data user_thread_data_pi;
 
-    bu_set_affinity();
+    parallel_set_affinity();
 
     user_thread_data_pi.user_func = parallel_func;
     user_thread_data_pi.user_arg  = parallel_arg; 

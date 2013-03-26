@@ -29,7 +29,7 @@
 
 
 int
-bu_set_affinity(void)
+parallel_set_affinity(void)
 {
 #if defined(_GNU_SOURCE) && defined(HAVE_PTHREAD_H)
 

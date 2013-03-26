@@ -3,6 +3,7 @@ lib_LTLIBRARIES = libbu.la
 noinst_LTLIBRARIES = libbu_nil.la
 
 libbu_nil_la_SOURCES = \
+	affinity.c \
 	argv.c \
 	avs.c \
 	backtrace.c \
@@ -91,6 +92,7 @@ libbu_la_LIBADD = \
 	${BU_LIBS}
 
 noinst_HEADERS = \
+	parallel.h \
 	rb_internals.h \
 	vls_internals.h
 

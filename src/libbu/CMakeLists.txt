@@ -105,6 +105,7 @@ endif("${BRLCAD_TCL_BUILD}" STREQUAL "ON")
 add_subdirectory(tests)
 
 set(bu_ignore_files
+  parallel.h
   rb_internals.h
   uce-dirent.h
   vls_internals.h
