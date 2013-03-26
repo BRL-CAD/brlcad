@@ -1024,6 +1024,7 @@ mged_process_char(char ch)
 }
 
 
+
 /*
  * M A I N
  */
@@ -1034,7 +1035,6 @@ main(int argc, char *argv[])
     int c;
     int read_only_flag=0;
 
-    int stdfd[2] = {0, 0};
     int parent_pipe[2] = {0, 0};
     int use_pipe = 0;
     int run_in_foreground=1;
