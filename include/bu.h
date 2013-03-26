@@ -407,7 +407,7 @@ typedef void *genptr_t;
  * this hardware.  Used to allocate application-specific per-processor
  * tables at compile-time and represent a hard limit on the number of
  * processors/threads that may be spawned. The actual number of
- * available processors is found at runtime by calling rt_avail_cpus()
+ * available processors is found at runtime by calling bu_avail_cpus()
  */
 #define MAX_PSW 1024
 
@@ -1522,9 +1522,8 @@ static __inline__ int BU_BITTEST(volatile void * addr, int nr)
  *
  * General purpose histogram handling routines.
  *
- * The macro RT_HISTOGRAM_TALLY is used to record items that
- * live in a single "bin", while the subroutine rt_hist_range()
- * is used to record items that may extend across multiple "bin"s.
+ * The subroutine bu_hist_range() is used to record items that may
+ * extend across multiple "bin"s.
  *
  */
 
