@@ -95,8 +95,8 @@ typedef struct FBIO_ {
     int (*if_open)FB_ARGS((struct FBIO_ *ifp, const char *file, int _width, int _height));		/**< @brief open device */
     int (*if_close)FB_ARGS((struct FBIO_ *ifp));							/**< @brief close device */
     int (*if_clear)FB_ARGS((struct FBIO_ *ifp, unsigned char *pp));					/**< @brief clear device */
-    int (*if_read)FB_ARGS((struct FBIO_ *ifp, int x, int y, unsigned char *pp, size_t count));		/**< @brief read pixels */
-    int (*if_write)FB_ARGS((struct FBIO_ *ifp, int x, int y, const unsigned char *pp, size_t count));	/**< @brief write pixels */
+    ssize_t (*if_read)FB_ARGS((struct FBIO_ *ifp, int x, int y, unsigned char *pp, size_t count));		/**< @brief read pixels */
+    ssize_t (*if_write)FB_ARGS((struct FBIO_ *ifp, int x, int y, const unsigned char *pp, size_t count));	/**< @brief write pixels */
     int (*if_rmap)FB_ARGS((struct FBIO_ *ifp, ColorMap *cmap));						/**< @brief read colormap */
     int (*if_wmap)FB_ARGS((struct FBIO_ *ifp, const ColorMap *cmap));					/**< @brief write colormap */
     int (*if_view)FB_ARGS((struct FBIO_ *ifp, int xcent, int ycent, int xzoom, int yzoom));		/**< @brief set view */
