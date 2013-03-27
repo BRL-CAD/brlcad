@@ -1,7 +1,0 @@
-#
-# Tcl package index file
-#
-set libfile [file join "@libdir@" @target_LIBNAME@]
-package ifneeded tkdnd @PKG_VERSION@ \
-  "source [file join $dir tkdnd.tcl] ; \
-   tkdnd::initialise \{$dir\} $libfile tkdnd"
