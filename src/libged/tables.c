@@ -41,7 +41,7 @@
 
 /* structure to distinguish new solids from existing (old) solids */
 struct identt {
-    int i_index;
+    size_t i_index;
     char i_name[NAMESIZE+1];
     mat_t i_mat;
 };
@@ -71,19 +71,19 @@ tables_check(char *a, char *b)
 }
 
 
-HIDDEN int
-tables_sol_number(const matp_t matrix, char *name, int *old, long *numsol)
+HIDDEN size_t
+tables_sol_number(const matp_t matrix, char *name, size_t *old, size_t *numsol)
 {
-    int i;
+    off_t i;
     struct identt idbuf1, idbuf2;
     static struct identt identt = {0, {0}, MAT_INIT_ZERO};
-    int readval;
+    ssize_t readval;
 
     memset(&idbuf1, 0, sizeof(struct identt));
     bu_strlcpy(idbuf1.i_name, name, sizeof(idbuf1.i_name));
     MAT_COPY(idbuf1.i_mat, matrix);
 
-    for (i = 0; i < *numsol; i++) {
+    for (i = 0; i < (ssize_t)*numsol; i++) {
 	(void)bu_lseek(rd_idfd, i*sizeof(identt), 0);
 	readval = read(rd_idfd, &idbuf2, sizeof identt);
 
@@ -112,7 +112,7 @@ tables_sol_number(const matp_t matrix, char *name, int *old, long *numsol)
 
 
 HIDDEN void
-tables_new(struct ged *gedp, struct directory *dp, struct bu_ptbl *cur_path, const fastf_t *old_mat, int flag, long *numreg, long *numsol)
+tables_new(struct ged *gedp, struct directory *dp, struct bu_ptbl *cur_path, const fastf_t *old_mat, int flag, size_t *numreg, size_t *numsol)
 {
     struct rt_db_internal intern;
     struct rt_comb_internal *comb;
@@ -182,7 +182,7 @@ tables_new(struct ged *gedp, struct directory *dp, struct bu_ptbl *cur_path, con
 	    struct rt_db_internal sol_intern;
 	    struct directory *sol_dp;
 	    mat_t temp_mat;
-	    int old;
+	    size_t old;
 
 	    switch (tree_list[i].tl_op) {
 		case OP_UNION:
@@ -302,8 +302,8 @@ ged_tables(struct ged *gedp, int argc, const char *argv[])
     int i;
     const char *usage = "file object(s)";
 
-    long int numreg = 0;
-    long int numsol = 0;
+    size_t numreg = 0;
+    size_t numsol = 0;
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
@@ -406,10 +406,10 @@ ged_tables(struct ged *gedp, int argc, const char *argv[])
 
     if (flag == SOL_TABLE || flag == REG_TABLE) {
 	bu_file_delete("/tmp/mged_discr\0");
-	fprintf(tabptr, "\n\nNumber Primitives = %ld  Number Regions = %ld\n",
+	fprintf(tabptr, "\n\nNumber Primitives = %lu  Number Regions = %lu\n",
 		      numsol, numreg);
 
-	bu_vls_printf(gedp->ged_result_str, "Processed %ld Primitives and %ld Regions\n",
+	bu_vls_printf(gedp->ged_result_str, "Processed %lu Primitives and %lu Regions\n",
 		      numsol, numreg);
 
 	(void)fclose(tabptr);
@@ -419,7 +419,7 @@ ged_tables(struct ged *gedp, int argc, const char *argv[])
 	fprintf(tabptr, "* 9999999\n* 9999999\n* 9999999\n* 9999999\n* 9999999\n");
 	(void)fclose(tabptr);
 
-	bu_vls_printf(gedp->ged_result_str, "Processed %ld Regions\n", numreg);
+	bu_vls_printf(gedp->ged_result_str, "Processed %lu Regions\n", numreg);
 
 	/* make ordered idents - tries newer gnu 'sort' syntax if not successful */
 	bu_vls_strcpy(&cmd, sortcmd_orig);
