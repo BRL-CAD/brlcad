@@ -242,11 +242,6 @@ main(int argc, char **argv)
 	setpgrp();
 #endif
 
-	/* Deal with CPU limits on "those kinds" of systems */
-	if ( bu_cpulimit_get() > 0 )  {
-	    bu_cpulimit_set( 9999999 );
-	}
-
 	/*
 	 *  Unless controller process has specifically said
 	 *  that this is an interactive session, e.g., for a demo,
