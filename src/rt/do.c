@@ -583,7 +583,6 @@ do_frame(int framenumber)
     double nutime = 0.0;		/* CPU time used, normalized by ncpu */
     double wallclock = 0.0;		/* # seconds of wall clock time */
     int npix = 0;			/* # of pixel values to be done */
-    int lim = 0;
     vect_t work, temp;
     quat_t quat;
 
@@ -694,19 +693,6 @@ do_frame(int framenumber)
 	if (xx * yy >= 0) {
 	    pix_end = yy * width + xx;
 	}
-    }
-
-    /*
-     * After the parameters for this calculation have been
-     * established, deal with CPU limits and priorities, where
-     * appropriate.  Because limits exist, they better be adequate.
-     * We assume that the Cray can produce MINRATE pixels/sec on
-     * images with extreme amounts of glass & mirrors.
-     */
-#define MINRATE 65
-    npix = width*height*(hypersample+1);
-    if ((lim = bu_cpulimit_get()) > 0) {
-	bu_cpulimit_set(lim + npix / MINRATE + 100);
     }
 
     /* Allocate data for pixel map for rerendering of black pixels */
