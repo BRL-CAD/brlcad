@@ -1860,13 +1860,13 @@ ogl_getview(FBIO *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom)
 
 
 /* read count pixels into pixelp starting at x, y */
-HIDDEN int
+HIDDEN ssize_t
 ogl_read(FBIO *ifp, int x, int y, unsigned char *pixelp, size_t count)
 {
     size_t n;
     size_t scan_count;	/* # pix on this scanline */
     register unsigned char *cp;
-    int ret;
+    ssize_t ret;
     register struct ogl_pixel *oglp;
 
     if (CJDEBUG) printf("entering ogl_read\n");
@@ -1899,7 +1899,7 @@ ogl_read(FBIO *ifp, int x, int y, unsigned char *pixelp, size_t count)
 	    cp += 3;
 	    n--;
 	}
-	ret += (int)scan_count;
+	ret += scan_count;
 	count -= scan_count;
 	x = 0;
 	/* Advance upwards */
@@ -1911,12 +1911,12 @@ ogl_read(FBIO *ifp, int x, int y, unsigned char *pixelp, size_t count)
 
 
 /* write count pixels from pixelp starting at xstart, ystart */
-HIDDEN int
+HIDDEN ssize_t
 ogl_write(FBIO *ifp, int xstart, int ystart, const unsigned char *pixelp, size_t count)
 {
     size_t scan_count;	/* # pix on this scanline */
     register unsigned char *cp;
-    int ret;
+    ssize_t ret;
     int ybase;
     size_t pix_count;	/* # pixels to send */
     register int x;

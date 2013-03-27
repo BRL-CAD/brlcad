@@ -31,7 +31,7 @@
 #include "fb.h"
 
 
-#define FILE_CMAP_ADDR ((long) ifp->if_width*ifp->if_height	\
+#define FILE_CMAP_ADDR ((off_t) ifp->if_width*ifp->if_height	\
 			*sizeof(RGBpixel))
 
 /* Ensure integer number of pixels per DMA */
@@ -63,7 +63,7 @@ dsk_open(FBIO *ifp, const char *file, int width, int height)
 	ifp->if_fd = 1;		/* fileno(stdout) */
 	ifp->if_width = width;
 	ifp->if_height = height;
-	ifp->if_seekpos = 0L;
+	ifp->if_seekpos = 0;
 	return 0;
     }
 
@@ -89,11 +89,11 @@ dsk_open(FBIO *ifp, const char *file, int width, int height)
 
     ifp->if_width = width;
     ifp->if_height = height;
-    if (bu_lseek(ifp->if_fd, 0, 0) == -1L) {
+    if (bu_lseek(ifp->if_fd, 0, 0) == -1) {
 	fb_log("disk_device_open : can not seek to beginning.\n");
 	return -1;
     }
-    ifp->if_seekpos = 0L;
+    ifp->if_seekpos = 0;
     return 0;
 }
 
@@ -139,7 +139,7 @@ disk_color_clear(FBIO *ifp, register unsigned char *bpp)
 
     /* Set start of framebuffer */
     fd = ifp->if_fd;
-    if (ifp->if_seekpos != 0L && bu_lseek(fd, 0, 0) == -1) {
+    if (ifp->if_seekpos != 0 && bu_lseek(fd, 0, 0) == -1) {
 	fb_log("disk_color_clear : seek failed.\n");
 	return -1;
     }
@@ -170,14 +170,14 @@ dsk_clear(FBIO *ifp, unsigned char *bgpp)
 }
 
 
-HIDDEN int
+HIDDEN ssize_t
 dsk_read(FBIO *ifp, int x, int y, unsigned char *pixelp, size_t count)
 {
-    size_t bytes = count * (long) sizeof(RGBpixel);
+    size_t bytes = count * sizeof(RGBpixel);
     size_t todo;
-    long got;
+    ssize_t got;
     size_t dest;
-    long bytes_read = 0;
+    size_t bytes_read = 0;
     int fd = ifp->if_fd;
 
     /* Reads on stdout make no sense.  Take reads from stdin. */
@@ -191,7 +191,7 @@ dsk_read(FBIO *ifp, int x, int y, unsigned char *pixelp, size_t count)
     ifp->if_seekpos = dest;
     while (bytes > 0) {
 	todo = bytes;
-	if ((got = read(fd, (char *) pixelp, todo)) != (long)todo) {
+	if ((got = read(fd, (char *) pixelp, todo)) != (ssize_t)todo) {
 	    if (got <= 0) {
 		if (got < 0) {
 		    perror("READ ERROR");
@@ -205,8 +205,8 @@ dsk_read(FBIO *ifp, int x, int y, unsigned char *pixelp, size_t count)
 	    }
 	    if (fd != 0) {
 		/* This happens all the time reading from pipes */
-		fb_log("disk_buffer_read(fd=%d): y=%d read of %ld got %ld bytes\n",
-		       fd, y, (long)todo, got);
+		fb_log("disk_buffer_read(fd=%d): y=%d read of %lu got %ld bytes\n",
+		       fd, y, todo, got);
 	    }
 	}
 	bytes -= got;
@@ -218,15 +218,15 @@ dsk_read(FBIO *ifp, int x, int y, unsigned char *pixelp, size_t count)
 }
 
 
-HIDDEN int
+HIDDEN ssize_t
 dsk_write(FBIO *ifp, int x, int y, const unsigned char *pixelp, size_t count)
 {
-    register long bytes = count * (long) sizeof(RGBpixel);
-    size_t todo;
-    size_t dest;
+    register ssize_t bytes = count * sizeof(RGBpixel);
+    ssize_t todo;
+    off_t dest;
 
     dest = (y * ifp->if_width + x) * sizeof(RGBpixel);
-    if (dest != ifp->if_seekpos) {
+    if (dest != (off_t)ifp->if_seekpos) {
 	if (bu_lseek(ifp->if_fd, dest, 0) == -1) {
 	    fb_log("disk_buffer_write : seek to %ld failed.\n", dest);
 	    return -1;
@@ -235,9 +235,9 @@ dsk_write(FBIO *ifp, int x, int y, const unsigned char *pixelp, size_t count)
     }
     while (bytes > 0) {
 	ssize_t ret;
-	todo = (size_t)bytes;
-	ret = (ssize_t)write(ifp->if_fd, (char *) pixelp, todo);
-	if (ret != (ssize_t)todo) {
+	todo = bytes;
+	ret = write(ifp->if_fd, (char *) pixelp, todo);
+	if (ret != todo) {
 	    fb_log("disk_buffer_write: write failed\n");
 	    return -1;
 	}
@@ -245,7 +245,7 @@ dsk_write(FBIO *ifp, int x, int y, const unsigned char *pixelp, size_t count)
 	pixelp += todo / sizeof(RGBpixel);
 	ifp->if_seekpos += todo;
     }
-    return (int)count;
+    return count;
 }
 
 

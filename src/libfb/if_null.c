@@ -67,21 +67,21 @@ null_clear(FBIO *ifp, unsigned char *UNUSED(pp))
 }
 
 
-HIDDEN int
+HIDDEN ssize_t
 null_read(FBIO *ifp, int UNUSED(x), int UNUSED(y), unsigned char *UNUSED(pixelp), size_t count)
 {
     FB_CK_FBIO(ifp);
 
-    return (int)count;
+    return count;
 }
 
 
-HIDDEN int
+HIDDEN ssize_t
 null_write(FBIO *ifp, int UNUSED(x), int UNUSED(y), const unsigned char *UNUSED(pixelp), size_t count)
 {
     FB_CK_FBIO(ifp);
 
-    return (int)count;
+    return count;
 }
 
 

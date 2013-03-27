@@ -245,7 +245,7 @@ mem_clear(FBIO *ifp, unsigned char *pp)
 }
 
 
-HIDDEN int
+HIDDEN ssize_t
 mem_read(FBIO *ifp, int x, int y, unsigned char *pixelp, size_t count)
 {
     size_t pixels_to_end;
@@ -260,11 +260,11 @@ mem_read(FBIO *ifp, int x, int y, unsigned char *pixelp, size_t count)
 
     memcpy((char *)pixelp, &(MI(ifp)->mem[(y*ifp->if_width + x)*3]), count*3);
 
-    return (int)count;
+    return count;
 }
 
 
-HIDDEN int
+HIDDEN ssize_t
 mem_write(FBIO *ifp, int x, int y, const unsigned char *pixelp, size_t count)
 {
     size_t pixels_to_end;
@@ -284,7 +284,7 @@ mem_write(FBIO *ifp, int x, int y, const unsigned char *pixelp, size_t count)
     } else {
 	MI(ifp)->mem_dirty = 1;
     }
-    return (int)count;
+    return count;
 }
 
 

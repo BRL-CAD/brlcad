@@ -349,10 +349,10 @@ rem_clear(FBIO *ifp, unsigned char *bgpp)
 /*
  * Send as longs:  x, y, num
  */
-HIDDEN int
+HIDDEN ssize_t
 rem_read(register FBIO *ifp, int x, int y, unsigned char *pixelp, size_t num)
 {
-    int ret;
+    ssize_t ret;
     unsigned char buf[3*NET_LONG_LEN+1];
 
     if (num == 0)
@@ -367,8 +367,8 @@ rem_read(register FBIO *ifp, int x, int y, unsigned char *pixelp, size_t num)
     /* Get response;  0 len means failure */
     ret = pkg_waitfor(MSG_RETURN, (char *)pixelp, num*sizeof(RGBpixel), PCP(ifp));
     if (ret <= 0) {
-	fb_log("rem_read: read %ld at <%d, %d> failed, ret=%d.\n",
-	       (long)num, x, y, ret);
+	fb_log("rem_read: read %lu at <%d, %d> failed, ret=%ld.\n",
+	       num, x, y, ret);
 	return -3;
     }
     return ret/sizeof(RGBpixel);
@@ -378,10 +378,10 @@ rem_read(register FBIO *ifp, int x, int y, unsigned char *pixelp, size_t num)
 /*
  * As longs, x, y, num
  */
-HIDDEN int
+HIDDEN ssize_t
 rem_write(register FBIO *ifp, int x, int y, const unsigned char *pixelp, size_t num)
 {
-    int ret;
+    ssize_t ret;
     unsigned char buf[3*NET_LONG_LEN+1];
 
     if (num <= 0) return num;

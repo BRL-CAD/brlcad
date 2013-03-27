@@ -768,7 +768,7 @@ X_clear(FBIO *ifp, unsigned char *pp)
 }
 
 
-HIDDEN int
+HIDDEN ssize_t
 X_read(FBIO *ifp, int x, int y, unsigned char *pixelp, size_t count)
 {
     unsigned char *bytebuf = XI(ifp)->bytebuf;
@@ -781,7 +781,7 @@ X_read(FBIO *ifp, int x, int y, unsigned char *pixelp, size_t count)
     /* return 24bit store if available */
     if (XI(ifp)->mem) {
 	memcpy(pixelp, &(XI(ifp)->mem[(y*ifp->if_width+x)*sizeof(RGBpixel)]), count*sizeof(RGBpixel));
-	return (int)count;
+	return count;
     }
 
     /* 1st -> 4th quadrant */
@@ -794,7 +794,7 @@ X_read(FBIO *ifp, int x, int y, unsigned char *pixelp, size_t count)
 	*pixelp++ = *cp;
 	*pixelp++ = *cp++;
     }
-    return (int)count;
+    return count;
 }
 
 
@@ -1097,12 +1097,12 @@ done:
  * Decompose a write of more than one scanline into multiple single
  * scanline writes.
  */
-HIDDEN int
+HIDDEN ssize_t
 X_write(FBIO *ifp, int x, int y, const unsigned char *pixelp, size_t count)
 {
     size_t maxcount;
     size_t todo;
-    int num;
+    size_t num;
 
     /* check origin bounds */
     if (x < 0 || x >= ifp->if_width || y < 0 || y >= ifp->if_height)
@@ -1123,7 +1123,7 @@ X_write(FBIO *ifp, int x, int y, const unsigned char *pixelp, size_t count)
 	if (x + todo > (size_t)ifp->if_width)
 	    num = ifp->if_width - x;
 	else
-	    num = (int)todo;
+	    num = todo;
 	if (X_scanwrite(ifp, x, y, pixelp, num, 1) == 0)
 	    return 0;
 	x = 0;
@@ -1131,7 +1131,7 @@ X_write(FBIO *ifp, int x, int y, const unsigned char *pixelp, size_t count)
 	todo -= num;
 	pixelp += num;
     }
-    return (int)count;
+    return count;
 }
 
 

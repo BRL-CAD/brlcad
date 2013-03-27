@@ -92,18 +92,18 @@ deb_clear(FBIO *ifp, unsigned char *pp)
 }
 
 
-HIDDEN int
+HIDDEN ssize_t
 deb_read(FBIO *ifp, int x, int y, unsigned char *pixelp, size_t count)
 {
     FB_CK_FBIO(ifp);
-    fb_log("fb_read(%p, %4d, %4d, %p, %ld)\n",
+    fb_log("fb_read(%p, %4d, %4d, %p, %lu)\n",
 	   (void *)ifp, x, y,
-	   (void *)pixelp, (long)count);
+	   (void *)pixelp, count);
     return count;
 }
 
 
-HIDDEN int
+HIDDEN ssize_t
 deb_write(FBIO *ifp, int x, int y, const unsigned char *pixelp, size_t count)
 {
     size_t i;
@@ -127,7 +127,7 @@ deb_write(FBIO *ifp, int x, int y, const unsigned char *pixelp, size_t count)
 	    fb_log("\n");
     }
 
-    return (int)count;
+    return count;
 }
 
 
