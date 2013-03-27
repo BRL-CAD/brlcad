@@ -342,17 +342,6 @@ bu_avail_cpus(void)
 }
 
 
-fastf_t
-bu_get_load_average(void)
-{
-    double load = -1.0;
-
-    bu_log("DEPRECATED: bu_get_load_average is deprecated and will be removed in a future release.\n");
-
-    return load;
-}
-
-
 int
 bu_get_public_cpus(void)
 {
@@ -389,13 +378,6 @@ bu_get_public_cpus(void)
     }
 #endif
     return avail_cpus;
-}
-
-
-int
-bu_set_realtime(void)
-{
-    return 0;
 }
 
 
