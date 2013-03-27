@@ -34,8 +34,9 @@
 int
 Findp()
 {
-    int saverec, rec2, i;
-    long offset;
+    int i;
+    size_t saverec, rec2;
+    off_t offset;
     char str[8];
 
     str[7] = '\0';
