@@ -642,6 +642,32 @@ BRLCAD_ENABLE_TK is OFF.
 Aliases:  ENABLE_TKTABLE
 
 
+--- BRLCAD_TKTREECTRL ---
+
+Option for enabling and disabling compilation of the TkTreeCtrl graphical
+table widget package provided with BRL-CAD's source distribution.
+Default is AUTO, auto-enabling if the BRLCAD_TCL option is set to
+BUNDLED and testing first for a system version if BRLCAD_TCL is set to
+AUTO or SYSTEM.  If BRLCAD_TKTREECTRL is set to BUNDLED, local copy is built
+even if a system version is present.  This package will be disabled if
+BRLCAD_ENABLE_TK is OFF.
+
+Aliases:  ENABLE_TKTREECTRL
+
+
+--- BRLCAD_TKDND ---
+
+Option for enabling and disabling compilation of the TkDnD 
+drag-and-drop widget provided with BRL-CAD's source distribution.
+Default is AUTO, auto-enabling if the BRLCAD_TCL option is set to
+BUNDLED and testing first for a system version if BRLCAD_TCL is set to
+AUTO or SYSTEM.  If BRLCAD_TKDND is set to BUNDLED, local copy is built
+even if a system version is present.  This package will be disabled if
+BRLCAD_ENABLE_TK is OFF.
+
+Aliases:  ENABLE_TKDND
+
+
 --- BRLCAD_OPENNURBS ---
 
 Option for enabling and disabling compilation of the openNURBS library

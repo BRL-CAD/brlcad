@@ -1,0 +1,201 @@
+2012-11-27  Petasis George  <petasis@iit.demokritos.gr>
+	* library/tkdnd_unix.tcl:
+	* library/tkdnd_windows.tcl: Leave and Drop events do not report 0
+        as root x/y (%X %Y). In case the underlying protocol does not support
+        reporting the mouse coordinates for the specific event, the last known
+        possition from the position event is used.
+
+2012-08-26  Petasis George  <petasis@iit.demokritos.gr>
+	TkDND 2.6 released.
+	* unix/tkUnixSelect.c: Added a work-around for getting the selection
+	under unix: since Tk does not always deliver SelectionNotify, we try
+	to get the selection even if SelectionNotify has not been received.
+
+2012-08-15  Petasis George  <petasis@iit.demokritos.gr>
+	* unix/tkUnixSelect.c: Partially solved the problem with getting
+	selection under unix. The solution was to try and get the selection,
+	even if a SelectionNotify event has not been delivered.
+
+2012-07-14  Petasis George  <petasis@iit.demokritos.gr>
+	* unix/tkUnixSelect.c: Tests with Tcl_ThreadAlert(). It helps
+	somewhat, but is not the solution for the problems when getting the
+	selection.
+
+2012-06-17  Petasis George  <petasis@iit.demokritos.gr>
+	TkDND 2.5 released.
+	* win/TkDND_OleDND.cpp: Fixes for type CF_HDROP.
+
+2012-06-07  Petasis George  <petasis@iit.demokritos.gr>
+	* demos/basic.tcl: Updated demo with support for colours, which only
+	works for XDND right now.
+
+	* unix/TkDND_XDND.c:
+	* unix/tkUnixSelect.c: Implementation of unix (XDND) drags completed.
+
+2012-06-06  Petasis George  <petasis@iit.demokritos.gr>
+	* unix/Cursors.c: Ported cursors from TkDND 1.x to TkDND 2.x
+
+2012-06-05  Petasis George  <petasis@iit.demokritos.gr>
+	* library/tkdnd.tcl:
+	* library/tkdnd_unix.tcl:
+	* unix/tkUnixSelect.c:
+	* unix/TkDND_XDND.c: Added support for initiating drags from Tk under
+	unix. Despite incomplete, seems to work with GTK.
+
+2012-06-02  Petasis George  <petasis@iit.demokritos.gr>
+	* library/tkdnd_unix.tcl:
+	* unix/TkDND_XDND.c:
+	* unix/tkUnixSelect.c:
+	* unix/tkSelect.h: Modifications to support Linux drops. Drops from
+	GTK seem to always work, and drops from Qt seem to work most of the
+	times.
+
+2012-04-19  Petasis George  <petasis@iit.demokritos.gr>
+	* win/Makefile: Updated the Windows Makefile, after a patch from
+	Dave Bodenstab.
+
+2012-04-12  Petasis George  <petasis@iit.demokritos.gr>
+	TkDND 2.4 released.
+	* library/tkdnd_unix.tcl:
+	* unix/TkDND_XDND.c:
+	* unix/tkUnixSelect.c:
+	* unix/tkSelect.h: Modifications to support Linux drops.
+
+	* tclconfig/*:
+	* configure.in, Makefile.in: Updated to TEA 3.9.
+
+	* library/tkdnd_unix.tcl: Removed braces from a comment in
+	xdnd::_GetDroppedData, left from testing with TIP 370 preliminary
+	implementation. SF Bug ID: 3516862
+
+2012-03-03  Petasis George  <petasis@iit.demokritos.gr>
+	TkDND 2.3 released.
+	* library/tkdnd_windows.tcl:
+	* win/OleDND.h:
+	* win/TkDND_OleDND.cpp: Fix in TkDND_DropSource::QueryContinueDrag,
+	to support dragging with all mouse buttons. Bug reported by
+	Michael Fersch.
+
+2011-09-24  Petasis George  <petasis@iit.demokritos.gr>
+	* win/OleDND.h: Added definition of WINVER to version 5, when compiling
+	with MinGW, which defines it with version 4. SF Bug ID: 3411338.
+
+2011-09-23  Petasis George  <petasis@iit.demokritos.gr>
+	* win/OleDND.h: Modified STRING_(s), to ease compilation with MinGW.
+	Patch provided by Hans-Christoph Steiner. SF Bug ID: 3411338.
+
+2011-09-22  Petasis George  <petasis@iit.demokritos.gr>
+	* win/OleDND.h: Added a check if CF_DIBV5 is defined (i.e.
+	WINVER < 0x0500). SF Bug ID: 3411338.
+
+2011-03-18  Petasis George  <petasis@iit.demokritos.gr>
+	* library/tkdnd_unix.tcl: Fixed a bug in xdnd::_GetDroppedData, where
+	an improper error was thrown in case no common types were found between
+	the drag source and drop target widgets. Now a more appropriate error
+	is returned. Bug reported by Kevin Walzer.
+
+2011-01-14  Petasis George  <petasis@iit.demokritos.gr>
+	* library/tkdnd_unix.tcl: Added support for accepting drops, if
+	TIP 370 is finally approved. Changes tested with a preliminary TIP 370
+	implementation.
+
+	* library/tkdnd_macosx.tcl: Fixed a bug reported by Kevin Walzer:
+	macdnd::_GetDroppedData and xdnd::_GetDroppedData were missing the
+	"time" argument, added in the XDND section for TIP 370 (if it gets
+	accepted).
+
+	* macosx/macdnd.m: Restored back a workarround by Kevin Walzer, as
+	TkDND does not work well under all circumstances in OS X 10.6.
+	(Reported by Kevin Walzer on 23 Dec 2010).
+
+2010-08-03  Petasis George  <petasis@iit.demokritos.gr>
+	TkDND 2.2 released.
+	* library/tkdnd_windows.tcl:
+	* win/OleDND.h: Fixes for compiling with UNICODE & _UNICODE.
+
+2010-07-28  Petasis George  <petasis@iit.demokritos.gr>
+	* win/Makefile: Updated.
+
+	* library/tkdnd_unix.tcl:
+	* library/tkdnd_windows.tcl: Fixed bug 2169256.
+
+	* library/tkdnd.tcl: Fixed bug 2486830.
+
+2010-06-16  Petasis George  <petasis@iit.demokritos.gr>
+	* Makefile.in:
+	* configure.in:
+	* win/Makefile:
+	* win/TkDND_OleDND.cpp:
+	* unix/TkDND_XDND.c: Applied a patch from Andreas Kupries, which
+	make the unix code compatible with compilers supporting C89 (i.e.
+	AIX's cc). Also, the TEA files were updated.
+
+	* /unix/TkDND_XDND.c: Fixed a bug in TkDND_RegisterTypesObjCmd.
+	It seems that KDE wants the XdndAware property on the window these
+	days, and not at the toplevel one.
+
+2010-06-11  Petasis George  <petasis@iit.demokritos.gr>
+	TkDND 2.1 released.
+
+2010-05-05  Petasis George  <petasis@iit.demokritos.gr>
+	* /macosx/macdnd.m: Several fixes. The most important are:
+	Do not initiate a drag if the clipboard is empty (i.e. because we
+	  cannot handle any of the provided types).
+	Fixed drag icon slide when the drag is canceled.
+
+2010-04-30  Petasis George  <petasis@iit.demokritos.gr>
+	* /macosx/macdnd.m: Several changes:
+	Moved drag operation inside TkDND_DoDragDropObjCmd. This means that
+	  drag operation can be started with a Tk binding.
+	Fixed the way drag types are declared in the drag clipboard. Now types
+	  are reported correctly during drops.
+	Added a tag in the DNDView class.
+	Added a function to get the DNDView pointer from an NSView pointer.
+	  Hopefully this will not permit to add more than one DNDView to any
+	  view. This function always return a DNDView pointer (it creates a
+	  new DNDView if a view does not already has one).
+
+	The demos seem to work, although the garbage collector seems to print
+	some messages during drags from Tk windows.
+
+2010-04-06  Petasis George  <petasis@iit.demokritos.gr>
+	* /macosx/macdnd.m: Some attempts towards drag support for OS X.
+
+2010-01-03  Petasis George  <petasis@iit.demokritos.gr>
+	* /library/tkdnd_macosx.tcl:
+	* /macosx/macdnd.m: Changed the way dropped data is handled: during
+	the drop event the data are converted into a utf-8 string (in case of
+	dropping string data) or a Tcl list object of utf-8 filenames (in case
+	of dropping files). The data object is stored directly in the
+	tkdnd::macdnd::_dropped_data variable, instead of the selection
+	clipboard. _GetDroppedData was modified to return this stored data.
+
+2009-12-30  Petasis George  <petasis@iit.demokritos.gr>
+	* /cmake:
+	* /CMakeLists.txt: Added support for building TkDND with cmake (i.e.
+	under windows).
+
+2009-12-29  Petasis George  <petasis@iit.demokritos.gr>
+	* /library/tkdnd_macosx.tcl:
+	* /macosx/macdnd.m: Changes to better integrate the work done by
+	Kevin Walzer with the rest of TkDND, since OS X seems to mimic the
+	XDND implementation. tkdnd_macosx.tcl is now a stub file, with most of
+	the work being done by the unix (XDND) code.
+	I think that OS X drop support is now working.
+
+2009-12-09  Petasis George  <petasis@iit.demokritos.gr>
+	* /library/tkdnd_macosx.tcl:
+	* /macosx/macdnd.m: Updates to better integrate the OS X type
+	registration command with the rest of the TkDND internal API.
+
+2009-12-01  Walzer Kevin    <kw@codebykevin.com>
+	* /macosx/*: Initial support for drop targets under OS X (Cocoa).
+
+2007-02-09  Petasis George  <petasis@iit.demokritos.gr>
+	* /unix/TkDND_XDND.c: Fixed a bug in TkDND_RegisterTypesObjCmd, where
+	Tk_Parent was used to determine if a provided path was a toplevel.
+	Replaced by a check through Tk_IsTopLevel.
+	Bug reported by Alain Bertrand <alain.mp.bertrand@tele2.be>
+
+2006-04-24  Petasis George  <petasis@iit.demokritos.gr>
+	* TkDND version 2.0 started.

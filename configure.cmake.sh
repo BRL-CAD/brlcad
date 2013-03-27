@@ -158,6 +158,14 @@ do
                                   shift;;
      --disable-tktable)                options="$options -DBRLCAD_TKTABLE=SYSTEM";
                                   shift;;
+     --enable-tktreectrl)                options="$options -DBRLCAD_TKTREECTRL=BUNDLED";
+                                  shift;;
+     --disable-tktreectrl)                options="$options -DBRLCAD_TKTREECTRL=SYSTEM";
+                                  shift;;
+     --enable-tkdnd)                options="$options -DBRLCAD_TKDND=BUNDLED";
+                                  shift;;
+     --disable-tkdnd)                options="$options -DBRLCAD_TKDND=SYSTEM";
+                                  shift;;
      --enable-opennurbs)                options="$options -DBRLCAD_OPENNURBS=BUNDLED";
                                   shift;;
      --disable-opennurbs)                options="$options -DBRLCAD_OPENNURBS=SYSTEM";

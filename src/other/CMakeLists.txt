@@ -776,21 +776,36 @@ DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/tktable/pkgIndex.tcl)
 DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/tktable/tktable_cfg.h)
 DISTCLEAN(${CMAKE_BINARY_DIR}/lib/Tktable2.10)
 
-#set(tktreectrl_ALIASES ENABLE_TKTREECTRL)
-#set(tktreectrl_DESCRIPTION "
-#Option for enabling and disabling compilation of the TkTreeCtrl graphical
-#table widget package provided with BRL-CAD's source distribution.
-#Default is AUTO, auto-enabling if the BRLCAD_TCL option is set to
-#BUNDLED and testing first for a system version if BRLCAD_TCL is set to
-#AUTO or SYSTEM.  If BRLCAD_TKTREECTRL is set to BUNDLED, local copy is built
-#even if a system version is present.  This package will be disabled if
-#BRLCAD_ENABLE_TK is OFF.
-#")
-#THIRD_PARTY_TCL_PACKAGE(tktreectrl tktreectrl "${TCL_WISH_EXECUTABLE}" "tcl;tk"
-#  "BRLCAD_ENABLE_TK;BRLCAD_LEVEL3" "" tktreectrl_ALIASES tktreectrl_DESCRIPTION)
-#DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/tktreectrl/pkgIndex.tcl)
-#DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/tktreectrl/tktreectrl_cfg.h)
-#DISTCLEAN(${CMAKE_BINARY_DIR}/lib/TkTreeCtrl2.4)
+set(tktreectrl_ALIASES ENABLE_TKTREECTRL)
+set(tktreectrl_DESCRIPTION "
+Option for enabling and disabling compilation of the TkTreeCtrl graphical
+table widget package provided with BRL-CAD's source distribution.
+Default is AUTO, auto-enabling if the BRLCAD_TCL option is set to
+BUNDLED and testing first for a system version if BRLCAD_TCL is set to
+AUTO or SYSTEM.  If BRLCAD_TKTREECTRL is set to BUNDLED, local copy is built
+even if a system version is present.  This package will be disabled if
+BRLCAD_ENABLE_TK is OFF.
+")
+THIRD_PARTY_TCL_PACKAGE(tktreectrl tktreectrl "${TCL_WISH_EXECUTABLE}" "tcl;tk"
+  "BRLCAD_ENABLE_TK;BRLCAD_LEVEL3" "" tktreectrl_ALIASES tktreectrl_DESCRIPTION)
+DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/tktreectrl/pkgIndex.tcl)
+DISTCLEAN(${CMAKE_BINARY_DIR}/lib/TkTreeCtrl2.4)
+
+set(tkdnd_ALIASES ENABLE_TKDND)
+set(tkdnd_DESCRIPTION "
+Option for enabling and disabling compilation of the TkDnD 
+drag-and-drop widget provided with BRL-CAD's source distribution.
+Default is AUTO, auto-enabling if the BRLCAD_TCL option is set to
+BUNDLED and testing first for a system version if BRLCAD_TCL is set to
+AUTO or SYSTEM.  If BRLCAD_TKDND is set to BUNDLED, local copy is built
+even if a system version is present.  This package will be disabled if
+BRLCAD_ENABLE_TK is OFF.
+")
+THIRD_PARTY_TCL_PACKAGE(tkdnd tkdnd "${TCL_WISH_EXECUTABLE}" "tcl;tk"
+  "BRLCAD_ENABLE_TK;BRLCAD_LEVEL3" "" tkdnd_ALIASES tkdnd_DESCRIPTION)
+DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/tkdnd/pkgIndex.tcl)
+DISTCLEAN(${CMAKE_BINARY_DIR}/lib/tkdnd2.6)
+
 
 # OpenNURBS Library
 set(opennurbs_ALIASES ENABLE_OPENNURBS)
