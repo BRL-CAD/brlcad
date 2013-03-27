@@ -193,20 +193,6 @@ bu_nice_set(int newnice)
 
 
 int
-bu_cpulimit_get(void)
-{
-    return -1;
-}
-
-
-void
-bu_cpulimit_set(int sec)
-{
-    if (sec < 0) sec = 0;
-}
-
-
-int
 bu_avail_cpus(void)
 {
     int ncpu = -1;

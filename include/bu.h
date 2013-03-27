@@ -4037,17 +4037,6 @@ BU_EXPORT extern int bu_process_id();
 BU_EXPORT extern void bu_nice_set(int newnice);
 
 /**
- * Return the current CPU limit, in seconds. Zero or negative return
- * indicates that limits are not in effect.
- */
-BU_EXPORT extern int bu_cpulimit_get();
-
-/**
- * Set CPU time limit, in seconds.
- */
-BU_EXPORT extern void bu_cpulimit_set(int sec);
-
-/**
  * Return the maximum number of physical CPUs that are considered to
  * be available to this process now.
  */

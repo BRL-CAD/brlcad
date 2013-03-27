@@ -885,4 +885,6 @@ s/bu_strcmpm\((.*),([^,]*)\)/bu_strcmp(\1)/g
 7.24
 ----
 s/bu_set_realtime([[:space:]]);//g
-        didn't do anything [7.23
+        didn't do anything [7.23]
+s/.*bu_cpulimit_[sg]et([[:space:]]);//g
+        didn't do anything [7.23]
