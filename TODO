@@ -38,6 +38,9 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* temp colors and temp matrices during ray tracing, need a
+  command-line and mged method to override parameters temporarily.
+
 * fix bottie crash on 32b builds
 
 * resolve bot bin sort optimization crash, disabled during release
