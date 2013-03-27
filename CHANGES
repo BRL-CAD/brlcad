@@ -65,6 +65,10 @@ new names should be listed for reference.
 **************
 
 
+7.24
+----
+
+
 7.22
 ----
 raytrace.h librt
@@ -211,8 +215,6 @@ include/raytrace.h
 	rt_fdiff -> NEAR_ZERO [deprecated 7.14]
 	rt_reldiff -> NEAR_ZERO [deprecated 7.14]
 	DIR_* -> RT_DIR_* [deprecated 7.14]
-include/bu.h
-	bu_fopen_uniq -> fopen [deprecated 7.14]
 mged
 	tops -g -u -> now default behavior [deprecated 7.14]
 	-n option -> -c option [deprecated 7.14]
@@ -234,8 +236,6 @@ srt/librt/cmd.c
 	rt_split_cmd() -> bu_argv_from_string() [deprecated 7.12]
 src/rt/viewarea.c
 	terminology and output format [deprecated 7.12]
-src/libbu/parallel.c
-	bu_get_load_average(), remove [deprecated 7.12]
 include/raytrace.h
 	RT_HIT_NORM -> RT_HIT_NORMAL [deprecated 7.12]
 
@@ -253,6 +253,9 @@ include/raytrace.h
 ------
 src/other/jove
 	jove -> emacs [deprecated 7.14]
+include/bu.h
+	bu_get_load_average(), remove [deprecated 7.12]
+	bu_fopen_uniq -> fopen [deprecated 7.14]
 
 7.22.0
 ------
@@ -875,3 +878,9 @@ s/bu_count_path(.*)\);/bu_dir_list\1, NULL);/g
 	made bu_dir_list() return the number of entries [7.21]
 s/bu_strcmpm\((.*),([^,]*)\)/bu_strcmp(\1)/g
 	no use for label parameter, convert to bu_strcmp() [7.21]
+        bu_set_realtime() [deprecated 7.22]
+
+7.24
+----
+s/bu_set_realtime([[:space:]]);//g
+        didn't do anything [7.23

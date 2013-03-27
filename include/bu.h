@@ -4084,16 +4084,6 @@ BU_EXPORT extern void bu_cpulimit_set(int sec);
 BU_EXPORT extern int bu_avail_cpus();
 
 /**
- * A generally portable method for obtaining the 1-minute load average.
- * Vendor-specific methods which don't involve a fork/exec sequence
- * would be preferable.
- * Alas, very very few systems put the load average in /proc,
- * most still grunge the avenrun[3] array out of /dev/kmem,
- * which requires special privileges to open.
- */
-BU_EXPORT extern fastf_t bu_get_load_average();
-
-/**
  * DEPRECATED: this routine's use of a temporary file is deprecated
  * and should not be relied upon.  a future implementation will
  * utilize environment variables instead of temporary files.
@@ -4109,16 +4099,6 @@ BU_EXPORT extern fastf_t bu_get_load_average();
  * use.
  */
 DEPRECATED BU_EXPORT extern int bu_get_public_cpus();
-
-/**
- * If possible, mark this process for real-time scheduler priority.
- * Will often need root privs to succeed.
- *
- * Returns -
- * 1 realtime priority obtained
- * 0 running with non-realtime scheduler behavior
- */
-BU_EXPORT extern int bu_set_realtime();
 
 /**
  * Create 'ncpu' copies of function 'func' all running in parallel,
