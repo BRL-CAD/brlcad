@@ -329,13 +329,19 @@
 ::itcl::body Command::invoke {} {
     set w $itk_component(text)
 
-    set cmd [$w get promptEnd insert]
+    set cmd [string trimleft [$w get promptEnd insert]]
     set more_args_list {}
 
     # remove any instances of prompt2 from the beginning of each secondary line
     regsub -all "\n$itk_option(-prompt2)" $cmd "" cmd
 
-    set cname [lindex $cmd 0]
+    set i [string first " " $cmd]
+    if {$i == -1} {
+	set cname $cmd
+    } else {
+	set cname [string range $cmd 0 $i-1]
+    }
+
     if {$cname == "master"} {
 	invokeMaster $cmd
 
@@ -357,7 +363,6 @@
 	}
 
 	if {$do_history} {
-	    eval lappend cmd $more_args_list
 	    $hist add $cmd
 	}
 
