@@ -1649,6 +1649,7 @@ package provide Archer 1.0
     set mTarget $_target
     set mDbType "BRL-CAD"
     set mCopyObj ""
+    set mCombWarningList ""
 
     if {![catch {$mTarget ls}]} {
 	set mDbShared 1
@@ -2947,6 +2948,19 @@ proc title_node_handler {node} {
 	    -validatecommand {::cadwidgets::Ged::validateDigit %P}
     } {}
 
+    itk_component add maxcombmembL {
+	::ttk::label $itk_component(generalF).maxcombmembL \
+	    -anchor e \
+	    -text "Max Comb Members Shown"
+    } {}
+    itk_component add maxcombmembE {
+	::ttk::entry $itk_component(generalF).maxcombmembE \
+	    -width 12 \
+	    -textvariable [::itcl::scope mMaxCombMembersShownPref] \
+	    -validate key \
+	    -validatecommand {::cadwidgets::Ged::validateDigit %P}
+    } {}
+
     itk_component add affectedTreeNodesModeCB {
 	::ttk::checkbutton $itk_component(generalF).affectedTreeNodesModeCB \
 	    -text "Highlight Affected Tree/List Nodes" \
@@ -3023,9 +3037,11 @@ proc title_node_handler {node} {
     grid $itk_component(rayColorVoidF) -column 1 -row $i -sticky ew
 
     # Disable tree attributes indefinitely
-#    incr i
-#    grid $itk_component(treeAttrsL) -column 0 -row $i -sticky e
-#    grid $itk_component(treeAttrsE) -column 1 -row $i -sticky ew
+    if {0} {
+    incr i
+    grid $itk_component(treeAttrsL) -column 0 -row $i -sticky e
+    grid $itk_component(treeAttrsE) -column 1 -row $i -sticky ew
+    }
 
     incr i
     grid $itk_component(selGroupL) -column 0 -row $i -sticky e
@@ -3036,6 +3052,9 @@ proc title_node_handler {node} {
     incr i
     grid $itk_component(rtbotmintieL) -column 0 -row $i -sticky e
     grid $itk_component(rtbotmintieE) -column 1 -row $i -sticky ew
+    incr i
+    grid $itk_component(maxcombmembL) -column 0 -row $i -sticky e
+    grid $itk_component(maxcombmembE) -column 1 -row $i -sticky ew
     incr i
     set i [buildOtherGeneralPreferences $i]
     grid $itk_component(affectedTreeNodesModeCB) \
@@ -8368,6 +8387,8 @@ proc title_node_handler {node} {
     gedCmd configure -rayColorVoid $mRayColorVoid
 
     $itk_component(ged) fontsize $mDisplayFontSize
+
+    rebuildTree
 }
 
 
@@ -8440,6 +8461,12 @@ proc title_node_handler {node} {
     set tflag 0
     if {$mTreeAttrColumns != $mTreeAttrColumnsPref} {
 	set mTreeAttrColumns $mTreeAttrColumnsPref
+	set cflag 1
+    }
+
+    if {$mMaxCombMembersShownPref != $mMaxCombMembersShown} {
+	set mMaxCombMembersShown $mMaxCombMembersShownPref
+	set mCombWarningList ""
 	set cflag 1
     }
 
@@ -8959,6 +8986,7 @@ proc title_node_handler {node} {
     set mDbUnits [gedCmd units -s]
     set mRtBotMintiePref $mRtBotMintie
     set mCompSelectGroupPref $mCompSelectGroup
+    set mMaxCombMembersShownPref $mMaxCombMembersShown
 
     # Convert mCompSelectMode to a string for the preferences panel
     set mCompSelectModePref [lindex $COMP_SELECT_MODE_NAMES $mCompSelectMode]
@@ -9130,6 +9158,7 @@ proc title_node_handler {node} {
     puts $_pfile "set mRtBotMintie $mRtBotMintie"
     puts $_pfile "set mCompSelectGroup $mCompSelectGroup"
     puts $_pfile "set mCompSelectMode $mCompSelectMode"
+    puts $_pfile "set mMaxCombMembersShown $mMaxCombMembersShown"
 
     puts $_pfile "set mGridAnchor \"$mGridAnchor\""
     puts $_pfile "set mGridColor \"$mGridColor\""

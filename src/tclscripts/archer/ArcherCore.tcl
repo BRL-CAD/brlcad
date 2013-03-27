@@ -463,6 +463,7 @@ namespace eval ArcherCore {
 
 	variable mMaxCombMembersShown 200
 	variable mMaxCombMembersShownPref ""
+	variable mCombWarningList ""
 
 	variable mZClipBack 100.0
 	variable mZClipBackPref 100.0
@@ -856,7 +857,7 @@ namespace eval ArcherCore {
 	# db/display commands
 	method getNodeChildren  {_node}
 	method getTreeFromGData  {_gdata}
-	method getTreeMembers  {_comb}
+	method getTreeMembers  {_comb {_wflag 0}}
 	method getTreeOp {_parent _child}
 	method renderComp        {_node}
 	method render             {_node _state _trans _updateTree {_wflag 1} {_node_id ""}}
@@ -3573,7 +3574,7 @@ namespace eval ArcherCore {
 }
 
 
-::itcl::body ArcherCore::getTreeMembers {_comb} {
+::itcl::body ArcherCore::getTreeMembers {_comb {_wflag 0}} {
     if {![$itk_component(ged) exists $_comb]} {
 	return ""
     }
@@ -3586,6 +3587,15 @@ namespace eval ArcherCore {
 	incr i
 
 	if {$i >= $mMaxCombMembersShown} {
+	    if {$_wflag} {
+		set j [lsearch $mCombWarningList $_comb]
+
+		if {$j == -1} {
+		    tk_messageBox -message "Warning: not all members of $_comb will be visible in the tree. See the \"Max Comb Members Shown\" preference."
+		    lappend mCombWarningList $_comb
+		}
+	    }
+
 	    break
 	}
     }
@@ -4633,7 +4643,7 @@ namespace eval ArcherCore {
 	    switch -- $ctype {
 		"comb" {
 		    #set tree [getTreeFromGData $cgdata]
-		    foreach gctext [getTreeMembers $ctext] {
+		    foreach gctext [getTreeMembers $ctext 1] {
 			if {[catch {$itk_component(ged) get $gctext} gcgdata]} {
 			    set op [getTreeOp $ctext $gctext]
 			    set img [getTreeImage $gctext "invalid" $op]
@@ -5157,6 +5167,7 @@ namespace eval ArcherCore {
     set mTarget $target
     set mDbType "BRL-CAD"
     set mCopyObj ""
+    set mCombWarningList ""
 
     if {![catch {$mTarget ls}]} {
 	set mDbShared 1
