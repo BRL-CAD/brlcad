@@ -62,9 +62,7 @@ double out_gamma = -1.0;
 int
 get_args(int argc, char **argv, size_t *width, size_t *height, FILE **infp, FILE **outfp)
 {
-    int c;
-    int ttyin = 0;
-    int ttyout = 0;
+    int c, ttyin, ttyout;
 
     while ((c = bu_getopt(argc, argv, "ag:s:w:n:o:h?")) != -1) {
 	switch (c) {
@@ -114,10 +112,8 @@ get_args(int argc, char **argv, size_t *width, size_t *height, FILE **infp, FILE
 	fileinput++;
     }
 
-    if (isatty(fileno(*infp)))
-    	ttyin = 1;
-    if (isatty(fileno(*outfp)))
-    	ttyout = 1;
+    ttyin = isatty(fileno(*infp));
+    ttyout = isatty(fileno(*outfp));
     if (ttyin && ttyout && argc == 1)
 	return 0; /* usage */ /* running the command with no arguments (AND no file pipes) */
     if (ttyin)
