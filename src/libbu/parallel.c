@@ -178,16 +178,19 @@ struct thread_data {
 /**
  * process id of the initiating thread. used to shutdown bu_parallel
  * threads/procs.
- *
- * NOT published in a public header.
  */
-int bu_pid_of_initiating_thread = 0;
+static int pid_of_initiating_thread = 0;
+
+static int parallel_nthreads_started = 0;	/* # threads started */
+static int parallel_nthreads_finished = 0;	/* # threads properly finished */
+static genptr_t parallel_arg;	/* User's arg to his threads */
+static void (*parallel_func)(int, genptr_t);	/* user function to run in parallel */
 
 
 int
 bu_is_parallel(void)
 {
-    if (bu_pid_of_initiating_thread != 0)
+    if (pid_of_initiating_thread != 0)
 	return 1;
     return 0;
 }
@@ -196,13 +199,13 @@ bu_is_parallel(void)
 void
 bu_kill_parallel(void)
 {
-    if (bu_pid_of_initiating_thread == 0)
+    if (pid_of_initiating_thread == 0)
 	return;
 
-    if (bu_pid_of_initiating_thread == bu_process_id())
+    if (pid_of_initiating_thread == bu_process_id())
 	return;
 
-    bu_terminate(bu_pid_of_initiating_thread);
+    bu_terminate(pid_of_initiating_thread);
 
     return;
 }
@@ -604,12 +607,7 @@ parallel_kill_workers(int tbl[MAX_PSW])
 #  endif   /* end check if sgi_4d defined */
 
 /* non-published global */
-extern int bu_pid_of_initiating_thread;
 
-static int parallel_nthreads_started = 0;	/* # threads started */
-static int parallel_nthreads_finished = 0;	/* # threads properly finished */
-static genptr_t parallel_arg;	/* User's arg to his threads */
-static void (*parallel_func)(int, genptr_t);	/* user function to run in parallel */
 
 HIDDEN void
 parallel_interface_arg(struct thread_data *user_thread_data)
@@ -617,6 +615,7 @@ parallel_interface_arg(struct thread_data *user_thread_data)
     parallel_set_affinity();
     (*((*user_thread_data).user_func))((*user_thread_data).cpu_id, (*user_thread_data).user_arg);
 }
+
 
 /**
  * Interface layer between bu_parallel and the user's function.
@@ -734,10 +733,10 @@ bu_parallel(void (*func)(int, genptr_t), int ncpu, genptr_t arg)
     if (UNLIKELY(bu_debug & BU_DEBUG_PARALLEL))
 	bu_log("bu_parallel(%d, %p)\n", ncpu, arg);
 
-    if (UNLIKELY(bu_pid_of_initiating_thread))
+    if (UNLIKELY(pid_of_initiating_thread))
 	bu_bomb("bu_parallel() called from within parallel section\n");
 
-    bu_pid_of_initiating_thread = bu_process_id();
+    pid_of_initiating_thread = bu_process_id();
 
     if (ncpu > MAX_PSW) {
 	bu_log("WARNING: bu_parallel() ncpu(%d) > MAX_PSW(%d), adjusting ncpu\n", ncpu, MAX_PSW);
@@ -1197,12 +1196,12 @@ bu_parallel(void (*func)(int, genptr_t), int ncpu, genptr_t arg)
      * output may be written into the wrong file.
      */
     x = bu_process_id();
-    if (UNLIKELY(bu_pid_of_initiating_thread != x)) {
+    if (UNLIKELY(pid_of_initiating_thread != x)) {
 	bu_log("WARNING: bu_parallel():  PID of initiating thread changed from %d to %d, open file table may be botched!\n",
-	       bu_pid_of_initiating_thread, x);
+	       pid_of_initiating_thread, x);
     }
 #  endif
-    bu_pid_of_initiating_thread = 0;	/* No threads any more */
+    pid_of_initiating_thread = 0;	/* No threads any more */
 
     bu_free(user_thread_data_bu, "struct thread_data *user_thread_data_bu");
 
