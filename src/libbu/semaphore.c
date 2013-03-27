@@ -28,6 +28,7 @@
 #include "bio.h"
 #include "bu.h"
 
+
 #if defined(_WIN32) && !defined(__CYGWIN__)
 struct bu_semaphores {
     uint32_t magic;
@@ -35,94 +36,6 @@ struct bu_semaphores {
 };
 # define DEFINED_BU_SEMAPHORES 1
 #endif
-
-#ifdef CRAY
-# include <sys/category.h>
-# include <sys/resource.h>
-# include <sys/types.h>
-# ifdef CRAY1
-#  include <sys/machd.h>	/* For HZ */
-# endif
-struct bu_semaphores {
-    uint32_t magic;
-    long p;
-};
-# define DEFINED_BU_SEMAPHORES 1
-#endif
-
-#ifdef CRAY2
-#undef MAXINT
-# include <sys/param.h>
-#endif
-
-#if defined(alliant) && !defined(i860)
-/* Alliant FX/8 */
-# include <cncall.h>
-struct bu_semaphores {
-    uint32_t magic;
-    char c;
-};
-# define DEFINED_BU_SEMAPHORES 1
-#endif
-
-#if (defined(sgi) && defined(mips)) || (defined(__sgi) && defined(__mips))
-# define SGI_4D 1
-# define _SGI_SOURCE 1	/* IRIX 5.0.1 needs this to def M_BLKSZ */
-# define _BSD_TYPES 1	/* IRIX 5.0.1 botch in sys/prctl.h */
-# include <sys/types.h>
-# include <ulocks.h>
-/* ulocks.h #include's <limits.h> and <malloc.h> */
-/* ulocks.h #include's <task.h> for getpid stuff */
-/* task.h #include's <sys/prctl.h> */
-# include <malloc.h>
-/* <malloc.h> #include's <stddef.h> */
-
-#ifdef HAVE_SYS_WAIT_H
-#  include <sys/wait.h>
-#endif
-
-static char bu_lockfile[MAXPATHLEN] = {0};
-
-static usptr_t *bu_lockstuff = 0;
-extern int _utrace;
-
-struct bu_semaphores {
-    uint32_t magic;
-    ulock_t ltp;
-};
-# define DEFINED_BU_SEMAPHORES 1
-#endif /* SGI_4D */
-
-/* XXX May need to set _SGI_MP_SOURCE */
-
-#ifdef ardent
-#	include <thread.h>
-struct bu_semaphores {
-    uint32_t magic;
-    char sem;
-};
-# define DEFINED_BU_SEMAPHORES 1
-#endif
-
-#if defined(convex) || defined(__convex__)
-struct bu_semaphores {
-    uint32_t magic;
-    long sem;
-};
-# define DEFINED_BU_SEMAPHORES 1
-#endif
-
-#if defined(n16)
-#	include <parallel.h>
-#	include <sys/sysadmin.h>
-struct bu_semaphores {
-    uint32_t magic;
-    char sem;
-};
-# define DEFINED_BU_SEMAPHORES 1
-#endif
-
-#include "bio.h"
 
 /*
  * multithreading support for SunOS 5.X / Solaris 2.x
@@ -155,65 +68,6 @@ struct bu_semaphores {
 
 #define BU_SEMAPHORE_MAGIC 0x62757365
 
-#if defined(SGI_4D)
-HIDDEN void
-semaphore_sgi_init()
-{
-    FILE *fp;
-    /*
-     * First time through.
-     * Use this opportunity to tune malloc().  It needs it!
-     * Default for M_BLKSZ is 8k.
-     */
-    if (mallopt(M_BLKSZ, 128*1024) != 0) {
-	fprintf(stderr, "semaphore_sgi_init: mallopt() failed\n");
-    }
-
-    /* Now, set up the lock arena */
-    fp = bu_temp_file(bu_lockfile, MAXPATHLEN);
-
-    if (UNLIKELY(bu_debug & BU_DEBUG_PARALLEL)) {
-	if (usconfig(CONF_LOCKTYPE, _USDEBUGPLUS) == -1)
-	    perror("usconfig CONF_LOCKTYPE");
-    }
-    /*
-     * Note that libc mp debugging to stderr can be enabled by saying
-     * int _utrace=1;
-     */
-
-    /* Cause lock file to vanish on exit */
-    usconfig(CONF_ARENATYPE, US_SHAREDONLY);
-
-    /* Set maximum number of procs that can share this arena */
-    usconfig(CONF_INITUSERS, bu_avail_cpus()+1);
-
-    if (UNLIKELY(bu_debug & BU_DEBUG_PARALLEL)) {
-	/* This is a big performance hit, but may find bugs */
-	usconfig(CONF_LOCKTYPE, US_DEBUG);
-    } else {
-	usconfig(CONF_LOCKTYPE, US_NODEBUG);
-    }
-
-    /* Initialize arena */
-    bu_lockstuff = usinit(bu_lockfile);
-    if (bu_lockstuff == 0) {
-	perror("usinit");
-	fprintf(stderr, "semaphore_sgi_init: usinit(%s) failed, unable to allocate lock space\n", bu_lockfile);
-	bu_bomb("fatal semaphore initialization failure");
-    }
-}
-#endif
-
-#if defined(convex) || defined(__convex__)
-HIDDEN void
-semaphore_convex_acquire(p)
-    register long *p;
-{
-    asm("getlck:");
-    asm("	tas	@0(ap)");	/* try to set the lock */
-    asm("	jbra.f	getlck");	/* loop until successful */
-}
-#endif /* convex */
 
 #if defined(PARALLEL) || defined(DEFINED_BU_SEMAPHORES)
 static unsigned int bu_nsemaphores = 0;
@@ -244,60 +98,6 @@ bu_semaphore_init(unsigned int nsemaphores)
     /*
      * Begin vendor-specific initialization sections.
      */
-
-#	if defined(alliant)
-    for (i=0; i < nsemaphores; i++) {
-	bu_semaphores[i].magic = BU_SEMAPHORE_MAGIC;
-	(void) initialize_lock(&bu_semaphores[i].c);
-    }
-#	endif
-
-#	ifdef ardent
-    for (i=0; i < nsemaphores; i++) {
-	bu_semaphores[i].magic = BU_SEMAPHORE_MAGIC;
-	bu_semaphores[i].sem = 1;	/* mark as released */
-    }
-#	endif
-
-#	if defined(convex) || defined(__convex__)
-    for (i=0; i < nsemaphores; i++) {
-	bu_semaphores[i].magic = BU_SEMAPHORE_MAGIC;
-	bu_semaphores[i].sem = 0;	/* mark as released */
-    }
-#	endif
-
-#	ifdef CRAY
-    for (i=0; i < nsemaphores; i++) {
-	bu_semaphores[i].magic = BU_SEMAPHORE_MAGIC;
-	LOCKASGN(&bu_semaphores[i].p);
-    }
-#	endif /* CRAY */
-
-#	if defined(n16)
-    /*
-     * Encore MultiMax.
-     * While the manual suggests that one should use spin_create()
-     * to acquire a new control structure for spin locking, it turns
-     * out that the library support for that simply malloc()s a 1-byte
-     * area to contain the lock, and sets it to PAR_UNLOCKED.
-     */
-    for (i=0; i < nsemaphores; i++) {
-	bu_semaphores[i].magic = BU_SEMAPHORE_MAGIC;
-	bu_semaphores[i].sem = PAR_UNLOCKED;
-    }
-#	endif
-
-#	ifdef SGI_4D
-    semaphore_sgi_init();
-    for (i=0; i < nsemaphores; i++) {
-	bu_semaphores[i].magic = BU_SEMAPHORE_MAGIC;
-	if ((bu_semaphores[i].ltp = usnewlock(bu_lockstuff)) == NULL) {
-	    perror("usnewlock");
-	    fprintf(stderr, "bu_semaphore_init: usnewlock() failed, unable to allocate lock [%d]\n", i);
-	    bu_bomb("fatal semaphore initialization failure");
-	}
-    }
-#	endif
 
 #	ifdef SUNOS
     for (i=0; i < nsemaphores; i++) {
@@ -341,6 +141,16 @@ bu_semaphore_init(unsigned int nsemaphores)
 
 
 void
+bu_semaphore_free() {
+    if (bu_semaphores) {
+	free(bu_semaphores);
+	bu_semaphores = (struct bu_semaphores *)NULL;
+	bu_nsemaphores = 0;
+    }
+}
+
+
+void
 bu_semaphore_reinit(unsigned int nsemaphores)
 {
     if (nsemaphores <= 0)
@@ -350,12 +160,7 @@ bu_semaphore_reinit(unsigned int nsemaphores)
     return;					/* No support on this hardware */
 #else
 
-    if (bu_nsemaphores != 0) {
-	free((void *)bu_semaphores);
-	bu_semaphores = (struct bu_semaphores *)0;
-	bu_nsemaphores = 0;
-    }
-
+    bu_semaphore_free();
     bu_semaphore_init(nsemaphores);
 #endif	/* PARALLEL */
 }
@@ -386,33 +191,6 @@ bu_semaphore_acquire(unsigned int i)
     /*
      * Begin vendor-specific initialization sections.
      */
-
-#	if defined(alliant)
-    (void) lock(&bu_semaphores[i].c);
-#	endif
-
-#	ifdef ardent
-    {
-	register long *p = &bu_semaphores[i].sem;
-	while (SYNCH_Adr = p, !SYNCH_Val)  while (!*p);
-    }
-#	endif
-
-#	if defined(convex) || defined(__convex__)
-    semaphore_convex_acquire(&bu_semaphores[i].sem);
-#	endif
-
-#	ifdef CRAY
-    LOCKON(&bu_semaphores[i].p);
-#	endif /* CRAY */
-
-#	if defined(n16)
-    (void)spin_lock((LOCK *)&bu_semaphores[i].sem);
-#	endif
-
-#	ifdef SGI_4D
-    uswsetlock(bu_semaphores[i].ltp, 1000);
-#	endif
 
 #	ifdef SUNOS
     if (mutex_lock(&bu_semaphores[i].mu)) {
@@ -463,30 +241,6 @@ bu_semaphore_release(unsigned int i)
      * Begin vendor-specific initialization sections.
      */
 
-#	if defined(alliant)
-    (void) unlock(&bu_semaphores[i].c);
-#	endif
-
-#	ifdef ardent
-    bu_semaphores[i].sem = 1;	/* release */
-#	endif
-
-#	if defined(convex) || defined(__convex__)
-    bu_semaphores[i].sem = 0;	/* release */
-#	endif
-
-#	ifdef CRAY
-    LOCKOFF(&bu_semaphores[i].p);
-#	endif /* CRAY */
-
-#	if defined(n16)
-    (void)spin_unlock((LOCK *)&bu_semaphores[i].sem);
-#	endif
-
-#	ifdef SGI_4D
-    usunsetlock(bu_semaphores[i].ltp);
-#	endif
-
 #	ifdef SUNOS
     if (mutex_unlock(&bu_semaphores[i].mu)) {
 	fprintf(stderr, "bu_semaphore_acquire(): mutex_unlock() failed on [%d]\n", i);
@@ -508,17 +262,6 @@ bu_semaphore_release(unsigned int i)
 #	endif
 #endif
 }
-
-/* XXX need a routine to pair up with _init() to delete the semaphore structures */
-#if 0
-void
-bu_semaphore_free() {
-    if (bu_semaphores) {
-	free(bu_semaphores);
-	bu_semaphores = (struct bu_semaphores *)NULL;
-    }
-}
-#endif
 
 
 /*
