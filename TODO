@@ -38,6 +38,10 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* rename chan_add, chan_mult, chan_permute and look into possibly
+  merging them into one tool in the util directory.  similar to the
+  'join' command, but arguably easier to use.
+
 * temp colors and temp matrices during ray tracing, need a
   command-line and mged method to override parameters temporarily.
 
