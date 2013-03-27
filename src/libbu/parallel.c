@@ -141,6 +141,9 @@ static genptr_t parallel_arg;
 /* user function to run in parallel */
 static void (*parallel_func)(int, genptr_t);
 
+/* !!! work-in-progress !!! */
+/* __thread */ void *cpu = NULL;
+
 
 int
 bu_is_parallel(void)
@@ -367,6 +370,16 @@ bu_get_public_cpus(void)
 }
 
 
+int
+bu_parallel_id(void)
+{
+    if (cpu)
+	return *(int *)cpu;
+    else
+	return 0;
+}
+
+
 /**********************************************************************/
 
 
@@ -375,8 +388,10 @@ bu_get_public_cpus(void)
 HIDDEN void
 parallel_interface_arg(struct thread_data *user_thread_data)
 {
+    cpu = &user_thread_data->cpu_id;
     parallel_set_affinity();
     (*(user_thread_data->user_func))(user_thread_data->cpu_id, user_thread_data->user_arg);
+    cpu = NULL; /* sanity */
 }
 
 
@@ -404,12 +419,14 @@ parallel_interface(void)
 
     bu_semaphore_acquire(BU_SEM_SYSCALL);
     user_thread_data_pi.cpu_id = parallel_nthreads_started++;
+    cpu = &user_thread_data_pi.cpu_id;
     bu_semaphore_release(BU_SEM_SYSCALL);
 
     parallel_interface_arg(&user_thread_data_pi);
 
     bu_semaphore_acquire(BU_SEM_SYSCALL);
     parallel_nthreads_finished++;
+    cpu = NULL; /* sanity */
     bu_semaphore_release(BU_SEM_SYSCALL);
 }
 
@@ -468,7 +485,7 @@ bu_parallel(void (*func)(int, genptr_t), int ncpu, genptr_t arg)
     for(x = 0; x < ncpu; x++) {
 	user_thread_data_bu[x].user_func = func;
 	user_thread_data_bu[x].user_arg  = arg;
-	user_thread_data_bu[x].cpu_id    = x;
+	user_thread_data_bu[x].cpu_id    = x + 1; /* index from 1 */
     }
 
     /* if we're in debug mode, allow additional cpus */
@@ -491,8 +508,6 @@ bu_parallel(void (*func)(int, genptr_t), int ncpu, genptr_t arg)
     /* Give the thread system a hint... */
     if (ncpu > concurrency) {
 	if (thr_setconcurrency(ncpu)) {
-	    fprintf(stderr, "ERROR parallel.c/bu_parallel(): thr_setconcurrency(%d) failed\n",
-		    ncpu);
 	    bu_log("ERROR parallel.c/bu_parallel(): thr_setconcurrency(%d) failed\n",
 		   ncpu);
 	    /* Not much to do, lump it */
@@ -505,10 +520,8 @@ bu_parallel(void (*func)(int, genptr_t), int ncpu, genptr_t arg)
     for (x = 0; x < ncpu; x++) {
 
 	if (thr_create(0, 0, (void *(*)(void *))parallel_interface_arg, &user_thread_data_bu[x], 0, &thread)) {
-	    fprintf(stderr, "ERROR: bu_parallel: thr_create(0x0, 0x0, 0x%x, 0x0, 0, 0x%x) failed on processor %d\n",
-		    parallel_interface_arg, &thread, x);
-	    bu_log("ERROR: bu_parallel: thr_create(0x0, 0x0, 0x%x, 0x0, 0, 0x%x) failed on processor %d\n",
-		   parallel_interface_arg, &thread, x);
+	    bu_log("ERROR: bu_parallel: thr_create(0x0, 0x0, 0x%x, 0x0, 0, 0x%x) failed for processor thread # %d\n",
+		   parallel_interface_arg, &thread, x+1);
 	    /* Not much to do, lump it */
 	} else {
 	    if (UNLIKELY(bu_debug & BU_DEBUG_PARALLEL))
@@ -539,7 +552,8 @@ bu_parallel(void (*func)(int, genptr_t), int ncpu, genptr_t arg)
 
 	if (thr_join((rt_thread_t)0, &thread, NULL)) {
 	    /* badness happened */
-	    fprintf(stderr, "thr_join()");
+	    perror("thr_join");
+	    bu_log("thr_join() failed");
 	}
 
 	/* Check to see if this is one the threads we created */
@@ -571,23 +585,22 @@ bu_parallel(void (*func)(int, genptr_t), int ncpu, genptr_t arg)
     thread = 0;
     nthreadc = 0;
 
-    /* XXX How to advise thread library that we need 'ncpu' processors? */
-
-    /* Create the posix threads */
+    /* Create the posix threads.
+     *
+     * Start at 1 so we can treat the parent as thread 0.
+     */
     for (x = 0; x < ncpu; x++) {
 	pthread_attr_t attrs;
 	pthread_attr_init(&attrs);
 	pthread_attr_setstacksize(&attrs, 10*1024*1024);
 
 	if (pthread_create(&thread, &attrs, (void *(*)(void *))parallel_interface_arg, &user_thread_data_bu[x])) {
-	    fprintf(stderr, "ERROR: bu_parallel: pthread_create(0x0, 0x0, 0x%lx, 0x0, 0, 0x%lx) failed on processor %d\n",
-		    (unsigned long int)parallel_interface_arg, (unsigned long int)&thread, x);
-	    bu_log("ERROR: bu_parallel: pthread_create(0x0, 0x0, 0x%lx, 0x0, 0, %p) failed on processor %d\n",
-		   (unsigned long int)parallel_interface_arg, (void *)&thread, x);
+	    bu_log("ERROR: bu_parallel: pthread_create(0x0, 0x0, 0x%lx, 0x0, 0, %p) failed for processor thread # %d\n",
+		   (unsigned long int)parallel_interface_arg, (void *)&thread, x+1);
 	    /* Not much to do, lump it */
 	} else {
 	    if (UNLIKELY(bu_debug & BU_DEBUG_PARALLEL)) {
-		bu_log("bu_parallel(): created thread: (thread: %p) (loop:%d) (nthreadc:%d)\n",
+		bu_log("bu_parallel(): created thread: (thread: %p) (loop: %d) (nthreadc: %d)\n",
 		       (void*)thread, x, nthreadc);
 		}
 
@@ -625,7 +638,7 @@ bu_parallel(void (*func)(int, genptr_t), int ncpu, genptr_t arg)
 
 	if ((ret = pthread_join(thread_tbl[x], NULL)) != 0) {
 	    /* badness happened */
-	    fprintf(stderr, "pthread_join(thread_tbl[%d]=%p) ret=%d\n", x, (void *)thread_tbl[x], ret);
+	    bu_log("pthread_join(thread_tbl[%d]=%p) ret=%d\n", x, (void *)thread_tbl[x], ret);
 	}
 
 	nthreade++;
@@ -659,7 +672,7 @@ bu_parallel(void (*func)(int, genptr_t), int ncpu, genptr_t arg)
 	    NULL,
 	    0,
 	    (LPVOID)parallel_interface,
-	    &user_thread_data_bu[x],
+	    &user_thread_data_bu[i],
 	    0,
 	    &dwThreadIdArray[i]);
 
@@ -667,10 +680,12 @@ bu_parallel(void (*func)(int, genptr_t), int ncpu, genptr_t arg)
 	    bu_log("bu_parallel(): Error in CreateThread");
 	    bu_exit();
 	}
+
+	nthreadc++;
     }
     /* Wait for other threads in the array */
 
-    WaitForMultipleObjects(i, hThreadArray, TRUE, INFINITE);
+    WaitForMultipleObjects(nthreadc, hThreadArray, TRUE, INFINITE);
     for (x = 0; x < nthreadc; x++) {
 	int ret;
 	if ((ret = CloseHandle(hThreadArray[x]) != 0)) {
