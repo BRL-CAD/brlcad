@@ -69,30 +69,6 @@
 #  include <sys/var.h>
 #endif
 
-#ifdef CRAY
-#  include <sys/category.h>
-#  include <sys/types.h>
-#  ifdef CRAY1
-#    include <sys/machd.h>	/* For HZ */
-#  endif
-#endif
-
-#ifdef CRAY2
-#  undef MAXINT
-#  include <sys/param.h>
-#endif
-
-#ifdef HEP
-#  include <synch.h>
-#  undef stderr
-#  define stderr stdout
-#endif /* HEP */
-
-#if defined(alliant) && !defined(i860)
-/* Alliant FX/8 */
-#  include <cncall.h>
-#endif
-
 #ifdef HAVE_SYS_TYPES_H
 #  include <sys/types.h>
 #endif
@@ -113,15 +89,6 @@
 #  ifdef HAVE_SYS_SCHED_H
 #    include <sys/sched.h>
 #  endif
-#endif
-
-#ifdef ardent
-#  include <thread.h>
-#endif
-
-#if defined(n16)
-#  include <parallel.h>
-#  include <sys/sysadmin.h>
 #endif
 
 /*
@@ -148,14 +115,6 @@
 
 #include "./parallel.h"
 
-
-#ifdef CRAY
-static struct taskcontrol {
-    int tsk_len;
-    int tsk_id;
-    int tsk_value;
-} bu_taskcontrol[MAX_PSW];
-#endif
 
 struct thread_data {
     void (*user_func)(int, genptr_t);
@@ -236,49 +195,13 @@ bu_nice_set(int newnice)
 int
 bu_cpulimit_get(void)
 {
-#ifdef CRAY
-    long old;			/* 64-bit clock counts */
-    extern long limit();
-
-    old = limit(C_PROC, 0, L_CPU, -1);
-    if (UNLIKELY(old < 0)) {
-	perror("bu_cpulimit_get(): CPU limit(get)");
-    }
-    if (old <= 0)
-	return INT_MAX;		/* virtually unlimited */
-    return ((old + HZ - 1) / HZ);
-#else
     return -1;
-#endif
 }
 
 
 void
 bu_cpulimit_set(int sec)
 {
-#ifdef CRAY
-    long prev;		/* seconds */
-    long curr;		/* seconds */
-    long newtick;	/* 64-bit clock counts */
-    extern long limit();
-
-    prev = bu_cpulimit_get();
-    curr = prev + sec;
-    if (curr <= 0 || curr >= INT_MAX)
-	curr = INT_MAX;	/* no limit, for practical purposes */
-    newtick = curr * HZ;
-    if (limit(C_PROC, 0, L_CPU, newtick) < 0) {
-	perror("bu_cpulimit_set: CPU limit(set)");
-    }
-    bu_log("Cray CPU limit changed from %d to %d seconds\n",
-	   prev, newtick/HZ);
-
-    /* Eliminate any memory limit */
-    if (limit(C_PROC, 0, L_MEM, 0) < 0) {
-	/* Hopefully, not fatal if memory limits are imposed */
-	perror("bu_cpulimit_set: MEM limit(set)");
-    }
-#endif
     if (sec < 0) sec = 0;
 }
 
@@ -289,22 +212,6 @@ bu_avail_cpus(void)
     int ncpu = -1;
 
 #ifdef PARALLEL
-
-#  ifdef alliant
-    if (ncpu < 0) {
-	long memsize, ipnum, cenum, detnum, attnum;
-
-#    if !defined(i860)
-	/* FX/8 */
-	lib_syscfg(&memsize, &ipnum, &cenum, &detnum, &attnum);
-#    else
-	/* FX/2800 */
-	attnum = 28;
-#    endif /* i860 */
-	ncpu = attnum;		/* # of CEs attached to parallel Complex */
-    }
-#  endif /* alliant */
-
 
 #  if defined(__sp3__)
     if (ncpu < 0) {
@@ -321,15 +228,6 @@ bu_avail_cpus(void)
 	ncpu = p.v_ncpus;
     }
 #  endif	/* __sp3__ */
-
-
-#  if defined(n16)
-    if (ncpu < 0) {
-	if ((ncpu = sysadmin(SADMIN_NUMCPUS, 0)) < 0) {
-	    perror("sysadmin");
-	}
-    }
-#  endif /* n16 */
 
 
 #  ifdef __FreeBSD__
@@ -387,17 +285,6 @@ bu_avail_cpus(void)
 	}
     }
 #endif
-
-#if defined(_SC_CRAY_NCPU)
-    /* cray */
-    if (ncpu < 0) {
-	ncpu = sysconf(_SC_CRAY_NCPU);
-	if (ncpu < 0) {
-	    perror("Unable to get the number of available CPUs");
-	}
-    }
-#  endif
-
 
 #  if defined(linux)
     if (ncpu < 0) {
@@ -532,11 +419,10 @@ parallel_interface_arg(struct thread_data *user_thread_data)
  * counter when the user's function returns to us (as opposed to
  * dumping core or longjmp'ing too far).
  *
- * Note that not all architectures can pass an argument
- * (e.g. the pointer to the user's function), so we depend on
- * using a global variable to communicate this.
- * This is no problem, since only one copy of bu_parallel()
- * may be active at any one time.
+ * Note that not all architectures can pass an argument (e.g. the
+ * pointer to the user's function), so we depend on using a global
+ * variable to communicate this.  This is no problem, since only one
+ * copy of bu_parallel() may be active at any one time.
  */
 HIDDEN void
 parallel_interface(void)
@@ -575,11 +461,6 @@ bu_parallel(void (*func)(int, genptr_t), int ncpu, genptr_t arg)
 
     struct thread_data *user_thread_data_bu;
     int avail_cpus = 1;
-
-#  if defined(alliant) && !defined(i860) && !__STDC__
-    register int d7;        /* known to be in d7 */
-    register int d6 = ncpu; /* known to be in d6 */
-#  endif
     int x;
 
     /*
@@ -630,80 +511,6 @@ bu_parallel(void (*func)(int, genptr_t), int ncpu, genptr_t arg)
 	    ncpu = avail_cpus;
 	}
     }
-
-#  ifdef HEP
-    parallel_nthreads_started = 1;
-    parallel_nthreads_finished = 1;
-    for (x=1; x<ncpu; x++) {
-	/* This is more expensive when GEMINUS>1 */
-	Dcreate(parallel_interface);
-    }
-    (*func)(0, arg);	/* avoid wasting this task */
-#  endif /* HEP */
-
-#  ifdef CRAY
-    parallel_nthreads_started = 1;
-    parallel_nthreads_finished = 1;
-    /* Create any extra worker tasks */
-    for (x=1; x<ncpu; x++) {
-	bu_taskcontrol[x].tsk_len = 3;
-	bu_taskcontrol[x].tsk_value = x;
-	TSKSTART(&bu_taskcontrol[x], parallel_interface);
-    }
-    (*func)(0, arg);	/* avoid wasting this task */
-
-    /* Wait for them to finish */
-    for (x=1; x<ncpu; x++) {
-	TSKWAIT(&bu_taskcontrol[x]);
-    }
-    /* There needs to be some way to kill the tfork()'ed processes here */
-#  endif
-
-#  if defined(alliant) && !defined(i860)
-#	if defined(__STDC__)	/* fxc defines it == 0 !! */
-#	undef __STDC__
-#	define __STDC__ 2
-
-    /* Calls parallel_interface in parallel "ncpu" times */
-    concurrent_call(CNCALL_COUNT|CNCALL_NO_QUIT, parallel_interface, ncpu);
-
-#	else
-    {
-	asm("	movl d6, d0");
-	asm("	subql #1, d0");
-	asm("	cstart d0");
-	asm("super_loop:");
-	parallel_interface();		/* d7 has current index, like magic */
-	asm("	crepeat super_loop");
-    }
-#	endif
-#  endif
-
-#  if defined(alliant) && defined(i860)
-#pragma loop cncall
-    for (x=0; x<ncpu; x++) {
-	parallel_interface();
-    }
-#  endif
-
-#  if defined(convex) || defined(__convex__)
-    /*$dir force_parallel */
-    for (x=0; x<ncpu; x++) {
-	parallel_interface();
-    }
-#  endif /* convex */
-
-#  ifdef ardent
-    /* The stack size parameter is pure guesswork */
-    parstack(parallel_interface, 1024*1024, ncpu);
-#  endif /* ardent */
-
-#  if defined(n16)
-    /* The shared memory size requirement is sheer guesswork */
-    /* The stack size is also guesswork */
-    if (task_init(8*1024*1024, ncpu, parallel_interface, 128*1024, 0) < 0)
-	perror("bu_parallel()/task_init()");
-#  endif
 
     /*
      * multithreading support for SunOS 5.X / Solaris 2.x
