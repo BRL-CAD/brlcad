@@ -56,13 +56,11 @@ struct bu_semaphores {
  */
 #ifdef HAVE_PTHREAD_H
 #	include <pthread.h>
-#  if !defined(sgi)
 struct bu_semaphores {
     uint32_t magic;
     pthread_mutex_t mu;
 };
 #	define DEFINED_BU_SEMAPHORES 1
-#  endif
 #endif
 
 
@@ -109,7 +107,7 @@ bu_semaphore_init(unsigned int nsemaphores)
 
     }
 #	endif
-#	if defined(HAVE_PTHREAD_H) && !defined(sgi)
+#	if defined(HAVE_PTHREAD_H)
     for (i=0; i < nsemaphores; i++) {
 	bu_semaphores[i].magic = BU_SEMAPHORE_MAGIC;
 	if (pthread_mutex_init(&bu_semaphores[i].mu,  NULL)) {
@@ -198,7 +196,7 @@ bu_semaphore_acquire(unsigned int i)
 	bu_bomb("fatal semaphore acquisition failure");
     }
 #	endif
-#	if defined(HAVE_PTHREAD_H) && !defined(sgi)
+#	if defined(HAVE_PTHREAD_H)
     if (pthread_mutex_lock(&bu_semaphores[i].mu)) {
 	fprintf(stderr, "bu_semaphore_acquire(): pthread_mutex_lock() failed on [%d]\n", i);
 	bu_bomb("fatal semaphore acquisition failure");
@@ -247,7 +245,7 @@ bu_semaphore_release(unsigned int i)
 	bu_bomb("fatal semaphore acquisition failure");
     }
 #	endif
-#	if defined(HAVE_PTHREAD_H) && !defined (sgi)
+#	if defined(HAVE_PTHREAD_H)
     if (pthread_mutex_unlock(&bu_semaphores[i].mu)) {
 	fprintf(stderr, "bu_semaphore_acquire(): pthread_mutex_unlock() failed on [%d]\n", i);
 	bu_bomb("fatal semaphore acquisition failure");

@@ -544,22 +544,13 @@ main(int argc, char **argv)
 	if (atoi(host) > 0) {
 	    /* Numeric */
 	    sinhim.sin_family = AF_INET;
-#ifdef cray
-	    addr_tmp = inet_addr(host);
-	    sinhim.sin_addr = addr_tmp;
-#else
 	    sinhim.sin_addr.s_addr = inet_addr(host);
-#endif
 	} else {
 	    if ((addr=(struct hostent *)gethostbyname(host)) == NULL)
 		err("bad hostname");
 	    sinhim.sin_family = addr->h_addrtype;
 	    memcpy((char*)&addr_tmp, addr->h_addr, addr->h_length);
-#ifdef cray
-	    sinhim.sin_addr = addr_tmp;
-#else
 	    sinhim.sin_addr.s_addr = addr_tmp;
-#endif /* cray */
 	}
 	sinhim.sin_port = htons(port);
 	sinme.sin_port = 0;		/* free choice */

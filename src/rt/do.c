@@ -867,16 +867,10 @@ do_frame(int framenumber)
     if (R_DEBUG&RDEBUG_RTMEM)
 	bu_debug &= ~BU_DEBUG_MEM_LOG;
 
-    /*
-     * Certain parallel systems (e.g., Alliant) count the entire
-     * multi-processor complex as one computer, and charge only once.
-     * This matches the desired behavior here.  Other vendors (e.g.,
-     * SGI) count each processor separately, and charge for all of
-     * them.  These results need to be normalized.  Otherwise, all we
-     * would know is that a given workload takes about the same amount
-     * of CPU time, regardless of the number of CPUs.
+    /* These results need to be normalized.  Otherwise, all we would
+     * know is that a given workload takes about the same amount of
+     * CPU time, regardless of the number of CPUs.
      */
-#if !defined(alliant)
     if (npsw > 1) {
 	int avail_cpus;
 	int ncpus;
@@ -888,9 +882,9 @@ do_frame(int framenumber)
 	    ncpus = npsw;
 	}
 	nutime = utime / ncpus;			/* compensate */
-    } else
-#endif
+    } else {
 	nutime = utime;
+    }
 
     /* prevent a bogus near-zero time to prevent infinite and
      * near-infinite results without relying on IEEE floating point

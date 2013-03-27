@@ -206,7 +206,7 @@ psecs(long int l, struct bu_vls *vp)
 	i = l;
 	bu_vls_printf(vp, "%d", i / 60);
     }
-    i = i % 60; /* GSM: bug in Alliant CE optimization prohibits "%=" here */
+    i = i % 60;
     bu_vls_printf(vp, ":%d%d", i / 10, i % 10);
 }
 

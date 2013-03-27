@@ -44,8 +44,6 @@
 
 __BEGIN_DECLS
 
-#undef r_a /* defined on alliant in <machine/reg.h> included in signal.h */
-
 #define NAMELEN 16	/* NAMESIZE from db.h (can't call it NAMESIZE!!!!!) */
 
 /*
