@@ -28,7 +28,6 @@ libbu_nil_la_SOURCES = \
 	fgets.c \
 	file.c \
 	fnmatch.c \
-	fopen_uniq.c \
 	getcwd.c \
 	getopt.c \
 	globals.c \
