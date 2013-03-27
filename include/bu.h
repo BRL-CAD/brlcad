@@ -2134,24 +2134,11 @@ BU_EXPORT extern int bu_debug;
  * byte address of the indicated variable.  Matching compensation code
  * for the CRAY is located in librt/parse.c
  */
-#if defined(CRAY)
-#	define bu_byteoffset(_i)	(((size_t)&(_i)))	/* actually a word offset */
+#if defined(__ia64__) || defined(__x86_64__) || defined(__sparc64__) || defined(_HPUX_SOURCE)
+#    define bu_byteoffset(_i)	((size_t)((char *)&(_i)))
 #else
-#  if defined(IRIX) && IRIX > 5 && _MIPS_SIM != _ABIN32 && _MIPS_SIM != _MIPS_SIM_ABI32
-#      define bu_byteoffset(_i)	((size_t)__INTADDR__(&(_i)))
-#  else
-#    if defined(sgi) || defined(__convexc__) || defined(ultrix) || defined(_HPUX_SOURCE)
-/* "Lazy" way.  Works on reasonable machines with byte addressing */
-#      define bu_byteoffset(_i)	((size_t)((char *)&(_i)))
-#    else
-#      if defined(__ia64__) || defined(__x86_64__) || defined(__sparc64__)
-#          define bu_byteoffset(_i)	((size_t)((char *)&(_i)))
-#      else
 /* "Conservative" way of finding # bytes as diff of 2 char ptrs */
-#        define bu_byteoffset(_i)	((size_t)(((char *)&(_i))-((char *)0)))
-#      endif
-#    endif
-#  endif
+#  define bu_byteoffset(_i)	((size_t)(((char *)&(_i))-((char *)0)))
 #endif
 
 
