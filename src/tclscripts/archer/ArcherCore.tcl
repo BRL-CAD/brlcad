@@ -3582,7 +3582,7 @@ namespace eval ArcherCore {
     set i 0
 
     set tlist {}
-    foreach item [regsub -all {/R} [lrange [split [$itk_component(ged) tree -d 1 $_comb] "\n"] 1 end-1] ""] {
+    foreach item [regsub -all {/|/R} [lrange [split [$itk_component(ged) tree -d 1 $_comb] "\n"] 1 end-1] ""] {
 	lappend tlist [lindex $item 1]
 	incr i
 
