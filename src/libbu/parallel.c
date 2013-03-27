@@ -146,6 +146,16 @@ static void (*parallel_func)(int, genptr_t);
 
 
 int
+bu_parallel_id(void)
+{
+    if (cpu)
+	return *(int *)cpu;
+    else
+	return 0;
+}
+
+
+int
 bu_is_parallel(void)
 {
     if (pid_of_initiating_thread != 0)
@@ -328,55 +338,6 @@ bu_avail_cpus(void)
 
     /* non-PARALLEL */
     return 1;
-}
-
-
-int
-bu_get_public_cpus(void)
-{
-    int avail_cpus = bu_avail_cpus();
-
-#ifndef _WIN32
-#  define PUBLIC_CPUS1 "/var/tmp/public_cpus"
-#  define PUBLIC_CPUS2 "/usr/tmp/public_cpus"
-
-    int public_cpus = 1;
-    FILE *fp;
-
-    if ((fp = fopen(PUBLIC_CPUS1, "rb")) != NULL
-	|| (fp = fopen(PUBLIC_CPUS2, "rb")) != NULL)
-    {
-	int ret;
-	ret = fscanf(fp, "%d", &public_cpus);
-	if (ret != 1)
-	    public_cpus = 1;
-	fclose(fp);
-	if (public_cpus < 0) public_cpus = avail_cpus + public_cpus;
-	if (public_cpus > avail_cpus) public_cpus = avail_cpus;
-	return public_cpus;
-    }
-
-    bu_file_delete(PUBLIC_CPUS1);
-    bu_file_delete(PUBLIC_CPUS2);
-    if ((fp = fopen(PUBLIC_CPUS1, "wb")) != NULL ||
-	(fp = fopen(PUBLIC_CPUS2, "wb")) != NULL)
-    {
-	fprintf(fp, "%d\n", avail_cpus);
-	bu_fchmod(fileno(fp), 0666);
-	fclose(fp);
-    }
-#endif
-    return avail_cpus;
-}
-
-
-int
-bu_parallel_id(void)
-{
-    if (cpu)
-	return *(int *)cpu;
-    else
-	return 0;
 }
 
 
