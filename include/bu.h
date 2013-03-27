@@ -3235,36 +3235,6 @@ BU_EXPORT extern const char *bu_which(const char *cmd);
  */
 BU_EXPORT extern const char *bu_whereis(const char *cmd);
 
-/** @file libbu/fopen_uniq.c
- *
- * DEPRECATED: Routine to open a unique filename.
- *
- */
-
-/**
- * DEPRECATED.  Do not use.
- *
- * Open a file for output assuring that the file did not previously
- * exist.
- *
- * Typical usage:
- @code
-	static int n = 0;
-	FILE *fp;
-
-	fp = bu_fopen_uniq("writing to %s for results", "output%d.pl", n++);
-	...
-	fclose(fp);
-
-
-	fp = bu_fopen_uniq((char *)NULL, "output%d.pl", n++);
-	...
-	fclose(fp);
- @endcode
- *
- */
-DEPRECATED BU_EXPORT extern FILE *bu_fopen_uniq(const char *outfmt, const char *namefmt, int n);
-
 /** @file libbu/temp.c
  *
  * Routine to open a temporary file.
@@ -4082,23 +4052,6 @@ BU_EXPORT extern void bu_cpulimit_set(int sec);
  * be available to this process now.
  */
 BU_EXPORT extern int bu_avail_cpus();
-
-/**
- * DEPRECATED: this routine's use of a temporary file is deprecated
- * and should not be relied upon.  a future implementation will
- * utilize environment variables instead of temporary files.
- *
- * A general mechanism for non-privileged users of a server system to
- * control how many processors of their server get consumed by
- * multi-thread cruncher processes, by leaving a world-writable file.
- *
- * If the number in the file is negative, it means "all but that
- * many."
- *
- * Returns the number of processors presently available for "public"
- * use.
- */
-DEPRECATED BU_EXPORT extern int bu_get_public_cpus();
 
 /**
  * Create 'ncpu' copies of function 'func' all running in parallel,

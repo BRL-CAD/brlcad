@@ -249,13 +249,15 @@ include/raytrace.h
 ************
 * OBSOLETE *
 ************
+
 7.24.0
 ------
-src/other/jove
-	jove -> emacs [deprecated 7.14]
 include/bu.h
+	bu_get_public_cpus(), remove [deprecated 7.16]
 	bu_get_load_average(), remove [deprecated 7.12]
 	bu_fopen_uniq -> fopen [deprecated 7.14]
+src/other/jove
+	jove -> emacs [deprecated 7.14]
 
 7.22.0
 ------
