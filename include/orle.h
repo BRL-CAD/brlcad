@@ -90,7 +90,7 @@ typedef struct	/* Old format RLE header minus magic number field.	*/
 
 typedef struct /* Old RLE format instruction.				*/
 {
-#if __STDC__ || defined(__convexc__)
+#if __STDC__
     /* !!! This won't match the file format, but will at least compile */
     /* ANSI insists that bit-field must be of type signed int, unsigned int or int */
     unsigned int datum:12, opcode:4;
@@ -101,7 +101,7 @@ typedef struct /* Old RLE format instruction.				*/
 
 typedef struct /* Old RLE format instruction.				*/
 {
-#if __STDC__ || defined(__convexc__)
+#if __STDC__
     /* !!! This won't match the file format, but will at least compile */
     /* ANSI insists that bit-field must be of type signed int, unsigned int or int */
     int	opcode:8, datum:8;
