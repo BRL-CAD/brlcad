@@ -529,7 +529,7 @@ dofile(FILE *fp)
 		bu_log("plrot: unrecognized command '%c' (0x%x)\n",
 		       (isascii(c) && isprint(c)) ? c : '?',
 		       c);
-		bu_log("plrot: ftell = %zd\n", bu_ftell(fp));
+		bu_log("plrot: ftell = %ld\n", bu_ftell(fp));
 		putchar(c);
 		break;
 	}
