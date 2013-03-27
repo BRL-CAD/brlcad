@@ -418,7 +418,7 @@ parallel_interface(void)
     user_thread_data_pi.user_arg  = parallel_arg;
 
     bu_semaphore_acquire(BU_SEM_SYSCALL);
-    user_thread_data_pi.cpu_id = parallel_nthreads_started++;
+    user_thread_data_pi.cpu_id = parallel_nthreads_started++ + 1;
     cpu = &user_thread_data_pi.cpu_id;
     bu_semaphore_release(BU_SEM_SYSCALL);
 
