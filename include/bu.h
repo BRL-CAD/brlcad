@@ -4919,6 +4919,11 @@ BU_EXPORT extern jmp_buf bu_jmpbuf;			/* for BU_SETJUMP() */
 BU_EXPORT extern void bu_semaphore_init(unsigned int nsemaphores);
 
 /**
+ * Release all initialized semaphores and any associated memory.
+ */
+BU_EXPORT extern void bu_semaphore_free();
+
+/**
  * Prepare 'nsemaphores' independent critical section semaphores.  Die
  * on error.
  */
