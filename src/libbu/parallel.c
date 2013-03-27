@@ -173,6 +173,41 @@ struct thread_data {
     int cpu_id;
 };
 
+
+
+/**
+ * process id of the initiating thread. used to shutdown bu_parallel
+ * threads/procs.
+ *
+ * NOT published in a public header.
+ */
+int bu_pid_of_initiating_thread = 0;
+
+
+int
+bu_is_parallel(void)
+{
+    if (bu_pid_of_initiating_thread != 0)
+	return 1;
+    return 0;
+}
+
+
+void
+bu_kill_parallel(void)
+{
+    if (bu_pid_of_initiating_thread == 0)
+	return;
+
+    if (bu_pid_of_initiating_thread == bu_process_id())
+	return;
+
+    bu_terminate(bu_pid_of_initiating_thread);
+
+    return;
+}
+
+
 void
 bu_nice_set(int newnice)
 {

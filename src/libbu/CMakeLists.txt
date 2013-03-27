@@ -48,7 +48,6 @@ set(LIBBU_SOURCES
   htond.c
   htonf.c
   interrupt.c
-  ispar.c
   kill.c
   lex.c
   linebuf.c
