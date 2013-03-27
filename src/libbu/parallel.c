@@ -613,7 +613,7 @@ HIDDEN void
 parallel_interface_arg(struct thread_data *user_thread_data)
 {
     parallel_set_affinity();
-    (*((*user_thread_data).user_func))((*user_thread_data).cpu_id, (*user_thread_data).user_arg);
+    (*(user_thread_data->user_func))(user_thread_data->cpu_id, user_thread_data->user_arg);
 }
 
 
