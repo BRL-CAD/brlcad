@@ -2050,8 +2050,8 @@ X24_getmem(FBIO *ifp)
     struct xinfo *xi = XI(ifp);
 
     char *mem = NULL;
-    int pixsize;
-    int size;
+    size_t pixsize;
+    off_t size;
     int isnew = 0;
 
     FB_CK_FBIO(ifp);
