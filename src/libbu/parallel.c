@@ -93,13 +93,6 @@
 #  include <cncall.h>
 #endif
 
-#if (defined(sgi) && defined(mips)) || (defined(__sgi) && defined(__mips))
-/* XXX hack that should eventually go away when it can be verified */
-#  define SGI_4D      1
-#  define _SGI_SOURCE 1 /* IRIX 5.0.1 needs this to def M_BLKSZ */
-#  define _BSD_TYPES  1 /* IRIX 5.0.1 botch in sys/prctl.h */
-#endif
-
 #ifdef HAVE_SYS_TYPES_H
 #  include <sys/types.h>
 #endif
@@ -120,9 +113,6 @@
 #  ifdef HAVE_SYS_SCHED_H
 #    include <sys/sched.h>
 #  endif
-#endif
-#if defined(IRIX64) && IRIX64 >= 64
-static struct sched_param bu_param;
 #endif
 
 #ifdef ardent
@@ -174,17 +164,23 @@ struct thread_data {
 };
 
 
-
 /**
  * process id of the initiating thread. used to shutdown bu_parallel
  * threads/procs.
  */
 static int pid_of_initiating_thread = 0;
 
-static int parallel_nthreads_started = 0;	/* # threads started */
-static int parallel_nthreads_finished = 0;	/* # threads properly finished */
-static genptr_t parallel_arg;	/* User's arg to his threads */
-static void (*parallel_func)(int, genptr_t);	/* user function to run in parallel */
+/* # threads started */
+static int parallel_nthreads_started = 0;
+
+/* # threads properly finished */
+static int parallel_nthreads_finished = 0;
+
+/* User's arg to his threads */
+static genptr_t parallel_arg;
+
+/* user function to run in parallel */
+static void (*parallel_func)(int, genptr_t);
 
 
 int
@@ -293,30 +289,6 @@ bu_avail_cpus(void)
     int ncpu = -1;
 
 #ifdef PARALLEL
-
-#  ifdef SGI_4D
-    /* XXX LAB 04 June 2002
-     *
-     * The call prctl(PR_MAXPPROCS) is supposed to indicate the number
-     * of processors this process can use.  Unfortunately, this
-     * returns 0 when running under a CPU set.  A bug report has been
-     * filed with SGI.
-     *
-     * The sysmp(MP_NPROCS) call returns the number of physically
-     * configured processors.  This will have to suffice until SGI
-     * comes up with a fix.
-     */
-#    ifdef HAVE_SYSMP
-    if (ncpu < 0) {
-	ncpu = sysmp(MP_NPROCS);
-    }
-#    elif defined(HAVE_PRCTL)
-    if (ncpu < 0) {
-	ncpu = (int)prctl(PR_MAXPPROCS);
-    }
-#    endif
-#  endif /* SGI_4D */
-
 
 #  ifdef alliant
     if (ncpu < 0) {
@@ -494,15 +466,15 @@ bu_get_load_average(void)
 }
 
 
-#ifndef _WIN32
-#  define PUBLIC_CPUS1 "/var/tmp/public_cpus"
-#  define PUBLIC_CPUS2 "/usr/tmp/public_cpus"
-#endif
 int
 bu_get_public_cpus(void)
 {
     int avail_cpus = bu_avail_cpus();
+
 #ifndef _WIN32
+#  define PUBLIC_CPUS1 "/var/tmp/public_cpus"
+#  define PUBLIC_CPUS2 "/usr/tmp/public_cpus"
+
     int public_cpus = 1;
     FILE *fp;
 
@@ -536,78 +508,14 @@ bu_get_public_cpus(void)
 int
 bu_set_realtime(void)
 {
-#	if defined(IRIX64) && IRIX64 >= 64
-    {
-	int policy;
-
-	if ((policy = sched_getscheduler(0)) >= 0) {
-	    if (policy == SCHED_RR || policy == SCHED_FIFO)
-		return 1;
-	}
-
-	sched_getparam(0, &bu_param);
-
-	if (sched_setscheduler(0, SCHED_RR /* policy */, &bu_param) >= 0) {
-	    return 1; /* realtime */
-	}
-	/* Fall through to return 0 */
-    }
-#	endif
     return 0;
 }
 
 
 /**********************************************************************/
 
-/*
- * Cray is known to wander among various pids, perhaps others.
- */
-#if defined(unix) || defined(__unix)
-#  define CHECK_PIDS 1
-#endif
-
 
 #ifdef PARALLEL
-
-/* bu_worker_tbl_not_empty and bu_kill_workers are only used by the sgi arch */
-#  ifdef SGI_4D
-
-
-HIDDEN int
-parallel_worker_tbl_not_empty(int tbl[MAX_PSW])
-{
-    register int i;
-    register int children=0;
-
-    for (i=1; i < MAX_PSW; ++i)
-	if (tbl[i]) children++;
-
-    return children;
-}
-
-
-HIDDEN void
-parallel_kill_workers(int tbl[MAX_PSW])
-{
-    register int i;
-
-    for (i=1; i < MAX_PSW; ++i) {
-	if (tbl[i]) {
-	    if (kill(tbl[i], 9)) {
-		perror("parallel_kill_workers(): SIGKILL to child process");
-	    }
-	    else {
-		bu_log("parallel_kill_workers(): child pid %d killed\n", tbl[i]);
-	    }
-	}
-    }
-
-    memset((char *)tbl, 0, sizeof(tbl));
-}
-#  endif   /* end check if sgi_4d defined */
-
-/* non-published global */
-
 
 HIDDEN void
 parallel_interface_arg(struct thread_data *user_thread_data)
@@ -638,7 +546,7 @@ parallel_interface(void)
     parallel_set_affinity();
 
     user_thread_data_pi.user_func = parallel_func;
-    user_thread_data_pi.user_arg  = parallel_arg; 
+    user_thread_data_pi.user_arg  = parallel_arg;
 
     bu_semaphore_acquire(BU_SEM_SYSCALL);
     user_thread_data_pi.cpu_id = parallel_nthreads_started++;
@@ -649,37 +557,9 @@ parallel_interface(void)
     bu_semaphore_acquire(BU_SEM_SYSCALL);
     parallel_nthreads_finished++;
     bu_semaphore_release(BU_SEM_SYSCALL);
-
-#  if defined(SGI_4D) || defined(IRIX)
-    /*
-     * On an SGI, a process/thread created with the "sproc" syscall
-     * has all of its file descriptors closed when it "returns" to
-     * sproc.  Since this trashes file descriptors which may still be
-     * in use by other processes, we avoid ever returning to sproc.
-     */
-    if (cpu) _exit(0);
-#  endif /* SGI */
 }
 
 #endif /* PARALLEL */
-
-#ifdef SGI_4D
-/**
- * SGI-specific.  Formatted printing of stdio's FILE struct.
- */
-HIDDEN void
-parallel_pr_FILE(char *title, FILE *fp)
-{
-    bu_log("FILE structure '%s', at x%x:\n", title, fp);
-    bu_log(" _cnt = x%x\n", fp->_cnt);
-    bu_log(" _ptr = x%x\n", fp->_ptr);
-    bu_log(" _base = x%x\n", fp->_base);
-    bu_log(" _file = x%x\n", fp->_file);
-    bu_printb(" _flag ", fp->_flag & 0xFF,
-	      "\010\010_IORW\7_100\6_IOERR\5_IOEOF\4_IOMYBUF\3_004\2_IOWRT\1_IOREAD");
-    bu_log("\n");
-}
-#endif
 
 
 void
@@ -702,16 +582,6 @@ bu_parallel(void (*func)(int, genptr_t), int ncpu, genptr_t arg)
 #  endif
     int x;
 
-#  if defined(SGI_4D) || defined(CRAY)
-    int curr;
-#  endif
-
-#  ifdef sgi
-    off_t stdin_pos;
-    FILE stdin_save;
-    int worker_pid_tbl[MAX_PSW] = {0};
-#  endif
-
     /*
      * multithreading support for SunOS 5.X / Solaris 2.x
      */
@@ -725,10 +595,6 @@ bu_parallel(void (*func)(int, genptr_t), int ncpu, genptr_t arg)
     rt_thread_t thread_tbl[MAX_PSW];
     int i;
 #  endif /* SUNOS */
-
-#  ifdef sgi
-    memset(worker_pid_tbl, 0, MAX_PSW * sizeof(int));
-#  endif
 
     if (UNLIKELY(bu_debug & BU_DEBUG_PARALLEL))
 	bu_log("bu_parallel(%d, %p)\n", ncpu, arg);
@@ -832,136 +698,6 @@ bu_parallel(void (*func)(int, genptr_t), int ncpu, genptr_t arg)
     parstack(parallel_interface, 1024*1024, ncpu);
 #  endif /* ardent */
 
-#  ifdef SGI_4D
-    stdin_pos = bu_ftell(stdin);
-    stdin_save = *(stdin);		/* struct copy */
-    parallel_nthreads_started = 1;
-    parallel_nthreads_finished = 1;
-
-    /* Note:  it may be beneficial to call prctl(PR_SETEXITSIG); */
-    /* prctl(PR_TERMCHILD) could help when parent dies.  But SIGHUP??? hmmm */
-    for (x = 1; x < ncpu; x++) {
-	/*
-	 * Start a share-group process, sharing ALL resources.  This
-	 * direct sys-call can be used because none of the
-	 * task-management services of, e.g., taskcreate() are needed.
-	 */
-#    if defined(IRIX) && IRIX <= 4
-	/* Stack size per proc comes from RLIMIT_STACK (typ 64MBytes). */
-	curr = sproc(parallel_interface, PR_SALL, 0);
-#    else
-	/* State maximum stack size.  Be generous, as this mainly
-	 * costs address space.  RAM is allocated only to those pages
-	 * used.  On the other hand, don't be too generous, because
-	 * each proc needs this much space on, e.g. a 64 processor
-	 * system.  Don't go quite for an even number of megabytes, in
-	 * the hopes of creating a small 32k "buffer zone" to catch
-	 * stack overflows.
-	 */
-	curr = sprocsp((void (*)(void *, size_t))parallel_interface,
-		      PR_SALL, 0, NULL,
-#      if defined(IRIX64)
-		      64*1024*1024 - 32*1024
-#      else
-		      4*1024*1024 - 32*1024
-#      endif
-	    );
-#    endif
-	if (curr < 0) {
-	    perror("sproc");
-	    bu_log("ERROR bu_parallel(): sproc(x%x, x%x)=%d failed on processor %d\n",
-		   parallel_interface, PR_SALL,
-		   curr, x);
-	    bu_log("sbrk(0)=%p\n", sbrk(0));
-	    bu_bomb("bu_parallel() failure");
-	} else {
-	    worker_pid_tbl[x] = curr;
-	}
-
-    }
-    (*func)(0, arg);	/* don't waste this thread */
-    {
-	int pid;
-	int pstat;
-	int children;
-
-	/*
-	 * Make sure all children are done.
-	 */
-	while (children=parallel_worker_tbl_not_empty(worker_pid_tbl)) {
-	    pstat = 0;
-	    if ((pid = wait(&pstat)) < 0) {
-		perror("bu_parallel() wait()");
-		parallel_kill_workers(worker_pid_tbl);
-		bu_bomb("parallelism error");
-	    } else if (pid == 0) {
-		bu_log("bu_parallel() wait() == 0 with %d children remaining\n", children);
-		parallel_kill_workers(worker_pid_tbl);
-		bu_bomb("Missing worker");
-	    } else {
-		if ((pstat & 0xFF) != 0) {
-		    bu_log("***ERROR: bu_parallel() worker %d exited with status x%x!\n", pid, pstat);
-		    /* XXX How to cope with this;  can't back out work that was lost at this level. */
-#    ifdef IRIX
-		    if (WIFEXITED(pstat))
-			bu_log ("Child terminated normally with status %d 0x%0x\n",
-				WEXITSTATUS(pstat));
-
-		    if (WIFSIGNALED(pstat)) {
-			bu_log("child terminated on signal %d %0x\n", WTERMSIG(pstat));
-			if (pstat & 0200)
-			    bu_log("core dumped\n");
-			else
-			    bu_log("No core dump\n");
-		    }
-		    if (WIFSTOPPED(pstat))
-			bu_log("child is stopped on signal %d 0x%x\n", WSTOPSIG(pstat));
-
-		    if ((pstat & 0177777) == 0177777)
-			bu_log("child has continued\n");
-
-#    endif
-		    parallel_kill_workers(worker_pid_tbl);
-		    bu_bomb("A worker blew out");
-		}
-		/* remove pid from worker_pid_tbl */
-		for (x=1; x < ncpu; x++)
-		    if (worker_pid_tbl[x] == pid) {
-			worker_pid_tbl[x] = 0;
-			break;
-		    }
-
-		if (x >= ncpu) {
-		    bu_log("WARNING: bu_parallel(): wait() returned non-child process, pid %d\n", pid);
-		}
-	    }
-	}
-    }
-    if (UNLIKELY(bu_ftell(stdin) != stdin_pos)) {
-	/*
-	 * Gross SGI bug: when a thread is finished, it returns to the
-	 * stack frame created by sproc(), which just calls exit(0),
-	 * resulting in all STDIO file buffers being fflush()ed.  This
-	 * zaps the stdin position, and may wreak additional havoc.
-	 *
-	 * Exists in IRIX 3.3.1, Irix 4.0.5,
-	 * should be fixed in a later release.  Maybe.
-	 */
-	bu_log("\nWarning:  stdin file pointer has been corrupted by SGI multi-processor bug!\n");
-	if (UNLIKELY(bu_debug & BU_DEBUG_PARALLEL)) {
-	    bu_log("Original position was x%x, now position is x%x!\n", stdin_pos, bu_ftell(stdin));
-	    parallel_pr_FILE("saved stdin", &stdin_save);
-	    parallel_pr_FILE("current stdin", stdin);
-	}
-	bu_fseek(stdin, stdin_pos, SEEK_SET);
-	if (UNLIKELY(bu_ftell(stdin) != stdin_pos)) {
-	    bu_log("WARNING: fseek() did not recover proper position.\n");
-	} else {
-	    bu_log("It was fixed by fseek()\n");
-	}
-    }
-#  endif /* sgi */
-
 #  if defined(n16)
     /* The shared memory size requirement is sheer guesswork */
     /* The stack size is also guesswork */
@@ -1055,7 +791,7 @@ bu_parallel(void (*func)(int, genptr_t), int ncpu, genptr_t arg)
 	       nthreadc, nthreade);
 #  endif	/* SUNOS */
 
-#  if defined(HAVE_PTHREAD_H) && !defined(sgi)
+#  if defined(HAVE_PTHREAD_H)
 
     thread = 0;
     nthreadc = 0;
@@ -1188,8 +924,9 @@ bu_parallel(void (*func)(int, genptr_t), int ncpu, genptr_t arg)
     if (UNLIKELY(bu_debug & BU_DEBUG_PARALLEL))
 	bu_log("bu_parallel(%d) complete, now serial\n", ncpu);
 
-#  ifdef CHECK_PIDS
-    /*
+#  if defined(unix) || defined(__unix)
+    /* Cray is known to wander among various pids, perhaps others.
+     *
      * At this point, all multi-tasking activity should have ceased,
      * and we should be just a single UNIX process with our original
      * PID and open file table (kernel struct u).  If not, then any
