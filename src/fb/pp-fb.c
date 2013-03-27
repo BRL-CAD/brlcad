@@ -114,7 +114,8 @@ struct colors {
 int ifd, io, grid_w, grid_h, min_w, min_h, max_w, max_h, ni, opq=0;
 int ib=0, ic=0, nc=0, ibc=0, itc=3;
 int itmc[500];
-long itm[500], loci, locd, loct=0, loce, ctoi(void);
+long itm[500], ctoi(void);
+off_t loci, loct=0, locd, loce;
 
 void	paint(void), prtclr(char raw), prtsmu(char raw);
 int	lookup(long int ix, long int *jx, int n);
