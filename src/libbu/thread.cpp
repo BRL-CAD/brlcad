@@ -20,23 +20,22 @@
 
 #include "common.h"
 
-#include <boost/thread/tss.hpp>
-
-static boost::thread_specific_ptr<int> thread_cpu;
+//static boost::thread_specific_ptr<int> thread_cpu;
+//__thread int thread_cpu;
+//__declspec(thread) int thread_cpu;
 
 extern "C" {
 
 void
-thread_set_cpu(int cpu)
+thread_set_cpu(int UNUSED(cpu))
 {
-    thread_cpu.reset(new int(cpu));
 }
 
 
 int
 thread_get_cpu(void)
 {
-    return *thread_cpu.get();
+    return 0;
 }
 
 

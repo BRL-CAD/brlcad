@@ -3,17 +3,7 @@ set(BU_INCLUDE_DIRS
   ${BRLCAD_BINARY_DIR}/include
   ${BRLCAD_SOURCE_DIR}/include
   ${TCL_INCLUDE_DIRS}
-  ${CMAKE_SOURCE_DIR}/src/other/boost
   )
-
-# No point halting on C++ warnings, we can't do anything about the
-# boost issues (except update boost)
-string(TOUPPER "${CMAKE_BUILD_TYPE}" BUILD_TYPE)
-if(BUILD_TYPE)
-  set(CMAKE_CXX_FLAGS_${BUILD_TYPE} "${CMAKE_CXX_FLAGS_${BUILD_TYPE}} -Wno-error")
-else(BUILD_TYPE)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-error")
-endif(BUILD_TYPE)
 
 # locally used but not needed by users of the library
 set(BU_LOCAL_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR})
@@ -104,7 +94,7 @@ set(LIBBU_SOURCES
   xdr.c
   )
 
-BRLCAD_ADDLIB(libbu "${LIBBU_SOURCES}" "${CMAKE_THREAD_LIBS_INIT};${TCL_LIBRARY};${WINSOCK_LIB};${PSAPI_LIB};${M_LIBRARY};boost_thread")
+BRLCAD_ADDLIB(libbu "${LIBBU_SOURCES}" "${CMAKE_THREAD_LIBS_INIT};${TCL_LIBRARY};${WINSOCK_LIB};${PSAPI_LIB};${M_LIBRARY}")
 set_target_properties(libbu PROPERTIES VERSION 20.0.1 SOVERSION 20)
 get_directory_property(BRLCAD_TCL_BUILD DIRECTORY ${BRLCAD_SOURCE_DIR}/src/other DEFINITION BRLCAD_TCL_BUILD)
 if("${BRLCAD_TCL_BUILD}" STREQUAL "ON")
