@@ -120,6 +120,7 @@ struct thread_data {
     void (*user_func)(int, genptr_t);
     genptr_t user_arg;
     int cpu_id;
+    int counted;
 };
 
 
@@ -141,17 +142,11 @@ static genptr_t parallel_arg;
 /* user function to run in parallel */
 static void (*parallel_func)(int, genptr_t);
 
-/* !!! work-in-progress !!! */
-/* __thread */ void *cpu = NULL;
-
 
 int
 bu_parallel_id(void)
 {
-    if (cpu)
-	return *(int *)cpu;
-    else
-	return 0;
+    return thread_get_cpu();
 }
 
 
@@ -349,10 +344,23 @@ bu_avail_cpus(void)
 HIDDEN void
 parallel_interface_arg(struct thread_data *user_thread_data)
 {
-    cpu = &user_thread_data->cpu_id;
     parallel_set_affinity();
+
+    thread_set_cpu(user_thread_data->cpu_id);
+
+    if (!user_thread_data->counted) {
+	bu_semaphore_acquire(BU_SEM_SYSCALL);
+	parallel_nthreads_started++;
+	bu_semaphore_release(BU_SEM_SYSCALL);
+    }
+
     (*(user_thread_data->user_func))(user_thread_data->cpu_id, user_thread_data->user_arg);
-    cpu = NULL; /* sanity */
+
+    if (!user_thread_data->counted) {
+	bu_semaphore_acquire(BU_SEM_SYSCALL);
+	parallel_nthreads_finished++;
+	bu_semaphore_release(BU_SEM_SYSCALL);
+    }
 }
 
 
@@ -379,15 +387,15 @@ parallel_interface(void)
     user_thread_data_pi.user_arg  = parallel_arg;
 
     bu_semaphore_acquire(BU_SEM_SYSCALL);
-    user_thread_data_pi.cpu_id = parallel_nthreads_started++ + 1;
-    cpu = &user_thread_data_pi.cpu_id;
+    user_thread_data_pi.cpu_id = parallel_nthreads_started++;
     bu_semaphore_release(BU_SEM_SYSCALL);
+
+    user_thread_data_pi.counted = 1;
 
     parallel_interface_arg(&user_thread_data_pi);
 
     bu_semaphore_acquire(BU_SEM_SYSCALL);
     parallel_nthreads_finished++;
-    cpu = NULL; /* sanity */
     bu_semaphore_release(BU_SEM_SYSCALL);
 }
 
@@ -447,6 +455,7 @@ bu_parallel(void (*func)(int, genptr_t), int ncpu, genptr_t arg)
 	user_thread_data_bu[x].user_func = func;
 	user_thread_data_bu[x].user_arg  = arg;
 	user_thread_data_bu[x].cpu_id    = x + 1; /* index from 1 */
+	user_thread_data_bu[x].counted   = 0;
     }
 
     /* if we're in debug mode, allow additional cpus */
