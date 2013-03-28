@@ -154,11 +154,8 @@ bu_heap_get(size_t sz)
 	    per_cpu[i].bin = bu_calloc(BINS, sizeof(struct bins), "struct bins");
     }
 
-#if 0
-    oncpu = bu_parallel_id();
-#else
-    oncpu = 0;
-#endif
+    /* what thread are we? */
+    oncpu = bu_parallel_id() - 1;
 
     if (sz > BINS || sz == 0) {
 	per_cpu[oncpu].misses++;
