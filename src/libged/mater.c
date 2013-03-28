@@ -35,11 +35,11 @@ ged_mater(struct ged *gedp, int argc, const char *argv[])
     static const char *usage = "object_name shader r [g b] inherit";
     static const char *prompt[] = {
 	"Name of combination to edit? ", /* unused */
-	"Specify shader.  Enclose spaces within quotes.  E.g., \"light invisible=1\"\nShader? ('del' to delete, '.' to skip) ",
+	"Specify shader.  Enclose spaces within quotes.  E.g., light invisible=1\nShader? ('del' to delete, '.' to skip) ",
 	"R, G, B color values (0 to 255)? ('del' to delete, '.' to skip) ",
 	"G component color value? ('.' to skip) ",
 	"B component color value? ('.' to skip) ",
-	"Should this object's shader override lower nodes? ([y/n] or '.' to skip) "
+	"Should this object's shader override lower nodes? (y/n or '.' to skip) "
     };
 
     struct directory *dp = NULL;
