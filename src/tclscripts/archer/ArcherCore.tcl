@@ -3943,6 +3943,11 @@ namespace eval ArcherCore {
 
 ::itcl::body ArcherCore::doMultiPane {} {
     gedCmd configure -multi_pane $mMultiPane
+
+    if {$mMultiPane && $mDisplayListMode} {
+	::update
+	redrawWho
+    }
 }
 
 ::itcl::body ArcherCore::doLighting {} {
