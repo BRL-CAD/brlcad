@@ -101,14 +101,14 @@ main(int argc, char *argv[])
 		if (BU_STR_EQUAL(argv[i], "stdin"))
 		    x->file = stdin;
 		else if (!(x->file = fopen(argv[i], "rb")))
-		    fprintf(stderr, "Channel: can't open %s for reading\n", argv[i]);
+		    fprintf(stderr, "chan_permute: can't open %s for reading\n", argv[i]);
 	    } else if (argv[i][1] == 'o') {
 		i++;
 		(x)->i_o = 0;
 		if (BU_STR_EQUAL(argv[i], "stdout"))
 		    x->file = stdout;
 		else if (!(x->file = fopen(argv[i], "wb")))
-		    fprintf(stderr, "Channel: can't open %s for writing\n", argv[i]);
+		    fprintf(stderr, "chan_permute: can't open %s for writing\n", argv[i]);
 	    } else {
 		fprintf(stderr, "Illegal option %c\n", argv[i][1]);
 		bu_exit(-1, NULL);
