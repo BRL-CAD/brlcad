@@ -161,6 +161,7 @@ namespace eval ArcherCore {
 	method WhatsOpen           {}
 	method Close               {}
 	method askToSave           {}
+	method freezeGUI           {{_freeze ""}}
 	method getTkColor          {_r _g _b}
 	method getRgbColor         {_color}
 	method setSave {}
@@ -325,6 +326,9 @@ namespace eval ArcherCore {
 	variable mDelayCommandViewBuild 0
 	variable mRestoringTree 0
 	variable mViewOnly 0
+	variable mFreezeGUI 0
+	variable mNeedsTreeRebuild 0
+	variable mNeedsTreeSync 0
 	variable mNoTree 0
 	variable mNoToolbar 0
 	variable mTarget ""
@@ -561,7 +565,7 @@ namespace eval ArcherCore {
 	    c cd clear clone closedb color comb comb_color combmem \
 	    copy copyeval copymat cp cpi dbconcat dbExpand decompose \
 	    delete draw E edcodes edcolor edcomb edit edmater erase ev \
-	    exit facetize fracture g graph group hide human i igraph \
+	    exit facetize fracture freezeGUI g graph group hide human i igraph \
 	    importFg4Section in inside item kill killall killrefs \
 	    killtree l ls make make_bb make_pnts man mater mirror move \
 	    move_arb_edge move_arb_face mv mvall nmg_collapse \
@@ -1273,7 +1277,9 @@ namespace eval ArcherCore {
 
 
 ::itcl::body ArcherCore::gedWrapper {cmd eflag hflag sflag tflag args} {
-    SetWaitCursor $this
+    if {!$mFreezeGUI} {
+	SetWaitCursor $this
+    }
 
     if {$eflag} {
 	set optionsAndArgs [eval dbExpand $args]
@@ -1306,7 +1312,10 @@ namespace eval ArcherCore {
 	}
     }
     checkIfSelectedObjExists
-    SetNormalCursor $this
+
+    if {!$mFreezeGUI} {
+	SetNormalCursor $this
+    }
 
     return $ret
 }
@@ -2250,7 +2259,8 @@ namespace eval ArcherCore {
 # ------------------------------------------------------------
 
 ::itcl::body ArcherCore::rebuildTree {} {
-    if {$mNoTree} {
+    if {$mNoTree || $mFreezeGUI} {
+	set mNeedsTreeRebuild 1
 	return
     }
 
@@ -2524,7 +2534,8 @@ namespace eval ArcherCore {
 # Synchronize the tree view with the database.
 #
 ::itcl::body ArcherCore::syncTree {} {
-    if {$mNoTree} {
+    if {$mNoTree || $mFreezeGUI} {
+	set mNeedsTreeSync 1
 	return
     }
 
@@ -5286,6 +5297,41 @@ namespace eval ArcherCore {
     }
 
     return 0
+}
+
+::itcl::body ArcherCore::freezeGUI {{_freeze ""}} {
+    if {$_freeze == ""} {
+	return $mFreezeGUI
+    }
+
+    if {![string is boolean $_freeze]} {
+	error "ArcherCore::freezeGUI: \"$_freeze\" is not a boolean"
+    }
+
+    if {($_freeze && $mFreezeGUI) ||
+	(!$_freeze && !$mFreezeGUI)} {
+	# Nothing to do
+	return
+    }
+
+    set mFreezeGUI $_freeze
+    if {$mFreezeGUI} {
+	$itk_component(ged) refresh_off
+	SetWaitCursor $this
+    } else {
+	if {$mNeedsTreeRebuild} {
+	    set mNeedsTreeRebuild 0
+	    set mNeedsTreeSync 0
+	    rebuildTree
+	} elseif {$mNeedsTreeSync} {
+	    set mNeedsTreeSync 0
+	    syncTree
+	}
+
+	$itk_component(ged) refresh_on
+	$itk_component(ged) refresh_all
+	SetNormalCursor $this
+    }
 }
 
 ::itcl::body ArcherCore::getTkColor {r g b} {
