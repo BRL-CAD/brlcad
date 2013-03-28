@@ -8,9 +8,9 @@
 # it until the boost issue is handled
 string(TOUPPER "${CMAKE_BUILD_TYPE}" BUILD_TYPE)
 if(BUILD_TYPE)
-  set(CMAKE_CXX_FLAGS_${BUILD_TYPE} "${CMAKE_CXX_FLAGS_${BUILD_TYPE}} -w")
+  set(CMAKE_CXX_FLAGS_${BUILD_TYPE} "${CMAKE_CXX_FLAGS_${BUILD_TYPE}} -Wno-error")
 else(BUILD_TYPE)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -w")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-error")
 endif(BUILD_TYPE)
 
 # Include directories needed by libpc users
