@@ -3440,7 +3440,7 @@ BU_EXPORT extern void ntohf(unsigned char *out,
 /** @addtogroup thread */
 /** @ingroup parallel */
 /** @{ */
-/** @file libbu/ispar.c
+/** @file libbu/parallel.c
  *
  * subroutine to determine if we are multi-threaded
  *
@@ -3463,6 +3463,12 @@ BU_EXPORT extern int bu_is_parallel();
  * without dragging in the whole parallel library if it isn't being used.
  */
 BU_EXPORT extern void bu_kill_parallel();
+
+/**
+ * returns the CPU number of the current bu_parallel() invoked thread.
+ */
+BU_EXPORT extern int bu_parallel_id(void);
+
 
 /** @} */
 
