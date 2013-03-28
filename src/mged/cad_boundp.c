@@ -133,6 +133,11 @@ GetArgs(int argc, const char *argv[])	/* process command arguments */
     static int tflag = 0;	/* set if "-t" option found */
     int c;		/* option letter */
 
+if (argc==1) {
+    fprintf(stderr,"Usage: cad_boundp [ -i input ] [ -o output ] [ -t tolerance ] [ -v ]\n");
+    fprintf(stderr,"       Program continues running:\n");
+}
+
 #ifdef DEBUG
     fprintf(stderr, "\n\t\tGetArgs\n");
 #endif
