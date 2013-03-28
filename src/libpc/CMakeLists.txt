@@ -4,13 +4,14 @@
 #	re2c/lemon to rewrite parsing code currently
 #       using boost
 
-# No point in warnings here, we can't do anything about
-# it until the boost issue is handled
+# libpc compilation produces excessive warnings about unquellable
+# inline failures due to internal boost header logic.  turn off inline
+# warnings outright.
 string(TOUPPER "${CMAKE_BUILD_TYPE}" BUILD_TYPE)
 if(BUILD_TYPE)
-  set(CMAKE_CXX_FLAGS_${BUILD_TYPE} "${CMAKE_CXX_FLAGS_${BUILD_TYPE}} -Wno-error")
+  set(CMAKE_CXX_FLAGS_${BUILD_TYPE} "${CMAKE_CXX_FLAGS_${BUILD_TYPE}} -Wno-inline -Wno-error")
 else(BUILD_TYPE)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-error")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-inline -Wno-error")
 endif(BUILD_TYPE)
 
 # Include directories needed by libpc users
