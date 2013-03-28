@@ -592,7 +592,7 @@ tie_kdtree_build(struct tie_s *tie, struct tie_kdtree_s *node, unsigned int dept
     /* Allocate 2 children nodes for the parent node */
     node->data = (void *)bu_calloc(2, sizeof(struct tie_kdtree_s), __FUNCTION__);
     if(((size_t)node->data & 7L))
-	bu_log("node->data 0x%X is not aligned! %x\n", node->data, (size_t)node->data & 7L);
+	bu_log("node->data 0x%X is not aligned! %lu\n", node->data, (size_t)node->data & 7L);
 
     BU_ALLOC(((struct tie_kdtree_s *)(node->data))[0].data, struct tie_geom_s);
     if(((size_t)((struct tie_kdtree_s *)(node->data))[0].data & 7L))
