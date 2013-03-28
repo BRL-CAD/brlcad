@@ -1,4 +1,4 @@
-/*                      P A R A L L E L . H
+/*                        T H R E A D . H
  * BRL-CAD
  *
  * Copyright (c) 2013 United States Government as represented by
@@ -18,23 +18,29 @@
  * information.
  */
 
-#include "bu.h"
+#include "common.h"
 
-/**
- * Set affinity mask of current thread to the CPU set it is currently
- * running on. If it is not running on any CPUs in the set, it is
- * migrated to CPU 0 by default.
- *
- * Return:
- *  0 on Suceess
- * -1 on Failure
- *
- */
-extern int parallel_set_affinity(void);
+#include <boost/thread/tss.hpp>
 
-extern void thread_set_cpu(int cpu);
-extern int thread_get_cpu(void);
+static boost::thread_specific_ptr<int> thread_cpu;
 
+extern "C" {
+
+void
+thread_set_cpu(int cpu)
+{
+    thread_cpu.reset(new int(cpu));
+}
+
+
+int
+thread_get_cpu(void)
+{
+    return *thread_cpu.get();
+}
+
+
+} /* extern "C" */
 
 /*
  * Local Variables:
