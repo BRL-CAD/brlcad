@@ -23,12 +23,12 @@ ELSE(WIN32)
 	SET(thread_SRCS ${pthread_SRCS})
 ENDIF(WIN32)
 
-add_library(boost_threads SHARED ${thread_SRCS})
-target_link_libraries(boost_threads ${CMAKE_THREAD_LIBS_INIT})
-set_target_properties(boost_threads PROPERTIES LINK_FLAGS "-DBOOST_THREAD_USE_DLL=1")
+add_library(boost_thread SHARED ${thread_SRCS})
+target_link_libraries(boost_thread ${CMAKE_THREAD_LIBS_INIT})
+set_target_properties(boost_thread PROPERTIES LINK_FLAGS "-DBOOST_THREAD_USE_DLL=1")
 
-add_library(boost_threads_static STATIC ${thread_SRCS})
-target_link_libraries(boost_threads_static ${CMAKE_THREAD_LIBS_INIT})
-set_target_properties(boost_threads_static PROPERTIES LINK_FLAGS "-DBOOST_THREAD_USE_LIB=1")
+add_library(boost_thread_static STATIC ${thread_SRCS})
+target_link_libraries(boost_thread_static ${CMAKE_THREAD_LIBS_INIT})
+set_target_properties(boost_thread_static PROPERTIES LINK_FLAGS "-DBOOST_THREAD_USE_LIB=1")
 
 endif(CMAKE_THREAD_LIBS_INIT)
