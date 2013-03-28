@@ -107,8 +107,11 @@ if(BRLCAD_ENABLE_COMPILER_WARNINGS OR BRLCAD_ENABLE_STRICT)
   BRLCAD_CHECK_C_FLAG(Wshadow)
   BRLCAD_CHECK_CXX_FLAG(Wshadow)
 
+  # want C inline warnings, but versions of g++ (circa 4.7) spew
+  # unquellable bogus warnings on default constructors that we don't
+  # have access to (e.g., in opennurbs and boost), so turn them off
   BRLCAD_CHECK_C_FLAG(Winline)
-  BRLCAD_CHECK_CXX_FLAG(Winline)
+  BRLCAD_CHECK_CXX_FLAG(Wno-inline)
 
   # Need this for tcl.h
   BRLCAD_CHECK_C_FLAG(Wno-long-long)
