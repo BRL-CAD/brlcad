@@ -260,7 +260,7 @@ DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/xmltools/include)
 # --------------------------------------------------------------------
 # Ignore the boost subdir - it's only used for the boost headers and
 # is not compiled
-CMAKEFILES(boost)
+ADD_SUBDIRECTORY(boost)
 
 # The incrtTcl subdirectory isn't directly referenced, but its
 # subdirectories are used - mark incrTcl as ignored
