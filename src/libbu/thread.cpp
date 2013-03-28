@@ -1,4 +1,4 @@
-/*                        T H R E A D . H
+/*                      T H R E A D . C P P
  * BRL-CAD
  *
  * Copyright (c) 2013 United States Government as represented by
