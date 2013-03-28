@@ -454,7 +454,7 @@ bu_parallel(void (*func)(int, genptr_t), int ncpu, genptr_t arg)
     for(x = 0; x < ncpu; x++) {
 	user_thread_data_bu[x].user_func = func;
 	user_thread_data_bu[x].user_arg  = arg;
-	user_thread_data_bu[x].cpu_id    = x + 1; /* index from 1 */
+	user_thread_data_bu[x].cpu_id    = x;
 	user_thread_data_bu[x].counted   = 0;
     }
 
@@ -491,7 +491,7 @@ bu_parallel(void (*func)(int, genptr_t), int ncpu, genptr_t arg)
 
 	if (thr_create(0, 0, (void *(*)(void *))parallel_interface_arg, &user_thread_data_bu[x], 0, &thread)) {
 	    bu_log("ERROR: bu_parallel: thr_create(0x0, 0x0, 0x%x, 0x0, 0, 0x%x) failed for processor thread # %d\n",
-		   parallel_interface_arg, &thread, x+1);
+		   parallel_interface_arg, &thread, x);
 	    /* Not much to do, lump it */
 	} else {
 	    if (UNLIKELY(bu_debug & BU_DEBUG_PARALLEL))
@@ -566,7 +566,7 @@ bu_parallel(void (*func)(int, genptr_t), int ncpu, genptr_t arg)
 
 	if (pthread_create(&thread, &attrs, (void *(*)(void *))parallel_interface_arg, &user_thread_data_bu[x])) {
 	    bu_log("ERROR: bu_parallel: pthread_create(0x0, 0x0, 0x%lx, 0x0, 0, %p) failed for processor thread # %d\n",
-		   (unsigned long int)parallel_interface_arg, (void *)&thread, x+1);
+		   (unsigned long int)parallel_interface_arg, (void *)&thread, x);
 	    /* Not much to do, lump it */
 	} else {
 	    if (UNLIKELY(bu_debug & BU_DEBUG_PARALLEL)) {
