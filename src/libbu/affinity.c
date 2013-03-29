@@ -108,18 +108,25 @@ parallel_set_affinity(void)
 
 #elif defined(HAVE_MACH_THREAD_POLICY_H)
 
-    /* Mac OS X mach thread affinity hinting */
+    /* Mac OS X mach thread affinity hinting.  Mach implements a CPU
+     * affinity policy by default so this just sets up an additional
+     * hint on how threads can be grouped/ungrouped.  Here we set all
+     * threads up into their own group so threads will get their own
+     * cpu and hopefully be kept in place by Mach from there.
+     */
 
     thread_extended_policy_data_t epolicy;
     thread_affinity_policy_data_t apolicy;
     thread_t curr_thread = mach_thread_self();
     kern_return_t ret;
 
+    /* discourage interrupting this thread */
     epolicy.timeshare = FALSE;
     ret = thread_policy_set(curr_thread, THREAD_EXTENDED_POLICY, (thread_policy_t) &epolicy, THREAD_EXTENDED_POLICY_COUNT);
     if (ret != KERN_SUCCESS)
 	return -1;
 
+    /* put each thread into a separate group */
     apolicy.affinity_tag = curr_thread;
     ret = thread_policy_set(curr_thread, THREAD_EXTENDED_POLICY, (thread_policy_t) &apolicy, THREAD_EXTENDED_POLICY_COUNT);
     if (ret != KERN_SUCCESS)
