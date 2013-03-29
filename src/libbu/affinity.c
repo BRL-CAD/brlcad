@@ -40,6 +40,11 @@
 #  include <pthread_np.h>
 #endif
 
+#ifdef HAVE_MACH_THREAD_POLICY_H
+#  include <mach/thread_policy.h>
+#  include <mach/mach.h>
+#endif
+
 #include "bu.h"
 
 
@@ -47,6 +52,8 @@ int
 parallel_set_affinity(void)
 {
 #if defined(HAVE_PTHREAD_H) && defined (CPU_ZERO)
+
+    /* Linux and BSD pthread affinity */
 
     pthread_t curr_thread = pthread_self();	/* Get current thread */
     int cpulim = bu_avail_cpus();		/* Max number of CPUs available for the process */
@@ -97,9 +104,35 @@ parallel_set_affinity(void)
 	return -1;
     }
 
-#endif
+    return 0;
+
+#elif defined(HAVE_MACH_THREAD_POLICY_H)
+
+    /* Mac OS X mach thread affinity hinting */
+
+    thread_extended_policy_data_t epolicy;
+    thread_affinity_policy_data_t apolicy;
+    thread_t curr_thread = mach_thread_self();
+    kern_return_t ret;
+
+    epolicy.timeshare = FALSE;
+    ret = thread_policy_set(curr_thread, THREAD_EXTENDED_POLICY, (thread_policy_t) &epolicy, THREAD_EXTENDED_POLICY_COUNT);
+    if (ret != KERN_SUCCESS)
+	return -1;
+
+    apolicy.affinity_tag = curr_thread;
+    ret = thread_policy_set(curr_thread, THREAD_EXTENDED_POLICY, (thread_policy_t) &apolicy, THREAD_EXTENDED_POLICY_COUNT);
+    if (ret != KERN_SUCCESS)
+	return -1;
 
     return 0;
+
+#else
+
+    /* don't know how to set thread affinity on this platform */
+    return 0;
+
+#endif
 }
 
 
