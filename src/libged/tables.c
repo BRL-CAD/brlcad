@@ -160,10 +160,14 @@ tables_new(struct ged *gedp, struct directory *dp, struct bu_ptbl *cur_path, con
     BU_ASSERT_SIZE_T(actual_count, ==, node_count);
 
     if (dp->d_flags & RT_DIR_REGION) {
+	struct bu_vls str = BU_VLS_INIT_ZERO;
+
 	(*numreg)++;
-	fprintf(tabptr, " %-4ld %4ld %4ld %4ld %4ld  ",
-		      *numreg, comb->region_id, comb->aircode, comb->GIFTmater,
-		      comb->los);
+	bu_vls_printf(&str, " %-4zu %4ld %4ld %4ld %4ld  ",
+		      *numreg, comb->region_id, comb->aircode, comb->GIFTmater, comb->los);
+	bu_vls_fwrite(tabptr, &str);
+	bu_vls_free(&str);
+
 	for (k = 0; k < BU_PTBL_LEN(cur_path); k++) {
 	    struct directory *path_dp;
 
@@ -405,9 +409,15 @@ ged_tables(struct ged *gedp, int argc, const char *argv[])
     bu_vls_printf(gedp->ged_result_str, "Summary written in: %s\n", argv[1]);
 
     if (flag == SOL_TABLE || flag == REG_TABLE) {
+	struct bu_vls str = BU_VLS_INIT_ZERO;
+
+	/* FIXME: should not assume /tmp */
 	bu_file_delete("/tmp/mged_discr\0");
-	fprintf(tabptr, "\n\nNumber Primitives = %lu  Number Regions = %lu\n",
+
+	bu_vls_printf(&str, "\n\nNumber Primitives = %zu  Number Regions = %zu\n",
 		      numsol, numreg);
+	bu_vls_fwrite(tabptr, &str);
+	bu_vls_free(&str);
 
 	bu_vls_printf(gedp->ged_result_str, "Processed %lu Primitives and %lu Regions\n",
 		      numsol, numreg);
