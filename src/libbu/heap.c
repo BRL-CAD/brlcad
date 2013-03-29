@@ -155,7 +155,7 @@ bu_heap_get(size_t sz)
     }
 
     /* what thread are we? */
-    oncpu = bu_parallel_id() - 1;
+    oncpu = bu_parallel_id();
 
     if (sz > BINS || sz == 0) {
 	per_cpu[oncpu].misses++;
