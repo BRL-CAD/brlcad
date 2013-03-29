@@ -59,25 +59,20 @@ parallel_set_affinity(void)
 
     /* Linux and BSD pthread affinity */
 
-    pthread_t curr_thread = pthread_self();	/* Get current thread */
-    int ncpu = bu_avail_cpus();			/* Max number of CPUs available for the process */
-    int status;					/* Status of thread setting/getting */
-    int cpu = 0;				/* Default CPU number */
-    int j;					/* Variable for iteration. */
-
 #ifdef HAVE_CPU_SET_T
     cpu_set_t set_of_cpus;
 #else
     cpuset_t set_of_cpus;
 #endif
+    int ret;
 
     /* Clear CPU set and assign our number */
     CPU_ZERO(&set_of_cpus);
     CPU_SET(bu_parallel_id() & bu_avail_cpus(), &set_of_cpus);
 
     /* set affinity mask of current thread */
-    status = pthread_setaffinity_np(curr_thread, sizeof(set_of_cpus), &set_of_cpus);
-    if (status != 0) {
+    ret = pthread_setaffinity_np(pthread_self(), sizeof(set_of_cpus), &set_of_cpus);
+    if (ret != 0) {
 	/* Error in setting affinity mask */
 	return -1;
     }
@@ -113,11 +108,13 @@ parallel_set_affinity(void)
     return 0;
 
 #elif defined(HAVE_WINDOWS_H)
+
     BOOL ret = SetThreadAffinityMask(GetCurrentThread(), 1 << bu_parallel_id() % bu_avail_cpus());
     if (ret  == 0)
 	return -1;
 
     return 0;
+
 #else
 
     /* don't know how to set thread affinity on this platform */
