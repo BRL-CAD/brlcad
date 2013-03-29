@@ -70,7 +70,7 @@ parallel_set_affinity(void)
 
     CPU_ZERO(&set_of_cpus);
 
-    for(j = 0; j < cpulim; j++) {
+    for (j = 0; j < cpulim; j++) {
 	/* Set affinity mask to include CPUs 0 to max available CPU */
 	CPU_SET(j, &set_of_cpus);
     }
@@ -78,14 +78,14 @@ parallel_set_affinity(void)
     /* Check current affinity mask assigned to thread */
     status = pthread_getaffinity_np(curr_thread, sizeof(set_of_cpus), &set_of_cpus);
 
-    if(status != 0) {
+    if (status != 0) {
 	/* Error in getting affinity mask */
 	return -1;
     }
 
-    for(j = 0; j < CPU_SETSIZE; j++) {
+    for (j = 0; j < CPU_SETSIZE; j++) {
 	/* Check which set has been returned by pthread_get_affinity */
-	if(CPU_ISSET(j, &set_of_cpus)) {
+	if (CPU_ISSET(j, &set_of_cpus)) {
 	    /* found affinity mask */
 	    cpu = j;
 	    break;
@@ -99,7 +99,7 @@ parallel_set_affinity(void)
     /* set affinity mask of current thread */
     status = pthread_setaffinity_np(curr_thread, sizeof(set_of_cpus), &set_of_cpus);
 
-    if(status != 0) {
+    if (status != 0) {
 	/* Error in setting affinity mask */
 	return -1;
     }
