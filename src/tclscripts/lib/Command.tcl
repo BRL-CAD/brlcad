@@ -382,9 +382,9 @@
 
 	if {$more_args_interrupted} {
 	    set more_args_interrupted 0
-	} else {
-	    print_prompt
 	}
+
+	print_prompt
 
 	# get rid of oldest output
 	set nlines [expr int([$w index end])]
@@ -1369,6 +1369,7 @@
 
 ::itcl::body Command::print_more_args_prompt {args} {
     eval $itk_component(text) insert insert $args
+    $itk_component(text) see insert
 }
 
 ::itcl::body Command::print_prompt {} {
