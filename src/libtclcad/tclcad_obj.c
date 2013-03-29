@@ -1042,7 +1042,7 @@ static struct to_cmdtab to_cmds[] = {
     {"make_name",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_make_name},
     {"make_pnts",	(char *)0, TO_UNLIMITED, to_more_args_func, ged_make_pnts},
     {"match",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_match},
-    {"mater",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_mater},
+    {"mater",	(char *)0, TO_UNLIMITED, to_more_args_func, ged_mater},
     {"mirror",	(char *)0, TO_UNLIMITED, to_mirror, GED_FUNC_PTR_NULL},
     {"model2view",	"vname", 2, to_view_func, ged_model2view},
     {"model_axes",	"???", TO_UNLIMITED, to_model_axes, GED_FUNC_PTR_NULL},
@@ -12305,7 +12305,7 @@ to_more_args_func(struct ged *gedp,
 
 	if (0 < bu_vls_strlen(&current_top->to_gop->go_more_args_callback)) {
 	    bu_vls_trunc(&callback_cmd, 0);
-	    bu_vls_printf(&callback_cmd, "%s \"%s\"",
+	    bu_vls_printf(&callback_cmd, "%s [string range {%s} 0 end]",
 			  bu_vls_addr(&current_top->to_gop->go_more_args_callback),
 			  bu_vls_addr(gedp->ged_result_str));
 
@@ -12360,8 +12360,11 @@ to_more_args_func(struct ged *gedp,
     bu_vls_free(&callback_cmd);
     bu_vls_free(&temp);
 
-    for (i = 0; i < ac; ++i)
+    bu_vls_printf(gedp->ged_result_str, "BUILT_BY_MORE_ARGS");
+    for (i = 0; i < ac; ++i) {
+	bu_vls_printf(gedp->ged_result_str, "%s ", av[i]);
 	bu_free((void *)av[i], "to_more_args_func");
+    }
 
     return ret;
 }
