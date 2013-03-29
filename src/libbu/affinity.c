@@ -46,7 +46,7 @@
 int
 parallel_set_affinity(void)
 {
-#if defined(HAVE_PTHREAD_H)
+#if defined(HAVE_PTHREAD_H) && defined (CPU_ZERO)
 
     pthread_t curr_thread = pthread_self();	/* Get current thread */
     int cpulim = bu_avail_cpus();		/* Max number of CPUs available for the process */
