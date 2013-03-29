@@ -139,6 +139,7 @@ static const int farb4[6][4] = {
     {2, 3, 7, 4},
 };
 
+
 #define ARB_AO(_t, _a, _i) offsetof(_t, _a) + sizeof(point_t) * _i + sizeof(point_t) / ELEMENTS_PER_POINT * X
 
 const struct bu_structparse rt_arb_parse[] = {
@@ -153,26 +154,28 @@ const struct bu_structparse rt_arb_parse[] = {
     { {'\0', '\0', '\0', '\0'}, 0, (char *)NULL, 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 
+
 short local_arb6_edge_vertex_mapping[10][2] = {
-    {0,1},	/* edge 12 */
-    {1,2},	/* edge 23 */
-    {2,3},	/* edge 34 */
-    {0,3},	/* edge 14 */
-    {0,4},	/* edge 15 */
-    {1,4},	/* edge 25 */
-    {2,7},	/* edge 36 */
-    {3,7},	/* edge 46 */
-    {4,4},	/* point 5 */
-    {7,7},	/* point 6 */
+    {0, 1},	/* edge 12 */
+    {1, 2},	/* edge 23 */
+    {2, 3},	/* edge 34 */
+    {0, 3},	/* edge 14 */
+    {0, 4},	/* edge 15 */
+    {1, 4},	/* edge 25 */
+    {2, 7},	/* edge 36 */
+    {3, 7},	/* edge 46 */
+    {4, 4},	/* point 5 */
+    {7, 7},	/* point 6 */
 };
 
+
 short local_arb4_edge_vertex_mapping[6][2] = {
-    {0,1},	/* edge 12 */
-    {1,2},	/* edge 23 */
-    {2,0},	/* edge 31 */
-    {0,4},	/* edge 14 */
-    {1,4},	/* edge 24 */
-    {2,4},	/* edge 34 */
+    {0, 1},	/* edge 12 */
+    {1, 2},	/* edge 23 */
+    {2, 0},	/* edge 31 */
+    {0, 4},	/* edge 14 */
+    {1, 4},	/* edge 24 */
+    {2, 4},	/* edge 34 */
 };
 
 
@@ -266,29 +269,29 @@ rt_arb_get_cgtype(
 
     /* Figure out what kind of ARB this is */
     switch (numuvec) {
-    case 8:
-	*cgtype = ARB8;     /* ARB8 */
-	break;
+	case 8:
+	    *cgtype = ARB8;     /* ARB8 */
+	    break;
 
-    case 6:
-	*cgtype = ARB7;     /* ARB7 */
-	break;
+	case 6:
+	    *cgtype = ARB7;     /* ARB7 */
+	    break;
 
-    case 4:
-	if (svec[0] == 2)
-	    *cgtype = ARB6; /* ARB6 */
-	else
-	    *cgtype = ARB5; /* ARB5 */
-	break;
+	case 4:
+	    if (svec[0] == 2)
+		*cgtype = ARB6; /* ARB6 */
+	    else
+		*cgtype = ARB5; /* ARB5 */
+	    break;
 
-    case 2:
-	*cgtype = ARB4;     /* ARB4 */
-	break;
+	case 2:
+	    *cgtype = ARB4;     /* ARB4 */
+	    break;
 
-    default:
-	bu_log("rt_arb_get_cgtype: bad number of unique vectors (%d)\n",
-		numuvec);
-	return 0;
+	default:
+	    bu_log("rt_arb_get_cgtype: bad number of unique vectors (%d)\n",
+		   numuvec);
+	    return 0;
     }
     return numuvec;
 }
@@ -401,7 +404,7 @@ HIDDEN int
 rt_arb_add_pt(register pointp_t point, const char *title, struct prep_arb *pap, int ptno, const char *name)
 
 
-    /* current point # on face */
+/* current point # on face */
 
 {
     vect_t work;
@@ -656,6 +659,7 @@ rt_arb_mk_planes(register struct prep_arb *pap, struct rt_arb_internal *aip, con
     }
     return 0;			/* OK */
 }
+
 
 /**
  * R T _ A R B _ B B O X
@@ -930,10 +934,10 @@ rt_arb_shot(struct soltab *stp, register struct xray *rp, struct application *ap
  */
 void
 rt_arb_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, struct application *ap)
-    /* An array of solid pointers */
-    /* An array of ray pointers */
-    /* array of segs (results returned) */
-    /* Number of ray/object pairs */
+/* An array of solid pointers */
+/* An array of ray pointers */
+/* array of segs (results returned) */
+/* Number of ray/object pairs */
 
 {
     register int j, i;
@@ -1005,7 +1009,7 @@ rt_arb_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
 	    segp[i].seg_out.hit_surfno == -1) {
 	    RT_ARB8_SEG_MISS(segp[i]);		/* MISS */
 	} else if (segp[i].seg_in.hit_dist >= segp[i].seg_out.hit_dist ||
-		 segp[i].seg_out.hit_dist >= INFINITY) {
+		   segp[i].seg_out.hit_dist >= INFINITY) {
 	    RT_ARB8_SEG_MISS(segp[i]);		/* MISS */
 	}
     }
@@ -1151,6 +1155,7 @@ rt_arb_free(register struct soltab *stp)
 	bu_free((char *)arbp->arb_opt, "arb_opt");
     bu_free((char *)arbp, "arb_specific");
 }
+
 
 #define ARB_FACE(vlist_head, arb_pts, a, b, c, d) \
     RT_ADD_VLIST(vlist_head, arb_pts[a], BN_VLIST_LINE_MOVE); \
@@ -2257,7 +2262,7 @@ rt_arb_edit(struct bu_vls *error_msg_ret,
 
     return 0;		/* OK */
 
- err:
+err:
     /* Error handling */
     bu_vls_printf(error_msg_ret, "cannot move edge: %d%d\n", pt1+1, pt2+1);
     return 1;		/* BAD */
@@ -2309,7 +2314,7 @@ rt_arb_volume(fastf_t *vol, const struct rt_db_internal *ip)
 	/* d = "top" point of the arb4 */
 	d = farb4[i][3];
 
-	/* create a plane from a,b,c */
+	/* create a plane from a, b, c */
 	if (bn_mk_plane_3pts(plane, aip->pt[a], aip->pt[b], aip->pt[c], &tmp_tol) < 0) {
 	    continue;
 	}
@@ -2350,33 +2355,33 @@ rt_arb_get_edge_list(const struct rt_db_internal *ip, short (*edge_list[])[2])
     arb_type = rt_arb_std_type(ip, &tmp_tol);
 
     switch (arb_type) {
-    case ARB8:
-	edge_count = 12;
-	(*edge_list) = arb8_edge_vertex_mapping;
+	case ARB8:
+	    edge_count = 12;
+	    (*edge_list) = arb8_edge_vertex_mapping;
 
-	break;
-    case ARB7:
-	edge_count = 12;
-	(*edge_list) = arb7_edge_vertex_mapping;
+	    break;
+	case ARB7:
+	    edge_count = 12;
+	    (*edge_list) = arb7_edge_vertex_mapping;
 
-	break;
-    case ARB6:
-	edge_count = 10;
-	(*edge_list) = local_arb6_edge_vertex_mapping;
+	    break;
+	case ARB6:
+	    edge_count = 10;
+	    (*edge_list) = local_arb6_edge_vertex_mapping;
 
-	break;
-    case ARB5:
-	edge_count = 9;
-	(*edge_list) = arb5_edge_vertex_mapping;
+	    break;
+	case ARB5:
+	    edge_count = 9;
+	    (*edge_list) = arb5_edge_vertex_mapping;
 
-	break;
-    case ARB4:
-	edge_count = 5;
-	(*edge_list) = arb4_edge_vertex_mapping;
+	    break;
+	case ARB4:
+	    edge_count = 5;
+	    (*edge_list) = arb4_edge_vertex_mapping;
 
-	break;
-    default:
-	return edge_count;
+	    break;
+	default:
+	    return edge_count;
     }
 
     return edge_count;
@@ -2442,54 +2447,54 @@ rt_arb_find_e_nearest_pt2(int *edge,
 
 	if (ret < 3 || tmp_dist < dist) {
 	    switch (ret) {
-	    case 0:
-		dist = 0.0;
-		if (tmp_dist < 0.5) {
+		case 0:
+		    dist = 0.0;
+		    if (tmp_dist < 0.5) {
+			*vert1 = edge_list[i][0] + 1;
+			*vert2 = edge_list[i][1] + 1;
+		    } else {
+			*vert1 = edge_list[i][1] + 1;
+			*vert2 = edge_list[i][0] + 1;
+		    }
+		    *edge = i + 1;
+		    break;
+		case 1:
+		    dist = 0.0;
 		    *vert1 = edge_list[i][0] + 1;
 		    *vert2 = edge_list[i][1] + 1;
-		} else {
+		    *edge = i + 1;
+		    break;
+		case 2:
+		    dist = 0.0;
 		    *vert1 = edge_list[i][1] + 1;
 		    *vert2 = edge_list[i][0] + 1;
-		}
-		*edge = i + 1;
-		break;
-	    case 1:
-		dist = 0.0;
-		*vert1 = edge_list[i][0] + 1;
-		*vert2 = edge_list[i][1] + 1;
-		*edge = i + 1;
-		break;
-	    case 2:
-		dist = 0.0;
-		*vert1 = edge_list[i][1] + 1;
-		*vert2 = edge_list[i][0] + 1;
-		*edge = i + 1;
-		break;
-	    case 3:
-		dist = tmp_dist;
-		*vert1 = edge_list[i][0] + 1;
-		*vert2 = edge_list[i][1] + 1;
-		*edge = i + 1;
-		break;
-	    case 4:
-		dist = tmp_dist;
-		*vert1 = edge_list[i][1] + 1;
-		*vert2 = edge_list[i][0] + 1;
-		*edge = i + 1;
-		break;
-	    case 5:
-		dist = tmp_dist;
-		V2SUB2(p1_to_pca, pca, p1);
-		V2SUB2(p1_to_p2, p2, p1);
-		if (MAG2SQ(p1_to_pca) / MAG2SQ(p1_to_p2) < 0.25) {
+		    *edge = i + 1;
+		    break;
+		case 3:
+		    dist = tmp_dist;
 		    *vert1 = edge_list[i][0] + 1;
 		    *vert2 = edge_list[i][1] + 1;
-		} else {
+		    *edge = i + 1;
+		    break;
+		case 4:
+		    dist = tmp_dist;
 		    *vert1 = edge_list[i][1] + 1;
 		    *vert2 = edge_list[i][0] + 1;
-		}
-		*edge = i + 1;
-		break;
+		    *edge = i + 1;
+		    break;
+		case 5:
+		    dist = tmp_dist;
+		    V2SUB2(p1_to_pca, pca, p1);
+		    V2SUB2(p1_to_p2, p2, p1);
+		    if (MAG2SQ(p1_to_pca) / MAG2SQ(p1_to_p2) < 0.25) {
+			*vert1 = edge_list[i][0] + 1;
+			*vert2 = edge_list[i][1] + 1;
+		    } else {
+			*vert1 = edge_list[i][1] + 1;
+			*vert2 = edge_list[i][0] + 1;
+		    }
+		    *edge = i + 1;
+		    break;
 	    }
 	}
     }
