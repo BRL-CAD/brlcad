@@ -1598,18 +1598,18 @@ rt_nmg_idisk(genptr_t op, genptr_t ip, struct nmg_exp_counts *ecnt, int idx, uin
 	    fg->order[1] = ntohl(*(uint32_t*)(d->v_order));
 	    fg->u.k_size = ntohl(*(uint32_t*)(d->u_size));
 	    fg->u.knots = rt_nmg_import4_fastf(basep, ecnt,
-					       ntohl(*(uint32_t*)(d->u_knots)), (matp_t)NULL,
+					       ntohl(*(uint32_t*)(d->u_knots)), (const matp_t)NULL,
 					       fg->u.k_size, 0);
 	    fg->v.k_size = ntohl(*(uint32_t*)(d->v_size));
 	    fg->v.knots = rt_nmg_import4_fastf(basep, ecnt,
-					       ntohl(*(uint32_t*)(d->v_knots)), (matp_t)NULL,
+					       ntohl(*(uint32_t*)(d->v_knots)), (const matp_t)NULL,
 					       fg->v.k_size, 0);
 	    fg->s_size[0] = ntohl(*(uint32_t*)(d->us_size));
 	    fg->s_size[1] = ntohl(*(uint32_t*)(d->vs_size));
 	    fg->pt_type = ntohl(*(uint32_t*)(d->pt_type));
 	    /* Transform ctl_points by 'mat' */
 	    fg->ctl_points = rt_nmg_import4_fastf(basep, ecnt,
-						  ntohl(*(uint32_t*)(d->ctl_points)), (matp_t)mat,
+						  ntohl(*(uint32_t*)(d->ctl_points)), (const matp_t)mat,
 						  fg->s_size[0] * fg->s_size[1],
 						  fg->pt_type);
 	}
@@ -1758,7 +1758,7 @@ rt_nmg_idisk(genptr_t op, genptr_t ip, struct nmg_exp_counts *ecnt, int idx, uin
 
 	    eg->k.k_size = ntohl(*(uint32_t*)(d->k_size));
 	    eg->k.knots = rt_nmg_import4_fastf(basep, ecnt,
-					       ntohl(*(uint32_t*)(d->knots)), (matp_t)NULL,
+					       ntohl(*(uint32_t*)(d->knots)), (const matp_t)NULL,
 					       eg->k.k_size, 0);
 	    eg->c_size = ntohl(*(uint32_t*)(d->c_size));
 	    eg->pt_type = ntohl(*(uint32_t*)(d->pt_type));
@@ -1770,13 +1770,13 @@ rt_nmg_idisk(genptr_t op, genptr_t ip, struct nmg_exp_counts *ecnt, int idx, uin
 		/* UV coords on snurb surface don't get xformed */
 		eg->ctl_points = rt_nmg_import4_fastf(basep,
 						      ecnt,
-						      ntohl(*(uint32_t*)(d->ctl_points)), (matp_t)NULL,
+						      ntohl(*(uint32_t*)(d->ctl_points)), (const matp_t)NULL,
 						      eg->c_size, eg->pt_type);
 	    } else {
 		/* XYZ coords on planar face DO get xformed */
 		eg->ctl_points = rt_nmg_import4_fastf(basep,
 						      ecnt,
-						      ntohl(*(uint32_t*)(d->ctl_points)), (matp_t)mat,
+						      ntohl(*(uint32_t*)(d->ctl_points)), (const matp_t)mat,
 						      eg->c_size, eg->pt_type);
 	    }
 	}
