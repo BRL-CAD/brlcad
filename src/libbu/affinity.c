@@ -71,32 +71,9 @@ parallel_set_affinity(void)
     cpuset_t set_of_cpus;
 #endif
 
+    /* Clear CPU set and assign our number */
     CPU_ZERO(&set_of_cpus);
-
-    for (j = 0; j < ncpu; j++) {
-	/* Set affinity mask to include CPUs 0 to max available CPU */
-	CPU_SET(j, &set_of_cpus);
-    }
-
-    /* Check current affinity mask assigned to thread */
-    status = pthread_getaffinity_np(curr_thread, sizeof(set_of_cpus), &set_of_cpus);
-    if (status != 0) {
-	/* Error in getting affinity mask */
-	return -1;
-    }
-
-    for (j = 0; j < CPU_SETSIZE; j++) {
-	/* Check which set has been returned by pthread_get_affinity */
-	if (CPU_ISSET(j, &set_of_cpus)) {
-	    /* found affinity mask */
-	    cpu = j;
-	    break;
-	}
-    }
-
-    /* Clear CPU set and assign CPUs */
-    CPU_ZERO(&set_of_cpus);
-    CPU_SET(cpu, &set_of_cpus);
+    CPU_SET(bu_parallel_id() & bu_avail_cpus(), &set_of_cpus);
 
     /* set affinity mask of current thread */
     status = pthread_setaffinity_np(curr_thread, sizeof(set_of_cpus), &set_of_cpus);
@@ -128,7 +105,7 @@ parallel_set_affinity(void)
 	return -1;
 
     /* put each thread into a separate group */
-    apolicy.affinity_tag = curr_thread;
+    apolicy.affinity_tag = bu_parallel_id() % bu_avail_cpus();
     ret = thread_policy_set(curr_thread, THREAD_EXTENDED_POLICY, (thread_policy_t) &apolicy, THREAD_EXTENDED_POLICY_COUNT);
     if (ret != KERN_SUCCESS)
 	return -1;
@@ -136,7 +113,7 @@ parallel_set_affinity(void)
     return 0;
 
 #elif defined(HAVE_WINDOWS_H)
-    BOOL ret = SetThreadAffinityMask(GetCurrentThread(), 1 << bu_parallel_id());
+    BOOL ret = SetThreadAffinityMask(GetCurrentThread(), 1 << bu_parallel_id() % bu_avail_cpus());
     if (ret  == 0)
 	return -1;
 
