@@ -1590,6 +1590,7 @@ rt_nmg_idisk(genptr_t op, genptr_t ip, struct nmg_exp_counts *ecnt, int idx, uin
 	case NMG_KIND_FACE_G_SNURB: {
 	    struct face_g_snurb *fg = (struct face_g_snurb *)op;
 	    struct disk_face_g_snurb *d;
+	    const matp_t matrix = (const matp_t)mat;
 	    d = &((struct disk_face_g_snurb *)ip)[iindex];
 	    NMG_CK_FACE_G_SNURB(fg);
 	    NMG_CK_DISKMAGIC(d->magic, DISK_FACE_G_SNURB_MAGIC);
@@ -1597,19 +1598,27 @@ rt_nmg_idisk(genptr_t op, genptr_t ip, struct nmg_exp_counts *ecnt, int idx, uin
 	    fg->order[0] = ntohl(*(uint32_t*)(d->u_order));
 	    fg->order[1] = ntohl(*(uint32_t*)(d->v_order));
 	    fg->u.k_size = ntohl(*(uint32_t*)(d->u_size));
-	    fg->u.knots = rt_nmg_import4_fastf(basep, ecnt,
-					       ntohl(*(uint32_t*)(d->u_knots)), (const matp_t)NULL,
-					       fg->u.k_size, 0);
+	    fg->u.knots = rt_nmg_import4_fastf(basep,
+					       ecnt,
+					       ntohl(*(uint32_t*)(d->u_knots)),
+					       (const matp_t)NULL,
+					       fg->u.k_size,
+					       0);
 	    fg->v.k_size = ntohl(*(uint32_t*)(d->v_size));
-	    fg->v.knots = rt_nmg_import4_fastf(basep, ecnt,
-					       ntohl(*(uint32_t*)(d->v_knots)), (const matp_t)NULL,
-					       fg->v.k_size, 0);
+	    fg->v.knots = rt_nmg_import4_fastf(basep,
+					       ecnt,
+					       ntohl(*(uint32_t*)(d->v_knots)),
+					       (const matp_t)NULL,
+					       fg->v.k_size,
+					       0);
 	    fg->s_size[0] = ntohl(*(uint32_t*)(d->us_size));
 	    fg->s_size[1] = ntohl(*(uint32_t*)(d->vs_size));
 	    fg->pt_type = ntohl(*(uint32_t*)(d->pt_type));
 	    /* Transform ctl_points by 'mat' */
-	    fg->ctl_points = rt_nmg_import4_fastf(basep, ecnt,
-						  ntohl(*(uint32_t*)(d->ctl_points)), (const matp_t)mat,
+	    fg->ctl_points = rt_nmg_import4_fastf(basep,
+						  ecnt,
+						  ntohl(*(uint32_t*)(d->ctl_points)),
+						  matrix,
 						  fg->s_size[0] * fg->s_size[1],
 						  fg->pt_type);
 	}
@@ -1757,9 +1766,12 @@ rt_nmg_idisk(genptr_t op, genptr_t ip, struct nmg_exp_counts *ecnt, int idx, uin
 	    if (eg->order == 0) return 0;
 
 	    eg->k.k_size = ntohl(*(uint32_t*)(d->k_size));
-	    eg->k.knots = rt_nmg_import4_fastf(basep, ecnt,
-					       ntohl(*(uint32_t*)(d->knots)), (const matp_t)NULL,
-					       eg->k.k_size, 0);
+	    eg->k.knots = rt_nmg_import4_fastf(basep,
+					       ecnt,
+					       ntohl(*(uint32_t*)(d->knots)),
+					       (const matp_t)NULL,
+					       eg->k.k_size,
+					       0);
 	    eg->c_size = ntohl(*(uint32_t*)(d->c_size));
 	    eg->pt_type = ntohl(*(uint32_t*)(d->pt_type));
 	    /*
@@ -1770,14 +1782,20 @@ rt_nmg_idisk(genptr_t op, genptr_t ip, struct nmg_exp_counts *ecnt, int idx, uin
 		/* UV coords on snurb surface don't get xformed */
 		eg->ctl_points = rt_nmg_import4_fastf(basep,
 						      ecnt,
-						      ntohl(*(uint32_t*)(d->ctl_points)), (const matp_t)NULL,
-						      eg->c_size, eg->pt_type);
+						      ntohl(*(uint32_t*)(d->ctl_points)),
+						      (const matp_t)NULL,
+						      eg->c_size,
+						      eg->pt_type);
 	    } else {
+		const matp_t matrix = (const matp_t)mat;
+
 		/* XYZ coords on planar face DO get xformed */
 		eg->ctl_points = rt_nmg_import4_fastf(basep,
 						      ecnt,
-						      ntohl(*(uint32_t*)(d->ctl_points)), (const matp_t)mat,
-						      eg->c_size, eg->pt_type);
+						      ntohl(*(uint32_t*)(d->ctl_points)),
+						      matrix,
+						      eg->c_size,
+						      eg->pt_type);
 	    }
 	}
 	    return 0;
