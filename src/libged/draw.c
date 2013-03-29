@@ -719,6 +719,28 @@ draw_solid_wireframe(struct ged *gedp, struct solid *sp)
     return 0;
 }
 
+static int
+redraw_solid(struct ged *gedp, struct solid *sp)
+{
+    if (sp->s_dmode == _GED_WIREFRAME) {
+	/* replot wireframe */
+	if (BU_LIST_NON_EMPTY(&sp->s_vlist)) {
+	    RT_FREE_VLIST(&sp->s_vlist);
+	}
+	return draw_solid_wireframe(gedp, sp);
+    } else {
+	/* non-wireframe replot - let's not and say we did */
+	if (gedp->ged_create_vlist_callback !=
+	    GED_CREATE_VLIST_CALLBACK_PTR_NULL)
+	{
+	    (*gedp->ged_create_vlist_callback)(sp);
+	}
+    }
+
+    return 0;
+}
+
+
 
 /**
  * G E D _ N M G _ R E G I O N _ S T A R T
@@ -1243,9 +1265,20 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 				       (genptr_t)&dgcdp);
 		}
 	    } else {
+		struct ged_display_list **paths_to_draw;
+		struct ged_display_list *gdlp;
+		struct solid *sp;
+
+		paths_to_draw = (struct ged_display_list **)
+		    bu_malloc(sizeof(struct ged_display_list *) * argc,
+		    "redraw paths");
+
 		/* create solids */
 		for (i = 0; i < argc; ++i) {
 		    dgcdp.gdlp = ged_addToDisplay(gedp, argv[i]);
+
+		    /* store draw path */
+		    paths_to_draw[i] = dgcdp.gdlp;
 
 		    if (dgcdp.gdlp == GED_DISPLAY_LIST_NULL) {
 			continue;
@@ -1274,12 +1307,25 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 		    ged_autoview(gedp, 1, autoview_args);
 		}
 
-		/* calculate plot vlists for solids */
-		av[0] = "redraw";
+		/* calculate plot vlists for solids of each draw path */
 		for (i = 0; i < argc; ++i) {
-		    av[1] = (char *)argv[i];
-		    ged_redraw(gedp, 2, (const char **)av);
+		    gdlp = paths_to_draw[i];
+
+		    if (gdlp == GED_DISPLAY_LIST_NULL) {
+			continue;
+		    }
+
+		    for (BU_LIST_FOR(sp, solid, &gdlp->gdl_headSolid)) {
+			ret = redraw_solid(gedp, sp);
+			if (ret < 0) {
+			    bu_vls_printf(gedp->ged_result_str,
+				    "%s: %s redraw failure\n", argv[0], argv[i]);
+			    return GED_ERROR;
+			}
+		    }
 		}
+
+		bu_free(paths_to_draw, "draw paths");
 	    }
 	    break;
 	case 2:		/* Big-E */
@@ -1724,27 +1770,6 @@ end:
 	db_free_full_path(&namepath);
 
     return gdlp;
-}
-
-static int
-redraw_solid(struct ged *gedp, struct solid *sp)
-{
-    if (sp->s_dmode == _GED_WIREFRAME) {
-	/* replot wireframe */
-	if (BU_LIST_NON_EMPTY(&sp->s_vlist)) {
-	    RT_FREE_VLIST(&sp->s_vlist);
-	}
-	return draw_solid_wireframe(gedp, sp);
-    } else {
-	/* non-wireframe replot - let's not and say we did */
-	if (gedp->ged_create_vlist_callback !=
-	    GED_CREATE_VLIST_CALLBACK_PTR_NULL)
-	{
-	    (*gedp->ged_create_vlist_callback)(sp);
-	}
-    }
-
-    return 0;
 }
 
 int
