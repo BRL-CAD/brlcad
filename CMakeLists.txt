@@ -1404,7 +1404,6 @@ endif(${BRLCAD_OPTIMIZED_BUILD} MATCHES "ON")
 # The variable CMAKE_THREAD_LIBS_INIT is the one of interest
 # when writing target_link_libraries lists.
 find_package(Threads)
-BRLCAD_INCLUDE_FILE(pthread.h HAVE_PTHREAD_H)
 
 # Check for the C++ STL library - need to link it explicitly in
 # some compilation situations
@@ -1535,6 +1534,8 @@ BRLCAD_INCLUDE_FILE(ncurses.h HAVE_NCURSES_H)
 BRLCAD_INCLUDE_FILE(netdb.h HAVE_NETDB_H)
 BRLCAD_INCLUDE_FILE(netinet/in.h HAVE_NETINET_IN_H)
 BRLCAD_INCLUDE_FILE(poll.h HAVE_POLL_H)
+BRLCAD_INCLUDE_FILE(pthread.h HAVE_PTHREAD_H)
+BRLCAD_INCLUDE_FILE(pthread_np.h HAVE_PTHREAD_NP_H)
 BRLCAD_INCLUDE_FILE(pwd.h HAVE_PWD_H)
 BRLCAD_INCLUDE_FILE(rle.h HAVE_RLE_H)
 BRLCAD_INCLUDE_FILE(sched.h HAVE_SCHED_H)
@@ -1544,6 +1545,7 @@ BRLCAD_INCLUDE_FILE(stdlib.h HAVE_STDLIB_H)
 BRLCAD_INCLUDE_FILE(string.h HAVE_STRING_H)
 BRLCAD_INCLUDE_FILE(strings.h HAVE_STRINGS_H)
 BRLCAD_INCLUDE_FILE(sys/_ioctl.h HAVE_SYS__IOCTL_H)
+BRLCAD_INCLUDE_FILE(sys/cpuset.h HAVE_SYS_CPUSET_H)
 BRLCAD_INCLUDE_FILE(sys/file.h HAVE_SYS_FILE_H)
 BRLCAD_INCLUDE_FILE(sys/ioctl.h HAVE_SYS_IOCTL_H)
 BRLCAD_INCLUDE_FILE(sys/ioctl_compat.h HAVE_SYS_IOCTL_COMPAT_H)
@@ -1610,6 +1612,7 @@ BRLCAD_TYPE_SIZE("socklen_t" "sys/types.h")
 if(NOT HAVE_SOCKLEN_T)
   BRLCAD_TYPE_SIZE("socklen_t" "sys/socket.h")
 endif(NOT HAVE_SOCKLEN_T)
+BRLCAD_TYPE_SIZE("cpu_set_t" "sched.h")
 
 BRLCAD_TYPE_SIZE("int" "")
 BRLCAD_TYPE_SIZE("long" "")
