@@ -2394,14 +2394,16 @@ rt_arb_find_e_nearest_pt2(int *edge,
 {
     int i;
     fastf_t dist=MAX_FASTF, tmp_dist;
-    short (*edge_list)[2];
+    short (*edge_list)[2] = {0};
     int edge_count=0;
     struct bn_tol tol;
     struct rt_arb_internal *aip = (struct rt_arb_internal *)ip->idb_ptr;
 
     RT_ARB_CK_MAGIC(aip);
+
     /* first build a list of edges */
-    if ((edge_count = rt_arb_get_edge_list(ip, &edge_list)) == 0)
+    edge_count = rt_arb_get_edge_list(ip, &edge_list);
+    if (edge_count == 0)
 	return -1;
 
     /* build a tolerance structure for the bn_dist routine */
@@ -2409,7 +2411,7 @@ rt_arb_find_e_nearest_pt2(int *edge,
     tol.dist    = 0.0;
     tol.dist_sq = 0.0;
     tol.perp    = 0.0;
-    tol.para    =  1.0;
+    tol.para    = 1.0;
 
     /* now look for the closest edge */
     for (i = 0; i < edge_count; i++) {
