@@ -18,20 +18,27 @@
  * information.
  */
 
+#ifndef _GNU_SOURCE
+#  define _GNU_SOURCE /* must come before common.h */
+#endif
+
 #include "common.h"
 
-#include <stdio.h>
-#include <stdlib.h>
+#ifdef HAVE_SCHED_H
+#  include <sched.h>
+#endif
 
 #ifdef HAVE_PTHREAD_H
 #  include <pthread.h>
 #endif
 
+#include "bu.h"
+
 
 int
 parallel_set_affinity(void)
 {
-#if defined(_GNU_SOURCE) && defined(HAVE_PTHREAD_H)
+#if defined(HAVE_PTHREAD_H)
 
     int cpulim = bu_avail_cpus();    /* Max number of CPUs available for the process */
     int status;                      /* Status of thread setting/getting */
