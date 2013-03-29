@@ -228,7 +228,8 @@ tables_new(struct ged *gedp, struct directory *dp, struct bu_ptbl *cur_path, con
 		    fprintf(tabptr, "   %c [%d] ", op, nsoltemp);
 		}
 	    } else {
-		nsoltemp = tables_sol_number((const matp_t)old_mat, tree_list[i].tl_tree->tr_l.tl_name, &old, numsol);
+		const matp_t mat = (const matp_t)old_mat;
+		nsoltemp = tables_sol_number(mat, tree_list[i].tl_tree->tr_l.tl_name, &old, numsol);
 		fprintf(tabptr, "   %c [%d] ", op, nsoltemp);
 		continue;
 	    }
