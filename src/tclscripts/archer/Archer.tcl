@@ -9042,6 +9042,7 @@ proc title_node_handler {node} {
     ::update
     if {[$itk_component(preferencesDialog) activate]} {
 	applyPreferencesIfDiff
+	$itk_component(ged) refresh_all
     }
 }
 

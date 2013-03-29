@@ -1349,7 +1349,8 @@ namespace eval ArcherCore {
 	    -scrollmargin 2 -visibleitems 80x15 \
 	    -textbackground $SystemWindow -prompt "ArcherCore> " \
 	    -prompt2 "% " -result_color black -cmd_color red \
-	    -background $LABEL_BACKGROUND_COLOR
+	    -background $LABEL_BACKGROUND_COLOR \
+	    -cmd_history_callback [::itcl::code $this addHistory]
     } {}
 
     $itk_component(cmd) component text configure -background white
@@ -3483,6 +3484,8 @@ namespace eval ArcherCore {
 	return
     }
 
+    set cmd [string trim $cmd]
+
     set maxlines 1000
     set tw [$itk_component(history) component text]
 
@@ -3540,13 +3543,11 @@ namespace eval ArcherCore {
 
     set i [lsearch -exact $mArcherCoreCommands $cmd]
     if {$i != -1} {
-	addHistory $args
 	return [uplevel $mCoreCmdLevel $args]
     }
 
     set i [lsearch -exact $mUnwrappedDbCommands $cmd]
     if {$i != -1} {
-	addHistory $args
 	return [eval gedCmd $args]
     }
 

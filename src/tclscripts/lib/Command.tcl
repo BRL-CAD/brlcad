@@ -29,16 +29,20 @@
     constructor {args} {}
     destructor {}
 
-    itk_option define -edit_style edit_style Edit_style emacs
+    itk_option define -edit_style edit_style Edit_Style emacs
     itk_option define -prompt prompt Prompt "> "
     itk_option define -prompt2 prompt2 Prompt ""
-    itk_option define -cmd_prefix cmd_prefix Cmd_prefix ""
+    itk_option define -cmd_prefix cmd_prefix Cmd_Prefix ""
     itk_option define -selection_color selection_color TextColor #fefe8e
     itk_option define -prompt_color prompt_color TextColor red1
     itk_option define -cmd_color cmd_color TextColor black
     itk_option define -oldcmd_color oldcmd_color TextColor red3
     itk_option define -result_color result_color TextColor blue3
     itk_option define -maxlines maxlines MaxLines 1000
+    itk_option define -cmd_history_callback cmd_history_callback Cmd_History_Callback ""
+
+    public common CMD_MORE_ARGS "BUILT_BY_MORE_ARGS"
+    public common CMD_MORE_ARGS_LEN [string length $CMD_MORE_ARGS]
 
     public method clear {}
     public method history {}
@@ -88,7 +92,7 @@
     private method tab_completion {}
     private method tab_expansion {line}
     private method print {str}
-    public method print_more_args_prompt {_prompt}
+    public method print_more_args_prompt {args}
     private method print_prompt {}
     private method print_prompt2 {}
     private method print_tag {str tag}
@@ -355,6 +359,12 @@
 	    $w tag add oldcmd promptEnd insert
 	    print_tag "Error: $msg\n" result
 	} else {
+	    set i [string first $CMD_MORE_ARGS $msg]
+	    if {$i != -1} {
+		set begin [expr {$i + $CMD_MORE_ARGS_LEN}]
+		set cmd [string range $msg $begin end]
+		set msg [string range $msg 0 $i-1]
+	    }
 	    $w tag add oldcmd promptEnd insert
 
 	    if {$msg != ""} {
@@ -364,6 +374,10 @@
 
 	if {$do_history} {
 	    $hist add $cmd
+
+	    if {$itk_option(-cmd_history_callback) != ""} {
+		$itk_option(-cmd_history_callback) $cmd
+	    }
 	}
 
 	if {$more_args_interrupted} {
@@ -1353,8 +1367,8 @@
     $w insert insert $str
 }
 
-::itcl::body Command::print_more_args_prompt {_prompt} {
-    $itk_component(text) insert insert $_prompt
+::itcl::body Command::print_more_args_prompt {args} {
+    eval $itk_component(text) insert insert $args
 }
 
 ::itcl::body Command::print_prompt {} {
