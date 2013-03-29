@@ -28,8 +28,16 @@
 #  include <sched.h>
 #endif
 
+#ifdef HAVE_SYS_CPUSET_H
+#  include <sys/cpuset.h>
+#endif
+
 #ifdef HAVE_PTHREAD_H
 #  include <pthread.h>
+#endif
+
+#ifdef HAVE_PTHREAD_NP_H
+#  include <pthread_np.h>
 #endif
 
 #include "bu.h"
@@ -40,23 +48,28 @@ parallel_set_affinity(void)
 {
 #if defined(HAVE_PTHREAD_H)
 
-    int cpulim = bu_avail_cpus();    /* Max number of CPUs available for the process */
-    int status;                      /* Status of thread setting/getting */
-    int cpu = 0;                     /* Default CPU number */
-    int j;                           /* Variable for iteration. */
-
-    cpu_set_t cpuset;				/* CPU set structure. Defined in sched.h */
     pthread_t curr_thread = pthread_self();	/* Get current thread */
+    int cpulim = bu_avail_cpus();		/* Max number of CPUs available for the process */
+    int status;					/* Status of thread setting/getting */
+    int cpu = 0;				/* Default CPU number */
+    int j;					/* Variable for iteration. */
 
-    CPU_ZERO(&cpuset);
+#ifdef HAVE_CPU_SET_T
+    cpu_set_t set_of_cpus;
+#else
+    cpuset_t set_of_cpus;
+#endif
+
+
+    CPU_ZERO(&set_of_cpus);
 
     for(j = 0; j < cpulim; j++) {
 	/* Set affinity mask to include CPUs 0 to max available CPU */
-	CPU_SET(j, &cpuset);
+	CPU_SET(j, &set_of_cpus);
     }
 
     /* Check current affinity mask assigned to thread */
-    status = pthread_getaffinity_np(curr_thread, sizeof(cpu_set_t), &cpuset);
+    status = pthread_getaffinity_np(curr_thread, sizeof(set_of_cpus), &set_of_cpus);
 
     if(status != 0) {
 	/* Error in getting affinity mask */
@@ -65,7 +78,7 @@ parallel_set_affinity(void)
 
     for(j = 0; j < CPU_SETSIZE; j++) {
 	/* Check which set has been returned by pthread_get_affinity */
-	if(CPU_ISSET(j, &cpuset)) {
+	if(CPU_ISSET(j, &set_of_cpus)) {
 	    /* found affinity mask */
 	    cpu = j;
 	    break;
@@ -73,11 +86,11 @@ parallel_set_affinity(void)
     }
 
     /* Clear CPU set and assign CPUs */
-    CPU_ZERO(&cpuset);
-    CPU_SET(cpu, &cpuset);
+    CPU_ZERO(&set_of_cpus);
+    CPU_SET(cpu, &set_of_cpus);
 
     /* set affinity mask of current thread */
-    status = pthread_setaffinity_np(curr_thread, sizeof(cpu_set_t), &cpuset);
+    status = pthread_setaffinity_np(curr_thread, sizeof(set_of_cpus), &set_of_cpus);
 
     if(status != 0) {
 	/* Error in setting affinity mask */
