@@ -87,7 +87,7 @@ int
 db_dirhash(const char *str)
 {
     const unsigned char *s = (unsigned char *)str;
-    ptrdiff_t sum = 0;
+    size_t sum = 0;
     int i = 1;
 
     /* sanity */
@@ -96,7 +96,7 @@ db_dirhash(const char *str)
 
     /* BSD name hashing starts i=0, discarding first char.  why? */
     while(*s)
-	sum += (ptrdiff_t)*s++ * i++;
+	sum += (size_t)*s++ * i++;
 
     return RT_DBHASH(sum);
 }
