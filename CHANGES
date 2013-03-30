@@ -67,15 +67,16 @@ new names should be listed for reference.
 
 7.24
 ----
-
+include/raytrace.h librt
+        RT_DBHASH and RT_DBNHASH [deprecation 7.24]
 
 7.22
 ----
-raytrace.h librt
+include/raytrace.h librt
 	nmg_model_break_e_on_v -> nmg_break_e_on_v [deprecation 7.22]
 	RT_GET_TREE -> BU_GET [deprecation 7.22]
 	RT_FREE_TREE -> BU_PUT [deprecation 7.22]
-bu.h
+include/bu.h
         bu_parse_mm() [deprecated 7.22]
 librtserver
         becoming stand-alone project, removes optional java dependency [deprecated 7.22]
@@ -93,18 +94,18 @@ librt
 	bspline primitive [deprecated 7.20]
 	poly primitive [deprecated 7.20]
 	hf primitive [deprecated 7.20]
-bu.h
+include/bu.h
 	bu_vls_init_if_uninit() -> bu_vls_init() [deprecated 7.20]
 autogen.sh && configure
 	GNU Autotools build system -> CMake build system [deprecated 7.20]
 	./configure -> cmake . [deprecated 7.20]
-raytrace.h
+include/raytrace.h
 	rt_load_attrs() -> rt_gettrees_and_attrs() or db5_import_attributs() [deprecated 7.20]
 	db_regexp_match() -> !bu_fnmatch() [deprecated 7.20]
 
 7.18
 ----
-raytrace.h rt_comb_internal members
+include/raytrace.h rt_comb_internal members
 	region_id -> region_id attribute [deprecated 7.18]
 	aircode -> air attribute [deprecated 7.18]
 	GIFTmater -> material_id attribute [deprecated 7.18]

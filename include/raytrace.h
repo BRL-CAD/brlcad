@@ -772,14 +772,33 @@ struct mem_map {
 
 
 /**
+ * DEPRECATED: external applications should use other LIBRT API to
+ * access database objects.
+ *
  * The directory is organized as forward linked lists hanging off of
  * one of RT_DBNHASH headers in the db_i structure.
+ *
+ * FIXME: this should not be public API, push container and iteration
+ * down into LIBRT.  External applications should not use this.
  */
-#define	RT_DBNHASH		5120	/**< @brief size of hash table */
+#define	RT_DBNHASH		8192	/**< @brief hash table is an
+					 * array of linked lists with
+					 * this many array pointer
+					 * elements (Memory use for
+					 * 32-bit: 32KB, 64-bit: 64KB)
+					 */
 
 #if	((RT_DBNHASH)&((RT_DBNHASH)-1)) != 0
+/**
+ * DEPRECATED: external applications should use other LIBRT API to
+ * access database objects.
+ */
 #define	RT_DBHASH(sum)	((size_t)(sum) % (RT_DBNHASH))
 #else
+/**
+ * DEPRECATED: external applications should use other LIBRT API to
+ * access database objects.
+ */
 #define	RT_DBHASH(sum)	((size_t)(sum) & ((RT_DBNHASH)-1))
 #endif
 
