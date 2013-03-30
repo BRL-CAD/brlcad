@@ -13,6 +13,7 @@ changes made.  See document footer for additional details.
 --- 2013-03-XX  Release 7.24.0                                     ---
 ----------------------------------------------------------------------
 
+* improved Mac, BSD, & Windows ray tracing performance - Sean Morrison
 * improved linux ray tracing via cpu thread affinity - Akshay Kashyap
 * fixed nirt high object count failure on Windows - Richard Weiss
 * added plate mode BoT support to 'bot_merge' command - Richard Weiss
