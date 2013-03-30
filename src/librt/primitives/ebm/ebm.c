@@ -1579,7 +1579,7 @@ fail:
  * Routine to format the parameters of an EBM for "db get"
  *
  * Legal requested parameters are:
- * "F" - bitmap file to extrude
+ * "F" or "file" - bitmap file to extrude
  * "W" - number of cells in X direction
  * "N" - number of cells in Y direction
  * "H" - height of each cell (mm)
@@ -1629,7 +1629,7 @@ rt_ebm_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const cha
  * Routine to adjust the parameters of an EBM
  *
  * Legal parameters are:
- * "F" - bitmap file to extrude
+ * "F" or "file" - bitmap file to extrude
  * "W" - number of cells in X direction
  * "N" - number of cells in Y direction
  * "H" - height of each cell (mm)
