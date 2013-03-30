@@ -13,6 +13,7 @@ changes made.  See document footer for additional details.
 --- 2013-03-XX  Release 7.24.0                                     ---
 ----------------------------------------------------------------------
 
+* added plate mode BoT support to 'bot_merge' command - Richard Weiss
 * upgraded libpng to 1.6.0 - Cliff Yapp
 * Tcl/Tk upgraded to version 8.5.13 - Cliff Yapp
 * jove removed, see jove.emacs for compatibility bindings - Cliff Yapp
