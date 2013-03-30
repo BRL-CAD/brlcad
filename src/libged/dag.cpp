@@ -129,7 +129,18 @@ position_node(_ged_dag_data *dag, bool has_parent, Avoid::ShapeRef *parent, Avoi
 {
     double new_x, new_y, new_x1, new_y1;
 
+#define LIBAVOID_LATEST_API
+#if defined LIBAVOID_LATEST_API
+    #define LIBX 0
+    #define LIBY 1
+    Box bbox = child->polygon().offsetBoundingBox(0);
+    new_x  = bbox.min[LIBX];
+    new_y  = bbox.min[LIBY];
+    new_x1 = bbox.max[LIBX];
+    new_y1 = bbox.max[LIBY];
+#else
     child->polygon().getBoundingRect(&new_x, &new_y, &new_x1, &new_y1);
+#endif
 
     /* If it has a parent it means that is not the root node.
      * Therefore, set the child's position depending on the parent's position.
@@ -137,8 +148,15 @@ position_node(_ged_dag_data *dag, bool has_parent, Avoid::ShapeRef *parent, Avoi
     if (has_parent) {
 	double parent_x, parent_y, parent_x1, parent_y1;
 
+#if defined LIBAVOID_LATEST_API
+        Box parent_bbox = parent->polygon().offsetBoundingBox(0);
+        parent_x  = bbox.min[LIBX];
+        parent_y  = bbox.min[LIBY];
+        parent_x1 = bbox.max[LIBX];
+        parent_y1 = bbox.max[LIBY];
+#else
 	parent->polygon().getBoundingRect(&parent_x, &parent_y, &parent_x1, &parent_y1);
-
+#endif
 	/* If the child node is not already on that level. Reset its y coordinate. */
 	if (!NEAR_EQUAL(new_y, parent_y + POSITION_COORDINATE, 0.001)) {
 	    new_y = parent_y + POSITION_COORDINATE;
@@ -519,7 +537,11 @@ add_objects(struct ged *gedp, struct _ged_dag_data *dag)
     dag->object_types = bu_create_hash_tbl(1);
 
     /* Sets a spacing distance for overlapping orthogonal connectors to be nudged apart. */
+#if defined LIBAVOID_LATEST_API
+    dag->router->setRoutingParameter(idealNudgingDistance, 25);
+#else
     dag->router->setOrthogonalNudgeDistance(25);
+#endif
 
     /* Number of Avoid::ShapeRef objects in the graph. These corresponds to the ones in the database. */
     dag->object_nr = 0;
@@ -646,8 +668,15 @@ graph_positions(struct ged *gedp, struct _ged_dag_data *dag)
 	unsigned long idx;
 	struct bu_hash_entry *hsh_entry = bu_find_hash_entry(dag->ids, (unsigned char *)id, strlen(id) + 1, &prev, &idx);
 	if(hsh_entry) {
+#if defined LIBAVOID_LATEST_API
+          Box bbox = (*it)->polygon().offsetBoundingBox(0);
+          minX = bbox.min[LIBX];
+          minY = bbox.min[LIBY];
+          maxX = bbox.max[LIBX];
+          maxY = bbox.max[LIBY];
+#else
 	    (*it)->polygon().getBoundingRect(&minX, &minY, &maxX, &maxY);
-
+#endif
 	    prev = NULL;
 	    struct bu_hash_entry *hsh_entry_type = bu_find_hash_entry(dag->object_types, hsh_entry->value,
 								      strlen((char *)hsh_entry->value) + 1, &prev, &idx);
