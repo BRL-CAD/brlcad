@@ -38,6 +38,10 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* rework the database object hash to push the iteration up into librt
+  as API instead of expecting callers to use RT_DBNHASH and
+  RT_DBHASH() manually.  consider using bu_hash or other container.
+
 * rename chan_add, chan_mult, chan_permute and look into possibly
   merging them into one tool in the util directory.  similar to the
   'join' command, but arguably easier to use.
