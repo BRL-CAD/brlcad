@@ -3354,8 +3354,10 @@ to_extract_contours_av(struct ged *gedp, struct ged_dm_view *gdvp, ged_polygon *
     register size_t j = 0, k = 0;
 
     gpp->gp_num_contours = contour_ac;
+    gpp->gp_hole = NULL;
+    gpp->gp_contour = NULL;
 
-    if (!contour_ac)
+    if (contour_ac == 0)
 	return GED_OK;
 
     gpp->gp_hole = (int *)bu_calloc(contour_ac, sizeof(int), "gp_hole");
