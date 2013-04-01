@@ -177,7 +177,7 @@ toyota_setup(register struct region *UNUSED(rp), struct bu_vls *matparm, genptr_
     tp->sun_sang = 6.840922996708585e-5;	/* in steradians */
     tp->index_refrac = 1.2;
     bu_strlcpy(tp->material, "junk", sizeof(tp->material));
-    VSET(tp->Zenith, 0., 0., 1.);
+    VSET(tp->Zenith, 0., 0., 1.0);
 
     if (bu_struct_parse(matparm, toyota_parse, (char *)tp) < 0) {
 	BU_PUT(tp, struct toyota_specific);
@@ -284,7 +284,7 @@ fastf_t
 air_mass(fastf_t air_gamma)
 /* Solar altitude off horizon (degrees). */
 {
-    if (air_gamma <= 0.) {
+    if (air_gamma <= 0.0) {
 	bu_log("air_mass: sun altitude of %g degrees ignored.\n", air_gamma);
 	return 0;
     }
@@ -305,7 +305,7 @@ zenith_luminance(fastf_t UNUSED(sun_alt), fastf_t UNUSED(t_vl))
 /* Solar altitude off horizon (degrees). */
 /* atmospheric turbidity (aerosol optical depth) */
 {
-    return 2000.;	/* swag */
+    return 2000.0;	/* swag */
 }
 
 
@@ -323,7 +323,7 @@ overcast_sky_lum(fastf_t lz, fastf_t *Zenith, fastf_t *Sky_elmt)
 /* luminance of the zenith */
 /* vectors to zenith and a sky element */
 {
-    return lz * (1. + 2.*VDOT(Zenith, Sky_elmt)/3.);
+    return lz * (1.0 + 2.*VDOT(Zenith, Sky_elmt)/3.0);
 }
 
 
@@ -340,7 +340,7 @@ homogenous_sky_lum(fastf_t *UNUSED(Sky_elmt), fastf_t *UNUSED(Sun), fastf_t UNUS
 /* vectors to a sky element and to sun */
 /* Turbidity factor. */
 {
-    return 0.;
+    return 0.0;
 }
 
 
@@ -374,7 +374,7 @@ clear_sky_lum(fastf_t lz, fastf_t *Sky_elmt, fastf_t *Sun, fastf_t *Zenith)
     lum =
 	lz
 	* (0.91 + 10*exp(-3.*sky_gamma) + 0.45*cos_gamma*cos_gamma)
-	* (1. - exp(-0.32/cos_theta))
+	* (1.0 - exp(-0.32/cos_theta))
 	/ 0.27385*(0.91 + 10.*exp(-3.*z0) + 0.45*cos_z0*cos_z0);
 
     return lum;
@@ -1394,7 +1394,7 @@ atmos_irradiance(fastf_t lambda)
 	{250.00,	2.51369}
     };
 
-    if (lambda < 250. || lambda > 25000.)
+    if (lambda < 250. || lambda > 25000.0)
 	bu_bomb("atmos_irradiance: bad wavelength.");
 
 
@@ -1482,7 +1482,7 @@ ozone_absorption(fastf_t lambda)
 	{750.,	0.004}
     };
 
-    if (lambda < 200. || lambda > 750.) {
+    if (lambda < 200. || lambda > 750.0) {
 	bu_bomb("ozone absorption: bad wavelength.");
     }
     /* Find index of lower lambda in table. */
@@ -1579,7 +1579,7 @@ spectral_dist_table(fastf_t lambda, fastf_t *e_mean, fastf_t *v1, fastf_t *v2)
 	{830.,	619.,	-98.,	65.}
     };
 
-    if (lambda < 300. || lambda > 830.) {
+    if (lambda < 300. || lambda > 830.0) {
 	bu_bomb("spectral_dist_table: bad wavelength.");
     } else {
 	/* Do linear interpolation to find approximate values. */
@@ -1637,11 +1637,11 @@ skylight_spectral_dist(fastf_t lambda, fastf_t *Zenith, fastf_t *Sky_elmt, fastf
 	    break;
     }
 /* XXX hack */
-    if (lum <= 0.) {/*bu_log("lum = %g\n", lum);*/ return 0.;}
+    if (lum <= 0.0) {/*bu_log("lum = %g\n", lum);*/ return 0.0;}
 
     /* Convert to color temperature.  Expression based on careful */
     /* measurements by Toyota. */
-    t_cp = 1.1985e8/pow(lum, 1.2) + 6500.;	/* Kelvin */
+    t_cp = 1.1985e8/pow(lum, 1.2) + 6500.0;	/* Kelvin */
 
     /* Convert color temperature into spectral distribution */
     /* using CIE synthesized daylight expression. */
@@ -1649,13 +1649,13 @@ skylight_spectral_dist(fastf_t lambda, fastf_t *Zenith, fastf_t *Sky_elmt, fastf
     /* Chromaticity coordinates, taken from Wyszecki, Guenter; Stiles, */
     /* WS; "Color Science: Concepts and Methods, Quantitative Data and */
     /* Formulae, " John Wiley and Sons, 1982, pp. 145-6. */
-    if (t_cp >= 4000. && t_cp < 7000.) {
+    if (t_cp >= 4000. && t_cp < 7000.0) {
 	x =
 	    -4.6070e9/(t_cp*t_cp*t_cp)
 	    + 2.9678e6/(t_cp*t_cp)
 	    + 0.09911e3/t_cp
 	    + 0.244063;
-    } else if (t_cp >= 7000. && t_cp <= 25000.) {
+    } else if (t_cp >= 7000. && t_cp <= 25000.0) {
 	x =
 	    -2.0064e9/(t_cp*t_cp*t_cp)
 	    + 1.9018e6/(t_cp*t_cp)
@@ -1756,7 +1756,7 @@ fresnel_refl(fastf_t cos_eps, fastf_t n1, fastf_t n2)
     fastf_t work, work2;	/* Intermediate results. */
 
     work2 = (n2/n1)*(n2/n1);
-    work = sqrt(work2 - (1. - cos_eps*cos_eps));
+    work = sqrt(work2 - (1.0 - cos_eps*cos_eps));
 
     p_parallel = (cos_eps - work)/(cos_eps + work);
     p_parallel *= p_parallel;
@@ -1802,7 +1802,7 @@ absorp_coeff(fastf_t lambda, char *material)
     /* Find "nearby" values of lambda, absorption for interpolation. */
     if ((n = fscanf(fp, "%lf %lf", &l, &a)) != 2 || lambda + MIKE_TOL < l) {
 	fclose(fp);
-	return -1.;
+	return -1.0;
     }
     lambda_l = l;
     absorp_l = a;
@@ -1814,7 +1814,7 @@ absorp_coeff(fastf_t lambda, char *material)
     }
     if (n != 2) {
 	fclose(fp);
-	return -1.;
+	return -1.0;
     } else {
 	lambda_h = l;
 	absorp_h = a;
@@ -2057,7 +2057,7 @@ lambda_to_rgb(fastf_t lambda, fastf_t irrad, fastf_t *rgb)
     kbz = 0.0073215;
 
     /* Interpolate values of x, y, z. */
-    if (lambda < 380. || lambda > 825.) {
+    if (lambda < 380. || lambda > 825.0) {
 	bu_log("lambda_to_rgb: bad wavelength, %g nm.", lambda);
 	bu_bomb("");
     }
@@ -2145,7 +2145,7 @@ background_light(fastf_t lambda, struct toyota_specific *ts, fastf_t *Refl, fast
 	refl = reflectance(lambda, alpha0, ts->refl, ts->refl_lines);
     }
     alpha1 = alpha0;	/* degrees. */
-    while (refl > MIKE_TOL && alpha1 < 90.) {
+    while (refl > MIKE_TOL && alpha1 < 90.0) {
 	alpha1++;
 	refl = reflectance(lambda, alpha1, ts->refl, ts->refl_lines);
     }
@@ -2176,20 +2176,20 @@ background_light(fastf_t lambda, struct toyota_specific *ts, fastf_t *Refl, fast
     /* Set up coord axes with Ctr as Z axis. */
     VCROSS(Xaxis, Yaxis, Ctr);
 
-    irradiance = 0.;
+    irradiance = 0.0;
     /* Integrate over solid angle. */
 /* JUST INTEGRATE OVER HEMISPHERE - THIS IS CURRENTLY WRONG */
     for (ang = SPREAD; ang < alpha_c; ang += SPREAD) {
 	r = sin(ang);
-	for (phi = 0.; phi < 2*M_PI; phi += SPREAD) {
+	for (phi = 0.0; phi < 2*M_PI; phi += SPREAD) {
 	    x = r*cos(phi);
 	    y = r*sin(phi);
 	    VJOIN2(Sky_elmnt, Ctr, x, Xaxis, y, Yaxis);
 	    VUNITIZE(Sky_elmnt);
 	    i_dot_n = VDOT(swp->sw_hit.hit_normal, Sky_elmnt);
-	    if (i_dot_n >= 1.) i_dot_n = .9999;
+	    if (i_dot_n >= 1.0) i_dot_n = .9999;
 	    if (rdebug&RDEBUG_RAYPLOT) {
-		VSCALE(work, Sky_elmnt, 200.);
+		VSCALE(work, Sky_elmnt, 200.0);
 		VADD2(work, swp->sw_hit.hit_point, work);
 		pl_color(stdout, 0, 255, 0);
 		pdv_3line(stdout, swp->sw_hit.hit_point, work);
@@ -2198,7 +2198,7 @@ background_light(fastf_t lambda, struct toyota_specific *ts, fastf_t *Refl, fast
 	    bg_radiance = skylight_spectral_dist(
 		lambda, ts->Zenith, Sky_elmnt,
 		Sun, ts->weather, t_vl);
-	    /* XXX hack */		if (i_dot_n > 0.) {
+	    /* XXX hack */		if (i_dot_n > 0.0) {
 		irradiance +=
 		    reflectance(lambda, acos(i_dot_n)*bn_radtodeg,
 				ts->refl, ts->refl_lines)
@@ -2212,7 +2212,7 @@ background_light(fastf_t lambda, struct toyota_specific *ts, fastf_t *Refl, fast
     bg_radiance = skylight_spectral_dist(lambda, ts->Zenith, Ctr,
 					 Sun, ts->weather, t_vl);
     if (rdebug&RDEBUG_RAYPLOT) {
-	VSCALE(work, Ctr, 200.);
+	VSCALE(work, Ctr, 200.0);
 	VADD2(work, swp->sw_hit.hit_point, work);
 	pl_color(stdout, 255, 50, 0);
 	pdv_3line(stdout, swp->sw_hit.hit_point, work);
@@ -2268,7 +2268,7 @@ toyota_render(register struct application *ap, const struct partition *UNUSED(pp
 
     ts->wavelength = 450;	/* XXX nm */
 
-    i_refl = 0.;
+    i_refl = 0.0;
     /* Consider effects of light source (>1 doesn't make sense really). */
     for (i=ap->a_rt_i->rti_nlights-1; i >= 0; i--) {
 
@@ -2288,7 +2288,7 @@ toyota_render(register struct application *ap, const struct partition *UNUSED(pp
 
 	/* Create reflected ray. */
 	i_dot_n = VDOT(swp->sw_hit.hit_normal, ap->a_ray.r_dir);
-	if (i_dot_n > 1.) i_dot_n = .9999;
+	if (i_dot_n > 1.0) i_dot_n = .9999;
 	VSCALE(work, swp->sw_hit.hit_normal, 2*i_dot_n);
 	VSUB2(Reflected, work, ap->a_ray.r_dir);
 	VUNITIZE(Reflected);
@@ -2311,7 +2311,7 @@ toyota_render(register struct application *ap, const struct partition *UNUSED(pp
 
 	/* XXX Hack:  it always misses */
 	if (rdebug&RDEBUG_RAYPLOT) {
-	    VSCALE(work, Reflected, 200.);
+	    VSCALE(work, Reflected, 200.0);
 	    VADD2(work, swp->sw_hit.hit_point, work);
 	    pl_color(stdout, 0, 150, 255);
 	    pdv_3line(stdout, swp->sw_hit.hit_point, work);

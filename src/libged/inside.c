@@ -764,7 +764,7 @@ rpcin(struct ged *UNUSED(gedp), struct rt_db_internal *ip, fastf_t thick[4])
     VSET(Norm,
 	 0.,
 	 2 * bp * yp/(rp * rp),
-	 -1.);
+	 -1.0);
     VUNITIZE(Norm)
 	th = thick[3] / Norm[Y];
     rpc->rpc_r -= th;
@@ -855,7 +855,7 @@ etoin(struct ged *UNUSED(gedp), struct rt_db_internal *ip, fastf_t thick[1])
 
     RT_ETO_CK_MAGIC(eto);
 
-    c = 1. - thick[0]/MAGNITUDE(eto->eto_C);
+    c = 1.0 - thick[0]/MAGNITUDE(eto->eto_C);
     VSCALE(eto->eto_C, eto->eto_C, c);
     eto->eto_rd -= thick[0];
 

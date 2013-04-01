@@ -86,7 +86,7 @@ spm_render(struct application *UNUSED(ap), const struct partition *UNUSED(pp), s
     VSET(swp->sw_color,
 	 ((double)cp[RED])/256.,
 	 ((double)cp[GRN])/256.,
-	 ((double)cp[BLU])/256.);
+	 ((double)cp[BLU])/256.0);
     return 1;
 }
 

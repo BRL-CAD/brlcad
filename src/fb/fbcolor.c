@@ -319,20 +319,20 @@ rgbhsv(int *rgb, int *hsv)
 	if (r != v)  {
 	    if (g == v)  {
 		if (b != x)
-		    h = (int) (42.5 * (3. - (double)(v-b) / dif));
+		    h = (int) (42.5 * (3.0 - (double)(v-b) / dif));
 		else
-		    h = (int) (42.5 * (1. + (double)(v-r) / dif));
+		    h = (int) (42.5 * (1.0 + (double)(v-r) / dif));
 	    } else {
 		if (r != x)
-		    h = (int) (42.5 * (5. - (double)(v-r) / dif));
+		    h = (int) (42.5 * (5.0 - (double)(v-r) / dif));
 		else
-		    h = (int) (42.5 * (3. + (double)(v-g) / dif));
+		    h = (int) (42.5 * (3.0 + (double)(v-g) / dif));
 	    }
 	} else {
 	    if (g != x)
-		h = (int) (42.5 * (1. - (double)(v-g) / dif));
+		h = (int) (42.5 * (1.0 - (double)(v-g) / dif));
 	    else
-		h = (int) (42.5 * (5. + (double)(v-b) / dif));
+		h = (int) (42.5 * (5.0 + (double)(v-b) / dif));
 	}
     }
 
@@ -362,13 +362,13 @@ hsvrgb(int *hsv, int *rgb)
 
     if (hsv[1] != 0)
     {
-	s = (double)hsv[1] / 255.;
+	s = (double)hsv[1] / 255.0;
 	h = (double)hsv[0] / 42.666;
 	f = modf(h, &(foo));
 	v = (double)hsv[2];
-	m = (int) (v * (1. - s) + .5);
-	n = (int) (v * (1. - s*f) + .5);
-	k = (int) (v * (1. - (s * (1.-f))) + .5);
+	m = (int) (v * (1.0 - s) + .5);
+	n = (int) (v * (1.0 - s*f) + .5);
+	k = (int) (v * (1.0 - (s * (1.-f))) + .5);
 	switch ((int) h)
 	{
 	    case 0:

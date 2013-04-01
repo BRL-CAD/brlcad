@@ -68,9 +68,9 @@ sh_directchange_rgb(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc,
 	return TCL_ERROR;
     }
 
-    r = atoi(argv[3+0]) / 255.;
-    g = atoi(argv[3+1]) / 255.;
-    b = atoi(argv[3+2]) / 255.;
+    r = atoi(argv[3+0]) / 255.0;
+    g = atoi(argv[3+1]) / 255.0;
+    b = atoi(argv[3+2]) / 255.0;
 
     rtip = (struct rt_i *)atol(argv[1]);
     RT_CK_RTI(rtip);

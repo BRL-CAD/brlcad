@@ -94,7 +94,7 @@ static int	scr_height = 0;
 
 #define	SETUP		7.5			/* black setup; 7.5 IRE */
 #define	COMP(x)		\
-	(unsigned char)(((x) * 255.) / (1.0 - SETUP/100.0))	/* setup compensation */
+	(unsigned char)(((x) * 255.0) / (1.0 - SETUP/100.0))	/* setup compensation */
 
 static  RGBpixel fcc_all[8] = {
     /* 100% white */{255, 255, 255},

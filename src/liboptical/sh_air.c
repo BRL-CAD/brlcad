@@ -249,7 +249,7 @@ air_render(struct application *ap, const struct partition *pp, struct shadework 
     if (swp->sw_transmit > 1.0) swp->sw_transmit = 1.0;
     else if (swp->sw_transmit < 0.0) swp->sw_transmit = 0.0;
 
-    /* extinction = 1. - transmission.  Extinguished part replaced by
+    /* extinction = 1.0 - transmission.  Extinguished part replaced by
      * the "color of the air".
      */
 

@@ -1353,13 +1353,13 @@ analyze_rhc(struct ged *gedp, const struct rt_db_internal *ip)
     vol_hyperb = area_hyperb*h;
 
     /* surface area of hyperbolic body */
-    area_body=0.;
+    area_body=0.0;
 #if 0
     k = (b+c)*(b+c) - c*c;
-#define X_eval(y) sqrt(1. + (4.*k)/(r*r*k*k*(y)*(y) + r*r*c*c))
+#define X_eval(y) sqrt(1.0 + (4.*k)/(r*r*k*k*(y)*(y) + r*r*c*c))
 #define L_eval(y) .5*k*(y)*X_eval(y) \
 	+ r*k*(r*r*c*c + 4.*k - r*r*c*c/k)*arcsinh((y)*sqrt(k)/c)
-    area_body = 2.*(L_eval(r) - L_eval(0.));
+    area_body = 2.*(L_eval(r) - L_eval(0.0));
 #endif
 
     bu_vls_printf(gedp->ged_result_str, "\n");

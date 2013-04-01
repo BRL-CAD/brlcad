@@ -78,17 +78,17 @@ rgbhsv(double *rgb, double *hsv)
 	if (!ZERO(r - v)) /* r != v */
 	    if (ZERO(g - v)) /* g == v */
 		if (!ZERO(b - x)) /* b != x */
-		    h = (double)(42.5 * (3. - (double)(v-b) / dif));
+		    h = (double)(42.5 * (3.0 - (double)(v-b) / dif));
 		else
-		    h = (double)(42.5 * (1. + (double)(v-r) / dif));
+		    h = (double)(42.5 * (1.0 + (double)(v-r) / dif));
 	    else if (!ZERO(r - x)) /* r != x */
-		h = (double)(42.5 * (5. - (double)(v-r) / dif));
+		h = (double)(42.5 * (5.0 - (double)(v-r) / dif));
 	    else
-		h = (double)(42.5 * (3. + (double)(v-g) / dif));
+		h = (double)(42.5 * (3.0 + (double)(v-g) / dif));
 	else if (!ZERO(g - x)) /* g != x */
-	    h = (double)(42.5 * (1. - (double)(v-g) / dif));
+	    h = (double)(42.5 * (1.0 - (double)(v-g) / dif));
 	else
-	    h = (double)(42.5 * (5. + (double)(v-b) / dif));
+	    h = (double)(42.5 * (5.0 + (double)(v-b) / dif));
     }
 
     if (!ZERO(v))
@@ -114,13 +114,13 @@ hsvrgb(double *hsv, double *rgb)
     double f;
 
     if (!ZERO(hsv[1])) {
-	s = (double)hsv[1] / 255.;
+	s = (double)hsv[1] / 255.0;
 	h = (double)hsv[0] / 42.666;
 	f = modf(h, &foo);
 	v = (double)hsv[2];
-	m = (double)(v * (1. - s) + .5);
-	n = (double)(v * (1. - s*f) + .5);
-	k = (double)(v * (1. - (s * (1.-f))) + .5);
+	m = (double)(v * (1.0 - s) + .5);
+	n = (double)(v * (1.0 - s*f) + .5);
+	k = (double)(v * (1.0 - (s * (1.-f))) + .5);
 	switch ((int) h) {
 	    case 0:
 		r = hsv[2];

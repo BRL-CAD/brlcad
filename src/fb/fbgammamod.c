@@ -182,9 +182,9 @@ main(int argc, char **argv)
     gexp = 1.0 / ( post_gam + gg - 1 );
     bexp = 1.0 / ( post_gam + bg - 1 );
 
-    radd = (ra + add) / 255.;
-    gadd = (ga + add) / 255.;
-    badd = (ba + add) / 255.;
+    radd = (ra + add) / 255.0;
+    gadd = (ga + add) / 255.0;
+    badd = (ba + add) / 255.0;
 
     rmul = rm * mul;
     gmul = gm * mul;

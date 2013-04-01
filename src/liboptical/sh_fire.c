@@ -479,7 +479,7 @@ fire_render(struct application *ap, const struct partition *pp, struct shadework
     VMOVE(swp->sw_color, color);
 /* VSETALL(swp->sw_basecolor, 1.0);*/
 
-    swp->sw_transmit = 1.0 - (lumens * 4.);
+    swp->sw_transmit = 1.0 - (lumens * 4.0);
     if (swp->sw_reflect > 0 || swp->sw_transmit > 0)
 	(void)rr_render(ap, pp, swp);
 

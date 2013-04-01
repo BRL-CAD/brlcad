@@ -3454,9 +3454,9 @@ dgo_drawH_part2(int dashflag, struct bu_list *vhead, const struct db_full_path *
 	    if (tsp) {
 		if (tsp->ts_mater.ma_color_valid) {
 		    sp->s_dflag = 0;	/* color specified in db */
-		    sp->s_basecolor[0] = tsp->ts_mater.ma_color[0] * 255.;
-		    sp->s_basecolor[1] = tsp->ts_mater.ma_color[1] * 255.;
-		    sp->s_basecolor[2] = tsp->ts_mater.ma_color[2] * 255.;
+		    sp->s_basecolor[0] = tsp->ts_mater.ma_color[0] * 255.0;
+		    sp->s_basecolor[1] = tsp->ts_mater.ma_color[1] * 255.0;
+		    sp->s_basecolor[2] = tsp->ts_mater.ma_color[2] * 255.0;
 		} else {
 		    sp->s_dflag = 1;	/* default color */
 		    sp->s_basecolor[0] = 255;

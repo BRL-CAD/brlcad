@@ -488,14 +488,14 @@ HIDDEN int
 ps_setWinBounds(struct dm *dmp, fastf_t *w)
 {
     /* Compute the clipping bounds */
-    dmp->dm_clipmin[0] = w[0] / 2048.;
-    dmp->dm_clipmax[0] = w[1] / 2047.;
-    dmp->dm_clipmin[1] = w[2] / 2048.;
-    dmp->dm_clipmax[1] = w[3] / 2047.;
+    dmp->dm_clipmin[0] = w[0] / 2048.0;
+    dmp->dm_clipmax[0] = w[1] / 2047.0;
+    dmp->dm_clipmin[1] = w[2] / 2048.0;
+    dmp->dm_clipmax[1] = w[3] / 2047.0;
 
     if (dmp->dm_zclip) {
-	dmp->dm_clipmin[2] = w[4] / 2048.;
-	dmp->dm_clipmax[2] = w[5] / 2047.;
+	dmp->dm_clipmin[2] = w[4] / 2048.0;
+	dmp->dm_clipmax[2] = w[5] / 2047.0;
     } else {
 	dmp->dm_clipmin[2] = -1.0e20;
 	dmp->dm_clipmax[2] = 1.0e20;
