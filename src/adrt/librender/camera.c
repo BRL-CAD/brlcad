@@ -415,7 +415,11 @@ render_camera_render_thread(int UNUSED(cpu), genptr_t ptr)
     struct tie_ray_s ray;
     fastf_t view_inv;
 
+    /* don't bind thread to proc on windows, this function isn't exported from
+     * libbu yet and causes dll link issues. */
+#ifndef _WIN32
     parallel_set_affinity();
+#endif
 
     VSETALL(v1, 0);
 
