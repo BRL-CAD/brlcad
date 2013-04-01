@@ -5992,6 +5992,16 @@ namespace eval ArcherCore {
 
 ::itcl::body ArcherCore::c {args} {
     eval gedWrapper c 0 1 1 2 $args
+
+    set ilist [lsearch -all -regexp $args {^-[cr]$}]
+    if {$ilist == ""} {
+	return
+    }
+    set i [lindex $list end]
+    incr i
+    
+    set oname [lindex $args $i]
+    selectTreePath $oname
 }
 
 ::itcl::body ArcherCore::cd {args} {
@@ -6020,6 +6030,9 @@ namespace eval ArcherCore {
 
 ::itcl::body ArcherCore::comb {args} {
     eval gedWrapper comb 0 1 1 2 $args
+
+    set oname [lindex $args 0]
+    selectTreePath $oname
 }
 
 ::itcl::body ArcherCore::comb_color {args} {
@@ -6292,6 +6305,9 @@ namespace eval ArcherCore {
 
 ::itcl::body ArcherCore::group {args} {
     eval gedWrapper g 1 1 1 2 $args
+
+    set oname [lindex $args 0]
+    selectTreePath $oname
 }
 
 ::itcl::body ArcherCore::hide {args} {
@@ -6352,6 +6368,9 @@ namespace eval ArcherCore {
 
 ::itcl::body ArcherCore::make {args} {
     eval gedWrapper make 0 0 1 2 $args
+
+    set oname [lindex $args 0]
+    selectTreePath $oname
 }
 
 ::itcl::body ArcherCore::make_bb {args} {
@@ -6577,6 +6596,9 @@ namespace eval ArcherCore {
 
 ::itcl::body ArcherCore::r {args} {
     eval gedWrapper r 0 1 1 2 $args
+
+    set oname [lindex $args 0]
+    selectTreePath $oname
 }
 
 ::itcl::body ArcherCore::rcodes {args} {
