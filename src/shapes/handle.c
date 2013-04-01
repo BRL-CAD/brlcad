@@ -268,23 +268,23 @@ main(int argc, char **argv)
 	/* Create solids for handle. */
 
 	/* Create top cylinder. */
-	bs[0] = (fastf_t)0.;
-	bs[1] = (fastf_t) (len / 2. - r1 - r2);
+	bs[0] = (fastf_t)0.0;
+	bs[1] = (fastf_t) (len / 2.0 - r1 - r2);
 	bs[2] = (fastf_t) (hgt - r2);
-	ht[0] = (fastf_t)0.;
+	ht[0] = (fastf_t)0.0;
 	ht[1] = (fastf_t) (r1 + r1 + r2 + r2 - len);
-	ht[2] = (fastf_t)0.;
+	ht[2] = (fastf_t)0.0;
 	rad = (fastf_t)r2;
 	solnam[5] = 97 + i;
 	solnam[6] = '1';
 	mk_rcc(fpw, solnam, bs, ht, rad);
 
 	/* Create right cylinder. */
-	bs[0] = (fastf_t)0.;
-	bs[1] = (fastf_t) (len / 2. - r2);
-	bs[2] = (fastf_t)0.;
-	ht[0] = (fastf_t)0.;
-	ht[1] = (fastf_t)0.;
+	bs[0] = (fastf_t)0.0;
+	bs[1] = (fastf_t) (len / 2.0 - r2);
+	bs[2] = (fastf_t)0.0;
+	ht[0] = (fastf_t)0.0;
+	ht[1] = (fastf_t)0.0;
 	ht[2] = (fastf_t) (hgt - r1 - r2);
 	rad = (fastf_t)r2;
 	solnam[6] = '2';
@@ -296,12 +296,12 @@ main(int argc, char **argv)
 	mk_rcc(fpw, solnam, bs, ht, rad);
 
 	/* Create right torus. */
-	cent[0] = (fastf_t)0.;
-	cent[1] = (fastf_t) (len / 2. -r1 - r2);
+	cent[0] = (fastf_t)0.0;
+	cent[1] = (fastf_t) (len / 2.0 -r1 - r2);
 	cent[2] = (fastf_t) (hgt - r1 -r2);
-	norm[0] = (fastf_t)1.;
-	norm[1] = (fastf_t)0.;
-	norm[2] = (fastf_t)0.;
+	norm[0] = (fastf_t)1.0;
+	norm[1] = (fastf_t)0.0;
+	norm[2] = (fastf_t)0.0;
 	rad1 = r1;
 	rad2 = r2;
 	solnam[6] = '4';
@@ -314,28 +314,28 @@ main(int argc, char **argv)
 
 	/* Create right arb8. */
 	pts[0][0] = (fastf_t)r2;
-	pts[0][1] = (fastf_t) (len / 2. - r1 - r2);
+	pts[0][1] = (fastf_t) (len / 2.0 - r1 - r2);
 	pts[0][2] = (fastf_t)hgt;
 	pts[1][0] = (fastf_t)r2;
-	pts[1][1] = (fastf_t) (len / 2.);
+	pts[1][1] = (fastf_t) (len / 2.0);
 	pts[1][2] = (fastf_t)hgt;
 	pts[2][0] = (fastf_t)r2;
-	pts[2][1] = (fastf_t) (len / 2.);
+	pts[2][1] = (fastf_t) (len / 2.0);
 	pts[2][2] = (fastf_t) (hgt -r1 - r2);
 	pts[3][0] = (fastf_t)r2;
-	pts[3][1] = (fastf_t) (len / 2. - r1 - r2);
+	pts[3][1] = (fastf_t) (len / 2.0 - r1 - r2);
 	pts[3][2] = (fastf_t) (hgt -r1 - r2);
 	pts[4][0] = (fastf_t)(-r2);
-	pts[4][1] = (fastf_t) (len / 2. - r1 - r2);
+	pts[4][1] = (fastf_t) (len / 2.0 - r1 - r2);
 	pts[4][2] = (fastf_t)hgt;
 	pts[5][0] = (fastf_t)(-r2);
-	pts[5][1] = (fastf_t) (len / 2.);
+	pts[5][1] = (fastf_t) (len / 2.0);
 	pts[5][2] = (fastf_t)hgt;
 	pts[6][0] = (fastf_t)(-r2);
-	pts[6][1] = (fastf_t) (len / 2.);
+	pts[6][1] = (fastf_t) (len / 2.0);
 	pts[6][2] = (fastf_t) (hgt -r1 - r2);
 	pts[7][0] = (fastf_t)(-r2);
-	pts[7][1] = (fastf_t) (len / 2. - r1 - r2);
+	pts[7][1] = (fastf_t) (len / 2.0 - r1 - r2);
 	pts[7][2] = (fastf_t) (hgt -r1 - r2);
 	solnam[6] ='6';
 	mk_arb8(fpw, solnam, &pts[0][X]);

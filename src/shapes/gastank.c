@@ -237,9 +237,9 @@ main(int argc, char **argv)
 
 	/* Create the 3 arb8s. */
 
-	pts[0][0] = (fastf_t)(dpt / 2.);
-	pts[0][1] = (fastf_t)(wid / 2. - rds);
-	pts[0][2] = (fastf_t)(hgt / 2. - rds);
+	pts[0][0] = (fastf_t)(dpt / 2.0);
+	pts[0][1] = (fastf_t)(wid / 2.0 - rds);
+	pts[0][2] = (fastf_t)(hgt / 2.0 - rds);
 	pts[1][0] = pts[0][0];
 	pts[1][1] = pts[0][1];
 	pts[1][2] = (-pts[0][2]);
@@ -266,8 +266,8 @@ main(int argc, char **argv)
 	solnam[7] = '1';
 	mk_arb8(fpw, solnam, &pts[0][X]);
 
-	pts[0][0] = (fastf_t)(dpt / 2. - rds);
-	pts[0][1] = (fastf_t)(wid / 2.);
+	pts[0][0] = (fastf_t)(dpt / 2.0 - rds);
+	pts[0][1] = (fastf_t)(wid / 2.0);
 	pts[1][0] = pts[0][0];
 	pts[1][1] = pts[0][1];
 	pts[2][0] = pts[0][0];
@@ -285,8 +285,8 @@ main(int argc, char **argv)
 	solnam[7] = '2';
 	mk_arb8(fpw, solnam, &pts[0][X]);
 
-	pts[0][1] = (fastf_t)(wid / 2. - rds);
-	pts[0][2] = (fastf_t)(hgt / 2.);
+	pts[0][1] = (fastf_t)(wid / 2.0 - rds);
+	pts[0][2] = (fastf_t)(hgt / 2.0);
 	pts[1][1] = pts[0][1];
 	pts[1][2] = (-pts[0][2]);
 	pts[2][1] = (-pts[0][1]);
@@ -306,9 +306,9 @@ main(int argc, char **argv)
 
 	/* Make 8 spheres. */
 
-	cent[0] = (fastf_t)(dpt / 2. - rds);
-	cent[1] = (fastf_t)(wid / 2. - rds);
-	cent[2] = (fastf_t)(hgt / 2. - rds);
+	cent[0] = (fastf_t)(dpt / 2.0 - rds);
+	cent[1] = (fastf_t)(wid / 2.0 - rds);
+	cent[2] = (fastf_t)(hgt / 2.0 - rds);
 	rad = (fastf_t)(rds);
 	solnam[7] = '4';
 	mk_sph(fpw, solnam, cent, rad);
@@ -345,12 +345,12 @@ main(int argc, char **argv)
 
 	/* Make 12 cylinders. */
 
-	bs[0] = (fastf_t)(dpt / 2. - rds);
-	bs[1] = (fastf_t)(wid / 2. - rds);
-	bs[2] = (fastf_t)(hgt / 2. - rds);
-	ht[0] = (fastf_t)(0.);
+	bs[0] = (fastf_t)(dpt / 2.0 - rds);
+	bs[1] = (fastf_t)(wid / 2.0 - rds);
+	bs[2] = (fastf_t)(hgt / 2.0 - rds);
+	ht[0] = (fastf_t)(0.0);
 	ht[1] = (fastf_t)(-wid + 2 * rds);
-	ht[2] = (fastf_t)(0.);
+	ht[2] = (fastf_t)(0.0);
 	solnam[7] = '2';
 	mk_rcc(fpw, solnam, bs, ht, rad);
 
@@ -366,11 +366,11 @@ main(int argc, char **argv)
 	solnam[7] = '5';
 	mk_rcc(fpw, solnam, bs, ht, rad);
 
-	bs[0] = (fastf_t)(dpt / 2. - rds);
-	bs[1] = (fastf_t)(wid / 2. - rds);
-	bs[2] = (fastf_t)(hgt / 2. - rds);
-	ht[0] = (fastf_t)(0.);
-	ht[1] = (fastf_t)(0.);
+	bs[0] = (fastf_t)(dpt / 2.0 - rds);
+	bs[1] = (fastf_t)(wid / 2.0 - rds);
+	bs[2] = (fastf_t)(hgt / 2.0 - rds);
+	ht[0] = (fastf_t)(0.0);
+	ht[1] = (fastf_t)(0.0);
 	ht[2] = (fastf_t)(-hgt + 2 * rds);
 	solnam[7] = '6';
 	mk_rcc(fpw, solnam, bs, ht, rad);
@@ -387,12 +387,12 @@ main(int argc, char **argv)
 	solnam[7] = '9';
 	mk_rcc(fpw, solnam, bs, ht, rad);
 
-	bs[0] = (fastf_t)(dpt / 2. - rds);
-	bs[1] = (fastf_t)(wid / 2. - rds);
-	bs[2] = (fastf_t)(hgt / 2. - rds);
+	bs[0] = (fastf_t)(dpt / 2.0 - rds);
+	bs[1] = (fastf_t)(wid / 2.0 - rds);
+	bs[2] = (fastf_t)(hgt / 2.0 - rds);
 	ht[0] = (fastf_t)(-dpt + 2 * rds);
-	ht[1] = (fastf_t)(0.);
-	ht[2] = (fastf_t)(0.);
+	ht[1] = (fastf_t)(0.0);
+	ht[2] = (fastf_t)(0.0);
 	solnam[6] = '2';
 	solnam[7] = '0';
 	mk_rcc(fpw, solnam, bs, ht, rad);

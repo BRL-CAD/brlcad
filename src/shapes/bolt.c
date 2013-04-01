@@ -335,88 +335,88 @@ main(int argc, char **argv)
 
 	/* Create all solids needed. */
 	/* Create solids of bolt head. */
-	leg = tan(M_PI / 6.) * hd / 2.;
-	hyp = leg * leg + (hd / 2.) * (hd / 2.);
+	leg = tan(M_PI / 6.0) * hd / 2.0;
+	hyp = leg * leg + (hd / 2.0) * (hd / 2.0);
 	hyp = sqrt(hyp);
 	/* Bolt head is two solids, create first solid. */
-	pts[0][0] = (fastf_t) ((-hd) / 2.);
+	pts[0][0] = (fastf_t) ((-hd) / 2.0);
 	pts[0][1] = (fastf_t)leg;
 	pts[0][2] = (fastf_t)hh;
-	pts[1][0] = (fastf_t)0.;
+	pts[1][0] = (fastf_t)0.0;
 	pts[1][1] = (fastf_t)hyp;
 	pts[1][2] = (fastf_t)hh;
-	pts[2][0] = (fastf_t)0.;
+	pts[2][0] = (fastf_t)0.0;
 	pts[2][1] = (fastf_t)(-hyp);
 	pts[2][2] = (fastf_t)hh;
-	pts[3][0] = (fastf_t) ((-hd) / 2.);
+	pts[3][0] = (fastf_t) ((-hd) / 2.0);
 	pts[3][1] = (fastf_t)(-leg);
 	pts[3][2] = (fastf_t)hh;
-	pts[4][0] = (fastf_t) ((-hd) / 2.);
+	pts[4][0] = (fastf_t) ((-hd) / 2.0);
 	pts[4][1] = (fastf_t)leg;
-	pts[4][2] = (fastf_t)0.;
-	pts[5][0] = (fastf_t)0.;
+	pts[4][2] = (fastf_t)0.0;
+	pts[5][0] = (fastf_t)0.0;
 	pts[5][1] = (fastf_t)hyp;
-	pts[5][2] = (fastf_t)0.;
-	pts[6][0] = (fastf_t)0.;
+	pts[5][2] = (fastf_t)0.0;
+	pts[6][0] = (fastf_t)0.0;
 	pts[6][1] = (fastf_t)(-hyp);
-	pts[6][2] = (fastf_t)0.;
-	pts[7][0] = (fastf_t) ((-hd) / 2.);
+	pts[6][2] = (fastf_t)0.0;
+	pts[7][0] = (fastf_t) ((-hd) / 2.0);
 	pts[7][1] = (fastf_t)(-leg);
-	pts[7][2] = (fastf_t)0.;
+	pts[7][2] = (fastf_t)0.0;
 	solnam[6] = 97 + i;
 	solnam[7] = '1';
 	mk_arb8(fpw, solnam, &pts[0][X]);
 
 	/* Create second solid. */
-	pts[0][0] = (fastf_t) (hd / 2.);
+	pts[0][0] = (fastf_t) (hd / 2.0);
 	pts[0][1] = (fastf_t)leg;
 	pts[0][2] = (fastf_t)hh;
-	pts[1][0] = (fastf_t)0.;
+	pts[1][0] = (fastf_t)0.0;
 	pts[1][1] = (fastf_t)hyp;
 	pts[1][2] = (fastf_t)hh;
-	pts[2][0] = (fastf_t)0.;
+	pts[2][0] = (fastf_t)0.0;
 	pts[2][1] = (fastf_t)(-hyp);
 	pts[2][2] = (fastf_t)hh;
-	pts[3][0] = (fastf_t) (hd / 2.);
+	pts[3][0] = (fastf_t) (hd / 2.0);
 	pts[3][1] = (fastf_t)(-leg);
 	pts[3][2] = (fastf_t)hh;
-	pts[4][0] = (fastf_t) (hd / 2.);
+	pts[4][0] = (fastf_t) (hd / 2.0);
 	pts[4][1] = (fastf_t)leg;
-	pts[4][2] = (fastf_t)0.;
-	pts[5][0] = (fastf_t)0.;
+	pts[4][2] = (fastf_t)0.0;
+	pts[5][0] = (fastf_t)0.0;
 	pts[5][1] = (fastf_t)hyp;
-	pts[5][2] = (fastf_t)0.;
-	pts[6][0] = (fastf_t)0.;
+	pts[5][2] = (fastf_t)0.0;
+	pts[6][0] = (fastf_t)0.0;
 	pts[6][1] = (fastf_t)(-hyp);
-	pts[6][2] = (fastf_t)0.;
-	pts[7][0] = (fastf_t) (hd / 2.);
+	pts[6][2] = (fastf_t)0.0;
+	pts[7][0] = (fastf_t) (hd / 2.0);
 	pts[7][1] = (fastf_t)(-leg);
-	pts[7][2] = (fastf_t)0.;
+	pts[7][2] = (fastf_t)0.0;
 	solnam[7] = '2';
 	mk_arb8(fpw, solnam, &pts[0][X]);
 
 	/* Create washer if necessary. */
 	if ((iopt == 2) || (iopt == 3)) {
-	    bs[0] = (fastf_t)0.;
-	    bs[1] = (fastf_t)0.;
-	    bs[2] = (fastf_t)0.;
-	    ht[0] = (fastf_t)0.;
-	    ht[1] = (fastf_t)0.;
+	    bs[0] = (fastf_t)0.0;
+	    bs[1] = (fastf_t)0.0;
+	    bs[2] = (fastf_t)0.0;
+	    ht[0] = (fastf_t)0.0;
+	    ht[1] = (fastf_t)0.0;
 	    ht[2] = (fastf_t)(-wh);
-	    rad = (fastf_t) (wd / 2.);
+	    rad = (fastf_t) (wd / 2.0);
 	    solnam[7] = '3';
 	    mk_rcc(fpw, solnam, bs, ht, rad);
 	}
 
 	/* Create bolt stem if necessary. */
 	if ((iopt == 3) || (iopt == 4)) {
-	    bs[0] = (fastf_t)0.;
-	    bs[1] = (fastf_t)0.;
-	    bs[2] = (fastf_t)0.;
-	    ht[0] = (fastf_t)0.;
-	    ht[1] = (fastf_t)0.;
+	    bs[0] = (fastf_t)0.0;
+	    bs[1] = (fastf_t)0.0;
+	    bs[2] = (fastf_t)0.0;
+	    ht[0] = (fastf_t)0.0;
+	    ht[1] = (fastf_t)0.0;
 	    ht[2] = (fastf_t)(-sh);
-	    rad = (fastf_t) (sd / 2.);
+	    rad = (fastf_t) (sd / 2.0);
 	    solnam[7] = '4';
 	    mk_rcc(fpw, solnam, bs, ht, rad);
 	}
