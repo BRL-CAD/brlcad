@@ -6329,8 +6329,6 @@ proc title_node_handler {node} {
 	return
     }
 
-    clearEditState
-
     if {$GeometryEditFrame::mEditClass != $GeometryEditFrame::EDIT_CLASS_ROT} {
 	initEdit
     }
