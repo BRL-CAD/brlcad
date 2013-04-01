@@ -364,21 +364,21 @@ int main(int argc, char **argv)
 
 	/* All variables 'dimensioned', now zero all variables.  */
 	for (i=0; i<nmged; i++) {
-	    cond[i].centroid[0] = (double)0.;
-	    cond[i].centroid[1] = (double)0.;
-	    cond[i].centroid[2] = (double)0.;
+	    cond[i].centroid[0] = (double)0.0;
+	    cond[i].centroid[1] = (double)0.0;
+	    cond[i].centroid[2] = (double)0.0;
 	    cond[i].mat = (int)0;
 	    for (j=0; j<nmged; j++) {
-		cond[i].shrarea[j] = (double)0.;
-		cond[i].avglen[j] = (double)0.;
-		cond[i].rmslen[j] = (double)0.;
-		cond[i].minlen[j] = (double)0.;
-		cond[i].maxlen[j] = (double)0.;
-		cond[i].numcal[j] = (double)0.;
-		cond[i].rkavg[j] = (double)0.;
-		cond[i].rkrms[j] = (double)0.;
-		cond[i].rkmin[j] = (double)0.;
-		cond[i].rkmax[j] = (double)0.;
+		cond[i].shrarea[j] = (double)0.0;
+		cond[i].avglen[j] = (double)0.0;
+		cond[i].rmslen[j] = (double)0.0;
+		cond[i].minlen[j] = (double)0.0;
+		cond[i].maxlen[j] = (double)0.0;
+		cond[i].numcal[j] = (double)0.0;
+		cond[i].rkavg[j] = (double)0.0;
+		cond[i].rkrms[j] = (double)0.0;
+		cond[i].rkmin[j] = (double)0.0;
+		cond[i].rkmax[j] = (double)0.0;
 	    }
 	}
 	fprintf(stdout, "All variables zeroed.\n");
@@ -446,11 +446,11 @@ int main(int argc, char **argv)
 
 	/* Find center of bounding rpp.  */
 	center[X] = rtip->mdl_min[X] + (rtip->mdl_max[X] -
-					rtip->mdl_min[X]) / 2.;
+					rtip->mdl_min[X]) / 2.0;
 	center[Y] = rtip->mdl_min[Y] + (rtip->mdl_max[Y] -
-					rtip->mdl_min[Y]) / 2.;
+					rtip->mdl_min[Y]) / 2.0;
 	center[Z] = rtip->mdl_min[Z] + (rtip->mdl_max[Z] -
-					rtip->mdl_min[Z]) / 2.;
+					rtip->mdl_min[Z]) / 2.0;
 
 	/* Find length of diagonal.  */
 	diagonal = (rtip->mdl_max[X] - rtip->mdl_min[X])
@@ -459,7 +459,7 @@ int main(int argc, char **argv)
 	    * (rtip->mdl_max[Y] - rtip->mdl_min[Y])
 	    + (rtip->mdl_max[Z] - rtip->mdl_min[Z])
 	    * (rtip->mdl_max[Z] - rtip->mdl_min[Z]);
-	diagonal = sqrt(diagonal) / 2. + .5;
+	diagonal = sqrt(diagonal) / 2.0 + .5;
 
 	/* Find minimum & maximum of grid.  */
 	xmin = center[X] - diagonal;
@@ -534,8 +534,8 @@ int main(int argc, char **argv)
 	(void)fflush(stdout);
 
 	strtpt[X] = xmax;
-	strtpt[Y] = ymin + gridspace / 2.;
-	strtpt[Z] = zmin + gridspace / 2.;
+	strtpt[Y] = ymin + gridspace / 2.0;
+	strtpt[Z] = zmin + gridspace / 2.0;
 	strtdir[X] = (-1);
 	strtdir[Y] = 0;
 	strtdir[Z] = 0;
@@ -567,7 +567,7 @@ int main(int argc, char **argv)
 
 	    strtpt[Y] += gridspace;
 	    if (strtpt[Y] > ymax) {
-		strtpt[Y] = ymin + gridspace / 2.;
+		strtpt[Y] = ymin + gridspace / 2.0;
 		strtpt[Z] += gridspace;
 	    }
 
@@ -590,12 +590,12 @@ int main(int argc, char **argv)
 	    printf("\nShooting down the 2nd axis.\n");
 	    (void)fflush(stdout);
 
-	    strtpt[X] = xmin + gridspace / 2.;
+	    strtpt[X] = xmin + gridspace / 2.0;
 	    strtpt[Y] = ymax;
-	    strtpt[Z] = zmin + gridspace / 2.;
-	    strtdir[X] = 0.;
-	    strtdir[Y] = (-1.);
-	    strtdir[X] = 0.;
+	    strtpt[Z] = zmin + gridspace / 2.0;
+	    strtdir[X] = 0.0;
+	    strtdir[Y] = (-1.0);
+	    strtdir[X] = 0.0;
 
 	    /* Rotate starting point (new pt = C + R[P - C]).  */
 	    t[X] = strtpt[X] - center [X];
@@ -624,7 +624,7 @@ int main(int argc, char **argv)
 
 		strtpt[X] += gridspace;
 		if (strtpt[X] > xmax) {
-		    strtpt[X] = xmin + gridspace / 2.;
+		    strtpt[X] = xmin + gridspace / 2.0;
 		    strtpt[Z] += gridspace;
 		}
 
@@ -643,12 +643,12 @@ int main(int argc, char **argv)
 	    printf("\nShooting down the 3rd axis.\n");
 	    (void)fflush(stdout);
 
-	    strtpt[X] = xmin + gridspace / 2.;
-	    strtpt[Y] = ymin + gridspace / 2.;
+	    strtpt[X] = xmin + gridspace / 2.0;
+	    strtpt[Y] = ymin + gridspace / 2.0;
 	    strtpt[Z] = zmax;
-	    strtdir[X] = 0.;
-	    strtdir[Y] = 0.;
-	    strtdir[Z] = (-1.);
+	    strtdir[X] = 0.0;
+	    strtdir[Y] = 0.0;
+	    strtdir[Z] = (-1.0);
 
 	    /* Rotate starting points (new pt = C + R[P - C]).  */
 	    t[X] = strtpt[X] - center[X];
@@ -670,7 +670,7 @@ int main(int argc, char **argv)
 
 		strtpt[X] += gridspace;
 		if (strtpt[X] > xmax) {
-		    strtpt[X] = xmin + gridspace / 2.;
+		    strtpt[X] = xmin + gridspace / 2.0;
 		    strtpt[Y] += gridspace;
 		}
 
@@ -731,8 +731,8 @@ int main(int argc, char **argv)
 		    }
 
 		} else {
-		    cond[i].avglen[j] = 0.;
-		    cond[i].rmslen[j] = 0.;
+		    cond[i].avglen[j] = 0.0;
+		    cond[i].rmslen[j] = 0.0;
 		}
 	    }
 	}
@@ -803,7 +803,7 @@ int main(int argc, char **argv)
 		    lenj = cond[j].avglen[i] * 1.e-3;
 		    if (((-ZEROTOL < ki) && (ki < ZEROTOL)) ||
 			((-ZEROTOL < kj) && (kj < ZEROTOL)))
-			cond[i].rkavg[j] = 0.;
+			cond[i].rkavg[j] = 0.0;
 		    else {
 			rki = leni / (ki * areai);
 			rkj = lenj / (kj * areai);
@@ -815,7 +815,7 @@ int main(int argc, char **argv)
 		    lenj = cond[j].rmslen[i] * 1.e-3;
 		    if (((-ZEROTOL < ki) && (ki < ZEROTOL)) ||
 			((-ZEROTOL < kj) && (kj < ZEROTOL)))
-			cond[i].rkrms[j] = 0.;
+			cond[i].rkrms[j] = 0.0;
 		    else {
 			rki = leni / (ki * areai);
 			rkj = lenj / (kj * areai);
@@ -827,7 +827,7 @@ int main(int argc, char **argv)
 		    lenj = cond[j].minlen[i] * 1.e-3;
 		    if (((-ZEROTOL < ki) && (ki < ZEROTOL)) ||
 			((-ZEROTOL < kj) && (kj < ZEROTOL)))
-			cond[i].rkmin[j] = 0.;
+			cond[i].rkmin[j] = 0.0;
 		    else {
 			rki = leni / (ki * areai);
 			rkj = lenj / (kj * areai);
@@ -839,7 +839,7 @@ int main(int argc, char **argv)
 		    lenj = cond[j].maxlen[i] * 1.e-3;
 		    if (((-ZEROTOL < ki) && (ki < ZEROTOL)) ||
 			((-ZEROTOL < kj) && (kj < ZEROTOL)))
-			cond[i].rkmax[j] = 0.;
+			cond[i].rkmax[j] = 0.0;
 		    else {
 			rki = leni / (ki * areai);
 			rkj = lenj / (kj * areai);
@@ -1131,7 +1131,7 @@ hit(struct application *UNUSED(ap_p), struct partition *PartHeadp, struct seg *U
 		dist = sqrt(dist);
 		cond[iprev].avglen[icur] += dist;
 		cond[iprev].rmslen[icur] += (dist * dist);
-		cond[iprev].numcal[icur] += 1.;
+		cond[iprev].numcal[icur] += 1.0;
 
 		if ((-ZEROTOL < cond[iprev].minlen[icur]) &&
 		    (cond[iprev].minlen[icur] < ZEROTOL)) {
@@ -1157,7 +1157,7 @@ hit(struct application *UNUSED(ap_p), struct partition *PartHeadp, struct seg *U
 		dist = sqrt(dist);
 		cond[icur].avglen[iprev] += dist;
 		cond[icur].rmslen[iprev] += (dist * dist);
-		cond[icur].numcal[iprev] += 1.;
+		cond[icur].numcal[iprev] += 1.0;
 
 		if ((-ZEROTOL < cond[icur].minlen[iprev]) &&
 		    (cond[icur].minlen[iprev] < ZEROTOL)) {

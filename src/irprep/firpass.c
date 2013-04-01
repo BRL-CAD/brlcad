@@ -508,30 +508,30 @@ int main(int argc, char **argv)
 	for (i=0; i<num; i++)
 	{
 	    region[i].regname="\0";
-	    region[i].cumnorm[0]=0.;
-	    region[i].cumnorm[1]=0.;
-	    region[i].cumnorm[2]=0.;
-	    region[i].cumvol[0]=0.;
-	    region[i].cumvol[1]=0.;
-	    region[i].cumvol[2]=0.;
-	    region[i].centroid[0]=0.;
-	    region[i].centroid[1]=0.;
-	    region[i].centroid[2]=0.;
+	    region[i].cumnorm[0]=0.0;
+	    region[i].cumnorm[1]=0.0;
+	    region[i].cumnorm[2]=0.0;
+	    region[i].cumvol[0]=0.0;
+	    region[i].cumvol[1]=0.0;
+	    region[i].cumvol[2]=0.0;
+	    region[i].centroid[0]=0.0;
+	    region[i].centroid[1]=0.0;
+	    region[i].centroid[2]=0.0;
 	    for (k=0; k<7; k++)
 	    {
-		region[i].cumfs[k][0] = 0.;
-		region[i].cumfs[k][1] = 0.;
-		region[i].cumfs[k][2] = 0.;
+		region[i].cumfs[k][0] = 0.0;
+		region[i].cumfs[k][1] = 0.0;
+		region[i].cumfs[k][2] = 0.0;
 	    }
-	    region[i].surarea[0]=0.;
-	    region[i].surarea[1]=0.;
-	    region[i].surarea[2]=0.;
+	    region[i].surarea[0]=0.0;
+	    region[i].surarea[1]=0.0;
+	    region[i].surarea[2]=0.0;
 	    for (j=0; j<num; j++)
 	    {
 		region[i].adjreg[j]=0;
-		region[i].ssurarea[0][j]=0.;
-		region[i].ssurarea[1][j]=0.;
-		region[i].ssurarea[2][j]=0.;
+		region[i].ssurarea[0][j]=0.0;
+		region[i].ssurarea[1][j]=0.0;
+		region[i].ssurarea[2][j]=0.0;
 	    }
 	}
 
@@ -541,7 +541,7 @@ int main(int argc, char **argv)
 	    for (j=0; j<num; j++)
 	    {
 		overlaps[i].ovrreg[j] = 0;
-		overlaps[i].ovrdep[j] = 0.;
+		overlaps[i].ovrdep[j] = 0.0;
 	    }
 	}
 
@@ -550,11 +550,11 @@ int main(int argc, char **argv)
 
 	/*  Find center of bounding rpp.  */
 	center[X] = rtip->mdl_min[X] + (rtip->mdl_max[X]
-					- rtip->mdl_min[X]) / 2.;
+					- rtip->mdl_min[X]) / 2.0;
 	center[Y] = rtip->mdl_min[Y] + (rtip->mdl_max[Y]
-					- rtip->mdl_min[Y]) / 2.;
+					- rtip->mdl_min[Y]) / 2.0;
 	center[Z] = rtip->mdl_min[Z] + (rtip->mdl_max[Z]
-					- rtip->mdl_min[Z]) / 2.;
+					- rtip->mdl_min[Z]) / 2.0;
 
 	/*  Find length of diagonal of bounding rpp.  */
 	diagonal = (rtip->mdl_max[X] - rtip->mdl_min[X])
@@ -563,7 +563,7 @@ int main(int argc, char **argv)
 	    * (rtip->mdl_max[Y] - rtip->mdl_min[Y])
 	    + (rtip->mdl_max[Z] - rtip->mdl_min[Z])
 	    * (rtip->mdl_max[Z] - rtip->mdl_min[Z]);
-	diagonal = sqrt(diagonal) / 2. + 0.5;
+	diagonal = sqrt(diagonal) / 2.0 + 0.5;
 
 	/*  Find minimum and maximums.  */
 	xmin = center[X] - diagonal;
@@ -657,11 +657,11 @@ int main(int argc, char **argv)
 	whichview=0;
 
 	strtpt[X] = xmax;
-	strtpt[Y] = ymin + gridspace / 2.;
-	strtpt[Z] = zmin + gridspace / 2.;
+	strtpt[Y] = ymin + gridspace / 2.0;
+	strtpt[Z] = zmin + gridspace / 2.0;
 	strtdir[X] = (-1.0);
-	strtdir[Y] = 0.;
-	strtdir[Z] = 0.;
+	strtdir[Y] = 0.0;
+	strtdir[Z] = 0.0;
 
 	/*  Put angle into radians.  */
 	angle[X] = radians((double)GAMMA);
@@ -692,9 +692,9 @@ int main(int argc, char **argv)
 
 	    /*  Set to show no previous shots.  */
 	    iprev=(-99);
-	    r[X]=xmax - center[X] + 5.;
-	    r[Y]=ymax - center[Y] + 5.;
-	    r[Z]=zmax - center[Z] + 5.;
+	    r[X]=xmax - center[X] + 5.0;
+	    r[Y]=ymax - center[Y] + 5.0;
+	    r[Z]=zmax - center[Z] + 5.0;
 
 
 	    (void)rotate(r, angle, t);
@@ -712,9 +712,9 @@ int main(int argc, char **argv)
 	     *		(void)fflush(stdout);
 	     */
 
-	    lnormal[X]=0.;
-	    lnormal[Y]=0.;
-	    lnormal[Z]=0.;
+	    lnormal[X]=0.0;
+	    lnormal[Y]=0.0;
+	    lnormal[Z]=0.0;
 
 	    /*  Call rt_shootray.  */
 	    (void)rt_shootray(&ap);
@@ -722,7 +722,7 @@ int main(int argc, char **argv)
 	    strtpt[Y] += gridspace;
 	    if (strtpt[Y] > ymax)
 	    {
-		strtpt[Y] = ymin + gridspace / 2.;
+		strtpt[Y] = ymin + gridspace / 2.0;
 		strtpt[Z] += gridspace;
 
 	    }
@@ -749,12 +749,12 @@ int main(int argc, char **argv)
 
 	    whichview = 1;
 
-	    strtpt[X] = xmin + gridspace / 2.;
+	    strtpt[X] = xmin + gridspace / 2.0;
 	    strtpt[Y] = ymax;
-	    strtpt[Z] = xmin + gridspace / 2.;
-	    strtdir[X] = 0.;
+	    strtpt[Z] = xmin + gridspace / 2.0;
+	    strtdir[X] = 0.0;
 	    strtdir[Y] = (-1.0);
-	    strtdir[Z] = 0.;
+	    strtdir[Z] = 0.0;
 
 	    /*  Angle already in radians.  */
 
@@ -779,9 +779,9 @@ int main(int argc, char **argv)
 	    {
 		/*  Set to show no previous shots.  */
 		iprev = (-99);
-		r[X] = xmax - center[X] + 5.;
-		r[Y] = ymax - center[Y] + 5.;
-		r[Z] = zmax - center[Z] + 5.;
+		r[X] = xmax - center[X] + 5.0;
+		r[Y] = ymax - center[Y] + 5.0;
+		r[Z] = zmax - center[Z] + 5.0;
 
 		(void)rotate(r, angle, t);
 
@@ -789,9 +789,9 @@ int main(int argc, char **argv)
 		leavept[Y] = center[Y] + t[Y];
 		leavept[Z] = center[Z] + t[Z];
 
-		lnormal[X] = 0.;
-		lnormal[Y] = 0.;
-		lnormal[Z] = 0.;
+		lnormal[X] = 0.0;
+		lnormal[Y] = 0.0;
+		lnormal[Z] = 0.0;
 
 		/*  Call rt_shootray.  */
 		(void)rt_shootray(&ap);
@@ -800,7 +800,7 @@ int main(int argc, char **argv)
 
 		if (strtpt[X] > xmax)
 		{
-		    strtpt[X] = xmin + gridspace / 2.;
+		    strtpt[X] = xmin + gridspace / 2.0;
 		    strtpt[Z] += gridspace;
 		}
 
@@ -821,11 +821,11 @@ int main(int argc, char **argv)
 
 	    whichview = 2;
 
-	    strtpt[X] = xmin + gridspace / 2.;
-	    strtpt[Y] = ymin + gridspace / 2.;
+	    strtpt[X] = xmin + gridspace / 2.0;
+	    strtpt[Y] = ymin + gridspace / 2.0;
 	    strtpt[Z] = zmax;
-	    strtdir[X] = 0.;
-	    strtdir[Y] = 0.;
+	    strtdir[X] = 0.0;
+	    strtdir[Y] = 0.0;
 	    strtdir[Z] = (-1.0);
 
 	    /*  Angle already in radians.  */
@@ -852,9 +852,9 @@ int main(int argc, char **argv)
 	    {
 		/*  Set to show no previous shots.  */
 		iprev = (-99);
-		r[X] = xmax - center[X] + 5.;
-		r[Y] = xmax - center[Y] + 5.;
-		r[Z] = xmax - center[Z] + 5.;
+		r[X] = xmax - center[X] + 5.0;
+		r[Y] = xmax - center[Y] + 5.0;
+		r[Z] = xmax - center[Z] + 5.0;
 
 		(void)rotate(r, angle, t);
 
@@ -862,9 +862,9 @@ int main(int argc, char **argv)
 		leavept[Y] = center[Y] + t[Y];
 		leavept[Z] = center[Z] + t[Z];
 
-		lnormal[X] = 0.;
-		lnormal[Y] = 0.;
-		lnormal[Z] = 0.;
+		lnormal[X] = 0.0;
+		lnormal[Y] = 0.0;
+		lnormal[Z] = 0.0;
 
 		/*  Call rt_shootray.  */
 		(void)rt_shootray(&ap);
@@ -873,7 +873,7 @@ int main(int argc, char **argv)
 
 		if (strtpt[X] > xmax)
 		{
-		    strtpt[X] = xmin + gridspace / 2.;
+		    strtpt[X] = xmin + gridspace / 2.0;
 		    strtpt[Y] += gridspace;
 		}
 
@@ -992,7 +992,7 @@ int main(int argc, char **argv)
 	    {
 		region[i].cumvol[0] = region[i].cumvol[0]
 		    + region[i].cumvol[1] + region[i].cumvol[2];
-		region[i].cumvol[0] /= 3.;
+		region[i].cumvol[0] /= 3.0;
 	    }
 	    region[i].cumvol[1]=(double)flag;
 
@@ -1054,7 +1054,7 @@ int main(int argc, char **argv)
 	    {
 		region[i].surarea[0] = region[i].surarea[0]
 		    + region[i].surarea[1] + region[i].surarea[2];
-		region[i].surarea[0] /= 3.;
+		region[i].surarea[0] /= 3.0;
 	    }
 	    region[i].surarea[1]=(double)flag;
 
@@ -1143,7 +1143,7 @@ int main(int argc, char **argv)
 			region[i].ssurarea[0][j] = region[i].ssurarea[0][j]
 			    + region[i].ssurarea[1][j]
 			    + region[i].ssurarea[2][j];
-			region[i].ssurarea[0][j] /= 3.;
+			region[i].ssurarea[0][j] /= 3.0;
 		    }
 		    region[i].ssurarea[1][j] = (double)flag;
 		}
@@ -1202,7 +1202,7 @@ int main(int argc, char **argv)
 		    region[i].cumfs[k][0] = region[i].cumfs[k][0] +
 			region[i].cumfs[k][1] +
 			region[i].cumfs[k][2];
-		    region[i].cumfs[k][0] /= 3.;
+		    region[i].cumfs[k][0] /= 3.0;
 		}
 
 		region[i].cumfs[k][1] = (double)flag;
@@ -1226,9 +1226,9 @@ int main(int argc, char **argv)
 		 ((-NORMTOL < region[i].cumnorm[Z]) &&
 		   (region[i].cumnorm[Z] < NORMTOL)))
 	    {
-		region[i].cumnorm[X] = 0.;
-		region[i].cumnorm[Y] = 0.;
-		region[i].cumnorm[Z] = 0.;
+		region[i].cumnorm[X] = 0.0;
+		region[i].cumnorm[Y] = 0.0;
+		region[i].cumnorm[Z] = 0.0;
 	    }
 
 	    else
@@ -1244,9 +1244,9 @@ int main(int argc, char **argv)
 		}
 		else
 		{
-		    region[i].cumnorm[X] = 0.;
-		    region[i].cumnorm[Y] = 0.;
-		    region[i].cumnorm[Z] = 0.;
+		    region[i].cumnorm[X] = 0.0;
+		    region[i].cumnorm[Y] = 0.0;
+		    region[i].cumnorm[Z] = 0.0;
 		}
 	    }
 
@@ -1653,7 +1653,7 @@ int main(int argc, char **argv)
 
 		/*  Convection coefficient of facet.  Currently  */
 		/*  set to 1.  */
-		faccv = 1.;
+		faccv = 1.0;
 
 		/*  Facets seen by the back & front of current  */
 		/*  facet.  Will be set to 0 thereby assuming  */
@@ -1669,18 +1669,18 @@ int main(int argc, char **argv)
 
 		/*  Shape factors for engine & track facets  */
 		/*  (between 0 & 1).  Currently set to 0.  */
-		facshape = 0.;
+		facshape = 0.0;
 
 		/*  Hub radius (m).  Currently set to 0 unless engine  */
 		/*  air area exist then print engine air area in square  */
 		/*  meters.  */
-		facradius = 0.;
+		facradius = 0.0;
 		if (region[i].cumfs[2][0] > ZEROTOL)
 		    facradius = region[i].cumfs[2][0] * (1.e-6);
 
 		/*  Bearing friction constant (J) for wheels.  */
 		/*  Currently set to 0.  */
-		facfric = 0.;
+		facfric = 0.0;
 		/*
 		 *		(void)printf("facshape:  %8.3f, facradius:  %8.3f, facfric:  %8.3f\n",
 		 *		   facshape, facradius, facfric);

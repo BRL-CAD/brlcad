@@ -219,7 +219,7 @@ int main(int argc, char **argv)
 	/*  Zero all arrays.  */
 	for (i=0; i<numreg; i++)
 	{
-	    info[i].temp = 0.;
+	    info[i].temp = 0.0;
 	    for (j=0; j<150; j++)
 	    {
 		info[i].regname[j] = ' ';
@@ -464,15 +464,15 @@ int main(int argc, char **argv)
 	rppmax[Z] = rtip->mdl_max[Z];
 
 	/*  Find the center of the bounding sphere or rpp.  */
-	center[X] = rppmin[X] + (rppmax[X] - rppmin[X]) / 2.;
-	center[Y] = rppmin[Y] + (rppmax[Y] - rppmin[Y]) / 2.;
-	center[Z] = rppmin[Z] + (rppmax[Z] - rppmin[Z]) / 2.;
+	center[X] = rppmin[X] + (rppmax[X] - rppmin[X]) / 2.0;
+	center[Y] = rppmin[Y] + (rppmax[Y] - rppmin[Y]) / 2.0;
+	center[Z] = rppmin[Z] + (rppmax[Z] - rppmin[Z]) / 2.0;
 
 	/*  Find the length of the radius of the bounding sphere.  */
 	radius = (rppmax[X] - rppmin[X]) * (rppmax[X] - rppmin[X]) +
 	    (rppmax[Y] - rppmin[Y]) * (rppmax[Y] - rppmin[Y]) +
 	    (rppmax[Z] - rppmin[Z]) * (rppmax[Z] - rppmin[Z]);
-	radius = sqrt(radius) / 2. + 1.;	/*  Make radius a bit longer.  */
+	radius = sqrt(radius) / 2.0 + 1.0;	/*  Make radius a bit longer.  */
 
 	printf("\nMinimum & maximum X:  %f - %f\n", rppmin[X], rppmax[X]);
 	printf("Minimum & maximum Y:  %f - %f\n", rppmin[Y], rppmax[Y]);
@@ -535,9 +535,9 @@ int main(int argc, char **argv)
 	(void)fflush(stdout);
 
 	/*  Set firing direction.  Rotate (-1, 0, 0) to proper position.  */
-	vec[X] = (-1.) * cbeta * calpha;
-	vec[Y] = (-1.) * cbeta * salpha;
-	vec[Z] = (-1.) * (-1.) * sbeta;
+	vec[X] = (-1.0) * cbeta * calpha;
+	vec[Y] = (-1.0) * cbeta * salpha;
+	vec[Z] = (-1.0) * (-1.0) * sbeta;
 	/*  Normalize.  */
 	denom = vec[X] * vec[X] + vec[Y] * vec[Y] + vec[Z] * vec[Z];
 	denom = sqrt(denom);

@@ -190,7 +190,7 @@ main(void)
     (void)fflush(stdout);
 
     /*  Set up color scale.  */
-    dcol = (65535. + 1.) / MAXCOL;
+    dcol = (65535.0 + 1.0) / MAXCOL;
     if (icol == 0)		/*  Shades of gray.  */
     {
 	printf("-shades of gray ");
@@ -219,7 +219,7 @@ main(void)
     {
 	printf("- black-blue-cyan-green-yellow-white ");
 	(void)fflush(stdout);
-	if (MAXCOL > 1280.)
+	if (MAXCOL > 1280.0)
 	{
 	    printf("Maximum number of colors, %d, is ", MAXCOL);
 	    printf("greater than 1280.\n");
@@ -229,52 +229,52 @@ main(void)
 	dcol = 1280. / MAXCOL;
 	i = 0;
 	/*  Colors (0, 0, 0) to (0, 0, 255).  */
-	check = 0.;
-	while ( (check <= 255.) && (i < MAXCOL) )
+	check = 0.0;
+	while ( (check <= 255.0) && (i < MAXCOL) )
 	{
 	    colval[i].red = (unsigned short)0;
 	    colval[i].green = (unsigned short)0;
-	    colval[i].blue = (unsigned short)(check * 256.);
+	    colval[i].blue = (unsigned short)(check * 256.0);
 	    check += dcol;
 	    i++;
 	}
 	/*  Colors (0, 0, 255) to (0, 255, 255).  */
-	check = 0.;
-	while ( (check <= 255.) && (i < MAXCOL) )
+	check = 0.0;
+	while ( (check <= 255.0) && (i < MAXCOL) )
 	{
 	    colval[i].red = (unsigned short)0;
-	    colval[i].green = (unsigned short)(check * 256.);
+	    colval[i].green = (unsigned short)(check * 256.0);
 	    colval[i].blue = (unsigned short)(255 * 256);
 	    check += dcol;
 	    i++;
 	}
 	/*  Colors (0, 255, 255) to (0, 255, 0).  */
-	check = 255.;
-	while ( (check >= 0.) && (i < MAXCOL) )
+	check = 255.0;
+	while ( (check >= 0.0) && (i < MAXCOL) )
 	{
 	    colval[i].red = (unsigned short)0;
 	    colval[i].green = (unsigned short)(255 * 256);
-	    colval[i].blue = (unsigned short)(check * 256.);
+	    colval[i].blue = (unsigned short)(check * 256.0);
 	    check -= dcol;
 	    i++;
 	}
 	/*  Colors (0, 255, 0) to (255, 255, 0).  */
-	check = 0.;
-	while ( (check <= 255.) && (i < MAXCOL) )
+	check = 0.0;
+	while ( (check <= 255.0) && (i < MAXCOL) )
 	{
-	    colval[i].red = (unsigned short)(check * 256.);
+	    colval[i].red = (unsigned short)(check * 256.0);
 	    colval[i].green = (unsigned short)(255 * 256);
 	    colval[i].blue = (unsigned short)0;
 	    check += dcol;
 	    i++;
 	}
 	/*  Colors (255, 255, 0) to (255, 255, 255).  */
-	check = 0.;
-	while ( (check <= 255.) && (i < MAXCOL) )
+	check = 0.0;
+	while ( (check <= 255.0) && (i < MAXCOL) )
 	{
 	    colval[i].red = (unsigned short)(255 * 256);
 	    colval[i].green = (unsigned short)(255 * 256);
-	    colval[i].blue = (unsigned short)(check * 256.);
+	    colval[i].blue = (unsigned short)(check * 256.0);
 	    check += dcol;
 	    i++;
 	}
@@ -284,7 +284,7 @@ main(void)
     {
 	printf("- black-blue-magenta-red-yellow-white ");
 	(void)fflush(stdout);
-	if (MAXCOL > 1280.)
+	if (MAXCOL > 1280.0)
 	{
 	    printf("Maximum number of colors, %d, is ", MAXCOL);
 	    printf("greater than 1280.\n");
@@ -294,52 +294,52 @@ main(void)
 	dcol = 1280. / MAXCOL;
 	i = 0;
 	/*  Colors (0, 0, 0) to (0, 0, 255).  */
-	check = 0.;
-	while ( (check <= 255.) && (i < MAXCOL) )
+	check = 0.0;
+	while ( (check <= 255.0) && (i < MAXCOL) )
 	{
 	    colval[i].red = (unsigned short)0;
 	    colval[i].green = (unsigned short)0;
-	    colval[i].blue = (unsigned short)(check * 256.);
+	    colval[i].blue = (unsigned short)(check * 256.0);
 	    check += dcol;
 	    i++;
 	}
 	/*  Colors (0, 0, 255) to (255, 0, 255).  */
-	check = 0.;
-	while ( (check <= 255.) && (i < MAXCOL) )
+	check = 0.0;
+	while ( (check <= 255.0) && (i < MAXCOL) )
 	{
-	    colval[i].red = (unsigned short)(check * 256.);
+	    colval[i].red = (unsigned short)(check * 256.0);
 	    colval[i].green = (unsigned short)0;
 	    colval[i].blue = (unsigned short)(255 * 256);
 	    check += dcol;
 	    i++;
 	}
 	/*  Colors (255, 0, 255) to (255, 0, 0).  */
-	check = 255.;
-	while ( (check >= 0.) && (i < MAXCOL) )
+	check = 255.0;
+	while ( (check >= 0.0) && (i < MAXCOL) )
 	{
 	    colval[i].red = (unsigned short)(255 * 256);
 	    colval[i].green = (unsigned short)0;
-	    colval[i].blue = (unsigned short)(check * 256.);
+	    colval[i].blue = (unsigned short)(check * 256.0);
 	    check -= dcol;
 	    i++;
 	}
 	/*  Colors (255, 0, 0) to (255, 255, 0).  */
-	check = 0.;
-	while ( (check <= 255.) && (i < MAXCOL) )
+	check = 0.0;
+	while ( (check <= 255.0) && (i < MAXCOL) )
 	{
 	    colval[i].red = (unsigned short)(255 * 256);
-	    colval[i].green = (unsigned short)(check * 256.);
+	    colval[i].green = (unsigned short)(check * 256.0);
 	    colval[i].blue = (unsigned short)0;
 	    check += dcol;
 	    i++;
 	}
 	/*  Colors (255, 255, 0) to (255, 255, 255).  */
-	check = 0.;
-	while ( (check <= 255.) && (i < MAXCOL) )
+	check = 0.0;
+	while ( (check <= 255.0) && (i < MAXCOL) )
 	{
 	    colval[i].red = (unsigned short)(255 * 256);
 	    colval[i].green = (unsigned short)(255 * 256);
-	    colval[i].blue = (unsigned short)(check * 256.);
+	    colval[i].blue = (unsigned short)(check * 256.0);
 	    check += dcol;
 	    i++;
 	}
@@ -719,15 +719,15 @@ main(void)
 		    (void)sprintf(string, "%.0f", min);
 		    XDrawString(my_display, wind_scale, my_gc,
 				2, 45, string, strlen(string));
-		    r = min + (max - min) / 4.;
+		    r = min + (max - min) / 4.0;
 		    (void)sprintf(string, "%.0f", r);
 		    XDrawString(my_display, wind_scale, my_gc,
 				(MAXCOL * 2 / 4 - 8), 45, string, strlen(string));
-		    r = min + (max - min) / 2.;
+		    r = min + (max - min) / 2.0;
 		    (void)sprintf(string, "%.0f", r);
 		    XDrawString(my_display, wind_scale, my_gc,
 				(MAXCOL * 2 / 2 - 8), 45, string, strlen(string));
-		    r = min + (max - min) * 3. / 4.;
+		    r = min + (max - min) * 3. / 4.0;
 		    (void)sprintf(string, "%.0f", r);
 		    XDrawString(my_display, wind_scale, my_gc,
 				(MAXCOL * 2 * 3 / 4 - 8), 45, string, strlen(string));

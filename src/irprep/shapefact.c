@@ -323,25 +323,25 @@ int main(int argc, char **argv)
 	    info[i].name = "\0";
 	    info[i].regnum = (-1);
 	    info[i].numchar = 0;
-	    info[i].lvrays = 0.;
-	    info[i].engarea = 0.;
+	    info[i].lvrays = 0.0;
+	    info[i].engarea = 0.0;
 	    for (j=0; j<numreg; j++)
 	    {
-		info[i].intrays[j] = 0.;
+		info[i].intrays[j] = 0.0;
 	    }
 	}
-	nummiss = 0.;
+	nummiss = 0.0;
 
 	/*  Get database ready by starting prep.  */
 	rt_prep(rtip);
 
 	/*  Find the center of the bounding rpp.  */
 	center[X] = rtip->mdl_min[X] +
-	    (rtip->mdl_max[X] - rtip->mdl_min[X]) / 2.;
+	    (rtip->mdl_max[X] - rtip->mdl_min[X]) / 2.0;
 	center[Y] = rtip->mdl_min[Y] +
-	    (rtip->mdl_max[Y] - rtip->mdl_min[Y]) / 2.;
+	    (rtip->mdl_max[Y] - rtip->mdl_min[Y]) / 2.0;
 	center[Z] = rtip->mdl_min[Z] +
-	    (rtip->mdl_max[Z] - rtip->mdl_min[Z]) / 2.;
+	    (rtip->mdl_max[Z] - rtip->mdl_min[Z]) / 2.0;
 
 	/*  Put region names into structure.  */
 	pr = BU_LIST_FIRST(region, &rtip->HeadRegion);
@@ -373,7 +373,7 @@ int main(int argc, char **argv)
 	ap.a_level = 0;		/*  Recursion level for diagnostics.  */
 	ap.a_resource = 0;	/*  Address for resource structure.  */
 
-	dump = 1000000.;	/*  Used for dumping info.  */
+	dump = 1000000.0;	/*  Used for dumping info.  */
 
 	for (r=0; r<loops; r++)	/*  Number of rays fired.  */
 	{
@@ -390,7 +390,7 @@ int main(int argc, char **argv)
 		* (rtip->mdl_max[Y] - rtip->mdl_min[Y])
 		+(rtip->mdl_max[Z] - rtip->mdl_min[Z])
 		* (rtip->mdl_max[Z] - rtip->mdl_min[Z]);
-	    rho = sqrt(rho) / 2. + .5;
+	    rho = sqrt(rho) / 2.0 + .5;
 
 	    /*  find surface area of bounding sphere.  */
 	    areabs = 4. * M_PI * rho * rho;
@@ -413,7 +413,7 @@ int main(int argc, char **argv)
 	     *	   (void)fflush(stdout);
 	     */
 	    q = BN_UNIF_DOUBLE(msr) + 0.5;
-	    phi = ( q * 2.) - 1.;
+	    phi = ( q * 2.0) - 1.0;
 	    phi = acos(phi);
 	    /*
 	     *	   printf("random number:  %f, phi:  %f\n", q, phi);
@@ -450,7 +450,7 @@ int main(int argc, char **argv)
 	     *	   printf("random number:  %f, rad:  %f\n", q, rad);
 	     *	   (void)fflush(stdout);
 	     */
-	    s[X] = 0.;
+	    s[X] = 0.0;
 	    s[Y] = rad * cos(theta);
 	    s[Z] = rad * sin(theta);
 	    /*
@@ -548,7 +548,7 @@ int main(int argc, char **argv)
 		    {
 			for (j=0; j<numreg; j++)
 			{
-			    sf = 0.;
+			    sf = 0.0;
 			    if ( (info[i].lvrays < -ZEROTOL) || (ZEROTOL <
 								 info[i].lvrays) )
 				sf = info[i].intrays[j] / info[i].lvrays;
@@ -559,7 +559,7 @@ int main(int argc, char **argv)
 		    }
 		}						/*  START # 3  */
 
-		dump = dump + 1000000.;
+		dump = dump + 1000000.0;
 	    }
 
 	}					/*  END # 2  */
@@ -571,7 +571,7 @@ int main(int argc, char **argv)
 	    /*  ray therefore do not divide by 2.  Division by 2 is to  */
 	    /*  include the backwards ray also.  */
 	    /*
-	     *	  info[i].engarea = info[i].allvrays * areabs / loops / 2.;
+	     *	  info[i].engarea = info[i].allvrays * areabs / loops / 2.0;
 	     */
 	    info[i].engarea = info[i].allvrays * areabs / (double)loops;
 
@@ -640,23 +640,23 @@ int main(int argc, char **argv)
 	{
 	    for (j=0; j<numreg; j++)
 	    {
-		rcpi = 0.;
-		rcpj = 0.;
+		rcpi = 0.0;
+		rcpj = 0.0;
 		if ( (info[i].lvrays < -ZEROTOL) || (ZEROTOL < info[i].lvrays) )
 		    rcpi = info[i].intrays[j] * info[i].engarea /info[i].lvrays;
 		if ( (info[j].lvrays < -ZEROTOL) || (ZEROTOL < info[j].lvrays) )
 		    rcpj = info[j].intrays[i] * info[j].engarea /info[j].lvrays;
 		rcp_diff = rcpi - rcpj;
-		if (rcp_diff < 0.) rcp_diff = (-rcp_diff);
+		if (rcp_diff < 0.0) rcp_diff = (-rcp_diff);
 		if ( (rcpi < -ZEROTOL) || (ZEROTOL < rcpi) )
 		    rcp_pdiff = rcp_diff / rcpi;
-		else rcp_pdiff = 0.;	/*  Don't divide by 0.  */
+		else rcp_pdiff = 0.0;	/*  Don't divide by 0.  */
 		/*  Print reciprocity errors greater than 10%.  */
 		if (rcp_pdiff > 0.1)
 		{
 		    fprintf(fp2, "%d   %d   %f   %f   %f   %f\n",
 				  info[i].regnum, info[j].regnum, rcpi, rcpj, rcp_diff,
-				  (rcp_pdiff * 100.));
+				  (rcp_pdiff * 100.0));
 		    (void)fflush(fp2);
 		}
 	    }
@@ -682,12 +682,12 @@ int main(int argc, char **argv)
 		(void)fflush(fp);
 
 		/*  Zero sums for shape factors & rays hit.  */
-		totalsf = 0.;
-		totalnh = 0.;
+		totalsf = 0.0;
+		totalnh = 0.0;
 
 		for (j=0; j<numreg; j++)
 		{
-		    sf = 0.;
+		    sf = 0.0;
 		    if ( (info[i].lvrays < -ZEROTOL) || (ZEROTOL <
 							 info[i].lvrays) )
 			sf = info[i].intrays[j] / info[i].lvrays;
@@ -988,7 +988,7 @@ miss(struct application *UNUSED(ap))
      * (void)fflush(stdout);
      */
 
-    nummiss = nummiss + 1.;
+    nummiss = nummiss + 1.0;
 
     return 1;
 }

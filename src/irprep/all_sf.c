@@ -203,13 +203,13 @@ int main(int argc, char **argv)
 	{
 	    /*  START # 110  */
 	    info[i].name = "\0";
-	    info[i].lvrays = 0.;
+	    info[i].lvrays = 0.0;
 	    for (j=0; j<numreg; j++)
 	    {
-		info[i].intrays[j] = 0.;
-		info[i].sf[j] = 0.;
+		info[i].intrays[j] = 0.0;
+		info[i].sf[j] = 0.0;
 	    }
-	    info[i].regarea = 0.;
+	    info[i].regarea = 0.0;
 	}						/*  END # 110  */
 
 	/*  Get database ready by starting prep.  */
@@ -217,11 +217,11 @@ int main(int argc, char **argv)
 
 	/*  Find the center of the bounding rpp of entire model.  */
 	centall[X] = rtip->mdl_min[X] +
-	    (rtip->mdl_max[X] - rtip->mdl_min[X]) / 2.;
+	    (rtip->mdl_max[X] - rtip->mdl_min[X]) / 2.0;
 	centall[Y] = rtip->mdl_min[Y] +
-	    (rtip->mdl_max[Y] - rtip->mdl_min[Y]) / 2.;
+	    (rtip->mdl_max[Y] - rtip->mdl_min[Y]) / 2.0;
 	centall[Z] = rtip->mdl_min[Z] +
-	    (rtip->mdl_max[Z] - rtip->mdl_min[Z]) / 2.;
+	    (rtip->mdl_max[Z] - rtip->mdl_min[Z]) / 2.0;
 
 	/*  Find minimum and maximum of entire model.  */
 	minall[X] = rtip->mdl_min[X];
@@ -236,7 +236,7 @@ int main(int argc, char **argv)
 	    + (maxall[Y] - minall[Y]) * (maxall[Y] - minall[Y])
 	    + (maxall[Z] - minall[Z]) * (maxall[Z] - minall[Z]);
 	/*  Add .5 to make sure completely outside the rpp.  */
-	radall = sqrt(radall) / 2. + .5;
+	radall = sqrt(radall) / 2.0 + .5;
 
 	/*  Find surface area of bounding sphere.  */
 	areaall = 4 * M_PI * radall * radall;
@@ -354,7 +354,7 @@ int main(int argc, char **argv)
 	    theta = q * 2. * M_PI;
 
 	    q = BN_UNIF_DOUBLE(msr) + 0.5;
-	    phi = (q * 2.) - 1.;
+	    phi = (q * 2.0) - 1.0;
 	    phi = acos(phi);
 
 	    rho = radall;
@@ -373,7 +373,7 @@ int main(int argc, char **argv)
 
 	    q = BN_UNIF_DOUBLE(msr) + 0.5;
 	    rds = rho * sqrt(q);
-	    s[X] = 0.;
+	    s[X] = 0.0;
 	    s[Y] = rds * cos(theta);
 	    s[Z] = rds * sin(theta);
 
@@ -452,7 +452,7 @@ int main(int argc, char **argv)
 	    {
 		/*  START # 1070  */
 		/*  Must divide by 2. since looking forwards & backwards.  */
-		info[i].regarea = info[i].lvrays / rayfir * areaall / 2.;
+		info[i].regarea = info[i].lvrays / rayfir * areaall / 2.0;
 		for (j=0; j<numreg; j++)
 		{
 		    /*  START # 1080  */
@@ -484,7 +484,7 @@ int main(int argc, char **argv)
 	    fprintf(fpw2, "Region\tArea\tEmissivity\n");
 	    /*  Area is put into square meters.  */
 	    fprintf(fpw2, "%d\t%f\n", (i + 1),
-			  (info[i].regarea / 1000. / 1000.));
+			  (info[i].regarea / 1000. / 1000.0));
 
 	    /*  Count the number of shape factors.  */
 	    k = 0;
@@ -564,12 +564,12 @@ hit(struct application *UNUSED(ap_p), struct partition *PartHeadp, struct seg *U
     rh2 = (-1);
 
     /*  Set leave & enter points to show no hits yet.  */
-    lvpt[X] = (-999.);
-    lvpt[Y] = (-999.);
-    lvpt[Z] = (-999.);
-    entpt[X] = (-999.);
-    entpt[Y] = (-999.);
-    entpt[Z] = (-999.);
+    lvpt[X] = (-999.0);
+    lvpt[Y] = (-999.0);
+    lvpt[Z] = (-999.0);
+    entpt[X] = (-999.0);
+    entpt[Y] = (-999.0);
+    entpt[Z] = (-999.0);
 
     /*  Set for first region.  */
     pp = PartHeadp->pt_forw;
@@ -594,7 +594,7 @@ hit(struct application *UNUSED(ap_p), struct partition *PartHeadp, struct seg *U
 	    lvpt[Z] = hitp->hit_point[Z];
 
 	    /*  Increment backwards for hitting ray.  */
-	    info[rh1].lvrays += 1.;
+	    info[rh1].lvrays += 1.0;
 
 	}						/*  END # 1020  */
 
@@ -618,9 +618,9 @@ hit(struct application *UNUSED(ap_p), struct partition *PartHeadp, struct seg *U
 	    tol[X] = lvpt[X] - entpt[X];
 	    tol[Y] = lvpt[Y] - entpt[Y];
 	    tol[Z] = lvpt[Z] - entpt[Z];
-	    if (tol[X] < 0.) tol[X] = (-tol[X]);
-	    if (tol[Y] < 0.) tol[Y] = (-tol[Y]);
-	    if (tol[Z] < 0.) tol[Z] = (-tol[Z]);
+	    if (tol[X] < 0.0) tol[X] = (-tol[X]);
+	    if (tol[Y] < 0.0) tol[Y] = (-tol[Y]);
+	    if (tol[Z] < 0.0) tol[Z] = (-tol[Z]);
 
 	    if ( (tol[X] < VDIVIDE_TOL) && (tol[Y] < VDIVIDE_TOL) && (tol[Z] < VDIVIDE_TOL) )
 	    {
@@ -632,12 +632,12 @@ hit(struct application *UNUSED(ap_p), struct partition *PartHeadp, struct seg *U
 		/*  START # 1040  */
 		/*  The points are not the same; therefore, increment  */
 		/*  appropriately.  */
-		info[rh1].lvrays += 1.;
-		info[rh1].intrays[rh2] += 1.;
+		info[rh1].lvrays += 1.0;
+		info[rh1].intrays[rh2] += 1.0;
 
 		/*  Increment backwards also.  */
-		info[rh2].lvrays += 1.;
-		info[rh2].intrays[rh1] += 1.;
+		info[rh2].lvrays += 1.0;
+		info[rh2].intrays[rh1] += 1.0;
 	    }						/*  END # 1040  */
 
 	    /*  Find info for 1st region.  */
@@ -655,7 +655,7 @@ hit(struct application *UNUSED(ap_p), struct partition *PartHeadp, struct seg *U
     }							/*  END # 1010  */
 
     /*  Increment the leaving ray since it leaves & doesn't hit anything.  */
-    info[rh1].lvrays += 1.;
+    info[rh1].lvrays += 1.0;
 
     return 0;
 }							/*  END # 1000  */
