@@ -4907,8 +4907,6 @@ namespace eval ArcherCore {
     set obj [lindex [split $_path /] end]
 
     if {$mEnableListView} {
-	set mSelectedObj $obj
-	set mSelectObjPath $obj
 	$itk_component(newtree) selection set [lindex [lindex $mText2Node($obj) 0] 0]
 	$itk_component(newtree) see [lindex [lindex $mText2Node($obj) 0] 0]
     } else {
@@ -4920,13 +4918,8 @@ namespace eval ArcherCore {
 	    set mSelectedObj ""
 	    putString $_path
 	} else {
-	    set mSelectedObj $obj
 	    $itk_component(newtree) selection set $snode
 	    $itk_component(newtree) see $snode
-	    foreach pnode [lreverse [findTreeParentNodes $snode]] {
-		append mSelectedObjPath $mNode2Text($pnode) "/"
-	    }
-	    append mSelectedObjPath $mNode2Text($snode)
 	}
     }
 }
