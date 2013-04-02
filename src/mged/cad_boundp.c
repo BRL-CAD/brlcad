@@ -228,7 +228,7 @@ Chop(void)					/* chop vectors into segments */
 	    coords temp;		/* store for swapping */
 
 #ifdef DEBUG
-	    fprintf(stderr, "endpoints swapped");
+	    fprintf(stderr, "  endpoints swapped\n");
 #endif
 	    temp = inp->sxy;
 	    inp->sxy = inp->exy;
@@ -268,7 +268,7 @@ Chop(void)					/* chop vectors into segments */
 		}
 	    }
 #ifdef DEBUG
-	fprintf(stderr, "new input pieces:");
+	fprintf(stderr, "  new input pieces:");
 	for (pp = piecehead.links; pp != &piecehead;
 	     pp = pp->links
 	    )
@@ -278,7 +278,7 @@ Chop(void)					/* chop vectors into segments */
 		    (double)pp->exy.x,
 		    (double)pp->exy.y
 		);
-	fprintf(stderr, "other segments:");
+	fprintf(stderr, "\n  other segments:");
 	for (segp = seghead.links; segp != &seghead;
 	     segp = segp->links
 	    )
@@ -289,6 +289,7 @@ Chop(void)					/* chop vectors into segments */
 		    (double)segp->exy.y
 		);
 #endif
+	fprintf(stderr, "\n");
 
 	/* Put input segment pieces into segment list. */
 
@@ -316,7 +317,7 @@ Split(coords *p, segment *oldp, segment *listh) 		/* split segment in two */
     segment *newp;	/* -> new list entry */
 
 #ifdef DEBUG
-    fprintf(stderr, "split (%g, %g) -> (%g, %g) at (%g, %g)",
+    fprintf(stderr, "  split (%g, %g) -> (%g, %g) at (%g, %g)\n",
 	    (double)oldp->sxy.x, (double)oldp->sxy.y,
 	    (double)oldp->exy.x, (double)oldp->exy.y,
 	    (double)p->x, (double)p->y
@@ -581,7 +582,7 @@ Intersect(segment *a, segment *b)			/* determine intersection */
 	FMIN(b->sxy.y, b->exy.y) - tolerance	/* b bottom */
 	) {
 #ifdef DEBUG
-	fprintf(stderr, "ranges don't intersect");
+	fprintf(stderr, "  ranges don't intersect\n");
 #endif
 	return NULL;		/* can't intersect */
     }
@@ -612,7 +613,7 @@ Intersect(segment *a, segment *b)			/* determine intersection */
 #define EPSILON 1.0e-06 		/* relative `det' size thresh */
 	if (fabs(det) <= EPSILON * norm * norm) {
 #ifdef DEBUG
-	    fprintf(stderr, "parallel: det=%g, norm=%g", det, norm);
+	    fprintf(stderr, "  parallel: det=%g, norm=%g\n", det, norm);
 #endif
 	    return NULL;		/* parallels don't intersect */
 	}
@@ -634,7 +635,7 @@ Intersect(segment *a, segment *b)			/* determine intersection */
 	p.y = onemmu * a->sxy.y + mu * a->exy.y;
 	if ((onemmu < 0.0 || mu < 0.0) && !EndPoint(&p, a)) {
 #ifdef DEBUG
-	    fprintf(stderr, "intersect off (%g, %g)->(%g, %g): mu=%g",
+	    fprintf(stderr, "  intersect off (%g, %g)->(%g, %g): mu=%g\n",
 		    (double)a->sxy.x, (double)a->sxy.y,
 		    (double)a->exy.x, (double)a->exy.y,
 		    mu
@@ -656,7 +657,7 @@ Intersect(segment *a, segment *b)			/* determine intersection */
 	}
 
 #ifdef DEBUG
-	fprintf(stderr, "intersection is (%g, %g): mu=%g lambda=%g",
+	fprintf(stderr, "  intersection is (%g, %g): mu=%g lambda=%g\n",
 		(double)p.x, (double)p.y, mu, lambda
 	    );
 #endif
@@ -672,7 +673,7 @@ EndPoint(coords *p, segment *segp)			/* check for segment endpoint */
 {
 #ifdef DEBUG
     if (Near(p, &segp->sxy) || Near(p, &segp->exy))
-	fprintf(stderr, "(%g, %g) is endpt of (%g, %g)->(%g, %g)",
+	fprintf(stderr, "  (%g, %g) is endpt of (%g, %g)->(%g, %g)\n",
 		(double)p->x, (double)p->y,
 		(double)segp->sxy.x, (double)segp->sxy.y,
 		(double)segp->exy.x, (double)segp->exy.y
@@ -697,7 +698,7 @@ Near(coords *ap, coords *bp)				/* check if within tolerance */
 
 #ifdef DEBUG
     if (xsq + ysq <= tolsq)
-	fprintf(stderr, "(%g, %g) is near (%g, %g)",
+	fprintf(stderr, "  (%g, %g) is near (%g, %g)\n",
 		(double)ap->x, (double)ap->y,
 		(double)bp->x, (double)bp->y
 	    );
@@ -752,7 +753,7 @@ Input(segment *inp)				/* input stroke record */
 	if (cvt == 4)
 	    return 1;	/* successfully converted */
 
-	fprintf(stderr, "bad input: %s", inbuf);
+	fprintf(stderr, "\n  bad input: %s", inbuf);
 	bu_exit(5, NULL);		/* return false insufficient */
     }
 
