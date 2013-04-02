@@ -45,7 +45,7 @@ static void Output(double result), Usage(void);
 static void
 Usage(void) 				/* print usage message */
 {
-    printf("Usage: cad_parea[ -i input][ -o output]\n");
+    printf("Usage: cad_parea [ -i input] [ -o output]\n");
 }
 
 
@@ -112,7 +112,7 @@ GetArgs(int argc, const char *argv[])			/* process command arguments */
 		if (!BU_STR_EQUAL(bu_optarg, "-")
 		    && freopen(bu_optarg, "r", stdin) == NULL
 		    ) {
-		    printf("cad_parea: can't open \"%s\"\n", bu_optarg);
+		    printf("cad_parea: can't open \"%s\" for reading\n", bu_optarg);
 		    return 0;
 		}
 		break;
@@ -127,12 +127,13 @@ GetArgs(int argc, const char *argv[])			/* process command arguments */
 		if (!BU_STR_EQUAL(bu_optarg, "-")
 		    && freopen(bu_optarg, "w", stdout) == NULL
 		    ) {
-		    printf("cad_parea: can't create \"%s\"\n", bu_optarg);
+		    printf("cad_parea: can't open \"%s\" for writing\n", bu_optarg);
 		    return 0;
 		}
 		break;
 
 	    case '?':
+	    case 'h':
 		Usage();	/* print usage message */
 		return 0;
 	}
