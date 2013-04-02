@@ -491,6 +491,7 @@ append_solid_to_display_list(
 	}
     }
 
+    sp->s_vlen = 0;
     db_dup_full_path(&sp->s_fullpath, pathp);
     sp->s_flag = DOWN;
     sp->s_iflag = DOWN;
@@ -1316,6 +1317,10 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 		    }
 
 		    for (BU_LIST_FOR(sp, solid, &gdlp->gdl_headSolid)) {
+			if (sp->s_vlen > 0) {
+			    /* skip previously draw solid */
+			    continue;
+			}
 			ret = redraw_solid(gedp, sp);
 			if (ret < 0) {
 			    bu_vls_printf(gedp->ged_result_str,
