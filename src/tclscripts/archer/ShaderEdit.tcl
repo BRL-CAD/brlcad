@@ -663,7 +663,7 @@
 		foreach s { 0 1 2 3 4 5 6 7 8 9 } {
 		    set lightImages(light_i${i}_v${v}_s${s}) \
 			[image create photo -file \
-			     [file join [bu_brlcad_data "tclscripts"] mged l_i${i}_v${v}_s${s}.gif]]
+			     [file join [bu_brlcad_data "tclscripts"] archer images l_i${i}_v${v}_s${s}.gif]]
 		}
 	    }
 	}
