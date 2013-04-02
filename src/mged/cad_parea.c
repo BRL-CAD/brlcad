@@ -100,7 +100,7 @@ GetArgs(int argc, const char *argv[])			/* process command arguments */
     int c;		/* option letter */
 
     bu_optind = 1;
-    while ((c = bu_getopt(argc, (char * const *)argv, "i:o:")) != -1)
+    while ((c = bu_getopt(argc, (char * const *)argv, "i:o:h?")) != -1)
 	switch (c) {
 	    case 'i':
 		if (iflag) {
