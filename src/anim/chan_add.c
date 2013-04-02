@@ -39,8 +39,7 @@ main(int argc, char **argv)
     double addend, temp;
     int i, j, doit, of, count, val, *col_list;
 
-
-    if (argc < 3) {
+    if (argc < 4) {
 	fprintf(stderr, "Usage: chan_add value num_columns column [column ...] < in.file > out.file\n");
 	return -1;
     }
