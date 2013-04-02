@@ -78,6 +78,7 @@ extern "C" {
     int rt_brep_class(const struct soltab *stp, const fastf_t *min, const fastf_t *max, const struct bn_tol *tol);
     void rt_brep_uv(struct application *ap, struct soltab *stp, register struct hit *hitp, register struct uvcoord *uvp);
     void rt_brep_free(register struct soltab *stp);
+    int rt_brep_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info);
     int rt_brep_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol, const struct rt_view_info *UNUSED(info));
     int rt_brep_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol);
     int rt_brep_export5(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip);
@@ -2609,6 +2610,94 @@ void plot_face_trim(struct bu_list *vhead, ON_BrepFace &face, int plotres,
     return;
 }
 
+int
+rt_brep_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
+{
+    TRACE1("rt_brep_adaptive_plot");
+    struct rt_brep_internal* bi;
+    point_t pt1, pt2;
+    int i, j;
+
+    BU_CK_LIST_HEAD(info->vhead);
+    RT_CK_DB_INTERNAL(ip);
+    bi = (struct rt_brep_internal*)ip->idb_ptr;
+    RT_BREP_CK_MAGIC(bi);
+
+    ON_Brep* brep = bi->brep;
+    int gridres = 10;
+    int isocurveres = 100;
+
+    for (int index = 0; index < brep->m_F.Count(); index++) {
+	ON_BrepFace& face = brep->m_F[index];
+	const ON_Surface *surf = face.SurfaceOf();
+
+	if (surf->IsClosed(0) || surf->IsClosed(1)) {
+	    ON_SumSurface *sumsurf = const_cast<ON_SumSurface *> (ON_SumSurface::Cast(surf));
+	    if (sumsurf != NULL) {
+		SurfaceTree* st = new SurfaceTree(&face, true, 2);
+
+		plot_face_from_surface_tree(info->vhead, st, isocurveres, gridres);
+
+		delete st;
+	    } else {
+		ON_RevSurface *revsurf = const_cast<ON_RevSurface *> (ON_RevSurface::Cast(surf));
+
+		if (revsurf != NULL) {
+		    SurfaceTree* st = new SurfaceTree(&face, true, 0);
+
+		    plot_face_from_surface_tree(info->vhead, st, isocurveres, gridres);
+
+		    delete st;
+		}
+	    }
+	}
+    }
+
+    for (i = 0; i < bi->brep->m_E.Count(); i++) {
+	ON_BrepEdge& e = brep->m_E[i];
+	const ON_Curve* crv = e.EdgeCurveOf();
+
+	if (crv->IsLinear()) {
+	    ON_BrepVertex& v1 = brep->m_V[e.m_vi[0]];
+	    ON_BrepVertex& v2 = brep->m_V[e.m_vi[1]];
+	    VMOVE(pt1, v1.Point());
+	    VMOVE(pt2, v2.Point());
+	    RT_ADD_VLIST(info->vhead, pt1, BN_VLIST_LINE_MOVE);
+	    RT_ADD_VLIST(info->vhead, pt2, BN_VLIST_LINE_DRAW);
+	} else {
+	    ON_BoundingBox bbox;
+	    double bbox_len = 0.0;
+
+	    if (crv->GetTightBoundingBox(bbox)) {
+		bbox_len = bbox.Diagonal().Length();
+	    } else {
+		bu_log("invalid curve bounding box\n");
+	    }
+
+	    // estimate curve length from curve bbox diagonal length
+	    double est_curve_len = bbox_len * .8;
+	    double num_steps = est_curve_len / info->point_spacing;
+	    double step = 1.0 / num_steps;
+	    ON_Interval dom = crv->Domain();
+	    ON_3dPoint p;
+
+	    p = crv->PointAt(dom.ParameterAt(0.0));
+	    VMOVE(pt1, p);
+	    RT_ADD_VLIST(info->vhead, pt1, BN_VLIST_LINE_MOVE);
+
+	    for (double domainval = step; domainval < 1.0; domainval += step) {
+		p = crv->PointAt(dom.ParameterAt(domainval));
+		VMOVE(pt1, p);
+		RT_ADD_VLIST(info->vhead, pt1, BN_VLIST_LINE_DRAW);
+	    }
+	    p = crv->PointAt(dom.ParameterAt(1.0));
+	    VMOVE(pt1, p);
+	    RT_ADD_VLIST(info->vhead, pt1, BN_VLIST_LINE_DRAW);
+	}
+    }
+
+    return 0;
+}
 
 /**
  * R T _ B R E P _ P L O T

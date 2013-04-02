@@ -1689,7 +1689,7 @@ const struct rt_functab rt_functab[] = {
 	rt_brep_class,
 	rt_brep_free,
 	rt_brep_plot,
-	NULL,
+	rt_brep_adaptive_plot,
 	NULL,
 	rt_brep_tess,
 	NULL,
