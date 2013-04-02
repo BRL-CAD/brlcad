@@ -5999,7 +5999,7 @@ namespace eval ArcherCore {
     }
     set i [lindex $list end]
     incr i
-    
+
     set oname [lindex $args $i]
     selectTreePath $oname
 }
