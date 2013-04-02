@@ -67,6 +67,8 @@
 	    Plastic
 	    Mirror
 	    Glass
+	    Light
+	    Cloud
 	    Unlisted
 	    None
 	}
@@ -75,6 +77,8 @@
 	    plastic
 	    mirror
 	    glass
+	    light
+	    cloud
 	    unlisted
 	    ""
 	}
@@ -83,6 +87,8 @@
 	    {Plastic plastic}
 	    {Mirror mirror}
 	    {Glass glass}
+	    {Light light}
+	    {Cloud cloud}
 	    {Unlisted unlisted}
 	    {None ""}
 	}
@@ -132,7 +138,7 @@
 	common DEF_LIGHT_LUMENS 1.0
 	common DEF_LIGHT_INFINITE 0
 	common DEF_LIGHT_VISIBLE 1
-	common DEF_LIGHT_ICON ""
+	common DEF_LIGHT_SHADOW_RAYS 0
 
 	common DEF_TEXTURE_FILE ""
 	common DEF_TEXTURE_MIRROR 0
@@ -184,9 +190,10 @@
 	variable lightAngle
 	variable lightTarget
 	variable lightLumens
+	variable lightShadowRays
 	variable lightInfinite
 	variable lightVisible
-	variable lightIcon
+	variable lightImages
 
 	variable textureFile
 	variable textureMirror
@@ -231,6 +238,7 @@
 	method build_plastic {parent id}
 	method build_mirror {parent id}
 	method build_glass {parent id}
+	method build_cloud {parent id}
 	method buildPhong {parent id}
 
 	method build_light {parent id}
@@ -255,6 +263,12 @@
 
 	method updatePhongForm {id}
 
+	method updateForm_cloud {id}
+	method setFormDefaults_cloud {id}
+
+	method updateForm_light {id}
+	method setFormDefaults_light {id}
+
 	method updateForm_unlisted {id}
 
 	method validateDouble_plastic {id d}
@@ -265,6 +279,12 @@
 
 	method validateDouble_glass {id d}
 	method updateGlassSpec {id}
+
+	method validateDouble_light {id d}
+	method updateLightSpec {id {_unused ""}}
+
+	method validateDouble_cloud {id d}
+	method updateCloudSpec {id}
 
 	method updateUnlistedSpec {id}
     }
@@ -363,6 +383,55 @@
 
     bind $itk_component(shaderCB) <<ComboboxSelected>> [::itcl::code $this changeShader]
 }
+
+
+::itcl::body ShaderEdit::build_cloud {parent id} {
+    set shaderType "cloud"
+    set shaderTypeUnlisted 0
+
+    itk_component add cloud$id\F {
+	::ttk::frame $parent.cloud$id\F
+    } {}
+
+    set parent $itk_component(cloud$id\F)
+
+    itk_component add cloudthreshold$id\L {
+	::ttk::label $parent.cloudthreshold$id\L \
+	    -text "Threshold"
+    } {}
+
+    itk_component add cloudthreshold$id\E {
+	::ttk::entry $parent.cloudthreshold$id\E \
+	    -width 5 \
+	    -textvariable [::itcl::scope cloudThreshold($id)] \
+	    -validate key \
+	    -validatecommand [::itcl::code $this validateDouble_cloud $id %P]
+    } {}
+
+    itk_component add cloudrange$id\L {
+	::ttk::label $parent.cloudrange$id\L \
+	    -text "Range"
+    } {}
+
+    itk_component add cloudrange$id\E {
+	::ttk::entry $parent.cloudrange$id\E \
+	    -width 5 \
+	    -textvariable [::itcl::scope cloudRange($id)] \
+	    -validate key \
+	    -validatecommand [::itcl::code $this validateDouble_cloud $id %P]
+    } {}
+
+    set row 0
+    grid $itk_component(cloudthreshold$id\L) -row $row -column 0 -sticky e
+    grid $itk_component(cloudthreshold$id\E) -row $row -column 1 -sticky w
+    grid $itk_component(cloudrange$id\L) -row $row -column 2 -sticky e
+    grid $itk_component(cloudrange$id\E) -row $row -column 3 -sticky w
+
+    pack $itk_component(cloud$id\F) -expand yes -fill both
+
+    setFormDefaults_cloud $id
+}
+
 
 ::itcl::body ShaderEdit::build_plastic {parent id} {
     set shaderType "plastic"
@@ -525,14 +594,7 @@
     set shaderType "light"
     set shaderTypeUnlisted 0
     buildLight $parent $id
-
-    set lightFraction($id) $DEF_LIGHT_FRACTION
-    set lightAngle($id) $DEF_LIGHT_ANGLE
-    set lightTarget($id) $DEF_LIGHT_TARGET
-    set lightLumens($id) $DEF_LIGHT_LUMENS
-    set lightInfinite($id) $DEF_LIGHT_INFINITE
-    set lightVisible($id) $DEF_LIGHT_VISIBLE
-    set lightIcon($id) $DEF_LIGHT_ICON
+    setFormDefaults_light $id
 }
 
 ::itcl::body ShaderEdit::buildLight {parent id} {
@@ -552,7 +614,7 @@
 	    -width 5 \
 	    -textvariable [::itcl::scope lightFraction($id)] \
 	    -validate key \
-	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
+	    -validatecommand [::itcl::code $this validateDouble_light $id %P]
     } {}
 
     itk_component add lightAngle$id\L {
@@ -565,7 +627,7 @@
 	    -width 5 \
 	    -textvariable [::itcl::scope lightAngle($id)] \
 	    -validate key \
-	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
+	    -validatecommand [::itcl::code $this validateDouble_light $id %P]
     } {}
 
     itk_component add lightTarget$id\L {
@@ -578,7 +640,7 @@
 	    -width 5 \
 	    -textvariable [::itcl::scope lightTarget($id)] \
 	    -validate key \
-	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
+	    -validatecommand [::itcl::code $this validateDouble_light $id %P]
     } {}
 
     itk_component add lightLumens$id\L {
@@ -591,8 +653,75 @@
 	    -width 5 \
 	    -textvariable [::itcl::scope lightLumens($id)] \
 	    -validate key \
-	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
+	    -validatecommand [::itcl::code $this validateDouble_light $id %P]
     } {}
+
+    # Load the images
+    if {![info exists lightImages(light_i0_v0_s0)]} {
+	foreach i { 0 1 } {
+	    foreach v { 0 1 } {
+		foreach s { 0 1 2 3 4 5 6 7 8 9 } {
+		    set lightImages(light_i${i}_v${v}_s${s}) \
+			[image create photo -file \
+			     [file join [bu_brlcad_data "tclscripts"] mged l_i${i}_v${v}_s${s}.gif]]
+		}
+	    }
+	}
+    }
+
+    itk_component add lightImage$id\L {
+	::ttk::label $parent.lightImage$id\L \
+	    -relief sunken \
+	    -padding 0 \
+	    -image $lightImages(light_i0_v0_s0)
+    } {}
+
+    itk_component add lightScale$id\S {
+	scale $parent.lightScale$id\S \
+	    -orient horiz \
+	    -label "Shadow Rays" \
+	    -from 0 \
+	    -to 64 \
+	    -bd 1 \
+	    -relief sunken \
+	    -variable [::itcl::scope lightShadowRays($id)] \
+	    -command [::itcl::code $this updateLightSpec $id]
+    }
+
+    itk_component add lightInfinite$id\CB {
+	::ttk::checkbutton $parent.lightInfinite$id\CB \
+	    -text "Infinite" \
+	    -variable [::itcl::scope lightInfinite($id)] \
+	    -command [::itcl::code $this updateLightSpec $id]
+    } {}
+
+    itk_component add lightVisible$id\CB {
+	::ttk::checkbutton $parent.lightVisible$id\CB \
+	    -text "Visible" \
+	    -variable [::itcl::scope lightVisible($id)] \
+	    -command [::itcl::code $this updateLightSpec $id]
+    } {}
+
+    set row 0
+    grid $itk_component(lightFraction$id\L) -row $row -column 0 -sticky e
+    grid $itk_component(lightFraction$id\E) -row $row -column 1 -sticky w
+    grid $itk_component(lightAngle$id\L) -row $row -column 2 -sticky e
+    grid $itk_component(lightAngle$id\E) -row $row -column 3 -sticky w
+    incr row
+    grid $itk_component(lightTarget$id\L) -row $row -column 0 -sticky e
+    grid $itk_component(lightTarget$id\E) -row $row -column 1 -sticky w
+    grid $itk_component(lightLumens$id\L) -row $row -column 2 -sticky e
+    grid $itk_component(lightLumens$id\E) -row $row -column 3 -sticky w
+    incr row
+    grid $itk_component(lightScale$id\S) -row $row -column 0 -columnspan 2 -sticky ew -padx 2 -pady 2
+    set irow $row
+    incr row
+    grid $itk_component(lightInfinite$id\CB) -row $row -column 0
+    grid $itk_component(lightVisible$id\CB) -row $row -column 1
+
+    grid $itk_component(lightImage$id\L) -row $irow -column 2 -columnspan 2 -rowspan 2 -padx 2 -pady 2
+
+    pack $itk_component(light$id\F) -expand yes -fill both
 }
 
 ::itcl::body ShaderEdit::build_unlisted {parent id} {
@@ -671,6 +800,9 @@
 	}
 	"Glass" {
 	    set stype glass
+	}
+	"Cloud" {
+	    set stype cloud
 	}
 	"Unlisted" {
 	    set stype unlisted
@@ -875,6 +1007,111 @@
     set ignoreShaderSpec 0
 }
 
+::itcl::body ShaderEdit::updateForm_cloud {id} {
+    setFormDefaults_cloud $id
+
+    set ignoreShaderSpec 1
+    foreach {key val} [lindex $shaderSpec 1] {
+	if {$val != ""} {
+	    set notEmptyVal 1
+	} else {
+	    set notEmptyVal 0
+	}
+
+	switch -- $key {
+	    "range" {
+		if {$notEmptyVal && [string is double $val]} {
+		    set cloudRange($id) $val
+		}
+	    }
+	    "thresh" {
+		if {$notEmptyVal && [string is double $val]} {
+		    set cloudThreshold($id) $val
+		}
+	    }
+	}
+    }
+    set ignoreShaderSpec 0
+}
+
+::itcl::body ShaderEdit::setFormDefaults_light {id} {
+    set ignoreShaderSpec 1
+
+    set lightFraction($id) $DEF_LIGHT_FRACTION
+    set lightAngle($id) $DEF_LIGHT_ANGLE
+    set lightTarget($id) $DEF_LIGHT_TARGET
+    set lightLumens($id) $DEF_LIGHT_LUMENS
+    set lightInfinite($id) $DEF_LIGHT_INFINITE
+    set lightVisible($id) $DEF_LIGHT_VISIBLE
+    set lightShadowRays($id) $DEF_LIGHT_SHADOW_RAYS
+
+    set ignoreShaderSpec 0
+}
+
+::itcl::body ShaderEdit::updateForm_light {id} {
+    setFormDefaults_light $id
+
+    set ignoreShaderSpec 1
+    foreach {key val} [lindex $shaderSpec 1] {
+	if {$val != ""} {
+	    set notEmptyVal 1
+	} else {
+	    set notEmptyVal 0
+	}
+
+	switch -- $key {
+	    "a" {
+		if {$notEmptyVal && [string is double $val]} {
+		    set lightAngle($id) $val
+		}
+	    }
+	    "b" {
+		if {$notEmptyVal && [string is double $val]} {
+		    set lightLumens($id) $val
+		}
+	    }
+	    "d" {
+		if {[llength $val] == 3} {
+		    set x [lindex $val 0]
+		    set y [lindex $val 1]
+		    set z [lindex $val 2]
+		    if {$notEmptyVal &&
+			[string is double $x] &&
+			[string is double $y] &&
+			[string is double $z]} {
+			set lightTarget($id) $val
+		    }
+		}
+	    }
+	    "f" {
+		if {$notEmptyVal && [string is double $val]} {
+		    set lightFraction($id) $val
+		}
+	    }
+	    "i" {
+		if {$notEmptyVal && [string is double $val]} {
+		    set lightInfinite($id) $val
+		}
+	    }
+	    "s" {
+		if {$notEmptyVal && [string is digit $val]} {
+		    set lightShadowRays($id) $val
+		}
+	    }
+	}
+    }
+    set ignoreShaderSpec 0
+}
+
+::itcl::body ShaderEdit::setFormDefaults_cloud {id} {
+    set ignoreShaderSpec 1
+
+    set cloudThreshold($id) $DEF_CLOUD_THRESHOLD
+    set cloudRange($id) $DEF_CLOUD_RANGE
+
+    set ignoreShaderSpec 0
+}
+
 ::itcl::body ShaderEdit::updateForm_unlisted {id} {
     set ignoreShaderSpec 1
 
@@ -891,6 +1128,130 @@
     }
 
     set ignoreShaderSpec 0
+}
+
+::itcl::body ShaderEdit::validateDouble_light {id d} {
+    if {![::cadwidgets::Ged::validateDouble $d]} {
+	return 0
+    }
+
+    if {!$ignoreShaderSpec} {
+	after idle [::itcl::code $this updateCloudSpec $id]
+    }
+
+    return 1
+}
+
+::itcl::body ShaderEdit::updateLightSpec {id {_unused ""}} {
+    set newSpec ""
+
+    if {$lightFraction($id) != $DEF_LIGHT_FRACTION} {
+	if {$newSpec == ""} {
+	    append newSpec "f $lightFraction($id)"
+	} else {
+	    append newSpec " f $lightFraction($id)"
+	}
+    }
+
+    if {$lightAngle($id) != $DEF_LIGHT_ANGLE} {
+	if {$newSpec == ""} {
+	    append newSpec "a $lightAngle($id)"
+	} else {
+	    append newSpec " a $lightAngle($id)"
+	}
+    }
+
+    if {$lightTarget($id) != $DEF_LIGHT_TARGET} {
+	if {$newSpec == ""} {
+	    append newSpec "d {$lightTarget($id)}"
+	} else {
+	    append newSpec " d {$lightTarget($id)}"
+	}
+    }
+
+    if {$lightLumens($id) != $DEF_LIGHT_LUMENS} {
+	if {$newSpec == ""} {
+	    append newSpec "b $lightLumens($id)"
+	} else {
+	    append newSpec " b $lightLumens($id)"
+	}
+    }
+
+    if {$lightShadowRays($id) != $DEF_LIGHT_SHADOW_RAYS} {
+	if {$newSpec == ""} {
+	    append newSpec "s $lightShadowRays($id)"
+	} else {
+	    append newSpec " s $lightShadowRays($id)"
+	}
+    }
+
+    if {$lightInfinite($id) != $DEF_LIGHT_INFINITE} {
+	if {$newSpec == ""} {
+	    append newSpec "i $lightInfinite($id)"
+	} else {
+	    append newSpec " i $lightInfinite($id)"
+	}
+    }
+
+    if {$lightVisible($id) != $DEF_LIGHT_VISIBLE} {
+	if {$newSpec == ""} {
+	    append newSpec "v $lightVisible($id)"
+	} else {
+	    append newSpec " v $lightVisible($id)"
+	}
+    }
+
+    set shaderSpec "light [list $newSpec]"
+
+    if {$lightShadowRays($id) > 9} {
+	set s 9
+    } else {
+	set s $lightShadowRays($id)
+    }
+
+    $itk_component(lightImage$id\L) configure -image $lightImages(light_i$lightInfinite($id)_v$lightVisible($id)_s$s)
+
+    if {$allowCallbacks && $itk_option(-shaderChangedCallback) != ""} {
+	$itk_option(-shaderChangedCallback)
+    }
+}
+
+::itcl::body ShaderEdit::validateDouble_cloud {id d} {
+    if {![::cadwidgets::Ged::validateDouble $d]} {
+	return 0
+    }
+
+    if {!$ignoreShaderSpec} {
+	after idle [::itcl::code $this updateCloudSpec $id]
+    }
+
+    return 1
+}
+
+::itcl::body ShaderEdit::updateCloudSpec {id} {
+    set newSpec ""
+
+    if {$cloudThreshold($id) != $DEF_CLOUD_THRESHOLD} {
+	if {$newSpec == ""} {
+	    append newSpec "thresh $cloudThreshold($id)"
+	} else {
+	    append newSpec " thresh $cloudThreshold($id)"
+	}
+    }
+
+    if {$cloudRange($id) != $DEF_CLOUD_RANGE} {
+	if {$newSpec == ""} {
+	    append newSpec "thresh $cloudRange($id)"
+	} else {
+	    append newSpec " thresh $cloudRange($id)"
+	}
+    }
+
+    set shaderSpec "cloud [list $newSpec]"
+
+    if {$allowCallbacks && $itk_option(-shaderChangedCallback) != ""} {
+	$itk_option(-shaderChangedCallback)
+    }
 }
 
 ::itcl::body ShaderEdit::validateDouble_plastic {id d} {
