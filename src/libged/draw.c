@@ -1316,6 +1316,10 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 		    }
 
 		    for (BU_LIST_FOR(sp, solid, &gdlp->gdl_headSolid)) {
+			if (sp->s_vlen > 0) {
+			    /* solid is already drawn */
+			    continue;
+			}
 			ret = redraw_solid(gedp, sp);
 			if (ret < 0) {
 			    bu_vls_printf(gedp->ged_result_str,
