@@ -27,7 +27,7 @@
 #endif
 
 
-#ifdef HAVE_PTHREAD_H
+#if defined(HAVE_PTHREAD_H)
 
 template<typename T>
 class ThreadLocal
@@ -62,15 +62,15 @@ public:
 };
 static ThreadLocal<int> thread_cpu;
 
-#elif defined(__cplusplus) && __cplusplus > 199711L
+#elif defined(HAVE_THREAD_LOCAL_INT)
 
 static thread_local int thread_cpu = 0;
 
-#elif defined(HAVE___THREAD)
+#elif defined(HAVE___THREAD_INT)
 
 static __thread int thread_cpu = 0;
 
-#elif defined(_MSC_VER)
+#elif defined(HAVE___DECLSPEC_THREAD__INT)
 
 static __declspec(thread) int thread_cpu;
 
