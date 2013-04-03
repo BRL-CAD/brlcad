@@ -344,9 +344,11 @@ bu_avail_cpus(void)
 HIDDEN void
 parallel_interface_arg(struct thread_data *user_thread_data)
 {
-    parallel_set_affinity();
-
+    /* keep track of our parallel ID number */
     thread_set_cpu(user_thread_data->cpu_id);
+
+    /* lock us onto a core corresponding to our parallel ID number */
+    parallel_set_affinity(user_thread_data->cpu_id);
 
     if (!user_thread_data->counted) {
 	bu_semaphore_acquire(BU_SEM_SYSCALL);
@@ -380,8 +382,6 @@ HIDDEN void
 parallel_interface(void)
 {
     struct thread_data user_thread_data_pi;
-
-    parallel_set_affinity();
 
     user_thread_data_pi.user_func = parallel_func;
     user_thread_data_pi.user_arg  = parallel_arg;
