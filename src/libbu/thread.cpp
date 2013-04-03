@@ -47,9 +47,21 @@ class ThreadLocal
 private:
     pthread_key_t key;
     std::vector<T*> vals;
+protected:
+    void set(T& val) {
+	T* value = new T(val);
+	vals.push_back(value);
+	pthread_setspecific(key, value);
+    }
+    T* get() {
+	T* val = static_cast<T*>(pthread_getspecific(key));
+	return val;
+    }
 public:
     ThreadLocal() {
+	int cpu0 = 0;
 	pthread_key_create(&key, NULL);
+	set(cpu0);
     }
     ~ThreadLocal() {
 	pthread_key_delete(key);
@@ -60,16 +72,17 @@ public:
 	vals.clear();
     }
     ThreadLocal& operator=(T& val) {
-	T* value = new T(val);
-	vals.push_back(value);
-	pthread_setspecific(key, value);
+	set(val);
 	return *this;
     }
     bool operator!() {
-	return (pthread_getspecific(key) == NULL);
+	return (get() == NULL);
     }
     operator T() {
-	return *static_cast<T*>(pthread_getspecific(key));
+	T* val = get();
+	if (!val)
+	    return 0;
+	return *val;
     }
 };
 static ThreadLocal<int> thread_cpu;
