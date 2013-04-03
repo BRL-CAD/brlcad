@@ -27,24 +27,20 @@
 #endif
 
 
+#ifdef HAVE_PTHREAD_H
+
 template<typename T>
 class ThreadLocal
 {
 private:
-#ifdef HAVE_PTHREAD_H
     pthread_key_t key;
-#endif
     std::vector<T*> vals;
 public:
     ThreadLocal() {
-#ifdef HAVE_PTHREAD_H
 	pthread_key_create(&key, NULL);
-#endif
     }
     ~ThreadLocal() {
-#ifdef HAVE_PTHREAD_H
 	pthread_key_delete(key);
-#endif
 	while (!vals.empty()) {
 	    delete vals.back();
 	    vals.pop_back();
@@ -54,36 +50,37 @@ public:
     ThreadLocal& operator=(T& val) {
 	T* value = new T(val);
 	vals.push_back(value);
-#ifdef HAVE_PTHREAD_H
 	pthread_setspecific(key, value);
-#endif
 	return *this;
     }
     bool operator!() {
-#ifdef HAVE_PTHREAD_H
 	return (pthread_getspecific(key) == NULL);
-#endif
     }
     operator T() {
-#ifdef HAVE_PTHREAD_H
 	return *static_cast<T*>(pthread_getspecific(key));
-#endif
     }
 };
+static ThreadLocal<int> thread_cpu;
 
+#elif defined(__cplusplus) && __cplusplus > 199711L
 
-#if defined(__cplusplus) && __cplusplus > 199711L
-// C++11 provides thread-local storage
-thread_local int thread_cpu = 0;
+static thread_local int thread_cpu = 0;
+
 #elif defined(HAVE___THREAD)
-__thread int thread_cpu = 0;
+
+static __thread int thread_cpu = 0;
+
 #elif defined(_MSC_VER)
-__declspec(thread) int thread_cpu;
+
+static __declspec(thread) int thread_cpu;
+
 #else
-ThreadLocal<int> thread_cpu;
+#  error "Unrecognized thread local storage method for this platform"
 #endif
 
+
 extern "C" {
+
 
 void
 thread_set_cpu(int cpu)
