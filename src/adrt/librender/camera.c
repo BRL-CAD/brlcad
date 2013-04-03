@@ -39,9 +39,6 @@
 #define TIE_SEM_LAST (TIE_SEM_WORKER+1)
 
 
-/* from libbu/affinity.c, not QUITE public yet */
-extern int parallel_set_affinity(void);
-
 struct render_shader_s {
 	const char *name;
 	int (*init)(render_t *, const char *);
@@ -414,12 +411,6 @@ render_camera_render_thread(int UNUSED(cpu), genptr_t ptr)
     vect_t pixel, accum, v1, v2;
     struct tie_ray_s ray;
     fastf_t view_inv;
-
-    /* don't bind thread to proc on windows, this function isn't exported from
-     * libbu yet and causes dll link issues. */
-#ifndef _WIN32
-    parallel_set_affinity();
-#endif
 
     VSETALL(v1, 0);
 
