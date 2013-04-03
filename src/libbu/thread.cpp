@@ -27,7 +27,19 @@
 #endif
 
 
-#if defined(HAVE_PTHREAD_H)
+#if defined(HAVE_THREAD_LOCAL)
+
+static thread_local int thread_cpu = 0;
+
+#elif defined(HAVE___THREAD)
+
+static __thread int thread_cpu = 0;
+
+#elif defined(HAVE___DECLSPEC_THREAD)
+
+static __declspec(thread) int thread_cpu;
+
+#elif defined(HAVE_PTHREAD_H)
 
 template<typename T>
 class ThreadLocal
@@ -61,18 +73,6 @@ public:
     }
 };
 static ThreadLocal<int> thread_cpu;
-
-#elif defined(HAVE_THREAD_LOCAL)
-
-static thread_local int thread_cpu = 0;
-
-#elif defined(HAVE___THREAD)
-
-static __thread int thread_cpu = 0;
-
-#elif defined(HAVE___DECLSPEC_THREAD)
-
-static __declspec(thread) int thread_cpu;
 
 #else
 #  error "Unrecognized thread local storage method for this platform"
