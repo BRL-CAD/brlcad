@@ -1624,6 +1624,15 @@ BRLCAD_TYPE_SIZE("uint64_t" "")
 BRLCAD_TYPE_SIZE("uintptr_t" "")
 BRLCAD_TYPE_SIZE("sig_t" "signal.h")
 
+# see if we have a TLS intrinsic
+BRLCAD_TYPE_SIZE("thread_local int" "") # C++11
+if (NOT HAVE_THREAD_LOCAL_INT)
+  BRLCAD_TYPE_SIZE("__thread int" "") # GCC except Mac OS X
+  if (NOT HAVE___THREAD_INT)
+    BRLCAD_TYPE_SIZE("__declspec(thread) int" "") # Windows
+  endif (NOT HAVE___THREAD_INT)
+endif (NOT HAVE_THREAD_LOCAL_INT)
+
 # see if the compiler supports %z as a size_t print width specifier
 BRLCAD_CHECK_C99_FORMAT_SPECIFIERS()
 
