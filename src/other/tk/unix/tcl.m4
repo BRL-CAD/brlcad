@@ -120,7 +120,8 @@ AC_DEFUN([SC_PATH_TCLCONFIG], [
 
 	if test x"${ac_cv_c_tclconfig}" = x ; then
 	    TCL_BIN_DIR="# no Tcl configs found"
-	    AC_MSG_ERROR([Can't find Tcl configuration definitions. Use --with-tcl to specify a directory containing tclConfig.sh])
+	    AC_MSG_WARN([Can't find Tcl configuration definitions])
+	    exit 0
 	else
 	    no_tcl=
 	    TCL_BIN_DIR="${ac_cv_c_tclconfig}"
@@ -250,7 +251,8 @@ AC_DEFUN([SC_PATH_TKCONFIG], [
 
 	if test x"${ac_cv_c_tkconfig}" = x ; then
 	    TK_BIN_DIR="# no Tk configs found"
-	    AC_MSG_ERROR([Can't find Tk configuration definitions. Use --with-tk to specify a directory containing tkConfig.sh])
+	    AC_MSG_WARN([Can't find Tk configuration definitions])
+	    exit 0
 	else
 	    no_tk=
 	    TK_BIN_DIR="${ac_cv_c_tkconfig}"
@@ -305,7 +307,7 @@ AC_DEFUN([SC_LOAD_TCLCONFIG], [
     elif test "`uname -s`" = "Darwin"; then
 	# If Tcl was built as a framework, attempt to use the libraries
 	# from the framework at the given location so that linking works
-	# against Tcl.framework installed in an arbitrary location.
+	# against Tcl.framework installed in an arbitary location.
 	case ${TCL_DEFS} in
 	    *TCL_FRAMEWORK*)
 		if test -f "${TCL_BIN_DIR}/${TCL_LIB_FILE}"; then
@@ -388,7 +390,7 @@ AC_DEFUN([SC_LOAD_TKCONFIG], [
     elif test "`uname -s`" = "Darwin"; then
 	# If Tk was built as a framework, attempt to use the libraries
 	# from the framework at the given location so that linking works
-	# against Tk.framework installed in an arbitrary location.
+	# against Tk.framework installed in an arbitary location.
 	case ${TK_DEFS} in
 	    *TK_FRAMEWORK*)
 		if test -f "${TK_BIN_DIR}/${TK_LIB_FILE}"; then
@@ -775,7 +777,6 @@ AC_DEFUN([SC_ENABLE_SYMBOLS], [
     if test "$tcl_ok" = "no"; then
 	CFLAGS_DEFAULT='$(CFLAGS_OPTIMIZE)'
 	LDFLAGS_DEFAULT='$(LDFLAGS_OPTIMIZE)'
-	AC_DEFINE(NDEBUG, 1, [Is no debugging enabled?])
 	AC_MSG_RESULT([no])
 	AC_DEFINE(TCL_CFG_OPTIMIZED, 1, [Is this an optimized build?])
     else
@@ -787,6 +788,8 @@ AC_DEFUN([SC_ENABLE_SYMBOLS], [
     fi
     AC_SUBST(CFLAGS_DEFAULT)
     AC_SUBST(LDFLAGS_DEFAULT)
+    ### FIXME: Surely TCL_CFG_DEBUG should be set to whether we're debugging?
+    AC_DEFINE(TCL_CFG_DEBUG, 1, [Is debugging enabled?])
 
     if test "$tcl_ok" = "mem" -o "$tcl_ok" = "all"; then
 	AC_DEFINE(TCL_MEM_DEBUG, 1, [Is memory debugging enabled?])
@@ -1110,15 +1113,12 @@ AC_DEFUN([SC_CONFIG_CFLAGS], [
     AC_CHECK_LIB(dl, dlopen, have_dl=yes, have_dl=no)
 
     # Require ranlib early so we can override it in special cases below.
-    AS_IF([test x"${SHLIB_VERSION}" = x], [SHLIB_VERSION="1.0"])
 
     AC_REQUIRE([AC_PROG_RANLIB])
 
     # Step 3: set configuration options based on system name and version.
 
     do64bit_ok=no
-    # default to '{$LIBS}' and set to "" on per-platform necessary basis
-    SHLIB_LD_LIBS='${LIBS}'
     LDFLAGS_ORIG="$LDFLAGS"
     # When ld needs options to work in 64-bit mode, put them in
     # LDFLAGS_ARCH so they eventually end up in LDFLAGS even if [load]
@@ -1131,9 +1131,15 @@ AC_DEFUN([SC_CONFIG_CFLAGS], [
     CFLAGS_DEBUG=-g
     CFLAGS_OPTIMIZE=-O
     AS_IF([test "$GCC" = yes], [
-	CFLAGS_WARNING="-Wall"
+#	CFLAGS_WARNING="-Wall -Wno-implicit-int"
+	CFLAGS_WARNING="-w"
     ], [CFLAGS_WARNING=""])
-    AC_CHECK_TOOL(AR, ar)
+dnl FIXME: Replace AC_CHECK_PROG with AC_CHECK_TOOL once cross compiling is fixed.
+dnl AC_CHECK_TOOL(AR, ar)
+    AC_CHECK_PROG(AR, ar, ar)
+    AS_IF([test "${AR}" = ""], [
+	AC_MSG_ERROR([Required archive tool 'ar' not found on PATH.])
+    ])
     STLIB_LD='${AR} cr'
     LD_LIBRARY_PATH_VAR="LD_LIBRARY_PATH"
     PLAT_OBJS=""
@@ -1144,26 +1150,24 @@ AC_DEFUN([SC_CONFIG_CFLAGS], [
 	    AS_IF([test "${TCL_THREADS}" = "1" -a "$GCC" != "yes"], [
 		# AIX requires the _r compiler when gcc isn't being used
 		case "${CC}" in
-		    *_r|*_r\ *)
+		    *_r)
 			# ok ...
 			;;
 		    *)
-			# Make sure only first arg gets _r
-		    	CC=`echo "$CC" | sed -e 's/^\([[^ ]]*\)/\1_r/'`
+			CC=${CC}_r
 			;;
 		esac
 		AC_MSG_RESULT([Using $CC for compiling with threads])
 	    ])
 	    LIBS="$LIBS -lc"
 	    SHLIB_CFLAGS=""
+	    # Note: need the LIBS below, otherwise Tk won't find Tcl's
+	    # symbols when dynamically loaded into tclsh.
+	    SHLIB_LD_LIBS='${LIBS}'
 	    SHLIB_SUFFIX=".so"
 
 	    DL_OBJS="tclLoadDl.o"
 	    LD_LIBRARY_PATH_VAR="LIBPATH"
-
-	    # ldAix No longer needed with use of -bexpall/-brtl
-	    # but some extensions may still reference it
-	    LDAIX_SRC='$(UNIX_DIR)/ldAix'
 
 	    # Check to enable 64-bit flags for compiler/linker
 	    AS_IF([test "$do64bit" = yes], [
@@ -1206,6 +1210,7 @@ AC_DEFUN([SC_CONFIG_CFLAGS], [
 	BeOS*)
 	    SHLIB_CFLAGS="-fPIC"
 	    SHLIB_LD='${CC} -nostart'
+	    SHLIB_LD_LIBS='${LIBS}'
 	    SHLIB_SUFFIX=".so"
 	    DL_OBJS="tclLoadDl.o"
 	    DL_LIBS="-ldl"
@@ -1220,6 +1225,7 @@ AC_DEFUN([SC_CONFIG_CFLAGS], [
 	BSD/OS-2.1*|BSD/OS-3*)
 	    SHLIB_CFLAGS=""
 	    SHLIB_LD="shlicc -r"
+	    SHLIB_LD_LIBS='${LIBS}'
 	    SHLIB_SUFFIX=".so"
 	    DL_OBJS="tclLoadDl.o"
 	    DL_LIBS="-ldl"
@@ -1229,6 +1235,7 @@ AC_DEFUN([SC_CONFIG_CFLAGS], [
 	BSD/OS-4.*)
 	    SHLIB_CFLAGS="-export-dynamic -fPIC"
 	    SHLIB_LD='${CC} -shared'
+	    SHLIB_LD_LIBS='${LIBS}'
 	    SHLIB_SUFFIX=".so"
 	    DL_OBJS="tclLoadDl.o"
 	    DL_LIBS="-ldl"
@@ -1236,36 +1243,15 @@ AC_DEFUN([SC_CONFIG_CFLAGS], [
 	    CC_SEARCH_FLAGS=""
 	    LD_SEARCH_FLAGS=""
 	    ;;
-	CYGWIN_*|MINGW32*)
+	CYGWIN_*)
 	    SHLIB_CFLAGS=""
 	    SHLIB_LD='${CC} -shared'
+	    SHLIB_LD_LIBS='${LIBS}'
 	    SHLIB_SUFFIX=".dll"
-	    DL_OBJS="tclLoadDl.o tclWinError.o"
+	    DL_OBJS="tclLoadDl.o"
 	    DL_LIBS="-ldl"
 	    CC_SEARCH_FLAGS=""
 	    LD_SEARCH_FLAGS=""
-	    TCL_NEEDS_EXP_FILE=1
-	    TCL_EXPORT_FILE_SUFFIX='${VERSION}\$\{DBGX\}.dll.a'
-	    TCL_SHLIB_LD_EXTRAS='-Wl,--out-implib,$[@].a'
-	    AC_CACHE_CHECK(for Cygwin version of gcc,
-		ac_cv_cygwin,
-		AC_TRY_COMPILE([
-		#ifdef __CYGWIN__
-		    #error cygwin
-		#endif
-		], [],
-		ac_cv_cygwin=no,
-		ac_cv_cygwin=yes)
-	    )
-	    if test "$ac_cv_cygwin" = "no"; then
-		AC_MSG_ERROR([${CC} is not a cygwin compiler.])
-	    fi
-	    if test "x${TCL_THREADS}" = "x0"; then
-		AC_MSG_ERROR([CYGWIN compile is only supported with --enable-threads])
-	    fi
-	    if test "x${SHARED_BUILD}" = "x1" -a ! -f "../win/tcldde13.dll" -a ! -f "../win/tk85.dll"; then
-		AC_MSG_ERROR([Please configure and make the ../win directory first.])
-	    fi
 	    ;;
 	dgux*)
 	    SHLIB_CFLAGS="-K PIC"
@@ -1280,6 +1266,17 @@ AC_DEFUN([SC_CONFIG_CFLAGS], [
 	Haiku*)
 	    LDFLAGS="$LDFLAGS -Wl,--export-dynamic"
 	    SHLIB_CFLAGS="-fPIC"
+	    SHLIB_LD_LIBS='${LIBS}'
+	    SHLIB_SUFFIX=".so"
+	    SHLIB_LD='${CC} -shared ${CFLAGS} ${LDFLAGS}'
+	    DL_OBJS="tclLoadDl.o"
+	    DL_LIBS="-lroot"
+	    AC_CHECK_LIB(network, inet_ntoa, [LIBS="$LIBS -lnetwork"])
+	    ;;
+	Haiku*)
+	    LDFLAGS="$LDFLAGS -Wl,--export-dynamic"
+	    SHLIB_CFLAGS="-fPIC"
+	    SHLIB_LD_LIBS='${LIBS}'
 	    SHLIB_SUFFIX=".so"
 	    SHLIB_LD='${CC} -shared ${CFLAGS} ${LDFLAGS}'
 	    DL_OBJS="tclLoadDl.o"
@@ -1301,6 +1298,7 @@ AC_DEFUN([SC_CONFIG_CFLAGS], [
 	    AS_IF([test "$tcl_ok" = yes], [
 		SHLIB_CFLAGS="+z"
 		SHLIB_LD="ld -b"
+		SHLIB_LD_LIBS='${LIBS}'
 		DL_OBJS="tclLoadShl.o"
 		DL_LIBS="-ldld"
 		LDFLAGS="$LDFLAGS -Wl,-E"
@@ -1310,6 +1308,7 @@ AC_DEFUN([SC_CONFIG_CFLAGS], [
 	    ])
 	    AS_IF([test "$GCC" = yes], [
 		SHLIB_LD='${CC} -shared'
+		SHLIB_LD_LIBS='${LIBS}'
 		LD_SEARCH_FLAGS=${CC_SEARCH_FLAGS}
 	    ])
 
@@ -1324,6 +1323,7 @@ AC_DEFUN([SC_CONFIG_CFLAGS], [
 			    # 64-bit gcc in use.  Fix flags for GNU ld.
 			    do64bit_ok=yes
 			    SHLIB_LD='${CC} -shared'
+			    SHLIB_LD_LIBS='${LIBS}'
 			    AS_IF([test $doRpath = yes], [
 				CC_SEARCH_FLAGS='-Wl,-rpath,${LIB_RUNTIME_DIR}'])
 			    LD_SEARCH_FLAGS=${CC_SEARCH_FLAGS}
@@ -1355,6 +1355,7 @@ AC_DEFUN([SC_CONFIG_CFLAGS], [
 	IRIX-5.*)
 	    SHLIB_CFLAGS=""
 	    SHLIB_LD="ld -shared -rdata_shared"
+	    SHLIB_LD_LIBS='${LIBS}'
 	    SHLIB_SUFFIX=".so"
 	    DL_OBJS="tclLoadDl.o"
 	    DL_LIBS=""
@@ -1365,6 +1366,7 @@ AC_DEFUN([SC_CONFIG_CFLAGS], [
 	IRIX-6.*)
 	    SHLIB_CFLAGS=""
 	    SHLIB_LD="ld -n32 -shared -rdata_shared"
+	    SHLIB_LD_LIBS='${LIBS}'
 	    SHLIB_SUFFIX=".so"
 	    DL_OBJS="tclLoadDl.o"
 	    DL_LIBS=""
@@ -1390,6 +1392,7 @@ AC_DEFUN([SC_CONFIG_CFLAGS], [
 	IRIX64-6.*)
 	    SHLIB_CFLAGS=""
 	    SHLIB_LD="ld -n32 -shared -rdata_shared"
+	    SHLIB_LD_LIBS='${LIBS}'
 	    SHLIB_SUFFIX=".so"
 	    DL_OBJS="tclLoadDl.o"
 	    DL_LIBS=""
@@ -1412,6 +1415,7 @@ AC_DEFUN([SC_CONFIG_CFLAGS], [
 	    ;;
 	Linux*)
 	    SHLIB_CFLAGS="-fPIC"
+	    SHLIB_LD_LIBS='${LIBS}'
 	    SHLIB_SUFFIX=".so"
 
 	    CFLAGS_OPTIMIZE="-O2"
@@ -1450,6 +1454,7 @@ AC_DEFUN([SC_CONFIG_CFLAGS], [
 	    ;;
 	GNU*)
 	    SHLIB_CFLAGS="-fPIC"
+	    SHLIB_LD_LIBS='${LIBS}'
 	    SHLIB_SUFFIX=".so"
 
 	    SHLIB_LD='${CC} -shared'
@@ -1462,6 +1467,7 @@ AC_DEFUN([SC_CONFIG_CFLAGS], [
 	    ;;
 	Lynx*)
 	    SHLIB_CFLAGS="-fPIC"
+	    SHLIB_LD_LIBS='${LIBS}'
 	    SHLIB_SUFFIX=".so"
 	    CFLAGS_OPTIMIZE=-02
 	    SHLIB_LD='${CC} -shared'
@@ -1496,6 +1502,7 @@ AC_DEFUN([SC_CONFIG_CFLAGS], [
 	NetBSD-1.*|FreeBSD-[[1-2]].*)
 	    SHLIB_CFLAGS="-fPIC"
 	    SHLIB_LD="ld -Bshareable -x"
+	    SHLIB_LD_LIBS='${LIBS}'
 	    SHLIB_SUFFIX=".so"
 	    DL_OBJS="tclLoadDl.o"
 	    DL_LIBS=""
@@ -1511,7 +1518,7 @@ AC_DEFUN([SC_CONFIG_CFLAGS], [
 	    AS_IF([test $tcl_cv_ld_elf = yes], [
 		SHARED_LIB_SUFFIX='${TCL_TRIM_DOTS}.so'
 	    ], [
-		SHARED_LIB_SUFFIX='${TCL_TRIM_DOTS}.so.${SHLIB_VERSION}'
+		SHARED_LIB_SUFFIX='${TCL_TRIM_DOTS}.so.1.0'
 	    ])
 
 	    # Ancient FreeBSD doesn't handle version numbers with dots.
@@ -1520,37 +1527,16 @@ AC_DEFUN([SC_CONFIG_CFLAGS], [
 	    TCL_LIB_VERSIONS_OK=nodots
 	    ;;
 	OpenBSD-*)
-	    arch=`arch -s`
-	    case "$arch" in
-	    m88k|vax)
-		# Equivalent using configure option --disable-load
-		# Step 4 will set the necessary variables
-		DL_OBJS=""
-		SHLIB_LD_LIBS=""
-		;;
-	    *)
-		SHLIB_CFLAGS="-fPIC"
-		SHLIB_LD='${CC} -shared ${SHLIB_CFLAGS}'
-		SHLIB_SUFFIX=".so"
-		DL_OBJS="tclLoadDl.o"
-		DL_LIBS=""
-		AS_IF([test $doRpath = yes], [
-		    CC_SEARCH_FLAGS='-Wl,-rpath,${LIB_RUNTIME_DIR}'])
-		LD_SEARCH_FLAGS=${CC_SEARCH_FLAGS}
-		SHARED_LIB_SUFFIX='${TCL_TRIM_DOTS}.so.${SHLIB_VERSION}'
-		;;
-	    esac
-	    case "$arch" in
-	    m88k|vax)
-		CFLAGS_OPTIMIZE="-O1"
-		;;
-	    sh)
-		CFLAGS_OPTIMIZE="-O0"
-		;;
-	    *)
-		CFLAGS_OPTIMIZE="-O2"
-		;;
-	    esac
+	    SHLIB_CFLAGS="-fPIC"
+	    SHLIB_LD='${CC} -shared ${SHLIB_CFLAGS}'
+	    SHLIB_LD_LIBS='${LIBS}'
+	    SHLIB_SUFFIX=".so"
+	    DL_OBJS="tclLoadDl.o"
+	    DL_LIBS=""
+	    AS_IF([test $doRpath = yes], [
+		CC_SEARCH_FLAGS='-Wl,-rpath,${LIB_RUNTIME_DIR}'])
+	    LD_SEARCH_FLAGS=${CC_SEARCH_FLAGS}
+	    SHARED_LIB_SUFFIX='${TCL_TRIM_DOTS}.so.1.0'
 	    AC_CACHE_CHECK([for ELF], tcl_cv_ld_elf, [
 		AC_EGREP_CPP(yes, [
 #ifdef __ELF__
@@ -1561,10 +1547,10 @@ AC_DEFUN([SC_CONFIG_CFLAGS], [
 		LDFLAGS=-Wl,-export-dynamic
 	    ], [LDFLAGS=""])
 	    AS_IF([test "${TCL_THREADS}" = "1"], [
-		# On OpenBSD:	Compile with -pthread
-		#		Don't link with -lpthread
+		# OpenBSD builds and links with -pthread, never -lpthread.
 		LIBS=`echo $LIBS | sed s/-lpthread//`
 		CFLAGS="$CFLAGS -pthread"
+		SHLIB_CFLAGS="$SHLIB_CFLAGS -pthread"
 	    ])
 	    # OpenBSD doesn't do version numbers with dots.
 	    UNSHARED_LIB_SUFFIX='${TCL_TRIM_DOTS}.a'
@@ -1575,6 +1561,7 @@ AC_DEFUN([SC_CONFIG_CFLAGS], [
 	    # NetBSD 2.* has ELF and can use 'cc -shared' to build shared libs
 	    SHLIB_CFLAGS="-fPIC"
 	    SHLIB_LD='${CC} -shared ${SHLIB_CFLAGS}'
+	    SHLIB_LD_LIBS='${LIBS}'
 	    SHLIB_SUFFIX=".so"
 	    DL_OBJS="tclLoadDl.o"
 	    DL_LIBS=""
@@ -1602,6 +1589,7 @@ AC_DEFUN([SC_CONFIG_CFLAGS], [
 	    SHLIB_CFLAGS="-fPIC"
 	    SHLIB_LD="${CC} -shared"
 	    TCL_SHLIB_LD_EXTRAS="-soname \$[@]"
+	    SHLIB_LD_LIBS='${LIBS}'
 	    SHLIB_SUFFIX=".so"
 	    DL_OBJS="tclLoadDl.o"
 	    DL_LIBS=""
@@ -1676,6 +1664,7 @@ AC_DEFUN([SC_CONFIG_CFLAGS], [
 	    AS_IF([test $tcl_cv_ld_single_module = yes], [
 		SHLIB_LD="${SHLIB_LD} -Wl,-single_module"
 	    ])
+	    SHLIB_LD_LIBS='${LIBS}'
 	    SHLIB_SUFFIX=".dylib"
 	    DL_OBJS="tclLoadDyld.o"
 	    DL_LIBS=""
@@ -1702,6 +1691,7 @@ AC_DEFUN([SC_CONFIG_CFLAGS], [
 	    LD_SEARCH_FLAGS=""
 	    LD_LIBRARY_PATH_VAR="DYLD_LIBRARY_PATH"
 	    AC_DEFINE(MAC_OSX_TCL, 1, [Is this a Mac I see before me?])
+	    AC_DEFINE(MODULE_SCOPE, extern, [module scope is visible])
 	    PLAT_OBJS='${MAC_OSX_OBJS}'
 	    PLAT_SRCS='${MAC_OSX_SRCS}'
 	    AC_MSG_CHECKING([whether to use CoreFoundation])
@@ -1769,7 +1759,6 @@ AC_DEFUN([SC_CONFIG_CFLAGS], [
 	    LD_SEARCH_FLAGS=""
 	    ;;
 	OS/390-*)
-	    SHLIB_LD_LIBS=""
 	    CFLAGS_OPTIMIZE=""		# Optimizer is buggy
 	    AC_DEFINE(_OE_SOCKETS, 1,	# needed in sys/socket.h
 		[Should OS/390 do the right thing with sockets?])
@@ -1807,6 +1796,7 @@ AC_DEFUN([SC_CONFIG_CFLAGS], [
 	    ], [
 	        SHLIB_LD='ld -non_shared -expect_unresolved "*"'
 	    ])
+	    SHLIB_LD_LIBS='${LIBS}'
 	    SHLIB_SUFFIX=".so"
 	    DL_OBJS="tclLoadDl.o"
 	    DL_LIBS=""
@@ -1885,7 +1875,7 @@ AC_DEFUN([SC_CONFIG_CFLAGS], [
 	    # requires an extra version number at the end of .so file names.
 	    # So, the library has to have a name like libtcl75.so.1.0
 
-	    SHARED_LIB_SUFFIX='${TCL_TRIM_DOTS}.so.${SHLIB_VERSION}'
+	    SHARED_LIB_SUFFIX='${TCL_TRIM_DOTS}.so.1.0'
 	    UNSHARED_LIB_SUFFIX='${TCL_TRIM_DOTS}.a'
 	    TCL_LIB_VERSIONS_OK=nodots
 	    ;;
@@ -1900,6 +1890,11 @@ AC_DEFUN([SC_CONFIG_CFLAGS], [
 		[Do we really want to follow the standard? Yes we do!])
 
 	    SHLIB_CFLAGS="-KPIC"
+
+	    # Note: need the LIBS below, otherwise Tk won't find Tcl's
+	    # symbols when dynamically loaded into tclsh.
+
+	    SHLIB_LD_LIBS='${LIBS}'
 	    SHLIB_SUFFIX=".so"
 	    DL_OBJS="tclLoadDl.o"
 	    DL_LIBS="-ldl"
@@ -1989,6 +1984,11 @@ AC_DEFUN([SC_CONFIG_CFLAGS], [
 			use_sunmath=no
 		])
 	    ])
+
+	    # Note: need the LIBS below, otherwise Tk won't find Tcl's
+	    # symbols when dynamically loaded into tclsh.
+
+	    SHLIB_LD_LIBS='${LIBS}'
 	    SHLIB_SUFFIX=".so"
 	    DL_OBJS="tclLoadDl.o"
 	    DL_LIBS="-ldl"
@@ -2087,7 +2087,7 @@ dnl # preprocessing tests use only CPPFLAGS.
 	case $system in
 	    AIX-*) ;;
 	    BSD/OS*) ;;
-	    CYGWIN_*|MINGW32_*) ;;
+	    CYGWIN_*) ;;
 	    IRIX*) ;;
 	    NetBSD-*|FreeBSD-*|OpenBSD-*) ;;
 	    Darwin-*) ;;
@@ -2099,26 +2099,20 @@ dnl # preprocessing tests use only CPPFLAGS.
 	SHARED_LIB_SUFFIX='${VERSION}${SHLIB_SUFFIX}'])
     AS_IF([test "$UNSHARED_LIB_SUFFIX" = ""], [
 	UNSHARED_LIB_SUFFIX='${VERSION}.a'])
-    DLL_INSTALL_DIR="\$(LIB_INSTALL_DIR)"
 
     AS_IF([test "${SHARED_BUILD}" = 1 -a "${SHLIB_SUFFIX}" != ""], [
         LIB_SUFFIX=${SHARED_LIB_SUFFIX}
         MAKE_LIB='${SHLIB_LD} -o [$]@ ${OBJS} ${SHLIB_LD_LIBS} ${TCL_SHLIB_LD_EXTRAS} ${TK_SHLIB_LD_EXTRAS} ${LD_SEARCH_FLAGS}'
-        AS_IF([test "${SHLIB_SUFFIX}" = ".dll"], [
-            INSTALL_LIB='$(INSTALL_LIBRARY) $(LIB_FILE) "$(BIN_INSTALL_DIR)/$(LIB_FILE)"'
-            DLL_INSTALL_DIR="\$(BIN_INSTALL_DIR)"
-        ], [
-            INSTALL_LIB='$(INSTALL_LIBRARY) $(LIB_FILE) "$(LIB_INSTALL_DIR)/$(LIB_FILE)"'
-        ])
+        INSTALL_LIB='$(INSTALL_LIBRARY) $(LIB_FILE) "$(LIB_INSTALL_DIR)"/$(LIB_FILE)'
     ], [
         LIB_SUFFIX=${UNSHARED_LIB_SUFFIX}
 
         AS_IF([test "$RANLIB" = ""], [
             MAKE_LIB='$(STLIB_LD) [$]@ ${OBJS}'
-            INSTALL_LIB='$(INSTALL_LIBRARY) $(LIB_FILE) "$(LIB_INSTALL_DIR)/$(LIB_FILE)"'
+            INSTALL_LIB='$(INSTALL_LIBRARY) $(LIB_FILE) "$(LIB_INSTALL_DIR)"/$(LIB_FILE)'
         ], [
             MAKE_LIB='${STLIB_LD} [$]@ ${OBJS} ; ${RANLIB} [$]@'
-            INSTALL_LIB='$(INSTALL_LIBRARY) $(LIB_FILE) "$(LIB_INSTALL_DIR)/$(LIB_FILE)" ; (cd "$(LIB_INSTALL_DIR)" ; $(RANLIB) $(LIB_FILE))'
+            INSTALL_LIB='$(INSTALL_LIBRARY) $(LIB_FILE) "$(LIB_INSTALL_DIR)"/$(LIB_FILE) ; (cd "$(LIB_INSTALL_DIR)" ; $(RANLIB) $(LIB_FILE))'
         ])
     ])
 
@@ -2128,7 +2122,7 @@ dnl # preprocessing tests use only CPPFLAGS.
         INSTALL_STUB_LIB='$(INSTALL_LIBRARY) $(STUB_LIB_FILE) "$(LIB_INSTALL_DIR)/$(STUB_LIB_FILE)"'
     ], [
         MAKE_STUB_LIB='${STLIB_LD} [$]@ ${STUB_LIB_OBJS} ; ${RANLIB} [$]@'
-        INSTALL_STUB_LIB='$(INSTALL_LIBRARY) $(STUB_LIB_FILE) "$(LIB_INSTALL_DIR)/$(STUB_LIB_FILE)" ; (cd "$(LIB_INSTALL_DIR)" ; $(RANLIB) $(STUB_LIB_FILE))'
+        INSTALL_STUB_LIB='$(INSTALL_LIBRARY) $(STUB_LIB_FILE) "$(LIB_INSTALL_DIR)"/$(STUB_LIB_FILE) ; (cd "$(LIB_INSTALL_DIR)" ; $(RANLIB) $(STUB_LIB_FILE))'
     ])
 
     # Define TCL_LIBS now that we know what DL_LIBS is.
@@ -2138,25 +2132,6 @@ dnl # preprocessing tests use only CPPFLAGS.
         TCL_LIBS="${DL_LIBS} ${LIBS} ${MATH_LIBS}"])
     AC_SUBST(TCL_LIBS)
 
-	# See if the compiler supports casting to a union type.
-	# This is used to stop gcc from printing a compiler
-	# warning when initializing a union member.
-
-	AC_CACHE_CHECK(for cast to union support,
-	    tcl_cv_cast_to_union,
-	    AC_TRY_COMPILE([],
-	    [
-		  union foo { int i; double d; };
-		  union foo f = (union foo) (int) 0;
-	    ],
-	    tcl_cv_cast_to_union=yes,
-	    tcl_cv_cast_to_union=no)
-	)
-	if test "$tcl_cv_cast_to_union" = "yes"; then
-	    AC_DEFINE(HAVE_CAST_TO_UNION, 1,
-		    [Defined when compiler supports casting to union type.])
-	fi
-
     # FIXME: This subst was left in only because the TCL_DL_LIBS
     # entry in tclConfig.sh uses it. It is not clear why someone
     # would use TCL_DL_LIBS instead of TCL_LIBS.
@@ -2165,7 +2140,6 @@ dnl # preprocessing tests use only CPPFLAGS.
     AC_SUBST(DL_OBJS)
     AC_SUBST(PLAT_OBJS)
     AC_SUBST(PLAT_SRCS)
-    AC_SUBST(LDAIX_SRC)
     AC_SUBST(CFLAGS)
     AC_SUBST(CFLAGS_DEBUG)
     AC_SUBST(CFLAGS_OPTIMIZE)
@@ -2190,7 +2164,6 @@ dnl # preprocessing tests use only CPPFLAGS.
     AC_SUBST(MAKE_LIB)
     AC_SUBST(MAKE_STUB_LIB)
     AC_SUBST(INSTALL_LIB)
-    AC_SUBST(DLL_INSTALL_DIR)
     AC_SUBST(INSTALL_STUB_LIB)
     AC_SUBST(RANLIB)
 ])
@@ -2414,7 +2387,7 @@ closedir(d);
 #
 # Results:
 #
-#	Sets the following vars:
+#	Sets the the following vars:
 #		XINCLUDES
 #		XLIBSW
 #

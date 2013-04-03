@@ -53,3 +53,7 @@ mp_sub (mp_int * a, mp_int * b, mp_int * c)
 }
 
 #endif
+
+/* $Source$ */
+/* $Revision$ */
+/* $Date$ */

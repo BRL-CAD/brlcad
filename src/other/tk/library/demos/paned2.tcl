@@ -2,6 +2,8 @@
 #
 # This demonstration script creates a toplevel window containing
 # a paned window that separates two windows vertically.
+#
+# RCS: @(#) $Id$
 
 if {![info exists widgetDemo]} {
     error "This script should be run from the \"widget\" demo."

@@ -1,4 +1,4 @@
-/*
+/* $Id$
  * Copyright (C) 2004 Pat Thoyts <patthoyts@users.sourceforge.net>
  *
  * ttk::scale widget.
@@ -45,6 +45,8 @@ typedef struct
 
 static Tk_OptionSpec ScaleOptionSpecs[] =
 {
+    WIDGET_TAKES_FOCUS,
+
     {TK_OPTION_STRING, "-command", "command", "Command", "",
 	Tk_Offset(Scale,scale.commandObj), -1, 
 	TK_OPTION_NULL_OK,0,0},
@@ -66,7 +68,6 @@ static Tk_OptionSpec ScaleOptionSpecs[] =
 	DEF_SCALE_LENGTH, Tk_Offset(Scale,scale.lengthObj), -1, 0, 0, 
     	GEOMETRY_CHANGED},
 
-    WIDGET_TAKEFOCUS_TRUE,
     WIDGET_INHERIT_OPTIONS(ttkCoreOptionSpecs)
 };
 

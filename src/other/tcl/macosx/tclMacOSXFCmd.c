@@ -8,6 +8,8 @@
  *
  * See the file "license.terms" for information on usage and redistribution of
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
+ *
+ * RCS: @(#) $Id$
  */
 
 #include "tclInt.h"
@@ -623,10 +625,8 @@ SetOSTypeFromAny(
     Tcl_UtfToExternalDString(encoding, string, length, &ds);
 
     if (Tcl_DStringLength(&ds) > 4) {
-	if (interp) {
-	    Tcl_AppendResult(interp, "expected Macintosh OS type but got \"",
-		    string, "\": ", NULL);
-	}
+	Tcl_AppendResult(interp, "expected Macintosh OS type but got \"",
+		string, "\": ", NULL);
 	result = TCL_ERROR;
     } else {
 	OSType osType;

@@ -4,6 +4,8 @@
  *	This file provides dirent-style directory-reading procedures for V7
  *	Unix systems that don't have such procedures. The origin of this code
  *	is unclear, but it seems to have come originally from Larry Wall.
+ *
+ * RCS: @(#) $Id$
  */
 
 #include "tclInt.h"

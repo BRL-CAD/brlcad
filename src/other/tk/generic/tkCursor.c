@@ -10,6 +10,8 @@
  *
  * See the file "license.terms" for information on usage and redistribution of
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
+ *
+ * RCS: @(#) $Id$
  */
 
 #include "tkInt.h"
@@ -349,11 +351,11 @@ Tk_GetCursorFromData(
      * add it to the database.
      */
 
-    if (TkParseColor(dataKey.display, Tk_Colormap(tkwin), fg, &fgColor) == 0) {
+    if (XParseColor(dataKey.display, Tk_Colormap(tkwin), fg, &fgColor) == 0) {
 	Tcl_AppendResult(interp, "invalid color name \"", fg, "\"", NULL);
 	goto error;
     }
-    if (TkParseColor(dataKey.display, Tk_Colormap(tkwin), bg, &bgColor) == 0) {
+    if (XParseColor(dataKey.display, Tk_Colormap(tkwin), bg, &bgColor) == 0) {
 	Tcl_AppendResult(interp, "invalid color name \"", bg, "\"", NULL);
 	goto error;
     }

@@ -28,6 +28,9 @@
 # Copyright (c) 2004 by Kevin B. Kenny.	 All rights reserved.
 # See the file "license.terms" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
+#
+# RCS: @(#) $Id$
+#
 #----------------------------------------------------------------------
 
 package require Tcl 8.5
@@ -394,9 +397,6 @@ proc parseON {on} {
 #----------------------------------------------------------------------
 
 proc onDayOfMonth {day year month} {
-    scan $day %d day
-    scan $year %d year
-    scan $month %d month
     set date [::tcl::clock::GetJulianDayFromEraYearMonthDay \
 	    [dict create era CE year $year month $month dayOfMonth $day] \
 		 2361222]

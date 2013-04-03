@@ -1,6 +1,8 @@
 Tcl Mac OS X README
 -------------------
 
+RCS: @(#) $Id$
+
 This is the README file for the Mac OS X/Darwin version of Tcl.
 
 
@@ -17,11 +19,16 @@ before asking on the list, many questions have already been answered).
 	http://groups.google.com/group/comp.lang.tcl/
 
 - The Tcl'ers Wiki also has many pages dealing with Tcl & Tk on Mac OS X, see
-	http://wiki.tcl.tk/_/ref?N=3753
-	http://wiki.tcl.tk/_/ref?N=8361
+	http://wiki.tcl.tk/references/3753!
+	http://wiki.tcl.tk/references/8361!
 
 - Please report bugs with Tcl or Tk on Mac OS X to the sourceforge bug trackers:
-	http://tcl.sourceforge.net/
+	Tcl: http://sf.net/tracker/?func=add&group_id=10894&atid=110894
+	Tk:  http://sf.net/tracker/?func=add&group_id=12997&atid=112997
+please make sure that your report Tk specific bugs to the tktoolkit project bug
+tracker rather than the tcl project bug tracker.
+Mac OS X specific bugs should usually be assigned to 'das' or 'wolfsuit'.
+
 
 2. Using Tcl on Mac OS X
 ------------------------

@@ -1,6 +1,8 @@
 Tcl UNIX README
 ---------------
 
+RCS: @(#) $Id$
+
 This is the directory where you configure, compile, test, and install UNIX
 versions of Tcl. This directory also contains source files for Tcl that are
 specific to UNIX. Some of the files in this directory are used on the PC or
@@ -166,3 +168,8 @@ a test is failing consistently, please send us a bug report with as much
 detail as you can manage. Please use the online database at
 	http://tcl.sourceforge.net/
 
+The Tcl test suite is very sensitive to proper implementation of ANSI C
+library procedures such as sprintf and sscanf. If the test suite generates
+errors, most likely they are due to non-conformance of your system's ANSI C
+library; such problems are unlikely to affect any real applications so it's
+probably safe to ignore them.

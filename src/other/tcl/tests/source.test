@@ -11,6 +11,8 @@
 #
 # See the file "license.terms" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
+#
+# RCS: @(#) $Id$
 
 if {[catch {package require tcltest 2.1}]} {
     puts stderr "Skipping tests in [info script]. tcltest 2.1 required."
@@ -107,19 +109,6 @@ test source-2.6 {source error conditions} -setup {
 } -match listGlob -result [list 1 \
 	{couldn't read file "*_non_existent_": no such file or directory} \
 	{POSIX ENOENT {no such file or directory}}]
-test source-2.7 {utf-8 with BOM} -setup {
-    set sourcefile [makeFile {} source.file]
-} -body {
-    set out [open $sourcefile w]
-    fconfigure $out -encoding utf-8
-    puts $out "\ufeffset y new-y"
-    close $out
-    set y old-y
-    source -encoding utf-8 $sourcefile
-    return $y
-} -cleanup {
-    removeFile $sourcefile
-} -result {new-y}
 
 test source-3.1 {return in middle of source file} -setup {
     set sourcefile [makeFile {

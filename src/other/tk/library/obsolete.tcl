@@ -3,6 +3,8 @@
 # This file contains obsolete procedures that people really shouldn't
 # be using anymore, but which are kept around for backward compatibility.
 #
+# RCS: @(#) $Id$
+#
 # Copyright (c) 1994 The Regents of the University of California.
 # Copyright (c) 1994 Sun Microsystems, Inc.
 #

@@ -9,6 +9,8 @@
  *
  * See the file "license.terms" for information on usage and redistribution of
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
+ *
+ * RCS: @(#) $Id$
  */
 
 #include "tclInt.h"
@@ -273,16 +275,11 @@ Tcl_SetByteArrayObj(
     TclFreeIntRep(objPtr);
     Tcl_InvalidateStringRep(objPtr);
 
-    if (length < 0) {
-	length = 0;
-    }
     byteArrayPtr = (ByteArray *) ckalloc(BYTEARRAY_SIZE(length));
     byteArrayPtr->used = length;
     byteArrayPtr->allocated = length;
+    memcpy(byteArrayPtr->bytes, bytes, (size_t) length);
 
-    if ((bytes != NULL) && (length > 0)) {
-	memcpy(byteArrayPtr->bytes, bytes, (size_t) length);
-    }
     objPtr->typePtr = &tclByteArrayType;
     SET_BYTEARRAY(objPtr, byteArrayPtr);
 }
@@ -441,7 +438,6 @@ FreeByteArrayInternalRep(
     Tcl_Obj *objPtr)		/* Object with internal rep to free. */
 {
     ckfree((char *) GET_BYTEARRAY(objPtr));
-    objPtr->typePtr = NULL;
 }
 
 /*
@@ -1912,7 +1908,7 @@ ScanNumber(
 	    register Tcl_HashEntry *hPtr;
 	    int isNew;
 
-	    hPtr = Tcl_CreateHashEntry(tablePtr, INT2PTR(value), &isNew);
+	    hPtr = Tcl_CreateHashEntry(tablePtr, (char *)value, &isNew);
 	    if (!isNew) {
 		return (Tcl_Obj *) Tcl_GetHashValue(hPtr);
 	    }

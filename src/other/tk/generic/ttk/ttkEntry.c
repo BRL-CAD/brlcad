@@ -1,4 +1,6 @@
 /*
+ * $Id$
+ *
  * DERIVED FROM: tk/generic/tkEntry.c r1.35.
  *
  * Copyright (c) 1990-1994 The Regents of the University of California.
@@ -10,7 +12,7 @@
 
 #include <string.h>
 #include <stdio.h>
-#include <tkInt.h>
+#include <tk.h>
 #include <X11/Xatom.h>
 
 #include "ttkTheme.h"
@@ -155,6 +157,8 @@ typedef struct {
 #define DEF_LIST_HEIGHT	"10"
 
 static Tk_OptionSpec EntryOptionSpecs[] = {
+    WIDGET_TAKES_FOCUS,
+
     {TK_OPTION_BOOLEAN, "-exportselection", "exportSelection",
         "ExportSelection", "1", -1, Tk_Offset(Entry, entry.exportSelection),
 	0,0,0 },
@@ -198,7 +202,6 @@ static Tk_OptionSpec EntryOptionSpecs[] = {
 	NULL, Tk_Offset(Entry, entry.styleData.backgroundObj), -1,
 	TK_OPTION_NULL_OK,0,0},
 
-    WIDGET_TAKEFOCUS_TRUE,
     WIDGET_INHERIT_OPTIONS(ttkCoreOptionSpecs)
 };
 
@@ -1135,14 +1138,13 @@ EntryDoLayout(void *recordPtr)
  *      Get a GC using the specified foreground color and the entry's font.
  *      Result must be freed with Tk_FreeGC().
  */
-static GC EntryGetGC(Entry *entryPtr, Tcl_Obj *colorObj, TkRegion clip)
+static GC EntryGetGC(Entry *entryPtr, Tcl_Obj *colorObj)
 {
     Tk_Window tkwin = entryPtr->core.tkwin;
     Tk_Font font = Tk_GetFontFromObj(tkwin, entryPtr->entry.fontObj);
     XColor *colorPtr;
     unsigned long mask = 0ul;
     XGCValues gcValues;
-    GC gc;
 
     gcValues.line_width = 1; mask |= GCLineWidth;
     gcValues.font = Tk_FontId(font); mask |= GCFont;
@@ -1150,11 +1152,7 @@ static GC EntryGetGC(Entry *entryPtr, Tcl_Obj *colorObj, TkRegion clip)
 	gcValues.foreground = colorPtr->pixel;
 	mask |= GCForeground;
     }
-    gc = Tk_GetGC(entryPtr->core.tkwin, mask, &gcValues);
-    if (clip != None) {
-	TkSetRegion(Tk_Display(entryPtr->core.tkwin), gc, clip);
-    }
-    return gc;
+    return Tk_GetGC(entryPtr->core.tkwin, mask, &gcValues);
 }
 
 /* EntryDisplay --
@@ -1165,19 +1163,15 @@ static void EntryDisplay(void *clientData, Drawable d)
     Entry *entryPtr = clientData;
     Tk_Window tkwin = entryPtr->core.tkwin;
     int leftIndex = entryPtr->entry.xscroll.first,
-	rightIndex = entryPtr->entry.xscroll.last + 1,
+	rightIndex = entryPtr->entry.xscroll.last,
 	selFirst = entryPtr->entry.selectFirst,
 	selLast = entryPtr->entry.selectLast;
     EntryStyleData es;
     GC gc;
     int showSelection, showCursor;
-    Ttk_Box textarea;
-    TkRegion clipRegion;
-    XRectangle rect;
 
     EntryInitStyleData(entryPtr, &es);
 
-    textarea = Ttk_ClientRegion(entryPtr->core.layout, "textarea");
     showCursor =
 	   (entryPtr->core.flags & CURSOR_ON) != 0
 	&& EntryEditable(entryPtr)
@@ -1223,20 +1217,6 @@ static void EntryDisplay(void *clientData, Drawable d)
 	}
     }
 
-    /* Initialize the clip region. Note that Xft does _not_ derive its
-     * clipping area from the GC, so we have to supply that by other means.
-     */
-
-    rect.x = textarea.x;
-    rect.y = textarea.y;
-    rect.width = textarea.width;
-    rect.height = textarea.height;
-    clipRegion = TkCreateRegion();
-    TkUnionRectWithRegion(&rect, clipRegion, clipRegion);
-#ifdef HAVE_XFT
-    TkUnixSetXftClipRegion(clipRegion);
-#endif
-
     /* Draw cursor:
      */
     if (showCursor) {
@@ -1253,42 +1233,31 @@ static void EntryDisplay(void *clientData, Drawable d)
 	/* @@@ should: maybe: SetCaretPos even when blinked off */
 	Tk_SetCaretPos(tkwin, cursorX, cursorY, cursorHeight);
 
-	gc = EntryGetGC(entryPtr, es.insertColorObj, clipRegion);
+	gc = EntryGetGC(entryPtr, es.insertColorObj);
 	XFillRectangle(Tk_Display(tkwin), d, gc,
 	    cursorX-cursorWidth/2, cursorY, cursorWidth, cursorHeight);
-	XSetClipMask(Tk_Display(tkwin), gc, None);
 	Tk_FreeGC(Tk_Display(tkwin), gc);
     }
 
     /* Draw the text:
      */
-    gc = EntryGetGC(entryPtr, es.foregroundObj, clipRegion);
+    gc = EntryGetGC(entryPtr, es.foregroundObj);
     Tk_DrawTextLayout(
 	Tk_Display(tkwin), d, gc, entryPtr->entry.textLayout,
 	entryPtr->entry.layoutX, entryPtr->entry.layoutY,
 	leftIndex, rightIndex);
-    XSetClipMask(Tk_Display(tkwin), gc, None);
     Tk_FreeGC(Tk_Display(tkwin), gc);
 
     /* Overwrite the selected portion (if any) in the -selectforeground color:
      */
     if (showSelection) {
-	gc = EntryGetGC(entryPtr, es.selForegroundObj, clipRegion);
+	gc = EntryGetGC(entryPtr, es.selForegroundObj);
 	Tk_DrawTextLayout(
 	    Tk_Display(tkwin), d, gc, entryPtr->entry.textLayout,
 	    entryPtr->entry.layoutX, entryPtr->entry.layoutY,
 	    selFirst, selLast);
-	XSetClipMask(Tk_Display(tkwin), gc, None);
 	Tk_FreeGC(Tk_Display(tkwin), gc);
     }
-
-    /* Drop the region. Note that we have to manually remove the reference to
-     * it from the Xft guts (if they're being used).
-     */
-#ifdef HAVE_XFT
-    TkUnixSetXftClipRegion(None);
-#endif
-    TkDestroyRegion(clipRegion);
 }
 
 /*------------------------------------------------------------------------
@@ -1821,7 +1790,6 @@ static const Ttk_Ensemble ComboboxCommands[] = {
     { "selection", 	0,EntrySelectionCommands },
     { "state",  	TtkWidgetStateCommand,0 },
     { "set", 		EntrySetCommand,0 },
-    { "validate",	EntryValidateCommand,0 },
     { "xview", 		EntryXViewCommand,0 },
     { 0,0,0 }
 };

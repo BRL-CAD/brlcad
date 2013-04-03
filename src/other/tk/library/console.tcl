@@ -4,6 +4,8 @@
 # can be used by non-unix systems that do not have built-in support
 # for shells.
 #
+# RCS: @(#) $Id$
+#
 # Copyright (c) 1995-1997 Sun Microsystems, Inc.
 # Copyright (c) 1998-2000 Ajuba Solutions.
 # Copyright (c) 2007 Daniel A. Steffen <das@users.sourceforge.net>

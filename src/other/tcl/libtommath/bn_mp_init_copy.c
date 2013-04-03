@@ -26,3 +26,7 @@ int mp_init_copy (mp_int * a, mp_int * b)
   return mp_copy (b, a);
 }
 #endif
+
+/* $Source$ */
+/* $Revision$ */
+/* $Date$ */

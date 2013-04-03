@@ -9,6 +9,8 @@
  *
  * See the file "license.terms" for information on usage and redistribution of
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
+ *
+ * RCS: @(#) $Id$
  */
 
 #include <stdio.h>
@@ -1198,7 +1200,6 @@ PolygonDeleteCoords(
 	polyPtr->numPoints = 0;
 	if (polyPtr->coordPtr != NULL) {
 	    ckfree((char *) polyPtr->coordPtr);
-	    polyPtr->coordPtr = NULL;
 	}
 	ComputePolygonBbox(canvas, polyPtr);
 	return;

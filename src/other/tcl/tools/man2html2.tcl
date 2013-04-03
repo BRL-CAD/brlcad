@@ -5,6 +5,9 @@
 # page to html conversion process. It is sourced by man2html.tcl.
 #
 # Copyright (c) 1996 by Sun Microsystems, Inc.
+#
+# $Id$
+#
 
 package require Tcl 8.4
 

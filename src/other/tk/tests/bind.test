@@ -6,6 +6,8 @@
 # Copyright (c) 1994-1995 Sun Microsystems, Inc.
 # Copyright (c) 1998-1999 by Scriptics Corporation.
 # All rights reserved.
+#
+# RCS: @(#) $Id$
 
 package require tcltest 2.1
 eval tcltest::configure $argv
@@ -1979,9 +1981,9 @@ test bind-22.10 {HandleEventGenerate} {
     setup
     bind .b.f <Key> {set x "%s %K"}
     set x {}
-    event gen .b.f <Control-Key-space>
+    event gen .b.f <Control-Key-1>
     set x
-} {4 space}
+} {4 1}
 test bind-22.11 {HandleEventGenerate} {
     setup
     bind .b.f <<Paste>> {set x "%s"}

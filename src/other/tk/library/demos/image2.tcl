@@ -2,6 +2,8 @@
 #
 # This demonstration script creates a simple collection of widgets
 # that allow you to select and view images in a Tk label.
+#
+# RCS: @(#) $Id$
 
 if {![info exists widgetDemo]} {
     error "This script should be run from the \"widget\" demo."

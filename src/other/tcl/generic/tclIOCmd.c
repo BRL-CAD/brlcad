@@ -7,6 +7,8 @@
  *
  * See the file "license.terms" for information on usage and redistribution of
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
+ *
+ * RCS: @(#) $Id$
  */
 
 #include "tclInt.h"
@@ -133,24 +135,32 @@ Tcl_PutsObjCmd(
 	break;
 
     case 4: /* [puts -nonewline $chan $x] or [puts $chan $x nonewline] */
-	newline = 0;
 	if (strcmp(TclGetString(objv[1]), "-nonewline") == 0) {
 	    chanObjPtr = objv[2];
 	    string = objv[3];
-	    break;
-	} else if (strcmp(TclGetString(objv[3]), "nonewline") == 0) {
+	} else {
 	    /*
 	     * The code below provides backwards compatibility with an old
 	     * form of the command that is no longer recommended or
-	     * documented. See also [Bug #3151675]. Will be removed in Tcl 9,
-	     * maybe even earlier.
+	     * documented.
 	     */
 
+	    char *arg;
+	    int length;
+
+	    arg = TclGetStringFromObj(objv[3], &length);
+	    if ((length != 9)
+		    || (strncmp(arg, "nonewline", (size_t) length) != 0)) {
+		Tcl_AppendResult(interp, "bad argument \"", arg,
+			"\": should be \"nonewline\"", NULL);
+		return TCL_ERROR;
+	    }
 	    chanObjPtr = objv[1];
 	    string = objv[2];
-	    break;
 	}
-	/* Fall through */
+	newline = 0;
+	break;
+
     default:
 	/* [puts] or [puts some bad number of arguments...] */
 	Tcl_WrongNumArgs(interp, 1, objv, "?-nonewline? ?channelId? string");
@@ -419,28 +429,24 @@ Tcl_ReadObjCmd(
     i++;	/* Consumed channel name. */
 
     /*
-     * Compute how many bytes to read.
+     * Compute how many bytes to read, and see whether the final newline
+     * should be dropped.
      */
 
     toRead = -1;
     if (i < objc) {
-	if (TclGetIntFromObj(interp, objv[i], &toRead) != TCL_OK) {
-	    /*
-	     * The code below provides backwards compatibility with an old
-	     * form of the command that is no longer recommended or
-	     * documented. See also [Bug #3151675]. Will be removed in Tcl 9,
-	     * maybe even earlier.
-	     */
+	char *arg;
 
-	    if (strcmp(TclGetString(objv[i]), "nonewline") != 0) {
-	    return TCL_ERROR;
+	arg = TclGetString(objv[i]);
+	if (isdigit(UCHAR(arg[0]))) { /* INTL: digit */
+	    if (TclGetIntFromObj(interp, objv[i], &toRead) != TCL_OK) {
+		return TCL_ERROR;
 	    }
+	} else if (strcmp(arg, "nonewline") == 0) {
 	    newline = 1;
-	} else if (toRead < 0) {
-	    Tcl_ResetResult(interp);
-	    Tcl_AppendResult(interp, "expected non-negative integer but got \"",
-		    TclGetString(objv[i]), "\"", NULL);
-	    Tcl_SetErrorCode(interp, "TCL", "VALUE", "NUMBER", NULL);
+	} else {
+	    Tcl_AppendResult(interp, "bad argument \"", arg,
+		    "\": should be \"nonewline\"", NULL);
 	    return TCL_ERROR;
 	}
     }
@@ -518,7 +524,7 @@ Tcl_SeekObjCmd(
     static const char *originOptions[] = {
 	"start", "current", "end", NULL
     };
-    static CONST int modeArray[] = {SEEK_SET, SEEK_CUR, SEEK_END};
+    static int modeArray[] = {SEEK_SET, SEEK_CUR, SEEK_END};
 
     if ((objc != 3) && (objc != 4)) {
 	Tcl_WrongNumArgs(interp, 1, objv, "channelId offset ?origin?");

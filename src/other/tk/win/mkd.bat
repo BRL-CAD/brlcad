@@ -1,4 +1,5 @@
 @echo off
+rem RCS: @(#) $Id$
 
 if exist %1\nul goto end
 

@@ -9,6 +9,8 @@
  *
  * See the file "license.terms" for information on usage and redistribution of
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
+ *
+ * RCS: @(#) $Id$
  */
 
 #include "tclInt.h"
@@ -202,10 +204,6 @@ Tcl_GetIndexFromObjStruct(
 	    entryPtr = NEXT_ENTRY(entryPtr, offset), idx++) {
 	for (p1 = key, p2 = *entryPtr; *p1 == *p2; p1++, p2++) {
 	    if (*p1 == '\0') {
-		if (p1 == key) {
-		    /* empty keys never match */
-		    continue;
-		}
 		index = idx;
 		goto done;
 	    }
@@ -260,27 +258,22 @@ Tcl_GetIndexFromObjStruct(
 	 * Produce a fancy error message.
 	 */
 
-	int count = 0;
+	int count;
 
 	TclNewObj(resultPtr);
 	Tcl_SetObjResult(interp, resultPtr);
-	entryPtr = tablePtr;
-	while ((*entryPtr != NULL) && !**entryPtr) {
-	    entryPtr = NEXT_ENTRY(entryPtr, offset);
-	}
 	Tcl_AppendStringsToObj(resultPtr, (numAbbrev > 1) &&
 		!(flags & TCL_EXACT) ? "ambiguous " : "bad ", msg, " \"", key,
-		"\": must be ", *entryPtr, NULL);
-	entryPtr = NEXT_ENTRY(entryPtr, offset);
-	while (*entryPtr != NULL) {
+		"\": must be ", STRING_AT(tablePtr, offset, 0), NULL);
+	for (entryPtr = NEXT_ENTRY(tablePtr, offset), count = 0;
+		*entryPtr != NULL;
+		entryPtr = NEXT_ENTRY(entryPtr, offset), count++) {
 	    if (*NEXT_ENTRY(entryPtr, offset) == NULL) {
 		Tcl_AppendStringsToObj(resultPtr, ((count > 0) ? "," : ""),
 			" or ", *entryPtr, NULL);
-	    } else if (**entryPtr) {
+	    } else {
 		Tcl_AppendStringsToObj(resultPtr, ", ", *entryPtr, NULL);
-		count++;
 	    }
-	    entryPtr = NEXT_ENTRY(entryPtr, offset);
 	}
 	Tcl_SetErrorCode(interp, "TCL", "LOOKUP", "INDEX", msg, key, NULL);
     }
@@ -312,11 +305,9 @@ SetIndexFromAny(
     Tcl_Interp *interp,		/* Used for error reporting if not NULL. */
     register Tcl_Obj *objPtr)	/* The object to convert. */
 {
-    if (interp) {
     Tcl_SetObjResult(interp, Tcl_NewStringObj(
 	    "can't convert value to index except via Tcl_GetIndexFromObj API",
 	    -1));
-    }
     return TCL_ERROR;
 }
 
@@ -406,7 +397,6 @@ FreeIndex(
     Tcl_Obj *objPtr)
 {
     ckfree((char *) objPtr->internalRep.otherValuePtr);
-    objPtr->typePtr = NULL;
 }
 
 /*
@@ -546,14 +536,12 @@ Tcl_WrongNumArgs(
 	    } else {
 		elementStr = TclGetStringFromObj(origObjv[i], &elemLen);
 	    }
-	    flags = 0;
-	    len = TclScanElement(elementStr, elemLen, &flags);
+	    len = Tcl_ScanCountedElement(elementStr, elemLen, &flags);
 
 	    if (MAY_QUOTE_WORD && len != elemLen) {
-		char *quotedElementStr = TclStackAlloc(interp,
-			(unsigned)len + 1);
+		char *quotedElementStr = TclStackAlloc(interp, (unsigned)len);
 
-		len = TclConvertElement(elementStr, elemLen,
+		len = Tcl_ConvertCountedElement(elementStr, elemLen,
 			quotedElementStr, flags);
 		Tcl_AppendToObj(objPtr, quotedElementStr, len);
 		TclStackFree(interp, quotedElementStr);
@@ -602,14 +590,12 @@ Tcl_WrongNumArgs(
 	     */
 
 	    elementStr = TclGetStringFromObj(objv[i], &elemLen);
-	    flags = 0;
-	    len = TclScanElement(elementStr, elemLen, &flags);
+	    len = Tcl_ScanCountedElement(elementStr, elemLen, &flags);
 
 	    if (MAY_QUOTE_WORD && len != elemLen) {
-		char *quotedElementStr = TclStackAlloc(interp,
-			(unsigned) len + 1);
+		char *quotedElementStr = TclStackAlloc(interp,(unsigned) len);
 
-		len = TclConvertElement(elementStr, elemLen,
+		len = Tcl_ConvertCountedElement(elementStr, elemLen,
 			quotedElementStr, flags);
 		Tcl_AppendToObj(objPtr, quotedElementStr, len);
 		TclStackFree(interp, quotedElementStr);

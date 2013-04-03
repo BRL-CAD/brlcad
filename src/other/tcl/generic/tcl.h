@@ -12,6 +12,8 @@
  *
  * See the file "license.terms" for information on usage and redistribution of
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
+ *
+ * RCS: @(#) $Id$
  */
 
 #ifndef _TCL
@@ -58,10 +60,10 @@ extern "C" {
 #define TCL_MAJOR_VERSION   8
 #define TCL_MINOR_VERSION   5
 #define TCL_RELEASE_LEVEL   TCL_FINAL_RELEASE
-#define TCL_RELEASE_SERIAL  13
+#define TCL_RELEASE_SERIAL  9
 
 #define TCL_VERSION	    "8.5"
-#define TCL_PATCH_LEVEL	    "8.5.13"
+#define TCL_PATCH_LEVEL	    "8.5.9"
 
 /*
  * The following definitions set up the proper options for Windows compilers.
@@ -89,6 +91,12 @@ extern "C" {
 #	define STRICT
 #   endif
 #endif /* __WIN32__ */
+
+/* quell shadow warnings */
+#ifdef index
+#  undef index
+#endif
+#define index tcl_scoped_index
 
 /*
  * Utility macros: STRINGIFY takes an argument and wraps it in "" (double
@@ -173,7 +181,7 @@ extern "C" {
 #   ifdef STATIC_BUILD
 #       define DLLIMPORT
 #       define DLLEXPORT
-#       ifdef _DLL
+#       if (defined(HAVE_DECLSPEC) && defined(_DLL))
 #           define CRTIMPORT __declspec(dllimport)
 #       else
 #           define CRTIMPORT
@@ -191,6 +199,10 @@ extern "C" {
 #       define DLLEXPORT
 #   endif
 #   define CRTIMPORT
+#endif
+
+#ifndef HAVE_DECLSPEC
+#   define HAVE_DECLSPEC 0
 #endif
 
 /*
@@ -352,17 +364,28 @@ typedef long LONG;
  */
 
 #if !defined(TCL_WIDE_INT_TYPE)&&!defined(TCL_WIDE_INT_IS_LONG)
-#   if defined(__WIN32__)
+#   if defined(__GNUC__)
+#      define TCL_WIDE_INT_TYPE long long
+#      if defined(__WIN32__) && !defined(__CYGWIN__)
+#         define TCL_LL_MODIFIER        "I64"
+#      else
+#         define TCL_LL_MODIFIER	"ll"
+#      endif
+typedef struct stat	Tcl_StatBuf;
+#   elif defined(__WIN32__)
 #      define TCL_WIDE_INT_TYPE __int64
 #      ifdef __BORLANDC__
+typedef struct stati64 Tcl_StatBuf;
 #         define TCL_LL_MODIFIER	"L"
 #      else /* __BORLANDC__ */
+#         if _MSC_VER < 1400 || !defined(_M_IX86)
+typedef struct _stati64	Tcl_StatBuf;
+#         else
+typedef struct _stat64	Tcl_StatBuf;
+#         endif /* _MSC_VER < 1400 */
 #         define TCL_LL_MODIFIER	"I64"
 #      endif /* __BORLANDC__ */
-#   elif defined(__GNUC__)
-#      define TCL_WIDE_INT_TYPE long long
-#      define TCL_LL_MODIFIER	"ll"
-#   else /* ! __WIN32__ && ! __GNUC__ */
+#   else /* __WIN32__ */
 /*
  * Don't know what platform it is and configure hasn't discovered what is
  * going on for us. Try to guess...
@@ -388,6 +411,7 @@ typedef TCL_WIDE_INT_TYPE		Tcl_WideInt;
 typedef unsigned TCL_WIDE_INT_TYPE	Tcl_WideUInt;
 
 #ifdef TCL_WIDE_INT_IS_LONG
+typedef struct stat	Tcl_StatBuf;
 #   define Tcl_WideAsLong(val)		((long)(val))
 #   define Tcl_LongAsWide(val)		((long)(val))
 #   define Tcl_WideAsDouble(val)	((double)((long)(val)))
@@ -401,6 +425,11 @@ typedef unsigned TCL_WIDE_INT_TYPE	Tcl_WideUInt;
  * or some other strange platform.
  */
 #   ifndef TCL_LL_MODIFIER
+#      ifdef HAVE_STRUCT_STAT64
+typedef struct stat64	Tcl_StatBuf;
+#      else
+typedef struct stat	Tcl_StatBuf;
+#      endif /* HAVE_STRUCT_STAT64 */
 #      define TCL_LL_MODIFIER		"ll"
 #   endif /* !TCL_LL_MODIFIER */
 #   define Tcl_WideAsLong(val)		((long)((Tcl_WideInt)(val)))
@@ -409,39 +438,6 @@ typedef unsigned TCL_WIDE_INT_TYPE	Tcl_WideUInt;
 #   define Tcl_DoubleAsWide(val)	((Tcl_WideInt)((double)(val)))
 #endif /* TCL_WIDE_INT_IS_LONG */
 
-#if defined(__WIN32__)
-#   ifdef __BORLANDC__
-	typedef struct stati64 Tcl_StatBuf;
-#   elif defined(_WIN64)
-	typedef struct __stat64 Tcl_StatBuf;
-#   elif (defined(_MSC_VER) && (_MSC_VER < 1400)) || defined(_USE_32BIT_TIME_T)
-	typedef struct _stati64	Tcl_StatBuf;
-#   else
-	typedef struct _stat32i64 Tcl_StatBuf;
-#   endif /* _MSC_VER < 1400 */
-#elif defined(__CYGWIN__)
-    typedef struct _stat32i64 {
-	dev_t st_dev;
-	unsigned short st_ino;
-	unsigned short st_mode;
-	short st_nlink;
-	short st_uid;
-	short st_gid;
-	/* Here is a 2-byte gap */
-	dev_t st_rdev;
-	/* Here is a 4-byte gap */
-	long long st_size;
-	struct {long tv_sec;} st_atim;
-	struct {long tv_sec;} st_mtim;
-	struct {long tv_sec;} st_ctim;
-	/* Here is a 4-byte gap */
-    } Tcl_StatBuf;
-#elif defined(HAVE_STRUCT_STAT64)
-    typedef struct stat64 Tcl_StatBuf;
-#else
-    typedef struct stat Tcl_StatBuf;
-#endif
-
 /*
  * Data structures defined opaquely in this module. The definitions below just
  * provide dummy types. A few fields are made visible in Tcl_Interp
@@ -512,7 +508,7 @@ typedef void (Tcl_ThreadCreateProc) _ANSI_ARGS_((ClientData clientData));
 /*
  * Threading function return types used for abstracting away platform
  * differences when writing a Tcl_ThreadCreateProc. See the NewThread function
- * in generic/tclThreadTest.c for it's usage.
+ * in generic/tclThreadTest.c for its usage.
  */
 
 #if defined __WIN32__
@@ -970,6 +966,8 @@ typedef struct Tcl_DString {
  *	is safe to leave the hash unquoted when the element is not the first
  *	element of a list, and this flag can be used by the caller to indicate
  *	that condition.
+ * (Careful! If you change these flag values be sure to change the definitions
+ * at the front of tclUtil.c).
  */
 
 #define TCL_DONT_USE_BRACES	1
@@ -2149,7 +2147,7 @@ typedef struct Tcl_Parse {
  * reflected in regcustom.h.
  */
 
-#if TCL_UTF_MAX > 4
+#if TCL_UTF_MAX > 3
     /*
      * unsigned int isn't 100% accurate as it should be a strict 4-byte value
      * (perhaps wchar_t). 64-bit systems may have troubles. The size of this
@@ -2448,6 +2446,9 @@ EXTERN int		Tcl_AppInit _ANSI_ARGS_((Tcl_Interp *interp));
 /*
  * end block for C++
  */
+
+/* quell shadow warnings */
+#undef index
 
 #ifdef __cplusplus
 }

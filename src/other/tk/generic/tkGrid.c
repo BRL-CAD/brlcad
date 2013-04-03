@@ -7,6 +7,8 @@
  *
  * See the file "license.terms" for information on usage and redistribution of
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
+ *
+ * RCS: @(#) $Id$
  */
 
 #include "tkInt.h"
@@ -165,7 +167,6 @@ typedef struct Gridder {
     struct Gridder *slavePtr;	/* First in list of slaves managed inside this
 				 * window (NULL means no grid slaves). */
     GridMaster *masterDataPtr;	/* Additional data for geometry master. */
-    Tcl_Obj *in;                /* Store master name when removed. */
     int column, row;		/* Location in the grid (starting from
 				 * zero). */
     int numCols, numRows;	/* Number of columns or rows this slave spans.
@@ -653,31 +654,12 @@ GridForgetRemoveCommand(
 		slavePtr->padTop = 0;
 		slavePtr->iPadX = 0;
 		slavePtr->iPadY = 0;
-		if (slavePtr->in != NULL) {
-		    Tcl_DecrRefCount(slavePtr->in);
-		    slavePtr->in = NULL;
-		}
 		slavePtr->doubleBw = 2*Tk_Changes(tkwin)->border_width;
 		if (slavePtr->flags & REQUESTED_RELAYOUT) {
 		    Tcl_CancelIdleCall(ArrangeGrid, (ClientData) slavePtr);
 		}
 		slavePtr->flags = 0;
 		slavePtr->sticky = 0;
-	    } else {
-		/*
-		 * When removing, store name of master to be able to
-		 * restore it later, even if the master is recreated.
-		 */
-
-		if (slavePtr->in != NULL) {
-		    Tcl_DecrRefCount(slavePtr->in);
-		    slavePtr->in = NULL;
-		}
-		if (slavePtr->masterPtr != NULL) {
-		    slavePtr->in = Tcl_NewStringObj(
-			    Tk_PathName(slavePtr->masterPtr->tkwin), -1);
-		    Tcl_IncrRefCount(slavePtr->in);
-		}
 	    }
 	    Tk_ManageGeometry(slave, NULL, (ClientData) NULL);
 	    if (slavePtr->masterPtr->tkwin != Tk_Parent(slavePtr->tkwin)) {
@@ -2438,7 +2420,6 @@ GetGrid(
     gridPtr->flags = 0;
     gridPtr->sticky = 0;
     gridPtr->size = 0;
-    gridPtr->in = NULL;
     gridPtr->masterDataPtr = NULL;
     Tcl_SetHashValue(hPtr, gridPtr);
     Tk_CreateEventHandler(tkwin, StructureNotifyMask,
@@ -2781,9 +2762,6 @@ DestroyGrid(
 	}
 	ckfree((char *) gridPtr->masterDataPtr);
     }
-    if (gridPtr->in != NULL) {
-	Tcl_DecrRefCount(gridPtr->in);
-    }
     ckfree((char *) gridPtr);
 }
 
@@ -2939,22 +2917,6 @@ ConfigureSlaves(
 
 	    if (TkGetWindowFromObj(interp, tkwin, objv[i], &slave) != TCL_OK) {
 		return TCL_ERROR;
-	    }
-	    if (masterPtr == NULL) {
-		/*
-		 * Is there any saved -in from a removed slave?
-		 * If there is, it becomes default for -in.
-		 * If the stored master does not exist, just ignore it.
-		 */
-
-		struct Gridder *slavePtr = GetGrid(slave);
-		if (slavePtr->in != NULL) {
-		    if (TkGetWindowFromObj(interp, slave, slavePtr->in, &parent)
-			    == TCL_OK) {
-			masterPtr = GetGrid(parent);
-			InitMasterData(masterPtr);
-		    }
-		}
 	    }
 	    if (masterPtr == NULL) {
 		parent = Tk_Parent(slave);

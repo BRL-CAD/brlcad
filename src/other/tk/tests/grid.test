@@ -4,6 +4,8 @@
 # Copyright (c) 1996 Sun Microsystems, Inc.
 # Copyright (c) 1998-1999 by Scriptics Corporation.
 # All rights reserved.
+#
+# RCS: @(#) $Id$
 
 package require tcltest 2.1
 eval tcltest::configure $argv
@@ -1949,66 +1951,6 @@ test grid-21.7 {anchor} {
            {37 100 225 150} {0 100 225 150} {0 60 225 150} {0 20 225 150} \
            {37 60 225 150}]
 grid_reset 21.7
-
-test grid-22.1 {remove: basic argument checking} {
-    list [catch {grid remove foo} msg] $msg
-} {1 {bad window path name "foo"}}
-
-test grid-22.2 {remove} {
-    button .c
-    grid [button .b]
-    set a [grid slaves .]
-    grid remove .b .c
-    lappend a [grid slaves .]
-    set a
-} {.b {}}
-grid_reset 22.2
-
-test grid-22.3 {remove} {
-    button .c
-    grid .c -row 2 -column 2 -rowspan 2 -columnspan 2 -padx 3 -pady 4 -sticky ns
-    grid remove .c
-    grid .c -row 0 -column 0
-    grid info .c
-} {-in . -column 0 -row 0 -columnspan 2 -rowspan 2 -ipadx 0 -ipady 0 -padx 3 -pady 4 -sticky ns}
-grid_reset 22.3
-
-test grid-22.3.1 {remove} {
-    frame .a
-    button .c
-    grid .c -in .a -row 2 -column 2 -rowspan 2 -columnspan 2 -padx {3 5} -pady {4 7} -sticky ns
-    grid remove .c
-    grid .c -row 0 -column 0
-    grid info .c
-} {-in .a -column 0 -row 0 -columnspan 2 -rowspan 2 -ipadx 0 -ipady 0 -padx {3 5} -pady {4 7} -sticky ns}
-grid_reset 22.3.1
-
-test grid-22.4 {remove, calling Tk_UnmaintainGeometry} {
-    frame .f -bd 2 -relief raised
-    place .f -x 10 -y 20 -width 200 -height 100
-    frame .f2 -width 50 -height 30 -bg red
-    grid .f2 -in .f
-    update
-    set x [winfo ismapped .f2]
-    grid remove .f2
-    place .f -x 30
-    update
-    lappend x [winfo ismapped .f2]
-} {1 0}
-grid_reset 22.4
-
-test grid-22.5 {remove} {
-    frame .a
-    button .c
-    grid .c -in .a -row 2 -column 2 -rowspan 2 -columnspan 2 -padx {3 5} -pady {4 7} -sticky ns
-    grid remove .c
-    # If .a was destroyed while remembered by the removed .c, make sure it
-    # is ignored.
-    destroy .a
-    grid .c -row 0 -column 0
-    grid info .c
-} {-in . -column 0 -row 0 -columnspan 2 -rowspan 2 -ipadx 0 -ipady 0 -padx {3 5} -pady {4 7} -sticky ns}
-grid_reset 22.5
 
 # cleanup
 cleanupTests

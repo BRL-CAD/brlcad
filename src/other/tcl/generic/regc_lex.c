@@ -742,10 +742,10 @@ lexescape(
     struct vars *v)
 {
     chr c;
-    static const chr alert[] = {
+    static chr alert[] = {
 	CHR('a'), CHR('l'), CHR('e'), CHR('r'), CHR('t')
     };
-    static const chr esc[] = {
+    static chr esc[] = {
 	CHR('E'), CHR('S'), CHR('C')
     };
     const chr *save;
@@ -1135,7 +1135,7 @@ newline(void)
 static const chr *
 ch(void)
 {
-    static const chr chstr[] = { CHR('c'), CHR('h'), CHR('\0') };
+    static chr chstr[] = { CHR('c'), CHR('h'), CHR('\0') };
 
     return chstr;
 }

@@ -1,4 +1,6 @@
 #
+# $Id$
+#
 # "Clam" theme.
 #
 # Inspired by the XFCE family of Gnome themes.

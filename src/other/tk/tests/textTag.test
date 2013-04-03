@@ -5,6 +5,8 @@
 # Copyright (c) 1994-1996 Sun Microsystems, Inc.
 # Copyright (c) 1998-1999 by Scriptics Corporation.
 # All rights reserved.
+#
+# RCS: @(#) $Id$
 
 package require tcltest 2.1
 eval tcltest::configure $argv
@@ -147,19 +149,6 @@ test textTag-2.13 {TkTextTagCmd - "add" option} haveCourier12 {
     .t tag add sel 1.1 1.5 2.4
     .t tag ranges sel
 } {1.1 1.5 2.4 2.5}
-test textTag-2.14 {tag add before -startline - Bug 1615425} haveCourier12 {
-    text .tt
-    for {set i 1} {$i <10} {incr i} {
-        .tt insert end "Line $i\n"
-    }
-    .tt tag configure mytag -font {Courier 12 bold}
-    .tt peer create .ptt
-    .ptt configure -startline 3 -endline 7
-    # the test succeeds if next line does not crash
-    .tt tag add mytag 1.0 1.end
-    destroy .ptt .tt
-    set res 1
-} {1}
 
 catch {.t tag delete x}
 test textTag-3.1 {TkTextTagCmd - "bind" option} haveCourier12 {

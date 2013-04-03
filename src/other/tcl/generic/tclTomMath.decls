@@ -12,6 +12,8 @@
 #
 # See the file "license.terms" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
+#
+# RCS: @(#) $Id$
 
 library tcl
 
@@ -210,13 +212,4 @@ declare 59 generic {
 }
 declare 60 generic {
     int TclBN_s_mp_sub(mp_int *a, mp_int *b, mp_int *c)
-}
-declare 61 {
-    int TclBN_mp_init_set_int(mp_int *a, unsigned long i)
-}
-declare 62 {
-    int TclBN_mp_set_int(mp_int *a, unsigned long i)
-}
-declare 63 {
-    int TclBN_mp_cnt_lsb(mp_int *a)
 }

@@ -8,6 +8,8 @@
  *
  * See the file "license.terms" for information on usage and redistribution of
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
+ *
+ * RCS: @(#) $Id$
  */
 
 #include "tkWinInt.h"
@@ -209,7 +211,7 @@ TkpScanWindowId(
     Window *idPtr)		/* Place to store converted result. */
 {
     Tk_Window tkwin;
-    void *number, *numberPtr = &number;
+    Window number, *numberPtr = &number;
 
     /*
      * We want sscanf for the 64-bit check, but if that doesn't work, then
@@ -297,7 +299,7 @@ TkpMakeWindow(
  *----------------------------------------------------------------------
  */
 
-int
+void
 XDestroyWindow(
     Display *display,
     Window w)
@@ -333,7 +335,6 @@ XDestroyWindow(
     if (hwnd != NULL && !(winPtr->flags & TK_DONT_DESTROY_WINDOW)) {
 	DestroyWindow(hwnd);
     }
-    return Success;
 }
 
 /*
@@ -352,7 +353,7 @@ XDestroyWindow(
  *----------------------------------------------------------------------
  */
 
-int
+void
 XMapWindow(
     Display *display,
     Window w)
@@ -376,7 +377,7 @@ XMapWindow(
 	for (parentPtr = winPtr->parentPtr; ;
 		parentPtr = parentPtr->parentPtr) {
 	    if ((parentPtr == NULL) || !(parentPtr->flags & TK_MAPPED)) {
-		return Success;
+		return;
 	    }
 	    if (parentPtr->flags & TK_TOP_HIERARCHY) {
 		break;
@@ -405,7 +406,6 @@ XMapWindow(
     event.xvisibility.window = winPtr->window;
     event.xvisibility.state = VisibilityUnobscured;
     NotifyVisibility(&event, winPtr);
-    return Success;
 }
 
 /*
@@ -461,7 +461,7 @@ NotifyVisibility(
  *----------------------------------------------------------------------
  */
 
-int
+void
 XUnmapWindow(
     Display *display,
     Window w)
@@ -489,7 +489,6 @@ XUnmapWindow(
 	event.xunmap.from_configure = False;
 	Tk_HandleEvent(&event);
     }
-    return Success;
 }
 
 /*
@@ -508,7 +507,7 @@ XUnmapWindow(
  *----------------------------------------------------------------------
  */
 
-int
+void
 XMoveResizeWindow(
     Display *display,
     Window w,
@@ -517,7 +516,6 @@ XMoveResizeWindow(
 {
     display->request++;
     MoveWindow(Tk_GetHWND(w), x, y, (int) width, (int) height, TRUE);
-    return Success;
 }
 
 /*
@@ -536,7 +534,7 @@ XMoveResizeWindow(
  *----------------------------------------------------------------------
  */
 
-int
+void
 XMoveWindow(
     Display *display,
     Window w,
@@ -548,7 +546,6 @@ XMoveWindow(
 
     MoveWindow(Tk_GetHWND(w), x, y, winPtr->changes.width,
 	    winPtr->changes.height, TRUE);
-    return Success;
 }
 
 /*
@@ -567,7 +564,7 @@ XMoveWindow(
  *----------------------------------------------------------------------
  */
 
-int
+void
 XResizeWindow(
     Display *display,
     Window w,
@@ -579,7 +576,6 @@ XResizeWindow(
 
     MoveWindow(Tk_GetHWND(w), winPtr->changes.x, winPtr->changes.y, (int)width,
 	    (int)height, TRUE);
-    return Success;
 }
 
 /*
@@ -598,7 +594,7 @@ XResizeWindow(
  *----------------------------------------------------------------------
  */
 
-int
+void
 XRaiseWindow(
     Display *display,
     Window w)
@@ -607,7 +603,6 @@ XRaiseWindow(
 
     display->request++;
     SetWindowPos(window, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
-    return Success;
 }
 
 /*
@@ -629,7 +624,7 @@ XRaiseWindow(
  *----------------------------------------------------------------------
  */
 
-int
+void
 XConfigureWindow(
     Display *display,
     Window w,
@@ -664,7 +659,6 @@ XConfigureWindow(
 	}
 	TkWinSetWindowPos(hwnd, sibling, values->stack_mode);
     }
-    return Success;
 }
 
 /*
@@ -683,7 +677,7 @@ XConfigureWindow(
  *----------------------------------------------------------------------
  */
 
-int
+void
 XClearWindow(
     Display *display,
     Window w)
@@ -711,7 +705,6 @@ XClearWindow(
     DeleteObject(brush);
     SelectPalette(dc, oldPalette, TRUE);
     ReleaseDC(hwnd, dc);
-    return Success;
 }
 
 /*
@@ -732,7 +725,7 @@ XClearWindow(
  *----------------------------------------------------------------------
  */
 
-int
+void
 XChangeWindowAttributes(
     Display *display,
     Window w,
@@ -742,7 +735,6 @@ XChangeWindowAttributes(
     if (valueMask & CWCursor) {
 	XDefineCursor(display, w, attributes->cursor);
     }
-    return Success;
 }
 
 /*

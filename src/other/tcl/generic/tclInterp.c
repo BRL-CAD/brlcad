@@ -9,6 +9,8 @@
  *
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
+ *
+ * RCS: @(#) $Id$
  */
 
 #include "tclInt.h"
@@ -205,9 +207,6 @@ static int		SlaveBgerror(Tcl_Interp *interp,
 			    Tcl_Obj *const objv[]);
 static Tcl_Interp *	SlaveCreate(Tcl_Interp *interp, Tcl_Obj *pathPtr,
 			    int safe);
-static int		SlaveDebugCmd(Tcl_Interp *interp,
-			    Tcl_Interp *slaveInterp,
-			    int objc, Tcl_Obj *const objv[]);
 static int		SlaveEval(Tcl_Interp *interp, Tcl_Interp *slaveInterp,
 			    int objc, Tcl_Obj *const objv[]);
 static int		SlaveExpose(Tcl_Interp *interp,
@@ -559,7 +558,7 @@ Tcl_InterpObjCmd(
     int index;
     static const char *options[] = {
 	"alias",	"aliases",	"bgerror",	"create",
-	"debug",	"delete",	"eval",		"exists",	"expose",
+	"delete",	"eval",		"exists",	"expose",
 	"hide",		"hidden",	"issafe",	"invokehidden",
 	"limit",	"marktrusted",	"recursionlimit","slaves",
 	"share",	"target",	"transfer",
@@ -567,7 +566,7 @@ Tcl_InterpObjCmd(
     };
     enum option {
 	OPT_ALIAS,	OPT_ALIASES,	OPT_BGERROR,	OPT_CREATE,
-	OPT_DEBUG,	OPT_DELETE,	OPT_EVAL,	OPT_EXISTS,	OPT_EXPOSE,
+	OPT_DELETE,	OPT_EVAL,	OPT_EXISTS,	OPT_EXPOSE,
 	OPT_HIDE,	OPT_HIDDEN,	OPT_ISSAFE,	OPT_INVOKEHID,
 	OPT_LIMIT,	OPT_MARKTRUSTED,OPT_RECLIMIT,	OPT_SLAVES,
 	OPT_SHARE,	OPT_TARGET,	OPT_TRANSFER
@@ -706,23 +705,6 @@ Tcl_InterpObjCmd(
 	}
 	Tcl_SetObjResult(interp, slavePtr);
 	return TCL_OK;
-    }
-    case OPT_DEBUG: {
-	/* TIP #378 */
-	Tcl_Interp *slaveInterp;
-
-	/*
-	 * Currently only -frame supported, otherwise ?-option ?value??
-	 */
-	if (objc < 3 || objc > 5) {
-	    Tcl_WrongNumArgs(interp, 2, objv, "path ?-frame ?bool??");
-	    return TCL_ERROR;
-	}
-	slaveInterp = GetInterp(interp, objv[2]);
-	if (slaveInterp == NULL) {
-	    return TCL_ERROR;
-	}
-	return SlaveDebugCmd(interp, slaveInterp, objc - 3, objv + 3);
     }
     case OPT_DELETE: {
 	int i;
@@ -2246,12 +2228,12 @@ SlaveObjCmd(
     Tcl_Interp *slaveInterp = clientData;
     int index;
     static const char *options[] = {
-	"alias",	"aliases",	"bgerror",	"debug",	"eval",
+	"alias",	"aliases",	"bgerror",	"eval",
 	"expose",	"hide",		"hidden",	"issafe",
 	"invokehidden",	"limit",	"marktrusted",	"recursionlimit", NULL
     };
     enum options {
-	OPT_ALIAS,	OPT_ALIASES,	OPT_BGERROR,	OPT_DEBUG,	OPT_EVAL,
+	OPT_ALIAS,	OPT_ALIASES,	OPT_BGERROR,	OPT_EVAL,
 	OPT_EXPOSE,	OPT_HIDE,	OPT_HIDDEN,	OPT_ISSAFE,
 	OPT_INVOKEHIDDEN, OPT_LIMIT,	OPT_MARKTRUSTED, OPT_RECLIMIT
     };
@@ -2298,16 +2280,6 @@ SlaveObjCmd(
 	    return TCL_ERROR;
 	}
 	return SlaveBgerror(interp, slaveInterp, objc - 2, objv + 2);
-    case OPT_DEBUG:
-	/*
-	 * TIP #378 *
-	 * Currently only -frame supported, otherwise ?-option ?value? ...?
-	 */
-	if (objc > 4) {
-	    Tcl_WrongNumArgs(interp, 2, objv, "?-frame ?bool??");
-	    return TCL_ERROR;
-	}
-	return SlaveDebugCmd(interp, slaveInterp, objc - 2, objv + 2);
     case OPT_EVAL:
 	if (objc < 3) {
 	    Tcl_WrongNumArgs(interp, 2, objv, "arg ?arg ...?");
@@ -2466,75 +2438,6 @@ SlaveObjCmdDeleteProc(
     if (slavePtr->slaveInterp != NULL) {
 	Tcl_DeleteInterp(slavePtr->slaveInterp);
     }
-}
-
-/*
- *----------------------------------------------------------------------
- *
- * SlaveDebugCmd -- TIP #378
- *
- *	Helper function to handle 'debug' command in a slave interpreter.
- *
- * Results:
- *	A standard Tcl result.
- *
- * Side effects:
- *	May modify INTERP_DEBUG flag in the slave.
- *
- *----------------------------------------------------------------------
- */
-
-static int
-SlaveDebugCmd(
-    Tcl_Interp *interp,		/* Interp for error return. */
-    Tcl_Interp *slaveInterp,	/* The slave interpreter in which command
-				 * will be evaluated. */
-    int objc,			/* Number of arguments. */
-    Tcl_Obj *const objv[])	/* Argument objects. */
-{
-    static const char *debugTypes[] = {
-	"-frame", NULL
-    };
-    enum DebugTypes {
-	DEBUG_TYPE_FRAME
-    };
-    int debugType;
-    Interp *iPtr;
-    Tcl_Obj *resultPtr;
-
-    iPtr = (Interp *) slaveInterp;
-    if (objc == 0) {
-	resultPtr = Tcl_NewObj();
-	Tcl_ListObjAppendElement(NULL, resultPtr,
-		Tcl_NewStringObj("-frame", -1));
-	Tcl_ListObjAppendElement(NULL, resultPtr,
-		Tcl_NewBooleanObj(iPtr->flags & INTERP_DEBUG_FRAME));
-	Tcl_SetObjResult(interp, resultPtr);
-    } else {
-	if (Tcl_GetIndexFromObj(interp, objv[0], debugTypes,
-			"debug option", 0, &debugType) != TCL_OK) {
-	    return TCL_ERROR;
-	}
-	if (debugType == DEBUG_TYPE_FRAME) {
-	    if (objc == 2) { /* set */
-		if (Tcl_GetBooleanFromObj(interp, objv[1], &debugType)
-			!= TCL_OK) {
-		    return TCL_ERROR;
-		}
-		/*
-		 * Quietly ignore attempts to disable interp debugging.
-		 * This is a one-way switch as frame debug info is maintained
-		 * in a stack that must be consistent once turned on.
-		 */
-		if (debugType) {
-		    iPtr->flags |= INTERP_DEBUG_FRAME;
-		}
-	    }
-	    Tcl_SetObjResult(interp,
-		    Tcl_NewBooleanObj(iPtr->flags & INTERP_DEBUG_FRAME));
-	}
-    }
-    return TCL_OK;
 }
 
 /*
@@ -4133,19 +4036,6 @@ SlaveCommandLimitCmd(
     ScriptLimitCallback *limitCBPtr;
     Tcl_HashEntry *hPtr;
 
-    /*
-     * First, ensure that we are not reading or writing the calling
-     * interpreter's limits; it may only manipulate its children. Note that
-     * the low level API enforces this with Tcl_Panic, which we want to
-     * avoid. [Bug 3398794]
-     */
-
-    if (interp == slaveInterp) {
-	Tcl_AppendResult(interp,
-		"limits on current interpreter inaccessible", NULL);
-	return TCL_ERROR;
-    }
-
     if (objc == consumedObjc) {
 	Tcl_Obj *dictPtr;
 
@@ -4316,19 +4206,6 @@ SlaveTimeLimitCmd(
     ScriptLimitCallbackKey key;
     ScriptLimitCallback *limitCBPtr;
     Tcl_HashEntry *hPtr;
-
-    /*
-     * First, ensure that we are not reading or writing the calling
-     * interpreter's limits; it may only manipulate its children. Note that
-     * the low level API enforces this with Tcl_Panic, which we want to
-     * avoid. [Bug 3398794]
-     */
-
-    if (interp == slaveInterp) {
-	Tcl_AppendResult(interp,
-		"limits on current interpreter inaccessible", NULL);
-	return TCL_ERROR;
-    }
 
     if (objc == consumedObjc) {
 	Tcl_Obj *dictPtr;

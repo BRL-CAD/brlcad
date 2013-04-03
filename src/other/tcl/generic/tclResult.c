@@ -7,6 +7,8 @@
  *
  * See the file "license.terms" for information on usage and redistribution of
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
+ *
+ * RCS: @(#) $Id$
  */
 
 #include "tclInt.h"
@@ -959,14 +961,12 @@ ResetObjResult(
 	TclNewObj(objResultPtr);
 	Tcl_IncrRefCount(objResultPtr);
 	iPtr->objResultPtr = objResultPtr;
-    } else {
-	if (objResultPtr->bytes != tclEmptyStringRep) {
-	    if (objResultPtr->bytes) {
-		ckfree((char *) objResultPtr->bytes);
-	    }
-	    objResultPtr->bytes = tclEmptyStringRep;
-	    objResultPtr->length = 0;
+    } else if (objResultPtr->bytes != tclEmptyStringRep) {
+	if (objResultPtr->bytes != NULL) {
+	    ckfree((char *) objResultPtr->bytes);
 	}
+	objResultPtr->bytes = tclEmptyStringRep;
+	objResultPtr->length = 0;
 	TclFreeIntRep(objResultPtr);
 	objResultPtr->typePtr = NULL;
     }

@@ -79,3 +79,7 @@ int mp_mul_2d (mp_int * a, int b, mp_int * c)
   return MP_OKAY;
 }
 #endif
+
+/* $Source$ */
+/* $Revision$ */
+/* $Date$ */

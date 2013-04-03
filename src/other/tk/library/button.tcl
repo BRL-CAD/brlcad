@@ -4,6 +4,8 @@
 # checkbutton, and radiobutton widgets and provides procedures
 # that help in implementing those bindings.
 #
+# RCS: @(#) $Id$
+#
 # Copyright (c) 1992-1994 The Regents of the University of California.
 # Copyright (c) 1994-1996 Sun Microsystems, Inc.
 # Copyright (c) 2002 ActiveState Corporation.
@@ -39,7 +41,7 @@ if {[tk windowingsystem] eq "aqua"} {
 	tk::ButtonLeave %W
     }
 }
-if {"win32" eq [tk windowingsystem]} {
+if {"windows" eq $tcl_platform(platform)} {
     bind Checkbutton <equal> {
 	tk::CheckRadioInvoke %W select
     }
@@ -131,7 +133,7 @@ bind Radiobutton <Leave> {
     tk::ButtonLeave %W
 }
 
-if {"win32" eq [tk windowingsystem]} {
+if {"windows" eq $tcl_platform(platform)} {
 
 #########################
 # Windows implementation 

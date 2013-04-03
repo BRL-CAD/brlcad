@@ -8,7 +8,7 @@ int
 _XInitImageFuncPtrs(
     XImage *image)
 {
-    return Success;
+    return 0;
 }
 
 /*
@@ -29,14 +29,14 @@ XStringListToTextProperty(
     int count,
     XTextProperty *text_prop_return)
 {
-    return (Status) 0;
+    return (Status) NULL;
 }
 
 /*
  * From Xlib.h
  */
 
-int
+void
 XChangeProperty(
     Display *display,
     Window w,
@@ -47,7 +47,6 @@ XChangeProperty(
     _Xconst unsigned char *data,
     int nelements)
 {
-    return Success;
 }
 
 Cursor
@@ -57,14 +56,14 @@ XCreateGlyphCursor(
     Font mask_font,
     unsigned int source_char,
     unsigned int mask_char,
-    XColor _Xconst *foreground_color,
-    XColor _Xconst *background_color)
+    XColor *foreground_color,
+    XColor *background_color)
 {
     return 1;
 }
 
 XIC
-XCreateIC(XIM xim, ...)
+XCreateIC(void)
 {
     return NULL;
 }
@@ -82,13 +81,12 @@ XCreatePixmapCursor(
     return (Cursor) NULL;
 }
 
-int
+void
 XDeleteProperty(
     Display *display,
     Window w,
     Atom property)
 {
-    return Success;
 }
 
 void
@@ -105,20 +103,18 @@ XFilterEvent(
     return 0;
 }
 
-int
+void
 XForceScreenSaver(
     Display *display,
     int mode)
 {
-    return Success;
 }
 
-int
+void
 XFreeCursor(
     Display *display,
     Cursor cursor)
 {
-    return Success;
 }
 
 GContext
@@ -142,7 +138,7 @@ XGetWindowAttributes(
     Window w,
     XWindowAttributes *window_attributes_return)
 {
-    return Success;
+    return 0;
 }
 
 Status
@@ -152,7 +148,7 @@ XGetWMColormapWindows(
     Window **windows_return,
     int *count_return)
 {
-    return (Status) 0;
+    return (Status) NULL;
 }
 
 int
@@ -161,7 +157,7 @@ XIconifyWindow(
     Window w,
     int screen_number)
 {
-    return Success;
+    return 0;
 }
 
 XHostAddress *
@@ -181,33 +177,30 @@ XLookupColor(
     XColor *exact_def_return,
     XColor *screen_def_return)
 {
-    return Success;
+    return 0;
 }
 
-int
+void
 XNextEvent(
     Display *display,
     XEvent *event_return)
 {
-    return Success;
 }
 
-int
+void
 XPutBackEvent(
     Display *display,
     XEvent *event)
 {
-    return Success;
 }
 
-int
+void
 XQueryColors(
     Display *display,
     Colormap colormap,
     XColor *defs_in_out,
     int ncolors)
 {
-    return Success;
 }
 
 int
@@ -219,14 +212,13 @@ XQueryTree(
     Window **children_return,
     unsigned int *nchildren_return)
 {
-    return Success;
+    return 0;
 }
 
-int
+void
 XRefreshKeyboardMapping(
     XMappingEvent *event_map)
 {
-    return Success;
 }
 
 Window
@@ -237,13 +229,12 @@ XRootWindow(
     return (Window) NULL;
 }
 
-int
+void
 XSelectInput(
     Display *display,
     Window w,
     long event_mask)
 {
-    return Success;
 }
 
 int
@@ -254,17 +245,16 @@ XSendEvent(
     long event_mask,
     XEvent *event_send)
 {
-    return Success;
+    return 0;
 }
 
-int
+void
 XSetCommand(
     Display *display,
     Window w,
-    char **argv,
+    CONST char **argv,
     int argc)
 {
-    return Success;
 }
 
 XErrorHandler
@@ -274,67 +264,60 @@ XSetErrorHandler(
     return NULL;
 }
 
-int
+void
 XSetIconName(
     Display *display,
     Window w,
     _Xconst char *icon_name)
 {
-    return Success;
 }
 
-int
+void
 XSetWindowBackground(
     Display *display,
     Window w,
     unsigned long background_pixel)
 {
-    return Success;
 }
 
-int
+void
 XSetWindowBackgroundPixmap(
     Display *display,
     Window w,
     Pixmap background_pixmap)
 {
-    return Success;
 }
 
-int
+void
 XSetWindowBorder(
     Display *display,
     Window w,
     unsigned long border_pixel)
 {
-    return Success;
 }
 
-int
+void
 XSetWindowBorderPixmap(
     Display *display,
     Window w,
     Pixmap border_pixmap)
 {
-    return Success;
 }
 
-int
+void
 XSetWindowBorderWidth(
     Display *display,
     Window w,
     unsigned int width)
 {
-    return Success;
 }
 
-int
+void
 XSetWindowColormap(
     Display *display,
     Window w,
     Colormap colormap)
 {
-    return Success;
 }
 
 Bool
@@ -351,14 +334,13 @@ XTranslateCoordinates(
     return 0;
 }
 
-int
+void
 XWindowEvent(
     Display *display,
     Window w,
     long event_mask,
     XEvent *event_return)
 {
-    return Success;
 }
 
 int
@@ -367,7 +349,7 @@ XWithdrawWindow(
     Window w,
     int screen_number)
 {
-    return Success;
+    return 0;
 }
 
 int
@@ -379,7 +361,7 @@ XmbLookupString(
     KeySym *keysym_return,
     Status *status_return)
 {
-    return Success;
+    return 0;
 }
 
 int

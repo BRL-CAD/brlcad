@@ -76,3 +76,7 @@ int mp_mul_2(mp_int * a, mp_int * b)
   return MP_OKAY;
 }
 #endif
+
+/* $Source$ */
+/* $Revision$ */
+/* $Date$ */

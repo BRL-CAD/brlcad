@@ -3,6 +3,8 @@
 #	Color selection dialog for platforms that do not support a
 #	standard color selection dialog.
 #
+# RCS: @(#) $Id$
+#
 # Copyright (c) 1996 Sun Microsystems, Inc.
 #
 # See the file "license.terms" for information on usage and redistribution
@@ -89,7 +91,7 @@ proc ::tk::dialog::color:: {args} {
 
     # 5. Withdraw the window, then update all the geometry information
     # so we know how big it wants to be, then center the window in the
-    # display (Motif style) and de-iconify it.
+    # display and de-iconify it.
 
     ::tk::PlaceWindow $w widget $data(-parent)
     wm title $w $data(-title)

@@ -9,6 +9,8 @@
  *
  * See the file "license.terms" for information on usage and redistribution of
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
+ *
+ * RCS: @(#) $Id$
  */
 
 #include "tclWinInt.h"
@@ -497,10 +499,8 @@ TclpSetVariables(
 {
     CONST char *ptr;
     char buffer[TCL_INTEGER_SPACE * 2];
-    union {
-	SYSTEM_INFO info;
-	OemId oemId;
-    } sys;
+    SYSTEM_INFO sysInfo, *sysInfoPtr = &sysInfo;
+    OemId *oemId;
     OSVERSIONINFOA osInfo;
     Tcl_DString ds;
     WCHAR szUserName[UNLEN+1];
@@ -512,7 +512,8 @@ TclpSetVariables(
     osInfo.dwOSVersionInfoSize = sizeof(OSVERSIONINFOA);
     GetVersionExA(&osInfo);
 
-    GetSystemInfo(&sys.info);
+    oemId = (OemId *) sysInfoPtr;
+    GetSystemInfo(&sysInfo);
 
     /*
      * Define the tcl_platform array.
@@ -526,13 +527,13 @@ TclpSetVariables(
     }
     wsprintfA(buffer, "%d.%d", osInfo.dwMajorVersion, osInfo.dwMinorVersion);
     Tcl_SetVar2(interp, "tcl_platform", "osVersion", buffer, TCL_GLOBAL_ONLY);
-    if (sys.oemId.wProcessorArchitecture < NUMPROCESSORS) {
+    if (oemId->wProcessorArchitecture < NUMPROCESSORS) {
 	Tcl_SetVar2(interp, "tcl_platform", "machine",
-		processors[sys.oemId.wProcessorArchitecture],
+		processors[oemId->wProcessorArchitecture],
 		TCL_GLOBAL_ONLY);
     }
 
-#ifndef NDEBUG
+#ifdef _DEBUG
     /*
      * The existence of the "debug" element of the tcl_platform array
      * indicates that this particular Tcl shell has been compiled with debug

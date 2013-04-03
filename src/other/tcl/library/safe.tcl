@@ -11,6 +11,8 @@
 #
 # See the file "license.terms" for information on usage and redistribution of
 # this file, and for a DISCLAIMER OF ALL WARRANTIES.
+#
+# RCS: @(#) $Id$
 
 #
 # The implementation is based on namespaces. These naming conventions are
@@ -490,10 +492,9 @@ proc ::safe::InterpInit {
     # Sync the paths used to search for Tcl modules. This can be done only
     # now, after tm.tcl was loaded.
     namespace upvar ::safe S$slave state
-    if {[llength $state(tm_path_slave)] > 0} {
-	::interp eval $slave [list \
-		::tcl::tm::add {*}[lreverse $state(tm_path_slave)]]
-    }
+    ::interp eval $slave [list \
+	      ::tcl::tm::add {*}$state(tm_path_slave)]
+
     return $slave
 }
 
@@ -671,9 +672,9 @@ proc ::safe::AliasGlob {slave args} {
     }
 
     if {$::tcl_platform(platform) eq "windows"} {
-	set dirPartRE {^(.*)[\\/]([^\\/]*)$}
+	set dirPartRE {^(.*)[\\/]}
     } else {
-	set dirPartRE {^(.*)/([^/]*)$}
+	set dirPartRE {^(.*)/}
     }
 
     set dir        {}
@@ -726,10 +727,11 @@ proc ::safe::AliasGlob {slave args} {
 	    DirInAccessPath $slave $dir
 	} msg]} {
 	    Log $slave $msg
-	    if {$got(-nocomplain)} {
+	    if {!$got(-nocomplain)} {
+		return -code error "permission denied"
+	    } else {
 		return
 	    }
-	    return -code error "permission denied"
 	}
 	lappend cmd -directory $dir
     }
@@ -741,32 +743,19 @@ proc ::safe::AliasGlob {slave args} {
 
     # Process remaining pattern arguments
     set firstPattern [llength $cmd]
-    foreach opt [lrange $args $at end] {
-	if {![regexp $dirPartRE $opt -> thedir thefile]} {
-	    set thedir .
-	}
-	if {$thedir eq "*"} {
-	    set mapped 0
-	    foreach d [glob -directory [TranslatePath $slave $virtualdir] \
-			   -types d -tails *] {
-		catch {
-		    DirInAccessPath $slave \
-			[TranslatePath $slave [file join $virtualdir $d]]
-		    if {$thefile eq "pkgIndex.tcl" || $thefile eq "*.tm"} {
-			lappend cmd [file join $d $thefile]
-			set mapped 1
-		    }
-		}
-	    }
-	    if {$mapped} continue
-	}
-	if {[catch {
+    while {$at < [llength $args]} {
+	set opt [lindex $args $at]
+	incr at
+	if {[regexp $dirPartRE $opt -> thedir] && [catch {
 	    set thedir [file join $virtualdir $thedir]
 	    DirInAccessPath $slave [TranslatePath $slave $thedir]
 	} msg]} {
 	    Log $slave $msg
-	    if {$got(-nocomplain)} continue
-	    return -code error "permission denied"
+	    if {$got(-nocomplain)} {
+		continue
+	    } else {
+		return -code error "permission denied"
+	    }
 	}
 	lappend cmd $opt
     }
@@ -783,7 +772,7 @@ proc ::safe::AliasGlob {slave args} {
 	return -code error "script error"
     }
 
-    Log $slave "GLOB < $msg" NOTICE
+    Log $slave "GLOB @ $msg" NOTICE
 
     # Translate path back to what the slave should see.
     set res {}
@@ -795,7 +784,7 @@ proc ::safe::AliasGlob {slave args} {
 	lappend res $p
     }
 
-    Log $slave "GLOB > $res" NOTICE
+    Log $slave "GLOB @ $res" NOTICE
     return $res
 }
 

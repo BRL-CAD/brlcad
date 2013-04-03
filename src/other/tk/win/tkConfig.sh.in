@@ -10,6 +10,8 @@
 # file in addition to this one.
 #
 # The information in this file is specific to a single platform.
+#
+# RCS: @(#) $Id$
 
 TK_DLL_FILE="@TK_DLL_FILE@"
 

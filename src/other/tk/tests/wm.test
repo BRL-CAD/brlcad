@@ -6,6 +6,8 @@
 # Copyright (c) 1994-1997 Sun Microsystems, Inc.
 # Copyright (c) 1998-1999 by Scriptics Corporation.
 # All rights reserved.
+#
+# RCS: @(#) $Id$
 
 # This file tests window manager interactions that work across platforms.
 # Window manager tests that only work on a specific platform should be placed

@@ -3,6 +3,9 @@
 '\" Copyright (c) 2003 ActiveState Corporation.
 '\" Copyright (c) 2006-2007 Daniel A. Steffen <das@users.sourceforge.net>
 '\" Copyright (c) 2008 Donal K. Fellows
+'\" 
+'\" RCS: @(#) $Id$
+'\" 
 '\"
 .so man.macros
 .TH colors n 8.3 Tk "Tk Built-In Commands"

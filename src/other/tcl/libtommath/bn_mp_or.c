@@ -44,3 +44,7 @@ int mp_or (mp_int * a, mp_int * b, mp_int * c)
   return MP_OKAY;
 }
 #endif
+
+/* $Source$ */
+/* $Revision$ */
+/* $Date$ */

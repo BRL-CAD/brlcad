@@ -9,6 +9,8 @@
  *
  * See the file "license.terms" for information on usage and redistribution of
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
+ *
+ * RCS: @(#) $Id$
  */
 
 #include "tclInt.h"
@@ -72,9 +74,6 @@ static unsigned int	HashStringKey(Tcl_HashTable *tablePtr, VOID *keyPtr);
 static Tcl_HashEntry *	BogusFind(Tcl_HashTable *tablePtr, const char *key);
 static Tcl_HashEntry *	BogusCreate(Tcl_HashTable *tablePtr, const char *key,
 			    int *newPtr);
-static Tcl_HashEntry *	CreateHashEntry(Tcl_HashTable *tablePtr, const char *key,
-			    int *newPtr);
-static Tcl_HashEntry *	FindHashEntry(Tcl_HashTable *tablePtr, const char *key);
 static void		RebuildTable(Tcl_HashTable *tablePtr);
 
 Tcl_HashKeyType tclArrayHashKeyType = {
@@ -187,8 +186,8 @@ Tcl_InitCustomHashTable(
     tablePtr->downShift = 28;
     tablePtr->mask = 3;
     tablePtr->keyType = keyType;
-    tablePtr->findProc = FindHashEntry;
-    tablePtr->createProc = CreateHashEntry;
+    tablePtr->findProc = Tcl_FindHashEntry;
+    tablePtr->createProc = Tcl_CreateHashEntry;
 
     if (typePtr == NULL) {
 	/*
@@ -231,15 +230,8 @@ Tcl_FindHashEntry(
     Tcl_HashTable *tablePtr,	/* Table in which to lookup entry. */
     const char *key)		/* Key to use to find matching entry. */
 {
-    return (*((tablePtr)->findProc))(tablePtr, key);
-}
 
-static Tcl_HashEntry *
-FindHashEntry(
-    Tcl_HashTable *tablePtr,	/* Table in which to lookup entry. */
-    const char *key)		/* Key to use to find matching entry. */
-{
-    return CreateHashEntry(tablePtr, key, NULL);
+    return Tcl_CreateHashEntry(tablePtr, key, NULL);
 }
 
 
@@ -266,17 +258,6 @@ FindHashEntry(
 
 Tcl_HashEntry *
 Tcl_CreateHashEntry(
-    Tcl_HashTable *tablePtr,	/* Table in which to lookup entry. */
-    const char *key,		/* Key to use to find or create matching
-				 * entry. */
-    int *newPtr)		/* Store info here telling whether a new entry
-				 * was created. */
-{
-    return (*((tablePtr)->createProc))(tablePtr, key, newPtr);
-}
-
-static Tcl_HashEntry *
-CreateHashEntry(
     Tcl_HashTable *tablePtr,	/* Table in which to lookup entry. */
     const char *key,		/* Key to use to find or create matching
 				 * entry. */
@@ -434,7 +415,7 @@ Tcl_DeleteHashEntry(
 #if TCL_HASH_KEY_STORE_HASH
     if (typePtr->hashKeyProc == NULL
 	    || typePtr->flags & TCL_HASH_KEY_RANDOMIZE_HASH) {
-	index = RANDOM_INDEX(tablePtr, PTR2UINT(entryPtr->hash));
+	index = RANDOM_INDEX (tablePtr, entryPtr->hash);
     } else {
 	index = PTR2UINT(entryPtr->hash) & tablePtr->mask;
     }
@@ -843,14 +824,14 @@ AllocStringEntry(
 {
     const char *string = (const char *) keyPtr;
     Tcl_HashEntry *hPtr;
-    unsigned int size, allocsize;
+    unsigned int size;
 
-    allocsize = size = strlen(string) + 1;
-    if (size < sizeof(hPtr->key)) {
-	allocsize = sizeof(hPtr->key);
+    size = sizeof(Tcl_HashEntry) + strlen(string) + 1 - sizeof(hPtr->key);
+    if (size < sizeof(Tcl_HashEntry)) {
+	size = sizeof(Tcl_HashEntry);
     }
-    hPtr = (Tcl_HashEntry *) ckalloc(sizeof(Tcl_HashEntry) + allocsize - sizeof(hPtr->key));
-    memcpy(hPtr->key.string, string, size);
+    hPtr = (Tcl_HashEntry *) ckalloc(size);
+    strcpy(hPtr->key.string, string);
     hPtr->clientData = 0;
     return hPtr;
 }
@@ -1064,7 +1045,7 @@ RebuildTable(
 #if TCL_HASH_KEY_STORE_HASH
 	    if (typePtr->hashKeyProc == NULL
 		    || typePtr->flags & TCL_HASH_KEY_RANDOMIZE_HASH) {
-		index = RANDOM_INDEX (tablePtr, PTR2UINT(hPtr->hash));
+		index = RANDOM_INDEX (tablePtr, hPtr->hash);
 	    } else {
 		index = PTR2UINT(hPtr->hash) & tablePtr->mask;
 	    }

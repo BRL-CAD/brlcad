@@ -11,6 +11,8 @@
  *
  * See the file "license.terms" for information on usage and redistribution of
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
+ *
+ * RCS: @(#) $Id$
  */
 
 #ifndef _TK
@@ -51,10 +53,10 @@ extern "C" {
 #define TK_MAJOR_VERSION	8
 #define TK_MINOR_VERSION	5
 #define TK_RELEASE_LEVEL	TCL_FINAL_RELEASE
-#define TK_RELEASE_SERIAL	13
+#define TK_RELEASE_SERIAL	9
 
 #define TK_VERSION		"8.5"
-#define TK_PATCH_LEVEL		"8.5.13"
+#define TK_PATCH_LEVEL		"8.5.9"
 
 /*
  * A special definition used to allow this header file to be included from
@@ -92,6 +94,12 @@ extern "C" {
 #ifdef XNQueryInputStyle
 #define TK_USE_INPUT_METHODS
 #endif
+
+/* quell shadow warnings */
+#ifdef index
+#  undef index
+#endif
+#define index tcl_scoped_index
 
 /*
  * Dummy types that are used by clients:
@@ -1587,6 +1595,9 @@ typedef int (Tk_SelectionProc) _ANSI_ARGS_((ClientData clientData,
 /*
  * end block for C++
  */
+
+/* quell shadow warnings */
+#undef index
 
 #ifdef __cplusplus
 }

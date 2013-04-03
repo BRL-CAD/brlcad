@@ -1,4 +1,4 @@
-/*
+/* $Id$
  * Copyright (c) 2004, Joe English
  */
 
@@ -113,6 +113,8 @@ typedef struct
 
 static Tk_OptionSpec NotebookOptionSpecs[] =
 {
+    WIDGET_TAKES_FOCUS,
+
     {TK_OPTION_INT, "-width", "width", "Width", "0",
 	Tk_Offset(Notebook,notebook.widthObj),-1,
 	0,0,GEOMETRY_CHANGED },
@@ -123,7 +125,6 @@ static Tk_OptionSpec NotebookOptionSpecs[] =
 	Tk_Offset(Notebook,notebook.paddingObj),-1,
 	TK_OPTION_NULL_OK,0,GEOMETRY_CHANGED },
 
-    WIDGET_TAKEFOCUS_TRUE,
     WIDGET_INHERIT_OPTIONS(ttkCoreOptionSpecs)
 };
 

@@ -8,6 +8,8 @@
  *
  * See the file "license.terms" for information on usage and redistribution of
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
+ *
+ * RCS: @(#) $Id$
  */
 
 #include "tclInt.h"
@@ -19,17 +21,17 @@
 
 /*
  * In some systems, like SunOS 4.1.3, the RTLD_NOW flag isn't defined and this
- * argument to dlopen must always be 1. The RTLD_LOCAL flag doesn't exist on
- * some platforms; if it doesn't exist, set it to 0 so it has no effect.
- * See [Bug #3216070]
+ * argument to dlopen must always be 1. The RTLD_GLOBAL flag is needed on some
+ * systems (e.g. SCO and UnixWare) but doesn't exist on others; if it doesn't
+ * exist, set it to 0 so it has no effect.
  */
 
 #ifndef RTLD_NOW
 #   define RTLD_NOW 1
 #endif
 
-#ifndef RTLD_LOCAL
-#   define RTLD_LOCAL 0
+#ifndef RTLD_GLOBAL
+#   define RTLD_GLOBAL 0
 #endif
 
 /*
@@ -73,10 +75,7 @@ TclpDlopen(
      */
 
     native = Tcl_FSGetNativePath(pathPtr);
-    /*
-     * Use (RTLD_NOW|RTLD_LOCAL) always, see [Bug #3216070]
-     */
-    handle = dlopen(native, RTLD_NOW | RTLD_LOCAL);
+    handle = dlopen(native, RTLD_NOW | RTLD_GLOBAL);
     if (handle == NULL) {
 	/*
 	 * Let the OS loader examine the binary search path for whatever
@@ -88,10 +87,7 @@ TclpDlopen(
 	char *fileName = Tcl_GetString(pathPtr);
 
 	native = Tcl_UtfToExternalDString(NULL, fileName, -1, &ds);
-	/*
-	 * Use (RTLD_NOW|RTLD_LOCAL) always, see [Bug #3216070]
-	 */
-	handle = dlopen(native, RTLD_NOW | RTLD_LOCAL);
+	handle = dlopen(native, RTLD_NOW | RTLD_GLOBAL);
 	Tcl_DStringFree(&ds);
     }
 

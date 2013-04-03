@@ -9,6 +9,8 @@
  *
  * See the file "license.terms" for information on usage and redistribution of
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
+ *
+ * RCS: @(#) $Id$
  */
 
 #include "tk.h"
@@ -81,7 +83,6 @@ static Tcl_ChannelType consoleChannelType = {
     NULL,			/* handler proc. */
     NULL,			/* wide seek proc */
     NULL,			/* thread action proc */
-    NULL
 };
 
 #ifdef __WIN32__
@@ -112,17 +113,25 @@ ShouldUseConsoleChannel(
     DCB dcb;
     DWORD consoleParams;
     DWORD fileType;
+    int mode;
+    char *bufMode;
     HANDLE handle;
 
     switch (type) {
     case TCL_STDIN:
 	handleId = STD_INPUT_HANDLE;
+	mode = TCL_READABLE;
+	bufMode = "line";
 	break;
     case TCL_STDOUT:
 	handleId = STD_OUTPUT_HANDLE;
+	mode = TCL_WRITABLE;
+	bufMode = "line";
 	break;
     case TCL_STDERR:
 	handleId = STD_ERROR_HANDLE;
+	mode = TCL_WRITABLE;
+	bufMode = "none";
 	break;
     default:
 	return 0;
@@ -500,22 +509,7 @@ ConsoleOutput(
 	Tcl_Interp *consoleInterp = info->consoleInterp;
 
 	if (consoleInterp && !Tcl_InterpDeleted(consoleInterp)) {
-	    Tcl_DString ds;
-	    Tcl_Encoding utf8 = Tcl_GetEncoding(NULL, "utf-8");
-
-	    /*
-	     * Not checking for utf8 == NULL.  Did not check for TCL_ERROR
-	     * from Tcl_SetChannelOption() in Tk_InitConsoleChannels() either.
-	     * Assumption is utf-8 Tcl_Encoding is reliably present.
-	     */
-
-	    CONST char *bytes
-		    = Tcl_ExternalToUtfDString(utf8, buf, toWrite, &ds);
-	    int numBytes = Tcl_DStringLength(&ds);
 	    Tcl_Obj *cmd = Tcl_NewStringObj("tk::ConsoleOutput", -1);
-
-	    Tcl_FreeEncoding(utf8);
-
 	    if (data->type == TCL_STDERR) {
 		Tcl_ListObjAppendElement(NULL, cmd,
 			Tcl_NewStringObj("stderr", -1));
@@ -523,10 +517,7 @@ ConsoleOutput(
 		Tcl_ListObjAppendElement(NULL, cmd,
 			Tcl_NewStringObj("stdout", -1));
 	    }
-	    Tcl_ListObjAppendElement(NULL, cmd,
-		    Tcl_NewStringObj(bytes, numBytes));
-
-	    Tcl_DStringFree(&ds);
+	    Tcl_ListObjAppendElement(NULL, cmd, Tcl_NewStringObj(buf, toWrite));
 	    Tcl_IncrRefCount(cmd);
 	    Tcl_GlobalEvalObj(consoleInterp, cmd);
 	    Tcl_DecrRefCount(cmd);

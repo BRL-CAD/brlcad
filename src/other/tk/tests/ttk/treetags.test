@@ -1,3 +1,6 @@
+#
+# $Id$
+#
 
 package require Tk
 package require tcltest ; namespace import -force tcltest::*

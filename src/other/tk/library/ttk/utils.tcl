@@ -1,4 +1,6 @@
 #
+# $Id$
+#
 # Utilities for widget implementations.
 #
 

@@ -1,4 +1,6 @@
 #
+# $Id$
+#
 # Settings for 'winnative' theme.
 #
 

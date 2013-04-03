@@ -8,6 +8,8 @@
  *
  * See the file "license.terms" for information on usage and redistribution of
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
+ *
+ * RCS: @(#) $Id$
  */
 
 #include "tclInt.h"
@@ -62,7 +64,7 @@ Tcl_ScaleTimeProc *tclScaleTimeProcPtr = NativeScaleTime;
 ClientData tclTimeClientData = NULL;
 
 /*
- *----------------------------------------------------------------------
+ *-----------------------------------------------------------------------------
  *
  * TclpGetSeconds --
  *
@@ -75,7 +77,7 @@ ClientData tclTimeClientData = NULL;
  * Side effects:
  *	None.
  *
- *----------------------------------------------------------------------
+ *-----------------------------------------------------------------------------
  */
 
 unsigned long
@@ -85,7 +87,7 @@ TclpGetSeconds(void)
 }
 
 /*
- *----------------------------------------------------------------------
+ *-----------------------------------------------------------------------------
  *
  * TclpGetClicks --
  *
@@ -100,7 +102,7 @@ TclpGetSeconds(void)
  * Side effects:
  *	None.
  *
- *----------------------------------------------------------------------
+ *-----------------------------------------------------------------------------
  */
 
 unsigned long
@@ -431,6 +433,17 @@ TclpGmtime(
 
     return &(tsdPtr->gmtime_buf);
 }
+
+/*
+ * Forwarder for obsolete item in Stubs
+ */
+
+struct tm *
+TclpGmtime_unix(
+    CONST time_t *timePtr)
+{
+    return TclpGmtime(timePtr);
+}
 
 /*
  *----------------------------------------------------------------------
@@ -470,6 +483,15 @@ TclpLocaltime(
 #endif
 
     return &(tsdPtr->localtime_buf);
+}
+/*
+ * Forwarder for obsolete item in Stubs
+ */
+struct tm*
+TclpLocaltime_unix(
+    CONST time_t *timePtr)
+{
+    return TclpLocaltime(timePtr);
 }
 
 /*

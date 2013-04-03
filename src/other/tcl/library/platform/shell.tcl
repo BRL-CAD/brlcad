@@ -187,7 +187,7 @@ proc ::platform::shell::TEMP {} {
  	    }
  	}
     }
-    if {$channel != ""} {
+    if {[string compare $channel ""]} {
  	return -code error "Failed to open a temporary file: $channel"
     } else {
  	return -code error "Failed to find an unused temporary file name"

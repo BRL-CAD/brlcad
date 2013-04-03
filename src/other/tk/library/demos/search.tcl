@@ -3,6 +3,8 @@
 # This demonstration script creates a collection of widgets that
 # allow you to load a file into a text widget, then perform searches
 # on that file.
+#
+# RCS: @(#) $Id$
 
 if {![info exists widgetDemo]} {
     error "This script should be run from the \"widget\" demo."

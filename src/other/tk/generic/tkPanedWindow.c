@@ -11,6 +11,8 @@
  *
  * See the file "license.terms" for information on usage and redistribution of
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
+ *
+ * RCS: @(#) $Id$
  */
 
 #include "default.h"
@@ -35,7 +37,7 @@
  * The following table defines the legal values for the -orient option.
  */
 
-static const char *const orientStrings[] = {
+static char *orientStrings[] = {
     "horizontal", "vertical", NULL
 };
 
@@ -45,7 +47,7 @@ enum orient { ORIENT_HORIZONTAL, ORIENT_VERTICAL };
  * The following table defines the legal values for the -stretch option.
  */
 
-static const char *const stretchStrings[] = {
+static char *stretchStrings[] = {
     "always", "first", "last", "middle", "never", NULL
 };
 
@@ -181,11 +183,11 @@ typedef struct PanedWindow {
 
 int			Tk_PanedWindowObjCmd(ClientData clientData,
 			    Tcl_Interp *interp, int objc,
-			    Tcl_Obj *const objv[]);
+			    Tcl_Obj *CONST objv[]);
 static void		PanedWindowCmdDeletedProc(ClientData clientData);
 static int		ConfigurePanedWindow(Tcl_Interp *interp,
 			    PanedWindow *pwPtr, int objc,
-			    Tcl_Obj *const objv[]);
+			    Tcl_Obj *CONST objv[]);
 static void		DestroyPanedWindow(PanedWindow *pwPtr);
 static void		DisplayPanedWindow(ClientData clientData);
 static void		PanedWindowEventProc(ClientData clientData,
@@ -195,7 +197,7 @@ static void		ProxyWindowEventProc(ClientData clientData,
 static void		DisplayProxyWindow(ClientData clientData);
 static void		PanedWindowWorldChanged(ClientData instanceData);
 static int		PanedWindowWidgetObjCmd(ClientData clientData,
-			    Tcl_Interp *, int objc, Tcl_Obj * const objv[]);
+			    Tcl_Interp *, int objc, Tcl_Obj * CONST objv[]);
 static void		PanedWindowLostSlaveProc(ClientData clientData,
 			    Tk_Window tkwin);
 static void		PanedWindowReqProc(ClientData clientData,
@@ -207,14 +209,14 @@ static void		SlaveStructureProc(ClientData clientData,
 			    XEvent *eventPtr);
 static int		PanedWindowSashCommand(PanedWindow *pwPtr,
 			    Tcl_Interp *interp, int objc,
-			    Tcl_Obj * const objv[]);
+			    Tcl_Obj * CONST objv[]);
 static int		PanedWindowProxyCommand(PanedWindow *pwPtr,
 			    Tcl_Interp *interp, int objc,
-			    Tcl_Obj * const objv[]);
+			    Tcl_Obj * CONST objv[]);
 static void		ComputeGeometry(PanedWindow *pwPtr);
 static int		ConfigureSlaves(PanedWindow *pwPtr,
 			    Tcl_Interp *interp, int objc,
-			    Tcl_Obj * const objv[]);
+			    Tcl_Obj * CONST objv[]);
 static void		DestroyOptionTables(ClientData clientData,
 			    Tcl_Interp *interp);
 static int		SetSticky(ClientData clientData, Tcl_Interp *interp,
@@ -258,7 +260,7 @@ static const Tk_GeomMgr panedWindowMgrType = {
  * the custom "-sticky" option for slave windows.
  */
 
-static const Tk_ObjCustomOption stickyOption = {
+static Tk_ObjCustomOption stickyOption = {
     "sticky",			/* name */
     SetSticky,			/* setProc */
     GetSticky,			/* getProc */
@@ -371,7 +373,7 @@ Tk_PanedWindowObjCmd(
     ClientData clientData,	/* NULL. */
     Tcl_Interp *interp,		/* Current interpreter. */
     int objc,			/* Number of arguments. */
-    Tcl_Obj * const objv[])	/* Argument objects. */
+    Tcl_Obj * CONST objv[])	/* Argument objects. */
 {
     PanedWindow *pwPtr;
     Tk_Window tkwin, parent;
@@ -518,11 +520,11 @@ PanedWindowWidgetObjCmd(
     ClientData clientData,	/* Information about square widget. */
     Tcl_Interp *interp,		/* Current interpreter. */
     int objc,			/* Number of arguments. */
-    Tcl_Obj * const objv[])	/* Argument objects. */
+    Tcl_Obj * CONST objv[])	/* Argument objects. */
 {
     PanedWindow *pwPtr = (PanedWindow *) clientData;
     int result = TCL_OK;
-    static const char *optionStrings[] = {
+    static CONST char *optionStrings[] = {
 	"add", "cget", "configure", "forget", "identify", "panecget",
 	"paneconfigure", "panes", "proxy", "sash", NULL
     };
@@ -744,7 +746,7 @@ ConfigureSlaves(
     PanedWindow *pwPtr,		/* Information about paned window. */
     Tcl_Interp *interp,		/* Current interpreter. */
     int objc,			/* Number of arguments. */
-    Tcl_Obj *const objv[])	/* Argument objects. */
+    Tcl_Obj *CONST objv[])	/* Argument objects. */
 {
     int i, firstOptionArg, j, found, doubleBw, index, numNewSlaves, haveLoc;
     int insertIndex;
@@ -1064,9 +1066,9 @@ PanedWindowSashCommand(
     PanedWindow *pwPtr,		/* Pointer to paned window information. */
     Tcl_Interp *interp,		/* Current interpreter. */
     int objc,			/* Number of arguments. */
-    Tcl_Obj *const objv[])	/* Argument objects. */
+    Tcl_Obj *CONST objv[])	/* Argument objects. */
 {
-    static const char *sashOptionStrings[] = {
+    static CONST char *sashOptionStrings[] = {
 	"coord", "dragto", "mark", "place", NULL
     };
     enum sashOptions {
@@ -1215,7 +1217,7 @@ ConfigurePanedWindow(
     Tcl_Interp *interp,		/* Used for error reporting. */
     PanedWindow *pwPtr,		/* Information about widget. */
     int objc,			/* Number of arguments. */
-    Tcl_Obj *const objv[])	/* Argument values. */
+    Tcl_Obj *CONST objv[])	/* Argument values. */
 {
     Tk_SavedOptions savedOptions;
     int typemask = 0;
@@ -2755,9 +2757,9 @@ PanedWindowProxyCommand(
     PanedWindow *pwPtr,		/* Pointer to paned window information. */
     Tcl_Interp *interp,		/* Current interpreter. */
     int objc,			/* Number of arguments. */
-    Tcl_Obj *const objv[])	/* Argument objects. */
+    Tcl_Obj *CONST objv[])	/* Argument objects. */
 {
-    static const char *optionStrings[] = {
+    static CONST char *optionStrings[] = {
 	"coord", "forget", "place", NULL
     };
     enum options {

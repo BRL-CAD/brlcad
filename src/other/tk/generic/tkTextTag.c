@@ -10,6 +10,8 @@
  *
  * See the file "license.terms" for information on usage and redistribution of
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
+ *
+ * RCS: @(#) $Id$
  */
 
 #include "default.h"
@@ -23,7 +25,7 @@
  * a whole is not.
  */
 
-static const char *wrapStrings[] = {
+static char *wrapStrings[] = {
     "char", "none", "word", "", NULL
 };
 
@@ -34,7 +36,7 @@ static const char *wrapStrings[] = {
  * widget as a whole is not.
  */
 
-static const char *tabStyleStrings[] = {
+static char *tabStyleStrings[] = {
     "tabular", "wordprocessor", "", NULL
 };
 
@@ -457,11 +459,6 @@ TkTextTagCmd(
 			&tagPtr->elide) != TCL_OK) {
 		    return TCL_ERROR;
 		}
-	        /* Indices are potentially obsolete after changing -elide,
-	         * especially those computed with "display" or "any"
-                 * submodifier, therefore increase the epoch.
-                 */
-	        textPtr->sharedTextPtr->stateEpoch++;
 	    }
 
 	    /*

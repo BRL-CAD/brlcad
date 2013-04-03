@@ -10,6 +10,8 @@
  *
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
+ *
+ * RCS: @(#) $Id$
  */
 
 #ifndef _TKINTDECLS
@@ -415,7 +417,7 @@ EXTERN Window		TkpMakeWindow(TkWindow *winPtr, Window parent);
 #ifndef TkpMenuNotifyToplevelCreate_TCL_DECLARED
 #define TkpMenuNotifyToplevelCreate_TCL_DECLARED
 /* 67 */
-EXTERN void		TkpMenuNotifyToplevelCreate(Tcl_Interp *interp,
+EXTERN void		TkpMenuNotifyToplevelCreate(Tcl_Interp *interp1,
 				char *menuName);
 #endif
 #ifndef TkpOpenDisplay_TCL_DECLARED
@@ -666,44 +668,110 @@ EXTERN Tcl_Obj *	TkpGetSystemDefault(Tk_Window tkwin,
 /* 112 */
 EXTERN void		TkpMenuThreadInit(void);
 #endif
+#ifdef __WIN32__ /* WIN */
 #ifndef TkClipBox_TCL_DECLARED
 #define TkClipBox_TCL_DECLARED
 /* 113 */
 EXTERN void		TkClipBox(TkRegion rgn, XRectangle *rect_return);
 #endif
+#endif /* WIN */
+#ifdef MAC_OSX_TK /* AQUA */
+#ifndef TkClipBox_TCL_DECLARED
+#define TkClipBox_TCL_DECLARED
+/* 113 */
+EXTERN void		TkClipBox(TkRegion rgn, XRectangle *rect_return);
+#endif
+#endif /* AQUA */
+#ifdef __WIN32__ /* WIN */
 #ifndef TkCreateRegion_TCL_DECLARED
 #define TkCreateRegion_TCL_DECLARED
 /* 114 */
 EXTERN TkRegion		TkCreateRegion(void);
 #endif
+#endif /* WIN */
+#ifdef MAC_OSX_TK /* AQUA */
+#ifndef TkCreateRegion_TCL_DECLARED
+#define TkCreateRegion_TCL_DECLARED
+/* 114 */
+EXTERN TkRegion		TkCreateRegion(void);
+#endif
+#endif /* AQUA */
+#ifdef __WIN32__ /* WIN */
 #ifndef TkDestroyRegion_TCL_DECLARED
 #define TkDestroyRegion_TCL_DECLARED
 /* 115 */
 EXTERN void		TkDestroyRegion(TkRegion rgn);
 #endif
+#endif /* WIN */
+#ifdef MAC_OSX_TK /* AQUA */
+#ifndef TkDestroyRegion_TCL_DECLARED
+#define TkDestroyRegion_TCL_DECLARED
+/* 115 */
+EXTERN void		TkDestroyRegion(TkRegion rgn);
+#endif
+#endif /* AQUA */
+#ifdef __WIN32__ /* WIN */
 #ifndef TkIntersectRegion_TCL_DECLARED
 #define TkIntersectRegion_TCL_DECLARED
 /* 116 */
 EXTERN void		TkIntersectRegion(TkRegion sra, TkRegion srcb,
 				TkRegion dr_return);
 #endif
+#endif /* WIN */
+#ifdef MAC_OSX_TK /* AQUA */
+#ifndef TkIntersectRegion_TCL_DECLARED
+#define TkIntersectRegion_TCL_DECLARED
+/* 116 */
+EXTERN void		TkIntersectRegion(TkRegion sra, TkRegion srcb,
+				TkRegion dr_return);
+#endif
+#endif /* AQUA */
+#ifdef __WIN32__ /* WIN */
 #ifndef TkRectInRegion_TCL_DECLARED
 #define TkRectInRegion_TCL_DECLARED
 /* 117 */
 EXTERN int		TkRectInRegion(TkRegion rgn, int x, int y,
 				unsigned int width, unsigned int height);
 #endif
+#endif /* WIN */
+#ifdef MAC_OSX_TK /* AQUA */
+#ifndef TkRectInRegion_TCL_DECLARED
+#define TkRectInRegion_TCL_DECLARED
+/* 117 */
+EXTERN int		TkRectInRegion(TkRegion rgn, int x, int y,
+				unsigned int width, unsigned int height);
+#endif
+#endif /* AQUA */
+#ifdef __WIN32__ /* WIN */
 #ifndef TkSetRegion_TCL_DECLARED
 #define TkSetRegion_TCL_DECLARED
 /* 118 */
 EXTERN void		TkSetRegion(Display *display, GC gc, TkRegion rgn);
 #endif
+#endif /* WIN */
+#ifdef MAC_OSX_TK /* AQUA */
+#ifndef TkSetRegion_TCL_DECLARED
+#define TkSetRegion_TCL_DECLARED
+/* 118 */
+EXTERN void		TkSetRegion(Display *display, GC gc, TkRegion rgn);
+#endif
+#endif /* AQUA */
+#ifdef __WIN32__ /* WIN */
 #ifndef TkUnionRectWithRegion_TCL_DECLARED
 #define TkUnionRectWithRegion_TCL_DECLARED
 /* 119 */
 EXTERN void		TkUnionRectWithRegion(XRectangle *rect, TkRegion src,
 				TkRegion dr_return);
 #endif
+#endif /* WIN */
+#ifdef MAC_OSX_TK /* AQUA */
+#ifndef TkUnionRectWithRegion_TCL_DECLARED
+#define TkUnionRectWithRegion_TCL_DECLARED
+/* 119 */
+EXTERN void		TkUnionRectWithRegion(XRectangle *rect, TkRegion src,
+				TkRegion dr_return);
+#endif
+#endif /* AQUA */
 /* Slot 120 is reserved */
 #ifdef MAC_OSX_TK /* AQUA */
 #ifndef TkpCreateNativeBitmap_TCL_DECLARED
@@ -792,12 +860,22 @@ EXTERN void		TkClipCleanup(TkDisplay *dispPtr);
 /* 144 */
 EXTERN void		TkGCCleanup(TkDisplay *dispPtr);
 #endif
+#ifdef __WIN32__ /* WIN */
 #ifndef TkSubtractRegion_TCL_DECLARED
 #define TkSubtractRegion_TCL_DECLARED
 /* 145 */
 EXTERN void		TkSubtractRegion(TkRegion sra, TkRegion srcb,
 				TkRegion dr_return);
 #endif
+#endif /* WIN */
+#ifdef MAC_OSX_TK /* AQUA */
+#ifndef TkSubtractRegion_TCL_DECLARED
+#define TkSubtractRegion_TCL_DECLARED
+/* 145 */
+EXTERN void		TkSubtractRegion(TkRegion sra, TkRegion srcb,
+				TkRegion dr_return);
+#endif
+#endif /* AQUA */
 #ifndef TkStylePkgInit_TCL_DECLARED
 #define TkStylePkgInit_TCL_DECLARED
 /* 146 */
@@ -1034,7 +1112,7 @@ typedef struct TkIntStubs {
     void (*tkpMakeContainer) (Tk_Window tkwin); /* 64 */
     void (*tkpMakeMenuWindow) (Tk_Window tkwin, int transient); /* 65 */
     Window (*tkpMakeWindow) (TkWindow *winPtr, Window parent); /* 66 */
-    void (*tkpMenuNotifyToplevelCreate) (Tcl_Interp *interp, char *menuName); /* 67 */
+    void (*tkpMenuNotifyToplevelCreate) (Tcl_Interp *interp1, char *menuName); /* 67 */
     TkDisplay * (*tkpOpenDisplay) (CONST char *display_name); /* 68 */
     int (*tkPointerEvent) (XEvent *eventPtr, TkWindow *winPtr); /* 69 */
     int (*tkPolygonToArea) (double *polyPtr, int numPoints, double *rectPtr); /* 70 */
@@ -1051,7 +1129,7 @@ typedef struct TkIntStubs {
     void (*tkSelEventProc) (Tk_Window tkwin, XEvent *eventPtr); /* 81 */
     void (*tkSelInit) (Tk_Window tkwin); /* 82 */
     void (*tkSelPropProc) (XEvent *eventPtr); /* 83 */
-    VOID *reserved84;
+    void *reserved84;
     void (*tkSetWindowMenuBar) (Tcl_Interp *interp, Tk_Window tkwin, char *oldMenuName, char *menuName); /* 85 */
     KeySym (*tkStringToKeysym) (char *name); /* 86 */
     int (*tkThickPolyLineToArea) (double *coordPtr, int numPoints, double width, int capStyle, int joinStyle, double *rectPtr); /* 87 */
@@ -1080,55 +1158,118 @@ typedef struct TkIntStubs {
     void (*tkpGetSubFonts) (Tcl_Interp *interp, Tk_Font tkfont); /* 110 */
     Tcl_Obj * (*tkpGetSystemDefault) (Tk_Window tkwin, CONST char *dbName, CONST char *className); /* 111 */
     void (*tkpMenuThreadInit) (void); /* 112 */
-    void (*tkClipBox) (TkRegion rgn, XRectangle *rect_return); /* 113 */
-    TkRegion (*tkCreateRegion) (void); /* 114 */
-    void (*tkDestroyRegion) (TkRegion rgn); /* 115 */
-    void (*tkIntersectRegion) (TkRegion sra, TkRegion srcb, TkRegion dr_return); /* 116 */
-    int (*tkRectInRegion) (TkRegion rgn, int x, int y, unsigned int width, unsigned int height); /* 117 */
-    void (*tkSetRegion) (Display *display, GC gc, TkRegion rgn); /* 118 */
-    void (*tkUnionRectWithRegion) (XRectangle *rect, TkRegion src, TkRegion dr_return); /* 119 */
-    VOID *reserved120;
 #if !(defined(__WIN32__) || defined(MAC_OSX_TK)) /* X11 */
-    VOID *reserved121;
+    void *reserved113;
 #endif /* X11 */
-#if defined(__WIN32__) /* WIN */
-    VOID *reserved121;
+#ifdef __WIN32__ /* WIN */
+    void (*tkClipBox) (TkRegion rgn, XRectangle *rect_return); /* 113 */
 #endif /* WIN */
 #ifdef MAC_OSX_TK /* AQUA */
-    VOID *reserved121; /* Dummy entry for stubs table backwards compatibility */
+    void *reserved113; /* Dummy entry for stubs table backwards compatibility */
+    void (*tkClipBox) (TkRegion rgn, XRectangle *rect_return); /* 113 */
+#endif /* AQUA */
+#if !(defined(__WIN32__) || defined(MAC_OSX_TK)) /* X11 */
+    void *reserved114;
+#endif /* X11 */
+#ifdef __WIN32__ /* WIN */
+    TkRegion (*tkCreateRegion) (void); /* 114 */
+#endif /* WIN */
+#ifdef MAC_OSX_TK /* AQUA */
+    void *reserved114; /* Dummy entry for stubs table backwards compatibility */
+    TkRegion (*tkCreateRegion) (void); /* 114 */
+#endif /* AQUA */
+#if !(defined(__WIN32__) || defined(MAC_OSX_TK)) /* X11 */
+    void *reserved115;
+#endif /* X11 */
+#ifdef __WIN32__ /* WIN */
+    void (*tkDestroyRegion) (TkRegion rgn); /* 115 */
+#endif /* WIN */
+#ifdef MAC_OSX_TK /* AQUA */
+    void *reserved115; /* Dummy entry for stubs table backwards compatibility */
+    void (*tkDestroyRegion) (TkRegion rgn); /* 115 */
+#endif /* AQUA */
+#if !(defined(__WIN32__) || defined(MAC_OSX_TK)) /* X11 */
+    void *reserved116;
+#endif /* X11 */
+#ifdef __WIN32__ /* WIN */
+    void (*tkIntersectRegion) (TkRegion sra, TkRegion srcb, TkRegion dr_return); /* 116 */
+#endif /* WIN */
+#ifdef MAC_OSX_TK /* AQUA */
+    void *reserved116; /* Dummy entry for stubs table backwards compatibility */
+    void (*tkIntersectRegion) (TkRegion sra, TkRegion srcb, TkRegion dr_return); /* 116 */
+#endif /* AQUA */
+#if !(defined(__WIN32__) || defined(MAC_OSX_TK)) /* X11 */
+    void *reserved117;
+#endif /* X11 */
+#ifdef __WIN32__ /* WIN */
+    int (*tkRectInRegion) (TkRegion rgn, int x, int y, unsigned int width, unsigned int height); /* 117 */
+#endif /* WIN */
+#ifdef MAC_OSX_TK /* AQUA */
+    void *reserved117; /* Dummy entry for stubs table backwards compatibility */
+    int (*tkRectInRegion) (TkRegion rgn, int x, int y, unsigned int width, unsigned int height); /* 117 */
+#endif /* AQUA */
+#if !(defined(__WIN32__) || defined(MAC_OSX_TK)) /* X11 */
+    void *reserved118;
+#endif /* X11 */
+#ifdef __WIN32__ /* WIN */
+    void (*tkSetRegion) (Display *display, GC gc, TkRegion rgn); /* 118 */
+#endif /* WIN */
+#ifdef MAC_OSX_TK /* AQUA */
+    void *reserved118; /* Dummy entry for stubs table backwards compatibility */
+    void (*tkSetRegion) (Display *display, GC gc, TkRegion rgn); /* 118 */
+#endif /* AQUA */
+#if !(defined(__WIN32__) || defined(MAC_OSX_TK)) /* X11 */
+    void *reserved119;
+#endif /* X11 */
+#ifdef __WIN32__ /* WIN */
+    void (*tkUnionRectWithRegion) (XRectangle *rect, TkRegion src, TkRegion dr_return); /* 119 */
+#endif /* WIN */
+#ifdef MAC_OSX_TK /* AQUA */
+    void *reserved119; /* Dummy entry for stubs table backwards compatibility */
+    void (*tkUnionRectWithRegion) (XRectangle *rect, TkRegion src, TkRegion dr_return); /* 119 */
+#endif /* AQUA */
+    void *reserved120;
+#if !(defined(__WIN32__) || defined(MAC_OSX_TK)) /* X11 */
+    void *reserved121;
+#endif /* X11 */
+#ifdef __WIN32__ /* WIN */
+    void *reserved121;
+#endif /* WIN */
+#ifdef MAC_OSX_TK /* AQUA */
+    void *reserved121; /* Dummy entry for stubs table backwards compatibility */
     Pixmap (*tkpCreateNativeBitmap) (Display *display, CONST char *source); /* 121 */
 #endif /* AQUA */
 #if !(defined(__WIN32__) || defined(MAC_OSX_TK)) /* X11 */
-    VOID *reserved122;
+    void *reserved122;
 #endif /* X11 */
-#if defined(__WIN32__) /* WIN */
-    VOID *reserved122;
+#ifdef __WIN32__ /* WIN */
+    void *reserved122;
 #endif /* WIN */
 #ifdef MAC_OSX_TK /* AQUA */
-    VOID *reserved122; /* Dummy entry for stubs table backwards compatibility */
+    void *reserved122; /* Dummy entry for stubs table backwards compatibility */
     void (*tkpDefineNativeBitmaps) (void); /* 122 */
 #endif /* AQUA */
-    VOID *reserved123;
+    void *reserved123;
 #if !(defined(__WIN32__) || defined(MAC_OSX_TK)) /* X11 */
-    VOID *reserved124;
+    void *reserved124;
 #endif /* X11 */
-#if defined(__WIN32__) /* WIN */
-    VOID *reserved124;
+#ifdef __WIN32__ /* WIN */
+    void *reserved124;
 #endif /* WIN */
 #ifdef MAC_OSX_TK /* AQUA */
-    VOID *reserved124; /* Dummy entry for stubs table backwards compatibility */
+    void *reserved124; /* Dummy entry for stubs table backwards compatibility */
     Pixmap (*tkpGetNativeAppBitmap) (Display *display, CONST char *name, int *width, int *height); /* 124 */
 #endif /* AQUA */
-    VOID *reserved125;
-    VOID *reserved126;
-    VOID *reserved127;
-    VOID *reserved128;
-    VOID *reserved129;
-    VOID *reserved130;
-    VOID *reserved131;
-    VOID *reserved132;
-    VOID *reserved133;
-    VOID *reserved134;
+    void *reserved125;
+    void *reserved126;
+    void *reserved127;
+    void *reserved128;
+    void *reserved129;
+    void *reserved130;
+    void *reserved131;
+    void *reserved132;
+    void *reserved133;
+    void *reserved134;
     void (*tkpDrawHighlightBorder) (Tk_Window tkwin, GC fgGC, GC bgGC, int highlightWidth, Drawable drawable); /* 135 */
     void (*tkSetFocusWin) (TkWindow *winPtr, int force); /* 136 */
     void (*tkpSetKeycodeAndState) (Tk_Window tkwin, KeySym keySym, XEvent *eventPtr); /* 137 */
@@ -1139,7 +1280,16 @@ typedef struct TkIntStubs {
     void (*tkFocusFree) (TkMainInfo *mainPtr); /* 142 */
     void (*tkClipCleanup) (TkDisplay *dispPtr); /* 143 */
     void (*tkGCCleanup) (TkDisplay *dispPtr); /* 144 */
+#if !(defined(__WIN32__) || defined(MAC_OSX_TK)) /* X11 */
+    void *reserved145;
+#endif /* X11 */
+#ifdef __WIN32__ /* WIN */
     void (*tkSubtractRegion) (TkRegion sra, TkRegion srcb, TkRegion dr_return); /* 145 */
+#endif /* WIN */
+#ifdef MAC_OSX_TK /* AQUA */
+    void *reserved145; /* Dummy entry for stubs table backwards compatibility */
+    void (*tkSubtractRegion) (TkRegion sra, TkRegion srcb, TkRegion dr_return); /* 145 */
+#endif /* AQUA */
     void (*tkStylePkgInit) (TkMainInfo *mainPtr); /* 146 */
     void (*tkStylePkgFree) (TkMainInfo *mainPtr); /* 147 */
     Tk_Window (*tkToplevelWindowForCommand) (Tcl_Interp *interp, CONST char *cmdName); /* 148 */
@@ -1149,20 +1299,20 @@ typedef struct TkIntStubs {
     void (*tkpDrawFrame) (Tk_Window tkwin, Tk_3DBorder border, int highlightWidth, int borderWidth, int relief); /* 152 */
     void (*tkCreateThreadExitHandler) (Tcl_ExitProc *proc, ClientData clientData); /* 153 */
     void (*tkDeleteThreadExitHandler) (Tcl_ExitProc *proc, ClientData clientData); /* 154 */
-    VOID *reserved155;
+    void *reserved155;
     int (*tkpTestembedCmd) (ClientData clientData, Tcl_Interp *interp, int argc, CONST char **argv); /* 156 */
     int (*tkpTesttextCmd) (ClientData dummy, Tcl_Interp *interp, int argc, CONST char **argv); /* 157 */
-    VOID *reserved158;
-    VOID *reserved159;
-    VOID *reserved160;
-    VOID *reserved161;
-    VOID *reserved162;
-    VOID *reserved163;
-    VOID *reserved164;
-    VOID *reserved165;
-    VOID *reserved166;
-    VOID *reserved167;
-    VOID *reserved168;
+    void *reserved158;
+    void *reserved159;
+    void *reserved160;
+    void *reserved161;
+    void *reserved162;
+    void *reserved163;
+    void *reserved164;
+    void *reserved165;
+    void *reserved166;
+    void *reserved167;
+    void *reserved168;
     int (*tkStateParseProc) (ClientData clientData, Tcl_Interp *interp, Tk_Window tkwin, CONST char *value, char *widgRec, int offset); /* 169 */
     char * (*tkStatePrintProc) (ClientData clientData, Tk_Window tkwin, char *widgRec, int offset, Tcl_FreeProc **freeProcPtr); /* 170 */
     int (*tkCanvasDashParseProc) (ClientData clientData, Tcl_Interp *interp, Tk_Window tkwin, CONST char *value, char *widgRec, int offset); /* 171 */
@@ -1640,34 +1790,90 @@ extern TkIntStubs *tkIntStubsPtr;
 #define TkpMenuThreadInit \
 	(tkIntStubsPtr->tkpMenuThreadInit) /* 112 */
 #endif
+#ifdef __WIN32__ /* WIN */
 #ifndef TkClipBox
 #define TkClipBox \
 	(tkIntStubsPtr->tkClipBox) /* 113 */
 #endif
+#endif /* WIN */
+#ifdef MAC_OSX_TK /* AQUA */
+#ifndef TkClipBox
+#define TkClipBox \
+	(tkIntStubsPtr->tkClipBox) /* 113 */
+#endif
+#endif /* AQUA */
+#ifdef __WIN32__ /* WIN */
 #ifndef TkCreateRegion
 #define TkCreateRegion \
 	(tkIntStubsPtr->tkCreateRegion) /* 114 */
 #endif
+#endif /* WIN */
+#ifdef MAC_OSX_TK /* AQUA */
+#ifndef TkCreateRegion
+#define TkCreateRegion \
+	(tkIntStubsPtr->tkCreateRegion) /* 114 */
+#endif
+#endif /* AQUA */
+#ifdef __WIN32__ /* WIN */
 #ifndef TkDestroyRegion
 #define TkDestroyRegion \
 	(tkIntStubsPtr->tkDestroyRegion) /* 115 */
 #endif
+#endif /* WIN */
+#ifdef MAC_OSX_TK /* AQUA */
+#ifndef TkDestroyRegion
+#define TkDestroyRegion \
+	(tkIntStubsPtr->tkDestroyRegion) /* 115 */
+#endif
+#endif /* AQUA */
+#ifdef __WIN32__ /* WIN */
 #ifndef TkIntersectRegion
 #define TkIntersectRegion \
 	(tkIntStubsPtr->tkIntersectRegion) /* 116 */
 #endif
+#endif /* WIN */
+#ifdef MAC_OSX_TK /* AQUA */
+#ifndef TkIntersectRegion
+#define TkIntersectRegion \
+	(tkIntStubsPtr->tkIntersectRegion) /* 116 */
+#endif
+#endif /* AQUA */
+#ifdef __WIN32__ /* WIN */
 #ifndef TkRectInRegion
 #define TkRectInRegion \
 	(tkIntStubsPtr->tkRectInRegion) /* 117 */
 #endif
+#endif /* WIN */
+#ifdef MAC_OSX_TK /* AQUA */
+#ifndef TkRectInRegion
+#define TkRectInRegion \
+	(tkIntStubsPtr->tkRectInRegion) /* 117 */
+#endif
+#endif /* AQUA */
+#ifdef __WIN32__ /* WIN */
 #ifndef TkSetRegion
 #define TkSetRegion \
 	(tkIntStubsPtr->tkSetRegion) /* 118 */
 #endif
+#endif /* WIN */
+#ifdef MAC_OSX_TK /* AQUA */
+#ifndef TkSetRegion
+#define TkSetRegion \
+	(tkIntStubsPtr->tkSetRegion) /* 118 */
+#endif
+#endif /* AQUA */
+#ifdef __WIN32__ /* WIN */
 #ifndef TkUnionRectWithRegion
 #define TkUnionRectWithRegion \
 	(tkIntStubsPtr->tkUnionRectWithRegion) /* 119 */
 #endif
+#endif /* WIN */
+#ifdef MAC_OSX_TK /* AQUA */
+#ifndef TkUnionRectWithRegion
+#define TkUnionRectWithRegion \
+	(tkIntStubsPtr->tkUnionRectWithRegion) /* 119 */
+#endif
+#endif /* AQUA */
 /* Slot 120 is reserved */
 #ifdef MAC_OSX_TK /* AQUA */
 #ifndef TkpCreateNativeBitmap
@@ -1738,10 +1944,18 @@ extern TkIntStubs *tkIntStubsPtr;
 #define TkGCCleanup \
 	(tkIntStubsPtr->tkGCCleanup) /* 144 */
 #endif
+#ifdef __WIN32__ /* WIN */
 #ifndef TkSubtractRegion
 #define TkSubtractRegion \
 	(tkIntStubsPtr->tkSubtractRegion) /* 145 */
 #endif
+#endif /* WIN */
+#ifdef MAC_OSX_TK /* AQUA */
+#ifndef TkSubtractRegion
+#define TkSubtractRegion \
+	(tkIntStubsPtr->tkSubtractRegion) /* 145 */
+#endif
+#endif /* AQUA */
 #ifndef TkStylePkgInit
 #define TkStylePkgInit \
 	(tkIntStubsPtr->tkStylePkgInit) /* 146 */
@@ -1853,38 +2067,6 @@ extern TkIntStubs *tkIntStubsPtr;
 
 #undef TCL_STORAGE_CLASS
 #define TCL_STORAGE_CLASS DLLIMPORT
-
-#if !defined(__WIN32__) && !defined(__CYGWIN__) && !defined(MAC_OSX_TK)
-
-/*
- * These macros are just wrappers for the equivalent X Region calls.
- */
-#   undef TkClipBox
-#   undef TkCreateRegion
-#   undef TkDestroyRegion
-#   undef TkIntersectRegion
-#   undef TkRectInRegion
-#   undef TkSetRegion
-#   undef TkSubtractRegion
-#   undef TkUnionRectWithRegion
-
-#   define TkClipBox(rgn, rect) XClipBox((Region) (rgn), (rect))
-#   define TkCreateRegion() (TkRegion) XCreateRegion()
-#   define TkDestroyRegion(rgn) XDestroyRegion((Region) (rgn))
-#   define TkIntersectRegion(a, b, r) XIntersectRegion((Region) (a), \
-(Region) (b), (Region) (r))
-#   define TkRectInRegion(r, x, y, w, h) XRectInRegion((Region) (r), (x), (y), (w), (h))
-#   define TkSetRegion(d, gc, rgn) XSetRegion((d), (gc), (Region) (rgn))
-#   define TkSubtractRegion(a, b, r) XSubtractRegion((Region) (a), \
-(Region) (b), (Region) (r))
-#   define TkUnionRectWithRegion(rect, src, ret) XUnionRectWithRegion((rect), \
-(Region) (src), (Region) (ret))
-#endif /* !__CYGWIN__*/
-
-#if defined(__CYGWIN__) && defined(USE_TK_STUBS) && !defined(USE_TK_STUB_PROCS)
-#   undef TkBindDeadWindow
-#   define TkBindDeadWindow(winPtr) /* Removed from Cygwins stub table, just do nothing */
-#endif
 
 #endif /* _TKINTDECLS */
 

@@ -49,3 +49,7 @@ int mp_cmp_mag (mp_int * a, mp_int * b)
   return MP_EQ;
 }
 #endif
+
+/* $Source$ */
+/* $Revision$ */
+/* $Date$ */

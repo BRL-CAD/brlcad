@@ -2,6 +2,8 @@
 #
 # This demonstration script creates a canvas widet that displays the
 # floorplan for DEC's Western Research Laboratory.
+#
+# RCS: @(#) $Id$
 
 if {![info exists widgetDemo]} {
     error "This script should be run from the \"widget\" demo."

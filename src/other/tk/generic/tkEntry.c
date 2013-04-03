@@ -13,6 +13,8 @@
  *
  * See the file "license.terms" for information on usage and redistribution of
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
+ *
+ * RCS: @(#) $Id$
  */
 
 #include "tkInt.h"
@@ -35,7 +37,7 @@
 #define DOUBLES_EQ(d1, d2)	(fabs((d1) - (d2)) < MIN_DBL_VAL)
 
 
-static const char *const stateStrings[] = {
+static char *stateStrings[] = {
     "disabled", "normal", "readonly", NULL
 };
 
@@ -43,7 +45,7 @@ static const char *const stateStrings[] = {
  * Definitions for -validate option values:
  */
 
-static const char *const validateStrings[] = {
+static char *validateStrings[] = {
     "all", "key", "focus", "focusin", "focusout", "none", NULL
 };
 enum validateType {
@@ -317,7 +319,7 @@ static const Tk_OptionSpec sbOptSpec[] = {
  * dispatch the entry widget command.
  */
 
-static const char *entryCmdNames[] = {
+static CONST char *entryCmdNames[] = {
     "bbox", "cget", "configure", "delete", "get", "icursor", "index",
     "insert", "scan", "selection", "validate", "xview", NULL
 };
@@ -328,7 +330,7 @@ enum entryCmd {
     COMMAND_SCAN, COMMAND_SELECTION, COMMAND_VALIDATE, COMMAND_XVIEW
 };
 
-static const char *selCmdNames[] = {
+static CONST char *selCmdNames[] = {
     "adjust", "clear", "from", "present", "range", "to", NULL
 };
 
@@ -343,7 +345,7 @@ enum selCmd {
  * dispatch the spinbox widget command.
  */
 
-static const char *sbCmdNames[] = {
+static CONST char *sbCmdNames[] = {
     "bbox", "cget", "configure", "delete", "get", "icursor", "identify",
     "index", "insert", "invoke", "scan", "selection", "set",
     "validate", "xview", NULL
@@ -356,7 +358,7 @@ enum sbCmd {
     SB_CMD_SET, SB_CMD_VALIDATE, SB_CMD_XVIEW
 };
 
-static const char *sbSelCmdNames[] = {
+static CONST char *sbSelCmdNames[] = {
     "adjust", "clear", "element", "from", "present", "range", "to", NULL
 };
 
@@ -374,7 +376,7 @@ enum sbselCmd {
  * modify them, you must modify the strings here.
  */
 
-static const char *selElementNames[] = {
+static CONST char *selElementNames[] = {
     "none", "buttondown", "buttonup", NULL, "entry"
 };
 
@@ -390,7 +392,7 @@ static const char *selElementNames[] = {
  */
 
 static int		ConfigureEntry(Tcl_Interp *interp, Entry *entryPtr,
-			    int objc, Tcl_Obj *const objv[], int flags);
+			    int objc, Tcl_Obj *CONST objv[], int flags);
 static void		DeleteChars(Entry *entryPtr, int index, int count);
 static void		DestroyEntry(char *memPtr);
 static void		DisplayEntry(ClientData clientData);
@@ -405,25 +407,25 @@ static int		EntryFetchSelection(ClientData clientData, int offset,
 static void		EntryLostSelection(ClientData clientData);
 static void		EventuallyRedraw(Entry *entryPtr);
 static void		EntryScanTo(Entry *entryPtr, int y);
-static void		EntrySetValue(Entry *entryPtr, const char *value);
+static void		EntrySetValue(Entry *entryPtr, CONST char *value);
 static void		EntrySelectTo(Entry *entryPtr, int index);
 static char *		EntryTextVarProc(ClientData clientData,
-			    Tcl_Interp *interp, const char *name1,
-			    const char *name2, int flags);
+			    Tcl_Interp *interp, CONST char *name1,
+			    CONST char *name2, int flags);
 static void		EntryUpdateScrollbar(Entry *entryPtr);
 static int		EntryValidate(Entry *entryPtr, char *cmd);
 static int		EntryValidateChange(Entry *entryPtr, char *change,
-		const char *newStr, int index, int type);
-static void		ExpandPercents(Entry *entryPtr, const char *before,
-			    const char *change, const char *newStr, int index,
+			    CONST char *newStr, int index, int type);
+static void		ExpandPercents(Entry *entryPtr, CONST char *before,
+			    CONST char *change, CONST char *newStr, int index,
 			    int type, Tcl_DString *dsPtr);
 static void		EntryValueChanged(Entry *entryPtr,
-			    const char *newValue);
+			    CONST char *newValue);
 static void		EntryVisibleRange(Entry *entryPtr,
 			    double *firstPtr, double *lastPtr);
 static int		EntryWidgetObjCmd(ClientData clientData,
 			    Tcl_Interp *interp, int objc,
-			    Tcl_Obj *const objv[]);
+			    Tcl_Obj *CONST objv[]);
 static void		EntryWorldChanged(ClientData instanceData);
 static int		GetEntryIndex(Tcl_Interp *interp, Entry *entryPtr,
 			    char *string, int *indexPtr);
@@ -435,7 +437,7 @@ static void		InsertChars(Entry *entryPtr, int index, char *string);
 
 static int		SpinboxWidgetObjCmd(ClientData clientData,
 			    Tcl_Interp *interp, int objc,
-			    Tcl_Obj *const objv[]);
+			    Tcl_Obj *CONST objv[]);
 static int		GetSpinboxElement(Spinbox *sbPtr, int x, int y);
 static int		SpinboxInvoke(Tcl_Interp *interp, Spinbox *sbPtr,
 			    int element);
@@ -474,7 +476,7 @@ Tk_EntryObjCmd(
     ClientData clientData,	/* NULL. */
     Tcl_Interp *interp,		/* Current interpreter. */
     int objc,			/* Number of arguments. */
-    Tcl_Obj *const objv[])	/* Argument objects. */
+    Tcl_Obj *CONST objv[])	/* Argument objects. */
 {
     register Entry *entryPtr;
     Tk_OptionTable optionTable;
@@ -585,7 +587,7 @@ EntryWidgetObjCmd(
     ClientData clientData,	/* Information about entry widget. */
     Tcl_Interp *interp,		/* Current interpreter. */
     int objc,			/* Number of arguments. */
-    Tcl_Obj *const objv[])	/* Argument objects. */
+    Tcl_Obj *CONST objv[])	/* Argument objects. */
 {
     Entry *entryPtr = (Entry *) clientData;
     int cmdIndex, selIndex, result;
@@ -1080,7 +1082,7 @@ ConfigureEntry(
     Entry *entryPtr,		/* Information about widget; may or may not
 				 * already have values for some fields. */
     int objc,			/* Number of valid entries in argv. */
-    Tcl_Obj *const objv[],	/* Argument objects. */
+    Tcl_Obj *CONST objv[],	/* Argument objects. */
     int flags)			/* Flags to pass to Tk_ConfigureWidget. */
 {
     Tk_SavedOptions savedOptions;
@@ -1294,7 +1296,7 @@ ConfigureEntry(
      */
 
     if (entryPtr->textVarName != NULL) {
-	const char *value;
+	CONST char *value;
 
 	value = Tcl_GetVar(interp, entryPtr->textVarName, TCL_GLOBAL_ONLY);
 	if (value == NULL) {
@@ -1328,10 +1330,11 @@ ConfigureEntry(
 	     * isn't a double value, we set it to -from.
 	     */
 
+	    int code;
 	    double dvalue;
 
-	    if (sscanf(entryPtr->string, "%lf", &dvalue) == 0) {
-		/* Scan failure */
+	    code = Tcl_GetDouble(NULL, entryPtr->string, &dvalue);
+	    if (code != TCL_OK) {
 		dvalue = sbPtr->fromValue;
 	    } else {
 		if (dvalue > sbPtr->toValue) {
@@ -2010,7 +2013,7 @@ InsertChars(
     ptrdiff_t byteIndex;
     size_t byteCount, newByteCount;
     int oldChars, charsAdded;
-    const char *string;
+    CONST char *string;
     char *newStr;
 
     string = entryPtr->string;
@@ -2106,7 +2109,7 @@ DeleteChars(
     int count)			/* How many characters to delete. */
 {
     int byteIndex, byteCount, newByteCount;
-    const char *string;
+    CONST char *string;
     char *newStr, *toDelete;
 
     if ((index + count) > entryPtr->numChars) {
@@ -2218,7 +2221,7 @@ DeleteChars(
 static void
 EntryValueChanged(
     Entry *entryPtr,		/* Entry whose value just changed. */
-    const char *newValue)	/* If this value is not NULL, we first force
+    CONST char *newValue)	/* If this value is not NULL, we first force
 				 * the value of the entry to this. */
 {
     if (newValue != NULL) {
@@ -2278,9 +2281,9 @@ EntryValueChanged(
 static void
 EntrySetValue(
     Entry *entryPtr,		/* Entry whose value is to be changed. */
-    const char *value)		/* New text to display in entry. */
+    CONST char *value)		/* New text to display in entry. */
 {
-    const char *oldSource;
+    CONST char *oldSource;
     int valueLen, malloced = 0;
 
     if (strcmp(value, entryPtr->string) == 0) {
@@ -2752,8 +2755,8 @@ EntryFetchSelection(
 {
     Entry *entryPtr = (Entry *) clientData;
     int byteCount;
-    const char *string;
-    const char *selStart, *selEnd;
+    CONST char *string;
+    CONST char *selStart, *selEnd;
 
     if ((entryPtr->selectFirst < 0) || !(entryPtr->exportSelection)) {
 	return -1;
@@ -3068,12 +3071,12 @@ static char *
 EntryTextVarProc(
     ClientData clientData,	/* Information about button. */
     Tcl_Interp *interp,		/* Interpreter containing variable. */
-    const char *name1,		/* Not used. */
-    const char *name2,		/* Not used. */
+    CONST char *name1,		/* Not used. */
+    CONST char *name2,		/* Not used. */
     int flags)			/* Information about what happened. */
 {
     Entry *entryPtr = (Entry *) clientData;
-    const char *value;
+    CONST char *value;
 
     if (entryPtr->flags & ENTRY_DELETED) {
 	/*
@@ -3198,7 +3201,7 @@ EntryValidateChange(
      register Entry *entryPtr,	/* Entry that needs validation. */
      char *change,		/* Characters to be added/deleted
 				 * (NUL-terminated string). */
-     const char *newValue,	/* Potential new value of entry string */
+     CONST char *newValue,	/* Potential new value of entry string */
      int index,			/* index of insert/delete, -1 otherwise */
      int type)			/* forced, delete, insert, focusin or
 				 * focusout */
@@ -3332,12 +3335,12 @@ EntryValidateChange(
 static void
 ExpandPercents(
      register Entry *entryPtr,	/* Entry that needs validation. */
-     register const char *before,
+     register CONST char *before,
 				/* Command containing percent expressions to
 				 * be replaced. */
-     const char *change,	/* Characters to added/deleted (NUL-terminated
+     CONST char *change,	/* Characters to added/deleted (NUL-terminated
 				 * string). */
-     const char *newValue,	/* Potential new value of entry string */
+     CONST char *newValue,	/* Potential new value of entry string */
      int index,			/* index of insert/delete */
      int type,			/* INSERT or DELETE */
      Tcl_DString *dsPtr)	/* Dynamic string in which to append new
@@ -3346,7 +3349,7 @@ ExpandPercents(
     int spaceNeeded, cvtFlags;	/* Used to substitute string as proper Tcl
 				 * list element. */
     int number, length;
-    register const char *string;
+    register CONST char *string;
     Tcl_UniChar ch;
     char numStorage[2*TCL_INTEGER_SPACE];
 
@@ -3499,7 +3502,7 @@ Tk_SpinboxObjCmd(
     ClientData clientData,	/* NULL. */
     Tcl_Interp *interp,		/* Current interpreter. */
     int objc,			/* Number of arguments. */
-    Tcl_Obj *const objv[])	/* Argument objects. */
+    Tcl_Obj *CONST objv[])	/* Argument objects. */
 {
     register Entry *entryPtr;
     register Spinbox *sbPtr;
@@ -3630,7 +3633,7 @@ SpinboxWidgetObjCmd(
     ClientData clientData,	/* Information about spinbox widget. */
     Tcl_Interp *interp,		/* Current interpreter. */
     int objc,			/* Number of arguments. */
-    Tcl_Obj *const objv[])	/* Argument objects. */
+    Tcl_Obj *CONST objv[])	/* Argument objects. */
 {
     Entry *entryPtr = (Entry *) clientData;
     Spinbox *sbPtr = (Spinbox *) clientData;
@@ -4238,9 +4241,9 @@ SpinboxInvoke(
 	} else if (!DOUBLES_EQ(sbPtr->fromValue, sbPtr->toValue)) {
 	    double dvalue;
 
-	    if (sscanf(entryPtr->string, "%lf", &dvalue) == 0) {
+	    if (Tcl_GetDouble(NULL, entryPtr->string, &dvalue) != TCL_OK) {
 		/*
-		 * If the string doesn't scan as a double value, just
+		 * If the string is empty, or isn't a valid double value, just
 		 * use the -from value
 		 */
 

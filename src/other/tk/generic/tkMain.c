@@ -12,19 +12,19 @@
  *
  * See the file "license.terms" for information on usage and redistribution of
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
+ *
+ * RCS: @(#) $Id$
  */
 
 #include "tclInt.h"
 #include "tkInt.h"
 #ifdef __WIN32__
 #include "tkWinInt.h"
-#include "../win/tclWinPort.h"
 #endif
 #ifdef MAC_OSX_TK
 #include "tkMacOSXInt.h"
 #endif
 
-extern int TkCygwinMainEx(int, char **, Tcl_AppInitProc *, Tcl_Interp *);
 
 typedef struct ThreadSpecificData {
     Tcl_Interp *interp;		/* Interpreter for this thread. */
@@ -46,45 +46,7 @@ static Tcl_ThreadDataKey dataKey;
  * it will conflict with a declaration elsewhere on some systems.
  */
 
-#if defined(__WIN32__) || defined(_WIN32)
-#define isatty WinIsTty
-static int WinIsTty(int fd) {
-    HANDLE handle;
-
-    /*
-     * For now, under Windows, we assume we are not running as a console mode
-     * app, so we need to use the GUI console.  In order to enable this, we
-     * always claim to be running on a tty.  This probably isn't the right
-     * way to do it.
-     */
-
-#if !defined(STATIC_BUILD)
-	if (tclStubsPtr->reserved9 && TclpIsAtty) {
-	    /* We are running on Cygwin */
-	    return TclpIsAtty(fd);
-	}
-#endif
-    handle = GetStdHandle(STD_INPUT_HANDLE + fd);
-
-    if ((handle == INVALID_HANDLE_VALUE) || (handle == 0)
-	     || (GetFileType(handle) == FILE_TYPE_UNKNOWN)) {
-	/*
-	 * If it's a bad or closed handle, then it's been connected
-	 * to a wish console window.
-	 */
-
-	return 1;
-    } else if (GetFileType(handle) == FILE_TYPE_CHAR) {
-	/*
-	 * A character file handle is a tty by definition.
-	 */
-
-	return 1;
-    } else {
-	return 0;
-    }
-}
-#else
+#if !defined(__WIN32__) && !defined(_WIN32)
 extern int		isatty(int fd);
 extern char *		strrchr(CONST char *string, int c);
 #endif
@@ -114,6 +76,7 @@ static void		StdinProc(ClientData clientData, int mask);
  *
  *----------------------------------------------------------------------
  */
+
 void
 Tk_MainEx(
     int argc,			/* Number of arguments. */
@@ -129,6 +92,9 @@ Tk_MainEx(
     int code, nullStdin = 0;
     Tcl_Channel inChannel, outChannel;
     ThreadSpecificData *tsdPtr;
+#ifdef __WIN32__
+    HANDLE handle;
+#endif
     Tcl_DString appName;
 
     /*
@@ -140,31 +106,6 @@ Tk_MainEx(
 	abort();
     }
 
-#if defined(__WIN32__) && !defined(__WIN64__) && !defined(STATIC_BUILD)
-
-    if (tclStubsPtr->reserved9) {
-	/* We are running win32 Tk under Cygwin, so let's check
-	 * whether the env("DISPLAY") variable or the -display
-	 * argument is set. If so, we really want to run the
-	 * Tk_MainEx function of libtk8.?.dll, not this one. */
-	if (Tcl_GetVar2(interp, "env", "DISPLAY", TCL_GLOBAL_ONLY)) {
-	loadCygwinTk:
-	    if (TkCygwinMainEx(argc, argv, appInitProc, interp)) {
-		/* Should never reach here. */
-		return;
-	    }
-	} else {
-	    int i;
-
-	    for (i = 1; i < argc; ++i) {
-		if (!strcmp(argv[i], "-display")) {
-		    goto loadCygwinTk;
-		}
-	    }
-	}
-    }
-#endif
-
     tsdPtr = (ThreadSpecificData *)
 	    Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
 
@@ -172,12 +113,7 @@ Tk_MainEx(
     tsdPtr->interp = interp;
     Tcl_Preserve((ClientData) interp);
 
-#if defined(__WIN32__) && !defined(STATIC_BUILD)
-    if (!tclStubsPtr->reserved9) {
-	/* Only initialize console when not running under cygwin */
-	Tk_InitConsoleChannels(interp);
-    }
-#elif  defined(__WIN32__)
+#if defined(__WIN32__)
     Tk_InitConsoleChannels(interp);
 #endif
 
@@ -260,8 +196,37 @@ Tk_MainEx(
      * Set the "tcl_interactive" variable.
      */
 
-    tsdPtr->tty = isatty(0);
+#ifdef __WIN32__
+    /*
+     * For now, under Windows, we assume we are not running as a console mode
+     * app, so we need to use the GUI console. In order to enable this, we
+     * always claim to be running on a tty. This probably isn't the right way
+     * to do it.
+     */
 
+    handle = GetStdHandle(STD_INPUT_HANDLE);
+
+    if ((handle == INVALID_HANDLE_VALUE) || (handle == 0)
+	     || (GetFileType(handle) == FILE_TYPE_UNKNOWN)) {
+	/*
+	 * If it's a bad or closed handle, then it's been connected to a wish
+	 * console window.
+	 */
+
+	tsdPtr->tty = 1;
+    } else if (GetFileType(handle) == FILE_TYPE_CHAR) {
+	/*
+	 * A character file handle is a tty by definition.
+	 */
+
+	tsdPtr->tty = 1;
+    } else {
+	tsdPtr->tty = 0;
+    }
+
+#else
+    tsdPtr->tty = isatty(0);
+#endif
 #if defined(MAC_OSX_TK)
     /*
      * On TkAqua, if we don't have a TTY and stdin is a special character file

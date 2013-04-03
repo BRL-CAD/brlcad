@@ -278,3 +278,7 @@ ERR:
 }     
      
 #endif
+
+/* $Source$ */
+/* $Revision$ */
+/* $Date$ */

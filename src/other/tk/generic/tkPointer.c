@@ -10,6 +10,8 @@
  *
  * See the file "license.terms" for information on usage and redistribution of
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
+ *
+ * RCS: @(#) $Id$
  */
 
 #include "tkInt.h"
@@ -466,7 +468,7 @@ XGrabPointer(
  *----------------------------------------------------------------------
  */
 
-int
+void
 XUngrabPointer(
     Display *display,
     Time time)
@@ -479,7 +481,6 @@ XUngrabPointer(
     tsdPtr->restrictWinPtr = NULL;
     TkpSetCapture(NULL);
     UpdateCursor(tsdPtr->lastWinPtr);
-    return Success;
 }
 
 /*
@@ -580,7 +581,7 @@ UpdateCursor(
  *----------------------------------------------------------------------
  */
 
-int
+void
 XDefineCursor(
     Display *display,
     Window w,
@@ -594,7 +595,6 @@ XDefineCursor(
 	UpdateCursor(winPtr);
     }
     display->request++;
-    return Success;
 }
 
 /*

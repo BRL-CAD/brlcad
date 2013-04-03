@@ -39,3 +39,7 @@ mp_count_bits (mp_int * a)
   return r;
 }
 #endif
+
+/* $Source$ */
+/* $Revision$ */
+/* $Date$ */

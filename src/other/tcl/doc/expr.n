@@ -6,6 +6,8 @@
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 '\" 
+'\" RCS: @(#) $Id$
+'\" 
 .so man.macros
 .TH expr n 8.5 Tcl "Tcl Built-In Commands"
 .BS
@@ -131,20 +133,7 @@ Multiply, divide, remainder.  None of these operators may be
 applied to string operands, and remainder may be applied only
 to integers.
 The remainder will always have the same sign as the divisor and
-an absolute value smaller than the absolute value of the divisor.
-.RS
-.PP
-When applied to integers, the division and remainder operators can be
-considered to partition the number line into a sequence of equal-sized
-adjacent non-overlapping pieces where each piece is the size of the divisor;
-the division result identifies which piece the divisor lay within, and the
-remainder result identifies where within that piece the divisor lay. A
-consequence of this is that the result of
-.QW "-57 \fB/\fR 10"
-is always -6, and the result of
-.QW "-57 \fB%\fR 10"
-is always 3.
-.RE
+an absolute value smaller than the divisor.
 .TP 20
 \fB+\0\0\-\fR
 Add and subtract.  Valid for any numeric operands.
@@ -311,7 +300,6 @@ returns \fB4.0\fR, not \fB4\fR.
 String values may be used as operands of the comparison operators,
 although the expression evaluator tries to do comparisons as integer
 or floating-point when it can,
-i.e., when all arguments to the operator allow numeric interpretations,
 except in the case of the \fBeq\fR and \fBne\fR operators.
 If one of the operands of a comparison is a string and the other
 has a numeric value, a canonical string representation of the numeric
@@ -322,10 +310,11 @@ is that produced by the \fB%g\fR format specifier of Tcl's
 \fBformat\fR command.  For example, the commands
 .CS
 \fBexpr {"0x03" > "2"}\fR
-\fBexpr {"0y" > "0x12"}\fR
+\fBexpr {"0y" < "0x12"}\fR
 .CE
 both return 1.  The first comparison is done using integer
-comparison, and the second is done using string comparison.
+comparison, and the second is done using string comparison after
+the second operand is converted to the string \fB18\fR.
 Because of Tcl's tendency to treat values as numbers whenever
 possible, it is not generally a good idea to use operators like \fB==\fR
 when you really want string comparison and the values of the

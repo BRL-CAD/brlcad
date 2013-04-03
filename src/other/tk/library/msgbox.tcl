@@ -3,11 +3,15 @@
 #	Implements messageboxes for platforms that do not have native
 #	messagebox support.
 #
+# RCS: @(#) $Id$
+#
 # Copyright (c) 1994-1997 Sun Microsystems, Inc.
 #
 # See the file "license.terms" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 #
+
+package require Ttk
 
 # Ensure existence of ::tk::dialog namespace
 #
@@ -252,7 +256,7 @@ proc ::tk::MessageBox {args} {
     toplevel $w -class Dialog -bg $bg
     wm title $w $data(-title)
     wm iconname $w Dialog
-    wm protocol $w WM_DELETE_WINDOW [list $w.$cancel invoke]
+    wm protocol $w WM_DELETE_WINDOW { }
 
     # Message boxes should be transient with respect to their parent so that
     # they always stay on top of the parent window.  But some window managers
@@ -421,7 +425,7 @@ proc ::tk::MessageBox {args} {
 
     # 7. Withdraw the window, then update all the geometry information
     # so we know how big it wants to be, then center the window in the
-    # display (Motif style) and de-iconify it.
+    # display and de-iconify it.
 
     ::tk::PlaceWindow $w widget $data(-parent)
 

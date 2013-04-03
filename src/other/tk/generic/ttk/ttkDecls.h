@@ -1,4 +1,6 @@
 /*
+ * $Id$
+ *
  * This file is (mostly) automatically generated from ttk.decls.
  */
 
@@ -28,36 +30,36 @@ extern const char *TtkInitializeStubs(
  */
 
 /* 0 */
-TTKAPI Ttk_Theme	Ttk_GetTheme(Tcl_Interp *interp, CONST char *name);
+TTKAPI Ttk_Theme	Ttk_GetTheme(Tcl_Interp *interp, const char *name);
 /* 1 */
 TTKAPI Ttk_Theme	Ttk_GetDefaultTheme(Tcl_Interp *interp);
 /* 2 */
 TTKAPI Ttk_Theme	Ttk_GetCurrentTheme(Tcl_Interp *interp);
 /* 3 */
-TTKAPI Ttk_Theme	Ttk_CreateTheme(Tcl_Interp *interp, CONST char *name,
+TTKAPI Ttk_Theme	Ttk_CreateTheme(Tcl_Interp *interp, const char *name,
 				Ttk_Theme parent);
 /* 4 */
 TTKAPI void		Ttk_RegisterCleanup(Tcl_Interp *interp,
-				VOID *deleteData,
+				void *deleteData,
 				Ttk_CleanupProc *cleanupProc);
 /* 5 */
 TTKAPI int		Ttk_RegisterElementSpec(Ttk_Theme theme,
-				CONST char *elementName,
+				const char *elementName,
 				Ttk_ElementSpec *elementSpec,
-				VOID *clientData);
+				void *clientData);
 /* 6 */
 TTKAPI Ttk_ElementClass * Ttk_RegisterElement(Tcl_Interp *interp,
-				Ttk_Theme theme, CONST char *elementName,
+				Ttk_Theme theme, const char *elementName,
 				Ttk_ElementSpec *elementSpec,
-				VOID *clientData);
+				void *clientData);
 /* 7 */
 TTKAPI int		Ttk_RegisterElementFactory(Tcl_Interp *interp,
-				CONST char *name,
+				const char *name,
 				Ttk_ElementFactory factoryProc,
-				VOID *clientData);
+				void *clientData);
 /* 8 */
 TTKAPI void		Ttk_RegisterLayout(Ttk_Theme theme,
-				CONST char *className,
+				const char *className,
 				Ttk_LayoutSpec layoutSpec);
 /* Slot 9 is reserved */
 /* 10 */
@@ -135,15 +137,15 @@ typedef struct TtkStubs {
     int revision;
     const struct TtkStubHooks *hooks;
 
-    Ttk_Theme (*ttk_GetTheme) (Tcl_Interp *interp, CONST char *name); /* 0 */
+    Ttk_Theme (*ttk_GetTheme) (Tcl_Interp *interp, const char *name); /* 0 */
     Ttk_Theme (*ttk_GetDefaultTheme) (Tcl_Interp *interp); /* 1 */
     Ttk_Theme (*ttk_GetCurrentTheme) (Tcl_Interp *interp); /* 2 */
-    Ttk_Theme (*ttk_CreateTheme) (Tcl_Interp *interp, CONST char *name, Ttk_Theme parent); /* 3 */
-    void (*ttk_RegisterCleanup) (Tcl_Interp *interp, VOID *deleteData, Ttk_CleanupProc *cleanupProc); /* 4 */
-    int (*ttk_RegisterElementSpec) (Ttk_Theme theme, CONST char *elementName, Ttk_ElementSpec *elementSpec, VOID *clientData); /* 5 */
-    Ttk_ElementClass * (*ttk_RegisterElement) (Tcl_Interp *interp, Ttk_Theme theme, CONST char *elementName, Ttk_ElementSpec *elementSpec, VOID *clientData); /* 6 */
-    int (*ttk_RegisterElementFactory) (Tcl_Interp *interp, CONST char *name, Ttk_ElementFactory factoryProc, VOID *clientData); /* 7 */
-    void (*ttk_RegisterLayout) (Ttk_Theme theme, CONST char *className, Ttk_LayoutSpec layoutSpec); /* 8 */
+    Ttk_Theme (*ttk_CreateTheme) (Tcl_Interp *interp, const char *name, Ttk_Theme parent); /* 3 */
+    void (*ttk_RegisterCleanup) (Tcl_Interp *interp, void *deleteData, Ttk_CleanupProc *cleanupProc); /* 4 */
+    int (*ttk_RegisterElementSpec) (Ttk_Theme theme, const char *elementName, Ttk_ElementSpec *elementSpec, void *clientData); /* 5 */
+    Ttk_ElementClass * (*ttk_RegisterElement) (Tcl_Interp *interp, Ttk_Theme theme, const char *elementName, Ttk_ElementSpec *elementSpec, void *clientData); /* 6 */
+    int (*ttk_RegisterElementFactory) (Tcl_Interp *interp, const char *name, Ttk_ElementFactory factoryProc, void *clientData); /* 7 */
+    void (*ttk_RegisterLayout) (Ttk_Theme theme, const char *className, Ttk_LayoutSpec layoutSpec); /* 8 */
     void (*reserved9)(void);
     int (*ttk_GetStateSpecFromObj) (Tcl_Interp *interp, Tcl_Obj *objPtr, Ttk_StateSpec *spec_rtn); /* 10 */
     Tcl_Obj * (*ttk_NewStateSpecObj) (unsigned int onbits, unsigned int offbits); /* 11 */

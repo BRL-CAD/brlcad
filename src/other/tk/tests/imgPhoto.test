@@ -8,6 +8,8 @@
 # All rights reserved.
 #
 # Author: Paul Mackerras (paulus@cs.anu.edu.au)
+#
+# RCS: @(#) $Id$
 
 package require tcltest 2.1
 eval tcltest::configure $argv

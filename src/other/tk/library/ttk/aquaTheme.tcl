@@ -1,4 +1,6 @@
 #
+# $Id$
+#
 # Aqua theme (OSX native look and feel)
 #
 

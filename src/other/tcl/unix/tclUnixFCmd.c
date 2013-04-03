@@ -10,6 +10,8 @@
  * See the file "license.terms" for information on usage and redistribution of
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
+ * RCS: @(#) $Id$
+ *
  * Portions of this code were derived from NetBSD source code which has the
  * following copyright notice:
  *

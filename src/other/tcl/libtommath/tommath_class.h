@@ -993,3 +993,7 @@
 #else
 #define LTM_LAST
 #endif
+
+/* $Source$ */
+/* $Revision$ */
+/* $Date$ */

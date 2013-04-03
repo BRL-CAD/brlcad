@@ -7,6 +7,8 @@
  *
  * See the file "license.terms" for information on usage and redistribution of
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
+ *
+ * RCS: @(#) $Id$
  */
 
 #include "tclInt.h"
@@ -81,30 +83,25 @@ TclSockGetPort(
  *----------------------------------------------------------------------
  */
 
-#undef TclSockMinimumBuffers
-#if !defined(_WIN32) && !defined(__CYGWIN__)
-#   define SOCKET int
-#endif
-
 int
 TclSockMinimumBuffers(
-    void *sock,			/* Socket file descriptor */
+    int sock,			/* Socket file descriptor */
     int size)			/* Minimum buffer size */
 {
     int current;
     socklen_t len;
 
     len = sizeof(int);
-    getsockopt((SOCKET)(size_t)sock, SOL_SOCKET, SO_SNDBUF, (char *)&current, &len);
+    getsockopt(sock, SOL_SOCKET, SO_SNDBUF, (char *)&current, &len);
     if (current < size) {
 	len = sizeof(int);
-	setsockopt((SOCKET)(size_t)sock, SOL_SOCKET, SO_SNDBUF, (char *)&size, len);
+	setsockopt(sock, SOL_SOCKET, SO_SNDBUF, (char *)&size, len);
     }
     len = sizeof(int);
-    getsockopt((SOCKET)(size_t)sock, SOL_SOCKET, SO_RCVBUF, (char *)&current, &len);
+    getsockopt(sock, SOL_SOCKET, SO_RCVBUF, (char *)&current, &len);
     if (current < size) {
 	len = sizeof(int);
-	setsockopt((SOCKET)(size_t)sock, SOL_SOCKET, SO_RCVBUF, (char *)&size, len);
+	setsockopt(sock, SOL_SOCKET, SO_RCVBUF, (char *)&size, len);
     }
     return TCL_OK;
 }

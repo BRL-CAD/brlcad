@@ -8,6 +8,8 @@
  *
  * See the file "license.terms" for information on usage and redistribution of
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
+ *
+ * RCS: @(#) $Id$
  */
 
 #include "tclInt.h"
@@ -22,8 +24,7 @@ static int NativeMatchType(Tcl_Interp *interp, CONST char* nativeEntry,
  * TclpFindExecutable --
  *
  *	This function computes the absolute path name of the current
- *	application, given its argv[0] value. For Cygwin, argv[0] is
- *	ignored and the path is determined the same as under win32.
+ *	application, given its argv[0] value.
  *
  * Results:
  *	None.
@@ -39,25 +40,10 @@ TclpFindExecutable(
     CONST char *argv0)		/* The value of the application's argv[0]
 				 * (native). */
 {
-    Tcl_Encoding encoding;
-#ifdef __CYGWIN__
-    int length;
-    char buf[PATH_MAX * 2];
-    char name[PATH_MAX * TCL_UTF_MAX + 1];
-    GetModuleFileNameW(NULL, buf, PATH_MAX);
-    cygwin_conv_path(3, buf, name, PATH_MAX);
-    length = strlen(name);
-    if ((length > 4) && !strcasecmp(name + length - 4, ".exe")) {
-	/* Strip '.exe' part. */
-	length -= 4;
-    }
-    encoding = Tcl_GetEncoding(NULL, NULL);
-    TclSetObjNameOfExecutable(
-	    Tcl_NewStringObj(name, length), encoding);
-#else
-    const char *name, *p;
+    CONST char *name, *p;
     Tcl_StatBuf statBuf;
     Tcl_DString buffer, nameString, cwd, utfName;
+    Tcl_Encoding encoding;
 
     if (argv0 == NULL) {
 	return;
@@ -98,7 +84,7 @@ TclpFindExecutable(
      */
 
     while (1) {
-	while (TclIsSpaceProc(*p)) {
+	while (isspace(UCHAR(*p))) {			/* INTL: BUG */
 	    p++;
 	}
 	name = p;
@@ -190,7 +176,6 @@ TclpFindExecutable(
 
   done:
     Tcl_DStringFree(&buffer);
-#endif
 }
 
 /*
@@ -1181,40 +1166,6 @@ TclpUtime(
 {
     return utime(Tcl_FSGetNativePath(pathPtr), tval);
 }
-#ifdef __CYGWIN__
-int TclOSstat(const char *name, Tcl_StatBuf *statBuf) {
-    struct stat buf;
-    int result = stat(name, &buf);
-    statBuf->st_mode = buf.st_mode;
-    statBuf->st_ino = buf.st_ino;
-    statBuf->st_dev = buf.st_dev;
-    statBuf->st_rdev = buf.st_rdev;
-    statBuf->st_nlink = buf.st_nlink;
-    statBuf->st_uid = buf.st_uid;
-    statBuf->st_gid = buf.st_gid;
-    statBuf->st_size = buf.st_size;
-    statBuf->st_atime = buf.st_atime;
-    statBuf->st_mtime = buf.st_mtime;
-    statBuf->st_ctime = buf.st_ctime;
-    return result;
-}
-int TclOSlstat(const char *name, Tcl_StatBuf *statBuf) {
-    struct stat buf;
-    int result = lstat(name, &buf);
-    statBuf->st_mode = buf.st_mode;
-    statBuf->st_ino = buf.st_ino;
-    statBuf->st_dev = buf.st_dev;
-    statBuf->st_rdev = buf.st_rdev;
-    statBuf->st_nlink = buf.st_nlink;
-    statBuf->st_uid = buf.st_uid;
-    statBuf->st_gid = buf.st_gid;
-    statBuf->st_size = buf.st_size;
-    statBuf->st_atime = buf.st_atime;
-    statBuf->st_mtime = buf.st_mtime;
-    statBuf->st_ctime = buf.st_ctime;
-    return result;
-}
-#endif
 
 /*
  * Local Variables:

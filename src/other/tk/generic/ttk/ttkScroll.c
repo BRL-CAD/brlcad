@@ -1,4 +1,5 @@
-/*
+/* $Id$
+ *
  * Copyright 2004, Joe English
  *
  * Support routines for scrollable widgets.

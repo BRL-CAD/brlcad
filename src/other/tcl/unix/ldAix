@@ -1,5 +1,5 @@
 #!/bin/sh
-# 
+#
 # ldAix ldCmd ldArg ldArg ...
 #
 # This shell script provides a wrapper for ld under AIX in order to
@@ -9,6 +9,8 @@
 # from the argument list, creates a .exp file describing all of the
 # symbols exported by those files, and then invokes "ldCmd" to
 # perform the real link.
+#
+# RCS: @(#) $Id$
 
 # Extract from the arguments the names of all of the object files.
 

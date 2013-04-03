@@ -1,4 +1,4 @@
-/*
+/* $Id$
  * Copyright (c) 2003, Joe English
  * Helper routines for widget implementations.
  */
@@ -109,18 +109,14 @@ MODULE_SCOPE int TtkWidgetConstructorObjCmd(
     Tcl_CreateObjCommand(interp, name, \
 	TtkWidgetConstructorObjCmd, (ClientData)specPtr,NULL)
 
-/* WIDGET_TAKEFOCUS_TRUE --
- * WIDGET_TAKEFOCUS_FALSE --
- *	Add one or the other of these to each OptionSpecs table 
- *	to indicate whether the widget should take focus 
- *	during keyboard traversal.
+/* WIDGET_TAKES_FOCUS --
+ * Add this to the OptionSpecs table of widgets that
+ * take keyboard focus during traversal to override
+ * CoreOptionSpec's -takefocus default value:
  */
-#define WIDGET_TAKEFOCUS_TRUE \
+#define WIDGET_TAKES_FOCUS \
     {TK_OPTION_STRING, "-takefocus", "takeFocus", "TakeFocus", \
 	"ttk::takefocus", Tk_Offset(WidgetCore, takeFocusPtr), -1, 0,0,0 }
-#define WIDGET_TAKEFOCUS_FALSE \
-    {TK_OPTION_STRING, "-takefocus", "takeFocus", "TakeFocus", \
-	"", Tk_Offset(WidgetCore, takeFocusPtr), -1, 0,0,0 }
 
 /* WIDGET_INHERIT_OPTIONS(baseOptionSpecs) --
  * Add this at the end of an OptionSpecs table to inherit
@@ -128,10 +124,6 @@ MODULE_SCOPE int TtkWidgetConstructorObjCmd(
  */
 #define WIDGET_INHERIT_OPTIONS(baseOptionSpecs) \
     {TK_OPTION_END, 0,0,0, NULL, -1,-1, 0, (ClientData)baseOptionSpecs, 0}
-
-/* All widgets should inherit from ttkCoreOptionSpecs[].
- */
-MODULE_SCOPE Tk_OptionSpec ttkCoreOptionSpecs[];
 
 /*
  * Useful routines for use inside widget implementations:
@@ -241,6 +233,11 @@ MODULE_SCOPE int Ttk_TagSetRemove(Ttk_TagSet, Ttk_Tag tag);
 
 MODULE_SCOPE void Ttk_TagSetValues(Ttk_TagTable, Ttk_TagSet, void *record);
 MODULE_SCOPE void Ttk_TagSetApplyStyle(Ttk_TagTable,Ttk_Style,Ttk_State,void*);
+
+/*
+ * Useful widget base classes:
+ */
+MODULE_SCOPE Tk_OptionSpec ttkCoreOptionSpecs[];
 
 /*
  * String tables for widget resource specifications:

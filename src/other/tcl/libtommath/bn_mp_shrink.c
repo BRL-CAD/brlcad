@@ -19,18 +19,17 @@
 int mp_shrink (mp_int * a)
 {
   mp_digit *tmp;
-  int used = 1;
-  
-  if(a->used > 0)
-    used = a->used;
-  
-  if (a->alloc != used) {
-    if ((tmp = OPT_CAST(mp_digit) XREALLOC (a->dp, sizeof (mp_digit) * used)) == NULL) {
+  if (a->alloc != a->used && a->used > 0) {
+    if ((tmp = OPT_CAST(mp_digit) XREALLOC (a->dp, sizeof (mp_digit) * a->used)) == NULL) {
       return MP_MEM;
     }
     a->dp    = tmp;
-    a->alloc = used;
+    a->alloc = a->used;
   }
   return MP_OKAY;
 }
 #endif
+
+/* $Source$ */
+/* $Revision$ */
+/* $Date$ */

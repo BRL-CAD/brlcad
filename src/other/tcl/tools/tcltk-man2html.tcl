@@ -1,6 +1,6 @@
 #!/bin/sh
 # The next line is executed by /bin/sh, but not tcl \
-exec tclsh "$0" ${1+"$@"}
+exec tclsh8.4 "$0" ${1+"$@"}
 
 package require Tcl 8.5
 
@@ -944,11 +944,6 @@ proc cross-reference {ref} {
 	}
 	scrollbar.n {
 	    if {$lref in {set}} {
-		return $ref
-	    }
-	}
-	safe.n {
-	    if {$lref in {options}} {
 		return $ref
 	    }
 	}

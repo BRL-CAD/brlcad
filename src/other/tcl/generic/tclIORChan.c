@@ -14,6 +14,8 @@
  *
  * See the file "license.terms" for information on usage and redistribution of
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
+ *
+ * RCS: @(#) $Id$
  */
 
 #include <tclInt.h>
@@ -2675,6 +2677,7 @@ ForwardOpToOwnerThread(
     Tcl_ThreadId dst = rcPtr->thread;
     ForwardingEvent *evPtr;
     ForwardingResult *resultPtr;
+    int result;
 
     /*
      * We gather the lock early. This allows us to check the liveness of the
@@ -2778,6 +2781,7 @@ ForwardOpToOwnerThread(
 
     Tcl_DeleteThreadExitHandler(SrcExitProc, (ClientData) evPtr);
 
+    result = resultPtr->result;
     ckfree((char*) resultPtr);
 }
 

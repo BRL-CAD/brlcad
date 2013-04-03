@@ -10,7 +10,11 @@
  *
  * See the file "license.terms" for information on usage and redistribution of
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
+ *
+ * RCS: @(#) $Id$
  */
+
+/* #define _WIN32_WINNT	0x0500 */
 
 #include "tclWinInt.h"
 #include "tclFileSystem.h"
@@ -1278,7 +1282,7 @@ WinIsReserved(
  *	because for NTFS root volumes, the getFileAttributesProc returns a
  *	'hidden' attribute when it should not.
  *
- *	We never make any calls to a 'get attributes' routine here, since we
+ *	We never make any calss to a 'get attributes' routine here, since we
  *	have arranged things so that our caller already knows such
  *	information.
  *
@@ -1550,25 +1554,14 @@ NativeAccess(
 	return -1;
     }
 
-    if (mode == F_OK) {
-	/*
-	 * File exists, nothing else to check.
-	 */
-
-	return 0;
-    }
-
     if ((mode & W_OK)
-	&& (attr & FILE_ATTRIBUTE_READONLY)
-	&& !(attr & FILE_ATTRIBUTE_DIRECTORY)) {
+	    && (tclWinProcs->getFileSecurityProc == NULL)
+	    && (attr & FILE_ATTRIBUTE_READONLY)) {
 	/*
-	 * The attributes say the file is not writable.	 If the file is a
-	 * regular file (i.e., not a directory), then the file is not
-	 * writable, full stop.	 For directories, the read-only bit is
-	 * (mostly) ignored by Windows, so we can't ascertain anything about
-	 * directory access from the attrib data.  However, if we have the
-	 * advanced 'getFileSecurityProc', then more robust ACL checks
-	 * will be done below.
+	 * We don't have the advanced 'getFileSecurityProc', and our
+	 * attributes say the file is not writable. If we do have
+	 * 'getFileSecurityProc', we'll do a more robust XP-related check
+	 * below.
 	 */
 
 	Tcl_SetErrno(EACCES);
@@ -1592,14 +1585,15 @@ NativeAccess(
      * we have a more complex permissions structure so we try to check that.
      * The code below is remarkably complex for such a simple thing as finding
      * what permissions the OS has set for a file.
+     *
+     * If we are simply checking for file existence, then we don't need all
+     * these complications (which are really quite slow: with this code 'file
+     * readable' is 5-6 times slower than 'file exists').
      */
 
-    if (tclWinProcs->getFileSecurityProc != NULL) {
+    if ((mode != F_OK) && (tclWinProcs->getFileSecurityProc != NULL)) {
 	SECURITY_DESCRIPTOR *sdPtr = NULL;
 	unsigned long size;
-	PSID pSid = 0;
-	BOOL SidDefaulted;
-	SID_IDENTIFIER_AUTHORITY samba_unmapped = {{0, 0, 0, 0, 0, 22}};
 	GENERIC_MAPPING genMap;
 	HANDLE hToken = NULL;
 	DWORD desiredAccess = 0, grantedAccess = 0;
@@ -1615,8 +1609,7 @@ NativeAccess(
 	size = 0;
 	(*tclWinProcs->getFileSecurityProc)(nativePath,
 		OWNER_SECURITY_INFORMATION | GROUP_SECURITY_INFORMATION
-		| DACL_SECURITY_INFORMATION | LABEL_SECURITY_INFORMATION,
-		0, 0, &size);
+		| DACL_SECURITY_INFORMATION, 0, 0, &size);
 
 	/*
 	 * Should have failed with ERROR_INSUFFICIENT_BUFFER
@@ -1649,33 +1642,12 @@ NativeAccess(
 
 	if (!(*tclWinProcs->getFileSecurityProc)(nativePath,
 		OWNER_SECURITY_INFORMATION | GROUP_SECURITY_INFORMATION
-		| DACL_SECURITY_INFORMATION | LABEL_SECURITY_INFORMATION,
-		sdPtr, size, &size)) {
+		| DACL_SECURITY_INFORMATION, sdPtr, size, &size)) {
 	    /*
 	     * Error getting owner SD
 	     */
 
 	    goto accessError;
-	}
-
-	/*
-	 * As of Samba 3.0.23 (10-Jul-2006), unmapped users and groups are
-	 * assigned to SID domains S-1-22-1 and S-1-22-2, where "22" is the
-	 * top-level authority.	 If the file owner and group is unmapped then
-	 * the ACL access check below will only test against world access,
-	 * which is likely to be more restrictive than the actual access
-	 * restrictions.  Since the ACL tests are more likely wrong than
-	 * right, skip them.  Moreover, the unix owner access permissions are
-	 * usually mapped to the Windows attributes, so if the user is the
-	 * file owner then the attrib checks above are correct (as far as they
-	 * go).
-	 */
-
-	if(!GetSecurityDescriptorOwner(sdPtr,&pSid,&SidDefaulted) ||
-	   memcmp(GetSidIdentifierAuthority(pSid),&samba_unmapped,
-		  sizeof(SID_IDENTIFIER_AUTHORITY))==0) {
-	    HeapFree(GetProcessHeap(), 0, sdPtr);
-	    return 0; /* Attrib tests say access allowed. */
 	}
 
 	/*
@@ -1755,6 +1727,17 @@ NativeAccess(
 	    return -1;
 	}
 
+	/*
+	 * For directories the above checks are ok. For files, though, we must
+	 * still check the 'attr' value.
+	 */
+
+	if ((mode & W_OK)
+		&& !(attr & FILE_ATTRIBUTE_DIRECTORY)
+		&& (attr & FILE_ATTRIBUTE_READONLY)) {
+	    Tcl_SetErrno(EACCES);
+	    return -1;
+	}
     }
     return 0;
 }
@@ -1850,10 +1833,27 @@ TclpObjChdir(
 {
     int result;
     const TCHAR *nativePath;
+#ifdef __CYGWIN__
+    extern int cygwin_conv_to_posix_path(const char *, char *);
+    char posixPath[MAX_PATH+1];
+    const char *path;
+    Tcl_DString ds;
+#endif /* __CYGWIN__ */
 
     nativePath = (const TCHAR *) Tcl_FSGetNativePath(pathPtr);
 
+#ifdef __CYGWIN__
+    /*
+     * Cygwin chdir only groks POSIX path.
+     */
+
+    path = Tcl_WinTCharToUtf(nativePath, -1, &ds);
+    cygwin_conv_to_posix_path(path, posixPath);
+    result = (chdir(posixPath) == 0 ? 1 : 0);
+    Tcl_DStringFree(&ds);
+#else /* __CYGWIN__ */
     result = (*tclWinProcs->setCurrentDirectoryProc)(nativePath);
+#endif /* __CYGWIN__ */
 
     if (result == 0) {
 	TclWinConvertError(GetLastError());
@@ -1861,6 +1861,51 @@ TclpObjChdir(
     }
     return 0;
 }
+
+#ifdef __CYGWIN__
+/*
+ *---------------------------------------------------------------------------
+ *
+ * TclpReadlink --
+ *
+ *	This function replaces the library version of readlink().
+ *
+ * Results:
+ *	The result is a pointer to a string specifying the contents of the
+ *	symbolic link given by 'path', or NULL if the symbolic link could not
+ *	be read. Storage for the result string is allocated in bufferPtr; the
+ *	caller must call Tcl_DStringFree() when the result is no longer
+ *	needed.
+ *
+ * Side effects:
+ *	See readlink() documentation.
+ *
+ *---------------------------------------------------------------------------
+ */
+
+char *
+TclpReadlink(
+    const char *path,		/* Path of file to readlink (UTF-8). */
+    Tcl_DString *linkPtr)	/* Uninitialized or free DString filled with
+				 * contents of link (UTF-8). */
+{
+    char link[MAXPATHLEN];
+    int length;
+    char *native;
+    Tcl_DString ds;
+
+    native = Tcl_UtfToExternalDString(NULL, path, -1, &ds);
+    length = readlink(native, link, sizeof(link));	/* INTL: Native. */
+    Tcl_DStringFree(&ds);
+
+    if (length < 0) {
+	return NULL;
+    }
+
+    Tcl_ExternalToUtfDString(NULL, link, length, linkPtr);
+    return Tcl_DStringValue(linkPtr);
+}
+#endif /* __CYGWIN__ */
 
 /*
  *----------------------------------------------------------------------
@@ -2221,8 +2266,8 @@ NativeStatMode(
      * positions.
      */
 
-    mode |= (mode & (S_IREAD|S_IWRITE|S_IEXEC)) >> 3;
-    mode |= (mode & (S_IREAD|S_IWRITE|S_IEXEC)) >> 6;
+    mode |= (mode & 0x0700) >> 3;
+    mode |= (mode & 0x0700) >> 6;
     return (unsigned short) mode;
 }
 

@@ -10,6 +10,8 @@
  *
  * See the file "license.terms" for information on usage and redistribution of
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
+ *
+ * RCS: @(#) $Id$
  */
 
 #include "default.h"
@@ -211,7 +213,7 @@ enum state {
     STATE_DISABLED, STATE_NORMAL
 };
 
-static const char *const stateStrings[] = {
+static char *stateStrings[] = {
     "disabled", "normal", NULL
 };
 
@@ -219,7 +221,7 @@ enum activeStyle {
     ACTIVE_STYLE_DOTBOX, ACTIVE_STYLE_NONE, ACTIVE_STYLE_UNDERLINE
 };
 
-static const char *const activeStyleStrings[] = {
+static char *activeStyleStrings[] = {
     "dotbox", "none", "underline", NULL
 };
 

@@ -1,4 +1,6 @@
 #
+# $Id$
+#
 # [7Jun2005] TO CHECK: [$tv see {}] -- shouldn't work (at least, shouldn't do
 # what it currently does)
 #
@@ -569,7 +571,7 @@ test treeview-identify-8 "identify element" -body {
 } -match glob -result [list \
 	branch $disclosure branch2 $disclosure branch3 $disclosure]
 
-# See #2381555
+# See #2381555 
 test treeview-identify-9 "identify works when horizontally scrolled" -setup {
     .tv configure -show {tree headings}
     foreach column {#0 A B C} {
@@ -615,25 +617,5 @@ test treeview-3006842 "Null bindings" -setup {
 } -result {} -cleanup {
     destroy .tv
 }
-
-test treeview-3085489-1 "tag add, no -tags" -setup {
-    ttk::treeview .tv
-} -body {
-    set item [.tv insert {} end]
-    .tv tag add foo $item
-    .tv item $item -tags
-} -cleanup {
-    destroy .tv
-} -result [list foo]
-
-test treeview-3085489-2 "tag remove, no -tags" -setup {
-    ttk::treeview .tv
-} -body {
-    set item [.tv insert {} end]
-    .tv tag remove foo $item
-    .tv item $item -tags
-} -cleanup {
-    destroy .tv
-} -result [list]
 
 tcltest::cleanupTests

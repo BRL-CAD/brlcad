@@ -9,6 +9,8 @@
  *
  * See the file "license.terms" for information on usage and redistribution of
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
+ *
+ * RCS: @(#) $Id$
  */
 
 #include "tkInt.h"
@@ -996,11 +998,12 @@ SendEventProc(
     Tcl_Event *eventPtr,
     int flags)
 {
+    int result = TCL_OK;
     SendEvent *evPtr = (SendEvent *)eventPtr;
 
     TRACE("SendEventProc\n");
 
-    Tcl_EvalObjEx(evPtr->interp, evPtr->cmdPtr,
+    result = Tcl_EvalObjEx(evPtr->interp, evPtr->cmdPtr,
 	    TCL_EVAL_DIRECT | TCL_EVAL_GLOBAL);
 
     Tcl_DecrRefCount(evPtr->cmdPtr);

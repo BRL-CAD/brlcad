@@ -22,3 +22,7 @@ int mp_unsigned_bin_size (mp_int * a)
   return (size / 8 + ((size & 7) != 0 ? 1 : 0));
 }
 #endif
+
+/* $Source$ */
+/* $Revision$ */
+/* $Date$ */

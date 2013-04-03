@@ -1,6 +1,6 @@
 #!/bin/sh
 # the next line restarts using wish \
-exec wish "$0" ${1+"$@"}
+exec wish "$0" "$@"
 
 # square --
 # This script generates a demo application containing only a "square"
@@ -10,6 +10,8 @@ exec wish "$0" ${1+"$@"}
 # 
 # Button-1 press/drag:		moves square to mouse
 # "a":				toggle size animation on/off
+#
+# RCS: @(#) $Id$
 
 package require Tk		;# We use Tk generally, and...
 package require Tktest		;# ... we use the square widget too.

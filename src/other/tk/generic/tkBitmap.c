@@ -10,6 +10,8 @@
  *
  * See the file "license.terms" for information on usage and redistribution of
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
+ *
+ * RCS: @(#) $Id$
  */
 
 #include "tkInt.h"
@@ -23,7 +25,7 @@
  * that warning message.
  */
 
-#if defined(_MSC_VER)
+#if (defined(__WIN32__) || defined(_WIN32)) && !defined(__GNUC__)
 #pragma warning (disable : 4305)
 #endif
 
@@ -38,7 +40,7 @@
 #include "question.xbm"
 #include "warning.xbm"
 
-#if defined(_MSC_VER)
+#if (defined(__WIN32__) || defined(_WIN32)) && !defined(__GNUC__)
 #pragma warning (default : 4305)
 #endif
 

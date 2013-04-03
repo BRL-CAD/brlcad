@@ -8,6 +8,8 @@
  *
  * See the file "license.terms" for information on usage and redistribution of
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
+ *
+ * RCS: @(#) $Id$
  */
 
 #include "tkWinInt.h"
@@ -328,7 +330,7 @@ KeycodeToKeysym(
      */
 
   skipToAscii:
-    if (keycode > MAX_KEYCODE) {
+    if (keycode < 0 || keycode > MAX_KEYCODE) {
 	return NoSymbol;
     }
     switch (keycode) {
@@ -692,13 +694,12 @@ XGetModifierMapping(
  *----------------------------------------------------------------------
  */
 
-int
+void
 XFreeModifiermap(
     XModifierKeymap *modmap)
 {
     ckfree((char *) modmap->modifiermap);
     ckfree((char *) modmap);
-    return Success;
 }
 
 /*

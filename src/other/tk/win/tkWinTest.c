@@ -10,6 +10,8 @@
  *
  * See the file "license.terms" for information on usage and redistribution of
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
+ *
+ * RCS: @(#) $Id$
  */
 
 #include "tkWinInt.h"
@@ -273,7 +275,7 @@ TestwineventCmd(
 	return TCL_ERROR;
     }
 
-    hwnd = (HWND) INT2PTR(strtol(argv[1], &rest, 0));
+    hwnd = (HWND) strtol(argv[1], &rest, 0);
     if (rest == argv[1]) {
 	hwnd = FindWindow(NULL, argv[1]);
 	if (hwnd == NULL) {
@@ -303,6 +305,9 @@ TestwineventCmd(
 	}
     }
     message = TkFindStateNum(NULL, NULL, messageMap, argv[3]);
+    if (message < 0) {
+	message = strtol(argv[3], NULL, 0);
+    }
     wParam = 0;
     lParam = 0;
 
@@ -390,7 +395,7 @@ TestfindwindowObjCmd(
 	AppendSystemError(interp, GetLastError());
 	r = TCL_ERROR;
     } else {
-        Tcl_SetObjResult(interp, Tcl_NewLongObj(PTR2INT(hwnd)));
+        Tcl_SetObjResult(interp, Tcl_NewLongObj((long)hwnd));
     }
     return r;
     
@@ -400,7 +405,7 @@ static BOOL CALLBACK
 EnumChildrenProc(HWND hwnd, LPARAM lParam)
 {
     Tcl_Obj *listObj = (Tcl_Obj *)lParam;
-    Tcl_ListObjAppendElement(NULL, listObj, Tcl_NewLongObj(PTR2INT(hwnd)));
+    Tcl_ListObjAppendElement(NULL, listObj, Tcl_NewLongObj((long)hwnd));
     return TRUE;
 }
 
@@ -426,10 +431,10 @@ TestgetwindowinfoObjCmd(
 	return TCL_ERROR;
     
     if (tkWinProcs->useWide) {
-	cch = GetClassNameW(INT2PTR(hwnd), (LPWSTR)buf, sizeof(buf)/sizeof(WCHAR));
+	cch = GetClassNameW((HWND)hwnd, (LPWSTR)buf, sizeof(buf)/sizeof(WCHAR));
 	classObj = Tcl_NewUnicodeObj((LPWSTR)buf, cch);
     } else {
-	cch = GetClassNameA(INT2PTR(hwnd), (LPSTR)buf, sizeof(buf));
+	cch = GetClassNameA((HWND)hwnd, (LPSTR)buf, sizeof(buf));
 	classObj = Tcl_NewStringObj((LPSTR)buf, cch);
     }
     if (cch == 0) {
@@ -444,9 +449,9 @@ TestgetwindowinfoObjCmd(
 
     Tcl_ListObjAppendElement(interp, resObj, Tcl_NewStringObj("id", -1));
     Tcl_ListObjAppendElement(interp, resObj, 
-	Tcl_NewLongObj(GetWindowLong(INT2PTR(hwnd), GWL_ID)));
+	Tcl_NewLongObj(GetWindowLong((HWND)hwnd, GWL_ID)));
 
-    cch = tkWinProcs->getWindowText(INT2PTR(hwnd), (LPTSTR)buf, cchBuf);
+    cch = tkWinProcs->getWindowText((HWND)hwnd, (LPTSTR)buf, cchBuf);
     if (tkWinProcs->useWide) {
 	textObj = Tcl_NewUnicodeObj((LPCWSTR)buf, cch);
     } else {
@@ -457,10 +462,10 @@ TestgetwindowinfoObjCmd(
     Tcl_ListObjAppendElement(interp, resObj, textObj);
     Tcl_ListObjAppendElement(interp, resObj, Tcl_NewStringObj("parent", -1));
     Tcl_ListObjAppendElement(interp, resObj, 
-	Tcl_NewLongObj(PTR2INT(GetParent(INT2PTR(hwnd)))));
+	Tcl_NewLongObj((long)GetParent((HWND)hwnd)));
 
     childrenObj = Tcl_NewListObj(0, NULL);
-    EnumChildWindows(INT2PTR(hwnd), EnumChildrenProc, (LPARAM)childrenObj);
+    EnumChildWindows((HWND)hwnd, EnumChildrenProc, (LPARAM)childrenObj);
     Tcl_ListObjAppendElement(interp, resObj, Tcl_NewStringObj("children", -1));
     Tcl_ListObjAppendElement(interp, resObj, childrenObj);
 

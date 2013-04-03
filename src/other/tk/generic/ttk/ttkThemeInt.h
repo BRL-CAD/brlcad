@@ -1,4 +1,6 @@
 /*
+ * $Id$
+ *
  * Theme engine: private definitions.
  *
  * Copyright (c) 2004 Joe English.  Freely redistributable.

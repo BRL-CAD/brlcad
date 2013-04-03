@@ -9,6 +9,8 @@
  *
  * See the file "license.terms" for information on usage and redistribution of
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
+ *
+ * RCS: @(#) $Id$
  */
 
 #include "tclInt.h"
@@ -748,25 +750,21 @@ CheckForStdChannelsBeingClosed(
     ChannelState *statePtr = ((Channel *) chan)->state;
     ThreadSpecificData *tsdPtr = TCL_TSD_INIT(&dataKey);
 
-    if (tsdPtr->stdinInitialized
-	    && tsdPtr->stdinChannel != NULL
-	    && statePtr == ((Channel *)tsdPtr->stdinChannel)->state) {
+    if ((chan == tsdPtr->stdinChannel) && (tsdPtr->stdinInitialized)) {
 	if (statePtr->refCount < 2) {
 	    statePtr->refCount = 0;
 	    tsdPtr->stdinChannel = NULL;
 	    return;
 	}
-    } else if (tsdPtr->stdoutInitialized
-	    && tsdPtr->stdoutChannel != NULL
-	    && statePtr == ((Channel *)tsdPtr->stdoutChannel)->state) {
+    } else if ((chan == tsdPtr->stdoutChannel)
+	    && (tsdPtr->stdoutInitialized)) {
 	if (statePtr->refCount < 2) {
 	    statePtr->refCount = 0;
 	    tsdPtr->stdoutChannel = NULL;
 	    return;
 	}
-    } else if (tsdPtr->stderrInitialized
-	    && tsdPtr->stderrChannel != NULL
-	    && statePtr == ((Channel *)tsdPtr->stderrChannel)->state) {
+    } else if ((chan == tsdPtr->stderrChannel)
+	    && (tsdPtr->stderrInitialized)) {
 	if (statePtr->refCount < 2) {
 	    statePtr->refCount = 0;
 	    tsdPtr->stderrChannel = NULL;
@@ -8351,7 +8349,6 @@ TclChannelEventScriptInvoker(
      */
 
     Tcl_Preserve(interp);
-    Tcl_Preserve(chanPtr);
     result = Tcl_EvalObjEx(interp, esPtr->scriptPtr, TCL_EVAL_GLOBAL);
 
     /*
@@ -8368,7 +8365,6 @@ TclChannelEventScriptInvoker(
 	}
 	TclBackgroundException(interp, result);
     }
-    Tcl_Release(chanPtr);
     Tcl_Release(interp);
 }
 
@@ -8407,7 +8403,7 @@ Tcl_FileEventObjCmd(
     int modeIndex;		/* Index of mode argument. */
     int mask;
     static const char *modeOptions[] = {"readable", "writable", NULL};
-    static CONST int maskArray[] = {TCL_READABLE, TCL_WRITABLE};
+    static int maskArray[] = {TCL_READABLE, TCL_WRITABLE};
 
     if ((objc != 3) && (objc != 4)) {
 	Tcl_WrongNumArgs(interp, 1, objv, "channelId event ?script?");
@@ -8466,33 +8462,6 @@ Tcl_FileEventObjCmd(
     CreateScriptRecord(interp, chanPtr, mask, objv[3]);
 
     return TCL_OK;
-}
-
-/*
- *----------------------------------------------------------------------
- *
- * ZeroTransferTimerProc --
- *
- *	Timer handler scheduled by TclCopyChannel so that -command is
- *	called asynchronously even when -size is 0.
- *
- * Results:
- *	None.
- *
- * Side effects:
- *	Calls CopyData for -command invocation.
- *
- *----------------------------------------------------------------------
- */
-
-static void
-ZeroTransferTimerProc(
-    ClientData clientData)
-{
-    /* calling CopyData with mask==0 still implies immediate invocation of the
-     *  -command callback, and completion of the fcopy.
-     */
-    CopyData(clientData, 0);
 }
 
 /*
@@ -8602,16 +8571,6 @@ TclCopyChannel(
 
     inStatePtr->csPtrR  = csPtr;
     outStatePtr->csPtrW = csPtr;
-
-    /*
-     * Special handling of -size 0 async transfers, so that the -command is
-     * still called asynchronously.
-     */
-
-    if ((nonBlocking == CHANNEL_NONBLOCKING) && (toRead == 0)) {
-        Tcl_CreateTimerHandler(0, ZeroTransferTimerProc, csPtr);
-        return 0;
-    }
 
     /*
      * Start copying data between the channels.
@@ -10747,9 +10706,6 @@ SetChannelFromAny(
     ChannelState *statePtr;
     Interp       *interpPtr;
 
-    if (interp == NULL) {
-	return TCL_ERROR;
-    }
     if (objPtr->typePtr == &tclChannelType) {
 	/*
 	 * The channel is valid until any call to DetachChannel occurs.

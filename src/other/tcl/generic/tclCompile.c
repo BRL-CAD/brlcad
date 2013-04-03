@@ -10,6 +10,8 @@
  *
  * See the file "license.terms" for information on usage and redistribution of
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
+ *
+ * RCS: @(#) $Id$
  */
 
 #include "tclInt.h"
@@ -397,7 +399,7 @@ InstructionDesc tclInstructionTable[] = {
 	 * stknext */
     {"existStk",	 1,    0,         0,	{OPERAND_NONE}},
 	/* Test if general variable exists; unparsed variable name is stktop*/
-    {0, 0, 0, 0, {0}}
+    {0}
 };
 
 /*
@@ -454,13 +456,12 @@ Tcl_ObjType tclByteCodeType = {
  *	generate an byte code internal form for the Tcl object "objPtr" by
  *	compiling its string representation. This function also takes a hook
  *	procedure that will be invoked to perform any needed post processing
- *	on the compilation results before generating byte codes. interp is
- *	compilation context and may not be NULL.
+ *	on the compilation results before generating byte codes.
  *
  * Results:
  *	The return value is a standard Tcl object result. If an error occurs
  *	during compilation, an error message is left in the interpreter's
- *	result.
+ *	result unless "interp" is NULL.
  *
  * Side effects:
  *	Frees the old internal representation. If no error occurs, then the
@@ -617,9 +618,6 @@ SetByteCodeFromAny(
 				 * compiled. Must not be NULL. */
     Tcl_Obj *objPtr)		/* The object to make a ByteCode object. */
 {
-    if (interp == NULL) {
-	return TCL_ERROR;
-    }
     (void) TclSetByteCodeFromAny(interp, objPtr, NULL, (ClientData) NULL);
     return TCL_OK;
 }
@@ -1140,8 +1138,7 @@ TclWordKnownAtCompileTime(
 	case TCL_TOKEN_BS:
 	    if (tempPtr != NULL) {
 		char utfBuf[TCL_UTF_MAX];
-		int length = TclParseBackslash(tokenPtr->start,
-			tokenPtr->size, NULL, utfBuf);
+		int length = Tcl_UtfBackslash(tokenPtr->start, NULL, utfBuf);
 		Tcl_AppendToObj(tempPtr, utfBuf, length);
 	    }
 	    break;
@@ -1672,7 +1669,7 @@ TclCompileTokens(
      * any. The table is extended if needed.
      *
      * Note: Different to the equivalent code in function
-     * 'TclSubstTokens()' (see file "tclParse.c") we do not seem to need
+     * 'EvalTokensStandard()' (see file "tclBasic.c") we do not seem to need
      * the 'adjust' variable. We also do not seem to need code which merges
      * continuation line information of multiple words which concat'd at
      * runtime. Either that or I have not managed to find a test case for
@@ -1705,8 +1702,7 @@ TclCompileTokens(
 	    break;
 
 	case TCL_TOKEN_BS:
-	    length = TclParseBackslash(tokenPtr->start, tokenPtr->size,
-		    NULL, buffer);
+	    length = Tcl_UtfBackslash(tokenPtr->start, NULL, buffer);
 	    Tcl_DStringAppend(&textBuffer, buffer, length);
 
 	    /*
@@ -3020,70 +3016,6 @@ TclFixupForwardJump(
 		    rangePtr->type);
 	}
     }
-
-    /*
-     * TIP #280: Adjust the mapping from PC values to the per-command
-     * information about arguments and their line numbers.
-     *
-     * Note: We cannot simply remove an out-of-date entry and then reinsert
-     * with the proper PC, because then we might overwrite another entry which
-     * was at that location. Therefore we pull (copy + delete) all effected
-     * entries (beyond the fixed PC) into an array, update them there, and at
-     * last reinsert them all.
-     */
-
-    {
-	ExtCmdLoc* eclPtr = envPtr->extCmdMapPtr;
-
-	/* A helper structure */
-
-	typedef struct {
-	    int pc;
-	    int cmd;
-	} MAP;
-
-	/*
-	 * And the helper array. At most the whole hashtable is placed into
-	 * this.
-	 */
-
-	MAP *map = (MAP*) ckalloc (sizeof(MAP) * eclPtr->litInfo.numEntries);
-
-	Tcl_HashSearch hSearch;
-	Tcl_HashEntry* hPtr;
-	int n, k, isnew;
-
-	/*
-	 * Phase I: Locate the affected entries, and save them in adjusted
-	 * form to the array. This removes them from the hash.
-	 */
-
-	for (n = 0, hPtr = Tcl_FirstHashEntry(&eclPtr->litInfo, &hSearch);
-	     hPtr != NULL;
-	     hPtr = Tcl_NextHashEntry(&hSearch)) {
-
-	    map [n].cmd = PTR2INT(Tcl_GetHashValue(hPtr));
-	    map [n].pc  = PTR2INT(Tcl_GetHashKey (&eclPtr->litInfo,hPtr));
-
-	    if (map[n].pc >= (jumpFixupPtr->codeOffset + 2)) {
-		Tcl_DeleteHashEntry(hPtr);
-		map [n].pc += 3;
-		n++;
-	    }
-	}
-
-	/*
-	 * Phase II: Re-insert the modified entries into the hash.
-	 */
-
-	for (k=0;k<n;k++) {
-	    hPtr = Tcl_CreateHashEntry(&eclPtr->litInfo, INT2PTR(map[k].pc), &isnew);
-	    Tcl_SetHashValue(hPtr, INT2PTR(map[k].cmd));
-	}
-
-	ckfree ((char *) map);
-    }
-
     return 1;			/* the jump was grown */
 }
 
@@ -4091,13 +4023,7 @@ RecordByteCodeStats(
 				 * to add to accumulated statistics. */
 {
     Interp *iPtr = (Interp *) *codePtr->interpHandle;
-    register ByteCodeStats *statsPtr;
-
-    if (iPtr == NULL) {
-	/* Avoid segfaulting in case we're called in a deleted interp */
-	return;
-    }
-    statsPtr = &(iPtr->stats);
+    register ByteCodeStats *statsPtr = &(iPtr->stats);
 
     statsPtr->numCompilations++;
     statsPtr->totalSrcBytes += (double) codePtr->numSrcBytes;

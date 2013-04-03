@@ -20,6 +20,8 @@ Linux, BSDI, and SCO UNIX. To compile for a PC running Windows, see the README
 file in the directory ../win. To compile for MacOSX, see the README file in
 the directory ../macosx.
 
+RCS: @(#) $Id$
+
 How To Compile And Install Tk:
 ------------------------------
 

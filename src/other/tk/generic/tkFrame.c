@@ -10,6 +10,8 @@
  *
  * See the file "license.terms" for information on usage and redistribution of
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
+ *
+ * RCS: @(#) $Id$
  */
 
 #include "default.h"
@@ -162,7 +164,7 @@ enum labelanchor {
     LABELANCHOR_W, LABELANCHOR_WN, LABELANCHOR_WS
 };
 
-static CONST char *labelAnchorStrings[] = {
+static char *labelAnchorStrings[] = {
     "e", "en", "es", "n", "ne", "nw", "s", "se", "sw", "w", "wn", "ws",
     NULL
 };
@@ -181,10 +183,6 @@ static const Tk_OptionSpec commonOptSpec[] = {
     {TK_OPTION_STRING, "-colormap", "colormap", "Colormap",
 	DEF_FRAME_COLORMAP, -1, Tk_Offset(Frame, colormapName),
 	TK_OPTION_NULL_OK, 0, 0},
-    /*
-     * Having -container is useless in a labelframe since a container has
-     * no border. It should be deprecated.
-     */
     {TK_OPTION_BOOLEAN, "-container", "container", "Container",
 	DEF_FRAME_CONTAINER, -1, Tk_Offset(Frame, isContainer), 0, 0, 0},
     {TK_OPTION_CURSOR, "-cursor", "cursor", "Cursor",
@@ -285,7 +283,7 @@ static const Tk_OptionSpec labelframeOptSpec[] = {
  * Class names for widgets, indexed by FrameType.
  */
 
-static CONST char *classNames[] = {"Frame", "Toplevel", "Labelframe"};
+static char *classNames[] = {"Frame", "Toplevel", "Labelframe"};
 
 /*
  * The following table maps from FrameType to the option template for that
@@ -295,7 +293,7 @@ static CONST char *classNames[] = {"Frame", "Toplevel", "Labelframe"};
 static const Tk_OptionSpec * const optionSpecs[] = {
     frameOptSpec,
     toplevelOptSpec,
-    labelframeOptSpec
+    labelframeOptSpec,
 };
 
 /*

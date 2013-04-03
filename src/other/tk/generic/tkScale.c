@@ -15,6 +15,8 @@
  *
  * See the file "license.terms" for information on usage and redistribution of
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
+ *
+ * RCS: @(#) $Id$
  */
 
 #include "default.h"
@@ -26,7 +28,7 @@
  * used together with the "enum orient" declaration in tkScale.h.
  */
 
-static const char *const orientStrings[] = {
+static char *orientStrings[] = {
     "horizontal", "vertical", NULL
 };
 
@@ -35,7 +37,7 @@ static const char *const orientStrings[] = {
  * used together with the "enum state" declaration in tkScale.h.
  */
 
-static const char *const stateStrings[] = {
+static char *stateStrings[] = {
     "active", "disabled", "normal", NULL
 };
 
@@ -140,7 +142,7 @@ static const Tk_OptionSpec optionSpecs[] = {
  * scale widget command.
  */
 
-static const char *commandNames[] = {
+static CONST char *commandNames[] = {
     "cget", "configure", "coords", "get", "identify", "set", NULL
 };
 
@@ -156,17 +158,17 @@ enum command {
 static void		ComputeFormat(TkScale *scalePtr);
 static void		ComputeScaleGeometry(TkScale *scalePtr);
 static int		ConfigureScale(Tcl_Interp *interp, TkScale *scalePtr,
-			    int objc, Tcl_Obj *const objv[]);
+			    int objc, Tcl_Obj *CONST objv[]);
 static void		DestroyScale(char *memPtr);
 static void		ScaleCmdDeletedProc(ClientData clientData);
 static void		ScaleEventProc(ClientData clientData,
 			    XEvent *eventPtr);
 static char *		ScaleVarProc(ClientData clientData,
-			    Tcl_Interp *interp, const char *name1,
-			    const char *name2, int flags);
+			    Tcl_Interp *interp, CONST char *name1,
+			    CONST char *name2, int flags);
 static int		ScaleWidgetObjCmd(ClientData clientData,
 			    Tcl_Interp *interp, int objc,
-			    Tcl_Obj *const objv[]);
+			    Tcl_Obj *CONST objv[]);
 static void		ScaleWorldChanged(ClientData instanceData);
 static void		ScaleSetVariable(TkScale *scalePtr);
 
@@ -202,7 +204,7 @@ Tk_ScaleObjCmd(
     ClientData clientData,	/* NULL. */
     Tcl_Interp *interp,		/* Current interpreter. */
     int objc,			/* Number of arguments. */
-    Tcl_Obj *const objv[])	/* Argument values. */
+    Tcl_Obj *CONST objv[])	/* Argument values. */
 {
     register TkScale *scalePtr;
     Tk_OptionTable optionTable;
@@ -328,7 +330,7 @@ ScaleWidgetObjCmd(
     ClientData clientData,	/* Information about scale widget. */
     Tcl_Interp *interp,		/* Current interpreter. */
     int objc,			/* Number of arguments. */
-    Tcl_Obj *const objv[])	/* Argument strings. */
+    Tcl_Obj *CONST objv[])	/* Argument strings. */
 {
     TkScale *scalePtr = (TkScale *) clientData;
     Tcl_Obj *objPtr;
@@ -555,7 +557,7 @@ ConfigureScale(
     register TkScale *scalePtr,	/* Information about widget; may or may not
 				 * already have values for some fields. */
     int objc,			/* Number of valid entries in objv. */
-    Tcl_Obj *const objv[])	/* Argument values. */
+    Tcl_Obj *CONST objv[])	/* Argument values. */
 {
     Tk_SavedOptions savedOptions;
     Tcl_Obj *errorResult = NULL;
@@ -1171,8 +1173,8 @@ static char *
 ScaleVarProc(
     ClientData clientData,	/* Information about button. */
     Tcl_Interp *interp,		/* Interpreter containing variable. */
-    const char *name1,		/* Name of variable. */
-    const char *name2,		/* Second part of variable name. */
+    CONST char *name1,		/* Name of variable. */
+    CONST char *name2,		/* Second part of variable name. */
     int flags)			/* Information about what happened. */
 {
     register TkScale *scalePtr = (TkScale *) clientData;

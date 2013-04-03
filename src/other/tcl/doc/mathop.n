@@ -4,6 +4,8 @@
 .\" See the file "license.terms" for information on usage and redistribution
 .\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 .\"
+.\" RCS: @(#) $Id$
+.\"
 .so man.macros
 .TH mathop n 8.5 Tcl "Tcl Mathematical Operator Commands"
 .BS
@@ -126,19 +128,13 @@ will be an integer.
 .TP
 \fB%\fR \fInumber number\fR
 .
-Returns the integral modulus (i.e., remainder) of the first argument
-with respect to the second.
-Each \fInumber\fR must have an integral value.
-Also, the sign of the result will be the same as the sign of the second
-\fInumber\fR, which must not be zero.
+Returns the integral modulus of the first argument with respect to the second.
+Each \fInumber\fR must have an integral value. Note that Tcl defines this
+operation exactly even for negative numbers, so that the following equality
+holds true:
 .RS
-.PP
-Note that Tcl defines this operation exactly even for negative numbers, so
-that the following command returns a true value (omitting the namespace for
-clarity):
-.PP
 .CS
-\fB==\fR [\fB*\fR [\fB/\fI x y\fR] \fIy\fR] [\fB-\fI x\fR [\fB%\fI x y\fR]]
+(\fIx \fB/ \fIy\fR) \fB* \fIy \fB== \fIx \fB-\fR (\fIx \fB% \fIy\fR)
 .CE
 .RE
 .TP

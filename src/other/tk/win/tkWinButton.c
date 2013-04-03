@@ -8,6 +8,8 @@
  *
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
+ *
+ * RCS: @(#) $Id$
  */
 
 #define OEMRESOURCE
@@ -90,7 +92,6 @@ Tk_ClassProcs tkpButtonProcs = {
     sizeof(Tk_ClassProcs),	/* size */
     TkButtonWorldChanged,	/* worldChangedProc */
     CreateProc,			/* createProc */
-    NULL					/* modalProc */
 };
 
 
@@ -181,7 +182,10 @@ InitBoxes(void)
  */
 
 void
-TkpButtonSetDefaults()
+TkpButtonSetDefaults(
+    Tk_OptionSpec *specPtr)	/* Points to an array of option specs,
+				 * terminated by one with type
+				 * TK_OPTION_END. */
 {
     int width = GetSystemMetrics(SM_CXEDGE);
     if (width > 0) {

@@ -2,6 +2,8 @@
 #
 # This demonstration script shows how you can produce output (in label
 # widgets) using many different alphabets.
+#
+# RCS: @(#) $Id$
 
 if {![info exists widgetDemo]} {
     error "This script should be run from the \"widget\" demo."

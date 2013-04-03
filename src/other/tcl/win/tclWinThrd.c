@@ -8,6 +8,8 @@
  *
  * See the file "license.terms" for information on usage and redistribution of
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
+ *
+ * RCS: @(#) $Id$
  */
 
 #include "tclWinInt.h"
@@ -260,7 +262,7 @@ TclpThreadExit(
 Tcl_ThreadId
 Tcl_GetCurrentThread(void)
 {
-    return (Tcl_ThreadId) INT2PTR(GetCurrentThreadId());
+    return (Tcl_ThreadId) GetCurrentThreadId();
 }
 
 /*

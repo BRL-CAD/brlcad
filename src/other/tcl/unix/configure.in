@@ -2,9 +2,11 @@
 dnl	This file is an input file used by the GNU "autoconf" program to
 dnl	generate the file "configure", which is run during Tcl installation
 dnl	to configure the system for the local environment.
+#
+# RCS: @(#) $Id$
 
 AC_INIT([tcl],[8.5])
-AC_PREREQ(2.59)
+AC_PREREQ(2.52)
 
 dnl This is only used when included from macosx/configure.ac
 m4_ifdef([SC_USE_CONFIG_HEADERS], [
@@ -25,7 +27,7 @@ m4_ifdef([SC_USE_CONFIG_HEADERS], [
 TCL_VERSION=8.5
 TCL_MAJOR_VERSION=8
 TCL_MINOR_VERSION=5
-TCL_PATCH_LEVEL=".13"
+TCL_PATCH_LEVEL=".9"
 VERSION=${TCL_VERSION}
 
 #------------------------------------------------------------------------
@@ -247,9 +249,7 @@ SC_TIME_HANDLER
 #	lack blkcnt_t.
 #--------------------------------------------------------------------
 
-if test "$ac_cv_cygwin" != "yes"; then
 AC_CHECK_MEMBERS([struct stat.st_blocks, struct stat.st_blksize])
-fi
 AC_CHECK_TYPES([blkcnt_t])
 AC_CHECK_FUNC(fstatfs, , [AC_DEFINE(NO_FSTATFS, 1, [Do we have fstatfs()?])])
 
@@ -383,7 +383,7 @@ AC_CHECK_FUNC(opendir, , [AC_DEFINE(USE_DIRENT2_H, 1, [May we include <dirent2.h
 #--------------------------------------------------------------------
 
 AC_CACHE_CHECK([union wait], tcl_cv_union_wait, [
-    AC_TRY_LINK([#include <sys/types.h>
+    AC_TRY_LINK([#include <sys/types.h> 
 #include <sys/wait.h>], [
 union wait x;
 WIFEXITED(x);		/* Generates compiler error if WIFEXITED
@@ -415,13 +415,16 @@ fi
 #	The code below deals with several issues related to gettimeofday:
 #	1. Some systems don't provide a gettimeofday function at all
 #	   (set NO_GETTOD if this is the case).
-#	2. See if gettimeofday is declared in the <sys/time.h> header file.
+#	2. SGI systems don't use the BSD form of the gettimeofday function,
+#	   but they have a BSDgettimeofday function that can be used instead.
+#	3. See if gettimeofday is declared in the <sys/time.h> header file.
 #	   if not, set the GETTOD_NOT_DECLARED flag so that tclPort.h can
 #	   declare it.
 #--------------------------------------------------------------------
 
-AC_CHECK_FUNC(gettimeofday,[],[
-    AC_DEFINE(NO_GETTOD, 1, [Do we have gettimeofday()?])
+AC_CHECK_FUNC(BSDgettimeofday,
+    [AC_DEFINE(HAVE_BSDGETTIMEOFDAY, 1, [Do we have BSDgettimeofday()?])], [
+    AC_CHECK_FUNC(gettimeofday, , [AC_DEFINE(NO_GETTOD, 1, [Do we have gettimeofday()?])])
 ])
 AC_CACHE_CHECK([for gettimeofday declaration], tcl_cv_grep_gettimeofday, [
     AC_EGREP_HEADER(gettimeofday, sys/time.h,
@@ -589,7 +592,7 @@ fi
 
 #--------------------------------------------------------------------
 #	The statements below check for systems where POSIX-style
-#	non-blocking I/O (O_NONBLOCK) doesn't work or is unimplemented.
+#	non-blocking I/O (O_NONBLOCK) doesn't work or is unimplemented. 
 #	On these systems (mostly older ones), use the old BSD-style
 #	FIONBIO approach instead.
 #--------------------------------------------------------------------
@@ -704,15 +707,11 @@ AC_CACHE_CHECK([if the C stack grows upwards in memory], tcl_cv_stack_grows_up, 
     AC_TRY_RUN([
 	int StackGrowsUp(int *parent) {
 	    int here;
-	    volatile int result;
-	    if (parent)
-		result = (&here < parent);
-	    else
-		result = StackGrowsUp(&here);
-	    return result;
+	    return (&here < parent);
 	}
 	int main (int argc, char *argv[]) {
-	    return StackGrowsUp(0);
+	    int foo;
+	    return StackGrowsUp(&foo);
 	}
     ], tcl_cv_stack_grows_up=yes, tcl_cv_stack_grows_up=no,
     tcl_cv_stack_grows_up=unknown)])
@@ -720,24 +719,6 @@ if test $tcl_cv_stack_grows_up = unknown; then
     AC_DEFINE(TCL_CROSS_COMPILE, 1, [Are we cross-compiling?])
 elif test $tcl_cv_stack_grows_up = yes; then
     AC_DEFINE(TCL_STACK_GROWS_UP, 1, [The C stack grows upwards in memory.])
-fi
-
-#--------------------------------------------------------------------
-# The check below checks whether the cpuid instruction is usable.
-#--------------------------------------------------------------------
-
-AC_CACHE_CHECK([whether the cpuid instruction is usable], tcl_cv_cpuid, [
-    AC_TRY_LINK(, [
-	int index,regsPtr[4];
-    __asm__ __volatile__("mov %%ebx, %%edi     \n\t"
-                 "cpuid            \n\t"
-                 "mov %%ebx, %%esi   \n\t"
-                 "mov %%edi, %%ebx  \n\t"
-                 : "=a"(regsPtr[0]), "=S"(regsPtr[1]), "=c"(regsPtr[2]), "=d"(regsPtr[3])
-                 : "a"(index) : "edi");
-    ], tcl_cv_cpuid=yes, tcl_cv_cpuid=no)])
-if test $tcl_cv_cpuid = yes; then
-    AC_DEFINE(HAVE_CPUID, 1, [Is the cpuid instruction usable?])
 fi
 
 #--------------------------------------------------------------------
@@ -771,10 +752,12 @@ if test "`uname -s`" = "Darwin" ; then
     echo "$LDFLAGS " | grep -q -- '-prebind ' && TCL_SHLIB_LD_EXTRAS="${TCL_SHLIB_LD_EXTRAS}"' -seg1addr 0xa000000'
     TCL_SHLIB_LD_EXTRAS="${TCL_SHLIB_LD_EXTRAS}"' -sectcreate __TEXT __info_plist Tcl-Info.plist'
     EXTRA_TCLSH_LIBS='-sectcreate __TEXT __info_plist Tclsh-Info.plist'
-    EXTRA_APP_CC_SWITCHES='-mdynamic-no-pic'
     AC_CONFIG_FILES([Tcl-Info.plist:../macosx/Tcl-Info.plist.in Tclsh-Info.plist:../macosx/Tclsh-Info.plist.in])
     TCL_YEAR="`date +%Y`"
 fi
+
+EXTRA_INSTALL_BINARIES=":"
+EXTRA_BUILD_HTML=":"
 
 if test "$FRAMEWORK_BUILD" = "1" ; then
     AC_DEFINE(TCL_FRAMEWORK, 1, [Is Tcl built as a framework?])
@@ -802,12 +785,12 @@ if test "$FRAMEWORK_BUILD" = "1" ; then
     PRIVATE_INCLUDE_DIR="${libdir}/PrivateHeaders"
     HTML_DIR="${libdir}/Resources/Documentation/Reference/Tcl"
     EXTRA_INSTALL="install-private-headers html-tcl"
-    EXTRA_BUILD_HTML='@ln -fs contents.htm "$(HTML_INSTALL_DIR)"/TclTOC.html'
-    EXTRA_INSTALL_BINARIES='@echo "Installing Info.plist to $(LIB_INSTALL_DIR)/Resources/" && $(INSTALL_DATA_DIR) "$(LIB_INSTALL_DIR)/Resources" && $(INSTALL_DATA) Tcl-Info.plist "$(LIB_INSTALL_DIR)/Resources/Info.plist"'
-    EXTRA_INSTALL_BINARIES="$EXTRA_INSTALL_BINARIES"' && echo "Installing license.terms to $(LIB_INSTALL_DIR)/Resources/" && $(INSTALL_DATA) "$(TOP_DIR)/license.terms" "$(LIB_INSTALL_DIR)/Resources"'
+    EXTRA_BUILD_HTML='@ln -fs contents.htm "$(HTML_INSTALL_DIR)"/TclTOC.html' 
+    EXTRA_INSTALL_BINARIES='@echo "Installing Info.plist to $(LIB_INSTALL_DIR)/Resources" && mkdir -p "$(LIB_INSTALL_DIR)/Resources" && $(INSTALL_DATA) Tcl-Info.plist "$(LIB_INSTALL_DIR)/Resources/Info.plist"'
+    EXTRA_INSTALL_BINARIES="$EXTRA_INSTALL_BINARIES"' && echo "Installing license.terms to $(LIB_INSTALL_DIR)/Resources" && $(INSTALL_DATA) "$(TOP_DIR)/license.terms" "$(LIB_INSTALL_DIR)/Resources"'
     EXTRA_INSTALL_BINARIES="$EXTRA_INSTALL_BINARIES"' && echo "Finalizing Tcl.framework" && rm -f "$(LIB_INSTALL_DIR)/../Current" && ln -s "$(VERSION)" "$(LIB_INSTALL_DIR)/../Current" && for f in "$(LIB_FILE)" tclConfig.sh Resources Headers PrivateHeaders; do rm -f "$(LIB_INSTALL_DIR)/../../$$f" && ln -s "Versions/Current/$$f" "$(LIB_INSTALL_DIR)/../.."; done && f="$(STUB_LIB_FILE)" && rm -f "$(LIB_INSTALL_DIR)/../../$$f" && ln -s "Versions/$(VERSION)/$$f" "$(LIB_INSTALL_DIR)/../.."'
-    # Don't use AC_DEFINE for the following as the framework version define
-    # needs to go into the Makefile even when using autoheader, so that we
+    # Don't use AC_DEFINE for the following as the framework version define 
+    # needs to go into the Makefile even when using autoheader, so that we  
     # can pick up a potential make override of VERSION. Also, don't put this
     # into CFLAGS as it should not go into tclConfig.sh
     EXTRA_CC_SWITCHES='-DTCL_FRAMEWORK_VERSION=\"$(VERSION)\"'

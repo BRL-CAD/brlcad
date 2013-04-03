@@ -10,6 +10,8 @@
 #
 # See the file "license.terms" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
+#
+# RCS: @(#) $Id$
 
 package require tcltest 2
 namespace import -force ::tcltest::*
@@ -126,36 +128,6 @@ test compile-3.5 {TclCompileCatchCmd: recover from error, [Bug 705406]} {
     }
     list [catch foo msg] $msg
 } {0 1}
-test compile-3.6 {TclCompileCatchCmd: error in storing result [Bug 3098302]} {*}{
-     -setup {
-	 namespace eval catchtest {
-	     variable result1 {}
-	 }
-	 trace add variable catchtest::result1 write catchtest::failtrace
-	 proc catchtest::failtrace {n1 n2 op} {
-	     return -code error "trace on $n1 fails by request"
-	 }
-     }
-    -body {
-	proc catchtest::x {} {
-	    variable result1
-	    set count 0
-	    for {set i 0} {$i < 10} {incr i} {
-		set status2 [catch {
-		    set status1 [catch {
-			return -code error -level 0 "original failure"
-		    } result1 options1]
-		} result2 options2]
-		incr count
-	    }
-	    list $count $result2
-	}
-	catchtest::x
-    }
-    -result {10 {can't set "result1": trace on result1 fails by request}}
-    -cleanup {namespace delete catchtest}
-}
-
 
 test compile-4.1 {TclCompileForCmd: command substituted test expression} {
     set i 0

@@ -37,3 +37,7 @@ mp_cmp (mp_int * a, mp_int * b)
   }
 }
 #endif
+
+/* $Source$ */
+/* $Revision$ */
+/* $Date$ */

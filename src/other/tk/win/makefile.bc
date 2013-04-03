@@ -12,6 +12,8 @@
 #
 # Copyright (c) 1995-1997 Sun Microsystems, Inc.
 # Copyright (c) 1998-2000 Ajuba Solutions.
+#
+# RCS: @(#) $Id$
 
 # Does not depend on the presence of any environment variables in
 # order to compile tcl; all needed information is derived from

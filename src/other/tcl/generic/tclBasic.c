@@ -13,6 +13,8 @@
  *
  * See the file "license.terms" for information on usage and redistribution of
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
+ *
+ * RCS: @(#) $Id$
  */
 
 #include "tclInt.h"
@@ -499,15 +501,6 @@ Tcl_CreateInterp(void)
     iPtr->resultSpace[0] = 0;
     iPtr->threadId = Tcl_GetCurrentThread();
 
-    /* TIP #378 */
-#ifdef TCL_INTERP_DEBUG_FRAME
-    iPtr->flags |= INTERP_DEBUG_FRAME;
-#else
-    if (getenv("TCL_INTERP_DEBUG_FRAME") != NULL) {
-        iPtr->flags |= INTERP_DEBUG_FRAME;
-    }
-#endif
-
     /*
      * Initialise the tables for variable traces and searches *before*
      * creating the global ns - so that the trace on errorInfo can be
@@ -828,7 +821,7 @@ Tcl_CreateInterp(void)
     Tcl_InitStubs(interp, TCL_VERSION, 1);
 
     if (TclTommath_Init(interp) != TCL_OK) {
-	Tcl_Panic("%s", Tcl_GetString(Tcl_GetObjResult(interp)));
+	Tcl_Panic(Tcl_GetString(Tcl_GetObjResult(interp)));
     }
 
     return interp;
@@ -1257,6 +1250,7 @@ DeleteInterpProc(
      * table, as it will be freed later in this function without further use.
      */
 
+    TclCleanupLiteralTable(interp, &(iPtr->literalTable));
     TclHandleFree(iPtr->handle);
     TclTeardownNamespace(iPtr->globalNsPtr);
 
@@ -1352,10 +1346,6 @@ DeleteInterpProc(
     if (iPtr->execEnvPtr != NULL) {
 	TclDeleteExecEnv(iPtr->execEnvPtr);
     }
-    if (iPtr->scriptFile) {
-	Tcl_DecrRefCount(iPtr->scriptFile);
-	iPtr->scriptFile = NULL;
-    }
     Tcl_DecrRefCount(iPtr->emptyObjPtr);
     iPtr->emptyObjPtr = NULL;
 
@@ -1388,15 +1378,12 @@ DeleteInterpProc(
 		hPtr != NULL;
 		hPtr = Tcl_NextHashEntry(&hSearch)) {
 	    CmdFrame *cfPtr = Tcl_GetHashValue(hPtr);
-	    Proc *procPtr = (Proc *) Tcl_GetHashKey(iPtr->linePBodyPtr, hPtr);
-	    procPtr->iPtr = NULL;
-	    if (cfPtr) {
-		if (cfPtr->type == TCL_LOCATION_SOURCE) {
-		    Tcl_DecrRefCount(cfPtr->data.eval.path);
-		}
-		ckfree((char *) cfPtr->line);
-		ckfree((char *) cfPtr);
+
+	    if (cfPtr->type == TCL_LOCATION_SOURCE) {
+		Tcl_DecrRefCount(cfPtr->data.eval.path);
 	    }
+	    ckfree((char *) cfPtr->line);
+	    ckfree((char *) cfPtr);
 	    Tcl_DeleteHashEntry(hPtr);
 	}
 	Tcl_DeleteHashTable(iPtr->linePBodyPtr);
@@ -3455,9 +3442,7 @@ int
 TclInterpReady(
     Tcl_Interp *interp)
 {
-#if !defined(TCL_NO_STACK_CHECK)
     int localInt; /* used for checking the stack */
-#endif
     register Interp *iPtr = (Interp *) interp;
 
     /*
@@ -3670,7 +3655,6 @@ TclEvalObjvInternal(
 	}
     }
 
-#ifdef USE_DTRACE
     if (TCL_DTRACE_CMD_ARGS_ENABLED()) {
 	char *a[10];
 	int i = 0;
@@ -3689,7 +3673,6 @@ TclEvalObjvInternal(
 	TCL_DTRACE_CMD_INFO(a[0], a[1], a[2], a[3], i[0], i[1]);
 	TclDecrRefCount(info);
     }
-#endif /* USE_DTRACE */
 
     /*
      * Finally, invoke the command's Tcl_ObjCmdProc.
@@ -3764,14 +3747,12 @@ TclEvalObjvInternal(
 	(void) Tcl_GetObjResult(interp);
     }
 
-#ifdef USE_DTRACE
     if (TCL_DTRACE_CMD_RESULT_ENABLED()) {
 	Tcl_Obj *r;
 
 	r = Tcl_GetObjResult(interp);
 	TCL_DTRACE_CMD_RESULT(TclGetString(objv[0]), code, TclGetString(r),r);
     }
-#endif /* USE_DTRACE */
 
   done:
     if (savedVarFramePtr) {
@@ -4076,7 +4057,7 @@ TclEvalEx(
     int line,			/* The line the script starts on. */
     int*  clNextOuter,       /* Information about an outer context for */
     CONST char* outerScript) /* continuation line data. This is set only in
-			      * TclSubstTokens(), to properly handle
+			      * EvalTokensStandard(), to properly handle
 			      * [...]-nested commands. The 'outerScript'
 			      * refers to the most-outer script containing the
 			      * embedded command, which is refered to by
@@ -4583,7 +4564,7 @@ TclAdvanceContinuations (line,clNextPtrPtr,loc)
     /*
      * Track the invisible continuation lines embedded in a script, if
      * any. Here they are just spaces (already). They were removed by
-     * TclSubstTokens() via TclParseBackslash().
+     * EvalTokensStandard() via Tcl_UtfBackslash().
      *
      * *clNextPtrPtr         <=> We have continuation lines to track.
      * **clNextPtrPtr >= 0   <=> We are not beyond the last possible location.
@@ -4770,10 +4751,6 @@ TclArgumentBCEnter(interp,objv,objc,codePtr,cfPtr,pc)
 	     * have to save them at compile time.
 	     */
 
-	    if (ePtr->nline != objc) {
-		Tcl_Panic ("TIP 280 data structure inconsistency");
-	    }
-
 	    for (word = 1; word < objc; word++) {
 		if (ePtr->line[word] >= 0) {
 		    int isnew;
@@ -4859,7 +4836,7 @@ TclArgumentBCRelease(interp,objv,objc,codePtr,pc)
 						    (char *) objv[word]);
 		    if (hPtr) {
 			CFWordBC* cfwPtr = (CFWordBC*) Tcl_GetHashValue (hPtr);
-
+ 
 			if (cfwPtr->prevPtr) {
 			    Tcl_SetHashValue(hPtr, cfwPtr->prevPtr);
 			} else {
@@ -4910,7 +4887,8 @@ TclArgumentGet(interp,obj,cfPtrPtr,wordPtr)
      * up by the caller. It knows better than us.
      */
 
-    if ((obj->bytes == NULL) || TclListObjIsCanonical(obj)) {
+    if ((!obj->bytes) || ((obj->typePtr == &tclListType) &&
+	    ((List *)obj->internalRep.twoPtrValue.ptr1)->canonicalFlag)) {
 	return;
     }
 
@@ -5092,50 +5070,61 @@ TclEvalObjEx(
      * internal rep).
      */
 
-    if (TclListObjIsCanonical(objPtr)) {
-	/*
-	 * TIP #280 Structures for tracking lines. As we know that this is
-	 * dynamic execution we ignore the invoker, even if known.
-	 */
+    if (objPtr->typePtr == &tclListType) {	/* is a list... */
+	List *listRepPtr = objPtr->internalRep.twoPtrValue.ptr1;
 
-	int nelements;
-	Tcl_Obj **elements, *copyPtr = TclListObjCopy(NULL, objPtr);
-	CmdFrame *eoFramePtr = (CmdFrame *)
+	if (objPtr->bytes == NULL ||	/* ...without a string rep */
+	    listRepPtr->canonicalFlag) {/* ...or that is canonical */
+	    /*
+	     * TIP #280 Structures for tracking lines. As we know that this is
+	     * dynamic execution we ignore the invoker, even if known.
+	     */
+
+	    int nelements;
+	    Tcl_Obj **elements, *copyPtr = TclListObjCopy(NULL, objPtr);
+	    CmdFrame *eoFramePtr = (CmdFrame *)
 		TclStackAlloc(interp, sizeof(CmdFrame));
 
-	eoFramePtr->type = TCL_LOCATION_EVAL_LIST;
-	eoFramePtr->level = (iPtr->cmdFramePtr == NULL?  1 
-		: iPtr->cmdFramePtr->level + 1);
-	eoFramePtr->framePtr = iPtr->framePtr;
-	eoFramePtr->nextPtr = iPtr->cmdFramePtr;
+	    eoFramePtr->type = TCL_LOCATION_EVAL_LIST;
+	    eoFramePtr->level = (iPtr->cmdFramePtr == NULL?
+				 1 : iPtr->cmdFramePtr->level + 1);
+	    eoFramePtr->framePtr = iPtr->framePtr;
+	    eoFramePtr->nextPtr = iPtr->cmdFramePtr;
 
-	eoFramePtr->nline = 0;
-	eoFramePtr->line = NULL;
+	    eoFramePtr->nline = 0;
+	    eoFramePtr->line = NULL;
 
-	eoFramePtr->cmd.listPtr  = objPtr;
-	Tcl_IncrRefCount(eoFramePtr->cmd.listPtr);
-	eoFramePtr->data.eval.path = NULL;
+	    eoFramePtr->cmd.listPtr  = objPtr;
+	    Tcl_IncrRefCount(eoFramePtr->cmd.listPtr);
+	    eoFramePtr->data.eval.path = NULL;
 
-	/*
-	 * TIP #280 We do _not_ compute all the line numbers for the words
-	 * in the command. For the eval of a pure list the most sensible
-	 * choice is to put all words on line 1. Given that we neither
-	 * need memory for them nor compute anything.  'line' is left
-	 * NULL. The two places using this information (TclInfoFrame, and
-	 * TclInitCompileEnv), are special-cased to use the proper line
-	 * number directly instead of accessing the 'line' array.
-	 */
+	    /*
+	     * TIP #280 We do _not_ compute all the line numbers for the words
+	     * in the command. For the eval of a pure list the most sensible
+	     * choice is to put all words on line 1. Given that we neither
+	     * need memory for them nor compute anything.  'line' is left
+	     * NULL. The two places using this information (TclInfoFrame, and
+	     * TclInitCompileEnv), are special-cased to use the proper line
+	     * number directly instead of accessing the 'line' array.
+	     */
 
-	Tcl_ListObjGetElements(NULL, copyPtr, &nelements, &elements);
+	    Tcl_ListObjGetElements(NULL, copyPtr,
+				   &nelements, &elements);
 
-	iPtr->cmdFramePtr = eoFramePtr;
-	result = Tcl_EvalObjv(interp, nelements, elements, flags);
+	    iPtr->cmdFramePtr = eoFramePtr;
+	    result = Tcl_EvalObjv(interp, nelements, elements,
+				  flags);
 
-	Tcl_DecrRefCount(copyPtr);
-	iPtr->cmdFramePtr = iPtr->cmdFramePtr->nextPtr;
-	Tcl_DecrRefCount(eoFramePtr->cmd.listPtr);
-	TclStackFree(interp, eoFramePtr);
-    } else if (flags & TCL_EVAL_DIRECT) {
+	    Tcl_DecrRefCount(copyPtr);
+	    iPtr->cmdFramePtr = iPtr->cmdFramePtr->nextPtr;
+	    Tcl_DecrRefCount(eoFramePtr->cmd.listPtr);
+	    TclStackFree(interp, eoFramePtr);
+
+	    goto done;
+	}
+    }
+
+    if (flags & TCL_EVAL_DIRECT) {
 	/*
 	 * We're not supposed to use the compiler or byte-code interpreter.
 	 * Let Tcl_EvalEx evaluate the command directly (and probably more
@@ -5295,6 +5284,7 @@ TclEvalObjEx(
 	iPtr->varFramePtr = savedVarFramePtr;
     }
 
+  done:
     TclDecrRefCount(objPtr);
     return result;
 }
@@ -6478,16 +6468,16 @@ ExprAbsFunc(
 	    goto unChanged;
 	} else if (l == (long)0) {
 	    const char *string = objv[1]->bytes;
-	    if (string) {
-		while (*string != '0') {
-		    if (*string == '-') {
-			Tcl_SetObjResult(interp, Tcl_NewLongObj(0));
-			return TCL_OK;
-		    }
-		    string++;
-		}
+	    if (!string) {
+	    /* There is no string representation, so internal one is correct */
+		goto unChanged;
 	    }
-	    goto unChanged;
+	    while (isspace(UCHAR(*string))) {
+	    	++string;
+	    }
+	    if (*string != '-') {
+		goto unChanged;
+	    }
 	} else if (l == LONG_MIN) {
 	    TclBNInitBignumFromLong(&big, l);
 	    goto tooLarge;
@@ -6753,7 +6743,7 @@ ExprRandFunc(
 	 * to insure different seeds in different threads (bug #416643)
 	 */
 
-	iPtr->randSeed = TclpGetClicks() + (PTR2INT(Tcl_GetCurrentThread())<<12);
+	iPtr->randSeed = TclpGetClicks() + ((long)Tcl_GetCurrentThread()<<12);
 
 	/*
 	 * Make sure 1 <= randSeed <= (2^31) - 2. See below.

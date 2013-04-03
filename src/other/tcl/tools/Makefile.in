@@ -6,6 +6,8 @@
 #
 #    HTML:		 1. Build the html target on Unix
 
+# RCS: @(#) $Id$
+
 TCL		= tcl@TCL_VERSION@
 TK		= tk@TCL_VERSION@
 VER		= @TCL_WIN_VERSION@

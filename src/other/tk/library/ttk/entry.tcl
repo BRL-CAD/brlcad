@@ -1,4 +1,6 @@
 #
+# $Id$
+#
 # DERIVED FROM: tk/library/entry.tcl r1.22
 #
 # Copyright (c) 1992-1994 The Regents of the University of California.
@@ -229,7 +231,7 @@ proc ttk::entry::See {w {index insert}} {
 #	position following the next end-of-word position.
 #
 set ::ttk::entry::State(startNext) \
-	[string equal [tk windowingsystem] "win32"]
+	[string equal $::tcl_platform(platform) "windows"]
 
 proc ttk::entry::NextWord {w start} {
     variable State

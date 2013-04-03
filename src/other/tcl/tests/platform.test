@@ -8,13 +8,15 @@
 #
 # See the file "license.terms" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
+#
+# RCS: @(#) 
 
 if {[lsearch [namespace children] ::tcltest] == -1} {
     package require tcltest
     namespace import -force ::tcltest::*
 }
 
-testConstraint testCPUID [llength [info commands testcpuid]]
+testConstraint testWinCPUID [llength [info commands testwincpuid]]
 
 test platform-1.1 {TclpSetVariables: tcl_platform} {
     interp create i
@@ -36,12 +38,12 @@ test platform-2.1 {tcl_platform(wordSize) indicates size of native word} {
     list [expr {$result < 0}] [expr {$result ^ int($result - 1)}]
 } {1 -1}
 
-# On Windows/UNIX, test that the CPU ID works
+# On Windows, test that the CPU ID works
 
-test platform-3.1 {CPU ID on Windows/UNIX} \
-    -constraints testCPUID \
+test platform-3.1 {CPU ID on Windows } \
+    -constraints testWinCPUID \
     -body {		
-	set cpudata [testcpuid 0]
+	set cpudata [testwincpuid 0]
 	binary format iii \
 	    [lindex $cpudata 1] \
 	    [lindex $cpudata 3] \

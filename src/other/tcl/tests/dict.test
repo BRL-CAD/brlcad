@@ -8,6 +8,8 @@
 # Copyright (c) 2003 Donal K. Fellows
 # See the file "license.terms" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
+#
+# RCS: @(#) $Id$
 
 if {[lsearch [namespace children] ::tcltest] == -1} {
     package require tcltest 2
@@ -222,7 +224,9 @@ test dict-9.2 {dict exists command} {dict exists {a b} b} 0
 test dict-9.3 {dict exists command} {dict exists {a {b c}} a b} 1
 test dict-9.4 {dict exists command} {dict exists {a {b c}} a c} 0
 test dict-9.5 {dict exists command} {dict exists {a {b c}} b c} 0
-test dict-9.6 {dict exists command} {dict exists {a {b c d}} a c} 0
+test dict-9.6 {dict exists command} {
+    list [catch {dict exists {a {b c d}} a c} msg] $msg
+} {1 {missing value to go with key}}
 test dict-9.7 {dict exists command} {
     list [catch {dict exists} msg] $msg
 } {1 {wrong # args: should be "dict exists dictionary key ?key ...?"}}
@@ -1193,57 +1197,6 @@ test dict-22.11 {dict with command: no recursive structures [Bug 1786481]} {
     }
     string range [append foo OK] end-1 end
 } OK
-
-proc linenumber {} {
-    dict get [info frame -1] line
-}
-test dict-23.1 {dict compilation crash: Bug 3487626} {
-    apply {n {
-	set e {}
-	set k {}
-	dict for {a b} {c {d {e {f g}}}} {
-	    ::tcl::dict::for {h i} $b {
-		dict update i e j {
-		    ::tcl::dict::update j f k {
-			return [expr {$n - [linenumber]}]
-		    }
-		}
-	    }
-	}
-    }} [linenumber]
-} 5
-test dict-23.2 {dict compilation crash: Bug 3487626} knownBug {
-    # Something isn't quite right in line number and continuation line
-    # tracking; at time of writing, this test produces 7, not 5, which
-    # indicates that the extra newlines in the non-script argument are
-    # confusing things.
-    apply {n {
-	set e {}
-	set k {}
-	dict for {a {
-b
-}} {c {d {e {f g}}}} {
-	    ::tcl::dict::for {h {
-i
-}} ${
-b
-} {
-		dict update {
-i
-} e {
-j
-} {
-		    ::tcl::dict::update {
-j
-} f k {
-			return [expr {$n - [linenumber]}]
-		    }
-		}
-	    }
-	}
-    }} [linenumber]
-} 5
-rename linenumber {}
 
 # cleanup
 ::tcltest::cleanupTests

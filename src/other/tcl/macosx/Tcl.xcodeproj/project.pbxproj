@@ -93,7 +93,6 @@
 		F96D48ED08F272C3004A47F5 /* bn_mp_clear_multi.c in Sources */ = {isa = PBXBuildFile; fileRef = F96D426F08F272B3004A47F5 /* bn_mp_clear_multi.c */; };
 		F96D48EE08F272C3004A47F5 /* bn_mp_cmp.c in Sources */ = {isa = PBXBuildFile; fileRef = F96D427008F272B3004A47F5 /* bn_mp_cmp.c */; };
 		F96D48F008F272C3004A47F5 /* bn_mp_cmp_mag.c in Sources */ = {isa = PBXBuildFile; fileRef = F96D427208F272B3004A47F5 /* bn_mp_cmp_mag.c */; };
-		F96D48F208F272C3004A47F5 /* bn_mp_cnt_lsb.c in Sources */ = {isa = PBXBuildFile; fileRef = F96D427408F272B3004A47F5 /* bn_mp_cnt_lsb.c */; };
 		F96D48F208F272C3004A47F5 /* bn_mp_copy.c in Sources */ = {isa = PBXBuildFile; fileRef = F96D427408F272B3004A47F5 /* bn_mp_copy.c */; };
 		F96D48F308F272C3004A47F5 /* bn_mp_count_bits.c in Sources */ = {isa = PBXBuildFile; fileRef = F96D427508F272B3004A47F5 /* bn_mp_count_bits.c */; };
 		F96D48F408F272C3004A47F5 /* bn_mp_div.c in Sources */ = {isa = PBXBuildFile; fileRef = F96D427608F272B3004A47F5 /* bn_mp_div.c */; };
@@ -934,7 +933,7 @@
 				F966C06F08F281DC005CB29B /* Frameworks */,
 				1AB674ADFE9D54B511CA2CBB /* Products */,
 			);
-			comments = "Copyright (c) 2004-2008 Daniel A. Steffen <das@users.sourceforge.net>\n\nSee the file \"license.terms\" for information on usage and redistribution of\nthis file, and for a DISCLAIMER OF ALL WARRANTIES.\n";
+			comments = "Copyright (c) 2004-2008 Daniel A. Steffen <das@users.sourceforge.net>\n\nSee the file \"license.terms\" for information on usage and redistribution of\nthis file, and for a DISCLAIMER OF ALL WARRANTIES.\n\nRCS: @(#) $Id$\n";
 			name = Tcl;
 			path = .;
 			sourceTree = SOURCE_ROOT;
@@ -2085,7 +2084,6 @@
 				F96D48EE08F272C3004A47F5 /* bn_mp_cmp.c in Sources */,
 				F9E61D28090A481F002B3151 /* bn_mp_cmp_d.c in Sources */,
 				F96D48F008F272C3004A47F5 /* bn_mp_cmp_mag.c in Sources */,
-				F96D48F208F272C3004A47F5 /* bn_mp_cnt_lsb.c in Sources */,
 				F96D48F208F272C3004A47F5 /* bn_mp_copy.c in Sources */,
 				F96D48F308F272C3004A47F5 /* bn_mp_count_bits.c in Sources */,
 				F96D48F408F272C3004A47F5 /* bn_mp_div.c in Sources */,

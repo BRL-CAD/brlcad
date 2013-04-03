@@ -11,14 +11,16 @@
 #
 # Note that after running these tests, entries will be left behind in the
 # message catalogs for locales foo, foo_BAR, and foo_BAR_baz.
+#
+# RCS: @(#) $Id$
 
 package require Tcl 8.2
 if {[catch {package require tcltest 2}]} {
     puts stderr "Skipping tests in [info script].  tcltest 2 required."
     return
 }
-if {[catch {package require msgcat 1.5.0}]} {
-    puts stderr "Skipping tests in [info script].  No msgcat 1.5.0 found to test."
+if {[catch {package require msgcat 1.4.2}]} {
+    puts stderr "Skipping tests in [info script].  No msgcat 1.4.2 found to test."
     return
 }
 
@@ -56,13 +58,6 @@ namespace eval ::msgcat::test {
 		set result [string tolower \
 			[msgcat::ConvertLocale $::tcl::mac::locale]]
 	    } else {
-		if {([info sharedlibextension] == ".dll")
-			&& ![catch {package require registry}]} {
-		    # Windows and Cygwin have other ways to determine the
-		    # locale when the environment variables are missing
-		    # and the registry package is present
-		    continue
-		}
 		set result c
 	    }
 	}
@@ -617,46 +612,6 @@ namespace eval ::msgcat::test {
     } -body {
 	mc "this is a %s" "good test"
     } -result "this is a good test"
-
-    # Tests msgcat-8.*: [mcflset]
-
-    set msgdir1 [makeDirectory msgdir1]
-    makeFile {::msgcat::mcflset k1 v1} l1.msg $msgdir1
-
-	test msgcat-8.1 {mcflset} -setup {
-	    variable locale [mclocale]
-	    mclocale l1
-	    mcload $msgdir1
-	} -cleanup {
-	    mclocale $locale
-	} -body {
-	    mc k1
-	} -result v1
-
-    removeFile l1.msg $msgdir1
-    removeDirectory msgdir1
-
-    set msgdir2 [makeDirectory msgdir2]
-    set msgdir3 [makeDirectory msgdir3]
-    makeFile "::msgcat::mcflset k2 v2 ; ::msgcat::mcload [list $msgdir3]"\
-	    l2.msg $msgdir2
-    makeFile {::msgcat::mcflset k3 v3} l2.msg $msgdir3
-
-	# chained mcload
-	test msgcat-8.2 {mcflset} -setup {
-	    variable locale [mclocale]
-	    mclocale l2
-	    mcload $msgdir2
-	} -cleanup {
-	    mclocale $locale
-	} -body {
-	    return [mc k2][mc k3]
-	} -result v2v3
-
-    removeFile l2.msg $msgdir2
-    removeDirectory msgdir2
-    removeFile l3.msg $msgdir3
-    removeDirectory msgdir3
 
     cleanupTests
 }

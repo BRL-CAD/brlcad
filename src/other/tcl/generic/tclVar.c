@@ -15,6 +15,8 @@
  *
  * See the file "license.terms" for information on usage and redistribution of
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
+ *
+ * RCS: @(#) $Id$
  */
 
 #include "tclInt.h"
@@ -65,8 +67,19 @@ VarHashCreateVar(
 
 #define VarHashFindVar(tablePtr, key) \
     VarHashCreateVar((tablePtr), (key), NULL)
+#ifdef _AIX
+/* Work around AIX cc problem causing crash in TclDeleteVars. Possible
+ * optimizer bug. Do _NOT_ inline this function, this re-activates the
+ * problem.
+ */
+static void
+VarHashInvalidateEntry(Var* varPtr) {
+    varPtr->flags |= VAR_DEAD_HASH;
+}
+#else
 #define VarHashInvalidateEntry(varPtr) \
     ((varPtr)->flags |= VAR_DEAD_HASH)
+#endif
 #define VarHashDeleteEntry(varPtr) \
     Tcl_DeleteHashEntry(&(((VarInHash *) varPtr)->entry))
 
@@ -2554,14 +2567,13 @@ Tcl_AppendObjCmd(
 	    /*
 	     * Note that we do not need to increase the refCount of the Var
 	     * pointers: should a trace delete the variable, the return value
-	     * of TclPtrSetVar will be NULL or emptyObjPtr, and we will not
-	     * access the variable again.
+	     * of TclPtrSetVar will be NULL, and we will not access the
+	     * variable again.
 	     */
 
 	    varValuePtr = TclPtrSetVar(interp, varPtr, arrayPtr, objv[1],
 		    NULL, objv[i], TCL_APPEND_VALUE|TCL_LEAVE_ERR_MSG, -1);
-	    if ((varValuePtr == NULL) ||
-		    (varValuePtr == ((Interp *) interp)->emptyObjPtr)) {
+	    if (varValuePtr == NULL) {
 		return TCL_ERROR;
 	    }
 	}
@@ -4776,7 +4788,6 @@ FreeLocalVarName(
     if (namePtr) {
 	Tcl_DecrRefCount(namePtr);
     }
-    objPtr->typePtr = NULL;
 }
 
 static void
@@ -4818,7 +4829,6 @@ FreeNsVarName(
 	    CleanupVar(varPtr, NULL);
 	}
     }
-    objPtr->typePtr = NULL;
 }
 
 static void
@@ -4858,7 +4868,6 @@ FreeParsedVarName(
 	TclDecrRefCount(arrayPtr);
 	ckfree(elem);
     }
-    objPtr->typePtr = NULL;
 }
 
 static void

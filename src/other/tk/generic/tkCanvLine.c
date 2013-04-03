@@ -9,6 +9,8 @@
  *
  * See the file "license.terms" for information on usage and redistribution of
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
+ *
+ * RCS: @(#) $Id$
  */
 
 #include <stdio.h>
@@ -1005,11 +1007,10 @@ LineInsert(
 	newCoordPtr[i+objc] = linePtr->coordPtr[i];
     }
     if (linePtr->coordPtr) {
-	ckfree((char *) linePtr->coordPtr);
+	ckfree((char *)linePtr->coordPtr);
     }
     linePtr->coordPtr = newCoordPtr;
-    length += objc;
-    linePtr->numPoints = length / 2;
+    linePtr->numPoints = (length + objc)/2;
 
     if ((length>3) && (state != TK_STATE_HIDDEN)) {
 	/*

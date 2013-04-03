@@ -3,12 +3,11 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 45;
+	objectVersion = 42;
 	objects = {
 
 /* Begin PBXBuildFile section */
 		F9067BCD0BFBA2900074F726 /* tkOldTest.c in Sources */ = {isa = PBXBuildFile; fileRef = F966BAFE08F27A39005CB29B /* tkOldTest.c */; };
-		F94523A20E6FC2AC00C1D987 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F94523A10E6FC2AC00C1D987 /* Cocoa.framework */; };
 		F966BDCF08F27A3F005CB29B /* tk3d.c in Sources */ = {isa = PBXBuildFile; fileRef = F966BAAC08F27A39005CB29B /* tk3d.c */; };
 		F966BDD108F27A3F005CB29B /* tkArgv.c in Sources */ = {isa = PBXBuildFile; fileRef = F966BAAE08F27A39005CB29B /* tkArgv.c */; };
 		F966BDD208F27A3F005CB29B /* tkAtom.c in Sources */ = {isa = PBXBuildFile; fileRef = F966BAAF08F27A39005CB29B /* tkAtom.c */; };
@@ -86,6 +85,7 @@
 		F966BE3508F27A40005CB29B /* tkWindow.c in Sources */ = {isa = PBXBuildFile; fileRef = F966BB1208F27A39005CB29B /* tkWindow.c */; };
 		F966BEDB08F27A40005CB29B /* tkMacOSXBitmap.c in Sources */ = {isa = PBXBuildFile; fileRef = F966BBC508F27A3B005CB29B /* tkMacOSXBitmap.c */; };
 		F966BEDC08F27A40005CB29B /* tkMacOSXButton.c in Sources */ = {isa = PBXBuildFile; fileRef = F966BBC608F27A3B005CB29B /* tkMacOSXButton.c */; };
+		F966BEDD08F27A40005CB29B /* tkMacOSXCarbonEvents.c in Sources */ = {isa = PBXBuildFile; fileRef = F966BBC708F27A3B005CB29B /* tkMacOSXCarbonEvents.c */; };
 		F966BEDE08F27A40005CB29B /* tkMacOSXClipboard.c in Sources */ = {isa = PBXBuildFile; fileRef = F966BBC808F27A3B005CB29B /* tkMacOSXClipboard.c */; };
 		F966BEDF08F27A40005CB29B /* tkMacOSXColor.c in Sources */ = {isa = PBXBuildFile; fileRef = F966BBC908F27A3B005CB29B /* tkMacOSXColor.c */; };
 		F966BEE008F27A40005CB29B /* tkMacOSXConfig.c in Sources */ = {isa = PBXBuildFile; fileRef = F966BBCA08F27A3B005CB29B /* tkMacOSXConfig.c */; };
@@ -281,7 +281,7 @@
 		F96D49A908F272C4004A47F5 /* tclMacOSXBundle.c in Sources */ = {isa = PBXBuildFile; fileRef = F96D433908F272B5004A47F5 /* tclMacOSXBundle.c */; };
 		F96D49AD08F272C4004A47F5 /* tclMacOSXFCmd.c in Sources */ = {isa = PBXBuildFile; fileRef = F96D433D08F272B5004A47F5 /* tclMacOSXFCmd.c */; };
 		F96D49AE08F272C4004A47F5 /* tclMacOSXNotify.c in Sources */ = {isa = PBXBuildFile; fileRef = F96D433E08F272B5004A47F5 /* tclMacOSXNotify.c */; };
-		F96D4AC608F272C9004A47F5 /* tclLoadDyld.c in Sources */ = {isa = PBXBuildFile; fileRef = F96D445B08F272B9004A47F5 /* tclLoadDyld.c */; settings = {COMPILER_FLAGS = "-Wno-deprecated-declarations"; }; };
+		F96D4AC608F272C9004A47F5 /* tclLoadDyld.c in Sources */ = {isa = PBXBuildFile; fileRef = F96D445B08F272B9004A47F5 /* tclLoadDyld.c */; };
 		F96D4ACA08F272C9004A47F5 /* tclUnixChan.c in Sources */ = {isa = PBXBuildFile; fileRef = F96D445F08F272B9004A47F5 /* tclUnixChan.c */; };
 		F96D4ACB08F272C9004A47F5 /* tclUnixEvent.c in Sources */ = {isa = PBXBuildFile; fileRef = F96D446008F272B9004A47F5 /* tclUnixEvent.c */; };
 		F96D4ACC08F272C9004A47F5 /* tclUnixFCmd.c in Sources */ = {isa = PBXBuildFile; fileRef = F96D446108F272B9004A47F5 /* tclUnixFCmd.c */; };
@@ -292,7 +292,6 @@
 		F96D4AD208F272CA004A47F5 /* tclUnixSock.c in Sources */ = {isa = PBXBuildFile; fileRef = F96D446708F272B9004A47F5 /* tclUnixSock.c */; };
 		F96D4AD408F272CA004A47F5 /* tclUnixThrd.c in Sources */ = {isa = PBXBuildFile; fileRef = F96D446908F272B9004A47F5 /* tclUnixThrd.c */; };
 		F96D4AD608F272CA004A47F5 /* tclUnixTime.c in Sources */ = {isa = PBXBuildFile; fileRef = F96D446B08F272B9004A47F5 /* tclUnixTime.c */; };
-		F9C9CC000E84059800E00935 /* ApplicationServices.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F9C9CBFF0E84059800E00935 /* ApplicationServices.framework */; };
 		F9E61D28090A481F002B3151 /* bn_mp_cmp_d.c in Sources */ = {isa = PBXBuildFile; fileRef = F96D427108F272B3004A47F5 /* bn_mp_cmp_d.c */; };
 		F9E61D29090A486C002B3151 /* bn_mp_neg.c in Sources */ = {isa = PBXBuildFile; fileRef = F96D42A208F272B3004A47F5 /* bn_mp_neg.c */; };
 		F9E61D2A090A4891002B3151 /* bn_mp_sqrt.c in Sources */ = {isa = PBXBuildFile; fileRef = F96D42C008F272B3004A47F5 /* bn_mp_sqrt.c */; };
@@ -304,7 +303,10 @@
 		F9E61D30090A48E2002B3151 /* bn_mp_to_unsigned_bin_n.c in Sources */ = {isa = PBXBuildFile; fileRef = F96D42C708F272B3004A47F5 /* bn_mp_to_unsigned_bin_n.c */; };
 		F9E61D31090A48F9002B3151 /* bn_mp_to_unsigned_bin.c in Sources */ = {isa = PBXBuildFile; fileRef = F96D42C608F272B3004A47F5 /* bn_mp_to_unsigned_bin.c */; };
 		F9E61D32090A48FA002B3151 /* bn_mp_unsigned_bin_size.c in Sources */ = {isa = PBXBuildFile; fileRef = F96D42CC08F272B3004A47F5 /* bn_mp_unsigned_bin_size.c */; };
-		F9F4415E0C8BAE6F00BCCD67 /* tclDTrace.d in Sources */ = {isa = PBXBuildFile; fileRef = F9F4415D0C8BAE6F00BCCD67 /* tclDTrace.d */; };
+		F9EA4AF008FA3BD500B1F5F0 /* tkMacOSXXCursors.r in Rez */ = {isa = PBXBuildFile; fileRef = F966BBF408F27A3C005CB29B /* tkMacOSXXCursors.r */; };
+		F9EA4AF208FA3BD800B1F5F0 /* tkMacOSXCursors.r in Rez */ = {isa = PBXBuildFile; fileRef = F966BBCC08F27A3B005CB29B /* tkMacOSXCursors.r */; };
+		F9EA4AF308FA3BDA00B1F5F0 /* tkMacOSXAETE.r in Rez */ = {isa = PBXBuildFile; fileRef = F966BBC408F27A3B005CB29B /* tkMacOSXAETE.r */; };
+		F9EA4AF408FA3BDB00B1F5F0 /* tkAboutDlg.r in Rez */ = {isa = PBXBuildFile; fileRef = F966BBC108F27A3B005CB29B /* tkAboutDlg.r */; };
 		F9FC77B80AB29E9100B7077D /* tclUnixCompat.c in Sources */ = {isa = PBXBuildFile; fileRef = F9FC77B70AB29E9100B7077D /* tclUnixCompat.c */; };
 		F9FD30BC0CC1AD070073837D /* regcomp.c in Sources */ = {isa = PBXBuildFile; fileRef = F96D3ED008F272A7004A47F5 /* regcomp.c */; };
 		F9FD30BD0CC1AD070073837D /* regerror.c in Sources */ = {isa = PBXBuildFile; fileRef = F96D3ED308F272A7004A47F5 /* regerror.c */; };
@@ -441,7 +443,7 @@
 		F9FD31400CC1AD070073837D /* tclMacOSXBundle.c in Sources */ = {isa = PBXBuildFile; fileRef = F96D433908F272B5004A47F5 /* tclMacOSXBundle.c */; };
 		F9FD31410CC1AD070073837D /* tclMacOSXFCmd.c in Sources */ = {isa = PBXBuildFile; fileRef = F96D433D08F272B5004A47F5 /* tclMacOSXFCmd.c */; };
 		F9FD31420CC1AD070073837D /* tclMacOSXNotify.c in Sources */ = {isa = PBXBuildFile; fileRef = F96D433E08F272B5004A47F5 /* tclMacOSXNotify.c */; };
-		F9FD31430CC1AD070073837D /* tclLoadDyld.c in Sources */ = {isa = PBXBuildFile; fileRef = F96D445B08F272B9004A47F5 /* tclLoadDyld.c */; settings = {COMPILER_FLAGS = "-Wno-deprecated-declarations"; }; };
+		F9FD31430CC1AD070073837D /* tclLoadDyld.c in Sources */ = {isa = PBXBuildFile; fileRef = F96D445B08F272B9004A47F5 /* tclLoadDyld.c */; };
 		F9FD31440CC1AD070073837D /* tclUnixChan.c in Sources */ = {isa = PBXBuildFile; fileRef = F96D445F08F272B9004A47F5 /* tclUnixChan.c */; };
 		F9FD31450CC1AD070073837D /* tclUnixCompat.c in Sources */ = {isa = PBXBuildFile; fileRef = F9FC77B70AB29E9100B7077D /* tclUnixCompat.c */; };
 		F9FD31460CC1AD070073837D /* tclUnixEvent.c in Sources */ = {isa = PBXBuildFile; fileRef = F96D446008F272B9004A47F5 /* tclUnixEvent.c */; };
@@ -562,7 +564,6 @@
 		F9FD31DA0CC1AD070073837D /* tkAppInit.c in Sources */ = {isa = PBXBuildFile; fileRef = F966BC7508F27A3D005CB29B /* tkAppInit.c */; settings = {COMPILER_FLAGS = "-DTK_TEST"; }; };
 		F9FD31DB0CC1AD070073837D /* tkUnix3d.c in Sources */ = {isa = PBXBuildFile; fileRef = F966BC7908F27A3D005CB29B /* tkUnix3d.c */; };
 		F9FD31DC0CC1AD070073837D /* tkUnixScale.c in Sources */ = {isa = PBXBuildFile; fileRef = F966BC8C08F27A3D005CB29B /* tkUnixScale.c */; };
-		F9FD31E20CC1AD070073837D /* tclDTrace.d in Sources */ = {isa = PBXBuildFile; fileRef = F9F4415D0C8BAE6F00BCCD67 /* tclDTrace.d */; };
 		F9FD31E40CC1AD070073837D /* CoreFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F966C07408F2820D005CB29B /* CoreFoundation.framework */; };
 		F9FD31F80CC1ADB70073837D /* tkUnixCursor.c in Sources */ = {isa = PBXBuildFile; fileRef = F966BC7D08F27A3D005CB29B /* tkUnixCursor.c */; };
 		F9FD31FA0CC1ADB70073837D /* tkUnixKey.c in Sources */ = {isa = PBXBuildFile; fileRef = F966BC8708F27A3D005CB29B /* tkUnixKey.c */; };
@@ -604,9 +605,6 @@
 		F936FCDA0CCD984600716967 /* ttknote.tcl */ = {isa = PBXFileReference; explicitFileType = text.script; fileEncoding = 4; path = ttknote.tcl; sourceTree = "<group>"; };
 		F936FCDB0CCD984600716967 /* combo.tcl */ = {isa = PBXFileReference; explicitFileType = text.script; fileEncoding = 4; path = combo.tcl; sourceTree = "<group>"; };
 		F93E5EFD09CF8711008FA367 /* tkMacOSXFont.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = tkMacOSXFont.h; sourceTree = "<group>"; };
-		F94523A10E6FC2AC00C1D987 /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = /System/Library/Frameworks/Cocoa.framework; sourceTree = "<absolute>"; };
-		F95D8D4B0F1715610006B020 /* Tk.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; path = Tk.icns; sourceTree = "<group>"; };
-		F95D8D4C0F1715610006B020 /* Tk.tiff */ = {isa = PBXFileReference; lastKnownFileType = image.tiff; path = Tk.tiff; sourceTree = "<group>"; };
 		F95FAFF90B34F1130072E431 /* macOSXLoad.test */ = {isa = PBXFileReference; explicitFileType = text.script; fileEncoding = 4; path = macOSXLoad.test; sourceTree = "<group>"; };
 		F962F7C60DADC26200648DB8 /* vsapi.test */ = {isa = PBXFileReference; explicitFileType = text.script; fileEncoding = 4; path = vsapi.test; sourceTree = "<group>"; };
 		F966BA0408F27A37005CB29B /* error.xbm */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 4; path = error.xbm; sourceTree = "<group>"; };
@@ -964,47 +962,51 @@
 		F966BBBB08F27A3B005CB29B /* GNUmakefile */ = {isa = PBXFileReference; explicitFileType = sourcecode.make; fileEncoding = 4; path = GNUmakefile; sourceTree = "<group>"; };
 		F966BBBE08F27A3B005CB29B /* README */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = README; sourceTree = "<group>"; };
 		F966BBC008F27A3B005CB29B /* Tk-Info.plist.in */ = {isa = PBXFileReference; explicitFileType = text.plist; fileEncoding = 4; path = "Tk-Info.plist.in"; sourceTree = "<group>"; };
+		F966BBC108F27A3B005CB29B /* tkAboutDlg.r */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.rez; path = tkAboutDlg.r; sourceTree = "<group>"; };
 		F966BBC208F27A3B005CB29B /* tkMacOSX.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = tkMacOSX.h; sourceTree = "<group>"; };
-		F966BBC508F27A3B005CB29B /* tkMacOSXBitmap.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.objc; fileEncoding = 4; path = tkMacOSXBitmap.c; sourceTree = "<group>"; };
-		F966BBC608F27A3B005CB29B /* tkMacOSXButton.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.objc; fileEncoding = 4; path = tkMacOSXButton.c; sourceTree = "<group>"; };
-		F966BBC808F27A3B005CB29B /* tkMacOSXClipboard.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.objc; fileEncoding = 4; path = tkMacOSXClipboard.c; sourceTree = "<group>"; };
-		F966BBC908F27A3B005CB29B /* tkMacOSXColor.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.objc; fileEncoding = 4; path = tkMacOSXColor.c; sourceTree = "<group>"; };
-		F966BBCA08F27A3B005CB29B /* tkMacOSXConfig.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.objc; fileEncoding = 4; path = tkMacOSXConfig.c; sourceTree = "<group>"; };
-		F966BBCB08F27A3B005CB29B /* tkMacOSXCursor.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.objc; fileEncoding = 4; path = tkMacOSXCursor.c; sourceTree = "<group>"; };
-		F966BBCC08F27A3B005CB29B /* tkMacOSXCursors.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = tkMacOSXCursors.h; sourceTree = "<group>"; };
-		F966BBCD08F27A3B005CB29B /* tkMacOSXDebug.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.objc; fileEncoding = 4; path = tkMacOSXDebug.c; sourceTree = "<group>"; };
+		F966BBC408F27A3B005CB29B /* tkMacOSXAETE.r */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.rez; path = tkMacOSXAETE.r; sourceTree = "<group>"; };
+		F966BBC508F27A3B005CB29B /* tkMacOSXBitmap.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = tkMacOSXBitmap.c; sourceTree = "<group>"; };
+		F966BBC608F27A3B005CB29B /* tkMacOSXButton.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = tkMacOSXButton.c; sourceTree = "<group>"; };
+		F966BBC708F27A3B005CB29B /* tkMacOSXCarbonEvents.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = tkMacOSXCarbonEvents.c; sourceTree = "<group>"; };
+		F966BBC808F27A3B005CB29B /* tkMacOSXClipboard.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = tkMacOSXClipboard.c; sourceTree = "<group>"; };
+		F966BBC908F27A3B005CB29B /* tkMacOSXColor.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = tkMacOSXColor.c; sourceTree = "<group>"; };
+		F966BBCA08F27A3B005CB29B /* tkMacOSXConfig.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = tkMacOSXConfig.c; sourceTree = "<group>"; };
+		F966BBCB08F27A3B005CB29B /* tkMacOSXCursor.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = tkMacOSXCursor.c; sourceTree = "<group>"; };
+		F966BBCC08F27A3B005CB29B /* tkMacOSXCursors.r */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.rez; path = tkMacOSXCursors.r; sourceTree = "<group>"; };
+		F966BBCD08F27A3B005CB29B /* tkMacOSXDebug.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = tkMacOSXDebug.c; sourceTree = "<group>"; };
 		F966BBCE08F27A3B005CB29B /* tkMacOSXDebug.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = tkMacOSXDebug.h; sourceTree = "<group>"; };
 		F966BBCF08F27A3B005CB29B /* tkMacOSXDefault.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = tkMacOSXDefault.h; sourceTree = "<group>"; };
-		F966BBD008F27A3B005CB29B /* tkMacOSXDialog.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.objc; fileEncoding = 4; path = tkMacOSXDialog.c; sourceTree = "<group>"; };
-		F966BBD108F27A3B005CB29B /* tkMacOSXDraw.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.objc; fileEncoding = 4; path = tkMacOSXDraw.c; sourceTree = "<group>"; };
-		F966BBD208F27A3B005CB29B /* tkMacOSXEmbed.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.objc; fileEncoding = 4; path = tkMacOSXEmbed.c; sourceTree = "<group>"; };
-		F966BBD308F27A3B005CB29B /* tkMacOSXEntry.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.objc; fileEncoding = 4; path = tkMacOSXEntry.c; sourceTree = "<group>"; };
-		F966BBD408F27A3B005CB29B /* tkMacOSXEvent.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.objc; fileEncoding = 4; path = tkMacOSXEvent.c; sourceTree = "<group>"; };
+		F966BBD008F27A3B005CB29B /* tkMacOSXDialog.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = tkMacOSXDialog.c; sourceTree = "<group>"; };
+		F966BBD108F27A3B005CB29B /* tkMacOSXDraw.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = tkMacOSXDraw.c; sourceTree = "<group>"; };
+		F966BBD208F27A3B005CB29B /* tkMacOSXEmbed.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = tkMacOSXEmbed.c; sourceTree = "<group>"; };
+		F966BBD308F27A3B005CB29B /* tkMacOSXEntry.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = tkMacOSXEntry.c; sourceTree = "<group>"; };
+		F966BBD408F27A3B005CB29B /* tkMacOSXEvent.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = tkMacOSXEvent.c; sourceTree = "<group>"; };
 		F966BBD508F27A3B005CB29B /* tkMacOSXEvent.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = tkMacOSXEvent.h; sourceTree = "<group>"; };
-		F966BBD608F27A3B005CB29B /* tkMacOSXFont.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.objc; fileEncoding = 4; path = tkMacOSXFont.c; sourceTree = "<group>"; };
-		F966BBD708F27A3B005CB29B /* tkMacOSXHLEvents.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.objc; fileEncoding = 4; path = tkMacOSXHLEvents.c; sourceTree = "<group>"; };
-		F966BBD808F27A3B005CB29B /* tkMacOSXInit.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.objc; fileEncoding = 4; path = tkMacOSXInit.c; sourceTree = "<group>"; };
+		F966BBD608F27A3B005CB29B /* tkMacOSXFont.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = tkMacOSXFont.c; sourceTree = "<group>"; };
+		F966BBD708F27A3B005CB29B /* tkMacOSXHLEvents.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = tkMacOSXHLEvents.c; sourceTree = "<group>"; };
+		F966BBD808F27A3B005CB29B /* tkMacOSXInit.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = tkMacOSXInit.c; sourceTree = "<group>"; };
 		F966BBDA08F27A3B005CB29B /* tkMacOSXInt.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = tkMacOSXInt.h; sourceTree = "<group>"; };
-		F966BBDB08F27A3B005CB29B /* tkMacOSXKeyboard.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.objc; fileEncoding = 4; path = tkMacOSXKeyboard.c; sourceTree = "<group>"; };
-		F966BBDC08F27A3B005CB29B /* tkMacOSXKeyEvent.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.objc; fileEncoding = 4; path = tkMacOSXKeyEvent.c; sourceTree = "<group>"; };
-		F966BBDD08F27A3B005CB29B /* tkMacOSXMenu.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.objc; fileEncoding = 4; path = tkMacOSXMenu.c; sourceTree = "<group>"; };
-		F966BBE008F27A3B005CB29B /* tkMacOSXMenubutton.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.objc; fileEncoding = 4; path = tkMacOSXMenubutton.c; sourceTree = "<group>"; };
-		F966BBE108F27A3B005CB29B /* tkMacOSXMenus.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.objc; fileEncoding = 4; path = tkMacOSXMenus.c; sourceTree = "<group>"; };
-		F966BBE208F27A3B005CB29B /* tkMacOSXMouseEvent.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.objc; fileEncoding = 4; path = tkMacOSXMouseEvent.c; sourceTree = "<group>"; };
-		F966BBE308F27A3B005CB29B /* tkMacOSXNotify.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.objc; fileEncoding = 4; path = tkMacOSXNotify.c; sourceTree = "<group>"; };
+		F966BBDB08F27A3B005CB29B /* tkMacOSXKeyboard.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = tkMacOSXKeyboard.c; sourceTree = "<group>"; };
+		F966BBDC08F27A3B005CB29B /* tkMacOSXKeyEvent.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = tkMacOSXKeyEvent.c; sourceTree = "<group>"; };
+		F966BBDD08F27A3B005CB29B /* tkMacOSXMenu.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = tkMacOSXMenu.c; sourceTree = "<group>"; };
+		F966BBE008F27A3B005CB29B /* tkMacOSXMenubutton.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = tkMacOSXMenubutton.c; sourceTree = "<group>"; };
+		F966BBE108F27A3B005CB29B /* tkMacOSXMenus.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = tkMacOSXMenus.c; sourceTree = "<group>"; };
+		F966BBE208F27A3B005CB29B /* tkMacOSXMouseEvent.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = tkMacOSXMouseEvent.c; sourceTree = "<group>"; };
+		F966BBE308F27A3B005CB29B /* tkMacOSXNotify.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = tkMacOSXNotify.c; sourceTree = "<group>"; };
 		F966BBEA08F27A3C005CB29B /* tkMacOSXPort.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = tkMacOSXPort.h; sourceTree = "<group>"; };
-		F966BBEB08F27A3C005CB29B /* tkMacOSXRegion.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.objc; fileEncoding = 4; path = tkMacOSXRegion.c; sourceTree = "<group>"; };
-		F966BBEC08F27A3C005CB29B /* tkMacOSXScale.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.objc; fileEncoding = 4; path = tkMacOSXScale.c; sourceTree = "<group>"; };
-		F966BBED08F27A3C005CB29B /* tkMacOSXScrlbr.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.objc; fileEncoding = 4; path = tkMacOSXScrlbr.c; sourceTree = "<group>"; };
-		F966BBEE08F27A3C005CB29B /* tkMacOSXSend.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.objc; fileEncoding = 4; path = tkMacOSXSend.c; sourceTree = "<group>"; };
-		F966BBEF08F27A3C005CB29B /* tkMacOSXSubwindows.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.objc; fileEncoding = 4; path = tkMacOSXSubwindows.c; sourceTree = "<group>"; };
-		F966BBF008F27A3C005CB29B /* tkMacOSXTest.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.objc; fileEncoding = 4; path = tkMacOSXTest.c; sourceTree = "<group>"; };
-		F966BBF108F27A3C005CB29B /* tkMacOSXWindowEvent.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.objc; fileEncoding = 4; path = tkMacOSXWindowEvent.c; sourceTree = "<group>"; };
-		F966BBF208F27A3C005CB29B /* tkMacOSXWm.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.objc; fileEncoding = 4; path = tkMacOSXWm.c; sourceTree = "<group>"; };
+		F966BBEB08F27A3C005CB29B /* tkMacOSXRegion.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = tkMacOSXRegion.c; sourceTree = "<group>"; };
+		F966BBEC08F27A3C005CB29B /* tkMacOSXScale.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = tkMacOSXScale.c; sourceTree = "<group>"; };
+		F966BBED08F27A3C005CB29B /* tkMacOSXScrlbr.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = tkMacOSXScrlbr.c; sourceTree = "<group>"; };
+		F966BBEE08F27A3C005CB29B /* tkMacOSXSend.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = tkMacOSXSend.c; sourceTree = "<group>"; };
+		F966BBEF08F27A3C005CB29B /* tkMacOSXSubwindows.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = tkMacOSXSubwindows.c; sourceTree = "<group>"; };
+		F966BBF008F27A3C005CB29B /* tkMacOSXTest.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = tkMacOSXTest.c; sourceTree = "<group>"; };
+		F966BBF108F27A3C005CB29B /* tkMacOSXWindowEvent.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = tkMacOSXWindowEvent.c; sourceTree = "<group>"; };
+		F966BBF208F27A3C005CB29B /* tkMacOSXWm.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = tkMacOSXWm.c; sourceTree = "<group>"; };
 		F966BBF308F27A3C005CB29B /* tkMacOSXWm.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = tkMacOSXWm.h; sourceTree = "<group>"; };
-		F966BBF408F27A3C005CB29B /* tkMacOSXXCursors.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = tkMacOSXXCursors.h; sourceTree = "<group>"; };
-		F966BBF508F27A3C005CB29B /* tkMacOSXXStubs.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.objc; fileEncoding = 4; path = tkMacOSXXStubs.c; sourceTree = "<group>"; };
+		F966BBF408F27A3C005CB29B /* tkMacOSXXCursors.r */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.rez; path = tkMacOSXXCursors.r; sourceTree = "<group>"; };
+		F966BBF508F27A3C005CB29B /* tkMacOSXXStubs.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = tkMacOSXXStubs.c; sourceTree = "<group>"; };
 		F966BBF708F27A3C005CB29B /* Wish-Info.plist.in */ = {isa = PBXFileReference; explicitFileType = text.plist; fileEncoding = 4; path = "Wish-Info.plist.in"; sourceTree = "<group>"; };
+		F966BBF808F27A3C005CB29B /* Wish.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; path = Wish.icns; sourceTree = "<group>"; };
 		F966BC0308F27A3C005CB29B /* README */ = {isa = PBXFileReference; explicitFileType = text; fileEncoding = 4; path = README; sourceTree = "<group>"; };
 		F966BC0508F27A3C005CB29B /* all.tcl */ = {isa = PBXFileReference; explicitFileType = text.script; fileEncoding = 4; path = all.tcl; sourceTree = "<group>"; };
 		F966BC0608F27A3C005CB29B /* arc.tcl */ = {isa = PBXFileReference; explicitFileType = text.script; fileEncoding = 4; path = arc.tcl; sourceTree = "<group>"; };
@@ -1307,7 +1309,7 @@
 		F968887F0AF788F6000797B5 /* ttk_Theme.3 */ = {isa = PBXFileReference; explicitFileType = text.man; fileEncoding = 4; path = ttk_Theme.3; sourceTree = "<group>"; };
 		F96888800AF788F6000797B5 /* ttk_treeview.n */ = {isa = PBXFileReference; explicitFileType = text.man; fileEncoding = 4; path = ttk_treeview.n; sourceTree = "<group>"; };
 		F96888810AF788F6000797B5 /* ttk_widget.n */ = {isa = PBXFileReference; explicitFileType = text.man; fileEncoding = 4; path = ttk_widget.n; sourceTree = "<group>"; };
-		F96888840AF78938000797B5 /* ttkMacOSXTheme.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.objc; fileEncoding = 4; path = ttkMacOSXTheme.c; sourceTree = "<group>"; };
+		F96888840AF78938000797B5 /* ttkMacOSXTheme.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = ttkMacOSXTheme.c; sourceTree = "<group>"; };
 		F96888860AF78953000797B5 /* ttkWinMonitor.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = ttkWinMonitor.c; sourceTree = "<group>"; };
 		F96888870AF78953000797B5 /* ttkWinTheme.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = ttkWinTheme.c; sourceTree = "<group>"; };
 		F96888880AF78953000797B5 /* ttkWinXPTheme.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = ttkWinXPTheme.c; sourceTree = "<group>"; };
@@ -2037,7 +2039,6 @@
 		F9A3084B08F2D4CE00BAE1AB /* Wish.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Wish.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		F9A3084E08F2D4F400BAE1AB /* Tcl.framework */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.framework; path = Tcl.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		F9A493240CEBF38300B78AE2 /* chanio.test */ = {isa = PBXFileReference; explicitFileType = text.script; fileEncoding = 4; path = chanio.test; sourceTree = "<group>"; };
-		F9C9CBFF0E84059800E00935 /* ApplicationServices.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = ApplicationServices.framework; path = /System/Library/Frameworks/ApplicationServices.framework; sourceTree = "<absolute>"; };
 		F9D1360A0CDC252C00DBE0B5 /* mclist.tcl */ = {isa = PBXFileReference; explicitFileType = text.script; fileEncoding = 4; path = mclist.tcl; sourceTree = "<group>"; };
 		F9ECB1120B26521500A28025 /* pkgIndex.tcl */ = {isa = PBXFileReference; explicitFileType = text.script; fileEncoding = 4; path = pkgIndex.tcl; sourceTree = "<group>"; };
 		F9ECB1130B26521500A28025 /* platform.tcl */ = {isa = PBXFileReference; explicitFileType = text.script; fileEncoding = 4; path = platform.tcl; sourceTree = "<group>"; };
@@ -2046,7 +2047,6 @@
 		F9ECB1CB0B26534C00A28025 /* mathop.test */ = {isa = PBXFileReference; explicitFileType = text.script; fileEncoding = 4; path = mathop.test; sourceTree = "<group>"; };
 		F9ECB1E10B26543C00A28025 /* platform_shell.n */ = {isa = PBXFileReference; explicitFileType = text.man; fileEncoding = 4; path = platform_shell.n; sourceTree = "<group>"; };
 		F9ECB1E20B26543C00A28025 /* platform.n */ = {isa = PBXFileReference; explicitFileType = text.man; fileEncoding = 4; path = platform.n; sourceTree = "<group>"; };
-		F9F4415D0C8BAE6F00BCCD67 /* tclDTrace.d */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.dtrace; path = tclDTrace.d; sourceTree = "<group>"; };
 		F9F4EFDC0CC7B3CA00378A27 /* ttkpane.tcl */ = {isa = PBXFileReference; explicitFileType = text.script; fileEncoding = 4; languageSpecificationIdentifier = shell; path = ttkpane.tcl; sourceTree = "<group>"; };
 		F9F4EFDD0CC7B3CB00378A27 /* ttkmenu.tcl */ = {isa = PBXFileReference; explicitFileType = text.script; fileEncoding = 4; languageSpecificationIdentifier = shell; path = ttkmenu.tcl; sourceTree = "<group>"; };
 		F9FC77B70AB29E9100B7077D /* tclUnixCompat.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = tclUnixCompat.c; sourceTree = "<group>"; };
@@ -2067,8 +2067,6 @@
 				F966C07508F2820D005CB29B /* CoreFoundation.framework in Frameworks */,
 				F966C07708F2821B005CB29B /* Carbon.framework in Frameworks */,
 				F966C07908F28233005CB29B /* IOKit.framework in Frameworks */,
-				F94523A20E6FC2AC00C1D987 /* Cocoa.framework in Frameworks */,
-				F9C9CC000E84059800E00935 /* ApplicationServices.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -2097,7 +2095,7 @@
 				F966C06F08F281DC005CB29B /* Frameworks */,
 				1AB674ADFE9D54B511CA2CBB /* Products */,
 			);
-			comments = "Copyright (c) 2004-2009 Daniel A. Steffen <das@users.sourceforge.net>\nCopyright 2008-2009, Apple Inc.\n\nSee the file \"license.terms\" for information on usage and redistribution of\nthis file, and for a DISCLAIMER OF ALL WARRANTIES.\n";
+			comments = "Copyright (c) 2004-2008 Daniel A. Steffen <das@users.sourceforge.net>\n\nSee the file \"license.terms\" for information on usage and redistribution of\nthis file, and for a DISCLAIMER OF ALL WARRANTIES.\n\nRCS: @(#) $Id$\n";
 			name = Wish;
 			path = .;
 			sourceTree = SOURCE_ROOT;
@@ -2541,14 +2539,17 @@
 				F966BBBB08F27A3B005CB29B /* GNUmakefile */,
 				F966BBBE08F27A3B005CB29B /* README */,
 				F966BBC008F27A3B005CB29B /* Tk-Info.plist.in */,
+				F966BBC108F27A3B005CB29B /* tkAboutDlg.r */,
 				F966BBC208F27A3B005CB29B /* tkMacOSX.h */,
+				F966BBC408F27A3B005CB29B /* tkMacOSXAETE.r */,
 				F966BBC508F27A3B005CB29B /* tkMacOSXBitmap.c */,
 				F966BBC608F27A3B005CB29B /* tkMacOSXButton.c */,
+				F966BBC708F27A3B005CB29B /* tkMacOSXCarbonEvents.c */,
 				F966BBC808F27A3B005CB29B /* tkMacOSXClipboard.c */,
 				F966BBC908F27A3B005CB29B /* tkMacOSXColor.c */,
 				F966BBCA08F27A3B005CB29B /* tkMacOSXConfig.c */,
 				F966BBCB08F27A3B005CB29B /* tkMacOSXCursor.c */,
-				F966BBCC08F27A3B005CB29B /* tkMacOSXCursors.h */,
+				F966BBCC08F27A3B005CB29B /* tkMacOSXCursors.r */,
 				F966BBCD08F27A3B005CB29B /* tkMacOSXDebug.c */,
 				F966BBCE08F27A3B005CB29B /* tkMacOSXDebug.h */,
 				F966BBCF08F27A3B005CB29B /* tkMacOSXDefault.h */,
@@ -2581,11 +2582,10 @@
 				F966BBF108F27A3C005CB29B /* tkMacOSXWindowEvent.c */,
 				F966BBF208F27A3C005CB29B /* tkMacOSXWm.c */,
 				F966BBF308F27A3C005CB29B /* tkMacOSXWm.h */,
-				F966BBF408F27A3C005CB29B /* tkMacOSXXCursors.h */,
+				F966BBF408F27A3C005CB29B /* tkMacOSXXCursors.r */,
 				F966BBF508F27A3C005CB29B /* tkMacOSXXStubs.c */,
 				F96888840AF78938000797B5 /* ttkMacOSXTheme.c */,
-				F95D8D4B0F1715610006B020 /* Tk.icns */,
-				F95D8D4C0F1715610006B020 /* Tk.tiff */,
+				F966BBF808F27A3C005CB29B /* Wish.icns */,
 				F966BBF708F27A3C005CB29B /* Wish-Info.plist.in */,
 				F97AE7F10B65C1E900310EA2 /* Wish-Common.xcconfig */,
 				F97AE8330B65C87F00310EA2 /* Wish-Debug.xcconfig */,
@@ -2848,10 +2848,8 @@
 		F966C06F08F281DC005CB29B /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
-				F9C9CBFF0E84059800E00935 /* ApplicationServices.framework */,
 				F966C07408F2820D005CB29B /* CoreFoundation.framework */,
 				F966C07608F2821B005CB29B /* Carbon.framework */,
-				F94523A10E6FC2AC00C1D987 /* Cocoa.framework */,
 				F966C07808F28233005CB29B /* IOKit.framework */,
 				F9FD32140CC1AF170073837D /* libX11.dylib */,
 				F9FD32150CC1AF170073837D /* libXext.dylib */,
@@ -3249,7 +3247,6 @@
 				F96D3EEA08F272A7004A47F5 /* tclDate.c */,
 				F96D3EEB08F272A7004A47F5 /* tclDecls.h */,
 				F96D3EEC08F272A7004A47F5 /* tclDictObj.c */,
-				F9F4415D0C8BAE6F00BCCD67 /* tclDTrace.d */,
 				F96D3EED08F272A7004A47F5 /* tclEncoding.c */,
 				F96D3EEE08F272A7004A47F5 /* tclEnv.c */,
 				F96D3EEF08F272A7004A47F5 /* tclEvent.c */,
@@ -3868,8 +3865,10 @@
 			buildPhases = (
 				F9A5C5F508F651A2008AE941 /* ShellScript */,
 				F9A5C5F608F651AB008AE941 /* ShellScript */,
+				F9EA4ADE08FA3B7F00B1F5F0 /* Rez */,
 				8DD76FAB0486AB0100D96B5E /* Sources */,
 				8DD76FAD0486AB0100D96B5E /* Frameworks */,
+				F95FA74C0B32CE190072E431 /* ShellScript */,
 			);
 			buildRules = (
 			);
@@ -3920,11 +3919,7 @@
 /* Begin PBXProject section */
 		08FB7793FE84155DC02AAC07 /* Project object */ = {
 			isa = PBXProject;
-			attributes = {
-				BuildIndependentTargetsInParallel = YES;
-			};
 			buildConfigurationList = F95CC8B509158F3100EA5ACE /* Build configuration list for PBXProject "Wish" */;
-			compatibilityVersion = "Xcode 3.1";
 			hasScannedForEncodings = 1;
 			mainGroup = 08FB7794FE84155DC02AAC07 /* Wish */;
 			projectDirPath = "";
@@ -3937,7 +3932,37 @@
 		};
 /* End PBXProject section */
 
+/* Begin PBXRezBuildPhase section */
+		F9EA4ADE08FA3B7F00B1F5F0 /* Rez */ = {
+			isa = PBXRezBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				F9EA4AF008FA3BD500B1F5F0 /* tkMacOSXXCursors.r in Rez */,
+				F9EA4AF208FA3BD800B1F5F0 /* tkMacOSXCursors.r in Rez */,
+				F9EA4AF308FA3BDA00B1F5F0 /* tkMacOSXAETE.r in Rez */,
+				F9EA4AF408FA3BDB00B1F5F0 /* tkAboutDlg.r in Rez */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXRezBuildPhase section */
+
 /* Begin PBXShellScriptBuildPhase section */
+		F95FA74C0B32CE190072E431 /* ShellScript */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+				"$(TARGET_BUILD_DIR)/$(PRODUCT_NAME)",
+				"$(REZ_COLLECTOR_DIR)/$(PRODUCT_NAME).rsrc",
+			);
+			outputPaths = (
+				"$(TARGET_TEMP_DIR)/stamp",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/bash;
+			shellScript = "touch -t $(date -r $(expr $(date '+%s') + 5) '+%Y%m%d%H%M.%S') \"${TARGET_TEMP_DIR}/stamp\"\n\n## Xcode bug workaround: Rezzing does not take place for commandline tool targets\n## even when a ResourceManager Resources phase is present, but this script phase's\n## input dependency on the final merged resource file forces the Rezzing.\n\nif [ \"${ZERO_LINK}\" = \"YES\" ]; then\n    ## ZeroLinking ignores OTHER_LDFLAGS, so our resource file doesn't get linked into the executable.\n    ## workaround: copy resource data into resource fork of zerolink launcher (will only work on HFS+).\n    cp -f \"${SCRIPT_INPUT_FILE_1}\" \"${SCRIPT_INPUT_FILE_0}/..namedfork/rsrc\"\nfi\n";
+		};
 		F97AF02F0B665DA900310EA2 /* ShellScript */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
@@ -3952,7 +3977,6 @@
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/bash;
 			shellScript = "gnumake -C \"${TK_SRCROOT}/macosx\"  -j \"$(sysctl -n hw.activecpu)\" \"$(echo \"${ACTION}\" | sed -e s/build// -e s/clean/distclean/ -e s/..\\*/\\&-/)${MAKE_TARGET}\" CFLAGS_WARNING=\"${WARNING_CFLAGS}\" CFLAGS_OPTIMIZE=\"-O${GCC_OPTIMIZATION_LEVEL}\" SYMROOT=\"${BUILT_PRODUCTS_DIR}\" OBJ_DIR=\"${OBJECT_FILE_DIR}\" INSTALL_ROOT=\"${DSTROOT}\" PREFIX=\"${PREFIX}\" BINDIR=\"${BINDIR}\" LIBDIR=\"${FRAMEWORK_INSTALL_PATH}\" MANDIR=\"${MANDIR}\" EXTRA_CONFIGURE_ARGS=\"${CONFIGURE_ARGS}\" APPLICATION_INSTALL_PATH=\"${APPLICATION_INSTALL_PATH}\" TCL_BUILD_DIR=\"${TCL_BUILD_DIR}\" TCL_FRAMEWORK_DIR=\"${TCL_FRAMEWORK_DIR}\" ${EXTRA_MAKE_FLAGS}\nresult=$?\nif [ -e \"${BUILT_PRODUCTS_DIR}/tktest\" ]; then\n\trm -f \"${BUILT_PRODUCTS_DIR}/tktest\"\nfi\necho \"Done\"\nrm -f \"${SCRIPT_INPUT_FILE_0}\"\nexit ${result}\n";
-			showEnvVarsInLog = 0;
 		};
 		F9A5C5F508F651A2008AE941 /* ShellScript */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -3974,7 +3998,6 @@
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/bash;
 			shellScript = "## tcl configure shell script phase\n\ncd \"${TCL_SRCROOT}\"/macosx &&\nif [ configure.ac -nt configure -o ../unix/configure.in -nt configure -o ../unix/tcl.m4 -nt configure -o ../unix/aclocal.m4 -nt configure ]; then\n    echo \"Running autoconf & autoheader in tcl/macosx\"\n    rm -rf autom4te.cache\n    ${AUTOCONF:-${DEVELOPER_DIR}/usr/bin/autoconf} && ${AUTOHEADER:-${DEVELOPER_DIR}/usr/bin/autoheader} || exit $?\n    rm -rf autom4te.cache\nfi\n\ncd \"${DERIVED_FILE_DIR}\" && mkdir -p tcl && cd tcl &&\nif [ \"${TCL_SRCROOT}\"/macosx/configure -nt config.status ]; then\n    echo \"Configuring Tcl\"\n    \"${TCL_SRCROOT}\"/macosx/configure --cache-file=../config.cache --prefix=${PREFIX} --bindir=${BINDIR} --libdir=${LIBDIR} --mandir=${MANDIR} --includedir=${INCLUDEDIR} --disable-shared ${CONFIGURE_ARGS}\nelse\n    ./config.status\nfi\n";
-			showEnvVarsInLog = 0;
 		};
 		F9A5C5F608F651AB008AE941 /* ShellScript */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -3994,7 +4017,6 @@
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/bash;
 			shellScript = "## tk configure shell script phase\n\ncd \"${TK_SRCROOT}\"/macosx &&\nif [ configure.ac -nt configure -o ../unix/configure.in -nt configure -o ../unix/tcl.m4 -nt configure -o ../unix/aclocal.m4 -nt configure ]; then\n    echo \"Running autoconf & autoheader in tk/macosx\"\n    rm -rf autom4te.cache\n    ${AUTOCONF:-${DEVELOPER_DIR}/usr/bin/autoconf} && ${AUTOHEADER:-${DEVELOPER_DIR}/usr/bin/autoheader} || exit $?\n    rm -rf autom4te.cache\nfi\n\ncd \"${DERIVED_FILE_DIR}\" && mkdir -p tk && cd tk &&\nif [ \"${TK_SRCROOT}\"/macosx/configure -nt config.status ]; then\n    echo \"Configuring Tk\"\n    \"${TK_SRCROOT}\"/macosx/configure --cache-file=../config.cache --prefix=${PREFIX} --bindir=${BINDIR} --libdir=${LIBDIR} --mandir=${MANDIR} --includedir=${INCLUDEDIR} --disable-shared --enable-aqua --with-tcl=../tcl ${CONFIGURE_ARGS}\nelse\n    ./config.status\nfi";
-			showEnvVarsInLog = 0;
 		};
 		F9FD30B40CC1AD070073837D /* ShellScript */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -4016,7 +4038,6 @@
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/bash;
 			shellScript = "## tcl configure shell script phase\n\ncd \"${TCL_SRCROOT}\"/macosx &&\nif [ configure.ac -nt configure -o ../unix/configure.in -nt configure -o ../unix/tcl.m4 -nt configure -o ../unix/aclocal.m4 -nt configure ]; then\n    echo \"Running autoconf & autoheader in tcl/macosx\"\n    rm -rf autom4te.cache\n    ${AUTOCONF:-${DEVELOPER_DIR}/usr/bin/autoconf} && ${AUTOHEADER:-${DEVELOPER_DIR}/usr/bin/autoheader} || exit $?\n    rm -rf autom4te.cache\nfi\n\ncd \"${DERIVED_FILE_DIR}\" && mkdir -p tcl && cd tcl &&\nif [ \"${TCL_SRCROOT}\"/macosx/configure -nt config.status ]; then\n    echo \"Configuring Tcl\"\n    \"${TCL_SRCROOT}\"/macosx/configure --cache-file=../config.cache --prefix=${PREFIX} --bindir=${BINDIR} --libdir=${LIBDIR} --mandir=${MANDIR} --includedir=${INCLUDEDIR} --disable-shared --disable-corefoundation ${CONFIGURE_ARGS}\nelse\n    ./config.status\nfi\n";
-			showEnvVarsInLog = 0;
 		};
 		F9FD30B50CC1AD070073837D /* ShellScript */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -4036,7 +4057,6 @@
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/bash;
 			shellScript = "## tk configure shell script phase\n\ncd \"${TK_SRCROOT}\"/macosx &&\nif [ configure.ac -nt configure -o ../unix/configure.in -nt configure -o ../unix/tcl.m4 -nt configure -o ../unix/aclocal.m4 -nt configure ]; then\n    echo \"Running autoconf & autoheader in tk/macosx\"\n    rm -rf autom4te.cache\n    ${AUTOCONF:-${DEVELOPER_DIR}/usr/bin/autoconf} && ${AUTOHEADER:-${DEVELOPER_DIR}/usr/bin/autoheader} || exit $?\n    rm -rf autom4te.cache\nfi\n\ncd \"${DERIVED_FILE_DIR}\" && mkdir -p tk && cd tk &&\nif [ \"${TK_SRCROOT}\"/macosx/configure -nt config.status ]; then\n    echo \"Configuring Tk\"\n    PATH=\"${PATH}:/usr/X11R6/bin\" \"${TK_SRCROOT}\"/macosx/configure --cache-file=../config.cache --prefix=${PREFIX} --bindir=${BINDIR} --libdir=${LIBDIR} --mandir=${MANDIR} --includedir=${INCLUDEDIR} --disable-shared --disable-corefoundation --enable-xft --with-tcl=../tcl ${CONFIGURE_ARGS}\nelse\n    ./config.status\nfi";
-			showEnvVarsInLog = 0;
 		};
 /* End PBXShellScriptBuildPhase section */
 
@@ -4192,7 +4212,6 @@
 				F96D4AD208F272CA004A47F5 /* tclUnixSock.c in Sources */,
 				F96D4AD408F272CA004A47F5 /* tclUnixThrd.c in Sources */,
 				F96D4AD608F272CA004A47F5 /* tclUnixTime.c in Sources */,
-				F9F4415E0C8BAE6F00BCCD67 /* tclDTrace.d in Sources */,
 				F966BDCF08F27A3F005CB29B /* tk3d.c in Sources */,
 				F966BDD108F27A3F005CB29B /* tkArgv.c in Sources */,
 				F966BDD208F27A3F005CB29B /* tkAtom.c in Sources */,
@@ -4302,6 +4321,7 @@
 				F96888230AF786D5000797B5 /* ttkWidget.c in Sources */,
 				F966BEDB08F27A40005CB29B /* tkMacOSXBitmap.c in Sources */,
 				F966BEDC08F27A40005CB29B /* tkMacOSXButton.c in Sources */,
+				F966BEDD08F27A40005CB29B /* tkMacOSXCarbonEvents.c in Sources */,
 				F966BEDE08F27A40005CB29B /* tkMacOSXClipboard.c in Sources */,
 				F966BEDF08F27A40005CB29B /* tkMacOSXColor.c in Sources */,
 				F966BEE008F27A40005CB29B /* tkMacOSXConfig.c in Sources */,
@@ -4493,7 +4513,6 @@
 				F9FD314C0CC1AD070073837D /* tclUnixSock.c in Sources */,
 				F9FD314D0CC1AD070073837D /* tclUnixThrd.c in Sources */,
 				F9FD314E0CC1AD070073837D /* tclUnixTime.c in Sources */,
-				F9FD31E20CC1AD070073837D /* tclDTrace.d in Sources */,
 				F9FD314F0CC1AD070073837D /* tk3d.c in Sources */,
 				F9FD31500CC1AD070073837D /* tkArgv.c in Sources */,
 				F9FD31510CC1AD070073837D /* tkAtom.c in Sources */,
@@ -4629,77 +4648,6 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin XCBuildConfiguration section */
-		F90E36D50F3B5C8400810A10 /* Debug gcc42 nogc */ = {
-			isa = XCBuildConfiguration;
-			baseConfigurationReference = F97AE8330B65C87F00310EA2 /* Wish-Debug.xcconfig */;
-			buildSettings = {
-				ARCHS = (
-					"$(NATIVE_ARCH_32_BIT)",
-					"$(NATIVE_ARCH_64_BIT)",
-				);
-				CPPFLAGS = "-arch $(CURRENT_ARCH) $(CPPFLAGS)";
-				GCC_C_LANGUAGE_STANDARD = gnu99;
-				GCC_ENABLE_OBJC_GC = unsupported;
-				GCC_ENABLE_PASCAL_STRINGS = NO;
-				GCC_INPUT_FILETYPE = sourcecode.c.objc;
-				GCC_VERSION = 4.2;
-				MACOSX_DEPLOYMENT_TARGET = 10.5;
-				ONLY_ACTIVE_ARCH = YES;
-				PREBINDING = NO;
-			};
-			name = "Debug gcc42 nogc";
-		};
-		F90E36D60F3B5C8400810A10 /* Debug gcc42 nogc */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				PRODUCT_NAME = Wish;
-				SKIP_INSTALL = NO;
-			};
-			name = "Debug gcc42 nogc";
-		};
-		F90E36D70F3B5C8400810A10 /* Debug gcc42 nogc */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				CONFIGURE_ARGS = "tcl_cv_cc_visibility_hidden=no $(CONFIGURE_ARGS)";
-				GCC_DYNAMIC_NO_PIC = NO;
-				GCC_ENABLE_FIX_AND_CONTINUE = YES;
-				GCC_PREPROCESSOR_DEFINITIONS = (
-					"__private_extern__=extern",
-					"$(GCC_PREPROCESSOR_DEFINITIONS)",
-				);
-				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
-				OTHER_LDFLAGS = (
-					"$(OTHER_LDFLAGS_AQUA)",
-					"$(OTHER_LDFLAGS)",
-				);
-				PRODUCT_NAME = tktest;
-			};
-			name = "Debug gcc42 nogc";
-		};
-		F90E36D80F3B5C8400810A10 /* Debug gcc42 nogc */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				CONFIGURE_ARGS = "tcl_cv_cc_visibility_hidden=no $(CONFIGURE_ARGS)";
-				GCC_DYNAMIC_NO_PIC = NO;
-				GCC_ENABLE_FIX_AND_CONTINUE = YES;
-				GCC_PREPROCESSOR_DEFINITIONS = (
-					"__private_extern__=extern",
-					"$(GCC_PREPROCESSOR_DEFINITIONS)",
-				);
-				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
-				HEADER_SEARCH_PATHS = (
-					/usr/X11R6/include,
-					/usr/X11R6/include/freetype2,
-					"$(HEADER_SEARCH_PATHS)",
-				);
-				LIBRARY_SEARCH_PATHS = (
-					/usr/X11R6/lib,
-					"$(LIBRARY_SEARCH_PATHS)",
-				);
-				PRODUCT_NAME = "tktest-X11";
-			};
-			name = "Debug gcc42 nogc";
-		};
 		F91BCC4F093152310042A6BF /* ReleaseUniversal */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -4723,13 +4671,12 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = F97AE82B0B65C69B00310EA2 /* Wish-Release.xcconfig */;
 			buildSettings = {
-				ARCHS = "$(ARCHS_STANDARD_32_64_BIT)";
-				CFLAGS = "-arch i386 -arch x86_64 -arch ppc $(CFLAGS)";
-				GCC_C_LANGUAGE_STANDARD = gnu99;
-				GCC_ENABLE_OBJC_GC = supported;
-				GCC_ENABLE_PASCAL_STRINGS = NO;
-				GCC_INPUT_FILETYPE = sourcecode.c.objc;
-				MACOSX_DEPLOYMENT_TARGET = 10.5;
+				ARCHS = (
+					ppc,
+					i386,
+				);
+				CFLAGS = "-arch ppc -arch i386 $(CFLAGS)";
+				MACOSX_DEPLOYMENT_TARGET = 10.4;
 				PREBINDING = NO;
 			};
 			name = ReleaseUniversal;
@@ -4773,18 +4720,8 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = F97AE8330B65C87F00310EA2 /* Wish-Debug.xcconfig */;
 			buildSettings = {
-				ARCHS = (
-					"$(NATIVE_ARCH_32_BIT)",
-					"$(NATIVE_ARCH_64_BIT)",
-				);
 				CONFIGURE_ARGS = "$(CONFIGURE_ARGS) --enable-symbols=all";
-				CPPFLAGS = "-arch $(CURRENT_ARCH) $(CPPFLAGS)";
-				GCC_C_LANGUAGE_STANDARD = gnu99;
-				GCC_ENABLE_OBJC_GC = supported;
-				GCC_ENABLE_PASCAL_STRINGS = NO;
-				GCC_INPUT_FILETYPE = sourcecode.c.objc;
-				MACOSX_DEPLOYMENT_TARGET = 10.5;
-				ONLY_ACTIVE_ARCH = YES;
+				MACOSX_DEPLOYMENT_TARGET = 10.2;
 				PREBINDING = NO;
 			};
 			name = DebugMemCompile;
@@ -4793,19 +4730,9 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = F97AE8330B65C87F00310EA2 /* Wish-Debug.xcconfig */;
 			buildSettings = {
-				ARCHS = (
-					"$(NATIVE_ARCH_32_BIT)",
-					"$(NATIVE_ARCH_64_BIT)",
-				);
-				CPPFLAGS = "-arch $(CURRENT_ARCH) $(CPPFLAGS)";
-				GCC_C_LANGUAGE_STANDARD = gnu99;
-				GCC_ENABLE_OBJC_GC = supported;
-				GCC_ENABLE_PASCAL_STRINGS = NO;
 				GCC_GENERATE_TEST_COVERAGE_FILES = YES;
-				GCC_INPUT_FILETYPE = sourcecode.c.objc;
 				GCC_INSTRUMENT_PROGRAM_FLOW_ARCS = YES;
-				MACOSX_DEPLOYMENT_TARGET = 10.5;
-				ONLY_ACTIVE_ARCH = YES;
+				MACOSX_DEPLOYMENT_TARGET = 10.2;
 				OTHER_LDFLAGS = (
 					"$(OTHER_LDFLAGS)",
 					"-lgcov",
@@ -4889,6 +4816,7 @@
 					"$(OTHER_LDFLAGS)",
 				);
 				PRODUCT_NAME = tktest;
+				ZERO_LINK = YES;
 			};
 			name = Debug;
 		};
@@ -4918,17 +4846,7 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = F97AE8330B65C87F00310EA2 /* Wish-Debug.xcconfig */;
 			buildSettings = {
-				ARCHS = (
-					"$(NATIVE_ARCH_32_BIT)",
-					"$(NATIVE_ARCH_64_BIT)",
-				);
-				CPPFLAGS = "-arch $(CURRENT_ARCH) $(CPPFLAGS)";
-				GCC_C_LANGUAGE_STANDARD = gnu99;
-				GCC_ENABLE_OBJC_GC = supported;
-				GCC_ENABLE_PASCAL_STRINGS = NO;
-				GCC_INPUT_FILETYPE = sourcecode.c.objc;
-				MACOSX_DEPLOYMENT_TARGET = 10.5;
-				ONLY_ACTIVE_ARCH = YES;
+				MACOSX_DEPLOYMENT_TARGET = 10.2;
 				PREBINDING = NO;
 			};
 			name = Debug;
@@ -4937,13 +4855,8 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = F97AE82B0B65C69B00310EA2 /* Wish-Release.xcconfig */;
 			buildSettings = {
-				ARCHS = "$(NATIVE_ARCH_32_BIT)";
-				GCC_C_LANGUAGE_STANDARD = gnu99;
-				GCC_ENABLE_OBJC_GC = supported;
-				GCC_ENABLE_PASCAL_STRINGS = NO;
-				GCC_INPUT_FILETYPE = sourcecode.c.objc;
-				MACOSX_DEPLOYMENT_TARGET = 10.5;
-				PREBINDING = NO;
+				MACOSX_DEPLOYMENT_TARGET = 10.2;
+				PREBINDING = YES;
 			};
 			name = Release;
 		};
@@ -4951,17 +4864,7 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = F97AE8330B65C87F00310EA2 /* Wish-Debug.xcconfig */;
 			buildSettings = {
-				ARCHS = (
-					"$(NATIVE_ARCH_32_BIT)",
-					"$(NATIVE_ARCH_64_BIT)",
-				);
-				CPPFLAGS = "-arch $(CURRENT_ARCH) $(CPPFLAGS)";
-				GCC_C_LANGUAGE_STANDARD = gnu99;
-				GCC_ENABLE_OBJC_GC = supported;
-				GCC_ENABLE_PASCAL_STRINGS = NO;
-				GCC_INPUT_FILETYPE = sourcecode.c.objc;
-				MACOSX_DEPLOYMENT_TARGET = 10.5;
-				ONLY_ACTIVE_ARCH = YES;
+				MACOSX_DEPLOYMENT_TARGET = 10.2;
 				PREBINDING = NO;
 			};
 			name = DebugNoFixZL;
@@ -4987,6 +4890,7 @@
 					"$(LIBRARY_SEARCH_PATHS)",
 				);
 				PRODUCT_NAME = "tktest-X11";
+				ZERO_LINK = YES;
 			};
 			name = Debug;
 		};
@@ -5025,8 +4929,6 @@
 		F97258AC0A86873D00096C78 /* ReleaseUniversal */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ARCHS = "$(ARCHS_STANDARD_32_64_BIT)";
-				CFLAGS = "-arch i386 -arch x86_64 -arch ppc $(CFLAGS)";
 				HEADER_SEARCH_PATHS = (
 					/usr/X11R6/include,
 					/usr/X11R6/include/freetype2,
@@ -5040,26 +4942,7 @@
 			};
 			name = ReleaseUniversal;
 		};
-		F97AED1B0B660B2100310EA2 /* Debug64bit */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				PRODUCT_NAME = Wish;
-				SKIP_INSTALL = NO;
-			};
-			name = Debug64bit;
-		};
-		F97AED1C0B660B2100310EA2 /* Debug64bit */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				OTHER_LDFLAGS = (
-					"$(OTHER_LDFLAGS_AQUA)",
-					"$(OTHER_LDFLAGS)",
-				);
-				PRODUCT_NAME = tktest;
-			};
-			name = Debug64bit;
-		};
-		F97AED1D0B660B2100310EA2 /* Debug64bit */ = {
+		F97AED080B660A6C00310EA2 /* ReleaseUniversal10.4uSDK */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				HEADER_SEARCH_PATHS = (
@@ -5073,40 +4956,46 @@
 				);
 				PRODUCT_NAME = "tktest-X11";
 			};
-			name = Debug64bit;
+			name = ReleaseUniversal10.4uSDK;
 		};
-		F97AED1E0B660B2100310EA2 /* Debug64bit */ = {
+		F97AED0F0B660AA300310EA2 /* ReleasePPC10.3.9SDK */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = F97AE8330B65C87F00310EA2 /* Wish-Debug.xcconfig */;
 			buildSettings = {
-				ARCHS = "$(NATIVE_ARCH_64_BIT)";
-				CONFIGURE_ARGS = "--enable-64bit $(CONFIGURE_ARGS)";
-				CPPFLAGS = "-arch $(NATIVE_ARCH_64_BIT) $(CPPFLAGS)";
-				GCC_C_LANGUAGE_STANDARD = gnu99;
-				GCC_ENABLE_OBJC_GC = supported;
-				GCC_ENABLE_PASCAL_STRINGS = NO;
-				GCC_INPUT_FILETYPE = sourcecode.c.objc;
-				MACOSX_DEPLOYMENT_TARGET = 10.5;
-				PREBINDING = NO;
+				HEADER_SEARCH_PATHS = (
+					/usr/X11R6/include,
+					/usr/X11R6/include/freetype2,
+					"$(HEADER_SEARCH_PATHS)",
+				);
+				LIBRARY_SEARCH_PATHS = (
+					/usr/X11R6/lib,
+					"$(LIBRARY_SEARCH_PATHS)",
+				);
+				PRODUCT_NAME = "tktest-X11";
 			};
-			name = Debug64bit;
+			name = ReleasePPC10.3.9SDK;
+		};
+		F97AED160B660AF100310EA2 /* ReleasePPC10.2.8SDK */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				HEADER_SEARCH_PATHS = (
+					/usr/X11R6/include,
+					/usr/X11R6/include/freetype2,
+					"$(HEADER_SEARCH_PATHS)",
+				);
+				LIBRARY_SEARCH_PATHS = (
+					/usr/X11R6/lib,
+					"$(LIBRARY_SEARCH_PATHS)",
+				);
+				PRODUCT_NAME = "tktest-X11";
+			};
+			name = ReleasePPC10.2.8SDK;
 		};
 		F987512F0DE7B57E00B1C9EC /* DebugNoCF */ = {
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = F97AE8330B65C87F00310EA2 /* Wish-Debug.xcconfig */;
 			buildSettings = {
-				ARCHS = (
-					"$(NATIVE_ARCH_32_BIT)",
-					"$(NATIVE_ARCH_64_BIT)",
-				);
 				CONFIGURE_ARGS = "$(CONFIGURE_ARGS) --disable-corefoundation";
-				CPPFLAGS = "-arch $(CURRENT_ARCH) $(CPPFLAGS)";
-				GCC_C_LANGUAGE_STANDARD = gnu99;
-				GCC_ENABLE_OBJC_GC = supported;
-				GCC_ENABLE_PASCAL_STRINGS = NO;
-				GCC_INPUT_FILETYPE = sourcecode.c.objc;
-				MACOSX_DEPLOYMENT_TARGET = 10.5;
-				ONLY_ACTIVE_ARCH = YES;
+				MACOSX_DEPLOYMENT_TARGET = 10.2;
 				PREBINDING = NO;
 			};
 			name = DebugNoCF;
@@ -5152,18 +5041,8 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = F97AE8330B65C87F00310EA2 /* Wish-Debug.xcconfig */;
 			buildSettings = {
-				ARCHS = (
-					"$(NATIVE_ARCH_32_BIT)",
-					"$(NATIVE_ARCH_64_BIT)",
-				);
 				CONFIGURE_ARGS = "$(CONFIGURE_ARGS) --disable-threads --disable-corefoundation";
-				CPPFLAGS = "-arch $(CURRENT_ARCH) $(CPPFLAGS)";
-				GCC_C_LANGUAGE_STANDARD = gnu99;
-				GCC_ENABLE_OBJC_GC = supported;
-				GCC_ENABLE_PASCAL_STRINGS = NO;
-				GCC_INPUT_FILETYPE = sourcecode.c.objc;
-				MACOSX_DEPLOYMENT_TARGET = 10.5;
-				ONLY_ACTIVE_ARCH = YES;
+				MACOSX_DEPLOYMENT_TARGET = 10.2;
 				PREBINDING = NO;
 			};
 			name = DebugNoCFUnthreaded;
@@ -5204,259 +5083,6 @@
 				PRODUCT_NAME = "tktest-X11";
 			};
 			name = DebugNoCFUnthreaded;
-		};
-		F9988AB10D814C6500B6B03B /* Debug gcc42 */ = {
-			isa = XCBuildConfiguration;
-			baseConfigurationReference = F97AE8330B65C87F00310EA2 /* Wish-Debug.xcconfig */;
-			buildSettings = {
-				ARCHS = (
-					"$(NATIVE_ARCH_32_BIT)",
-					"$(NATIVE_ARCH_64_BIT)",
-				);
-				CPPFLAGS = "-arch $(CURRENT_ARCH) $(CPPFLAGS)";
-				GCC_C_LANGUAGE_STANDARD = gnu99;
-				GCC_ENABLE_OBJC_GC = supported;
-				GCC_ENABLE_PASCAL_STRINGS = NO;
-				GCC_INPUT_FILETYPE = sourcecode.c.objc;
-				GCC_VERSION = 4.2;
-				MACOSX_DEPLOYMENT_TARGET = 10.5;
-				ONLY_ACTIVE_ARCH = YES;
-				PREBINDING = NO;
-			};
-			name = "Debug gcc42";
-		};
-		F9988AB20D814C6500B6B03B /* Debug gcc42 */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				PRODUCT_NAME = Wish;
-				SKIP_INSTALL = NO;
-			};
-			name = "Debug gcc42";
-		};
-		F9988AB30D814C6500B6B03B /* Debug gcc42 */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				CONFIGURE_ARGS = "tcl_cv_cc_visibility_hidden=no $(CONFIGURE_ARGS)";
-				GCC_DYNAMIC_NO_PIC = NO;
-				GCC_ENABLE_FIX_AND_CONTINUE = YES;
-				GCC_PREPROCESSOR_DEFINITIONS = (
-					"__private_extern__=extern",
-					"$(GCC_PREPROCESSOR_DEFINITIONS)",
-				);
-				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
-				OTHER_LDFLAGS = (
-					"$(OTHER_LDFLAGS_AQUA)",
-					"$(OTHER_LDFLAGS)",
-				);
-				PRODUCT_NAME = tktest;
-			};
-			name = "Debug gcc42";
-		};
-		F9988AB40D814C6500B6B03B /* Debug gcc42 */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				CONFIGURE_ARGS = "tcl_cv_cc_visibility_hidden=no $(CONFIGURE_ARGS)";
-				GCC_DYNAMIC_NO_PIC = NO;
-				GCC_ENABLE_FIX_AND_CONTINUE = YES;
-				GCC_PREPROCESSOR_DEFINITIONS = (
-					"__private_extern__=extern",
-					"$(GCC_PREPROCESSOR_DEFINITIONS)",
-				);
-				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
-				HEADER_SEARCH_PATHS = (
-					/usr/X11R6/include,
-					/usr/X11R6/include/freetype2,
-					"$(HEADER_SEARCH_PATHS)",
-				);
-				LIBRARY_SEARCH_PATHS = (
-					/usr/X11R6/lib,
-					"$(LIBRARY_SEARCH_PATHS)",
-				);
-				PRODUCT_NAME = "tktest-X11";
-			};
-			name = "Debug gcc42";
-		};
-		F9988AB50D814C7500B6B03B /* Debug llvmgcc42 */ = {
-			isa = XCBuildConfiguration;
-			baseConfigurationReference = F97AE8330B65C87F00310EA2 /* Wish-Debug.xcconfig */;
-			buildSettings = {
-				ARCHS = (
-					"$(NATIVE_ARCH_32_BIT)",
-					"$(NATIVE_ARCH_64_BIT)",
-				);
-				CC = "$(DEVELOPER_DIR)/usr/bin/llvm-gcc-4.2";
-				CPPFLAGS = "-arch $(CURRENT_ARCH) $(CPPFLAGS)";
-				GCC_C_LANGUAGE_STANDARD = gnu99;
-				GCC_ENABLE_OBJC_GC = supported;
-				GCC_ENABLE_PASCAL_STRINGS = NO;
-				GCC_INPUT_FILETYPE = sourcecode.c.objc;
-				GCC_VERSION = com.apple.compilers.llvmgcc42;
-				MACOSX_DEPLOYMENT_TARGET = 10.5;
-				ONLY_ACTIVE_ARCH = YES;
-				PREBINDING = NO;
-			};
-			name = "Debug llvmgcc42";
-		};
-		F9988AB60D814C7500B6B03B /* Debug llvmgcc42 */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				PRODUCT_NAME = Wish;
-				SKIP_INSTALL = NO;
-			};
-			name = "Debug llvmgcc42";
-		};
-		F9988AB70D814C7500B6B03B /* Debug llvmgcc42 */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				CONFIGURE_ARGS = "tcl_cv_cc_visibility_hidden=no $(CONFIGURE_ARGS)";
-				GCC_DYNAMIC_NO_PIC = NO;
-				GCC_ENABLE_FIX_AND_CONTINUE = YES;
-				GCC_PREPROCESSOR_DEFINITIONS = (
-					"__private_extern__=extern",
-					"$(GCC_PREPROCESSOR_DEFINITIONS)",
-				);
-				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
-				OTHER_LDFLAGS = (
-					"$(OTHER_LDFLAGS_AQUA)",
-					"$(OTHER_LDFLAGS)",
-				);
-				PRODUCT_NAME = tktest;
-			};
-			name = "Debug llvmgcc42";
-		};
-		F9988AB80D814C7500B6B03B /* Debug llvmgcc42 */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				CONFIGURE_ARGS = "tcl_cv_cc_visibility_hidden=no $(CONFIGURE_ARGS)";
-				GCC_DYNAMIC_NO_PIC = NO;
-				GCC_ENABLE_FIX_AND_CONTINUE = YES;
-				GCC_PREPROCESSOR_DEFINITIONS = (
-					"__private_extern__=extern",
-					"$(GCC_PREPROCESSOR_DEFINITIONS)",
-				);
-				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
-				HEADER_SEARCH_PATHS = (
-					/usr/X11R6/include,
-					/usr/X11R6/include/freetype2,
-					"$(HEADER_SEARCH_PATHS)",
-				);
-				LIBRARY_SEARCH_PATHS = (
-					/usr/X11R6/lib,
-					"$(LIBRARY_SEARCH_PATHS)",
-				);
-				PRODUCT_NAME = "tktest-X11";
-			};
-			name = "Debug llvmgcc42";
-		};
-		F9988BB10D81586D00B6B03B /* ReleaseUniversal gcc42 */ = {
-			isa = XCBuildConfiguration;
-			baseConfigurationReference = F97AE82B0B65C69B00310EA2 /* Wish-Release.xcconfig */;
-			buildSettings = {
-				ARCHS = "$(ARCHS_STANDARD_32_64_BIT)";
-				CFLAGS = "-arch i386 -arch x86_64 -arch ppc $(CFLAGS)";
-				GCC_C_LANGUAGE_STANDARD = gnu99;
-				GCC_ENABLE_OBJC_GC = supported;
-				GCC_ENABLE_PASCAL_STRINGS = NO;
-				GCC_INPUT_FILETYPE = sourcecode.c.objc;
-				GCC_VERSION = 4.2;
-				MACOSX_DEPLOYMENT_TARGET = 10.5;
-				PREBINDING = NO;
-			};
-			name = "ReleaseUniversal gcc42";
-		};
-		F9988BB20D81586D00B6B03B /* ReleaseUniversal gcc42 */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				PRODUCT_NAME = Wish;
-				SKIP_INSTALL = NO;
-			};
-			name = "ReleaseUniversal gcc42";
-		};
-		F9988BB30D81586D00B6B03B /* ReleaseUniversal gcc42 */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				OTHER_LDFLAGS = (
-					"$(OTHER_LDFLAGS_AQUA)",
-					"$(OTHER_LDFLAGS)",
-				);
-				PRODUCT_NAME = tktest;
-			};
-			name = "ReleaseUniversal gcc42";
-		};
-		F9988BB40D81586D00B6B03B /* ReleaseUniversal gcc42 */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ARCHS = "$(ARCHS_STANDARD_32_64_BIT)";
-				CFLAGS = "-arch i386 -arch x86_64 -arch ppc $(CFLAGS)";
-				HEADER_SEARCH_PATHS = (
-					/usr/X11R6/include,
-					/usr/X11R6/include/freetype2,
-					"$(HEADER_SEARCH_PATHS)",
-				);
-				LIBRARY_SEARCH_PATHS = (
-					/usr/X11R6/lib,
-					"$(LIBRARY_SEARCH_PATHS)",
-				);
-				PRODUCT_NAME = "tktest-X11";
-			};
-			name = "ReleaseUniversal gcc42";
-		};
-		F9988BB50D81587400B6B03B /* ReleaseUniversal llvmgcc42 */ = {
-			isa = XCBuildConfiguration;
-			baseConfigurationReference = F97AE82B0B65C69B00310EA2 /* Wish-Release.xcconfig */;
-			buildSettings = {
-				ARCHS = "$(ARCHS_STANDARD_32_64_BIT)";
-				CC = "$(DEVELOPER_DIR)/usr/bin/llvm-gcc-4.2";
-				CFLAGS = "-arch i386 -arch x86_64 -arch ppc $(CFLAGS)";
-				DEBUG_INFORMATION_FORMAT = dwarf;
-				GCC_C_LANGUAGE_STANDARD = gnu99;
-				GCC_ENABLE_OBJC_GC = supported;
-				GCC_ENABLE_PASCAL_STRINGS = NO;
-				GCC_INPUT_FILETYPE = sourcecode.c.objc;
-				GCC_OPTIMIZATION_LEVEL = 4;
-				GCC_VERSION = com.apple.compilers.llvmgcc42;
-				MACOSX_DEPLOYMENT_TARGET = 10.5;
-				PREBINDING = NO;
-				TCL_CONFIGURE_ARGS = "$(TCL_CONFIGURE_ARGS) --disable-dtrace";
-			};
-			name = "ReleaseUniversal llvmgcc42";
-		};
-		F9988BB60D81587400B6B03B /* ReleaseUniversal llvmgcc42 */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				PRODUCT_NAME = Wish;
-				SKIP_INSTALL = NO;
-			};
-			name = "ReleaseUniversal llvmgcc42";
-		};
-		F9988BB70D81587400B6B03B /* ReleaseUniversal llvmgcc42 */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				OTHER_LDFLAGS = (
-					"$(OTHER_LDFLAGS_AQUA)",
-					"$(OTHER_LDFLAGS)",
-				);
-				PRODUCT_NAME = tktest;
-			};
-			name = "ReleaseUniversal llvmgcc42";
-		};
-		F9988BB80D81587400B6B03B /* ReleaseUniversal llvmgcc42 */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ARCHS = "$(ARCHS_STANDARD_32_64_BIT)";
-				CFLAGS = "-arch i386 -arch x86_64 -arch ppc $(CFLAGS)";
-				HEADER_SEARCH_PATHS = (
-					/usr/X11R6/include,
-					/usr/X11R6/include/freetype2,
-					"$(HEADER_SEARCH_PATHS)",
-				);
-				LIBRARY_SEARCH_PATHS = (
-					/usr/X11R6/lib,
-					"$(LIBRARY_SEARCH_PATHS)",
-				);
-				PRODUCT_NAME = "tktest-X11";
-			};
-			name = "ReleaseUniversal llvmgcc42";
 		};
 		F99EE73B0BE835310060D4AF /* DebugUnthreaded */ = {
 			isa = XCBuildConfiguration;
@@ -5532,18 +5158,8 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = F97AE8330B65C87F00310EA2 /* Wish-Debug.xcconfig */;
 			buildSettings = {
-				ARCHS = (
-					"$(NATIVE_ARCH_32_BIT)",
-					"$(NATIVE_ARCH_64_BIT)",
-				);
 				CONFIGURE_ARGS = "$(CONFIGURE_ARGS) --disable-threads";
-				CPPFLAGS = "-arch $(CURRENT_ARCH) $(CPPFLAGS)";
-				GCC_C_LANGUAGE_STANDARD = gnu99;
-				GCC_ENABLE_OBJC_GC = supported;
-				GCC_ENABLE_PASCAL_STRINGS = NO;
-				GCC_INPUT_FILETYPE = sourcecode.c.objc;
-				MACOSX_DEPLOYMENT_TARGET = 10.5;
-				ONLY_ACTIVE_ARCH = YES;
+				MACOSX_DEPLOYMENT_TARGET = 10.2;
 				PREBINDING = NO;
 			};
 			name = DebugUnthreaded;
@@ -5552,34 +5168,24 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = F97AE8330B65C87F00310EA2 /* Wish-Debug.xcconfig */;
 			buildSettings = {
-				ARCHS = (
-					"$(NATIVE_ARCH_32_BIT)",
-					"$(NATIVE_ARCH_64_BIT)",
-				);
-				CPPFLAGS = "-arch $(CURRENT_ARCH) $(CPPFLAGS)";
-				GCC_C_LANGUAGE_STANDARD = gnu99;
-				GCC_ENABLE_OBJC_GC = unsupported;
-				GCC_ENABLE_PASCAL_STRINGS = NO;
-				GCC_INPUT_FILETYPE = sourcecode.c.objc;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					PURIFY,
 					"$(GCC_PREPROCESSOR_DEFINITIONS)",
 				);
-				MACOSX_DEPLOYMENT_TARGET = 10.5;
-				ONLY_ACTIVE_ARCH = YES;
+				MACOSX_DEPLOYMENT_TARGET = 10.2;
 				PREBINDING = NO;
 			};
 			name = DebugLeaks;
 		};
-		F9EEED960C2FEFD300396116 /* ReleaseUniversal10.5SDK */ = {
+		F9DB62080B65ADA800A370FB /* ReleaseUniversal10.4uSDK */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				PRODUCT_NAME = Wish;
 				SKIP_INSTALL = NO;
 			};
-			name = ReleaseUniversal10.5SDK;
+			name = ReleaseUniversal10.4uSDK;
 		};
-		F9EEED970C2FEFD300396116 /* ReleaseUniversal10.5SDK */ = {
+		F9DB62090B65ADA800A370FB /* ReleaseUniversal10.4uSDK */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				OTHER_LDFLAGS = (
@@ -5588,42 +5194,96 @@
 				);
 				PRODUCT_NAME = tktest;
 			};
-			name = ReleaseUniversal10.5SDK;
+			name = ReleaseUniversal10.4uSDK;
 		};
-		F9EEED980C2FEFD300396116 /* ReleaseUniversal10.5SDK */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ARCHS = "$(ARCHS_STANDARD_32_64_BIT)";
-				CFLAGS = "-arch i386 -arch x86_64 -arch ppc $(CFLAGS)";
-				HEADER_SEARCH_PATHS = (
-					/usr/X11R6/include,
-					/usr/X11R6/include/freetype2,
-					"$(HEADER_SEARCH_PATHS)",
-				);
-				LIBRARY_SEARCH_PATHS = (
-					/usr/X11R6/lib,
-					"$(LIBRARY_SEARCH_PATHS)",
-				);
-				PRODUCT_NAME = "tktest-X11";
-			};
-			name = ReleaseUniversal10.5SDK;
-		};
-		F9EEED990C2FEFD300396116 /* ReleaseUniversal10.5SDK */ = {
+		F9DB620A0B65ADA800A370FB /* ReleaseUniversal10.4uSDK */ = {
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = F97AE82B0B65C69B00310EA2 /* Wish-Release.xcconfig */;
 			buildSettings = {
-				ARCHS = "$(ARCHS_STANDARD_32_64_BIT)";
-				CFLAGS = "-arch i386 -arch x86_64 -arch ppc $(CFLAGS)";
+				ARCHS = (
+					ppc,
+					i386,
+				);
+				CFLAGS = "-arch ppc -arch i386 $(CFLAGS)";
 				CPPFLAGS = "-isysroot $(SDKROOT) $(CPPFLAGS)";
-				GCC_C_LANGUAGE_STANDARD = gnu99;
-				GCC_ENABLE_OBJC_GC = supported;
-				GCC_ENABLE_PASCAL_STRINGS = NO;
-				GCC_INPUT_FILETYPE = sourcecode.c.objc;
-				MACOSX_DEPLOYMENT_TARGET = 10.5;
+				MACOSX_DEPLOYMENT_TARGET = 10.4;
 				PREBINDING = NO;
-				SDKROOT = macosx10.5;
+				SDKROOT = /Developer/SDKs/MacOSX10.4u.sdk;
 			};
-			name = ReleaseUniversal10.5SDK;
+			name = ReleaseUniversal10.4uSDK;
+		};
+		F9DB621F0B65AFDE00A370FB /* ReleasePPC10.3.9SDK */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				LDFLAGS = "-force_cpusubtype_ALL $(LDFLAGS)";
+				PRODUCT_NAME = Wish;
+				SKIP_INSTALL = NO;
+			};
+			name = ReleasePPC10.3.9SDK;
+		};
+		F9DB62200B65AFDE00A370FB /* ReleasePPC10.3.9SDK */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				OTHER_LDFLAGS = (
+					"$(OTHER_LDFLAGS_AQUA)",
+					"$(OTHER_LDFLAGS)",
+				);
+				PRODUCT_NAME = tktest;
+			};
+			name = ReleasePPC10.3.9SDK;
+		};
+		F9DB62210B65AFDE00A370FB /* ReleasePPC10.3.9SDK */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = F97AE82B0B65C69B00310EA2 /* Wish-Release.xcconfig */;
+			buildSettings = {
+				ARCHS = ppc;
+				CFLAGS = "$(PER_ARCH_CFLAGS_ppc) $(CFLAGS)";
+				CPPFLAGS = "-arch ppc -isysroot $(SDKROOT) $(CPPFLAGS)";
+				MACOSX_DEPLOYMENT_TARGET = 10.3;
+				PREBINDING = YES;
+				SDKROOT = /Developer/SDKs/MacOSX10.3.9.sdk;
+			};
+			name = ReleasePPC10.3.9SDK;
+		};
+		F9DB62350B65B03A00A370FB /* ReleasePPC10.2.8SDK */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				PRODUCT_NAME = Wish;
+				SKIP_INSTALL = NO;
+			};
+			name = ReleasePPC10.2.8SDK;
+		};
+		F9DB62360B65B03A00A370FB /* ReleasePPC10.2.8SDK */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				OTHER_LDFLAGS = (
+					"$(OTHER_LDFLAGS_AQUA)",
+					"$(OTHER_LDFLAGS)",
+				);
+				PRODUCT_NAME = tktest;
+			};
+			name = ReleasePPC10.2.8SDK;
+		};
+		F9DB62370B65B03A00A370FB /* ReleasePPC10.2.8SDK */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = F97AE82B0B65C69B00310EA2 /* Wish-Release.xcconfig */;
+			buildSettings = {
+				ARCHS = ppc;
+				CFLAGS = "$(PER_ARCH_CFLAGS_ppc) -fconstant-cfstrings $(CFLAGS)";
+				CPPFLAGS = "-arch ppc -D__CONSTANT_CFSTRINGS__ -DMAC_OS_X_VERSION_MIN_REQUIRED=1020 -nostdinc -isystem $(SDKROOT)/usr/include/gcc/darwin/$(GCC_VERSION) -isystem $(SDKROOT)/usr/include -F$(SDKROOT)/System/Library/Frameworks";
+				DEBUG_INFORMATION_FORMAT = stabs;
+				GCC = /usr/bin/gcc;
+				GCC_VERSION = 3.3;
+				LDFLAGS = "-L$(SDKROOT)/usr/lib/gcc/darwin/$(GCC_VERSION) -Wl,-syslibroot,$(SDKROOT)";
+				MACOSX_DEPLOYMENT_TARGET = 10.2;
+				PREBINDING = YES;
+				SDKROOT = /Developer/SDKs/MacOSX10.2.8.sdk;
+				WARNING_CFLAGS = (
+					"$(WARNING_CFLAGS_GCC3)",
+					"-Wno-long-double",
+				);
+			};
+			name = ReleasePPC10.2.8SDK;
 		};
 /* End XCBuildConfiguration section */
 
@@ -5632,9 +5292,6 @@
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				F95CC8AC09158F3100EA5ACE /* Debug */,
-				F9988AB20D814C6500B6B03B /* Debug gcc42 */,
-				F90E36D60F3B5C8400810A10 /* Debug gcc42 nogc */,
-				F9988AB60D814C7500B6B03B /* Debug llvmgcc42 */,
 				F95CC8AE09158F3100EA5ACE /* DebugNoFixZL */,
 				F99EE73B0BE835310060D4AF /* DebugUnthreaded */,
 				F98751300DE7B57E00B1C9EC /* DebugNoCF */,
@@ -5642,12 +5299,11 @@
 				F93084370BB93D2800CD0B9E /* DebugMemCompile */,
 				F99EE73C0BE835310060D4AF /* DebugLeaks */,
 				F9359B260DF212DA00E04F67 /* DebugGCov */,
-				F97AED1B0B660B2100310EA2 /* Debug64bit */,
 				F95CC8AD09158F3100EA5ACE /* Release */,
 				F91BCC4F093152310042A6BF /* ReleaseUniversal */,
-				F9988BB20D81586D00B6B03B /* ReleaseUniversal gcc42 */,
-				F9988BB60D81587400B6B03B /* ReleaseUniversal llvmgcc42 */,
-				F9EEED960C2FEFD300396116 /* ReleaseUniversal10.5SDK */,
+				F9DB62080B65ADA800A370FB /* ReleaseUniversal10.4uSDK */,
+				F9DB621F0B65AFDE00A370FB /* ReleasePPC10.3.9SDK */,
+				F9DB62350B65B03A00A370FB /* ReleasePPC10.2.8SDK */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;
@@ -5656,9 +5312,6 @@
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				F95CC8B109158F3100EA5ACE /* Debug */,
-				F9988AB30D814C6500B6B03B /* Debug gcc42 */,
-				F90E36D70F3B5C8400810A10 /* Debug gcc42 nogc */,
-				F9988AB70D814C7500B6B03B /* Debug llvmgcc42 */,
 				F95CC8B309158F3100EA5ACE /* DebugNoFixZL */,
 				F99EE73D0BE835310060D4AF /* DebugUnthreaded */,
 				F98751310DE7B57E00B1C9EC /* DebugNoCF */,
@@ -5666,12 +5319,11 @@
 				F93084380BB93D2800CD0B9E /* DebugMemCompile */,
 				F99EE73E0BE835310060D4AF /* DebugLeaks */,
 				F9359B270DF212DA00E04F67 /* DebugGCov */,
-				F97AED1C0B660B2100310EA2 /* Debug64bit */,
 				F95CC8B209158F3100EA5ACE /* Release */,
 				F91BCC50093152310042A6BF /* ReleaseUniversal */,
-				F9988BB30D81586D00B6B03B /* ReleaseUniversal gcc42 */,
-				F9988BB70D81587400B6B03B /* ReleaseUniversal llvmgcc42 */,
-				F9EEED970C2FEFD300396116 /* ReleaseUniversal10.5SDK */,
+				F9DB62090B65ADA800A370FB /* ReleaseUniversal10.4uSDK */,
+				F9DB62200B65AFDE00A370FB /* ReleasePPC10.3.9SDK */,
+				F9DB62360B65B03A00A370FB /* ReleasePPC10.2.8SDK */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;
@@ -5680,9 +5332,6 @@
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				F95CC8B609158F3100EA5ACE /* Debug */,
-				F9988AB10D814C6500B6B03B /* Debug gcc42 */,
-				F90E36D50F3B5C8400810A10 /* Debug gcc42 nogc */,
-				F9988AB50D814C7500B6B03B /* Debug llvmgcc42 */,
 				F95CC8B809158F3100EA5ACE /* DebugNoFixZL */,
 				F99EE7410BE835310060D4AF /* DebugUnthreaded */,
 				F987512F0DE7B57E00B1C9EC /* DebugNoCF */,
@@ -5690,12 +5339,11 @@
 				F930843A0BB93D2800CD0B9E /* DebugMemCompile */,
 				F99EE7420BE835310060D4AF /* DebugLeaks */,
 				F9359B250DF212DA00E04F67 /* DebugGCov */,
-				F97AED1E0B660B2100310EA2 /* Debug64bit */,
 				F95CC8B709158F3100EA5ACE /* Release */,
 				F91BCC51093152310042A6BF /* ReleaseUniversal */,
-				F9988BB10D81586D00B6B03B /* ReleaseUniversal gcc42 */,
-				F9988BB50D81587400B6B03B /* ReleaseUniversal llvmgcc42 */,
-				F9EEED990C2FEFD300396116 /* ReleaseUniversal10.5SDK */,
+				F9DB620A0B65ADA800A370FB /* ReleaseUniversal10.4uSDK */,
+				F9DB62210B65AFDE00A370FB /* ReleasePPC10.3.9SDK */,
+				F9DB62370B65B03A00A370FB /* ReleasePPC10.2.8SDK */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;
@@ -5704,9 +5352,6 @@
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				F97258A90A86873D00096C78 /* Debug */,
-				F9988AB40D814C6500B6B03B /* Debug gcc42 */,
-				F90E36D80F3B5C8400810A10 /* Debug gcc42 nogc */,
-				F9988AB80D814C7500B6B03B /* Debug llvmgcc42 */,
 				F97258AB0A86873D00096C78 /* DebugNoFixZL */,
 				F99EE73F0BE835310060D4AF /* DebugUnthreaded */,
 				F98751320DE7B57E00B1C9EC /* DebugNoCF */,
@@ -5714,12 +5359,11 @@
 				F93084390BB93D2800CD0B9E /* DebugMemCompile */,
 				F99EE7400BE835310060D4AF /* DebugLeaks */,
 				F9359B280DF212DA00E04F67 /* DebugGCov */,
-				F97AED1D0B660B2100310EA2 /* Debug64bit */,
 				F97258AA0A86873D00096C78 /* Release */,
 				F97258AC0A86873D00096C78 /* ReleaseUniversal */,
-				F9988BB40D81586D00B6B03B /* ReleaseUniversal gcc42 */,
-				F9988BB80D81587400B6B03B /* ReleaseUniversal llvmgcc42 */,
-				F9EEED980C2FEFD300396116 /* ReleaseUniversal10.5SDK */,
+				F97AED080B660A6C00310EA2 /* ReleaseUniversal10.4uSDK */,
+				F97AED0F0B660AA300310EA2 /* ReleasePPC10.3.9SDK */,
+				F97AED160B660AF100310EA2 /* ReleasePPC10.2.8SDK */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;

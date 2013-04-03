@@ -30,3 +30,7 @@ int     KARATSUBA_MUL_CUTOFF = 80,      /* Min. number of digits before Karatsub
         TOOM_MUL_CUTOFF      = 350,      /* no optimal values of these are known yet so set em high */
         TOOM_SQR_CUTOFF      = 400; 
 #endif
+
+/* $Source$ */
+/* $Revision$ */
+/* $Date$ */

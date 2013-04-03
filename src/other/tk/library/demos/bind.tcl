@@ -2,6 +2,8 @@
 #
 # This demonstration script creates a text widget with bindings set
 # up for hypertext-like effects.
+#
+# RCS: @(#) $Id$
 
 if {![info exists widgetDemo]} {
     error "This script should be run from the \"widget\" demo."

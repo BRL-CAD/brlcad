@@ -11,6 +11,8 @@
  *
  * See the file "license.terms" for information on usage and redistribution of
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
+ *
+ * RCS: @(#) $Id$
  */
 
 #include "tclInt.h"
@@ -320,10 +322,8 @@ Tcl_ProcObjCmd(
     }
 
     if ((procArgs[0] == 'a') && (strncmp(procArgs, "args", 4) == 0)) {
-	int numBytes;
-
 	procArgs +=4;
-	while (*procArgs != '\0') {
+	while(*procArgs != '\0') {
 	    if (*procArgs != ' ') {
 		goto done;
 	    }
@@ -334,9 +334,12 @@ Tcl_ProcObjCmd(
 	 * The argument list is just "args"; check the body
 	 */
 
-	procBody = Tcl_GetStringFromObj(objv[3], &numBytes);
-	if (TclParseAllWhiteSpace(procBody, numBytes) < numBytes) {
-	    goto done;
+	procBody = TclGetString(objv[3]);
+	while (*procBody != '\0') {
+	    if (!isspace(UCHAR(*procBody))) {
+		goto done;
+	    }
+	    procBody++;
 	}
 
 	/*
@@ -630,7 +633,7 @@ TclCreateProc(
 	    } else {
 		localPtr->defValuePtr = NULL;
 	    }
-	    memcpy(localPtr->name, fieldValues[0], nameLength + 1);
+	    strcpy(localPtr->name, fieldValues[0]);
 	    if ((i == numArgs - 1)
 		    && (localPtr->nameLength == 4)
 		    && (localPtr->name[0] == 'a')
@@ -1080,7 +1083,7 @@ ProcWrongNumArgs(
     int localCt = procPtr->numCompiledLocals, numArgs, i;
     Tcl_Obj **desiredObjs;
     const char *final = NULL;
-
+    
     /*
      * Build up desired argument list for Tcl_WrongNumArgs
      */
@@ -1092,8 +1095,6 @@ ProcWrongNumArgs(
     if (framePtr->isProcCallFrame & FRAME_IS_LAMBDA) {
 	desiredObjs[0] = Tcl_NewStringObj("lambdaExpr", -1);
     } else {
-	((Interp *) interp)->ensembleRewrite.numInsertedObjs -= skip - 1;
-
 #ifdef AVOID_HACKS_FOR_ITCL
 	desiredObjs[0] = framePtr->objv[skip-1];
 #else
@@ -1163,9 +1164,9 @@ TclInitCompiledLocals(
     ByteCode *codePtr;
 
     bodyPtr = framePtr->procPtr->bodyPtr;
-    if (bodyPtr->typePtr != &tclByteCodeType) {
+    /*if (bodyPtr->typePtr != &tclByteCodeType) {
 	Tcl_Panic("body object for proc attached to frame is not a byte code type");
-    }
+    }*/
     codePtr = bodyPtr->internalRep.otherValuePtr;
 
     if (framePtr->numCompiledLocals) {
@@ -1174,7 +1175,7 @@ TclInitCompiledLocals(
 	}
 	framePtr->localCachePtr = codePtr->localCachePtr;
 	framePtr->localCachePtr->refCount++;
-    }
+    }    
 
     InitResolvedLocals(interp, codePtr, varPtr, nsPtr);
 }
@@ -1232,12 +1233,12 @@ InitResolvedLocals(
 	for (; localPtr != NULL; varPtr++, localPtr = localPtr->nextPtr) {
 	    varPtr->flags = 0;
 	    varPtr->value.objPtr = NULL;
-
+	    
 	    /*
 	     * Now invoke the resolvers to determine the exact variables
 	     * that should be used.
 	     */
-
+	    
 	    resVarInfo = localPtr->resolveInfo;
 	    if (resVarInfo && resVarInfo->fetchProc) {
 		Var *resolvedVarPtr = (Var *)
@@ -1258,7 +1259,7 @@ InitResolvedLocals(
      * This is the first run after a recompile, or else the resolver epoch
      * has changed: update the resolver cache.
      */
-
+    
     firstLocalPtr = localPtr;
     for (; localPtr != NULL; localPtr = localPtr->nextPtr) {
 	if (localPtr->resolveInfo) {
@@ -1270,13 +1271,13 @@ InitResolvedLocals(
 	    localPtr->resolveInfo = NULL;
 	}
 	localPtr->flags &= ~VAR_RESOLVED;
-
+	
 	if (haveResolvers &&
 		!(localPtr->flags & (VAR_ARGUMENT|VAR_TEMPORARY))) {
 	    ResolverScheme *resPtr = iPtr->resolverPtr;
 	    Tcl_ResolvedVarInfo *vinfo;
 	    int result;
-
+	    
 	    if (nsPtr->compiledVarResProc) {
 		result = (*nsPtr->compiledVarResProc)(nsPtr->interp,
 			localPtr->name, localPtr->nameLength,
@@ -1315,8 +1316,8 @@ TclFreeLocalCache(
     for (i = 0; i < localCachePtr->numVars; i++, namePtrPtr++) {
 	Tcl_Obj *objPtr = *namePtrPtr;
 	/*
-	 * Note that this can be called with interp==NULL, on interp
-	 * deletion. In that case, the literal table and objects go away
+	 * Note that this can be called with interp==NULL, on interp 
+	 * deletion. In that case, the literal table and objects go away 
 	 * on their own.
 	 */
 	if (objPtr) {
@@ -1395,7 +1396,7 @@ InitArgsAndLocals(
     register Var *varPtr, *defPtr;
     int localCt = procPtr->numCompiledLocals, numArgs, argCt, i, imax;
     Tcl_Obj *const *argObjs;
-
+        
     /*
      * Make sure that the local cache of variable names and initial values has
      * been initialised properly .
@@ -1411,7 +1412,7 @@ InitArgsAndLocals(
     } else {
 	defPtr = NULL;
     }
-
+    
     /*
      * Create the "compiledLocals" array. Make sure it is large enough to hold
      * all the procedure's compiled local variables, including its formal
@@ -1713,14 +1714,13 @@ TclObjInterpProcCore(
     }
 #endif /*TCL_COMPILE_DEBUG*/
 
-#ifdef USE_DTRACE
     if (TCL_DTRACE_PROC_ARGS_ENABLED()) {
 	char *a[10];
 	int i = 0;
 	int l = iPtr->varFramePtr->isProcCallFrame & FRAME_IS_LAMBDA ? 1 : 0;
 
 	while (i < 10) {
-	    a[i] = (l < iPtr->varFramePtr->objc ?
+	    a[i] = (l < iPtr->varFramePtr->objc ? 
 		    TclGetString(iPtr->varFramePtr->objv[l]) : NULL); i++; l++;
 	}
 	TCL_DTRACE_PROC_ARGS(a[0], a[1], a[2], a[3], a[4], a[5], a[6], a[7],
@@ -1729,12 +1729,11 @@ TclObjInterpProcCore(
     if (TCL_DTRACE_PROC_INFO_ENABLED() && iPtr->cmdFramePtr) {
 	Tcl_Obj *info = TclInfoFrame(interp, iPtr->cmdFramePtr);
 	char *a[4]; int i[2];
-
+	
 	TclDTraceInfo(info, a, i);
 	TCL_DTRACE_PROC_INFO(a[0], a[1], a[2], a[3], i[0], i[1]);
 	TclDecrRefCount(info);
     }
-#endif /* USE_DTRACE */
 
     /*
      * Invoke the commands in the procedure's body.
@@ -1750,16 +1749,14 @@ TclObjInterpProcCore(
 		procPtr->bodyPtr->internalRep.otherValuePtr;
 
 	codePtr->refCount++;
-#ifdef USE_DTRACE
 	if (TCL_DTRACE_PROC_ENTRY_ENABLED()) {
 	    int l;
-
+	    
 	    l = iPtr->varFramePtr->isProcCallFrame & FRAME_IS_LAMBDA ? 2 : 1;
 	    TCL_DTRACE_PROC_ENTRY(TclGetString(procNameObj),
 		    iPtr->varFramePtr->objc - l,
 		    (Tcl_Obj **)(iPtr->varFramePtr->objv + l));
 	}
-#endif /* USE_DTRACE */
 	result = TclExecuteByteCode(interp, codePtr);
 	if (TCL_DTRACE_PROC_RETURN_ENABLED()) {
 	    TCL_DTRACE_PROC_RETURN(TclGetString(procNameObj), result);
@@ -1830,7 +1827,6 @@ TclObjInterpProcCore(
 	(void) 0;		/* do nothing */
     }
 
-#ifdef USE_DTRACE
     if (TCL_DTRACE_PROC_RESULT_ENABLED()) {
 	Tcl_Obj *r;
 
@@ -1838,7 +1834,6 @@ TclObjInterpProcCore(
 	TCL_DTRACE_PROC_RESULT(TclGetString(procNameObj), result,
 		TclGetString(r), r);
     }
-#endif /* USE_DTRACE */
 
   procDone:
     /*
@@ -2015,7 +2010,7 @@ ProcCompileProc(
 		    Tcl_IncrRefCount(copy->defValuePtr);
 		}
 		copy->resolveInfo = localPtr->resolveInfo;
-		memcpy(copy->name, localPtr->name, localPtr->nameLength + 1);
+		strcpy(copy->name, localPtr->name);
 	    }
 
 	    /*
@@ -2198,7 +2193,7 @@ TclProcCleanupProc(
      * the same ProcPtr is overwritten with a new CmdFrame.
      */
 
-    if (iPtr == NULL) {
+    if (!iPtr) {
 	return;
     }
 
@@ -2209,15 +2204,13 @@ TclProcCleanupProc(
 
     cfPtr = (CmdFrame *) Tcl_GetHashValue(hePtr);
 
-    if (cfPtr) {
-	if (cfPtr->type == TCL_LOCATION_SOURCE) {
-	    Tcl_DecrRefCount(cfPtr->data.eval.path);
-	    cfPtr->data.eval.path = NULL;
-	}
-	ckfree((char *) cfPtr->line);
-	cfPtr->line = NULL;
-	ckfree((char *) cfPtr);
+    if (cfPtr->type == TCL_LOCATION_SOURCE) {
+	Tcl_DecrRefCount(cfPtr->data.eval.path);
+	cfPtr->data.eval.path = NULL;
     }
+    ckfree((char *) cfPtr->line);
+    cfPtr->line = NULL;
+    ckfree((char *) cfPtr);
     Tcl_DeleteHashEntry(hePtr);
 }
 
@@ -2438,7 +2431,6 @@ FreeLambdaInternalRep(
 	TclProcCleanupProc(procPtr);
     }
     TclDecrRefCount(nsObjPtr);
-    objPtr->typePtr = NULL;
 }
 
 static int
@@ -2449,20 +2441,15 @@ SetLambdaFromAny(
     Interp *iPtr = (Interp *) interp;
     char *name;
     Tcl_Obj *argsPtr, *bodyPtr, *nsObjPtr, **objv, *errPtr;
-    int isNew, objc, result;
-    CmdFrame *cfPtr = NULL;
+    int objc, result;
     Proc *procPtr;
-
-    if (interp == NULL) {
-	return TCL_ERROR;
-    }
 
     /*
      * Convert objPtr to list type first; if it cannot be converted, or if its
      * length is not 2, then it cannot be converted to lambdaType.
      */
 
-    result = TclListObjGetElements(NULL, objPtr, &objc, &objv);
+    result = TclListObjGetElements(interp, objPtr, &objc, &objv);
     if ((result != TCL_OK) || ((objc != 2) && (objc != 3))) {
 	TclNewLiteralStringObj(errPtr, "can't interpret \"");
 	Tcl_AppendObjToObj(errPtr, objPtr);
@@ -2547,14 +2534,14 @@ SetLambdaFromAny(
 
 	    if (contextPtr->line
 		    && (contextPtr->nline >= 2) && (contextPtr->line[1] >= 0)) {
-		int buf[2];
+		int isNew, buf[2];
+		CmdFrame *cfPtr = (CmdFrame *) ckalloc(sizeof(CmdFrame));
 
 		/*
 		 * Move from approximation (line of list cmd word) to actual
 		 * location (line of 2nd list element).
 		 */
 
-		cfPtr = (CmdFrame *) ckalloc(sizeof(CmdFrame));
 		TclListLines(objPtr, contextPtr->line[1], 2, buf, NULL);
 
 		cfPtr->level = -1;
@@ -2570,6 +2557,9 @@ SetLambdaFromAny(
 
 		cfPtr->cmd.str.cmd = NULL;
 		cfPtr->cmd.str.len = 0;
+
+		Tcl_SetHashValue(Tcl_CreateHashEntry(iPtr->linePBodyPtr,
+			(char *) procPtr, &isNew), cfPtr);
 	    }
 
 	    /*
@@ -2581,8 +2571,6 @@ SetLambdaFromAny(
 	}
 	TclStackFree(interp, contextPtr);
     }
-    Tcl_SetHashValue(Tcl_CreateHashEntry(iPtr->linePBodyPtr, (char *) procPtr,
-	    &isNew), cfPtr);
 
     /*
      * Set the namespace for this lambda: given by objv[2] understood as a

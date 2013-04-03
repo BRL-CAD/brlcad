@@ -8,6 +8,8 @@
  *
  * See the file "license.terms" for information on usage and redistribution of
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
+ *
+ * RCS: @(#) $Id$
  */
 
 #include "tclWinInt.h"
@@ -1144,7 +1146,7 @@ ConsoleReaderThread(
 {
     ConsoleInfo *infoPtr = (ConsoleInfo *)arg;
     HANDLE *handle = infoPtr->handle;
-    DWORD waitResult;
+    DWORD count, waitResult;
     HANDLE wEvents[2];
 
     /* The first event takes precedence. */
@@ -1166,6 +1168,8 @@ ConsoleReaderThread(
 
 	    break;
 	}
+
+	count = 0;
 
 	/*
 	 * Look for data on the console, but first ignore any events that are
@@ -1362,7 +1366,7 @@ TclWinOpenConsoleChannel(
      * for instance).
      */
 
-    sprintf(channelName, "file%" TCL_I_MODIFIER "x", (size_t)infoPtr);
+    wsprintfA(channelName, "file%lx", (int) infoPtr);
 
     infoPtr->channel = Tcl_CreateChannel(&consoleChannelType, channelName,
 	    (ClientData) infoPtr, permissions);

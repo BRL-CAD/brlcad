@@ -4,6 +4,8 @@
 # It also implements keyboard traversal of menus and implements a few
 # other utility procedures related to menus.
 #
+# RCS: @(#) $Id$
+#
 # Copyright (c) 1992-1994 The Regents of the University of California.
 # Copyright (c) 1994-1997 Sun Microsystems, Inc.
 # Copyright (c) 1998-1999 by Scriptics Corporation.
@@ -60,7 +62,7 @@
 # This file is tricky because there are five different ways that menus
 # can be used:
 #
-# 1. As a pulldown from a menubutton. In this style, the variable
+# 1. As a pulldown from a menubutton. In this style, the variable 
 #    tk::Priv(postedMb) identifies the posted menubutton.
 # 2. As a torn-off menu copied from some other menu.  In this style
 #    tk::Priv(postedMb) is empty, and menu's type is "tearoff".
@@ -282,81 +284,81 @@ proc ::tk::MbPost {w {x {}} {y {}}} {
     update idletasks
     if {[catch {
 	switch [$w cget -direction] {
-	    above {
-		set x [winfo rootx $w]
-		set y [expr {[winfo rooty $w] - [winfo reqheight $menu]}]
+    	    above {
+    	    	set x [winfo rootx $w]
+    	    	set y [expr {[winfo rooty $w] - [winfo reqheight $menu]}]
 		# if we go offscreen to the top, show as 'below'
-		if {$y < [winfo vrooty $w]} {
-		    set y [expr {[winfo vrooty $w] + [winfo rooty $w] + [winfo reqheight $w]}]
+		if {$y < 0} {
+		    set y [expr {[winfo rooty $w] + [winfo height $w]}]
 		}
 		PostOverPoint $menu $x $y
-	    }
-	    below {
-		set x [winfo rootx $w]
-		set y [expr {[winfo rooty $w] + [winfo height $w]}]
+    	    }
+    	    below {
+    	    	set x [winfo rootx $w]
+    	    	set y [expr {[winfo rooty $w] + [winfo height $w]}]
 		# if we go offscreen to the bottom, show as 'above'
 		set mh [winfo reqheight $menu]
-		if {($y + $mh) > ([winfo vrooty $w] + [winfo vrootheight $w])} {
-		    set y [expr {[winfo vrooty $w] + [winfo vrootheight $w] + [winfo rooty $w] - $mh}]
+		if {($y + $mh) > [winfo screenheight $w]} {
+		    set y [expr {[winfo rooty $w] - $mh}]
 		}
 		PostOverPoint $menu $x $y
-	    }
-	    left {
-		set x [expr {[winfo rootx $w] - [winfo reqwidth $menu]}]
-		set y [expr {(2 * [winfo rooty $w] + [winfo height $w]) / 2}]
-		set entry [MenuFindName $menu [$w cget -text]]
-		if {[$w cget -indicatoron]} {
+    	    }
+    	    left {
+    	    	set x [expr {[winfo rootx $w] - [winfo reqwidth $menu]}]
+    	    	set y [expr {(2 * [winfo rooty $w] + [winfo height $w]) / 2}]
+    	    	set entry [MenuFindName $menu [$w cget -text]]
+		if {[$w cget -indicatoron] && $entry ne ""} {
 		    if {$entry == [$menu index last]} {
-			incr y [expr {-([$menu yposition $entry] \
-				+ [winfo reqheight $menu])/2}]
+		    	incr y [expr {-([$menu yposition $entry] \
+			    	+ [winfo reqheight $menu])/2}]
 		    } else {
-			incr y [expr {-([$menu yposition $entry] \
+		    	incr y [expr {-([$menu yposition $entry] \
 			        + [$menu yposition [expr {$entry+1}]])/2}]
 		    }
-		}
+    	    	}
 		PostOverPoint $menu $x $y
 		if {$entry ne "" \
 			&& [$menu entrycget $entry -state] ne "disabled"} {
-		    $menu activate $entry
+    	    	    $menu activate $entry
 		    GenerateMenuSelect $menu
-		}
-	}
-	    right {
-		set x [expr {[winfo rootx $w] + [winfo width $w]}]
-		set y [expr {(2 * [winfo rooty $w] + [winfo height $w]) / 2}]
-		set entry [MenuFindName $menu [$w cget -text]]
-		if {[$w cget -indicatoron]} {
+    	    	}
+    	    }
+    	    right {
+    	    	set x [expr {[winfo rootx $w] + [winfo width $w]}]
+    	    	set y [expr {(2 * [winfo rooty $w] + [winfo height $w]) / 2}]
+    	    	set entry [MenuFindName $menu [$w cget -text]]
+		if {[$w cget -indicatoron] && $entry ne ""} {
 		    if {$entry == [$menu index last]} {
-			incr y [expr {-([$menu yposition $entry] \
-				+ [winfo reqheight $menu])/2}]
+		    	incr y [expr {-([$menu yposition $entry] \
+			    	+ [winfo reqheight $menu])/2}]
 		    } else {
-			incr y [expr {-([$menu yposition $entry] \
+		    	incr y [expr {-([$menu yposition $entry] \
 			        + [$menu yposition [expr {$entry+1}]])/2}]
 		    }
-		}
+    	    	}
 		PostOverPoint $menu $x $y
 		if {$entry ne "" \
 			&& [$menu entrycget $entry -state] ne "disabled"} {
-		    $menu activate $entry
+    	    	    $menu activate $entry
 		    GenerateMenuSelect $menu
-		}
-	    }
-	    default {
-		if {[$w cget -indicatoron]} {
+    	    	}
+    	    }
+    	    default {
+    	    	if {[$w cget -indicatoron]} {
 		    if {$y eq ""} {
 			set x [expr {[winfo rootx $w] + [winfo width $w]/2}]
 			set y [expr {[winfo rooty $w] + [winfo height $w]/2}]
-		    }
+	    	    }
 	            PostOverPoint $menu $x $y [MenuFindName $menu [$w cget -text]]
 		} else {
 		    PostOverPoint $menu [winfo rootx $w] [expr {[winfo rooty $w]+[winfo height $w]}]
-		}
-	    }
+    	    	}
+    	    }
 	}
     } msg]} {
 	# Error posting menu (e.g. bogus -postcommand). Unpost it and
 	# reflect the error.
-
+	
 	set savedInfo $errorInfo
 	MenuUnpost {}
 	error $msg $savedInfo
@@ -365,7 +367,7 @@ proc ::tk::MbPost {w {x {}} {y {}}} {
 
     set Priv(tearoff) $tearoff
     if {$tearoff != 0} {
-	focus $menu
+    	focus $menu
 	if {[winfo viewable $w]} {
 	    SaveGrabInfo $w
 	    grab -global $w
@@ -406,8 +408,6 @@ proc ::tk::MenuUnpost menu {
 
     after cancel [array get Priv menuActivatedTimer]
     unset -nocomplain Priv(menuActivated)
-    after cancel [array get Priv menuDeactivatedTimer]
-    unset -nocomplain Priv(menuDeactivated)
 
     catch {
 	if {$mb ne ""} {
@@ -425,7 +425,8 @@ proc ::tk::MenuUnpost menu {
 	} elseif {$Priv(popup) ne ""} {
 	    $Priv(popup) unpost
 	    set Priv(popup) {}
-	} elseif {[$menu cget -type] ne "menubar" && [$menu cget -type] ne "tearoff"} {
+	} elseif {[$menu cget -type] ne "menubar" \
+		&& [$menu cget -type] ne "tearoff"} {
 	    # We're in a cascaded sub-menu from a torn-off menu or popup.
 	    # Unpost all the menus up to the toplevel one (but not
 	    # including the top-level torn-off one) and deactivate the
@@ -433,7 +434,8 @@ proc ::tk::MenuUnpost menu {
 
 	    while {1} {
 		set parent [winfo parent $menu]
-		if {[winfo class $parent] ne "Menu" || ![winfo ismapped $parent]} {
+		if {[winfo class $parent] ne "Menu" \
+			|| ![winfo ismapped $parent]} {
 		    break
 		}
 		$parent activate none
@@ -452,8 +454,8 @@ proc ::tk::MenuUnpost menu {
     }
 
     if {($Priv(tearoff) != 0) || $Priv(menuBar) ne ""} {
-	# Release grab, if any, and restore the previous grab, if there
-	# was one.
+    	# Release grab, if any, and restore the previous grab, if there
+    	# was one.
 	if {$menu ne ""} {
 	    set grab [grab current $menu]
 	    if {$grab ne ""} {
@@ -561,17 +563,13 @@ proc ::tk::MenuMotion {menu x y state} {
         set index [$menu index @$x,$y]
         if {[info exists Priv(menuActivated)] \
                 && $index ne "none" \
-                && $index ne $activeindex} {
+                && $index ne $activeindex \
+                && [$menu type $index] eq "cascade"} {
             set mode [option get $menu clickToFocus ClickToFocus]
-            if {[string is false $mode]} {
-                set delay [expr {[$menu cget -type] eq "menubar" ? 0 : 50}]
-                if {[$menu type $index] eq "cascade"} {
-                    set Priv(menuActivatedTimer) \
-                        [after $delay [list $menu postcascade active]]
-                } else {
-                    set Priv(menuDeactivatedTimer) \
-                        [after $delay [list $menu postcascade none]]
-                }
+            if {$mode eq "" || ([string is boolean $mode] && !$mode)} {
+                set delay [expr {[$menu cget -type] eq "menubar"? 0 : 50}]
+                set Priv(menuActivatedTimer) \
+                    [after $delay [list $menu postcascade active]]
             }
         }
     }
@@ -700,7 +698,7 @@ proc ::tk::MenuInvoke {w buttonRelease} {
 	set isCascade [string equal [$w type $active] "cascade"]
 
 	# Only de-activate the active item if it's a cascade; this prevents
-	# the annoying "activation flicker" you otherwise get with
+	# the annoying "activation flicker" you otherwise get with 
 	# checkbuttons/commands/etc. on menubars
 
 	if { $isCascade } {
@@ -1028,10 +1026,11 @@ proc ::tk::TraverseToMenu {w char} {
 	return
     }
     while {[winfo class $w] eq "Menu"} {
+	if {[$w cget -type] ne "menubar" && $Priv(postedMb) eq ""} {
+	    return
+	}
 	if {[$w cget -type] eq "menubar"} {
 	    break
-	} elseif {$Priv(postedMb) eq ""} {
-	    return
 	}
 	set w [winfo parent $w]
     }
@@ -1150,7 +1149,8 @@ proc ::tk::MenuFirstEntry menu {
 	    # otherwise, if the first entry of the cascade is a cascade,
 	    # we can get an annoying cascading effect resulting in a bunch of
 	    # menus getting posted (bug 676)
-	    if {[$menu type $i] eq "cascade" && [$menu cget -type] eq "menubar"} {
+	    if {[$menu type $i] eq "cascade" \
+		    && [$menu cget -type] eq "menubar"} {
 		set cascade [$menu entrycget $i -menu]
 		if {$cascade ne ""} {
 		    $menu postcascade $i
@@ -1207,7 +1207,7 @@ proc ::tk::MenuFindName {menu s} {
 
 proc ::tk::PostOverPoint {menu x y {entry {}}}  {
     global tcl_platform
-
+    
     if {$entry ne ""} {
 	if {$entry == [$menu index last]} {
 	    incr y [expr {-([$menu yposition $entry] \
@@ -1218,34 +1218,24 @@ proc ::tk::PostOverPoint {menu x y {entry {}}}  {
 	}
 	incr x [expr {-[winfo reqwidth $menu]/2}]
     }
-
-    if {[tk windowingsystem] eq "win32"} {
-	# osVersion is not available in safe interps
-	set ver 5
-	if {[info exists tcl_platform(osVersion)]} {
-	    scan $tcl_platform(osVersion) %d ver
-	}
-
+    if {$tcl_platform(platform) == "windows"} {
 	# We need to fix some problems with menu posting on Windows,
 	# where, if the menu would overlap top or bottom of screen,
 	# Windows puts it in the wrong place for us.  We must also
 	# subtract an extra amount for half the height of the current
 	# entry.  To be safe we subtract an extra 10.
-	# NOTE: this issue appears to have been resolved in the Window
-	# manager provided with Vista and Windows 7.
-	if {$ver < 6} {
-	    set yoffset [expr {[winfo screenheight $menu] \
-		    - $y - [winfo reqheight $menu] - 10}]
-	    if {$yoffset < [winfo vrooty $menu]} {
-		# The bottom of the menu is offscreen, so adjust upwards
-		incr y [expr {$yoffset - [winfo vrooty $menu]}]
-	    }
-	    # If we're off the top of the screen (either because we were
-	    # originally or because we just adjusted too far upwards),
-	    # then make the menu popup on the top edge.
-	    if {$y < [winfo vrooty $menu]} {
-		set y [winfo vrooty $menu]
-	    }
+	set yoffset [expr {[winfo screenheight $menu] \
+		- $y - [winfo reqheight $menu] - 10}]
+	if {$yoffset < 0} {
+	    # The bottom of the menu is offscreen, so adjust upwards
+	    incr y $yoffset
+	    if {$y < 0} { set y 0 }
+	}
+	# If we're off the top of the screen (either because we were
+	# originally or because we just adjusted too far upwards),
+	# then make the menu popup on the top edge.
+	if {$y < 0} {
+	    set y 0
 	}
     }
     $menu post $x $y
@@ -1279,7 +1269,7 @@ proc ::tk::RestoreOldGrab {} {
     variable ::tk::Priv
 
     if {$Priv(oldGrab) ne ""} {
-	# Be careful restoring the old grab, since it's window may not
+    	# Be careful restoring the old grab, since it's window may not
 	# be visible anymore.
 
 	catch {
@@ -1300,7 +1290,7 @@ proc ::tk_menuSetFocus {menu} {
     }
     focus $menu
 }
-
+    
 proc ::tk::GenerateMenuSelect {menu} {
     variable ::tk::Priv
 

@@ -10,6 +10,8 @@
  *
  * See the file "license.terms" for information on usage and redistribution of
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
+ *
+ * RCS: @(#) $Id$
  */
 
 #include "tkWinInt.h"
@@ -259,7 +261,7 @@ TkpUseWindow(
     if (Tcl_GetInt(interp, string, &id) != TCL_OK) {
 	return TCL_ERROR;
     }
-    hwnd = (HWND) INT2PTR(id);
+    hwnd = (HWND) id;
     if ((HWND)winPtr->privatePtr == hwnd) {
 	return TCL_OK;
     }
@@ -279,12 +281,12 @@ TkpUseWindow(
     }
 
     id = SendMessage(hwnd, TK_INFO, TK_CONTAINER_VERIFY, 0);
-    if (id == PTR2INT(hwnd)) {
+    if (id == (long)hwnd) {
 	if (!SendMessage(hwnd, TK_INFO, TK_CONTAINER_ISAVAILABLE, 0)) {
     	    Tcl_AppendResult(interp, "The container is already in use", NULL);
 	    return TCL_ERROR;
 	}
-    } else if (id == -PTR2INT(hwnd)) {
+    } else if (id == -(long)hwnd) {
 	Tcl_AppendResult(interp, "the window to use is not a Tk container",
 		NULL);
 	return TCL_ERROR;
@@ -457,7 +459,7 @@ TkWinEmbeddedEventProc(
 		result = containerPtr->embeddedHWnd == NULL? 1:0;
 		break;
 	    case TK_CONTAINER_VERIFY:
-		result = PTR2INT(containerPtr->parentHWnd);
+		result = (long)containerPtr->parentHWnd;
 		break;
 	    default:
 		result = 0;
@@ -495,7 +497,7 @@ TkWinEmbeddedEventProc(
 		    }
 		    containerPtr->embeddedHWnd = (HWND)wParam;
 		}
-		result = PTR2INT(containerPtr->parentHWnd);
+		result = (long)containerPtr->parentHWnd;
 	    } else {
 		result = 0;
 	    }
@@ -568,14 +570,14 @@ TkWinEmbeddedEventProc(
 	     * returned.
 	     */
 	    if (topwinPtr) {
-		result = PTR2INT(GetParent(containerPtr->parentHWnd));
+		result = (long)GetParent(containerPtr->parentHWnd);
 	    } else {
 		topwinPtr = containerPtr->parentPtr;
 		while (!(topwinPtr->flags & TK_TOP_HIERARCHY)) {
 		    topwinPtr = topwinPtr->parentPtr;
 		}
 		if (topwinPtr && topwinPtr->window) {
-		    result = PTR2INT(GetParent(Tk_GetHWND(topwinPtr->window)));
+		    result = (long)GetParent(Tk_GetHWND(topwinPtr->window));
 		} else {
 		    result = 0;
 		}
@@ -736,7 +738,7 @@ TkWinEmbeddedEventProc(
 	     */
 
 	    if (topwinPtr) {
-		if (wParam <= 3) {
+		if (wParam >= 0 && wParam <= 3) {
 		    TkpWmSetState(topwinPtr, wParam);
 		}
 		result = 1+TkpWmGetState(topwinPtr);
@@ -759,7 +761,7 @@ TkWinEmbeddedEventProc(
 	     * Reply the message sender: this is not a Tk container
 	     */
 
-	    return -PTR2INT(hwnd);
+	    return -(long)hwnd;
 	} else {
 	    result = 0;
 	}

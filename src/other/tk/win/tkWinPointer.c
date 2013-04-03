@@ -8,6 +8,8 @@
  *
  * See the file "license.terms" for information on usage and redistribution of
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
+ *
+ * RCS: @(#) $Id$
  */
 
 #include "tkWinInt.h"
@@ -193,13 +195,12 @@ XGrabKeyboard(
  *----------------------------------------------------------------------
  */
 
-int
+void
 XUngrabKeyboard(
     Display *display,
     Time time)
 {
     keyboardWinPtr = NULL;
-    return Success;
 }
 
 /*
@@ -344,7 +345,7 @@ XQueryPointer(
  *----------------------------------------------------------------------
  */
 
-int
+void
 XWarpPointer(
     Display *display,
     Window src_w,
@@ -360,7 +361,6 @@ XWarpPointer(
 
     GetWindowRect(Tk_GetHWND(dest_w), &r);
     SetCursorPos(r.left+dest_x, r.top+dest_y);
-    return Success;
 }
 
 /*
@@ -379,7 +379,7 @@ XWarpPointer(
  *----------------------------------------------------------------------
  */
 
-int
+void
 XGetInputFocus(
     Display *display,
     Window *focus_return,
@@ -390,7 +390,6 @@ XGetInputFocus(
     *focus_return = tkwin ? Tk_WindowId(tkwin) : None;
     *revert_to_return = RevertToParent;
     display->request++;
-    return Success;
 }
 
 /*
@@ -410,7 +409,7 @@ XGetInputFocus(
  *----------------------------------------------------------------------
  */
 
-int
+void
 XSetInputFocus(
     Display *display,
     Window focus,
@@ -421,7 +420,6 @@ XSetInputFocus(
     if (focus != None) {
 	SetFocus(Tk_GetHWND(focus));
     }
-    return Success;
 }
 
 /*

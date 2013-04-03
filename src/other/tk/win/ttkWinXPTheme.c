@@ -1,4 +1,6 @@
 /*
+ * $Id$
+ *
  * Tk theme engine which uses the Windows XP "Visual Styles" API
  * Adapted from Georgios Petasis' XP theme patch.
  *
@@ -384,8 +386,6 @@ typedef struct 	/* XP element specifications */
 #   define 	IGNORE_THEMESIZE 0x80000000 /* See NOTE-GetThemePartSize */
 #   define 	PAD_MARGINS	 0x40000000 /* See NOTE-GetThemeMargins */
 #   define 	HEAP_ELEMENT	 0x20000000 /* ElementInfo is on heap */
-#   define 	HALF_HEIGHT	 0x10000000 /* Used by GenericSizedElements */
-#   define 	HALF_WIDTH	 0x08000000 /* Used by GenericSizedElements */
 } ElementInfo;
 
 typedef struct
@@ -588,10 +588,6 @@ GenericSizedElementSize(
 	(elementData->info->flags >> 8) & 0xff);
     *heightPtr = elementData->procs->GetThemeSysSize(NULL,
 	elementData->info->flags & 0xff);
-    if (elementData->info->flags & HALF_HEIGHT)
-	*heightPtr /= 2;
-    if (elementData->info->flags & HALF_WIDTH)
-	*widthPtr /= 2;
 }
 
 static Ttk_ElementSpec GenericSizedElementSpec = {
@@ -1039,42 +1035,6 @@ static ElementInfo ElementInfoTable[] = {
 };
 #undef PAD
 
-
-static int
-GetSysFlagFromObj(Tcl_Interp *interp, Tcl_Obj *objPtr, int *resultPtr)
-{
-    static const char *names[] = {
-	"SM_CXBORDER", "SM_CYBORDER", "SM_CXVSCROLL", "SM_CYVSCROLL",
-	"SM_CXHSCROLL", "SM_CYHSCROLL", "SM_CXMENUCHECK", "SM_CYMENUCHECK",
-	"SM_CXMENUSIZE", "SM_CYMENUSIZE", "SM_CXSIZE", "SM_CYSIZE", "SM_CXSMSIZE",
-	"SM_CYSMSIZE"
-    };
-    int flags[] = {
-	SM_CXBORDER, SM_CYBORDER, SM_CXVSCROLL, SM_CYVSCROLL,
-	SM_CXHSCROLL, SM_CYHSCROLL, SM_CXMENUCHECK, SM_CYMENUCHECK,
-	SM_CXMENUSIZE, SM_CYMENUSIZE, SM_CXSIZE, SM_CYSIZE, SM_CXSMSIZE,
-	SM_CYSMSIZE
-    };
-
-    Tcl_Obj **objv;
-    int i, objc;
-
-    if (Tcl_ListObjGetElements(interp, objPtr, &objc, &objv) != TCL_OK)
-	return TCL_ERROR;
-    if (objc != 2) {
-	Tcl_SetResult(interp, "wrong # args", TCL_STATIC);
-	return TCL_ERROR;
-    }
-    for (i = 0; i < objc; ++i) {
-	int option;
-	if (Tcl_GetIndexFromObj(interp, objv[i], names, "system constant", 0, &option)
-		!= TCL_OK)
-	    return TCL_ERROR;
-	*resultPtr |= (flags[option] << (8 * (1 - i)));
-    }
-    return TCL_OK;
-}
-
 /*----------------------------------------------------------------------
  * Windows Visual Styles API Element Factory
  *
@@ -1107,13 +1067,10 @@ Ttk_CreateVsapiElement(
     int length = 0;
     char *name;
     LPWSTR wname;
-    Ttk_ElementSpec *elementSpec = &GenericElementSpec;
 
-    static const char *optionStrings[] =
-	{ "-padding","-width","-height","-margins", "-syssize",
-	  "-halfheight", "-halfwidth", NULL };
-    enum { O_PADDING, O_WIDTH, O_HEIGHT, O_MARGINS, O_SYSSIZE,
-	   O_HALFHEIGHT, O_HALFWIDTH };
+    const char *optionStrings[] =
+	{ "-padding","-width","-height","-margins",NULL };
+    enum { O_PADDING, O_WIDTH, O_HEIGHT, O_MARGINS };
 
     if (objc < 2) {
 	Tcl_AppendResult(interp,
@@ -1165,27 +1122,6 @@ Ttk_CreateVsapiElement(
 		pad.top = pad.bottom = tmp;
 		flags |= IGNORE_THEMESIZE;
 		break;
-	    case O_SYSSIZE:
-		if (GetSysFlagFromObj(interp, objv[i+1], &tmp) != TCL_OK) {
-		    return TCL_ERROR;
-		}
-		elementSpec = &GenericSizedElementSpec;
-		flags |= (tmp & 0xFFFF);
-		break;
-	    case O_HALFHEIGHT:
-		if (Tcl_GetBooleanFromObj(interp, objv[i+1], &tmp) != TCL_OK) {
-		    return TCL_ERROR;
-		}
-		if (tmp)
-		    flags |= HALF_HEIGHT;
-		break;
-	    case O_HALFWIDTH:
-		if (Tcl_GetBooleanFromObj(interp, objv[i+1], &tmp) != TCL_OK) {
-		    return TCL_ERROR;
-		}
-		if (tmp)
-		    flags |= HALF_WIDTH;
-		break;
 	    }
 	}
     }
@@ -1220,7 +1156,7 @@ Ttk_CreateVsapiElement(
     }
 
     elementPtr = (ElementInfo *)ckalloc(sizeof(ElementInfo));
-    elementPtr->elementSpec = elementSpec;
+    elementPtr->elementSpec = &GenericElementSpec;
     elementPtr->partId = partId;
     elementPtr->statemap = stateTable;
     elementPtr->padding = pad;

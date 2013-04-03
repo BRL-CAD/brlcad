@@ -7,11 +7,13 @@
  *
  * See the file "license.terms" for information on usage and redistribution of
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
+ *
+ * RCS: @(#) $Id$
  */
 
 #include "tclInt.h"
 
-typedef size_t (LengthProc)(const char *src);
+typedef size_t (LengthProc)(CONST char *src);
 
 /*
  * The following data structure represents an encoding, which describes how to
@@ -123,7 +125,7 @@ typedef struct EscapeEncodingData {
 } EscapeEncodingData;
 
 /*
- * constants used when loading an encoding file to identify the type of the
+ * Constants used when loading an encoding file to identify the type of the
  * file.
  */
 
@@ -195,19 +197,19 @@ static unsigned short emptyPage[256];
  */
 
 static int		BinaryProc(ClientData clientData,
-			    const char *src, int srcLen, int flags,
+			    CONST char *src, int srcLen, int flags,
 			    Tcl_EncodingState *statePtr, char *dst, int dstLen,
 			    int *srcReadPtr, int *dstWrotePtr,
 			    int *dstCharsPtr);
 static void		DupEncodingIntRep(Tcl_Obj *srcPtr, Tcl_Obj *dupPtr);
 static void		EscapeFreeProc(ClientData clientData);
 static int		EscapeFromUtfProc(ClientData clientData,
-			    const char *src, int srcLen, int flags,
+			    CONST char *src, int srcLen, int flags,
 			    Tcl_EncodingState *statePtr, char *dst, int dstLen,
 			    int *srcReadPtr, int *dstWrotePtr,
 			    int *dstCharsPtr);
 static int		EscapeToUtfProc(ClientData clientData,
-			    const char *src, int srcLen, int flags,
+			    CONST char *src, int srcLen, int flags,
 			    Tcl_EncodingState *statePtr, char *dst, int dstLen,
 			    int *srcReadPtr, int *dstWrotePtr,
 			    int *dstCharsPtr);
@@ -216,55 +218,55 @@ static void		FreeEncoding(Tcl_Encoding encoding);
 static void		FreeEncodingIntRep(Tcl_Obj *objPtr);
 static Encoding *	GetTableEncoding(EscapeEncodingData *dataPtr,
 			    int state);
-static Tcl_Encoding	LoadEncodingFile(Tcl_Interp *interp, const char *name);
-static Tcl_Encoding	LoadTableEncoding(const char *name, int type,
+static Tcl_Encoding	LoadEncodingFile(Tcl_Interp *interp, CONST char *name);
+static Tcl_Encoding	LoadTableEncoding(CONST char *name, int type,
 			    Tcl_Channel chan);
-static Tcl_Encoding	LoadEscapeEncoding(const char *name, Tcl_Channel chan);
+static Tcl_Encoding	LoadEscapeEncoding(CONST char *name, Tcl_Channel chan);
 static Tcl_Channel	OpenEncodingFileChannel(Tcl_Interp *interp,
-			    const char *name);
+			    CONST char *name);
 static void		TableFreeProc(ClientData clientData);
 static int		TableFromUtfProc(ClientData clientData,
-			    const char *src, int srcLen, int flags,
+			    CONST char *src, int srcLen, int flags,
 			    Tcl_EncodingState *statePtr, char *dst, int dstLen,
 			    int *srcReadPtr, int *dstWrotePtr,
 			    int *dstCharsPtr);
-static int		TableToUtfProc(ClientData clientData, const char *src,
+static int		TableToUtfProc(ClientData clientData, CONST char *src,
 			    int srcLen, int flags, Tcl_EncodingState *statePtr,
 			    char *dst, int dstLen, int *srcReadPtr,
 			    int *dstWrotePtr, int *dstCharsPtr);
-static size_t		unilen(const char *src);
+static size_t		unilen(CONST char *src);
 static int		UnicodeToUtfProc(ClientData clientData,
-			    const char *src, int srcLen, int flags,
+			    CONST char *src, int srcLen, int flags,
 			    Tcl_EncodingState *statePtr, char *dst, int dstLen,
 			    int *srcReadPtr, int *dstWrotePtr,
 			    int *dstCharsPtr);
 static int		UtfToUnicodeProc(ClientData clientData,
-			    const char *src, int srcLen, int flags,
+			    CONST char *src, int srcLen, int flags,
 			    Tcl_EncodingState *statePtr, char *dst, int dstLen,
 			    int *srcReadPtr, int *dstWrotePtr,
 			    int *dstCharsPtr);
 static int		UtfToUtfProc(ClientData clientData,
-			    const char *src, int srcLen, int flags,
+			    CONST char *src, int srcLen, int flags,
 			    Tcl_EncodingState *statePtr, char *dst, int dstLen,
 			    int *srcReadPtr, int *dstWrotePtr,
 			    int *dstCharsPtr, int pureNullMode);
 static int		UtfIntToUtfExtProc(ClientData clientData,
-			    const char *src, int srcLen, int flags,
+			    CONST char *src, int srcLen, int flags,
 			    Tcl_EncodingState *statePtr, char *dst, int dstLen,
 			    int *srcReadPtr, int *dstWrotePtr,
 			    int *dstCharsPtr);
 static int		UtfExtToUtfIntProc(ClientData clientData,
-			    const char *src, int srcLen, int flags,
+			    CONST char *src, int srcLen, int flags,
 			    Tcl_EncodingState *statePtr, char *dst, int dstLen,
 			    int *srcReadPtr, int *dstWrotePtr,
 			    int *dstCharsPtr);
 static int		Iso88591FromUtfProc(ClientData clientData,
-			    const char *src, int srcLen, int flags,
+			    CONST char *src, int srcLen, int flags,
 			    Tcl_EncodingState *statePtr, char *dst, int dstLen,
 			    int *srcReadPtr, int *dstWrotePtr,
 			    int *dstCharsPtr);
 static int		Iso88591ToUtfProc(ClientData clientData,
-			    const char *src, int srcLen, int flags,
+			    CONST char *src, int srcLen, int flags,
 			    Tcl_EncodingState *statePtr, char *dst,
 			    int dstLen, int *srcReadPtr, int *dstWrotePtr,
 			    int *dstCharsPtr);
@@ -304,7 +306,7 @@ Tcl_GetEncodingFromObj(
     Tcl_Obj *objPtr,
     Tcl_Encoding *encodingPtr)
 {
-    const char *name = Tcl_GetString(objPtr);
+    CONST char *name = Tcl_GetString(objPtr);
     if (objPtr->typePtr != &encodingType) {
 	Tcl_Encoding encoding = Tcl_GetEncoding(interp, name);
 
@@ -334,7 +336,6 @@ FreeEncodingIntRep(
     Tcl_Obj *objPtr)
 {
     Tcl_FreeEncoding((Tcl_Encoding) objPtr->internalRep.otherValuePtr);
-    objPtr->typePtr = NULL;
 }
 
 /*
@@ -692,7 +693,7 @@ TclFinalizeEncodingSubsystem(void)
  *-------------------------------------------------------------------------
  */
 
-const char *
+CONST char *
 Tcl_GetDefaultEncodingDir(void)
 {
     int numDirs;
@@ -726,7 +727,7 @@ Tcl_GetDefaultEncodingDir(void)
 
 void
 Tcl_SetDefaultEncodingDir(
-    const char *path)
+    CONST char *path)
 {
     Tcl_Obj *searchPath = Tcl_GetEncodingSearchPath();
     Tcl_Obj *directory = Tcl_NewStringObj(path, -1);
@@ -764,7 +765,7 @@ Tcl_SetDefaultEncodingDir(
 Tcl_Encoding
 Tcl_GetEncoding(
     Tcl_Interp *interp,		/* Interp for error reporting, if not NULL. */
-    const char *name)		/* The name of the desired encoding. */
+    CONST char *name)		/* The name of the desired encoding. */
 {
     Tcl_HashEntry *hPtr;
     Encoding *encodingPtr;
@@ -877,7 +878,7 @@ FreeEncoding(
  *---------------------------------------------------------------------------
  */
 
-const char *
+CONST char *
 Tcl_GetEncodingName(
     Tcl_Encoding encoding)	/* The encoding whose name to fetch. */
 {
@@ -984,13 +985,13 @@ Tcl_GetEncodingNames(
 int
 Tcl_SetSystemEncoding(
     Tcl_Interp *interp,		/* Interp for error reporting, if not NULL. */
-    const char *name)		/* The name of the desired encoding, or NULL/""
+    CONST char *name)		/* The name of the desired encoding, or NULL
 				 * to reset to default encoding. */
 {
     Tcl_Encoding encoding;
     Encoding *encodingPtr;
 
-    if (!name || !*name) {
+    if (name == NULL) {
 	Tcl_MutexLock(&encodingMutex);
 	encoding = defaultEncoding;
 	encodingPtr = (Encoding *) encoding;
@@ -1107,7 +1108,7 @@ char *
 Tcl_ExternalToUtfDString(
     Tcl_Encoding encoding,	/* The encoding for the source string, or NULL
 				 * for the default system encoding. */
-    const char *src,		/* Source string in specified encoding. */
+    CONST char *src,		/* Source string in specified encoding. */
     int srcLen,			/* Source string length in bytes, or < 0 for
 				 * encoding-specific string length. */
     Tcl_DString *dstPtr)	/* Uninitialized or free DString in which the
@@ -1181,7 +1182,7 @@ Tcl_ExternalToUtf(
     Tcl_Interp *interp,		/* Interp for error return, if not NULL. */
     Tcl_Encoding encoding,	/* The encoding for the source string, or NULL
 				 * for the default system encoding. */
-    const char *src,		/* Source string in specified encoding. */
+    CONST char *src,		/* Source string in specified encoding. */
     int srcLen,			/* Source string length in bytes, or < 0 for
 				 * encoding-specific string length. */
     int flags,			/* Conversion control flags. */
@@ -1274,7 +1275,7 @@ char *
 Tcl_UtfToExternalDString(
     Tcl_Encoding encoding,	/* The encoding for the converted string, or
 				 * NULL for the default system encoding. */
-    const char *src,		/* Source string in UTF-8. */
+    CONST char *src,		/* Source string in UTF-8. */
     int srcLen,			/* Source string length in bytes, or < 0 for
 				 * strlen(). */
     Tcl_DString *dstPtr)	/* Uninitialized or free DString in which the
@@ -1349,7 +1350,7 @@ Tcl_UtfToExternal(
     Tcl_Interp *interp,		/* Interp for error return, if not NULL. */
     Tcl_Encoding encoding,	/* The encoding for the converted string, or
 				 * NULL for the default system encoding. */
-    const char *src,		/* Source string in UTF-8. */
+    CONST char *src,		/* Source string in UTF-8. */
     int srcLen,			/* Source string length in bytes, or < 0 for
 				 * strlen(). */
     int flags,			/* Conversion control flags. */
@@ -1434,7 +1435,7 @@ Tcl_UtfToExternal(
 
 void
 Tcl_FindExecutable(
-    const char *argv0)		/* The value of the application's argv[0]
+    CONST char *argv0)		/* The value of the application's argv[0]
 				 * (native). */
 {
     TclInitSubsystems();
@@ -1464,7 +1465,7 @@ Tcl_FindExecutable(
 static Tcl_Channel
 OpenEncodingFileChannel(
     Tcl_Interp *interp,		/* Interp for error reporting, if not NULL. */
-    const char *name)		/* The name of the encoding file on disk and
+    CONST char *name)		/* The name of the encoding file on disk and
 				 * also the name for new encoding. */
 {
     Tcl_Obj *nameObj = Tcl_NewStringObj(name, -1);
@@ -1494,7 +1495,7 @@ OpenEncodingFileChannel(
 	    }
 	}
 	if (!verified) {
-	    const char *dirString = Tcl_GetString(directory);
+	    CONST char *dirString = Tcl_GetString(directory);
 	    for (i=0; i<numDirs && !verified; i++) {
 		if (strcmp(dirString, Tcl_GetString(dir[i])) == 0) {
 		    verified = 1;
@@ -1580,7 +1581,7 @@ OpenEncodingFileChannel(
 static Tcl_Encoding
 LoadEncodingFile(
     Tcl_Interp *interp,		/* Interp for error reporting, if not NULL. */
-    const char *name)		/* The name of the encoding file on disk and
+    CONST char *name)		/* The name of the encoding file on disk and
 				 * also the name for new encoding. */
 {
     Tcl_Channel chan = NULL;
@@ -1653,7 +1654,7 @@ LoadEncodingFile(
 
 static Tcl_Encoding
 LoadTableEncoding(
-    const char *name,		/* Name for new encoding. */
+    CONST char *name,		/* Name for new encoding. */
     int type,			/* Type of encoding (ENCODING_?????). */
     Tcl_Channel chan)		/* File containing new encoding. */
 {
@@ -1672,7 +1673,7 @@ LoadTableEncoding(
      * sequences in the encoding files.
      */
 
-    static const char staticHex[] = {
+    static char staticHex[] = {
       0,  0,  0,  0,  0,  0,  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, /*   0 ...  15 */
       0,  0,  0,  0,  0,  0,  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, /*  16 ...  31 */
       0,  0,  0,  0,  0,  0,  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, /*  32 ...  47 */
@@ -1935,7 +1936,7 @@ LoadTableEncoding(
 
 static Tcl_Encoding
 LoadEscapeEncoding(
-    const char *name,		/* Name for new encoding. */
+    CONST char *name,		/* Name for new encoding. */
     Tcl_Channel chan)		/* File containing new encoding. */
 {
     int i;
@@ -1951,7 +1952,7 @@ LoadEscapeEncoding(
 
     while (1) {
 	int argc;
-	const char **argv;
+	CONST char **argv;
 	char *line;
 	Tcl_DString lineString;
 
@@ -2056,7 +2057,7 @@ LoadEscapeEncoding(
 static int
 BinaryProc(
     ClientData clientData,	/* Not used. */
-    const char *src,		/* Source string (unknown encoding). */
+    CONST char *src,		/* Source string (unknown encoding). */
     int srcLen,			/* Source string length in bytes. */
     int flags,			/* Conversion control flags. */
     Tcl_EncodingState *statePtr,/* Place for conversion routine to store state
@@ -2117,7 +2118,7 @@ BinaryProc(
 static int
 UtfIntToUtfExtProc(
     ClientData clientData,	/* Not used. */
-    const char *src,		/* Source string in UTF-8. */
+    CONST char *src,		/* Source string in UTF-8. */
     int srcLen,			/* Source string length in bytes. */
     int flags,			/* Conversion control flags. */
     Tcl_EncodingState *statePtr,/* Place for conversion routine to store state
@@ -2165,7 +2166,7 @@ UtfIntToUtfExtProc(
 static int
 UtfExtToUtfIntProc(
     ClientData clientData,	/* Not used. */
-    const char *src,		/* Source string in UTF-8. */
+    CONST char *src,		/* Source string in UTF-8. */
     int srcLen,			/* Source string length in bytes. */
     int flags,			/* Conversion control flags. */
     Tcl_EncodingState *statePtr,/* Place for conversion routine to store state
@@ -2214,7 +2215,7 @@ UtfExtToUtfIntProc(
 static int
 UtfToUtfProc(
     ClientData clientData,	/* Not used. */
-    const char *src,		/* Source string in UTF-8. */
+    CONST char *src,		/* Source string in UTF-8. */
     int srcLen,			/* Source string length in bytes. */
     int flags,			/* Conversion control flags. */
     Tcl_EncodingState *statePtr,/* Place for conversion routine to store state
@@ -2241,7 +2242,7 @@ UtfToUtfProc(
 				 * representation to real null-bytes or vice
 				 * versa. */
 {
-    const char *srcStart, *srcEnd, *srcClose;
+    CONST char *srcStart, *srcEnd, *srcClose;
     char *dstStart, *dstEnd;
     int result, numChars;
     Tcl_UniChar ch;
@@ -2328,7 +2329,7 @@ UtfToUtfProc(
 static int
 UnicodeToUtfProc(
     ClientData clientData,	/* Not used. */
-    const char *src,		/* Source string in Unicode. */
+    CONST char *src,		/* Source string in Unicode. */
     int srcLen,			/* Source string length in bytes. */
     int flags,			/* Conversion control flags. */
     Tcl_EncodingState *statePtr,/* Place for conversion routine to store state
@@ -2352,7 +2353,7 @@ UnicodeToUtfProc(
 				 * correspond to the bytes stored in the
 				 * output buffer. */
 {
-    const char *srcStart, *srcEnd;
+    CONST char *srcStart, *srcEnd;
     char *dstEnd, *dstStart;
     int result, numChars;
     Tcl_UniChar ch;
@@ -2414,7 +2415,7 @@ static int
 UtfToUnicodeProc(
     ClientData clientData,	/* TableEncodingData that specifies
 				 * encoding. */
-    const char *src,		/* Source string in UTF-8. */
+    CONST char *src,		/* Source string in UTF-8. */
     int srcLen,			/* Source string length in bytes. */
     int flags,			/* Conversion control flags. */
     Tcl_EncodingState *statePtr,/* Place for conversion routine to store state
@@ -2438,7 +2439,7 @@ UtfToUnicodeProc(
 				 * correspond to the bytes stored in the
 				 * output buffer. */
 {
-    const char *srcStart, *srcEnd, *srcClose, *dstStart, *dstEnd;
+    CONST char *srcStart, *srcEnd, *srcClose, *dstStart, *dstEnd;
     int result, numChars;
     Tcl_UniChar ch;
 
@@ -2508,7 +2509,7 @@ static int
 TableToUtfProc(
     ClientData clientData,	/* TableEncodingData that specifies
 				 * encoding. */
-    const char *src,		/* Source string in specified encoding. */
+    CONST char *src,		/* Source string in specified encoding. */
     int srcLen,			/* Source string length in bytes. */
     int flags,			/* Conversion control flags. */
     Tcl_EncodingState *statePtr,/* Place for conversion routine to store state
@@ -2532,7 +2533,7 @@ TableToUtfProc(
 				 * correspond to the bytes stored in the
 				 * output buffer. */
 {
-    const char *srcStart, *srcEnd;
+    CONST char *srcStart, *srcEnd;
     char *dstEnd, *dstStart, *prefixBytes;
     int result, byte, numChars;
     Tcl_UniChar ch;
@@ -2617,7 +2618,7 @@ static int
 TableFromUtfProc(
     ClientData clientData,	/* TableEncodingData that specifies
 				 * encoding. */
-    const char *src,		/* Source string in UTF-8. */
+    CONST char *src,		/* Source string in UTF-8. */
     int srcLen,			/* Source string length in bytes. */
     int flags,			/* Conversion control flags. */
     Tcl_EncodingState *statePtr,/* Place for conversion routine to store state
@@ -2641,7 +2642,7 @@ TableFromUtfProc(
 				 * correspond to the bytes stored in the
 				 * output buffer. */
 {
-    const char *srcStart, *srcEnd, *srcClose;
+    CONST char *srcStart, *srcEnd, *srcClose;
     char *dstStart, *dstEnd, *prefixBytes;
     Tcl_UniChar ch;
     int result, len, word, numChars;
@@ -2739,7 +2740,7 @@ TableFromUtfProc(
 static int
 Iso88591ToUtfProc(
     ClientData clientData,	/* Ignored. */
-    const char *src,		/* Source string in specified encoding. */
+    CONST char *src,		/* Source string in specified encoding. */
     int srcLen,			/* Source string length in bytes. */
     int flags,			/* Conversion control flags. */
     Tcl_EncodingState *statePtr,/* Place for conversion routine to store state
@@ -2763,7 +2764,7 @@ Iso88591ToUtfProc(
 				 * correspond to the bytes stored in the
 				 * output buffer. */
 {
-    const char *srcStart, *srcEnd;
+    CONST char *srcStart, *srcEnd;
     char *dstEnd, *dstStart;
     int result, numChars;
 
@@ -2818,7 +2819,7 @@ Iso88591ToUtfProc(
 static int
 Iso88591FromUtfProc(
     ClientData clientData,	/* Ignored. */
-    const char *src,		/* Source string in UTF-8. */
+    CONST char *src,		/* Source string in UTF-8. */
     int srcLen,			/* Source string length in bytes. */
     int flags,			/* Conversion control flags. */
     Tcl_EncodingState *statePtr,/* Place for conversion routine to store state
@@ -2842,7 +2843,7 @@ Iso88591FromUtfProc(
 				 * correspond to the bytes stored in the
 				 * output buffer. */
 {
-    const char *srcStart, *srcEnd, *srcClose;
+    CONST char *srcStart, *srcEnd, *srcClose;
     char *dstStart, *dstEnd;
     int result, numChars;
 
@@ -2959,7 +2960,7 @@ static int
 EscapeToUtfProc(
     ClientData clientData,	/* EscapeEncodingData that specifies
 				 * encoding. */
-    const char *src,		/* Source string in specified encoding. */
+    CONST char *src,		/* Source string in specified encoding. */
     int srcLen,			/* Source string length in bytes. */
     int flags,			/* Conversion control flags. */
     Tcl_EncodingState *statePtr,/* Place for conversion routine to store state
@@ -2988,7 +2989,7 @@ EscapeToUtfProc(
     unsigned short **tableToUnicode;
     Encoding *encodingPtr;
     int state, result, numChars;
-    const char *srcStart, *srcEnd;
+    CONST char *srcStart, *srcEnd;
     char *dstStart, *dstEnd;
 
     result = TCL_OK;
@@ -3173,7 +3174,7 @@ static int
 EscapeFromUtfProc(
     ClientData clientData,	/* EscapeEncodingData that specifies
 				 * encoding. */
-    const char *src,		/* Source string in UTF-8. */
+    CONST char *src,		/* Source string in UTF-8. */
     int srcLen,			/* Source string length in bytes. */
     int flags,			/* Conversion control flags. */
     Tcl_EncodingState *statePtr,/* Place for conversion routine to store state
@@ -3199,7 +3200,7 @@ EscapeFromUtfProc(
 {
     EscapeEncodingData *dataPtr;
     Encoding *encodingPtr;
-    const char *srcStart, *srcEnd, *srcClose;
+    CONST char *srcStart, *srcEnd, *srcClose;
     char *dstStart, *dstEnd;
     int state, result, numChars;
     TableEncodingData *tableDataPtr;
@@ -3480,7 +3481,7 @@ GetTableEncoding(
 
 static size_t
 unilen(
-    const char *src)
+    CONST char *src)
 {
     unsigned short *p;
 

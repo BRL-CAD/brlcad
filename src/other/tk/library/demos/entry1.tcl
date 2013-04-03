@@ -2,6 +2,8 @@
 #
 # This demonstration script creates several entry widgets without
 # scrollbars.
+#
+# RCS: @(#) $Id$
 
 if {![info exists widgetDemo]} {
     error "This script should be run from the \"widget\" demo."

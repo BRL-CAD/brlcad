@@ -5,6 +5,8 @@
 # These procedures use a callback interface to avoid using vwait,
 # which is not defined in the safe base.
 #
+# RCS: @(#) $Id$
+#
 # See the http.n man page for documentation
 
 package provide http 1.0

@@ -2,6 +2,8 @@
 #
 # Implementation of the history command.
 #
+# RCS: @(#) $Id$
+#
 # Copyright (c) 1997 Sun Microsystems, Inc.
 #
 # See the file "license.terms" for information on usage and redistribution

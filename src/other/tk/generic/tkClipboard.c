@@ -10,6 +10,8 @@
  *
  * See the file "license.terms" for information on usage and redistribution of
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
+ *
+ * RCS: @(#) $Id$
  */
 
 #include "tkInt.h"
@@ -645,11 +647,12 @@ TkClipInit(
      * and set up an event handler for it.
      */
 
-    dispPtr->clipWindow = (Tk_Window) TkAllocWindow(dispPtr,
-	DefaultScreen(dispPtr->display), NULL);
+    dispPtr->clipWindow = Tk_CreateWindow(interp, (Tk_Window) NULL,
+	    "_clip", DisplayString(dispPtr->display));
+    if (dispPtr->clipWindow == NULL) {
+	return TCL_ERROR;
+    }
     Tcl_Preserve((ClientData) dispPtr->clipWindow);
-    ((TkWindow *) dispPtr->clipWindow)->flags |= TK_TOP_HIERARCHY|TK_TOP_LEVEL|TK_HAS_WRAPPER|TK_WIN_MANAGED;
-    TkWmNewWindow((TkWindow *) dispPtr->clipWindow);
     atts.override_redirect = True;
     Tk_ChangeWindowAttributes(dispPtr->clipWindow, CWOverrideRedirect, &atts);
     Tk_MakeWindowExist(dispPtr->clipWindow);

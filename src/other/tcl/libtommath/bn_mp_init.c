@@ -40,3 +40,7 @@ int mp_init (mp_int * a)
   return MP_OKAY;
 }
 #endif
+
+/* $Source$ */
+/* $Revision$ */
+/* $Date$ */

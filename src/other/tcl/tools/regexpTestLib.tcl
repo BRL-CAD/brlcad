@@ -5,6 +5,9 @@
 # Spencer's test suite to tcl test files.
 #
 # Copyright (c) 1996 by Sun Microsystems, Inc.
+#
+# SCCS: @(#) regexpTestLib.tcl 1.4 98/01/22 14:48:34
+# 
 
 proc readInputFile {} {
     global inFileName

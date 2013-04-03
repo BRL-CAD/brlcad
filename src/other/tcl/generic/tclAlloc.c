@@ -14,6 +14,8 @@
  *
  * See the file "license.terms" for information on usage and redistribution of
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
+ *
+ * RCS: @(#) $Id$
  */
 
 /*
@@ -25,6 +27,12 @@
 #if !defined(TCL_THREADS) || !defined(USE_THREAD_ALLOC)
 
 #if USE_TCLALLOC
+
+#ifdef TCL_DEBUG
+#   define DEBUG
+/* #define MSTATS */
+#   define RCHECK
+#endif
 
 /*
  * We should really make use of AC_CHECK_TYPE(caddr_t) here, but it can wait
@@ -54,7 +62,7 @@ union overhead {
 	unsigned char index;		/* bucket # */
 	unsigned char unused;		/* unused */
 	unsigned char magic1;		/* other magic number */
-#ifndef NDEBUG
+#ifdef RCHECK
 	unsigned short rmagic;		/* range magic number */
 	unsigned long size;		/* actual block size */
 	unsigned short unused2;		/* padding to 8-byte align */
@@ -71,7 +79,7 @@ union overhead {
 #define MAGIC		0xef	/* magic # on accounting info */
 #define RMAGIC		0x5555	/* magic # on range info */
 
-#ifndef NDEBUG
+#ifdef RCHECK
 #define	RSLOP		sizeof (unsigned short)
 #else
 #define	RSLOP		0
@@ -137,7 +145,7 @@ static	unsigned int numMallocs[NBUCKETS+1];
 #include <stdio.h>
 #endif
 
-#if !defined(NDEBUG)
+#if defined(DEBUG) || defined(RCHECK)
 #define	ASSERT(p)	if (!(p)) Tcl_Panic(# p)
 #define RANGE_ASSERT(p) if (!(p)) Tcl_Panic(# p)
 #else
@@ -294,7 +302,7 @@ TclpAlloc(
 	numMallocs[NBUCKETS]++;
 #endif
 
-#ifndef NDEBUG
+#ifdef RCHECK
 	/*
 	 * Record allocated size of block and bound space with magic numbers.
 	 */
@@ -352,7 +360,7 @@ TclpAlloc(
     numMallocs[bucket]++;
 #endif
 
-#ifndef NDEBUG
+#ifdef RCHECK
     /*
      * Record allocated size of block and bound space with magic numbers.
      */
@@ -572,7 +580,7 @@ TclpRealloc(
 	numMallocs[NBUCKETS]++;
 #endif
 
-#ifndef NDEBUG
+#ifdef RCHECK
 	/*
 	 * Record allocated size of block and update magic number bounds.
 	 */
@@ -614,7 +622,7 @@ TclpRealloc(
      * Ok, we don't have to copy, it fits as-is
      */
 
-#ifndef NDEBUG
+#ifdef RCHECK
     overPtr->realBlockSize = (numBytes + RSLOP - 1) & ~(RSLOP - 1);
     BLOCK_END(overPtr) = RMAGIC;
 #endif

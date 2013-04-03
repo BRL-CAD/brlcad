@@ -129,6 +129,7 @@
  *
  * See the file "license.terms" for information on usage and redistribution of
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
+ *
  */
 #include "tclInt.h"
 
@@ -2299,7 +2300,7 @@ MODULE_SCOPE int yynerrs;
  * Month and day table.
  */
 
-static const TABLE MonthDayTable[] = {
+static TABLE MonthDayTable[] = {
     { "january",	tMONTH,	 1 },
     { "february",	tMONTH,	 2 },
     { "march",		tMONTH,	 3 },
@@ -2331,7 +2332,7 @@ static const TABLE MonthDayTable[] = {
  * Time units table.
  */
 
-static const TABLE UnitsTable[] = {
+static TABLE UnitsTable[] = {
     { "year",		tMONTH_UNIT,	12 },
     { "month",		tMONTH_UNIT,	 1 },
     { "fortnight",	tDAY_UNIT,	14 },
@@ -2349,7 +2350,7 @@ static const TABLE UnitsTable[] = {
  * Assorted relative-time words.
  */
 
-static const TABLE OtherTable[] = {
+static TABLE OtherTable[] = {
     { "tomorrow",	tDAY_UNIT,	1 },
     { "yesterday",	tDAY_UNIT,	-1 },
     { "today",		tDAY_UNIT,	0 },
@@ -2382,7 +2383,7 @@ static const TABLE OtherTable[] = {
  * point constants to work around an SGI compiler bug).
  */
 
-static const TABLE TimezoneTable[] = {
+static TABLE TimezoneTable[] = {
     { "gmt",	tZONE,	   HOUR( 0) },	    /* Greenwich Mean */
     { "ut",	tZONE,	   HOUR( 0) },	    /* Universal (Coordinated) */
     { "utc",	tZONE,	   HOUR( 0) },
@@ -2467,7 +2468,7 @@ static const TABLE TimezoneTable[] = {
  * Military timezone table.
  */
 
-static const TABLE MilitaryTable[] = {
+static TABLE	MilitaryTable[] = {
     { "a",	tZONE,	-HOUR( 1) },
     { "b",	tZONE,	-HOUR( 2) },
     { "c",	tZONE,	-HOUR( 3) },
@@ -2560,7 +2561,7 @@ LookupWord(
 {
     register char *p;
     register char *q;
-    register const TABLE *tp;
+    register TABLE *tp;
     int i, abbrev;
 
     /*

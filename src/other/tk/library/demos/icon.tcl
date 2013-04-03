@@ -2,6 +2,8 @@
 #
 # This demonstration script creates a toplevel window containing
 # buttons that display bitmaps instead of text.
+#
+# RCS: @(#) $Id$
 
 if {![info exists widgetDemo]} {
     error "This script should be run from the \"widget\" demo."

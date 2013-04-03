@@ -1,6 +1,8 @@
 # clrpick.tcl --
 #
 # This demonstration script prompts the user to select a color.
+#
+# RCS: @(#) $Id$
 
 if {![info exists widgetDemo]} {
     error "This script should be run from the \"widget\" demo."

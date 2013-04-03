@@ -10,6 +10,8 @@
  *
  * See the file "license.terms" for information on usage and redistribution of
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
+ *
+ * RCS: @(#) $Id$
  */
 
 #include "tclInt.h"
@@ -291,7 +293,6 @@ TclpAlloc(
     register int bucket;
     size_t size;
 
-#ifndef __LP64__
     if (sizeof(int) >= sizeof(size_t)) {
 	/* An unsigned int overflow can also be a size_t overflow */
 	const size_t zero = 0;
@@ -302,7 +303,6 @@ TclpAlloc(
 	    return NULL;
 	}
     }
-#endif
 
     cachePtr = TclpGetAllocCache();
     if (cachePtr == NULL) {
@@ -436,7 +436,6 @@ TclpRealloc(
 	return TclpAlloc(reqSize);
     }
 
-#ifndef __LP64__
     if (sizeof(int) >= sizeof(size_t)) {
 	/* An unsigned int overflow can also be a size_t overflow */
 	const size_t zero = 0;
@@ -447,7 +446,6 @@ TclpRealloc(
 	    return NULL;
 	}
     }
-#endif
 
     cachePtr = TclpGetAllocCache();
     if (cachePtr == NULL) {

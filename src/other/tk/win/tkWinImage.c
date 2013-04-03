@@ -7,6 +7,8 @@
  *
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
+ *
+ * RCS: @(#) $Id$
  */
 
 #include "tkWinInt.h"
@@ -68,7 +70,7 @@ ImageGetPixel(
     int x, int y)
 {
     unsigned long pixel = 0;
-    unsigned char *srcPtr = (unsigned char *) &(image->data[(y * image->bytes_per_line)
+    unsigned char *srcPtr = &(image->data[(y * image->bytes_per_line)
 	    + ((x * image->bits_per_pixel) / NBBY)]);
 
     switch (image->bits_per_pixel) {
@@ -116,7 +118,7 @@ PutPixel(
     int x, int y,
     unsigned long pixel)
 {
-    unsigned char *destPtr = (unsigned char *) &(image->data[(y * image->bytes_per_line)
+    unsigned char *destPtr = &(image->data[(y * image->bytes_per_line)
 	    + ((x * image->bits_per_pixel) / NBBY)]);
 
     switch  (image->bits_per_pixel) {
@@ -368,16 +370,16 @@ XGetImageZPixmap(
 	unsigned char *p, *pend;
 
 	GetDIBits(hdcMem, hbmp, 0, height, NULL, bmInfo, DIB_PAL_COLORS);
-	data = (unsigned char *) ckalloc(bmInfo->bmiHeader.biSizeImage);
+	data = ckalloc(bmInfo->bmiHeader.biSizeImage);
 	if (!data) {
 	    /* printf("Failed to allocate data area for XImage.\n"); */
 	    ret_image = NULL;
 	    goto cleanup;
 	}
-	ret_image = XCreateImage(display, NULL, depth, ZPixmap, 0, (char *)data,
+	ret_image = XCreateImage(display, NULL, depth, ZPixmap, 0, data,
 		width, height, 32, (int) ((width + 31) >> 3) & ~1);
 	if (ret_image == NULL) {
-	    ckfree((char *)data);
+	    ckfree(data);
 	    goto cleanup;
 	}
 
@@ -404,13 +406,13 @@ XGetImageZPixmap(
 	unsigned char *p;
 
 	GetDIBits(hdcMem, hbmp, 0, height, NULL, bmInfo, DIB_PAL_COLORS);
-	data = (unsigned char *) ckalloc(bmInfo->bmiHeader.biSizeImage);
+	data = ckalloc(bmInfo->bmiHeader.biSizeImage);
 	if (!data) {
 	    /* printf("Failed to allocate data area for XImage.\n"); */
 	    ret_image = NULL;
 	    goto cleanup;
 	}
-	ret_image = XCreateImage(display, NULL, 8, ZPixmap, 0, (char *)data,
+	ret_image = XCreateImage(display, NULL, 8, ZPixmap, 0, data,
 		width, height, 8, (int) width);
 	if (ret_image == NULL) {
 	    ckfree((char *) data);
@@ -435,13 +437,13 @@ XGetImageZPixmap(
 	}
     } else if (depth == 16) {
 	GetDIBits(hdcMem, hbmp, 0, height, NULL, bmInfo, DIB_RGB_COLORS);
-	data = (unsigned char *) ckalloc(bmInfo->bmiHeader.biSizeImage);
+	data = ckalloc(bmInfo->bmiHeader.biSizeImage);
 	if (!data) {
 	    /* printf("Failed to allocate data area for XImage.\n"); */
 	    ret_image = NULL;
 	    goto cleanup;
 	}
-	ret_image = XCreateImage(display, NULL, 16, ZPixmap, 0, (char *) data,
+	ret_image = XCreateImage(display, NULL, 16, ZPixmap, 0, data,
 		width, height, 16, 0 /* will be calc'ed from bitmap_pad */);
 	if (ret_image == NULL) {
 	    ckfree((char *) data);
@@ -461,13 +463,13 @@ XGetImageZPixmap(
 	}
     } else {
 	GetDIBits(hdcMem, hbmp, 0, height, NULL, bmInfo, DIB_RGB_COLORS);
-	data = (unsigned char *) ckalloc(width * height * 4);
+	data = ckalloc(width * height * 4);
 	if (!data) {
 	    /* printf("Failed to allocate data area for XImage.\n"); */
 	    ret_image = NULL;
 	    goto cleanup;
 	}
-	ret_image = XCreateImage(display, NULL, 32, ZPixmap, 0, (char *) data,
+	ret_image = XCreateImage(display, NULL, 32, ZPixmap, 0, data,
 		width, height, 0, (int) width * 4);
 	if (ret_image == NULL) {
 	    ckfree((char *) data);
@@ -484,7 +486,7 @@ XGetImageZPixmap(
 	    unsigned int byte_width, h, w;
 
 	    byte_width = ((width * 3 + 3) & ~(unsigned)3);
-	    smallBitBase = (unsigned char *) ckalloc(byte_width * height);
+	    smallBitBase = ckalloc(byte_width * height);
 	    if (!smallBitBase) {
 		ckfree((char *) ret_image->data);
 		ckfree((char *) ret_image);
@@ -511,7 +513,7 @@ XGetImageZPixmap(
 	     */
 
 	    for (h = 0; h < height; h++) {
-		bigBitData   = (unsigned char *) (ret_image->data + h * ret_image->bytes_per_line);
+		bigBitData   = ret_image->data + h * ret_image->bytes_per_line;
 		smallBitData = smallBitBase + h * byte_width;
 
 		for (w = 0; w < width; w++) {

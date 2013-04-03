@@ -9,6 +9,8 @@
  *
  * See the file "license.terms" for information on usage and redistribution of
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
+ *
+ * CVS: $Id$
  */
 
 #include "tclInt.h"
@@ -133,7 +135,7 @@ static Tcl_ChannelType transformChannelType = {
     TransformNotifyProc,	/* Handling of events bubbling up. */
     TransformWideSeekProc,	/* Wide seek proc. */
     NULL,			/* Thread action. */
-    NULL			/* Truncate. */
+    NULL,			/* Truncate. */
 };
 
 /*

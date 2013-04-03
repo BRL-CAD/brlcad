@@ -8,6 +8,8 @@
  *
  * See the file "license.terms" for information on usage and redistribution of
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
+ *
+ * RCS: @(#) $Id$
  */
 
 #ifndef _TKMENU
@@ -252,7 +254,7 @@ typedef struct TkMenuEntry {
  * Menu states
  */
 
-MODULE_SCOPE const char *tkMenuStateStrings[];
+MODULE_SCOPE char *tkMenuStateStrings[];
 
 #define ENTRY_ACTIVE 0
 #define ENTRY_NORMAL 1

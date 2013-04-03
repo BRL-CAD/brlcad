@@ -7,6 +7,8 @@
 #
 # See the file "license.terms" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
+#
+# RCS: @(#) $Id$
 
 if {[catch {package require tcltest 2.0.2}]} {
     puts stderr "Skipping tests in [info script]. tcltest 2.0.2 required."
@@ -227,18 +229,6 @@ test parse-5.26 {Tcl_ParseCommand: {*} parsing} testparser {
 test parse-5.27 {Tcl_ParseCommand: {*} parsing} testparser {
     testparser "{*}\\\n foo bar" 0
 } {- \{*\}\\\n\ foo\ bar 3 simple {{*}} 1 text * 0 simple foo 1 text foo 0 simple bar 1 text bar 0 {}}
-test parse-5.28 {Tcl_ParseCommand: {*} parsing, expanded literals} testparser {
-    testparser {{*}{a b}} 0
-} {- {{*}{a b}} 2 simple a 1 text a 0 simple b 1 text b 0 {}}
-test parse-5.29 {Tcl_ParseCommand: {*} parsing, expanded literals, naked backslashes} testparser {
-    testparser {{*}{a \n b}} 0
-} {- {{*}{a \n b}} 1 expand {{*}{a \n b}} 1 text {a \n b} 0 {}}
-test parse-5.30 {Tcl_ParseCommand: {*} parsing, expanded literals} testparser {
-    testparser {{*}"a b"} 0
-} {- {{*}"a b"} 2 simple a 1 text a 0 simple b 1 text b 0 {}}
-test parse-5.31 {Tcl_ParseCommand: {*} parsing, expanded literals, naked backslashes} testparser {
-    testparser {{*}"a \n b"} 0
-} {- {{*}"a \n b"} 1 expand {{*}"a \n b"} 3 text {a } 0 backslash {\n} 0 text { b} 0 {}}
 
 test parse-6.1 {ParseTokens procedure, empty word} testparser {
     testparser {""} 0
@@ -1061,44 +1051,6 @@ test parse-19.4 {Bug 1115904: recursion limit in Tcl_EvalEx} -setup {
 } -cleanup {
     interp delete i
 } -returnCodes error -match glob -result {too many nested*}
-
-test parse-20.1 {TclParseBackslash: truncated escape} testparser {
-    testparser {\u12345} 1
-} {- \\ 1 simple \\ 1 text \\ 0 u12345}
-test parse-20.2 {TclParseBackslash: truncated escape} testparser {
-    testparser {\u12345} 2
-} {- {\u} 1 word {\u} 1 backslash {\u} 0 12345}
-test parse-20.3 {TclParseBackslash: truncated escape} testparser {
-    testparser {\u12345} 3
-} {- {\u1} 1 word {\u1} 1 backslash {\u1} 0 2345}
-test parse-20.4 {TclParseBackslash: truncated escape} testparser {
-    testparser {\u12345} 4
-} {- {\u12} 1 word {\u12} 1 backslash {\u12} 0 345}
-test parse-20.5 {TclParseBackslash: truncated escape} testparser {
-    testparser {\u12345} 5
-} {- {\u123} 1 word {\u123} 1 backslash {\u123} 0 45}
-test parse-20.6 {TclParseBackslash: truncated escape} testparser {
-    testparser {\u12345} 6
-} {- {\u1234} 1 word {\u1234} 1 backslash {\u1234} 0 5}
-test parse-20.7 {TclParseBackslash: truncated escape} testparser {
-    testparser {\u12345} 7
-} {- {\u12345} 1 word {\u12345} 2 backslash {\u1234} 0 text 5 0 {}}
-
-test parse-20.8 {TclParseBackslash: truncated escape} testparser {
-    testparser {\x12X} 1
-} {- \\ 1 simple \\ 1 text \\ 0 x12X}
-test parse-20.9 {TclParseBackslash: truncated escape} testparser {
-    testparser {\x12X} 2
-} {- {\x} 1 word {\x} 1 backslash {\x} 0 12X}
-test parse-20.10 {TclParseBackslash: truncated escape} testparser {
-    testparser {\x12X} 3
-} {- {\x1} 1 word {\x1} 1 backslash {\x1} 0 2X}
-test parse-20.11 {TclParseBackslash: truncated escape} testparser {
-    testparser {\x12X} 4
-} {- {\x12} 1 word {\x12} 1 backslash {\x12} 0 X}
-test parse-20.12 {TclParseBackslash: truncated escape} testparser {
-    testparser {\x12X} 5
-} {- {\x12X} 1 word {\x12X} 2 backslash {\x12} 0 text X 0 {}}
 
 cleanupTests
 }

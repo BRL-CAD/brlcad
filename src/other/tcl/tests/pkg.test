@@ -10,19 +10,22 @@
 #
 # See the file "license.terms" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
+#
+# RCS: @(#) $Id$
 
 if {[lsearch [namespace children] ::tcltest] == -1} {
-    package require tcltest 2.3.4
+    package require tcltest 2
     namespace import -force ::tcltest::*
 }
 
 # Do all this in a slave interp to avoid garbaging the
 # package list
 set i [interp create]
-tcltest::loadIntoSlaveInterpreter $i {*}$argv
-
+interp eval $i [list set argv $argv]
+interp eval $i [list package require tcltest 2]
+interp eval $i [list namespace import -force ::tcltest::*]
 interp eval $i {
-namespace import -force ::tcltest::*
+
 package forget {*}[package names]
 set oldPkgUnknown [package unknown]
 package unknown {}

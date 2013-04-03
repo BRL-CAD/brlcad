@@ -7,17 +7,12 @@
  *
  * See the file "license.terms" for information on usage and redistribution of
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
+ *
+ * RCS: @(#) $Id$
  */
 
 #include "tkWinInt.h"
 
-#undef TkCreateRegion
-#undef TkDestroyRegion
-#undef TkClipBox
-#undef TkIntersectRegion
-#undef TkUnionRectWithRegion
-#undef TkRectInRegion
-#undef TkSubtractRegion
 
 /*
  *----------------------------------------------------------------------

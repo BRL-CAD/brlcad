@@ -1094,10 +1094,6 @@ test filesystem-9.9 {path objects and glob and file tail and tilde} {
     set res
 } {0 0 0 0 1}
 
-test filesystem-10.1 {Bug 3414754} {
-    string match */ [file join [pwd] foo/]
-} 0
-
 cleanupTests
 unset -nocomplain drive
 }

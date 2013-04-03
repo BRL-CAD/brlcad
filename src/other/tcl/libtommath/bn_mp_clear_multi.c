@@ -28,3 +28,7 @@ void mp_clear_multi(mp_int *mp, ...)
     va_end(args);
 }
 #endif
+
+/* $Source$ */
+/* $Revision$ */
+/* $Date$ */

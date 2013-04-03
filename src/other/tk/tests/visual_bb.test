@@ -5,6 +5,8 @@
 # with instructions about how the window should appear.  You can look
 # at the window to make sure it appears as expected.  Individual tests
 # are kept in separate ".tcl" files in this directory.
+#
+# RCS: @(#) $Id$
 
 package require tcltest 2.1
 eval tcltest::configure $argv

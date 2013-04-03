@@ -3,6 +3,8 @@
 #	Some functions needed for the common dialog boxes. Probably need to go
 #	in a different file.
 #
+# RCS: @(#) $Id$
+#
 # Copyright (c) 1996 Sun Microsystems, Inc.
 #
 # See the file "license.terms" for information on usage and redistribution

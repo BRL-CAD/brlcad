@@ -1,5 +1,8 @@
 # This file is a Tcl script to test out Tk's "tk_dialog" command.
 # It is organized in the standard fashion for Tcl tests.
+#
+# RCS: @(#) $Id$
+#
 
 package require tcltest 2.1
 eval tcltest::configure $argv
@@ -12,10 +15,10 @@ test dialog-1.2 {tk_dialog command} {
     list [catch {tk_dialog foo foo foo foo foo} msg] $msg
 } {1 {bad window path name "foo"}}
 test dialog-1.3 {tk_dialog command} {
-    set res [list [catch {tk_dialog .d foo foo fooBitmap foo} msg] $msg]
+    set res [list [catch {tk_dialog .d foo foo foo foo} msg] $msg]
     destroy .d
     set res
-} {1 {bitmap "fooBitmap" not defined}}
+} {1 {bitmap "foo" not defined}}
 
 proc PressButton {btn} {
     if {![winfo ismapped $btn]} {

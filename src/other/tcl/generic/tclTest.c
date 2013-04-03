@@ -13,17 +13,12 @@
  *
  * See the file "license.terms" for information on usage and redistribution of
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
+ *
+ * RCS: @(#) $Id$
  */
-
-#ifndef _WIN64
-/* See [Bug 3354324]: file mtime sets wrong time */
-#   define _USE_32BIT_TIME_T
-#endif
 
 #define TCL_TEST
 #include "tclInt.h"
-
-#include <math.h>
 
 /*
  * Required for Testregexp*Cmd
@@ -65,8 +60,6 @@ typedef struct TestAsyncHandler {
     struct TestAsyncHandler *nextPtr;
 				/* Next is list of handlers. */
 } TestAsyncHandler;
-
-TCL_DECLARE_MUTEX(asyncTestMutex);
 
 static TestAsyncHandler *firstHandler = NULL;
 
@@ -257,9 +250,6 @@ static int		TestdelCmd(ClientData dummy,
 			    Tcl_Interp *interp, int argc, const char **argv);
 static int		TestdelassocdataCmd(ClientData dummy,
 			    Tcl_Interp *interp, int argc, const char **argv);
-static int		TestdoubledigitsObjCmd(ClientData dummy,
-					       Tcl_Interp* interp,
-					       int objc, Tcl_Obj* const objv[]);
 static int		TestdstringCmd(ClientData dummy,
 			    Tcl_Interp *interp, int argc, const char **argv);
 static int		TestencodingObjCmd(ClientData dummy,
@@ -444,11 +434,6 @@ static int		TestNumUtfCharsCmd(ClientData clientData,
 static int		TestHashSystemHashCmd(ClientData clientData,
 			    Tcl_Interp *interp, int objc,
 			    Tcl_Obj *const objv[]);
-#if defined(HAVE_CPUID) || defined(__WIN32__)
-static int		TestcpuidCmd (ClientData dummy,
-			    Tcl_Interp* interp, int objc,
-			    Tcl_Obj *CONST objv[]);
-#endif
 
 static Tcl_Filesystem testReportingFilesystem = {
     "reporting",
@@ -479,7 +464,7 @@ static Tcl_Filesystem testReportingFilesystem = {
     &TestReportRenameFile,
     &TestReportCopyDirectory,
     &TestReportLstat,
-    (Tcl_FSLoadFileProc *) &TestReportLoadFile,
+    &TestReportLoadFile,
     NULL /* cwd */,
     &TestReportChdir
 };
@@ -622,8 +607,6 @@ Tcltest_Init(
     Tcl_CreateCommand(interp, "testdel", TestdelCmd, (ClientData) 0, NULL);
     Tcl_CreateCommand(interp, "testdelassocdata", TestdelassocdataCmd,
 	    (ClientData) 0, NULL);
-    Tcl_CreateObjCommand(interp, "testdoubledigits", TestdoubledigitsObjCmd,
-			 NULL, NULL);
     Tcl_DStringInit(&dstring);
     Tcl_CreateCommand(interp, "testdstring", TestdstringCmd, (ClientData) 0,
 	    NULL);
@@ -712,10 +695,6 @@ Tcltest_Init(
 	    (ClientData) NULL, NULL);
     Tcl_CreateCommand(interp, "testexitmainloop", TestexitmainloopCmd,
 	    (ClientData) NULL, NULL);
-#if defined(HAVE_CPUID) || defined(__WIN32__)
-    Tcl_CreateObjCommand(interp, "testcpuid", TestcpuidCmd,
-	    (ClientData) 0, NULL);
-#endif
     t3ArgTypes[0] = TCL_EITHER;
     t3ArgTypes[1] = TCL_EITHER;
     Tcl_CreateMathFunc(interp, "T3", 2, t3ArgTypes, TestMathFunc2,
@@ -807,21 +786,18 @@ TestasyncCmd(
 	    goto wrongNumArgs;
 	}
 	asyncPtr = (TestAsyncHandler *) ckalloc(sizeof(TestAsyncHandler));
-	asyncPtr->command = ckalloc(strlen(argv[2]) + 1);
-	strcpy(asyncPtr->command, argv[2]);
-        Tcl_MutexLock(&asyncTestMutex);
 	asyncPtr->id = nextId;
 	nextId++;
 	asyncPtr->handler = Tcl_AsyncCreate(AsyncHandlerProc,
-                                            INT2PTR(asyncPtr->id));
+		(ClientData) asyncPtr);
+	asyncPtr->command = (char *) ckalloc((unsigned) (strlen(argv[2]) + 1));
+	strcpy(asyncPtr->command, argv[2]);
 	asyncPtr->nextPtr = firstHandler;
 	firstHandler = asyncPtr;
-        Tcl_MutexUnlock(&asyncTestMutex);
 	TclFormatInt(buf, asyncPtr->id);
 	Tcl_SetResult(interp, buf, TCL_VOLATILE);
     } else if (strcmp(argv[1], "delete") == 0) {
 	if (argc == 2) {
-            Tcl_MutexLock(&asyncTestMutex);
 	    while (firstHandler != NULL) {
 		asyncPtr = firstHandler;
 		firstHandler = asyncPtr->nextPtr;
@@ -829,7 +805,6 @@ TestasyncCmd(
 		ckfree(asyncPtr->command);
 		ckfree((char *) asyncPtr);
 	    }
-            Tcl_MutexUnlock(&asyncTestMutex);
 	    return TCL_OK;
 	}
 	if (argc != 3) {
@@ -838,7 +813,6 @@ TestasyncCmd(
 	if (Tcl_GetInt(interp, argv[2], &id) != TCL_OK) {
 	    return TCL_ERROR;
 	}
-        Tcl_MutexLock(&asyncTestMutex);
 	for (prevPtr = NULL, asyncPtr = firstHandler; asyncPtr != NULL;
 		prevPtr = asyncPtr, asyncPtr = asyncPtr->nextPtr) {
 	    if (asyncPtr->id != id) {
@@ -854,7 +828,6 @@ TestasyncCmd(
 	    ckfree((char *) asyncPtr);
 	    break;
 	}
-        Tcl_MutexUnlock(&asyncTestMutex);
     } else if (strcmp(argv[1], "mark") == 0) {
 	if (argc != 5) {
 	    goto wrongNumArgs;
@@ -863,7 +836,6 @@ TestasyncCmd(
 		|| (Tcl_GetInt(interp, argv[4], &code) != TCL_OK)) {
 	    return TCL_ERROR;
 	}
-        Tcl_MutexLock(&asyncTestMutex);
 	for (asyncPtr = firstHandler; asyncPtr != NULL;
 		asyncPtr = asyncPtr->nextPtr) {
 	    if (asyncPtr->id == id) {
@@ -871,7 +843,6 @@ TestasyncCmd(
 		break;
 	    }
 	}
-        Tcl_MutexUnlock(&asyncTestMutex);
 	Tcl_SetResult(interp, (char *)argv[3], TCL_VOLATILE);
 	return code;
 #ifdef TCL_THREADS
@@ -882,22 +853,19 @@ TestasyncCmd(
 	if (Tcl_GetInt(interp, argv[2], &id) != TCL_OK) {
 	    return TCL_ERROR;
 	}
-        Tcl_MutexLock(&asyncTestMutex);
 	for (asyncPtr = firstHandler; asyncPtr != NULL;
 		asyncPtr = asyncPtr->nextPtr) {
 	    if (asyncPtr->id == id) {
 		Tcl_ThreadId threadID;
 		if (Tcl_CreateThread(&threadID, AsyncThreadProc,
-			(ClientData) INT2PTR(id), TCL_THREAD_STACK_DEFAULT,
+			(ClientData) asyncPtr, TCL_THREAD_STACK_DEFAULT,
 			TCL_THREAD_NOFLAGS) != TCL_OK) {
 		    Tcl_SetResult(interp, "can't create thread", TCL_STATIC);
-		    Tcl_MutexUnlock(&asyncTestMutex);
 		    return TCL_ERROR;
 		}
 		break;
 	    }
 	}
-        Tcl_MutexUnlock(&asyncTestMutex);
     } else {
 	Tcl_AppendResult(interp, "bad option \"", argv[1],
 		"\": must be create, delete, int, mark, or marklater", NULL);
@@ -914,28 +882,14 @@ TestasyncCmd(
 
 static int
 AsyncHandlerProc(
-    ClientData clientData,	/* If of TestAsyncHandler structure. 
-                                 * in global list. */
+    ClientData clientData,	/* Pointer to TestAsyncHandler structure. */
     Tcl_Interp *interp,		/* Interpreter in which command was
 				 * executed, or NULL. */
     int code)			/* Current return code from command. */
 {
-    TestAsyncHandler *asyncPtr;
-    int id = PTR2INT(clientData);
+    TestAsyncHandler *asyncPtr = (TestAsyncHandler *) clientData;
     const char *listArgv[4], *cmd;
     char string[TCL_INTEGER_SPACE];
-
-    Tcl_MutexLock(&asyncTestMutex);
-    for (asyncPtr = firstHandler; asyncPtr != NULL;
-         asyncPtr = asyncPtr->nextPtr) {
-        if (asyncPtr->id == id) break;
-    }
-    Tcl_MutexUnlock(&asyncTestMutex);
-
-    if (!asyncPtr) {
-        /* Woops - this one was deleted between the AsyncMark and now */
-        return TCL_OK;
-    }
 
     TclFormatInt(string, code);
     listArgv[0] = asyncPtr->command;
@@ -974,22 +928,12 @@ AsyncHandlerProc(
 #ifdef TCL_THREADS
 static Tcl_ThreadCreateType
 AsyncThreadProc(
-    ClientData clientData)	/* Parameter is the id of a
+    ClientData clientData)	/* Parameter is a pointer to a
 				 * TestAsyncHandler, defined above. */
 {
-    TestAsyncHandler *asyncPtr;
-    int id = PTR2INT(clientData);
-
+    TestAsyncHandler *asyncPtr = clientData;
     Tcl_Sleep(1);
-    Tcl_MutexLock(&asyncTestMutex);
-    for (asyncPtr = firstHandler; asyncPtr != NULL;
-         asyncPtr = asyncPtr->nextPtr) {
-        if (asyncPtr->id == id) {
-            Tcl_AsyncMark(asyncPtr->handler);
-            break;
-        }
-    }
-    Tcl_MutexUnlock(&asyncTestMutex);
+    Tcl_AsyncMark(asyncPtr->handler);
     Tcl_ExitThread(TCL_OK);
     TCL_THREAD_CREATE_RETURN;
 }
@@ -1651,102 +1595,6 @@ TestdelassocdataCmd(
 	return TCL_ERROR;
     }
     Tcl_DeleteAssocData(interp, argv[1]);
-    return TCL_OK;
-}
-
-/*
- *-----------------------------------------------------------------------------
- *
- * TestdoubledigitsCmd --
- *
- *	This procedure implements the 'testdoubledigits' command. It is
- *	used to test the low-level floating-point formatting primitives
- *	in Tcl.
- *
- * Usage:
- *	testdoubledigits fpval ndigits type ?shorten"
- *
- * Parameters:
- *	fpval - Floating-point value to format.
- *	ndigits - Digit count to request from Tcl_DoubleDigits
- *	type - One of 'shortest', 'Steele', 'e', 'f'
- *	shorten - Indicates that the 'shorten' flag should be passed in.
- *
- *-----------------------------------------------------------------------------
- */
-
-static int
-TestdoubledigitsObjCmd(ClientData unused,
-				/* NULL */
-		       Tcl_Interp* interp,
-				/* Tcl interpreter */
-		       int objc,
-				/* Parameter count */
-		       Tcl_Obj* const objv[])
-				/* Parameter vector */
-{
-    static const char* options[] = {
-	"shortest",
-	"Steele",
-	"e",
-	"f",
-	NULL
-    };
-    static const int types[] = {
-	TCL_DD_SHORTEST,
-	TCL_DD_STEELE,
-	TCL_DD_E_FORMAT,
-	TCL_DD_F_FORMAT
-    };
-
-    const Tcl_ObjType* doubleType;
-    double d;
-    int status;
-    int ndigits;
-    int type;
-    int decpt;
-    int signum;
-    char* str;
-    char* endPtr;
-    Tcl_Obj* strObj;
-    Tcl_Obj* retval;
-
-    if (objc < 4 || objc > 5) {
-	Tcl_WrongNumArgs(interp, 1, objv, "fpval ndigits type ?shorten?");
-	return TCL_ERROR;
-    }
-    status = Tcl_GetDoubleFromObj(interp, objv[1], &d);
-    if (status != TCL_OK) {
-	doubleType = Tcl_GetObjType("double");
-	if (objv[1]->typePtr == doubleType
-	    || TclIsNaN(objv[1]->internalRep.doubleValue)) {
-	    status = TCL_OK;
-	    memcpy(&d, &(objv[1]->internalRep.doubleValue), sizeof(double));
-	}
-    }
-    if (status != TCL_OK
-	|| Tcl_GetIntFromObj(interp, objv[2], &ndigits) != TCL_OK
-	|| Tcl_GetIndexFromObj(interp, objv[3], options, "conversion type",
-			       TCL_EXACT, &type) != TCL_OK) {
-	fprintf(stderr, "bad value? %g\n", d);
-	return TCL_ERROR;
-    }
-    type = types[type];
-    if (objc > 4) {
-	if (strcmp(Tcl_GetString(objv[4]), "shorten")) {
-	    Tcl_SetObjResult(interp, Tcl_NewStringObj("bad flag", -1));
-	    return TCL_ERROR;
-	}
-	type |= TCL_DD_SHORTEN_FLAG;
-    }
-    str = TclDoubleDigits(d, ndigits, type, &decpt, &signum, &endPtr);
-    strObj = Tcl_NewStringObj(str, endPtr-str);
-    ckfree(str);
-    retval = Tcl_NewListObj(1, &strObj);
-    Tcl_ListObjAppendElement(NULL, retval, Tcl_NewIntObj(decpt));
-    strObj = Tcl_NewStringObj(signum ? "-" : "+", 1);
-    Tcl_ListObjAppendElement(NULL, retval, strObj);
-    Tcl_SetObjResult(interp, retval);
     return TCL_OK;
 }
 
@@ -3276,7 +3124,7 @@ TestlocaleCmd(
     	"ctype", "numeric", "time", "collate", "monetary",
 	"all",	NULL
     };
-    static CONST int lcTypes[] = {
+    static int lcTypes[] = {
 	LC_CTYPE, LC_NUMERIC, LC_TIME, LC_COLLATE, LC_MONETARY,
 	LC_ALL
     };
@@ -4548,7 +4396,7 @@ TestpanicCmd(
      */
 
     argString = Tcl_Merge(argc-1, argv+1);
-    Tcl_Panic("%s", argString);
+    Tcl_Panic(argString);
     ckfree((char *)argString);
 
     return TCL_OK;
@@ -5366,7 +5214,7 @@ TestmainthreadCmd(
     const char **argv)		/* Argument strings. */
 {
   if (argc == 1) {
-      Tcl_Obj *idObj = Tcl_NewLongObj((long)(size_t)Tcl_GetCurrentThread());
+      Tcl_Obj *idObj = Tcl_NewLongObj((long)Tcl_GetCurrentThread());
       Tcl_SetObjResult(interp, idObj);
       return TCL_OK;
   } else {
@@ -6065,7 +5913,7 @@ TestChannelCmd(
 	    return TCL_ERROR;
 	}
 
-	TclFormatInt(buf, (long)(size_t)Tcl_GetChannelThread(chan));
+	TclFormatInt(buf, (long) Tcl_GetChannelThread(chan));
 	Tcl_AppendResult(interp, buf, NULL);
 	return TCL_OK;
     }
@@ -7120,62 +6968,6 @@ TestNumUtfCharsCmd(
     }
     return TCL_OK;
 }
-
-#if defined(HAVE_CPUID) || defined(__WIN32__)
-/*
- *----------------------------------------------------------------------
- *
- * TestcpuidCmd --
- *
- *	Retrieves CPU ID information.
- *
- * Usage:
- *	testwincpuid <eax>
- *
- * Parameters:
- *	eax - The value to pass in the EAX register to a CPUID instruction.
- *
- * Results:
- *	Returns a four-element list containing the values from the EAX, EBX,
- *	ECX and EDX registers returned from the CPUID instruction.
- *
- * Side effects:
- *	None.
- *
- *----------------------------------------------------------------------
- */
-
-static int
-TestcpuidCmd(
-    ClientData dummy,
-    Tcl_Interp* interp,		/* Tcl interpreter */
-    int objc,			/* Parameter count */
-    Tcl_Obj *const * objv)	/* Parameter vector */
-{
-    int status, index, i;
-    unsigned int regs[4];
-    Tcl_Obj *regsObjs[4];
-
-    if (objc != 2) {
-	Tcl_WrongNumArgs(interp, 1, objv, "eax");
-	return TCL_ERROR;
-    }
-    if (Tcl_GetIntFromObj(interp, objv[1], &index) != TCL_OK) {
-	return TCL_ERROR;
-    }
-    status = TclWinCPUID((unsigned) index, regs);
-    if (status != TCL_OK) {
-	Tcl_SetObjResult(interp,
-		Tcl_NewStringObj("operation not available", -1));
-	return status;
-    }
-    for (i=0 ; i<4 ; ++i) {
-	regsObjs[i] = Tcl_NewIntObj((int) regs[i]);
-    }
-    Tcl_SetObjResult(interp, Tcl_NewListObj(4, regsObjs));
-    return TCL_OK;
-}
-#endif
 
 /*
  * Used to do basic checks of the TCL_HASH_KEY_SYSTEM_HASH flag
@@ -7592,7 +7384,5 @@ TestconcatobjCmd(
  * mode: c
  * c-basic-offset: 4
  * fill-column: 78
- * tab-width: 8
- * indent-tabs-mode: nil
  * End:
  */

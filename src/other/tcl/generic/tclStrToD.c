@@ -13,12 +13,20 @@
  *
  * See the file "license.terms" for information on usage and redistribution of
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
+ *
+ * RCS: @(#) $Id$
+ *
  *----------------------------------------------------------------------
  */
 
-#include "tclInt.h"
-#include "tommath.h"
+#include <tclInt.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <float.h>
+#include <limits.h>
 #include <math.h>
+#include <ctype.h>
+#include <tommath.h>
 
 /*
  * Define KILL_OCTAL to suppress interpretation of numbers with leading zero
@@ -87,72 +95,11 @@ typedef unsigned int fpu_control_t __attribute__ ((__mode__ (__HI__)));
  * runtime).
  */
 
-/* Magic constants */
-
-#define LOG10_2 0.3010299956639812
-#define TWO_OVER_3LOG10 0.28952965460216784
-#define LOG10_3HALVES_PLUS_FUDGE 0.1760912590558
-
-/* Definitions of the parts of an IEEE754-format floating point number */
-
-#define SIGN_BIT 		0x80000000
-				/* Mask for the sign bit in the first
-				 * word of a double */
-#define EXP_MASK	     	0x7ff00000
-				/* Mask for the exponent field in the
-				 * first word of a double */
-#define EXP_SHIFT		20
-				/* Shift count to make the exponent an 
-				 * integer */
-#define HIDDEN_BIT		(((Tcl_WideUInt) 0x00100000) << 32)
-				/* Hidden 1 bit for the significand */
-#define HI_ORDER_SIG_MASK	0x000fffff
-				/* Mask for the high-order part of the
-				 * significand in the first word of a
-				 * double */
-#define SIG_MASK		(((Tcl_WideUInt) HI_ORDER_SIG_MASK << 32) \
-				 | 0xffffffff)
-				/* Mask for the 52-bit significand. */
-#define FP_PRECISION		53
-				/* Number of bits of significand plus the
-				 * hidden bit */
-#define EXPONENT_BIAS		0x3ff
-				/* Bias of the exponent 0 */
-
-/* Derived quantities */
-
-#define TEN_PMAX		22
-				/* floor(FP_PRECISION*log(2)/log(5)) */
-#define QUICK_MAX		14
-				/* floor((FP_PRECISION-1)*log(2)/log(10)) - 1 */
-#define BLETCH			0x10
-				/* Highest power of two that is greater than
-				 * DBL_MAX_10_EXP, divided by 16 */
-#define DIGIT_GROUP		8
-				/* floor(DIGIT_BIT*log(2)/log(10)) */
-
-/* Union used to dismantle floating point numbers. */
-
-typedef union Double {
-    struct {
-#ifdef WORDS_BIGENDIAN
-	int word0;
-	int word1;
-#else
-	int word1;
-	int word0;
-#endif
-    } w;
-    double d;
-    Tcl_WideUInt q;
-} Double;
-
 static int maxpow10_wide;	/* The powers of ten that can be represented
 				 * exactly as wide integers. */
 static Tcl_WideUInt *pow10_wide;
 #define MAXPOW	22
-static double pow10vals[MAXPOW+1];
-				/* The powers of ten that can be represented
+static double pow10vals[MAXPOW+1];	/* The powers of ten that can be represented
 				 * exactly as IEEE754 doubles. */
 static int mmaxpow;		/* Largest power of ten that can be
 				 * represented exactly in a 'double'. */
@@ -162,11 +109,13 @@ static int log2FLT_RADIX;	/* Logarithm of the floating point radix. */
 static int mantBits;		/* Number of bits in a double's significand */
 static mp_int pow5[9];		/* Table of powers of 5**(2**n), up to
 				 * 5**256 */
-static double tiny = 0.0;		/* The smallest representable double */
+static double tiny;		/* The smallest representable double */
 static int maxDigits;		/* The maximum number of digits to the left of
 				 * the decimal point of a double. */
 static int minDigits;		/* The maximum number of digits to the right
 				 * of the decimal point in a double. */
+static int mantDIGIT;		/* Number of mp_digit's needed to hold the
+				 * significand of a double. */
 static const double pow_10_2_n[] = {	/* Inexact higher powers of ten. */
     1.0,
     100.0,
@@ -178,7 +127,6 @@ static const double pow_10_2_n[] = {	/* Inexact higher powers of ten. */
     1.0e+128,
     1.0e+256
 };
-
 static int n770_fp;		/* Flag is 1 on Nokia N770 floating point.
 				 * Nokia's floating point has the words
 				 * reversed: if big-endian is 7654 3210,
@@ -187,151 +135,27 @@ static int n770_fp;		/* Flag is 1 on Nokia N770 floating point.
 				 * little-endian within the 32-bit words
 				 * but big-endian between them. */
 
-/* Table of powers of 5 that are small enough to fit in an mp_digit. */
-
-static const mp_digit dpow5[13] = {
-               1,              5,             25,            125,
-             625,           3125,          15625,          78125,
-          390625,        1953125,        9765625,       48828125,
-       244140625
-};
-
-/* Table of powers: pow5_13[n] = 5**(13*2**(n+1)) */
-static mp_int pow5_13[5];	/* Table of powers: 5**13, 5**26, 5**52,
-				 * 5**104, 5**208 */
-static const double tens[] = {
-    1e00, 1e01, 1e02, 1e03, 1e04, 1e05, 1e06, 1e07, 1e08, 1e09,
-    1e10, 1e11, 1e12, 1e13, 1e14, 1e15, 1e16, 1e17, 1e18, 1e19,
-    1e20, 1e21, 1e22
-};
-
-static const int itens [] = {
-    1,
-    10,
-    100,
-    1000,
-    10000,
-    100000,
-    1000000,
-    10000000,
-    100000000
-};
-
-static const double bigtens[] = {
-    1e016, 1e032, 1e064, 1e128, 1e256
-};
-#define N_BIGTENS 5
-
-static const int log2pow5[27] = {
-    01,  3,  5,  7, 10, 12, 14, 17, 19, 21,
-    24, 26, 28, 31, 33, 35, 38, 40, 42, 45,
-    47, 49, 52, 54, 56, 59, 61
-};
-#define N_LOG2POW5 27
-
-static const Tcl_WideUInt wuipow5[27] = {
-    (Tcl_WideUInt) 1,		/* 5**0 */
-    (Tcl_WideUInt) 5,
-    (Tcl_WideUInt) 25,
-    (Tcl_WideUInt) 125,
-    (Tcl_WideUInt) 625,
-    (Tcl_WideUInt) 3125,	/* 5**5 */
-    (Tcl_WideUInt) 3125*5,
-    (Tcl_WideUInt) 3125*25,
-    (Tcl_WideUInt) 3125*125,
-    (Tcl_WideUInt) 3125*625,
-    (Tcl_WideUInt) 3125*3125,	/* 5**10 */
-    (Tcl_WideUInt) 3125*3125*5,
-    (Tcl_WideUInt) 3125*3125*25,
-    (Tcl_WideUInt) 3125*3125*125,
-    (Tcl_WideUInt) 3125*3125*625,
-    (Tcl_WideUInt) 3125*3125*3125, /* 5**15 */
-    (Tcl_WideUInt) 3125*3125*3125*5,
-    (Tcl_WideUInt) 3125*3125*3125*25,
-    (Tcl_WideUInt) 3125*3125*3125*125,
-    (Tcl_WideUInt) 3125*3125*3125*625,
-    (Tcl_WideUInt) 3125*3125*3125*3125,	/* 5**20 */
-    (Tcl_WideUInt) 3125*3125*3125*3125*5,
-    (Tcl_WideUInt) 3125*3125*3125*3125*25,
-    (Tcl_WideUInt) 3125*3125*3125*3125*125,
-    (Tcl_WideUInt) 3125*3125*3125*3125*625,
-    (Tcl_WideUInt) 3125*3125*3125*3125*3125,  /* 5**25 */
-    (Tcl_WideUInt) 3125*3125*3125*3125*3125*5 /* 5**26 */
-};
-
 /*
  * Static functions defined in this file.
  */
 
+static double		AbsoluteValue(double v, int *signum);
 static int		AccumulateDecimalDigit(unsigned, int, 
 			    Tcl_WideUInt *, mp_int *, int);
+static double		BignumToBiasedFrExp(mp_int *big, int* machexp);
+static int		GetIntegerTimesPower(double v, mp_int *r, int *e);
 static double		MakeHighPrecisionDouble(int signum,
 			    mp_int *significand, int nSigDigs, int exponent);
 static double		MakeLowPrecisionDouble(int signum,
 			    Tcl_WideUInt significand, int nSigDigs,
 			    int exponent);
 static double		MakeNaN(int signum, Tcl_WideUInt tag);
-static double		RefineApproximation(double approx,
-			    mp_int *exactSignificand, int exponent);
-static void		MulPow5(mp_int*, unsigned, mp_int*);
-static int 		NormalizeRightward(Tcl_WideUInt*);
-static int		RequiredPrecision(Tcl_WideUInt);
-static void		DoubleToExpAndSig(double, Tcl_WideUInt*, int*, int*);
-static void		TakeAbsoluteValue(Double*, int*);
-static char*		FormatInfAndNaN(Double*, int*, char**);
-static char*		FormatZero(int*, char**);
-static int		ApproximateLog10(Tcl_WideUInt, int, int);
-static int		BetterLog10(double, int, int*);
-static void		ComputeScale(int, int, int*, int*, int*, int*);
-static void		SetPrecisionLimits(int, int, int*, int*, int*, int*);
-static char*		BumpUp(char*, char*, int*);
-static int		AdjustRange(double*, int);
-static char*		ShorteningQuickFormat(double, int, int, double, 
-			    char*, int*);
-static char*		StrictQuickFormat(double, int, int, double,
-			    char*, int*);
-static char*		QuickConversion(double, int, int, int, int, int, int,
-			    int*, char**);
-static void		CastOutPowersOf2(int*, int*, int*);
-static char*		ShorteningInt64Conversion(Double*, int, Tcl_WideUInt,
-			    int, int, int, int, int, int, int, int, int,
-			    int, int, int*, char**);
-static char*		StrictInt64Conversion(Double*, int, Tcl_WideUInt,
-			    int, int, int, int, int, int,
-			    int, int, int*, char**);
-static int		ShouldBankerRoundUpPowD(mp_int*, int, int);
-static int		ShouldBankerRoundUpToNextPowD(mp_int*, mp_int*,
-			    int, int, int, mp_int*);
-static char*		ShorteningBignumConversionPowD(Double* dPtr, 
-			    int convType, Tcl_WideUInt bw, int b2, int b5,
-			    int m2plus, int m2minus, int m5,
-			    int sd, int k, int len, 
-			    int ilim, int ilim1, int* decpt,
-			    char** endPtr);
-static char*		StrictBignumConversionPowD(Double* dPtr, int convType,
-			    Tcl_WideUInt bw, int b2, int b5,
-			    int sd, int k, int len, 
-			    int ilim, int ilim1, int* decpt,
-			    char** endPtr);
-static int		ShouldBankerRoundUp(mp_int*, mp_int*, int);
-static int		ShouldBankerRoundUpToNext(mp_int*, mp_int*, mp_int*,
-			    int, int, mp_int*);
-static char*		ShorteningBignumConversion(Double* dPtr, int convType,
-			    Tcl_WideUInt bw, int b2,
-			    int m2plus, int m2minus,
-			    int s2, int s5, int k, int len, 
-			    int ilim, int ilim1, int* decpt,
-			    char** endPtr);
-static char*		StrictBignumConversion(Double* dPtr, int convType,
-			    Tcl_WideUInt bw, int b2,
-			    int s2, int s5, int k, int len, 
-			    int ilim, int ilim1, int* decpt,
-			    char** endPtr);
-static double		BignumToBiasedFrExp(mp_int *big, int *machexp);
+static Tcl_WideUInt	Nokia770Twiddle(Tcl_WideUInt w);
 static double		Pow10TimesFrExp(int exponent, double fraction,
 			    int *machexp);
+static double		RefineApproximation(double approx,
+			    mp_int *exactSignificand, int exponent);
 static double		SafeLdExp(double fraction, int exponent);
-static Tcl_WideUInt	Nokia770Twiddle(Tcl_WideUInt w);
 
 /*
  *----------------------------------------------------------------------
@@ -524,7 +348,7 @@ TclParseNumber(
 	     * I, N, and whitespace.
 	     */
 
-	    if (TclIsSpaceProc(c)) {
+	    if (isspace(UCHAR(c))) {
 		if (flags & TCL_PARSE_NO_WHITESPACE) {
 		    goto endgame;
 		}
@@ -580,9 +404,9 @@ TclParseNumber(
 	case ZERO:
 	    /*
 	     * Scanned a leading zero (perhaps with a + or -). Acceptable
-	     * inputs are digits, period, X, b, and E. If 8 or 9 is encountered,
+	     * inputs are digits, period, X, and E. If 8 or 9 is encountered,
 	     * the number can't be octal. This state and the OCTAL state
-	     * differ only in whether they recognize 'X' and 'b'.
+	     * differ only in whether they recognize 'X'.
 	     */
 
 	    acceptState = state;
@@ -626,7 +450,7 @@ TclParseNumber(
 	case ZERO_O:
 	zeroo:
 	    if (c == '0') {
-		numTrailZeros++;
+		++numTrailZeros;
 		state = OCTAL;
 		break;
 	    } else if (c >= '1' && c <= '7') {
@@ -699,7 +523,7 @@ TclParseNumber(
 	     */
 
 	    if (c == '0') {
-		numTrailZeros++;
+		++numTrailZeros;
 		state = BAD_OCTAL;
 		break;
 	    } else if (isdigit(UCHAR(c))) {
@@ -742,7 +566,7 @@ TclParseNumber(
 	case ZERO_X:
 	zerox:
 	    if (c == '0') {
-		numTrailZeros++;
+		++numTrailZeros;
 		state = HEXADECIMAL;
 		break;
 	    } else if (isdigit(UCHAR(c))) {
@@ -788,7 +612,7 @@ TclParseNumber(
 	    acceptLen = len;
 	case ZERO_B:
 	    if (c == '0') {
-		numTrailZeros++;
+		++numTrailZeros;
 		state = BINARY;
 		break;
 	    } else if (c != '1') {
@@ -835,7 +659,7 @@ TclParseNumber(
 	    acceptPoint = p;
 	    acceptLen = len;
 	    if (c == '0') {
-		numTrailZeros++;
+		++numTrailZeros;
 		state = DECIMAL;
 		break;
 	    } else if (isdigit(UCHAR(c))) {
@@ -878,12 +702,12 @@ TclParseNumber(
 
 	case LEADING_RADIX_POINT:
 	    if (c == '0') {
-		numDigitsAfterDp++;
-		numTrailZeros++;
+		++numDigitsAfterDp;
+		++numTrailZeros;
 		state = FRACTION;
 		break;
 	    } else if (isdigit(UCHAR(c))) {
-		numDigitsAfterDp++;
+		++numDigitsAfterDp;
 		if (objPtr != NULL) {
 		    significandOverflow = AccumulateDecimalDigit(
 			    (unsigned)(c-'0'), numTrailZeros,
@@ -1038,7 +862,7 @@ TclParseNumber(
 	    }
 	    /* FALLTHROUGH */
 	case sNANPAREN:
-	    if (TclIsSpaceProc(c)) {
+	    if (isspace(UCHAR(c))) {
 		break;
 	    }
 	    if (numSigDigs < 13) {
@@ -1048,10 +872,7 @@ TclParseNumber(
 		    d = 10 + c - 'a';
 		} else if (c >= 'A' && c <= 'F') {
 		    d = 10 + c - 'A';
-		} else {
-		    goto endgame;
 		}
-		numSigDigs++;
 		significandWide = (significandWide << 4) + d;
 		state = sNANHEX;
 		break;
@@ -1066,8 +887,8 @@ TclParseNumber(
 	    acceptLen = len;
 	    goto endgame;
 	}
-	p++;
-	len--;
+	++p;
+	--len;
     }
 
   endgame:
@@ -1092,9 +913,9 @@ TclParseNumber(
 	     * Accept trailing whitespace.
 	     */
 
-	    while (len != 0 && TclIsSpaceProc(*p)) {
-		p++;
-		len--;
+	    while (len != 0 && isspace(UCHAR(*p))) {
+		++p;
+		--len;
 	    }
 	}
 	if (endPtrPtr == NULL) {
@@ -1345,7 +1166,6 @@ TclParseNumber(
 		Tcl_AppendToObj(msg, " (looks like invalid octal number)", -1);
 	    }
 	    Tcl_SetObjResult(interp, msg);
-	    Tcl_SetErrorCode(interp, "TCL", "VALUE", "NUMBER", NULL);
 	}
     }
 
@@ -1664,9 +1484,6 @@ MakeHighPrecisionDouble(
 	goto returnValue;
     }
     retval = SafeLdExp(retval, machexp);
-    if (tiny == 0.0) {
-	tiny = SafeLdExp(1.0, DBL_MIN_EXP * log2FLT_RADIX - mantBits);
-    }
     if (retval < tiny) {
 	retval = tiny;
     }
@@ -1909,2386 +1726,414 @@ RefineApproximation(
 }
 
 /*
- *-----------------------------------------------------------------------------
- *
- * MultPow5 --
- *
- *	Multiply a bignum by a power of 5.
- *
- * Side effects:
- *	Stores base*5**n in result
- *
- *-----------------------------------------------------------------------------
- */
-
-inline static void
-MulPow5(mp_int* base, 		/* Number to multiply */
-	 unsigned n,		/* Power of 5 to multiply by */
-	 mp_int* result)	/* Place to store the result */
-{
-    mp_int* p = base;
-    int n13 = n / 13;
-    int r = n % 13;
-    if (r != 0) {
-	mp_mul_d(p, dpow5[r], result);
-	p = result;
-    }
-    r = 0;
-    while (n13 != 0) {
-	if (n13 & 1) {
-	    mp_mul(p, pow5_13+r, result);
-	    p = result;
-	}
-	n13 >>= 1;
-	++r;
-    }
-    if (p != result) {
-	mp_copy(p, result);
-    }
-}
-
-/*
- *-----------------------------------------------------------------------------
- *
- * NormalizeRightward --
- *
- *	Shifts a number rightward until it is odd (that is, until the
- *	least significant bit is nonzero.
- *
- * Results:
- *	Returns the number of bit positions by which the number was shifted.
- *
- * Side effects:
- *	Shifts the number in place; *wPtr is replaced by the shifted number.
- *
- *-----------------------------------------------------------------------------
- */
-
-inline static int
-NormalizeRightward(Tcl_WideUInt* wPtr)
-				/* INOUT: Number to shift */
-{
-    int rv = 0;
-    Tcl_WideUInt w = *wPtr;
-    if (!(w & (Tcl_WideUInt) 0xffffffff)) {
-	w >>= 32; rv += 32;
-    } 
-    if (!(w & (Tcl_WideUInt) 0xffff)) {
-	w >>= 16; rv += 16;
-    }
-    if (!(w & (Tcl_WideUInt) 0xff)) {
-	w >>= 8; rv += 8;
-    }
-    if (!(w & (Tcl_WideUInt) 0xf)) {
-	w >>= 4; rv += 4;
-    }
-    if (!(w & 0x3)) {
-	w >>= 2; rv += 2;
-    }
-    if (!(w & 0x1)) {
-	w >>= 1; ++rv;
-    }
-    *wPtr = w;
-    return rv;
-}
-
-/*
- *-----------------------------------------------------------------------------0
- *
- * RequiredPrecision --
- *
- *	Determines the number of bits needed to hold an intger.
- *
- * Results:
- *	Returns the position of the most significant bit (0 - 63).
- *	Returns 0 if the number is zero.
- *
- *----------------------------------------------------------------------------
- */
-
-static int
-RequiredPrecision(Tcl_WideUInt w)
-				/* Number to interrogate */
-{
-    int rv;
-    unsigned long wi;
-    if (w & ((Tcl_WideUInt) 0xffffffff << 32)) {
-	wi = (unsigned long) (w >> 32); rv = 32;
-    } else {
-	wi = (unsigned long) w; rv = 0;
-    }
-    if (wi & 0xffff0000) {
-	wi >>= 16; rv += 16;
-    }
-    if (wi & 0xff00) {
-	wi >>= 8; rv += 8;
-    }
-    if (wi & 0xf0) {
-	wi >>= 4; rv += 4;
-    }
-    if (wi & 0xc) {
-	wi >>= 2; rv += 2;
-    }
-    if (wi & 0x2) {
-	wi >>= 1; ++rv;
-    }
-    if (wi & 0x1) {
-	++rv;
-    }
-    return rv;
-}
-
-/*
- *-----------------------------------------------------------------------------
- *
- * DoubleToExpAndSig --
- *
- *	Separates a 'double' into exponent and significand.
- *
- * Side effects:
- *	Stores the significand in '*significand' and the exponent in
- *	'*expon' so that dv == significand * 2.0**expon, and significand
- *	is odd.  Also stores the position of the leftmost 1-bit in 'significand'
- *	in 'bits'.
- *
- *-----------------------------------------------------------------------------
- */
-
-inline static void
-DoubleToExpAndSig(double dv,	/* Number to convert */
-		  Tcl_WideUInt* significand,
-				/* OUTPUT: Significand of the number */
-		  int* expon,	/* OUTPUT: Exponent to multiply the number by */
-		  int* bits)	/* OUTPUT: Number of significant bits */
-{
-    Double d;			/* Number being converted */
-    Tcl_WideUInt z;		/* Significand under construction */
-    int de;			/* Exponent of the number */
-    int k;			/* Bit count */
-
-    d.d = dv;
-
-    /* Extract exponent and significand */
-
-    de = (d.w.word0 & EXP_MASK) >> EXP_SHIFT;
-    z = d.q & SIG_MASK;
-    if (de != 0) {
-	z |= HIDDEN_BIT;
-	k = NormalizeRightward(&z);
-	*bits = FP_PRECISION - k;
-	*expon = k + (de - EXPONENT_BIAS) - (FP_PRECISION-1);
-    } else {
-	k = NormalizeRightward(&z);
-	*expon = k + (de - EXPONENT_BIAS) - (FP_PRECISION-1) + 1;
-	*bits = RequiredPrecision(z);
-    }
-    *significand = z;
-}
-
-/*
- *-----------------------------------------------------------------------------
- *
- * TakeAbsoluteValue --
- *
- *	Takes the absolute value of a 'double' including 0, Inf and NaN
- *
- * Side effects:
- *	The 'double' in *d is replaced with its absolute value. The
- *	signum is stored in 'sign': 1 for negative, 0 for nonnegative.
- *
- *-----------------------------------------------------------------------------
- */
-
-inline static void
-TakeAbsoluteValue(Double* d,	/* Number to replace with absolute value */
-		  int* sign)	/* Place to put the signum */
-{
-    if (d->w.word0 & SIGN_BIT) {
-	*sign = 1;
-	d->w.word0 &= ~SIGN_BIT;
-    } else {
-	*sign = 0;
-    }
-}
-
-/*
- *-----------------------------------------------------------------------------
- *
- * FormatInfAndNaN --
- *
- *	Bailout for formatting infinities and Not-A-Number.
- *
- * Results:
- *	Returns one of the strings 'Infinity' and 'NaN'.
- *
- * Side effects:
- *	Stores 9999 in *decpt, and sets '*endPtr' to designate the
- *	terminating NUL byte of the string if 'endPtr' is not NULL. 
- *
- * The string returned must be freed by the caller using 'ckfree'.
- *
- *-----------------------------------------------------------------------------
- */
-
-inline static char*
-FormatInfAndNaN(Double* d,	/* Exceptional number to format */
-		int* decpt,	/* Decimal point to set to a bogus value */
-		char** endPtr)	/* Pointer to the end of the formatted data */
-{
-    char* retval;
-    *decpt = 9999;
-    if (!(d->w.word1) && !(d->w.word0 & HI_ORDER_SIG_MASK)) {
-	retval = ckalloc(9);
-	strcpy(retval, "Infinity");
-	if (endPtr) {
-	    *endPtr = retval + 8;
-	}
-    } else {
-	retval = ckalloc(4);
-	strcpy(retval, "NaN");
-	if (endPtr) {
-	    *endPtr = retval + 3;
-	}
-    }
-    return retval;
-}
-
-/*
- *-----------------------------------------------------------------------------
- *
- * FormatZero --
- *
- *	Bailout to format a zero floating-point number.
- *
- * Results:
- *	Returns the constant string "0"
- *
- * Side effects:
- *	Stores 1 in '*decpt' and puts a pointer to the NUL byte terminating
- *	the string in '*endPtr' if 'endPtr' is not NULL.
- *
- *-----------------------------------------------------------------------------
- */
-
-inline static char*
-FormatZero(int* decpt,		/* Location of the decimal point */
-	   char** endPtr)	/* Pointer to the end of the formatted data */
-{
-    char* retval = ckalloc(2);
-    strcpy(retval, "0");
-    if (endPtr) {
-	*endPtr = retval+1;
-    }
-    *decpt = 0;
-    return retval;
-}
-
-/*
- *-----------------------------------------------------------------------------
- *
- * ApproximateLog10 --
- *
- *	Computes a two-term Taylor series approximation to the common
- *	log of a number, and computes the number's binary log.
- *
- * Results:
- *	Return an approximation to floor(log10(bw*2**be)) that is either
- *	exact or 1 too high.
- *
- *-----------------------------------------------------------------------------
- */
-
-inline static int
-ApproximateLog10(Tcl_WideUInt bw,
-				/* Integer significand of the number */
-		 int be,	/* Power of two to scale bw */
-		 int bbits)	/* Number of bits of precision in bw */
-{
-    int i;			/* Log base 2 of the number */
-    int k;			/* Floor(Log base 10 of the number) */
-    double ds;			/* Mantissa of the number */
-    Double d2;
-
-    /*
-     * Compute i and d2 such that d = d2*2**i, and 1 < d2 < 2.
-     * Compute an approximation to log10(d), 
-     *   log10(d) ~ log10(2) * i + log10(1.5) 
-     *            + (significand-1.5)/(1.5 * log(10))
-     */
-
-    d2.q = bw << (FP_PRECISION - bbits) & SIG_MASK;
-    d2.w.word0 |= (EXPONENT_BIAS) << EXP_SHIFT;
-    i = be + bbits - 1;
-    ds = (d2.d - 1.5) * TWO_OVER_3LOG10
-	+ LOG10_3HALVES_PLUS_FUDGE
-	+ LOG10_2 * i;
-    k = (int) ds;
-    if (k > ds) {
-	--k;
-    }
-    return k;
-}
-
-/*
- *-----------------------------------------------------------------------------
- *
- * BetterLog10 --
- *
- *	Improves the result of ApproximateLog10 for numbers in the range
- *	1 .. 10**(TEN_PMAX)-1
- *
- * Side effects:
- *	Sets k_check to 0 if the new result is known to be exact, and to
- *	1 if it may still be one too high.
- *
- * Results:
- *	Returns the improved approximation to log10(d)
- *
- *-----------------------------------------------------------------------------
- */
-
-inline static int
-BetterLog10(double d,		/* Original number to format */
-	  int k,		/* Characteristic(Log base 10) of the number */
-	  int* k_check)		/* Flag == 1 if k is inexact */
-{
-    /* 
-     * Performance hack. If k is in the range 0..TEN_PMAX, then we can
-     * use a powers-of-ten table to check it.
-     */
-    if (k >= 0 && k <= TEN_PMAX) {
-	if (d < tens[k]) {
-	    k--;
-	}
-	*k_check = 0;
-    } else {
-	*k_check = 1;
-    }
-    return k;
-}
-
-/*
- *-----------------------------------------------------------------------------
- *
- * ComputeScale --
- *
- *	Prepares to format a floating-point number as decimal.
- *
- * Parameters:
- *	floor(log10*x) is k (or possibly k-1).  floor(log2(x) is i.
- *	The significand of x requires bbits bits to represent.
- *
- * Results:
- *	Determines integers b2, b5, s2, s5 so that sig*2**b2*5**b5/2**s2*2**s5
- *	exactly represents the value of the x/10**k. This value will lie
- *	in the range [1 .. 10), and allows for computing successive digits
- *	by multiplying sig%10 by 10.
- *
- *-----------------------------------------------------------------------------
- */
-
-inline static void
-ComputeScale(int be,		/* Exponent part of number: d = bw * 2**be */
-	     int k,		/* Characteristic of log10(number) */
-	     int* b2,		/* OUTPUT: Power of 2 in the numerator */
-	     int* b5,		/* OUTPUT: Power of 5 in the numerator */
-	     int* s2,		/* OUTPUT: Power of 2 in the denominator */
-	     int* s5)		/* OUTPUT: Power of 5 in the denominator */
-{
-
-    /* 
-     * Scale numerator and denominator powers of 2 so that the
-     * input binary number is the ratio of integers
-     */
-    if (be <= 0) {
-	*b2 = 0;
-	*s2 = -be;
-    } else {
-	*b2 = be;
-	*s2 = 0;
-    }
-
-    /* 
-     * Scale numerator and denominator so that the output decimal number
-     * is the ratio of integers
-     */
-    if (k >= 0) {
-	*b5 = 0;
-	*s5 = k;
-	*s2 += k;
-    } else {
-	*b2 -= k;
-	*b5 = -k;
-	*s5 = 0;
-    }
-}
-
-/*
- *-----------------------------------------------------------------------------
- *
- * SetPrecisionLimits --
- *
- *	Determines how many digits of significance should be computed
- *	(and, hence, how much memory need be allocated) for formatting a
- *	floating point number.
- *
- * Given that 'k' is floor(log10(x)):
- * if 'shortest' format is used, there will be at most 18 digits in the result.
- * if 'F' format is used, there will be at most 'ndigits' + k + 1 digits
- * if 'E' format is used, there will be exactly 'ndigits' digits.
- *
- * Side effects:
- *	Adjusts '*ndigitsPtr' to have a valid value.
- *	Stores the maximum memory allocation needed in *iPtr.
- *	Sets '*iLimPtr' to the limiting number of digits to convert if k
- *	has been guessed correctly, and '*iLim1Ptr' to the limiting number
- *	of digits to convert if k has been guessed to be one too high.
- *
- *-----------------------------------------------------------------------------
- */
-
-inline static void
-SetPrecisionLimits(int convType,
-				/* Type of conversion:
-				 *   TCL_DD_SHORTEST
-				 *   TCL_DD_STEELE0
-				 *   TCL_DD_E_FMT
-				 *   TCL_DD_F_FMT */
-		   int k,	/* Floor(log10(number to convert)) */
-		   int* ndigitsPtr,
-				/* IN/OUT: Number of digits requested
-				 *         (Will be adjusted if needed) */
-		   int* iPtr,	/* OUT: Maximum number of digits
-				 *      to return */
-		   int *iLimPtr,/* OUT: Number of digits of significance
-				 *      if the bignum method is used.*/
-		   int *iLim1Ptr)
-				/* OUT: Number of digits of significance
-				 *      if the quick method is used. */
-{
-    switch(convType) {
-    case TCL_DD_SHORTEST0:
-    case TCL_DD_STEELE0:
-	*iLimPtr = *iLim1Ptr = -1;
-	*iPtr = 18;
-	*ndigitsPtr = 0;
-	break;
-    case TCL_DD_E_FORMAT:
-	if (*ndigitsPtr <= 0) {
-	    *ndigitsPtr = 1;
-	}
-	*iLimPtr = *iLim1Ptr = *iPtr = *ndigitsPtr;
-	break;
-    case TCL_DD_F_FORMAT:
-	*iPtr = *ndigitsPtr + k + 1;
-	*iLimPtr = *iPtr;
-	*iLim1Ptr = *iPtr - 1;
-	if (*iPtr <= 0) {
-	    *iPtr = 1;
-	}
-	break;
-    default:
-	*iPtr = -1;
-	*iLimPtr = -1;
-	*iLim1Ptr = -1;
-	Tcl_Panic("impossible conversion type in TclDoubleDigits");
-    }
-}
-
-/*
- *-----------------------------------------------------------------------------
- *
- * BumpUp --
- *
- *	Increases a string of digits ending in a series of nines to
- *	designate the next higher number.  xxxxb9999... -> xxxx(b+1)0000...
- *
- * Results:
- *	Returns a pointer to the end of the adjusted string.
- *
- * Side effects:
- *	In the case that the string consists solely of '999999', sets it
- *	to "1" and moves the decimal point (*kPtr) one place to the right.
- *
- *-----------------------------------------------------------------------------
- */
-
-
-inline static char*
-BumpUp(char* s,		    	/* Cursor pointing one past the end of the
-				 * string */ 
-       char* retval,		/* Start of the string of digits */
-       int* kPtr)		/* Position of the decimal point */
-{
-    while (*--s == '9') {
-	if (s == retval) {
-	    ++(*kPtr);
-	    *s = '1';
-	    return s+1;
-	}
-    }
-    ++*s;
-    ++s;
-    return s;
-}
-
-/*
- *-----------------------------------------------------------------------------
- *
- * AdjustRange --
- *
- *	Rescales a 'double' in preparation for formatting it using the
- *	'quick' double-to-string method.
- *
- * Results:
- *	Returns the precision that has been lost in the prescaling as
- *	a count of units in the least significant place.
- *
- *-----------------------------------------------------------------------------
- */
-
-inline static int
-AdjustRange(double* dPtr,	/* INOUT: Number to adjust */
-	    int k)		/* IN: floor(log10(d)) */
-{
-    int ieps;			/* Number of roundoff errors that have
-				 * accumulated */
-    double d = *dPtr;		/* Number to adjust */
-    double ds;
-    int i, j, j1;
-
-    ieps = 2;
-
-    if (k > 0) {
-	/*
-	 * The number must be reduced to bring it into range.
-	 */
-	ds = tens[k & 0xf];
-	j = k >> 4;
-	if (j & BLETCH) {
-	    j &= (BLETCH-1);
-	    d /= bigtens[N_BIGTENS - 1];
-	    ieps++;
-	}
-	i = 0;
-	for (; j != 0; j>>=1) {
-	    if (j & 1) {
-		ds *= bigtens[i];
-		++ieps;
-	    }
-	    ++i;
-	}
-	d /= ds;
-    } else if ((j1 = -k) != 0) {
-	/*
-	 * The number must be increased to bring it into range
-	 */
-	d *= tens[j1 & 0xf];
-	i = 0;
-	for (j = j1>>4; j; j>>=1) {
-	    if (j & 1) {
-		ieps++;
-		d *= bigtens[i];
-	    }
-	    ++i;
-	}
-    }
-
-    *dPtr = d;
-    return ieps;
-}
-
-/*
- *-----------------------------------------------------------------------------
- *
- * ShorteningQuickFormat --
- *
- *	Returns a 'quick' format of a double precision number to a string
- *	of digits, preferring a shorter string of digits if the shorter
- *	string is still within 1/2 ulp of the number. 
- *
- * Results:
- *	Returns the string of digits. Returns NULL if the 'quick' method
- *	fails and the bignum method must be used.
- *
- * Side effects:
- *	Stores the position of the decimal point at '*kPtr'.
- *
- *-----------------------------------------------------------------------------
- */
-
-inline static char*
-ShorteningQuickFormat(double d,	/* Number to convert */
-		      int k,	/* floor(log10(d)) */
-		      int ilim,	/* Number of significant digits to return */
-		      double eps,
-		      		/* Estimated roundoff error */
-		      char* retval,
-		      		/* Buffer to receive the digit string */
-		      int* kPtr)
-				/* Pointer to stash the position of
-				 * the decimal point */
-{
-    char* s = retval;		/* Cursor in the return value */
-    int digit;			/* Current digit */
-    int i;
-
-    eps = 0.5 / tens[ilim-1] - eps;
-    i = 0;
-    for (;;) {
-	/* Convert a digit */
-
-	digit = (int) d;
-	d -= digit;
-	*s++ = '0' + digit;
-
-	/*
-	 * Truncate the conversion if the string of digits is within
-	 * 1/2 ulp of the actual value.
-	 */
-
-	if (d < eps) {
-	    *kPtr = k;
-	    return s;
-	}
-	if ((1. - d) < eps) {
-	    *kPtr = k;
-	    return BumpUp(s, retval, kPtr);
-	}
-
-	/*
-	 * Bail out if the conversion fails to converge to a sufficiently
-	 * precise value
-	 */
-
-	if (++i >= ilim) {
-	    return NULL;
-	}
-
-	/*
-	 * Bring the next digit to the integer part.
-	 */
-
-	eps *= 10;
-	d *= 10.0;
-    }
-}
-
-/*
- *-----------------------------------------------------------------------------
- *
- * StrictQuickFormat --
- *
- *	Convert a double precision number of a string of a precise number
- *	of digits, using the 'quick' double precision method.
- *
- * Results:
- *	Returns the digit string, or NULL if the bignum method must be
- *	used to do the formatting.
- *
- * Side effects:
- *	Stores the position of the decimal point in '*kPtr'.
- *
- *-----------------------------------------------------------------------------
- */
-
-inline static char*
-StrictQuickFormat(double d,	/* Number to convert */
-		  int k,	/* floor(log10(d)) */
-		  int ilim,	/* Number of significant digits to return */
-		  double eps,	/* Estimated roundoff error */
-		  char* retval,	/* Start of the digit string */
-		  int* kPtr)	/* Pointer to stash the position of
-				 * the decimal point */
-{
-    char* s = retval;		/* Cursor in the return value */
-    int digit;			/* Current digit of the answer */
-    int i;
-
-    eps *= tens[ilim-1];
-    i = 1;
-    for (;;) {
-	/* Extract a digit */
-	digit = (int) d;
-	d -= digit;
-	if (d == 0.0) {
-	    ilim = i;
-	}
-	*s++ = '0' + digit;
-
-	/* 
-	 * When the given digit count is reached, handle trailing strings
-	 * of 0 and 9.
-	 */
-	if (i == ilim) {
-	    if (d > 0.5 + eps) {
-		*kPtr = k;
-		return BumpUp(s, retval, kPtr);
-	    } else if (d < 0.5 - eps) {
-		while (*--s == '0') {
-		    /* do nothing */
-		}
-		s++;
-		*kPtr = k;
-		return s;
-	    } else {
-		return NULL;
-	    }
-	}
-
-	/* Advance to the next digit */
-	++i;
-	d *= 10.0;
-    }
-}
-
-/*
- *-----------------------------------------------------------------------------
- *
- * QuickConversion --
- *
- *	Converts a floating point number the 'quick' way, when only a limited
- *	number of digits is required and floating point arithmetic can
- *	therefore be used for the intermediate results.
- *
- * Results:
- *	Returns the converted string, or NULL if the bignum method must
- *	be used.
- *
- *-----------------------------------------------------------------------------
- */
-
-inline static char*
-QuickConversion(double e,	/* Number to format */
-		int k,		/* floor(log10(d)), approximately */
-		int k_check,	/* 0 if k is exact, 1 if it may be too high */
-		int flags,	/* Flags passed to dtoa:
-				 *    TCL_DD_SHORTEN_FLAG */
-		int len,	/* Length of the return value */
-		int ilim,	/* Number of digits to store */
-		int ilim1,	/* Number of digits to store if we
-				 * musguessed k */
-		int* decpt,	/* OUTPUT: Location of the decimal point */
-		char** endPtr)	/* OUTPUT: Pointer to the terminal null byte */
-{
-    int ieps;			/* Number of 1-ulp roundoff errors that have
-				 * accumulated in the calculation*/
-    Double eps;			/* Estimated roundoff error */
-    char* retval;		/* Returned string */
-    char* end;			/* Pointer to the terminal null byte in the
-				 * returned string */
-    volatile double d;		/* Workaround for a bug in mingw gcc 3.4.5 */
-
-    /*
-     * Bring d into the range [1 .. 10)
-     */
-    ieps = AdjustRange(&e, k);
-    d = e;
-
-    /*
-     * If the guessed value of k didn't get d into range, adjust it
-     * by one. If that leaves us outside the range in which quick format
-     * is accurate, bail out.
-     */
-    if (k_check && d < 1. && ilim > 0) {
-	if (ilim1 < 0) {
-	    return NULL;
-	}
-	ilim = ilim1;
-	--k;
-	d *= 10.0;
-	++ieps;
-    }
-
-    /*
-     * Compute estimated roundoff error
-     */
-    eps.d = ieps * d + 7.;
-    eps.w.word0 -= (FP_PRECISION-1) << EXP_SHIFT;
-
-    /*
-     * Handle the peculiar case where the result has no significant
-     * digits.
-     */
-    retval = ckalloc(len + 1);
-    if (ilim == 0) {
-	d -= 5.;
-	if (d > eps.d) {
-	    *retval = '1';
-	    *decpt = k;
-	    return retval;
-	} else if (d < -eps.d) {
-	    *decpt = k;
-	    return retval;
-	} else {
-	    ckfree(retval);
-	    return NULL;
-	}
-    }
-
-    /* Format the digit string */
-
-    if (flags & TCL_DD_SHORTEN_FLAG) {
-	end = ShorteningQuickFormat(d, k, ilim, eps.d, retval, decpt);
-    } else {
-	end = StrictQuickFormat(d, k, ilim, eps.d, retval, decpt);
-    }
-    if (end == NULL) {
-	ckfree(retval);
-	return NULL;
-    }
-    *end = '\0';
-    if (endPtr != NULL) {
-	*endPtr = end;
-    }
-    return retval;
-}
-
-/*
- *-----------------------------------------------------------------------------
- *
- * CastOutPowersOf2 --
- *
- *	Adjust the factors 'b2', 'm2', and 's2' to cast out common powers
- *	of 2 from numerator and denominator in preparation for the 'bignum'
- *	method of floating point conversion.
- *
- *-----------------------------------------------------------------------------
- */
-
-inline static void
-CastOutPowersOf2(int* b2,	/* Power of 2 to multiply the significand  */
-		 int* m2,	/* Power of 2 to multiply 1/2 ulp  */
-		 int* s2)	/* Power of 2 to multiply the common
-				 * denominator */
-{
-    int i;
-    if (*m2 > 0 && *s2 > 0) {	/* Find the smallest power of 2 in the
-				 * numerator */
-        if (*m2 < *s2) {	/* Find the lowest common denominatorr */
-	    i = *m2;
-	} else {
-	    i = *s2;
-	}
-	*b2 -= i;		/* Reduce to lowest terms */
-	*m2 -= i;
-	*s2 -= i;
-    }
-}
-
-/*
- *-----------------------------------------------------------------------------
- *
- * ShorteningInt64Conversion --
- *
- *	Converts a double-precision number to the shortest string of
- *	digits that reconverts exactly to the given number, or to
- *	'ilim' digits if that will yield a shorter result. The numerator and
- *	denominator in David Gay's conversion algorithm are known to fit
- *	in Tcl_WideUInt, giving considerably faster arithmetic than mp_int's.
- *
- * Results:
- *	Returns the string of significant decimal digits, in newly
- *	allocated memory
- *
- * Side effects:
- *	Stores the location of the decimal point in '*decpt' and the
- *      location of the terminal null byte in '*endPtr'.
- *
- *-----------------------------------------------------------------------------
- */
-
-inline static char*
-ShorteningInt64Conversion(Double* dPtr,
-				/* Original number to convert */
-			  int convType,
-				/* Type of conversion (shortest, Steele,
-				   E format, F format) */
-			  Tcl_WideUInt bw,
-				/* Integer significand */
-			  int b2, int b5,
-				/* Scale factor for the significand
-				 * in the numerator */
-			  int m2plus, int m2minus, int m5,
-				/* Scale factors for 1/2 ulp in
-				 * the numerator (will be different if
-				 * bw == 1 */
-			  int s2, int s5,
-				/* Scale factors for the denominator */
-			  int k,
-				/* Number of output digits before the decimal
-				 * point */
-			  int len,
-				/* Number of digits to allocate */
-			  int ilim,
-				/* Number of digits to convert if b >= s */
-			  int ilim1,
-				/* Number of digits to convert if b < s */
-			  int* decpt,
-				/* OUTPUT: Position of the decimal point */
-			  char** endPtr)
-				/* OUTPUT: Position of the terminal '\0'
-				 *         at the end of the returned string */
-{
-    
-    char* retval = ckalloc(len + 1);
-				/* Output buffer */
-    Tcl_WideUInt b = (bw * wuipow5[b5]) << b2;
-				/* Numerator of the fraction being converted */
-    Tcl_WideUInt S = wuipow5[s5] << s2;
-				/* Denominator of the fraction being 
-				 * converted */
-    Tcl_WideUInt mplus, mminus;	/* Ranges for testing whether the result
-				 * is within roundoff of being exact */
-    int digit;			/* Current output digit */
-    char* s = retval;		/* Cursor in the output buffer */
-    int i;			/* Current position in the output buffer */
-
-    /* Adjust if the logarithm was guessed wrong */
-
-    if (b < S) {
-	b = 10 * b;
-	++m2plus; ++m2minus; ++m5;
-	ilim = ilim1;
-	--k;
-    }
-
-    /* Compute roundoff ranges */
-
-    mplus = wuipow5[m5] << m2plus;
-    mminus = wuipow5[m5] << m2minus;
-
-    /* Loop through the digits */
-
-    i = 1;
-    for (;;) {
-	digit = (int)(b / S);
-	if (digit > 10) {
-	    Tcl_Panic("wrong digit!");
-	}
-	b = b % S;
-
-	/* 
-	 * Does the current digit put us on the low side of the exact value
-	 * but within within roundoff of being exact?
-	 */
-	if (b < mplus
-	    || (b == mplus
-		&& convType != TCL_DD_STEELE0
-		&& (dPtr->w.word1 & 1) == 0)) {
-	    /*
-	     * Make sure we shouldn't be rounding *up* instead,
-	     * in case the next number above is closer
-	     */
-	    if (2 * b > S
-		|| (2 * b == S
-		    && (digit & 1) != 0)) {
-		++digit;
-		if (digit == 10) {
-		    *s++ = '9';
-		    s = BumpUp(s, retval, &k);
-		    break;
-		}
-	    }
-
-	    /* Stash the current digit */
-
-	    *s++ = '0' + digit;
-	    break;
-	}
-
-	/*
-	 * Does one plus the current digit put us within roundoff of the
-	 * number?
-	 */
-	if (b > S - mminus
-	    || (b == S - mminus
-		&& convType != TCL_DD_STEELE0
-		&& (dPtr->w.word1 & 1) == 0)) {
-	    if (digit == 9) {
-		*s++ = '9';
-		s = BumpUp(s, retval, &k);
-		break;
-	    }
-	    ++digit;
-	    *s++ = '0' + digit;
-	    break;
-	}
-
-	/*
-	 * Have we converted all the requested digits?
-	 */
-	*s++ = '0' + digit;
-	if (i == ilim) {
-	    if (2*b > S
-		|| (2*b == S && (digit & 1) != 0)) {
-		s = BumpUp(s, retval, &k);
-	    }
-	    break;
-	}
-	
-	/* Advance to the next digit */
-	
-	b = 10 * b;
-	mplus = 10 * mplus;
-	mminus = 10 * mminus;
-	++i;
-    }
-
-    /* 
-     * Endgame - store the location of the decimal point and the end of the
-     * string.
-     */
-    *s = '\0';
-    *decpt = k;
-    if (endPtr) {
-	*endPtr = s;
-    }
-    return retval;
-}
-
-/*
- *-----------------------------------------------------------------------------
- *
- * StrictInt64Conversion --
- *
- *	Converts a double-precision number to a fixed-length string of
- *	'ilim' digits that reconverts exactly to the given number.
- *	('ilim' should be replaced with 'ilim1' in the case where
- *	log10(d) has been overestimated).  The numerator and
- *	denominator in David Gay's conversion algorithm are known to fit
- *	in Tcl_WideUInt, giving considerably faster arithmetic than mp_int's.
- *
- * Results:
- *	Returns the string of significant decimal digits, in newly
- *	allocated memory
- *
- * Side effects:
- *	Stores the location of the decimal point in '*decpt' and the
- *      location of the terminal null byte in '*endPtr'.
- *
- *-----------------------------------------------------------------------------
- */
-
-inline static char*
-StrictInt64Conversion(Double* dPtr,
-				/* Original number to convert */
-		      int convType,
-				/* Type of conversion (shortest, Steele,
-				   E format, F format) */
-		      Tcl_WideUInt bw,
-				/* Integer significand */
-		      int b2, int b5,
-				/* Scale factor for the significand
-				 * in the numerator */
-		      int s2, int s5,
-				/* Scale factors for the denominator */
-		      int k,
-				/* Number of output digits before the decimal
-				 * point */
-		      int len,
-				/* Number of digits to allocate */
-		      int ilim,
-				/* Number of digits to convert if b >= s */
-		      int ilim1,
-				/* Number of digits to convert if b < s */
-		      int* decpt,
-				/* OUTPUT: Position of the decimal point */
-		      char** endPtr)
-				/* OUTPUT: Position of the terminal '\0'
-				 *         at the end of the returned string */
-{
-    
-    char* retval = ckalloc(len + 1);
-				/* Output buffer */
-    Tcl_WideUInt b = (bw * wuipow5[b5]) << b2;
-				/* Numerator of the fraction being converted */
-    Tcl_WideUInt S = wuipow5[s5] << s2;
-				/* Denominator of the fraction being 
-				 * converted */
-    int digit;			/* Current output digit */
-    char* s = retval;		/* Cursor in the output buffer */
-    int i;			/* Current position in the output buffer */
-
-    /* Adjust if the logarithm was guessed wrong */
-
-    if (b < S) {
-	b = 10 * b;
-	ilim = ilim1;
-	--k;
-    }
-
-    /* Loop through the digits */
-
-    i = 1;
-    for (;;) {
-	digit = (int)(b / S);
-	if (digit > 10) {
-	    Tcl_Panic("wrong digit!");
-	}
-	b = b % S;
-
-	/*
-	 * Have we converted all the requested digits?
-	 */
-	*s++ = '0' + digit;
-	if (i == ilim) {
-	    if (2*b > S
-		|| (2*b == S && (digit & 1) != 0)) {
-		s = BumpUp(s, retval, &k);
-	    } else {
-		while (*--s == '0') {
-		    /* do nothing */
-		}
-		++s;
-	    }
-	    break;
-	}
-	
-	/* Advance to the next digit */
-	
-	b = 10 * b;
-	++i;
-    }
-
-    /* 
-     * Endgame - store the location of the decimal point and the end of the
-     * string.
-     */
-    *s = '\0';
-    *decpt = k;
-    if (endPtr) {
-	*endPtr = s;
-    }
-    return retval;
-}
-
-/*
- *-----------------------------------------------------------------------------
- *
- * ShouldBankerRoundUpPowD --
- *
- *	Test whether bankers' rounding should round a digit up. Assumption
- *	is made that the denominator of the fraction being tested is
- *	a power of 2**DIGIT_BIT.
- *
- * Results:
- *	Returns 1 iff the fraction is more than 1/2, or if the fraction
- *	is exactly 1/2 and the digit is odd.
- *
- *-----------------------------------------------------------------------------
- */
-
-inline static int
-ShouldBankerRoundUpPowD(mp_int* b,
-				/* Numerator of the fraction */
-			int sd,	/* Denominator is 2**(sd*DIGIT_BIT) */
-			int isodd)
-				/* 1 if the digit is odd, 0 if even */
-{
-    int i;
-    static const mp_digit topbit = (1<<(DIGIT_BIT-1));
-    if (b->used < sd || (b->dp[sd-1] & topbit) == 0) {
-	return 0;
-    }
-    if (b->dp[sd-1] != topbit) {
-	return 1;
-    }
-    for (i = sd-2; i >= 0; --i) {
-	if (b->dp[i] != 0) {
-	    return 1;
-	}
-    }
-    return isodd;
-}
-
-/*
- *-----------------------------------------------------------------------------
- *
- * ShouldBankerRoundUpToNextPowD --
- *
- *	Tests whether bankers' rounding will round down in the
- *	"denominator is a power of 2**MP_DIGIT" case.
- *
- * Results:
- *	Returns 1 if the rounding will be performed - which increases the
- *	digit by one - and 0 otherwise.
- *
- *-----------------------------------------------------------------------------
- */
-
-inline static int
-ShouldBankerRoundUpToNextPowD(mp_int* b,
-				/* Numerator of the fraction */
-			      mp_int* m,
-				/* Numerator of the rounding tolerance */
-			      int sd, 
-				/* Common denominator is 2**(sd*DIGIT_BIT) */
-			      int convType,
-				/* Conversion type: STEELE defeats 
-				 * round-to-even (Not sure why one wants to
-				 * do this; I copied it from Gay) FIXME */
-			      int isodd,
-				/* 1 if the integer significand is odd */
-			      mp_int* temp)
-				/* Work area for the calculation */
-{
-    int i;
-
-    /* 
-     * Compare B and S-m -- which is the same as comparing B+m and S --
-     * which we do by computing b+m and doing a bitwhack compare against
-     * 2**(DIGIT_BIT*sd)
-     */
-    mp_add(b, m, temp);
-    if (temp->used <= sd) {	/* too few digits to be > S */
-	return 0;
-    }
-    if (temp->used > sd+1 || temp->dp[sd] > 1) {
-				/* >= 2s */
-	return 1;
-    }
-    for (i = sd-1; i >= 0; --i) {
-				/* check for ==s */
-	if (temp->dp[i] != 0) {	/* > s */
-	    return 1;
-	}
-    }
-    if (convType == TCL_DD_STEELE0) {
-				/* biased rounding */
-	return 0;
-    }
-    return isodd;
-}
-
-/*
- *-----------------------------------------------------------------------------
- *
- * ShorteningBignumConversionPowD --
- *
- *	Converts a double-precision number to the shortest string of
- *	digits that reconverts exactly to the given number, or to
- *	'ilim' digits if that will yield a shorter result. The denominator
- *	in David Gay's conversion algorithm is known to be a power of
- *	2**DIGIT_BIT, and hence the division in the main loop may be replaced
- *	by a digit shift and mask.
- *
- * Results:
- *	Returns the string of significant decimal digits, in newly
- *	allocated memory
- *
- * Side effects:
- *	Stores the location of the decimal point in '*decpt' and the
- *      location of the terminal null byte in '*endPtr'.
- *
- *-----------------------------------------------------------------------------
- */
-
-inline static char*
-ShorteningBignumConversionPowD(Double* dPtr,
-				/* Original number to convert */
-			       int convType,
-				/* Type of conversion (shortest, Steele,
-				   E format, F format) */
-			       Tcl_WideUInt bw,
-				/* Integer significand */
-			       int b2, int b5,
-				/* Scale factor for the significand
-				 * in the numerator */
-			       int m2plus, int m2minus, int m5,
-				/* Scale factors for 1/2 ulp in
-				 * the numerator (will be different if
-				 * bw == 1 */
-			       int sd,
-				/* Scale factor for the denominator */
-			       int k,
-				/* Number of output digits before the decimal
-				 * point */
-			       int len,
-				/* Number of digits to allocate */
-			       int ilim,
-				/* Number of digits to convert if b >= s */
-			       int ilim1,
-				/* Number of digits to convert if b < s */
-			       int* decpt,
-				/* OUTPUT: Position of the decimal point */
-			       char** endPtr)
-				/* OUTPUT: Position of the terminal '\0'
-				 *         at the end of the returned string */
-{
-    
-    char* retval = ckalloc(len + 1);
-				/* Output buffer */
-    mp_int b;			/* Numerator of the fraction being converted */
-    mp_int mplus, mminus;	/* Bounds for roundoff */
-    mp_digit digit;		/* Current output digit */
-    char* s = retval;		/* Cursor in the output buffer */
-    int i;			/* Index in the output buffer */
-    mp_int temp;
-    int r1;
-
-    /* 
-     * b = bw * 2**b2 * 5**b5
-     * mminus = 5**m5
-     */
-
-    TclBNInitBignumFromWideUInt(&b, bw);
-    mp_init_set_int(&mminus, 1);
-    MulPow5(&b, b5, &b);
-    mp_mul_2d(&b, b2, &b);
-
-    /* Adjust if the logarithm was guessed wrong */
-
-    if (b.used <= sd) {
-	mp_mul_d(&b, 10, &b);
-	++m2plus; ++m2minus; ++m5;
-	ilim = ilim1;
-	--k;
-    }
-
-    /*
-     * mminus = 5**m5 * 2**m2minus
-     * mplus = 5**m5 * 2**m2plus
-     */
-
-    mp_mul_2d(&mminus, m2minus, &mminus);
-    MulPow5(&mminus, m5, &mminus);
-    if (m2plus > m2minus) {
-	mp_init_copy(&mplus, &mminus);
-	mp_mul_2d(&mplus, m2plus-m2minus, &mplus);
-    }
-    mp_init(&temp);
-
-    /* Loop through the digits. Do division and mod by s == 2**(sd*DIGIT_BIT)
-     * by mp_digit extraction */
-
-    i = 0;
-    for (;;) {
-	if (b.used <= sd) {
-	    digit = 0;
-	} else {
-	    digit = b.dp[sd];
-	    if (b.used > sd+1 || digit >= 10) {
-		Tcl_Panic("wrong digit!");
-	    }
-	    --b.used; mp_clamp(&b);
-	}
-
-	/* 
-	 * Does the current digit put us on the low side of the exact value
-	 * but within within roundoff of being exact?
-	 */
-	
-	r1 = mp_cmp_mag(&b, (m2plus > m2minus)? &mplus : &mminus);
-	if (r1 == MP_LT
-	    || (r1 == MP_EQ
-		&& convType != TCL_DD_STEELE0
-		&& (dPtr->w.word1 & 1) == 0)) {
-	    /*
-	     * Make sure we shouldn't be rounding *up* instead,
-	     * in case the next number above is closer
-	     */
-	    if (ShouldBankerRoundUpPowD(&b, sd, digit&1)) {
-		++digit;
-		if (digit == 10) {
-		    *s++ = '9';
-		    s = BumpUp(s, retval, &k);
-		    break;
-		}
-	    }
-
-	    /* Stash the last digit */
-
-	    *s++ = '0' + digit;
-	    break;
-	}
-
-	/*
-	 * Does one plus the current digit put us within roundoff of the
-	 * number?
-	 */
-	
-	if (ShouldBankerRoundUpToNextPowD(&b, &mminus, sd, 
-					   convType, dPtr->w.word1 & 1,
-					   &temp)) {
-	    if (digit == 9) {
-		*s++ = '9';
-		s = BumpUp(s, retval, &k);
-		break;
-	    }
-	    ++digit;
-	    *s++ = '0' + digit;
-	    break;
-	}
-
-	/*
-	 * Have we converted all the requested digits?
-	 */
-	*s++ = '0' + digit;
-	if (i == ilim) {
-	    if (ShouldBankerRoundUpPowD(&b, sd, digit&1)) {
-		s = BumpUp(s, retval, &k);
-	    }
-	    break;
-	}
-	
-	/* Advance to the next digit */
-	
-	mp_mul_d(&b, 10, &b);
-	mp_mul_d(&mminus, 10, &mminus);
-	if (m2plus > m2minus) {
-	    mp_mul_2d(&mminus, m2plus-m2minus, &mplus);
-	}
-	++i;
-    }
-
-    /* 
-     * Endgame - store the location of the decimal point and the end of the
-     * string.
-     */
-    if (m2plus > m2minus) {
-	mp_clear(&mplus);
-    }
-    mp_clear_multi(&b, &mminus, &temp, NULL);
-    *s = '\0';
-    *decpt = k;
-    if (endPtr) {
-	*endPtr = s;
-    }
-    return retval;
-}
-
-/*
- *-----------------------------------------------------------------------------
- *
- * StrictBignumConversionPowD --
- *
- *	Converts a double-precision number to a fixed-lengt string of
- *	'ilim' digits (or 'ilim1' if log10(d) has been overestimated.)
- *	The denominator in David Gay's conversion algorithm is known to
- *	be a power of 2**DIGIT_BIT, and hence the division in the main 
- *	loop may be replaced by a digit shift and mask.
- *
- * Results:
- *	Returns the string of significant decimal digits, in newly
- *	allocated memory.
- *
- * Side effects:
- *	Stores the location of the decimal point in '*decpt' and the
- *      location of the terminal null byte in '*endPtr'.
- *
- *-----------------------------------------------------------------------------
- */
-
-inline static char*
-StrictBignumConversionPowD(Double* dPtr,
-				/* Original number to convert */
-			   int convType,
-				/* Type of conversion (shortest, Steele,
-				   E format, F format) */
-			   Tcl_WideUInt bw,
-				/* Integer significand */
-			   int b2, int b5,
-				/* Scale factor for the significand
-				 * in the numerator */
-			   int sd,
-				/* Scale factor for the denominator */
-			   int k,
-				/* Number of output digits before the decimal
-				 * point */
-			   int len,
-				/* Number of digits to allocate */
-			   int ilim,
-				/* Number of digits to convert if b >= s */
-			   int ilim1,
-				/* Number of digits to convert if b < s */
-			   int* decpt,
-				/* OUTPUT: Position of the decimal point */
-			   char** endPtr)
-				/* OUTPUT: Position of the terminal '\0'
-				 *         at the end of the returned string */
-{
-    
-    char* retval = ckalloc(len + 1);
-				/* Output buffer */
-    mp_int b;			/* Numerator of the fraction being converted */
-    mp_digit digit;		/* Current output digit */
-    char* s = retval;		/* Cursor in the output buffer */
-    int i;			/* Index in the output buffer */
-    mp_int temp;
-
-    /* 
-     * b = bw * 2**b2 * 5**b5
-     */
-
-    TclBNInitBignumFromWideUInt(&b, bw);
-    MulPow5(&b, b5, &b);
-    mp_mul_2d(&b, b2, &b);
-
-    /* Adjust if the logarithm was guessed wrong */
-
-    if (b.used <= sd) {
-	mp_mul_d(&b, 10, &b);
-	ilim = ilim1;
-	--k;
-    }
-    mp_init(&temp);
-
-    /* 
-     * Loop through the digits. Do division and mod by s == 2**(sd*DIGIT_BIT)
-     * by mp_digit extraction 
-     */
-
-    i = 1;
-    for (;;) {
-	if (b.used <= sd) {
-	    digit = 0;
-	} else {
-	    digit = b.dp[sd];
-	    if (b.used > sd+1 || digit >= 10) {
-		Tcl_Panic("wrong digit!");
-	    }
-	    --b.used; mp_clamp(&b);
-	}
-
-	/*
-	 * Have we converted all the requested digits?
-	 */
-	*s++ = '0' + digit;
-	if (i == ilim) {
-	    if (ShouldBankerRoundUpPowD(&b, sd, digit&1)) {
-		s = BumpUp(s, retval, &k);
-	    } else {
-		while (*--s == '0') {
-		    /* do nothing */
-		}
-		++s;
-	    }
-	    break;
-	}
-	
-	/* Advance to the next digit */
-	
-	mp_mul_d(&b, 10, &b);
-	++i;
-    }
-
-    /* 
-     * Endgame - store the location of the decimal point and the end of the
-     * string.
-     */
-    mp_clear_multi(&b, &temp, NULL);
-    *s = '\0';
-    *decpt = k;
-    if (endPtr) {
-	*endPtr = s;
-    }
-    return retval;
-}
-
-/*
- *-----------------------------------------------------------------------------
- *
- * ShouldBankerRoundUp --
- *
- *	Tests whether a digit should be rounded up or down when finishing
- *	bignum-based floating point conversion.
- *
- * Results:
- *	Returns 1 if the number needs to be rounded up, 0 otherwise.
- *
- *-----------------------------------------------------------------------------
- */
-
-inline static int
-ShouldBankerRoundUp(mp_int* twor,
-				/* 2x the remainder from thd division that
-				 * produced the last digit */
-		    mp_int* S,	/* Denominator */
-		    int isodd)	/* Flag == 1 if the last digit is odd */
-{
-    int r = mp_cmp_mag(twor, S);
-    switch (r) {
-    case MP_LT:
-	return 0;
-    case MP_EQ:
-	return isodd;
-    case MP_GT:
-	return 1;
-    }
-    Tcl_Panic("in ShouldBankerRoundUp, trichotomy fails!");
-    return 0;
-}
-
-/*
- *-----------------------------------------------------------------------------
- *
- * ShouldBankerRoundUpToNext --
- *
- *	Tests whether the remainder is great enough to force rounding
- *	to the next higher digit.
- *
- * Results:
- *	Returns 1 if the number should be rounded up, 0 otherwise.
- *
- *-----------------------------------------------------------------------------
- */
-
-inline static int
-ShouldBankerRoundUpToNext(mp_int* b,
-				/* Remainder from the division that produced
-				 * the last digit. */
-			  mp_int* m,
-				/* Numerator of the rounding tolerance */
-			  mp_int* S,
-				/* Denominator */
-			  int convType,
-				/* Conversion type: STEELE0 defeats
-				 * round-to-even. (Not sure why one would
-				 * want this; I coped it from Gay. FIXME */
-			  int isodd,
-				/* 1 if the integer significand is odd */
-			  mp_int* temp)
-				/* Work area needed for the calculation */
-{
-    int r;
-    /* Compare b and S-m: this is the same as comparing B+m and S. */
-    mp_add(b, m, temp);
-    r = mp_cmp_mag(temp, S);
-    switch(r) {
-    case MP_LT:
-	return 0;
-    case MP_EQ:
-	if (convType == TCL_DD_STEELE0) {
-	    return 0;
-	} else {
-	    return isodd;
-	}
-    case MP_GT:
-	return 1;
-    }
-    Tcl_Panic("in ShouldBankerRoundUpToNext, trichotomy fails!");
-    return 0;
-}
-		 
-/*
- *-----------------------------------------------------------------------------
- *
- * ShorteningBignumConversion --
- *
- *	Convert a floating point number to a variable-length digit string
- *	using the multiprecision method.
- *
- * Results:
- *	Returns the string of digits.
- *
- * Side effects:
- *	Stores the position of the decimal point in *decpt.
- *	Stores a pointer to the end of the number in *endPtr.
- *
- *-----------------------------------------------------------------------------
- */
-
-inline static char*
-ShorteningBignumConversion(Double* dPtr,
-				/* Original number being converted */
-			   int convType,
-				/* Conversion type */
-			   Tcl_WideUInt bw,
-				/* Integer significand and exponent */
-			   int b2,
-				/* Scale factor for the significand */
-			   int m2plus, int m2minus,
-				/* Scale factors for 1/2 ulp in numerator */
-			   int s2, int s5,
-				/* Scale factors for denominator */
-			   int k,
-				/* Guessed position of the decimal point */
-			   int len,
-				/* Size of the digit buffer to allocate */
-			   int ilim,
-				/* Number of digits to convert if b >= s */
-			   int ilim1,
-				/* Number of digits to convert if b < s */
-			   int* decpt,
-				/* OUTPUT: Position of the decimal point */
-			   char** endPtr)
-				/* OUTPUT: Pointer to the end of the number */
-{
-    char* retval = ckalloc(len+1);
-				/* Buffer of digits to return */
-    char* s = retval;		/* Cursor in the return value */
-    mp_int b;			/* Numerator of the result */
-    mp_int mminus;		/* 1/2 ulp below the result */
-    mp_int mplus;		/* 1/2 ulp above the result */
-    mp_int S;			/* Denominator of the result */
-    mp_int dig;			/* Current digit of the result */
-    int digit;			/* Current digit of the result */
-    mp_int temp;		/* Work area */
-    int minit = 1;		/* Fudge factor for when we misguess k */
-    int i;
-    int r1;
-
-    /*
-     * b = bw * 2**b2 * 5**b5
-     * S = 2**s2 * 5*s5
-     */
-
-    TclBNInitBignumFromWideUInt(&b, bw);
-    mp_mul_2d(&b, b2, &b);
-    mp_init_set_int(&S, 1);
-    MulPow5(&S, s5, &S); mp_mul_2d(&S, s2, &S);
-
-    /*
-     * Handle the case where we guess the position of the decimal point 
-     * wrong. 
-     */
-    
-    if (mp_cmp_mag(&b, &S) == MP_LT) {
-	mp_mul_d(&b, 10, &b);
-	minit = 10;
-	ilim =ilim1;
-	--k;
-    }
-
-    /* mminus = 2**m2minus * 5**m5 */
-
-    mp_init_set_int(&mminus, minit);
-    mp_mul_2d(&mminus, m2minus, &mminus);
-    if (m2plus > m2minus) {
-	mp_init_copy(&mplus, &mminus);
-	mp_mul_2d(&mplus, m2plus-m2minus, &mplus);
-    }
-    mp_init(&temp);
-
-    /* Loop through the digits */
-
-    mp_init(&dig);
-    i = 1;
-    for (;;) {
-	mp_div(&b, &S, &dig, &b);
-	if (dig.used > 1 || dig.dp[0] >= 10) {
-	    Tcl_Panic("wrong digit!");
-	}
-	digit = dig.dp[0];
-
-	/* 
-	 * Does the current digit leave us with a remainder small enough to
-	 * round to it?
-	 */
-
-	r1 = mp_cmp_mag(&b, (m2plus > m2minus)? &mplus : &mminus);
-	if (r1 == MP_LT
-	    || (r1 == MP_EQ
-		&& convType != TCL_DD_STEELE0
-		&& (dPtr->w.word1 & 1) == 0)) {
-	    mp_mul_2d(&b, 1, &b);
-	    if (ShouldBankerRoundUp(&b, &S, digit&1)) {
-		++digit;
-		if (digit == 10) {
-		    *s++ = '9';
-		    s = BumpUp(s, retval, &k);
-		    break;
-		}
-	    }
-	    *s++ = '0' + digit;
-	    break;
-	}
-
-	/*
-	 * Does the current digit leave us with a remainder large enough
-	 * to commit to rounding up to the next higher digit?
-	 */
-
-	if (ShouldBankerRoundUpToNext(&b, &mminus, &S, convType,
-				      dPtr->w.word1 & 1, &temp)) {
-	    ++digit;
-	    if (digit == 10) {
-		*s++ = '9';
-		s = BumpUp(s, retval, &k);
-		break;
-	    }
-	    *s++ = '0' + digit;
-	    break;
-	}
-
-	/* Have we converted all the requested digits? */
-
-	*s++ = '0' + digit;
-	if (i == ilim) {
-	    mp_mul_2d(&b, 1, &b);
-	    if (ShouldBankerRoundUp(&b, &S, digit&1)) {
-		s = BumpUp(s, retval, &k);  
-	    }
-	    break;
-	}
-
-	/* Advance to the next digit */
-
-	if (s5 > 0) {
-
-	    /* Can possibly shorten the denominator */
-	    mp_mul_2d(&b, 1, &b);
-	    mp_mul_2d(&mminus, 1, &mminus);
-	    if (m2plus > m2minus) {
-		mp_mul_2d(&mplus, 1, &mplus);
-	    }
-	    mp_div_d(&S, 5, &S, NULL);
-	    --s5;
-	    /* 
-	     * IDEA: It might possibly be a win to fall back to
-	     *       int64 arithmetic here if S < 2**64/10. But it's
-	     *       a win only for a fairly narrow range of magnitudes
-	     *       so perhaps not worth bothering. We already know that
-	     *       we shorten the denominator by at least 1 mp_digit, perhaps
-	     *       2. as we do the conversion for 17 digits of significance.
-	     * Possible savings:
-	     * 10**26   1 trip through loop before fallback possible
-	     * 10**27   1 trip
-	     * 10**28   2 trips     
-	     * 10**29   3 trips
-	     * 10**30   4 trips
-	     * 10**31   5 trips
-	     * 10**32   6 trips
-	     * 10**33   7 trips
-	     * 10**34   8 trips
-	     * 10**35   9 trips
-	     * 10**36  10 trips
-	     * 10**37  11 trips
-	     * 10**38  12 trips
-	     * 10**39  13 trips
-	     * 10**40  14 trips
-	     * 10**41  15 trips
-	     * 10**42  16 trips
-	     * thereafter  no gain.
-	     */
-	} else {
-	    mp_mul_d(&b, 10, &b);
-	    mp_mul_d(&mminus, 10, &mminus);
-	    if (m2plus > m2minus) {
-		mp_mul_2d(&mplus, 10, &mplus);
-	    }
-	}
-
-	++i;
-    }
-
-
-    /* 
-     * Endgame - store the location of the decimal point and the end of the
-     * string.
-     */
-    if (m2plus > m2minus) {
-	mp_clear(&mplus);
-    }
-    mp_clear_multi(&b, &mminus, &temp, &dig, &S, NULL);
-    *s = '\0';
-    *decpt = k;
-    if (endPtr) {
-	*endPtr = s;
-    }
-    return retval;
-
-}
-		 
-/*
- *-----------------------------------------------------------------------------
- *
- * StrictBignumConversion --
- *
- *	Convert a floating point number to a fixed-length digit string
- *	using the multiprecision method.
- *
- * Results:
- *	Returns the string of digits.
- *
- * Side effects:
- *	Stores the position of the decimal point in *decpt.
- *	Stores a pointer to the end of the number in *endPtr.
- *
- *-----------------------------------------------------------------------------
- */
-
-inline static char*
-StrictBignumConversion(Double* dPtr,
-				/* Original number being converted */
-		       int convType,
-				/* Conversion type */
-		       Tcl_WideUInt bw,
-				/* Integer significand and exponent */
-		       int b2,	/* Scale factor for the significand */
-		       int s2, int s5,
-				/* Scale factors for denominator */
-		       int k,	/* Guessed position of the decimal point */
-		       int len,	/* Size of the digit buffer to allocate */
-		       int ilim,
-				/* Number of digits to convert if b >= s */
-		       int ilim1,
-				/* Number of digits to convert if b < s */
-		       int* decpt,
-				/* OUTPUT: Position of the decimal point */
-		       char** endPtr)
-				/* OUTPUT: Pointer to the end of the number */
-{
-    char* retval = ckalloc(len+1);
-				/* Buffer of digits to return */
-    char* s = retval;		/* Cursor in the return value */
-    mp_int b;			/* Numerator of the result */
-    mp_int S;			/* Denominator of the result */
-    mp_int dig;			/* Current digit of the result */
-    int digit;			/* Current digit of the result */
-    mp_int temp;		/* Work area */
-    int g;			/* Size of the current digit groun */
-    int i, j;
-    
-    /*
-     * b = bw * 2**b2 * 5**b5
-     * S = 2**s2 * 5*s5
-     */
-
-    mp_init_multi(&temp, &dig, NULL);
-    TclBNInitBignumFromWideUInt(&b, bw);
-    mp_mul_2d(&b, b2, &b);
-    mp_init_set_int(&S, 1);
-    MulPow5(&S, s5, &S); mp_mul_2d(&S, s2, &S);
-
-    /*
-     * Handle the case where we guess the position of the decimal point 
-     * wrong. 
-     */
-    
-    if (mp_cmp_mag(&b, &S) == MP_LT) {
-	mp_mul_d(&b, 10, &b);
-	ilim =ilim1;
-	--k;
-    }
-
-    /* Convert the leading digit */
-
-    i = 0;
-    mp_div(&b, &S, &dig, &b);
-    if (dig.used > 1 || dig.dp[0] >= 10) {
-	Tcl_Panic("wrong digit!");
-    }
-    digit = dig.dp[0];
-
-    /* Is a single digit all that was requested? */
-
-    *s++ = '0' + digit;
-    if (++i >= ilim) {
-	mp_mul_2d(&b, 1, &b);
-	if (ShouldBankerRoundUp(&b, &S, digit&1)) {
-	    s = BumpUp(s, retval, &k);  
-	}
-    } else {
-
-	for (;;) {
-
-	    /* Shift by a group of digits. */
-
-	    g = ilim - i;
-	    if (g > DIGIT_GROUP) {
-		g = DIGIT_GROUP;
-	    }
-	    if (s5 >= g) {
-		mp_div_d(&S, dpow5[g], &S, NULL);
-		s5 -= g;
-	    } else if (s5 > 0) {
-		mp_div_d(&S, dpow5[s5], &S, NULL);
-		mp_mul_d(&b, dpow5[g - s5], &b);
-		s5 = 0;
-	    } else {
-		mp_mul_d(&b, dpow5[g], &b);
-	    }
-	    mp_mul_2d(&b, g, &b);
-	    
-	    /*
-	     * As with the shortening bignum conversion, it's possible at
-	     * this point that we will have reduced the denominator to
-	     * less than 2**64/10, at which point it would be possible to
-	     * fall back to to int64 arithmetic. But the potential payoff
-	     * is tremendously less - unless we're working in F format -
-	     * because we know that three groups of digits will always
-	     * suffice for %#.17e, the longest format that doesn't introduce
-	     * empty precision.
-	     */
-
-	    /* Extract the next group of digits */
-	    
-	    mp_div(&b, &S, &dig, &b);
-	    if (dig.used > 1) {
-		Tcl_Panic("wrong digit!");
-	    }
-	    digit = dig.dp[0];
-	    for (j = g-1; j >= 0; --j) {
-		int t = itens[j];
-		*s++ = digit / t + '0';
-		digit %= t;
-	    }
-	    i += g;
-	    
-	    /* Have we converted all the requested digits? */
-	    
-	    if (i == ilim) {
-		mp_mul_2d(&b, 1, &b);
-		if (ShouldBankerRoundUp(&b, &S, digit&1)) {
-		    s = BumpUp(s, retval, &k);  
-		} else {
-		    while (*--s == '0') {
-			/* do nothing */
-		    }
-		    ++s;
-		}	
-	    break;
-	    }
-	}
-    }
-    /* 
-     * Endgame - store the location of the decimal point and the end of the
-     * string.
-     */
-    mp_clear_multi(&b, &S, &temp, &dig, NULL);
-    *s = '\0';
-    *decpt = k;
-    if (endPtr) {
-	*endPtr = s;
-    }
-    return retval;
-
-}
-
-/*
- *-----------------------------------------------------------------------------
+ *----------------------------------------------------------------------
  *
  * TclDoubleDigits --
  *
- *	Core of Tcl's conversion of double-precision floating point numbers
- *	to decimal.
+ *	Converts a double to a string of digits.
  *
  * Results:
- *	Returns a newly-allocated string of digits.
+ *	Returns the position of the character in the string after which the
+ *	decimal point should appear. Since the string contains only
+ *	significant digits, the position may be less than zero or greater than
+ *	the length of the string.
  *
  * Side effects:
- *	Sets *decpt to the index of the character in the string before the
- *	place that the decimal point should go. If 'endPtr' is not NULL,
- *	sets endPtr to point to the terminating '\0' byte of the string.
- *	Sets *sign to 1 if a minus sign should be printed with the number,
- *	or 0 if a plus sign (or no sign) should appear.
+ *	Stores the digits in the given buffer and sets 'signum' according to
+ *	the sign of the number.
  *
- * This function is a service routine that produces the string of digits
- * for floating-point-to-decimal conversion. It can do a number of things
- * according to the 'flags' argument. Valid values for 'flags' include:
- *	TCL_DD_SHORTEST - This is the default for floating point conversion
- *		if ::tcl_precision is 0. It constructs the shortest string
- *		of digits that will reconvert to the given number when scanned.
- *		For floating point numbers that are exactly between two
- *		decimal numbers, it resolves using the 'round to even' rule.
- *		With this value, the 'ndigits' parameter is ignored.
- *	TCL_DD_STEELE - This value is not recommended and may be removed
- *		in the future. It follows the conversion algorithm outlined
- *		in "How to Print Floating-Point Numbers Accurately" by
- *		Guy L. Steele, Jr. and Jon L. White [Proc. ACM SIGPLAN '90, 
- *		pp. 112-126]. This rule has the effect of rendering 1e23
- *		as 9.9999999999999999e22 - which is a 'better' approximation
- *		in the sense that it will reconvert correctly even if
- *		a subsequent input conversion is 'round up' or 'round down'
- *		rather than 'round to nearest', but is surprising otherwise.
- *	TCL_DD_E_FORMAT - This value is used to prepare numbers for %e
- *		format conversion (or for default floating->string if
- *		tcl_precision is not 0). It constructs a string of at most
- *		'ndigits' digits, choosing the one that is closest to the
- *		given number (and resolving ties with 'round to even').
- *		It is allowed to return fewer than 'ndigits' if the number
- *		converts exactly; if the TCL_DD_E_FORMAT|TCL_DD_SHORTEN_FLAG 
- *		is supplied instead, it also returns fewer digits if the 
- *		shorter string will still reconvert to the given input number.
- *		In any case, strings of trailing zeroes are suppressed.
- *	TCL_DD_F_FORMAT - This value is used to prepare numbers for %f
- *		format conversion. It requests that conversion proceed until
- *		'ndigits' digits after the decimal point have been converted.
- *		It is possible for this format to result in a zero-length 
- *		string if the number is sufficiently small. Again, it
- *		is permissible for TCL_DD_F_FORMAT to return fewer digits
- *		for a number that converts exactly, and changing the
- *		argument to TCL_DD_F_FORMAT|TCL_DD_SHORTEN_FLAG will allow
- *		the routine also to return fewer digits if the shorter string
- *		will still reconvert without loss to the given input number.
- *		Strings of trailing zeroes are suppressed.
- *
- *	To any of these flags may be OR'ed TCL_DD_NO_QUICK; this flag
- *	requires all calculations to be done in exact arithmetic. Normally,
- *	E and F format with fewer than about 14 digits will be done with
- *	a quick floating point approximation and fall back on the exact
- *	arithmetic only if the input number is close enough to the
- *	midpoint between two decimal strings that more precision is needed
- *	to resolve which string is correct.
- *
- * The value stored in the 'decpt' argument on return may be negative 
- * (indicating that the decimal point falls to the left of the string) 
- * or greater than the length of the string.  In addition, the value -9999
- * is used as a sentinel to indicate that the string is one of the special
- * values "Infinity" and "NaN", and that no decimal point should be inserted.
- * 
- *-----------------------------------------------------------------------------
+ *----------------------------------------------------------------------
+
  */
-char*
-TclDoubleDigits(double dv,	/* Number to convert */
-		int ndigits,	/* Number of digits requested */
-		int flags,	/* Conversion flags */
-		int* decpt,	/* OUTPUT: Position of the decimal point */
-		int* sign,	/* OUTPUT: 1 if the result is negative */
-		char** endPtr)	/* OUTPUT: If not NULL, receives a pointer
-				 *         to one character beyond the end
-				 *         of the returned string */
+
+int
+TclDoubleDigits(
+    char *buffer,		/* Buffer in which to store the result, must
+				 * have at least 18 chars */
+    double v,			/* Number to convert. Must be finite, and not
+				 * NaN */
+    int *signum)		/* Output: 1 if the number is negative.
+				 * Should handle -0 correctly on the IEEE
+				 * architecture. */
 {
-    int convType = (flags & TCL_DD_CONVERSION_TYPE_MASK);
-				/* Type of conversion being performed
-				 * TCL_DD_SHORTEST0
-				 * TCL_DD_STEELE0
-				 * TCL_DD_E_FORMAT
-				 * TCL_DD_F_FORMAT */
-    Double d;			/* Union for deconstructing doubles */
-    Tcl_WideUInt bw;		/* Integer significand */
-    int be;			/* Power of 2 by which b must be multiplied */
-    int bbits;			/* Number of bits needed to represent b */
-    int denorm;			/* Flag == 1 iff the input number was
-				 * denormalized */
-    int k;			/* Estimate of floor(log10(d)) */
-    int k_check;		/* Flag == 1 if d is near enough to a 
-				 * power of ten that k must be checked */
-    int b2, b5, s2, s5;		/* Powers of 2 and 5 in the numerator and
-				 * denominator of intermediate results */
-    int ilim = -1, ilim1 = -1;	/* Number of digits to convert, and number
-				 * to convert if log10(d) has been 
-				 * overestimated */
-    char* retval;		/* Return value from this function */
-    int i = -1;
-
-    /* Put the input number into a union for bit-whacking */
-
-    d.d = dv;
-
-    /* 
-     * Handle the cases of negative numbers (by taking the absolute value:
-     * this includes -Inf and -NaN!), infinity, Not a Number, and zero.
-     */
-
-    TakeAbsoluteValue(&d, sign);
-    if ((d.w.word0 & EXP_MASK) == EXP_MASK) {
-	return FormatInfAndNaN(&d, decpt, endPtr);
-    }
-    if (d.d == 0.0) {
-	return FormatZero(decpt, endPtr);
-    }
-
-    /* 
-     * Unpack the floating point into a wide integer and an exponent.
-     * Determine the number of bits that the big integer requires, and
-     * compute a quick approximation (which may be one too high) of
-     * ceil(log10(d.d)).
-     */
-    denorm = ((d.w.word0 & EXP_MASK) == 0);
-    DoubleToExpAndSig(d.d, &bw, &be, &bbits);
-    k = ApproximateLog10(bw, be, bbits);
-    k = BetterLog10(d.d, k, &k_check);
-
-    /* At this point, we have:
-     *	  d is the number to convert.
-     *    bw are significand and exponent: d == bw*2**be, 
-     *    bbits is the length of bw: 2**bbits-1 <= bw < 2**bbits
-     *	  k is either ceil(log10(d)) or ceil(log10(d))+1. k_check is 0
-     *      if we know that k is exactly ceil(log10(d)) and 1 if we need to
-     *	    check.
-     *    We want a rational number 
-     *      r = b * 10**(1-k) = bw * 2**b2 * 5**b5 / (2**s2 / 5**s5),
-     *    with b2, b5, s2, s5 >= 0.  Note that the most significant decimal
-     *    digit is floor(r) and that successive digits can be obtained
-     *    by setting r <- 10*floor(r) (or b <= 10 * (b % S)).
-     *    Find appropriate b2, b5, s2, s5.
-     */
-
-    ComputeScale(be, k, &b2, &b5, &s2, &s5);
+    int e;			/* Power of FLT_RADIX that satisfies
+				 * v = f * FLT_RADIX**e */
+    int lowOK, highOK;
+    mp_int r;			/* Scaled significand. */
+    mp_int s;			/* Divisor such that v = r / s */
+    int smallestSig;		/* Flag == 1 iff v's significand is the
+				 * smallest that can be represented. */
+    mp_int mplus;		/* Scaled epsilon: (r + 2* mplus) == v(+)
+				 * where v(+) is the floating point successor
+				 * of v. */
+    mp_int mminus;		/* Scaled epsilon: (r - 2*mminus) == v(-)
+				 * where v(-) is the floating point
+				 * predecessor of v. */
+    mp_int temp;
+    int rfac2 = 0;		/* Powers of 2 and 5 by which large */
+    int rfac5 = 0;		/* integers should be scaled.	    */
+    int sfac2 = 0;
+    int sfac5 = 0;
+    int mplusfac2 = 0;
+    int mminusfac2 = 0;
+    char c;
+    int i, k, n;
 
     /*
-     * Correct an incorrect caller-supplied 'ndigits'.
-     * Also determine:
-     *	i = The maximum number of decimal digits that will be returned in the
-     *      formatted string.  This is k + 1 + ndigits for F format, 18 for
-     *	    shortest and Steele, and ndigits for E format.
-     *  ilim = The number of significant digits to convert if
-     *         k has been guessed correctly. This is -1 for shortest and Steele
-     *         (which stop when all significance has been lost), 'ndigits'
-     *	       for E format, and 'k + 1 + ndigits' for F format.
-     *  ilim1 = The minimum number of significant digits to convert if
-     *	        k has been guessed 1 too high. This, too, is -1 for shortest
-     *	        and Steele, and 'ndigits' for E format, but it's 'ndigits-1'
-     *	        for F format.
+     * Split the number into absolute value and signum.
      */
 
-    SetPrecisionLimits(convType, k, &ndigits, &i, &ilim, &ilim1);
+    v = AbsoluteValue(v, signum);
 
-    /* 
-     * Try to do low-precision conversion in floating point rather
-     * than resorting to expensive multiprecision arithmetic
+    /*
+     * Handle zero specially.
      */
-    if (ilim >= 0 && ilim <= QUICK_MAX && !(flags & TCL_DD_NO_QUICK)) {
-	if ((retval = QuickConversion(d.d, k, k_check, flags,
-				      i, ilim, ilim1,
-				      decpt, endPtr)) != NULL) {
-	    return retval;
+
+    if (v == 0.0) {
+	*buffer++ = '0';
+	*buffer++ = '\0';
+	return 1;
+    }
+
+    /*
+     * Find a large integer r, and integer e, such that
+     *         v = r * FLT_RADIX**e
+     * and r is as small as possible. Also determine whether the significand
+     * is the smallest possible.
+     */
+
+    smallestSig = GetIntegerTimesPower(v, &r, &e);
+
+    lowOK = highOK = (mp_iseven(&r));
+
+    /*
+     * We are going to want to develop integers r, s, mplus, and mminus such
+     * that v = r / s, v(+)-v / 2 = mplus / s; v-v(-) / 2 = mminus / s and
+     * then scale either s or r, mplus, mminus by an appropriate power of ten.
+     *
+     * We actually do this by keeping track of the powers of 2 and 5 by which
+     * f is multiplied to yield v and by which 1 is multiplied to yield s,
+     * mplus, and mminus.
+     */
+
+    if (e >= 0) {
+	int bits = e * log2FLT_RADIX;
+
+	if (!smallestSig) {
+	    /*
+	     * Normal case, m+ and m- are both FLT_RADIX**e
+	     */
+
+	    rfac2 = bits + 1;
+	    sfac2 = 1;
+	    mplusfac2 = bits;
+	    mminusfac2 = bits;
+	} else {
+	    /*
+	     * If f is equal to the smallest significand, then we need another
+	     * factor of FLT_RADIX in s to cope with stepping to the next
+	     * smaller exponent when going to e's predecessor.
+	     */
+
+	    rfac2 = bits + log2FLT_RADIX + 1;
+	    sfac2 = 1 + log2FLT_RADIX;
+	    mplusfac2 = bits + log2FLT_RADIX;
+	    mminusfac2 = bits;
+	}
+    } else {
+	/*
+	 * v has digits after the binary point
+	 */
+
+	if (e <= DBL_MIN_EXP-DBL_MANT_DIG || !smallestSig) {
+	    /*
+	     * Either f isn't the smallest significand or e is the smallest
+	     * exponent. mplus and mminus will both be 1.
+	     */
+
+	    rfac2 = 1;
+	    sfac2 = 1 - e * log2FLT_RADIX;
+	    mplusfac2 = 0;
+	    mminusfac2 = 0;
+	} else {
+	    /*
+	     * f is the smallest significand, but e is not the smallest
+	     * exponent. We need to scale by FLT_RADIX again to cope with the
+	     * fact that v's predecessor has a smaller exponent.
+	     */
+
+	    rfac2 = 1 + log2FLT_RADIX;
+	    sfac2 = 1 + log2FLT_RADIX * (1 - e);
+	    mplusfac2 = FLT_RADIX;
+	    mminusfac2 = 0;
 	}
     }
 
-    /* 
-     * For shortening conversions, determine the upper and lower bounds
-     * for the remainder at which we can stop.
-     *   m+ = (2**m2plus * 5**m5) / (2**s2 * 5**s5) is the limit on the
-     *        high side, and
-     *   m- = (2**m2minus * 5**m5) / (2**s2 * 5**s5) is the limit on the
-     *        low side.
-     *   We may need to increase s2 to put m2plus, m2minus, b2 over a
-     *   common denominator.
+    /*
+     * Estimate the highest power of ten that will be needed to hold the
+     * result.
      */
 
-    if (flags & TCL_DD_SHORTEN_FLAG) {
-	int m2minus = b2;
-	int m2plus;
-	int m5 = b5;
-	int len = i;
-
-	/* 
-	 * Find the quantity i so that (2**i*5**b5)/(2**s2*5**s5)
-	 * is 1/2 unit in the least significant place of the floating 
-	 * point number.
-	 */
-	if (denorm) {
-	    i = be + EXPONENT_BIAS + (FP_PRECISION-1);
-	} else {
-	    i = 1 + FP_PRECISION - bbits;
-	}
-	b2 += i;
-	s2 += i;
-
-	/* 
-	 * Reduce the fractions to lowest terms, since the above calculation
-	 * may have left excess powers of 2 in numerator and denominator
-	 */
-	CastOutPowersOf2(&b2, &m2minus, &s2);
-
-	/*
-	 * In the special case where bw==1, the nearest floating point number
-	 * to it on the low side is 1/4 ulp below it. Adjust accordingly.
-	 */
-	m2plus = m2minus;
-	if (!denorm && bw == 1) {
-	    ++b2;
-	    ++s2;
-	    ++m2plus;
-	}
-
-	if (s5+1 < N_LOG2POW5
-	    && s2+1 + log2pow5[s5+1] <= 64) {
-	    /*
-	     * If 10*2**s2*5**s5 == 2**(s2+1)+5**(s5+1) fits in a 64-bit
-	     * word, then all our intermediate calculations can be done
-	     * using exact 64-bit arithmetic with no need for expensive
-	     * multiprecision operations. (This will be true for all numbers
-	     * in the range [1.0e-3 .. 1.0e+24]).
-	     */
-
-	    return ShorteningInt64Conversion(&d, convType, bw, b2, b5,
-					     m2plus, m2minus, m5,
-					     s2, s5, k, len, ilim, ilim1, 
-					     decpt, endPtr);
-	} else if (s5 == 0) {
-	    /*
-	     * The denominator is a power of 2, so we can replace division
-	     * by digit shifts. First we round up s2 to a multiple of
-	     * DIGIT_BIT, and adjust m2 and b2 accordingly. Then we launch
-	     * into a version of the comparison that's specialized for
-	     * the 'power of mp_digit in the denominator' case.
-	     */
-	    if (s2 % DIGIT_BIT != 0) {
-		int delta = DIGIT_BIT - (s2 % DIGIT_BIT);
-		b2 += delta;
-		m2plus += delta;
-		m2minus += delta;
-		s2 += delta;
-	    }
-	    return ShorteningBignumConversionPowD(&d, convType, bw, b2, b5,
-						  m2plus, m2minus, m5,
-						  s2/DIGIT_BIT, k, len, 
-						  ilim, ilim1, decpt, endPtr);
-	} else {
-
-	    /* 
-	     * Alas, there's no helpful special case; use full-up
-	     * bignum arithmetic for the conversion
-	     */
-
-	    return ShorteningBignumConversion(&d, convType, bw,
-					      b2, m2plus, m2minus,
-					      s2, s5, k, len,
-					      ilim, ilim1, decpt, endPtr);
-
-	}
-
+    k = (int) ceil(log(v) / log(10.));
+    if (k >= 0) {
+	sfac2 += k;
+	sfac5 = k;
     } else {
+	rfac2 -= k;
+	mplusfac2 -= k;
+	mminusfac2 -= k;
+	rfac5 = -k;
+    }
 
-	/* Non-shortening conversion */
+    /*
+     * Scale r, s, mplus, mminus by the appropriate powers of 2 and 5.
+     */
 
-	int len = i;
-
-	/* Reduce numerator and denominator to lowest terms */
-
-	if (b2 >= s2 && s2 > 0) {
-	    b2 -= s2; s2 = 0;
-	} else if (s2 >= b2 && b2 > 0) {
-	    s2 -= b2; b2 = 0;
+    mp_init_set(&mplus, 1);
+    for (i=0 ; i<=8 ; ++i) {
+	if (rfac5 & (1 << i)) {
+	    mp_mul(&mplus, pow5+i, &mplus);
 	}
+    }
+    mp_mul(&r, &mplus, &r);
+    mp_mul_2d(&r, rfac2, &r);
+    mp_init_copy(&mminus, &mplus);
+    mp_mul_2d(&mplus, mplusfac2, &mplus);
+    mp_mul_2d(&mminus, mminusfac2, &mminus);
+    mp_init_set(&s, 1);
+    for (i=0 ; i<=8 ; ++i) {
+	if (sfac5 & (1 << i)) {
+	    mp_mul(&s, pow5+i, &s);
+	}
+    }
+    mp_mul_2d(&s, sfac2, &s);
 
-	if (s5+1 < N_LOG2POW5
-	    && s2+1 + log2pow5[s5+1] <= 64) {
-	    /*
-	     * If 10*2**s2*5**s5 == 2**(s2+1)+5**(s5+1) fits in a 64-bit
-	     * word, then all our intermediate calculations can be done
-	     * using exact 64-bit arithmetic with no need for expensive
-	     * multiprecision operations.
-	     */
+    /*
+     * It is possible for k to be off by one because we used an inexact
+     * logarithm.
+     */
 
-	    return StrictInt64Conversion(&d, convType, bw, b2, b5,
-					 s2, s5, k, len, ilim, ilim1, 
-					 decpt, endPtr);
+    mp_init(&temp);
+    mp_add(&r, &mplus, &temp);
+    i = mp_cmp_mag(&temp, &s);
+    if (i>0 || (highOK && i==0)) {
+	mp_mul_d(&s, 10, &s);
+	++k;
+    } else {
+	mp_mul_d(&temp, 10, &temp);
+	i = mp_cmp_mag(&temp, &s);
+	if (i<0 || (highOK && i==0)) {
+	    mp_mul_d(&r, 10, &r);
+	    mp_mul_d(&mplus, 10, &mplus);
+	    mp_mul_d(&mminus, 10, &mminus);
+	    --k;
+	}
+    }
 
-	} else if (s5 == 0) {
-	    /*
-	     * The denominator is a power of 2, so we can replace division
-	     * by digit shifts. First we round up s2 to a multiple of
-	     * DIGIT_BIT, and adjust m2 and b2 accordingly. Then we launch
-	     * into a version of the comparison that's specialized for
-	     * the 'power of mp_digit in the denominator' case.
-	     */
-	    if (s2 % DIGIT_BIT != 0) {
-		int delta = DIGIT_BIT - (s2 % DIGIT_BIT);
-		b2 += delta;
-		s2 += delta;
-	    }
-	    return StrictBignumConversionPowD(&d, convType, bw, b2, b5,
-					      s2/DIGIT_BIT, k, len, 
-					      ilim, ilim1, decpt, endPtr);
+    /*
+     * At this point, k contains the power of ten by which we're scaling the
+     * result. r/s is at least 1/10 and strictly less than ten, and v = r/s *
+     * 10**k. mplus and mminus give the rounding limits.
+     */
+
+    for (;;) {
+	int tc1, tc2;
+
+	mp_mul_d(&r, 10, &r);
+	mp_div(&r, &s, &temp, &r);	/* temp = 10r / s; r = 10r mod s */
+	i = temp.dp[0];
+	mp_mul_d(&mplus, 10, &mplus);
+	mp_mul_d(&mminus, 10, &mminus);
+	tc1 = mp_cmp_mag(&r, &mminus);
+	if (lowOK) {
+	    tc1 = (tc1 <= 0);
 	} else {
-	    /*
-	     * There are no helpful special cases, but at least we know
-	     * in advance how many digits we will convert. We can run the
-	     * conversion in steps of DIGIT_GROUP digits, so as to
-	     * have many fewer mp_int divisions.
-	     */
-	    return StrictBignumConversion(&d, convType, bw, b2, s2, s5,
-					  k, len, ilim, ilim1, decpt, endPtr);
+	    tc1 = (tc1 < 0);
 	}
-    } 
-}
+	mp_add(&r, &mplus, &temp);
+	tc2 = mp_cmp_mag(&temp, &s);
+	if (highOK) {
+	    tc2 = (tc2 >= 0);
+	} else {
+	    tc2 = (tc2 > 0);
+	}
+	if (!tc1) {
+	    if (!tc2) {
+		*buffer++ = '0' + i;
+	    } else {
+		c = (char) (i + '1');
+		break;
+	    }
+	} else {
+	    if (!tc2) {
+		c = (char) (i + '0');
+	    } else {
+		mp_mul_2d(&r, 1, &r);
+		n = mp_cmp_mag(&r, &s);
+		if (n < 0) {
+		    c = (char) (i + '0');
+		} else {
+		    c = (char) (i + '1');
+		}
+	    }
+	    break;
+	}
+    };
+    *buffer++ = c;
+    *buffer++ = '\0';
 
+    /*
+     * Free memory, and return.
+     */
+
+    mp_clear_multi(&r, &s, &mplus, &mminus, &temp, NULL);
+    return k;
+}
+
+/*
+ *----------------------------------------------------------------------
+ *
+ * AbsoluteValue --
+ *
+ *	Splits a 'double' into its absolute value and sign.
+ *
+ * Results:
+ *	Returns the absolute value.
+ *
+ * Side effects:
+ *	Stores the signum in '*signum'.
+ *
+ *----------------------------------------------------------------------
+ */
+
+static double
+AbsoluteValue(
+    double v,			/* Number to split */
+    int *signum)		/* (Output) Sign of the number 1=-, 0=+ */
+{
+    /*
+     * Take the absolute value of the number, and report the number's sign.
+     * Take special steps to preserve signed zeroes in IEEE floating point.
+     * (We can't use fpclassify, because that's a C9x feature and we still
+     * have to build on C89 compilers.)
+     */
+
+#ifndef IEEE_FLOATING_POINT
+    if (v >= 0.0) {
+	*signum = 0;
+    } else {
+	*signum = 1;
+	v = -v;
+    }
+#else
+    union {
+	Tcl_WideUInt iv;
+	double dv;
+    } bitwhack;
+    bitwhack.dv = v;
+    if (n770_fp) {
+	bitwhack.iv = Nokia770Twiddle(bitwhack.iv);
+    }
+    if (bitwhack.iv & ((Tcl_WideUInt) 1 << 63)) {
+	*signum = 1;
+	bitwhack.iv &= ~((Tcl_WideUInt) 1 << 63);
+	if (n770_fp) {
+	    bitwhack.iv = Nokia770Twiddle(bitwhack.iv);
+	}
+	v = bitwhack.dv;
+    } else {
+	*signum = 0;
+    }
+#endif
+    return v;
+}
+
+/*
+ *----------------------------------------------------------------------
+ *
+ * GetIntegerTimesPower --
+ *
+ *	Converts a floating point number to an exact integer times a power of
+ *	the floating point radix.
+ *
+ * Results:
+ *	Returns 1 if it converted the smallest significand, 0 otherwise.
+ *
+ * Side effects:
+ *	Initializes the integer value (does not just assign it), and stores
+ *	the exponent.
+ *
+ *----------------------------------------------------------------------
+ */
+
+static int
+GetIntegerTimesPower(
+    double v,			/* Value to convert */
+    mp_int *rPtr,		/* (Output) Integer value */
+    int *ePtr)			/* (Output) Power of FLT_RADIX by which r must
+				 * be multiplied to yield v*/
+{
+    double a, f;
+    int e, i, n;
+
+    /*
+     * Develop f and e such that v = f * FLT_RADIX**e, with
+     * 1.0/FLT_RADIX <= f < 1.
+     */
+
+    f = frexp(v, &e);
+#if FLT_RADIX > 2
+    n = e % log2FLT_RADIX;
+    if (n > 0) {
+	n -= log2FLT_RADIX;
+	e += 1;
+	f *= ldexp(1.0, n);
+    }
+    e = (e - n) / log2FLT_RADIX;
+#endif
+    if (f == 1.0) {
+	f = 1.0 / FLT_RADIX;
+	e += 1;
+    }
+
+    /*
+     * If the original number was denormalized, adjust e and f to be denormal
+     * as well.
+     */
+
+    if (e < DBL_MIN_EXP) {
+	n = mantBits + (e - DBL_MIN_EXP)*log2FLT_RADIX;
+	f = ldexp(f, (e - DBL_MIN_EXP)*log2FLT_RADIX);
+	e = DBL_MIN_EXP;
+	n = (n + DIGIT_BIT - 1) / DIGIT_BIT;
+    } else {
+	n = mantDIGIT;
+    }
+
+    /*
+     * Now extract the base-2**DIGIT_BIT digits of f into a multi-precision
+     * integer r. Preserve the invariant v = r * 2**rfac2 * FLT_RADIX**e by
+     * adjusting e.
+     */
+
+    a = f;
+    n = mantDIGIT;
+    mp_init_size(rPtr, n);
+    rPtr->used = n;
+    rPtr->sign = MP_ZPOS;
+    i = (mantBits % DIGIT_BIT);
+    if (i == 0) {
+	i = DIGIT_BIT;
+    }
+    while (n > 0) {
+	a *= ldexp(1.0, i);
+	i = DIGIT_BIT;
+	rPtr->dp[--n] = (mp_digit) a;
+	a -= (mp_digit) a;
+    }
+    *ePtr = e - DBL_MANT_DIG;
+    return (f == 1.0 / FLT_RADIX);
+}
 
 /*
  *----------------------------------------------------------------------
@@ -4355,7 +2200,7 @@ TclInitDoubleConversion(void)
     if (frexp((double) FLT_RADIX, &log2FLT_RADIX) != 0.5) {
 	Tcl_Panic("This code doesn't work on a decimal machine!");
     }
-    log2FLT_RADIX--;
+    --log2FLT_RADIX;
     mantBits = DBL_MANT_DIG * log2FLT_RADIX;
     d = 1.0;
 
@@ -4386,11 +2231,6 @@ TclInitDoubleConversion(void)
     for (i=0; i<8; ++i) {
 	mp_sqr(pow5+i, pow5+i+1);
     }
-    mp_init_set_int(pow5_13, 1220703125);
-    for (i = 1; i < 5; ++i) {
-	mp_init(pow5_13 + i);
-	mp_sqr(pow5_13 + i - 1, pow5_13 + i);
-    }
 
     /*
      * Determine the number of decimal digits to the left and right of the
@@ -4399,10 +2239,12 @@ TclInitDoubleConversion(void)
      * the significand of a double.
      */
 
+    tiny = SafeLdExp(1.0, DBL_MIN_EXP * log2FLT_RADIX - mantBits);
     maxDigits = (int) ((DBL_MAX_EXP * log((double) FLT_RADIX)
 	    + 0.5 * log(10.)) / log(10.));
     minDigits = (int) floor((DBL_MIN_EXP - DBL_MANT_DIG)
 	    * log((double) FLT_RADIX) / log(10.));
+    mantDIGIT = (mantBits + DIGIT_BIT-1) / DIGIT_BIT;
     log10_DIGIT_MAX = (int) floor(DIGIT_BIT * log(2.) / log(10.));
 
     /*
@@ -4446,7 +2288,7 @@ TclFinalizeDoubleConversion(void)
 {
     int i;
 
-    ckfree((char *) pow10_wide);
+    Tcl_Free((char *) pow10_wide);
     for (i=0; i<9; ++i) {
 	mp_clear(pow5 + i);
     }
@@ -4531,13 +2373,12 @@ TclBignumToDouble(
     mp_int *a)			/* Integer to convert. */
 {
     mp_int b;
-    int bits, shift, i, lsb;
+    int bits, shift, i;
     double r;
 
-
     /*
-     * We need a 'mantBits'-bit significand.  Determine what shift will 
-     * give us that.
+     * Determine how many bits we need, and extract that many from the input.
+     * Round to nearest unit in the last place.
      */
 
     bits = mp_count_bits(a);
@@ -4549,54 +2390,17 @@ TclBignumToDouble(
 	    return -HUGE_VAL;
 	}
     }
-    shift = mantBits - bits;
-
-    /* 
-     * If shift > 0, shift the significand left by the requisite number of
-     * bits.  If shift == 0, the significand is already exactly 'mantBits'
-     * in length.  If shift < 0, we will need to shift the significand right
-     * by the requisite number of bits, and round it. If the '1-shift'
-     * least significant bits are 0, but the 'shift'th bit is nonzero,
-     * then the significand lies exactly between two values and must be
-     * 'rounded to even'.
-     */
-
+    shift = mantBits + 1 - bits;
     mp_init(&b);
-    if (shift == 0) {
-	mp_copy(a, &b);
-    } else if (shift > 0) {
+    if (shift > 0) {
 	mp_mul_2d(a, shift, &b);
     } else if (shift < 0) {
-	lsb = mp_cnt_lsb(a);
-	if (lsb == -1-shift) {
-
-	    /*
-	     * Round to even
-	     */
-
-	    mp_div_2d(a, -shift, &b, NULL);
-	    if (mp_isodd(&b)) {
-		if (b.sign == MP_ZPOS) {
-		    mp_add_d(&b, 1, &b);
-		} else {
-		    mp_sub_d(&b, 1, &b);
-		}
-	    }
-	} else {
-
-	    /*
-	     * Ordinary rounding
-	     */
-
-	    mp_div_2d(a, -1-shift, &b, NULL);
-	    if (b.sign == MP_ZPOS) {
-		mp_add_d(&b, 1, &b);
-	    } else {
-		mp_sub_d(&b, 1, &b);
-	    }
-	    mp_div_2d(&b, 1, &b, NULL);
-	}
+	mp_div_2d(a, -shift, &b, NULL);
+    } else {
+	mp_copy(a, &b);
     }
+    mp_add_d(&b, 1, &b);
+    mp_div_2d(&b, 1, &b, NULL);
 
     /*
      * Accumulate the result, one mp_digit at a time.
@@ -4624,20 +2428,6 @@ TclBignumToDouble(
 	return -r;
     }
 }
-
-/*
- *-----------------------------------------------------------------------------
- *
- * TclCeil --
- *
- *	Computes the smallest floating point number that is at least the
- *	mp_int argument.
- *
- * Results:
- *	Returns the floating point number.
- *
- *-----------------------------------------------------------------------------
- */
 
 double
 TclCeil(
@@ -4681,20 +2471,6 @@ TclCeil(
     mp_clear(&b);
     return r;
 }
-
-/*
- *-----------------------------------------------------------------------------
- *
- * TclFloor --
- *
- *	Computes the largest floating point number less than or equal to
- *	the mp_int argument.
- *
- * Results:
- *	Returns the floating point value.
- *
- *-----------------------------------------------------------------------------
- */
 
 double
 TclFloor(

@@ -42,3 +42,7 @@ mp_mod (mp_int * a, mp_int * b, mp_int * c)
   return res;
 }
 #endif
+
+/* $Source$ */
+/* $Revision$ */
+/* $Date$ */

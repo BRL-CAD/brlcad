@@ -4,9 +4,6 @@
     #ifndef _TCLCONFIG
     #define _TCLCONFIG
 
-/* Define if building universal (internal helper macro) */
-#undef AC_APPLE_UNIVERSAL_BUILD
-
 /* Is pthread_attr_get_np() declared in <pthread.h>? */
 #undef ATTRGETNP_NOT_DECLARED
 
@@ -22,8 +19,8 @@
 /* Define to 1 if the system has the type `blkcnt_t'. */
 #undef HAVE_BLKCNT_T
 
-/* Defined when compiler supports casting to union type. */
-#undef HAVE_CAST_TO_UNION
+/* Do we have BSDgettimeofday()? */
+#undef HAVE_BSDGETTIMEOFDAY
 
 /* Define to 1 if you have the `chflags' function. */
 #undef HAVE_CHFLAGS
@@ -36,9 +33,6 @@
 
 /* Do we have access to Darwin CoreFoundation.framework? */
 #undef HAVE_COREFOUNDATION
-
-/* Is the cpuid instruction usable? */
-#undef HAVE_CPUID
 
 /* Do we have fts functions? */
 #undef HAVE_FTS
@@ -199,10 +193,10 @@
 /* Is 'struct stat64' in <sys/stat.h>? */
 #undef HAVE_STRUCT_STAT64
 
-/* Define to 1 if `st_blksize' is a member of `struct stat'. */
+/* Define to 1 if `st_blksize' is member of `struct stat'. */
 #undef HAVE_STRUCT_STAT_ST_BLKSIZE
 
-/* Define to 1 if `st_blocks' is a member of `struct stat'. */
+/* Define to 1 if `st_blocks' is member of `struct stat'. */
 #undef HAVE_STRUCT_STAT_ST_BLOCKS
 
 /* Define to 1 if you have the <sys/filio.h> header file. */
@@ -261,9 +255,6 @@
 
 /* Default libtommath precision. */
 #undef MP_PREC
-
-/* Is no debugging enabled? */
-#undef NDEBUG
 
 /* Is Darwin CoreFoundation unavailable for 64-bit? */
 #undef NO_COREFOUNDATION_64
@@ -337,9 +328,6 @@
 /* Define to the one symbol short name of this package. */
 #undef PACKAGE_TARNAME
 
-/* Define to the home page for this package. */
-#undef PACKAGE_URL
-
 /* Define to the version of this package. */
 #undef PACKAGE_VERSION
 
@@ -351,6 +339,9 @@
 
 /* What encoding should be used for embedded configuration info? */
 #undef TCL_CFGVAL_ENCODING
+
+/* Is debugging enabled? */
+#undef TCL_CFG_DEBUG
 
 /* Is this a 64-bit build? */
 #undef TCL_CFG_DO64BIT
@@ -433,17 +424,9 @@
 /* Should we use vfork() instead of fork()? */
 #undef USE_VFORK
 
-/* Define WORDS_BIGENDIAN to 1 if your processor stores words with the most
-   significant byte first (like Motorola and SPARC, unlike Intel). */
-#if defined AC_APPLE_UNIVERSAL_BUILD
-# if defined __BIG_ENDIAN__
-#  define WORDS_BIGENDIAN 1
-# endif
-#else
-# ifndef WORDS_BIGENDIAN
-#  undef WORDS_BIGENDIAN
-# endif
-#endif
+/* Define to 1 if your processor stores words with the most significant byte
+   first (like Motorola and SPARC, unlike Intel and VAX). */
+#undef WORDS_BIGENDIAN
 
 /* Are Darwin SUSv3 extensions available? */
 #undef _DARWIN_C_SOURCE
@@ -498,7 +481,7 @@
 /* Define to `int' if <sys/types.h> does not define. */
 #undef pid_t
 
-/* Define to `unsigned int' if <sys/types.h> does not define. */
+/* Define to `unsigned' if <sys/types.h> does not define. */
 #undef size_t
 
 /* Define as int if socklen_t is not available */

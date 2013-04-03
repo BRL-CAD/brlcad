@@ -4,6 +4,8 @@
 # procedures that help in implementing those bindings.  The spinbox builds
 # off the entry widget, so it can reuse Entry bindings and procedures.
 #
+# RCS: @(#) $Id$
+#
 # Copyright (c) 1992-1994 The Regents of the University of California.
 # Copyright (c) 1994-1997 Sun Microsystems, Inc.
 # Copyright (c) 1999-2000 Jeffrey Hobbs
@@ -221,7 +223,7 @@ if {[tk windowingsystem] eq "aqua"} {
 
 # On Windows, paste is done using Shift-Insert.  Shift-Insert already
 # generates the <<Paste>> event, so we don't need to do anything here.
-if {[tk windowingsystem] ne "win32"} {
+if {$tcl_platform(platform) ne "windows"} {
     bind Spinbox <Insert> {
 	catch {::tk::EntryInsert %W [::tk::GetSelection %W PRIMARY]}
     }

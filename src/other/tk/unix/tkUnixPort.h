@@ -10,6 +10,8 @@
  *
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
+ *
+ * RCS: @(#) $Id$
  */
 
 #ifndef _UNIXPORT
@@ -128,34 +130,30 @@
 #   define NBBY 8
 #endif
 
-#ifdef __CYGWIN__
-#   define UINT unsigned int
-#   define HWND void *
-#   define HDC void *
-#   define HINSTANCE void *
-#   define COLORREF void *
-#   define HMENU void *
-#   define TkWinDCState void
-#   define HPALETTE void *
-#   define WNDPROC void *
-#   define WPARAM void *
-#   define LPARAM void *
-#   define LRESULT void *
+/*
+ * These macros are just wrappers for the equivalent X Region calls.
+ */
 
-    extern int TkPutImage(unsigned long *, int, Display *, Drawable,
-	    GC, XImage *, int, int, int, int, unsigned int, unsigned int);
+#define TkClipBox(rgn, rect) XClipBox((Region) rgn, rect)
+#define TkCreateRegion() (TkRegion) XCreateRegion()
+#define TkDestroyRegion(rgn) XDestroyRegion((Region) rgn)
+#define TkIntersectRegion(a, b, r) XIntersectRegion((Region) a, \
+	(Region) b, (Region) r)
+#define TkRectInRegion(r, x, y, w, h) XRectInRegion((Region) r, x, y, w, h)
+#define TkSetRegion(d, gc, rgn) XSetRegion(d, gc, (Region) rgn)
+#define TkSubtractRegion(a, b, r) XSubtractRegion((Region) a, \
+	(Region) b, (Region) r)
+#define TkUnionRectWithRegion(rect, src, ret) XUnionRectWithRegion(rect, \
+	(Region) src, (Region) ret)
 
-#else /* !__CYGWIN__ */
-    /*
-     * The TkPutImage macro strips off the color table information, which isn't
-     * needed for X.
-     */
+/*
+ * The TkPutImage macro strips off the color table information, which isn't
+ * needed for X.
+ */
 
-#   define TkPutImage(colors, ncolors, display, pixels, gc, image, srcx, srcy, destx, desty, width, height) \
-		XPutImage(display, pixels, gc, image, srcx, srcy, destx, \
-		desty, width, height);
-
-#endif /* !__CYGWIN__ */
+#define TkPutImage(colors, ncolors, display, pixels, gc, image, srcx, srcy, destx, desty, width, height) \
+	XPutImage(display, pixels, gc, image, srcx, srcy, destx, \
+	desty, width, height);
 
 /*
  * Supply macros for seek offsets, if they're not already provided by
@@ -184,12 +182,10 @@
  * These functions do nothing under Unix, so we just eliminate calls to them.
  */
 
-#define TkpButtonSetDefaults() {}
+#define TkpButtonSetDefaults(specPtr) {}
 #define TkpDestroyButton(butPtr) {}
 #define TkSelUpdateClipboard(a,b) {}
-#ifndef __CYGWIN__
 #define TkSetPixmapColormap(p,c) {}
-#endif
 
 /*
  * These calls implement native bitmaps which are not supported under
@@ -205,10 +201,8 @@
  * This should perhaps use the real size of an XID.
  */
 
-#ifndef __CYGWIN__
 #define TkpPrintWindowId(buf,w) \
 	sprintf((buf), "%#08lx", (unsigned long) (w))
-#endif
 
 /*
  * The following declaration is used to get access to a private Tcl interface

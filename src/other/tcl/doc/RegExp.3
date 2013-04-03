@@ -6,6 +6,8 @@
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 '\" 
+'\" RCS: @(#) $Id$
+'\" 
 .so man.macros
 .TH Tcl_RegExpMatch 3 8.1 Tcl "Tcl Library Procedures"
 .BS
@@ -346,7 +348,7 @@ typedef struct Tcl_RegExpInfo {
 The \fInsubs\fR field contains a count of the number of parenthesized
 subexpressions within the regular expression.  If the \fBTCL_REG_NOSUB\fR
 was used, then this value will be zero.  The \fImatches\fR field
-points to an array of \fInsubs\fR+1 values that indicate the bounds of each
+points to an array of \fInsubs\fR values that indicate the bounds of each
 subexpression matched.  The first element in the array refers to the
 range matched by the entire regular expression, and subsequent elements
 refer to the parenthesized subexpressions in the order that they

@@ -9,13 +9,15 @@
  *
  * See the file "license.terms" for information on usage and redistribution of
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
+ *
+ * RCS: @(#) $Id$
  */
 
 #include "tk.h"
 #include "locale.h"
 
 #ifdef TK_TEST
-extern int		Tktest_Init(Tcl_Interp *interp);
+extern int		Tktest_Init _ANSI_ARGS_((Tcl_Interp *interp));
 #endif /* TK_TEST */
 
 /*
@@ -50,7 +52,7 @@ main(
 #ifndef TK_LOCAL_APPINIT
 #define TK_LOCAL_APPINIT Tcl_AppInit
 #endif
-    extern int TK_LOCAL_APPINIT (Tcl_Interp *interp);
+    extern int TK_LOCAL_APPINIT _ANSI_ARGS_((Tcl_Interp *interp));
 
     /*
      * The following #if block allows you to change how Tcl finds the startup
@@ -59,7 +61,7 @@ main(
      */
 
 #ifdef TK_LOCAL_MAIN_HOOK
-    extern int TK_LOCAL_MAIN_HOOK (int *argc, char ***argv);
+    extern int TK_LOCAL_MAIN_HOOK _ANSI_ARGS_((int *argc, char ***argv));
     TK_LOCAL_MAIN_HOOK(&argc, &argv);
 #endif
 

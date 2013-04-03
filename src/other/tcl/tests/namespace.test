@@ -10,6 +10,8 @@
 #
 # See the file "license.terms" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
+#
+# RCS: @(#) $Id$
 
 if {[lsearch [namespace children] ::tcltest] == -1} {
     package require tcltest 2
@@ -23,12 +25,6 @@ if {[lsearch [namespace children] ::tcltest] == -1} {
 
 # Clear out any namespaces called test_ns_*
 catch {namespace delete {*}[namespace children :: test_ns_*]}
-
-proc fq {ns} {
-    if {[string match ::* $ns]} {return $ns}
-    set current [uplevel 1 {namespace current}]
-    return [string trimright $current :]::[string trimleft $ns :]
-}
 
 test namespace-1.1 {TclInitNamespaces, GetNamespaceFromObj, NamespaceChildrenCmd} {
     namespace children :: test_ns_*
@@ -935,8 +931,9 @@ test namespace-21.7 {NamespaceChildrenCmd, glob-style pattern given} {
 } [lsort {::test_ns_1::test_ns_2 ::test_ns_1::test_ns_foo}]
 test namespace-21.8 {NamespaceChildrenCmd, trivial pattern starting with ::} {
     namespace eval test_ns_1 {}
-    namespace children [namespace current] [fq test_ns_1]
-} [fq test_ns_1]
+    namespace children [namespace current] \
+	    [string trimright [namespace current] :]::test_ns_1
+} [string trimright [namespace current] :]::test_ns_1
 
 test namespace-22.1 {NamespaceCodeCmd, bad args} {
     catch {namespace delete {*}[namespace children :: test_ns_*]}
@@ -947,11 +944,11 @@ test namespace-22.2 {NamespaceCodeCmd, arg is already scoped value} {
     namespace eval test_ns_1 {
         proc cmd {} {return "test_ns_1::cmd"}
     }
-    namespace code {::namespace inscope ::test_ns_1 cmd}
-} {::namespace inscope ::test_ns_1 cmd}
+    namespace code {namespace inscope ::test_ns_1 cmd}
+} {namespace inscope ::test_ns_1 cmd}
 test namespace-22.3 {NamespaceCodeCmd, arg is already scoped value} {
     namespace code {namespace     inscope     ::test_ns_1 cmd}
-} {::namespace inscope :: {namespace     inscope     ::test_ns_1 cmd}}
+} {namespace     inscope     ::test_ns_1 cmd}
 test namespace-22.4 {NamespaceCodeCmd, in :: namespace} {
     namespace code unknown
 } {::namespace inscope :: unknown}
@@ -971,12 +968,6 @@ test namespace-22.6 {NamespaceCodeCmd, in other namespace} {
 	namespace code {set v} 
     }] 
 } {42} 
-test namespace-22.7 {NamespaceCodeCmd, Bug 3202171} {
-    namespace eval demo {
-	proc namespace args {puts $args}
-	::namespace code {namespace inscope foo}
-    }
-} [list ::namespace inscope [fq demo] {namespace inscope foo}]
 
 test namespace-23.1 {NamespaceCurrentCmd, bad args} {
     catch {namespace delete {*}[namespace children :: test_ns_*]}
@@ -2467,22 +2458,6 @@ test namespace-51.16 {Bug 1566526} {
     slave eval namespace eval demo namespace path ::
     interp delete slave
 } {}
-test namespace-51.17 {Bug 3185407} -setup {
-    namespace eval ::test_ns_1 {}
-} -body {
-    namespace eval ::test_ns_1 {
-	variable result {}
-	namespace eval ns {proc foo {} {}}
-	namespace eval ns2 {proc foo {} {}}
-	namespace path {ns ns2}
-	variable x foo
-	lappend result [namespace which $x]
-	proc foo {} {}
-	lappend result [namespace which $x]
-    }
-} -cleanup {
-    namespace delete ::test_ns_1
-} -result {::test_ns_1::ns::foo ::test_ns_1::foo}
 
 # TIP 181 - namespace unknown tests
 test namespace-52.1 {unknown: default handler ::unknown} {

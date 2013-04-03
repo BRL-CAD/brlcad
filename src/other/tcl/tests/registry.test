@@ -9,6 +9,8 @@
 #
 # Copyright (c) 1997 by Sun Microsystems, Inc.  All rights reserved.
 # Copyright (c) 1998-1999 by Scriptics Corporation.
+#
+# RCS: @(#) $Id$
 
 if {[lsearch [namespace children] ::tcltest] == -1} {
     package require tcltest 2
@@ -17,10 +19,13 @@ if {[lsearch [namespace children] ::tcltest] == -1} {
 
 testConstraint reg 0
 if {[testConstraint win]} {
-    if {![catch {
+    catch {
+	# Is the registry extension already static to this shell?
+	if [catch {load {} Registry; set ::reglib {}}] {
+	    # try the location given to use on the commandline to tcltest
 	    ::tcltest::loadTestedCommands
-	    package require registry
-	}]} {
+	    load $::reglib Registry
+	}
 	testConstraint reg 1
     }
 }
@@ -457,12 +462,6 @@ test registry-6.20 {GetValue: values with Unicode strings with embedded nulls} {
     registry delete HKEY_CURRENT_USER\\TclFoobar
     set result
 } "foo ba r baz"
-test registry-6.21 {GetValue: very long value names and values} {pcOnly reg} {
-    registry set HKEY_CURRENT_USER\\TclFoobar [string repeat k 199] [string repeat x 199] multi_sz
-    set result [registry get HKEY_CURRENT_USER\\TclFoobar [string repeat k 199]]
-    registry delete HKEY_CURRENT_USER\\TclFoobar
-    set result
-} [string repeat x 199]
 
 test registry-7.1 {GetValueNames: bad key} {win reg english} {
     registry delete HKEY_CURRENT_USER\\TclFoobar

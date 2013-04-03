@@ -7,6 +7,8 @@
  *
  * See the file "license.terms" for information on usage and redistribution of
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
+ *
+ * RCS: @(#) $Id$
  */
 
 #include "tclInt.h"
@@ -40,6 +42,8 @@ static int		TestwinclockCmd(ClientData dummy, Tcl_Interp* interp,
 static int		TestwinsleepCmd(ClientData dummy, Tcl_Interp* interp,
 			    int objc, Tcl_Obj *const objv[]);
 static Tcl_ObjCmdProc	TestExceptionCmd;
+static int		TestwincpuidCmd(ClientData dummy, Tcl_Interp* interp,
+			    int objc, Tcl_Obj *const objv[]);
 static int		TestplatformChmod(const char *nativePath, int pmode);
 static int		TestchmodCmd(ClientData dummy,
 			    Tcl_Interp *interp, int argc, const char **argv);
@@ -74,6 +78,7 @@ TclplatformtestInit(
     Tcl_CreateObjCommand(interp, "testvolumetype", TestvolumetypeCmd,
 	    NULL, NULL);
     Tcl_CreateObjCommand(interp, "testwinclock", TestwinclockCmd, NULL, NULL);
+    Tcl_CreateObjCommand(interp, "testwincpuid", TestwincpuidCmd, NULL, NULL);
     Tcl_CreateObjCommand(interp, "testwinsleep", TestwinsleepCmd, NULL, NULL);
     Tcl_CreateObjCommand(interp, "testexcept", TestExceptionCmd, NULL, NULL);
     return TCL_OK;
@@ -289,6 +294,83 @@ TestwinclockCmd(
     return TCL_OK;
 }
 
+/*
+ *----------------------------------------------------------------------
+ *
+ * TestwincpuidCmd --
+ *
+ *	Retrieves CPU ID information.
+ *
+ * Usage:
+ *	testwincpuid <eax>
+ *
+ * Parameters:
+ *	eax - The value to pass in the EAX register to a CPUID instruction.
+ *
+ * Results:
+ *	Returns a four-element list containing the values from the EAX, EBX,
+ *	ECX and EDX registers returned from the CPUID instruction.
+ *
+ * Side effects:
+ *	None.
+ *
+ *----------------------------------------------------------------------
+ */
+
+static int
+TestwincpuidCmd(
+    ClientData dummy,
+    Tcl_Interp* interp,		/* Tcl interpreter */
+    int objc,			/* Parameter count */
+    Tcl_Obj *const * objv)	/* Parameter vector */
+{
+    int status, index, i;
+    unsigned int regs[4];
+    Tcl_Obj *regsObjs[4];
+
+    if (objc != 2) {
+	Tcl_WrongNumArgs(interp, 1, objv, "eax");
+	return TCL_ERROR;
+    }
+    if (Tcl_GetIntFromObj(interp, objv[1], &index) != TCL_OK) {
+	return TCL_ERROR;
+    }
+    status = TclWinCPUID((unsigned) index, regs);
+    if (status != TCL_OK) {
+	Tcl_SetObjResult(interp,
+		Tcl_NewStringObj("operation not available", -1));
+	return status;
+    }
+    for (i=0 ; i<4 ; ++i) {
+	regsObjs[i] = Tcl_NewIntObj((int) regs[i]);
+    }
+    Tcl_SetObjResult(interp, Tcl_NewListObj(4, regsObjs));
+    return TCL_OK;
+}
+
+/*
+ *----------------------------------------------------------------------
+ *
+ * TestwinsleepCmd --
+ *
+ *	Causes this process to wait for the given number of milliseconds by
+ *	means of a direct call to Sleep.
+ *
+ * Usage:
+ *	testwinsleep <n>
+ *
+ * Parameters:
+ *	n - the number of milliseconds to sleep
+ *
+ * Results:
+ *	None.
+ *
+ * Side effects:
+ *	Sleeps for the requisite number of milliseconds.
+ *
+ *----------------------------------------------------------------------
+ */
+
 static int
 TestwinsleepCmd(
     ClientData clientData,	/* Unused */
@@ -348,7 +430,7 @@ TestExceptionCmd(
 	"invalid_disp", "guard_page", "invalid_handle", "ctrl+c",
 	NULL
     };
-    static const DWORD exceptions[] = {
+    static DWORD exceptions[] = {
 	EXCEPTION_ACCESS_VIOLATION, EXCEPTION_DATATYPE_MISALIGNMENT,
 	EXCEPTION_ARRAY_BOUNDS_EXCEEDED, EXCEPTION_FLT_DENORMAL_OPERAND,
 	EXCEPTION_FLT_DIVIDE_BY_ZERO, EXCEPTION_FLT_INEXACT_RESULT,

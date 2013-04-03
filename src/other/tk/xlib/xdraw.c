@@ -7,6 +7,8 @@
  *
  * See the file "license.terms" for information on usage and redistribution of
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
+ *
+ * RCS: @(#) $Id$
  */
 
 #include "tk.h"
@@ -27,7 +29,7 @@
  *----------------------------------------------------------------------
  */
 
-int
+void
 XDrawLine(
     Display *display,
     Drawable d,
@@ -41,7 +43,7 @@ XDrawLine(
     points[0].y = y1;
     points[1].x = x2;
     points[1].y = y2;
-    return XDrawLines(display, d, gc, points, 2, CoordModeOrigin);
+    XDrawLines(display, d, gc, points, 2, CoordModeOrigin);
 }
 
 /*
@@ -61,7 +63,7 @@ XDrawLine(
  *----------------------------------------------------------------------
  */
 
-int
+void
 XFillRectangle(
     Display *display,
     Drawable d,
@@ -76,7 +78,7 @@ XFillRectangle(
     rectangle.y = y;
     rectangle.width = width;
     rectangle.height = height;
-    return XFillRectangles(display, d, gc, &rectangle, 1);
+    XFillRectangles(display, d, gc, &rectangle, 1);
 }
 
 /*

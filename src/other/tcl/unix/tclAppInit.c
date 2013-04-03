@@ -10,6 +10,8 @@
  *
  * See the file "license.terms" for information on usage and redistribution of
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
+ *
+ * RCS: @(#) $Id$
  */
 
 #include "tcl.h"
@@ -26,8 +28,8 @@ extern Tcl_PackageInitProc	Tcltest_Init;
 #endif /* TCL_TEST */
 
 #ifdef TCL_XT_TEST
-extern void		XtToolkitInitialize (void);
-extern int		Tclxttest_Init (Tcl_Interp *interp);
+extern void		XtToolkitInitialize _ANSI_ARGS_((void));
+extern int		Tclxttest_Init _ANSI_ARGS_((Tcl_Interp *interp));
 #endif
 
 /*
@@ -62,7 +64,7 @@ main(
 #ifndef TCL_LOCAL_APPINIT
 #define TCL_LOCAL_APPINIT Tcl_AppInit
 #endif
-    extern int TCL_LOCAL_APPINIT (Tcl_Interp *interp);
+    extern int TCL_LOCAL_APPINIT _ANSI_ARGS_((Tcl_Interp *interp));
 
     /*
      * The following #if block allows you to change how Tcl finds the startup
@@ -71,7 +73,7 @@ main(
      */
 
 #ifdef TCL_LOCAL_MAIN_HOOK
-    extern int TCL_LOCAL_MAIN_HOOK (int *argc, char ***argv);
+    extern int TCL_LOCAL_MAIN_HOOK _ANSI_ARGS_((int *argc, char ***argv));
 #endif
 
 #ifdef TCL_XT_TEST

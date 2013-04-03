@@ -5,31 +5,27 @@
  *	contexts.
  *
  * Copyright (c) 1995-1996 Sun Microsystems, Inc.
- * Copyright (c) 2002-2009 Daniel A. Steffen <das@users.sourceforge.net>
- * Copyright 2008-2009, Apple Inc.
+ * Copyright (c) 2002-2007 Daniel A. Steffen <das@users.sourceforge.net>
  *
  * See the file "license.terms" for information on usage and redistribution of
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
+ *
+ * RCS: @(#) $Id$
  */
 
 #include <tkInt.h>
 
 #if !defined(MAC_OSX_TK)
 #   include <X11/Xlib.h>
-#   define gcCacheSize 0
-#   define TkpInitGCCache(gc)
-#   define TkpFreeGCCache(gc)
-#   define TkpGetGCCache(gc)
-#else
+#endif
+#ifdef MAC_OSX_TK
 #   include <tkMacOSXInt.h>
 #   include <X11/Xlib.h>
 #   include <X11/X.h>
 #   define Cursor XCursor
 #   define Region XRegion
-#   define gcCacheSize sizeof(TkpGCCache)
 #endif
 
-#undef TkSetRegion
 
 /*
  *----------------------------------------------------------------------
@@ -49,7 +45,7 @@
 
 static TkpClipMask *AllocClipMask(GC gc) {
     TkpClipMask *clip_mask = (TkpClipMask*) gc->clip_mask;
-
+    
     if (clip_mask == None) {
 	clip_mask = (TkpClipMask*) ckalloc(sizeof(TkpClipMask));
 	gc->clip_mask = (Pixmap) clip_mask;
@@ -123,8 +119,7 @@ XCreateGC(
 
 #define MAX_DASH_LIST_SIZE 10
 
-    gp = (XGCValues *) ckalloc(sizeof(XGCValues) + MAX_DASH_LIST_SIZE +
-	    gcCacheSize);
+    gp = (XGCValues *) ckalloc(sizeof(XGCValues) + MAX_DASH_LIST_SIZE);
     if (!gp) {
 	return None;
     }
@@ -134,9 +129,9 @@ XCreateGC(
 
     InitField(function,		  GCFunction,		GXcopy);
     InitField(plane_mask,	  GCPlaneMask,		(unsigned long)(~0));
-    InitField(foreground,	  GCForeground,
+    InitField(foreground,	  GCForeground,		
 	    BlackPixelOfScreen(DefaultScreenOfDisplay(display)));
-    InitField(background,	  GCBackground,
+    InitField(background,	  GCBackground,		
 	    WhitePixelOfScreen(DefaultScreenOfDisplay(display)));
     InitField(line_width,	  GCLineWidth,		1);
     InitField(line_style,	  GCLineStyle,		LineSolid);
@@ -161,36 +156,13 @@ XCreateGC(
     gp->clip_mask = None;
     if (mask & GCClipMask) {
 	TkpClipMask *clip_mask = AllocClipMask(gp);
-
+	
 	clip_mask->type = TKP_CLIP_PIXMAP;
 	clip_mask->value.pixmap = values->clip_mask;
     }
-    TkpInitGCCache(gp);
 
     return gp;
 }
-
-#ifdef MAC_OSX_TK
-/*
- *----------------------------------------------------------------------
- *
- * TkpGetGCCache --
- *
- * Results:
- *	Pointer to the TkpGCCache at the end of the GC.
- *
- * Side effects:
- *	None.
- *
- *----------------------------------------------------------------------
- */
-
-TkpGCCache*
-TkpGetGCCache(GC gc) {
-    return (gc ? (TkpGCCache*)(((char*) gc) + sizeof(XGCValues) +
-	    MAX_DASH_LIST_SIZE) : NULL);
-}
-#endif
 
 /*
  *----------------------------------------------------------------------
@@ -208,7 +180,7 @@ TkpGetGCCache(GC gc) {
  *----------------------------------------------------------------------
  */
 
-int
+void
 XChangeGC(
     Display *d,
     GC gc,
@@ -246,7 +218,6 @@ XChangeGC(
 	gc->dashes = values->dashes;
 	(&(gc->dashes))[1] = 0;
     }
-    return Success;
 }
 
 /*
@@ -265,16 +236,14 @@ XChangeGC(
  *----------------------------------------------------------------------
  */
 
-int XFreeGC(
+void XFreeGC(
     Display *d,
     GC gc)
 {
     if (gc != None) {
 	FreeClipMask(gc);
-	TkpFreeGCCache(gc);
 	ckfree((char *) gc);
     }
-    return Success;
 }
 
 /*
@@ -294,27 +263,25 @@ int XFreeGC(
  *----------------------------------------------------------------------
  */
 
-int
+void
 XSetForeground(
     Display *display,
     GC gc,
     unsigned long foreground)
 {
     gc->foreground = foreground;
-    return Success;
 }
 
-int
+void
 XSetBackground(
     Display *display,
     GC gc,
     unsigned long background)
 {
     gc->background = background;
-    return Success;
 }
 
-int
+void
 XSetDashes(
     Display *display,
     GC gc,
@@ -336,40 +303,36 @@ XSetDashes(
 	*p++ = *dash_list++;
     }
     *p = 0;
-    return Success;
 }
 
-int
+void
 XSetFunction(
     Display *display,
     GC gc,
     int function)
 {
     gc->function = function;
-    return Success;
 }
 
-int
+void
 XSetFillRule(
     Display *display,
     GC gc,
     int fill_rule)
 {
     gc->fill_rule = fill_rule;
-    return Success;
 }
 
-int
+void
 XSetFillStyle(
     Display *display,
     GC gc,
     int fill_style)
 {
     gc->fill_style = fill_style;
-    return Success;
 }
 
-int
+void
 XSetTSOrigin(
     Display *display,
     GC gc,
@@ -377,40 +340,36 @@ XSetTSOrigin(
 {
     gc->ts_x_origin = x;
     gc->ts_y_origin = y;
-    return Success;
 }
 
-int
+void
 XSetFont(
     Display *display,
     GC gc,
     Font font)
 {
     gc->font = font;
-    return Success;
 }
 
-int
+void
 XSetArcMode(
     Display *display,
     GC gc,
     int arc_mode)
 {
     gc->arc_mode = arc_mode;
-    return Success;
 }
 
-int
+void
 XSetStipple(
     Display *display,
     GC gc,
     Pixmap stipple)
 {
     gc->stipple = stipple;
-    return Success;
 }
 
-int
+void
 XSetLineAttributes(
     Display *display,
     GC gc,
@@ -423,10 +382,9 @@ XSetLineAttributes(
     gc->line_style = line_style;
     gc->cap_style = cap_style;
     gc->join_style = join_style;
-    return Success;
 }
 
-int
+void
 XSetClipOrigin(
     Display *display,
     GC gc,
@@ -435,7 +393,6 @@ XSetClipOrigin(
 {
     gc->clip_x_origin = clip_x_origin;
     gc->clip_y_origin = clip_y_origin;
-    return Success;
 }
 
 /*
@@ -466,7 +423,7 @@ TkSetRegion(
     TkRegion r)
 {
     if (r == None) {
-	Tcl_Panic("must not pass None to TkSetRegion for compatibility with X11; use XSetClipMask instead");
+	FreeClipMask(gc);
     } else {
 	TkpClipMask *clip_mask = AllocClipMask(gc);
 
@@ -478,7 +435,7 @@ TkSetRegion(
     }
 }
 
-int
+void
 XSetClipMask(
     Display *display,
     GC gc,
@@ -492,7 +449,6 @@ XSetClipMask(
 	clip_mask->type = TKP_CLIP_PIXMAP;
 	clip_mask->value.pixmap = pixmap;
     }
-    return Success;
 }
 
 /*

@@ -7,10 +7,12 @@
 # Copyright (c) 1998-1999 by Scriptics Corporation.
 # See the file "license.terms" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
+# 
+# $Id$
 #
 # SOURCE: tcl/tools/genStubs.tcl, revision 1.20
 #
-# CHANGES:
+# CHANGES: 
 #	+ Remove xxx_TCL_DECLARED #ifdeffery
 #	+ Use application-defined storage class specifier instead of "EXTERN"
 #	+ Add "epoch" and "revision" fields to stubs table record
@@ -18,7 +20,7 @@
 #	+ Second argument to "declare" is used as a status guard
 #	  instead of a platform guard.
 #	+ Use void (*reserved$i)(void) = 0 instead of void *reserved$i = NULL
-#	  for unused stub entries, in case pointer-to-function and
+#	  for unused stub entries, in case pointer-to-function and 
 #	  pointer-to-object are different sizes.
 #	+ Allow trailing semicolon in function declarations
 #	+ stubs table is const-qualified
@@ -30,7 +32,7 @@ namespace eval genStubs {
     # libraryName --
     #
     #	The name of the entire library.  This value is used to compute
-    #	the USE_*_STUBS macro and the name of the init file.
+    #	the USE_*_STUBS macro, the name of the init file, and others.
 
     variable libraryName "UNKNOWN"
 
@@ -181,22 +183,12 @@ proc genStubs::hooks {names} {
 #	decl		The C function declaration, or {} for an undefined
 #			entry.
 #
-proc genStubs::declare {args} {
+proc genStubs::declare {index status decl} {
     variable stubs
     variable curName
     variable revision
 
     incr revision
-
-    if {[llength $args] == 2} {
-	lassign $args index decl
-	set status current
-    } elseif {[llength $args] == 3} {
-	lassign $args index status decl
-    } else {
-	puts stderr "wrong # args: declare $args"
-	return
-    }
 
     # Check for duplicate declarations, then add the declaration and
     # bump the lastNum counter if necessary.
@@ -204,7 +196,6 @@ proc genStubs::declare {args} {
     if {[info exists stubs($curName,decl,$index)]} {
 	puts stderr "Duplicate entry: $index"
     }
-    regsub -all const $decl CONST decl
     regsub -all "\[ \t\n\]+" [string trim $decl] " " decl
     set decl [parseDecl $decl]
 
@@ -238,7 +229,6 @@ proc genStubs::rewriteFile {file text} {
     }
     set in [open ${file} r]
     set out [open ${file}.new w]
-    fconfigure $out -translation lf
 
     while {![eof $in]} {
 	set line [gets $in]
@@ -280,7 +270,7 @@ proc genStubs::addPlatformGuard {plat text} {
 	}
 	unix {
 	    return "#if !defined(__WIN32__) /* UNIX */\n${text}#endif /* UNIX */\n"
-	}
+	}		    
 	macosx {
 	    return "#ifdef MAC_OSX_TCL\n${text}#endif /* MAC_OSX_TCL */\n"
 	}
@@ -414,9 +404,6 @@ proc genStubs::makeDecl {name decl index} {
     lassign $decl rtype fname args
 
     append text "/* $index */\n"
-    if {$rtype != "void"} {
-	regsub -all void $rtype VOID rtype
-    }
     set line "$scspec $rtype"
     set count [expr {2 - ([string length $line] / 8)}]
     append line [string range "\t\t\t" 0 $count]
@@ -433,10 +420,9 @@ proc genStubs::makeDecl {name decl index} {
     }
     append line $fname
 
-    regsub -all void $args VOID args
     set arg1 [lindex $args 0]
     switch -exact $arg1 {
-	VOID {
+	void {
 	    append line "(void)"
 	}
 	TCL_VARARGS {
@@ -531,19 +517,15 @@ proc genStubs::makeSlot {name decl index} {
     append lfname [string range $fname 1 end]
 
     set text "    "
-    if {$rtype != "void"} {
-	regsub -all void $rtype VOID rtype
-    }
     if {$args == ""} {
 	append text $rtype " *" $lfname "; /* $index */\n"
 	return $text
     }
     append text $rtype " (*" $lfname ") "
 
-    regsub -all void $args VOID args
     set arg1 [lindex $args 0]
     switch -exact $arg1 {
-	VOID {
+	void {
 	    append text "(void)"
 	}
 	TCL_VARARGS {
@@ -618,7 +600,7 @@ proc genStubs::makeInit {name decl index} {
 # Results:
 #	None.
 
-proc genStubs::forAllStubs {name slotProc guardProc textVar
+proc genStubs::forAllStubs {name slotProc guardProc textVar 
     	{skipString {"/* Slot $i is reserved */\n"}}} {
     variable stubs
     upvar $textVar text
@@ -642,7 +624,7 @@ proc genStubs::addGuard {status text} {
     set upName [string toupper $libraryName]
 
     switch -- $status {
-	current	{
+	current	{ 
 	    # No change
 	}
 	deprecated {
@@ -655,7 +637,7 @@ proc genStubs::addGuard {status text} {
 	    puts stderr "Unrecognized status code $status"
 	}
     }
-    return $text
+    return $text 
 }
 
 proc genStubs::ifdeffed {macro text} {

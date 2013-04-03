@@ -9,6 +9,8 @@
  *
  * See the file "license.terms" for information on usage and redistribution of
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
+ *
+ * RCS: @(#) $Id$
  */
 
 #include "tclInt.h"
@@ -452,7 +454,6 @@ Tcl_Main(
 		    Tcl_WriteObj(errChannel, valuePtr);
 		}
 		Tcl_WriteChars(errChannel, "\n", 1);
-		Tcl_DecrRefCount(options);
 	    }
 	    exitCode = 1;
 	}

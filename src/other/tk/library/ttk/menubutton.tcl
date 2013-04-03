@@ -1,4 +1,6 @@
 #
+# $Id$
+#
 # Bindings for Menubuttons.
 #
 # Menubuttons have three interaction modes:

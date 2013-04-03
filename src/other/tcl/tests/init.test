@@ -9,9 +9,11 @@
 #
 # See the file "license.terms" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
+#
+# RCS: @(#) $Id$
 
 if {[lsearch [namespace children] ::tcltest] == -1} {
-    package require tcltest 2.3.4
+    package require tcltest 2
     namespace import -force ::tcltest::*
 }
 
@@ -53,18 +55,21 @@ test init-1.7 {auto_qualify - multiples colons 1} {
 test init-1.8 {auto_qualify - multiple colons 2} {
     auto_qualify :::foo ::bar
 } foo
-
+
 
 # we use a sub interp and auto_reset and double the tests because there is 2
 # places where auto_loading occur (before loading the indexes files and after)
 
 set testInterp [interp create]
-tcltest::loadIntoSlaveInterpreter $testInterp {*}$argv
+interp eval $testInterp [list set argv $argv]
+interp eval $testInterp [list package require tcltest]
+interp eval $testInterp [list namespace import -force ::tcltest::*]
+
 interp eval $testInterp {
-    namespace import -force ::tcltest::*
-    auto_reset
-    catch {rename parray {}}
-
+
+auto_reset
+catch {rename parray {}}
+
 test init-2.0 {load parray - stage 1} {
     set ret [catch {parray} error]
     rename parray {} ; # remove it, for the next test - that should not fail.
@@ -145,12 +150,12 @@ test init-3.0 {random stuff in the auto_index, should still work} {
 
 set count 0
 foreach arg [subst -nocommands -novariables {
-    c
-    {argument
+		c
+                {argument
                 which spans
                 multiple lines}
-    {argument which is all on one line but which is of such great length that the Tcl C library will truncate it when appending it onto the global error stack}
-    {argument which spans multiple lines
+                {argument which is all on one line but which is of such great length that the Tcl C library will truncate it when appending it onto the global error stack}
+                {argument which spans multiple lines
                 and is long enough to be truncated and
 "               <- includes a false lead in the prune point search
                 and must be longer still to force truncation}
@@ -159,13 +164,13 @@ foreach arg [subst -nocommands -novariables {
 		error stack cannot be uniquely determined.
 		foo bar foo
 "}
-    {contrived example: rare circumstance 
+                {contrived example: rare circumstance 
 		where the point at which to prune the
 		error stack cannot be uniquely determined.
 		foo bar
 "}
-    {argument that contains non-ASCII character, \u20ac, and which is of such great length that it will be longer than 150 bytes so it will be truncated by the Tcl C library}
-	}] {    ;# emacs needs -> "
+		{argument that contains non-ASCII character, \u20ac, and which is of such great length that it will be longer than 150 bytes so it will be truncated by the Tcl C library}
+	}] {
 
     test init-4.$count.0 {::errorInfo produced by [unknown]} {
 	auto_reset

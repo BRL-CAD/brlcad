@@ -1,4 +1,6 @@
 /*
+ * $Id$
+ *
  * This file is (mostly) automatically generated from ttk.decls.
  * It is compiled and linked in with the ttk package proper.
  */

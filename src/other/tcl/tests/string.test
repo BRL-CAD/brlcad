@@ -11,6 +11,8 @@
 #
 # See the file "license.terms" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
+#
+# RCS: @(#) $Id$
 
 if {[lsearch [namespace children] ::tcltest] == -1} {
     package require tcltest
@@ -601,18 +603,18 @@ test string-6.91 {string is double, bad doubles} {
     }
     set result
 } {1 1 0 0 0 1 0 0}
-test string-6.92 {string is integer, 32-bit overflow} {
+test string-6.92 {string is double, 32-bit overflow} {
     # Bug 718878
     set x 0x100000000
     list [string is integer -failindex var $x] $var
 } {0 -1}
-test string-6.93 {string is integer, 32-bit overflow} {
+test string-6.93 {string is double, 32-bit overflow} {
     # Bug 718878
     set x 0x100000000
     append x ""
     list [string is integer -failindex var $x] $var
 } {0 -1}
-test string-6.94 {string is integer, 32-bit overflow} {
+test string-6.94 {string is double, 32-bit overflow} {
     # Bug 718878
     set x 0x100000000
     list [string is integer -failindex var [expr {$x}]] $var
@@ -1608,11 +1610,6 @@ test string-24.11 {string reverse command - corner case} {
     set y \udead
     string reverse $x$y
 } \udead\ubeef
-test string-24.12 {string reverse command - corner case} {
-    set x \ubeef
-    set y \udead
-    string is ascii [string reverse $x$y]
-} 0
 
 test string-25.1 {string is list} {
     string is list {a b c}

@@ -1,4 +1,6 @@
 #
+# $Id$
+#
 # Bindings for ttk::panedwindow widget.
 #
 

@@ -9,6 +9,8 @@
  *
  * See the file "license.terms" for information on usage and redistribution of
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
+ *
+ * RCS: @(#) $Id$
  */
 
 #ifndef _TKWININT
@@ -129,8 +131,8 @@ typedef struct {
  * Win32 raster and BitBlt op modes.
  */
 
-MODULE_SCOPE const int tkpWinRopModes[];
-MODULE_SCOPE const int tkpWinBltModes[];
+MODULE_SCOPE int tkpWinRopModes[];
+MODULE_SCOPE int tkpWinBltModes[];
 
 /*
  * The following defines are used with TkWinGetBorderPixels to get the extra 2

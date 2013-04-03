@@ -8,6 +8,8 @@
  *
  * See the file "license.terms" for information on usage and redistribution of
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
+ *
+ * RCS: @(#) $Id$
  */
 
 #include "tkInt.h"
@@ -160,7 +162,9 @@ Tk_FocusObjCmd(
 	    if (newPtr == NULL) {
 		return TCL_ERROR;
 	    }
-	    TkSetFocusWin(newPtr, 0);
+	    if (!(newPtr->flags & TK_ALREADY_DEAD)) {
+		TkSetFocusWin(newPtr, 0);
+	    }
 	    return TCL_OK;
 	}
     }
@@ -550,14 +554,6 @@ TkSetFocusWin(
     TkWindow *topLevelPtr;
     int allMapped, serial;
 
-    /*
-     * Don't set focus if window is already dead. [Bug 3574708]
-     */
-
-    if (winPtr->flags & TK_ALREADY_DEAD) {
-	return;
-    }
-
     displayFocusPtr = FindDisplayFocusInfo(winPtr->mainPtr, winPtr->dispPtr);
 
     /*
@@ -731,7 +727,7 @@ TkFocusKeyEvent(
 {
     DisplayFocusInfo *displayFocusPtr;
     TkWindow *focusWinPtr;
-    int focusX, focusY;
+    int focusX, focusY, vRootX, vRootY, vRootWidth, vRootHeight;
 
     displayFocusPtr = FindDisplayFocusInfo(winPtr->mainPtr, winPtr->dispPtr);
     focusWinPtr = displayFocusPtr->focusWinPtr;
@@ -764,9 +760,11 @@ TkFocusKeyEvent(
 	    eventPtr->xkey.x = -1;
 	    eventPtr->xkey.y = -1;
 	} else {
+	    Tk_GetVRootGeometry((Tk_Window) focusWinPtr, &vRootX, &vRootY,
+		    &vRootWidth, &vRootHeight);
 	    Tk_GetRootCoords((Tk_Window) focusWinPtr, &focusX, &focusY);
-	    eventPtr->xkey.x = eventPtr->xkey.x_root - focusX;
-	    eventPtr->xkey.y = eventPtr->xkey.y_root - focusY;
+	    eventPtr->xkey.x = eventPtr->xkey.x_root - vRootX - focusX;
+	    eventPtr->xkey.y = eventPtr->xkey.y_root - vRootY - focusY;
 	}
 	eventPtr->xkey.window = focusWinPtr->window;
 	return focusWinPtr;
@@ -1079,10 +1077,11 @@ TkFocusSplit(winPtr)
 				* must be moved to this new toplevel */
 {
     ToplevelFocusInfo *tlFocusPtr;
+    DisplayFocusInfo *displayFocusPtr;
     TkWindow *topLevelPtr;
     TkWindow *subWinPtr;
 
-    FindDisplayFocusInfo(winPtr->mainPtr, winPtr->dispPtr);
+    displayFocusPtr = FindDisplayFocusInfo(winPtr->mainPtr, winPtr->dispPtr);
 
     /*
      * Find the top-level window for winPtr, then find (or create)

@@ -2,6 +2,8 @@
 #
 # This demonstration illustrates how Tcl/Tk can be used to construct
 # simulations of physical systems.
+#
+# RCS: @(#) $Id$
 
 if {![info exists widgetDemo]} {
     error "This script should be run from the \"widget\" demo."

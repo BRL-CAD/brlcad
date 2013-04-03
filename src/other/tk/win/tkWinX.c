@@ -9,6 +9,8 @@
  *
  * See the file "license.terms" for information on usage and redistribution of
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
+ *
+ * RCS: @(#) $Id$
  */
 
 /*
@@ -28,7 +30,7 @@
  */
 
 #ifndef _WIN32_IE
-#define _WIN32_IE 0x0501 /* IE 5 */
+#define _WIN32_IE 0x0300
 #endif
 
 #include <commctrl.h>
@@ -296,10 +298,10 @@ TkWinXInit(
      * Initialize input language info
      */
 
-    if (GetLocaleInfo(LANGIDFROMLCID(PTR2INT(GetKeyboardLayout(0))),
+    if (GetLocaleInfo(LANGIDFROMLCID((DWORD)GetKeyboardLayout(0)),
 	       LOCALE_IDEFAULTANSICODEPAGE | LOCALE_RETURN_NUMBER,
 	       (LPTSTR) &lpCP, sizeof(lpCP)/sizeof(TCHAR))
-	    && TranslateCharsetInfo(INT2PTR(lpCP), &lpCs, TCI_SRCCODEPAGE)) {
+	    && TranslateCharsetInfo((DWORD *)lpCP, &lpCs, TCI_SRCCODEPAGE)) {
 	UpdateInputLanguage((int) lpCs.ciCharset);
     }
 
@@ -519,8 +521,8 @@ TkWinDisplayChanged(
      * the HWND and we'll just get blank spots copied onto the screen.
      */
 
-    screen->ext_data = INT2PTR(GetDeviceCaps(dc, PLANES));
-    screen->root_depth = GetDeviceCaps(dc, BITSPIXEL) * PTR2INT(screen->ext_data);
+    screen->ext_data = (XExtData *) GetDeviceCaps(dc, PLANES);
+    screen->root_depth = GetDeviceCaps(dc, BITSPIXEL) * (int) screen->ext_data;
 
     if (screen->root_visual != NULL) {
 	ckfree((char *) screen->root_visual);
@@ -767,13 +769,12 @@ TkClipCleanup(
  *----------------------------------------------------------------------
  */
 
-int
+void
 XBell(
     Display *display,
     int percent)
 {
     MessageBeep(MB_OK);
-    return Success;
 }
 
 /*
@@ -1453,7 +1454,7 @@ UpdateInputLanguage(
     if (keyInputCharset == charset) {
 	return;
     }
-    if (TranslateCharsetInfo(INT2PTR(charset), &charsetInfo,
+    if (TranslateCharsetInfo((DWORD*)charset, &charsetInfo,
 	    TCI_SRCCHARSET) == 0) {
 	/*
 	 * Some mysterious failure.
@@ -1996,7 +1997,7 @@ Tk_ResetUserInactiveTime(
     inp.mi.mouseData = 0;
     inp.mi.dwFlags = MOUSEEVENTF_MOVE;
     inp.mi.time = 0;
-    inp.mi.dwExtraInfo = (DWORD) 0;
+    inp.mi.dwExtraInfo = (DWORD) NULL;
 
     SendInput(1, &inp, sizeof(inp));
 }

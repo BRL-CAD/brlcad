@@ -5,6 +5,8 @@
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 '\" 
+'\" RCS: @(#) $Id$
+'\" 
 .so man.macros
 .TH dde n 1.3 dde "Tcl Bundled Packages"
 .BS
@@ -144,7 +146,7 @@ unpredictable results.
 .PP
 An external application which wishes to run a script in Tcl should have
 that script store its result in a variable, run the \fBdde execute\fR
-command, and then run \fBdde request\fR to get the value of the
+command, and the run \fBdde request\fR to get the value of the
 variable.
 .PP
 When using DDE, be careful to ensure that the event queue is flushed
@@ -159,7 +161,7 @@ This asks Internet Explorer (which must already be running) to go to a
 particularly important website:
 .CS
 package require dde
-\fBdde execute\fR -async iexplore WWW_OpenURL http://www.tcl.tk/
+\fBdde execute\fR iexplore WWW_OpenURL http://www.tcl.tk/
 .CE
 .SH "SEE ALSO"
 tk(n), winfo(n), send(n)

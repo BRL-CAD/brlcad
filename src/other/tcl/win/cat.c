@@ -7,10 +7,16 @@
  *
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
+ *
+ * RCS: @(#) $Id$
  */
 
 #include <stdio.h>
-#include <io.h>
+#ifdef __CYGWIN__
+#   include <unistd.h>
+#else
+#   include <io.h>
+#endif
 #include <string.h>
 
 int

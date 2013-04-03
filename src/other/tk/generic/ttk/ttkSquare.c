@@ -1,6 +1,8 @@
 /* square.c - Copyright (C) 2004 Pat Thoyts <patthoyts@users.sourceforge.net>
  *
  * Minimal sample ttk widget.
+ *
+ * $Id$
  */
 
 #include <tk.h>
@@ -50,6 +52,8 @@ typedef struct
 
 static Tk_OptionSpec SquareOptionSpecs[] =
 {
+    WIDGET_TAKES_FOCUS,
+
     {TK_OPTION_PIXELS, "-borderwidth", "borderWidth", "BorderWidth",
      DEFAULT_BORDERWIDTH, Tk_Offset(Square,square.borderWidthObj), -1,
      0,0,GEOMETRY_CHANGED },
@@ -74,7 +78,6 @@ static Tk_OptionSpec SquareOptionSpecs[] =
     {TK_OPTION_ANCHOR, "-anchor", "anchor", "Anchor",
      NULL, Tk_Offset(Square,square.anchorObj), -1, TK_OPTION_NULL_OK, 0, 0},
     
-    WIDGET_TAKEFOCUS_TRUE,
     WIDGET_INHERIT_OPTIONS(ttkCoreOptionSpecs)
 };
 
@@ -219,9 +222,10 @@ static void SquareElementDraw(
     Drawable d, Ttk_Box b, unsigned int state)
 {
     SquareElement *square = elementRecord;
-    Tk_3DBorder foreground = NULL;
+    Tk_3DBorder border = NULL, foreground = NULL;
     int borderWidth = 1, relief = TK_RELIEF_FLAT;
 
+    border = Tk_Get3DBorderFromObj(tkwin, square->borderObj);
     foreground = Tk_Get3DBorderFromObj(tkwin, square->foregroundObj);
     Tcl_GetIntFromObj(NULL, square->borderWidthObj, &borderWidth);
     Tk_GetReliefFromObj(NULL, square->reliefObj, &relief);

@@ -2,6 +2,8 @@
 dnl	This file is an input file used by the GNU "autoconf" program to
 dnl	generate the file "configure", which is run during Tk installation
 dnl	to configure the system for the local environment.
+#
+# RCS: @(#) $Id$
 
 AC_INIT([tk],[8.5])
 AC_PREREQ(2.59)
@@ -25,7 +27,7 @@ m4_ifdef([SC_USE_CONFIG_HEADERS], [
 TK_VERSION=8.5
 TK_MAJOR_VERSION=8
 TK_MINOR_VERSION=5
-TK_PATCH_LEVEL=".13"
+TK_PATCH_LEVEL=".9"
 VERSION=${TK_VERSION}
 LOCALES="cs da de el en en_gb eo es fr hu it nl pl pt ru sv"
 
@@ -223,7 +225,7 @@ AC_CHECK_TYPE([intptr_t], [
     for tcl_cv_intptr_t in "int" "long" "long long" none; do
 	if test "$tcl_cv_intptr_t" != none; then
 	    AC_COMPILE_IFELSE([AC_LANG_BOOL_COMPILE_TRY([AC_INCLUDES_DEFAULT],
-		    [[sizeof (void *) <= sizeof ($tcl_cv_intptr_t)]])],
+		    [[sizeof (void *) <= sizeof ($tcl_cv_intptr_t)]])], 
 		[tcl_ok=yes], [tcl_ok=no])
 	    test "$tcl_ok" = yes && break; fi
     done])
@@ -239,7 +241,7 @@ AC_CHECK_TYPE([uintptr_t], [
 	    none; do
 	if test "$tcl_cv_uintptr_t" != none; then
 	    AC_COMPILE_IFELSE([AC_LANG_BOOL_COMPILE_TRY([AC_INCLUDES_DEFAULT],
-		    [[sizeof (void *) <= sizeof ($tcl_cv_uintptr_t)]])],
+		    [[sizeof (void *) <= sizeof ($tcl_cv_uintptr_t)]])], 
 		[tcl_ok=yes], [tcl_ok=no])
 	    test "$tcl_ok" = yes && break; fi
     done])
@@ -276,12 +278,12 @@ if test "`uname -s`" = "Darwin" ; then
 	    AC_MSG_WARN([Aqua can only be used when CoreFoundation is available])
 	    tk_aqua=no
 	fi
-	if test ! -d /System/Library/Frameworks/Cocoa.framework; then
-	    AC_MSG_WARN([Aqua can only be used when Cocoa is available])
+	if test ! -d /System/Library/Frameworks/Carbon.framework; then
+	    AC_MSG_WARN([Aqua can only be used when Carbon is available])
 	    tk_aqua=no
 	fi
-	if test "`uname -r | awk -F. '{print [$]1}'`" -lt 9; then
-	    AC_MSG_WARN([Aqua requires Mac OS X 10.5 or later])
+	if test "`uname -r | awk -F. '{print [$]1}'`" -lt 6; then
+	    AC_MSG_WARN([Aqua requires Mac OS X 10.2 or later])
 	    tk_aqua=no
 	fi
     fi
@@ -294,7 +296,7 @@ if test "`uname -s`" = "Darwin" ; then
 		done
 		CPPFLAGS="$CPPFLAGS -I/usr/X11R6/include"
 		LDFLAGS="$LDFLAGS -L/usr/X11R6/lib -lX11"
-		AC_TRY_LINK([#include <X11/Xlib.h>], [XrmInitialize();],
+		AC_TRY_LINK([#include <X11/Xlib.h>], [XrmInitialize();], 
 		    tcl_cv_lib_x11_64=yes, tcl_cv_lib_x11_64=no)
 		for v in CFLAGS CPPFLAGS LDFLAGS; do
 		    eval $v'="$hold_'$v'"'
@@ -302,7 +304,7 @@ if test "`uname -s`" = "Darwin" ; then
 	fi
 	# remove 64-bit arch flags from CFLAGS et al. for combined 32 & 64 bit
 	# fat builds if configuration does not support 64-bit.
-	if test "$tcl_cv_lib_x11_64" = no; then
+	if test $tk_aqua = yes -o "$tcl_cv_lib_x11_64" = no; then
 	    AC_MSG_NOTICE([Removing 64-bit architectures from compiler & linker flags])
 	    for v in CFLAGS CPPFLAGS LDFLAGS; do
 		eval $v'="`echo "$'$v' "|sed -e "s/-arch ppc64 / /g" -e "s/-arch x86_64 / /g"`"'
@@ -363,8 +365,8 @@ fi
 
 if test $tk_aqua = yes; then
     AC_DEFINE(MAC_OSX_TK, 1, [Are we building TkAqua?])
-    LIBS="$LIBS -framework Cocoa -framework Carbon -framework IOKit"
-    EXTRA_CC_SWITCHES='-std=gnu99 -x objective-c -fobjc-gc'
+    LIBS="$LIBS -framework Carbon -framework IOKit"
+    CFLAGS="$CFLAGS -fpascal-strings"
     TK_WINDOWINGSYSTEM=AQUA
     if test -n "${enable_symbols}" -a "${enable_symbols}" != no; then
         AC_DEFINE(TK_MAC_DEBUG, 1, [Are TkAqua debug messages enabled?])
@@ -378,7 +380,7 @@ else
     #	autoconf macro will return an include directory that contains
     #	no include files, so double-check its result just to be safe.
     #--------------------------------------------------------------------
-
+    
     SC_PATH_X
     TK_WINDOWINGSYSTEM=X11
 fi
@@ -550,7 +552,7 @@ if test $tk_aqua = no; then
 	    CFLAGS="$CFLAGS $XINCLUDES $XFT_CFLAGS"
 	    tk_oldLibs=$LIBS
 	    LIBS="$tk_oldLIBS $XFT_LIBS $XLIBSW"
-	    AC_CHECK_LIB(Xft, XftFontOpen, [], [
+	    AC_CHECK_LIB(Xft, FT_New_Face, [], [
 		found_xft=no
 	    ])
 	    CFLAGS=$tk_oldCFlags
@@ -596,7 +598,7 @@ eval eval "TK_SHARED_LIB_SUFFIX=${SHARED_LIB_SUFFIX}"
 eval "TK_LIB_FILE=libtk${LIB_SUFFIX}"
 
 # tkConfig.sh needs a version of the _LIB_SUFFIX that has been eval'ed
-# since on some platforms TK_LIB_FILE contains shell escapes.
+# since on some platforms TK_LIB_FILE contains shell escapes. 
 
 eval "TK_LIB_FILE=${TK_LIB_FILE}"
 
@@ -620,11 +622,10 @@ WISH_RSRC_FILE='wish$(VERSION).rsrc'
 if test "`uname -s`" = "Darwin" ; then
     SC_ENABLE_FRAMEWORK
     TK_SHLIB_LD_EXTRAS="-compatibility_version ${TK_VERSION} -current_version ${TK_VERSION}`echo ${TK_PATCH_LEVEL} | awk ['{match($0, "\\\.[0-9]+"); print substr($0,RSTART,RLENGTH)}']`"
-    TK_SHLIB_LD_EXTRAS="${TK_SHLIB_LD_EXTRAS}"' -install_name "${DYLIB_INSTALL_DIR}/${TK_LIB_FILE}" -unexported_symbols_list $$(f=$(TK_LIB_FILE).E && nm -gp tkMacOSX*.o 2>/dev/null | awk "/^[[0-9a-f]]+ . \.objc/ {print \$$3}" > $$f && nm -gjp "$(TCL_BIN_DIR)"/$(TCL_STUB_LIB_FILE) | grep ^_[[^_]] >> $$f && echo $$f)'
+    TK_SHLIB_LD_EXTRAS="${TK_SHLIB_LD_EXTRAS}"' -install_name "${DYLIB_INSTALL_DIR}"/${TK_LIB_FILE} -unexported_symbols_list $$(f=$(TCL_STUB_LIB_FILE).E && nm -gjp "$(TCL_BIN_DIR)"/$(TCL_STUB_LIB_FILE) | grep ^_[[^_]] > $$f && echo $$f)'
     echo "$LDFLAGS " | grep -q -- '-prebind ' && TK_SHLIB_LD_EXTRAS="${TK_SHLIB_LD_EXTRAS}"' -seg1addr 0xb000000'
     TK_SHLIB_LD_EXTRAS="${TK_SHLIB_LD_EXTRAS}"' -sectcreate __TEXT __info_plist Tk-Info.plist'
     EXTRA_WISH_LIBS='-sectcreate __TEXT __info_plist Wish-Info.plist'
-    EXTRA_APP_CC_SWITCHES="${EXTRA_APP_CC_SWITCHES}"' -mdynamic-no-pic'
     AC_CONFIG_FILES([Tk-Info.plist:../macosx/Tk-Info.plist.in Wish-Info.plist:../macosx/Wish-Info.plist.in])
     for l in ${LOCALES}; do CFBUNDLELOCALIZATIONS="${CFBUNDLELOCALIZATIONS}<string>$l</string>"; done
     TK_YEAR="`date +%Y`"
@@ -650,7 +651,6 @@ if test "$FRAMEWORK_BUILD" = "1" ; then
     TK_LIB_FILE="Tk"
     TK_LIB_FLAG="-framework Tk"
     TK_BUILD_LIB_SPEC="-F`pwd | sed -e 's/ /\\\\ /g'` -framework Tk"
-    WISH_BUILD_LIB_SPEC="-F`pwd | sed -e 's/ /\\\\ /g'` -framework Tk \${WISH_LIBS}"
     TK_LIB_SPEC="-F${libdir} -framework Tk"
     libdir="${libdir}/Tk.framework/Versions/\${VERSION}"
     TK_LIBRARY="${libdir}/Resources/Scripts"
@@ -661,27 +661,24 @@ if test "$FRAMEWORK_BUILD" = "1" ; then
     PRIVATE_INCLUDE_DIR="${libdir}/PrivateHeaders"
     HTML_DIR="${libdir}/Resources/Documentation/Reference/Tk"
     EXTRA_INSTALL="install-private-headers html-tk"
-    EXTRA_BUILD_HTML='@ln -fs contents.htm "$(HTML_INSTALL_DIR)"/TkTOC.html'
-    EXTRA_INSTALL_BINARIES='@echo "Installing Info.plist to $(LIB_INSTALL_DIR)/Resources/" && mkdir -p "$(LIB_INSTALL_DIR)/Resources" && $(INSTALL_DATA) Tk-Info.plist "$(LIB_INSTALL_DIR)/Resources/Info.plist"'
+    EXTRA_BUILD_HTML='@ln -fs contents.htm "$(HTML_INSTALL_DIR)"/TkTOC.html' 
+    EXTRA_INSTALL_BINARIES='@echo "Installing Info.plist to $(LIB_INSTALL_DIR)/Resources" && mkdir -p "$(LIB_INSTALL_DIR)/Resources" && $(INSTALL_DATA) Tk-Info.plist "$(LIB_INSTALL_DIR)/Resources/Info.plist"'
     EXTRA_INSTALL_BINARIES="$EXTRA_INSTALL_BINARIES"' && echo "Installing license.terms to $(LIB_INSTALL_DIR)/Resources" && $(INSTALL_DATA) "$(TOP_DIR)/license.terms" "$(LIB_INSTALL_DIR)/Resources"'
     if test $tk_aqua = yes; then
-        EXTRA_INSTALL_BINARIES="$EXTRA_INSTALL_BINARIES"' && echo "Installing Images to $(LIB_INSTALL_DIR)/Resources" && mkdir -p "$(LIB_INSTALL_DIR)/Resources" && for i in Tk.tiff Tk.icns; do $(INSTALL_DATA) "$(MAC_OSX_DIR)/$$i" "$(LIB_INSTALL_DIR)/Resources"; done'
+        EXTRA_INSTALL_BINARIES="$EXTRA_INSTALL_BINARIES"' && echo "Installing ${TK_RSRC_FILE} to $(LIB_INSTALL_DIR)/Resources" && mkdir -p "$(LIB_INSTALL_DIR)/Resources" && $(INSTALL_DATA) "${TK_RSRC_FILE}" "$(LIB_INSTALL_DIR)/Resources"'
         EXTRA_INSTALL_BINARIES="$EXTRA_INSTALL_BINARIES"' && echo "Installing wish$(VERSION) script to $(INSTALL_ROOT)/'"${bindir}"'" && mkdir -p "$(INSTALL_ROOT)/'"${bindir}"'" && printf > "$(INSTALL_ROOT)/'"${bindir}"'/wish$(VERSION)" "#!/bin/sh\n\"\$$(dirname \$$0)'"`eval d="${bindir}"; echo "$d" | sed -e 's#/[^/][^/]*#/..#g'`"'$(bindir)/Wish\" \"\$$@\"" && chmod +x "$(INSTALL_ROOT)/'"${bindir}"'/wish$(VERSION)"'
         bindir="${libdir}/Resources/Wish.app/Contents/MacOS"
         EXTRA_INSTALL_BINARIES="$EXTRA_INSTALL_BINARIES"' && echo "Installing Info.plist to $(BIN_INSTALL_DIR)/.." && $(INSTALL_DATA) Wish-Info.plist "$(BIN_INSTALL_DIR)/../Info.plist" && mv -f "$(BIN_INSTALL_DIR)/wish$(VERSION)" "$(BIN_INSTALL_DIR)/Wish"'
-        EXTRA_INSTALL_BINARIES="$EXTRA_INSTALL_BINARIES"' && echo "Installing Wish.icns to $(BIN_INSTALL_DIR)/../Resources" && mkdir -p "$(BIN_INSTALL_DIR)/../Resources" && $(INSTALL_DATA) "$(MAC_OSX_DIR)/Tk.icns" "$(BIN_INSTALL_DIR)/../Resources/Wish.icns"'
-        EXTRA_INSTALL_BINARIES="$EXTRA_INSTALL_BINARIES"' && echo "Installing Wish.sdef to $(BIN_INSTALL_DIR)/../Resources" && $(INSTALL_DATA) "$(MAC_OSX_DIR)/Wish.sdef" "$(BIN_INSTALL_DIR)/../Resources"'
+        EXTRA_INSTALL_BINARIES="$EXTRA_INSTALL_BINARIES"' && echo "Installing Wish.icns to $(BIN_INSTALL_DIR)/../Resources" && mkdir -p "$(BIN_INSTALL_DIR)/../Resources" && $(INSTALL_DATA) "$(MAC_OSX_DIR)/Wish.icns" "$(BIN_INSTALL_DIR)/../Resources"'
+        EXTRA_INSTALL_BINARIES="$EXTRA_INSTALL_BINARIES"' && echo "Installing ${WISH_RSRC_FILE} to $(BIN_INSTALL_DIR)/../Resources" && $(INSTALL_DATA) "${WISH_RSRC_FILE}" "$(BIN_INSTALL_DIR)/../Resources"'
     fi
     EXTRA_INSTALL_BINARIES="$EXTRA_INSTALL_BINARIES"' && echo "Finalizing Tk.framework" && rm -f "$(LIB_INSTALL_DIR)/../Current" && ln -s "$(VERSION)" "$(LIB_INSTALL_DIR)/../Current" && for f in "$(LIB_FILE)" tkConfig.sh Resources Headers PrivateHeaders; do rm -f "$(LIB_INSTALL_DIR)/../../$$f" && ln -s "Versions/Current/$$f" "$(LIB_INSTALL_DIR)/../.."; done && f="$(STUB_LIB_FILE)" && rm -f "$(LIB_INSTALL_DIR)/../../$$f" && ln -s "Versions/$(VERSION)/$$f" "$(LIB_INSTALL_DIR)/../.."'
-    # Don't use AC_DEFINE for the following as the framework version define
-    # needs to go into the Makefile even when using autoheader, so that we
+    # Don't use AC_DEFINE for the following as the framework version define 
+    # needs to go into the Makefile even when using autoheader, so that we  
     # can pick up a potential make override of VERSION. Also, don't put this
     # into CFLAGS as it should not go into tkConfig.sh
     EXTRA_CC_SWITCHES="$EXTRA_CC_SWITCHES"' -DTK_FRAMEWORK_VERSION=\"$(VERSION)\"'
 else
-    if test $tk_aqua = yes; then
-        EXTRA_INSTALL_BINARIES='@echo "Installing Images to $(LIB_INSTALL_DIR)/" && mkdir -p "$(LIB_INSTALL_DIR)" && for i in Tk.tiff Tk.icns; do $(INSTALL_DATA) "$(MAC_OSX_DIR)/$$i" "$(LIB_INSTALL_DIR)"; done'
-    fi
     # libdir must be a fully qualified path and not ${exec_prefix}/lib
     eval libdir="$libdir"
     if test "${TCL_LIB_VERSIONS_OK}" = "ok"; then
@@ -690,12 +687,22 @@ else
         TK_LIB_FLAG="-ltk`echo ${TK_VERSION} | tr -d .`"
     fi
     TK_BUILD_LIB_SPEC="-L`pwd | sed -e 's/ /\\\\ /g'` ${TK_LIB_FLAG}"
-    if test "${ac_cv_cygwin}" = "yes" -a "$SHARED_BUILD" = "1"; then
-	WISH_BUILD_LIB_SPEC="-L\$(TOP_DIR)/win -ltk${TK_MAJOR_VERSION}${TK_MINOR_VERSION} \${TCL_LIB_SPEC}"
-    else
-	WISH_BUILD_LIB_SPEC="-L`pwd | sed -e 's/ /\\\\ /g'` ${TK_LIB_FLAG} \${WISH_LIBS}"
-    fi
     TK_LIB_SPEC="-L${libdir} ${TK_LIB_FLAG}"
+fi
+
+# Support for building the Aqua resource files
+if test $tk_aqua = yes; then
+    LIB_RSRC_FILE='${TK_RSRC_FILE}'
+    APP_RSRC_FILE='${WISH_RSRC_FILE}'
+    REZ=/Developer/Tools/Rez
+    REZ_FLAGS='-d "SystemSevenOrLater=1" -useDF -ro'
+    if test "$SHARED_BUILD" = 0; then
+	EXTRA_INSTALL_BINARIES='@echo "Installing $(TK_RSRC_FILE) to $(LIB_INSTALL_DIR)" && $(INSTALL_DATA) $(TK_RSRC_FILE) "$(LIB_INSTALL_DIR)"'
+	TK_BUILD_LIB_SPEC="$TK_BUILD_LIB_SPEC -sectcreate __TEXT __tk_rsrc `pwd | sed -e 's/ /\\\\ /g'`/\${TK_RSRC_FILE}"
+	TK_LIB_SPEC="$TK_LIB_SPEC -sectcreate __TEXT __tk_rsrc ${libdir}/\${TK_RSRC_FILE}"
+    else
+        TK_SHLIB_LD_EXTRAS="$TK_SHLIB_LD_EXTRAS -sectcreate __TEXT __tk_rsrc \${TK_RSRC_FILE}"
+    fi
 fi
 
 #--------------------------------------------------------------------
@@ -750,7 +757,6 @@ AC_SUBST(TK_SHARED_BUILD)
 AC_SUBST(LD_LIBRARY_PATH_VAR)
 
 AC_SUBST(TK_BUILD_LIB_SPEC)
-AC_SUBST(WISH_BUILD_LIB_SPEC)
 
 AC_SUBST(TCL_STUB_FLAGS)
 AC_SUBST(XINCLUDES)
@@ -783,7 +789,3 @@ AC_CONFIG_FILES([
     tkConfig.sh:../unix/tkConfig.sh.in
 ])
 AC_OUTPUT
-
-dnl Local Variables:
-dnl mode: autoconf
-dnl End:

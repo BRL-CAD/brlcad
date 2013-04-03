@@ -4,6 +4,8 @@
 #	Unix platform. This implementation is used only if the
 #	"::tk_strictMotif" flag is set.
 #
+# RCS: @(#) $Id$
+#
 # Copyright (c) 1996 Sun Microsystems, Inc.
 # Copyright (c) 1998-2000 Scriptics Corporation
 #
@@ -246,12 +248,8 @@ proc ::tk::MotifFDialog_Config {dataName type argList} {
     if {$type eq "open"} {
 	lappend specs {-multiple "" "" "0"}
     }
-    if {$type eq "save"} {
-	lappend specs {-confirmoverwrite "" "" "1"}
-    }
 
     set data(-multiple) 0
-    set data(-confirmoverwrite) 1
     # 2: default values depending on the type of the dialog
     #
     if {![info exists data(selectPath)]} {
@@ -851,7 +849,7 @@ proc ::tk::MotifFDialog_ActivateSEnt {w} {
 			-message [mc {File "%1$s" does not exist.} $item]
 		return
 	    }
-	} elseif {$data(type) eq "save" && $data(-confirmoverwrite)} {
+	} elseif {$data(type) eq "save"} {
 	    set message [format %s%s \
 		    [mc "File \"%1\$s\" already exists.\n\n" $selectFilePath] \
 		    [mc {Replace existing file?}]]

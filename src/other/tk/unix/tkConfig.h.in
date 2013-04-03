@@ -4,9 +4,6 @@
     #ifndef _TKCONFIG
     #define _TKCONFIG
 
-/* Define if building universal (internal helper macro) */
-#undef AC_APPLE_UNIVERSAL_BUILD
-
 /* Is pthread_attr_get_np() declared in <pthread.h>? */
 #undef ATTRGETNP_NOT_DECLARED
 
@@ -15,9 +12,6 @@
 
 /* Define to 1 if you have the <AvailabilityMacros.h> header file. */
 #undef HAVE_AVAILABILITYMACROS_H
-
-/* Defined when compiler supports casting to union type. */
-#undef HAVE_CAST_TO_UNION
 
 /* Do we have access to Darwin CoreFoundation.framework? */
 #undef HAVE_COREFOUNDATION
@@ -115,9 +109,6 @@
 /* Compiler support for module scope symbols */
 #undef MODULE_SCOPE
 
-/* Is no debugging enabled? */
-#undef NDEBUG
-
 /* Is Darwin CoreFoundation unavailable for 64-bit? */
 #undef NO_COREFOUNDATION_64
 
@@ -142,9 +133,6 @@
 /* Define to the one symbol short name of this package. */
 #undef PACKAGE_TARNAME
 
-/* Define to the home page for this package. */
-#undef PACKAGE_URL
-
 /* Define to the version of this package. */
 #undef PACKAGE_VERSION
 
@@ -153,6 +141,9 @@
 
 /* Define to 1 if you have the ANSI C header files. */
 #undef STDC_HEADERS
+
+/* Is debugging enabled? */
+#undef TCL_CFG_DEBUG
 
 /* Is this a 64-bit build? */
 #undef TCL_CFG_DO64BIT
@@ -193,17 +184,9 @@
 /* Do we want to use the threaded memory allocator? */
 #undef USE_THREAD_ALLOC
 
-/* Define WORDS_BIGENDIAN to 1 if your processor stores words with the most
-   significant byte first (like Motorola and SPARC, unlike Intel). */
-#if defined AC_APPLE_UNIVERSAL_BUILD
-# if defined __BIG_ENDIAN__
-#  define WORDS_BIGENDIAN 1
-# endif
-#else
-# ifndef WORDS_BIGENDIAN
-#  undef WORDS_BIGENDIAN
-# endif
-#endif
+/* Define to 1 if your processor stores words with the most significant byte
+   first (like Motorola and SPARC, unlike Intel and VAX). */
+#undef WORDS_BIGENDIAN
 
 /* Are Darwin SUSv3 extensions available? */
 #undef _DARWIN_C_SOURCE
@@ -252,7 +235,7 @@
 /* Define to `int' if <sys/types.h> does not define. */
 #undef pid_t
 
-/* Define to `unsigned int' if <sys/types.h> does not define. */
+/* Define to `unsigned' if <sys/types.h> does not define. */
 #undef size_t
 
 /* Do we want to use the strtod() in compat? */

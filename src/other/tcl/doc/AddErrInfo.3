@@ -5,6 +5,8 @@
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 '\" 
+'\" RCS: @(#) $Id$
+'\" 
 .so man.macros
 .TH Tcl_AddErrorInfo 3 8.5 Tcl "Tcl Library Procedures"
 .BS
@@ -109,7 +111,7 @@ with the value of \fIcode\fR.  The \fB(Tcl_Obj *)\fR returned
 by \fBTcl_GetReturnOptions\fR points to an unshared
 \fBTcl_Obj\fR with reference count of zero.  The dictionary
 may be written to, either adding, removing, or overwriting
-any entries in it, without the need to check for a shared object.
+any entries in it, with the need to check for a shared object.
 .PP
 A typical usage for \fBTcl_GetReturnOptions\fR is to
 retrieve the stack trace when script evaluation returns

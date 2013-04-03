@@ -7,6 +7,8 @@
  *
  * See the file "license.terms" for information on usage and redistribution of
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
+ *
+ * RCS: @(#) $Id$
  */
 
 #include "tclInt.h"
@@ -26,26 +28,27 @@
 #define ALPHA_BITS ((1 << UPPERCASE_LETTER) | (1 << LOWERCASE_LETTER) \
 	| (1 << TITLECASE_LETTER) | (1 << MODIFIER_LETTER) | (1<<OTHER_LETTER))
 
-#define CONTROL_BITS ((1 << CONTROL) | (1 << FORMAT) | (1 << PRIVATE_USE))
-
 #define DIGIT_BITS (1 << DECIMAL_DIGIT_NUMBER)
 
 #define SPACE_BITS ((1 << SPACE_SEPARATOR) | (1 << LINE_SEPARATOR) \
 	| (1 << PARAGRAPH_SEPARATOR))
 
-#define WORD_BITS (ALPHA_BITS | DIGIT_BITS | (1 << CONNECTOR_PUNCTUATION))
+#define CONNECTOR_BITS (1 << CONNECTOR_PUNCTUATION)
+
+#define PRINT_BITS (ALPHA_BITS | DIGIT_BITS | SPACE_BITS | \
+	(1 << NON_SPACING_MARK) | (1 << ENCLOSING_MARK) | \
+	(1 << COMBINING_SPACING_MARK) | (1 << LETTER_NUMBER) | \
+	(1 << OTHER_NUMBER) | (1 << CONNECTOR_PUNCTUATION) | \
+	(1 << DASH_PUNCTUATION) | (1 << OPEN_PUNCTUATION) | \
+	(1 << CLOSE_PUNCTUATION) | (1 << INITIAL_QUOTE_PUNCTUATION) | \
+	(1 << FINAL_QUOTE_PUNCTUATION) | (1 << OTHER_PUNCTUATION) | \
+	(1 << MATH_SYMBOL) | (1 << CURRENCY_SYMBOL) | \
+	(1 << MODIFIER_SYMBOL) | (1 << OTHER_SYMBOL))
 
 #define PUNCT_BITS ((1 << CONNECTOR_PUNCTUATION) | \
 	(1 << DASH_PUNCTUATION) | (1 << OPEN_PUNCTUATION) | \
 	(1 << CLOSE_PUNCTUATION) | (1 << INITIAL_QUOTE_PUNCTUATION) | \
 	(1 << FINAL_QUOTE_PUNCTUATION) | (1 << OTHER_PUNCTUATION))
-
-#define GRAPH_BITS (WORD_BITS | PUNCT_BITS | \
-	(1 << NON_SPACING_MARK) | (1 << ENCLOSING_MARK) | \
-	(1 << COMBINING_SPACING_MARK) | (1 << LETTER_NUMBER) | \
-	(1 << OTHER_NUMBER) | \
-	(1 << MATH_SYMBOL) | (1 << CURRENCY_SYMBOL) | \
-	(1 << MODIFIER_SYMBOL) | (1 << OTHER_SYMBOL))
 
 /*
  * Unicode characters less than this value are represented by themselves in
@@ -1125,9 +1128,10 @@ Tcl_UniCharToUpper(
     int info = GetUniCharInfo(ch);
 
     if (GetCaseType(info) & 0x04) {
-	ch -= GetDelta(info);
+	return (Tcl_UniChar) (ch - GetDelta(info));
+    } else {
+	return ch;
     }
-    return (Tcl_UniChar) ch;
 }
 
 /*
@@ -1153,9 +1157,10 @@ Tcl_UniCharToLower(
     int info = GetUniCharInfo(ch);
 
     if (GetCaseType(info) & 0x02) {
-	ch += GetDelta(info);
+	return (Tcl_UniChar) (ch + GetDelta(info));
+    } else {
+	return ch;
     }
-    return (Tcl_UniChar) ch;
 }
 
 /*
@@ -1186,11 +1191,12 @@ Tcl_UniCharToTitle(
 	 * Subtract or add one depending on the original case.
 	 */
 
-	ch += ((mode & 0x4) ? -1 : 1);
+	return (Tcl_UniChar) (ch + ((mode & 0x4) ? -1 : 1));
     } else if (mode == 0x4) {
-	ch -= GetDelta(info);
+	return (Tcl_UniChar) (ch - GetDelta(info));
+    } else {
+	return ch;
     }
-    return (Tcl_UniChar) ch;
 }
 
 /*
@@ -1324,7 +1330,9 @@ int
 Tcl_UniCharIsAlnum(
     int ch)			/* Unicode character to test. */
 {
-    return (((ALPHA_BITS | DIGIT_BITS) >> GetCategory(ch)) & 1);
+    register int category = (GetUniCharInfo(ch) & UNICODE_CATEGORY_MASK);
+
+    return (((ALPHA_BITS | DIGIT_BITS) >> category) & 1);
 }
 
 /*
@@ -1347,7 +1355,8 @@ int
 Tcl_UniCharIsAlpha(
     int ch)			/* Unicode character to test. */
 {
-    return ((ALPHA_BITS >> GetCategory(ch)) & 1);
+    register int category = (GetUniCharInfo(ch) & UNICODE_CATEGORY_MASK);
+    return ((ALPHA_BITS >> category) & 1);
 }
 
 /*
@@ -1370,7 +1379,7 @@ int
 Tcl_UniCharIsControl(
     int ch)			/* Unicode character to test. */
 {
-    return ((CONTROL_BITS >> GetCategory(ch)) & 1);
+    return ((GetUniCharInfo(ch) & UNICODE_CATEGORY_MASK) == CONTROL);
 }
 
 /*
@@ -1393,7 +1402,7 @@ int
 Tcl_UniCharIsDigit(
     int ch)			/* Unicode character to test. */
 {
-    return (GetCategory(ch) == DECIMAL_DIGIT_NUMBER);
+    return (GetUniCharInfo(ch)&UNICODE_CATEGORY_MASK) == DECIMAL_DIGIT_NUMBER;
 }
 
 /*
@@ -1416,7 +1425,8 @@ int
 Tcl_UniCharIsGraph(
     int ch)			/* Unicode character to test. */
 {
-    return ((GRAPH_BITS >> GetCategory(ch)) & 1);
+    register int category = (GetUniCharInfo(ch) & UNICODE_CATEGORY_MASK);
+    return (((PRINT_BITS >> category) & 1) && ((unsigned char) ch != ' '));
 }
 
 /*
@@ -1439,7 +1449,7 @@ int
 Tcl_UniCharIsLower(
     int ch)			/* Unicode character to test. */
 {
-    return (GetCategory(ch) == LOWERCASE_LETTER);
+    return ((GetUniCharInfo(ch) & UNICODE_CATEGORY_MASK) == LOWERCASE_LETTER);
 }
 
 /*
@@ -1462,7 +1472,8 @@ int
 Tcl_UniCharIsPrint(
     int ch)			/* Unicode character to test. */
 {
-    return (((GRAPH_BITS|SPACE_BITS) >> GetCategory(ch)) & 1);
+    register int category = (GetUniCharInfo(ch) & UNICODE_CATEGORY_MASK);
+    return ((PRINT_BITS >> category) & 1);
 }
 
 /*
@@ -1485,7 +1496,8 @@ int
 Tcl_UniCharIsPunct(
     int ch)			/* Unicode character to test. */
 {
-    return ((PUNCT_BITS >> GetCategory(ch)) & 1);
+    register int category = (GetUniCharInfo(ch) & UNICODE_CATEGORY_MASK);
+    return ((PUNCT_BITS >> category) & 1);
 }
 
 /*
@@ -1508,15 +1520,18 @@ int
 Tcl_UniCharIsSpace(
     int ch)			/* Unicode character to test. */
 {
+    register int category;
+
     /*
      * If the character is within the first 127 characters, just use the
      * standard C function, otherwise consult the Unicode table.
      */
 
-    if (((Tcl_UniChar) ch) < ((Tcl_UniChar) 0x80)) {
+    if (ch < 0x80) {
 	return isspace(UCHAR(ch)); /* INTL: ISO space */
     } else {
-	return ((SPACE_BITS >> GetCategory(ch)) & 1);
+	category = (GetUniCharInfo(ch) & UNICODE_CATEGORY_MASK);
+	return ((SPACE_BITS >> category) & 1);
     }
 }
 
@@ -1540,7 +1555,7 @@ int
 Tcl_UniCharIsUpper(
     int ch)			/* Unicode character to test. */
 {
-    return (GetCategory(ch) == UPPERCASE_LETTER);
+    return ((GetUniCharInfo(ch) & UNICODE_CATEGORY_MASK) == UPPERCASE_LETTER);
 }
 
 /*
@@ -1563,7 +1578,9 @@ int
 Tcl_UniCharIsWordChar(
     int ch)			/* Unicode character to test. */
 {
-    return ((WORD_BITS >> GetCategory(ch)) & 1);
+    register int category = (GetUniCharInfo(ch) & UNICODE_CATEGORY_MASK);
+
+    return (((ALPHA_BITS | DIGIT_BITS | CONNECTOR_BITS) >> category) & 1);
 }
 
 /*

@@ -13,6 +13,8 @@
 # See the file "license.terms" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 #
+# RCS: @(#) $Id$
+#
 #----------------------------------------------------------------------
 
 # We must have message catalogs that support the root locale, and
@@ -3076,23 +3078,18 @@ proc ::tcl::clock::GetSystemTimeZone {} {
 	set timezone $result
     } elseif {[set result [getenv TZ]] ne {}} {
 	set timezone $result
+    } elseif { [info exists CachedSystemTimeZone] } {
+	set timezone $CachedSystemTimeZone
+    } elseif { $::tcl_platform(platform) eq {windows} } {
+	set timezone [GuessWindowsTimeZone]
+    } elseif { [file exists /etc/localtime]
+	       && ![catch {ReadZoneinfoFile \
+			       Tcl/Localtime /etc/localtime}] } {
+	set timezone :Tcl/Localtime
+    } else {
+	set timezone :localtime
     }
-    if {![info exists timezone]} {
-        # Cache the time zone only if it was detected by one of the
-        # expensive methods.
-        if { [info exists CachedSystemTimeZone] } {
-            set timezone $CachedSystemTimeZone
-        } elseif { $::tcl_platform(platform) eq {windows} } {
-            set timezone [GuessWindowsTimeZone]
-        } elseif { [file exists /etc/localtime]
-                   && ![catch {ReadZoneinfoFile \
-                                   Tcl/Localtime /etc/localtime}] } {
-            set timezone :Tcl/Localtime
-        } else {
-            set timezone :localtime
-        }
-	set CachedSystemTimeZone $timezone
-    }
+    set CachedSystemTimeZone $timezone
     if { ![dict exists $TimeZoneBad $timezone] } {
 	dict set TimeZoneBad $timezone [catch {SetupTimeZone $timezone}]
     }
@@ -3494,7 +3491,7 @@ proc ::tcl::clock::LoadZoneinfoFile { fileName } {
 proc ::tcl::clock::ReadZoneinfoFile {fileName fname} {
     variable MINWIDE
     variable TZData
-    if { ![file exists $fname] } {
+    if { ![info exists fname] } {
 	return -code error "$fileName not found"
     }
 
@@ -3584,10 +3581,8 @@ proc ::tcl::clock::ReadZoneinfoFile {fileName fname} {
     set i 0
     set abbrevs {}
     foreach a $abbrList {
-	for {set j 0} {$j <= [string length $a]} {incr j} {
-	    dict set abbrevs $i [string range $a $j end]
-	    incr i
-	}
+	dict set abbrevs $i $a
+	incr i [expr { [string length $a] + 1 }]
     }
 
     # Package up a list of tuples, each of which contains transition time,

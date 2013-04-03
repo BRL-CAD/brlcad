@@ -10,6 +10,8 @@
  *
  * See the file "license.terms" for information on usage and redistribution of
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
+ *
+ * RCS: @(#) $Id$
  */
 
 #include "tkInt.h"
@@ -26,14 +28,14 @@ static Tcl_ThreadDataKey dataKey;
  * tkButton.h.
  */
 
-static const char *const classNames[] = {"Label", "Button", "Checkbutton", "Radiobutton"};
+static const char *classNames[] = {"Label", "Button", "Checkbutton", "Radiobutton"};
 
 /*
  * The following table defines the legal values for the -default option. It is
  * used together with the "enum defaultValue" declaration in tkButton.h.
  */
 
-static const char *const defaultStrings[] = {
+static const char *defaultStrings[] = {
     "active", "disabled", "normal", NULL
 };
 
@@ -42,7 +44,7 @@ static const char *const defaultStrings[] = {
  * It is used together with the "enum state" declaration in tkButton.h.
  */
 
-static const char *const stateStrings[] = {
+static const char *stateStrings[] = {
     "active", "disabled", "normal", NULL
 };
 
@@ -51,24 +53,18 @@ static const char *const stateStrings[] = {
  * It is used with the "enum compound" declaration in tkButton.h
  */
 
-static const char *const compoundStrings[] = {
+static const char *compoundStrings[] = {
     "bottom", "center", "left", "none", "right", "top", NULL
 };
 
-char tkDefButtonHighlightWidth[TCL_INTEGER_SPACE] = DEF_BUTTON_HIGHLIGHT_WIDTH;
-char tkDefButtonPadx[TCL_INTEGER_SPACE] = DEF_BUTTON_PADX;
-char tkDefButtonPady[TCL_INTEGER_SPACE] = DEF_BUTTON_PADY;
 char tkDefButtonBorderWidth[TCL_INTEGER_SPACE] = DEF_BUTTON_BORDER_WIDTH;
-char tkDefLabelHighlightWidth[TCL_INTEGER_SPACE] = DEF_LABEL_HIGHLIGHT_WIDTH;
-char tkDefLabelPadx[TCL_INTEGER_SPACE] = DEF_LABCHKRAD_PADX;
-char tkDefLabelPady[TCL_INTEGER_SPACE] = DEF_LABCHKRAD_PADY;
 
 /*
  * Information used for parsing configuration options.  There is a
  * separate table for each of the four widget classes.
  */
 
-static const Tk_OptionSpec labelOptionSpecs[] = {
+static Tk_OptionSpec labelOptionSpecs[] = {
     {TK_OPTION_BORDER, "-activebackground", "activeBackground", "Foreground",
 	DEF_BUTTON_ACTIVE_BG_COLOR, -1, Tk_Offset(TkButton, activeBorder),
 	0, (ClientData) DEF_BUTTON_ACTIVE_BG_MONO, 0},
@@ -116,7 +112,7 @@ static const Tk_OptionSpec labelOptionSpecs[] = {
 	DEF_BUTTON_HIGHLIGHT, -1, Tk_Offset(TkButton, highlightColorPtr),
 	0, 0, 0},
     {TK_OPTION_PIXELS, "-highlightthickness", "highlightThickness",
-	"HighlightThickness", tkDefLabelHighlightWidth,
+	"HighlightThickness", DEF_LABEL_HIGHLIGHT_WIDTH,
 	Tk_Offset(TkButton, highlightWidthPtr),
 	Tk_Offset(TkButton, highlightWidth), 0, 0, 0},
     {TK_OPTION_STRING, "-image", "image", "Image",
@@ -125,10 +121,10 @@ static const Tk_OptionSpec labelOptionSpecs[] = {
     {TK_OPTION_JUSTIFY, "-justify", "justify", "Justify",
 	DEF_BUTTON_JUSTIFY, -1, Tk_Offset(TkButton, justify), 0, 0, 0},
     {TK_OPTION_PIXELS, "-padx", "padX", "Pad",
-	tkDefLabelPadx, Tk_Offset(TkButton, padXPtr),
+	DEF_LABCHKRAD_PADX, Tk_Offset(TkButton, padXPtr),
 	Tk_Offset(TkButton, padX), 0, 0, 0},
     {TK_OPTION_PIXELS, "-pady", "padY", "Pad",
-	tkDefLabelPady, Tk_Offset(TkButton, padYPtr),
+	DEF_LABCHKRAD_PADY, Tk_Offset(TkButton, padYPtr),
 	Tk_Offset(TkButton, padY), 0, 0, 0},
     {TK_OPTION_RELIEF, "-relief", "relief", "Relief",
 	DEF_LABCHKRAD_RELIEF, -1, Tk_Offset(TkButton, relief), 0, 0, 0},
@@ -153,7 +149,7 @@ static const Tk_OptionSpec labelOptionSpecs[] = {
     {TK_OPTION_END, NULL, NULL, NULL, NULL, 0, 0, 0, 0}
 };
 
-static const Tk_OptionSpec buttonOptionSpecs[] = {
+static Tk_OptionSpec buttonOptionSpecs[] = {
     {TK_OPTION_BORDER, "-activebackground", "activeBackground", "Foreground",
 	DEF_BUTTON_ACTIVE_BG_COLOR, -1, Tk_Offset(TkButton, activeBorder),
 	0, (ClientData) DEF_BUTTON_ACTIVE_BG_MONO, 0},
@@ -207,7 +203,7 @@ static const Tk_OptionSpec buttonOptionSpecs[] = {
 	DEF_BUTTON_HIGHLIGHT, -1, Tk_Offset(TkButton, highlightColorPtr),
 	0, 0, 0},
     {TK_OPTION_PIXELS, "-highlightthickness", "highlightThickness",
-	"HighlightThickness", tkDefButtonHighlightWidth,
+	"HighlightThickness", DEF_BUTTON_HIGHLIGHT_WIDTH,
 	Tk_Offset(TkButton, highlightWidthPtr),
 	Tk_Offset(TkButton, highlightWidth), 0, 0, 0},
     {TK_OPTION_STRING, "-image", "image", "Image",
@@ -219,10 +215,10 @@ static const Tk_OptionSpec buttonOptionSpecs[] = {
 	 DEF_BUTTON_OVER_RELIEF, -1, Tk_Offset(TkButton, overRelief),
 	 TK_OPTION_NULL_OK, 0, 0},
     {TK_OPTION_PIXELS, "-padx", "padX", "Pad",
-	tkDefButtonPadx, Tk_Offset(TkButton, padXPtr),
+	DEF_BUTTON_PADX, Tk_Offset(TkButton, padXPtr),
 	Tk_Offset(TkButton, padX), 0, 0, 0},
     {TK_OPTION_PIXELS, "-pady", "padY", "Pad",
-	tkDefButtonPady, Tk_Offset(TkButton, padYPtr),
+	DEF_BUTTON_PADY, Tk_Offset(TkButton, padYPtr),
 	Tk_Offset(TkButton, padY), 0, 0, 0},
     {TK_OPTION_RELIEF, "-relief", "relief", "Relief",
 	DEF_BUTTON_RELIEF, -1, Tk_Offset(TkButton, relief),
@@ -254,7 +250,7 @@ static const Tk_OptionSpec buttonOptionSpecs[] = {
     {TK_OPTION_END, NULL, NULL, NULL, NULL, 0, -1, 0, 0, 0}
 };
 
-static const Tk_OptionSpec checkbuttonOptionSpecs[] = {
+static Tk_OptionSpec checkbuttonOptionSpecs[] = {
     {TK_OPTION_BORDER, "-activebackground", "activeBackground", "Foreground",
 	DEF_BUTTON_ACTIVE_BG_COLOR, -1, Tk_Offset(TkButton, activeBorder),
 	0, (ClientData) DEF_BUTTON_ACTIVE_BG_MONO, 0},
@@ -305,7 +301,7 @@ static const Tk_OptionSpec checkbuttonOptionSpecs[] = {
 	DEF_BUTTON_HIGHLIGHT, -1, Tk_Offset(TkButton, highlightColorPtr),
 	0, 0, 0},
     {TK_OPTION_PIXELS, "-highlightthickness", "highlightThickness",
-	"HighlightThickness", tkDefButtonHighlightWidth,
+	"HighlightThickness", DEF_BUTTON_HIGHLIGHT_WIDTH,
 	Tk_Offset(TkButton, highlightWidthPtr),
 	Tk_Offset(TkButton, highlightWidth), 0, 0, 0},
     {TK_OPTION_STRING, "-image", "image", "Image",
@@ -325,10 +321,10 @@ static const Tk_OptionSpec checkbuttonOptionSpecs[] = {
 	 DEF_BUTTON_OVER_RELIEF, -1, Tk_Offset(TkButton, overRelief),
 	 TK_OPTION_NULL_OK, 0, 0},
     {TK_OPTION_PIXELS, "-padx", "padX", "Pad",
-	tkDefLabelPadx, Tk_Offset(TkButton, padXPtr),
+	DEF_LABCHKRAD_PADX, Tk_Offset(TkButton, padXPtr),
 	Tk_Offset(TkButton, padX), 0, 0, 0},
     {TK_OPTION_PIXELS, "-pady", "padY", "Pad",
-	tkDefLabelPady, Tk_Offset(TkButton, padYPtr),
+	DEF_LABCHKRAD_PADY, Tk_Offset(TkButton, padYPtr),
 	Tk_Offset(TkButton, padY), 0, 0, 0},
     {TK_OPTION_RELIEF, "-relief", "relief", "Relief",
 	DEF_LABCHKRAD_RELIEF, -1, Tk_Offset(TkButton, relief), 0, 0, 0},
@@ -367,7 +363,7 @@ static const Tk_OptionSpec checkbuttonOptionSpecs[] = {
     {TK_OPTION_END, NULL, NULL, NULL, NULL, 0, -1, 0, 0, 0}
 };
 
-static const Tk_OptionSpec radiobuttonOptionSpecs[] = {
+static Tk_OptionSpec radiobuttonOptionSpecs[] = {
     {TK_OPTION_BORDER, "-activebackground", "activeBackground", "Foreground",
 	DEF_BUTTON_ACTIVE_BG_COLOR, -1, Tk_Offset(TkButton, activeBorder),
 	0, (ClientData) DEF_BUTTON_ACTIVE_BG_MONO, 0},
@@ -418,7 +414,7 @@ static const Tk_OptionSpec radiobuttonOptionSpecs[] = {
 	DEF_BUTTON_HIGHLIGHT, -1, Tk_Offset(TkButton, highlightColorPtr),
 	0, 0, 0},
     {TK_OPTION_PIXELS, "-highlightthickness", "highlightThickness",
-	"HighlightThickness", tkDefButtonHighlightWidth,
+	"HighlightThickness", DEF_BUTTON_HIGHLIGHT_WIDTH,
 	Tk_Offset(TkButton, highlightWidthPtr),
 	Tk_Offset(TkButton, highlightWidth), 0, 0, 0},
     {TK_OPTION_STRING, "-image", "image", "Image",
@@ -435,10 +431,10 @@ static const Tk_OptionSpec radiobuttonOptionSpecs[] = {
 	 DEF_BUTTON_OVER_RELIEF, -1, Tk_Offset(TkButton, overRelief),
 	 TK_OPTION_NULL_OK, 0, 0},
     {TK_OPTION_PIXELS, "-padx", "padX", "Pad",
-	tkDefLabelPadx, Tk_Offset(TkButton, padXPtr),
+	DEF_LABCHKRAD_PADX, Tk_Offset(TkButton, padXPtr),
 	Tk_Offset(TkButton, padX), 0, 0, 0},
     {TK_OPTION_PIXELS, "-pady", "padY", "Pad",
-	tkDefLabelPady, Tk_Offset(TkButton, padYPtr),
+	DEF_LABCHKRAD_PADY, Tk_Offset(TkButton, padYPtr),
 	Tk_Offset(TkButton, padY), 0, 0, 0},
     {TK_OPTION_RELIEF, "-relief", "relief", "Relief",
 	DEF_LABCHKRAD_RELIEF, -1, Tk_Offset(TkButton, relief), 0, 0, 0},
@@ -484,7 +480,7 @@ static const Tk_OptionSpec radiobuttonOptionSpecs[] = {
  * such as TYPE_LABEL, to the option template for that class of widgets.
  */
 
-static const Tk_OptionSpec *const optionSpecs[] = {
+static Tk_OptionSpec * const optionSpecs[] = {
     labelOptionSpecs,
     buttonOptionSpecs,
     checkbuttonOptionSpecs,
@@ -643,7 +639,7 @@ ButtonCreate(
 	    Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
 
     if (!tsdPtr->defaultsInitialized) {
-	TkpButtonSetDefaults();
+	TkpButtonSetDefaults(optionSpecs[type]);
 	tsdPtr->defaultsInitialized = 1;
     }
 

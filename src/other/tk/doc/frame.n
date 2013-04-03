@@ -5,6 +5,8 @@
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 '\" 
+'\" RCS: @(#) $Id$
+'\" 
 .so man.macros
 .TH frame n 8.4 Tk "Tk Built-In Commands"
 .BS
@@ -52,8 +54,6 @@ things like geometry requests.  The window should not have any
 children of its own in this application.
 This option may not be changed with the \fBconfigure\fR
 widget command.
-Note that \fB-borderwidth\fR, \fB-padx\fR and \fB-pady\fR are ignored when
-configured as a container since a container has no border.
 .OP \-height height Height
 Specifies the desired height for the window in any of the forms
 acceptable to \fBTk_GetPixels\fR.  If this option is less than or equal

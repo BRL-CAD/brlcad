@@ -2,6 +2,8 @@
 '\" Copyright (c) 1998-2000 by Scriptics Corporation.
 '\" All rights reserved.
 '\" 
+'\" RCS: @(#) $Id$
+'\" 
 .so man.macros
 .TH pkg::create n 8.3 Tcl "Tcl Built-In Commands"
 .BS

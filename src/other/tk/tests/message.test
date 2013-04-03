@@ -5,6 +5,8 @@
 # Copyright (c) 1994-1996 Sun Microsystems, Inc.
 # Copyright (c) 1998-2000 by Ajuba Solutions.
 # All rights reserved.
+#
+# RCS: @(#) $Id$
 
 package require tcltest 2.1
 eval tcltest::configure $argv

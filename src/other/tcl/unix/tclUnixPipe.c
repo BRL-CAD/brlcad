@@ -9,6 +9,8 @@
  *
  * See the file "license.terms" for information on usage and redistribution of
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
+ *
+ * RCS: @(#) $Id$
  */
 
 #include "tclInt.h"
@@ -212,7 +214,7 @@ TclpCreateTempFile(
 
     if (contents != NULL) {
 	native = Tcl_UtfToExternalDString(NULL, contents, -1, &dstring);
-	if (write(fd, native, Tcl_DStringLength(&dstring)) == -1) {
+	if (write(fd, native, strlen(native)) == -1) {
 	    close(fd);
 	    Tcl_DStringFree(&dstring);
 	    return NULL;
