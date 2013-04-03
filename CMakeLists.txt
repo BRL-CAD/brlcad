@@ -1624,14 +1624,23 @@ BRLCAD_TYPE_SIZE("uint64_t" "")
 BRLCAD_TYPE_SIZE("uintptr_t" "")
 BRLCAD_TYPE_SIZE("sig_t" "signal.h")
 
-# see if we have a TLS intrinsic
-BRLCAD_TYPE_SIZE("thread_local int" "") # C++11
-if (NOT HAVE_THREAD_LOCAL_INT)
-  BRLCAD_TYPE_SIZE("__thread int" "") # GCC except Mac OS X
-  if (NOT HAVE___THREAD_INT)
-    BRLCAD_TYPE_SIZE("__declspec(thread) int" "") # Windows
-  endif (NOT HAVE___THREAD_INT)
-endif (NOT HAVE_THREAD_LOCAL_INT)
+# see if we have a TLS intrinsic, first check C++11 compliance
+check_cxx_source_compiles("static thread_local int i = 0; int main() { return i; }" HAVE_THREAD_LOCAL)
+if (HAVE_THREAD_LOCAL)
+  CONFIG_H_APPEND(BRLCAD "#define HAVE_THREAD_LOCAL 1\n")
+else (HAVE_THREAD_LOCAL)
+  # try GCC except Mac OS X
+  check_cxx_source_compiles("static __thread int i = 0; int main() { return i; }" HAVE___THREAD)
+  if (HAVE___THREAD)
+    CONFIG_H_APPEND(BRLCAD "#define HAVE___THREAD 1\n")
+  else (HAVE___THREAD)
+    # try Windows
+    check_cxx_source_compiles("static __declspec(thread) int i = 0; int main() { return i; }" HAVE___DECLSPEC_THREAD)
+    if (HAVE___DECLSPEC_THREAD)
+      CONFIG_H_APPEND(BRLCAD "#define HAVE___DECLSPEC_THREAD 1\n")
+    endif (HAVE___DECLSPEC_THREAD)
+  endif (HAVE___THREAD)
+endif (HAVE_THREAD_LOCAL)
 
 # see if the compiler supports %z as a size_t print width specifier
 BRLCAD_CHECK_C99_FORMAT_SPECIFIERS()
