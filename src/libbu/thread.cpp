@@ -62,15 +62,15 @@ public:
 };
 static ThreadLocal<int> thread_cpu;
 
-#elif defined(HAVE_THREAD_LOCAL_INT)
+#elif defined(HAVE_THREAD_LOCAL)
 
 static thread_local int thread_cpu = 0;
 
-#elif defined(HAVE___THREAD_INT)
+#elif defined(HAVE___THREAD)
 
 static __thread int thread_cpu = 0;
 
-#elif defined(HAVE___DECLSPEC_THREAD__INT)
+#elif defined(HAVE___DECLSPEC_THREAD)
 
 static __declspec(thread) int thread_cpu;
 
