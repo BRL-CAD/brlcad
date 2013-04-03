@@ -53,7 +53,7 @@
 
 
 int
-parallel_set_affinity(void)
+parallel_set_affinity(int cpu)
 {
 #if defined(HAVE_PTHREAD_H) && defined (CPU_ZERO)
 
@@ -68,7 +68,7 @@ parallel_set_affinity(void)
 
     /* Clear CPU set and assign our number */
     CPU_ZERO(&set_of_cpus);
-    CPU_SET(bu_parallel_id() & bu_avail_cpus(), &set_of_cpus);
+    CPU_SET(cpu & bu_avail_cpus(), &set_of_cpus);
 
     /* set affinity mask of current thread */
     ret = pthread_setaffinity_np(pthread_self(), sizeof(set_of_cpus), &set_of_cpus);
@@ -100,7 +100,7 @@ parallel_set_affinity(void)
 	return -1;
 
     /* put each thread into a separate group */
-    apolicy.affinity_tag = bu_parallel_id() % bu_avail_cpus();
+    apolicy.affinity_tag = cpu % bu_avail_cpus();
     ret = thread_policy_set(curr_thread, THREAD_EXTENDED_POLICY, (thread_policy_t) &apolicy, THREAD_EXTENDED_POLICY_COUNT);
     if (ret != KERN_SUCCESS)
 	return -1;
@@ -109,7 +109,7 @@ parallel_set_affinity(void)
 
 #elif defined(HAVE_WINDOWS_H)
 
-    BOOL ret = SetThreadAffinityMask(GetCurrentThread(), 1 << bu_parallel_id() % bu_avail_cpus());
+    BOOL ret = SetThreadAffinityMask(GetCurrentThread(), 1 << cpu % bu_avail_cpus());
     if (ret  == 0)
 	return -1;
 

@@ -30,7 +30,7 @@
  * -1 on Failure
  *
  */
-extern int parallel_set_affinity(void);
+extern int parallel_set_affinity(int cpu);
 
 extern void thread_set_cpu(int cpu);
 extern int thread_get_cpu(void);
