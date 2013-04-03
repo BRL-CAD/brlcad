@@ -6057,6 +6057,14 @@ namespace eval ArcherCore {
 
 ::itcl::body ArcherCore::cp {args} {
     eval gedWrapper cp 0 0 1 2 $args
+
+    set oname [lindex $args 1]
+    if {$oname == ""} {
+	return ""
+    }
+
+    draw $oname
+    selectTreePath $oname
 }
 
 ::itcl::body ArcherCore::cpi {args} {
