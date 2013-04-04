@@ -409,6 +409,7 @@ parallel_interface(void)
     bu_semaphore_release(BU_SEM_SYSCALL);
 }
 
+
 #endif /* PARALLEL */
 
 
@@ -592,7 +593,7 @@ bu_parallel(void (*func)(int, genptr_t), int ncpu, genptr_t arg)
 	    if (UNLIKELY(bu_debug & BU_DEBUG_PARALLEL)) {
 		bu_log("bu_parallel(): created thread: (thread: %p) (loop: %d) (nthreadc: %d)\n",
 		       (void*)thread, x, nthreadc);
-		}
+	    }
 
 	    thread_tbl[nthreadc] = thread;
 	    nthreadc++;
@@ -651,12 +652,12 @@ bu_parallel(void (*func)(int, genptr_t), int ncpu, genptr_t arg)
 
     thread = 0;
     nthreadc = 0;
-    DWORD   dwThreadIdArray[ncpu];
-    HANDLE  hThreadArray[ncpu] = {0};
+    DWORD dwThreadIdArray[ncpu];
+    HANDLE hThreadArray[ncpu] = {0};
 
     /* Create the Win32 threads */
 
-    for( int i = 0; i < ncpu; i++){
+    for(int i = 0; i < ncpu; i++) {
 
 	hThreadArray[i] = CreateThread(
 	    NULL,
