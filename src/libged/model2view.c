@@ -17,11 +17,6 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file libged/model2view.c
- *
- * The model2view command.
- *
- */
 
 #include "common.h"
 
@@ -32,15 +27,13 @@
 
 #include "./ged_private.h"
 
-/**
- * M O D E L 2 V I E W
- *
- * Given a point in model space coordinates (in mm) convert it to
- * view (screen) coordinates which must be scaled to correspond to
- * actual screen coordinates. If no input coordinates are supplied,
- * the model2view matrix is displayed.
- */
 
+/**
+ * Given a point in model space coordinates (in mm) convert it to view
+ * (screen) coordinates which must be scaled to correspond to actual
+ * screen coordinates. If no input coordinates are supplied, the
+ * model2view matrix is displayed.
+ */
 int
 ged_model2view(struct ged *gedp, int argc, const char *argv[])
 {
@@ -62,23 +55,22 @@ ged_model2view(struct ged *gedp, int argc, const char *argv[])
     }
 
     if (argc != 4) {
-	goto bad;
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return GED_ERROR;
     }
 
-    if (sscanf(argv[1], "%lf", &model_pt[X]) != 1 ||
-	sscanf(argv[2], "%lf", &model_pt[Y]) != 1 ||
-	sscanf(argv[3], "%lf", &model_pt[Z]) != 1) {
-	goto bad;
+    if (sscanf(argv[1], "%lf", &model_pt[X]) != 1
+	|| sscanf(argv[2], "%lf", &model_pt[Y]) != 1
+	|| sscanf(argv[3], "%lf", &model_pt[Z]) != 1)
+    {
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return GED_ERROR;
     }
 
     MAT4X3PNT(view_pt, gedp->ged_gvp->gv_model2view, model_pt);
     bn_encode_vect(gedp->ged_result_str, view_pt);
 
     return GED_OK;
-
-bad:
-    bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-    return GED_ERROR;
 }
 
 
