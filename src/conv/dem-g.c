@@ -1677,6 +1677,13 @@ main(int ac, char *av[])
 
     bu_setprogname(av[0]);
 
+    progname = *av;
+
+    if (ac < 2) {
+	usage();
+	bu_exit(BRLCAD_ERROR, "Exiting.\n");
+    }
+
     /*
      * element_counts[]
      * element_counts[record_type] = number of elements in each record type
@@ -2081,13 +2088,6 @@ main(int ac, char *av[])
     conversion_factor_to_milimeters[1] = 304.8;
     conversion_factor_to_milimeters[2] = 1000.0;
     conversion_factor_to_milimeters[3] = 30000.0;
-
-    progname = *av;
-
-    if (ac < 2) {
-	usage();
-	bu_exit(BRLCAD_ERROR, "Exiting.\n");
-    }
 
     input_filename = bu_realpath(av[1], NULL);
 
