@@ -49,7 +49,10 @@ changes made.  See document footer for additional details.
 * g_diff gives non-zero return code if .g files differ - Sean Morrison
 * fixed typographical errors in numerous tools and docs - Carl Moore
 * fixed TIE perpendicular face mesh evaluation failure - Richard Weiss
-
+* added -b option to set tpkg network packet size - Andrei Popescu
+* added manual page for existing mged reid command - Richard Weiss
+* added manual page for bot_sync, bot_flip, bot_split - Richard Weiss
+* added manual page for running rtarea within mged - Richard Weiss
 
 ----------------------------------------------------------------------
 --- 2012-06-25  Release 7.22.0                                     ---
