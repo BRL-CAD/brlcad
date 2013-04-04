@@ -1149,17 +1149,38 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
     } while (0)
 
 
+/**
+ * Compose 3D vector at `a' of:
+ * vector at `b' plus
+ * scalar `c' times vector at `d'
+ *
+ * This is basically a shorthand for VSCALE();VADD2();.
+ */
 #define VJOIN1(a, b, c, d) do { \
 	(a)[X] = (b)[X] + (c) * (d)[X]; \
 	(a)[Y] = (b)[Y] + (c) * (d)[Y]; \
 	(a)[Z] = (b)[Z] + (c) * (d)[Z]; \
     } while (0)
 
+/**
+ * Compose 2D vector at `a' of:
+ * vector at `b' plus
+ * scalar `c' times vector at `d'
+ *
+ * This is basically a shorthand for V2SCALE();V2ADD2();.
+ */
 #define V2JOIN1(a, b, c, d) do { \
 	(a)[X] = (b)[X] + (c) * (d)[X]; \
 	(a)[Y] = (b)[Y] + (c) * (d)[Y]; \
     } while (0)
 
+/**
+ * Compose 4D vector at `a' of:
+ * vector at `b' plus
+ * scalar `c' times vector at `d'
+ *
+ * This is basically a shorthand for HSCALE();HADD2();.
+ */
 #define HJOIN1(a, b, c, d) do { \
 	(a)[X] = (b)[X] + (c) * (d)[X]; \
 	(a)[Y] = (b)[Y] + (c) * (d)[Y]; \
@@ -1167,6 +1188,13 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
 	(a)[W] = (b)[W] + (c) * (d)[W]; \
     } while (0)
 
+/**
+ * Compose `n'-D vector at `a' of:
+ * vector at `b' plus
+ * scalar `c' times vector at `d'
+ *
+ * This is basically a shorthand for VSCALEN();VADD2N();.
+ */
 #define VJOIN1N(a, b, c, d, n) do { \
 	register int _vjoin1; \
 	for (_vjoin1 = 0; \
