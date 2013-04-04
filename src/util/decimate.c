@@ -65,6 +65,8 @@ main(int argc, char **argv)
     size_t dh, dw;
     size_t todo;
 
+    int failure;
+
     if (argc < 4) {
 	fputs(usage, stderr);
 	bu_exit (1, NULL);
@@ -79,12 +81,20 @@ main(int argc, char **argv)
 	oheight = atoi(argv[5]);
     }
 
-    if (nbytes <= 0 || nbytes > INT_MAX || iwidth <= 0 || iwidth > INT_MAX || iheight <= 0 || iheight > INT_MAX ) {
-	bu_log("Input size of range: %ldx%ld\n", (long int)iwidth, (long int)iheight);
-	return EXIT_FAILURE;
+    failure = (nbytes <= 0 || nbytes > INT_MAX);
+    if (failure){
+	bu_log("decimate: bad nbytes/pixel: %ld\n",(long int)nbytes);
+    }
+    if (iwidth <= 0 || iwidth > INT_MAX || iheight <= 0 || iheight > INT_MAX ) {
+    	failure = 1 ;
+	bu_log("decimate: bad size of input range: %ldx%ld\n", (long int)iwidth, (long int)iheight);
     }
     if (owidth <= 0 || owidth > INT_MAX || oheight <= 0 || oheight > INT_MAX ) {
-	bu_log("Output size of range: %ldx%ld\n", (long int)owidth, (long int)oheight);
+    	failure = 1 ;
+	bu_log("decimate: bad size of output range: %ldx%ld\n", (long int)owidth, (long int)oheight);
+    }
+    if (failure){
+	fputs(usage, stderr);
 	return EXIT_FAILURE;
     }
 
