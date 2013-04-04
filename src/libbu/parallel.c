@@ -415,6 +415,8 @@ parallel_interface(void)
 void
 bu_parallel(void (*func)(int, genptr_t), int ncpu, genptr_t arg)
 {
+    /* avoid using the 'register' keyword in here "just in case" */
+
 #ifndef PARALLEL
 
     bu_log("bu_parallel(%d., %p):  Not compiled for PARALLEL machine, running single-threaded\n", ncpu, arg);
