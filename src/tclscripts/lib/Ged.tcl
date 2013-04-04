@@ -737,6 +737,7 @@ package provide cadwidgets::Ged 1.0
 	proc validateDigit {_d}
 	proc validateDigitMax {_d _max}
 	proc validateDouble {_d}
+	proc validateRgb {_rgb}
     }
 
     protected {
@@ -5272,6 +5273,21 @@ package provide cadwidgets::Ged 1.0
 
 ::itcl::body cadwidgets::Ged::validateDouble {_d} {
     if {[string is double $_d] || $_d == "." || $_d == "-"} {
+	return 1
+    }
+
+    return 0
+}
+
+
+::itcl::body cadwidgets::Ged::validateRgb {_rgb} {
+    set r [lindex $_rgb 0]
+    set g [lindex $_rgb 1]
+    set b [lindex $_rgb 2]
+
+    if {($r == "" || ([string is digit $r] && $r <= 255)) &&
+	($g == "" || ([string is digit $g] && $g <= 255)) &&
+	($b == "" || ([string is digit $b] && $b <= 255))} {
 	return 1
     }
 
