@@ -171,7 +171,8 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   perhaps an explicit 'rad' suffix and an implicit 'deg' suffix, e.g.
   rt -a 0.3rad -e 0.5rad and aet 0.3rad 45deg 0
 
-* change fbserv usage to require a flag for its non-daemon mode
+* change fbserv usage to require a flag for its non-daemon mode, make
+  the device type optional for both daemon and non-daemon mode
 
 * make sure we can run db_dirbuild() multiple times without creating
   duplicate entries.
