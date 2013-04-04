@@ -1679,6 +1679,9 @@ main(int ac, char *av[])
 
     progname = *av;
 
+/* Because other file names (__.tmp , __.dsp , __.g) are set up based on the file name provided
+ * in dem-g command argument, dem-g cannot accept tty input.
+ */  
     if (ac < 2) {
 	usage();
 	bu_exit(BRLCAD_ERROR, "Exiting.\n");
