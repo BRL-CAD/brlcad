@@ -16,7 +16,7 @@
  *
  * Calculate whether two coplanar triangles intersect:
  *
- * int bn_coplanar_tri_tri_isect(point_t V0, point_t V1, point_t V2,
+ * int bn_tri_tri_isect_coplanar(point_t V0, point_t V1, point_t V2,
  *                               point_t U0, point_t U1, point_t U2,
  *                               int area_flag)
  * parameters: vertices of triangle 1: V0, V1, V2
@@ -175,7 +175,7 @@
     }
 
 
-int bn_coplanar_tri_tri_isect(point_t V0, point_t V1, point_t V2,
+int bn_tri_tri_isect_coplanar(point_t V0, point_t V1, point_t V2,
 			      point_t U0, point_t U1, point_t U2, int area_flag)
 {
     int ret;

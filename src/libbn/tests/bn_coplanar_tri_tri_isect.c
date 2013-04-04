@@ -60,7 +60,7 @@ main(int argc, char **argv)
     sscanf(argv[7], "%d", &area_flag);
     sscanf(argv[8], "%d", &expected_result);
 
-    actual_result = bn_coplanar_tri_tri_isect(V0,V1,V2,U0,U1,U2,area_flag);
+    actual_result = bn_tri_tri_isect_coplanar(V0,V1,V2,U0,U1,U2,area_flag);
 
     bu_log("result: %d\n", actual_result);
 

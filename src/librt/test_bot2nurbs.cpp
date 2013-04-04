@@ -702,7 +702,7 @@ size_t overlapping_edge_triangles(std::map< size_t, std::set<size_t> > *patches,
 			    VSET(u0, onpt_u0.x, onpt_u0.y, onpt_u0.z);
 			    VSET(u1, onpt_u1.x, onpt_u1.y, onpt_u1.z);
 			    VSET(u2, onpt_u2.x, onpt_u2.y, onpt_u2.z);
-			    int overlap = bn_coplanar_tri_tri_isect(v0, v1, v2, u0, u1, u2, 1);
+			    int overlap = bn_tri_tri_isect_coplanar(v0, v1, v2, u0, u1, u2, 1);
 			    if (overlap) {
 				std::cout << "Patch " << (*p_it).first << " overlap: (" << *sizet_it << "," << *ef_it2 << ")\n";
 				split_overlapping_patch(*sizet_it, *ef_it2, (*p_it).first, patches, info);
