@@ -713,13 +713,13 @@ findang(fastf_t *angles, fastf_t *unitv)
     if ((f = cos(angles[4])) > 1.0e-16 || f < -1.0e-16) {
 	f = unitv[X]/f;
 	if (f <= -1.0)
-	    angles[3] = 180;
+	    angles[3] = 180.0;
 	else if (f >= 1.0)
-	    angles[3] = 0;
+	    angles[3] = 0.0;
 	else
 	    angles[3] = bn_radtodeg * acos(f);
     } else
-	angles[3] = 0;
+	angles[3] = 0.0;
 
     if (unitv[Y] < 0)
 	angles[3] = 360.0 - angles[3];
