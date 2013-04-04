@@ -4054,16 +4054,16 @@ BU_EXPORT extern int bu_avail_cpus();
  * by 'func' using a "self-dispatching" paradigm.
  *
  * 'func' is called with one parameter, its thread number.  Threads
- * are given increasing numbers, starting with zero.
+ * are given increasing numbers, starting with zero.  Processes may
+ * also call bu_parallel_id() to obtain their thread number.
+ *
+ * Threads created with bu_parallel() automatically set CPU affinity
+ * where available for improved performance.  This behavior can be
+ * disabled at runtime by setting the LIBBU_AFFINITY environment
+ * variable to 0.
  *
  * This function will not return control until all invocations of the
  * subroutine are finished.
- *
- * Don't use registers in this function (bu_parallel).  At least on
- * the Alliant, register context is NOT preserved when exiting the
- * parallel mode, because the serial portion resumes on some arbitrary
- * processor, not necessarily the one that serial execution started
- * on.  The registers are not shared.
  */
 BU_EXPORT extern void bu_parallel(void (*func)(int ncpu, genptr_t arg), int ncpu, genptr_t arg);
 
