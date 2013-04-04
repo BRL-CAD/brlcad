@@ -54,6 +54,7 @@ changes made.  See document footer for additional details.
 * added manual page for bot_sync, bot_flip, bot_split - Richard Weiss
 * added manual page for running rtarea within mged - Richard Weiss
 * improved documentation consistency and authorship info - Tom Browder
+* new mouse-input unpushed matrix edit option in archer - Bob Parker
 
 ----------------------------------------------------------------------
 --- 2012-06-25  Release 7.22.0                                     ---
