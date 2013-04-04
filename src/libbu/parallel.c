@@ -121,6 +121,7 @@ struct thread_data {
     genptr_t user_arg;
     int cpu_id;
     int counted;
+    int affinity;
 };
 
 
@@ -347,8 +348,10 @@ parallel_interface_arg(struct thread_data *user_thread_data)
     /* keep track of our parallel ID number */
     thread_set_cpu(user_thread_data->cpu_id);
 
-    /* lock us onto a core corresponding to our parallel ID number */
-    parallel_set_affinity(user_thread_data->cpu_id);
+    if (user_thread_data->affinity) {
+	/* lock us onto a core corresponding to our parallel ID number */
+	parallel_set_affinity(user_thread_data->cpu_id);
+    }
 
     if (!user_thread_data->counted) {
 	bu_semaphore_acquire(BU_SEM_SYSCALL);
@@ -382,6 +385,8 @@ HIDDEN void
 parallel_interface(void)
 {
     struct thread_data user_thread_data_pi;
+    char *libbu_affinity = NULL;
+    int affinity = 1;
 
     user_thread_data_pi.user_func = parallel_func;
     user_thread_data_pi.user_arg  = parallel_arg;
@@ -390,7 +395,12 @@ parallel_interface(void)
     user_thread_data_pi.cpu_id = parallel_nthreads_started++;
     bu_semaphore_release(BU_SEM_SYSCALL);
 
+    libbu_affinity = getenv("LIBBU_AFFINITY");
+    if (libbu_affinity)
+	affinity = (int)strtol(libbu_affinity, NULL, 0x10);
+
     user_thread_data_pi.counted = 1;
+    user_thread_data_pi.affinity = affinity;
 
     parallel_interface_arg(&user_thread_data_pi);
 
@@ -416,6 +426,9 @@ bu_parallel(void (*func)(int, genptr_t), int ncpu, genptr_t arg)
     struct thread_data *user_thread_data_bu;
     int avail_cpus = 1;
     int x;
+
+    char *libbu_affinity = NULL;
+    int affinity = 1;
 
     /*
      * multithreading support for SunOS 5.X / Solaris 2.x
@@ -448,6 +461,10 @@ bu_parallel(void (*func)(int, genptr_t), int ncpu, genptr_t arg)
     parallel_func = func;
     parallel_arg = arg;
 
+    libbu_affinity = getenv("LIBBU_AFFINITY");
+    if (libbu_affinity)
+	affinity = (int)strtol(libbu_affinity, NULL, 0x10);
+
     user_thread_data_bu = (struct thread_data *)bu_calloc(ncpu, sizeof(*user_thread_data_bu), "struct thread_data *user_thread_data_bu");
 
     /* Fill in the data of user_thread_data_bu structures of all threads */
@@ -456,6 +473,7 @@ bu_parallel(void (*func)(int, genptr_t), int ncpu, genptr_t arg)
 	user_thread_data_bu[x].user_arg  = arg;
 	user_thread_data_bu[x].cpu_id    = x;
 	user_thread_data_bu[x].counted   = 0;
+	user_thread_data_bu[x].affinity  = affinity;
     }
 
     /* if we're in debug mode, allow additional cpus */
