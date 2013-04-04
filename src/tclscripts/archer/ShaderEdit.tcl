@@ -68,6 +68,7 @@
 	    Mirror
 	    Glass
 	    Light
+	    Checker
 	    Cloud
 	    Unlisted
 	    None
@@ -78,6 +79,7 @@
 	    mirror
 	    glass
 	    light
+	    checker
 	    cloud
 	    unlisted
 	    ""
@@ -88,6 +90,7 @@
 	    {Mirror mirror}
 	    {Glass glass}
 	    {Light light}
+	    {Checker checker}
 	    {Cloud cloud}
 	    {Unlisted unlisted}
 	    {None ""}
@@ -238,6 +241,7 @@
 	method build_plastic {parent id}
 	method build_mirror {parent id}
 	method build_glass {parent id}
+	method build_checker {parent id}
 	method build_cloud {parent id}
 	method buildPhong {parent id}
 
@@ -263,6 +267,9 @@
 
 	method updatePhongForm {id}
 
+	method updateForm_checker {id}
+	method setFormDefaults_checker {id}
+
 	method updateForm_cloud {id}
 	method setFormDefaults_cloud {id}
 
@@ -282,6 +289,10 @@
 
 	method validateDouble_light {id d}
 	method updateLightSpec {id {_unused ""}}
+
+	method validateDouble_checker {id d}
+	method validateRgb_checker {id rgb}
+	method updateCheckerSpec {id}
 
 	method validateDouble_cloud {id d}
 	method updateCloudSpec {id}
@@ -382,6 +393,71 @@
     grid columnconfigure $itk_interior 1 -weight 1
 
     bind $itk_component(shaderCB) <<ComboboxSelected>> [::itcl::code $this changeShader]
+}
+
+
+::itcl::body ShaderEdit::build_checker {parent id} {
+    set shaderType "checker"
+    set shaderTypeUnlisted 0
+
+    itk_component add checker$id\F {
+	::ttk::frame $parent.checker$id\F
+    } {}
+
+    set parent $itk_component(checker$id\F)
+
+    itk_component add checkerColorA$id\L {
+	::ttk::label $parent.checkerColorA$id\L \
+	    -text "Color A"
+    } {}
+
+    itk_component add checkerColorA$id\E {
+	::ttk::entry $parent.checkerColorA$id\E \
+	    -width 15 \
+	    -textvariable [::itcl::scope checkerColorA($id)] \
+	    -validate key \
+	    -validatecommand [::itcl::code $this validateRgb_checker $id %P]
+    } {}
+
+    itk_component add checkerColorB$id\L {
+	::ttk::label $parent.checkerColorB$id\L \
+	    -text "Color B"
+    } {}
+
+    itk_component add checkerColorB$id\E {
+	::ttk::entry $parent.checkerColorB$id\E \
+	    -width 15 \
+	    -textvariable [::itcl::scope checkerColorB($id)] \
+	    -validate key \
+	    -validatecommand [::itcl::code $this validateRgb_checker $id %P]
+    } {}
+
+    itk_component add checkerScale$id\L {
+	::ttk::label $parent.checkerScale$id\L \
+	    -text "Range"
+    } {}
+
+    itk_component add checkerScale$id\E {
+	::ttk::entry $parent.checkerScale$id\E \
+	    -width 5 \
+	    -textvariable [::itcl::scope checkerScale($id)] \
+	    -validate key \
+	    -validatecommand [::itcl::code $this validateDouble_checker $id %P]
+    } {}
+
+    set row 0
+    grid $itk_component(checkerColorA$id\L) -row $row -column 0 -sticky e
+    grid $itk_component(checkerColorA$id\E) -row $row -column 1 -sticky w
+    incr row
+    grid $itk_component(checkerColorB$id\L) -row $row -column 0 -sticky e
+    grid $itk_component(checkerColorB$id\E) -row $row -column 1 -sticky w
+    incr row
+    grid $itk_component(checkerScale$id\L) -row $row -column 0 -sticky e
+    grid $itk_component(checkerScale$id\E) -row $row -column 1 -sticky w
+
+    pack $itk_component(checker$id\F) -expand yes -fill both
+
+    setFormDefaults_checker $id
 }
 
 
@@ -801,6 +877,12 @@
 	"Glass" {
 	    set stype glass
 	}
+	"Light" {
+	    set stype light
+	}
+	"Checker" {
+	    set stype checker
+	}
 	"Cloud" {
 	    set stype cloud
 	}
@@ -1007,6 +1089,48 @@
     set ignoreShaderSpec 0
 }
 
+::itcl::body ShaderEdit::updateForm_checker {id} {
+    setFormDefaults_checker $id
+
+    set ignoreShaderSpec 1
+    foreach {key val} [lindex $shaderSpec 1] {
+	if {$val != ""} {
+	    set notEmptyVal 1
+	} else {
+	    set notEmptyVal 0
+	}
+
+	switch -- $key {
+	    "a" {
+		if {$notEmptyVal && [llength $val] == 3} {
+		    set checkerColorA($id) $val
+		}
+	    }
+	    "b" {
+		if {$notEmptyVal && [llength $val] == 3} {
+		    set checkerColorB($id) $val
+		}
+	    }
+	    "s" {
+		if {$notEmptyVal && [string is double $val]} {
+		    set checkerScale($id) $val
+		}
+	    }
+	}
+    }
+    set ignoreShaderSpec 0
+}
+
+::itcl::body ShaderEdit::setFormDefaults_checker {id} {
+    set ignoreShaderSpec 1
+
+    set checkerColorA($id) $DEF_CHECKER_COLOR_A
+    set checkerColorB($id) $DEF_CHECKER_COLOR_B
+    set checkerScale($id) $DEF_CHECKER_SCALE
+
+    set ignoreShaderSpec 0
+}
+
 ::itcl::body ShaderEdit::updateForm_cloud {id} {
     setFormDefaults_cloud $id
 
@@ -1034,16 +1158,11 @@
     set ignoreShaderSpec 0
 }
 
-::itcl::body ShaderEdit::setFormDefaults_light {id} {
+::itcl::body ShaderEdit::setFormDefaults_cloud {id} {
     set ignoreShaderSpec 1
 
-    set lightFraction($id) $DEF_LIGHT_FRACTION
-    set lightAngle($id) $DEF_LIGHT_ANGLE
-    set lightTarget($id) $DEF_LIGHT_TARGET
-    set lightLumens($id) $DEF_LIGHT_LUMENS
-    set lightInfinite($id) $DEF_LIGHT_INFINITE
-    set lightVisible($id) $DEF_LIGHT_VISIBLE
-    set lightShadowRays($id) $DEF_LIGHT_SHADOW_RAYS
+    set cloudThreshold($id) $DEF_CLOUD_THRESHOLD
+    set cloudRange($id) $DEF_CLOUD_RANGE
 
     set ignoreShaderSpec 0
 }
@@ -1103,11 +1222,16 @@
     set ignoreShaderSpec 0
 }
 
-::itcl::body ShaderEdit::setFormDefaults_cloud {id} {
+::itcl::body ShaderEdit::setFormDefaults_light {id} {
     set ignoreShaderSpec 1
 
-    set cloudThreshold($id) $DEF_CLOUD_THRESHOLD
-    set cloudRange($id) $DEF_CLOUD_RANGE
+    set lightFraction($id) $DEF_LIGHT_FRACTION
+    set lightAngle($id) $DEF_LIGHT_ANGLE
+    set lightTarget($id) $DEF_LIGHT_TARGET
+    set lightLumens($id) $DEF_LIGHT_LUMENS
+    set lightInfinite($id) $DEF_LIGHT_INFINITE
+    set lightVisible($id) $DEF_LIGHT_VISIBLE
+    set lightShadowRays($id) $DEF_LIGHT_SHADOW_RAYS
 
     set ignoreShaderSpec 0
 }
@@ -1210,6 +1334,64 @@
     }
 
     $itk_component(lightImage$id\L) configure -image $lightImages(light_i$lightInfinite($id)_v$lightVisible($id)_s$s)
+
+    if {$allowCallbacks && $itk_option(-shaderChangedCallback) != ""} {
+	$itk_option(-shaderChangedCallback)
+    }
+}
+
+::itcl::body ShaderEdit::validateDouble_checker {id d} {
+    if {![::cadwidgets::Ged::validateDouble $d]} {
+	return 0
+    }
+
+    if {!$ignoreShaderSpec} {
+	after idle [::itcl::code $this updateCheckerSpec $id]
+    }
+
+    return 1
+}
+
+::itcl::body ShaderEdit::validateRgb_checker {id rgb} {
+    if {![::cadwidgets::Ged::validateRgb $rgb]} {
+	return 0
+    }
+
+    if {!$ignoreShaderSpec} {
+	after idle [::itcl::code $this updateCheckerSpec $id]
+    }
+
+    return 1
+}
+
+::itcl::body ShaderEdit::updateCheckerSpec {id} {
+    set newSpec ""
+
+    if {$checkerColorA($id) != $DEF_CHECKER_COLOR_A} {
+	if {$newSpec == ""} {
+	    append newSpec "a {$checkerColorA($id)}"
+	} else {
+	    append newSpec " a {$checkerColorA($id)}"
+	}
+    }
+
+    if {$checkerColorB($id) != $DEF_CHECKER_COLOR_B} {
+	if {$newSpec == ""} {
+	    append newSpec "b {$checkerColorB($id)}"
+	} else {
+	    append newSpec " b {$checkerColorB($id)}"
+	}
+    }
+
+    if {$checkerScale($id) != $DEF_CHECKER_SCALE} {
+	if {$newSpec == ""} {
+	    append newSpec "s $checkerScale($id)"
+	} else {
+	    append newSpec " s $checkerScale($id)"
+	}
+    }
+
+    set shaderSpec "checker [list $newSpec]"
 
     if {$allowCallbacks && $itk_option(-shaderChangedCallback) != ""} {
 	$itk_option(-shaderChangedCallback)
