@@ -4078,9 +4078,8 @@ void
 nmg_isect_fu_jra(struct nmg_inter_struct *is, struct faceuse *fu1, struct faceuse *fu2, struct bu_ptbl *eu1_list, struct bu_ptbl *eu2_list)
 {
     struct model *m;
-    struct bu_ptbl verts1, verts2;
-    struct loopuse *lu;
-    int i;
+    struct bu_ptbl verts1, verts2, eus;
+    ssize_t i;
 
     if (rt_g.NMG_debug & DEBUG_POLYSECT)
 	bu_log("nmg_isect_fu_jra(fu1=x%x, fu2=x%x) START\n", fu1, fu2);
@@ -4094,46 +4093,39 @@ nmg_isect_fu_jra(struct nmg_inter_struct *is, struct faceuse *fu1, struct faceus
     m = nmg_find_model(&fu1->l.magic);
     NMG_CK_MODEL(m);
 
-    nmg_vertex_tabulate(&verts2, &fu2->l.magic);
-
     /* Intersect fu1 edgeuses */
-    for (BU_LIST_FOR(lu, loopuse, &fu1->lu_hd)) {
+    nmg_vertex_tabulate(&verts2, &fu2->l.magic);
+    nmg_edgeuse_tabulate(&eus, &fu1->l.magic);
+    for (i = 0; i < BU_PTBL_END(&eus); i++) {
 	struct edgeuse *eu;
 
-	NMG_CK_LOOPUSE(lu);
-
-	if (BU_LIST_FIRST_MAGIC(&lu->down_hd) != NMG_EDGEUSE_MAGIC)
+	eu = (struct edgeuse *)BU_PTBL_GET(&eus, i);
+	NMG_CK_EDGEUSE(eu);
+	if (eu->g.magic_p && *eu->g.magic_p == NMG_EDGE_G_CNURB_MAGIC) {
 	    continue;
-
-	for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
-	    NMG_CK_EDGEUSE(eu);
-
-	    nmg_isect_eu_fu(is, &verts2, eu, fu2);
 	}
+	nmg_isect_eu_fu(is, &verts2, eu, fu2);
     }
-
     bu_ptbl_free(&verts2);
-    nmg_vertex_tabulate(&verts1, &fu1->l.magic);
+    bu_ptbl_free(&eus);
 
-    /* now intersect fu2 edgeuses */
-    for (BU_LIST_FOR(lu, loopuse, &fu2->lu_hd)) {
+    /* Intersect fu2 edgeuses */
+    nmg_vertex_tabulate(&verts1, &fu1->l.magic);
+    nmg_edgeuse_tabulate(&eus, &fu2->l.magic);
+    for (i = 0; i < BU_PTBL_END(&eus); i++) {
 	struct edgeuse *eu;
 
-	NMG_CK_LOOPUSE(lu);
-
-	if (BU_LIST_FIRST_MAGIC(&lu->down_hd) != NMG_EDGEUSE_MAGIC)
+	eu = (struct edgeuse *)BU_PTBL_GET(&eus, i);
+	NMG_CK_EDGEUSE(eu);
+	if (eu->g.magic_p && *eu->g.magic_p == NMG_EDGE_G_CNURB_MAGIC) {
 	    continue;
-
-	for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
-	    NMG_CK_EDGEUSE(eu);
-
-	    nmg_isect_eu_fu(is, &verts1, eu, fu1);
 	}
+	nmg_isect_eu_fu(is, &verts1, eu, fu1);
     }
+    bu_ptbl_free(&verts1);
+    bu_ptbl_free(&eus);
 
     /* check for existing vertices along intersection */
-    bu_ptbl_free(&verts1);
-
     /* XXXX this is the second time this tabulate is being done,
      * but for now it's safer this way
      */
