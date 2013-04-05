@@ -1,112 +1,103 @@
-set(brlcadinclude_required
-	${CMAKE_CURRENT_BINARY_DIR}/brlcad_config.h
-	RtServerImpl.h
-	bn.h
-	bu.h
-	common.h
-	ged.h
-	magic.h
-	pstdint.h
-	raytrace.h
-	rt/defines.h
-	rtfunc.h
-	rtgeom.h
-	rtserver.h
-	tclcad.h
-)
+set(include_hdrs
+  ${CMAKE_CURRENT_BINARY_DIR}/brlcad_config.h
+  RtServerImpl.h
+  bn.h
+  bu.h
+  common.h
+  ged.h
+  magic.h
+  pstdint.h
+  raytrace.h
+  rt/defines.h
+  rtfunc.h
+  rtgeom.h
+  rtserver.h
+  tclcad.h
+  analyze.h
+  anim.h
+  bot.h
+  brep.h
+  brlcad.h
+  brlcad.i
+  cmd.h
+  db.h
+  db5.h
+  dg.h
+  dm-Null.h
+  dm-X.h
+  dm-glx.h
+  dm-ogl.h
+  dm-pex.h
+  dm-plot.h
+  dm-ps.h
+  dm-rtgl.h
+  dm-tk.h
+  dm-wgl.h
+  dm.h
+  dm_color.h
+  dm_xvars.h
+  dvec.h
+  fb.h
+  fbio.h
+  fbserv_obj.h
+  fft.h
+  gcv.h
+  icv.h
+  libtermio.h
+  light.h
+  mater.h
+  nmg.h
+  nurb.h
+  obj.h
+  optical.h
+  orle.h
+  photonmap.h
+  pc.h
+  pkg.h
+  plastic.h
+  plot3.h
+  redblack.h
+  shadefuncs.h
+  shadework.h
+  solid.h
+  spectrum.h
+  spm.h
+  tie.h
+  tol.h
+  vectfont.h
+  vector_fpu.h
+  vector_x86.h
+  vfont-if.h
+  vmath.h
+  wdb.h
+  )
 if(WIN32)
-	set(brlcadinclude_required ${brlcadinclude_required} ${CMAKE_CURRENT_BINARY_DIR}/config_win_cmake.h)
+  set(include_hdrs ${include_hdrs} ${CMAKE_CURRENT_BINARY_DIR}/config_win_cmake.h)
 endif(WIN32)
-
-set(brlcadinclude_wanted
-	analyze.h
-	anim.h
-	bot.h
-	brep.h
-	brlcad.h
-	brlcad.i
-	cmd.h
-	db.h
-	db5.h
-	dg.h
-	dm-Null.h
-	dm-X.h
-	dm-glx.h
-	dm-ogl.h
-	dm-pex.h
-	dm-plot.h
-	dm-ps.h
-	dm-rtgl.h
-	dm-tk.h
-	dm-wgl.h
-	dm.h
-	dm_color.h
-	dm_xvars.h
-	dvec.h
-	fb.h
-	fbio.h
-	fbserv_obj.h
-	fft.h
-	gcv.h
-	icv.h
-	libtermio.h
-	light.h
-	mater.h
-	nmg.h
-	nurb.h
-	obj.h
-	optical.h
-	orle.h
-	photonmap.h
-	pc.h
-	pkg.h
-	plastic.h
-	plot3.h
-	redblack.h
-	shadefuncs.h
-	shadework.h
-	solid.h
-	spectrum.h
-	spm.h
-	tie.h
-	tol.h
-	vectfont.h
-	vector_fpu.h
-	vector_x86.h
-	vfont-if.h
-	vmath.h
-	wdb.h
-)
+install(FILES ${include_hdrs} DESTINATION include/brlcad)
 
 # headers used by multiple packages but still considered private.
 # public headers should NOT include these headers.
-set(brlcadnoinst_HEADERS
-	bin.h
-	bio.h
-	brlcad_version.h
-	bselect.h
-	conf.h
-	fbmsg.h
-	sysv.h
-)
+set(noinst_HEADERS
+  bin.h
+  bio.h
+  brlcad_version.h
+  bselect.h
+  conf.h
+  fbmsg.h
+  sysv.h
+  )
 
-set(brlcadinclude_misc
-	conf
-	config_win.h
-	config_win_cmake.h.in
-	)
+set(include_misc
+  conf
+  config_win.h
+  config_win_cmake.h.in
+  )
 
-install(FILES ${brlcadinclude_required} DESTINATION include/brlcad)
-
-
-if(NOT BRLCAD_BUILD_BENCHMARK_ONLY AND NOT BRLCAD_BUILD_RTSERVER_ONLY)
-	install(FILES ${brlcadinclude_wanted} DESTINATION include/brlcad)
-endif(NOT BRLCAD_BUILD_BENCHMARK_ONLY AND NOT BRLCAD_BUILD_RTSERVER_ONLY)
-
-CMAKEFILES(${brlcadinclude_required})
-CMAKEFILES(${brlcadinclude_wanted})
-CMAKEFILES(${brlcadnoinst_HEADERS})
-CMAKEFILES(${brlcadinclude_misc})
+CMAKEFILES(${include_required})
+CMAKEFILES(${include_wanted})
+CMAKEFILES(${noinst_HEADERS})
+CMAKEFILES(${include_misc})
 CMAKEFILES(Makefile.am)
 
 # Local Variables:
