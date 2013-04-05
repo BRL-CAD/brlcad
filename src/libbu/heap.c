@@ -94,9 +94,10 @@ struct bins {
 };
 
 struct cpus {
-    struct bins *bin;
+    struct bins bin[BINS];
     size_t misses;
-} *per_cpu = NULL;
+};
+static struct cpus per_cpu[MAX_PSW] = {{{{0, 0, 0, 0}}, 0}};
 
 
 void
@@ -145,15 +146,6 @@ bu_heap_get(size_t sz)
     int oncpu;
     struct bins *bin;
 
-    /* init per-cpu structures */
-    if (!per_cpu) {
-	size_t i;
-	size_t ncpus = bu_avail_cpus();
-	per_cpu = bu_calloc(ncpus, sizeof(struct cpus), "struct cpus");
-	for (i=0; i<ncpus; i++)
-	    per_cpu[i].bin = bu_calloc(BINS, sizeof(struct bins), "struct bins");
-    }
-
     /* what thread are we? */
     oncpu = bu_parallel_id();
 
@@ -171,16 +163,14 @@ bu_heap_get(size_t sz)
     }
 
     bin = &per_cpu[oncpu].bin[smo];
-
     bin->alloc++;
-    /* alloc[smo]++; */
 
     /* init */
-    if (!bin->pages) {
+    if (bin->pages == 0) {
 
-	if (bu_debug && printit==0) {
-	    atexit(bu_heap_print);
+	if (bu_debug && printit == 0) {
 	    printit++;
+	    atexit(bu_heap_print);
 	}
 
 	bin->pages++;
