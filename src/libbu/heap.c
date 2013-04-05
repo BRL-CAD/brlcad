@@ -33,6 +33,9 @@
  * arbitrarily large except where there are very few allocations (each
  * size will allocate at least one page).  PAGESIZE should be some
  * multiple larger than BINS.
+ *
+ * Embedded or memory-constrained environments probably want to set
+ * this a lot smaller than the default.
  */
 #define BINS 1024
 
@@ -213,6 +216,8 @@ bu_heap_put(void *ptr, size_t sz)
 	bu_free(ptr, "heap free");
 	return;
     }
+
+    /* TODO: actually do something useful :) */
 
     return;
 }
