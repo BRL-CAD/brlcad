@@ -87,6 +87,14 @@ draw_check_leaf(struct db_tree_state *tsp,
 		(void)rt_bot_plot_poly(&vhead, ip, tsp->ts_ttol, tsp->ts_tol);
 		_ged_drawH_part2(0, &vhead, pathp, tsp, SOLID_NULL, dgcdp);
 	    } else if (ip->idb_major_type == DB5_MAJORTYPE_BRLCAD &&
+		    (ip->idb_minor_type == DB5_MINORTYPE_BRLCAD_BREP)) {
+		struct bu_list vhead;
+
+		BU_LIST_INIT(&vhead);
+
+		(void)rt_brep_plot_poly(&vhead, pathp, ip, tsp->ts_ttol, tsp->ts_tol, NULL);
+		_ged_drawH_part2(0, &vhead, pathp, tsp, SOLID_NULL, dgcdp);
+	    } else if (ip->idb_major_type == DB5_MAJORTYPE_BRLCAD &&
 		       ip->idb_minor_type == DB5_MINORTYPE_BRLCAD_POLY) {
 		struct bu_list vhead;
 
@@ -123,6 +131,13 @@ draw_check_leaf(struct db_tree_state *tsp,
 		    BU_LIST_INIT(&vhead);
 
 		    (void)rt_bot_plot_poly(&vhead, ip, tsp->ts_ttol, tsp->ts_tol);
+		    _ged_drawH_part2(0, &vhead, pathp, tsp, SOLID_NULL, dgcdp);
+		} else if (ip->idb_minor_type == DB5_MINORTYPE_BRLCAD_BREP) {
+			struct bu_list vhead;
+
+			BU_LIST_INIT(&vhead);
+
+			(void)rt_brep_plot_poly(&vhead, pathp, ip, tsp->ts_ttol, tsp->ts_tol, NULL);
 		    _ged_drawH_part2(0, &vhead, pathp, tsp, SOLID_NULL, dgcdp);
 		} else if (ip->idb_minor_type == DB5_MINORTYPE_BRLCAD_POLY) {
 		    struct bu_list vhead;
@@ -836,6 +851,18 @@ draw_nmg_region_start(struct db_tree_state *tsp, const struct db_full_path *path
 		    (void)rt_bot_plot(&vhead, &intern, tsp->ts_ttol, tsp->ts_tol, NULL);
 		} else {
 		    (void)rt_bot_plot_poly(&vhead, &intern, tsp->ts_ttol, tsp->ts_tol);
+		}
+	    }
+	    goto out;
+	case ID_BREP:
+	    {
+		if (RT_G_DEBUG&DEBUG_TREEWALK) {
+		    bu_log("fastpath draw ID_BREP %s\n", dp->d_namep);
+		}
+		if (dgcdp->draw_wireframes) {
+		    (void)rt_brep_plot(&vhead, &intern, tsp->ts_ttol, tsp->ts_tol, NULL);
+		} else {
+		    (void)rt_brep_plot_poly(&vhead, pathp, &intern, tsp->ts_ttol, tsp->ts_tol, NULL);
 		}
 	    }
 	    goto out;

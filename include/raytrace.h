@@ -6752,6 +6752,19 @@ RT_EXPORT extern int rt_bot_tess(struct nmgregion **r,
 				 const struct rt_tess_tol *ttol,
 				 const struct bn_tol *tol);
 
+/* BREP drawing routines */
+RT_EXPORT extern int rt_brep_plot(struct bu_list		*vhead,
+				 struct rt_db_internal		*ip,
+				 const struct rt_tess_tol	*ttol,
+				 const struct bn_tol		*tol,
+				 const struct rt_view_info *info);
+RT_EXPORT extern int rt_brep_plot_poly(struct bu_list		*vhead,
+					  const struct db_full_path *pathp,
+				      struct rt_db_internal	*ip,
+				      const struct rt_tess_tol	*ttol,
+				      const struct bn_tol	*tol,
+				      const struct rt_view_info *info);
+
 /* From nmg_tri.c */
 RT_EXPORT extern void nmg_triangulate_shell(struct shell *s,
 					    const struct bn_tol  *tol);

@@ -39,7 +39,7 @@
 #include "../librt/primitives/brep/brep_local.h"
 
 #if 1
-RT_EXPORT extern int brep_command(struct bu_vls *vls, struct brep_specific* bs, struct rt_brep_internal* bi, struct bn_vlblock *vbp, int argc, const char *argv[], char *commtag);
+RT_EXPORT extern int brep_command(struct bu_vls *vls, const char *solid_name, const struct rt_tess_tol *ttol, const struct bn_tol *tol, struct brep_specific* bs, struct rt_brep_internal* bi, struct bn_vlblock *vbp, int argc, const char *argv[], char *commtag);
 RT_EXPORT extern int brep_conversion(struct rt_db_internal *intern, ON_Brep **brep);
 RT_EXPORT extern int brep_conversion_comb(struct rt_db_internal *old_internal, char *name, char *suffix, struct rt_wdb *wdbp, fastf_t local2mm);
 RT_EXPORT extern int brep_intersect(struct rt_db_internal *intern1, struct rt_db_internal *intern2, int i, int j, struct bn_vlblock *vbp, double max_dis);
@@ -52,7 +52,7 @@ int
 ged_brep(struct ged *gedp, int argc, const char *argv[])
 {
     struct bn_vlblock*vbp;
-    char *solid_name;
+    const char *solid_name;
     static const char *usage = "brep obj [command|brepname|suffix] ";
     struct directory *ndp;
     struct rt_db_internal intern;
@@ -91,7 +91,7 @@ ged_brep(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-    solid_name = (char *)argv[1];
+    solid_name = argv[1];
     if ((ndp = db_lookup(gedp->ged_wdbp->dbip,  solid_name, LOOKUP_NOISY)) == RT_DIR_NULL) {
 	bu_vls_printf(gedp->ged_result_str, "Error: %s is not a solid or does not exist in database", solid_name);
 	return GED_ERROR;
@@ -267,7 +267,7 @@ ged_brep(struct ged *gedp, int argc, const char *argv[])
 
     vbp = rt_vlblock_init();
 
-    brep_command(gedp->ged_result_str, bs, bi, vbp, argc, argv, commtag);
+    brep_command(gedp->ged_result_str, solid_name, (const struct rt_tess_tol *)&gedp->ged_wdbp->wdb_ttol, &gedp->ged_wdbp->wdb_tol, bs, bi, vbp, argc, argv, commtag);
 
     snprintf(namebuf, 64, "%s%s_", commtag, solid_name);
     _ged_cvt_vlblock_to_solids(gedp, vbp, namebuf, 0);

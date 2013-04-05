@@ -34,6 +34,8 @@
 #include <set>
 #include <utility>
 
+#include "poly2tri/poly2tri.h"
+
 #include "vmath.h"
 
 #include "plot3.h"
@@ -50,7 +52,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-    RT_EXPORT extern int brep_command(struct bu_vls *vls, struct brep_specific* bs, struct rt_brep_internal* bi, struct bn_vlblock *vbp, int argc, const char *argv[], char *commtag);
+    RT_EXPORT extern int brep_command(struct bu_vls *vls, const char *solid_name, const struct rt_tess_tol* ttol, const struct bn_tol* tol, struct brep_specific* bs, struct rt_brep_internal* bi, struct bn_vlblock *vbp, int argc, const char *argv[], char *commtag);
     RT_EXPORT extern int brep_conversion(struct rt_db_internal* intern, ON_Brep** brep);
     RT_EXPORT extern int brep_conversion_comb(struct rt_db_internal *old_internal, char *name, char *suffix, struct rt_wdb *wdbp, fastf_t local2mm);
     RT_EXPORT extern int brep_intersect(struct rt_db_internal *intern1, struct rt_db_internal *intern2, int i, int j, struct bn_vlblock* vbp, double max_dis);
@@ -58,6 +60,7 @@ extern "C" {
 }
 #endif
 
+extern void poly2tri_CDT(struct bu_list *vhead, ON_BrepFace &face, const struct rt_tess_tol *ttol, const struct bn_tol *tol, const struct rt_view_info *info, bool watertight = false, int plottype = 0, int num_points = -1.0);
 
 /********************************************************************************
  * Auxiliary functions
@@ -420,15 +423,15 @@ plotUVDomain2d(ON_BrepFace &face, struct bn_vlblock *vbp)
 
     vhead = rt_vlblock_find(vbp, PURERED);
 
-	double width,height;
+    double width, height;
     ON_BoundingBox loop_bb;
     ON_BoundingBox trim_bb;
 #ifndef RESETDOMAIN
-	if (face.GetSurfaceSize(&width,&height)) {
-	    face.SetDomain(0,0.0,width);
-	    face.SetDomain(1,0.0,height);
+    if (face.GetSurfaceSize(&width, &height)) {
+	face.SetDomain(0, 0.0, width);
+	face.SetDomain(1, 0.0, height);
 
-	}
+    }
 #endif
     surf->GetDomain(0, &umin, &umax);
     surf->GetDomain(1, &vmin, &vmax);
@@ -478,7 +481,14 @@ plottrim(ON_BrepTrim& trim, struct bn_vlblock *vbp, int plotres, bool dim3d)
     ON_TextLog tl(stderr);
 
     vhead = rt_vlblock_find(vbp, YELLOW);
+#ifndef RESETDOMAIN
+    double width, height;
+    if (face->GetSurfaceSize(&width, &height)) {
+	face->SetDomain(0, 0.0, width);
+	face->SetDomain(1, 0.0, height);
 
+    }
+#endif
     surf->GetDomain(0, &umin, &umax);
     const ON_Curve* trimCurve = trim.TrimCurveOf();
     //trimCurve->Dump(tl);
@@ -1257,6 +1267,64 @@ brep_edge_info(struct brep_specific* bs, struct bu_vls *vls, int ei)
     return 0;
 }
 
+int brep_facecdt_plot(struct bu_vls *vls, const char *solid_name,
+        const struct rt_tess_tol *ttol, const struct bn_tol *tol,
+        struct brep_specific* bs, struct rt_brep_internal*UNUSED(bi),
+        struct bn_vlblock *vbp, int index, int plottype, int num_points = -1)
+{
+    register struct bu_list *vhead = rt_vlblock_find(vbp, YELLOW);
+    bool watertight = true;
+    ON_wString wstr;
+    ON_TextLog tl(wstr);
+
+    ON_Brep* brep = bs->brep;
+    if (brep == NULL || !brep->IsValid(&tl)) {
+	if (wstr.Length() > 0) {
+	    ON_String onstr = ON_String(wstr);
+	    const char *isvalidinfo = onstr.Array();
+	    bu_vls_strcat(vls, "brep (");
+	    bu_vls_strcat(vls, solid_name);
+	    bu_vls_strcat(vls, ") is NOT valid:");
+	    bu_vls_strcat(vls, isvalidinfo);
+	} else {
+	    bu_vls_strcat(vls, "brep (");
+	    bu_vls_strcat(vls, solid_name);
+	    bu_vls_strcat(vls, ") is NOT valid.");
+	}
+	//for now try to draw - return -1;
+    }
+
+    for (int face_index = 0; face_index < brep->m_F.Count(); face_index++) {
+	ON_BrepFace *face = brep->Face(face_index);
+	const ON_Surface *s = face->SurfaceOf();
+	double surface_width, surface_height;
+	if (s->GetSurfaceSize(&surface_width, &surface_height)) {
+	    // reparameterization of the face's surface and transforms the "u"
+	    // and "v" coordinates of all the face's parameter space trimming
+	    // curves to minimize distortion in the map from parameter space to 3d..
+	    face->SetDomain(0, 0.0, surface_width);
+	    face->SetDomain(1, 0.0, surface_height);
+	}
+    }
+
+    if (index == -1) {
+	for (index = 0; index < brep->m_F.Count(); index++) {
+	    ON_BrepFace& face = brep->m_F[index];
+	    poly2tri_CDT(vhead, face, ttol, tol, NULL, watertight, plottype,num_points);
+	}
+    } else if (index < brep->m_F.Count()) {
+	ON_BrepFaceArray& faces = brep->m_F;
+	if (index < faces.Count()) {
+	    ON_BrepFace& face = faces[index];
+	    face.Dump(tl);
+	    poly2tri_CDT(vhead, face, ttol, tol, NULL, watertight, plottype,num_points);
+	}
+    }
+
+    bu_vls_printf(vls, ON_String(wstr).Array());
+
+    return 0;
+}
 
 int
 brep_facetrim_plot(struct bu_vls *vls, struct brep_specific* bs, struct rt_brep_internal*, struct bn_vlblock *vbp, int index, int plotres, bool dim3d)
@@ -2420,7 +2488,7 @@ brep_conversion_comb(struct rt_db_internal *old_internal, char *name, char *suff
 
 
 int
-brep_command(struct bu_vls *vls, struct brep_specific* bs, struct rt_brep_internal* bi, struct bn_vlblock *vbp, int argc, const char *argv[], char *commtag)
+brep_command(struct bu_vls *vls, const char *solid_name, const struct rt_tess_tol *ttol, const struct bn_tol *tol, struct brep_specific* bs, struct rt_brep_internal* bi, struct bn_vlblock *vbp, int argc, const char *argv[], char *commtag)
 {
     const char *command;
     int ret = 0;
@@ -2553,10 +2621,11 @@ brep_command(struct bu_vls *vls, struct brep_specific* bs, struct rt_brep_intern
 	    const char *part = argv[3];
 	    int startindex = -1;
 	    int endindex = -1;
+	    int numpoints = -1;
 	    int plotres = 100;
 	    if (argc == 6) {
 		const char *strres = argv[5];
-		plotres = atoi(strres);
+		plotres = numpoints = atoi(strres);
 	    }
 	    if (argc >= 5) {
 		const char *str = argv[4];
@@ -2617,6 +2686,31 @@ brep_command(struct bu_vls *vls, struct brep_specific* bs, struct rt_brep_intern
 		for (int i = startindex; i <= endindex; i++) {
 		    ret = brep_facetrim_plot(vls, bs, bi, vbp, i, plotres,
 					     false);
+		}
+	    } else if (BU_STR_EQUAL(part, "FCDT")) {
+		snprintf(commtag, 64, "_BC_FCDT_");
+		for (int i = startindex; i <= endindex; i++) {
+		    ret = brep_facecdt_plot(vls, solid_name, ttol, tol, bs, bi, vbp, i, 0);
+		}
+	    } else if (BU_STR_EQUAL(part, "FCDTw")) {
+		snprintf(commtag, 64, "_BC_FCDT_");
+		for (int i = startindex; i <= endindex; i++) {
+		    ret = brep_facecdt_plot(vls, solid_name, ttol, tol, bs, bi, vbp, i, 1, numpoints);
+		}
+	    } else if (BU_STR_EQUAL(part, "FCDT2d")) {
+		snprintf(commtag, 64, "_BC_FCDT2d_");
+		for (int i = startindex; i <= endindex; i++) {
+		    ret = brep_facecdt_plot(vls, solid_name, ttol, tol, bs, bi, vbp, i, 2);
+		}
+	    } else if (BU_STR_EQUAL(part, "FCDTm2d")) {
+		snprintf(commtag, 64, "_BC_FCDTm2d_");
+		for (int i = startindex; i <= endindex; i++) {
+		    ret = brep_facecdt_plot(vls, solid_name, ttol, tol, bs, bi, vbp, i, 3, numpoints);
+		}
+	    } else if (BU_STR_EQUAL(part, "FCDTp2d")) {
+		snprintf(commtag, 64, "_BC_FCDTp2d_");
+		for (int i = startindex; i <= endindex; i++) {
+		    ret = brep_facecdt_plot(vls, solid_name, ttol, tol, bs, bi, vbp, i, 4, numpoints);
 		}
 	    } else if (BU_STR_EQUAL(part, "SBB")) {
 		snprintf(commtag, 64, "_BC_SBB_");

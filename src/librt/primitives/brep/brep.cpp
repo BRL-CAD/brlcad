@@ -30,11 +30,14 @@
 
 #include <vector>
 #include <list>
+#include <map>
 #include <stack>
 #include <iostream>
 #include <algorithm>
 #include <set>
 #include <utility>
+
+#include "poly2tri/poly2tri.h"
 
 #include "assert.h"
 
@@ -2569,7 +2572,886 @@ void plot_face_from_surface_tree(struct bu_list *vhead, SurfaceTree* st,
     BBNode *root = st->getRootNode();
     plot_BBNode(vhead, st, root, isocurveres, gridres);
 }
-///////////////////////////
+
+void getEdgePoints(const ON_BrepTrim &trim, fastf_t t1, ON_3dPoint &start_2d,
+        ON_3dVector &start_tang, ON_3dPoint &start_3d, ON_3dVector &start_norm,
+        fastf_t t2, ON_3dPoint &end_2d, ON_3dVector &end_tang,
+        ON_3dPoint &end_3d, ON_3dVector &end_norm, fastf_t min_dist,
+        fastf_t max_dist, fastf_t within_dist, fastf_t cos_within_ang,
+        std::map<double, ON_3dPoint *> &param_points)
+{
+    const ON_Surface *s = trim.SurfaceOf();
+    ON_Interval range = trim.Domain();
+    ON_3dPoint mid_2d;
+    ON_3dPoint mid_3d;
+    ON_3dVector mid_norm;
+    ON_3dVector mid_tang;
+    fastf_t t = (t1 + t2) / 2.0;
+
+    if (trim.EvTangent(t, mid_2d, mid_tang)
+	    && s->EvNormal(mid_2d.x, mid_2d.y, mid_3d, mid_norm)) {
+	ON_Line line3d(start_3d, end_3d);
+	double dist3d;
+
+	if ((line3d.Length() > max_dist)
+	        || ((dist3d = mid_3d.DistanceTo(line3d.ClosestPointTo(mid_3d)))
+	                > within_dist + ON_ZERO_TOLERANCE)
+	        || ((((start_tang * end_tang)
+	                < cos_within_ang - ON_ZERO_TOLERANCE)
+	                || ((start_norm * end_norm)
+	                        < cos_within_ang - ON_ZERO_TOLERANCE))
+	                && (dist3d > min_dist + ON_ZERO_TOLERANCE))) {
+	    getEdgePoints(trim, t1, start_2d, start_tang, start_3d, start_norm,
+		    t, mid_2d, mid_tang, mid_3d, mid_norm, min_dist, max_dist,
+		    within_dist, cos_within_ang, param_points);
+	    param_points[(t - range.m_t[0]) / (range.m_t[1] - range.m_t[0])] =
+		    new ON_3dPoint(mid_3d);
+	    getEdgePoints(trim, t, mid_2d, mid_tang, mid_3d, mid_norm, t2,
+		    end_2d, end_tang, end_3d, end_norm, min_dist, max_dist,
+		    within_dist, cos_within_ang, param_points);
+	}
+    }
+}
+
+std::map<double, ON_3dPoint *> *getEdgePoints(ON_BrepTrim &trim,
+        fastf_t max_dist, const struct rt_tess_tol *ttol,
+        const struct bn_tol *tol, const struct rt_view_info *UNUSED(info))
+{
+    std::map<double, ON_3dPoint *> *param_points = NULL;
+    fastf_t min_dist, within_dist, cos_within_ang;
+
+    double dist = 1000.0;
+
+    const ON_Surface *s = trim.SurfaceOf();
+
+    bool bGrowBox = false;
+    ON_3dPoint min, max;
+    if (trim.GetBoundingBox(min, max, bGrowBox)) {
+	dist = DIST_PT_PT(min,max);
+    }
+
+    if (ttol->abs < tol->dist + ON_ZERO_TOLERANCE) {
+	min_dist = tol->dist;
+    } else {
+	min_dist = ttol->abs;
+    }
+
+    double rel = 0.0;
+    if (ttol->rel > 0.0 + ON_ZERO_TOLERANCE) {
+	rel = ttol->rel * dist;
+	if (max_dist < rel * 10.0) {
+	    max_dist = rel * 10.0;
+	}
+	within_dist = rel < min_dist ? min_dist : rel;
+    } else if (ttol->abs > 0.0 + ON_ZERO_TOLERANCE) {
+	within_dist = min_dist;
+    } else {
+	within_dist = 0.01 * dist; // default to 1% minimum surface distance
+    }
+
+    if (ttol->norm > 0.0 + ON_ZERO_TOLERANCE) {
+	cos_within_ang = cos(ttol->norm);
+    } else {
+	cos_within_ang = cos(ON_PI / 2.0);
+    }
+
+    if (trim.m_trim_user.p == NULL) {
+	param_points = new std::map<double, ON_3dPoint *>();
+	trim.m_trim_user.p = (void *) param_points;
+	ON_Interval range = trim.Domain();
+
+	if (trim.IsClosed()) {
+	    double mid_range = (range.m_t[0] + range.m_t[1]) / 2.0;
+	    ON_3dPoint start_2d, start_3d;
+	    ON_3dVector start_tang, start_norm;
+	    ON_3dPoint mid_2d, mid_3d;
+	    ON_3dVector mid_tang, mid_norm;
+	    ON_3dPoint end_2d, end_3d;
+	    ON_3dVector end_tang, end_norm;
+	    if (trim.EvTangent(range.m_t[0], start_2d, start_tang)
+		    && trim.EvTangent(mid_range, mid_2d, mid_tang)
+		    && trim.EvTangent(range.m_t[1], end_2d, end_tang)
+		    && s->EvNormal(mid_2d.x, mid_2d.y, mid_3d, mid_norm)
+		    && s->EvNormal(start_2d.x, start_2d.y, start_3d, start_norm)
+		    && s->EvNormal(end_2d.x, end_2d.y, end_3d, end_norm)) {
+		(*param_points)[0.0] = new ON_3dPoint(
+		        s->PointAt(trim.PointAt(range.m_t[0]).x,
+		                trim.PointAt(range.m_t[0]).y));
+		getEdgePoints(trim, range.m_t[0], start_2d, start_tang,
+		        start_3d, start_norm, mid_range, mid_2d, mid_tang,
+		        mid_3d, mid_norm, min_dist, max_dist, within_dist,
+		        cos_within_ang, *param_points);
+		(*param_points)[0.5] = new ON_3dPoint(
+		        s->PointAt(trim.PointAt(mid_range).x,
+		                trim.PointAt(mid_range).y));
+		getEdgePoints(trim, mid_range, mid_2d, mid_tang, mid_3d,
+		        mid_norm, range.m_t[1], end_2d, end_tang, end_3d,
+		        end_norm, min_dist, max_dist, within_dist,
+		        cos_within_ang, *param_points);
+		(*param_points)[1.0] = new ON_3dPoint(
+		        s->PointAt(trim.PointAt(range.m_t[1]).x,
+		                trim.PointAt(range.m_t[1]).y));
+	    }
+	} else {
+	    ON_3dPoint start_2d, start_3d;
+	    ON_3dVector start_tang, start_norm;
+	    ON_3dPoint end_2d, end_3d;
+	    ON_3dVector end_tang, end_norm;
+	    if (trim.EvTangent(range.m_t[0], start_2d, start_tang)
+		    && trim.EvTangent(range.m_t[1], end_2d, end_tang)
+		    && s->EvNormal(start_2d.x, start_2d.y, start_3d, start_norm)
+		    && s->EvNormal(end_2d.x, end_2d.y, end_3d, end_norm)) {
+		(*param_points)[0.0] = new ON_3dPoint(start_3d);
+		getEdgePoints(trim, range.m_t[0], start_2d, start_tang,
+		        start_3d, start_norm, range.m_t[1], end_2d, end_tang,
+		        end_3d, end_norm, min_dist, max_dist, within_dist,
+		        cos_within_ang, *param_points);
+		(*param_points)[1.0] = new ON_3dPoint(end_3d);
+	    }
+	}
+    } else {
+	param_points = (std::map<double, ON_3dPoint *> *) trim.m_trim_user.p;
+    }
+
+    return param_points;
+}
+
+void getSurfacePoints(const ON_Surface *s, fastf_t u1, fastf_t u2, fastf_t v1,
+        fastf_t v2, fastf_t min_dist, fastf_t within_dist,
+        fastf_t cos_within_ang, ON_2dPointArray &on_surf_points, bool left,
+        bool below)
+{
+    double ldfactor = 2.0;
+    ON_2dPoint p2d;
+    ON_3dPoint p[4];
+    ON_3dVector norm[4];
+    ON_3dPoint mid;
+    ON_3dVector norm_mid;
+    fastf_t u = (u1 + u2) / 2.0;
+    fastf_t v = (v1 + v2) / 2.0;
+    fastf_t udist = u2 - u1;
+    fastf_t vdist = v2 - v1;
+
+    if ((udist < min_dist + ON_ZERO_TOLERANCE)
+	    || (vdist < min_dist + ON_ZERO_TOLERANCE)) {
+	return;
+    }
+
+    if (udist > ldfactor * vdist) {
+	int isteps = (int) (udist / vdist);
+	isteps = (int) (udist / vdist / ldfactor * 2.0);
+	fastf_t step = udist / (fastf_t) isteps;
+
+	fastf_t step_u;
+	for (int i = 1; i <= isteps; i++) {
+	    step_u = u1 + i * step;
+	    if ((below) && (i < isteps)) {
+		p2d.Set(step_u, v1);
+		on_surf_points.Append(p2d);
+	    }
+	    if (i == 1) {
+		getSurfacePoints(s, u1, u1 + step, v1, v2, min_dist,
+		        within_dist, cos_within_ang, on_surf_points, left,
+		        below);
+	    } else if (i == isteps) {
+		getSurfacePoints(s, u2 - step, u2, v1, v2, min_dist,
+		        within_dist, cos_within_ang, on_surf_points, left,
+		        below);
+	    } else {
+		getSurfacePoints(s, step_u - step, step_u, v1, v2, min_dist, within_dist,
+		        cos_within_ang, on_surf_points, left, below);
+	    }
+	    left = false;
+
+	    if (i < isteps) {
+		//top
+		p2d.Set(step_u, v2);
+		on_surf_points.Append(p2d);
+	    }
+	}
+    } else if (vdist > ldfactor * udist) {
+	int isteps = (int) (vdist / udist);
+	isteps = (int) (vdist / udist / ldfactor * 2.0);
+	fastf_t step = vdist / (fastf_t) isteps;
+	fastf_t step_v;
+	for (int i = 1; i <= isteps; i++) {
+	    step_v = v1 + i * step;
+	    if ((left) && (i < isteps)) {
+		p2d.Set(u1, step_v);
+		on_surf_points.Append(p2d);
+	    }
+
+	    if (i == 1) {
+		getSurfacePoints(s, u1, u2, v1, v1 + step, min_dist,
+		        within_dist, cos_within_ang, on_surf_points, left,
+		        below);
+	    } else if (i == isteps) {
+		getSurfacePoints(s, u1, u2, v2 - step, v2, min_dist,
+		        within_dist, cos_within_ang, on_surf_points, left,
+		        below);
+	    } else {
+		getSurfacePoints(s, u1, u2, step_v - step, step_v, min_dist, within_dist,
+		        cos_within_ang, on_surf_points, left, below);
+	    }
+
+	    below = false;
+
+	    if (i < isteps) {
+		//right
+		p2d.Set(u2, step_v);
+		on_surf_points.Append(p2d);
+	    }
+	}
+    } else if ((s->EvNormal(u1, v1, p[0], norm[0]))
+	    && (s->EvNormal(u2, v1, p[1], norm[1])) // for u
+	    && (s->EvNormal(u2, v2, p[2], norm[2]))
+	    && (s->EvNormal(u1, v2, p[3], norm[3]))
+	    && (s->EvNormal(u, v, mid, norm_mid))) {
+	double udot;
+	double vdot;
+	ON_Line line1(p[0], p[2]);
+	ON_Line line2(p[1], p[3]);
+	double dist = mid.DistanceTo(line1.ClosestPointTo(mid));
+	V_MAX(dist, mid.DistanceTo(line2.ClosestPointTo(mid)));
+
+	if (dist < min_dist + ON_ZERO_TOLERANCE) {
+	    return;
+	}
+
+	if (VNEAR_EQUAL(norm[0],norm[1],ON_ZERO_TOLERANCE)) {
+	    udot = 1.0;
+	} else {
+	    udot = norm[0] * norm[1];
+	}
+	if (VNEAR_EQUAL(norm[0],norm[3],ON_ZERO_TOLERANCE)) {
+	    vdot = 1.0;
+	} else {
+	    vdot = norm[0] * norm[3];
+	}
+	if ((udot < cos_within_ang - ON_ZERO_TOLERANCE)
+	        && (vdot < cos_within_ang - ON_ZERO_TOLERANCE)) {
+	    if (left) {
+		p2d.Set(u1, v);
+		on_surf_points.Append(p2d);
+	    }
+	    if (below) {
+		p2d.Set(u, v1);
+		on_surf_points.Append(p2d);
+	    }
+	    //center
+	    p2d.Set(u, v);
+	    on_surf_points.Append(p2d);
+	    //right
+	    p2d.Set(u2, v);
+	    on_surf_points.Append(p2d);
+	    //top
+	    p2d.Set(u, v2);
+	    on_surf_points.Append(p2d);
+
+	    getSurfacePoints(s, u1, u, v1, v, min_dist, within_dist,
+		    cos_within_ang, on_surf_points, left, below);
+	    getSurfacePoints(s, u1, u, v, v2, min_dist, within_dist,
+		    cos_within_ang, on_surf_points, left, false);
+	    getSurfacePoints(s, u, u2, v1, v, min_dist, within_dist,
+		    cos_within_ang, on_surf_points, false, below);
+	    getSurfacePoints(s, u, u2, v, v2, min_dist, within_dist,
+		    cos_within_ang, on_surf_points, false, false);
+	} else if (udot < cos_within_ang - ON_ZERO_TOLERANCE) {
+	    if (below) {
+		p2d.Set(u, v1);
+		on_surf_points.Append(p2d);
+	    }
+	    //top
+	    p2d.Set(u, v2);
+	    on_surf_points.Append(p2d);
+	    getSurfacePoints(s, u1, u, v1, v2, min_dist, within_dist,
+		    cos_within_ang, on_surf_points, left, below);
+	    getSurfacePoints(s, u, u2, v1, v2, min_dist, within_dist,
+		    cos_within_ang, on_surf_points, false, below);
+	} else if (vdot < cos_within_ang - ON_ZERO_TOLERANCE) {
+	    if (left) {
+		p2d.Set(u1, v);
+		on_surf_points.Append(p2d);
+	    }
+	    //right
+	    p2d.Set(u2, v);
+	    on_surf_points.Append(p2d);
+
+	    getSurfacePoints(s, u1, u2, v1, v, min_dist, within_dist,
+		    cos_within_ang, on_surf_points, left, below);
+	    getSurfacePoints(s, u1, u2, v, v2, min_dist, within_dist,
+		    cos_within_ang, on_surf_points, left, false);
+	} else {
+	    if (dist > within_dist + ON_ZERO_TOLERANCE) {
+		if (left) {
+		    p2d.Set(u1, v);
+		    on_surf_points.Append(p2d);
+		}
+		if (below) {
+		    p2d.Set(u, v1);
+		    on_surf_points.Append(p2d);
+		}
+		//center
+		p2d.Set(u, v);
+		on_surf_points.Append(p2d);
+		//right
+		p2d.Set(u2, v);
+		on_surf_points.Append(p2d);
+		//top
+		p2d.Set(u, v2);
+		on_surf_points.Append(p2d);
+
+		getSurfacePoints(s, u1, u, v1, v, min_dist, within_dist,
+		        cos_within_ang, on_surf_points, left, below);
+		getSurfacePoints(s, u1, u, v, v2, min_dist, within_dist,
+		        cos_within_ang, on_surf_points, left, false);
+		getSurfacePoints(s, u, u2, v1, v, min_dist, within_dist,
+		        cos_within_ang, on_surf_points, false, below);
+		getSurfacePoints(s, u, u2, v, v2, min_dist, within_dist,
+		        cos_within_ang, on_surf_points, false, false);
+	    }
+	}
+    }
+}
+
+void getSurfacePoints(ON_BrepFace &face, const struct rt_tess_tol *ttol,
+        const struct bn_tol *tol, const struct rt_view_info *UNUSED(info),
+        ON_2dPointArray &on_surf_points)
+{
+    double surface_width, surface_height;
+    const ON_Surface *s = face.SurfaceOf();
+    ON_Brep *brep = face.Brep();
+
+    if (s->GetSurfaceSize(&surface_width, &surface_height)) {
+	double dist, min_dist, within_dist, cos_within_ang;
+	if ((surface_width < tol->dist) || (surface_height < tol->dist)) {
+	    return;
+	}
+
+	// may be a smaller trimmed subset of surface so worth getting
+	// face boundary
+	bool bGrowBox = false;
+	ON_3dPoint min, max;
+	for (int ti = 0; ti < face.Loop(0)->TrimCount(); ti++) {
+	    ON_BrepTrim *trim = face.Loop(0)->Trim(ti);
+	    trim->GetBoundingBox(min, max, bGrowBox);
+	    bGrowBox = true;
+	}
+
+	ON_BoundingBox tight_bbox;
+	if (brep->GetTightBoundingBox(tight_bbox)) {
+	    dist = DIST_PT_PT(tight_bbox.m_min,tight_bbox.m_max);
+	}
+
+	if (ttol->abs < tol->dist + ON_ZERO_TOLERANCE) {
+	    min_dist = tol->dist;
+	} else {
+	    min_dist = ttol->abs;
+	}
+
+	double rel = 0.0;
+	if (ttol->rel > 0.0 + ON_ZERO_TOLERANCE) {
+	    rel = ttol->rel * dist;
+	    within_dist = rel < min_dist ? min_dist : rel;
+	    //if (ttol->abs < tol->dist + ON_ZERO_TOLERANCE) {
+	    //    min_dist = within_dist;
+	    //}
+	} else if ((ttol->abs > 0.0 + ON_ZERO_TOLERANCE)
+	        && (ttol->norm < 0.0 + ON_ZERO_TOLERANCE)) {
+	    within_dist = min_dist;
+	} else if ((ttol->abs > 0.0 + ON_ZERO_TOLERANCE)
+	        || (ttol->norm > 0.0 + ON_ZERO_TOLERANCE)) {
+	    within_dist = dist;
+	} else {
+	    within_dist = 0.01 * dist; // default to 1% minimum surface distance
+	}
+
+	if (ttol->norm > 0.0 + ON_ZERO_TOLERANCE) {
+	    cos_within_ang = cos(ttol->norm);
+	} else {
+	    cos_within_ang = cos(ON_PI / 2.0);
+	}
+	ON_BOOL32 uclosed = s->IsClosed(0);
+	ON_BOOL32 vclosed = s->IsClosed(1);
+	if (uclosed && vclosed) {
+	    ON_2dPoint p;
+	    double midx = (min.x + max.x) / 2.0;
+	    double midy = (min.y + max.y) / 2.0;
+
+	    //bottom left
+	    p.Set(min.x, min.y);
+	    on_surf_points.Append(p);
+
+	    //midy left
+	    p.Set(min.x, midy);
+	    on_surf_points.Append(p);
+
+	    getSurfacePoints(s, min.x, midx, min.y, midy, min_dist, within_dist,
+		    cos_within_ang, on_surf_points, true, true);
+
+	    //bottom midx
+	    p.Set(midx, min.y);
+	    on_surf_points.Append(p);
+
+	    //midx midy
+	    p.Set(midx, midy);
+	    on_surf_points.Append(p);
+
+	    getSurfacePoints(s, midx, max.x, min.y, midy, min_dist, within_dist,
+		    cos_within_ang, on_surf_points, false, true);
+
+	    //bottom right
+	    p.Set(max.x, min.y);
+	    on_surf_points.Append(p);
+
+	    //right  midy
+	    p.Set(max.x, midy);
+	    on_surf_points.Append(p);
+
+	    //top left
+	    p.Set(min.x, max.y);
+	    on_surf_points.Append(p);
+
+	    getSurfacePoints(s, min.x, midx, midy, max.y, min_dist, within_dist,
+		    cos_within_ang, on_surf_points, true, false);
+
+	    //top midx
+	    p.Set(midx, max.y);
+	    on_surf_points.Append(p);
+
+	    getSurfacePoints(s, midx, max.x, midy, max.y, min_dist, within_dist,
+		    cos_within_ang, on_surf_points, false, false);
+
+	    //top left
+	    p.Set(max.x, max.y);
+	    on_surf_points.Append(p);
+	} else if (uclosed) {
+	    ON_2dPoint p;
+	    double midx = (min.x + max.x) / 2.0;
+
+	    //bottom left
+	    p.Set(min.x, min.y);
+	    on_surf_points.Append(p);
+
+	    //top left
+	    p.Set(min.x, max.y);
+	    on_surf_points.Append(p);
+
+	    getSurfacePoints(s, min.x, midx, min.y, max.y, min_dist,
+		    within_dist, cos_within_ang, on_surf_points, true, true);
+
+	    //bottom midx
+	    p.Set(midx, min.y);
+	    on_surf_points.Append(p);
+
+	    //top midx
+	    p.Set(midx, max.y);
+	    on_surf_points.Append(p);
+
+	    getSurfacePoints(s, midx, max.x, min.y, max.y, min_dist,
+		    within_dist, cos_within_ang, on_surf_points, false, true);
+
+	    //bottom right
+	    p.Set(max.x, min.y);
+	    on_surf_points.Append(p);
+
+	    //top right
+	    p.Set(max.x, max.y);
+	    on_surf_points.Append(p);
+	} else if (vclosed) {
+	    ON_2dPoint p;
+	    double midy = (min.y + max.y) / 2.0;
+
+	    //bottom left
+	    p.Set(min.x, min.y);
+	    on_surf_points.Append(p);
+
+	    //left midy
+	    p.Set(min.x, midy);
+	    on_surf_points.Append(p);
+
+	    getSurfacePoints(s, min.x, max.x, min.y, midy, min_dist,
+		    within_dist, cos_within_ang, on_surf_points, true, true);
+
+	    //bottom right
+	    p.Set(max.x, min.y);
+	    on_surf_points.Append(p);
+
+	    //right midy
+	    p.Set(max.x, midy);
+	    on_surf_points.Append(p);
+
+	    getSurfacePoints(s, min.x, max.x, midy, max.y, min_dist,
+		    within_dist, cos_within_ang, on_surf_points, true, false);
+
+	    // top left
+	    p.Set(min.x, max.y);
+	    on_surf_points.Append(p);
+
+	    //top right
+	    p.Set(max.x, max.y);
+	    on_surf_points.Append(p);
+	} else {
+	    ON_2dPoint p;
+	    //bottom left
+	    p.Set(min.x, min.y);
+	    on_surf_points.Append(p);
+
+	    //top left
+	    p.Set(min.x, max.y);
+	    on_surf_points.Append(p);
+
+	    getSurfacePoints(s, min.x, max.x, min.y, max.y, min_dist,
+		    within_dist, cos_within_ang, on_surf_points, true, true);
+
+	    //bottom right
+	    p.Set(max.x, min.y);
+	    on_surf_points.Append(p);
+
+	    //top right
+	    p.Set(max.x, max.y);
+	    on_surf_points.Append(p);
+	}
+    }
+}
+
+void poly2tri_CDT(struct bu_list *vhead, ON_BrepFace &face,
+        const struct rt_tess_tol *ttol, const struct bn_tol *tol,
+        const struct rt_view_info *info, bool watertight = false, int plottype =
+                0, int num_points = -1.0)
+{
+    ON_RTree rt_trims, rt_points;
+    ON_2dPointArray on_surf_points;
+    const ON_Surface *s = face.SurfaceOf();
+    double surface_width, surface_height;
+    std::vector<ON_3dPoint *> singularity_points;
+    fastf_t max_dist = 0.0;
+    p2t::CDT* cdt = NULL;
+    ON_BoundingBox loop_bb;
+
+    if (s->GetSurfaceSize(&surface_width, &surface_height)) {
+	if ((surface_width < tol->dist) || (surface_height < tol->dist)) {
+	    return;
+	}
+	max_dist = sqrt(
+	        surface_width * surface_width + surface_height * surface_height)
+	        / 10.0;
+    }
+
+    std::map<p2t::Point *, ON_3dPoint *> *pointmap = new std::map<p2t::Point *, ON_3dPoint *>();
+
+    for (int li = 0; li < face.LoopCount(); li++) {
+	ON_2dPointArray on_loop_points;
+	std::vector<p2t::Point*> polyline;
+	ON_BrepLoop *loop = face.Loop(li);
+
+	for (int lti = 0; lti < loop->TrimCount(); lti++) {
+	    ON_BrepTrim *trim = loop->Trim(lti);
+	    //ON_BrepEdge *edge = trim->Edge();
+	    bool removeedgepoints = false;
+
+	    if (trim->m_type == ON_BrepTrim::singular) {
+		ON_BrepVertex& v1 = face.Brep()->m_V[trim->m_vi[0]];
+		ON_3dPoint *p3d = new ON_3dPoint(v1.Point());
+		p2t::Point *p = new p2t::Point(trim->PointAtStart().x,
+		        trim->PointAtStart().y);
+		polyline.push_back(p);
+		on_loop_points.Append(trim->PointAtStart());
+		(*pointmap)[p] = p3d;
+		// vector just used for freeing 3d point of singularity
+		singularity_points.push_back(p3d);
+		continue;
+	    }
+
+	    if (!trim->m_trim_user.p) {
+		(void) getEdgePoints(*trim, max_dist, ttol, tol, info);
+		removeedgepoints = true;
+	    }
+	    if (trim->m_trim_user.p) {
+		std::map<double, ON_3dPoint *> *param_points3d = (std::map<
+		        double, ON_3dPoint *> *) trim->m_trim_user.p;
+
+		ON_3dPoint boxmin;
+		ON_3dPoint boxmax;
+
+		if (trim->GetBoundingBox(boxmin, boxmax, false)) {
+		    double t0, t1;
+		    trim->GetDomain(&t0, &t1);
+		    ON_2dPoint p2d = trim->PointAtStart();
+		    ON_3dPoint ts3d = s->PointAt(p2d.x, p2d.y);
+		    ON_2dPoint end_p2d = trim->PointAtEnd();
+		    ON_3dPoint te3d = s->PointAt(end_p2d.x, end_p2d.y);
+		    ON_3dVector norm = s->NormalAt(trim->PointAtStart().x,
+			    trim->PointAtStart().y);
+		    std::map<double, ON_3dPoint*>::const_iterator i;
+		    for (i = param_points3d->begin();
+			    i != param_points3d->end();) {
+			double t = (*i).first;
+			ON_3dPoint *p3d = (*i).second;
+			if (++i == param_points3d->end())
+			    continue;
+
+			p2d = trim->PointAt(t0 + (t1 - t0) * t);
+
+			// map point to last entry to 3d point
+			p2t::Point *p = new p2t::Point(p2d.x, p2d.y);
+			polyline.push_back(p);
+			on_loop_points.Append(p2d);
+			(*pointmap)[p] = p3d;
+		    }
+		}
+	    }
+	}
+
+	if (on_loop_points.Count() > 2) {
+	    for (int i = 1; i <= on_loop_points.Count(); i++) {
+		ON_2dPoint *start = NULL;
+		ON_2dPoint *end = NULL;
+		if (i == on_loop_points.Count()) {
+		    start = on_loop_points.At(i - 1);
+		    end = on_loop_points.At(0);
+		} else {
+		    start = on_loop_points.At(i - 1);
+		    end = on_loop_points.At(i);
+		}
+		ON_Line *line = new ON_Line(*start, *end);
+		ON_BoundingBox bb = line->BoundingBox();
+		bb.m_max.x = bb.m_max.x + ON_ZERO_TOLERANCE;
+		bb.m_max.y = bb.m_max.y + ON_ZERO_TOLERANCE;
+		bb.m_max.z = bb.m_max.z + ON_ZERO_TOLERANCE;
+		bb.m_min.x = bb.m_min.x - ON_ZERO_TOLERANCE;
+		bb.m_min.y = bb.m_min.y - ON_ZERO_TOLERANCE;
+		bb.m_min.z = bb.m_min.z - ON_ZERO_TOLERANCE;
+
+		rt_trims.Insert2d(bb.Min(), bb.Max(), line);
+	    }
+	} else {
+	    return;
+	}
+
+	if (li == 0) {
+	    cdt = new p2t::CDT(polyline);
+	} else {
+	    cdt->AddHole(polyline);
+	}
+
+    }
+
+    getSurfacePoints(face, ttol, tol, info, on_surf_points);
+
+    for (int i = 0; i < on_surf_points.Count(); i++) {
+	ON_SimpleArray<void*> results;
+	ON_2dPoint *p = on_surf_points.At(i);
+
+	rt_trims.Search2d((const double *) p, (const double *) p, results);
+
+	if (results.Count() > 0) {
+	    bool on_edge = false;
+	    for (int ri = 0; ri < results.Count(); ri++) {
+		double dist;
+		ON_Line *l = (ON_Line *) *results.At(ri);
+		dist = l->MinimumDistanceTo(*p);
+		if (NEAR_ZERO(dist,tol->dist)) {
+		    on_edge = true;
+		    break;
+		}
+	    }
+	    if (!on_edge) {
+		cdt->AddPoint(new p2t::Point(p->x, p->y));
+	    }
+	} else {
+	    cdt->AddPoint(new p2t::Point(p->x, p->y));
+	}
+    }
+    ON_SimpleArray<void*> results;
+    ON_BoundingBox bb = rt_trims.BoundingBox();
+    rt_trims.Search2d((const double *) bb.m_min, (const double *) bb.m_max,
+	    results);
+
+    if (results.Count() > 0) {
+	for (int ri = 0; ri < results.Count(); ri++) {
+	    ON_Line *l = (ON_Line *) *results.At(ri);
+	    delete l;
+	}
+    }
+    rt_trims.RemoveAll();
+
+    if ((plottype < 3)) {
+	cdt->Triangulate(true, num_points);
+    } else {
+	cdt->Triangulate(false, num_points);
+    }
+
+    if (plottype < 3) {
+	std::vector<p2t::Triangle*> tris = cdt->GetTriangles();
+	if (plottype == 0) { // shaded tris 3d
+	    ON_3dPoint pnt[3];
+	    ON_3dVector norm[3];
+	    point_t pt[3];
+	    vect_t nv[3];
+
+	    for (size_t i = 0; i < tris.size(); i++) {
+		p2t::Triangle *t = tris[i];
+		p2t::Point *p = NULL;
+		for (size_t j = 0; j < 3; j++) {
+		    p = t->GetPoint(j);
+		    if (s->EvNormal(p->x, p->y, pnt[j], norm[j])) {
+			if (watertight) {
+			    std::map<p2t::Point *, ON_3dPoint *>::iterator ii =
+				    pointmap->find(p);
+			    if (ii != pointmap->end()) {
+				pnt[j] = *((*ii).second);
+			    }
+			}
+			if (face.m_bRev) {
+			    norm[j] = norm[j] * -1.0;
+			}
+			VMOVE(pt[j], pnt[j]);
+			VMOVE(nv[j], norm[j]);
+		    }
+		}
+		//tri one
+		RT_ADD_VLIST(vhead, nv[0], BN_VLIST_TRI_START);
+		RT_ADD_VLIST(vhead, nv[0], BN_VLIST_TRI_VERTNORM);
+		RT_ADD_VLIST(vhead, pt[0], BN_VLIST_TRI_MOVE);
+		RT_ADD_VLIST(vhead, nv[1], BN_VLIST_TRI_VERTNORM);
+		RT_ADD_VLIST(vhead, pt[1], BN_VLIST_TRI_DRAW);
+		RT_ADD_VLIST(vhead, nv[2], BN_VLIST_TRI_VERTNORM);
+		RT_ADD_VLIST(vhead, pt[2], BN_VLIST_TRI_DRAW);
+		RT_ADD_VLIST(vhead, pt[0], BN_VLIST_TRI_END);
+	    }
+	} else if (plottype == 1) { // tris 3d wire
+	    ON_3dPoint pnt[3];
+	    ON_3dVector norm[3];
+	    point_t pt[3];
+	    vect_t nv[3];
+	    for (size_t i = 0; i < tris.size(); i++) {
+		p2t::Triangle *t = tris[i];
+		p2t::Point *p = NULL;
+		for (size_t j = 0; j < 3; j++) {
+		    p = t->GetPoint(j);
+		    if (s->EvNormal(p->x, p->y, pnt[j], norm[j])) {
+			if (watertight) {
+			    std::map<p2t::Point *, ON_3dPoint *>::iterator ii =
+				    pointmap->find(p);
+			    if (ii != pointmap->end()) {
+				pnt[j] = *((*ii).second);
+			    }
+			}
+			if (face.m_bRev) {
+			    norm[j] = norm[j] * -1.0;
+			}
+			VMOVE(pt[j], pnt[j]);
+			VMOVE(nv[j], norm[j]);
+		    }
+		}
+		//tri one
+		RT_ADD_VLIST(vhead, pt[0], BN_VLIST_LINE_MOVE);
+		RT_ADD_VLIST(vhead, pt[1], BN_VLIST_LINE_DRAW);
+		RT_ADD_VLIST(vhead, pt[2], BN_VLIST_LINE_DRAW);
+		RT_ADD_VLIST(vhead, pt[0], BN_VLIST_LINE_DRAW);
+
+	    }
+	} else if (plottype == 2) { // tris 2d
+	    double pt1[3], pt2[3];
+	    for (size_t i = 0; i < tris.size(); i++) {
+		p2t::Triangle *t = tris[i];
+		p2t::Point *p = NULL;
+		for (size_t j = 0; j < 3; j++) {
+		    if (j == 0) {
+			p = t->GetPoint(2);
+		    } else {
+			p = t->GetPoint(j - 1);
+		    }
+		    pt1[0] = p->x;
+		    pt1[1] = p->y;
+		    pt1[2] = 0.0;
+		    p = t->GetPoint(j);
+		    pt2[0] = p->x;
+		    pt2[1] = p->y;
+		    pt2[2] = 0.0;
+		    RT_ADD_VLIST(vhead, pt1, BN_VLIST_LINE_MOVE);
+		    RT_ADD_VLIST(vhead, pt2, BN_VLIST_LINE_DRAW);
+		}
+	    }
+	}
+    } else if (plottype == 3) {
+	std::list<p2t::Triangle*> tris = cdt->GetMap();
+	std::list<p2t::Triangle*>::iterator it;
+	double pt1[3], pt2[3];
+	for (it = tris.begin(); it != tris.end(); it++) {
+	    p2t::Triangle* t = *it;
+	    p2t::Point *p = NULL;
+	    for (size_t j = 0; j < 3; j++) {
+		if (j == 0) {
+		    p = t->GetPoint(2);
+		} else {
+		    p = t->GetPoint(j - 1);
+		}
+		pt1[0] = p->x;
+		pt1[1] = p->y;
+		pt1[2] = 0.0;
+		p = t->GetPoint(j);
+		pt2[0] = p->x;
+		pt2[1] = p->y;
+		pt2[2] = 0.0;
+		RT_ADD_VLIST(vhead, pt1, BN_VLIST_LINE_MOVE);
+		RT_ADD_VLIST(vhead, pt2, BN_VLIST_LINE_DRAW);
+	    }
+	}
+    } else if (plottype == 4) {
+	std::vector<p2t::Point*>& points = cdt->GetPoints();
+	double pt[3];
+	for (size_t i = 0; i < points.size(); i++) {
+	    p2t::Point *p = NULL;
+	    p = (p2t::Point *) points[i];
+	    pt[0] = p->x;
+	    pt[1] = p->y;
+	    pt[2] = 0.0;
+	    RT_ADD_VLIST(vhead, pt, BN_VLIST_POINT_DRAW);
+	}
+    }
+
+    std::map<p2t::Point *, ON_3dPoint *>::iterator ii;
+    for (ii = pointmap->begin(); ii != pointmap->end(); pointmap->erase(ii++));
+    while (!singularity_points.empty()) {
+	delete singularity_points.back();
+	singularity_points.pop_back();
+    }
+    delete pointmap;
+
+    for (int li = 0; li < face.LoopCount(); li++) {
+	ON_BrepLoop *loop = face.Loop(li);
+
+	for (int lti = 0; lti < loop->TrimCount(); lti++) {
+	    ON_BrepTrim *trim = loop->Trim(lti);
+
+	    if (trim->m_trim_user.p) {
+		std::map<double, ON_3dPoint *> *points = (std::map<double,
+		        ON_3dPoint *> *) trim->m_trim_user.p;
+		std::map<double, ON_3dPoint *>::iterator i;
+		for (i = points->begin(); i != points->end(); i++) {
+		    ON_3dPoint *p = (*i).second;
+		    delete p;
+		}
+		points->clear();
+		delete points;
+		trim->m_trim_user.p = NULL;
+	    }
+	}
+    }
+    if (cdt != NULL) {
+	std::vector<p2t::Point*> v = cdt->GetPoints();
+	while (!v.empty()) {
+	    delete v.back();
+	    v.pop_back();
+	}
+	if (plottype < 4)
+	    delete cdt;
+    }
+    return;
+}
+
 void plot_face_trim(struct bu_list *vhead, ON_BrepFace &face, int plotres,
 		    bool dim3d) {
     const ON_Surface* surf = face.SurfaceOf();
@@ -2616,7 +3498,6 @@ rt_brep_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info
     TRACE1("rt_brep_adaptive_plot");
     struct rt_brep_internal* bi;
     point_t pt1, pt2;
-    int i, j;
 
     BU_CK_LIST_HEAD(info->vhead);
     RT_CK_DB_INTERNAL(ip);
@@ -2653,8 +3534,8 @@ rt_brep_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info
 	}
     }
 
-    for (i = 0; i < bi->brep->m_E.Count(); i++) {
-	ON_BrepEdge& e = brep->m_E[i];
+    for (int index = 0; index < bi->brep->m_E.Count(); index++) {
+	ON_BrepEdge& e = brep->m_E[index];
 	const ON_Curve* crv = e.EdgeCurveOf();
 
 	if (crv->IsLinear()) {
@@ -2817,6 +3698,99 @@ rt_brep_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_t
     return 0;
 }
 
+/**
+ * R T _ B R E P _ P L O T _ P O L Y
+ */
+int rt_brep_plot_poly(struct bu_list *vhead, const struct db_full_path *pathp, struct rt_db_internal *ip,
+		const struct rt_tess_tol *ttol, const struct bn_tol *tol,
+		const struct rt_view_info *info) {
+	TRACE1("rt_brep_plot");
+	struct rt_brep_internal* bi;
+	const char *solid_name =  DB_FULL_PATH_CUR_DIR(pathp)->d_namep;
+	ON_wString wstr;
+	ON_TextLog tl(wstr);
+
+	BU_CK_LIST_HEAD(vhead);
+	RT_CK_DB_INTERNAL(ip);
+	bi = (struct rt_brep_internal*) ip->idb_ptr;
+	RT_BREP_CK_MAGIC(bi);
+
+	ON_Brep* brep = bi->brep;
+	if (brep == NULL || !brep->IsValid(&tl)) {
+	    if (wstr.Length() > 0) {
+		ON_String onstr = ON_String(wstr);
+		const char *isvalidinfo = onstr.Array();
+		bu_log("brep (%s) is NOT valid: %s\n",solid_name,isvalidinfo);
+	    } else {
+		bu_log("brep (%s) is NOT valid.\n",solid_name);
+	    }
+	    //return 0; let's just try it for now, need to improve the not valid checks
+	}
+
+#ifndef TESTIT
+#ifndef WATER_TIGHT
+	fastf_t  max_dist = 0;
+	for (int index = 0; index < brep->m_F.Count(); index++) {
+		ON_BrepFace *face = brep->Face(index);
+		const ON_Surface *s = face->SurfaceOf();
+		double surface_width,surface_height;
+		if (s->GetSurfaceSize(&surface_width,&surface_height)) {
+		    // reparameterization of the face's surface and transforms the "u"
+		    // and "v" coordinates of all the face's parameter space trimming
+		    // curves to minimize distortion in the map from parameter space to 3d..
+		    face->SetDomain(0, 0.0, surface_width);
+		    face->SetDomain(1, 0.0, surface_height);
+		    max_dist = sqrt(surface_width*surface_width + surface_height*surface_height) / 10.0;
+		}
+	}
+#ifdef DRAW_FACE
+	for (int index = 0; index < brep->m_E.Count(); index++) {
+		ON_BrepEdge& edge = brep->m_E[index];
+		if (edge.m_edge_user.p == NULL) {
+		    std::map<double,ON_3dPoint *> *points = getEdgePoints(edge, max_dist, ttol, tol, info);
+		}
+	}
+#endif
+#endif
+	bool watertight = true;
+	int plottype = 0;
+	int numpoints = -1;
+	for (int index = 0; index < brep->m_F.Count(); index++) {
+		ON_BrepFace& face = brep->m_F[index];
+
+#ifdef DRAW_FACE
+		draw_face_CDT(vhead, face, ttol, tol, info, watertight, plottype, numpoints);
+#else
+		poly2tri_CDT(vhead, face, ttol, tol, info, watertight, plottype, numpoints);
+#endif
+	}
+#else
+	for (int index = 0; index < brep->m_F.Count(); index++) {
+		ON_BrepFace& face = brep->m_F[index];
+		SurfaceTree* st = new SurfaceTree(&face, true, 10);
+
+		plot_poly_from_surface_tree(vhead, st, face.m_bRev);
+
+		delete st;
+	}
+#endif
+	for (int index = 0; index < brep->m_E.Count(); index++) {
+		ON_BrepEdge& edge = brep->m_E[index];
+		if (edge.m_edge_user.p != NULL) {
+		    std::map<double,ON_3dPoint *> *points = (std::map<double,ON_3dPoint *> *)edge.m_edge_user.p;
+		    std::map<double,ON_3dPoint *>::iterator i;
+		    for(i=points->begin(); i != points->end(); i++) {
+			ON_3dPoint *p = (*i).second;
+			delete p;
+		    }
+		    points->clear();
+		    delete points;
+		    edge.m_edge_user.p = NULL;
+		}
+	}
+
+	return 0;
+}
 
 /**
  * R T _ B R E P _ T E S S
