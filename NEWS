@@ -13,6 +13,7 @@ changes made.  See document footer for additional details.
 --- 2013-03-XX  Release 7.24.0                                     ---
 ----------------------------------------------------------------------
 
+* fixed mged lesson 15 toy truck 'inside' ordering bug - Sean Morrison
 * fixed uninstallable Linux RPM package on Fedora 18 - Jordi Sayol
 * improved Mac, BSD, & Windows ray tracing performance - Sean Morrison
 * improved Linux ray tracing via cpu thread affinity - Akshay Kashyap
