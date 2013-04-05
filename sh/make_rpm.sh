@@ -141,6 +141,9 @@ rm -Rf $TMPDIR
 mkdir -p $TMPDIR/tmp
 cp -Rf misc/debian/* $TMPDIR
 
+# create "version" file
+echo $BVERSION >$TMPDIR/version
+
 # compile and install in tmp dir
 cmake -DBRLCAD_BUNDLED_LIBS=ON \
       -DBRLCAD_FLAGS_OPTIMIZATION=ON \
@@ -153,7 +156,7 @@ cmake -DBRLCAD_BUNDLED_LIBS=ON \
 make -j$NJOBS
 fakeroot make install DESTDIR=`pwd`"/$TMPDIR/tmp"
 
-# copy menu files
+# copy menu files and others
 mkdir -p $TMPDIR/tmp/etc/profile.d
 cp -f $TMPDIR/brlcad.sh $TMPDIR/tmp/etc/profile.d
 
@@ -175,6 +178,9 @@ cp -f $TMPDIR/brlcad-doc.directory $TMPDIR/tmp/usr/share/desktop-directories
 
 mkdir -p $TMPDIR/tmp/usr/share/mime/packages
 cp -f $TMPDIR/brlcad.xml $TMPDIR/tmp/usr/share/mime/packages
+
+mkdir -p $TMPDIR/tmp/usr/brlcad
+cp -f $TMPDIR/version $TMPDIR/tmp/usr/brlcad
 
 # copy icons
 for I in 16x16 24x24 36x36 48x48 64x64 96x96 128x128 256x256

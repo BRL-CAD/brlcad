@@ -165,8 +165,11 @@ if test "$1" = "-s" ;then
     tar -czf "../brlcad_$BVERSION.orig.tar.gz" *
 fi
 
-# #
+# copy debian folder on project root
 cp -Rf misc/debian/ .
+
+# create "version" file
+echo $BVERSION >debian/version
 
 # update debian/changelog if needed
 if test -s $CFILE && test `sed -n '1p' $CFILE | grep "brlcad ($BVERSION-$RELEASE" | wc -l` -eq 0 ; then
