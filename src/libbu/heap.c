@@ -52,54 +52,43 @@
  */
 #define PAGESIZE (BINS * 1024)
 
-/**
- * heaps is an array of lists containing pages of memory binned per
- * requested allocation size.
- *
- * heaps:
- * [0] [1] [2] [3] ... [BINS-1]
- *   \   \   \
- *    oo  o   oooo      'o' is a PAGESIZE allocation of memory
- */
-#if 0
-static char **heaps[BINS] = {0};
-
-/**
- * pages is an array of counts for how many heap pages have been
- * allocated per each heaps[] size.
- *
- * pages:
- * [0] [1] [2] [3] ... [BINS-1]
- *   \   \   \
- *    2   1   4
- */
-static size_t pages[BINS] = {0};
-
-/**
- * used is an array of lists to count how much memory has been used
- * (allocated) per page.
- */
-static size_t *used[BINS] = {0};
-
-/** keep track of our allocation counts for reporting stats */
-static size_t alloc[BINS] = {0};
-
-/** keep track of allocation sizes outside our supported range */
-static size_t misses = 0;
-#endif
-
 
 struct bins {
+    /**
+     * heaps is an array of memory pages.  they are allocated one at a
+     * time so we only have to keep track of the last page.
+     */
     char **heaps;
+
+    /**
+     * pages is a count of how many heap pages have been allocated so
+     * we can quickly jump into the current.
+     */
     size_t pages;
+
+    /**
+     * used is an array of page sizes for tabulating how much memory
+     * each page is currently using (allocate).  not a counter so we
+     * avoid a multiply.
+     */
     size_t *used;
+
+    /** keep track of our allocation counts for reporting stats */
     size_t alloc;
 };
 
 struct cpus {
+    /** each allocation size gets a bin for holding memory pages */
     struct bins bin[BINS];
+
+    /** keep track of allocation sizes outside our supported range */
     size_t misses;
 };
+
+/**
+ * store data in a cpu-specific structure so we can avoid the need for
+ * mutex locking entirely.  relies on static zero-initialization.
+ */
 static struct cpus per_cpu[MAX_PSW] = {{{{0, 0, 0, 0}}, 0}};
 
 
