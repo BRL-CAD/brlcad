@@ -58,6 +58,7 @@ struct memqdebug {
     struct memdebug m;
 };
 
+
 static struct bu_list *bu_memq = BU_LIST_NULL;
 static struct bu_list bu_memqhd = BU_LIST_INIT_ZERO;
 #define MEMQDEBUG_NULL ((struct memqdebug *)0)
@@ -93,7 +94,7 @@ again:
     if (LIKELY(bu_memdebug != NULL)) {
 	for (; mp >= bu_memdebug; mp--) {
 	    /* Search for an empty slot */
-	    if (mp->mdb_len > 0)  continue;
+	    if (mp->mdb_len > 0) continue;
 	    mp->magic = MDB_MAGIC;
 	    mp->mdb_addr = ptr;
 	    mp->mdb_len = cnt;
@@ -143,16 +144,16 @@ memdebug_check(register genptr_t ptr, const char *str)
 
     if (bu_memdebug == (struct memdebug *)0) {
 	bu_semaphore_acquire(BU_SEM_SYSCALL);
-	fprintf(stderr, "memdebug_check(%p, %s)  no memdebug table yet\n",
+	fprintf(stderr, "memdebug_check(%p, %s) no memdebug table yet\n",
 		ptr, str);
 	bu_semaphore_release(BU_SEM_SYSCALL);
 	return MEMDEBUG_NULL;
     }
     for (; mp >= bu_memdebug; mp--) {
-	if (!mp->magic)  continue;
-	if (mp->magic != MDB_MAGIC)  bu_bomb("memdebug_check() malloc tracing table corrupted!\n");
-	if (mp->mdb_len == 0)  continue;
-	if (mp->mdb_addr != ptr)  continue;
+	if (!mp->magic) continue;
+	if (mp->magic != MDB_MAGIC) bu_bomb("memdebug_check() malloc tracing table corrupted!\n");
+	if (mp->mdb_len == 0) continue;
+	if (mp->mdb_addr != ptr) continue;
 	ip = (uint32_t *)((char *)ptr+mp->mdb_len-sizeof(uint32_t));
 	if (*ip != MDB_MAGIC) {
 	    bu_semaphore_acquire(BU_SEM_SYSCALL);
@@ -246,6 +247,7 @@ alloc(alloc_t type, size_t cnt, size_t sz, const char *str)
     if (UNLIKELY(ptr==(char *)0 || bu_debug&BU_DEBUG_MEM_LOG)) {
 	fprintf(stderr, "NULL malloc(%llu) %s\n", (unsigned long long)(cnt*size), str);
     }
+
 #if defined(MALLOC_NOT_MP_SAFE)
     bu_semaphore_release(BU_SEM_SYSCALL);
 #endif
@@ -505,9 +507,9 @@ bu_prmem(const char *str)
     if (bu_memdebug_len > 0) {
 	mp = &bu_memdebug[bu_memdebug_len-1];
 	for (; mp >= bu_memdebug; mp--) {
-	    if (!mp->magic)  continue;
-	    if (mp->magic != MDB_MAGIC)  bu_bomb("memdebug_check() malloc tracing table corrupted!\n");
-	    if (mp->mdb_len == 0)  continue;
+	    if (!mp->magic) continue;
+	    if (mp->magic != MDB_MAGIC) bu_bomb("memdebug_check() malloc tracing table corrupted!\n");
+	    if (mp->mdb_len == 0) continue;
 
 	    count++;
 	    ip = (uint32_t *)(((char *)mp->mdb_addr)+mp->mdb_len-sizeof(uint32_t));
@@ -601,16 +603,16 @@ bu_ck_malloc_ptr(genptr_t ptr, const char *str)
 
     if (UNLIKELY(bu_debug&BU_DEBUG_MEM_CHECK)) {
 	if (bu_memdebug == (struct memdebug *)0) {
-	    fprintf(stderr, "bu_ck_malloc_ptr(%p, %s)  no memdebug table yet\n",
+	    fprintf(stderr, "bu_ck_malloc_ptr(%p, %s) no memdebug table yet\n",
 		    ptr, str);
 	    /* warning only -- the program is just getting started */
 	    return;
 	}
 
 	for (; mp >= bu_memdebug; mp--) {
-	    if (!mp->magic)  continue;
-	    if (mp->magic != MDB_MAGIC)  bu_bomb("bu_ck_malloc_ptr() malloc tracing table corrupted!\n");
-	    if (mp->mdb_len == 0 || mp->mdb_addr != ptr)  continue;
+	    if (!mp->magic) continue;
+	    if (mp->magic != MDB_MAGIC) bu_bomb("bu_ck_malloc_ptr() malloc tracing table corrupted!\n");
+	    if (mp->mdb_len == 0 || mp->mdb_addr != ptr) continue;
 
 	    /* Found the relevant entry */
 	    ip = (uint32_t *)(((char *)ptr)+mp->mdb_len-sizeof(uint32_t));
@@ -640,18 +642,18 @@ bu_mem_barriercheck(void)
     register uint32_t *ip;
 
     if (UNLIKELY(bu_memdebug == (struct memdebug *)0)) {
-	fprintf(stderr, "bu_mem_barriercheck()  no memdebug table yet\n");
+	fprintf(stderr, "bu_mem_barriercheck() no memdebug table yet\n");
 	return 0;
     }
     bu_semaphore_acquire(BU_SEM_SYSCALL);
     for (; mp >= bu_memdebug; mp--) {
-	if (!mp->magic)  continue;
+	if (!mp->magic) continue;
 	if (mp->magic != MDB_MAGIC) {
 	    bu_semaphore_release(BU_SEM_SYSCALL);
 	    fprintf(stderr, "  mp->magic = x%lx, s/b=x%x\n", (unsigned long)(mp->magic), MDB_MAGIC);
 	    bu_bomb("bu_mem_barriercheck() malloc tracing table corrupted!\n");
 	}
-	if (mp->mdb_len == 0)  continue;
+	if (mp->mdb_len == 0) continue;
 	ip = (uint32_t *)(((char *)mp->mdb_addr)+mp->mdb_len-sizeof(uint32_t));
 	if (*ip != MDB_MAGIC) {
 	    bu_semaphore_release(BU_SEM_SYSCALL);
