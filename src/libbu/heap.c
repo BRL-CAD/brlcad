@@ -53,18 +53,18 @@
 #define PAGESIZE (BINS * 1024)
 
 
-struct bins {
+struct heap {
     /**
-     * heaps is an array of memory pages.  they are allocated one at a
+     * pages is an array of memory pages.  they are allocated one at a
      * time so we only have to keep track of the last page.
      */
-    char **heaps;
+    char **pages;
 
     /**
-     * pages is a count of how many heap pages have been allocated so
-     * we can quickly jump into the current.
+     * a count of how many heap pages have been allocated so we can
+     * quickly jump into the current.
      */
-    size_t pages;
+    size_t count;
 
     /**
      * used tabulates how much memory the current page is using
@@ -75,7 +75,7 @@ struct bins {
 
 struct cpus {
     /** each allocation size gets a bin for holding memory pages */
-    struct bins bin[BINS];
+    struct heap heap[BINS];
 
     /** keep track of allocation sizes outside our supported range */
     size_t misses;
@@ -115,15 +115,15 @@ heap_print()
 	for (i=0; i < BINS; i++) {
 
 	    /* capacity across all pages */
-	    got = per_cpu[h].bin[i].pages * (PAGESIZE/(i+1));
+	    got = per_cpu[h].heap[i].count * (PAGESIZE/(i+1));
 
 	    if (got > 0) {
 		/* last page is partial */
-		got -= (PAGESIZE - per_cpu[h].bin[i].used)/(i+1);
-		bu_log("%04zu [%02zu] => %zu\n", i, per_cpu[h].bin[i].pages, got);
+		got -= (PAGESIZE - per_cpu[h].heap[i].used)/(i+1);
+		bu_log("%04zu [%02zu] => %zu\n", i, per_cpu[h].heap[i].count, got);
 		allocs += got;
 	    }
-	    total_pages += per_cpu[h].bin[i].pages;
+	    total_pages += per_cpu[h].heap[i].count;
 	}
 	misses += per_cpu[h].misses;
     }
@@ -144,7 +144,7 @@ bu_heap_get(size_t sz)
     register size_t smo = sz-1;
     static int printit = 0;
     int oncpu;
-    struct bins *bin;
+    struct heap *heap;
 
     /* what thread are we? */
     oncpu = bu_parallel_id();
@@ -162,33 +162,33 @@ bu_heap_get(size_t sz)
 	return bu_calloc(1, sz, "heap calloc");
     }
 
-    bin = &per_cpu[oncpu].bin[smo];
+    heap = &per_cpu[oncpu].heap[smo];
 
     /* init */
-    if (bin->pages == 0) {
+    if (heap->count == 0) {
 
 	if (bu_debug && printit == 0) {
 	    printit++;
 	    atexit(heap_print);
 	}
 
-	bin->pages++;
-	bin->heaps = (char **)bu_malloc(1 * sizeof(char *), "heap malloc heaps[]");
-	bin->heaps[0] = (char *)bu_calloc(1, PAGESIZE, "heap calloc heaps[][0]");
-	bin->used = 0;
+	heap->count++;
+	heap->pages = (char **)bu_malloc(1 * sizeof(char *), "heap malloc pages[]");
+	heap->pages[0] = (char *)bu_calloc(1, PAGESIZE, "heap calloc pages[][0]");
+	heap->used = 0;
     }
 
     /* grow */
-    if (bin->used+sz > PAGESIZE) {
-	bin->pages++;
-	bin->heaps = (char **)bu_realloc(bin->heaps, bin->pages * sizeof(char *), "heap realloc heaps[]");
-	bin->heaps[bin->pages-1] = (char *)bu_calloc(1, PAGESIZE, "heap calloc heaps[][]");
-	bin->used = 0;
+    if (heap->used+sz > PAGESIZE) {
+	heap->count++;
+	heap->pages = (char **)bu_realloc(heap->pages, heap->count * sizeof(char *), "heap realloc pages[]");
+	heap->pages[heap->count-1] = (char *)bu_calloc(1, PAGESIZE, "heap calloc pages[][]");
+	heap->used = 0;
     }
 
     /* give */
-    ret = &(bin->heaps[bin->pages-1][bin->used]);
-    bin->used += sz;
+    ret = &(heap->pages[heap->count-1][heap->used]);
+    heap->used += sz;
 
     return (void *)ret;
 }
@@ -267,7 +267,7 @@ int main (int ac, char *av[])
 
 /* sanity */
 #if PAGESIZE < BINS
-#  error "ERROR: heap page size cannot be smaller than bin size"
+#  error "ERROR: heap page size cannot be smaller than bin range"
 #endif
 
 
