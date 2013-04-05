@@ -84,7 +84,7 @@ static char *p_arb8[] = {
     "Enter thickness for face 1485: ",
     "Enter thickness for face 2376: ",
     "Enter thickness for face 1265: ",
-    "Enter thickness for face 3478: ",
+    "Enter thickness for face 3487: ",
 };
 
 
