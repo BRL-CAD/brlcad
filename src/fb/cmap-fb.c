@@ -26,11 +26,11 @@
 
 #include "common.h"
 
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
 
+#include "bio.h"
 #include "bu.h"
 #include "fb.h"
 
@@ -104,7 +104,8 @@ main(int argc, char **argv)
 	} else if (BU_STR_EQUAL(argv[1], "-o")) {
 	    overlay++;
 	} else if (argv[1][0] == '-') {
-	    /* unknown flag */
+	    if (!BU_STR_EQUAL(argv[1], "-?"))
+	        fprintf(stderr,"cmap-fb: unknown flag %s\n",argv[1]);
 	    bu_exit(1, "%s", usage);
 	} else
 	    break;	/* must be a filename */
@@ -117,8 +118,11 @@ main(int argc, char **argv)
 	    fprintf(stderr, "cmap-fb: can't open \"%s\"\n", argv[1]);
 	    bu_exit(2, "%s", usage);
 	}
-    } else
+    } else {
 	fp = stdin;
+	if(isatty(fileno(fp)))
+	    fprintf(stderr,"%s       Program continues running:\n",usage);
+    }
 
     if ((fbp = fb_open(NULL, fbsize, fbsize)) == FBIO_NULL)
 	bu_exit(3, "Unable to open framebuffer\n");
