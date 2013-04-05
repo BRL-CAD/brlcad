@@ -67,10 +67,10 @@ struct heap {
     size_t count;
 
     /**
-     * used tabulates how much memory the current page is using
-     * (allocated).  it's not a counter so we can avoid a multiply.
+     * given tabulates how much memory the current page has been
+     * allocated to callers.  not a counter to avoid a multiply.
      */
-    size_t used;
+    size_t given;
 };
 
 struct cpus {
@@ -119,7 +119,7 @@ heap_print()
 
 	    if (got > 0) {
 		/* last page is partial */
-		got -= (PAGESIZE - per_cpu[h].heap[i].used)/(i+1);
+		got -= (PAGESIZE - per_cpu[h].heap[i].given)/(i+1);
 		bu_log("%04zu [%02zu] => %zu\n", i, per_cpu[h].heap[i].count, got);
 		allocs += got;
 	    }
@@ -175,20 +175,20 @@ bu_heap_get(size_t sz)
 	heap->count++;
 	heap->pages = (char **)bu_malloc(1 * sizeof(char *), "heap malloc pages[]");
 	heap->pages[0] = (char *)bu_calloc(1, PAGESIZE, "heap calloc pages[][0]");
-	heap->used = 0;
+	heap->given = 0;
     }
 
     /* grow */
-    if (heap->used+sz > PAGESIZE) {
+    if (heap->given+sz > PAGESIZE) {
 	heap->count++;
 	heap->pages = (char **)bu_realloc(heap->pages, heap->count * sizeof(char *), "heap realloc pages[]");
 	heap->pages[heap->count-1] = (char *)bu_calloc(1, PAGESIZE, "heap calloc pages[][]");
-	heap->used = 0;
+	heap->given = 0;
     }
 
     /* give */
-    ret = &(heap->pages[heap->count-1][heap->used]);
-    heap->used += sz;
+    ret = &(heap->pages[heap->count-1][heap->given]);
+    heap->given += sz;
 
     return (void *)ret;
 }
