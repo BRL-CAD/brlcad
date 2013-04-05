@@ -100,15 +100,24 @@ struct cpus {
 static struct cpus per_cpu[MAX_PSW] = {{{{0, 0, 0, 0}}, 0}};
 
 
-void
-bu_heap_print()
+static void
+heap_print()
 {
+    static int printed = 0;
+
     size_t h, i, j;
     size_t misses = 0;
     size_t allocations = 0;
     size_t total_pages = 0;
     size_t total_alloc = 0;
     size_t ncpu = bu_avail_cpus();
+
+    /* this may get registered for atexit() multiple times, so make
+     * sure we only do this once
+     */
+    if (printed++ > 0) {
+	return;
+    }
 
     bu_log("=======================\n"
 	   "Memory Heap Information\n"
@@ -170,7 +179,7 @@ bu_heap_get(size_t sz)
 
 	if (bu_debug && printit == 0) {
 	    printit++;
-	    atexit(bu_heap_print);
+	    atexit(heap_print);
 	}
 
 	bin->pages++;
