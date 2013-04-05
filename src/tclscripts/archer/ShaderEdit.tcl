@@ -70,6 +70,7 @@
 	    Light
 	    Checker
 	    Cloud
+	    Camouflage
 	    Unlisted
 	    None
 	}
@@ -81,6 +82,7 @@
 	    light
 	    checker
 	    cloud
+	    camo
 	    unlisted
 	    ""
 	}
@@ -92,6 +94,7 @@
 	    {Light light}
 	    {Checker checker}
 	    {Cloud cloud}
+	    {Camouflage camo}
 	    {Unlisted unlisted}
 	    {None ""}
 	}
@@ -243,6 +246,7 @@
 	method build_glass {parent id}
 	method build_checker {parent id}
 	method build_cloud {parent id}
+	method build_camo {parent id}
 	method buildPhong {parent id}
 
 	method build_light {parent id}
@@ -273,6 +277,9 @@
 	method updateForm_cloud {id}
 	method setFormDefaults_cloud {id}
 
+	method updateForm_camo {id}
+	method setFormDefaults_camo {id}
+
 	method updateForm_light {id}
 	method setFormDefaults_light {id}
 
@@ -289,6 +296,10 @@
 
 	method validateDouble_light {id d}
 	method updateLightSpec {id {_unused ""}}
+
+	method validateDouble_camo {id d}
+	method validateRgb_camo {id rgb}
+	method updateCamoSpec {id}
 
 	method validateDouble_checker {id d}
 	method validateRgb_checker {id rgb}
@@ -509,6 +520,199 @@
 }
 
 
+::itcl::body ShaderEdit::build_camo {parent id} {
+    set shaderType "camo"
+    set shaderTypeUnlisted 0
+
+    itk_component add camo$id\F {
+	::ttk::frame $parent.camo$id\F
+    } {}
+
+    set parent $itk_component(camo$id\F)
+
+    itk_component add camoC1$id\L {
+	::ttk::label $parent.camoC1$id\L \
+	    -text "Background Color"
+    } {}
+
+    itk_component add camoC1$id\E {
+	::ttk::entry $parent.camoC1$id\E \
+	    -width 20 \
+	    -textvariable [::itcl::scope camoC1($id)] \
+	    -validate key \
+	    -validatecommand [::itcl::code $this validateRgb_camo $id %P]
+    } {}
+
+    itk_component add camoC2$id\L {
+	::ttk::label $parent.camoC2$id\L \
+	    -text "Color 1"
+    } {}
+
+    itk_component add camoC2$id\E {
+	::ttk::entry $parent.camoC2$id\E \
+	    -width 20 \
+	    -textvariable [::itcl::scope camoC2($id)] \
+	    -validate key \
+	    -validatecommand [::itcl::code $this validateRgb_camo $id %P]
+    } {}
+
+    itk_component add camoC3$id\L {
+	::ttk::label $parent.camoC3$id\L \
+	    -text "Color 2"
+    } {}
+
+    itk_component add camoC3$id\E {
+	::ttk::entry $parent.camoC3$id\E \
+	    -width 20 \
+	    -textvariable [::itcl::scope camoC3($id)] \
+	    -validate key \
+	    -validatecommand [::itcl::code $this validateRgb_camo $id %P]
+    } {}
+
+    itk_component add camoT1$id\L {
+	::ttk::label $parent.camoT1$id\L \
+	    -text "Threshold 1"
+    } {}
+
+    itk_component add camoT1$id\E {
+	::ttk::entry $parent.camoT1$id\E \
+	    -width 20 \
+	    -textvariable [::itcl::scope camoT1($id)] \
+	    -validate key \
+	    -validatecommand [::itcl::code $this validateDouble_camo $id %P]
+    } {}
+
+    itk_component add camoT2$id\L {
+	::ttk::label $parent.camoT2$id\L \
+	    -text "Threshold 2"
+    } {}
+
+    itk_component add camoT2$id\E {
+	::ttk::entry $parent.camoT2$id\E \
+	    -width 20 \
+	    -textvariable [::itcl::scope camoT2($id)] \
+	    -validate key \
+	    -validatecommand [::itcl::code $this validateDouble_camo $id %P]
+    } {}
+
+    itk_component add camoSize$id\L {
+	::ttk::label $parent.camo$id\L \
+	    -text "Noise Size"
+    } {}
+
+    itk_component add camoSize$id\E {
+	::ttk::entry $parent.camoSize$id\E \
+	    -width 20 \
+	    -textvariable [::itcl::scope camoSize($id)] \
+	    -validate key \
+	    -validatecommand [::itcl::code $this validateDouble_camo $id %P]
+    } {}
+
+    itk_component add camoScale$id\L {
+	::ttk::label $parent.camoScale$id\L \
+	    -text "Noise Scale"
+    } {}
+
+    itk_component add camoScale$id\E {
+	::ttk::entry $parent.camoScale$id\E \
+	    -width 20 \
+	    -textvariable [::itcl::scope camoScale($id)] \
+	    -validate key \
+	    -validatecommand [::itcl::code $this validateDouble_camo $id %P]
+    } {}
+
+    itk_component add camoDelta$id\L {
+	::ttk::label $parent.camoDelta$id\L \
+	    -text "Noise Delta"
+    } {}
+
+    itk_component add camoDelta$id\E {
+	::ttk::entry $parent.camoDelta$id\E \
+	    -width 20 \
+	    -textvariable [::itcl::scope camoDelta($id)] \
+	    -validate key \
+	    -validatecommand [::itcl::code $this validateDouble_camo $id %P]
+    } {}
+
+    itk_component add camoLacun$id\L {
+	::ttk::label $parent.camoLacun$id\L \
+	    -text "Lacunarity"
+    } {}
+
+    itk_component add camoLacun$id\E {
+	::ttk::entry $parent.camoLacun$id\E \
+	    -width 20 \
+	    -textvariable [::itcl::scope camoLacun($id)] \
+	    -validate key \
+	    -validatecommand [::itcl::code $this validateDouble_camo $id %P]
+    } {}
+
+    itk_component add camoOctaves$id\L {
+	::ttk::label $parent.camoOctaves$id\L \
+	    -text "Octaves"
+    } {}
+
+    itk_component add camoOctaves$id\E {
+	::ttk::entry $parent.camoOctaves$id\E \
+	    -width 20 \
+	    -textvariable [::itcl::scope camoOctaves($id)] \
+	    -validate key \
+	    -validatecommand [::itcl::code $this validateDouble_camo $id %P]
+    } {}
+
+    itk_component add camoHval$id\L {
+	::ttk::label $parent.camoHval$id\L \
+	    -text "H Value"
+    } {}
+
+    itk_component add camoHval$id\E {
+	::ttk::entry $parent.camoHval$id\E \
+	    -width 20 \
+	    -textvariable [::itcl::scope camoHval($id)] \
+	    -validate key \
+	    -validatecommand [::itcl::code $this validateDouble_camo $id %P]
+    } {}
+
+    set row 0
+    grid $itk_component(camoC1$id\L) -row $row -column 0 -sticky e
+    grid $itk_component(camoC1$id\E) -row $row -column 1 -sticky w
+    incr row
+    grid $itk_component(camoC2$id\L) -row $row -column 0 -sticky e
+    grid $itk_component(camoC2$id\E) -row $row -column 1 -sticky w
+    incr row
+    grid $itk_component(camoC3$id\L) -row $row -column 0 -sticky e
+    grid $itk_component(camoC3$id\E) -row $row -column 1 -sticky w
+    incr row
+    grid $itk_component(camoDelta$id\L) -row $row -column 0 -sticky e
+    grid $itk_component(camoDelta$id\E) -row $row -column 1 -sticky w
+    incr row
+    grid $itk_component(camoScale$id\L) -row $row -column 0 -sticky e
+    grid $itk_component(camoScale$id\E) -row $row -column 1 -sticky w
+    incr row
+    grid $itk_component(camoSize$id\L) -row $row -column 0 -sticky e
+    grid $itk_component(camoSize$id\E) -row $row -column 1 -sticky w
+    incr row
+    grid $itk_component(camoT1$id\L) -row $row -column 0 -sticky e
+    grid $itk_component(camoT1$id\E) -row $row -column 1 -sticky w
+    incr row
+    grid $itk_component(camoT2$id\L) -row $row -column 0 -sticky e
+    grid $itk_component(camoT2$id\E) -row $row -column 1 -sticky w
+    incr row
+    grid $itk_component(camoLacun$id\L) -row $row -column 0 -sticky e
+    grid $itk_component(camoLacun$id\E) -row $row -column 1 -sticky w
+    incr row
+    grid $itk_component(camoHval$id\L) -row $row -column 0 -sticky e
+    grid $itk_component(camoHval$id\E) -row $row -column 1 -sticky w
+    incr row
+    grid $itk_component(camoOctaves$id\L) -row $row -column 0 -sticky e
+    grid $itk_component(camoOctaves$id\E) -row $row -column 1 -sticky w
+
+    pack $itk_component(camo$id\F) -expand yes -fill both
+
+    setFormDefaults_camo $id
+}
+
+
 ::itcl::body ShaderEdit::build_plastic {parent id} {
     set shaderType "plastic"
     set shaderTypeUnlisted 0
@@ -645,23 +849,27 @@
     set row 0
     grid $itk_component(phongTrans$id\L) -row $row -column 0 -sticky e
     grid $itk_component(phongTrans$id\E) -row $row -column 1 -sticky w
-    grid $itk_component(phongRefl$id\L) -row $row -column 2 -sticky e
-    grid $itk_component(phongRefl$id\E) -row $row -column 3 -sticky w
+    incr row
+    grid $itk_component(phongRefl$id\L) -row $row -column 0 -sticky e
+    grid $itk_component(phongRefl$id\E) -row $row -column 1 -sticky w
     incr row
     grid $itk_component(phongSpec$id\L) -row $row -column 0 -sticky e
     grid $itk_component(phongSpec$id\E) -row $row -column 1 -sticky w
-    grid $itk_component(phongDiff$id\L) -row $row -column 2 -sticky e
-    grid $itk_component(phongDiff$id\E) -row $row -column 3 -sticky w
+    incr row
+    grid $itk_component(phongDiff$id\L) -row $row -column 0 -sticky e
+    grid $itk_component(phongDiff$id\E) -row $row -column 1 -sticky w
     incr row
     grid $itk_component(phongRi$id\L) -row $row -column 0 -sticky e
     grid $itk_component(phongRi$id\E) -row $row -column 1 -sticky w
-    grid $itk_component(phongShine$id\L) -row $row -column 2 -sticky e
-    grid $itk_component(phongShine$id\E) -row $row -column 3 -sticky w
+    incr row
+    grid $itk_component(phongShine$id\L) -row $row -column 0 -sticky e
+    grid $itk_component(phongShine$id\E) -row $row -column 1 -sticky w
     incr row
     grid $itk_component(phongExt$id\L) -row $row -column 0 -sticky e
     grid $itk_component(phongExt$id\E) -row $row -column 1 -sticky w
-    grid $itk_component(phongEmiss$id\L) -row $row -column 2 -sticky e
-    grid $itk_component(phongEmiss$id\E) -row $row -column 3 -sticky w
+    incr row
+    grid $itk_component(phongEmiss$id\L) -row $row -column 0 -sticky e
+    grid $itk_component(phongEmiss$id\E) -row $row -column 1 -sticky w
 
     pack $itk_component(phong$id\F) -expand yes -fill both
 }
@@ -885,6 +1093,9 @@
 	}
 	"Cloud" {
 	    set stype cloud
+	}
+	"Camouflage" {
+	    set stype camo
 	}
 	"Unlisted" {
 	    set stype unlisted
@@ -1167,6 +1378,96 @@
     set ignoreShaderSpec 0
 }
 
+::itcl::body ShaderEdit::updateForm_camo {id} {
+    setFormDefaults_checker $id
+
+    set ignoreShaderSpec 1
+    foreach {key val} [lindex $shaderSpec 1] {
+	if {$val != ""} {
+	    set notEmptyVal 1
+	} else {
+	    set notEmptyVal 0
+	}
+
+	switch -- $key {
+	    "l" {
+		if {$notEmptyVal && [string is double $val]} {
+		    set camoLacun($id) $val
+		}
+	    }
+	    "H" {
+		if {$notEmptyVal && [string is double $val]} {
+		    set camoHval($id) $val
+		}
+	    }
+	    "o" {
+		if {$notEmptyVal && [string is double $val]} {
+		    set camoOctaves($id) $val
+		}
+	    }
+	    "s" {
+		if {$notEmptyVal && [string is double $val]} {
+		    set camoSize($id) $val
+		}
+	    }
+	    "v" {
+		if {$notEmptyVal && [string is double $val]} {
+		    set camoScale($id) $val
+		}
+	    }
+	    "c1" {
+		if {$notEmptyVal && [llength $val] == 3} {
+		    set camoC1($id) $val
+		}
+	    }
+	    "c2" {
+		if {$notEmptyVal && [llength $val] == 3} {
+		    set camoC2($id) $val
+		}
+	    }
+	    "c3" {
+		if {$notEmptyVal && [llength $val] == 3} {
+		    set camoC3($id) $val
+		}
+	    }
+	    "t1" {
+		if {$notEmptyVal && [string is double $val]} {
+		    set camoT1($id) $val
+		}
+	    }
+	    "t2" {
+		if {$notEmptyVal && [string is double $val]} {
+		    set camoT2($id) $val
+		}
+	    }
+	    "d" {
+		if {$notEmptyVal && [string is double $val]} {
+		    set camoDelta($id) $val
+		}
+	    }
+	}
+    }
+    set ignoreShaderSpec 0
+}
+
+::itcl::body ShaderEdit::setFormDefaults_camo {id} {
+    set ignoreShaderSpec 1
+
+    set camoLacun($id) $DEF_CAMO_LACUN
+    set camoHval($id) $DEF_CAMO_HVAL
+    set camoOctaves($id) $DEF_CAMO_OCTAVES
+    set camoSize($id) $DEF_CAMO_SIZE
+    set camoScale($id) $DEF_CAMO_SCALE
+    set camoC1($id) $DEF_CAMO_C1
+    set camoC2($id) $DEF_CAMO_C2
+    set camoC3($id) $DEF_CAMO_C3
+    set camoT1($id) $DEF_CAMO_T1
+    set camoT2($id) $DEF_CAMO_T2
+    set camoDelta($id) $DEF_CAMO_DELTA
+
+    set ignoreShaderSpec 0
+}
+
 ::itcl::body ShaderEdit::updateForm_light {id} {
     setFormDefaults_light $id
 
@@ -1334,6 +1635,128 @@
     }
 
     $itk_component(lightImage$id\L) configure -image $lightImages(light_i$lightInfinite($id)_v$lightVisible($id)_s$s)
+
+    if {$allowCallbacks && $itk_option(-shaderChangedCallback) != ""} {
+	$itk_option(-shaderChangedCallback)
+    }
+}
+
+::itcl::body ShaderEdit::validateDouble_camo {id d} {
+    if {![::cadwidgets::Ged::validateDouble $d]} {
+	return 0
+    }
+
+    if {!$ignoreShaderSpec} {
+	after idle [::itcl::code $this updateCamoSpec $id]
+    }
+
+    return 1
+}
+
+::itcl::body ShaderEdit::validateRgb_camo {id rgb} {
+    if {![::cadwidgets::Ged::validateRgb $rgb]} {
+	return 0
+    }
+
+    if {!$ignoreShaderSpec} {
+	after idle [::itcl::code $this updateCamoSpec $id]
+    }
+
+    return 1
+}
+
+::itcl::body ShaderEdit::updateCamoSpec {id} {
+    set newSpec ""
+
+    if {$camoLacun($id) != $DEF_CAMO_LACUN} {
+	if {$newSpec == ""} {
+	    append newSpec "l {$camoLacun($id)}"
+	} else {
+	    append newSpec " l {$camoLacun($id)}"
+	}
+    }
+
+    if {$camoHval($id) != $DEF_CAMO_HVAL} {
+	if {$newSpec == ""} {
+	    append newSpec "H {$camoHval($id)}"
+	} else {
+	    append newSpec " H {$camoHval($id)}"
+	}
+    }
+
+    if {$camoOctaves($id) != $DEF_CAMO_OCTAVES} {
+	if {$newSpec == ""} {
+	    append newSpec "o {$camoOctaves($id)}"
+	} else {
+	    append newSpec " o {$camoOctaves($id)}"
+	}
+    }
+
+    if {$camoSize($id) != $DEF_CAMO_SIZE} {
+	if {$newSpec == ""} {
+	    append newSpec "s {$camoSize($id)}"
+	} else {
+	    append newSpec " s {$camoSize($id)}"
+	}
+    }
+
+    if {$camoScale($id) != $DEF_CAMO_SCALE} {
+	if {$newSpec == ""} {
+	    append newSpec "v {$camoScale($id)}"
+	} else {
+	    append newSpec " v {$camoScale($id)}"
+	}
+    }
+
+    if {$camoC1($id) != $DEF_CAMO_C1} {
+	if {$newSpec == ""} {
+	    append newSpec "c1 {$camoC1($id)}"
+	} else {
+	    append newSpec " c1 {$camoC1($id)}"
+	}
+    }
+
+    if {$camoC2($id) != $DEF_CAMO_C2} {
+	if {$newSpec == ""} {
+	    append newSpec "c2 {$camoC2($id)}"
+	} else {
+	    append newSpec " c2 {$camoC2($id)}"
+	}
+    }
+
+    if {$camoC3($id) != $DEF_CAMO_C3} {
+	if {$newSpec == ""} {
+	    append newSpec "c3 {$camoC3($id)}"
+	} else {
+	    append newSpec " c3 {$camoC3($id)}"
+	}
+    }
+
+    if {$camoT1($id) != $DEF_CAMO_T1} {
+	if {$newSpec == ""} {
+	    append newSpec "t1 {$camoT1($id)}"
+	} else {
+	    append newSpec " t1 {$camoT1($id)}"
+	}
+    }
+
+    if {$camoT2($id) != $DEF_CAMO_T2} {
+	if {$newSpec == ""} {
+	    append newSpec "t2 {$camoT2($id)}"
+	} else {
+	    append newSpec " t2 {$camoT2($id)}"
+	}
+    }
+
+    if {$camoDelta($id) != $DEF_CAMO_DELTA} {
+	if {$newSpec == ""} {
+	    append newSpec "d {$camoDelta($id)}"
+	} else {
+	    append newSpec " d {$camoDelta($id)}"
+	}
+    }
+
+    set shaderSpec "camo [list $newSpec]"
 
     if {$allowCallbacks && $itk_option(-shaderChangedCallback) != ""} {
 	$itk_option(-shaderChangedCallback)
