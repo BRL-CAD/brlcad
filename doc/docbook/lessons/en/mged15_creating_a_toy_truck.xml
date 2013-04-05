@@ -146,7 +146,7 @@
 	If you are using <application>BRL-CAD</application> version 6.0 or later, at the Command Window
 	prompt, type:
 
-	<command>inside cab1.s caboff1.s .5 -.1 .7 -.1 -.1 -.1[Enter]</command>
+	<command>inside cab1.s caboff1.s -.1 .7 -.1 -.1 .5 -.1[Enter]</command>
 
 	The inside command tells <application>MGED</application> to:
 	<informaltable>
@@ -156,46 +156,60 @@
 		<entry>inside</entry>
 		<entry>cab1.s</entry>
 		<entry>caboff1.s</entry>
+		<entry>-.1</entry>
+		<entry>.7</entry>
+		<entry>-.1</entry>
+		<entry>-.1</entry>
 		<entry>.5</entry>
-		<entry>-.1</entry>
-		<entry>7</entry>
-		<entry>-.1</entry>
-		<entry>-.1</entry>
 		<entry>-.1</entry>
 	      </row>
 	      <row>
 		<entry>Inside the shape</entry>
 		<entry>named cab1.s,</entry>
 		<entry>create rpp called caboff1.s</entry>
-		<entry>Make face 1234 (bottom) .5 units thick</entry>
-		<entry>Make face 5678 (top) -.1 units thick</entry>
-		<entry>Make face 1485 (rear) .7 units thick</entry>
-		<entry>Make face 2376 (front) -.1 units thick</entry>
-		<entry>Make face 1265 (right) -.1 units thick</entry>
-		<entry>Make face 3478 (left) -.1 units thick</entry>
+		<entry>Make face 1234 (front) -.1 units thick</entry>
+		<entry>Make face 5678 (rear) .7 units thick</entry>
+		<entry>Make face 1485 (right) -.1 units thick</entry>
+		<entry>Make face 2376 (left) -.1 units thick</entry>
+		<entry>Make face 1265 (bottom) .5 units thick</entry>
+		<entry>Make face 3487 (top) -.1 units thick</entry>
 	      </row>
 	    </tbody>
 	  </tgroup>
 	</informaltable>
 
       </para>
+
       <note>
 	<para>
-	  In this example, each negative thickness number indicates that
-	  caboff1.s will protrude through the corresponding face of cab1.s.
+	  In this example, each negative thickness number indicates
+	  that caboff1.s will protrude through the corresponding face
+	  of cab1.s.  Running the l (list) command, you can see the
+	  vertices for the box it creates:
+
+	  <literallayout class="normal">
+caboff1.s:  ARB8
+	  1 (1.1, -0.1, 0.5)
+	  2 (1.1, 1.1, 0.5)
+	  3 (1.1, 1.1, 1.1)
+	  4 (1.1, -0.1, 1.1)
+	  5 (0.7, -0.1, 0.5)
+	  6 (0.7, 1.1, 0.5)
+	  7 (0.7, 1.1, 1.1)
+	  8 (0.7, -0.1, 1.1)
+	  </literallayout>
 	</para>
       </note>
+
       <note>
 	<para>
-	  Note that in <application>BRL-CAD</application> versions 6.0 and later, the faces of an rpp are
-	  numbered in a different order than in previous versions. So, if you
-	  are using a pre-6.0 release of the package, the following parameter
-	  order must be used for the aforementioned inside command:
+	  Note that in older versions
+	  of <application>BRL-CAD</application>, the faces of an rpp
+	  were numbered in a different order.  So, if your results
+	  don't match, kill caboff1.s and run this command instead:
 
-	  <command>inside cab1.s caboff1.s -.1 .7 -.1 -.1 .5 -.1[Enter]</command>
+	  <command>inside cab1.s caboff1.s .5 -.1 .7 -.1 -.1 -.1[Enter]</command>
 
-	  (The order of faces in this case is front, rear, right, left, bottom,
-	  top instead of that specified for versions 6.0 and later.)
 	</para>
       </note>
 
