@@ -154,7 +154,7 @@ round_closest(double x)
 void
 usage(void)
 {
-    bu_log("Usage: %s dem_file\n", progname);
+    bu_log("\nUsage: %s dem_file\n(Can not use stdin.)\n", progname);
 }
 
 
@@ -1681,10 +1681,10 @@ main(int ac, char *av[])
 
 /* Because other file names (__.tmp , __.dsp , __.g) are set up based on the file name provided
  * in dem-g command argument, dem-g cannot accept tty input.
- */  
+ */
     if (ac < 2) {
 	usage();
-	bu_exit(BRLCAD_ERROR, "Exiting.\n");
+	bu_exit(BRLCAD_ERROR, " ");
     }
 
     /*
