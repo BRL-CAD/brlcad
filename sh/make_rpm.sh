@@ -292,6 +292,7 @@ fi
 echo -e '
 %files' >> $TMPDIR/brlcad.spec
 
+find $TMPDIR/tmp/usr/brlcad -type d | sed 's:'$TMPDIR'/tmp:%dir ":' | sed 's:$:":' >> $TMPDIR/brlcad.spec
 find $TMPDIR/tmp/ ! -type d | sed 's:'$TMPDIR'/tmp:":' | sed 's:$:":' >> $TMPDIR/brlcad.spec
 
 # create rpm file
