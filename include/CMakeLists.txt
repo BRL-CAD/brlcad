@@ -74,7 +74,7 @@ set(include_hdrs
 if(WIN32)
   set(include_hdrs ${include_hdrs} ${CMAKE_CURRENT_BINARY_DIR}/config_win_cmake.h)
 endif(WIN32)
-install(FILES ${include_hdrs} DESTINATION include/brlcad)
+install(FILES ${include_hdrs} DESTINATION ${INCLUDE_DIR}/brlcad)
 
 # headers used by multiple packages but still considered private.
 # public headers should NOT include these headers.
