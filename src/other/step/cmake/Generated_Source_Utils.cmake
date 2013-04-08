@@ -3,11 +3,7 @@
 macro(MD5 filename md5sum)
   file(READ "${filename}" RAW_MD5_FILE)
   string(REGEX REPLACE "\\\\r" "" STRIPPED_MD5_FILE "${RAW_MD5_FILE}")
-  file(WRITE ${CMAKE_BINARY_DIR}/CMakeTmp/md5_file "${STRIPPED_MD5_FILE}")
-  execute_process(COMMAND ${CMAKE_COMMAND} -E md5sum ${CMAKE_BINARY_DIR}/CMakeTmp/md5_file OUTPUT_VARIABLE md5string)
-  file(REMOVE ${CMAKE_BINARY_DIR}/CMakeTmp/md5_file)
-  string(REPLACE " ${CMAKE_BINARY_DIR}/CMakeTmp/md5_file" "" md5string "${md5string}")
-  string(STRIP "${md5string}" ${md5sum})
+  string(MD5 ${md5sum} "${STRIPPED_MD5_FILE}")
 endmacro(MD5)
 
 macro(FILEVAR filename var)
