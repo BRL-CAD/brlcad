@@ -33,6 +33,18 @@
 #ifndef SHAPES_H
 #define SHAPES_H
 
+#ifndef P2T_EXPORT
+#  if defined(P2T_DLL_EXPORTS) && defined(P2T_DLL_IMPORTS)
+#    error "Only P2T_DLL_EXPORTS or P2T_DLL_IMPORTS can be defined, not both."
+#  elif defined(P2T_DLL_EXPORTS)
+#    define P2T_EXPORT __declspec(dllexport)
+#  elif defined(P2T_DLL_IMPORTS)
+#    define P2T_EXPORT __declspec(dllimport)
+#  else
+#    define P2T_EXPORT
+#  endif
+#endif
+
 #include <vector>
 #include <cstddef>
 #include <assert.h>
@@ -47,7 +59,7 @@ struct Point {
   double x, y;
 
   /// Default constructor does nothing (for performance).
-  Point()
+  P2T_EXPORT Point()
   {
     x = 0.0;
     y = 0.0;
@@ -57,24 +69,24 @@ struct Point {
   std::vector<Edge*> edge_list;
 
   /// Construct using coordinates.
-  Point(double x, double y) : x(x), y(y) {}
+  P2T_EXPORT Point(double x, double y) : x(x), y(y) {}
 
   /// Set this point to all zeros.
-  void set_zero()
+  P2T_EXPORT void set_zero()
   {
     x = 0.0;
     y = 0.0;
   }
 
   /// Set this point to some specified coordinates.
-  void set(double x_, double y_)
+  P2T_EXPORT void set(double x_, double y_)
   {
     x = x_;
     y = y_;
   }
 
   /// Negate this point.
-  Point operator -() const
+  P2T_EXPORT Point operator -() const
   {
     Point v;
     v.set(-x, -y);
@@ -82,34 +94,34 @@ struct Point {
   }
 
   /// Add a point to this point.
-  void operator +=(const Point& v)
+  P2T_EXPORT void operator +=(const Point& v)
   {
     x += v.x;
     y += v.y;
   }
 
   /// Subtract a point from this point.
-  void operator -=(const Point& v)
+  P2T_EXPORT void operator -=(const Point& v)
   {
     x -= v.x;
     y -= v.y;
   }
 
   /// Multiply this point by a scalar.
-  void operator *=(double a)
+  P2T_EXPORT void operator *=(double a)
   {
     x *= a;
     y *= a;
   }
 
   /// Get the length of this point (the norm).
-  double Length() const
+  P2T_EXPORT double Length() const
   {
     return sqrt(x * x + y * y);
   }
 
   /// Convert this point into a unit point. Returns the Length.
-  double Normalize()
+  P2T_EXPORT double Normalize()
   {
     double len = Length();
     x /= len;
@@ -125,7 +137,7 @@ struct Edge {
   Point* p, *q;
 
   /// Constructor
-  Edge(Point& p1, Point& p2) : p(&p1), q(&p2)
+  P2T_EXPORT Edge(Point& p1, Point& p2) : p(&p1), q(&p2)
   {
     if (p1.y > p2.y) {
       q = &p1;
@@ -151,61 +163,61 @@ class Triangle {
 public:
 
 /// Constructor
-Triangle(Point& a, Point& b, Point& c);
+P2T_EXPORT Triangle(Point& a, Point& b, Point& c);
 
 /// Flags to determine if an edge is a Constrained edge
 bool constrained_edge[3];
 /// Flags to determine if an edge is a Delauney edge
 bool delaunay_edge[3];
 
-Point* GetPoint(const int& index);
-Point* PointCW(Point& point);
-Point* PointCCW(Point& point);
-Point* OppositePoint(Triangle& t, Point& p);
+P2T_EXPORT Point* GetPoint(const int& index);
+P2T_EXPORT Point* PointCW(Point& point);
+P2T_EXPORT Point* PointCCW(Point& point);
+P2T_EXPORT Point* OppositePoint(Triangle& t, Point& p);
 
-Triangle* GetNeighbor(const int& index);
-void MarkNeighbor(Point* p1, Point* p2, Triangle* t);
-void MarkNeighbor(Triangle& t);
+P2T_EXPORT Triangle* GetNeighbor(const int& index);
+P2T_EXPORT void MarkNeighbor(Point* p1, Point* p2, Triangle* t);
+P2T_EXPORT void MarkNeighbor(Triangle& t);
 
-void MarkConstrainedEdge(const int index);
-void MarkConstrainedEdge(Edge& edge);
-void MarkConstrainedEdge(Point* p, Point* q);
+P2T_EXPORT void MarkConstrainedEdge(const int index);
+P2T_EXPORT void MarkConstrainedEdge(Edge& edge);
+P2T_EXPORT void MarkConstrainedEdge(Point* p, Point* q);
 
-int Index(const Point* p);
-int EdgeIndex(const Point* p1, const Point* p2);
+P2T_EXPORT int Index(const Point* p);
+P2T_EXPORT int EdgeIndex(const Point* p1, const Point* p2);
 
-Triangle* NeighborCW(Point& point);
-Triangle* NeighborCCW(Point& point);
-Triangle* NeighborAcross(Point& opoint);
-bool GetConstrainedEdgeCCW(Point& p);
-bool GetConstrainedEdgeCW(Point& p);
-void SetConstrainedEdgeCCW(Point& p, bool ce);
-void SetConstrainedEdgeCW(Point& p, bool ce);
-bool GetDelunayEdgeCCW(Point& p);
-bool GetDelunayEdgeCW(Point& p);
-void SetDelunayEdgeCCW(Point& p, bool e);
-void SetDelunayEdgeCW(Point& p, bool e);
+P2T_EXPORT Triangle* NeighborCW(Point& point);
+P2T_EXPORT Triangle* NeighborCCW(Point& point);
+P2T_EXPORT Triangle* NeighborAcross(Point& opoint);
+P2T_EXPORT bool GetConstrainedEdgeCCW(Point& p);
+P2T_EXPORT bool GetConstrainedEdgeCW(Point& p);
+P2T_EXPORT void SetConstrainedEdgeCCW(Point& p, bool ce);
+P2T_EXPORT void SetConstrainedEdgeCW(Point& p, bool ce);
+P2T_EXPORT bool GetDelunayEdgeCCW(Point& p);
+P2T_EXPORT bool GetDelunayEdgeCW(Point& p);
+P2T_EXPORT void SetDelunayEdgeCCW(Point& p, bool e);
+P2T_EXPORT void SetDelunayEdgeCW(Point& p, bool e);
 
-bool Contains(Point* p);
-bool Contains(const Edge& e);
-bool Contains(Point* p, Point* q);
-void Legalize(Point& point);
-void Legalize(Point& opoint, Point& npoint);
+P2T_EXPORT bool Contains(Point* p);
+P2T_EXPORT bool Contains(const Edge& e);
+P2T_EXPORT bool Contains(Point* p, Point* q);
+P2T_EXPORT void Legalize(Point& point);
+P2T_EXPORT void Legalize(Point& opoint, Point& npoint);
 /**
  * Clears all references to all other triangles and points
  */
-void Clear();
-void ClearNeighbor(Triangle *triangle );
-void ClearNeighbors();
-void ClearDelunayEdges();
+P2T_EXPORT void Clear();
+P2T_EXPORT void ClearNeighbor(Triangle *triangle );
+P2T_EXPORT void ClearNeighbors();
+P2T_EXPORT void ClearDelunayEdges();
 
-inline bool IsInterior();
-inline void IsInterior(bool b);
+P2T_EXPORT inline bool IsInterior();
+P2T_EXPORT inline void IsInterior(bool b);
 
-inline bool IsChecked();
-inline void IsChecked(bool b);
+P2T_EXPORT inline bool IsChecked();
+P2T_EXPORT inline void IsChecked(bool b);
 
-void DebugPrint();
+P2T_EXPORT void DebugPrint();
 
 private:
 
