@@ -14,19 +14,19 @@ dnl Makefile.am to upgrade the package name.
 dnl This is here to prevent earlier autoconf from being used, it
 dnl should not be necessary to regenerate configure if the time
 dnl stamps are correct
-AC_PREREQ([2.68])
+AC_PREREQ([2.52])
 
 dnl Version number stuff here:
 
 AC_INIT([libpng],[1.6.0],[png-mng-implement@lists.sourceforge.net])
-AC_CONFIG_MACRO_DIR([scripts])
+#AC_CONFIG_MACRO_DIR([scripts])
 
 # libpng does not follow GNU file name conventions (hence 'foreign')
 # color-tests requires automake 1.11 or later
 # silent-rules requires automake 1.11 or later
 # dist-xz requires automake 1.11 or later
 # 1.12.2 fixes a security issue in 1.11.2 and 1.12.1
-AM_INIT_AUTOMAKE([1.12.2 foreign dist-xz color-tests silent-rules serial-tests])
+AM_INIT_AUTOMAKE([1.8 foreign])
 # was:
 # AM_INIT_AUTOMAKE
 AM_MAINTAINER_MODE
@@ -62,7 +62,7 @@ AC_PROG_MAKE_SET
 dnl libtool/libtoolize; version 2.4.2 is the tested version, this or any
 dnl compatible later version may be used
 LT_INIT([win32-dll])
-LT_PREREQ([2.4.2])
+#LT_PREREQ([2.4.2])
 
 # On Solaris 10 and 12 CPP gets set to cc -E, however this still
 # does some input parsing.  We need strict ANSI-C style tokenization,
