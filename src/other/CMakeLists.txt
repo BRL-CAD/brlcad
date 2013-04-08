@@ -889,6 +889,8 @@ if(BRLCAD_LEVEL2)
   set(BULLET_LIBRARIES "${BULLET_LIBRARIES}" CACHE STRING "Bullet libs" FORCE) 
   set(BULLET_FOUND "${BULLET_FOUND}" CACHE BOOL "Bullet status" FORCE) 
   mark_as_advanced(BULLET_INCLUDE_DIR)
+  mark_as_advanced(BULLET_FOUND)
+  mark_as_advanced(BULLET_LIBRARIES)
 endif(BRLCAD_LEVEL2)
 
 # Adaptagrams is not yet integrated as a src/other subbuild, but there
@@ -904,6 +906,8 @@ if(BRLCAD_LEVEL2)
   endif(ADAPTAGRAMS_FOUND)
   set(ADAPTAGRAMS_LIBRARIES "${ADAPTAGRAMS_LIBRARIES}" CACHE STRING "Adaptagrams libs" FORCE) 
   set(ADAPTAGRAMS_FOUND "${ADAPTAGRAMS_FOUND}" CACHE BOOL "Adaptagrams status" FORCE) 
+  mark_as_advanced(ADAPTAGRAMS_FOUND)
+  mark_as_advanced(ADAPTAGRAMS_LIBRARIES)
 endif(BRLCAD_LEVEL2)
 
 # Poly2Tri CDT library
@@ -919,6 +923,9 @@ if(BRLCAD_LEVEL2)
 else(BRLCAD_LEVEL2)
   CMAKEFILES(poly2tri)
 endif(BRLCAD_LEVEL2)
+mark_as_advanced(P2T_SHARED)
+mark_as_advanced(P2T_STATIC)
+mark_as_advanced(P2T_TESTS)
 
 # The jama/tnt headers are installed by default - BRL-CAD requires the
 # altered headers to build (I think?)
