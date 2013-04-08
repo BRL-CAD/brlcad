@@ -23,6 +23,4 @@ then
 	fi
 fi
 
-source /etc/profile.d/brlcad.sh || :
-
 update-mime-database /usr/share/mime || :

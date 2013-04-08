@@ -255,8 +255,6 @@ then
     fi
 fi
 
-source /etc/profile.d/brlcad.sh || :
-
 update-mime-database /usr/share/mime || :
 update-desktop-database -q || :
 gtk-update-icon-cache -qf /usr/share/icons/hicolor || :' >> $TMPDIR/brlcad.spec
