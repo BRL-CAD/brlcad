@@ -2,7 +2,7 @@
 
 macro(MD5 filename md5sum)
   file(READ "${filename}" RAW_MD5_FILE)
-  string(REGEX REPLACE "\\\\r" "" STRIPPED_MD5_FILE "${RAW_MD5_FILE}")
+  string(REGEX REPLACE "\r" "" STRIPPED_MD5_FILE "${RAW_MD5_FILE}")
   string(MD5 ${md5sum} "${STRIPPED_MD5_FILE}")
 endmacro(MD5)
 
