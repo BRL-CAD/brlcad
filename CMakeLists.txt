@@ -94,13 +94,11 @@ endif(EXISTS ${CMAKE_BINARY_DIR}/CMakeCache.txt)
 DISTCLEAN(${CMAKE_BINARY_DIR}/CMakeCache.txt)
 
 # Minimum required version of CMake
-cmake_minimum_required(VERSION 2.8.4)
+cmake_minimum_required(VERSION 2.8.7)
 if(COMMAND CMAKE_POLICY)
   CMAKE_POLICY(SET CMP0003 NEW)
   CMAKE_POLICY(SET CMP0007 OLD)
-  if(${CMAKE_VERSION} VERSION_GREATER 2.8.3)
-    CMAKE_POLICY(SET CMP0017 OLD)
-  endif(${CMAKE_VERSION} VERSION_GREATER 2.8.3)
+  CMAKE_POLICY(SET CMP0017 OLD)
 endif(COMMAND CMAKE_POLICY)
 
 # set CMake project name
