@@ -198,6 +198,11 @@ include(${CMAKE_SOURCE_DIR}/misc/CMake/BRLCAD_Util.cmake)
 # Define CMake routines for bookkeeping of build files
 include(${CMAKE_SOURCE_DIR}/misc/CMake/BRLCAD_CMakeFiles.cmake)
 
+# Make sure the BRL-CAD library list is initialized empty - this way
+# if pieces are disabled between one configure and the next, they
+# won't linger in the list
+set(BRLCAD_LIBS "" CACHE STRING "BRL-CAD libraries" FORCE)
+
 #---------------------------------------------------------------------
 # Define the current BRL-CAD version.
 # See HACKING for details on how to properly update the version
