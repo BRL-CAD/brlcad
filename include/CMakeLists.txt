@@ -94,8 +94,7 @@ set(include_misc
   config_win_cmake.h.in
   )
 
-CMAKEFILES(${include_required})
-CMAKEFILES(${include_wanted})
+CMAKEFILES(${include_hdrs})
 CMAKEFILES(${noinst_HEADERS})
 CMAKEFILES(${include_misc})
 CMAKEFILES(Makefile.am)
