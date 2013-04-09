@@ -38,6 +38,13 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* use spatial partitioning during boolean processing of polygonal
+  meshes.  good approach might be to generalize TIE's kd-tree to
+  polygons or even create a new scheme (e.g., an integer-indexed grid
+  layout).  data coherence would be nice (but not essential).  current
+  approach is at least O(N^2) with large constant time.  New should be
+  O(N*log(N)).
+
 * rework the database object hash to push the iteration up into librt
   as API instead of expecting callers to use RT_DBNHASH and
   RT_DBHASH() manually.  consider using bu_hash or other container.
