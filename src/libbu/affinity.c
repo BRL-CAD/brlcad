@@ -55,7 +55,7 @@
 int
 parallel_set_affinity(int cpu)
 {
-#if defined(HAVE_PTHREAD_H) && defined (CPU_ZERO)
+#if defined(HAVE_PTHREAD_H) && defined(CPU_ZERO)
 
     /* Linux and BSD pthread affinity */
 
