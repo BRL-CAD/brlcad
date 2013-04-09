@@ -143,45 +143,5 @@ scripts/pnglibconf.dfn: scripts/pnglibconf.dfa scripts/options.awk pngconf.h
 $(libpng15_la_OBJECTS): png.h pngconf.h \
 	pnglibconf.h pngpriv.h pngdebug.h pnginfo.h pngstruct.h
 
-test: check-am
+include $(top_srcdir)/misc/Makefile.defs
 
-# Extra checks
-check: scripts/symbols.chk
-
-# Don't distribute the generated script files
-dist-hook:
-	cd '$(top_distdir)'; rm -f $(SCRIPT_CLEANFILES)
-
-# install the .../include headers as links to the new ones
-install-data-hook:
-	cd $(DESTDIR)$(includedir); rm -f png.h pngconf.h pnglibconf.h
-	cd $(DESTDIR)$(includedir); $(LN_S) $(PNGLIB_BASENAME)/png.h png.h
-	cd $(DESTDIR)$(includedir); $(LN_S) $(PNGLIB_BASENAME)/pngconf.h \
-		pngconf.h
-	cd $(DESTDIR)$(includedir); $(LN_S) $(PNGLIB_BASENAME)/pnglibconf.h \
-		pnglibconf.h
-	cd $(DESTDIR)$(pkgconfigdir); rm -f libpng.pc
-	cd $(DESTDIR)$(pkgconfigdir); $(LN_S) $(PNGLIB_BASENAME).pc libpng.pc
-
-# do evil things to libpng to cause libpng15 to be used
-install-exec-hook:
-	cd $(DESTDIR)$(bindir); rm -f libpng-config
-	cd $(DESTDIR)$(bindir); $(LN_S) $(PNGLIB_BASENAME)-config libpng-config
-	@set -x;\
-	cd $(DESTDIR)$(libdir);\
-	for ext in a la so so.15.12 sl dylib dll.a; do\
-		rm -f libpng.$$ext;\
-                if test -f $(PNGLIB_BASENAME).$$ext; then\
-                       $(LN_S) $(PNGLIB_BASENAME).$$ext libpng.$$ext;\
-                fi;\
-	done
-
-uninstall-hook:
-	cd $(DESTDIR)$(includedir); rm -f png.h pngconf.h pnglibconf.h
-	rm -f $(DESTDIR)$(pkgconfigdir)/libpng.pc
-	rm -f $(DESTDIR)$(bindir)/libpng-config
-	rm -f $(DESTDIR)$(libdir)/libpng.a
-	rm -f $(DESTDIR)$(libdir)/libpng.la
-	rm -f $(DESTDIR)$(libdir)/libpng.dll.a
-
-depends:
