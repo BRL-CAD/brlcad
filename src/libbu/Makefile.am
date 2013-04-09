@@ -72,6 +72,7 @@ libbu_nil_la_SOURCES = \
 	str.c \
 	tcl.c \
 	temp.c \
+	thread.cpp \
 	timer.c \
 	units.c \
 	vers.c \
