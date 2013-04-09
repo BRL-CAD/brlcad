@@ -1844,6 +1844,8 @@ AC_CHECK_TYPE([uintptr_t],
 	test -z "$ac_type" && break
     done])
 
+AC_CHECK_TYPES([cpu_set_t], [], [], [#include <sched.h>])
+
 dnl ******************************************
 dnl *** Check for compiler characteristics ***
 dnl ******************************************
@@ -4018,16 +4020,16 @@ if test "x$build_brlcad_tk" = "xyes" ; then
 fi
 AC_SUBST(TK_PATH)
 
-dnl configure libpng
-if test "x$build_brlcad_png" = "xyes" ; then
-   if test "x$LIBZ_CPPFLAGS" != "x" ; then
-	LIBZ_PATH="$PWD/${ac_top_builddir}/src/other/libz"
-	ac_configure_args="$ac_configure_args --with-sub-libs=\"${LIBZ_PATH}/libz.la\" --with-sub-cppflags=\"-I${LIBZ_PATH}\" --with-sub-cflags=\"$CFLAGS\" --with-sub-ldflags=\"$LDFLAGS\""
-    else
-	ac_configure_args="$ac_configure_args --with-sub-libs='$LIBZLIB' --with-sub-cflags=\"$CFLAGS\" --with-sub-ldflags=\"$LDFLAGS\""
-   fi
-   AC_CONFIG_SUBDIRS([src/other/libpng])
-fi
+#dnl configure libpng
+#if test "x$build_brlcad_png" = "xyes" ; then
+#   if test "x$LIBZ_CPPFLAGS" != "x" ; then
+#	LIBZ_PATH="$PWD/${ac_top_builddir}/src/other/libz"
+#	ac_configure_args="$ac_configure_args --with-sub-libs=\"${LIBZ_PATH}/libz.la\" --with-sub-cppflags=\"-I${LIBZ_PATH}\" --with-sub-cflags=\"$CFLAGS\" --with-sub-ldflags=\"$LDFLAGS\""
+#    else
+#	ac_configure_args="$ac_configure_args --with-sub-libs='$LIBZLIB' --with-sub-cflags=\"$CFLAGS\" --with-sub-ldflags=\"$LDFLAGS\""
+#   fi
+#   AC_CONFIG_SUBDIRS([src/other/libpng])
+#fi
 
 dnl configure tkhtml
 if test "x$build_brlcad_tkhtml" = "xyes" ; then
@@ -4192,6 +4194,7 @@ AC_CONFIG_FILES([
 	src/other/iwidgets/generic/Makefile
 	src/other/iwidgets/iwidgets.tcl
 	src/other/iwidgets/pkgIndex.tcl
+	src/other/libpng/Makefile
 	src/other/libregex/Makefile
 	src/other/libtermlib/Makefile
 	src/other/libutahrle/Makefile
