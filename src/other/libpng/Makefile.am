@@ -12,19 +12,6 @@ PNGLIB_BASENAME= libpng15
 # AUTOMAKE_OPTIONS = foreign color-tests
 AUTOMAKE_OPTIONS = foreign
 
-# test programs - run on make check, make distcheck
-TESTS_ENVIRONMENT= srcdir=$(srcdir)
-check_PROGRAMS= pngtest
-pngtest_SOURCES = pngtest.c
-pngtest_LDADD = libpng15.la
-TESTS = test-pngtest.sh
-
-# Only do the following if the contrib directory is present.
-check_PROGRAMS+= pngvalid
-pngvalid_SOURCES = contrib/libtests/pngvalid.c
-pngvalid_LDADD = libpng15.la
-TESTS += test-pngvalid-simple.sh test-pngvalid-full.sh
-
 # man pages
 dist_man_MANS= libpng.3 libpngpf.3 png.5
 
