@@ -29,6 +29,9 @@
 #ifndef IGNORE_CONFIG_H
 #if defined(_WIN32)
 
+#include <fcntl.h>
+#include <errno.h>
+
 /* !!! this should not be here, should fix the build system settings */
 #define __STDC__ 1
 
