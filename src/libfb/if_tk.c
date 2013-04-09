@@ -78,78 +78,6 @@ Tk_PhotoImageBlock block = {
 char *tkwrite_buffer;
 
 
-HIDDEN int fb_tk_open(FBIO *ifp, const char *file, int width, int height),
-    fb_tk_close(FBIO *ifp),
-    tk_clear(FBIO *ifp, unsigned char *pp),
-    tk_read(FBIO *ifp, int x, int y, unsigned char *pixelp, size_t count),
-    tk_write(FBIO *ifp, int x, int y, const unsigned char *pixelp, size_t count),
-    tk_rmap(FBIO *ifp, ColorMap *cmp),
-    tk_wmap(FBIO *ifp, const ColorMap *cmp),
-    tk_view(FBIO *ifp, int xcenter, int ycenter, int xzoom, int yzoom),
-    tk_getview(FBIO *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom),
-    tk_setcursor(FBIO *ifp, const unsigned char *bits, int xbits, int ybits, int xorig, int yorig),
-    tk_cursor(FBIO *ifp, int mode, int x, int y),
-    tk_getcursor(FBIO *ifp, int *mode, int *x, int *y),
-    tk_readrect(FBIO *ifp, int xmin, int ymin, int width, int height, unsigned char *pp),
-    tk_writerect(FBIO *ifp, int xmin, int ymin, int width, int height, const unsigned char *pp),
-    tk_bwreadrect(FBIO *ifp, int xmin, int ymin, int width, int height, unsigned char *pp),
-    tk_bwwriterect(FBIO *ifp, int xmin, int ymin, int width, int height, const unsigned char *pp),
-    tk_poll(FBIO *ifp),
-    tk_flush(FBIO *ifp),
-    tk_free(FBIO *ifp),
-    tk_help(FBIO *ifp);
-
-/* This is the ONLY thing that we "export" */
-FBIO tk_interface = {
-    0,
-    fb_tk_open,
-    fb_tk_close,
-    tk_clear,
-    tk_read,
-    tk_write,
-    tk_rmap,
-    tk_wmap,
-    tk_view,
-    tk_getview,
-    tk_setcursor,
-    tk_cursor,
-    tk_getcursor,
-    tk_readrect,
-    tk_writerect,
-    tk_bwreadrect,
-    tk_bwwriterect,
-    tk_poll,
-    tk_flush,
-    tk_free,
-    tk_help,
-    "Debugging Interface",
-    32*1024,		/* max width */
-    32*1024,		/* max height */
-    "/dev/tk",
-    512,			/* current/default width */
-    512,			/* current/default height */
-    -1,			/* select fd */
-    -1,			/* file descriptor */
-    1, 1,			/* zoom */
-    256, 256,		/* window center */
-    0, 0, 0,		/* cursor */
-    PIXEL_NULL,		/* page_base */
-    PIXEL_NULL,		/* page_curp */
-    PIXEL_NULL,		/* page_endp */
-    -1,			/* page_no */
-    0,			/* page_ref */
-    0L,			/* page_curpos */
-    0L,			/* page_pixels */
-    0,			/* debug */
-    {0}, /* u1 */
-    {0}, /* u2 */
-    {0}, /* u3 */
-    {0}, /* u4 */
-    {0}, /* u5 */
-    {0}  /* u6 */
-};
-
-
 HIDDEN int
 fb_tk_open(FBIO *ifp, const char *file, int width, int height)
 {
@@ -383,18 +311,18 @@ tk_clear(FBIO *ifp, unsigned char *pp)
 }
 
 
-HIDDEN int
+HIDDEN ssize_t
 tk_read(FBIO *ifp, int x, int y, unsigned char *pixelp, size_t count)
 {
     FB_CK_FBIO(ifp);
     fb_log("fb_read(0x%lx, %4d, %4d, 0x%lx, %ld)\n",
 	   (unsigned long)ifp, x, y,
 	   (unsigned long)pixelp, (long)count);
-    return (int)count;
+    return (ssize_t)count;
 }
 
 
-HIDDEN int
+HIDDEN ssize_t 
 tk_write(FBIO *ifp, int UNUSED(x), int y, const unsigned char *pixelp, size_t count)
 {
     uint32_t line[3];
@@ -419,7 +347,7 @@ tk_write(FBIO *ifp, int UNUSED(x), int y, const unsigned char *pixelp, size_t co
 	sleep(1);
     }
 
-    return (int)count;
+    return (ssize_t)count;
 }
 
 
@@ -611,6 +539,57 @@ Usage: /dev/tk[#]\n\
 
     return 0;
 }
+
+/* This is the ONLY thing that we "export" */
+FBIO tk_interface = {
+    0,
+    fb_tk_open,
+    fb_tk_close,
+    tk_clear,
+    tk_read,
+    tk_write,
+    tk_rmap,
+    tk_wmap,
+    tk_view,
+    tk_getview,
+    tk_setcursor,
+    tk_cursor,
+    tk_getcursor,
+    tk_readrect,
+    tk_writerect,
+    tk_bwreadrect,
+    tk_bwwriterect,
+    tk_poll,
+    tk_flush,
+    tk_free,
+    tk_help,
+    "Debugging Interface",
+    32*1024,		/* max width */
+    32*1024,		/* max height */
+    "/dev/tk",
+    512,			/* current/default width */
+    512,			/* current/default height */
+    -1,			/* select fd */
+    -1,			/* file descriptor */
+    1, 1,			/* zoom */
+    256, 256,		/* window center */
+    0, 0, 0,		/* cursor */
+    PIXEL_NULL,		/* page_base */
+    PIXEL_NULL,		/* page_curp */
+    PIXEL_NULL,		/* page_endp */
+    -1,			/* page_no */
+    0,			/* page_ref */
+    0L,			/* page_curpos */
+    0L,			/* page_pixels */
+    0,			/* debug */
+    {0}, /* u1 */
+    {0}, /* u2 */
+    {0}, /* u3 */
+    {0}, /* u4 */
+    {0}, /* u5 */
+    {0}  /* u6 */
+};
+
 
 
 #else

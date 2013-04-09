@@ -30,6 +30,7 @@ if(WIN32)
   set(fbwgl_srcs if_wgl.c)
 endif(WIN32)
 if(BRLCAD_ENABLE_TK)
+  set(FBTKDEFS "-DIF_TK")
   set(fbtk_srcs if_tk.c)
 endif(BRLCAD_ENABLE_TK)
 
@@ -67,6 +68,7 @@ add_definitions(
   -DIF_AB
   ${FBX11DEFS}
   ${FBOGLDEFS}
+  ${FBTKDEFS}
   ${XOPEN_DEFINE}
   )
 
