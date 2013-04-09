@@ -41,6 +41,7 @@ changes made.  See document footer for additional details.
 * quell pix-png gAMA chunk warning defaulting to unset - Sean Morrison
 * fixed mged interactive object translation keypoint bug - Bob Parker
 * fixed corrupted tessellation pipe export bug - Richard Weiss
+* fixed memory leak in bot_condense - Chris Dueck
 * output from g-var no longer prints 'fwrite' messages - Sean Morrison
 * fixed crash in step-g tool importing AP214 entities - Sean Morrison
 * improved 3dm-g output and invalid geometry support - Sean Morrison
