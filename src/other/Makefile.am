@@ -109,6 +109,7 @@ endif
 
 VDSDIR=libvds
 
+P2TDIR=poly2tri
 
 if ONLY_BENCHMARK
 SUBDIRS = \
@@ -117,6 +118,7 @@ SUBDIRS = \
 	${REGEXDIR} \
 	${TCLDIR} \
 	${OPENNURBSDIR} \
+        ${P2TDIR} \
 	${TNTDIR}
 
 else !ONLY_BENCHMARK
@@ -128,6 +130,7 @@ SUBDIRS = \
 	${REGEXDIR} \
 	${TCLDIR} \
 	${OPENNURBSDIR} \
+        ${P2TDIR} \
 	${TNTDIR}
 
 else !ONLY_RTS
@@ -149,6 +152,7 @@ SUBDIRS = \
 	${TKHTMLDIR} \
 	${TKTABLEDIR} \
 	${OPENNURBSDIR} \
+        ${P2TDIR} \
 	${TNTDIR} \
         ${VDSDIR}
 
@@ -207,6 +211,7 @@ EXTRA_DIST = \
 	togl.dist \
 	URToolkit.dist \
 	libvds.dist \
+	poly2tri.dist \
 	xmltools \
 	xmltools.dist
 
@@ -221,6 +226,7 @@ DIST_SUBDIRS = \
 	libvds \
 	libz \
 	openNURBS \
+	poly2tri \
 	tcl \
 	tk \
 	tkpng \

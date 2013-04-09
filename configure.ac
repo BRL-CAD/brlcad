@@ -2452,6 +2452,11 @@ LIBVDS_CPPFLAGS='-I${top_srcdir}/src/other/libvds'
 AC_SUBST(LIBVDS)
 AC_SUBST(LIBVDS_CPPFLAGS)
 
+LIBP2T='${top_builddir}/src/other/poly2tri/libp2t.la'
+LIBP2T_CPPFLAGS='-I${top_srcdir}/src/other/poly2tri'
+AC_SUBST(LIBP2T)
+AC_SUBST(LIBP2T_CPPFLAGS)
+
 dnl *** libz ***
 dnl See if zlib library support works
 zlib_works=no
@@ -2623,7 +2628,6 @@ else
 fi
 AC_SUBST(RLE)
 AC_SUBST(RLE_CPPFLAGS)
-
 
 dnl *** openNURBS ***
 dnl See if openNURBS library support works
@@ -3905,7 +3909,7 @@ FFT_LIBS="${LIBM}"
 ANALYZE_LIBS="${RT} ${RT_LIBS} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS}"
 BU_LIBS="${LIBSTDCXX} ${TCL} ${PNG} ${LIBZ} ${LIBM} ${LIBMALLOC} ${LIBTHREAD}"
 BN_LIBS="${BU} ${BU_LIBS} ${TCL} ${LIBM}"
-RT_LIBS="${BN} ${BN_LIBS} ${BU} ${BU_LIBS} ${REGEX} ${LIBM} ${SYSV} ${OPENNURBS} ${BREP} ${LIBVDS}"
+RT_LIBS="${BN} ${BN_LIBS} ${BU} ${BU_LIBS} ${REGEX} ${LIBM} ${SYSV} ${OPENNURBS} ${BREP} ${LIBVDS} ${LIBP2T}"
 ICV_LIBS="{BN} ${BN_LIBS} ${BU} ${BU_LIBS}"
 GCV_LIBS="${RT} ${RT_LIBS} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS}"
 GED_LIBS="${WDB} ${RT} ${RT_LIBS} ${ICV} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS} ${PNG} ${TCL} ${REGEX} ${ANALYZE}"
@@ -4202,6 +4206,7 @@ AC_CONFIG_FILES([
 	src/other/libvds/Makefile
 	src/other/libz/Makefile
 	src/other/openNURBS/Makefile
+	src/other/poly2tri/Makefile
 	src/other/tcl/Makefile
 	src/other/tk/Makefile
 	src/other/tkpng/Makefile
