@@ -36,7 +36,7 @@
 #include "./iges_extern.h"
 
 int
-Readrec(size_t recno)
+Readrec(int recno)
 {
 
     int i, ch;

@@ -278,7 +278,7 @@ extern void Convsolids();
 extern void Get_att();
 extern void Convtree();
 extern void Convassem();
-extern int Readrec(size_t recno);
+extern int Readrec(int recno);
 extern void Readint(int *inum, char *id);
 extern void Readflt(fastf_t *inum, char *id);
 extern void Readdbl(double *inum, char *id);
