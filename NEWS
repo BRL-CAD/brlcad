@@ -19,7 +19,6 @@ changes made.  See document footer for additional details.
 * improved Linux ray tracing via cpu thread affinity - Akshay Kashyap
 * fixed nirt high object count failure on Windows - Richard Weiss
 * added plate mode BoT support to 'bot_merge' command - Richard Weiss
-* upgraded libpng to 1.6.0 - Cliff Yapp
 * jove removed, see jove.emacs for compatibility bindings - Cliff Yapp
 * added gqa -q quiet option to suppress 'was not hit' - Richard Weiss
 * level-of-detail mged configuration dialog, under Tools - Nick Reed
