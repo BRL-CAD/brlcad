@@ -498,7 +498,7 @@ main(int argc, char *argv[])
 		   regions_written, percent);
     }
 
-    bu_log("%lu triangles written\n", tot_polygons);
+    bu_log("%x triangles written\n", tot_polygons);
 
     if (output_file) {
 	if (binary) {
