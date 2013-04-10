@@ -1846,6 +1846,12 @@ AC_CHECK_TYPE([uintptr_t],
 
 AC_CHECK_TYPES([cpu_set_t], [], [], [#include <sched.h>])
 
+AC_COMPILE_IFELSE(
+   [[static __thread int i = 0; int main() { return i; }]],
+   [AC_DEFINE(HAVE___THREAD, 1, [Define to 1 if __thread is present])],
+   []
+)
+
 dnl ******************************************
 dnl *** Check for compiler characteristics ***
 dnl ******************************************
