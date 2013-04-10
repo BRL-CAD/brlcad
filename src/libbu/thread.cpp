@@ -26,6 +26,8 @@
 #  include <pthread.h>
 #endif
 
+#include "bu.h"
+
 
 #if defined(HAVE_THREAD_LOCAL)
 
@@ -50,7 +52,11 @@ private:
 protected:
     void set(T& val) {
 	T* value = new T(val);
+
+	bu_semaphore_acquire(BU_SEM_THREAD);
 	vals.push_back(value);
+	bu_semaphore_release(BU_SEM_THREAD);
+
 	pthread_setspecific(key, value);
     }
     T* get() {
@@ -59,17 +65,20 @@ protected:
     }
 public:
     ThreadLocal() {
-	int cpu0 = 0;
+	T init = 0;
 	pthread_key_create(&key, NULL);
-	set(cpu0);
+	set(init);
     }
     ~ThreadLocal() {
 	pthread_key_delete(key);
+
+	bu_semaphore_acquire(BU_SEM_THREAD);
 	while (!vals.empty()) {
 	    delete vals.back();
 	    vals.pop_back();
 	}
 	vals.clear();
+	bu_semaphore_release(BU_SEM_THREAD);
     }
     ThreadLocal& operator=(T& val) {
 	set(val);
