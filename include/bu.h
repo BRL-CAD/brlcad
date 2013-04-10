@@ -1740,7 +1740,7 @@ struct bu_mapped_file {
     char *appl;		/**< bu_strdup() of tag for application using 'apbuf'  */
     genptr_t apbuf;	/**< opt: application-specific buffer */
     size_t apbuflen;	/**< opt: application-specific buflen */
-    long modtime;	/**< date stamp, in case file is modified */
+    time_t modtime;	/**< date stamp, in case file is modified */
     int uses;		/**< # ptrs to this struct handed out */
     int dont_restat;	/**< 1=on subsequent opens, don't re-stat()  */
 };
