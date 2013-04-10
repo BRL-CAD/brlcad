@@ -74,7 +74,7 @@ static int regions_tried = 0;
 static int regions_converted = 0;
 static int regions_written = 0;
 static int inches = 0;
-static unsigned int tot_polygons = 0;
+static size_t tot_polygons = 0;
 
 
 /* Byte swaps a four byte value */
@@ -500,7 +500,7 @@ main(int argc, char *argv[])
 		   regions_written, percent);
     }
 
-    bu_log("%x triangles written\n", tot_polygons);
+    bu_log("%zu triangles written\n", tot_polygons);
 
     if (output_file) {
 	if (binary) {
