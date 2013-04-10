@@ -117,9 +117,9 @@ get_args(int argc, char **argv, size_t *width, size_t *height, FILE **infp, FILE
     if (ttyin && ttyout && argc == 1)
 	return 0; /* usage */ /* running the command with no arguments (AND no file pipes) */
     if (ttyin)
-	bu_log("ERROR: %s will not read pix data from a tty\n", bu_getprogname());
+	bu_log("%s: will not read pix data from a tty\n", bu_getprogname());
     if (ttyout)
-	bu_log("ERROR: %s will not write png data to a tty\n", bu_getprogname());
+	bu_log("%s: will not write png data to a tty\n", bu_getprogname());
     if ( ttyin || ttyout )
 	return 0; /* usage */
     if (argc > ++bu_optind) {
