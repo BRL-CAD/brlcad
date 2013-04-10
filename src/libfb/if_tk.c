@@ -322,7 +322,7 @@ tk_read(FBIO *ifp, int x, int y, unsigned char *pixelp, size_t count)
 }
 
 
-HIDDEN ssize_t 
+HIDDEN ssize_t
 tk_write(FBIO *ifp, int UNUSED(x), int y, const unsigned char *pixelp, size_t count)
 {
     uint32_t line[3];
