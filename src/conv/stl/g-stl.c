@@ -400,15 +400,15 @@ main(int argc, char *argv[])
     mutex = (output_file && output_directory);
     missingg = (bu_optind+1 >= argc);
     if (mutex)
-	bu_log("g-stl: options \"-o\" and \"-m\" are mutually exclusive\n");
+	bu_log("%s: options \"-o\" and \"-m\" are mutually exclusive\n",argv[0]);
     if (missingg)
-	bu_log("g-stl: missing .g file and object(s)\n");
+	bu_log("%s: missing .g file and object(s)\n",argv[0]);
     if (mutex || missingg)
 	bu_exit(1, usage, argv[0]);
 
     if (!output_file && !output_directory) {
 	if (binary) {
-	    bu_exit(1, "g-stl: Can't output binary to stdout\n");
+	    bu_exit(1, "%s: Can't output binary to stdout\n",argv[0]);
 	}
 	fp = stdout;
     } else if (output_file) {
@@ -417,14 +417,14 @@ main(int argc, char *argv[])
 	    if ((fp=fopen(output_file, "wb+")) == NULL)
 	    {
 		perror(argv[0]);
-		bu_exit(1, "g-stl: Cannot open ASCII output file (%s) for writing\n", output_file);
+		bu_exit(1, "%s: Cannot open ASCII output file (%s) for writing\n",argv[0],output_file);
 	    }
 	} else {
 	    /* Open binary output file */
 	    if ((bfd=open(output_file, O_WRONLY|O_CREAT|O_TRUNC|O_BINARY, S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH)) < 0)
 	    {
 		perror(argv[0]);
-		bu_exit(1, "g-stl: Cannot open binary output file (%s) for writing\n", output_file);
+		bu_exit(1, "%s: Cannot open binary output file (%s) for writing\n",argv[0],output_file);
 	    }
 	}
     }
