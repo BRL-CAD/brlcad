@@ -60,9 +60,9 @@ parallel_set_affinity(int cpu)
     /* Linux and BSD pthread affinity */
 
 #ifdef HAVE_CPU_SET_T
-    cpu_set_t set_of_cpus;
+    cpu_set_t set_of_cpus; /* bsd */
 #else
-    cpuset_t set_of_cpus;
+    cpuset_t set_of_cpus; /* linux */
 #endif
     int ret;
 
