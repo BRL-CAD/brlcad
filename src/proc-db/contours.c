@@ -47,20 +47,17 @@ main(int argc, char *argv[])
     while (!feof(stdin)) {
 	if (scanf("%d %d %128s", &npts, &z, name) != 3)  break;
 	if(npts < 0) {
-	    bu_log("Negative # of pts\n");
+	    bu_log("%s: Negative # of pts\n",argv[0]);
 	    return -1;
 	}
 	if (npts >= INT_MAX) {
-	    bu_log("Too many points\n");
+	    bu_log("%s: Too many points\n",argv[0]);
 	    return -1;
-	}
-	if (npts < 0) {
-	    npts = 0;
 	}
 
 	for (i=0; i<npts; i++) {
 	    if (scanf("%d %d", &x, &y) != 2)
-		fprintf(stderr, "bad xy\n");
+		fprintf(stderr, "%s: bad xy\n",argv[0]);
 	    if (i==0)
 		pl_3move(stdout, x, y, z);
 	    else
