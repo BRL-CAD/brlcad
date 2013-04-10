@@ -107,7 +107,7 @@ bu_open_mapped_file(const char *name, const char *appl)
 		    bu_semaphore_release(BU_SEM_SYSCALL);
 		    fd = -1;
 		}
-		if (sb.st_size != mp->buflen) {
+		if ((size_t)sb.st_size != mp->buflen) {
 		    bu_log("bu_open_mapped_file(%s) WARNING: File size changed from %ld to %ld, opening new version.\n", real_path, mp->buflen, sb.st_size);
 		    /* mp doesn't reflect the file any longer.  Invalidate. */
 		    mp->appl = "__STALE__";
