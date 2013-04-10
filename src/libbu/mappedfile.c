@@ -53,6 +53,8 @@ bu_open_mapped_file(const char *name, const char *appl)
 #ifdef HAVE_SYS_STAT_H
     struct stat sb;
     int fd = -1;	/* unix file descriptor */
+    int readval;
+	ssize_t bytes_to_go, nbytes;
 #else
     FILE *fp = (FILE *)NULL;	/* stdio file pointer */
 #endif
@@ -105,14 +107,14 @@ bu_open_mapped_file(const char *name, const char *appl)
 		    bu_semaphore_release(BU_SEM_SYSCALL);
 		    fd = -1;
 		}
-		if ((size_t)sb.st_size != mp->buflen) {
-		    bu_log("bu_open_mapped_file(%s) WARNING: File size changed from %ld to %ld, opening new version.\n", real_path, (long)mp->buflen, (long)sb.st_size);
+		if (sb.st_size != mp->buflen) {
+		    bu_log("bu_open_mapped_file(%s) WARNING: File size changed from %ld to %ld, opening new version.\n", real_path, mp->buflen, sb.st_size);
 		    /* mp doesn't reflect the file any longer.  Invalidate. */
 		    mp->appl = "__STALE__";
 		    /* Can't invalidate old copy, it may still be in use. */
 		    break;
 		}
-		if ((long)sb.st_mtime != mp->modtime) {
+		if (sb.st_mtime != mp->modtime) {
 		    bu_log("bu_open_mapped_file(%s) WARNING: File modified since last mapped, opening new version.\n", real_path);
 		    /* mp doesn't reflect the file any longer.  Invalidate. */
 		    mp->appl = "__STALE__";
@@ -181,14 +183,13 @@ bu_open_mapped_file(const char *name, const char *appl)
     if (appl) mp->appl = bu_strdup(appl);
 
 #ifdef HAVE_SYS_STAT_H
-    /* The buflen member of "struct bu_mapped_file" should be a size_t. */
-    mp->buflen = (long)sb.st_size;
-    mp->modtime = (long)sb.st_mtime;
+    mp->buflen = sb.st_size;
+    mp->modtime = sb.st_mtime;
 #  ifdef HAVE_SYS_MMAN_H
 
     /* Attempt to access as memory-mapped file */
     bu_semaphore_acquire(BU_SEM_SYSCALL);
-    mp->buf = mmap(NULL, (size_t)sb.st_size, PROT_READ, MAP_PRIVATE, fd, (off_t)0);
+    mp->buf = mmap(NULL, sb.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
     bu_semaphore_release(BU_SEM_SYSCALL);
 
     if (UNLIKELY(mp->buf == MAP_FAILED))
@@ -204,13 +205,26 @@ bu_open_mapped_file(const char *name, const char *appl)
 	/* Allocate a local zero'd buffer, and slurp it in always
 	 * leaving space for a trailing zero.
 	 */
-	mp->buf = bu_calloc(1, (size_t)sb.st_size+1, real_path);
+	mp->buf = bu_calloc(1, sb.st_size+1, real_path);
 
+	nbytes = 0;
+	bytes_to_go = sb.st_size;
 	bu_semaphore_acquire(BU_SEM_SYSCALL);
-	ret = read(fd, mp->buf, (size_t)sb.st_size);
+	while (nbytes < sb.st_size) {
+	    readval = read(fd, ((char *)(mp->buf)) + nbytes, ((bytes_to_go > INT_MAX) ? (INT_MAX) : (bytes_to_go)));
+	    if (UNLIKELY(readval < 0)) {
+		bu_semaphore_release(BU_SEM_SYSCALL);
+		perror(real_path);
+		bu_free(mp->buf, real_path);
+		goto fail;
+	    } else {
+		nbytes += readval;
+		bytes_to_go -= readval;
+	    }
+	}
 	bu_semaphore_release(BU_SEM_SYSCALL);
 
-	if (UNLIKELY(ret != sb.st_size)) {
+	if (UNLIKELY(nbytes != sb.st_size)) {
 	    perror(real_path);
 	    bu_free(mp->buf, real_path);
 	    goto fail;
