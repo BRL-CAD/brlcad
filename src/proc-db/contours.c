@@ -40,10 +40,8 @@ main(int argc, char *argv[])
 {
     int i;
 
-    if (argc > 0) {
-	bu_log("Usage: %s\n", argv[0]);
-	bu_log("\n\n");
-    }
+    if (argc > 0)
+	bu_log("Usage: %s\n\n", argv[0]);
 
     pl_3space(stdout, -32768,  -32768,  -32768, 32767, 32767, 32767);
     while (!feof(stdin)) {
