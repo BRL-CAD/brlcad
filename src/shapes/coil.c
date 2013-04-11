@@ -557,7 +557,8 @@ main(int ac, char *av[])
     } else {
 	filename = DEFAULT_COIL_FILENAME;
     }
-/* make sure file doesn't already exist and opens for writing */
+
+    /* make sure file doesn't already exist and opens for writing */
     if (bu_file_exists(filename, NULL)) {
 	bu_exit(2, "%s: refusing to overwrite pre-existing file %s\n", av[0], filename);
     }
