@@ -239,7 +239,7 @@ make_coil(struct rt_wdb (*file), char *prefix, struct bu_list *sections, int sta
     int need_subtractions = 0;
     struct wmember coil;
     struct wmember coil_subtractions;
-	struct coil_data_t *s_data;
+    struct coil_data_t *s_data;
     struct coil_data_t *e_data;
     struct coil_data_t *cd;
     struct bu_vls str = BU_VLS_INIT_ZERO;
@@ -312,6 +312,7 @@ make_coil(struct rt_wdb (*file), char *prefix, struct bu_list *sections, int sta
     mk_pipe_free(&head);
 }
 
+
 void usage()
 {
     bu_log("Usage: coil [-d mean_outer_diameter] [-w wire_diameter] [-h helix_angle] [-p pitch]\n");
@@ -339,7 +340,7 @@ ReadArgs(int argc, char **argv, struct bu_list *sections, fastf_t *mean_outer_di
     if (argc == 1) {
 	usage();
 	bu_log("       Program continues running:\n");
-    	usedefaults=1;
+	usedefaults=1;
     }
     while ((c=bu_getopt(argc, argv, options)) != -1) {
 	switch (c) {
@@ -454,7 +455,7 @@ main(int ac, char *av[])
 	}
 
 	if (mean_outer_diameter < 0 || wire_diameter < 0 || helix_angle < 0 || pitch < 0 || nt < 0 || start_cap_type < 0 || end_cap_type < 0)
-	    bu_exit(1, "%s: negative value in one or more arguments supplied to coil\n",av[0]);
+	    bu_exit(1, "%s: negative value in one or more arguments supplied to coil\n", av[0]);
 
 	if (ZERO(wire_diameter) && ZERO(mean_outer_diameter)) {
 	    mean_outer_diameter = 1000;
@@ -510,44 +511,44 @@ main(int ac, char *av[])
 	       "override explicit section specification with -S\n");
 
 	if (coil_data) {
-	if (start_cap_type != 0 || end_cap_type != 0) {
-	    bu_log("Note:  At this time only uncapped coils are allowed when length is constrained.\n");
-	    start_cap_type = 0;
-	    end_cap_type = 0;
-	}
-	if (!ZERO(helix_angle)) {
-	    bu_log("Note:  At this time variable helix angles are unsupported when length is constrained.\n");
-	    helix_angle = 0;
-	}
-	/* Thanks to earlier checks, we're guaranteed to have valid data for this calculation regardless of
-	 * user input */
-	nominal_length = coil_data->wd + coil_data->p * coil_data->nt;
-	if (nominal_length > overall_length) {
-	    /* Something has to give - start with pitch */
-	    coil_data->p = (overall_length - coil_data->wd)/coil_data->nt;
-	    while (coil_data->p < coil_data->wd) {
-		/* That didn't work, start knocking off turns*/
-		while ((coil_data->nt > 1) && (coil_data->p < coil_data->wd)) {
-		   coil_data->nt--;
-		   coil_data->p = (overall_length - coil_data->wd)/coil_data->nt;
-		}
-		if (coil_data->nt == 1) {
-		    /* THAT didn't work, change the wire diameter */
-		    coil_data->wd = overall_length/2;
-		    coil_data->p = coil_data->wd ;
-		}
+	    if (start_cap_type != 0 || end_cap_type != 0) {
+		bu_log("Note:  At this time only uncapped coils are allowed when length is constrained.\n");
+		start_cap_type = 0;
+		end_cap_type = 0;
 	    }
-	} else {
-	    if (!EQUAL(nominal_length, overall_length)) {
-		/* Add turns first, then adjust pitch */
-		while (nominal_length < overall_length) {
-		    coil_data->nt++;
-		    nominal_length = coil_data->wd + coil_data->p * coil_data->nt;
-		}
-		coil_data->nt--;
+	    if (!ZERO(helix_angle)) {
+		bu_log("Note:  At this time variable helix angles are unsupported when length is constrained.\n");
+		helix_angle = 0;
+	    }
+	    /* Thanks to earlier checks, we're guaranteed to have valid data for this calculation regardless of
+	     * user input */
+	    nominal_length = coil_data->wd + coil_data->p * coil_data->nt;
+	    if (nominal_length > overall_length) {
+		/* Something has to give - start with pitch */
 		coil_data->p = (overall_length - coil_data->wd)/coil_data->nt;
+		while (coil_data->p < coil_data->wd) {
+		    /* That didn't work, start knocking off turns*/
+		    while ((coil_data->nt > 1) && (coil_data->p < coil_data->wd)) {
+			coil_data->nt--;
+			coil_data->p = (overall_length - coil_data->wd)/coil_data->nt;
+		    }
+		    if (coil_data->nt == 1) {
+			/* THAT didn't work, change the wire diameter */
+			coil_data->wd = overall_length/2;
+			coil_data->p = coil_data->wd ;
+		    }
+		}
+	    } else {
+		if (!EQUAL(nominal_length, overall_length)) {
+		    /* Add turns first, then adjust pitch */
+		    while (nominal_length < overall_length) {
+			coil_data->nt++;
+			nominal_length = coil_data->wd + coil_data->p * coil_data->nt;
+		    }
+		    coil_data->nt--;
+		    coil_data->p = (overall_length - coil_data->wd)/coil_data->nt;
+		}
 	    }
-	}
 	}
     }
 
@@ -558,11 +559,11 @@ main(int ac, char *av[])
     }
 /* make sure file doesn't already exist and opens for writing */
     if (bu_file_exists(filename, NULL)) {
-	bu_exit(2, "%s: refusing to overwrite pre-existing file %s\n",av[0],filename);
+	bu_exit(2, "%s: refusing to overwrite pre-existing file %s\n", av[0], filename);
     }
     db_fp = wdb_fopen(filename);
     if (!db_fp) {
-	bu_exit(2, "%s: unable to open %s for writing\n",av[0],filename);
+	bu_exit(2, "%s: unable to open %s for writing\n", av[0], filename);
     }
 
     /* do it. */
