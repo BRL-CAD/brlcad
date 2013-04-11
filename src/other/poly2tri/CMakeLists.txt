@@ -11,21 +11,9 @@ PROJECT(Poly2Tri)
 # SET LIBNAME
 set(P2T_LIB_NAME p2t)
 
-# COMMAND LINE OPTIONS
-if(DEFINED P2T_SHARED)
-  option(P2T_SHARED "Build shared lib" ${PNG_SHARED})
-else()
-  option(P2T_SHARED "Build shared lib" ON)
-endif()
-if(DEFINED P2T_STATIC)
-  option(P2T_STATIC "Build static lib" ${PNG_STATIC})
-else()
-  option(P2T_STATIC "Build static lib" ON)
-endif()
-
-##option(P2T_TESTS  "Build libp2t tests" NO)
 # Testing option
 OPTION_WITH_DEFAULT(P2T_TESTS  "Build libp2t tests" NO)
+MARK_AS_ADVANCED(P2T_TESTS)
 IF(P2T_TESTS)
   INCLUDE(CTest)
   ENABLE_TESTING()
@@ -35,6 +23,17 @@ INCLUDE_DIRECTORIES(
   ${CMAKE_CURRENT_SOURCE_DIR}
   )
 
+set(LIBP2T_PUBLIC_HDRS
+	poly2tri/poly2tri.h
+	poly2tri/common/shapes.h
+	poly2tri/sweep/cdt.h
+)
+set(LIBP2T_PRIVATE_HDRS
+	poly2tri/common/utils.h
+    poly2tri/sweep/advancing_front.h
+    poly2tri/sweep/sweep.h
+    poly2tri/sweep/sweep_context.h
+)
 set(LIBP2T_SOURCES
 	poly2tri/common/shapes.cc
 	poly2tri/common/utils.cc
@@ -59,23 +58,19 @@ IF(MSVC)
 ENDIF(MSVC)
 add_definitions("-DP2T_NO_GLFW")
 
-if(P2T_SHARED)
-  add_library(${P2T_LIB_NAME} SHARED ${LIBP2T_SOURCES})
-  if(MSVC)
-    # msvc does not append 'lib' - do it here to have consistent name
-    set_target_properties(${P2T_LIB_NAME} PROPERTIES PREFIX "lib")
-    set_target_properties(${P2T_LIB_NAME} PROPERTIES IMPORT_PREFIX "lib")
-  endif()
-  target_link_libraries(${P2T_LIB_NAME} ${ZLIB_LIBRARY} ${M_LIBRARY})
-  install(TARGETS ${P2T_LIB_NAME}
-	RUNTIME DESTINATION ${BIN_DIR}
-	LIBRARY DESTINATION ${LIB_DIR}
-	ARCHIVE DESTINATION ${LIB_DIR})
-
+add_library(${P2T_LIB_NAME} ${LIBP2T_SOURCES} ${LIBP2T_PUBLIC_HDRS} ${LIBP2T_PRIVATE_HDRS})
+if(MSVC)
+  # msvc does not append 'lib' - do it here to have consistent name
+  set_target_properties(${P2T_LIB_NAME} PROPERTIES PREFIX "lib")
+  set_target_properties(${P2T_LIB_NAME} PROPERTIES IMPORT_PREFIX "lib")
 endif()
+target_link_libraries(${P2T_LIB_NAME} ${ZLIB_LIBRARY} ${M_LIBRARY})
+install(TARGETS ${P2T_LIB_NAME}
+  RUNTIME DESTINATION ${BIN_DIR}
+  LIBRARY DESTINATION ${LIB_DIR}
+  ARCHIVE DESTINATION ${LIB_DIR})
 
-if(P2T_STATIC)
-# does not work without changing name
+if(BUILD_STATIC_LIBS)
   set(P2T_LIB_NAME_STATIC ${P2T_LIB_NAME}_static)
   add_library(${P2T_LIB_NAME_STATIC} STATIC ${LIBP2T_SOURCES})
   if(MSVC)
@@ -87,9 +82,9 @@ if(P2T_STATIC)
 	RUNTIME DESTINATION ${BIN_DIR}
 	LIBRARY DESTINATION ${LIB_DIR}
 	ARCHIVE DESTINATION ${LIB_DIR})
-endif()
+endif(BUILD_STATIC_LIBS)
 
-if(P2T_SHARED AND WIN32)
+if(WIN32)
   set_target_properties(${P2T_LIB_NAME} PROPERTIES DEFINE_SYMBOL P2T_BUILD_DLL)
 endif()
 
@@ -107,8 +102,8 @@ endif()
 
 install(FILES poly2tri/poly2tri.h DESTINATION include/poly2tri)
 install(FILES poly2tri/common/shapes.h DESTINATION include/poly2tri/common)
-install(FILES poly2tri/common/utils.h DESTINATION include/poly2tri/common)
 install(FILES poly2tri/sweep/cdt.h DESTINATION include/poly2tri/sweep)
+
 
 
 
