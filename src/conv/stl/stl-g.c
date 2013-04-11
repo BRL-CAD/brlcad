@@ -72,17 +72,17 @@ static int bot_fcurr=0;		/* current bot face */
 static void
 usage(const char *argv0)
 {
-    bu_log("%s [-db] [-t tolerance] [-N forced_name] [-i initial_ident] [-I constant_ident] [-m material_code] [-c units_str] [-x rt_debug_flag] input.stl output.g\n", argv0);
+    bu_log("Usage: %s [-db] [-t tolerance] [-N forced_name] [-i initial_ident] [-I constant_ident] [-m material_code] [-c units_str] [-x rt_debug_flag] input.stl output.g\n", argv0);
     bu_log("	where input.stl is a STereoLithography file\n");
     bu_log("	and output.g is the name of a BRL-CAD database file to receive the conversion.\n");
-    bu_log("	The -b option specifies that the input file is in the binary STL format (default is ASCII). \n");
-    bu_log("	The -c option specifies the units used in the STL file (units_str may be \"in\", \"ft\", ... default is \"mm\"\n");
-    bu_log("	The -N option specifies a name to use for the object.\n");
     bu_log("	The -d option prints additional debugging information.\n");
+    bu_log("	The -b option specifies that the input file is in the binary STL format (default is ASCII). \n");
+    bu_log("	The -t option specifies the minimum distance between two distinct vertices (mm).\n");
+    bu_log("	The -N option specifies a name to use for the object.\n");
     bu_log("	The -i option sets the initial region ident number (default is 1000).\n");
     bu_log("	The -I option sets the ident number that will be assigned to all regions (conflicts with -i).\n");
     bu_log("	The -m option sets the integer material code for all the parts (default is 1).\n");
-    bu_log("	The -t option specifies the minimum distance between two distinct vertices (mm).\n");
+    bu_log("	The -c option specifies the units used in the STL file (units_str may be \"in\", \"ft\", ... default is \"mm\"\n");
     bu_log("	The -x option specifies an RT debug flags (see raytrace.h).\n");
 }
 
@@ -584,6 +584,7 @@ main(int argc, char *argv[])
     }
 
     /* Get command line arguments. */
+    /* Don't need to account for -h and -? ("default" takes care of them).  */
     while ((c = bu_getopt(argc, argv, "bt:i:I:m:dx:N:c:")) != -1) {
 	double tmp;
 
