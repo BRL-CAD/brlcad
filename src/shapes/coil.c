@@ -42,6 +42,7 @@
 #define DEFAULT_COIL_FILENAME "coil.g"
 #define DEFAULT_COIL_OBJECT "coil"
 
+int usedefaults = 0;
 
 struct coil_data_t {
     struct bu_list l;
@@ -338,6 +339,7 @@ ReadArgs(int argc, char **argv, struct bu_list *sections, fastf_t *mean_outer_di
     if (argc == 1) {
 	usage();
 	bu_log("       Program continues running:\n");
+    	usedefaults=1;
     }
     while ((c=bu_getopt(argc, argv, options)) != -1) {
 	switch (c) {
@@ -393,6 +395,8 @@ ReadArgs(int argc, char **argv, struct bu_list *sections, fastf_t *mean_outer_di
 		BU_LIST_INSERT(&(*sections), &((*coil_data).l));
 		break;
 	    case '?':
+		if (argc == 2)
+		    usedefaults=1;
 		usage();
 		break;
 	    default:
@@ -445,7 +449,7 @@ main(int ac, char *av[])
 
     if (BU_LIST_IS_EMPTY(&sections)) {
 
-	if (ac == 1) {
+	if (usedefaults) {
 	    bu_log("Creating a coil with default parameters.\n");
 	}
 
