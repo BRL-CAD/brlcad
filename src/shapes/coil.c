@@ -335,6 +335,10 @@ ReadArgs(int argc, char **argv, struct bu_list *sections, fastf_t *mean_outer_di
 
     bu_opterr = 0;
 
+    if (argc == 1) {
+	usage();
+	bu_log("       Program continues running:\n");
+    }
     while ((c=bu_getopt(argc, argv, options)) != -1) {
 	switch (c) {
 	    case 'd' :
@@ -387,6 +391,9 @@ ReadArgs(int argc, char **argv, struct bu_list *sections, fastf_t *mean_outer_di
 		    coil_data->lhf = -1;
 		}
 		BU_LIST_INSERT(&(*sections), &((*coil_data).l));
+		break;
+	    case '?':
+		usage();
 		break;
 	    default:
 		/* since c (bu_getopt() return value) holds '?',
@@ -443,7 +450,7 @@ main(int ac, char *av[])
 	}
 
 	if (mean_outer_diameter < 0 || wire_diameter < 0 || helix_angle < 0 || pitch < 0 || nt < 0 || start_cap_type < 0 || end_cap_type < 0)
-	    bu_exit(1, "ERROR: negative value in one or more arguments supplied to coil");
+	    bu_exit(1, "%s: negative value in one or more arguments supplied to coil\n",av[0]);
 
 	if (ZERO(wire_diameter) && ZERO(mean_outer_diameter)) {
 	    mean_outer_diameter = 1000;
@@ -540,18 +547,18 @@ main(int ac, char *av[])
 	}
     }
 
-    /* make sure file doesn't already exist and opens for writing */
     if (av[bu_optind]) {
 	filename = av[bu_optind];
     } else {
 	filename = DEFAULT_COIL_FILENAME;
     }
-    if (!bu_file_exists(filename, NULL)) {
-	bu_exit(2, "ERROR: refusing to overwrite pre-existing file %s", filename);
+/* make sure file doesn't already exist and opens for writing */
+    if (bu_file_exists(filename, NULL)) {
+	bu_exit(2, "%s: refusing to overwrite pre-existing file %s\n",av[0],filename);
     }
     db_fp = wdb_fopen(filename);
     if (!db_fp) {
-	bu_exit(2, "ERROR: unable to open %s for writing", filename);
+	bu_exit(2, "%s: unable to open %s for writing\n",av[0],filename);
     }
 
     /* do it. */
