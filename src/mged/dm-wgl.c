@@ -281,9 +281,18 @@ dirty_hook()
 static void
 zclip_hook()
 {
+    fastf_t bounds[6] = { GED_MIN, GED_MAX, GED_MIN, GED_MAX, GED_MIN, GED_MAX };
+
     dmp->dm_zclip = ((struct wgl_vars *)dmp->dm_vars.priv_vars)->mvars.zclipping_on;
     view_state->vs_gvp->gv_zclip = dmp->dm_zclip;
     dirty_hook();
+
+    if (dmp->dm_zclip) {
+	bounds[4] = -1.0;
+	bounds[5] = 1.0;
+    }
+
+    DM_SET_WIN_BOUNDS(dmp, bounds);
 }
 
 
