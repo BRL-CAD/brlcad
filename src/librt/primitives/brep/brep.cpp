@@ -2574,11 +2574,11 @@ void plot_face_from_surface_tree(struct bu_list *vhead, SurfaceTree* st,
 }
 
 void getEdgePoints(const ON_BrepTrim &trim, fastf_t t1, ON_3dPoint &start_2d,
-        ON_3dVector &start_tang, ON_3dPoint &start_3d, ON_3dVector &start_norm,
-        fastf_t t2, ON_3dPoint &end_2d, ON_3dVector &end_tang,
-        ON_3dPoint &end_3d, ON_3dVector &end_norm, fastf_t min_dist,
-        fastf_t max_dist, fastf_t within_dist, fastf_t cos_within_ang,
-        std::map<double, ON_3dPoint *> &param_points)
+	ON_3dVector &start_tang, ON_3dPoint &start_3d, ON_3dVector &start_norm,
+	fastf_t t2, ON_3dPoint &end_2d, ON_3dVector &end_tang,
+	ON_3dPoint &end_3d, ON_3dVector &end_norm, fastf_t min_dist,
+	fastf_t max_dist, fastf_t within_dist, fastf_t cos_within_ang,
+	std::map<double, ON_3dPoint *> &param_points)
 {
     const ON_Surface *s = trim.SurfaceOf();
     ON_Interval range = trim.Domain();
@@ -2594,13 +2594,13 @@ void getEdgePoints(const ON_BrepTrim &trim, fastf_t t1, ON_3dPoint &start_2d,
 	double dist3d;
 
 	if ((line3d.Length() > max_dist)
-	        || ((dist3d = mid_3d.DistanceTo(line3d.ClosestPointTo(mid_3d)))
-	                > within_dist + ON_ZERO_TOLERANCE)
-	        || ((((start_tang * end_tang)
-	                < cos_within_ang - ON_ZERO_TOLERANCE)
-	                || ((start_norm * end_norm)
-	                        < cos_within_ang - ON_ZERO_TOLERANCE))
-	                && (dist3d > min_dist + ON_ZERO_TOLERANCE))) {
+		|| ((dist3d = mid_3d.DistanceTo(line3d.ClosestPointTo(mid_3d)))
+			> within_dist + ON_ZERO_TOLERANCE)
+		|| ((((start_tang * end_tang)
+			< cos_within_ang - ON_ZERO_TOLERANCE)
+			|| ((start_norm * end_norm)
+				< cos_within_ang - ON_ZERO_TOLERANCE))
+			&& (dist3d > min_dist + ON_ZERO_TOLERANCE))) {
 	    getEdgePoints(trim, t1, start_2d, start_tang, start_3d, start_norm,
 		    t, mid_2d, mid_tang, mid_3d, mid_norm, min_dist, max_dist,
 		    within_dist, cos_within_ang, param_points);
@@ -2614,8 +2614,8 @@ void getEdgePoints(const ON_BrepTrim &trim, fastf_t t1, ON_3dPoint &start_2d,
 }
 
 std::map<double, ON_3dPoint *> *getEdgePoints(ON_BrepTrim &trim,
-        fastf_t max_dist, const struct rt_tess_tol *ttol,
-        const struct bn_tol *tol, const struct rt_view_info *UNUSED(info))
+	fastf_t max_dist, const struct rt_tess_tol *ttol,
+	const struct bn_tol *tol, const struct rt_view_info *UNUSED(info))
 {
     std::map<double, ON_3dPoint *> *param_points = NULL;
     fastf_t min_dist, within_dist, cos_within_ang;
@@ -2675,22 +2675,22 @@ std::map<double, ON_3dPoint *> *getEdgePoints(ON_BrepTrim &trim,
 		    && s->EvNormal(start_2d.x, start_2d.y, start_3d, start_norm)
 		    && s->EvNormal(end_2d.x, end_2d.y, end_3d, end_norm)) {
 		(*param_points)[0.0] = new ON_3dPoint(
-		        s->PointAt(trim.PointAt(range.m_t[0]).x,
-		                trim.PointAt(range.m_t[0]).y));
+			s->PointAt(trim.PointAt(range.m_t[0]).x,
+				trim.PointAt(range.m_t[0]).y));
 		getEdgePoints(trim, range.m_t[0], start_2d, start_tang,
-		        start_3d, start_norm, mid_range, mid_2d, mid_tang,
-		        mid_3d, mid_norm, min_dist, max_dist, within_dist,
-		        cos_within_ang, *param_points);
+			start_3d, start_norm, mid_range, mid_2d, mid_tang,
+			mid_3d, mid_norm, min_dist, max_dist, within_dist,
+			cos_within_ang, *param_points);
 		(*param_points)[0.5] = new ON_3dPoint(
-		        s->PointAt(trim.PointAt(mid_range).x,
-		                trim.PointAt(mid_range).y));
+			s->PointAt(trim.PointAt(mid_range).x,
+				trim.PointAt(mid_range).y));
 		getEdgePoints(trim, mid_range, mid_2d, mid_tang, mid_3d,
-		        mid_norm, range.m_t[1], end_2d, end_tang, end_3d,
-		        end_norm, min_dist, max_dist, within_dist,
-		        cos_within_ang, *param_points);
+			mid_norm, range.m_t[1], end_2d, end_tang, end_3d,
+			end_norm, min_dist, max_dist, within_dist,
+			cos_within_ang, *param_points);
 		(*param_points)[1.0] = new ON_3dPoint(
-		        s->PointAt(trim.PointAt(range.m_t[1]).x,
-		                trim.PointAt(range.m_t[1]).y));
+			s->PointAt(trim.PointAt(range.m_t[1]).x,
+				trim.PointAt(range.m_t[1]).y));
 	    }
 	} else {
 	    ON_3dPoint start_2d, start_3d;
@@ -2703,9 +2703,9 @@ std::map<double, ON_3dPoint *> *getEdgePoints(ON_BrepTrim &trim,
 		    && s->EvNormal(end_2d.x, end_2d.y, end_3d, end_norm)) {
 		(*param_points)[0.0] = new ON_3dPoint(start_3d);
 		getEdgePoints(trim, range.m_t[0], start_2d, start_tang,
-		        start_3d, start_norm, range.m_t[1], end_2d, end_tang,
-		        end_3d, end_norm, min_dist, max_dist, within_dist,
-		        cos_within_ang, *param_points);
+			start_3d, start_norm, range.m_t[1], end_2d, end_tang,
+			end_3d, end_norm, min_dist, max_dist, within_dist,
+			cos_within_ang, *param_points);
 		(*param_points)[1.0] = new ON_3dPoint(end_3d);
 	    }
 	}
@@ -2717,9 +2717,9 @@ std::map<double, ON_3dPoint *> *getEdgePoints(ON_BrepTrim &trim,
 }
 
 void getSurfacePoints(const ON_Surface *s, fastf_t u1, fastf_t u2, fastf_t v1,
-        fastf_t v2, fastf_t min_dist, fastf_t within_dist,
-        fastf_t cos_within_ang, ON_2dPointArray &on_surf_points, bool left,
-        bool below)
+	fastf_t v2, fastf_t min_dist, fastf_t within_dist,
+	fastf_t cos_within_ang, ON_2dPointArray &on_surf_points, bool left,
+	bool below)
 {
     double ldfactor = 2.0;
     ON_2dPoint p2d;
@@ -2751,15 +2751,15 @@ void getSurfacePoints(const ON_Surface *s, fastf_t u1, fastf_t u2, fastf_t v1,
 	    }
 	    if (i == 1) {
 		getSurfacePoints(s, u1, u1 + step, v1, v2, min_dist,
-		        within_dist, cos_within_ang, on_surf_points, left,
-		        below);
+			within_dist, cos_within_ang, on_surf_points, left,
+			below);
 	    } else if (i == isteps) {
 		getSurfacePoints(s, u2 - step, u2, v1, v2, min_dist,
-		        within_dist, cos_within_ang, on_surf_points, left,
-		        below);
+			within_dist, cos_within_ang, on_surf_points, left,
+			below);
 	    } else {
 		getSurfacePoints(s, step_u - step, step_u, v1, v2, min_dist, within_dist,
-		        cos_within_ang, on_surf_points, left, below);
+			cos_within_ang, on_surf_points, left, below);
 	    }
 	    left = false;
 
@@ -2783,15 +2783,15 @@ void getSurfacePoints(const ON_Surface *s, fastf_t u1, fastf_t u2, fastf_t v1,
 
 	    if (i == 1) {
 		getSurfacePoints(s, u1, u2, v1, v1 + step, min_dist,
-		        within_dist, cos_within_ang, on_surf_points, left,
-		        below);
+			within_dist, cos_within_ang, on_surf_points, left,
+			below);
 	    } else if (i == isteps) {
 		getSurfacePoints(s, u1, u2, v2 - step, v2, min_dist,
-		        within_dist, cos_within_ang, on_surf_points, left,
-		        below);
+			within_dist, cos_within_ang, on_surf_points, left,
+			below);
 	    } else {
 		getSurfacePoints(s, u1, u2, step_v - step, step_v, min_dist, within_dist,
-		        cos_within_ang, on_surf_points, left, below);
+			cos_within_ang, on_surf_points, left, below);
 	    }
 
 	    below = false;
@@ -2829,7 +2829,7 @@ void getSurfacePoints(const ON_Surface *s, fastf_t u1, fastf_t u2, fastf_t v1,
 	    vdot = norm[0] * norm[3];
 	}
 	if ((udot < cos_within_ang - ON_ZERO_TOLERANCE)
-	        && (vdot < cos_within_ang - ON_ZERO_TOLERANCE)) {
+		&& (vdot < cos_within_ang - ON_ZERO_TOLERANCE)) {
 	    if (left) {
 		p2d.Set(u1, v);
 		on_surf_points.Append(p2d);
@@ -2902,21 +2902,21 @@ void getSurfacePoints(const ON_Surface *s, fastf_t u1, fastf_t u2, fastf_t v1,
 		on_surf_points.Append(p2d);
 
 		getSurfacePoints(s, u1, u, v1, v, min_dist, within_dist,
-		        cos_within_ang, on_surf_points, left, below);
+			cos_within_ang, on_surf_points, left, below);
 		getSurfacePoints(s, u1, u, v, v2, min_dist, within_dist,
-		        cos_within_ang, on_surf_points, left, false);
+			cos_within_ang, on_surf_points, left, false);
 		getSurfacePoints(s, u, u2, v1, v, min_dist, within_dist,
-		        cos_within_ang, on_surf_points, false, below);
+			cos_within_ang, on_surf_points, false, below);
 		getSurfacePoints(s, u, u2, v, v2, min_dist, within_dist,
-		        cos_within_ang, on_surf_points, false, false);
+			cos_within_ang, on_surf_points, false, false);
 	    }
 	}
     }
 }
 
 void getSurfacePoints(ON_BrepFace &face, const struct rt_tess_tol *ttol,
-        const struct bn_tol *tol, const struct rt_view_info *UNUSED(info),
-        ON_2dPointArray &on_surf_points)
+	const struct bn_tol *tol, const struct rt_view_info *UNUSED(info),
+	ON_2dPointArray &on_surf_points)
 {
     double surface_width, surface_height;
     const ON_Surface *s = face.SurfaceOf();
@@ -2961,10 +2961,10 @@ void getSurfacePoints(ON_BrepFace &face, const struct rt_tess_tol *ttol,
 	    //    min_dist = within_dist;
 	    //}
 	} else if ((ttol->abs > 0.0 + ON_ZERO_TOLERANCE)
-	        && (ttol->norm < 0.0 + ON_ZERO_TOLERANCE)) {
+		&& (ttol->norm < 0.0 + ON_ZERO_TOLERANCE)) {
 	    within_dist = min_dist;
 	} else if ((ttol->abs > 0.0 + ON_ZERO_TOLERANCE)
-	        || (ttol->norm > 0.0 + ON_ZERO_TOLERANCE)) {
+		|| (ttol->norm > 0.0 + ON_ZERO_TOLERANCE)) {
 	    within_dist = dist;
 	} else {
 	    within_dist = 0.01 * dist; // default to 1% minimum surface distance
@@ -3120,9 +3120,9 @@ void getSurfacePoints(ON_BrepFace &face, const struct rt_tess_tol *ttol,
 }
 
 void poly2tri_CDT(struct bu_list *vhead, ON_BrepFace &face,
-        const struct rt_tess_tol *ttol, const struct bn_tol *tol,
-        const struct rt_view_info *info, bool watertight = false, int plottype =
-                0, int num_points = -1.0)
+	const struct rt_tess_tol *ttol, const struct bn_tol *tol,
+	const struct rt_view_info *info, bool watertight = false, int plottype =
+		0, int num_points = -1.0)
 {
     ON_RTree rt_trims, rt_points;
     ON_2dPointArray on_surf_points;
@@ -3138,8 +3138,8 @@ void poly2tri_CDT(struct bu_list *vhead, ON_BrepFace &face,
 	    return;
 	}
 	max_dist = sqrt(
-	        surface_width * surface_width + surface_height * surface_height)
-	        / 10.0;
+		surface_width * surface_width + surface_height * surface_height)
+		/ 10.0;
     }
 
     std::map<p2t::Point *, ON_3dPoint *> *pointmap = new std::map<p2t::Point *, ON_3dPoint *>();
@@ -3158,7 +3158,7 @@ void poly2tri_CDT(struct bu_list *vhead, ON_BrepFace &face,
 		ON_BrepVertex& v1 = face.Brep()->m_V[trim->m_vi[0]];
 		ON_3dPoint *p3d = new ON_3dPoint(v1.Point());
 		p2t::Point *p = new p2t::Point(trim->PointAtStart().x,
-		        trim->PointAtStart().y);
+			trim->PointAtStart().y);
 		polyline.push_back(p);
 		on_loop_points.Append(trim->PointAtStart());
 		(*pointmap)[p] = p3d;
@@ -3173,7 +3173,7 @@ void poly2tri_CDT(struct bu_list *vhead, ON_BrepFace &face,
 	    }
 	    if (trim->m_trim_user.p) {
 		std::map<double, ON_3dPoint *> *param_points3d = (std::map<
-		        double, ON_3dPoint *> *) trim->m_trim_user.p;
+			double, ON_3dPoint *> *) trim->m_trim_user.p;
 
 		ON_3dPoint boxmin;
 		ON_3dPoint boxmax;
@@ -3433,7 +3433,7 @@ void poly2tri_CDT(struct bu_list *vhead, ON_BrepFace &face,
 
 	    if (trim->m_trim_user.p) {
 		std::map<double, ON_3dPoint *> *points = (std::map<double,
-		        ON_3dPoint *> *) trim->m_trim_user.p;
+			ON_3dPoint *> *) trim->m_trim_user.p;
 		std::map<double, ON_3dPoint *>::iterator i;
 		for (i = points->begin(); i != points->end(); i++) {
 		    ON_3dPoint *p = (*i).second;

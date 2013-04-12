@@ -829,7 +829,7 @@ brep_surface_info(struct brep_specific* bs, struct bu_vls *vls, int si)
     ON_TextLog info_output(wonstr);
     ON_Brep *brep = bs->brep;
     if (brep == NULL) {
-        return -1;
+	return -1;
     }
     if (!brep->IsValid(&info_output)) {
 	bu_log("brep is NOT valid");
@@ -873,7 +873,7 @@ brep_surface_bezier_info(struct brep_specific* bs, struct bu_vls *vls, int si)
     ON_TextLog info_output(wonstr);
     ON_Brep *brep = bs->brep;
     if (brep == NULL) {
-        return -1;
+	return -1;
     }
     if (!brep->IsValid(&info_output)) {
 	bu_log("brep is NOT valid");
@@ -940,7 +940,7 @@ brep_face_info(struct brep_specific* bs, struct bu_vls *vls, int fi)
     ON_TextLog dump(s);
     ON_Brep *brep = bs->brep;
     if (brep == NULL) {
-        return -1;
+	return -1;
     }
     if (!brep->IsValid(&dump)) {
 	bu_log("brep is NOT valid");
@@ -1084,7 +1084,7 @@ brep_trim_info(struct brep_specific* bs, struct bu_vls *vls, int ti)
     ON_wString wstr;
     ON_TextLog dump(wstr);
     if (brep == NULL) {
-        return -1;
+	return -1;
     }
     if (!brep->IsValid(&dump)) {
 	bu_log("brep is NOT valid");
@@ -1185,7 +1185,7 @@ brep_trim_bezier_info(struct brep_specific* bs, struct bu_vls *vls, int ti)
     ON_wString wstr;
     ON_TextLog dump(wstr);
     if (brep == NULL) {
-        return -1;
+	return -1;
     }
     if (!brep->IsValid(&dump)) {
 	bu_log("brep is NOT valid");
@@ -1229,7 +1229,7 @@ brep_edge_info(struct brep_specific* bs, struct bu_vls *vls, int ei)
     ON_wString wstr;
     ON_TextLog dump(wstr);
     if (brep == NULL) {
-        return -1;
+	return -1;
     }
     if (!brep->IsValid(&dump)) {
 	bu_log("brep is NOT valid");
@@ -1268,9 +1268,9 @@ brep_edge_info(struct brep_specific* bs, struct bu_vls *vls, int ei)
 }
 
 int brep_facecdt_plot(struct bu_vls *vls, const char *solid_name,
-        const struct rt_tess_tol *ttol, const struct bn_tol *tol,
-        struct brep_specific* bs, struct rt_brep_internal*UNUSED(bi),
-        struct bn_vlblock *vbp, int index, int plottype, int num_points = -1)
+	const struct rt_tess_tol *ttol, const struct bn_tol *tol,
+	struct brep_specific* bs, struct rt_brep_internal*UNUSED(bi),
+	struct bn_vlblock *vbp, int index, int plottype, int num_points = -1)
 {
     register struct bu_list *vhead = rt_vlblock_find(vbp, YELLOW);
     bool watertight = true;
@@ -1334,7 +1334,7 @@ brep_facetrim_plot(struct bu_vls *vls, struct brep_specific* bs, struct rt_brep_
 
     ON_Brep* brep = bs->brep;
     if (brep == NULL) {
-        return -1;
+	return -1;
     }
     if (!brep->IsValid(&tl)) {
 	bu_log("brep is NOT valid");
@@ -1371,7 +1371,7 @@ brep_trim_direction_plot(struct bu_vls *vls, struct brep_specific* bs, struct rt
 
     ON_Brep* brep = bs->brep;
     if (brep == NULL) {
-        return -1;
+	return -1;
     }
     if (!brep->IsValid(&tl)) {
 	bu_log("brep is NOT valid");
@@ -1404,7 +1404,7 @@ brep_surface_plot(struct bu_vls *vls, struct brep_specific* bs, struct rt_brep_i
 
     ON_Brep* brep = bs->brep;
     if (brep == NULL) {
-        return -1;
+	return -1;
     }
     if (!brep->IsValid(&tl)) {
 	bu_log("brep is NOT valid");
@@ -1435,7 +1435,7 @@ brep_surface_normal_plot(struct bu_vls *vls, struct brep_specific* bs, struct rt
 
     ON_Brep* brep = bs->brep;
     if (brep == NULL) {
-        return -1;
+	return -1;
     }
     if (!brep->IsValid(&tl)) {
 	bu_log("brep is NOT valid");
@@ -1467,7 +1467,7 @@ brep_surface_knot_plot(struct bu_vls *vls, struct brep_specific* bs, struct rt_b
 
     ON_Brep* brep = bs->brep;
     if (brep == NULL) {
-        return -1;
+	return -1;
     }
     if (!brep->IsValid(&tl)) {
 	bu_log("brep is NOT valid");
@@ -1497,7 +1497,7 @@ brep_edge3d_plot(struct bu_vls *vls, struct brep_specific* bs, struct rt_brep_in
 
     ON_Brep* brep = bs->brep;
     if (brep == NULL) {
-        return -1;
+	return -1;
     }
     if (!brep->IsValid(&tl)) {
 	bu_log("brep is NOT valid");
@@ -1528,7 +1528,7 @@ brep_trim_plot(struct bu_vls *vls, struct brep_specific* bs, struct rt_brep_inte
 
     ON_Brep* brep = bs->brep;
     if (brep == NULL) {
-        return -1;
+	return -1;
     }
     if (!brep->IsValid(&tl)) {
 	bu_log("brep is NOT valid");
@@ -1558,7 +1558,7 @@ brep_surface_cv_plot(struct bu_vls *vls, struct brep_specific* bs, struct rt_bre
 
     ON_Brep* brep = bs->brep;
     if (brep == NULL) {
-        return -1;
+	return -1;
     }
     if (!brep->IsValid(&tl)) {
 	bu_log("brep is NOT valid");
@@ -2152,7 +2152,7 @@ brep_isosurface_plot(struct bu_vls *vls, struct brep_specific* bs, struct rt_bre
 
     ON_Brep* brep = bs->brep;
     if (brep == NULL) {
-        return -1;
+	return -1;
     }
     if (!brep->IsValid(&tl)) {
 	bu_log("brep is NOT valid");
@@ -2197,7 +2197,7 @@ brep_surfaceleafs_plot(struct bu_vls *vls, struct brep_specific* bs, struct rt_b
 
     ON_Brep* brep = bs->brep;
     if (brep == NULL) {
-        return -1;
+	return -1;
     }
     if (!brep->IsValid(&tl)) {
 	bu_log("brep is NOT valid");
@@ -2231,7 +2231,7 @@ brep_trimleafs_plot(struct bu_vls *vls, struct brep_specific* bs, struct rt_brep
 
     ON_Brep* brep = bs->brep;
     if (brep == NULL) {
-        return -1;
+	return -1;
     }
     if (!brep->IsValid(&tl)) {
 	bu_log("brep is NOT valid");
