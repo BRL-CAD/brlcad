@@ -1312,13 +1312,10 @@ nmg_class_pt_fu_except(const fastf_t *pt, const struct faceuse *fu, const struct
 	    }
 	} else if (lu->orientation == OT_SAME) {
 	    ot_same[lu_class]++;
-	    if (lu_class == NMG_CLASS_AinB ||
-		lu_class == NMG_CLASS_AonBshared ||
-		lu_class == NMG_CLASS_AonBanti) {
-#if 0
-	    if (lu_class == NMG_CLASS_AinB ||
-		lu_class == NMG_CLASS_AonBshared)
-#endif
+	    if (lu_class == NMG_CLASS_AinB
+		|| lu_class == NMG_CLASS_AonBshared
+		|| lu_class == NMG_CLASS_AonBanti)
+	    {
 		ot_same_in++;
 	    }
 	}
@@ -1332,10 +1329,7 @@ nmg_class_pt_fu_except(const fastf_t *pt, const struct faceuse *fu, const struct
 	       ot_opposite[0], ot_opposite[1], ot_opposite[2], ot_opposite[3]);
     }
 
-    if (ot_same_in <= ot_opposite_out) {
-#if 0
     if (ot_same_in == ot_opposite_out) {
-#endif
 	/* All the holes cancel out the solid loops */
 	fu_class = NMG_CLASS_AoutB;
     } else if (ot_same_in > ot_opposite_out) {
