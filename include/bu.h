@@ -2134,7 +2134,7 @@ BU_EXPORT extern int bu_debug;
  * byte address of the indicated variable.  Matching compensation code
  * for the CRAY is located in librt/parse.c
  */
-#if defined(__ia64__) || defined(__x86_64__) || defined(__sparc64__) || defined(_HPUX_SOURCE) || defined(__CLANG__)
+#if defined(__ia64__) || defined(__x86_64__) || defined(__sparc64__) || defined(_HPUX_SOURCE) || defined(__clang__)
 #    define bu_byteoffset(_i)	((size_t)((char *)&(_i)))
 #else
 /* "Conservative" way of finding # bytes as diff of 2 char ptrs */
