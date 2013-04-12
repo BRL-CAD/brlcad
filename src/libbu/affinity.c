@@ -118,6 +118,7 @@ parallel_set_affinity(int cpu)
 #else
 
     /* don't know how to set thread affinity on this platform */
+    cpu = 0;	/* do something with cpu to avoid an unused parameter warning */
     return 0;
 
 #endif
