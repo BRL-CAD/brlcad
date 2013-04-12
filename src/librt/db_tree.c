@@ -1434,9 +1434,6 @@ db_free_tree(union tree *tp, struct resource *resp)
     }
     tp->tr_op = 0;		/* sanity */
 
-    /* reset magic after recursion */
-    tp->magic = RT_TREE_MAGIC;
-
     RT_FREE_TREE(tp, resp);
 }
 
