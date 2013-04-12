@@ -26,7 +26,8 @@ set(MGED_POINTS_SRCS
   )
 
 BRLCAD_ADDLIB(libpoints "${MGED_POINTS_SRCS}" libbu)
-SET_TARGET_PROPERTIES(libpoints PROPERTIES COMPILE_DEFINITIONS "ENABLE_POINTS")
+set_target_properties(libpoints PROPERTIES VERSION 20.0.1 SOVERSION 20)
+set_target_properties(libpoints PROPERTIES COMPILE_DEFINITIONS "ENABLE_POINTS")
 set(mged_points_ignore_files
   count.h
   points_parse.y

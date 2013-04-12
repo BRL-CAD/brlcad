@@ -32,6 +32,7 @@ IF(NOT MSVC)
     )
 
   add_library(termlib SHARED ${LIBTERM_SOURCES})
+  set_target_properties(termlib PROPERTIES VERSION 1.7.1 SOVERSION 1)
   install(TARGETS termlib
     RUNTIME DESTINATION ${BIN_DIR}
     LIBRARY DESTINATION ${LIB_DIR}

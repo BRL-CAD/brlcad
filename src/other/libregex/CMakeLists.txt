@@ -19,6 +19,7 @@ add_definitions(
   )
 
 add_library(regex SHARED ${LIBREGEX_SOURCES})
+set_target_properties(regex PROPERTIES VERSION 1.0.4 SOVERSION 1)
 install(TARGETS regex
 	RUNTIME DESTINATION ${BIN_DIR}
 	LIBRARY DESTINATION ${LIB_DIR}
