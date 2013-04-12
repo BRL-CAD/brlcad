@@ -34,3 +34,5 @@ EXTRA_DIST = \
 	CMakeLists.txt
 
 DEPENDS = src/libbn src/libsysv src/other/openNURBS ${DEPADD}
+
+include $(top_srcdir)/misc/Makefile.defs
