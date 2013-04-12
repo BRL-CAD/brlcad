@@ -39,6 +39,7 @@ set(LIBRENDER_SRCS
   librender/texture_stack.c
   )
 BRLCAD_ADDLIB(librender "${LIBRENDER_SRCS}" libgcv)
+set_target_properties(librender PROPERTIES VERSION 20.0.1 SOVERSION 20)
 
 set(tie_HDRS
   adrt.h
