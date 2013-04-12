@@ -58,6 +58,7 @@ endif(MSVC)
 add_definitions("-DP2T_NO_GLFW")
 
 add_library(${P2T_LIB_NAME} ${LIBP2T_SOURCES} ${LIBP2T_PUBLIC_HDRS} ${LIBP2T_PRIVATE_HDRS})
+set_target_properties(${P2T_LIB_NAME} PROPERTIES VERSION 1.0.1 SOVERSION 1)
 if(MSVC)
   # msvc does not append 'lib' - do it here to have consistent name
   set_target_properties(${P2T_LIB_NAME} PROPERTIES PREFIX "lib")

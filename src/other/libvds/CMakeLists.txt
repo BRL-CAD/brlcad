@@ -137,6 +137,7 @@ set(VDS_HDRS
 #add_definitions(-DVDS_DEBUGPRINT)
 
 add_library(libvds SHARED ${CORE_SRCS})
+set_target_properties(libvds PROPERTIES VERSION 1.0.1 SOVERSION 1)
 
 install(TARGETS libvds
 	RUNTIME DESTINATION ${BIN_DIR}
@@ -144,6 +145,7 @@ install(TARGETS libvds
 	ARCHIVE DESTINATION ${LIB_DIR})
 
 add_library(stdvds SHARED ${STD_SRCS})
+set_target_properties(stdvds PROPERTIES VERSION 1.0.1 SOVERSION 1)
 
 install(TARGETS stdvds
 	RUNTIME DESTINATION ${BIN_DIR}
