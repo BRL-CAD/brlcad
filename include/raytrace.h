@@ -1270,6 +1270,7 @@ union tree {
  * DEPRECATED, use BU_PUT()
  */
 #define RT_FREE_TREE(_tp, _res) { \
+	(_tp)->magic = 0;			  \
 	(_tp)->tr_b.tb_left = (_res)->re_tree_hd; \
 	(_tp)->tr_b.tb_right = TREE_NULL;	  \
 	(_res)->re_tree_hd = (_tp);		  \
