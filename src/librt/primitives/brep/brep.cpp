@@ -2923,7 +2923,11 @@ void getSurfacePoints(ON_BrepFace &face, const struct rt_tess_tol *ttol,
     ON_Brep *brep = face.Brep();
 
     if (s->GetSurfaceSize(&surface_width, &surface_height)) {
-	double dist, min_dist, within_dist, cos_within_ang;
+	double dist = 0.0;
+	double min_dist = 0.0;
+	double within_dist = 0.0;
+	double  cos_within_ang = 0.0;
+
 	if ((surface_width < tol->dist) || (surface_height < tol->dist)) {
 	    return;
 	}
@@ -3413,7 +3417,8 @@ void poly2tri_CDT(struct bu_list *vhead, ON_BrepFace &face,
     }
 
     std::map<p2t::Point *, ON_3dPoint *>::iterator ii;
-    for (ii = pointmap->begin(); ii != pointmap->end(); pointmap->erase(ii++));
+    for (ii = pointmap->begin(); ii != pointmap->end(); pointmap->erase(ii++))
+	;
     while (!singularity_points.empty()) {
 	delete singularity_points.back();
 	singularity_points.pop_back();
