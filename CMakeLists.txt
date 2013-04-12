@@ -94,7 +94,7 @@ endif(EXISTS ${CMAKE_BINARY_DIR}/CMakeCache.txt)
 DISTCLEAN(${CMAKE_BINARY_DIR}/CMakeCache.txt)
 
 # Minimum required version of CMake
-cmake_minimum_required(VERSION 2.8.7)
+cmake_minimum_required(VERSION 2.8.4)
 if(COMMAND CMAKE_POLICY)
   CMAKE_POLICY(SET CMP0003 NEW)
   CMAKE_POLICY(SET CMP0007 OLD)
