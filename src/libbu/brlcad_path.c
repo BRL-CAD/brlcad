@@ -49,14 +49,22 @@ HIDDEN const char *
 _brlcad_data()
 {
     static char path[MAXPATHLEN] = {0};
+
 #ifndef BRLCAD_DATA
-    snprintf(path, MAXPATHLEN, "%s/share/brlcad/%s", BRLCAD_ROOT, brlcad_version());
+#  ifdef BRLCAD_DATA_DIR
+    if (find_path(path, BRLCAD_ROOT, BRLCAD_DATA_DIR, NULL, 0))
+	return path;
+#  endif
+
+    snprintf(path, MAXPATHLEN, "%s%cshare", BRLCAD_ROOT, BU_DIR_SEPARATOR);
+
 #else
     /* do this instead of just returning BRLCAD_DATA to keep compiler
      * quiet about unreachable code.
      */
     snprintf(path, MAXPATHLEN, "%s", BRLCAD_DATA);
 #endif
+
     return path;
 }
 
@@ -432,9 +440,9 @@ bu_brlcad_data(const char *rhs, int fail_quietly)
 	return result;
     }
 
-    /* bu_brlcad_root/BRLCAD_DATA_SUBPATH path */
-#ifdef BRLCAD_DATA_SUBPATH
-    snprintf(path, MAXPATHLEN, "%s", BRLCAD_DATA_SUBPATH);
+    /* bu_brlcad_root/BRLCAD_DATA_DIR path */
+#ifdef BRLCAD_DATA_DIR
+    snprintf(path, MAXPATHLEN, "%s", BRLCAD_DATA_DIR);
     lhs = bu_brlcad_root(path, 1);
     if (lhs) {
 	snprintf(where, MAX_WHERE_SIZE, "\tBRLCAD_ROOT common data path  [%s]\n", path);
@@ -447,33 +455,6 @@ bu_brlcad_data(const char *rhs, int fail_quietly)
 	}
     }
 #endif
-
-    /* bu_brlcad_root/share/brlcad/VERSION path */
-    snprintf(path, (size_t)MAXPATHLEN, "share/brlcad/%s", brlcad_version());
-    lhs = bu_brlcad_root(path, 1);
-    if (lhs) {
-	snprintf(where, MAX_WHERE_SIZE, "\tBRLCAD_ROOT common data path  [%s]\n", path);
-	if (find_path(result, lhs, rhs, &searched, where)) {
-	    if (UNLIKELY(bu_debug & BU_DEBUG_PATHS)) {
-		bu_log("Found: BRLCAD_ROOT common data path [%s]\n", result);
-	    }
-	    bu_vls_free(&searched);
-	    return result;
-	}
-    }
-
-    /* bu_brlcad_root/share/brlcad path */
-    lhs = bu_brlcad_root("share/brlcad", 1);
-    if (lhs) {
-	snprintf(where, MAX_WHERE_SIZE, "\tBRLCAD_ROOT common data path  [%s]\n", lhs);
-	if (find_path(result, lhs, rhs, &searched, where)) {
-	    if (UNLIKELY(bu_debug & BU_DEBUG_PATHS)) {
-		bu_log("Found: BRLCAD_ROOT common data path [%s]\n", result);
-	    }
-	    bu_vls_free(&searched);
-	    return result;
-	}
-    }
 
     /* bu_brlcad_root/share path */
     lhs = bu_brlcad_root("share", 1);
