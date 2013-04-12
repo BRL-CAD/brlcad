@@ -511,36 +511,27 @@ rt_linear_pipe_prep(
     }
 }
 
-
-/**
- * R T _ P I P E _ B B O X
- *
- * Calculate a bounding RPP for a pipe
- */
-int
-rt_pipe_bbox(
-    struct rt_db_internal *ip,
-    point_t *min,
-    point_t *max,
-    const struct bn_tol *UNUSED(tol))
+HIDDEN void
+pipe_elements_calculate(struct bu_list *elements_head, struct rt_db_internal *ip, point_t *min, point_t *max)
 {
     struct rt_pipe_internal *pip;
     struct wdb_pipept *pp1, *pp2, *pp3;
     point_t curr_pt;
     fastf_t curr_id, curr_od;
 
+
     RT_CK_DB_INTERNAL(ip);
     pip = (struct rt_pipe_internal *)ip->idb_ptr;
     RT_PIPE_CK_MAGIC(pip);
 
     if (BU_LIST_IS_EMPTY(&(pip->pipe_segs_head))) {
-	return 0;
+	return;
     }
 
     pp1 = BU_LIST_FIRST(wdb_pipept, &(pip->pipe_segs_head));
     pp2 = BU_LIST_NEXT(wdb_pipept, &pp1->l);
     if (BU_LIST_IS_HEAD(&pp2->l, &(pip->pipe_segs_head))) {
-	return 0;
+	return;
     }
     pp3 = BU_LIST_NEXT(wdb_pipept, &pp2->l);
     if (BU_LIST_IS_HEAD(&pp3->l, &(pip->pipe_segs_head))) {
@@ -567,7 +558,7 @@ rt_pipe_bbox(
 
 	if (!pp3) {
 	    /* last segment */
-	    rt_linear_pipe_prep(NULL, curr_pt, curr_id, curr_od, pp2->pp_coord, pp2->pp_id, pp2->pp_od, min, max);
+	    rt_linear_pipe_prep(elements_head, curr_pt, curr_id, curr_od, pp2->pp_coord, pp2->pp_id, pp2->pp_od, min, max);
 	    break;
 	}
 
@@ -579,7 +570,7 @@ rt_pipe_bbox(
 	dist_to_bend = pp2->pp_bendradius * tan(angle / 2.0);
 	if (isnan(dist_to_bend) || VNEAR_ZERO(norm, SQRT_SMALL_FASTF) || NEAR_ZERO(dist_to_bend, SQRT_SMALL_FASTF)) {
 	    /* points are colinear, treat as a linear segment */
-	    rt_linear_pipe_prep(NULL, curr_pt, curr_id, curr_od,
+	    rt_linear_pipe_prep(elements_head, curr_pt, curr_id, curr_od,
 				pp2->pp_coord, pp2->pp_id, pp2->pp_od, min, max);
 	    VMOVE(curr_pt, pp2->pp_coord);
 	    goto next_pt;
@@ -596,14 +587,14 @@ rt_pipe_bbox(
 	    /* do not make linear sections that are too small to raytrace */
 	    VMOVE(bend_start, curr_pt);
 	} else {
-	    rt_linear_pipe_prep(NULL, curr_pt, curr_id, curr_od,
+	    rt_linear_pipe_prep(elements_head, curr_pt, curr_id, curr_od,
 				bend_start, pp2->pp_id, pp2->pp_od, min, max);
 	}
 
 	/* and bend section */
 	VCROSS(v1, n1, norm);
 	VJOIN1(bend_center, bend_start, -pp2->pp_bendradius, v1);
-	rt_bend_pipe_prep(NULL, bend_center, bend_start, bend_end, pp2->pp_bendradius, angle,
+	rt_bend_pipe_prep(elements_head, bend_center, bend_start, bend_end, pp2->pp_bendradius, angle,
 			  pp2->pp_od, pp2->pp_id, pp1->pp_od, pp3->pp_od, min, max);
 
 	VMOVE(curr_pt, bend_end);
@@ -620,7 +611,39 @@ next_pt:
 	    pp3 = (struct wdb_pipept *)NULL;
 	}
     }
+}
 
+HIDDEN void
+pipe_elements_free(struct bu_list *head) {
+    if (head != 0) {
+        struct id_pipe *p;
+
+        while (BU_LIST_WHILE(p, id_pipe, head)) {
+            BU_LIST_DEQUEUE(&(p->l));
+            if (p->pipe_is_bend) {
+                BU_PUT(p, struct lin_pipe);
+            } else {
+                BU_PUT(p, struct bend_pipe);
+            }
+        }
+
+        BU_PUT(head, struct bu_list);
+    }
+}
+
+/**
+ * R T _ P I P E _ B B O X
+ *
+ * Calculate a bounding RPP for a pipe
+ */
+int
+rt_pipe_bbox(
+    struct rt_db_internal *ip,
+    point_t *min,
+    point_t *max,
+    const struct bn_tol *UNUSED(tol))
+{
+    pipe_elements_calculate(NULL, ip, min, max);
     return 0;
 }
 
@@ -644,125 +667,33 @@ int
 rt_pipe_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 {
     struct bu_list *head;
-    struct rt_pipe_internal *pip;
-    struct wdb_pipept *pp1, *pp2, *pp3;
-    point_t curr_pt;
-    fastf_t curr_id, curr_od;
     fastf_t dx, dy, dz, f;
 
     if (rtip) {
 	RT_CK_RTI(rtip);
     }
-    RT_CK_DB_INTERNAL(ip);
-    pip = (struct rt_pipe_internal *)ip->idb_ptr;
-    RT_PIPE_CK_MAGIC(pip);
 
     BU_GET(head, struct bu_list);
-    stp->st_specific = (genptr_t)head;
     BU_LIST_INIT(head);
 
-    if (BU_LIST_IS_EMPTY(&(pip->pipe_segs_head))) {
-	return 0;
-    }
+    pipe_elements_calculate(head, ip, &(stp->st_min), &(stp->st_max));
 
-    pp1 = BU_LIST_FIRST(wdb_pipept, &(pip->pipe_segs_head));
-    pp2 = BU_LIST_NEXT(wdb_pipept, &pp1->l);
-    if (BU_LIST_IS_HEAD(&pp2->l, &(pip->pipe_segs_head))) {
-	return 0;
-    }
-    pp3 = BU_LIST_NEXT(wdb_pipept, &pp2->l);
-    if (BU_LIST_IS_HEAD(&pp3->l, &(pip->pipe_segs_head))) {
-	pp3 = (struct wdb_pipept *)NULL;
-    }
-
-    VMOVE(curr_pt, pp1->pp_coord);
-    curr_od = pp1->pp_od;
-    curr_id = pp1->pp_id;
-    while (1) {
-	vect_t n1, n2;
-	vect_t norm;
-	vect_t v1;
-	vect_t diff;
-	fastf_t angle;
-	fastf_t dist_to_bend;
-	point_t bend_start, bend_end, bend_center;
-
-	VSUB2(n1, curr_pt, pp2->pp_coord);
-	if (VNEAR_ZERO(n1, RT_LEN_TOL)) {
-	    /* duplicate point, skip to next point */
-	    goto next_pt;
-	}
-
-	if (!pp3) {
-	    /* last segment */
-	    rt_linear_pipe_prep(head, curr_pt, curr_id, curr_od, pp2->pp_coord, pp2->pp_id, pp2->pp_od, &(stp->st_min), &(stp->st_max));
-	    break;
-	}
-
-	VSUB2(n2, pp3->pp_coord, pp2->pp_coord);
-	VCROSS(norm, n1, n2);
-	VUNITIZE(n1);
-	VUNITIZE(n2);
-	angle = bn_pi - acos(VDOT(n1, n2));
-	dist_to_bend = pp2->pp_bendradius * tan(angle / 2.0);
-	if (isnan(dist_to_bend) || VNEAR_ZERO(norm, SQRT_SMALL_FASTF) || NEAR_ZERO(dist_to_bend, SQRT_SMALL_FASTF)) {
-	    /* points are colinear, treat as a linear segment */
-	    rt_linear_pipe_prep(head, curr_pt, curr_id, curr_od,
-				pp2->pp_coord, pp2->pp_id, pp2->pp_od, &(stp->st_min), &(stp->st_max));
-	    VMOVE(curr_pt, pp2->pp_coord);
-	    goto next_pt;
-	}
-
-	VJOIN1(bend_start, pp2->pp_coord, dist_to_bend, n1);
-	VJOIN1(bend_end, pp2->pp_coord, dist_to_bend, n2);
-
-	VUNITIZE(norm);
-
-	/* linear section */
-	VSUB2(diff, curr_pt, bend_start);
-	if (MAGNITUDE(diff) <= RT_LEN_TOL) {
-	    /* do not make linear sections that are too small to raytrace */
-	    VMOVE(bend_start, curr_pt);
-	} else {
-	    rt_linear_pipe_prep(head, curr_pt, curr_id, curr_od,
-				bend_start, pp2->pp_id, pp2->pp_od, &(stp->st_min), &(stp->st_max));
-	}
-
-	/* and bend section */
-	VCROSS(v1, n1, norm);
-	VJOIN1(bend_center, bend_start, -pp2->pp_bendradius, v1);
-	rt_bend_pipe_prep(head, bend_center, bend_start, bend_end, pp2->pp_bendradius, angle,
-			  pp2->pp_od, pp2->pp_id, pp1->pp_od, pp3->pp_od, &(stp->st_min), &(stp->st_max));
-
-	VMOVE(curr_pt, bend_end);
-next_pt:
-	if (!pp3) {
-	    break;
-	}
-	curr_id = pp2->pp_id;
-	curr_od = pp2->pp_od;
-	pp1 = pp2;
-	pp2 = pp3;
-	pp3 = BU_LIST_NEXT(wdb_pipept, &pp3->l);
-	if (BU_LIST_IS_HEAD(&pp3->l, &(pip->pipe_segs_head))) {
-	    pp3 = (struct wdb_pipept *)NULL;
-	}
-    }
+	stp->st_specific = (genptr_t)head;
 
     VSET(stp->st_center,
-	 (stp->st_max[X] + stp->st_min[X]) / 2,
-	 (stp->st_max[Y] + stp->st_min[Y]) / 2,
-	 (stp->st_max[Z] + stp->st_min[Z]) / 2);
+         (stp->st_max[X] + stp->st_min[X]) / 2,
+         (stp->st_max[Y] + stp->st_min[Y]) / 2,
+         (stp->st_max[Z] + stp->st_min[Z]) / 2);
 
     dx = (stp->st_max[X] - stp->st_min[X]) / 2;
     f = dx;
     dy = (stp->st_max[Y] - stp->st_min[Y]) / 2;
     if (dy > f) {
-	f = dy;
+        f = dy;
     }
     dz = (stp->st_max[Z] - stp->st_min[Z]) / 2;
     if (dz > f) {
-	f = dz;
+        f = dz;
     }
     stp->st_aradius = f;
     stp->st_bradius = sqrt(dx * dx + dy * dy + dz * dz);
@@ -1887,7 +1818,6 @@ rt_pipe_uv(
     }
 }
 
-
 /**
  * R T _ P I P E _ F R E E
  */
@@ -1895,22 +1825,7 @@ void
 rt_pipe_free(struct soltab *stp)
 {
     if (stp != NULL) {
-	struct bu_list *head = (struct bu_list *)stp->st_specific;
-
-	if (head != 0) {
-	    struct id_pipe *p;
-
-	    while (BU_LIST_WHILE(p, id_pipe, head)) {
-		BU_LIST_DEQUEUE(&(p->l));
-		if (p->pipe_is_bend) {
-		    BU_PUT(p, struct lin_pipe);
-		} else {
-		    BU_PUT(p, struct bend_pipe);
-		}
-	    }
-
-	    BU_PUT(head, struct bu_list);
-	}
+	pipe_elements_free((struct bu_list *)stp->st_specific);
     }
 }
 
