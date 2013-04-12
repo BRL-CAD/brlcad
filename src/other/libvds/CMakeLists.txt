@@ -107,6 +107,13 @@ if(NOT MAN_DIR)
 endif(NOT MAN_DIR)
 
 #---------------------------------------------------------------------
+include(CheckLibraryExists)
+CHECK_LIBRARY_EXISTS(m cos "" HAVE_M_LIBRARY)
+if(HAVE_M_LIBRARY)
+  set(SYS_LIBS ${SYS_LIBS} m)
+endif(HAVE_M_LIBRARY)
+
+#---------------------------------------------------------------------
 
 set(CORE_SRCS
   build.c
@@ -138,6 +145,9 @@ set(VDS_HDRS
 
 add_library(libvds SHARED ${CORE_SRCS})
 set_target_properties(libvds PROPERTIES VERSION 1.0.1 SOVERSION 1)
+if(SYS_LIBS)
+  target_link_libraries(libvds ${SYS_LIBS})
+endif(SYS_LIBS)
 
 install(TARGETS libvds
 	RUNTIME DESTINATION ${BIN_DIR}
@@ -146,6 +156,10 @@ install(TARGETS libvds
 
 add_library(stdvds SHARED ${STD_SRCS})
 set_target_properties(stdvds PROPERTIES VERSION 1.0.1 SOVERSION 1)
+if(SYS_LIBS)
+  target_link_libraries(stdvds ${SYS_LIBS})
+endif(SYS_LIBS)
+
 
 install(TARGETS stdvds
 	RUNTIME DESTINATION ${BIN_DIR}
