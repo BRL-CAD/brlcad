@@ -149,11 +149,11 @@ position_node(_ged_dag_data *dag, bool has_parent, Avoid::ShapeRef *parent, Avoi
 	double parent_x, parent_y, parent_x1, parent_y1;
 
 #if defined LIBAVOID_LATEST_API
-        Box parent_bbox = parent->polygon().offsetBoundingBox(0);
-        parent_x  = bbox.min[LIBX];
-        parent_y  = bbox.min[LIBY];
-        parent_x1 = bbox.max[LIBX];
-        parent_y1 = bbox.max[LIBY];
+	Box parent_bbox = parent->polygon().offsetBoundingBox(0);
+	parent_x  = bbox.min[LIBX];
+	parent_y  = bbox.min[LIBY];
+	parent_x1 = bbox.max[LIBX];
+	parent_y1 = bbox.max[LIBY];
 #else
 	parent->polygon().getBoundingRect(&parent_x, &parent_y, &parent_x1, &parent_y1);
 #endif
@@ -669,11 +669,11 @@ graph_positions(struct ged *gedp, struct _ged_dag_data *dag)
 	struct bu_hash_entry *hsh_entry = bu_find_hash_entry(dag->ids, (unsigned char *)id, strlen(id) + 1, &prev, &idx);
 	if(hsh_entry) {
 #if defined LIBAVOID_LATEST_API
-          Box bbox = (*it)->polygon().offsetBoundingBox(0);
-          minX = bbox.min[LIBX];
-          minY = bbox.min[LIBY];
-          maxX = bbox.max[LIBX];
-          maxY = bbox.max[LIBY];
+	  Box bbox = (*it)->polygon().offsetBoundingBox(0);
+	  minX = bbox.min[LIBX];
+	  minY = bbox.min[LIBY];
+	  maxX = bbox.max[LIBX];
+	  maxY = bbox.max[LIBY];
 #else
 	    (*it)->polygon().getBoundingRect(&minX, &minY, &maxX, &maxY);
 #endif

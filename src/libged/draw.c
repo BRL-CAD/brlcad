@@ -757,7 +757,6 @@ redraw_solid(struct ged *gedp, struct solid *sp)
 }
 
 
-
 /**
  * G E D _ N M G _ R E G I O N _ S T A R T
  *

@@ -281,7 +281,7 @@ libged_nil_la_SOURCES = \
 	zoom/zoom.c
 
 AM_CFLAGS = \
-        ${STD_C99_FLAGS} \
+	${STD_C99_FLAGS} \
 	${STRICT_FLAGS}
 
 # cannot set per-target CPPFLAGS until automake 1.7+
