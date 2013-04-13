@@ -661,7 +661,7 @@ utah_pushBack(const BBNode* sbv, ON_2dPoint &uv)
 
 
 int
-utah_newton_solver_test(const BBNode* sbv, const ON_Surface* surf, const ON_Ray& r, ON_2dPoint* ouv, double* t, ON_3dVector* N, bool& converged, ON_2dPoint* suv, const int count, const int iu, const int iv)
+utah_newton_solver(const BBNode* sbv, const ON_Surface* surf, const ON_Ray& r, ON_2dPoint* ouv, double* t, ON_3dVector* N, bool& converged, ON_2dPoint* suv, const int count, const int iu, const int iv)
 {
     int i = 0;
     int intersects = 0;
@@ -816,7 +816,7 @@ utah_newton_4corner_solver(const BBNode* sbv, const ON_Surface* surf, const ON_R
 		ON_2dPoint uv;
 		uv.x = sbv->m_u[iu];
 		uv.y = sbv->m_v[iv];
-		intersects += utah_newton_solver_test(sbv, surf, r, ouv, t, N, converged, &uv, intersects, iu, iv);
+		intersects += utah_newton_solver(sbv, surf, r, ouv, t, N, converged, &uv, intersects, iu, iv);
 	    }
 	}
     }
@@ -824,120 +824,8 @@ utah_newton_4corner_solver(const BBNode* sbv, const ON_Surface* surf, const ON_R
     ON_2dPoint uv;
     uv.x = sbv->m_u.Mid();
     uv.y = sbv->m_v.Mid();
-    intersects += utah_newton_solver_test(sbv, surf, r, ouv, t, N, converged, &uv, intersects, -1, -1);
+    intersects += utah_newton_solver(sbv, surf, r, ouv, t, N, converged, &uv, intersects, -1, -1);
     return intersects;
-}
-
-
-void
-utah_newton_solver(const ON_Surface* surf, const ON_Ray& r, ON_2dPoint &uv, double& t, ON_3dVector &N, bool& converged)
-{
-    // This function is currently not called when ray tracing. We use utah_newton_solver_test().
-    int i;
-    double j11, j12, j21, j22;
-    double f, g;
-    double rootdist, oldrootdist;
-    double J, invdetJ;
-
-    ON_3dVector p1, p2;
-    double p1d = 0, p2d = 0;
-    converged = false;
-    utah_ray_planes(r, p1, p1d, p2, p2d);
-
-    ON_3dPoint S;
-    ON_3dVector Su, Sv;
-    ON_2dPoint uv0(uv);
-
-    surf->Ev1Der(uv.x, uv.y, S, Su, Sv);
-
-    utah_F(S, p1, p1d, p2, p2d, f, g);
-    rootdist = fabs(f) + fabs(g);
-
-    for (i = 0; i < BREP_MAX_ITERATIONS; i++) {
-	utah_Fu(Su, p1, p2, j11, j21);
-	utah_Fv(Sv, p1, p2, j12, j22);
-
-	J = (j11 * j22 - j12 * j21);
-
-	if (NEAR_ZERO(J, BREP_INTERSECTION_ROOT_EPSILON)) {
-	    // perform jittered perturbation in parametric domain....
-	    uv.x = uv.x + .1 * drand48() * (uv0.x - uv.x);
-	    uv.y = uv.y + .1 * drand48() * (uv0.y - uv.y);
-	    continue;
-	}
-
-	invdetJ = 1. / J;
-
-	uv.x -= invdetJ * (j22 * f - j12 * g);
-	uv.y -= invdetJ * (j11 * g - j21 * f);
-
-	utah_pushBack(surf, uv);
-
-	surf->Ev1Der(uv.x, uv.y, S, Su, Sv);
-	utah_F(S, p1, p1d, p2, p2d, f, g);
-	oldrootdist = rootdist;
-	rootdist = fabs(f) + fabs(g);
-
-	if (oldrootdist < rootdist) return;
-
-	if (rootdist < ROOT_TOL) {
-	    t = utah_calc_t(r, S);
-	    converged = true;
-	    N = ON_CrossProduct(Su, Sv);
-	    N.Unitize();
-
-	    return;
-	}
-    }
-}
-
-
-bool
-lines_intersect(double x1, double y1, double x2, double y2, double x3, double y3, double x4, double y4)
-{
-    // This function is currently not called when ray tracing.
-    double tol = 1e-8;
-    double A1 = y2-y1;
-    double B1 = x1-x2;
-    double C1 = A1*x1+B1*y1;
-
-    double A2 = y4-y3;
-    double B2 = x3-x4;
-    double C2 = A2*x3+B2*y3;
-
-    double det = A1*B2 - A2*B1;
-
-    if (NEAR_ZERO(det, tol)) {
-	return false;
-    } else {
-	double x = (B2*C1 - B1*C2)/det;
-	double y = (A1*C2 - A2*C1)/det;
-
-	if ((x >= std::min<double>(x1, x2)) && (x <= std::max<double>(x1, x2)) &&
-	    (x >= std::min<double>(x3, x4)) && (x <= std::max<double>(x3, x4)) &&
-	    (y >= std::min<double>(y1, y2)) && (y <= std::max<double>(y1, y2)) &&
-	    (y >= std::min<double>(y3, y4)) && (y <= std::max<double>(y3, y4))) {
-	    return true;
-	}
-
-	if (NEAR_EQUAL(x, x1, tol) && NEAR_EQUAL(y, y1, tol)) {
-	    return true;
-	}
-
-	if (NEAR_EQUAL(x, x2, tol) && NEAR_EQUAL(y, y2, tol)) {
-	    return true;
-	}
-
-	if (NEAR_EQUAL(x, x3, tol) && NEAR_EQUAL(y, y3, tol)) {
-	    return true;
-	}
-
-	if (NEAR_EQUAL(x, x4, tol) && NEAR_EQUAL(y, y4, tol)) {
-	    return true;
-	}
-    }
-
-    return false;
 }
 
 
@@ -1055,7 +943,7 @@ utah_isTrimmed(ON_2dPoint uv, const ON_BrepFace *face) {
 
 #define MAX_BREP_SUBDIVISION_INTERSECTS 5
 int
-utah_brep_intersect_test(const BBNode* sbv, const ON_BrepFace* face, const ON_Surface* surf, pt2d_t& uv, ON_Ray& ray, HitList& hits)
+utah_brep_intersect(const BBNode* sbv, const ON_BrepFace* face, const ON_Surface* surf, pt2d_t& uv, ON_Ray& ray, HitList& hits)
 {
     ON_3dVector N[MAX_BREP_SUBDIVISION_INTERSECTS];
     double t[MAX_BREP_SUBDIVISION_INTERSECTS];
@@ -1151,138 +1039,6 @@ utah_brep_intersect_test(const BBNode* sbv, const ON_BrepFace* face, const ON_Su
 }
 
 
-int
-utah_brep_intersect(const BBNode* sbv, const ON_BrepFace* face, const ON_Surface* surf, pt2d_t uv, ON_Ray& ray, HitList& hits)
-{
-    // This function is currently not called when ray tracing. We use utah_brep_intersect_test().
-    ON_3dVector N;
-    bool hit = false;
-    double t = 0.0;
-    ON_2dPoint ouv(uv[0], uv[1]);
-    int found = BREP_INTERSECT_ROOT_DIVERGED;
-    bool converged = false;
-    double closesttrim;
-
-    utah_newton_solver(surf, ray, ouv, t, N, converged);
-    /*
-     * DDR.  The utah people are using this t_min which represents the
-     * last point hit along the ray to ensure we are looking at points
-     * further down the ray.  I haven't implemented this I'm not sure
-     * we need it
-     *
-     * if (converged && (t > 1.e-2) && (t < t_min) && (!utah_isTrimmed(ouv, face))) hit = true;
-     *
-     */
-    //if (converged && (t > 1.e-2) && (!utah_isTrimmed(ouv, face))) hit = true;
-    //if (converged && (t > 1.e-2) && (!((BBNode*)sbv)->isTrimmed(ouv))) hit = true;
-
-    if ((sbv->m_u[0] < ouv[0]) && (sbv->m_u[1] > ouv[0]) &&
-	(sbv->m_v[0] < ouv[1]) && (sbv->m_v[1] > ouv[1])) {
-	BRNode* trimBR = NULL;
-	int trim_status = ((BBNode*)sbv)->isTrimmed(ouv, &trimBR, closesttrim);
-	if (converged && (t > 1.e-2)) {
-	    if (trim_status != 1) {
-		hit = true;
-//#define KHITPLOT
-#ifdef KHITPLOT
-		double min[3], max[3];
-		COLOR_PLOT(255, 200, 200);
-		VSET(min, ouv[0]-0.01, ouv[1]-0.01, 0.0);
-		VSET(max, ouv[0]+0.01, ouv[1]+0.01, 0.0);
-		BB_PLOT(min, max);
-	    } else {
-		double min[3], max[3];
-		COLOR_PLOT(200, 255, 200);
-		VSET(min, ouv[0]-0.01, ouv[1]-0.01, 0.0);
-		VSET(max, ouv[0]+0.01, ouv[1]+0.01, 0.0);
-		BB_PLOT(min, max);
-#endif
-	    }
-	}
-    }
-
-    uv[0] = ouv.x;
-    uv[1] = ouv.y;
-
-    if (hit) {
-	ON_3dPoint _pt;
-	ON_3dVector _norm(N);
-	vect_t vpt;
-	vect_t vnorm;
-	_pt = ray.m_origin + (ray.m_dir*t);
-	VMOVE(vpt, _pt);
-	if (face->m_bRev) _norm.Reverse();
-	VMOVE(vnorm, _norm);
-	hit_count += 1;
-	hits.push_back(brep_hit(*face, ray, vpt, vnorm, uv));
-	hits.back().sbv = sbv;
-	found = BREP_INTERSECT_FOUND;
-    }
-
-    return found;
-}
-
-
-int
-brep_intersect(const BBNode* sbv, const ON_BrepFace* face, const ON_Surface* surf, pt2d_t uv, ON_Ray& ray, HitList& hits)
-{
-    // This function is currently not called when ray tracing. We use utah_brep_intersect_test().
-    int found = BREP_INTERSECT_ROOT_ITERATION_LIMIT;
-    fastf_t Dlast = MAX_FASTF;
-    int diverge_iter = 0;
-    pt2d_t Rcurr;
-    pt2d_t new_uv;
-    ON_3dPoint pt;
-    ON_3dVector su;
-    ON_3dVector sv;
-    plane_ray pr;
-    double closesttrim;
-
-    brep_get_plane_ray(ray, pr);
-
-    for (int i = 0; i < BREP_MAX_ITERATIONS; i++) {
-	brep_r(surf, pr, uv, pt, su, sv, Rcurr);
-
-	fastf_t d = v2mag(Rcurr);
-	if (d < BREP_INTERSECTION_ROOT_EPSILON) {
-	    TRACE1("R:"<<ON_PRINT2(Rcurr));
-	    found = BREP_INTERSECT_FOUND; break;
-	} else if (d > Dlast) {
-	    found = BREP_INTERSECT_ROOT_DIVERGED; //break;
-	    diverge_iter++;
-	    if (diverge_iter > 10)
-		break;
-	}
-
-	brep_newton_iterate(pr, Rcurr, su, sv, uv, new_uv);
-	move(uv, new_uv);
-	Dlast = d;
-    }
-
-    BRNode* trimBR = NULL;
-    int trim_status = ((BBNode*)sbv)->isTrimmed(uv, &trimBR, closesttrim);
-    if ((found > 0) &&  (trim_status != 1)) {
-	ON_3dPoint _pt;
-	ON_3dVector _norm;
-	vect_t vpt;
-	vect_t vnorm;
-	surf->EvNormal(uv[0], uv[1], _pt, _norm);
-	VMOVE(vpt, _pt);
-	if (face->m_bRev) _norm.Reverse();
-	VMOVE(vnorm, _norm);
-	hits.push_back(brep_hit(*face, ray, vpt, vnorm, uv));
-	hits.back().sbv = sbv;
-
-	if (!sbv->m_u.Includes(uv[0]) || !sbv->m_v.Includes(uv[1])) {
-	    hits.back().oob = true;
-	    return BREP_INTERSECT_OOB;
-	}
-    }
-
-    return found;
-}
-
-
 typedef std::pair<int, int> ip_t;
 typedef std::list<ip_t> MissList;
 
@@ -1361,7 +1117,7 @@ rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *a
 	const ON_BrepFace* f = sbv->m_face;
 	const ON_Surface* surf = f->SurfaceOf();
 	pt2d_t uv = {sbv->m_u.Mid(), sbv->m_v.Mid()};
-	utah_brep_intersect_test(sbv, f, surf, uv, r, all_hits);
+	utah_brep_intersect(sbv, f, surf, uv, r, all_hits);
 	s++;
     }
 
