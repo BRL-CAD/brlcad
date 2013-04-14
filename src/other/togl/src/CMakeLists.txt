@@ -101,7 +101,7 @@ SET(TOGL_SRCS
     )
 
 add_library(togl SHARED ${TOGL_SRCS})
-set_target_properties(${P2T_LIB_NAME} PROPERTIES VERSION 2.0.1 SOVERSION 2)
+set_target_properties(togl PROPERTIES VERSION 2.0.1 SOVERSION 2)
 ADD_DEPENDENCIES(togl togl_stubs_gen)
 IF(WIN32)
 	target_link_libraries(togl ${TCL_STUB_LIBRARIES} ${X11_LIBRARIES} ${OPENGL_LIBRARIES})
