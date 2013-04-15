@@ -70,6 +70,7 @@
 	    Light
 	    Checker
 	    Cloud
+	    Stack
 	    Camouflage
 	    Unlisted
 	    None
@@ -82,6 +83,7 @@
 	    light
 	    checker
 	    cloud
+	    stack
 	    camo
 	    unlisted
 	    ""
@@ -94,6 +96,7 @@
 	    {Light light}
 	    {Checker checker}
 	    {Cloud cloud}
+	    {Stack stack}
 	    {Camouflage camo}
 	    {Unlisted unlisted}
 	    {None ""}
@@ -231,10 +234,12 @@
 	variable envmapName
 
 	variable stackList {}
+	variable stackLen 0
+	variable stackParams
 
 	variable shaderSpec ""
-	variable shaderType ""
-	variable shaderTypeUnlisted 0
+	variable shaderType
+	variable shaderTypeUnlisted
 	variable ignoreShaderSpec 0
 
 	variable allowCallbacks 1
@@ -252,38 +257,57 @@
 	method build_light {parent id}
 	method buildLight {parent id}
 
+	method add_shader {stype parent}
+	method delete_shader {id}
+	method build_stack {parent id}
+
 	method build_unlisted {parent id}
 	method buildUnlisted {parent id}
+
+	method build_air {parent id}
+	method build_fakestar {parent id}
+	method build_proj {parent id}
+	method build_testmap {parent id}
+	method build_texture {parent id}
 
 	method changeShader {}
 	method updateShader {stype}
 	method updateShaderForm {id}
 	method destroyCurrentShader {}
 
-	method updateForm_plastic {id}
+	method updateForm_plastic {spec id}
 	method setFormDefaults_plastic {id}
 
-	method updateForm_mirror {id}
+	method updateForm_mirror {spec id}
 	method setFormDefaults_mirror {id}
 
-	method updateForm_glass {id}
+	method updateForm_glass {spec id}
 	method setFormDefaults_glass {id}
 
-	method updatePhongForm {id}
+	method updatePhongForm {spec id}
 
-	method updateForm_checker {id}
+	method updateForm_checker {spec id}
 	method setFormDefaults_checker {id}
 
-	method updateForm_cloud {id}
+	method updateForm_cloud {spec id}
 	method setFormDefaults_cloud {id}
 
-	method updateForm_camo {id}
+	method updateForm_camo {spec id}
 	method setFormDefaults_camo {id}
 
-	method updateForm_light {id}
+	method updateForm_light {spec id}
 	method setFormDefaults_light {id}
 
-	method updateForm_unlisted {id}
+	method updateForm_stack {spec id}
+	method setFormDefaults_stack {}
+
+	method updateForm_unlisted {spec id}
+
+	method updateForm_air {spec id}
+	method updateForm_fakestar {spec id}
+	method updateForm_proj {spec id}
+	method updateForm_testmap {spec id}
+	method updateForm_texture {spec id}
 
 	method validateDouble_plastic {id d}
 	method updatePlasticSpec {id}
@@ -308,7 +332,10 @@
 	method validateDouble_cloud {id d}
 	method updateCloudSpec {id}
 
+	method updateStackSpec {id}
+
 	method updateUnlistedSpec {id}
+
     }
 
     private {
@@ -343,6 +370,10 @@
 ::itcl::body ShaderEdit::initShader {_shaderSpec} {
     set allowCallbacks 0
 
+    catch {unset shaderType}
+    catch {unset shaderTypeUnlisted}
+    set shaderType(0) ""
+    set shaderTypeUnlisted(0) ""
     set shaderSpec $_shaderSpec
     updateShaderForm 0
 
@@ -400,16 +431,19 @@
 	-columnspan 2 \
 	-sticky "nsew"
 
-    grid rowconfigure $itk_interior 1 -weight 1
+    grid rowconfigure $itk_interior $row -weight 1
     grid columnconfigure $itk_interior 1 -weight 1
+
+    grid rowconfigure $itk_component(shaderBody) 0 -weight 1
+    grid columnconfigure $itk_component(shaderBody) 0 -weight 1
 
     bind $itk_component(shaderCB) <<ComboboxSelected>> [::itcl::code $this changeShader]
 }
 
 
 ::itcl::body ShaderEdit::build_checker {parent id} {
-    set shaderType "checker"
-    set shaderTypeUnlisted 0
+    set shaderType($id) "checker"
+    set shaderTypeUnlisted($id) 0
 
     itk_component add checker$id\F {
 	::ttk::frame $parent.checker$id\F
@@ -466,15 +500,16 @@
     grid $itk_component(checkerScale$id\L) -row $row -column 0 -sticky e
     grid $itk_component(checkerScale$id\E) -row $row -column 1 -sticky w
 
-    pack $itk_component(checker$id\F) -expand yes -fill both
+    #pack $itk_component(checker$id\F) -expand yes -fill both
+    grid $itk_component(checker$id\F) -sticky nsew
 
     setFormDefaults_checker $id
 }
 
 
 ::itcl::body ShaderEdit::build_cloud {parent id} {
-    set shaderType "cloud"
-    set shaderTypeUnlisted 0
+    set shaderType($id) "cloud"
+    set shaderTypeUnlisted($id) 0
 
     itk_component add cloud$id\F {
 	::ttk::frame $parent.cloud$id\F
@@ -514,15 +549,16 @@
     grid $itk_component(cloudrange$id\L) -row $row -column 2 -sticky e
     grid $itk_component(cloudrange$id\E) -row $row -column 3 -sticky w
 
-    pack $itk_component(cloud$id\F) -expand yes -fill both
+    #pack $itk_component(cloud$id\F) -expand yes -fill both
+    grid $itk_component(cloud$id\F) -sticky nsew
 
     setFormDefaults_cloud $id
 }
 
 
 ::itcl::body ShaderEdit::build_camo {parent id} {
-    set shaderType "camo"
-    set shaderTypeUnlisted 0
+    set shaderType($id) "camo"
+    set shaderTypeUnlisted($id) 0
 
     itk_component add camo$id\F {
 	::ttk::frame $parent.camo$id\F
@@ -707,29 +743,29 @@
     grid $itk_component(camoOctaves$id\L) -row $row -column 0 -sticky e
     grid $itk_component(camoOctaves$id\E) -row $row -column 1 -sticky w
 
-    pack $itk_component(camo$id\F) -expand yes -fill both
+    #pack $itk_component(camo$id\F) -expand yes -fill both
+    grid $itk_component(camo$id\F) -sticky nsew
 
     setFormDefaults_camo $id
 }
 
-
 ::itcl::body ShaderEdit::build_plastic {parent id} {
-    set shaderType "plastic"
-    set shaderTypeUnlisted 0
+    set shaderType($id) "plastic"
+    set shaderTypeUnlisted($id) 0
     buildPhong $parent $id
     setFormDefaults_plastic $id
 }
 
 ::itcl::body ShaderEdit::build_mirror {parent id} {
-    set shaderType "mirror"
-    set shaderTypeUnlisted 0
+    set shaderType($id) "mirror"
+    set shaderTypeUnlisted($id) 0
     buildPhong $parent $id
     setFormDefaults_mirror $id
 }
 
 ::itcl::body ShaderEdit::build_glass {parent id} {
-    set shaderType "glass"
-    set shaderTypeUnlisted 0
+    set shaderType($id) "glass"
+    set shaderTypeUnlisted($id) 0
     buildPhong $parent $id
     setFormDefaults_glass $id
 }
@@ -751,7 +787,7 @@
 	    -width 5 \
 	    -textvariable [::itcl::scope phongTrans($id)] \
 	    -validate key \
-	    -validatecommand [::itcl::code $this validateDouble_$shaderType $id %P]
+	    -validatecommand [::itcl::code $this validateDouble_$shaderType($id) $id %P]
     } {}
 
 
@@ -765,7 +801,7 @@
 	    -width 5 \
 	    -textvariable [::itcl::scope phongRefl($id)] \
 	    -validate key \
-	    -validatecommand [::itcl::code $this validateDouble_$shaderType $id %P]
+	    -validatecommand [::itcl::code $this validateDouble_$shaderType($id) $id %P]
     } {}
 
     itk_component add phongSpec$id\L {
@@ -778,7 +814,7 @@
 	    -width 5 \
 	    -textvariable [::itcl::scope phongSpec($id)] \
 	    -validate key \
-	    -validatecommand [::itcl::code $this validateDouble_$shaderType $id %P]
+	    -validatecommand [::itcl::code $this validateDouble_$shaderType($id) $id %P]
     } {}
 
     itk_component add phongDiff$id\L {
@@ -791,7 +827,7 @@
 	    -width 5 \
 	    -textvariable [::itcl::scope phongDiff($id)] \
 	    -validate key \
-	    -validatecommand [::itcl::code $this validateDouble_$shaderType $id %P]
+	    -validatecommand [::itcl::code $this validateDouble_$shaderType($id) $id %P]
     } {}
 
     itk_component add phongRi$id\L {
@@ -804,7 +840,7 @@
 	    -width 5 \
 	    -textvariable [::itcl::scope phongRi($id)] \
 	    -validate key \
-	    -validatecommand [::itcl::code $this validateDouble_$shaderType $id %P]
+	    -validatecommand [::itcl::code $this validateDouble_$shaderType($id) $id %P]
     } {}
 
     itk_component add phongExt$id\L {
@@ -817,7 +853,7 @@
 	    -width 5 \
 	    -textvariable [::itcl::scope phongExt($id)] \
 	    -validate key \
-	    -validatecommand [::itcl::code $this validateDouble_$shaderType $id %P]
+	    -validatecommand [::itcl::code $this validateDouble_$shaderType($id) $id %P]
     } {}
 
     itk_component add phongShine$id\L {
@@ -830,7 +866,7 @@
 	    -width 5 \
 	    -textvariable [::itcl::scope phongShine($id)] \
 	    -validate key \
-	    -validatecommand [::itcl::code $this validateDouble_$shaderType $id %P]
+	    -validatecommand [::itcl::code $this validateDouble_$shaderType($id) $id %P]
     } {}
 
     itk_component add phongEmiss$id\L {
@@ -843,7 +879,7 @@
 	    -width 5 \
 	    -textvariable [::itcl::scope phongEmiss($id)] \
 	    -validate key \
-	    -validatecommand [::itcl::code $this validateDouble_$shaderType $id %P]
+	    -validatecommand [::itcl::code $this validateDouble_$shaderType($id) $id %P]
     } {}
 
     set row 0
@@ -871,12 +907,13 @@
     grid $itk_component(phongEmiss$id\L) -row $row -column 0 -sticky e
     grid $itk_component(phongEmiss$id\E) -row $row -column 1 -sticky w
 
-    pack $itk_component(phong$id\F) -expand yes -fill both
+    #pack $itk_component(phong$id\F) -expand yes -fill both
+    grid $itk_component(phong$id\F) -sticky nsew
 }
 
 ::itcl::body ShaderEdit::build_light {parent id} {
-    set shaderType "light"
-    set shaderTypeUnlisted 0
+    set shaderType($id) "light"
+    set shaderTypeUnlisted($id) 0
     buildLight $parent $id
     setFormDefaults_light $id
 }
@@ -1005,12 +1042,202 @@
 
     grid $itk_component(lightImage$id\L) -row $irow -column 2 -columnspan 2 -rowspan 2 -padx 2 -pady 2
 
-    pack $itk_component(light$id\F) -expand yes -fill both
+    #pack $itk_component(light$id\F) -expand yes -fill both
+    grid $itk_component(light$id\F) -sticky nsew
+}
+
+::itcl::body ShaderEdit::add_shader {stype parent} {
+    set index $stackLen
+    incr stackLen
+    frame $parent.stk_$index -bd 2 -relief groove
+
+    set parent $parent.stk_$index
+    set stackParams(stk_$index,window) $parent
+    grid rowconfigure $parent 0 -weight 1
+    grid columnconfigure $parent 0 -weight 1
+
+    if {[lsearch $SHADER_TYPES $stype] != -1} {
+	label $parent.lab -text $stype -bg CadetBlue -fg white
+    } else {
+	label $parent.lab -text "Unrecognized Shader" -bg CadetBlue -fg white
+    }
+    grid $parent.lab -columnspan 4 -sticky ew
+    set stackParams(stk_$index,name) $stype
+
+    button $parent.del -text delete -width 8 \
+	-command [::itcl::code $this delete_shader "stk_$index"]
+
+    set spec [lindex $shaderSpec 1]
+
+    switch -- $stype {
+	plastic {
+	    setFormDefaults_plastic stk_$index
+	    build_plastic $parent stk_$index
+	    set addspec [list plastic {}]
+	}
+	glass {
+	    setFormDefaults_glass stk_$index
+	    build_glass $parent stk_$index
+	    set addspec [list glass {}]
+	}
+	mirror {
+	    setFormDefaults_mirror stk_$index
+	    build_mirror $parent stk_$index
+	    set addspec [list mirror {}]
+	}
+	light {
+	    setFormDefaults_light stk_$index
+	    build_light $parent stk_$index
+	    set addspec [list light {}]
+	}
+	bump -
+	bwtexture -
+	texture {
+	    setFormDefaults_texture stk_$index
+	    build_texture $parent stk_$index
+	    set addspec [list $stype {}]
+	}
+	checker {
+	    setFormDefaults_checker stk_$index
+	    build_checker $parent stk_$index
+	    set addspec [list checker {}]
+	}
+	testmap {
+	    setFormDefaults_testmap stk_$index
+	    build_testmap $parent stk_$index
+	    set addspec [list testmap {}]
+	}
+	fakestar {
+	    setFormDefaults_fakestar stk_$index
+	    build_fakestar $parent stk_$index
+	    set addspec [list fakestar {}]
+	}
+	cloud {
+	    setFormDefaults_cloud stk_$index
+	    build_cloud $parent stk_$index
+	    set addspec [list cloud {}]
+	}
+	prj {
+	    setFormDefaults_proj stk_$index
+	    build_proj $parent stk_$index
+	    set addspec [list prj {}]
+	}
+	camo {
+	    setFormDefaults_camo stk_$index
+	    build_camo $parent stk_$index
+	    set addspec [list camo {}]
+	}
+	air {
+	    setFormDefaults_air stk_$index
+	    build_air $parent stk_$index
+	    set addspec [list air {}]
+	}
+	default {
+	    build_unlisted $parent stk_$index
+	    set addspec [list unlisted {}]
+	}
+    }
+
+    lappend spec $addspec
+    set shaderSpec "stack [list $spec]"
+
+    grid $parent.del -columnspan 4
+    grid $parent -columnspan 2 -sticky ew
+    grid columnconfigure $parent 0 -minsize 400
+}
+
+::itcl::body ShaderEdit::delete_shader {id} {
+    # destroy the shader subwindow
+    #catch {destroy $stackParams($id,window)} msg
+    catch {rename $stackParams($id,window) ""} msg
+
+    set spec [lindex $shaderSpec 1]
+    set i [lsearch -index 0 $spec $stackParams($id,name)]
+    if {$i != -1} {
+	set spec [lreplace $spec $i $i]
+	set shaderSpec "stack [list $spec]"
+    }
+
+    # adjust the shader list
+    set stackParams($id,window) ""
+    set stackParams($id,name) ""
+}
+
+::itcl::body ShaderEdit::build_stack {parent id} {
+    set shaderType($id) "stack"
+    set shaderTypeUnlisted($id) 0
+
+    itk_component add stack$id\F {
+	::ttk::frame $parent.stack$id\F
+    } {}
+
+    set parent $itk_component(stack$id\F)
+
+    itk_component add stack$id\SF {
+	::iwidgets::scrolledframe $parent.stack$id\SF -width 432 -height 250 -hscrollmode dynamic
+    } {}
+
+    set childsite [$itk_component(stack$id\SF) childsite]
+
+    itk_component add stackAdd$id\MB {
+	::ttk::menubutton $parent.stackAdd$id\MB \
+	    -text "Add Shader"
+    } {}
+
+    itk_component add stackAdd$id\M {
+	::menu $parent.stackAdd$id\M \
+	    -tearoff 0
+    } {}
+
+    $itk_component(stackAdd$id\M) add command \
+	-label "Plastic" -command [::itcl::code $this add_shader plastic $childsite]
+    $itk_component(stackAdd$id\M) add command \
+	-label "Glass" -command [::itcl::code $this add_shader glass $childsite]
+    $itk_component(stackAdd$id\M) add command \
+	-label "Mirror" -command [::itcl::code $this add_shader mirror $childsite]
+    $itk_component(stackAdd$id\M) add command \
+	-label "Light" -command [::itcl::code $this add_shader light $childsite]
+    #$itk_component(stackAdd$id\M) add command \
+	-label "Bump Map" -command [::itcl::code $this add_shader bump $childsite]
+    #$itk_component(stackAdd$id\M) add command \
+	-label "Texture (color)" -command [::itcl::code $this add_shader texture $childsite]
+    #$itk_component(stackAdd$id\M) add command \
+	-label "Texture (bw)" -command [::itcl::code $this add_shader bwtexture $childsite]
+    #$itk_component(stackAdd$id\M) add command \
+	-label Fakestar -command [::itcl::code $this add_shader fakestar $childsite]
+    $itk_component(stackAdd$id\M) add command \
+	-label Cloud -command [::itcl::code $this add_shader cloud $childsite]
+    $itk_component(stackAdd$id\M) add command \
+	-label Checker -command [::itcl::code $this add_shader checker $childsite]
+    $itk_component(stackAdd$id\M) add command \
+	-label Camouflage -command [::itcl::code $this add_shader camo $childsite]
+    #$itk_component(stackAdd$id\M) add command \
+	-label Projection -command [::itcl::code $this add_shader prj $childsite]
+    #$itk_component(stackAdd$id\M) add command \
+	-label Air -command [::itcl::code $this add_shader air $childsite]
+    #$itk_component(stackAdd$id\M) add command \
+	-label Testmap -command [::itcl::code $this add_shader testmap $childsite]
+    $itk_component(stackAdd$id\M) add command \
+	-label Unlisted -command [::itcl::code $this add_shader unlisted $childsite]
+
+    $itk_component(stackAdd$id\MB) configure -menu $itk_component(stackAdd$id\M)
+
+    set row 0
+    grid $itk_component(stackAdd$id\MB) -row $row -column 0 -sticky n
+    incr row
+    grid $itk_component(stack$id\SF) -row $row -column 0 -sticky nsew
+    grid columnconfigure $itk_component(stack$id\F) 0 -weight 1
+    grid rowconfigure $itk_component(stack$id\F) 1 -weight 1
+
+    #pack $itk_component(stack$id\F) -expand yes -fill both
+    grid $itk_component(stack$id\F) -sticky nsew
+
+    setFormDefaults_stack
 }
 
 ::itcl::body ShaderEdit::build_unlisted {parent id} {
-    set shaderType "unlisted"
-    set shaderTypeUnlisted 1
+    set shaderType($id) "unlisted"
+    set shaderTypeUnlisted($id) 1
 
     buildUnlisted $parent $id
 
@@ -1070,6 +1297,21 @@
     pack $parent -expand yes -fill both
 }
 
+::itcl::body ShaderEdit::build_air {parent id} {
+}
+
+::itcl::body ShaderEdit::build_fakestar {parent id} {
+}
+
+::itcl::body ShaderEdit::build_proj {parent id} {
+}
+
+::itcl::body ShaderEdit::build_testmap {parent id} {
+}
+
+::itcl::body ShaderEdit::build_texture {parent id} {
+}
+
 ## changeShader
 #
 # Destroy the current shader and build a new one.
@@ -1094,6 +1336,9 @@
 	"Cloud" {
 	    set stype cloud
 	}
+	"Stack" {
+	    set stype stack
+	}
 	"Camouflage" {
 	    set stype camo
 	}
@@ -1107,17 +1352,20 @@
 
     set shaderSpec $stype
 
-    if {$shaderType == $stype} {
+    if {$shaderType(0) == $stype} {
 	# Nothing to do
 	return
     }
 
     destroyCurrentShader
+    unset shaderType
+    unset shaderTypeUnlisted
+    set shaderType(0) ""
+    set shaderTypeUnlisted(0) ""
 
     if {$stype != ""} {
 	build_$stype $itk_component(shaderBody) 0
     } else {
-	set shaderType ""
     }
 
     if {$allowCallbacks && $itk_option(-shaderChangedCallback) != ""} {
@@ -1144,28 +1392,30 @@
 
 	#	set ignoreShaderSpec 1
 
-	if {$shaderType == $stype} {
-	    updateForm_$stype $id
+	if {$shaderType($id) == $stype} {
+	    updateForm_$stype $shaderSpec $id
 	} else {
 	    set i [lsearch $SHADER_TYPES $stype]
 	    if {$i == -1} {
-		if {!$shaderTypeUnlisted} {
+		if {!$shaderTypeUnlisted($id)} {
 		    destroyCurrentShader
 		    build_unlisted $itk_component(shaderBody) $id
 		}
-		updateForm_unlisted $id
+		updateForm_unlisted $shaderSpec $id
 	    } else {
 		destroyCurrentShader
 		build_$stype $itk_component(shaderBody) $id
-		updateForm_$stype $id
+		updateForm_$stype $shaderSpec $id
 	    }
 	}
 
 	#	set ignoreShaderSpec 0
     } else {
 	destroyCurrentShader
-	set shaderType ""
-	set shaderTypeUnlisted 0
+	unset shaderType
+	unset shaderTypeUnlisted
+	set shaderType(0) ""
+	set shaderTypeUnlisted(0) ""
     }
 
     if {$allowCallbacks && $itk_option(-shaderChangedCallback) != ""} {
@@ -1174,14 +1424,17 @@
 }
 
 ::itcl::body ShaderEdit::destroyCurrentShader {} {
-    foreach child [pack slaves $itk_component(shaderBody)] {
-	destroy $child
+#    foreach child [pack slaves $itk_component(shaderBody)] {
+#	destroy $child
+#    }
+    foreach child [grid slaves $itk_component(shaderBody)] {
+	rename $child ""
     }
 }
 
-::itcl::body ShaderEdit::updateForm_plastic {id} {
+::itcl::body ShaderEdit::updateForm_plastic {spec id} {
     setFormDefaults_plastic $id
-    updatePhongForm $id
+    updatePhongForm $spec $id
 }
 
 ::itcl::body ShaderEdit::setFormDefaults_plastic {id} {
@@ -1199,9 +1452,9 @@
     set ignoreShaderSpec 0
 }
 
-::itcl::body ShaderEdit::updateForm_mirror {id} {
+::itcl::body ShaderEdit::updateForm_mirror {spec id} {
     setFormDefaults_mirror $id
-    updatePhongForm $id
+    updatePhongForm $spec $id
 }
 
 ::itcl::body ShaderEdit::setFormDefaults_mirror {id} {
@@ -1219,9 +1472,9 @@
     set ignoreShaderSpec 0
 }
 
-::itcl::body ShaderEdit::updateForm_glass {id} {
+::itcl::body ShaderEdit::updateForm_glass {spec id} {
     setFormDefaults_glass $id
-    updatePhongForm $id
+    updatePhongForm $spec $id
 }
 
 ::itcl::body ShaderEdit::setFormDefaults_glass {id} {
@@ -1239,14 +1492,14 @@
     set ignoreShaderSpec 0
 }
 
-::itcl::body ShaderEdit::updatePhongForm {id} {
+::itcl::body ShaderEdit::updatePhongForm {spec id} {
     if {[llength $shaderSpec] < 2} {
 	return
     }
 
     set ignoreShaderSpec 1
 
-    foreach {key val} [lindex $shaderSpec 1] {
+    foreach {key val} [lindex $spec 1] {
 	if {$val != ""} {
 	    set notEmptyVal 1
 	} else {
@@ -1300,11 +1553,11 @@
     set ignoreShaderSpec 0
 }
 
-::itcl::body ShaderEdit::updateForm_checker {id} {
+::itcl::body ShaderEdit::updateForm_checker {spec id} {
     setFormDefaults_checker $id
 
     set ignoreShaderSpec 1
-    foreach {key val} [lindex $shaderSpec 1] {
+    foreach {key val} [lindex $spec 1] {
 	if {$val != ""} {
 	    set notEmptyVal 1
 	} else {
@@ -1342,11 +1595,11 @@
     set ignoreShaderSpec 0
 }
 
-::itcl::body ShaderEdit::updateForm_cloud {id} {
+::itcl::body ShaderEdit::updateForm_cloud {spec id} {
     setFormDefaults_cloud $id
 
     set ignoreShaderSpec 1
-    foreach {key val} [lindex $shaderSpec 1] {
+    foreach {key val} [lindex $spec 1] {
 	if {$val != ""} {
 	    set notEmptyVal 1
 	} else {
@@ -1378,11 +1631,11 @@
     set ignoreShaderSpec 0
 }
 
-::itcl::body ShaderEdit::updateForm_camo {id} {
+::itcl::body ShaderEdit::updateForm_camo {spec id} {
     setFormDefaults_checker $id
 
     set ignoreShaderSpec 1
-    foreach {key val} [lindex $shaderSpec 1] {
+    foreach {key val} [lindex $spec 1] {
 	if {$val != ""} {
 	    set notEmptyVal 1
 	} else {
@@ -1468,11 +1721,11 @@
     set ignoreShaderSpec 0
 }
 
-::itcl::body ShaderEdit::updateForm_light {id} {
+::itcl::body ShaderEdit::updateForm_light {spec id} {
     setFormDefaults_light $id
 
     set ignoreShaderSpec 1
-    foreach {key val} [lindex $shaderSpec 1] {
+    foreach {key val} [lindex $spec 1] {
 	if {$val != ""} {
 	    set notEmptyVal 1
 	} else {
@@ -1537,10 +1790,103 @@
     set ignoreShaderSpec 0
 }
 
-::itcl::body ShaderEdit::updateForm_unlisted {id} {
+::itcl::body ShaderEdit::updateForm_stack {spec id} {
+    set stackLen 0
+    set childsite [$itk_component(stack$id\SF) childsite]
+
+    foreach subspec [lindex $spec 1] {
+	set stype [lindex $subspec 0]
+	set index $stackLen
+	incr stackLen
+	frame $childsite.stk_$index -bd 2 -relief groove
+	set parent $childsite.stk_$index
+	set stackParams(stk_$index,window) $parent
+
+	grid rowconfigure $parent 0 -weight 1
+	grid columnconfigure $parent 0 -weight 1
+
+	if {[lsearch $SHADER_TYPES $stype] != -1} {
+	    label $parent.lab -text $stype -bg CadetBlue -fg white
+	} else {
+	    label $parent.lab -text "Unrecognized Shader" -bg CadetBlue -fg white
+	}
+	grid $parent.lab -columnspan 4 -sticky ew
+	set stackParams(stk_$index,name) $stype
+
+	button $parent.del -text delete -width 8 \
+	    -command [::itcl::code $this delete_shader "stk_$index"]
+
+	switch -- $stype {
+	    plastic {
+		build_plastic $parent stk_$index
+		updateForm_plastic $subspec stk_$index
+	    }
+	    glass {
+		build_glass $parent stk_$index
+		updateForm_glass $subspec stk_$index
+	    }
+	    mirror {
+		build_mirror $parent stk_$index
+		updateForm_mirror $subspec stk_$index
+	    }
+	    light {
+		build_light $parent stk_$index
+		updateForm_light $subspec stk_$index
+	    }
+	    bump -
+	    bwtexture -
+	    texture {
+		build_texture $parent stk_$index
+		updateForm_texture $subspec stk_$index
+	    }
+	    checker {
+		build_checker $parent stk_$index
+		updateForm_checker $subspec stk_$index
+	    }
+	    testmap {
+		build_testmap $parent stk_$index
+		updateForm_testmap $subspec stk_$index
+	    }
+	    fakestar {
+		build_fakestar $parent stk_$index
+		updateForm_fakestar $subspec stk_$index
+	    }
+	    cloud {
+		build_cloud $parent stk_$index
+		updateForm_cloud $subspec stk_$index
+	    }
+	    prj {
+		build_proj $parent stk_$index
+		updateForm_proj $subspec stk_$index
+	    }
+	    camo {
+		build_camo $parent stk_$index
+		updateForm_camo $subspec stk_$index
+	    }
+	    air {
+		build_air $parent stk_$index
+		updateForm_air $subspec stk_$index
+	    }
+	    default {
+		build_unlisted $parent stk_$index
+		updateForm_unlisted $subspec stk_$index
+	    }
+	}
+
+	grid $parent.del -columnspan 4
+	grid $parent -columnspan 2 -sticky ew
+	grid columnconfigure $parent 0 -minsize 400
+    }
+}
+
+::itcl::body ShaderEdit::setFormDefaults_stack {} {
+    set stackLen 0
+}
+
+::itcl::body ShaderEdit::updateForm_unlisted {spec id} {
     set ignoreShaderSpec 1
 
-    set slen [llength $shaderSpec]
+    set slen [llength $spec]
     if {$slen == 1} {
 	set unlistedName($id) [lindex $shaderSpec 0]
 	set unlistedParams($id) ""
@@ -1552,6 +1898,31 @@
 	set unlistedParams($id) ""
     }
 
+    set ignoreShaderSpec 0
+}
+
+::itcl::body ShaderEdit::updateForm_air {spec id} {
+    set ignoreShaderSpec 1
+    set ignoreShaderSpec 0
+}
+
+::itcl::body ShaderEdit::updateForm_fakestar {spec id} {
+    set ignoreShaderSpec 1
+    set ignoreShaderSpec 0
+}
+
+::itcl::body ShaderEdit::updateForm_proj {spec id} {
+    set ignoreShaderSpec 1
+    set ignoreShaderSpec 0
+}
+
+::itcl::body ShaderEdit::updateForm_testmap {spec id} {
+    set ignoreShaderSpec 1
+    set ignoreShaderSpec 0
+}
+
+::itcl::body ShaderEdit::updateForm_texture {spec id} {
+    set ignoreShaderSpec 1
     set ignoreShaderSpec 0
 }
 
@@ -1626,7 +1997,17 @@
 	}
     }
 
-    set shaderSpec "light [list $newSpec]"
+    if {$shaderType(0) == "stack"} {
+	set spec [lindex $shaderSpec 1]
+	set i [lsearch -index 0 $spec light]
+	if {$i != -1} {
+	    set spec [lreplace $spec $i $i "light [list $newSpec]"]
+	}
+
+	set shaderSpec "stack [list $spec]"
+    } else {
+	set shaderSpec "light [list $newSpec]"
+    }
 
     if {$lightShadowRays($id) > 9} {
 	set s 9
@@ -1756,7 +2137,17 @@
 	}
     }
 
-    set shaderSpec "camo [list $newSpec]"
+    if {$shaderType(0) == "stack"} {
+	set spec [lindex $shaderSpec 1]
+	set i [lsearch -index 0 $spec camo]
+	if {$i != -1} {
+	    set spec [lreplace $spec $i $i "camo [list $newSpec]"]
+	}
+
+	set shaderSpec "stack [list $spec]"
+    } else {
+	set shaderSpec "camo [list $newSpec]"
+    }
 
     if {$allowCallbacks && $itk_option(-shaderChangedCallback) != ""} {
 	$itk_option(-shaderChangedCallback)
@@ -1814,7 +2205,17 @@
 	}
     }
 
-    set shaderSpec "checker [list $newSpec]"
+    if {$shaderType(0) == "stack"} {
+	set spec [lindex $shaderSpec 1]
+	set i [lsearch -index 0 $spec checker]
+	if {$i != -1} {
+	    set spec [lreplace $spec $i $i "checker [list $newSpec]"]
+	}
+
+	set shaderSpec "stack [list $spec]"
+    } else {
+	set shaderSpec "checker [list $newSpec]"
+    }
 
     if {$allowCallbacks && $itk_option(-shaderChangedCallback) != ""} {
 	$itk_option(-shaderChangedCallback)
@@ -1852,7 +2253,17 @@
 	}
     }
 
-    set shaderSpec "cloud [list $newSpec]"
+    if {$shaderType(0) == "stack"} {
+	set spec [lindex $shaderSpec 1]
+	set i [lsearch -index 0 $spec cloud]
+	if {$i != -1} {
+	    set spec [lreplace $spec $i $i "cloud [list $newSpec]"]
+	}
+
+	set shaderSpec "stack [list $spec]"
+    } else {
+	set shaderSpec "cloud [list $newSpec]"
+    }
 
     if {$allowCallbacks && $itk_option(-shaderChangedCallback) != ""} {
 	$itk_option(-shaderChangedCallback)
@@ -1938,7 +2349,17 @@
 	}
     }
 
-    set shaderSpec "plastic [list $newSpec]"
+    if {$shaderType(0) == "stack"} {
+	set spec [lindex $shaderSpec 1]
+	set i [lsearch -index 0 $spec plastic]
+	if {$i != -1} {
+	    set spec [lreplace $spec $i $i "plastic [list $newSpec]"]
+	}
+
+	set shaderSpec "stack [list $spec]"
+    } else {
+	set shaderSpec "plastic [list $newSpec]"
+    }
 
     if {$allowCallbacks && $itk_option(-shaderChangedCallback) != ""} {
 	$itk_option(-shaderChangedCallback)
@@ -2024,7 +2445,17 @@
 	}
     }
 
-    set shaderSpec "mirror [list $newSpec]"
+    if {$shaderType(0) == "stack"} {
+	set spec [lindex $shaderSpec 1]
+	set i [lsearch -index 0 $spec mirror]
+	if {$i != -1} {
+	    set spec [lreplace $spec $i $i "mirror [list $newSpec]"]
+	}
+
+	set shaderSpec "stack [list $spec]"
+    } else {
+	set shaderSpec "mirror [list $newSpec]"
+    }
 
     if {$allowCallbacks && $itk_option(-shaderChangedCallback) != ""} {
 	$itk_option(-shaderChangedCallback)
@@ -2110,7 +2541,17 @@
 	}
     }
 
-    set shaderSpec "glass [list $newSpec]"
+    if {$shaderType(0) == "stack"} {
+	set spec [lindex $shaderSpec 1]
+	set i [lsearch -index 0 $spec glass]
+	if {$i != -1} {
+	    set spec [lreplace $spec $i $i "glass [list $newSpec]"]
+	}
+
+	set shaderSpec "stack [list $spec]"
+    } else {
+	set shaderSpec "glass [list $newSpec]"
+    }
 
     if {$allowCallbacks && $itk_option(-shaderChangedCallback) != ""} {
 	$itk_option(-shaderChangedCallback)
@@ -2118,8 +2559,22 @@
 }
 
 
+::itcl::body ShaderEdit::updateStackSpec {id} {
+}
+
+
 ::itcl::body ShaderEdit::updateUnlistedSpec {id} {
-    set shaderSpec "$unlistedName($id) $unlistedParams($id)"
+    if {$shaderType(0) == "stack"} {
+	set spec [lindex $shaderSpec 1]
+	set i [lsearch -index 0 $spec $unlistedName($id)]
+	if {$i != -1} {
+	    set spec [lreplace $spec $i $i "$unlistedName($id) [list $unlistedParams($id)]"]
+	}
+
+	set shaderSpec "stack [list $spec]"
+    } else {
+	set shaderSpec "$unlistedName($id) [list $newSpec]"
+    }
 
     if {$allowCallbacks && $itk_option(-shaderChangedCallback) != ""} {
 	$itk_option(-shaderChangedCallback)
