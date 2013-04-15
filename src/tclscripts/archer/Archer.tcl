@@ -7266,6 +7266,9 @@ proc title_node_handler {node} {
 
 
 ::itcl::body Archer::initDbAttrView {name} {
+    set mObjViewMode $OBJ_EDIT_VIEW_MODE
+    set mPrevObjViewMode $OBJ_EDIT_VIEW_MODE
+
     catch {pack forget $itk_component(dbAttrView)}
     catch {pack forget $itk_component(objViewToolbar)}
     catch {pack forget $itk_component(objAttrView)}
