@@ -143,7 +143,7 @@ db_get(const struct db_i *dbip, const struct directory *dp, union record *where,
 	return -1;
     }
     if (offset < 0 || len+(size_t)offset > dp->d_len) {
-	bu_log("db_get(%s):  xfer %d..%x exceeds 0..%zu\n",
+	bu_log("db_get(%s):  xfer %d..%lu exceeds 0..%zu\n",
 	       dp->d_namep, offset, offset+len, dp->d_len);
 	where->u_id = '\0';	/* undefined id */
 	return -1;
@@ -217,7 +217,7 @@ db_put(struct db_i *dbip, const struct directory *dp, union record *where, off_t
 				    dp->d_namep, dbip, dp, where, offset, len);
 
     if ((len+(size_t)offset) > dp->d_len) {
-	bu_log("db_put(%s):  xfer %d..%x exceeds 0..%zu\n",
+	bu_log("db_put(%s):  xfer %d..%lu exceeds 0..%zu\n",
 	       dp->d_namep, offset, offset+len, dp->d_len);
 	return -1;
     }
