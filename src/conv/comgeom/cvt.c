@@ -180,7 +180,7 @@ main(int argc, char **argv)
     printf("Reading version %d COMGEOM file\n", version);
 
     if (verbose) {
-	printf("COMGEOM input file must have this format:\n");
+	printf("COMGEOM input file (version %d) must have this format:\n",version);
 	switch (version) {
 	    case 1:
 		printf("     1.  title card\n");
