@@ -48,9 +48,14 @@
 #include <vector>
 #include <cstddef>
 #include <assert.h>
+#include <cfloat>
 #include <cmath>
 
-#define EQ(v1, v2) ((v1 - v2 > -__FLT_EPSILON__) && (v1 - v2 < __FLT_EPSILON__))
+#if defined(__FLT_EPSILON__)
+#  define EQ(v1, v2) ((v1 - v2 > -__FLT_EPSILON__) && (v1 - v2 < __FLT_EPSILON__))
+#elif defined(FLT_EPSILON)
+#  define EQ(v1, v2) ((v1 - v2 > - FLT_EPSILON) && (v1 - v2 < FLT_EPSILON))
+#endif
 
 namespace p2t {
 
