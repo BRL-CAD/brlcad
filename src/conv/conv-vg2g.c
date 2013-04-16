@@ -63,7 +63,7 @@ main(int argc, char **argv)
     bu_setprogname(argv[0]);
 
     if ( argc != 3 )  {
-	printf("Usage: conv-vg2g file.vg file.g\n");
+	printf("Usage: conv-vg2g file.vg file.g\n(I prompt as necessary)\n");
 	return 11;
     }
 
