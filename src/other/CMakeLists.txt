@@ -861,18 +861,16 @@ endif(BRLCAD_LEVEL2)
 # and we're likely to be making changes.  If our own copy of VDSlib
 # ever spins back off into its own project, revisit the NOSYS
 
-if(BRLCAD_LEVEL2)
-  set(libvds_ALIASES ENABLE_VDS)
-  set(libvds_DESCRIPTION "
+set(libvds_ALIASES ENABLE_VDS)
+set(libvds_DESCRIPTION "
 Option for enabling and disabling compilation of the libvds triangle
 simplification library provided with BRL-CAD's source code.  Default
 is AUTO, responsive to the toplevel BRLCAD_BUNDLED_LIBS option and
 testing first for a system version if BRLCAD_BUNDLED_LIBS is also
 AUTO.
 ")
-  THIRD_PARTY(libvds libvds "" libvds_ALIASES libvds_DESCRIPTION NOSYS)
-  set(LIBVDS_INCLUDE_DIR "${BRLCAD_SOURCE_DIR}/src/other/libvds" CACHE STRING "Directory containing libvds headers." FORCE)
-endif(BRLCAD_LEVEL2)
+THIRD_PARTY(libvds libvds "" libvds_ALIASES libvds_DESCRIPTION NOSYS)
+set(LIBVDS_INCLUDE_DIR "${BRLCAD_SOURCE_DIR}/src/other/libvds" CACHE STRING "Directory containing libvds headers." FORCE)
 
 # Bullet is not yet integrated as a src/other subbuild, but there is
 # code that will make use of it if it is available.  If that code
@@ -911,18 +909,14 @@ if(BRLCAD_LEVEL2)
 endif(BRLCAD_LEVEL2)
 
 # Poly2Tri CDT library
-if(BRLCAD_LEVEL2)
-  add_subdirectory(poly2tri)
-  include(${CMAKE_CURRENT_SOURCE_DIR}/poly2tri.dist)
-  CMAKEFILES_IN_DIR(poly2tri_ignore_files poly2tri)
-  DISTCLEAN(${CMAKE_CURRENT_SOURCE_DIR}/poly2tri/Makefile)
-  set(P2T_LIBRARY "p2t" CACHE STRING "Poly2Tri library" FORCE)
-  set(P2T_INCLUDE_DIR "${BRLCAD_SOURCE_DIR}/src/other/poly2tri" CACHE STRING "Directory containing poly2tri header" FORCE)
-  mark_as_advanced(P2T_LIBRARY)
-  mark_as_advanced(P2T_INCLUDE_DIR)
-else(BRLCAD_LEVEL2)
-  CMAKEFILES(poly2tri)
-endif(BRLCAD_LEVEL2)
+add_subdirectory(poly2tri)
+include(${CMAKE_CURRENT_SOURCE_DIR}/poly2tri.dist)
+CMAKEFILES_IN_DIR(poly2tri_ignore_files poly2tri)
+DISTCLEAN(${CMAKE_CURRENT_SOURCE_DIR}/poly2tri/Makefile)
+set(P2T_LIBRARY "p2t" CACHE STRING "Poly2Tri library" FORCE)
+set(P2T_INCLUDE_DIR "${BRLCAD_SOURCE_DIR}/src/other/poly2tri" CACHE STRING "Directory containing poly2tri header" FORCE)
+mark_as_advanced(P2T_LIBRARY)
+mark_as_advanced(P2T_INCLUDE_DIR)
 mark_as_advanced(P2T_SHARED)
 mark_as_advanced(P2T_STATIC)
 mark_as_advanced(P2T_TESTS)
