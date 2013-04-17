@@ -381,9 +381,9 @@ rt_arb_centroid(point_t *cent, const struct rt_db_internal *ip)
     y_avg /= arb_type;
     z_avg /= arb_type;
 
-    *cent[0] = x_avg;
-    *cent[1] = y_avg;
-    *cent[2] = z_avg;
+    (*cent)[0] = x_avg;
+    (*cent)[1] = y_avg;
+    (*cent)[2] = z_avg;
 
 }
 
