@@ -1183,7 +1183,7 @@ shoot_normal_rays(struct sim_manifold *current_manifold,
     vect_t diff, up_vec, ref_axis;
     point_t overlap_center;
     fastf_t d, r;
-    struct xrays xrayp;
+    struct xrays *xrayp;
     struct xrays *entry;
     struct xray center_ray;
 
