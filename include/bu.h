@@ -1271,10 +1271,10 @@ typedef double fastf_t;
  * the sign indicating positive (0) or negative (1) infinity.
  */
 #ifndef INFINITY
-#  if defined(HUGE_VALF)
-#    define INFINITY ((fastf_t)HUGE_VALF)
-#  elif defined(HUGE_VAL)
+#  if defined(HUGE_VAL)
 #    define INFINITY ((fastf_t)HUGE_VAL)
+#  elif defined(HUGE_VALF)
+#    define INFINITY ((fastf_t)HUGE_VALF)
 #  elif defined(HUGE)
 #    define INFINITY ((fastf_t)HUGE)
 #  elif defined(MAXFLOAT)
