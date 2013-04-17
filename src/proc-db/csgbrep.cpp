@@ -24,6 +24,7 @@
 #include "rtgeom.h"
 #include "wdb.h"
 
+#define DEFAULT_FILENAME "csgbrep.g"
 
 /* without OBJ_BREP, this entire procedural example is disabled */
 #ifdef OBJ_BREP
@@ -95,11 +96,14 @@ main(int argc, char** argv)
     tol.para = 1.0 - tol.perp;
 
     if (argc > 1)
+	bu_log("Usage: %s (arguments ignored)\n", argv[0]);
+    else
 	bu_log("Usage: %s\n", argv[0]);
+    bu_log("       Program continues running (is to write %s):\n",DEFAULT_FILENAME);
 
     ON::Begin();
 
-    outfp = wdb_fopen("csgbrep.g");
+    outfp = wdb_fopen(DEFAULT_FILENAME);
     const char* id_name = "CSG B-Rep Examples";
     mk_id(outfp, id_name);
 
