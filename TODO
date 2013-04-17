@@ -39,8 +39,9 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
 * document all of the places our src/other external dependencies are
-  used, how and to what extent they're used, and why in a
-  src/other/README file.
+  used, how and to what extent they're used, and why in the
+  src/other/README file.  A start exists, but more specificity as to
+  source files, etc. is needed.
 
 * use spatial partitioning during boolean processing of polygonal
   meshes.  good approach might be to generalize TIE's kd-tree to

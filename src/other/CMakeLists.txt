@@ -939,6 +939,7 @@ if(BRLCAD_ENABLE_OSL)
   add_subdirectory(osl)
 endif(BRLCAD_ENABLE_OSL)
 
+CMAKEFILES(README)
 CMAKEFILES(Makefile.am)
 
 # Local Variables:

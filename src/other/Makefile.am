@@ -163,6 +163,7 @@ endif
 # end ONLY_BENCHMARK
 
 EXTRA_DIST = \
+	README \
 	boost \
 	clipper \
 	togl \
