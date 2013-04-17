@@ -208,7 +208,7 @@ get_bb(struct ged *gedp, struct simulation_params *sim_params)
 
 	    /* Get BB position in 3D space */
 	    VSCALE(current_node->bb_center, current_node->bb_dims, 0.5);
-	    VADD2(current_node->bb_center, current_node->bb_center, current_node->bb_min)
+	    VADD2(current_node->bb_center, current_node->bb_center, current_node->bb_min);
 
 	    MAT_IDN(current_node->m);
 	    current_node->m[12] = current_node->bb_center[0];

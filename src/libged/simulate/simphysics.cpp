@@ -267,9 +267,9 @@ get_transforms(btDiscreteDynamicsWorld* dynamicsWorld)
 			  current_node->btbb_dims[0], current_node->btbb_dims[1], current_node->btbb_dims[2]);
 
 		//Get BB position in 3D space
-		VCOMB2(current_node->btbb_center, 1, current_node->btbb_min, 0.5, current_node->btbb_dims)
+		VCOMB2(current_node->btbb_center, 1, current_node->btbb_min, 0.5, current_node->btbb_dims);
 
-		    v = bb_RigidBody->getLinearVelocity();
+		v = bb_RigidBody->getLinearVelocity();
 		VMOVE(current_node->linear_velocity, v);
 
 		/*bu_log("Got linear velocity as : %f, %f, %f", current_node->linear_velocity[0],
