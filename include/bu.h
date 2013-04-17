@@ -1277,6 +1277,8 @@ typedef double fastf_t;
 #    define INFINITY ((fastf_t)HUGE_VALF)
 #  elif defined(HUGE)
 #    define INFINITY ((fastf_t)HUGE)
+#  elif defined(MAXDOUBLE)
+#    define INFINITY ((fastf_t)MAXDOUBLE)
 #  elif defined(MAXFLOAT)
 #    define INFINITY ((fastf_t)MAXFLOAT)
 #  else
