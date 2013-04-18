@@ -7,13 +7,6 @@ noinst_LTLIBRARIES = \
 BREP_CPPFLAGS = ${SSE} -DOBJ_BREP=1 ${TNT_CPPFLAGS} ${OPENNURBS_CPPFLAGS}
 BREP_LIBADD = ${OPENNURBS} ${BREP} ${BREP_LIBS}
 
-test_dvec_SOURCES = test_dvec.cpp
-# cannot set per-target CPPFLAGS until automake 1.7+
-test_dvec_CXXFLAGS = ${SSE}
-test_dvec_LDADD = \
-	librt.la \
-	${RT_LIBS}
-
 # cannot set per-target CPPFLAGS until automake 1.7+
 AM_CPPFLAGS = \
 	${REGEX_CPPFLAGS} \
@@ -28,8 +21,7 @@ noinst_PROGRAMS = \
 	namegen \
 	nurb_example \
 	parsetest \
-	prcomb \
-	test_dvec
+	prcomb
 
 # make sure example and temporary code compiles, but don't include it in librt
 librt_xxx_la_SOURCES = \
@@ -313,6 +305,10 @@ sample_applications_DATA = \
 # XXX need to fix these so the timers are selected by configure.ac
 EXTRA_DIST = \
 	$(sample_applications_DATA) \
+	tests/CMakeLists.txt \
+	tests/nurbs_surfaces.g \
+	tests/nurbs_tests.cpp \
+	tests/test_dvec.cpp \
 	CMakeLists.txt \
 	columnparse.c \
 	namegen.c \
