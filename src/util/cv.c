@@ -84,10 +84,7 @@ main(int argc, char **argv)
 	return 1;
     }
 
-    in_cookie = bu_cv_cookie(in_pat);
-    out_cookie = bu_cv_cookie(out_pat);
-
-    if (argc >= 5) {
+    if (argc == 5) {
 	if ((outfp = fopen(argv[4], "w")) == NULL) {
 	    perror(argv[4]);
 	    return 2;
@@ -110,6 +107,8 @@ main(int argc, char **argv)
 	return 5;
     }
 
+    in_cookie = bu_cv_cookie(in_pat);
+    out_cookie = bu_cv_cookie(out_pat);
     iitem = bu_cv_itemlen(in_cookie);
     oitem = bu_cv_itemlen(out_cookie);
 #define NITEMS (64*1024)
