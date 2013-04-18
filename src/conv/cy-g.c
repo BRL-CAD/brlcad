@@ -110,12 +110,12 @@ main(int argc, char **argv)
     }
 
     if ((infp=fopen(argv[1], "rb")) == NULL) {
-	bu_log("Cannot open input file (%s)\n", argv[1]);
+	bu_log("%s: cannot open input file (%s)\n", argv[0] , argv[1]);
 	bu_exit(1, "%s", usage);
     }
 
     if ((outfp = wdb_fopen(argv[2])) == NULL) {
-	bu_log("Cannot open output file (%s)\n", argv[2]);
+	bu_log("%s: cannot open output file (%s)\n", argv[0] , argv[2]);
 	bu_exit(1, "%s", usage);
     }
 
