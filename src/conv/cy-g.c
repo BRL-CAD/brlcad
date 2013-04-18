@@ -403,7 +403,7 @@ main(int argc, char **argv)
 	curves[y] = (fastf_t *)bu_calloc((unsigned int)(nlg+1)*3, sizeof(fastf_t), "ars curve");
     }
 
-    /* allocate memory for a table os sines and cosines */
+    /* allocate memory for a table of sines and cosines */
     sins = (fastf_t *)bu_calloc((unsigned int)nlg+1, sizeof(fastf_t), "sines");
     coss = (fastf_t *)bu_calloc((unsigned int)nlg+1, sizeof(fastf_t), "cosines");
 
