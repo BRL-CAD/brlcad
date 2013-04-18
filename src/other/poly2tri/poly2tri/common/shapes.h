@@ -51,11 +51,10 @@
 #include <cfloat>
 #include <cmath>
 
-#if defined(__FLT_EPSILON__)
-#  define EQ(v1, v2) ((v1 - v2 > -__FLT_EPSILON__) && (v1 - v2 < __FLT_EPSILON__))
-#elif defined(FLT_EPSILON)
-#  define EQ(v1, v2) ((v1 - v2 > - FLT_EPSILON) && (v1 - v2 < FLT_EPSILON))
-#endif
+/* Avoid exact floating point comparison warnings, but this macro
+ * is used in some places where *very* tight equality is needed - 
+ * use DBL_MIN */
+#define EQ(v1, v2) ((v1 - v2 > -DBL_MIN) && (v1 - v2 < DBL_MIN))
 
 namespace p2t {
 
