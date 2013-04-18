@@ -36,7 +36,7 @@
 char usage[] = "\
 Usage: cv in_pat out_pat [[infile] outfile]\n\
 \n\
-Where a pattern is: [h|n][s|u] c|s|i|l|d|8|16|32|64\n\
+Where a pattern (no embedded blanks) is: [h|n] [s|u] [c|s|i|l|d|8|16|32|64]\n\
 e.g., hui is host unsigned int, nl is network (signed) long\n\
 ";
 
