@@ -313,9 +313,12 @@ include_directories(
 #BRLCAD_ADDEXEC(test_bot2nurbs test_bot2nurbs.cpp "librt;libwdb;libbrep;libbu" NOSTRICT NO_INSTALL)
 #BRLCAD_ADDEXEC(test_nurbsfit test_nurbsfit.cpp "librt;libwdb;libbrep;libbu" NOSTRICT NO_INSTALL)
 #BRLCAD_ADDEXEC(test_root3-subd test_root3-subd.cpp "librt;libwdb;libbrep;libbu" NOSTRICT NO_INSTALL)
+#BRLCAD_ADDEXEC(test_surfacetree test_surfacetree.cpp "librt;libwdb;libbrep;libbu" NOSTRICT NO_INSTALL)
 
 BRLCAD_ADDEXEC(test_dvec test_dvec.cpp "librt" NOSTRICT NO_INSTALL LOCAL)
 ADD_TEST(test_dvec test_dvec)
+
+add_subdirectory(tests)
 
 # Local Variables:
 # tab-width: 8
