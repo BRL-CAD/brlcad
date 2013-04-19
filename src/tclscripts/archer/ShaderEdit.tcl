@@ -73,6 +73,7 @@
 	    Stack
 	    "Env Map"
 	    Camouflage
+	    Air
 	    Unlisted
 	    None
 	}
@@ -87,6 +88,7 @@
 	    stack
 	    envmap
 	    camo
+	    air
 	    unlisted
 	    ""
 	}
@@ -101,6 +103,7 @@
 	    {Stack stack}
 	    {"Env Map" envmap}
 	    {Camouflage camo}
+	    {Air air}
 	    {Unlisted unlisted}
 	    {None ""}
 	}
@@ -282,6 +285,9 @@
 	method updateShaderForm {id}
 	method destroyCurrentShader {}
 
+	method updateForm_air {spec id}
+	method setFormDefaults_air {id}
+
 	method updateForm_plastic {spec id}
 	method setFormDefaults_plastic {id}
 
@@ -313,11 +319,13 @@
 
 	method updateForm_unlisted {spec id}
 
-	method updateForm_air {spec id}
 	method updateForm_fakestar {spec id}
 	method updateForm_proj {spec id}
 	method updateForm_testmap {spec id}
 	method updateForm_texture {spec id}
+
+	method validateDouble_air {id d}
+	method updateAirSpec {id}
 
 	method validateDouble_plastic {id d}
 	method updatePlasticSpec {id}
@@ -329,7 +337,7 @@
 	method updateGlassSpec {id}
 
 	method validateDouble_light {id d}
-	method updateLightSpec {id {_unused ""}}
+	method updateLightSpec {id {unused ""}}
 
 	method validateDouble_camo {id d}
 	method validateRgb_camo {id rgb}
@@ -492,7 +500,7 @@
 
     itk_component add checkerScale$id\E {
 	::ttk::entry $parent.checkerScale$id\E \
-	    -width 5 \
+	    -width 15 \
 	    -textvariable [::itcl::scope checkerScale($id)] \
 	    -validate key \
 	    -validatecommand [::itcl::code $this validateDouble_checker $id %P]
@@ -750,7 +758,6 @@
     grid $itk_component(camoOctaves$id\L) -row $row -column 0 -sticky e
     grid $itk_component(camoOctaves$id\E) -row $row -column 1 -sticky w
 
-    #pack $itk_component(camo$id\F) -expand yes -fill both
     grid $itk_component(camo$id\F) -sticky nsew
 
     setFormDefaults_camo $id
@@ -1145,8 +1152,8 @@
 	set shaderSpec [list stack $spec]
     }
 
-    grid $parent.del -columnspan 4
-    grid $parent -columnspan 2 -sticky ew
+    grid $parent.del -sticky w
+    grid $parent -sticky ew
     grid columnconfigure $parent 0 -minsize 400
 }
 
@@ -1231,7 +1238,7 @@
 	-label Camouflage -command [::itcl::code $this add_shader camo $childsite]
     #$itk_component(stackAdd$id\M) add command \
 	-label Projection -command [::itcl::code $this add_shader prj $childsite]
-    #$itk_component(stackAdd$id\M) add command \
+    $itk_component(stackAdd$id\M) add command \
 	-label Air -command [::itcl::code $this add_shader air $childsite]
     #$itk_component(stackAdd$id\M) add command \
 	-label Testmap -command [::itcl::code $this add_shader testmap $childsite]
@@ -1465,6 +1472,68 @@
 }
 
 ::itcl::body ShaderEdit::build_air {parent id} {
+    set shaderType($id) "air"
+    set shaderTypeUnlisted($id) 0
+
+    itk_component add air$id\F {
+	::ttk::frame $parent.air$id\F
+    } {}
+
+    set parent $itk_component(air$id\F)
+
+    itk_component add airDensity$id\L {
+	::ttk::label $parent.airDensity$id\L \
+	    -text "Density"
+    } {}
+
+    itk_component add airDensity$id\E {
+	::ttk::entry $parent.airDensity$id\E \
+	    -width 15 \
+	    -textvariable [::itcl::scope airDensity($id)] \
+	    -validate key \
+	    -validatecommand [::itcl::code $this validateDouble_air $id %P]
+    } {}
+
+    itk_component add airDelta$id\L {
+	::ttk::label $parent.airDelta$id\L \
+	    -text "Delta"
+    } {}
+
+    itk_component add airDelta$id\E {
+	::ttk::entry $parent.airDelta$id\E \
+	    -width 15 \
+	    -textvariable [::itcl::scope airDelta($id)] \
+	    -validate key \
+	    -validatecommand [::itcl::code $this validateDouble_air $id %P]
+    } {}
+
+    itk_component add airScale$id\L {
+	::ttk::label $parent.airScale$id\L \
+	    -text "Scale"
+    } {}
+
+    itk_component add airScale$id\E {
+	::ttk::entry $parent.airScale$id\E \
+	    -width 15 \
+	    -textvariable [::itcl::scope airScale($id)] \
+	    -validate key \
+	    -validatecommand [::itcl::code $this validateDouble_air $id %P]
+    } {}
+
+    set row 0
+    grid $itk_component(airDensity$id\L) -row $row -column 0 -sticky e
+    grid $itk_component(airDensity$id\E) -row $row -column 1 -sticky w
+    incr row
+    grid $itk_component(airDelta$id\L) -row $row -column 0 -sticky e
+    grid $itk_component(airDelta$id\E) -row $row -column 1 -sticky w
+    incr row
+    grid $itk_component(airScale$id\L) -row $row -column 0 -sticky e
+    grid $itk_component(airScale$id\E) -row $row -column 1 -sticky w
+
+    grid $itk_component(air$id\F) -sticky nsew
+    grid columnconfigure $itk_component(air$id\F) 1 -weight 1
+
+    setFormDefaults_air $id
 }
 
 ::itcl::body ShaderEdit::build_fakestar {parent id} {
@@ -1511,6 +1580,9 @@
 	}
 	"Camouflage" {
 	    set stype camo
+	}
+	"Air" {
+	    set stype air
 	}
 	"Unlisted" {
 	    set stype unlisted
@@ -1600,6 +1672,49 @@
     foreach child [grid slaves $itk_component(shaderBody)] {
 	rename $child ""
     }
+}
+
+::itcl::body ShaderEdit::updateForm_air {spec id} {
+    setFormDefaults_air $id
+
+    set ignoreShaderSpec 1
+    foreach {key val} [lindex $spec 1] {
+	if {$val != ""} {
+	    set notEmptyVal 1
+	} else {
+	    set notEmptyVal 0
+	}
+
+	switch -- $key {
+	    "dpm" {
+		if {$notEmptyVal && [string is double $val]} {
+		    set airDensity($id) $val
+		}
+	    }
+	    "d" {
+		if {$notEmptyVal && [string is double $val]} {
+		    set airDelta($id) $val
+		}
+	    }
+	    "s" {
+		if {$notEmptyVal && [string is double $val]} {
+		    set airScale($id) $val
+		}
+	    }
+	}
+    }
+
+    set ignoreShaderSpec 0
+}
+
+::itcl::body ShaderEdit::setFormDefaults_air {id} {
+    set ignoreShaderSpec 1
+
+    set airDensity($id) $DEF_AIR_DENSITY
+    set airDelta($id) $DEF_AIR_DELTA
+    set airScale($id) $DEF_AIR_SCALE
+
+    set ignoreShaderSpec 0
 }
 
 ::itcl::body ShaderEdit::updateForm_plastic {spec id} {
@@ -2043,8 +2158,8 @@
 	    }
 	}
 
-	grid $parent.del -columnspan 4
-	grid $parent -columnspan 2 -sticky ew
+	grid $parent.del -sticky w
+	grid $parent -sticky ew
 	grid columnconfigure $parent 0 -minsize 400
     }
 }
@@ -2151,11 +2266,6 @@
     set ignoreShaderSpec 0
 }
 
-::itcl::body ShaderEdit::updateForm_air {spec id} {
-    set ignoreShaderSpec 1
-    set ignoreShaderSpec 0
-}
-
 ::itcl::body ShaderEdit::updateForm_fakestar {spec id} {
     set ignoreShaderSpec 1
     set ignoreShaderSpec 0
@@ -2176,6 +2286,75 @@
     set ignoreShaderSpec 0
 }
 
+::itcl::body ShaderEdit::validateDouble_air {id d} {
+    if {![::cadwidgets::Ged::validateDouble $d]} {
+	return 0
+    }
+
+    if {!$ignoreShaderSpec} {
+	after idle [::itcl::code $this updateAirSpec $id]
+    }
+
+    return 1
+}
+
+::itcl::body ShaderEdit::updateAirSpec {id} {
+    set newSpec ""
+
+    if {$airDensity($id) != $DEF_AIR_DENSITY} {
+	if {$newSpec == ""} {
+	    append newSpec "dpm $airDensity($id)"
+	} else {
+	    append newSpec " dpm $airDensity($id)"
+	}
+    }
+
+    if {$airDelta($id) != $DEF_AIR_DELTA} {
+	if {$newSpec == ""} {
+	    append newSpec "d $airDelta($id)"
+	} else {
+	    append newSpec " d $airDelta($id)"
+	}
+    }
+
+    if {$airScale($id) != $DEF_AIR_SCALE} {
+	if {$newSpec == ""} {
+	    append newSpec "s $airScale($id)"
+	} else {
+	    append newSpec " s $airScale($id)"
+	}
+    }
+
+    if {$shaderType(0) == "stack"} {
+	set spec [lindex $shaderSpec 1]
+	set i [lsearch -index 0 $spec air]
+	if {$i != -1} {
+	    set spec [lreplace $spec $i $i "air [list $newSpec]"]
+	}
+
+	set shaderSpec "stack [list $spec]"
+    } elseif {$shaderType(0) == "envmap"} {
+	set spec [lindex $shaderSpec 1]
+	set subType [lindex $spec 0]
+	set subSpec [lindex $spec 1]
+
+	if {$subType == "stack"} {
+	    set i [lsearch -index 0 $subSpec air]
+	    if {$i != -1} {
+		set spec [lreplace $subSpec $i $i "air [list $newSpec]"]
+	    }
+
+	    set spec "stack [list $spec]"
+	} else {
+	    set spec "air [list $newSpec]"
+	}
+
+	set shaderSpec "envmap [list $spec]"
+    } else {
+	set shaderSpec "air [list $newSpec]"
+    }
+}
+
 ::itcl::body ShaderEdit::validateDouble_light {id d} {
     if {![::cadwidgets::Ged::validateDouble $d]} {
 	return 0
@@ -2188,7 +2367,7 @@
     return 1
 }
 
-::itcl::body ShaderEdit::updateLightSpec {id {_unused ""}} {
+::itcl::body ShaderEdit::updateLightSpec {id {unused ""}} {
     set newSpec ""
 
     if {$lightFraction($id) != $DEF_LIGHT_FRACTION} {
