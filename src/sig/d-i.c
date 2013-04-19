@@ -86,8 +86,8 @@ int main(int argc, char **argv)
     }
 
     if ( clip_low != 0 || clip_high != 0 )
-	fprintf( stderr, "Warning: Clipped %d high, %d low\n",
-		 clip_high, clip_low );
+	fprintf( stderr, "%s: warning: clipped %d high, %d low\n",
+		 argv[0], clip_high, clip_low );
     return 0;
 }
 
