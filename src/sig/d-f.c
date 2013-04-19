@@ -52,9 +52,7 @@ int main(int argc, char **argv)
     scale = 1.0;
 
     if ( argc > 1 ) {
-	if ( BU_STR_EQUAL( argv[1], "-n" ) )
-	    scale = 1.0;
-	else
+	if ( ! BU_STR_EQUAL( argv[1], "-n" ) )
 	    scale = atof( argv[1] );
 	argc--;
     }
@@ -64,12 +62,12 @@ int main(int argc, char **argv)
     }
 
     while ( (num = fread( &ibuf[0], sizeof( ibuf[0] ), 512, stdin)) > 0 ) {
-	if ( !EQUAL(scale, 1.0) ) {
-	    for ( i = 0; i < num; i++ )
-		obuf[i] = ibuf[i] * scale;
-	} else {
+	if ( EQUAL(scale, 1.0) ) {
 	    for ( i = 0; i < num; i++ )
 		obuf[i] = ibuf[i];
+	} else {
+	    for ( i = 0; i < num; i++ )
+		obuf[i] = ibuf[i] * scale;
 	}
 
 	ret = fwrite( &obuf[0], sizeof( obuf[0] ), num, stdout );
