@@ -52,7 +52,7 @@ nurbs_test(long int test_number, struct db_i *dbip)
     switch (test_number)
     {
 	case 1: /* 3d -> 2d pull-back function get_closest_point */
-	    {	
+	    {
 		struct rt_db_internal case_1_intern;
 		struct rt_brep_internal *case_1_brep_ip = NULL;
 		RT_DB_INTERNAL_INIT(&case_1_intern);
@@ -124,7 +124,7 @@ main(int argc, char **argv)
 	}
     } else {
 	retval = nurbs_test(test_number, dbip);
-    } 
+    }
     return retval;
 }
 
