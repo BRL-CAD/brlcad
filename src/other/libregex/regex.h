@@ -35,7 +35,48 @@
 #ifndef _REGEX_H_
 #define	_REGEX_H_
 
-#include "common.h"
+#if defined (_WIN32)
+#  include <BaseTsd.h>
+#endif
+
+#include <limits.h>
+#include <stddef.h>
+
+#if !defined(ssize_t)
+#  if defined(_WIN32)
+     typedef SSIZE_T ssize_t;
+#  else
+     typedef ptrdiff_t ssize_t;
+#  endif
+#  define HAVE_SSIZE_T 1
+#endif
+
+
+#if !defined(off_t)
+#  if defined(_WIN32)
+     typedef SSIZE_T off_t;
+#    define _OFF_T_DEFINED 1
+#  else
+     typedef ptrdiff_t ssize_t;
+#  endif
+#endif
+
+
+#include <sys/types.h>
+#include <stdio.h>
+#include <string.h>
+#include <ctype.h>
+#include <stdlib.h>
+
+
+#ifdef __cplusplus
+#  define __BEGIN_DECLS   extern "C" {
+#  define __END_DECLS     }
+#else
+#  define __BEGIN_DECLS
+#  define __END_DECLS
+#endif
+
 
 #ifndef REGEX_EXPORT
 #  if defined(_WIN32) && !defined(__CYGWIN__) && defined(BRLCAD_DLL)
@@ -49,15 +90,7 @@
 #  endif
 #endif
 
-#include <sys/types.h>
-
 /* types */
-
-/* ugly hack to make non-MS windows compilers work */
-#if defined(_WIN32) && !defined(_MSC_VER) && !defined(_OFF_T_)
-#define _OFF_T_
-typedef ssize_t off_t;
-#endif
 
 typedef off_t regoff_t;
 

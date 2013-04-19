@@ -40,13 +40,6 @@ static char rcsid[] = "$NetBSD: regerror.c,v 1.4 1995/02/27 13:29:20 cgd Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
-#include <sys/types.h>
-#include <stdio.h>
-#include <string.h>
-#include <ctype.h>
-#include <limits.h>
-#include <stdlib.h>
-
 #include "regex.h"
 #include "./utils.h"
 
