@@ -72,6 +72,7 @@
 	    Cloud
 	    Stack
 	    "Env Map"
+	    Projection
 	    Camouflage
 	    Air
 	    Unlisted
@@ -87,25 +88,11 @@
 	    cloud
 	    stack
 	    envmap
+	    prj
 	    camo
 	    air
 	    unlisted
 	    ""
-	}
-
-	common SHADER_NAMES_AND_TYPES {
-	    {Plastic plastic}
-	    {Mirror mirror}
-	    {Glass glass}
-	    {Light light}
-	    {Checker checker}
-	    {Cloud cloud}
-	    {Stack stack}
-	    {"Env Map" envmap}
-	    {Camouflage camo}
-	    {Air air}
-	    {Unlisted unlisted}
-	    {None ""}
 	}
 
 	common DEF_PLASTIC_TRANS 0
@@ -276,7 +263,7 @@
 
 	method build_air {parent id}
 	method build_fakestar {parent id}
-	method build_proj {parent id}
+	method build_prj {parent id}
 	method build_testmap {parent id}
 	method build_texture {parent id}
 
@@ -319,8 +306,9 @@
 
 	method updateForm_unlisted {spec id}
 
+	method updateForm_prj {spec id}
+
 	method updateForm_fakestar {spec id}
-	method updateForm_proj {spec id}
 	method updateForm_testmap {spec id}
 	method updateForm_texture {spec id}
 
@@ -351,6 +339,8 @@
 	method updateCloudSpec {id}
 
 	method updateUnlistedSpec {id}
+	method updatePrjSpec {id}
+
 
     }
 
@@ -1123,7 +1113,7 @@
 	    set addspec [list cloud {}]
 	}
 	prj {
-	    build_proj $parent stk_$index
+	    build_prj $parent stk_$index
 	    set addspec [list prj {}]
 	}
 	camo {
@@ -1236,7 +1226,7 @@
 	-label Checker -command [::itcl::code $this add_shader checker $childsite]
     $itk_component(stackAdd$id\M) add command \
 	-label Camouflage -command [::itcl::code $this add_shader camo $childsite]
-    #$itk_component(stackAdd$id\M) add command \
+    $itk_component(stackAdd$id\M) add command \
 	-label Projection -command [::itcl::code $this add_shader prj $childsite]
     $itk_component(stackAdd$id\M) add command \
 	-label Air -command [::itcl::code $this add_shader air $childsite]
@@ -1305,7 +1295,7 @@
 	-label Checker -command [::itcl::code $this select_shader checker $childsite]
     $itk_component(envmapSelect$id\M) add command \
 	-label Camouflage -command [::itcl::code $this select_shader camo $childsite]
-    #$itk_component(envmapSelect$id\M) add command \
+    $itk_component(envmapSelect$id\M) add command \
 	-label Projection -command [::itcl::code $this select_shader prj $childsite]
     #$itk_component(envmapSelect$id\M) add command \
 	-label Testmap -command [::itcl::code $this select_shader testmap $childsite]
@@ -1347,7 +1337,7 @@
     if {[lsearch $SHADER_TYPES $stype] != -1} {
 	label $parent.lab -text $stype -bg CadetBlue -fg white
     } else {
-	label $parent.lab -text "Unrecognized Shader" -bg CadetBlue -fg white
+	label $parent.lab -text "Unlisted Shader" -bg CadetBlue -fg white
     }
     grid $parent.lab -columnspan 4 -sticky ew
     set stackParams(env_$index,name) $stype
@@ -1392,7 +1382,7 @@
 	    set addspec [list cloud {}]
 	}
 	prj {
-	    build_proj $parent env_$index
+	    build_prj $parent env_$index
 	    set addspec [list prj {}]
 	}
 	camo {
@@ -1539,7 +1529,36 @@
 ::itcl::body ShaderEdit::build_fakestar {parent id} {
 }
 
-::itcl::body ShaderEdit::build_proj {parent id} {
+::itcl::body ShaderEdit::build_prj {parent id} {
+    set shaderType($id) "prj"
+    set shaderTypeUnlisted($id) 0
+
+    itk_component add prj$id\F {
+	::ttk::frame $parent.prj$id\F
+    } {}
+
+    set parent $itk_component(prj$id\F)
+
+    itk_component add prjFile$id\L {
+	::ttk::label $parent.prjFile$id\L \
+	    -text "Parameter File"
+    } {}
+
+    itk_component add prjFile$id\E {
+	::ttk::entry $parent.prjFile$id\E \
+	    -textvariable [::itcl::scope projectionFile($id)]
+    } {}
+    bind $itk_component(prjFile$id\E) <KeyRelease> \
+	[::itcl::code $this updatePrjSpec $id]
+
+    set row 0
+    grid $itk_component(prjFile$id\L) -row $row -column 0 -sticky e
+    grid $itk_component(prjFile$id\E) -row $row -column 1 -sticky w
+
+    grid $itk_component(prj$id\F) -sticky nsew
+    grid columnconfigure $itk_component(prj$id\F) 1 -weight 1
+
+    set projectionFile($id) ""
 }
 
 ::itcl::body ShaderEdit::build_testmap {parent id} {
@@ -1586,6 +1605,9 @@
 	}
 	"Unlisted" {
 	    set stype unlisted
+	}
+	"Projection" {
+	    set stype prj
 	}
 	default {
 	    set stype ""
@@ -2141,8 +2163,8 @@
 		updateForm_cloud $subspec stk_$index
 	    }
 	    prj {
-		build_proj $parent stk_$index
-		updateForm_proj $subspec stk_$index
+		build_prj $parent stk_$index
+		updateForm_prj $subspec stk_$index
 	    }
 	    camo {
 		build_camo $parent stk_$index
@@ -2229,7 +2251,7 @@
 	    updateForm_cloud $subspec env_$index
 	}
 	prj {
-	    build_proj $parent env_$index
+	    build_prj $parent env_$index
 	    updateForm_prj $subspec env_$index
 	}
 	camo {
@@ -2266,12 +2288,15 @@
     set ignoreShaderSpec 0
 }
 
-::itcl::body ShaderEdit::updateForm_fakestar {spec id} {
+::itcl::body ShaderEdit::updateForm_prj {spec id} {
     set ignoreShaderSpec 1
+
+    set projectionFile($id) [lindex $spec 1]
+
     set ignoreShaderSpec 0
 }
 
-::itcl::body ShaderEdit::updateForm_proj {spec id} {
+::itcl::body ShaderEdit::updateForm_fakestar {spec id} {
     set ignoreShaderSpec 1
     set ignoreShaderSpec 0
 }
@@ -3137,6 +3162,41 @@
     }
 
     set prevUnlistedName($id) $unlistedName($id)
+
+    if {$allowCallbacks && $itk_option(-shaderChangedCallback) != ""} {
+	$itk_option(-shaderChangedCallback)
+    }
+}
+
+::itcl::body ShaderEdit::updatePrjSpec {id} {
+    if {$shaderType(0) == "stack"} {
+	set spec [lindex $shaderSpec 1]
+	set i [lsearch -index 0 $spec prj]
+	if {$i != -1} {
+	    set spec [lreplace $spec $i $i [list prj $projectionFile($id)]]
+	}
+
+	set shaderSpec [list stack $spec]
+    } elseif {$shaderType(0) == "envmap"} {
+	set spec [lindex $shaderSpec 1]
+	set subType [lindex $spec 0]
+	set subSpec [lindex $spec 1]
+
+	if {$subType == "stack"} {
+	    set i [lsearch -index 0 $subSpec prj]
+	    if {$i != -1} {
+		set subSpec [lreplace $subSpec $i $i [list prj $projectionFile($id)]]
+	    }
+
+	    set spec [list stack $subSpec]
+	} else {
+	    set spec [list prj $projectionFile($id)]
+	}
+
+	set shaderSpec [list envmap $spec]
+    } else {
+	set shaderSpec [list prj $projectionFile($id)]
+    }
 
     if {$allowCallbacks && $itk_option(-shaderChangedCallback) != ""} {
 	$itk_option(-shaderChangedCallback)
