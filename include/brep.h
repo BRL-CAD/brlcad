@@ -1643,7 +1643,7 @@ private:
  *   -- minimum occurs when the gradient is zero, i.e.
  *     \f[ \nabla f(u, v) = |\vec{S}(u, v)-\vec{p}|^2 = 0 \f]
  */
-bool get_closest_point(ON_2dPoint& outpt,
+BREP_EXPORT bool get_closest_point(ON_2dPoint& outpt,
 		       ON_BrepFace* face,
 		       const ON_3dPoint& point,
 		       SurfaceTree* tree = NULL,
