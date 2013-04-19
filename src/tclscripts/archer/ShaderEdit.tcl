@@ -69,6 +69,8 @@
 	    Glass
 	    Light
 	    Checker
+	    Testmap
+	    Fakestar
 	    Cloud
 	    Stack
 	    "Env Map"
@@ -85,6 +87,8 @@
 	    glass
 	    light
 	    checker
+	    testmap
+	    fakestar
 	    cloud
 	    stack
 	    envmap
@@ -302,7 +306,6 @@
 	method setFormDefaults_stack {}
 
 	method updateForm_envmap {spec id}
-	method setFormDefaults_envmap {}
 
 	method updateForm_unlisted {spec id}
 
@@ -1071,8 +1074,6 @@
     button $parent.del -text delete -width 8 \
 	-command [::itcl::code $this delete_shader "stk_$index"]
 
-#    set majortype [lindex $shaderSpec 0]
-
     switch -- $stype {
 	plastic {
 	    build_plastic $parent stk_$index
@@ -1102,11 +1103,11 @@
 	}
 	testmap {
 	    build_testmap $parent stk_$index
-	    set addspec [list testmap {}]
+	    set addspec testmap
 	}
 	fakestar {
 	    build_fakestar $parent stk_$index
-	    set addspec [list fakestar {}]
+	    set addspec fakestar
 	}
 	cloud {
 	    build_cloud $parent stk_$index
@@ -1218,7 +1219,7 @@
 	-label "Texture (color)" -command [::itcl::code $this add_shader texture $childsite]
     #$itk_component(stackAdd$id\M) add command \
 	-label "Texture (bw)" -command [::itcl::code $this add_shader bwtexture $childsite]
-    #$itk_component(stackAdd$id\M) add command \
+    $itk_component(stackAdd$id\M) add command \
 	-label Fakestar -command [::itcl::code $this add_shader fakestar $childsite]
     $itk_component(stackAdd$id\M) add command \
 	-label Cloud -command [::itcl::code $this add_shader cloud $childsite]
@@ -1230,7 +1231,7 @@
 	-label Projection -command [::itcl::code $this add_shader prj $childsite]
     $itk_component(stackAdd$id\M) add command \
 	-label Air -command [::itcl::code $this add_shader air $childsite]
-    #$itk_component(stackAdd$id\M) add command \
+    $itk_component(stackAdd$id\M) add command \
 	-label Testmap -command [::itcl::code $this add_shader testmap $childsite]
     $itk_component(stackAdd$id\M) add command \
 	-label Unlisted -command [::itcl::code $this add_shader unlisted $childsite]
@@ -1287,8 +1288,8 @@
 	-label "Texture (color)" -command [::itcl::code $this select_shader texture $childsite]
     #$itk_component(envmapSelect$id\M) add command \
 	-label "Texture (bw)" -command [::itcl::code $this select_shader bwtexture $childsite]
-    #$itk_component(envmapSelect$id\M) add command \
-	-label Fakestar -command [::itcl::code $this select_shader fakestar $childsite]
+    $itk_component(envmapSelect$id\M) add command \
+	-label "Fakestar" -command [::itcl::code $this select_shader fakestar $childsite]
     $itk_component(envmapSelect$id\M) add command \
 	-label Cloud -command [::itcl::code $this select_shader cloud $childsite]
     $itk_component(envmapSelect$id\M) add command \
@@ -1297,7 +1298,7 @@
 	-label Camouflage -command [::itcl::code $this select_shader camo $childsite]
     $itk_component(envmapSelect$id\M) add command \
 	-label Projection -command [::itcl::code $this select_shader prj $childsite]
-    #$itk_component(envmapSelect$id\M) add command \
+    $itk_component(envmapSelect$id\M) add command \
 	-label Testmap -command [::itcl::code $this select_shader testmap $childsite]
     $itk_component(envmapSelect$id\M) add command \
 	-label Unlisted -command [::itcl::code $this select_shader unlisted $childsite]
@@ -1317,8 +1318,6 @@
     grid columnconfigure $itk_component(envmap$id\F) 0 -weight 1
     grid rowconfigure $itk_component(envmap$id\F) $row -weight 1
     grid $itk_component(envmap$id\F) -sticky nsew
-
-#    setFormDefaults_envmap
 }
 
 ::itcl::body ShaderEdit::select_shader {stype parent} {
@@ -1371,11 +1370,11 @@
 	}
 	testmap {
 	    build_testmap $parent env_$index
-	    set addspec [list testmap {}]
+	    set addspec testmap
 	}
 	fakestar {
 	    build_fakestar $parent env_$index
-	    set addspec [list fakestar {}]
+	    set addspec fakestar
 	}
 	cloud {
 	    build_cloud $parent env_$index
@@ -1527,6 +1526,26 @@
 }
 
 ::itcl::body ShaderEdit::build_fakestar {parent id} {
+    set shaderType($id) "fakestar"
+    set shaderTypeUnlisted($id) 0
+
+    itk_component add fakestar$id\F {
+	::ttk::frame $parent.fakestar$id\F
+    } {}
+
+    set parent $itk_component(fakestar$id\F)
+
+    itk_component add fakestarFile$id\L {
+	::ttk::label $parent.fakestarFile$id\L \
+	    -text "There are no parameters to set \n\
+		   for the fakestar texture map"
+    } {}
+
+    set row 0
+    grid $itk_component(fakestarFile$id\L) -row $row -column 0 -sticky e
+
+    grid $itk_component(fakestar$id\F) -sticky nsew
+    grid columnconfigure $itk_component(fakestar$id\F) 1 -weight 1
 }
 
 ::itcl::body ShaderEdit::build_prj {parent id} {
@@ -1562,6 +1581,26 @@
 }
 
 ::itcl::body ShaderEdit::build_testmap {parent id} {
+    set shaderType($id) "testmap"
+    set shaderTypeUnlisted($id) 0
+
+    itk_component add testmap$id\F {
+	::ttk::frame $parent.testmap$id\F
+    } {}
+
+    set parent $itk_component(testmap$id\F)
+
+    itk_component add testmapFile$id\L {
+	::ttk::label $parent.testmapFile$id\L \
+	    -text "There are no parameters to set \n\
+		   for the testmap"
+    } {}
+
+    set row 0
+    grid $itk_component(testmapFile$id\L) -row $row -column 0 -sticky e
+
+    grid $itk_component(testmap$id\F) -sticky nsew
+    grid columnconfigure $itk_component(testmap$id\F) 1 -weight 1
 }
 
 ::itcl::body ShaderEdit::build_texture {parent id} {
@@ -1608,6 +1647,12 @@
 	}
 	"Projection" {
 	    set stype prj
+	}
+	"Fakestar" {
+	    set stype fakestar
+	}
+	"Testmap" {
+	    set stype testmap
 	}
 	default {
 	    set stype ""
@@ -2275,9 +2320,6 @@
     grid $parent -columnspan 2 -sticky nsew
 }
 
-::itcl::body ShaderEdit::setFormDefaults_envmap {} {
-}
-
 ::itcl::body ShaderEdit::updateForm_unlisted {spec id} {
     set ignoreShaderSpec 1
 
@@ -2297,13 +2339,9 @@
 }
 
 ::itcl::body ShaderEdit::updateForm_fakestar {spec id} {
-    set ignoreShaderSpec 1
-    set ignoreShaderSpec 0
 }
 
 ::itcl::body ShaderEdit::updateForm_testmap {spec id} {
-    set ignoreShaderSpec 1
-    set ignoreShaderSpec 0
 }
 
 ::itcl::body ShaderEdit::updateForm_texture {spec id} {
