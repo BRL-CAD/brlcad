@@ -71,6 +71,7 @@
 	    Checker
 	    Cloud
 	    Stack
+	    "Env Map"
 	    Camouflage
 	    Unlisted
 	    None
@@ -84,6 +85,7 @@
 	    checker
 	    cloud
 	    stack
+	    envmap
 	    camo
 	    unlisted
 	    ""
@@ -97,6 +99,7 @@
 	    {Checker checker}
 	    {Cloud cloud}
 	    {Stack stack}
+	    {"Env Map" envmap}
 	    {Camouflage camo}
 	    {Unlisted unlisted}
 	    {None ""}
@@ -228,6 +231,7 @@
 
 	variable projectionFile
 
+	variable prevUnlistedName
 	variable unlistedName
 	variable unlistedParams
 
@@ -260,6 +264,9 @@
 	method add_shader {stype parent}
 	method delete_shader {id}
 	method build_stack {parent id}
+
+	method build_envmap {parent id}
+	method select_shader {stype parent}
 
 	method build_unlisted {parent id}
 	method buildUnlisted {parent id}
@@ -301,6 +308,9 @@
 	method updateForm_stack {spec id}
 	method setFormDefaults_stack {}
 
+	method updateForm_envmap {spec id}
+	method setFormDefaults_envmap {}
+
 	method updateForm_unlisted {spec id}
 
 	method updateForm_air {spec id}
@@ -331,8 +341,6 @@
 
 	method validateDouble_cloud {id d}
 	method updateCloudSpec {id}
-
-	method updateStackSpec {id}
 
 	method updateUnlistedSpec {id}
 
@@ -500,7 +508,6 @@
     grid $itk_component(checkerScale$id\L) -row $row -column 0 -sticky e
     grid $itk_component(checkerScale$id\E) -row $row -column 1 -sticky w
 
-    #pack $itk_component(checker$id\F) -expand yes -fill both
     grid $itk_component(checker$id\F) -sticky nsew
 
     setFormDefaults_checker $id
@@ -1067,68 +1074,56 @@
     button $parent.del -text delete -width 8 \
 	-command [::itcl::code $this delete_shader "stk_$index"]
 
-    set spec [lindex $shaderSpec 1]
+#    set majortype [lindex $shaderSpec 0]
 
     switch -- $stype {
 	plastic {
-	    setFormDefaults_plastic stk_$index
 	    build_plastic $parent stk_$index
 	    set addspec [list plastic {}]
 	}
 	glass {
-	    setFormDefaults_glass stk_$index
 	    build_glass $parent stk_$index
 	    set addspec [list glass {}]
 	}
 	mirror {
-	    setFormDefaults_mirror stk_$index
 	    build_mirror $parent stk_$index
 	    set addspec [list mirror {}]
 	}
 	light {
-	    setFormDefaults_light stk_$index
 	    build_light $parent stk_$index
 	    set addspec [list light {}]
 	}
 	bump -
 	bwtexture -
 	texture {
-	    setFormDefaults_texture stk_$index
 	    build_texture $parent stk_$index
 	    set addspec [list $stype {}]
 	}
 	checker {
-	    setFormDefaults_checker stk_$index
 	    build_checker $parent stk_$index
 	    set addspec [list checker {}]
 	}
 	testmap {
-	    setFormDefaults_testmap stk_$index
 	    build_testmap $parent stk_$index
 	    set addspec [list testmap {}]
 	}
 	fakestar {
-	    setFormDefaults_fakestar stk_$index
 	    build_fakestar $parent stk_$index
 	    set addspec [list fakestar {}]
 	}
 	cloud {
-	    setFormDefaults_cloud stk_$index
 	    build_cloud $parent stk_$index
 	    set addspec [list cloud {}]
 	}
 	prj {
-	    setFormDefaults_proj stk_$index
 	    build_proj $parent stk_$index
 	    set addspec [list prj {}]
 	}
 	camo {
-	    setFormDefaults_camo stk_$index
 	    build_camo $parent stk_$index
 	    set addspec [list camo {}]
 	}
 	air {
-	    setFormDefaults_air stk_$index
 	    build_air $parent stk_$index
 	    set addspec [list air {}]
 	}
@@ -1138,8 +1133,17 @@
 	}
     }
 
-    lappend spec $addspec
-    set shaderSpec "stack [list $spec]"
+    if {$shaderType(0) == "envmap"} {
+	set spec [lindex $shaderSpec 1]
+	set subspec [lindex $spec 1]
+	lappend subspec $addspec
+	set spec [lreplace $spec 1 1 $subspec]
+	set shaderSpec [list envmap $spec]
+    } else {
+	set spec [lindex $shaderSpec 1]
+	lappend spec $addspec
+	set shaderSpec [list stack $spec]
+    }
 
     grid $parent.del -columnspan 4
     grid $parent -columnspan 2 -sticky ew
@@ -1148,17 +1152,30 @@
 
 ::itcl::body ShaderEdit::delete_shader {id} {
     # destroy the shader subwindow
-    #catch {destroy $stackParams($id,window)} msg
-    catch {rename $stackParams($id,window) ""} msg
+    catch {rename $stackParams($id,window) ""}
 
-    set spec [lindex $shaderSpec 1]
-    set i [lsearch -index 0 $spec $stackParams($id,name)]
-    if {$i != -1} {
-	set spec [lreplace $spec $i $i]
-	set shaderSpec "stack [list $spec]"
+    # example - {envmap {stack {{camo {}} {plastic {}}}}}
+    if {$shaderType(0) == "envmap"} {
+	# if we get here, we know that the subtype is stack
+
+	set spec [lindex $shaderSpec 1]
+	set subspec [lindex $spec 1]
+	set i [lsearch -index 0 $subspec $stackParams($id,name)]
+
+	if {$i != -1} {
+	    set subspec [lreplace $subspec $i $i]
+	    set shaderSpec [list envmap [list stack $subspec]]
+	}
+    } else {
+	set spec [lindex $shaderSpec 1]
+	set i [lsearch -index 0 $spec $stackParams($id,name)]
+
+	if {$i != -1} {
+	    set spec [lreplace $spec $i $i]
+	    set shaderSpec [list stack $spec]
+	}
     }
 
-    # adjust the shader list
     set stackParams($id,window) ""
     set stackParams($id,name) ""
 }
@@ -1178,6 +1195,7 @@
     } {}
 
     set childsite [$itk_component(stack$id\SF) childsite]
+    $childsite configure -background cyan
 
     itk_component add stackAdd$id\MB {
 	::ttk::menubutton $parent.stackAdd$id\MB \
@@ -1226,13 +1244,171 @@
     grid $itk_component(stackAdd$id\MB) -row $row -column 0 -sticky n
     incr row
     grid $itk_component(stack$id\SF) -row $row -column 0 -sticky nsew
-    grid columnconfigure $itk_component(stack$id\F) 0 -weight 1
-    grid rowconfigure $itk_component(stack$id\F) 1 -weight 1
 
-    #pack $itk_component(stack$id\F) -expand yes -fill both
+    grid columnconfigure $itk_component(stack$id\F) 0 -weight 1
+    grid rowconfigure $itk_component(stack$id\F) $row -weight 1
     grid $itk_component(stack$id\F) -sticky nsew
 
     setFormDefaults_stack
+}
+
+::itcl::body ShaderEdit::build_envmap {parent id} {
+    set shaderType($id) "envmap"
+    set shaderTypeUnlisted($id) 0
+
+    itk_component add envmap$id\F {
+	::ttk::frame $parent.envmap$id\F
+    } {}
+
+    set parent $itk_component(envmap$id\F)
+
+    itk_component add envmapSelect$id\MB {
+	::ttk::menubutton $parent.envmapSelect$id\MB \
+	    -text "Select Shader"
+    } {}
+
+    itk_component add envmapSelect$id\M {
+	::menu $parent.envmapSelect$id\M \
+	    -tearoff 0
+    } {}
+
+    itk_component add childsite$id\F {
+	::ttk::frame $parent.childsite$id\F
+    } {}
+
+    set childsite $itk_component(childsite$id\F)
+
+    $itk_component(envmapSelect$id\M) add command \
+	-label "Plastic" -command [::itcl::code $this select_shader plastic $childsite]
+    $itk_component(envmapSelect$id\M) add command \
+	-label "Glass" -command [::itcl::code $this select_shader glass $childsite]
+    $itk_component(envmapSelect$id\M) add command \
+	-label "Mirror" -command [::itcl::code $this select_shader mirror $childsite]
+    #$itk_component(envmapSelect$id\M) add command \
+	-label "Bump Map" -command [::itcl::code $this select_shader bump $childsite]
+    #$itk_component(envmapSelect$id\M) add command \
+	-label "Texture (color)" -command [::itcl::code $this select_shader texture $childsite]
+    #$itk_component(envmapSelect$id\M) add command \
+	-label "Texture (bw)" -command [::itcl::code $this select_shader bwtexture $childsite]
+    #$itk_component(envmapSelect$id\M) add command \
+	-label Fakestar -command [::itcl::code $this select_shader fakestar $childsite]
+    $itk_component(envmapSelect$id\M) add command \
+	-label Cloud -command [::itcl::code $this select_shader cloud $childsite]
+    $itk_component(envmapSelect$id\M) add command \
+	-label Checker -command [::itcl::code $this select_shader checker $childsite]
+    $itk_component(envmapSelect$id\M) add command \
+	-label Camouflage -command [::itcl::code $this select_shader camo $childsite]
+    #$itk_component(envmapSelect$id\M) add command \
+	-label Projection -command [::itcl::code $this select_shader prj $childsite]
+    #$itk_component(envmapSelect$id\M) add command \
+	-label Testmap -command [::itcl::code $this select_shader testmap $childsite]
+    $itk_component(envmapSelect$id\M) add command \
+	-label Unlisted -command [::itcl::code $this select_shader unlisted $childsite]
+    $itk_component(envmapSelect$id\M) add command \
+	-label Stack -command [::itcl::code $this select_shader stack $childsite]
+
+    $itk_component(envmapSelect$id\MB) configure -menu $itk_component(envmapSelect$id\M)
+
+    set row 0
+    grid $itk_component(envmapSelect$id\MB) -row $row -column 0 -sticky n
+    incr row
+    grid $childsite -row $row -column 0 -sticky nsew
+
+    grid rowconfigure $childsite 0 -weight 1
+    grid columnconfigure $childsite 0 -weight 1
+
+    grid columnconfigure $itk_component(envmap$id\F) 0 -weight 1
+    grid rowconfigure $itk_component(envmap$id\F) $row -weight 1
+    grid $itk_component(envmap$id\F) -sticky nsew
+
+#    setFormDefaults_envmap
+}
+
+::itcl::body ShaderEdit::select_shader {stype parent} {
+    set index 0
+    if {[winfo exists $parent.env_$index]} {
+	rename $parent.env_$index ""
+    }
+
+    frame $parent.env_$index -bd 2 -relief groove
+
+    set parent $parent.env_$index
+    set stackParams(env_$index,window) $parent
+    grid rowconfigure $parent 1 -weight 1
+    grid columnconfigure $parent 0 -weight 1
+
+    if {[lsearch $SHADER_TYPES $stype] != -1} {
+	label $parent.lab -text $stype -bg CadetBlue -fg white
+    } else {
+	label $parent.lab -text "Unrecognized Shader" -bg CadetBlue -fg white
+    }
+    grid $parent.lab -columnspan 4 -sticky ew
+    set stackParams(env_$index,name) $stype
+
+    switch -- $stype {
+	plastic {
+	    build_plastic $parent env_$index
+	    set addspec [list plastic {}]
+	}
+	glass {
+	    build_glass $parent env_$index
+	    set addspec [list glass {}]
+	}
+	mirror {
+	    build_mirror $parent env_$index
+	    set addspec [list mirror {}]
+	}
+	light {
+	    build_light $parent env_$index
+	    set addspec [list light {}]
+	}
+	bump -
+	bwtexture -
+	texture {
+	    build_texture $parent env_$index
+	    set addspec [list $stype {}]
+	}
+	checker {
+	    build_checker $parent env_$index
+	    set addspec [list checker {}]
+	}
+	testmap {
+	    build_testmap $parent env_$index
+	    set addspec [list testmap {}]
+	}
+	fakestar {
+	    build_fakestar $parent env_$index
+	    set addspec [list fakestar {}]
+	}
+	cloud {
+	    build_cloud $parent env_$index
+	    set addspec [list cloud {}]
+	}
+	prj {
+	    build_proj $parent env_$index
+	    set addspec [list prj {}]
+	}
+	camo {
+	    build_camo $parent env_$index
+	    set addspec [list camo {}]
+	}
+	stack {
+	    build_stack $parent env_$index
+	    set addspec [list stack {}]
+	}
+	air {
+	    build_air $parent env_$index
+	    set addspec [list air {}]
+	}
+	default {
+	    build_unlisted $parent env_$index
+	    set addspec [list unlisted {}]
+	}
+    }
+
+    set shaderSpec "envmap [list $addspec]"
+
+    grid $parent -columnspan 2 -sticky nsew
 }
 
 ::itcl::body ShaderEdit::build_unlisted {parent id} {
@@ -1241,17 +1417,9 @@
 
     buildUnlisted $parent $id
 
-    set slen [llength $shaderSpec]
-    if {$slen == 1} {
-	set unlistedName($id) [lindex $shaderSpec 0]
-	set unlistedParams($id) ""
-    } elseif {$slen == 2} {
-	set unlistedName($id) [lindex $shaderSpec 0]
-	set unlistedParams($id) [lrange $shaderSpec 1 end]
-    } else {
-	set unlistedName($id) ""
-	set unlistedParams($id) ""
-    }
+    set prevUnlistedName($id) "unlisted"
+    set unlistedName($id) "unlisted"
+    set unlistedParams($id) ""
 }
 
 ::itcl::body ShaderEdit::buildUnlisted {parent id} {
@@ -1271,7 +1439,7 @@
 	    -textvariable [::itcl::scope unlistedName($id)]
     } {}
     bind $itk_component(unlistedName$id\E) <KeyRelease> \
-	[::itcl::code $this updateUnlistedSpec 0]
+	[::itcl::code $this updateUnlistedSpec $id]
 
     itk_component add unlistedParams$id\L {
 	::ttk::label $parent.unlistedParams$id\L \
@@ -1283,18 +1451,17 @@
 	    -textvariable [::itcl::scope unlistedParams($id)]
     } {}
     bind $itk_component(unlistedParams$id\E) <KeyRelease> \
-	[::itcl::code $this updateUnlistedSpec 0]
+	[::itcl::code $this updateUnlistedSpec $id]
 
     set row 0
     grid $itk_component(unlistedName$id\L) -row $row -column 0 -sticky e
-    grid $itk_component(unlistedName$id\E) -row $row -column 1 -sticky nsew
+    grid $itk_component(unlistedName$id\E) -row $row -column 1 -sticky ew
     incr row
     grid $itk_component(unlistedParams$id\L) -row $row -column 0 -sticky e
-    grid $itk_component(unlistedParams$id\E) -row $row -column 1 -sticky nsew
+    grid $itk_component(unlistedParams$id\E) -row $row -column 1 -sticky ew
 
-    grid columnconfigure $parent 1 -weight 1
-
-    pack $parent -expand yes -fill both
+    grid $itk_component(unlisted$id\F) -sticky nsew
+    grid columnconfigure $itk_component(unlisted$id\F) 1 -weight 1
 }
 
 ::itcl::body ShaderEdit::build_air {parent id} {
@@ -1338,6 +1505,9 @@
 	}
 	"Stack" {
 	    set stype stack
+	}
+	"Env Map" {
+	    set stype envmap
 	}
 	"Camouflage" {
 	    set stype camo
@@ -1397,10 +1567,13 @@
 	} else {
 	    set i [lsearch $SHADER_TYPES $stype]
 	    if {$i == -1} {
-		if {!$shaderTypeUnlisted($id)} {
-		    destroyCurrentShader
-		    build_unlisted $itk_component(shaderBody) $id
-		}
+		#if {!$shaderTypeUnlisted($id)} {
+		#destroyCurrentShader
+		#build_unlisted $itk_component(shaderBody) $id
+		#}
+
+		destroyCurrentShader
+		build_unlisted $itk_component(shaderBody) $id
 		updateForm_unlisted $shaderSpec $id
 	    } else {
 		destroyCurrentShader
@@ -1424,9 +1597,6 @@
 }
 
 ::itcl::body ShaderEdit::destroyCurrentShader {} {
-#    foreach child [pack slaves $itk_component(shaderBody)] {
-#	destroy $child
-#    }
     foreach child [grid slaves $itk_component(shaderBody)] {
 	rename $child ""
     }
@@ -1883,20 +2053,100 @@
     set stackLen 0
 }
 
+::itcl::body ShaderEdit::updateForm_envmap {spec id} {
+    set index 0
+    set subspec [lindex $spec 1]
+    set stype [lindex $subspec 0]
+
+    set parent $itk_component(childsite$id\F)
+    frame $parent.env_$index -bd 2 -relief groove
+
+    set parent $parent.env_$index
+    set stackParams(env_$index,window) $parent
+    grid rowconfigure $parent 1 -weight 1
+    grid columnconfigure $parent 0 -weight 1
+
+    if {[lsearch $SHADER_TYPES $stype] != -1} {
+	label $parent.lab -text $stype -bg CadetBlue -fg white
+    } else {
+	label $parent.lab -text "Unrecognized Shader" -bg CadetBlue -fg white
+    }
+    grid $parent.lab -columnspan 4 -sticky ew
+    set stackParams(env_$index,name) $stype
+
+    switch -- $stype {
+	plastic {
+	    build_plastic $parent env_$index
+	    updateForm_plastic $subspec env_$index
+	}
+	glass {
+	    build_glass $parent env_$index
+	    updateForm_glass $subspec env_$index
+	}
+	mirror {
+	    build_mirror $parent env_$index
+	    updateForm_mirror $subspec env_$index
+	}
+	light {
+	    build_light $parent env_$index
+	    updateForm_ligth $subspec env_$index
+	}
+	bump -
+	bwtexture -
+	texture {
+	    build_texture $parent env_$index
+	    updateForm_texture $subspec env_$index
+	}
+	checker {
+	    build_checker $parent env_$index
+	    updateForm_checker $subspec env_$index
+	}
+	testmap {
+	    build_testmap $parent env_$index
+	    updateForm_testmap $subspec env_$index
+	}
+	fakestar {
+	    build_fakestar $parent env_$index
+	    updateForm_fakestar $subspec env_$index
+	}
+	cloud {
+	    build_cloud $parent env_$index
+	    updateForm_cloud $subspec env_$index
+	}
+	prj {
+	    build_proj $parent env_$index
+	    updateForm_prj $subspec env_$index
+	}
+	camo {
+	    build_camo $parent env_$index
+	    updateForm_camo $subspec env_$index
+	}
+	stack {
+	    build_stack $parent env_$index
+	    updateForm_stack $subspec env_$index
+	}
+	air {
+	    build_air $parent env_$index
+	    updateForm_air $subspec env_$index
+	}
+	default {
+	    build_unlisted $parent env_$index
+	    updateForm_unlisted $subspec env_$index
+	}
+    }
+
+    grid $parent -columnspan 2 -sticky nsew
+}
+
+::itcl::body ShaderEdit::setFormDefaults_envmap {} {
+}
+
 ::itcl::body ShaderEdit::updateForm_unlisted {spec id} {
     set ignoreShaderSpec 1
 
-    set slen [llength $spec]
-    if {$slen == 1} {
-	set unlistedName($id) [lindex $shaderSpec 0]
-	set unlistedParams($id) ""
-    } elseif {$slen == 2} {
-	set unlistedName($id) [lindex $shaderSpec 0]
-	set unlistedParams($id) [lrange $shaderSpec 1 end]
-    } else {
-	set unlistedName($id) ""
-	set unlistedParams($id) ""
-    }
+    set prevUnlistedName($id) [lindex $spec 0]
+    set unlistedName($id) [lindex $spec 0]
+    set unlistedParams($id) [lindex $spec 1]
 
     set ignoreShaderSpec 0
 }
@@ -2005,6 +2255,23 @@
 	}
 
 	set shaderSpec "stack [list $spec]"
+    } elseif {$shaderType(0) == "envmap"} {
+	set spec [lindex $shaderSpec 1]
+	set subType [lindex $spec 0]
+	set subSpec [lindex $spec 1]
+
+	if {$subType == "stack"} {
+	    set i [lsearch -index 0 $subSpec light]
+	    if {$i != -1} {
+		set spec [lreplace $subSpec $i $i "light [list $newSpec]"]
+	    }
+
+	    set spec "stack [list $spec]"
+	} else {
+	    set spec "light [list $newSpec]"
+	}
+
+	set shaderSpec "envmap [list $spec]"
     } else {
 	set shaderSpec "light [list $newSpec]"
     }
@@ -2145,6 +2412,23 @@
 	}
 
 	set shaderSpec "stack [list $spec]"
+    } elseif {$shaderType(0) == "envmap"} {
+	set spec [lindex $shaderSpec 1]
+	set subType [lindex $spec 0]
+	set subSpec [lindex $spec 1]
+
+	if {$subType == "stack"} {
+	    set i [lsearch -index 0 $subSpec camo]
+	    if {$i != -1} {
+		set spec [lreplace $subSpec $i $i "camo [list $newSpec]"]
+	    }
+
+	    set spec "stack [list $spec]"
+	} else {
+	    set spec "camo [list $newSpec]"
+	}
+
+	set shaderSpec "envmap [list $spec]"
     } else {
 	set shaderSpec "camo [list $newSpec]"
     }
@@ -2213,6 +2497,23 @@
 	}
 
 	set shaderSpec "stack [list $spec]"
+    } elseif {$shaderType(0) == "envmap"} {
+	set spec [lindex $shaderSpec 1]
+	set subType [lindex $spec 0]
+	set subSpec [lindex $spec 1]
+
+	if {$subType == "stack"} {
+	    set i [lsearch -index 0 $subSpec checker]
+	    if {$i != -1} {
+		set spec [lreplace $subSpec $i $i "checker [list $newSpec]"]
+	    }
+
+	    set spec "stack [list $spec]"
+	} else {
+	    set spec "checker [list $newSpec]"
+	}
+
+	set shaderSpec "envmap [list $spec]"
     } else {
 	set shaderSpec "checker [list $newSpec]"
     }
@@ -2261,6 +2562,23 @@
 	}
 
 	set shaderSpec "stack [list $spec]"
+    } elseif {$shaderType(0) == "envmap"} {
+	set spec [lindex $shaderSpec 1]
+	set subType [lindex $spec 0]
+	set subSpec [lindex $spec 1]
+
+	if {$subType == "stack"} {
+	    set i [lsearch -index 0 $subSpec cloud]
+	    if {$i != -1} {
+		set spec [lreplace $subSpec $i $i "cloud [list $newSpec]"]
+	    }
+
+	    set spec "stack [list $spec]"
+	} else {
+	    set spec "cloud [list $newSpec]"
+	}
+
+	set shaderSpec "envmap [list $spec]"
     } else {
 	set shaderSpec "cloud [list $newSpec]"
     }
@@ -2357,6 +2675,23 @@
 	}
 
 	set shaderSpec "stack [list $spec]"
+    } elseif {$shaderType(0) == "envmap"} {
+	set spec [lindex $shaderSpec 1]
+	set subType [lindex $spec 0]
+	set subSpec [lindex $spec 1]
+
+	if {$subType == "stack"} {
+	    set i [lsearch -index 0 $subSpec plastic]
+	    if {$i != -1} {
+		set spec [lreplace $subSpec $i $i "plastic [list $newSpec]"]
+	    }
+
+	    set spec "stack [list $spec]"
+	} else {
+	    set spec "plastic [list $newSpec]"
+	}
+
+	set shaderSpec "envmap [list $spec]"
     } else {
 	set shaderSpec "plastic [list $newSpec]"
     }
@@ -2453,6 +2788,23 @@
 	}
 
 	set shaderSpec "stack [list $spec]"
+    } elseif {$shaderType(0) == "envmap"} {
+	set spec [lindex $shaderSpec 1]
+	set subType [lindex $spec 0]
+	set subSpec [lindex $spec 1]
+
+	if {$subType == "stack"} {
+	    set i [lsearch -index 0 $subSpec mirror]
+	    if {$i != -1} {
+		set spec [lreplace $subSpec $i $i "mirror [list $newSpec]"]
+	    }
+
+	    set spec "stack [list $spec]"
+	} else {
+	    set spec "mirror [list $newSpec]"
+	}
+
+	set shaderSpec "envmap [list $spec]"
     } else {
 	set shaderSpec "mirror [list $newSpec]"
     }
@@ -2549,6 +2901,23 @@
 	}
 
 	set shaderSpec "stack [list $spec]"
+    } elseif {$shaderType(0) == "envmap"} {
+	set spec [lindex $shaderSpec 1]
+	set subType [lindex $spec 0]
+	set subSpec [lindex $spec 1]
+
+	if {$subType == "stack"} {
+	    set i [lsearch -index 0 $subSpec glass]
+	    if {$i != -1} {
+		set spec [lreplace $subSpec $i $i "glass [list $newSpec]"]
+	    }
+
+	    set spec "stack [list $spec]"
+	} else {
+	    set spec "glass [list $newSpec]"
+	}
+
+	set shaderSpec "envmap [list $spec]"
     } else {
 	set shaderSpec "glass [list $newSpec]"
     }
@@ -2558,23 +2927,37 @@
     }
 }
 
-
-::itcl::body ShaderEdit::updateStackSpec {id} {
-}
-
-
 ::itcl::body ShaderEdit::updateUnlistedSpec {id} {
     if {$shaderType(0) == "stack"} {
 	set spec [lindex $shaderSpec 1]
-	set i [lsearch -index 0 $spec $unlistedName($id)]
+	set i [lsearch -index 0 $spec $prevUnlistedName($id)]
 	if {$i != -1} {
-	    set spec [lreplace $spec $i $i "$unlistedName($id) [list $unlistedParams($id)]"]
+	    set spec [lreplace $spec $i $i [list $unlistedName($id) $unlistedParams($id)]]
 	}
 
-	set shaderSpec "stack [list $spec]"
+	set shaderSpec [list stack $spec]
+    } elseif {$shaderType(0) == "envmap"} {
+	set spec [lindex $shaderSpec 1]
+	set subType [lindex $spec 0]
+	set subSpec [lindex $spec 1]
+
+	if {$subType == "stack"} {
+	    set i [lsearch -index 0 $subSpec $prevUnlistedName($id)]
+	    if {$i != -1} {
+		set subSpec [lreplace $subSpec $i $i [list $unlistedName($id) $unlistedParams($id)]]
+	    }
+
+	    set spec [list stack $subSpec]
+	} else {
+	    set spec [list $unlistedName($id) $unlistedParams($id)]
+	}
+
+	set shaderSpec [list envmap $spec]
     } else {
-	set shaderSpec "$unlistedName($id) [list $newSpec]"
+	set shaderSpec [list $unlistedName($id) $unlistedParams($id)]
     }
+
+    set prevUnlistedName($id) $unlistedName($id)
 
     if {$allowCallbacks && $itk_option(-shaderChangedCallback) != ""} {
 	$itk_option(-shaderChangedCallback)
