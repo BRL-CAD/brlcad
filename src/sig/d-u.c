@@ -21,7 +21,7 @@
  *
  *  Convert doubles to 16bit unsigned ints
  *
- *	% d-i [-n || scale]
+ *	% d-u [-n || scale]
  *
  *	-n will normalize the data (scale -1.0 to +1.0
  *		between -32767 and +32767).
@@ -62,7 +62,7 @@ int main(int argc, char **argv)
     }
 
     if ( argc > 1 || ZERO(scale) || isatty(fileno(stdin)) ) {
-	bu_exit(1, "Usage: d-i [-n || scale] < doubles > unsigned_shorts\n");
+	bu_exit(1, "Usage: d-u [-n || scale] < doubles > unsigned_shorts\n");
     }
 
     clip_high = clip_low = 0;
@@ -86,8 +86,8 @@ int main(int argc, char **argv)
     }
 
     if ( clip_low != 0 || clip_high != 0 )
-	fprintf( stderr, "Warning: Clipped %d high, %d low\n",
-		 clip_high, clip_low );
+	fprintf( stderr, "%s: warning: clipped %d high, %d low\n",
+		 argv[0], clip_high, clip_low );
     return 0;
 }
 
