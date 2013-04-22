@@ -52,7 +52,7 @@
 #endif
 
 
-#if !defined(off_t) && !__APPLE__
+#if !defined(off_t) && !defined(__APPLE__)
 #  if defined(_WIN32)
      typedef SSIZE_T off_t;
 #    define _OFF_T_DEFINED 1
