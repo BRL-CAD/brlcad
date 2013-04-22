@@ -42,6 +42,13 @@
 #include <limits.h>
 #include <stddef.h>
 
+
+#include <sys/types.h>
+#include <stdio.h>
+#include <string.h>
+#include <ctype.h>
+#include <stdlib.h>
+
 #if !defined(ssize_t)
 #  if defined(_WIN32)
      typedef SSIZE_T ssize_t;
@@ -52,7 +59,7 @@
 #endif
 
 
-#if !defined(off_t)
+#if !defined(off_t) && !__APPLE__
 #  if defined(_WIN32)
      typedef SSIZE_T off_t;
 #    define _OFF_T_DEFINED 1
@@ -61,12 +68,6 @@
 #  endif
 #endif
 
-
-#include <sys/types.h>
-#include <stdio.h>
-#include <string.h>
-#include <ctype.h>
-#include <stdlib.h>
 
 
 #ifdef __cplusplus
