@@ -843,14 +843,8 @@ ged_red(struct ged *gedp, int argc, const char **argv)
     /* Write the combination components to the file */
     if (write_comb(gedp, comb, argv[1])) {
 	bu_vls_printf(gedp->ged_result_str, "Unable to edit %s\n", argv[1]);
-	(void)fclose(fp);
 	goto cleanup;
     }
-
-    /* Close the temp file so it will be written to disk. The temp file now
-     * contains the data for the combination which is to then be edited.
-     */
-    (void)fclose(fp);
 
     /* Edit the file */
     if (_ged_editit(editstring, _ged_tmpfil)) {
