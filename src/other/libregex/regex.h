@@ -61,6 +61,13 @@
 #  endif
 #endif
 
+/* On Windows 64bit, "off_t" is defined as a "long"
+ * within "sys/types.h" which breaks "libregex". To
+ * resolve this, we must define "off_t" before we
+ * include "sys/types.h". Defining "off_t" as
+ * "ssize_t" works for both Windows 32bit and 64bit.
+ */
+
 #include <sys/types.h>
 #include <stdio.h>
 #include <string.h>
