@@ -42,13 +42,6 @@
 #include <limits.h>
 #include <stddef.h>
 
-
-#include <sys/types.h>
-#include <stdio.h>
-#include <string.h>
-#include <ctype.h>
-#include <stdlib.h>
-
 #if !defined(ssize_t)
 #  if defined(_WIN32)
      typedef SSIZE_T ssize_t;
@@ -68,7 +61,11 @@
 #  endif
 #endif
 
-
+#include <sys/types.h>
+#include <stdio.h>
+#include <string.h>
+#include <ctype.h>
+#include <stdlib.h>
 
 #ifdef __cplusplus
 #  define __BEGIN_DECLS   extern "C" {
