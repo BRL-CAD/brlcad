@@ -57,7 +57,7 @@
      typedef SSIZE_T off_t;
 #    define _OFF_T_DEFINED 1
 #  else
-     typedef ptrdiff_t ssize_t;
+     typedef ptrdiff_t off_t;
 #  endif
 #endif
 
