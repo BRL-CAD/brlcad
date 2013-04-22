@@ -2271,7 +2271,7 @@
 	}
 	light {
 	    build_light $parent env_$index
-	    updateForm_ligth $subspec env_$index
+	    updateForm_light $subspec env_$index
 	}
 	bump -
 	bwtexture -
