@@ -250,8 +250,7 @@ common operating system environments including for BSD, IRIX, Linux,
 Solaris, Mac OS X, and Windows among others.  The entire package is
 distributed in binary and source code form as free open source
 software (FOSS), provided under Open Source Initiative (OSI) approved
-license terms.  BRL-CAD was released as open source in December 2004
-with portions licensed under the GPL, LGPL, GFDL, and BSD licenses.
+license terms.  BRL-CAD was released as open source in December 2004.
 See the COPYING file for more details.
 
 
@@ -283,8 +282,8 @@ GETTING HELP
 ------------
 
 Feel free to direct any unanswered questions relating to BRL-CAD via
-e-mail to 'devs@brlcad.org' or to any of the other contact means
-described above in the COMMUNICATIONS section of this document.
+e-mail or to any of the other contact means described above in the
+COMMUNICATIONS section of this document.
 
 Best Wishes,
 The BRL-CAD Development Team
