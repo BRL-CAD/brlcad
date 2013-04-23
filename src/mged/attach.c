@@ -460,6 +460,8 @@ gui_setup(const char *dstr)
 int
 mged_attach(struct w_dm *wp, int argc, const char *argv[])
 {
+    int opt_argc;
+    char **opt_argv;
     struct dm_list *o_dm_list;
 
     if (!wp) {
@@ -483,7 +485,11 @@ mged_attach(struct w_dm *wp, int argc, const char *argv[])
 	bu_vls_init(&tmp_dmp->dm_pathName);
 	bu_vls_init(&tmp_dmp->dm_dName);
 
-	dm_processOptions(tmp_dmp, &tmp_vls, argc - 1, argv + 1);
+	opt_argc = argc - 1;
+	opt_argv = bu_dup_argv(opt_argc, argv + 1);
+	dm_processOptions(tmp_dmp, &tmp_vls, opt_argc, opt_argv);
+	bu_free_argv(opt_argc, opt_argv);
+
 	if (strlen(bu_vls_addr(&tmp_dmp->dm_dName))) {
 	    if (gui_setup(bu_vls_addr(&tmp_dmp->dm_dName)) == TCL_ERROR) {
 		bu_free((genptr_t)curr_dm_list, "f_attach: dm_list");

@@ -106,7 +106,7 @@
 #define DM_TYPE_OGL	4
 #define DM_TYPE_GLX	5
 #define DM_TYPE_PEX	6
-#define DM_TYPE_WGL     7
+#define DM_TYPE_WGL	7
 #define DM_TYPE_TK	8
 #define DM_TYPE_RTGL	9
 
@@ -321,6 +321,8 @@ struct dm {
 #define DM_GEN_DLISTS(_dmp, _range) _dmp->dm_genDLists(_dmp, _range)
 #define DM_GET_DISPLAY_IMAGE(_dmp, _image) _dmp->dm_getDisplayImage(_dmp, _image)
 
+__BEGIN_DECLS
+
 DM_EXPORT extern struct dm dm_ogl;
 DM_EXPORT extern struct dm dm_plot;
 DM_EXPORT extern struct dm dm_ps;
@@ -348,7 +350,7 @@ DM_EXPORT extern int dm_Normal2Xy(struct dm *dmp,
 				  int use_aspect);
 DM_EXPORT extern void dm_fogHint(struct dm *dmp,
 				 int fastfog);
-DM_EXPORT extern int dm_processOptions();
+DM_EXPORT extern int dm_processOptions(struct dm *dmp, struct bu_vls *init_proc_vls, int argc, char **argv);
 DM_EXPORT extern int dm_limit(int i);
 DM_EXPORT extern int dm_unlimit(int i);
 DM_EXPORT extern fastf_t dm_wrap(fastf_t f);
@@ -407,6 +409,8 @@ DM_EXPORT extern void dm_draw_scale(struct dm *dmp,
 
 /* vers.c */
 DM_EXPORT extern const char *dm_version(void);
+
+__END_DECLS
 
 
 /************************************************/
