@@ -407,7 +407,6 @@ bu_brlcad_data(const char *rhs, int fail_quietly)
     const char *lhs;
     struct bu_vls searched = BU_VLS_INIT_ZERO;
     char where[MAX_WHERE_SIZE] = {0};
-    char path[MAXPATHLEN] = {0};
 
     if (UNLIKELY(bu_debug & BU_DEBUG_PATHS)) {
 	bu_log("bu_brlcad_data: looking for [%s]\n", rhs?rhs:"");
@@ -442,16 +441,19 @@ bu_brlcad_data(const char *rhs, int fail_quietly)
 
     /* bu_brlcad_root/BRLCAD_DATA_DIR path */
 #ifdef BRLCAD_DATA_DIR
-    snprintf(path, MAXPATHLEN, "%s", BRLCAD_DATA_DIR);
-    lhs = bu_brlcad_root(path, 1);
-    if (lhs) {
-	snprintf(where, MAX_WHERE_SIZE, "\tBRLCAD_ROOT common data path  [%s]\n", path);
-	if (find_path(result, lhs, rhs, &searched, where)) {
-	    if (UNLIKELY(bu_debug & BU_DEBUG_PATHS)) {
-		bu_log("Found: BRLCAD_ROOT common data path [%s]\n", result);
+    {
+	char path[MAXPATHLEN] = {0};
+	snprintf(path, MAXPATHLEN, "%s", BRLCAD_DATA_DIR);
+	lhs = bu_brlcad_root(path, 1);
+	if (lhs) {
+	    snprintf(where, MAX_WHERE_SIZE, "\tBRLCAD_ROOT common data path  [%s]\n", path);
+	    if (find_path(result, lhs, rhs, &searched, where)) {
+		if (UNLIKELY(bu_debug & BU_DEBUG_PATHS)) {
+		    bu_log("Found: BRLCAD_ROOT common data path [%s]\n", result);
+		}
+		bu_vls_free(&searched);
+		return result;
 	    }
-	    bu_vls_free(&searched);
-	    return result;
 	}
     }
 #endif
