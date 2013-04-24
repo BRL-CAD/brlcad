@@ -33,6 +33,12 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* The sph wireframe drawing routine doesn't seem to like drawing very
+  small spheres far from the origin:
+
+  in test_2.s sph 1, 2, 1 0.0007  (draws a sphere wireframe correctly)
+  in test_1.s sph 10000 -15000 3000 0.0007 (incorrect wireframe)
+
 * use spatial partitioning during boolean processing of polygonal
   meshes.  good approach might be to generalize TIE's kd-tree to
   polygons or even create a new scheme (e.g., an integer-indexed grid
