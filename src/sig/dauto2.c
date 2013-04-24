@@ -39,8 +39,7 @@ int	clip[BSIZE];		/* clipped buffer */
 int	out[BSIZE];
 double	r[BSIZE];
 
-static const char usage[] = "\
-Usage: dauto2 [window_size (512)] < doubles\n";
+static const char usage[] = "Usage: dauto2 [window_size (512)] < doubles >outputfile\n";
 
 int main(int argc, char **argv)
 {
