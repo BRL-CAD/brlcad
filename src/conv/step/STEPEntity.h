@@ -70,7 +70,7 @@ public:
 	void SetONId(int on_id) {ON_id = on_id;}
 	int STEPid();
 	STEPWrapper *Step();
-	bool Load(STEPWrapper *UNUSED(sw), SDAI_Application_instance *UNUSED(sse)) {return false;};
+	virtual bool Load(STEPWrapper *UNUSED(sw), SDAI_Application_instance *UNUSED(sse)) {return false;};
 };
 
 
