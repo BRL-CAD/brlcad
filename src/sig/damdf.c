@@ -39,8 +39,7 @@
 double	data[BSIZE];		/* Input buffer */
 double	r[BSIZE];
 
-static const char usage[] = "\
-Usage: damdf [window_size (512)] < doubles >outputfile\n";
+static const char usage[] = "Usage: damdf [window_size (512)] < doubles >outputfile\n";
 
 int main(int argc, char **argv)
 {
