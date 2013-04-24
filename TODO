@@ -18,23 +18,16 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
-* report of massive mged memory leak drawing large complex geometry,
-  need to check wireframe lod work and recent memory management
-  changes.
-
-* test arbn v5 import/export (make sure plane equations are not
-  corrupted).
-
-* closing the graphics window brings down X11 on Mac due to a bad
-  context.  fix or revert recent close window behavior.
-
-* investigate INFINITY spatial partitioning issue.
+* TBD
 
 
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------------
 
-* TBD.
+* investigate INFINITY spatial partitioning issue.
+
+* closing the graphics window brings down X11 on Mac due to a bad
+  context.  fix or revert recent close window behavior.
 
 
 THESE ARE UNSCHEDULED BACKLOG TASKS
