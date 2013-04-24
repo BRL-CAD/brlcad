@@ -2,9 +2,9 @@ BRLCAD_ADDEXEC(test_dvec test_dvec.cpp "librt" NOSTRICT NO_INSTALL LOCAL)
 add_test(test_dvec test_dvec)
 
 # NURBS testing
-#BRLCAD_ADDEXEC(nurbs_tester nurbs_tests.cpp "librt;libbrep;libbu" NO_INSTALL LOCAL)
+BRLCAD_ADDEXEC(nurbs_tester nurbs_tests.cpp "librt;libbrep;libbu" NO_INSTALL LOCAL)
 
-#add_test(NURBS-get_closest_point-distinct_points nurbs_tester ${CMAKE_CURRENT_SOURCE_DIR}/nurbs_surfaces.g 1)
+add_test(NURBS-get_closest_point-distinct_points nurbs_tester ${CMAKE_CURRENT_SOURCE_DIR}/nurbs_surfaces.g 1)
 
 CMAKEFILES(nurbs_surfaces.g)
 
