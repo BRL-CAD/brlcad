@@ -45,19 +45,22 @@
 string Representation::entityname = Factory::RegisterClass(ENTITYNAME, (FactoryMethod)Representation::Create);
 
 
-Representation::Representation() {
+Representation::Representation()
+{
     step = NULL;
     id = 0;
 }
 
 
-Representation::Representation(STEPWrapper *sw, int step_id) {
+Representation::Representation(STEPWrapper *sw, int step_id)
+{
     step = sw;
     id = step_id;
 }
 
 
-Representation::~Representation() {
+Representation::~Representation()
+{
     /*
       LIST_OF_REPRESENTATION_ITEMS::iterator i = items.begin();
 
@@ -78,7 +81,7 @@ Representation::~Representation() {
 	LIST_OF_REPRESENTATION_CONTEXT::iterator ic = context_of_items.begin();
 
 	while (ic != context_of_items.end()) {
-	    delete (*ic);
+	    delete(*ic);
 	    ic = context_of_items.erase(ic);
 	}
     } else {
@@ -88,7 +91,8 @@ Representation::~Representation() {
 
 
 double
-Representation::GetLengthConversionFactor() {
+Representation::GetLengthConversionFactor()
+{
     LIST_OF_REPRESENTATION_CONTEXT::iterator i = context_of_items.begin();
 
     while (i != context_of_items.end()) {
@@ -103,7 +107,8 @@ Representation::GetLengthConversionFactor() {
 
 
 double
-Representation::GetPlaneAngleConversionFactor() {
+Representation::GetPlaneAngleConversionFactor()
+{
     LIST_OF_REPRESENTATION_CONTEXT::iterator i = context_of_items.begin();
 
     while (i != context_of_items.end()) {
@@ -118,7 +123,8 @@ Representation::GetPlaneAngleConversionFactor() {
 
 
 double
-Representation::GetSolidAngleConversionFactor() {
+Representation::GetSolidAngleConversionFactor()
+{
     LIST_OF_REPRESENTATION_CONTEXT::iterator i = context_of_items.begin();
 
     while (i != context_of_items.end()) {
@@ -150,8 +156,9 @@ bool Representation::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 	    SDAI_Application_instance *entity = (*i);
 	    if (entity) {
 		RepresentationItem *aRI = dynamic_cast<RepresentationItem *>(Factory::CreateObject(sw, entity));
-		if (aRI != NULL)
+		if (aRI != NULL) {
 		    items.push_back(aRI);
+		}
 	    } else {
 		std::cerr << CLASSNAME << ": Unhandled entity in attribute 'items'." << std::endl;
 		l->clear();
@@ -229,33 +236,39 @@ bool Representation::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 
 
 void
-Representation::Print(int level) {
-    TAB(level); std::cout << CLASSNAME << ":" << name << "(";
+Representation::Print(int level)
+{
+    TAB(level);
+    std::cout << CLASSNAME << ":" << name << "(";
     std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-    TAB(level+1); std::cout << "items:" << std::endl;
+    TAB(level + 1);
+    std::cout << "items:" << std::endl;
     LIST_OF_REPRESENTATION_ITEMS::iterator i;
-    for (i=items.begin(); i != items.end(); ++i) {
+    for (i = items.begin(); i != items.end(); ++i) {
 	//ManifoldSolidBrep *msb = (ManifoldSolidBrep *)(*i);
-	(*i)->Print(level+1);
+	(*i)->Print(level + 1);
 	//(*i)->LoadONBrep((ON_Brep *)NULL);
-	(*i)->Print(level+1);
+	(*i)->Print(level + 1);
     }
 
-    TAB(level+1); std::cout << "context_of_items:" << std::endl;
+    TAB(level + 1);
+    std::cout << "context_of_items:" << std::endl;
     LIST_OF_REPRESENTATION_CONTEXT::iterator ic;
-    for (ic=context_of_items.begin(); ic != context_of_items.end(); ++ic) {
-	(*ic)->Print(level+1);
+    for (ic = context_of_items.begin(); ic != context_of_items.end(); ++ic) {
+	(*ic)->Print(level + 1);
     }
 }
 
 STEPEntity *
-Representation::GetInstance(STEPWrapper *sw, int id) {
+Representation::GetInstance(STEPWrapper *sw, int id)
+{
     return new Representation(sw, id);
 }
 
 STEPEntity *
-Representation::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
+Representation::Create(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
     return STEPEntity::CreateEntity(sw, sse, GetInstance, CLASSNAME);
 }
 

@@ -30,22 +30,23 @@
 #include "ElectricCurrentUnit.h"
 #include "SiUnit.h"
 
-class ElectricCurrentSiUnit : public ElectricCurrentUnit, public SiUnit {
+class ElectricCurrentSiUnit : public ElectricCurrentUnit, public SiUnit
+{
 private:
-	static string entityname;
-	static EntityInstanceFunc GetInstance;
+    static string entityname;
+    static EntityInstanceFunc GetInstance;
 
 protected:
 
 public:
-	ElectricCurrentSiUnit();
-	virtual ~ElectricCurrentSiUnit();
-	ElectricCurrentSiUnit(STEPWrapper *sw,int step_id);
-	bool Load(STEPWrapper *sw,SDAI_Application_instance *sse);
-	virtual void Print(int level);
+    ElectricCurrentSiUnit();
+    virtual ~ElectricCurrentSiUnit();
+    ElectricCurrentSiUnit(STEPWrapper *sw, int step_id);
+    bool Load(STEPWrapper *sw, SDAI_Application_instance *sse);
+    virtual void Print(int level);
 
-	//static methods
-	static STEPEntity *Create(STEPWrapper *sw,SDAI_Application_instance *sse);
+    //static methods
+    static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
 #endif /* ELECTRICCURRENTSIUNIT_H_ */

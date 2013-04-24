@@ -29,23 +29,24 @@
 
 #include "BSplineSurface.h"
 
-class UniformSurface : virtual public BSplineSurface {
+class UniformSurface : virtual public BSplineSurface
+{
 private:
-	static string entityname;
-	static EntityInstanceFunc GetInstance;
+    static string entityname;
+    static EntityInstanceFunc GetInstance;
 
 protected:
 
 public:
-	UniformSurface();
-	virtual ~UniformSurface();
-	UniformSurface(STEPWrapper *sw,int step_id);
-	bool Load(STEPWrapper *sw,SDAI_Application_instance *sse);
-	virtual bool LoadONBrep(ON_Brep *brep);
-	virtual void Print(int level);
+    UniformSurface();
+    virtual ~UniformSurface();
+    UniformSurface(STEPWrapper *sw, int step_id);
+    bool Load(STEPWrapper *sw, SDAI_Application_instance *sse);
+    virtual bool LoadONBrep(ON_Brep *brep);
+    virtual void Print(int level);
 
-	//static methods
-	static STEPEntity *Create(STEPWrapper *sw,SDAI_Application_instance *sse);
+    //static methods
+    static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
 #endif /* UNIFORMSURFACE_H_ */

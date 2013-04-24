@@ -32,56 +32,62 @@
 
 #define CLASSNAME "Edge"
 #define ENTITYNAME "Edge"
-string Edge::entityname = Factory::RegisterClass(ENTITYNAME,(FactoryMethod)Edge::Create);
+string Edge::entityname = Factory::RegisterClass(ENTITYNAME, (FactoryMethod)Edge::Create);
 
-Edge::Edge() {
+Edge::Edge()
+{
     step = NULL;
     id = 0;
     edge_start = NULL;
     edge_end = NULL;
 }
 
-Edge::Edge(STEPWrapper *sw,int step_id) {
+Edge::Edge(STEPWrapper *sw, int step_id)
+{
     step = sw;
     id = step_id;
     edge_start = NULL;
     edge_end = NULL;
 }
 
-Edge::~Edge() {
+Edge::~Edge()
+{
     edge_start = NULL;
     edge_end = NULL;
 }
 
 bool
-Edge::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
-    step=sw;
+Edge::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
+    step = sw;
     id = sse->STEPfile_id;
 
-    if ( !TopologicalRepresentationItem::Load(step,sse) ) {
+    if (!TopologicalRepresentationItem::Load(step, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::TopologicalRepresentationItem." << std::endl;
 	return false;
     }
 
     // need to do this for local attributes to makes sure we have
     // the actual entity and not a complex/supertype parent
-    sse = step->getEntity(sse,ENTITYNAME);
+    sse = step->getEntity(sse, ENTITYNAME);
 
     if (edge_start == NULL) {
-	SDAI_Application_instance *entity = step->getEntityAttribute(sse,"edge_start");
+	SDAI_Application_instance *entity = step->getEntityAttribute(sse, "edge_start");
 	if (entity) {
-	    if (entity->STEPfile_id > 0)
-		edge_start = dynamic_cast<Vertex *>(Factory::CreateObject(sw,entity));
+	    if (entity->STEPfile_id > 0) {
+		edge_start = dynamic_cast<Vertex *>(Factory::CreateObject(sw, entity));
+	    }
 	} else {
 	    std::cout << CLASSNAME << ":Error loading attribute edge_start" << std::endl;
 	    return false;
 	}
     }
     if (edge_end == NULL) {
-	SDAI_Application_instance *entity = step->getEntityAttribute(sse,"edge_end");
+	SDAI_Application_instance *entity = step->getEntityAttribute(sse, "edge_end");
 	if (entity) {
-	    if (entity->STEPfile_id > 0)
-		edge_end = dynamic_cast<Vertex *>(Factory::CreateObject(sw,entity));
+	    if (entity->STEPfile_id > 0) {
+		edge_end = dynamic_cast<Vertex *>(Factory::CreateObject(sw, entity));
+	    }
 	} else {
 	    std::cout << CLASSNAME << ":Error loading attribute edge_end" << std::endl;
 	    return false;
@@ -91,25 +97,36 @@ Edge::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
 }
 
 void
-Edge::Print(int level) {
-    TAB(level); std::cout << CLASSNAME << ":" << name << "(";
+Edge::Print(int level)
+{
+    TAB(level);
+    std::cout << CLASSNAME << ":" << name << "(";
     std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-    TAB(level); std::cout << "Attributes:" << std::endl;
-    TAB(level+1); std::cout << "edge_start:" << std::endl;
-    if (edge_start) edge_start->Print(level+1);
+    TAB(level);
+    std::cout << "Attributes:" << std::endl;
+    TAB(level + 1);
+    std::cout << "edge_start:" << std::endl;
+    if (edge_start) {
+	edge_start->Print(level + 1);
+    }
 
-    TAB(level+1); std::cout << "edge_end:" << std::endl;
-    if (edge_end) edge_end->Print(level+1);
+    TAB(level + 1);
+    std::cout << "edge_end:" << std::endl;
+    if (edge_end) {
+	edge_end->Print(level + 1);
+    }
 }
 
 STEPEntity *
-Edge::GetInstance(STEPWrapper *sw, int id) {
+Edge::GetInstance(STEPWrapper *sw, int id)
+{
     return new Edge(sw, id);
 }
 
 STEPEntity *
-Edge::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
+Edge::Create(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
     return STEPEntity::CreateEntity(sw, sse, GetInstance, CLASSNAME);
 }
 

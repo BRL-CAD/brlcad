@@ -29,28 +29,33 @@
 
 #include "Conic.h"
 
-class Parabola : public Conic {
+class Parabola : public Conic
+{
 private:
-	static string entityname;
-	static EntityInstanceFunc GetInstance;
+    static string entityname;
+    static EntityInstanceFunc GetInstance;
 
 protected:
-	double focal_dist;
+    double focal_dist;
 
-	Parabola();
-	Parabola(STEPWrapper *sw,int step_id);
+    Parabola();
+    Parabola(STEPWrapper *sw, int step_id);
 
 public:
-	virtual ~Parabola();
-	virtual curve_type CurveType() { return CONIC; };
-	virtual conic_type ConicType() { return PARABOLA; };
-	bool Load(STEPWrapper *sw,SDAI_Application_instance *sse);
-	virtual bool LoadONBrep(ON_Brep *brep);
-	virtual void Print(int level);
-	virtual void SetParameterTrim(double start, double end);
+    virtual ~Parabola();
+    virtual curve_type CurveType() {
+	return CONIC;
+    };
+    virtual conic_type ConicType() {
+	return PARABOLA;
+    };
+    bool Load(STEPWrapper *sw, SDAI_Application_instance *sse);
+    virtual bool LoadONBrep(ON_Brep *brep);
+    virtual void Print(int level);
+    virtual void SetParameterTrim(double start, double end);
 
-	//static methods
-	static STEPEntity *Create(STEPWrapper *sw,SDAI_Application_instance *sse);
+    //static methods
+    static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
 #endif /* PARABOLA_H_ */

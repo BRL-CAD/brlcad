@@ -31,33 +31,37 @@
 
 #define CLASSNAME "LuminousIntensityContextDependentUnit"
 #define ENTITYNAME "Luminous_Intensity_Context_Dependent_Unit"
-string LuminousIntensityContextDependentUnit::entityname = Factory::RegisterClass(ENTITYNAME,(FactoryMethod)LuminousIntensityContextDependentUnit::Create);
+string LuminousIntensityContextDependentUnit::entityname = Factory::RegisterClass(ENTITYNAME, (FactoryMethod)LuminousIntensityContextDependentUnit::Create);
 
-LuminousIntensityContextDependentUnit::LuminousIntensityContextDependentUnit() {
+LuminousIntensityContextDependentUnit::LuminousIntensityContextDependentUnit()
+{
     step = NULL;
     id = 0;
 }
 
-LuminousIntensityContextDependentUnit::LuminousIntensityContextDependentUnit(STEPWrapper *sw,int step_id) {
+LuminousIntensityContextDependentUnit::LuminousIntensityContextDependentUnit(STEPWrapper *sw, int step_id)
+{
     step = sw;
     id = step_id;
 }
 
-LuminousIntensityContextDependentUnit::~LuminousIntensityContextDependentUnit() {
+LuminousIntensityContextDependentUnit::~LuminousIntensityContextDependentUnit()
+{
 }
 
 bool
-LuminousIntensityContextDependentUnit::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
-    step=sw;
+LuminousIntensityContextDependentUnit::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
+    step = sw;
     id = sse->STEPfile_id;
 
 
     // load base class attributes
-    if ( !LuminousIntensityUnit::Load(step,sse) ) {
+    if (!LuminousIntensityUnit::Load(step, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::Unit." << std::endl;
 	return false;
     }
-    if ( !ContextDependentUnit::Load(step,sse) ) {
+    if (!ContextDependentUnit::Load(step, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::Unit." << std::endl;
 	return false;
     }
@@ -66,23 +70,28 @@ LuminousIntensityContextDependentUnit::Load(STEPWrapper *sw,SDAI_Application_ins
 }
 
 void
-LuminousIntensityContextDependentUnit::Print(int level) {
-    TAB(level); std::cout << CLASSNAME << ":" << "(";
+LuminousIntensityContextDependentUnit::Print(int level)
+{
+    TAB(level);
+    std::cout << CLASSNAME << ":" << "(";
     std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-    TAB(level); std::cout << "Inherited Attributes:" << std::endl;
-    LuminousIntensityUnit::Print(level+1);
-    ContextDependentUnit::Print(level+1);
+    TAB(level);
+    std::cout << "Inherited Attributes:" << std::endl;
+    LuminousIntensityUnit::Print(level + 1);
+    ContextDependentUnit::Print(level + 1);
 
 }
 
 STEPEntity *
-LuminousIntensityContextDependentUnit::GetInstance(STEPWrapper *sw, int id) {
+LuminousIntensityContextDependentUnit::GetInstance(STEPWrapper *sw, int id)
+{
     return new LuminousIntensityContextDependentUnit(sw, id);
 }
 
 STEPEntity *
-LuminousIntensityContextDependentUnit::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
+LuminousIntensityContextDependentUnit::Create(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
     return STEPEntity::CreateEntity(sw, sse, GetInstance, CLASSNAME);
 }
 

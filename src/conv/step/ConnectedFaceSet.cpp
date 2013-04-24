@@ -31,19 +31,22 @@
 
 #define CLASSNAME "ConnectedFaceSet"
 #define ENTITYNAME "Connected_Face_Set"
-string ConnectedFaceSet::entityname = Factory::RegisterClass(ENTITYNAME,(FactoryMethod)ConnectedFaceSet::Create);
+string ConnectedFaceSet::entityname = Factory::RegisterClass(ENTITYNAME, (FactoryMethod)ConnectedFaceSet::Create);
 
-ConnectedFaceSet::ConnectedFaceSet() {
+ConnectedFaceSet::ConnectedFaceSet()
+{
     step = NULL;
     id = 0;
 }
 
-ConnectedFaceSet::ConnectedFaceSet(STEPWrapper *sw,int step_id) {
+ConnectedFaceSet::ConnectedFaceSet(STEPWrapper *sw, int step_id)
+{
     step = sw;
     id = step_id;
 }
 
-ConnectedFaceSet::~ConnectedFaceSet() {
+ConnectedFaceSet::~ConnectedFaceSet()
+{
     /*
       LIST_OF_FACES::iterator i = cfs_faces.begin();
 
@@ -56,26 +59,27 @@ ConnectedFaceSet::~ConnectedFaceSet() {
 }
 
 bool
-ConnectedFaceSet::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
-    step=sw;
+ConnectedFaceSet::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
+    step = sw;
     id = sse->STEPfile_id;
 
-    if ( !TopologicalRepresentationItem::Load(step,sse) ) {
+    if (!TopologicalRepresentationItem::Load(step, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::TopologicalRepresentationItem." << std::endl;
 	return false;
     }
 
     // need to do this for local attributes to makes sure we have
     // the actual entity and not a complex/supertype parent
-    sse = step->getEntity(sse,ENTITYNAME);
+    sse = step->getEntity(sse, ENTITYNAME);
 
     if (cfs_faces.empty()) {
-	LIST_OF_ENTITIES *l = step->getListOfEntities(sse,"cfs_faces");
+	LIST_OF_ENTITIES *l = step->getListOfEntities(sse, "cfs_faces");
 	LIST_OF_ENTITIES::iterator i;
-	for(i=l->begin();i!=l->end();i++) {
+	for (i = l->begin(); i != l->end(); i++) {
 	    SDAI_Application_instance *entity = (*i);
 	    if (entity) {
-		Face *aAF = dynamic_cast<Face *>(Factory::CreateObject(sw,entity)); //CreateSurfaceObject(sw,entity));
+		Face *aAF = dynamic_cast<Face *>(Factory::CreateObject(sw, entity)); //CreateSurfaceObject(sw,entity));
 
 		cfs_faces.push_back(aAF);
 	    } else {
@@ -93,36 +97,44 @@ ConnectedFaceSet::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
 }
 
 void
-ConnectedFaceSet::Print(int level) {
-    TAB(level); std::cout << CLASSNAME << ":" << name << "(";
+ConnectedFaceSet::Print(int level)
+{
+    TAB(level);
+    std::cout << CLASSNAME << ":" << name << "(";
     std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-    TAB(level); std::cout << "Attributes:" << std::endl;
-    TAB(level+1); std::cout << "cfs_faces:" << std::endl;
+    TAB(level);
+    std::cout << "Attributes:" << std::endl;
+    TAB(level + 1);
+    std::cout << "cfs_faces:" << std::endl;
     LIST_OF_FACES::iterator i;
-    for(i=cfs_faces.begin(); i != cfs_faces.end(); ++i) {
-	(*i)->Print(level+1);
+    for (i = cfs_faces.begin(); i != cfs_faces.end(); ++i) {
+	(*i)->Print(level + 1);
     }
 
-    TAB(level); std::cout << "Inherited Attributes:" << std::endl;
-    TopologicalRepresentationItem::Print(level+1);
+    TAB(level);
+    std::cout << "Inherited Attributes:" << std::endl;
+    TopologicalRepresentationItem::Print(level + 1);
 }
 
 void
-ConnectedFaceSet::ReverseFaceSet() {
-	LIST_OF_FACES::iterator i;
-	for(i=cfs_faces.begin(); i != cfs_faces.end(); ++i) {
-		(*i)->ReverseFace();
-	}
+ConnectedFaceSet::ReverseFaceSet()
+{
+    LIST_OF_FACES::iterator i;
+    for (i = cfs_faces.begin(); i != cfs_faces.end(); ++i) {
+	(*i)->ReverseFace();
+    }
 }
 
 STEPEntity *
-ConnectedFaceSet::GetInstance(STEPWrapper *sw, int id) {
+ConnectedFaceSet::GetInstance(STEPWrapper *sw, int id)
+{
     return new ConnectedFaceSet(sw, id);
 }
 
 STEPEntity *
-ConnectedFaceSet::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
+ConnectedFaceSet::Create(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
     return STEPEntity::CreateEntity(sw, sse, GetInstance, CLASSNAME);
 }
 
@@ -136,9 +148,9 @@ ConnectedFaceSet::LoadONBrep(ON_Brep *brep)
 
     LIST_OF_FACES::iterator i;
     int facecnt = 0;
-    for(i=cfs_faces.begin(); i != cfs_faces.end(); ++i) {
+    for (i = cfs_faces.begin(); i != cfs_faces.end(); ++i) {
 	//if (facecnt == 5)
-	if ( !(*i)->LoadONBrep(brep) ) {
+	if (!(*i)->LoadONBrep(brep)) {
 	    std::cerr << "Error: " << entityname << "::LoadONBrep() - Error loading openNURBS brep." << std::endl;
 	    return false;
 	}

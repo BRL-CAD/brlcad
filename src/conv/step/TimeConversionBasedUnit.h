@@ -30,22 +30,23 @@
 #include "TimeUnit.h"
 #include "ConversionBasedUnit.h"
 
-class TimeConversionBasedUnit : public TimeUnit, public ConversionBasedUnit {
+class TimeConversionBasedUnit : public TimeUnit, public ConversionBasedUnit
+{
 private:
-	static string entityname;
-	static EntityInstanceFunc GetInstance;
+    static string entityname;
+    static EntityInstanceFunc GetInstance;
 
 protected:
 
 public:
-	TimeConversionBasedUnit();
-	virtual ~TimeConversionBasedUnit();
-	TimeConversionBasedUnit(STEPWrapper *sw,int step_id);
-	bool Load(STEPWrapper *sw,SDAI_Application_instance *sse);
-	virtual void Print(int level);
+    TimeConversionBasedUnit();
+    virtual ~TimeConversionBasedUnit();
+    TimeConversionBasedUnit(STEPWrapper *sw, int step_id);
+    bool Load(STEPWrapper *sw, SDAI_Application_instance *sse);
+    virtual void Print(int level);
 
-	//static methods
-	static STEPEntity *Create(STEPWrapper *sw,SDAI_Application_instance *sse);
+    //static methods
+    static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
 #endif /* TIMECONVERSIONBASEDUNIT_H_ */

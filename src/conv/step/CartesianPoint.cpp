@@ -30,47 +30,51 @@
 
 #define CLASSNAME "CartesianPoint"
 #define ENTITYNAME "Cartesian_Point"
-string CartesianPoint::entityname = Factory::RegisterClass(ENTITYNAME,(FactoryMethod)CartesianPoint::Create);
+string CartesianPoint::entityname = Factory::RegisterClass(ENTITYNAME, (FactoryMethod)CartesianPoint::Create);
 
-CartesianPoint::CartesianPoint() {
+CartesianPoint::CartesianPoint()
+{
     step = NULL;
     id = 0;
     vertex_index = -1;
     coordinates[0] = coordinates[1] = coordinates[2] = 0.0;
 }
 
-CartesianPoint::CartesianPoint(STEPWrapper *sw,int step_id) {
+CartesianPoint::CartesianPoint(STEPWrapper *sw, int step_id)
+{
     step = sw;
     id = step_id;
     vertex_index = -1;
     coordinates[0] = coordinates[1] = coordinates[2] = 0.0;
 }
 
-CartesianPoint::~CartesianPoint() {
+CartesianPoint::~CartesianPoint()
+{
 }
 
 bool
-CartesianPoint::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
-    step=sw;
+CartesianPoint::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
+    step = sw;
     id = sse->STEPfile_id;
 
 
     // load base class attributes
-    if ( !Point::Load(step,sse) ) {
+    if (!Point::Load(step, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::Point." << std::endl;
 	return false;
     }
 
     // need to do this for local attributes to makes sure we have
     // the actual entity and not a complex/supertype parent
-    sse = step->getEntity(sse,ENTITYNAME);
+    sse = step->getEntity(sse, ENTITYNAME);
 
-    STEPattribute *attr = step->getAttribute(sse,"coordinates");
+    STEPattribute *attr = step->getAttribute(sse, "coordinates");
     if (attr != NULL) {
 	STEPaggregate *sa = (STEPaggregate *)(attr->ptr.a);
 	RealNode *rn = (RealNode *)sa->GetHead();
 	int index = 0;
-    while (( rn != NULL) && (index < 3)){
+	while ((rn != NULL) && (index < 3)) {
 	    coordinates[index++] = rn->value;
 	    rn = (RealNode *)rn->NextNode();
 	}
@@ -81,27 +85,34 @@ CartesianPoint::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
 }
 
 void
-CartesianPoint::Print(int level) {
-    TAB(level); std::cout << CLASSNAME << ":" << name << "(";
+CartesianPoint::Print(int level)
+{
+    TAB(level);
+    std::cout << CLASSNAME << ":" << name << "(";
     std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-    TAB(level); std::cout << "Attributes:" << std::endl;
-    TAB(level+1); std::cout << "coordinate:";
+    TAB(level);
+    std::cout << "Attributes:" << std::endl;
+    TAB(level + 1);
+    std::cout << "coordinate:";
     std::cout << "(" << coordinates[0] << ",";
     std::cout << coordinates[1] << ",";
     std::cout << coordinates[2] << ")" << std::endl;
 
-    TAB(level); std::cout << "Inherited Attributes:" << std::endl;
-    Point::Print(level+1);
+    TAB(level);
+    std::cout << "Inherited Attributes:" << std::endl;
+    Point::Print(level + 1);
 }
 
 STEPEntity *
-CartesianPoint::GetInstance(STEPWrapper *sw, int id) {
+CartesianPoint::GetInstance(STEPWrapper *sw, int id)
+{
     return new CartesianPoint(sw, id);
 }
 
 STEPEntity *
-CartesianPoint::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
+CartesianPoint::Create(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
     return STEPEntity::CreateEntity(sw, sse, GetInstance, CLASSNAME);
 }
 

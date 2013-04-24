@@ -34,33 +34,37 @@
 
 #define CLASSNAME "PlaneAngleConversionBasedUnit"
 #define ENTITYNAME "Plane_Angle_Conversion_Based_Unit"
-string PlaneAngleConversionBasedUnit::entityname = Factory::RegisterClass(ENTITYNAME,(FactoryMethod)PlaneAngleConversionBasedUnit::Create);
+string PlaneAngleConversionBasedUnit::entityname = Factory::RegisterClass(ENTITYNAME, (FactoryMethod)PlaneAngleConversionBasedUnit::Create);
 
-PlaneAngleConversionBasedUnit::PlaneAngleConversionBasedUnit() {
+PlaneAngleConversionBasedUnit::PlaneAngleConversionBasedUnit()
+{
     step = NULL;
     id = 0;
 }
 
-PlaneAngleConversionBasedUnit::PlaneAngleConversionBasedUnit(STEPWrapper *sw,int step_id) {
+PlaneAngleConversionBasedUnit::PlaneAngleConversionBasedUnit(STEPWrapper *sw, int step_id)
+{
     step = sw;
     id = step_id;
 }
 
-PlaneAngleConversionBasedUnit::~PlaneAngleConversionBasedUnit() {
+PlaneAngleConversionBasedUnit::~PlaneAngleConversionBasedUnit()
+{
 }
 
 bool
-PlaneAngleConversionBasedUnit::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
-    step=sw;
+PlaneAngleConversionBasedUnit::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
+    step = sw;
     id = sse->STEPfile_id;
 
 
     // load base class attributes
-    if ( !PlaneAngleUnit::Load(step,sse) ) {
+    if (!PlaneAngleUnit::Load(step, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::Unit." << std::endl;
 	return false;
     }
-    if ( !ConversionBasedUnit::Load(step,sse) ) {
+    if (!ConversionBasedUnit::Load(step, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::Unit." << std::endl;
 	return false;
     }
@@ -69,23 +73,28 @@ PlaneAngleConversionBasedUnit::Load(STEPWrapper *sw,SDAI_Application_instance *s
 }
 
 void
-PlaneAngleConversionBasedUnit::Print(int level) {
-    TAB(level); std::cout << CLASSNAME << ":" << "(";
+PlaneAngleConversionBasedUnit::Print(int level)
+{
+    TAB(level);
+    std::cout << CLASSNAME << ":" << "(";
     std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-    TAB(level); std::cout << "Inherited Attributes:" << std::endl;
-    PlaneAngleUnit::Print(level+1);
-    ConversionBasedUnit::Print(level+1);
+    TAB(level);
+    std::cout << "Inherited Attributes:" << std::endl;
+    PlaneAngleUnit::Print(level + 1);
+    ConversionBasedUnit::Print(level + 1);
 
 }
 
 STEPEntity *
-PlaneAngleConversionBasedUnit::GetInstance(STEPWrapper *sw, int id) {
+PlaneAngleConversionBasedUnit::GetInstance(STEPWrapper *sw, int id)
+{
     return new PlaneAngleConversionBasedUnit(sw, id);
 }
 
 STEPEntity *
-PlaneAngleConversionBasedUnit::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
+PlaneAngleConversionBasedUnit::Create(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
     return STEPEntity::CreateEntity(sw, sse, GetInstance, CLASSNAME);
 }
 

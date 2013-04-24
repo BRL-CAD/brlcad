@@ -36,69 +36,75 @@
 
 #define CLASSNAME "Line"
 #define ENTITYNAME "Line"
-string Line::entityname = Factory::RegisterClass(ENTITYNAME,(FactoryMethod)Line::Create);
+string Line::entityname = Factory::RegisterClass(ENTITYNAME, (FactoryMethod)Line::Create);
 
-Line::Line() {
+Line::Line()
+{
     step = NULL;
     id = 0;
     pnt = NULL;
     dir = NULL;
 }
 
-Line::Line(STEPWrapper *sw,int step_id) {
+Line::Line(STEPWrapper *sw, int step_id)
+{
     step = sw;
     id = step_id;
     pnt = NULL;
     dir = NULL;
 }
 
-Line::~Line() {
+Line::~Line()
+{
 }
 
 void
-Line::StartPoint(double *p) {
-    VMOVE(p,pnt->Coordinates());
+Line::StartPoint(double *p)
+{
+    VMOVE(p, pnt->Coordinates());
     return;
 }
 
 void
-Line::EndPoint(double *p) {
+Line::EndPoint(double *p)
+{
     double d[3];
     double mag = dir->Magnitude();
 
-    VMOVE(d,dir->Orientation());
-    VSCALE(d,d,mag);
-    VADD2(p,pnt->Coordinates(),d);
+    VMOVE(d, dir->Orientation());
+    VSCALE(d, d, mag);
+    VADD2(p, pnt->Coordinates(), d);
     return;
 }
 
 bool
-Line::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
-    step=sw;
+Line::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
+    step = sw;
     id = sse->STEPfile_id;
 
-    if ( !Curve::Load(sw,sse) ) {
+    if (!Curve::Load(sw, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::Curve." << std::endl;
 	return false;
     }
 
     // need to do this for local attributes to makes sure we have
     // the actual entity and not a complex/supertype parent
-    sse = step->getEntity(sse,ENTITYNAME);
+    sse = step->getEntity(sse, ENTITYNAME);
 
     if (pnt == NULL) {
-	SDAI_Application_instance *entity = step->getEntityAttribute(sse,"pnt");
+	SDAI_Application_instance *entity = step->getEntityAttribute(sse, "pnt");
 	if (entity != NULL) {
-	    pnt = dynamic_cast<CartesianPoint *>(Factory::CreateObject(sw,entity));
+	    pnt = dynamic_cast<CartesianPoint *>(Factory::CreateObject(sw, entity));
 	} else {
 	    std::cout << CLASSNAME << ":Error loading member field \"pnt\"." << std::endl;
 	    return false;
 	}
     }
     if (dir == NULL) {
-	SDAI_Application_instance *entity = step->getEntityAttribute(sse,"dir");
+	SDAI_Application_instance *entity = step->getEntityAttribute(sse, "dir");
 	if (entity != NULL) {
-	    dir = dynamic_cast<Vector *>(Factory::CreateObject(sw,entity));
+	    dir = dynamic_cast<Vector *>(Factory::CreateObject(sw, entity));
 	} else {
 	    std::cout << CLASSNAME << ":Error loading member field \"dir\"." << std::endl;
 	    return false;
@@ -122,25 +128,31 @@ return NULL;
 */
 
 void
-Line::Print(int level) {
-    TAB(level); std::cout << CLASSNAME << ":" << name << "(";
+Line::Print(int level)
+{
+    TAB(level);
+    std::cout << CLASSNAME << ":" << name << "(";
     std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-    TAB(level); std::cout << "Attributes:" << std::endl;
-    pnt->Print(level+1);
-    dir->Print(level+1);
+    TAB(level);
+    std::cout << "Attributes:" << std::endl;
+    pnt->Print(level + 1);
+    dir->Print(level + 1);
 
-    TAB(level); std::cout << "Inherited Attributes:" << std::endl;
-    Curve::Print(level+1);
+    TAB(level);
+    std::cout << "Inherited Attributes:" << std::endl;
+    Curve::Print(level + 1);
 }
 
 STEPEntity *
-Line::GetInstance(STEPWrapper *sw, int id) {
+Line::GetInstance(STEPWrapper *sw, int id)
+{
     return new Line(sw, id);
 }
 
 STEPEntity *
-Line::Create(STEPWrapper *sw,SDAI_Application_instance *sse){
+Line::Create(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
     return STEPEntity::CreateEntity(sw, sse, GetInstance, CLASSNAME);
 }
 

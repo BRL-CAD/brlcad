@@ -31,29 +31,33 @@
 
 #define CLASSNAME "SolidAngleUnit"
 #define ENTITYNAME "Solid_Angle_Unit"
-string SolidAngleUnit::entityname = Factory::RegisterClass(ENTITYNAME,(FactoryMethod)SolidAngleUnit::Create);
+string SolidAngleUnit::entityname = Factory::RegisterClass(ENTITYNAME, (FactoryMethod)SolidAngleUnit::Create);
 
-SolidAngleUnit::SolidAngleUnit() {
+SolidAngleUnit::SolidAngleUnit()
+{
     step = NULL;
     id = 0;
 }
 
-SolidAngleUnit::SolidAngleUnit(STEPWrapper *sw,int step_id) {
+SolidAngleUnit::SolidAngleUnit(STEPWrapper *sw, int step_id)
+{
     step = sw;
     id = step_id;
 }
 
-SolidAngleUnit::~SolidAngleUnit() {
+SolidAngleUnit::~SolidAngleUnit()
+{
 }
 
 bool
-SolidAngleUnit::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
-    step=sw;
+SolidAngleUnit::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
+    step = sw;
     id = sse->STEPfile_id;
 
 
     // load base class attributes
-    if ( !NamedUnit::Load(step,sse) ) {
+    if (!NamedUnit::Load(step, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::Unit." << std::endl;
 	return false;
     }
@@ -62,22 +66,27 @@ SolidAngleUnit::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
 }
 
 void
-SolidAngleUnit::Print(int level) {
-    TAB(level); std::cout << CLASSNAME << ":" << "(";
+SolidAngleUnit::Print(int level)
+{
+    TAB(level);
+    std::cout << CLASSNAME << ":" << "(";
     std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-    TAB(level); std::cout << "Inherited Attributes:" << std::endl;
-    NamedUnit::Print(level+1);
+    TAB(level);
+    std::cout << "Inherited Attributes:" << std::endl;
+    NamedUnit::Print(level + 1);
 
 }
 
 STEPEntity *
-SolidAngleUnit::GetInstance(STEPWrapper *sw, int id) {
+SolidAngleUnit::GetInstance(STEPWrapper *sw, int id)
+{
     return new SolidAngleUnit(sw, id);
 }
 
 STEPEntity *
-SolidAngleUnit::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
+SolidAngleUnit::Create(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
     return STEPEntity::CreateEntity(sw, sse, GetInstance, CLASSNAME);
 }
 

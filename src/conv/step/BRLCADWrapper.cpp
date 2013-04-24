@@ -33,21 +33,24 @@
 #include <iostream>
 
 
-int BRLCADWrapper::sol_reg_cnt=0;
+int BRLCADWrapper::sol_reg_cnt = 0;
 
 
-BRLCADWrapper::BRLCADWrapper() {
+BRLCADWrapper::BRLCADWrapper()
+{
     outfp = NULL;
 }
 
 
-BRLCADWrapper::~BRLCADWrapper() {
+BRLCADWrapper::~BRLCADWrapper()
+{
     Close();
 }
 
 
 bool
-BRLCADWrapper::OpenFile(const char *flnm) {
+BRLCADWrapper::OpenFile(const char *flnm)
+{
     //TODO: need to check to make sure we aren't overwriting
 
     /* open brlcad instance */
@@ -66,7 +69,8 @@ BRLCADWrapper::OpenFile(const char *flnm) {
 
 
 bool
-BRLCADWrapper::WriteHeader() {
+BRLCADWrapper::WriteHeader()
+{
     db5_update_attribute("_GLOBAL", "HEADERINFO", "test header attributes", outfp->dbip);
     db5_update_attribute("_GLOBAL", "HEADERCLASS", "test header classification", outfp->dbip);
     db5_update_attribute("_GLOBAL", "HEADERAPPROVED", "test header approval", outfp->dbip);
@@ -75,7 +79,8 @@ BRLCADWrapper::WriteHeader() {
 
 
 bool
-BRLCADWrapper::WriteSphere(double *center, double radius) {
+BRLCADWrapper::WriteSphere(double *center, double radius)
+{
     point_t pnt;
     center[X] = 0.0;
     center[Y] = 0.0;
@@ -87,7 +92,8 @@ BRLCADWrapper::WriteSphere(double *center, double radius) {
 
 
 bool
-BRLCADWrapper::WriteBrep(std::string name, ON_Brep *brep) {
+BRLCADWrapper::WriteBrep(std::string name, ON_Brep *brep)
+{
     std::ostringstream str;
     std::string strcnt;
 
@@ -110,7 +116,8 @@ BRLCADWrapper::WriteBrep(std::string name, ON_Brep *brep) {
 
 
 bool
-BRLCADWrapper::Close() {
+BRLCADWrapper::Close()
+{
 
     if (outfp) {
 	wdb_close(outfp);

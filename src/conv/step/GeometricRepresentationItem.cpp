@@ -31,29 +31,33 @@
 
 #define CLASSNAME "GeometricRepresentationItem"
 #define ENTITYNAME "Geometric_Representation_Item"
-string GeometricRepresentationItem::entityname = Factory::RegisterClass(ENTITYNAME,(FactoryMethod)GeometricRepresentationItem::Create);
+string GeometricRepresentationItem::entityname = Factory::RegisterClass(ENTITYNAME, (FactoryMethod)GeometricRepresentationItem::Create);
 
-GeometricRepresentationItem::GeometricRepresentationItem() {
+GeometricRepresentationItem::GeometricRepresentationItem()
+{
     step = NULL;
     id = 0;
 }
 
-GeometricRepresentationItem::GeometricRepresentationItem(STEPWrapper *sw,int step_id) {
+GeometricRepresentationItem::GeometricRepresentationItem(STEPWrapper *sw, int step_id)
+{
     step = sw;
     id = step_id;
 }
 
-GeometricRepresentationItem::~GeometricRepresentationItem() {
+GeometricRepresentationItem::~GeometricRepresentationItem()
+{
 }
 
 bool
-GeometricRepresentationItem::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
+GeometricRepresentationItem::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
 
-    step=sw;
+    step = sw;
     id = sse->STEPfile_id;
 
     // load base class attributes
-    if ( !RepresentationItem::Load(sw,sse) ) {
+    if (!RepresentationItem::Load(sw, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::RepresentationItem." << std::endl;
 	return false;
     }
@@ -62,21 +66,26 @@ GeometricRepresentationItem::Load(STEPWrapper *sw,SDAI_Application_instance *sse
 }
 
 void
-GeometricRepresentationItem::Print(int level) {
-    TAB(level); std::cout << CLASSNAME << ":" << "(";
+GeometricRepresentationItem::Print(int level)
+{
+    TAB(level);
+    std::cout << CLASSNAME << ":" << "(";
     std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-    TAB(level); std::cout << "Inherited Attributes:" << std::endl;
-    RepresentationItem::Print(level+1);
+    TAB(level);
+    std::cout << "Inherited Attributes:" << std::endl;
+    RepresentationItem::Print(level + 1);
 }
 
 STEPEntity *
-GeometricRepresentationItem::GetInstance(STEPWrapper *sw, int id) {
+GeometricRepresentationItem::GetInstance(STEPWrapper *sw, int id)
+{
     return new GeometricRepresentationItem(sw, id);
 }
 
 STEPEntity *
-GeometricRepresentationItem::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
+GeometricRepresentationItem::Create(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
     return STEPEntity::CreateEntity(sw, sse, GetInstance, CLASSNAME);
 }
 

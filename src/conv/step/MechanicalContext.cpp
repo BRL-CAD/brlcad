@@ -76,7 +76,8 @@ void MechanicalContext::Print(int level)
 }
 
 STEPEntity *
-MechanicalContext::GetInstance(STEPWrapper *sw, int id) {
+MechanicalContext::GetInstance(STEPWrapper *sw, int id)
+{
     return new MechanicalContext(sw, id);
 }
 

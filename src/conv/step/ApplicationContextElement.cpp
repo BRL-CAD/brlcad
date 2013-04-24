@@ -95,16 +95,17 @@ void ApplicationContextElement::Print(int level)
 
     TAB(level);
     std::cout << "Attributes:" << std::endl;
-    TAB(level+1);
+    TAB(level + 1);
     std::cout << "name:" << name << std::endl;
 
-    TAB(level+1);
+    TAB(level + 1);
     std::cout << "frame_of_reference:" << std::endl;
     frame_of_reference->Print(level + 2);
 }
 
 STEPEntity *
-ApplicationContextElement::GetInstance(STEPWrapper *sw, int id) {
+ApplicationContextElement::GetInstance(STEPWrapper *sw, int id)
+{
     return new ApplicationContextElement(sw, id);
 }
 

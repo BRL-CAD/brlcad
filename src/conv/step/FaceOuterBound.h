@@ -29,23 +29,24 @@
 
 #include "FaceBound.h"
 
-class FaceOuterBound : public FaceBound {
+class FaceOuterBound : public FaceBound
+{
 private:
-	static string entityname;
-	static EntityInstanceFunc GetInstance;
+    static string entityname;
+    static EntityInstanceFunc GetInstance;
 
 protected:
 
 public:
-	FaceOuterBound();
-	virtual ~FaceOuterBound();
-	FaceOuterBound(STEPWrapper *sw,int step_id);
-	bool Load(STEPWrapper *sw,SDAI_Application_instance *sse);
-	virtual bool LoadONBrep(ON_Brep *brep);
-	virtual void Print(int level);
+    FaceOuterBound();
+    virtual ~FaceOuterBound();
+    FaceOuterBound(STEPWrapper *sw, int step_id);
+    bool Load(STEPWrapper *sw, SDAI_Application_instance *sse);
+    virtual bool LoadONBrep(ON_Brep *brep);
+    virtual void Print(int level);
 
-	//static methods
-	static STEPEntity *Create(STEPWrapper *sw,SDAI_Application_instance *sse);
+    //static methods
+    static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
 #endif /* FACEOUTERBOUND_H_ */

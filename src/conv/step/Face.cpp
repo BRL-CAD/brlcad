@@ -32,21 +32,24 @@
 
 #define CLASSNAME "Face"
 #define ENTITYNAME "Face"
-string Face::entityname = Factory::RegisterClass(ENTITYNAME,(FactoryMethod)Face::Create);
+string Face::entityname = Factory::RegisterClass(ENTITYNAME, (FactoryMethod)Face::Create);
 
-Face::Face() {
+Face::Face()
+{
     step = NULL;
     id = 0;
-	reverse = false;
+    reverse = false;
 }
 
-Face::Face(STEPWrapper *sw,int step_id) {
+Face::Face(STEPWrapper *sw, int step_id)
+{
     step = sw;
     id = step_id;
-	reverse = false;
+    reverse = false;
 }
 
-Face::~Face() {
+Face::~Face()
+{
     /*
       LIST_OF_FACE_BOUNDS::iterator i = bounds.begin();
 
@@ -59,27 +62,28 @@ Face::~Face() {
 }
 
 bool
-Face::Load(STEPWrapper *sw, SDAI_Application_instance *sse) {
-    step=sw;
+Face::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
+    step = sw;
     id = sse->STEPfile_id;
 
     // load base class attributes
-    if ( !TopologicalRepresentationItem::Load(step,sse) ) {
+    if (!TopologicalRepresentationItem::Load(step, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::TopologicalRepresentationItem." << std::endl;
 	return false;
     }
 
     // need to do this for local attributes to makes sure we have
     // the actual entity and not a complex/supertype parent
-    sse = step->getEntity(sse,ENTITYNAME);
+    sse = step->getEntity(sse, ENTITYNAME);
 
     if (bounds.empty()) {
-	LIST_OF_ENTITIES *l = step->getListOfEntities(sse,"bounds");
+	LIST_OF_ENTITIES *l = step->getListOfEntities(sse, "bounds");
 	LIST_OF_ENTITIES::iterator i;
-	for(i=l->begin();i!=l->end();i++) {
+	for (i = l->begin(); i != l->end(); i++) {
 	    SDAI_Application_instance *entity = (*i);
 	    if (entity) {
-		FaceBound *aFB = dynamic_cast<FaceBound *>(Factory::CreateObject(sw,entity));
+		FaceBound *aFB = dynamic_cast<FaceBound *>(Factory::CreateObject(sw, entity));
 
 		bounds.push_back(aFB);
 	    } else {
@@ -96,33 +100,41 @@ Face::Load(STEPWrapper *sw, SDAI_Application_instance *sse) {
 }
 
 void
-Face::Print(int level) {
-    TAB(level); std::cout << CLASSNAME << ":" << name << "(";
+Face::Print(int level)
+{
+    TAB(level);
+    std::cout << CLASSNAME << ":" << name << "(";
     std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-    TAB(level); std::cout << "Attributes:" << std::endl;
-    TAB(level+1); std::cout << "bounds:" << std::endl;
+    TAB(level);
+    std::cout << "Attributes:" << std::endl;
+    TAB(level + 1);
+    std::cout << "bounds:" << std::endl;
     LIST_OF_FACE_BOUNDS::iterator i;
-    for(i=bounds.begin();i!=bounds.end();i++){
-	(*i)->Print(level+1);
+    for (i = bounds.begin(); i != bounds.end(); i++) {
+	(*i)->Print(level + 1);
     }
 
-    TAB(level); std::cout << "Inherited Attributes:" << std::endl;
-    TopologicalRepresentationItem::Print(level+1);
+    TAB(level);
+    std::cout << "Inherited Attributes:" << std::endl;
+    TopologicalRepresentationItem::Print(level + 1);
 }
 
 void
-Face::ReverseFace() {
+Face::ReverseFace()
+{
     reverse = true;
 }
 
 STEPEntity *
-Face::GetInstance(STEPWrapper *sw, int id) {
+Face::GetInstance(STEPWrapper *sw, int id)
+{
     return new Face(sw, id);
 }
 
 STEPEntity *
-Face::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
+Face::Create(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
     return STEPEntity::CreateEntity(sw, sse, GetInstance, CLASSNAME);
 }
 

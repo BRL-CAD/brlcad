@@ -34,21 +34,24 @@
 
 #define CLASSNAME "Axis2Placement2D"
 #define ENTITYNAME "Axis2_Placement_2d"
-string Axis2Placement2D::entityname = Factory::RegisterClass(ENTITYNAME,(FactoryMethod)Axis2Placement2D::Create);
+string Axis2Placement2D::entityname = Factory::RegisterClass(ENTITYNAME, (FactoryMethod)Axis2Placement2D::Create);
 
-Axis2Placement2D::Axis2Placement2D() {
+Axis2Placement2D::Axis2Placement2D()
+{
     step = NULL;
     id = 0;
     ref_direction = NULL;
 }
 
-Axis2Placement2D::Axis2Placement2D(STEPWrapper *sw,int step_id) {
+Axis2Placement2D::Axis2Placement2D(STEPWrapper *sw, int step_id)
+{
     step = sw;
     id = step_id;
     ref_direction = NULL;
 }
 
-Axis2Placement2D::~Axis2Placement2D() {
+Axis2Placement2D::~Axis2Placement2D()
+{
 }
 
 /*
@@ -56,21 +59,22 @@ Axis2Placement2D::~Axis2Placement2D() {
  *   FUNCTION build_2axes()
  */
 void
-Axis2Placement2D::BuildAxis() {
+Axis2Placement2D::BuildAxis()
+{
     double d[3];
     double ortho_comp[3] = {0.0, 0.0, 0.0};
 
     if (ref_direction == NULL) {
-	VSET(d,1.0,0.0,0.0);
+	VSET(d, 1.0, 0.0, 0.0);
     } else {
-	VMOVE(d,ref_direction->DirectionRatios());
+	VMOVE(d, ref_direction->DirectionRatios());
 	VUNITIZE(d);
     }
-    OrthogonalComplement(ortho_comp,d);
+    OrthogonalComplement(ortho_comp, d);
 
-    VMOVE(p[0],d);
-    VMOVE(p[1],ortho_comp);
-    VSETALL(p[2],0.0);
+    VMOVE(p[0], d);
+    VMOVE(p[1], ortho_comp);
+    VSETALL(p[2], 0.0);
 
     return;
 }
@@ -80,54 +84,61 @@ Axis2Placement2D::BuildAxis() {
  *   FUNCTION orthogonal_complement()
  */
 void
-Axis2Placement2D::OrthogonalComplement(double *ortho, double *vec) {
+Axis2Placement2D::OrthogonalComplement(double *ortho, double *vec)
+{
     ortho[0] = -vec[1];
     ortho[1] = vec[0];
 }
 
 const double *
-Axis2Placement2D::GetAxis(int i) {
+Axis2Placement2D::GetAxis(int i)
+{
     return p[i];
 }
 
 const double *
-Axis2Placement2D::GetOrigin() {
+Axis2Placement2D::GetOrigin()
+{
     return location->Coordinates();
 }
 
 const double *
-Axis2Placement2D::GetNormal() {
+Axis2Placement2D::GetNormal()
+{
     return p[0];
 }
 
 const double *
-Axis2Placement2D::GetXAxis() {
+Axis2Placement2D::GetXAxis()
+{
     return p[0];
 }
 
 const double *
-Axis2Placement2D::GetYAxis() {
+Axis2Placement2D::GetYAxis()
+{
     return p[1];
 }
 
 bool
-Axis2Placement2D::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
-    step=sw;
+Axis2Placement2D::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
+    step = sw;
     id = sse->STEPfile_id;
 
-    if ( !Placement::Load(step,sse) ) {
+    if (!Placement::Load(step, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::Placement." << std::endl;
 	return false;
     }
 
     // need to do this for local attributes to makes sure we have
     // the actual entity and not a complex/supertype parent
-    sse = step->getEntity(sse,ENTITYNAME);
+    sse = step->getEntity(sse, ENTITYNAME);
 
     if (ref_direction == NULL) {
-	SDAI_Application_instance *entity = step->getEntityAttribute(sse,"ref_direction");
+	SDAI_Application_instance *entity = step->getEntityAttribute(sse, "ref_direction");
 	if (entity) {
-	    ref_direction = dynamic_cast<Direction *>(Factory::CreateObject(sw,entity));
+	    ref_direction = dynamic_cast<Direction *>(Factory::CreateObject(sw, entity));
 	} else { // optional so no problem if not here
 	    ref_direction = NULL;
 	}
@@ -139,26 +150,34 @@ Axis2Placement2D::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
 }
 
 void
-Axis2Placement2D::Print(int level) {
-    TAB(level); std::cout << CLASSNAME << ":" << std::endl;
+Axis2Placement2D::Print(int level)
+{
+    TAB(level);
+    std::cout << CLASSNAME << ":" << std::endl;
 
-    TAB(level); std::cout << "Attributes:" << std::endl;
-    TAB(level+1); std::cout << "ref_direction:" << std::endl;
-    if (ref_direction)
-	ref_direction->Print(level+1);
+    TAB(level);
+    std::cout << "Attributes:" << std::endl;
+    TAB(level + 1);
+    std::cout << "ref_direction:" << std::endl;
+    if (ref_direction) {
+	ref_direction->Print(level + 1);
+    }
 
-    TAB(level); std::cout << "Inherited Attributes:" << std::endl;
-    Placement::Print(level+1);
+    TAB(level);
+    std::cout << "Inherited Attributes:" << std::endl;
+    Placement::Print(level + 1);
 
 }
 
 STEPEntity *
-Axis2Placement2D::GetInstance(STEPWrapper *sw, int id) {
+Axis2Placement2D::GetInstance(STEPWrapper *sw, int id)
+{
     return new Axis2Placement2D(sw, id);
 }
 
 STEPEntity *
-Axis2Placement2D::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
+Axis2Placement2D::Create(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
     return STEPEntity::CreateEntity(sw, sse, GetInstance, CLASSNAME);
 }
 

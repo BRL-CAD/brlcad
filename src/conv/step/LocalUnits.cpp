@@ -29,10 +29,12 @@ double LocalUnits::length = 1.0;
 double LocalUnits::planeangle = 1.0;
 double LocalUnits::solidangle = 1.0;
 
-LocalUnits::LocalUnits() {
+LocalUnits::LocalUnits()
+{
 }
 
-LocalUnits::~LocalUnits() {
+LocalUnits::~LocalUnits()
+{
 }
 
 // Local Variables:

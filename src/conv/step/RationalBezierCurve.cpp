@@ -31,28 +31,32 @@
 
 #define CLASSNAME "RationalBezierCurve"
 #define ENTITYNAME "Rational_Bezier_Curve"
-string RationalBezierCurve::entityname = Factory::RegisterClass(ENTITYNAME,(FactoryMethod)RationalBezierCurve::Create);
+string RationalBezierCurve::entityname = Factory::RegisterClass(ENTITYNAME, (FactoryMethod)RationalBezierCurve::Create);
 
-RationalBezierCurve::RationalBezierCurve() {
+RationalBezierCurve::RationalBezierCurve()
+{
     step = NULL;
     id = 0;
 }
 
-RationalBezierCurve::RationalBezierCurve(STEPWrapper *sw,int step_id) {
+RationalBezierCurve::RationalBezierCurve(STEPWrapper *sw, int step_id)
+{
     step = sw;
     id = step_id;
 }
 
-RationalBezierCurve::~RationalBezierCurve() {
+RationalBezierCurve::~RationalBezierCurve()
+{
 }
 
 bool
-RationalBezierCurve::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
-    step=sw;
+RationalBezierCurve::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
+    step = sw;
     id = sse->STEPfile_id;
 
     // load base class attributes
-    if ( !RationalBSplineCurve::Load(sw,sse) ) {
+    if (!RationalBSplineCurve::Load(sw, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::RationalBSplineCurve." << std::endl;
 	return false;
     }
@@ -61,8 +65,10 @@ RationalBezierCurve::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
 }
 
 void
-RationalBezierCurve::Print(int level) {
-    TAB(level); std::cout << CLASSNAME << ":" << name << "(";
+RationalBezierCurve::Print(int level)
+{
+    TAB(level);
+    std::cout << CLASSNAME << ":" << name << "(";
     std::cout << "ID:" << STEPid() << ")" << std::endl;
 
     RationalBSplineCurve::Print(level);
@@ -70,12 +76,14 @@ RationalBezierCurve::Print(int level) {
 }
 
 STEPEntity *
-RationalBezierCurve::GetInstance(STEPWrapper *sw, int id) {
+RationalBezierCurve::GetInstance(STEPWrapper *sw, int id)
+{
     return new RationalBezierCurve(sw, id);
 }
 
 STEPEntity *
-RationalBezierCurve::Create(STEPWrapper *sw,SDAI_Application_instance *sse){
+RationalBezierCurve::Create(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
     return STEPEntity::CreateEntity(sw, sse, GetInstance, CLASSNAME);
 }
 

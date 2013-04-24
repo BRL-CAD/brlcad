@@ -32,65 +32,77 @@
 
 #define CLASSNAME "Hyperbola"
 #define ENTITYNAME "Hyperbola"
-string Hyperbola::entityname = Factory::RegisterClass(ENTITYNAME,(FactoryMethod)Hyperbola::Create);
+string Hyperbola::entityname = Factory::RegisterClass(ENTITYNAME, (FactoryMethod)Hyperbola::Create);
 
-Hyperbola::Hyperbola() {
+Hyperbola::Hyperbola()
+{
     step = NULL;
     id = 0;
     semi_axis = 0.0;
     semi_imag_axis = 0.0;
 }
 
-Hyperbola::Hyperbola(STEPWrapper *sw,int step_id) {
+Hyperbola::Hyperbola(STEPWrapper *sw, int step_id)
+{
     step = sw;
     id = step_id;
     semi_axis = 0.0;
     semi_imag_axis = 0.0;
 }
 
-Hyperbola::~Hyperbola() {
+Hyperbola::~Hyperbola()
+{
 }
 
 bool
-Hyperbola::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
-    step=sw;
+Hyperbola::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
+    step = sw;
     id = sse->STEPfile_id;
 
-    if ( !Conic::Load(step,sse) ) {
+    if (!Conic::Load(step, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::Conic." << std::endl;
 	return false;
     }
 
     // need to do this for local attributes to makes sure we have
     // the actual entity and not a complex/supertype parent
-    sse = step->getEntity(sse,ENTITYNAME);
+    sse = step->getEntity(sse, ENTITYNAME);
 
-    semi_axis = step->getRealAttribute(sse,"semi_axis");
-    semi_imag_axis = step->getRealAttribute(sse,"semi_imag_axis");
+    semi_axis = step->getRealAttribute(sse, "semi_axis");
+    semi_imag_axis = step->getRealAttribute(sse, "semi_imag_axis");
 
     return true;
 }
 
 void
-Hyperbola::Print(int level) {
-    TAB(level); std::cout << CLASSNAME << ":" << name << "(";
+Hyperbola::Print(int level)
+{
+    TAB(level);
+    std::cout << CLASSNAME << ":" << name << "(";
     std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-    TAB(level); std::cout << "Attributes:" << std::endl;
-    TAB(level+1); std::cout << "semi_axis:" << semi_axis << std::endl;
-    TAB(level+1); std::cout << "semi_imag_axis:" << semi_imag_axis << std::endl;
+    TAB(level);
+    std::cout << "Attributes:" << std::endl;
+    TAB(level + 1);
+    std::cout << "semi_axis:" << semi_axis << std::endl;
+    TAB(level + 1);
+    std::cout << "semi_imag_axis:" << semi_imag_axis << std::endl;
 
-    TAB(level); std::cout << "Inherited Attributes:" << std::endl;
-    Conic::Print(level+1);
+    TAB(level);
+    std::cout << "Inherited Attributes:" << std::endl;
+    Conic::Print(level + 1);
 }
 
 STEPEntity *
-Hyperbola::GetInstance(STEPWrapper *sw, int id) {
+Hyperbola::GetInstance(STEPWrapper *sw, int id)
+{
     return new Hyperbola(sw, id);
 }
 
 STEPEntity *
-Hyperbola::Create(STEPWrapper *sw,SDAI_Application_instance *sse){
+Hyperbola::Create(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
     return STEPEntity::CreateEntity(sw, sse, GetInstance, CLASSNAME);
 }
 

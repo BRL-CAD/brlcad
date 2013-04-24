@@ -32,66 +32,74 @@
 
 #define CLASSNAME "Conic"
 #define ENTITYNAME "Conic"
-string Conic::entityname = Factory::RegisterClass(ENTITYNAME,(FactoryMethod)Conic::Create);
+string Conic::entityname = Factory::RegisterClass(ENTITYNAME, (FactoryMethod)Conic::Create);
 
-Conic::Conic() {
+Conic::Conic()
+{
     step = NULL;
     id = 0;
     position = NULL;
 }
 
-Conic::Conic(STEPWrapper *sw,int step_id) {
+Conic::Conic(STEPWrapper *sw, int step_id)
+{
     step = sw;
     id = step_id;
     position = NULL;
 }
 
-Conic::~Conic() {
+Conic::~Conic()
+{
     delete position;
 }
 
 const double *
-Conic::GetOrigin() {
+Conic::GetOrigin()
+{
     return position->GetOrigin();
 }
 
 const double *
-Conic::GetNormal() {
+Conic::GetNormal()
+{
     return position->GetNormal();
 }
 
 const double *
-Conic::GetXAxis() {
+Conic::GetXAxis()
+{
     return position->GetXAxis();
 }
 
 const double *
-Conic::GetYAxis() {
+Conic::GetYAxis()
+{
     return position->GetYAxis();
 }
 
 bool
-Conic::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
-    step=sw;
+Conic::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
+    step = sw;
     id = sse->STEPfile_id;
 
-    if ( !GeometricRepresentationItem::Load(step,sse) ) {
+    if (!GeometricRepresentationItem::Load(step, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::GeometricRepresentationItem." << std::endl;
 	return false;
     }
 
     // need to do this for local attributes to makes sure we have
     // the actual entity and not a complex/supertype parent
-    sse = step->getEntity(sse,ENTITYNAME);
+    sse = step->getEntity(sse, ENTITYNAME);
 
     if (position == NULL) {
-	SDAI_Select *select = step->getSelectAttribute(sse,"position");
+	SDAI_Select *select = step->getSelectAttribute(sse, "position");
 	if (select) {
 	    //if (select->CurrentUnderlyingType() == config_control_designt_axis2_placement) {
 	    Axis2Placement *aA2P = new Axis2Placement();
 
 	    position = aA2P;
-	    if (!aA2P->Load(step,select)) {
+	    if (!aA2P->Load(step, select)) {
 		std::cout << CLASSNAME << ":Error loading select Axis2Placement from Conic." << std::endl;
 		return false;
 	    }
@@ -107,26 +115,33 @@ Conic::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
 }
 
 void
-Conic::Print(int level) {
-    TAB(level); std::cout << CLASSNAME << ":" << name << "(";
+Conic::Print(int level)
+{
+    TAB(level);
+    std::cout << CLASSNAME << ":" << name << "(";
     std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-    TAB(level); std::cout << "Attributes:" << std::endl;
-    TAB(level+1); std::cout << "position:" << std::endl;
-    position->Print(level+1);
+    TAB(level);
+    std::cout << "Attributes:" << std::endl;
+    TAB(level + 1);
+    std::cout << "position:" << std::endl;
+    position->Print(level + 1);
 
-    TAB(level); std::cout << "Inherited Attributes:" << std::endl;
-    GeometricRepresentationItem::Print(level+1);
+    TAB(level);
+    std::cout << "Inherited Attributes:" << std::endl;
+    GeometricRepresentationItem::Print(level + 1);
 
 }
 
 STEPEntity *
-Conic::GetInstance(STEPWrapper *sw, int id) {
+Conic::GetInstance(STEPWrapper *sw, int id)
+{
     return new Conic(sw, id);
 }
 
 STEPEntity *
-Conic::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
+Conic::Create(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
     return STEPEntity::CreateEntity(sw, sse, GetInstance, CLASSNAME);
 }
 

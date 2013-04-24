@@ -32,28 +32,32 @@
 
 #define CLASSNAME "UniformCurve"
 #define ENTITYNAME "Uniform_Curve"
-string UniformCurve::entityname = Factory::RegisterClass(ENTITYNAME,(FactoryMethod)UniformCurve::Create);
+string UniformCurve::entityname = Factory::RegisterClass(ENTITYNAME, (FactoryMethod)UniformCurve::Create);
 
-UniformCurve::UniformCurve() {
+UniformCurve::UniformCurve()
+{
     step = NULL;
     id = 0;
 }
 
-UniformCurve::UniformCurve(STEPWrapper *sw,int step_id) {
+UniformCurve::UniformCurve(STEPWrapper *sw, int step_id)
+{
     step = sw;
     id = step_id;
 }
 
-UniformCurve::~UniformCurve() {
+UniformCurve::~UniformCurve()
+{
 }
 
 bool
-UniformCurve::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
-    step=sw;
+UniformCurve::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
+    step = sw;
     id = sse->STEPfile_id;
 
     // load base class attributes
-    if ( !BSplineCurve::Load(sw,sse) ) {
+    if (!BSplineCurve::Load(sw, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::BSplineCurve." << std::endl;
 	return false;
     }
@@ -62,21 +66,26 @@ UniformCurve::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
 }
 
 void
-UniformCurve::Print(int level) {
-    TAB(level); std::cout << CLASSNAME << ":" << name << "(";
+UniformCurve::Print(int level)
+{
+    TAB(level);
+    std::cout << CLASSNAME << ":" << name << "(";
     std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-    TAB(level); std::cout << "Inherited:" << std::endl;
-    BSplineCurve::Print(level+1);
+    TAB(level);
+    std::cout << "Inherited:" << std::endl;
+    BSplineCurve::Print(level + 1);
 }
 
 STEPEntity *
-UniformCurve::GetInstance(STEPWrapper *sw, int id) {
+UniformCurve::GetInstance(STEPWrapper *sw, int id)
+{
     return new UniformCurve(sw, id);
 }
 
 STEPEntity *
-UniformCurve::Create(STEPWrapper *sw,SDAI_Application_instance *sse){
+UniformCurve::Create(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
     return STEPEntity::CreateEntity(sw, sse, GetInstance, CLASSNAME);
 }
 

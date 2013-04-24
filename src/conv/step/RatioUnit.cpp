@@ -31,29 +31,33 @@
 
 #define CLASSNAME "RatioUnit"
 #define ENTITYNAME "Ratio_Unit"
-string RatioUnit::entityname = Factory::RegisterClass(ENTITYNAME,(FactoryMethod)RatioUnit::Create);
+string RatioUnit::entityname = Factory::RegisterClass(ENTITYNAME, (FactoryMethod)RatioUnit::Create);
 
-RatioUnit::RatioUnit() {
+RatioUnit::RatioUnit()
+{
     step = NULL;
     id = 0;
 }
 
-RatioUnit::RatioUnit(STEPWrapper *sw,int step_id) {
+RatioUnit::RatioUnit(STEPWrapper *sw, int step_id)
+{
     step = sw;
     id = step_id;
 }
 
-RatioUnit::~RatioUnit() {
+RatioUnit::~RatioUnit()
+{
 }
 
 bool
-RatioUnit::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
-    step=sw;
+RatioUnit::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
+    step = sw;
     id = sse->STEPfile_id;
 
 
     // load base class attributes
-    if ( !NamedUnit::Load(step,sse) ) {
+    if (!NamedUnit::Load(step, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::Unit." << std::endl;
 	return false;
     }
@@ -62,22 +66,27 @@ RatioUnit::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
 }
 
 void
-RatioUnit::Print(int level) {
-    TAB(level); std::cout << CLASSNAME << ":" << "(";
+RatioUnit::Print(int level)
+{
+    TAB(level);
+    std::cout << CLASSNAME << ":" << "(";
     std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-    TAB(level); std::cout << "Inherited Attributes:" << std::endl;
-    NamedUnit::Print(level+1);
+    TAB(level);
+    std::cout << "Inherited Attributes:" << std::endl;
+    NamedUnit::Print(level + 1);
 
 }
 
 STEPEntity *
-RatioUnit::GetInstance(STEPWrapper *sw, int id) {
+RatioUnit::GetInstance(STEPWrapper *sw, int id)
+{
     return new RatioUnit(sw, id);
 }
 
 STEPEntity *
-RatioUnit::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
+RatioUnit::Create(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
     return STEPEntity::CreateEntity(sw, sse, GetInstance, CLASSNAME);
 }
 

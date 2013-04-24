@@ -31,31 +31,35 @@
 
 #define CLASSNAME "BoundedSurfaceCurve"
 #define ENTITYNAME "Bounded_Surface_Curve"
-string BoundedSurfaceCurve::entityname = Factory::RegisterClass(ENTITYNAME,(FactoryMethod)BoundedSurfaceCurve::Create);
+string BoundedSurfaceCurve::entityname = Factory::RegisterClass(ENTITYNAME, (FactoryMethod)BoundedSurfaceCurve::Create);
 
-BoundedSurfaceCurve::BoundedSurfaceCurve() {
+BoundedSurfaceCurve::BoundedSurfaceCurve()
+{
     step = NULL;
     id = 0;
 }
 
-BoundedSurfaceCurve::BoundedSurfaceCurve(STEPWrapper *sw,int step_id) {
+BoundedSurfaceCurve::BoundedSurfaceCurve(STEPWrapper *sw, int step_id)
+{
     step = sw;
     id = step_id;
 }
 
-BoundedSurfaceCurve::~BoundedSurfaceCurve() {
+BoundedSurfaceCurve::~BoundedSurfaceCurve()
+{
 }
 
 bool
-BoundedSurfaceCurve::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
-    step=sw;
+BoundedSurfaceCurve::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
+    step = sw;
     id = sse->STEPfile_id;
 
-    if ( !SurfaceCurve::Load(sw,sse) ) {
+    if (!SurfaceCurve::Load(sw, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::SurfaceCurve." << std::endl;
 	return false;
     }
-    if ( !BoundedCurve::Load(sw,sse) ) {
+    if (!BoundedCurve::Load(sw, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::BoundedCurve." << std::endl;
 	return false;
     }
@@ -64,34 +68,41 @@ BoundedSurfaceCurve::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
 }
 
 const double *
-BoundedSurfaceCurve::PointAtEnd() {
+BoundedSurfaceCurve::PointAtEnd()
+{
     std::cerr << CLASSNAME << ": Error: virtual function PointAtEnd() not implemented for this type of curve.";
     return NULL;
 }
 
 const double *
-BoundedSurfaceCurve::PointAtStart() {
+BoundedSurfaceCurve::PointAtStart()
+{
     std::cerr << CLASSNAME << ": Error: virtual function PointAtStart() not implemented for this type of curve.";
     return NULL;
 }
 
 void
-BoundedSurfaceCurve::Print(int level) {
-    TAB(level); std::cout << CLASSNAME << ":" << name << "(";
+BoundedSurfaceCurve::Print(int level)
+{
+    TAB(level);
+    std::cout << CLASSNAME << ":" << name << "(";
     std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-    TAB(level); std::cout << "Inherited Attributes:" << std::endl;
-    SurfaceCurve::Print(level+1);
-    BoundedCurve::Print(level+1);
+    TAB(level);
+    std::cout << "Inherited Attributes:" << std::endl;
+    SurfaceCurve::Print(level + 1);
+    BoundedCurve::Print(level + 1);
 }
 
 STEPEntity *
-BoundedSurfaceCurve::GetInstance(STEPWrapper *sw, int id) {
+BoundedSurfaceCurve::GetInstance(STEPWrapper *sw, int id)
+{
     return new BoundedSurfaceCurve(sw, id);
 }
 
 STEPEntity *
-BoundedSurfaceCurve::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
+BoundedSurfaceCurve::Create(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
     return STEPEntity::CreateEntity(sw, sse, GetInstance, CLASSNAME);
 }
 

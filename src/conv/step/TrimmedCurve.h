@@ -32,30 +32,31 @@
 class TrimmingSelect;
 typedef list<TrimmingSelect *> LIST_OF_TRIMMING_SELECT;
 
-class TrimmedCurve : public BoundedCurve {
+class TrimmedCurve : public BoundedCurve
+{
 private:
-	static string entityname;
-	static EntityInstanceFunc GetInstance;
+    static string entityname;
+    static EntityInstanceFunc GetInstance;
 
 protected:
-	Curve *basis_curve;
-	LIST_OF_TRIMMING_SELECT trim_1;
-	LIST_OF_TRIMMING_SELECT trim_2;
-	Boolean sense_agreement;
-	Trimming_preference master_representation;
+    Curve *basis_curve;
+    LIST_OF_TRIMMING_SELECT trim_1;
+    LIST_OF_TRIMMING_SELECT trim_2;
+    Boolean sense_agreement;
+    Trimming_preference master_representation;
 
 public:
-	TrimmedCurve();
-	virtual ~TrimmedCurve();
-	TrimmedCurve(STEPWrapper *sw,int step_id);
-	bool Load(STEPWrapper *sw,SDAI_Application_instance *sse);
-	virtual bool LoadONBrep(ON_Brep *brep);
-	virtual const double *PointAtEnd();
-	virtual const double *PointAtStart();
-	virtual void Print(int level);
+    TrimmedCurve();
+    virtual ~TrimmedCurve();
+    TrimmedCurve(STEPWrapper *sw, int step_id);
+    bool Load(STEPWrapper *sw, SDAI_Application_instance *sse);
+    virtual bool LoadONBrep(ON_Brep *brep);
+    virtual const double *PointAtEnd();
+    virtual const double *PointAtStart();
+    virtual void Print(int level);
 
-	//static methods
-	static STEPEntity *Create(STEPWrapper *sw,SDAI_Application_instance *sse);
+    //static methods
+    static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
 #endif /* TRIMMEDCURVE_H_ */

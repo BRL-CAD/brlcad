@@ -31,25 +31,26 @@
 // forward declaration of class
 class Axis1Placement;
 
-class SurfaceOfRevolution: public SweptSurface {
+class SurfaceOfRevolution: public SweptSurface
+{
 private:
-	static string entityname;
-	static EntityInstanceFunc GetInstance;
+    static string entityname;
+    static EntityInstanceFunc GetInstance;
 
 protected:
-	Axis1Placement* axis_position;
+    Axis1Placement *axis_position;
 
 
 public:
-	SurfaceOfRevolution();
-	virtual ~SurfaceOfRevolution();
-	SurfaceOfRevolution(STEPWrapper *sw,int step_id);
-	bool Load(STEPWrapper *sw,SDAI_Application_instance *sse);
-	virtual bool LoadONBrep(ON_Brep *brep);
-	virtual void Print(int level);
+    SurfaceOfRevolution();
+    virtual ~SurfaceOfRevolution();
+    SurfaceOfRevolution(STEPWrapper *sw, int step_id);
+    bool Load(STEPWrapper *sw, SDAI_Application_instance *sse);
+    virtual bool LoadONBrep(ON_Brep *brep);
+    virtual void Print(int level);
 
-	//static methods
-	static STEPEntity *Create(STEPWrapper *sw,SDAI_Application_instance *sse);
+    //static methods
+    static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
 #endif /* SURFACE_OF_REVOLUTION_H_ */

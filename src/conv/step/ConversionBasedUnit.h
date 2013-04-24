@@ -31,27 +31,28 @@
 
 class MeasureWithUnit;
 
-class ConversionBasedUnit : virtual public NamedUnit {
+class ConversionBasedUnit : virtual public NamedUnit
+{
 private:
-	static string entityname;
-	static EntityInstanceFunc GetInstance;
+    static string entityname;
+    static EntityInstanceFunc GetInstance;
 
 protected:
-	string name;
-	MeasureWithUnit *conversion_factor;
+    string name;
+    MeasureWithUnit *conversion_factor;
 
 public:
-	ConversionBasedUnit();
-	virtual ~ConversionBasedUnit();
-	ConversionBasedUnit(STEPWrapper *sw,int step_id);
-	double GetLengthConversionFactor();
-	double GetPlaneAngleConversionFactor();
-	double GetSolidAngleConversionFactor();
-	bool Load(STEPWrapper *sw,SDAI_Application_instance *sse);
-	virtual void Print(int level);
+    ConversionBasedUnit();
+    virtual ~ConversionBasedUnit();
+    ConversionBasedUnit(STEPWrapper *sw, int step_id);
+    double GetLengthConversionFactor();
+    double GetPlaneAngleConversionFactor();
+    double GetSolidAngleConversionFactor();
+    bool Load(STEPWrapper *sw, SDAI_Application_instance *sse);
+    virtual void Print(int level);
 
-	//static methods
-	static STEPEntity *Create(STEPWrapper *sw,SDAI_Application_instance *sse);
+    //static methods
+    static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
 #endif /* CONVERSIONBASEDUNIT_H_ */

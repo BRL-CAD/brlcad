@@ -31,80 +31,92 @@
 
 #define CLASSNAME "OffsetSurface"
 #define ENTITYNAME "Offset_Surface"
-string OffsetSurface::entityname = Factory::RegisterClass(ENTITYNAME,(FactoryMethod)OffsetSurface::Create);
+string OffsetSurface::entityname = Factory::RegisterClass(ENTITYNAME, (FactoryMethod)OffsetSurface::Create);
 
-OffsetSurface::OffsetSurface() {
-    step=NULL;
+OffsetSurface::OffsetSurface()
+{
+    step = NULL;
     id = 0;
     basis_surface = NULL;
     distance = 0.0;
     self_intersect = LUnset;
 }
 
-OffsetSurface::OffsetSurface(STEPWrapper *sw,int step_id) {
-    step=sw;
+OffsetSurface::OffsetSurface(STEPWrapper *sw, int step_id)
+{
+    step = sw;
     id = step_id;
     basis_surface = NULL;
     distance = 0.0;
     self_intersect = LUnset;
 }
 
-OffsetSurface::~OffsetSurface() {
+OffsetSurface::~OffsetSurface()
+{
 }
 
 bool
-OffsetSurface::Load(STEPWrapper *sw, SDAI_Application_instance *sse) {
+OffsetSurface::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
 
-    step=sw;
+    step = sw;
     id = sse->STEPfile_id;
 
-    if ( !Surface::Load(step,sse) ) {
+    if (!Surface::Load(step, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::BoundedSurface." << std::endl;
 	return false;
     }
 
     // need to do this for local attributes to makes sure we have
     // the actual entity and not a complex/supertype parent
-    sse = step->getEntity(sse,ENTITYNAME);
+    sse = step->getEntity(sse, ENTITYNAME);
 
     if (basis_surface == NULL) {
-	SDAI_Application_instance *entity = step->getEntityAttribute(sse,"basis_surface");
+	SDAI_Application_instance *entity = step->getEntityAttribute(sse, "basis_surface");
 	if (entity) {
-	    basis_surface = dynamic_cast<Surface *>(Factory::CreateObject(sw,entity));
+	    basis_surface = dynamic_cast<Surface *>(Factory::CreateObject(sw, entity));
 	} else {
 	    std::cerr << CLASSNAME << ": error loading 'basis_surface' attribute." << std::endl;
 	    return false;
 	}
     }
 
-    distance = step->getRealAttribute(sse,"distance");
-    self_intersect = step->getLogicalAttribute(sse,"self_intersect");
+    distance = step->getRealAttribute(sse, "distance");
+    self_intersect = step->getLogicalAttribute(sse, "self_intersect");
 
     return true;
 }
 
 void
-OffsetSurface::Print(int level) {
-    TAB(level); std::cout << CLASSNAME << ":" << name << "(";
+OffsetSurface::Print(int level)
+{
+    TAB(level);
+    std::cout << CLASSNAME << ":" << name << "(";
     std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-    TAB(level); std::cout << "Attributes:" << std::endl;
-    basis_surface->Print(level+1);
+    TAB(level);
+    std::cout << "Attributes:" << std::endl;
+    basis_surface->Print(level + 1);
 
-    TAB(level+1); std::cout << "distance:" << distance << std::endl;
-    TAB(level+1); std::cout << "self_intersect:" << step->getLogicalString((Logical)self_intersect) << std::endl;
+    TAB(level + 1);
+    std::cout << "distance:" << distance << std::endl;
+    TAB(level + 1);
+    std::cout << "self_intersect:" << step->getLogicalString((Logical)self_intersect) << std::endl;
 
-    TAB(level); std::cout << "Inherited Attributes:" << std::endl;
-    Surface::Print(level+1);
+    TAB(level);
+    std::cout << "Inherited Attributes:" << std::endl;
+    Surface::Print(level + 1);
 }
 
 STEPEntity *
-OffsetSurface::GetInstance(STEPWrapper *sw, int id) {
+OffsetSurface::GetInstance(STEPWrapper *sw, int id)
+{
     return new OffsetSurface(sw, id);
 }
 
 STEPEntity *
-OffsetSurface::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
+OffsetSurface::Create(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
     return STEPEntity::CreateEntity(sw, sse, GetInstance, CLASSNAME);
 }
 

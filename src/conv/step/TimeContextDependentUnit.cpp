@@ -31,33 +31,37 @@
 
 #define CLASSNAME "TimeContextDependentUnit"
 #define ENTITYNAME "Time_Context_Dependent_Unit"
-string TimeContextDependentUnit::entityname = Factory::RegisterClass(ENTITYNAME,(FactoryMethod)TimeContextDependentUnit::Create);
+string TimeContextDependentUnit::entityname = Factory::RegisterClass(ENTITYNAME, (FactoryMethod)TimeContextDependentUnit::Create);
 
-TimeContextDependentUnit::TimeContextDependentUnit() {
+TimeContextDependentUnit::TimeContextDependentUnit()
+{
     step = NULL;
     id = 0;
 }
 
-TimeContextDependentUnit::TimeContextDependentUnit(STEPWrapper *sw,int step_id) {
+TimeContextDependentUnit::TimeContextDependentUnit(STEPWrapper *sw, int step_id)
+{
     step = sw;
     id = step_id;
 }
 
-TimeContextDependentUnit::~TimeContextDependentUnit() {
+TimeContextDependentUnit::~TimeContextDependentUnit()
+{
 }
 
 bool
-TimeContextDependentUnit::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
-    step=sw;
+TimeContextDependentUnit::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
+    step = sw;
     id = sse->STEPfile_id;
 
 
     // load base class attributes
-    if ( !TimeUnit::Load(step,sse) ) {
+    if (!TimeUnit::Load(step, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::Unit." << std::endl;
 	return false;
     }
-    if ( !ContextDependentUnit::Load(step,sse) ) {
+    if (!ContextDependentUnit::Load(step, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::Unit." << std::endl;
 	return false;
     }
@@ -66,23 +70,28 @@ TimeContextDependentUnit::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
 }
 
 void
-TimeContextDependentUnit::Print(int level) {
-    TAB(level); std::cout << CLASSNAME << ":" << "(";
+TimeContextDependentUnit::Print(int level)
+{
+    TAB(level);
+    std::cout << CLASSNAME << ":" << "(";
     std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-    TAB(level); std::cout << "Inherited Attributes:" << std::endl;
-    TimeUnit::Print(level+1);
-    ContextDependentUnit::Print(level+1);
+    TAB(level);
+    std::cout << "Inherited Attributes:" << std::endl;
+    TimeUnit::Print(level + 1);
+    ContextDependentUnit::Print(level + 1);
 
 }
 
 STEPEntity *
-TimeContextDependentUnit::GetInstance(STEPWrapper *sw, int id) {
+TimeContextDependentUnit::GetInstance(STEPWrapper *sw, int id)
+{
     return new TimeContextDependentUnit(sw, id);
 }
 
 STEPEntity *
-TimeContextDependentUnit::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
+TimeContextDependentUnit::Create(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
     return STEPEntity::CreateEntity(sw, sse, GetInstance, CLASSNAME);
 }
 

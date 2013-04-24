@@ -33,29 +33,32 @@ class Direction;
 
 class CartesianTransformationOperator;
 
-class OffsetCurve3D : public Curve {
+class OffsetCurve3D : public Curve
+{
 private:
-	static string entityname;
-	static EntityInstanceFunc GetInstance;
+    static string entityname;
+    static EntityInstanceFunc GetInstance;
 
 protected:
-	Curve *basis_curve;
-	double distance;
-	Logical self_intersect;
-	Direction *ref_direction;
+    Curve *basis_curve;
+    double distance;
+    Logical self_intersect;
+    Direction *ref_direction;
 
 public:
-	OffsetCurve3D();
-	virtual ~OffsetCurve3D();
-	OffsetCurve3D(STEPWrapper *sw,int step_id);
-	virtual curve_type CurveType() { return OFFSET_CURVE_3D; };
-	bool Load(STEPWrapper *sw,SDAI_Application_instance *sse);
-	virtual const double *PointAtEnd();
-	virtual const double *PointAtStart();
-	virtual void Print(int level);
+    OffsetCurve3D();
+    virtual ~OffsetCurve3D();
+    OffsetCurve3D(STEPWrapper *sw, int step_id);
+    virtual curve_type CurveType() {
+	return OFFSET_CURVE_3D;
+    };
+    bool Load(STEPWrapper *sw, SDAI_Application_instance *sse);
+    virtual const double *PointAtEnd();
+    virtual const double *PointAtStart();
+    virtual void Print(int level);
 
-	//static methods
-	static STEPEntity *Create(STEPWrapper *sw,SDAI_Application_instance *sse);
+    //static methods
+    static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
 #endif /* OFFSETCURVE3D_H_ */

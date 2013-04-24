@@ -29,22 +29,23 @@
 
 #include "NamedUnit.h"
 
-class TimeUnit : virtual public NamedUnit {
+class TimeUnit : virtual public NamedUnit
+{
 private:
-	static string entityname;
-	static EntityInstanceFunc GetInstance;
+    static string entityname;
+    static EntityInstanceFunc GetInstance;
 
 protected:
 
 public:
-	TimeUnit();
-	virtual ~TimeUnit();
-	TimeUnit(STEPWrapper *sw,int step_id);
-	bool Load(STEPWrapper *sw,SDAI_Application_instance *sse);
-	virtual void Print(int level);
+    TimeUnit();
+    virtual ~TimeUnit();
+    TimeUnit(STEPWrapper *sw, int step_id);
+    bool Load(STEPWrapper *sw, SDAI_Application_instance *sse);
+    virtual void Print(int level);
 
-	//static methods
-	static STEPEntity *Create(STEPWrapper *sw,SDAI_Application_instance *sse);
+    //static methods
+    static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
 #endif /* TIMEUNIT_H_ */

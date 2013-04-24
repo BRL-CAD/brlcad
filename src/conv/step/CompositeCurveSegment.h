@@ -31,25 +31,26 @@
 
 class Curve;
 
-class CompositeCurveSegment : public FoundedItem {
+class CompositeCurveSegment : public FoundedItem
+{
 private:
-	static string entityname;
-	static EntityInstanceFunc GetInstance;
+    static string entityname;
+    static EntityInstanceFunc GetInstance;
 
 protected:
-	Curve *parent_curve;
-	Transition_code transition;
-	Boolean same_sense;
+    Curve *parent_curve;
+    Transition_code transition;
+    Boolean same_sense;
 
 public:
-	CompositeCurveSegment();
-	virtual ~CompositeCurveSegment();
-	CompositeCurveSegment(STEPWrapper *sw,int step_id);
-	bool Load(STEPWrapper *sw,SDAI_Application_instance *sse);
-	virtual void Print(int level);
+    CompositeCurveSegment();
+    virtual ~CompositeCurveSegment();
+    CompositeCurveSegment(STEPWrapper *sw, int step_id);
+    bool Load(STEPWrapper *sw, SDAI_Application_instance *sse);
+    virtual void Print(int level);
 
-	//static methods
-	static STEPEntity *Create(STEPWrapper *sw,SDAI_Application_instance *sse);
+    //static methods
+    static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
 #endif /* COMPOSITECURVESEGMENT_H_ */

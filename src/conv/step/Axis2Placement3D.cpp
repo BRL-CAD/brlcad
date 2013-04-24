@@ -34,23 +34,26 @@
 
 #define CLASSNAME "Axis2Placement3D"
 #define ENTITYNAME "Axis2_Placement_3d"
-string Axis2Placement3D::entityname = Factory::RegisterClass(ENTITYNAME,(FactoryMethod)Axis2Placement3D::Create);
+string Axis2Placement3D::entityname = Factory::RegisterClass(ENTITYNAME, (FactoryMethod)Axis2Placement3D::Create);
 
-Axis2Placement3D::Axis2Placement3D() {
+Axis2Placement3D::Axis2Placement3D()
+{
     step = NULL;
     id = 0;
     axis = NULL;
     ref_direction = NULL;
 }
 
-Axis2Placement3D::Axis2Placement3D(STEPWrapper *sw,int step_id) {
+Axis2Placement3D::Axis2Placement3D(STEPWrapper *sw, int step_id)
+{
     step = sw;
     id = step_id;
     axis = NULL;
     ref_direction = NULL;
 }
 
-Axis2Placement3D::~Axis2Placement3D() {
+Axis2Placement3D::~Axis2Placement3D()
+{
 }
 
 /*
@@ -68,27 +71,28 @@ Axis2Placement3D::~Axis2Placement3D() {
 /////////
 */
 void
-Axis2Placement3D::BuildAxis() {
+Axis2Placement3D::BuildAxis()
+{
     double d1[3] = VINIT_ZERO;
     double d2[3] = VINIT_ZERO;
     double d1Xd2[3] = VINIT_ZERO;
 
     if (axis == NULL) {
-	VSET(d1,0.0,0.0,1.0);
+	VSET(d1, 0.0, 0.0, 1.0);
     } else {
-	VMOVE(d1,axis->DirectionRatios());
+	VMOVE(d1, axis->DirectionRatios());
 	VUNITIZE(d1);
     }
     if (ref_direction == NULL) {
-	FirstProjAxis(d2,d1,NULL);
+	FirstProjAxis(d2, d1, NULL);
     } else {
-	FirstProjAxis(d2,d1,ref_direction->DirectionRatios());
+	FirstProjAxis(d2, d1, ref_direction->DirectionRatios());
     }
-    VCROSS(d1Xd2,d1,d2);
+    VCROSS(d1Xd2, d1, d2);
     VUNITIZE(d1Xd2);
-    VMOVE(p[0],d2);
-    VMOVE(p[1],d1Xd2);
-    VMOVE(p[2],d1);
+    VMOVE(p[0], d2);
+    VMOVE(p[1], d1Xd2);
+    VMOVE(p[2], d1);
 
     return;
 }
@@ -97,24 +101,26 @@ Axis2Placement3D::BuildAxis() {
  *   FUNCTION first_proj_axis()
  */
 void
-Axis2Placement3D::FirstProjAxis(double *proj,double *zaxis, double *refdir) {
+Axis2Placement3D::FirstProjAxis(double *proj, double *zaxis, double *refdir)
+{
     double z[3] = VINIT_ZERO;
     double v[3] = VINIT_ZERO;
     double TOL = 1e-9;
 
-    if (zaxis == NULL)
+    if (zaxis == NULL) {
 	return;
+    }
 
-    VMOVE(z,zaxis);
+    VMOVE(z, zaxis);
     VUNITIZE(z);
     if (refdir == NULL) {
-	double xplus[3]=  {1.0,0.0,0.0};
-	double xminus[3]=  {-1.0,0.0,0.0};
+	double xplus[3] =  {1.0, 0.0, 0.0};
+	double xminus[3] =  { -1.0, 0.0, 0.0};
 	if (!VNEAR_EQUAL(z, xplus, TOL) &&
 	    !VNEAR_EQUAL(z, xminus, TOL))  {
-	    VSET(v,1.0,0.0,0.0);
+	    VSET(v, 1.0, 0.0, 0.0);
 	} else {
-	    VSET(v,0.0,1.0,0.0);
+	    VSET(v, 0.0, 1.0, 0.0);
 	}
     } else {
 	double cross[3];
@@ -122,23 +128,23 @@ Axis2Placement3D::FirstProjAxis(double *proj,double *zaxis, double *refdir) {
 
 	VCROSS(cross, refdir, z);
 	mag = MAGNITUDE(cross);
-	if (NEAR_ZERO(mag,TOL)) {
+	if (NEAR_ZERO(mag, TOL)) {
 	    return;
 	} else {
-	    VMOVE(v,refdir);
+	    VMOVE(v, refdir);
 	    VUNITIZE(v);
 	}
 
     }
     double x_vec[3];
     double aproj[3];
-    double dot = VDOT(v,z);
+    double dot = VDOT(v, z);
     ScalarTimesVector(x_vec, dot, z);
-    VectorDifference(aproj,v,x_vec);
-    VSCALE(x_vec,z,dot);
-    VSUB2(aproj,v, x_vec);
+    VectorDifference(aproj, v, x_vec);
+    VSCALE(x_vec, z, dot);
+    VSUB2(aproj, v, x_vec);
     VUNITIZE(aproj);
-    VMOVE(proj,aproj);
+    VMOVE(proj, aproj);
 
     return;
 }
@@ -147,10 +153,11 @@ Axis2Placement3D::FirstProjAxis(double *proj,double *zaxis, double *refdir) {
  *  FUNCTION scalar_times_vector ()
  */
 void
-Axis2Placement3D::ScalarTimesVector(double *v, double scalar, double *vec) {
-    VMOVE(v,vec);
+Axis2Placement3D::ScalarTimesVector(double *v, double scalar, double *vec)
+{
+    VMOVE(v, vec);
     VUNITIZE(v);
-    VSCALE(v,v,scalar);
+    VSCALE(v, v, scalar);
 }
 
 /*
@@ -158,70 +165,77 @@ Axis2Placement3D::ScalarTimesVector(double *v, double scalar, double *vec) {
  *   FUNCTION vector_difference()
  */
 void
-Axis2Placement3D::VectorDifference(double *result, double *v1, double *v2) {
+Axis2Placement3D::VectorDifference(double *result, double *v1, double *v2)
+{
     double vec1[3];
     double vec2[3];
 
-    VMOVE(vec1,v1);
-    VMOVE(vec2,v2);
+    VMOVE(vec1, v1);
+    VMOVE(vec2, v2);
     VUNITIZE(vec1);
     VUNITIZE(vec2);
 
-    VADD2(result,vec1,vec2);
+    VADD2(result, vec1, vec2);
 }
 
 const double *
-Axis2Placement3D::GetAxis(int i) {
+Axis2Placement3D::GetAxis(int i)
+{
     return p[i];
 }
 
 const double *
-Axis2Placement3D::GetOrigin() {
+Axis2Placement3D::GetOrigin()
+{
     return location->Coordinates();
 }
 
 const double *
-Axis2Placement3D::GetNormal() {
+Axis2Placement3D::GetNormal()
+{
     return p[2];
 }
 
 const double *
-Axis2Placement3D::GetXAxis() {
+Axis2Placement3D::GetXAxis()
+{
     return p[0];
 }
 
 const double *
-Axis2Placement3D::GetYAxis() {
+Axis2Placement3D::GetYAxis()
+{
     return p[1];
 }
 
 bool
-Axis2Placement3D::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
-    step=sw;
+Axis2Placement3D::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
+    step = sw;
     id = sse->STEPfile_id;
 
-    if ( !Placement::Load(step,sse) ) {
+    if (!Placement::Load(step, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::Placement." << std::endl;
 	return false;
     }
 
     // need to do this for local attributes to makes sure we have
     // the actual entity and not a complex/supertype parent
-    sse = step->getEntity(sse,ENTITYNAME);
+    sse = step->getEntity(sse, ENTITYNAME);
 
     if (axis == NULL) {
-	SDAI_Application_instance *entity = step->getEntityAttribute(sse,"axis");
+	SDAI_Application_instance *entity = step->getEntityAttribute(sse, "axis");
 	if (entity) {
-	    axis = dynamic_cast<Direction *>(Factory::CreateObject(sw,entity));
+	    axis = dynamic_cast<Direction *>(Factory::CreateObject(sw, entity));
 	} else { // optional so no problem if not here
 	    axis = NULL;
 	}
     }
 
     if (ref_direction == NULL) {
-	SDAI_Application_instance *entity = step->getEntityAttribute(sse,"ref_direction");
+	SDAI_Application_instance *entity = step->getEntityAttribute(sse, "ref_direction");
 	if (entity) {
-	    ref_direction = dynamic_cast<Direction *>(Factory::CreateObject(sw,entity));
+	    ref_direction = dynamic_cast<Direction *>(Factory::CreateObject(sw, entity));
 	} else { // optional so no problem if not here
 	    ref_direction = NULL;
 	}
@@ -233,31 +247,39 @@ Axis2Placement3D::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
 }
 
 void
-Axis2Placement3D::Print(int level) {
-    TAB(level); std::cout << CLASSNAME << ":" << "(";
+Axis2Placement3D::Print(int level)
+{
+    TAB(level);
+    std::cout << CLASSNAME << ":" << "(";
     std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-    TAB(level); std::cout << "Attributes:" << std::endl;
+    TAB(level);
+    std::cout << "Attributes:" << std::endl;
     if (axis) {
-	TAB(level+1); std::cout << "axis:" << std::endl;
-	axis->Print(level+1);
+	TAB(level + 1);
+	std::cout << "axis:" << std::endl;
+	axis->Print(level + 1);
     }
     if (ref_direction) {
-	TAB(level+1); std::cout << "ref_direction:" << std::endl;
-	ref_direction->Print(level+1);
+	TAB(level + 1);
+	std::cout << "ref_direction:" << std::endl;
+	ref_direction->Print(level + 1);
     }
 
-    TAB(level); std::cout << "Inherited Attributes:" << std::endl;
-    Placement::Print(level+1);
+    TAB(level);
+    std::cout << "Inherited Attributes:" << std::endl;
+    Placement::Print(level + 1);
 }
 
 STEPEntity *
-Axis2Placement3D::GetInstance(STEPWrapper *sw, int id) {
+Axis2Placement3D::GetInstance(STEPWrapper *sw, int id)
+{
     return new Axis2Placement3D(sw, id);
 }
 
 STEPEntity *
-Axis2Placement3D::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
+Axis2Placement3D::Create(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
     return STEPEntity::CreateEntity(sw, sse, GetInstance, CLASSNAME);
 }
 

@@ -109,20 +109,21 @@ void ItemDefinedTransformation::Print(int level)
 
     TAB(level);
     std::cout << "Attributes:" << std::endl;
-    TAB(level+1);
+    TAB(level + 1);
     std::cout << "name:" << name << std::endl;
-    TAB(level+1);
+    TAB(level + 1);
     std::cout << "description:" << description << std::endl;
-    TAB(level+1);
+    TAB(level + 1);
     std::cout << "transform_item_1:" << name << std::endl;
     transform_item_1->Print(level + 2);
-    TAB(level+1);
+    TAB(level + 1);
     std::cout << "transform_item_2:" << name << std::endl;
     transform_item_2->Print(level + 2);
 }
 
 STEPEntity *
-ItemDefinedTransformation::GetInstance(STEPWrapper *sw, int id) {
+ItemDefinedTransformation::GetInstance(STEPWrapper *sw, int id)
+{
     return new ItemDefinedTransformation(sw, id);
 }
 

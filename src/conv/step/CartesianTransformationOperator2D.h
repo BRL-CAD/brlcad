@@ -29,23 +29,24 @@
 
 #include "CartesianTransformationOperator.h"
 
-class CartesianTransformationOperator2D : public CartesianTransformationOperator {
+class CartesianTransformationOperator2D : public CartesianTransformationOperator
+{
 private:
-	static string entityname;
-	static EntityInstanceFunc GetInstance;
+    static string entityname;
+    static EntityInstanceFunc GetInstance;
 
 protected:
 
 public:
-	CartesianTransformationOperator2D();
-	virtual ~CartesianTransformationOperator2D();
-	CartesianTransformationOperator2D(STEPWrapper *sw,int step_id);
-	bool Load(STEPWrapper *sw,SDAI_Application_instance *sse);
-	virtual bool LoadONBrep(ON_Brep *brep);
-	virtual void Print(int level);
+    CartesianTransformationOperator2D();
+    virtual ~CartesianTransformationOperator2D();
+    CartesianTransformationOperator2D(STEPWrapper *sw, int step_id);
+    bool Load(STEPWrapper *sw, SDAI_Application_instance *sse);
+    virtual bool LoadONBrep(ON_Brep *brep);
+    virtual void Print(int level);
 
-	//static methods
-	static STEPEntity *Create(STEPWrapper *sw,SDAI_Application_instance *sse);
+    //static methods
+    static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
 #endif /* CARTESIAN_TRANSFORMATION_OPERATOR_2D_H_ */

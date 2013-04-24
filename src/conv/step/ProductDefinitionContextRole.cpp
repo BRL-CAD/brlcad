@@ -91,14 +91,15 @@ void ProductDefinitionContextRole::Print(int level)
 
     TAB(level);
     std::cout << "Attributes:" << std::endl;
-    TAB(level+1);
+    TAB(level + 1);
     std::cout << "name:" << name << std::endl;
-    TAB(level+1);
+    TAB(level + 1);
     std::cout << "description:" << description << std::endl;
 }
 
 STEPEntity *
-ProductDefinitionContextRole::GetInstance(STEPWrapper *sw, int id) {
+ProductDefinitionContextRole::GetInstance(STEPWrapper *sw, int id)
+{
     return new ProductDefinitionContextRole(sw, id);
 }
 

@@ -35,7 +35,8 @@
 class ON_Brep;
 class Representation;
 
-class RepresentationRelationship: virtual public STEPEntity {
+class RepresentationRelationship: virtual public STEPEntity
+{
 private:
     static string entityname;
     static EntityInstanceFunc GetInstance;

@@ -31,28 +31,32 @@
 
 #define CLASSNAME "QuasiUniformSurface"
 #define ENTITYNAME "Quasi_Uniform_Surface"
-string QuasiUniformSurface::entityname = Factory::RegisterClass(ENTITYNAME,(FactoryMethod)QuasiUniformSurface::Create);
+string QuasiUniformSurface::entityname = Factory::RegisterClass(ENTITYNAME, (FactoryMethod)QuasiUniformSurface::Create);
 
-QuasiUniformSurface::QuasiUniformSurface() {
+QuasiUniformSurface::QuasiUniformSurface()
+{
     step = NULL;
     id = 0;
 }
 
-QuasiUniformSurface::QuasiUniformSurface(STEPWrapper *sw,int step_id) {
-    step=sw;
+QuasiUniformSurface::QuasiUniformSurface(STEPWrapper *sw, int step_id)
+{
+    step = sw;
     id = step_id;
 }
 
-QuasiUniformSurface::~QuasiUniformSurface() {
+QuasiUniformSurface::~QuasiUniformSurface()
+{
 }
 
 bool
-QuasiUniformSurface::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
+QuasiUniformSurface::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
 
-    step=sw;
+    step = sw;
     id = sse->STEPfile_id;
 
-    if (!BSplineSurface::Load(sw,sse)) {
+    if (!BSplineSurface::Load(sw, sse)) {
 	std::cout << "Error loading QuasiUniformSurface." << std::endl;
 	return false;
     }
@@ -60,21 +64,26 @@ QuasiUniformSurface::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
 }
 
 void
-QuasiUniformSurface::Print(int level) {
-    TAB(level); std::cout << CLASSNAME << ":" << name << "(";
+QuasiUniformSurface::Print(int level)
+{
+    TAB(level);
+    std::cout << CLASSNAME << ":" << name << "(";
     std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-    TAB(level); std::cout << "Inherited:" << std::endl;
-    BSplineSurface::Print(level+1);
+    TAB(level);
+    std::cout << "Inherited:" << std::endl;
+    BSplineSurface::Print(level + 1);
 }
 
 STEPEntity *
-QuasiUniformSurface::GetInstance(STEPWrapper *sw, int id) {
+QuasiUniformSurface::GetInstance(STEPWrapper *sw, int id)
+{
     return new QuasiUniformSurface(sw, id);
 }
 
 STEPEntity *
-QuasiUniformSurface::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
+QuasiUniformSurface::Create(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
     return STEPEntity::CreateEntity(sw, sse, GetInstance, CLASSNAME);
 }
 

@@ -32,28 +32,32 @@
 
 #define CLASSNAME "QuasiUniformCurve"
 #define ENTITYNAME "Quasi_Uniform_Curve"
-string QuasiUniformCurve::entityname = Factory::RegisterClass(ENTITYNAME,(FactoryMethod)QuasiUniformCurve::Create);
+string QuasiUniformCurve::entityname = Factory::RegisterClass(ENTITYNAME, (FactoryMethod)QuasiUniformCurve::Create);
 
-QuasiUniformCurve::QuasiUniformCurve() {
+QuasiUniformCurve::QuasiUniformCurve()
+{
     step = NULL;
     id = 0;
 }
 
-QuasiUniformCurve::QuasiUniformCurve(STEPWrapper *sw,int step_id) {
+QuasiUniformCurve::QuasiUniformCurve(STEPWrapper *sw, int step_id)
+{
     step = sw;
     id = step_id;
 }
 
-QuasiUniformCurve::~QuasiUniformCurve() {
+QuasiUniformCurve::~QuasiUniformCurve()
+{
 }
 
 bool
-QuasiUniformCurve::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
-    step=sw;
+QuasiUniformCurve::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
+    step = sw;
     id = sse->STEPfile_id;
 
     // load base class attributes
-    if ( !BSplineCurve::Load(sw,sse) ) {
+    if (!BSplineCurve::Load(sw, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::BSplineCurve." << std::endl;
 	return false;
     }
@@ -62,21 +66,26 @@ QuasiUniformCurve::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
 }
 
 void
-QuasiUniformCurve::Print(int level) {
-    TAB(level); std::cout << CLASSNAME << ":" << name << "(";
+QuasiUniformCurve::Print(int level)
+{
+    TAB(level);
+    std::cout << CLASSNAME << ":" << name << "(";
     std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-    TAB(level); std::cout << "Inherited Attributes:" << std::endl;
-    BSplineCurve::Print(level+1);
+    TAB(level);
+    std::cout << "Inherited Attributes:" << std::endl;
+    BSplineCurve::Print(level + 1);
 }
 
 STEPEntity *
-QuasiUniformCurve::GetInstance(STEPWrapper *sw, int id) {
+QuasiUniformCurve::GetInstance(STEPWrapper *sw, int id)
+{
     return new QuasiUniformCurve(sw, id);
 }
 
 STEPEntity *
-QuasiUniformCurve::Create(STEPWrapper *sw,SDAI_Application_instance *sse){
+QuasiUniformCurve::Create(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
     return STEPEntity::CreateEntity(sw, sse, GetInstance, CLASSNAME);
 }
 

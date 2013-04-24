@@ -29,23 +29,24 @@
 
 #include "NamedUnit.h"
 
-class ContextDependentUnit : virtual public NamedUnit {
+class ContextDependentUnit : virtual public NamedUnit
+{
 private:
-	static string entityname;
-	static EntityInstanceFunc GetInstance;
+    static string entityname;
+    static EntityInstanceFunc GetInstance;
 
 protected:
-	string name;
+    string name;
 
 public:
-	ContextDependentUnit();
-	virtual ~ContextDependentUnit();
-	ContextDependentUnit(STEPWrapper *sw,int step_id);
-	bool Load(STEPWrapper *sw,SDAI_Application_instance *sse);
-	virtual void Print(int level);
+    ContextDependentUnit();
+    virtual ~ContextDependentUnit();
+    ContextDependentUnit(STEPWrapper *sw, int step_id);
+    bool Load(STEPWrapper *sw, SDAI_Application_instance *sse);
+    virtual void Print(int level);
 
-	//static methods
-	static STEPEntity *Create(STEPWrapper *sw,SDAI_Application_instance *sse);
+    //static methods
+    static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
 #endif /* CONTEXTDEPENDENTUNIT_H_ */

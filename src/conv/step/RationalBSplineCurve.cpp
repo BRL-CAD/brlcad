@@ -32,46 +32,50 @@
 
 #define CLASSNAME "RationalBSplineCurve"
 #define ENTITYNAME "Rational_B_Spline_Curve"
-string RationalBSplineCurve::entityname = Factory::RegisterClass(ENTITYNAME,(FactoryMethod)RationalBSplineCurve::Create);
+string RationalBSplineCurve::entityname = Factory::RegisterClass(ENTITYNAME, (FactoryMethod)RationalBSplineCurve::Create);
 
-RationalBSplineCurve::RationalBSplineCurve() {
+RationalBSplineCurve::RationalBSplineCurve()
+{
     step = NULL;
     id = 0;
 }
 
-RationalBSplineCurve::RationalBSplineCurve(STEPWrapper *sw,int step_id) {
+RationalBSplineCurve::RationalBSplineCurve(STEPWrapper *sw, int step_id)
+{
     step = sw;
     id = step_id;
 }
 
-RationalBSplineCurve::~RationalBSplineCurve() {
+RationalBSplineCurve::~RationalBSplineCurve()
+{
     weights_data.clear();
 }
 
 bool
-RationalBSplineCurve::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
-    step=sw;
+RationalBSplineCurve::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
+    step = sw;
     id = sse->STEPfile_id;
 
     // load base class attributes
-    if ( !BSplineCurve::Load(sw,sse) ) {
+    if (!BSplineCurve::Load(sw, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::BSplineCurve." << std::endl;
 	return false;
     }
 
     // need to do this for local attributes to makes sure we have
     // the actual entity and not a complex/supertype parent
-    sse = step->getEntity(sse,ENTITYNAME);
+    sse = step->getEntity(sse, ENTITYNAME);
 
     if (weights_data.empty()) {
-	STEPattribute *attr = step->getAttribute(sse,"weights_data");
+	STEPattribute *attr = step->getAttribute(sse, "weights_data");
 
 	if (attr) {
 	    STEPaggregate *sa = (STEPaggregate *)(attr->ptr.a);
 	    RealNode *rn = (RealNode *)sa->GetHead();
 
-	    while ( rn != NULL) {
-		weights_data.insert(weights_data.end(),rn->value);
+	    while (rn != NULL) {
+		weights_data.insert(weights_data.end(), rn->value);
 		rn = (RealNode *)rn->NextNode();
 	    }
 	} else {
@@ -84,16 +88,20 @@ RationalBSplineCurve::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
 }
 
 void
-RationalBSplineCurve::Print(int level) {
-    TAB(level); std::cout << CLASSNAME << ":" << name << "(";
+RationalBSplineCurve::Print(int level)
+{
+    TAB(level);
+    std::cout << CLASSNAME << ":" << name << "(";
     std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-    TAB(level); std::cout << "Inherited Attributes:" << std::endl;
+    TAB(level);
+    std::cout << "Inherited Attributes:" << std::endl;
     BSplineCurve::Print(level);
 
-    TAB(level); std::cout << "weights_data:";
+    TAB(level);
+    std::cout << "weights_data:";
     LIST_OF_REALS::iterator i;
-    for(i=weights_data.begin();i!=weights_data.end();i++) {
+    for (i = weights_data.begin(); i != weights_data.end(); i++) {
 	std::cout << " " << (*i);
     }
     std::cout << std::endl;
@@ -101,12 +109,14 @@ RationalBSplineCurve::Print(int level) {
 }
 
 STEPEntity *
-RationalBSplineCurve::GetInstance(STEPWrapper *sw, int id) {
+RationalBSplineCurve::GetInstance(STEPWrapper *sw, int id)
+{
     return new RationalBSplineCurve(sw, id);
 }
 
 STEPEntity *
-RationalBSplineCurve::Create(STEPWrapper *sw,SDAI_Application_instance *sse){
+RationalBSplineCurve::Create(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
     return STEPEntity::CreateEntity(sw, sse, GetInstance, CLASSNAME);
 }
 

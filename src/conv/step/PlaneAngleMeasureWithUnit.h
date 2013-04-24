@@ -29,22 +29,23 @@
 
 #include "MeasureWithUnit.h"
 
-class PlaneAngleMeasureWithUnit : public MeasureWithUnit {
+class PlaneAngleMeasureWithUnit : public MeasureWithUnit
+{
 private:
-	static string entityname;
-	static EntityInstanceFunc GetInstance;
+    static string entityname;
+    static EntityInstanceFunc GetInstance;
 
 protected:
 
 public:
-	PlaneAngleMeasureWithUnit();
-	virtual ~PlaneAngleMeasureWithUnit();
-	PlaneAngleMeasureWithUnit(STEPWrapper *sw,int step_id);
-	bool Load(STEPWrapper *sw,SDAI_Application_instance *sse);
-	virtual void Print(int level);
+    PlaneAngleMeasureWithUnit();
+    virtual ~PlaneAngleMeasureWithUnit();
+    PlaneAngleMeasureWithUnit(STEPWrapper *sw, int step_id);
+    bool Load(STEPWrapper *sw, SDAI_Application_instance *sse);
+    virtual void Print(int level);
 
-	//static methods
-	static STEPEntity *Create(STEPWrapper *sw,SDAI_Application_instance *sse);
+    //static methods
+    static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
 #endif /* PLANE_ANGLE_MEASURE_WITH_UNIT_H_ */

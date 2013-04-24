@@ -33,84 +33,96 @@
 
 #define CLASSNAME "FaceSurface"
 #define ENTITYNAME "Face_Surface"
-string FaceSurface::entityname = Factory::RegisterClass(ENTITYNAME,(FactoryMethod)FaceSurface::Create);
+string FaceSurface::entityname = Factory::RegisterClass(ENTITYNAME, (FactoryMethod)FaceSurface::Create);
 
-FaceSurface::FaceSurface() {
+FaceSurface::FaceSurface()
+{
     step = NULL;
     id = 0;
     face_geometry = NULL;
-	same_sense = BUnset;
+    same_sense = BUnset;
 }
 
-FaceSurface::FaceSurface(STEPWrapper *sw,int step_id) {
+FaceSurface::FaceSurface(STEPWrapper *sw, int step_id)
+{
     step = sw;
     id = step_id;
     face_geometry = NULL;
-	same_sense = BUnset;
+    same_sense = BUnset;
 }
 
-FaceSurface::~FaceSurface() {
-    face_geometry=NULL;
+FaceSurface::~FaceSurface()
+{
+    face_geometry = NULL;
 }
 
 bool
-FaceSurface::Load(STEPWrapper *sw, SDAI_Application_instance *sse) {
+FaceSurface::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
 
-    step=sw;
+    step = sw;
     id = sse->STEPfile_id;
 
 
-    if ( !Face::Load(sw,sse) ) {
+    if (!Face::Load(sw, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::Face." << std::endl;
 	return false;
     }
 
-    if ( !GeometricRepresentationItem::Load(sw,sse) ) {
+    if (!GeometricRepresentationItem::Load(sw, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::GeometricRepresentationItem." << std::endl;
 	return false;
     }
 
     // need to do this for local attributes to makes sure we have
     // the actual entity and not a complex/supertype parent
-    sse = step->getEntity(sse,ENTITYNAME);
+    sse = step->getEntity(sse, ENTITYNAME);
 
     if (face_geometry == NULL) {
-	SDAI_Application_instance *entity = step->getEntityAttribute(sse,"face_geometry");
+	SDAI_Application_instance *entity = step->getEntityAttribute(sse, "face_geometry");
 	if (entity) {
 	    //face_geometry = dynamic_cast<Surface *>(Factory::CreateGeometricRepresentationItemObject(sw,entity));
-	    face_geometry = dynamic_cast<Surface *>(Factory::CreateObject(sw,entity)); //CreateSurfaceObject(sw,entity));
+	    face_geometry = dynamic_cast<Surface *>(Factory::CreateObject(sw, entity)); //CreateSurfaceObject(sw,entity));
 	    //face_geometry->Print(0);
 	}
     }
 
-    same_sense = step->getBooleanAttribute(sse,"same_sense");
+    same_sense = step->getBooleanAttribute(sse, "same_sense");
 
     return true;
 }
 
 void
-FaceSurface::Print(int level) {
-    TAB(level); std::cout << CLASSNAME << ":" << name << "(";
+FaceSurface::Print(int level)
+{
+    TAB(level);
+    std::cout << CLASSNAME << ":" << name << "(";
     std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-    TAB(level); std::cout << "Attributes:" << std::endl;
-    TAB(level+1); std::cout << "face_geometry:" << std::endl;
-    face_geometry->Print(level+1);
+    TAB(level);
+    std::cout << "Attributes:" << std::endl;
+    TAB(level + 1);
+    std::cout << "face_geometry:" << std::endl;
+    face_geometry->Print(level + 1);
 
-    TAB(level+1); std::cout << "same_sense:" << step->getBooleanString((Boolean)same_sense) << std::endl;
+    TAB(level + 1);
+    std::cout << "same_sense:" << step->getBooleanString((Boolean)same_sense) << std::endl;
 
-    TAB(level); std::cout << "Inherited Attributes:" << std::endl;
-    Face::Print(level+1);
-    GeometricRepresentationItem::Print(level+1);
+    TAB(level);
+    std::cout << "Inherited Attributes:" << std::endl;
+    Face::Print(level + 1);
+    GeometricRepresentationItem::Print(level + 1);
 }
 
 STEPEntity *
-FaceSurface::GetInstance(STEPWrapper *sw, int id) {
+FaceSurface::GetInstance(STEPWrapper *sw, int id)
+{
     return new FaceSurface(sw, id);
 }
 
 STEPEntity *
-FaceSurface::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
+FaceSurface::Create(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
     return STEPEntity::CreateEntity(sw, sse, GetInstance, CLASSNAME);
 }
 

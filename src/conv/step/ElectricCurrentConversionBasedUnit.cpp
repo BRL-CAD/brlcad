@@ -34,29 +34,33 @@
 
 #define CLASSNAME "ElectricCurrentConversionBasedUnit"
 #define ENTITYNAME "Electric_Current_Conversion_Based_Unit"
-string ElectricCurrentConversionBasedUnit::entityname = Factory::RegisterClass(ENTITYNAME,(FactoryMethod)ElectricCurrentConversionBasedUnit::Create);
+string ElectricCurrentConversionBasedUnit::entityname = Factory::RegisterClass(ENTITYNAME, (FactoryMethod)ElectricCurrentConversionBasedUnit::Create);
 
-ElectricCurrentConversionBasedUnit::ElectricCurrentConversionBasedUnit() {
+ElectricCurrentConversionBasedUnit::ElectricCurrentConversionBasedUnit()
+{
     step = NULL;
     id = 0;
 }
 
-ElectricCurrentConversionBasedUnit::ElectricCurrentConversionBasedUnit(STEPWrapper *sw,int step_id) {
+ElectricCurrentConversionBasedUnit::ElectricCurrentConversionBasedUnit(STEPWrapper *sw, int step_id)
+{
     step = sw;
     id = step_id;
 }
 
-ElectricCurrentConversionBasedUnit::~ElectricCurrentConversionBasedUnit() {
+ElectricCurrentConversionBasedUnit::~ElectricCurrentConversionBasedUnit()
+{
 }
 
 bool
-ElectricCurrentConversionBasedUnit::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
-    step=sw;
+ElectricCurrentConversionBasedUnit::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
+    step = sw;
     id = sse->STEPfile_id;
 
 
     // load base class attributes
-    if ( !ElectricCurrentConversionBasedUnit::Load(step,sse) ) {
+    if (!ElectricCurrentConversionBasedUnit::Load(step, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::Unit." << std::endl;
 	return false;
     }
@@ -65,23 +69,28 @@ ElectricCurrentConversionBasedUnit::Load(STEPWrapper *sw,SDAI_Application_instan
 }
 
 void
-ElectricCurrentConversionBasedUnit::Print(int level) {
-    TAB(level); std::cout << CLASSNAME << ":" << "(";
+ElectricCurrentConversionBasedUnit::Print(int level)
+{
+    TAB(level);
+    std::cout << CLASSNAME << ":" << "(";
     std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-    TAB(level); std::cout << "Inherited Attributes:" << std::endl;
-    ElectricCurrentUnit::Print(level+1);
-    ConversionBasedUnit::Print(level+1);
+    TAB(level);
+    std::cout << "Inherited Attributes:" << std::endl;
+    ElectricCurrentUnit::Print(level + 1);
+    ConversionBasedUnit::Print(level + 1);
 
 }
 
 STEPEntity *
-ElectricCurrentConversionBasedUnit::GetInstance(STEPWrapper *sw, int id) {
+ElectricCurrentConversionBasedUnit::GetInstance(STEPWrapper *sw, int id)
+{
     return new ElectricCurrentConversionBasedUnit(sw, id);
 }
 
 STEPEntity *
-ElectricCurrentConversionBasedUnit::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
+ElectricCurrentConversionBasedUnit::Create(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
     return STEPEntity::CreateEntity(sw, sse, GetInstance, CLASSNAME);
 }
 

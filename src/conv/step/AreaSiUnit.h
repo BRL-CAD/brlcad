@@ -30,22 +30,23 @@
 #include "AreaUnit.h"
 #include "SiUnit.h"
 
-class AreaSiUnit : public AreaUnit, public SiUnit {
+class AreaSiUnit : public AreaUnit, public SiUnit
+{
 private:
-	static string entityname;
-	static EntityInstanceFunc GetInstance;
+    static string entityname;
+    static EntityInstanceFunc GetInstance;
 
 protected:
 
 public:
-	AreaSiUnit();
-	virtual ~AreaSiUnit();
-	AreaSiUnit(STEPWrapper *sw,int step_id);
-	bool Load(STEPWrapper *sw,SDAI_Application_instance *sse);
-	virtual void Print(int level);
+    AreaSiUnit();
+    virtual ~AreaSiUnit();
+    AreaSiUnit(STEPWrapper *sw, int step_id);
+    bool Load(STEPWrapper *sw, SDAI_Application_instance *sse);
+    virtual void Print(int level);
 
-	//static methods
-	static STEPEntity *Create(STEPWrapper *sw,SDAI_Application_instance *sse);
+    //static methods
+    static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
 #endif /* AREASIUNIT_H_ */

@@ -31,42 +31,50 @@
 
 #define CLASSNAME "FoundedItem"
 #define ENTITYNAME "Founded_Item"
-string FoundedItem::entityname = Factory::RegisterClass(ENTITYNAME,(FactoryMethod)FoundedItem::Create);
+string FoundedItem::entityname = Factory::RegisterClass(ENTITYNAME, (FactoryMethod)FoundedItem::Create);
 
-FoundedItem::FoundedItem() {
+FoundedItem::FoundedItem()
+{
     step = NULL;
     id = 0;
 }
 
-FoundedItem::FoundedItem(STEPWrapper *sw,int step_id) {
+FoundedItem::FoundedItem(STEPWrapper *sw, int step_id)
+{
     step = sw;
     id = step_id;
 }
 
-FoundedItem::~FoundedItem() {
+FoundedItem::~FoundedItem()
+{
 }
 
 bool
-FoundedItem::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
-    step=sw;
+FoundedItem::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
+    step = sw;
     id = sse->STEPfile_id;
 
     return true;
 }
 
 void
-FoundedItem::Print(int level) {
-    TAB(level); std::cout << CLASSNAME << ":" << "(";
+FoundedItem::Print(int level)
+{
+    TAB(level);
+    std::cout << CLASSNAME << ":" << "(";
     std::cout << "ID:" << STEPid() << ")" << std::endl;
 }
 
 STEPEntity *
-FoundedItem::GetInstance(STEPWrapper *sw, int id) {
+FoundedItem::GetInstance(STEPWrapper *sw, int id)
+{
     return new FoundedItem(sw, id);
 }
 
 STEPEntity *
-FoundedItem::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
+FoundedItem::Create(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
     return STEPEntity::CreateEntity(sw, sse, GetInstance, CLASSNAME);
 }
 

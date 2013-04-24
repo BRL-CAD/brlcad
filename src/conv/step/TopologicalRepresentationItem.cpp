@@ -31,28 +31,32 @@
 
 #define CLASSNAME "TopologicalRepresentationItem"
 #define ENTITYNAME "Topological_Representation_Item"
-string TopologicalRepresentationItem::entityname = Factory::RegisterClass(ENTITYNAME,(FactoryMethod)TopologicalRepresentationItem::Create);
+string TopologicalRepresentationItem::entityname = Factory::RegisterClass(ENTITYNAME, (FactoryMethod)TopologicalRepresentationItem::Create);
 
-TopologicalRepresentationItem::TopologicalRepresentationItem() {
+TopologicalRepresentationItem::TopologicalRepresentationItem()
+{
     step = NULL;
     id = 0;
 }
 
-TopologicalRepresentationItem::TopologicalRepresentationItem(STEPWrapper *sw,int step_id) {
+TopologicalRepresentationItem::TopologicalRepresentationItem(STEPWrapper *sw, int step_id)
+{
     step = sw;
     id = step_id;
 }
 
-TopologicalRepresentationItem::~TopologicalRepresentationItem() {
+TopologicalRepresentationItem::~TopologicalRepresentationItem()
+{
 }
 
 bool
-TopologicalRepresentationItem::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
-    step=sw;
+TopologicalRepresentationItem::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
+    step = sw;
     id = sse->STEPfile_id;
 
     // load base class attributes
-    if ( !RepresentationItem::Load(step,sse) ) {
+    if (!RepresentationItem::Load(step, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::RepresentationItem." << std::endl;
 	return false;
     }
@@ -61,21 +65,26 @@ TopologicalRepresentationItem::Load(STEPWrapper *sw,SDAI_Application_instance *s
 }
 
 void
-TopologicalRepresentationItem::Print(int level) {
-    TAB(level); std::cout << CLASSNAME << ":" << "(";
+TopologicalRepresentationItem::Print(int level)
+{
+    TAB(level);
+    std::cout << CLASSNAME << ":" << "(";
     std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-    TAB(level); std::cout << "Inherited Attributes:" << std::endl;
-    RepresentationItem::Print(level+1);
+    TAB(level);
+    std::cout << "Inherited Attributes:" << std::endl;
+    RepresentationItem::Print(level + 1);
 }
 
 STEPEntity *
-TopologicalRepresentationItem::GetInstance(STEPWrapper *sw, int id) {
+TopologicalRepresentationItem::GetInstance(STEPWrapper *sw, int id)
+{
     return new TopologicalRepresentationItem(sw, id);
 }
 
 STEPEntity *
-TopologicalRepresentationItem::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
+TopologicalRepresentationItem::Create(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
     return STEPEntity::CreateEntity(sw, sse, GetInstance, CLASSNAME);
 }
 

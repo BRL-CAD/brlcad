@@ -31,28 +31,31 @@
 
 class CartesianTransformationOperator;
 
-class CurveReplica : public Curve {
+class CurveReplica : public Curve
+{
 private:
-	static string entityname;
-	static EntityInstanceFunc GetInstance;
+    static string entityname;
+    static EntityInstanceFunc GetInstance;
 
 protected:
-	Curve *parent_curve;
-	CartesianTransformationOperator *transformation;
+    Curve *parent_curve;
+    CartesianTransformationOperator *transformation;
 
 public:
-	CurveReplica();
-	virtual ~CurveReplica();
-	CurveReplica(STEPWrapper *sw,int step_id);
-	virtual curve_type CurveType() { return CURVE_REPLICA; };
-	bool Load(STEPWrapper *sw,SDAI_Application_instance *sse);
-	virtual bool LoadONBrep(ON_Brep *brep);
-	virtual const double *PointAtEnd();
-	virtual const double *PointAtStart();
-	virtual void Print(int level);
+    CurveReplica();
+    virtual ~CurveReplica();
+    CurveReplica(STEPWrapper *sw, int step_id);
+    virtual curve_type CurveType() {
+	return CURVE_REPLICA;
+    };
+    bool Load(STEPWrapper *sw, SDAI_Application_instance *sse);
+    virtual bool LoadONBrep(ON_Brep *brep);
+    virtual const double *PointAtEnd();
+    virtual const double *PointAtStart();
+    virtual void Print(int level);
 
-	//static methods
-	static STEPEntity *Create(STEPWrapper *sw,SDAI_Application_instance *sse);
+    //static methods
+    static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
 #endif /* CURVEREPLICA_H_ */

@@ -35,60 +35,67 @@
 
 #define CLASSNAME "ConversionBasedUnit"
 #define ENTITYNAME "Conversion_Based_Unit"
-string ConversionBasedUnit::entityname = Factory::RegisterClass(ENTITYNAME,(FactoryMethod)ConversionBasedUnit::Create);
+string ConversionBasedUnit::entityname = Factory::RegisterClass(ENTITYNAME, (FactoryMethod)ConversionBasedUnit::Create);
 
-ConversionBasedUnit::ConversionBasedUnit() {
+ConversionBasedUnit::ConversionBasedUnit()
+{
     step = NULL;
     id = 0;
     conversion_factor = NULL;
 }
 
-ConversionBasedUnit::ConversionBasedUnit(STEPWrapper *sw,int step_id) {
+ConversionBasedUnit::ConversionBasedUnit(STEPWrapper *sw, int step_id)
+{
     step = sw;
     id = step_id;
     conversion_factor = NULL;
 }
 
-ConversionBasedUnit::~ConversionBasedUnit() {
+ConversionBasedUnit::~ConversionBasedUnit()
+{
 }
 
 double
-ConversionBasedUnit::GetLengthConversionFactor() {
+ConversionBasedUnit::GetLengthConversionFactor()
+{
     return conversion_factor->GetLengthConversionFactor();
 }
 
 double
-ConversionBasedUnit::GetPlaneAngleConversionFactor() {
+ConversionBasedUnit::GetPlaneAngleConversionFactor()
+{
     return conversion_factor->GetPlaneAngleConversionFactor();
 }
 
 double
-ConversionBasedUnit::GetSolidAngleConversionFactor() {
+ConversionBasedUnit::GetSolidAngleConversionFactor()
+{
     return conversion_factor->GetSolidAngleConversionFactor();
 }
 
 bool
-ConversionBasedUnit::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
-    step=sw;
+ConversionBasedUnit::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
+    step = sw;
     id = sse->STEPfile_id;
 
 
     // load base class attributes
-    if ( !NamedUnit::Load(step,sse) ) {
+    if (!NamedUnit::Load(step, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::Unit." << std::endl;
 	return false;
     }
 
     // need to do this for local attributes to makes sure we have
     // the actual entity and not a complex/supertype parent
-    sse = step->getEntity(sse,ENTITYNAME);
+    sse = step->getEntity(sse, ENTITYNAME);
 
-    name = step->getStringAttribute(sse,"name");
+    name = step->getStringAttribute(sse, "name");
 
     if (conversion_factor == NULL) {
-	SDAI_Application_instance *entity = step->getEntityAttribute(sse,"conversion_factor");
+	SDAI_Application_instance *entity = step->getEntityAttribute(sse, "conversion_factor");
 	if (entity) {
-	    conversion_factor = dynamic_cast<MeasureWithUnit *>(Factory::CreateObject(sw,entity));
+	    conversion_factor = dynamic_cast<MeasureWithUnit *>(Factory::CreateObject(sw, entity));
 	} else {
 	    std::cerr << CLASSNAME << ": error loading 'conversion_factor' attribute." << std::endl;
 	    return false;
@@ -99,27 +106,35 @@ ConversionBasedUnit::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
 }
 
 void
-ConversionBasedUnit::Print(int level) {
-    TAB(level); std::cout << CLASSNAME << ":" << "(";
+ConversionBasedUnit::Print(int level)
+{
+    TAB(level);
+    std::cout << CLASSNAME << ":" << "(";
     std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-    TAB(level); std::cout << "Attributes:" << std::endl;
-    TAB(level+1); std::cout << "name:" << name << std::endl;
-    TAB(level+1); std::cout << "conversion_factor:" << std::endl;
-    conversion_factor->Print(level+2);
+    TAB(level);
+    std::cout << "Attributes:" << std::endl;
+    TAB(level + 1);
+    std::cout << "name:" << name << std::endl;
+    TAB(level + 1);
+    std::cout << "conversion_factor:" << std::endl;
+    conversion_factor->Print(level + 2);
 
-    TAB(level); std::cout << "Inherited Attributes:" << std::endl;
-    NamedUnit::Print(level+1);
+    TAB(level);
+    std::cout << "Inherited Attributes:" << std::endl;
+    NamedUnit::Print(level + 1);
 
 }
 
 STEPEntity *
-ConversionBasedUnit::GetInstance(STEPWrapper *sw, int id) {
+ConversionBasedUnit::GetInstance(STEPWrapper *sw, int id)
+{
     return new ConversionBasedUnit(sw, id);
 }
 
 STEPEntity *
-ConversionBasedUnit::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
+ConversionBasedUnit::Create(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
     return STEPEntity::CreateEntity(sw, sse, GetInstance, CLASSNAME);
 }
 

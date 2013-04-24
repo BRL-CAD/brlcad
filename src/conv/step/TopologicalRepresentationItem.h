@@ -29,23 +29,24 @@
 
 #include "RepresentationItem.h"
 
-class TopologicalRepresentationItem : virtual public RepresentationItem {
+class TopologicalRepresentationItem : virtual public RepresentationItem
+{
 private:
-	static string entityname;
-	static EntityInstanceFunc GetInstance;
+    static string entityname;
+    static EntityInstanceFunc GetInstance;
 
 protected:
 
 public:
-	TopologicalRepresentationItem();
-	virtual ~TopologicalRepresentationItem();
-	TopologicalRepresentationItem(STEPWrapper *sw,int step_id);
-	bool Load(STEPWrapper *sw,SDAI_Application_instance *sse);
-	virtual bool LoadONBrep(ON_Brep *brep);
-	virtual void Print(int level);
+    TopologicalRepresentationItem();
+    virtual ~TopologicalRepresentationItem();
+    TopologicalRepresentationItem(STEPWrapper *sw, int step_id);
+    bool Load(STEPWrapper *sw, SDAI_Application_instance *sse);
+    virtual bool LoadONBrep(ON_Brep *brep);
+    virtual void Print(int level);
 
-	//static methods
-	static STEPEntity *Create(STEPWrapper *sw,SDAI_Application_instance *sse);
+    //static methods
+    static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
 #endif /* TOPOLOGICALREPRESENTATIONITEM_H_ */

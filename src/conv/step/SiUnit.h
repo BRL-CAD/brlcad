@@ -29,28 +29,29 @@
 
 #include "NamedUnit.h"
 
-class SiUnit : virtual public NamedUnit {
+class SiUnit : virtual public NamedUnit
+{
 private:
-	static string entityname;
-	static EntityInstanceFunc GetInstance;
-	double GetPrefixFactor();
+    static string entityname;
+    static EntityInstanceFunc GetInstance;
+    double GetPrefixFactor();
 
 protected:
-	Si_prefix prefix;
-	Si_unit_name name;
+    Si_prefix prefix;
+    Si_unit_name name;
 
 public:
-	SiUnit();
-	virtual ~SiUnit();
-	SiUnit(STEPWrapper *sw,int step_id);
-	double GetLengthConversionFactor();
-	double GetPlaneAngleConversionFactor();
-	double GetSolidAngleConversionFactor();
-	bool Load(STEPWrapper *sw,SDAI_Application_instance *sse);
-	virtual void Print(int level);
+    SiUnit();
+    virtual ~SiUnit();
+    SiUnit(STEPWrapper *sw, int step_id);
+    double GetLengthConversionFactor();
+    double GetPlaneAngleConversionFactor();
+    double GetSolidAngleConversionFactor();
+    bool Load(STEPWrapper *sw, SDAI_Application_instance *sse);
+    virtual void Print(int level);
 
-	//static methods
-	static STEPEntity *Create(STEPWrapper *sw,SDAI_Application_instance *sse);
+    //static methods
+    static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
 #endif /* SIUNIT_H_ */

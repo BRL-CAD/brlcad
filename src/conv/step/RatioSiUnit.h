@@ -30,22 +30,23 @@
 #include "RatioUnit.h"
 #include "SiUnit.h"
 
-class RatioSiUnit : public RatioUnit, public SiUnit {
+class RatioSiUnit : public RatioUnit, public SiUnit
+{
 private:
-	static string entityname;
-	static EntityInstanceFunc GetInstance;
+    static string entityname;
+    static EntityInstanceFunc GetInstance;
 
 protected:
 
 public:
-	RatioSiUnit();
-	virtual ~RatioSiUnit();
-	RatioSiUnit(STEPWrapper *sw,int step_id);
-	bool Load(STEPWrapper *sw,SDAI_Application_instance *sse);
-	virtual void Print(int level);
+    RatioSiUnit();
+    virtual ~RatioSiUnit();
+    RatioSiUnit(STEPWrapper *sw, int step_id);
+    bool Load(STEPWrapper *sw, SDAI_Application_instance *sse);
+    virtual void Print(int level);
 
-	//static methods
-	static STEPEntity *Create(STEPWrapper *sw,SDAI_Application_instance *sse);
+    //static methods
+    static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
 #endif /* RATIOSIUNIT_H_ */

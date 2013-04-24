@@ -29,22 +29,23 @@
 
 #include "NamedUnit.h"
 
-class SolidAngleUnit : virtual public NamedUnit {
+class SolidAngleUnit : virtual public NamedUnit
+{
 private:
-	static string entityname;
-	static EntityInstanceFunc GetInstance;
+    static string entityname;
+    static EntityInstanceFunc GetInstance;
 
 protected:
 
 public:
-	SolidAngleUnit();
-	virtual ~SolidAngleUnit();
-	SolidAngleUnit(STEPWrapper *sw,int step_id);
-	bool Load(STEPWrapper *sw,SDAI_Application_instance *sse);
-	virtual void Print(int level);
+    SolidAngleUnit();
+    virtual ~SolidAngleUnit();
+    SolidAngleUnit(STEPWrapper *sw, int step_id);
+    bool Load(STEPWrapper *sw, SDAI_Application_instance *sse);
+    virtual void Print(int level);
 
-	//static methods
-	static STEPEntity *Create(STEPWrapper *sw,SDAI_Application_instance *sse);
+    //static methods
+    static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
 #endif /* SOLIDANGLEUNIT_H_ */

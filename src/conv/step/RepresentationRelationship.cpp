@@ -106,20 +106,21 @@ void RepresentationRelationship::Print(int level)
 
     TAB(level);
     std::cout << "Attributes:" << std::endl;
-    TAB(level+1);
+    TAB(level + 1);
     std::cout << "name:" << name << std::endl;
-    TAB(level+1);
+    TAB(level + 1);
     std::cout << "description:" << description << std::endl;
-    TAB(level+1);
+    TAB(level + 1);
     std::cout << "rep_1:" << std::endl;
     rep_1->Print(level + 2);
-    TAB(level+1);
+    TAB(level + 1);
     std::cout << "rep_2:" << std::endl;
     rep_2->Print(level + 2);
 }
 
 STEPEntity *
-RepresentationRelationship::GetInstance(STEPWrapper *sw, int id) {
+RepresentationRelationship::GetInstance(STEPWrapper *sw, int id)
+{
     return new RepresentationRelationship(sw, id);
 }
 

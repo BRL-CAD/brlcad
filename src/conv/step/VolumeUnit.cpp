@@ -31,29 +31,33 @@
 
 #define CLASSNAME "VolumeUnit"
 #define ENTITYNAME "Volume_Unit"
-string VolumeUnit::entityname = Factory::RegisterClass(ENTITYNAME,(FactoryMethod)VolumeUnit::Create);
+string VolumeUnit::entityname = Factory::RegisterClass(ENTITYNAME, (FactoryMethod)VolumeUnit::Create);
 
-VolumeUnit::VolumeUnit() {
+VolumeUnit::VolumeUnit()
+{
     step = NULL;
     id = 0;
 }
 
-VolumeUnit::VolumeUnit(STEPWrapper *sw,int step_id) {
+VolumeUnit::VolumeUnit(STEPWrapper *sw, int step_id)
+{
     step = sw;
     id = step_id;
 }
 
-VolumeUnit::~VolumeUnit() {
+VolumeUnit::~VolumeUnit()
+{
 }
 
 bool
-VolumeUnit::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
-    step=sw;
+VolumeUnit::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
+    step = sw;
     id = sse->STEPfile_id;
 
 
     // load base class attributes
-    if ( !NamedUnit::Load(step,sse) ) {
+    if (!NamedUnit::Load(step, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::Unit." << std::endl;
 	return false;
     }
@@ -62,22 +66,27 @@ VolumeUnit::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
 }
 
 void
-VolumeUnit::Print(int level) {
-    TAB(level); std::cout << CLASSNAME << ":" << "(";
+VolumeUnit::Print(int level)
+{
+    TAB(level);
+    std::cout << CLASSNAME << ":" << "(";
     std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-    TAB(level); std::cout << "Inherited Attributes:" << std::endl;
-    NamedUnit::Print(level+1);
+    TAB(level);
+    std::cout << "Inherited Attributes:" << std::endl;
+    NamedUnit::Print(level + 1);
 
 }
 
 STEPEntity *
-VolumeUnit::GetInstance(STEPWrapper *sw, int id) {
+VolumeUnit::GetInstance(STEPWrapper *sw, int id)
+{
     return new VolumeUnit(sw, id);
 }
 
 STEPEntity *
-VolumeUnit::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
+VolumeUnit::Create(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
     return STEPEntity::CreateEntity(sw, sse, GetInstance, CLASSNAME);
 }
 

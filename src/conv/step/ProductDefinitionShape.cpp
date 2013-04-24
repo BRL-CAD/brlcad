@@ -79,7 +79,8 @@ void ProductDefinitionShape::Print(int level)
 }
 
 STEPEntity *
-ProductDefinitionShape::GetInstance(STEPWrapper *sw, int id) {
+ProductDefinitionShape::GetInstance(STEPWrapper *sw, int id)
+{
     return new ProductDefinitionShape(sw, id);
 }
 

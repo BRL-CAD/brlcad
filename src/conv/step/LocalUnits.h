@@ -26,13 +26,14 @@
 #ifndef LOCALUNITS_H_
 #define LOCALUNITS_H_
 
-class LocalUnits {
+class LocalUnits
+{
 public:
-	static double length;
-	static double planeangle;
-	static double solidangle;
-	LocalUnits();
-	virtual ~LocalUnits();
+    static double length;
+    static double planeangle;
+    static double solidangle;
+    LocalUnits();
+    virtual ~LocalUnits();
 };
 
 #endif /* LOCALUNITS_H_ */

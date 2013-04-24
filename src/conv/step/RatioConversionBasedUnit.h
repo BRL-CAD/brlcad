@@ -30,22 +30,23 @@
 #include "RatioUnit.h"
 #include "ConversionBasedUnit.h"
 
-class RatioConversionBasedUnit : public RatioUnit, public ConversionBasedUnit {
+class RatioConversionBasedUnit : public RatioUnit, public ConversionBasedUnit
+{
 private:
-	static string entityname;
-	static EntityInstanceFunc GetInstance;
+    static string entityname;
+    static EntityInstanceFunc GetInstance;
 
 protected:
 
 public:
-	RatioConversionBasedUnit();
-	virtual ~RatioConversionBasedUnit();
-	RatioConversionBasedUnit(STEPWrapper *sw,int step_id);
-	bool Load(STEPWrapper *sw,SDAI_Application_instance *sse);
-	virtual void Print(int level);
+    RatioConversionBasedUnit();
+    virtual ~RatioConversionBasedUnit();
+    RatioConversionBasedUnit(STEPWrapper *sw, int step_id);
+    bool Load(STEPWrapper *sw, SDAI_Application_instance *sse);
+    virtual void Print(int level);
 
-	//static methods
-	static STEPEntity *Create(STEPWrapper *sw,SDAI_Application_instance *sse);
+    //static methods
+    static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
 #endif /* RATIOCONVERSIONBASEDUNIT_H_ */

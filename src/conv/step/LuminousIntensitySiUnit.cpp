@@ -31,33 +31,37 @@
 
 #define CLASSNAME "LuminousIntensitySiUnit"
 #define ENTITYNAME "Luminous_Intensity_Si_Unit"
-string LuminousIntensitySiUnit::entityname = Factory::RegisterClass(ENTITYNAME,(FactoryMethod)LuminousIntensitySiUnit::Create);
+string LuminousIntensitySiUnit::entityname = Factory::RegisterClass(ENTITYNAME, (FactoryMethod)LuminousIntensitySiUnit::Create);
 
-LuminousIntensitySiUnit::LuminousIntensitySiUnit() {
+LuminousIntensitySiUnit::LuminousIntensitySiUnit()
+{
     step = NULL;
     id = 0;
 }
 
-LuminousIntensitySiUnit::LuminousIntensitySiUnit(STEPWrapper *sw,int step_id) {
+LuminousIntensitySiUnit::LuminousIntensitySiUnit(STEPWrapper *sw, int step_id)
+{
     step = sw;
     id = step_id;
 }
 
-LuminousIntensitySiUnit::~LuminousIntensitySiUnit() {
+LuminousIntensitySiUnit::~LuminousIntensitySiUnit()
+{
 }
 
 bool
-LuminousIntensitySiUnit::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
-    step=sw;
+LuminousIntensitySiUnit::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
+    step = sw;
     id = sse->STEPfile_id;
 
 
     // load base class attributes
-    if ( !LuminousIntensityUnit::Load(step,sse) ) {
+    if (!LuminousIntensityUnit::Load(step, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::Unit." << std::endl;
 	return false;
     }
-    if ( !SiUnit::Load(step,sse) ) {
+    if (!SiUnit::Load(step, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::Unit." << std::endl;
 	return false;
     }
@@ -66,23 +70,28 @@ LuminousIntensitySiUnit::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
 }
 
 void
-LuminousIntensitySiUnit::Print(int level) {
-    TAB(level); std::cout << CLASSNAME << ":" << "(";
+LuminousIntensitySiUnit::Print(int level)
+{
+    TAB(level);
+    std::cout << CLASSNAME << ":" << "(";
     std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-    TAB(level); std::cout << "Inherited Attributes:" << std::endl;
-    LuminousIntensityUnit::Print(level+1);
-    SiUnit::Print(level+1);
+    TAB(level);
+    std::cout << "Inherited Attributes:" << std::endl;
+    LuminousIntensityUnit::Print(level + 1);
+    SiUnit::Print(level + 1);
 
 }
 
 STEPEntity *
-LuminousIntensitySiUnit::GetInstance(STEPWrapper *sw, int id) {
+LuminousIntensitySiUnit::GetInstance(STEPWrapper *sw, int id)
+{
     return new LuminousIntensitySiUnit(sw, id);
 }
 
 STEPEntity *
-LuminousIntensitySiUnit::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
+LuminousIntensitySiUnit::Create(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
     return STEPEntity::CreateEntity(sw, sse, GetInstance, CLASSNAME);
 }
 

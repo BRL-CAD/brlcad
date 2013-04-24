@@ -33,27 +33,31 @@
 
 #define CLASSNAME "AdvancedFace"
 #define ENTITYNAME "Advanced_Face"
-string AdvancedFace::entityname = Factory::RegisterClass(ENTITYNAME,(FactoryMethod)AdvancedFace::Create);
+string AdvancedFace::entityname = Factory::RegisterClass(ENTITYNAME, (FactoryMethod)AdvancedFace::Create);
 
-AdvancedFace::AdvancedFace() {
+AdvancedFace::AdvancedFace()
+{
     step = NULL;
     id = 0;
 }
 
-AdvancedFace::AdvancedFace(STEPWrapper *sw, int step_id) {
+AdvancedFace::AdvancedFace(STEPWrapper *sw, int step_id)
+{
     step = sw;
     id = step_id;
 }
 
-AdvancedFace::~AdvancedFace() {
+AdvancedFace::~AdvancedFace()
+{
 }
 
 bool
-AdvancedFace::Load(STEPWrapper *sw, SDAI_Application_instance *sse) {
-    step=sw;
+AdvancedFace::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
+    step = sw;
     id = sse->STEPfile_id;
 
-    if ( !FaceSurface::Load(sw,sse) ) {
+    if (!FaceSurface::Load(sw, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::FaceSurface." << std::endl;
 	return false;
     }
@@ -61,21 +65,26 @@ AdvancedFace::Load(STEPWrapper *sw, SDAI_Application_instance *sse) {
 }
 
 void
-AdvancedFace::Print(int level) {
-    TAB(level); std::cout << CLASSNAME << ":" << name << "(";
+AdvancedFace::Print(int level)
+{
+    TAB(level);
+    std::cout << CLASSNAME << ":" << name << "(";
     std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-    TAB(level); std::cout << "Inherited Attributes:" << std::endl;
-    FaceSurface::Print(level+1);
+    TAB(level);
+    std::cout << "Inherited Attributes:" << std::endl;
+    FaceSurface::Print(level + 1);
 }
 
 STEPEntity *
-AdvancedFace::GetInstance(STEPWrapper *sw, int id) {
+AdvancedFace::GetInstance(STEPWrapper *sw, int id)
+{
     return new AdvancedFace(sw, id);
 }
 
 STEPEntity *
-AdvancedFace::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
+AdvancedFace::Create(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
     return STEPEntity::CreateEntity(sw, sse, GetInstance, CLASSNAME);
 }
 

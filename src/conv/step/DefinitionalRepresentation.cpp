@@ -31,27 +31,31 @@
 
 #define CLASSNAME "DefinitionalRepresentation"
 #define ENTITYNAME "Definitional_Representation"
-string DefinitionalRepresentation::entityname = Factory::RegisterClass(ENTITYNAME,(FactoryMethod)DefinitionalRepresentation::Create);
+string DefinitionalRepresentation::entityname = Factory::RegisterClass(ENTITYNAME, (FactoryMethod)DefinitionalRepresentation::Create);
 
-DefinitionalRepresentation::DefinitionalRepresentation() {
+DefinitionalRepresentation::DefinitionalRepresentation()
+{
     step = NULL;
     id = 0;
 }
 
-DefinitionalRepresentation::DefinitionalRepresentation(STEPWrapper *sw,int step_id) {
+DefinitionalRepresentation::DefinitionalRepresentation(STEPWrapper *sw, int step_id)
+{
     step = sw;
     id = step_id;
 }
 
-DefinitionalRepresentation::~DefinitionalRepresentation() {
+DefinitionalRepresentation::~DefinitionalRepresentation()
+{
 }
 
 bool
-DefinitionalRepresentation::Load(STEPWrapper *sw, SDAI_Application_instance *sse) {
-    step=sw;
+DefinitionalRepresentation::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
+    step = sw;
     id = sse->STEPfile_id;
 
-    if ( !Representation::Load(sw,sse) ) {
+    if (!Representation::Load(sw, sse)) {
 	std::cout << CLASSNAME << ":Error loading baseclass Representation." << std::endl;
 	return false;
     }
@@ -60,21 +64,26 @@ DefinitionalRepresentation::Load(STEPWrapper *sw, SDAI_Application_instance *sse
 }
 
 void
-DefinitionalRepresentation::Print(int level) {
-    TAB(level); std::cout << CLASSNAME << ":" << name << "(";
+DefinitionalRepresentation::Print(int level)
+{
+    TAB(level);
+    std::cout << CLASSNAME << ":" << name << "(";
     std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-    TAB(level); std::cout << "Inherited Attributes:" << std::endl;
-    Representation::Print(level+1);
+    TAB(level);
+    std::cout << "Inherited Attributes:" << std::endl;
+    Representation::Print(level + 1);
 }
 
 STEPEntity *
-DefinitionalRepresentation::GetInstance(STEPWrapper *sw, int id) {
+DefinitionalRepresentation::GetInstance(STEPWrapper *sw, int id)
+{
     return new DefinitionalRepresentation(sw, id);
 }
 
 STEPEntity *
-DefinitionalRepresentation::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
+DefinitionalRepresentation::Create(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
     return STEPEntity::CreateEntity(sw, sse, GetInstance, CLASSNAME);
 }
 

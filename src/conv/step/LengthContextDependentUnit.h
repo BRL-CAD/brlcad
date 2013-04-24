@@ -30,22 +30,23 @@
 #include "LengthUnit.h"
 #include "ContextDependentUnit.h"
 
-class LengthContextDependentUnit : public LengthUnit, public ContextDependentUnit {
+class LengthContextDependentUnit : public LengthUnit, public ContextDependentUnit
+{
 private:
-	static string entityname;
-	static EntityInstanceFunc GetInstance;
+    static string entityname;
+    static EntityInstanceFunc GetInstance;
 
 protected:
 
 public:
-	LengthContextDependentUnit();
-	virtual ~LengthContextDependentUnit();
-	LengthContextDependentUnit(STEPWrapper *sw,int step_id);
-	bool Load(STEPWrapper *sw,SDAI_Application_instance *sse);
-	virtual void Print(int level);
+    LengthContextDependentUnit();
+    virtual ~LengthContextDependentUnit();
+    LengthContextDependentUnit(STEPWrapper *sw, int step_id);
+    bool Load(STEPWrapper *sw, SDAI_Application_instance *sse);
+    virtual void Print(int level);
 
-	//static methods
-	static STEPEntity *Create(STEPWrapper *sw,SDAI_Application_instance *sse);
+    //static methods
+    static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
 #endif /* LENGTHCONTEXTDEPENDENTUNIT_H_ */

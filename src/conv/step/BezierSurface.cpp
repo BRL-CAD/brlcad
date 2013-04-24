@@ -32,28 +32,32 @@
 
 #define CLASSNAME "BezierSurface"
 #define ENTITYNAME "Bezier_Surface"
-string BezierSurface::entityname = Factory::RegisterClass(ENTITYNAME,(FactoryMethod)BezierSurface::Create);
+string BezierSurface::entityname = Factory::RegisterClass(ENTITYNAME, (FactoryMethod)BezierSurface::Create);
 
-BezierSurface::BezierSurface() {
+BezierSurface::BezierSurface()
+{
     step = NULL;
     id = 0;
 }
 
-BezierSurface::BezierSurface(STEPWrapper *sw,int step_id) {
+BezierSurface::BezierSurface(STEPWrapper *sw, int step_id)
+{
     step = sw;
     id = step_id;
 }
 
-BezierSurface::~BezierSurface() {
+BezierSurface::~BezierSurface()
+{
 }
 
 bool
-BezierSurface::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
-    step=sw;
+BezierSurface::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
+    step = sw;
     id = sse->STEPfile_id;
 
     // load base class attributes
-    if ( !BSplineSurface::Load(sw,sse) ) {
+    if (!BSplineSurface::Load(sw, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::BSplineCurve." << std::endl;
 	return false;
     }
@@ -62,21 +66,26 @@ BezierSurface::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
 }
 
 void
-BezierSurface::Print(int level) {
-    TAB(level); std::cout << CLASSNAME << ":" << name << "(";
+BezierSurface::Print(int level)
+{
+    TAB(level);
+    std::cout << CLASSNAME << ":" << name << "(";
     std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-    TAB(level); std::cout << "Inherited Attributes:" << std::endl;
-    BSplineSurface::Print(level+1);
+    TAB(level);
+    std::cout << "Inherited Attributes:" << std::endl;
+    BSplineSurface::Print(level + 1);
 }
 
 STEPEntity *
-BezierSurface::GetInstance(STEPWrapper *sw, int id) {
+BezierSurface::GetInstance(STEPWrapper *sw, int id)
+{
     return new BezierSurface(sw, id);
 }
 
 STEPEntity *
-BezierSurface::Create(STEPWrapper *sw,SDAI_Application_instance *sse){
+BezierSurface::Create(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
     return STEPEntity::CreateEntity(sw, sse, GetInstance, CLASSNAME);
 }
 

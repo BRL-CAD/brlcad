@@ -36,7 +36,8 @@
 class ON_Brep;
 class RepresentationItem;
 
-class ItemDefinedTransformation: virtual public Transformation {
+class ItemDefinedTransformation: virtual public Transformation
+{
 private:
     static string entityname;
     static EntityInstanceFunc GetInstance;

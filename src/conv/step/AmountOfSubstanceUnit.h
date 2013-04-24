@@ -29,22 +29,23 @@
 
 #include "NamedUnit.h"
 
-class AmountOfSubstanceUnit : virtual public NamedUnit {
+class AmountOfSubstanceUnit : virtual public NamedUnit
+{
 private:
-	static string entityname;
-	static EntityInstanceFunc GetInstance;
+    static string entityname;
+    static EntityInstanceFunc GetInstance;
 
 protected:
 
 public:
-	AmountOfSubstanceUnit();
-	virtual ~AmountOfSubstanceUnit();
-	AmountOfSubstanceUnit(STEPWrapper *sw,int step_id);
-	bool Load(STEPWrapper *sw,SDAI_Application_instance *sse);
-	virtual void Print(int level);
+    AmountOfSubstanceUnit();
+    virtual ~AmountOfSubstanceUnit();
+    AmountOfSubstanceUnit(STEPWrapper *sw, int step_id);
+    bool Load(STEPWrapper *sw, SDAI_Application_instance *sse);
+    virtual void Print(int level);
 
-	//static methods
-	static STEPEntity *Create(STEPWrapper *sw,SDAI_Application_instance *sse);
+    //static methods
+    static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
 #endif /* AMOUNTOFSUBSTANCEUNIT_H_ */

@@ -32,32 +32,35 @@
 class CartesianPoint;
 class Vector;
 
-class Line : public Curve {
+class Line : public Curve
+{
 private:
-	static string entityname;
-	static EntityInstanceFunc GetInstance;
+    static string entityname;
+    static EntityInstanceFunc GetInstance;
 
 protected:
-	CartesianPoint *pnt;
-	Vector *dir;
+    CartesianPoint *pnt;
+    Vector *dir;
 
 public:
-	Line();
-	virtual ~Line();
-	Line(STEPWrapper *sw,int step_id);
-	virtual curve_type CurveType() { return LINE; };
-	void StartPoint(double *p);
-	void EndPoint(double *p);
-	bool Load(STEPWrapper *sw,SDAI_Application_instance *sse);
-	virtual bool LoadONBrep(ON_Brep *brep);
-/*TODO: remove
-	virtual const double *PointAtEnd();
-	virtual const double *PointAtStart();
-*/
-	virtual void Print(int level);
+    Line();
+    virtual ~Line();
+    Line(STEPWrapper *sw, int step_id);
+    virtual curve_type CurveType() {
+	return LINE;
+    };
+    void StartPoint(double *p);
+    void EndPoint(double *p);
+    bool Load(STEPWrapper *sw, SDAI_Application_instance *sse);
+    virtual bool LoadONBrep(ON_Brep *brep);
+    /*TODO: remove
+    	virtual const double *PointAtEnd();
+    	virtual const double *PointAtStart();
+    */
+    virtual void Print(int level);
 
-	//static methods
-	static STEPEntity *Create(STEPWrapper *sw,SDAI_Application_instance *sse);
+    //static methods
+    static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
 #endif /* LINE_H_ */

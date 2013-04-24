@@ -29,23 +29,24 @@
 
 #include "FaceSurface.h"
 
-class AdvancedFace: public FaceSurface {
+class AdvancedFace: public FaceSurface
+{
 private:
-	static string entityname;
-	static EntityInstanceFunc GetInstance;
+    static string entityname;
+    static EntityInstanceFunc GetInstance;
 
 protected:
 
 public:
-	AdvancedFace();
-	virtual ~AdvancedFace();
-	AdvancedFace(STEPWrapper *sw,int step_id);
-	bool Load(STEPWrapper *sw, SDAI_Application_instance *sse);
-	virtual bool LoadONBrep(ON_Brep *brep);
-	virtual void Print(int level);
+    AdvancedFace();
+    virtual ~AdvancedFace();
+    AdvancedFace(STEPWrapper *sw, int step_id);
+    bool Load(STEPWrapper *sw, SDAI_Application_instance *sse);
+    virtual bool LoadONBrep(ON_Brep *brep);
+    virtual void Print(int level);
 
-	//static methods
-	static STEPEntity *Create(STEPWrapper *sw,SDAI_Application_instance *sse);
+    //static methods
+    static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
 #endif /* ADVANCEDFACE_H_ */

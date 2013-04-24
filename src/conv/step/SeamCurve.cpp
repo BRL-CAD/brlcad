@@ -31,27 +31,31 @@
 
 #define CLASSNAME "SeamCurve"
 #define ENTITYNAME "Seam_Curve"
-string SeamCurve::entityname = Factory::RegisterClass(ENTITYNAME,(FactoryMethod)SeamCurve::Create);
+string SeamCurve::entityname = Factory::RegisterClass(ENTITYNAME, (FactoryMethod)SeamCurve::Create);
 
-SeamCurve::SeamCurve() {
+SeamCurve::SeamCurve()
+{
     step = NULL;
     id = 0;
 }
 
-SeamCurve::SeamCurve(STEPWrapper *sw,int step_id) {
+SeamCurve::SeamCurve(STEPWrapper *sw, int step_id)
+{
     step = sw;
     id = step_id;
 }
 
-SeamCurve::~SeamCurve() {
+SeamCurve::~SeamCurve()
+{
 }
 
 bool
-SeamCurve::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
-    step=sw;
+SeamCurve::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
+    step = sw;
     id = sse->STEPfile_id;
 
-    if ( !SurfaceCurve::Load(sw,sse) ) {
+    if (!SurfaceCurve::Load(sw, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::SurfaceCurve." << std::endl;
 	return false;
     }
@@ -60,21 +64,26 @@ SeamCurve::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
 }
 
 void
-SeamCurve::Print(int level) {
-    TAB(level); std::cout << CLASSNAME << ":" << name << "(";
+SeamCurve::Print(int level)
+{
+    TAB(level);
+    std::cout << CLASSNAME << ":" << name << "(";
     std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-    TAB(level); std::cout << "Inherited Attributes:" << std::endl;
-    SurfaceCurve::Print(level+1);
+    TAB(level);
+    std::cout << "Inherited Attributes:" << std::endl;
+    SurfaceCurve::Print(level + 1);
 }
 
 STEPEntity *
-SeamCurve::GetInstance(STEPWrapper *sw, int id) {
+SeamCurve::GetInstance(STEPWrapper *sw, int id)
+{
     return new SeamCurve(sw, id);
 }
 
 STEPEntity *
-SeamCurve::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
+SeamCurve::Create(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
     return STEPEntity::CreateEntity(sw, sse, GetInstance, CLASSNAME);
 }
 

@@ -32,26 +32,29 @@
 
 #define CLASSNAME "RectangularCompositeSurface"
 #define ENTITYNAME "Rectangular_Composite_Surface"
-string RectangularCompositeSurface::entityname = Factory::RegisterClass(ENTITYNAME,(FactoryMethod)RectangularCompositeSurface::Create);
+string RectangularCompositeSurface::entityname = Factory::RegisterClass(ENTITYNAME, (FactoryMethod)RectangularCompositeSurface::Create);
 
-RectangularCompositeSurface::RectangularCompositeSurface() {
-    step=NULL;
+RectangularCompositeSurface::RectangularCompositeSurface()
+{
+    step = NULL;
     id = 0;
     segments = NULL;
 }
 
-RectangularCompositeSurface::RectangularCompositeSurface(STEPWrapper *sw,int step_id) {
-    step=sw;
+RectangularCompositeSurface::RectangularCompositeSurface(STEPWrapper *sw, int step_id)
+{
+    step = sw;
     id = step_id;
     segments = NULL;
 }
 
-RectangularCompositeSurface::~RectangularCompositeSurface() {
+RectangularCompositeSurface::~RectangularCompositeSurface()
+{
     LIST_OF_LIST_OF_PATCHES::iterator i = segments->begin();
 
-    while(i != segments->end()) {
+    while (i != segments->end()) {
 	(*i)->clear();
-	delete (*i);
+	delete(*i);
 	i = segments->erase(i);
     }
     segments->clear();
@@ -59,55 +62,65 @@ RectangularCompositeSurface::~RectangularCompositeSurface() {
 }
 
 bool
-RectangularCompositeSurface::Load(STEPWrapper *sw, SDAI_Application_instance *sse) {
+RectangularCompositeSurface::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
 
-    step=sw;
+    step = sw;
     id = sse->STEPfile_id;
 
-    if ( !BoundedSurface::Load(step,sse) ) {
+    if (!BoundedSurface::Load(step, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::BoundedSurface." << std::endl;
 	return false;
     }
 
     // need to do this for local attributes to makes sure we have
     // the actual entity and not a complex/supertype parent
-    sse = step->getEntity(sse,ENTITYNAME);
+    sse = step->getEntity(sse, ENTITYNAME);
 
-    if (segments == NULL)
-	segments = step->getListOfListOfPatches(sse,"segments");
+    if (segments == NULL) {
+	segments = step->getListOfListOfPatches(sse, "segments");
+    }
 
     return true;
 }
 
 void
-RectangularCompositeSurface::Print(int level) {
-    TAB(level); std::cout << CLASSNAME << ":" << name << "(";
+RectangularCompositeSurface::Print(int level)
+{
+    TAB(level);
+    std::cout << CLASSNAME << ":" << name << "(";
     std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-    TAB(level); std::cout << "Attributes:" << std::endl;
-    TAB(level+1); std::cout << "segments:" << std::endl;
+    TAB(level);
+    std::cout << "Attributes:" << std::endl;
+    TAB(level + 1);
+    std::cout << "segments:" << std::endl;
     LIST_OF_LIST_OF_PATCHES::iterator i;
-    int cnt=0;
-    for(i=segments->begin(); i != segments->end(); ++i) {
+    int cnt = 0;
+    for (i = segments->begin(); i != segments->end(); ++i) {
 	LIST_OF_PATCHES::iterator j;
 	LIST_OF_PATCHES *p = *i;
-	TAB(level+1); std::cout << "surface_patch " << cnt++ << ":" << std::endl;
-	for(j=p->begin(); j != p->end(); ++j) {
-	    (*j)->Print(level+1);
+	TAB(level + 1);
+	std::cout << "surface_patch " << cnt++ << ":" << std::endl;
+	for (j = p->begin(); j != p->end(); ++j) {
+	    (*j)->Print(level + 1);
 	}
     }
 
-    TAB(level); std::cout << "Inherited Attributes:" << std::endl;
-    BoundedSurface::Print(level+1);
+    TAB(level);
+    std::cout << "Inherited Attributes:" << std::endl;
+    BoundedSurface::Print(level + 1);
 }
 
 STEPEntity *
-RectangularCompositeSurface::GetInstance(STEPWrapper *sw, int id) {
+RectangularCompositeSurface::GetInstance(STEPWrapper *sw, int id)
+{
     return new RectangularCompositeSurface(sw, id);
 }
 
 STEPEntity *
-RectangularCompositeSurface::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
+RectangularCompositeSurface::Create(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
     return STEPEntity::CreateEntity(sw, sse, GetInstance, CLASSNAME);
 }
 

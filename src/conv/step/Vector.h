@@ -31,26 +31,27 @@
 
 class Direction;
 
-class Vector : public GeometricRepresentationItem {
+class Vector : public GeometricRepresentationItem
+{
 private:
-	static string entityname;
-	static EntityInstanceFunc GetInstance;
+    static string entityname;
+    static EntityInstanceFunc GetInstance;
 
 protected:
-	Direction *orientation;
-	double magnitude;
+    Direction *orientation;
+    double magnitude;
 
 public:
-	Vector();
-	virtual ~Vector();
-	Vector(STEPWrapper *sw,int step_id);
-	bool Load(STEPWrapper *sw,SDAI_Application_instance *sse);
-	double Magnitude();
-	const double *Orientation();
-	virtual void Print(int level);
+    Vector();
+    virtual ~Vector();
+    Vector(STEPWrapper *sw, int step_id);
+    bool Load(STEPWrapper *sw, SDAI_Application_instance *sse);
+    double Magnitude();
+    const double *Orientation();
+    virtual void Print(int level);
 
-	//static methods
-	static STEPEntity *Create(STEPWrapper *sw,SDAI_Application_instance *sse);
+    //static methods
+    static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
 #endif /* VECTOR_H_ */

@@ -31,33 +31,37 @@
 
 #define CLASSNAME "AmountOfSubstanceSiUnit"
 #define ENTITYNAME "Amount_Of_Substance_Si_Unit"
-string AmountOfSubstanceSiUnit::entityname = Factory::RegisterClass(ENTITYNAME,(FactoryMethod)AmountOfSubstanceSiUnit::Create);
+string AmountOfSubstanceSiUnit::entityname = Factory::RegisterClass(ENTITYNAME, (FactoryMethod)AmountOfSubstanceSiUnit::Create);
 
-AmountOfSubstanceSiUnit::AmountOfSubstanceSiUnit() {
+AmountOfSubstanceSiUnit::AmountOfSubstanceSiUnit()
+{
     step = NULL;
     id = 0;
 }
 
-AmountOfSubstanceSiUnit::AmountOfSubstanceSiUnit(STEPWrapper *sw,int step_id) {
+AmountOfSubstanceSiUnit::AmountOfSubstanceSiUnit(STEPWrapper *sw, int step_id)
+{
     step = sw;
     id = step_id;
 }
 
-AmountOfSubstanceSiUnit::~AmountOfSubstanceSiUnit() {
+AmountOfSubstanceSiUnit::~AmountOfSubstanceSiUnit()
+{
 }
 
 bool
-AmountOfSubstanceSiUnit::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
-    step=sw;
+AmountOfSubstanceSiUnit::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
+    step = sw;
     id = sse->STEPfile_id;
 
 
     // load base class attributes
-    if ( !AmountOfSubstanceUnit::Load(step,sse) ) {
+    if (!AmountOfSubstanceUnit::Load(step, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::Unit." << std::endl;
 	return false;
     }
-    if ( !SiUnit::Load(step,sse) ) {
+    if (!SiUnit::Load(step, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::Unit." << std::endl;
 	return false;
     }
@@ -66,23 +70,28 @@ AmountOfSubstanceSiUnit::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
 }
 
 void
-AmountOfSubstanceSiUnit::Print(int level) {
-    TAB(level); std::cout << CLASSNAME << ":" << "(";
+AmountOfSubstanceSiUnit::Print(int level)
+{
+    TAB(level);
+    std::cout << CLASSNAME << ":" << "(";
     std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-    TAB(level); std::cout << "Inherited Attributes:" << std::endl;
-    AmountOfSubstanceUnit::Print(level+1);
-    SiUnit::Print(level+1);
+    TAB(level);
+    std::cout << "Inherited Attributes:" << std::endl;
+    AmountOfSubstanceUnit::Print(level + 1);
+    SiUnit::Print(level + 1);
 
 }
 
 STEPEntity *
-AmountOfSubstanceSiUnit::GetInstance(STEPWrapper *sw, int id) {
+AmountOfSubstanceSiUnit::GetInstance(STEPWrapper *sw, int id)
+{
     return new AmountOfSubstanceSiUnit(sw, id);
 }
 
 STEPEntity *
-AmountOfSubstanceSiUnit::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
+AmountOfSubstanceSiUnit::Create(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
     return STEPEntity::CreateEntity(sw, sse, GetInstance, CLASSNAME);
 }
 

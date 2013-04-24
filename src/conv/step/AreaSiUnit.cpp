@@ -31,32 +31,36 @@
 
 #define CLASSNAME "AreaSiUnit"
 #define ENTITYNAME "Area_Si_Unit"
-string AreaSiUnit::entityname = Factory::RegisterClass(ENTITYNAME,(FactoryMethod)AreaSiUnit::Create);
+string AreaSiUnit::entityname = Factory::RegisterClass(ENTITYNAME, (FactoryMethod)AreaSiUnit::Create);
 
-AreaSiUnit::AreaSiUnit() {
+AreaSiUnit::AreaSiUnit()
+{
     step = NULL;
     id = 0;
 }
 
-AreaSiUnit::AreaSiUnit(STEPWrapper *sw,int step_id){
+AreaSiUnit::AreaSiUnit(STEPWrapper *sw, int step_id)
+{
     step = sw;
     id = step_id;
 }
 
-AreaSiUnit::~AreaSiUnit() {
+AreaSiUnit::~AreaSiUnit()
+{
 }
 
 bool
-AreaSiUnit::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
-    step=sw;
+AreaSiUnit::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
+    step = sw;
     id = sse->STEPfile_id;
 
     // load base class attributes
-    if ( !AreaUnit::Load(step,sse) ) {
+    if (!AreaUnit::Load(step, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::Unit." << std::endl;
 	return false;
     }
-    if ( !SiUnit::Load(step,sse) ) {
+    if (!SiUnit::Load(step, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::Unit." << std::endl;
 	return false;
     }
@@ -65,23 +69,28 @@ AreaSiUnit::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
 }
 
 void
-AreaSiUnit::Print(int level) {
-    TAB(level); std::cout << CLASSNAME << ":" << "(";
+AreaSiUnit::Print(int level)
+{
+    TAB(level);
+    std::cout << CLASSNAME << ":" << "(";
     std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-    TAB(level); std::cout << "Inherited Attributes:" << std::endl;
-    AreaUnit::Print(level+1);
-    SiUnit::Print(level+1);
+    TAB(level);
+    std::cout << "Inherited Attributes:" << std::endl;
+    AreaUnit::Print(level + 1);
+    SiUnit::Print(level + 1);
 
 }
 
 STEPEntity *
-AreaSiUnit::GetInstance(STEPWrapper *sw, int id) {
+AreaSiUnit::GetInstance(STEPWrapper *sw, int id)
+{
     return new AreaSiUnit(sw, id);
 }
 
 STEPEntity *
-AreaSiUnit::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
+AreaSiUnit::Create(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
     return STEPEntity::CreateEntity(sw, sse, GetInstance, CLASSNAME);
 }
 

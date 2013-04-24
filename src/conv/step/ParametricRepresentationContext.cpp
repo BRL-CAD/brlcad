@@ -31,28 +31,32 @@
 
 #define CLASSNAME "ParametricRepresentationContext"
 #define ENTITYNAME "Parametric_Representation_Context"
-string ParametricRepresentationContext::entityname = Factory::RegisterClass(ENTITYNAME,(FactoryMethod)ParametricRepresentationContext::Create);
+string ParametricRepresentationContext::entityname = Factory::RegisterClass(ENTITYNAME, (FactoryMethod)ParametricRepresentationContext::Create);
 
-ParametricRepresentationContext::ParametricRepresentationContext() {
+ParametricRepresentationContext::ParametricRepresentationContext()
+{
     step = NULL;
     id = 0;
 }
 
-ParametricRepresentationContext::ParametricRepresentationContext(STEPWrapper *sw,int step_id) {
+ParametricRepresentationContext::ParametricRepresentationContext(STEPWrapper *sw, int step_id)
+{
     step = sw;
     id = step_id;
 }
 
-ParametricRepresentationContext::~ParametricRepresentationContext() {
+ParametricRepresentationContext::~ParametricRepresentationContext()
+{
 }
 
 bool
-ParametricRepresentationContext::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
-    step=sw;
+ParametricRepresentationContext::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
+    step = sw;
     id = sse->STEPfile_id;
 
     // load base class attributes
-    if ( !RepresentationContext::Load(sw,sse) ) {
+    if (!RepresentationContext::Load(sw, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::RepresentationContext." << std::endl;
 	return false;
     }
@@ -61,23 +65,28 @@ ParametricRepresentationContext::Load(STEPWrapper *sw,SDAI_Application_instance 
 }
 
 void
-ParametricRepresentationContext::Print(int level) {
-    TAB(level); std::cout << CLASSNAME << ":" << "(";
+ParametricRepresentationContext::Print(int level)
+{
+    TAB(level);
+    std::cout << CLASSNAME << ":" << "(";
     std::cout << "ID:" << STEPid() << ")" << std::endl;
 
 
-    TAB(level); std::cout << "Inherited Attributes:" << std::endl;
-    RepresentationContext::Print(level+1);
+    TAB(level);
+    std::cout << "Inherited Attributes:" << std::endl;
+    RepresentationContext::Print(level + 1);
 
 }
 
 STEPEntity *
-ParametricRepresentationContext::GetInstance(STEPWrapper *sw, int id) {
+ParametricRepresentationContext::GetInstance(STEPWrapper *sw, int id)
+{
     return new ParametricRepresentationContext(sw, id);
 }
 
 STEPEntity *
-ParametricRepresentationContext::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
+ParametricRepresentationContext::Create(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
     return STEPEntity::CreateEntity(sw, sse, GetInstance, CLASSNAME);
 }
 

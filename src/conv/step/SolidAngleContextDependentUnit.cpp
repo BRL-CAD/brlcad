@@ -31,33 +31,37 @@
 
 #define CLASSNAME "SolidAngleContextDependentUnit"
 #define ENTITYNAME "Solid_Angle_Context_Dependent_Unit"
-string SolidAngleContextDependentUnit::entityname = Factory::RegisterClass(ENTITYNAME,(FactoryMethod)SolidAngleContextDependentUnit::Create);
+string SolidAngleContextDependentUnit::entityname = Factory::RegisterClass(ENTITYNAME, (FactoryMethod)SolidAngleContextDependentUnit::Create);
 
-SolidAngleContextDependentUnit::SolidAngleContextDependentUnit() {
+SolidAngleContextDependentUnit::SolidAngleContextDependentUnit()
+{
     step = NULL;
     id = 0;
 }
 
-SolidAngleContextDependentUnit::SolidAngleContextDependentUnit(STEPWrapper *sw,int step_id) {
+SolidAngleContextDependentUnit::SolidAngleContextDependentUnit(STEPWrapper *sw, int step_id)
+{
     step = sw;
     id = step_id;
 }
 
-SolidAngleContextDependentUnit::~SolidAngleContextDependentUnit() {
+SolidAngleContextDependentUnit::~SolidAngleContextDependentUnit()
+{
 }
 
 bool
-SolidAngleContextDependentUnit::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
-    step=sw;
+SolidAngleContextDependentUnit::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
+    step = sw;
     id = sse->STEPfile_id;
 
 
     // load base class attributes
-    if ( !SolidAngleUnit::Load(step,sse) ) {
+    if (!SolidAngleUnit::Load(step, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::Unit." << std::endl;
 	return false;
     }
-    if ( !ContextDependentUnit::Load(step,sse) ) {
+    if (!ContextDependentUnit::Load(step, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::Unit." << std::endl;
 	return false;
     }
@@ -66,23 +70,28 @@ SolidAngleContextDependentUnit::Load(STEPWrapper *sw,SDAI_Application_instance *
 }
 
 void
-SolidAngleContextDependentUnit::Print(int level) {
-    TAB(level); std::cout << CLASSNAME << ":" << "(";
+SolidAngleContextDependentUnit::Print(int level)
+{
+    TAB(level);
+    std::cout << CLASSNAME << ":" << "(";
     std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-    TAB(level); std::cout << "Inherited Attributes:" << std::endl;
-    SolidAngleUnit::Print(level+1);
-    ContextDependentUnit::Print(level+1);
+    TAB(level);
+    std::cout << "Inherited Attributes:" << std::endl;
+    SolidAngleUnit::Print(level + 1);
+    ContextDependentUnit::Print(level + 1);
 
 }
 
 STEPEntity *
-SolidAngleContextDependentUnit::GetInstance(STEPWrapper *sw, int id) {
+SolidAngleContextDependentUnit::GetInstance(STEPWrapper *sw, int id)
+{
     return new SolidAngleContextDependentUnit(sw, id);
 }
 
 STEPEntity *
-SolidAngleContextDependentUnit::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
+SolidAngleContextDependentUnit::Create(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
     return STEPEntity::CreateEntity(sw, sse, GetInstance, CLASSNAME);
 }
 

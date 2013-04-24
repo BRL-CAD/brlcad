@@ -112,12 +112,12 @@ void Product::Print(int level)
 
     TAB(level);
     std::cout << "Attributes:" << std::endl;
-    TAB(level+1);
+    TAB(level + 1);
     std::cout << "name:" << name << std::endl;
-    TAB(level+1);
+    TAB(level + 1);
     std::cout << "description:" << description << std::endl;
 
-    TAB(level+1);
+    TAB(level + 1);
     std::cout << "frame_of_reference:" << std::endl;
     LIST_OF_PRODUCT_CONTEXT::iterator i;
     for (i = frame_of_reference.begin(); i != frame_of_reference.end(); ++i) {
@@ -126,7 +126,8 @@ void Product::Print(int level)
 }
 
 STEPEntity *
-Product::GetInstance(STEPWrapper *sw, int id) {
+Product::GetInstance(STEPWrapper *sw, int id)
+{
     return new Product(sw, id);
 }
 

@@ -29,7 +29,8 @@
 
 #include "ApplicationContextElement.h"
 
-class ProductContext: public ApplicationContextElement {
+class ProductContext: public ApplicationContextElement
+{
 private:
     static string entityname;
     static EntityInstanceFunc GetInstance;

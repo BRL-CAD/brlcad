@@ -31,24 +31,27 @@
 
 class ON_Brep;
 
-class Point : public GeometricRepresentationItem {
+class Point : public GeometricRepresentationItem
+{
 private:
-	static string entityname;
-	static EntityInstanceFunc GetInstance;
+    static string entityname;
+    static EntityInstanceFunc GetInstance;
 
 protected:
 
 public:
-	Point();
-	virtual ~Point();
-	Point(STEPWrapper *sw,int step_id);
-	bool Load(STEPWrapper *sw,SDAI_Application_instance *sse);
-	virtual void AddVertex(ON_Brep *brep);
-	virtual const double *Point3d() { return NULL; };
-	virtual void Print(int level);
+    Point();
+    virtual ~Point();
+    Point(STEPWrapper *sw, int step_id);
+    bool Load(STEPWrapper *sw, SDAI_Application_instance *sse);
+    virtual void AddVertex(ON_Brep *brep);
+    virtual const double *Point3d() {
+	return NULL;
+    };
+    virtual void Print(int level);
 
-	//static methods
-	static STEPEntity *Create(STEPWrapper *sw,SDAI_Application_instance *sse);
+    //static methods
+    static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
 #endif /* POINT_H_ */

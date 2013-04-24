@@ -31,29 +31,33 @@
 
 #define CLASSNAME "ElectricCurrentUnit"
 #define ENTITYNAME "Electric_Current_Unit"
-string ElectricCurrentUnit::entityname = Factory::RegisterClass(ENTITYNAME,(FactoryMethod)ElectricCurrentUnit::Create);
+string ElectricCurrentUnit::entityname = Factory::RegisterClass(ENTITYNAME, (FactoryMethod)ElectricCurrentUnit::Create);
 
-ElectricCurrentUnit::ElectricCurrentUnit() {
+ElectricCurrentUnit::ElectricCurrentUnit()
+{
     step = NULL;
     id = 0;
 }
 
-ElectricCurrentUnit::ElectricCurrentUnit(STEPWrapper *sw,int step_id) {
+ElectricCurrentUnit::ElectricCurrentUnit(STEPWrapper *sw, int step_id)
+{
     step = sw;
     id = step_id;
 }
 
-ElectricCurrentUnit::~ElectricCurrentUnit() {
+ElectricCurrentUnit::~ElectricCurrentUnit()
+{
 }
 
 bool
-ElectricCurrentUnit::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
-    step=sw;
+ElectricCurrentUnit::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
+    step = sw;
     id = sse->STEPfile_id;
 
 
     // load base class attributes
-    if ( !NamedUnit::Load(step,sse) ) {
+    if (!NamedUnit::Load(step, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::Unit." << std::endl;
 	return false;
     }
@@ -62,19 +66,23 @@ ElectricCurrentUnit::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
 }
 
 void
-ElectricCurrentUnit::Print(int level) {
-    TAB(level); std::cout << CLASSNAME << ":" << "(";
+ElectricCurrentUnit::Print(int level)
+{
+    TAB(level);
+    std::cout << CLASSNAME << ":" << "(";
     std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-    TAB(level); std::cout << "Inherited Attributes:" << std::endl;
-    NamedUnit::Print(level+1);
+    TAB(level);
+    std::cout << "Inherited Attributes:" << std::endl;
+    NamedUnit::Print(level + 1);
 
 }
 STEPEntity *
-ElectricCurrentUnit::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
+ElectricCurrentUnit::Create(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
     Factory::OBJECTS::iterator i;
     if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
-	ElectricCurrentUnit *object = new ElectricCurrentUnit(sw,sse->STEPfile_id);
+	ElectricCurrentUnit *object = new ElectricCurrentUnit(sw, sse->STEPfile_id);
 
 	Factory::AddObject(object);
 

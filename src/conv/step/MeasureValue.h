@@ -30,7 +30,8 @@
 #include "STEPEntity.h"
 
 
-class MeasureValue : virtual public STEPEntity {
+class MeasureValue : virtual public STEPEntity
+{
 public:
     enum measure_type {
 	AMOUNT_OF_SUBSTANCE_MEASURE,
@@ -55,30 +56,30 @@ public:
 	TIME_MEASURE,
 	VOLUME_MEASURE,
 	UNKNOWN
-	};
+    };
 
 private:
-	static string entityname;
-	static EntityInstanceFunc GetInstance;
+    static string entityname;
+    static EntityInstanceFunc GetInstance;
 
 protected:
-	int ivalue;
-	double rvalue;
-	string svalue;
-	measure_type type;
+    int ivalue;
+    double rvalue;
+    string svalue;
+    measure_type type;
 
 public:
-	MeasureValue();
-	virtual ~MeasureValue();
-	MeasureValue(STEPWrapper *sw,int step_id);
-	double GetLengthMeasure();
-	double GetPlaneAngleMeasure();
-	double GetSolidAngleMeasure();
-	bool Load(STEPWrapper *sw,SDAI_Select *sse);
-	virtual void Print(int level);
+    MeasureValue();
+    virtual ~MeasureValue();
+    MeasureValue(STEPWrapper *sw, int step_id);
+    double GetLengthMeasure();
+    double GetPlaneAngleMeasure();
+    double GetSolidAngleMeasure();
+    bool Load(STEPWrapper *sw, SDAI_Select *sse);
+    virtual void Print(int level);
 
-	//static methods
-	static STEPEntity *Create(STEPWrapper *sw,SDAI_Application_instance *sse);
+    //static methods
+    static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
 #endif /* MEASUREVALUE_H_ */

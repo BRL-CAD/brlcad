@@ -34,33 +34,37 @@
 
 #define CLASSNAME "MassConversionBasedUnit"
 #define ENTITYNAME "Mass_Conversion_Based_Unit"
-string MassConversionBasedUnit::entityname = Factory::RegisterClass(ENTITYNAME,(FactoryMethod)MassConversionBasedUnit::Create);
+string MassConversionBasedUnit::entityname = Factory::RegisterClass(ENTITYNAME, (FactoryMethod)MassConversionBasedUnit::Create);
 
-MassConversionBasedUnit::MassConversionBasedUnit() {
+MassConversionBasedUnit::MassConversionBasedUnit()
+{
     step = NULL;
     id = 0;
 }
 
-MassConversionBasedUnit::MassConversionBasedUnit(STEPWrapper *sw,int step_id) {
+MassConversionBasedUnit::MassConversionBasedUnit(STEPWrapper *sw, int step_id)
+{
     step = sw;
     id = step_id;
 }
 
-MassConversionBasedUnit::~MassConversionBasedUnit() {
+MassConversionBasedUnit::~MassConversionBasedUnit()
+{
 }
 
 bool
-MassConversionBasedUnit::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
-    step=sw;
+MassConversionBasedUnit::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
+    step = sw;
     id = sse->STEPfile_id;
 
 
     // load base class attributes
-    if ( !MassUnit::Load(step,sse) ) {
+    if (!MassUnit::Load(step, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::Unit." << std::endl;
 	return false;
     }
-    if ( !ConversionBasedUnit::Load(step,sse) ) {
+    if (!ConversionBasedUnit::Load(step, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::Unit." << std::endl;
 	return false;
     }
@@ -69,23 +73,28 @@ MassConversionBasedUnit::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
 }
 
 void
-MassConversionBasedUnit::Print(int level) {
-    TAB(level); std::cout << CLASSNAME << ":" << "(";
+MassConversionBasedUnit::Print(int level)
+{
+    TAB(level);
+    std::cout << CLASSNAME << ":" << "(";
     std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-    TAB(level); std::cout << "Inherited Attributes:" << std::endl;
-    MassUnit::Print(level+1);
-    ConversionBasedUnit::Print(level+1);
+    TAB(level);
+    std::cout << "Inherited Attributes:" << std::endl;
+    MassUnit::Print(level + 1);
+    ConversionBasedUnit::Print(level + 1);
 
 }
 
 STEPEntity *
-MassConversionBasedUnit::GetInstance(STEPWrapper *sw, int id) {
+MassConversionBasedUnit::GetInstance(STEPWrapper *sw, int id)
+{
     return new MassConversionBasedUnit(sw, id);
 }
 
 STEPEntity *
-MassConversionBasedUnit::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
+MassConversionBasedUnit::Create(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
     return STEPEntity::CreateEntity(sw, sse, GetInstance, CLASSNAME);
 }
 

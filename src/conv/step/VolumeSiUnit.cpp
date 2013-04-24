@@ -31,33 +31,37 @@
 
 #define CLASSNAME "VolumeSiUnit"
 #define ENTITYNAME "Volume_Si_Unit"
-string VolumeSiUnit::entityname = Factory::RegisterClass(ENTITYNAME,(FactoryMethod)VolumeSiUnit::Create);
+string VolumeSiUnit::entityname = Factory::RegisterClass(ENTITYNAME, (FactoryMethod)VolumeSiUnit::Create);
 
-VolumeSiUnit::VolumeSiUnit() {
+VolumeSiUnit::VolumeSiUnit()
+{
     step = NULL;
     id = 0;
 }
 
-VolumeSiUnit::VolumeSiUnit(STEPWrapper *sw,int step_id) {
+VolumeSiUnit::VolumeSiUnit(STEPWrapper *sw, int step_id)
+{
     step = sw;
     id = step_id;
 }
 
-VolumeSiUnit::~VolumeSiUnit() {
+VolumeSiUnit::~VolumeSiUnit()
+{
 }
 
 bool
-VolumeSiUnit::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
-    step=sw;
+VolumeSiUnit::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
+    step = sw;
     id = sse->STEPfile_id;
 
 
     // load base class attributes
-    if ( !VolumeUnit::Load(step,sse) ) {
+    if (!VolumeUnit::Load(step, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::Unit." << std::endl;
 	return false;
     }
-    if ( !SiUnit::Load(step,sse) ) {
+    if (!SiUnit::Load(step, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::Unit." << std::endl;
 	return false;
     }
@@ -66,23 +70,28 @@ VolumeSiUnit::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
 }
 
 void
-VolumeSiUnit::Print(int level) {
-    TAB(level); std::cout << CLASSNAME << ":" << "(";
+VolumeSiUnit::Print(int level)
+{
+    TAB(level);
+    std::cout << CLASSNAME << ":" << "(";
     std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-    TAB(level); std::cout << "Inherited Attributes:" << std::endl;
-    VolumeUnit::Print(level+1);
-    SiUnit::Print(level+1);
+    TAB(level);
+    std::cout << "Inherited Attributes:" << std::endl;
+    VolumeUnit::Print(level + 1);
+    SiUnit::Print(level + 1);
 
 }
 
 STEPEntity *
-VolumeSiUnit::GetInstance(STEPWrapper *sw, int id) {
+VolumeSiUnit::GetInstance(STEPWrapper *sw, int id)
+{
     return new VolumeSiUnit(sw, id);
 }
 
 STEPEntity *
-VolumeSiUnit::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
+VolumeSiUnit::Create(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
     return STEPEntity::CreateEntity(sw, sse, GetInstance, CLASSNAME);
 }
 

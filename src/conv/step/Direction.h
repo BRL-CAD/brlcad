@@ -29,25 +29,28 @@
 
 #include "GeometricRepresentationItem.h"
 
-class Direction : public GeometricRepresentationItem {
+class Direction : public GeometricRepresentationItem
+{
 private:
-	static string entityname;
-	static EntityInstanceFunc GetInstance;
+    static string entityname;
+    static EntityInstanceFunc GetInstance;
 
 protected:
-	double direction_ratios[3];
+    double direction_ratios[3];
 
 public:
-	Direction();
-	virtual ~Direction();
-	Direction(STEPWrapper *sw,int step_id);
-	double *DirectionRatios() { return direction_ratios; };
-	bool Load(STEPWrapper *sw,SDAI_Application_instance *sse);
-	virtual bool LoadONBrep(ON_Brep *brep);
-	virtual void Print(int level);
+    Direction();
+    virtual ~Direction();
+    Direction(STEPWrapper *sw, int step_id);
+    double *DirectionRatios() {
+	return direction_ratios;
+    };
+    bool Load(STEPWrapper *sw, SDAI_Application_instance *sse);
+    virtual bool LoadONBrep(ON_Brep *brep);
+    virtual void Print(int level);
 
-	//static methods
-	static STEPEntity *Create(STEPWrapper *sw,SDAI_Application_instance *sse);
+    //static methods
+    static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
 #endif /* DIRECTION_H_ */

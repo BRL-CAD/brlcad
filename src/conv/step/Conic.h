@@ -32,40 +32,45 @@
 class Axis2Placement;
 
 
-class Conic : public Curve {
+class Conic : public Curve
+{
 public:
-	enum conic_type {
+    enum conic_type {
 	CIRCLE,
 	ELLIPSE,
 	HYPERBOLA,
 	PARABOLA,
 	UNKNOWN_CONIC
-	};
+    };
 
 private:
-	static string entityname;
-	static EntityInstanceFunc GetInstance;
+    static string entityname;
+    static EntityInstanceFunc GetInstance;
 
 protected:
-	Axis2Placement *position;
+    Axis2Placement *position;
 
-	Conic();
-	Conic(STEPWrapper *sw,int step_id);
+    Conic();
+    Conic(STEPWrapper *sw, int step_id);
 
 public:
-	virtual ~Conic();
-	const double *GetOrigin();
-	const double *GetNormal();
-	const double *GetXAxis();
-	const double *GetYAxis();
-	bool Load(STEPWrapper *sw,SDAI_Application_instance *sse);
-	virtual bool LoadONBrep(ON_Brep *brep);
-	virtual void Print(int level);
-	virtual curve_type CurveType() { return CONIC; };
-	virtual conic_type ConicType() { return UNKNOWN_CONIC; };
+    virtual ~Conic();
+    const double *GetOrigin();
+    const double *GetNormal();
+    const double *GetXAxis();
+    const double *GetYAxis();
+    bool Load(STEPWrapper *sw, SDAI_Application_instance *sse);
+    virtual bool LoadONBrep(ON_Brep *brep);
+    virtual void Print(int level);
+    virtual curve_type CurveType() {
+	return CONIC;
+    };
+    virtual conic_type ConicType() {
+	return UNKNOWN_CONIC;
+    };
 
-	//static methods
-	static STEPEntity *Create(STEPWrapper *sw,SDAI_Application_instance *sse);
+    //static methods
+    static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
 #endif /* CONIC_H_ */

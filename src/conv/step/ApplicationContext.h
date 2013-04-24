@@ -34,7 +34,8 @@
 // forward declaration of class
 class ON_Brep;
 
-class ApplicationContext: virtual public STEPEntity {
+class ApplicationContext: virtual public STEPEntity
+{
 private:
     static string entityname;
     static EntityInstanceFunc GetInstance;

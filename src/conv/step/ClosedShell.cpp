@@ -31,27 +31,31 @@
 
 #define CLASSNAME "ClosedShell"
 #define ENTITYNAME "Closed_Shell"
-string ClosedShell::entityname = Factory::RegisterClass(ENTITYNAME,(FactoryMethod)ClosedShell::Create);
+string ClosedShell::entityname = Factory::RegisterClass(ENTITYNAME, (FactoryMethod)ClosedShell::Create);
 
-ClosedShell::ClosedShell() {
+ClosedShell::ClosedShell()
+{
     step = NULL;
     id = 0;
 }
 
-ClosedShell::ClosedShell(STEPWrapper *sw,int step_id) {
+ClosedShell::ClosedShell(STEPWrapper *sw, int step_id)
+{
     step = sw;
     id = step_id;
 }
 
-ClosedShell::~ClosedShell() {
+ClosedShell::~ClosedShell()
+{
 }
 
 bool
-ClosedShell::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
-    step=sw;
+ClosedShell::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
+    step = sw;
     id = sse->STEPfile_id;
 
-    if ( !ConnectedFaceSet::Load(step,sse) ) {
+    if (!ConnectedFaceSet::Load(step, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::ConnectedFaceSet." << std::endl;
 	return false;
     }
@@ -59,26 +63,32 @@ ClosedShell::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
 }
 
 void
-ClosedShell::Print(int level) {
-    TAB(level); std::cout << CLASSNAME << ":" << name << "(";
+ClosedShell::Print(int level)
+{
+    TAB(level);
+    std::cout << CLASSNAME << ":" << name << "(";
     std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-    TAB(level); std::cout << "Inherited Attributes:" << std::endl;
-    ConnectedFaceSet::Print(level+1);
+    TAB(level);
+    std::cout << "Inherited Attributes:" << std::endl;
+    ConnectedFaceSet::Print(level + 1);
 }
 
 void
-ClosedShell::ReverseFaceSet() {
+ClosedShell::ReverseFaceSet()
+{
     ConnectedFaceSet::ReverseFaceSet();
 }
 
 STEPEntity *
-ClosedShell::GetInstance(STEPWrapper *sw, int id) {
+ClosedShell::GetInstance(STEPWrapper *sw, int id)
+{
     return new ClosedShell(sw, id);
 }
 
 STEPEntity *
-ClosedShell::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
+ClosedShell::Create(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
     return STEPEntity::CreateEntity(sw, sse, GetInstance, CLASSNAME);
 }
 

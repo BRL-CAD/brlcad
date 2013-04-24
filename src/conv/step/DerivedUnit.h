@@ -32,23 +32,24 @@
 class DerivedUnitElement;
 typedef list<DerivedUnitElement *> LIST_OF_DERIVED_UNIT_ELEMENTS;
 
-class DerivedUnit : public Unit {
+class DerivedUnit : public Unit
+{
 private:
-	static string entityname;
-	static EntityInstanceFunc GetInstance;
+    static string entityname;
+    static EntityInstanceFunc GetInstance;
 
 protected:
-	LIST_OF_DERIVED_UNIT_ELEMENTS elements;
+    LIST_OF_DERIVED_UNIT_ELEMENTS elements;
 
 public:
-	DerivedUnit();
-	virtual ~DerivedUnit();
-	DerivedUnit(STEPWrapper *sw,int step_id);
-	bool Load(STEPWrapper *sw,SDAI_Application_instance *sse);
-	virtual void Print(int level);
+    DerivedUnit();
+    virtual ~DerivedUnit();
+    DerivedUnit(STEPWrapper *sw, int step_id);
+    bool Load(STEPWrapper *sw, SDAI_Application_instance *sse);
+    virtual void Print(int level);
 
-	//static methods
-	static STEPEntity *Create(STEPWrapper *sw,SDAI_Application_instance *sse);
+    //static methods
+    static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
 #endif /* DERIVEDUNIT_H_ */

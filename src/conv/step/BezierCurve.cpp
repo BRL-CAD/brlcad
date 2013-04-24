@@ -32,28 +32,32 @@
 
 #define CLASSNAME "BezierCurve"
 #define ENTITYNAME "Bezier_Curve"
-string BezierCurve::entityname = Factory::RegisterClass(ENTITYNAME,(FactoryMethod)BezierCurve::Create);
+string BezierCurve::entityname = Factory::RegisterClass(ENTITYNAME, (FactoryMethod)BezierCurve::Create);
 
-BezierCurve::BezierCurve() {
+BezierCurve::BezierCurve()
+{
     step = NULL;
     id = 0;
 }
 
-BezierCurve::BezierCurve(STEPWrapper *sw,int step_id) {
+BezierCurve::BezierCurve(STEPWrapper *sw, int step_id)
+{
     step = sw;
     id = step_id;
 }
 
-BezierCurve::~BezierCurve() {
+BezierCurve::~BezierCurve()
+{
 }
 
 bool
-BezierCurve::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
-    step=sw;
+BezierCurve::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
+    step = sw;
     id = sse->STEPfile_id;
 
     // load base class attributes
-    if ( !BSplineCurve::Load(sw,sse) ) {
+    if (!BSplineCurve::Load(sw, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::BSplineCurve." << std::endl;
 	return false;
     }
@@ -62,23 +66,28 @@ BezierCurve::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
 }
 
 void
-BezierCurve::Print(int level) {
-    TAB(level); std::cout << CLASSNAME << ":" << name << "(";
+BezierCurve::Print(int level)
+{
+    TAB(level);
+    std::cout << CLASSNAME << ":" << name << "(";
     std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-    TAB(level); std::cout << "Inherited Attributes:" << std::endl;
-    BSplineCurve::Print(level+1);
+    TAB(level);
+    std::cout << "Inherited Attributes:" << std::endl;
+    BSplineCurve::Print(level + 1);
 
 
 }
 
 STEPEntity *
-BezierCurve::GetInstance(STEPWrapper *sw, int id) {
+BezierCurve::GetInstance(STEPWrapper *sw, int id)
+{
     return new BezierCurve(sw, id);
 }
 
 STEPEntity *
-BezierCurve::Create(STEPWrapper *sw,SDAI_Application_instance *sse){
+BezierCurve::Create(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
     return STEPEntity::CreateEntity(sw, sse, GetInstance, CLASSNAME);
 }
 

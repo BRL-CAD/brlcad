@@ -34,24 +34,25 @@ class ClosedShell;
 class STEPWrapper;
 class ON_Brep;
 
-class ManifoldSolidBrep: public SolidModel {
+class ManifoldSolidBrep: public SolidModel
+{
 private:
-	static string entityname;
-	static EntityInstanceFunc GetInstance;
+    static string entityname;
+    static EntityInstanceFunc GetInstance;
 
 protected:
-	ClosedShell *outer;
+    ClosedShell *outer;
 
 public:
-	ManifoldSolidBrep();
-	ManifoldSolidBrep(STEPWrapper *sw,int step_id);
-	virtual ~ManifoldSolidBrep();
-	bool Load(STEPWrapper *sw,SDAI_Application_instance *sse);
-	virtual bool LoadONBrep(ON_Brep *brep);
-	virtual void Print(int level);
+    ManifoldSolidBrep();
+    ManifoldSolidBrep(STEPWrapper *sw, int step_id);
+    virtual ~ManifoldSolidBrep();
+    bool Load(STEPWrapper *sw, SDAI_Application_instance *sse);
+    virtual bool LoadONBrep(ON_Brep *brep);
+    virtual void Print(int level);
 
-	//static methods
-	static STEPEntity *Create(STEPWrapper *sw,SDAI_Application_instance *sse);
+    //static methods
+    static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
 #endif /* MANIFOLDSOLIDBREP_H_ */

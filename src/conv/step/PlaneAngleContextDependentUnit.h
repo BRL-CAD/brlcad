@@ -30,22 +30,23 @@
 #include "PlaneAngleUnit.h"
 #include "ContextDependentUnit.h"
 
-class PlaneAngleContextDependentUnit : public PlaneAngleUnit, public ContextDependentUnit {
+class PlaneAngleContextDependentUnit : public PlaneAngleUnit, public ContextDependentUnit
+{
 private:
-	static string entityname;
-	static EntityInstanceFunc GetInstance;
+    static string entityname;
+    static EntityInstanceFunc GetInstance;
 
 protected:
 
 public:
-	PlaneAngleContextDependentUnit();
-	virtual ~PlaneAngleContextDependentUnit();
-	PlaneAngleContextDependentUnit(STEPWrapper *sw,int step_id);
-	bool Load(STEPWrapper *sw,SDAI_Application_instance *sse);
-	virtual void Print(int level);
+    PlaneAngleContextDependentUnit();
+    virtual ~PlaneAngleContextDependentUnit();
+    PlaneAngleContextDependentUnit(STEPWrapper *sw, int step_id);
+    bool Load(STEPWrapper *sw, SDAI_Application_instance *sse);
+    virtual void Print(int level);
 
-	//static methods
-	static STEPEntity *Create(STEPWrapper *sw,SDAI_Application_instance *sse);
+    //static methods
+    static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
 #endif /* PLANEANGLECONTEXTDEPENDENTUNIT_H_ */

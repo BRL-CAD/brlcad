@@ -41,28 +41,32 @@
 std::string ShapeRepresentation::entityname = Factory::RegisterClass(ENTITYNAME, (FactoryMethod)ShapeRepresentation::Create);
 
 
-ShapeRepresentation::ShapeRepresentation() {
+ShapeRepresentation::ShapeRepresentation()
+{
     step = NULL;
     id = 0;
 }
 
 
-ShapeRepresentation::ShapeRepresentation(STEPWrapper *sw,int step_id) {
+ShapeRepresentation::ShapeRepresentation(STEPWrapper *sw, int step_id)
+{
     step = sw;
     id = step_id;
 }
 
 
-ShapeRepresentation::~ShapeRepresentation() {
+ShapeRepresentation::~ShapeRepresentation()
+{
 }
 
 
 bool
-ShapeRepresentation::Load(STEPWrapper *sw, SDAI_Application_instance *sse) {
-    step=sw;
+ShapeRepresentation::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
+    step = sw;
     id = sse->STEPfile_id;
 
-    if ( !Representation::Load(sw,sse) ) {
+    if (!Representation::Load(sw, sse)) {
 	std::cout << CLASSNAME << ":Error loading baseclass Representation." << std::endl;
 	return false;
     }
@@ -72,7 +76,8 @@ ShapeRepresentation::Load(STEPWrapper *sw, SDAI_Application_instance *sse) {
 
 
 void
-ShapeRepresentation::Print(int level) {
+ShapeRepresentation::Print(int level)
+{
     TAB(level);
     std::cout << CLASSNAME << ":" << name << "(";
     std::cout << "ID:" << STEPid() << ")" << std::endl;
@@ -81,12 +86,14 @@ ShapeRepresentation::Print(int level) {
 }
 
 STEPEntity *
-ShapeRepresentation::GetInstance(STEPWrapper *sw, int id) {
+ShapeRepresentation::GetInstance(STEPWrapper *sw, int id)
+{
     return new ShapeRepresentation(sw, id);
 }
 
 STEPEntity *
-ShapeRepresentation::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
+ShapeRepresentation::Create(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
     return STEPEntity::CreateEntity(sw, sse, GetInstance, CLASSNAME);
 }
 

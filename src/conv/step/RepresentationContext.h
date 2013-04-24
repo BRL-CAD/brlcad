@@ -29,24 +29,25 @@
 
 #include "STEPEntity.h"
 
-class RepresentationContext : virtual public STEPEntity {
+class RepresentationContext : virtual public STEPEntity
+{
 private:
-	static string entityname;
-	static EntityInstanceFunc GetInstance;
+    static string entityname;
+    static EntityInstanceFunc GetInstance;
 
 protected:
-	string context_identifier;
-	string context_type;
+    string context_identifier;
+    string context_type;
 
 public:
-	RepresentationContext();
-	virtual ~RepresentationContext();
-	RepresentationContext(STEPWrapper *sw,int step_id);
-	bool Load(STEPWrapper *sw,SDAI_Application_instance *sse);
-	virtual void Print(int level);
+    RepresentationContext();
+    virtual ~RepresentationContext();
+    RepresentationContext(STEPWrapper *sw, int step_id);
+    bool Load(STEPWrapper *sw, SDAI_Application_instance *sse);
+    virtual void Print(int level);
 
-	//static methods
-	static STEPEntity *Create(STEPWrapper *sw,SDAI_Application_instance *sse);
+    //static methods
+    static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
 #endif /* REPRESENTATIONCONTEXT_H_ */

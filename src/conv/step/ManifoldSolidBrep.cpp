@@ -32,44 +32,48 @@
 
 #define CLASSNAME "ManifoldSolidBrep"
 #define ENTITYNAME "Manifold_Solid_Brep"
-string ManifoldSolidBrep::entityname = Factory::RegisterClass(ENTITYNAME,(FactoryMethod)ManifoldSolidBrep::Create);
+string ManifoldSolidBrep::entityname = Factory::RegisterClass(ENTITYNAME, (FactoryMethod)ManifoldSolidBrep::Create);
 
-ManifoldSolidBrep::ManifoldSolidBrep() {
-    step=NULL;
+ManifoldSolidBrep::ManifoldSolidBrep()
+{
+    step = NULL;
     id = 0;
     outer = NULL;
 }
 
-ManifoldSolidBrep::ManifoldSolidBrep(STEPWrapper *sw,int step_id) {
-    step=sw;
+ManifoldSolidBrep::ManifoldSolidBrep(STEPWrapper *sw, int step_id)
+{
+    step = sw;
     id = step_id;
     outer = NULL;
 }
 
-ManifoldSolidBrep::~ManifoldSolidBrep() {
+ManifoldSolidBrep::~ManifoldSolidBrep()
+{
     outer = NULL;
 }
 
 bool
-ManifoldSolidBrep::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
-    step=sw;
+ManifoldSolidBrep::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
+    step = sw;
     id = sse->STEPfile_id;
 
     // load base class attributes
-    if ( !SolidModel::Load(step,sse) ) {
+    if (!SolidModel::Load(step, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::SolidModel." << std::endl;
 	return false;
     }
 
     // need to do this for local attributes to makes sure we have
     // the actual entity and not a complex/supertype parent
-    sse = step->getEntity(sse,ENTITYNAME);
+    sse = step->getEntity(sse, ENTITYNAME);
 
     if (outer == NULL) {
-	SDAI_Application_instance *entity = step->getEntityAttribute(sse,"outer");
+	SDAI_Application_instance *entity = step->getEntityAttribute(sse, "outer");
 	if (entity) {
 	    //outer = dynamic_cast<ClosedShell *>(Factory::CreateTopologicalObject(sw,entity));
-	    outer = dynamic_cast<ClosedShell *>(Factory::CreateObject(sw,entity));
+	    outer = dynamic_cast<ClosedShell *>(Factory::CreateObject(sw, entity));
 	} else {
 	    std::cout << CLASSNAME << ":Error loading entity attribute 'outer'." << std::endl;
 	    return false;
@@ -79,25 +83,32 @@ ManifoldSolidBrep::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
 }
 
 void
-ManifoldSolidBrep::Print(int level) {
-    TAB(level); std::cout << CLASSNAME << ":" << name << "(";
+ManifoldSolidBrep::Print(int level)
+{
+    TAB(level);
+    std::cout << CLASSNAME << ":" << name << "(";
     std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-    TAB(level); std::cout << "Attributes:" << std::endl;
-    TAB(level+1); std::cout << "outer:" << std::endl;
-    outer->Print(level+1);
+    TAB(level);
+    std::cout << "Attributes:" << std::endl;
+    TAB(level + 1);
+    std::cout << "outer:" << std::endl;
+    outer->Print(level + 1);
 
-    TAB(level); std::cout << "Inherited Attributes:" << std::endl;
-    SolidModel::Print(level+1);
+    TAB(level);
+    std::cout << "Inherited Attributes:" << std::endl;
+    SolidModel::Print(level + 1);
 }
 
 STEPEntity *
-ManifoldSolidBrep::GetInstance(STEPWrapper *sw, int id) {
+ManifoldSolidBrep::GetInstance(STEPWrapper *sw, int id)
+{
     return new ManifoldSolidBrep(sw, id);
 }
 
 STEPEntity *
-ManifoldSolidBrep::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
+ManifoldSolidBrep::Create(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
     return STEPEntity::CreateEntity(sw, sse, GetInstance, CLASSNAME);
 }
 

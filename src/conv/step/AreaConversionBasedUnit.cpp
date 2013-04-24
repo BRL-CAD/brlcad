@@ -34,33 +34,37 @@
 
 #define CLASSNAME "AreaConversionBasedUnit"
 #define ENTITYNAME "Area_Conversion_Based_Unit"
-string AreaConversionBasedUnit::entityname = Factory::RegisterClass(ENTITYNAME,(FactoryMethod)AreaConversionBasedUnit::Create);
+string AreaConversionBasedUnit::entityname = Factory::RegisterClass(ENTITYNAME, (FactoryMethod)AreaConversionBasedUnit::Create);
 
-AreaConversionBasedUnit::AreaConversionBasedUnit() {
+AreaConversionBasedUnit::AreaConversionBasedUnit()
+{
     step = NULL;
     id = 0;
 }
 
-AreaConversionBasedUnit::AreaConversionBasedUnit(STEPWrapper *sw,int step_id) {
+AreaConversionBasedUnit::AreaConversionBasedUnit(STEPWrapper *sw, int step_id)
+{
     step = sw;
     id = step_id;
 }
 
-AreaConversionBasedUnit::~AreaConversionBasedUnit() {
+AreaConversionBasedUnit::~AreaConversionBasedUnit()
+{
 }
 
 bool
-AreaConversionBasedUnit::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
-    step=sw;
+AreaConversionBasedUnit::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
+    step = sw;
     id = sse->STEPfile_id;
 
 
     // load base class attributes
-    if ( !AreaUnit::Load(step,sse) ) {
+    if (!AreaUnit::Load(step, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::Unit." << std::endl;
 	return false;
     }
-    if ( !ConversionBasedUnit::Load(step,sse) ) {
+    if (!ConversionBasedUnit::Load(step, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::Unit." << std::endl;
 	return false;
     }
@@ -69,23 +73,28 @@ AreaConversionBasedUnit::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
 }
 
 void
-AreaConversionBasedUnit::Print(int level) {
-    TAB(level); std::cout << CLASSNAME << ":" << "(";
+AreaConversionBasedUnit::Print(int level)
+{
+    TAB(level);
+    std::cout << CLASSNAME << ":" << "(";
     std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-    TAB(level); std::cout << "Inherited Attributes:" << std::endl;
-    AreaUnit::Print(level+1);
-    ConversionBasedUnit::Print(level+1);
+    TAB(level);
+    std::cout << "Inherited Attributes:" << std::endl;
+    AreaUnit::Print(level + 1);
+    ConversionBasedUnit::Print(level + 1);
 
 }
 
 STEPEntity *
-AreaConversionBasedUnit::GetInstance(STEPWrapper *sw, int id) {
+AreaConversionBasedUnit::GetInstance(STEPWrapper *sw, int id)
+{
     return new AreaConversionBasedUnit(sw, id);
 }
 
 STEPEntity *
-AreaConversionBasedUnit::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
+AreaConversionBasedUnit::Create(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
     return STEPEntity::CreateEntity(sw, sse, GetInstance, CLASSNAME);
 }
 

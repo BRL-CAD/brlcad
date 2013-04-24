@@ -30,22 +30,23 @@
 #include "AmountOfSubstanceUnit.h"
 #include "ContextDependentUnit.h"
 
-class AmountOfSubstanceContextDependentUnit : public AmountOfSubstanceUnit, public ContextDependentUnit {
+class AmountOfSubstanceContextDependentUnit : public AmountOfSubstanceUnit, public ContextDependentUnit
+{
 private:
-	static string entityname;
-	static EntityInstanceFunc GetInstance;
+    static string entityname;
+    static EntityInstanceFunc GetInstance;
 
 protected:
 
 public:
-	AmountOfSubstanceContextDependentUnit();
-	virtual ~AmountOfSubstanceContextDependentUnit();
-	AmountOfSubstanceContextDependentUnit(STEPWrapper *sw,int step_id);
-	bool Load(STEPWrapper *sw,SDAI_Application_instance *sse);
-	virtual void Print(int level);
+    AmountOfSubstanceContextDependentUnit();
+    virtual ~AmountOfSubstanceContextDependentUnit();
+    AmountOfSubstanceContextDependentUnit(STEPWrapper *sw, int step_id);
+    bool Load(STEPWrapper *sw, SDAI_Application_instance *sse);
+    virtual void Print(int level);
 
-	//static methods
-	static STEPEntity *Create(STEPWrapper *sw,SDAI_Application_instance *sse);
+    //static methods
+    static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
 #endif /* AMOUNTOFSUBSTANCECONTEXTDEPENDENTUNIT_H_ */

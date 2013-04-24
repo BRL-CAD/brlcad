@@ -31,28 +31,31 @@
 
 class CartesianTransformationOperator;
 
-class OffsetCurve2D : public Curve {
+class OffsetCurve2D : public Curve
+{
 private:
-	static string entityname;
-	static EntityInstanceFunc GetInstance;
+    static string entityname;
+    static EntityInstanceFunc GetInstance;
 
 protected:
-	Curve *basis_curve;
-	double distance;
-	Logical self_intersect;
+    Curve *basis_curve;
+    double distance;
+    Logical self_intersect;
 
 public:
-	OffsetCurve2D();
-	virtual ~OffsetCurve2D();
-	OffsetCurve2D(STEPWrapper *sw,int step_id);
-	virtual curve_type CurveType() { return OFFSET_CURVE_2D; };
-	bool Load(STEPWrapper *sw,SDAI_Application_instance *sse);
-	virtual const double *PointAtEnd();
-	virtual const double *PointAtStart();
-	virtual void Print(int level);
+    OffsetCurve2D();
+    virtual ~OffsetCurve2D();
+    OffsetCurve2D(STEPWrapper *sw, int step_id);
+    virtual curve_type CurveType() {
+	return OFFSET_CURVE_2D;
+    };
+    bool Load(STEPWrapper *sw, SDAI_Application_instance *sse);
+    virtual const double *PointAtEnd();
+    virtual const double *PointAtStart();
+    virtual void Print(int level);
 
-	//static methods
-	static STEPEntity *Create(STEPWrapper *sw,SDAI_Application_instance *sse);
+    //static methods
+    static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
 #endif /* OFFSETCURVE2D_H_ */

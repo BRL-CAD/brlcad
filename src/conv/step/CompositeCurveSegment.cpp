@@ -33,7 +33,7 @@
 
 #define CLASSNAME "CompositeCurveSegment"
 #define ENTITYNAME "Composite_Curve_Segment"
-string CompositeCurveSegment::entityname = Factory::RegisterClass(ENTITYNAME,(FactoryMethod)CompositeCurveSegment::Create);
+string CompositeCurveSegment::entityname = Factory::RegisterClass(ENTITYNAME, (FactoryMethod)CompositeCurveSegment::Create);
 
 static const char *Transition_code_string[] = {
     "discontinuous",
@@ -43,7 +43,8 @@ static const char *Transition_code_string[] = {
     "unset"
 };
 
-CompositeCurveSegment::CompositeCurveSegment() {
+CompositeCurveSegment::CompositeCurveSegment()
+{
     step = NULL;
     id = 0;
     parent_curve = NULL;
@@ -51,7 +52,8 @@ CompositeCurveSegment::CompositeCurveSegment() {
     same_sense = BUnset;
 }
 
-CompositeCurveSegment::CompositeCurveSegment(STEPWrapper *sw,int step_id) {
+CompositeCurveSegment::CompositeCurveSegment(STEPWrapper *sw, int step_id)
+{
     step = sw;
     id = step_id;
     parent_curve = NULL;
@@ -59,64 +61,76 @@ CompositeCurveSegment::CompositeCurveSegment(STEPWrapper *sw,int step_id) {
     same_sense = BUnset;
 }
 
-CompositeCurveSegment::~CompositeCurveSegment() {
+CompositeCurveSegment::~CompositeCurveSegment()
+{
 }
 
 bool
-CompositeCurveSegment::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
-    step=sw;
+CompositeCurveSegment::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
+    step = sw;
     id = sse->STEPfile_id;
 
-    if ( !FoundedItem::Load(sw,sse) ) {
+    if (!FoundedItem::Load(sw, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::Curve." << std::endl;
 	return false;
     }
 
     // need to do this for local attributes to makes sure we have
     // the actual entity and not a complex/supertype parent
-    sse = step->getEntity(sse,ENTITYNAME);
+    sse = step->getEntity(sse, ENTITYNAME);
 
     if (parent_curve == NULL) {
-	SDAI_Application_instance *entity = step->getEntityAttribute(sse,"parent_curve");
+	SDAI_Application_instance *entity = step->getEntityAttribute(sse, "parent_curve");
 	if (entity != NULL) {
-	    parent_curve = dynamic_cast<Curve *>(Factory::CreateObject(sw,entity));
+	    parent_curve = dynamic_cast<Curve *>(Factory::CreateObject(sw, entity));
 	} else {
 	    std::cout << CLASSNAME << ":Error loading member entity \"parent_curve\"." << std::endl;
 	    return false;
 	}
     }
 
-    transition = (Transition_code)step->getEnumAttribute(sse,"transition");
-    if (transition > Transition_code_unset)
+    transition = (Transition_code)step->getEnumAttribute(sse, "transition");
+    if (transition > Transition_code_unset) {
 	transition = Transition_code_unset;
+    }
 
-    same_sense = step->getBooleanAttribute(sse,"same_sense");
+    same_sense = step->getBooleanAttribute(sse, "same_sense");
 
     return true;
 }
 
 void
-CompositeCurveSegment::Print(int level) {
-    TAB(level); std::cout << CLASSNAME << ":" << "(";
+CompositeCurveSegment::Print(int level)
+{
+    TAB(level);
+    std::cout << CLASSNAME << ":" << "(";
     std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-    TAB(level); std::cout << "Attributes:" << std::endl;
-    TAB(level+1); std::cout << "parent_curve:" << std::endl;
-    parent_curve->Print(level+1);
-    TAB(level+1); std::cout << "transition:" << Transition_code_string[transition] << std::endl;
-    TAB(level+1); std::cout << "same_sense:" << step->getBooleanString(same_sense) << std::endl;
+    TAB(level);
+    std::cout << "Attributes:" << std::endl;
+    TAB(level + 1);
+    std::cout << "parent_curve:" << std::endl;
+    parent_curve->Print(level + 1);
+    TAB(level + 1);
+    std::cout << "transition:" << Transition_code_string[transition] << std::endl;
+    TAB(level + 1);
+    std::cout << "same_sense:" << step->getBooleanString(same_sense) << std::endl;
 
-    TAB(level); std::cout << "Inherited Attributes:" << std::endl;
-    FoundedItem::Print(level+1);
+    TAB(level);
+    std::cout << "Inherited Attributes:" << std::endl;
+    FoundedItem::Print(level + 1);
 }
 
 STEPEntity *
-CompositeCurveSegment::GetInstance(STEPWrapper *sw, int id) {
+CompositeCurveSegment::GetInstance(STEPWrapper *sw, int id)
+{
     return new CompositeCurveSegment(sw, id);
 }
 
 STEPEntity *
-CompositeCurveSegment::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
+CompositeCurveSegment::Create(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
     return STEPEntity::CreateEntity(sw, sse, GetInstance, CLASSNAME);
 }
 

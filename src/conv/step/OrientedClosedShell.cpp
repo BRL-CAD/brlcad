@@ -96,10 +96,10 @@ void OrientedClosedShell::Print(int level)
 
     TAB(level);
     std::cout << "Attributes:" << std::endl;
-    TAB(level+1);
+    TAB(level + 1);
     std::cout << "closed_shell_element:" << std::endl;
     closed_shell_element->Print(level + 1);
-    TAB(level+1);
+    TAB(level + 1);
     std::cout << "orientation:" << step->getBooleanString(orientation) << std::endl;
 
     TAB(level);
@@ -108,7 +108,8 @@ void OrientedClosedShell::Print(int level)
 }
 
 STEPEntity *
-OrientedClosedShell::GetInstance(STEPWrapper *sw, int id) {
+OrientedClosedShell::GetInstance(STEPWrapper *sw, int id)
+{
     return new OrientedClosedShell(sw, id);
 }
 
@@ -120,8 +121,9 @@ OrientedClosedShell::Create(STEPWrapper *sw, SDAI_Application_instance *sse)
 
 bool OrientedClosedShell::LoadONBrep(ON_Brep *brep)
 {
-    if (ON_id >= 0)
-	return true; //already loaded
+    if (ON_id >= 0) {
+	return true;    //already loaded
+    }
 
     if (!closed_shell_element->LoadONBrep(brep)) {
 	std::cerr << "Error: " << entityname << "::LoadONBrep() - Error loading openNURBS brep." << std::endl;

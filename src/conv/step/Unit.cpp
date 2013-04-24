@@ -31,42 +31,50 @@
 
 #define CLASSNAME "Unit"
 #define ENTITYNAME "Unit"
-string Unit::entityname = Factory::RegisterClass(ENTITYNAME,(FactoryMethod)Unit::Create);
+string Unit::entityname = Factory::RegisterClass(ENTITYNAME, (FactoryMethod)Unit::Create);
 
-Unit::Unit() {
+Unit::Unit()
+{
     step = NULL;
     id = 0;
 }
 
-Unit::Unit(STEPWrapper *sw,int step_id) {
+Unit::Unit(STEPWrapper *sw, int step_id)
+{
     step = sw;
     id = step_id;
 }
 
-Unit::~Unit() {
+Unit::~Unit()
+{
 }
 
 bool
-Unit::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
-    step=sw;
+Unit::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
+    step = sw;
     id = sse->STEPfile_id;
 
     return true;
 }
 
 void
-Unit::Print(int level) {
-    TAB(level); std::cout << CLASSNAME << ":" << "(";
+Unit::Print(int level)
+{
+    TAB(level);
+    std::cout << CLASSNAME << ":" << "(";
     std::cout << "ID:" << STEPid() << ")" << std::endl;
 }
 
 STEPEntity *
-Unit::GetInstance(STEPWrapper *sw, int id) {
+Unit::GetInstance(STEPWrapper *sw, int id)
+{
     return new Unit(sw, id);
 }
 
 STEPEntity *
-Unit::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
+Unit::Create(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
     return STEPEntity::CreateEntity(sw, sse, GetInstance, CLASSNAME);
 }
 

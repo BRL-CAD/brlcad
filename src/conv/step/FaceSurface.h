@@ -33,27 +33,28 @@
 // forward declaration of class
 class Surface;
 
-class FaceSurface: public Face , public GeometricRepresentationItem {
+class FaceSurface: public Face , public GeometricRepresentationItem
+{
 private:
-	static string entityname;
-	static EntityInstanceFunc GetInstance;
+    static string entityname;
+    static EntityInstanceFunc GetInstance;
 
 protected:
-	Surface *face_geometry;
-	Boolean same_sense;
+    Surface *face_geometry;
+    Boolean same_sense;
 
 
 public:
-	FaceSurface();
-	virtual ~FaceSurface();
-	FaceSurface(STEPWrapper *sw,int step_id);
-	void AddFace(ON_Brep *brep);
-	bool Load(STEPWrapper *sw, SDAI_Application_instance *sse);
-	virtual bool LoadONBrep(ON_Brep *brep);
-	virtual void Print(int level);
+    FaceSurface();
+    virtual ~FaceSurface();
+    FaceSurface(STEPWrapper *sw, int step_id);
+    void AddFace(ON_Brep *brep);
+    bool Load(STEPWrapper *sw, SDAI_Application_instance *sse);
+    virtual bool LoadONBrep(ON_Brep *brep);
+    virtual void Print(int level);
 
-	//static methods
-	static STEPEntity *Create(STEPWrapper *sw,SDAI_Application_instance *sse);
+    //static methods
+    static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
 #endif /* FACESURFACE_H_ */

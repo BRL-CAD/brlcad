@@ -103,7 +103,7 @@ void BrepWithVoids::Print(int level)
 
     TAB(level);
     std::cout << "Attributes:" << std::endl;
-    TAB(level+1);
+    TAB(level + 1);
     std::cout << "voids:" << std::endl;
     LIST_OF_ORIENTED_CLOSED_SHELLS::iterator i;
     for (i = voids.begin(); i != voids.end(); ++i) {
@@ -116,7 +116,8 @@ void BrepWithVoids::Print(int level)
 }
 
 STEPEntity *
-BrepWithVoids::GetInstance(STEPWrapper *sw, int id) {
+BrepWithVoids::GetInstance(STEPWrapper *sw, int id)
+{
     return new BrepWithVoids(sw, id);
 }
 

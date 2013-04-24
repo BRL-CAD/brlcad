@@ -39,49 +39,50 @@
 
 
 class STEPEntity;
-typedef STEPEntity* (*FactoryMethod)(STEPWrapper*,SDAI_Application_instance*);
-typedef std::map<std::string,FactoryMethod> FACTORYMAP;
+typedef STEPEntity *(*FactoryMethod)(STEPWrapper *, SDAI_Application_instance *);
+typedef std::map<std::string, FactoryMethod> FACTORYMAP;
 typedef std::vector<STEPEntity *> VECTOR_OF_OBJECTS;
 
 
-class Factory {
+class Factory
+{
 public:
     typedef std::map<int, STEPEntity *> OBJECTS;
     typedef std::map<int, int> ID_TO_INDEX_MAP;
     typedef std::map<int, int> INDEX_TO_ID_MAP;
     typedef std::list<STEPEntity *> UNMAPPED_OBJECTS;
-	static OBJECTS objects;
-	static UNMAPPED_OBJECTS unmapped_objects;
+    static OBJECTS objects;
+    static UNMAPPED_OBJECTS unmapped_objects;
 
-	static int vertex_count;
-	static VECTOR_OF_OBJECTS vertices;
-	static ID_TO_INDEX_MAP vertex_to_index;
-	static INDEX_TO_ID_MAP vertex_index_to_id;
+    static int vertex_count;
+    static VECTOR_OF_OBJECTS vertices;
+    static ID_TO_INDEX_MAP vertex_to_index;
+    static INDEX_TO_ID_MAP vertex_index_to_id;
 
 protected:
-	Factory();
+    Factory();
 
 private:
-	static STEPEntity *CreateCurveObject(STEPWrapper *sw,SDAI_Application_instance *sse);
-	static STEPEntity *CreateSurfaceObject(STEPWrapper *sw,SDAI_Application_instance *sse);
-	static STEPEntity *CreateNamedUnitObject(STEPWrapper *sw,SDAI_Application_instance *sse);
-	static STEPEntity *CreateShapeRepresentationRelationshipObject(STEPWrapper *sw,SDAI_Application_instance *sse);
-	static STEPEntity *CreateRepresentationContext(STEPWrapper *sw,SDAI_Application_instance *sse);
+    static STEPEntity *CreateCurveObject(STEPWrapper *sw, SDAI_Application_instance *sse);
+    static STEPEntity *CreateSurfaceObject(STEPWrapper *sw, SDAI_Application_instance *sse);
+    static STEPEntity *CreateNamedUnitObject(STEPWrapper *sw, SDAI_Application_instance *sse);
+    static STEPEntity *CreateShapeRepresentationRelationshipObject(STEPWrapper *sw, SDAI_Application_instance *sse);
+    static STEPEntity *CreateRepresentationContext(STEPWrapper *sw, SDAI_Application_instance *sse);
 
 public:
-	static const char *factoryname;
-	virtual ~Factory();
-	static STEPEntity *CreateObject(STEPWrapper *sw,SDAI_Application_instance *sse);
-	static FACTORYMAP &GetMap();
-	static void Print();
+    static const char *factoryname;
+    virtual ~Factory();
+    static STEPEntity *CreateObject(STEPWrapper *sw, SDAI_Application_instance *sse);
+    static FACTORYMAP &GetMap();
+    static void Print();
     static std::string RegisterClass(std::string name, FactoryMethod f);
-	static void DeleteObjects();
-	static OBJECTS::iterator FindObject(int id);
-	static void AddObject(STEPEntity *se);
-	static void AddVertex(STEPEntity *se);
-	static VECTOR_OF_OBJECTS *GetVertices();
-	static int GetVertexIndex(int id);
-	static STEPEntity *GetVertexByIndex(int index);
+    static void DeleteObjects();
+    static OBJECTS::iterator FindObject(int id);
+    static void AddObject(STEPEntity *se);
+    static void AddVertex(STEPEntity *se);
+    static VECTOR_OF_OBJECTS *GetVertices();
+    static int GetVertexIndex(int id);
+    static STEPEntity *GetVertexByIndex(int index);
 };
 
 

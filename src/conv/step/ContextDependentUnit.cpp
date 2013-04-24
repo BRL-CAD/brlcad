@@ -31,62 +31,73 @@
 
 #define CLASSNAME "ContextDependentUnit"
 #define ENTITYNAME "Context_Dependent_Unit"
-string ContextDependentUnit::entityname = Factory::RegisterClass(ENTITYNAME,(FactoryMethod)ContextDependentUnit::Create);
+string ContextDependentUnit::entityname = Factory::RegisterClass(ENTITYNAME, (FactoryMethod)ContextDependentUnit::Create);
 
-ContextDependentUnit::ContextDependentUnit() {
+ContextDependentUnit::ContextDependentUnit()
+{
     step = NULL;
     id = 0;
 }
 
-ContextDependentUnit::ContextDependentUnit(STEPWrapper *sw,int step_id) {
+ContextDependentUnit::ContextDependentUnit(STEPWrapper *sw, int step_id)
+{
     step = sw;
     id = step_id;
 }
 
-ContextDependentUnit::~ContextDependentUnit() {
+ContextDependentUnit::~ContextDependentUnit()
+{
 }
 
 bool
-ContextDependentUnit::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
-    step=sw;
+ContextDependentUnit::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
+    step = sw;
     id = sse->STEPfile_id;
 
 
     // load base class attributes
-    if ( !NamedUnit::Load(step,sse) ) {
+    if (!NamedUnit::Load(step, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::Unit." << std::endl;
 	return false;
     }
 
     // need to do this for local attributes to makes sure we have
     // the actual entity and not a complex/supertype parent
-    sse = step->getEntity(sse,ENTITYNAME);
+    sse = step->getEntity(sse, ENTITYNAME);
 
-    name = step->getStringAttribute(sse,"name");
+    name = step->getStringAttribute(sse, "name");
 
     return true;
 }
 
 void
-ContextDependentUnit::Print(int level) {
-    TAB(level); std::cout << CLASSNAME << ":" << "(";
+ContextDependentUnit::Print(int level)
+{
+    TAB(level);
+    std::cout << CLASSNAME << ":" << "(";
     std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-    TAB(level); std::cout << "Attributes:" << std::endl;
-    TAB(level+1); std::cout << "name:" << name << std::endl;
+    TAB(level);
+    std::cout << "Attributes:" << std::endl;
+    TAB(level + 1);
+    std::cout << "name:" << name << std::endl;
 
-    TAB(level); std::cout << "Inherited Attributes:" << std::endl;
-    NamedUnit::Print(level+1);
+    TAB(level);
+    std::cout << "Inherited Attributes:" << std::endl;
+    NamedUnit::Print(level + 1);
 
 }
 
 STEPEntity *
-ContextDependentUnit::GetInstance(STEPWrapper *sw, int id) {
+ContextDependentUnit::GetInstance(STEPWrapper *sw, int id)
+{
     return new ContextDependentUnit(sw, id);
 }
 
 STEPEntity *
-ContextDependentUnit::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
+ContextDependentUnit::Create(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
     return STEPEntity::CreateEntity(sw, sse, GetInstance, CLASSNAME);
 }
 

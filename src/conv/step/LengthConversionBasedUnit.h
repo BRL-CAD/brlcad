@@ -30,22 +30,23 @@
 #include "LengthUnit.h"
 #include "ConversionBasedUnit.h"
 
-class LengthConversionBasedUnit : public LengthUnit, public ConversionBasedUnit {
+class LengthConversionBasedUnit : public LengthUnit, public ConversionBasedUnit
+{
 private:
-	static string entityname;
-	static EntityInstanceFunc GetInstance;
+    static string entityname;
+    static EntityInstanceFunc GetInstance;
 
 protected:
 
 public:
-	LengthConversionBasedUnit();
-	virtual ~LengthConversionBasedUnit();
-	LengthConversionBasedUnit(STEPWrapper *sw,int step_id);
-	bool Load(STEPWrapper *sw,SDAI_Application_instance *sse);
-	virtual void Print(int level);
+    LengthConversionBasedUnit();
+    virtual ~LengthConversionBasedUnit();
+    LengthConversionBasedUnit(STEPWrapper *sw, int step_id);
+    bool Load(STEPWrapper *sw, SDAI_Application_instance *sse);
+    virtual void Print(int level);
 
-	//static methods
-	static STEPEntity *Create(STEPWrapper *sw,SDAI_Application_instance *sse);
+    //static methods
+    static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
 #endif /* LENGTHCONVERSIONBASEDUNIT_H_ */

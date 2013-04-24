@@ -31,24 +31,25 @@
 
 class Direction;
 
-class CartesianTransformationOperator3D : public CartesianTransformationOperator {
+class CartesianTransformationOperator3D : public CartesianTransformationOperator
+{
 private:
-	static string entityname;
-	static EntityInstanceFunc GetInstance;
+    static string entityname;
+    static EntityInstanceFunc GetInstance;
 
 protected:
-	Direction *axis3;//optional
+    Direction *axis3;//optional
 
 public:
-	CartesianTransformationOperator3D();
-	virtual ~CartesianTransformationOperator3D();
-	CartesianTransformationOperator3D(STEPWrapper *sw,int step_id);
-	bool Load(STEPWrapper *sw,SDAI_Application_instance *sse);
-	virtual bool LoadONBrep(ON_Brep *brep);
-	virtual void Print(int level);
+    CartesianTransformationOperator3D();
+    virtual ~CartesianTransformationOperator3D();
+    CartesianTransformationOperator3D(STEPWrapper *sw, int step_id);
+    bool Load(STEPWrapper *sw, SDAI_Application_instance *sse);
+    virtual bool LoadONBrep(ON_Brep *brep);
+    virtual void Print(int level);
 
-	//static methods
-	static STEPEntity *Create(STEPWrapper *sw,SDAI_Application_instance *sse);
+    //static methods
+    static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
 #endif /* CARTESIAN_TRANSFORMATION_OPERATOR_3D_H_ */

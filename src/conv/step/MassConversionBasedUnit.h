@@ -30,22 +30,23 @@
 #include "MassUnit.h"
 #include "ConversionBasedUnit.h"
 
-class MassConversionBasedUnit : public MassUnit, public ConversionBasedUnit {
+class MassConversionBasedUnit : public MassUnit, public ConversionBasedUnit
+{
 private:
-	static string entityname;
-	static EntityInstanceFunc GetInstance;
+    static string entityname;
+    static EntityInstanceFunc GetInstance;
 
 protected:
 
 public:
-	MassConversionBasedUnit();
-	virtual ~MassConversionBasedUnit();
-	MassConversionBasedUnit(STEPWrapper *sw,int step_id);
-	bool Load(STEPWrapper *sw,SDAI_Application_instance *sse);
-	virtual void Print(int level);
+    MassConversionBasedUnit();
+    virtual ~MassConversionBasedUnit();
+    MassConversionBasedUnit(STEPWrapper *sw, int step_id);
+    bool Load(STEPWrapper *sw, SDAI_Application_instance *sse);
+    virtual void Print(int level);
 
-	//static methods
-	static STEPEntity *Create(STEPWrapper *sw,SDAI_Application_instance *sse);
+    //static methods
+    static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
 #endif /* MASSCONVERSIONBASEDUNIT_H_ */

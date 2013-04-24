@@ -65,7 +65,8 @@ void Transformation::Print(int level)
 }
 
 STEPEntity *
-Transformation::GetInstance(STEPWrapper *sw, int id) {
+Transformation::GetInstance(STEPWrapper *sw, int id)
+{
     return new Transformation(sw, id);
 }
 

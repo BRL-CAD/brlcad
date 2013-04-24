@@ -31,33 +31,37 @@
 
 #define CLASSNAME "MassContextDependentUnit"
 #define ENTITYNAME "Mass_Context_Dependent_Unit"
-string MassContextDependentUnit::entityname = Factory::RegisterClass(ENTITYNAME,(FactoryMethod)MassContextDependentUnit::Create);
+string MassContextDependentUnit::entityname = Factory::RegisterClass(ENTITYNAME, (FactoryMethod)MassContextDependentUnit::Create);
 
-MassContextDependentUnit::MassContextDependentUnit() {
+MassContextDependentUnit::MassContextDependentUnit()
+{
     step = NULL;
     id = 0;
 }
 
-MassContextDependentUnit::MassContextDependentUnit(STEPWrapper *sw,int step_id) {
+MassContextDependentUnit::MassContextDependentUnit(STEPWrapper *sw, int step_id)
+{
     step = sw;
     id = step_id;
 }
 
-MassContextDependentUnit::~MassContextDependentUnit() {
+MassContextDependentUnit::~MassContextDependentUnit()
+{
 }
 
 bool
-MassContextDependentUnit::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
-    step=sw;
+MassContextDependentUnit::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
+    step = sw;
     id = sse->STEPfile_id;
 
 
     // load base class attributes
-    if ( !MassUnit::Load(step,sse) ) {
+    if (!MassUnit::Load(step, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::Unit." << std::endl;
 	return false;
     }
-    if ( !ContextDependentUnit::Load(step,sse) ) {
+    if (!ContextDependentUnit::Load(step, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::Unit." << std::endl;
 	return false;
     }
@@ -66,23 +70,28 @@ MassContextDependentUnit::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
 }
 
 void
-MassContextDependentUnit::Print(int level) {
-    TAB(level); std::cout << CLASSNAME << ":" << "(";
+MassContextDependentUnit::Print(int level)
+{
+    TAB(level);
+    std::cout << CLASSNAME << ":" << "(";
     std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-    TAB(level); std::cout << "Inherited Attributes:" << std::endl;
-    MassUnit::Print(level+1);
-    ContextDependentUnit::Print(level+1);
+    TAB(level);
+    std::cout << "Inherited Attributes:" << std::endl;
+    MassUnit::Print(level + 1);
+    ContextDependentUnit::Print(level + 1);
 
 }
 
 STEPEntity *
-MassContextDependentUnit::GetInstance(STEPWrapper *sw, int id) {
+MassContextDependentUnit::GetInstance(STEPWrapper *sw, int id)
+{
     return new MassContextDependentUnit(sw, id);
 }
 
 STEPEntity *
-MassContextDependentUnit::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
+MassContextDependentUnit::Create(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
     return STEPEntity::CreateEntity(sw, sse, GetInstance, CLASSNAME);
 }
 

@@ -29,24 +29,25 @@
 
 #include "MeasureWithUnit.h"
 
-class UncertaintyMeasureWithUnit : public MeasureWithUnit {
+class UncertaintyMeasureWithUnit : public MeasureWithUnit
+{
 private:
-	static string entityname;
-	static EntityInstanceFunc GetInstance;
+    static string entityname;
+    static EntityInstanceFunc GetInstance;
 
 protected:
-	string name;
-	string description;
+    string name;
+    string description;
 
 public:
-	UncertaintyMeasureWithUnit();
-	virtual ~UncertaintyMeasureWithUnit();
-	UncertaintyMeasureWithUnit(STEPWrapper *sw,int step_id);
-	bool Load(STEPWrapper *sw,SDAI_Application_instance *sse);
-	virtual void Print(int level);
+    UncertaintyMeasureWithUnit();
+    virtual ~UncertaintyMeasureWithUnit();
+    UncertaintyMeasureWithUnit(STEPWrapper *sw, int step_id);
+    bool Load(STEPWrapper *sw, SDAI_Application_instance *sse);
+    virtual void Print(int level);
 
-	//static methods
-	static STEPEntity *Create(STEPWrapper *sw,SDAI_Application_instance *sse);
+    //static methods
+    static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
 #endif /* UNCERTAINTYMEASUREWITHUNIT_H_ */

@@ -32,26 +32,29 @@
 class ON_BoundingBox;
 class ON_Brep;
 
-class Loop : public TopologicalRepresentationItem {
+class Loop : public TopologicalRepresentationItem
+{
 private:
-	static string entityname;
-	static EntityInstanceFunc GetInstance;
+    static string entityname;
+    static EntityInstanceFunc GetInstance;
 
 protected:
-	int ON_loop_index;
+    int ON_loop_index;
 
 public:
-	Loop();
-	virtual ~Loop();
-	Loop(STEPWrapper *sw,int step_id);
-	virtual ON_BoundingBox *GetEdgeBounds(ON_Brep *brep);
-	bool Load(STEPWrapper *sw,SDAI_Application_instance *sse);
-	virtual bool LoadONBrep(ON_Brep *brep);
-	virtual void Print(int level);
-	void SetLoopIndex(int index) { ON_loop_index = index; };
+    Loop();
+    virtual ~Loop();
+    Loop(STEPWrapper *sw, int step_id);
+    virtual ON_BoundingBox *GetEdgeBounds(ON_Brep *brep);
+    bool Load(STEPWrapper *sw, SDAI_Application_instance *sse);
+    virtual bool LoadONBrep(ON_Brep *brep);
+    virtual void Print(int level);
+    void SetLoopIndex(int index) {
+	ON_loop_index = index;
+    };
 
-	//static methods
-	static STEPEntity *Create(STEPWrapper *sw,SDAI_Application_instance *sse);
+    //static methods
+    static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
 #endif /* LOOP_H_ */

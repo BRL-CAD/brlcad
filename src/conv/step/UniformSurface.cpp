@@ -32,28 +32,32 @@
 
 #define CLASSNAME "UniformSurface"
 #define ENTITYNAME "Uniform_Surface"
-string UniformSurface::entityname = Factory::RegisterClass(ENTITYNAME,(FactoryMethod)UniformSurface::Create);
+string UniformSurface::entityname = Factory::RegisterClass(ENTITYNAME, (FactoryMethod)UniformSurface::Create);
 
-UniformSurface::UniformSurface() {
+UniformSurface::UniformSurface()
+{
     step = NULL;
     id = 0;
 }
 
-UniformSurface::UniformSurface(STEPWrapper *sw,int step_id) {
+UniformSurface::UniformSurface(STEPWrapper *sw, int step_id)
+{
     step = sw;
     id = step_id;
 }
 
-UniformSurface::~UniformSurface() {
+UniformSurface::~UniformSurface()
+{
 }
 
 bool
-UniformSurface::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
-    step=sw;
+UniformSurface::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
+    step = sw;
     id = sse->STEPfile_id;
 
     // load base class attributes
-    if ( !BSplineSurface::Load(sw,sse) ) {
+    if (!BSplineSurface::Load(sw, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::BSplineCurve." << std::endl;
 	return false;
     }
@@ -62,21 +66,26 @@ UniformSurface::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
 }
 
 void
-UniformSurface::Print(int level) {
-    TAB(level); std::cout << CLASSNAME << ":" << name << "(";
+UniformSurface::Print(int level)
+{
+    TAB(level);
+    std::cout << CLASSNAME << ":" << name << "(";
     std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-    TAB(level); std::cout << "Inherited:" << std::endl;
-    BSplineSurface::Print(level+1);
+    TAB(level);
+    std::cout << "Inherited:" << std::endl;
+    BSplineSurface::Print(level + 1);
 }
 
 STEPEntity *
-UniformSurface::GetInstance(STEPWrapper *sw, int id) {
+UniformSurface::GetInstance(STEPWrapper *sw, int id)
+{
     return new UniformSurface(sw, id);
 }
 
 STEPEntity *
-UniformSurface::Create(STEPWrapper *sw,SDAI_Application_instance *sse){
+UniformSurface::Create(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
     return STEPEntity::CreateEntity(sw, sse, GetInstance, CLASSNAME);
 }
 

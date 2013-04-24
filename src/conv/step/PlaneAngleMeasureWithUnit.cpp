@@ -35,29 +35,33 @@
 
 #define CLASSNAME "PlaneAngleMeasureWithUnit"
 #define ENTITYNAME "Plane_Angle_Measure_With_Unit"
-string PlaneAngleMeasureWithUnit::entityname = Factory::RegisterClass(ENTITYNAME,(FactoryMethod)PlaneAngleMeasureWithUnit::Create);
+string PlaneAngleMeasureWithUnit::entityname = Factory::RegisterClass(ENTITYNAME, (FactoryMethod)PlaneAngleMeasureWithUnit::Create);
 
-PlaneAngleMeasureWithUnit::PlaneAngleMeasureWithUnit() {
+PlaneAngleMeasureWithUnit::PlaneAngleMeasureWithUnit()
+{
     step = NULL;
     id = 0;
 }
 
-PlaneAngleMeasureWithUnit::PlaneAngleMeasureWithUnit(STEPWrapper *sw,int step_id) {
+PlaneAngleMeasureWithUnit::PlaneAngleMeasureWithUnit(STEPWrapper *sw, int step_id)
+{
     step = sw;
     id = step_id;
 }
 
-PlaneAngleMeasureWithUnit::~PlaneAngleMeasureWithUnit() {
+PlaneAngleMeasureWithUnit::~PlaneAngleMeasureWithUnit()
+{
 }
 
 bool
-PlaneAngleMeasureWithUnit::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
-    step=sw;
+PlaneAngleMeasureWithUnit::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
+    step = sw;
     id = sse->STEPfile_id;
 
 
     // load base class attributes
-    if ( !MeasureWithUnit::Load(step,sse) ) {
+    if (!MeasureWithUnit::Load(step, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::" << CLASSNAME << std::endl;
 	return false;
     }
@@ -65,22 +69,27 @@ PlaneAngleMeasureWithUnit::Load(STEPWrapper *sw,SDAI_Application_instance *sse) 
 }
 
 void
-PlaneAngleMeasureWithUnit::Print(int level) {
-    TAB(level); std::cout << CLASSNAME << ":" << "(";
+PlaneAngleMeasureWithUnit::Print(int level)
+{
+    TAB(level);
+    std::cout << CLASSNAME << ":" << "(";
     std::cout << "ID:" << STEPid() << ")" << std::endl;
 
 
-    TAB(level); std::cout << "Inherited Attributes:" << std::endl;
-    MeasureWithUnit::Print(level+1);
+    TAB(level);
+    std::cout << "Inherited Attributes:" << std::endl;
+    MeasureWithUnit::Print(level + 1);
 }
 
 STEPEntity *
-PlaneAngleMeasureWithUnit::GetInstance(STEPWrapper *sw, int id) {
+PlaneAngleMeasureWithUnit::GetInstance(STEPWrapper *sw, int id)
+{
     return new PlaneAngleMeasureWithUnit(sw, id);
 }
 
 STEPEntity *
-PlaneAngleMeasureWithUnit::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
+PlaneAngleMeasureWithUnit::Create(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
     return STEPEntity::CreateEntity(sw, sse, GetInstance, CLASSNAME);
 }
 

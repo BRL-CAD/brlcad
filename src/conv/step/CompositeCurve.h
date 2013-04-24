@@ -32,26 +32,27 @@
 class CompositeCurveSegment;
 typedef list<CompositeCurveSegment *> LIST_OF_SEGMENTS;
 
-class CompositeCurve : public BoundedCurve {
+class CompositeCurve : public BoundedCurve
+{
 private:
-	static string entityname;
-	static EntityInstanceFunc GetInstance;
+    static string entityname;
+    static EntityInstanceFunc GetInstance;
 
 protected:
-	LIST_OF_SEGMENTS segments;
-	Logical self_intersect;
+    LIST_OF_SEGMENTS segments;
+    Logical self_intersect;
 
 public:
-	CompositeCurve();
-	virtual ~CompositeCurve();
-	CompositeCurve(STEPWrapper *sw,int step_id);
-	bool Load(STEPWrapper *sw,SDAI_Application_instance *sse);
-	virtual const double *PointAtEnd();
-	virtual const double *PointAtStart();
-	virtual void Print(int level);
+    CompositeCurve();
+    virtual ~CompositeCurve();
+    CompositeCurve(STEPWrapper *sw, int step_id);
+    bool Load(STEPWrapper *sw, SDAI_Application_instance *sse);
+    virtual const double *PointAtEnd();
+    virtual const double *PointAtStart();
+    virtual void Print(int level);
 
-	//static methods
-	static STEPEntity *Create(STEPWrapper *sw,SDAI_Application_instance *sse);
+    //static methods
+    static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
 #endif /* COMPOSITECURVE_H_ */

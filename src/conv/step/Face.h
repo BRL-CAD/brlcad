@@ -36,27 +36,28 @@ class ON_BoundingBox;
 class FaceBound;
 typedef list<FaceBound *> LIST_OF_FACE_BOUNDS;
 
-class Face: public TopologicalRepresentationItem {
+class Face: public TopologicalRepresentationItem
+{
 private:
-	static string entityname;
-	static EntityInstanceFunc GetInstance;
+    static string entityname;
+    static EntityInstanceFunc GetInstance;
 
 protected:
-	bool reverse;
-	LIST_OF_FACE_BOUNDS bounds;
+    bool reverse;
+    LIST_OF_FACE_BOUNDS bounds;
 
 public:
-	Face();
-	virtual ~Face();
-	Face(STEPWrapper *sw,int step_id);
-	ON_BoundingBox *GetEdgeBounds(ON_Brep *brep);
-	bool Load(STEPWrapper *sw, SDAI_Application_instance *sse);
-	virtual bool LoadONBrep(ON_Brep *brep);
-	virtual void Print(int level);
-	virtual void ReverseFace();
+    Face();
+    virtual ~Face();
+    Face(STEPWrapper *sw, int step_id);
+    ON_BoundingBox *GetEdgeBounds(ON_Brep *brep);
+    bool Load(STEPWrapper *sw, SDAI_Application_instance *sse);
+    virtual bool LoadONBrep(ON_Brep *brep);
+    virtual void Print(int level);
+    virtual void ReverseFace();
 
-	//static methods
-	static STEPEntity *Create(STEPWrapper *sw,SDAI_Application_instance *sse);
+    //static methods
+    static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
 #endif /* FACE_H_ */

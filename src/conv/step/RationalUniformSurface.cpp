@@ -32,28 +32,32 @@
 
 #define CLASSNAME "RationalUniformSurface"
 #define ENTITYNAME "Rational_Uniform_Surface"
-string RationalUniformSurface::entityname = Factory::RegisterClass(ENTITYNAME,(FactoryMethod)RationalUniformSurface::Create);
+string RationalUniformSurface::entityname = Factory::RegisterClass(ENTITYNAME, (FactoryMethod)RationalUniformSurface::Create);
 
-RationalUniformSurface::RationalUniformSurface() {
+RationalUniformSurface::RationalUniformSurface()
+{
     step = NULL;
     id = 0;
 }
 
-RationalUniformSurface::RationalUniformSurface(STEPWrapper *sw,int step_id) {
+RationalUniformSurface::RationalUniformSurface(STEPWrapper *sw, int step_id)
+{
     step = sw;
     id = step_id;
 }
 
-RationalUniformSurface::~RationalUniformSurface() {
+RationalUniformSurface::~RationalUniformSurface()
+{
 }
 
 bool
-RationalUniformSurface::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
-    step=sw;
+RationalUniformSurface::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
+    step = sw;
     id = sse->STEPfile_id;
 
     // load base class attributes
-    if ( !RationalBSplineSurface::Load(sw,sse) ) {
+    if (!RationalBSplineSurface::Load(sw, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::BSplineSurface." << std::endl;
 	return false;
     }
@@ -63,21 +67,26 @@ RationalUniformSurface::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
 }
 
 void
-RationalUniformSurface::Print(int level) {
-    TAB(level); std::cout << CLASSNAME << ":" << name << "(";
+RationalUniformSurface::Print(int level)
+{
+    TAB(level);
+    std::cout << CLASSNAME << ":" << name << "(";
     std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-    TAB(level); std::cout << "Inherited:" << std::endl;
-    RationalBSplineSurface::Print(level+1);
+    TAB(level);
+    std::cout << "Inherited:" << std::endl;
+    RationalBSplineSurface::Print(level + 1);
 }
 
 STEPEntity *
-RationalUniformSurface::GetInstance(STEPWrapper *sw, int id) {
+RationalUniformSurface::GetInstance(STEPWrapper *sw, int id)
+{
     return new RationalUniformSurface(sw, id);
 }
 
 STEPEntity *
-RationalUniformSurface::Create(STEPWrapper *sw,SDAI_Application_instance *sse){
+RationalUniformSurface::Create(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
     return STEPEntity::CreateEntity(sw, sse, GetInstance, CLASSNAME);
 }
 

@@ -29,23 +29,24 @@
 
 #include "SurfaceCurve.h"
 
-class IntersectionCurve : public SurfaceCurve {
+class IntersectionCurve : public SurfaceCurve
+{
 private:
-	static string entityname;
-	static EntityInstanceFunc GetInstance;
+    static string entityname;
+    static EntityInstanceFunc GetInstance;
 
 protected:
 
 public:
-	IntersectionCurve();
-	virtual ~IntersectionCurve();
-	IntersectionCurve(STEPWrapper *sw,int step_id);
-	bool Load(STEPWrapper *sw,SDAI_Application_instance *sse);
-	virtual bool LoadONBrep(ON_Brep *brep);
-	virtual void Print(int level);
+    IntersectionCurve();
+    virtual ~IntersectionCurve();
+    IntersectionCurve(STEPWrapper *sw, int step_id);
+    bool Load(STEPWrapper *sw, SDAI_Application_instance *sse);
+    virtual bool LoadONBrep(ON_Brep *brep);
+    virtual void Print(int level);
 
-	//static methods
-	static STEPEntity *Create(STEPWrapper *sw,SDAI_Application_instance *sse);
+    //static methods
+    static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
 #endif /* INTERSECTION_CURVE_H_ */

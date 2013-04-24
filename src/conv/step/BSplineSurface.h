@@ -35,31 +35,32 @@ class CartesianPoint;
 typedef list<CartesianPoint *> LIST_OF_POINTS;
 typedef list<LIST_OF_POINTS *> LIST_OF_LIST_OF_POINTS;
 
-class BSplineSurface: public BoundedSurface {
+class BSplineSurface: public BoundedSurface
+{
 private:
-	static string entityname;
-	static EntityInstanceFunc GetInstance;
+    static string entityname;
+    static EntityInstanceFunc GetInstance;
 
 protected:
-	int u_degree;
-	int v_degree;
-	LIST_OF_LIST_OF_POINTS *control_points_list;
-	B_spline_surface_form surface_form;
-	Logical u_closed;
-	Logical v_closed;
-	Logical self_intersect;
+    int u_degree;
+    int v_degree;
+    LIST_OF_LIST_OF_POINTS *control_points_list;
+    B_spline_surface_form surface_form;
+    Logical u_closed;
+    Logical v_closed;
+    Logical self_intersect;
 
 public:
-	BSplineSurface();
-	virtual ~BSplineSurface();
-	BSplineSurface(STEPWrapper *sw,int step_id);
-	bool Load(STEPWrapper *sw,SDAI_Application_instance *sse);
-	virtual bool LoadONBrep(ON_Brep *brep);
-	virtual void Print(int level);
-	string Form();
+    BSplineSurface();
+    virtual ~BSplineSurface();
+    BSplineSurface(STEPWrapper *sw, int step_id);
+    bool Load(STEPWrapper *sw, SDAI_Application_instance *sse);
+    virtual bool LoadONBrep(ON_Brep *brep);
+    virtual void Print(int level);
+    string Form();
 
-	//static methods
-	static STEPEntity *Create(STEPWrapper *sw,SDAI_Application_instance *sse);
+    //static methods
+    static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
 #endif /* BSPLINESURFACE_H_ */

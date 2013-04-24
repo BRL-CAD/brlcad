@@ -36,7 +36,8 @@ class ON_Brep;
 class ProductDefinitionFormation;
 class ProductDefinitionContext;
 
-class ProductDefinition: virtual public STEPEntity {
+class ProductDefinition: virtual public STEPEntity
+{
 private:
     static string entityname;
     static EntityInstanceFunc GetInstance;

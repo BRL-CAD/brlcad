@@ -30,25 +30,26 @@
 #include "SurfaceCurve.h"
 #include "BoundedCurve.h"
 
-class BoundedSurfaceCurve : public SurfaceCurve, public BoundedCurve {
+class BoundedSurfaceCurve : public SurfaceCurve, public BoundedCurve
+{
 private:
-	static string entityname;
-	static EntityInstanceFunc GetInstance;
+    static string entityname;
+    static EntityInstanceFunc GetInstance;
 
 protected:
 
 public:
-	BoundedSurfaceCurve();
-	virtual ~BoundedSurfaceCurve();
-	BoundedSurfaceCurve(STEPWrapper *sw,int step_id);
-	bool Load(STEPWrapper *sw,SDAI_Application_instance *sse);
-	virtual bool LoadONBrep(ON_Brep *brep);
-	virtual const double *PointAtEnd();
-	virtual const double *PointAtStart();
-	virtual void Print(int level);
+    BoundedSurfaceCurve();
+    virtual ~BoundedSurfaceCurve();
+    BoundedSurfaceCurve(STEPWrapper *sw, int step_id);
+    bool Load(STEPWrapper *sw, SDAI_Application_instance *sse);
+    virtual bool LoadONBrep(ON_Brep *brep);
+    virtual const double *PointAtEnd();
+    virtual const double *PointAtStart();
+    virtual void Print(int level);
 
-	//static methods
-	static STEPEntity *Create(STEPWrapper *sw,SDAI_Application_instance *sse);
+    //static methods
+    static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
 #endif /* BOUNDEDSURFACECURVE_H_ */

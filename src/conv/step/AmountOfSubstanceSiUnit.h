@@ -30,22 +30,23 @@
 #include "AmountOfSubstanceUnit.h"
 #include "SiUnit.h"
 
-class AmountOfSubstanceSiUnit : public AmountOfSubstanceUnit, public SiUnit {
+class AmountOfSubstanceSiUnit : public AmountOfSubstanceUnit, public SiUnit
+{
 private:
-	static string entityname;
-	static EntityInstanceFunc GetInstance;
+    static string entityname;
+    static EntityInstanceFunc GetInstance;
 
 protected:
 
 public:
-	AmountOfSubstanceSiUnit();
-	virtual ~AmountOfSubstanceSiUnit();
-	AmountOfSubstanceSiUnit(STEPWrapper *sw,int step_id);
-	bool Load(STEPWrapper *sw,SDAI_Application_instance *sse);
-	virtual void Print(int level);
+    AmountOfSubstanceSiUnit();
+    virtual ~AmountOfSubstanceSiUnit();
+    AmountOfSubstanceSiUnit(STEPWrapper *sw, int step_id);
+    bool Load(STEPWrapper *sw, SDAI_Application_instance *sse);
+    virtual void Print(int level);
 
-	//static methods
-	static STEPEntity *Create(STEPWrapper *sw,SDAI_Application_instance *sse);
+    //static methods
+    static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
 #endif /* AMOUNTOFSUBSTANCESIUNIT_H_ */

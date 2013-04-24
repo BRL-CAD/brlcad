@@ -34,35 +34,46 @@ class Loop;
 class ON_BoundingBox;
 class ON_Brep;
 
-class FaceBound : public TopologicalRepresentationItem {
+class FaceBound : public TopologicalRepresentationItem
+{
 private:
-	static string entityname;
-	static EntityInstanceFunc GetInstance;
+    static string entityname;
+    static EntityInstanceFunc GetInstance;
 
 protected:
-	Loop *bound;
-	int ON_face_index;
-	bool inner;
-	Boolean orientation;
+    Loop *bound;
+    int ON_face_index;
+    bool inner;
+    Boolean orientation;
 
 
 public:
-	FaceBound();
-	virtual ~FaceBound();
-	FaceBound(STEPWrapper *sw,int step_id);
-	void SetInner() { inner = true; };
-	void SetOuter() { inner = false; };
-	bool IsInner() {return inner;}
-	bool IsOuter() {return !inner;}
-	ON_BoundingBox *GetEdgeBounds(ON_Brep *brep);
-	bool Load(STEPWrapper *sw,SDAI_Application_instance *sse);
-	virtual bool LoadONBrep(ON_Brep *brep);
-	virtual void Print(int level);
-	bool Oriented();
-	void SetFaceIndex(int index) { ON_face_index = index; };
+    FaceBound();
+    virtual ~FaceBound();
+    FaceBound(STEPWrapper *sw, int step_id);
+    void SetInner() {
+	inner = true;
+    };
+    void SetOuter() {
+	inner = false;
+    };
+    bool IsInner() {
+	return inner;
+    }
+    bool IsOuter() {
+	return !inner;
+    }
+    ON_BoundingBox *GetEdgeBounds(ON_Brep *brep);
+    bool Load(STEPWrapper *sw, SDAI_Application_instance *sse);
+    virtual bool LoadONBrep(ON_Brep *brep);
+    virtual void Print(int level);
+    bool Oriented();
+    void SetFaceIndex(int index) {
+	ON_face_index = index;
+    };
 
-	//static methods
-	static STEPEntity *Create(STEPWrapper *sw,SDAI_Application_instance *sse);
+    //static methods
+    static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
 #endif /* FACEBOUND_H_ */

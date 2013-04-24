@@ -29,29 +29,30 @@
 
 #include "STEPEntity.h"
 
-class DimensionalExponents : virtual public STEPEntity {
+class DimensionalExponents : virtual public STEPEntity
+{
 private:
-	static string entityname;
-	static EntityInstanceFunc GetInstance;
+    static string entityname;
+    static EntityInstanceFunc GetInstance;
 
 protected:
-	  double length_exponent;
-	  double mass_exponent;
-	  double time_exponent;
-	  double electric_current_exponent;
-	  double thermodynamic_temperature_exponent;
-	  double amount_of_substance_exponent;
-	  double luminous_intensity_exponent;
+    double length_exponent;
+    double mass_exponent;
+    double time_exponent;
+    double electric_current_exponent;
+    double thermodynamic_temperature_exponent;
+    double amount_of_substance_exponent;
+    double luminous_intensity_exponent;
 
 public:
-	DimensionalExponents();
-	virtual ~DimensionalExponents();
-	DimensionalExponents(STEPWrapper *sw,int step_id);
-	bool Load(STEPWrapper *sw,SDAI_Application_instance *sse);
-	virtual void Print(int level);
+    DimensionalExponents();
+    virtual ~DimensionalExponents();
+    DimensionalExponents(STEPWrapper *sw, int step_id);
+    bool Load(STEPWrapper *sw, SDAI_Application_instance *sse);
+    virtual void Print(int level);
 
-	//static methods
-	static STEPEntity *Create(STEPWrapper *sw,SDAI_Application_instance *sse);
+    //static methods
+    static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
 #endif /* DIMENSIONALEXPONENTS_H_ */

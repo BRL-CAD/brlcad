@@ -32,29 +32,30 @@
 typedef list<int> LIST_OF_INTEGERS;
 typedef list<double> LIST_OF_REALS;
 
-class BSplineSurfaceWithKnots : virtual public BSplineSurface {
+class BSplineSurfaceWithKnots : virtual public BSplineSurface
+{
 private:
-	static string entityname;
-	static EntityInstanceFunc GetInstance;
+    static string entityname;
+    static EntityInstanceFunc GetInstance;
 
 protected:
-	LIST_OF_INTEGERS u_multiplicities;
-	LIST_OF_INTEGERS v_multiplicities;
-	LIST_OF_REALS u_knots;
-	LIST_OF_REALS v_knots;
-	Knot_type knot_spec;
+    LIST_OF_INTEGERS u_multiplicities;
+    LIST_OF_INTEGERS v_multiplicities;
+    LIST_OF_REALS u_knots;
+    LIST_OF_REALS v_knots;
+    Knot_type knot_spec;
 
 
 public:
-	BSplineSurfaceWithKnots();
-	virtual ~BSplineSurfaceWithKnots();
-	BSplineSurfaceWithKnots(STEPWrapper *sw,int step_id);
-	bool Load(STEPWrapper *sw,SDAI_Application_instance *sse);
-	virtual bool LoadONBrep(ON_Brep *brep);
-	virtual void Print(int level);
+    BSplineSurfaceWithKnots();
+    virtual ~BSplineSurfaceWithKnots();
+    BSplineSurfaceWithKnots(STEPWrapper *sw, int step_id);
+    bool Load(STEPWrapper *sw, SDAI_Application_instance *sse);
+    virtual bool LoadONBrep(ON_Brep *brep);
+    virtual void Print(int level);
 
-	//static methods
-	static STEPEntity *Create(STEPWrapper *sw,SDAI_Application_instance *sse);
+    //static methods
+    static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
 #endif /* BSPLINESURFACEWITHKNOTS_H_ */

@@ -36,7 +36,8 @@ class ON_Brep;
 class ProductContext;
 typedef list<ProductContext *> LIST_OF_PRODUCT_CONTEXT;
 
-class Product: virtual public STEPEntity {
+class Product: virtual public STEPEntity
+{
 private:
     static string entityname;
     static EntityInstanceFunc GetInstance;

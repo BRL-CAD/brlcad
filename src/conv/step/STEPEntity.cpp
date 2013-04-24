@@ -30,8 +30,8 @@
 
 STEPEntity::STEPEntity()
 {
-    step=NULL;
-    id=0;
+    step = NULL;
+    id = 0;
     ON_id = -1;
 }
 
@@ -57,10 +57,10 @@ STEPWrapper *STEPEntity::Step()
 
 STEPEntity *
 STEPEntity::CreateEntity(
-	STEPWrapper *sw,
-	SDAI_Application_instance *sse,
-	EntityInstanceFunc Instance,
-	const char *classname)
+    STEPWrapper *sw,
+    SDAI_Application_instance *sse,
+    EntityInstanceFunc Instance,
+    const char *classname)
 {
     Factory::OBJECTS::iterator i;
 

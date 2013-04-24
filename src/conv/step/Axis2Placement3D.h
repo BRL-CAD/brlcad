@@ -31,35 +31,36 @@
 
 class Direction;
 
-class Axis2Placement3D : public Placement {
+class Axis2Placement3D : public Placement
+{
 private:
-	static string entityname;
-	static EntityInstanceFunc GetInstance;
-	double p[3][3];
+    static string entityname;
+    static EntityInstanceFunc GetInstance;
+    double p[3][3];
 
-	void BuildAxis();
-	void FirstProjAxis(double *proj,double *zaxis, double *refdir);
-	void ScalarTimesVector(double *v, double scalar, double *vec);
-	void VectorDifference(double *result, double *v1, double *v2);
+    void BuildAxis();
+    void FirstProjAxis(double *proj, double *zaxis, double *refdir);
+    void ScalarTimesVector(double *v, double scalar, double *vec);
+    void VectorDifference(double *result, double *v1, double *v2);
 protected:
-	Direction *axis;
-	Direction *ref_direction;
+    Direction *axis;
+    Direction *ref_direction;
 
 public:
-	Axis2Placement3D();
-	virtual ~Axis2Placement3D();
-	Axis2Placement3D(STEPWrapper *sw,int step_id);
-	const double *GetAxis(int i);
-	virtual const double *GetOrigin();
-	virtual const double *GetNormal();
-	virtual const double *GetXAxis();
-	virtual const double *GetYAxis();
-	bool Load(STEPWrapper *sw,SDAI_Application_instance *sse);
-	virtual bool LoadONBrep(ON_Brep *brep);
-	virtual void Print(int level);
+    Axis2Placement3D();
+    virtual ~Axis2Placement3D();
+    Axis2Placement3D(STEPWrapper *sw, int step_id);
+    const double *GetAxis(int i);
+    virtual const double *GetOrigin();
+    virtual const double *GetNormal();
+    virtual const double *GetXAxis();
+    virtual const double *GetYAxis();
+    bool Load(STEPWrapper *sw, SDAI_Application_instance *sse);
+    virtual bool LoadONBrep(ON_Brep *brep);
+    virtual void Print(int level);
 
-	//static methods
-	static STEPEntity *Create(STEPWrapper *sw,SDAI_Application_instance *sse);
+    //static methods
+    static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
 #endif /* AXIS2_PLACEMENT_3D_H_ */

@@ -32,7 +32,7 @@
 
 #define CLASSNAME "BSplineSurfaceWithKnots"
 #define ENTITYNAME "B_Spline_Surface_With_Knots"
-string BSplineSurfaceWithKnots::entityname = Factory::RegisterClass(ENTITYNAME,(FactoryMethod)BSplineSurfaceWithKnots::Create);
+string BSplineSurfaceWithKnots::entityname = Factory::RegisterClass(ENTITYNAME, (FactoryMethod)BSplineSurfaceWithKnots::Create);
 
 static const char *Knot_type_string[] = {
     "uniform_knots",
@@ -42,43 +42,47 @@ static const char *Knot_type_string[] = {
     "unset"
 };
 
-BSplineSurfaceWithKnots::BSplineSurfaceWithKnots() {
+BSplineSurfaceWithKnots::BSplineSurfaceWithKnots()
+{
     step = NULL;
     id = 0;
     knot_spec = Knot_type_unset;
 }
 
-BSplineSurfaceWithKnots::BSplineSurfaceWithKnots(STEPWrapper *sw,int step_id) {
+BSplineSurfaceWithKnots::BSplineSurfaceWithKnots(STEPWrapper *sw, int step_id)
+{
     step = sw;
     id = step_id;
     knot_spec = Knot_type_unset;
 }
 
-BSplineSurfaceWithKnots::~BSplineSurfaceWithKnots() {
+BSplineSurfaceWithKnots::~BSplineSurfaceWithKnots()
+{
 }
 
 bool
-BSplineSurfaceWithKnots::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
-    step=sw;
+BSplineSurfaceWithKnots::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
+    step = sw;
     id = sse->STEPfile_id;
 
     // load base class attributes
-    if ( !BSplineSurface::Load(step,sse) ) {
+    if (!BSplineSurface::Load(step, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::BSplineCurve." << std::endl;
 	return false;
     }
 
     // need to do this for local attributes to makes sure we have
     // the actual entity and not a complex/supertype parent
-    sse = step->getEntity(sse,ENTITYNAME);
+    sse = step->getEntity(sse, ENTITYNAME);
 
     if (u_multiplicities.empty()) {
-	STEPattribute *attr = step->getAttribute(sse,"u_multiplicities");
+	STEPattribute *attr = step->getAttribute(sse, "u_multiplicities");
 	if (attr) {
 	    STEPaggregate *sa = (STEPaggregate *)(attr->ptr.a);
 	    IntNode *in = (IntNode *)sa->GetHead();
 
-	    while ( in != NULL) {
+	    while (in != NULL) {
 		u_multiplicities.push_back(in->value);
 		in = (IntNode *)in->NextNode();
 	    }
@@ -88,12 +92,12 @@ BSplineSurfaceWithKnots::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
 	}
     }
     if (v_multiplicities.empty()) {
-	STEPattribute *attr = step->getAttribute(sse,"v_multiplicities");
+	STEPattribute *attr = step->getAttribute(sse, "v_multiplicities");
 	if (attr) {
 	    STEPaggregate *sa = (STEPaggregate *)(attr->ptr.a);
 	    IntNode *in = (IntNode *)sa->GetHead();
 
-	    while ( in != NULL) {
+	    while (in != NULL) {
 		v_multiplicities.push_back(in->value);
 		in = (IntNode *)in->NextNode();
 	    }
@@ -103,12 +107,12 @@ BSplineSurfaceWithKnots::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
 	}
     }
     if (u_knots.empty()) {
-	STEPattribute *attr = step->getAttribute(sse,"u_knots");
+	STEPattribute *attr = step->getAttribute(sse, "u_knots");
 	if (attr) {
 	    STEPaggregate *sa = (STEPaggregate *)(attr->ptr.a);
 	    RealNode *rn = (RealNode *)sa->GetHead();
 
-	    while ( rn != NULL) {
+	    while (rn != NULL) {
 		u_knots.push_back(rn->value);
 		rn = (RealNode *)rn->NextNode();
 	    }
@@ -118,12 +122,12 @@ BSplineSurfaceWithKnots::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
 	}
     }
     if (v_knots.empty()) {
-	STEPattribute *attr = step->getAttribute(sse,"v_knots");
+	STEPattribute *attr = step->getAttribute(sse, "v_knots");
 	if (attr) {
 	    STEPaggregate *sa = (STEPaggregate *)(attr->ptr.a);
 	    RealNode *rn = (RealNode *)sa->GetHead();
 
-	    while ( rn != NULL) {
+	    while (rn != NULL) {
 		v_knots.push_back(rn->value);
 		rn = (RealNode *)rn->NextNode();
 	    }
@@ -133,56 +137,68 @@ BSplineSurfaceWithKnots::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
 	}
     }
 
-    knot_spec = (Knot_type)step->getEnumAttribute(sse,"knot_spec");
-    if (knot_spec > Knot_type_unset)
+    knot_spec = (Knot_type)step->getEnumAttribute(sse, "knot_spec");
+    if (knot_spec > Knot_type_unset) {
 	knot_spec = Knot_type_unset;
+    }
 
     return true;
 }
 
 void
-BSplineSurfaceWithKnots::Print(int level) {
-    TAB(level); std::cout << CLASSNAME << ":" << name << "(";
+BSplineSurfaceWithKnots::Print(int level)
+{
+    TAB(level);
+    std::cout << CLASSNAME << ":" << name << "(";
     std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-    TAB(level); std::cout << "Attributes:" << std::endl;
-    TAB(level+1); std::cout << "u_multiplicities:";
+    TAB(level);
+    std::cout << "Attributes:" << std::endl;
+    TAB(level + 1);
+    std::cout << "u_multiplicities:";
     LIST_OF_INTEGERS::iterator ii;
-    for(ii=u_multiplicities.begin();ii!=u_multiplicities.end();ii++) {
+    for (ii = u_multiplicities.begin(); ii != u_multiplicities.end(); ii++) {
 	std::cout << " " << (*ii);
     }
     std::cout << std::endl;
-    TAB(level+1); std::cout << "v_multiplicities:";
-    for(ii=v_multiplicities.begin();ii!=v_multiplicities.end();ii++) {
+    TAB(level + 1);
+    std::cout << "v_multiplicities:";
+    for (ii = v_multiplicities.begin(); ii != v_multiplicities.end(); ii++) {
 	std::cout << " " << (*ii);
     }
     std::cout << std::endl;
 
-    TAB(level+1); std::cout << "u_knots:";
+    TAB(level + 1);
+    std::cout << "u_knots:";
     LIST_OF_REALS::iterator ir;
-    for(ir=u_knots.begin();ir!=u_knots.end();ir++) {
+    for (ir = u_knots.begin(); ir != u_knots.end(); ir++) {
 	std::cout << " " << (*ir);
     }
     std::cout << std::endl;
-    TAB(level+1); std::cout << "v_knots:";
-    for(ir=v_knots.begin();ir!=v_knots.end();ir++) {
+    TAB(level + 1);
+    std::cout << "v_knots:";
+    for (ir = v_knots.begin(); ir != v_knots.end(); ir++) {
 	std::cout << " " << (*ir);
     }
     std::cout << std::endl;
 
-    TAB(level+1); std::cout << "knot_spec:" << Knot_type_string[knot_spec] << std::endl;
+    TAB(level + 1);
+    std::cout << "knot_spec:" << Knot_type_string[knot_spec] << std::endl;
 
-    TAB(level); std::cout << "Inherited Attributes:" << std::endl;
-    BSplineSurface::Print(level+1);
+    TAB(level);
+    std::cout << "Inherited Attributes:" << std::endl;
+    BSplineSurface::Print(level + 1);
 }
 
 STEPEntity *
-BSplineSurfaceWithKnots::GetInstance(STEPWrapper *sw, int id) {
+BSplineSurfaceWithKnots::GetInstance(STEPWrapper *sw, int id)
+{
     return new BSplineSurfaceWithKnots(sw, id);
 }
 
 STEPEntity *
-BSplineSurfaceWithKnots::Create(STEPWrapper *sw,SDAI_Application_instance *sse){
+BSplineSurfaceWithKnots::Create(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
     return STEPEntity::CreateEntity(sw, sse, GetInstance, CLASSNAME);
 }
 

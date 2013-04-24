@@ -31,7 +31,7 @@
 
 #define CLASSNAME "MeasureValue"
 #define ENTITYNAME "Measure_Value"
-string MeasureValue::entityname = Factory::RegisterClass(ENTITYNAME,(FactoryMethod)MeasureValue::Create);
+string MeasureValue::entityname = Factory::RegisterClass(ENTITYNAME, (FactoryMethod)MeasureValue::Create);
 
 const char *measure_type_names[] = {
     "AMOUNT_OF_SUBSTANCE_MEASURE",
@@ -59,7 +59,8 @@ const char *measure_type_names[] = {
     NULL
 };
 
-MeasureValue::MeasureValue() {
+MeasureValue::MeasureValue()
+{
     step = NULL;
     id = 0;
     type = MeasureValue::UNKNOWN;
@@ -67,7 +68,8 @@ MeasureValue::MeasureValue() {
     rvalue = 0.0;
 }
 
-MeasureValue::MeasureValue(STEPWrapper *sw,int step_id) {
+MeasureValue::MeasureValue(STEPWrapper *sw, int step_id)
+{
     step = sw;
     id = step_id;
     type = MeasureValue::UNKNOWN;
@@ -75,11 +77,13 @@ MeasureValue::MeasureValue(STEPWrapper *sw,int step_id) {
     rvalue = 0.0;
 }
 
-MeasureValue::~MeasureValue() {
+MeasureValue::~MeasureValue()
+{
 }
 
 double
-MeasureValue::GetLengthMeasure() {
+MeasureValue::GetLengthMeasure()
+{
     if (type != LENGTH_MEASURE) {
 	std::cerr << CLASSNAME << ":Error: Not a length measure." << std::endl;
 	return 1.0;
@@ -88,7 +92,8 @@ MeasureValue::GetLengthMeasure() {
 }
 
 double
-MeasureValue::GetPlaneAngleMeasure() {
+MeasureValue::GetPlaneAngleMeasure()
+{
     if (type != PLANE_ANGLE_MEASURE) {
 	std::cerr << CLASSNAME << ":Error: Not a plane angle measure." << std::endl;
 	return 1.0;
@@ -97,7 +102,8 @@ MeasureValue::GetPlaneAngleMeasure() {
 }
 
 double
-MeasureValue::GetSolidAngleMeasure() {
+MeasureValue::GetSolidAngleMeasure()
+{
     if (type != SOLID_ANGLE_MEASURE) {
 	std::cerr << CLASSNAME << ":Error: Not a solid angle measure." << std::endl;
 	return 1.0;
@@ -106,14 +112,15 @@ MeasureValue::GetSolidAngleMeasure() {
 }
 
 bool
-MeasureValue::Load(STEPWrapper *sw,SDAI_Select *sse) {
-    step=sw;
+MeasureValue::Load(STEPWrapper *sw, SDAI_Select *sse)
+{
+    step = sw;
 //	id = sse->STEPfile_id;
 
     //std::cout << sse->UnderlyingTypeName() << std::endl;
     SdaiMeasure_value *v = (SdaiMeasure_value *)sse;
 
-    if ( v->IsLength_measure()) {
+    if (v->IsLength_measure()) {
 	type = LENGTH_MEASURE;
 	rvalue = (double)*v;
     } else if (v->IsMass_measure()) {
@@ -185,27 +192,35 @@ MeasureValue::Load(STEPWrapper *sw,SDAI_Select *sse) {
 }
 
 void
-MeasureValue::Print(int level) {
-    TAB(level); std::cout << CLASSNAME << ":" << "(";
+MeasureValue::Print(int level)
+{
+    TAB(level);
+    std::cout << CLASSNAME << ":" << "(";
     std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-    TAB(level); std::cout << "Attributes:" << std::endl;
+    TAB(level);
+    std::cout << "Attributes:" << std::endl;
     if (type == DESCRIPTIVE_MEASURE) {
-	TAB(level+1); std::cout << "Type:" << measure_type_names[type] << " Value:" << svalue << std::endl;
+	TAB(level + 1);
+	std::cout << "Type:" << measure_type_names[type] << " Value:" << svalue << std::endl;
     } else if ((type == COUNT_MEASURE) || (type == NUMERIC_MEASURE)) {
-	TAB(level+1); std::cout << "Type:" << measure_type_names[type] << " Value:" << ivalue << std::endl;
+	TAB(level + 1);
+	std::cout << "Type:" << measure_type_names[type] << " Value:" << ivalue << std::endl;
     } else {
-	TAB(level+1); std::cout << "Type:" << measure_type_names[type] << " Value:" << rvalue << std::endl;
+	TAB(level + 1);
+	std::cout << "Type:" << measure_type_names[type] << " Value:" << rvalue << std::endl;
     }
 }
 
 STEPEntity *
-MeasureValue::GetInstance(STEPWrapper *sw, int id) {
+MeasureValue::GetInstance(STEPWrapper *sw, int id)
+{
     return new MeasureValue(sw, id);
 }
 
 STEPEntity *
-MeasureValue::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
+MeasureValue::Create(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
     return STEPEntity::CreateEntity(sw, sse, GetInstance, CLASSNAME);
 }
 

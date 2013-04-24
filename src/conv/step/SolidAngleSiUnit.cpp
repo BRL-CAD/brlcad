@@ -31,33 +31,37 @@
 
 #define CLASSNAME "SolidAngleSiUnit"
 #define ENTITYNAME "Solid_Angle_Si_Unit"
-string SolidAngleSiUnit::entityname = Factory::RegisterClass(ENTITYNAME,(FactoryMethod)SolidAngleSiUnit::Create);
+string SolidAngleSiUnit::entityname = Factory::RegisterClass(ENTITYNAME, (FactoryMethod)SolidAngleSiUnit::Create);
 
-SolidAngleSiUnit::SolidAngleSiUnit() {
+SolidAngleSiUnit::SolidAngleSiUnit()
+{
     step = NULL;
     id = 0;
 }
 
-SolidAngleSiUnit::SolidAngleSiUnit(STEPWrapper *sw,int step_id) {
+SolidAngleSiUnit::SolidAngleSiUnit(STEPWrapper *sw, int step_id)
+{
     step = sw;
     id = step_id;
 }
 
-SolidAngleSiUnit::~SolidAngleSiUnit() {
+SolidAngleSiUnit::~SolidAngleSiUnit()
+{
 }
 
 bool
-SolidAngleSiUnit::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
-    step=sw;
+SolidAngleSiUnit::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
+    step = sw;
     id = sse->STEPfile_id;
 
 
     // load base class attributes
-    if ( !SolidAngleUnit::Load(step,sse) ) {
+    if (!SolidAngleUnit::Load(step, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::Unit." << std::endl;
 	return false;
     }
-    if ( !SiUnit::Load(step,sse) ) {
+    if (!SiUnit::Load(step, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::Unit." << std::endl;
 	return false;
     }
@@ -66,23 +70,28 @@ SolidAngleSiUnit::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
 }
 
 void
-SolidAngleSiUnit::Print(int level) {
-    TAB(level); std::cout << CLASSNAME << ":" << "(";
+SolidAngleSiUnit::Print(int level)
+{
+    TAB(level);
+    std::cout << CLASSNAME << ":" << "(";
     std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-    TAB(level); std::cout << "Inherited Attributes:" << std::endl;
-    SolidAngleUnit::Print(level+1);
-    SiUnit::Print(level+1);
+    TAB(level);
+    std::cout << "Inherited Attributes:" << std::endl;
+    SolidAngleUnit::Print(level + 1);
+    SiUnit::Print(level + 1);
 
 }
 
 STEPEntity *
-SolidAngleSiUnit::GetInstance(STEPWrapper *sw, int id) {
+SolidAngleSiUnit::GetInstance(STEPWrapper *sw, int id)
+{
     return new SolidAngleSiUnit(sw, id);
 }
 
 STEPEntity *
-SolidAngleSiUnit::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
+SolidAngleSiUnit::Create(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
     return STEPEntity::CreateEntity(sw, sse, GetInstance, CLASSNAME);
 }
 

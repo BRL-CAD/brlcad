@@ -32,27 +32,31 @@
 
 #define CLASSNAME "Point"
 #define ENTITYNAME "Point"
-string Point::entityname = Factory::RegisterClass(ENTITYNAME,(FactoryMethod)Point::Create);
+string Point::entityname = Factory::RegisterClass(ENTITYNAME, (FactoryMethod)Point::Create);
 
-Point::Point() {
+Point::Point()
+{
     step = NULL;
     id = 0;
 }
 
-Point::Point(STEPWrapper *sw,int step_id) {
+Point::Point(STEPWrapper *sw, int step_id)
+{
     step = sw;
     id = step_id;
 }
 
-Point::~Point() {
+Point::~Point()
+{
 }
 
 bool
-Point::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
-    step=sw;
+Point::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
+    step = sw;
     id = sse->STEPfile_id;
 
-    if ( !GeometricRepresentationItem::Load(step,sse) ) {
+    if (!GeometricRepresentationItem::Load(step, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::GeometricRepresentationItem." << std::endl;
 	return false;
     }
@@ -60,21 +64,26 @@ Point::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
 }
 
 void
-Point::Print(int level) {
-    TAB(level); std::cout << CLASSNAME << ":" << name << "(";
+Point::Print(int level)
+{
+    TAB(level);
+    std::cout << CLASSNAME << ":" << name << "(";
     std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-    TAB(level); std::cout << "Inherited Attributes:" << std::endl;
-    GeometricRepresentationItem::Print(level+1);
+    TAB(level);
+    std::cout << "Inherited Attributes:" << std::endl;
+    GeometricRepresentationItem::Print(level + 1);
 }
 
 STEPEntity *
-Point::GetInstance(STEPWrapper *sw, int id) {
+Point::GetInstance(STEPWrapper *sw, int id)
+{
     return new Point(sw, id);
 }
 
 STEPEntity *
-Point::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
+Point::Create(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
     return STEPEntity::CreateEntity(sw, sse, GetInstance, CLASSNAME);
 }
 

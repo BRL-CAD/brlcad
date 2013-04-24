@@ -35,7 +35,8 @@
 class ON_Brep;
 //class CharacterizedDefinition;
 
-class PropertyDefinition: virtual public STEPEntity {
+class PropertyDefinition: virtual public STEPEntity
+{
 private:
     static string entityname;
     static EntityInstanceFunc GetInstance;

@@ -31,33 +31,37 @@
 
 #define CLASSNAME "RatioSiUnit"
 #define ENTITYNAME "Ratio_Si_Unit"
-string RatioSiUnit::entityname = Factory::RegisterClass(ENTITYNAME,(FactoryMethod)RatioSiUnit::Create);
+string RatioSiUnit::entityname = Factory::RegisterClass(ENTITYNAME, (FactoryMethod)RatioSiUnit::Create);
 
-RatioSiUnit::RatioSiUnit() {
+RatioSiUnit::RatioSiUnit()
+{
     step = NULL;
     id = 0;
 }
 
-RatioSiUnit::RatioSiUnit(STEPWrapper *sw,int step_id) {
+RatioSiUnit::RatioSiUnit(STEPWrapper *sw, int step_id)
+{
     step = sw;
     id = step_id;
 }
 
-RatioSiUnit::~RatioSiUnit() {
+RatioSiUnit::~RatioSiUnit()
+{
 }
 
 bool
-RatioSiUnit::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
-    step=sw;
+RatioSiUnit::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
+    step = sw;
     id = sse->STEPfile_id;
 
 
     // load base class attributes
-    if ( !RatioUnit::Load(step,sse) ) {
+    if (!RatioUnit::Load(step, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::Unit." << std::endl;
 	return false;
     }
-    if ( !SiUnit::Load(step,sse) ) {
+    if (!SiUnit::Load(step, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::Unit." << std::endl;
 	return false;
     }
@@ -66,23 +70,28 @@ RatioSiUnit::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
 }
 
 void
-RatioSiUnit::Print(int level) {
-    TAB(level); std::cout << CLASSNAME << ":" << "(";
+RatioSiUnit::Print(int level)
+{
+    TAB(level);
+    std::cout << CLASSNAME << ":" << "(";
     std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-    TAB(level); std::cout << "Inherited Attributes:" << std::endl;
-    RatioUnit::Print(level+1);
-    SiUnit::Print(level+1);
+    TAB(level);
+    std::cout << "Inherited Attributes:" << std::endl;
+    RatioUnit::Print(level + 1);
+    SiUnit::Print(level + 1);
 
 }
 
 STEPEntity *
-RatioSiUnit::GetInstance(STEPWrapper *sw, int id) {
+RatioSiUnit::GetInstance(STEPWrapper *sw, int id)
+{
     return new RatioSiUnit(sw, id);
 }
 
 STEPEntity *
-RatioSiUnit::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
+RatioSiUnit::Create(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
     return STEPEntity::CreateEntity(sw, sse, GetInstance, CLASSNAME);
 }
 

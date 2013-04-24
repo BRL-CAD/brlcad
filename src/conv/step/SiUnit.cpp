@@ -32,7 +32,7 @@
 
 #define CLASSNAME "SiUnit"
 #define ENTITYNAME "Si_Unit"
-string SiUnit::entityname = Factory::RegisterClass(ENTITYNAME,(FactoryMethod)SiUnit::Create);
+string SiUnit::entityname = Factory::RegisterClass(ENTITYNAME, (FactoryMethod)SiUnit::Create);
 
 
 static const char *Si_prefix_string[] = {
@@ -87,34 +87,39 @@ static const char *Si_unit_name_string[] = {
     "unset"
 };
 
-SiUnit::SiUnit() {
+SiUnit::SiUnit()
+{
     step = NULL;
     id = 0;
     prefix = Si_prefix_unset;
     name = Si_unit_name_unset;
 }
 
-SiUnit::SiUnit(STEPWrapper *sw,int step_id) {
+SiUnit::SiUnit(STEPWrapper *sw, int step_id)
+{
     step = sw;
     id = step_id;
     prefix = Si_prefix_unset;
     name = Si_unit_name_unset;
 }
 
-SiUnit::~SiUnit() {
+SiUnit::~SiUnit()
+{
 }
 
 double
-SiUnit::GetLengthConversionFactor() {
+SiUnit::GetLengthConversionFactor()
+{
     if (name == Si_unit_name__metre) {
 	double pf = GetPrefixFactor();
-	return 1000.0*pf; // local units millimeters
+	return 1000.0 * pf; // local units millimeters
     }
     return 1.e3; //SiUnit for length better be Si_unit_name__metre
 }
 
 double
-SiUnit::GetPlaneAngleConversionFactor() {
+SiUnit::GetPlaneAngleConversionFactor()
+{
     if (name == Si_unit_name__radian) {
 	double pf = GetPrefixFactor();
 	return pf; // local units radians
@@ -123,7 +128,8 @@ SiUnit::GetPlaneAngleConversionFactor() {
 }
 
 double
-SiUnit::GetSolidAngleConversionFactor() {
+SiUnit::GetSolidAngleConversionFactor()
+{
     if (name == Si_unit_name__steradian) {
 	double pf = GetPrefixFactor();
 	return pf; // local units radians
@@ -132,7 +138,8 @@ SiUnit::GetSolidAngleConversionFactor() {
 }
 
 double
-SiUnit::GetPrefixFactor() {
+SiUnit::GetPrefixFactor()
+{
     switch (prefix) {
 	case Si_prefix__exa:
 	    return 1.e18;
@@ -172,53 +179,64 @@ SiUnit::GetPrefixFactor() {
 }
 
 bool
-SiUnit::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
-    step=sw;
+SiUnit::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
+    step = sw;
     id = sse->STEPfile_id;
 
 
     // load base class attributes
-    if ( !NamedUnit::Load(step,sse) ) {
+    if (!NamedUnit::Load(step, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::Unit." << std::endl;
 	return false;
     }
 
     // need to do this for local attributes to makes sure we have
     // the actual entity and not a complex/supertype parent
-    sse = step->getEntity(sse,ENTITYNAME);
+    sse = step->getEntity(sse, ENTITYNAME);
 
-    prefix = (Si_prefix)step->getEnumAttribute(sse,"prefix");
-    if (prefix > Si_prefix_unset)
+    prefix = (Si_prefix)step->getEnumAttribute(sse, "prefix");
+    if (prefix > Si_prefix_unset) {
 	prefix = Si_prefix_unset;
+    }
 
-    name = (Si_unit_name)step->getEnumAttribute(sse,"name");
-    if (name > Si_unit_name_unset)
+    name = (Si_unit_name)step->getEnumAttribute(sse, "name");
+    if (name > Si_unit_name_unset) {
 	name = Si_unit_name_unset;
+    }
 
     return true;
 }
 
 void
-SiUnit::Print(int level) {
-    TAB(level); std::cout << CLASSNAME << ":" << "(";
+SiUnit::Print(int level)
+{
+    TAB(level);
+    std::cout << CLASSNAME << ":" << "(";
     std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-    TAB(level); std::cout << "Local Attributes:" << std::endl;
-    TAB(level+1); std::cout << "prefix:" << Si_prefix_string[prefix]<< std::endl;
-    TAB(level+1); std::cout << "name:" << Si_unit_name_string[name] << std::endl;
+    TAB(level);
+    std::cout << "Local Attributes:" << std::endl;
+    TAB(level + 1);
+    std::cout << "prefix:" << Si_prefix_string[prefix] << std::endl;
+    TAB(level + 1);
+    std::cout << "name:" << Si_unit_name_string[name] << std::endl;
 
-    TAB(level); std::cout << "Inherited Attributes:" << std::endl;
-    NamedUnit::Print(level+1);
+    TAB(level);
+    std::cout << "Inherited Attributes:" << std::endl;
+    NamedUnit::Print(level + 1);
 
 }
 
 STEPEntity *
-SiUnit::GetInstance(STEPWrapper *sw, int id) {
+SiUnit::GetInstance(STEPWrapper *sw, int id)
+{
     return new SiUnit(sw, id);
 }
 
 STEPEntity *
-SiUnit::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
+SiUnit::Create(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
     return STEPEntity::CreateEntity(sw, sse, GetInstance, CLASSNAME);
 }
 

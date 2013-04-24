@@ -36,7 +36,8 @@
 // forward declaration of class
 class ON_Brep;
 
-class ProductDefinitionFormationWithSpecifiedSource: public ProductDefinitionFormation {
+class ProductDefinitionFormationWithSpecifiedSource: public ProductDefinitionFormation
+{
 private:
     static string entityname;
     static EntityInstanceFunc GetInstance;

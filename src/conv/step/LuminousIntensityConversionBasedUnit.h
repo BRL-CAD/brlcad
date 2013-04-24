@@ -30,22 +30,23 @@
 #include "LuminousIntensityUnit.h"
 #include "ConversionBasedUnit.h"
 
-class LuminousIntensityConversionBasedUnit : public LuminousIntensityUnit, public ConversionBasedUnit {
+class LuminousIntensityConversionBasedUnit : public LuminousIntensityUnit, public ConversionBasedUnit
+{
 private:
-	static string entityname;
-	static EntityInstanceFunc GetInstance;
+    static string entityname;
+    static EntityInstanceFunc GetInstance;
 
 protected:
 
 public:
-	LuminousIntensityConversionBasedUnit();
-	virtual ~LuminousIntensityConversionBasedUnit();
-	LuminousIntensityConversionBasedUnit(STEPWrapper *sw,int step_id);
-	bool Load(STEPWrapper *sw,SDAI_Application_instance *sse);
-	virtual void Print(int level);
+    LuminousIntensityConversionBasedUnit();
+    virtual ~LuminousIntensityConversionBasedUnit();
+    LuminousIntensityConversionBasedUnit(STEPWrapper *sw, int step_id);
+    bool Load(STEPWrapper *sw, SDAI_Application_instance *sse);
+    virtual void Print(int level);
 
-	//static methods
-	static STEPEntity *Create(STEPWrapper *sw,SDAI_Application_instance *sse);
+    //static methods
+    static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
 #endif /* LUMINOUSINTENSITYCONVERSIONBASEDUNIT_H_ */

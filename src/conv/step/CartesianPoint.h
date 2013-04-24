@@ -28,31 +28,42 @@
 
 #include <Point.h>
 
-class CartesianPoint: public Point {
+class CartesianPoint: public Point
+{
 private:
-	static string entityname;
-	static EntityInstanceFunc GetInstance;
-	int vertex_index;
+    static string entityname;
+    static EntityInstanceFunc GetInstance;
+    int vertex_index;
 
 protected:
-	double coordinates[3];
+    double coordinates[3];
 
 public:
-	CartesianPoint();
-	virtual ~CartesianPoint();
-	CartesianPoint(STEPWrapper *sw,int step_id);
-	bool Load(STEPWrapper *sw,SDAI_Application_instance *sse);
-	virtual bool LoadONBrep(ON_Brep *brep);
-	virtual void AddVertex(ON_Brep *brep);
-	virtual const double *Point3d() { return coordinates; };
-	virtual void Print(int level);
-	double X() { return coordinates[0]; };
-	double Y() { return coordinates[1]; };
-	double Z() { return coordinates[2]; };
-	const double *Coordinates() { return coordinates; };
+    CartesianPoint();
+    virtual ~CartesianPoint();
+    CartesianPoint(STEPWrapper *sw, int step_id);
+    bool Load(STEPWrapper *sw, SDAI_Application_instance *sse);
+    virtual bool LoadONBrep(ON_Brep *brep);
+    virtual void AddVertex(ON_Brep *brep);
+    virtual const double *Point3d() {
+	return coordinates;
+    };
+    virtual void Print(int level);
+    double X() {
+	return coordinates[0];
+    };
+    double Y() {
+	return coordinates[1];
+    };
+    double Z() {
+	return coordinates[2];
+    };
+    const double *Coordinates() {
+	return coordinates;
+    };
 
-	//static methods
-	static STEPEntity *Create(STEPWrapper *sw,SDAI_Application_instance *sse);
+    //static methods
+    static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
 #endif /* CARTESIANPOINT_H_ */

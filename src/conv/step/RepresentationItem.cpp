@@ -31,45 +31,51 @@
 
 #define CLASSNAME "RepresentationItem"
 #define ENTITYNAME "Representation_Item"
-string RepresentationItem::entityname = Factory::RegisterClass(ENTITYNAME,(FactoryMethod)RepresentationItem::Create);
+string RepresentationItem::entityname = Factory::RegisterClass(ENTITYNAME, (FactoryMethod)RepresentationItem::Create);
 
-RepresentationItem::RepresentationItem() {
+RepresentationItem::RepresentationItem()
+{
     step = NULL;
     id = 0;
-    name="";
+    name = "";
 }
 
-RepresentationItem::RepresentationItem(STEPWrapper *sw,int step_id) {
+RepresentationItem::RepresentationItem(STEPWrapper *sw, int step_id)
+{
     step = sw;
     id = step_id;
-    name="";
+    name = "";
 }
 
-RepresentationItem::~RepresentationItem() {
+RepresentationItem::~RepresentationItem()
+{
 }
 
 string
-RepresentationItem::ClassName() {
+RepresentationItem::ClassName()
+{
     return entityname;
 }
 
 string
-RepresentationItem::Name() {
+RepresentationItem::Name()
+{
     return name;
 }
 
 
 bool
-RepresentationItem::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
-    step=sw;
+RepresentationItem::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
+    step = sw;
     id = sse->STEPfile_id;
 
 
     // need to do this for local attributes to makes sure we have
     // the actual entity and not a complex/supertype parent
-    sse = step->getEntity(sse,ENTITYNAME);
+    sse = step->getEntity(sse, ENTITYNAME);
 
-    name = step->getStringAttribute(sse,"name");
+    name = step->getStringAttribute(sse, "name");
 
     //std::cout << "name:" << name << std::endl;
 
@@ -77,21 +83,28 @@ RepresentationItem::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
 }
 
 void
-RepresentationItem::Print(int level) {
-    TAB(level); std::cout << "RepresentationItem:" << name << std::endl;
-    TAB(level); std::cout << "ID:" << STEPid() << std::endl;
+RepresentationItem::Print(int level)
+{
+    TAB(level);
+    std::cout << "RepresentationItem:" << name << std::endl;
+    TAB(level);
+    std::cout << "ID:" << STEPid() << std::endl;
 
-    TAB(level); std::cout << "Attributes:" << std::endl;
-    TAB(level+1); std::cout << "name:" << name << std::endl;
+    TAB(level);
+    std::cout << "Attributes:" << std::endl;
+    TAB(level + 1);
+    std::cout << "name:" << name << std::endl;
 }
 
 STEPEntity *
-RepresentationItem::GetInstance(STEPWrapper *sw, int id) {
+RepresentationItem::GetInstance(STEPWrapper *sw, int id)
+{
     return new RepresentationItem(sw, id);
 }
 
 STEPEntity *
-RepresentationItem::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
+RepresentationItem::Create(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
     return STEPEntity::CreateEntity(sw, sse, GetInstance, CLASSNAME);
 }
 

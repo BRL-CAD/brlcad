@@ -29,7 +29,8 @@
 
 #include "ProductDefinitionContext.h"
 
-class DesignContext: public ProductDefinitionContext {
+class DesignContext: public ProductDefinitionContext
+{
 private:
     static string entityname;
     static EntityInstanceFunc GetInstance;

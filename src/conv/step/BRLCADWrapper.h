@@ -31,7 +31,7 @@
 #include <string>
 
 extern "C" {
-/* brlcad headers */
+    /* brlcad headers */
 #include <bu.h>
 #include <wdb.h>
 }
@@ -39,13 +39,14 @@ extern "C" {
 
 class ON_Brep;
 
-class BRLCADWrapper {
- private:
+class BRLCADWrapper
+{
+private:
     std::string filename;
     struct rt_wdb *outfp;
     static int sol_reg_cnt;
 
- public:
+public:
     BRLCADWrapper();
     virtual ~BRLCADWrapper();
     bool OpenFile(const char *filename);

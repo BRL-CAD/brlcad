@@ -34,80 +34,90 @@
 
 #define CLASSNAME "Axis1Placement"
 #define ENTITYNAME "Axis1_Placement"
-string Axis1Placement::entityname = Factory::RegisterClass(ENTITYNAME,(FactoryMethod)Axis1Placement::Create);
+string Axis1Placement::entityname = Factory::RegisterClass(ENTITYNAME, (FactoryMethod)Axis1Placement::Create);
 
-Axis1Placement::Axis1Placement() {
+Axis1Placement::Axis1Placement()
+{
     step = NULL;
     id = 0;
     axis = NULL;
-    VSET(z,0.0,0.0,0.0);
+    VSET(z, 0.0, 0.0, 0.0);
 }
 
-Axis1Placement::Axis1Placement(STEPWrapper *sw,int step_id) {
+Axis1Placement::Axis1Placement(STEPWrapper *sw, int step_id)
+{
     step = sw;
     id = step_id;
     axis = NULL;
-    VSET(z,0.0,0.0,0.0);
+    VSET(z, 0.0, 0.0, 0.0);
 }
 
-Axis1Placement::~Axis1Placement() {
+Axis1Placement::~Axis1Placement()
+{
 }
 
 void
-Axis1Placement::BuildAxis() {
+Axis1Placement::BuildAxis()
+{
 
     if (axis == NULL) {
-	VSET(z,1.0,0.0,0.0);
+	VSET(z, 1.0, 0.0, 0.0);
     } else {
-	VMOVE(z,axis->DirectionRatios());
+	VMOVE(z, axis->DirectionRatios());
 	VUNITIZE(z);
     }
     return;
 }
 
 const double *
-Axis1Placement::GetAxis() {
+Axis1Placement::GetAxis()
+{
     return z;
 }
 
 const double *
-Axis1Placement::GetOrigin() {
+Axis1Placement::GetOrigin()
+{
     return location->Coordinates();
 }
 
 const double *
-Axis1Placement::GetNormal() {
+Axis1Placement::GetNormal()
+{
     return z;
 }
 
 const double *
-Axis1Placement::GetXAxis() {
+Axis1Placement::GetXAxis()
+{
     return z;
 }
 
 const double *
-Axis1Placement::GetYAxis() {
+Axis1Placement::GetYAxis()
+{
     return z;
 }
 
 bool
-Axis1Placement::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
-    step=sw;
+Axis1Placement::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
+    step = sw;
     id = sse->STEPfile_id;
 
-    if ( !Placement::Load(step,sse) ) {
+    if (!Placement::Load(step, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::Placement." << std::endl;
 	return false;
     }
 
     // need to do this for local attributes to makes sure we have
     // the actual entity and not a complex/supertype parent
-    sse = step->getEntity(sse,ENTITYNAME);
+    sse = step->getEntity(sse, ENTITYNAME);
 
     if (axis == NULL) {
-	SDAI_Application_instance *entity = step->getEntityAttribute(sse,"axis");
+	SDAI_Application_instance *entity = step->getEntityAttribute(sse, "axis");
 	if (entity) {
-	    axis = dynamic_cast<Direction *>(Factory::CreateObject(sw,entity));
+	    axis = dynamic_cast<Direction *>(Factory::CreateObject(sw, entity));
 	} else { // optional so no problem if not here
 	    axis = NULL;
 	}
@@ -119,26 +129,34 @@ Axis1Placement::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
 }
 
 void
-Axis1Placement::Print(int level) {
-    TAB(level); std::cout << CLASSNAME << ":" << std::endl;
+Axis1Placement::Print(int level)
+{
+    TAB(level);
+    std::cout << CLASSNAME << ":" << std::endl;
 
-    TAB(level); std::cout << "Attributes:" << std::endl;
-    TAB(level+1); std::cout << "ref_direction:" << std::endl;
-    if (axis)
-	axis->Print(level+1);
+    TAB(level);
+    std::cout << "Attributes:" << std::endl;
+    TAB(level + 1);
+    std::cout << "ref_direction:" << std::endl;
+    if (axis) {
+	axis->Print(level + 1);
+    }
 
-    TAB(level); std::cout << "Inherited Attributes:" << std::endl;
-    Placement::Print(level+1);
+    TAB(level);
+    std::cout << "Inherited Attributes:" << std::endl;
+    Placement::Print(level + 1);
 
 }
 
 STEPEntity *
-Axis1Placement::GetInstance(STEPWrapper *sw, int id) {
+Axis1Placement::GetInstance(STEPWrapper *sw, int id)
+{
     return new Axis1Placement(sw, id);
 }
 
 STEPEntity *
-Axis1Placement::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
+Axis1Placement::Create(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
     return STEPEntity::CreateEntity(sw, sse, GetInstance, CLASSNAME);
 }
 

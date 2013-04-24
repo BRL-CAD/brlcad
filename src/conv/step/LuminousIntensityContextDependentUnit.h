@@ -30,22 +30,23 @@
 #include "LuminousIntensityUnit.h"
 #include "ContextDependentUnit.h"
 
-class LuminousIntensityContextDependentUnit : public LuminousIntensityUnit, public ContextDependentUnit {
+class LuminousIntensityContextDependentUnit : public LuminousIntensityUnit, public ContextDependentUnit
+{
 private:
-	static string entityname;
-	static EntityInstanceFunc GetInstance;
+    static string entityname;
+    static EntityInstanceFunc GetInstance;
 
 protected:
 
 public:
-	LuminousIntensityContextDependentUnit();
-	virtual ~LuminousIntensityContextDependentUnit();
-	LuminousIntensityContextDependentUnit(STEPWrapper *sw,int step_id);
-	bool Load(STEPWrapper *sw,SDAI_Application_instance *sse);
-	virtual void Print(int level);
+    LuminousIntensityContextDependentUnit();
+    virtual ~LuminousIntensityContextDependentUnit();
+    LuminousIntensityContextDependentUnit(STEPWrapper *sw, int step_id);
+    bool Load(STEPWrapper *sw, SDAI_Application_instance *sse);
+    virtual void Print(int level);
 
-	//static methods
-	static STEPEntity *Create(STEPWrapper *sw,SDAI_Application_instance *sse);
+    //static methods
+    static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
 #endif /* LUMINOUSINTENSITYCONTEXTDEPENDENTUNIT_H_ */

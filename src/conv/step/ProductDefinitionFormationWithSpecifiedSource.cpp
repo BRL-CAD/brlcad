@@ -61,18 +61,18 @@ string ProductDefinitionFormationWithSpecifiedSource::SourceString()
 {
     string sourcestring;
     switch (make_or_buy) {
-    case Source__made:
-	sourcestring = ".MADE.";
-	break;
-    case Source__bought:
-	sourcestring = ".BOUGHT.";
-	break;
-    case Source__not_known:
-	sourcestring = ".NOT_KNOWN.";
-	break;
-    case Source_unset:
-    default:
-	sourcestring = ".UNSET.";
+	case Source__made:
+	    sourcestring = ".MADE.";
+	    break;
+	case Source__bought:
+	    sourcestring = ".BOUGHT.";
+	    break;
+	case Source__not_known:
+	    sourcestring = ".NOT_KNOWN.";
+	    break;
+	case Source_unset:
+	default:
+	    sourcestring = ".UNSET.";
     }
     return sourcestring;
 }
@@ -92,8 +92,9 @@ bool ProductDefinitionFormationWithSpecifiedSource::Load(STEPWrapper *sw, SDAI_A
     sse = step->getEntity(sse, ENTITYNAME);
 
     make_or_buy = (Source) step->getEnumAttribute(sse, "make_or_buy");
-    if (make_or_buy > Source_unset)
+    if (make_or_buy > Source_unset) {
 	make_or_buy = Source_unset;
+    }
 
     return true;
 }
@@ -106,7 +107,7 @@ void ProductDefinitionFormationWithSpecifiedSource::Print(int level)
 
     TAB(level);
     std::cout << "Attributes:" << std::endl;
-    TAB(level+1);
+    TAB(level + 1);
     std::cout << "make_or_buy:" << SourceString() << std::endl;
 
     TAB(level);
@@ -115,7 +116,8 @@ void ProductDefinitionFormationWithSpecifiedSource::Print(int level)
 }
 
 STEPEntity *
-ProductDefinitionFormationWithSpecifiedSource::GetInstance(STEPWrapper *sw, int id) {
+ProductDefinitionFormationWithSpecifiedSource::GetInstance(STEPWrapper *sw, int id)
+{
     return new ProductDefinitionFormationWithSpecifiedSource(sw, id);
 }
 

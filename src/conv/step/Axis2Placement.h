@@ -31,35 +31,36 @@
 
 class Placement;
 
-class Axis2Placement : virtual public STEPEntity {
+class Axis2Placement : virtual public STEPEntity
+{
 private:
-	static string entityname;
-	static EntityInstanceFunc GetInstance;
+    static string entityname;
+    static EntityInstanceFunc GetInstance;
 
 public:
-	enum axis2_placement_type {
-		AXIS2_PLACEMENT_2D,
-		AXIS2_PLACEMENT_3D,
-		UNKNOWN
-	};
+    enum axis2_placement_type {
+	AXIS2_PLACEMENT_2D,
+	AXIS2_PLACEMENT_3D,
+	UNKNOWN
+    };
 
 protected:
-	Placement *value;
-	axis2_placement_type type;
+    Placement *value;
+    axis2_placement_type type;
 
 public:
-	Axis2Placement();
-	virtual ~Axis2Placement();
-	Axis2Placement(STEPWrapper *sw,int step_id);
-	const double *GetOrigin();
-	const double *GetNormal();
-	const double *GetXAxis();
-	const double *GetYAxis();
-	bool Load(STEPWrapper *sw,SDAI_Select *sse);
-	virtual void Print(int level);
+    Axis2Placement();
+    virtual ~Axis2Placement();
+    Axis2Placement(STEPWrapper *sw, int step_id);
+    const double *GetOrigin();
+    const double *GetNormal();
+    const double *GetXAxis();
+    const double *GetYAxis();
+    bool Load(STEPWrapper *sw, SDAI_Select *sse);
+    virtual void Print(int level);
 
-	//static methods
-	static STEPEntity *Create(STEPWrapper *sw,SDAI_Application_instance *sse);
+    //static methods
+    static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
 #endif /* AXIS2PLACEMENT_H_ */

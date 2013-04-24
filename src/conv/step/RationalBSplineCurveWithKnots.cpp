@@ -31,32 +31,36 @@
 
 #define CLASSNAME "RationalBSplineCurveWithKnots"
 #define ENTITYNAME "Rational_B_Spline_Curve_With_Knots"
-string RationalBSplineCurveWithKnots::entityname = Factory::RegisterClass(ENTITYNAME,(FactoryMethod)RationalBSplineCurveWithKnots::Create);
+string RationalBSplineCurveWithKnots::entityname = Factory::RegisterClass(ENTITYNAME, (FactoryMethod)RationalBSplineCurveWithKnots::Create);
 
-RationalBSplineCurveWithKnots::RationalBSplineCurveWithKnots() {
+RationalBSplineCurveWithKnots::RationalBSplineCurveWithKnots()
+{
     step = NULL;
     id = 0;
 }
 
-RationalBSplineCurveWithKnots::RationalBSplineCurveWithKnots(STEPWrapper *sw,int step_id) {
+RationalBSplineCurveWithKnots::RationalBSplineCurveWithKnots(STEPWrapper *sw, int step_id)
+{
     step = sw;
     id = step_id;
 }
 
-RationalBSplineCurveWithKnots::~RationalBSplineCurveWithKnots() {
+RationalBSplineCurveWithKnots::~RationalBSplineCurveWithKnots()
+{
 }
 
 bool
-RationalBSplineCurveWithKnots::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
-    step=sw;
+RationalBSplineCurveWithKnots::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
+    step = sw;
     id = sse->STEPfile_id;
 
     // load base class attributes
-    if ( !RationalBSplineCurve::Load(step,sse) ) {
+    if (!RationalBSplineCurve::Load(step, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::RationalBSplineCurve." << std::endl;
 	return false;
     }
-    if ( !BSplineCurveWithKnots::Load(step,sse) ) {
+    if (!BSplineCurveWithKnots::Load(step, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::BSplineCurveWithKnots." << std::endl;
 	return false;
     }
@@ -65,22 +69,26 @@ RationalBSplineCurveWithKnots::Load(STEPWrapper *sw,SDAI_Application_instance *s
 }
 
 void
-RationalBSplineCurveWithKnots::Print(int level) {
-    TAB(level); std::cout << CLASSNAME << ":" << name << "(";
+RationalBSplineCurveWithKnots::Print(int level)
+{
+    TAB(level);
+    std::cout << CLASSNAME << ":" << name << "(";
     std::cout << "ID:" << STEPid() << ")" << std::endl;
     std::cout << "ON_id:(" << ON_id << ")" << std::endl;
 
-    RationalBSplineCurve::Print(level+1);
-    BSplineCurveWithKnots::Print(level+1);
+    RationalBSplineCurve::Print(level + 1);
+    BSplineCurveWithKnots::Print(level + 1);
 }
 
 STEPEntity *
-RationalBSplineCurveWithKnots::GetInstance(STEPWrapper *sw, int id) {
+RationalBSplineCurveWithKnots::GetInstance(STEPWrapper *sw, int id)
+{
     return new RationalBSplineCurveWithKnots(sw, id);
 }
 
 STEPEntity *
-RationalBSplineCurveWithKnots::Create(STEPWrapper *sw,SDAI_Application_instance *sse){
+RationalBSplineCurveWithKnots::Create(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
     return STEPEntity::CreateEntity(sw, sse, GetInstance, CLASSNAME);
 }
 

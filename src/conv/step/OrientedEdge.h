@@ -29,26 +29,27 @@
 
 #include "Edge.h"
 
-class OrientedEdge : public Edge {
+class OrientedEdge : public Edge
+{
 private:
-	static string entityname;
-	static EntityInstanceFunc GetInstance;
+    static string entityname;
+    static EntityInstanceFunc GetInstance;
 
 protected:
-	Boolean orientation;
-	Edge *edge_element;
+    Boolean orientation;
+    Edge *edge_element;
 
 public:
-	OrientedEdge();
-	virtual ~OrientedEdge();
-	OrientedEdge(STEPWrapper *sw,int step_id);
-	bool Load(STEPWrapper *sw,SDAI_Application_instance *sse);
-	virtual bool LoadONBrep(ON_Brep *brep);
-	bool OrientWithEdge();
-	virtual void Print(int level);
+    OrientedEdge();
+    virtual ~OrientedEdge();
+    OrientedEdge(STEPWrapper *sw, int step_id);
+    bool Load(STEPWrapper *sw, SDAI_Application_instance *sse);
+    virtual bool LoadONBrep(ON_Brep *brep);
+    bool OrientWithEdge();
+    virtual void Print(int level);
 
-	//static methods
-	static STEPEntity *Create(STEPWrapper *sw,SDAI_Application_instance *sse);
+    //static methods
+    static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
 #endif /* ORIENTEDEDGE_H_ */

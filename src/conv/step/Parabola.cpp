@@ -31,61 +31,72 @@
 
 #define CLASSNAME "Parabola"
 #define ENTITYNAME "Parabola"
-string Parabola::entityname = Factory::RegisterClass(ENTITYNAME,(FactoryMethod)Parabola::Create);
+string Parabola::entityname = Factory::RegisterClass(ENTITYNAME, (FactoryMethod)Parabola::Create);
 
-Parabola::Parabola() {
+Parabola::Parabola()
+{
     step = NULL;
     id = 0;
     focal_dist = 0.0;
 }
 
-Parabola::Parabola(STEPWrapper *sw,int step_id) {
+Parabola::Parabola(STEPWrapper *sw, int step_id)
+{
     step = sw;
     id = step_id;
     focal_dist = 0.0;
 }
 
-Parabola::~Parabola() {
+Parabola::~Parabola()
+{
 }
 
 bool
-Parabola::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
-    step=sw;
+Parabola::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
+    step = sw;
     id = sse->STEPfile_id;
 
-    if ( !Conic::Load(step,sse) ) {
+    if (!Conic::Load(step, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::Conic." << std::endl;
 	return false;
     }
 
     // need to do this for local attributes to makes sure we have
     // the actual entity and not a complex/supertype parent
-    sse = step->getEntity(sse,ENTITYNAME);
+    sse = step->getEntity(sse, ENTITYNAME);
 
-    focal_dist = step->getRealAttribute(sse,"focal_dist");
+    focal_dist = step->getRealAttribute(sse, "focal_dist");
 
     return true;
 }
 
 void
-Parabola::Print(int level) {
-    TAB(level); std::cout << CLASSNAME << ":" << name << "(";
+Parabola::Print(int level)
+{
+    TAB(level);
+    std::cout << CLASSNAME << ":" << name << "(";
     std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-    TAB(level); std::cout << "Attributes:" << std::endl;
-    TAB(level+1); std::cout << "focal_dist:" << focal_dist << std::endl;
+    TAB(level);
+    std::cout << "Attributes:" << std::endl;
+    TAB(level + 1);
+    std::cout << "focal_dist:" << focal_dist << std::endl;
 
-    TAB(level); std::cout << "Inherited Attributes:" << std::endl;
-    Conic::Print(level+1);
+    TAB(level);
+    std::cout << "Inherited Attributes:" << std::endl;
+    Conic::Print(level + 1);
 }
 
 STEPEntity *
-Parabola::GetInstance(STEPWrapper *sw, int id) {
+Parabola::GetInstance(STEPWrapper *sw, int id)
+{
     return new Parabola(sw, id);
 }
 
 STEPEntity *
-Parabola::Create(STEPWrapper *sw,SDAI_Application_instance *sse){
+Parabola::Create(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
     return STEPEntity::CreateEntity(sw, sse, GetInstance, CLASSNAME);
 }
 

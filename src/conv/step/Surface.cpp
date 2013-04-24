@@ -29,27 +29,31 @@
 
 #define CLASSNAME "Surface"
 #define ENTITYNAME "Surface"
-string Surface::entityname = Factory::RegisterClass(ENTITYNAME,(FactoryMethod)Surface::Create);
+string Surface::entityname = Factory::RegisterClass(ENTITYNAME, (FactoryMethod)Surface::Create);
 
-Surface::Surface() {
+Surface::Surface()
+{
     step = NULL;
     id = 0;
 }
 
-Surface::Surface(STEPWrapper *sw,int step_id) {
-    step=sw;
+Surface::Surface(STEPWrapper *sw, int step_id)
+{
+    step = sw;
     id = step_id;
 }
 
-Surface::~Surface() {
+Surface::~Surface()
+{
 }
 
 bool
-Surface::Load(STEPWrapper *sw, SDAI_Application_instance *sse) {
-    step=sw;
+Surface::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
+    step = sw;
     id = sse->STEPfile_id;
 
-    if ( !GeometricRepresentationItem::Load(step,sse) ) {
+    if (!GeometricRepresentationItem::Load(step, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::GeometricRepresentationItem." << std::endl;
 	return false;
     }
@@ -57,18 +61,22 @@ Surface::Load(STEPWrapper *sw, SDAI_Application_instance *sse) {
 }
 
 void
-Surface::Print(int level) {
-    TAB(level); std::cout << CLASSNAME << ":" << name << "(";
+Surface::Print(int level)
+{
+    TAB(level);
+    std::cout << CLASSNAME << ":" << name << "(";
     std::cout << "ID:" << STEPid() << ")" << std::endl;
 }
 
 STEPEntity *
-Surface::GetInstance(STEPWrapper *sw, int id) {
+Surface::GetInstance(STEPWrapper *sw, int id)
+{
     return new Surface(sw, id);
 }
 
 STEPEntity *
-Surface::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
+Surface::Create(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
     return STEPEntity::CreateEntity(sw, sse, GetInstance, CLASSNAME);
 }
 

@@ -51,26 +51,36 @@ typedef STEPEntity *(EntityInstanceFunc)(STEPWrapper *sw, int id);
 class STEPEntity
 {
 protected:
-	int id;
-	int ON_id;
-	STEPWrapper *step;
-	static STEPEntity * CreateEntity(
-		STEPWrapper *sw,
-		SDAI_Application_instance *sse,
-		EntityInstanceFunc Instance,
-		const char *classname);
+    int id;
+    int ON_id;
+    STEPWrapper *step;
+    static STEPEntity *CreateEntity(
+	STEPWrapper *sw,
+	SDAI_Application_instance *sse,
+	EntityInstanceFunc Instance,
+	const char *classname);
 
 public:
-	STEPEntity();
-	virtual ~STEPEntity();
+    STEPEntity();
+    virtual ~STEPEntity();
 
-	int GetId() {return id;}
-	void SetId(int nid) {id = nid;}
-	int GetONId() {return ON_id;}
-	void SetONId(int on_id) {ON_id = on_id;}
-	int STEPid();
-	STEPWrapper *Step();
-	virtual bool Load(STEPWrapper *UNUSED(sw), SDAI_Application_instance *UNUSED(sse)) {return false;};
+    int GetId() {
+	return id;
+    }
+    void SetId(int nid) {
+	id = nid;
+    }
+    int GetONId() {
+	return ON_id;
+    }
+    void SetONId(int on_id) {
+	ON_id = on_id;
+    }
+    int STEPid();
+    STEPWrapper *Step();
+    virtual bool Load(STEPWrapper *UNUSED(sw), SDAI_Application_instance *UNUSED(sse)) {
+	return false;
+    };
 };
 
 

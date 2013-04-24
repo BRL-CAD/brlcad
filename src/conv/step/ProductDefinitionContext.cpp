@@ -77,7 +77,7 @@ void ProductDefinitionContext::Print(int level)
 
     TAB(level);
     std::cout << "Attributes:" << std::endl;
-    TAB(level+1);
+    TAB(level + 1);
     std::cout << "life_cycle_stage:" << life_cycle_stage << std::endl;
 
     TAB(level);
@@ -86,7 +86,8 @@ void ProductDefinitionContext::Print(int level)
 }
 
 STEPEntity *
-ProductDefinitionContext::GetInstance(STEPWrapper *sw, int id) {
+ProductDefinitionContext::GetInstance(STEPWrapper *sw, int id)
+{
     return new ProductDefinitionContext(sw, id);
 }
 

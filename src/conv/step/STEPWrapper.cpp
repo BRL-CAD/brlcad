@@ -60,16 +60,18 @@ STEPWrapper::~STEPWrapper()
 
 bool STEPWrapper::convert(BRLCADWrapper *dot_g)
 {
-    if (!dot_g)
+    if (!dot_g) {
 	return false;
+    }
 
     this->dotg = dot_g;
 
     int num_ents = instance_list->InstanceCount();
-    for (int i=0; i < num_ents; i++) {
+    for (int i = 0; i < num_ents; i++) {
 	SDAI_Application_instance *sse = instance_list->GetSTEPentity(i);
-	if (sse == NULL)
+	if (sse == NULL) {
 	    continue;
+	}
 	std::string name = sse->EntityName();
 	std::transform(name.begin(), name.end(), name.begin(), (int(*)(int))std::tolower);
 
@@ -98,8 +100,9 @@ bool STEPWrapper::convert(BRLCADWrapper *dot_g)
 		} else {
 		    ON_TextLog tl;
 
-		    if (!onBrep->IsValid(&tl))
+		    if (!onBrep->IsValid(&tl)) {
 			bu_log("WARNING: %s is not valid\n", name.c_str());
+		    }
 
 		    //onBrep->SpSplitClosedFaces();
 		    //ON_Brep *tbrep = TightenBrep(onBrep);
@@ -123,7 +126,7 @@ bool STEPWrapper::convert(BRLCADWrapper *dot_g)
 	    }
 
 	    std::cerr << std::endl;
-	    std::cerr << "ProductDefinitionFormation [" << sse->STEPfile_id << "]:" << std::endl<< std::endl;
+	    std::cerr << "ProductDefinitionFormation [" << sse->STEPfile_id << "]:" << std::endl << std::endl;
 	    if (pd->Load(this, sse)) {
 		pd->Print(0);
 		delete pd;
@@ -138,7 +141,7 @@ bool STEPWrapper::convert(BRLCADWrapper *dot_g)
 	    }
 
 	    std::cerr << std::endl;
-	    std::cerr << "ProductDefinitionContextAssociation [" << sse->STEPfile_id << "]:" << std::endl<< std::endl;
+	    std::cerr << "ProductDefinitionContextAssociation [" << sse->STEPfile_id << "]:" << std::endl << std::endl;
 	    if (pdca->Load(this, sse)) {
 		pdca->Print(0);
 		delete pdca;
@@ -163,8 +166,7 @@ bool STEPWrapper::convert(BRLCADWrapper *dot_g)
 		cdsr->Print(0);
 		delete cdsr;
 	    }
-	}
-	else if ((sse->STEPfile_id > 0) && (sse->IsA(config_control_design::e_product_related_product_category))) {
+	} else if ((sse->STEPfile_id > 0) && (sse->IsA(config_control_design::e_product_related_product_category))) {
 	    ProductRelatedProductCategory *prpc = new ProductRelatedProductCategory();
 
 	    if (!prpc) {
@@ -172,7 +174,7 @@ bool STEPWrapper::convert(BRLCADWrapper *dot_g)
 	    }
 
 	    std::cerr << std::endl;
-	    std::cerr << "ProductRelatedProductCategory [" << sse->STEPfile_id << "]:" << std::endl<< std::endl;
+	    std::cerr << "ProductRelatedProductCategory [" << sse->STEPfile_id << "]:" << std::endl << std::endl;
 	    if (prpc->Load(this, sse)) {
 		prpc->Print(0);
 		delete prpc;
@@ -268,8 +270,9 @@ STEPWrapper::getBooleanAttribute(int STEPid, const char *name)
 
 	if (attrname.compare(name) == 0) {
 	    retValue = (Boolean)(*attr->ptr.e).asInt();
-	    if (retValue > BUnset)
+	    if (retValue > BUnset) {
 		retValue = BUnset;
+	    }
 	    break;
 	}
     }
@@ -312,8 +315,9 @@ STEPWrapper::getLogicalAttribute(int STEPid, const char *name)
 
 	if (attrname.compare(name) == 0) {
 	    retValue = (Logical)(*attr->ptr.e).asInt();
-	    if (retValue > LUnknown)
+	    if (retValue > LUnknown) {
 		retValue = LUnknown;
+	    }
 	    break;
 	}
     }
@@ -427,7 +431,7 @@ STEPWrapper::getRealAttribute(int STEPid, const char *name)
 }
 
 
-LIST_OF_ENTITIES*
+LIST_OF_ENTITIES *
 STEPWrapper::getListOfEntities(int STEPid, const char *name)
 {
     LIST_OF_ENTITIES *l = new LIST_OF_ENTITIES;
@@ -459,7 +463,7 @@ STEPWrapper::getListOfEntities(int STEPid, const char *name)
 }
 
 
-LIST_OF_LIST_OF_POINTS*
+LIST_OF_LIST_OF_POINTS *
 STEPWrapper::getListOfListOfPoints(int STEPid, const char *attrName)
 {
     LIST_OF_LIST_OF_POINTS *l = new LIST_OF_LIST_OF_POINTS;
@@ -603,7 +607,8 @@ STEPWrapper::getAttribute(SDAI_Application_instance *sse, const char *name)
 
 
 LIST_OF_STRINGS *
-STEPWrapper::getAttributes(SDAI_Application_instance *sse) {
+STEPWrapper::getAttributes(SDAI_Application_instance *sse)
+{
     LIST_OF_STRINGS *l = new LIST_OF_STRINGS;
 
     sse->ResetAttributes();
@@ -632,8 +637,9 @@ STEPWrapper::getBooleanAttribute(SDAI_Application_instance *sse, const char *nam
 
 	if (attrname.compare(name) == 0) {
 	    retValue = (Boolean)(*attr->ptr.e).asInt();
-	    if (retValue > BUnset)
+	    if (retValue > BUnset) {
 		retValue = BUnset;
+	    }
 	    break;
 	}
     }
@@ -702,8 +708,9 @@ STEPWrapper::getLogicalAttribute(SDAI_Application_instance *sse, const char *nam
 
 	if (attrname.compare(name) == 0) {
 	    retValue = (Logical)(*attr->ptr.e).asInt();
-	    if (retValue > LUnknown)
+	    if (retValue > LUnknown) {
 		retValue = LUnknown;
+	    }
 	    break;
 	}
     }
@@ -771,7 +778,7 @@ STEPWrapper::getSelectAttribute(SDAI_Application_instance *sse, const char *name
 }
 
 
-LIST_OF_ENTITIES*
+LIST_OF_ENTITIES *
 STEPWrapper::getListOfEntities(SDAI_Application_instance *sse, const char *name)
 {
     LIST_OF_ENTITIES *l = new LIST_OF_ENTITIES;
@@ -802,7 +809,7 @@ STEPWrapper::getListOfEntities(SDAI_Application_instance *sse, const char *name)
 }
 
 
-LIST_OF_SELECTS*
+LIST_OF_SELECTS *
 STEPWrapper::getListOfSelects(SDAI_Application_instance *sse, const char *name)
 {
     LIST_OF_SELECTS *l = new LIST_OF_SELECTS;
@@ -817,10 +824,10 @@ STEPWrapper::getListOfSelects(SDAI_Application_instance *sse, const char *name)
 	if (attrname.compare(name) == 0) {
 
 	    SelectAggregate *sa = (SelectAggregate *)attr->ptr.a;
-	    SelectNode *sn = (SelectNode*)sa->GetHead();
+	    SelectNode *sn = (SelectNode *)sa->GetHead();
 	    while (sn) {
 		l->push_back(sn->node);
-		sn = (SelectNode*)sn->NextNode();
+		sn = (SelectNode *)sn->NextNode();
 	    }
 	    break;
 	}
@@ -830,7 +837,7 @@ STEPWrapper::getListOfSelects(SDAI_Application_instance *sse, const char *name)
 }
 
 
-LIST_OF_LIST_OF_PATCHES*
+LIST_OF_LIST_OF_PATCHES *
 STEPWrapper::getListOfListOfPatches(SDAI_Application_instance *sse, const char *attrName)
 {
     LIST_OF_LIST_OF_PATCHES *l = new LIST_OF_LIST_OF_PATCHES;
@@ -874,7 +881,7 @@ STEPWrapper::getListOfListOfPatches(SDAI_Application_instance *sse, const char *
 }
 
 
-LIST_OF_LIST_OF_POINTS*
+LIST_OF_LIST_OF_POINTS *
 STEPWrapper::getListOfListOfPoints(SDAI_Application_instance *sse, const char *attrName)
 {
     LIST_OF_LIST_OF_POINTS *l = new LIST_OF_LIST_OF_POINTS;
@@ -982,8 +989,9 @@ STEPWrapper::getStringAttribute(SDAI_Application_instance *sse, const char *name
 
 	if (attrname.compare(name) == 0) {
 	    const char *str = attr->asStr(attrval);
-	    if (str != NULL)
+	    if (str != NULL) {
 		retValue = str;
+	    }
 	    break;
 	}
     }
@@ -1002,7 +1010,7 @@ STEPWrapper::load(std::string &step_file)
 	/* load STEP file */
 	sfile->ReadExchangeFile(stepfile.c_str());
 
-    } catch (std::exception& e) {
+    } catch (std::exception &e) {
 	std::cerr << e.what() << std::endl;
 	return false;
     }
@@ -1011,7 +1019,7 @@ STEPWrapper::load(std::string &step_file)
 }
 
 
-LIST_OF_REALS*
+LIST_OF_REALS *
 STEPWrapper::parseListOfReals(const char *in)
 {
     LIST_OF_REALS *l = new LIST_OF_REALS;
@@ -1045,7 +1053,7 @@ STEPWrapper::parseListOfReals(const char *in)
 }
 
 
-LIST_OF_POINTS*
+LIST_OF_POINTS *
 STEPWrapper::parseListOfPointEntities(const char *in)
 {
     LIST_OF_POINTS *l = new LIST_OF_POINTS;
@@ -1072,7 +1080,7 @@ STEPWrapper::parseListOfPointEntities(const char *in)
 }
 
 
-LIST_OF_PATCHES*
+LIST_OF_PATCHES *
 STEPWrapper::parseListOfPatchEntities(const char *in)
 {
     LIST_OF_PATCHES *l = new LIST_OF_PATCHES;
@@ -1102,17 +1110,21 @@ STEPWrapper::parseListOfPatchEntities(const char *in)
 void
 STEPWrapper::printEntity(SDAI_Application_instance *se, int level)
 {
-    for (int i=0; i< level; i++)
+    for (int i = 0; i < level; i++) {
 	std::cout << "    ";
+    }
     std::cout << "Entity:" << se->EntityName() << "(" << se->STEPfile_id << ")" << std::endl;
-    for (int i=0; i< level; i++)
+    for (int i = 0; i < level; i++) {
 	std::cout << "    ";
+    }
     std::cout << "Description:" << se->eDesc->Description() << std::endl;
-    for (int i=0; i< level; i++)
+    for (int i = 0; i < level; i++) {
 	std::cout << "    ";
+    }
     std::cout << "Entity Type:" << se->eDesc->Type() << std::endl;
-    for (int i=0; i< level; i++)
+    for (int i = 0; i < level; i++) {
 	std::cout << "    ";
+    }
     std::cout << "Attributes:" << std::endl;
 
     STEPattribute *attr;
@@ -1120,24 +1132,26 @@ STEPWrapper::printEntity(SDAI_Application_instance *se, int level)
     while ((attr = se->NextAttribute()) != NULL) {
 	std::string attrval;
 
-	for (int i=0; i<= level; i++)
+	for (int i = 0; i <= level; i++) {
 	    std::cout << "    ";
+	}
 	std::cout << attr->Name() << ": " << attr->asStr(attrval) << " TypeName: " << attr->TypeName() << " Type: " << attr->Type() << std::endl;
 	if (attr->Type() == 256) {
 	    if (attr->IsDerived()) {
-		for (int i=0; i<= level; i++)
+		for (int i = 0; i <= level; i++) {
 		    std::cout << "    ";
+		}
 		std::cout << "        ********* DERIVED *********" << std::endl;
 	    } else {
-		printEntity(*(attr->ptr.c), level+2);
+		printEntity(*(attr->ptr.c), level + 2);
 	    }
-	} else if ((attr->Type() == SET_TYPE)||(attr->Type() == LIST_TYPE)) {
+	} else if ((attr->Type() == SET_TYPE) || (attr->Type() == LIST_TYPE)) {
 	    STEPaggregate *sa = (STEPaggregate *)(attr->ptr.a);
 
 	    // std::cout << "aggr:" << sa->asStr(attrval) << "  BaseType:" << attr->BaseType() << std::endl;
 
 	    if (attr->BaseType() == ENTITY_TYPE) {
-		printEntityAggregate(sa, level+2);
+		printEntityAggregate(sa, level + 2);
 	    }
 	}
 
@@ -1151,8 +1165,9 @@ STEPWrapper::printEntityAggregate(STEPaggregate *sa, int level)
 {
     std::string strVal;
 
-    for (int i=0; i< level; i++)
+    for (int i = 0; i < level; i++) {
 	std::cout << "    ";
+    }
     std::cout << "Aggregate:" << sa->asStr(strVal) << std::endl;
 
     EntityNode *sn = (EntityNode *)sa->GetHead();
@@ -1160,10 +1175,10 @@ STEPWrapper::printEntityAggregate(STEPaggregate *sa, int level)
     while (sn != NULL) {
 	sse = (SDAI_Application_instance *)sn->node;
 
-	if (((sse->eDesc->Type() == SET_TYPE)||(sse->eDesc->Type() == LIST_TYPE))&&(sse->eDesc->BaseType() == ENTITY_TYPE)) {
-	    printEntityAggregate((STEPaggregate *)sse, level+2);
+	if (((sse->eDesc->Type() == SET_TYPE) || (sse->eDesc->Type() == LIST_TYPE)) && (sse->eDesc->BaseType() == ENTITY_TYPE)) {
+	    printEntityAggregate((STEPaggregate *)sse, level + 2);
 	} else if (sse->eDesc->Type() == ENTITY_TYPE) {
-	    printEntity(sse, level+2);
+	    printEntity(sse, level + 2);
 	} else {
 	    std::cout << "Instance Type not handled:" << std::endl;
 	}
@@ -1202,8 +1217,8 @@ STEPWrapper::printLoadStatistics()
 	std::cout << "STEP file \"" << stepfile << "\"" << std::endl;
     }
 
-    int numEntitiesUsed=0;
-    for (int i=0; i < num_schma_ents; i++) {
+    int numEntitiesUsed = 0;
+    for (int i = 0; i < num_schma_ents; i++) {
 	ent = registry->NextEntity();
 
 	int entCount = instance_list->EntityKeywordCount(ent->Name());
@@ -1222,7 +1237,7 @@ STEPWrapper::getBaseType(int type)
 {
     const char *retValue = NULL;
 
-    switch(type) {
+    switch (type) {
 	case sdaiINSTANCE:
 	    retValue = "sdaiINSTANCE";
 	    break;

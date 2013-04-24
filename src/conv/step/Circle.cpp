@@ -31,61 +31,72 @@
 
 #define CLASSNAME "Circle"
 #define ENTITYNAME "Circle"
-string Circle::entityname = Factory::RegisterClass(ENTITYNAME,(FactoryMethod)Circle::Create);
+string Circle::entityname = Factory::RegisterClass(ENTITYNAME, (FactoryMethod)Circle::Create);
 
-Circle::Circle() {
+Circle::Circle()
+{
     step = NULL;
     id = 0;
     radius = 0.0;
 }
 
-Circle::Circle(STEPWrapper *sw,int step_id) {
+Circle::Circle(STEPWrapper *sw, int step_id)
+{
     step = sw;
     id = step_id;
     radius = 0.0;
 }
 
-Circle::~Circle() {
+Circle::~Circle()
+{
 }
 
 bool
-Circle::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
-    step=sw;
+Circle::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
+    step = sw;
     id = sse->STEPfile_id;
 
-    if ( !Conic::Load(step,sse) ) {
+    if (!Conic::Load(step, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::Conic." << std::endl;
 	return false;
     }
 
     // need to do this for local attributes to makes sure we have
     // the actual entity and not a complex/supertype parent
-    sse = step->getEntity(sse,ENTITYNAME);
+    sse = step->getEntity(sse, ENTITYNAME);
 
-    radius = step->getRealAttribute(sse,"radius");
+    radius = step->getRealAttribute(sse, "radius");
 
     return true;
 }
 
 void
-Circle::Print(int level) {
-    TAB(level); std::cout << CLASSNAME << ":" << name << "(";
+Circle::Print(int level)
+{
+    TAB(level);
+    std::cout << CLASSNAME << ":" << name << "(";
     std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-    TAB(level); std::cout << "Attributes:" << std::endl;
-    TAB(level+1); std::cout << "radius:" << radius << std::endl;
+    TAB(level);
+    std::cout << "Attributes:" << std::endl;
+    TAB(level + 1);
+    std::cout << "radius:" << radius << std::endl;
 
-    TAB(level); std::cout << "Inherited Attributes:" << std::endl;
-    Conic::Print(level+1);
+    TAB(level);
+    std::cout << "Inherited Attributes:" << std::endl;
+    Conic::Print(level + 1);
 }
 
 STEPEntity *
-Circle::GetInstance(STEPWrapper *sw, int id) {
+Circle::GetInstance(STEPWrapper *sw, int id)
+{
     return new Circle(sw, id);
 }
 
 STEPEntity *
-Circle::Create(STEPWrapper *sw,SDAI_Application_instance *sse){
+Circle::Create(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
     return STEPEntity::CreateEntity(sw, sse, GetInstance, CLASSNAME);
 }
 

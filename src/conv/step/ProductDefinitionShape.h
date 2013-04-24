@@ -36,7 +36,8 @@
 // forward declaration of class
 class ON_Brep;
 
-class ProductDefinitionShape: public PropertyDefinition {
+class ProductDefinitionShape: public PropertyDefinition
+{
 private:
     static string entityname;
     static EntityInstanceFunc GetInstance;

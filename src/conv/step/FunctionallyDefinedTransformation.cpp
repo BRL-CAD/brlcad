@@ -31,59 +31,70 @@
 
 #define CLASSNAME "FunctionallyDefinedTransformation"
 #define ENTITYNAME "Functionally_Defined_Transformation"
-string FunctionallyDefinedTransformation::entityname = Factory::RegisterClass(ENTITYNAME,(FactoryMethod)FunctionallyDefinedTransformation::Create);
+string FunctionallyDefinedTransformation::entityname = Factory::RegisterClass(ENTITYNAME, (FactoryMethod)FunctionallyDefinedTransformation::Create);
 
-FunctionallyDefinedTransformation::FunctionallyDefinedTransformation() {
+FunctionallyDefinedTransformation::FunctionallyDefinedTransformation()
+{
     step = NULL;
     id = 0;
 }
 
-FunctionallyDefinedTransformation::FunctionallyDefinedTransformation(STEPWrapper *sw,int step_id) {
+FunctionallyDefinedTransformation::FunctionallyDefinedTransformation(STEPWrapper *sw, int step_id)
+{
     step = sw;
     id = step_id;
 }
 
-FunctionallyDefinedTransformation::~FunctionallyDefinedTransformation() {
+FunctionallyDefinedTransformation::~FunctionallyDefinedTransformation()
+{
 }
 
 bool
-FunctionallyDefinedTransformation::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
+FunctionallyDefinedTransformation::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
 
-    step=sw;
+    step = sw;
     id = sse->STEPfile_id;
 
-	if ( !Transformation::Load(step,sse) ) {
-		std::cout << CLASSNAME << ":Error loading base class ::Transformation." << std::endl;
-		return false;
-	}
+    if (!Transformation::Load(step, sse)) {
+	std::cout << CLASSNAME << ":Error loading base class ::Transformation." << std::endl;
+	return false;
+    }
 
     // need to do this for local attributes to makes sure we have
     // the actual entity and not a complex/supertype parent
-    sse = step->getEntity(sse,ENTITYNAME);
+    sse = step->getEntity(sse, ENTITYNAME);
 
-    name = step->getStringAttribute(sse,"name");
-	description = step->getStringAttribute(sse,"description");
+    name = step->getStringAttribute(sse, "name");
+    description = step->getStringAttribute(sse, "description");
 
     return true;
 }
 
 void
-FunctionallyDefinedTransformation::Print(int level) {
-    TAB(level); std::cout << CLASSNAME << ":" << "(";
+FunctionallyDefinedTransformation::Print(int level)
+{
+    TAB(level);
+    std::cout << CLASSNAME << ":" << "(";
     std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-    TAB(level); std::cout << "Attributes:" << std::endl;
-    TAB(level+1); std::cout << "name:" << name << std::endl;
-	TAB(level+1); std::cout << "description:" << description << std::endl;
+    TAB(level);
+    std::cout << "Attributes:" << std::endl;
+    TAB(level + 1);
+    std::cout << "name:" << name << std::endl;
+    TAB(level + 1);
+    std::cout << "description:" << description << std::endl;
 }
 
 STEPEntity *
-FunctionallyDefinedTransformation::GetInstance(STEPWrapper *sw, int id) {
+FunctionallyDefinedTransformation::GetInstance(STEPWrapper *sw, int id)
+{
     return new FunctionallyDefinedTransformation(sw, id);
 }
 
 STEPEntity *
-FunctionallyDefinedTransformation::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
+FunctionallyDefinedTransformation::Create(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
     return STEPEntity::CreateEntity(sw, sse, GetInstance, CLASSNAME);
 }
 

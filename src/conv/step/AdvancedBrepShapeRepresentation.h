@@ -41,22 +41,24 @@
 
 class AdvancedBrepShapeRepresentation : public ShapeRepresentation
 {
- private:
+private:
     static std::string entityname;
     static EntityInstanceFunc GetInstance;
 
- protected:
+protected:
 
- public:
+public:
     AdvancedBrepShapeRepresentation();
-    AdvancedBrepShapeRepresentation(STEPWrapper *sw,int step_id);
+    AdvancedBrepShapeRepresentation(STEPWrapper *sw, int step_id);
     virtual ~AdvancedBrepShapeRepresentation();
 
     ON_Brep *GetONBrep();
     virtual bool LoadONBrep(ON_Brep *brep);
 
     bool Load(STEPWrapper *sw, SDAI_Application_instance *sse);
-    std::string Name() {return name;};
+    std::string Name() {
+	return name;
+    };
     virtual void Print(int level);
 
     //static methods

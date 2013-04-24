@@ -34,9 +34,10 @@
 
 #define CLASSNAME "OffsetCurve2D"
 #define ENTITYNAME "Offset_Curve_2d"
-string OffsetCurve2D::entityname = Factory::RegisterClass(ENTITYNAME,(FactoryMethod)OffsetCurve2D::Create);
+string OffsetCurve2D::entityname = Factory::RegisterClass(ENTITYNAME, (FactoryMethod)OffsetCurve2D::Create);
 
-OffsetCurve2D::OffsetCurve2D() {
+OffsetCurve2D::OffsetCurve2D()
+{
     step = NULL;
     id = 0;
     basis_curve = NULL;
@@ -44,7 +45,8 @@ OffsetCurve2D::OffsetCurve2D() {
     self_intersect = LUnset;
 }
 
-OffsetCurve2D::OffsetCurve2D(STEPWrapper *sw,int step_id) {
+OffsetCurve2D::OffsetCurve2D(STEPWrapper *sw, int step_id)
+{
     step = sw;
     id = step_id;
     basis_curve = NULL;
@@ -52,70 +54,81 @@ OffsetCurve2D::OffsetCurve2D(STEPWrapper *sw,int step_id) {
     self_intersect = LUnset;
 }
 
-OffsetCurve2D::~OffsetCurve2D() {
+OffsetCurve2D::~OffsetCurve2D()
+{
     basis_curve = NULL;
 }
 
 bool
-OffsetCurve2D::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
-    step=sw;
+OffsetCurve2D::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
+    step = sw;
     id = sse->STEPfile_id;
 
-    if ( !Curve::Load(sw,sse) ) {
+    if (!Curve::Load(sw, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::Curve." << std::endl;
 	return false;
     }
 
     // need to do this for local attributes to makes sure we have
     // the actual entity and not a complex/supertype parent
-    sse = step->getEntity(sse,ENTITYNAME);
+    sse = step->getEntity(sse, ENTITYNAME);
 
     if (basis_curve == NULL) {
-	SDAI_Application_instance *entity = step->getEntityAttribute(sse,"basis_curve");
+	SDAI_Application_instance *entity = step->getEntityAttribute(sse, "basis_curve");
 	if (entity) {
-	    basis_curve = dynamic_cast<Curve *>(Factory::CreateObject(sw,entity)); //CreateCurveObject(sw,entity));
+	    basis_curve = dynamic_cast<Curve *>(Factory::CreateObject(sw, entity)); //CreateCurveObject(sw,entity));
 	} else {
 	    std::cerr << CLASSNAME << ": Error loading entity attribute 'basis_curve'." << std::endl;
 	    return false;
 	}
     }
 
-    distance = step->getRealAttribute(sse,"distance");
-    self_intersect = step->getLogicalAttribute(sse,"self_intersect");
+    distance = step->getRealAttribute(sse, "distance");
+    self_intersect = step->getLogicalAttribute(sse, "self_intersect");
 
     return true;
 }
 
 const double *
-OffsetCurve2D::PointAtEnd() {
+OffsetCurve2D::PointAtEnd()
+{
     std::cerr << CLASSNAME << ": Error: virtual function PointAtEnd() not implemented for this type of curve.";
     return NULL;
 }
 
 const double *
-OffsetCurve2D::PointAtStart() {
+OffsetCurve2D::PointAtStart()
+{
     std::cerr << CLASSNAME << ": Error: virtual function PointAtStart() not implemented for this type of curve.";
     return NULL;
 }
 
 void
-OffsetCurve2D::Print(int level) {
-    TAB(level); std::cout << CLASSNAME << ":" << name << "(";
+OffsetCurve2D::Print(int level)
+{
+    TAB(level);
+    std::cout << CLASSNAME << ":" << name << "(";
     std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-    TAB(level); std::cout << "Attributes:" << std::endl;
-    basis_curve->Print(level+1);
-    TAB(level+1); std::cout << "distance:" << distance << std::endl;
-    TAB(level+1); std::cout << "self_intersect:" << step->getLogicalString(self_intersect) << std::endl;
+    TAB(level);
+    std::cout << "Attributes:" << std::endl;
+    basis_curve->Print(level + 1);
+    TAB(level + 1);
+    std::cout << "distance:" << distance << std::endl;
+    TAB(level + 1);
+    std::cout << "self_intersect:" << step->getLogicalString(self_intersect) << std::endl;
 }
 
 STEPEntity *
-OffsetCurve2D::GetInstance(STEPWrapper *sw, int id) {
+OffsetCurve2D::GetInstance(STEPWrapper *sw, int id)
+{
     return new OffsetCurve2D(sw, id);
 }
 
 STEPEntity *
-OffsetCurve2D::Create(STEPWrapper *sw,SDAI_Application_instance *sse){
+OffsetCurve2D::Create(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
     return STEPEntity::CreateEntity(sw, sse, GetInstance, CLASSNAME);
 }
 

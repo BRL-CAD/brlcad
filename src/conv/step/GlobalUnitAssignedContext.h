@@ -32,26 +32,27 @@
 class Unit;
 typedef list<Unit *> LIST_OF_UNITS;
 
-class GlobalUnitAssignedContext : public RepresentationContext {
+class GlobalUnitAssignedContext : public RepresentationContext
+{
 private:
-	static string entityname;
-	static EntityInstanceFunc GetInstance;
+    static string entityname;
+    static EntityInstanceFunc GetInstance;
 
 protected:
-	LIST_OF_UNITS units;
+    LIST_OF_UNITS units;
 
 public:
-	GlobalUnitAssignedContext();
-	virtual ~GlobalUnitAssignedContext();
-	GlobalUnitAssignedContext(STEPWrapper *sw,int step_id);
-	double GetLengthConversionFactor();
-	double GetPlaneAngleConversionFactor();
-	double GetSolidAngleConversionFactor();
-	bool Load(STEPWrapper *sw,SDAI_Application_instance *sse);
-	virtual void Print(int level);
+    GlobalUnitAssignedContext();
+    virtual ~GlobalUnitAssignedContext();
+    GlobalUnitAssignedContext(STEPWrapper *sw, int step_id);
+    double GetLengthConversionFactor();
+    double GetPlaneAngleConversionFactor();
+    double GetSolidAngleConversionFactor();
+    bool Load(STEPWrapper *sw, SDAI_Application_instance *sse);
+    virtual void Print(int level);
 
-	//static methods
-	static STEPEntity *Create(STEPWrapper *sw,SDAI_Application_instance *sse);
+    //static methods
+    static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
 #endif /* GLOBALUNITASSIGNEDCONTEXT_H_ */

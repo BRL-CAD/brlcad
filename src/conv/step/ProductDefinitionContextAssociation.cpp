@@ -114,19 +114,20 @@ void ProductDefinitionContextAssociation::Print(int level)
     TAB(level);
     std::cout << "Attributes:" << std::endl;
 
-    TAB(level+1);
+    TAB(level + 1);
     std::cout << "definition:" << std::endl;
     definition->Print(level + 2);
-    TAB(level+1);
+    TAB(level + 1);
     std::cout << "frame_of_reference:" << std::endl;
     frame_of_reference->Print(level + 2);
-    TAB(level+1);
+    TAB(level + 1);
     std::cout << "role:" << std::endl;
     role->Print(level + 2);
 }
 
 STEPEntity *
-ProductDefinitionContextAssociation::GetInstance(STEPWrapper *sw, int id) {
+ProductDefinitionContextAssociation::GetInstance(STEPWrapper *sw, int id)
+{
     return new ProductDefinitionContextAssociation(sw, id);
 }
 

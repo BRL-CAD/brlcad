@@ -28,22 +28,23 @@
 
 #include "Representation.h"
 
-class DefinitionalRepresentation : public Representation {
+class DefinitionalRepresentation : public Representation
+{
 private:
-	static string entityname;
-	static EntityInstanceFunc GetInstance;
+    static string entityname;
+    static EntityInstanceFunc GetInstance;
 
 protected:
 
 public:
-	DefinitionalRepresentation();
-	DefinitionalRepresentation(STEPWrapper *sw,int step_id);
-	virtual ~DefinitionalRepresentation();
-	bool Load(STEPWrapper *sw, SDAI_Application_instance *sse);
-	virtual void Print(int level);
+    DefinitionalRepresentation();
+    DefinitionalRepresentation(STEPWrapper *sw, int step_id);
+    virtual ~DefinitionalRepresentation();
+    bool Load(STEPWrapper *sw, SDAI_Application_instance *sse);
+    virtual void Print(int level);
 
-	//static methods
-	static STEPEntity *Create(STEPWrapper *sw,SDAI_Application_instance *sse);
+    //static methods
+    static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
 #endif /* DEFINITIONALREPRESENTATION_H_ */

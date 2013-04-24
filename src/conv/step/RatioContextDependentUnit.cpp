@@ -31,33 +31,37 @@
 
 #define CLASSNAME "RatioContextDependentUnit"
 #define ENTITYNAME "Ratio_Context_Dependent_Unit"
-string RatioContextDependentUnit::entityname = Factory::RegisterClass(ENTITYNAME,(FactoryMethod)RatioContextDependentUnit::Create);
+string RatioContextDependentUnit::entityname = Factory::RegisterClass(ENTITYNAME, (FactoryMethod)RatioContextDependentUnit::Create);
 
-RatioContextDependentUnit::RatioContextDependentUnit() {
+RatioContextDependentUnit::RatioContextDependentUnit()
+{
     step = NULL;
     id = 0;
 }
 
-RatioContextDependentUnit::RatioContextDependentUnit(STEPWrapper *sw,int step_id) {
+RatioContextDependentUnit::RatioContextDependentUnit(STEPWrapper *sw, int step_id)
+{
     step = sw;
     id = step_id;
 }
 
-RatioContextDependentUnit::~RatioContextDependentUnit() {
+RatioContextDependentUnit::~RatioContextDependentUnit()
+{
 }
 
 bool
-RatioContextDependentUnit::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
-    step=sw;
+RatioContextDependentUnit::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
+    step = sw;
     id = sse->STEPfile_id;
 
 
     // load base class attributes
-    if ( !RatioUnit::Load(step,sse) ) {
+    if (!RatioUnit::Load(step, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::Unit." << std::endl;
 	return false;
     }
-    if ( !ContextDependentUnit::Load(step,sse) ) {
+    if (!ContextDependentUnit::Load(step, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::Unit." << std::endl;
 	return false;
     }
@@ -66,23 +70,28 @@ RatioContextDependentUnit::Load(STEPWrapper *sw,SDAI_Application_instance *sse) 
 }
 
 void
-RatioContextDependentUnit::Print(int level) {
-    TAB(level); std::cout << CLASSNAME << ":" << "(";
+RatioContextDependentUnit::Print(int level)
+{
+    TAB(level);
+    std::cout << CLASSNAME << ":" << "(";
     std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-    TAB(level); std::cout << "Inherited Attributes:" << std::endl;
-    RatioUnit::Print(level+1);
-    ContextDependentUnit::Print(level+1);
+    TAB(level);
+    std::cout << "Inherited Attributes:" << std::endl;
+    RatioUnit::Print(level + 1);
+    ContextDependentUnit::Print(level + 1);
 
 }
 
 STEPEntity *
-RatioContextDependentUnit::GetInstance(STEPWrapper *sw, int id) {
+RatioContextDependentUnit::GetInstance(STEPWrapper *sw, int id)
+{
     return new RatioContextDependentUnit(sw, id);
 }
 
 STEPEntity *
-RatioContextDependentUnit::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
+RatioContextDependentUnit::Create(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
     return STEPEntity::CreateEntity(sw, sse, GetInstance, CLASSNAME);
 }
 

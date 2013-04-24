@@ -77,7 +77,7 @@ void ProductContext::Print(int level)
 
     TAB(level);
     std::cout << "Attributes:" << std::endl;
-    TAB(level+1);
+    TAB(level + 1);
     std::cout << "discipline_type:" << discipline_type << std::endl;
 
     TAB(level);
@@ -86,7 +86,8 @@ void ProductContext::Print(int level)
 }
 
 STEPEntity *
-ProductContext::GetInstance(STEPWrapper *sw, int id) {
+ProductContext::GetInstance(STEPWrapper *sw, int id)
+{
     return new ProductContext(sw, id);
 }
 

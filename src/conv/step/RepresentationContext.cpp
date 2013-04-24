@@ -31,50 +31,61 @@
 
 #define CLASSNAME "RepresentationContext"
 #define ENTITYNAME "Representation_Context"
-string RepresentationContext::entityname = Factory::RegisterClass(ENTITYNAME,(FactoryMethod)RepresentationContext::Create);
+string RepresentationContext::entityname = Factory::RegisterClass(ENTITYNAME, (FactoryMethod)RepresentationContext::Create);
 
-RepresentationContext::RepresentationContext() {
+RepresentationContext::RepresentationContext()
+{
     step = NULL;
     id = 0;
 }
 
-RepresentationContext::RepresentationContext(STEPWrapper *sw,int step_id) {
+RepresentationContext::RepresentationContext(STEPWrapper *sw, int step_id)
+{
     step = sw;
     id = step_id;
 }
 
-RepresentationContext::~RepresentationContext() {
+RepresentationContext::~RepresentationContext()
+{
 }
 
 bool
-RepresentationContext::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
-    step=sw;
+RepresentationContext::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
+    step = sw;
     id = sse->STEPfile_id;
 
-    context_identifier = step->getStringAttribute(sse,"context_identifier");
-    context_type = step->getStringAttribute(sse,"context_type");
+    context_identifier = step->getStringAttribute(sse, "context_identifier");
+    context_type = step->getStringAttribute(sse, "context_type");
 
     return true;
 }
 
 void
-RepresentationContext::Print(int level) {
-    TAB(level); std::cout << CLASSNAME << ":" << "(";
+RepresentationContext::Print(int level)
+{
+    TAB(level);
+    std::cout << CLASSNAME << ":" << "(";
     std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-    TAB(level); std::cout << "Local Attributes:" << std::endl;
-    TAB(level+1); std::cout << "context_identifier:" << context_identifier << std::endl;
-    TAB(level+1); std::cout << "context_type:" << context_type << std::endl;
+    TAB(level);
+    std::cout << "Local Attributes:" << std::endl;
+    TAB(level + 1);
+    std::cout << "context_identifier:" << context_identifier << std::endl;
+    TAB(level + 1);
+    std::cout << "context_type:" << context_type << std::endl;
 
 }
 
 STEPEntity *
-RepresentationContext::GetInstance(STEPWrapper *sw, int id) {
+RepresentationContext::GetInstance(STEPWrapper *sw, int id)
+{
     return new RepresentationContext(sw, id);
 }
 
 STEPEntity *
-RepresentationContext::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
+RepresentationContext::Create(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
     return STEPEntity::CreateEntity(sw, sse, GetInstance, CLASSNAME);
 }
 

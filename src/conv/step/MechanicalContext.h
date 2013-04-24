@@ -29,7 +29,8 @@
 
 #include "ProductContext.h"
 
-class MechanicalContext: public ProductContext {
+class MechanicalContext: public ProductContext
+{
 private:
     static string entityname;
     static EntityInstanceFunc GetInstance;

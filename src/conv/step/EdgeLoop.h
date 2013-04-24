@@ -33,24 +33,25 @@
 class ON_BoundingBox;
 class ON_Brep;
 
-class EdgeLoop : public Loop, public Path {
+class EdgeLoop : public Loop, public Path
+{
 private:
-	static string entityname;
-	static EntityInstanceFunc GetInstance;
+    static string entityname;
+    static EntityInstanceFunc GetInstance;
 
 protected:
 
 public:
-	EdgeLoop();
-	virtual ~EdgeLoop();
-	EdgeLoop(STEPWrapper *sw,int step_id);
-	ON_BoundingBox *GetEdgeBounds(ON_Brep *brep);
-	bool Load(STEPWrapper *sw,SDAI_Application_instance *sse);
-	virtual bool LoadONBrep(ON_Brep *brep);
-	virtual void Print(int level);
+    EdgeLoop();
+    virtual ~EdgeLoop();
+    EdgeLoop(STEPWrapper *sw, int step_id);
+    ON_BoundingBox *GetEdgeBounds(ON_Brep *brep);
+    bool Load(STEPWrapper *sw, SDAI_Application_instance *sse);
+    virtual bool LoadONBrep(ON_Brep *brep);
+    virtual void Print(int level);
 
-	//static methods
-	static STEPEntity *Create(STEPWrapper *sw,SDAI_Application_instance *sse);
+    //static methods
+    static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
 #endif /* EDGELOOP_H_ */

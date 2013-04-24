@@ -32,40 +32,44 @@
 
 #define CLASSNAME "DerivedUnitElement"
 #define ENTITYNAME "Derived_Unit_Element"
-string DerivedUnitElement::entityname = Factory::RegisterClass(ENTITYNAME,(FactoryMethod)DerivedUnitElement::Create);
+string DerivedUnitElement::entityname = Factory::RegisterClass(ENTITYNAME, (FactoryMethod)DerivedUnitElement::Create);
 
-DerivedUnitElement::DerivedUnitElement() {
+DerivedUnitElement::DerivedUnitElement()
+{
     step = NULL;
     id = 0;
     unit = NULL;
     exponent = 0.0;
 }
 
-DerivedUnitElement::DerivedUnitElement(STEPWrapper *sw,int step_id) {
+DerivedUnitElement::DerivedUnitElement(STEPWrapper *sw, int step_id)
+{
     step = sw;
     id = step_id;
     unit = NULL;
     exponent = 0.0;
 }
 
-DerivedUnitElement::~DerivedUnitElement() {
+DerivedUnitElement::~DerivedUnitElement()
+{
 }
 
 bool
-DerivedUnitElement::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
-    step=sw;
+DerivedUnitElement::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
+    step = sw;
     id = sse->STEPfile_id;
 
     // need to do this for local attributes to makes sure we have
     // the actual entity and not a complex/supertype parent
-    sse = step->getEntity(sse,ENTITYNAME);
+    sse = step->getEntity(sse, ENTITYNAME);
 
     if (unit == NULL) {
-	SDAI_Application_instance *se = step->getEntityAttribute(sse,"unit");
+	SDAI_Application_instance *se = step->getEntityAttribute(sse, "unit");
 
 	if (se != NULL) {
 	    //unit = dynamic_cast<NamedUnit*>(Factory::CreateNamedUnitObject(sw,se));
-	    unit = dynamic_cast<NamedUnit*>(Factory::CreateObject(sw,se));
+	    unit = dynamic_cast<NamedUnit *>(Factory::CreateObject(sw, se));
 	    if (unit == NULL) {
 		std::cout << CLASSNAME << ":Error loading member field \"unit\"." << std::endl;
 		return false;
@@ -75,29 +79,36 @@ DerivedUnitElement::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
 	    return false;
 	}
     }
-    exponent = step->getRealAttribute(sse,"exponent");
+    exponent = step->getRealAttribute(sse, "exponent");
 
     return true;
 }
 
 void
-DerivedUnitElement::Print(int level) {
-    TAB(level); std::cout << CLASSNAME << ":" << "(";
+DerivedUnitElement::Print(int level)
+{
+    TAB(level);
+    std::cout << CLASSNAME << ":" << "(";
     std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-    TAB(level); std::cout << "Attributes:" << std::endl;
-    TAB(level+1); std::cout << "unit:" << std::endl;
-    unit->Print(level+1);
-    TAB(level+1); std::cout << "exponent:" << exponent << std::endl;
+    TAB(level);
+    std::cout << "Attributes:" << std::endl;
+    TAB(level + 1);
+    std::cout << "unit:" << std::endl;
+    unit->Print(level + 1);
+    TAB(level + 1);
+    std::cout << "exponent:" << exponent << std::endl;
 }
 
 STEPEntity *
-DerivedUnitElement::GetInstance(STEPWrapper *sw, int id) {
+DerivedUnitElement::GetInstance(STEPWrapper *sw, int id)
+{
     return new DerivedUnitElement(sw, id);
 }
 
 STEPEntity *
-DerivedUnitElement::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
+DerivedUnitElement::Create(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
     return STEPEntity::CreateEntity(sw, sse, GetInstance, CLASSNAME);
 }
 

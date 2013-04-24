@@ -31,29 +31,33 @@
 
 #define CLASSNAME "TimeUnit"
 #define ENTITYNAME "Time_Unit"
-string TimeUnit::entityname = Factory::RegisterClass(ENTITYNAME,(FactoryMethod)TimeUnit::Create);
+string TimeUnit::entityname = Factory::RegisterClass(ENTITYNAME, (FactoryMethod)TimeUnit::Create);
 
-TimeUnit::TimeUnit() {
+TimeUnit::TimeUnit()
+{
     step = NULL;
     id = 0;
 }
 
-TimeUnit::TimeUnit(STEPWrapper *sw,int step_id) {
+TimeUnit::TimeUnit(STEPWrapper *sw, int step_id)
+{
     step = sw;
     id = step_id;
 }
 
-TimeUnit::~TimeUnit() {
+TimeUnit::~TimeUnit()
+{
 }
 
 bool
-TimeUnit::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
-    step=sw;
+TimeUnit::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
+    step = sw;
     id = sse->STEPfile_id;
 
 
     // load base class attributes
-    if ( !NamedUnit::Load(step,sse) ) {
+    if (!NamedUnit::Load(step, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::Unit." << std::endl;
 	return false;
     }
@@ -62,22 +66,27 @@ TimeUnit::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
 }
 
 void
-TimeUnit::Print(int level) {
-    TAB(level); std::cout << CLASSNAME << ":" << "(";
+TimeUnit::Print(int level)
+{
+    TAB(level);
+    std::cout << CLASSNAME << ":" << "(";
     std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-    TAB(level); std::cout << "Inherited Attributes:" << std::endl;
-    NamedUnit::Print(level+1);
+    TAB(level);
+    std::cout << "Inherited Attributes:" << std::endl;
+    NamedUnit::Print(level + 1);
 
 }
 
 STEPEntity *
-TimeUnit::GetInstance(STEPWrapper *sw, int id) {
+TimeUnit::GetInstance(STEPWrapper *sw, int id)
+{
     return new TimeUnit(sw, id);
 }
 
 STEPEntity *
-TimeUnit::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
+TimeUnit::Create(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
     return STEPEntity::CreateEntity(sw, sse, GetInstance, CLASSNAME);
 }
 

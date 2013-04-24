@@ -34,33 +34,37 @@
 
 #define CLASSNAME "TimeConversionBasedUnit"
 #define ENTITYNAME "Time_Conversion_Based_Unit"
-string TimeConversionBasedUnit::entityname = Factory::RegisterClass(ENTITYNAME,(FactoryMethod)TimeConversionBasedUnit::Create);
+string TimeConversionBasedUnit::entityname = Factory::RegisterClass(ENTITYNAME, (FactoryMethod)TimeConversionBasedUnit::Create);
 
-TimeConversionBasedUnit::TimeConversionBasedUnit() {
+TimeConversionBasedUnit::TimeConversionBasedUnit()
+{
     step = NULL;
     id = 0;
 }
 
-TimeConversionBasedUnit::TimeConversionBasedUnit(STEPWrapper *sw,int step_id) {
+TimeConversionBasedUnit::TimeConversionBasedUnit(STEPWrapper *sw, int step_id)
+{
     step = sw;
     id = step_id;
 }
 
-TimeConversionBasedUnit::~TimeConversionBasedUnit() {
+TimeConversionBasedUnit::~TimeConversionBasedUnit()
+{
 }
 
 bool
-TimeConversionBasedUnit::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
-    step=sw;
+TimeConversionBasedUnit::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
+    step = sw;
     id = sse->STEPfile_id;
 
 
     // load base class attributes
-    if ( !TimeUnit::Load(step,sse) ) {
+    if (!TimeUnit::Load(step, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::Unit." << std::endl;
 	return false;
     }
-    if ( !ConversionBasedUnit::Load(step,sse) ) {
+    if (!ConversionBasedUnit::Load(step, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::Unit." << std::endl;
 	return false;
     }
@@ -69,23 +73,28 @@ TimeConversionBasedUnit::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
 }
 
 void
-TimeConversionBasedUnit::Print(int level) {
-    TAB(level); std::cout << CLASSNAME << ":" << "(";
+TimeConversionBasedUnit::Print(int level)
+{
+    TAB(level);
+    std::cout << CLASSNAME << ":" << "(";
     std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-    TAB(level); std::cout << "Inherited Attributes:" << std::endl;
-    TimeUnit::Print(level+1);
-    ConversionBasedUnit::Print(level+1);
+    TAB(level);
+    std::cout << "Inherited Attributes:" << std::endl;
+    TimeUnit::Print(level + 1);
+    ConversionBasedUnit::Print(level + 1);
 
 }
 
 STEPEntity *
-TimeConversionBasedUnit::GetInstance(STEPWrapper *sw, int id) {
+TimeConversionBasedUnit::GetInstance(STEPWrapper *sw, int id)
+{
     return new TimeConversionBasedUnit(sw, id);
 }
 
 STEPEntity *
-TimeConversionBasedUnit::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
+TimeConversionBasedUnit::Create(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
     return STEPEntity::CreateEntity(sw, sse, GetInstance, CLASSNAME);
 }
 

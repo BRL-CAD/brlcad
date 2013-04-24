@@ -32,7 +32,7 @@
 
 #define CLASSNAME "TrimmingSelect"
 #define ENTITYNAME "Trimming_Select"
-string TrimmingSelect::entityname = Factory::RegisterClass(ENTITYNAME,(FactoryMethod)TrimmingSelect::Create);
+string TrimmingSelect::entityname = Factory::RegisterClass(ENTITYNAME, (FactoryMethod)TrimmingSelect::Create);
 
 const char *trimming_select_type_strings[] = {
     "CARTESIAN_POINT",
@@ -41,7 +41,8 @@ const char *trimming_select_type_strings[] = {
     NULL
 };
 
-TrimmingSelect::TrimmingSelect() {
+TrimmingSelect::TrimmingSelect()
+{
     step = NULL;
     id = 0;
     cartesian_point = NULL;
@@ -49,7 +50,8 @@ TrimmingSelect::TrimmingSelect() {
     type = TrimmingSelect::UNKNOWN;
 }
 
-TrimmingSelect::TrimmingSelect(STEPWrapper *sw,int step_id) {
+TrimmingSelect::TrimmingSelect(STEPWrapper *sw, int step_id)
+{
     step = sw;
     id = step_id;
     cartesian_point = NULL;
@@ -57,21 +59,25 @@ TrimmingSelect::TrimmingSelect(STEPWrapper *sw,int step_id) {
     type = TrimmingSelect::UNKNOWN;
 }
 
-TrimmingSelect::~TrimmingSelect() {
+TrimmingSelect::~TrimmingSelect()
+{
 }
 
 double
-TrimmingSelect::GetParameterTrim() {
+TrimmingSelect::GetParameterTrim()
+{
     return parameter_value;
 }
 
 const double *
-TrimmingSelect::GetPointTrim() {
+TrimmingSelect::GetPointTrim()
+{
     return cartesian_point->Point3d();
 }
 
 bool
-TrimmingSelect::IsParameterTrim() {
+TrimmingSelect::IsParameterTrim()
+{
     if (type == PARAMETER_VALUE) {
 	return true;
     }
@@ -79,16 +85,17 @@ TrimmingSelect::IsParameterTrim() {
 }
 
 bool
-TrimmingSelect::Load(STEPWrapper *sw,SDAI_Select *sse) {
-    step=sw;
+TrimmingSelect::Load(STEPWrapper *sw, SDAI_Select *sse)
+{
+    step = sw;
 
     //std::cout << sse->UnderlyingTypeName() << std::endl;
     SdaiTrimming_select *v = (SdaiTrimming_select *)sse;
 
-    if ( v->IsCartesian_point()) {
+    if (v->IsCartesian_point()) {
 	SdaiCartesian_point *p = *v;
 	type = CARTESIAN_POINT;
-	cartesian_point = dynamic_cast<CartesianPoint *>(Factory::CreateObject(sw,(SDAI_Application_instance *)p));
+	cartesian_point = dynamic_cast<CartesianPoint *>(Factory::CreateObject(sw, (SDAI_Application_instance *)p));
     } else if (v->IsParameter_value()) {
 	type = PARAMETER_VALUE;
 	parameter_value = (double)*v;
@@ -98,23 +105,29 @@ TrimmingSelect::Load(STEPWrapper *sw,SDAI_Select *sse) {
 }
 
 void
-TrimmingSelect::Print(int level) {
-    TAB(level); std::cout << CLASSNAME << ":" << std::endl;
+TrimmingSelect::Print(int level)
+{
+    TAB(level);
+    std::cout << CLASSNAME << ":" << std::endl;
     if (type == CARTESIAN_POINT) {
-	TAB(level); std::cout << "Type:" << trimming_select_type_strings[type] << " Value:" << std::endl;
-	cartesian_point->Print(level+1);
+	TAB(level);
+	std::cout << "Type:" << trimming_select_type_strings[type] << " Value:" << std::endl;
+	cartesian_point->Print(level + 1);
     } else if (type == PARAMETER_VALUE) {
-	TAB(level); std::cout << "Type:" << trimming_select_type_strings[type] << " Value:" << parameter_value << std::endl;
+	TAB(level);
+	std::cout << "Type:" << trimming_select_type_strings[type] << " Value:" << parameter_value << std::endl;
     }
 }
 
 STEPEntity *
-TrimmingSelect::GetInstance(STEPWrapper *sw, int id) {
+TrimmingSelect::GetInstance(STEPWrapper *sw, int id)
+{
     return new TrimmingSelect(sw, id);
 }
 
 STEPEntity *
-TrimmingSelect::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
+TrimmingSelect::Create(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
     return STEPEntity::CreateEntity(sw, sse, GetInstance, CLASSNAME);
 }
 

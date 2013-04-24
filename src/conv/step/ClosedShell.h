@@ -29,24 +29,25 @@
 
 #include "ConnectedFaceSet.h"
 
-class ClosedShell : public ConnectedFaceSet {
+class ClosedShell : public ConnectedFaceSet
+{
 private:
-	static string entityname;
-	static EntityInstanceFunc GetInstance;
+    static string entityname;
+    static EntityInstanceFunc GetInstance;
 
 protected:
 
 public:
-	ClosedShell();
-	virtual ~ClosedShell();
-	ClosedShell(STEPWrapper *sw,int step_id);
-	bool Load(STEPWrapper *sw,SDAI_Application_instance *sse);
-	virtual bool LoadONBrep(ON_Brep *brep);
-	virtual void Print(int level);
-	virtual void ReverseFaceSet();
+    ClosedShell();
+    virtual ~ClosedShell();
+    ClosedShell(STEPWrapper *sw, int step_id);
+    bool Load(STEPWrapper *sw, SDAI_Application_instance *sse);
+    virtual bool LoadONBrep(ON_Brep *brep);
+    virtual void Print(int level);
+    virtual void ReverseFaceSet();
 
-	//static methods
-	static STEPEntity *Create(STEPWrapper *sw,SDAI_Application_instance *sse);
+    //static methods
+    static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
 #endif /* CLOSEDSHELL_H_ */

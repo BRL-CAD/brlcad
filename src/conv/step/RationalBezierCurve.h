@@ -30,23 +30,24 @@
 #include "RationalBSplineCurve.h"
 #include "BezierCurve.h"
 
-class RationalBezierCurve : public RationalBSplineCurve, public BezierCurve {
+class RationalBezierCurve : public RationalBSplineCurve, public BezierCurve
+{
 private:
-	static string entityname;
-	static EntityInstanceFunc GetInstance;
+    static string entityname;
+    static EntityInstanceFunc GetInstance;
 
 protected:
 
 public:
-	RationalBezierCurve();
-	virtual ~RationalBezierCurve();
-	RationalBezierCurve(STEPWrapper *sw,int step_id);
-	bool Load(STEPWrapper *sw,SDAI_Application_instance *sse);
-	virtual bool LoadONBrep(ON_Brep *brep);
-	virtual void Print(int level);
+    RationalBezierCurve();
+    virtual ~RationalBezierCurve();
+    RationalBezierCurve(STEPWrapper *sw, int step_id);
+    bool Load(STEPWrapper *sw, SDAI_Application_instance *sse);
+    virtual bool LoadONBrep(ON_Brep *brep);
+    virtual void Print(int level);
 
-	//static methods
-	static STEPEntity *Create(STEPWrapper *sw,SDAI_Application_instance *sse);
+    //static methods
+    static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
 #endif /* RATIONALBEZIERCURVE_H_ */

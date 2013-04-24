@@ -76,7 +76,8 @@ void DesignContext::Print(int level)
 }
 
 STEPEntity *
-DesignContext::GetInstance(STEPWrapper *sw, int id) {
+DesignContext::GetInstance(STEPWrapper *sw, int id)
+{
     return new DesignContext(sw, id);
 }
 

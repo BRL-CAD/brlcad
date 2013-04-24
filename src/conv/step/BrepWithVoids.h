@@ -36,7 +36,8 @@ class ON_Brep;
 
 typedef list<OrientedClosedShell *> LIST_OF_ORIENTED_CLOSED_SHELLS;
 
-class BrepWithVoids: public ManifoldSolidBrep {
+class BrepWithVoids: public ManifoldSolidBrep
+{
 private:
     static string entityname;
     static EntityInstanceFunc GetInstance;

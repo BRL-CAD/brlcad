@@ -31,29 +31,33 @@
 
 #define CLASSNAME "AmountOfSubstanceUnit"
 #define ENTITYNAME "Amount_Of_Substance_Unit"
-string AmountOfSubstanceUnit::entityname = Factory::RegisterClass(ENTITYNAME,(FactoryMethod)AmountOfSubstanceUnit::Create);
+string AmountOfSubstanceUnit::entityname = Factory::RegisterClass(ENTITYNAME, (FactoryMethod)AmountOfSubstanceUnit::Create);
 
-AmountOfSubstanceUnit::AmountOfSubstanceUnit() {
+AmountOfSubstanceUnit::AmountOfSubstanceUnit()
+{
     step = NULL;
     id = 0;
 }
 
-AmountOfSubstanceUnit::AmountOfSubstanceUnit(STEPWrapper *sw,int step_id) {
+AmountOfSubstanceUnit::AmountOfSubstanceUnit(STEPWrapper *sw, int step_id)
+{
     step = sw;
     id = step_id;
 }
 
-AmountOfSubstanceUnit::~AmountOfSubstanceUnit() {
+AmountOfSubstanceUnit::~AmountOfSubstanceUnit()
+{
 }
 
 bool
-AmountOfSubstanceUnit::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
-    step=sw;
+AmountOfSubstanceUnit::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
+    step = sw;
     id = sse->STEPfile_id;
 
 
     // load base class attributes
-    if ( !NamedUnit::Load(step,sse) ) {
+    if (!NamedUnit::Load(step, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::Unit." << std::endl;
 	return false;
     }
@@ -62,22 +66,27 @@ AmountOfSubstanceUnit::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
 }
 
 void
-AmountOfSubstanceUnit::Print(int level) {
-    TAB(level); std::cout << CLASSNAME << ":" << "(";
+AmountOfSubstanceUnit::Print(int level)
+{
+    TAB(level);
+    std::cout << CLASSNAME << ":" << "(";
     std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-    TAB(level); std::cout << "Inherited Attributes:" << std::endl;
-    NamedUnit::Print(level+1);
+    TAB(level);
+    std::cout << "Inherited Attributes:" << std::endl;
+    NamedUnit::Print(level + 1);
 
 }
 
 STEPEntity *
-AmountOfSubstanceUnit::GetInstance(STEPWrapper *sw, int id) {
+AmountOfSubstanceUnit::GetInstance(STEPWrapper *sw, int id)
+{
     return new AmountOfSubstanceUnit(sw, id);
 }
 
 STEPEntity *
-AmountOfSubstanceUnit::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
+AmountOfSubstanceUnit::Create(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
     return STEPEntity::CreateEntity(sw, sse, GetInstance, CLASSNAME);
 }
 

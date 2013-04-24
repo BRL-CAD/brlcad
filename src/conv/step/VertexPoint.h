@@ -34,30 +34,33 @@
 class Point;
 class ON_Brep;
 
-class VertexPoint : public Vertex , public GeometricRepresentationItem {
+class VertexPoint : public Vertex , public GeometricRepresentationItem
+{
 public:
-	typedef map<int,VertexPoint *> OBJECTS;
+    typedef map<int, VertexPoint *> OBJECTS;
 
 private:
-	static string entityname;
-	static EntityInstanceFunc GetInstance;
-	static OBJECTS verticies;
+    static string entityname;
+    static EntityInstanceFunc GetInstance;
+    static OBJECTS verticies;
 
 protected:
-	Point *vertex_geometry;
+    Point *vertex_geometry;
 
 public:
-	VertexPoint();
-	virtual ~VertexPoint();
-	VertexPoint(STEPWrapper *sw,int step_id);
-	bool Load(STEPWrapper *sw,SDAI_Application_instance *sse);
-	virtual bool LoadONBrep(ON_Brep *brep);
-	virtual const double *Point3d() { return vertex_geometry->Point3d(); };
-	virtual void Print(int level);
+    VertexPoint();
+    virtual ~VertexPoint();
+    VertexPoint(STEPWrapper *sw, int step_id);
+    bool Load(STEPWrapper *sw, SDAI_Application_instance *sse);
+    virtual bool LoadONBrep(ON_Brep *brep);
+    virtual const double *Point3d() {
+	return vertex_geometry->Point3d();
+    };
+    virtual void Print(int level);
 
-	//static methods
-	static STEPEntity *Create(STEPWrapper *sw,SDAI_Application_instance *sse);
-	virtual void AddVertex(ON_Brep *brep);
+    //static methods
+    static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
+    virtual void AddVertex(ON_Brep *brep);
 };
 
 #endif /* VERTEXPOINT_H_ */

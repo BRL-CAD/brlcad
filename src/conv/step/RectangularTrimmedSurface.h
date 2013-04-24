@@ -31,30 +31,31 @@
 // forward declaration of class
 class Surface;
 
-class RectangularTrimmedSurface: public BoundedSurface {
+class RectangularTrimmedSurface: public BoundedSurface
+{
 private:
-	static string entityname;
-	static EntityInstanceFunc GetInstance;
+    static string entityname;
+    static EntityInstanceFunc GetInstance;
 
 protected:
-	Surface* basis_surface;
-	double u1;
-	double u2;
-	double v1;
-	double v2;
-	Boolean usense;
-	Boolean vsense;
+    Surface *basis_surface;
+    double u1;
+    double u2;
+    double v1;
+    double v2;
+    Boolean usense;
+    Boolean vsense;
 
 public:
-	RectangularTrimmedSurface();
-	virtual ~RectangularTrimmedSurface();
-	RectangularTrimmedSurface(STEPWrapper *sw,int step_id);
-	bool Load(STEPWrapper *sw,SDAI_Application_instance *sse);
-	virtual bool LoadONBrep(ON_Brep *brep);
-	virtual void Print(int level);
+    RectangularTrimmedSurface();
+    virtual ~RectangularTrimmedSurface();
+    RectangularTrimmedSurface(STEPWrapper *sw, int step_id);
+    bool Load(STEPWrapper *sw, SDAI_Application_instance *sse);
+    virtual bool LoadONBrep(ON_Brep *brep);
+    virtual void Print(int level);
 
-	//static methods
-	static STEPEntity *Create(STEPWrapper *sw,SDAI_Application_instance *sse);
+    //static methods
+    static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
 #endif /* RECTANGULAR_TRIMMED_SURFACE_H_ */

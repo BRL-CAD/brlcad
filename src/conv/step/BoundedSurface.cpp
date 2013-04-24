@@ -30,27 +30,31 @@
 
 #define CLASSNAME "BoundedSurface"
 #define ENTITYNAME "Bounded_Surface"
-string BoundedSurface::entityname = Factory::RegisterClass(ENTITYNAME,(FactoryMethod)BoundedSurface::Create);
+string BoundedSurface::entityname = Factory::RegisterClass(ENTITYNAME, (FactoryMethod)BoundedSurface::Create);
 
-BoundedSurface::BoundedSurface() {
-    step=NULL;
+BoundedSurface::BoundedSurface()
+{
+    step = NULL;
     id = 0;
 }
 
-BoundedSurface::BoundedSurface(STEPWrapper *sw,int step_id) {
-    step=sw;
+BoundedSurface::BoundedSurface(STEPWrapper *sw, int step_id)
+{
+    step = sw;
     id = step_id;
 }
 
-BoundedSurface::~BoundedSurface() {
+BoundedSurface::~BoundedSurface()
+{
 }
 
 bool
-BoundedSurface::Load(STEPWrapper *sw, SDAI_Application_instance *sse) {
-    step=sw;
+BoundedSurface::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
+    step = sw;
     id = sse->STEPfile_id;
 
-    if ( !Surface::Load(sw,sse) ) {
+    if (!Surface::Load(sw, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::Surface." << std::endl;
 	return false;
     }
@@ -59,21 +63,26 @@ BoundedSurface::Load(STEPWrapper *sw, SDAI_Application_instance *sse) {
 }
 
 void
-BoundedSurface::Print(int level) {
-    TAB(level); std::cout << CLASSNAME << ":" << name << "(";
+BoundedSurface::Print(int level)
+{
+    TAB(level);
+    std::cout << CLASSNAME << ":" << name << "(";
     std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-    TAB(level); std::cout << "Inherited Attributes:" << std::endl;
-    Surface::Print(level+1);
+    TAB(level);
+    std::cout << "Inherited Attributes:" << std::endl;
+    Surface::Print(level + 1);
 }
 
 STEPEntity *
-BoundedSurface::GetInstance(STEPWrapper *sw, int id) {
+BoundedSurface::GetInstance(STEPWrapper *sw, int id)
+{
     return new BoundedSurface(sw, id);
 }
 
 STEPEntity *
-BoundedSurface::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
+BoundedSurface::Create(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
     return STEPEntity::CreateEntity(sw, sse, GetInstance, CLASSNAME);
 }
 

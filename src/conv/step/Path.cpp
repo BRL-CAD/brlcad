@@ -31,21 +31,24 @@
 
 #define CLASSNAME "Path"
 #define ENTITYNAME "Path"
-string Path::entityname = Factory::RegisterClass(ENTITYNAME,(FactoryMethod)Path::Create);
+string Path::entityname = Factory::RegisterClass(ENTITYNAME, (FactoryMethod)Path::Create);
 
-Path::Path() {
+Path::Path()
+{
     step = NULL;
     id = 0;
     ON_path_index = 0;
 }
 
-Path::Path(STEPWrapper *sw,int step_id) {
+Path::Path(STEPWrapper *sw, int step_id)
+{
     step = sw;
     id = step_id;
     ON_path_index = 0;
 }
 
-Path::~Path() {
+Path::~Path()
+{
     /*
       LIST_OF_ORIENTED_EDGES::iterator i = edge_list.begin();
 
@@ -58,50 +61,55 @@ Path::~Path() {
 }
 
 LIST_OF_ORIENTED_EDGES::iterator
-Path::getNext(LIST_OF_ORIENTED_EDGES::iterator i) {
+Path::getNext(LIST_OF_ORIENTED_EDGES::iterator i)
+{
     i++;
-    if (i==edge_list.end()){
-	i=edge_list.begin();
+    if (i == edge_list.end()) {
+	i = edge_list.begin();
     }
     return i;
 }
 
 LIST_OF_ORIENTED_EDGES::iterator
-Path::getPrev(LIST_OF_ORIENTED_EDGES::iterator i) {
-    if (i==edge_list.begin()){
-	i=edge_list.end();
+Path::getPrev(LIST_OF_ORIENTED_EDGES::iterator i)
+{
+    if (i == edge_list.begin()) {
+	i = edge_list.end();
     }
     i--;
     return i;
 }
 
 bool
-Path::isSeam(LIST_OF_ORIENTED_EDGES::iterator i) {
+Path::isSeam(LIST_OF_ORIENTED_EDGES::iterator i)
+{
     int edge_id = (*i)->GetONId();
     int cnt = 0;
-    for(i=edge_list.begin();i!=edge_list.end();i++) {
+    for (i = edge_list.begin(); i != edge_list.end(); i++) {
 	if (edge_id == (*i)->GetONId()) {
 	    cnt++;
-	    if (cnt == 2 )
+	    if (cnt == 2) {
 		return true;
+	    }
 	}
     }
     return false;
 }
 
 bool
-Path::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
-    step=sw;
+Path::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
+    step = sw;
     id = sse->STEPfile_id;
 
-    if ( !TopologicalRepresentationItem::Load(step,sse) ) {
+    if (!TopologicalRepresentationItem::Load(step, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::TopologicalRepresentationItem." << std::endl;
 	return false;
     }
 
     // need to do this for local attributes to makes sure we have
     // the actual entity and not a complex/supertype parent
-    sse = step->getEntity(sse,ENTITYNAME);
+    sse = step->getEntity(sse, ENTITYNAME);
 
     if (edge_list.empty()) {
 	LIST_OF_ENTITIES *l = step->getListOfEntities(sse, "edge_list");
@@ -130,28 +138,35 @@ Path::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
 }
 
 void
-Path::Print(int level) {
-    TAB(level); std::cout << CLASSNAME << ":" << name << "(";
+Path::Print(int level)
+{
+    TAB(level);
+    std::cout << CLASSNAME << ":" << name << "(";
     std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-    TAB(level); std::cout << "Attributes:" << std::endl;
-    TAB(level+1); std::cout << "edge_list:" << std::endl;
+    TAB(level);
+    std::cout << "Attributes:" << std::endl;
+    TAB(level + 1);
+    std::cout << "edge_list:" << std::endl;
     LIST_OF_ORIENTED_EDGES::iterator i;
-    for(i=edge_list.begin();i!=edge_list.end();i++) {
-	(*i)->Print(level+1);
+    for (i = edge_list.begin(); i != edge_list.end(); i++) {
+	(*i)->Print(level + 1);
     }
 
-    TAB(level); std::cout << "Inherited Attributes:" << std::endl;
-    TopologicalRepresentationItem::Print(level+1);
+    TAB(level);
+    std::cout << "Inherited Attributes:" << std::endl;
+    TopologicalRepresentationItem::Print(level + 1);
 }
 
 STEPEntity *
-Path::GetInstance(STEPWrapper *sw, int id) {
+Path::GetInstance(STEPWrapper *sw, int id)
+{
     return new Path(sw, id);
 }
 
 STEPEntity *
-Path::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
+Path::Create(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
     return STEPEntity::CreateEntity(sw, sse, GetInstance, CLASSNAME);
 }
 

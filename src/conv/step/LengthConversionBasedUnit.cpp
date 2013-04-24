@@ -34,33 +34,37 @@
 
 #define CLASSNAME "LengthConversionBasedUnit"
 #define ENTITYNAME "Length_Conversion_Based_Unit"
-string LengthConversionBasedUnit::entityname = Factory::RegisterClass(ENTITYNAME,(FactoryMethod)LengthConversionBasedUnit::Create);
+string LengthConversionBasedUnit::entityname = Factory::RegisterClass(ENTITYNAME, (FactoryMethod)LengthConversionBasedUnit::Create);
 
-LengthConversionBasedUnit::LengthConversionBasedUnit() {
+LengthConversionBasedUnit::LengthConversionBasedUnit()
+{
     step = NULL;
     id = 0;
 }
 
-LengthConversionBasedUnit::LengthConversionBasedUnit(STEPWrapper *sw,int step_id) {
+LengthConversionBasedUnit::LengthConversionBasedUnit(STEPWrapper *sw, int step_id)
+{
     step = sw;
     id = step_id;
 }
 
-LengthConversionBasedUnit::~LengthConversionBasedUnit() {
+LengthConversionBasedUnit::~LengthConversionBasedUnit()
+{
 }
 
 bool
-LengthConversionBasedUnit::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
-    step=sw;
+LengthConversionBasedUnit::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
+    step = sw;
     id = sse->STEPfile_id;
 
 
     // load base class attributes
-    if ( !LengthUnit::Load(step,sse) ) {
+    if (!LengthUnit::Load(step, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::Unit." << std::endl;
 	return false;
     }
-    if ( !ConversionBasedUnit::Load(step,sse) ) {
+    if (!ConversionBasedUnit::Load(step, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::Unit." << std::endl;
 	return false;
     }
@@ -69,23 +73,28 @@ LengthConversionBasedUnit::Load(STEPWrapper *sw,SDAI_Application_instance *sse) 
 }
 
 void
-LengthConversionBasedUnit::Print(int level) {
-    TAB(level); std::cout << CLASSNAME << ":" << "(";
+LengthConversionBasedUnit::Print(int level)
+{
+    TAB(level);
+    std::cout << CLASSNAME << ":" << "(";
     std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-    TAB(level); std::cout << "Inherited Attributes:" << std::endl;
-    LengthUnit::Print(level+1);
-    ConversionBasedUnit::Print(level+1);
+    TAB(level);
+    std::cout << "Inherited Attributes:" << std::endl;
+    LengthUnit::Print(level + 1);
+    ConversionBasedUnit::Print(level + 1);
 
 }
 
 STEPEntity *
-LengthConversionBasedUnit::GetInstance(STEPWrapper *sw, int id) {
+LengthConversionBasedUnit::GetInstance(STEPWrapper *sw, int id)
+{
     return new LengthConversionBasedUnit(sw, id);
 }
 
 STEPEntity *
-LengthConversionBasedUnit::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
+LengthConversionBasedUnit::Create(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
     return STEPEntity::CreateEntity(sw, sse, GetInstance, CLASSNAME);
 }
 

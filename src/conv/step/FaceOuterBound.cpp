@@ -32,29 +32,33 @@
 
 #define CLASSNAME "FaceOuterBound"
 #define ENTITYNAME "Face_Outer_Bound"
-string FaceOuterBound::entityname = Factory::RegisterClass(ENTITYNAME,(FactoryMethod)FaceOuterBound::Create);
+string FaceOuterBound::entityname = Factory::RegisterClass(ENTITYNAME, (FactoryMethod)FaceOuterBound::Create);
 
-FaceOuterBound::FaceOuterBound() {
+FaceOuterBound::FaceOuterBound()
+{
     step = NULL;
     id = 0;
 }
 
-FaceOuterBound::FaceOuterBound(STEPWrapper *sw,int step_id) {
+FaceOuterBound::FaceOuterBound(STEPWrapper *sw, int step_id)
+{
     step = sw;
     id = step_id;
 }
 
-FaceOuterBound::~FaceOuterBound() {
+FaceOuterBound::~FaceOuterBound()
+{
 }
 
 bool
-FaceOuterBound::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
+FaceOuterBound::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
     bool retValue = true;
 
-    step=sw;
+    step = sw;
     id = sse->STEPfile_id;
 
-    if ( !FaceBound::Load(step,sse)) {
+    if (!FaceBound::Load(step, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class 'FaceBound'." << std::endl;
 	retValue = false;
     }
@@ -62,21 +66,26 @@ FaceOuterBound::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
 }
 
 void
-FaceOuterBound::Print(int level) {
-    TAB(level); std::cout << CLASSNAME << ":" << name << "(";
+FaceOuterBound::Print(int level)
+{
+    TAB(level);
+    std::cout << CLASSNAME << ":" << name << "(";
     std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-    TAB(level); std::cout << "Inherited Attributes:" << std::endl;
-    FaceBound::Print(level+1);
+    TAB(level);
+    std::cout << "Inherited Attributes:" << std::endl;
+    FaceBound::Print(level + 1);
 }
 
 STEPEntity *
-FaceOuterBound::GetInstance(STEPWrapper *sw, int id) {
+FaceOuterBound::GetInstance(STEPWrapper *sw, int id)
+{
     return new FaceOuterBound(sw, id);
 }
 
 STEPEntity *
-FaceOuterBound::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
+FaceOuterBound::Create(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
     return STEPEntity::CreateEntity(sw, sse, GetInstance, CLASSNAME);
 }
 

@@ -29,7 +29,8 @@
 
 #include "ClosedShell.h"
 
-class OrientedClosedShell: public ClosedShell {
+class OrientedClosedShell: public ClosedShell
+{
 private:
     static string entityname;
     static EntityInstanceFunc GetInstance;

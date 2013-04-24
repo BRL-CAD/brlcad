@@ -30,22 +30,23 @@
 #include "TimeUnit.h"
 #include "SiUnit.h"
 
-class TimeSiUnit : public TimeUnit, public SiUnit {
+class TimeSiUnit : public TimeUnit, public SiUnit
+{
 private:
-	static string entityname;
-	static EntityInstanceFunc GetInstance;
+    static string entityname;
+    static EntityInstanceFunc GetInstance;
 
 protected:
 
 public:
-	TimeSiUnit();
-	virtual ~TimeSiUnit();
-	TimeSiUnit(STEPWrapper *sw,int step_id);
-	bool Load(STEPWrapper *sw,SDAI_Application_instance *sse);
-	virtual void Print(int level);
+    TimeSiUnit();
+    virtual ~TimeSiUnit();
+    TimeSiUnit(STEPWrapper *sw, int step_id);
+    bool Load(STEPWrapper *sw, SDAI_Application_instance *sse);
+    virtual void Print(int level);
 
-	//static methods
-	static STEPEntity *Create(STEPWrapper *sw,SDAI_Application_instance *sse);
+    //static methods
+    static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
 #endif /* TIMESIUNIT_H_ */

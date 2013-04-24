@@ -31,33 +31,37 @@
 
 #define CLASSNAME "LengthSiUnit"
 #define ENTITYNAME "Length_Si_Unit"
-string LengthSiUnit::entityname = Factory::RegisterClass(ENTITYNAME,(FactoryMethod)LengthSiUnit::Create);
+string LengthSiUnit::entityname = Factory::RegisterClass(ENTITYNAME, (FactoryMethod)LengthSiUnit::Create);
 
-LengthSiUnit::LengthSiUnit() {
+LengthSiUnit::LengthSiUnit()
+{
     step = NULL;
     id = 0;
 }
 
-LengthSiUnit::LengthSiUnit(STEPWrapper *sw,int step_id) {
+LengthSiUnit::LengthSiUnit(STEPWrapper *sw, int step_id)
+{
     step = sw;
     id = step_id;
 }
 
-LengthSiUnit::~LengthSiUnit() {
+LengthSiUnit::~LengthSiUnit()
+{
 }
 
 bool
-LengthSiUnit::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
-    step=sw;
+LengthSiUnit::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
+    step = sw;
     id = sse->STEPfile_id;
 
 
     // load base class attributes
-    if ( !LengthUnit::Load(step,sse) ) {
+    if (!LengthUnit::Load(step, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::Unit." << std::endl;
 	return false;
     }
-    if ( !SiUnit::Load(step,sse) ) {
+    if (!SiUnit::Load(step, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::Unit." << std::endl;
 	return false;
     }
@@ -66,23 +70,28 @@ LengthSiUnit::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
 }
 
 void
-LengthSiUnit::Print(int level) {
-    TAB(level); std::cout << CLASSNAME << ":" << "(";
+LengthSiUnit::Print(int level)
+{
+    TAB(level);
+    std::cout << CLASSNAME << ":" << "(";
     std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-    TAB(level); std::cout << "Inherited Attributes:" << std::endl;
-    LengthUnit::Print(level+1);
-    SiUnit::Print(level+1);
+    TAB(level);
+    std::cout << "Inherited Attributes:" << std::endl;
+    LengthUnit::Print(level + 1);
+    SiUnit::Print(level + 1);
 
 }
 
 STEPEntity *
-LengthSiUnit::GetInstance(STEPWrapper *sw, int id) {
+LengthSiUnit::GetInstance(STEPWrapper *sw, int id)
+{
     return new LengthSiUnit(sw, id);
 }
 
 STEPEntity *
-LengthSiUnit::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
+LengthSiUnit::Create(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
     return STEPEntity::CreateEntity(sw, sse, GetInstance, CLASSNAME);
 }
 

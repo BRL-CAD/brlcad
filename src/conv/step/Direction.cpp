@@ -33,43 +33,47 @@
 
 #define CLASSNAME "Direction"
 #define ENTITYNAME "Direction"
-string Direction::entityname = Factory::RegisterClass(ENTITYNAME,(FactoryMethod)Direction::Create);
+string Direction::entityname = Factory::RegisterClass(ENTITYNAME, (FactoryMethod)Direction::Create);
 
-Direction::Direction() {
+Direction::Direction()
+{
     step = NULL;
     id = 0;
-    VSET(direction_ratios,0.0,0.0,0.0);
+    VSET(direction_ratios, 0.0, 0.0, 0.0);
 }
 
-Direction::Direction(STEPWrapper *sw,int step_id) {
+Direction::Direction(STEPWrapper *sw, int step_id)
+{
     step = sw;
     id = step_id;
-    VSET(direction_ratios,0.0,0.0,0.0);
+    VSET(direction_ratios, 0.0, 0.0, 0.0);
 }
 
-Direction::~Direction() {
+Direction::~Direction()
+{
 }
 
 bool
-Direction::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
-    step=sw;
+Direction::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
+    step = sw;
     id = sse->STEPfile_id;
 
-    if ( !GeometricRepresentationItem::Load(step,sse) ) {
+    if (!GeometricRepresentationItem::Load(step, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::GeometricRepresentationItem." << std::endl;
 	return false;
     }
 
     // need to do this for local attributes to makes sure we have
     // the actual entity and not a complex/supertype parent
-    sse = step->getEntity(sse,ENTITYNAME);
+    sse = step->getEntity(sse, ENTITYNAME);
 
-    STEPattribute *attr = step->getAttribute(sse,"direction_ratios");
+    STEPattribute *attr = step->getAttribute(sse, "direction_ratios");
     if (attr != NULL) {
 	STEPaggregate *sa = (STEPaggregate *)(attr->ptr.a);
 	RealNode *rn = (RealNode *)sa->GetHead();
 	int index = 0;
-	while ( rn != NULL) {
+	while (rn != NULL) {
 	    direction_ratios[index++] = rn->value;
 	    rn = (RealNode *)rn->NextNode();
 	}
@@ -81,27 +85,34 @@ Direction::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
 }
 
 void
-Direction::Print(int level) {
-    TAB(level); std::cout << CLASSNAME << ":" << "(";
+Direction::Print(int level)
+{
+    TAB(level);
+    std::cout << CLASSNAME << ":" << "(";
     std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-    TAB(level); std::cout << "Local Attributes:" << std::endl;
-    TAB(level+1); std::cout << "direction_ratios:";
+    TAB(level);
+    std::cout << "Local Attributes:" << std::endl;
+    TAB(level + 1);
+    std::cout << "direction_ratios:";
     std::cout << "(" << direction_ratios[0] << ",";
     std::cout << direction_ratios[1] << ",";
     std::cout << direction_ratios[2] << ")" << std::endl;
 
-    TAB(level); std::cout << "Inherited Attributes:" << std::endl;
-    GeometricRepresentationItem::Print(level+1);
+    TAB(level);
+    std::cout << "Inherited Attributes:" << std::endl;
+    GeometricRepresentationItem::Print(level + 1);
 }
 
 STEPEntity *
-Direction::GetInstance(STEPWrapper *sw, int id) {
+Direction::GetInstance(STEPWrapper *sw, int id)
+{
     return new Direction(sw, id);
 }
 
 STEPEntity *
-Direction::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
+Direction::Create(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
     return STEPEntity::CreateEntity(sw, sse, GetInstance, CLASSNAME);
 }
 

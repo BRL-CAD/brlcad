@@ -32,7 +32,8 @@
 class PCurve;
 class Surface;
 
-class PCurveOrSurface : virtual public STEPEntity {
+class PCurveOrSurface : virtual public STEPEntity
+{
 public:
     enum pcurve_or_surface_type {
 	PCURVE,
@@ -41,23 +42,23 @@ public:
     };
 
 private:
-	static string entityname;
-	static EntityInstanceFunc GetInstance;
+    static string entityname;
+    static EntityInstanceFunc GetInstance;
 
 protected:
-	PCurve *pcurve;
-	Surface *surface;
-	pcurve_or_surface_type type;
+    PCurve *pcurve;
+    Surface *surface;
+    pcurve_or_surface_type type;
 
 public:
-	PCurveOrSurface();
-	virtual ~PCurveOrSurface();
-	PCurveOrSurface(STEPWrapper *sw,int step_id);
-	bool Load(STEPWrapper *sw,SDAI_Select *sse);
-	virtual void Print(int level);
+    PCurveOrSurface();
+    virtual ~PCurveOrSurface();
+    PCurveOrSurface(STEPWrapper *sw, int step_id);
+    bool Load(STEPWrapper *sw, SDAI_Select *sse);
+    virtual void Print(int level);
 
-	//static methods
-	static STEPEntity *Create(STEPWrapper *sw,SDAI_Application_instance *sse);
+    //static methods
+    static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
 #endif /* PCURVEORSURFACE_H_ */

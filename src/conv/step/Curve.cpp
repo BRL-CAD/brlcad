@@ -32,14 +32,15 @@
 
 #define CLASSNAME "Curve"
 #define ENTITYNAME "Curve"
-string Curve::entityname = Factory::RegisterClass(ENTITYNAME,(FactoryMethod)Curve::Create);
+string Curve::entityname = Factory::RegisterClass(ENTITYNAME, (FactoryMethod)Curve::Create);
 
-Curve::Curve() {
+Curve::Curve()
+{
     step = NULL;
     id = 0;
     trimmed = false;
     parameter_trim = false;
-    for(int i =0; i<3; i++) {
+    for (int i = 0; i < 3; i++) {
 	trim_startpoint[i] = 0.0;
 	trim_endpoint[i] = 0.0;
     }
@@ -49,12 +50,13 @@ Curve::Curve() {
     end = NULL;
 }
 
-Curve::Curve(STEPWrapper *sw,int step_id) {
+Curve::Curve(STEPWrapper *sw, int step_id)
+{
     step = sw;
     id = step_id;
     trimmed = false;
     parameter_trim = false;
-    for(int i =0; i<3; i++) {
+    for (int i = 0; i < 3; i++) {
 	trim_startpoint[i] = 0.0;
 	trim_endpoint[i] = 0.0;
     }
@@ -64,15 +66,17 @@ Curve::Curve(STEPWrapper *sw,int step_id) {
     end = NULL;
 }
 
-Curve::~Curve() {
+Curve::~Curve()
+{
 }
 
 bool
-Curve::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
-    step=sw;
+Curve::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
+    step = sw;
     id = sse->STEPfile_id;
 
-    if ( !GeometricRepresentationItem::Load(step,sse) ) {
+    if (!GeometricRepresentationItem::Load(step, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::GeometricRepresentationItem." << std::endl;
 	return false;
     }
@@ -81,10 +85,11 @@ Curve::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
 }
 
 const double *
-Curve::PointAtEnd() {
+Curve::PointAtEnd()
+{
     if (trimmed) { //explicitly trimmed
 	return trim_endpoint;
-    } else if ((start != NULL) && (end != NULL)){ //not explicit let's try edge vertices
+    } else if ((start != NULL) && (end != NULL)) { //not explicit let's try edge vertices
 	return end->Point3d();
     } else {
 	//std::cerr << "Error: endpoints not specified for curve " << entityname << std::endl;
@@ -93,10 +98,11 @@ Curve::PointAtEnd() {
 }
 
 const double *
-Curve::PointAtStart() {
+Curve::PointAtStart()
+{
     if (trimmed) { //explicitly trimmed
 	return trim_startpoint;
-    } else if ((start != NULL) && (end != NULL)){ //not explicit let's try edge vertices
+    } else if ((start != NULL) && (end != NULL)) { //not explicit let's try edge vertices
 	return start->Point3d();
     } else {
 	//std::cerr << "Error: endpoints not specified for curve " << entityname << std::endl;
@@ -105,16 +111,20 @@ Curve::PointAtStart() {
 }
 
 void
-Curve::Print(int level) {
-    TAB(level); std::cout << CLASSNAME << ":" << name << "(";
+Curve::Print(int level)
+{
+    TAB(level);
+    std::cout << CLASSNAME << ":" << name << "(";
     std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-    TAB(level); std::cout << "Inherited Attributes:" << std::endl;
-    GeometricRepresentationItem::Print(level+1);
+    TAB(level);
+    std::cout << "Inherited Attributes:" << std::endl;
+    GeometricRepresentationItem::Print(level + 1);
 }
 
 void
-Curve::SetParameterTrim(double start_param, double end_param) {
+Curve::SetParameterTrim(double start_param, double end_param)
+{
     trimmed = true;
     parameter_trim = true;
     t = start_param;
@@ -122,34 +132,39 @@ Curve::SetParameterTrim(double start_param, double end_param) {
 }
 
 void
-Curve::SetPointTrim(const double *start_point, const double *end_point) {
+Curve::SetPointTrim(const double *start_point, const double *end_point)
+{
     trimmed = true;
     parameter_trim = false;
-    for (int i=0;i<3;i++) {
+    for (int i = 0; i < 3; i++) {
 	trim_startpoint[i] = start_point[i];
 	trim_endpoint[i] = end_point[i];
     }
 }
 
 void
-Curve::Start(Vertex *v) {
-    trimmed=false;
+Curve::Start(Vertex *v)
+{
+    trimmed = false;
     start = v;
 }
 
 void
-Curve::End(Vertex *v) {
-    trimmed=false;
+Curve::End(Vertex *v)
+{
+    trimmed = false;
     end = v;
 }
 
 STEPEntity *
-Curve::GetInstance(STEPWrapper *sw, int id) {
+Curve::GetInstance(STEPWrapper *sw, int id)
+{
     return new Curve(sw, id);
 }
 
 STEPEntity *
-Curve::Create(STEPWrapper *sw,SDAI_Application_instance *sse){
+Curve::Create(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
     return STEPEntity::CreateEntity(sw, sse, GetInstance, CLASSNAME);
 }
 

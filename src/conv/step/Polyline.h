@@ -32,25 +32,26 @@
 class PolylineSegment;
 typedef list<CartesianPoint *> LIST_OF_POINTS;
 
-class Polyline : public BoundedCurve {
+class Polyline : public BoundedCurve
+{
 private:
-	static string entityname;
-	static EntityInstanceFunc GetInstance;
+    static string entityname;
+    static EntityInstanceFunc GetInstance;
 
 protected:
-	LIST_OF_POINTS points;
+    LIST_OF_POINTS points;
 
 public:
-	Polyline();
-	virtual ~Polyline();
-	Polyline(STEPWrapper *sw,int step_id);
-	bool Load(STEPWrapper *sw,SDAI_Application_instance *sse);
-	virtual const double *PointAtEnd();
-	virtual const double *PointAtStart();
-	virtual void Print(int level);
+    Polyline();
+    virtual ~Polyline();
+    Polyline(STEPWrapper *sw, int step_id);
+    bool Load(STEPWrapper *sw, SDAI_Application_instance *sse);
+    virtual const double *PointAtEnd();
+    virtual const double *PointAtStart();
+    virtual void Print(int level);
 
-	//static methods
-	static STEPEntity *Create(STEPWrapper *sw,SDAI_Application_instance *sse);
+    //static methods
+    static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
 #endif /* POLYLINE_H_ */

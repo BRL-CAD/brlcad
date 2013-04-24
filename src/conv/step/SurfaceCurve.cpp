@@ -34,7 +34,7 @@
 
 #define CLASSNAME "SurfaceCurve"
 #define ENTITYNAME "Surface_Curve"
-string SurfaceCurve::entityname = Factory::RegisterClass(ENTITYNAME,(FactoryMethod)SurfaceCurve::Create);
+string SurfaceCurve::entityname = Factory::RegisterClass(ENTITYNAME, (FactoryMethod)SurfaceCurve::Create);
 
 static const char *Preferred_surface_curve_representation_string[] = {
     "curve_3d",
@@ -43,43 +43,47 @@ static const char *Preferred_surface_curve_representation_string[] = {
     "unset"
 };
 
-SurfaceCurve::SurfaceCurve() {
+SurfaceCurve::SurfaceCurve()
+{
     step = NULL;
     id = 0;
     curve_3d = NULL;
     master_representation = Preferred_surface_curve_representation_unset;
 }
 
-SurfaceCurve::SurfaceCurve(STEPWrapper *sw,int step_id) {
+SurfaceCurve::SurfaceCurve(STEPWrapper *sw, int step_id)
+{
     step = sw;
     id = step_id;
     curve_3d = NULL;
     master_representation = Preferred_surface_curve_representation_unset;
 }
 
-SurfaceCurve::~SurfaceCurve() {
+SurfaceCurve::~SurfaceCurve()
+{
     curve_3d = NULL;
     associated_geometry.clear();
 }
 
 bool
-SurfaceCurve::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
-    step=sw;
+SurfaceCurve::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
+    step = sw;
     id = sse->STEPfile_id;
 
-    if ( !Curve::Load(sw,sse) ) {
+    if (!Curve::Load(sw, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::Curve." << std::endl;
 	return false;
     }
 
     // need to do this for local attributes to makes sure we have
     // the actual entity and not a complex/supertype parent
-    sse = step->getEntity(sse,ENTITYNAME);
+    sse = step->getEntity(sse, ENTITYNAME);
 
-    if (curve_3d ==NULL) {
-	SDAI_Application_instance *entity = step->getEntityAttribute(sse,"curve_3d");
+    if (curve_3d == NULL) {
+	SDAI_Application_instance *entity = step->getEntityAttribute(sse, "curve_3d");
 	if (entity) {
-	    curve_3d = dynamic_cast<Curve *>(Factory::CreateObject(sw,entity)); //CreateCurveObject(sw,entity));
+	    curve_3d = dynamic_cast<Curve *>(Factory::CreateObject(sw, entity)); //CreateCurveObject(sw,entity));
 	} else {
 	    std::cout << CLASSNAME << ":Error loading attribute 'curve_3d'." << std::endl;
 	    return false;
@@ -107,7 +111,7 @@ SurfaceCurve::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
     if (associated_geometry.empty()) {
 	STEPattribute *attr = step->getAttribute(sse, "associated_geometry");
 	if (attr) {
-	    STEPaggregate *sa = (STEPaggregate *) (attr->ptr.a);
+	    STEPaggregate *sa = (STEPaggregate *)(attr->ptr.a);
 	    EntityNode *sn = (EntityNode *) sa->GetHead();
 	    SDAI_Select *p_or_s;
 	    while (sn != NULL) {
@@ -131,45 +135,55 @@ SurfaceCurve::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
 	}
     }
 
-    master_representation = (Preferred_surface_curve_representation)step->getEnumAttribute(sse,"master_representation");
+    master_representation = (Preferred_surface_curve_representation)step->getEnumAttribute(sse, "master_representation");
 
     return true;
 }
 
 const double *
-SurfaceCurve::PointAtEnd() {
+SurfaceCurve::PointAtEnd()
+{
     return curve_3d->PointAtEnd();
 }
 
 const double *
-SurfaceCurve::PointAtStart() {
+SurfaceCurve::PointAtStart()
+{
     return curve_3d->PointAtStart();
 }
 
 void
-SurfaceCurve::Print(int level) {
-    TAB(level); std::cout << CLASSNAME << ":" << name << "(";
+SurfaceCurve::Print(int level)
+{
+    TAB(level);
+    std::cout << CLASSNAME << ":" << name << "(";
     std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-    TAB(level); std::cout << "Attributes:" << std::endl;
-    TAB(level+1); std::cout << "curve_3d:" << std::endl;
-    curve_3d->Print(level+1);
-    TAB(level+1); std::cout << "associated_geometry:" << std::endl;
+    TAB(level);
+    std::cout << "Attributes:" << std::endl;
+    TAB(level + 1);
+    std::cout << "curve_3d:" << std::endl;
+    curve_3d->Print(level + 1);
+    TAB(level + 1);
+    std::cout << "associated_geometry:" << std::endl;
     LIST_OF_PCURVE_OR_SURFACE::iterator i;
-    for(i=associated_geometry.begin();i!=associated_geometry.end();i++) {
-	(*i)->Print(level+1);
+    for (i = associated_geometry.begin(); i != associated_geometry.end(); i++) {
+	(*i)->Print(level + 1);
     }
 
-    TAB(level+1); std::cout << "master_representation:" << Preferred_surface_curve_representation_string[master_representation] << std::endl;
+    TAB(level + 1);
+    std::cout << "master_representation:" << Preferred_surface_curve_representation_string[master_representation] << std::endl;
 }
 
 STEPEntity *
-SurfaceCurve::GetInstance(STEPWrapper *sw, int id) {
+SurfaceCurve::GetInstance(STEPWrapper *sw, int id)
+{
     return new SurfaceCurve(sw, id);
 }
 
 STEPEntity *
-SurfaceCurve::Create(STEPWrapper *sw,SDAI_Application_instance *sse){
+SurfaceCurve::Create(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
     return STEPEntity::CreateEntity(sw, sse, GetInstance, CLASSNAME);
 }
 

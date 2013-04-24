@@ -39,7 +39,8 @@ class ProductDefinitionShape;
 
 typedef std::list<RepresentationRelationship *> LIST_OF_REPRESENTATION_RELATIONSHIPS;
 
-class ContextDependentShapeRepresentation: virtual public STEPEntity {
+class ContextDependentShapeRepresentation: virtual public STEPEntity
+{
 private:
     static string entityname;
     static EntityInstanceFunc GetInstance;

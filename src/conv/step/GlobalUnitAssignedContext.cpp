@@ -50,20 +50,23 @@
 
 #define CLASSNAME "GlobalUnitAssignedContext"
 #define ENTITYNAME "Global_Unit_Assigned_Context"
-string GlobalUnitAssignedContext::entityname = Factory::RegisterClass(ENTITYNAME,(FactoryMethod)GlobalUnitAssignedContext::Create);
+string GlobalUnitAssignedContext::entityname = Factory::RegisterClass(ENTITYNAME, (FactoryMethod)GlobalUnitAssignedContext::Create);
 
 
-GlobalUnitAssignedContext::GlobalUnitAssignedContext() {
+GlobalUnitAssignedContext::GlobalUnitAssignedContext()
+{
     step = NULL;
     id = 0;
 }
 
-GlobalUnitAssignedContext::GlobalUnitAssignedContext(STEPWrapper *sw,int step_id) {
+GlobalUnitAssignedContext::GlobalUnitAssignedContext(STEPWrapper *sw, int step_id)
+{
     step = sw;
     id = step_id;
 }
 
-GlobalUnitAssignedContext::~GlobalUnitAssignedContext() {
+GlobalUnitAssignedContext::~GlobalUnitAssignedContext()
+{
     /*
       LIST_OF_UNITS::iterator i = units.begin();
 
@@ -76,10 +79,11 @@ GlobalUnitAssignedContext::~GlobalUnitAssignedContext() {
 }
 
 double
-GlobalUnitAssignedContext::GetLengthConversionFactor() {
+GlobalUnitAssignedContext::GetLengthConversionFactor()
+{
     LIST_OF_UNITS::iterator i = units.begin();
 
-    while(i != units.end()) {
+    while (i != units.end()) {
 	LengthSiUnit *si = dynamic_cast<LengthSiUnit *>(*i);
 	if (si != NULL) {
 	    //found SI length unit
@@ -102,10 +106,11 @@ GlobalUnitAssignedContext::GetLengthConversionFactor() {
 }
 
 double
-GlobalUnitAssignedContext::GetPlaneAngleConversionFactor() {
+GlobalUnitAssignedContext::GetPlaneAngleConversionFactor()
+{
     LIST_OF_UNITS::iterator i = units.begin();
 
-    while(i != units.end()) {
+    while (i != units.end()) {
 	PlaneAngleSiUnit *si = dynamic_cast<PlaneAngleSiUnit *>(*i);
 	if (si != NULL) {
 	    //found SI length unit
@@ -128,10 +133,11 @@ GlobalUnitAssignedContext::GetPlaneAngleConversionFactor() {
 }
 
 double
-GlobalUnitAssignedContext::GetSolidAngleConversionFactor() {
+GlobalUnitAssignedContext::GetSolidAngleConversionFactor()
+{
     LIST_OF_UNITS::iterator i = units.begin();
 
-    while(i != units.end()) {
+    while (i != units.end()) {
 	SolidAngleSiUnit *si = dynamic_cast<SolidAngleSiUnit *>(*i);
 	if (si != NULL) {
 	    //found SI length unit
@@ -155,35 +161,36 @@ GlobalUnitAssignedContext::GetSolidAngleConversionFactor() {
 }
 
 bool
-GlobalUnitAssignedContext::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
-    step=sw;
+GlobalUnitAssignedContext::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
+    step = sw;
     id = sse->STEPfile_id;
 
     // load base class attributes
-    if ( !RepresentationContext::Load(sw,sse) ) {
+    if (!RepresentationContext::Load(sw, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::RepresentationContext." << std::endl;
 	return false;
     }
 
     // need to do this for local attributes to makes sure we have
     // the actual entity and not a complex/supertype parent
-    sse = step->getEntity(sse,ENTITYNAME);
+    sse = step->getEntity(sse, ENTITYNAME);
 
     if (units.empty()) {
 	SdaiUnit *unit;
-	LIST_OF_SELECTS *l = step->getListOfSelects(sse,"units");
+	LIST_OF_SELECTS *l = step->getListOfSelects(sse, "units");
 	LIST_OF_SELECTS::iterator i;
-	for(i=l->begin();i!=l->end();i++) {
-	    unit=(SdaiUnit *)(*i);
-	    if (unit->IsNamed_unit()){
+	for (i = l->begin(); i != l->end(); i++) {
+	    unit = (SdaiUnit *)(*i);
+	    if (unit->IsNamed_unit()) {
 		SdaiNamed_unit *snu = *unit;
-		NamedUnit *nu = dynamic_cast<NamedUnit*>(Factory::CreateObject(sw,(SDAI_Application_instance *)snu));
+		NamedUnit *nu = dynamic_cast<NamedUnit *>(Factory::CreateObject(sw, (SDAI_Application_instance *)snu));
 		units.push_back(nu);
 #ifdef AP203e2
 	    } else if (unit->IsDerived_unit()) { 		//TODO: derived_unit
 		SdaiDerived_unit *sdu = *unit;
-		NamedUnit *nu = (NamedUnit*)
-		Unit *du = dynamic_cast<Unit *>(Factory::CreateObject(sw,(SDAI_Application_instance *)sdu));
+		NamedUnit *nu = (NamedUnit *)
+				Unit * du = dynamic_cast<Unit *>(Factory::CreateObject(sw, (SDAI_Application_instance *)sdu));
 		units.push_back(du);
 #endif
 	    } else {
@@ -201,29 +208,36 @@ GlobalUnitAssignedContext::Load(STEPWrapper *sw,SDAI_Application_instance *sse) 
 }
 
 void
-GlobalUnitAssignedContext::Print(int level) {
-    TAB(level); std::cout << CLASSNAME << ":" << "(";
+GlobalUnitAssignedContext::Print(int level)
+{
+    TAB(level);
+    std::cout << CLASSNAME << ":" << "(";
     std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-    TAB(level); std::cout << "Attributes:" << std::endl;
-    TAB(level+1); std::cout << "units(list):" << std::endl;
+    TAB(level);
+    std::cout << "Attributes:" << std::endl;
+    TAB(level + 1);
+    std::cout << "units(list):" << std::endl;
     LIST_OF_UNITS::iterator i;
-    for(i=units.begin();i!=units.end();i++) {
-	(*i)->Print(level+1);
+    for (i = units.begin(); i != units.end(); i++) {
+	(*i)->Print(level + 1);
 	std::cout << std::endl;
     }
 
-    TAB(level); std::cout << "Inherited Attributes:" << std::endl;
-    RepresentationContext::Print(level+1);
+    TAB(level);
+    std::cout << "Inherited Attributes:" << std::endl;
+    RepresentationContext::Print(level + 1);
 }
 
 STEPEntity *
-GlobalUnitAssignedContext::GetInstance(STEPWrapper *sw, int id) {
+GlobalUnitAssignedContext::GetInstance(STEPWrapper *sw, int id)
+{
     return new GlobalUnitAssignedContext(sw, id);
 }
 
 STEPEntity *
-GlobalUnitAssignedContext::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
+GlobalUnitAssignedContext::Create(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
     return STEPEntity::CreateEntity(sw, sse, GetInstance, CLASSNAME);
 }
 

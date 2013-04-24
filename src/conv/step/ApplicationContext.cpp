@@ -83,17 +83,19 @@ void ApplicationContext::Print(int level)
 
     TAB(level);
     std::cout << "Attributes:" << std::endl;
-    TAB(level+1);
+    TAB(level + 1);
     std::cout << "application:" << application << std::endl;
 }
 
 STEPEntity *
-ApplicationContext::GetInstance(STEPWrapper *sw, int id) {
+ApplicationContext::GetInstance(STEPWrapper *sw, int id)
+{
     return new ApplicationContext(sw, id);
 }
 
 STEPEntity *
-ApplicationContext::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
+ApplicationContext::Create(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
     return STEPEntity::CreateEntity(sw, sse, GetInstance, CLASSNAME);
 }
 

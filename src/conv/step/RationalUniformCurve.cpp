@@ -32,28 +32,32 @@
 
 #define CLASSNAME "RationalUniformCurve"
 #define ENTITYNAME "Rational_Uniform_Curve"
-string RationalUniformCurve::entityname = Factory::RegisterClass(ENTITYNAME,(FactoryMethod)RationalUniformCurve::Create);
+string RationalUniformCurve::entityname = Factory::RegisterClass(ENTITYNAME, (FactoryMethod)RationalUniformCurve::Create);
 
-RationalUniformCurve::RationalUniformCurve() {
+RationalUniformCurve::RationalUniformCurve()
+{
     step = NULL;
     id = 0;
 }
 
-RationalUniformCurve::RationalUniformCurve(STEPWrapper *sw,int step_id) {
+RationalUniformCurve::RationalUniformCurve(STEPWrapper *sw, int step_id)
+{
     step = sw;
     id = step_id;
 }
 
-RationalUniformCurve::~RationalUniformCurve() {
+RationalUniformCurve::~RationalUniformCurve()
+{
 }
 
 bool
-RationalUniformCurve::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
-    step=sw;
+RationalUniformCurve::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
+    step = sw;
     id = sse->STEPfile_id;
 
     // load base class attributes
-    if ( !RationalBSplineCurve::Load(sw,sse) ) {
+    if (!RationalBSplineCurve::Load(sw, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::RationalBSplineCurve." << std::endl;
 	return false;
     }
@@ -62,21 +66,26 @@ RationalUniformCurve::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
 }
 
 void
-RationalUniformCurve::Print(int level) {
-    TAB(level); std::cout << CLASSNAME << ":" << name << "(";
+RationalUniformCurve::Print(int level)
+{
+    TAB(level);
+    std::cout << CLASSNAME << ":" << name << "(";
     std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-    TAB(level); std::cout << "Inherited:" << std::endl;
-    RationalBSplineCurve::Print(level+1);
+    TAB(level);
+    std::cout << "Inherited:" << std::endl;
+    RationalBSplineCurve::Print(level + 1);
 }
 
 STEPEntity *
-RationalUniformCurve::GetInstance(STEPWrapper *sw, int id) {
+RationalUniformCurve::GetInstance(STEPWrapper *sw, int id)
+{
     return new RationalUniformCurve(sw, id);
 }
 
 STEPEntity *
-RationalUniformCurve::Create(STEPWrapper *sw,SDAI_Application_instance *sse){
+RationalUniformCurve::Create(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
     return STEPEntity::CreateEntity(sw, sse, GetInstance, CLASSNAME);
 }
 

@@ -28,30 +28,31 @@
 
 #include "ElementarySurface.h"
 
-class ConicalSurface: public ElementarySurface {
+class ConicalSurface: public ElementarySurface
+{
 private:
-	static string entityname;
-	static EntityInstanceFunc GetInstance;
+    static string entityname;
+    static EntityInstanceFunc GetInstance;
 
 protected:
-	double radius;
-	double semi_angle;
+    double radius;
+    double semi_angle;
 
 
 public:
-	ConicalSurface();
-	virtual ~ConicalSurface();
-	ConicalSurface(STEPWrapper *sw,int step_id);
-	const double *GetOrigin();
-	const double *GetNormal();
-	const double *GetXAxis();
-	const double *GetYAxis();
-	bool Load(STEPWrapper *sw,SDAI_Application_instance *sse);
-	virtual bool LoadONBrep(ON_Brep *brep);
-	virtual void Print(int level);
+    ConicalSurface();
+    virtual ~ConicalSurface();
+    ConicalSurface(STEPWrapper *sw, int step_id);
+    const double *GetOrigin();
+    const double *GetNormal();
+    const double *GetXAxis();
+    const double *GetYAxis();
+    bool Load(STEPWrapper *sw, SDAI_Application_instance *sse);
+    virtual bool LoadONBrep(ON_Brep *brep);
+    virtual void Print(int level);
 
-	//static methods
-	static STEPEntity *Create(STEPWrapper *sw,SDAI_Application_instance *sse);
+    //static methods
+    static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
 #endif /* CONICAL_SURFACE_H_ */

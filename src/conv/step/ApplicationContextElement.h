@@ -35,7 +35,8 @@
 class ON_Brep;
 class ApplicationContext;
 
-class ApplicationContextElement: virtual public STEPEntity {
+class ApplicationContextElement: virtual public STEPEntity
+{
 private:
     static string entityname;
     static EntityInstanceFunc GetInstance;

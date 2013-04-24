@@ -31,27 +31,31 @@
 
 #define CLASSNAME "CompositeCurveOnSurface"
 #define ENTITYNAME "Composite_Curve_On_Surface"
-string CompositeCurveOnSurface::entityname = Factory::RegisterClass(ENTITYNAME,(FactoryMethod)CompositeCurveOnSurface::Create);
+string CompositeCurveOnSurface::entityname = Factory::RegisterClass(ENTITYNAME, (FactoryMethod)CompositeCurveOnSurface::Create);
 
-CompositeCurveOnSurface::CompositeCurveOnSurface() {
+CompositeCurveOnSurface::CompositeCurveOnSurface()
+{
     step = NULL;
     id = 0;
 }
 
-CompositeCurveOnSurface::CompositeCurveOnSurface(STEPWrapper *sw,int step_id) {
+CompositeCurveOnSurface::CompositeCurveOnSurface(STEPWrapper *sw, int step_id)
+{
     step = sw;
     id = step_id;
 }
 
-CompositeCurveOnSurface::~CompositeCurveOnSurface() {
+CompositeCurveOnSurface::~CompositeCurveOnSurface()
+{
 }
 
 bool
-CompositeCurveOnSurface::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
-    step=sw;
+CompositeCurveOnSurface::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
+    step = sw;
     id = sse->STEPfile_id;
 
-    if ( !CompositeCurve::Load(step,sse) ) {
+    if (!CompositeCurve::Load(step, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::CompositeCurve." << std::endl;
 	return false;
     }
@@ -61,21 +65,26 @@ CompositeCurveOnSurface::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
 
 void
 
-CompositeCurveOnSurface::Print(int level) {
-    TAB(level); std::cout << CLASSNAME << ":" << name << "(";
+CompositeCurveOnSurface::Print(int level)
+{
+    TAB(level);
+    std::cout << CLASSNAME << ":" << name << "(";
     std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-    TAB(level); std::cout << "Inherited Attributes:" << std::endl;
-    CompositeCurve::Print(level+1);
+    TAB(level);
+    std::cout << "Inherited Attributes:" << std::endl;
+    CompositeCurve::Print(level + 1);
 }
 
 STEPEntity *
-CompositeCurveOnSurface::GetInstance(STEPWrapper *sw, int id) {
+CompositeCurveOnSurface::GetInstance(STEPWrapper *sw, int id)
+{
     return new CompositeCurveOnSurface(sw, id);
 }
 
 STEPEntity *
-CompositeCurveOnSurface::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
+CompositeCurveOnSurface::Create(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
     return STEPEntity::CreateEntity(sw, sse, GetInstance, CLASSNAME);
 }
 

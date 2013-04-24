@@ -31,33 +31,37 @@
 
 #define CLASSNAME "TimeSiUnit"
 #define ENTITYNAME "Time_Si_Unit"
-string TimeSiUnit::entityname = Factory::RegisterClass(ENTITYNAME,(FactoryMethod)TimeSiUnit::Create);
+string TimeSiUnit::entityname = Factory::RegisterClass(ENTITYNAME, (FactoryMethod)TimeSiUnit::Create);
 
-TimeSiUnit::TimeSiUnit() {
+TimeSiUnit::TimeSiUnit()
+{
     step = NULL;
     id = 0;
 }
 
-TimeSiUnit::TimeSiUnit(STEPWrapper *sw,int step_id) {
+TimeSiUnit::TimeSiUnit(STEPWrapper *sw, int step_id)
+{
     step = sw;
     id = step_id;
 }
 
-TimeSiUnit::~TimeSiUnit() {
+TimeSiUnit::~TimeSiUnit()
+{
 }
 
 bool
-TimeSiUnit::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
-    step=sw;
+TimeSiUnit::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
+    step = sw;
     id = sse->STEPfile_id;
 
 
     // load base class attributes
-    if ( !TimeUnit::Load(step,sse) ) {
+    if (!TimeUnit::Load(step, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::Unit." << std::endl;
 	return false;
     }
-    if ( !SiUnit::Load(step,sse) ) {
+    if (!SiUnit::Load(step, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::Unit." << std::endl;
 	return false;
     }
@@ -66,23 +70,28 @@ TimeSiUnit::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
 }
 
 void
-TimeSiUnit::Print(int level) {
-    TAB(level); std::cout << CLASSNAME << ":" << "(";
+TimeSiUnit::Print(int level)
+{
+    TAB(level);
+    std::cout << CLASSNAME << ":" << "(";
     std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-    TAB(level); std::cout << "Inherited Attributes:" << std::endl;
-    TimeUnit::Print(level+1);
-    SiUnit::Print(level+1);
+    TAB(level);
+    std::cout << "Inherited Attributes:" << std::endl;
+    TimeUnit::Print(level + 1);
+    SiUnit::Print(level + 1);
 
 }
 
 STEPEntity *
-TimeSiUnit::GetInstance(STEPWrapper *sw, int id) {
+TimeSiUnit::GetInstance(STEPWrapper *sw, int id)
+{
     return new TimeSiUnit(sw, id);
 }
 
 STEPEntity *
-TimeSiUnit::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
+TimeSiUnit::Create(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
     return STEPEntity::CreateEntity(sw, sse, GetInstance, CLASSNAME);
 }
 

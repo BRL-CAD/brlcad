@@ -31,25 +31,28 @@
 // forward declaration of class
 class Curve;
 
-class SweptSurface: public Surface {
+class SweptSurface: public Surface
+{
 private:
-	static string entityname;
-	static EntityInstanceFunc GetInstance;
-	int swept_edge_ON_id;
+    static string entityname;
+    static EntityInstanceFunc GetInstance;
+    int swept_edge_ON_id;
 protected:
-	Curve *swept_curve;
+    Curve *swept_curve;
 
 public:
-	SweptSurface();
-	virtual ~SweptSurface();
-	SweptSurface(STEPWrapper *sw,int step_id);
-	int GetSweptEdgeONId() { return swept_edge_ON_id; };
-	bool Load(STEPWrapper *sw,SDAI_Application_instance *sse);
-	virtual bool LoadONBrep(ON_Brep *brep);
-	virtual void Print(int level);
+    SweptSurface();
+    virtual ~SweptSurface();
+    SweptSurface(STEPWrapper *sw, int step_id);
+    int GetSweptEdgeONId() {
+	return swept_edge_ON_id;
+    };
+    bool Load(STEPWrapper *sw, SDAI_Application_instance *sse);
+    virtual bool LoadONBrep(ON_Brep *brep);
+    virtual void Print(int level);
 
-	//static methods
-	static STEPEntity *Create(STEPWrapper *sw,SDAI_Application_instance *sse);
+    //static methods
+    static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
 #endif /* SWEPT_SURFACE_H_ */

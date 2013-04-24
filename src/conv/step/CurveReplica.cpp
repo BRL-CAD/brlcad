@@ -34,43 +34,47 @@
 
 #define CLASSNAME "CurveReplica"
 #define ENTITYNAME "Curve_Replica"
-string CurveReplica::entityname = Factory::RegisterClass(ENTITYNAME,(FactoryMethod)CurveReplica::Create);
+string CurveReplica::entityname = Factory::RegisterClass(ENTITYNAME, (FactoryMethod)CurveReplica::Create);
 
-CurveReplica::CurveReplica() {
+CurveReplica::CurveReplica()
+{
     step = NULL;
     id = 0;
     parent_curve = NULL;
     transformation = NULL;
 }
 
-CurveReplica::CurveReplica(STEPWrapper *sw,int step_id) {
+CurveReplica::CurveReplica(STEPWrapper *sw, int step_id)
+{
     step = sw;
     id = step_id;
     parent_curve = NULL;
     transformation = NULL;
 }
 
-CurveReplica::~CurveReplica() {
+CurveReplica::~CurveReplica()
+{
 }
 
 bool
-CurveReplica::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
-    step=sw;
+CurveReplica::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
+    step = sw;
     id = sse->STEPfile_id;
 
-    if ( !Curve::Load(sw,sse) ) {
+    if (!Curve::Load(sw, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::Curve." << std::endl;
 	return false;
     }
 
     // need to do this for local attributes to makes sure we have
     // the actual entity and not a complex/supertype parent
-    sse = step->getEntity(sse,ENTITYNAME);
+    sse = step->getEntity(sse, ENTITYNAME);
 
     if (parent_curve == NULL) {
-	SDAI_Application_instance *entity = step->getEntityAttribute(sse,"parent_curve");
+	SDAI_Application_instance *entity = step->getEntityAttribute(sse, "parent_curve");
 	if (entity != NULL) {
-	    parent_curve = dynamic_cast<Curve *>(Factory::CreateObject(sw,entity)); //CreateCurveObject(sw,entity));
+	    parent_curve = dynamic_cast<Curve *>(Factory::CreateObject(sw, entity)); //CreateCurveObject(sw,entity));
 	} else {
 	    std::cout << CLASSNAME << ":Error loading member field \"parent_curve\"." << std::endl;
 	    return false;
@@ -78,9 +82,9 @@ CurveReplica::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
     }
 
     if (transformation == NULL) {
-	SDAI_Application_instance *entity = step->getEntityAttribute(sse,"transformation");
+	SDAI_Application_instance *entity = step->getEntityAttribute(sse, "transformation");
 	if (entity != NULL) {
-	    transformation = dynamic_cast<CartesianTransformationOperator *>(Factory::CreateObject(sw,entity));
+	    transformation = dynamic_cast<CartesianTransformationOperator *>(Factory::CreateObject(sw, entity));
 	} else {
 	    std::cout << CLASSNAME << ":Error loading member field \"transformation\"." << std::endl;
 	    return false;
@@ -91,40 +95,50 @@ CurveReplica::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
 }
 
 const double *
-CurveReplica::PointAtEnd() {
+CurveReplica::PointAtEnd()
+{
     std::cerr << CLASSNAME << ": Error: virtual function PointAtEnd() not implemented for this type of curve.";
     return NULL;
 }
 
 const double *
-CurveReplica::PointAtStart() {
+CurveReplica::PointAtStart()
+{
     std::cerr << CLASSNAME << ": Error: virtual function PointAtStart() not implemented for this type of curve.";
     return NULL;
 }
 
 void
-CurveReplica::Print(int level) {
-    TAB(level); std::cout << CLASSNAME << ":" << name << "(";
+CurveReplica::Print(int level)
+{
+    TAB(level);
+    std::cout << CLASSNAME << ":" << name << "(";
     std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-    TAB(level); std::cout << "Attributes:" << std::endl;
-    TAB(level+1); std::cout << "parent_curve:" << std::endl;
-    parent_curve->Print(level+1);
+    TAB(level);
+    std::cout << "Attributes:" << std::endl;
+    TAB(level + 1);
+    std::cout << "parent_curve:" << std::endl;
+    parent_curve->Print(level + 1);
 
-    TAB(level+1); std::cout << "transformation:" << std::endl;
-    transformation->Print(level+1);
+    TAB(level + 1);
+    std::cout << "transformation:" << std::endl;
+    transformation->Print(level + 1);
 
-    TAB(level); std::cout << "Inherited Attributes:" << std::endl;
-    Curve::Print(level+1);
+    TAB(level);
+    std::cout << "Inherited Attributes:" << std::endl;
+    Curve::Print(level + 1);
 }
 
 STEPEntity *
-CurveReplica::GetInstance(STEPWrapper *sw, int id) {
+CurveReplica::GetInstance(STEPWrapper *sw, int id)
+{
     return new CurveReplica(sw, id);
 }
 
 STEPEntity *
-CurveReplica::Create(STEPWrapper *sw,SDAI_Application_instance *sse){
+CurveReplica::Create(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
     return STEPEntity::CreateEntity(sw, sse, GetInstance, CLASSNAME);
 }
 

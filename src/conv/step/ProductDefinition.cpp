@@ -117,21 +117,22 @@ void ProductDefinition::Print(int level)
 
     TAB(level);
     std::cout << "Attributes:" << std::endl;
-    TAB(level+1);
+    TAB(level + 1);
     std::cout << "ident:" << ident << std::endl;
-    TAB(level+1);
+    TAB(level + 1);
     std::cout << "description:" << description << std::endl;
 
-    TAB(level+1);
+    TAB(level + 1);
     std::cout << "formation:" << std::endl;
     formation->Print(level + 1);
-    TAB(level+1);
+    TAB(level + 1);
     std::cout << "frame_of_reference:" << std::endl;
     frame_of_reference->Print(level + 2);
 }
 
 STEPEntity *
-ProductDefinition::GetInstance(STEPWrapper *sw, int id) {
+ProductDefinition::GetInstance(STEPWrapper *sw, int id)
+{
     return new ProductDefinition(sw, id);
 }
 

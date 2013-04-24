@@ -31,47 +31,55 @@
 
 #define CLASSNAME "Plane"
 #define ENTITYNAME "Plane"
-string Plane::entityname = Factory::RegisterClass(ENTITYNAME,(FactoryMethod)Plane::Create);
+string Plane::entityname = Factory::RegisterClass(ENTITYNAME, (FactoryMethod)Plane::Create);
 
-Plane::Plane() {
+Plane::Plane()
+{
     step = NULL;
     id = 0;
 }
 
-Plane::Plane(STEPWrapper *sw,int step_id) {
-    step=sw;
+Plane::Plane(STEPWrapper *sw, int step_id)
+{
+    step = sw;
     id = step_id;
 }
 
-Plane::~Plane() {
+Plane::~Plane()
+{
 }
 
 const double *
-Plane::GetOrigin() {
+Plane::GetOrigin()
+{
     return position->GetOrigin();
 }
 
 const double *
-Plane::GetNormal() {
+Plane::GetNormal()
+{
     return position->GetNormal();
 }
 
 const double *
-Plane::GetXAxis() {
+Plane::GetXAxis()
+{
     return position->GetXAxis();
 }
 
 const double *
-Plane::GetYAxis() {
+Plane::GetYAxis()
+{
     return position->GetYAxis();
 }
 
 bool
-Plane::Load(STEPWrapper *sw, SDAI_Application_instance *sse) {
-    step=sw;
+Plane::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
+    step = sw;
     id = sse->STEPfile_id;
 
-    if ( !ElementarySurface::Load(step,sse) ) {
+    if (!ElementarySurface::Load(step, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::Surface." << std::endl;
 	return false;
     }
@@ -80,20 +88,24 @@ Plane::Load(STEPWrapper *sw, SDAI_Application_instance *sse) {
 }
 
 void
-Plane::Print(int level) {
-    TAB(level); std::cout << CLASSNAME << ":" << name << "(";
+Plane::Print(int level)
+{
+    TAB(level);
+    std::cout << CLASSNAME << ":" << name << "(";
     std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-    ElementarySurface::Print(level+1);
+    ElementarySurface::Print(level + 1);
 }
 
 STEPEntity *
-Plane::GetInstance(STEPWrapper *sw, int id) {
+Plane::GetInstance(STEPWrapper *sw, int id)
+{
     return new Plane(sw, id);
 }
 
 STEPEntity *
-Plane::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
+Plane::Create(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
     return STEPEntity::CreateEntity(sw, sse, GetInstance, CLASSNAME);
 }
 

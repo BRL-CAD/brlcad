@@ -30,22 +30,23 @@
 #include "VolumeUnit.h"
 #include "SiUnit.h"
 
-class VolumeSiUnit : public VolumeUnit, public SiUnit {
+class VolumeSiUnit : public VolumeUnit, public SiUnit
+{
 private:
-	static string entityname;
-	static EntityInstanceFunc GetInstance;
+    static string entityname;
+    static EntityInstanceFunc GetInstance;
 
 protected:
 
 public:
-	VolumeSiUnit();
-	virtual ~VolumeSiUnit();
-	VolumeSiUnit(STEPWrapper *sw,int step_id);
-	bool Load(STEPWrapper *sw,SDAI_Application_instance *sse);
-	virtual void Print(int level);
+    VolumeSiUnit();
+    virtual ~VolumeSiUnit();
+    VolumeSiUnit(STEPWrapper *sw, int step_id);
+    bool Load(STEPWrapper *sw, SDAI_Application_instance *sse);
+    virtual void Print(int level);
 
-	//static methods
-	static STEPEntity *Create(STEPWrapper *sw,SDAI_Application_instance *sse);
+    //static methods
+    static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
 #endif /* VOLUMESIUNIT_H_ */

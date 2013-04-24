@@ -38,7 +38,8 @@ class ON_Brep;
 class Product;
 typedef list<Product *> LIST_OF_PRODUCTS;
 
-class ProductRelatedProductCategory: public ProductCategory {
+class ProductRelatedProductCategory: public ProductCategory
+{
 private:
     static string entityname;
     static EntityInstanceFunc GetInstance;

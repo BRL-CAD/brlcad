@@ -29,28 +29,33 @@
 
 #include "Conic.h"
 
-class Circle : public Conic {
+class Circle : public Conic
+{
 private:
-	static string entityname;
-	static EntityInstanceFunc GetInstance;
+    static string entityname;
+    static EntityInstanceFunc GetInstance;
 
 protected:
-	double radius;
+    double radius;
 
-	Circle();
-	Circle(STEPWrapper *sw,int step_id);
+    Circle();
+    Circle(STEPWrapper *sw, int step_id);
 
 public:
-	virtual ~Circle();
-	virtual curve_type CurveType() { return CONIC; };
-	virtual conic_type ConicType() { return CIRCLE; };
-	bool Load(STEPWrapper *sw,SDAI_Application_instance *sse);
-	virtual bool LoadONBrep(ON_Brep *brep);
-	virtual void Print(int level);
-	virtual void SetParameterTrim(double start, double end);
+    virtual ~Circle();
+    virtual curve_type CurveType() {
+	return CONIC;
+    };
+    virtual conic_type ConicType() {
+	return CIRCLE;
+    };
+    bool Load(STEPWrapper *sw, SDAI_Application_instance *sse);
+    virtual bool LoadONBrep(ON_Brep *brep);
+    virtual void Print(int level);
+    virtual void SetParameterTrim(double start, double end);
 
-	//static methods
-	static STEPEntity *Create(STEPWrapper *sw,SDAI_Application_instance *sse);
+    //static methods
+    static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
 #endif /* CIRCLE_H_ */

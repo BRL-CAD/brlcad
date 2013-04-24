@@ -32,27 +32,31 @@
 
 #define CLASSNAME "EdgeLoop"
 #define ENTITYNAME "Edge_Loop"
-string EdgeLoop::entityname = Factory::RegisterClass(ENTITYNAME,(FactoryMethod)EdgeLoop::Create);
+string EdgeLoop::entityname = Factory::RegisterClass(ENTITYNAME, (FactoryMethod)EdgeLoop::Create);
 
-EdgeLoop::EdgeLoop() {
+EdgeLoop::EdgeLoop()
+{
     step = NULL;
     id = 0;
 }
 
-EdgeLoop::EdgeLoop(STEPWrapper *sw,int step_id) {
+EdgeLoop::EdgeLoop(STEPWrapper *sw, int step_id)
+{
     step = sw;
     id = step_id;
 }
 
-EdgeLoop::~EdgeLoop() {
+EdgeLoop::~EdgeLoop()
+{
 }
 
 bool
-EdgeLoop::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
-    step=sw;
+EdgeLoop::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
+    step = sw;
     id = sse->STEPfile_id;
 
-    if ( !Path::Load(step,sse) ) {
+    if (!Path::Load(step, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::Path." << std::endl;
 	return false;
     }
@@ -60,26 +64,32 @@ EdgeLoop::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
 }
 
 void
-EdgeLoop::Print(int level) {
-    TAB(level); std::cout << CLASSNAME << ":" << "(";
+EdgeLoop::Print(int level)
+{
+    TAB(level);
+    std::cout << CLASSNAME << ":" << "(";
     std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-    TAB(level); std::cout << "Inherited Attributes:" << std::endl;
-    Path::Print(level+1);
+    TAB(level);
+    std::cout << "Inherited Attributes:" << std::endl;
+    Path::Print(level + 1);
 }
 
 STEPEntity *
-EdgeLoop::GetInstance(STEPWrapper *sw, int id) {
+EdgeLoop::GetInstance(STEPWrapper *sw, int id)
+{
     return new EdgeLoop(sw, id);
 }
 
 STEPEntity *
-EdgeLoop::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
+EdgeLoop::Create(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
     return STEPEntity::CreateEntity(sw, sse, GetInstance, CLASSNAME);
 }
 
 ON_BoundingBox *
-EdgeLoop::GetEdgeBounds(ON_Brep *brep) {
+EdgeLoop::GetEdgeBounds(ON_Brep *brep)
+{
     return Path::GetEdgeBounds(brep);
 }
 

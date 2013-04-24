@@ -31,30 +31,34 @@
 
 #define CLASSNAME "Loop"
 #define ENTITYNAME "Loop"
-string Loop::entityname = Factory::RegisterClass(ENTITYNAME,(FactoryMethod)Loop::Create);
+string Loop::entityname = Factory::RegisterClass(ENTITYNAME, (FactoryMethod)Loop::Create);
 
-Loop::Loop() {
+Loop::Loop()
+{
     step = NULL;
     id = 0;
     ON_loop_index = 0;
 }
 
-Loop::Loop(STEPWrapper *sw,int step_id) {
+Loop::Loop(STEPWrapper *sw, int step_id)
+{
     step = sw;
     id = step_id;
     ON_loop_index = 0;
 }
 
-Loop::~Loop() {
+Loop::~Loop()
+{
 }
 
 bool
-Loop::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
-    step=sw;
+Loop::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
+    step = sw;
     id = sse->STEPfile_id;
 
     // load base class attributes
-    if ( !TopologicalRepresentationItem::Load(step,sse) ) {
+    if (!TopologicalRepresentationItem::Load(step, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::TopologicalRepresentationItem." << std::endl;
 	return false;
     }
@@ -63,26 +67,32 @@ Loop::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
 }
 
 void
-Loop::Print(int level) {
-    TAB(level); std::cout << CLASSNAME << ":" << name << "(";
+Loop::Print(int level)
+{
+    TAB(level);
+    std::cout << CLASSNAME << ":" << name << "(";
     std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-    TAB(level); std::cout << "Inherited Attributes:" << std::endl;
-    TopologicalRepresentationItem::Print(level+1);
+    TAB(level);
+    std::cout << "Inherited Attributes:" << std::endl;
+    TopologicalRepresentationItem::Print(level + 1);
 }
 
 STEPEntity *
-Loop::GetInstance(STEPWrapper *sw, int id) {
+Loop::GetInstance(STEPWrapper *sw, int id)
+{
     return new Loop(sw, id);
 }
 
 STEPEntity *
-Loop::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
+Loop::Create(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
     return STEPEntity::CreateEntity(sw, sse, GetInstance, CLASSNAME);
 }
 
 ON_BoundingBox *
-Loop::GetEdgeBounds(ON_Brep *UNUSED(brep)) {
+Loop::GetEdgeBounds(ON_Brep *UNUSED(brep))
+{
     return NULL;
 }
 

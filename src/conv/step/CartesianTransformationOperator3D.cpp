@@ -33,41 +33,45 @@
 
 #define CLASSNAME "CartesianTransformationOperator3D"
 #define ENTITYNAME "Cartesian_Transformation_Operator_3d"
-string CartesianTransformationOperator3D::entityname = Factory::RegisterClass(ENTITYNAME,(FactoryMethod)CartesianTransformationOperator3D::Create);
+string CartesianTransformationOperator3D::entityname = Factory::RegisterClass(ENTITYNAME, (FactoryMethod)CartesianTransformationOperator3D::Create);
 
-CartesianTransformationOperator3D::CartesianTransformationOperator3D() {
+CartesianTransformationOperator3D::CartesianTransformationOperator3D()
+{
     step = NULL;
     id = 0;
     axis3 = NULL;
 }
 
-CartesianTransformationOperator3D::CartesianTransformationOperator3D(STEPWrapper *sw,int step_id) {
+CartesianTransformationOperator3D::CartesianTransformationOperator3D(STEPWrapper *sw, int step_id)
+{
     step = sw;
     id = step_id;
     axis3 = NULL;
 }
 
-CartesianTransformationOperator3D::~CartesianTransformationOperator3D() {
+CartesianTransformationOperator3D::~CartesianTransformationOperator3D()
+{
 }
 
 bool
-CartesianTransformationOperator3D::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
-    step=sw;
+CartesianTransformationOperator3D::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
+    step = sw;
     id = sse->STEPfile_id;
 
-    if ( !CartesianTransformationOperator::Load(sw,sse) ) {
+    if (!CartesianTransformationOperator::Load(sw, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::CartesianTransformationOperator." << std::endl;
 	return false;
     }
 
     // need to do this for local attributes to makes sure we have
     // the actual entity and not a complex/supertype parent
-    sse = step->getEntity(sse,ENTITYNAME);
+    sse = step->getEntity(sse, ENTITYNAME);
 
     if (axis3 == NULL) {
-	SDAI_Application_instance *entity = step->getEntityAttribute(sse,"axis3");
+	SDAI_Application_instance *entity = step->getEntityAttribute(sse, "axis3");
 	if (entity) { //this attribute is optional
-	    axis3 = dynamic_cast<Direction *>(Factory::CreateObject(sw,entity));
+	    axis3 = dynamic_cast<Direction *>(Factory::CreateObject(sw, entity));
 	}
     }
 
@@ -75,27 +79,34 @@ CartesianTransformationOperator3D::Load(STEPWrapper *sw,SDAI_Application_instanc
 }
 
 void
-CartesianTransformationOperator3D::Print(int level) {
-    TAB(level); std::cout << CLASSNAME << ":" << GeometricRepresentationItem::name << "(";
+CartesianTransformationOperator3D::Print(int level)
+{
+    TAB(level);
+    std::cout << CLASSNAME << ":" << GeometricRepresentationItem::name << "(";
     std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-    TAB(level); std::cout << "Attributes:" << std::endl;
+    TAB(level);
+    std::cout << "Attributes:" << std::endl;
     if (axis3) {
-	TAB(level+1); std::cout << "axis3:" << std::endl;
-	axis3->Print(level+1);
+	TAB(level + 1);
+	std::cout << "axis3:" << std::endl;
+	axis3->Print(level + 1);
     }
 
-    TAB(level); std::cout << "Inherited Attributes:" << std::endl;
-    CartesianTransformationOperator::Print(level+1);
+    TAB(level);
+    std::cout << "Inherited Attributes:" << std::endl;
+    CartesianTransformationOperator::Print(level + 1);
 }
 
 STEPEntity *
-CartesianTransformationOperator3D::GetInstance(STEPWrapper *sw, int id) {
+CartesianTransformationOperator3D::GetInstance(STEPWrapper *sw, int id)
+{
     return new CartesianTransformationOperator3D(sw, id);
 }
 
 STEPEntity *
-CartesianTransformationOperator3D::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
+CartesianTransformationOperator3D::Create(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
     return STEPEntity::CreateEntity(sw, sse, GetInstance, CLASSNAME);
 }
 

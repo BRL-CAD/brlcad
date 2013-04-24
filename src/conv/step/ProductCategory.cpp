@@ -91,14 +91,15 @@ void ProductCategory::Print(int level)
 
     TAB(level);
     std::cout << "Attributes:" << std::endl;
-    TAB(level+1);
+    TAB(level + 1);
     std::cout << "name:" << name << std::endl;
-    TAB(level+1);
+    TAB(level + 1);
     std::cout << "description:" << description << std::endl;
 }
 
 STEPEntity *
-ProductCategory::GetInstance(STEPWrapper *sw, int id) {
+ProductCategory::GetInstance(STEPWrapper *sw, int id)
+{
     return new ProductCategory(sw, id);
 }
 

@@ -30,22 +30,23 @@
 #include "MassUnit.h"
 #include "ContextDependentUnit.h"
 
-class MassContextDependentUnit : public MassUnit, public ContextDependentUnit {
+class MassContextDependentUnit : public MassUnit, public ContextDependentUnit
+{
 private:
-	static string entityname;
-	static EntityInstanceFunc GetInstance;
+    static string entityname;
+    static EntityInstanceFunc GetInstance;
 
 protected:
 
 public:
-	MassContextDependentUnit();
-	virtual ~MassContextDependentUnit();
-	MassContextDependentUnit(STEPWrapper *sw,int step_id);
-	bool Load(STEPWrapper *sw,SDAI_Application_instance *sse);
-	virtual void Print(int level);
+    MassContextDependentUnit();
+    virtual ~MassContextDependentUnit();
+    MassContextDependentUnit(STEPWrapper *sw, int step_id);
+    bool Load(STEPWrapper *sw, SDAI_Application_instance *sse);
+    virtual void Print(int level);
 
-	//static methods
-	static STEPEntity *Create(STEPWrapper *sw,SDAI_Application_instance *sse);
+    //static methods
+    static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
 #endif /* MASSCONTEXTDEPENDENTUNIT_H_ */

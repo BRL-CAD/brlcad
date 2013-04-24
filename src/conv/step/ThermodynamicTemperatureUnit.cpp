@@ -31,29 +31,33 @@
 
 #define CLASSNAME "ThermodynamicTemperatureUnit"
 #define ENTITYNAME "Thermodynamic_Temperature_Unit"
-string ThermodynamicTemperatureUnit::entityname = Factory::RegisterClass(ENTITYNAME,(FactoryMethod)ThermodynamicTemperatureUnit::Create);
+string ThermodynamicTemperatureUnit::entityname = Factory::RegisterClass(ENTITYNAME, (FactoryMethod)ThermodynamicTemperatureUnit::Create);
 
-ThermodynamicTemperatureUnit::ThermodynamicTemperatureUnit() {
+ThermodynamicTemperatureUnit::ThermodynamicTemperatureUnit()
+{
     step = NULL;
     id = 0;
 }
 
-ThermodynamicTemperatureUnit::ThermodynamicTemperatureUnit(STEPWrapper *sw,int step_id) {
+ThermodynamicTemperatureUnit::ThermodynamicTemperatureUnit(STEPWrapper *sw, int step_id)
+{
     step = sw;
     id = step_id;
 }
 
-ThermodynamicTemperatureUnit::~ThermodynamicTemperatureUnit() {
+ThermodynamicTemperatureUnit::~ThermodynamicTemperatureUnit()
+{
 }
 
 bool
-ThermodynamicTemperatureUnit::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
-    step=sw;
+ThermodynamicTemperatureUnit::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
+    step = sw;
     id = sse->STEPfile_id;
 
 
     // load base class attributes
-    if ( !NamedUnit::Load(step,sse) ) {
+    if (!NamedUnit::Load(step, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::Unit." << std::endl;
 	return false;
     }
@@ -62,22 +66,27 @@ ThermodynamicTemperatureUnit::Load(STEPWrapper *sw,SDAI_Application_instance *ss
 }
 
 void
-ThermodynamicTemperatureUnit::Print(int level) {
-    TAB(level); std::cout << CLASSNAME << ":" << "(";
+ThermodynamicTemperatureUnit::Print(int level)
+{
+    TAB(level);
+    std::cout << CLASSNAME << ":" << "(";
     std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-    TAB(level); std::cout << "Inherited Attributes:" << std::endl;
-    NamedUnit::Print(level+1);
+    TAB(level);
+    std::cout << "Inherited Attributes:" << std::endl;
+    NamedUnit::Print(level + 1);
 
 }
 
 STEPEntity *
-ThermodynamicTemperatureUnit::GetInstance(STEPWrapper *sw, int id) {
+ThermodynamicTemperatureUnit::GetInstance(STEPWrapper *sw, int id)
+{
     return new ThermodynamicTemperatureUnit(sw, id);
 }
 
 STEPEntity *
-ThermodynamicTemperatureUnit::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
+ThermodynamicTemperatureUnit::Create(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
     return STEPEntity::CreateEntity(sw, sse, GetInstance, CLASSNAME);
 }
 

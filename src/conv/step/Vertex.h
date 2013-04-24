@@ -29,26 +29,29 @@
 
 #include "TopologicalRepresentationItem.h"
 
-class Vertex : public TopologicalRepresentationItem {
-	typedef map<SDAI_Application_instance *,Vertex *> OBJECTS;
+class Vertex : public TopologicalRepresentationItem
+{
+    typedef map<SDAI_Application_instance *, Vertex *> OBJECTS;
 
 private:
-	static string entityname;
-	static EntityInstanceFunc GetInstance;
-	static OBJECTS objects;
+    static string entityname;
+    static EntityInstanceFunc GetInstance;
+    static OBJECTS objects;
 
 protected:
 
 public:
-	Vertex();
-	virtual ~Vertex();
-	Vertex(STEPWrapper *sw,int step_id);
-	bool Load(STEPWrapper *sw,SDAI_Application_instance *sse);
-	virtual const double *Point3d() { return NULL; };
-	virtual void Print(int level);
+    Vertex();
+    virtual ~Vertex();
+    Vertex(STEPWrapper *sw, int step_id);
+    bool Load(STEPWrapper *sw, SDAI_Application_instance *sse);
+    virtual const double *Point3d() {
+	return NULL;
+    };
+    virtual void Print(int level);
 
-	//static methods
-	static STEPEntity *Create(STEPWrapper *sw,SDAI_Application_instance *sse);
+    //static methods
+    static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
 #endif /* VERTEX_H_ */

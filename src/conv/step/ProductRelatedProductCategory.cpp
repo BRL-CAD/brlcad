@@ -103,7 +103,7 @@ void ProductRelatedProductCategory::Print(int level)
 
     TAB(level);
     std::cout << "Attributes:" << std::endl;
-    TAB(level+1);
+    TAB(level + 1);
     std::cout << "products:" << std::endl;
     LIST_OF_PRODUCTS::iterator i;
     for (i = products.begin(); i != products.end(); ++i) {
@@ -112,7 +112,8 @@ void ProductRelatedProductCategory::Print(int level)
 }
 
 STEPEntity *
-ProductRelatedProductCategory::GetInstance(STEPWrapper *sw, int id) {
+ProductRelatedProductCategory::GetInstance(STEPWrapper *sw, int id)
+{
     return new ProductRelatedProductCategory(sw, id);
 }
 

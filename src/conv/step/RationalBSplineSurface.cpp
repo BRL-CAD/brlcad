@@ -32,44 +32,48 @@
 
 #define CLASSNAME "RationalBSplineSurface"
 #define ENTITYNAME "Rational_B_Spline_Surface"
-string RationalBSplineSurface::entityname = Factory::RegisterClass(ENTITYNAME,(FactoryMethod)RationalBSplineSurface::Create);
+string RationalBSplineSurface::entityname = Factory::RegisterClass(ENTITYNAME, (FactoryMethod)RationalBSplineSurface::Create);
 
-RationalBSplineSurface::RationalBSplineSurface() {
+RationalBSplineSurface::RationalBSplineSurface()
+{
     step = NULL;
     id = 0;
 }
 
-RationalBSplineSurface::RationalBSplineSurface(STEPWrapper *sw,int step_id) {
+RationalBSplineSurface::RationalBSplineSurface(STEPWrapper *sw, int step_id)
+{
     step = sw;
     id = step_id;
 }
 
-RationalBSplineSurface::~RationalBSplineSurface() {
+RationalBSplineSurface::~RationalBSplineSurface()
+{
     LIST_OF_LIST_OF_REALS::iterator i = weights_data.begin();
     while (i != weights_data.end()) {
-	delete (*i);
+	delete(*i);
 	i = weights_data.erase(i);
     }
 }
 
 bool
-RationalBSplineSurface::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
-    step=sw;
+RationalBSplineSurface::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
+    step = sw;
     id = sse->STEPfile_id;
 
     // load base class attributes
-    if ( !BSplineSurface::Load(sw,sse) ) {
+    if (!BSplineSurface::Load(sw, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::BSplineSurface." << std::endl;
 	return false;
     }
 
     // need to do this for local attributes to makes sure we have
     // the actual entity and not a complex/supertype parent
-    sse = step->getEntity(sse,ENTITYNAME);
+    sse = step->getEntity(sse, ENTITYNAME);
 
     if (weights_data.empty()) {
 	std::string attrval;
-	STEPattribute *attr = step->getAttribute(sse,"weights_data");
+	STEPattribute *attr = step->getAttribute(sse, "weights_data");
 
 	if (attr) {
 	    GenericAggregate_ptr gp = (GenericAggregate_ptr)attr->ptr.a;
@@ -77,7 +81,7 @@ RationalBSplineSurface::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
 	    STEPnode *sn = (STEPnode *)gp->GetHead();
 	    const char *eaStr;
 
-	    while ( sn != NULL) {
+	    while (sn != NULL) {
 		eaStr = sn->asStr(attrval);
 		LIST_OF_REALS *uv = step->parseListOfReals(eaStr);
 		weights_data.push_back(uv);
@@ -100,19 +104,23 @@ RationalBSplineSurface::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
 }
 
 void
-RationalBSplineSurface::Print(int level) {
-    TAB(level); std::cout << CLASSNAME << ":" << name << "(";
+RationalBSplineSurface::Print(int level)
+{
+    TAB(level);
+    std::cout << CLASSNAME << ":" << name << "(";
     std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-    TAB(level); std::cout << "Inherited Attributes:" << std::endl;
+    TAB(level);
+    std::cout << "Inherited Attributes:" << std::endl;
     BSplineSurface::Print(level);
 
-    TAB(level); std::cout << "weights_data:" << std::endl;
+    TAB(level);
+    std::cout << "weights_data:" << std::endl;
     LIST_OF_LIST_OF_REALS::iterator i;
-    for(i=weights_data.begin();i!=weights_data.end();i++) {
+    for (i = weights_data.begin(); i != weights_data.end(); i++) {
 	LIST_OF_REALS::iterator j;
 	TAB(level);
-	for(j=(*i)->begin();j!=(*i)->end();j++) {
+	for (j = (*i)->begin(); j != (*i)->end(); j++) {
 	    std::cout << " " << (*j);
 	}
 	std::cout << std::endl;
@@ -120,12 +128,14 @@ RationalBSplineSurface::Print(int level) {
 }
 
 STEPEntity *
-RationalBSplineSurface::GetInstance(STEPWrapper *sw, int id) {
+RationalBSplineSurface::GetInstance(STEPWrapper *sw, int id)
+{
     return new RationalBSplineSurface(sw, id);
 }
 
 STEPEntity *
-RationalBSplineSurface::Create(STEPWrapper *sw,SDAI_Application_instance *sse){
+RationalBSplineSurface::Create(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
     return STEPEntity::CreateEntity(sw, sse, GetInstance, CLASSNAME);
 }
 

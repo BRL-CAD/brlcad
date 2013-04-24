@@ -33,76 +33,87 @@
 
 #define CLASSNAME "FaceBound"
 #define ENTITYNAME "Face_Bound"
-string FaceBound::entityname = Factory::RegisterClass(ENTITYNAME,(FactoryMethod)FaceBound::Create);
+string FaceBound::entityname = Factory::RegisterClass(ENTITYNAME, (FactoryMethod)FaceBound::Create);
 
-FaceBound::FaceBound() {
+FaceBound::FaceBound()
+{
     step = NULL;
     id = 0;
     bound = NULL;
     inner = true;
-	ON_face_index=-1;
-	orientation = BUnset;
+    ON_face_index = -1;
+    orientation = BUnset;
 }
 
-FaceBound::FaceBound(STEPWrapper *sw,int step_id) {
+FaceBound::FaceBound(STEPWrapper *sw, int step_id)
+{
     step = sw;
     id = step_id;
     bound = NULL;
     inner = true;
-	ON_face_index=-1;
-	orientation = BUnset;
+    ON_face_index = -1;
+    orientation = BUnset;
 }
 
-FaceBound::~FaceBound() {
+FaceBound::~FaceBound()
+{
     bound = NULL;
 }
 
 bool
-FaceBound::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
-    step=sw;
+FaceBound::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
+    step = sw;
     id = sse->STEPfile_id;
 
     // load base class attributes
-    if ( !TopologicalRepresentationItem::Load(step,sse) ) {
+    if (!TopologicalRepresentationItem::Load(step, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::TopologicalRepresentationItem." << std::endl;
 	return false;
     }
 
     // need to do this for local attributes to makes sure we have
     // the actual entity and not a complex/supertype parent
-    sse = step->getEntity(sse,ENTITYNAME);
+    sse = step->getEntity(sse, ENTITYNAME);
 
     if (bound == NULL) {
-	SDAI_Application_instance *entity = step->getEntityAttribute(sse,"bound");
+	SDAI_Application_instance *entity = step->getEntityAttribute(sse, "bound");
 	if (entity) {
-	    bound = dynamic_cast<Loop*>(Factory::CreateObject(sw,entity));
+	    bound = dynamic_cast<Loop *>(Factory::CreateObject(sw, entity));
 	} else {
 	    std::cerr << CLASSNAME << ": Error loading 'bound' entity." << std::endl;
 	    return false;
 	}
     }
-    orientation = step->getBooleanAttribute(sse,"orientation");
+    orientation = step->getBooleanAttribute(sse, "orientation");
 
     return true;
 }
 
 void
-FaceBound::Print(int level) {
-    TAB(level); std::cout << CLASSNAME << ":" << name << "(";
+FaceBound::Print(int level)
+{
+    TAB(level);
+    std::cout << CLASSNAME << ":" << name << "(";
     std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-    TAB(level); std::cout << "Attributes:" << std::endl;
-    TAB(level+1); std::cout << "bound:" << std::endl;
-    bound->Print(level+1);
+    TAB(level);
+    std::cout << "Attributes:" << std::endl;
+    TAB(level + 1);
+    std::cout << "bound:" << std::endl;
+    bound->Print(level + 1);
 
-    TAB(level+1); std::cout << "orientation:" << step->getBooleanString((Boolean)orientation) << std::endl;
+    TAB(level + 1);
+    std::cout << "orientation:" << step->getBooleanString((Boolean)orientation) << std::endl;
 
-    TAB(level); std::cout << "Inherited Attributes:" << std::endl;
-    TopologicalRepresentationItem::Print(level+1);
+    TAB(level);
+    std::cout << "Inherited Attributes:" << std::endl;
+    TopologicalRepresentationItem::Print(level + 1);
 }
 
 bool
-FaceBound::Oriented() {
+FaceBound::Oriented()
+{
     if (orientation == BTrue) {
 	return true;
     }
@@ -110,12 +121,14 @@ FaceBound::Oriented() {
 }
 
 STEPEntity *
-FaceBound::GetInstance(STEPWrapper *sw, int id) {
+FaceBound::GetInstance(STEPWrapper *sw, int id)
+{
     return new FaceBound(sw, id);
 }
 
 STEPEntity *
-FaceBound::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
+FaceBound::Create(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
     return STEPEntity::CreateEntity(sw, sse, GetInstance, CLASSNAME);
 }
 

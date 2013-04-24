@@ -32,25 +32,26 @@
 
 class Curve;
 
-class EdgeCurve : public Edge , public GeometricRepresentationItem {
+class EdgeCurve : public Edge , public GeometricRepresentationItem
+{
 private:
-	static string entityname;
-	static EntityInstanceFunc GetInstance;
+    static string entityname;
+    static EntityInstanceFunc GetInstance;
 
 protected:
-	Boolean same_sense;
-	Curve *edge_geometry;
+    Boolean same_sense;
+    Curve *edge_geometry;
 
 public:
-	EdgeCurve();
-	virtual ~EdgeCurve();
-	EdgeCurve(STEPWrapper *sw,int step_id);
-	bool Load(STEPWrapper *sw,SDAI_Application_instance *sse);
-	virtual bool LoadONBrep(ON_Brep *brep);
-	virtual void Print(int level);
+    EdgeCurve();
+    virtual ~EdgeCurve();
+    EdgeCurve(STEPWrapper *sw, int step_id);
+    bool Load(STEPWrapper *sw, SDAI_Application_instance *sse);
+    virtual bool LoadONBrep(ON_Brep *brep);
+    virtual void Print(int level);
 
-	//static methods
-	static STEPEntity *Create(STEPWrapper *sw,SDAI_Application_instance *sse);
+    //static methods
+    static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
 #endif /* EDGECURVE_H_ */

@@ -32,23 +32,24 @@
 class UncertaintyMeasureWithUnit;
 typedef list<UncertaintyMeasureWithUnit *> LIST_OF_UNCERTAINTY_MEASURE_WITH_UNIT;
 
-class GlobalUncertaintyAssignedContext : public RepresentationContext {
+class GlobalUncertaintyAssignedContext : public RepresentationContext
+{
 private:
-	static string entityname;
-	static EntityInstanceFunc GetInstance;
+    static string entityname;
+    static EntityInstanceFunc GetInstance;
 
 protected:
-	LIST_OF_UNCERTAINTY_MEASURE_WITH_UNIT uncertainty;
+    LIST_OF_UNCERTAINTY_MEASURE_WITH_UNIT uncertainty;
 
 public:
-	GlobalUncertaintyAssignedContext();
-	virtual ~GlobalUncertaintyAssignedContext();
-	GlobalUncertaintyAssignedContext(STEPWrapper *sw,int step_id);
-	bool Load(STEPWrapper *sw,SDAI_Application_instance *sse);
-	virtual void Print(int level);
+    GlobalUncertaintyAssignedContext();
+    virtual ~GlobalUncertaintyAssignedContext();
+    GlobalUncertaintyAssignedContext(STEPWrapper *sw, int step_id);
+    bool Load(STEPWrapper *sw, SDAI_Application_instance *sse);
+    virtual void Print(int level);
 
-	//static methods
-	static STEPEntity *Create(STEPWrapper *sw,SDAI_Application_instance *sse);
+    //static methods
+    static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
 #endif /* GLOBALUNCERTAINTYASSIGNEDCONTEXT_H_ */

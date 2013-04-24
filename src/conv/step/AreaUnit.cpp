@@ -31,29 +31,33 @@
 
 #define CLASSNAME "AreaUnit"
 #define ENTITYNAME "Area_Unit"
-string AreaUnit::entityname = Factory::RegisterClass(ENTITYNAME,(FactoryMethod)AreaUnit::Create);
+string AreaUnit::entityname = Factory::RegisterClass(ENTITYNAME, (FactoryMethod)AreaUnit::Create);
 
-AreaUnit::AreaUnit() {
+AreaUnit::AreaUnit()
+{
     step = NULL;
     id = 0;
 }
 
-AreaUnit::AreaUnit(STEPWrapper *sw,int step_id) {
+AreaUnit::AreaUnit(STEPWrapper *sw, int step_id)
+{
     step = sw;
     id = step_id;
 }
 
-AreaUnit::~AreaUnit() {
+AreaUnit::~AreaUnit()
+{
 }
 
 bool
-AreaUnit::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
-    step=sw;
+AreaUnit::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
+    step = sw;
     id = sse->STEPfile_id;
 
 
     // load base class attributes
-    if ( !NamedUnit::Load(step,sse) ) {
+    if (!NamedUnit::Load(step, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::Unit." << std::endl;
 	return false;
     }
@@ -62,22 +66,27 @@ AreaUnit::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
 }
 
 void
-AreaUnit::Print(int level) {
-    TAB(level); std::cout << CLASSNAME << ":" << "(";
+AreaUnit::Print(int level)
+{
+    TAB(level);
+    std::cout << CLASSNAME << ":" << "(";
     std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-    TAB(level); std::cout << "Inherited Attributes:" << std::endl;
-    NamedUnit::Print(level+1);
+    TAB(level);
+    std::cout << "Inherited Attributes:" << std::endl;
+    NamedUnit::Print(level + 1);
 
 }
 
 STEPEntity *
-AreaUnit::GetInstance(STEPWrapper *sw, int id) {
+AreaUnit::GetInstance(STEPWrapper *sw, int id)
+{
     return new AreaUnit(sw, id);
 }
 
 STEPEntity *
-AreaUnit::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
+AreaUnit::Create(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
     return STEPEntity::CreateEntity(sw, sse, GetInstance, CLASSNAME);
 }
 

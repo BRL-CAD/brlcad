@@ -30,22 +30,23 @@
 #include "AreaUnit.h"
 #include "ConversionBasedUnit.h"
 
-class AreaConversionBasedUnit : public AreaUnit, public ConversionBasedUnit {
+class AreaConversionBasedUnit : public AreaUnit, public ConversionBasedUnit
+{
 private:
-	static string entityname;
-	static EntityInstanceFunc GetInstance;
+    static string entityname;
+    static EntityInstanceFunc GetInstance;
 
 protected:
 
 public:
-	AreaConversionBasedUnit();
-	virtual ~AreaConversionBasedUnit();
-	AreaConversionBasedUnit(STEPWrapper *sw,int step_id);
-	bool Load(STEPWrapper *sw,SDAI_Application_instance *sse);
-	virtual void Print(int level);
+    AreaConversionBasedUnit();
+    virtual ~AreaConversionBasedUnit();
+    AreaConversionBasedUnit(STEPWrapper *sw, int step_id);
+    bool Load(STEPWrapper *sw, SDAI_Application_instance *sse);
+    virtual void Print(int level);
 
-	//static methods
-	static STEPEntity *Create(STEPWrapper *sw,SDAI_Application_instance *sse);
+    //static methods
+    static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
 #endif /* AREACONVERSIONBASEDUNIT_H_ */

@@ -79,7 +79,8 @@ void ShapeRepresentationRelationship::Print(int level)
 }
 
 STEPEntity *
-ShapeRepresentationRelationship::GetInstance(STEPWrapper *sw, int id) {
+ShapeRepresentationRelationship::GetInstance(STEPWrapper *sw, int id)
+{
     return new ShapeRepresentationRelationship(sw, id);
 }
 

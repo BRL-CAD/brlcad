@@ -32,7 +32,7 @@
 
 #define CLASSNAME "BSplineCurve"
 #define ENTITYNAME "B_Spline_Curve"
-string BSplineCurve::entityname = Factory::RegisterClass(ENTITYNAME,(FactoryMethod)BSplineCurve::Create);
+string BSplineCurve::entityname = Factory::RegisterClass(ENTITYNAME, (FactoryMethod)BSplineCurve::Create);
 
 static const char *B_spline_curve_form_string[] = {
     "polyline_form",
@@ -44,7 +44,8 @@ static const char *B_spline_curve_form_string[] = {
     "unset"
 };
 
-BSplineCurve::BSplineCurve() {
+BSplineCurve::BSplineCurve()
+{
     step = NULL;
     id = 0;
     degree = 0;
@@ -53,7 +54,8 @@ BSplineCurve::BSplineCurve() {
     self_intersect = LUnset;
 }
 
-BSplineCurve::BSplineCurve(STEPWrapper *sw,int step_id) {
+BSplineCurve::BSplineCurve(STEPWrapper *sw, int step_id)
+{
     step = sw;
     id = step_id;
     degree = 0;
@@ -62,7 +64,8 @@ BSplineCurve::BSplineCurve(STEPWrapper *sw,int step_id) {
     self_intersect = LUnset;
 }
 
-BSplineCurve::~BSplineCurve() {
+BSplineCurve::~BSplineCurve()
+{
     /*
       LIST_OF_POINTS::iterator i = control_points_list.begin();
 
@@ -75,28 +78,29 @@ BSplineCurve::~BSplineCurve() {
 }
 
 bool
-BSplineCurve::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
+BSplineCurve::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
     bool retValue = true;
 
-    step=sw;
+    step = sw;
     id = sse->STEPfile_id;
 
-    if ( !BoundedCurve::Load(step,sse) ) {
+    if (!BoundedCurve::Load(step, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::BoundedCurve." << std::endl;
 	return false;
     }
 
     // need to do this for local attributes to makes sure we have
     // the actual entity and not a complex/supertype parent
-    sse = step->getEntity(sse,ENTITYNAME);
+    sse = step->getEntity(sse, ENTITYNAME);
 
     if (control_points_list.empty()) {
-	LIST_OF_ENTITIES *l = step->getListOfEntities(sse,"control_points_list");
+	LIST_OF_ENTITIES *l = step->getListOfEntities(sse, "control_points_list");
 	LIST_OF_ENTITIES::iterator i;
-	for(i=l->begin();i!=l->end();i++) {
+	for (i = l->begin(); i != l->end(); i++) {
 	    SDAI_Application_instance *entity = (*i);
 	    if (entity) {
-		CartesianPoint *aCP = dynamic_cast<CartesianPoint *>(Factory::CreateObject(sw,entity));
+		CartesianPoint *aCP = dynamic_cast<CartesianPoint *>(Factory::CreateObject(sw, entity));
 
 		control_points_list.push_back(aCP);
 	    } else {
@@ -110,12 +114,13 @@ BSplineCurve::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
 	delete l;
     }
 
-    closed_curve = step->getLogicalAttribute(sse,"closed_curve");
-    self_intersect = step->getLogicalAttribute(sse,"self_intersect");
-    degree = step->getIntegerAttribute(sse,"degree");
-    curve_form = (B_spline_curve_form)step->getEnumAttribute(sse,"curve_form");
-    if (curve_form > B_spline_curve_form_unset)
+    closed_curve = step->getLogicalAttribute(sse, "closed_curve");
+    self_intersect = step->getLogicalAttribute(sse, "self_intersect");
+    degree = step->getIntegerAttribute(sse, "degree");
+    curve_form = (B_spline_curve_form)step->getEnumAttribute(sse, "curve_form");
+    if (curve_form > B_spline_curve_form_unset) {
 	curve_form = B_spline_curve_form_unset;
+    }
 
     return retValue;
 }
@@ -135,33 +140,44 @@ return NULL;
 */
 
 void
-BSplineCurve::Print(int level) {
-    TAB(level); std::cout << CLASSNAME << ":" << name << "(";
+BSplineCurve::Print(int level)
+{
+    TAB(level);
+    std::cout << CLASSNAME << ":" << name << "(";
     std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-    TAB(level); std::cout << "Attributes:" << std::endl;
-    TAB(level+1); std::cout << "control_points_list:" << std::endl;
+    TAB(level);
+    std::cout << "Attributes:" << std::endl;
+    TAB(level + 1);
+    std::cout << "control_points_list:" << std::endl;
     LIST_OF_POINTS::iterator i;
-    for(i=control_points_list.begin();i!=control_points_list.end();i++) {
-	(*i)->Print(level+1);
+    for (i = control_points_list.begin(); i != control_points_list.end(); i++) {
+	(*i)->Print(level + 1);
     }
 
-    TAB(level+1); std::cout << "closed_curve:" << step->getLogicalString((Logical)closed_curve) << std::endl;
-    TAB(level+1); std::cout << "self_intersect:" << step->getLogicalString((Logical)self_intersect) << std::endl;
-    TAB(level+1); std::cout << "degree:" << degree << std::endl;
-    TAB(level+1); std::cout << "curve_form:" << B_spline_curve_form_string[curve_form] << std::endl;
+    TAB(level + 1);
+    std::cout << "closed_curve:" << step->getLogicalString((Logical)closed_curve) << std::endl;
+    TAB(level + 1);
+    std::cout << "self_intersect:" << step->getLogicalString((Logical)self_intersect) << std::endl;
+    TAB(level + 1);
+    std::cout << "degree:" << degree << std::endl;
+    TAB(level + 1);
+    std::cout << "curve_form:" << B_spline_curve_form_string[curve_form] << std::endl;
 
-    TAB(level); std::cout << "Inherited Attributes:" << std::endl;
-    BoundedCurve::Print(level+1);
+    TAB(level);
+    std::cout << "Inherited Attributes:" << std::endl;
+    BoundedCurve::Print(level + 1);
 }
 
 STEPEntity *
-BSplineCurve::GetInstance(STEPWrapper *sw, int id) {
+BSplineCurve::GetInstance(STEPWrapper *sw, int id)
+{
     return new BSplineCurve(sw, id);
 }
 
 STEPEntity *
-BSplineCurve::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
+BSplineCurve::Create(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
     return STEPEntity::CreateEntity(sw, sse, GetInstance, CLASSNAME);
 }
 /*

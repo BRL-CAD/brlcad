@@ -31,29 +31,33 @@
 
 #define CLASSNAME "LengthUnit"
 #define ENTITYNAME "Length_Unit"
-string LengthUnit::entityname = Factory::RegisterClass(ENTITYNAME,(FactoryMethod)LengthUnit::Create);
+string LengthUnit::entityname = Factory::RegisterClass(ENTITYNAME, (FactoryMethod)LengthUnit::Create);
 
-LengthUnit::LengthUnit() {
+LengthUnit::LengthUnit()
+{
     step = NULL;
     id = 0;
 }
 
-LengthUnit::LengthUnit(STEPWrapper *sw,int step_id) {
+LengthUnit::LengthUnit(STEPWrapper *sw, int step_id)
+{
     step = sw;
     id = step_id;
 }
 
-LengthUnit::~LengthUnit() {
+LengthUnit::~LengthUnit()
+{
 }
 
 bool
-LengthUnit::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
-    step=sw;
+LengthUnit::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
+    step = sw;
     id = sse->STEPfile_id;
 
 
     // load base class attributes
-    if ( !NamedUnit::Load(step,sse) ) {
+    if (!NamedUnit::Load(step, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::Unit." << std::endl;
 	return false;
     }
@@ -62,22 +66,27 @@ LengthUnit::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
 }
 
 void
-LengthUnit::Print(int level) {
-    TAB(level); std::cout << CLASSNAME << ":" << "(";
+LengthUnit::Print(int level)
+{
+    TAB(level);
+    std::cout << CLASSNAME << ":" << "(";
     std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-    TAB(level); std::cout << "Inherited Attributes:" << std::endl;
-    NamedUnit::Print(level+1);
+    TAB(level);
+    std::cout << "Inherited Attributes:" << std::endl;
+    NamedUnit::Print(level + 1);
 
 }
 
 STEPEntity *
-LengthUnit::GetInstance(STEPWrapper *sw, int id) {
+LengthUnit::GetInstance(STEPWrapper *sw, int id)
+{
     return new LengthUnit(sw, id);
 }
 
 STEPEntity *
-LengthUnit::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
+LengthUnit::Create(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
     return STEPEntity::CreateEntity(sw, sse, GetInstance, CLASSNAME);
 }
 

@@ -30,23 +30,24 @@
 #include "RationalBSplineSurface.h"
 #include "BSplineSurfaceWithKnots.h"
 
-class RationalBSplineSurfaceWithKnots : public RationalBSplineSurface, public BSplineSurfaceWithKnots {
+class RationalBSplineSurfaceWithKnots : public RationalBSplineSurface, public BSplineSurfaceWithKnots
+{
 private:
-	static string entityname;
-	static EntityInstanceFunc GetInstance;
+    static string entityname;
+    static EntityInstanceFunc GetInstance;
 
 protected:
 
 public:
-	RationalBSplineSurfaceWithKnots();
-	virtual ~RationalBSplineSurfaceWithKnots();
-	RationalBSplineSurfaceWithKnots(STEPWrapper *sw,int step_id);
-	bool Load(STEPWrapper *sw,SDAI_Application_instance *sse);
-	virtual bool LoadONBrep(ON_Brep *brep);
-	virtual void Print(int level);
+    RationalBSplineSurfaceWithKnots();
+    virtual ~RationalBSplineSurfaceWithKnots();
+    RationalBSplineSurfaceWithKnots(STEPWrapper *sw, int step_id);
+    bool Load(STEPWrapper *sw, SDAI_Application_instance *sse);
+    virtual bool LoadONBrep(ON_Brep *brep);
+    virtual void Print(int level);
 
-	//static methods
-	static STEPEntity *Create(STEPWrapper *sw,SDAI_Application_instance *sse);
+    //static methods
+    static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
 #endif /* RATIONALBSPLINESURFACEWITHKNOTS_H_ */

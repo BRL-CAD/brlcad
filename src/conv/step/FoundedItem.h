@@ -29,22 +29,23 @@
 
 #include "STEPEntity.h"
 
-class FoundedItem : virtual public STEPEntity {
+class FoundedItem : virtual public STEPEntity
+{
 private:
-	static string entityname;
-	static EntityInstanceFunc GetInstance;
+    static string entityname;
+    static EntityInstanceFunc GetInstance;
 
 protected:
 
 public:
-	FoundedItem();
-	virtual ~FoundedItem();
-	FoundedItem(STEPWrapper *sw,int step_id);
-	bool Load(STEPWrapper *sw,SDAI_Application_instance *sse);
-	virtual void Print(int level);
+    FoundedItem();
+    virtual ~FoundedItem();
+    FoundedItem(STEPWrapper *sw, int step_id);
+    bool Load(STEPWrapper *sw, SDAI_Application_instance *sse);
+    virtual void Print(int level);
 
-	//static methods
-	static STEPEntity *Create(STEPWrapper *sw,SDAI_Application_instance *sse);
+    //static methods
+    static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
 #endif /* FOUNDEDITEM_H_ */

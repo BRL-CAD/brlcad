@@ -31,24 +31,25 @@
 
 typedef list<LIST_OF_REALS *> LIST_OF_LIST_OF_REALS;
 
-class RationalBSplineSurface : virtual public BSplineSurface {
+class RationalBSplineSurface : virtual public BSplineSurface
+{
 private:
-	static string entityname;
-	static EntityInstanceFunc GetInstance;
+    static string entityname;
+    static EntityInstanceFunc GetInstance;
 
 protected:
-	LIST_OF_LIST_OF_REALS weights_data;
+    LIST_OF_LIST_OF_REALS weights_data;
 
 public:
-	RationalBSplineSurface();
-	virtual ~RationalBSplineSurface();
-	RationalBSplineSurface(STEPWrapper *sw,int step_id);
-	bool Load(STEPWrapper *sw,SDAI_Application_instance *sse);
-	virtual bool LoadONBrep(ON_Brep *brep);
-	virtual void Print(int level);
+    RationalBSplineSurface();
+    virtual ~RationalBSplineSurface();
+    RationalBSplineSurface(STEPWrapper *sw, int step_id);
+    bool Load(STEPWrapper *sw, SDAI_Application_instance *sse);
+    virtual bool LoadONBrep(ON_Brep *brep);
+    virtual void Print(int level);
 
-	//static methods
-	static STEPEntity *Create(STEPWrapper *sw,SDAI_Application_instance *sse);
+    //static methods
+    static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
 #endif /* RATIONALBSPLINESURFACE_H_ */

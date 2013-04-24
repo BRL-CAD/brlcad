@@ -35,29 +35,32 @@ class PCurveOrSurface;
 
 typedef list<PCurveOrSurface *> LIST_OF_PCURVE_OR_SURFACE;
 
-class SurfaceCurve : public Curve {
+class SurfaceCurve : public Curve
+{
 private:
-	static string entityname;
-	static EntityInstanceFunc GetInstance;
+    static string entityname;
+    static EntityInstanceFunc GetInstance;
 
 protected:
-	Curve *curve_3d;
-	LIST_OF_PCURVE_OR_SURFACE associated_geometry;
-	Preferred_surface_curve_representation master_representation;
+    Curve *curve_3d;
+    LIST_OF_PCURVE_OR_SURFACE associated_geometry;
+    Preferred_surface_curve_representation master_representation;
 
 public:
-	SurfaceCurve();
-	virtual ~SurfaceCurve();
-	SurfaceCurve(STEPWrapper *sw,int step_id);
-	//TODO: check for ANDOR types of SURFACE_CURVE
-	virtual curve_type CurveType() { return SURFACE_CURVE; };
-	bool Load(STEPWrapper *sw,SDAI_Application_instance *sse);
-	virtual const double *PointAtEnd();
-	virtual const double *PointAtStart();
-	virtual void Print(int level);
+    SurfaceCurve();
+    virtual ~SurfaceCurve();
+    SurfaceCurve(STEPWrapper *sw, int step_id);
+    //TODO: check for ANDOR types of SURFACE_CURVE
+    virtual curve_type CurveType() {
+	return SURFACE_CURVE;
+    };
+    bool Load(STEPWrapper *sw, SDAI_Application_instance *sse);
+    virtual const double *PointAtEnd();
+    virtual const double *PointAtStart();
+    virtual void Print(int level);
 
-	//static methods
-	static STEPEntity *Create(STEPWrapper *sw,SDAI_Application_instance *sse);
+    //static methods
+    static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
 #endif /* SURFACECURVE_H_ */

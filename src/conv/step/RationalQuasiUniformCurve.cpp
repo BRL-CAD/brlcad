@@ -31,28 +31,32 @@
 
 #define CLASSNAME "RationalQuasiUniformCurve"
 #define ENTITYNAME "Rational_Quasi_Uniform_Curve"
-string RationalQuasiUniformCurve::entityname = Factory::RegisterClass(ENTITYNAME,(FactoryMethod)RationalQuasiUniformCurve::Create);
+string RationalQuasiUniformCurve::entityname = Factory::RegisterClass(ENTITYNAME, (FactoryMethod)RationalQuasiUniformCurve::Create);
 
-RationalQuasiUniformCurve::RationalQuasiUniformCurve() {
+RationalQuasiUniformCurve::RationalQuasiUniformCurve()
+{
     step = NULL;
     id = 0;
 }
 
-RationalQuasiUniformCurve::RationalQuasiUniformCurve(STEPWrapper *sw,int step_id) {
+RationalQuasiUniformCurve::RationalQuasiUniformCurve(STEPWrapper *sw, int step_id)
+{
     step = sw;
     id = step_id;
 }
 
-RationalQuasiUniformCurve::~RationalQuasiUniformCurve() {
+RationalQuasiUniformCurve::~RationalQuasiUniformCurve()
+{
 }
 
 bool
-RationalQuasiUniformCurve::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
-    step=sw;
+RationalQuasiUniformCurve::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
+    step = sw;
     id = sse->STEPfile_id;
 
     // load base class attributes (no need to add quasi here has no additional attributes)
-    if ( !RationalBSplineCurve::Load(sw,sse) ) {
+    if (!RationalBSplineCurve::Load(sw, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::RationalBSplineCurve." << std::endl;
 	return false;
     }
@@ -61,20 +65,24 @@ RationalQuasiUniformCurve::Load(STEPWrapper *sw,SDAI_Application_instance *sse) 
 }
 
 void
-RationalQuasiUniformCurve::Print(int level) {
-    TAB(level); std::cout << CLASSNAME << ":" << name << "(";
+RationalQuasiUniformCurve::Print(int level)
+{
+    TAB(level);
+    std::cout << CLASSNAME << ":" << name << "(";
     std::cout << "ID:" << STEPid() << ")" << std::endl;
 
     RationalBSplineCurve::Print(level);
 }
 
 STEPEntity *
-RationalQuasiUniformCurve::GetInstance(STEPWrapper *sw, int id) {
+RationalQuasiUniformCurve::GetInstance(STEPWrapper *sw, int id)
+{
     return new RationalQuasiUniformCurve(sw, id);
 }
 
 STEPEntity *
-RationalQuasiUniformCurve::Create(STEPWrapper *sw,SDAI_Application_instance *sse){
+RationalQuasiUniformCurve::Create(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
     return STEPEntity::CreateEntity(sw, sse, GetInstance, CLASSNAME);
 }
 

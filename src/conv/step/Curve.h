@@ -30,49 +30,52 @@
 #include "GeometricRepresentationItem.h"
 class Vertex;
 
-class Curve : virtual public GeometricRepresentationItem {
+class Curve : virtual public GeometricRepresentationItem
+{
 public:
-	enum curve_type {
-		LINE,
-		CONIC,
-		PCURVE,
-		SURFACE_CURVE,
-		OFFSET_CURVE_2D,
-		OFFSET_CURVE_3D,
-		CURVE_REPLICA,
-		UNKNOWN_CURVE
-	};
+    enum curve_type {
+	LINE,
+	CONIC,
+	PCURVE,
+	SURFACE_CURVE,
+	OFFSET_CURVE_2D,
+	OFFSET_CURVE_3D,
+	CURVE_REPLICA,
+	UNKNOWN_CURVE
+    };
 
 private:
-	static string entityname;
-	static EntityInstanceFunc GetInstance;
+    static string entityname;
+    static EntityInstanceFunc GetInstance;
 
 protected:
-	bool trimmed;
-	bool parameter_trim;
-	double t,s;
-	double trim_startpoint[3];
-	double trim_endpoint[3];
-	Vertex *start;
-	Vertex *end;
-	Curve(STEPWrapper *sw,int step_id);
+    bool trimmed;
+    bool parameter_trim;
+    double t, s;
+    double trim_startpoint[3];
+    double trim_endpoint[3];
+    Vertex *start;
+    Vertex *end;
+    Curve(STEPWrapper *sw, int step_id);
 
 public:
-	Curve();
-	virtual ~Curve();
-	virtual curve_type CurveType() { return UNKNOWN_CURVE; };
-	bool Load(STEPWrapper *sw,SDAI_Application_instance *sse);
-	virtual bool LoadONBrep(ON_Brep *brep);
-	virtual const double *PointAtEnd();
-	virtual const double *PointAtStart();
-	virtual void Print(int level);
-	virtual void SetParameterTrim(double start, double end);
-	void SetPointTrim(const double *start, const double *end);
-	void Start(Vertex *v);
-	void End(Vertex *v);
+    Curve();
+    virtual ~Curve();
+    virtual curve_type CurveType() {
+	return UNKNOWN_CURVE;
+    };
+    bool Load(STEPWrapper *sw, SDAI_Application_instance *sse);
+    virtual bool LoadONBrep(ON_Brep *brep);
+    virtual const double *PointAtEnd();
+    virtual const double *PointAtStart();
+    virtual void Print(int level);
+    virtual void SetParameterTrim(double start, double end);
+    void SetPointTrim(const double *start, const double *end);
+    void Start(Vertex *v);
+    void End(Vertex *v);
 
-	//static methods
-	static STEPEntity *Create(STEPWrapper *sw,SDAI_Application_instance *sse);
+    //static methods
+    static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
 #endif /* CURVE_H_ */

@@ -32,24 +32,27 @@
 class STEPWrapper;
 class ON_BoundingBox;
 
-class Surface: public GeometricRepresentationItem {
+class Surface: public GeometricRepresentationItem
+{
 private:
-	static string entityname;
-	static EntityInstanceFunc GetInstance;
+    static string entityname;
+    static EntityInstanceFunc GetInstance;
 
 protected:
-	ON_BoundingBox *trim_curve_3d_bbox;
+    ON_BoundingBox *trim_curve_3d_bbox;
 
 public:
-	Surface();
-	virtual ~Surface();
-	Surface(STEPWrapper *sw,int step_id);
-	bool Load(STEPWrapper *sw,SDAI_Application_instance *sse);
-	virtual void Print(int level);
-	void SetCurveBounds(ON_BoundingBox *tcbb) {trim_curve_3d_bbox = tcbb;};
+    Surface();
+    virtual ~Surface();
+    Surface(STEPWrapper *sw, int step_id);
+    bool Load(STEPWrapper *sw, SDAI_Application_instance *sse);
+    virtual void Print(int level);
+    void SetCurveBounds(ON_BoundingBox *tcbb) {
+	trim_curve_3d_bbox = tcbb;
+    };
 
-	//static methods
-	static STEPEntity *Create(STEPWrapper *sw,SDAI_Application_instance *sse);
+    //static methods
+    static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
 #endif /* SURFACE_H_ */

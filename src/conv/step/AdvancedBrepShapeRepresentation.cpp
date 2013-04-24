@@ -41,7 +41,8 @@
 std::string AdvancedBrepShapeRepresentation::entityname = Factory::RegisterClass(ENTITYNAME, (FactoryMethod)AdvancedBrepShapeRepresentation::Create);
 
 
-AdvancedBrepShapeRepresentation::AdvancedBrepShapeRepresentation() {
+AdvancedBrepShapeRepresentation::AdvancedBrepShapeRepresentation()
+{
     context_of_items.clear();
     items.clear();
     step = NULL;
@@ -49,7 +50,8 @@ AdvancedBrepShapeRepresentation::AdvancedBrepShapeRepresentation() {
 }
 
 
-AdvancedBrepShapeRepresentation::AdvancedBrepShapeRepresentation(STEPWrapper *sw, int step_id) {
+AdvancedBrepShapeRepresentation::AdvancedBrepShapeRepresentation(STEPWrapper *sw, int step_id)
+{
     context_of_items.clear();
     items.clear();
     step = sw;
@@ -57,22 +59,26 @@ AdvancedBrepShapeRepresentation::AdvancedBrepShapeRepresentation(STEPWrapper *sw
 }
 
 
-AdvancedBrepShapeRepresentation::~AdvancedBrepShapeRepresentation() {
+AdvancedBrepShapeRepresentation::~AdvancedBrepShapeRepresentation()
+{
 }
 
 STEPEntity *
-AdvancedBrepShapeRepresentation::GetInstance(STEPWrapper *sw, int id) {
+AdvancedBrepShapeRepresentation::GetInstance(STEPWrapper *sw, int id)
+{
     return new AdvancedBrepShapeRepresentation(sw, id);
 }
 
 STEPEntity *
-AdvancedBrepShapeRepresentation::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
+AdvancedBrepShapeRepresentation::Create(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
     return STEPEntity::CreateEntity(sw, sse, GetInstance, CLASSNAME);
 }
 
 
 bool
-AdvancedBrepShapeRepresentation::Load(STEPWrapper *sw, SDAI_Application_instance *sse) {
+AdvancedBrepShapeRepresentation::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
     step = sw;
     id = sse->STEPfile_id;
 
@@ -85,7 +91,8 @@ AdvancedBrepShapeRepresentation::Load(STEPWrapper *sw, SDAI_Application_instance
 
 
 void
-AdvancedBrepShapeRepresentation::Print(int level) {
+AdvancedBrepShapeRepresentation::Print(int level)
+{
     TAB(level);
     std::cout << CLASSNAME << ":" << name << "(";
     std::cout << "ID:" << STEPid() << ")" << std::endl;

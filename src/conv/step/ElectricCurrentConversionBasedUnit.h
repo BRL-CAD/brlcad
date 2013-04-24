@@ -30,22 +30,23 @@
 #include "ElectricCurrentUnit.h"
 #include "ConversionBasedUnit.h"
 
-class ElectricCurrentConversionBasedUnit : public ElectricCurrentUnit, public ConversionBasedUnit {
+class ElectricCurrentConversionBasedUnit : public ElectricCurrentUnit, public ConversionBasedUnit
+{
 private:
-	static string entityname;
-	static EntityInstanceFunc GetInstance;
+    static string entityname;
+    static EntityInstanceFunc GetInstance;
 
 protected:
 
 public:
-	ElectricCurrentConversionBasedUnit();
-	virtual ~ElectricCurrentConversionBasedUnit();
-	ElectricCurrentConversionBasedUnit(STEPWrapper *sw,int step_id);
-	bool Load(STEPWrapper *sw,SDAI_Application_instance *sse);
-	virtual void Print(int level);
+    ElectricCurrentConversionBasedUnit();
+    virtual ~ElectricCurrentConversionBasedUnit();
+    ElectricCurrentConversionBasedUnit(STEPWrapper *sw, int step_id);
+    bool Load(STEPWrapper *sw, SDAI_Application_instance *sse);
+    virtual void Print(int level);
 
-	//static methods
-	static STEPEntity *Create(STEPWrapper *sw,SDAI_Application_instance *sse);
+    //static methods
+    static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
 #endif /* ELECTRICCURRENTCONVERSIONBASEDUNIT_H_ */

@@ -45,32 +45,35 @@ typedef struct trim_curve2d {
 typedef list<TrimCurve2d *> LIST_OF_TRIMS;
 typedef list<LIST_OF_TRIMS *> LIST_OF_TRIM_PATHS;
 
-class Path : public TopologicalRepresentationItem {
+class Path : public TopologicalRepresentationItem
+{
 private:
-	LIST_OF_TRIM_PATHS paths;
-	static string entityname;
-	static EntityInstanceFunc GetInstance;
-	bool isSeam(LIST_OF_ORIENTED_EDGES::iterator i);
-	LIST_OF_ORIENTED_EDGES::iterator getNext(LIST_OF_ORIENTED_EDGES::iterator i);
-	LIST_OF_ORIENTED_EDGES::iterator getPrev(LIST_OF_ORIENTED_EDGES::iterator i);
+    LIST_OF_TRIM_PATHS paths;
+    static string entityname;
+    static EntityInstanceFunc GetInstance;
+    bool isSeam(LIST_OF_ORIENTED_EDGES::iterator i);
+    LIST_OF_ORIENTED_EDGES::iterator getNext(LIST_OF_ORIENTED_EDGES::iterator i);
+    LIST_OF_ORIENTED_EDGES::iterator getPrev(LIST_OF_ORIENTED_EDGES::iterator i);
 
 protected:
-	LIST_OF_ORIENTED_EDGES edge_list;
-	int ON_path_index;
+    LIST_OF_ORIENTED_EDGES edge_list;
+    int ON_path_index;
 
 public:
-	Path();
-	virtual ~Path();
-	Path(STEPWrapper *sw,int step_id);
-	virtual ON_BoundingBox *GetEdgeBounds(ON_Brep *brep);
-	bool Load(STEPWrapper *sw,SDAI_Application_instance *sse);
-	virtual bool LoadONBrep(ON_Brep *brep);
-	bool LoadONTrimmingCurves(ON_Brep *brep);
-	virtual void Print(int level);
-	void SetPathIndex(int index) { ON_path_index = index; };
-	bool ShiftSurfaceSeam(ON_Brep *brep, double *t);
-	//static methods
-	static STEPEntity *Create(STEPWrapper *sw,SDAI_Application_instance *sse);
+    Path();
+    virtual ~Path();
+    Path(STEPWrapper *sw, int step_id);
+    virtual ON_BoundingBox *GetEdgeBounds(ON_Brep *brep);
+    bool Load(STEPWrapper *sw, SDAI_Application_instance *sse);
+    virtual bool LoadONBrep(ON_Brep *brep);
+    bool LoadONTrimmingCurves(ON_Brep *brep);
+    virtual void Print(int level);
+    void SetPathIndex(int index) {
+	ON_path_index = index;
+    };
+    bool ShiftSurfaceSeam(ON_Brep *brep, double *t);
+    //static methods
+    static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
 #endif /* PATH_H_ */

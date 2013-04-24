@@ -96,17 +96,18 @@ void PropertyDefinition::Print(int level)
 
     TAB(level);
     std::cout << "Attributes:" << std::endl;
-    TAB(level+1);
+    TAB(level + 1);
     std::cout << "name:" << name << std::endl;
-    TAB(level+1);
+    TAB(level + 1);
     std::cout << "description:" << description << std::endl;
-    TAB(level+1);
+    TAB(level + 1);
     std::cout << "definition:" << std::endl;
     //definition->Print(level+2);
 }
 
 STEPEntity *
-PropertyDefinition::GetInstance(STEPWrapper *sw, int id) {
+PropertyDefinition::GetInstance(STEPWrapper *sw, int id)
+{
     return new PropertyDefinition(sw, id);
 }
 

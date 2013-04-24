@@ -31,33 +31,37 @@
 
 #define CLASSNAME "MassSiUnit"
 #define ENTITYNAME "Mass_Si_Unit"
-string MassSiUnit::entityname = Factory::RegisterClass(ENTITYNAME,(FactoryMethod)MassSiUnit::Create);
+string MassSiUnit::entityname = Factory::RegisterClass(ENTITYNAME, (FactoryMethod)MassSiUnit::Create);
 
-MassSiUnit::MassSiUnit() {
+MassSiUnit::MassSiUnit()
+{
     step = NULL;
     id = 0;
 }
 
-MassSiUnit::MassSiUnit(STEPWrapper *sw,int step_id) {
+MassSiUnit::MassSiUnit(STEPWrapper *sw, int step_id)
+{
     step = sw;
     id = step_id;
 }
 
-MassSiUnit::~MassSiUnit() {
+MassSiUnit::~MassSiUnit()
+{
 }
 
 bool
-MassSiUnit::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
-    step=sw;
+MassSiUnit::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
+    step = sw;
     id = sse->STEPfile_id;
 
 
     // load base class attributes
-    if ( !MassUnit::Load(step,sse) ) {
+    if (!MassUnit::Load(step, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::Unit." << std::endl;
 	return false;
     }
-    if ( !SiUnit::Load(step,sse) ) {
+    if (!SiUnit::Load(step, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::Unit." << std::endl;
 	return false;
     }
@@ -66,23 +70,28 @@ MassSiUnit::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
 }
 
 void
-MassSiUnit::Print(int level) {
-    TAB(level); std::cout << CLASSNAME << ":" << "(";
+MassSiUnit::Print(int level)
+{
+    TAB(level);
+    std::cout << CLASSNAME << ":" << "(";
     std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-    TAB(level); std::cout << "Inherited Attributes:" << std::endl;
-    MassUnit::Print(level+1);
-    SiUnit::Print(level+1);
+    TAB(level);
+    std::cout << "Inherited Attributes:" << std::endl;
+    MassUnit::Print(level + 1);
+    SiUnit::Print(level + 1);
 
 }
 
 STEPEntity *
-MassSiUnit::GetInstance(STEPWrapper *sw, int id) {
+MassSiUnit::GetInstance(STEPWrapper *sw, int id)
+{
     return new MassSiUnit(sw, id);
 }
 
 STEPEntity *
-MassSiUnit::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
+MassSiUnit::Create(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
     return STEPEntity::CreateEntity(sw, sse, GetInstance, CLASSNAME);
 }
 

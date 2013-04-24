@@ -31,47 +31,51 @@
 
 #define CLASSNAME "VertexPoint"
 #define ENTITYNAME "Vertex_Point"
-string VertexPoint::entityname = Factory::RegisterClass(ENTITYNAME,(FactoryMethod)VertexPoint::Create);
+string VertexPoint::entityname = Factory::RegisterClass(ENTITYNAME, (FactoryMethod)VertexPoint::Create);
 
-VertexPoint::VertexPoint() {
+VertexPoint::VertexPoint()
+{
     step = NULL;
     id = 0;
     vertex_geometry = NULL;
 }
 
-VertexPoint::VertexPoint(STEPWrapper *sw,int step_id) {
+VertexPoint::VertexPoint(STEPWrapper *sw, int step_id)
+{
     step = sw;
     id = step_id;
     vertex_geometry = NULL;
 }
 
-VertexPoint::~VertexPoint() {
+VertexPoint::~VertexPoint()
+{
     vertex_geometry = NULL;
 }
 
 bool
-VertexPoint::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
-    step=sw;
+VertexPoint::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
+    step = sw;
     id = sse->STEPfile_id;
 
     // load base class attributes
-    if ( !Vertex::Load(step,sse) ) {
+    if (!Vertex::Load(step, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::Vertex." << std::endl;
 	return false;
     }
-    if ( !GeometricRepresentationItem::Load(step,sse) ) {
+    if (!GeometricRepresentationItem::Load(step, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::GeometricRepresentationItem." << std::endl;
 	return false;
     }
 
     // need to do this for local attributes to makes sure we have
     // the actual entity and not a complex/supertype parent
-    sse = step->getEntity(sse,ENTITYNAME);
+    sse = step->getEntity(sse, ENTITYNAME);
 
     if (vertex_geometry == NULL) {
-	SDAI_Application_instance *entity = step->getEntityAttribute(sse,"vertex_geometry");
+	SDAI_Application_instance *entity = step->getEntityAttribute(sse, "vertex_geometry");
 	if (entity) {
-	    vertex_geometry = dynamic_cast<Point *>(Factory::CreateObject(sw,entity));
+	    vertex_geometry = dynamic_cast<Point *>(Factory::CreateObject(sw, entity));
 	} else {
 	    std::cout << CLASSNAME << ":Error loading attribute 'vertex_geometry'." << std::endl;
 	    return false;
@@ -81,32 +85,38 @@ VertexPoint::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
 }
 
 void
-VertexPoint::Print(int level) {
-    TAB(level); std::cout << CLASSNAME << ":" << name << "(";
+VertexPoint::Print(int level)
+{
+    TAB(level);
+    std::cout << CLASSNAME << ":" << name << "(";
     std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-    TAB(level); std::cout << "vertex_geometry:" << std::endl;
+    TAB(level);
+    std::cout << "vertex_geometry:" << std::endl;
     if (vertex_geometry) {
-	vertex_geometry->Print(level+1);
+	vertex_geometry->Print(level + 1);
     } else {
-	TAB(level); std::cout << "vertex_geometry:NULL" << std::endl;
+	TAB(level);
+	std::cout << "vertex_geometry:NULL" << std::endl;
     }
 }
 
 STEPEntity *
-VertexPoint::GetInstance(STEPWrapper *sw, int id) {
+VertexPoint::GetInstance(STEPWrapper *sw, int id)
+{
     return new VertexPoint(sw, id);
 }
 
 STEPEntity *
-VertexPoint::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
+VertexPoint::Create(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
     return STEPEntity::CreateEntity(sw, sse, GetInstance, CLASSNAME);
 }
 
 bool
 VertexPoint::LoadONBrep(ON_Brep *brep)
 {
-    if ( !vertex_geometry->LoadONBrep(brep)) {
+    if (!vertex_geometry->LoadONBrep(brep)) {
 	std::cerr << "Error: " << entityname << "::LoadONBrep() - Error loading openNURBS brep." << std::endl;
 	return false;
     }

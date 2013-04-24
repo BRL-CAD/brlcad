@@ -31,41 +31,45 @@
 
 #define CLASSNAME "Surface_Of_Linear_Extrusion"
 #define ENTITYNAME "Surface_Of_Revolution"
-string SurfaceOfRevolution::entityname = Factory::RegisterClass(ENTITYNAME,(FactoryMethod)SurfaceOfRevolution::Create);
+string SurfaceOfRevolution::entityname = Factory::RegisterClass(ENTITYNAME, (FactoryMethod)SurfaceOfRevolution::Create);
 
-SurfaceOfRevolution::SurfaceOfRevolution() {
+SurfaceOfRevolution::SurfaceOfRevolution()
+{
     step = NULL;
     id = 0;
     axis_position = NULL;
 }
 
-SurfaceOfRevolution::SurfaceOfRevolution(STEPWrapper *sw,int step_id) {
-    step=sw;
+SurfaceOfRevolution::SurfaceOfRevolution(STEPWrapper *sw, int step_id)
+{
+    step = sw;
     id = step_id;
     axis_position = NULL;
 }
 
-SurfaceOfRevolution::~SurfaceOfRevolution() {
+SurfaceOfRevolution::~SurfaceOfRevolution()
+{
 }
 
 bool
-SurfaceOfRevolution::Load(STEPWrapper *sw, SDAI_Application_instance *sse) {
-    step=sw;
+SurfaceOfRevolution::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
+    step = sw;
     id = sse->STEPfile_id;
 
-    if ( !SweptSurface::Load(step,sse) ) {
+    if (!SweptSurface::Load(step, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::Surface." << std::endl;
 	return false;
     }
 
     // need to do this for local attributes to makes sure we have
     // the actual entity and not a complex/supertype parent
-    sse = step->getEntity(sse,ENTITYNAME);
+    sse = step->getEntity(sse, ENTITYNAME);
 
     if (axis_position == NULL) {
-	SDAI_Application_instance *entity = step->getEntityAttribute(sse,"axis_position");
+	SDAI_Application_instance *entity = step->getEntityAttribute(sse, "axis_position");
 	if (entity) {
-	    axis_position = dynamic_cast<Axis1Placement *>(Factory::CreateObject(sw,entity));
+	    axis_position = dynamic_cast<Axis1Placement *>(Factory::CreateObject(sw, entity));
 	} else {
 	    std::cerr << CLASSNAME << ": error loading 'axis_position' attribute." << std::endl;
 	    return false;
@@ -76,23 +80,28 @@ SurfaceOfRevolution::Load(STEPWrapper *sw, SDAI_Application_instance *sse) {
 }
 
 void
-SurfaceOfRevolution::Print(int level) {
-    TAB(level); std::cout << CLASSNAME << ":" << name << "(";
+SurfaceOfRevolution::Print(int level)
+{
+    TAB(level);
+    std::cout << CLASSNAME << ":" << name << "(";
     std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-    if (axis_position != NULL)
-	axis_position->Print(level+1);
+    if (axis_position != NULL) {
+	axis_position->Print(level + 1);
+    }
 
-    SweptSurface::Print(level+1);
+    SweptSurface::Print(level + 1);
 }
 
 STEPEntity *
-SurfaceOfRevolution::GetInstance(STEPWrapper *sw, int id) {
+SurfaceOfRevolution::GetInstance(STEPWrapper *sw, int id)
+{
     return new SurfaceOfRevolution(sw, id);
 }
 
 STEPEntity *
-SurfaceOfRevolution::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
+SurfaceOfRevolution::Create(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
     return STEPEntity::CreateEntity(sw, sse, GetInstance, CLASSNAME);
 }
 
