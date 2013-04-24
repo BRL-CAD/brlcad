@@ -109,8 +109,10 @@ Path::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
 	for (i = l->begin(); i != l->end(); i++) {
 	    SDAI_Application_instance *entity = (*i);
 	    if (entity) {
-		OrientedEdge *aOE =dynamic_cast<OrientedEdge *>(Factory::CreateObject(sw, entity));
-		edge_list.push_back(aOE);
+		OrientedEdge *aOE = dynamic_cast<OrientedEdge *>(Factory::CreateObject(sw, entity));
+		if (aOE) {
+		    edge_list.push_back(aOE);
+		}
 	    } else {
 		std::cerr << CLASSNAME
 			  << ": Unhandled entity in attribute 'edge_list'."
