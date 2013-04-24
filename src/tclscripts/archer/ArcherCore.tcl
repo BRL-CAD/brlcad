@@ -5876,7 +5876,7 @@ namespace eval ArcherCore {
 }
 
 ::itcl::body ArcherCore::shootRay_doit {_start _op _target _prep _no_bool _onehit _bot_dflag _objects} {
-    init_shoot_ray ray $_prep $_no_bool $_onehit $_bot_dflag $_objects
+    $itk_component(ged) init_shoot_ray ray $_prep $_no_bool $_onehit $_bot_dflag $_objects
     return [ray shootray $_start $_op $_target]
 }
 
