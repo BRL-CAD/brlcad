@@ -33,6 +33,7 @@
 class RationalUniformSurface : public RationalBSplineSurface, public UniformSurface {
 private:
 	static string entityname;
+	static EntityInstanceFunc GetInstance;
 
 protected:
 

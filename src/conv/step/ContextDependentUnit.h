@@ -32,6 +32,7 @@
 class ContextDependentUnit : virtual public NamedUnit {
 private:
 	static string entityname;
+	static EntityInstanceFunc GetInstance;
 
 protected:
 	string name;

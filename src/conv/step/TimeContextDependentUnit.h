@@ -33,6 +33,7 @@
 class TimeContextDependentUnit : public TimeUnit, public ContextDependentUnit {
 private:
 	static string entityname;
+	static EntityInstanceFunc GetInstance;
 
 protected:
 

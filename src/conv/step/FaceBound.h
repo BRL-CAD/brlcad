@@ -37,6 +37,7 @@ class ON_Brep;
 class FaceBound : public TopologicalRepresentationItem {
 private:
 	static string entityname;
+	static EntityInstanceFunc GetInstance;
 
 protected:
 	Loop *bound;

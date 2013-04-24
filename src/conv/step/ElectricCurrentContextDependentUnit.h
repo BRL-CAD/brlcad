@@ -33,6 +33,7 @@
 class ElectricCurrentContextDependentUnit : public ElectricCurrentUnit, public ContextDependentUnit {
 private:
 	static string entityname;
+	static EntityInstanceFunc GetInstance;
 
 protected:
 

@@ -33,6 +33,7 @@
 class RationalUniformCurve : public RationalBSplineCurve, public UniformCurve {
 private:
 	static string entityname;
+	static EntityInstanceFunc GetInstance;
 
 protected:
 

@@ -39,6 +39,7 @@ typedef list<FaceBound *> LIST_OF_FACE_BOUNDS;
 class Face: public TopologicalRepresentationItem {
 private:
 	static string entityname;
+	static EntityInstanceFunc GetInstance;
 
 protected:
 	bool reverse;

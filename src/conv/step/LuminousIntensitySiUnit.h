@@ -33,6 +33,7 @@
 class LuminousIntensitySiUnit : public LuminousIntensityUnit, public SiUnit {
 private:
 	static string entityname;
+	static EntityInstanceFunc GetInstance;
 
 protected:
 

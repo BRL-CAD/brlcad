@@ -32,6 +32,7 @@
 class TopologicalRepresentationItem : virtual public RepresentationItem {
 private:
 	static string entityname;
+	static EntityInstanceFunc GetInstance;
 
 protected:
 

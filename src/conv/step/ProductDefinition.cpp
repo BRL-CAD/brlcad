@@ -131,23 +131,14 @@ void ProductDefinition::Print(int level)
 }
 
 STEPEntity *
+ProductDefinition::GetInstance(STEPWrapper *sw, int id) {
+    return new ProductDefinition(sw, id);
+}
+
+STEPEntity *
 ProductDefinition::Create(STEPWrapper *sw, SDAI_Application_instance *sse)
 {
-    Factory::OBJECTS::iterator i;
-    if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
-	ProductDefinition *object = new ProductDefinition(sw, sse->STEPfile_id);
-
-	Factory::AddObject(object);
-
-	if (!object->Load(sw, sse)) {
-	    std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
-	    delete object;
-	    return NULL;
-	}
-	return static_cast<STEPEntity *>(object);
-    } else {
-	return (*i).second;
-    }
+    return STEPEntity::CreateEntity(sw, sse, GetInstance, CLASSNAME);
 }
 
 bool ProductDefinition::LoadONBrep(ON_Brep *brep)

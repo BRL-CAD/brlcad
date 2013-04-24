@@ -32,6 +32,7 @@
 class ParametricRepresentationContext : public RepresentationContext {
 private:
 	static string entityname;
+	static EntityInstanceFunc GetInstance;
 
 protected:
 

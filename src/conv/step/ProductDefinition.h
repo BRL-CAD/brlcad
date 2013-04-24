@@ -39,6 +39,7 @@ class ProductDefinitionContext;
 class ProductDefinition: virtual public STEPEntity {
 private:
     static string entityname;
+    static EntityInstanceFunc GetInstance;
 
 protected:
     string ident;

@@ -34,6 +34,7 @@ class DimensionalExponents;
 class NamedUnit : public Unit {
 private:
 	static string entityname;
+	static EntityInstanceFunc GetInstance;
 
 protected:
 	DimensionalExponents *dimensions;

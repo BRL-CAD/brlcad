@@ -35,6 +35,7 @@ typedef list<DerivedUnitElement *> LIST_OF_DERIVED_UNIT_ELEMENTS;
 class DerivedUnit : public Unit {
 private:
 	static string entityname;
+	static EntityInstanceFunc GetInstance;
 
 protected:
 	LIST_OF_DERIVED_UNIT_ELEMENTS elements;

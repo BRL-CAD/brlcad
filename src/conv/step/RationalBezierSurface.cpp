@@ -68,23 +68,15 @@ RationalBezierSurface::Print(int level) {
     RationalBSplineSurface::Print(level);
 
 }
+
+STEPEntity *
+RationalBezierSurface::GetInstance(STEPWrapper *sw, int id) {
+    return new RationalBezierSurface(sw, id);
+}
+
 STEPEntity *
 RationalBezierSurface::Create(STEPWrapper *sw,SDAI_Application_instance *sse){
-    Factory::OBJECTS::iterator i;
-    if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
-	RationalBezierSurface *object = new RationalBezierSurface(sw,sse->STEPfile_id);
-
-	Factory::AddObject(object);
-
-	if (!object->Load(sw,sse)) {
-	    std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
-	    delete object;
-	    return NULL;
-	}
-	return static_cast<STEPEntity *>(object);
-    } else {
-	return (*i).second;
-    }
+    return STEPEntity::CreateEntity(sw, sse, GetInstance, CLASSNAME);
 }
 
 // Local Variables:

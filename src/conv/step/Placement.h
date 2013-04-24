@@ -34,6 +34,7 @@ class CartesianPoint;
 class Placement : public GeometricRepresentationItem {
 private:
 	static string entityname;
+	static EntityInstanceFunc GetInstance;
 
 protected:
 	CartesianPoint *location;

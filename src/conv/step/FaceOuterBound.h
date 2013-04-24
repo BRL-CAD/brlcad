@@ -32,6 +32,7 @@
 class FaceOuterBound : public FaceBound {
 private:
 	static string entityname;
+	static EntityInstanceFunc GetInstance;
 
 protected:
 

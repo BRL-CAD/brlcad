@@ -37,6 +37,7 @@ class CartesianTransformationOperator : public GeometricRepresentationItem,
 	public FunctionallyDefinedTransformation {
 private:
 	static string entityname;
+	static EntityInstanceFunc GetInstance;
 
 protected:
 	Direction *axis1;//optional

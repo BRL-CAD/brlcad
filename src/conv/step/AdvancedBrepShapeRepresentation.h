@@ -43,6 +43,7 @@ class AdvancedBrepShapeRepresentation : public ShapeRepresentation
 {
  private:
     static std::string entityname;
+    static EntityInstanceFunc GetInstance;
 
  protected:
 

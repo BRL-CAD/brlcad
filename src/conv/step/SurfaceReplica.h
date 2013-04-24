@@ -34,6 +34,7 @@ class CartesianTransformationOperator3D;
 class SurfaceReplica: public Surface {
 private:
 	static string entityname;
+	static EntityInstanceFunc GetInstance;
 
 protected:
 	Surface* parent_surface;

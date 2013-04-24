@@ -35,6 +35,7 @@ class Curve;
 class EdgeCurve : public Edge , public GeometricRepresentationItem {
 private:
 	static string entityname;
+	static EntityInstanceFunc GetInstance;
 
 protected:
 	Boolean same_sense;

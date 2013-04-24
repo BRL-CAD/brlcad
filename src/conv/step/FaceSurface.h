@@ -36,6 +36,7 @@ class Surface;
 class FaceSurface: public Face , public GeometricRepresentationItem {
 private:
 	static string entityname;
+	static EntityInstanceFunc GetInstance;
 
 protected:
 	Surface *face_geometry;

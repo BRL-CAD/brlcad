@@ -34,6 +34,7 @@ class CartesianTransformationOperator;
 class CurveReplica : public Curve {
 private:
 	static string entityname;
+	static EntityInstanceFunc GetInstance;
 
 protected:
 	Curve *parent_curve;

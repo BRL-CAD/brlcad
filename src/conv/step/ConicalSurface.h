@@ -31,6 +31,7 @@
 class ConicalSurface: public ElementarySurface {
 private:
 	static string entityname;
+	static EntityInstanceFunc GetInstance;
 
 protected:
 	double radius;

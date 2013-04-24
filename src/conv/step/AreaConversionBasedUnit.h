@@ -33,6 +33,7 @@
 class AreaConversionBasedUnit : public AreaUnit, public ConversionBasedUnit {
 private:
 	static string entityname;
+	static EntityInstanceFunc GetInstance;
 
 protected:
 

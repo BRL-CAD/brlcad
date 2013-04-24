@@ -42,6 +42,7 @@ public:
 
 private:
 	static string entityname;
+	static EntityInstanceFunc GetInstance;
 
 protected:
 	PCurve *pcurve;

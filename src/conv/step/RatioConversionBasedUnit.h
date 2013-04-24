@@ -33,6 +33,7 @@
 class RatioConversionBasedUnit : public RatioUnit, public ConversionBasedUnit {
 private:
 	static string entityname;
+	static EntityInstanceFunc GetInstance;
 
 protected:
 

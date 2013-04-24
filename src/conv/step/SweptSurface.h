@@ -34,6 +34,7 @@ class Curve;
 class SweptSurface: public Surface {
 private:
 	static string entityname;
+	static EntityInstanceFunc GetInstance;
 	int swept_edge_ON_id;
 protected:
 	Curve *swept_curve;

@@ -35,6 +35,7 @@ typedef list<CartesianPoint *> LIST_OF_POINTS;
 class Polyline : public BoundedCurve {
 private:
 	static string entityname;
+	static EntityInstanceFunc GetInstance;
 
 protected:
 	LIST_OF_POINTS points;

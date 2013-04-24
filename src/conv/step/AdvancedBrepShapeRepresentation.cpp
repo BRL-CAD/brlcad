@@ -60,24 +60,14 @@ AdvancedBrepShapeRepresentation::AdvancedBrepShapeRepresentation(STEPWrapper *sw
 AdvancedBrepShapeRepresentation::~AdvancedBrepShapeRepresentation() {
 }
 
+STEPEntity *
+AdvancedBrepShapeRepresentation::GetInstance(STEPWrapper *sw, int id) {
+    return new AdvancedBrepShapeRepresentation(sw, id);
+}
 
 STEPEntity *
 AdvancedBrepShapeRepresentation::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
-    Factory::OBJECTS::iterator i;
-    if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
-	AdvancedBrepShapeRepresentation *object = new AdvancedBrepShapeRepresentation(sw, sse->STEPfile_id);
-
-	Factory::AddObject(object);
-
-	if (!object->Load(sw, sse)) {
-	    std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
-	    delete object;
-	    return NULL;
-	}
-	return static_cast<STEPEntity *>(object);
-    } else {
-	return (*i).second;
-    }
+    return STEPEntity::CreateEntity(sw, sse, GetInstance, CLASSNAME);
 }
 
 

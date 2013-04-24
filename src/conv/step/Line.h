@@ -35,6 +35,7 @@ class Vector;
 class Line : public Curve {
 private:
 	static string entityname;
+	static EntityInstanceFunc GetInstance;
 
 protected:
 	CartesianPoint *pnt;

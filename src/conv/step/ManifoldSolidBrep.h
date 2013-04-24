@@ -37,6 +37,7 @@ class ON_Brep;
 class ManifoldSolidBrep: public SolidModel {
 private:
 	static string entityname;
+	static EntityInstanceFunc GetInstance;
 
 protected:
 	ClosedShell *outer;

@@ -33,6 +33,7 @@
 class PlaneAngleSiUnit : public PlaneAngleUnit, public SiUnit {
 private:
 	static string entityname;
+	static EntityInstanceFunc GetInstance;
 
 protected:
 

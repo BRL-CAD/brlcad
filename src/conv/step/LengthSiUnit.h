@@ -33,6 +33,7 @@
 class LengthSiUnit : public LengthUnit, public SiUnit {
 private:
 	static string entityname;
+	static EntityInstanceFunc GetInstance;
 
 protected:
 

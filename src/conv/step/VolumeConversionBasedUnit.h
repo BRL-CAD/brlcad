@@ -33,6 +33,7 @@
 class VolumeConversionBasedUnit : public VolumeUnit, public ConversionBasedUnit {
 private:
 	static string entityname;
+	static EntityInstanceFunc GetInstance;
 
 protected:
 

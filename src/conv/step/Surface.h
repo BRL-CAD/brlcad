@@ -35,6 +35,7 @@ class ON_BoundingBox;
 class Surface: public GeometricRepresentationItem {
 private:
 	static string entityname;
+	static EntityInstanceFunc GetInstance;
 
 protected:
 	ON_BoundingBox *trim_curve_3d_bbox;

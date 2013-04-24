@@ -32,6 +32,7 @@
 class OrientedEdge : public Edge {
 private:
 	static string entityname;
+	static EntityInstanceFunc GetInstance;
 
 protected:
 	Boolean orientation;

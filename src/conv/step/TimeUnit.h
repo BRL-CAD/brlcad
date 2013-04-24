@@ -32,6 +32,7 @@
 class TimeUnit : virtual public NamedUnit {
 private:
 	static string entityname;
+	static EntityInstanceFunc GetInstance;
 
 protected:
 

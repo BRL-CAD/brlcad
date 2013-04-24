@@ -32,6 +32,7 @@
 class BoundaryCurve : public CompositeCurveOnSurface {
 private:
 	static string entityname;
+	static EntityInstanceFunc GetInstance;
 
 protected:
 

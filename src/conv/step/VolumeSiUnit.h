@@ -33,6 +33,7 @@
 class VolumeSiUnit : public VolumeUnit, public SiUnit {
 private:
 	static string entityname;
+	static EntityInstanceFunc GetInstance;
 
 protected:
 

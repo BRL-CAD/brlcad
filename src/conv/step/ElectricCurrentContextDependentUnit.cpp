@@ -75,23 +75,15 @@ ElectricCurrentContextDependentUnit::Print(int level) {
     ContextDependentUnit::Print(level+1);
 
 }
+
+STEPEntity *
+ElectricCurrentContextDependentUnit::GetInstance(STEPWrapper *sw, int id) {
+    return new ElectricCurrentContextDependentUnit(sw, id);
+}
+
 STEPEntity *
 ElectricCurrentContextDependentUnit::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
-    Factory::OBJECTS::iterator i;
-    if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
-	ElectricCurrentContextDependentUnit *object = new ElectricCurrentContextDependentUnit(sw,sse->STEPfile_id);
-
-	Factory::AddObject(object);
-
-	if (!object->Load(sw, sse)) {
-	    std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
-	    delete object;
-	    return NULL;
-	}
-	return static_cast<STEPEntity *>(object);
-    } else {
-	return (*i).second;
-    }
+    return STEPEntity::CreateEntity(sw, sse, GetInstance, CLASSNAME);
 }
 
 // Local Variables:

@@ -34,6 +34,7 @@ typedef list<LIST_OF_REALS *> LIST_OF_LIST_OF_REALS;
 class RationalBSplineSurface : virtual public BSplineSurface {
 private:
 	static string entityname;
+	static EntityInstanceFunc GetInstance;
 
 protected:
 	LIST_OF_LIST_OF_REALS weights_data;

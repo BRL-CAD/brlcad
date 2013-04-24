@@ -160,23 +160,14 @@ void ContextDependentShapeRepresentation::Print(int level)
 }
 
 STEPEntity *
+ContextDependentShapeRepresentation::GetInstance(STEPWrapper *sw, int id) {
+    return new ContextDependentShapeRepresentation(sw, id);
+}
+
+STEPEntity *
 ContextDependentShapeRepresentation::Create(STEPWrapper *sw, SDAI_Application_instance *sse)
 {
-    Factory::OBJECTS::iterator i;
-    if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
-	ContextDependentShapeRepresentation *object = new ContextDependentShapeRepresentation(sw, sse->STEPfile_id);
-
-	Factory::AddObject(object);
-
-	if (!object->Load(sw, sse)) {
-	    std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
-	    delete object;
-	    return NULL;
-	}
-	return static_cast<STEPEntity *>(object);
-    } else {
-	return (*i).second;
-    }
+    return STEPEntity::CreateEntity(sw, sse, GetInstance, CLASSNAME);
 }
 
 bool ContextDependentShapeRepresentation::LoadONBrep(ON_Brep *brep)

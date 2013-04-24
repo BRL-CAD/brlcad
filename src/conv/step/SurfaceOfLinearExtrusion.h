@@ -34,6 +34,7 @@ class Vector;
 class SurfaceOfLinearExtrusion: public SweptSurface {
 private:
 	static string entityname;
+	static EntityInstanceFunc GetInstance;
 
 protected:
 	Vector* extrusion_axis;

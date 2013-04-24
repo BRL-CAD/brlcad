@@ -33,6 +33,7 @@
 class SolidAngleSiUnit : public SolidAngleUnit, public SiUnit {
 private:
 	static string entityname;
+	static EntityInstanceFunc GetInstance;
 
 protected:
 

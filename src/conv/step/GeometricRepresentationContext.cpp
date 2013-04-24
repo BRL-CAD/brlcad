@@ -79,23 +79,15 @@ GeometricRepresentationContext::Print(int level) {
     TAB(level); std::cout << "Inherited Attributes:" << std::endl;
     RepresentationContext::Print(level+1);
 }
+
+STEPEntity *
+GeometricRepresentationContext::GetInstance(STEPWrapper *sw, int id) {
+    return new GeometricRepresentationContext(sw, id);
+}
+
 STEPEntity *
 GeometricRepresentationContext::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
-    Factory::OBJECTS::iterator i;
-    if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
-	GeometricRepresentationContext *object = new GeometricRepresentationContext(sw,sse->STEPfile_id);
-
-	Factory::AddObject(object);
-
-	if (!object->Load(sw, sse)) {
-	    std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
-	    delete object;
-	    return NULL;
-	}
-	return static_cast<STEPEntity *>(object);
-    } else {
-	return (*i).second;
-    }
+    return STEPEntity::CreateEntity(sw, sse, GetInstance, CLASSNAME);
 }
 
 // Local Variables:

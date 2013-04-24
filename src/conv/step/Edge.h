@@ -35,6 +35,7 @@ class Vertex;
 class Edge : public TopologicalRepresentationItem {
 private:
 	static string entityname;
+	static EntityInstanceFunc GetInstance;
 
 protected:
 	Vertex *edge_start;

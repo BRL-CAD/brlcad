@@ -34,6 +34,7 @@ class Curve;
 class CompositeCurveSegment : public FoundedItem {
 private:
 	static string entityname;
+	static EntityInstanceFunc GetInstance;
 
 protected:
 	Curve *parent_curve;

@@ -33,6 +33,7 @@
 class LengthConversionBasedUnit : public LengthUnit, public ConversionBasedUnit {
 private:
 	static string entityname;
+	static EntityInstanceFunc GetInstance;
 
 protected:
 

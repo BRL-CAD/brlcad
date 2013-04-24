@@ -33,6 +33,7 @@
 class RationalBezierSurface : public RationalBSplineSurface, public BezierSurface {
 private:
 	static string entityname;
+	static EntityInstanceFunc GetInstance;
 
 protected:
 

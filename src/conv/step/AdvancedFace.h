@@ -32,6 +32,7 @@
 class AdvancedFace: public FaceSurface {
 private:
 	static string entityname;
+	static EntityInstanceFunc GetInstance;
 
 protected:
 

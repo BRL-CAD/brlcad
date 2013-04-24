@@ -41,6 +41,7 @@ typedef list<Product *> LIST_OF_PRODUCTS;
 class ProductRelatedProductCategory: public ProductCategory {
 private:
     static string entityname;
+    static EntityInstanceFunc GetInstance;
 
 protected:
     LIST_OF_PRODUCTS products;

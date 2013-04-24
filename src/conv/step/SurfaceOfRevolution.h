@@ -34,6 +34,7 @@ class Axis1Placement;
 class SurfaceOfRevolution: public SweptSurface {
 private:
 	static string entityname;
+	static EntityInstanceFunc GetInstance;
 
 protected:
 	Axis1Placement* axis_position;

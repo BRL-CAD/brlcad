@@ -38,6 +38,7 @@ class ON_Brep;
 class ShapeRepresentationRelationship: public RepresentationRelationship {
 private:
     static string entityname;
+    static EntityInstanceFunc GetInstance;
 
 protected:
 

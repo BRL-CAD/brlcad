@@ -49,6 +49,7 @@ class Path : public TopologicalRepresentationItem {
 private:
 	LIST_OF_TRIM_PATHS paths;
 	static string entityname;
+	static EntityInstanceFunc GetInstance;
 	bool isSeam(LIST_OF_ORIENTED_EDGES::iterator i);
 	LIST_OF_ORIENTED_EDGES::iterator getNext(LIST_OF_ORIENTED_EDGES::iterator i);
 	LIST_OF_ORIENTED_EDGES::iterator getPrev(LIST_OF_ORIENTED_EDGES::iterator i);

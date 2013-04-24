@@ -32,6 +32,7 @@
 class Direction : public GeometricRepresentationItem {
 private:
 	static string entityname;
+	static EntityInstanceFunc GetInstance;
 
 protected:
 	double direction_ratios[3];

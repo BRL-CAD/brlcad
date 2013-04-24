@@ -34,6 +34,7 @@ class ON_Brep;
 class SolidModel : public GeometricRepresentationItem {
 private:
 	static string entityname;
+	static EntityInstanceFunc GetInstance;
 
 protected:
 

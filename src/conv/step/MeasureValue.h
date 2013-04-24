@@ -59,6 +59,7 @@ public:
 
 private:
 	static string entityname;
+	static EntityInstanceFunc GetInstance;
 
 protected:
 	int ivalue;

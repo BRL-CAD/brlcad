@@ -33,6 +33,7 @@
 class AreaContextDependentUnit : public AreaUnit, public ContextDependentUnit {
 private:
 	static string entityname;
+	static EntityInstanceFunc GetInstance;
 
 protected:
 

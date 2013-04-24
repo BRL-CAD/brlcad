@@ -35,6 +35,7 @@ typedef list<Unit *> LIST_OF_UNITS;
 class GlobalUnitAssignedContext : public RepresentationContext {
 private:
 	static string entityname;
+	static EntityInstanceFunc GetInstance;
 
 protected:
 	LIST_OF_UNITS units;

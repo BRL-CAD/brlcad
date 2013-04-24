@@ -34,6 +34,7 @@ class Placement;
 class Axis2Placement : virtual public STEPEntity {
 private:
 	static string entityname;
+	static EntityInstanceFunc GetInstance;
 
 public:
 	enum axis2_placement_type {

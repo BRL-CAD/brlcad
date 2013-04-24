@@ -40,6 +40,7 @@ class ProductDefinitionContextRole;
 class ProductDefinitionContextAssociation: virtual public STEPEntity {
 private:
     static string entityname;
+    static EntityInstanceFunc GetInstance;
 
 protected:
     ProductDefinition *definition;

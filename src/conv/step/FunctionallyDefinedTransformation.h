@@ -34,6 +34,7 @@
 class FunctionallyDefinedTransformation : public Transformation {
 private:
 	static string entityname;
+	static EntityInstanceFunc GetInstance;
 
 protected:
 	string name;

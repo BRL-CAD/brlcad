@@ -38,6 +38,7 @@ typedef list<PCurveOrSurface *> LIST_OF_PCURVE_OR_SURFACE;
 class SurfaceCurve : public Curve {
 private:
 	static string entityname;
+	static EntityInstanceFunc GetInstance;
 
 protected:
 	Curve *curve_3d;

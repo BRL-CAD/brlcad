@@ -39,6 +39,7 @@ class RepresentationItem;
 class ItemDefinedTransformation: virtual public Transformation {
 private:
     static string entityname;
+    static EntityInstanceFunc GetInstance;
 
 protected:
     string name;

@@ -25,6 +25,7 @@
 
 /* inteface header */
 #include "STEPEntity.h"
+#include "Factory.h"
 
 
 STEPEntity::STEPEntity()
@@ -50,6 +51,34 @@ STEPEntity::STEPid()
 STEPWrapper *STEPEntity::Step()
 {
     return step;
+}
+
+
+
+STEPEntity *
+STEPEntity::CreateEntity(
+	STEPWrapper *sw,
+	SDAI_Application_instance *sse,
+	EntityInstanceFunc Instance,
+	const char *classname)
+{
+    Factory::OBJECTS::iterator i;
+
+    if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
+	STEPEntity *object = Instance(sw, sse->STEPfile_id);
+
+	if (!object->Load(sw, sse)) {
+	    std::cerr << classname << ":Error loading class in ::Create() method." << std::endl;
+	    delete object;
+	    return NULL;
+	}
+
+	Factory::AddObject(object);
+
+	return static_cast<STEPEntity *>(object);
+    } else {
+	return (*i).second;
+    }
 }
 
 

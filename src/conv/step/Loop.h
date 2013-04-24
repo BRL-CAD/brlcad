@@ -35,6 +35,7 @@ class ON_Brep;
 class Loop : public TopologicalRepresentationItem {
 private:
 	static string entityname;
+	static EntityInstanceFunc GetInstance;
 
 protected:
 	int ON_loop_index;

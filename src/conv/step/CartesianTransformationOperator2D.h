@@ -32,6 +32,7 @@
 class CartesianTransformationOperator2D : public CartesianTransformationOperator {
 private:
 	static string entityname;
+	static EntityInstanceFunc GetInstance;
 
 protected:
 

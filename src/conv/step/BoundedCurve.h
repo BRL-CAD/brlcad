@@ -32,6 +32,7 @@
 class BoundedCurve : public Curve {
 private:
 	static string entityname;
+	static EntityInstanceFunc GetInstance;
 
 protected:
 

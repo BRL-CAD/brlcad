@@ -35,6 +35,7 @@ typedef list<CompositeCurveSegment *> LIST_OF_SEGMENTS;
 class CompositeCurve : public BoundedCurve {
 private:
 	static string entityname;
+	static EntityInstanceFunc GetInstance;
 
 protected:
 	LIST_OF_SEGMENTS segments;

@@ -31,6 +31,7 @@
 class DefinitionalRepresentation : public Representation {
 private:
 	static string entityname;
+	static EntityInstanceFunc GetInstance;
 
 protected:
 

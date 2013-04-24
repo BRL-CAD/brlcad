@@ -32,6 +32,7 @@
 class DimensionalExponents : virtual public STEPEntity {
 private:
 	static string entityname;
+	static EntityInstanceFunc GetInstance;
 
 protected:
 	  double length_exponent;

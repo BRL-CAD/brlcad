@@ -39,6 +39,7 @@ class Transformation;
 class RepresentationRelationshipWithTransformation: public RepresentationRelationship {
 private:
     static string entityname;
+    static EntityInstanceFunc GetInstance;
 
 protected:
     Transformation *transformation_operator;

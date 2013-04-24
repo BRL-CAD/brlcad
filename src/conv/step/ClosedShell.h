@@ -32,6 +32,7 @@
 class ClosedShell : public ConnectedFaceSet {
 private:
 	static string entityname;
+	static EntityInstanceFunc GetInstance;
 
 protected:
 

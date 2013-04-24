@@ -33,6 +33,7 @@
 class SolidAngleConversionBasedUnit : public SolidAngleUnit, public ConversionBasedUnit {
 private:
 	static string entityname;
+	static EntityInstanceFunc GetInstance;
 
 protected:
 

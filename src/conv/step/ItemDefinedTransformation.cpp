@@ -122,23 +122,14 @@ void ItemDefinedTransformation::Print(int level)
 }
 
 STEPEntity *
+ItemDefinedTransformation::GetInstance(STEPWrapper *sw, int id) {
+    return new ItemDefinedTransformation(sw, id);
+}
+
+STEPEntity *
 ItemDefinedTransformation::Create(STEPWrapper *sw, SDAI_Application_instance *sse)
 {
-    Factory::OBJECTS::iterator i;
-    if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
-	ItemDefinedTransformation *object = new ItemDefinedTransformation(sw, sse->STEPfile_id);
-
-	Factory::AddObject(object);
-
-	if (!object->Load(sw, sse)) {
-	    std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
-	    delete object;
-	    return NULL;
-	}
-	return static_cast<STEPEntity *>(object);
-    } else {
-	return (*i).second;
-    }
+    return STEPEntity::CreateEntity(sw, sse, GetInstance, CLASSNAME);
 }
 
 bool ItemDefinedTransformation::LoadONBrep(ON_Brep *brep)

@@ -31,6 +31,7 @@
 class BoundedSurface: public Surface {
 private:
 	static string entityname;
+	static EntityInstanceFunc GetInstance;
 
 protected:
 

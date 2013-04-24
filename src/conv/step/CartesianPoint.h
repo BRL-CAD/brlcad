@@ -31,6 +31,7 @@
 class CartesianPoint: public Point {
 private:
 	static string entityname;
+	static EntityInstanceFunc GetInstance;
 	int vertex_index;
 
 protected:

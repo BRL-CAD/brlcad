@@ -107,23 +107,15 @@ TrimmingSelect::Print(int level) {
 	TAB(level); std::cout << "Type:" << trimming_select_type_strings[type] << " Value:" << parameter_value << std::endl;
     }
 }
+
+STEPEntity *
+TrimmingSelect::GetInstance(STEPWrapper *sw, int id) {
+    return new TrimmingSelect(sw, id);
+}
+
 STEPEntity *
 TrimmingSelect::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
-    Factory::OBJECTS::iterator i;
-    if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
-	TrimmingSelect *object = new TrimmingSelect(sw,sse->STEPfile_id);
-
-	Factory::AddObject(object);
-
-	if (!object->Load(sw, (SDAI_Select *)sse)) {
-	    std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
-	    delete object;
-	    return NULL;
-	}
-	return static_cast<STEPEntity *>(object);
-    } else {
-	return (*i).second;
-    }
+    return STEPEntity::CreateEntity(sw, sse, GetInstance, CLASSNAME);
 }
 
 // Local Variables:

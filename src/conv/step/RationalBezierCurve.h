@@ -33,6 +33,7 @@
 class RationalBezierCurve : public RationalBSplineCurve, public BezierCurve {
 private:
 	static string entityname;
+	static EntityInstanceFunc GetInstance;
 
 protected:
 

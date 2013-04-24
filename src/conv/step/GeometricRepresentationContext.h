@@ -32,6 +32,7 @@
 class GeometricRepresentationContext : public RepresentationContext {
 private:
 	static string entityname;
+	static EntityInstanceFunc GetInstance;
 
 protected:
 	int coordinate_space_dimension;

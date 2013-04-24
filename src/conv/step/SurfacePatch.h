@@ -34,6 +34,7 @@ class BoundedSurface;
 class SurfacePatch : public FoundedItem {
 private:
 	static string entityname;
+	static EntityInstanceFunc GetInstance;
 
 protected:
 	BoundedSurface *parent_surface;

@@ -36,6 +36,7 @@ typedef list<Face *> LIST_OF_FACES;
 class ConnectedFaceSet : public TopologicalRepresentationItem {
 private:
 	static string entityname;
+	static EntityInstanceFunc GetInstance;
 
 protected:
 	LIST_OF_FACES cfs_faces;

@@ -33,6 +33,7 @@
 class RatioSiUnit : public RatioUnit, public SiUnit {
 private:
 	static string entityname;
+	static EntityInstanceFunc GetInstance;
 
 protected:
 

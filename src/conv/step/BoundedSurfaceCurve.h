@@ -33,6 +33,7 @@
 class BoundedSurfaceCurve : public SurfaceCurve, public BoundedCurve {
 private:
 	static string entityname;
+	static EntityInstanceFunc GetInstance;
 
 protected:
 

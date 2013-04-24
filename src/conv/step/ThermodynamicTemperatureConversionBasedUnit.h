@@ -33,6 +33,7 @@
 class ThermodynamicTemperatureConversionBasedUnit : public ThermodynamicTemperatureUnit, public ConversionBasedUnit {
 private:
 	static string entityname;
+	static EntityInstanceFunc GetInstance;
 
 protected:
 

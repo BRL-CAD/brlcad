@@ -33,6 +33,7 @@
 class RationalBSplineSurfaceWithKnots : public RationalBSplineSurface, public BSplineSurfaceWithKnots {
 private:
 	static string entityname;
+	static EntityInstanceFunc GetInstance;
 
 protected:
 

@@ -33,6 +33,7 @@
 class TimeSiUnit : public TimeUnit, public SiUnit {
 private:
 	static string entityname;
+	static EntityInstanceFunc GetInstance;
 
 protected:
 

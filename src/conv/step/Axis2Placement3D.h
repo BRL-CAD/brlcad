@@ -34,6 +34,7 @@ class Direction;
 class Axis2Placement3D : public Placement {
 private:
 	static string entityname;
+	static EntityInstanceFunc GetInstance;
 	double p[3][3];
 
 	void BuildAxis();

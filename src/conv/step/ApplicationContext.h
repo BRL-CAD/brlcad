@@ -37,6 +37,7 @@ class ON_Brep;
 class ApplicationContext: virtual public STEPEntity {
 private:
     static string entityname;
+    static EntityInstanceFunc GetInstance;
 
 protected:
     string application;

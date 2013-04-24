@@ -90,22 +90,13 @@ CartesianTransformationOperator3D::Print(int level) {
 }
 
 STEPEntity *
+CartesianTransformationOperator3D::GetInstance(STEPWrapper *sw, int id) {
+    return new CartesianTransformationOperator3D(sw, id);
+}
+
+STEPEntity *
 CartesianTransformationOperator3D::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
-    Factory::OBJECTS::iterator i;
-    if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
-	CartesianTransformationOperator3D *object = new CartesianTransformationOperator3D(sw,sse->STEPfile_id);
-
-	Factory::AddObject(object);
-
-	if (!object->Load(sw, sse)) {
-	    std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
-	    delete object;
-	    return NULL;
-	}
-	return static_cast<STEPEntity *>(object);
-    } else {
-	return (*i).second;
-    }
+    return STEPEntity::CreateEntity(sw, sse, GetInstance, CLASSNAME);
 }
 
 bool

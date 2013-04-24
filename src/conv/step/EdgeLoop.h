@@ -36,6 +36,7 @@ class ON_Brep;
 class EdgeLoop : public Loop, public Path {
 private:
 	static string entityname;
+	static EntityInstanceFunc GetInstance;
 
 protected:
 

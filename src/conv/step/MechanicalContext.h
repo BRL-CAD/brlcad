@@ -32,6 +32,7 @@
 class MechanicalContext: public ProductContext {
 private:
     static string entityname;
+    static EntityInstanceFunc GetInstance;
 
 public:
     MechanicalContext();

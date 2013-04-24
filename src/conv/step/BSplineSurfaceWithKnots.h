@@ -35,6 +35,7 @@ typedef list<double> LIST_OF_REALS;
 class BSplineSurfaceWithKnots : virtual public BSplineSurface {
 private:
 	static string entityname;
+	static EntityInstanceFunc GetInstance;
 
 protected:
 	LIST_OF_INTEGERS u_multiplicities;

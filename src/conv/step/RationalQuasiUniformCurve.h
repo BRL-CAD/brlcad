@@ -33,6 +33,7 @@
 class RationalQuasiUniformCurve : public RationalBSplineCurve, public QuasiUniformCurve {
 private:
 	static string entityname;
+	static EntityInstanceFunc GetInstance;
 
 protected:
 

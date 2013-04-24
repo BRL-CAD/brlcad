@@ -35,6 +35,7 @@ typedef list<TrimmingSelect *> LIST_OF_TRIMMING_SELECT;
 class TrimmedCurve : public BoundedCurve {
 private:
 	static string entityname;
+	static EntityInstanceFunc GetInstance;
 
 protected:
 	Curve *basis_curve;

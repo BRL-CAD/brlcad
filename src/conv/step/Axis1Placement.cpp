@@ -133,22 +133,13 @@ Axis1Placement::Print(int level) {
 }
 
 STEPEntity *
+Axis1Placement::GetInstance(STEPWrapper *sw, int id) {
+    return new Axis1Placement(sw, id);
+}
+
+STEPEntity *
 Axis1Placement::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
-    Factory::OBJECTS::iterator i;
-    if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
-	Axis1Placement *object = new Axis1Placement(sw,sse->STEPfile_id);
-
-	Factory::AddObject(object);
-
-	if (!object->Load(sw, sse)) {
-	    std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
-	    delete object;
-	    return NULL;
-	}
-	return static_cast<STEPEntity *>(object);
-    } else {
-	return (*i).second;
-    }
+    return STEPEntity::CreateEntity(sw, sse, GetInstance, CLASSNAME);
 }
 
 bool

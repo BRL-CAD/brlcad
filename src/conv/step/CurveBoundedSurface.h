@@ -36,6 +36,7 @@ typedef list<BoundaryCurve *> LIST_OF_BOUNDARIES;
 class CurveBoundedSurface: public BoundedSurface {
 private:
 	static string entityname;
+	static EntityInstanceFunc GetInstance;
 
 protected:
 	Surface* basis_surface;

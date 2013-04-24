@@ -32,6 +32,7 @@
 class UncertaintyMeasureWithUnit : public MeasureWithUnit {
 private:
 	static string entityname;
+	static EntityInstanceFunc GetInstance;
 
 protected:
 	string name;

@@ -34,6 +34,7 @@ class NamedUnit;
 class DerivedUnitElement : virtual public STEPEntity {
 private:
 	static string entityname;
+	static EntityInstanceFunc GetInstance;
 
 protected:
 	NamedUnit *unit;

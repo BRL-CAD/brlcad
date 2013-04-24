@@ -33,6 +33,7 @@
 class AmountOfSubstanceConversionBasedUnit : public AmountOfSubstanceUnit, public ConversionBasedUnit {
 private:
 	static string entityname;
+	static EntityInstanceFunc GetInstance;
 
 protected:
 

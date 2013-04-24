@@ -33,6 +33,7 @@
 class BoundedPCurve : public PCurve, public BoundedCurve {
 private:
 	static string entityname;
+	static EntityInstanceFunc GetInstance;
 
 protected:
 

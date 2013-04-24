@@ -33,6 +33,7 @@
 class TimeConversionBasedUnit : public TimeUnit, public ConversionBasedUnit {
 private:
 	static string entityname;
+	static EntityInstanceFunc GetInstance;
 
 protected:
 

@@ -32,6 +32,7 @@
 class Unit : virtual public STEPEntity {
 private:
 	static string entityname;
+	static EntityInstanceFunc GetInstance;
 
 protected:
 

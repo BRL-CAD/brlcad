@@ -33,6 +33,7 @@
 class VolumeContextDependentUnit : public VolumeUnit, public ContextDependentUnit {
 private:
 	static string entityname;
+	static EntityInstanceFunc GetInstance;
 
 protected:
 

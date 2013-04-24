@@ -34,6 +34,7 @@ class Surface;
 class RectangularTrimmedSurface: public BoundedSurface {
 private:
 	static string entityname;
+	static EntityInstanceFunc GetInstance;
 
 protected:
 	Surface* basis_surface;

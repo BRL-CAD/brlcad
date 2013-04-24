@@ -35,6 +35,7 @@ class Unit;
 class MeasureWithUnit : virtual public STEPEntity {
 private:
 	static string entityname;
+	static EntityInstanceFunc GetInstance;
 
 protected:
 	MeasureValue value_component;

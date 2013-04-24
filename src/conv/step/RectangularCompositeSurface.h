@@ -37,6 +37,7 @@ class SurfacePatch;
 class RectangularCompositeSurface: public BoundedSurface {
 private:
 	static string entityname;
+	static EntityInstanceFunc GetInstance;
 
 protected:
 	LIST_OF_LIST_OF_PATCHES *segments;

@@ -38,6 +38,7 @@ typedef list<LIST_OF_POINTS *> LIST_OF_LIST_OF_POINTS;
 class BSplineSurface: public BoundedSurface {
 private:
 	static string entityname;
+	static EntityInstanceFunc GetInstance;
 
 protected:
 	int u_degree;

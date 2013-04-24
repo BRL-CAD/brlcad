@@ -35,6 +35,7 @@ typedef list<double> LIST_OF_REALS;
 class BSplineCurveWithKnots : virtual public BSplineCurve {
 private:
 	static string entityname;
+	static EntityInstanceFunc GetInstance;
 
 protected:
 	LIST_OF_INTEGERS knot_multiplicities;

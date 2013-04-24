@@ -35,6 +35,7 @@ class ON_Brep;
 class Axis1Placement : public Placement {
 private:
 	static string entityname;
+	static EntityInstanceFunc GetInstance;
 	double z[3];
 
 	void BuildAxis();

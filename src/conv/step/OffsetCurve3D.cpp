@@ -122,23 +122,15 @@ OffsetCurve3D::Print(int level) {
     TAB(level+1); std::cout << "self_intersect:" << step->getLogicalString(self_intersect) << std::endl;
     ref_direction->Print(level+1);
 }
+
+STEPEntity *
+OffsetCurve3D::GetInstance(STEPWrapper *sw, int id) {
+    return new OffsetCurve3D(sw, id);
+}
+
 STEPEntity *
 OffsetCurve3D::Create(STEPWrapper *sw,SDAI_Application_instance *sse){
-    Factory::OBJECTS::iterator i;
-    if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
-	OffsetCurve3D *object = new OffsetCurve3D(sw,sse->STEPfile_id);
-
-	Factory::AddObject(object);
-
-	if (!object->Load(sw,sse)) {
-	    std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
-	    delete object;
-	    return NULL;
-	}
-	return static_cast<STEPEntity *>(object);
-    } else {
-	return (*i).second;
-    }
+    return STEPEntity::CreateEntity(sw, sse, GetInstance, CLASSNAME);
 }
 
 // Local Variables:

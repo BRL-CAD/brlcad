@@ -42,6 +42,7 @@ typedef std::list<RepresentationRelationship *> LIST_OF_REPRESENTATION_RELATIONS
 class ContextDependentShapeRepresentation: virtual public STEPEntity {
 private:
     static string entityname;
+    static EntityInstanceFunc GetInstance;
 
 protected:
     LIST_OF_REPRESENTATION_RELATIONSHIPS representation_relation;

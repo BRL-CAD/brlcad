@@ -33,6 +33,7 @@
 class RatioContextDependentUnit : public RatioUnit, public ContextDependentUnit {
 private:
 	static string entityname;
+	static EntityInstanceFunc GetInstance;
 
 protected:
 

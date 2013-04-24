@@ -34,6 +34,7 @@ class Direction;
 class Vector : public GeometricRepresentationItem {
 private:
 	static string entityname;
+	static EntityInstanceFunc GetInstance;
 
 protected:
 	Direction *orientation;

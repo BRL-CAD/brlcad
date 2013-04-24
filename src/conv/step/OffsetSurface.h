@@ -31,6 +31,7 @@
 class OffsetSurface: public Surface {
 private:
 	static string entityname;
+	static EntityInstanceFunc GetInstance;
 
 protected:
 	Surface* basis_surface;

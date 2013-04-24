@@ -47,6 +47,7 @@ class Representation : virtual public STEPEntity
 {
 private:
     static std::string entityname;
+    static EntityInstanceFunc GetInstance;
 
 protected:
     std::string name;

@@ -33,6 +33,7 @@
 class AmountOfSubstanceContextDependentUnit : public AmountOfSubstanceUnit, public ContextDependentUnit {
 private:
 	static string entityname;
+	static EntityInstanceFunc GetInstance;
 
 protected:
 

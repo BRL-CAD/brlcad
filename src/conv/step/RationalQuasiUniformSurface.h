@@ -33,6 +33,7 @@
 class RationalQuasiUniformSurface : public RationalBSplineSurface, public QuasiUniformSurface {
 private:
 	static string entityname;
+	static EntityInstanceFunc GetInstance;
 
 protected:
 

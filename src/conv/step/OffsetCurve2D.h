@@ -34,6 +34,7 @@ class CartesianTransformationOperator;
 class OffsetCurve2D : public Curve {
 private:
 	static string entityname;
+	static EntityInstanceFunc GetInstance;
 
 protected:
 	Curve *basis_curve;

@@ -33,6 +33,7 @@
 class MassConversionBasedUnit : public MassUnit, public ConversionBasedUnit {
 private:
 	static string entityname;
+	static EntityInstanceFunc GetInstance;
 
 protected:
 

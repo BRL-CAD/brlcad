@@ -32,6 +32,7 @@
 class FoundedItem : virtual public STEPEntity {
 private:
 	static string entityname;
+	static EntityInstanceFunc GetInstance;
 
 protected:
 

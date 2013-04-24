@@ -32,6 +32,7 @@
 class BezierCurve : virtual public BSplineCurve {
 private:
 	static string entityname;
+	static EntityInstanceFunc GetInstance;
 
 protected:
 

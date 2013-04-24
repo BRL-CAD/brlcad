@@ -32,6 +32,7 @@
 class RepresentationContext : virtual public STEPEntity {
 private:
 	static string entityname;
+	static EntityInstanceFunc GetInstance;
 
 protected:
 	string context_identifier;

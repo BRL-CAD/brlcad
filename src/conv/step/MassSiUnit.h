@@ -33,6 +33,7 @@
 class MassSiUnit : public MassUnit, public SiUnit {
 private:
 	static string entityname;
+	static EntityInstanceFunc GetInstance;
 
 protected:
 

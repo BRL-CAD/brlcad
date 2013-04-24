@@ -32,6 +32,7 @@
 class ProductContext: public ApplicationContextElement {
 private:
     static string entityname;
+    static EntityInstanceFunc GetInstance;
     string discipline_type;
 
 public:

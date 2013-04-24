@@ -68,23 +68,15 @@ CompositeCurveOnSurface::Print(int level) {
     TAB(level); std::cout << "Inherited Attributes:" << std::endl;
     CompositeCurve::Print(level+1);
 }
+
+STEPEntity *
+CompositeCurveOnSurface::GetInstance(STEPWrapper *sw, int id) {
+    return new CompositeCurveOnSurface(sw, id);
+}
+
 STEPEntity *
 CompositeCurveOnSurface::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
-    Factory::OBJECTS::iterator i;
-    if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
-	CompositeCurveOnSurface *object = new CompositeCurveOnSurface(sw,sse->STEPfile_id);
-
-	Factory::AddObject(object);
-
-	if (!object->Load(sw, sse)) {
-	    std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
-	    delete object;
-	    return NULL;
-	}
-	return static_cast<STEPEntity *>(object);
-    } else {
-	return (*i).second;
-    }
+    return STEPEntity::CreateEntity(sw, sse, GetInstance, CLASSNAME);
 }
 
 bool

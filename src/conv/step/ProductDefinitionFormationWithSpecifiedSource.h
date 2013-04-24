@@ -39,6 +39,7 @@ class ON_Brep;
 class ProductDefinitionFormationWithSpecifiedSource: public ProductDefinitionFormation {
 private:
     static string entityname;
+    static EntityInstanceFunc GetInstance;
 
 protected:
     Source make_or_buy;

@@ -32,6 +32,7 @@
 class Parabola : public Conic {
 private:
 	static string entityname;
+	static EntityInstanceFunc GetInstance;
 
 protected:
 	double focal_dist;

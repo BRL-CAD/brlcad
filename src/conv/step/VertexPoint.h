@@ -40,6 +40,7 @@ public:
 
 private:
 	static string entityname;
+	static EntityInstanceFunc GetInstance;
 	static OBJECTS verticies;
 
 protected:

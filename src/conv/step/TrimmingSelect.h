@@ -41,6 +41,7 @@ public:
 
 private:
 	static string entityname;
+	static EntityInstanceFunc GetInstance;
 
 protected:
 	CartesianPoint *cartesian_point;

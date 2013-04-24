@@ -59,23 +59,15 @@ Unit::Print(int level) {
     TAB(level); std::cout << CLASSNAME << ":" << "(";
     std::cout << "ID:" << STEPid() << ")" << std::endl;
 }
+
+STEPEntity *
+Unit::GetInstance(STEPWrapper *sw, int id) {
+    return new Unit(sw, id);
+}
+
 STEPEntity *
 Unit::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
-    Factory::OBJECTS::iterator i;
-    if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
-	Unit *object = new Unit(sw,sse->STEPfile_id);
-
-	Factory::AddObject(object);
-
-	if (!object->Load(sw, sse)) {
-	    std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
-	    delete object;
-	    return NULL;
-	}
-	return static_cast<STEPEntity *>(object);
-    } else {
-	return (*i).second;
-    }
+    return STEPEntity::CreateEntity(sw, sse, GetInstance, CLASSNAME);
 }
 
 // Local Variables:

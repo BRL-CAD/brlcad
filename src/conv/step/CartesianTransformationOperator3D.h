@@ -34,6 +34,7 @@ class Direction;
 class CartesianTransformationOperator3D : public CartesianTransformationOperator {
 private:
 	static string entityname;
+	static EntityInstanceFunc GetInstance;
 
 protected:
 	Direction *axis3;//optional

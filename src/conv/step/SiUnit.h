@@ -32,6 +32,7 @@
 class SiUnit : virtual public NamedUnit {
 private:
 	static string entityname;
+	static EntityInstanceFunc GetInstance;
 	double GetPrefixFactor();
 
 protected:

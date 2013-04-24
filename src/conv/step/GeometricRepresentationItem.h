@@ -32,6 +32,7 @@
 class GeometricRepresentationItem : virtual public RepresentationItem {
 private:
 	static string entityname;
+	static EntityInstanceFunc GetInstance;
 
 protected:
 

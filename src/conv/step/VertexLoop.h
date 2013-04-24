@@ -35,6 +35,7 @@ class Vertex;
 class VertexLoop : public Loop {
 private:
 	static string entityname;
+	static EntityInstanceFunc GetInstance;
 
 protected:
 	Vertex *loop_vertex;

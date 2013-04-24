@@ -105,22 +105,13 @@ FaceSurface::Print(int level) {
 }
 
 STEPEntity *
+FaceSurface::GetInstance(STEPWrapper *sw, int id) {
+    return new FaceSurface(sw, id);
+}
+
+STEPEntity *
 FaceSurface::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
-    Factory::OBJECTS::iterator i;
-    if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
-	FaceSurface *object = new FaceSurface(sw,sse->STEPfile_id);
-
-	Factory::AddObject(object);
-
-	if (!object->Load(sw, sse)) {
-	    std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
-	    delete object;
-	    return NULL;
-	}
-	return static_cast<STEPEntity *>(object);
-    } else {
-	return (*i).second;
-    }
+    return STEPEntity::CreateEntity(sw, sse, GetInstance, CLASSNAME);
 }
 
 // Local Variables:

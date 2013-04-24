@@ -36,6 +36,7 @@ class ON_Brep;
 class RepresentationItem : virtual public STEPEntity {
 private:
 	static string entityname;
+	static EntityInstanceFunc GetInstance;
 
 protected:
 	string name;

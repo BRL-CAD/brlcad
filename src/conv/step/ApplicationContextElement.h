@@ -38,6 +38,7 @@ class ApplicationContext;
 class ApplicationContextElement: virtual public STEPEntity {
 private:
     static string entityname;
+    static EntityInstanceFunc GetInstance;
 
 protected:
     string name;

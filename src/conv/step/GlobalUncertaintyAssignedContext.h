@@ -35,6 +35,7 @@ typedef list<UncertaintyMeasureWithUnit *> LIST_OF_UNCERTAINTY_MEASURE_WITH_UNIT
 class GlobalUncertaintyAssignedContext : public RepresentationContext {
 private:
 	static string entityname;
+	static EntityInstanceFunc GetInstance;
 
 protected:
 	LIST_OF_UNCERTAINTY_MEASURE_WITH_UNIT uncertainty;

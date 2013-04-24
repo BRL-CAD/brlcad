@@ -33,6 +33,7 @@
 class LengthContextDependentUnit : public LengthUnit, public ContextDependentUnit {
 private:
 	static string entityname;
+	static EntityInstanceFunc GetInstance;
 
 protected:
 

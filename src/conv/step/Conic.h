@@ -44,6 +44,7 @@ public:
 
 private:
 	static string entityname;
+	static EntityInstanceFunc GetInstance;
 
 protected:
 	Axis2Placement *position;

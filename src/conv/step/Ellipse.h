@@ -32,6 +32,7 @@
 class Ellipse : public Conic {
 private:
 	static string entityname;
+	static EntityInstanceFunc GetInstance;
 
 protected:
 	double semi_axis_1;

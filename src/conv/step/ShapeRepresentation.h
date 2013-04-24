@@ -41,6 +41,7 @@ class ShapeRepresentation : public Representation
 {
 private:
     static std::string entityname;
+    static EntityInstanceFunc GetInstance;
 
 protected:
 

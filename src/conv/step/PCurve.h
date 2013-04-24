@@ -35,6 +35,7 @@ class DefinitionalRepresentation;
 class PCurve : public Curve {
 private:
 	static string entityname;
+	static EntityInstanceFunc GetInstance;
 
 protected:
 	Surface *basis_surface;

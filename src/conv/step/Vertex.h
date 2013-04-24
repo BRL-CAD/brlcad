@@ -34,6 +34,7 @@ class Vertex : public TopologicalRepresentationItem {
 
 private:
 	static string entityname;
+	static EntityInstanceFunc GetInstance;
 	static OBJECTS objects;
 
 protected:

@@ -119,23 +119,15 @@ Axis2Placement::Print(int level) {
 	TAB(level+1); std::cout << "Type:" << axis2_placement_type_names[type] << " Value:" << std::endl;
     }
 }
+
+STEPEntity *
+Axis2Placement::GetInstance(STEPWrapper *sw, int id) {
+    return new Axis2Placement(sw, id);
+}
+
 STEPEntity *
 Axis2Placement::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
-    Factory::OBJECTS::iterator i;
-    if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
-	Axis2Placement *object = new Axis2Placement(sw,sse->STEPfile_id);
-
-	Factory::AddObject(object);
-
-	if (!object->Load(sw, (SDAI_Select *)sse)) {
-	    std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
-	    delete object;
-	    return NULL;
-	}
-	return static_cast<STEPEntity *>(object);
-    } else {
-	return (*i).second;
-    }
+    return STEPEntity::CreateEntity(sw, sse, GetInstance, CLASSNAME);
 }
 
 // Local Variables:

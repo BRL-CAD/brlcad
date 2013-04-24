@@ -32,6 +32,7 @@
 class DesignContext: public ProductDefinitionContext {
 private:
     static string entityname;
+    static EntityInstanceFunc GetInstance;
 
 public:
     DesignContext();

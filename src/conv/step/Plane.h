@@ -31,6 +31,7 @@
 class Plane: public ElementarySurface {
 private:
 	static string entityname;
+	static EntityInstanceFunc GetInstance;
 
 protected:
 

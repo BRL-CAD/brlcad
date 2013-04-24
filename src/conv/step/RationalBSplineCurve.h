@@ -34,6 +34,7 @@ typedef list<double> LIST_OF_REALS;
 class RationalBSplineCurve : virtual public BSplineCurve {
 private:
 	static string entityname;
+	static EntityInstanceFunc GetInstance;
 
 protected:
 	LIST_OF_REALS weights_data;

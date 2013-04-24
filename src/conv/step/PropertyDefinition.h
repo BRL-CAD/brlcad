@@ -38,6 +38,7 @@ class ON_Brep;
 class PropertyDefinition: virtual public STEPEntity {
 private:
     static string entityname;
+    static EntityInstanceFunc GetInstance;
 
 protected:
     string name;

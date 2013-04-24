@@ -118,23 +118,15 @@ PCurve::Print(int level) {
     TAB(level+1); std::cout << "reference_to_curve:" << std::endl;
     reference_to_curve->Print(level+1);
 }
+
+STEPEntity *
+PCurve::GetInstance(STEPWrapper *sw, int id) {
+    return new PCurve(sw, id);
+}
+
 STEPEntity *
 PCurve::Create(STEPWrapper *sw,SDAI_Application_instance *sse){
-    Factory::OBJECTS::iterator i;
-    if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
-	PCurve *object = new PCurve(sw,sse->STEPfile_id);
-
-	Factory::AddObject(object);
-
-	if (!object->Load(sw,sse)) {
-	    std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
-	    delete object;
-	    return NULL;
-	}
-	return static_cast<STEPEntity *>(object);
-    } else {
-	return (*i).second;
-    }
+    return STEPEntity::CreateEntity(sw, sse, GetInstance, CLASSNAME);
 }
 
 // Local Variables:

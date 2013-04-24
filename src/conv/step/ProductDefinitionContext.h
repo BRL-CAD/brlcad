@@ -32,6 +32,7 @@
 class ProductDefinitionContext: public ApplicationContextElement {
 private:
     static string entityname;
+    static EntityInstanceFunc GetInstance;
     string life_cycle_stage;
 
 public:

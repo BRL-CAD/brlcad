@@ -33,6 +33,7 @@
 class RationalBSplineCurveWithKnots : public RationalBSplineCurve, public BSplineCurveWithKnots {
 private:
 	static string entityname;
+	static EntityInstanceFunc GetInstance;
 
 protected:
 

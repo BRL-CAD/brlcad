@@ -33,6 +33,7 @@
 class ElectricCurrentConversionBasedUnit : public ElectricCurrentUnit, public ConversionBasedUnit {
 private:
 	static string entityname;
+	static EntityInstanceFunc GetInstance;
 
 protected:
 

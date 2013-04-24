@@ -33,6 +33,7 @@
 class AreaSiUnit : public AreaUnit, public SiUnit {
 private:
 	static string entityname;
+	static EntityInstanceFunc GetInstance;
 
 protected:
 

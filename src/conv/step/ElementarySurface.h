@@ -34,6 +34,7 @@ class Axis2Placement3D;
 class ElementarySurface: public Surface {
 private:
 	static string entityname;
+	static EntityInstanceFunc GetInstance;
 
 protected:
 	Axis2Placement3D *position;
