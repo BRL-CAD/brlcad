@@ -254,7 +254,7 @@ db_fullpath_traverse(struct db_i *dbip,
 	    struct rt_db_internal in;
 	    struct rt_comb_internal *comb;
 
-	    if (rt_db_get_internal5(&in, dp, dbip, NULL, resp) < 0)
+	    if (rt_db_get_internal(&in, dp, dbip, NULL, resp) < 0)
 		return;
 
 	    comb = (struct rt_comb_internal *)in.idb_ptr;
@@ -530,7 +530,7 @@ db_fullpath_stateful_traverse(struct db_i *dbip, struct rt_wdb *wdbp, struct db_
 	    struct rt_db_internal in;
 	    struct rt_comb_internal *comb;
 
-	    if (rt_db_get_internal5(&in, dp, dbip, NULL, resp) < 0)
+	    if (rt_db_get_internal(&in, dp, dbip, NULL, resp) < 0)
 		return 0;
 
 	    comb = (struct rt_comb_internal *)in.idb_ptr;
@@ -583,7 +583,7 @@ f_below(struct db_plan_t *plan, struct db_full_path *entry, struct db_i *dbip, s
 	return 0;
 
     if (dp->d_flags & RT_DIR_COMB) {
-	if (rt_db_get_internal5(&in, dp, dbip, NULL, wdbp->wdb_resp) < 0)
+	if (rt_db_get_internal(&in, dp, dbip, NULL, wdbp->wdb_resp) < 0)
 	    return 0;
 
 	comb = (struct rt_comb_internal *)in.idb_ptr;
@@ -1388,7 +1388,7 @@ f_nnodes(struct db_plan_t *plan, struct db_full_path *entry, struct db_i *dbip, 
 	return 0;
 
     if (dp->d_flags & RT_DIR_COMB) {
-	rt_db_get_internal5(&in, dp, dbip, (fastf_t *)NULL, &rt_uniresource);
+	rt_db_get_internal(&in, dp, dbip, (fastf_t *)NULL, &rt_uniresource);
 	comb = (struct rt_comb_internal *)in.idb_ptr;
 	if (comb->tree == NULL) {
 	    node_count = 0;
