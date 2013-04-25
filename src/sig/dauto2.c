@@ -32,7 +32,6 @@
 
 #include "bu.h"
 
-
 #define	BSIZE	2048		/* Must be AT LEAST 2*Points in spectrum */
 double	data[BSIZE];		/* Input buffer */
 int	clip[BSIZE];		/* clipped buffer */
@@ -95,9 +94,11 @@ int main(int argc, char **argv)
 		    out[i]--;
 	    }
 	}
+
 	for ( i = 0; i < L; i++ ) {
 	    r[i] = out[i];
 	}
+
 	ret = fwrite( r, sizeof(*r), L, stdout );
 	if (ret != (size_t)L)
 	    perror("fwrite");
