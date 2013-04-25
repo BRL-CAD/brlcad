@@ -349,8 +349,10 @@
 	method updateGlassSpec {id}
 
 	method validateDouble_light {id d}
+	method validateTarget_light {id d}
 	method updateLightSpec {id {unused ""}}
 
+	method validate3TupleDoubles_camo {_id _t}
 	method validateDouble_camo {id d}
 	method validateRgb_camo {id rgb}
 	method updateCamoSpec {id}
@@ -640,6 +642,45 @@
 	    -validatecommand [::itcl::code $this validateRgb_camo $id %P]
     } {}
 
+    itk_component add camoDelta$id\L {
+	::ttk::label $parent.camoDelta$id\L \
+	    -text "Noise Delta"
+    } {}
+
+    itk_component add camoDelta$id\E {
+	::ttk::entry $parent.camoDelta$id\E \
+	    -width 20 \
+	    -textvariable [::itcl::scope camoDelta($id)] \
+	    -validate key \
+	    -validatecommand [::itcl::code $this validate3TupleDoubles_camo $id %P]
+    } {}
+
+    itk_component add camoScale$id\L {
+	::ttk::label $parent.camoScale$id\L \
+	    -text "Noise Scale"
+    } {}
+
+    itk_component add camoScale$id\E {
+	::ttk::entry $parent.camoScale$id\E \
+	    -width 20 \
+	    -textvariable [::itcl::scope camoScale($id)] \
+	    -validate key \
+	    -validatecommand [::itcl::code $this validate3TupleDoubles_camo $id %P]
+    } {}
+
+    itk_component add camoSize$id\L {
+	::ttk::label $parent.camo$id\L \
+	    -text "Noise Size"
+    } {}
+
+    itk_component add camoSize$id\E {
+	::ttk::entry $parent.camoSize$id\E \
+	    -width 20 \
+	    -textvariable [::itcl::scope camoSize($id)] \
+	    -validate key \
+	    -validatecommand [::itcl::code $this validateDouble_camo $id %P]
+    } {}
+
     itk_component add camoT1$id\L {
 	::ttk::label $parent.camoT1$id\L \
 	    -text "Threshold 1"
@@ -666,45 +707,6 @@
 	    -validatecommand [::itcl::code $this validateDouble_camo $id %P]
     } {}
 
-    itk_component add camoSize$id\L {
-	::ttk::label $parent.camo$id\L \
-	    -text "Noise Size"
-    } {}
-
-    itk_component add camoSize$id\E {
-	::ttk::entry $parent.camoSize$id\E \
-	    -width 20 \
-	    -textvariable [::itcl::scope camoSize($id)] \
-	    -validate key \
-	    -validatecommand [::itcl::code $this validateDouble_camo $id %P]
-    } {}
-
-    itk_component add camoScale$id\L {
-	::ttk::label $parent.camoScale$id\L \
-	    -text "Noise Scale"
-    } {}
-
-    itk_component add camoScale$id\E {
-	::ttk::entry $parent.camoScale$id\E \
-	    -width 20 \
-	    -textvariable [::itcl::scope camoScale($id)] \
-	    -validate key \
-	    -validatecommand [::itcl::code $this validateDouble_camo $id %P]
-    } {}
-
-    itk_component add camoDelta$id\L {
-	::ttk::label $parent.camoDelta$id\L \
-	    -text "Noise Delta"
-    } {}
-
-    itk_component add camoDelta$id\E {
-	::ttk::entry $parent.camoDelta$id\E \
-	    -width 20 \
-	    -textvariable [::itcl::scope camoDelta($id)] \
-	    -validate key \
-	    -validatecommand [::itcl::code $this validateDouble_camo $id %P]
-    } {}
-
     itk_component add camoLacun$id\L {
 	::ttk::label $parent.camoLacun$id\L \
 	    -text "Lacunarity"
@@ -718,19 +720,6 @@
 	    -validatecommand [::itcl::code $this validateDouble_camo $id %P]
     } {}
 
-    itk_component add camoOctaves$id\L {
-	::ttk::label $parent.camoOctaves$id\L \
-	    -text "Octaves"
-    } {}
-
-    itk_component add camoOctaves$id\E {
-	::ttk::entry $parent.camoOctaves$id\E \
-	    -width 20 \
-	    -textvariable [::itcl::scope camoOctaves($id)] \
-	    -validate key \
-	    -validatecommand [::itcl::code $this validateDouble_camo $id %P]
-    } {}
-
     itk_component add camoHval$id\L {
 	::ttk::label $parent.camoHval$id\L \
 	    -text "H Value"
@@ -740,6 +729,19 @@
 	::ttk::entry $parent.camoHval$id\E \
 	    -width 20 \
 	    -textvariable [::itcl::scope camoHval($id)] \
+	    -validate key \
+	    -validatecommand [::itcl::code $this validateDouble_camo $id %P]
+    } {}
+
+    itk_component add camoOctaves$id\L {
+	::ttk::label $parent.camoOctaves$id\L \
+	    -text "Octaves"
+    } {}
+
+    itk_component add camoOctaves$id\E {
+	::ttk::entry $parent.camoOctaves$id\E \
+	    -width 20 \
+	    -textvariable [::itcl::scope camoOctaves($id)] \
 	    -validate key \
 	    -validatecommand [::itcl::code $this validateDouble_camo $id %P]
     } {}
@@ -877,19 +879,6 @@
 	    -validatecommand [::itcl::code $this validateDouble_$shaderType($id) $id %P]
     } {}
 
-    itk_component add phongExt$id\L {
-	::ttk::label $parent.phongExt$id\L \
-	    -text "Extinction"
-    } {}
-
-    itk_component add phongExt$id\E {
-	::ttk::entry $parent.phongExt$id\E \
-	    -width 5 \
-	    -textvariable [::itcl::scope phongExt($id)] \
-	    -validate key \
-	    -validatecommand [::itcl::code $this validateDouble_$shaderType($id) $id %P]
-    } {}
-
     itk_component add phongShine$id\L {
 	::ttk::label $parent.phongShine$id\L \
 	    -text "Shininess"
@@ -899,6 +888,19 @@
 	::ttk::entry $parent.phongShine$id\E \
 	    -width 5 \
 	    -textvariable [::itcl::scope phongShine($id)] \
+	    -validate key \
+	    -validatecommand [::itcl::code $this validateDouble_$shaderType($id) $id %P]
+    } {}
+
+    itk_component add phongExt$id\L {
+	::ttk::label $parent.phongExt$id\L \
+	    -text "Extinction"
+    } {}
+
+    itk_component add phongExt$id\E {
+	::ttk::entry $parent.phongExt$id\E \
+	    -width 5 \
+	    -textvariable [::itcl::scope phongExt($id)] \
 	    -validate key \
 	    -validatecommand [::itcl::code $this validateDouble_$shaderType($id) $id %P]
     } {}
@@ -995,7 +997,7 @@
 	    -width 5 \
 	    -textvariable [::itcl::scope lightTarget($id)] \
 	    -validate key \
-	    -validatecommand [::itcl::code $this validateDouble_light $id %P]
+	    -validatecommand [::itcl::code $this validateTarget_light $id %P]
     } {}
 
     itk_component add lightLumens$id\L {
@@ -2070,7 +2072,7 @@
 	    }
 	    "em" {
 		if {$notEmptyVal && [string is double $val]} {
-		    set phongEm($id) $val
+		    set phongEmiss($id) $val
 		}
 	    }
 	}
@@ -2655,34 +2657,7 @@
 	}
     }
 
-    if {$shaderType(0) == "stack"} {
-	set spec [lindex $shaderSpec 1]
-	set i [lsearch -index 0 $spec air]
-	if {$i != -1} {
-	    set spec [lreplace $spec $i $i "air [list $newSpec]"]
-	}
-
-	set shaderSpec "stack [list $spec]"
-    } elseif {$shaderType(0) == "envmap"} {
-	set spec [lindex $shaderSpec 1]
-	set subType [lindex $spec 0]
-	set subSpec [lindex $spec 1]
-
-	if {$subType == "stack"} {
-	    set i [lsearch -index 0 $subSpec air]
-	    if {$i != -1} {
-		set spec [lreplace $subSpec $i $i "air [list $newSpec]"]
-	    }
-
-	    set spec "stack [list $spec]"
-	} else {
-	    set spec "air [list $newSpec]"
-	}
-
-	set shaderSpec "envmap [list $spec]"
-    } else {
-	set shaderSpec "air [list $newSpec]"
-    }
+    finalSpecSetting air $newSpec
 }
 
 ::itcl::body ShaderEdit::validateDouble_light {id d} {
@@ -2691,7 +2666,19 @@
     }
 
     if {!$ignoreShaderSpec} {
-	after idle [::itcl::code $this updateCloudSpec $id]
+	after idle [::itcl::code $this updateLightSpec $id]
+    }
+
+    return 1
+}
+
+::itcl::body ShaderEdit::validateTarget_light {_id _d} {
+    if {![::cadwidgets::Ged::validate3TupleDoubles $_d]} {
+	return 0
+    }
+
+    if {!$ignoreShaderSpec} {
+	after idle [::itcl::code $this updateLightSpec $_id]
     }
 
     return 1
@@ -2756,34 +2743,7 @@
 	}
     }
 
-    if {$shaderType(0) == "stack"} {
-	set spec [lindex $shaderSpec 1]
-	set i [lsearch -index 0 $spec light]
-	if {$i != -1} {
-	    set spec [lreplace $spec $i $i "light [list $newSpec]"]
-	}
-
-	set shaderSpec "stack [list $spec]"
-    } elseif {$shaderType(0) == "envmap"} {
-	set spec [lindex $shaderSpec 1]
-	set subType [lindex $spec 0]
-	set subSpec [lindex $spec 1]
-
-	if {$subType == "stack"} {
-	    set i [lsearch -index 0 $subSpec light]
-	    if {$i != -1} {
-		set spec [lreplace $subSpec $i $i "light [list $newSpec]"]
-	    }
-
-	    set spec "stack [list $spec]"
-	} else {
-	    set spec "light [list $newSpec]"
-	}
-
-	set shaderSpec "envmap [list $spec]"
-    } else {
-	set shaderSpec "light [list $newSpec]"
-    }
+    finalSpecSetting light $newSpec
 
     if {$lightShadowRays($id) > 9} {
 	set s 9
@@ -2796,6 +2756,18 @@
     if {$allowCallbacks && $itk_option(-shaderChangedCallback) != ""} {
 	$itk_option(-shaderChangedCallback)
     }
+}
+
+::itcl::body ShaderEdit::validate3TupleDoubles_camo {_id _t} {
+    if {![::cadwidgets::Ged::validate3TupleDoubles $_t]} {
+	return 0
+    }
+
+    if {!$ignoreShaderSpec} {
+	after idle [::itcl::code $this updateCamoSpec $_id]
+    }
+
+    return 1
 }
 
 ::itcl::body ShaderEdit::validateDouble_camo {id d} {
@@ -2913,34 +2885,7 @@
 	}
     }
 
-    if {$shaderType(0) == "stack"} {
-	set spec [lindex $shaderSpec 1]
-	set i [lsearch -index 0 $spec camo]
-	if {$i != -1} {
-	    set spec [lreplace $spec $i $i "camo [list $newSpec]"]
-	}
-
-	set shaderSpec "stack [list $spec]"
-    } elseif {$shaderType(0) == "envmap"} {
-	set spec [lindex $shaderSpec 1]
-	set subType [lindex $spec 0]
-	set subSpec [lindex $spec 1]
-
-	if {$subType == "stack"} {
-	    set i [lsearch -index 0 $subSpec camo]
-	    if {$i != -1} {
-		set spec [lreplace $subSpec $i $i "camo [list $newSpec]"]
-	    }
-
-	    set spec "stack [list $spec]"
-	} else {
-	    set spec "camo [list $newSpec]"
-	}
-
-	set shaderSpec "envmap [list $spec]"
-    } else {
-	set shaderSpec "camo [list $newSpec]"
-    }
+    finalSpecSetting camo $newSpec
 
     if {$allowCallbacks && $itk_option(-shaderChangedCallback) != ""} {
 	$itk_option(-shaderChangedCallback)
@@ -2998,34 +2943,7 @@
 	}
     }
 
-    if {$shaderType(0) == "stack"} {
-	set spec [lindex $shaderSpec 1]
-	set i [lsearch -index 0 $spec checker]
-	if {$i != -1} {
-	    set spec [lreplace $spec $i $i "checker [list $newSpec]"]
-	}
-
-	set shaderSpec "stack [list $spec]"
-    } elseif {$shaderType(0) == "envmap"} {
-	set spec [lindex $shaderSpec 1]
-	set subType [lindex $spec 0]
-	set subSpec [lindex $spec 1]
-
-	if {$subType == "stack"} {
-	    set i [lsearch -index 0 $subSpec checker]
-	    if {$i != -1} {
-		set spec [lreplace $subSpec $i $i "checker [list $newSpec]"]
-	    }
-
-	    set spec "stack [list $spec]"
-	} else {
-	    set spec "checker [list $newSpec]"
-	}
-
-	set shaderSpec "envmap [list $spec]"
-    } else {
-	set shaderSpec "checker [list $newSpec]"
-    }
+    finalSpecSetting checker $newSpec
 
     if {$allowCallbacks && $itk_option(-shaderChangedCallback) != ""} {
 	$itk_option(-shaderChangedCallback)
@@ -3063,34 +2981,7 @@
 	}
     }
 
-    if {$shaderType(0) == "stack"} {
-	set spec [lindex $shaderSpec 1]
-	set i [lsearch -index 0 $spec cloud]
-	if {$i != -1} {
-	    set spec [lreplace $spec $i $i "cloud [list $newSpec]"]
-	}
-
-	set shaderSpec "stack [list $spec]"
-    } elseif {$shaderType(0) == "envmap"} {
-	set spec [lindex $shaderSpec 1]
-	set subType [lindex $spec 0]
-	set subSpec [lindex $spec 1]
-
-	if {$subType == "stack"} {
-	    set i [lsearch -index 0 $subSpec cloud]
-	    if {$i != -1} {
-		set spec [lreplace $subSpec $i $i "cloud [list $newSpec]"]
-	    }
-
-	    set spec "stack [list $spec]"
-	} else {
-	    set spec "cloud [list $newSpec]"
-	}
-
-	set shaderSpec "envmap [list $spec]"
-    } else {
-	set shaderSpec "cloud [list $newSpec]"
-    }
+    finalSpecSetting cloud $newSpec
 
     if {$allowCallbacks && $itk_option(-shaderChangedCallback) != ""} {
 	$itk_option(-shaderChangedCallback)
@@ -3176,34 +3067,7 @@
 	}
     }
 
-    if {$shaderType(0) == "stack"} {
-	set spec [lindex $shaderSpec 1]
-	set i [lsearch -index 0 $spec plastic]
-	if {$i != -1} {
-	    set spec [lreplace $spec $i $i "plastic [list $newSpec]"]
-	}
-
-	set shaderSpec "stack [list $spec]"
-    } elseif {$shaderType(0) == "envmap"} {
-	set spec [lindex $shaderSpec 1]
-	set subType [lindex $spec 0]
-	set subSpec [lindex $spec 1]
-
-	if {$subType == "stack"} {
-	    set i [lsearch -index 0 $subSpec plastic]
-	    if {$i != -1} {
-		set spec [lreplace $subSpec $i $i "plastic [list $newSpec]"]
-	    }
-
-	    set spec "stack [list $spec]"
-	} else {
-	    set spec "plastic [list $newSpec]"
-	}
-
-	set shaderSpec "envmap [list $spec]"
-    } else {
-	set shaderSpec "plastic [list $newSpec]"
-    }
+    finalSpecSetting plastic $newSpec
 
     if {$allowCallbacks && $itk_option(-shaderChangedCallback) != ""} {
 	$itk_option(-shaderChangedCallback)
@@ -3289,34 +3153,7 @@
 	}
     }
 
-    if {$shaderType(0) == "stack"} {
-	set spec [lindex $shaderSpec 1]
-	set i [lsearch -index 0 $spec mirror]
-	if {$i != -1} {
-	    set spec [lreplace $spec $i $i "mirror [list $newSpec]"]
-	}
-
-	set shaderSpec "stack [list $spec]"
-    } elseif {$shaderType(0) == "envmap"} {
-	set spec [lindex $shaderSpec 1]
-	set subType [lindex $spec 0]
-	set subSpec [lindex $spec 1]
-
-	if {$subType == "stack"} {
-	    set i [lsearch -index 0 $subSpec mirror]
-	    if {$i != -1} {
-		set spec [lreplace $subSpec $i $i "mirror [list $newSpec]"]
-	    }
-
-	    set spec "stack [list $spec]"
-	} else {
-	    set spec "mirror [list $newSpec]"
-	}
-
-	set shaderSpec "envmap [list $spec]"
-    } else {
-	set shaderSpec "mirror [list $newSpec]"
-    }
+    finalSpecSetting mirror $newSpec
 
     if {$allowCallbacks && $itk_option(-shaderChangedCallback) != ""} {
 	$itk_option(-shaderChangedCallback)
@@ -3402,34 +3239,7 @@
 	}
     }
 
-    if {$shaderType(0) == "stack"} {
-	set spec [lindex $shaderSpec 1]
-	set i [lsearch -index 0 $spec glass]
-	if {$i != -1} {
-	    set spec [lreplace $spec $i $i "glass [list $newSpec]"]
-	}
-
-	set shaderSpec "stack [list $spec]"
-    } elseif {$shaderType(0) == "envmap"} {
-	set spec [lindex $shaderSpec 1]
-	set subType [lindex $spec 0]
-	set subSpec [lindex $spec 1]
-
-	if {$subType == "stack"} {
-	    set i [lsearch -index 0 $subSpec glass]
-	    if {$i != -1} {
-		set spec [lreplace $subSpec $i $i "glass [list $newSpec]"]
-	    }
-
-	    set spec "stack [list $spec]"
-	} else {
-	    set spec "glass [list $newSpec]"
-	}
-
-	set shaderSpec "envmap [list $spec]"
-    } else {
-	set shaderSpec "glass [list $newSpec]"
-    }
+    finalSpecSetting glass $newSpec
 
     if {$allowCallbacks && $itk_option(-shaderChangedCallback) != ""} {
 	$itk_option(-shaderChangedCallback)
@@ -3474,34 +3284,7 @@
 }
 
 ::itcl::body ShaderEdit::updatePrjSpec {id} {
-    if {$shaderType(0) == "stack"} {
-	set spec [lindex $shaderSpec 1]
-	set i [lsearch -index 0 $spec prj]
-	if {$i != -1} {
-	    set spec [lreplace $spec $i $i [list prj $projectionFile($id)]]
-	}
-
-	set shaderSpec [list stack $spec]
-    } elseif {$shaderType(0) == "envmap"} {
-	set spec [lindex $shaderSpec 1]
-	set subType [lindex $spec 0]
-	set subSpec [lindex $spec 1]
-
-	if {$subType == "stack"} {
-	    set i [lsearch -index 0 $subSpec prj]
-	    if {$i != -1} {
-		set subSpec [lreplace $subSpec $i $i [list prj $projectionFile($id)]]
-	    }
-
-	    set spec [list stack $subSpec]
-	} else {
-	    set spec [list prj $projectionFile($id)]
-	}
-
-	set shaderSpec [list envmap $spec]
-    } else {
-	set shaderSpec [list prj $projectionFile($id)]
-    }
+    finalSpecSetting prj $projectionFile($id)
 
     if {$allowCallbacks && $itk_option(-shaderChangedCallback) != ""} {
 	$itk_option(-shaderChangedCallback)
@@ -3532,7 +3315,7 @@
 
 
 ::itcl::body ShaderEdit::validateScale_texture {_id _s _type} {
-    if {![::cadwidgets::Ged::validate2TupleDigits $_s]} {
+    if {![::cadwidgets::Ged::validate2TupleNonZeroDigits $_s]} {
 	return 0
     }
 
@@ -3602,7 +3385,7 @@
 	set spec [lindex $shaderSpec 1]
 	set i [lsearch -index 0 $spec $_type]
 	if {$i != -1} {
-	    set spec [lreplace $spec $i $i "$_type [list $_newSpec]"]
+	    set spec [lreplace $spec $i $i [list $_type $_newSpec]]
 	}
 
 	set shaderSpec "stack [list $spec]"
@@ -3614,7 +3397,7 @@
 	if {$subType == "stack"} {
 	    set i [lsearch -index 0 $subSpec $_type]
 	    if {$i != -1} {
-		set spec [lreplace $subSpec $i $i "$_type [list $_newSpec]"]
+		set spec [lreplace $subSpec $i $i [list $_type $_newSpec]]
 	    }
 
 	    set spec "stack [list $spec]"
