@@ -32,6 +32,7 @@ changes made.  See document footer for additional details.
 * improved BoT mesh editing interface in archer - Bob Parker
 * fixed crash when running screengrab in archer - Nick Reed
 * fixed asc2g and mged empty revolve object crashes - Sean Morrison
+* improved Linux support for multiple hardware displays - Bob Parker
 * fixed crash when parsing invalid shader parameters - Cliff Yapp
 * fixed mged 'dbupgrade' -permissions error on windows - Sean Morrison
 * fixed infinite loop raytracing subtracted lights - Sean Morrison
