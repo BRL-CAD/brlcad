@@ -738,6 +738,8 @@ package provide cadwidgets::Ged 1.0
 	proc validateDigitMax {_d _max}
 	proc validateDouble {_d}
 	proc validateRgb {_rgb}
+	proc validate2TupleNonZeroDigits {_t}
+	proc validate3TupleDoubles {_t}
     }
 
     protected {
@@ -5281,6 +5283,10 @@ package provide cadwidgets::Ged 1.0
 
 
 ::itcl::body cadwidgets::Ged::validateRgb {_rgb} {
+    if {[llength $_rgb] > 3} {
+	return 0
+    }
+
     set r [lindex $_rgb 0]
     set g [lindex $_rgb 1]
     set b [lindex $_rgb 2]
@@ -5288,6 +5294,42 @@ package provide cadwidgets::Ged 1.0
     if {($r == "" || ([string is digit $r] && $r <= 255)) &&
 	($g == "" || ([string is digit $g] && $g <= 255)) &&
 	($b == "" || ([string is digit $b] && $b <= 255))} {
+	return 1
+    }
+
+    return 0
+}
+
+
+::itcl::body cadwidgets::Ged::validate2TupleNonZeroDigits {_t} {
+    if {[llength $_t] > 2} {
+	return 0
+    }
+
+    set t1 [lindex $_t 0]
+    set t2 [lindex $_t 1]
+
+    if {([string is digit $t1] && $t1 > 0) &&
+	([string is digit $t2] && $t2 > 0)} {
+	return 1
+    }
+
+    return 0
+}
+
+
+::itcl::body cadwidgets::Ged::validate3TupleDoubles {_t} {
+    if {[llength $_t] > 3} {
+	return 0
+    }
+
+    set t1 [lindex $_t 0]
+    set t2 [lindex $_t 1]
+    set t3 [lindex $_t 2]
+
+    if {[string is double $t1] &&
+	[string is double $t2] &&
+	[string is double $t3]} {
 	return 1
     }
 
