@@ -51,14 +51,12 @@
 #  define HAVE_SSIZE_T 1
 #endif
 
-
-#if !defined(off_t) && !defined(__APPLE__)
-#  if defined(_WIN32)
-     typedef SSIZE_T off_t;
-#    define _OFF_T_DEFINED 1
-#  else
-     typedef ptrdiff_t off_t;
-#  endif
+#if defined(_WIN32) && !defined(_OFF_T_DEFINED)
+   typedef SSIZE_T off_t;
+#  define _OFF_T_DEFINED 1
+#elif !defined(__APPLE__) && !defined(__off_t_defined)
+   typedef ptrdiff_t off_t;
+#  define __off_t_defined 1
 #endif
 
 /* On Windows 64bit, "off_t" is defined as a "long"
