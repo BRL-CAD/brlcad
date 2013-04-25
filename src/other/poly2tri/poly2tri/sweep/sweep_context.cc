@@ -146,7 +146,8 @@ void SweepContext::InitEdges(std::vector<Point*> &polyline)
   size_t num_points = polyline.size();
   for (size_t i = 0; i < num_points; i++) {
     size_t j = i < num_points - 1 ? i + 1 : 0;
-    edge_list.push_back(new Edge(*polyline[i], *polyline[j]));
+    if (!(EQ((*polyline[i]).x, (*polyline[j]).x) && EQ((*polyline[i]).y, (*polyline[j]).y)))
+	    edge_list.push_back(new Edge(*polyline[i], *polyline[j]));
   }
 }
 
