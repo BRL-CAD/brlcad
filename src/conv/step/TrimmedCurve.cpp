@@ -107,41 +107,40 @@ TrimmedCurve::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
     if (trim_1.empty()) {
 	STEPattribute *attr = step->getAttribute(sse, "trim_1");
 	if (attr) {
-	    STEPaggregate *sa = (STEPaggregate *)(attr->ptr.a);
-	    EntityNode *sn = (EntityNode *) sa->GetHead();
+	    SelectAggregate *sa = static_cast<SelectAggregate *>(attr->ptr.a);
+	    SelectNode *sn = static_cast<SelectNode *>(sa->GetHead());
 	    SDAI_Select *p;
 	    while (sn != NULL) {
-		p = (SDAI_Select *) sn->node;
+		p = static_cast<SDAI_Select *>(sn->node);
 		TrimmingSelect *aTS = new TrimmingSelect();
 
-		trim_1.push_back(aTS);
-
-		if (!aTS->Load(step, p)) {
+		if (p && !aTS->Load(step, p)) {
 		    std::cout << CLASSNAME << ":Error loading TrimmingSelect from list." << std::endl;
+		    delete aTS;
 		    return false;
 		}
-
-		sn = (EntityNode *) sn->NextNode();
+		trim_1.push_back(aTS);
+		sn = static_cast<SelectNode *>(sn->NextNode());
 	    }
 	}
     }
     if (trim_2.empty()) {
 	STEPattribute *attr = step->getAttribute(sse, "trim_2");
 	if (attr) {
-	    STEPaggregate *sa = (STEPaggregate *)(attr->ptr.a);
-	    EntityNode *sn = (EntityNode *) sa->GetHead();
+	    SelectAggregate *sa = static_cast<SelectAggregate *>(attr->ptr.a);
+	    SelectNode *sn = static_cast<SelectNode *>(sa->GetHead());
 	    SDAI_Select *p;
 	    while (sn != NULL) {
-		p = (SDAI_Select *) sn->node;
+		p = static_cast<SDAI_Select *>(sn->node);
 		TrimmingSelect *aTS = new TrimmingSelect();
 
-		trim_2.push_back(aTS);
-
-		if (!aTS->Load(step, p)) {
+		if (p && !aTS->Load(step, p)) {
 		    std::cout << CLASSNAME << ":Error loading TrimmingSelect from list." << std::endl;
+		    delete aTS;
 		    return false;
 		}
-		sn = (EntityNode *) sn->NextNode();
+		trim_2.push_back(aTS);
+		sn = static_cast<SelectNode *>(sn->NextNode());
 	    }
 	}
     }

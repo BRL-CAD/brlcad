@@ -111,26 +111,27 @@ SurfaceCurve::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
     if (associated_geometry.empty()) {
 	STEPattribute *attr = step->getAttribute(sse, "associated_geometry");
 	if (attr) {
-	    STEPaggregate *sa = (STEPaggregate *)(attr->ptr.a);
-	    EntityNode *sn = (EntityNode *) sa->GetHead();
+	    SelectAggregate *sa = static_cast<SelectAggregate *>(attr->ptr.a);
+	    SelectNode *sn = static_cast<SelectNode *>(sa->GetHead());
+
 	    SDAI_Select *p_or_s;
 	    while (sn != NULL) {
-		p_or_s = (SDAI_Select *) sn->node;
+		p_or_s = static_cast<SDAI_Select *>(sn->node);
 
-		if (p_or_s->CurrentUnderlyingType() == config_control_design::t_pcurve_or_surface) {
+		if (p_or_s && p_or_s->CurrentUnderlyingType() == config_control_design::t_pcurve_or_surface) {
 		    PCurveOrSurface *aPCOS = new PCurveOrSurface();
-
-		    associated_geometry.push_back(aPCOS);
 
 		    if (!aPCOS->Load(step, p_or_s)) {
 			std::cout << CLASSNAME << ":Error loading PCurveOrSurface select." << std::endl;
+			delete aPCOS;
 			return false;
 		    }
+		    associated_geometry.push_back(aPCOS);
 		} else {
 		    std::cout << CLASSNAME << ":Unhandled select in attribute 'associated_geometry': " << p_or_s->CurrentUnderlyingType()->Description() << std::endl;
 		    return false;
 		}
-		sn = (EntityNode *) sn->NextNode();
+		sn = static_cast<SelectNode *>(sn->NextNode());
 	    }
 	}
     }
