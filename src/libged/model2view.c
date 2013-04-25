@@ -54,12 +54,8 @@ ged_model2view(struct ged *gedp, int argc, const char *argv[])
 	return GED_OK;
     }
 
-    if (argc != 4) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
-    }
-
-    if (sscanf(argv[1], "%lf", &model_pt[X]) != 1
+    if (argc != 4
+	|| sscanf(argv[1], "%lf", &model_pt[X]) != 1
 	|| sscanf(argv[2], "%lf", &model_pt[Y]) != 1
 	|| sscanf(argv[3], "%lf", &model_pt[Z]) != 1)
     {
