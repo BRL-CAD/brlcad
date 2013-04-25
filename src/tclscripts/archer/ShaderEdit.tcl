@@ -68,6 +68,9 @@
 	    Mirror
 	    Glass
 	    Light
+	    "Texture (color)"
+	    "Texture (b/w)"
+	    Bump
 	    Checker
 	    Testmap
 	    Fakestar
@@ -77,6 +80,7 @@
 	    Projection
 	    Camouflage
 	    Air
+	    Extern
 	    Unlisted
 	    None
 	}
@@ -86,6 +90,9 @@
 	    mirror
 	    glass
 	    light
+	    texture
+	    bwtexture
+	    bump
 	    checker
 	    testmap
 	    fakestar
@@ -95,6 +102,7 @@
 	    prj
 	    camo
 	    air
+	    extern
 	    unlisted
 	    ""
 	}
@@ -150,6 +158,7 @@
 	common DEF_TEXTURE_MIRROR 0
 	common DEF_TEXTURE_WIDTH 512
 	common DEF_TEXTURE_HEIGHT 512
+	common DEF_TEXTURE_SCALE_UV "1 1"
 	common DEF_TEXTURE_SCALE_U 1
 	common DEF_TEXTURE_SCALE_V 1
 	common DEF_TEXTURE_TRANS ""
@@ -205,6 +214,7 @@
 	variable textureMirror
 	variable textureWidth
 	variable textureHeight
+	variable textureScale_UV
 	variable textureScale_U
 	variable textureScale_V
 	variable textureTrans
@@ -269,7 +279,11 @@
 	method build_fakestar {parent id}
 	method build_prj {parent id}
 	method build_testmap {parent id}
-	method build_texture {parent id}
+	method build_texture {_parent _id}
+	method build_bwtexture {_parent _id}
+	method build_bump {_parent _id}
+	method build_texture_common {_parent _id _type}
+	method build_extern {parent id}
 
 	method changeShader {}
 	method updateShader {stype}
@@ -313,7 +327,14 @@
 
 	method updateForm_fakestar {spec id}
 	method updateForm_testmap {spec id}
-	method updateForm_texture {spec id}
+
+	method updateForm_texture {_spec _id}
+	method updateForm_bwtexture {_spec _id}
+	method updateForm_bump {_spec _id}
+	method updateForm_texture_common {_spec _id}
+	method setFormDefaults_texture {id}
+
+	method updateForm_extern {spec id}
 
 	method validateDouble_air {id d}
 	method updateAirSpec {id}
@@ -343,8 +364,14 @@
 
 	method updateUnlistedSpec {id}
 	method updatePrjSpec {id}
+	method updateExternSpec {id}
 
+	method validateDigit_texture {_id _d _type}
+	method validateScale_texture {_id _s _type}
+	method validateRgb_texture {_id _rgb _type}
+	method updateTextureSpec {_id _type}
 
+	method finalSpecSetting {_type _newSpec}
     }
 
     private {
@@ -1094,7 +1121,7 @@
 	bump -
 	bwtexture -
 	texture {
-	    build_texture $parent stk_$index
+	    build_texture_common $parent stk_$index $stype
 	    set addspec [list $stype {}]
 	}
 	checker {
@@ -1213,11 +1240,11 @@
 	-label "Mirror" -command [::itcl::code $this add_shader mirror $childsite]
     $itk_component(stackAdd$id\M) add command \
 	-label "Light" -command [::itcl::code $this add_shader light $childsite]
-    #$itk_component(stackAdd$id\M) add command \
+    $itk_component(stackAdd$id\M) add command \
 	-label "Bump Map" -command [::itcl::code $this add_shader bump $childsite]
-    #$itk_component(stackAdd$id\M) add command \
+    $itk_component(stackAdd$id\M) add command \
 	-label "Texture (color)" -command [::itcl::code $this add_shader texture $childsite]
-    #$itk_component(stackAdd$id\M) add command \
+    $itk_component(stackAdd$id\M) add command \
 	-label "Texture (bw)" -command [::itcl::code $this add_shader bwtexture $childsite]
     $itk_component(stackAdd$id\M) add command \
 	-label Fakestar -command [::itcl::code $this add_shader fakestar $childsite]
@@ -1282,11 +1309,11 @@
 	-label "Glass" -command [::itcl::code $this select_shader glass $childsite]
     $itk_component(envmapSelect$id\M) add command \
 	-label "Mirror" -command [::itcl::code $this select_shader mirror $childsite]
-    #$itk_component(envmapSelect$id\M) add command \
+    $itk_component(envmapSelect$id\M) add command \
 	-label "Bump Map" -command [::itcl::code $this select_shader bump $childsite]
-    #$itk_component(envmapSelect$id\M) add command \
+    $itk_component(envmapSelect$id\M) add command \
 	-label "Texture (color)" -command [::itcl::code $this select_shader texture $childsite]
-    #$itk_component(envmapSelect$id\M) add command \
+    $itk_component(envmapSelect$id\M) add command \
 	-label "Texture (bw)" -command [::itcl::code $this select_shader bwtexture $childsite]
     $itk_component(envmapSelect$id\M) add command \
 	-label "Fakestar" -command [::itcl::code $this select_shader fakestar $childsite]
@@ -1361,7 +1388,7 @@
 	bump -
 	bwtexture -
 	texture {
-	    build_texture $parent env_$index
+	    build_texture_common $parent env_$index $stype
 	    set addspec [list $stype {}]
 	}
 	checker {
@@ -1603,7 +1630,147 @@
     grid columnconfigure $itk_component(testmap$id\F) 1 -weight 1
 }
 
-::itcl::body ShaderEdit::build_texture {parent id} {
+::itcl::body ShaderEdit::build_texture {_parent _id} {
+    build_texture_common $_parent $_id texture
+}
+
+::itcl::body ShaderEdit::build_bwtexture {_parent _id} {
+    build_texture_common $_parent $_id bwtexture
+}
+
+::itcl::body ShaderEdit::build_bump {_parent _id} {
+    build_texture_common $_parent $_id bump
+}
+
+::itcl::body ShaderEdit::build_texture_common {_parent _id _type} {
+    set shaderType($_id) $_type
+    set shaderTypeUnlisted($_id) 0
+
+    itk_component add texture$_id\F {
+	::ttk::frame $_parent.texture$_id\F
+    } {}
+
+    set parent $itk_component(texture$_id\F)
+
+    itk_component add textureFile$_id\L {
+	::ttk::label $parent.textureFile$_id\L \
+	    -text "Texture File"
+    } {}
+
+    itk_component add textureFile$_id\E {
+	::ttk::entry $parent.textureFile$_id\E \
+	    -textvariable [::itcl::scope textureFile($_id)]
+    } {}
+    bind $itk_component(textureFile$_id\E) <KeyRelease> \
+	[::itcl::code $this updateTextureSpec $_id $_type]
+
+    itk_component add textureWidth$_id\L {
+	::ttk::label $parent.textureWidth$_id\L \
+	    -text "Texture Width (pixels)"
+    } {}
+
+    itk_component add textureWidth$_id\E {
+	::ttk::entry $parent.textureWidth$_id\E \
+	    -textvariable [::itcl::scope textureWidth($_id)] \
+	    -validate key \
+	    -validatecommand [::itcl::code $this validateDigit_texture $_id %P $_type]
+    } {}
+
+    itk_component add textureHeight$_id\L {
+	::ttk::label $parent.textureHeight$_id\L \
+	    -text "Texture Height (pixels)"
+    } {}
+
+    itk_component add textureHeight$_id\E {
+	::ttk::entry $parent.textureHeight$_id\E \
+	    -textvariable [::itcl::scope textureHeight($_id)] \
+	    -validate key \
+	    -validatecommand [::itcl::code $this validateDigit_texture $_id %P $_type]
+    } {}
+
+    itk_component add textureScaleUV$_id\L {
+	::ttk::label $parent.textureScaleU$_id\L \
+	    -text "Texture Scale UV"
+    } {}
+
+    itk_component add textureScaleUV$_id\E {
+	::ttk::entry $parent.textureScaleUV$_id\E \
+	    -textvariable [::itcl::scope textureScale_UV($_id)] \
+	    -validate key \
+	    -validatecommand [::itcl::code $this validateScale_texture $_id %P $_type]
+    } {}
+
+    itk_component add textureMirror$_id\CB {
+	::ttk::checkbutton $parent.textureMirror$_id\CB \
+	    -text "Mirror Adjacent Tiles" \
+	    -variable [::itcl::scope textureMirror($_id)] \
+	    -command [::itcl::code $this updateTextureSpec $_id $_type]
+    } {}
+
+    itk_component add textureTrans$_id\L {
+	::ttk::label $parent.textureTrans$_id\L \
+	    -text "Transparency (RGB)"
+    } {}
+
+    itk_component add textureTrans$_id\E {
+	::ttk::entry $parent.textureTrans$_id\E \
+	    -textvariable [::itcl::scope textureTrans($_id)] \
+	    -validate key \
+	    -validatecommand [::itcl::code $this validateRgb_texture $_id %P $_type]
+    } {}
+
+    set row 0
+    grid $itk_component(textureFile$_id\L) -row $row -column 0 -sticky e
+    grid $itk_component(textureFile$_id\E) -row $row -column 1 -sticky w
+    incr row
+    grid $itk_component(textureWidth$_id\L) -row $row -column 0 -sticky e
+    grid $itk_component(textureWidth$_id\E) -row $row -column 1 -sticky w
+    incr row
+    grid $itk_component(textureHeight$_id\L) -row $row -column 0 -sticky e
+    grid $itk_component(textureHeight$_id\E) -row $row -column 1 -sticky w
+    incr row
+    grid $itk_component(textureScaleUV$_id\L) -row $row -column 0 -sticky e
+    grid $itk_component(textureScaleUV$_id\E) -row $row -column 1 -sticky w
+    incr row
+    grid $itk_component(textureMirror$_id\CB) -row $row -column 0 -sticky e
+    incr row
+    grid $itk_component(textureTrans$_id\L) -row $row -column 0 -sticky e
+    grid $itk_component(textureTrans$_id\E) -row $row -column 1 -sticky w
+    grid $itk_component(texture$_id\F) -sticky nsew
+
+    setFormDefaults_texture $_id
+}
+
+::itcl::body ShaderEdit::build_extern {parent id} {
+    set shaderType($id) "extern"
+    set shaderTypeUnlisted($id) 0
+
+    itk_component add extern$id\F {
+	::ttk::frame $parent.extern$id\F
+    } {}
+
+    set parent $itk_component(extern$id\F)
+
+    itk_component add externFile$id\L {
+	::ttk::label $parent.externFile$id\L \
+	    -text "File"
+    } {}
+
+    itk_component add externFile$id\E {
+	::ttk::entry $parent.externFile$id\E \
+	    -textvariable [::itcl::scope externFile($id)]
+    } {}
+    bind $itk_component(externFile$id\E) <KeyRelease> \
+	[::itcl::code $this updateExternSpec $id]
+
+    set row 0
+    grid $itk_component(externFile$id\L) -row $row -column 0 -sticky e
+    grid $itk_component(externFile$id\E) -row $row -column 1 -sticky w
+
+    grid $itk_component(extern$id\F) -sticky nsew
+    grid columnconfigure $itk_component(extern$id\F) 1 -weight 1
+
+    set externFile($id) ""
 }
 
 ## changeShader
@@ -1653,6 +1820,18 @@
 	}
 	"Testmap" {
 	    set stype testmap
+	}
+	"Extern" {
+	    set stype extern
+	}
+	"Texture (color)" {
+	    set stype texture
+	}
+	"Texture (b/w)" {
+	    set stype bwtexture
+	}
+	"Bump" {
+	    set stype bump
 	}
 	default {
 	    set stype ""
@@ -1706,11 +1885,6 @@
 	} else {
 	    set i [lsearch $SHADER_TYPES $stype]
 	    if {$i == -1} {
-		#if {!$shaderTypeUnlisted($id)} {
-		#destroyCurrentShader
-		#build_unlisted $itk_component(shaderBody) $id
-		#}
-
 		destroyCurrentShader
 		build_unlisted $itk_component(shaderBody) $id
 		updateForm_unlisted $shaderSpec $id
@@ -2188,8 +2362,8 @@
 	    bump -
 	    bwtexture -
 	    texture {
-		build_texture $parent stk_$index
-		updateForm_texture $subspec stk_$index
+		build_texture_common $parent stk_$index $stype
+		updateForm_texture_common $subspec stk_$index
 	    }
 	    checker {
 		build_checker $parent stk_$index
@@ -2276,8 +2450,8 @@
 	bump -
 	bwtexture -
 	texture {
-	    build_texture $parent env_$index
-	    updateForm_texture $subspec env_$index
+	    build_texture_common $parent env_$index $stype
+	    updateForm_texture_common $subspec env_$index
 	}
 	checker {
 	    build_checker $parent env_$index
@@ -2332,9 +2506,7 @@
 
 ::itcl::body ShaderEdit::updateForm_prj {spec id} {
     set ignoreShaderSpec 1
-
     set projectionFile($id) [lindex $spec 1]
-
     set ignoreShaderSpec 0
 }
 
@@ -2344,10 +2516,105 @@
 ::itcl::body ShaderEdit::updateForm_testmap {spec id} {
 }
 
-::itcl::body ShaderEdit::updateForm_texture {spec id} {
+
+::itcl::body ShaderEdit::updateForm_texture {_spec _id} {
+    updateForm_texture_common $_spec $_id
+}
+
+
+::itcl::body ShaderEdit::updateForm_bwtexture {_spec _id} {
+    updateForm_texture_common $_spec $_id
+}
+
+
+::itcl::body ShaderEdit::updateForm_bump {_spec _id} {
+    updateForm_texture_common $_spec $_id
+}
+
+::itcl::body ShaderEdit::updateForm_texture_common {_spec _id} {
+    setFormDefaults_texture $_id
+
     set ignoreShaderSpec 1
+    foreach {key val} [lindex $_spec 1] {
+	if {$val != ""} {
+	    set notEmptyVal 1
+	} else {
+	    set notEmptyVal 0
+	}
+
+	switch -- $key {
+	    "file" {
+		set textureFile($_id) $val
+	    }
+	    "m" {
+		if {$notEmptyVal && [::string is boolean $val]} {
+		    if {$val} {
+			set textureMirror($_id) 1
+		    } else {
+			set textureMirror($_id) 0
+		    }
+		}
+	    }
+	    "w" {
+		if {$notEmptyVal && [::cadwidgets::Ged::validateDigit $val]} {
+		    set textureWidth($_id) $val
+		}
+	    }
+	    "n" {
+		if {$notEmptyVal && [::cadwidgets::Ged::validateDigit $val]} {
+		    set textureHeight($_id) $val
+		}
+	    }
+	    "uv" {
+		if {$notEmptyVal} {
+		    set uvlist [::split $val ","]
+		    set uvlen [llength $uvlist]
+		    set u [lindex $uvlist 0]
+		    set v [lindex $uvlist 1]
+		    if {$uvlen == 2 && [::string is digit $u] && [::string is digit $v]} {
+			set textureScale_UV($_id) $uvlist
+		    }
+		}
+	    }
+	    "transp" {
+		if {$notEmptyVal && [::cadwidgets::Ged::validateRgb $val]} {
+		    set textureTrans($_id) $val
+		}
+	    }
+	    "trans_valid" {
+		if {$notEmptyVal && [::string is boolean $val]} {
+		    if {$val} {
+			set textureTransValid($_id) 1
+		    } else {
+			set textureTransValid($_id) 0
+		    }
+		}
+	    }
+	}
+    }
     set ignoreShaderSpec 0
 }
+
+::itcl::body ShaderEdit::setFormDefaults_texture {id} {
+    set ignoreShaderSpec 1
+
+    set textureFile($id) $DEF_TEXTURE_FILE
+    set textureMirror($id) $DEF_TEXTURE_MIRROR
+    set textureWidth($id) $DEF_TEXTURE_WIDTH
+    set textureHeight($id) $DEF_TEXTURE_HEIGHT
+    set textureScale_UV($id) $DEF_TEXTURE_SCALE_UV
+    set textureTrans($id) $DEF_TEXTURE_TRANS
+    set textureTransValid($id) $DEF_TEXTURE_TRANS_VALID
+
+    set ignoreShaderSpec 0
+}
+
+::itcl::body ShaderEdit::updateForm_extern {spec id} {
+    set ignoreShaderSpec 1
+    set externFile($id) [lindex $spec 1]
+    set ignoreShaderSpec 0
+}
+
 
 ::itcl::body ShaderEdit::validateDouble_air {id d} {
     if {![::cadwidgets::Ged::validateDouble $d]} {
@@ -3234,6 +3501,130 @@
 	set shaderSpec [list envmap $spec]
     } else {
 	set shaderSpec [list prj $projectionFile($id)]
+    }
+
+    if {$allowCallbacks && $itk_option(-shaderChangedCallback) != ""} {
+	$itk_option(-shaderChangedCallback)
+    }
+}
+
+
+::itcl::body ShaderEdit::updateExternSpec {id} {
+    set shaderSpec [list extern $externFile($id)]
+
+    if {$allowCallbacks && $itk_option(-shaderChangedCallback) != ""} {
+	$itk_option(-shaderChangedCallback)
+    }
+}
+
+
+::itcl::body ShaderEdit::validateDigit_texture {_id _d _type} {
+    if {![::cadwidgets::Ged::validateDigit $_d]} {
+	return 0
+    }
+
+    if {!$ignoreShaderSpec} {
+	after idle [::itcl::code $this updateTextureSpec $_id $_type]
+    }
+
+    return 1
+}
+
+
+::itcl::body ShaderEdit::validateScale_texture {_id _s _type} {
+    if {![::cadwidgets::Ged::validate2TupleDigits $_s]} {
+	return 0
+    }
+
+    if {!$ignoreShaderSpec} {
+	after idle [::itcl::code $this updateTextureSpec $_id $_type]
+    }
+
+    return 1
+}
+
+
+::itcl::body ShaderEdit::validateRgb_texture {_id _rgb _type} {
+    if {![::cadwidgets::Ged::validateRgb $_rgb]} {
+	return 0
+    }
+
+    if {!$ignoreShaderSpec} {
+	after idle [::itcl::code $this updateTextureSpec $_id $_type]
+    }
+
+    return 1
+}
+
+
+::itcl::body ShaderEdit::updateTextureSpec {_id _type} {
+    set newSpec ""
+
+    if {$textureFile($_id) != $DEF_TEXTURE_FILE} {
+	append newSpec " file {$textureFile($_id)}"
+    }
+
+    if {$textureMirror($_id) != $DEF_TEXTURE_MIRROR} {
+	append newSpec " m $textureMirror($_id)"
+    }
+
+    if {$textureWidth($_id) != $DEF_TEXTURE_WIDTH} {
+	append newSpec " w $textureWidth($_id)"
+    }
+
+    if {$textureHeight($_id) != $DEF_TEXTURE_HEIGHT} {
+	append newSpec " n $textureHeight($_id)"
+    }
+
+    if {$textureScale_UV($_id) != $DEF_TEXTURE_SCALE_UV} {
+	set u [lindex $textureScale_UV($_id) 0]
+	set v [lindex $textureScale_UV($_id) 1]
+
+	if {$u != "" && $v != "" && [::string is digit $u] && [::string is digit $v]} {
+	    append newSpec " uv $u,$v"
+	}
+    }
+
+    if {$textureTrans($_id) != $DEF_TEXTURE_TRANS} {
+	append newSpec " transp {$textureTrans($_id)}"
+
+	if {[llength $textureTrans($_id)] == 3 && [::cadwidgets::Ged::validateRgb $textureTrans($_id)]} {
+	    append newSpec " trans_valid 1"
+	}
+    }
+
+    finalSpecSetting $_type $newSpec
+}
+
+
+::itcl::body ShaderEdit::finalSpecSetting {_type _newSpec} {
+    if {$shaderType(0) == "stack"} {
+	set spec [lindex $shaderSpec 1]
+	set i [lsearch -index 0 $spec $_type]
+	if {$i != -1} {
+	    set spec [lreplace $spec $i $i "$_type [list $_newSpec]"]
+	}
+
+	set shaderSpec "stack [list $spec]"
+    } elseif {$shaderType(0) == "envmap"} {
+	set spec [lindex $shaderSpec 1]
+	set subType [lindex $spec 0]
+	set subSpec [lindex $spec 1]
+
+	if {$subType == "stack"} {
+	    set i [lsearch -index 0 $subSpec $_type]
+	    if {$i != -1} {
+		set spec [lreplace $subSpec $i $i "$_type [list $_newSpec]"]
+	    }
+
+	    set spec "stack [list $spec]"
+	} else {
+	    set spec "$_type [list $_newSpec]"
+	}
+
+	set shaderSpec "envmap [list $spec]"
+    } else {
+	set shaderSpec "$_type [list $_newSpec]"
     }
 
     if {$allowCallbacks && $itk_option(-shaderChangedCallback) != ""} {
