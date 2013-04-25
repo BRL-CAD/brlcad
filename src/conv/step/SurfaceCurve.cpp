@@ -118,7 +118,11 @@ SurfaceCurve::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 	    while (sn != NULL) {
 		p_or_s = static_cast<SDAI_Select *>(sn->node);
 
-		if (p_or_s && p_or_s->CurrentUnderlyingType() == config_control_design::t_pcurve_or_surface) {
+		const TypeDescriptor *underlying_type = p_or_s->CurrentUnderlyingType();
+
+		if (underlying_type == config_control_design::e_pcurve ||
+		    underlying_type == config_control_design::e_surface)
+		{
 		    PCurveOrSurface *aPCOS = new PCurveOrSurface();
 
 		    if (!aPCOS->Load(step, p_or_s)) {
