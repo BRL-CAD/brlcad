@@ -31,6 +31,7 @@ changes made.  See document footer for additional details.
 * openNURBS updated to version 5.0 (2012-10-24) - Richard Weiss
 * improved BoT mesh editing interface in archer - Bob Parker
 * fixed crash when running screengrab in archer - Nick Reed
+* fixed memory leak when working with pipe primitives - Daniel Roßberg
 * fixed asc2g and mged empty revolve object crashes - Sean Morrison
 * improved Linux support for multiple hardware displays - Bob Parker
 * fixed crash when parsing invalid shader parameters - Cliff Yapp
