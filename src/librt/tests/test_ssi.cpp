@@ -103,16 +103,16 @@ main(int argc, char** argv)
     ON_SimpleArray<ON_NurbsCurve*> curve_uv;
     ON_SimpleArray<ON_NurbsCurve*> curve_st;
 
-    int i = atoi(argv[4]), j = atoi(argv[5]);
-    if (i < 0 || i >= brep1->m_S.Count() || j < 0 || j >= brep2->m_S.Count()) {
+    int a = atoi(argv[4]), b = atoi(argv[5]);
+    if (a < 0 || a >= brep1->m_S.Count() || b < 0 || b >= brep2->m_S.Count()) {
 	bu_log("Out of range: \n");
 	bu_log("\t0 <= i <= %d\n", brep1->m_S.Count() - 1);
 	bu_log("\t0 <= j <= %d\n", brep2->m_S.Count() - 1);
 	return -1;
     }
 
-    brep1->m_S[i]->GetNurbForm(surf1);
-    brep2->m_S[j]->GetNurbForm(surf2);
+    brep1->m_S[a]->GetNurbForm(surf1);
+    brep2->m_S[b]->GetNurbForm(surf2);
 
     // Run the intersection (max_dis = 0)
     if (brlcad::surface_surface_intersection(&surf1, &surf2, curve, curve_uv, curve_st, 0)) {
@@ -188,15 +188,14 @@ main(int argc, char** argv)
 	char *name = new char [strlen(intersect_name) + 10];
 	strcpy(name, intersect_name);
 	char number[10];
-	itoa(i, number, 10);
+	sprintf(number, "%d", i);
 	strcat(name, number);
 
 	struct bu_external ext;
 	BU_CK_EXTERNAL(&ext);
-	int flags = db_flags_internal(&intern);
 	struct directory *dp;
 	dp = db_diradd(dbip, name, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (genptr_t)&intern.idb_type);
-	int ret = rt_db_put_internal(dp, dbip, &intern, &rt_uniresource);
+	ret = rt_db_put_internal(dp, dbip, &intern, &rt_uniresource);
 	if (ret)
 	    bu_log("ERROR: failure writing [%s] to disk\n", name);
 	else
