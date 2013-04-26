@@ -953,7 +953,7 @@ proc pattern_sph { args } {
 
 
 proc pattern_cyl { args } {
-    global M_PI M_PI_2 local2base
+    global DEG2RAD M_PI M_PI_2 local2base
 
     init_vmath
 
