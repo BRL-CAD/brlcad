@@ -65,6 +65,7 @@ int
 main(int argc, char** argv)
 {
     int ret = 0;
+    struct bu_vls intersect_name, name;
 
     if (argc != 6 && argc != 7) {
 	bu_log("Usage: %s %s\n", argv[0], "<file> <obj1> <obj2> <surf_i> <surf_j> [curve_name]");
@@ -142,17 +143,17 @@ main(int argc, char** argv)
     bu_log("%s", str);
     delete str; */
 
-    char *intersect_name;
+    bu_vls_init(&intersect_name);
     if (argc == 7) {
-	intersect_name = argv[6];
+	bu_vls_sprintf(&intersect_name, argv[6]);
     } else {
-	intersect_name = new char [strlen(argv[2]) + strlen(argv[3]) + 3];
-	strcpy(intersect_name, argv[2]);
-	strcat(intersect_name, "_");
-	strcat(intersect_name, argv[3]);
-	strcat(intersect_name, "_");
+	bu_vls_strcpy(&intersect_name, argv[2]);
+	bu_vls_strcat(&intersect_name, "_");
+	bu_vls_strcat(&intersect_name, argv[3]);
+	bu_vls_strcat(&intersect_name, "_");
     }
 
+    bu_vls_init(&name);
     for (int i = 0; i < curve.Count(); i++) {
 	// Do sampling, and use a pipe primitive to represent a curve
 	struct rt_db_internal intern;
@@ -184,19 +185,15 @@ main(int argc, char** argv)
 	    BU_LIST_INSERT(&pi->pipe_segs_head, &ps->l);
 	}
 
-	char *name = new char [strlen(intersect_name) + 10];
-	strcpy(name, intersect_name);
-	char number[10];
-	sprintf(number, "%d", i);
-	strcat(name, number);
+	bu_vls_sprintf(&name, "%s%d", bu_vls_addr(&intersect_name), i);
 
 	struct directory *dp;
-	dp = db_diradd(dbip, name, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (genptr_t)&intern.idb_type);
+	dp = db_diradd(dbip, bu_vls_addr(&name), RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (genptr_t)&intern.idb_type);
 	ret = rt_db_put_internal(dp, dbip, &intern, &rt_uniresource);
 	if (ret)
-	    bu_log("ERROR: failure writing [%s] to disk\n", name);
+	    bu_log("ERROR: failure writing [%s] to disk\n", bu_vls_addr(&name));
 	else
-	    bu_log("%s is written to file.\n", name);
+	    bu_log("%s is written to file.\n", bu_vls_addr(&name));
     }
 
     // Free the memory.
@@ -206,6 +203,9 @@ main(int argc, char** argv)
 	delete curve_uv[i];
     for (int i = 0; i < curve_st.Count(); i++)
 	delete curve_st[i];
+
+    bu_vls_free(&intersect_name);
+    bu_vls_free(&name);
 
     return ret;
 }
