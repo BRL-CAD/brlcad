@@ -6375,6 +6375,10 @@ namespace eval ArcherCore {
 }
 
 ::itcl::body ArcherCore::make {args} {
+    if {$args == "" || $args == "-t"} {
+	return [eval $itk_component(ged) make $args]
+    }
+
     eval gedWrapper make 0 0 1 2 $args
 
     set oname [lindex $args 0]
