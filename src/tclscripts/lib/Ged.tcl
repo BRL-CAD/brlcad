@@ -107,7 +107,8 @@ package provide cadwidgets::Ged 1.0
 	common GED_RAY_ODD "ged_ray_odd"
 	common GED_RAY_EVEN "ged_ray_even"
 	common GED_RAY_VOID "ged_ray_void"
-	common GED_RAD2DEG [expr {180.0 / 3.141592653589793}]
+	common GED_RAD2DEG 57.2957795130823208767981548141051703
+	common GED_DEG2RAD 0.0174532925199432957692369076848861271
 
 	variable mGedFile ""
 
