@@ -178,7 +178,6 @@ main(int argc, char** argv)
 	    ON_3dPoint p = curve[i]->PointAt(dom.ParameterAt((double) j
 							     / (double) plotres));
 	    VSET(ps->pp_coord, p.x, p.y, p.z);
-	    bu_log("%lf %lf %lf\n", p.x, p.y, p.z);
 	    ps->pp_id = 50;
 	    ps->pp_od = 100;
 	    ps->pp_bendradius = 0;
@@ -191,8 +190,6 @@ main(int argc, char** argv)
 	sprintf(number, "%d", i);
 	strcat(name, number);
 
-	struct bu_external ext;
-	BU_CK_EXTERNAL(&ext);
 	struct directory *dp;
 	dp = db_diradd(dbip, name, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (genptr_t)&intern.idb_type);
 	ret = rt_db_put_internal(dp, dbip, &intern, &rt_uniresource);
