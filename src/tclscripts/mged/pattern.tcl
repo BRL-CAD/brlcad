@@ -1108,6 +1108,11 @@ proc pattern_cyl { args } {
 		set list_h [lindex $args $index]
 		incr index
 	    }
+	    "-lr" {
+		incr index
+		set list_r [lindex $args $index]
+		incr index
+	    }
 	    "-sr" {
 		incr index
 		set start_r [lindex $args $index]
