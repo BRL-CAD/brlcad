@@ -31,6 +31,9 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 
 * Investigate replacing togl for adrt/isst
 
+* Rework p2t so it doesn't take down the application
+  when a NURBS tessellation fails - should just abandon the
+  problem input and continue.
 
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
