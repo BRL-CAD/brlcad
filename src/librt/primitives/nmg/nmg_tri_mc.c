@@ -716,7 +716,7 @@ fire_row(int cpu, void * ptr)
 	    count += rt_nmg_mc_pew(m->s, primp, &a, x, y, z, m->step, m->tol);
 	}
     }
-    bu_log("%d done, %d\n", cpu, count);
+    bu_log("%d done, %lu\n", cpu, count);
     m->count += count;
     /* free the rt stuff we don't need anymore */
 }
