@@ -88,7 +88,7 @@ int main(int argc, char **argv)
     L = N - M + 1;	/* number of "good" points per section */
 
     if ( argc != 2 || isatty(fileno(stdin)) || isatty(fileno(stdout)) ) {
-	bu_exit(1, "Usage: dconv filter < doubles > doubles\n       WARNING: kernel size must be 2^i - 1\n" );
+	bu_exit(1, "Usage: dconv filterfile < doubles > doubles\n       WARNING: kernel size must be 2^i - 1\n" );
     }
 
 #ifdef never
