@@ -79,17 +79,17 @@ mult(double *o, double *b, int n)
 int main(int argc, char **argv)
 {
     int	i;
-    int	N, M, L;
+    int M = 128;	/* kernel size */
+    int	N, L;
     FILE	*fp;
     size_t ret;
-
-    M = 128;	/* kernel size */
-    N = 2*M;	/* input sub-section length (fft size) */
-    L = N - M + 1;	/* number of "good" points per section */
 
     if ( argc != 2 || isatty(fileno(stdin)) || isatty(fileno(stdout)) ) {
 	bu_exit(1, "Usage: dconv filterfile < doubles > doubles\n       WARNING: kernel size must be 2^i - 1\n" );
     }
+
+    N = 2*M;	/* input sub-section length (fft size) */
+    L = M + 1;	/* number of "good" points per section, simplified from L = N - M + 1 */
 
 #ifdef never
     /* prepare the kernel(!) */
