@@ -24,6 +24,9 @@ set(lib_TCLSCRIPTS
 	View.tcl
 	ViewAxesControl.tcl
 	cursor.tcl
+	apply_mat.tcl
+	pattern.tcl
+	pattern_gui.tcl
 )
 BRLCAD_ADDDATA(lib_TCLSCRIPTS tclscripts/lib)
 pkgIndex_BUILD(lib tclscripts/lib)

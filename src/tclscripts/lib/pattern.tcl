@@ -43,6 +43,36 @@
 #
 # Returns a new unique object name
 
+namespace eval cadwidgets {
+    if {![info exists ged]} {
+	set ged db
+    }
+
+    if {![info exists mgedFlag]} {
+	set mgedFlag 1
+    }
+}
+
+if {![info exists local2base]} {
+    set local2base 1.0
+}
+
+proc exists_wrapper {args} {
+    if {$::cadwidgets::mgedFlag} {
+	eval exists $args
+    } else {
+	eval $::cadwidgets::ged exists $args
+    }
+}
+
+proc regdef_wrapper {args} {
+    if {$::cadwidgets::mgedFlag} {
+	eval regdef $args
+    } else {
+	eval $::cadwidgets::ged regdef $args
+    }
+}
+
 proc create_new_name { leaf sstr rstr increment } {
     if { [string length $sstr] != 0 } {
 	set prefix ""
@@ -67,7 +97,8 @@ proc create_new_name { leaf sstr rstr increment } {
     # make sure this name doesn't already exist
     set dummy 0
     set base_name $new_name
-    while { [exists $new_name] == 1 } {
+
+    while {[exists_wrapper $new_name] == 1} {
 	incr dummy
 	set max_len [expr 16 - [string length $dummy] - 1]
 	set new_name "[string range $base_name 0 $max_len]_$dummy"
@@ -127,8 +158,9 @@ proc copy_tree { args } {
     switch -- $op {
 	"l" {
 	    set leaf [lindex $tree 1]
-	    if { [catch {db get $leaf} leaf_db] } {
+	    if { [catch {$::cadwidgets::ged get $leaf} leaf_db] } {
 		puts "WARNING: $leaf does not actually exist"
+		puts "\n$::cadwidgets::ged get $leaf"
 		return [list "l" $leaf]
 	    }
 	    set type [lindex $leaf_db 0]
@@ -147,7 +179,7 @@ proc copy_tree { args } {
 
 	    if { $type != "comb" } {
 		# this is a primitive
-		if { [catch {eval db put $new_name $leaf_db} ret] } {
+		if { [catch {eval $::cadwidgets::ged put $new_name $leaf_db} ret] } {
 		    error "Cannot create copy of primitive $leaf as $new_name\n\t$ret"
 		}
 	    } else {
@@ -160,17 +192,17 @@ proc copy_tree { args } {
 		    set region 1
 		    if { $depth == "regions" } {
 			# just copy the region to the new name
-			if { [catch {eval db put $new_name $leaf_db} ret] } {
+			if { [catch {eval $::cadwidgets::ged put $new_name $leaf_db} ret] } {
 			    error "Cannot create copy of region $leaf as $new_name\n\t$ret"
 			}
 			# adjust region id
-			set regdef [regdef]
+			set regdef [regdef_wrapper]
 			set id [lindex $regdef 1]
-			if { [catch {db adjust $new_name id $id} ret] } {
+			if { [catch {$::cadwidgets::ged adjust $new_name id $id} ret] } {
 			    error "Cannot adjust region ident for $new_name!!!\n\t$ret"
 			}
 			incr id
-			regdef $id
+			regdef_wrapper $id
 			return [list "l" $new_name $old_mat]
 		    }
 		}
@@ -181,21 +213,21 @@ proc copy_tree { args } {
 		incr index
 		set old_tree [lindex $leaf_db $index]
 		set new_tree [eval copy_tree $opt_str [list $old_tree]]
-		if { [catch {eval db put $new_name $leaf_db} ret] } {
+		if { [catch {eval $::cadwidgets::ged put $new_name $leaf_db} ret] } {
 		    error "Cannot create copy of combination $leaf as $new_name\n\t$ret"
 		}
-		if { [catch {db adjust $new_name tree $new_tree} ret] } {
+		if { [catch {$::cadwidgets::ged adjust $new_name tree $new_tree} ret] } {
 		    error "Cannot adjust tree in new combination named $new_name\n\t$ret"
 		}
 		if { $region } {
 		    # set region ident according to regdef
-		    set regdef [regdef]
+		    set regdef [regdef_wrapper]
 		    set id [lindex $regdef 1]
-		    if { [catch {db adjust $new_name id $id} ret] } {
+		    if { [catch {$::cadwidgets::ged adjust $new_name id $id} ret] } {
 			error "Cannot adjust ident number for region ($new_name)!!!!\n\t$ret"
 		    }
 		    incr id
-		    regdef $id
+		    regdef_wrapper $id
 		}
 	    }
 	    return [list "l" $new_name $old_mat]
@@ -261,7 +293,7 @@ proc copy_obj { args } {
     }
 
     set obj [lindex $args $index]
-    if { [catch {db get $obj} obj_db] } {
+    if { [catch {$::cadwidgets::ged get $obj} obj_db] } {
 	error "Cannot retrieve object $obj\n\t$obj_db"
     }
 
@@ -273,7 +305,7 @@ proc copy_obj { args } {
 	}
 	# just copy the primitive to a new name
 	set new_name [create_new_name $obj $sstr $rstr $increment]
-	if { [catch {eval db put $new_name $obj_db} ret] } {
+	if { [catch {eval $::cadwidgets::ged put $new_name $obj_db} ret] } {
 	    error "cannot copy $obj to $new_name!!!\n\t$ret"
 	}
 	return $new_name
@@ -292,16 +324,16 @@ proc copy_obj { args } {
 	if { $depth == "regions" } {
 	    # just copy this region to a new name
 	    set new_name [create_new_name $obj $sstr $rstr $increment]
-	    if { [catch {eval db put $new_name $obj_db} ret] } {
+	    if { [catch {eval $::cadwidgets::ged put $new_name $obj_db} ret] } {
 		error "Cannot copy $obj to $new_name!!!\n\t$ret"
 	    }
-	    set regdef [regdef]
+	    set regdef [regdef_wrapper]
 	    set id [lindex $regdef 1]
-	    if { [catch {db adjust $new_name id $id} ret] } {
+	    if { [catch {$::cadwidgets::ged adjust $new_name id $id} ret] } {
 		error "Cannot adjust ident for region ($new_name)!!!!\n\t$ret"
 	    }
 	    incr id
-	    regdef $id
+	    regdef_wrapper $id
 	    return $new_name
 	}
 
@@ -316,22 +348,22 @@ proc copy_obj { args } {
     set tree [lindex $obj_db $tree_idx]
     set new_tree [eval copy_tree $opt_str [list $tree]]
     set new_name [create_new_name $obj $sstr $rstr $increment]
-    if { [catch {eval db put $new_name $obj_db} ret] } {
+    if { [catch {eval $::cadwidgets::ged put $new_name $obj_db} ret] } {
 	error "Cannot copy $obj to $new_name!!!\n\t$ret"
     }
-    if { [catch {db adjust $new_name tree $new_tree} ret] } {
+    if { [catch {$::cadwidgets::ged adjust $new_name tree $new_tree} ret] } {
 	error "Cannot adjust tree on new combination ($new_name)!!!!\n\t$ret"
     }
 
     if { $region } {
 	# set region ident according to regdef
-	set regdef [regdef]
+	set regdef [regdef_wrapper]
 	set id [lindex $regdef 1]
-	if { [catch {db adjust $new_name id $id} ret] } {
+	if { [catch {$::cadwidgets::ged adjust $new_name id $id} ret] } {
 	    error "Cannot adjust ident number for region ($new_name)!!!!\n\t$ret"
 	}
 	incr id
-	regdef $id
+	regdef_wrapper $id
     }
     return $new_name
 }
@@ -506,6 +538,10 @@ proc pattern_rect { args } {
 	error "no Z delta provided\n$usage"
     }
 
+    if {!$::cadwidgets::mgedFlag} {
+	$::cadwidgets::ged freezeGUI 1
+    }
+
     if { $num_x } {
 	set list_x {}
 	for { set index 1 } { $index <= $num_x } { incr index } {
@@ -555,7 +591,7 @@ proc pattern_rect { args } {
     set ydir [vunitize $ydir]
     set zdir [vunitize $zdir]
 
-    # convert to local units
+    # convert to base units
     for { set i 0 } { $i < $num_x } { incr i } {
 	set list_x [lreplace $list_x $i $i [expr [lindex $list_x $i] * $local2base]]
     }
@@ -584,7 +620,10 @@ proc pattern_rect { args } {
 			"top" {
 			    set base_new_name ${obj}_${x_index}_${y_index}_${z_index}
 			    set new_name [create_new_name $base_new_name $sstr $rstr $increment]
-			    if { [catch {db put $new_name comb region no tree [list l $obj $mat] } ret] } {
+			    if { [catch {$::cadwidgets::ged put $new_name comb region no tree [list l $obj $mat] } ret] } {
+				if {!$::cadwidgets::mgedFlag} {
+				    $::cadwidgets::ged freezeGUI 0
+				}
 				error "Cannot create new object!!!\n$ret"
 			    }
 			    if { $group_name != "" } {
@@ -615,11 +654,20 @@ proc pattern_rect { args } {
     }
 
     if { [llength $group_list] > 0 } {
-	if { [catch "g $group_name $group_list" ret] } {
+	if { [catch "$::cadwidgets::ged g $group_name $group_list" ret] } {
+	    if {!$::cadwidgets::mgedFlag} {
+		$::cadwidgets::ged freezeGUI 0
+	    }
 	    error "Cannot create group $group_name from list \{${group_list}\}!!!\n$ret"
 	}
     }
-    draw $group_name
+
+    if {$::cadwidgets::mgedFlag} {
+	draw $group_name
+    } else {
+	$::cadwidgets::ged draw $group_name
+	$::cadwidgets::ged freezeGUI 0
+    }
 }
 
 
@@ -635,6 +683,7 @@ proc pattern_sph { args } {
 		\[-start_az starting_azimuth \] \[-start_el starting_elevation\] \[-start_r starting_radius\] \
 		\[-raz\] \[-rel\] \
 		object1 \[object2 object3 ...\]"
+
     set objs {}
     set start_az 0
     set start_el [expr -$M_PI_2]
@@ -821,6 +870,10 @@ proc pattern_sph { args } {
 	error "No radius delta provided!!!\n$usage"
     }
 
+    if {!$::cadwidgets::mgedFlag} {
+	$::cadwidgets::ged freezeGUI 1
+    }
+
     if { $num_az } {
 	set list_az {}
 	for { set index 0 } { $index < $num_az } { incr index } {
@@ -906,7 +959,10 @@ proc pattern_sph { args } {
 			"top" {
 			    set base_new_name ${obj}_${az_index}_${el_index}_${r_index}
 			    set new_name [create_new_name $base_new_name $sstr $rstr $increment]
-			    if { [catch {db put $new_name comb region no tree [list l $obj $mat] } ret] } {
+			    if { [catch {$::cadwidgets::ged put $new_name comb region no tree [list l $obj $mat] } ret] } {
+				if {!$::cadwidgets::mgedFlag} {
+				    $::cadwidgets::ged freezeGUI 0
+				}
 				error "Cannot create new object!!!\n$ret"
 			    }
 			    if { $group_name != "" } {
@@ -943,12 +999,20 @@ proc pattern_sph { args } {
     }
 
     if { [llength $group_list] > 0 } {
-	if { [catch "g $group_name $group_list" ret] } {
+	if { [catch "$::cadwidgets::ged g $group_name $group_list" ret] } {
+	    if {!$::cadwidgets::mgedFlag} {
+		$::cadwidgets::ged freezeGUI 0
+	    }
 	    error "Cannot create group $group_name from list \{${group_list}\}!!!\n$ret"
 	}
     }
 
-    draw $group_name
+    if {$::cadwidgets::mgedFlag} {
+	draw $group_name
+    } else {
+	$::cadwidgets::ged draw $group_name
+	$::cadwidgets::ged freezeGUI 0
+    }
 }
 
 
@@ -1142,7 +1206,6 @@ proc pattern_cyl { args } {
     if { 	[llength $list_az] == 0 && $num_az == 0 &&
 		[llength $list_r] == 0 && $num_r == 0 &&
 		[llength $list_h] == 0 && $num_h == 0 } {
-
 	error "No azimuth, radii, or heights provided!!!!\n$usage"
     }
 
@@ -1176,6 +1239,10 @@ proc pattern_cyl { args } {
 	error "azimuth and height direction must be perpendicular!!!\n$usage"
     } else {
 	set az_dir2 [vcross $height_dir $start_az_dir]
+    }
+
+    if {!$::cadwidgets::mgedFlag} {
+	$::cadwidgets::ged freezeGUI 1
     }
 
     if { $num_az } {
@@ -1257,7 +1324,10 @@ proc pattern_cyl { args } {
 			"top" {
 			    set base_new_name ${obj}_${r_index}_${h_index}_${az_index}
 			    set new_name [create_new_name $base_new_name $sstr $rstr $increment]
-			    if { [catch {db put $new_name comb region no tree [list l $obj $mat] } ret] } {
+			    if { [catch {$::cadwidgets::ged put $new_name comb region no tree [list l $obj $mat] } ret] } {
+				if {!$::cadwidgets::mgedFlag} {
+				    $::cadwidgets::ged freezeGUI 0
+				}
 				error "Cannot create new object!!!\n$ret"
 			    }
 			    if { $group_name != "" } {
@@ -1288,12 +1358,20 @@ proc pattern_cyl { args } {
     }
 
     if { [llength $group_list] > 0 } {
-	if { [catch "g $group_name $group_list" ret] } {
+	if { [catch "$::cadwidgets::ged g $group_name $group_list" ret] } {
+	    if {!$::cadwidgets::mgedFlag} {
+		$::cadwidgets::ged freezeGUI 0
+	    }
 	    error "Cannot create group $group_name from list \{${group_list}\}!!!\n$ret"
 	}
     }
 
-    draw $group_name
+    if {$::cadwidgets::mgedFlag} {
+	draw $group_name
+    } else {
+	$::cadwidgets::ged draw $group_name
+	$::cadwidgets::ged freezeGUI 0
+    }
 }
 
 

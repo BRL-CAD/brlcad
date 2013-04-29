@@ -3,7 +3,6 @@ set(mged_TCLSCRIPTS
   adc.tcl
   anim.tcl
   apply.tcl
-  apply_mat.tcl
   asc2g.tcl
   attr_edit.tcl
   bindings.tcl
@@ -59,8 +58,6 @@ set(mged_TCLSCRIPTS
   mview.tcl
   openw.tcl
   overlap.tcl
-  pattern.tcl
-  pattern_gui.tcl
   plot.tcl
   points.tcl
   prj_add.tcl

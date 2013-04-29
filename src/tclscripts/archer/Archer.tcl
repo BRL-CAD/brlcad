@@ -175,6 +175,7 @@ package provide Archer 1.0
 	method bot_sync_all_wrapper {}
 	method fbclear {}
 	method getZClipState {}
+	method launchPatternTool {}
 	method raytracePlus {{_batch_list {}}}
 
 	# ArcherCore Override Section
@@ -1030,6 +1031,11 @@ package provide Archer 1.0
     return [list [expr {$mZClipFrontMax * $mZClipFront}] [expr {$mZClipBackMax * $mZClipBack}]]
 }
 
+::itcl::body Archer::launchPatternTool {} {
+    set ::cadwidgets::mgedFlag 0
+    set ::cadwidgets::ged $this
+    pattern_control .\#auto
+}
 
 ::itcl::body Archer::raytracePlus {{_batch_list {}}} {
     global tcl_platform
@@ -6994,17 +7000,35 @@ proc title_node_handler {node} {
 	    -command [::itcl::code $this bot_fix_all_wrapper]
     } {}
 
+    set parent $itk_component(objToolView)
+    itk_component add otherToolsF {
+	::ttk::labelframe $parent.otherToolsF \
+	    -text "Other Tools" \
+	    -labelanchor n
+    } {}
+
+    set parent $itk_component(otherToolsF)
+    itk_component add patternToolB {
+	::ttk::button $parent.patternToolB \
+	    -text "Pattern Tool" \
+	    -command [::itcl::code $this launchPatternTool]
+    } {}
+
     grid $itk_component(botSplitAllB) -sticky ew
     grid $itk_component(botSyncAllB) -sticky ew
     grid $itk_component(botFlipCheckAllB) -sticky ew
     grid $itk_component(botFixAllB) -sticky ew
     grid columnconfigure $itk_component(botToolsF) 0 -weight 1
 
+    grid $itk_component(patternToolB) -sticky ew
+    grid columnconfigure $itk_component(otherToolsF) 0 -weight 1
 
     set i 0
     grid $itk_component(compPickF) -row $i -pady 4 -sticky ew
     incr i
     grid $itk_component(botToolsF) -row $i -pady 4 -sticky ew
+    incr i
+    grid $itk_component(otherToolsF) -row $i -pady 4 -sticky ew
     incr i
     grid rowconfigure $itk_component(objToolView) $i -weight 1
     grid columnconfigure $itk_component(objToolView) 0 -weight 1

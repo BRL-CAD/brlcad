@@ -219,6 +219,7 @@ namespace eval ArcherCore {
 	method edmater             {args}
 	method erase               {args}
 	method ev                  {args}
+	method exists              {args}
 	method exit                {args}
 	method facetize            {args}
 	method fracture            {args}
@@ -226,6 +227,7 @@ namespace eval ArcherCore {
 	method hide                {args}
 	method human               {args}
 	method g                   {args}
+	method get                 {args}
 	method group               {args}
 	method i                   {args}
 	method igraph              {args}
@@ -241,6 +243,7 @@ namespace eval ArcherCore {
 	method ls                  {args}
 	method make		   {args}
 	method make_bb             {args}
+	method make_name           {args}
 	method make_pnts           {args}
 	method man                 {args}
 	method mater               {args}
@@ -564,10 +567,10 @@ namespace eval ArcherCore {
 	    bot_merge bot_smooth bot_split bot_sync bot_vertex_fuse \
 	    c cd clear clone closedb color comb comb_color combmem \
 	    copy copyeval copymat cp cpi dbconcat dbExpand decompose \
-	    delete draw E edcodes edcolor edcomb edit edmater erase ev \
-	    exit facetize fracture freezeGUI g graph group hide human i igraph \
+	    delete draw E edcodes edcolor edcomb edit edmater erase ev exists \
+	    exit facetize fracture freezeGUI g get graph group hide human i igraph \
 	    importFg4Section in inside item kill killall killrefs \
-	    killtree l ls make make_bb make_pnts man mater mirror move \
+	    killtree l ls make make_bb make_name make_pnts man mater mirror move \
 	    move_arb_edge move_arb_face mv mvall nmg_collapse \
 	    nmg_simplify ocenter opendb orotate oscale otranslate p q \
 	    quit packTree prefix protate pscale ptranslate push put \
@@ -1291,29 +1294,33 @@ namespace eval ArcherCore {
     }
 
     if {[catch {eval gedCmd $cmd $options $expandedArgs} ret]} {
-	SetNormalCursor $this
+	if {!$mFreezeGUI} {
+	    SetNormalCursor $this
+	}
 	error $ret
     }
 
     if {$sflag} {
 	set mNeedSave 1
-	updateSaveMode
-    }
-
-    switch -- $tflag {
-	0 {
-	    # Do nothing
-	}
-	1 {
-	    catch {updateTreeDrawLists}
-	}
-	default {
-	    catch {syncTree}
+	if {!$mFreezeGUI} {
+	    updateSaveMode
 	}
     }
-    checkIfSelectedObjExists
 
     if {!$mFreezeGUI} {
+	switch -- $tflag {
+	    0 {
+		# Do nothing
+	    }
+	    1 {
+		catch {updateTreeDrawLists}
+	    }
+	    default {
+		catch {syncTree}
+	    }
+	}
+	checkIfSelectedObjExists
+
 	SetNormalCursor $this
     }
 
@@ -5327,6 +5334,8 @@ namespace eval ArcherCore {
 	    syncTree
 	}
 
+	updateSaveMode
+
 	$itk_component(ged) refresh_on
 	$itk_component(ged) refresh_all
 	SetNormalCursor $this
@@ -6170,7 +6179,7 @@ namespace eval ArcherCore {
 	set args [lreplace $args $i $i]
     }
 
-    if {$wflag} {
+    if {$wflag && !$mFreezeGUI} {
 	SetWaitCursor $this
     }
 
@@ -6191,8 +6200,13 @@ namespace eval ArcherCore {
 	    gedCmd configure -primitiveLabels $mSelectedObjPath
 	}
 
-	updateTreeDrawLists
-	SetNormalCursor $this
+	if {!$mFreezeGUI} {
+	    updateTreeDrawLists
+
+	    if {$wflag} {
+		SetNormalCursor $this
+	    }
+	}
 
 	return $ret
     }
@@ -6201,9 +6215,12 @@ namespace eval ArcherCore {
 	gedCmd configure -primitiveLabels $mSelectedObjPath
     }
 
-    updateTreeDrawLists
-    if {$wflag} {
-	SetNormalCursor $this
+    if {!$mFreezeGUI} {
+	updateTreeDrawLists
+
+	if {$wflag} {
+	    SetNormalCursor $this
+	}
     }
 
     return $ret
@@ -6291,6 +6308,10 @@ namespace eval ArcherCore {
     eval gedWrapper ev 1 0 0 1 $args
 }
 
+::itcl::body ArcherCore::exists {args} {
+    eval gedWrapper exists 0 1 0 0 $args
+}
+
 ::itcl::body ArcherCore::exit {args} {
     Close
 }
@@ -6305,6 +6326,10 @@ namespace eval ArcherCore {
 
 ::itcl::body ArcherCore::g {args} {
     eval group $args
+}
+
+::itcl::body ArcherCore::get {args} {
+    eval gedWrapper get 0 1 0 0 $args
 }
 
 ::itcl::body ArcherCore::graph {args} {
@@ -6387,6 +6412,10 @@ namespace eval ArcherCore {
 
 ::itcl::body ArcherCore::make_bb {args} {
     eval gedWrapper make_bb 0 0 1 1 $args
+}
+
+::itcl::body ArcherCore::make_name {args} {
+    eval gedWrapper make_name 0 1 0 0 $args
 }
 
 ::itcl::body ArcherCore::make_pnts {args} {

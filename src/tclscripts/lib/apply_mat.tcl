@@ -41,7 +41,7 @@ proc apply_mat_to_regions { tree mat } {
 	l
 	{
 	    set leaf [lindex $tree 1]
-	    set new_leaf [db get $leaf]
+	    set new_leaf [$::cadwidgets::ged get $leaf]
 	    set type [lindex $new_leaf 0]
 	    if { $type != "comb" } {
 		puts "WARNING: encountered primitive ($leaf) above region level!!!, ignoring"
@@ -71,9 +71,9 @@ proc apply_mat_to_regions { tree mat } {
 		set new_tree [apply_mat_to_regions $sub_tree $new_mat]
 	    }
 	    set new_leaf [lreplace $new_leaf $index $index $new_tree]
-	    set command [concat db adjust $leaf [lrange $new_leaf 1 end]]
+	    set command [concat $::cadwidgets::ged adjust $leaf [lrange $new_leaf 1 end]]
 	    if { [catch $command ret] } {
-		error "ERROR: 'db adjust' failed for combination $leaf\n\t$ret"
+		error "ERROR: '$::cadwidgets::ged adjust' failed for combination $leaf\n\t$ret"
 	    }
 	    return [list l $leaf]
 	}
@@ -187,7 +187,7 @@ proc apply_mat { args } {
     }
 
     foreach obj [lrange $args $index end] {
-	if { [catch "db get $obj" obj_db] } {
+	if { [catch "$::cadwidgets::ged get $obj" obj_db] } {
 	    puts $obj_db
 	    puts "WARNING: $obj does not exist, ignoring!!"
 	    continue
@@ -197,10 +197,10 @@ proc apply_mat { args } {
 	if { $type != "comb" } {
 	    # this is a primitive, so just apply the matrix
 	    # using a temporary combination and a "push"
-	    set tmp [make_name ____]
-	    db put $tmp comb region no tree [list l $obj $mat]
-	    push $tmp
-	    kill $tmp
+	    set tmp [$::cadwidgets::ged make_name ____]
+	    $::cadwidgets::ged put $tmp comb region no tree [list l $obj $mat]
+	    $::cadwidgets::ged push $tmp
+	    $::cadwidgets::ged kill $tmp
 	    continue
 	}
 
@@ -215,16 +215,16 @@ proc apply_mat { args } {
 	switch $depth {
 	    "primitives" {
 		set new_tree [apply_mat_comb $obj_tree $mat]
-		db adjust $obj tree $new_tree
-		xpush $obj
+		$::cadwidgets::ged adjust $obj tree $new_tree
+		$::cadwidgets::ged xpush $obj
 	    }
 	    "regions" {
 		set new_tree [apply_mat_to_regions $obj_tree $mat]
-		db adjust $obj tree $new_tree
+		$::cadwidgets::ged adjust $obj tree $new_tree
 	    }
 	    "top" {
 		set new_tree [apply_mat_comb $obj_tree $mat]
-		db adjust $obj tree $new_tree
+		$::cadwidgets::ged adjust $obj tree $new_tree
 	    }
 	}
     }

@@ -30,6 +30,8 @@
 class pattern_control {
     inherit itk::Toplevel
 
+    itk_option define -ged ged Ged "db"
+
     constructor {} {}
     destructor {}
 
@@ -1421,6 +1423,10 @@ body pattern_control::constructor {} {
 
 body pattern_control::destructor {} {
     unset combovar_r
+}
+
+::itcl::configbody pattern_control::ged {
+    set ::cadwidgets::ged $itk_option(-ged)
 }
 
 body pattern_control::update_depth { box level } {
