@@ -180,6 +180,7 @@ namespace eval ArcherCore {
 	method attr                {args}
 	method bb                  {args}
 	method bev                 {args}
+	method B                   {args}
 	method blast               {args}
 	method bo                  {args}
 	method bot                 {args}
@@ -212,11 +213,13 @@ namespace eval ArcherCore {
 	method decompose           {args}
 	method delete              {args}
 	method draw                {args}
+	method e                   {args}
 	method E                   {args}
 	method edcodes             {args}
 	method edcolor             {args}
 	method edcomb              {args}
 	method edmater             {args}
+	method d                   {args}
 	method erase               {args}
 	method ev                  {args}
 	method exists              {args}
@@ -562,12 +565,12 @@ namespace eval ArcherCore {
 	# This is mostly a list of wrapped Ged commands. However, it also contains
 	# a few commands that are implemented here in ArcherCore.
 	variable mArcherCoreCommands { \
-	    3ptarb adjust arced attr bb bev blast bo bot bot_condense \
+	    3ptarb adjust arced attr bb bev B blast bo bot bot_condense \
 	    bot_decimate bot_face_fuse bot_face_sort bot_flip \
 	    bot_merge bot_smooth bot_split bot_sync bot_vertex_fuse \
 	    c cd clear clone closedb color comb comb_color combmem \
 	    copy copyeval copymat cp cpi dbconcat dbExpand decompose \
-	    delete draw E edcodes edcolor edcomb edit edmater erase ev exists \
+	    delete draw e E edcodes edcolor edcomb edit edmater d erase ev exists \
 	    exit facetize fracture freezeGUI g get graph group hide human i igraph \
 	    importFg4Section in inside item kill killall killrefs \
 	    killtree l ls make make_bb make_name make_pnts man mater mirror move \
@@ -5947,6 +5950,10 @@ namespace eval ArcherCore {
     eval gedWrapper bev 0 0 1 1 $args
 }
 
+::itcl::body ArcherCore::B {args} {
+    eval blast $args
+}
+
 ::itcl::body ArcherCore::blast {args} {
     eval gedWrapper blast 0 0 0 1 $args
 }
@@ -6166,6 +6173,10 @@ namespace eval ArcherCore {
     eval gedWrapper kill 1 0 1 2 $args
 }
 
+::itcl::body ArcherCore::e {args} {
+    eval draw $args
+}
+
 ::itcl::body ArcherCore::draw {args} {
     if {[llength $args] == 0} {
 	return
@@ -6254,6 +6265,10 @@ namespace eval ArcherCore {
 
 ::itcl::body ArcherCore::edmater {args} {
     eval gedWrapper edmater 0 0 1 0 $args
+}
+
+::itcl::body ArcherCore::d {args} {
+    eval erase $args
 }
 
 ::itcl::body ArcherCore::erase {args} {
