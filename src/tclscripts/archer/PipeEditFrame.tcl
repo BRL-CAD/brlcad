@@ -502,37 +502,31 @@
 	} \
 	$setPointOD {
 	    set mEditCommand pscale
-	    set mEditPCommand [::itcl::code $this p]
 	    set mEditClass $EDIT_CLASS_SCALE
 	    set mEditParam1 "o$seg_i"
 	} \
 	$setPointID {
 	    set mEditCommand pscale
-	    set mEditPCommand [::itcl::code $this p]
 	    set mEditClass $EDIT_CLASS_SCALE
 	    set mEditParam1 "i$seg_i"
 	} \
 	$setPointBend {
 	    set mEditCommand pscale
-	    set mEditPCommand [::itcl::code $this p]
 	    set mEditClass $EDIT_CLASS_SCALE
 	    set mEditParam1 "b$seg_i"
 	} \
 	$setPipeOD {
 	    set mEditCommand pscale
-	    set mEditPCommand [::itcl::code $this p]
 	    set mEditClass $EDIT_CLASS_SCALE
 	    set mEditParam1 O
 	} \
 	$setPipeID {
 	    set mEditCommand pscale
-	    set mEditPCommand [::itcl::code $this p]
 	    set mEditClass $EDIT_CLASS_SCALE
 	    set mEditParam1 I
 	} \
 	$setPipeBend {
 	    set mEditCommand pscale
-	    set mEditPCommand [::itcl::code $this p]
 	    set mEditClass $EDIT_CLASS_SCALE
 	    set mEditParam1 B
 	} \
