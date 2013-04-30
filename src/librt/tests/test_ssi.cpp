@@ -125,37 +125,47 @@ main(int argc, char** argv)
     if (curve.Count() == 0)
 	return 0;
 
-    // ON_SSX_EVENT cannot give us enough information on the intersections.
-    /*
-    ON_SSX_EVENT ssi_event;
-    ssi_event.m_curve3d = curve[0];
-    ssi_event.m_curveA = curve_uv[0];
-    ssi_event.m_curveB = curve_st[0];
-    ssi_event.m_type = ON_SSX_EVENT::TYPE::ssx_transverse;
-    ON_wString wstr;
-    ON_TextLog textlog(wstr);
-    ssi_event.Dump(textlog);
-    char *str = new char [wstr.Length() + 1];
-    for (int k = 0; k < wstr.Length(); k++) {
-	str[k] = wstr[k];
-    }
-    str[wstr.Length()] = 0;
-    bu_log("%s", str);
-    delete str; */
-
     bu_vls_init(&intersect_name);
     if (argc == 7) {
-	bu_vls_sprintf(&intersect_name, argv[6]);
+	bu_vls_sprintf(&intersect_name, "%s_", argv[6]);
     } else {
-	bu_vls_strcpy(&intersect_name, argv[2]);
-	bu_vls_strcat(&intersect_name, "_");
-	bu_vls_strcat(&intersect_name, argv[3]);
-	bu_vls_strcat(&intersect_name, "_");
+	bu_vls_sprintf(&intersect_name, "%s_%s_", argv[2], argv[3]);
+    }
+    
+    // Print the information of an intersection curve, using
+    // the ON_NurbsCurve::Dump() method. Later, after ON_SSX_EVENT
+    // is improved, we will use ON_SSX_EVENT::Dump() instead.
+    bu_log("*** 2D Intersection Curves on Surface A: ***\n");
+    for (int i = 0; i < curve_uv.Count(); i++) {
+	ON_wString wstr;
+	ON_TextLog textlog(wstr);
+	curve_uv[i]->Dump(textlog);
+	ON_String str = ON_String(wstr);
+	char *c_str = str.Array();
+	bu_log("Intersection curve %d:\n %s", i + 1, c_str);
     }
 
-    bu_vls_init(&name);
+    bu_log("*** 2D Intersection Curves on Surface B: ***\n");
+    for (int i = 0; i < curve_uv.Count(); i++) {
+	ON_wString wstr;
+	ON_TextLog textlog(wstr);
+	curve_st[i]->Dump(textlog);
+	ON_String str = ON_String(wstr);
+	char *c_str = str.Array();
+	bu_log("Intersection curve %d:\n %s", i + 1, c_str);
+    }
+
+    bu_log("*** 3D Intersection Curves: ***\n");
     for (int i = 0; i < curve.Count(); i++) {
-	// Do sampling, and use a pipe primitive to represent a curve
+	ON_wString wstr;
+	ON_TextLog textlog(wstr);
+	curve[i]->Dump(textlog);
+	ON_String str = ON_String(wstr);
+	char *c_str = str.Array();
+	bu_log("Intersection curve %d:\n %s", i + 1, c_str);
+
+	// Use a pipe primitive to represent a curve.
+	// The CVs of the curve are used as vertexes of the pipe.
 	struct rt_db_internal intern;
 	RT_DB_INTERNAL_INIT(&intern);
 	intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
@@ -168,23 +178,23 @@ main(int argc, char** argv)
 	pi->pipe_count = curve.Count();
 	BU_LIST_INIT(&(pi->pipe_segs_head));
 	struct wdb_pipept *ps;
-	ON_Interval dom = curve[i]->Domain();
-	// use different plotres for different accuracy (resolution)
-	int plotres = 100;
-	for (int j = 0; j <= plotres; j++) {
+	
+	fastf_t od = curve[i]->BoundingBox().Diagonal().Length() * 0.05;
+	for (int j = 0; j < curve[i]->CVCount(); j++) {
 	    BU_ALLOC(ps, struct wdb_pipept);
 	    ps->l.magic = WDB_PIPESEG_MAGIC;
 	    ps->l.back = NULL;
 	    ps->l.forw = NULL;
-	    ON_3dPoint p = curve[i]->PointAt(dom.ParameterAt((double) j
-							     / (double) plotres));
+	    ON_3dPoint p;
+	    curve[i]->GetCV(j, p);
 	    VSET(ps->pp_coord, p.x, p.y, p.z);
-	    ps->pp_id = 50;
-	    ps->pp_od = 100;
+	    ps->pp_id = 0.0;
+	    ps->pp_od = od;
 	    ps->pp_bendradius = 0;
 	    BU_LIST_INSERT(&pi->pipe_segs_head, &ps->l);
 	}
 
+	bu_vls_init(&name);
 	bu_vls_sprintf(&name, "%s%d", bu_vls_addr(&intersect_name), i);
 
 	struct directory *dp;
@@ -194,6 +204,7 @@ main(int argc, char** argv)
 	    bu_log("ERROR: failure writing [%s] to disk\n", bu_vls_addr(&name));
 	else
 	    bu_log("%s is written to file.\n", bu_vls_addr(&name));
+	bu_vls_free(&name);
     }
 
     // Free the memory.
@@ -205,7 +216,6 @@ main(int argc, char** argv)
 	delete curve_st[i];
 
     bu_vls_free(&intersect_name);
-    bu_vls_free(&name);
 
     return ret;
 }
