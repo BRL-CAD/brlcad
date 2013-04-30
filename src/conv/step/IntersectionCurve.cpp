@@ -90,8 +90,19 @@ IntersectionCurve::Create(STEPWrapper *sw, SDAI_Application_instance *sse)
 bool
 IntersectionCurve::LoadONBrep(ON_Brep *brep)
 {
-    std::cerr << "Error: ::LoadONBrep(ON_Brep *brep<" << std::hex << brep << std::dec << ">) not implemented for " << entityname << std::endl;
-    return false;
+    bool status;
+
+    if (!brep) {
+	return false;
+    }
+
+    curve_3d->Start(start);
+    curve_3d->End(end);
+
+    status = curve_3d->LoadONBrep(brep);
+    ON_id = curve_3d->GetONId();
+
+    return status;
 }
 
 // Local Variables:
