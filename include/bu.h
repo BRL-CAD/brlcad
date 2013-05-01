@@ -3205,8 +3205,8 @@ BU_EXPORT extern const char *bu_brlcad_root(const char *rhs, int fail_quietly);
  *
  *   BRLCAD_DATA environment variable if set
  *   BRLCAD_DATA compile-time path
- *   bu_brlcad_root/share/brlcad/VERSION path
- *   bu_brlcad_root path
+ *   bu_brlcad_root/DATA_DIR path
+ *   bu_brlcad_root/share path
  *   current directory
  *
  * A STATIC buffer is returned.  It is the caller's responsibility to
