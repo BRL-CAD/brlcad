@@ -47,7 +47,7 @@ void	disp_inten(double *buf, int size);
 void	disp_bars(double *buf, int size);
 
 static const char usage[] = "\
-Usage: ddisp [-v -b -p -c -h] [width (512)]\n";
+Usage: ddisp [-v -b -p -c -h] [width (512)] < inputfile\n";
 
 int
 main(int argc, char **argv)
@@ -55,6 +55,10 @@ main(int argc, char **argv)
     double	buf[MAXPTS];
 
     int	n, L;
+
+    if ( isatty(fileno(stdin)) ) {
+	bu_exit(1, "%s", usage );
+    }
 
     while ( argc > 1 ) {
 	if ( BU_STR_EQUAL(argv[1], "-v") ) {
@@ -75,9 +79,6 @@ main(int argc, char **argv)
 	argv++;
     }
 
-    if ( isatty(fileno(stdin)) ) {
-	bu_exit(1, "%s", usage );
-    }
     if ( (fbp = fb_open( NULL, fbsize, fbsize )) == FBIO_NULL ) {
 	bu_exit(2, "Unable to open framebuffer\n");
     }
