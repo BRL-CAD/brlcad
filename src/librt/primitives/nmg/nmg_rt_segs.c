@@ -1012,13 +1012,13 @@ unresolved(struct hitmiss *next_hit, struct bu_ptbl *a_tbl, struct bu_ptbl *next
     b = &a_tbl->buffer[a_tbl->end];
     l_p = &a_tbl->buffer[0];
     for (; l_p < b; l_p ++)
-	bu_log("\t0x%ld %s\n", **l_p, bu_identify_magic(**l_p));
+	bu_log("\t%p %s\n", **l_p, bu_identify_magic(**l_p));
 
     bu_log("topo table NEXT\n");
     b = &next_tbl->buffer[next_tbl->end];
     l_p = &next_tbl->buffer[0];
     for (; l_p < b; l_p ++)
-	bu_log("\t0x%ld %s\n", **l_p, bu_identify_magic(**l_p));
+	bu_log("\t%p %s\n", **l_p, bu_identify_magic(**l_p));
 
     bu_log("<---Unable to fix state transition\n");
     pl_ray(rd);
