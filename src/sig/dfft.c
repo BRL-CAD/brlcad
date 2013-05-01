@@ -74,11 +74,9 @@ int main(int argc, char **argv)
     int i, n, c;
     int L = 1024;
 
-    if (isatty(STDIN_FILENO) || isatty(STDOUT_FILENO)) {
-	bu_exit(1, "%s", usage);
-    }
-
-    while ((c = bu_getopt(argc, argv, "d:clpLANh")) != -1) {
+    while ((c = bu_getopt(argc, argv, "d:clpLANh?")) != -1) {
+    	if (bu_optopt == '?')
+    	    c='h';
 	switch (c) {
 	    case 'd': mindB = -atof(bu_optarg); break;
 	    case 'c': cflag++; break;
@@ -88,11 +86,12 @@ int main(int argc, char **argv)
 	    case 'A': ascii_output++; break;
 	    case 'N': normalize_output++; break;
 	    case 'h': printf("%s", usage); return EXIT_SUCCESS;
-	    case ':': printf("Missing argument to %c\n%s\n", c, usage); return EXIT_FAILURE;
-	    case '?':
-	    default:  printf("Unknown argument: %c\n%s\n", c, usage); return EXIT_FAILURE;
+	    default:  bu_exit(1, "%s", usage);
 	}
     }
+
+    if (isatty(STDIN_FILENO) || isatty(STDOUT_FILENO))
+	bu_exit(1, "%s", usage);
 
     /* Calculate Critical Band filter weights */
     if (cflag) {
