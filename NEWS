@@ -51,6 +51,7 @@ changes made.  See document footer for additional details.
 * fixed corrupted tessellation pipe export bug - Richard Weiss
 * fixed memory leak in bot_condense - Chris Dueck
 * output from g-var no longer prints 'fwrite' messages - Sean Morrison
+* fixed gqa to not report overlap regions as zero hits - Richard Weiss
 * fixed crash in step-g tool importing AP214 entities - Sean Morrison
 * improved 3dm-g output and invalid geometry support - Sean Morrison
 * fixed crash revolving empty sketch objects - Sean Morrison
