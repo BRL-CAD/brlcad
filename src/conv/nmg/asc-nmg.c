@@ -43,7 +43,7 @@
 static int ascii_to_brlcad(FILE *fpin, struct rt_wdb *fpout, char *reg_name, char *grp_name);
 static void descr_to_nmg(struct shell *s, FILE *fp, fastf_t *Ext);
 
-char		usage[] = "Usage: %s [file]\n";
+char		usage[] = "Usage: asc-nmg [filein] [fileout] ; use - for stdin\n";
 
 /*
  *	M a i n
@@ -57,15 +57,19 @@ main(int argc, char **argv)
     FILE		*fpin;
     struct rt_wdb	*fpout;
 
+    if (isatty(fileno(stdin)) && isatty(fileno(stdout)) && argc == 1)
+	bu_log("%s       Program continues running:\n",usage);
+
     bu_setprogname(argv[0]);
 
     /* Get ascii NMG input file name. */
-    if (bu_optind >= argc) {
+    if (bu_optind >= argc || (int)(*argv[1]) == '-') {
 	afile = "-";
 	fpin = stdin;
 #if defined(_WIN32) && !defined(__CYGWIN__)
 	setmode(fileno(fpin), O_BINARY);
 #endif
+    bu_log("%s: will be reading from stdin\n",argv[0]);
     } else {
 	afile = argv[bu_optind];
 	if ((fpin = fopen(afile, "rb")) == NULL) {
@@ -74,6 +78,7 @@ main(int argc, char **argv)
 		    argv[0], afile);
 	    bu_exit(1, NULL);
 	}
+    bu_log("%s: will be reading from file %s\n",argv[0],afile);
     }
 
 
@@ -89,6 +94,7 @@ main(int argc, char **argv)
 		argv[0], bfile);
 	bu_exit(1, NULL);
     }
+    bu_log("%s: will be creating file %s\n",argv[0],bfile);
 
     ascii_to_brlcad(fpin, fpout, "nmg", NULL);
     fclose(fpin);
