@@ -146,13 +146,69 @@ main(int argc, char** argv)
     }
 
     bu_log("*** 2D Intersection Curves on Surface B: ***\n");
-    for (int i = 0; i < curve_uv.Count(); i++) {
+    for (int i = 0; i < curve_st.Count(); i++) {
 	ON_wString wstr;
 	ON_TextLog textlog(wstr);
 	curve_st[i]->Dump(textlog);
 	ON_String str = ON_String(wstr);
 	char *c_str = str.Array();
 	bu_log("Intersection curve %d:\n %s", i + 1, c_str);
+    }
+
+    for (int i = 0; i < curve_uv.Count() + curve_st.Count(); i++) {
+	ON_NurbsCurve *curve2d = i < curve_uv.Count() ? curve_uv[i] :
+	    curve_st[i - curve_uv.Count()];
+	// Use a sketch primitive to represent a 2D curve (polyline curve).
+	// The CVs of the curve are used as vertexes of the sketch.
+	struct rt_db_internal intern;
+	struct rt_sketch_internal *sketch;
+	int vert_count = curve2d->CVCount();
+	RT_DB_INTERNAL_INIT(&intern);
+	intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
+	intern.idb_type = ID_SKETCH;
+	intern.idb_meth = &rt_functab[ID_SKETCH];
+	BU_ALLOC(intern.idb_ptr, struct rt_sketch_internal);
+	sketch = (struct rt_sketch_internal *)intern.idb_ptr;
+	sketch->magic = RT_SKETCH_INTERNAL_MAGIC;
+	VSET(sketch->V, 0.0, 0.0, 0.0);
+	VSET(sketch->u_vec, 1.0, 0.0, 0.0);
+	VSET(sketch->v_vec, 0.0, 1.0, 0.0);
+	sketch->vert_count = vert_count;
+	sketch->curve.count = vert_count - 1;
+
+	// The memory must be dynamic allocated since they are bu_free'd
+	// in rt_db_free_internal()
+	sketch->verts = (point2d_t *)bu_calloc(vert_count, sizeof(point2d_t), "sketch->verts");
+	sketch->curve.reverse = (int *)bu_calloc(vert_count - 1, sizeof(int), "sketch->crv->reverse");
+	sketch->curve.segment = (genptr_t *)bu_calloc(vert_count - 1, sizeof(genptr_t), "sketch->crv->segments");
+
+	for (int j = 0; j < vert_count; j++) {
+	    ON_3dPoint CV3d;
+	    curve2d->GetCV(j, CV3d);
+	    sketch->verts[j][0] = CV3d.x;
+	    sketch->verts[j][1] = CV3d.y;
+	    if (j != 0) {
+		struct line_seg *lsg;
+		BU_ALLOC(lsg, struct line_seg);
+		lsg->magic = CURVE_LSEG_MAGIC;
+		lsg->start = j - 1;
+		lsg->end = j;
+		sketch->curve.segment[j - 1] = (genptr_t)lsg;
+		sketch->curve.reverse[j - 1] = 0;
+	    }
+	}
+
+	bu_vls_init(&name);
+	bu_vls_sprintf(&name, "%s2d_%d", bu_vls_addr(&intersect_name), i);
+
+	struct directory *dp;
+	dp = db_diradd(dbip, bu_vls_addr(&name), RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (genptr_t)&intern.idb_type);
+	ret = rt_db_put_internal(dp, dbip, &intern, &rt_uniresource);
+	if (ret)
+	    bu_log("ERROR: failure writing [%s] to disk\n", dp->d_namep);
+	else
+	    bu_log("%s is written to file.\n", dp->d_namep);
+	bu_vls_free(&name);
     }
 
     bu_log("*** 3D Intersection Curves: ***\n");
@@ -195,15 +251,15 @@ main(int argc, char** argv)
 	}
 
 	bu_vls_init(&name);
-	bu_vls_sprintf(&name, "%s%d", bu_vls_addr(&intersect_name), i);
+	bu_vls_sprintf(&name, "%s3d_%d", bu_vls_addr(&intersect_name), i);
 
 	struct directory *dp;
 	dp = db_diradd(dbip, bu_vls_addr(&name), RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (genptr_t)&intern.idb_type);
 	ret = rt_db_put_internal(dp, dbip, &intern, &rt_uniresource);
 	if (ret)
-	    bu_log("ERROR: failure writing [%s] to disk\n", bu_vls_addr(&name));
+	    bu_log("ERROR: failure writing [%s] to disk\n", dp->d_namep);
 	else
-	    bu_log("%s is written to file.\n", bu_vls_addr(&name));
+	    bu_log("%s is written to file.\n", dp->d_namep);
 	bu_vls_free(&name);
     }
 
