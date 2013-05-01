@@ -1110,7 +1110,7 @@ alarmhandler(int sig)
     t = time(NULL) - starttime;
     p = (float)ICSize/PMap[PM_GLOBAL]->MaxPhotons + .015;
     tl = (float)t*1.0/p - t;
-    bu_log("    Irradiance Cache Progress: %d%%  Approximate time left: %d%d",
+    bu_log("    Irradiance Cache Progress: %d%%  Approximate time left: %f%f",
 	   (int)(100.0*p), (1.0/p-1.0)*(float)t, (float)t*1.0/p);
 #define BAH(s, w) if (tl > (s)) { float d = floor(tl / (((s) == 0)?1.0:(float)(s))); \
 	tl -= d * (s); bu_log("%d "w, (int)d, d>1?"s":""); }

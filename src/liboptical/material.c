@@ -139,7 +139,7 @@ load_dynamic_shader(const char *material)
     if (strlen(material) < sizeof(sh_name)) {
 	bu_strlcpy(sh_name, material, sizeof(sh_name));
     } else {
-	bu_log("shader name too long \"%s\" %zu > %d\n",
+	bu_log("shader name too long \"%s\" %zu > %lu\n",
 	       material, strlen(material), sizeof(sh_name));
 	return (struct mfuncs *)NULL;
     }
