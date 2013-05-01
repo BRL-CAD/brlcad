@@ -923,13 +923,19 @@ rt_metaball_get(struct bu_vls *logstr, const struct rt_db_internal *intern, cons
 {
     struct rt_metaball_internal *mb = (struct rt_metaball_internal *)intern->idb_ptr;
     struct wdb_metaballpt *mbpt = NULL;
+    int first = 1;
 
     RT_METABALL_CK_MAGIC(mb);
 
     /* write crap in */
     bu_vls_printf(logstr, "metaball %d %.25G {", mb->method, mb->threshold);
     for (BU_LIST_FOR(mbpt, wdb_metaballpt, &mb->metaball_ctrl_head))
+	if (first) {
+	    first = 0;
 	    bu_vls_printf(logstr, "{%.25G %.25G %.25G %.25G %.25G}",
+			    V3ARGS(mbpt->coord), mbpt->fldstr, mbpt->sweat);
+	} else
+	    bu_vls_printf(logstr, " {%.25G %.25G %.25G %.25G %.25G}",
 			    V3ARGS(mbpt->coord), mbpt->fldstr, mbpt->sweat);
     bu_vls_printf(logstr, "}");
 
