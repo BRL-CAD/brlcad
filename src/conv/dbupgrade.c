@@ -42,6 +42,11 @@
 #include "rtgeom.h"
 #include "mater.h"
 
+void
+usage (char *name)
+{
+	fprintf(stderr, "Usage: %s input.g output.g\n", name);
+}
 
 int
 main(int argc, char **argv)
@@ -74,7 +79,7 @@ main(int argc, char **argv)
     rt_init_resource( &rt_uniresource, 0, NULL );
 
     if ( argc != 3 && argc != 4 )  {
-	fprintf(stderr, "Usage: %s input.g output.g\n", argv[0]);
+	usage(argv[0]);
 	return 1;
     }
 
@@ -83,40 +88,17 @@ main(int argc, char **argv)
 	 * currently, can only revert to db version 4
 	 */
 	if ( !BU_STR_EQUAL( argv[1], "-r" ) ) {
-	    fprintf(stderr, "Usage: %s input.g output.g\n", argv[0]);
+	    usage(argv[0]);
 	    return 1;
-	} else {
-	    reverse = 1;
-	    in_arg = 2;
-	    out_arg = 3;
 	}
+	reverse = 1;
+	in_arg = 2;
+	out_arg = 3;
     }
 
-    if ( !reverse ) {
-	if ( (dbip = db_open( argv[in_arg], "r" )) == DBI_NULL )  {
-	    perror( argv[in_arg] );
-	    return 2;
-	}
-
-	if ( (fp = wdb_fopen( argv[out_arg] )) == NULL )  {
-	    perror( argv[out_arg] );
-	    return 3;
-	}
-    } else {
-	if ( (dbip = db_open( argv[in_arg], "r" )) == DBI_NULL )  {
-	    perror( argv[in_arg] );
-	    return 2;
-	}
-	if ( (dbip4 = db_create( argv[out_arg], 4 )) == DBI_NULL ) {
-	    bu_log( "Failed to create output database (%s)\n", argv[out_arg] );
-	    return 3;
-	}
-
-	if ( (fp = wdb_dbopen( dbip4, RT_WDB_TYPE_DB_DISK )) == RT_WDB_NULL ) {
-	    bu_log( "db_dbopen() failed for %s\n", argv[out_arg] );
-	    return 4;
-	}
-
+    if ( (dbip = db_open( argv[in_arg], "r" )) == DBI_NULL )  {
+        perror( argv[in_arg] );
+        return 2;
     }
 
     version = db_version(dbip);
@@ -130,13 +112,24 @@ main(int argc, char **argv)
 	    bu_log( "Input database version not recognized!!!!\n" );
 	    return 4;
 	}
-    } else if ( reverse ) {
+	if ( (fp = wdb_fopen( argv[out_arg] )) == NULL )  {
+	    perror( argv[out_arg] );
+	    return 3;
+	}
+    } else {
 	if ( version != 5 ) {
 	    bu_log( "Can only revert from db version 5\n" );
 	    return 6;
 	}
+	if ( (dbip4 = db_create( argv[out_arg], 4 )) == DBI_NULL ) {
+	    bu_log( "Failed to create output database (%s)\n", argv[out_arg] );
+	    return 3;
+	}
+	if ( (fp = wdb_dbopen( dbip4, RT_WDB_TYPE_DB_DISK )) == RT_WDB_NULL ) {
+	    bu_log( "db_dbopen() failed for %s\n", argv[out_arg] );
+	    return 4;
+	}
     }
-
 
     RT_CK_DBI(dbip);
     if ( db_dirbuild( dbip ) )
