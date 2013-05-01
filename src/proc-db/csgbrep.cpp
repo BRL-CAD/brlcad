@@ -99,7 +99,8 @@ main(int argc, char** argv)
 	bu_log("Usage: %s (arguments ignored)\n", argv[0]);
     else
 	bu_log("Usage: %s\n", argv[0]);
-    bu_log("       Program continues running (is to write %s):\n",DEFAULT_FILENAME);
+
+    bu_log("Writing objects to %s:\n",DEFAULT_FILENAME);
 
     ON::Begin();
 
