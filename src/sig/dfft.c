@@ -59,9 +59,11 @@ void LintoLog(double *in, double *out, int num);
 
 static const char usage[] = "\
 Usage: dfft [options] [width (1024)] < doubles > 512logmags\n\
+  Options are:\n\
   -d dB  minimum dB (default 120)\n\
   -l     log frequency scale\n\
   -c     critical band filter (3rd octave)\n\
+  -p     phase\n\
   -N	 normalized PSD to max magnitude\n\
   -L	 linear output (no dB mag)\n\
   -A     ascii output\n\
