@@ -44,12 +44,18 @@ else(CMAKE_CONFIGURATION_TYPES)
   DISTCLEAN(${CMAKE_BINARY_DIR}/${BIN_DIR}/brlman.tcl)
   DISTCLEAN(${CMAKE_BINARY_DIR}/${BIN_DIR}/brlman.bat)
 endif(CMAKE_CONFIGURATION_TYPES)
+file(COPY brlman.bat
+  DESTINATION ${CMAKE_BINARY_DIR}/src/brlman
+  FILE_PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ
+  GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
+DISTCLEAN(${CMAKE_BINARY_DIR}/src/brlman/brlman.bat)
 
 set(BTCLSH_BIN_DIR "${CMAKE_INSTALL_PREFIX}/${BIN_DIR}")
 configure_file(brlman.sh.in ${CMAKE_BINARY_DIR}/src/brlman/brlman @ONLY)
 install(PROGRAMS ${CMAKE_BINARY_DIR}/src/brlman/brlman DESTINATION ${BIN_DIR})
 configure_file(brlman.tcl.in ${CMAKE_BINARY_DIR}/src/brlman/brlman.tcl @ONLY)
 install(PROGRAMS ${CMAKE_BINARY_DIR}/src/brlman/brlman.tcl DESTINATION ${BIN_DIR})
+install(PROGRAMS ${CMAKE_BINARY_DIR}/src/brlman/brlman.bat DESTINATION ${BIN_DIR})
 
 CMAKEFILES(brlman.tcl.in brlman.sh.in brlman.bat)
 
