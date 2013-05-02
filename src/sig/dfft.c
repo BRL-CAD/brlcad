@@ -75,8 +75,6 @@ int main(int argc, char **argv)
     int L = 1024;
 
     while ((c = bu_getopt(argc, argv, "d:clpLANh?")) != -1) {
-    	if (bu_optopt == '?')
-    	    c='h';
 	switch (c) {
 	    case 'd': mindB = -atof(bu_optarg); break;
 	    case 'c': cflag++; break;
@@ -85,7 +83,6 @@ int main(int argc, char **argv)
 	    case 'L': linear_output++; break;
 	    case 'A': ascii_output++; break;
 	    case 'N': normalize_output++; break;
-	    case 'h': printf("%s", usage); return EXIT_SUCCESS;
 	    default:  bu_exit(1, "%s", usage);
 	}
     }
