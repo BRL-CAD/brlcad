@@ -1820,6 +1820,42 @@ Circle::SetParameterTrim(double start_param, double end_param)
     SetPointTrim(startpoint, endpoint);
 }
 
+#define ANGLE_ZERO_TOL 1.0e-6
+
+// move rad from [-2pi, 2pi] into [0.0, 2pi]
+static double
+normalize_angle(double rad)
+{
+    if (NEAR_ZERO(rad, ANGLE_ZERO_TOL)) {
+	return 0.0;
+    } else if (rad < 0.0) {
+	return rad + 2.0 * ON_PI;
+    }
+
+    return rad;
+}
+
+static double
+radians_from_xaxis_to_ellipse_point(Conic *conic, ON_3dPoint p, double a = 1.0, double b = 1.0)
+{
+    ON_3dPoint origin = conic->GetOrigin();
+    ON_3dPoint center = origin * LocalUnits::length;
+    ON_3dVector xaxis = conic->GetXAxis();
+    ON_3dVector yaxis = conic->GetYAxis();
+
+    // get p after translating to origin
+    ON_3dPoint canonical_p = p - center;
+
+    // decompose into x and y components
+    double x = canonical_p * xaxis;
+    double y = canonical_p * yaxis;
+
+    // ellipse scaling
+    x /= a;
+    y /= b;
+
+    return atan2(y, x);
+}
 
 bool
 Circle::LoadONBrep(ON_Brep *brep)
@@ -1852,92 +1888,40 @@ Circle::LoadONBrep(ON_Brep *brep)
     ON_3dPoint startpt;
     ON_3dPoint endpt;
 
-    double TOL = 1e-9;
-    if (trimmed) { //explicitly trimmed
-	if (parameter_trim) {
-	    if (NEAR_ZERO(t, TOL)) {
-		t = 0.0;
-	    } else if (t < 0.0) {
-		t = t + 2 * ON_PI;
-	    }
-	    if (NEAR_ZERO(s, TOL)) {
-		s = 2 * ON_PI;
-	    } else if (s < 0.0) {
-		s = s + 2 * ON_PI;
-	    }
-	    if (s < t) {
-		s = s + 2 * ON_PI;
-	    }
-	    startpt = circle.PointAt(t);
-	    endpt = circle.PointAt(s);
-	    //TODO: check sense agreement
-	} else {
-
-	    // must be point trim so calc t, s from points
+    // get explicit start and end points
+    if (trimmed) {
+	if (!parameter_trim) {
 	    startpt = trim_startpoint;
 	    endpt = trim_endpoint;
-
-	    // NOTE: point from point trim entity already converted to proper units
-
-	    ON_3dVector fp = startpt - center;
-	    double xdot = fp * xaxis;
-	    double ydot = fp * yaxis;
-	    t = atan2(ydot, xdot);
-	    if (NEAR_ZERO(t, TOL)) {
-		t = 0.0;
-	    } else if (t < 0.0) {
-		t = t + 2 * ON_PI;
-	    }
-
-	    fp = endpt - center;
-	    xdot = fp * xaxis;
-	    ydot = fp * yaxis;
-	    s = atan2(ydot, xdot);
-	    if (NEAR_ZERO(s, TOL)) {
-		s = 2 * ON_PI;
-	    } else if (s < 0.0) {
-		s = s + 2 * ON_PI;
-	    }
-
-	    if (s < t) {
-		s = s + 2 * ON_PI;
-	    }
 	}
-    } else if ((start != NULL) && (end != NULL)) { //not explicit let's try edge vertices
+    } else if (start && end) {
 	startpt = start->Point3d();
 	endpt = end->Point3d();
 
-	startpt = startpt * LocalUnits::length;
-	endpt = endpt * LocalUnits::length;
-
-	ON_3dVector fp = startpt - center;
-	double xdot = fp * xaxis;
-	double ydot = fp * yaxis;
-	t = atan2(ydot, xdot);
-	if (NEAR_ZERO(t, TOL)) {
-	    t = 0.0;
-	} else if (t < 0.0) {
-	    t = t + 2 * ON_PI;
-	}
-
-	fp = endpt - center;
-	xdot = fp * xaxis;
-	ydot = fp * yaxis;
-	s = atan2(ydot, xdot);
-	if (NEAR_ZERO(s, TOL)) {
-	    s = 2 * ON_PI;
-	} else if (s < 0.0) {
-	    s = s + 2 * ON_PI;
-	}
-
-	if (s < t) {
-	    s = s + 2 * ON_PI;
-	    ;
-	}
+	startpt *= LocalUnits::length;
+	endpt *= LocalUnits::length;
     } else {
 	std::cerr << "Error: ::LoadONBrep(ON_Brep *brep<" << std::hex << brep << std::dec
 		  << ">) not endpoints for specified for curve " << entityname << std::endl;
 	return false;
+    }
+
+    // if we have start and end points, get corresponding t and s
+    if ((trimmed && !parameter_trim) || (start && end)) {
+	t = radians_from_xaxis_to_ellipse_point(this, startpt);
+	s = radians_from_xaxis_to_ellipse_point(this, endpt);
+    }
+
+    t = normalize_angle(t);
+    s = normalize_angle(s);
+    if (s < t) {
+	s += 2.0 * ON_PI;
+    }
+
+    // if we have only t and s, get corresponding start and end points
+    if (parameter_trim) {
+	startpt = circle.PointAt(t);
+	endpt = circle.PointAt(s);
     }
 
     double theta = s - t;
@@ -2095,91 +2079,45 @@ Ellipse::LoadONBrep(ON_Brep *brep)
     // ON_3dPoint focus_1 = center + (eccentricity * a) * xaxis;
     // ON_3dPoint focus_2 = center - (eccentricity * a) * xaxis;
 
-    ON_3dPoint pnt1;
-    ON_3dPoint pnt2;
-    if (trimmed) { //explicitly trimmed
-	if (parameter_trim) {
-	    if (s < t) {
-		double tmp = s;
-		s = t;
-		t = tmp;
-	    }
-	    pnt1 = ellipse.PointAt(t);
-	    pnt2 = ellipse.PointAt(s);
-	    //TODO: check sense agreement
-	} else {
-	    double TOL = 1e-9;
+    ON_3dPoint startpt;
+    ON_3dPoint endpt;
 
-	    //must be point trim so calc t, s from points
-	    pnt1 = trim_startpoint;
-	    pnt2 = trim_endpoint;
-
-	    // NOTE: point from point trim entity already converted to proper units
-
-	    ON_3dVector fp = pnt1 - center;
-	    double xdot = fp * xaxis;
-	    double ydot = fp * yaxis;
-	    t = atan2(ydot / b, xdot / a);
-	    if (NEAR_ZERO(t, TOL)) {
-		t = 0.0;
-	    } else if (t < 0.0) {
-		t = t + 2 * ON_PI;
-	    }
-
-	    fp = pnt2 - center;
-	    xdot = fp * xaxis;
-	    ydot = fp * yaxis;
-	    s = atan2(ydot / b, xdot / a);
-	    if (NEAR_ZERO(s, TOL)) {
-		s = 2 * ON_PI;
-	    } else if (s < 0.0) {
-		s = s + 2 * ON_PI;
-	    }
-
-	    if (s < t) {
-		double tmp = s;
-		s = t;
-		t = tmp;
-	    }
+    // get explicit start and end points
+    if (trimmed) {
+	if (!parameter_trim) {
+	    startpt = trim_startpoint;
+	    endpt = trim_endpoint;
 	}
-    } else if ((start != NULL) && (end != NULL)) { //not explicit let's try edge vertices
-	double TOL = 1e-9;
+    } else if (start && end) {
+	startpt = start->Point3d();
+	endpt = end->Point3d();
 
-	pnt1 = start->Point3d();
-	pnt2 = end->Point3d();
-
-	pnt1 = pnt1 * LocalUnits::length;
-	pnt2 = pnt2 * LocalUnits::length;
-
-	ON_3dVector fp = pnt1 - center;
-	double xdot = fp * xaxis;
-	double ydot = fp * yaxis;
-	t = atan2(ydot / b, xdot / a);
-	if (NEAR_ZERO(t, TOL)) {
-	    t = 0.0;
-	} else if (t < 0.0) {
-	    t = t + 2 * ON_PI;
-	}
-
-	fp = pnt2 - center;
-	xdot = fp * xaxis;
-	ydot = fp * yaxis;
-	s = atan2(ydot / b, xdot / a);
-	if (NEAR_ZERO(s, TOL)) {
-	    s = 2 * ON_PI;
-	} else if (s < 0.0) {
-	    s = s + 2 * ON_PI;
-	}
-
-	if (s < t) {
-	    double tmp = s;
-	    s = t;
-	    t = tmp;
-	}
+	startpt *= LocalUnits::length;
+	endpt *= LocalUnits::length;
     } else {
 	std::cerr << "Error: ::LoadONBrep(ON_Brep *brep<" << std::hex << brep << std::dec
 		  << ">) not endpoints for specified for curve " << entityname << std::endl;
 	return false;
+    }
+
+    // if we have start and end points, get corresponding t and s
+    if ((trimmed && !parameter_trim) || (start && end)) {
+	t = radians_from_xaxis_to_ellipse_point(this, startpt, a, b);
+	s = radians_from_xaxis_to_ellipse_point(this, endpt, a, b);
+    }
+
+    t = normalize_angle(t);
+    s = normalize_angle(s);
+    if (s < t) {
+	double tmp = s;
+	s = t;
+	t = tmp;
+    }
+
+    // if we have only t and s, get corresponding start and end points
+    if (parameter_trim) {
+	startpt = ellipse.PointAt(t);
+	endpt = ellipse.PointAt(s);
     }
 
     double theta = s - t;
