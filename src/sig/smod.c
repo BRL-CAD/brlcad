@@ -54,6 +54,7 @@ short mapbuf[BUFLEN];		/* translation buffer/lookup table */
 unsigned char clip_h[BUFLEN];	/* map of values which clip high */
 unsigned char clip_l[BUFLEN];	/* map of values which clip low */
 
+static const char usage[] = "Usage: smod [-a add | -s sub | -m mult | -d div | -A | -e exp | -r root] [file.s]\n";
 
 int
 get_args(int argc, char *argv[])
@@ -180,7 +181,7 @@ main(int argc, char *argv[])
 	progname = *argv;
 
     if (!get_args(argc, argv) || isatty(fileno(stdin)) || isatty(fileno(stdout))) {
-	bu_exit(1, "Usage: smod {-a add -s sub -m mult -d div -A(abs) -e exp -r root} [file.s]\n");
+	bu_exit(1, "%s", usage);
     }
 
     mk_trans_tbl();
@@ -194,12 +195,12 @@ main(int argc, char *argv[])
 	    long mdx;
 	    if (idx < 0)
 		idx = 0;
-	    if (idx > BUFLEN-1)
+	    else if (idx > BUFLEN-1)
 		idx = BUFLEN-1;
 	    mdx = iobuf[idx] + 32768;
 	    if (mdx < 0)
 		mdx = 0;
-	    if (mdx > BUFLEN-1)
+	    else if (mdx > BUFLEN-1)
 		mdx = BUFLEN-1;
 
 	    iobuf[idx] = mapbuf[mdx];
