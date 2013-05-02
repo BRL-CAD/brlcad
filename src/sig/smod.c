@@ -62,7 +62,7 @@ get_args(int argc, char *argv[])
     int c;
     double d;
 
-    while ((c = bu_getopt(argc, argv, "a:s:m:d:Ae:r:")) != -1) {
+    while ((c = bu_getopt(argc, argv, "a:s:m:d:Ae:r:h?")) != -1) {
 	switch (c) {
 	    case 'a':
 		op[ numop ] = ADD;
@@ -80,7 +80,7 @@ get_args(int argc, char *argv[])
 		op[ numop ] = MULT;
 		d = atof(bu_optarg);
 		if (ZERO(d)) {
-		    bu_exit(2, "bwmod: divide by zero!\n");
+		    bu_exit(2, "smod: divide by zero!\n");
 		}
 		val[ numop++ ] = 1.0 / d;
 		break;
@@ -96,7 +96,7 @@ get_args(int argc, char *argv[])
 		op[ numop ] = POW;
 		d = atof(bu_optarg);
 		if (ZERO(d)) {
-		    bu_exit(2, "bwmod: zero root!\n");
+		    bu_exit(2, "smod: zero root!\n");
 		}
 		val[ numop++ ] = 1.0 / d;
 		break;
@@ -116,7 +116,7 @@ get_args(int argc, char *argv[])
 	ifname = bu_realpath(file_name, NULL);
 	if (freopen(ifname, "r", stdin) == NULL) {
 	    fprintf(stderr,
-			  "bwmod: cannot open \"%s(canonical %s)\" for reading\n",
+			  "smod: cannot open \"%s(canonical %s)\" for reading\n",
 			  file_name,ifname);
 	    bu_free(ifname,"ifname alloc from bu_realpath");
 	    return 0;
@@ -125,7 +125,7 @@ get_args(int argc, char *argv[])
     }
 
     if (argc > ++bu_optind)
-	fprintf(stderr, "bwmod: excess argument(s) ignored\n");
+	fprintf(stderr, "smod: excess argument(s) ignored\n");
 
     return 1;		/* OK */
 }
