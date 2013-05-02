@@ -131,7 +131,7 @@ main(int argc, char** argv)
     } else {
 	bu_vls_sprintf(&intersect_name, "%s_%s_", argv[2], argv[3]);
     }
-    
+
     // Print the information of an intersection curve, using
     // the ON_NurbsCurve::Dump() method. Later, after ON_SSX_EVENT
     // is improved, we will use ON_SSX_EVENT::Dump() instead.
@@ -234,7 +234,7 @@ main(int argc, char** argv)
 	pi->pipe_count = curve.Count();
 	BU_LIST_INIT(&(pi->pipe_segs_head));
 	struct wdb_pipept *ps;
-	
+
 	fastf_t od = curve[i]->BoundingBox().Diagonal().Length() * 0.05;
 	for (int j = 0; j < curve[i]->CVCount(); j++) {
 	    BU_ALLOC(ps, struct wdb_pipept);
