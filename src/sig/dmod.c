@@ -104,8 +104,8 @@ get_args(int argc, char **argv)
 	}
     }
 
-    if ( bu_optind >= argc )  {
-	if ( isatty(fileno(stdin)) )
+    if (bu_optind >= argc) {
+	if (isatty(fileno(stdin)))
 	    return 0;
 	file_name = "-";
 	infp = stdin;
