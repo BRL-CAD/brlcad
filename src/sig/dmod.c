@@ -78,7 +78,7 @@ get_args(int argc, char **argv)
 		op[ numop ] = MULT;
 		d = atof(bu_optarg);
 		if (ZERO(d)) {
-		    bu_exit(2, "dmod: divide by zero!\n" );
+		    bu_exit(2, "dmod: divide by zero!\n");
 		}
 		val[ numop++ ] = 1.0 / d;
 		break;
@@ -94,7 +94,7 @@ get_args(int argc, char **argv)
 		op[ numop ] = POW;
 		d = atof(bu_optarg);
 		if (ZERO(d)) {
-		    bu_exit(2, "dmod: zero root!\n" );
+		    bu_exit(2, "dmod: zero root!\n");
 		}
 		val[ numop++ ] = 1.0 / d;
 		break;
