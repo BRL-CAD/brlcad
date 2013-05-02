@@ -1750,32 +1750,33 @@ ConicalSurface::LoadONBrep(ON_Brep *brep)
 
 
 int
-intersectLines(ON_Line &l1, ON_Line &l2, ON_3dPoint &out)
+intersectLines(const ON_Line &l1, const ON_Line &l2, ON_3dPoint &out)
 {
-    fastf_t t, u;
-    point_t p, a;
-    vect_t d, c;
     struct bn_tol tol;
 
     tol.magic = BN_TOL_MAGIC;
-    tol.dist = 0.0005;
+    tol.dist = BN_TOL_DIST;
     tol.dist_sq = tol.dist * tol.dist;
     tol.perp = 1e-6;
     tol.para = 1 - tol.perp;
 
-    VMOVE(p, l1.from);
-    VMOVE(a, l2.from);
-    ON_3dVector l1dir = l1.Direction();
-    l1dir.Unitize();
-    VMOVE(d, l1dir);
-    ON_3dVector l2dir = l2.Direction();
-    l2dir.Unitize();
-    VMOVE(c, l2dir);
+    point_t l1_from, l2_from;
+    VMOVE(l1_from, l1.from);
+    VMOVE(l2_from, l2.from);
 
-    int i = bn_isect_line3_line3(&t, &u, p, d, a, c, &tol);
+    ON_3dVector d;
+    vect_t l1_dir, l2_dir;
+
+    d = l1.Direction();
+    VMOVE(l1_dir, d);
+    d = l2.Direction();
+    VMOVE(l2_dir, d);
+
+    fastf_t l1_dist, l2_dist;
+    int i = bn_isect_line3_line3(&l1_dist, &l2_dist, l1_from, l1_dir,
+				 l2_from, l2_dir, &tol);
     if (i == 1) {
-	VMOVE(out, l1.from);
-	out = out + t * l1dir;
+	out = l1.from + l1.Direction() * l1_dist;
     }
     return i;
 }
@@ -1848,8 +1849,9 @@ Circle::LoadONBrep(ON_Brep *brep)
     // with given center and radius.
     ON_Circle circle(plane, center, r);
 
-    ON_3dPoint pnt1;
-    ON_3dPoint pnt2;
+    ON_3dPoint startpt;
+    ON_3dPoint endpt;
+
     double TOL = 1e-9;
     if (trimmed) { //explicitly trimmed
 	if (parameter_trim) {
@@ -1866,18 +1868,18 @@ Circle::LoadONBrep(ON_Brep *brep)
 	    if (s < t) {
 		s = s + 2 * ON_PI;
 	    }
-	    pnt1 = circle.PointAt(t);
-	    pnt2 = circle.PointAt(s);
+	    startpt = circle.PointAt(t);
+	    endpt = circle.PointAt(s);
 	    //TODO: check sense agreement
 	} else {
 
-	    //must be point trim so calc t, s from points
-	    pnt1 = trim_startpoint;
-	    pnt2 = trim_endpoint;
+	    // must be point trim so calc t, s from points
+	    startpt = trim_startpoint;
+	    endpt = trim_endpoint;
 
 	    // NOTE: point from point trim entity already converted to proper units
 
-	    ON_3dVector fp = pnt1 - center;
+	    ON_3dVector fp = startpt - center;
 	    double xdot = fp * xaxis;
 	    double ydot = fp * yaxis;
 	    t = atan2(ydot, xdot);
@@ -1887,7 +1889,7 @@ Circle::LoadONBrep(ON_Brep *brep)
 		t = t + 2 * ON_PI;
 	    }
 
-	    fp = pnt2 - center;
+	    fp = endpt - center;
 	    xdot = fp * xaxis;
 	    ydot = fp * yaxis;
 	    s = atan2(ydot, xdot);
@@ -1902,13 +1904,13 @@ Circle::LoadONBrep(ON_Brep *brep)
 	    }
 	}
     } else if ((start != NULL) && (end != NULL)) { //not explicit let's try edge vertices
-	pnt1 = start->Point3d();
-	pnt2 = end->Point3d();
+	startpt = start->Point3d();
+	endpt = end->Point3d();
 
-	pnt1 = pnt1 * LocalUnits::length;
-	pnt2 = pnt2 * LocalUnits::length;
+	startpt = startpt * LocalUnits::length;
+	endpt = endpt * LocalUnits::length;
 
-	ON_3dVector fp = pnt1 - center;
+	ON_3dVector fp = startpt - center;
 	double xdot = fp * xaxis;
 	double ydot = fp * yaxis;
 	t = atan2(ydot, xdot);
@@ -1918,7 +1920,7 @@ Circle::LoadONBrep(ON_Brep *brep)
 	    t = t + 2 * ON_PI;
 	}
 
-	fp = pnt2 - center;
+	fp = endpt - center;
 	xdot = fp * xaxis;
 	ydot = fp * yaxis;
 	s = atan2(ydot, xdot);
@@ -1938,8 +1940,6 @@ Circle::LoadONBrep(ON_Brep *brep)
 	return false;
     }
 
-    ON_3dPoint PB = pnt1;
-    ON_3dPoint PE = pnt2;
     double theta = s - t;
     int narcs = 1;
     if (theta < ON_PI / 2.0) {
@@ -1951,38 +1951,43 @@ Circle::LoadONBrep(ON_Brep *brep)
     } else {
 	narcs = 4;
     }
+
     double dtheta = theta / narcs;
     double w = cos(dtheta / 2.0);
     ON_3dPointArray cpts(2 * narcs + 1);
     double angle = t;
     double W[2 * 4 + 1]; /* 2 * max narcs + 1 */
-    ON_3dPoint P0, P1, P2, PM, PT;
-    ON_3dVector T0, T2;
+    ON_3dPoint circleP1, isect, circleP2, PM, PT;
+    ON_3dVector tangentP1, tangentP2;
 
-    P0 = PB;
-    T0 = circle.TangentAt(t);
+    circleP1 = startpt;
+    tangentP1 = circle.TangentAt(t);
 
     for (int i = 0; i < narcs; i++) {
 	angle = angle + dtheta;
-	P2 = circle.PointAt(angle);
-	T2 = circle.TangentAt(angle);
-	ON_Line tangent1(P0, P0 + r * T0);
-	ON_Line tangent2(P2, P2 + r * T2);
-	if (intersectLines(tangent1, tangent2, P1) != 1) {
+
+	circleP2 = circle.PointAt(angle);
+	tangentP2 = circle.TangentAt(angle);
+	ON_Line tangent1(circleP1, circleP1 + r * tangentP1);
+	ON_Line tangent2(circleP2, circleP2 + r * tangentP2);
+
+	if (intersectLines(tangent1, tangent2, isect) != 1) {
 	    std::cerr << entityname << ": Error: Control point can not be calculated." << std::endl;
 	    return false;
 	}
 
-	P1 = (w) * P1; // must pre-weight before putting into NURB
-	cpts.Append(P0);
+	cpts.Append(circleP1);
+
+	isect *= w; // must pre-weight before putting into NURB
+	cpts.Append(isect);
+
 	W[2 * i] = 1.0;
-	cpts.Append(P1);
 	W[2 * i + 1] = w;
 
-	P0 = P2;
-	T0 = T2;
+	circleP1 = circleP2;
+	tangentP1 = tangentP2;
     }
-    cpts.Append(PE);
+    cpts.Append(endpt);
     W[2 * narcs] = 1.0;
 
     int degree = 2;
