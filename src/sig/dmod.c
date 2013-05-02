@@ -53,13 +53,15 @@ int	op[256] = {0};		/* operations */
 double	val[256] = {0.0};		/* arguments to operations */
 double	buf[BUFLEN] = {0.0};		/* working buffer */
 
+static const char usage[] = "Usage: dmod {-a add -s sub -m mult -d div -A(abs) -e exp -r root} [doubles]\n";
+
 int
 get_args(int argc, char **argv)
 {
     int c;
     double	d;
 
-    while ( (c = bu_getopt( argc, argv, "a:s:m:d:Ae:r:" )) != -1 )  {
+    while ( (c = bu_getopt( argc, argv, "a:s:m:d:Ae:r:h?" )) != -1 )  {
 	switch ( c )  {
 	    case 'a':
 		op[ numop ] = ADD;
@@ -99,7 +101,7 @@ get_args(int argc, char **argv)
 		break;
 
 	    default:		/* '?' */
-		return 0;
+		bu_exit(1, "%s", usage);
 	}
     }
 
@@ -134,7 +136,7 @@ int main(int argc, char **argv)
 
     if ( !get_args( argc, argv ) || isatty(fileno(infp))
 	 || isatty(fileno(stdout)) ) {
-	bu_exit(1, "Usage: dmod {-a add -s sub -m mult -d div -A(abs) -e exp -r root} [doubles]\n");
+	bu_exit(1, "%s", usage);
     }
 
     while ( (n = fread(buf, sizeof(*buf), BUFLEN, infp)) > 0 ) {
