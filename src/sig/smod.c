@@ -103,7 +103,7 @@ get_args(int argc, char *argv[])
 		break;
 
 	    default:		/* '?' */
-		return 0;
+		bu_exit(1, "%s", usage);
 	}
     }
 
