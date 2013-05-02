@@ -19,18 +19,18 @@
  */
 /** @file dmod.c
  *
- *  Modify a stream of doubles.
+ * Modify a stream of doubles.
  *
- *  Allows any number of add, subtract, multiply, divide, or
- *  exponentiation operations to be performed on a stream of values.
+ * Allows any number of add, subtract, multiply, divide, or
+ * exponentiation operations to be performed on a stream of values.
  *
  */
 
 #include "common.h"
 
 #include <stdlib.h>
-#include <math.h>
 #include <string.h>
+#include <math.h>
 #include "bio.h"
 
 #include "bu.h"
@@ -41,28 +41,27 @@ char	*file_name = NULL;
 FILE	*infp = NULL;
 
 
-#define	ADD	1
-#define MULT	2
-#define	ABS	3
-#define	POW	4
+#define ADD 1
+#define MULT 2
+#define ABS 3
+#define POW 4
+#define BUFLEN 4096
 
-#define	BUFLEN	4096
+int numop = 0;		/* number of operations */
+int op[256] = {0};		/* operations */
+double val[256] = {0.0};		/* arguments to operations */
+double buf[BUFLEN] = {0.0};		/* working buffer */
 
-int	numop = 0;		/* number of operations */
-int	op[256] = {0};		/* operations */
-double	val[256] = {0.0};		/* arguments to operations */
-double	buf[BUFLEN] = {0.0};		/* working buffer */
-
-static const char usage[] = "Usage: dmod {-a add -s sub -m mult -d div -A(abs) -e exp -r root} [doubles]\n";
+static const char usage[] = "Usage: dmod [-a add | -s sub | -m mult | -d div | -A | -e exp | -r root] [doubles]\n";
 
 int
 get_args(int argc, char **argv)
 {
     int c;
-    double	d;
+    double d;
 
-    while ( (c = bu_getopt( argc, argv, "a:s:m:d:Ae:r:h?" )) != -1 )  {
-	switch ( c )  {
+    while ((c = bu_getopt(argc, argv, "a:s:m:d:Ae:r:h?")) != -1) {
+	switch (c) {
 	    case 'a':
 		op[ numop ] = ADD;
 		val[ numop++ ] = atof(bu_optarg);
