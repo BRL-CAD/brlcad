@@ -1404,7 +1404,8 @@ nmg_loop_plane_area(const struct loopuse *lu, fastf_t *pl)
     area = 0.5 * MAGNITUDE(plane);
 
     /* Error if the area is too small to unitize the normal vector */
-    VUNITIZE_RET(plane, (fastf_t)(-1.0));
+    if (MAGNITUDE(plane) < VDIVIDE_TOL) return -1.0;
+    VUNITIZE(plane);
 
     /* calculate plane[W] as average distance to plane */
     for (BU_LIST_FOR (eu, edgeuse, &lu->down_hd)) {

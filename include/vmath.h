@@ -1011,15 +1011,6 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
 	} \
     } while (0)
 
-/** @brief If vector magnitude is too small, return an error code. */
-#define VUNITIZE_RET(a, ret) do { \
-	register double _f; \
-	_f = MAGNITUDE(a); \
-	if (_f < VDIVIDE_TOL) return ret; \
-	_f = 1.0/_f; \
-	(a)[X] *= _f; (a)[Y] *= _f; (a)[Z] *= _f; \
-    } while (0)
-
 /**
  * @brief Find the sum of two points, and scale the result.  Often
  * used to find the midpoint.
