@@ -205,7 +205,6 @@
 
 
 ::itcl::body MetaballEditFrame::moveElement {_dm _obj _vx _vy _ocenter} {
-.archer0 putString "MetaballEditFrame::moveElement: enter"
     set mb_i [expr {$mCurrentPoint - 1}]
     set pdata [lindex [$itk_option(-mged) get $itk_option(-geometryObjectPath)] 3]
     set pt [lrange [lindex $pdata $mb_i] 0 2]
@@ -213,8 +212,7 @@
     set vpt [$itk_option(-mged) pane_m2v_point $_dm $pt]
     set vz [lindex $vpt 2]
     set mpt [$itk_option(-mged) pane_v2m_point $_dm [list $_vx $_vy $vz]]
-.archer0 putString "MetaballEditFrame::moveElement: pt_i - $pt_i"
-    $itk_option(-mged) move_metaballpt $_obj $pt_i $mpt
+    $itk_option(-mged) move_metaballpt $_obj $mb_i $mpt
 }
 
 
