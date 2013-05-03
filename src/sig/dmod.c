@@ -119,8 +119,8 @@ get_args(int argc, char **argv)
 	}
     }
 
-    if ( argc > ++bu_optind )
-	fprintf( stderr, "dmod: excess argument(s) ignored\n" );
+    if (argc > ++bu_optind)
+	fprintf(stderr, "dmod: excess argument(s) ignored\n");
 
     return 1;		/* OK */
 }
