@@ -1122,6 +1122,26 @@ GED_EXPORT extern int ged_find_bot_edge_nearest_pt(struct ged *gedp, int argc, c
 GED_EXPORT extern int ged_find_botpt_nearest_pt(struct ged *gedp, int argc, const char *argv[]);
 
 /**
+ * Add a metaball point.
+ */
+GED_EXPORT extern int ged_add_metaballpt(struct ged *gedp, int argc, const char *argv[]);
+
+/**
+ * Delete a metaball point.
+ */
+GED_EXPORT extern int ged_delete_metaballpt(struct ged *gedp, int argc, const char *argv[]);
+
+/**
+ * Find the metaball point nearest the specified point in model coordinates.
+ */
+GED_EXPORT extern int ged_find_metaballpt_nearest_pt(struct ged *gedp, int argc, const char *argv[]);
+
+/**
+ * Move a metaball point.
+ */
+GED_EXPORT extern int ged_move_metaballpt(struct ged *gedp, int argc, const char *argv[]);
+
+/**
  * Find the pipe point nearest the specified point in model coordinates.
  */
 GED_EXPORT extern int ged_find_pipept_nearest_pt(struct ged *gedp, int argc, const char *argv[]);

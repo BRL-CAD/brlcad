@@ -24,6 +24,7 @@ set(archer_TCLSCRIPTS
   HypEditFrame.tcl
   LoadArcherLibs.tcl
   LODUtility.tcl
+  MetaballEditFrame.tcl
   PartEditFrame.tcl
   PipeEditFrame.tcl
   Plugin.tcl

@@ -272,6 +272,7 @@ package provide cadwidgets::Ged 1.0
 	method edit_motion_delta_callback {args}
 	method edit_motion_delta_callback_all {args}
 	method more_args_callback {args}
+	method mouse_add_metaballpt {args}
 	method mouse_append_pipept {args}
 	method mouse_constrain_rot {args}
 	method mouse_constrain_trans {args}
@@ -281,6 +282,7 @@ package provide cadwidgets::Ged 1.0
 	method mouse_find_pipept {_pipe _mx _my}
 	method mouse_move_arb_edge {args}
 	method mouse_move_arb_face {args}
+	method mouse_move_metaballpt {args}
 	method mouse_move_pipept {args}
 	method mouse_orotate {args}
 	method mouse_oscale {args}
@@ -306,6 +308,8 @@ package provide cadwidgets::Ged 1.0
 	method move_botpts {args}
 	method move_botpt_mode {args}
 	method move_botpts_mode {args}
+	method move_metaballpt {args}
+	method move_metaballpt_mode {args}
 	method move_pipept {args}
 	method move_pipept_mode {args}
 	method mv {args}
@@ -358,7 +362,9 @@ package provide cadwidgets::Ged 1.0
 	method pane_move_arb_face_mode {_pane args}
 	method pane_move_botpt_mode {_pane args}
 	method pane_move_botpts_mode {_pane args}
+	method pane_move_metaballpt_mode {_pane args}
 	method pane_move_pipept_mode {_pane args}
+	method pane_mouse_add_metaballpt {_pane args}
 	method pane_mouse_append_pipept {_pane args}
 	method pane_mouse_constrain_rot {_pane args}
 	method pane_mouse_constrain_trans {_pane args}
@@ -367,11 +373,13 @@ package provide cadwidgets::Ged 1.0
 	method pane_mouse_find_bot_edge {_pane _bot _viewz _mx _my}
 	method pane_mouse_find_bot_face {_pane _bot _viewz _mx _my}
 	method pane_mouse_find_botpt {_pane _bot _viewz _mx _my}
+	method pane_mouse_find_metaballpt {_pane _pipe _mx _my}
 	method pane_mouse_find_pipept {_pane _pipe _mx _my}
 	method pane_mouse_find_type_face {_pane _type _obj _viewz _mx _my _callback}
 	method pane_mouse_move_arb_edge {_pane args}
 	method pane_mouse_move_arb_face {_pane args}
 	method pane_mouse_move_botpt {_pane args}
+	method pane_mouse_move_metaballpt {_pane args}
 	method pane_mouse_move_pipept {_pane args}
 	method pane_mouse_orotate {_pane args}
 	method pane_mouse_oscale {_pane args}
@@ -607,6 +615,7 @@ package provide cadwidgets::Ged 1.0
 	method begin_view_measure {_pane _part1_button _part1_button _x _y}
 	method begin_view_measure_part2 {_pane _button _x _y}
 	method default_views {}
+	method delete_metaballpt {args}
 	method delete_pipept {args}
 	method end_data_arrow {_pane}
 	method end_data_line {_pane}
@@ -628,6 +637,7 @@ package provide cadwidgets::Ged 1.0
 	method handle_view_measure_part2 {_pane _x _y}
 	method help {args}
 	method history_callback {args}
+	method init_add_metaballpt {_obj {_button 1} {_callback {}}}
 	method init_append_pipept {_obj {_button 1} {_callback {}}}
 	method init_button_no_op {{_button 1}}
 	method init_comp_pick {{_button 1}}
@@ -647,6 +657,7 @@ package provide cadwidgets::Ged 1.0
 	method init_find_bot_edge {_obj {_button 1} {_viewz 1.0} {_callback {}}}
 	method init_find_bot_face {_obj {_button 1} {_viewz 1.0} {_callback {}}}
 	method init_find_botpt {_obj {_button 1} {_viewz 1.0} {_callback {}}}
+	method init_find_metaballpt {_obj {_button 1} {_callback {}}}
 	method init_find_pipept {_obj {_button 1} {_callback {}}}
 	method init_prepend_pipept {_obj {_button 1} {_callback {}}}
 	method init_view_bindings {{_type default}}
@@ -753,6 +764,7 @@ package provide cadwidgets::Ged 1.0
 	variable mBotEdgeCallback ""
 	variable mBotFaceCallback ""
 	variable mBotPointCallback ""
+	variable mMetaballPointCallback ""
 	variable mPipePointCallback ""
 	variable mMeasuringStickColorVDraw2D ff00ff
 	variable mMeasuringStickColorVDraw3D ffff00
@@ -1918,6 +1930,11 @@ package provide cadwidgets::Ged 1.0
     eval $mGed more_args_callback $args
 }
 
+
+::itcl::body cadwidgets::Ged::mouse_add_metaballpt {args} {
+    eval $mGed mouse_add_metaballpt $itk_component($itk_option(-pane)) $args
+}
+
 ::itcl::body cadwidgets::Ged::mouse_append_pipept {args} {
     eval $mGed mouse_append_pipept $itk_component($itk_option(-pane)) $args
 }
@@ -1964,6 +1981,10 @@ package provide cadwidgets::Ged 1.0
 
 ::itcl::body cadwidgets::Ged::mouse_move_arb_face {args} {
     eval $mGed mouse_move_arb_face $itk_component($itk_option(-pane)) $args
+}
+
+::itcl::body cadwidgets::Ged::mouse_move_metaballpt {args} {
+    eval $mGed mouse_move_metaballpt $itk_component($itk_option(-pane)) $args
 }
 
 ::itcl::body cadwidgets::Ged::mouse_move_pipept {args} {
@@ -2064,6 +2085,14 @@ package provide cadwidgets::Ged 1.0
 
 ::itcl::body cadwidgets::Ged::move_botpts_mode {args} {
     eval $mGed move_botpts_mode $itk_component($itk_option(-pane)) $args
+}
+
+::itcl::body cadwidgets::Ged::move_metaballpt {args} {
+    eval $mGed move_metaballpt $args
+}
+
+::itcl::body cadwidgets::Ged::move_metaballpt_mode {args} {
+    eval $mGed move_metaballpt_mode $itk_component($itk_option(-pane)) $args
 }
 
 ::itcl::body cadwidgets::Ged::move_pipept {args} {
@@ -2372,8 +2401,21 @@ package provide cadwidgets::Ged 1.0
     eval $mGed move_botpts_mode $itk_component($_pane) $args
 }
 
+::itcl::body cadwidgets::Ged::pane_move_metaballpt_mode {_pane args} {
+    eval $mGed move_metaballpt_mode $itk_component($_pane) $args
+}
+
 ::itcl::body cadwidgets::Ged::pane_move_pipept_mode {_pane args} {
     eval $mGed move_pipept_mode $itk_component($_pane) $args
+}
+
+
+::itcl::body cadwidgets::Ged::pane_mouse_add_metaballpt {_pane args} {
+    eval $mGed mouse_add_metaballpt $itk_component($_pane) $args
+
+    if {$mMetaballPointCallback != ""} {
+	catch {$mMetaballPointCallback}
+    }
 }
 
 ::itcl::body cadwidgets::Ged::pane_mouse_append_pipept {_pane args} {
@@ -2488,6 +2530,20 @@ package provide cadwidgets::Ged 1.0
 }
 
 
+::itcl::body cadwidgets::Ged::pane_mouse_find_metaballpt {_pane _pipe _mx _my} {
+    set i [$mGed mouse_find_metaballpt $itk_component($_pane) $_pipe $_mx $_my]
+
+    set mPrevGedMouseX $_mx
+    set mPrevGedMouseY $_my
+
+    if {$mMetaballPointCallback != ""} {
+	catch {$mMetaballPointCallback $i}
+    }
+
+    return $i
+}
+
+
 ::itcl::body cadwidgets::Ged::pane_mouse_find_pipept {_pane _pipe _mx _my} {
     set i [$mGed mouse_find_pipept $itk_component($_pane) $_pipe $_mx $_my]
 
@@ -2541,6 +2597,10 @@ package provide cadwidgets::Ged 1.0
 
 ::itcl::body cadwidgets::Ged::pane_mouse_move_botpt {_pane args} {
     eval $mGed mouse_move_botpt $itk_component($_pane) $args
+}
+
+::itcl::body cadwidgets::Ged::pane_mouse_move_metaballpt {_pane args} {
+    eval $mGed mouse_move_metaballpt $itk_component($_pane) $args
 }
 
 ::itcl::body cadwidgets::Ged::pane_mouse_move_pipept {_pane args} {
@@ -3674,6 +3734,10 @@ package provide cadwidgets::Ged 1.0
     $mGed aet $itk_component(lr) 90 0 0
 }
 
+::itcl::body cadwidgets::Ged::delete_metaballpt {args} {
+    eval $mGed delete_metaballpt $args
+}
+
 ::itcl::body cadwidgets::Ged::delete_pipept {args} {
     eval $mGed delete_pipept $args
 }
@@ -4211,6 +4275,19 @@ package provide cadwidgets::Ged 1.0
     return $mHistoryCallback
 }
 
+
+::itcl::body cadwidgets::Ged::init_add_metaballpt {_obj {_button 1} {_callback {}}} {
+    measure_line_erase
+
+    set mMetaballPointCallback $_callback
+
+    foreach dm {ur ul ll lr} {
+	bind $itk_component($dm) <$_button> "[::itcl::code $this pane_mouse_add_metaballpt $dm $_obj %x %y]; focus %W; break"
+	bind $itk_component($dm) <ButtonRelease-$_button> ""
+    }
+}
+
+
 ::itcl::body cadwidgets::Ged::init_append_pipept {_obj {_button 1} {_callback {}}} {
     measure_line_erase
 
@@ -4396,6 +4473,18 @@ package provide cadwidgets::Ged 1.0
 
     foreach dm {ur ul ll lr} {
 	bind $itk_component($dm) <$_button> "[::itcl::code $this pane_mouse_find_botpt $dm $_obj $_viewz %x %y]; focus %W; break"
+	bind $itk_component($dm) <ButtonRelease-$_button> ""
+    }
+}
+
+
+::itcl::body cadwidgets::Ged::init_find_metaballpt {_obj {_button 1} {_callback {}}} {
+    measure_line_erase
+
+    set mMetaballPointCallback $_callback
+
+    foreach dm {ur ul ll lr} {
+	bind $itk_component($dm) <$_button> "[::itcl::code $this pane_mouse_find_metaballpt $dm $_obj %x %y]; focus %W; break"
 	bind $itk_component($dm) <ButtonRelease-$_button> ""
     }
 }

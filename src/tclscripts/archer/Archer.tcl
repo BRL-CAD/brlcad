@@ -152,12 +152,14 @@ package provide Archer 1.0
 	method pluginUpdateStatusBar {msg}
 
 	method importFg4Sections   {_slist _wlist _delta}
+	method initAddMetaballPoint {_obj _button _callback}
 	method initAppendPipePoint {_obj _button _callback}
 	method initFindArbEdge {_obj _button _callback}
 	method initFindArbFace {_obj _button _callback}
 	method initFindBotEdge {_obj _button _viewz _callback}
 	method initFindBotFace {_obj _button _callback}
 	method initFindBotPoint {_obj _button _viewz _callback}
+	method initFindMetaballPoint {_obj _button _callback {_dflag 0}}
 	method initFindPipePoint {_obj _button _callback {_dflag 0}}
 	method initPrependPipePoint {_obj _button _callback}
 
@@ -327,6 +329,7 @@ package provide Archer 1.0
 	method buildObjRtImageView {}
 	method buildObjToolView {}
 	method buildObjViewToolbar {}
+	method buildMetaballEditView {}
 	method buildPartEditView {}
 	method buildPipeEditView {}
 	method buildRhcEditView {}
@@ -426,6 +429,7 @@ package provide Archer 1.0
 	method createGrip {_name}
 	method createHalf {_name}
 	method createHyp {_name}
+	method createMetaball {_name}
 	method createPart {_name}
 	method createPipe {_name}
 	method createRhc {_name}
@@ -756,6 +760,22 @@ package provide Archer 1.0
 }
 
 
+::itcl::body Archer::initAddMetaballPoint {_obj _button _callback} {
+    if {![info exists itk_component(ged)]} {
+	return
+    }
+
+    # This deselects the selected mouse mode in the primary toolbar
+    set mDefaultBindingMode FIRST_FREE_BINDING_MODE
+
+    # For the moment, the callback being used here is from PipeEditFrame. At some point,
+    # Archer may want to provide the callback in order to do something before passing
+    # things through to PipeEditFrame.
+
+    $itk_component(ged) init_add_metaballpt $_obj $_button $_callback
+}
+
+
 ::itcl::body Archer::initAppendPipePoint {_obj _button _callback} {
     if {![info exists itk_component(ged)]} {
 	return
@@ -829,6 +849,20 @@ package provide Archer 1.0
     set mDefaultBindingMode FIRST_FREE_BINDING_MODE
 
     $itk_component(ged) init_find_botpt $_obj $_button $_viewz $_callback
+}
+
+
+::itcl::body Archer::initFindMetaballPoint {_obj _button _callback {_dflag 0}} {
+    if {![info exists itk_component(ged)]} {
+	return
+    }
+
+    # This deselects the selected mouse mode in the primary toolbar
+    if {$_dflag} {
+	set mDefaultBindingMode FIRST_FREE_BINDING_MODE
+    }
+
+    $itk_component(ged) init_find_metaballpt $_obj $_button $_callback
 }
 
 
@@ -6209,6 +6243,13 @@ proc title_node_handler {node} {
 
 	    return $itk_component(hypView)
 	}
+	"metaball" {
+	    if {![info exists itk_component(metaballView)]} {
+		buildMetaballEditView
+	    }
+
+	    return $itk_component(metaballView)
+	}
 	"part" {
 	    if {![info exists itk_component(partView)]} {
 		buildPartEditView
@@ -6403,7 +6444,10 @@ proc title_node_handler {node} {
 
     if {$GeometryEditFrame::mEditClass != $GeometryEditFrame::EDIT_CLASS_TRANS} {
 	initEdit
-    } elseif {$GeometryEditFrame::mEditMode > 0 && ([regexp {arb[45678]} $mSelectedObjType] || $mSelectedObjType == "pipe")} {
+    } elseif {$GeometryEditFrame::mEditMode > 0 &&
+	      ([regexp {arb[45678]} $mSelectedObjType] ||
+	       $mSelectedObjType == "metaball" ||
+	       $mSelectedObjType == "pipe")} {
 	$itk_component($mSelectedObjType\View) initTranslate
 	$itk_component(ged) rect lwidth 0
 	return
@@ -7077,6 +7121,15 @@ proc title_node_handler {node} {
 	-variable [::itcl::scope mObjViewMode] \
 	-value $OBJ_RT_IMAGE_VIEW_MODE \
 	-command [::itcl::code $this initObjRtImageView 1]
+}
+
+
+::itcl::body Archer::buildMetaballEditView {} {
+    set parent $itk_component(objEditView)
+    itk_component add metaballView {
+	MetaballEditFrame $parent.metaballview \
+	    -units "mm"
+    } {}
 }
 
 
@@ -9374,6 +9427,10 @@ proc title_node_handler {node} {
 	    set name [gedCmd make_name "nmg."]
 	    vmake $name nmg
 	}
+	"metaball" {
+	    set name [gedCmd make_name "metaball."]
+	    createMetaball $name
+	}
 	"part" {
 	    set name [gedCmd make_name "part."]
 	    createPart $name
@@ -9602,6 +9659,16 @@ proc title_node_handler {node} {
 	    -mged $itk_component(ged)
     }
     $itk_component(hypView) createGeometry $name
+}
+
+
+::itcl::body Archer::createMetaball {name} {
+    if {![info exists itk_component(metaballView)]} {
+	buildMetaballEditView
+	$itk_component(metaballView) configure \
+	    -mged $itk_component(ged)
+    }
+    $itk_component(metaballView) createGeometry $name
 }
 
 

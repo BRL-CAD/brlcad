@@ -362,6 +362,13 @@ extern int _ged_scale_hyp(struct ged *gedp,
 			  fastf_t sf,
 			  int rflag);
 
+/* defined in edit_metaball.c */
+extern int _ged_scale_metaball(struct ged *gedp,
+			       struct rt_metaball_internal *mbip,
+			       const char *attribute,
+			       fastf_t sf,
+			       int rflag);
+
 /* defined in scale_part.c */
 extern int _ged_scale_part(struct ged *gedp,
 			   struct rt_part_internal *part,
