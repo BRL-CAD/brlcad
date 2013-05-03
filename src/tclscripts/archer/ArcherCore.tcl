@@ -6170,7 +6170,7 @@ namespace eval ArcherCore {
 }
 
 ::itcl::body ArcherCore::delete {args} {
-    eval gedWrapper kill 1 0 1 2 $args
+    eval kill $args
 }
 
 ::itcl::body ArcherCore::e {args} {

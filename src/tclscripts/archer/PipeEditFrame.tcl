@@ -68,9 +68,8 @@
 	    {Set Pipe Bend}
 	}
 
-	method clearAllTables {}
-
 	# Override what's in GeometryEditFrame
+	method clearAllTables {}
 	method initGeometry {gdata}
 	method initTranslate {}
 	method updateGeometry {}
