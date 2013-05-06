@@ -84,7 +84,7 @@ struct region_pair {
  */
 
 struct voxelRegion {
-    const char *regionName;
+    char *regionName;
     fastf_t regionDistance;
     struct voxelRegion *nextRegion;
 };

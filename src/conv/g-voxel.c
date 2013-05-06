@@ -27,9 +27,15 @@ printToFile(genptr_t callBackData, int x, int y, int z, const char *a, fastf_t f
     fastf_t *threshold = (fastf_t *)callBackData;
     FILE *fp;
 
-    fp = fopen("voxels1.txt","a");
-    fprintf(fp, "%f\t(%4d,%4d,%4d)\t%s\t%f\n", *threshold, x, y, z, a, fill);
-    fclose(fp);
+    if (a != NULL) {
+	fp = fopen("voxels1.txt","a");
+
+	if (fp != NULL) {
+	    fprintf(fp, "%f\t(%4d,%4d,%4d)\t%s\t%f\n", *threshold, x, y, z, a, fill);
+	    fclose(fp);
+	}
+    }
+    /* else this voxel is air */
 }
 
 

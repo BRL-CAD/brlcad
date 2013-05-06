@@ -48,41 +48,45 @@ struct voxelizeData
 };
 
 HIDDEN void
-create_boxes(genptr_t callBackData, int x, int y, int z, const char *UNUSED(a), fastf_t fill)
+create_boxes(genptr_t callBackData, int x, int y, int z, const char *a, fastf_t fill)
 {
-    fastf_t min[3], max[3];
+    if (a != NULL) {
+	fastf_t min[3], max[3];
 
-    struct bu_vls *vp;
-    char bufx[50], bufy[50], bufz[50];
-    char *nameDestination;
+	struct bu_vls *vp;
+	char bufx[50], bufy[50], bufz[50];
+	char *nameDestination;
 
-    struct voxelizeData *dataValues = (struct voxelizeData *)callBackData;
+	struct voxelizeData *dataValues = (struct voxelizeData *)callBackData;
 
-    sprintf(bufx, "%d", x);
-    sprintf(bufy, "%d", y);
-    sprintf(bufz, "%d", z);
-    if(dataValues->threshold <= fill) {
-	vp = bu_vls_vlsinit();
-	bu_vls_strcat(vp, dataValues->newname);
-	bu_vls_strcat(vp, ".x");
-	bu_vls_strcat(vp, bufx);
-	bu_vls_strcat(vp, "y");
-	bu_vls_strcat(vp, bufy);
-	bu_vls_strcat(vp, "z");
-	bu_vls_strcat(vp, bufz);
-	bu_vls_strcat(vp, ".s");
+	sprintf(bufx, "%d", x);
+	sprintf(bufy, "%d", y);
+	sprintf(bufz, "%d", z);
 
-	min[0] = (dataValues->bbMin)[0] + (x * (dataValues->sizeVoxel)[0]);
-	min[1] = (dataValues->bbMin)[1] + (y * (dataValues->sizeVoxel)[1]);
-	min[2] = (dataValues->bbMin)[2] + (z * (dataValues->sizeVoxel)[2]);
-	max[0] = (dataValues->bbMin)[0] + ( (x + 1.0) * (dataValues->sizeVoxel)[0]);
-	max[1] = (dataValues->bbMin)[1] + ( (y + 1.0) * (dataValues->sizeVoxel)[1]);
-	max[2] = (dataValues->bbMin)[2] + ( (z + 1.0) * (dataValues->sizeVoxel)[2]);
+	if (dataValues->threshold <= fill) {
+	    vp = bu_vls_vlsinit();
+	    bu_vls_strcat(vp, dataValues->newname);
+	    bu_vls_strcat(vp, ".x");
+	    bu_vls_strcat(vp, bufx);
+	    bu_vls_strcat(vp, "y");
+	    bu_vls_strcat(vp, bufy);
+	    bu_vls_strcat(vp, "z");
+	    bu_vls_strcat(vp, bufz);
+	    bu_vls_strcat(vp, ".s");
 
-	nameDestination = bu_vls_strgrab(vp);
-	mk_rpp(dataValues->wdbp,nameDestination, min, max);
-	mk_addmember(nameDestination, &dataValues->content.l, 0, WMOP_UNION);
+	    min[0] = (dataValues->bbMin)[0] + (x * (dataValues->sizeVoxel)[0]);
+	    min[1] = (dataValues->bbMin)[1] + (y * (dataValues->sizeVoxel)[1]);
+	    min[2] = (dataValues->bbMin)[2] + (z * (dataValues->sizeVoxel)[2]);
+	    max[0] = (dataValues->bbMin)[0] + ( (x + 1.0) * (dataValues->sizeVoxel)[0]);
+	    max[1] = (dataValues->bbMin)[1] + ( (y + 1.0) * (dataValues->sizeVoxel)[1]);
+	    max[2] = (dataValues->bbMin)[2] + ( (z + 1.0) * (dataValues->sizeVoxel)[2]);
+
+	    nameDestination = bu_vls_strgrab(vp);
+	    mk_rpp(dataValues->wdbp,nameDestination, min, max);
+	    mk_addmember(nameDestination, &dataValues->content.l, 0, WMOP_UNION);
+	}
     }
+    /* else this voxel is air */
 }
 
 int
