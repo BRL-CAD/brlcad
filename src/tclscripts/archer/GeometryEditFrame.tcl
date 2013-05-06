@@ -90,6 +90,7 @@
 	variable mYmax 0
 	variable mZmin 0
 	variable mZmax 0
+	variable mInitGeometry 0
 
 	method buildUpperPanel {}
 	method buildLowerPanel {}

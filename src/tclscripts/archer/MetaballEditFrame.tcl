@@ -41,8 +41,8 @@
 	common movePoint 2
 	common addPoint 3
 	common deletePoint 4
-	common setThreshold 5
-	common setMethod 6
+	common setMethod 5
+	common setThreshold 6
 	common setFieldStrength 7
 	common setSmooth 8
 
@@ -52,10 +52,10 @@
 	    {Move Point}
 	    {Add Point}
 	    {Delete Point}
-	    {Set Threshold}
 	    {Set Render Method}
-	    {Scale Point (Field Strength)}
-	    {Scale Point (Smoothness)}
+	    {Set Threshold}
+	    {Scale Pnt Strength}
+	    {Scale Pnt Smooth}
 	}
 
 	# Override what's in GeometryEditFrame
@@ -86,7 +86,6 @@
 	method initEditState {}
 
 	method endMetaballPointMove {_dm _obj _mx _my}
-	method handleDetailPopup {_index _X _Y}
 	method handleEnter {_row _col}
 	method highlightCurrentPoint {}
 	method metaballPointAddCallback {}
@@ -96,6 +95,8 @@
 
 	method singleSelectCallback {_pindex}
 	method validateDetailEntry {_row _col _newval _clientdata}
+
+	method watchVar {_name1 _name2 _op}
     }
 
     private {}
@@ -107,6 +108,9 @@
 # ------------------------------------------------------------
 
 ::itcl::body MetaballEditFrame::constructor {args} {
+    trace add variable [::itcl::scope mMethod] write [::itcl::code $this watchVar]
+    trace add variable [::itcl::scope mThreshold] write [::itcl::code $this watchVar]
+
     eval itk_initialize $args
 }
 
@@ -134,8 +138,9 @@
 # Initialize the variables containing the object's specification.
 #
 ::itcl::body MetaballEditFrame::initGeometry {gdata} {
+    set mInitGeometry 1
     set mMethod [lindex $gdata 0]
-    set mThreshold [lindex $gdata 1]
+    set mThreshold [format "%.6f" [lindex $gdata 1]]
 
     unset mDetail
     set mDetail(active) ""
@@ -150,16 +155,17 @@
     foreach item [lindex $gdata 2] {
 	set mDetail($row,$SELECT_COL) ""
 
-	set mDetail($row,$X_COL) [lindex $item 0]
-	set mDetail($row,$Y_COL) [lindex $item 1]
-	set mDetail($row,$Z_COL) [lindex $item 2]
-	set mDetail($row,$FS_COL) [lindex $item 3]
-	set mDetail($row,$S_COL) [lindex $item 4]
+	set mDetail($row,$X_COL) [format "%.6f" [lindex $item 0]]
+	set mDetail($row,$Y_COL) [format "%.6f" [lindex $item 1]]
+	set mDetail($row,$Z_COL) [format "%.6f" [lindex $item 2]]
+	set mDetail($row,$FS_COL) [format "%.6f" [lindex $item 3]]
+	set mDetail($row,$S_COL) [format "%.6f" [lindex $item 4]]
 
 	incr row
     }
 
     GeometryEditFrame::initGeometry $gdata
+    set mInitGeometry 0
 
     metaballPointSelectCallback [expr {$mCurrentPoint - 1}]
 }
@@ -182,14 +188,15 @@
 	return
     }
 
-    #XXX Please finish me!
-    return
+    set pdata {}
+    set row 1
+    while {[info exists mDetail($row,0)]} {
+	# Build point data from row data
+	lappend pdata [list $mDetail($row,$X_COL) $mDetail($row,$Y_COL) $mDetail($row,$Z_COL) $mDetail($row,$FS_COL) $mDetail($row,$S_COL)]
+	incr row
+    }
 
-    $itk_option(-mged) adjust $itk_option(-geometryObject) \
-	V [list $mVx $mVy $mVz] \
-	A [list $mAx $mAy $mAz] \
-	B [list $mBx $mBy $mBz] \
-	C [list $mCx $mCy $mCz]
+    $itk_option(-mged) adjust $itk_option(-geometryObject) $mMethod $mThreshold $pdata
 
     GeometryEditFrame::updateGeometry
 }
@@ -250,6 +257,25 @@
 ::itcl::body MetaballEditFrame::buildUpperPanel {} {
     set parent [$this childsite]
 
+    GeometryEditFrame::buildComboBox $parent \
+	method \
+	method \
+	[::itcl::scope mMethod] \
+	"Method:" \
+	{0 1 2}
+
+    itk_component add thresholdL {
+	::ttk::label $parent.thresholdL \
+	    -text "Threshold:" \
+	    -anchor e
+    } {}
+    itk_component add thresholdE {
+	::ttk::entry $parent.thresholdE \
+	    -textvariable [::itcl::scope mThreshold] \
+	    -validate key \
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
+    } {}
+
     itk_component add detailTab {
 	::cadwidgets::TkTable $parent.detailTab \
 	    [::itcl::scope mDetail] \
@@ -262,7 +288,6 @@
 	    -colstretchmode unset \
 	    -validate 1 \
 	    -validatecommand [::itcl::code $this validateDetailEntry] \
-	    -tablePopupHandler [::itcl::code $this handleDetailPopup] \
 	    -entercommand [::itcl::code $this handleEnter] \
 	    -singleSelectCallback [::itcl::code $this singleSelectCallback]
     } {}
@@ -270,8 +295,17 @@
     # Set width of column 0
     $itk_component(detailTab) width 0 3
 
-    pack $itk_component(detailTab) -expand yes -fill both
-    pack $parent -expand yes -fill both
+    set row 0
+    grid $itk_component(methodL) -row $row -column 0 -sticky ne
+    grid $itk_component(methodF) -row $row -column 1 -sticky nsew
+    incr row
+    grid $itk_component(thresholdL) -row $row -column 0 -sticky ne
+    grid $itk_component(thresholdE) -row $row -column 1 -sticky nsew
+    incr row
+    grid $itk_component(detailTab) -row $row -column 0 -columnspan 2 -sticky nsew
+
+    grid rowconfigure $parent $row -weight 1
+    grid columnconfigure $parent 1 -weight 1
 }
 
 ::itcl::body MetaballEditFrame::buildLowerPanel {} {
@@ -290,8 +324,35 @@
 	incr row
     }
 
+    itk_component add hlPointsCB {
+	::ttk::checkbutton $parent.hlPointsCB \
+	    -text "Highlight Points" \
+	    -command [::itcl::code $this highlightCurrentPoint] \
+	    -variable ::GeometryEditFrame::mHighlightPoints
+    } {}
+
+    itk_component add pointSizeL {
+	::ttk::label $parent.pointSizeL \
+	    -anchor e \
+	    -text "Highlight Point Size"
+    } {}
+    itk_component add pointSizeE {
+	::ttk::entry $parent.pointSizeE \
+	    -width 12 \
+	    -textvariable [::itcl::scope mHighlightPointSize] \
+	    -validate key \
+	    -validatecommand [::itcl::code $this validatePointSize %P]
+    } {}
+
+    bind $itk_component(pointSizeE) <Return> [::itcl::code $this updatePointSize]
+
     incr row
     grid rowconfigure $parent $row -weight 1
+    incr row
+    grid $itk_component(hlPointsCB) -row $row -column 0 -sticky w
+    incr row
+    grid $itk_component(pointSizeL) -column 0 -row $row -sticky e
+    grid $itk_component(pointSizeE) -column 1 -row $row -sticky ew
     grid columnconfigure $parent 1 -weight 1
 }
 
@@ -301,11 +362,7 @@
 	return
     }
 
-    set doUpdate 0
-    set gdata [$itk_option(-mged) get $itk_option(-geometryObject)]
-    set gdata [lrange $gdata 1 end]
-
-    # Get example code from PipeEditFrame
+    updateGeometry
 }
 
 ::itcl::body MetaballEditFrame::initEditState {} {
@@ -340,15 +397,15 @@
 	    set mEditParam1 ""
 	    $::ArcherCore::application initFindMetaballPoint $itk_option(-geometryObjectPath) 1 [::itcl::code $this metaballPointDeleteCallback] 1
 	} \
-	$setThreshold {
-	    set mEditCommand pset
-	    set mEditClass $EDIT_CLASS_SET
-	    set mEditParam1 t
-	} \
 	$setMethod {
 	    set mEditCommand pset
 	    set mEditClass $EDIT_CLASS_SET
 	    set mEditParam1 m
+	} \
+	$setThreshold {
+	    set mEditCommand pset
+	    set mEditClass $EDIT_CLASS_SET
+	    set mEditParam1 t
 	} \
 	$setFieldStrength {
 	    set mEditCommand pscale
@@ -375,13 +432,16 @@
 }
 
 
-::itcl::body MetaballEditFrame::handleDetailPopup {_index _X _Y} {
-    #XXX Please finish me!
-}
-
-
 ::itcl::body MetaballEditFrame::handleEnter {_row _col} {
-    #XXX Please finish me!
+    if {$itk_option(-mged) == "" ||
+	$itk_option(-geometryObject) == "" ||
+	$_row < 1 ||
+	$_col < 1 ||
+	$_col > $Z_COL} {
+	return
+    }
+
+    updateGeometryIfMod
 }
 
 
@@ -479,7 +539,33 @@
 
 
 ::itcl::body MetaballEditFrame::validateDetailEntry {_row _col _newval _clientdata} {
-    #XXX Please finish me!
+    if {![info exists mDetail($_row,0)]} {
+	return 0
+    }
+
+    return [::cadwidgets::Ged::validateDouble $_newval]
+}
+
+
+::itcl::body MetaballEditFrame::watchVar {_name1 _name2 _op} {
+    if {$mInitGeometry} {
+	return
+    }
+
+    set len [llength $_name1]
+    if {$len == 3} {
+	# strip off everything but the variable name
+	set name1 [regsub {::.*::} [lindex $_name1 2] ""]
+    } else {
+	set name1 $_name1
+    }
+
+    switch -- $name1 {
+	mMethod -
+	mThreshold {
+	    updateGeometryIfMod
+	}
+    }
 }
 
 
