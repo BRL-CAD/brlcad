@@ -368,6 +368,10 @@ extern int _ged_scale_metaball(struct ged *gedp,
 			       const char *attribute,
 			       fastf_t sf,
 			       int rflag);
+extern int _ged_set_metaball(struct ged *gedp,
+			     struct rt_metaball_internal *mbip,
+			     const char *attribute,
+			     fastf_t sf);
 
 /* defined in scale_part.c */
 extern int _ged_scale_part(struct ged *gedp,

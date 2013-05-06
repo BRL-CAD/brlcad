@@ -231,10 +231,10 @@
 	    $::ArcherCore::application p_pscale $obj s$mb_i $args
 	} \
 	$setMethod {
-	    $::ArcherCore::application p_pscale $obj m $args
+	    $::ArcherCore::application p_pset $obj m $args
 	} \
 	$setThreshold {
-	    $::ArcherCore::application p_pscale $obj t $args
+	    $::ArcherCore::application p_pset $obj t $args
 	}
 
     highlightCurrentPoint
@@ -341,13 +341,13 @@
 	    $::ArcherCore::application initFindMetaballPoint $itk_option(-geometryObjectPath) 1 [::itcl::code $this metaballPointDeleteCallback] 1
 	} \
 	$setThreshold {
-	    set mEditCommand pscale
-	    set mEditClass $EDIT_CLASS_SCALE
+	    set mEditCommand pset
+	    set mEditClass $EDIT_CLASS_SET
 	    set mEditParam1 t
 	} \
 	$setMethod {
-	    set mEditCommand pscale
-	    set mEditClass $EDIT_CLASS_SCALE
+	    set mEditCommand pset
+	    set mEditClass $EDIT_CLASS_SET
 	    set mEditParam1 m
 	} \
 	$setFieldStrength {

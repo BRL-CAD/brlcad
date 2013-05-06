@@ -50,6 +50,7 @@
 	common EDIT_CLASS_ROT 1
 	common EDIT_CLASS_SCALE 2
 	common EDIT_CLASS_TRANS 3
+	common EDIT_CLASS_SET 4
 
 	common mEditMode 0
 	common mPrevEditMode 0

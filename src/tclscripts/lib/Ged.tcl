@@ -527,6 +527,7 @@ package provide cadwidgets::Ged 1.0
 	method protate_mode {args}
 	method pscale {args}
 	method pscale_mode {args}
+	method pset {args}
 	method ptranslate {args}
 	method ptranslate_mode {args}
 	method scale {args}
@@ -3226,6 +3227,10 @@ package provide cadwidgets::Ged 1.0
 
 ::itcl::body cadwidgets::Ged::pscale_mode {args} {
     eval $mGed pscale_mode $itk_component($itk_option(-pane)) $args
+}
+
+::itcl::body cadwidgets::Ged::pset {args} {
+    eval $mGed pset $args
 }
 
 ::itcl::body cadwidgets::Ged::ptranslate {args} {

@@ -85,6 +85,39 @@ _ged_get_metaball_pt_i(struct rt_metaball_internal *mbip, int mbp_i)
 
 
 int
+_ged_set_metaball(struct ged *gedp, struct rt_metaball_internal *mbip, const char *attribute, fastf_t sf)
+{
+    RT_METABALL_CK_MAGIC(mbip);
+
+    switch (attribute[0]) {
+	case 'm':
+	case 'M':
+	    if (sf <= METABALL_METABALL)
+		mbip->method = METABALL_METABALL;
+	    else if (sf >= METABALL_BLOB)
+		mbip->method = METABALL_BLOB;
+	    else
+		mbip->method = (int)sf;
+
+	    break;
+	case 't':
+	case 'T':
+	    if (sf < 0)
+		mbip->threshold = -sf;
+	    else
+		mbip->threshold = sf;
+
+	    break;
+	default:
+	    bu_vls_printf(gedp->ged_result_str, "bad metaball attribute - %s", attribute);
+	    return GED_ERROR;
+    }
+
+    return GED_OK;
+}
+
+
+int
 _ged_scale_metaball(struct ged *gedp, struct rt_metaball_internal *mbip, const char *attribute, fastf_t sf, int rflag)
 {
     int mbp_i;
@@ -118,16 +151,6 @@ _ged_scale_metaball(struct ged *gedp, struct rt_metaball_internal *mbip, const c
 
 	    BU_CKMAG(mbpp, WDB_METABALLPT_MAGIC, "wdb_metaballpt");
 	    GED_METABALL_SCALE(mbpp->sweat, sf);
-
-	    break;
-	case 'm':
-	case 'M':
-	    mbip->method = (int)sf;
-
-	    break;
-	case 't':
-	case 'T':
-	    mbip->threshold = sf;
 
 	    break;
 	default:

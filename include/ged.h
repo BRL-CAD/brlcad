@@ -1587,6 +1587,11 @@ GED_EXPORT extern int ged_protate(struct ged *gedp, int argc, const char *argv[]
 GED_EXPORT extern int ged_pscale(struct ged *gedp, int argc, const char *argv[]);
 
 /**
+ * Set an obj's attribute to the specified value.
+ */
+GED_EXPORT extern int ged_pset(struct ged *gedp, int argc, const char *argv[]);
+
+/**
  * Translate obj's attributes by tvec.
  */
 GED_EXPORT extern int ged_ptranslate(struct ged *gedp, int argc, const char *argv[]);

@@ -185,6 +185,7 @@ package provide Archer 1.0
 	method p                   {args}
 	method p_protate           {args}
 	method p_pscale            {args}
+	method p_pset              {args}
 	method p_ptranslate        {args}
 	method p_move_arb_edge     {args}
 	method p_move_arb_face     {args}
@@ -1643,6 +1644,12 @@ package provide Archer 1.0
 
 ::itcl::body Archer::p_pscale {args} {
     catch {eval gedCmd pscale $args} ret
+    return $ret
+}
+
+
+::itcl::body Archer::p_pset {args} {
+    catch {eval gedCmd pset $args} ret
     return $ret
 }
 

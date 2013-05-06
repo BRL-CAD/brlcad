@@ -182,6 +182,7 @@ set(LIBGED_SOURCES
   protate.c
   ps.c
   pscale.c
+  pset.c
   ptranslate.c
   push.c
   put.c
