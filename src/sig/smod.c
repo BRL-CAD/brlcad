@@ -38,14 +38,14 @@
 #include "vmath.h"
 
 
+char *progname = "smod";
+
+
 #define ADD 1
 #define MULT 2
 #define ABS 3
 #define POW 4
 #define BUFLEN 65536
-
-
-char *progname = "(noname)";
 
 int numop = 0;		/* number of operations */
 int op[256];		/* operations */
@@ -81,7 +81,7 @@ get_args(int argc, char *argv[])
 		op[ numop ] = MULT;
 		d = atof(bu_optarg);
 		if (ZERO(d)) {
-		    bu_exit(2, "smod: divide by zero!\n");
+		    bu_exit(2, "%s: divide by zero!\n",progname);
 		}
 		val[ numop++ ] = 1.0 / d;
 		break;
@@ -97,7 +97,7 @@ get_args(int argc, char *argv[])
 		op[ numop ] = POW;
 		d = atof(bu_optarg);
 		if (ZERO(d)) {
-		    bu_exit(2, "smod: zero root!\n");
+		    bu_exit(2, "%s: zero root!\n",progname);
 		}
 		val[ numop++ ] = 1.0 / d;
 		break;
@@ -117,8 +117,8 @@ get_args(int argc, char *argv[])
 	ifname = bu_realpath(file_name, NULL);
 	if (freopen(ifname, "r", stdin) == NULL) {
 	    fprintf(stderr,
-			  "smod: cannot open \"%s(canonical %s)\" for reading\n",
-			  file_name,ifname);
+			  "%s: cannot open \"%s(canonical %s)\" for reading\n",
+			  progname,file_name,ifname);
 	    bu_free(ifname,"ifname alloc from bu_realpath");
 	    return 0;
 	}
@@ -126,7 +126,7 @@ get_args(int argc, char *argv[])
     }
 
     if (argc > ++bu_optind)
-	fprintf(stderr, "smod: excess argument(s) ignored\n");
+	fprintf(stderr, "%s: excess argument(s) ignored\n",progname);
 
     return 1;		/* OK */
 }
