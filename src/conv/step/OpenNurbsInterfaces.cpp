@@ -1926,9 +1926,7 @@ Circle::LoadONBrep(ON_Brep *brep)
     }
 
     while (s < t) {
-	double tmp = s;
-	s = t;
-	t = tmp;
+	s += 2.0 * ON_PI;
     }
 
     // if we have only t and s, get corresponding start and end points
@@ -2127,9 +2125,7 @@ Ellipse::LoadONBrep(ON_Brep *brep)
     }
 
     while (s < t) {
-	double tmp = s;
-	s = t;
-	t = tmp;
+	s += 2.0 * ON_PI;
     }
 
     // if we have only t and s, get corresponding start and end points
