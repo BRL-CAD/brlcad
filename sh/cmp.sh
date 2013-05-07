@@ -305,7 +305,7 @@ fi
   ################
 echo -n "Volu: "
 rm -f $base.base.gqa.log
-g_qa $GQTOL -Av $dbfile $base >$base.base.gqa.log 2>&1
+g_qa "$GQTOL" -Av $dbfile $base >$base.base.gqa.log 2>&1
 if ! test -f $base.base.gqa.log ; then
     echo "ERROR: $base.base.gqa.log failed to evaluate"
     continue
@@ -314,7 +314,7 @@ bvol=`grep total $base.base.gqa.log | awk '{print $4}'`
 bvol=`printf "%.1f" $bvol`
 if ! test "x$bvol" = "x" && ! test "x$bvol" = "x0.0" ; then
     rm -f "$i.gqa.log"
-    vol="`g_qa $GQTOL -Av $dbfile $i 2>&1 | tee $i.gqa.log | tail -n 5 | grep total | awk '{print $4}'`"
+    vol="`g_qa "$GQTOL" -Av $dbfile $i 2>&1 | tee $i.gqa.log | tail -n 5 | grep total | awk '{print $4}'`"
     vol=`printf "%.1f" $vol`
     if test "x$vol" = "x" ; then
 	vol="0"
