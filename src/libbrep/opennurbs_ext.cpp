@@ -3425,7 +3425,11 @@ surface_surface_intersection(const ON_Surface* surfA,
 	    max_dis = pow(surfA->BoundingBox().Volume()*surfB->BoundingBox().Volume(), 1.0/6.0) * 0.2;
 	}
     }
+    double max_dis_2dA = ON_2dVector(surfA->Domain(0).Length(), surfA->Domain(1).Length()).Length() * 0.01;
+    double max_dis_2dB = ON_2dVector(surfB->Domain(0).Length(), surfB->Domain(1).Length()).Length() * 0.01;
     bu_log("max_dis: %lf\n", max_dis);
+    bu_log("max_dis_2dA: %lf\n", max_dis_2dA);
+    bu_log("max_dis_2dB: %lf\n", max_dis_2dB);
     // NOTE: More tests are needed to find a better threshold.
 
     std::vector<PointPair> ptpairs;
@@ -3519,14 +3523,15 @@ surface_surface_intersection(const ON_Surface* surfA,
 	if (polylines[i] != NULL) {
 	    int startpoint = (*polylines[i])[0];
 	    int endpoint = (*polylines[i])[polylines[i]->Count() - 1];
-	    if (curvept[startpoint].DistanceTo(curvept[endpoint]) < max_dis) {
-		polylines[i]->Append(startpoint);
-	    }
 
 	    // The intersection curves in the 3d space
 	    ON_3dPointArray ptarray;
 	    for (int j = 0; j < polylines[i]->Count(); j++)
 		ptarray.Append(curvept[(*polylines[i])[j]]);
+	    // If it form a loop in the 3D space
+	    if (curvept[startpoint].DistanceTo(curvept[endpoint]) < max_dis) {
+		ptarray.Append(curvept[startpoint]);
+	    }
 	    ON_PolylineCurve curve(ptarray);
 	    ON_NurbsCurve *nurbscurve = ON_NurbsCurve::New();
 	    if (curve.GetNurbForm(*nurbscurve)) {
@@ -3537,6 +3542,11 @@ surface_surface_intersection(const ON_Surface* surfA,
 	    ptarray.Empty();
 	    for (int j = 0; j < polylines[i]->Count(); j++) {
 		ON_2dPoint &pt2d = curveuv[(*polylines[i])[j]];
+		ptarray.Append(ON_3dPoint(pt2d.x, pt2d.y, 0.0));
+	    }
+	    // If it form a loop in the 2D space (happens rarely compared to 3D)
+	    if (curveuv[startpoint].DistanceTo(curveuv[endpoint]) < max_dis_2dA) {
+		ON_2dPoint &pt2d = curveuv[startpoint];
 		ptarray.Append(ON_3dPoint(pt2d.x, pt2d.y, 0.0));
 	    }
 	    curve = ON_PolylineCurve(ptarray);
@@ -3550,6 +3560,11 @@ surface_surface_intersection(const ON_Surface* surfA,
 	    ptarray.Empty();
 	    for (int j = 0; j < polylines[i]->Count(); j++) {
 		ON_2dPoint &pt2d = curvest[(*polylines[i])[j]];
+		ptarray.Append(ON_3dPoint(pt2d.x, pt2d.y, 0.0));
+	    }
+	    // If it form a loop in the 2D space (happens rarely compared to 3D)
+	    if (curvest[startpoint].DistanceTo(curvest[endpoint]) < max_dis_2dB) {
+		ON_2dPoint &pt2d = curvest[startpoint];
 		ptarray.Append(ON_3dPoint(pt2d.x, pt2d.y, 0.0));
 	    }
 	    curve = ON_PolylineCurve(ptarray);
