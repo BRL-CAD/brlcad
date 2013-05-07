@@ -37,6 +37,9 @@
 #include "vmath.h"
 
 
+char *progname = "dmod";
+
+
 char	*file_name = NULL;
 FILE	*infp = NULL;
 
@@ -78,7 +81,7 @@ get_args(int argc, char **argv)
 		op[ numop ] = MULT;
 		d = atof(bu_optarg);
 		if (ZERO(d)) {
-		    bu_exit(2, "dmod: divide by zero!\n");
+		    bu_exit(2, "%s: divide by zero!\n",progname);
 		}
 		val[ numop++ ] = 1.0 / d;
 		break;
@@ -94,7 +97,7 @@ get_args(int argc, char **argv)
 		op[ numop ] = POW;
 		d = atof(bu_optarg);
 		if (ZERO(d)) {
-		    bu_exit(2, "dmod: zero root!\n");
+		    bu_exit(2, "%s: zero root!\n",progname);
 		}
 		val[ numop++ ] = 1.0 / d;
 		break;
@@ -113,14 +116,14 @@ get_args(int argc, char **argv)
 	file_name = argv[bu_optind];
 	if ( (infp = fopen(file_name, "r")) == NULL )  {
 	    fprintf( stderr,
-			   "dmod: cannot open \"%s\" for reading\n",
-			   file_name );
+			   "%s: cannot open \"%s\" for reading\n",
+			   progname,file_name );
 	    return 0;
 	}
     }
 
     if (argc > ++bu_optind)
-	fprintf(stderr, "dmod: excess argument(s) ignored\n");
+	fprintf(stderr, "%s: excess argument(s) ignored\n",progname);
 
     return 1;		/* OK */
 }
