@@ -1776,7 +1776,10 @@ intersectLines(const ON_Line &l1, const ON_Line &l2, ON_3dPoint &out)
     int i = bn_isect_line3_line3(&l1_dist, &l2_dist, l1_from, l1_dir,
 				 l2_from, l2_dir, &tol);
     if (i == 1) {
-	out = l1.from + l1.Direction() * l1_dist;
+	ON_3dVector l1_unit_dir = l1.Direction();
+	l1_unit_dir.Unitize();
+
+	out = l1.from + l1_unit_dir * l1_dist;
     }
     return i;
 }
