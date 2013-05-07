@@ -1825,17 +1825,20 @@ Circle::SetParameterTrim(double start_param, double end_param)
 
 #define ANGLE_ZERO_TOL 1.0e-6
 
-// move rad from [-2pi, 2pi] into [0.0, 2pi]
 static double
-normalize_angle(double rad)
+simplify_angle(double rad)
 {
-    if (NEAR_ZERO(rad, ANGLE_ZERO_TOL)) {
-	return 0.0;
-    } else if (rad < 0.0) {
-	return rad + 2.0 * ON_PI;
-    }
+    double result;
 
-    return rad;
+    result = fmod(rad, 2.0 * ON_PI);
+
+    if (NEAR_ZERO(result, ANGLE_ZERO_TOL)) {
+	result = 0.0;
+    } else if (result < 0.0) {
+	result += 2.0 * ON_PI;
+    }
+    
+    return result;
 }
 
 static double
@@ -1915,10 +1918,17 @@ Circle::LoadONBrep(ON_Brep *brep)
 	s = radians_from_xaxis_to_ellipse_point(this, endpt);
     }
 
-    t = normalize_angle(t);
-    s = normalize_angle(s);
-    if (s < t) {
-	s += 2.0 * ON_PI;
+    t = simplify_angle(t);
+    s = simplify_angle(s);
+
+    if (NEAR_ZERO(s, ANGLE_ZERO_TOL)) {
+	s = 2.0 * ON_PI;
+    }
+
+    while (s < t) {
+	double tmp = s;
+	s = t;
+	t = tmp;
     }
 
     // if we have only t and s, get corresponding start and end points
@@ -2109,9 +2119,14 @@ Ellipse::LoadONBrep(ON_Brep *brep)
 	s = radians_from_xaxis_to_ellipse_point(this, endpt, a, b);
     }
 
-    t = normalize_angle(t);
-    s = normalize_angle(s);
-    if (s < t) {
+    t = simplify_angle(t);
+    s = simplify_angle(s);
+
+    if (NEAR_ZERO(s, ANGLE_ZERO_TOL)) {
+	s = 2.0 * ON_PI;
+    }
+
+    while (s < t) {
 	double tmp = s;
 	s = t;
 	t = tmp;
