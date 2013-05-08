@@ -5550,6 +5550,7 @@ package provide cadwidgets::Ged 1.0
     $help add adc		{{args} {set/get adc attributes}}
     $help add adjust		{{} {adjust database object parameters}}
     $help add ae2dir		{{[-i] az el} {return the view direction}}
+    $help add ae		{{["az el tw"]} {set/get the azimuth, elevation and twist}}
     $help add aet		{{["az el tw"]} {set/get the azimuth, elevation and twist}}
     $help add analyze		{{object(s)} {analyze objects}}
     $help add arb		{{name rot fb} {creates an arb}}
