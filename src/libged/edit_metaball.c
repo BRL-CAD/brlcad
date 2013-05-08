@@ -226,7 +226,7 @@ ged_find_metaballpt_nearest_pt(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-    if ((last = strrchr(argv[1], '/')) == NULL)
+    if ((last = (char *)strrchr(argv[1], '/')) == NULL)
 	last = (char *)argv[1];
     else
 	++last;
@@ -352,7 +352,7 @@ ged_add_metaballpt(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-    if ((last = strrchr(argv[1], '/')) == NULL)
+    if ((last = (char *)strrchr(argv[1], '/')) == NULL)
 	last = (char *)argv[1];
     else
 	++last;
@@ -486,7 +486,7 @@ ged_delete_metaballpt(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-    if ((last = strrchr(argv[1], '/')) == NULL)
+    if ((last = (char *)strrchr(argv[1], '/')) == NULL)
 	last = (char *)argv[1];
     else
 	++last;
@@ -583,7 +583,7 @@ ged_move_metaballpt(struct ged *gedp, int argc, const char *argv[])
 	++argv;
     }
 
-    if ((last = strrchr(argv[1], '/')) == NULL)
+    if ((last = (char *)strrchr(argv[1], '/')) == NULL)
 	last = (char *)argv[1];
     else
 	++last;
