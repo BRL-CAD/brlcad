@@ -54,6 +54,7 @@ if(DOXYGEN_FOUND)
     WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/doc
     )
   add_custom_target(dox DEPENDS ${CMAKE_BINARY_DIR}/doc/doxygen_output/html/index.html)
+  add_custom_target(doxygen DEPENDS ${CMAKE_BINARY_DIR}/doc/doxygen_output/html/index.html)
 endif(DOXYGEN_FOUND)
 
 set(misc_ignore_files
