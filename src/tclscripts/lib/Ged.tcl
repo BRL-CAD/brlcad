@@ -594,6 +594,7 @@ package provide cadwidgets::Ged 1.0
 	method who {args}
 	method win_size {args}
 	method wmater {args}
+	method x {args}
 	method xpush {args}
 	method ypr {args}
 	method zap {args}
@@ -3534,6 +3535,10 @@ package provide cadwidgets::Ged 1.0
     eval $mGed wmater $args
 }
 
+::itcl::body cadwidgets::Ged::x {args} {
+    eval report $args
+}
+
 ::itcl::body cadwidgets::Ged::xpush {args} {
     eval $mGed xpush $args
 }
@@ -5786,6 +5791,7 @@ package provide cadwidgets::Ged 1.0
     $help add whichid		{{[-s] ident(s)} {lists all regions with given ident code}}
     $help add who		{{[r(eal)|p(hony)|b(oth)]} {list the top-level objects currently being displayed}}
     $help add wmater		{{file comb1 [comb2 ...]} {write material properties to a file for the specified combinations}}
+    $help add x 		{{[lvl]} {print solid table & vector list}}
     $help add xpush		{{object} {Experimental Push Command}}
     $help add ypr		{{yaw pitch roll} {set the view orientation given the yaw, pitch and roll}}
     $help add zap		{{} {clear screen}}
