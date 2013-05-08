@@ -52,7 +52,7 @@ static int make_cells = 0;		/* Insert cell coords in output? */
 static int d_per_l = 1;		/* doubles per line of output */
 
 
-void print_usage (void)
+void print_usage ()
 {
     bu_exit(1, "Usage: 'double-asc %s\n%s [file.d]'\n",
 	    "[-{ah}] [-s squaresize] [-w width] [-n height]",
@@ -107,7 +107,6 @@ get_args(int argc, char **argv)
 	    case '#':
 		d_per_l = atoi(bu_optarg);
 		break;
-	    case '?':
 	    default:
 		print_usage();
 	}
