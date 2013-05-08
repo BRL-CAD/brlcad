@@ -153,12 +153,44 @@
 
 
 #if defined(_WIN32) || defined(WIN32) && (SIZEOF_VOID_P != SIZEOF_LONG)
-#  define stat __stat64
+#  define stat(path, buffer) _stat64(path, (struct __stat64 *)buffer);
 #elif defined(_WIN32) || defined(WIN32) && (SIZEOF_VOID_P == SIZEOF_LONG)
-#  define stat __stat32
+#  define stat(path, buffer) _stat32(path, (struct __stat32 *)buffer);
 #else
 #  define stat _stat
 #endif
+
+#if defined(_WIN32) || defined(WIN32) && (SIZEOF_VOID_P != SIZEOF_LONG)
+#  define fstat(path, buffer) _fstat64(path, (struct __stat64 *)buffer);
+#elif defined(_WIN32) || defined(WIN32) && (SIZEOF_VOID_P == SIZEOF_LONG)
+#  define fstat(path, buffer) _fstat32(path, (struct __stat32 *)buffer);
+#else
+#  define fstat _fstat
+#endif
+
+#if defined(_WIN32) || defined(WIN32) && (SIZEOF_VOID_P != SIZEOF_LONG)
+    /* windows 64bit */
+#  if defined(ftell)
+#     undef ftell
+#  endif
+#  define ftell _ftelli64;
+#endif
+
+#if defined(_WIN32) || defined(WIN32) && (SIZEOF_VOID_P != SIZEOF_LONG)
+    /* windows 64bit */
+#  define lseek _lseeki64;
+#else
+#  define lseek _lseek;
+#endif
+
+#if defined(_WIN32) || defined(WIN32) && (SIZEOF_VOID_P != SIZEOF_LONG)
+    /* windows 64bit */
+#  if defined(fseek)
+#     undef fseek
+#  endif
+#  define fseek _fseeki64;
+#endif
+
 
 
 #define fmax __max
