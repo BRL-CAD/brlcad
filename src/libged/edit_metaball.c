@@ -206,7 +206,7 @@ ged_find_metaballpt_nearest_pt(struct ged *gedp, int argc, const char *argv[])
     double scan[3];
     mat_t mat;
     int pt_i;
-    char *last;
+    const char *last;
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_VIEW(gedp, GED_ERROR);
@@ -226,8 +226,8 @@ ged_find_metaballpt_nearest_pt(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-    if ((last = (char *)strrchr(argv[1], '/')) == NULL)
-	last = (char *)argv[1];
+    if ((last = strrchr(argv[1], '/')) == NULL)
+	last = argv[1];
     else
 	++last;
 
@@ -332,7 +332,7 @@ ged_add_metaballpt(struct ged *gedp, int argc, const char *argv[])
     point_t mb_pt;
     struct wdb_metaballpt *lastmbp;
     double scan[3];
-    char *last;
+    const char *last;
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_VIEW(gedp, GED_ERROR);
@@ -352,8 +352,8 @@ ged_add_metaballpt(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-    if ((last = (char *)strrchr(argv[1], '/')) == NULL)
-	last = (char *)argv[1];
+    if ((last = strrchr(argv[1], '/')) == NULL)
+	last = argv[1];
     else
 	++last;
 
@@ -467,7 +467,7 @@ ged_delete_metaballpt(struct ged *gedp, int argc, const char *argv[])
     struct wdb_metaballpt *mbp;
     struct rt_metaball_internal *mbip;
     int pt_i;
-    char *last;
+    const char *last;
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
@@ -486,8 +486,8 @@ ged_delete_metaballpt(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-    if ((last = (char *)strrchr(argv[1], '/')) == NULL)
-	last = (char *)argv[1];
+    if ((last = strrchr(argv[1], '/')) == NULL)
+	last = argv[1];
     else
 	++last;
 
@@ -553,7 +553,7 @@ ged_move_metaballpt(struct ged *gedp, int argc, const char *argv[])
     double scan[3];
     int seg_i;
     int rflag = 0;
-    char *last;
+    const char *last;
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
@@ -583,8 +583,8 @@ ged_move_metaballpt(struct ged *gedp, int argc, const char *argv[])
 	++argv;
     }
 
-    if ((last = (char *)strrchr(argv[1], '/')) == NULL)
-	last = (char *)argv[1];
+    if ((last = strrchr(argv[1], '/')) == NULL)
+	last = argv[1];
     else
 	++last;
 
