@@ -4356,15 +4356,19 @@ rt_brep_boolean(struct rt_db_internal *out, const struct rt_db_internal *ip1, co
     // calculate intersection curves
     for (int i = 0; i < facecount1; i++) {
 	for (int j = 0; j < facecount2; j++) {
-	    ON_SimpleArray<ON_NurbsCurve *> curve_uv, curve_st, curve_3d;
-	    if (brlcad::surface_surface_intersection(brep1->m_S[brep1->m_F[i].m_si],
-						     brep2->m_S[brep2->m_F[j].m_si],
-						     curve_3d,
-						     curve_uv,
-						     curve_st))
+	    ON_ClassArray<ON_SSX_EVENT> events;
+	    if (brep1->m_S[brep1->m_F[i].m_si]->IntersectSurface(
+			brep2->m_S[brep2->m_F[j].m_si],
+			events))
 		continue;
-	    for (int k = 0; k < curve_3d.Count(); k++) {
-		delete curve_3d[k];
+	    ON_SimpleArray<ON_NurbsCurve *> curve_uv, curve_st;
+	    for (int k = 0; k < events.Count(); k++) {
+		ON_NurbsCurve *nurbscurve = ON_NurbsCurve::New();
+		events[k].m_curveA->GetNurbForm(*nurbscurve);
+		curve_uv.Append(nurbscurve);
+		nurbscurve = ON_NurbsCurve::New();
+		events[k].m_curveA->GetNurbForm(*nurbscurve);
+		curve_st.Append(nurbscurve);
 	    }
 	    curvesarray[i].Append(curve_uv.Count(), curve_uv.Array());
 	    curvesarray[facecount1 + j].Append(curve_st.Count(), curve_st.Array());

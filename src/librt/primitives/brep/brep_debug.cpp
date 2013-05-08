@@ -2769,7 +2769,7 @@ brep_command(struct bu_vls *vls, const char *solid_name, const struct rt_tess_to
 }
 
 
-int brep_intersect(struct rt_db_internal *intern1, struct rt_db_internal *intern2, int i, int j, struct bn_vlblock *vbp, double max_dis)
+int brep_intersect(struct rt_db_internal *intern1, struct rt_db_internal *intern2, int i, int j, struct bn_vlblock *vbp, double)
 {
     RT_CK_DB_INTERNAL(intern1);
     RT_CK_DB_INTERNAL(intern2);
@@ -2784,9 +2784,6 @@ int brep_intersect(struct rt_db_internal *intern1, struct rt_db_internal *intern
 
     ON_NurbsSurface surf1;
     ON_NurbsSurface surf2;
-    ON_SimpleArray<ON_NurbsCurve*> curve;
-    ON_SimpleArray<ON_NurbsCurve*> curve_uv;
-    ON_SimpleArray<ON_NurbsCurve*> curve_st;
 
     if (i < 0 || i >= brep1->m_S.Count() || j < 0 || j >= brep2->m_S.Count()) {
 	bu_log("Out of range: \n");
@@ -2798,26 +2795,24 @@ int brep_intersect(struct rt_db_internal *intern1, struct rt_db_internal *intern
     brep1->m_S[i]->GetNurbForm(surf1);
     brep2->m_S[j]->GetNurbForm(surf2);
 
-    if (brlcad::surface_surface_intersection(&surf1, &surf2, curve, curve_uv, curve_st, max_dis)) {
+    ON_ClassArray<ON_SSX_EVENT> events;
+    if (surf1.IntersectSurface(&surf2, events)) {
 	bu_log("Intersection failed\n");
 	return -1;
     }
 
     plotsurface(surf1, vbp, 100, 10, PURERED);
     plotsurface(surf2, vbp, 100, 10, BLUE);
-    for (int k = 0; k < curve.Count(); k++) {
-	plotcurve(*(curve[k]), vbp, 1000, GREEN);
-	delete curve[k];
+    for (int k = 0; k < events.Count(); k++) {
+	plotcurve(*(events[k].m_curve3d), vbp, 1000, GREEN);
     }
 
     /* plot the returned 2d curves in UV parameter spaces */
-    for (int k = 0; k < curve_uv.Count(); k++) {
-	plotcurveonsurface(curve_uv[k], &surf1, vbp, curve_uv[k]->KnotCount() - 1, PEACH);
-	delete curve_uv[k];
+    for (int k = 0; k < events.Count(); k++) {
+	plotcurveonsurface(events[k].m_curveA, &surf1, vbp, 1000, PEACH);
     }
-    for (int k = 0; k < curve_st.Count(); k++) {
-	plotcurveonsurface(curve_st[k], &surf2, vbp, curve_st[k]->KnotCount() - 1, DARKVIOLET);
-	delete curve_st[k];
+    for (int k = 0; k < events.Count(); k++) {
+	plotcurveonsurface(events[k].m_curveB, &surf2, vbp, 1000, DARKVIOLET);
     }
 
     return 0;

@@ -19,9 +19,11 @@ set(BREP_LOCAL_INCLUDE_DIRS
 BRLCAD_LIB_INCLUDE_DIRS(brep BREP_INCLUDE_DIRS BREP_LOCAL_INCLUDE_DIRS)
 
 set(LIBBREP_SOURCES
+  intersect.cpp
   opennurbs_ext.cpp
   #opennurbs_fit.cpp
   PullbackCurve.cpp
+  ssx_event.cpp
   )
 
 set(libbrep_ignored_files
