@@ -1653,6 +1653,7 @@ struct dm dm_X = {
     X_drawEnd,
     X_normal,
     X_loadMatrix,
+    null_loadPMatrix,
     X_drawString2D,
     X_drawLine2D,
     X_drawLine3D,

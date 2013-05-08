@@ -72,6 +72,13 @@ null_loadMatrix(struct dm *UNUSED(dmp), fastf_t *UNUSED(mat), int UNUSED(which_e
 
 
 int
+null_loadPMatrix(fastf_t *UNUSED(mat))
+{
+    return 0;
+}
+
+
+int
 null_drawString2D(struct dm *UNUSED(dmp), const char *UNUSED(str), fastf_t UNUSED(x), fastf_t UNUSED(y), int UNUSED(size), int UNUSED(use_aspect))
 {
     return 0;
@@ -264,6 +271,7 @@ struct dm dm_null = {
     null_drawEnd,
     null_normal,
     null_loadMatrix,
+    null_loadPMatrix,
     null_drawString2D,
     null_drawLine2D,
     null_drawLine3D,

@@ -50,6 +50,10 @@ null_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye);
 
 
 DM_EXPORT extern int
+null_loadPMatrix(fastf_t *mat);
+
+
+DM_EXPORT extern int
 null_drawString2D(struct dm *dmp, const char *str, fastf_t x, fastf_t y, int size, int use_aspect);
 
 

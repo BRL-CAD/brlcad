@@ -102,6 +102,7 @@ HIDDEN int ogl_drawBegin(struct dm *dmp);
 HIDDEN int ogl_drawEnd(struct dm *dmp);
 HIDDEN int ogl_normal(struct dm *dmp);
 HIDDEN int ogl_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye);
+HIDDEN int ogl_loadPMatrix(fastf_t *mat);
 HIDDEN int ogl_drawString2D(struct dm *dmp, const char *str, fastf_t x, fastf_t y, int size, int use_aspect);
 HIDDEN int ogl_drawLine2D(struct dm *dmp, fastf_t X1, fastf_t Y1, fastf_t X2, fastf_t Y2);
 HIDDEN int ogl_drawLine3D(struct dm *dmp, point_t pt1, point_t pt2);
@@ -141,6 +142,7 @@ struct dm dm_ogl = {
     ogl_drawEnd,
     ogl_normal,
     ogl_loadMatrix,
+    ogl_loadPMatrix,
     ogl_drawString2D,
     ogl_drawLine2D,
     ogl_drawLine3D,
@@ -1375,6 +1377,48 @@ ogl_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye)
     gtmat[15] = *(mptr++);
 
     glMatrixMode(GL_MODELVIEW);
+    glLoadIdentity();
+    glLoadMatrixf(gtmat);
+
+    return TCL_OK;
+}
+
+
+/*
+ * O G L _ L O A D P M A T R I X
+ *
+ * Load a new projection matrix.  This will be followed by
+ * many calls to ogl_draw().
+ */
+HIDDEN int
+ogl_loadPMatrix(fastf_t *mat)
+{
+    fastf_t *mptr;
+    GLfloat gtmat[16];
+
+    mptr = mat;
+
+    gtmat[0] = *(mptr++);
+    gtmat[4] = *(mptr++);
+    gtmat[8] = *(mptr++);
+    gtmat[12] = *(mptr++);
+
+    gtmat[1] = *(mptr++);
+    gtmat[5] = *(mptr++);
+    gtmat[9] = *(mptr++);
+    gtmat[13] = *(mptr++);
+
+    gtmat[2] = *(mptr++);
+    gtmat[6] = *(mptr++);
+    gtmat[10] = -*(mptr++);
+    gtmat[14] = -*(mptr++);
+
+    gtmat[3] = *(mptr++);
+    gtmat[7] = *(mptr++);
+    gtmat[11] = *(mptr++);
+    gtmat[15] = *(mptr++);
+
+    glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
     glLoadMatrixf(gtmat);
 

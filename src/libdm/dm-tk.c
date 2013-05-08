@@ -814,6 +814,7 @@ struct dm dm_tk = {
     tk_drawEnd,
     tk_normal,
     tk_loadMatrix,
+    null_loadPMatrix,
     tk_drawString2D,
     tk_drawLine2D,
     tk_drawLine3D,

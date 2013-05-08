@@ -906,6 +906,48 @@ wgl_loadMatrix(struct dm *dmp, mat_t mat, int which_eye)
 
 
 /*
+ * W G L _ L O A D P M A T R I X
+ *
+ * Load a new projection matrix.  This will be followed by
+ * many calls to ogl_draw().
+ */
+HIDDEN int
+wgl_loadPMatrix(fastf_t *mat)
+{
+    fastf_t *mptr;
+    GLfloat gtmat[16];
+
+    mptr = mat;
+
+    gtmat[0] = *(mptr++);
+    gtmat[4] = *(mptr++);
+    gtmat[8] = *(mptr++);
+    gtmat[12] = *(mptr++);
+
+    gtmat[1] = *(mptr++);
+    gtmat[5] = *(mptr++);
+    gtmat[9] = *(mptr++);
+    gtmat[13] = *(mptr++);
+
+    gtmat[2] = *(mptr++);
+    gtmat[6] = *(mptr++);
+    gtmat[10] = -*(mptr++);
+    gtmat[14] = -*(mptr++);
+
+    gtmat[3] = *(mptr++);
+    gtmat[7] = *(mptr++);
+    gtmat[11] = *(mptr++);
+    gtmat[15] = *(mptr++);
+
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+    glLoadMatrixf(gtmat);
+
+    return TCL_OK;
+}
+
+
+/*
  *  			W G L _ D R A W V L I S T H I D D E N L I N E
  *
  */
@@ -2099,6 +2141,7 @@ struct dm dm_wgl = {
     wgl_drawEnd,
     wgl_normal,
     wgl_loadMatrix,
+    wgl_loadPMatrix,
     wgl_drawString2D,
     wgl_drawLine2D,
     wgl_drawLine3D,

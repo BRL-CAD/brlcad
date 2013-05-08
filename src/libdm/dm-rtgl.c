@@ -93,6 +93,7 @@ struct dm dm_rtgl = {
     rtgl_drawEnd,
     rtgl_normal,
     rtgl_loadMatrix,
+    null_loadPMatrix,
     rtgl_drawString2D,
     rtgl_drawLine2D,
     rtgl_drawLine3D,

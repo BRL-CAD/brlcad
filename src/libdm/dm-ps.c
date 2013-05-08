@@ -511,6 +511,7 @@ struct dm dm_ps = {
     ps_drawEnd,
     ps_normal,
     ps_loadMatrix,
+    null_loadPMatrix,
     ps_drawString2D,
     ps_drawLine2D,
     ps_drawLine3D,

@@ -507,6 +507,7 @@ struct dm dm_plot = {
     plot_drawEnd,
     plot_normal,
     plot_loadMatrix,
+    null_loadPMatrix,
     plot_drawString2D,
     plot_drawLine2D,
     plot_drawLine3D,
