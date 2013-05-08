@@ -910,6 +910,7 @@ static struct to_cmdtab to_cmds[] = {
     {"ae2dir",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_ae2dir},
     {"aet",	"[[-i] az el [tw]]", 6, to_view_func_plus, ged_aet},
     {"analyze",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_analyze},
+    {"annotate", (char *)0, TO_UNLIMITED, to_pass_through_func, ged_annotate},
     {"append_pipept",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_append_pipept},
     {"arb",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_arb},
     {"arced",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_arced},

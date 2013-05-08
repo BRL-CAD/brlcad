@@ -119,6 +119,7 @@ package provide cadwidgets::Ged 1.0
 	method ae2dir {args}
 	method aet {args}
 	method analyze {args}
+	method annotate {args}
 	method arb {args}
 	method arced {args}
 	method arot {args}
@@ -1095,6 +1096,10 @@ package provide cadwidgets::Ged 1.0
 
 ::itcl::body cadwidgets::Ged::analyze {args} {
     eval $mGed analyze $args
+}
+
+::itcl::body cadwidgets::Ged::annotate {args} {
+    eval $mGed annotate $args
 }
 
 ::itcl::body cadwidgets::Ged::arb {args} {
@@ -5553,6 +5558,7 @@ package provide cadwidgets::Ged 1.0
     $help add ae		{{["az el tw"]} {set/get the azimuth, elevation and twist}}
     $help add aet		{{["az el tw"]} {set/get the azimuth, elevation and twist}}
     $help add analyze		{{object(s)} {analyze objects}}
+    $help add annotate		{{[object(s)] [-n name] [-p x y z]} {annotate objects}}
     $help add arb		{{name rot fb} {creates an arb}}
     $help add arced     	{{a/b anim_cmd ...} {edit the matrix, etc., along an arc}}
     $help add arot		{{x y z angle} {rotate about axis x,y,z by angle (degrees)}}
