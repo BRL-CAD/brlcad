@@ -505,7 +505,7 @@ tk_drawString2D(struct dm *dmp, const char *str, fastf_t x, fastf_t y, int size,
 	bu_log("\ty - %g\n", y);
 	bu_log("\tsize - %d\n", size);
 
-	bu_log("color = %d\n", ((struct x_vars *)dmp->dm_vars.priv_vars)->fg);
+	bu_log("color = %lu\n", ((struct x_vars *)dmp->dm_vars.priv_vars)->fg);
 	/* bu_log("real_color = %d\n", ((struct x_vars *)dmp->dm_vars.priv_vars)->gc->foreground); */
 
 	if (use_aspect) {
@@ -544,7 +544,7 @@ tk_drawLine2D(struct dm *dmp, fastf_t xpos1, fastf_t ypos1, fastf_t xpos2, fastf
 	bu_log("x2 = %g, y2 = %g\n", xpos2, ypos2);
 	bu_log("sx1 = %d, sy1 = %d\n", sx1, sy1);
 	bu_log("sx2 = %d, sy2 = %d\n", sx2, sy2);
-	bu_log("color = %d\n", ((struct x_vars *)dmp->dm_vars.priv_vars)->fg);
+	bu_log("color = %lu\n", ((struct x_vars *)dmp->dm_vars.priv_vars)->fg);
     }
 
     XDrawLine(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
