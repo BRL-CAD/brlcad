@@ -210,14 +210,13 @@ rt_advance_to_next_cell(register struct rt_shootray_status *ssp)
 	 * below.
 	 *
 	 * Therefore, "nudge" the point just slightly into the next
-	 * cell by adding OFFSET_DIST.
+	 * cell by adding our distance tolerance.
 	 *
 	 * XXX At present, a cell is never less than 1mm wide.
 	 *
-	 * XXX The value of OFFSET_DIST should be some percentage of
-	 * the cell's smallest dimension, rather than an absolute
-	 * distance in mm.  This will prevent doing microscopic
-	 * models.
+	 * XXX The "nudge" value was based on an absolute value defined
+	 * by OFFSET_DIST but has been changed to use distance tolerance
+	 * specified in mm and can now be overridden by a user.
 	 */
 
 	t0 = ssp->box_start;
@@ -293,8 +292,8 @@ rt_advance_to_next_cell(register struct rt_shootray_status *ssp)
 		     */
 
 		    if (cutp->cut_type == CUT_CUTNODE &&
-			t0 + OFFSET_DIST < ssp->tv[out_axis]) {
-			t0 += OFFSET_DIST;
+			t0 + ssp->ap->a_rt_i->rti_tol.dist < ssp->tv[out_axis]) {
+			t0 += ssp->ap->a_rt_i->rti_tol.dist;
 			break;
 		    }
 
@@ -377,7 +376,7 @@ rt_advance_to_next_cell(register struct rt_shootray_status *ssp)
 		 * NOTE: This portion implements Muuss' non-uniform binary
 		 * space partitioning tree.
 		 *********************************************************/
-		t0 += OFFSET_DIST;
+		t0 += ssp->ap->a_rt_i->rti_tol.dist;
 		cutp = curcut;
 		break;
 	    default:
@@ -483,7 +482,7 @@ rt_advance_to_next_cell(register struct rt_shootray_status *ssp)
 		     * Move newray point further into new box.
 		     * Try again.
 		     */
-		    t0 += OFFSET_DIST;
+		    t0 += ssp->ap->a_rt_i->rti_tol.dist;
 		    goto top;
 		}
 		/* Don't get stuck within the same box for long */
@@ -552,7 +551,7 @@ rt_advance_to_next_cell(register struct rt_shootray_status *ssp)
 		    /* See if point marched outside model RPP */
 		    if (ssp->box_start > ssp->model_end)
 			goto pop_space_stack;
-		    t0 = ssp->box_start + OFFSET_DIST;
+		    t0 = ssp->box_start + ssp->ap->a_rt_i->rti_tol.dist;
 		    goto top;
 		}
 		if (push_flag) {
@@ -704,7 +703,7 @@ rt_find_backing_dist(struct rt_shootray_status *ss, struct bu_bitv *backbits) {
 	    goto done;
 	} else {
 	    /* increment cur_dist into next cell for next execution of this loop */
-	    cur_dist = ray.r_max + OFFSET_DIST;
+	    cur_dist = ray.r_max + ss->ap->a_rt_i->rti_tol.dist;
 	}
 
 	/* process this box node (look at all the pieces) */
