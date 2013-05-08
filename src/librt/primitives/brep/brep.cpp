@@ -774,11 +774,14 @@ utah_newton_solver(const BBNode* sbv, const ON_Surface* surf, const ON_Ray& r, O
 	    utah_F(S, p1, p1d, p2, p2d, f, g);
 	    rootdist = fabs(f) + fabs(g);
 	    if (oldrootdist <= rootdist) {
-		if (errantcount > 1000) {
+		/* the errantcount limit just needs to be "big enough"
+		 * that it subdivides a 'reasonable' number of times
+		 * before giving up.  should only get stuck on really
+		 * difficult surface walks.  prevents inf loop too.
+		 */
+		if (errantcount > 1000)
 		    return intersects;
-		} else {
-		    errantcount++;
-		}
+		errantcount++;
 	    }
 	}
 
