@@ -188,3 +188,6 @@
  * @ingroup libpc
  *
  */
+
+/** @defgroup libbrep libbrep (NURBS) */
+
