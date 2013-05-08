@@ -322,6 +322,7 @@ package provide cadwidgets::Ged 1.0
 	method open {args}
 	method opendb {args}
 	method orient {args}
+	method orientation {args}
 	method orotate {args}
 	method orotate_mode {args}
 	method oscale {args}
@@ -1723,7 +1724,7 @@ package provide cadwidgets::Ged 1.0
 }
 
 ::itcl::body cadwidgets::Ged::keypoint {args} {
-    eval $mGed $itk_component($itk_option(-pane)) $args
+    eval $mGed keypoint $itk_component($itk_option(-pane)) $args
 }
 
 ::itcl::body cadwidgets::Ged::kill {args} {
@@ -2148,6 +2149,10 @@ package provide cadwidgets::Ged 1.0
 
 ::itcl::body cadwidgets::Ged::orient {args} {
     eval $mGed orient $itk_component($itk_option(-pane)) $args
+}
+
+::itcl::body cadwidgets::Ged::orientation {args} {
+    eval orient $itk_component($itk_option(-pane)) $args
 }
 
 ::itcl::body cadwidgets::Ged::orotate {args} {
@@ -5703,6 +5708,7 @@ package provide cadwidgets::Ged 1.0
     $help add nmg_simplify    	{{[arb|tgc|ell|poly] new_solid nmg_solid}	{simplify nmg_solid, if possible}}
     $help add ocenter 		{{obj [x y z]} {get/set center for obj}}
     $help add orient		{{x y z w} {set view direction from quaternion}}
+    $help add orientation	{{x y z w} {set view direction from quaternion}}
     $help add orotate		{{x y z} {rotate object}}
     $help add oscale		{{sf} {scale object}}
     $help add otranslate 	{{x y z} {translate object}}
