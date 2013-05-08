@@ -63,7 +63,7 @@ fi
 
 SZ="1024"
 HP="0"
-GQTOL="-g10m, .1m"
+GQTOL="-g 10m-10mm"
 dbfile="$1"
 
 printf "\nStarted at `date`\n"
