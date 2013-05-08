@@ -64,6 +64,8 @@ bool ON_Surface_SubSurface(
 	)
 {
     bool split = true;
+    ON_Surface **target;
+    int last_split = 0;
     int t1_del, t2_del, t3_del;
 
     // Make sure we have intervals with non-zero lengths
@@ -78,27 +80,34 @@ bool ON_Surface_SubSurface(
         (*result) = (ON_Surface *)srf;
         return true;
     }
+    if (fabs(u_val->Min() - srf->Domain(0).m_t[0]) > ON_ZERO_TOLERANCE) last_split = 1;
+    if (fabs(u_val->Max() - srf->Domain(0).m_t[1]) > ON_ZERO_TOLERANCE) last_split = 2;
+    if (fabs(v_val->Min() - srf->Domain(1).m_t[0]) > ON_ZERO_TOLERANCE) last_split = 3;
+    if (fabs(v_val->Max() - srf->Domain(1).m_t[1]) > ON_ZERO_TOLERANCE) last_split = 4;
     t1_del = (*t1) ? (0) : (1);
     t2_del = (*t2) ? (0) : (1);
     t3_del = (*t3) ? (0) : (1);
     ON_Surface *ssplit = (ON_Surface *)srf;
     ON_Surface_Create_Scratch_Surfaces(t1, t2, t3, t4);
     if (fabs(u_val->Min() - srf->Domain(0).m_t[0]) > ON_ZERO_TOLERANCE) {
-        split = ssplit->Split(0, u_val->Min(), *t1, *t2);
-        ssplit = *t2;
+        if (last_split == 1) {target = t4;} else {target = t2;}
+        split = ssplit->Split(0, u_val->Min(), *t1, *target);
+        ssplit = *target;
     }
     if ((fabs(u_val->Max() - srf->Domain(0).m_t[1]) > ON_ZERO_TOLERANCE) && split) {
-        split = ssplit->Split(0, u_val->Max(), *t1, *t3);
-        ssplit = *t1;
+        if (last_split == 2) {target = t4;} else {target = t1;}
+        split = ssplit->Split(0, u_val->Max(), *target, *t3);
+        ssplit = *target;
     }
     if ((fabs(v_val->Min() - srf->Domain(1).m_t[0]) > ON_ZERO_TOLERANCE) && split) {
-        split = ssplit->Split(1, v_val->Min(), *t2, *t3);
-        ssplit = *t3;
+        if (last_split == 3) {target = t4;} else {target = t3;}
+        split = ssplit->Split(1, v_val->Min(), *t2, *target);
+        ssplit = *target;
     }
     if ((fabs(v_val->Max() - srf->Domain(1).m_t[1]) > ON_ZERO_TOLERANCE) && split) {
         split = ssplit->Split(1, v_val->Max(), *t4, *t2);
-        (*result) = *t4;
     }
+    (*result) = *t4;
     if (t1_del) delete *t1;
     if (t2_del) delete *t2;
     if (t3_del) delete *t3;

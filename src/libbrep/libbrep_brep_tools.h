@@ -61,7 +61,7 @@
   @param t2 surface used during split algorithm
   @param t3 surface used during split algorithm
   @param t4 surface used during split algorithm
-  @param[out] result final subsurface
+  @param[out] result final subsurface - if t4 was supplied, that ON_Surface holds the final surface and result will point to it - otherwise, a new ON_Surface is created
 
   @return @c true if surface creation is successful or if the subsurface
   is the same as the parent surface, @c false if one or more split
