@@ -226,25 +226,21 @@ printf -- "%-25s ($bigger $fore $ratio)\n" "$nrps"
   ################
 export RT=rtxray
 echo -n "Xray: "
-rm -f $base.base.rtxray.bw $base.base.rtxray.pix $base.base.rtxray.log
+rm -f $base.base.rtxray.pix $base.base.rtxray.log
 sh $base.base.rt -o $base.base.rtxray.pix -s$SZ >$base.base.rtxray.log 2>&1
-mv $base.base.rtxray.pix $base.base.rtxray.bw
-chmod 666 $base.base.rtxray.bw
-if ! test -f $base.base.rtxray.bw ; then
-    echo "ERROR: $base.base.rtxray.bw failed to render"
+chmod 666 $base.base.rtxray.pix
+if ! test -f $base.base.rtxray.pix ; then
+    echo "ERROR: $base.base.rtxray.pix failed to render"
     continue
 fi
 
-rm -f $i.rtxray.bw $i.rtxray.pix $i.rtxray.log
+rm -f $i.rtxray.pix $i.rtxray.log
 sh $i.rt -o $i.rtxray.pix -s$SZ >$i.rtxray.log 2>&1
-mv $i.rtxray.pix $i.rtxray.bw
-chmod 666 $i.rtxray.bw
-if test -f "$i.rtxray.bw" ; then
-    chmod 666 $i.rtxray.bw
-    bw-pix $base.base.rtxray.bw $base.base.rtxray.pix
-    bw-pix $i.rtxray.bw $i.rtxray.pix
+chmod 666 $i.rtxray.pix
+if test -f "$i.rtxray.pix" ; then
+    chmod 666 $i.rtxray.pix
     diff="`pixdiff $base.base.rtxray.pix $i.rtxray.pix 2>&1 1>/dev/null`"
-    back="`bw-pix $base.base.rtxray.bw | pixcount 2>&1 | grep \"  0   0   0  \" | awk '{print $4}'`"
+    back="`pixcount $base.base.rtxray.pix 2>&1 | grep \"  0   0   0  \" | awk '{print $4}'`"
     fore="`expr $SZ \* $SZ - $back`"
     obm="`echo $diff | awk '{print $9}'`"
     percent=`dc -e "3k 1 $obm 3 / $fore / - 100 * d [0] sa 0.0 >a p"`
@@ -311,12 +307,12 @@ if ! test -f $base.base.gqa.log ; then
     continue
 fi
 bvol=`grep total $base.base.gqa.log | awk '{print $4}'`
-bvol=`printf "%.1f" $bvol`
-if ! test "x$bvol" = "x" && ! test "x$bvol" = "x0.0" ; then
+bvol2=`printf "%.1f" $bvol`
+if ! test "x$bvol2" = "x" && ! test "x$bvol2" = "x0.0" ; then
     rm -f "$i.gqa.log"
     vol="`g_qa "$GQTOL" -Av $dbfile $i 2>&1 | tee $i.gqa.log | tail -n 5 | grep total | awk '{print $4}'`"
-    vol=`printf "%.1f" $vol`
-    if test "x$vol" = "x" ; then
+    vol2=`printf "%.1f" $vol`
+    if test "x$vol2" = "x" ; then
 	vol="0"
     fi
     devi=`dc -e "3k 100.0 $bvol $vol - d * v $bvol / 100.0 * - d [0] sa 0.0 >a p"`
