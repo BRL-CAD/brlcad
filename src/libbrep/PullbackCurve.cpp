@@ -956,17 +956,11 @@ pullback_samples_from_closed_surface(PBCData* data,
     if (!surf)
 	return;
 
-    ON_Interval dom[2];
     ON_2dPointArray *samples = new ON_2dPointArray();
     size_t numKnots = curve->SpanCount();
     double *knots = new double[numKnots + 1];
 
     curve->GetSpanVector(knots);
-
-    for (int i = 0; i < 2; i++) {
-	dom[i] = surf->Domain(i);
-	//std::cout << "Dom[" << i << "] - " << dom[i].m_t[0]  << "," << dom[i].m_t[1] << std::endl;
-    }
 
     size_t istart = 0;
     while ((istart < (numKnots + 1)) && (t >= knots[istart]))
