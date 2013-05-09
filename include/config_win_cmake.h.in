@@ -151,47 +151,67 @@
 #define sys_errlist _sys_errlist
 #define sys_nerr _sys_nerr
 
-
-#if defined(_WIN32) || defined(WIN32) && (SIZEOF_VOID_P != SIZEOF_LONG)
-#  define stat(path, buffer) _stat64(path, (struct __stat64 *)buffer);
-#elif defined(_WIN32) || defined(WIN32) && (SIZEOF_VOID_P == SIZEOF_LONG)
-#  define stat(path, buffer) _stat32(path, (struct __stat32 *)buffer);
-#else
-#  define stat _stat
-#endif
-
-#if defined(_WIN32) || defined(WIN32) && (SIZEOF_VOID_P != SIZEOF_LONG)
-#  define fstat(path, buffer) _fstat64(path, (struct __stat64 *)buffer);
-#elif defined(_WIN32) || defined(WIN32) && (SIZEOF_VOID_P == SIZEOF_LONG)
-#  define fstat(path, buffer) _fstat32(path, (struct __stat32 *)buffer);
-#else
-#  define fstat _fstat
-#endif
-
-#if defined(_WIN32) || defined(WIN32) && (SIZEOF_VOID_P != SIZEOF_LONG)
-    /* windows 64bit */
-#  if defined(ftell)
-#     undef ftell
+/* set up stat */
+#if defined(SIZEOF_VOID_P) && SIZEOF_VOID_P == 8 
+#  if defined(_stati64)
+#     if defined(stat)
+#        undef stat
+#     endif
+#     define stat(path, buffer) _stati64(path, (struct __stati64 *)buffer);
 #  endif
-#  define ftell _ftelli64;
-#endif
-
-#if defined(_WIN32) || defined(WIN32) && (SIZEOF_VOID_P != SIZEOF_LONG)
-    /* windows 64bit */
-#  define lseek _lseeki64;
 #else
-#  define lseek _lseek;
-#endif
-
-#if defined(_WIN32) || defined(WIN32) && (SIZEOF_VOID_P != SIZEOF_LONG)
-    /* windows 64bit */
-#  if defined(fseek)
-#     undef fseek
+#  if !defined(stat) && defined(_stat)
+#     define stat _stat
 #  endif
-#  define fseek _fseeki64;
 #endif
 
+/* set up fstat */
+#if defined(SIZEOF_VOID_P) && SIZEOF_VOID_P == 8 
+#  if defined(_fstati64)
+#     if defined(fstat)
+#        undef fstat
+#     endif
+#     define fstat(path, buffer) _fstati64(path, (struct __stati64 *)buffer);
+#  endif
+#else
+#  if !defined(fstat) && defined(_fstat)
+#     define fstat _fstat
+#  endif
+#endif
 
+/* set up ftell */
+#if defined(SIZEOF_VOID_P) && SIZEOF_VOID_P == 8 
+#  if defined(_ftelli64)
+#     if defined(ftell)
+#        undef ftell
+#     endif
+#     define ftell _ftelli64;
+#  endif
+#endif
+
+/* set up lseek */
+#if defined(SIZEOF_VOID_P) && SIZEOF_VOID_P == 8 
+#  if defined(_lseeki64)
+#     if defined(lseek)
+#        undef lseek
+#     endif
+#     define lseek _lseeki64;
+#  endif
+#else
+#  if !defined(lseek) && defined(_lseek)
+#     define lseek _lseek
+#  endif
+#endif
+
+/* set up fseek */
+#if defined(SIZEOF_VOID_P) && SIZEOF_VOID_P == 8 
+#  if defined(_fseeki64)
+#     if defined(fseek)
+#        undef fseek
+#     endif
+#     define fseek _fseeki64;
+#  endif
+#endif
 
 #define fmax __max
 #define ioctl ioctlsocket
