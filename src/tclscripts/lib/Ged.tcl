@@ -615,6 +615,7 @@ package provide cadwidgets::Ged 1.0
 	method tree {args}
 	method unhide {args}
 	method units {args}
+	method vblend {args}
 	method v2m_point {args}
 	method vdraw {args}
 	method view {args}
@@ -625,6 +626,7 @@ package provide cadwidgets::Ged 1.0
 	method view_callback_all {args}
 	method viewdir {args}
 	method viewsize {args}
+	method vjoin1 {args}
 	method vmake {args}
 	method vnirt {args}
 	method voxelize {args}
@@ -3669,6 +3671,10 @@ package provide cadwidgets::Ged 1.0
     eval $mGed v2m_point $itk_component($itk_option(-pane)) $args
 }
 
+::itcl::body cadwidgets::Ged::vblend {args} {
+    uplevel \#0 vblend $args
+}
+
 ::itcl::body cadwidgets::Ged::vdraw {args} {
     eval $mGed vdraw $args
 }
@@ -3709,6 +3715,10 @@ package provide cadwidgets::Ged 1.0
 
 ::itcl::body cadwidgets::Ged::viewsize {args} {
     eval size $args
+}
+
+::itcl::body cadwidgets::Ged::vjoin1 {args} {
+    uplevel \#0 vjoin1 $args
 }
 
 ::itcl::body cadwidgets::Ged::vmake {args} {
@@ -6040,11 +6050,13 @@ package provide cadwidgets::Ged 1.0
     $help add unhide		{{[objects]} {unset the "hidden" flag for the specified objects so they will appear in a "t" or "ls" command output}}
     $help add units		{{[mm|cm|m|in|ft|...]}	{change units}}
     $help add v2m_point		{{x y z} {convert xyz in view space to xyz in model space}}
+    $help add vblend		{{} {}}
     $help add vdraw		{{write|insert|delete|read|length|show [args]} {vector drawing (cnuzman)}}
     $help add view		{{quat|ypr|aet|center|eye|size [args]} {get/set view parameters}}
     $help add view2model	{{} {returns the view to model matrix}}
     $help add viewDir		{{[-i]} {return the view direction}}
     $help add viewsize		{{vsize} {set/get the view size}}
+    $help add vjoin1		{{} {}}
     $help add vmake		{{pname ptype} {make a primitive of ptype and size it according to the view}}
     $help add vnirt		{{options vX vY} {trace a single ray aimed at (vX, vY) in view coordinates}}
     $help add wcodes		{{file object(s)} {write codes to file for the specified object(s)}}
