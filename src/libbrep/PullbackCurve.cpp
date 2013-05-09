@@ -897,6 +897,49 @@ pullback_samples(PBCData* data,
     return samples;
 }
 
+// If the given uv point is at the edge of a closed parameter range, bias it
+// to the same side of the range as the previous point.
+static ON_2dPoint
+resolve_seam_point_from_prev(
+	const ON_Surface *surf,
+	const ON_2dPoint &pt,
+	const ON_2dPoint &prev_pt)
+{
+    ON_2dPoint newpt = pt;
+
+    ON_Interval dom[2];
+    dom[0] = surf->Domain(0);
+    dom[1] = surf->Domain(1);
+
+    double umin = dom[0].m_t[0];
+    double umax = dom[0].m_t[1];
+    double vmin = dom[1].m_t[0];
+    double vmax = dom[1].m_t[1];
+
+    if (surf->IsClosed(0) &&
+	(NEAR_EQUAL(pt.x, umin, PBC_TOL) || NEAR_EQUAL(pt.x, umax, PBC_TOL)))
+    {
+	if (fabs(prev_pt.x - umin) < fabs(prev_pt.x - umax)) {
+	    newpt.x = umin;
+	} else {
+	    newpt.x = umax;
+	}
+    }
+
+    if (surf->IsClosed(1) &&
+        (NEAR_EQUAL(pt.y, vmin, PBC_TOL) || NEAR_EQUAL(pt.y, vmax, PBC_TOL)))
+    {
+	if (fabs(prev_pt.y - vmin) < fabs(prev_pt.y - vmax)) {
+	    newpt.y = vmin;
+	} else {
+	    newpt.y = vmax;
+	}
+    }
+
+    return newpt;
+}
+
+
 void
 pullback_samples_from_closed_surface(PBCData* data,
 				     double t,
@@ -973,20 +1016,7 @@ pullback_samples_from_closed_surface(PBCData* data,
 	    double delta = (knots[i] - knots[i - 1]) / (double)samplesperknotinterval;
 	    for (size_t j = 1; j < samplesperknotinterval;) {
 		if (toUV(*data, pt, knots[i - 1] + j * delta, PBC_FROM_OFFSET)) {
-		    if (surf->IsClosed(0) && (NEAR_EQUAL(pt.x, dom[0].m_t[0], PBC_TOL) || NEAR_EQUAL(pt.x, dom[0].m_t[1], PBC_TOL))) {
-			if (fabs(prev_pt.x - dom[0].m_t[0]) < fabs(prev_pt.x - dom[0].m_t[1])) {
-			    pt.x = dom[0].m_t[0];
-			} else {
-			    pt.x = dom[0].m_t[1];
-			}
-		    }
-		    if (surf->IsClosed(1) && (NEAR_EQUAL(pt.y, dom[1].m_t[0], PBC_TOL) || NEAR_EQUAL(pt.y, dom[1].m_t[1], PBC_TOL))) {
-			if (fabs(prev_pt.y - dom[1].m_t[0]) < fabs(prev_pt.y - dom[1].m_t[1])) {
-			    pt.y = dom[1].m_t[0];
-			} else {
-			    pt.y = dom[1].m_t[1];
-			}
-		    }
+		    pt = resolve_seam_point_from_prev(surf, pt, prev_pt);
 		    dir = pt - prev_pt;
 		    dir.Unitize();
 		    has_dir = true;
@@ -1066,37 +1096,11 @@ pullback_samples_from_closed_surface(PBCData* data,
 		if (surf->IsClosed(0) || surf->IsClosed(1)) {
 		    ON_2dPoint test;
 		    if (toUV(*data, test, knots[i] + delta, PBC_FROM_OFFSET)) {
-			if (surf->IsClosed(0) && (NEAR_EQUAL(pt.x, dom[0].m_t[0], PBC_TOL) || NEAR_EQUAL(pt.x, dom[0].m_t[1], PBC_TOL))) {
-			    if (fabs(test.x - dom[0].m_t[0]) < fabs(test.x - dom[0].m_t[1])) {
-				pt.x = dom[0].m_t[0];
-			    } else {
-				pt.x = dom[0].m_t[1];
-			    }
-			}
-			if (surf->IsClosed(1) && (NEAR_EQUAL(pt.y, dom[1].m_t[0], PBC_TOL) || NEAR_EQUAL(pt.y, dom[1].m_t[1], PBC_TOL))) {
-			    if (fabs(test.y - dom[1].m_t[0]) < fabs(test.y - dom[1].m_t[1])) {
-				pt.y = dom[1].m_t[0];
-			    } else {
-				pt.y = dom[1].m_t[1];
-			    }
-			}
+			pt = resolve_seam_point_from_prev(surf, pt, test);
 		    }
 		}
 	    } else {
-		if (surf->IsClosed(0) && (NEAR_EQUAL(pt.x, dom[0].m_t[0], PBC_TOL) || NEAR_EQUAL(pt.x, dom[0].m_t[1], PBC_TOL))) {
-		    if (fabs(prev_pt.x - dom[0].m_t[0]) < fabs(prev_pt.x - dom[0].m_t[1])) {
-			pt.x = dom[0].m_t[0];
-		    } else {
-			pt.x = dom[0].m_t[1];
-		    }
-		}
-		if (surf->IsClosed(1) && (NEAR_EQUAL(pt.y, dom[1].m_t[0], PBC_TOL) || NEAR_EQUAL(pt.y, dom[1].m_t[1], PBC_TOL))) {
-		    if (fabs(prev_pt.y - dom[1].m_t[0]) < fabs(prev_pt.y - dom[1].m_t[1])) {
-			pt.y = dom[1].m_t[0];
-		    } else {
-			pt.y = dom[1].m_t[1];
-		    }
-		}
+		pt = resolve_seam_point_from_prev(surf, pt, prev_pt);
 	    }
 	    samples->Append(pt);
 	    //std::cout << "pt -  " << pt.x << "," << pt.y << "   2d dir - " << (pt.x - prev_pt.x) << "," << (pt.y - prev_pt.y) << std::endl;
@@ -1114,20 +1118,7 @@ pullback_samples_from_closed_surface(PBCData* data,
 	double delta = (knots[i] - knots[i - 1]) / (double)samplesperknotinterval;
 	for (size_t j = 1; j < samplesperknotinterval;) {
 	    if (toUV(*data, pt, knots[i - 1] + j * delta, -PBC_FROM_OFFSET)) {
-		if (surf->IsClosed(0) && (NEAR_EQUAL(pt.x, dom[0].m_t[0], PBC_TOL) || NEAR_EQUAL(pt.x, dom[0].m_t[1], PBC_TOL))) {
-		    if (fabs(prev_pt.x - dom[0].m_t[0]) < fabs(prev_pt.x - dom[0].m_t[1])) {
-			pt.x = dom[0].m_t[0];
-		    } else {
-			pt.x = dom[0].m_t[1];
-		    }
-		}
-		if (surf->IsClosed(1) && (NEAR_EQUAL(pt.y, dom[1].m_t[0], PBC_TOL) || NEAR_EQUAL(pt.y, dom[1].m_t[1], PBC_TOL))) {
-		    if (fabs(prev_pt.y - dom[1].m_t[0]) < fabs(prev_pt.y - dom[1].m_t[1])) {
-			pt.y = dom[1].m_t[0];
-		    } else {
-			pt.y = dom[1].m_t[1];
-		    }
-		}
+		pt = resolve_seam_point_from_prev(surf, pt, prev_pt);
 		dir = pt - prev_pt;
 		dir.Unitize();
 		has_dir = true;
@@ -1201,20 +1192,7 @@ pullback_samples_from_closed_surface(PBCData* data,
 	    }
 	}
 	if (toUV(*data, pt, knots[i], -PBC_FROM_OFFSET)) {
-	    if (surf->IsClosed(0) && (NEAR_EQUAL(pt.x, dom[0].m_t[0], PBC_TOL) || NEAR_EQUAL(pt.x, dom[0].m_t[1], PBC_TOL))) {
-		if (fabs(prev_pt.x - dom[0].m_t[0]) < fabs(prev_pt.x - dom[0].m_t[1])) {
-		    pt.x = dom[0].m_t[0];
-		} else {
-		    pt.x = dom[0].m_t[1];
-		}
-	    }
-	    if (surf->IsClosed(1) && (NEAR_EQUAL(pt.y, dom[1].m_t[0], PBC_TOL) || NEAR_EQUAL(pt.y, dom[1].m_t[1], PBC_TOL))) {
-		if (fabs(prev_pt.y - dom[1].m_t[0]) < fabs(prev_pt.y - dom[1].m_t[1])) {
-		    pt.y = dom[1].m_t[0];
-		} else {
-		    pt.y = dom[1].m_t[1];
-		}
-	    }
+	    pt = resolve_seam_point_from_prev(surf, pt, prev_pt);
 	    samples->Append(pt);
 	    //std::cout << "pt -  " << pt.x << "," << pt.y << "   2d dir - " << (pt.x - prev_pt.x) << "," << (pt.y - prev_pt.y) << std::endl;
 	    prev_pt = pt;
