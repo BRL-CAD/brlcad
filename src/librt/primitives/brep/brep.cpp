@@ -761,7 +761,7 @@ utah_newton_solver(const BBNode* sbv, const ON_Surface* surf, const ON_Ray& r, O
 	utah_F(S, p1, p1d, p2, p2d, f, g);
 	oldrootdist = rootdist;
 	rootdist = fabs(f) + fabs(g);
-	errantcount = 0.0;
+	errantcount = 0;
 	while (oldrootdist < rootdist) {
 	    du *= 0.5;
 	    dv *= 0.5;
