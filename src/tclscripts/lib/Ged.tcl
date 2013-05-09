@@ -132,6 +132,14 @@ package provide cadwidgets::Ged 1.0
 	method bg {args}
 	method bg_all {args}
 	method blast {args}
+	method bn_dist_pt2_lseg2 {args}
+	method bn_isect_line2_line2 {args}
+	method bn_isect_line3_line3 {args}
+	method bn_noise_fbm {args}
+	method bn_noise_perlin {args}
+	method bn_noise_slice {args}
+	method bn_noise_turb {args}
+	method bn_random {args}
 	method bo {args}
 	method bot {args}
 	method bot_condense {args}
@@ -819,6 +827,8 @@ package provide cadwidgets::Ged 1.0
 #	variable mLastPort -1
 	variable mLastPort 999
 
+	variable mRandomSeed 1
+
 	method init_button_no_op_prot {{_button 1}}
 	method measure_line_erase {}
 	method multi_pane {args}
@@ -1158,6 +1168,43 @@ package provide cadwidgets::Ged 1.0
 ::itcl::body cadwidgets::Ged::blast {args} {
     set mRayNeedGettrees 1
     eval $mGed blast $args
+}
+
+::itcl::body cadwidgets::Ged::bn_dist_pt2_lseg2 {args} {
+    eval ::bn_dist_pt2_lseg2 $args
+}
+
+::itcl::body cadwidgets::Ged::bn_isect_line2_line2 {args} {
+    eval ::bn_isect_line2_line2 $args
+}
+
+::itcl::body cadwidgets::Ged::bn_isect_line3_line3 {args} {
+    eval ::bn_isect_line3_line3 $args
+}
+
+::itcl::body cadwidgets::Ged::bn_noise_fbm {args} {
+    uplevel \#0 eval bn_noise_fbm $args
+}
+
+::itcl::body cadwidgets::Ged::bn_noise_perlin {args} {
+    eval ::bn_noise_perlin $args
+}
+
+::itcl::body cadwidgets::Ged::bn_noise_slice {args} {
+    uplevel \#0 eval bn_noise_slice $args
+}
+
+::itcl::body cadwidgets::Ged::bn_noise_turb {args} {
+    uplevel \#0 eval bn_noise_turb $args
+}
+
+::itcl::body cadwidgets::Ged::bn_random {args} {
+    set seed [lindex $args 0]
+    if {$seed != "" && [string is double $seed]} {
+	set mRandomSeed $seed
+    }
+
+    uplevel \#0 bn_random [list [::itcl::scope mRandomSeed]]
 }
 
 ::itcl::body cadwidgets::Ged::bo {args} {
@@ -5595,6 +5642,14 @@ package provide cadwidgets::Ged 1.0
     $help add bb		{{object} {Report the size of the bounding box (rpp) containing the specified object}}
     $help add bev		{{[P|t] new_obj obj1 op obj2 ...} {boolean evaluation of objects via NMG's}}
     $help add blast		{{"-C#/#/# <objects>"} {clear screen, draw objects}}
+    $help add bn_dist_pt2_lseg2 {{ptA ptB pt} {calculate distance of pt to line segment AB}}
+    $help add bn_isect_line2_line2 {{pt dir pt dir} {find the point where the lines intersect}}
+    $help add bn_isect_line3_line3 {{pt dir pt dir} {find the point where the lines intersect}}
+    $help add bn_noise_fbm {{X Y Z h_val lacunarity octaves} {}}
+    $help add bn_noise_perlin {{X Y Z} {}}
+    $help add bn_noise_slice {{xdim ydim inv h_val lac octaves dX dY dZ sX [sY sZ]} {}}
+    $help add bn_noise_turb {{X Y Z h_val lacunarity octaves} {}}
+    $help add bn_random {{[seed]} {generates a random number}}
     $help add bo		{{(-i|-o) major_type minor_type dest source}
 			{manipulate opaque objects.
 			Must specify one of -i (for creating or adjusting objects (input))
