@@ -308,10 +308,12 @@ if ! test -f $base.base.gqa.log ; then
 fi
 bvol=`grep total $base.base.gqa.log | awk '{print $4}'`
 bvol2=`printf "%.1f" $bvol`
+bvol=`printf "%f" $bvol`
 if ! test "x$bvol2" = "x" && ! test "x$bvol2" = "x0.0" ; then
     rm -f "$i.gqa.log"
     vol="`g_qa "$GQTOL" -Av $dbfile $i 2>&1 | tee $i.gqa.log | tail -n 5 | grep total | awk '{print $4}'`"
     vol2=`printf "%.1f" $vol`
+    vol=`printf "%f" $vol`
     if test "x$vol2" = "x" ; then
 	vol="0"
     fi
