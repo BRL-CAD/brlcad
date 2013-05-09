@@ -514,6 +514,16 @@ package provide cadwidgets::Ged 1.0
 	method putmat {args}
 	method qray {args}
 	method quat {args}
+	method quat_mat2quat {args}
+	method quat_quat2mat {args}
+	method quat_distance {args}
+	method quat_double {args}
+	method quat_bisect {args}
+	method quat_slerp {args}
+	method quat_sberp {args}
+	method quat_make_nearest {args}
+	method quat_exp {args}
+	method quat_log {args}
 	method qvrot {args}
 	method r {args}
 	method rcodes {args}
@@ -3209,6 +3219,46 @@ package provide cadwidgets::Ged 1.0
     eval $mGed quat $itk_component($itk_option(-pane)) $args
 }
 
+::itcl::body cadwidgets::Ged::quat_mat2quat {args} {
+    uplevel \#0 quat_mat2quat $args
+}
+
+::itcl::body cadwidgets::Ged::quat_quat2mat {args} {
+    uplevel \#0 quat_quat2mat $args
+}
+
+::itcl::body cadwidgets::Ged::quat_distance {args} {
+    uplevel \#0 quat_distance $args
+}
+
+::itcl::body cadwidgets::Ged::quat_double {args} {
+    uplevel \#0 quat_double $args
+}
+
+::itcl::body cadwidgets::Ged::quat_bisect {args} {
+    uplevel \#0 quat_bisect $args
+}
+
+::itcl::body cadwidgets::Ged::quat_slerp {args} {
+    uplevel \#0 quat_slerp $args
+}
+
+::itcl::body cadwidgets::Ged::quat_sberp {args} {
+    uplevel \#0 quat_sberp $args
+}
+
+::itcl::body cadwidgets::Ged::quat_make_nearest {args} {
+    uplevel \#0 quat_make_nearest $args
+}
+
+::itcl::body cadwidgets::Ged::quat_exp {args} {
+    uplevel \#0 quat_exp $args
+}
+
+::itcl::body cadwidgets::Ged::quat_log {args} {
+    uplevel \#0 quat_log $args
+}
+
 ::itcl::body cadwidgets::Ged::qvrot {args} {
     eval $mGed qvrot $itk_component($itk_option(-pane)) $args
 }
@@ -5890,7 +5940,7 @@ package provide cadwidgets::Ged 1.0
     $help add mat_vec_perp	{{vec} {returns a vector perpandicular to vec}}
     $help add mat_scale_about_pt {{pt scale} {}}
     $help add mat_xform_about_pt {{xform pt} {}}
-    $help add mat_arb_rot	{{pt dir angle} {}}
+    $help add mat_arb_rot	{{pt dir angle} {returns a rotation matrix}}
     $help add mater		{{region shader R G B inherit} {modify region's material information}}
     $help add mirror		{{[-p point] [-d dir] [-x] [-y] [-z] [-o offset] old new}	{mirror object along the specified axis}}
     $help add model2view	{{} {returns the model2view matrix}}
@@ -5926,6 +5976,16 @@ package provide cadwidgets::Ged 1.0
     $help add putmat		{{a/b I|m0 m1 ... m15} {put the specified matrix on a/b}}
     $help add qray		{{subcommand}	{get/set query_ray characteristics}}
     $help add quat		{{[a b c d]} {get/set the view orientation as a quaternion}}
+    $help add quat_mat2quat	{{mat} {returns a quaternion}}
+    $help add quat_quat2mat	{{quat} {returns a matrix}}
+    $help add quat_distance	{{quatA quatB} {}}
+    $help add quat_double	{{quatA quatB} {}}
+    $help add quat_bisect	{{quatA quatB} {}}
+    $help add quat_slerp	{{quatA quatB factor} {}}
+    $help add quat_sberp	{{quat1 quatA quatB quat2 factor} {}}
+    $help add quat_make_nearest	{{quatA quatB} {}}
+    $help add quat_exp		{{quat} {}}
+    $help add quat_log		{{quat} {}}
     $help add qvrot		{{x y z angle} {set the view given a direction vector and an angle of rotation}}
     $help add r			{{region <operation solid>} {create or extend a Region combination}}
     $help add rcodes		{{file} {read codes from file}}
