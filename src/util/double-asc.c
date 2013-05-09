@@ -35,8 +35,9 @@
 #include "fb.h"
 
 
-#define OPT_STRING "acf:hs:n:w#:?"
-
+#define OPT_STRING "acf:hs:n:w:#:?"
+#define usage1 "Usage: double-asc [-{ah}] [-s squaresize] [-w width] [-n height]\n"
+#define usage2 "                  [-c] [-f format] [-# depth] [file.d]\n"
 
 static char *file_name;
 static char *format = 0;
@@ -52,11 +53,13 @@ static int make_cells = 0;		/* Insert cell coords in output? */
 static int d_per_l = 1;		/* doubles per line of output */
 
 
-void print_usage (void)
+void print_usage (willexit)
+    int willexit;
 {
-    bu_exit(1, "Usage: double-asc %s\n%s [file.d]\n",
-	    "[-{ah}] [-s squaresize] [-w width] [-n height]",
-	    "                   [-c] [-f format] [-# depth]");
+    if (willexit)
+	bu_exit(1, "%s%s",usage1,usage2);
+    fprintf(stderr,"%s%s",usage1,usage2);
+    fprintf(stderr,"       Program continues running:\n");
 }
 
 
@@ -108,11 +111,12 @@ get_args(int argc, char **argv)
 		d_per_l = atoi(bu_optarg);
 		break;
 	    default:
-		print_usage();
+		print_usage(1);
 	}
     }
-    if (argc == 1 && isatty(fileno(stdin)) && isatty(fileno(stdout)) )
-	print_usage();
+    if (argc == 1 && isatty(fileno(stdin)) && isatty(fileno(stdout))) {
+	print_usage(0);
+    }
     if (format == 0)
 	format = " %g";
 
@@ -135,11 +139,11 @@ get_args(int argc, char **argv)
 	    fileinput = 1;
 	    break;
 	default:
-	    print_usage();
+	    print_usage(1);
     }
 
     if (argc > ++bu_optind) {
-	print_usage();
+	print_usage(1);
     }
 
     return 1;		/* OK */
@@ -160,7 +164,7 @@ main (int argc, char **argv)
     int row, col;	/* coords within input stream */
 
     if (!get_args(argc, argv)) {
-	print_usage();
+	print_usage(1);
     }
 
     /* autosize input? */
