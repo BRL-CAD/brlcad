@@ -236,11 +236,11 @@ voxelize(struct rt_i *rtip, fastf_t sizeVoxel[3], int levelOfDetail, void (*crea
 			tmp = old;
 			create_boxes(callBackData, k, j, i, tmp->regionName, tmp->regionDistance / effectiveDistance);
 			old = tmp->nextRegion;
-			
+
 			/* free the space allocated for new regions */
 			if (tmp->regionName != 0)
 			    bu_free(tmp->regionName, "voxelize:voxelRegion:regionName");
-			
+
 			BU_FREE(tmp, struct voxelRegion);
 		    }
 		}

@@ -53,7 +53,7 @@ ON_SSX_EVENT::~ON_SSX_EVENT()
 
 void ON_SSX_EVENT::Dump(ON_TextLog& text_log) const
 {
- 
+
   text_log.Print("m_type: ");
   switch( m_type )
   {
@@ -117,7 +117,7 @@ void ON_SSX_EVENT::Dump(ON_TextLog& text_log) const
     text_log.PushIndent();
     m_curveB->Dump(text_log);
     text_log.PopIndent();
-    
+
     text_log.Print("3D curves:\n");
     text_log.PushIndent();
     m_curve3d->Dump(text_log);
@@ -207,7 +207,7 @@ bool ON_SSX_EVENT::IsValid(
     {
       ON_ERROR("ON_SSX_EVENT::IsValid - Bogus surfaceA_domain0 passed in");
       surfaceA_domain0 = NULL;
-    }    
+    }
  }
  if(surfaceA_domain1)
  {
@@ -215,7 +215,7 @@ bool ON_SSX_EVENT::IsValid(
     {
       ON_ERROR("ON_SSX_EVENT::IsValid - Bogus surfaceA_domain1 passed in");
       surfaceA_domain1 = NULL;
-    }    
+    }
  }
  if(surfaceB_domain0)
  {
@@ -223,7 +223,7 @@ bool ON_SSX_EVENT::IsValid(
     {
       ON_ERROR("ON_SSX_EVENT::IsValid - Bogus surfaceB_domain0 passed in");
       surfaceB_domain0 = NULL;
-    }    
+    }
  }
  if(surfaceB_domain1)
  {
@@ -231,7 +231,7 @@ bool ON_SSX_EVENT::IsValid(
     {
       ON_ERROR("ON_SSX_EVENT::IsValid - Bogus surfaceB_domain1 passed in");
       surfaceB_domain1 = NULL;
-    }    
+    }
  }
 
  ON_Interval dom;
@@ -296,7 +296,7 @@ bool ON_SSX_EVENT::IsValid(
       {
         if(text_log)
           text_log->Print("ON_SSX_EVENT::m_curve** == NULL for an ssx_transverse event.\n");
-        return false; 
+        return false;
       }
 
       m_curveA->IsValid( text_log);
@@ -324,12 +324,12 @@ bool ON_SSX_EVENT::IsValid(
         cvcnt = nc->CVCount();
       nc = ON_NurbsCurve::Cast(m_curveA);
       if(nc && nc->CVCount()>cvcnt)
-        cvcnt = nc->CVCount(); 
+        cvcnt = nc->CVCount();
       nc = ON_NurbsCurve::Cast(m_curveB);
       if(nc && nc->CVCount()>cvcnt)
         cvcnt = nc->CVCount();
-      
-      ON__SSXTester_Helper TestIt(text_log,  surfaceA,  ADomain, surfaceB, BDomain); 
+
+      ON__SSXTester_Helper TestIt(text_log,  surfaceA,  ADomain, surfaceB, BDomain);
       TestIt.tol = ftol;
 
       cvcnt = (cvcnt-3)*5;
@@ -364,7 +364,7 @@ bool ON_SSX_EVENT::IsValid(
 					else if( ok){
 						sfirst_log = spoint_log;
 					}
-          ok = false; 
+          ok = false;
         }
       }
       if(!ok)
@@ -389,7 +389,7 @@ bool ON_SSX_EVENT::IsValid(
       {
         if(text_log)
           text_log->Print(" m_curve** == NULL for an ssx_tangent event.\n");
-        return false; 
+        return false;
       }
 
       m_curveA->IsValid( text_log);
@@ -415,12 +415,12 @@ bool ON_SSX_EVENT::IsValid(
         cvcnt = nc->CVCount();
       nc = ON_NurbsCurve::Cast(m_curveA);
       if(nc && nc->CVCount()>cvcnt)
-        cvcnt = nc->CVCount(); 
+        cvcnt = nc->CVCount();
       nc = ON_NurbsCurve::Cast(m_curveB);
       if(nc && nc->CVCount()>cvcnt)
         cvcnt = nc->CVCount();
-      
-      ON__SSXTester_Helper TestIt(text_log,  surfaceA,  ADomain, surfaceB, BDomain); 
+
+      ON__SSXTester_Helper TestIt(text_log,  surfaceA,  ADomain, surfaceB, BDomain);
       TestIt.tol = xtol;
       TestIt.log = text_log;
 
@@ -447,7 +447,7 @@ bool ON_SSX_EVENT::IsValid(
     {
       if(text_log)
         text_log->Print(" m_curve** == NULL for an ssx_overlap event.\n");
-      return false; 
+      return false;
     }
 
     m_curveA->IsValid( text_log);
@@ -499,21 +499,21 @@ bool ON_SSX_EVENT::IsValid(
     if(dist>xtol)
     {
       if(text_log)
-        text_log->Print(" SurfaceA->PointAt( m_pointA).DistanceTo(m_point3d)=%g > intersection_tolerance = &g.\n", dist, xtol); 
+        text_log->Print(" SurfaceA->PointAt( m_pointA).DistanceTo(m_point3d)=%g > intersection_tolerance = &g.\n", dist, xtol);
       rc = false;
     }
     dist = B.DistanceTo(m_point3d);
     if(dist>xtol)
     {
       if(text_log)
-        text_log->Print(" SurfaceB->PointAt( m_pointA).DistanceTo(m_point3d)=%g > intersection_tolerance = &g.\n", dist, xtol); 
+        text_log->Print(" SurfaceB->PointAt( m_pointA).DistanceTo(m_point3d)=%g > intersection_tolerance = &g.\n", dist, xtol);
       rc = false;
     }
     dist = B.DistanceTo(A);
     if(dist>xtol)
     {
       if(text_log)
-        text_log->Print(" SurfaceB->PointAt( m_pointA).DistanceTo(SurfaceB->PointAt( m_pointB))=%g > intersection_tolerance = &g.\n", dist, xtol); 
+        text_log->Print(" SurfaceB->PointAt( m_pointA).DistanceTo(SurfaceB->PointAt( m_pointB))=%g > intersection_tolerance = &g.\n", dist, xtol);
       rc = false;
     }
     break;
@@ -562,21 +562,21 @@ bool ON_SSX_EVENT::IsValid(
     if(dist>xtol)
     {
       if(text_log)
-        text_log->Print(" SurfaceA->PointAt( m_pointA).DistanceTo(m_point3d)=%g > intersection_tolerance = &g.\n", dist, xtol); 
+        text_log->Print(" SurfaceA->PointAt( m_pointA).DistanceTo(m_point3d)=%g > intersection_tolerance = &g.\n", dist, xtol);
       rc = false;
     }
     dist = B.DistanceTo(m_point3d);
     if(dist>xtol)
     {
       if(text_log)
-        text_log->Print(" SurfaceB->PointAt( m_pointA).DistanceTo(m_point3d)=%g > intersection_tolerance = &g.\n", dist, xtol); 
+        text_log->Print(" SurfaceB->PointAt( m_pointA).DistanceTo(m_point3d)=%g > intersection_tolerance = &g.\n", dist, xtol);
       rc = false;
     }
     dist = B.DistanceTo(A);
     if(dist>xtol)
     {
       if(text_log)
-        text_log->Print(" SurfaceB->PointAt( m_pointA).DistanceTo(SurfaceB->PointAt( m_pointB))=%g > intersection_tolerance = &g.\n", dist, xtol); 
+        text_log->Print(" SurfaceB->PointAt( m_pointA).DistanceTo(SurfaceB->PointAt( m_pointB))=%g > intersection_tolerance = &g.\n", dist, xtol);
       rc = false;
     }
     break;
@@ -586,24 +586,24 @@ bool ON_SSX_EVENT::IsValid(
       text_log->Print("ON_SSX_EVENT.m_type set to undefined value.\n");
     return false;
   }
- 
+
  return rc;
 }
 
 bool ON_SSX_EVENT::IsPointEvent() const
 {
-  return (    ON_SSX_EVENT::ssx_transverse_point == m_type 
+  return (    ON_SSX_EVENT::ssx_transverse_point == m_type
            || ON_SSX_EVENT::ssx_tangent_point == m_type);
 }
 
 bool ON_SSX_EVENT::IsTinyEvent(double tiny_tolerance) const
 {
-  if (    ON_SSX_EVENT::ssx_transverse_point == m_type 
+  if (    ON_SSX_EVENT::ssx_transverse_point == m_type
        || ON_SSX_EVENT::ssx_tangent_point == m_type
      )
     return true; // point event is always "tiny"
 
-  if (   ON_SSX_EVENT::ssx_transverse != m_type 
+  if (   ON_SSX_EVENT::ssx_transverse != m_type
       && ON_SSX_EVENT::ssx_tangent    != m_type
       && ON_SSX_EVENT::ssx_overlap    != m_type
       )
@@ -669,12 +669,12 @@ ON__SSXTester_Helper::ON__SSXTester_Helper(ON_TextLog* text_log,
                     const class ON_Interval surfaceA_domain[2],
                     const class ON_Surface* surfaceB,
                     const class ON_Interval surfaceB_domain[2]) :
-SA(*surfaceA), SB(*surfaceB) 
+SA(*surfaceA), SB(*surfaceB)
 {
 	Adom[0] = surfaceA_domain[0];
-	Adom[1] = surfaceA_domain[1]; 
-	Bdom[0] = surfaceB_domain[0]; 
-    Bdom[1] = surfaceB_domain[1]; 
+	Adom[1] = surfaceA_domain[1];
+	Bdom[0] = surfaceB_domain[0];
+    Bdom[1] = surfaceB_domain[1];
    tol = .01;
 
    log = text_log;
@@ -704,7 +704,7 @@ bool ON__SSXTester_Helper::TestPoint(ON_2dPoint A, ON_2dPoint B, ON_3dPoint P, d
   ON_2dPoint st, uv;
   st = A;
   SA.GetLocalClosestPoint(P, A.x, A.y, &st.x, &st.y, &Adom[0], &Adom[1] );
-  ON_3dPoint PA = SA.PointAt(st.x, st.y); 
+  ON_3dPoint PA = SA.PointAt(st.x, st.y);
   dist = P.DistanceTo(PA);
 
   if( dist>tol)
@@ -716,7 +716,7 @@ bool ON__SSXTester_Helper::TestPoint(ON_2dPoint A, ON_2dPoint B, ON_3dPoint P, d
   }
   uv = B;
   SB.GetLocalClosestPoint(P, uv.x, uv.y, &uv.x, &uv.y, &Bdom[0], &Bdom[1] );
-  ON_3dPoint PB = SB.PointAt(uv.x, uv.y); 
+  ON_3dPoint PB = SB.PointAt(uv.x, uv.y);
   dist = P.DistanceTo(PB);
 
   if( dist>tol)
@@ -730,7 +730,7 @@ bool ON__SSXTester_Helper::TestPoint(ON_2dPoint A, ON_2dPoint B, ON_3dPoint P, d
 
   PA = SA.PointAt(A.x, A.y);
   SB.GetLocalClosestPoint(PA, B.x, B.y, &uv.x, &uv.y, &Bdom[0], &Bdom[1] );
-  PB = SB.PointAt(uv.x, uv.y); 
+  PB = SB.PointAt(uv.x, uv.y);
   dist = PA.DistanceTo(PB);
   if( dist>tol)
   {
@@ -742,7 +742,7 @@ bool ON__SSXTester_Helper::TestPoint(ON_2dPoint A, ON_2dPoint B, ON_3dPoint P, d
 
   PB = SB.PointAt(B.x, B.y);
   SA.GetLocalClosestPoint(PB, A.x, A.y, &st.x, &st.y, &Adom[0], &Adom[1] );
-  PA = SA.PointAt(st.x, st.y); 
+  PA = SA.PointAt(st.x, st.y);
   dist = PA.DistanceTo(PB);
   if( dist>tol)
   {

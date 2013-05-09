@@ -186,7 +186,7 @@ main(int argc, char** argv)
 	}
 
 	bu_vls_init(&name);
-	bu_vls_sprintf(&name, "%s2d%c_%d", bu_vls_addr(&intersect_name), 
+	bu_vls_sprintf(&name, "%s2d%c_%d", bu_vls_addr(&intersect_name),
 	    i < events.Count() ? 'A' : 'B', i % events.Count());
 
 	struct directory *dp;

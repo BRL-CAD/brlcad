@@ -1837,7 +1837,7 @@ simplify_angle(double rad)
     } else if (result < 0.0) {
 	result += 2.0 * ON_PI;
     }
-    
+
     return result;
 }
 
