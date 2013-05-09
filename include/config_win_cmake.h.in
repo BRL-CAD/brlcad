@@ -153,64 +153,37 @@
 
 /* set up stat */
 #if defined(SIZEOF_VOID_P) && SIZEOF_VOID_P == 8 
-#  if defined(_stati64)
-#     if defined(stat)
-#        undef stat
-#     endif
-#     define stat(path, buffer) _stati64(path, (struct __stati64 *)buffer);
-#  endif
+#   define stat _stati64
 #else
-#  if !defined(stat) && defined(_stat)
-#     define stat _stat
-#  endif
+#   define stat _stat
 #endif
 
 /* set up fstat */
 #if defined(SIZEOF_VOID_P) && SIZEOF_VOID_P == 8 
-#  if defined(_fstati64)
-#     if defined(fstat)
-#        undef fstat
-#     endif
-#     define fstat(path, buffer) _fstati64(path, (struct __stati64 *)buffer);
-#  endif
+#   define fstat _fstati64
 #else
-#  if !defined(fstat) && defined(_fstat)
-#     define fstat _fstat
-#  endif
-#endif
-
-/* set up ftell */
-#if defined(SIZEOF_VOID_P) && SIZEOF_VOID_P == 8 
-#  if defined(_ftelli64)
-#     if defined(ftell)
-#        undef ftell
-#     endif
-#     define ftell _ftelli64;
-#  endif
+#   define fstat _fstat
 #endif
 
 /* set up lseek */
 #if defined(SIZEOF_VOID_P) && SIZEOF_VOID_P == 8 
-#  if defined(_lseeki64)
-#     if defined(lseek)
-#        undef lseek
-#     endif
-#     define lseek _lseeki64;
-#  endif
+#   define lseek _lseeki64
 #else
-#  if !defined(lseek) && defined(_lseek)
-#     define lseek _lseek
-#  endif
+#   define lseek _lseek
+#endif
+
+/* set up ftell */
+#if defined(SIZEOF_VOID_P) && SIZEOF_VOID_P == 8 
+#   include<stdio.h>
+#   undef ftell
+#   define ftell _ftelli64
 #endif
 
 /* set up fseek */
 #if defined(SIZEOF_VOID_P) && SIZEOF_VOID_P == 8 
-#  if defined(_fseeki64)
-#     if defined(fseek)
-#        undef fseek
-#     endif
-#     define fseek _fseeki64;
-#  endif
+#   include<stdio.h>
+#   undef fseek
+#   define fseek _fseeki64
 #endif
 
 #define fmax __max
