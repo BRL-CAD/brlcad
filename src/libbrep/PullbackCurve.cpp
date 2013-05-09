@@ -966,121 +966,13 @@ pullback_samples_from_closed_surface(PBCData* data,
     double steptol = 0.0000001;
     bool has_dir = false;
     bool has_prev_dir = false;
-    for (size_t i = istart; i <= istop; i++) {
-	if (i <= numKnots / 2) {
-	    if (i > 0) {
-		double delta = (knots[i] - knots[i - 1]) / (double)samplesperknotinterval;
-		for (size_t j = 1; j < samplesperknotinterval;) {
-		    if (toUV(*data, pt, knots[i - 1] + j * delta, PBC_FROM_OFFSET)) {
-			if (surf->IsClosed(0) && (NEAR_EQUAL(pt.x, dom[0].m_t[0], PBC_TOL) || NEAR_EQUAL(pt.x, dom[0].m_t[1], PBC_TOL))) {
-			    if (fabs(prev_pt.x - dom[0].m_t[0]) < fabs(prev_pt.x - dom[0].m_t[1])) {
-				pt.x = dom[0].m_t[0];
-			    } else {
-				pt.x = dom[0].m_t[1];
-			    }
-			}
-			if (surf->IsClosed(1) && (NEAR_EQUAL(pt.y, dom[1].m_t[0], PBC_TOL) || NEAR_EQUAL(pt.y, dom[1].m_t[1], PBC_TOL))) {
-			    if (fabs(prev_pt.y - dom[1].m_t[0]) < fabs(prev_pt.y - dom[1].m_t[1])) {
-				pt.y = dom[1].m_t[0];
-			    } else {
-				pt.y = dom[1].m_t[1];
-			    }
-			}
-			dir = pt - prev_pt;
-			dir.Unitize();
-			has_dir = true;
-			if (has_prev_dir && (j > 1)) {
-			    double dot = prev_dir * dir;
-#ifdef SHOW_UNUSED
-			    double lastgood = 0.0, lastbad = 0.0;
-#endif
-			    ON_2dPoint lastgoodpoint;
-			    ON_2dPoint lastbadpoint;
-			    ON_2dPoint workingpoint;
-			    if (dot < dottol) {
-				double step = delta;
-				double at = knots[i - 1] + j * delta;
-				while (step > steptol) {
-				    step = step / 2.0;
-				    if (dot < dottol) {
-#ifdef SHOW_UNUSED
-					lastbad = at;
-#endif
-					lastbadpoint = workingpoint;
-					at = at - step;
-					if (toUV(*data, workingpoint, at, PBC_FROM_OFFSET)) {
-					    dir = workingpoint - prev_pt;
-					    dir.Unitize();
-					    dot = prev_dir * dir;
-					}
-				    } else {
-#ifdef SHOW_UNUSED
-					lastgood = at;
-#endif
-					lastgoodpoint = workingpoint;
-					at = at + step;
-					if (toUV(*data, workingpoint, at, PBC_FROM_OFFSET)) {
-					    dir = workingpoint - prev_pt;
-					    dir.Unitize();
-					    dot = prev_dir * dir;
-					}
-				    }
-				}
-				if (dot < dottol) {
-#ifdef SHOW_UNUSED
-				    lastbad = at;
-#endif
-				    lastbadpoint = workingpoint;
-				} else {
-#ifdef SHOW_UNUSED
-				    lastgood = at;
-#endif
-				    lastgoodpoint = workingpoint;
-				}
-				samples->Append(lastgoodpoint);
-				data->segments.push_back(samples);
-				samples = new ON_2dPointArray();
-				samples->Append(lastbadpoint);
 
-				std::cout << "finalgoodpt -  " << lastgoodpoint.x << "," << lastgoodpoint.y << std::endl;
-				std::cout << "finalbadpt -  " << lastbadpoint.x << "," << lastbadpoint.y  << std::endl;
-			    }
-			}
-			samples->Append(pt);
-			j++;
-			//std::cout << "pt -  " << pt.x << "," << pt.y << "   2d dir - " << (pt.x - prev_pt.x) << "," << (pt.y - prev_pt.y) << std::endl;
-			prev_pt = pt;
-			prev_dir = dir;
-			has_prev_dir = true;
-		    } else {
-			//std::cout << "didn't find point on surface" << std::endl;
-			j++;
-		    }
-		}
-	    }
-	    if (toUV(*data, pt, knots[i], PBC_FROM_OFFSET)) {
-		if ((i == istart) && (i < numKnots)) {
-		    double delta = (knots[i + 1] - knots[i]) / (double)samplesperknotinterval;
-		    if (surf->IsClosed(0) || surf->IsClosed(1)) {
-			ON_2dPoint test;
-			if (toUV(*data, test, knots[i] + delta, PBC_FROM_OFFSET)) {
-			    if (surf->IsClosed(0) && (NEAR_EQUAL(pt.x, dom[0].m_t[0], PBC_TOL) || NEAR_EQUAL(pt.x, dom[0].m_t[1], PBC_TOL))) {
-				if (fabs(test.x - dom[0].m_t[0]) < fabs(test.x - dom[0].m_t[1])) {
-				    pt.x = dom[0].m_t[0];
-				} else {
-				    pt.x = dom[0].m_t[1];
-				}
-			    }
-			    if (surf->IsClosed(1) && (NEAR_EQUAL(pt.y, dom[1].m_t[0], PBC_TOL) || NEAR_EQUAL(pt.y, dom[1].m_t[1], PBC_TOL))) {
-				if (fabs(test.y - dom[1].m_t[0]) < fabs(test.y - dom[1].m_t[1])) {
-				    pt.y = dom[1].m_t[0];
-				} else {
-				    pt.y = dom[1].m_t[1];
-				}
-			    }
-			}
-		    }
-		} else {
+    size_t i;
+    for (i = istart; (i <= (numKnots / 2)) && (i <= istop); ++i) {
+	if (i > 0) {
+	    double delta = (knots[i] - knots[i - 1]) / (double)samplesperknotinterval;
+	    for (size_t j = 1; j < samplesperknotinterval;) {
+		if (toUV(*data, pt, knots[i - 1] + j * delta, PBC_FROM_OFFSET)) {
 		    if (surf->IsClosed(0) && (NEAR_EQUAL(pt.x, dom[0].m_t[0], PBC_TOL) || NEAR_EQUAL(pt.x, dom[0].m_t[1], PBC_TOL))) {
 			if (fabs(prev_pt.x - dom[0].m_t[0]) < fabs(prev_pt.x - dom[0].m_t[1])) {
 			    pt.x = dom[0].m_t[0];
@@ -1095,136 +987,246 @@ pullback_samples_from_closed_surface(PBCData* data,
 			    pt.y = dom[1].m_t[1];
 			}
 		    }
-		}
-		samples->Append(pt);
-		//std::cout << "pt -  " << pt.x << "," << pt.y << "   2d dir - " << (pt.x - prev_pt.x) << "," << (pt.y - prev_pt.y) << std::endl;
-		prev_pt = pt;
-		if (has_dir) {
-		    prev_dir = dir;
-		    has_prev_dir = true;
-		}
-	    } else {
-		//std::cout << "didn't find point on surface" << std::endl;
-	    }
-	} else {
-	    if ((i > 0) && (i < (numKnots + 1))) {
-		double delta = (knots[i] - knots[i - 1]) / (double)samplesperknotinterval;
-		for (size_t j = 1; j < samplesperknotinterval;) {
-		    if (toUV(*data, pt, knots[i - 1] + j * delta, -PBC_FROM_OFFSET)) {
-			if (surf->IsClosed(0) && (NEAR_EQUAL(pt.x, dom[0].m_t[0], PBC_TOL) || NEAR_EQUAL(pt.x, dom[0].m_t[1], PBC_TOL))) {
-			    if (fabs(prev_pt.x - dom[0].m_t[0]) < fabs(prev_pt.x - dom[0].m_t[1])) {
-				pt.x = dom[0].m_t[0];
-			    } else {
-				pt.x = dom[0].m_t[1];
-			    }
-			}
-			if (surf->IsClosed(1) && (NEAR_EQUAL(pt.y, dom[1].m_t[0], PBC_TOL) || NEAR_EQUAL(pt.y, dom[1].m_t[1], PBC_TOL))) {
-			    if (fabs(prev_pt.y - dom[1].m_t[0]) < fabs(prev_pt.y - dom[1].m_t[1])) {
-				pt.y = dom[1].m_t[0];
-			    } else {
-				pt.y = dom[1].m_t[1];
-			    }
-			}
-			dir = pt - prev_pt;
-			dir.Unitize();
-			has_dir = true;
-			if (has_prev_dir && (j > 1)) {
-			    double dot = prev_dir * dir;
+		    dir = pt - prev_pt;
+		    dir.Unitize();
+		    has_dir = true;
+		    if (has_prev_dir && (j > 1)) {
+			double dot = prev_dir * dir;
 #ifdef SHOW_UNUSED
-			    double lastgood = 0.0, lastbad = 0.0;
+			double lastgood = 0.0, lastbad = 0.0;
 #endif
-			    ON_2dPoint lastgoodpoint;
-			    ON_2dPoint lastbadpoint;
-			    ON_2dPoint workingpoint;
-			    //std::cout << "dot - " << dot << std::endl;
-			    if (dot < dottol) {
-				double step = delta;
-				double at = knots[i - 1] + j * delta;
-				while (step > steptol) {
-				    step = step / 2.0;
-				    if (dot < dottol) {
-#ifdef SHOW_UNUSED
-					lastbad = at;
-#endif
-					lastbadpoint = workingpoint;
-					at = at - step;
-					if (toUV(*data, workingpoint, at, -PBC_FROM_OFFSET)) {
-					    dir = workingpoint - prev_pt;
-					    dir.Unitize();
-					    dot = prev_dir * dir;
-					}
-				    } else {
-#ifdef SHOW_UNUSED
-					lastgood = at;
-#endif
-					lastgoodpoint = workingpoint;
-					at = at + step;
-					if (toUV(*data, workingpoint, at, -PBC_FROM_OFFSET)) {
-					    dir = workingpoint - prev_pt;
-					    dir.Unitize();
-					    dot = prev_dir * dir;
-					}
-				    }
-				}
+			ON_2dPoint lastgoodpoint;
+			ON_2dPoint lastbadpoint;
+			ON_2dPoint workingpoint;
+			if (dot < dottol) {
+			    double step = delta;
+			    double at = knots[i - 1] + j * delta;
+			    while (step > steptol) {
+				step = step / 2.0;
 				if (dot < dottol) {
 #ifdef SHOW_UNUSED
 				    lastbad = at;
 #endif
 				    lastbadpoint = workingpoint;
+				    at = at - step;
+				    if (toUV(*data, workingpoint, at, PBC_FROM_OFFSET)) {
+					dir = workingpoint - prev_pt;
+					dir.Unitize();
+					dot = prev_dir * dir;
+				    }
 				} else {
 #ifdef SHOW_UNUSED
 				    lastgood = at;
 #endif
 				    lastgoodpoint = workingpoint;
+				    at = at + step;
+				    if (toUV(*data, workingpoint, at, PBC_FROM_OFFSET)) {
+					dir = workingpoint - prev_pt;
+					dir.Unitize();
+					dot = prev_dir * dir;
+				    }
 				}
-				samples->Append(lastgoodpoint);
-				data->segments.push_back(samples);
-				samples = new ON_2dPointArray();
-				samples->Append(lastbadpoint);
-
-				std::cout << "finalgoodpt -  " << lastgoodpoint.x << "," << lastgoodpoint.y << std::endl;
-				std::cout << "finalbadpt -  " << lastbadpoint.x << "," << lastbadpoint.y  << std::endl;
 			    }
-			}
-			samples->Append(pt);
-			j++;
-			//std::cout << "pt -  " << pt.x << "," << pt.y << "   2d dir - " << (pt.x - prev_pt.x) << "," << (pt.y - prev_pt.y) << std::endl;
-			prev_pt = pt;
-			prev_dir = dir;
-			has_prev_dir = true;
-		    } else {
-			//std::cout << "didn't find point on surface" << std::endl;
-			j++;
-		    }
-		}
-		if (toUV(*data, pt, knots[i], -PBC_FROM_OFFSET)) {
-		    if (surf->IsClosed(0) && (NEAR_EQUAL(pt.x, dom[0].m_t[0], PBC_TOL) || NEAR_EQUAL(pt.x, dom[0].m_t[1], PBC_TOL))) {
-			if (fabs(prev_pt.x - dom[0].m_t[0]) < fabs(prev_pt.x - dom[0].m_t[1])) {
-			    pt.x = dom[0].m_t[0];
-			} else {
-			    pt.x = dom[0].m_t[1];
-			}
-		    }
-		    if (surf->IsClosed(1) && (NEAR_EQUAL(pt.y, dom[1].m_t[0], PBC_TOL) || NEAR_EQUAL(pt.y, dom[1].m_t[1], PBC_TOL))) {
-			if (fabs(prev_pt.y - dom[1].m_t[0]) < fabs(prev_pt.y - dom[1].m_t[1])) {
-			    pt.y = dom[1].m_t[0];
-			} else {
-			    pt.y = dom[1].m_t[1];
+			    if (dot < dottol) {
+#ifdef SHOW_UNUSED
+				lastbad = at;
+#endif
+				lastbadpoint = workingpoint;
+			    } else {
+#ifdef SHOW_UNUSED
+				lastgood = at;
+#endif
+				lastgoodpoint = workingpoint;
+			    }
+			    samples->Append(lastgoodpoint);
+			    data->segments.push_back(samples);
+			    samples = new ON_2dPointArray();
+			    samples->Append(lastbadpoint);
+
+			    std::cout << "finalgoodpt -  " << lastgoodpoint.x << "," << lastgoodpoint.y << std::endl;
+			    std::cout << "finalbadpt -  " << lastbadpoint.x << "," << lastbadpoint.y  << std::endl;
 			}
 		    }
 		    samples->Append(pt);
+		    j++;
 		    //std::cout << "pt -  " << pt.x << "," << pt.y << "   2d dir - " << (pt.x - prev_pt.x) << "," << (pt.y - prev_pt.y) << std::endl;
 		    prev_pt = pt;
-		    if (has_dir) {
-			prev_dir = dir;
-			has_prev_dir = true;
-		    }
+		    prev_dir = dir;
+		    has_prev_dir = true;
 		} else {
 		    //std::cout << "didn't find point on surface" << std::endl;
+		    j++;
 		}
 	    }
+	} /* i > 0 */
+
+	if (toUV(*data, pt, knots[i], PBC_FROM_OFFSET)) {
+	    if ((i == istart) && (i < numKnots)) {
+		double delta = (knots[i + 1] - knots[i]) / (double)samplesperknotinterval;
+		if (surf->IsClosed(0) || surf->IsClosed(1)) {
+		    ON_2dPoint test;
+		    if (toUV(*data, test, knots[i] + delta, PBC_FROM_OFFSET)) {
+			if (surf->IsClosed(0) && (NEAR_EQUAL(pt.x, dom[0].m_t[0], PBC_TOL) || NEAR_EQUAL(pt.x, dom[0].m_t[1], PBC_TOL))) {
+			    if (fabs(test.x - dom[0].m_t[0]) < fabs(test.x - dom[0].m_t[1])) {
+				pt.x = dom[0].m_t[0];
+			    } else {
+				pt.x = dom[0].m_t[1];
+			    }
+			}
+			if (surf->IsClosed(1) && (NEAR_EQUAL(pt.y, dom[1].m_t[0], PBC_TOL) || NEAR_EQUAL(pt.y, dom[1].m_t[1], PBC_TOL))) {
+			    if (fabs(test.y - dom[1].m_t[0]) < fabs(test.y - dom[1].m_t[1])) {
+				pt.y = dom[1].m_t[0];
+			    } else {
+				pt.y = dom[1].m_t[1];
+			    }
+			}
+		    }
+		}
+	    } else {
+		if (surf->IsClosed(0) && (NEAR_EQUAL(pt.x, dom[0].m_t[0], PBC_TOL) || NEAR_EQUAL(pt.x, dom[0].m_t[1], PBC_TOL))) {
+		    if (fabs(prev_pt.x - dom[0].m_t[0]) < fabs(prev_pt.x - dom[0].m_t[1])) {
+			pt.x = dom[0].m_t[0];
+		    } else {
+			pt.x = dom[0].m_t[1];
+		    }
+		}
+		if (surf->IsClosed(1) && (NEAR_EQUAL(pt.y, dom[1].m_t[0], PBC_TOL) || NEAR_EQUAL(pt.y, dom[1].m_t[1], PBC_TOL))) {
+		    if (fabs(prev_pt.y - dom[1].m_t[0]) < fabs(prev_pt.y - dom[1].m_t[1])) {
+			pt.y = dom[1].m_t[0];
+		    } else {
+			pt.y = dom[1].m_t[1];
+		    }
+		}
+	    }
+	    samples->Append(pt);
+	    //std::cout << "pt -  " << pt.x << "," << pt.y << "   2d dir - " << (pt.x - prev_pt.x) << "," << (pt.y - prev_pt.y) << std::endl;
+	    prev_pt = pt;
+	    if (has_dir) {
+		prev_dir = dir;
+		has_prev_dir = true;
+	    }
+	} else {
+	    //std::cout << "didn't find point on surface" << std::endl;
 	}
     }
+
+    for (; (i <= numKnots) && (i <= istop); ++i) {
+	double delta = (knots[i] - knots[i - 1]) / (double)samplesperknotinterval;
+	for (size_t j = 1; j < samplesperknotinterval;) {
+	    if (toUV(*data, pt, knots[i - 1] + j * delta, -PBC_FROM_OFFSET)) {
+		if (surf->IsClosed(0) && (NEAR_EQUAL(pt.x, dom[0].m_t[0], PBC_TOL) || NEAR_EQUAL(pt.x, dom[0].m_t[1], PBC_TOL))) {
+		    if (fabs(prev_pt.x - dom[0].m_t[0]) < fabs(prev_pt.x - dom[0].m_t[1])) {
+			pt.x = dom[0].m_t[0];
+		    } else {
+			pt.x = dom[0].m_t[1];
+		    }
+		}
+		if (surf->IsClosed(1) && (NEAR_EQUAL(pt.y, dom[1].m_t[0], PBC_TOL) || NEAR_EQUAL(pt.y, dom[1].m_t[1], PBC_TOL))) {
+		    if (fabs(prev_pt.y - dom[1].m_t[0]) < fabs(prev_pt.y - dom[1].m_t[1])) {
+			pt.y = dom[1].m_t[0];
+		    } else {
+			pt.y = dom[1].m_t[1];
+		    }
+		}
+		dir = pt - prev_pt;
+		dir.Unitize();
+		has_dir = true;
+		if (has_prev_dir && (j > 1)) {
+		    double dot = prev_dir * dir;
+#ifdef SHOW_UNUSED
+		    double lastgood = 0.0, lastbad = 0.0;
+#endif
+		    ON_2dPoint lastgoodpoint;
+		    ON_2dPoint lastbadpoint;
+		    ON_2dPoint workingpoint;
+		    //std::cout << "dot - " << dot << std::endl;
+		    if (dot < dottol) {
+			double step = delta;
+			double at = knots[i - 1] + j * delta;
+			while (step > steptol) {
+			    step = step / 2.0;
+			    if (dot < dottol) {
+#ifdef SHOW_UNUSED
+				lastbad = at;
+#endif
+				lastbadpoint = workingpoint;
+				at = at - step;
+				if (toUV(*data, workingpoint, at, -PBC_FROM_OFFSET)) {
+				    dir = workingpoint - prev_pt;
+				    dir.Unitize();
+				    dot = prev_dir * dir;
+				}
+			    } else {
+#ifdef SHOW_UNUSED
+				lastgood = at;
+#endif
+				lastgoodpoint = workingpoint;
+				at = at + step;
+				if (toUV(*data, workingpoint, at, -PBC_FROM_OFFSET)) {
+				    dir = workingpoint - prev_pt;
+				    dir.Unitize();
+				    dot = prev_dir * dir;
+				}
+			    }
+			}
+			if (dot < dottol) {
+#ifdef SHOW_UNUSED
+			    lastbad = at;
+#endif
+			    lastbadpoint = workingpoint;
+			} else {
+#ifdef SHOW_UNUSED
+			    lastgood = at;
+#endif
+			    lastgoodpoint = workingpoint;
+			}
+			samples->Append(lastgoodpoint);
+			data->segments.push_back(samples);
+			samples = new ON_2dPointArray();
+			samples->Append(lastbadpoint);
+
+			std::cout << "finalgoodpt -  " << lastgoodpoint.x << "," << lastgoodpoint.y << std::endl;
+			std::cout << "finalbadpt -  " << lastbadpoint.x << "," << lastbadpoint.y  << std::endl;
+		    }
+		}
+		samples->Append(pt);
+		j++;
+		//std::cout << "pt -  " << pt.x << "," << pt.y << "   2d dir - " << (pt.x - prev_pt.x) << "," << (pt.y - prev_pt.y) << std::endl;
+		prev_pt = pt;
+		prev_dir = dir;
+		has_prev_dir = true;
+	    } else {
+		//std::cout << "didn't find point on surface" << std::endl;
+		j++;
+	    }
+	}
+	if (toUV(*data, pt, knots[i], -PBC_FROM_OFFSET)) {
+	    if (surf->IsClosed(0) && (NEAR_EQUAL(pt.x, dom[0].m_t[0], PBC_TOL) || NEAR_EQUAL(pt.x, dom[0].m_t[1], PBC_TOL))) {
+		if (fabs(prev_pt.x - dom[0].m_t[0]) < fabs(prev_pt.x - dom[0].m_t[1])) {
+		    pt.x = dom[0].m_t[0];
+		} else {
+		    pt.x = dom[0].m_t[1];
+		}
+	    }
+	    if (surf->IsClosed(1) && (NEAR_EQUAL(pt.y, dom[1].m_t[0], PBC_TOL) || NEAR_EQUAL(pt.y, dom[1].m_t[1], PBC_TOL))) {
+		if (fabs(prev_pt.y - dom[1].m_t[0]) < fabs(prev_pt.y - dom[1].m_t[1])) {
+		    pt.y = dom[1].m_t[0];
+		} else {
+		    pt.y = dom[1].m_t[1];
+		}
+	    }
+	    samples->Append(pt);
+	    //std::cout << "pt -  " << pt.x << "," << pt.y << "   2d dir - " << (pt.x - prev_pt.x) << "," << (pt.y - prev_pt.y) << std::endl;
+	    prev_pt = pt;
+	    if (has_dir) {
+		prev_dir = dir;
+		has_prev_dir = true;
+	    }
+	} else {
+	    //std::cout << "didn't find point on surface" << std::endl;
+	}
+    }
+
     delete [] knots;
     if (samples != NULL)
 	data->segments.push_back(samples);
