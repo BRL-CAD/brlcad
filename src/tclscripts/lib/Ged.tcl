@@ -178,6 +178,7 @@ package provide cadwidgets::Ged 1.0
 	method dbfind {args}
 	method dbip {args}
 	method dbot_dump {args}
+	method dbversion {args}
 	method decompose {args}
 	method delay {args}
 	method dir2ae {args}
@@ -559,7 +560,9 @@ package provide cadwidgets::Ged 1.0
 	method solids {args}
 	method solids_on_ray {args}
 	method summary {args}
+	method sv {args}
 	method sync {args}
+	method t {args}
 	method tire {args}
 	method title {args}
 	method tol {args}
@@ -575,7 +578,6 @@ package provide cadwidgets::Ged 1.0
 	method units {args}
 	method v2m_point {args}
 	method vdraw {args}
-	method version {args}
 	method view {args}
 	method view2model {args}
 	method view2screen {args}
@@ -583,6 +585,7 @@ package provide cadwidgets::Ged 1.0
 	method view_callback {args}
 	method view_callback_all {args}
 	method viewdir {args}
+	method viewsize {args}
 	method vmake {args}
 	method vnirt {args}
 	method voxelize {args}
@@ -1395,6 +1398,10 @@ package provide cadwidgets::Ged 1.0
     eval $mGed dbot_dump $args
 }
 
+::itcl::body cadwidgets::Ged::dbversion {args} {
+    eval $mGed version $args
+}
+
 ::itcl::body cadwidgets::Ged::decompose {args} {
     eval $mGed decompose $args
 }
@@ -1874,9 +1881,7 @@ package provide cadwidgets::Ged 1.0
     return
 }
 
-#
-# Not yet handling perspective.
-#
+
 ::itcl::body cadwidgets::Ged::make_image {_port _w _n _viewsize _orientation _eye_pt _perspective _bgcolor _ecolor _necolor _occmode _gamma _color_objects _ghost_objects _edge_objects} {
     global tcl_platform
     global env
@@ -2152,7 +2157,7 @@ package provide cadwidgets::Ged 1.0
 }
 
 ::itcl::body cadwidgets::Ged::orientation {args} {
-    eval orient $itk_component($itk_option(-pane)) $args
+    eval $mGed orientation $itk_component($itk_option(-pane)) $args
 }
 
 ::itcl::body cadwidgets::Ged::orotate {args} {
@@ -3392,8 +3397,16 @@ package provide cadwidgets::Ged 1.0
     eval $mGed summary $args
 }
 
+::itcl::body cadwidgets::Ged::sv {args} {
+    eval $mGed sv $itk_component($itk_option(-pane)) $args
+}
+
 ::itcl::body cadwidgets::Ged::sync {args} {
     eval $mGed sync $args
+}
+
+::itcl::body cadwidgets::Ged::t {args} {
+    eval $mGed t $args
 }
 
 ::itcl::body cadwidgets::Ged::tire {args} {
@@ -3458,10 +3471,6 @@ package provide cadwidgets::Ged 1.0
     eval $mGed vdraw $args
 }
 
-::itcl::body cadwidgets::Ged::version {args} {
-    eval $mGed version $args
-}
-
 ::itcl::body cadwidgets::Ged::view {args} {
     eval $mGed view $itk_component($itk_option(-pane)) $args
 }
@@ -3494,6 +3503,10 @@ package provide cadwidgets::Ged 1.0
 
 ::itcl::body cadwidgets::Ged::viewdir {args} {
     eval $mGed viewdir $itk_component($itk_option(-pane)) $args
+}
+
+::itcl::body cadwidgets::Ged::viewsize {args} {
+    eval size $args
 }
 
 ::itcl::body cadwidgets::Ged::vmake {args} {
@@ -3541,7 +3554,7 @@ package provide cadwidgets::Ged 1.0
 }
 
 ::itcl::body cadwidgets::Ged::x {args} {
-    eval report $args
+    eval $mGed x $args
 }
 
 ::itcl::body cadwidgets::Ged::xpush {args} {
@@ -5627,6 +5640,7 @@ package provide cadwidgets::Ged 1.0
     $help add dbfind		{{[-s] <objects>} {find all references to objects}}
     $help add dbip		{{} {get dbip}}
     $help add dbot_dump	{{[-b] [-m directory] [-o file] [-t dxf|obj|sat|stl] [-u units] \n} {dump the displayed bots}}
+    $help add dbversion		{{} {return the database version}}
     $help add decompose		{{nmg_solid [prefix]}	{decompose nmg_solid into maximally connected shells}}
     $help add delay		{{sec usec} {delay processing for the specified amount of time}}
     $help add dir2ae		{{az el} {returns a direction vector given the azimuth and elevation}}
@@ -5772,7 +5786,9 @@ package provide cadwidgets::Ged 1.0
     $help add snap_view		{{vx vy} {snap the view to grid}}
     $help add solids		{{file object(s)} {returns an ascii summary of solids}}
     $help add summary		{{[s r g]}	{count/list solid/reg/groups}}
+    $help add sv		{{"x y"} {slew the view}}
     $help add sync		{{} {sync the in memory database to disk}}
+    $help add t 		{{[-a -c -r -s]} {table of contents}}
     $help add tire		{{[options] tire_top} {create a tire}}
     $help add title		{{?string?} {print or change the title}}
     $help add tol		{{"[abs #] [rel #] [norm #] [dist #] [perp #]"} {show/set tessellation and calculation tolerances}}
@@ -5784,10 +5800,10 @@ package provide cadwidgets::Ged 1.0
     $help add units		{{[mm|cm|m|in|ft|...]}	{change units}}
     $help add v2m_point		{{x y z} {convert xyz in view space to xyz in model space}}
     $help add vdraw		{{write|insert|delete|read|length|show [args]} {vector drawing (cnuzman)}}
-    $help add version		{{} {return the database version}}
     $help add view		{{quat|ypr|aet|center|eye|size [args]} {get/set view parameters}}
     $help add view2model	{{} {returns the view to model matrix}}
     $help add viewDir		{{[-i]} {return the view direction}}
+    $help add viewsize		{{vsize} {set/get the view size}}
     $help add vmake		{{pname ptype} {make a primitive of ptype and size it according to the view}}
     $help add vnirt		{{options vX vY} {trace a single ray aimed at (vX, vY) in view coordinates}}
     $help add wcodes		{{file object(s)} {write codes to file for the specified object(s)}}
