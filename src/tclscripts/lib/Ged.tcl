@@ -274,6 +274,27 @@ package provide cadwidgets::Ged 1.0
 	method make_image {_port _w _n _viewsize _orientation _eye_pt _perspective _bgcolor _ecolor _necolor _occmode _gamma _color_objects _ghost_objects _edge_objects}
 	method make_name {args}
 	method make_pnts {args}
+	method mat_mul {args}
+	method mat_inv {args}
+	method mat_trn {args}
+	method matXvec {args}
+	method mat4x3vec {args}
+	method mat4x3pnt {args}
+	method mat_ae {args}
+	method mat_ae_vec {args}
+	method mat_aet_vec {args}
+	method mat_angles {args}
+	method mat_eigen2x2 {args}
+	method mat_fromto {args}
+	method mat_xrot {args}
+	method mat_yrot {args}
+	method mat_zrot {args}
+	method mat_lookat {args}
+	method mat_vec_ortho {args}
+	method mat_vec_perp {args}
+	method mat_scale_about_pt {args}
+	method mat_xform_about_pt {args}
+	method mat_arb_rot {args}
 	method match {args}
 	method mater {args}
 	method mirror {args}
@@ -1183,7 +1204,7 @@ package provide cadwidgets::Ged 1.0
 }
 
 ::itcl::body cadwidgets::Ged::bn_noise_fbm {args} {
-    uplevel \#0 eval bn_noise_fbm $args
+    uplevel \#0 bn_noise_fbm $args
 }
 
 ::itcl::body cadwidgets::Ged::bn_noise_perlin {args} {
@@ -1191,11 +1212,11 @@ package provide cadwidgets::Ged 1.0
 }
 
 ::itcl::body cadwidgets::Ged::bn_noise_slice {args} {
-    uplevel \#0 eval bn_noise_slice $args
+    uplevel \#0 bn_noise_slice $args
 }
 
 ::itcl::body cadwidgets::Ged::bn_noise_turb {args} {
-    uplevel \#0 eval bn_noise_turb $args
+    uplevel \#0 bn_noise_turb $args
 }
 
 ::itcl::body cadwidgets::Ged::bn_random {args} {
@@ -1950,6 +1971,90 @@ package provide cadwidgets::Ged 1.0
 
 ::itcl::body cadwidgets::Ged::make_pnts {args} {
     eval $mGed make_pnts $args
+}
+
+::itcl::body cadwidgets::Ged::mat_mul {args} {
+    uplevel \#0 mat_mul $args
+}
+
+::itcl::body cadwidgets::Ged::mat_inv {args} {
+    uplevel \#0 mat_inv $args
+}
+
+::itcl::body cadwidgets::Ged::mat_trn {args} {
+    uplevel \#0 mat_trn $args
+}
+
+::itcl::body cadwidgets::Ged::matXvec {args} {
+    uplevel \#0 matXvec $args
+}
+
+::itcl::body cadwidgets::Ged::mat4x3vec {args} {
+    uplevel \#0 mat4x3vec $args
+}
+
+::itcl::body cadwidgets::Ged::mat4x3pnt {args} {
+    uplevel \#0 mat4x3pnt $args
+}
+
+::itcl::body cadwidgets::Ged::mat_ae {args} {
+    uplevel \#0 mat_ae $args
+}
+
+::itcl::body cadwidgets::Ged::mat_ae_vec {args} {
+    uplevel \#0 mat_ae_vec $args
+}
+
+::itcl::body cadwidgets::Ged::mat_aet_vec {args} {
+    uplevel \#0 mat_aet_vec $args
+}
+
+::itcl::body cadwidgets::Ged::mat_angles {args} {
+    uplevel \#0 mat_angles $args
+}
+
+::itcl::body cadwidgets::Ged::mat_eigen2x2 {args} {
+    uplevel \#0 mat_eigen2x2 $args
+}
+
+::itcl::body cadwidgets::Ged::mat_fromto {args} {
+    uplevel \#0 mat_fromto $args
+}
+
+::itcl::body cadwidgets::Ged::mat_xrot {args} {
+    uplevel \#0 mat_xrot $args
+}
+
+::itcl::body cadwidgets::Ged::mat_yrot {args} {
+    uplevel \#0 mat_yrot $args
+}
+
+::itcl::body cadwidgets::Ged::mat_zrot {args} {
+    uplevel \#0 mat_zrot $args
+}
+
+::itcl::body cadwidgets::Ged::mat_lookat {args} {
+    uplevel \#0 mat_lookat $args
+}
+
+::itcl::body cadwidgets::Ged::mat_vec_ortho {args} {
+    uplevel \#0 mat_vec_ortho $args
+}
+
+::itcl::body cadwidgets::Ged::mat_vec_perp {args} {
+    uplevel \#0 mat_vec_perp $args
+}
+
+::itcl::body cadwidgets::Ged::mat_scale_about_pt {args} {
+    uplevel \#0 mat_scale_about_pt $args
+}
+
+::itcl::body cadwidgets::Ged::mat_xform_about_pt {args} {
+    uplevel \#0 mat_xform_about_pt $args
+}
+
+::itcl::body cadwidgets::Ged::mat_arb_rot {args} {
+    uplevel \#0 mat_arb_rot $args
 }
 
 ::itcl::body cadwidgets::Ged::match {args} {
@@ -5765,6 +5870,27 @@ package provide cadwidgets::Ged 1.0
     $help add make_name		{{template | -s [num]} {make a unique name}}
     $help add make_pnts		{{object_name path_and_filename file_format units_or_conv_factor default_diameter} {creates a point-cloud}}
     $help add match		{{exp} {returns all database objects matching the given expression}}
+    $help add mat_mul		{{matA matB} {multiply matB by matA}}
+    $help add mat_inv		{{mat} {find the inverse of mat}}
+    $help add mat_trn		{{mat} {find the transpose of mat}}
+    $help add matXvec		{{mat hvec} {multiply hvec by mat}}
+    $help add mat4x3vec		{{mat vec} {multiply vec by mat}}
+    $help add mat4x3pnt		{{mat pnt} {multiply pnt by mat}}
+    $help add mat_ae		{{az el} {returns the matrix for az,el}}
+    $help add mat_ae_vec	{{vec} {returns the az,el for vec}}
+    $help add mat_aet_vec	{{vec_ae vec_twist accuracy} {returns the az,el,tw}}
+    $help add mat_angles	{{a b c} {returns a rotation matrix}}
+    $help add mat_eigen2x2	{{a b c} {}}
+    $help add mat_fromto	{{vecFrom vecTo} {}}
+    $help add mat_xrot		{{sina cosa} {returns a rotation matrix}}
+    $help add mat_yrot		{{sina cosa} {returns a rotation matrix}}
+    $help add mat_zrot		{{sina cosa} {returns a rotation matrix}}
+    $help add mat_lookat	{{dir yflip} {}}
+    $help add mat_vec_ortho	{{vec} {returns a vector orthogonal to vec}}
+    $help add mat_vec_perp	{{vec} {returns a vector perpandicular to vec}}
+    $help add mat_scale_about_pt {{pt scale} {}}
+    $help add mat_xform_about_pt {{xform pt} {}}
+    $help add mat_arb_rot	{{pt dir angle} {}}
     $help add mater		{{region shader R G B inherit} {modify region's material information}}
     $help add mirror		{{[-p point] [-d dir] [-x] [-y] [-z] [-o offset] old new}	{mirror object along the specified axis}}
     $help add model2view	{{} {returns the model2view matrix}}
