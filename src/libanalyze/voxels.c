@@ -151,6 +151,7 @@ voxelize(struct rt_i *rtip, fastf_t sizeVoxel[3], int levelOfDetail, void (*crea
     int            numVoxel[3];
     int            yMin;
     int            zMin;
+	int            i, j, k, rayNum;
     fastf_t        *voxelArray;
     fastf_t        rayTraceDistance;
     fastf_t        effectiveDistance;
@@ -192,8 +193,8 @@ voxelize(struct rt_i *rtip, fastf_t sizeVoxel[3], int levelOfDetail, void (*crea
     effectiveDistance = levelOfDetail * levelOfDetail * sizeVoxel[0];
 
     /* start shooting */
-    for (int i = 0; i < numVoxel[2]; ++i) {
-	for (int j = 0; j < numVoxel[1]; ++j) {
+    for (i = 0; i < numVoxel[2]; ++i) {
+	for (j = 0; j < numVoxel[1]; ++j) {
 	    struct application ap;
 
 	    RT_APPLICATION_INIT(&ap);
@@ -207,8 +208,8 @@ voxelize(struct rt_i *rtip, fastf_t sizeVoxel[3], int levelOfDetail, void (*crea
 
 	    voxelHits.fillDistances = voxelArray;
 
-	    for (int rayNum = 0; rayNum < levelOfDetail; ++rayNum) {
-		for (int k = 0; k < levelOfDetail; ++k) {
+	    for (rayNum = 0; rayNum < levelOfDetail; ++rayNum) {
+		for (k = 0; k < levelOfDetail; ++k) {
 
 		    /* ray is hit through evenly spaced points of the unit sized voxels */
 		    VSET(ap.a_ray.r_pt, (rtip->mdl_min)[0] - 1.,
@@ -219,7 +220,7 @@ voxelize(struct rt_i *rtip, fastf_t sizeVoxel[3], int levelOfDetail, void (*crea
 	    }
 
 	    /* output results via a call-back supplied by user*/
-	    for (int k = 0; k < numVoxel[0]; ++k) {
+	    for (k = 0; k < numVoxel[0]; ++k) {
 		if(voxelHits.regionList[k].regionName == NULL)
 		    /* an air voxel */
 		    create_boxes(callBackData, k, j, i, NULL, 0.);
