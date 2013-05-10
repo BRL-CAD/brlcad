@@ -31,7 +31,7 @@
 #include "common.h"
 
 #include <math.h>
-#include <stdio.h>
+#include "bio.h"
 
 #include "bu.h"
 #include "bn.h"
@@ -39,7 +39,7 @@
 #include "vmath.h"
 
 
-#define OPT_STR "ro:"
+#define OPT_STR "ro:h?"
 
 
 int full_print = 0;
@@ -47,6 +47,9 @@ int full_print = 0;
 /* intentionally double for scan */
 double offset[3];
 
+void usage(void){
+	fprintf(stderr,"Usage: anim_offset -o # # # [-r] in.table out.table\n");
+}
 
 int
 get_args(int argc, char **argv)
@@ -88,8 +91,15 @@ main(int argc, char *argv[])
     VSETALL(point, 0.0);
     VSETALL(zero, 0.0);
 
-    (void) get_args(argc, argv);
+    if (argc == 1 && isatty(fileno(stdin)) && isatty(fileno(stdout))){
+	usage();
+    	return 0;
+    }
 
+    if (!get_args(argc, argv)){
+	usage();
+	return 0;
+    }
 
     while (1) {
 	/*read line from table */
