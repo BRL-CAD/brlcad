@@ -39,8 +39,8 @@
 
 #include "common.h"
 
-#include <stdio.h>
 #include <math.h>
+#include <bio.h>
 
 #include "bu.h"
 #include "bn.h"
@@ -48,7 +48,7 @@
 #include "anim.h"
 
 
-#define OPT_STR "yzqr"
+#define OPT_STR "yzqrh?"
 
 #define YPR 0
 #define XYZ 1
@@ -65,6 +65,9 @@
 int mode;
 int units;
 
+void usage(void){
+	fprintf(stderr,"Usage: anim_keyread [-y|z] key.file key.table\n");
+}
 
 int
 get_args(int argc, char **argv)
@@ -90,7 +93,6 @@ get_args(int argc, char **argv)
 		units = RADIANS;
 		break;
 	    default:
-		fprintf(stderr, "Unknown option: -%c\n", c);
 		return 0;
 	}
     }
@@ -110,8 +112,15 @@ main(int argc, char *argv[])
     double eyept[3] = {0.0};
     double scan[4];
 
-    if (!get_args(argc, argv))
-	fprintf(stderr, "anim_keyread: get_args error\n");
+    if (argc == 1 && isatty(fileno(stdin)) && isatty(fileno(stdout))){
+	usage();
+    	return 0;
+    }
+
+    if (!get_args(argc, argv)){
+	usage();
+	return 0;
+    }
 
     while (!feof(stdin)) {
 	/* read one keyframe */
