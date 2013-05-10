@@ -33,16 +33,16 @@
 #include "common.h"
 
 #include <math.h>
-#include <stdio.h>
-#include <stdlib.h>
+#include "bio.h"
 
 #include "bu.h"
-#include "vmath.h"
+#include <stdlib.h>
 #include "anim.h"
+#include "vmath.h"
 
 
 #define MAXN 100
-#define OPT_STR "b:f:p:s:r"
+#define OPT_STR "b:f:p:s:rh?"
 
 #define PREP -1
 #define START 0
@@ -60,6 +60,9 @@ int print_int = 1;
 fastf_t magic_factor = 1.0;
 fastf_t desired_step = 0.1;
 
+void usage(void){
+	fprintf(stderr,"Usage: anim_fly [-f factor] [-r] [-p integer] [-b max_bank_angle] [-s step] in.table out.table\n");
+}
 
 /* determine the yaw of the given direction vector */
 fastf_t
@@ -205,7 +208,6 @@ get_args(int argc, char **argv)
 		desired_step = scan; /* double to fastf_t */
 		break;
 	    default:
-		fprintf(stderr, "Unknown option: -%c\n", c);
 		return 0;
 	}
     }
@@ -227,8 +229,15 @@ main(int argc, char *argv[])
 
     yaw = pch = rll = 0.0;
 
-    if (!get_args(argc, argv))
-	fprintf(stderr, "Anim_fly: Get_args error\n");
+    if (argc == 1 && isatty(fileno(stdin)) && isatty(fileno(stdout))){
+	usage();
+    	return 0;
+    }
+
+    if (!get_args(argc, argv)){
+	usage();
+	return 0;
+    }
 
     /* read first two lines of table to determine the time step used */
     /* (a constant time step is assumed throughout the rest of the file)*/
