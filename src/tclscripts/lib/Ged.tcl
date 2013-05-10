@@ -6216,7 +6216,7 @@ package provide cadwidgets::Ged 1.0
     $help add view2model	{{} {returns the view to model matrix}}
     $help add view2model_lu	{{x y z} {convert view xyz to model coordinates (local units)}}
     $help add view2model_vec	{{x y z} {convert view xyz to model coordinates (vec)}}
-    $help add viewDir		{{[-i]} {return the view direction}}
+    $help add viewdir		{{[-i]} {return the view direction}}
     $help add viewsize		{{vsize} {set/get the view size}}
     $help add vjoin1		{{} {}}
     $help add vmake		{{pname ptype} {make a primitive of ptype and size it according to the view}}
