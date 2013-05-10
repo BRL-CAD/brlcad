@@ -410,7 +410,9 @@ ged_nirt(struct ged *gedp, int argc, const char *argv[])
 	    ++i;
 	} else {
 	    /* append other arguments (i.e. options, file and obj(s)) */
+	    bu_vls_strcat(&line1, "\"");
 	    bu_vls_strcat(&line1, gedp->ged_gdp->gd_rt_cmd[i]);
+	    bu_vls_strcat(&line1, "\"");
 	    bu_vls_strcat(&line1, " ");
 	}
     }
