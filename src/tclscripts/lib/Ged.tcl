@@ -312,7 +312,9 @@ package provide cadwidgets::Ged 1.0
 	method match {args}
 	method mater {args}
 	method mirror {args}
+	method model2grid_lu {args}
 	method model2view {args}
+	method model2view_lu {args}
 	method model_axes {args}
 	method edit_motion_delta_callback {args}
 	method edit_motion_delta_callback_all {args}
@@ -2154,8 +2156,16 @@ package provide cadwidgets::Ged 1.0
     eval $mGed mirror $args
 }
 
+::itcl::body cadwidgets::Ged::model2grid_lu {args} {
+    eval $mGed model2grid_lu $itk_component($itk_option(-pane)) $args
+}
+
 ::itcl::body cadwidgets::Ged::model2view {args} {
     eval $mGed model2view $itk_component($itk_option(-pane)) $args
+}
+
+::itcl::body cadwidgets::Ged::model2view_lu {args} {
+    eval $mGed model2view_lu $itk_component($itk_option(-pane)) $args
 }
 
 ::itcl::body cadwidgets::Ged::model_axes {args} {
@@ -6052,7 +6062,9 @@ package provide cadwidgets::Ged 1.0
     $help add mat_arb_rot	{{pt dir angle} {returns a rotation matrix}}
     $help add mater		{{region shader R G B inherit} {modify region's material information}}
     $help add mirror		{{[-p point] [-d dir] [-x] [-y] [-z] [-o offset] old new}	{mirror object along the specified axis}}
+    $help add model2grid_lu	{{x y z} {convert model xyz to grid coordinates (local units)}}
     $help add model2view	{{} {returns the model2view matrix}}
+    $help add model2view_lu	{{x y z} {convert model xyz to view coordinates (local units)}}
     $help add move_arb_edge	{{arb edge pt} {move an arb's edge through pt}}
     $help add move_arb_face	{{arb face pt} {move an arb's face through pt}}
     $help add mv		{{old new} {rename object}}
