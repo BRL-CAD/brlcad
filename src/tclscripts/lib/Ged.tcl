@@ -196,6 +196,11 @@ package provide cadwidgets::Ged 1.0
 	method dbip {args}
 	method dbot_dump {args}
 	method dbversion {args}
+	method debugbu {args}
+	method debugdir {args}
+	method debuglib {args}
+	method debugmem {args}
+	method debugnmg {args}
 	method decompose {args}
 	method delay {args}
 	method dir2ae {args}
@@ -1525,6 +1530,26 @@ package provide cadwidgets::Ged 1.0
 
 ::itcl::body cadwidgets::Ged::dbversion {args} {
     eval $mGed version $args
+}
+
+::itcl::body cadwidgets::Ged::debugbu {args} {
+    eval $mGed debugbu $args
+}
+
+::itcl::body cadwidgets::Ged::debugdir {args} {
+    eval $mGed debugdir $args
+}
+
+::itcl::body cadwidgets::Ged::debuglib {args} {
+    eval $mGed debuglib $args
+}
+
+::itcl::body cadwidgets::Ged::debugmem {args} {
+    eval $mGed debugmem $args
+}
+
+::itcl::body cadwidgets::Ged::debugnmg {args} {
+    eval $mGed debugnmg $args
 }
 
 ::itcl::body cadwidgets::Ged::decompose {args} {
@@ -5915,6 +5940,11 @@ package provide cadwidgets::Ged 1.0
     $help add dbip		{{} {get dbip}}
     $help add dbot_dump	{{[-b] [-m directory] [-o file] [-t dxf|obj|sat|stl] [-u units] \n} {dump the displayed bots}}
     $help add dbversion		{{} {return the database version}}
+    $help add debugbu		{{[hex_code]} {activate libbu debugging}}
+    $help add debugdir		{{} {dump of database directory}}
+    $help add debuglib		{{[hex_code]} {activate librt debugging}}
+    $help add debugmem		{{[hex_code]} {activate memory debugging}}
+    $help add debugnmg		{{[hex_code]} {activate nmg debugging}}
     $help add decompose		{{nmg_solid [prefix]}	{decompose nmg_solid into maximally connected shells}}
     $help add delay		{{sec usec} {delay processing for the specified amount of time}}
     $help add dir2ae		{{az el} {returns a direction vector given the azimuth and elevation}}
