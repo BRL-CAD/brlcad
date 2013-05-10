@@ -39,7 +39,10 @@
 
 /* generic entity name */
 #define GENERIC_NAME "rhino"
-
+#define Usage "Usage: 3dm-g [-v vmode] [-r] [-u] -o output_file.g input_file.3dm\n"
+/*  Did not use THIS define; some options aren't fully implemented:
+  #define Usage "Usage: 3dm-g [-d] [-s scalefactor] [-t tolerance] [-v vmode] [-r] [-u] -o output_file.g input_file.3dm\n"
+*/
 
 /* typedefs and global containers for building layer hierarchy */
 typedef std::map< std::string, std::string> STR_STR_MAP;
@@ -231,7 +234,7 @@ main(int argc, char** argv)
     ON_TextLog* dump = &dump_to_stdout;
 
     int c;
-    while ((c = bu_getopt(argc, argv, "o:dv:t:s:ru")) != -1) {
+    while ((c = bu_getopt(argc, argv, "o:dv:t:s:ruh?")) != -1) {
 	switch (c) {
 	    case 's':	/* scale factor */
 		break;
@@ -252,16 +255,17 @@ main(int argc, char** argv)
 		break;
 	    case 'u':
 		use_uuidnames = 1;
-	    default:
 		break;
+	    default:
+		dump->Print(Usage);
+		return 1;
 	}
     }
     argc -= bu_optind;
     argv += bu_optind;
     inputFileName  = argv[0];
     if (outFileName == NULL) {
-	dump->Print("\n** Error **\n Need an output file to continue. Syntax: \n");
-	dump->Print(" ./3dm-g -o <output file>.g <input file>.3dm \n** Error **\n\n");
+	dump->Print(Usage);
 	return 1;
 	// strip file suffix and add .g
     }
@@ -328,7 +332,7 @@ main(int argc, char** argv)
 	myAttributes.Dump(*dump); // On debug print
 	dump->Print("\n");
 
-	if (use_uuidnames == 1) {
+	if (use_uuidnames) {
 	    char uuidstring[37];
 	    ON_UuidToString(myAttributes.m_uuid, uuidstring);
 	    ON_String constr(uuidstring);
