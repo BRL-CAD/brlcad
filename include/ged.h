@@ -973,6 +973,7 @@ GED_EXPORT extern int ged_debuglib(struct ged *gedp, int argc, const char *argv[
  * Provides user-level access to LIBBU's bu_prmem()
  */
 GED_EXPORT extern int ged_debugmem(struct ged *gedp, int argc, const char *argv[]);
+GED_EXPORT extern int ged_memprint(struct ged *gedp, int argc, const char *argv[]);
 
 /**
  * Set/get librt's NMG debug bit vector
