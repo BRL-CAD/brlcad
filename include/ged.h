@@ -1548,6 +1548,11 @@ GED_EXPORT extern int ged_png(struct ged *gedp, int argc, const char *argv[]);
 GED_EXPORT extern int ged_screen_grab(struct ged *gedp, int argc, const char *argv[]);
 
 /**
+ * Write out polygons (binary) of the currently displayed geometry.
+ */
+GED_EXPORT extern int ged_polybinout(struct ged *gedp, int argc, const char *argv[]);
+
+/**
  * Set point of view
  */
 GED_EXPORT extern int ged_pov(struct ged *gedp, int argc, const char *argv[]);
