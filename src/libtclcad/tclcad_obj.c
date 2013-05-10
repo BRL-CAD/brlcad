@@ -1160,6 +1160,7 @@ static struct to_cmdtab to_cmds[] = {
     {"poly_cont_build_end",	"y", TO_UNLIMITED, to_poly_cont_build_end, GED_FUNC_PTR_NULL},
     {"poly_ell_mode",	"x y", TO_UNLIMITED, to_poly_ell_mode, GED_FUNC_PTR_NULL},
     {"poly_rect_mode",	"x y [s]", TO_UNLIMITED, to_poly_rect_mode, GED_FUNC_PTR_NULL},
+    {"polybinout",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_polybinout},
     {"pov",	"center quat scale eye_pos perspective", 7, to_view_func_plus, ged_pmat},
     {"prcolor",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_prcolor},
     {"prefix",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_prefix},

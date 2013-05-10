@@ -525,6 +525,7 @@ package provide cadwidgets::Ged 1.0
 	method pmodel2view {args}
 	method png {args}
 	method pngwf {args}
+	method polybinout {args}
 	method pov {args}
 	method prcolor {args}
 	method prefix {args}
@@ -3283,6 +3284,10 @@ package provide cadwidgets::Ged 1.0
 
 ::itcl::body cadwidgets::Ged::pngwf {args} {
     eval $mGed pngwf $itk_component($itk_option(-pane)) $args
+}
+
+::itcl::body cadwidgets::Ged::polybinout {args} {
+    eval $mGed polybinout $args
 }
 
 ::itcl::body cadwidgets::Ged::pov {args} {
@@ -6128,6 +6133,7 @@ package provide cadwidgets::Ged 1.0
     $help add pmat		{{} {get the perspective matrix}}
     $help add pmodel2view	{{} {get the pmodel2view matrix}}
     $help add png		{{[-c r/g/b] [-s size] file} {creates a png file of the current view (wireframe only)}}
+    $help add polybinout	{{file}	{write out polygons (binary) of the currently displayed geometry}}
     $help add pov		{{args}	{experimental:  set point-of-view}}
     $help add prcolor		{{} {print color and material table}}
     $help add prefix		{{new_prefix object(s)} {prefix each occurrence of object name(s)}}
