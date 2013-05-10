@@ -246,6 +246,8 @@ package provide cadwidgets::Ged 1.0
 	method gqa {args}
 	method graph {args}
 	method grid {args}
+	method grid2model_lu {args}
+	method grid2view_lu {args}
 	method handle_expose {args}
 	method hide {args}
 	method how {args}
@@ -1823,6 +1825,14 @@ package provide cadwidgets::Ged 1.0
     foreach dm {ur ul ll lr} {
 	eval $mGed grid $itk_component($dm) $args
     }
+}
+
+::itcl::body cadwidgets::Ged::grid2model_lu {args} {
+    eval $mGed grid2model_lu $itk_component($itk_option(-pane)) $args 
+}
+
+::itcl::body cadwidgets::Ged::grid2view_lu {args} {
+    eval $mGed grid2view_lu $itk_component($itk_option(-pane)) $args
 }
 
 ::itcl::body cadwidgets::Ged::handle_expose {args} {
@@ -6004,6 +6014,8 @@ package provide cadwidgets::Ged 1.0
     $help add gqa		{{options object(s)} {perform quantitative analysis checks on geometry}}
     $help add graph             {{} {query and manipulate properties of the graph that corresponds to the currently opened .g database}}
     $help add grid		{{color|draw|help|mrh|mrv|rh|rv|snap|vars|vsnap [args]} {get/set grid attributes}}
+    $help add grid2model_lu	{{x y} {convert grid xy to model coordinates (local units)}}
+    $help add grid2view_lu	{{x y} {convert grid xy to view coordinates (local units)}}
     $help add help		{{cmd} {returns a help string for cmd}}
     $help add hide		{{[objects]} {set the "hidden" flag for the specified objects so they do not appear in a "t" or "ls" command output}}
     $help add how		{{obj} {returns how an object is being displayed}}
