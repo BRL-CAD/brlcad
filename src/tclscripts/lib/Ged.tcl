@@ -633,7 +633,10 @@ package provide cadwidgets::Ged 1.0
 	method v2m_point {args}
 	method vdraw {args}
 	method view {args}
+	method view2grid_lu {args}
 	method view2model {args}
+	method view2model_lu {args}
+	method view2model_vec {args}
 	method view2screen {args}
 	method view_axes {args}
 	method view_callback {args}
@@ -3753,8 +3756,20 @@ package provide cadwidgets::Ged 1.0
     eval $mGed view $itk_component($itk_option(-pane)) $args
 }
 
+::itcl::body cadwidgets::Ged::view2grid_lu {args} {
+    eval $mGed view2grid_lu $itk_component($itk_option(-pane)) $args
+}
+
 ::itcl::body cadwidgets::Ged::view2model {args} {
     eval $mGed view2model $itk_component($itk_option(-pane)) $args
+}
+
+::itcl::body cadwidgets::Ged::view2model_lu {args} {
+    eval $mGed view2model_lu $itk_component($itk_option(-pane)) $args
+}
+
+::itcl::body cadwidgets::Ged::view2model_vec {args} {
+    eval $mGed view2model_vec $itk_component($itk_option(-pane)) $args
 }
 
 ::itcl::body cadwidgets::Ged::view2screen {args} {
@@ -6137,7 +6152,10 @@ package provide cadwidgets::Ged 1.0
     $help add vblend		{{} {}}
     $help add vdraw		{{write|insert|delete|read|length|show [args]} {vector drawing (cnuzman)}}
     $help add view		{{quat|ypr|aet|center|eye|size [args]} {get/set view parameters}}
+    $help add view2grid_lu	{{x y z} {convert view xyz to grid coordinates (local units)}}
     $help add view2model	{{} {returns the view to model matrix}}
+    $help add view2model_lu	{{x y z} {convert view xyz to model coordinates (local units)}}
+    $help add view2model_vec	{{x y z} {convert view xyz to model coordinates (vec)}}
     $help add viewDir		{{[-i]} {return the view direction}}
     $help add viewsize		{{vsize} {set/get the view size}}
     $help add vjoin1		{{} {}}

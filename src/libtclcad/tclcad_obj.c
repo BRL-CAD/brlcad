@@ -856,7 +856,14 @@ HIDDEN int to_view_func_common(struct ged *gedp,
 			       ged_func_ptr func,
 			       const char *usage,
 			       int maxargs,
-			       int cflag);
+			       int cflag,
+			       int rflag);
+HIDDEN int to_view_func_less(struct ged *gedp,
+			     int argc,
+			     const char *argv[],
+			     ged_func_ptr func,
+			     const char *usage,
+			     int maxargs);
 HIDDEN int to_view_func_plus(struct ged *gedp,
 			     int argc,
 			     const char *argv[],
@@ -1251,8 +1258,11 @@ static struct to_cmdtab to_cmds[] = {
     {"view_axes",	"vname [args]", TO_UNLIMITED, to_view_axes, GED_FUNC_PTR_NULL},
     {"view_callback",	"vname [args]", TO_UNLIMITED, to_view_callback, GED_FUNC_PTR_NULL},
     {"view_win_size",	"[s] | [x y]", 4, to_view_win_size, GED_FUNC_PTR_NULL},
-    {"view2model",	"vname", 2, to_view_func, ged_view2model},
-    {"view2screen",	"vname", 2, to_view2screen, GED_FUNC_PTR_NULL},
+    {"view2grid_lu",	"x y z", 5, to_view_func_less, ged_view2grid_lu},
+    {"view2model",	"", 2, to_view_func_less, ged_view2model},
+    {"view2model_lu",	"x y z", 5, to_view_func_less, ged_view2model_lu},
+    {"view2model_vec",	"x y z", 5, to_view_func_less, ged_view2model_vec},
+    {"view2screen",	"", 2, to_view2screen, GED_FUNC_PTR_NULL},
     {"viewdir",	"[-i]", 3, to_view_func, ged_viewdir},
     {"vmake",	"pname ptype", TO_UNLIMITED, to_vmake, GED_FUNC_PTR_NULL},
     {"vnirt",	"[args]", TO_UNLIMITED, to_view_func, ged_vnirt},
@@ -12571,7 +12581,7 @@ to_view_func(struct ged *gedp,
 	     const char *usage,
 	     int maxargs)
 {
-    return to_view_func_common(gedp, argc, argv, func, usage, maxargs, 0);
+    return to_view_func_common(gedp, argc, argv, func, usage, maxargs, 0, 1);
 }
 
 HIDDEN int
@@ -12581,7 +12591,8 @@ to_view_func_common(struct ged *gedp,
 		    ged_func_ptr func,
 		    const char *usage,
 		    int maxargs,
-		    int cflag)
+		    int cflag,
+		    int rflag)
 {
     register int i;
     int ret;
@@ -12652,10 +12663,22 @@ to_view_func_common(struct ged *gedp,
 	    bu_vls_free(&save_result);
 	}
 
-	to_refresh_view(gdvp);
+	if (rflag)
+	    to_refresh_view(gdvp);
     }
 
     return ret;
+}
+
+HIDDEN int
+to_view_func_less(struct ged *gedp,
+		  int argc,
+		  const char *argv[],
+		  ged_func_ptr func,
+		  const char *usage,
+		  int maxargs)
+{
+    return to_view_func_common(gedp, argc, argv, func, usage, maxargs, 1, 0);
 }
 
 HIDDEN int
@@ -12666,7 +12689,7 @@ to_view_func_plus(struct ged *gedp,
 		  const char *usage,
 		  int maxargs)
 {
-    return to_view_func_common(gedp, argc, argv, func, usage, maxargs, 1);
+    return to_view_func_common(gedp, argc, argv, func, usage, maxargs, 1, 1);
 }
 
 HIDDEN int
