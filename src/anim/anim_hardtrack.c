@@ -38,7 +38,7 @@
 #include "anim.h"
 
 
-#define OPT_STR "b:d:f:i:l:pr:w:sg:m:c"
+#define OPT_STR "b:d:f:i:l:pr:w:sg:m:ch?"
 
 #define NW num_wheels
 #define NEXT(i)	(i+1)%NW
@@ -111,6 +111,9 @@ int get_circumf;	/* flag: just return circumference of track */
 vect_t centroid, rcentroid;	/* alternate centroid and its reverse */
 mat_t m_axes, m_rev_axes;	/* matrices to and from alternate axes */
 
+void usage(void){
+	fprintf(stderr,"Usage: anim_hardtrack [-l num_linkslinkname] [-w wheelname] [options] wheelfile in.table out.script\n");
+}
 
 int
 get_link(fastf_t *pos, fastf_t *angle_p, fastf_t dist)
@@ -344,9 +347,14 @@ main(int argc, char *argv[])
     MAT_IDN(m_axes);
     MAT_IDN(m_rev_axes);
 
-    if (!get_args(argc, argv)) {
-	fprintf(stderr, "anim_hardtrack: argument error.\n");
-	return -1;
+    if (argc == 1 && isatty(fileno(stdin)) && isatty(fileno(stdout))){
+	usage();
+    	return 0;
+    }
+
+    if (!get_args(argc, argv)){
+	usage();
+	return 0;
     }
 
     if (axes || cent) {
