@@ -39,7 +39,7 @@
 #include "vmath.h"
 
 
-#define OPT_STR "f:yqv"
+#define OPT_STR "f:yqvh?"
 
 #define LOOKAT_SCRIPT 0
 #define LOOKAT_YPR 1
@@ -50,6 +50,10 @@ int frame = 0;
 int print_mode = LOOKAT_SCRIPT;
 int print_viewsize = 0;
 
+void usage(void){
+	fprintf(stderr,"Usage: anim_lookat [-f #] [-v] in.table out.script\n");
+	fprintf(stderr,"   or: anim_lookat - [y | q] [-v] in.table out.table\n");
+}
 
 int
 get_args(int argc, char **argv)
@@ -70,7 +74,6 @@ get_args(int argc, char **argv)
 		print_viewsize = 1;
 		break;
 	    default:
-		fprintf(stderr, "Unknown option: -%c\n", c);
 		return 0;
 	}
     }
@@ -95,8 +98,15 @@ main(int argc, char *argv[])
     VSETALL(look, 0.0);
     VSETALL(eye, 0.0);
 
-    if (argc > 1)
-	get_args(argc, argv);
+    if (argc == 1 && isatty(fileno(stdin)) && isatty(fileno(stdout))){
+	usage();
+    	return 0;
+    }
+
+    if (!get_args(argc, argv)){
+	usage();
+	return 0;
+    }
 
     VSET(norm, 0.0, 1.0, 0.0);
     while (!feof(stdin)) {
