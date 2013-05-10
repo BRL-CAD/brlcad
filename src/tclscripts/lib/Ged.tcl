@@ -369,6 +369,7 @@ package provide cadwidgets::Ged 1.0
 	method mvall {args}
 	method nirt {args}
 	method nmg_collapse {args}
+	method nmg_fix_normals {args}
 	method nmg_simplify {args}
 	method ocenter {args}
 	method open {args}
@@ -2409,6 +2410,10 @@ package provide cadwidgets::Ged 1.0
 
 ::itcl::body cadwidgets::Ged::nmg_collapse {args} {
     eval $mGed nmg_collapse $args
+}
+
+::itcl::body cadwidgets::Ged::nmg_fix_normals {args} {
+    eval $mGed nmg_fix_normals $args
 }
 
 ::itcl::body cadwidgets::Ged::nmg_simplify {args} {
@@ -6107,6 +6112,7 @@ package provide cadwidgets::Ged 1.0
     $help add mvall		{{old new} {rename object everywhere}}
     $help add nirt		{{[nirt(1) options] [x y z]}	{trace a single ray from current view}}
     $help add nmg_collapse    	{{nmg_solid new_solid maximum_error_distance [minimum_allowed_angle]}	{decimate NMG solid via edge collapse}}
+    $help add nmg_fix_normals  	{{nmg}	{fix NMG normals}}
     $help add nmg_simplify    	{{[arb|tgc|ell|poly] new_solid nmg_solid}	{simplify nmg_solid, if possible}}
     $help add ocenter 		{{obj [x y z]} {get/set center for obj}}
     $help add orient		{{x y z w} {set view direction from quaternion}}

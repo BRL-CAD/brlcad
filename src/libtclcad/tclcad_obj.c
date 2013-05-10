@@ -1129,6 +1129,7 @@ static struct to_cmdtab to_cmds[] = {
     {"new_view",	"vname type [args]", TO_UNLIMITED, to_new_view, GED_FUNC_PTR_NULL},
     {"nirt",	"[args]", TO_UNLIMITED, to_view_func, ged_nirt},
     {"nmg_collapse",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_nmg_collapse},
+    {"nmg_fix_normals",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_nmg_fix_normals},
     {"nmg_simplify",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_nmg_simplify},
     {"ocenter",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_ocenter},
     {"open",	(char *)0, TO_UNLIMITED, to_pass_through_and_refresh_func, ged_reopen},
