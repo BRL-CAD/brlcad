@@ -157,6 +157,15 @@ package provide cadwidgets::Ged 1.0
 	method bot_vertex_fuse {args}
 	method bounds {args}
 	method bounds_all {args}
+	method bu_units_conversion {args}
+	method bu_brlcad_data {args}
+	method bu_brlcad_dir {args}
+	method bu_brlcad_root {args}
+	method bu_mem_barriercheck {args}
+	method bu_prmem {args}
+	method bu_get_value_by_keyword {args}
+	method bu_rgb_to_hsv {args}
+	method bu_hsv_to_rgb {args}
 	method c {args}
 	method cat {args}
 	method center {args}
@@ -1309,6 +1318,42 @@ package provide cadwidgets::Ged 1.0
     foreach dm {ur ul ll lr} {
 	eval $mGed bounds $itk_component($dm) $args
     }
+}
+
+::itcl::body cadwidgets::Ged::bu_units_conversion {args} {
+    uplevel \#0 bu_units_conversion $args
+}
+
+::itcl::body cadwidgets::Ged::bu_brlcad_data {args} {
+    uplevel \#0 bu_brlcad_data $args
+}
+
+::itcl::body cadwidgets::Ged::bu_brlcad_dir {args} {
+    uplevel \#0 bu_brlcad_dir $args
+}
+
+::itcl::body cadwidgets::Ged::bu_brlcad_root {args} {
+    uplevel \#0 bu_brlcad_root $args
+}
+
+::itcl::body cadwidgets::Ged::bu_mem_barriercheck {args} {
+    uplevel \#0 bu_mem_barriercheck $args
+}
+
+::itcl::body cadwidgets::Ged::bu_prmem {args} {
+    uplevel \#0 bu_prmem $args
+}
+
+::itcl::body cadwidgets::Ged::bu_get_value_by_keyword {args} {
+    uplevel \#0 bu_get_value_by_keyword $args
+}
+
+::itcl::body cadwidgets::Ged::bu_rgb_to_hsv {args} {
+    uplevel \#0 bu_rgb_to_hsv $args
+}
+
+::itcl::body cadwidgets::Ged::bu_hsv_to_rgb {args} {
+    uplevel \#0 bu_hsv_to_rgb $args
 }
 
 ::itcl::body cadwidgets::Ged::c {args} {
@@ -5842,6 +5887,15 @@ package provide cadwidgets::Ged 1.0
     $help add bot_smooth	{{[-t norm_tolerance_degrees] new_bot old_bot} {calculate vertex normals for BOT primitive}}
     $help add bot_split		{{bot} {split the bot}}
     $help add bot_vertex_fuse	{{new_bot old_bot} {}}
+    $help add bu_units_conversion  {{units} {}}
+    $help add bu_brlcad_data	{{subdir} {}}
+    $help add bu_brlcad_dir	{{dirkey} {}}
+    $help add bu_brlcad_root	{{subdir} {}}
+    $help add bu_mem_barriercheck {{} {}}
+    $help add bu_prmem		{{title} {}}
+    $help add bu_get_value_by_keyword {{iwant list} {}}
+    $help add bu_rgb_to_hsv	{{rgb} {}}
+    $help add bu_hsv_to_rgb	{{hsv} {}}
     $help add c		{{[-gr] comb_name <boolean_expr>} {create or extend a combination using standard notation}}
     $help add cat	{{<objects>} {list attributes (brief)}}
     $help add center		{{["x y z"]} {set/get the view center}}
