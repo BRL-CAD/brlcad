@@ -223,6 +223,7 @@ package provide cadwidgets::Ged 1.0
 	method expand {args}
 	method eye {args}
 	method eye_pos {args}
+	method eye_pt {args}
 	method exists {args}
 	method faceplate {args}
 	method facetize {args}
@@ -249,6 +250,7 @@ package provide cadwidgets::Ged 1.0
 	method grid2model_lu {args}
 	method grid2view_lu {args}
 	method handle_expose {args}
+	method hdivide {args}
 	method hide {args}
 	method how {args}
 	method human {args}
@@ -1716,6 +1718,10 @@ package provide cadwidgets::Ged 1.0
     eval $mGed eye_pos $itk_component($itk_option(-pane)) $args
 }
 
+::itcl::body cadwidgets::Ged::eye_pt {args} {
+    eval $mGed eye_pt $itk_component($itk_option(-pane)) $args
+}
+
 ::itcl::body cadwidgets::Ged::exists {args} {
     eval $mGed exists $args
 }
@@ -1837,6 +1843,10 @@ package provide cadwidgets::Ged 1.0
 
 ::itcl::body cadwidgets::Ged::handle_expose {args} {
     eval $mGed handle_expose $args
+}
+
+::itcl::body cadwidgets::Ged::hdivide {args} {
+    uplevel \#0 hdivide $args
 }
 
 ::itcl::body cadwidgets::Ged::hide {args} {
@@ -5999,6 +6009,7 @@ package provide cadwidgets::Ged 1.0
     $help add expand		{{expression} {globs expression against database objects}}
     $help add eye		{{mx my mz} {set eye point to given model coordinates}}
     $help add eye_pos		{{mx my mz} {set eye position to given model coordinates}}
+    $help add eye_pt		{{mx my mz} {set eye point to given model coordinates}}
     $help add exists		{{object} {check for the existence of object}}
     $help add facetize		{{[-m] [-n] [-t] [-T] new_obj old_obj [old_obj2 old_obj3 ...]} {create a new bot object by facetizing the specified objects}}
     $help add voxelize		{{gg} {dfdf}}
@@ -6017,6 +6028,7 @@ package provide cadwidgets::Ged 1.0
     $help add grid2model_lu	{{x y} {convert grid xy to model coordinates (local units)}}
     $help add grid2view_lu	{{x y} {convert grid xy to view coordinates (local units)}}
     $help add help		{{cmd} {returns a help string for cmd}}
+    $help add hdivide		{{hvect} {}}
     $help add hide		{{[objects]} {set the "hidden" flag for the specified objects so they do not appear in a "t" or "ls" command output}}
     $help add how		{{obj} {returns how an object is being displayed}}
     $help add i			{{obj combination [operation]} {add instance of obj to comb}}
