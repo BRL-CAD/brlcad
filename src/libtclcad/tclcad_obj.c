@@ -1072,6 +1072,7 @@ static struct to_cmdtab to_cmds[] = {
     {"make_pnts",	(char *)0, TO_UNLIMITED, to_more_args_func, ged_make_pnts},
     {"match",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_match},
     {"mater",	(char *)0, TO_UNLIMITED, to_more_args_func, ged_mater},
+    {"memprint",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_memprint},
     {"mirror",	(char *)0, TO_UNLIMITED, to_mirror, GED_FUNC_PTR_NULL},
     {"model2grid_lu",	"x y z", 5, to_view_func_less, ged_model2grid_lu},
     {"model2view",	"vname", 2, to_view_func, ged_model2view},

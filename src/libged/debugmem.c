@@ -53,6 +53,27 @@ ged_debugmem(struct ged *gedp, int argc, const char *argv[])
 }
 
 
+int
+ged_memprint(struct ged *gedp, int argc, const char *argv[])
+{
+    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+
+    /* initialize result */
+    bu_vls_trunc(gedp->ged_result_str, 0);
+
+    if (argc != 1) {
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s", argv[0]);
+	return GED_ERROR;
+    }
+
+    bu_log("Database free-storage map:\n");
+    rt_memprint(&(gedp->ged_wdbp->dbip->dbi_freep));
+
+    return GED_OK;
+}
+
+
 /*
  * Local Variables:
  * tab-width: 8

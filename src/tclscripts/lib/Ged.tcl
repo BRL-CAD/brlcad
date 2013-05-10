@@ -240,6 +240,7 @@ package provide cadwidgets::Ged 1.0
 	method get_bot_edges {args}
 	method get_comb {args}
 	method get_eyemodel {args}
+	method get_fbserv {_fbtype _w _n}
 	method get_prev_ged_mouse {args}
 	method get_prev_mouse {args}
 	method get_type {args}
@@ -288,7 +289,6 @@ package provide cadwidgets::Ged 1.0
 	method m2v_point {args}
 	method make {args}
 	method make_bb {name args}
-	method get_fbserv {_fbtype _w _n}
 	method make_image_local {_bgcolor _ecolor _necolor _occmode _gamma _color_objects _ghost_objects _edge_objects}
 	method make_image {_port _w _n _viewsize _orientation _eye_pt _perspective _bgcolor _ecolor _necolor _occmode _gamma _color_objects _ghost_objects _edge_objects}
 	method make_name {args}
@@ -316,6 +316,7 @@ package provide cadwidgets::Ged 1.0
 	method mat_arb_rot {args}
 	method match {args}
 	method mater {args}
+	method memprint {args}
 	method mirror {args}
 	method model2grid_lu {args}
 	method model2view {args}
@@ -1800,9 +1801,21 @@ package provide cadwidgets::Ged 1.0
     eval $mGed get_eyemodel $itk_component($itk_option(-pane)) $args
 }
 
-::itcl::body cadwidgets::Ged::lastMouseRayPos {} {
-    return $mLastMouseRayPos
+::itcl::body cadwidgets::Ged::get_fbserv {_fbtype _w _n} {
+    incr mLastPort
+    set port $mLastPort
+
+    set binpath [bu_brlcad_root "bin"]
+
+    # This doesn't work (i.e. the "&" causes exec to always succeed, even when the command fails)
+    while {[catch {exec [file join $binpath fbserv] -w $_w -n $_n $port $_fbtype &} pid]} {
+	    puts $pid
+	    incr port
+    }
+
+    return "$pid $port"
 }
+
 
 ::itcl::body cadwidgets::Ged::get_prev_ged_mouse {args} {
     return "$mPrevGedMouseX $mPrevGedMouseY"
@@ -1938,6 +1951,10 @@ package provide cadwidgets::Ged 1.0
     eval $mGed l $args
 }
 
+::itcl::body cadwidgets::Ged::lastMouseRayPos {} {
+    return $mLastMouseRayPos
+}
+
 ::itcl::body cadwidgets::Ged::light {args} {
     eval $mGed light $itk_component($itk_option(-pane)) $args
 }
@@ -1999,22 +2016,6 @@ package provide cadwidgets::Ged 1.0
 
 ::itcl::body cadwidgets::Ged::make_bb {name args} {
     eval $mGed make_bb $name $args
-}
-
-
-::itcl::body cadwidgets::Ged::get_fbserv {_fbtype _w _n} {
-    incr mLastPort
-    set port $mLastPort
-
-    set binpath [bu_brlcad_root "bin"]
-
-    # This doesn't work (i.e. the "&" causes exec to always succeed, even when the command fails)
-    while {[catch {exec [file join $binpath fbserv] -w $_w -n $_n $port $_fbtype &} pid]} {
-	    puts $pid
-	    incr port
-    }
-
-    return "$pid $port"
 }
 
 
@@ -2175,6 +2176,10 @@ package provide cadwidgets::Ged 1.0
 
 ::itcl::body cadwidgets::Ged::mater {args} {
     eval $mGed mater $args
+}
+
+::itcl::body cadwidgets::Ged::memprint {args} {
+    eval $mGed memprint $args
 }
 
 ::itcl::body cadwidgets::Ged::mirror {args} {
@@ -6091,6 +6096,7 @@ package provide cadwidgets::Ged 1.0
     $help add mat_xform_about_pt {{xform pt} {}}
     $help add mat_arb_rot	{{pt dir angle} {returns a rotation matrix}}
     $help add mater		{{region shader R G B inherit} {modify region's material information}}
+    $help add memprint		{{} {print memory}}
     $help add mirror		{{[-p point] [-d dir] [-x] [-y] [-z] [-o offset] old new}	{mirror object along the specified axis}}
     $help add model2grid_lu	{{x y z} {convert model xyz to grid coordinates (local units)}}
     $help add model2view	{{} {returns the model2view matrix}}
