@@ -227,8 +227,6 @@ main(int argc, char *argv[])
     double second[4];
     double scan[4];
 
-    yaw = pch = rll = 0.0;
-
     if (argc == 1 && isatty(fileno(stdin)) && isatty(fileno(stdout))){
 	usage();
     	return 0;
@@ -238,6 +236,8 @@ main(int argc, char *argv[])
 	usage();
 	return 0;
     }
+
+    yaw = pch = rll = 0.0;
 
     /* read first two lines of table to determine the time step used */
     /* (a constant time step is assumed throughout the rest of the file)*/
