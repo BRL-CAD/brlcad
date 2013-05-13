@@ -29,20 +29,24 @@
 
 #include "common.h"
 
-#include <stdio.h>
+#include "bio.h"
 #include <string.h>
 #include <stdlib.h>
 
 #include "bu.h"
 
 
-#define OPT_STR "ci"
+#define OPT_STR "cih?"
 
 #define MAXLEN 50 /*maximum length of lines to be read */
 #define MAXLINES 30		/* maximum length of lines to be stored*/
 
 int suppressed;		/* flag: suppress printing of 'clean;' commands */
 int incremental;	/* flag: order for incremental time resolution */
+
+void usage(void){
+	fprintf(stderr,"Usage: anim_fly [-f factor] [-r] [-p integer] [-b max_bank_angle] [-s step] in.table out.table\n");
+}
 
 
 int get_args(int argc, char **argv)
@@ -60,7 +64,6 @@ int get_args(int argc, char **argv)
 		incremental = 1;
 		break;
 	    default:
-		fprintf(stderr, "Unknown option: -%c\n", c);
 		return 0;
 	}
     }
@@ -77,9 +80,15 @@ main(int argc, char *argv[])
     char line[MAXLEN];
     char pbuffer[MAXLEN*MAXLINES];
 
+    if (argc == 1 && isatty(fileno(stdin)) && isatty(fileno(stdout))){
+	usage();
+    	return 0;
+    }
 
-    if (!get_args(argc, argv))
-	fprintf(stderr, "Get_args error\n");
+    if (!get_args(argc, argv)){
+	usage();
+	return 0;
+    }
 
     /* copy any lines preceding the first "start" command */
     last_pos = bu_ftell(stdin);
