@@ -102,7 +102,7 @@ HIDDEN int ogl_drawBegin(struct dm *dmp);
 HIDDEN int ogl_drawEnd(struct dm *dmp);
 HIDDEN int ogl_normal(struct dm *dmp);
 HIDDEN int ogl_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye);
-HIDDEN int ogl_loadPMatrix(fastf_t *mat);
+HIDDEN int ogl_loadPMatrix(struct dm *dmp, fastf_t *mat);
 HIDDEN int ogl_drawString2D(struct dm *dmp, const char *str, fastf_t x, fastf_t y, int size, int use_aspect);
 HIDDEN int ogl_drawLine2D(struct dm *dmp, fastf_t X1, fastf_t Y1, fastf_t X2, fastf_t Y2);
 HIDDEN int ogl_drawLine3D(struct dm *dmp, point_t pt1, point_t pt2);
@@ -1387,14 +1387,31 @@ ogl_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye)
 /*
  * O G L _ L O A D P M A T R I X
  *
- * Load a new projection matrix.  This will be followed by
- * many calls to ogl_draw().
+ * Load a new projection matrix.
+ *
  */
 HIDDEN int
-ogl_loadPMatrix(fastf_t *mat)
+ogl_loadPMatrix(struct dm *dmp, fastf_t *mat)
 {
     fastf_t *mptr;
     GLfloat gtmat[16];
+
+    glMatrixMode(GL_PROJECTION);
+
+    if (mat == (fastf_t *)NULL) {
+	if (((struct ogl_vars *)dmp->dm_vars.priv_vars)->face_flag) {
+	    glPopMatrix();
+	    glLoadIdentity();
+	    glOrtho(-xlim_view, xlim_view, -ylim_view, ylim_view, dmp->dm_clipmin[2], dmp->dm_clipmax[2]);
+	    glPushMatrix();
+	    glLoadMatrixd(((struct ogl_vars *)dmp->dm_vars.priv_vars)->faceplate_mat);
+	} else {
+	    glLoadIdentity();
+	    glOrtho(-xlim_view, xlim_view, -ylim_view, ylim_view, dmp->dm_clipmin[2], dmp->dm_clipmax[2]);
+	}
+
+	return TCL_OK;
+    }
 
     mptr = mat;
 
@@ -1418,7 +1435,6 @@ ogl_loadPMatrix(fastf_t *mat)
     gtmat[11] = *(mptr++);
     gtmat[15] = *(mptr++);
 
-    glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
     glLoadMatrixf(gtmat);
 

@@ -72,7 +72,7 @@ null_loadMatrix(struct dm *UNUSED(dmp), fastf_t *UNUSED(mat), int UNUSED(which_e
 
 
 int
-null_loadPMatrix(fastf_t *UNUSED(mat))
+null_loadPMatrix(struct dm *UNUSED(dmp), fastf_t *UNUSED(mat))
 {
     return 0;
 }

@@ -908,14 +908,31 @@ wgl_loadMatrix(struct dm *dmp, mat_t mat, int which_eye)
 /*
  * W G L _ L O A D P M A T R I X
  *
- * Load a new projection matrix.  This will be followed by
- * many calls to ogl_draw().
+ * Load a new projection matrix.
+ *
  */
 HIDDEN int
-wgl_loadPMatrix(fastf_t *mat)
+wgl_loadPMatrix(struct dm *dmp, fastf_t *mat)
 {
     fastf_t *mptr;
     GLfloat gtmat[16];
+
+    glMatrixMode(GL_PROJECTION);
+
+    if (mat == (fastf_t *)NULL) {
+	if (((struct wgl_vars *)dmp->dm_vars.priv_vars)->face_flag) {
+	    glPopMatrix();
+	    glLoadIdentity();
+	    glOrtho(-xlim_view, xlim_view, -ylim_view, ylim_view, dmp->dm_clipmin[2], dmp->dm_clipmax[2]);
+	    glPushMatrix();
+	    glLoadMatrixd(((struct wgl_vars *)dmp->dm_vars.priv_vars)->faceplate_mat);
+	} else {
+	    glLoadIdentity();
+	    glOrtho(-xlim_view, xlim_view, -ylim_view, ylim_view, dmp->dm_clipmin[2], dmp->dm_clipmax[2]);
+	}
+
+	return TCL_OK;
+    }
 
     mptr = mat;
 
@@ -939,7 +956,6 @@ wgl_loadPMatrix(fastf_t *mat)
     gtmat[11] = *(mptr++);
     gtmat[15] = *(mptr++);
 
-    glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
     glLoadMatrixf(gtmat);
 

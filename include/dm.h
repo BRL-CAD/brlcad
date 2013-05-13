@@ -223,7 +223,7 @@ struct dm {
     int (*dm_drawEnd)(struct dm *dmp);		/**< @brief formerly dmr_epilog */
     int (*dm_normal)(struct dm *dmp);
     int (*dm_loadMatrix)(struct dm *dmp, fastf_t *mat, int which_eye);
-    int (*dm_loadPMatrix)(fastf_t *mat);
+    int (*dm_loadPMatrix)(struct dm *dmp, fastf_t *mat);
     int (*dm_drawString2D)(struct dm *dmp, const char *str, fastf_t x, fastf_t y, int size, int use_aspect);	/**< @brief formerly dmr_puts */
     int (*dm_drawLine2D)(struct dm *dmp, fastf_t x_1, fastf_t y_1, fastf_t x_2, fastf_t y_2);	/**< @brief formerly dmr_2d_line */
     int (*dm_drawLine3D)(struct dm *dmp, point_t pt1, point_t pt2);
@@ -295,7 +295,7 @@ struct dm {
 #define DM_DRAW_END(_dmp) _dmp->dm_drawEnd(_dmp)
 #define DM_NORMAL(_dmp) _dmp->dm_normal(_dmp)
 #define DM_LOADMATRIX(_dmp, _mat, _eye) _dmp->dm_loadMatrix(_dmp, _mat, _eye)
-#define DM_LOADPMATRIX(_dmp, _mat) _dmp->dm_loadPMatrix(_mat)
+#define DM_LOADPMATRIX(_dmp, _mat) _dmp->dm_loadPMatrix(_dmp, _mat)
 #define DM_DRAW_STRING_2D(_dmp, _str, _x, _y, _size, _use_aspect) _dmp->dm_drawString2D(_dmp, _str, _x, _y, _size, _use_aspect)
 #define DM_DRAW_LINE_2D(_dmp, _x1, _y1, _x2, _y2) _dmp->dm_drawLine2D(_dmp, _x1, _y1, _x2, _y2)
 #define DM_DRAW_LINE_3D(_dmp, _pt1, _pt2) _dmp->dm_drawLine3D(_dmp, _pt1, _pt2)

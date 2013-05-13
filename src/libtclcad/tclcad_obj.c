@@ -13256,19 +13256,13 @@ go_dm_draw_polys(struct dm *dmp, ged_data_polygon_state *gdpsp, int mode)
 HIDDEN void
 go_draw(struct ged_dm_view *gdvp)
 {
-#if 1
     DM_LOADMATRIX(gdvp->gdv_dmp, gdvp->gdv_view->gv_model2view, 0);
-    DM_LOADPMATRIX(gdvp->gdv_dmp, gdvp->gdv_view->gv_pmat);
-#else
-    matp_t mat;
 
     if (SMALL_FASTF < gdvp->gdv_view->gv_perspective)
-	mat = gdvp->gdv_view->gv_pmodel2view;
+	DM_LOADPMATRIX(gdvp->gdv_dmp, gdvp->gdv_view->gv_pmat);
     else
-	mat = gdvp->gdv_view->gv_model2view;
+	DM_LOADPMATRIX(gdvp->gdv_dmp, (fastf_t *)NULL);
 
-    DM_LOADMATRIX(gdvp->gdv_dmp, mat, 0);
-#endif
     go_draw_dlist(gdvp->gdv_gop, gdvp->gdv_dmp, &gdvp->gdv_gop->go_gedp->ged_gdp->gd_headDisplay);
 }
 
