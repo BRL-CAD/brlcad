@@ -1358,19 +1358,20 @@ if(NOT MSVC)
   include(${BRLCAD_CMAKE_DIR}/CompilerFlags.cmake)
 endif(NOT MSVC)
 
-# determine whether the compiler supports an 'inline' keyword variant
-include(${BRLCAD_CMAKE_DIR}/CheckCInline.cmake)
-CHECK_C_INLINE(C_INLINE)
-if(NOT C_INLINE STREQUAL "inline")
-  add_definitions("-Dinline=${C_INLINE}")
-endif(NOT C_INLINE STREQUAL "inline")
-
 # The src/other subdirectory does not share (at least, not universally)
 # certain definitions common to all other directories in BRL-CAD.  Also,
 # we don't want flags that are otherwise global to BRL-CAD to be passed
 # to the src/other directory (particularly things like strict compiler
 # flags) so add src/other before any of that setup occurs.
 add_subdirectory(src/other)
+
+# Most of the src/other projects have their own logic for handling
+# the C inline issue - BRL-CAD needs a fine-grained approach.  Mixed
+# C and C++ sources require different treatment for the same build
+# target, since C++11 doesn't allow inline to be re-defined. See
+# misc/CMake/BRLCAD_Targets.cmake for handling of C_INLINE.
+include(${BRLCAD_CMAKE_DIR}/CheckCInline.cmake)
+CHECK_C_INLINE(C_INLINE)
 
 # Requires that CompilerFlags.cmake already be loaded
 if(NOT MSVC)
