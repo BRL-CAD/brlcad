@@ -45,7 +45,7 @@ int suppressed;		/* flag: suppress printing of 'clean;' commands */
 int incremental;	/* flag: order for incremental time resolution */
 
 void usage(void){
-	fprintf(stderr,"Usage: anim_fly [-f factor] [-r] [-p integer] [-b max_bank_angle] [-s step] in.table out.table\n");
+	fprintf(stderr,"Usage: anim_sort [-ic] < mixed.script > ordered.script\n");
 }
 
 
