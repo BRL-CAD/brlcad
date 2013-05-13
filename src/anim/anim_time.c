@@ -31,13 +31,13 @@
 
 #include <stdlib.h>
 #include <math.h>
-#include <stdio.h>
+#include "bio.h"
 
 #include "bu.h"
 #include "vmath.h"
 
 
-#define OPT_STR "ds:e:i:f:qm:v"
+#define OPT_STR "ds:e:i:f:qm:vh?"
 
 #define MAXLEN 64
 #define MAXITS 100
@@ -52,13 +52,15 @@ int v0_set =	 TIME_NONE;
 int v1_set =	 TIME_NONE;
 int query =	 0;
 int verbose = 	 0;
-int maxlines = 	 0;
-int domem = 	 0;
+int maxlines = 	 MAXLEN;
 int debug = 	 0;
 
 /* intentionally double for scan */
 double inv0, inv1;
 
+void usage(void){
+	fprintf(stderr,"Usage: anim_time [-s#] [-e#] [-d] < in.table\n");
+}
 
 fastf_t
 gettime(fastf_t dist, fastf_t a, fastf_t b, fastf_t c, fastf_t init)
@@ -129,7 +131,6 @@ int get_args(int argc, char **argv)
 		break;
 	    case 'm':
 		sscanf(bu_optarg, "%d", &maxlines);
-		domem = 1;
 		break;
 	    case 'v':
 		verbose = 1;
@@ -138,7 +139,6 @@ int get_args(int argc, char **argv)
 		debug = 1;
 		break;
 	    default:
-		fprintf(stderr, "Unknown option: -%c\n", c);
 		return 0;
 	}
     }
@@ -158,16 +158,17 @@ main(int argc, char **argv)
     /* intentionally double for scan */
     double end, *x, *y, *z;
 
+    if (argc == 1 && isatty(fileno(stdin)) && isatty(fileno(stdout))){
+	usage();
+    	return 0;
+    }
+
+    if (!get_args(argc, argv)){
+	usage();
+	return 0;
+    }
+
     plen = 0;
-
-    if (!get_args(argc, argv)) {
-	fprintf(stderr, "Usage: anim_time [-s#] [-e#] [-d] < in.table\n");
-	return 1;
-    }
-
-    if (!domem) {
-	maxlines = MAXLEN;
-    }
 
     l = (fastf_t *) bu_malloc(maxlines*sizeof(fastf_t), "l[]");
     if (verbose) {
