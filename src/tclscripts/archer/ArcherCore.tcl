@@ -194,6 +194,7 @@ namespace eval ArcherCore {
 	method bot_split           {args}
 	method bot_sync            {args}
 	method bot_vertex_fuse     {args}
+	method brep                {args}
 	method c                   {args}
 	method cd                  {args}
 	method clear               {args}
@@ -568,7 +569,7 @@ namespace eval ArcherCore {
 	    3ptarb adjust arced attr bb bev B blast bo bot bot_condense \
 	    bot_decimate bot_face_fuse bot_face_sort bot_flip \
 	    bot_merge bot_smooth bot_split bot_sync bot_vertex_fuse \
-	    c cd clear clone closedb color comb comb_color combmem \
+	    brep c cd clear clone closedb color comb comb_color combmem \
 	    copy copyeval copymat cp cpi dbconcat dbExpand decompose \
 	    delete draw e E edcodes edcolor edcomb edit edmater d erase ev exists \
 	    exit facetize fracture freezeGUI g get graph group hide human i igraph \
@@ -587,7 +588,7 @@ namespace eval ArcherCore {
 	variable mUnwrappedDbCommands {}
 
 	variable mBannedDbCommands {
-	    dbip open rtabort shaded_mode
+	    dbip open shaded_mode
 	}
 
 	variable mMouseOverrideInfo "\
@@ -6004,6 +6005,10 @@ namespace eval ArcherCore {
 
 ::itcl::body ArcherCore::bot_vertex_fuse {args} {
     eval gedWrapper bot_vertex_fuse 0 0 1 1 $args
+}
+
+::itcl::body ArcherCore::brep {args} {
+    eval gedWrapper brep 0 1 1 2 $args
 }
 
 ::itcl::body ArcherCore::c {args} {

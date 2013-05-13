@@ -6336,7 +6336,13 @@ proc title_node_handler {node} {
 	return
     }
 
-    set odata [lrange [gedCmd get $mSelectedObj] 1 end]
+    # The brep primitive type does not yet support "get"
+    if {$mSelectedObjType == "brep"} {
+	set odata ""
+    } else {
+	set odata [lrange [gedCmd get $mSelectedObj] 1 end]
+    }
+
     restoreCanvas
 
     if {$_initEditMode && [info exists GeometryEditFrame::mEditCommand]} {
