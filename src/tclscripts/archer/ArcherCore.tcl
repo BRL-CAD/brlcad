@@ -189,6 +189,7 @@ namespace eval ArcherCore {
 	method bot_face_fuse       {args}
 	method bot_face_sort       {args}
 	method bot_flip            {args}
+	method bot_fuse            {args}
 	method bot_merge           {args}
 	method bot_smooth          {args}
 	method bot_split           {args}
@@ -567,7 +568,7 @@ namespace eval ArcherCore {
 	# a few commands that are implemented here in ArcherCore.
 	variable mArcherCoreCommands { \
 	    3ptarb adjust arced attr bb bev B blast bo bot bot_condense \
-	    bot_decimate bot_face_fuse bot_face_sort bot_flip \
+	    bot_decimate bot_face_fuse bot_face_sort bot_flip bot_fuse \
 	    bot_merge bot_smooth bot_split bot_sync bot_vertex_fuse \
 	    brep c cd clear clone closedb color comb comb_color combmem \
 	    copy copyeval copymat cp cpi dbconcat dbExpand decompose \
@@ -5985,6 +5986,10 @@ namespace eval ArcherCore {
 
 ::itcl::body ArcherCore::bot_flip {args} {
     eval gedWrapper bot_flip 1 0 1 0 $args
+}
+
+::itcl::body ArcherCore::bot_fuse {args} {
+    eval gedWrapper bot_fuse 0 0 1 2 $args
 }
 
 ::itcl::body ArcherCore::bot_merge {args} {

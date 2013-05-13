@@ -150,6 +150,7 @@ package provide cadwidgets::Ged 1.0
 	method bot_face_sort {args}
 	method bot_face_split {args}
 	method bot_flip {args}
+	method bot_fuse {args}
 	method bot_merge {args}
 	method bot_smooth {args}
 	method bot_split {args}
@@ -1306,6 +1307,10 @@ package provide cadwidgets::Ged 1.0
 
 ::itcl::body cadwidgets::Ged::bot_flip {args} {
     eval $mGed bot_flip $args
+}
+
+::itcl::body cadwidgets::Ged::bot_fuse {args} {
+    eval $mGed bot_fuse $args
 }
 
 ::itcl::body cadwidgets::Ged::bot_merge {args} {
@@ -5976,8 +5981,9 @@ package provide cadwidgets::Ged 1.0
     $help add bot_condense	{{new_bot old_bot} {create a new bot by condensing the old bot}}
     $help add bot_decimate	{{[options] new_bot old_bot} {create a new bot by decimating the old bot}}
     $help add bot_dump	{{[-b] [-m directory] [-o file] [-t dxf|obj|sat|stl] [-u units] [bot1 bot2 ...]\n} {dump the specified bots}}
-    $help add bot_face_fuse	{{new_bot old_bot} {eliminate duplicate faces in a BOT solid}}
+    $help add bot_face_fuse	{{new_bot old_bot} {eliminate duplicate faces in a BOT}}
     $help add bot_face_sort	{{triangles_per_piece bot_solid1 [bot_solid2 bot_solid3 ...]} {sort the facelist of BOT solids to optimize ray trace performance for a particular number of triangles per raytrace piece}}
+    $help add bot_fuse		{{new_bot old_bot} {eliminate duplicate points in a BOT}}
     $help add bot_merge		{{bot_dest bot1_src [botn_src]} {merge the specified bots into bot_dest}}
     $help add bot_smooth	{{[-t norm_tolerance_degrees] new_bot old_bot} {calculate vertex normals for BOT primitive}}
     $help add bot_split		{{bot} {split the bot}}
