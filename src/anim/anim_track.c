@@ -57,6 +57,7 @@
 #define NEXT(i)	(i+1)%NW
 #define PREV(i)	(i+NW-1)%NW
 
+#define progname "anim_track"
 
 typedef double *pdouble;
 
@@ -123,7 +124,7 @@ mat_t m_axes, m_rev_axes;	/* matrices to and from alternate axes */
 double first_tracklen;
 
 void usage(void){
-	fprintf(stderr,"Usage: anim_track [options] wheelfile < in.table > out.script\n");
+	fprintf(stderr,"Usage: %s [options] wheelfile < in.table > out.script\n",progname);
 	fprintf(stderr,"       (options can be viewed on the man page)\n");
 }
 
@@ -229,7 +230,7 @@ get_args(int argc, char **argv)
 			bu_strlcpy(wheel_cmd, argv[bu_optind], sizeof(wheel_cmd));
 			break;
 		    default:
-			fprintf(stderr, "Unknown option: -m%c\n", *bu_optarg);
+			fprintf(stderr, "%s: Unknown option: -m%c\n",progname,*bu_optarg);
 			return 0;
 		}
 		bu_optind += 1;
@@ -258,7 +259,7 @@ get_args(int argc, char **argv)
 			bu_optind++;
 			break;
 		    default:
-			fprintf(stderr, "Unknown option: -l%c\n", *bu_optarg);
+			fprintf(stderr, "%s: Unknown option: -l%c\n",progname,*bu_optarg);
 			return 0;
 		}
 		break;
