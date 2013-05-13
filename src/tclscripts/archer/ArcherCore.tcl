@@ -2356,8 +2356,7 @@ namespace eval ArcherCore {
     # Is _pnode currently set up for children?
     if {![catch {set clists $mPNode2CList($_pnode)}]} {
 
-	set pgdata [$itk_component(ged) get $ptext]
-	set ptype [lindex $pgdata 0]
+	set ptype [$itk_component(ged) get_type $ptext]
 
 	if {$ptype == "dsp" ||
 	    $ptype == "ebm" ||
@@ -2521,8 +2520,7 @@ namespace eval ArcherCore {
 	    }
 	}
     } else {
-	set pgdata [$itk_component(ged) get $ptext]
-	set ptype [lindex $pgdata 0]
+	set ptype [$itk_component(ged) get_type $ptext]
 
 	if {$ptype == "comb"} {
 	    set mlist [getTreeMembers $ptext]
