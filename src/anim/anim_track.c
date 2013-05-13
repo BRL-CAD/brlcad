@@ -39,7 +39,7 @@
 #include "./cattrack.h"
 
 
-#define OPT_STR "sycuvb:d:f:i:r:p:w:g:m:l:a"
+#define OPT_STR "sycuvb:d:f:i:r:p:w:g:m:l:ah?"
 
 #define GIVEN 0
 #define CALCULATED 1
@@ -122,6 +122,10 @@ mat_t m_axes, m_rev_axes;	/* matrices to and from alternate axes */
 /* intentionally double for scan */
 double first_tracklen;
 
+void usage(void){
+	fprintf(stderr,"Usage: anim_track [options] wheelfile < in.table > out.script\n");
+	fprintf(stderr,"       (options can be viewed on the man page)\n");
+}
 
 int
 get_args(int argc, char **argv)
@@ -262,7 +266,6 @@ get_args(int argc, char **argv)
 		anti_strobe = 1;
 		break;
 	    default:
-		fprintf(stderr, "Unknown option: -%c\n", c);
 		return 0;
 	}
     }
@@ -469,8 +472,15 @@ main(int argc, char *argv[])
     MAT_IDN(m_axes);
     MAT_IDN(m_rev_axes);
 
-    if (!get_args(argc, argv))
-	fprintf(stderr, "anim_track: Argument error.\n");
+    if (argc == 1 && isatty(fileno(stdin)) && isatty(fileno(stdout))){
+	usage();
+    	return 0;
+    }
+
+    if (!get_args(argc, argv)){
+	usage();
+	return 0;
+    }
 
     if (axes || cent) {
 	/* vehicle has own reference frame */
