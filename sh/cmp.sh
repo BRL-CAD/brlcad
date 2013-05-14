@@ -125,30 +125,30 @@ fi
 rps=`printf -- "%10.0f rays/s" "${perf}"`
 printf -- "%-25s ($p1 $p2 $p3 $p4 $p5)\n" "${rps}"
 
-  ################
-echo -n "Tied: "
-export LIBRT_BOT_MINTIE=1
-rm -f "$i.rt.log" "$i.rt.pix"
-p1=`sh $i.rt -B -o $i.rt.pix -s$SZ -H$HP 2>&1 | tee $i.rt.log | grep RTFM | awk '{print $9}'`
-rm -f "$i.rt.log" "$i.rt.pix"
-p2=`sh $i.rt -B -o $i.rt.pix -s$SZ -H$HP 2>&1 | tee $i.rt.log | grep RTFM | awk '{print $9}'`
-rm -f "$i.rt.log" "$i.rt.pix"
-p3=`sh $i.rt -B -o $i.rt.pix -s$SZ -H$HP 2>&1 | tee $i.rt.log | grep RTFM | awk '{print $9}'`
-rm -f "$i.rt.log" "$i.rt.pix"
-p4=`sh $i.rt -B -o $i.rt.pix -s$SZ -H$HP 2>&1 | tee $i.rt.log | grep RTFM | awk '{print $9}'`
-rm -f "$i.rt.log" "$i.rt.pix"
-p5=`sh $i.rt -B -o $i.rt.pix -s$SZ -H$HP 2>&1 | tee $i.rt.log | grep RTFM | awk '{print $9}'`
-if test "x$p1" = "x" ; then p1=0 ; fi
-if test "x$p2" = "x" ; then p2=0 ; fi
-if test "x$p3" = "x" ; then p3=0 ; fi
-if test "x$p4" = "x" ; then p4=0 ; fi
-if test "x$p5" = "x" ; then p5=0 ; fi
-tperf=`dc -e "3k $p1 $p2 $p3 $p4 $p5 + + + + 5.0 / 0k p"`
-if test "x$tperf" = "x" ; then
-    tperf="0"
-fi
-rps=`printf -- "%10.0f rays/s" "${tperf}"`
-printf -- "%-25s ($p1 $p2 $p3 $p4 $p5)\n" "${rps}"
+#   ################
+# echo -n "Tied: "
+# export LIBRT_BOT_MINTIE=1
+# rm -f "$i.rt.log" "$i.rt.pix"
+# p1=`sh $i.rt -B -o $i.rt.pix -s$SZ -H$HP 2>&1 | tee $i.rt.log | grep RTFM | awk '{print $9}'`
+# rm -f "$i.rt.log" "$i.rt.pix"
+# p2=`sh $i.rt -B -o $i.rt.pix -s$SZ -H$HP 2>&1 | tee $i.rt.log | grep RTFM | awk '{print $9}'`
+# rm -f "$i.rt.log" "$i.rt.pix"
+# p3=`sh $i.rt -B -o $i.rt.pix -s$SZ -H$HP 2>&1 | tee $i.rt.log | grep RTFM | awk '{print $9}'`
+# rm -f "$i.rt.log" "$i.rt.pix"
+# p4=`sh $i.rt -B -o $i.rt.pix -s$SZ -H$HP 2>&1 | tee $i.rt.log | grep RTFM | awk '{print $9}'`
+# rm -f "$i.rt.log" "$i.rt.pix"
+# p5=`sh $i.rt -B -o $i.rt.pix -s$SZ -H$HP 2>&1 | tee $i.rt.log | grep RTFM | awk '{print $9}'`
+# if test "x$p1" = "x" ; then p1=0 ; fi
+# if test "x$p2" = "x" ; then p2=0 ; fi
+# if test "x$p3" = "x" ; then p3=0 ; fi
+# if test "x$p4" = "x" ; then p4=0 ; fi
+# if test "x$p5" = "x" ; then p5=0 ; fi
+# tperf=`dc -e "3k $p1 $p2 $p3 $p4 $p5 + + + + 5.0 / 0k p"`
+# if test "x$tperf" = "x" ; then
+#     tperf="0"
+# fi
+# rps=`printf -- "%10.0f rays/s" "${tperf}"`
+# printf -- "%-25s ($p1 $p2 $p3 $p4 $p5)\n" "${rps}"
 
   ################
 echo -n "Prep: "
@@ -169,46 +169,46 @@ fi
 rays=`printf -- "%10.0f rays" "${prep}"`
 printf -- "%-25s ($t1 $t2 $t3 $t4 $t5)\n" "${rays}"
 
-  ################
-rm -f $base.base.rt.pix $base.base.rt.log
-sh $base.base.rt -B -o $base.base.rt.pix -s$SZ >$base.base.rt.log 2>&1
-if test -f $base.base.rt.pix ; then
-    chmod 666 $base.base.rt.pix
-fi
-if ! test -f $base.base.rt.pix ; then
-    echo "ERROR: $base.base.rt.pix failed to render"
-    continue
-fi
+#   ################
+# rm -f $base.base.rt.pix $base.base.rt.log
+# sh $base.base.rt -B -o $base.base.rt.pix -s$SZ >$base.base.rt.log 2>&1
+# if test -f $base.base.rt.pix ; then
+#     chmod 666 $base.base.rt.pix
+# fi
+# if ! test -f $base.base.rt.pix ; then
+#     echo "ERROR: $base.base.rt.pix failed to render"
+#     continue
+# fi
 
-rm -f $i.tie.rt.pix $i.tie.rt.log $i.rt.pix $i.rt.log
-export LIBRT_BOT_MINTIE=0
-sh $i.rt -B -o $i.rt.pix -s$SZ >$i.rt.log 2>&1
-if test -f "$i.rt.pix" ; then
-    echo -n "Diff: "
-    chmod 666 $i.rt.pix
-    diff="`pixdiff $base.base.rt.pix $i.rt.pix 2>&1 1>/dev/null`"
-    back="`pixcount $base.base.rt.pix 2>&1 | grep \"  0   0   1  \" | awk '{print $4}'`"
-    fore="`expr $SZ \* $SZ - $back`"
-    obm="`echo $diff | awk '{print $9}'`"
-    percent=`dc -e "3k 1 $obm 3 / $fore / - 100 * d [0] sa 0.0 >a p"`
-    printf -- "%10.1f %%%13s (`echo $diff | awk '{print $3/3, $4, $5/3, $6, $7, $8, $9/3, $10, $11, $12}'`, $back background, $fore foreground)\n" "$percent" " "
-else
-    printf -- "ERROR: $i.rt.pix failed to render\n"
-fi
-export LIBRT_BOT_MINTIE=1
-sh $i.rt -B -o $i.tie.rt.pix -s$SZ >$i.tie.rt.log 2>&1
-if test -f "$i.tie.rt.pix" ; then
-    echo -n "TDif: "
-    chmod 666 $i.tie.rt.pix
-    diff="`pixdiff $i.rt.pix $i.tie.rt.pix 2>&1 1>/dev/null`"
-    back="`pixcount $i.rt.pix 2>&1 | grep \"  0   0   1  \" | awk '{print $4}'`"
-    fore="`expr $SZ \* $SZ - $back`"
-    obm="`echo $diff | awk '{print $9}'`"
-    percent=`dc -e "3k 1 $obm 3 / $fore / - 100 * d [0] sa 0.0 >a p"`
-    printf -- "%10.1f %%%13s (`echo $diff | awk '{print $3/3, $4, $5/3, $6, $7, $8, $9/3, $10, $11, $12}'`, $back background, $fore foreground)\n" "$percent" " "
-else
-    printf -- "ERROR: $i.tie.rt.pix failed to render\n"
-fi
+# rm -f $i.tie.rt.pix $i.tie.rt.log $i.rt.pix $i.rt.log
+# export LIBRT_BOT_MINTIE=0
+# sh $i.rt -B -o $i.rt.pix -s$SZ >$i.rt.log 2>&1
+# if test -f "$i.rt.pix" ; then
+#     echo -n "Diff: "
+#     chmod 666 $i.rt.pix
+#     diff="`pixdiff $base.base.rt.pix $i.rt.pix 2>&1 1>/dev/null`"
+#     back="`pixcount $base.base.rt.pix 2>&1 | grep \"  0   0   1  \" | awk '{print $4}'`"
+#     fore="`expr $SZ \* $SZ - $back`"
+#     obm="`echo $diff | awk '{print $9}'`"
+#     percent=`dc -e "3k 1 $obm 3 / $fore / - 100 * d [0] sa 0.0 >a p"`
+#     printf -- "%10.1f %%%13s (`echo $diff | awk '{print $3/3, $4, $5/3, $6, $7, $8, $9/3, $10, $11, $12}'`, $back background, $fore foreground)\n" "$percent" " "
+# else
+#     printf -- "ERROR: $i.rt.pix failed to render\n"
+# fi
+# export LIBRT_BOT_MINTIE=1
+# sh $i.rt -B -o $i.tie.rt.pix -s$SZ >$i.tie.rt.log 2>&1
+# if test -f "$i.tie.rt.pix" ; then
+#     echo -n "TDif: "
+#     chmod 666 $i.tie.rt.pix
+#     diff="`pixdiff $i.rt.pix $i.tie.rt.pix 2>&1 1>/dev/null`"
+#     back="`pixcount $i.rt.pix 2>&1 | grep \"  0   0   1  \" | awk '{print $4}'`"
+#     fore="`expr $SZ \* $SZ - $back`"
+#     obm="`echo $diff | awk '{print $9}'`"
+#     percent=`dc -e "3k 1 $obm 3 / $fore / - 100 * d [0] sa 0.0 >a p"`
+#     printf -- "%10.1f %%%13s (`echo $diff | awk '{print $3/3, $4, $5/3, $6, $7, $8, $9/3, $10, $11, $12}'`, $back background, $fore foreground)\n" "$percent" " "
+# else
+#     printf -- "ERROR: $i.tie.rt.pix failed to render\n"
+# fi
 
   ################
 echo -n "Norm: "
