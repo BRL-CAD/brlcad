@@ -61,9 +61,6 @@ ged_adjust(struct ged *gedp, int argc, const char *argv[])
 
     name = (char *)argv[1];
 
-    /* Verify that this wdb supports lookup operations (non-null dbip) */
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-
     GED_DB_LOOKUP(gedp, dp, name, LOOKUP_QUIET, GED_ERROR);
 
     GED_DB_GET_INTERNAL(gedp, &intern, dp, (matp_t)NULL, &rt_uniresource, GED_ERROR);
