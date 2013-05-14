@@ -109,7 +109,7 @@ parallel_set_affinity(int cpu)
 
 #elif defined(HAVE_WINDOWS_H)
 
-    BOOL ret = SetThreadAffinityMask(GetCurrentThread(), 1 << cpu % bu_avail_cpus());
+    BOOL ret = SetThreadAffinityMask(GetCurrentThread(), 1ul << cpu % bu_avail_cpus());
     if (ret  == 0)
 	return -1;
 
