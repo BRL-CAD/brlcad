@@ -43,6 +43,7 @@
 static void printusage (void)
 {
     bu_log("Usage: asc-pl [file.in [file.pl]]\n");
+    bu_exit(1, NULL);
 }
 
 
@@ -69,10 +70,14 @@ main (int argc, char **argv)
     int line_nm;
     int nm_args = 0;
 
+
+    if ( BU_STR_EQUAL(argv[1],"-h") || BU_STR_EQUAL(argv[1],"-?")) {
+	printusage();
+    }
+
     /* Handle command-line syntax */
     if (argc > 3) {
 	printusage();
-	return 1;
     }
     fp[0] = stdin;
     fp[1] = stdout;
@@ -82,7 +87,6 @@ main (int argc, char **argv)
 	if ((fp[i] = fopen(*argv, fm[i])) == NULL) {
 	    bu_log("Cannot open file '%s'\n", *argv);
 	    printusage();
-	    return 1;
 	}
     }
     if (isatty(fileno(fp[FP_OUT]))) {
