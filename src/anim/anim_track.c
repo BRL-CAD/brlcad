@@ -124,8 +124,11 @@ mat_t m_axes, m_rev_axes;	/* matrices to and from alternate axes */
 double first_tracklen;
 
 void usage(void){
-	fprintf(stderr,"Usage: %s [options] wheelfile < in.table > out.script\n",progname);
-	fprintf(stderr,"       (options can be viewed on the man page)\n");
+	fprintf(stderr,"Usage: %s -p num_pads parent/basename\n",progname);
+	fprintf(stderr,"       -w parent/basename -b # # # -d # # # -u -y\n");
+	fprintf(stderr,"       -s -a -v -c -lm -lf # -ls # -le # -i # -f #\n");
+	fprintf(stderr,"       -r # -g # -mp command -mw command  wheelfile\n");
+	fprintf(stderr,"        < in.table > out.script\n");
 }
 
 int
