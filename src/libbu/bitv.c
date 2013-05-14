@@ -71,12 +71,12 @@
  * users should not call this directly, instead calling the
  * BU_BITV_SHIFT macro instead.
  */
-inline unsigned int
+inline size_t
 bu_bitv_shift()
 {
     size_t x = sizeof(bitv_t) * 8;
 
-    FLOOR_ILOG2(x)
+    FLOOR_ILOG2(x);
 
     return x;
 }
