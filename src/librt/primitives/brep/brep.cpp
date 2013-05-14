@@ -689,7 +689,7 @@ utah_newton_solver(const BBNode* sbv, const ON_Surface* surf, const ON_Ray& r, O
     ON_3dVector Su, Sv;
     //ON_3dVector Suu, Suv, Svv;
 
-    ON_2dPoint uv,prev_uv,next_uv;
+    ON_2dPoint uv,puv;
 
     uv.x = suv->x;
     uv.y = suv->y;
@@ -747,50 +747,36 @@ utah_newton_solver(const BBNode* sbv, const ON_Surface* surf, const ON_Ray& r, O
 	    cdu = du;
 	    cdv = dv;
 	}
+	puv.x = uv.x;
+	puv.y = uv.y;
 
-	next_uv.x = uv.x - du;
-	next_uv.y = uv.y - dv;
+	uv.x -= du;
+	uv.y -= dv;
 
-	utah_pushBack(sbv, next_uv);
+	utah_pushBack(sbv, uv);
 
-	if (next_uv == uv) {
-	    //must already be on the border of the SBV, cannot go any further
-	    return intersects;
-	}
-	surf->Ev1Der(next_uv.x, next_uv.y, S, Su, Sv);
+	surf->Ev1Der(uv.x, uv.y, S, Su, Sv);
 	utah_F(S, p1, p1d, p2, p2d, f, g);
 	oldrootdist = rootdist;
 	rootdist = fabs(f) + fabs(g);
-	errantcount = 0;
-	if (oldrootdist > ROOT_TOL) {
-	    while (oldrootdist < rootdist - ROOT_TOL) {
-		prev_uv = next_uv;
-		du *= 0.5;
-		dv *= 0.5;
-		next_uv.x = uv.x - du;
-		next_uv.y = uv.y - dv;
+	int halve_count = 0;
+	while ((halve_count++ < 3) && (oldrootdist < rootdist)) {
+	    // divide current UV step
+	    uv.x = (puv.x + uv.x)/2.0;
+	    uv.y = (puv.y + uv.y)/2.0;
 
-		utah_pushBack(sbv, next_uv);
+	    surf->Ev1Der(uv.x, uv.y, S, Su, Sv);
+	    utah_F(S, p1, p1d, p2, p2d, f, g);
+	    rootdist = fabs(f) + fabs(g);
+	}
 
-		if (next_uv == prev_uv) {
-		    //must be on the border of the SBV or not changing, cannot go any further no sense iterating
-		    break;
-		}
-
-		surf->Ev1Der(next_uv.x, next_uv.y, S, Su, Sv);
-		utah_F(S, p1, p1d, p2, p2d, f, g);
-		rootdist = fabs(f) + fabs(g);
+	if (oldrootdist <= rootdist) {
+	    if (errantcount > 3) {
+		return intersects;
+	    } else {
 		errantcount++;
-		/* the errantcount limit just needs to be "big enough"
-		 * that it subdivides a 'reasonable' number of times
-		 * before giving up.  should only get stuck on really
-		 * difficult surface walks.  prevents inf loop too.
-		 */
-		if (errantcount > 4)
-		    return intersects;
 	    }
 	}
-	uv = next_uv;
 
 	if (rootdist < ROOT_TOL) {
 	    if (sbv->m_u.Includes(uv.x) && sbv->m_v.Includes(uv.y)) {
