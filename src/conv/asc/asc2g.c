@@ -1253,7 +1253,7 @@ botbld(void)
 	bu_fgets(buf, BUFSIZE, ifp);
 	sscanf(buf, "%lu: %le %le %le", &j, &a[0], &a[1], &a[2]);
 	if (i != j) {
-	    bu_log("Vertices out of order in solid %s (expecting %d, found %d)\n",
+	    bu_log("Vertices out of order in solid %s (expecting %lu, found %lu)\n",
 		   my_name, i, j);
 	    bu_free((char *)vertices, "botbld: vertices");
 	    bu_log("Skipping this solid!\n");
@@ -1276,7 +1276,7 @@ botbld(void)
 	    sscanf(buf, "%lu: %d %d %d", &j, &faces[i*3], &faces[i*3+1], &faces[i*3+2]);
 
 	if (i != j) {
-	    bu_log("Faces out of order in solid %s (expecting %d, found %d)\n",
+	    bu_log("Faces out of order in solid %s (expecting %lu, found %lu)\n",
 		   my_name, i, j);
 	    bu_free((char *)vertices, "botbld: vertices");
 	    bu_free((char *)faces, "botbld: faces");
@@ -1567,10 +1567,13 @@ main(int argc, char *argv[])
     struct bu_vls	line = BU_VLS_INIT_ZERO;
     int                 isComment=1;
 
-    bu_debug = BU_DEBUG_COREDUMP;
+    if ( BU_STR_EQUAL(argv[1],"-h") || BU_STR_EQUAL(argv[1],"-?"))
+	bu_exit(1, "%s", usage);
 
     if (argc != 3)
 	bu_exit(1, "%s", usage);
+
+    bu_debug = BU_DEBUG_COREDUMP;
 
     Tcl_FindExecutable(argv[0]);
 
@@ -1808,7 +1811,7 @@ main(int argc, char *argv[])
     fclose(ifp); ifp = NULL;
     wdb_close(ofp); ofp = NULL;
 
-    bu_exit(0, "");
+    bu_exit(0, " ");
     return 0;
 }
 
