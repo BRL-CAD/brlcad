@@ -921,7 +921,7 @@ rt_superell_import5(struct rt_db_internal *ip, const struct bu_external *ep, con
     eip->magic = RT_SUPERELL_INTERNAL_MAGIC;
 
     /* Convert from database (network) to internal (host) format */
-    bu_ntohd((unsigned char *)vec, ep->ext_buf, ELEMENTS_PER_VECT*4 + 2);
+    ntohd((unsigned char *)vec, ep->ext_buf, ELEMENTS_PER_VECT*4 + 2);
 
     /* Apply modeling transformations */
     if (mat == NULL) mat = bn_mat_identity;
@@ -974,7 +974,7 @@ rt_superell_export5(struct bu_external *ep, const struct rt_db_internal *ip, dou
     vec[4*ELEMENTS_PER_VECT + 1] = eip->e;
 
     /* Convert from internal (host) to database (network) format */
-    bu_htond(ep->ext_buf, (unsigned char *)vec, ELEMENTS_PER_VECT*4 + 2);
+    htond(ep->ext_buf, (unsigned char *)vec, ELEMENTS_PER_VECT*4 + 2);
 
     return 0;
 }

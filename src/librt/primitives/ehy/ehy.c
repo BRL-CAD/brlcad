@@ -1805,7 +1805,7 @@ rt_ehy_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     xip->ehy_magic = RT_EHY_INTERNAL_MAGIC;
 
     /* Convert from database (network) to internal (host) format */
-    bu_ntohd((unsigned char *)vec, ep->ext_buf, 3*4);
+    ntohd((unsigned char *)vec, ep->ext_buf, 3*4);
 
     /* Apply modeling transformations */
     if (mat == NULL) mat = bn_mat_identity;
@@ -1884,7 +1884,7 @@ rt_ehy_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
     vec[3*3+2] = xip->ehy_c * local2mm;
 
     /* Convert from internal (host) to database (network) format */
-    bu_htond(ep->ext_buf, (unsigned char *)vec, 3*4);
+    htond(ep->ext_buf, (unsigned char *)vec, 3*4);
 
     return 0;
 }

@@ -685,7 +685,7 @@ rt_hlf_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
     hip->magic = RT_HALF_INTERNAL_MAGIC;
 
     /* Convert from database (network) to internal (host) format */
-    bu_ntohd((unsigned char *)tmp_plane, ep->ext_buf, ELEMENTS_PER_PLANE);
+    ntohd((unsigned char *)tmp_plane, ep->ext_buf, ELEMENTS_PER_PLANE);
 
     /* to apply modeling transformations, create a temporary normal
      * vector and point on the plane
@@ -748,10 +748,10 @@ rt_hlf_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
 
     /* the normal */
     VMOVE(eqn, hip->eqn); /* convert fastf_t to double */
-    bu_htond((unsigned char *)ep->ext_buf, (unsigned char *)eqn, ELEMENTS_PER_VECT);
+    htond((unsigned char *)ep->ext_buf, (unsigned char *)eqn, ELEMENTS_PER_VECT);
 
     /* the distance */
-    bu_htond(((unsigned char *)(ep->ext_buf)) + SIZEOF_NETWORK_DOUBLE*ELEMENTS_PER_VECT,
+    htond(((unsigned char *)(ep->ext_buf)) + SIZEOF_NETWORK_DOUBLE*ELEMENTS_PER_VECT,
 	  (unsigned char *)&scaled_dist, 1);
 
     return 0;

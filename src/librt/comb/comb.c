@@ -199,7 +199,7 @@ rt_comb_v5_serialize(
 		double scanmat[ELEMENTS_PER_MAT];
 
 		MAT_COPY(scanmat, tp->tr_l.tl_mat); /* convert fastf_t to double */
-		bu_htond(ssp->matp, (const unsigned char *)scanmat, ELEMENTS_PER_MAT);
+		htond(ssp->matp, (const unsigned char *)scanmat, ELEMENTS_PER_MAT);
 		ssp->matp += ELEMENTS_PER_MAT * SIZEOF_NETWORK_DOUBLE;
 	    }
 
@@ -538,7 +538,7 @@ rt_comb_import5(struct rt_db_internal *ip, const struct bu_external *ep,
 		BU_ASSERT_SIZE_T(mi, <, nmat);
 
 		/* read matrix */
-		bu_ntohd((unsigned char *)scanmat, &matp[mi*ELEMENTS_PER_MAT*SIZEOF_NETWORK_DOUBLE], ELEMENTS_PER_MAT);
+		ntohd((unsigned char *)scanmat, &matp[mi*ELEMENTS_PER_MAT*SIZEOF_NETWORK_DOUBLE], ELEMENTS_PER_MAT);
 		MAT_COPY(diskmat, scanmat); /* convert double to fastf_t */
 
 		if (!mat || bn_mat_is_identity(mat)) {
@@ -661,7 +661,7 @@ rt_comb_import5(struct rt_db_internal *ip, const struct bu_external *ep,
 		    BU_ASSERT_SIZE_T(mi, <, nmat);
 
 		    /* read matrix */
-		    bu_ntohd((unsigned char *)scanmat, &matp[mi*ELEMENTS_PER_MAT*SIZEOF_NETWORK_DOUBLE], ELEMENTS_PER_MAT);
+		    ntohd((unsigned char *)scanmat, &matp[mi*ELEMENTS_PER_MAT*SIZEOF_NETWORK_DOUBLE], ELEMENTS_PER_MAT);
 		    MAT_COPY(diskmat, scanmat); /* convert double to fastf_t */
 
 		    if (!mat || bn_mat_is_identity(mat)) {

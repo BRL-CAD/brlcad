@@ -807,7 +807,7 @@ int Get3DCoords(coords *coop)
     /* read coordinates */
     if (fread(in, sizeof(in), 1, pfin) != 1)
 	return false;
-    bu_ntohd((unsigned char *)out, in, 2);
+    ntohd((unsigned char *)out, in, 2);
     x = out[0];
     y = out[1];
 
@@ -846,7 +846,7 @@ GetDCoords(coords *coop)
     /* read coordinates */
     if (fread(in, sizeof(in), 1, pfin) != 1)
 	return false;
-    bu_ntohd((unsigned char *)out, in, 2);
+    ntohd((unsigned char *)out, in, 2);
     x = out[0];
     y = out[1];
 
@@ -1158,7 +1158,7 @@ DoFile(void)	/* returns vpl status code */
 			fprintf(stderr, "dspace3\n");
 		    if (fread(in, sizeof(in), 1, pfin) != 1)
 			return Foo(-11);
-		    bu_ntohd((unsigned char *)out, in, 5);
+		    ntohd((unsigned char *)out, in, 5);
 		    /* Only need X and Y, ignore Z */
 		    space.left  = out[0]; /* x1 */
 		    space.bottom= out[1]; /* y1 */
@@ -1177,7 +1177,7 @@ DoFile(void)	/* returns vpl status code */
 			fprintf(stderr, "dspace\n");
 		    if (fread(in, sizeof(in), 1, pfin) != 1)
 			return Foo(-11);
-		    bu_ntohd((unsigned char *)out, in, 4);
+		    ntohd((unsigned char *)out, in, 4);
 		    space.left  = out[0]; /* x1 */
 		    space.bottom= out[1]; /* y1 */
 		    space.right = out[2]; /* x2 */

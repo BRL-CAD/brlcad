@@ -1102,11 +1102,11 @@ rt_nurb_export5(struct bu_external *ep, const struct rt_db_internal *ip, double 
 	}
 
 	/* serialize */
-	bu_htond(cp, (unsigned char *)uknots, srf->u.k_size);
+	htond(cp, (unsigned char *)uknots, srf->u.k_size);
 	cp += srf->u.k_size * SIZEOF_NETWORK_DOUBLE;
-	bu_htond(cp, (unsigned char *)vknots, srf->v.k_size);
+	htond(cp, (unsigned char *)vknots, srf->v.k_size);
 	cp += srf->v.k_size * SIZEOF_NETWORK_DOUBLE;
-	bu_htond(cp, (unsigned char *)srf->ctl_points,
+	htond(cp, (unsigned char *)srf->ctl_points,
 	      coords * srf->s_size[0] * srf->s_size[1]);
 	cp += coords * srf->s_size[0] * srf->s_size[1] * SIZEOF_NETWORK_DOUBLE;
 
@@ -1196,9 +1196,9 @@ rt_nurb_import5(struct rt_db_internal *ip, const struct bu_external *ep, registe
 	uknots = (double *)bu_malloc(srf->u.k_size * sizeof(double), "uknots");
 	vknots = (double *)bu_malloc(srf->v.k_size * sizeof(double), "vknots");
 
-	bu_ntohd((unsigned char *)uknots, cp, srf->u.k_size);
+	ntohd((unsigned char *)uknots, cp, srf->u.k_size);
 	cp += srf->u.k_size * SIZEOF_NETWORK_DOUBLE;
-	bu_ntohd((unsigned char *)vknots, cp, srf->v.k_size);
+	ntohd((unsigned char *)vknots, cp, srf->v.k_size);
 	cp += srf->v.k_size * SIZEOF_NETWORK_DOUBLE;
 
 	/* convert double to fastf_t */
@@ -1217,7 +1217,7 @@ rt_nurb_import5(struct rt_db_internal *ip, const struct bu_external *ep, registe
 
 	points = (double *)bu_malloc(coords * srf->s_size[0] * srf->s_size[1] * sizeof(double), "points");
 
-	bu_ntohd((unsigned char *)points, cp, coords * srf->s_size[0] * srf->s_size[1]);
+	ntohd((unsigned char *)points, cp, coords * srf->s_size[0] * srf->s_size[1]);
 
 	/* convert double to fastf_t */
 	for (i=0; i < coords * srf->s_size[0] * srf->s_size[1]; i++) {

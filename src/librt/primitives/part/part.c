@@ -1471,10 +1471,10 @@ rt_part_import4(struct rt_db_internal *ip, const struct bu_external *ep, registe
     }
 
     /* Convert from database to internal format */
-    bu_ntohd((unsigned char *)v, rp->part.p_v, ELEMENTS_PER_POINT);
-    bu_ntohd((unsigned char *)h, rp->part.p_h, ELEMENTS_PER_VECT);
-    bu_ntohd((unsigned char *)&vrad, rp->part.p_vrad, 1);
-    bu_ntohd((unsigned char *)&hrad, rp->part.p_hrad, 1);
+    ntohd((unsigned char *)v, rp->part.p_v, ELEMENTS_PER_POINT);
+    ntohd((unsigned char *)h, rp->part.p_h, ELEMENTS_PER_VECT);
+    ntohd((unsigned char *)&vrad, rp->part.p_vrad, 1);
+    ntohd((unsigned char *)&hrad, rp->part.p_hrad, 1);
 
     RT_CK_DB_INTERNAL(ip);
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
@@ -1571,10 +1571,10 @@ rt_part_export4(struct bu_external *ep, const struct rt_db_internal *ip, double 
     /* pip->part_type is not converted -- internal only */
 
     rec->part.p_id = DBID_PARTICLE;
-    bu_htond(rec->part.p_v, (unsigned char *)vert, ELEMENTS_PER_POINT);
-    bu_htond(rec->part.p_h, (unsigned char *)hi, ELEMENTS_PER_VECT);
-    bu_htond(rec->part.p_vrad, (unsigned char *)&vrad, 1);
-    bu_htond(rec->part.p_hrad, (unsigned char *)&hrad, 1);
+    htond(rec->part.p_v, (unsigned char *)vert, ELEMENTS_PER_POINT);
+    htond(rec->part.p_h, (unsigned char *)hi, ELEMENTS_PER_VECT);
+    htond(rec->part.p_vrad, (unsigned char *)&vrad, 1);
+    htond(rec->part.p_hrad, (unsigned char *)&hrad, 1);
 
     return 0;
 }
@@ -1608,7 +1608,7 @@ rt_part_import5(struct rt_db_internal *ip, const struct bu_external *ep, registe
     part->part_magic = RT_PART_INTERNAL_MAGIC;
 
     /* Convert from database (network) to internal (host) format */
-    bu_ntohd((unsigned char *)vec, ep->ext_buf, 8);
+    ntohd((unsigned char *)vec, ep->ext_buf, 8);
 
     /* Apply modeling transformations */
     if (mat == NULL) mat = bn_mat_identity;
@@ -1692,7 +1692,7 @@ rt_part_export5(struct bu_external *ep, const struct rt_db_internal *ip, double 
     /* !!! should make sure the values are proper (no negative radius) */
 
     /* Convert from internal (host) to database (network) format */
-    bu_htond(ep->ext_buf, (unsigned char *)vec, 8);
+    htond(ep->ext_buf, (unsigned char *)vec, 8);
 
     return 0;
 }

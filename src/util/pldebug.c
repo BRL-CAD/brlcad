@@ -196,7 +196,7 @@ outfloat(int n)
     if (ret < (size_t)n)
 	perror("fread");
 
-    bu_ntohd((unsigned char *)out, in, n);
+    ntohd((unsigned char *)out, in, n);
 
     putchar('(');
     for (i = 0; i < n; i++) {

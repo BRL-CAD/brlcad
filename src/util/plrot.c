@@ -600,12 +600,12 @@ two_dcoord_out(FILE *fp, fastf_t *m)
     if (ret < 2*8)
 	perror("fread");
 
-    bu_ntohd((unsigned char *)p1, buf, 2);
+    ntohd((unsigned char *)p1, buf, 2);
     p1[2] = 0;		/* no Z */
 
     MAT4X3PNT(p2, m, p1);
 
-    bu_htond(buf, (unsigned char *)p2, 3);
+    htond(buf, (unsigned char *)p2, 3);
     ret = fwrite(buf, 1, 3*8, stdout);
     if (ret < 3*8)
 	perror("fwrite");
@@ -624,11 +624,11 @@ three_dcoord_out(FILE *fp, fastf_t *m)
     if (ret < 3*8)
 	perror("fread");
 
-    bu_ntohd((unsigned char *)p1, buf, 3);
+    ntohd((unsigned char *)p1, buf, 3);
 
     MAT4X3PNT(p2, m, p1);
 
-    bu_htond(buf, (unsigned char *)p2, 3);
+    htond(buf, (unsigned char *)p2, 3);
     ret = fwrite(buf, 1, 3*8, stdout);
     if (ret < 3*8)
 	perror("fwrite");
@@ -646,7 +646,7 @@ getdouble(FILE *fp)
     if (ret < 1)
 	perror("fread");
 
-    bu_ntohd((unsigned char *)&d, buf, 1);
+    ntohd((unsigned char *)&d, buf, 1);
     return d;
 }
 

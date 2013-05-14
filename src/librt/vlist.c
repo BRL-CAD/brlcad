@@ -353,7 +353,7 @@ rt_vlist_export(struct bu_vls *vls, struct bu_list *hp, const char *name)
 
 	for (i = 0; i < nused; i++) {
 	    VMOVE(point, pt[i]); /* convert fastf_t to double */
-	    bu_htond(bp, (unsigned char *)point, ELEMENTS_PER_VECT);
+	    htond(bp, (unsigned char *)point, ELEMENTS_PER_VECT);
 	    bp += ELEMENTS_PER_VECT*SIZEOF_NETWORK_DOUBLE;
 	}
     }
@@ -387,7 +387,7 @@ rt_vlist_import(struct bu_list *hp, struct bu_vls *namevls, const unsigned char 
 	int cmd;
 
 	cmd = *bp++;
-	bu_ntohd((unsigned char *)point, pp, ELEMENTS_PER_POINT);
+	ntohd((unsigned char *)point, pp, ELEMENTS_PER_POINT);
 	pp += ELEMENTS_PER_POINT*SIZEOF_NETWORK_DOUBLE;
 	BN_ADD_VLIST(&rt_g.rtg_vlfree, hp, point, cmd);
     }
@@ -565,7 +565,7 @@ rt_uplot_get_args(FILE *fp, const struct uplot *up, char *carg, fastf_t *arg)
 		ret = fread(inbuf, SIZEOF_NETWORK_DOUBLE, 1, fp);
 		if (ret != 1)
 		    bu_log("WARNING: uplot read failure\n");
-		bu_ntohd((unsigned char *)&scan, (unsigned char *)inbuf, 1);
+		ntohd((unsigned char *)&scan, (unsigned char *)inbuf, 1);
 		arg[i] = scan; /* convert double to fastf_t */
 		break;
 	    }

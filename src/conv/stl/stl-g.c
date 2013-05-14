@@ -432,7 +432,7 @@ Convert_part_binary()
 	}
 
 	/* now use our network to native host format conversion tools */
-	bu_ntohf((unsigned char *)flts, buf, 12);
+	ntohf((unsigned char *)flts, buf, 12);
 
 	/* unused attribute byte count */
 	ret = fread(buf, 2, 1, fd_in);

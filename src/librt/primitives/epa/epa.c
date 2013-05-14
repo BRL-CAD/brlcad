@@ -1778,7 +1778,7 @@ rt_epa_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     xip->epa_magic = RT_EPA_INTERNAL_MAGIC;
 
     /* Convert from database (network) to internal (host) format */
-    bu_ntohd((unsigned char *)vec, ep->ext_buf, 11);
+    ntohd((unsigned char *)vec, ep->ext_buf, 11);
 
     /* Apply modeling transformations */
     if (mat == NULL) mat = bn_mat_identity;
@@ -1856,7 +1856,7 @@ rt_epa_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
     vec[3*3+1] = xip->epa_r2 * local2mm;
 
     /* Convert from internal (host) to database (network) format */
-    bu_htond(ep->ext_buf, (unsigned char *)vec, 11);
+    htond(ep->ext_buf, (unsigned char *)vec, 11);
 
     return 0;
 }

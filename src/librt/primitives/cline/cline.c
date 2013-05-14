@@ -856,13 +856,13 @@ rt_cline_import4(struct rt_db_internal *ip, const struct bu_external *ep, const 
     cline_ip->magic = RT_CLINE_INTERNAL_MAGIC;
     if (mat == NULL) mat = bn_mat_identity;
 
-    bu_ntohd((unsigned char *)&scan, rp->cli.cli_thick, 1);
+    ntohd((unsigned char *)&scan, rp->cli.cli_thick, 1);
     cline_ip->thickness = scan / mat[15];
-    bu_ntohd((unsigned char *)&scan, rp->cli.cli_radius, 1);
+    ntohd((unsigned char *)&scan, rp->cli.cli_radius, 1);
     cline_ip->radius = scan / mat[15];
-    bu_ntohd((unsigned char *)&work, rp->cli.cli_V, ELEMENTS_PER_POINT);
+    ntohd((unsigned char *)&work, rp->cli.cli_V, ELEMENTS_PER_POINT);
     MAT4X3PNT(cline_ip->v, mat, work);
-    bu_ntohd((unsigned char *)&work, rp->cli.cli_h, ELEMENTS_PER_POINT);
+    ntohd((unsigned char *)&work, rp->cli.cli_h, ELEMENTS_PER_POINT);
     MAT4X3VEC(cline_ip->h, mat, work);
 
     return 0;			/* OK */
@@ -900,13 +900,13 @@ rt_cline_export4(struct bu_external *ep, const struct rt_db_internal *ip, double
     rec->cli.cli_id = DBID_CLINE;	/* GED primitive type from db.h */
 
     tmp = cline_ip->thickness * local2mm;
-    bu_htond(rec->cli.cli_thick, (unsigned char *)(&tmp), 1);
+    htond(rec->cli.cli_thick, (unsigned char *)(&tmp), 1);
     tmp = cline_ip->radius * local2mm;
-    bu_htond(rec->cli.cli_radius, (unsigned char *)(&tmp), 1);
+    htond(rec->cli.cli_radius, (unsigned char *)(&tmp), 1);
     VSCALE(work, cline_ip->v, local2mm);
-    bu_htond(rec->cli.cli_V, (unsigned char *)work, ELEMENTS_PER_VECT);
+    htond(rec->cli.cli_V, (unsigned char *)work, ELEMENTS_PER_VECT);
     VSCALE(work, cline_ip->h, local2mm);
-    bu_htond(rec->cli.cli_h, (unsigned char *)work, ELEMENTS_PER_VECT);
+    htond(rec->cli.cli_h, (unsigned char *)work, ELEMENTS_PER_VECT);
 
     return 0;
 }
@@ -941,7 +941,7 @@ rt_cline_import5(struct rt_db_internal *ip, const struct bu_external *ep, regist
     cline_ip->magic = RT_CLINE_INTERNAL_MAGIC;
 
     /* Convert from database (network) to internal (host) format */
-    bu_ntohd((unsigned char *)vec, ep->ext_buf, 8);
+    ntohd((unsigned char *)vec, ep->ext_buf, 8);
 
     if (mat == NULL) mat = bn_mat_identity;
     cline_ip->thickness = vec[0] / mat[15];
@@ -983,7 +983,7 @@ rt_cline_export5(struct bu_external *ep, const struct rt_db_internal *ip, double
     VSCALE(&vec[5], cline_ip->h, local2mm);
 
     /* Convert from internal (host) to database (network) format */
-    bu_htond(ep->ext_buf, (unsigned char *)vec, 8);
+    htond(ep->ext_buf, (unsigned char *)vec, 8);
 
     return 0;
 }

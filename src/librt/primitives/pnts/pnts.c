@@ -42,7 +42,7 @@ extern int rt_ell_plot(struct bu_list *, struct rt_db_internal *, const struct r
 HIDDEN unsigned char *
 pnts_pack_double(unsigned char *buf, unsigned char *data, unsigned int count)
 {
-    bu_htond(buf, data, count);
+    htond(buf, data, count);
     buf += count * SIZEOF_NETWORK_DOUBLE;
     return buf;
 }
@@ -51,7 +51,7 @@ pnts_pack_double(unsigned char *buf, unsigned char *data, unsigned int count)
 HIDDEN unsigned char *
 pnts_unpack_double(unsigned char *buf, unsigned char *data, unsigned int count)
 {
-    bu_ntohd(data, buf, count);
+    ntohd(data, buf, count);
     buf += count * SIZEOF_NETWORK_DOUBLE;
     return buf;
 }
@@ -135,7 +135,7 @@ rt_pnts_export5(struct bu_external *external, const struct rt_db_internal *inter
     buf = (unsigned char *)external->ext_buf;
 
     scan = pnts->scale; /* convert fastf_t to double */
-    bu_htond(buf, (unsigned char *)&scan, 1);
+    htond(buf, (unsigned char *)&scan, 1);
     buf += SIZEOF_NETWORK_DOUBLE;
     *(uint16_t *)buf = htons((unsigned short)pnts->type);
     buf += SIZEOF_NETWORK_SHORT;
@@ -384,7 +384,7 @@ rt_pnts_import5(struct rt_db_internal *internal, const struct bu_external *exter
     pnts->point = NULL;
 
     /* unpack the header */
-    bu_ntohd((unsigned char *)&scan, buf, 1);
+    ntohd((unsigned char *)&scan, buf, 1);
     pnts->scale = scan; /* convert double to fastf_t */
     buf += SIZEOF_NETWORK_DOUBLE;
     pnts->type = (rt_pnt_type)ntohs(*(uint16_t *)buf);

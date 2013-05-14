@@ -389,7 +389,7 @@ rt_grp_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     gip->magic = RT_GRIP_INTERNAL_MAGIC;
 
     /* Convert from database (network) to internal (host) format */
-    bu_ntohd((unsigned char *)vec, ep->ext_buf, 7);
+    ntohd((unsigned char *)vec, ep->ext_buf, 7);
 
     /* Transform the point, and the normal */
     if (mat == NULL) mat = bn_mat_identity;
@@ -443,7 +443,7 @@ rt_grp_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
     vec[6] = gip->mag * local2mm;
 
     /* Convert from internal (host) to database (network) format */
-    bu_htond(ep->ext_buf, (unsigned char *)vec, 7);
+    htond(ep->ext_buf, (unsigned char *)vec, 7);
 
     return 0;
 }

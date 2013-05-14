@@ -143,7 +143,7 @@ temp_render(struct application *ap, const struct partition *pp, struct shadework
 	cp = ((unsigned char *)(tp->mp->buf)) +
 	    (int)(ymin * (tp->t_n-1)) * tp->t_w * 8 +
 	    (int)(xmin * (tp->t_w-1)) * 8;
-	bu_ntohd((unsigned char *)&ttemp, cp, 1);
+	ntohd((unsigned char *)&ttemp, cp, 1);
 	temp += ttemp;
     } else {
 	/* Calculate weighted average of cells in footprint */
@@ -198,7 +198,7 @@ temp_render(struct application *ap, const struct partition *pp, struct shadework
 		cell_area = line_factor * (col_upper - col_lower);
 		tot_area += cell_area;
 
-		bu_ntohd((unsigned char *)&ttemp, cp, 1);
+		ntohd((unsigned char *)&ttemp, cp, 1);
 
 		if (rdebug & RDEBUG_SHADE)
 		    bu_log("\t %g weight=%g (from col=%d line=%d)\n",

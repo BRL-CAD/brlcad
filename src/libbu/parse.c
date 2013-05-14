@@ -162,11 +162,11 @@ bu_struct_export(struct bu_external *ext, const genptr_t base, const struct bu_s
 		CKMEM(len);
 		switch(sizeof(fastf_t)) {
 		    case sizeof(float):
-			bu_htonf((unsigned char *)cp, (unsigned char *)loc, ip->sp_count);
+			htonf((unsigned char *)cp, (unsigned char *)loc, ip->sp_count);
 			break;
 		    case sizeof(double):
 		    default:
-			bu_htond((unsigned char *)cp, (unsigned char *)loc, ip->sp_count);
+			htond((unsigned char *)cp, (unsigned char *)loc, ip->sp_count);
 			break;
 		}
 		cp += len;
@@ -175,7 +175,7 @@ bu_struct_export(struct bu_external *ext, const genptr_t base, const struct bu_s
 		/* Double-precision floating point */
 		len = ip->sp_count * sizeof(double);
 		CKMEM(len);
-		bu_htond((unsigned char *)cp, (unsigned char *)loc, ip->sp_count);
+		htond((unsigned char *)cp, (unsigned char *)loc, ip->sp_count);
 		cp += len;
 		continue;
 	    case 'd':
@@ -331,11 +331,11 @@ bu_struct_import(genptr_t base, const struct bu_structparse *imp, const struct b
 		len = ip->sp_count * sizeof(fastf_t);
 		switch(sizeof(fastf_t)) {
 		    case sizeof(float):
-			bu_ntohf((unsigned char *)loc, cp, ip->sp_count);
+			ntohf((unsigned char *)loc, cp, ip->sp_count);
 			break;
 		    case sizeof(double):
 		    default:
-			bu_ntohd((unsigned char *)loc, cp, ip->sp_count);
+			ntohd((unsigned char *)loc, cp, ip->sp_count);
 			break;
 		}
 		cp += len;
@@ -344,7 +344,7 @@ bu_struct_import(genptr_t base, const struct bu_structparse *imp, const struct b
 	    case 'g':
 		/* Double-precision floating point */
 		len = ip->sp_count * sizeof(double);
-		bu_ntohd((unsigned char *)loc, cp, ip->sp_count);
+		ntohd((unsigned char *)loc, cp, ip->sp_count);
 		cp += len;
 		bytes_used += len;
 		break;

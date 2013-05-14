@@ -3996,16 +3996,16 @@ rt_pipe_import4(
 	mat = bn_mat_identity;
     }
     for (exp_pipept = &rp->pwr.pwr_data[pip->pipe_count - 1]; exp_pipept >= &rp->pwr.pwr_data[0]; exp_pipept--) {
-	bu_ntohd((unsigned char *)&scan[0], exp_pipept->epp_id, 1);
+	ntohd((unsigned char *)&scan[0], exp_pipept->epp_id, 1);
 	tmp.pp_id = scan[0]; /* convert double to fastf_t */
 
-	bu_ntohd((unsigned char *)&scan[1], exp_pipept->epp_od, 1);
+	ntohd((unsigned char *)&scan[1], exp_pipept->epp_od, 1);
 	tmp.pp_od = scan[1]; /* convert double to fastf_t */
 
-	bu_ntohd((unsigned char *)&scan[2], exp_pipept->epp_bendradius, 1);
+	ntohd((unsigned char *)&scan[2], exp_pipept->epp_bendradius, 1);
 	tmp.pp_bendradius = scan[2]; /* convert double to fastf_t */
 
-	bu_ntohd((unsigned char *)scan, exp_pipept->epp_coord, ELEMENTS_PER_VECT);
+	ntohd((unsigned char *)scan, exp_pipept->epp_coord, ELEMENTS_PER_VECT);
 	VMOVE(tmp.pp_coord, scan); /* convert double to fastf_t */
 
 	/* Apply modeling transformations */
@@ -4092,16 +4092,16 @@ rt_pipe_export4(
 
 
 	VMOVE(scan, tmp.pp_coord); /* convert fastf_t to double */
-	bu_htond(epp->epp_coord, (unsigned char *)scan, ELEMENTS_PER_POINT);
+	htond(epp->epp_coord, (unsigned char *)scan, ELEMENTS_PER_POINT);
 
 	scan[0] = tmp.pp_id; /* convert fastf_t to double */
-	bu_htond(epp->epp_id, (unsigned char *)&scan[0], 1);
+	htond(epp->epp_id, (unsigned char *)&scan[0], 1);
 
 	scan[1] = tmp.pp_od; /* convert fastf_t to double */
-	bu_htond(epp->epp_od, (unsigned char *)&scan[1], 1);
+	htond(epp->epp_od, (unsigned char *)&scan[1], 1);
 
 	scan[2] = tmp.pp_bendradius; /* convert fastf_t to double */
-	bu_htond(epp->epp_bendradius, (unsigned char *)&scan[2], 1);
+	htond(epp->epp_bendradius, (unsigned char *)&scan[2], 1);
     }
 
     return 0;
@@ -4154,7 +4154,7 @@ rt_pipe_import5(
     vec = (double *)bu_malloc(byte_count, "rt_pipe_import5: vec");
 
     /* Convert from database (network) to internal (host) format */
-    bu_ntohd((unsigned char *)vec, (unsigned char *)ep->ext_buf + 4, double_count);
+    ntohd((unsigned char *)vec, (unsigned char *)ep->ext_buf + 4, double_count);
 
     /*
      * Walk the array of segments in reverse order, allocating a
@@ -4243,7 +4243,7 @@ rt_pipe_export5(struct bu_external *ep, const struct rt_db_internal *ip, double 
     }
 
     /* Convert from internal (host) to database (network) format */
-    bu_htond((unsigned char *)ep->ext_buf + 4, (unsigned char *)vec, double_count);
+    htond((unsigned char *)ep->ext_buf + 4, (unsigned char *)vec, double_count);
 
     bu_free((genptr_t)vec, "rt_pipe_export5: vec");
     return 0;

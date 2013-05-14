@@ -380,7 +380,7 @@ getieee(void)
     if (ret < 1)
 	perror("fread");
 
-    bu_ntohd((unsigned char *)&d, (unsigned char *)in, 1);
+    ntohd((unsigned char *)&d, (unsigned char *)in, 1);
     return d;
 }
 
@@ -484,7 +484,7 @@ putieee(double d)
     unsigned char out[8];
     size_t ret;
 
-    bu_htond(out, (unsigned char *)&d, 1);
+    htond(out, (unsigned char *)&d, 1);
     ret = fwrite(out, 1, 8, stdout);
     if (ret < 8)
 	perror("fwrite");

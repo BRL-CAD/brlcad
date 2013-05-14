@@ -1343,7 +1343,7 @@ rt_arb_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
     aip->magic = RT_ARB_INTERNAL_MAGIC;
 
     /* Convert from database (network) to internal (host) format */
-    bu_ntohd((unsigned char *)vec, ep->ext_buf, 8*3);
+    ntohd((unsigned char *)vec, ep->ext_buf, 8*3);
     if (mat == NULL) mat = bn_mat_identity;
     for (i=0; i<8; i++) {
 	MAT4X3PNT(aip->pt[i], mat, &vec[i*3]);
@@ -1377,7 +1377,7 @@ rt_arb_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
     for (i=0; i<8; i++) {
 	VSCALE(&vec[i*ELEMENTS_PER_VECT], aip->pt[i], local2mm);
     }
-    bu_htond(ep->ext_buf, (unsigned char *)vec, 8*ELEMENTS_PER_VECT);
+    htond(ep->ext_buf, (unsigned char *)vec, 8*ELEMENTS_PER_VECT);
     return 0;
 }
 

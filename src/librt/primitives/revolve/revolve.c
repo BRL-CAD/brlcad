@@ -1543,7 +1543,7 @@ rt_revolve_import5(struct rt_db_internal *ip, const struct bu_external *ep, cons
 	    rip->skt = (struct rt_sketch_internal *)tmp_ip.idb_ptr;
     }
 
-    bu_ntohd((unsigned char *)&vv, (unsigned char *)ep->ext_buf, ELEMENTS_PER_VECT*3 + 1);
+    ntohd((unsigned char *)&vv, (unsigned char *)ep->ext_buf, ELEMENTS_PER_VECT*3 + 1);
 
     /* Apply the modeling transformation */
     if (mat == NULL) mat = bn_mat_identity;
@@ -1674,7 +1674,7 @@ rt_revolve_export5(struct bu_external *ep, const struct rt_db_internal *ip, doub
     VSCALE(&vec[2*3], rip->r, local2mm);
     vec[9] = rip->ang;
 
-    bu_htond(ptr, (unsigned char *)vec, ELEMENTS_PER_VECT*3 + 1);
+    htond(ptr, (unsigned char *)vec, ELEMENTS_PER_VECT*3 + 1);
     ptr += (ELEMENTS_PER_VECT*3 + 1) * SIZEOF_NETWORK_DOUBLE;
 
     bu_strlcpy((char *)ptr, bu_vls_addr(&rip->sketch_name), bu_vls_strlen(&rip->sketch_name) + 1);

@@ -858,7 +858,7 @@ rt_arbn_import4(struct rt_db_internal *ip, const struct bu_external *ep, const f
     aip->eqn = (plane_t *)bu_malloc(aip->neqn*sizeof(plane_t), "arbn plane eqn[]");
     scan = (double *)bu_malloc(aip->neqn*sizeof(double)*ELEMENTS_PER_PLANE, "scan array");
 
-    bu_ntohd((unsigned char *)scan, (unsigned char *)(&rp[1]), aip->neqn*ELEMENTS_PER_PLANE);
+    ntohd((unsigned char *)scan, (unsigned char *)(&rp[1]), aip->neqn*ELEMENTS_PER_PLANE);
     for (i=0; i<aip->neqn; i++) {
 	aip->eqn[i][X] = scan[(i*ELEMENTS_PER_PLANE)+0]; /* convert double to fastf_t */
 	aip->eqn[i][Y] = scan[(i*ELEMENTS_PER_PLANE)+1]; /* convert double to fastf_t */
@@ -949,7 +949,7 @@ rt_arbn_export4(struct bu_external *ep, const struct rt_db_internal *ip, double 
 	*sp++ = aip->eqn[i][W] * local2mm;
     }
 
-    bu_htond((unsigned char *)&rec[1], (unsigned char *)sbuf, aip->neqn * ELEMENTS_PER_PLANE);
+    htond((unsigned char *)&rec[1], (unsigned char *)sbuf, aip->neqn * ELEMENTS_PER_PLANE);
 
     bu_free((char *)sbuf, "arbn temp");
     return 0;			/* OK */
@@ -995,7 +995,7 @@ rt_arbn_import5(struct rt_db_internal *ip, const struct bu_external *ep, const f
     if (aip->neqn <= 0) return -1;
 
     eqn = (double *)bu_malloc(byte_count, "arbn plane eqn[] temp buf");
-    bu_ntohd((unsigned char *)eqn, (unsigned char *)ep->ext_buf + ELEMENTS_PER_PLANE, double_count);
+    ntohd((unsigned char *)eqn, (unsigned char *)ep->ext_buf + ELEMENTS_PER_PLANE, double_count);
     aip->eqn = (plane_t *)bu_malloc(double_count * sizeof(fastf_t), "arbn plane eqn[]");
     for (i=0; i < aip->neqn; i++) {
 	HMOVE(aip->eqn[i], &eqn[i*ELEMENTS_PER_PLANE]);
@@ -1077,7 +1077,7 @@ rt_arbn_export5(struct bu_external *ep, const struct rt_db_internal *ip, double 
     }
 
     /* Convert from internal (host) to database (network) format */
-    bu_htond((unsigned char *)ep->ext_buf + SIZEOF_NETWORK_LONG, (unsigned char *)vec, double_count);
+    htond((unsigned char *)ep->ext_buf + SIZEOF_NETWORK_LONG, (unsigned char *)vec, double_count);
 
     bu_free((char *)vec, "arbn temp");
     return 0;			/* OK */

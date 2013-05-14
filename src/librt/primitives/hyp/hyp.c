@@ -1234,7 +1234,7 @@ rt_hyp_import5(struct rt_db_internal *ip, const struct bu_external *ep, const ma
      * conversion from network data (Big Endian ints, IEEE double
      * floating point) to host local data representations.
      */
-    bu_ntohd((unsigned char *)&vec, (const unsigned char *)ep->ext_buf, ELEMENTS_PER_VECT*4);
+    ntohd((unsigned char *)&vec, (const unsigned char *)ep->ext_buf, ELEMENTS_PER_VECT*4);
 
     /* Apply the modeling transformation */
     if (mat == NULL) mat = bn_mat_identity;
@@ -1292,7 +1292,7 @@ rt_hyp_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
     vec[10] = hyp_ip->hyp_bnr * local2mm;
 
     /* Convert from internal (host) to database (network) format */
-    bu_htond(ep->ext_buf, (unsigned char *)vec, ELEMENTS_PER_VECT*4);
+    htond(ep->ext_buf, (unsigned char *)vec, ELEMENTS_PER_VECT*4);
 
     return 0;
 }

@@ -1376,7 +1376,7 @@ rt_ell_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
     eip->magic = RT_ELL_INTERNAL_MAGIC;
 
     /* Convert from database (network) to internal (host) format */
-    bu_ntohd((unsigned char *)vec, ep->ext_buf, ELEMENTS_PER_VECT*4);
+    ntohd((unsigned char *)vec, ep->ext_buf, ELEMENTS_PER_VECT*4);
 
     /* Apply modeling transformations */
     if (mat == NULL) mat = bn_mat_identity;
@@ -1424,7 +1424,7 @@ rt_ell_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
     VSCALE(&vec[3*ELEMENTS_PER_VECT], eip->c, local2mm);
 
     /* Convert from internal (host) to database (network) format */
-    bu_htond(ep->ext_buf, (unsigned char *)vec, ELEMENTS_PER_VECT*4);
+    htond(ep->ext_buf, (unsigned char *)vec, ELEMENTS_PER_VECT*4);
 
     return 0;
 }

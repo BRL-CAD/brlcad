@@ -153,14 +153,14 @@ rt_binunif_import5_minor_type(struct rt_db_internal *ip,
 	    bip->count = ep->ext_nbytes/SIZEOF_NETWORK_FLOAT;
 	    bip->u.uint8 = (unsigned char *) bu_malloc( bip->count * sizeof(float),
 							"rt_binunif_internal" );
-	    bu_ntohf( (unsigned char *) bip->u.uint8,
+	    ntohf( (unsigned char *) bip->u.uint8,
 		   ep->ext_buf, bip->count );
 	    break;
 	case DB5_MINORTYPE_BINU_DOUBLE:
 	    bip->count = ep->ext_nbytes/SIZEOF_NETWORK_DOUBLE;
 	    bip->u.uint8 = (unsigned char *) bu_malloc( bip->count * sizeof(double),
 							"rt_binunif_internal" );
-	    bu_ntohd( (unsigned char *) bip->u.uint8, ep->ext_buf, bip->count );
+	    ntohd( (unsigned char *) bip->u.uint8, ep->ext_buf, bip->count );
 	    break;
 	case DB5_MINORTYPE_BINU_8BITINT:
 	case DB5_MINORTYPE_BINU_8BITINT_U:
@@ -259,13 +259,13 @@ rt_binunif_export5( struct bu_external		*ep,
 	    ep->ext_nbytes = bip->count * SIZEOF_NETWORK_FLOAT;
 	    ep->ext_buf = (genptr_t)bu_malloc( ep->ext_nbytes,
 					       "binunif external");
-	    bu_htonf( ep->ext_buf, (unsigned char *) bip->u.uint8, bip->count );
+	    htonf( ep->ext_buf, (unsigned char *) bip->u.uint8, bip->count );
 	    break;
 	case DB5_MINORTYPE_BINU_DOUBLE:
 	    ep->ext_nbytes = bip->count * SIZEOF_NETWORK_DOUBLE;
 	    ep->ext_buf = (genptr_t)bu_malloc( ep->ext_nbytes,
 					       "binunif external");
-	    bu_htond( ep->ext_buf, (unsigned char *) bip->u.uint8, bip->count );
+	    htond( ep->ext_buf, (unsigned char *) bip->u.uint8, bip->count );
 	    break;
 	case DB5_MINORTYPE_BINU_8BITINT:
 	case DB5_MINORTYPE_BINU_8BITINT_U:

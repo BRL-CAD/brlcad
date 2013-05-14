@@ -176,7 +176,7 @@ getieee(void)
     if (ret < 1)
 	perror("fread");
 
-    bu_ntohd((unsigned char *)&d, in, 1);
+    ntohd((unsigned char *)&d, in, 1);
     return d;
 }
 

@@ -205,7 +205,7 @@ view_pixel(struct application *ap)
 
 
     if (rpt_dist)
-	bu_htond(dist, (unsigned char *)&(ap->a_dist), 1);
+	htond(dist, (unsigned char *)&(ap->a_dist), 1);
 
     if (ap->a_user == 0) {
 	/* Shot missed the model, don't dither */
