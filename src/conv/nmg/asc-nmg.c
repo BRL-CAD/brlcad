@@ -43,7 +43,9 @@
 static int ascii_to_brlcad(FILE *fpin, struct rt_wdb *fpout, char *reg_name, char *grp_name);
 static void descr_to_nmg(struct shell *s, FILE *fp, fastf_t *Ext);
 
-char		usage[] = "Usage: asc-nmg [filein] [fileout] ; use - for stdin\n";
+void usage(void){
+	bu_log("Usage: asc-nmg [filein] [fileout] ; use - for stdin\n");
+}
 
 /*
  *	M a i n
@@ -57,8 +59,15 @@ main(int argc, char **argv)
     FILE		*fpin;
     struct rt_wdb	*fpout;
 
-    if (isatty(fileno(stdin)) && isatty(fileno(stdout)) && argc == 1)
-	bu_log("%s       Program continues running:\n",usage);
+    if ( BU_STR_EQUAL(argv[1],"-h") || BU_STR_EQUAL(argv[1],"-?")) {
+	usage();
+	bu_exit(1, NULL);
+    }
+
+    if (isatty(fileno(stdin)) && isatty(fileno(stdout)) && argc == 1){
+    	usage();
+	bu_log("       Program continues running:\n");
+    }
 
     bu_setprogname(argv[0]);
 
