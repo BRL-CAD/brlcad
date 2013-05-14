@@ -58,15 +58,16 @@
 #include "bu.h"
 
 
-#define OPT_STRING "a:c:e:ipr?"	/* For bu_getopt(3) */
+#define OPT_STRING "a:c:e:iprh?"	/* For bu_getopt(3) */
 #define fpeek(f) ungetc(fgetc(f), f)
 
+char usage[]="Usage: azel [-a azim] [-e elev] [-c celsiz] [-{ip}r] [infile [outfile]]";
 
 /* ======================================================================== */
 void
 PrintUsage (void)
 {
-    bu_exit(1, "Usage:  'azel [-a azim] [-e elev] [-c celsiz] [-{ip}r] [infile [outfile]]'\n");
+    bu_exit(1, "%s\n",usage);
 }
 
 
@@ -141,6 +142,11 @@ main (int argc, char **argv)
     int Ch;                 /* Input character */
     int i;                  /* Dummy variable for loop indexing */
 
+    if (isatty(fileno(stdin)) && isatty(fileno(stdout)) && argc == 1){
+    	fprintf(stderr,"%s\n",usage);
+	fprintf(stderr,"       Program continues running:\n");
+    }
+
     /* Handle command-line options */
     while ((Ch = bu_getopt(argc, argv, OPT_STRING)) != -1)
 	switch (Ch) {
@@ -175,7 +181,7 @@ main (int argc, char **argv)
 		Round = 1;
 		break;
 	    default:
-		if (Ch != '?') {
+		if (Ch != '?' && Ch != 'h') {
 		    fprintf(stderr, "Bad option '-%c'\n", Ch);
 		}
 		PrintUsage();
