@@ -1270,6 +1270,17 @@ typedef double fastf_t;
  * in the biased-exponent field and all 0 bits in the fraction with
  * the sign indicating positive (0) or negative (1) infinity.
  */
+
+
+/* !!! this undef is temporarily restored to restore old behavior and
+ * !!! force the use of the reversion below - it should disappear when 
+ * !!! that reversion does. -- CWY, 20130514
+ */
+#ifdef INFINITY
+#    undef INFINITY
+#endif
+
+
 #ifndef INFINITY
 #if 1
 /* !!! this is temporarily reverted to a historic value due to a
