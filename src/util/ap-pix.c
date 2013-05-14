@@ -46,6 +46,11 @@ struct {
 FILE *magfp, *yelfp, *cyafp;
 int verbose = 0;
 
+char *argv0;
+
+void usage(void){
+	bu_exit(1, "Usage: %s [-v] file.ap > file.pix (3456 x ?)\n", argv0);
+}
 
 int
 main(int argc, char **argv)
@@ -54,17 +59,20 @@ main(int argc, char **argv)
     int i, bit;
     int line;
 
-    const char *argv0 = argv[0];
+    argv0 = argv[0];
 
-    if (argc > 1 && BU_STR_EQUAL(argv[1], "-v")) {
-	verbose++;
-	argc--;
-	argv++;
+    if (argc > 1 ){
+	if ( BU_STR_EQUAL(argv[1], "-h") ||  BU_STR_EQUAL(argv[1], "-?") )
+	    usage();
+	if ( BU_STR_EQUAL(argv[1], "-v") ) {
+	    verbose++;
+	    argc--;
+	    argv++;
+	}
     }
 
-    if (argc != 2) {
-	bu_exit(1, "Usage: %s [-v] file.ap > file.pix (3456 x ?)\n", argv0);
-    }
+    if (argc != 2)
+	usage();
 
     magfp = fopen(argv[1], "r");
     if (magfp == NULL) {
