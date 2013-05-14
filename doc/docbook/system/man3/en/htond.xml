@@ -1,23 +1,23 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 <!-- lifted from troff+man by doclifter -->
-<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='htond3'>
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='bu_htond3'>
 <refmeta>
-    <refentrytitle>HTOND</refentrytitle>
+    <refentrytitle>BU_HTOND</refentrytitle>
 <manvolnum>3</manvolnum>
 <refmiscinfo class='source'>BRL-CAD</refmiscinfo>
 <refmiscinfo class='manual'>BRL-CAD</refmiscinfo>
 </refmeta>
 
 <refnamediv>
-<refname>htond</refname>
-<refname>ntohd</refname>
+<refname>bu_htond</refname>
+<refname>bu_ntohd</refname>
 <refpurpose>convert double-precision floating point numbers between host and network format and byte order</refpurpose>
 </refnamediv>
 <!-- body begins here -->
 <refsynopsisdiv xml:id='synopsis'>
 <funcsynopsis>
 <funcprototype>
-<funcdef><function>htond</function></funcdef>
+<funcdef><function>bu_htond</function></funcdef>
 <paramdef><parameter>netptr</parameter></paramdef>
 <paramdef><parameter>hostptr</parameter></paramdef>
 <paramdef><parameter>count</parameter></paramdef>
@@ -29,7 +29,7 @@ int count;
 
 </funcsynopsisinfo>
 <funcprototype>
-<funcdef><function>ntohd</function></funcdef>
+<funcdef><function>bu_ntohd</function></funcdef>
 <paramdef><parameter>hostptr</parameter></paramdef>
 <paramdef><parameter>netptr</parameter></paramdef>
 <paramdef><parameter>count</parameter></paramdef>
