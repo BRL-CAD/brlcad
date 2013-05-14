@@ -172,25 +172,10 @@
 #   define lseek _lseek
 #endif
 
-/* set up ftell */
-#if defined(SIZEOF_VOID_P) && SIZEOF_VOID_P == 8 
-#   include<stdio.h>
-#   undef ftell
-#   define ftell _ftelli64
-#endif
-
-/* set up fseek */
-#if defined(SIZEOF_VOID_P) && SIZEOF_VOID_P == 8 
-#   include<stdio.h>
-#   undef fseek
-#   define fseek _fseeki64
-#endif
-
 #define fmax __max
 #define ioctl ioctlsocket
 
 #define SHARED_PTR_BOOST	1
-
 
 /*
  * Signal handling

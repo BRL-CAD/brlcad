@@ -267,7 +267,7 @@ main(int argc, char **argv)
 		    break;
 		}
 		ichg=1;
-		bu_lseek(ifd, loci, 0);
+		lseek(ifd, loci, 0);
 		loct=loci;
 		ic=0;
 		for (i=0;i<ni;i++) {
@@ -309,7 +309,7 @@ main(int argc, char **argv)
 	    case 'l':
 		printf("Background color is %s\n", colortab[ibc].name);
 		printf("Transparent color is %s\n\n", colortab[itc].name);
-		bu_lseek(ifd, loci, 0);
+		lseek(ifd, loci, 0);
 		loct=loci;
 		ic=0;
 		for (i=0;i<ni;i++) {
@@ -347,7 +347,7 @@ main(int argc, char **argv)
 		    ssize_t writeret;
 		    for (i=0;i<ni;i++) {
 			loci+=6;
-			bu_lseek(ifd, loci, 0);
+			lseek(ifd, loci, 0);
 			ic=0;
 			for (j=0, cp=colortab[itmc[i]].name;j<3;
 			     cp++, j++) {
@@ -356,7 +356,7 @@ main(int argc, char **argv)
 			    if (writeret < 0)
 				perror("write");
 			}
-			bu_lseek(ifd, ++loci, 0);
+			lseek(ifd, ++loci, 0);
 			while ((c=gc())!='\n') loci++;
 			loci++;
 		    }
@@ -367,7 +367,7 @@ main(int argc, char **argv)
 		    bu_exit(0, NULL);
 		}
 		loct=loce;
-		bu_lseek(ifd, loce, 0);
+		lseek(ifd, loce, 0);
 		ic=0;
 		fb_close(fbp);
 		goto view;
@@ -390,7 +390,7 @@ main(int argc, char **argv)
 		    break;
 		}
 		ichg=1;
-		bu_lseek(ifd, loci, 0);
+		lseek(ifd, loci, 0);
 		loct=loci;
 		ic=0;
 		for (i=0;i<ni;i++) {
@@ -406,7 +406,7 @@ main(int argc, char **argv)
 	    case 's':
 		prtsmu(0);
 		ichg=1;
-		bu_lseek(ifd, loci, 0);
+		lseek(ifd, loci, 0);
 		loct=loci;
 		ic=0;
 		iskp=0;
@@ -487,7 +487,7 @@ paint(void)
     tp[GRN]=colortab[itc].c_pixel[GRN];
     tp[BLU]=colortab[itc].c_pixel[BLU];
     fb_clear(fbp, bp);
-    bu_lseek(ifd, locd, 0);
+    lseek(ifd, locd, 0);
     loct=locd;
     ic=0;
     nc=0;

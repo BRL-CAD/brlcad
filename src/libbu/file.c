@@ -79,7 +79,7 @@ bu_file_exists(const char *path, int *fd)
     }
 
     /* does it exist as a filesystem entity? */
-    if (bu_stat(path, &sbuf) == 0) {
+    if (stat(path, &sbuf) == 0) {
 	if (UNLIKELY(bu_debug & BU_DEBUG_PATHS)) {
 	    bu_log("YES\n");
 	}
@@ -112,8 +112,8 @@ bu_same_file(const char *fn1, const char *fn2)
 	return 0;
     }
 
-    if ((bu_stat(fn1, &sb1) == 0) &&
-	(bu_stat(fn2, &sb2) == 0) &&
+    if ((stat(fn1, &sb1) == 0) &&
+	(stat(fn2, &sb2) == 0) &&
 	(sb1.st_dev == sb2.st_dev) &&
 	(sb1.st_ino == sb2.st_ino)) {
 	return 1;
@@ -133,7 +133,7 @@ bu_same_fd(int fd1, int fd2)
     }
 
     /* ares files the same inode on same device? */
-    if ((bu_fstat(fd1, &sb1) == 0) && (bu_fstat(fd2, &sb2) == 0) && (sb1.st_dev == sb2.st_dev) && (sb1.st_ino == sb2.st_ino)) {
+    if ((fstat(fd1, &sb1) == 0) && (fstat(fd2, &sb2) == 0) && (sb1.st_dev == sb2.st_dev) && (sb1.st_ino == sb2.st_ino)) {
 	return 1;
     }
 
@@ -168,7 +168,7 @@ file_access(const char *path, int access_level)
 	return 0;
     }
 
-    if (bu_stat(path, &sb) == -1) {
+    if (stat(path, &sb) == -1) {
 	return 0;
     }
 
@@ -249,7 +249,7 @@ bu_file_directory(const char *path)
 	return 0;
     }
 
-    if (bu_stat(path, &sb) == -1) {
+    if (stat(path, &sb) == -1) {
 	return 0;
     }
 
@@ -266,7 +266,7 @@ bu_file_symbolic(const char *path)
 	return 0;
     }
 
-    if (bu_stat(path, &sb) == -1) {
+    if (stat(path, &sb) == -1) {
 	return 0;
     }
 
@@ -298,7 +298,7 @@ bu_file_delete(const char *path)
 	    /* second pass, try to force deletion by changing file
 	     * permissions (similar to rm -f).
 	     */
-	    if (bu_fstat(fd, &sb) == -1) {
+	    if (fstat(fd, &sb) == -1) {
 		break;
 	    }
 	    bu_fchmod(fd, (sb.st_mode|S_IRWXU));
@@ -331,28 +331,10 @@ bu_fseek(FILE *stream, off_t offset, int origin)
 {
     int ret;
 
-#if defined(_WIN32) || defined(WIN32) && (SIZEOF_VOID_P != SIZEOF_LONG)
+#if defined(HAVE__FSEEKI64) && defined(SIZEOF_VOID_P) && SIZEOF_VOID_P == 8
     ret = _fseeki64(stream, offset, origin);
 #else
     ret = fseek(stream, offset, origin);
-#endif
-
-    return ret;
-}
-
-off_t
-bu_lseek(int fd, off_t offset, int origin)
-{
-    off_t ret;
-
-#if defined(_WIN32) || defined(WIN32) && (SIZEOF_VOID_P != SIZEOF_LONG)
-    /* windows 64bit */
-    ret = _lseeki64(fd, offset, origin);
-#elif defined(_WIN32) || defined(WIN32) && (SIZEOF_VOID_P == SIZEOF_LONG)
-    /* windows 32bit */
-    ret = _lseek(fd, offset, origin);
-#else
-    ret = lseek(fd, offset, origin);
 #endif
 
     return ret;
@@ -363,7 +345,7 @@ bu_ftell(FILE *stream)
 {
     off_t ret;
 
-#if defined(_WIN32) || defined(WIN32) && (SIZEOF_VOID_P != SIZEOF_LONG)
+#if defined(HAVE__FTELLI64) && defined(SIZEOF_VOID_P) && SIZEOF_VOID_P == 8
     /* windows 64bit */
     ret = _ftelli64(stream);
 #else
@@ -372,43 +354,6 @@ bu_ftell(FILE *stream)
 
     return ret;
 }
-
-int
-bu_fstat(int fd, genptr_t buffer)
-{
-    int ret;
-
-#if defined(_WIN32) || defined(WIN32) && (SIZEOF_VOID_P != SIZEOF_LONG)
-    /* windows 64bit */
-    ret = _fstat64(fd, (struct __stat64 *)buffer);
-#elif defined(_WIN32) || defined(WIN32) && (SIZEOF_VOID_P == SIZEOF_LONG)
-    /* windows 32bit */
-    ret = _fstat32(fd, (struct __stat32 *)buffer);
-#else
-    ret = fstat(fd, (struct stat *)buffer);
-#endif
-
-    return ret;
-}
-
-int
-bu_stat(const char *path, genptr_t buffer)
-{
-    int ret;
-
-#if defined(_WIN32) || defined(WIN32) && (SIZEOF_VOID_P != SIZEOF_LONG)
-    /* windows 64bit */
-    ret = _stat64(path, (struct __stat64 *)buffer);
-#elif defined(_WIN32) || defined(WIN32) && (SIZEOF_VOID_P == SIZEOF_LONG)
-    /* windows 32bit */
-    ret = _stat32(path, (struct __stat32 *)buffer);
-#else
-    ret = stat(path, (struct stat *)buffer);
-#endif
-
-    return ret;
-}
-
 
 /*
  * Local Variables:

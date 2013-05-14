@@ -276,7 +276,7 @@ nmg_to_stl(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(reg
 	    unsigned char tot_buffer[4];
 
 	    /* Re-position pointer to 80th byte */
-	    bu_lseek(bfd, 80, SEEK_SET);
+	    lseek(bfd, 80, SEEK_SET);
 
 	    /* Write out number of triangles */
 	    *(uint32_t *)tot_buffer = htonl((unsigned long)region_polys);
@@ -507,7 +507,7 @@ main(int argc, char *argv[])
 	    unsigned char tot_buffer[4];
 
 	    /* Re-position pointer to 80th byte */
-	    bu_lseek(bfd, 80, SEEK_SET);
+	    lseek(bfd, 80, SEEK_SET);
 
 	    /* Write out number of triangles */
 	    *(uint32_t *)tot_buffer = htonl((unsigned long)tot_polygons);

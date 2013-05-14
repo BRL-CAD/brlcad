@@ -196,7 +196,7 @@ main(int ac, char *av[])
 	return -1;
     }
 
-    if(bu_fstat(fileno(in1), &sb)) {
+    if(fstat(fileno(in1), &sb)) {
 	perror(av[next_arg]);
 	fclose(in1);
 	return -1;
@@ -214,7 +214,7 @@ main(int ac, char *av[])
 	return -1;
     }
 
-    if (bu_fstat(fileno(in2), &sb)) {
+    if (fstat(fileno(in2), &sb)) {
 	perror(av[next_arg]);
 	fclose(in1);
 	fclose(in2);

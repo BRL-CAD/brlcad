@@ -510,7 +510,7 @@ fb_skip_bytes(int fd, off_t num, int fileinput, int scanbytes, unsigned char *sc
     int n, try;
 
     if (fileinput) {
-	(void)bu_lseek(fd, num, 1);
+	(void)lseek(fd, num, 1);
 	return 0;
     }
 

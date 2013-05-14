@@ -1476,7 +1476,7 @@ create_outputfilename( struct frame *fr )
 	return -1;			/* skip this frame */
     }
     /* The file exists and is writable */
-    if ( bu_stat( fr->fr_filename, &sb ) >= 0 && sb.st_size > 0 )  {
+    if ( stat( fr->fr_filename, &sb ) >= 0 && sb.st_size > 0 )  {
 	/* The file has existing contents, dequeue all
 	 * non-black pixels.
 	 */
@@ -2329,7 +2329,7 @@ ph_pixels(struct pkg_conn *pc, char *buf)
     if ( (fd = open( fr->fr_filename, 2 )) < 0 )  {
 	/* open failed */
 	perror( fr->fr_filename );
-    } else if ( bu_lseek( fd, info.li_startpix*3, 0 ) < 0 )  {
+    } else if ( lseek( fd, info.li_startpix*3, 0 ) < 0 )  {
 	/* seek failed */
 	perror( fr->fr_filename );
 	(void)close(fd);

@@ -79,7 +79,7 @@ main(int argc, char **argv)
 
     if (argc == 4) {
 	image_offset = atoi(argv[3]);
-	bu_lseek(0, image_offset*scanbytes, 0);
+	lseek(0, image_offset*scanbytes, 0);
     }
     if (argc == 5)
 	framenumber = atoi(argv[4]);

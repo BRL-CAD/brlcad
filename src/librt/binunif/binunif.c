@@ -74,7 +74,7 @@ rt_mk_binunif(struct rt_wdb *wdbp, const char *obj_name, const char *file_name, 
 	return -1;
     }
 
-    if (bu_stat(file_name, &st)) {
+    if (stat(file_name, &st)) {
 	bu_log("Cannot stat input file (%s)", file_name);
 	return -1;
     }

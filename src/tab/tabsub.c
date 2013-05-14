@@ -107,7 +107,7 @@ get_proto(char **buffer, char *file)
 	bu_exit(1, NULL);
     }
 
-    if (bu_fstat( fd, &sb ) != 0 )  {
+    if (fstat( fd, &sb ) != 0 )  {
 	perror(file);
 	bu_exit(1, NULL);
     }

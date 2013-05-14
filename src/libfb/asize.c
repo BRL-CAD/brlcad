@@ -118,7 +118,7 @@ fb_common_file_size(size_t *widthp, size_t *heightp, const char *filename, int p
     if (fb_common_name_size(widthp, heightp, cp))
 	return 1;
 
-    if (bu_stat(filename, &sbuf) < 0)
+    if (stat(filename, &sbuf) < 0)
 	return	0;
 
     size = (size_t)(sbuf.st_size / pixel_size);

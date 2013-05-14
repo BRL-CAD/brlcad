@@ -1716,6 +1716,10 @@ if(WIN32)
   if(NOT HAVE_ASINH)
     set(asinh 1)
   endif(NOT HAVE_ASINH)
+
+  BRLCAD_FUNCTION_EXISTS(_fseeki64 HAVE__FSEEKI64)
+  BRLCAD_FUNCTION_EXISTS(_ftelli64 HAVE__FTELLI64)
+
 endif(WIN32)
 
 # Check whether we need to add import/export lines to libraries

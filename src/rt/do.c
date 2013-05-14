@@ -758,7 +758,7 @@ do_frame(int framenumber)
 		}
 
 		/* check if partial result */
-		ret = bu_fstat(fd, &sb);
+		ret = fstat(fd, &sb);
 		if (ret >= 0 && sb.st_size > 0 && (size_t)sb.st_size < width*height*sizeof(RGBpixel)) {
 
 		    /* Read existing pix data into the frame buffer */

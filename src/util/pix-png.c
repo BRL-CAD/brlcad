@@ -231,7 +231,7 @@ main(int argc, char *argv[])
 	bu_exit(1, "%s: Short read\n", bu_getprogname());
 
     /* warn if we only read part of the input */
-    if (bu_fstat(fileno(infp), &sb) < 0) {
+    if (fstat(fileno(infp), &sb) < 0) {
 	perror("unable to stat file:");
 	bu_exit(1, "ERROR: %s cannot proceed.", bu_getprogname());
     }

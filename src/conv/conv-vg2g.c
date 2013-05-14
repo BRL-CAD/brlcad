@@ -111,7 +111,7 @@ main(int argc, char **argv)
 	}
     }
     else {
-	bu_lseek(ifd, 0, 0);
+	lseek(ifd, 0, 0);
 	/* have an old vged file to convert */
 
 	/* units are important now because:
@@ -212,7 +212,7 @@ main(int argc, char **argv)
 	    case ID_ARS_A:
 		if ( rec.a.a_name[0] == '\0' )  {
 		    /* Skip deleted junk */
-		    bu_lseek( ifd, (off_t)(rec.a.a_totlen * sizeof(rec)), 1 );
+		    lseek( ifd, (off_t)(rec.a.a_totlen * sizeof(rec)), 1 );
 		    goto top;
 		}
 		rec.a.a_xmin *= factor;
