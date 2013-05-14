@@ -1373,7 +1373,7 @@ typedef unsigned char bitv_t;
  */
 struct bu_bitv {
     struct bu_list l;		/**< linked list for caller's use */
-    unsigned int nbits;		/**< actual size of bits[], in bits */
+    size_t nbits;		/**< actual size of bits[], in bits */
     bitv_t bits[2];	/**< variable size array */
 };
 typedef struct bu_bitv bu_bitv_t;
@@ -2702,7 +2702,7 @@ BU_EXPORT extern void bu_avs_add_nonunique(struct bu_attribute_value_set *avsp,
  * length.  The bit vector itself is guaranteed to be initialized to
  * all zero.
  */
-BU_EXPORT extern struct bu_bitv *bu_bitv_new(unsigned int nbits);
+BU_EXPORT extern struct bu_bitv *bu_bitv_new(size_t nbits);
 
 /**
  * Release all internal storage for this bit vector.

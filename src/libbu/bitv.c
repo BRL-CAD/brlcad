@@ -83,7 +83,7 @@ bu_bitv_shift()
 
 
 struct bu_bitv *
-bu_bitv_new(unsigned int nbits)
+bu_bitv_new(size_t nbits)
 {
     struct bu_bitv *bv;
     size_t bv_bytes;
