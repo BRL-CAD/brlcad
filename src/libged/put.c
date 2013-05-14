@@ -62,11 +62,7 @@ ged_put(struct ged *gedp, int argc, const char *argv[])
 
     name = (char *)argv[1];
 
-    /* Verify that this wdb supports lookup operations (non-null dbip).
-     * stdout/file wdb objects don't, but can still be written to.
-     * If not, just skip the lookup test and write the object
-     */
-    if (gedp->ged_wdbp->dbip && db_lookup(gedp->ged_wdbp->dbip, argv[1], LOOKUP_QUIET) != RT_DIR_NULL) {
+    if (db_lookup(gedp->ged_wdbp->dbip, argv[1], LOOKUP_QUIET) != RT_DIR_NULL) {
 	bu_vls_printf(gedp->ged_result_str, "%s already exists", argv[1]);
 	return GED_ERROR;
     }
