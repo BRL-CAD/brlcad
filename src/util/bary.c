@@ -24,7 +24,7 @@
 #include "common.h"
 
 #include <stdlib.h>
-#include <stdio.h>
+#include "bio.h"
 #include <math.h>
 
 #include "bu.h"
@@ -42,11 +42,13 @@ struct site
 #define SITE_NULL ((struct site *) 0)
 #define SITE_MAGIC 0x73697465
 #define s_magic l.magic
-#define OPT_STRING "ns:t?"
+#define OPT_STRING "ns:t?h"
+
+#define usage "Usage: bary [-nt] [-s \"x y z\"] [file]"
 
 void print_usage (void)
 {
-    bu_exit(1, "Usage: 'bary [-nt] [-s \"x y z\"] [file]'\n");
+    bu_exit(1, "%s\n",usage);
 }
 
 
@@ -150,6 +152,11 @@ main (int argc, char **argv)
     /* intentionally double for scan */
     double x, y, z;
 
+    if (isatty(fileno(stdin)) && isatty(fileno(stdout)) && argc == 1){
+    	bu_log("%s\n",usage);
+	bu_log("       Program continues running:\n");
+    }
+
     BU_LIST_INIT(&site_list);
     while ((ch = bu_getopt(argc, argv, OPT_STRING)) != -1)
 	switch (ch) {
@@ -167,7 +174,6 @@ main (int argc, char **argv)
 		if (tail_buf == 0)	 /* Only initialize it once */
 		    tail_buf = bu_vls_vlsinit();
 		break;
-	    case '?':
 	    default:
 		print_usage();
 	}
