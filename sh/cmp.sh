@@ -61,7 +61,7 @@ if test $# -ne 3 ; then
     echo "Usage: $0 file.g base.obj new.obj"
 fi
 
-SZ="1024"
+SZ="256"
 HP="0"
 GQTOL="-g 10m-10mm"
 dbfile="$1"
