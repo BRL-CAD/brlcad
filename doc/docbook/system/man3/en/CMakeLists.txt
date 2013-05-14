@@ -1,5 +1,5 @@
 set(docbook_man3_EN
-  htond.xml
+  bu_htond.xml
   libcursor.xml
   libfb.xml
   liborle.xml
