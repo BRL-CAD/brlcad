@@ -1620,7 +1620,7 @@ rt_rhc_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     xip->rhc_magic = RT_RHC_INTERNAL_MAGIC;
 
     /* Convert from database (network) to internal (host) format */
-    ntohd((unsigned char *)vec, ep->ext_buf, 11);
+    bu_ntohd((unsigned char *)vec, ep->ext_buf, 11);
 
     /* Apply modeling transformations */
     if (mat == NULL) {
@@ -1683,7 +1683,7 @@ rt_rhc_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
     vec[3 * 3 + 1] = xip->rhc_c * local2mm;
 
     /* Convert from internal (host) to database (network) format */
-    htond(ep->ext_buf, (unsigned char *)vec, 11);
+    bu_htond(ep->ext_buf, (unsigned char *)vec, 11);
 
     return 0;
 }

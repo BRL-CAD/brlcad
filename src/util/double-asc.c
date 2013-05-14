@@ -195,7 +195,7 @@ main (int argc, char **argv)
 	for (line_nm = 0; line_nm < l_per_b; ++line_nm) {
 	    if (make_cells)
 		printf("%d %d", col, row);
-	    ntohd((unsigned char *)value, bp, d_per_l);
+	    bu_ntohd((unsigned char *)value, bp, d_per_l);
 	    bp += d_per_l * 8;
 	    for (i = 0; i < d_per_l; ++i)
 		printf(format, value[i]);

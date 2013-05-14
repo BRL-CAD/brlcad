@@ -101,22 +101,22 @@ countHits(struct bu_vlb *vlb)
 	    double outObl;
 	    /* UNUSED: int regionIndex; */
 
-	    ntohd((unsigned char *)enterPt, c, 3);
+	    bu_ntohd((unsigned char *)enterPt, c, 3);
 	    c += SIZEOF_NETWORK_DOUBLE * 3;
 
-	    ntohd((unsigned char *)exitPt, c, 3);
+	    bu_ntohd((unsigned char *)exitPt, c, 3);
 	    c += SIZEOF_NETWORK_DOUBLE * 3;
 
-	    ntohd((unsigned char *)enterNorm, c, 3);
+	    bu_ntohd((unsigned char *)enterNorm, c, 3);
 	    c += SIZEOF_NETWORK_DOUBLE * 3;
 
-	    ntohd((unsigned char *)exitNorm, c, 3);
+	    bu_ntohd((unsigned char *)exitNorm, c, 3);
 	    c += SIZEOF_NETWORK_DOUBLE * 3;
 
-	    ntohd((unsigned char*)&inObl, c, 1);
+	    bu_ntohd((unsigned char*)&inObl, c, 1);
 	    c += SIZEOF_NETWORK_DOUBLE;
 
-	    ntohd((unsigned char*)&outObl, c, 1);
+	    bu_ntohd((unsigned char*)&outObl, c, 1);
 	    c += SIZEOF_NETWORK_DOUBLE;
 
 	    /* UNUSED: regionIndex = BU_GLONG(c); */

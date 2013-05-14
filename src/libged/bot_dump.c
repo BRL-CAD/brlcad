@@ -559,7 +559,7 @@ write_bot_stl_binary(struct rt_bot_internal *bot, int fd, char *UNUSED(name))
 	VMOVE(flt_ptr, C);
 	flt_ptr += 3;
 
-	htonf(vert_buffer, (const unsigned char *)flts, 12);
+	bu_htonf(vert_buffer, (const unsigned char *)flts, 12);
 	for (j = 0; j < 12; j++) {
 	    lswap((unsigned int *)&vert_buffer[j*4]);
 	}

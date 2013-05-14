@@ -255,7 +255,7 @@ nmg_to_stl(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(reg
 		} else {
 		    int i;
 
-		    htonf(vert_buffer, (const unsigned char *)flts, 12);
+		    bu_htonf(vert_buffer, (const unsigned char *)flts, 12);
 		    for (i=0; i<12; i++) {
 			lswap((unsigned int *)&vert_buffer[i*4]);
 		    }

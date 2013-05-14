@@ -30,7 +30,7 @@
 
 
 void
-htonf(register unsigned char *out, register const unsigned char *in, size_t count)
+bu_htonf(register unsigned char *out, register const unsigned char *in, size_t count)
 {
     register size_t i;
 
@@ -62,12 +62,12 @@ htonf(register unsigned char *out, register const unsigned char *in, size_t coun
 	    break;
     }
 
-    bu_bomb("ntohf.c:  ERROR, no NtoHD conversion for this machine type\n");
+    bu_bomb("bu_ntohf.c:  ERROR, no NtoHD conversion for this machine type\n");
 }
 
 
 void
-ntohf(register unsigned char *out, register const unsigned char *in, size_t count)
+bu_ntohf(register unsigned char *out, register const unsigned char *in, size_t count)
 {
     register size_t i;
 
@@ -99,7 +99,7 @@ ntohf(register unsigned char *out, register const unsigned char *in, size_t coun
 	    break;
     }
 
-    bu_bomb("ntohf.c:  ERROR, no NtoHD conversion for this machine type\n");
+    bu_bomb("bu_ntohf.c:  ERROR, no NtoHD conversion for this machine type\n");
 }
 
 /*

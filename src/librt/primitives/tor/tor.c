@@ -1503,7 +1503,7 @@ rt_tor_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
     vec[2*3+1] = tip->r_h*local2mm;		/* r2 */
 
     /* convert from internal (host) to database (network) format */
-    htond(ep->ext_buf, (unsigned char *)vec, 2*3+2);
+    bu_htond(ep->ext_buf, (unsigned char *)vec, 2*3+2);
 
     return 0;
 }
@@ -1644,7 +1644,7 @@ rt_tor_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
     tip = (struct rt_tor_internal *)ip->idb_ptr;
     tip->magic = RT_TOR_INTERNAL_MAGIC;
 
-    ntohd((unsigned char *)&rec, ep->ext_buf, 2*3+2);
+    bu_ntohd((unsigned char *)&rec, ep->ext_buf, 2*3+2);
 
     /* Apply modeling transformations */
     MAT4X3PNT(tip->v, mat, rec.v);

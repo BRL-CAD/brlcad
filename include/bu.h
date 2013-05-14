@@ -3412,14 +3412,14 @@ BU_EXPORT extern void bu_hist_pr(const struct bu_hist *histp, const char *title)
 /**
  * Host to Network Doubles
  */
-BU_EXPORT extern void htond(unsigned char *out,
+BU_EXPORT extern void bu_htond(unsigned char *out,
 			    const unsigned char *in,
 			    size_t count);
 
 /**
  * Network to Host Doubles
  */
-BU_EXPORT extern void ntohd(unsigned char *out,
+BU_EXPORT extern void bu_ntohd(unsigned char *out,
 			    const unsigned char *in,
 			    size_t count);
 
@@ -3434,14 +3434,14 @@ BU_EXPORT extern void ntohd(unsigned char *out,
 /**
  * Host to Network Floats
  */
-BU_EXPORT extern void htonf(unsigned char *out,
+BU_EXPORT extern void bu_htonf(unsigned char *out,
 			    const unsigned char *in,
 			    size_t count);
 
 /**
  * Network to Host Floats
  */
-BU_EXPORT extern void ntohf(unsigned char *out,
+BU_EXPORT extern void bu_ntohf(unsigned char *out,
 			    const unsigned char *in,
 			    size_t count);
 

@@ -259,7 +259,7 @@ outfloat(int n)
     if (ret < (size_t)n)
 	perror("fread");
 
-    ntohd((unsigned char *)out, in, n);
+    bu_ntohd((unsigned char *)out, in, n);
 
     for (i = 0; i < n; i++) {
 	/*printf("%g", out[i]);*/
