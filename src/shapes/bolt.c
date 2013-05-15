@@ -132,9 +132,9 @@ main(int argc, char **argv)
 	    perror("scanf");
 	    iopt = 3;
 	}
-	if (iopt < 0)
+	else if (iopt < 0)
 	    iopt = 0;
-	if (iopt > 4)
+	else if (iopt > 4)
 	    iopt = 4;
 
 	/* Get file name of mged file to be created. */
@@ -155,9 +155,9 @@ main(int argc, char **argv)
 	    perror("scanf");
 	    numblt = 1;
 	}
-	if (numblt < 1)
+	else if (numblt < 1)
 	    numblt = 1;
-	if (numblt > 26)
+	else if (numblt > 26)
 	    numblt = 26;
 
 	/* Find dimensions of the bolt. */
