@@ -40,7 +40,7 @@ printusage(void)
 {
 	printf("Usage: bolt  <-- (if no arguments, go into interactive mode)\n");
 	printf("or\n");
-	printf("Usage: bolt -o # -f name.g -n # -hd # -hh # -wd # -wh # -sd # -sh #\n");
+	printf("Usage: bolt -o# -f name.g -n# -hd# -hh# -wd# -wh# -sd# -sh#\n");
 }
 
 int
@@ -232,6 +232,11 @@ main(int argc, char **argv)
 	    /* START # 3 */
 	    /* Put argument into temporary character string. */
 	    temp = argv[i];
+
+	    if (temp[0] != '-') {
+	    	printf("bolt: illegal option %s ; missing leading '-'\n",argv[i]);
+	    	return 0;
+	    }
 
 	    /* -o - set type of bolt to make. */
 	    if (temp[1] == 'o') {
