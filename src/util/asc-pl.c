@@ -40,14 +40,15 @@
 #define FP_OUT 1
 
 
-static void printusage (void)
+static void
+printusage (void)
 {
-    bu_log("Usage: asc-pl [file.in [file.pl]]\n");
-    bu_exit(1, NULL);
+    bu_exit(1, "Usage: asc-pl [file.in [file.pl]]\n");
 }
 
 
-static int check_syntax (char cmd, int needed, int got, int line)
+static int
+check_syntax (char cmd, int needed, int got, int line)
 {
     if (got < needed) {
 	bu_exit(1, "Too few arguments for '%c' command on line %d\n", cmd, line);
