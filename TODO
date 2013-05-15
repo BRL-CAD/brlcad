@@ -38,6 +38,10 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* implement a null spatial partitioning method so we can determine
+  what other intersection hits are being masked (and what impact a
+  given method has on performance)
+
 * [hn]to[hn]* conversion functions were usurped by windows 8 so we
   need to either wrap them or undeprecate our xdr API or see if a
   simple config header fix might work (ideal)
