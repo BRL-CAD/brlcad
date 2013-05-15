@@ -51,8 +51,8 @@ int print_mode = LOOKAT_SCRIPT;
 int print_viewsize = 0;
 
 void usage(void){
-	fprintf(stderr,"Usage: anim_lookat [-f #] [-v] in.table out.script\n");
-	fprintf(stderr,"   or: anim_lookat - [y | q] [-v] in.table out.table\n");
+    fprintf(stderr,"Usage: anim_lookat [-f #] [-v] in.table out.script\n");
+    fprintf(stderr,"   or: anim_lookat - [y | q] [-v] in.table out.table\n");
 }
 
 int

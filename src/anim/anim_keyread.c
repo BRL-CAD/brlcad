@@ -66,7 +66,7 @@ int mode;
 int units;
 
 void usage(void){
-	fprintf(stderr,"Usage: anim_keyread [-y|z] key.file key.table\n");
+    fprintf(stderr,"Usage: anim_keyread [-y|z] key.file key.table\n");
 }
 
 int

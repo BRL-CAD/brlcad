@@ -70,8 +70,8 @@ int input_mode, output_mode, length, input_units, output_units;
 int input_perm, output_perm, input_inv, output_inv;
 
 void usage(void){
-	fprintf(stderr,"Usage: anim_orient [q | y | a | z | m] [vri] [q | y | a | z | m] [vriu] in.table out.table\n");
-	bu_exit(0, NULL);
+    fprintf(stderr,"Usage: anim_orient [q | y | a | z | m] [vri] [q | y | a | z | m] [vriu] in.table out.table\n");
+    bu_exit(0, NULL);
 }
 
 

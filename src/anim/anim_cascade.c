@@ -66,7 +66,7 @@ int cmd_fcen, cmd_fypr, cmd_rcen, cmd_rypr, cmd_acen, cmd_aypr;
 int output_mode, read_time, print_time;
 
 void usage(void){
-	fprintf(stderr,"Usage: anim_cascade [-s] [-o(f|r|a)] [-(f|r|a)(c|y) # # #] input.table output.table\n");
+    fprintf(stderr,"Usage: anim_cascade [-s] [-o(f|r|a)] [-(f|r|a)(c|y) # # #] input.table output.table\n");
 }
 
 int get_args(int argc, char **argv)

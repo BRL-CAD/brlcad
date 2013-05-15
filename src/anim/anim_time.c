@@ -59,7 +59,7 @@ int debug = 	 0;
 double inv0, inv1;
 
 void usage(void){
-	fprintf(stderr,"Usage: anim_time [-s#] [-e#] [-d] < in.table\n");
+    fprintf(stderr,"Usage: anim_time [-s#] [-e#] [-d] < in.table\n");
 }
 
 fastf_t

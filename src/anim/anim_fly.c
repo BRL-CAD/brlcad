@@ -61,7 +61,7 @@ fastf_t magic_factor = 1.0;
 fastf_t desired_step = 0.1;
 
 void usage(void){
-	fprintf(stderr,"Usage: anim_fly [-f factor] [-r] [-p integer] [-b max_bank_angle] [-s step] in.table out.table\n");
+    fprintf(stderr,"Usage: anim_fly [-f factor] [-r] [-p integer] [-b max_bank_angle] [-s step] in.table out.table\n");
 }
 
 /* determine the yaw of the given direction vector */

@@ -48,7 +48,7 @@ int full_print = 0;
 double offset[3];
 
 void usage(void){
-	fprintf(stderr,"Usage: anim_offset -o # # # [-r] in.table out.table\n");
+    fprintf(stderr,"Usage: anim_offset -o # # # [-r] in.table out.table\n");
 }
 
 int
