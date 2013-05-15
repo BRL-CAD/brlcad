@@ -35,8 +35,8 @@
 #include "fb.h"
 
 
-#define OPT_STRING "acf:rs:n:w:#:h?"
-#define usage1 "Usage: double-asc [-{ar}] [-s squaresize] [-w width] [-n height]\n"
+#define OPT_STRING "acf:s:n:w:#:h?"
+#define usage1 "Usage: double-asc [-a] [-s squaresize] [-w width] [-n height]\n"
 #define usage2 "                  [-c] [-f format] [-# depth] [file.d]\n"
 
 static char *file_name;
@@ -76,11 +76,6 @@ get_args(int argc, char **argv)
 	     */
 	    case 'a':
 		autosize = 1;
-		break;
-	    case 'r':
-		/* high-res */
-		file_height = file_width = 1024L;
-		autosize = 0;
 		break;
 	    case 's':
 		/* square file size */
