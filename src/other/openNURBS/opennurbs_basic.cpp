@@ -367,6 +367,22 @@ int ON_Curve::IntersectSurface(
   return 0;
 }
 
+int ON_Surface::IntersectSurface( 
+        const ON_Surface*,
+        ON_ClassArray<ON_SSX_EVENT>&,
+        double,
+        double,
+        double,
+        const ON_Interval*,
+        const ON_Interval*,
+        const ON_Interval*,
+        const ON_Interval*
+        ) const
+{
+  // The working function is part of the Rhino SDK.
+  return 0;
+}
+
 ON_SurfaceTree* ON_Surface::CreateSurfaceTree() const
 {
   // The working function is part of the Rhino SDK.

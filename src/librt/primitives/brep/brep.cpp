@@ -4356,9 +4356,9 @@ rt_brep_boolean(struct rt_db_internal *out, const struct rt_db_internal *ip1, co
     for (int i = 0; i < facecount1; i++) {
 	for (int j = 0; j < facecount2; j++) {
 	    ON_ClassArray<ON_SSX_EVENT> events;
-	    if (brep1->m_S[brep1->m_F[i].m_si]->IntersectSurface(
-			brep2->m_S[brep2->m_F[j].m_si],
-			events))
+	    if (ON_Intersect(brep1->m_S[brep1->m_F[i].m_si],
+			     brep2->m_S[brep2->m_F[j].m_si],
+			     events))
 		continue;
 	    ON_SimpleArray<ON_NurbsCurve *> curve_uv, curve_st;
 	    for (int k = 0; k < events.Count(); k++) {

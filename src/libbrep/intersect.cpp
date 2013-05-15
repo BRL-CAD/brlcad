@@ -291,20 +291,19 @@ public:
 
 #define INTERSECT_MAX_DEPTH 8
 int
-ON_Surface::IntersectSurface(
-        const ON_Surface* surfB,
-        ON_ClassArray<ON_SSX_EVENT>& x,
-        double,
-        double,
-        double,
-        const ON_Interval*,
-        const ON_Interval*,
-        const ON_Interval*,
-        const ON_Interval*
-        ) const
+ON_Intersect(const ON_Surface* surfA,
+	     const ON_Surface* surfB,
+	     ON_ClassArray<ON_SSX_EVENT>& x,
+	     double,
+	     double,
+	     double,
+	     const ON_Interval*,
+	     const ON_Interval*,
+	     const ON_Interval*,
+	     const ON_Interval*)
 {
     bu_log("ON_Surface::IntersectSurface() in libbrep is called.\n");
-    const ON_Surface *surfA = this;
+
     if (surfA == NULL || surfB == NULL) {
 	return -1;
     }

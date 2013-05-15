@@ -114,7 +114,7 @@ main(int argc, char** argv)
 
     // Run the intersection
     ON_ClassArray<ON_SSX_EVENT> events;
-    if (surf1.IntersectSurface(&surf2, events)) {
+    if (ON_Intersect(&surf1, &surf2, events)) {
 	bu_log("Intersection failed\n");
 	return -1;
     }
@@ -135,7 +135,7 @@ main(int argc, char** argv)
     for (int i = 0; i < events.Count(); i++) {
 	ON_wString wstr;
 	ON_TextLog textlog(wstr);
-	events[i].Dump(textlog);
+	DumpSSXEvent(events[i], textlog);
 	ON_String str = ON_String(wstr);
 	bu_log("Intersection event %d:\n %s", i + 1, str.Array());
     }

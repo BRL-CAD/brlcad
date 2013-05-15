@@ -1712,6 +1712,27 @@ check_pullback_singularity_bridge(const ON_Surface *surf, const ON_2dPoint &p1, 
 extern BREP_EXPORT ON_NurbsCurve*
 interpolateLocalCubicCurve(const ON_3dPointArray &Q);
 
+/**
+ * Dump the information of an ON_SSX_EVENT.
+ */
+extern BREP_EXPORT void
+DumpSSXEvent(ON_SSX_EVENT &x, ON_TextLog &text_log);
+
+/**
+ * An overload of ON_Intersect for surface-surface intersection.
+ */
+extern BREP_EXPORT int
+ON_Intersect(const ON_Surface* surfA,
+	     const ON_Surface* surfB,
+	     ON_ClassArray<ON_SSX_EVENT>& x,
+	     double intersection_tolerance = 0.0,
+	     double overlap_tolerance = 0.0,
+	     double fitting_tolerance = 0.0,
+	     const ON_Interval* surfaceA_udomain = 0,
+	     const ON_Interval* surfaceA_vdomain = 0,
+	     const ON_Interval* surfaceB_udomain = 0,
+	     const ON_Interval* surfaceB_vdomain = 0);
+
 } /* extern C++ */
 #endif
 
