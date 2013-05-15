@@ -51,9 +51,12 @@ int turn_wheels = 0;
 double length, angle, radius;
 double factor = 1.0;
 
-void usage(void){
-	fprintf(stderr,"Usage: anim_turn -l length [-a angle] [-r radius] [-f factor] [-p integer] < in.table > out.table\n");
+
+static void
+usage(void){
+    fprintf(stderr,"Usage: anim_turn -l length [-a angle] [-r radius] [-f factor] [-p integer] < in.table > out.table\n");
 }
+
 
 int
 get_args(int argc, char **argv)
