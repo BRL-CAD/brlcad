@@ -38,7 +38,8 @@
 
 
 /* declarations to support use of bu_getopt() */
-char *options = "d";
+char *options = "dh?";
+char *subsetoptions = "d";
 
 char *progname = "(noname)";
 #define DEBUG_NAMES 1
@@ -57,7 +58,7 @@ void usage(char *s)
     if (s) (void)fputs(s, stderr);
 
     (void) fprintf(stderr, "Usage: %s [-%s] [<] geom.g [> file.dxf] [bot1 bot2 bot3...]\n",
-		   progname, options);
+		   progname, subsetoptions);
     bu_exit(1, NULL);
 }
 
@@ -78,12 +79,15 @@ int parse_args(int ac, char *av[])
     bu_opterr = 0;
 
     /* get all the option flags from the command line */
-    while ((c=bu_getopt(ac, av, options)) != -1)
+    while ((c=bu_getopt(ac, av, options)) != -1) {
+	if (bu_optopt == '?')
+	    c='h';
 	switch (c) {
 	    case 'd'	: debug = strtol(bu_optarg, NULL, 16); break;
+	    case 'h'	: usage(""); break;
 	    default	: usage("Bad flag specified\n"); break;
 	}
-
+    }
     return bu_optind;
 }
 
