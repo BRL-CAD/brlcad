@@ -29,7 +29,7 @@ scripties = \
 	cursor.tcl \
 	apply_mat.tcl \
 	pattern.tcl \
-	pattern_gui.tcl \
+	pattern_gui.tcl
 
 BUILT_SOURCES = \
 	pkgIndex.tcl \
