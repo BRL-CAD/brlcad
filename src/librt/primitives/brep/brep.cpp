@@ -760,6 +760,10 @@ utah_newton_solver(const BBNode* sbv, const ON_Surface* surf, const ON_Ray& r, O
 	oldrootdist = rootdist;
 	rootdist = fabs(f) + fabs(g);
 	int halve_count = 0;
+
+	/* FIXME: all constants should be documented, why this
+	 * value?  what's the sensitivity/impact?
+	 */
 	while ((halve_count++ < 3) && (oldrootdist < rootdist)) {
 	    // divide current UV step
 	    uv.x = (puv.x + uv.x)/2.0;
@@ -771,6 +775,11 @@ utah_newton_solver(const BBNode* sbv, const ON_Surface* surf, const ON_Ray& r, O
 	}
 
 	if (oldrootdist <= rootdist) {
+
+	    /* FIXME: all constants should be documented. why this
+	     * value? must it coincide with the constant in the
+	     * preceeding loop?
+	     */
 	    if (errantcount > 3) {
 		return intersects;
 	    } else {
