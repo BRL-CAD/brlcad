@@ -32,38 +32,37 @@
 #include "bu.h"
 
 
-/* Dots are least most significant bit first in increasing index */
-struct app_record {
-    unsigned char ml[432];
-    unsigned char yl[432];
-    unsigned char cl[432];
-} magline, yelline, cyaline;
-
-struct {
-    char red, green, blue;
-} out;
-
-FILE *magfp, *yelfp, *cyafp;
-int verbose = 0;
-
-char *argv0;
-
-void usage(void){
-	bu_exit(1, "Usage: %s [-v] file.ap > file.pix (3456 x ?)\n", argv0);
+static void
+usage(const char *argv0){
+    bu_exit(1, "Usage: %s [-v] file.ap > file.pix (3456 x ?)\n", argv0);
 }
+
 
 int
 main(int argc, char **argv)
 {
+    /* Dots are least most significant bit first in increasing index */
+    struct app_record {
+	unsigned char ml[432];
+	unsigned char yl[432];
+	unsigned char cl[432];
+    } magline, yelline, cyaline;
+
+    struct {
+	char red, green, blue;
+    } out;
+
+    FILE *magfp, *yelfp, *cyafp;
+
     size_t ret;
     int i, bit;
     int line;
-
-    argv0 = argv[0];
+    const char *argv0 = argv[0];
+    int verbose = 0;
 
     if (argc > 1 ){
 	if ( BU_STR_EQUAL(argv[1], "-h") ||  BU_STR_EQUAL(argv[1], "-?") )
-	    usage();
+	    usage(argv0);
 	if ( BU_STR_EQUAL(argv[1], "-v") ) {
 	    verbose++;
 	    argc--;
@@ -72,7 +71,7 @@ main(int argc, char **argv)
     }
 
     if (argc != 2)
-	usage();
+	usage(argv0);
 
     magfp = fopen(argv[1], "r");
     if (magfp == NULL) {
