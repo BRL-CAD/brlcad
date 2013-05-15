@@ -123,12 +123,27 @@ mat_t m_axes, m_rev_axes;	/* matrices to and from alternate axes */
 /* intentionally double for scan */
 double first_tracklen;
 
-void usage(void){
-	fprintf(stderr,"Usage: %s -p num_pads parent/basename\n",progname);
-	fprintf(stderr,"       -w parent/basename -b # # # -d # # # -u -y\n");
-	fprintf(stderr,"       -s -a -v -c -lm -lf # -ls # -le # -i # -f #\n");
-	fprintf(stderr,"       -r # -g # -mp command -mw command  wheelfile\n");
-	fprintf(stderr,"        < in.table > out.script\n");
+static void
+usage(void){
+    fprintf(stderr, "Usage: %s [options] wheelfile < in.table > out.script\n", progname);
+    fprintf(stderr, "\n\tOptions:\n");
+    fprintf(stderr, "\t  [-w parent/basename] to specify wheels to animate\n");
+    fprintf(stderr, "\t  [-a] to add random jitter\n");
+    fprintf(stderr, "\t  [-p num_pads parent/basename] to animate track pads\n");
+    fprintf(stderr, "\t  [-b # # #] to specify yaw, pitch, and roll\n");
+    fprintf(stderr, "\t  [-d # # #] to specify centroid (default is origin)\n");
+    fprintf(stderr, "\t  [{-u|-y|-s}] to specify track distance manually, via orientation, or via steering\n");
+    fprintf(stderr, "\t  [-a] to enable anti-strobing (track appears to go backwards\n");
+    fprintf(stderr, "\t  [-v] to specify new wheel positions every frame\n");
+    fprintf(stderr, "\t  [-c] to calculate track circumference\n");
+    fprintf(stderr, "\t  [-lm] to minimize track length\n");
+    fprintf(stderr, "\t  [{-lf|-ls|-le} #] to specify fixed track, stretchable, or elastic track length\n");
+    fprintf(stderr, "\t  [-i #] to specify initial track offset\n");
+    fprintf(stderr, "\t  [-f #] to specify initial script frame number\n");
+    fprintf(stderr, "\t  [-r #] to specify common radius for all wheels\n");
+    fprintf(stderr, "\t  [-g #] to output an mged script instead of an animation script\n");
+    fprintf(stderr, "\t  [-mp command] to specify a pad animation matrix\n");
+    fprintf(stderr, "\t  [-mw command] to specify a wheel animation matrix\n");
 }
 
 int
