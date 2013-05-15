@@ -57,7 +57,6 @@
 #define NEXT(i)	(i+1)%NW
 #define PREV(i)	(i+NW-1)%NW
 
-#define progname "anim_track"
 
 typedef double *pdouble;
 
@@ -124,8 +123,8 @@ mat_t m_axes, m_rev_axes;	/* matrices to and from alternate axes */
 double first_tracklen;
 
 static void
-usage(void){
-    bu_log("Usage: %s [options] wheelfile < in.table > out.script\n", progname);
+usage(const char *argv0){
+    bu_log("Usage: %s [options] wheelfile < in.table > out.script\n", argv0);
     bu_log("\n\tOptions:\n");
     bu_log("\t  [-w parent/basename] to specify wheels to animate\n");
     bu_log("\t  [-a] to add random jitter\n");
@@ -151,6 +150,7 @@ get_args(int argc, char **argv)
 {
     int c, i;
     fastf_t yaw, pch, rll;
+    const char *argv0 = argv[0];
 
     /* defaults*/
     wheel_nindex = link_nindex = 0;
@@ -248,7 +248,7 @@ get_args(int argc, char **argv)
 			bu_strlcpy(wheel_cmd, argv[bu_optind], sizeof(wheel_cmd));
 			break;
 		    default:
-			bu_log("%s: Unknown option: -m%c\n",progname,*bu_optarg);
+			bu_log("%s: Unknown option: -m%c\n", argv0, *bu_optarg);
 			return 0;
 		}
 		bu_optind += 1;
@@ -277,7 +277,7 @@ get_args(int argc, char **argv)
 			bu_optind++;
 			break;
 		    default:
-			bu_log("%s: Unknown option: -l%c\n",progname,*bu_optarg);
+			bu_log("%s: Unknown option: -l%c\n", argv0, *bu_optarg);
 			return 0;
 		}
 		break;
@@ -473,6 +473,7 @@ main(int argc, char *argv[])
     int last_steer, last_frame;
     int rndtabi=0;
     fastf_t halfpadlen, delta, prev_dist;
+    const char *argv0 = argv[0];
 
     /* intentionally double for scan */
     double temp[3];
@@ -492,12 +493,12 @@ main(int argc, char *argv[])
     MAT_IDN(m_rev_axes);
 
     if (argc == 1 && isatty(fileno(stdin)) && isatty(fileno(stdout))){
-	usage();
+	usage(argv0);
     	return 0;
     }
 
     if (!get_args(argc, argv)){
-	usage();
+	usage(argv0);
 	return 0;
     }
 
