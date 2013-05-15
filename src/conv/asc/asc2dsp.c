@@ -66,7 +66,7 @@ output_netshort(char *buf, unsigned *nchars, FILE *fpo)
 	return;
 
     if (*nchars > BUFSZ - 1) {
-	bu_log("asc2dsp: nchars (%ud) > %ud (%d)\n", *nchars, BUFSZ - 1);
+	bu_log("asc2dsp: nchars (%ud) > BUFSZ - 1 (%d)\n", *nchars, BUFSZ - 1);
 	bu_exit(1, "asc2dsp: FATAL");
     }
 
