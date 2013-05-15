@@ -26,7 +26,10 @@ scripties = \
 	TkTable.tcl \
 	View.tcl \
 	ViewAxesControl.tcl \
-	cursor.tcl
+	cursor.tcl \
+	apply_mat.tcl \
+	pattern.tcl \
+	pattern_gui.tcl \
 
 BUILT_SOURCES = \
 	pkgIndex.tcl \
