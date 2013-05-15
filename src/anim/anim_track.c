@@ -125,25 +125,25 @@ double first_tracklen;
 
 static void
 usage(void){
-    fprintf(stderr, "Usage: %s [options] wheelfile < in.table > out.script\n", progname);
-    fprintf(stderr, "\n\tOptions:\n");
-    fprintf(stderr, "\t  [-w parent/basename] to specify wheels to animate\n");
-    fprintf(stderr, "\t  [-a] to add random jitter\n");
-    fprintf(stderr, "\t  [-p num_pads parent/basename] to animate track pads\n");
-    fprintf(stderr, "\t  [-b # # #] to specify yaw, pitch, and roll\n");
-    fprintf(stderr, "\t  [-d # # #] to specify centroid (default is origin)\n");
-    fprintf(stderr, "\t  [{-u|-y|-s}] to specify track distance manually, via orientation, or via steering\n");
-    fprintf(stderr, "\t  [-a] to enable anti-strobing (track appears to go backwards\n");
-    fprintf(stderr, "\t  [-v] to specify new wheel positions every frame\n");
-    fprintf(stderr, "\t  [-c] to calculate track circumference\n");
-    fprintf(stderr, "\t  [-lm] to minimize track length\n");
-    fprintf(stderr, "\t  [{-lf|-ls|-le} #] to specify fixed track, stretchable, or elastic track length\n");
-    fprintf(stderr, "\t  [-i #] to specify initial track offset\n");
-    fprintf(stderr, "\t  [-f #] to specify initial script frame number\n");
-    fprintf(stderr, "\t  [-r #] to specify common radius for all wheels\n");
-    fprintf(stderr, "\t  [-g #] to output an mged script instead of an animation script\n");
-    fprintf(stderr, "\t  [-mp command] to specify a pad animation matrix\n");
-    fprintf(stderr, "\t  [-mw command] to specify a wheel animation matrix\n");
+    bu_log("Usage: %s [options] wheelfile < in.table > out.script\n", progname);
+    bu_log("\n\tOptions:\n");
+    bu_log("\t  [-w parent/basename] to specify wheels to animate\n");
+    bu_log("\t  [-a] to add random jitter\n");
+    bu_log("\t  [-p num_pads parent/basename] to animate track pads\n");
+    bu_log("\t  [-b # # #] to specify yaw, pitch, and roll\n");
+    bu_log("\t  [-d # # #] to specify centroid (default is origin)\n");
+    bu_log("\t  [{-u|-y|-s}] to specify track distance manually, via orientation, or via steering\n");
+    bu_log("\t  [-a] to enable anti-strobing (track appears to go backwards\n");
+    bu_log("\t  [-v] to specify new wheel positions every frame\n");
+    bu_log("\t  [-c] to calculate track circumference\n");
+    bu_log("\t  [-lm] to minimize track length\n");
+    bu_log("\t  [{-lf|-ls|-le} #] to specify fixed track, stretchable, or elastic track length\n");
+    bu_log("\t  [-i #] to specify initial track offset\n");
+    bu_log("\t  [-f #] to specify initial script frame number\n");
+    bu_log("\t  [-r #] to specify common radius for all wheels\n");
+    bu_log("\t  [-g #] to output an mged script instead of an animation script\n");
+    bu_log("\t  [-mp command] to specify a pad animation matrix\n");
+    bu_log("\t  [-mw command] to specify a wheel animation matrix\n");
 }
 
 int
@@ -248,7 +248,7 @@ get_args(int argc, char **argv)
 			bu_strlcpy(wheel_cmd, argv[bu_optind], sizeof(wheel_cmd));
 			break;
 		    default:
-			fprintf(stderr, "%s: Unknown option: -m%c\n",progname,*bu_optarg);
+			bu_log("%s: Unknown option: -m%c\n",progname,*bu_optarg);
 			return 0;
 		}
 		bu_optind += 1;
@@ -277,7 +277,7 @@ get_args(int argc, char **argv)
 			bu_optind++;
 			break;
 		    default:
-			fprintf(stderr, "%s: Unknown option: -l%c\n",progname,*bu_optarg);
+			bu_log("%s: Unknown option: -l%c\n",progname,*bu_optarg);
 			return 0;
 		}
 		break;
@@ -510,7 +510,7 @@ main(int argc, char *argv[])
     /* get track information from specified file */
 
     if (!(stream = fopen(*(argv+bu_optind), "rb"))) {
-	fprintf(stderr, "Track: Could not open file %s.\n", *(argv+bu_optind));
+	bu_log("Track: Could not open file %s.\n", *(argv+bu_optind));
 	return 0;
     }
 
@@ -653,7 +653,7 @@ main(int argc, char *argv[])
 	/* call track_prep to calculate geometry of track */
 	if ((frame==first_frame)||read_wheels) {
 	    if ((track_prep())==-1) {
-		fprintf(stderr, "Track: error in frame %d: track too short.\n", frame);
+		bu_log("Track: error in frame %d: track too short.\n", frame);
 		break;
 	    }
 	    if (get_circumf) {
