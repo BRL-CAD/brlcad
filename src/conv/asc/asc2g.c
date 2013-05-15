@@ -1811,7 +1811,6 @@ main(int argc, char *argv[])
     fclose(ifp); ifp = NULL;
     wdb_close(ofp); ofp = NULL;
 
-    bu_exit(0, " ");
     return 0;
 }
 
