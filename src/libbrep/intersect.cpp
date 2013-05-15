@@ -192,9 +192,9 @@ triangle_intersection(const struct Triangle &TriA, const struct Triangle &TriB, 
 
 struct PointPair {
     int indexA, indexB;
-    double distance;
+    double distance3d, distanceA, distanceB;
     bool operator < (const PointPair &_pp) const {
-	return distance < _pp.distance;
+	return distance3d < _pp.distance3d;
     }
 };
 
@@ -504,8 +504,8 @@ ON_Surface::IntersectSurface(
 	max_dis = pow(surfA->BoundingBox().Volume()*surfB->BoundingBox().Volume(), 1.0/6.0) * 0.2;
     }
 
-    double max_dis_2dA = ON_2dVector(surfA->Domain(0).Length(), surfA->Domain(1).Length()).Length() * 0.01;
-    double max_dis_2dB = ON_2dVector(surfB->Domain(0).Length(), surfB->Domain(1).Length()).Length() * 0.01;
+    double max_dis_2dA = ON_2dVector(surfA->Domain(0).Length(), surfA->Domain(1).Length()).Length() * 0.1;
+    double max_dis_2dB = ON_2dVector(surfB->Domain(0).Length(), surfB->Domain(1).Length()).Length() * 0.1;
     bu_log("max_dis: %lf\n", max_dis);
     bu_log("max_dis_2dA: %lf\n", max_dis_2dA);
     bu_log("max_dis_2dB: %lf\n", max_dis_2dB);
@@ -515,8 +515,10 @@ ON_Surface::IntersectSurface(
     for (int i = 0; i < curvept.Count(); i++) {
 	for (int j = i + 1; j < curvept.Count(); j++) {
 	    PointPair ppair;
-	    ppair.distance = curvept[i].DistanceTo(curvept[j]);
-	    if (ppair.distance < max_dis) {
+	    ppair.distance3d = curvept[i].DistanceTo(curvept[j]);
+	    ppair.distanceA = curveuv[i].DistanceTo(curveuv[j]);
+	    ppair.distanceB = curvest[i].DistanceTo(curvest[j]);
+	    if (ppair.distanceA < max_dis_2dA && ppair.distanceB < max_dis_2dB) {
 		ppair.indexA = i;
 		ppair.indexB = j;
 		ptpairs.push_back(ppair);
@@ -682,3 +684,12 @@ ON_Surface::IntersectSurface(
 }
 
 #endif
+
+// Local Variables:
+// tab-width: 8
+// mode: C++
+// c-basic-offset: 4
+// indent-tabs-mode: t
+// c-file-style: "stroustrup"
+// End:
+// ex: shiftwidth=4 tabstop=8
