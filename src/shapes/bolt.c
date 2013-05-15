@@ -35,13 +35,14 @@
 #include "raytrace.h"
 #include "wdb.h"
 
-void
+static void
 printusage(void)
 {
-	printf("Usage: bolt  <-- (if no arguments, go into interactive mode)\n");
-	printf("or\n");
-	printf("Usage: bolt -o# -f name.g -n# -hd# -hh# -wd# -wh# -sd# -sh#\n");
+    printf("Usage: bolt  <-- (if no arguments, go into interactive mode)\n");
+    printf("or\n");
+    printf("Usage: bolt -o# -f name.g -n# -hd# -hh# -wd# -wh# -sd# -sh#\n");
 }
+
 
 int
 main(int argc, char **argv)
@@ -72,10 +73,10 @@ main(int argc, char **argv)
     struct wmember comb1;	/* Used to make groups. */
     int ret;
 
-    if(argc > 1){
-	if ( BU_STR_EQUAL(argv[1],"-h") || BU_STR_EQUAL(argv[1],"-?")){
-		printusage();
-		return 0;
+    if(argc > 1) {
+	if (BU_STR_EQUAL(argv[1], "-h") || BU_STR_EQUAL(argv[1], "-?")) {
+	    printusage();
+	    return 0;
 	}
     }
 
@@ -116,7 +117,7 @@ main(int argc, char **argv)
 
     /* If there are no arguments ask questions. */
     if (argc == 1) {
-    	printusage();
+	printusage();
 	printf("       Program continues running:\n");
 	/* START # 1 */
 
@@ -234,7 +235,7 @@ main(int argc, char **argv)
 	    temp = argv[i];
 
 	    if (temp[0] != '-') {
-	    	printf("bolt: illegal option %s ; missing leading '-'\n",argv[i]);
+	    	printf("bolt: illegal option %s ; missing leading '-'\n", argv[i]);
 	    	return 0;
 	    }
 
@@ -242,13 +243,13 @@ main(int argc, char **argv)
 	    if (temp[1] == 'o') {
 		/* START # 4 */
 		if (temp[2] == '1')
-			iopt = 1;
+		    iopt = 1;
 		else if (temp[2] == '2')
-			iopt = 2;
+		    iopt = 2;
 		else if (temp[2] == '3')
-			iopt = 3;
+		    iopt = 3;
 		else if (temp[2] == '4')
-			iopt = 4;
+		    iopt = 4;
 	    }						/* END # 4 */
 
 	    /* -f - mged file name. */
@@ -329,11 +330,11 @@ main(int argc, char **argv)
 			sscanf(temp1, "%lf", &sh);
 		    }
 		}					/* END # 9 */
-	    	else {
-    		    printf("bolt: illegal option -- %c\n",temp[1]);
-    		    printusage();
-	    	    return 0;
-	    	}
+		else {
+		    printf("bolt: illegal option -- %c\n", temp[1]);
+		    printusage();
+		    return 0;
+		}
 	    }						/* END # 6.1 */
 
 	}						/* END # 3 */
