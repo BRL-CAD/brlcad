@@ -1031,6 +1031,11 @@ GED_EXPORT extern int ged_eac(struct ged *gedp, int argc, const char *argv[]);
 GED_EXPORT extern int ged_echo(struct ged *gedp, int argc, const char *argv[]);
 
 /**
+ * Arb specific edits.
+ */
+GED_EXPORT extern int ged_edarb(struct ged *gedp, int argc, const char *argv[]);
+
+/**
  * Text edit the color table
  */
 GED_EXPORT extern int ged_edcolor(struct ged *gedp, int argc, const char *argv[]);

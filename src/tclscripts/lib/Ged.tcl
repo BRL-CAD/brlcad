@@ -214,6 +214,7 @@ package provide cadwidgets::Ged 1.0
 	method E {args}
 	method eac {args}
 	method echo {args}
+	method edarb {args}
 	method edcodes {args}
 	method edcolor {args}
 	method edcomb {args}
@@ -1678,6 +1679,10 @@ package provide cadwidgets::Ged 1.0
 
 ::itcl::body cadwidgets::Ged::echo {args} {
     eval $mGed echo $args
+}
+
+::itcl::body cadwidgets::Ged::edarb {args} {
+    eval $mGed edarb $args
 }
 
 ::itcl::body cadwidgets::Ged::edcodes {args} {
@@ -6040,6 +6045,7 @@ package provide cadwidgets::Ged 1.0
     $help add E			{{[-s] <objects>} {evaluated edit of objects. Option 's' provides a slower, but better fidelity evaluation}}
     $help add eac		{{air_code(s)} {draw objects with the specified air codes}}
     $help add echo		{{args} {echo the specified args to the command window}}
+    $help add edarb		{{extrude|permute arb args} {edit an arb}}
     $help add edcodes		{{object(s)} {edit the various codes for the specified objects}}
     $help add edcolor		{{} {edit the color table}}
     $help add edcomb		{{comb rflag rid air los mid} {modify combination record information}}

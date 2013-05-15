@@ -83,6 +83,7 @@ set(LIBGED_SOURCES
   edbot.c
   edcodes.c
   edcomb.c
+  edarb.c
   edit.c
   edit_metaball.c
   editit.c

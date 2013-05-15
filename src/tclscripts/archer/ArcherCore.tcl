@@ -217,6 +217,7 @@ namespace eval ArcherCore {
 	method draw                {args}
 	method e                   {args}
 	method E                   {args}
+	method edarb               {args}
 	method edcodes             {args}
 	method edcolor             {args}
 	method edcomb              {args}
@@ -572,7 +573,7 @@ namespace eval ArcherCore {
 	    bot_merge bot_smooth bot_split bot_sync bot_vertex_fuse \
 	    brep c cd clear clone closedb color comb comb_color combmem \
 	    copy copyeval copymat cp cpi dbconcat dbExpand decompose \
-	    delete draw e E edcodes edcolor edcomb edit edmater d erase ev exists \
+	    delete draw e E edarb edcodes edcolor edcomb edit edmater d erase ev exists \
 	    exit facetize fracture freezeGUI g get graph group hide human i igraph \
 	    importFg4Section in inside item kill killall killrefs \
 	    killtree l ls make make_bb make_name make_pnts man mater mirror move \
@@ -6247,6 +6248,19 @@ namespace eval ArcherCore {
 
 ::itcl::body ArcherCore::E {args} {
     eval gedWrapper E 1 0 0 1 $args
+}
+
+::itcl::body ArcherCore::edarb {args} {
+    if {[catch {eval gedWrapper edarb 0 1 1 0 $args} ret]} {
+	return $ret
+    }
+    set len [llength $args]
+    
+    if {$len > 2} {
+	redrawObj [lindex $args 1] 0
+    }
+
+    return $ret
 }
 
 ::itcl::body ArcherCore::edcodes {args} {
