@@ -130,22 +130,22 @@ get_args(int argc, char **argv)
 
 	if ((oldfp = fopen(argv[bu_optind], "r")) == NULL) {
 	    fprintf(stderr,
-			  "pix3filter: cannot open \"%s\" for reading\n",
-			  argv[bu_optind]);
+		    "pix3filter: cannot open \"%s\" for reading\n",
+		    argv[bu_optind]);
 	    return 0;
 	}
 
 	if ((curfp = fopen(argv[++bu_optind], "r")) == NULL) {
 	    fprintf(stderr,
-			  "pix3filter: cannot open \"%s\" for reading\n",
-			  argv[bu_optind]);
+		    "pix3filter: cannot open \"%s\" for reading\n",
+		    argv[bu_optind]);
 	    return 0;
 	}
 
 	if ((newfp = fopen(argv[++bu_optind], "r")) == NULL) {
 	    fprintf(stderr,
-			  "pix3filter: cannot open \"%s\" for reading\n",
-			  argv[bu_optind]);
+		    "pix3filter: cannot open \"%s\" for reading\n",
+		    argv[bu_optind]);
 	    return 0;
 	}
 	bu_optind += 3;
@@ -158,8 +158,8 @@ get_args(int argc, char **argv)
 
 	if ((curfp = fopen(file_name, "r")) == NULL) {
 	    fprintf(stderr,
-			  "pix3filter: cannot open \"%s\" for reading\n",
-			  file_name);
+		    "pix3filter: cannot open \"%s\" for reading\n",
+		    file_name);
 	    bu_free(working_name, "free working_name");
 	    return 0;
 	}
@@ -181,15 +181,15 @@ get_args(int argc, char **argv)
 	if ((oldfp = fopen(working_name, "r")) == NULL) {
 	    if (frameNumber-1 != 0) {
 		fprintf(stderr,
-			      "pix3filter: cannot open \"%s\" for reading.\n",
-			      working_name);
+			"pix3filter: cannot open \"%s\" for reading.\n",
+			working_name);
 		bu_free(working_name, "free working_name");
 		return 0;
 	    }
 	    if ((oldfp = fopen(file_name, "r")) == NULL) {
 		fprintf(stderr,
-			      "pix3filter: cannot open \"%s\" for reading.\n",
-			      file_name);
+			"pix3filter: cannot open \"%s\" for reading.\n",
+			file_name);
 		bu_free(working_name, "free working_name");
 		return 0;
 	    }
@@ -198,8 +198,8 @@ get_args(int argc, char **argv)
 	snprintf(working_name, strlen(file_name)+5, "%s.%d", file_name, frameNumber+1);
 	if ((newfp = fopen(working_name, "r")) == NULL) {
 	    fprintf(stderr,
-			  "pix3filter: cannot open \"%s\" for reading.\n",
-			  working_name);
+		    "pix3filter: cannot open \"%s\" for reading.\n",
+		    working_name);
 	    bu_free(working_name, "free working_name");
 	    return 0;
 	}

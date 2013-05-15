@@ -153,40 +153,40 @@ double *end_table = &table[10];
 	dg = NOISE(); DITHER(_g, green, dg, MAG1); _g = (_g+26) / 51; \
 	db = NOISE(); DITHER(_b, blue, db, MAG1); _b = (_b+26) / 51; \
 	if (_r == _g) { \
-		if (_r == _b) { \
-			/* grey */ \
-			DITHER(_r, red, dr, MAG2); \
-			DITHER(_g, green, dg, MAG2); \
-			DITHER(_b, blue, db, MAG2); \
-			i = nvec[ ((_r+_g+_b)/3) >> 4]; \
-		} else if (_r == 0) { \
-			/* all blue */ \
-			DITHER(_r, red, dr, MAG2); \
-			DITHER(_g, green, dg, MAG2); \
-			DITHER(_b, blue, db, MAG2); \
-			i = bvec[ _b >> 4]; \
-		} else { \
-			/* color cube # */ \
-			i = (unsigned char)(_r + _g * 6 + _b * 36); \
-		} \
-	} \
-	else if (_g == _b && _g == 0) { \
-		/* all red */ \
+	    if (_r == _b) { \
+		/* grey */ \
 		DITHER(_r, red, dr, MAG2); \
 		DITHER(_g, green, dg, MAG2); \
 		DITHER(_b, blue, db, MAG2); \
-		i = rvec[ _r >> 4]; \
-	} else if (_r == _b && _r == 0) { \
-		/* all green */ \
+		i = nvec[ ((_r+_g+_b)/3) >> 4]; \
+	    } else if (_r == 0) { \
+		/* all blue */ \
 		DITHER(_r, red, dr, MAG2); \
 		DITHER(_g, green, dg, MAG2); \
 		DITHER(_b, blue, db, MAG2); \
-		i = gvec[_g >> 4]; \
-	} else { \
+		i = bvec[ _b >> 4]; \
+	    } else { \
 		/* color cube # */ \
 		i = (unsigned char)(_r + _g * 6 + _b * 36); \
+	    } \
 	} \
-}
+	else if (_g == _b && _g == 0) { \
+	    /* all red */ \
+	    DITHER(_r, red, dr, MAG2); \
+	    DITHER(_g, green, dg, MAG2); \
+	    DITHER(_b, blue, db, MAG2); \
+	    i = rvec[ _r >> 4]; \
+	} else if (_r == _b && _r == 0) { \
+	    /* all green */ \
+	    DITHER(_r, red, dr, MAG2); \
+	    DITHER(_g, green, dg, MAG2); \
+	    DITHER(_b, blue, db, MAG2); \
+	    i = gvec[_g >> 4]; \
+	} else { \
+	    /* color cube # */ \
+	    i = (unsigned char)(_r + _g * 6 + _b * 36); \
+	} \
+    }
 
 
 #define REMAPIXEL(red, green, blue, i) {\
@@ -200,7 +200,7 @@ double *end_table = &table[10];
 	else if (_g == _b && _g == 0) i = rvec[red/16];   /* all red */ \
 	else if (_r == _b && _r == 0) i = gvec[green/16]; /* all green */ \
 	else i = (unsigned char)(_r + _g * 6 + _b * 36);  /* color cube # */ \
-}
+    }
 
 
 /*

@@ -72,7 +72,7 @@ main (int argc, char **argv)
     int nm_args = 0;
 
 
-    if ( BU_STR_EQUAL(argv[1],"-h") || BU_STR_EQUAL(argv[1],"-?")) {
+    if (BU_STR_EQUAL(argv[1], "-h") || BU_STR_EQUAL(argv[1], "-?")) {
 	printusage();
     }
 

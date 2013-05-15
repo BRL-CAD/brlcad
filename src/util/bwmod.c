@@ -150,12 +150,12 @@ get_args(int argc, char **argv)
 	ifname = bu_realpath(file_name, NULL);
 	if (freopen(ifname, "rb", stdin) == NULL) {
 	    fprintf(stderr,
-			  "bwmod: cannot open \"%s(canonical %s)\" for reading\n",
-			  file_name,ifname);
-	    bu_free(ifname,"ifname alloc from bu_realpath");
+		    "bwmod: cannot open \"%s(canonical %s)\" for reading\n",
+		    file_name, ifname);
+	    bu_free(ifname, "ifname alloc from bu_realpath");
 	    return 0;
 	}
-	bu_free(ifname,"ifname alloc from bu_realpath");
+	bu_free(ifname, "ifname alloc from bu_realpath");
     }
 
     if (argc > ++bu_optind)
@@ -183,7 +183,7 @@ void mk_trans_tbl(void)
 		case OR  : tmp=d; tmp |= (int)val[i]; d=tmp;break;
 		case AND : tmp=d; tmp &= (int)val[i]; d=tmp;break;
 		case XOR : tmp=d; tmp ^= (int)val[i]; d= tmp; break;
-		/* case TRUNC: tmp=((int)d/(int)val[i])*(int)val[i]; break; */
+		    /* case TRUNC: tmp=((int)d/(int)val[i])*(int)val[i]; break; */
 		default  : fprintf(stderr, "%s: error in op\n", progname);
 		    bu_exit (-1, NULL);
 		    break;
@@ -274,7 +274,7 @@ int main(int argc, char **argv)
 	/* output */
 	if (write(1, (void *)ibuf, (unsigned)n) != n) {
 	    fprintf(stderr, "%s: Error writing stdout\n",
-			  progname);
+		    progname);
 	    bu_exit (-1, NULL);
 	}
     }

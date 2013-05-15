@@ -48,7 +48,7 @@ struct site
 
 void print_usage (void)
 {
-    bu_exit(1, "%s\n",usage);
+    bu_exit(1, "%s\n", usage);
 }
 
 
@@ -125,7 +125,7 @@ int read_point (FILE *fp, fastf_t *c_p, int c_len, int normalize, struct bu_vls 
 	goto wrap_up;
     }
 
- wrap_up:
+wrap_up:
     if ((return_code == 1) && (tail != 0)) {
 	bu_vls_trunc(tail, 0);
 	bu_vls_strcat(tail, cp);
@@ -152,8 +152,8 @@ main (int argc, char **argv)
     /* intentionally double for scan */
     double x, y, z;
 
-    if (isatty(fileno(stdin)) && isatty(fileno(stdout)) && argc == 1){
-    	bu_log("%s\n",usage);
+    if (isatty(fileno(stdin)) && isatty(fileno(stdout)) && argc == 1) {
+	bu_log("%s\n", usage);
 	bu_log("       Program continues running:\n");
     }
 

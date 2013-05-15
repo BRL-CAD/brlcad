@@ -143,8 +143,8 @@ get_args(int argc, char **argv)
 	    if ((orig = fopen(orig_name, "r")) == NULL) {
 		perror(orig_name);
 		fprintf(stderr,
-			      "pixpaste: cannot open \"%s\" for reading\n",
-			      orig_name);
+			"pixpaste: cannot open \"%s\" for reading\n",
+			orig_name);
 		return 0;
 	    }
 	    orig_isfile = 1;
@@ -159,15 +159,15 @@ get_args(int argc, char **argv)
 	    paste = stdin;
 	    if (!orig_isfile) {
 		fprintf(stderr,
-			      "pixpaste: The original file and paste file cannot both be stdin!.\n");
+			"pixpaste: The original file and paste file cannot both be stdin!.\n");
 		return 0;
 	    }
 	} else {
 	    if ((paste = fopen(paste_name, "r")) == NULL) {
 		perror(paste_name);
 		fprintf(stderr,
-			      "pixpaste: cannot open \"%s\" for reading",
-			      paste_name);
+			"pixpaste: cannot open \"%s\" for reading",
+			paste_name);
 		return 0;
 	    }
 	    paste_isfile=1;

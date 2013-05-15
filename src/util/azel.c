@@ -67,7 +67,7 @@ char usage[]="Usage: azel [-a azim] [-e elev] [-c celsiz] [-{ip}r] [infile [outf
 void
 PrintUsage (void)
 {
-    bu_exit(1, "%s\n",usage);
+    bu_exit(1, "%s\n", usage);
 }
 
 
@@ -75,11 +75,11 @@ PrintUsage (void)
 void
 GetCoord (FILE *Whence, double *Coord, char Label, int LineNm, char *FileName)
 
-    /* File from which to read */
-    /* Where to store coordinate */
-    /* Name of coordinate */
-    /* How far in input? */
-    /* What input stream? */
+/* File from which to read */
+/* Where to store coordinate */
+/* Name of coordinate */
+/* How far in input? */
+/* What input stream? */
 
 {
     int Ch;
@@ -142,9 +142,9 @@ main (int argc, char **argv)
     int Ch;                 /* Input character */
     int i;                  /* Dummy variable for loop indexing */
 
-    if (isatty(fileno(stdin)) && isatty(fileno(stdout)) && argc == 1){
-    	fprintf(stderr,"%s\n",usage);
-	fprintf(stderr,"       Program continues running:\n");
+    if (isatty(fileno(stdin)) && isatty(fileno(stdout)) && argc == 1) {
+	fprintf(stderr, "%s\n", usage);
+	fprintf(stderr, "       Program continues running:\n");
     }
 
     /* Handle command-line options */

@@ -173,7 +173,7 @@ main (int argc, char **argv)
     if (!fb_common_image_size(&width, &height, nm_pixels))
 	bu_exit (0, NULL);
 
- done:
+done:
     bu_log("%zu %zu\n", width, height);
     return 0;
 }

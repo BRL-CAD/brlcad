@@ -53,8 +53,8 @@ static fastf_t r1, r2;		/* radii */
 #define OPT_STRING "ahn:s:w:ST:?"
 
 #define made_it()	(void) fprintf(stderr, "Made it to %s:%d\n",	\
-				__FILE__, __LINE__);			\
-				fflush(stderr)
+				       __FILE__, __LINE__);			\
+    fflush(stderr)
 static char usage[] = "\
 Usage: texturescale [-T 'r1 r2' | -S]\n\
 		 [-ah] [-s squaresize] [-w file_width] [-n file_height]\n\

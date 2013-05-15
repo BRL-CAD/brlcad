@@ -46,6 +46,7 @@ printUsage()
     bu_log("Usage: pixbustup basename width [image_offset] [first_number] <input.pix\n");
 }
 
+
 int
 main(int argc, char **argv)
 {
@@ -102,10 +103,10 @@ main(int argc, char **argv)
 	ifname = bu_realpath(name, NULL);
 	if ((fd=creat(ifname, 0444))<0) {
 	    perror(ifname);
-	    bu_free(ifname,"ifname alloc from bu_realpath");
+	    bu_free(ifname, "ifname alloc from bu_realpath");
 	    continue;
 	}
-	bu_free(ifname,"ifname alloc from bu_realpath");
+	bu_free(ifname, "ifname alloc from bu_realpath");
 
 	rwval = write(fd, in1, scanbytes);
 	if ((size_t)rwval != scanbytes) {

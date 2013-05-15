@@ -319,10 +319,10 @@ static int is_exterior (unsigned char *pix_rgb)
  */
 static int is_border (unsigned char *prp, unsigned char *trp, unsigned char *nrp, int col_nm)
 
-    /* Previous row */
-    /* Current (this) row */
-    /* Next row */
-    /* Current column */
+/* Previous row */
+/* Current (this) row */
+/* Next row */
+/* Current column */
 
 {
     unsigned char pix_rgb[3];

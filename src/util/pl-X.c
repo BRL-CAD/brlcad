@@ -214,8 +214,8 @@ getargs(struct uplot *up)
 
 void
 draw(double x_1, double y_1, double UNUSED(z_1), double x_2, double y_2, double z_2)
-    /* from point */
-    /* to point */
+/* from point */
+/* to point */
 {
     int sx_1, sy_1, sx_2, sy_2;
 

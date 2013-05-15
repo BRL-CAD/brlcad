@@ -63,7 +63,7 @@ void
 prolog(FILE *fp, char *name, size_t w, size_t h)
 
 
-    /* in points */
+/* in points */
 {
     time_t ltime;
 
@@ -119,7 +119,7 @@ postlog(FILE *fp)
 void
 hexout(FILE *fp, int byte)
 
-    /* 0 <= byte <= 255 */
+/* 0 <= byte <= 255 */
 {
     int high, low;
     static int symbol[16] = { '0', '1', '2', '3', '4', '5', '6',
@@ -192,8 +192,8 @@ get_args(int argc, char **argv)
 	file_name = argv[bu_optind];
 	if ((infp = fopen(file_name, "r")) == NULL) {
 	    fprintf(stderr,
-			  "pix-ps: cannot open \"%s\" for reading\n",
-			  file_name);
+		    "pix-ps: cannot open \"%s\" for reading\n",
+		    file_name);
 	    return 0;
 	}
 	/*fileinput++;*/

@@ -81,9 +81,9 @@ main(int argc, char **argv)
     }
 
 #define CHECK_INDEX(idx) \
-if (idx > MAX_INDEX) { \
-    bu_exit(3, "pixhist3d: read invalid index %u\n", (unsigned int)idx); \
-}
+    if (idx > MAX_INDEX) { \
+	bu_exit(3, "pixhist3d: read invalid index %u\n", (unsigned int)idx); \
+    }
 
     while ((n = fread(&ibuf[0], sizeof(*ibuf), sizeof(ibuf), fp)) > 0) {
 	unsigned char *bp;

@@ -182,8 +182,8 @@ getieee(void)
 
 void
 draw(double x_1, double y_1, double UNUSED(z_1), double x_2, double y_2, double z_2)
-    /* from point */
-    /* to point */
+/* from point */
+/* to point */
 {
     int sx1, sy1, sx2, sy2;
 
@@ -233,7 +233,7 @@ label(double x, double y, char *str)
 void
 scaleinfo(FILE *fp, int w, int h)
 
-    /* in points */
+/* in points */
 {
     /*
      * About this PostScript scaling issue...
@@ -283,7 +283,7 @@ void
 prolog(FILE *fp, char *name, int w, int h)
 
 
-    /* in points */
+/* in points */
 {
     time_t ltime;
 
@@ -396,8 +396,8 @@ get_args(int argc, char **argv)
 	file_name = argv[bu_optind];
 	if ((infp = fopen(file_name, "r")) == NULL) {
 	    fprintf(stderr,
-			  "pl-ps: cannot open \"%s\" for reading\n",
-			  file_name);
+		    "pl-ps: cannot open \"%s\" for reading\n",
+		    file_name);
 	    return 0;
 	}
 	/*fileinput++;*/

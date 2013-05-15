@@ -99,8 +99,8 @@ get_args(int argc, char **argv, FILE **inpp, int *max, double *multiplier)
 	*inpp = fopen(argv[bu_optind], "r");
 	if (*inpp == NULL) {
 	    fprintf(stderr,
-			  "pixfade: cannot open \"%s\" for reading\n",
-			  argv[bu_optind]);
+		    "pixfade: cannot open \"%s\" for reading\n",
+		    argv[bu_optind]);
 	    return 0;
 	}
     }

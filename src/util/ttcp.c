@@ -280,83 +280,83 @@ prusage(struct rusage *r0,
 	    *outp++ = *cp;
 	else if (cp[1]) switch (*++cp) {
 
-	    case 'U':
-		tvsub(&tdiff, &r1->ru_utime, &r0->ru_utime);
-		sprintf(outp, "%ld.%01ld", (long int)tdiff.tv_sec,
-			(long int)tdiff.tv_usec/100000L);
-		END(outp);
-		break;
+		case 'U':
+		    tvsub(&tdiff, &r1->ru_utime, &r0->ru_utime);
+		    sprintf(outp, "%ld.%01ld", (long int)tdiff.tv_sec,
+			    (long int)tdiff.tv_usec/100000L);
+		    END(outp);
+		    break;
 
-	    case 'S':
-		tvsub(&tdiff, &r1->ru_stime, &r0->ru_stime);
-		sprintf(outp, "%ld.%01ld", (long int)tdiff.tv_sec, (long int)tdiff.tv_usec/100000L);
-		END(outp);
-		break;
+		case 'S':
+		    tvsub(&tdiff, &r1->ru_stime, &r0->ru_stime);
+		    sprintf(outp, "%ld.%01ld", (long int)tdiff.tv_sec, (long int)tdiff.tv_usec/100000L);
+		    END(outp);
+		    break;
 
-	    case 'E':
-		psecs(ms / 100, outp);
-		END(outp);
-		break;
+		case 'E':
+		    psecs(ms / 100, outp);
+		    END(outp);
+		    break;
 
-	    case 'P':
-		sprintf(outp, "%d%%", (int) (t*100 / ((ms ? ms : 1))));
-		END(outp);
-		break;
+		case 'P':
+		    sprintf(outp, "%d%%", (int) (t*100 / ((ms ? ms : 1))));
+		    END(outp);
+		    break;
 
-	    case 'W':
-		i = r1->ru_nswap - r0->ru_nswap;
-		sprintf(outp, "%d", i);
-		END(outp);
-		break;
+		case 'W':
+		    i = r1->ru_nswap - r0->ru_nswap;
+		    sprintf(outp, "%d", i);
+		    END(outp);
+		    break;
 
-	    case 'X':
-		sprintf(outp, "%ld", t == 0 ? 0 : (r1->ru_ixrss-r0->ru_ixrss)/t);
-		END(outp);
-		break;
+		case 'X':
+		    sprintf(outp, "%ld", t == 0 ? 0 : (r1->ru_ixrss-r0->ru_ixrss)/t);
+		    END(outp);
+		    break;
 
-	    case 'D':
-		sprintf(outp, "%ld", t == 0 ? 0 :
-			(r1->ru_idrss+r1->ru_isrss-(r0->ru_idrss+r0->ru_isrss))/t);
-		END(outp);
-		break;
+		case 'D':
+		    sprintf(outp, "%ld", t == 0 ? 0 :
+			    (r1->ru_idrss+r1->ru_isrss-(r0->ru_idrss+r0->ru_isrss))/t);
+		    END(outp);
+		    break;
 
-	    case 'K':
-		sprintf(outp, "%ld", t == 0 ? 0 :
-			((r1->ru_ixrss+r1->ru_isrss+r1->ru_idrss) -
-			 (r0->ru_ixrss+r0->ru_idrss+r0->ru_isrss))/t);
-		END(outp);
-		break;
+		case 'K':
+		    sprintf(outp, "%ld", t == 0 ? 0 :
+			    ((r1->ru_ixrss+r1->ru_isrss+r1->ru_idrss) -
+			     (r0->ru_ixrss+r0->ru_idrss+r0->ru_isrss))/t);
+		    END(outp);
+		    break;
 
-	    case 'M':
-		sprintf(outp, "%ld", r1->ru_maxrss/2);
-		END(outp);
-		break;
+		case 'M':
+		    sprintf(outp, "%ld", r1->ru_maxrss/2);
+		    END(outp);
+		    break;
 
-	    case 'F':
-		sprintf(outp, "%ld", r1->ru_majflt-r0->ru_majflt);
-		END(outp);
-		break;
+		case 'F':
+		    sprintf(outp, "%ld", r1->ru_majflt-r0->ru_majflt);
+		    END(outp);
+		    break;
 
-	    case 'R':
-		sprintf(outp, "%ld", r1->ru_minflt-r0->ru_minflt);
-		END(outp);
-		break;
+		case 'R':
+		    sprintf(outp, "%ld", r1->ru_minflt-r0->ru_minflt);
+		    END(outp);
+		    break;
 
-	    case 'I':
-		sprintf(outp, "%ld", r1->ru_inblock-r0->ru_inblock);
-		END(outp);
-		break;
+		case 'I':
+		    sprintf(outp, "%ld", r1->ru_inblock-r0->ru_inblock);
+		    END(outp);
+		    break;
 
-	    case 'O':
-		sprintf(outp, "%ld", r1->ru_oublock-r0->ru_oublock);
-		END(outp);
-		break;
-	    case 'C':
-		sprintf(outp, "%ld+%ld", r1->ru_nvcsw-r0->ru_nvcsw,
-			r1->ru_nivcsw-r0->ru_nivcsw);
-		END(outp);
-		break;
-	}
+		case 'O':
+		    sprintf(outp, "%ld", r1->ru_oublock-r0->ru_oublock);
+		    END(outp);
+		    break;
+		case 'C':
+		    sprintf(outp, "%ld+%ld", r1->ru_nvcsw-r0->ru_nvcsw,
+			    r1->ru_nivcsw-r0->ru_nivcsw);
+		    END(outp);
+		    break;
+	    }
     }
     *outp = '\0';
 }
@@ -497,23 +497,23 @@ main(int argc, char **argv)
 	    case 'n':
 		nbuf = atoi(&argv[0][2]);
 		if(nbuf < 0) {
-		  printf("Negative buffer count.\n");
-		  return -1;
+		    printf("Negative buffer count.\n");
+		    return -1;
 		}
 		if(nbuf >= INT_MAX) {
-		  printf("Too many buffers specified.\n");
-		  return -1;
+		    printf("Too many buffers specified.\n");
+		    return -1;
 		}
 		break;
 	    case 'l':
 		buflen = atoi(&argv[0][2]);
 		if(buflen <= 0) {
-		  printf("Invalid buffer length.\n");
-		  return -1;
+		    printf("Invalid buffer length.\n");
+		    return -1;
 		}
 		if(buflen >= INT_MAX) {
-		  printf("Buffer length too large.\n");
-		  return -1;
+		    printf("Buffer length too large.\n");
+		    return -1;
 		}
 		break;
 	    case 's':
@@ -522,10 +522,10 @@ main(int argc, char **argv)
 	    case 'p':
 		port = atoi(&argv[0][2]);
 		if(port < 0) {
-		  port = 0;
+		    port = 0;
 		}
 		if(port > 65535) {
-		  port = 65535;
+		    port = 65535;
 		}
 		break;
 	    case 'u':
@@ -666,7 +666,7 @@ main(int argc, char **argv)
 	    ((double)nbytes)*8/realt/1024);
     return 0;
 
- usage:
+usage:
     fprintf(stderr, "%s%s", Usage, Usage2);
     return 1;
 }

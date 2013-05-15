@@ -340,7 +340,7 @@ main(int argc, char **argv)
 	if (ret == 0)
 	    perror("fwrite");
     }
- done:
+done:
 
     for (i=0; i < ncolors; i++)
 	bu_free(rows[i], "row[]");

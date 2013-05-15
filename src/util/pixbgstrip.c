@@ -102,8 +102,8 @@ get_args(int argc, char **argv)
 	if ((infp = fopen(file_name, "r")) == NULL) {
 	    perror(file_name);
 	    fprintf(stderr,
-			  "pixbgstrip: cannot open \"%s\" for reading\n",
-			  file_name);
+		    "pixbgstrip: cannot open \"%s\" for reading\n",
+		    file_name);
 	    bu_exit (1, NULL);
 	}
 	fileinput++;

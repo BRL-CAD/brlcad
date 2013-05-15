@@ -105,8 +105,8 @@ get_args(int argc, char **argv)
 	file_name = argv[bu_optind];
 	if ((buffp = fopen(file_name, "r")) == NULL) {
 	    fprintf(stderr,
-			  "pixembed: cannot open \"%s\" for reading\n",
-			  file_name);
+		    "pixembed: cannot open \"%s\" for reading\n",
+		    file_name);
 	    return 0;
 	}
     }

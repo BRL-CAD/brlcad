@@ -57,9 +57,9 @@ void print_usage (willexit)
     int willexit;
 {
     if (willexit)
-	bu_exit(1, "%s%s",usage1,usage2);
-    fprintf(stderr,"%s%s",usage1,usage2);
-    fprintf(stderr,"       Program continues running:\n");
+	bu_exit(1, "%s%s", usage1, usage2);
+    fprintf(stderr, "%s%s", usage1, usage2);
+    fprintf(stderr, "       Program continues running:\n");
 }
 
 
@@ -127,10 +127,10 @@ get_args(int argc, char **argv)
 	    file_name = argv[bu_optind++];
 	    ifname = bu_realpath(file_name, NULL);
 	    if ((infd = open(ifname, O_RDONLY)) == -1) {
-		bu_free(ifname,"ifname alloc from bu_realpath");
+		bu_free(ifname, "ifname alloc from bu_realpath");
 		bu_exit (1, "Cannot open file '%s'\n", file_name);
 	    }
-	    bu_free(ifname,"ifname alloc from bu_realpath");
+	    bu_free(ifname, "ifname alloc from bu_realpath");
 	    fileinput = 1;
 	    break;
 	default:

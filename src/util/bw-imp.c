@@ -144,8 +144,8 @@ get_args(int argc, char **argv)
 	file_name = argv[bu_optind];
 	if ((infp = fopen(file_name, "r")) == NULL) {
 	    fprintf(stderr,
-			  "bw-imp: cannot open \"%s\" for reading\n",
-			  file_name);
+		    "bw-imp: cannot open \"%s\" for reading\n",
+		    file_name);
 	    return false;
 	}
     }
@@ -208,7 +208,7 @@ im_header(void)
 {
 
     printf("@document(language impress, prerasterization on, Name \"%s\")",
-		 file_name
+	   file_name
 	);
 
     /* The margins need to be multiples of 16 (printer word align) */

@@ -81,15 +81,15 @@ main(int argc, char **argv)
     }
 
     if (nbytes <= 0 || nbytes > INT_MAX) {
-    	failure = 1 ;
+	failure = 1;
 	bu_log("decimate: bad nbytes/pixel: %ld\n", (long int)nbytes);
     }
     if (iwidth <= 0 || iwidth > INT_MAX || iheight <= 0 || iheight > INT_MAX) {
-    	failure = 1 ;
+	failure = 1;
 	bu_log("decimate: bad size of input range: %ldx%ld\n", (long int)iwidth, (long int)iheight);
     }
     if (owidth <= 0 || owidth > INT_MAX || oheight <= 0 || oheight > INT_MAX) {
-    	failure = 1 ;
+	failure = 1;
 	bu_log("decimate: bad size of output range: %ldx%ld\n", (long int)owidth, (long int)oheight);
     }
     if (failure) {

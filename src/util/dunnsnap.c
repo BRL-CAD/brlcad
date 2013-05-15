@@ -162,7 +162,7 @@ main(int argc, char **argv)
 
     return 0;
 
- bad:
+bad:
     if (fbp != FBIO_NULL)
 	fb_close(fbp);
 

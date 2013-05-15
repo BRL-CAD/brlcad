@@ -162,7 +162,7 @@ main(int argc, char **argv)
 	}
 	y = (y + 1) % out_height;
     }
- done:
+done:
     fprintf(stderr, "\n");
 
     return 0;

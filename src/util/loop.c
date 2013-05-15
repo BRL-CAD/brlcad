@@ -92,7 +92,7 @@ main(int argc, char *argv[])
     /* determine if any arguments are real */
     for (i = 1; i < argc; i++) {
 	double dval = atof(argv[i]);
-	long int ival = strtol(argv[i],NULL,0);
+	long int ival = strtol(argv[i], NULL, 0);
 	if (!ZERO(dval - (double)ival)) {
 	    status = REAL;
 	    break;
@@ -187,20 +187,20 @@ main(int argc, char *argv[])
 	    bu_strlcpy(fmt_string, "%d\n", sizeof(fmt_string));
 	fmt_string[50-1] = '\0'; /* sanity */
 
-	start  = strtol(argv[1],NULL,0);
+	start  = strtol(argv[1], NULL, 0);
 	if ((start < INT_MIN) || (start > INT_MAX)) {
 	    bu_log("'start' out of range of signed integer.\n");
 	    return 1;
 	}
 
-	finish = strtol(argv[2],NULL,0);
+	finish = strtol(argv[2], NULL, 0);
 	if ((finish < INT_MIN) || (finish > INT_MAX)) {
 	    bu_log("'finish' out of range of signed integer.\n");
 	    return 1;
 	}
 
 	if (argc == 4) {
-	    incr = strtol(argv[3],NULL,0);
+	    incr = strtol(argv[3], NULL, 0);
 	    if ((incr < INT_MIN) || (incr > INT_MAX)) {
 		bu_log("'incr' out of range of signed integer.\n");
 		return 1;
@@ -238,7 +238,7 @@ main(int argc, char *argv[])
 	    cfinish = ULONG_MAX-1;
 
 	if (argc == 5) {
-	    cincr = strtol(argv[4],NULL,0);
+	    cincr = strtol(argv[4], NULL, 0);
 	    if ((cincr < -UCHAR_MAX) || (cincr > UCHAR_MAX)) {
 		bu_log("'incr' out of range of char.\n");
 		return 1;

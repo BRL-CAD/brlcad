@@ -61,10 +61,10 @@ main(int argc, char **argv)
     ifname = bu_realpath(argv[1], NULL);
     if ((fd = open(ifname, 0)) < 0) {
 	perror(ifname);
-	bu_free(ifname,"ifname alloc from bu_realpath");
+	bu_free(ifname, "ifname alloc from bu_realpath");
 	exit(1);
     }
-    bu_free(ifname,"ifname alloc from bu_realpath");
+    bu_free(ifname, "ifname alloc from bu_realpath");
 
     if (isatty(fileno(stdout))) {
 	bu_exit(2, "dpix-pix:  binary output directed to terminal, aborting\n");

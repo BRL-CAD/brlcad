@@ -85,7 +85,7 @@ void doit(FILE *fd)
 	    pixel = r +	(g << 8) + (b << 16);
 
 	    if (!(vals[k=(pixel >> 3)] &
-		   (mask = (1 << (pixel & 0x07))))) {
+		  (mask = (1 << (pixel & 0x07))))) {
 		vals[k] |= (unsigned char)mask;
 		++count;
 	    }
@@ -96,9 +96,9 @@ void doit(FILE *fd)
 	for (i = 0; i < 1<<24; ++i)
 	    if ((vals[i>>3] & (1<<(i & 0x07))))
 		printf("%3d %3d %3d\n",
-			     i & 0x0ff,
-			     (i >> 8) & 0x0ff,
-			     (i >> 16) & 0x0ff);
+		       i & 0x0ff,
+		       (i >> 8) & 0x0ff,
+		       (i >> 16) & 0x0ff);
 }
 
 

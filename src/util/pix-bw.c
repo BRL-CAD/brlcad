@@ -76,25 +76,27 @@ main(int argc, char **argv)
 	    gweight = 0.66;
 	    bweight = 0.08;
 	    red = green = blue = 1;
-	} else switch (argv[1][1]) {
-	    case 'R':
-		red++;
-		if (argv[1][2] != '\0')
-		    rweight = atof(&argv[1][2]);
-		break;
-	    case 'G':
-		green++;
-		if (argv[1][2] != '\0')
-		    gweight = atof(&argv[1][2]);
-		break;
-	    case 'B':
-		blue++;
-		if (argv[1][2] != '\0')
-		    bweight = atof(&argv[1][2]);
-		break;
-	    default:
-		fprintf(stderr, "pix-bw: bad flag \"%s\"\n", argv[1]);
-		bu_exit(1, "%s", usage);
+	} else {
+	    switch (argv[1][1]) {
+		case 'R':
+		    red++;
+		    if (argv[1][2] != '\0')
+			rweight = atof(&argv[1][2]);
+		    break;
+		case 'G':
+		    green++;
+		    if (argv[1][2] != '\0')
+			gweight = atof(&argv[1][2]);
+		    break;
+		case 'B':
+		    blue++;
+		    if (argv[1][2] != '\0')
+			bweight = atof(&argv[1][2]);
+		    break;
+		default:
+		    fprintf(stderr, "pix-bw: bad flag \"%s\"\n", argv[1]);
+		    bu_exit(1, "%s", usage);
+	    }
 	}
 	argc--;
 	argv++;

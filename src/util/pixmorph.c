@@ -304,13 +304,13 @@ lines_read(FILE *fp, long int numlines,
 	/* Now, the other useful information. */
 
 	lines->s[MIDDLE].x_1 = DBLEND(lines->s[FIRST].x_1,
-				     lines->s[LAST].x_1, warpfrac);
+				      lines->s[LAST].x_1, warpfrac);
 	lines->s[MIDDLE].y_1 = DBLEND(lines->s[FIRST].y_1,
-				     lines->s[LAST].y_1, warpfrac);
+				      lines->s[LAST].y_1, warpfrac);
 	lines->s[MIDDLE].x_2 = DBLEND(lines->s[FIRST].x_2,
-				     lines->s[LAST].x_2, warpfrac);
+				      lines->s[LAST].x_2, warpfrac);
 	lines->s[MIDDLE].y_2 = DBLEND(lines->s[FIRST].y_2,
-				     lines->s[LAST].y_2, warpfrac);
+				      lines->s[LAST].y_2, warpfrac);
 
 	for (j = 0; j < 3; j++) {
 	    lines->s[j].xdelta = lines->s[j].x_2 - lines->s[j].x_1;

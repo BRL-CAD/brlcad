@@ -112,7 +112,7 @@ dunnopen(void)
     /* open the camera device */
 
 #ifdef HAVE_TERMIOS_H
-	if ((fd = open("/dev/camera", O_RDWR | O_NONBLOCK)) < 0)
+    if ((fd = open("/dev/camera", O_RDWR | O_NONBLOCK)) < 0)
 #else
 	if ((fd = open("/dev/camera", O_RDWR | O_NDELAY)) < 0)
 #endif
@@ -120,7 +120,7 @@ dunnopen(void)
 	    bu_exit(10, "\007dunnopen: can't open /dev/camera\n");
 	}
 #ifdef HAVE_TERMIOS_H
-	if (tcgetattr(fd, &tty) < 0)
+    if (tcgetattr(fd, &tty) < 0)
 #else
 	if (ioctl(fd, TCGETA, &tty) < 0)
 #endif

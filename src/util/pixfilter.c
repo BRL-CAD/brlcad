@@ -119,8 +119,8 @@ get_args(int argc, char **argv)
 	file_name = argv[bu_optind];
 	if ((infp = fopen(file_name, "r")) == NULL) {
 	    fprintf(stderr,
-			  "pixfilter: cannot open \"%s\" for reading\n",
-			  file_name);
+		    "pixfilter: cannot open \"%s\" for reading\n",
+		    file_name);
 	    return 0;
 	}
     }
@@ -275,7 +275,7 @@ dousage(void)
     int i;
 
     fputs(usage, stderr);
-    fputs("Possible arguments for -f (type):\n",stderr);
+    fputs("Possible arguments for -f (type):\n", stderr);
     i = 0;
     while (kernel[i].name != NULL) {
 	fprintf(stderr, "  %-10s%s\n", kernel[i].uname, kernel[i].name);

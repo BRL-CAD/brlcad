@@ -153,8 +153,8 @@ get_args(int argc, char **argv)
 	    if ((input = fopen(in_name, "r")) == NULL) {
 		perror(in_name);
 		fprintf(stderr,
-			      "pixcut: cannot open \"%s\" for reading\n",
-			      in_name);
+			"pixcut: cannot open \"%s\" for reading\n",
+			in_name);
 		return 0;
 	    }
 	    isfile = 1;
@@ -215,12 +215,12 @@ main(int argc, char **argv)
 	fprintf(stderr, "pixcut: Copyright (C) 1992 Paladin Software\n");
 	fprintf(stderr, "pixcut: All rights reserved.\npixcut:\n");
 	fprintf(stderr, "pixcut: original image %ldx%ld\n",
-		      org_width, org_height);
+		org_width, org_height);
 	fprintf(stderr, "pixcut: new image %ldx%ld\n",
-		      new_width, new_height);
+		new_width, new_height);
 	fprintf(stderr, "pixcut: offset %ldx%ld\n", base_x, base_y);
 	fprintf(stderr, "pixcut: background color %d/%d/%d\n",
-		      background[0], background[1], background[2]);
+		background[0], background[1], background[2]);
 
 	if (base_x < 0 || base_y < 0 ||
 	    base_x+new_width >org_width ||

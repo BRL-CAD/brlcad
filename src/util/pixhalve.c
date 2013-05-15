@@ -99,8 +99,8 @@ get_args(int argc, char **argv)
 	if ((infp = fopen(file_name, "r")) == NULL) {
 	    perror(file_name);
 	    fprintf(stderr,
-			  "pixhalve: cannot open \"%s\" for reading\n",
-			  file_name);
+		    "pixhalve: cannot open \"%s\" for reading\n",
+		    file_name);
 	    return 0;
 	}
 	fileinput++;
@@ -123,9 +123,9 @@ get_args(int argc, char **argv)
  */
 static void
 separate(int *rop, int *gop, int *bop, unsigned char *cp, long int num)
-    /* Y */
-    /* U */
-    /* V */
+/* Y */
+/* U */
+/* V */
 
 
 {

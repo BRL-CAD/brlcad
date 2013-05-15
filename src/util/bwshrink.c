@@ -105,7 +105,7 @@ int method = METH_BOXCAR;
 void usage(void)
 {
     (void) fprintf(stderr,
-"Usage: %s [-u] [-h] [-w width] [-n scanlines] [-s squaresize]\n\
+		   "Usage: %s [-u] [-h] [-w width] [-n scanlines] [-s squaresize]\n\
 		[-f shrink_factor] [bwfile] > bwfile\n", progname);
     bu_exit (1, NULL);
 }
@@ -127,22 +127,33 @@ void parse_args(int ac, char **av)
     /* get all the option flags from the command line */
     while ((c=bu_getopt(ac, av, options)) != -1)
 	switch (c) {
-	    case 'f'	: if ((c = atoi(bu_optarg)) > 1)
-		factor = c;
+	    case 'f':
+		if ((c = atoi(bu_optarg)) > 1)
+		    factor = c;
 		break;
-	    case 'h'	: width = height = 1024; break;
-	    case 'n'	: if ((c=atoi(bu_optarg)) > 0)
-		height = c;
+	    case 'h':
+		width = height = 1024;
 		break;
-	    case 'w'	: if ((c=atoi(bu_optarg)) > 0)
-		width = c;
+	    case 'n':
+		if ((c=atoi(bu_optarg)) > 0)
+		    height = c;
 		break;
-	    case 's'	: if ((c=atoi(bu_optarg)) > 0)
-		height = width = c;
+	    case 'w':
+		if ((c=atoi(bu_optarg)) > 0)
+		    width = c;
 		break;
-	    case 'u'	: method = METH_UNDERSAMPLE; break;
-	    case '?'	:
-	    default		: usage(); break;
+	    case 's':
+		if ((c=atoi(bu_optarg)) > 0)
+		    height = width = c;
+		break;
+	    case 'u'
+		: method = METH_UNDERSAMPLE;
+		break;
+
+	    case '?':
+	    default:
+		usage();
+		break;
 	}
 
     if (bu_optind >= ac) {
@@ -156,7 +167,7 @@ void parse_args(int ac, char **av)
 	    bu_exit (-1, NULL);
 	} else
 	    filename = av[bu_optind];
-	bu_free(ifname,"ifname alloc from bu_realpath");
+	bu_free(ifname, "ifname alloc from bu_realpath");
     }
     if (bu_optind+1 < ac)
 	fprintf(stderr, "%s: Excess arguments ignored\n", progname);
@@ -186,7 +197,7 @@ int main(int ac, char **av)
     size = width * height;
     if ((buffer = (unsigned char *)malloc(width*height)) == (unsigned char *)NULL) {
 	fprintf(stderr, "%s: cannot allocate input buffer\n",
-		      progname);
+		progname);
 	bu_free(buffer, "buffer alloc from malloc");
 	bu_exit (-1, NULL);
     }
@@ -204,10 +215,14 @@ int main(int ac, char **av)
     }
 
     switch (method) {
-	case METH_BOXCAR : shrink_image(width, height, buffer, factor); break;
-	case METH_UNDERSAMPLE : usample_image(width, height, buffer, factor);
+	case METH_BOXCAR:
+	    shrink_image(width, height, buffer, factor);
 	    break;
-	default: return -1;
+	case METH_UNDERSAMPLE:
+	    usample_image(width, height, buffer, factor);
+	    break;
+	default:
+	    return -1;
     }
 
     for (t=0; t < size && (c=write(1, (char *)&buffer[t], size-t)) >= 0;

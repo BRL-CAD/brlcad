@@ -81,15 +81,15 @@ get_args(int argc, char **argv)
 
 	if ((fldonefp = fopen(argv[bu_optind], "r")) == NULL) {
 	    fprintf(stderr,
-			  "pixfields: cannot open \"%s\" for reading\n",
-			  argv[bu_optind]);
+		    "pixfields: cannot open \"%s\" for reading\n",
+		    argv[bu_optind]);
 	    return 0;
 	}
 
 	if ((fldtwofp = fopen(argv[++bu_optind], "r")) == NULL) {
 	    fprintf(stderr,
-			  "pixfields: cannot open \"%s\" for reading\n",
-			  argv[bu_optind]);
+		    "pixfields: cannot open \"%s\" for reading\n",
+		    argv[bu_optind]);
 	    return 0;
 	}
 

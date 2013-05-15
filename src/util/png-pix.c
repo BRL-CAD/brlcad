@@ -81,8 +81,8 @@ main(int argc, char **argv)
 	if ((fp_in = fopen(argv[bu_optind], "rb")) == NULL) {
 	    perror(argv[bu_optind]);
 	    fprintf(stderr,
-			  "png-pix: cannot open \"%s\" for reading\n",
-			  argv[bu_optind]);
+		    "png-pix: cannot open \"%s\" for reading\n",
+		    argv[bu_optind]);
 	    return 1;
 	}
     }

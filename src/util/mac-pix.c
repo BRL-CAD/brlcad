@@ -169,8 +169,8 @@ get_args(int argc, char **argv)
 	file_name = argv[bu_optind];
 	if ((infp = fopen(file_name, "r")) == NULL) {
 	    fprintf(stderr,
-			  "mac-pix: cannot open \"%s\" for reading\n",
-			  file_name);
+		    "mac-pix: cannot open \"%s\" for reading\n",
+		    file_name);
 	    return 0;
 	}
     }

@@ -54,7 +54,7 @@ UCHAR *read_image(int scanlen, int Width, int Height, unsigned char *buffer)
     if (!buffer &&
 	(buffer=(UCHAR *)malloc(scanlen * Height)) == (UCHAR *)NULL) {
 	fprintf(stderr, "%s: cannot allocate input buffer\n",
-		      progname);
+		progname);
 	bu_exit (-1, NULL);
     }
 
@@ -173,7 +173,7 @@ int method = METH_BOXCAR;
 void usage(void)
 {
     (void) fprintf(stderr,
-"Usage: %s [-u] [-h] [-w width] [-n scanlines] [-s squaresize]\n\
+		   "Usage: %s [-u] [-h] [-w width] [-n scanlines] [-s squaresize]\n\
 		 [-f shrink_factor] [pixfile] > pixfile\n", progname);
     bu_exit (1, NULL);
 }
@@ -195,22 +195,32 @@ void parse_args(int ac, char **av)
     /* get all the option flags from the command line */
     while ((c=bu_getopt(ac, av, options)) != -1)
 	switch (c) {
-	    case 'f'	: if ((c = atoi(bu_optarg)) > 1)
-		factor = c;
+	    case 'f':
+		if ((c = atoi(bu_optarg)) > 1)
+		    factor = c;
 		break;
-	    case 'h'	: width = height = 1024; break;
-	    case 'n'	: if ((c=atoi(bu_optarg)) > 0)
-		height = c;
+	    case 'h':
+		width = height = 1024;
 		break;
-	    case 'w'	: if ((c=atoi(bu_optarg)) > 0)
-		width = c;
+	    case 'n':
+		if ((c=atoi(bu_optarg)) > 0)
+		    height = c;
 		break;
-	    case 's'	: if ((c=atoi(bu_optarg)) > 0)
-		height = width = c;
+	    case 'w':
+		if ((c=atoi(bu_optarg)) > 0)
+		    width = c;
 		break;
-	    case 'u'	: method = METH_UNDERSAMPLE; break;
-	    case '?'	:
-	    default		: usage(); break;
+	    case 's':
+		if ((c=atoi(bu_optarg)) > 0)
+		    height = width = c;
+		break;
+	    case 'u':
+		method = METH_UNDERSAMPLE;
+		break;
+	    case '?':
+	    default:
+		usage();
+		break;
 	}
 
     if (bu_optind >= ac) {
@@ -221,11 +231,11 @@ void parse_args(int ac, char **av)
 	char *ifname = bu_realpath(av[bu_optind], NULL);
 	if (freopen(ifname, "r", stdin) == (FILE *)NULL) {
 	    perror(ifname);
-	    bu_free(ifname,"ifname alloc from bu_realpath");
+	    bu_free(ifname, "ifname alloc from bu_realpath");
 	    bu_exit (-1, NULL);
 	} else
 	    filename = av[bu_optind];
-	bu_free(ifname,"ifname alloc from bu_realpath");
+	bu_free(ifname, "ifname alloc from bu_realpath");
     }
     if (bu_optind+1 < ac)
 	fprintf(stderr, "%s: Excess arguments ignored\n", progname);

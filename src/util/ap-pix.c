@@ -33,7 +33,7 @@
 
 
 static void
-usage(const char *argv0){
+usage(const char *argv0) {
     bu_exit(1, "Usage: %s [-v] file.ap > file.pix (3456 x ?)\n", argv0);
 }
 
@@ -60,10 +60,10 @@ main(int argc, char **argv)
     const char *argv0 = argv[0];
     int verbose = 0;
 
-    if (argc > 1 ){
-	if ( BU_STR_EQUAL(argv[1], "-h") ||  BU_STR_EQUAL(argv[1], "-?") )
+    if (argc > 1) {
+	if (BU_STR_EQUAL(argv[1], "-h") ||  BU_STR_EQUAL(argv[1], "-?"))
 	    usage(argv0);
-	if ( BU_STR_EQUAL(argv[1], "-v") ) {
+	if (BU_STR_EQUAL(argv[1], "-v")) {
 	    verbose++;
 	    argc--;
 	    argv++;

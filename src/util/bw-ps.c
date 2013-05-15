@@ -115,8 +115,8 @@ get_args(int argc, char **argv)
 	file_name = argv[bu_optind];
 	if ((infp = fopen(file_name, "r")) == NULL) {
 	    fprintf(stderr,
-			  "bw-ps: cannot open \"%s\" for reading\n",
-			  file_name);
+		    "bw-ps: cannot open \"%s\" for reading\n",
+		    file_name);
 	    return 0;
 	}
 	/*fileinput++;*/
@@ -188,7 +188,7 @@ void
 prolog(FILE *fp, char *name, int w, int h)
 
 
-    /* in points */
+/* in points */
 {
     time_t ltime;
 

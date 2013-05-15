@@ -126,8 +126,8 @@ get_args(int argc, char **argv)
     else if ((f1 = fopen(f1_name, "r")) == NULL) {
 	perror(f1_name);
 	fprintf(stderr,
-		      "pixmerge: cannot open \"%s\" for reading\n",
-		      f1_name);
+		"pixmerge: cannot open \"%s\" for reading\n",
+		f1_name);
 	return 0;
     }
 
@@ -137,8 +137,8 @@ get_args(int argc, char **argv)
     else if ((f2 = fopen(f2_name, "r")) == NULL) {
 	perror(f2_name);
 	fprintf(stderr,
-		      "pixmerge: cannot open \"%s\" for reading\n",
-		      f2_name);
+		"pixmerge: cannot open \"%s\" for reading\n",
+		f2_name);
 	return 0;
     }
 

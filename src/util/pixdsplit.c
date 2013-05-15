@@ -124,15 +124,15 @@ main (int argc, char *argv[])
 	    inf_name = bu_realpath(argv[bu_optind++], NULL);
 	    if(inf_name == NULL || *inf_name == '\0') {
 		bu_log("Bad file name\n");
-		bu_free(inf_name,"realpath alloc from bu_realpath");
+		bu_free(inf_name, "realpath alloc from bu_realpath");
 		return 1;
 	    }
 	    if ((infd = open(inf_name, O_RDONLY)) == -1) {
 		bu_log("Cannot open file '%s'\n", inf_name);
-		bu_free(inf_name,"realpath alloc from bu_realpath");
+		bu_free(inf_name, "realpath alloc from bu_realpath");
 		return 1;
 	    }
-	    bu_free(inf_name,"realpath alloc from bu_realpath");
+	    bu_free(inf_name, "realpath alloc from bu_realpath");
 	    break;
 	default:
 	    print_usage();
