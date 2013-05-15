@@ -50,7 +50,7 @@ main(int argc, char *argv[])
     bu_optind = 1;
 
     /* Get past command line options. */
-    while ((c = bu_getopt(argc, argv, "bno:m:t:u:")) != -1) {
+    while ((c = bu_getopt(argc, argv, "bno:m:t:u:h?")) != -1) {
 	switch (c) {
 	    case 'b':
 	    case 'n':
