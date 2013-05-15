@@ -67,10 +67,12 @@ libged_nil_la_SOURCES = \
 	dup.c \
 	eac.c \
 	echo.c \
+	edarb.c \
 	edbot.c \
 	edcodes.c \
 	edcomb.c \
 	edpipe.c \
+	edit_metaball.c \
 	edit.c \
 	editit.c \
 	edmater.c \
@@ -160,6 +162,7 @@ libged_nil_la_SOURCES = \
 	pmat.c \
 	pmodel2view.c \
 	png.c \
+	polybinout.c \
 	polyclip.cpp \
 	pov.c \
 	prcolor.c \
@@ -168,6 +171,7 @@ libged_nil_la_SOURCES = \
 	ps.c \
 	protate.c \
 	pscale.c \
+	pset.c \
 	ptranslate.c \
 	push.c \
 	put.c \
