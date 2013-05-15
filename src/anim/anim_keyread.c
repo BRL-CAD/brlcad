@@ -40,7 +40,7 @@
 #include "common.h"
 
 #include <math.h>
-#include <bio.h>
+#include "bio.h"
 
 #include "bu.h"
 #include "bn.h"
