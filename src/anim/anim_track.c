@@ -123,7 +123,7 @@ mat_t m_axes, m_rev_axes;	/* matrices to and from alternate axes */
 double first_tracklen;
 
 static void
-usage(const char *argv0){
+usage(const char *argv0) {
     bu_log("Usage: %s [options] wheelfile < in.table > out.script\n", argv0);
     bu_log("\n\tOptions:\n");
     bu_log("\t  [-w parent/basename] to specify wheels to animate\n");
@@ -144,6 +144,7 @@ usage(const char *argv0){
     bu_log("\t  [-mp command] to specify a pad animation matrix\n");
     bu_log("\t  [-mw command] to specify a wheel animation matrix\n");
 }
+
 
 int
 get_args(int argc, char **argv)
@@ -492,12 +493,12 @@ main(int argc, char *argv[])
     MAT_IDN(m_axes);
     MAT_IDN(m_rev_axes);
 
-    if (argc == 1 && isatty(fileno(stdin)) && isatty(fileno(stdout))){
+    if (argc == 1 && isatty(fileno(stdin)) && isatty(fileno(stdout))) {
 	usage(argv0);
     	return 0;
     }
 
-    if (!get_args(argc, argv)){
+    if (!get_args(argc, argv)) {
 	usage(argv0);
 	return 0;
     }
