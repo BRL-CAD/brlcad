@@ -38,6 +38,10 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* [hn]to[hn]* conversion functions were usurped by windows 8 so we
+  need to either wrap them or undeprecate our xdr API or see if a
+  simple config header fix might work (ideal)
+
 * The sph wireframe drawing routine doesn't seem to like drawing very
   small spheres far from the origin:
 
