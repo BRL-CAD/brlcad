@@ -495,7 +495,7 @@ main(int argc, char *argv[])
 
     if (argc == 1 && isatty(fileno(stdin)) && isatty(fileno(stdout))) {
 	usage(argv0);
-    	return 0;
+	return 0;
     }
 
     if (!get_args(argc, argv)) {
