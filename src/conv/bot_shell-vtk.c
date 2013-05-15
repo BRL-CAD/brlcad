@@ -77,8 +77,7 @@ static long max_faces = 0;
 static long num_faces = 0;
 #define FACES_BLOCK	512
 
-static char *usage = "Usage:\n\
-	%s [-m] [-n] [-d debug_level] [-g cell_size] -o vtk_polydata_output_file database.g object1 object2...\n";
+static char *usage = "Usage: %s [-m] [-n] [-d debug_level] [-g cell_size] -o vtk_polydata_output_file database.g object1 object2...\n";
 
 /* routine to replace default overlap handler.
  * overlaps are irrelevant to this application
@@ -396,7 +395,7 @@ main(int argc, char *argv[])
     /* Get command line arguments. */
     memset(&ap, 0, sizeof(struct application));
     ap.a_onehit = 1;
-    while ((c=bu_getopt(argc, argv, "nmd:g:o:")) != -1) {
+    while ((c=bu_getopt(argc, argv, "nmd:g:o:h?")) != -1) {
 	switch (c) {
 	    case 'd':	/* debug level */
 		debug = atoi(bu_optarg);
@@ -416,6 +415,8 @@ main(int argc, char *argv[])
 	    case 'n':	/* include normals in the VTK data */
 		use_normals = 1;
 		break;
+	    default:
+		bu_exit(1, usage, argv[0]);
 	}
     }
 
