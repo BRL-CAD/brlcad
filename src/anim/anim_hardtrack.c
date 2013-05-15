@@ -111,7 +111,9 @@ int get_circumf;	/* flag: just return circumference of track */
 vect_t centroid, rcentroid;	/* alternate centroid and its reverse */
 mat_t m_axes, m_rev_axes;	/* matrices to and from alternate axes */
 
-void usage(void){
+static void
+usage(void)
+{
     fprintf(stderr,"Usage: anim_hardtrack [-l num_linkslinkname] [-w wheelname] [options] wheelfile in.table out.script\n");
 }
 

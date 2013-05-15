@@ -58,7 +58,9 @@ int debug = 	 0;
 /* intentionally double for scan */
 double inv0, inv1;
 
-void usage(void){
+static void
+usage(void)
+{
     fprintf(stderr,"Usage: anim_time [-s#] [-e#] [-d] < in.table\n");
 }
 

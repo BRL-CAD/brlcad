@@ -65,7 +65,9 @@ double fcenter[3], fypr[3], rcenter[3], rypr[3], acenter[3], aypr[3];
 int cmd_fcen, cmd_fypr, cmd_rcen, cmd_rypr, cmd_acen, cmd_aypr;
 int output_mode, read_time, print_time;
 
-void usage(void){
+static void
+usage(void)
+{
     fprintf(stderr,"Usage: anim_cascade [-s] [-o(f|r|a)] [-(f|r|a)(c|y) # # #] input.table output.table\n");
 }
 

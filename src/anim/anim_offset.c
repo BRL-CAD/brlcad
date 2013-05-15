@@ -47,7 +47,9 @@ int full_print = 0;
 /* intentionally double for scan */
 double offset[3];
 
-void usage(void){
+static void
+usage(void)
+{
     fprintf(stderr,"Usage: anim_offset -o # # # [-r] in.table out.table\n");
 }
 

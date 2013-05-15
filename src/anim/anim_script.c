@@ -55,7 +55,9 @@ char mat_cmd[10];   /* default is lmul */
 double centroid[3];
 double viewsize;
 
-void usage(void){
+static void
+usage(void)
+{
     fprintf(stderr,"Usage: anim_script [-v #] [-r|t|s] [-q][-p] [-a|b # # #] [-c|d # # #] [-f #] [-m cmd] [objectname] < in.table > out.script\n");
 }
 

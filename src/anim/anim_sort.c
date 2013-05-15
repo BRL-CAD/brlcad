@@ -44,7 +44,9 @@
 int suppressed;		/* flag: suppress printing of 'clean;' commands */
 int incremental;	/* flag: order for incremental time resolution */
 
-void usage(void){
+static void
+usage(void)
+{
     fprintf(stderr,"Usage: anim_sort [-ic] < mixed.script > ordered.script\n");
 }
 
