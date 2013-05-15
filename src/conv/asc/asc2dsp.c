@@ -77,7 +77,7 @@ output_netshort(char *buf, unsigned *nchars, FILE *fpo)
     /* note strtoul should ignore leading zeroes: verified by testing with '011' input */
     val = strtoul(buf, 0, 10);
     if (val > UINT16_MAX) {
-	bu_log("asc2dsp: hostshort (%lu) > UINT16_MAX (%lu)\n", val, UINT16_MAX);
+	bu_log("asc2dsp: hostshort (%lu) > UINT16_MAX (%d)\n", val, UINT16_MAX);
 	bu_exit(1, "asc2dsp: FATAL");
     }
 
