@@ -35,6 +35,8 @@
 
 #include "./ged_private.h"
 
+/* defined in draw_calc.cpp */
+extern fastf_t brep_est_avg_curve_len(struct rt_brep_internal *bi);
 
 /* declare our callbacks used by _ged_drawtrees() */
 static int drawtrees_depth = 0;
@@ -686,6 +688,17 @@ solid_point_spacing_for_view(
 		break;
 	    case DB5_MINORTYPE_BRLCAD_BOT:
 		point_spacing = view_avg_sample_spacing(gvp);
+		break;
+	    case DB5_MINORTYPE_BRLCAD_BREP: {
+		struct rt_brep_internal *bi;
+
+		RT_CK_DB_INTERNAL(ip);
+		bi = (struct rt_brep_internal *)ip->idb_ptr;
+		RT_BREP_CK_MAGIC(bi);
+
+		point_spacing = solid_point_spacing(gvp,
+			brep_est_avg_curve_len(bi) * (2.0 / M_PI) * 2.0);
+	    }
 		break;
 	    default:
 		point_spacing = solid_point_spacing(gvp, sp->s_size);
