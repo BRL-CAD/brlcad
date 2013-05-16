@@ -63,6 +63,7 @@ libged_nil_la_SOURCES = \
 	dg_obj.c \
 	dir2ae.c \
 	draw.c \
+	draw_calc.cpp \
 	dump.c \
 	dup.c \
 	eac.c \
