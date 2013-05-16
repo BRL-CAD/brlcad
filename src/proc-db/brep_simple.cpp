@@ -428,6 +428,11 @@ namespace {
 
 }
 
+void
+printusage(void){
+	printf("Usage: brep_simple (takes no arguments\n");
+}
+
 int
 main(int argc, char** argv)
 {
@@ -437,8 +442,14 @@ main(int argc, char** argv)
     const char* id_name = "B-Rep Example";
     const char* geom_name = "cube.s";
 
-    if (argc > 1)
-	bu_log("%s: Not expecting any arguments.\n", argv[0]);
+    if ( BU_STR_EQUAL(argv[1],"-h") || BU_STR_EQUAL(argv[1],"-?")){
+    	printusage();
+    	return 0;
+    }
+    if (argc >= 1){
+    	printusage();
+    	printf("       Program continues running (will create file brep_simple.g):\n");
+    }
 
     ON::Begin();
 
