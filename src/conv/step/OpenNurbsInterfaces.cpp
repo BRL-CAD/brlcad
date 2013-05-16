@@ -1936,6 +1936,11 @@ Circle::LoadONBrep(ON_Brep *brep)
     }
 
     double theta = s - t;
+
+    if (VNEAR_EQUAL(startpt, endpt, BN_TOL_DIST)) {
+	theta = 2.0 * ON_PI;
+    }
+
     int narcs = 1;
     if (theta < ON_PI / 2.0) {
 	narcs = 1;
@@ -2135,6 +2140,10 @@ Ellipse::LoadONBrep(ON_Brep *brep)
     }
 
     double theta = s - t;
+
+    if (VNEAR_EQUAL(startpt, endpt, BN_TOL_DIST)) {
+	theta = 2.0 * ON_PI;
+    }
 
     int narcs = 1;
     if (theta < ON_PI / 2.0) {
