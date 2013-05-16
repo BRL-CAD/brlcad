@@ -94,7 +94,7 @@ main(int argc, char **argv)
 
 #define rand_num(p)	(BN_UNIF_DOUBLE(p)+0.5)
 
-    if (argc > 0){
+    if (argc > 1){
 	bu_exit(1, "Usage: %s\n", argv[0]);
     }
 
