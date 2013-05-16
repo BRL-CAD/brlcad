@@ -112,6 +112,9 @@ struct _ged_trace_data {
 };
 
 
+/* defined in facedef.c */
+extern int edarb_facedef(void *data, int argc, const char *argv[]);
+
 /* defined in globals.c */
 extern struct solid _FreeSolid;
 

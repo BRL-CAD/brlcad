@@ -23,29 +23,12 @@
 
 #include "common.h"
 
-#if 1
 #include <stdlib.h>
 #include <ctype.h>
 #include <string.h>
 
 #include "cmd.h"
-#include "rtgeom.h"
-#include "ged.h"
-#include "db.h"
-#else
-#include <stdlib.h>
-#include <stdio.h>
-#include <signal.h>
-#include <math.h>
-#include <string.h>
-
-#include "bio.h"
-#include "bu.h"
-#include "vmath.h"
-#include "rtgeom.h"
-#include "ged.h"
-#include "db.h"
-#endif
+#include "ged_private.h"
 
 
 /* EXT4TO6():	extrudes face pt1 pt2 pt3 of an ARB4 "distance"
@@ -1032,6 +1015,7 @@ ged_edarb(struct ged *gedp, int argc, const char *argv[])
     static struct bu_cmdtab arb_cmds[] = {
 	{"edgedir",		edarb_edgedir},
 	{"extrude",		edarb_extrude},
+	{"facedef",		edarb_facedef},
 	{"mirface",		edarb_mirface},
 	{"permute",		edarb_permute},
 	{(char *)0,		(int (*)())0 }

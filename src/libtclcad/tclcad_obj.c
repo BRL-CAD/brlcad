@@ -996,7 +996,7 @@ static struct to_cmdtab to_cmds[] = {
     {"e",	(char *)0, TO_UNLIMITED, to_autoview_func, ged_draw},
     {"eac",	(char *)0, TO_UNLIMITED, to_autoview_func, ged_eac},
     {"echo",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_echo},
-    {"edarb",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_edarb},
+    {"edarb",	(char *)0, TO_UNLIMITED, to_more_args_func, ged_edarb},
     {"edcodes",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_edcodes},
     {"edcolor",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_edcolor},
     {"edcomb",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_edcomb},
