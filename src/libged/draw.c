@@ -647,6 +647,56 @@ solid_point_spacing(struct ged_view *gvp, fastf_t solid_width)
     return DIST_PT_PT(p1, p2);
 }
 
+/* Choose a point spacing for the given solid (sp, ip) s.t. solid
+ * curves plotted with that spacing will look smooth when rasterized
+ * in the given view (gvp).
+ *
+ * TODO: view_avg_sample_spacing() might be sufficient if we can
+ * develop a general decimation routine for the resulting plots, in
+ * which case, this function could be removed.
+ */
+static fastf_t
+solid_point_spacing_for_view(
+	struct solid *sp,
+	struct rt_db_internal *ip,
+	struct ged_view *gvp)
+{
+    fastf_t point_spacing = 0.0;
+
+    if (ip->idb_major_type == DB5_MAJORTYPE_BRLCAD) {
+	switch (ip->idb_minor_type) {
+	    case DB5_MINORTYPE_BRLCAD_TGC: {
+		struct rt_tgc_internal *tgc;
+		fastf_t avg_diameter;
+		fastf_t tgc_mag_a, tgc_mag_b, tgc_mag_c, tgc_mag_d;
+
+		RT_CK_DB_INTERNAL(ip);
+		tgc = (struct rt_tgc_internal *)ip->idb_ptr;
+		RT_TGC_CK_MAGIC(tgc);
+
+		tgc_mag_a = MAGNITUDE(tgc->a);
+		tgc_mag_b = MAGNITUDE(tgc->b);
+		tgc_mag_c = MAGNITUDE(tgc->c);
+		tgc_mag_d = MAGNITUDE(tgc->d);
+
+		avg_diameter = tgc_mag_a + tgc_mag_b + tgc_mag_c + tgc_mag_d;
+		avg_diameter /= 2.0;
+		point_spacing = solid_point_spacing(gvp, avg_diameter);
+	    }
+		break;
+	    case DB5_MINORTYPE_BRLCAD_BOT:
+		point_spacing = view_avg_sample_spacing(gvp);
+		break;
+	    default:
+		point_spacing = solid_point_spacing(gvp, sp->s_size);
+	}
+    } else {
+	point_spacing = solid_point_spacing(gvp, sp->s_size);
+    }
+
+    return point_spacing;
+}
+
 static fastf_t
 draw_solid_wireframe(struct ged *gedp, struct solid *sp)
 {
@@ -674,37 +724,7 @@ draw_solid_wireframe(struct ged *gedp, struct solid *sp)
 	info.vhead = &vhead;
 	info.tol = tsp->ts_tol;
 
-	if (ip->idb_major_type == DB5_MAJORTYPE_BRLCAD) {
-	    switch (ip->idb_minor_type) {
-		case DB5_MINORTYPE_BRLCAD_TGC: {
-		    struct rt_tgc_internal *tgc;
-		    fastf_t avg_diameter;
-		    fastf_t tgc_mag_a, tgc_mag_b, tgc_mag_c, tgc_mag_d;
-
-		    RT_CK_DB_INTERNAL(ip);
-		    tgc = (struct rt_tgc_internal *)ip->idb_ptr;
-		    RT_TGC_CK_MAGIC(tgc);
-
-		    tgc_mag_a = MAGNITUDE(tgc->a);
-		    tgc_mag_b = MAGNITUDE(tgc->b);
-		    tgc_mag_c = MAGNITUDE(tgc->c);
-		    tgc_mag_d = MAGNITUDE(tgc->d);
-
-		    avg_diameter = tgc_mag_a + tgc_mag_b + tgc_mag_c + tgc_mag_d;
-		    avg_diameter /= 2.0;
-		    info.point_spacing = solid_point_spacing(gvp, avg_diameter);
-		}
-		    break;
-		case DB5_MINORTYPE_BRLCAD_BOT:
-		    info.point_spacing = view_avg_sample_spacing(gvp);
-		    break;
-		default:
-		    info.point_spacing = solid_point_spacing(gvp, sp->s_size);
-	    }
-	} else {
-	    info.point_spacing = solid_point_spacing(gvp, sp->s_size);
-	}
-
+	info.point_spacing = solid_point_spacing_for_view(sp, ip, gvp);
 	info.curve_spacing = sp->s_size / 2.0;
 
 	info.point_spacing /= gvp->gv_point_scale;
