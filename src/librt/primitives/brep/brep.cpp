@@ -3315,34 +3315,52 @@ rt_brep_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info
 	    RT_ADD_VLIST(info->vhead, pt1, BN_VLIST_LINE_MOVE);
 	    RT_ADD_VLIST(info->vhead, pt2, BN_VLIST_LINE_DRAW);
 	} else {
-	    ON_BoundingBox bbox;
-	    double bbox_len = 0.0;
-
-	    if (crv->GetTightBoundingBox(bbox)) {
-		bbox_len = bbox.Diagonal().Length();
-	    } else {
-		bu_log("invalid curve bounding box\n");
-	    }
-
-	    // estimate curve length from curve bbox diagonal length
-	    double est_curve_len = bbox_len * .8;
-	    double num_steps = est_curve_len / info->point_spacing;
-	    double step = 1.0 / num_steps;
+	    point_t endpt;
 	    ON_Interval dom = crv->Domain();
-	    ON_3dPoint p;
 
-	    p = crv->PointAt(dom.ParameterAt(0.0));
+	    ON_3dPoint p = crv->PointAt(dom.ParameterAt(1.0));
+	    VMOVE(endpt, p);
+
+	    int min_linear_seg_count = crv->Degree() + 1;
+	    double max_domain_step = 1.0 / min_linear_seg_count;
+
+	    // specifiy first tentative segment t1 to t2
+	    double t2 = max_domain_step;
+	    double t1 = 0.0;
+	    p = crv->PointAt(dom.ParameterAt(t1));
 	    VMOVE(pt1, p);
 	    RT_ADD_VLIST(info->vhead, pt1, BN_VLIST_LINE_MOVE);
 
-	    for (double domainval = step; domainval < 1.0; domainval += step) {
-		p = crv->PointAt(dom.ParameterAt(domainval));
-		VMOVE(pt1, p);
-		RT_ADD_VLIST(info->vhead, pt1, BN_VLIST_LINE_DRAW);
+	    // add segments until the minimum segment count is
+	    // acheived and the distance between the end of the last
+	    // segment and the endpoint is within point spacing
+	    for (int nsegs = 0; (nsegs < min_linear_seg_count) ||
+		(DIST_PT_PT(pt1, endpt) > info->point_spacing); ++nsegs)
+	    {
+		p = crv->PointAt(dom.ParameterAt(t2));
+		VMOVE(pt2, p);
+
+		// bring t2 increasingly closer to t1 until target
+		// point spacing is acheived
+		double step = t2 - t1;
+		while (DIST_PT_PT(pt1, pt2) > info->point_spacing) {
+		    step /= 2.0;
+		    t2 = t1 + step;
+		    p = crv->PointAt(dom.ParameterAt(t2));
+		    VMOVE(pt2, p);
+		}
+		RT_ADD_VLIST(info->vhead, pt2, BN_VLIST_LINE_DRAW);
+
+		// advance to next segment
+		t1 = t2;
+		VMOVE(pt1, pt2);
+
+		t2 += max_domain_step;
+		if (t2 > 1.0) {
+		    t2 = 1.0;
+		}
 	    }
-	    p = crv->PointAt(dom.ParameterAt(1.0));
-	    VMOVE(pt1, p);
-	    RT_ADD_VLIST(info->vhead, pt1, BN_VLIST_LINE_DRAW);
+	    RT_ADD_VLIST(info->vhead, endpt, BN_VLIST_LINE_DRAW);
 	}
     }
 
