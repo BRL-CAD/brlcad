@@ -81,6 +81,7 @@ libged_nil_la_SOURCES = \
 	expand.c \
 	eye.c \
 	eye_pos.c \
+	facedef.c \
 	facetize.c \
 	fb2pix.c \
 	find.c \
