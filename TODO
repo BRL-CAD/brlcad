@@ -18,7 +18,9 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
-* TBD
+* run clutter + g2asc + asc2g + g2asc ... observe bad halfspace.  this
+  is possibly related to an earlier change, needs review before
+  release.
 
 
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
