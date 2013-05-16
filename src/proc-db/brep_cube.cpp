@@ -452,6 +452,7 @@ main(int argc, char** argv)
     bu_log("Writing a twisted cube b-rep...\n");
     outfp = wdb_fopen("brep_cube.g");
     mk_id(outfp, id_name);
+
     brep = MakeTwistedCube(error_log);
     mk_brep(outfp, geom_name, brep);
 
