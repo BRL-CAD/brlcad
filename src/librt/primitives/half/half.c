@@ -61,8 +61,8 @@ struct half_specific {
 #define HALF_NULL ((struct half_specific *)0)
 
 const struct bu_structparse rt_hlf_parse[] = {
-    { "%f", 3, "N", bu_offsetofarray(struct rt_half_internal, eqn, plane_t, X), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    { "%f", 1, "d", bu_offsetofarray(struct rt_half_internal, eqn, plane_t, W), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    { "%f", 3, "N", bu_offsetofarray(struct rt_half_internal, eqn, fastf_t, X), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    { "%f", 1, "d", bu_offsetofarray(struct rt_half_internal, eqn, fastf_t, W), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     { {'\0', '\0', '\0', '\0'}, 0, (char *)NULL, 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 
