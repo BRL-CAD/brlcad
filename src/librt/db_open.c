@@ -54,22 +54,6 @@
 #define DEFAULT_DB_TITLE "Untitled BRL-CAD Database"
 
 
-/**
- * D B _ O P E N
- *
- * Open the named database.
- * The 'mode' parameter specifies read-only or read-write mode.
- *
- * As a convenience, dbi_filepath is a C-style argv array of dirs to
- * search when attempting to open related files (such as data files
- * for EBM solids or texture-maps).  The default values are "." and
- * the directory containing the ".g" file.  They may be overridden by
- * setting the environment variable BRLCAD_FILE_PATH.
- *
- * Returns:
- * DBI_NULL error
- * db_i * success
- */
 struct db_i *
 db_open(const char *name, const char *mode)
 {

@@ -3710,9 +3710,41 @@ RT_EXPORT extern struct bu_ptbl *db_search_unique_objects(void *searchplan,
  */
 RT_EXPORT extern void db_sync(struct db_i	*dbip);
 
-/* open an existing model database */
-RT_EXPORT extern struct db_i *db_open(const char *name,
-				      const char *mode);
+
+/**
+ * for db_open(), open the specified file as read-only
+ */
+#define DB_OPEN_READONLY "r"
+
+/**
+ * for db_open(), open the specified file as read-write
+ */
+#define DB_OPEN_READWRITE "rw"
+
+/**
+ * Open the named database.
+ *
+ * The 'name' parameter specifies the file or filepath to a .g
+ * geometry database file for reading and/or writing.
+ *
+ * The 'mode' parameter specifies whether to open read-only or in
+ * read-write mode, specified via the DB_OPEN_READONLY and
+ * DB_OPEN_READWRITE symbols respectively.
+ *
+ * As a convenience, the returned db_t structure's dbi_filepath field
+ * is a C-style argv array of dirs to search when attempting to open
+ * related files (such as data files for EBM solids or texture-maps).
+ * The default values are "." and the directory containing the ".g"
+ * file.  They may be overridden by setting the environment variable
+ * BRLCAD_FILE_PATH.
+ *
+ * Returns:
+ * DBI_NULL error
+ * db_i * success
+ */
+RT_EXPORT extern struct db_i *
+db_open(const char *name, const char *mode);
+
 
 /* create a new model database */
 /**
