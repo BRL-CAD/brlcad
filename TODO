@@ -18,10 +18,6 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
-* double-check conversion of bu_offsetof to bu_offsetofarray in
-  primitive bu_structparse definitions - incorrect offsets there
-  will corrupt data in g2asc/asc2g operations
-
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------------
 
