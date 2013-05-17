@@ -60,8 +60,6 @@ struct toon_specific toon_defaults = {
 
 #define SHDR_NULL ((struct toon_specific *)0)
 #define SHDR_O(m) bu_offsetof(struct toon_specific, m)
-#define SHDR_AO(m) bu_offsetofarray(struct toon_specific, m)
-
 
 /* description of how to parse/print the arguments to the shader
  * There is at least one line here for each variable in the shader specific

@@ -98,7 +98,6 @@ struct bbd_specific bbd_defaults = {
 
 #define SHDR_NULL ((struct bbd_specific *)0)
 #define SHDR_O(m) bu_offsetof(struct bbd_specific, m)
-#define SHDR_AO(m) bu_offsetofarray(struct bbd_specific, m)
 
 void new_image(register const struct bu_structparse *sdp,
 	       register const char *name,

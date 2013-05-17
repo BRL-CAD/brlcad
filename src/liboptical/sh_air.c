@@ -54,7 +54,6 @@ static struct air_specific air_defaults = {
 
 #define SHDR_NULL ((struct air_specific *)0)
 #define SHDR_O(m) bu_offsetof(struct air_specific, m)
-#define SHDR_AO(m) bu_offsetofarray(struct air_specific, m)
 
 static void dpm_hook(register const struct bu_structparse *sdp, register const char *name, char *base, const char *value);
 

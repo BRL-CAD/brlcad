@@ -109,8 +109,6 @@ struct gauss_specific gauss_defaults = {
 
 #define SHDR_NULL ((struct gauss_specific *)0)
 #define SHDR_O(m) bu_offsetof(struct gauss_specific, m)
-#define SHDR_AO(m) bu_offsetofarray(struct gauss_specific, m)
-
 
 /* description of how to parse/print the arguments to the shader
  * There is at least one line here for each variable in the shader specific

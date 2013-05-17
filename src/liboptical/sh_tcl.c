@@ -70,8 +70,6 @@ struct tcl_specific tcl_defaults = {
 
 #define SHDR_NULL ((struct tcl_specific *)0)
 #define SHDR_O(m) bu_offsetof(struct tcl_specific, m)
-#define SHDR_AO(m) bu_offsetofarray(struct tcl_specific, m)
-
 
 /* description of how to parse/print the arguments to the shader
  * There is at least one line here for each variable in the shader specific

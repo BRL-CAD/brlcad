@@ -130,8 +130,6 @@ struct tthrm_specific {
 /* The default values for the variables in the shader specific structure */
 #define SHDR_NULL ((struct tthrm_specific *)0)
 #define SHDR_O(m) bu_offsetof(struct tthrm_specific, m)
-#define SHDR_AO(m) bu_offsetofarray(struct tthrm_specific, m)
-
 
 /* description of how to parse/print the arguments to the shader
  * There is at least one line here for each variable in the shader specific

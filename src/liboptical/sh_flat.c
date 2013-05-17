@@ -83,8 +83,6 @@ struct flat_specific flat_defaults = {
 
 #define SHDR_FLAT ((struct flat_specific *)0)
 #define SHDR_O(m) bu_offsetof(struct flat_specific, m)
-#define SHDR_AO(m) bu_offsetofarray(struct flat_specific, m)
-
 
 /* description of how to parse/print the arguments to the shader
  * There is at least one line here for each variable in the shader specific
