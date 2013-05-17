@@ -43,25 +43,25 @@ size_t addBotPoint
     int   y,
     int   z
 ) {
-    size_t ret = form.bot.num_vertices;
+    size_t ret = form.bot_num_vertices;
 
     // search for duplicate vertex
-    for(size_t i = 0; i < form.bot.num_vertices; ++i) {
-	if ((form.bot.vertices[i * 3]     == x) &&
-	    (form.bot.vertices[i * 3 + 1] == y) &&
-	    (form.bot.vertices[i * 3 + 2] == z)) {
+    for(size_t i = 0; i < form.bot_num_vertices; ++i) {
+	if ((form.bot_vertices[i * 3]     == x) &&
+	    (form.bot_vertices[i * 3 + 1] == y) &&
+	    (form.bot_vertices[i * 3 + 2] == z)) {
 	    ret = i;
 	    break;
 	}
     }
 
-    if (ret == form.bot.num_vertices) {
+    if (ret == form.bot_num_vertices) {
 	// add a new vertex
-	form.bot.vertices[form.bot.num_vertices * 3]     = x;
-	form.bot.vertices[form.bot.num_vertices * 3 + 1] = y;
-	form.bot.vertices[form.bot.num_vertices * 3 + 2] = z;
+	form.bot_vertices[form.bot_num_vertices * 3]     = x;
+	form.bot_vertices[form.bot_num_vertices * 3 + 1] = y;
+	form.bot_vertices[form.bot_num_vertices * 3 + 2] = z;
 
-	++form.bot.num_vertices;
+	++form.bot_num_vertices;
     }
 
     return ret; // return index of vertex
@@ -76,19 +76,19 @@ void addBotTriangle
     int   c
 ) {
     // all three points on a line?
-    int ax = form.bot.vertices[a * 3] - form.bot.vertices[b * 3];
-    int ay = form.bot.vertices[a * 3 + 1] - form.bot.vertices[b * 3 + 1];
-    int az = form.bot.vertices[a * 3 + 2] - form.bot.vertices[b * 3 + 2];
-    int bx = form.bot.vertices[a * 3] - form.bot.vertices[c * 3];
-    int by = form.bot.vertices[a * 3 + 1] - form.bot.vertices[c * 3 + 1];
-    int bz = form.bot.vertices[a * 3 + 2] - form.bot.vertices[c * 3 + 2];
+    int ax = form.bot_vertices[a * 3] - form.bot_vertices[b * 3];
+    int ay = form.bot_vertices[a * 3 + 1] - form.bot_vertices[b * 3 + 1];
+    int az = form.bot_vertices[a * 3 + 2] - form.bot_vertices[b * 3 + 2];
+    int bx = form.bot_vertices[a * 3] - form.bot_vertices[c * 3];
+    int by = form.bot_vertices[a * 3 + 1] - form.bot_vertices[c * 3 + 1];
+    int bz = form.bot_vertices[a * 3 + 2] - form.bot_vertices[c * 3 + 2];
 
     int di = ay * bz - az * by;
     int dj = az * bx - ax * bz;
     int dk = ax * by - ay * bx;
 
     if ((di != 0) || (dj != 0) || (dk != 0))
-	addTriangle(form.bot.faces, form.bot.num_faces, a, b, c);
+	addTriangle(form.bot_faces, form.bot_num_faces, a, b, c);
 }
 
 
@@ -97,8 +97,8 @@ void readCadTypeBot
     std::istream& is,
     Form&         form
 ) {
-    form.bot.num_faces    = 0; // unknown yet how many different faces are used, there may be some degenerated ones
-    form.bot.num_vertices = 0; // unknown yet how many different points are used
+    form.bot_num_faces    = 0; // unknown yet how many different faces are used, there may be some degenerated ones
+    form.bot_num_vertices = 0; // unknown yet how many different points are used
 
     for(size_t i = 0; i < form.npts; ++i) {
 	int x;
@@ -122,8 +122,8 @@ void readLongFormBot
     std::istream& is,
     Form&         form
 ) {
-    form.bot.num_faces    = 0; // unknown yet how many different faces are used
-    form.bot.num_vertices = 0; // unknown yet how many different points are used
+    form.bot_num_faces    = 0; // unknown yet how many different faces are used
+    form.bot_num_vertices = 0; // unknown yet how many different points are used
 
     int x;
     int y;
@@ -184,7 +184,7 @@ void readRingModeBox
     form.npts = -form.id - 10000;
 
     for (size_t i = 0; i < form.npts; ++i)
-	is >> form.pt[i][0] >> form.pt[i][1] >> form.pt[i][2];
+	is >> form.bot_pt[i][0] >> form.bot_pt[i][1] >> form.bot_pt[i][2];
 
     std::cout << "RingModeBox ("
 	      << form.compnr
@@ -236,7 +236,7 @@ void readPipe
     }
 
     for (size_t i = 0; i<form.npts; ++i)
-	is >> form.pt[i][0] >> form.pt[i][1] >> form.pt[i][2];
+	is >> form.bot_pt[i][0] >> form.bot_pt[i][1] >> form.bot_pt[i][2];
 
     is >> form.radius1;
 
@@ -260,7 +260,7 @@ void readRectangularBox
     form.npts = 2;
 
     for (size_t i = 0; i < form.npts; ++i)
-	is >> form.pt[i][0] >> form.pt[i][1] >> form.pt[i][2];
+	is >> form.bot_pt[i][0] >> form.bot_pt[i][1] >> form.bot_pt[i][2];
 
     std::cout << "RectangularBox ("
 	      << form.compnr
@@ -281,9 +281,9 @@ void readCone
 
     form.npts = 2;
 
-    is >> form.pt[0][0] >> form.pt[0][1] >> form.pt[0][2];
+    is >> form.bot_pt[0][0] >> form.bot_pt[0][1] >> form.bot_pt[0][2];
     is >> form.radius1;
-    is >> form.pt[1][0] >> form.pt[1][1] >> form.pt[1][2];
+    is >> form.bot_pt[1][0] >> form.bot_pt[1][1] >> form.bot_pt[1][2];
     is >> form.radius2;
 
     std::cout << "Cone ("
@@ -306,7 +306,7 @@ void readCylinder
     form.npts = 2;
 
     for (size_t i = 0; i < form.npts; ++i)
-	is >> form.pt[i][0] >> form.pt[i][1] >> form.pt[i][2];
+	is >> form.bot_pt[i][0] >> form.bot_pt[i][1] >> form.bot_pt[i][2];
 
     is >> form.radius1;
 
@@ -330,7 +330,7 @@ void readArb8
     form.npts = 8;
 
     for (size_t i = 0; i < form.npts; ++i)
-	is >> form.pt[i][0] >> form.pt[i][1] >> form.pt[i][2];
+	is >> form.bot_pt[i][0] >> form.bot_pt[i][1] >> form.bot_pt[i][2];
 
     std::cout << "Arb8 ("
 	      << form.compnr
@@ -376,7 +376,7 @@ void conv
     if (is) {
 	writeTitle(wdbp, title);
 
-	Form form = {0, 0, 0, 0, {{{0}}}, {0, 0, 0}, 0, 0, 0, 0};
+	Form form = {0, 0, 0, 0, {{0}}, 0, 0, {0}, {0}, {0, 0, 0}, 0, 0, 0, 0};
 	bool translatedShape = false;
 	int  id;
 

@@ -40,23 +40,17 @@ const size_t MAX_NPTS      = 3 * MAX_TRIANGLES;
 
 typedef int I_Point_t[3];
 
-
 struct Form {
     int    id;
     int    compnr;
     int    s_compnr; // surrounding component number
     size_t npts;
 
-    union {
-	I_Point_t pt[MAX_NPTS];
-
-	struct {
-	    size_t num_vertices;
-	    size_t num_faces;
-	    int vertices[MAX_NPTS * 3];   // points[3][num_vertices]
-	    int faces[MAX_TRIANGLES * 3]; // faces[3][num_faces]
-	} bot;
-    };
+    I_Point_t bot_pt[MAX_NPTS];
+    size_t bot_num_vertices;
+    size_t bot_num_faces;
+    int bot_vertices[MAX_NPTS * 3];   // points[3][num_vertices]
+    int bot_faces[MAX_TRIANGLES * 3]; // faces[3][num_faces]
 
     int tr_vec[3];
     int thickness;
@@ -64,6 +58,5 @@ struct Form {
     int radius1;
     int radius2;
 };
-
 
 #endif // GLOB_INCLUDED
