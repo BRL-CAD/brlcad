@@ -178,7 +178,7 @@ main(int argc, char **argv)
 	if (Tcl_Init(interp) == TCL_ERROR)
 	    bu_log("Tcl_Init error %s\n", Tcl_GetStringResult(interp));
 
-	if ((dbip = db_open(iname, "rb")) == NULL) {
+	if ((dbip = db_open(iname, "r")) == NULL) {
 	    bu_exit(4, "Unable to db_open() file '%s', aborting\n", iname);
 	}
 	RT_CK_DBI(dbip);
