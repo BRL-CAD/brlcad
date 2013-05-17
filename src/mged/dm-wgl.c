@@ -242,6 +242,7 @@ Wgl_colorchange()
 static void
 establish_zbuffer()
 {
+    (void)DM_MAKE_CURRENT(dmp);
     (void)DM_SET_ZBUFFER(dmp, ((struct wgl_vars *)dmp->dm_vars.priv_vars)->mvars.zbuffer_on);
     view_state->vs_flag = 1;
 }
@@ -250,6 +251,7 @@ establish_zbuffer()
 static void
 establish_lighting()
 {
+    (void)DM_MAKE_CURRENT(dmp);
     (void)DM_SET_LIGHT(dmp, ((struct wgl_vars *)dmp->dm_vars.priv_vars)->mvars.lighting_on);
     view_state->vs_flag = 1;
 }
@@ -258,6 +260,7 @@ establish_lighting()
 static void
 establish_transparency()
 {
+    (void)DM_MAKE_CURRENT(dmp);
     (void)DM_SET_TRANSPARENCY(dmp, ((struct wgl_vars *)dmp->dm_vars.priv_vars)->mvars.transparency_on);
     view_state->vs_flag = 1;
 }
@@ -292,7 +295,8 @@ zclip_hook()
 	bounds[5] = 1.0;
     }
 
-    DM_SET_WIN_BOUNDS(dmp, bounds);
+    (void)DM_MAKE_CURRENT(dmp);
+    (void)DM_SET_WIN_BOUNDS(dmp, bounds);
 }
 
 

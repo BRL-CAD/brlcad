@@ -177,12 +177,6 @@ wgl_setBGColor(struct dm *dmp,
     ((struct wgl_vars *)dmp->dm_vars.priv_vars)->b = b / 255.0;
 
     if (((struct wgl_vars *)dmp->dm_vars.priv_vars)->mvars.doublebuffer) {
-	if (!wglMakeCurrent(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc,
-			    ((struct wgl_vars *)dmp->dm_vars.priv_vars)->glxc)) {
-	    bu_log("wgl_setBGColor: Couldn't make context current\n");
-	    return TCL_ERROR;
-	}
-
 	SwapBuffers(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc);
 	glClearColor(((struct wgl_vars *)dmp->dm_vars.priv_vars)->r,
 		     ((struct wgl_vars *)dmp->dm_vars.priv_vars)->g,
@@ -803,25 +797,6 @@ wgl_drawEnd(struct dm *dmp)
 #if 0
     glFinish();
 #endif
-
-    if (!wglMakeCurrent((HDC)NULL, (HGLRC)NULL)) {
-	LPVOID buf;
-
-	FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER |
-		      FORMAT_MESSAGE_FROM_SYSTEM |
-		      FORMAT_MESSAGE_IGNORE_INSERTS,
-		      NULL,
-		      GetLastError(),
-		      MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
-		      (LPTSTR)&buf,
-		      0,
-		      NULL);
-	bu_log("wgl_drawBegin: Couldn't release the current context.\n");
-	bu_log("wgl_drawBegin: %s", buf);
-	LocalFree(buf);
-
-	return TCL_ERROR;
-    }
 
     wgl_actively_drawing = 0;
     return TCL_OK;
@@ -1503,12 +1478,6 @@ wgl_setWinBounds(struct dm *dmp, fastf_t w[6])
     if (dmp->dm_debugLevel)
 	bu_log("wgl_setWinBounds()\n");
 
-    if (!wglMakeCurrent(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc,
-			((struct wgl_vars *)dmp->dm_vars.priv_vars)->glxc)) {
-	bu_log("wgl_setWinBounds: Couldn't make context current\n");
-	return TCL_ERROR;
-    }
-
     dmp->dm_clipmin[0] = w[0];
     dmp->dm_clipmin[1] = w[2];
     dmp->dm_clipmin[2] = w[4];
@@ -1605,12 +1574,6 @@ wgl_configureWin_guts(struct dm *dmp,
 
     if (dmp->dm_debugLevel)
 	bu_log("wgl_configureWin_guts()\n");
-
-    if (!wglMakeCurrent(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc,
-			((struct wgl_vars *)dmp->dm_vars.priv_vars)->glxc)) {
-	bu_log("wgl_configureWin_guts: Couldn't make context current\n");
-	return TCL_ERROR;
-    }
 
     hwnd = WindowFromDC(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc);
     GetWindowRect(hwnd, &xwa);
@@ -1933,7 +1896,7 @@ wgl_reshape(struct dm *dmp, int width, int height)
     dmp->dm_aspect = (fastf_t)dmp->dm_width / (fastf_t)dmp->dm_height;
 
     if (dmp->dm_debugLevel) {
-	bu_log("wgl_configureWin_guts()\n");
+	bu_log("wgl_reshape()\n");
 	bu_log("width = %d, height = %d\n", dmp->dm_width, dmp->dm_height);
     }
 
@@ -1954,8 +1917,30 @@ wgl_reshape(struct dm *dmp, int width, int height)
 
 
 HIDDEN int
+wgl_makeCurrent(struct dm *dmp)
+{
+    if (dmp->dm_debugLevel)
+	bu_log("wgl_makeCurrent()\n");
+
+    if (!wglMakeCurrent(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc,
+			((struct wgl_vars *)dmp->dm_vars.priv_vars)->glxc)) {
+	bu_log("wgl_makeCurrent: Couldn't make context current\n");
+	return TCL_ERROR;
+    }
+
+    return TCL_OK;
+}
+
+
+HIDDEN int
 wgl_configureWin(struct dm *dmp, int force)
 {
+    if (!wglMakeCurrent(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc,
+			((struct wgl_vars *)dmp->dm_vars.priv_vars)->glxc)) {
+	bu_log("wgl_configureWin: Couldn't make context current\n");
+	return TCL_ERROR;
+    }
+
     return wgl_configureWin_guts(dmp, force);
 }
 
@@ -1968,12 +1953,6 @@ wgl_setLight(struct dm *dmp, int lighting_on)
 
     dmp->dm_light = lighting_on;
     ((struct wgl_vars *)dmp->dm_vars.priv_vars)->mvars.lighting_on = dmp->dm_light;
-
-    if (!wglMakeCurrent(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc,
-			((struct wgl_vars *)dmp->dm_vars.priv_vars)->glxc)) {
-	bu_log("wgl_setLight: Couldn't make context current\n");
-	return TCL_ERROR;
-    }
 
     if (!dmp->dm_light) {
 	/* Turn it off */
@@ -2010,12 +1989,6 @@ wgl_setTransparency(struct dm *dmp,
     dmp->dm_transparency = transparency_on;
     ((struct wgl_vars *)dmp->dm_vars.priv_vars)->mvars.transparency_on = dmp->dm_transparency;
 
-    if (!wglMakeCurrent(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc,
-			((struct wgl_vars *)dmp->dm_vars.priv_vars)->glxc)) {
-	bu_log("wgl_setTransparency: Couldn't make context current\n");
-	return TCL_ERROR;
-    }
-
     if (transparency_on) {
 	/* Turn it on */
 	glEnable(GL_BLEND);
@@ -2037,12 +2010,6 @@ wgl_setDepthMask(struct dm *dmp,
 
     dmp->dm_depthMask = enable;
 
-    if (!wglMakeCurrent(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc,
-			((struct wgl_vars *)dmp->dm_vars.priv_vars)->glxc)) {
-	bu_log("wgl_setDepthMask: Couldn't make context current\n");
-	return TCL_ERROR;
-    }
-
     if (enable)
 	glDepthMask(GL_TRUE);
     else
@@ -2060,12 +2027,6 @@ wgl_setZBuffer(struct dm *dmp, int zbuffer_on)
 
     dmp->dm_zbuffer = zbuffer_on;
     ((struct wgl_vars *)dmp->dm_vars.priv_vars)->mvars.zbuffer_on = dmp->dm_zbuffer;
-
-    if (!wglMakeCurrent(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc,
-			((struct wgl_vars *)dmp->dm_vars.priv_vars)->glxc)) {
-	bu_log("wgl_setZBuffer: Couldn't make context current\n");
-	return TCL_ERROR;
-    }
 
     if (((struct wgl_vars *)dmp->dm_vars.priv_vars)->mvars.zbuf == 0) {
 	dmp->dm_zbuffer = 0;
@@ -2088,12 +2049,6 @@ wgl_beginDList(struct dm *dmp, unsigned int list)
 {
     if (dmp->dm_debugLevel)
 	bu_log("wgl_beginDList()\n");
-
-    if (!wglMakeCurrent(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc,
-			((struct wgl_vars *)dmp->dm_vars.priv_vars)->glxc)) {
-	bu_log("wgl_beginDList: Couldn't make context current\n");
-	return TCL_ERROR;
-    }
 
     glNewList((GLuint)list, GL_COMPILE);
     return TCL_OK;
@@ -2124,12 +2079,6 @@ wgl_freeDLists(struct dm *dmp, unsigned int list, int range)
     if (dmp->dm_debugLevel)
 	bu_log("wgl_freeDLists()\n");
 
-    if (!wglMakeCurrent(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc,
-			((struct wgl_vars *)dmp->dm_vars.priv_vars)->glxc)) {
-	bu_log("wgl_freeDLists: Couldn't make context current\n");
-	return TCL_ERROR;
-    }
-
     glDeleteLists((GLuint)list, (GLsizei)range);
     return TCL_OK;
 }
@@ -2140,12 +2089,6 @@ wgl_genDLists(struct dm *dmp, size_t range)
 {
     if (dmp->dm_debugLevel)
 	bu_log("wgl_freeDLists()\n");
-
-    if (!wglMakeCurrent(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc,
-			((struct wgl_vars *)dmp->dm_vars.priv_vars)->glxc)) {
-	bu_log("wgl_freeDLists: Couldn't make context current\n");
-	return TCL_ERROR;
-    }
 
     return glGenLists((GLsizei)range);
 }
@@ -2185,6 +2128,7 @@ struct dm dm_wgl = {
     wgl_genDLists,
     null_getDisplayImage,	/* display to image function */
     wgl_reshape,
+    wgl_makeCurrent,
     0,
     1,				/* has displaylist */
     0,                          /* no stereo by default */

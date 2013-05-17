@@ -173,6 +173,10 @@ DM_EXPORT extern void
 null_reshape(struct dm *dmp, int width, int height);
 
 
+DM_EXPORT extern int
+null_makeCurrent(struct dm *dmp);
+
+
 #endif  /* __DM_NULL__ */
 
 /** @} */

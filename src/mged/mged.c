@@ -2325,7 +2325,8 @@ refresh(void)
 	    if (mged_variables->mv_fb &&
 		dmp->dm_zbuffer) {
 		restore_zbuffer = 1;
-		DM_SET_ZBUFFER(dmp, 0);
+		(void)DM_MAKE_CURRENT(dmp);
+		(void)DM_SET_ZBUFFER(dmp, 0);
 	    }
 
 	    dirty = 0;

@@ -1421,7 +1421,7 @@ to_deleteProc(ClientData clientData)
 	bu_vls_free(&gdvp->gdv_name);
 	bu_vls_free(&gdvp->gdv_callback);
 	bu_vls_free(&gdvp->gdv_edit_motion_delta_callback);
-	DM_CLOSE(gdvp->gdv_dmp);
+	(void)DM_CLOSE(gdvp->gdv_dmp);
 	bu_free((genptr_t)gdvp->gdv_view, "ged_view");
 
 	to_close_fbs(gdvp);
@@ -2087,7 +2087,8 @@ to_bg(struct ged *gedp,
 	b < 0 || 255 < b)
 	goto bad_color;
 
-    DM_SET_BGCOLOR(gdvp->gdv_dmp,
+    (void)DM_MAKE_CURRENT(gdvp->gdv_dmp);
+    (void)DM_SET_BGCOLOR(gdvp->gdv_dmp,
 		   (unsigned char)r,
 		   (unsigned char)g,
 		   (unsigned char)b);
@@ -2193,7 +2194,8 @@ to_bounds(struct ged *gedp,
     else
 	gdvp->gdv_dmp->dm_bound = GED_MAX / gdvp->gdv_dmp->dm_clipmax[2];
 
-    DM_SET_WIN_BOUNDS(gdvp->gdv_dmp, bounds);
+    (void)DM_MAKE_CURRENT(gdvp->gdv_dmp);
+    (void)DM_SET_WIN_BOUNDS(gdvp->gdv_dmp, bounds);
 
     return GED_OK;
 }
@@ -5116,7 +5118,7 @@ to_deleteViewProc(ClientData clientData)
     bu_vls_free(&gdvp->gdv_name);
     bu_vls_free(&gdvp->gdv_callback);
     bu_vls_free(&gdvp->gdv_edit_motion_delta_callback);
-    DM_CLOSE(gdvp->gdv_dmp);
+    (void)DM_CLOSE(gdvp->gdv_dmp);
     bu_free((genptr_t)gdvp->gdv_view, "ged_view");
     bu_free((genptr_t)gdvp, "ged_dm_view");
 }
@@ -5468,7 +5470,7 @@ to_fontsize(struct ged *gedp,
 
     if (DM_VALID_FONT_SIZE(fontsize) || fontsize == 0) {
 	gdvp->gdv_dmp->dm_fontsize = fontsize;
-	DM_CONFIGURE_WIN(gdvp->gdv_dmp, 1);
+	(void)DM_CONFIGURE_WIN(gdvp->gdv_dmp, 1);
 	to_refresh_view(gdvp);
 	return GED_OK;
     }
@@ -6014,7 +6016,8 @@ to_light(struct ged *gedp,
     if (light < 0)
 	light = 0;
 
-    DM_SET_LIGHT(gdvp->gdv_dmp, light);
+    (void)DM_MAKE_CURRENT(gdvp->gdv_dmp);
+    (void)DM_SET_LIGHT(gdvp->gdv_dmp, light);
     to_refresh_view(gdvp);
 
     return GED_OK;
@@ -11840,7 +11843,8 @@ to_transparency(struct ged *gedp,
 	    return GED_ERROR;
 	}
 
-	DM_SET_TRANSPARENCY(gdvp->gdv_dmp, transparency);
+	(void)DM_MAKE_CURRENT(gdvp->gdv_dmp);
+	(void)DM_SET_TRANSPARENCY(gdvp->gdv_dmp, transparency);
 	return GED_OK;
     }
 
@@ -12259,7 +12263,8 @@ to_zbuffer(struct ged *gedp,
     else if (1 < zbuffer)
 	zbuffer = 1;
 
-    DM_SET_ZBUFFER(gdvp->gdv_dmp, zbuffer);
+    (void)DM_MAKE_CURRENT(gdvp->gdv_dmp);
+    (void)DM_SET_ZBUFFER(gdvp->gdv_dmp, zbuffer);
     to_refresh_view(gdvp);
 
     return GED_OK;
@@ -12790,7 +12795,7 @@ to_close_fbs(struct ged_dm_view *gdvp)
 HIDDEN void to_dm_get_display_image(struct ged *gedp, unsigned char **idata)
 {
     if (gedp->ged_dmp) {
-	DM_GET_DISPLAY_IMAGE(((struct dm *)gedp->ged_dmp), idata);
+	(void)DM_GET_DISPLAY_IMAGE(((struct dm *)gedp->ged_dmp), idata);
     }
 }
 
@@ -12931,23 +12936,24 @@ to_create_vlist_callback(struct solid *sp)
 		first = 0;
 	    }
 
-	    DM_BEGINDLIST(gdvp->gdv_dmp, sp->s_dlist);
+	    (void)DM_MAKE_CURRENT(gdvp->gdv_dmp);
+	    (void)DM_BEGINDLIST(gdvp->gdv_dmp, sp->s_dlist);
 
 	    if (sp->s_iflag == UP)
-		DM_SET_FGCOLOR(gdvp->gdv_dmp, 255, 255, 255, 0, sp->s_transparency);
+		(void)DM_SET_FGCOLOR(gdvp->gdv_dmp, 255, 255, 255, 0, sp->s_transparency);
 	    else
-		DM_SET_FGCOLOR(gdvp->gdv_dmp,
+		(void)DM_SET_FGCOLOR(gdvp->gdv_dmp,
 			       (unsigned char)sp->s_color[0],
 			       (unsigned char)sp->s_color[1],
 			       (unsigned char)sp->s_color[2], 0, sp->s_transparency);
 
 	    if (sp->s_hiddenLine) {
-		DM_DRAW_VLIST_HIDDEN_LINE(gdvp->gdv_dmp, (struct bn_vlist *)&sp->s_vlist);
+		(void)DM_DRAW_VLIST_HIDDEN_LINE(gdvp->gdv_dmp, (struct bn_vlist *)&sp->s_vlist);
 	    } else {
-		DM_DRAW_VLIST(gdvp->gdv_dmp, (struct bn_vlist *)&sp->s_vlist);
+		(void)DM_DRAW_VLIST(gdvp->gdv_dmp, (struct bn_vlist *)&sp->s_vlist);
 	    }
 
-	    DM_ENDDLIST(gdvp->gdv_dmp);
+	    (void)DM_ENDDLIST(gdvp->gdv_dmp);
 	}
     }
 }
@@ -12960,7 +12966,8 @@ to_free_vlist_callback(unsigned int dlist, int range)
 
     for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
 	if (to_is_viewable(gdvp)) {
-	    DM_FREEDLISTS(gdvp->gdv_dmp, dlist, range);
+	    (void)DM_MAKE_CURRENT(gdvp->gdv_dmp);
+	    (void)DM_FREEDLISTS(gdvp->gdv_dmp, dlist, range);
 	}
     }
 }
@@ -13087,15 +13094,15 @@ go_dm_draw_arrows(struct dm *dmp, struct ged_data_arrow_state *gdasp)
     saveLineStyle = dmp->dm_lineStyle;
 
     /* set color */
-    DM_SET_FGCOLOR(dmp,
+    (void)DM_SET_FGCOLOR(dmp,
 		   gdasp->gdas_color[0],
 		   gdasp->gdas_color[1],
 		   gdasp->gdas_color[2], 1, 1.0);
 
     /* set linewidth */
-    DM_SET_LINE_ATTR(dmp, gdasp->gdas_line_width, 0);  /* solid lines */
+    (void)DM_SET_LINE_ATTR(dmp, gdasp->gdas_line_width, 0);  /* solid lines */
 
-    DM_DRAW_LINES_3D(dmp,
+    (void)DM_DRAW_LINES_3D(dmp,
 		     gdasp->gdas_num_points,
 		     gdasp->gdas_points, 0);
 
@@ -13147,11 +13154,11 @@ go_dm_draw_arrows(struct dm *dmp, struct ged_data_arrow_state *gdasp)
 	VMOVE(points[14], a_pt4);
 	VMOVE(points[15], a_pt1);
 
-	DM_DRAW_LINES_3D(dmp, 16, points, 0);
+	(void)DM_DRAW_LINES_3D(dmp, 16, points, 0);
     }
 
     /* Restore the line attributes */
-    DM_SET_LINE_ATTR(dmp, saveLineWidth, saveLineStyle);
+    (void)DM_SET_LINE_ATTR(dmp, saveLineWidth, saveLineStyle);
 }
 
 
@@ -13161,7 +13168,7 @@ go_dm_draw_labels(struct dm *dmp, struct ged_data_label_state *gdlsp, matp_t m2v
     register int i;
 
     /* set color */
-    DM_SET_FGCOLOR(dmp,
+    (void)DM_SET_FGCOLOR(dmp,
 		   gdlsp->gdls_color[0],
 		   gdlsp->gdls_color[1],
 		   gdlsp->gdls_color[2], 1, 1.0);
@@ -13171,7 +13178,7 @@ go_dm_draw_labels(struct dm *dmp, struct ged_data_label_state *gdlsp, matp_t m2v
 
 	MAT4X3PNT(vpoint, m2vmat,
 		  gdlsp->gdls_points[i]);
-	DM_DRAW_STRING_2D(dmp, gdlsp->gdls_labels[i],
+	(void)DM_DRAW_STRING_2D(dmp, gdlsp->gdls_labels[i],
 			  vpoint[X], vpoint[Y], 0, 1);
     }
 }
@@ -13190,20 +13197,20 @@ go_dm_draw_lines(struct dm *dmp, struct ged_data_line_state *gdlsp)
     saveLineStyle = dmp->dm_lineStyle;
 
     /* set color */
-    DM_SET_FGCOLOR(dmp,
+    (void)DM_SET_FGCOLOR(dmp,
 		   gdlsp->gdls_color[0],
 		   gdlsp->gdls_color[1],
 		   gdlsp->gdls_color[2], 1, 1.0);
 
     /* set linewidth */
-    DM_SET_LINE_ATTR(dmp, gdlsp->gdls_line_width, 0);  /* solid lines */
+    (void)DM_SET_LINE_ATTR(dmp, gdlsp->gdls_line_width, 0);  /* solid lines */
 
-    DM_DRAW_LINES_3D(dmp,
+    (void)DM_DRAW_LINES_3D(dmp,
 		     gdlsp->gdls_num_points,
 		     gdlsp->gdls_points, 0);
 
     /* Restore the line attributes */
-    DM_SET_LINE_ATTR(dmp, saveLineWidth, saveLineStyle);
+    (void)DM_SET_LINE_ATTR(dmp, saveLineWidth, saveLineStyle);
 }
 
 
@@ -13223,26 +13230,26 @@ go_dm_draw_polys(struct dm *dmp, ged_data_polygon_state *gdpsp, int mode)
     last_poly = gdpsp->gdps_polygons.gp_num_polygons - 1;
     for (i = 0; i < gdpsp->gdps_polygons.gp_num_polygons; ++i) {
 	/* set color */
-	DM_SET_FGCOLOR(dmp,
+	(void)DM_SET_FGCOLOR(dmp,
 		       gdpsp->gdps_polygons.gp_polygon[i].gp_color[0],
 		       gdpsp->gdps_polygons.gp_polygon[i].gp_color[1],
 		       gdpsp->gdps_polygons.gp_polygon[i].gp_color[2],
 		       1, 1.0);
 
 	/* set the linewidth and linestyle for polygon i */
-	DM_SET_LINE_ATTR(dmp,
+	(void)DM_SET_LINE_ATTR(dmp,
 			 gdpsp->gdps_polygons.gp_polygon[i].gp_line_width,
 			 gdpsp->gdps_polygons.gp_polygon[i].gp_line_style);
 
 	for (j = 0; j < gdpsp->gdps_polygons.gp_polygon[i].gp_num_contours; ++j) {
 	    size_t last = gdpsp->gdps_polygons.gp_polygon[i].gp_contour[j].gpc_num_points-1;
 
-	    DM_DRAW_LINES_3D(dmp,
+	    (void)DM_DRAW_LINES_3D(dmp,
 			     gdpsp->gdps_polygons.gp_polygon[i].gp_contour[j].gpc_num_points,
 			     gdpsp->gdps_polygons.gp_polygon[i].gp_contour[j].gpc_point, 1);
 
 	    if (mode != TCLCAD_POLY_CONTOUR_MODE || i != last_poly || gdpsp->gdps_cflag == 0) {
-		DM_DRAW_LINE_3D(dmp,
+		(void)DM_DRAW_LINE_3D(dmp,
 				gdpsp->gdps_polygons.gp_polygon[i].gp_contour[j].gpc_point[last],
 				gdpsp->gdps_polygons.gp_polygon[i].gp_contour[j].gpc_point[0]);
 	    }
@@ -13250,19 +13257,19 @@ go_dm_draw_polys(struct dm *dmp, ged_data_polygon_state *gdpsp, int mode)
     }
 
     /* Restore the line attributes */
-    DM_SET_LINE_ATTR(dmp, saveLineWidth, saveLineStyle);
+    (void)DM_SET_LINE_ATTR(dmp, saveLineWidth, saveLineStyle);
 }
 
 
 HIDDEN void
 go_draw(struct ged_dm_view *gdvp)
 {
-    DM_LOADMATRIX(gdvp->gdv_dmp, gdvp->gdv_view->gv_model2view, 0);
+    (void)DM_LOADMATRIX(gdvp->gdv_dmp, gdvp->gdv_view->gv_model2view, 0);
 
     if (SMALL_FASTF < gdvp->gdv_view->gv_perspective)
-	DM_LOADPMATRIX(gdvp->gdv_dmp, gdvp->gdv_view->gv_pmat);
+	(void)DM_LOADPMATRIX(gdvp->gdv_dmp, gdvp->gdv_view->gv_pmat);
     else
-	DM_LOADPMATRIX(gdvp->gdv_dmp, (fastf_t *)NULL);
+	(void)DM_LOADPMATRIX(gdvp->gdv_dmp, (fastf_t *)NULL);
 
     go_draw_dlist(gdvp->gdv_gop, gdvp->gdv_dmp, &gdvp->gdv_gop->go_gedp->ged_gdp->gd_headDisplay);
 }
@@ -13289,7 +13296,7 @@ go_draw_dlist(struct ged_obj *gop, struct dm *dmp, struct bu_list *hdlp)
 
 		if (line_style != sp->s_soldash) {
 		    line_style = sp->s_soldash;
-		    DM_SET_LINE_ATTR(dmp, dmp->dm_lineWidth, line_style);
+		    (void)DM_SET_LINE_ATTR(dmp, dmp->dm_lineWidth, line_style);
 		}
 
 		go_draw_solid(gop, dmp, sp);
@@ -13299,7 +13306,7 @@ go_draw_dlist(struct ged_obj *gop, struct dm *dmp, struct bu_list *hdlp)
 	}
 
 	/* disable write to depth buffer */
-	DM_SET_DEPTH_MASK(dmp, 0);
+	(void)DM_SET_DEPTH_MASK(dmp, 0);
 
 	/* Second, draw transparent stuff */
 	gdlp = BU_LIST_NEXT(ged_display_list, hdlp);
@@ -13313,7 +13320,7 @@ go_draw_dlist(struct ged_obj *gop, struct dm *dmp, struct bu_list *hdlp)
 
 		if (line_style != sp->s_soldash) {
 		    line_style = sp->s_soldash;
-		    DM_SET_LINE_ATTR(dmp, dmp->dm_lineWidth, line_style);
+		    (void)DM_SET_LINE_ATTR(dmp, dmp->dm_lineWidth, line_style);
 		}
 
 		go_draw_solid(gop, dmp, sp);
@@ -13323,7 +13330,7 @@ go_draw_dlist(struct ged_obj *gop, struct dm *dmp, struct bu_list *hdlp)
 	}
 
 	/* re-enable write to depth buffer */
-	DM_SET_DEPTH_MASK(dmp, 1);
+	(void)DM_SET_DEPTH_MASK(dmp, 1);
     } else {
 	gdlp = BU_LIST_NEXT(ged_display_list, hdlp);
 	while (BU_LIST_NOT_HEAD(gdlp, hdlp)) {
@@ -13332,7 +13339,7 @@ go_draw_dlist(struct ged_obj *gop, struct dm *dmp, struct bu_list *hdlp)
 	    FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid) {
 		if (line_style != sp->s_soldash) {
 		    line_style = sp->s_soldash;
-		    DM_SET_LINE_ATTR(dmp, dmp->dm_lineWidth, line_style);
+		    (void)DM_SET_LINE_ATTR(dmp, dmp->dm_lineWidth, line_style);
 		}
 
 		go_draw_solid(gop, dmp, sp);
@@ -13351,12 +13358,12 @@ go_draw_faceplate(struct ged_obj *gop, struct ged_dm_view *gdvp)
 {
     /* Center dot */
     if (gdvp->gdv_view->gv_center_dot.gos_draw) {
-	DM_SET_FGCOLOR(gdvp->gdv_dmp,
+	(void)DM_SET_FGCOLOR(gdvp->gdv_dmp,
 		       gdvp->gdv_view->gv_center_dot.gos_line_color[0],
 		       gdvp->gdv_view->gv_center_dot.gos_line_color[1],
 		       gdvp->gdv_view->gv_center_dot.gos_line_color[2],
 		       1, 1.0);
-	DM_DRAW_POINT_2D(gdvp->gdv_dmp, 0.0, 0.0);
+	(void)DM_DRAW_POINT_2D(gdvp->gdv_dmp, 0.0, 0.0);
     }
 
     /* Model axes */
@@ -13414,12 +13421,12 @@ go_draw_faceplate(struct ged_obj *gop, struct ged_dm_view *gdvp)
 		      gdvp->gdv_view->gv_size * gop->go_gedp->ged_wdbp->dbip->dbi_base2local,
 		      V3ARGS(center),
 		      V3ARGS(gdvp->gdv_view->gv_aet));
-	DM_SET_FGCOLOR(gdvp->gdv_dmp,
+	(void)DM_SET_FGCOLOR(gdvp->gdv_dmp,
 		       gdvp->gdv_view->gv_view_params.gos_text_color[0],
 		       gdvp->gdv_view->gv_view_params.gos_text_color[1],
 		       gdvp->gdv_view->gv_view_params.gos_text_color[2],
 		       1, 1.0);
-	DM_DRAW_STRING_2D(gdvp->gdv_dmp, bu_vls_addr(&vls), -0.98, -0.965, 10, 0);
+	(void)DM_DRAW_STRING_2D(gdvp->gdv_dmp, bu_vls_addr(&vls), -0.98, -0.965, 10, 0);
 	bu_vls_free(&vls);
     }
 
@@ -13444,17 +13451,17 @@ go_draw_solid(struct ged_obj *gop, struct dm *dmp, struct solid *sp)
 	DM_DRAWDLIST(dmp, sp->s_dlist);
     } else {
 	if (sp->s_iflag == UP)
-	    DM_SET_FGCOLOR(dmp, 255, 255, 255, 0, sp->s_transparency);
+	    (void)DM_SET_FGCOLOR(dmp, 255, 255, 255, 0, sp->s_transparency);
 	else
-	    DM_SET_FGCOLOR(dmp,
+	    (void)DM_SET_FGCOLOR(dmp,
 			   (unsigned char)sp->s_color[0],
 			   (unsigned char)sp->s_color[1],
 			   (unsigned char)sp->s_color[2], 0, sp->s_transparency);
 
 	if (sp->s_hiddenLine) {
-	    DM_DRAW_VLIST_HIDDEN_LINE(dmp, (struct bn_vlist *)&sp->s_vlist);
+	    (void)DM_DRAW_VLIST_HIDDEN_LINE(dmp, (struct bn_vlist *)&sp->s_vlist);
 	} else {
-	    DM_DRAW_VLIST(dmp, (struct bn_vlist *)&sp->s_vlist);
+	    (void)DM_DRAW_VLIST(dmp, (struct bn_vlist *)&sp->s_vlist);
 	}
     }
 }
@@ -13493,7 +13500,7 @@ go_draw_other(struct ged_obj *gop, struct ged_dm_view *gdvp)
 	go_dm_draw_polys(gdvp->gdv_dmp, &gdvp->gdv_view->gv_sdata_polygons, gdvp->gdv_view->gv_mode);
 
     /* Restore to non-rotated, full brightness */
-    DM_NORMAL(gdvp->gdv_dmp);
+    (void)DM_NORMAL(gdvp->gdv_dmp);
     go_draw_faceplate(gop, gdvp);
 
     if (gdvp->gdv_view->gv_data_labels.gdls_draw)
@@ -13526,13 +13533,13 @@ go_refresh(struct ged_obj *gop, struct ged_dm_view *gdvp)
     /* Turn off the zbuffer if the framebuffer is active AND the zbuffer is on. */
     if (gdvp->gdv_fbs.fbs_mode != TCLCAD_OBJ_FB_MODE_OFF &&
 	gdvp->gdv_dmp->dm_zbuffer) {
-	DM_SET_ZBUFFER(gdvp->gdv_dmp, 0);
+	(void)DM_SET_ZBUFFER(gdvp->gdv_dmp, 0);
 	restore_zbuffer = 1;
     }
 
-    DM_DRAW_BEGIN(gdvp->gdv_dmp);
+    (void)DM_DRAW_BEGIN(gdvp->gdv_dmp);
     go_refresh_draw(gop, gdvp, restore_zbuffer);
-    DM_DRAW_END(gdvp->gdv_dmp);
+    (void)DM_DRAW_END(gdvp->gdv_dmp);
 }
 
 
@@ -13556,7 +13563,7 @@ go_refresh_draw(struct ged_obj *gop, struct ged_dm_view *gdvp, int restore_zbuff
 		       gdvp->gdv_dmp->dm_width, gdvp->gdv_dmp->dm_height);
 
 	if (restore_zbuffer) {
-	    DM_SET_ZBUFFER(gdvp->gdv_dmp, 1);
+	    (void)DM_SET_ZBUFFER(gdvp->gdv_dmp, 1);
 	}
 
 	return;
@@ -13572,7 +13579,7 @@ go_refresh_draw(struct ged_obj *gop, struct ged_dm_view *gdvp, int restore_zbuff
 		       gdvp->gdv_dmp->dm_width, gdvp->gdv_dmp->dm_height);
 
 	if (restore_zbuffer) {
-	    DM_SET_ZBUFFER(gdvp->gdv_dmp, 1);
+	    (void)DM_SET_ZBUFFER(gdvp->gdv_dmp, 1);
 	}
     } else {
 	if (gdvp->gdv_fbs.fbs_mode == TCLCAD_OBJ_FB_MODE_UNDERLAY) {
@@ -13586,12 +13593,12 @@ go_refresh_draw(struct ged_obj *gop, struct ged_dm_view *gdvp, int restore_zbuff
 
 	    if (gdvp->gdv_dmp->dm_zbuffer) {
 		bu_log("Set zbuffer on, after underlay\n");
-		DM_SET_ZBUFFER(gdvp->gdv_dmp, 1);
+		(void)DM_SET_ZBUFFER(gdvp->gdv_dmp, 1);
 	    }
 	}
 
 	if (restore_zbuffer) {
-	    DM_SET_ZBUFFER(gdvp->gdv_dmp, 1);
+	    (void)DM_SET_ZBUFFER(gdvp->gdv_dmp, 1);
 	}
 
 	go_draw(gdvp);

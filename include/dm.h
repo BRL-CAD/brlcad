@@ -251,6 +251,7 @@ struct dm {
     int (*dm_genDLists)(struct dm *dmp, size_t range);
     int (*dm_getDisplayImage)(struct dm *dmp, unsigned char **image);
     void (*dm_reshape)(struct dm *dmp, int width, int height);
+    int (*dm_makeCurrent)(struct dm *dmp);
     unsigned long dm_id;          /**< @brief window id */
     int dm_displaylist;		/**< @brief !0 means device has displaylist */
     int dm_stereo;                /**< @brief stereo flag */
@@ -322,6 +323,7 @@ struct dm {
 #define DM_FREEDLISTS(_dmp, _list, _range) _dmp->dm_freeDLists(_dmp, _list, _range)
 #define DM_GEN_DLISTS(_dmp, _range) _dmp->dm_genDLists(_dmp, _range)
 #define DM_GET_DISPLAY_IMAGE(_dmp, _image) _dmp->dm_getDisplayImage(_dmp, _image)
+#define DM_MAKE_CURRENT(_dmp) _dmp->dm_makeCurrent(_dmp)
 
 __BEGIN_DECLS
 

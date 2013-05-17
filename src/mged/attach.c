@@ -542,7 +542,8 @@ mged_attach(struct w_dm *wp, int argc, const char *argv[])
 	dlist_state->dl_active = 1;
     }
 
-    DM_SET_WIN_BOUNDS(dmp, windowbounds);
+    (void)DM_MAKE_CURRENT(dmp);
+    (void)DM_SET_WIN_BOUNDS(dmp, windowbounds);
     mged_fb_open();
 
     return TCL_OK;

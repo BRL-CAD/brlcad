@@ -265,6 +265,13 @@ null_reshape(struct dm *UNUSED(dmp), int UNUSED(width), int UNUSED(height))
 }
 
 
+int
+null_makeCurrent(struct dm *UNUSED(dmp))
+{
+    return 0;
+}
+
+
 struct dm dm_null = {
     null_close,
     null_drawBegin,
@@ -299,6 +306,7 @@ struct dm dm_null = {
     null_genDLists,
     null_getDisplayImage,
     null_reshape,
+    null_makeCurrent,
     0,
     0,				/* no displaylist */
     0,				/* no stereo */

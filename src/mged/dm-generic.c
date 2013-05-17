@@ -642,6 +642,7 @@ common_dm(int argc, const char *argv[])
 	}
 
 	dirty = 1;
+	(void)DM_MAKE_CURRENT(dmp);
 	return DM_SET_BGCOLOR(dmp, r, g, b);
     }
 

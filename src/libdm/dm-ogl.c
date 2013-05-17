@@ -131,6 +131,7 @@ HIDDEN int ogl_freeDLists(struct dm *dmp, unsigned int list, int range);
 HIDDEN int ogl_genDLists(struct dm *dmp, size_t range);
 HIDDEN int ogl_getDisplayImage(struct dm *dmp, unsigned char **image);
 HIDDEN void ogl_reshape(struct dm *dmp, int width, int height);
+HIDDEN int ogl_makeCurrent(struct dm *dmp);
 
 HIDDEN int ogl_setLight(struct dm *dmp, int lighting_on);
 HIDDEN int ogl_setZBuffer(struct dm *dmp, int zbuffer_on);
@@ -170,6 +171,7 @@ struct dm dm_ogl = {
     ogl_genDLists,
     ogl_getDisplayImage, /* display to image function */
     ogl_reshape,
+    ogl_makeCurrent,
     0,
     1,				/* has displaylist */
     0,                          /* no stereo by default */
@@ -248,13 +250,6 @@ ogl_setBGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b
     ((struct ogl_vars *)dmp->dm_vars.priv_vars)->b = b / 255.0;
 
     if (((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.doublebuffer) {
-	if (!glXMakeCurrent(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
-			    ((struct dm_xvars *)dmp->dm_vars.pub_vars)->win,
-			    ((struct ogl_vars *)dmp->dm_vars.priv_vars)->glxc)) {
-	    bu_log("ogl_setBGColor: Couldn't make context current\n");
-	    return TCL_ERROR;
-	}
-
 	glXSwapBuffers(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
 		       ((struct dm_xvars *)dmp->dm_vars.pub_vars)->win);
 	glClearColor(((struct ogl_vars *)dmp->dm_vars.priv_vars)->r,
@@ -285,13 +280,6 @@ ogl_configureWin_guts(struct dm *dmp, int force)
 
     if (dmp->dm_debugLevel)
 	bu_log("ogl_configureWin_guts()\n");
-
-    if (!glXMakeCurrent(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
-			((struct dm_xvars *)dmp->dm_vars.pub_vars)->win,
-			((struct ogl_vars *)dmp->dm_vars.priv_vars)->glxc)) {
-	bu_log("ogl_configureWin_guts: Couldn't make context current\n");
-	return TCL_ERROR;
-    }
 
     XGetWindowAttributes(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
 			 ((struct dm_xvars *)dmp->dm_vars.pub_vars)->win, &xwa);
@@ -430,7 +418,7 @@ ogl_reshape(struct dm *dmp, int width, int height)
     dmp->dm_aspect = (fastf_t)dmp->dm_width / (fastf_t)dmp->dm_height;
 
     if (dmp->dm_debugLevel) {
-	bu_log("ogl_configureWin_guts()\n");
+	bu_log("ogl_reshape()\n");
 	bu_log("width = %d, height = %d\n", dmp->dm_width, dmp->dm_height);
     }
 
@@ -451,8 +439,32 @@ ogl_reshape(struct dm *dmp, int width, int height)
 
 
 HIDDEN int
+ogl_makeCurrent(struct dm *dmp)
+{
+    if (dmp->dm_debugLevel)
+	bu_log("ogl_makeCurrent()\n");
+
+    if (!glXMakeCurrent(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
+			((struct dm_xvars *)dmp->dm_vars.pub_vars)->win,
+			((struct ogl_vars *)dmp->dm_vars.priv_vars)->glxc)) {
+	bu_log("ogl_makeCurrent: Couldn't make context current\n");
+	return TCL_ERROR;
+    }
+
+    return TCL_OK;
+}
+
+
+HIDDEN int
 ogl_configureWin(struct dm *dmp, int force)
 {
+    if (!glXMakeCurrent(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
+			((struct dm_xvars *)dmp->dm_vars.pub_vars)->win,
+			((struct ogl_vars *)dmp->dm_vars.priv_vars)->glxc)) {
+	bu_log("ogl_configureWin: Couldn't make context current\n");
+	return TCL_ERROR;
+    }
+
     return ogl_configureWin_guts(dmp, force);
 }
 
@@ -465,13 +477,6 @@ ogl_setLight(struct dm *dmp, int lighting_on)
 
     dmp->dm_light = lighting_on;
     ((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.lighting_on = dmp->dm_light;
-
-    if (!glXMakeCurrent(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
-			((struct dm_xvars *)dmp->dm_vars.pub_vars)->win,
-			((struct ogl_vars *)dmp->dm_vars.priv_vars)->glxc)) {
-	bu_log("ogl_setLight: Couldn't make context current\n");
-	return TCL_ERROR;
-    }
 
     if (!dmp->dm_light) {
 	/* Turn it off */
@@ -2030,13 +2035,6 @@ ogl_setWinBounds(struct dm *dmp, fastf_t *w)
     if (dmp->dm_debugLevel)
 	bu_log("ogl_setWinBounds()\n");
 
-    if (!glXMakeCurrent(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
-			((struct dm_xvars *)dmp->dm_vars.pub_vars)->win,
-			((struct ogl_vars *)dmp->dm_vars.priv_vars)->glxc)) {
-	bu_log("ogl_setWinBounds: Couldn't make context current\n");
-	return TCL_ERROR;
-    }
-
     dmp->dm_clipmin[0] = w[0];
     dmp->dm_clipmin[1] = w[2];
     dmp->dm_clipmin[2] = w[4];
@@ -2066,13 +2064,6 @@ ogl_setTransparency(struct dm *dmp,
     dmp->dm_transparency = transparency_on;
     ((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.transparency_on = dmp->dm_transparency;
 
-    if (!glXMakeCurrent(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
-			((struct dm_xvars *)dmp->dm_vars.pub_vars)->win,
-			((struct ogl_vars *)dmp->dm_vars.priv_vars)->glxc)) {
-	bu_log("ogl_setTransparency: Couldn't make context current\n");
-	return TCL_ERROR;
-    }
-
     if (transparency_on) {
 	/* Turn it on */
 	glEnable(GL_BLEND);
@@ -2094,13 +2085,6 @@ ogl_setDepthMask(struct dm *dmp,
 
     dmp->dm_depthMask = enable;
 
-    if (!glXMakeCurrent(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
-			((struct dm_xvars *)dmp->dm_vars.pub_vars)->win,
-			((struct ogl_vars *)dmp->dm_vars.priv_vars)->glxc)) {
-	bu_log("ogl_setDepthMask: Couldn't make context current\n");
-	return TCL_ERROR;
-    }
-
     if (enable)
 	glDepthMask(GL_TRUE);
     else
@@ -2118,13 +2102,6 @@ ogl_setZBuffer(struct dm *dmp, int zbuffer_on)
 
     dmp->dm_zbuffer = zbuffer_on;
     ((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.zbuffer_on = dmp->dm_zbuffer;
-
-    if (!glXMakeCurrent(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
-			((struct dm_xvars *)dmp->dm_vars.pub_vars)->win,
-			((struct ogl_vars *)dmp->dm_vars.priv_vars)->glxc)) {
-	bu_log("ogl_setZBuffer: Couldn't make context current\n");
-	return TCL_ERROR;
-    }
 
     if (((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.zbuf == 0) {
 	dmp->dm_zbuffer = 0;
@@ -2147,13 +2124,6 @@ ogl_beginDList(struct dm *dmp, unsigned int list)
 {
     if (dmp->dm_debugLevel)
 	bu_log("ogl_beginDList()\n");
-
-    if (!glXMakeCurrent(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
-			((struct dm_xvars *)dmp->dm_vars.pub_vars)->win,
-			((struct ogl_vars *)dmp->dm_vars.priv_vars)->glxc)) {
-	bu_log("ogl_beginDList: Couldn't make context current\n");
-	return TCL_ERROR;
-    }
 
     glNewList((GLuint)list, GL_COMPILE);
     return TCL_OK;
@@ -2184,13 +2154,6 @@ ogl_freeDLists(struct dm *dmp, unsigned int list, int range)
     if (dmp->dm_debugLevel)
 	bu_log("ogl_freeDLists()\n");
 
-    if (!glXMakeCurrent(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
-			((struct dm_xvars *)dmp->dm_vars.pub_vars)->win,
-			((struct ogl_vars *)dmp->dm_vars.priv_vars)->glxc)) {
-	bu_log("ogl_freeDLists: Couldn't make context current\n");
-	return TCL_ERROR;
-    }
-
     glDeleteLists((GLuint)list, (GLsizei)range);
     return TCL_OK;
 }
@@ -2201,13 +2164,6 @@ ogl_genDLists(struct dm *dmp, size_t range)
 {
     if (dmp->dm_debugLevel)
 	bu_log("ogl_freeDLists()\n");
-
-    if (!glXMakeCurrent(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
-			((struct dm_xvars *)dmp->dm_vars.pub_vars)->win,
-			((struct ogl_vars *)dmp->dm_vars.priv_vars)->glxc)) {
-	bu_log("ogl_freeDLists: Couldn't make context current\n");
-	return TCL_ERROR;
-    }
 
     return glGenLists((GLsizei)range);
 }
@@ -2246,18 +2202,7 @@ ogl_getDisplayImage(struct dm *dmp, unsigned char **image)
 
 	pixels = bu_calloc(width * height, sizeof(GLuint), "pixels");
 
-#if defined(DM_WGL)
-	wglMakeCurrent(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc,
-		       ((struct wgl_vars *)dmp->dm_vars.priv_vars)->glxc);
-#else
-	glXMakeCurrent(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
-		       ((struct dm_xvars *)dmp->dm_vars.pub_vars)->win,
-		       ((struct ogl_vars *)dmp->dm_vars.priv_vars)->glxc);
-#endif
-
 	{
-
-
 	    glReadBuffer(GL_FRONT);
 #if defined(DM_WGL)
 	    /* XXX GL_UNSIGNED_INT_8_8_8_8 is currently not
