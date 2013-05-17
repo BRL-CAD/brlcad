@@ -58,8 +58,8 @@ struct grip_specific {
 #define GRIP_NULL ((struct grip_specific *)0)
 
 const struct bu_structparse rt_grp_parse[] = {
-    { "%f", 3, "V", bu_offsetofarray(struct rt_grip_internal, center, point_t, X), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    { "%f", 3, "N", bu_offsetofarray(struct rt_grip_internal, normal, vect_t, X), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    { "%f", 3, "V", bu_offsetofarray(struct rt_grip_internal, center, fastf_t, X), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    { "%f", 3, "N", bu_offsetofarray(struct rt_grip_internal, normal, fastf_t, X), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     { "%f", 1, "L", bu_offsetof(struct rt_grip_internal, mag), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     { {'\0', '\0', '\0', '\0'}, 0, (char *)NULL, 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
