@@ -34,7 +34,7 @@ __BEGIN_DECLS
 static fastf_t
 brep_avg_curve_bbox_diagonal_len(ON_Brep *brep)
 {
-    fastf_t avg_curve_len;
+    fastf_t avg_curve_len = 0.0;
     int i, num_curves = 0;
 
     for (i = 0; i < brep->m_E.Count(); ++i) {
