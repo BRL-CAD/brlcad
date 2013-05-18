@@ -111,6 +111,7 @@ Make_name(char *ptr, const char *form, const char *base, int number)
     bu_strlcat(ptr, scrat, NAMESIZE);
 }
 
+
 void
 Readpoints(void)
 {
@@ -142,6 +143,7 @@ Readpoints(void)
 	printf("X Y Z (^D for end): ");
     }
 }
+
 
 void
 Names(void)
@@ -208,6 +210,7 @@ Names(void)
     ptr->elbflu_r[0] = '\0';
 }
 
+
 void
 Normals(void)
 {
@@ -240,6 +243,7 @@ Normals(void)
 	ptr = ptr->next;
     }
 }
+
 
 void
 Adjust(void)
@@ -288,6 +292,7 @@ Adjust(void)
     VMOVE(ptr->p1, ptr->p);
     VMOVE(ptr->p2, ptr->p);
 }
+
 
 void
 Pipes(void)
@@ -452,6 +457,7 @@ Pipes(void)
     }
 }
 
+
 void
 Elbows(void)	/* make a tubing elbow and fluid elbow */
 {
@@ -542,6 +548,7 @@ Elbows(void)	/* make a tubing elbow and fluid elbow */
     }
 }
 
+
 void
 Groups(void)
 {
@@ -601,6 +608,7 @@ Groups(void)
 	}
     }
 }
+
 
 int
 main(int argc, char **argv)
@@ -757,6 +765,7 @@ main(int argc, char **argv)
     return 0;
 }
 
+
 void
 Usage(void)
 {
@@ -769,6 +778,7 @@ Usage(void)
     fprintf(stderr, "   -n -> nothing at the corners\n");
     fprintf(stderr, "   -c -> cable (no fluid)\n");
 }
+
 
 /*
  * Local Variables:

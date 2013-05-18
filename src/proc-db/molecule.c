@@ -44,6 +44,7 @@ struct sphere  {
     int s_atom_type;		/* Atom Type */
 };
 
+
 struct sphere *s_list = (struct sphere *) 0;
 struct sphere *s_head = (struct sphere *) 0;
 
@@ -52,6 +53,7 @@ struct atoms  {
     char a_name[128];
     unsigned char red, green, blue;
 };
+
 
 struct atoms atom_list[50];
 
@@ -88,6 +90,7 @@ main(int argc, char **argv)
     return 0;
 }
 
+
 /* File format from stdin
  *
  * For a ATOM DATA_TYPE ATOM_ID ATOM_NAME RED GREEN BLUE
@@ -123,7 +126,7 @@ read_data(void)
 		if (ret == 0)
 		    perror("scanf");
 		if (i < 0 || i >= 50) {
-		    fprintf(stderr, "Atom index value %d is out of bounds [0,50)\n", i);
+		    fprintf(stderr, "Atom index value %d is out of bounds [0, 50)\n", i);
 		    return;
 		}
 		ret = scanf("%128s", atom_list[i].a_name);
@@ -181,6 +184,7 @@ read_data(void)
     }
 }
 
+
 void
 process_sphere(int id, fastf_t *center, double rad, int sph_type)
 {
@@ -222,6 +226,7 @@ process_sphere(int id, fastf_t *center, double rad, int sph_type)
 	s_list = newsph;
     }
 }
+
 
 int
 make_bond(int sp1, int sp2)
@@ -273,6 +278,7 @@ make_bond(int sp1, int sp2)
 
     return 0;		/* OK */
 }
+
 
 /*
  * Local Variables:

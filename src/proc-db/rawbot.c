@@ -55,6 +55,7 @@ void usage(const char *progname)
     bu_exit(-1, NULL);
 }
 
+
 int main(int argc, char *argv[])
 {
     char inputString[512];
@@ -176,6 +177,7 @@ int main(int argc, char *argv[])
 
     return 0;
 }
+
 
 /*
  * Local Variables:

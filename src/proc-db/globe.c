@@ -44,6 +44,7 @@ void usage(void)
     bu_exit(-1, NULL);
 }
 
+
 int
 main(int ac, char *av[])
 {
@@ -169,6 +170,7 @@ main(int ac, char *av[])
     wdb_close(db_fp);
     return 0;
 }
+
 
 /*
  * Local Variables:

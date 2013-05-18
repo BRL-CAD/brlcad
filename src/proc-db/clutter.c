@@ -94,7 +94,7 @@ main(int argc, char **argv)
 
 #define rand_num(p)	(BN_UNIF_DOUBLE(p)+0.5)
 
-    if (argc > 1){
+    if (argc > 1) {
 	bu_exit(1, "Usage: %s\n", argv[0]);
     }
 
@@ -143,7 +143,7 @@ main(int argc, char **argv)
 		    height = prim_stack(name, x, y, size);
 		    break;
 	    }
-	    if (height > maxheight)  maxheight = height;
+	    if (height > maxheight) maxheight = height;
 	}
     }
 
@@ -173,6 +173,7 @@ main(int argc, char **argv)
 
     return 0;
 }
+
 
 double
 crystal_stack(char *cname, double xc, double yc, double size)
@@ -213,7 +214,7 @@ crystal_stack(char *cname, double xc, double yc, double size)
 	nsolids = 3 + (rand() & 7);
 
 	high = crystal_layer(name, center, size/2, maj, min, rand1 * 90.0, rand2 * 8.0 + 2.0, nsolids);
-	if (high > height)  height = high;
+	if (high > height) height = high;
     }
 
     /* Build the crystal union */
@@ -237,6 +238,7 @@ crystal_stack(char *cname, double xc, double yc, double size)
 	     mtab[i].mt_name, mtab[i].mt_param, rgb, 0);
     return height;
 }
+
 
 double
 crystal_layer(char *crname, fastf_t *center, double radius, fastf_t *maj, fastf_t *min, double var, double ratio, int nsolids)
@@ -274,7 +276,7 @@ crystal_layer(char *crname, fastf_t *center, double radius, fastf_t *maj, fastf_
 	if (rand() & 1) {
 	    maj_axis = maj;
 	    min_axis = min;
-	}  else  {
+	} else {
 	    maj_axis = min;
 	    min_axis = maj;
 	}
@@ -324,6 +326,7 @@ crystal_layer(char *crname, fastf_t *center, double radius, fastf_t *maj, fastf_
     return height;
 }
 
+
 void
 do_plate(char *name, double xc, double yc, double size)
 
@@ -343,12 +346,13 @@ do_plate(char *name, double xc, double yc, double size)
     VSET(maxpt, xc+esz, yc+esz, -1);
     mk_rpp(outfp, sname, minpt, maxpt);
 
-    /* Needs to be in a region, with color!  */
+    /* Needs to be in a region, with color! */
     get_rgb(rgb);
     i = PICK_MAT;
     mk_region1(outfp, name, sname,
 	       mtab[i].mt_name, mtab[i].mt_param, rgb);
 }
+
 
 double
 ball_stack(char *bname, double xc, double yc, double size)
@@ -382,6 +386,7 @@ ball_stack(char *bname, double xc, double yc, double size)
 
     return n*size;
 }
+
 
 double
 prim_stack(char *pname, double xc, double yc, double size)
@@ -463,6 +468,7 @@ prim_stack(char *pname, double xc, double yc, double size)
     return vpos;
 }
 
+
 void
 do_rings(char *ringname, fastf_t *center, double r1, double r2, double incr, int n)
 {
@@ -492,6 +498,7 @@ do_rings(char *ringname, fastf_t *center, double r1, double r2, double incr, int
     /* Build the group that holds all the regions */
     mk_lfcomb(outfp, ringname, &head, 0);
 }
+
 
 /*
  * Local Variables:

@@ -51,6 +51,7 @@ void do_light(char *name, fastf_t *pos, fastf_t *dir_at, int da_flag, double r, 
 
 struct rt_wdb *outfp;
 
+
 int
 main(int argc, char **argv)
 {
@@ -80,6 +81,7 @@ main(int argc, char **argv)
 
     return 0;
 }
+
 
 void
 do_cell(struct val *vp, double xc, double yc)
@@ -153,6 +155,7 @@ pnorms(fastf_t (*norms)[3], fastf_t (*verts)[3], fastf_t *out, int npts)
     }
 }
 
+
 void
 do_light(char *name, fastf_t *pos, fastf_t *dir_at, int da_flag, double r, unsigned char *rgb)
 
@@ -193,6 +196,7 @@ do_light(char *name, fastf_t *pos, fastf_t *dir_at, int da_flag, double r, unsig
 
     mk_region1(outfp, name, nbuf, "light", "shadows=1", rgb);
 }
+
 
 /*
  * Local Variables:

@@ -185,7 +185,7 @@ main(int argc, char **argv)
 	    case 'd' : rt_g.debug |= DEBUG_MEM | DEBUG_MEM_FULL; break;
 	    default	:
 		fprintf(stderr,
-			      "Usage: %s [-d] > database.g\n", *argv);
+			"Usage: %s [-d] > database.g\n", *argv);
 		return -1;
 	}
     }
@@ -228,6 +228,7 @@ main(int argc, char **argv)
 
     return 0;
 }
+
 
 /*
  * Local Variables:

@@ -65,6 +65,7 @@ main(int argc, char **argv)
     return 0;
 }
 
+
 /* Make a leaf node out of an ARB4 */
 void
 do_leaf(char *name)
@@ -108,6 +109,7 @@ pnorms(fastf_t (*norms)[3], fastf_t (*verts)[3], fastf_t *centroid, int npts)
 	VMOVE(norms[i], n);
     }
 }
+
 
 void
 do_tree(char *name, char *lname, int level)
@@ -157,6 +159,7 @@ do_tree(char *name, char *lname, int level)
 	do_tree(nm, lname, level-1);
     }
 }
+
 
 /*
  * Local Variables:

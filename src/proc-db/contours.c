@@ -45,19 +45,19 @@ main(int argc, char *argv[])
 
     pl_3space(stdout, -32768,  -32768,  -32768, 32767, 32767, 32767);
     while (!feof(stdin)) {
-	if (scanf("%d %d %128s", &npts, &z, name) != 3)  break;
+	if (scanf("%d %d %128s", &npts, &z, name) != 3) break;
 	if(npts < 0) {
-	    bu_log("%s: Negative # of pts\n",argv[0]);
+	    bu_log("%s: Negative # of pts\n", argv[0]);
 	    return -1;
 	}
 	if (npts >= INT_MAX) {
-	    bu_log("%s: Too many points\n",argv[0]);
+	    bu_log("%s: Too many points\n", argv[0]);
 	    return -1;
 	}
 
 	for (i=0; i<npts; i++) {
 	    if (scanf("%d %d", &x, &y) != 2)
-		fprintf(stderr, "%s: bad xy\n",argv[0]);
+		fprintf(stderr, "%s: bad xy\n", argv[0]);
 	    if (i==0)
 		pl_3move(stdout, x, y, z);
 	    else
@@ -68,6 +68,7 @@ main(int argc, char *argv[])
 
     return 0;
 }
+
 
 /*
  * Local Variables:

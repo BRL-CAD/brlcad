@@ -153,6 +153,7 @@ main(int argc, char **argv)
     return 0;
 }
 
+
 void
 make_room(char *rname, fastf_t *imin, fastf_t *imax, fastf_t *thickness, struct wmember *headp)
 
@@ -181,6 +182,7 @@ make_room(char *rname, fastf_t *imin, fastf_t *imax, fastf_t *thickness, struct 
     mk_lfcomb(outfp, rname, &head, 1);
     (void)mk_addmember(rname, &(headp->l), NULL, WMOP_UNION);
 }
+
 
 void
 make_walls(char *rname, fastf_t *imin, fastf_t *imax, fastf_t *thickness, int bits, struct wmember *headp)
@@ -217,7 +219,7 @@ make_walls(char *rname, fastf_t *imin, fastf_t *imax, fastf_t *thickness, int bi
 	omin[Y] -= thickness[Y];
 
     for (mask=8; mask > 0; mask >>= 1) {
-	if ((bits & mask) == 0)  continue;
+	if ((bits & mask) == 0) continue;
 
 	VMOVE(wmin, omin);
 	VMOVE(wmax, omax);
@@ -251,6 +253,7 @@ make_walls(char *rname, fastf_t *imin, fastf_t *imax, fastf_t *thickness, int bi
     mk_lfcomb(outfp, rname, &head, 1);
     (void)mk_addmember(rname, &(headp->l), NULL, WMOP_UNION);
 }
+
 
 void
 make_pillar(char *prefix, int ix, int iy, fastf_t *center, fastf_t *lwh, struct wmember *headp)
@@ -294,6 +297,7 @@ make_pillar(char *prefix, int ix, int iy, fastf_t *center, fastf_t *lwh, struct 
     (void)mk_addmember(pilname, &(headp->l), NULL, WMOP_UNION);
 }
 
+
 void
 make_carpet(char *rname, fastf_t *min, fastf_t *max, char *file, struct wmember *headp)
 {
@@ -315,6 +319,7 @@ make_carpet(char *rname, fastf_t *min, fastf_t *max, char *file, struct wmember 
 
     (void)mk_addmember(rname, &(headp->l), NULL, WMOP_UNION);
 }
+
 
 /*
  * Local Variables:

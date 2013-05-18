@@ -338,6 +338,7 @@ Face_X_Event::Render_Curves()
     return 0; /* XXX - unused */
 }
 
+
 /**
  * CurveCurveIntersect
  *
@@ -575,6 +576,7 @@ MakeLoops(
 
     return 0;/* XXX - unused */
 }
+
 
 /**
  * IsClosed
@@ -976,6 +978,7 @@ BrepBrepIntersect(
     return false;
 }
 
+
 namespace si {
 
     enum {
@@ -1002,6 +1005,7 @@ TwistedCubeEdgeCurve(const ON_3dPoint& from, const ON_3dPoint& to)
     return c3d;
 }
 
+
 void
 MakeTwistedCubeEdge(ON_Brep& brep, int from, int to, int curve)
 {
@@ -1010,6 +1014,7 @@ MakeTwistedCubeEdge(ON_Brep& brep, int from, int to, int curve)
     ON_BrepEdge& edge = brep.NewEdge(v0, v1, curve);
     edge.m_tolerance = 0.0; // exact!
 }
+
 
 void
 MakeTwistedCubeEdges1(ON_Brep& brep)
@@ -1020,6 +1025,7 @@ MakeTwistedCubeEdges1(ON_Brep& brep)
     MakeTwistedCubeEdge(brep, A, D, AD);
 }
 
+
 void
 MakeTwistedCubeEdges2(ON_Brep& brep)
 {
@@ -1028,6 +1034,7 @@ MakeTwistedCubeEdges2(ON_Brep& brep)
     MakeTwistedCubeEdge(brep, G, si::H, GH);
     MakeTwistedCubeEdge(brep, E, si::H, EH);
 }
+
 
 ON_Surface*
 TwistedCubeSideSurface(const ON_3dPoint& SW, const ON_3dPoint& SE, const ON_3dPoint& NE, const ON_3dPoint& NW)
@@ -1052,6 +1059,7 @@ TwistedCubeSideSurface(const ON_3dPoint& SW, const ON_3dPoint& SE, const ON_3dPo
 
     return pNurbsSurface;
 }
+
 
 ON_Curve*
 TwistedCubeTrimmingCurve(const ON_Surface& s,
@@ -1165,6 +1173,7 @@ MakeTwistedCubeTrimmingLoop(ON_Brep& brep,
     return loop.m_loop_index;
 }
 
+
 void
 MakeTwistedCubeFace(ON_Brep& brep,
 		    int surf,
@@ -1187,6 +1196,7 @@ MakeTwistedCubeFace(ON_Brep& brep,
     face.m_bRev = (orientation == -1);
 }
 
+
 void
 MakeTwistedCubeFaces1(ON_Brep& brep)
 {
@@ -1200,6 +1210,7 @@ MakeTwistedCubeFaces1(ON_Brep& brep)
 			AD, -1);
 }
 
+
 void
 MakeTwistedCubeFaces2(ON_Brep& brep)
 {
@@ -1212,6 +1223,7 @@ MakeTwistedCubeFaces2(ON_Brep& brep)
 			GH, -1,
 			FG, -1);
 }
+
 
 ON_Brep*
 MakeTwistedSquare1(ON_TextLog& error_log)
@@ -1348,6 +1360,7 @@ main()
     BrepBrepIntersect(&brep1, &brep2, 1e-3, 1e-9);
     return 0;
 }
+
 
 /** @} */
 /*

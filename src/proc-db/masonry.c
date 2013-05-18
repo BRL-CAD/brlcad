@@ -135,6 +135,7 @@ set_translate(char *s)
     MAT_DELTAS(trans_matrix, dx*unit_conv, dy*unit_conv, dz*unit_conv);
 }
 
+
 /*
  * B U I L D H R O T
  *
@@ -194,6 +195,7 @@ buildHrot(matp_t mat, double alpha, double beta, double ggamma)
     mat[9] = calpha * sbeta * sgamma + salpha * cgamma;
     mat[10] = calpha * cbeta;
 }
+
 
 void
 set_rotate(char *s)
@@ -418,6 +420,7 @@ h_segs(double sz, double ez, struct boardseg *seglist, double sx, double ex)
     }
 }
 
+
 void
 mksolid(struct rt_wdb *fd, point_t (*pts), struct wmember *wm_hd)
 {
@@ -430,6 +433,7 @@ mksolid(struct rt_wdb *fd, point_t (*pts), struct wmember *wm_hd)
     if (trans_matrix)
 	MAT_COPY(wm->wm_mat, trans_matrix);
 }
+
 
 void
 mk_h_rpp(struct rt_wdb *fd, struct wmember *wm_hd, double xmin, double xmax, double ymin, double ymax, double zmin, double zmax)
@@ -448,6 +452,7 @@ mk_h_rpp(struct rt_wdb *fd, struct wmember *wm_hd, double xmin, double xmax, dou
     mksolid(fd, pts, wm_hd);
 }
 
+
 void
 mk_v_rpp(struct rt_wdb *fd, struct wmember *wm_hd, double xmin, double xmax, double ymin, double ymax, double zmin, double zmax)
 {
@@ -464,6 +469,7 @@ mk_v_rpp(struct rt_wdb *fd, struct wmember *wm_hd, double xmin, double xmax, dou
 
     mksolid(fd, pts, wm_hd);
 }
+
 
 /*
  * put the sides on a frame opening
@@ -793,6 +799,7 @@ frame(struct rt_wdb *fd)
 	     stud_properties[0], stud_properties[1], color, 0);
 }
 
+
 void
 sheetrock(struct rt_wdb *fd)
 {
@@ -839,6 +846,7 @@ sheetrock(struct rt_wdb *fd)
     mk_lcomb(fd, sol_name, &wm_hd, 1, (char *)NULL, (char *)NULL,
 	     color, 0);
 }
+
 
 void
 mortar_brick(struct rt_wdb *UNUSED(fd))
@@ -1040,6 +1048,7 @@ int main(int ac, char **av)
     wdb_close(db_fd);
     return 0;
 }
+
 
 /*
  * Local Variables:

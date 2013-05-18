@@ -232,6 +232,7 @@ int main(int argc, char **argv)
     return 0;
 }
 
+
 void usage(char *n)
 {
     printf(
@@ -241,6 +242,7 @@ void usage(char *n)
 	  i -- use interactive mode\n\
 	  f -- specify output file\n\n", n);
 }
+
 
 void initializeInfo(params_t *p, int inter, char *name, int depth)
 {
@@ -393,6 +395,7 @@ void initializeInfo(params_t *p, int inter, char *name, int depth)
     MAT_IDN(IDENT);
 }
 
+
 void createSphereflake(params_t *p)
 {
     mat_t trans;
@@ -415,6 +418,7 @@ void createSphereflake(params_t *p)
     printf("\nSphereFlake created");
 
 }
+
 
 void createLights(params_t *p)
 {
@@ -457,6 +461,7 @@ void createLights(params_t *p)
     printf("\nLights created");
 }
 
+
 void createPlane(params_t *p)
 {
     char name[MAX_INPUT_LENGTH];
@@ -475,6 +480,7 @@ void createPlane(params_t *p)
     printf("\nPlane created");
 }
 
+
 void createEnvironMap(params_t *UNUSED(p))
 {
     char name[MAX_INPUT_LENGTH];
@@ -489,6 +495,7 @@ void createEnvironMap(params_t *UNUSED(p))
     printf("\nEnvironment map created");
 
 }
+
 
 void createScene(params_t *p)
 {
@@ -511,6 +518,7 @@ void createScene(params_t *p)
     printf("\nScene created (FILE: %s)\n", p->fileName);
 }
 
+
 void printMatrix(char *n, fastf_t *m)
 {
     int i = 0;
@@ -521,6 +529,7 @@ void printMatrix(char *n, fastf_t *m)
     }
     printf("\n-----------\n");
 }
+
 
 void getTrans(mat_t (*t), int theta, int phi, fastf_t radius)
 {
@@ -547,6 +556,7 @@ void getTrans(mat_t (*t), int theta, int phi, fastf_t radius)
     memcpy(*t, newPos, sizeof(newPos));
 }
 
+
 void getYRotMat(mat_t (*t), fastf_t theta)
 {
     fastf_t sin_ = sin(D2R(theta));
@@ -562,6 +572,7 @@ void getYRotMat(mat_t (*t), fastf_t theta)
     memcpy(*t, r, sizeof(*t));
 }
 
+
 void getZRotMat(mat_t (*t), fastf_t phi)
 {
     fastf_t sin_ = sin(D2R(phi));
@@ -576,6 +587,7 @@ void getZRotMat(mat_t (*t), fastf_t phi)
     r[15] = 1;
     memcpy(*t, r, sizeof(*t));
 }
+
 
 /*
   void makeFlake(int depth, mat_t *trans, point_t center, fastf_t radius, float delta, int maxDepth)
@@ -615,6 +627,7 @@ void makeFlake(int depth, mat_t (*trans), fastf_t *center, fastf_t radius, doubl
 	makeFlake(depth+1, &temp, pcent, newRadius, delta, maxDepth);
     }
 }
+
 
 /*
  * Local Variables:

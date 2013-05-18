@@ -49,6 +49,7 @@ void usage(void)
     fprintf(stderr, "Usage: %s db_file.g\n", progname);
 }
 
+
 int
 main(int ac, char *av[])
 {
@@ -147,6 +148,7 @@ main(int ac, char *av[])
     wdb_close(db_fp);
     return 0;
 }
+
 
 /*
  * Local Variables:

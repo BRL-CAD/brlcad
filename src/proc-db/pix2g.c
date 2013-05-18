@@ -70,6 +70,7 @@ void usage(void)
     bu_exit(-1, NULL);
 }
 
+
 void computeScanline(int UNUSED(pid), genptr_t UNUSED(arg)) {
     int i=0;
     /* working pixel component value */
@@ -163,6 +164,7 @@ void computeScanline(int UNUSED(pid), genptr_t UNUSED(arg)) {
     }
 
 }
+
 
 int
 main(int ac, char *av[])
@@ -267,6 +269,7 @@ main(int ac, char *av[])
 
     return 0;
 }
+
 
 /*
  * Local Variables:
