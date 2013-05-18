@@ -144,9 +144,9 @@ void writePipe
 	point_t pipePoint;
 
 	if (translate) {
-	  VADD2(pipePoint, form.bot_pt[i-1], form.tr_vec);
+	  VADD2(pipePoint, form.data.pt[i-1], form.tr_vec);
 	} else {
-	  VMOVE(pipePoint, form.bot_pt[i-1]);
+	  VMOVE(pipePoint, form.data.pt[i-1]);
 	}
 
 	VSCALE(pipePoint, pipePoint, IntavalUnitInMm);
@@ -176,11 +176,11 @@ void writeRectangularBox
     point_t min, max;
 
     if (translate) {
-      VADD2(min, form.bot_pt[0], form.tr_vec);
-      VADD2(max, form.bot_pt[1], form.tr_vec);
+      VADD2(min, form.data.pt[0], form.tr_vec);
+      VADD2(max, form.data.pt[1], form.tr_vec);
     } else {
-      VMOVE(min, form.bot_pt[0]);
-      VMOVE(max, form.bot_pt[1]);
+      VMOVE(min, form.data.pt[0]);
+      VMOVE(max, form.data.pt[1]);
     }
 
     VSCALE(min, min, IntavalUnitInMm);
@@ -205,16 +205,16 @@ void writeSolidBot
     fastf_t vertices[MAX_NPTS * 3];
 
     if (translate) {
-	for(size_t i = 0; i < form.bot_num_vertices; ++i) {
-	    vertices[i * 3]     = (form.bot_vertices[i * 3] + form.tr_vec[0]) * IntavalUnitInMm;
-	    vertices[i * 3 + 1] = (form.bot_vertices[i * 3 + 1] + form.tr_vec[1]) * IntavalUnitInMm;
-	    vertices[i * 3 + 2] = (form.bot_vertices[i * 3 + 2] + form.tr_vec[2]) * IntavalUnitInMm;
+	for(size_t i = 0; i < form.data.bot.num_vertices; ++i) {
+	    vertices[i * 3]     = (form.data.bot.vertices[i * 3] + form.tr_vec[0]) * IntavalUnitInMm;
+	    vertices[i * 3 + 1] = (form.data.bot.vertices[i * 3 + 1] + form.tr_vec[1]) * IntavalUnitInMm;
+	    vertices[i * 3 + 2] = (form.data.bot.vertices[i * 3 + 2] + form.tr_vec[2]) * IntavalUnitInMm;
 	}
     } else {
-	for(size_t i = 0; i < form.bot_num_vertices; ++i) {
-	    vertices[i * 3]     = form.bot_vertices[i * 3] * IntavalUnitInMm;
-	    vertices[i * 3 + 1] = form.bot_vertices[i * 3 + 1] * IntavalUnitInMm;
-	    vertices[i * 3 + 2] = form.bot_vertices[i * 3 + 2] * IntavalUnitInMm;
+	for(size_t i = 0; i < form.data.bot.num_vertices; ++i) {
+	    vertices[i * 3]     = form.data.bot.vertices[i * 3] * IntavalUnitInMm;
+	    vertices[i * 3 + 1] = form.data.bot.vertices[i * 3 + 1] * IntavalUnitInMm;
+	    vertices[i * 3 + 2] = form.data.bot.vertices[i * 3 + 2] * IntavalUnitInMm;
 	}
     }
 
@@ -225,10 +225,10 @@ void writeSolidBot
 	   RT_BOT_SOLID,
 	   RT_BOT_UNORIENTED,
 	   0,
-	   form.bot_num_vertices,
-	   form.bot_num_faces,
+	   form.data.bot.num_vertices,
+	   form.data.bot.num_faces,
 	   vertices,
-	   form.bot_faces,
+	   form.data.bot.faces,
 	   0,
 	   0);
 
@@ -253,10 +253,10 @@ void writeRingModeBox
 
     if (translate) {
 	for(size_t i = 0; i < form.npts; ++i)
-	  VADD2(outer[i], form.bot_pt[i], form.tr_vec);
+	  VADD2(outer[i], form.data.pt[i], form.tr_vec);
     } else {
       for(size_t i = 0; i < form.npts; ++i) {
-	  VMOVE(outer[i], form.bot_pt[i]);
+	  VMOVE(outer[i], form.data.pt[i]);
       }
     }
 
@@ -439,25 +439,25 @@ void writePlateBot
     fastf_t vertices[MAX_NPTS * 3];
 
     if (translate) {
-	for(size_t i = 0; i < form.bot_num_vertices; ++i) {
-	    vertices[i * 3]     = (form.bot_vertices[i * 3] + form.tr_vec[0]) * IntavalUnitInMm;
-	    vertices[i * 3 + 1] = (form.bot_vertices[i * 3 + 1] + form.tr_vec[1]) * IntavalUnitInMm;
-	    vertices[i * 3 + 2] = (form.bot_vertices[i * 3 + 2] + form.tr_vec[2]) * IntavalUnitInMm;
+	for(size_t i = 0; i < form.data.bot.num_vertices; ++i) {
+	    vertices[i * 3]     = (form.data.bot.vertices[i * 3] + form.tr_vec[0]) * IntavalUnitInMm;
+	    vertices[i * 3 + 1] = (form.data.bot.vertices[i * 3 + 1] + form.tr_vec[1]) * IntavalUnitInMm;
+	    vertices[i * 3 + 2] = (form.data.bot.vertices[i * 3 + 2] + form.tr_vec[2]) * IntavalUnitInMm;
 	}
     } else {
-	for(size_t i = 0; i<form.bot_num_vertices; ++i) {
-	    vertices[i * 3]     = form.bot_vertices[i * 3] * IntavalUnitInMm;
-	    vertices[i * 3 + 1] = form.bot_vertices[i * 3 + 1] * IntavalUnitInMm;
-	    vertices[i * 3 + 2] = form.bot_vertices[i * 3 + 2] * IntavalUnitInMm;
+	for(size_t i = 0; i<form.data.bot.num_vertices; ++i) {
+	    vertices[i * 3]     = form.data.bot.vertices[i * 3] * IntavalUnitInMm;
+	    vertices[i * 3 + 1] = form.data.bot.vertices[i * 3 + 1] * IntavalUnitInMm;
+	    vertices[i * 3 + 2] = form.data.bot.vertices[i * 3 + 2] * IntavalUnitInMm;
 	}
     }
 
     fastf_t thickness[MAX_TRIANGLES];
 
-    for(size_t i = 0; i < form.bot_num_faces; ++i)
+    for(size_t i = 0; i < form.data.bot.num_faces; ++i)
 	thickness[i] = form.thickness * IntavalUnitInMm;
 
-    bu_bitv* faceMode = bu_bitv_new(form.bot_num_faces);
+    bu_bitv* faceMode = bu_bitv_new(form.data.bot.num_faces);
 
     sprintf(name, "s%lu.pbot", (long unsigned)++bot_counter);
 
@@ -466,10 +466,10 @@ void writePlateBot
 	   RT_BOT_PLATE,
 	   RT_BOT_UNORIENTED,
 	   0,
-	   form.bot_num_vertices,
-	   form.bot_num_faces,
+	   form.data.bot.num_vertices,
+	   form.data.bot.num_faces,
 	   vertices,
-	   form.bot_faces,
+	   form.data.bot.faces,
 	   thickness,
 	   faceMode);
 
@@ -492,12 +492,12 @@ void writeCone
     vect_t base, height;
 
     if (translate) {
-      VADD2(base, form.bot_pt[0], form.tr_vec);
+      VADD2(base, form.data.pt[0], form.tr_vec);
     } else {
-      VMOVE(base, form.bot_pt[0]);
+      VMOVE(base, form.data.pt[0]);
     }
 
-    VSUB2(height, form.bot_pt[1], form.bot_pt[0]);
+    VSUB2(height, form.data.pt[1], form.data.pt[0]);
 
     VSCALE(base, base, IntavalUnitInMm);
     VSCALE(height, height, IntavalUnitInMm);
@@ -524,12 +524,12 @@ void writeCylinder
     vect_t base, height;
 
     if (translate) {
-      VADD2(base, form.bot_pt[0], form.tr_vec);
+      VADD2(base, form.data.pt[0], form.tr_vec);
     } else {
-      VMOVE(base, form.bot_pt[0]);
+      VMOVE(base, form.data.pt[0]);
     }
 
-    VSUB2(height, form.bot_pt[1], form.bot_pt[0]);
+    VSUB2(height, form.data.pt[1], form.data.pt[0]);
 
     VSCALE(base, base, IntavalUnitInMm);
     VSCALE(height, height, IntavalUnitInMm);
@@ -555,23 +555,23 @@ void writeArb8
     point_t shuffle[8];
 
     if (translate) {
-      VADD2(shuffle[0], form.bot_pt[0], form.tr_vec);
-      VADD2(shuffle[1], form.bot_pt[7], form.tr_vec);
-      VADD2(shuffle[2], form.bot_pt[3], form.tr_vec);
-      VADD2(shuffle[3], form.bot_pt[1], form.tr_vec);
-      VADD2(shuffle[4], form.bot_pt[6], form.tr_vec);
-      VADD2(shuffle[5], form.bot_pt[5], form.tr_vec);
-      VADD2(shuffle[6], form.bot_pt[4], form.tr_vec);
-      VADD2(shuffle[7], form.bot_pt[2], form.tr_vec);
+      VADD2(shuffle[0], form.data.pt[0], form.tr_vec);
+      VADD2(shuffle[1], form.data.pt[7], form.tr_vec);
+      VADD2(shuffle[2], form.data.pt[3], form.tr_vec);
+      VADD2(shuffle[3], form.data.pt[1], form.tr_vec);
+      VADD2(shuffle[4], form.data.pt[6], form.tr_vec);
+      VADD2(shuffle[5], form.data.pt[5], form.tr_vec);
+      VADD2(shuffle[6], form.data.pt[4], form.tr_vec);
+      VADD2(shuffle[7], form.data.pt[2], form.tr_vec);
     } else {
-      VMOVE(shuffle[0], form.bot_pt[0]);
-      VMOVE(shuffle[1], form.bot_pt[7]);
-      VMOVE(shuffle[2], form.bot_pt[3]);
-      VMOVE(shuffle[3], form.bot_pt[1]);
-      VMOVE(shuffle[4], form.bot_pt[6]);
-      VMOVE(shuffle[5], form.bot_pt[5]);
-      VMOVE(shuffle[6], form.bot_pt[4]);
-      VMOVE(shuffle[7], form.bot_pt[2]);
+      VMOVE(shuffle[0], form.data.pt[0]);
+      VMOVE(shuffle[1], form.data.pt[7]);
+      VMOVE(shuffle[2], form.data.pt[3]);
+      VMOVE(shuffle[3], form.data.pt[1]);
+      VMOVE(shuffle[4], form.data.pt[6]);
+      VMOVE(shuffle[5], form.data.pt[5]);
+      VMOVE(shuffle[6], form.data.pt[4]);
+      VMOVE(shuffle[7], form.data.pt[2]);
     }
 
     for (size_t i = 0; i < 8; ++i) {
