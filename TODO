@@ -18,6 +18,10 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
+* fix duplicate directory entries and/or db open/close cleanup (need
+  no leaking memory).  see src/rt/viewedge.c FIXME comment for prior.
+
+
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------------
 
@@ -31,6 +35,7 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 * Rework p2t so it doesn't take down the application
   when a NURBS tessellation fails - should just abandon the
   problem input and continue.
+
 
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
