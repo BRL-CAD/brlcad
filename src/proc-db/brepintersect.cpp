@@ -49,6 +49,7 @@ int PolylineBBox(
     return 0;
 }
 
+
 /**
  * tests whether a point is inside of the triangle using vector math
  * the point has to be in the same plane as the triangle, otherwise
@@ -128,6 +129,7 @@ bool PointInTriangle(
 	return false;
 }
 
+
 bool PointInPolyline(
     const ON_3dPoint& P,
     const ON_Polyline pline,
@@ -168,6 +170,7 @@ bool PointInPolyline(
     return inside;
 }
 
+
 /**
  * determines whether or not a point is inside the given mesh
  */
@@ -199,6 +202,7 @@ bool PointInMesh(
     }
     return 0;
 }
+
 
 /**
  * finds the intersection point between segments x1, x2 and x3, x4 and
@@ -350,6 +354,7 @@ int SegmentSegmentIntersect(
     return 0;
 }
 
+
 /**
  * uses iteration of SegmentSegmentIntersect.
  *
@@ -377,6 +382,7 @@ int SegmentPolylineIntersect(
     }
     return my_rv;
 }
+
 
 /**
  * intersects a triangle ABC with a line PQ
@@ -604,6 +610,7 @@ int TriangleTriangleIntersect(
     return number_found;
 }
 
+
 /**
  * checks whether two Polylines are inside one another.
  *
@@ -641,6 +648,7 @@ int PolylinePolylineInternal(
 	return 0;
     }
 }
+
 
 /**
  * This class has the responsibility of keeping track of the points
@@ -711,6 +719,7 @@ TriIntersections::TriIntersections(
     }
 }
 
+
 int TriIntersections::InsertPoint(
     ON_3dPoint P,
     uint8_t direction,
@@ -735,6 +744,7 @@ int TriIntersections::InsertPoint(
     return 0;
 }
 
+
 int TriIntersections::AddLine(
     ON_Line line
     )
@@ -742,6 +752,7 @@ int TriIntersections::AddLine(
     intersections.Append(line);
     return intersections.Count();
 }
+
 
 int TriIntersections::Faces(
     ON_ClassArray<ON_3dPoint[3]> UNUSED(faces)
@@ -833,6 +844,7 @@ int TriIntersections::Faces(
     return 0;
 }
 
+
 /**
  * the point index is responsible for keeping track of the points we
  * put into a mesh.  if we give it a point it doesn't have it puts it
@@ -847,10 +859,12 @@ public:
     int InsertPoint(ON_3dPoint);
 };
 
+
 PointIndex::PointIndex(ON_Mesh *m) : tol(0.0)
 {
     mesh = m;
 }
+
 
 int PointIndex::InsertPoint(
     ON_3dPoint P
@@ -865,6 +879,7 @@ int PointIndex::InsertPoint(
     mesh->m_V.Append(ON_3fPoint(P));
     return mesh->m_V.Count();
 }
+
 
 /**
  * Outputs an array of the same size as this.m_V.Count() in which the
@@ -892,6 +907,7 @@ int GenerateFaceConnectivityList(
     return 0;
 }
 
+
 /**
  * converts all quads in a mesh to triangles
  */
@@ -913,6 +929,7 @@ int MeshTriangulate(
 
     return 0;
 }
+
 
 /**
  * Intersect two meshes and returns their intersection in Polylines
@@ -943,6 +960,7 @@ int MeshMeshIntersect(
 
     return 0;
 }
+
 
 int main()
 {
@@ -1018,6 +1036,7 @@ int main()
     /* int rv = MeshMeshIntersect(&mesh1, &mesh2, &out, 1.0e-10); */
     /* assert(rv == 2); */
 }
+
 
 /** @} */
 /*
