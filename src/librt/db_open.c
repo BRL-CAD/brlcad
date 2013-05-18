@@ -253,7 +253,7 @@ db_create(const char *name, int version)
     if (result < 0)
 	return DBI_NULL;
 
-    if ((dbip = db_open(name, "r+w")) == DBI_NULL)
+    if ((dbip = db_open(name, DB_OPEN_READWRITE)) == DBI_NULL)
 	return DBI_NULL;
 
     /* Do a quick scan to determine version, find _GLOBAL, etc. */

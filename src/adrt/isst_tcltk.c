@@ -193,8 +193,8 @@ list_geometry(ClientData UNUSED(clientData), Tcl_Interp *interp, int objc, Tcl_O
 	return TCL_ERROR;
     }
 
-    if ((dbip = db_open(Tcl_GetString(objv[1]), "r")) == DBI_NULL) {
-	bu_log("Unable to open geometry file (%s)\n", Tcl_GetString(objv[1]));
+    if ((dbip = db_open(Tcl_GetString(objv[1]), DB_OPEN_READONLY)) == DBI_NULL) {
+	bu_log("Unable to open geometry database file (%s)\n", Tcl_GetString(objv[1]));
 	return TCL_ERROR;
     }
     db_dirbuild(dbip);

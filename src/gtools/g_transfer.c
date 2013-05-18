@@ -569,11 +569,11 @@ main(int argc, char *argv[]) {
     /* make sure the geometry file is a geometry database, get a
      * database instance pointer.
      */
-    dbip = db_open(geometry_file, "r");
+    dbip = db_open(geometry_file, DB_OPEN_READONLY);
     if (dbip == DBI_NULL) {
-	bu_log("Cannot open %s\n", geometry_file);
+	bu_log("Cannot open geometry database file %s\n", geometry_file);
 	perror(argv0);
-	bu_exit(EXIT_FAILURE, "Need a geometry file");
+	bu_exit(EXIT_FAILURE, "Need a geometry database file");
     }
 
     /* load the database directory into memory */

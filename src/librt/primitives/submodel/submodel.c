@@ -108,7 +108,7 @@ rt_submodel_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rti
 	sub_dbip = rtip->rti_dbip;
     } else {
 	/* db_open will cache dbip's via bu_open_mapped_file() */
-	if ((sub_dbip = db_open(bu_vls_addr(&sip->file), "r")) == DBI_NULL)
+	if ((sub_dbip = db_open(bu_vls_addr(&sip->file), DB_OPEN_READONLY)) == DBI_NULL)
 	    return -1;
 
 	/* Save the overhead of stat() calls on subsequent opens */
@@ -739,8 +739,8 @@ rt_submodel_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct 
 
     if (bu_vls_strlen(&sip->file) != 0) {
 	/* db_open will cache dbip's via bu_open_mapped_file() */
-	if ((good.dbip = db_open(bu_vls_addr(&sip->file), "r")) == DBI_NULL) {
-	    bu_log("rt_submodel_plot() db_open(%s) failure\n", bu_vls_addr(&sip->file));
+	if ((good.dbip = db_open(bu_vls_addr(&sip->file), DB_OPEN_READONLY)) == DBI_NULL) {
+	    bu_log("Cannot open geometry database file (%s) to store plot\n", bu_vls_addr(&sip->file));
 	    return -1;
 	}
 	if (!db_is_directory_non_empty(good.dbip)) {

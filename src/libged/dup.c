@@ -187,9 +187,9 @@ ged_dup(struct ged *gedp, int argc, const char *argv[])
     }
 
     /* open the input file */
-    if ((newdbp = db_open(argv[1], "r")) == DBI_NULL) {
+    if ((newdbp = db_open(argv[1], DB_OPEN_READONLY)) == DBI_NULL) {
 	perror(argv[1]);
-	bu_vls_printf(gedp->ged_result_str, "dup: Can't open %s", argv[1]);
+	bu_vls_printf(gedp->ged_result_str, "dup: Cannot open geometry database file %s", argv[1]);
 	return GED_ERROR;
     }
 

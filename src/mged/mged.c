@@ -2624,8 +2624,8 @@ f_opendb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *a
     rt_new_material_head(MATER_NULL);
 
     /* Get input file */
-    if (((dbip = db_open(argv[1], "r+w")) == DBI_NULL) &&
-	((dbip = db_open(argv[1], "r")) == DBI_NULL)) {
+    if (((dbip = db_open(argv[1], DB_OPEN_READWRITE)) == DBI_NULL) &&
+	((dbip = db_open(argv[1], DB_OPEN_READONLY)) == DBI_NULL)) {
 	char line[128];
 
 	/*

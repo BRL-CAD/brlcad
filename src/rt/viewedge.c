@@ -451,8 +451,8 @@ view_init(struct application *ap, char *file, char *UNUSED(obj), int minus_o, in
 	}
 
 
-	if ((dbip = db_open(file, "r")) == DBI_NULL)
-	    bu_exit(EXIT_FAILURE, "rtedge: could not open database.\n");
+	if ((dbip = db_open(file, DB_OPEN_READONLY)) == DBI_NULL)
+	    bu_exit(EXIT_FAILURE, "rtedge: could not open geometry database file %s.\n", file);
 	RT_CK_DBI(dbip);
 
 #if 0

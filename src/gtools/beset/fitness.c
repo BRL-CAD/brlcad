@@ -58,8 +58,8 @@ fit_store (char *obj, char *dbname, struct fitness_state *fstate)
 {
     struct db_i *db;
 
-    if ( (db=db_open(dbname, "r")) == DBI_NULL)
-	bu_exit(EXIT_FAILURE, "Failed to open model database");
+    if ( (db=db_open(dbname, DB_OPEN_READONLY)) == DBI_NULL)
+	bu_exit(EXIT_FAILURE, "Failed to open geometry database file");
     if (db_dirbuild(db) < 0)
 	bu_exit(EXIT_FAILURE, "Failed to build directory structure");
 

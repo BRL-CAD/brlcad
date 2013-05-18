@@ -96,7 +96,7 @@ main(int argc, char **argv)
 	out_arg = 3;
     }
 
-    if ( (dbip = db_open( argv[in_arg], "r" )) == DBI_NULL )  {
+    if ( (dbip = db_open(argv[in_arg], DB_OPEN_READONLY)) == DBI_NULL )  {
         perror( argv[in_arg] );
         return 2;
     }

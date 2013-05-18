@@ -57,7 +57,7 @@ parsArg(int argc, char **argv)
     }
     else
 	objfile = argv[bu_optind++];
-    if ((dbip = db_open(objfile, "r")) == DBI_NULL) {
+    if ((dbip = db_open(objfile, DB_OPEN_READONLY)) == DBI_NULL) {
 	perror(objfile);
 	return 0;		/* FAIL */
     }

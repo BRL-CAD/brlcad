@@ -208,7 +208,7 @@ make_spaghetti(const char *filename, const char *name, long count)
     wdb_close(fp);
 
     /* done with the write-only, now begins read/write */
-    dbip = db_open(filename, "rw");
+    dbip = db_open(filename, DB_OPEN_READWRITE);
     if (dbip == DBI_NULL) {
 	perror("ERROR");
 	bu_exit(EXIT_FAILURE, "Failed to open geometry file [%s].  Aborting.\n", filename);

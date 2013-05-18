@@ -955,9 +955,9 @@ main(int argc, char **argv)
 
     Rt_Init(INTERP);
 
-    if ((dbip1 = db_open(file1, "r")) == DBI_NULL) {
+    if ((dbip1 = db_open(file1, DB_OPEN_READONLY)) == DBI_NULL) {
 	perror(file1);
-	bu_exit(1, "Cannot open %s\n", file1);
+	bu_exit(1, "Cannot open geometry database file %s\n", file1);
     }
 
     RT_CK_DBI(dbip1);
@@ -996,9 +996,9 @@ main(int argc, char **argv)
 	pre_5_vers++;
     }
 
-    if ((dbip2 = db_open(file2, "r")) == DBI_NULL) {
+    if ((dbip2 = db_open(file2, DB_OPEN_READONLY)) == DBI_NULL) {
 	perror(file2);
-	bu_exit(1, "Cannot open %s\n", file2);
+	bu_exit(1, "Cannot open geometry database file %s\n", file2);
     }
 
     RT_CK_DBI(dbip2);

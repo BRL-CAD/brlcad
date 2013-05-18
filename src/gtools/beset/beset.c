@@ -138,7 +138,7 @@ int main(int argc, char *argv[]) {
     pop_init(&pop, opts.pop_size);
     pop_spawn(&pop);
 
-    source_db = db_open(argv[ac+1], "r+w");
+    source_db = db_open(argv[ac+1], DB_OPEN_READWRITE);
     db_dirbuild(source_db);
     pop.db_c = db_create("testdb", 5);
     db_close(pop.db_c);

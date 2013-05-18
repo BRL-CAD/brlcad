@@ -184,7 +184,7 @@ int main(int ac, char **av)
     rt_init_resource( &rt_uniresource, 0, NULL );
 
     /* open the database */
-    if ((dbip = db_open(av[arg_index], "r")) == DBI_NULL) {
+    if ((dbip = db_open(av[arg_index], DB_OPEN_READONLY)) == DBI_NULL) {
 	perror(av[arg_index]);
 	bu_exit(255, "ERROR: unable to open geometry database (%s)\n", av[arg_index]);
     }

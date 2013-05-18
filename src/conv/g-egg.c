@@ -290,9 +290,9 @@ main(int argc, char *argv[])
 
     gcvwriter.func = nmg_to_egg;
 
-    if ((dbip = db_open(argv[0], "r")) == DBI_NULL) {
+    if ((dbip = db_open(argv[0], DB_OPEN_READONLY)) == DBI_NULL) {
 	perror(argv[0]);
-	bu_exit(1, "Unable to open geometry file (%s)\n", argv[0]);
+	bu_exit(1, "Unable to open geometry database file (%s)\n", argv[0]);
     }
     if (db_dirbuild(dbip)) {
 	bu_exit(1, "ERROR: db_dirbuild failed\n");

@@ -146,7 +146,7 @@ pop_spawn (struct population *p)
  * in the main loop
  */
     wdb_close(p->db_p->dbi_wdbp);
-    if ((p->db_p = db_open("gen000", "r")) == DBI_NULL)
+    if ((p->db_p = db_open("gen000", DB_OPEN_READONLY)) == DBI_NULL)
 	bu_exit(EXIT_FAILURE, "Failed to re-open initial population");
     if (db_dirbuild(p->db_p) < 0)
 	bu_exit(EXIT_FAILURE, "Failed to load initial database");

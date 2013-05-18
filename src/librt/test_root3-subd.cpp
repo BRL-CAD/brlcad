@@ -450,9 +450,9 @@ int main(int argc, char *argv[])
 	bu_exit(1, "Usage: %s file.g object", argv[0]);
     }
 
-    dbip = db_open(argv[1], "r+w");
+    dbip = db_open(argv[1], DB_OPEN_READWRITE);
     if (dbip == DBI_NULL) {
-	bu_exit(1, "ERROR: Unable to read from %s\n", argv[1]);
+	bu_exit(1, "ERROR: Unable to read from geometry database file %s\n", argv[1]);
     }
 
     if (db_dirbuild(dbip) < 0)

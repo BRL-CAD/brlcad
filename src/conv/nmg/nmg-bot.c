@@ -101,10 +101,10 @@ main(int argc, char **argv)
 
     rt_init_resource(&rt_uniresource, 0, NULL);
 
-    dbip = db_open(argv[argc-2], "r");
+    dbip = db_open(argv[argc-2], DB_OPEN_READONLY);
     if (dbip == DBI_NULL) {
 	perror(argv[0]);
-	bu_exit(1, "Cannot open file (%s)\n", argv[argc-2]);
+	bu_exit(1, "Cannot open geometry database file (%s)\n", argv[argc-2]);
     }
 
     if ((fdout=wdb_fopen(argv[argc-1])) == NULL) {

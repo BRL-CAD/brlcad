@@ -100,9 +100,9 @@ main(int argc, char **argv)
 	return -1;
     }
 
-    dbip = db_open(argv[1], "r+w");
+    dbip = db_open(argv[1], DB_OPEN_READWRITE);
     if (dbip == DBI_NULL) {
-	bu_log("ERROR: Unable to read from %s\n", argv[1]);
+	bu_log("ERROR: Unable to read from geometry database file %s\n", argv[1]);
 	return -1;
     }
 

@@ -441,9 +441,9 @@ int main(int argc, char *argv[])
     object = argv[bu_optind];
 
     /* open BRL-CAD database */
-    if ((dbip = db_open(db_file, "r")) == DBI_NULL) {
+    if ((dbip = db_open(db_file, DB_OPEN_READONLY)) == DBI_NULL) {
 	perror(argv[0]);
-	bu_exit(1, "Cannot open %s\n", db_file);
+	bu_exit(1, "Cannot open geometry database file %s\n", db_file);
     }
     if (db_dirbuild(dbip)) {
 	bu_exit(1, "db_dirbuild() failed!\n");

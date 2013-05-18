@@ -77,7 +77,7 @@ main(int argc, char **argv)
 	return 1;
     }
 
-    if ( (dbip = db_open( argv[1], "r" )) == DBI_NULL )  {
+    if ( (dbip = db_open(argv[1], DB_OPEN_READONLY)) == DBI_NULL )  {
 	perror( argv[1] );
 	return 2;
     }

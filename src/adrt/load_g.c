@@ -284,9 +284,9 @@ load_g (struct tie_s *tie, const char *db, int argc, const char **argv, struct a
     /*
      * these should probably encode so the result can be passed back to client
      */
-    if ((dbip = db_open(db, "r")) == DBI_NULL) {
+    if ((dbip = db_open(db, DB_OPEN_READONLY)) == DBI_NULL) {
 	perror(db);
-	bu_log("Unable to open geometry file (%s)\n", db);
+	bu_log("Unable to open geometry database file (%s)\n", db);
 	return -1;
     }
     if (db_dirbuild(dbip)) {

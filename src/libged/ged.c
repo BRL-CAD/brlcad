@@ -351,8 +351,8 @@ _ged_open_dbip(const char *filename, int existing_only)
     struct db_i *dbip;
 
     /* open database */
-    if (((dbip = db_open(filename, "r+w")) == DBI_NULL) &&
-	((dbip = db_open(filename, "r")) == DBI_NULL)) {
+    if (((dbip = db_open(filename, DB_OPEN_READWRITE)) == DBI_NULL) &&
+	((dbip = db_open(filename, DB_OPEN_READONLY)) == DBI_NULL)) {
 
 	/*
 	 * Check to see if we can access the database

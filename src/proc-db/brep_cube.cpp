@@ -465,9 +465,9 @@ main(int argc, char** argv)
 
     /* reread from file to make sure brep import is working okay */
     bu_log("Reading a twisted cube b-rep...\n");
-    struct db_i* dbip = db_open("brep_cube.g", "r");
+    struct db_i* dbip = db_open("brep_cube.g", DB_OPEN_READONLY);
     if (!dbip) {
-	bu_exit(1, "Unable to find brep_cube.g geometry file.");
+	bu_exit(1, "Unable to find brep_cube.g geometry database file.");
     }
     db_dirbuild(dbip);
     struct directory* dirp;

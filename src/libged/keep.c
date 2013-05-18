@@ -163,7 +163,7 @@ ged_keep(struct ged *gedp, int argc, const char *argv[])
 
     /* Alert user if named file already exists */
 
-    new_dbip = db_open(argv[0], "w");
+    new_dbip = db_open(argv[0], DB_OPEN_READWRITE);
 
     if (new_dbip != DBI_NULL) {
 	if (db_version(new_dbip) != db_version(gedp->ged_wdbp->dbip)) {

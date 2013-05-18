@@ -707,8 +707,8 @@ db_init(char *db_name)
     struct rt_comb_internal *comb;
     struct rt_db_internal *ip;
 
-    if ((dbip = db_open(db_name, "r+w")) == DBI_NULL)
-	bu_exit(1, "Cannot open database file '%s'\n", db_name);
+    if ((dbip = db_open(db_name, DB_OPEN_READWRITE)) == DBI_NULL)
+	bu_exit(1, "Cannot open geometry database file '%s'\n", db_name);
     db_dirbuild(dbip);
 
     FOR_ALL_DIRECTORY_START(dp, dbip) {

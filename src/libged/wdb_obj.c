@@ -1668,8 +1668,8 @@ wdb_prep_dbip(const char *filename)
     struct db_i *dbip;
 
     /* open database */
-    if (((dbip = db_open(filename, "r+w")) == DBI_NULL) &&
-	((dbip = db_open(filename, "r")) == DBI_NULL)) {
+    if (((dbip = db_open(filename, DB_OPEN_READWRITE)) == DBI_NULL) &&
+	((dbip = db_open(filename, DB_OPEN_READONLY)) == DBI_NULL)) {
 
 	/*
 	 * Check to see if we can access the database
@@ -4398,7 +4398,7 @@ wdb_concat_cmd(struct rt_wdb *wdbp,
     }
 
     /* open the input file */
-    if ((newdbp = db_open(oldfile, "r")) == DBI_NULL) {
+    if ((newdbp = db_open(oldfile, DB_OPEN_READONLY)) == DBI_NULL) {
 	bu_vls_free(&cc_data.affix);
 	perror(oldfile);
 	Tcl_AppendResult(wdbp->wdb_interp, "%s: Can't open ", argv[0], oldfile, (char *)NULL);
@@ -4792,7 +4792,7 @@ wdb_dup_cmd(struct rt_wdb *wdbp,
     }
 
     /* open the input file */
-    if ((newdbp = db_open(argv[1], "r")) == DBI_NULL) {
+    if ((newdbp = db_open(argv[1], DB_OPEN_READONLY)) == DBI_NULL) {
 	perror(argv[1]);
 	Tcl_AppendResult(wdbp->wdb_interp, "dup: Can't open ", argv[1], (char *)NULL);
 	return TCL_ERROR;
@@ -7533,7 +7533,7 @@ wdb_keep_cmd(struct rt_wdb *wdbp,
 
     /* Alert user if named file already exists */
 
-    new_dbip = db_open(argv[1], "w");
+    new_dbip = db_open(argv[1], DB_OPEN_READWRITE);
 
 
     if (new_dbip != DBI_NULL) {

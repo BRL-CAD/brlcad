@@ -57,7 +57,7 @@ rt_dirbuild(const char *filename, char *buf, int len)
     if (getenv("LIBRT_BOT_MINTIE"))
 	rt_bot_mintie = atoi(getenv("LIBRT_BOT_MINTIE"));
 
-    if ((dbip = db_open(filename, "r")) == DBI_NULL)
+    if ((dbip = db_open(filename, DB_OPEN_READONLY)) == DBI_NULL)
 	return RTI_NULL;		/* FAIL */
     RT_CK_DBI(dbip);
 

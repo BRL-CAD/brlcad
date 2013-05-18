@@ -290,9 +290,9 @@ main(int argc, char *argv[])
     argc -= bu_optind;
     argv += bu_optind;
     db_name = argv[0];
-    if ((DBIP = db_open(db_name, "r")) == DBI_NULL) {
+    if ((DBIP = db_open(db_name, DB_OPEN_READONLY)) == DBI_NULL) {
 	perror("g-iges");
-	bu_exit(1, "ERROR: unable to open geometry file (%s)\n", db_name);
+	bu_exit(1, "ERROR: unable to open geometry database file (%s)\n", db_name);
     }
 
     /* Scan the database */

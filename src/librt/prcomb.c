@@ -70,8 +70,8 @@ main(int argc, char *argv[])
 
     MAT_IDN(identity_mat);
 
-    if ((dbip = db_open(argv[1], "r")) == NULL) {
-	fprintf(stderr, "Cannot open %s\n", argv[1]);
+    if ((dbip = db_open(argv[1], DB_OPEN_READONLY)) == NULL) {
+	fprintf(stderr, "Cannot open geometry database file %s\n", argv[1]);
 	perror("test");
 	return 1;
     }

@@ -470,9 +470,9 @@ main(int argc, char** argv)
     delete brep;
 
     printf("Reading a twisted cube b-rep...\n");
-    struct db_i* dbip = db_open("brep_simple.g", "r");
+    struct db_i* dbip = db_open("brep_simple.g", DB_OPEN_READONLY);
     if (!dbip) {
-	bu_exit(1, "Unable to open brep_simple.g\n");
+	bu_exit(1, "Unable to open brep_simple.g geometry database file\n");
     }
     db_dirbuild(dbip);
     struct directory* dirp;
