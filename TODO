@@ -21,7 +21,10 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 * FreeBSD i386 9.1-RELEASE provokes a build failure with regex.h which
   appears to be related to the off_t logic - conflicts with sys/types.h
   and when the defines are added to use the regex.h version it produces
-  a regress-red failure.
+  a regress-red failure.  Same thing on Haiku and OpenIndiana.  We're
+  getting away with it on 32 bit Linux systems - builds and regress-red
+  passes on Ubuntu and Fedora - but stricter systems don't like it. 
+  64-bit systems don't seem to have trouble, at least not so far.
 
 * fix duplicate directory entries and/or db open/close cleanup (need
   no leaking memory).  see src/rt/viewedge.c FIXME comment for prior.
