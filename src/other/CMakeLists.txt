@@ -330,6 +330,14 @@ if(BRLCAD_PNG_BUILD)
 
   get_directory_property(PNG_LIBRARY DIRECTORY libpng DEFINITION PNG_LIB_NAME)
   set(PNG_LIBRARY "${PNG_LIBRARY}" CACHE STRING "libpng name for targets" FORCE)
+
+  # On Haiku the find_library call sets this variable directly, which is not
+  # how we handle things elsewhere in BRL-CAD - unset the variable in that
+  # situation so the remainder of the build logic works normally
+  if("${M_LIBRARY}" MATCHES "NOTFOUND")
+    unset(M_LIBRARY CACHE)
+  endif("${M_LIBRARY}" MATCHES "NOTFOUND")
+
 ELSE(BRLCAD_PNG_BUILD)
   # The PNG CMake file seems to set PNG_PNG_INCLUDE_DIR rather than
   # PNG_INCLUDE_DIR, so a generic macro won't pick up the setting -
