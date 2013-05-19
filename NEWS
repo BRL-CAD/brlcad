@@ -28,6 +28,7 @@ changes made.  See document footer for additional details.
 * added gqa -q quiet option to suppress 'was not hit' - Richard Weiss
 * level-of-detail mged configuration dialog, under Tools - Nick Reed
 * added level-of-detail wireframe support to mged/archer - Nick Reed
+* initial NURBS shaded display and tessellation support - Keith Bowman
 * fixed patch-g -f input file permissions failure - Sean Morrison
 * improved large file support for the patch-g importer - Sean Morrison
 * openNURBS updated to version 5.0 (2012-10-24) - Richard Weiss
