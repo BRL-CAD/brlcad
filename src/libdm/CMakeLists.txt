@@ -28,6 +28,10 @@ if(WIN32 AND BRLCAD_ENABLE_OPENGL)
   set(dmw32_srcs dm-wgl.c)
 endif(WIN32 AND BRLCAD_ENABLE_OPENGL)
 
+if(BRLCAD_ENABLE_X11)
+  set(DM_X_LIBS ${X11_LIBRARIES} ${X11_Xi_LIB})
+endif(BRLCAD_ENABLE_X11)
+
 if(BRLCAD_ENABLE_X11 AND BRLCAD_ENABLE_TK)
   list(APPEND libdm_DEFINES DM_X IF_X)
   set(dmx11_srcs dm-X.c)
@@ -85,7 +89,7 @@ set(LIBDM_SRCS
   vers.c
   )
 
-BRLCAD_ADDLIB(libdm "${LIBDM_SRCS}" "libged;librt;libfb;${X11_LIBRARIES};${X11_Xi_LIB};${DM_TKLIB};${Carbon_LIBRARIES}")
+BRLCAD_ADDLIB(libdm "${LIBDM_SRCS}" "libged;librt;libfb;${DM_X_LIBS};${DM_TKLIB};${Carbon_LIBRARIES}")
 set_target_properties(libdm PROPERTIES VERSION 20.0.1 SOVERSION 20)
 
 if(BRLCAD_BUILD_LOCAL_TK AND BRLCAD_ENABLE_TK)
