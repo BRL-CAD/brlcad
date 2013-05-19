@@ -18,6 +18,11 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
+* FreeBSD i386 9.1-RELEASE provokes a build failure with regex.h which
+  appears to be related to the off_t logic - conflicts with sys/types.h
+  and when the defines are added to use the regex.h version it produces
+  a regress-red failure.
+
 * fix duplicate directory entries and/or db open/close cleanup (need
   no leaking memory).  see src/rt/viewedge.c FIXME comment for prior.
 
