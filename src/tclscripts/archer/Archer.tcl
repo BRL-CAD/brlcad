@@ -2695,7 +2695,7 @@ proc title_node_handler {node} {
 	    -width 12 \
 	    -textvariable [::itcl::scope mZClipBackMaxPref] \
 	    -validate key \
-	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
+	    -validatecommand [::itcl::code $this validateZClipMax %P]
     } {}
     itk_component add zclipBackMaxB {
 	::ttk::button $itk_component(zclipBackMaxF).zclipBackMaxB \
@@ -2720,7 +2720,7 @@ proc title_node_handler {node} {
 	    -width 12 \
 	    -textvariable [::itcl::scope mZClipFrontMaxPref] \
 	    -validate key \
-	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
+	    -validatecommand [::itcl::code $this validateZClipMax %P]
     } {}
     itk_component add zclipFrontMaxB {
 	::ttk::button $itk_component(zclipFrontMaxF).zclipFrontMaxB \
@@ -2746,25 +2746,29 @@ proc title_node_handler {node} {
 	::ttk::radiobutton $itk_component(lightModeF).lightModeFrontRB \
 	    -text "Front" \
 	    -value $LIGHT_MODE_FRONT \
-	    -variable [::itcl::scope mLightingModePref]
+	    -variable [::itcl::scope mLightingModePref] \
+	    -command [::itcl::code $this updateLightingMode]
     } {}
     itk_component add lightModeFrontBackRB {
 	::ttk::radiobutton $itk_component(lightModeF).lightModeFrontBackRB \
 	    -text "Front and Back" \
 	    -value $LIGHT_MODE_FRONT_AND_BACK \
-	    -variable [::itcl::scope mLightingModePref]
+	    -variable [::itcl::scope mLightingModePref] \
+	    -command [::itcl::code $this updateLightingMode]
     } {}
     itk_component add lightModeFrontBackDarkRB {
 	::ttk::radiobutton $itk_component(lightModeF).lightModeFrontBackDarkRB \
 	    -text "Front and Back (Dark Back)" \
 	    -value $LIGHT_MODE_FRONT_AND_BACK_DARK \
-	    -variable [::itcl::scope mLightingModePref]
+	    -variable [::itcl::scope mLightingModePref] \
+	    -command [::itcl::code $this updateLightingMode]
     } {}
     itk_component add lightModeFrontBackLightRB {
 	::ttk::radiobutton $itk_component(lightModeF).lightModeFrontBackLightRB \
 	    -text "Front and Back (Light Back)" \
 	    -value $LIGHT_MODE_FRONT_AND_BACK_LIGHT \
-	    -variable [::itcl::scope mLightingModePref]
+	    -variable [::itcl::scope mLightingModePref] \
+	    -command [::itcl::code $this updateLightingMode]
     } {}
 
     itk_component add displayModeL {
@@ -8399,10 +8403,25 @@ proc title_node_handler {node} {
     set wflag 0
     $itk_component(ged) refresh_off
 
-    if {$mZClipBackMaxPref != $mZClipBackMax ||
+    if {$mZClipBackMaxPref == "" ||
+	$mZClipBackMaxPref == "." ||
+	$mZClipFrontMaxPref == "" ||
+	$mZClipFrontMaxPref == "."} {
+
+	# Set things back the way they were before
+	# calling the preferences dialog.
+	set mZClipBackMaxPref $mZClipBackMax
+	set mZClipFrontMaxPref $mZClipFrontMax
+	set mZClipBackPref $mZClipBack
+	set mZClipFrontPref $mZClipFront
+
+	updateZClipPlanes 0
+	set rflag 1
+    } elseif {$mZClipBackMaxPref != $mZClipBackMax ||
 	$mZClipFrontMaxPref != $mZClipFrontMax ||
 	$mZClipBackPref != $mZClipBack ||
 	$mZClipFrontPref != $mZClipFront} {
+
 	set mZClipBackMax $mZClipBackMaxPref
 	set mZClipFrontMax $mZClipFrontMaxPref
 	set mZClipBack $mZClipBackPref
@@ -9042,6 +9061,12 @@ proc title_node_handler {node} {
 	updateZClipPlanes 0
 	set rflag 1
     }
+
+    if {$mLightingModePref != $mLightingMode} {
+	gedCmd light_all $mLightingMode
+	set rflag 1
+    }
+
 
     if {$mPerspectivePref != $mPerspective} {
 	set mPerspectivePref $mPerspective

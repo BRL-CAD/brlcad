@@ -643,6 +643,7 @@ namespace eval ArcherCore {
 	method launchRtApp {_app _size}
 
 	method updateDisplaySettings {}
+	method updateLightingMode {}
 	method updatePerspective {_unused}
 	method updateZClipPlanes {_unused}
 	method calculateZClipMax {}
@@ -650,6 +651,7 @@ namespace eval ArcherCore {
 	method calculateZClipFrontMax {}
 	method pushPerspectiveSettings {}
 	method pushZClipSettings {}
+	method validateZClipMax {_d}
 
 	method shootRay_doit {_start _op _target _prep _no_bool _onehit _bot_dflag _objects}
 
@@ -5842,6 +5844,14 @@ namespace eval ArcherCore {
     $itk_component(ged) refresh_all
 }
 
+::itcl::body ArcherCore::updateLightingMode {} {
+    set mLightingModeCurr $mLightingModePref
+
+    if {$mLighting} {
+	gedCmd light_all $mLightingModeCurr
+    }
+}
+
 ::itcl::body ArcherCore::updatePerspective {_unused} {
     $itk_component(ged) perspective_all $mPerspectivePref
 }
@@ -5873,6 +5883,24 @@ namespace eval ArcherCore {
 ::itcl::body ArcherCore::calculateZClipFrontMax {} {
     set mZClipFrontMaxPref [calculateZClipMax]
     updateZClipPlanes 0
+}
+
+::itcl::body ArcherCore::validateZClipMax {_d} {
+    if {[::cadwidgets::Ged::validateDouble $_d]} {
+
+	if {$_d == "" || $_d == "."} {
+	    return 1
+	}
+
+	if {$_d < 0} {
+	    return 0
+	}
+
+	after idle [::itcl::code $this updateZClipPlanes 0]
+	return 1
+    }
+
+    return 0
 }
 
 ::itcl::body ArcherCore::pushPerspectiveSettings {} {
