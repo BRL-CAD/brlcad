@@ -431,7 +431,7 @@ printPoints(struct rt_brep_internal* bi)
 
 static void
 printusage(void) {
-    printf("Usage: brep_simple (takes no arguments\n");
+    printf("Usage: brep_simple (takes no arguments)\n");
 }
 
 
