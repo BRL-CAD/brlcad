@@ -34,7 +34,7 @@
 #include "bu.h"
 
 
-ON_Brep *
+static ON_Brep *
 generate_brep(int count, ON_3dPoint *points)
 {
     ON_Brep *brep = new ON_Brep();
@@ -422,7 +422,7 @@ generate_brep(int count, ON_3dPoint *points)
 }
 
 
-void
+static void
 printusage(void){
 	printf("Usage: breplicator (takes no arguments)\n");
 }
