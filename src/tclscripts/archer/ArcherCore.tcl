@@ -3769,10 +3769,10 @@ namespace eval ArcherCore {
 	($mColorObjects != "" || $mGhostObjects != "" || $mEdgeObjects != "")} {
 	$itk_component(ged) center $mSavedCenter
 	$itk_component(ged) size $mSavedSize
-    } else {
-	set mSavedCenter ""
-	set mSavedSize ""
     }
+
+    set mSavedCenter ""
+    set mSavedSize ""
 
     # Get the eye pt in model coordinates
     set eyemodel [split [regsub {;} [$itk_component(ged) get_eyemodel] {}] "\n"]
