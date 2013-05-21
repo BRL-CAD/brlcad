@@ -12931,12 +12931,14 @@ to_create_vlist_callback(struct solid *sp)
 
     for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
 	if (to_is_viewable(gdvp)) {
+
+	    (void)DM_MAKE_CURRENT(gdvp->gdv_dmp);
+
 	    if (first) {
 		sp->s_dlist = DM_GEN_DLISTS(gdvp->gdv_dmp, 1);
 		first = 0;
 	    }
 
-	    (void)DM_MAKE_CURRENT(gdvp->gdv_dmp);
 	    (void)DM_BEGINDLIST(gdvp->gdv_dmp, sp->s_dlist);
 
 	    if (sp->s_iflag == UP)
