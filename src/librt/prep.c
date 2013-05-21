@@ -939,7 +939,8 @@ rt_clean(register struct rt_i *rtip)
 
     /* Free animation structures */
     /* XXX modify to only free those from this rtip */
-    db_free_anim(rtip->rti_dbip);
+    if (rtip->rti_dbip)
+	db_free_anim(rtip->rti_dbip);
 
     /* Free array of solid table pointers indexed by solid ID */
     for (i=0; i <= ID_MAX_SOLID; i++) {
@@ -1006,25 +1007,28 @@ rt_clean(register struct rt_i *rtip)
     bu_hist_free(&rtip->rti_hist_cutdepth);
     bu_hist_free(&rtip->rti_hist_cell_pieces);
 
-    /*
-     * Zero the solid instancing counters in dbip database instance.
-     * Done here because the same dbip could be used by multiple
-     * rti's, and rt_gettrees() can be called multiple times on this
-     * one rtip.
-     *
-     * There is a race (collision!) here on d_uses if rt_gettrees() is
-     * called on another rtip of the same dbip before this rtip is
-     * done with all its treewalking.
-     *
-     * This must be done for each 'clean' to keep
-     * rt_find_identical_solid() working properly as d_uses goes up.
-     */
-    for (i=0; i < RT_DBNHASH; i++) {
-	register struct directory *dp;
+    if (rtip->rti_dbip) {
+	/*
+	 * Zero the solid instancing counters in dbip database
+	 * instance.  Done here because the same dbip could be used by
+	 * multiple rti's, and rt_gettrees() can be called multiple
+	 * times on this one rtip.
+	 *
+	 * FIXME: There is a race (collision!) here on d_uses if
+	 * rt_gettrees() is called on another rtip of the same dbip
+	 * before this rtip is done with all its treewalking.
+	 *
+	 * This must be done for each 'clean' to keep
+	 * rt_find_identical_solid() working properly as d_uses goes
+	 * up.
+	 */
+	for (i=0; i < RT_DBNHASH; i++) {
+	    register struct directory *dp;
 
-	dp = rtip->rti_dbip->dbi_Head[i];
-	for (; dp != RT_DIR_NULL; dp = dp->d_forw)
-	    dp->d_uses = 0;
+	    dp = rtip->rti_dbip->dbi_Head[i];
+	    for (; dp != RT_DIR_NULL; dp = dp->d_forw)
+		dp->d_uses = 0;
+	}
     }
 
     bu_ptbl_reset(&rtip->delete_regs);
