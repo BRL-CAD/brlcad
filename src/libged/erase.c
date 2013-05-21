@@ -263,11 +263,13 @@ ged_erasePathFromDisplay(struct ged *gedp,
 	next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
 
 	if (BU_STR_EQUAL(path, bu_vls_addr(&gdlp->gdl_path))) {
+	    if (gedp->ged_free_vlist_callback != GED_FREE_VLIST_CALLBACK_PTR_NULL) {
 
-	    if (gedp->ged_free_vlist_callback != GED_FREE_VLIST_CALLBACK_PTR_NULL)
-		(*gedp->ged_free_vlist_callback)(BU_LIST_FIRST(solid, &gdlp->gdl_headSolid)->s_dlist,
-						 BU_LIST_LAST(solid, &gdlp->gdl_headSolid)->s_dlist -
-						 BU_LIST_FIRST(solid, &gdlp->gdl_headSolid)->s_dlist + 1);
+		/* We can't assume the display lists are contiguous */
+		FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid) {
+		    (*gedp->ged_free_vlist_callback)(BU_LIST_FIRST(solid, &gdlp->gdl_headSolid)->s_dlist, 1);
+		}
+	    }
 
 	    /* Free up the solids list associated with this display list */
 	    while (BU_LIST_WHILE(sp, solid, &gdlp->gdl_headSolid)) {
@@ -533,10 +535,13 @@ _ged_freeDisplayListItem (struct ged *gedp,
     struct solid *sp;
     struct directory *dp;
 
-    if (gedp->ged_free_vlist_callback != GED_FREE_VLIST_CALLBACK_PTR_NULL)
-	(*gedp->ged_free_vlist_callback)(BU_LIST_FIRST(solid, &gdlp->gdl_headSolid)->s_dlist,
-					 BU_LIST_LAST(solid, &gdlp->gdl_headSolid)->s_dlist -
-					 BU_LIST_FIRST(solid, &gdlp->gdl_headSolid)->s_dlist + 1);
+    if (gedp->ged_free_vlist_callback != GED_FREE_VLIST_CALLBACK_PTR_NULL) {
+
+	/* We can't assume the display lists are contiguous */
+	FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid) {
+	    (*gedp->ged_free_vlist_callback)(BU_LIST_FIRST(solid, &gdlp->gdl_headSolid)->s_dlist, 1);
+	}
+    }
 
     /* Free up the solids list associated with this display list */
     while (BU_LIST_WHILE(sp, solid, &gdlp->gdl_headSolid)) {
