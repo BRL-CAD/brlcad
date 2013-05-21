@@ -50,6 +50,10 @@ db_add_anim(struct db_i *dbip, register struct animate *anp, int root)
     if (root) {
 	if (RT_G_DEBUG&DEBUG_ANIM)
 	    bu_log("db_add_anim(x%x) root\n", anp);
+
+	if (!dbip)
+	    bu_bomb("Unexpected NULL dbip encountered in db_add_anim\n");
+
 	headp = &(dbip->dbi_anroot);
     } else {
 	dp = DB_FULL_PATH_CUR_DIR(&anp->an_path);
@@ -217,11 +221,14 @@ db_free_1anim(struct animate *anp)
 }
 
 void
-db_free_anim(register struct db_i *dbip)
+db_free_anim(struct db_i *dbip)
 {
     register struct animate *anp;
     register struct directory *dp;
     register int i;
+
+    if (!dbip)
+	return;
 
     /* Rooted animations */
     for (anp = dbip->dbi_anroot; anp != ANIM_NULL;) {
@@ -258,6 +265,9 @@ db_parse_1anim(struct db_i *dbip, int argc, const char *argv[])
     struct db_tree_state ts;
     struct animate *anp;
     int i;
+
+    if (!dbip)
+	return NULL;
 
     if (argc < 4) {
 	bu_log("db_parse_1anim:  not enough arguments\n");
@@ -439,6 +449,9 @@ db_write_anim(FILE *fop, struct animate *anp)
 {
     char *thepath;
     int i;
+
+    if (!fop)
+	return;
 
     RT_CK_ANIMATE(anp);
 
