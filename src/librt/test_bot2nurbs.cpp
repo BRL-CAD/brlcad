@@ -91,14 +91,14 @@ struct Manifold_Info {
     int patch_cnt;
 };
 
+
 /**********************************************************************************
- *
  *   Utility functions used throughout the process of fitting
- *
  **********************************************************************************/
 
 // Make an edge using consistent vertex ordering
-Edge mk_edge(size_t pt_A, size_t pt_B)
+static Edge
+mk_edge(size_t pt_A, size_t pt_B)
 {
     if (pt_A <= pt_B) {
 	return std::make_pair(pt_A, pt_B);
@@ -107,8 +107,10 @@ Edge mk_edge(size_t pt_A, size_t pt_B)
     }
 }
 
+
 // Calculate area of a face
-double face_area(struct rt_bot_internal *bot, size_t face_num)
+static double
+face_area(struct rt_bot_internal *bot, size_t face_num)
 {
     point_t ptA, ptB, ptC;
     double a, b, c, p;
@@ -124,9 +126,11 @@ double face_area(struct rt_bot_internal *bot, size_t face_num)
     return area;
 }
 
+
 // Given a patch consisting of a set of faces find the
 // set of edges that forms the outer edge of the patch
-void find_edge_segments(std::set<size_t> *faces, EdgeList *patch_edges, struct Manifold_Info *info)
+static void
+find_edge_segments(std::set<size_t> *faces, EdgeList *patch_edges, struct Manifold_Info *info)
 {
     size_t pt_A, pt_B, pt_C;
     std::set<size_t>::iterator it;
@@ -151,8 +155,10 @@ void find_edge_segments(std::set<size_t> *faces, EdgeList *patch_edges, struct M
     }
 }
 
+
 // Given a BoT face, return the three edges associated with that face
-void get_face_edges(struct rt_bot_internal *bot, size_t face_num, std::set<Edge> *face_edges)
+static void
+get_face_edges(struct rt_bot_internal *bot, size_t face_num, std::set<Edge> *face_edges)
 {
     size_t pt_A, pt_B, pt_C;
     pt_A = bot->faces[face_num*3+0]*3;
@@ -163,8 +169,10 @@ void get_face_edges(struct rt_bot_internal *bot, size_t face_num, std::set<Edge>
     face_edges->insert(mk_edge(pt_C, pt_A));
 }
 
+
 // Given a BoT face, return the three other faces that share an edge with that face
-void get_connected_faces(struct rt_bot_internal *bot, size_t face_num, EdgeToFace *edge_to_face, std::set<size_t> *faces)
+static void
+get_connected_faces(struct rt_bot_internal *bot, size_t face_num, EdgeToFace *edge_to_face, std::set<size_t> *faces)
 {
     std::set<Edge> face_edges;
     std::set<Edge>::iterator face_edges_it;
@@ -183,7 +191,9 @@ void get_connected_faces(struct rt_bot_internal *bot, size_t face_num, EdgeToFac
 
 // Use SVD algorithm from Soderkvist to fit a plane to vertex points
 // http://www.math.ltu.se/~jove/courses/mam208/svd.pdf
-void fit_plane(size_t UNUSED(patch_id), std::set<size_t> *faces, struct Manifold_Info *info, ON_Plane *plane) {
+static void
+fit_plane(size_t UNUSED(patch_id), std::set<size_t> *faces, struct Manifold_Info *info, ON_Plane *plane)
+{
     if (faces->size() > 0) {
 	ON_3dPoint center(0.0, 0.0, 0.0);
 	std::set<size_t> verts;
@@ -256,8 +266,11 @@ void fit_plane(size_t UNUSED(patch_id), std::set<size_t> *faces, struct Manifold
     }
 }
 
+
 // Check if a mesh is planar
-int planar_patch_test(size_t patch_id, std::set<size_t> *faces, struct Manifold_Info *info, fastf_t tol) {
+static int
+planar_patch_test(size_t patch_id, std::set<size_t> *faces, struct Manifold_Info *info, fastf_t tol)
+{
     if (faces->size() == 1) return 1;
     if (faces->size() > 0) {
 	std::set<size_t> verts;
@@ -279,20 +292,21 @@ int planar_patch_test(size_t patch_id, std::set<size_t> *faces, struct Manifold_
         if (max_dist < tol) return 1;
         return 0;
     } else {
-      return 0;
+	return 0;
     }
 }
+
+
 /**********************************************************************************
- *
  *   Debugging code for plotting structures commonly generated during fitting
- *
  **********************************************************************************/
 
 // To plot specific groups of curves in MGED, do the following:
 // set glob_compat_mode 0
 // set pl_list [glob 27_curve*.pl]
 // foreach plfile $pl_list {overlay $plfile}
-void plot_curve(struct rt_bot_internal *bot, std::vector<size_t> *pts, int r, int g, int b, FILE *c_plot)
+static void
+plot_curve(struct rt_bot_internal *bot, std::vector<size_t> *pts, int r, int g, int b, FILE *c_plot)
 {
     if (c_plot == NULL) {
 	FILE* plot = fopen("plot_curve.pl", "w");
@@ -313,7 +327,9 @@ void plot_curve(struct rt_bot_internal *bot, std::vector<size_t> *pts, int r, in
     }
 }
 
-void plot_face(point_t p1, point_t p2, point_t p3, int r, int g, int b, FILE *c_plot)
+
+static void
+plot_face(point_t p1, point_t p2, point_t p3, int r, int g, int b, FILE *c_plot)
 {
     pl_color(c_plot, r, g, b);
     pdv_3move(c_plot, p1);
@@ -324,7 +340,9 @@ void plot_face(point_t p1, point_t p2, point_t p3, int r, int g, int b, FILE *c_
     pdv_3cont(c_plot, p3);
 }
 
-void plot_faces(std::map< size_t, std::set<size_t> > *patches, struct Manifold_Info *info, const char *filename)
+
+static void
+plot_faces(std::map< size_t, std::set<size_t> > *patches, struct Manifold_Info *info, const char *filename)
 {
     std::map< size_t, std::set<size_t> >::iterator p_it;
     FILE* plot_file = fopen(filename, "w");
@@ -341,7 +359,9 @@ void plot_faces(std::map< size_t, std::set<size_t> > *patches, struct Manifold_I
     fclose(plot_file);
 }
 
-void plot_patch_borders(std::map< size_t, std::set<size_t> > *patches, struct Manifold_Info *info, const char *filename)
+
+static void
+plot_patch_borders(std::map< size_t, std::set<size_t> > *patches, struct Manifold_Info *info, const char *filename)
 {
     std::map< size_t, std::set<size_t> >::iterator p_it;
     FILE* edge_plot = fopen(filename, "w");
@@ -358,7 +378,9 @@ void plot_patch_borders(std::map< size_t, std::set<size_t> > *patches, struct Ma
     fclose(edge_plot);
 }
 
-void plot_ncurve(ON_Curve &curve, FILE *c_plot)
+
+static void
+plot_ncurve(ON_Curve &curve, FILE *c_plot)
 {
     double pt1[3], pt2[3];
     ON_2dPoint from, to;
@@ -392,8 +414,10 @@ void plot_ncurve(ON_Curve &curve, FILE *c_plot)
     }
 }
 
+
 // plot loop
-void plot_loop(std::vector<size_t> *edges, struct Manifold_Info *info, FILE *l_plot)
+static void
+plot_loop(std::vector<size_t> *edges, struct Manifold_Info *info, FILE *l_plot)
 {
     std::vector<size_t>::iterator v_it;
     int r = int(256*drand48() + 1.0);
@@ -409,7 +433,7 @@ void plot_loop(std::vector<size_t> *edges, struct Manifold_Info *info, FILE *l_p
 	for (int i = 1; i <= plotres; i++) {
 	    double pt1[3], pt2[3];
 	    ON_3dPoint p = edge_curve->PointAt(dom.ParameterAt((double)(i - 1)
-			/ (double)plotres));
+							       / (double)plotres));
 	    VMOVE(pt1, p);
 	    p = edge_curve->PointAt(dom.ParameterAt((double) i / (double)plotres));
 	    VMOVE(pt2, p);
@@ -419,14 +443,14 @@ void plot_loop(std::vector<size_t> *edges, struct Manifold_Info *info, FILE *l_p
     }
 }
 
+
 /**********************************************************************************
- *
  *   Code for partitioning a mesh into patches suitable for NURBS surface fitting
- *
  **********************************************************************************/
 
 // Clean out empty patches
-void remove_empty_patches(struct Manifold_Info *info)
+static void
+remove_empty_patches(struct Manifold_Info *info)
 {
     for (int i = 0; i < (int)info->patches.size(); i++) {
 	if (info->patches[i].size() == 0) {
@@ -436,7 +460,8 @@ void remove_empty_patches(struct Manifold_Info *info)
 }
 
 
-void sync_structure_maps(struct Manifold_Info *info)
+static void
+sync_structure_maps(struct Manifold_Info *info)
 {
     std::map< size_t, std::set<size_t> >::iterator p_it;
     info->edge_to_patch.clear();
@@ -460,9 +485,11 @@ void sync_structure_maps(struct Manifold_Info *info)
     }
 }
 
+
 // For a given face, determine which patch shares the majority of its edges.  If no one patch
 // has a majority, return -1
-int find_major_patch(size_t face_num, struct Manifold_Info *info, size_t curr_patch, size_t patch_count)
+static int
+find_major_patch(size_t face_num, struct Manifold_Info *info, size_t curr_patch, size_t patch_count)
 {
     std::map<size_t, size_t> patch_cnt;
     std::map<size_t, size_t>::iterator patch_cnt_itr;
@@ -504,12 +531,14 @@ int find_major_patch(size_t face_num, struct Manifold_Info *info, size_t curr_pa
     }
 }
 
+
 // Given a list of edges and the "current" patch, find triangles that share more edges with
 // a different patch.  If the corresponding normals allow, move the triangles in question to
 // the patch with which they share the most edges.  Return the number of triangles shifted.
 // This won't fully "smooth" an edge in a given pass, but an iterative approach should converge
 // to edges with triangles in their correct "major" patches
-size_t shift_edge_triangles(std::map< size_t, std::set<size_t> > *patches, size_t curr_patch, struct Manifold_Info *info)
+static size_t
+shift_edge_triangles(std::map< size_t, std::set<size_t> > *patches, size_t curr_patch, struct Manifold_Info *info)
 {
     std::set<size_t> patch_edgefaces;
     std::map<size_t, size_t> faces_to_shift;
@@ -552,7 +581,10 @@ size_t shift_edge_triangles(std::map< size_t, std::set<size_t> > *patches, size_
     return faces_to_shift.size();
 }
 
-void construct_patches(std::set<size_t> *faces, std::map< size_t, std::set<size_t> > *patches, struct Manifold_Info *info) {
+
+static void
+construct_patches(std::set<size_t> *faces, std::map< size_t, std::set<size_t> > *patches, struct Manifold_Info *info)
+{
     if (faces->size() > 0){
 	while(faces->size() > 0) {
 	    info->patch_cnt++;
@@ -572,10 +604,10 @@ void construct_patches(std::set<size_t> *faces, std::map< size_t, std::set<size_
 		get_connected_faces(info->bot, face_num, &(info->edge_to_face), &connected_faces);
 		for (cf_it = connected_faces.begin(); cf_it != connected_faces.end() ; cf_it++) {
 		    if(faces->find((*cf_it)) != faces->end()) {
-		    if(ON_DotProduct( *(*info).face_normals.At((int)(start_face_num)),*(*info).face_normals.At((int)(*cf_it)) ) > 0.5) {
-			face_queue.push((*cf_it));
-			faces->erase((*cf_it));
-}
+			if(ON_DotProduct( *(*info).face_normals.At((int)(start_face_num)),*(*info).face_normals.At((int)(*cf_it)) ) > 0.5) {
+			    face_queue.push((*cf_it));
+			    faces->erase((*cf_it));
+			}
 		    }
 		}
 	    }
@@ -583,7 +615,10 @@ void construct_patches(std::set<size_t> *faces, std::map< size_t, std::set<size_
     }
 }
 
-void split_overlapping_patch(size_t face1, size_t face2, size_t orig_patch, std::map< size_t, std::set<size_t> > *patches, struct Manifold_Info *info) {
+
+static void
+split_overlapping_patch(size_t face1, size_t face2, size_t orig_patch, std::map< size_t, std::set<size_t> > *patches, struct Manifold_Info *info)
+{
     std::set<size_t> *faces = &((*patches)[orig_patch]);
     std::queue<size_t> face_queue_1;
     std::queue<size_t> face_queue_2;
@@ -628,15 +663,16 @@ void split_overlapping_patch(size_t face1, size_t face2, size_t orig_patch, std:
 	    for (cf_it = connected_faces.begin(); cf_it != connected_faces.end(); cf_it++) {
 		if(faces->find((*cf_it)) != faces->end() && (*patches)[new_patch_1].find(*cf_it) == (*patches)[new_patch_1].end()) {
 		    if(ON_DotProduct( *(*info).face_normals.At(((int)start_face_num_2)),*(*info).face_normals.At((int)(*cf_it)) ) > 0.5) {
-		    face_queue_2.push((*cf_it));
-		    faces->erase((*cf_it));
-}
+			face_queue_2.push((*cf_it));
+			faces->erase((*cf_it));
+		    }
 		}
 	    }
 	}
-   }
-   if (faces->size() > 0) construct_patches(faces, patches, info);
+    }
+    if (faces->size() > 0) construct_patches(faces, patches, info);
 }
+
 
 // Given a patch, find triangles that overlap when projected into the patch domain, remove them
 // from the current patch and set them up in their own patch.  Returns the number of faces moved
@@ -648,7 +684,8 @@ void split_overlapping_patch(size_t face1, size_t face2, size_t orig_patch, std:
 // Also - need to check how the nurbs fitting code is calculating their initial plane, and use
 // that for this test rather than the original faces - it is projection into *THAT* plane that
 // must be clean, and a projection clean in the "standard" direction may not be clean there.
-size_t overlapping_edge_triangles(std::map< size_t, std::set<size_t> > *patches, struct Manifold_Info *info)
+static size_t
+overlapping_edge_triangles(std::map< size_t, std::set<size_t> > *patches, struct Manifold_Info *info)
 {
     size_t total_overlapping = 0;
     std::map< size_t, std::set<size_t> >::iterator p_it;
@@ -731,7 +768,9 @@ size_t overlapping_edge_triangles(std::map< size_t, std::set<size_t> > *patches,
     return total_overlapping;
 }
 
-void bot_partition(struct Manifold_Info *info)
+
+static void
+bot_partition(struct Manifold_Info *info)
 {
     std::map< size_t, std::set<size_t> > face_groups;
     std::map< size_t, std::set<size_t> > patches;
@@ -829,8 +868,8 @@ void bot_partition(struct Manifold_Info *info)
 		    if (curr_face_area < (face_size_criteria*10) && curr_face_area > (face_size_criteria*0.1)) {
 			if (face_groups[info->face_to_plane[(*cf_it)]].find((*cf_it)) != face_groups[info->face_to_plane[(*cf_it)]].end()) {
 			    if (info->face_to_plane[(*cf_it)] == current_plane) {
-			//	if(ON_DotProduct( *(*info).face_normals.At((start_face_num)),*(*info).face_normals.At((*cf_it)) ) > 0.5) {
-					// Large patches pose a problem for feature preservation - make an attempt to ensure "large"
+				//	if(ON_DotProduct( *(*info).face_normals.At((start_face_num)),*(*info).face_normals.At((*cf_it)) ) > 0.5) {
+				// Large patches pose a problem for feature preservation - make an attempt to ensure "large"
 				// patches are flat.
 				if (patches[info->patch_cnt].size() > info->patch_size_threshold) {
 				    vect_t origin;
@@ -856,7 +895,7 @@ void bot_partition(struct Manifold_Info *info)
 				    face_queue.push((*cf_it));
 				    face_groups[info->face_to_plane[(*cf_it)]].erase((*cf_it));
 				}
-			//	}
+				//	}
 			    }
 			}
 		    }
@@ -910,13 +949,13 @@ void bot_partition(struct Manifold_Info *info)
     sync_structure_maps(info);
 }
 
+
 /**********************************************************************************
- *
  *   Code for moving from patches with edge segments to a structured topology
  *   of curve segments and loops.
- *
  **********************************************************************************/
-void find_edges(struct Manifold_Info *info)
+static void
+find_edges(struct Manifold_Info *info)
 {
     std::map< size_t, size_t> vert_to_m_V;  // Keep mapping between vertex index being used in Brep and BoT index
     std::map< size_t, std::set<size_t> >::iterator p_it;
@@ -1064,10 +1103,10 @@ void find_edges(struct Manifold_Info *info)
 		ON_NurbsCurve *curve_nurb;
                 int c3i;
 		if (curve_pnts.Count() == 2) {
-		   c3i = info->brep->AddEdgeCurve(new ON_LineCurve(*(curve_pnts.First()), *(curve_pnts.Last())));
+		    c3i = info->brep->AddEdgeCurve(new ON_LineCurve(*(curve_pnts.First()), *(curve_pnts.Last())));
 		} else {
-		   curve_nurb = interpolateLocalCubicCurve(curve_pnts);
-		   c3i = info->brep->AddEdgeCurve(curve_nurb);
+		    curve_nurb = interpolateLocalCubicCurve(curve_pnts);
+		    c3i = info->brep->AddEdgeCurve(curve_nurb);
 		}
 		ON_BrepVertex& StartV = info->brep->m_V[vs_id];
 		StartV.m_tolerance = 1e-3;
@@ -1113,7 +1152,8 @@ void find_edges(struct Manifold_Info *info)
 }
 
 
-void find_outer_loop(std::map<size_t, std::vector<size_t> > *loops, size_t *outer_loop, std::set<size_t> *inner_loops, struct Manifold_Info *info)
+static void
+find_outer_loop(std::map<size_t, std::vector<size_t> > *loops, size_t *outer_loop, std::set<size_t> *inner_loops, struct Manifold_Info *info)
 {
     // If we have more than one loop, we need to identify the outer loop.  OpenNURBS handles outer
     // and inner loops separately, so we need to know which loop is our outer surface boundary.
@@ -1134,8 +1174,8 @@ void find_outer_loop(std::map<size_t, std::vector<size_t> > *loops, size_t *oute
 	    ON_3dPoint pmin(boxmin[0], boxmin[1], boxmin[2]);
 	    ON_3dPoint pmax(boxmax[0], boxmax[1], boxmax[2]);
 	    if (pmin.DistanceTo(pmax) > diag_max) {
-               *outer_loop = (*l_it).first;
-               diag_max = pmin.DistanceTo(pmax);
+		*outer_loop = (*l_it).first;
+		diag_max = pmin.DistanceTo(pmax);
             }
 	}
 	for(l_it = loops->begin(); l_it != loops->end(); l_it++) {
@@ -1146,10 +1186,12 @@ void find_outer_loop(std::map<size_t, std::vector<size_t> > *loops, size_t *oute
     }
 }
 
+
 // Do pullbacks to generate trimming curves in 2D, use them to create BrepTrim and BrepLoop structures for
 // outer and inner trimming loops
-void build_loop(size_t patch_id, size_t loop_index, ON_BrepLoop::TYPE loop_type, std::map<size_t, std::vector<size_t> > *loops, struct Manifold_Info *info) {
-
+static void
+build_loop(size_t patch_id, size_t loop_index, ON_BrepLoop::TYPE loop_type, std::map<size_t, std::vector<size_t> > *loops, struct Manifold_Info *info)
+{
     ON_BrepFace& face = info->brep->m_F[(int)patch_id];
     const ON_Surface *surface = face.SurfaceOf();
     ON_Interval xdom = surface->Domain(0);
@@ -1206,7 +1248,7 @@ void build_loop(size_t patch_id, size_t loop_index, ON_BrepLoop::TYPE loop_type,
 			loop_anchor = pt_2d;
 			found_first_pt = 1;
 		    } else {
-                      istart++;
+			istart++;
                     }
 		} else {
 		    std::cout << "Pullback failure on first pt (" << patch_id << "," << curr_edge << "," << (double)(istart-1)/(double)50 << "): " << pt_3d.x << "," << pt_3d.y << "," << pt_3d.z << "\n";
@@ -1267,7 +1309,9 @@ void build_loop(size_t patch_id, size_t loop_index, ON_BrepLoop::TYPE loop_type,
     delete st;
 }
 
-void find_loops(struct Manifold_Info *info)
+
+static void
+find_loops(struct Manifold_Info *info)
 {
     std::map< size_t, std::set<size_t> >::iterator p_it;
     for (p_it = info->patch_edges.begin(); p_it != info->patch_edges.end(); p_it++) {
@@ -1303,9 +1347,9 @@ void find_loops(struct Manifold_Info *info)
 		loops[curr_loop].push_back(curr_edge);
 		ON_BrepEdge& edge = info->brep->m_E[(int)curr_edge];
                 if(vert_to_match == edge.m_vi[0]) {
-                  vert_to_match = edge.m_vi[1];
+		    vert_to_match = edge.m_vi[1];
                 } else {
-                  vert_to_match = edge.m_vi[0];
+		    vert_to_match = edge.m_vi[0];
                 }
 		// use vert_to_edges to assemble other curves
 		std::set<size_t> candidate_edges;
@@ -1344,13 +1388,13 @@ void find_loops(struct Manifold_Info *info)
     }
 }
 
+
 /**********************************************************************************
- *
  *              Code for fitted 3D NURBS surfaces to patches.
- *
  **********************************************************************************/
 
-void PatchToVector3d(struct rt_bot_internal *bot, size_t curr_patch, struct Manifold_Info *info, on_fit::vector_vec3d &data)
+static void
+PatchToVector3d(struct rt_bot_internal *bot, size_t curr_patch, struct Manifold_Info *info, on_fit::vector_vec3d &data)
 {
     std::set<size_t> *faces = &(info->patches[curr_patch]);
     std::set<size_t>::iterator f_it;
@@ -1435,8 +1479,10 @@ void PatchToVector3d(struct rt_bot_internal *bot, size_t curr_patch, struct Mani
 }
 
 
-    // Actually fit the NURBS surfaces and build faces
-void find_surfaces(struct Manifold_Info *info) {
+// Actually fit the NURBS surfaces and build faces
+static void
+find_surfaces(struct Manifold_Info *info)
+{
     std::map< size_t, std::set<size_t> >::iterator p_it;
     for (p_it = info->patches.begin(); p_it != info->patches.end(); p_it++) {
 	std::cout << "Found patch " << (*p_it).first << " with " << (*p_it).second.size() << " faces\n";
@@ -1478,7 +1524,8 @@ void find_surfaces(struct Manifold_Info *info) {
 }
 
 
-int main(int argc, char *argv[])
+int
+main(int argc, char *argv[])
 {
     struct db_i *dbip;
     struct directory *dp;
@@ -1525,9 +1572,9 @@ int main(int argc, char *argv[])
     }
 
     RT_DB_INTERNAL_INIT(&intern)
-    if (rt_db_get_internal(&intern, dp, dbip, NULL, &rt_uniresource) < 0) {
-	bu_exit(1, "ERROR: Unable to get internal representation of %s\n", argv[2]);
-    }
+	if (rt_db_get_internal(&intern, dp, dbip, NULL, &rt_uniresource) < 0) {
+	    bu_exit(1, "ERROR: Unable to get internal representation of %s\n", argv[2]);
+	}
 
     if (intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_BOT) {
 	bu_exit(1, "ERROR: object %s does not appear to be of type BoT\n", argv[2]);
