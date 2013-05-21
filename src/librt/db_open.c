@@ -263,21 +263,31 @@ db_create(const char *name, int version)
     return dbip;
 }
 
+
 void
 db_close_client(struct db_i *dbip, long int *client)
 {
+    if (!dbip)
+	return;
+
     RT_CK_DBI(dbip);
+
     if (client) {
 	(void)bu_ptbl_rm(&dbip->dbi_clients, client);
     }
+
     db_close(dbip);
 }
+
 
 void
 db_close(register struct db_i *dbip)
 {
     register int i;
     register struct directory *dp, *nextdp;
+
+    if (!dbip)
+	return;
 
     RT_CK_DBI(dbip);
     if (RT_G_DEBUG&DEBUG_DB) bu_log("db_close(%s) x%x uses=%d\n",
