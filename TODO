@@ -26,9 +26,6 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
   passes on Ubuntu and Fedora - but stricter systems don't like it. 
   64-bit systems don't seem to have trouble, at least not so far.
 
-* fix duplicate directory entries and/or db open/close cleanup (need
-  no leaking memory).  see src/rt/viewedge.c FIXME comment for prior.
-
 
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------------
