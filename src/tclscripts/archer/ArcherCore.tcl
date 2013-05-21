@@ -489,7 +489,7 @@ namespace eval ArcherCore {
 
 	variable mLightingMode 1
 	variable mLightingModePref ""
-	variable mDisplayListMode 0
+	variable mDisplayListMode 1
 	variable mDisplayListModePref ""
 	variable mWireframeMode 0
 	variable mWireframeModePref ""
