@@ -608,16 +608,17 @@ createDList(struct solid *sp)
     if (sp->s_dlist == 0)
 	sp->s_dlist = DM_GEN_DLISTS(dmp, 1);
 
-    DM_BEGINDLIST(dmp, sp->s_dlist);
+    (void)DM_MAKE_CURRENT(dmp);
+    (void)DM_BEGINDLIST(dmp, sp->s_dlist);
     if (sp->s_iflag == UP)
-	DM_SET_FGCOLOR(dmp, 255, 255, 255, 0, sp->s_transparency);
+	(void)DM_SET_FGCOLOR(dmp, 255, 255, 255, 0, sp->s_transparency);
     else
-	DM_SET_FGCOLOR(dmp,
+	(void)DM_SET_FGCOLOR(dmp,
 		       (unsigned char)sp->s_color[0],
 		       (unsigned char)sp->s_color[1],
 		       (unsigned char)sp->s_color[2], 0, sp->s_transparency);
-    DM_DRAW_VLIST(dmp, (struct bn_vlist *)&sp->s_vlist);
-    DM_ENDDLIST(dmp);
+    (void)DM_DRAW_VLIST(dmp, (struct bn_vlist *)&sp->s_vlist);
+    (void)DM_ENDDLIST(dmp);
 }
 
 
@@ -685,7 +686,8 @@ freeDListsAll(unsigned int dlist, int range)
     FOR_ALL_DISPLAYS(dlp, &head_dm_list.l) {
 	if (dlp->dml_dmp->dm_displaylist &&
 	    dlp->dml_mged_variables->mv_dlist) {
-	    DM_FREEDLISTS(dlp->dml_dmp, dlist, range);
+	    (void)DM_MAKE_CURRENT(dmp);
+	    (void)DM_FREEDLISTS(dlp->dml_dmp, dlist, range);
 	}
 
 	dlp->dml_dirty = 1;
