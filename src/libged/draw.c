@@ -1125,7 +1125,6 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
     int ac = 1;
     char *av[2];
     struct ged_view *gvp;
-    int autoview;
 
     RT_CHECK_DBI(gedp->ged_wdbp->dbip);
 
@@ -1137,9 +1136,9 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 
     gvp = gedp->ged_gvp;
     if (gvp && gvp->gv_adaptive_plot)
-	autoview = 1;
+	dgcdp.autoview = 1;
     else
-	autoview = 0;
+	dgcdp.autoview = 0;
 
     /* options are already parsed into _dgcdp */
     if (_dgcdp != (struct _ged_client_data *)0) {
@@ -1260,7 +1259,7 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 
 		    break;
 		case 'R':
-		    autoview = 0;
+		    dgcdp.autoview = 0;
 		    break;
 		case 'A':
 		case 'o':
@@ -1369,7 +1368,7 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 		 * we need to autoview now so we have the correct
 		 * view size for plotting.
 		 */
-		if (autoview) {
+		if (dgcdp.autoview) {
 		    const char *autoview_args[2] = {"autoview", '\0'};
 		    ged_autoview(gedp, 1, autoview_args);
 		}

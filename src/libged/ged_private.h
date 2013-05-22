@@ -98,6 +98,7 @@ struct _ged_client_data {
     long nvectors;
     int do_polysolids;
     int num_halfs;
+    int autoview;
 };
 
 
