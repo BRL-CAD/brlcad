@@ -121,12 +121,12 @@ parsArgv(int argc, char **argv)
 {
     int c;
 /* Parse options.						*/
-    while ((c = bu_getopt(argc, argv, "b")) != -1) {
+    while ((c = bu_getopt(argc, argv, "bh?")) != -1) {
 	switch (c) {
 	    case 'b' :
 		tty = 0;
 		break;
-	    case '?' :
+	    default:
 		return 0;
 	}
     }
