@@ -34,7 +34,7 @@
 #include "vmath.h"
 
 /* declarations to support use of bu_getopt() */
-char *options = "w:h:d:W:H:sn:t:Du:mc:C:";
+char *options = "w:h:d:W:H:sn:t:Du:mc:C:?";
 
 char *progname = "(noname)";
 double brick_width=8.0;
@@ -86,9 +86,6 @@ int parse_args(int ac, char **av)
 	progname = *av;
     else
 	++progname;
-
-    /* Turn off getopt's error messages */
-    bu_opterr = 0;
 
     /* get all the option flags from the command line */
     while ((c=bu_getopt(ac, av, options)) != -1)
@@ -151,9 +148,8 @@ int parse_args(int ac, char **av)
 	    case 's':
 		standalone = !standalone;
 		break;
-	    case '?':
 	    default:
-		usage("bad command line option\n");
+		usage("\n");
 		break;
 	}
 
@@ -327,12 +323,14 @@ int main(int ac, char **av)
     double horiz_spacing;
     double vert_spacing;
 
+    if (ac == 1 && isatty(fileno(stdin)) && isatty(fileno(stdout)))
+	usage("\n");
 
     /* parse command flags, and make sure there are arguments
      * left over for processing.
      */
-    if (parse_args(ac, av) < ac) usage("Excess command line arguments\n");
-
+    if (parse_args(ac, av) < ac)
+	usage("Excess command line arguments\n");
 
     /* build the wall
 
