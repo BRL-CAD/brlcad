@@ -16,7 +16,7 @@
 <refsynopsisdiv xml:id="synopsis">
 <cmdsynopsis sepchar=" ">
   <command>fb-rle</command>
-    <arg choice="opt" rep="norepeat">-cdh </arg>
+    <arg choice="opt" rep="norepeat">-cd </arg>
     <arg choice="opt" rep="norepeat">-F <replaceable>framebuffer</replaceable></arg>
     <arg choice="opt" rep="norepeat">-C <replaceable>r/g/b</replaceable></arg>
     <arg choice="opt" rep="norepeat">-S <replaceable>squarescrsize</replaceable></arg>
@@ -62,8 +62,6 @@ command line options.</para>
   <varlistentry>
   <term><option>-h</option></term>
   <listitem>
-<para>changes the screen size to 1024x1024.</para>
-  </listitem>
   </varlistentry>
   <varlistentry>
   <term><option>-W </option><replaceable>scr_width</replaceable></term>
