@@ -60,10 +60,6 @@ and
 command line options.</para>
 <variablelist remap="TP">
   <varlistentry>
-  <term><option>-h</option></term>
-  <listitem>
-  </varlistentry>
-  <varlistentry>
   <term><option>-W </option><replaceable>scr_width</replaceable></term>
   <listitem>
 <para>specifies the desired width of the screen, in pixels.</para>
