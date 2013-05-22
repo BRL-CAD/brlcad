@@ -408,6 +408,9 @@ namespace eval ArcherCore {
 	variable mColorObjects {}
 	variable mGhostObjects {}
 	variable mEdgeObjects {}
+	variable mColorObjectsHow 0
+	variable mGhostObjectsHow 0
+	variable mEdgeObjectsHow 0
 
 	variable mAccordianCallbackActive 0
 	variable mTreeMode $TREE_MODE_TREE
@@ -2630,16 +2633,26 @@ namespace eval ArcherCore {
 
     set whoList [gedCmd who]
 
+    set who [lindex $whoList 0]
+    if {$who != ""} {
+	set how [gedCmd how $who]
+    } else {
+	set how 0
+    }
+
     switch -- $mTreeMode \
 	$TREE_MODE_TREE - \
 	$TREE_MODE_COLOR_OBJECTS {
 	    set mColorObjects $whoList
+	    set mColorObjectsHow $how
 	} \
 	$TREE_MODE_GHOST_OBJECTS {
 	    set mGhostObjects $whoList
+	    set mGhostObjectsHow $how
 	} \
 	$TREE_MODE_EDGE_OBJECTS {
 	    set mEdgeObjects $whoList
+	    set mEdgeObjectsHow $how
 	}
 
     foreach ditem $whoList {
@@ -7244,6 +7257,7 @@ namespace eval ArcherCore {
 
     set drawem 0
     set draw_objects ""
+    set how 0
 
     if {!$_state && !$mToolViewChange} {    # The same accordian button was pressed and there's NO tool view change
 	if {[regexp Tree $_item all]} {
@@ -7316,12 +7330,15 @@ namespace eval ArcherCore {
 		$TREE_MODE_TREE - \
 		$TREE_MODE_COLOR_OBJECTS {
 		    set draw_objects $mColorObjects
+		    set how $mColorObjectsHow
 		} \
 		$TREE_MODE_GHOST_OBJECTS {
 		    set draw_objects $mGhostObjects
+		    set how $mGhostObjectsHow
 		} \
 		$TREE_MODE_EDGE_OBJECTS {
 		    set draw_objects $mEdgeObjects
+		    set how $mEdgeObjectsHow
 		}
 	}
 
@@ -7344,7 +7361,11 @@ namespace eval ArcherCore {
 	set mSavedCenter [$itk_component(ged) center]
 	set mSavedSize [$itk_component(ged) size]
 	zap
-	eval draw $draw_objects
+
+	if {$draw_objects != ""} {
+	    eval draw -m$how $draw_objects
+	}
+
 	$itk_component(ged) center $mSavedCenter
 	$itk_component(ged) size $mSavedSize
 	$itk_component(ged) refresh_on
