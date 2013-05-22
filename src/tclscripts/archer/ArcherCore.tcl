@@ -5265,6 +5265,9 @@ namespace eval ArcherCore {
     set mSelectedObjPath ""
     set mSelectedObj ""
     set mSelectedObjType ""
+    set mColorObjects ""
+    set mGhostObjects ""
+    set mEdgeObjects ""
 
     if {!$mViewOnly} {
 	gedCmd size [expr {$mGroundPlaneSize * 1.5 * [gedCmd base2local]}]

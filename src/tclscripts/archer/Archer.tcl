@@ -1750,9 +1750,24 @@ package provide Archer 1.0
 
     set mDbTitle [$itk_component(ged) title]
     set mDbUnits [$itk_component(ged) units -s]
+    set mPrevObjViewMode $OBJ_ATTR_VIEW_MODE
+    set mPrevSelectedObjPath ""
+    set mPrevSelectedObj ""
+    set mSelectedObjPath ""
+    set mSelectedObj ""
+    set mSelectedObjType ""
+    set mColorObjects ""
+    set mGhostObjects ""
+    set mEdgeObjects ""
 
     if {!$mViewOnly} {
 	initDbAttrView $mTarget
+
+	set mTreeMode $TREE_MODE_TREE
+	set mPrevTreeMode $TREE_MODE_TREE
+	set mPrevTreeMode2 $TREE_MODE_COLOR_OBJECTS
+	toggleTreeView
+
 	applyPreferences
 	doLighting
 	updateWizardMenu
