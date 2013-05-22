@@ -3,8 +3,8 @@ set(igraph_TCLSCRIPTS
   igraph.tcl
   )
 BRLCAD_ADDDATA(igraph_TCLSCRIPTS tclscripts/igraph)
-pkgIndex_BUILD(igraph tclscripts/igraph)
-tclIndex_BUILD(igraph tclscripts/igraph)
+pkgIndex_BUILD(tclscripts/igraph)
+tclIndex_BUILD(tclscripts/igraph)
 
 CMAKEFILES(pkgIndex.tcl tclIndex)
 CMAKEFILES(Makefile.am)

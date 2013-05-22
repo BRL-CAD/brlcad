@@ -29,8 +29,8 @@ set(lib_TCLSCRIPTS
 	pattern_gui.tcl
 )
 BRLCAD_ADDDATA(lib_TCLSCRIPTS tclscripts/lib)
-pkgIndex_BUILD(lib tclscripts/lib)
-tclIndex_BUILD(lib tclscripts/lib)
+pkgIndex_BUILD(tclscripts/lib)
+tclIndex_BUILD(tclscripts/lib)
 
 CMAKEFILES(pkgIndex.tcl tclIndex)
 CMAKEFILES(Makefile.am)

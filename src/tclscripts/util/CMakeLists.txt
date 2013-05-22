@@ -4,8 +4,8 @@ set(util_TCLSCRIPTS
   luniq.tcl
   )
 BRLCAD_ADDDATA(util_TCLSCRIPTS tclscripts/util)
-pkgIndex_BUILD(util tclscripts/util)
-tclIndex_BUILD(util tclscripts/util)
+pkgIndex_BUILD(tclscripts/util)
+tclIndex_BUILD(tclscripts/util)
 
 CMAKEFILES(Makefile.am pkgIndex.tcl tclIndex)
 

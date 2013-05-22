@@ -2,7 +2,7 @@ set(lod_TCLSCRIPTS
   LODDialog.tcl
   )
 BRLCAD_ADDDATA(lod_TCLSCRIPTS tclscripts/lod)
-tclIndex_BUILD(lod tclscripts/lod)
+tclIndex_BUILD(tclscripts/lod)
 
 CMAKEFILES(Makefile.am tclIndex)
 

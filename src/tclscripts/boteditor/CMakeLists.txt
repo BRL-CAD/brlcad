@@ -4,7 +4,7 @@ set(boteditor_TCLSCRIPTS
   botTools.tcl
   )
 BRLCAD_ADDDATA(boteditor_TCLSCRIPTS tclscripts/boteditor)
-tclIndex_BUILD(boteditor tclscripts/boteditor)
+tclIndex_BUILD(tclscripts/boteditor)
 
 CMAKEFILES(Makefile.am tclIndex)
 

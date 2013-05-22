@@ -43,8 +43,8 @@ set(archer_TCLSCRIPTS
   tabwindow.itk
   )
 BRLCAD_ADDDATA(archer_TCLSCRIPTS tclscripts/archer)
-pkgIndex_BUILD(archer tclscripts/archer)
-tclIndex_BUILD(archer tclscripts/archer)
+pkgIndex_BUILD(tclscripts/archer)
+tclIndex_BUILD(tclscripts/archer)
 
 CMAKEFILES(pkgIndex.tcl tclIndex)
 CMAKEFILES(Makefile.am)

@@ -45,8 +45,8 @@ set(rtwizard_TCLSCRIPTS
   rtwizard.bat
   )
 BRLCAD_ADDDATA(rtwizard_TCLSCRIPTS tclscripts/rtwizard)
-pkgIndex_BUILD(rtwizard tclscripts/rtwizard)
-tclIndex_BUILD(rtwizard tclscripts/rtwizard)
+pkgIndex_BUILD(tclscripts/rtwizard)
+tclIndex_BUILD(tclscripts/rtwizard)
 
 # Examples
 

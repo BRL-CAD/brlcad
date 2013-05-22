@@ -8,8 +8,8 @@ set(hv3_TCLSCRIPTS
   snit.tcl
   )
 BRLCAD_ADDDATA(hv3_TCLSCRIPTS tclscripts/hv3)
-pkgIndex_BUILD(hv3 tclscripts/hv3)
-tclIndex_BUILD(hv3 tclscripts/hv3)
+pkgIndex_BUILD(tclscripts/hv3)
+tclIndex_BUILD(tclscripts/hv3)
 install(FILES hv3.man DESTINATION ${DATA_DIR}/doc)
 install(FILES tkhtml.n DESTINATION ${MAN_DIR}/mann)
 set(hv3_ignore_files

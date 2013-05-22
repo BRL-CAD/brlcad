@@ -84,8 +84,8 @@ set(mged_TCLSCRIPTS
   )
 BRLCAD_ADDDATA(mged_TCLSCRIPTS tclscripts/mged)
 # no packages in here (so far)
-# pkgIndex_BUILD(mged tclscripts/mged)
-tclIndex_BUILD(mged tclscripts/mged)
+# pkgIndex_BUILD(tclscripts/mged)
+tclIndex_BUILD(tclscripts/mged)
 
 set(mged_tcl_DATA
   l_i0_v0_s0.gif
