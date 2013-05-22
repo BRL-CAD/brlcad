@@ -210,18 +210,18 @@ printf -- "%-25s ($t1 $t2 $t3 $t4 $t5)\n" "${rays}"
 #     printf -- "ERROR: $i.tie.rt.pix failed to render\n"
 # fi
 
-  ################
-echo -n "Norm: "
-if test x`echo "$perf > $tperf" | bc` = x1 ; then
-    bigger="$perf"
-else
-    bigger="$tperf"
-fi
-fore="`expr $SZ \* $SZ - $back`"
-ratio=`dc -e "3k $fore $SZ d * / p"`
-norm=`dc -e "3k $bigger $ratio * p"`
-nrps=`printf -- "%10.0f rays/s" "${norm}"`
-printf -- "%-25s ($bigger $fore $ratio)\n" "$nrps"
+#   ################
+# echo -n "Norm: "
+# if test x`echo "$perf > $tperf" | bc` = x1 ; then
+#     bigger="$perf"
+# else
+#     bigger="$tperf"
+# fi
+# fore="`expr $SZ \* $SZ - $back`"
+# ratio=`dc -e "3k $fore $SZ d * / p"`
+# norm=`dc -e "3k $bigger $ratio * p"`
+# nrps=`printf -- "%10.0f rays/s" "${norm}"`
+# printf -- "%-25s ($bigger $fore $ratio)\n" "$nrps"
 
   ################
 export RT=rtxray
