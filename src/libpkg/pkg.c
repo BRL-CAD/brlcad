@@ -734,7 +734,6 @@ struct pkg_conn *
 pkg_getclient(int fd, const struct pkg_switch *switchp, void (*errlog) (char *msg), int nodelay)
 {
     int s2;
-    auto int onoff;
 #ifdef HAVE_WINSOCK_H
     WORD wVersionRequested;		/* initialize Windows socket networking, increment reference count */
     WSADATA wsaData;
@@ -757,6 +756,7 @@ pkg_getclient(int fd, const struct pkg_switch *switchp, void (*errlog) (char *ms
 
 #ifdef FIONBIO
     if (nodelay) {
+	int onoff;
 	onoff = 1;
 	if (ioctl(fd, FIONBIO, &onoff) < 0)
 	    _pkg_perror(errlog, "pkg_getclient: FIONBIO 1");
@@ -793,10 +793,11 @@ pkg_getclient(int fd, const struct pkg_switch *switchp, void (*errlog) (char *ms
     }  while (s2 < 0);
 #ifdef FIONBIO
     if (nodelay) {
-	onoff = 0;
-	if (ioctl(fd, FIONBIO, &onoff) < 0)
+	int onoff2;
+	onoff2 = 0;
+	if (ioctl(fd, FIONBIO, &onoff2) < 0)
 	    _pkg_perror(errlog, "pkg_getclient: FIONBIO 2");
-	if (ioctl(s2, FIONBIO, &onoff) < 0)
+	if (ioctl(s2, FIONBIO, &onoff2) < 0)
 	    _pkg_perror(errlog, "pkg_getclient: FIONBIO 3");
     }
 #endif
