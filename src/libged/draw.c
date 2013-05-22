@@ -1124,7 +1124,6 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
     int i;
     int ac = 1;
     char *av[2];
-    struct ged_view *gvp;
 
     RT_CHECK_DBI(gedp->ged_wdbp->dbip);
 
@@ -1134,16 +1133,17 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
     ++drawtrees_depth;
     av[1] = (char *)0;
 
-    gvp = gedp->ged_gvp;
-    if (gvp && gvp->gv_adaptive_plot)
-	dgcdp.autoview = 1;
-    else
-	dgcdp.autoview = 0;
-
     /* options are already parsed into _dgcdp */
     if (_dgcdp != (struct _ged_client_data *)0) {
 	dgcdp = *_dgcdp;            /* struct copy */
     } else {
+	struct ged_view *gvp;
+
+	gvp = gedp->ged_gvp;
+	if (gvp && gvp->gv_adaptive_plot)
+	    dgcdp.autoview = 1;
+	else
+	    dgcdp.autoview = 0;
 
 	memset(&dgcdp, 0, sizeof(struct _ged_client_data));
 	dgcdp.gedp = gedp;
