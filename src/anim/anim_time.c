@@ -155,7 +155,7 @@ main(int argc, char **argv)
     fastf_t temp0, temp1, temp2, start=0.0, v0, v1;
     int i, j, num, plen;
 
-    fastf_t time, dist, slope, a, b, c;
+    fastf_t timeval, dist, slope, a, b, c;
 
     /* intentionally double for scan */
     double end, *x, *y, *z;
@@ -203,7 +203,7 @@ main(int argc, char **argv)
 	plen++;
     }
 
-    time = end - start;
+    timeval = end - start;
     dist = l[plen-1];
 
     if (query) {
@@ -211,15 +211,15 @@ main(int argc, char **argv)
 	return 0;
     }
 
-    if (time < VDIVIDE_TOL) {
-	fprintf(stderr, "anim_time: time too small. Only %f s.\n", time);
+    if (timeval < VDIVIDE_TOL) {
+	fprintf(stderr, "anim_time: time too small. Only %f s.\n", timeval);
 	return 10;
     }
     if (dist < VDIVIDE_TOL) {
 	fprintf(stderr, "anim_time: pathlength too small. Only %f\n", dist);
 	return 10;
     }
-    slope = dist/time;
+    slope = dist/timeval;
 
     switch (v0_set) {
 	case TIME_ABSOLUTE:
@@ -263,8 +263,8 @@ main(int argc, char **argv)
 	return 1;
     }
 
-    a = ((v1+v0) - 2.0*slope)/(time*time);
-    b = (3*slope - (v1+2.0*v0))/time;
+    a = ((v1+v0) - 2.0*slope)/(timeval*timeval);
+    b = (3*slope - (v1+2.0*v0))/timeval;
     c = v0;
 
     temp2 = 1.0/slope;
