@@ -53,8 +53,15 @@ main(int argc, char *argv[])
     int tfd = 0;
     int ret = 0;
 
-    if (argc > 1)
+    if ( (BU_STR_EQUAL(argv[1],"-h") || BU_STR_EQUAL(argv[1],"-?")) && argc == 2){
+	bu_log("Usage: %s (takes no arguments)\n",argv[0]);
+	exit(1);
+    }
+
+    if (argc > 1){
 	bu_log("%s: unrecognized argument(s)\n", argv[0]);
+	bu_log("        Program continues running:\n", argv[0]);
+    }
 
     if ((count = bu_mread(0, buf, sizeof(buf))) < (long)sizeof(buf)) {
 	if (count < 0) {
