@@ -249,9 +249,16 @@ extern "C" {
 #include <limits.h>
 #include <ctype.h>
 
+/* these are for openindiana (opensolaris fork) */
+#if 0
 /* limits.h (sys/syslimits.h) should define this, but some don't */
 #ifndef NAME_MAX
 #  define NAME_MAX 255
+#endif
+
+#ifndef isfinite
+#  define isfinite(x) (fpclassify(x) & (FP_NORMAL | FP_SUBNORMAL | FP_ZERO))
+#endif
 #endif
 
 #if defined(ON_COMPILER_IRIX) || defined(ON_COMPILER_SUN)
