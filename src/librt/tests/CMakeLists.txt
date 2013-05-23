@@ -9,7 +9,7 @@ BRLCAD_ADDEXEC(nurbs_tester nurbs_tests.cpp "librt;libbrep;libbu" NO_INSTALL LOC
 
 add_test(NURBS-get_closest_point-distinct_points nurbs_tester ${CMAKE_CURRENT_SOURCE_DIR}/nurbs_surfaces.g 1)
 
-CMAKEFILES(nurbs_surfaces.g)
+CMAKEFILES(arb_intersect.g nurbs_surfaces.g)
 
 # Local Variables:
 # tab-width: 8
