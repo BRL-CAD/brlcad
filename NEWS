@@ -13,6 +13,7 @@ changes made.  See document footer for additional details.
 --- 2013-03-XX  Release 7.24.0                                     ---
 ----------------------------------------------------------------------
 
+* 'idents' command no longer reports negative booleans - Keith Bowman
 * improved support for NURBS with big uv-domain changes - Keith Bowman
 * improved ray tracing behavior for grazing rays - Keith Bowman
 * improved robustness of the step-g geometry importer - Nick Reed
