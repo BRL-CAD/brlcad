@@ -92,7 +92,7 @@ int im_header(void);
 void im_write(int y);
 
 char usage[] = "\
-Usage: bw-imp [-h -D] [-s squaresize] [-w width] [-n height]\n\
+Usage: bw-imp [-D] [-s squaresize] [-w width] [-n height]\n\
 	[-X page_xoff] [-Y page_yoff] [-t thresh] [file.bw] > impress\n";
 
 int
@@ -100,16 +100,14 @@ get_args(int argc, char **argv)
 {
     int c;
 
-    while ((c = bu_getopt(argc, argv, "hDs:n:w:t:X:Y:")) != -1) {
+    while ((c = bu_getopt(argc, argv, "Ds:n:w:t:X:Y:h?")) != -1) {
 	switch (c) {
-	    case 'h':
-		/* high-res */
-		height = width = 1024;
-		break;
 	    case 'D':
 		/* halftone instead of dither */
 		pattern = halftone;
 		break;
+/* Use '-s 1024' in place of old 'h'.
+ */
 	    case 's':
 		/* square size */
 		height = width = atoi(bu_optarg);
