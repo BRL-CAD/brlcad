@@ -114,7 +114,7 @@ main(int argc, char** argv)
 
     // Run the intersection
     ON_ClassArray<ON_SSX_EVENT> events;
-    if (ON_Intersect(&surf1, &surf2, events)) {
+    if (ON_Intersect(&surf1, &surf2, events) < 0) {
 	bu_log("Intersection failed\n");
 	return -1;
     }

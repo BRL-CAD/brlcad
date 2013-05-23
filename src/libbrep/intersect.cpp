@@ -35,8 +35,6 @@
 
 #include "brep.h"
 
-#if !defined(OPENNURBS_PLUS_INC_)
-
 /**
  * Surface-surface intersections (SSI)
  *
@@ -302,8 +300,6 @@ ON_Intersect(const ON_Surface* surfA,
 	     const ON_Interval*,
 	     const ON_Interval*)
 {
-    bu_log("ON_Surface::IntersectSurface() in libbrep is called.\n");
-
     if (surfA == NULL || surfB == NULL) {
 	return -1;
     }
@@ -475,10 +471,6 @@ ON_Intersect(const ON_Surface* surfA,
 		}
 	    }
 	}
-	/* for (int i = 0; i < curvept.Count(); i++) {
-	    bu_log("(%lf %lf %lf)\n", curvept[i].x, curvept[i].y, curvept[i].z);
-	}
-	bu_log("%d %d\n", h, tmp_pairs.size());*/
     }
     bu_log("We get %d intersection bounding boxes.\n", bbox_count);
     bu_log("%d points on the intersection curves.\n", curvept.Count());
@@ -679,10 +671,8 @@ ON_Intersect(const ON_Surface* surfA,
 	}
     }
 
-    return 0;
+    return x.Count();
 }
-
-#endif
 
 // Local Variables:
 // tab-width: 8

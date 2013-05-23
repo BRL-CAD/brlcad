@@ -2796,7 +2796,7 @@ int brep_intersect(struct rt_db_internal *intern1, struct rt_db_internal *intern
     brep2->m_S[j]->GetNurbForm(surf2);
 
     ON_ClassArray<ON_SSX_EVENT> events;
-    if (ON_Intersect(&surf1, &surf2, events)) {
+    if (ON_Intersect(&surf1, &surf2, events) < 0) {
 	bu_log("Intersection failed\n");
 	return -1;
     }

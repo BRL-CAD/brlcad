@@ -1720,7 +1720,48 @@ DumpSSXEvent(ON_SSX_EVENT &x, ON_TextLog &text_log);
 
 /**
  * An overload of ON_Intersect for surface-surface intersection.
+ *
+ * Description:
+ *   Intersect surfaceA with surfaceB.
+ *
+ * Parameters:
+ *   surfaceA - [in]
+ *
+ *   surfaceB - [in]
+ *
+ *   x - [out]
+ *     Intersection events are appended to this array.
+ *
+ *   intersection_tolerance - [in]
+ *     If the input intersection_tolerance <= 0.0, then 0.001 is used.
+ *
+ *   overlap_tolerance - [in]
+ *     If positive, then overlap_tolerance must be
+ *     >= intersection_tolerance and is used to test for
+ *     overlapping regions. If the input
+ *     overlap_tolerance <= 0.0, then 2*intersection_tolerance
+ *     is used.
+ *
+ *   fitting_tolerance - [in]
+ *     If fitting_tolerance is > 0 and >= intersection_tolerance,
+ *     then the intersection curves are fit to this tolerance.
+ *     If input fitting_tolerance <= 0.0 or < intersection_tolerance,
+ *     then intersection_tolerance is used.
+ *
+ *   surfaceA_udomain - [in]
+ *     optional restriction on surfaceA u domain
+ *   surfaceA_vdomain - [in]
+ *     optional restriction on surfaceA v domain
+ *
+ *   surfaceB_udomain - [in]
+ *     optional restriction on surfaceB u domain
+ *   surfaceB_vdomain - [in]
+ *     optional restriction on surfaceB v domain
+ *
+ * Returns:
+ *    Number of intersection events appended to x. -1 for error.
  */
+
 extern BREP_EXPORT int
 ON_Intersect(const ON_Surface* surfA,
 	     const ON_Surface* surfB,

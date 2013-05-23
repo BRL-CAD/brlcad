@@ -4385,7 +4385,7 @@ rt_brep_boolean(struct rt_db_internal *out, const struct rt_db_internal *ip1, co
 	    ON_ClassArray<ON_SSX_EVENT> events;
 	    if (ON_Intersect(brep1->m_S[brep1->m_F[i].m_si],
 			     brep2->m_S[brep2->m_F[j].m_si],
-			     events))
+			     events) <= 0)
 		continue;
 	    ON_SimpleArray<ON_NurbsCurve *> curve_uv, curve_st;
 	    for (int k = 0; k < events.Count(); k++) {
