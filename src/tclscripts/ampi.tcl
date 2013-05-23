@@ -24,19 +24,25 @@
 # This is a comment \
     exit
 
-# make the pkgIndex.tcl
+set error 0
+
 if {![info exists argv]} {
-    puts "No directory argument provided."
+    puts "No directory argument provided for pkgIndex.tcl."
     return 0
 }
 
+
+# make the pkgIndex.tcl
 foreach arg $argv {
+
     # generate a pkgIndex.tcl file in the arg dir
     puts "Generating pkgIndex.tcl in $arg"
-    catch {pkg_mkIndex -verbose $arg *.tcl *.itcl *.itk *.sh}
+    catch {pkg_mkIndex -verbose $arg *.tcl *.itcl *.itk *.sh} errout
 
     if {![file exists "$arg/pkgIndex.tcl"]} {
+	puts "$errout"
 	puts "ERROR: pkgIndex.tcl does not exist in $arg"
+	incr error
 	continue
     }
 
@@ -64,6 +70,9 @@ foreach arg $argv {
     }
     close $fd
 }
+
+
+exit $error
 
 # Local Variables:
 # mode: Tcl

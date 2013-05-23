@@ -24,49 +24,54 @@
 # This is a comment \
     exit
 
-# make the tclIndex
-proc make_tclIndex {argv} {
-    foreach arg $argv {
-	# generate a tclIndex file in the arg dir
-	puts "Generating a tclIndex in $arg"
-	catch {auto_mkindex $arg *.tcl *.itcl *.itk *.sh}
-
-	if {![file exists "$arg/tclIndex"]} {
-	    puts "ERROR: tclIndex does not exist in $arg"
-	    continue
-	}
-
-	set tclIndex ""
-	set header ""
-
-	# sort the tclIndex
-	set fd [open "$arg/tclIndex"]
-	while {[gets $fd data] >= 0} {
-	    if {[string compare -length 3 $data "set"] == 0} {
-		lappend tclIndex $data
-	    } else {
-		lappend header $data
-	    }
-	}
-	close $fd
-
-	# write out the sorted tclIndex
-	set fd [open "$arg/tclIndex" {WRONLY TRUNC CREAT}]
-	foreach line $header {
-	    puts $fd $line
-	}
-	foreach line [lsort $tclIndex] {
-	    puts $fd $line
-	}
-	close $fd
-    }
-}
+set error 0
 
 if {![info exists argv]} {
+    puts "No directory argument provided for tclIndex."
     return 0
 }
 
-make_tclIndex $argv
+
+# make the tclIndex
+foreach arg $argv {
+    # generate a tclIndex file in the arg dir
+    puts "Generating tclIndex in $arg"
+    catch {auto_mkindex $arg *.tcl *.itcl *.itk *.sh} errout
+
+    if {![file exists "$arg/tclIndex"]} {
+	puts "$errout"
+	puts "ERROR: tclIndex does not exist in $arg"
+	incr error
+	continue
+    }
+
+    set tclIndex ""
+    set header ""
+
+    # sort the tclIndex
+    set fd [open "$arg/tclIndex"]
+    while {[gets $fd data] >= 0} {
+	if {[string compare -length 3 $data "set"] == 0} {
+	    lappend tclIndex $data
+	} else {
+	    lappend header $data
+	}
+    }
+    close $fd
+
+    # write out the sorted tclIndex
+    set fd [open "$arg/tclIndex" {WRONLY TRUNC CREAT}]
+    foreach line $header {
+	puts $fd $line
+    }
+    foreach line [lsort $tclIndex] {
+	puts $fd $line
+    }
+    close $fd
+}
+
+
+exit $error
 
 # Local Variables:
 # mode: Tcl
