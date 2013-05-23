@@ -1270,25 +1270,7 @@ typedef double fastf_t;
  * in the biased-exponent field and all 0 bits in the fraction with
  * the sign indicating positive (0) or negative (1) infinity.
  */
-
-
-/* !!! this undef is temporarily restored to restore old behavior and
- * !!! force the use of the reversion below - it should disappear when 
- * !!! that reversion does. -- CWY, 20130514
- */
-#ifdef INFINITY
-#    undef INFINITY
-#endif
-
-
 #ifndef INFINITY
-#if 1
-/* !!! this is temporarily reverted to a historic value due to a
- * !!! change it introduces in our spatial partitioning (grazing a tgc
- * !!! that is right on the edge of a BSP cell). -- CSM, 20130424
- */
-#    define INFINITY ((fastf_t)1.0e40)
-#else
 #  if defined(HUGE_VAL)
 #    define INFINITY ((fastf_t)HUGE_VAL)
 #  elif defined(HUGE_VALF)
@@ -1305,7 +1287,6 @@ typedef double fastf_t;
       */
 #    define INFINITY ((fastf_t)1.0e40)
 #  endif
-#endif
 #endif
 
 
