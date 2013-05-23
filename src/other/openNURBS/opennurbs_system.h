@@ -249,6 +249,11 @@ extern "C" {
 #include <limits.h>
 #include <ctype.h>
 
+/* limits.h (sys/syslimits.h) should define this, but some don't */
+#ifndef NAME_MAX
+#  define NAME_MAX 255
+#endif
+
 #if defined(ON_COMPILER_IRIX) || defined(ON_COMPILER_SUN)
 #include <alloca.h>
 #endif
