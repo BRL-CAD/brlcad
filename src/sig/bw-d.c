@@ -65,8 +65,10 @@ int main(int argc, char **argv)
 	argc--;
     }
 
-    if ( argc > 1 || ZERO(scale) || isatty(fileno(stdin)) )
+    if ( argc > 1 || ZERO(scale) || isatty(fileno(stdin)) ) {
+    	fprintf(stderr,"bad argument\n");
 	printusage();
+    }
 
     while ( (num = fread( &ibuf[0], sizeof( ibuf[0] ), 512, stdin)) > 0 ) {
 	if ( EQUAL(scale, 1.0) ) {
