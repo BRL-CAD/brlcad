@@ -17,7 +17,7 @@
 <refsynopsisdiv xml:id='synopsis'>
 <cmdsynopsis>
   <command>bw-imp</command>
-    <arg choice='opt'>-Dh </arg>
+    <arg choice='opt'>-D </arg>
     <arg choice='opt'>-s <replaceable>squaresize</replaceable></arg>
     <arg choice='opt'>-w <replaceable>width</replaceable></arg>
     <arg choice='opt'>-n <replaceable>height</replaceable></arg>
@@ -63,9 +63,7 @@ If the input file is already bi-level, such as might be produced by the
 <citerefentry><refentrytitle>halftone</refentrytitle><manvolnum>1</manvolnum></citerefentry>
 program, then this is the option to be used.</para>
 
-<para>The
-<option>-h</option>
-option specifies a 1024x1024 image rather than the default of 512x512.
+<para>
 Printing is done in portrait mode.
 The largest image which can generally be printed on an 8.5 by 11 inch
 piece of paper is 2240 by 3200 pixels,
