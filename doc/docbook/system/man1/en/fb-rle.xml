@@ -60,25 +60,25 @@ and
 command line options.</para>
 <variablelist remap="TP">
   <varlistentry>
-  <term><option>-W </option><replaceable>scr_width</replaceable></term>
+  <term><option>-W</option> <replaceable>scr_width</replaceable></term>
   <listitem>
 <para>specifies the desired width of the screen, in pixels.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><option>-N </option><replaceable>scr_height</replaceable></term>
+  <term><option>-N</option> <replaceable>scr_height</replaceable></term>
   <listitem>
 <para>specifies the desired height of the screen, in scanlines.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><option>-S </option><replaceable>squarescrsize</replaceable></term>
+  <term><option>-S</option> <replaceable>squarescrsize</replaceable></term>
   <listitem>
 <para>sets the screen width and height to the indicated value.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><option>-F </option><replaceable>framebuffer</replaceable></term>
+  <term><option>-F</option> <replaceable>framebuffer</replaceable></term>
   <listitem>
 <para>This option specifies which framebuffer the image is to be saved from.
 If not given, the environment variable
@@ -92,19 +92,19 @@ be used.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><option>-w </option><replaceable>file_width</replaceable></term>
+  <term><option>-w</option> <replaceable>file_width</replaceable></term>
   <listitem>
 <para>specifies the desired width of the saved image, in pixels.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><option>-n </option><replaceable>file_height</replaceable></term>
+  <term><option>-n</option> <replaceable>file_height</replaceable></term>
   <listitem>
 <para>specifies the desired height of the saved image, in scanlines.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><option>-s </option><replaceable>squarefilesize</replaceable></term>
+  <term><option>-s</option> <replaceable>squarefilesize</replaceable></term>
   <listitem>
 <para>sets the saved image width and height to the indicated value.</para>
   </listitem>
@@ -112,7 +112,7 @@ be used.</para>
   <varlistentry>
   <term><option>-c</option></term>
   <listitem>
-<para>The “crunch colormap” option.
+<para>The "crunch colormap" option.
 If the frame buffer contains a non standard (i.e. non linear) colormap,
 rather than saving that colormap in the RLE file
 this option causes the colormap to be applied
@@ -133,27 +133,27 @@ image decoding process, written on standard error.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><option>-C </option><replaceable>r/g/b</replaceable></term>
+  <term><option>-C</option> <replaceable>r/g/b</replaceable></term>
   <listitem>
 <para>The background value to be recorded in the RLE file is normally
 automatically selected from the display.
 This option permits
 the user to specify an alternate background color
-as a red/green/blue triple, separated by slashes (“/”).
+as a red/green/blue triple, separated by slashes ("/").
 The color intensity in each channel ranges from 0 (dark) to 255 (bright).</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><option>-X </option><replaceable>scr_xoff</replaceable></term>
+  <term><option>-X</option> <replaceable>scr_xoff</replaceable></term>
   <listitem>
 <para>Specify a screen X offset, which will offset the saved area onto the screen
 by the given amount.  (i.e.,
-<option>-X </option><literal>10</literal>
+<option>-X</option> <literal>10</literal>
 would place (0,10) on the screen in the RLE image rectangle coordinate (0,0).</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><option>-Y </option><replaceable>scr_yoff</replaceable></term>
+  <term><option>-Y</option> <replaceable>scr_yoff</replaceable></term>
   <listitem>
 <para>Specify a screen Y offset, which will offset the saved area onto the screen
 by the given amount.</para>
@@ -179,11 +179,11 @@ utilities, which only operate on RLE encoded files.</para>
 
 <refsection xml:id="examples"><title>EXAMPLES</title>
   <blockquote remap="RS">
-<para> fb-rle  truck.rle
+<para>fb-rle truck.rle
 <!-- .br -->
- fb-rle  -C 0/255/0  &gt;car.rle
+fb-rle -C 0/255/0 &gt;car.rle
 <!-- .br -->
- fb-rle  -h  -s 512  &gt;lowerleft.rle
+fb-rle -h -s 512 &gt;lowerleft.rle
   </para></blockquote> <!-- remap='RE' -->
 </refsection>
 
