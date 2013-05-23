@@ -10,7 +10,7 @@ descriptive text that emphasizes or further describes significant
 changes made.  See document footer for additional details.
 
 ----------------------------------------------------------------------
---- 2013-03-XX  Release 7.24.0                                     ---
+--- 2013-05-27  Release 7.24.0                                     ---
 ----------------------------------------------------------------------
 
 * 'idents' command no longer reports negative booleans - Keith Bowman
@@ -71,6 +71,7 @@ changes made.  See document footer for additional details.
 * improved documentation consistency and authorship info - Tom Browder
 * new mouse-input unpushed matrix edit option in archer - Bob Parker
 * fixed bug during pipe editing with working units set - Bob Parker
+
 
 ----------------------------------------------------------------------
 --- 2012-06-25  Release 7.22.0                                     ---
