@@ -264,6 +264,26 @@ tables_new(struct ged *gedp, struct directory *dp, struct bu_ptbl *cur_path, con
 	    struct directory *nextdp;
 	    mat_t new_mat;
 
+	    /* For the 'idents' command skip over non-union combinations above the region level,
+	     * these members of a combination don't add positively to the defined regions of space
+	     * and their region ID's will not show up along a shotline unless positively added
+	     * elsewhere in the hierarchy. This is causing headaches for users generating an
+	     * association table from our 'idents' listing.
+	     */
+	    if (flag == ID_TABLE) {
+		switch (tree_list[i].tl_op) {
+		    case OP_UNION:
+			break;
+		    case OP_SUBTRACT:
+		    case OP_INTERSECT:
+			continue;
+			break;
+		    default:
+			bu_log("unrecognized operation in combination %s\n", dp->d_namep);
+			break;
+		}
+	    }
+
 	    nextdp = db_lookup(gedp->ged_wdbp->dbip, tree_list[i].tl_tree->tr_l.tl_name, LOOKUP_NOISY);
 	    if (nextdp == RT_DIR_NULL) {
 		bu_vls_printf(gedp->ged_result_str, "\tskipping this object\n");
