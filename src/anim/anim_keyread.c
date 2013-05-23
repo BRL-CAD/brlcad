@@ -110,7 +110,7 @@ main(int argc, char *argv[])
     fastf_t viewrot[16] = {0.0}, angle[3] = {0.0}, quat[4] = {0.0};
 
     /* intentionally double for scan */
-    double time, viewsize;
+    double timeval, viewsize;
     double eyept[3] = {0.0};
     double scan[4];
 
@@ -128,7 +128,7 @@ main(int argc, char *argv[])
 	/* read one keyframe */
 	count = 0;
 
-	count += scanf("%lf", &time);
+	count += scanf("%lf", &timeval);
 	count += scanf("%lf", &viewsize);
 	count += scanf("%lf %lf %lf", eyept, eyept+1, eyept+2);
 	/* read in transposed matrix */
@@ -160,24 +160,24 @@ main(int argc, char *argv[])
 	if (feof(stdin) || count != 21)
 	    break;
 
-	printf("%.10g\t%.10g\t%.10g\t%.10g\t%.10g\t", time, viewsize, eyept[0], eyept[1], eyept[2]);
+	printf("%.10g\t%.10g\t%.10g\t%.10g\t%.10g\t", timeval, viewsize, eyept[0], eyept[1], eyept[2]);
 
 	if (mode==YPR) {
 	    anim_v_unpermute(viewrot);
 	    c = anim_mat2ypr(viewrot, angle);
 	    if (c==ERROR1)
-		fprintf(stderr, "Warning: yaw and roll arbitrarily defined at time = %f.\n", time);
+		fprintf(stderr, "Warning: yaw and roll arbitrarily defined at time = %f.\n", timeval);
 	    else if (c==ERROR2)
-		fprintf(stderr, "Keyread: can't interpret matrix at time = %f.\n", time);
+		fprintf(stderr, "Keyread: can't interpret matrix at time = %f.\n", timeval);
 	    if (units == DEGREES)
 		VSCALE(angle, angle, RAD2DEG);
 	    printf("%.10g\t%.10g\t%.10g\n", angle[0], angle[1], angle[2]);
 	} else if (mode==XYZ) {
 	    c = anim_mat2zyx(viewrot, angle);
 	    if (c==ERROR1)
-		fprintf(stderr, "Warning: x and z rotations arbitrarily defined at time = %f.\n", time);
+		fprintf(stderr, "Warning: x and z rotations arbitrarily defined at time = %f.\n", timeval);
 	    else if (c==ERROR2)
-		fprintf(stderr, "Keyread: can't interpret matrix at time = %f\n.", time);
+		fprintf(stderr, "Keyread: can't interpret matrix at time = %f\n.", timeval);
 	    if (units == DEGREES)
 		VSCALE(angle, angle, RAD2DEG);
 	    printf("%.10g\t%.10g\t%.10g\n", angle[X], angle[Y], angle[Z]);
