@@ -86,7 +86,7 @@ main(int argc, char *argv[])
     mat_t mat;
 
     /* intentionally double for scan */
-    double time;
+    double timeval;
     double scan[3];
 
     VSETALL(temp, 0.0);
@@ -105,7 +105,7 @@ main(int argc, char *argv[])
 
     while (1) {
 	/*read line from table */
-	val = scanf("%lf%*[^-0123456789]", &time); /*read time, ignore garbage*/
+	val = scanf("%lf%*[^-0123456789]", &timeval); /*read time, ignore garbage*/
 	if (val < 1) {
 	    break;
 	}
@@ -130,7 +130,7 @@ main(int argc, char *argv[])
 	anim_add_trans(mat, point, zero);
 	MAT4X3PNT(temp, mat, offset);
 
-	printf("%.10g\t%.10g\t%.10g\t%.10g", time, temp[0], temp[1], temp[2]);
+	printf("%.10g\t%.10g\t%.10g\t%.10g", timeval, temp[0], temp[1], temp[2]);
 	if (full_print)
 	    printf("\t%.10g\t%.10g\t%.10g", yaw, pitch, roll);
 	printf("\n");
