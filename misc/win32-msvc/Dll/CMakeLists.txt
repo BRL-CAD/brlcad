@@ -47,7 +47,7 @@ target_link_libraries(BrlcadCore
   libwdb-static
   p2t_static
   zlib-static
-  openNURBS
+  openNURBS-static
   tcl85
   )
 
@@ -114,7 +114,7 @@ target_link_libraries(brlcad
   libwdb-static
   p2t_static
   zlib-static
-  openNURBS
+  openNURBS-static
   Ws2_32
   Psapi
   )
