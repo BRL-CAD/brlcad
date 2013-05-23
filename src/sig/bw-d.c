@@ -40,12 +40,20 @@
 unsigned char	ibuf[512];
 double	obuf[512];
 
+void
+printusage(void)
+{
+	bu_exit(1, "Usage: bw-d [-n || scale] < unsigned_chars > doubles\n");
+}
 
 int main(int argc, char **argv)
 {
     int	i, num;
     double	scale;
     size_t ret;
+
+    if ( BU_STR_EQUAL( argv[1], "-h" ) || BU_STR_EQUAL( argv[1], "-?" ) )
+	printusage();
 
     scale = 1.0;
 
@@ -57,9 +65,8 @@ int main(int argc, char **argv)
 	argc--;
     }
 
-    if ( argc > 1 || ZERO(scale) || isatty(fileno(stdin)) ) {
-	bu_exit(1, "Usage: bw-d [-n || scale] < unsigned_chars > doubles\n");
-    }
+    if ( argc > 1 || ZERO(scale) || isatty(fileno(stdin)) )
+	printusage();
 
     while ( (num = fread( &ibuf[0], sizeof( ibuf[0] ), 512, stdin)) > 0 ) {
 	if ( EQUAL(scale, 1.0) ) {
