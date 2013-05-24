@@ -55,7 +55,7 @@ void prolog(FILE *fp, char *name, int w, int h);
 void postlog(FILE *fp);
 
 static char usage[] = "\
-Usage: bw-ps [-e] [-c] [-L] [-h]\n\
+Usage: bw-ps [-e] [-c] [-L]\n\
 	[-s input_squaresize] [-w input_width] [-n input_height]\n\
 	[-S inches_square] [-W inches_width] [-N inches_height] [file.bw]\n";
 
@@ -64,15 +64,11 @@ get_args(int argc, char **argv)
 {
     int c;
 
-    while ((c = bu_getopt(argc, argv, "ehcLs:w:n:S:W:N:")) != -1) {
+    while ((c = bu_getopt(argc, argv, "ecLs:w:n:S:W:N:h?")) != -1) {
 	switch (c) {
 	    case 'e':
 		/* Encapsulated PostScript */
 		encapsulated++;
-		break;
-	    case 'h':
-		/* high-res */
-		height = width = 1024;
 		break;
 	    case 'c':
 		center = 1;
@@ -80,6 +76,8 @@ get_args(int argc, char **argv)
 	    case 'L':
 		landscape = 1;
 		break;
+/* -h was removed; in its place use -s 1024
+ */
 	    case 's':
 		/* square file size */
 		height = width = atoi(bu_optarg);
