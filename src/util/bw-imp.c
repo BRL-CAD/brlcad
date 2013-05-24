@@ -106,8 +106,6 @@ get_args(int argc, char **argv)
 		/* halftone instead of dither */
 		pattern = halftone;
 		break;
-/* Use '-s 1024' in place of old 'h'.
- */
 	    case 's':
 		/* square size */
 		height = width = atoi(bu_optarg);
