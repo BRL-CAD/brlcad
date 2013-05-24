@@ -35,7 +35,7 @@
 #include "fb.h"
 #include "libtermio.h"
 
-#define COMMA ', '
+#define COMMA ','
 
 
 int curchan = 0;	/* 0=r, 1=g, 2=b */
