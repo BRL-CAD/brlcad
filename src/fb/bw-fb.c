@@ -167,12 +167,12 @@ get_args(int argc, char **argv)
 	ifname = bu_realpath(file_name, NULL);
 	if ((infd = open(ifname, 0)) < 0) {
 	    fprintf(stderr,
-			  "bw-fb: cannot open \"%s (canonical %s)\" for reading\n",
-			  file_name,ifname);
-	    bu_free(ifname,"ifname alloc from bu_realpath");
+		    "bw-fb: cannot open \"%s (canonical %s)\" for reading\n",
+		    file_name, ifname);
+	    bu_free(ifname, "ifname alloc from bu_realpath");
 	    return 0;
 	}
-	bu_free(ifname,"ifname alloc from bu_realpath");
+	bu_free(ifname, "ifname alloc from bu_realpath");
 	fileinput++;
     }
 
