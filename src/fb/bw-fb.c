@@ -72,7 +72,7 @@ static int infd;
 static FBIO *fbp;
 
 static char usage[] = "\
-Usage: bw-fb [-a -H -i -c -z -R -G -B] [-F framebuffer]\n\
+Usage: bw-fb [-a -i -c -z -R -G -B] [-F framebuffer]\n\
 	[-s squarefilesize] [-w file_width] [-n file_height]\n\
 	[-x file_xoff] [-y file_yoff] [-X scr_xoff] [-Y scr_yoff]\n\
 	[-S squarescrsize] [-W scr_width] [-N scr_height] [file.bw]\n";
@@ -81,19 +81,10 @@ get_args(int argc, char **argv)
 {
     int c;
 
-    while ((c = bu_getopt(argc, argv, "aHiczRGBF:s:w:n:x:y:X:Y:S:W:N:h?")) != -1) {
+    while ((c = bu_getopt(argc, argv, "aiczRGBF:s:w:n:x:y:X:Y:S:W:N:h?")) != -1) {
 	switch (c) {
 	    case 'a':
 		autosize = 1;
-		break;
-/* What is showing up immed. below as 'H' had been 'h', which has been converted to
-   a help flag.  Problem: it would take -s 1024 -S 1024' to replace the old 'h'.
-*/
-	    case 'H':
-		/* high-res */
-		file_height = file_width = 1024;
-		scr_height = scr_width = 1024;
-		autosize = 0;
 		break;
 	    case 'i':
 		inverse = 1;
