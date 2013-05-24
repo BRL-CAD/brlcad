@@ -33,6 +33,10 @@
 
 #include "bu.h"
 
+void
+printusage(void) {
+	bu_exit(3, "Usage: bw-pix [in.bw] [out.pix]\n");
+}
 
 int
 main(int argc, char **argv)
@@ -41,10 +45,13 @@ main(int argc, char **argv)
     size_t in, out, num;
     FILE *finp, *foutp;
 
+    if ( BU_STR_EQUAL(argv[1], "-h") || BU_STR_EQUAL(argv[1], "-?") )
+	printusage();
+
     /* check for input file */
     if (argc > 1) {
 	if ((finp = fopen(argv[1], "rb")) == NULL) {
-	    bu_exit(1, "bw-pix: can't open \"%s\"\n", argv[1]);
+	    bu_exit(1, "bw-pix: can't open \"%s\" for reading\n", argv[1]);
 	}
     } else
 	finp = stdin;
@@ -52,14 +59,13 @@ main(int argc, char **argv)
     /* check for output file */
     if (argc > 2) {
 	if ((foutp = fopen(argv[2], "wb")) == NULL) {
-	    bu_exit(2, "bw-pix: can't open \"%s\"\n", argv[2]);
+	    bu_exit(2, "bw-pix: can't open \"%s\" for writing\n", argv[2]);
 	}
     } else
 	foutp = stdout;
 
-    if (argc > 3 || isatty(fileno(finp)) || isatty(fileno(foutp))) {
-	bu_exit(3, "Usage: bw-pix [in.bw] [out.pix]\n");
-    }
+    if (argc > 3 || isatty(fileno(finp)) || isatty(fileno(foutp)))
+	printusage();
 
     while ((num = fread(ibuf, sizeof(char), 1024, finp)) > 0) {
 	size_t ret;
