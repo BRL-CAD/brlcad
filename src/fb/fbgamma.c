@@ -37,12 +37,12 @@
 
 char *options = "ihoF:";
 
-void	checkgamma(double g);
+void checkgamma(double g);
 
 unsigned char rampval[10] = { 255, 128, 64, 32, 16, 8, 4, 2, 1, 0 };
 int x, y, scr_width, scr_height, patch_width, patch_height;
-unsigned char	*altline;
-unsigned char	*line;
+unsigned char *altline;
+unsigned char *line;
 char *framebuffer = (char *)NULL;
 int image = 0;
 
@@ -79,6 +79,7 @@ void mk_ramp(FBIO *fb, int r, int g, int b, int n)
     }
 }
 
+
 void disp_image(FBIO *fb)
 {
 
@@ -107,14 +108,14 @@ void disp_image(FBIO *fb)
 int
 main(int argc, char **argv)
 {
-    int	i;
-    int	onegamma = 0;
-    int	fbsize = 512;
-    int	overlay = 0;
-    double	gamr = 0, gamg = 0, gamb = 0;	/* gamma's */
-    double	f;
+    int i;
+    int onegamma = 0;
+    int fbsize = 512;
+    int overlay = 0;
+    double gamr = 0, gamg = 0, gamb = 0;	/* gamma's */
+    double f;
     ColorMap cm;
-    FBIO	*fbp;
+    FBIO *fbp;
 
     onegamma = 0;
 
@@ -132,77 +133,79 @@ main(int argc, char **argv)
 
     if (bu_optind == argc - 1) {
 	/* single value for all channels */
-	f = atof( argv[bu_optind] );
-	checkgamma( f );
+	f = atof(argv[bu_optind]);
+	checkgamma(f);
 	gamr = gamg = gamb = 1.0 / f;
 	onegamma++;
-    } else if (bu_optind == argc - 4 ) {
+    } else if (bu_optind == argc - 4) {
 	/* different RGB values */
-	f = atof( argv[bu_optind] );
-	checkgamma( f );
+	f = atof(argv[bu_optind]);
+	checkgamma(f);
 	gamr = 1.0 / f;
-	f = atof( argv[bu_optind+1] );
-	checkgamma( f );
+	f = atof(argv[bu_optind+1]);
+	checkgamma(f);
 	gamg = 1.0 / f;
-	f = atof( argv[bu_optind+2] );
-	checkgamma( f );
+	f = atof(argv[bu_optind+2]);
+	checkgamma(f);
 	gamb = 1.0 / f;
     } else {
-	bu_exit(1, "%s", usage );
+	bu_exit(1, "%s", usage);
     }
 
-    if ( (fbp = fb_open( framebuffer, fbsize, fbsize )) == FBIO_NULL ) {
-	bu_exit( 2, "Unable to open framebuffer\n" );
+    if ((fbp = fb_open(framebuffer, fbsize, fbsize)) == FBIO_NULL) {
+	bu_exit(2, "Unable to open framebuffer\n");
     }
 
     /* draw the gamma image if requested */
     if (image) disp_image(fbp);
 
     /* get the starting map */
-    if ( overlay ) {
-	fb_rmap( fbp, &cm );
+    if (overlay) {
+	fb_rmap(fbp, &cm);
     } else {
 	/* start with a linear map */
-	for ( i = 0; i < 256; i++ ) {
+	for (i = 0; i < 256; i++) {
 	    cm.cm_red[i] = cm.cm_green[i]
 		= cm.cm_blue[i] = i << 8;
 	}
     }
 
     /* apply the gamma(s) */
-    for ( i = 0; i < 256; i++ ) {
-	if ( gamr < 0 )
-	    cm.cm_red[i] = 65535 * pow( (double)cm.cm_red[i] / 65535.0, -1.0/gamr );
+    for (i = 0; i < 256; i++) {
+	if (gamr < 0)
+	    cm.cm_red[i] = 65535 * pow((double)cm.cm_red[i] / 65535.0, -1.0/gamr);
 	else
-	    cm.cm_red[i] = 65535 * pow( (double)cm.cm_red[i] / 65535.0, gamr );
-	if ( onegamma && (overlay == 0) ) {
+	    cm.cm_red[i] = 65535 * pow((double)cm.cm_red[i] / 65535.0, gamr);
+	if (onegamma && (overlay == 0)) {
 	    cm.cm_green[i] = cm.cm_red[i];
 	    cm.cm_blue[i]  = cm.cm_red[i];
 	} else {
-	    if ( gamg < 0 )
-		cm.cm_green[i] = 65535 * pow( (double)cm.cm_green[i] / 65535.0, -1.0/gamg );
+	    if (gamg < 0)
+		cm.cm_green[i] = 65535 * pow((double)cm.cm_green[i] / 65535.0, -1.0/gamg);
 	    else
-		cm.cm_green[i] = 65535 * pow( (double)cm.cm_green[i] / 65535.0, gamg );
-	    if ( gamb < 0 )
-		cm.cm_blue[i]  = 65535 * pow( (double)cm.cm_blue[i] / 65535.0, -1.0/gamb );
+		cm.cm_green[i] = 65535 * pow((double)cm.cm_green[i] / 65535.0, gamg);
+	    if (gamb < 0)
+		cm.cm_blue[i]  = 65535 * pow((double)cm.cm_blue[i] / 65535.0, -1.0/gamb);
 	    else
-		cm.cm_blue[i]  = 65535 * pow( (double)cm.cm_blue[i] / 65535.0, gamb );
+		cm.cm_blue[i]  = 65535 * pow((double)cm.cm_blue[i] / 65535.0, gamb);
 	}
     }
 
-    fb_wmap( fbp, &cm );
-    fb_close( fbp );
+    fb_wmap(fbp, &cm);
+    fb_close(fbp);
     return 0;
 }
+
 
 void
 checkgamma(double g)
 {
-    if ( fabs(g) < 1.0e-10 ) {
-	fprintf( stderr, "fbgamma: gamma too close to zero\n" );
-	bu_exit(3, "%s", usage );
+    if (fabs(g) < 1.0e-10) {
+	fprintf(stderr, "fbgamma: gamma too close to zero\n");
+	bu_exit(3, "%s", usage);
     }
 }
+
 
 /*
  * Local Variables:

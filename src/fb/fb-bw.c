@@ -101,8 +101,8 @@ get_args(int argc, char **argv)
 	file_name = argv[bu_optind];
 	if ((outfp = fopen(file_name, "wb")) == NULL) {
 	    fprintf(stderr,
-			  "fb-bw: cannot open \"%s\" for writing\n",
-			  file_name);
+		    "fb-bw: cannot open \"%s\" for writing\n",
+		    file_name);
 	    return 0;
 	}
     }

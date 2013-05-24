@@ -140,8 +140,8 @@ spm_square(bn_spm_map_t *mapp)
     for (y = 0; y < scr_height; y++) {
 	for (x = 0; x < scr_width; x++) {
 	    bn_spm_read(mapp, &scanline[x],
-		     (double)x/(double)scr_width,
-		     (double)y/(double)scr_height);
+			(double)x/(double)scr_width,
+			(double)y/(double)scr_height);
 	}
 	if (fb_write(fbp, 0, y, scanline, scr_width) != scr_width) break;
     }

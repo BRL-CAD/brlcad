@@ -20,8 +20,8 @@
  */
 /** @file fbclear.c
  *
- *  This program is intended to be used to clear a frame buffer
- *  to black, or to the specified color
+ * This program is intended to be used to clear a frame buffer
+ * to black, or to the specified color
  *
  */
 
@@ -39,13 +39,13 @@
 #endif
 
 
-static char	*framebuffer = NULL;
-static FBIO	*fbp;
-static int	scr_width = 0;		/* use default size */
-static int	scr_height = 0;
-static int	clear_and_reset = 0;
+static char *framebuffer = NULL;
+static FBIO *fbp;
+static int scr_width = 0;		/* use default size */
+static int scr_height = 0;
+static int clear_and_reset = 0;
 
-#define u_char	unsigned char
+#define u_char unsigned char
 
 static char usage[] = "\
 Usage: fbclear [-h -c] [-F framebuffer]\n\
@@ -56,8 +56,8 @@ get_args(int argc, char **argv)
 {
     int c;
 
-    while ( (c = bu_getopt( argc, argv, "hcF:s:w:n:S:W:N:" )) != -1 )  {
-	switch ( c )  {
+    while ((c = bu_getopt(argc, argv, "hcF:s:w:n:S:W:N:")) != -1) {
+	switch (c) {
 	    case 'h':
 		/* high-res */
 		scr_height = scr_width = 1024;
@@ -89,12 +89,13 @@ get_args(int argc, char **argv)
     return 1;		/* OK */
 }
 
+
 int
 main(int argc, char **argv)
 {
-    if ( !get_args( argc, argv ) )  {
+    if (!get_args(argc, argv)) {
 	(void)fputs(usage, stderr);
-	bu_exit( 1, NULL );
+	bu_exit(1, NULL);
     }
 
     if ((fbp = fb_open(framebuffer, scr_width, scr_height)) == NULL) {
@@ -105,43 +106,44 @@ main(int argc, char **argv)
     scr_width = fb_getwidth(fbp);
     scr_height = fb_getheight(fbp);
 
-    if ( clear_and_reset ) {
-	if ( fb_wmap( fbp, COLORMAP_NULL ) < 0 )
+    if (clear_and_reset) {
+	if (fb_wmap(fbp, COLORMAP_NULL) < 0)
 	    bu_exit(3, NULL);
-	(void)fb_view( fbp, scr_width/2, scr_height/2, 1, 1 );
+	(void)fb_view(fbp, scr_width/2, scr_height/2, 1, 1);
     } else {
-	ColorMap	cmap;
-	int		xcent, ycent, xzoom, yzoom;
-	if ( fb_rmap( fbp, &cmap ) >= 0 )  {
-	    if ( !fb_is_linear_cmap( &cmap ) )  {
+	ColorMap cmap;
+	int xcent, ycent, xzoom, yzoom;
+	if (fb_rmap(fbp, &cmap) >= 0) {
+	    if (!fb_is_linear_cmap(&cmap)) {
 		fprintf(stderr, "fbclear: NOTE: non-linear colormap in effect.  -c flag loads linear colormap.\n");
 	    }
 	}
-	(void)fb_getview( fbp, &xcent, &ycent, &xzoom, &yzoom );
-	if ( xzoom != 1 || yzoom != 1 )  {
+	(void)fb_getview(fbp, &xcent, &ycent, &xzoom, &yzoom);
+	if (xzoom != 1 || yzoom != 1) {
 	    fprintf(stderr, "fbclear:  NOTE: framebuffer is zoomed.  -c will un-zoom.\n");
 	}
     }
 
-    if ( bu_optind+3 == argc ) {
-	static RGBpixel	pixel;
-	pixel[RED] = (u_char) atoi( argv[bu_optind+0] );
-	pixel[GRN] = (u_char) atoi( argv[bu_optind+1] );
-	pixel[BLU] = (u_char) atoi( argv[bu_optind+2] );
-	fb_clear( fbp, pixel );
-    } else if ( bu_optind+1 == argc ) {
-	static RGBpixel	pixel;
+    if (bu_optind+3 == argc) {
+	static RGBpixel pixel;
+	pixel[RED] = (u_char) atoi(argv[bu_optind+0]);
+	pixel[GRN] = (u_char) atoi(argv[bu_optind+1]);
+	pixel[BLU] = (u_char) atoi(argv[bu_optind+2]);
+	fb_clear(fbp, pixel);
+    } else if (bu_optind+1 == argc) {
+	static RGBpixel pixel;
 	pixel[RED] = pixel[GRN] = pixel[BLU]
-	    = (u_char) atoi( argv[bu_optind+0] );
-	fb_clear( fbp, pixel );
+	    = (u_char) atoi(argv[bu_optind+0]);
+	fb_clear(fbp, pixel);
     } else {
-	if ( bu_optind != argc )
+	if (bu_optind != argc)
 	    fprintf(stderr, "fbclear: extra arguments ignored\n");
-	fb_clear( fbp, PIXEL_NULL );
+	fb_clear(fbp, PIXEL_NULL);
     }
-    (void)fb_close( fbp );
+    (void)fb_close(fbp);
     return 0;
 }
+
 
 /*
  * Local Variables:

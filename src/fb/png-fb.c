@@ -148,8 +148,8 @@ get_args(int argc, char **argv)
 	if ((fp_in = fopen(file_name, "rb")) == NULL) {
 	    perror(file_name);
 	    fprintf(stderr,
-			  "png-fb: cannot open \"%s\" for reading\n",
-			  file_name);
+		    "png-fb: cannot open \"%s\" for reading\n",
+		    file_name);
 	    bu_exit(1, NULL);
 	}
 	fileinput++;

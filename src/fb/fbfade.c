@@ -67,7 +67,7 @@
 
 #define USAGE1 "fbfade [ -s size ] [ -w width ] [ -n height ] [ -f in_fb_file ]"
 #define USAGE2	\
-	"\t[ -h ] [ -S size ] [ -W width ] [ -N height ] [ [ -F ] out_fb_file ]"
+    "\t[ -h ] [ -S size ] [ -W width ] [ -N height ] [ [ -F ] out_fb_file ]"
 #define OPTSTR "f:F:hn:N:s:S:w:W:"
 
 

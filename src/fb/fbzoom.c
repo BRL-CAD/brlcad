@@ -35,7 +35,7 @@
 #include "libtermio.h"
 
 
-#define COMMA ','
+#define COMMA ', '
 
 
 int pars_Argv(int argc, char **argv);
@@ -163,6 +163,7 @@ printUsage()
     bu_log("q	Exit\n");
     bu_log("RETURN	Exit\n");
 }
+
 
 int
 doKeyPad(void)

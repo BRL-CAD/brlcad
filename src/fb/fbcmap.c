@@ -688,7 +688,7 @@ main(int argc, char **argv)
 			   "Color map #2, corrected for POLAROID 809/891 film.\n");
 	    /* First entry black */
 #define BOOST(point, bias) \
-	((int)((bias)+((float)(point)/256.*(255-(bias)))))
+	    ((int)((bias)+((float)(point)/256.*(255-(bias)))))
 	    for (i = 1; i < 256; i++) {
 		fudge = BOOST(i, 70);
 		cp->cm_red[i] = fudge << 8;		/* B */

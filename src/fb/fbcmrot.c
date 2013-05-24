@@ -88,6 +88,7 @@ get_args(int argc, char **argv)
     return 1;		/* OK */
 }
 
+
 int
 main(int argc, char **argv)
 {
@@ -106,7 +107,7 @@ main(int argc, char **argv)
 
     if ((fbp = fb_open(NULL, size, size)) == FBIO_NULL) {
 	fprintf(stderr, "fbcmrot:  fb_open failed\n");
-	return	1;
+	return 1;
     }
 
     local_inp = &cm1;
@@ -144,8 +145,9 @@ main(int argc, char **argv)
 	    break;
     }
     fb_close(fbp);
-    return	0;
+    return 0;
 }
+
 
 /*
  * Local Variables:

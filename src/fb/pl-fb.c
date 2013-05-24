@@ -33,7 +33,7 @@
  * Method:
  *
  * Inputs vector data and builds a rasterization descriptor for each
- * visible stroke.  (Strokes are limited to frame boundaries.)  X goes
+ * visible stroke.  (Strokes are limited to frame boundaries.) X goes
  * down the page, Y goes from left to right.  To obtain a different
  * orientation, pre-process data with the "rot" filter.  (Quadrant 1
  * graphics devices)
@@ -82,7 +82,7 @@
 #include "fb.h"
 #include "plot3.h"
 
-#define COMMA ','
+#define COMMA ', '
 
 /*
   Raster device model and image terminology as used herein:
@@ -134,16 +134,16 @@
 
 /* helper macros */
 #define GET_STROKE(vp) { \
-			while (((vp)=freep) == STROKE_NULL) \
-				get_strokes(); \
-			freep = (vp)->freep; \
-			CK_STROKE(vp); \
-			(vp)->freep = STROKE_NULL; }
+	while (((vp)=freep) == STROKE_NULL) \
+	    get_strokes(); \
+	freep = (vp)->freep; \
+	CK_STROKE(vp); \
+	(vp)->freep = STROKE_NULL; }
 
 #define FREE_STROKE(vp) { \
-			CK_STROKE(vp); \
-			(vp)->freep = freep; \
-			freep = (vp); }
+	CK_STROKE(vp); \
+	(vp)->freep = freep; \
+	freep = (vp); }
 
 
 /* Data structure definitions:	*/
@@ -331,7 +331,7 @@ static struct descr *freep = STROKE_NULL;	/* head of free stroke list */
  */
 static stroke *
 Dequeue(struct band *bp, stroke **hp)
-    /* *hp -> first descr in list */
+/* *hp -> first descr in list */
 {
     stroke *vp;		/* -> descriptor */
 
@@ -376,8 +376,8 @@ Requeue(struct band *bp, stroke *vp)
  */
 static void
 Raster(stroke *vp, struct band *np)
-    /* -> rasterization descr */
-    /* *np -> next band 1st descr */
+/* -> rasterization descr */
+/* *np -> next band 1st descr */
 {
     short dy;		/* raster within active band */
 
@@ -692,7 +692,7 @@ prep_dda(stroke *vp, coords *pt1, coords *pt2)
  */
 static void
 BuildStr(coords *pt1, coords *pt2)		/* returns true or dies */
-    /* endpoints */
+/* endpoints */
 {
     stroke *vp;		/* -> rasterization descr */
     int thick;
@@ -744,7 +744,7 @@ BuildStr(coords *pt1, coords *pt2)		/* returns true or dies */
 
 static int
 GetCoords(coords *coop)
-    /* -> input coordinates */
+/* -> input coordinates */
 {
     unsigned char buf[4];
     double x, y;
@@ -837,7 +837,7 @@ int Get3DCoords(coords *coop)
 
 int
 GetDCoords(coords *coop)
-    /* -> input coordinates */
+/* -> input coordinates */
 {
     static unsigned char in[2*8];
     static double out[2];
@@ -1217,7 +1217,7 @@ DoFile(void)	/* returns vpl status code */
 			space.top   = sxt16((long)(buf2[7]<<8) | buf2[6]); /* y2 */
 		    }
 
-	    spacend:
+		spacend:
 		    delta = space.right - space.left;
 		    deltao2 = space.top - space.bottom;
 		    if (deltao2 > delta)
@@ -1312,7 +1312,7 @@ DoFile(void)	/* returns vpl status code */
 */
 static void
 Catch(int sig)
-    /* signal number */
+/* signal number */
 {
     int pid;		/* this process's ID */
     int i;

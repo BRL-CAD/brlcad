@@ -37,17 +37,17 @@ char *Usage="[-h] [-F framebuffer]\n\
 	[-s squareframesize] [-w frame_width] [-n frame_height]\n";
 
 #define USAGE_EXIT(p) { fprintf(stderr, "Usage: %s %s\n", (p), Usage); \
-			bu_exit(-1, NULL); }
+	bu_exit(-1, NULL); }
 
 int
 main(int argc, char **argv)
 {
     int c;
-    int	x;
-    FBIO		*fbp;
-    int	xsize, ysize;
-    int		 len;
-    char	*framebuffer = (char *)NULL;
+    int x;
+    FBIO *fbp;
+    int xsize, ysize;
+    int len;
+    char *framebuffer = (char *)NULL;
     unsigned char *line;
     static RGBpixel white = { 255, 255, 255 };
     static RGBpixel red = { 255, 0, 0 };
@@ -55,8 +55,8 @@ main(int argc, char **argv)
     static RGBpixel blue = { 0, 0, 255 };
 
     xsize = ysize = 0;
-    while ( (c = bu_getopt( argc, argv, "ahF:s:w:n:S:W:N:" )) != -1 )  {
-	switch ( c )  {
+    while ((c = bu_getopt(argc, argv, "ahF:s:w:n:S:W:N:")) != -1) {
+	switch (c) {
 	    case 'h':
 		/* high-res */
 		xsize = ysize = 1024;
@@ -93,8 +93,8 @@ main(int argc, char **argv)
 	}
     }
 
-    if ( (fbp = fb_open( framebuffer, xsize, ysize )) == FBIO_NULL )
-	bu_exit( 1, NULL );
+    if ((fbp = fb_open(framebuffer, xsize, ysize)) == FBIO_NULL)
+	bu_exit(1, NULL);
 
     if (xsize <= 0)
 	xsize = fb_getwidth(fbp);
@@ -103,31 +103,32 @@ main(int argc, char **argv)
 
     /* malloc buffer for pixel lines */
     len = (xsize > ysize) ? xsize : ysize;
-    if ( (line = (unsigned char *)malloc(len*sizeof(RGBpixel))) == RGBPIXEL_NULL )  {
+    if ((line = (unsigned char *)malloc(len*sizeof(RGBpixel))) == RGBPIXEL_NULL) {
 	fprintf(stderr, "fbframe:  malloc failure\n");
 	return 1;
     }
 
-#define FLOOD(col)	{ for ( x=len-1; x >= 0; x-- ) {COPYRGB(&line[3*x], col);} }
+#define FLOOD(col) { for (x=len-1; x >= 0; x--) {COPYRGB(&line[3*x], col);} }
 
     /*
-     * Red:	( 0->510,      0 )
-     * Green:	(    511, 0->510 )
-     * Blue:	( 511->1,    511 )
-     * White:	(      0, 511->1 )
+     * Red:	(0->510,      0)
+     * Green:	(511, 0->510)
+     * Blue:	(511->1,    511)
+     * White:	(0, 511->1)
      */
-    FLOOD( red );
-    fb_writerect( fbp, 0, 0, xsize-1, 1, line );
-    FLOOD( green );
-    fb_writerect( fbp, xsize-1, 0, 1, ysize-1, line );
-    FLOOD( blue );
-    fb_writerect( fbp, 1, ysize-1, xsize-1, 1, line );
-    FLOOD( white );
-    fb_writerect( fbp, 0, 1, 1, ysize-1, line );
+    FLOOD(red);
+    fb_writerect(fbp, 0, 0, xsize-1, 1, line);
+    FLOOD(green);
+    fb_writerect(fbp, xsize-1, 0, 1, ysize-1, line);
+    FLOOD(blue);
+    fb_writerect(fbp, 1, ysize-1, xsize-1, 1, line);
+    FLOOD(white);
+    fb_writerect(fbp, 0, 1, 1, ysize-1, line);
 
-    fb_close( fbp );
+    fb_close(fbp);
     return 0;
 }
+
 
 /*
  * Local Variables:

@@ -105,7 +105,7 @@ main(int argc, char **argv)
 	    overlay++;
 	} else if (argv[1][0] == '-') {
 	    if (!BU_STR_EQUAL(argv[1], "-?"))
-	        fprintf(stderr,"cmap-fb: unknown flag %s\n",argv[1]);
+		fprintf(stderr, "cmap-fb: unknown flag %s\n", argv[1]);
 	    bu_exit(1, "%s", usage);
 	} else
 	    break;	/* must be a filename */
@@ -121,7 +121,7 @@ main(int argc, char **argv)
     } else {
 	fp = stdin;
 	if(isatty(fileno(fp)))
-	    fprintf(stderr,"%s       Program continues running:\n",usage);
+	    fprintf(stderr, "%s       Program continues running:\n", usage);
     }
 
     if ((fbp = fb_open(NULL, fbsize, fbsize)) == FBIO_NULL)

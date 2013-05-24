@@ -30,18 +30,18 @@
 #include "bu.h"
 #include "fb.h"
 
-static unsigned char	*white_line, *grey_line, *dark_line;
-static FBIO	*fbp;
-static char	*framebuffer = NULL;
+static unsigned char *white_line, *grey_line, *dark_line;
+static FBIO *fbp;
+static char *framebuffer = NULL;
 
-#define OLD	0
-#define	BINARY	1
-#define	DECIMAL 2
+#define OLD 0
+#define BINARY 1
+#define DECIMAL 2
 
-static int	fbwidth = 0;
-static int	fbheight = 0;
-static int	flavor = DECIMAL;
-static int	clear = 0;
+static int fbwidth = 0;
+static int fbheight = 0;
+static int flavor = DECIMAL;
+static int clear = 0;
 
 void grid(FBIO *fbiop, unsigned char *line, int spacing), oldflavor(void);
 
@@ -100,10 +100,11 @@ get_args(int argc, char **argv)
     return 1;		/* OK */
 }
 
+
 int
 main(int argc, char **argv)
 {
-    int	i;
+    int i;
 
     if (!get_args(argc, argv)) {
 	(void)fputs(usage, stderr);
@@ -153,10 +154,11 @@ main(int argc, char **argv)
     return 0;
 }
 
+
 void
 grid(FBIO *fbiop, unsigned char *line, int spacing)
 {
-    int	x, y;
+    int x, y;
 
     for (y = 0; y < fbheight; y += spacing)
 	fb_write(fbiop, 0, y, line, fbwidth);
@@ -165,15 +167,16 @@ grid(FBIO *fbiop, unsigned char *line, int spacing)
     }
 }
 
+
 void
 oldflavor(void)
 {
-    FBIO	*fbiop;
-    int	x, y;
-    int	middle;
-    int	mask;
-    int	fb_sz;
-    static RGBpixel	black, white, red;
+    FBIO *fbiop;
+    int x, y;
+    int middle;
+    int mask;
+    int fb_sz;
+    static RGBpixel black, white, red;
 
     fbiop = fb_open(NULL, fbwidth, fbheight);
     if (fbiop == NULL) {
@@ -209,6 +212,7 @@ oldflavor(void)
     fb_close(fbp);
     bu_exit(0, NULL);
 }
+
 
 /*
  * Local Variables:

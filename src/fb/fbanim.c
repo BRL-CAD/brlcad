@@ -40,19 +40,19 @@
 #include "fb.h"
 
 
-int		sec;
-int		usec;
+int sec;
+int usec;
 
-void		newframe(int i);
+void newframe(int i);
 
-FBIO	*fbp;
-int	screen_width;		/* Number of pixels/line in frame buffer */
-int	screen_height;
-int	verbose = 0;
-int	rocking = 0;
+FBIO *fbp;
+int screen_width;		/* Number of pixels/line in frame buffer */
+int screen_height;
+int verbose = 0;
+int rocking = 0;
 
-int	subimage_width;		/* subimage width */
-int	subimage_height;		/* subimage height */
+int subimage_width;		/* subimage width */
+int subimage_height;		/* subimage height */
 int nframes;			/* number of frames */
 int im_line;			/* Number of images across the screen */
 int fps;			/* frames/sec */
@@ -70,8 +70,8 @@ get_args(int argc, char **argv)
 {
     int c;
 
-    while ( (c = bu_getopt( argc, argv, "s:w:n:hirvp:S:W:N:" )) != -1 )  {
-	switch ( c )  {
+    while ((c = bu_getopt(argc, argv, "s:w:n:hirvp:S:W:N:")) != -1) {
+	switch (c) {
 	    case 's':
 		subimage_width = subimage_height = atoi(bu_optarg);
 		break;
@@ -86,7 +86,7 @@ get_args(int argc, char **argv)
 		break;
 	    case 'p':
 		passes = atoi(bu_optarg);
-		if (passes<1)  passes=1;
+		if (passes<1) passes=1;
 		break;
 	    case 'r':
 		rocking = 1;
@@ -113,27 +113,28 @@ get_args(int argc, char **argv)
 	}
     }
 
-    if ( bu_optind+1 >= argc )	/* two mandatory positional args */
+    if (bu_optind+1 >= argc)	/* two mandatory positional args */
 	return 0;
     return 1;		/* OK */
 }
+
 
 int
 main(int argc, char **argv)
 {
     int i;
 
-    if ( !get_args( argc, argv ) )  {
+    if (!get_args(argc, argv)) {
 	(void)fputs(Usage, stderr);
-	bu_exit( 1, NULL );
+	bu_exit(1, NULL);
     }
 
     /* If not given with -s & -n, use (old) positional param (compat) */
-    if ( subimage_width <= 0 || subimage_height <= 0 )  {
+    if (subimage_width <= 0 || subimage_height <= 0) {
 	subimage_width = subimage_height = atoi(argv[bu_optind]);
-	if ( subimage_width == 0 ) {
+	if (subimage_width == 0) {
 	    fprintf(stderr, "fbanim: must specify image size\n");
-	    bu_exit( 2, NULL );
+	    bu_exit(2, NULL);
 	}
     }
     nframes = atoi(argv[bu_optind+1]);
@@ -141,12 +142,12 @@ main(int argc, char **argv)
 	bu_log("ERROR: Invalid number of frames");
 	return 1;
     }
-    if ( bu_optind+2 >= argc )
+    if (bu_optind+2 >= argc)
 	fps = 8;
     else
 	fps = atoi(argv[bu_optind+2]);
 
-    if ( fps <= 1 )  {
+    if (fps <= 1) {
 	sec = fps ? 1 : 4;
 	usec = 0;
     } else {
@@ -154,7 +155,7 @@ main(int argc, char **argv)
 	usec = 1000000/fps;
     }
 
-    if ( (fbp = fb_open( NULL, screen_width, screen_height )) == NULL )  {
+    if ((fbp = fb_open(NULL, screen_width, screen_height)) == NULL) {
 	fprintf(stderr, "fbanim: fb_open failed\n");
 	bu_exit(12, NULL);
     }
@@ -163,41 +164,42 @@ main(int argc, char **argv)
 
     im_line = screen_width/subimage_width;	/* number of images across line */
 
-    fb_zoom( fbp, screen_width/subimage_width, screen_height/subimage_height );
+    fb_zoom(fbp, screen_width/subimage_width, screen_height/subimage_height);
 
-    while (passes-- > 0)  {
-	if ( !rocking )  {
+    while (passes-- > 0) {
+	if (!rocking) {
 	    /* Play from start to finish, over and over */
-	    for ( i=0; i<nframes; i++ )
+	    for (i=0; i<nframes; i++)
 		newframe(i);
 	} else {
 	    /* Play from start to finish and back */
-	    for ( i=0; i<nframes; i++ )
+	    for (i=0; i<nframes; i++)
 		newframe(i);
 	    while (i-->0)
 		newframe(i);
 	}
     }
-    fb_close( fbp );
+    fb_close(fbp);
     return 0;
 }
+
 
 void
 newframe(int i)
 {
-    int	xPan, yPan;		/* Pan Location */
+    int xPan, yPan;		/* Pan Location */
     struct timeval tv;
     fd_set fds;
 
     xPan = (i%im_line)*subimage_width+subimage_width/2;
     yPan = (i/im_line)*subimage_height+subimage_height/2;
-    if ( inverse )
+    if (inverse)
 	yPan = screen_width - yPan;
-    if ( verbose )  {
+    if (verbose) {
 	printf("%3d: %3d %3d\n", i, xPan, yPan);
-	fflush( stdout );
+	fflush(stdout);
     }
-    fb_window( fbp, xPan, yPan );
+    fb_window(fbp, xPan, yPan);
 
     FD_ZERO(&fds);
     FD_SET(fileno(stdin), &fds);
@@ -207,6 +209,7 @@ newframe(int i)
 
     select(fileno(stdin)+1, &fds, (fd_set *)0, (fd_set *)0, &tv);
 }
+
 
 /*
  * Local Variables:

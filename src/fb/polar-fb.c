@@ -113,12 +113,12 @@ RGBpixel Color[] = {
 int
 LoadNPF (char *FileName, double *Table, int Quantum, double convert, double arc_min, double arc_max)
 
-    /* Name of input file */
-    /* Location for storing function */
-    /* Angular resolution of Table (in degrees) */
-    /* Factor to convert input units to radians */
-    /* First angle of interest */
-    /* Last    "    "     "    */
+/* Name of input file */
+/* Location for storing function */
+/* Angular resolution of Table (in degrees) */
+/* Factor to convert input units to radians */
+/* First angle of interest */
+/* Last    "    "     "    */
 
 {
     int Warnings = 0;	/* Have any warning messages been printed? */
@@ -251,11 +251,11 @@ ArgCompat (int Interior)
 void
 Fill_Empty (unsigned char *fbbPtr, double UNUSED(rho), double UNUSED(npf_rho), int UNUSED(unit_r), int merge)
 
-    /* Pointer to within fbb */
-    /* Radius of current pixel */
-    /* Value of function at this theta */
-    /* Unit radius (in pixels) */
-    /* Overlay onto current FB contents? */
+/* Pointer to within fbb */
+/* Radius of current pixel */
+/* Value of function at this theta */
+/* Unit radius (in pixels) */
+/* Overlay onto current FB contents? */
 
 {
     if (! merge) {
@@ -263,27 +263,29 @@ Fill_Empty (unsigned char *fbbPtr, double UNUSED(rho), double UNUSED(npf_rho), i
     }
 }
 
+
 void
 Fill_Constant (unsigned char *fbbPtr, double UNUSED(rho), double UNUSED(npf_rho), int UNUSED(unit_r), int UNUSED(merge))
 
-    /* Pointer to within fbb */
-    /* Radius of current pixel */
-    /* Value of function at this theta */
-    /* Unit radius (in pixels) */
-    /* Overlay onto current FB contents? */
+/* Pointer to within fbb */
+/* Radius of current pixel */
+/* Value of function at this theta */
+/* Unit radius (in pixels) */
+/* Overlay onto current FB contents? */
 
 {
     COPYRGB(fbbPtr, Color[C_INTERIOR]);
 }
 
+
 void
 Fill_Ramp (unsigned char *fbbPtr, double rho, double UNUSED(npf_rho), int unit_r, int UNUSED(merge))
 
-    /* Pointer to within fbb */
-    /* Radius of current pixel */
-    /* Value of function at this theta */
-    /* Unit radius (in pixels) */
-    /* Overlay onto current FB contents? */
+/* Pointer to within fbb */
+/* Radius of current pixel */
+/* Value of function at this theta */
+/* Unit radius (in pixels) */
+/* Overlay onto current FB contents? */
 
 {
     RGBpixel ThisPix;	/* Ramped color for current pixel */
@@ -297,14 +299,15 @@ Fill_Ramp (unsigned char *fbbPtr, double rho, double UNUSED(npf_rho), int unit_r
     COPYRGB(fbbPtr, ThisPix);
 }
 
+
 void
 Fill_Wedges (unsigned char *fbbPtr, double UNUSED(rho), double npf_rho, int UNUSED(unit_r), int UNUSED(merge))
 
-    /* Pointer to within fbb */
-    /* Radius of current pixel */
-    /* Value of function at this theta */
-    /* Unit radius (in pixels) */
-    /* Overlay onto current FB contents? */
+/* Pointer to within fbb */
+/* Radius of current pixel */
+/* Value of function at this theta */
+/* Unit radius (in pixels) */
+/* Overlay onto current FB contents? */
 
 {
     if (npf_rho > .8) {
@@ -324,11 +327,11 @@ Fill_Wedges (unsigned char *fbbPtr, double UNUSED(rho), double npf_rho, int UNUS
 void
 Fill_Rings (unsigned char *fbbPtr, double rho, double UNUSED(npf_rho), int unit_r, int UNUSED(merge))
 
-    /* Pointer to within fbb */
-    /* Radius of current pixel */
-    /* Value of function at this theta */
-    /* Unit radius (in pixels) */
-    /* Overlay onto current FB contents? */
+/* Pointer to within fbb */
+/* Radius of current pixel */
+/* Value of function at this theta */
+/* Unit radius (in pixels) */
+/* Overlay onto current FB contents? */
 
 {
     if (rho / unit_r > .8) {
@@ -708,7 +711,7 @@ main (int argc, char **argv)
 		    Interior = BI_WEDGES;
 		    break;
 		case '?':
-	    error:
+		error:
 		default:
 		    PrintUsage(1);
 		    (void) bu_exit (*Opt != '?', NULL);

@@ -35,7 +35,7 @@
 #include "fb.h"
 #include "libtermio.h"
 
-#define COMMA ','
+#define COMMA ', '
 
 
 int curchan = 0;	/* 0=r, 1=g, 2=b */
@@ -46,14 +46,14 @@ unsigned char buf[3*2048];
 ColorMap old_map;
 ColorMap cm;
 
-static char	*framebuffer = NULL;
-static FBIO	*fbp;
-static int	scr_height;
-static int	scr_width;
+static char *framebuffer = NULL;
+static FBIO *fbp;
+static int scr_height;
+static int scr_width;
 
-void	new_rgb(void), rgbhsv(int *rgb, int *hsv), hsvrgb(int *hsv, int *rgb);
-int	pars_Argv(int argc, char **argv);
-int	doKeyPad(void);
+void new_rgb(void), rgbhsv(int *rgb, int *hsv), hsvrgb(int *hsv, int *rgb);
+int pars_Argv(int argc, char **argv);
+int doKeyPad(void);
 
 static char usage[] = "\
 Usage: fbcolor [-h] [-F framebuffer]\n\
@@ -65,75 +65,75 @@ main(int argc, char **argv)
 {
     int i;
 
-    if ( ! pars_Argv( argc, argv ) )  {
+    if (! pars_Argv(argc, argv)) {
 	(void)fputs(usage, stderr);
-	return	1;
+	return 1;
     }
-    if ( (fbp = fb_open( framebuffer, scr_width, scr_height )) == FBIO_NULL )  {
+    if ((fbp = fb_open(framebuffer, scr_width, scr_height)) == FBIO_NULL) {
 	fprintf(stderr, "fbcolor:  fb_open(%s) failure\n", framebuffer);
-	return	1;
+	return 1;
     }
 
     /* Get the actual screen size we were given */
     scr_width = fb_getwidth(fbp);
     scr_height = fb_getheight(fbp);
 
-    fb_rmap( fbp, &old_map );
-    fb_clear( fbp, RGBPIXEL_NULL );
+    fb_rmap(fbp, &old_map);
+    fb_clear(fbp, RGBPIXEL_NULL);
 
-    rgbhsv( col, &col[3] );
+    rgbhsv(col, &col[3]);
 
     /* Note that color 0, 0, 0 is special;  use 1, 1, 1 for black */
     /* Red */
-    for ( i=0; i<255; i++)  {
+    for (i=0; i<255; i++) {
 	buf[3*i+RED] = i;
 	buf[3*i+GRN] = 1;
 	buf[3*i+BLU] = 1;
     }
-    for ( i=0; i<99; i++ )
-	fb_write( fbp, 0, i, buf, 256 );
+    for (i=0; i<99; i++)
+	fb_write(fbp, 0, i, buf, 256);
 
     /* Green */
     memset((char *)buf, 0, sizeof(buf));
-    for ( i=0; i<255; i++) {
+    for (i=0; i<255; i++) {
 	buf[3*i+RED] = 1;
 	buf[3*i+GRN] = i;
 	buf[3*i+BLU] = 1;
     }
-    for ( i=100; i<199; i++ )
-	fb_write( fbp, 0, i, buf, 256 );
+    for (i=100; i<199; i++)
+	fb_write(fbp, 0, i, buf, 256);
 
     /* Blue */
     memset((char *)buf, 0, sizeof(buf));
-    for ( i=0; i<255; i++)  {
+    for (i=0; i<255; i++) {
 	buf[3*i+RED] = 1;
 	buf[3*i+GRN] = 1;
 	buf[3*i+BLU] = i;
     }
-    for ( i=200; i<299; i++ )
-	fb_write( fbp, 0, i, buf, 256 );
+    for (i=200; i<299; i++)
+	fb_write(fbp, 0, i, buf, 256);
 
     /* Set RAW mode */
-    save_Tty( 0 );
-    set_Raw( 0 );
-    clr_Echo( 0 );
+    save_Tty(0);
+    set_Raw(0);
+    clr_Echo(0);
 
-    do  {
+    do {
 	/* Build color map for current value */
 	memset((char *)&cm, 0, sizeof(cm));
-	for ( i=0; i<col[RED]; i++ )
+	for (i=0; i<col[RED]; i++)
 	    cm.cm_red[i] = 0xFFFF;
-	for (; i<255; i++ )
+	for (; i<255; i++)
 	    cm.cm_red[i] = 0;
 
-	for ( i=0; i<col[GRN]; i++ )
+	for (i=0; i<col[GRN]; i++)
 	    cm.cm_green[i] = 0xFFFF;
-	for (; i<255; i++ )
+	for (; i<255; i++)
 	    cm.cm_green[i] = 0;
 
-	for ( i=0; i<col[BLU]; i++ )
+	for (i=0; i<col[BLU]; i++)
 	    cm.cm_blue[i] = 0xFFFF;
-	for (; i<255; i++ )
+	for (; i<255; i++)
 	    cm.cm_blue[i] = 0;
 
 	/* 0, 0, 0 is color chosen */
@@ -146,21 +146,22 @@ main(int argc, char **argv)
 	cm.cm_green[1] = 0;
 	cm.cm_blue[1] = 0;
 
-	fb_wmap( fbp, &cm );
+	fb_wmap(fbp, &cm);
 
-	(void) fprintf( stdout,
-			"%c rgb=%3d,%3d,%3d hsv=%3d,%3d,%3d   \r",
-			"RGBHSIx"[curchan],
-			col[0], col[1], col[2],
-			col[3], col[4], col[5]	);
-	(void) fflush( stdout );
-    } while ( doKeyPad() );
+	(void) fprintf(stdout,
+		       "%c rgb=%3d, %3d, %3d hsv=%3d, %3d, %3d   \r",
+		       "RGBHSIx"[curchan],
+		       col[0], col[1], col[2],
+		       col[3], col[4], col[5]);
+	(void) fflush(stdout);
+    } while (doKeyPad());
 
-    fb_wmap( fbp, &old_map );
-    reset_Tty( 0 );
-    (void) fprintf( stdout,  "\n");	/* Move off of the output line.	*/
-    return	0;
+    fb_wmap(fbp, &old_map);
+    reset_Tty(0);
+    (void) fprintf(stdout,  "\n");	/* Move off of the output line.	*/
+    return 0;
 }
+
 
 char help[] = "\r\n\
 + .	increase by 1\r\n\
@@ -181,25 +182,25 @@ doKeyPad(void)
 {
     int ch;
 
-    if ( (ch = getchar()) == EOF )
-	return	0;		/* done */
+    if ((ch = getchar()) == EOF)
+	return 0;		/* done */
 
-    switch ( ch )  {
+    switch (ch) {
 	default :
-	    (void) fprintf( stdout,
-			    "\r\n'%c' bad -- Type ? for help\r\n",
-			    ch
+	    (void) fprintf(stdout,
+			   "\r\n'%c' bad -- Type ? for help\r\n",
+			   ch
 		);
 	    break;
 	case '?' :
-	    (void) fprintf( stdout, "\r\n%s", help );
+	    (void) fprintf(stdout, "\r\n%s", help);
 	    break;
 	case '\r' :
 	case '\n' :				/* Done, return to normal */
 	case 'q' :
-	    return	0;
+	    return 0;
 	case 'Q' :				/* Done, leave "as is" */
-	    return	0;
+	    return 0;
 
 	case 'r':
 	    curchan = 0;
@@ -221,10 +222,10 @@ doKeyPad(void)
 	    curchan = 5;
 	    break;
 	case '/':
-	    if ( ++curchan >= 6 )  curchan = 0;
+	    if (++curchan >= 6) curchan = 0;
 	    break;
 
-	    /* unit changes with -+ or ,. */
+	    /* unit changes with -+ or , . */
 	case '+':
 	case '.':
 	    col[curchan]++;
@@ -246,29 +247,31 @@ doKeyPad(void)
 	    new_rgb();
 	    break;
     }
-    return	1;		/* keep going */
+    return 1;		/* keep going */
 }
+
 
 void
 new_rgb(void) {
     /* Wrap values to stay in range 0..255 */
-    if ( col[curchan] < 0 ) col[curchan] = 255;
-    if ( col[curchan] > 255 ) col[curchan] = 0;
+    if (col[curchan] < 0) col[curchan] = 255;
+    if (col[curchan] > 255) col[curchan] = 0;
     /* recompute either rgb or hsv from the other */
-    if ( curchan < 3 )
-	rgbhsv( col, &col[3] );
+    if (curchan < 3)
+	rgbhsv(col, &col[3]);
     else
-	hsvrgb( &col[3], col );
+	hsvrgb(&col[3], col);
 }
 
-/*	p a r s _ A r g v ( )
+
+/* p a r s _ A r g v ()
  */
 int
 pars_Argv(int argc, char **argv)
 {
-    int	c;
-    while ( (c = bu_getopt( argc, argv, "F:s:S:w:W:n:N:h" )) != -1 )  {
-	switch ( c )  {
+    int c;
+    while ((c = bu_getopt(argc, argv, "F:s:S:w:W:n:N:h")) != -1) {
+	switch (c) {
 	    case 'F':
 		framebuffer = bu_optarg;
 		break;
@@ -288,11 +291,12 @@ pars_Argv(int argc, char **argv)
 		scr_height = atoi(bu_optarg);
 		break;
 	    case '?' :
-		return	0;
+		return 0;
 	}
     }
-    return	1;
+    return 1;
 }
+
 
 /* rgbhsv
  *
@@ -301,9 +305,9 @@ pars_Argv(int argc, char **argv)
 void
 rgbhsv(int *rgb, int *hsv)
 {
-    int	s, v;
-    int	r, g, b;
-    int	x;
+    int s, v;
+    int r, g, b;
+    int x;
     static int h;
     double dif = 0;
 
@@ -314,10 +318,10 @@ rgbhsv(int *rgb, int *hsv)
     v = ((v > b) ? v : b);
     x = ((r < g) ? r : g);
     x = ((x < b) ? x : b);
-    if (v != x)  {
+    if (v != x) {
 	dif = (double) (v - x);
-	if (r != v)  {
-	    if (g == v)  {
+	if (r != v) {
+	    if (g == v) {
 		if (b != x)
 		    h = (int) (42.5 * (3.0 - (double)(v-b) / dif));
 		else
@@ -346,6 +350,7 @@ rgbhsv(int *rgb, int *hsv)
     hsv[2] = v;
 }
 
+
 /* hsvrgb
  *
  * convert hue saturation and value to red, green, blue
@@ -360,8 +365,7 @@ hsvrgb(int *hsv, int *rgb)
     double h, s, v, foo;
     double f;
 
-    if (hsv[1] != 0)
-    {
+    if (hsv[1] != 0) {
 	s = (double)hsv[1] / 255.0;
 	h = (double)hsv[0] / 42.666;
 	f = modf(h, &(foo));
@@ -369,8 +373,7 @@ hsvrgb(int *hsv, int *rgb)
 	m = (int) (v * (1.0 - s) + .5);
 	n = (int) (v * (1.0 - s*f) + .5);
 	k = (int) (v * (1.0 - (s * (1.-f))) + .5);
-	switch ((int) h)
-	{
+	switch ((int) h) {
 	    case 0:
 		r = hsv[2];
 		g = k;
@@ -403,14 +406,14 @@ hsvrgb(int *hsv, int *rgb)
 		b = n;
 		break;
 	}
-    }
-    else
+    } else
 	r = g = b = hsv[2];
 
     rgb[0] = r;
     rgb[1] = g;
     rgb[2] = b;
 }
+
 
 /*
  * Local Variables:

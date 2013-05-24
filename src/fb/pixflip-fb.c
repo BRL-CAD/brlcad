@@ -239,10 +239,10 @@ main(int argc, char **argv)
 	ifname = bu_realpath(name, NULL);
 	if ((fd=open(ifname, 0))<0) {
 	    perror(ifname);
-	    bu_free(ifname,"ifname alloc from bu_realpath");
+	    bu_free(ifname, "ifname alloc from bu_realpath");
 	    goto done;
 	}
-	bu_free(ifname,"ifname alloc from bu_realpath");
+	bu_free(ifname, "ifname alloc from bu_realpath");
 
 	/* Read in .pix file.  Bottom to top */
 	i = read(fd, obuf, scanbytes);

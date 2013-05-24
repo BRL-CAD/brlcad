@@ -166,12 +166,12 @@ get_args(int argc, char **argv)
 	if ((infd = open(ifname, 0)) < 0) {
 	    perror(ifname);
 	    fprintf(stderr,
-			  "pix-fb: cannot open \"%s(canonical %s)\" for reading\n",
-			  file_name,ifname);
-	    bu_free(ifname,"ifname alloc from bu_realpath");
+		    "pix-fb: cannot open \"%s(canonical %s)\" for reading\n",
+		    file_name, ifname);
+	    bu_free(ifname, "ifname alloc from bu_realpath");
 	    bu_exit(1, NULL);
 	}
-	bu_free(ifname,"ifname alloc from bu_realpath");
+	bu_free(ifname, "ifname alloc from bu_realpath");
 #ifdef _WIN32
 	setmode(infd, O_BINARY);
 #endif

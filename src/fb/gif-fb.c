@@ -107,7 +107,7 @@ static RGBpixel *cmap;			/* bu_malloc()ed local color map */
 /* NOTE:  Relies on R, G, B order and also on RGBpixel being 3 unsigned chars. */
 
 #define GIF_EXTENSION '!'
-#define GIF_IMAGE ','
+#define GIF_IMAGE ', '
 #define GIF_TERMINATOR ';'
 
 /* in ioutil.c */
@@ -287,7 +287,7 @@ static short exp_buffer[(1 << 11) - 2];	/* reverse-order atomic codes */
 /* Non-recursive version, for wimpy systems: */
 static void
 Expand(int c)
-    /* LZW code */
+/* LZW code */
 {
     short *bp = exp_buffer;
 
@@ -726,7 +726,7 @@ main(int argc, char **argv)
 		continue;	/* so says the GIF spec */
 
 	    case GIF_TERMINATOR:	/* GIF terminator */
-	terminate:
+	    terminate:
 		/* GIF spec suggests pause and wait for go-ahead here,
 		   also "screen clear", but they're impractical. */
 

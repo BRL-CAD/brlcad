@@ -38,12 +38,12 @@
 #include "fb.h"
 
 
-static int	bytes_per_sample = 3;
-static int	file_length = 0;
-static char	*file_name;
+static int bytes_per_sample = 3;
+static int file_length = 0;
+static char *file_name;
 
-static size_t	width;
-static size_t	height;
+static size_t width;
+static size_t height;
 
 static char usage[] = "\
 Usage:	pixautosize [-b bytes_per_sample] [-f file_name]\n\
@@ -54,8 +54,8 @@ get_args(int argc, char **argv)
 {
     int c;
 
-    while ( (c = bu_getopt( argc, argv, "b:f:l:" )) != -1 )  {
-	switch ( c )  {
+    while ((c = bu_getopt(argc, argv, "b:f:l:")) != -1) {
+	switch (c) {
 	    case 'b':
 		bytes_per_sample = atoi(bu_optarg);
 		break;
@@ -70,49 +70,51 @@ get_args(int argc, char **argv)
 	}
     }
 
-    if ( argc > ++bu_optind )
-	fprintf( stderr, "pixautosize: excess argument(s) ignored\n" );
+    if (argc > ++bu_optind)
+	fprintf(stderr, "pixautosize: excess argument(s) ignored\n");
 
     return 1;		/* OK */
 }
 
+
 int
 main(int argc, char **argv)
 {
-    int	ret = 0;
-    int	nsamp;
+    int ret = 0;
+    int nsamp;
 
-    if ( !get_args( argc, argv ) || bytes_per_sample <= 0 )  {
+    if (!get_args(argc, argv) || bytes_per_sample <= 0) {
 	(void)fputs(usage, stderr);
 	return 1;
     }
 
-    if ( !file_name && file_length <= 0 )  {
+    if (!file_name && file_length <= 0) {
 	(void)fputs(usage, stderr);
 	return 1;
     }
 
-    if ( file_name ) {
-	if ( !fb_common_file_size(&width, &height, file_name, bytes_per_sample) ) {
+    if (file_name) {
+	if (!fb_common_file_size(&width, &height, file_name, bytes_per_sample)) {
 	    fprintf(stderr, "pixautosize: unable to autosize file '%s'\n", file_name);
 	    ret = 1;		/* ERROR */
 	}
     } else {
 	nsamp = file_length/bytes_per_sample;
-	if ( !fb_common_image_size(&width, &height, nsamp) ) {
+	if (!fb_common_image_size(&width, &height, nsamp)) {
 	    fprintf(stderr, "pixautosize: unable to autosize nsamples=%d\n", nsamp);
 	    ret = 2;		/* ERROR */
 	}
     }
 
     /*
-     *  Whether or not an error message was printed to stderr above,
-     *  print out the width and height on stdout.
-     *  They will be zero on error.
+     * Whether or not an error message was printed to stderr above,
+     * print out the width and height on stdout.
+     * They will be zero on error.
      */
     printf("WIDTH=%lu; HEIGHT=%lu\n", (unsigned long)width, (unsigned long)height);
     return ret;
 }
+
 
 /*
  * Local Variables:
