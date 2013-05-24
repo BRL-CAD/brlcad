@@ -35,7 +35,7 @@
 #include "libtermio.h"
 
 
-#define COMMA ', '
+#define COMMA ','
 
 
 int pars_Argv(int argc, char **argv);

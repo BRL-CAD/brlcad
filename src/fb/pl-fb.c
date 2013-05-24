@@ -82,7 +82,7 @@
 #include "fb.h"
 #include "plot3.h"
 
-#define COMMA ', '
+#define COMMA ','
 
 /*
   Raster device model and image terminology as used herein:

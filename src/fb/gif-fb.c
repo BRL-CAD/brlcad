@@ -107,7 +107,7 @@ static RGBpixel *cmap;			/* bu_malloc()ed local color map */
 /* NOTE:  Relies on R, G, B order and also on RGBpixel being 3 unsigned chars. */
 
 #define GIF_EXTENSION '!'
-#define GIF_IMAGE ', '
+#define GIF_IMAGE ','
 #define GIF_TERMINATOR ';'
 
 /* in ioutil.c */
