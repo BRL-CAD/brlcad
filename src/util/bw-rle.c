@@ -60,7 +60,7 @@ static size_t file_width = 512;
 static size_t file_height = 512;
 
 static char usage[] = "\
-Usage: bw-rle [-h] [-s squarefilesize]  [-C bg]\n\
+Usage: bw-rle [-s squarefilesize]  [-C bg]\n\
 	[-w file_width] [-n file_height] [file.bw] [file.rle]\n\
 \n\
 If omitted, the .bw file is taken from stdin\n\
@@ -111,11 +111,11 @@ main(int argc, char **argv)
 	    rle_putcom(strdup(comment), &outrle);
 	}
     }
-# if HAVE_GETHOSTNAME
+#if HAVE_GETHOSTNAME
     gethostname(host, sizeof(host));
     snprintf(comment, 128, "converted_host=%s", host);
     rle_putcom(strdup(comment), &outrle);
-# endif
+#endif
 
     rle_put_setup(&outrle);
     rle_row_alloc(&outrle, &rows);

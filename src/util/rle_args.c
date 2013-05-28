@@ -29,12 +29,10 @@ get_args(int argc, char **argv, rle_hdr *outrle, FILE** infp, char** infile, int
 {
     int c;
 
-    while ((c = bu_getopt(argc, argv, "hs:w:n:C:")) != -1) {
+    while ((c = bu_getopt(argc, argv, "s:w:n:C:h?")) != -1) {
 	switch (c) {
-	    case 'h':
-		/* high-res */
-		*file_height = *file_width = 1024;
-		break;
+/* 'h' was removed, because 's 1024' can be used in its place.
+ */
 	    case 's':
 		/* square file size */
 		*file_height = *file_width = atoi(bu_optarg);
@@ -59,7 +57,6 @@ get_args(int argc, char **argv, rle_hdr *outrle, FILE** infp, char** infile, int
 		}
 		break;
 	    default:
-	    case '?':
 		return 0;
 	}
     }

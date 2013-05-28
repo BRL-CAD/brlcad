@@ -17,7 +17,6 @@
 <refsynopsisdiv xml:id='synopsis'>
 <cmdsynopsis>
   <command>bw-rle</command>
-    <arg choice='opt'>-h </arg>
     <arg choice='opt'>-C <replaceable>bg_val</replaceable></arg>
     <arg choice='opt'>-s <replaceable>square_file_size</replaceable></arg>
     <arg choice='opt'>-w <replaceable>file_width</replaceable></arg>
