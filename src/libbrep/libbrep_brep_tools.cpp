@@ -72,7 +72,7 @@ bool ON_Surface_SubSurface(
     if ((u_val->Length() <= ON_ZERO_TOLERANCE) || (v_val->Length() <= ON_ZERO_TOLERANCE))
         return false;
 
-    // If we have the original surface domain, just return true 
+    // If we have the original surface domain, just return true
     if ((fabs(u_val->Min() - srf->Domain(0).m_t[0]) <= ON_ZERO_TOLERANCE) &&
         (fabs(u_val->Max() - srf->Domain(0).m_t[1]) <= ON_ZERO_TOLERANCE) &&
         (fabs(v_val->Min() - srf->Domain(1).m_t[0]) <= ON_ZERO_TOLERANCE) &&

@@ -6299,7 +6299,7 @@ namespace eval ArcherCore {
 	return $ret
     }
     set len [llength $args]
-    
+
     if {$len > 2} {
 	redrawObj [lindex $args 1] 0
     }

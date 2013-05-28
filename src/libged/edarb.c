@@ -109,7 +109,7 @@ editarb(struct ged *gedp, struct rt_arb_internal *arb, int type, int edge, vect_
     int pflag = 0;
     fastf_t peqn[7][4];
     struct bu_vls error_msg = BU_VLS_INIT_ZERO;
-    
+
     if (rt_arb_calc_planes(&error_msg, arb, type, peqn, &gedp->ged_wdbp->wdb_tol)) {
 	bu_vls_printf(gedp->ged_result_str, "%s. Cannot calculate plane equations for faces\n", bu_vls_addr(&error_msg));
 	bu_vls_free(&error_msg);

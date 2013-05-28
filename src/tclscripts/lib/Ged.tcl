@@ -1865,7 +1865,7 @@ package provide cadwidgets::Ged 1.0
 }
 
 ::itcl::body cadwidgets::Ged::grid2model_lu {args} {
-    eval $mGed grid2model_lu $itk_component($itk_option(-pane)) $args 
+    eval $mGed grid2model_lu $itk_component($itk_option(-pane)) $args
 }
 
 ::itcl::body cadwidgets::Ged::grid2view_lu {args} {

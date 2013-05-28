@@ -49,8 +49,8 @@
   Create a NURBS surface that corresponds to a subset
   of an input surface, as defined by UV intervals. The
   t parameters may be NULL, in which case working surfaces
-  will be created by the function.  If supplied, existing 
-  surfaces are reused to avoid extra malloc operations 
+  will be created by the function.  If supplied, existing
+  surfaces are reused to avoid extra malloc operations
   and memory usage associated with creating the working
   surfaces.
 
@@ -60,14 +60,14 @@
   @param t1 surface used during split algorithm
   @param t2 surface used during split algorithm
   @param t3 surface used during split algorithm
-  @param t4 surface holding final result of split passes 
+  @param t4 surface holding final result of split passes
   @param[out] result final subsurface - holds *t4 if it was non-NULL as an input, else holds a pointer to the new ON_Surface
 
   @return @c true if surface creation is successful or if the subsurface
   is the same as the parent surface, @c false if one or more split
   operations failed.
 */
-NURBS_EXPORT 
+NURBS_EXPORT
 bool ON_Surface_SubSurface(
         const ON_Surface *srf,
         ON_Interval *u_val,
