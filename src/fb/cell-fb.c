@@ -41,7 +41,7 @@
 #define MAX_COLORTBL 11
 #define WHITE colortbl[0]
 #define BACKGROUND colortbl[MAX_COLORTBL]
-#define OPT_STRING "CM:F:N:S:W:X:a:b:c:d:ef:ghikl:m:p:s:v:x:?"
+#define OPT_STRING "CM:F:N:S:W:X:a:b:c:d:ef:gikl:m:p:s:v:x:h?"
 #define BLEND_USING_HSV 1
 
 #define STATE_VIEW_TOP 0
@@ -142,7 +142,6 @@ static char *usage[] = {
     " -e                Erase frame buffer before displaying picture",
     " -f n              Display field `n' of cell data",
     " -g                Leave space between cells",
-    " -h                Use high-resolution frame buffer (sames as -S 1024)",
     " -i                Round values (default is to interpolate colors)",
     " -k                Display color key",
     " -l \"a e\"          Write log information to stdout",
@@ -744,9 +743,6 @@ pars_Argv(int argc, char **argv)
 	    case 'g':
 		grid_flag = 1;
 		break;
-	    case 'h':
-		fb_height = fb_width = HIRES;
-		break;
 	    case 'i':
 		interp_flag = 0;
 		break;
@@ -818,7 +814,7 @@ pars_Argv(int argc, char **argv)
 		    return 0;
 		}
 		break;
-	    case '?':
+	    default:
 		return 0;
 	}
     }
