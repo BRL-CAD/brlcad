@@ -49,9 +49,11 @@ main (int argc, char **argv)
     int i;
     unsigned char *bin_color = (unsigned char *)0;/* resultant pixel values */
 
-    if ((nm_threshs = argc - 1) < 1) {
+    if ( (BU_STR_EQUAL(argv[1],"-h") || BU_STR_EQUAL(argv[1],"-?")) && argc == 2)
 	bu_exit(1, "%s", USAGE);
-    }
+    if ((nm_threshs = argc - 1) < 1)
+	bu_exit(1, "%s", USAGE);
+
     if (nm_threshs > 255) {
 	bu_exit(1, "bwthresh: Too many thresholds!\n");
     }
