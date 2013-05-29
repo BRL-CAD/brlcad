@@ -50,7 +50,9 @@
  * Embedded or memory-constrained environments probably want to set
  * this a lot smaller than the default.
  */
-#define PAGESIZE (BINS * 1024)
+#ifndef PAGESIZE
+#  define PAGESIZE (BINS * 1024)
+#endif
 
 
 struct heap {
