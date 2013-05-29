@@ -54,9 +54,6 @@
 #if defined(_WIN32) && !defined(_OFF_T_DEFINED)
    typedef SSIZE_T off_t;
 #  define _OFF_T_DEFINED 1
-#elif !defined(__APPLE__) && !defined(__off_t_defined)
-   typedef ptrdiff_t off_t;
-#  define __off_t_defined 1
 #endif
 
 /* On Windows 64bit, "off_t" is defined as a "long"
@@ -67,6 +64,13 @@
  */
 
 #include <sys/types.h>
+
+#if !defined(_WIN32) && !defined(__APPLE__) && !defined(__off_t_defined) && !defined(_OFF_T_DECLARED)
+   typedef ptrdiff_t off_t;
+#  define __off_t_defined 1
+#  define _OFF_T_DECLARED 1
+#endif
+
 #include <stdio.h>
 #include <string.h>
 #include <ctype.h>
