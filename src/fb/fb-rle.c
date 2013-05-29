@@ -101,8 +101,6 @@ get_args(int argc, char **argv)
 		/* square file size */
 		file_height = file_width = atoi(bu_optarg);
 		break;
-/* case 'h' (high-res) was deleted; in its place, use 'S' with argument of 1024.
- */
 	    case 'S':
 		screen_height = screen_width = atoi(bu_optarg);
 		break;
