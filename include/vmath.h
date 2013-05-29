@@ -1021,7 +1021,7 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
 			(o)[Z] = ((a)[Z] + (b)[Z]) * (s); \
     } while (0)
 
-#define VADD2SCALEN(o, a, b, n) do { \
+#define VADD2SCALEN(o, a, b, s, n) do { \
 	register int _vadd2scale; \
 	for (_vadd2scale = 0; \
 	_vadd2scale < (n); \
@@ -1040,7 +1040,7 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
 			(o)[Z] = ((a)[Z] - (b)[Z]) * (s); \
     } while (0)
 
-#define VSUB2SCALEN(o, a, b, n) do { \
+#define VSUB2SCALEN(o, a, b, s, n) do { \
 	register int _vsub2scale; \
 	for (_vsub2scale = 0; \
 	_vsub2scale < (n); \
