@@ -76,8 +76,6 @@ get_args(int argc, char **argv)
 	    case 'L':
 		landscape = 1;
 		break;
-/* -h was removed; in its place use -s 1024
- */
 	    case 's':
 		/* square file size */
 		height = width = atoi(bu_optarg);
