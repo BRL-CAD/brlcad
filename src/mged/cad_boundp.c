@@ -97,8 +97,8 @@ static segment seghead = {
 static int
 Usage(void) 				/* print usage message */
 {
-    return
-	fprintf(stderr, "Usage: cad_boundp[ -i input][ -o output][ -t tolerance][ -v]");
+	fprintf(stderr, "Usage: cad_boundp [-i input] [-o output] [-t tolerance] [-v]\n");
+	return 0;
 }
 
 
@@ -134,7 +134,7 @@ GetArgs(int argc, const char *argv[])	/* process command arguments */
     int c;		/* option letter */
 
 if (argc==1) {
-    fprintf(stderr,"Usage: cad_boundp [ -i input ] [ -o output ] [ -t tolerance ] [ -v ]\n");
+    Usage();
     fprintf(stderr,"       Program continues running:\n");
 }
 
@@ -142,7 +142,7 @@ if (argc==1) {
     fprintf(stderr, "\n\t\tGetArgs\n");
 #endif
     bu_optind = 1;
-    while ((c = bu_getopt(argc, (char * const *)argv, "i:o:t:v")) != -1)
+    while ((c = bu_getopt(argc, (char * const *)argv, "i:o:t:vh?")) != -1)
 	switch (c) {
 	    case 'i':
 		if (iflag) {
@@ -188,8 +188,9 @@ if (argc==1) {
 		vflag = 1;
 		break;
 
-	    case '?':
-		return Usage(); /* print usage message */
+	    default:
+		Usage(); /* print usage message */
+		bu_exit(0, NULL);
 	}
 
     return 1;
