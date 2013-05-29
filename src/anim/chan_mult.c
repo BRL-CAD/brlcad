@@ -31,6 +31,11 @@
 #include "bio.h"
 #include "bu.h"
 
+void
+printusage (void) {
+	fprintf(stderr, "Usage: chan_mult factor num_columns column [col ... ] < in.file > out.file\n");
+	bu_exit(-1, NULL);
+}
 
 int
 main(int argc, char **argv)
@@ -38,10 +43,10 @@ main(int argc, char **argv)
     double factor, temp;
     int i, j, doit, of, count, val, *col_list;
 
-    if (argc < 4) {
-	fprintf(stderr, "Usage: chan_mult factor num_columns column [col ... ] < in.file > out.file\n");
-	return -1;
-    }
+    if ( BU_STR_EQUAL(argv[1], "-h") || BU_STR_EQUAL(argv[1], "-?") )
+	printusage();
+    if (argc < 4)
+	printusage();
 
     sscanf(*(argv+1), "%lf", &factor);
     sscanf(*(argv+2), "%d", &of);

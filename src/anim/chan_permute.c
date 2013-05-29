@@ -62,6 +62,13 @@ struct unit {
 char ihead[] = "-i";
 char ohead[] = "-o";
 
+void
+printusage (void) {
+	fprintf(stderr,
+		"Usage: chan_permute -i infile1 id id id ... [-i infile2 ...] -o outfile1 id id ... [-o outfile2 ...]\n");
+	bu_exit(-1, NULL);
+}
+
 int
 main(int argc, char *argv[])
 {
@@ -70,11 +77,10 @@ main(int argc, char *argv[])
     struct unit *x, *y;
     Word *arrayd;
 
-    if (argc == 1) {
-	fprintf(stderr,
-		"Usage: chan_permute -i infile1 id id id ... [-i infile2 ...] -o outfile1 id id ... [-o outfile2 ...]\n");
-	bu_exit(-1, NULL);
-    }
+    if ( BU_STR_EQUAL(argv[1], "-h") || BU_STR_EQUAL(argv[1], "-?") )
+	printusage();
+    if (argc == 1)
+	printusage();
 
     i=j=icount = ocount = maxlength = 0;
     for (i=1;i<argc;i++) {
