@@ -46,7 +46,7 @@ static void Output(double result), Usage(void);
 static void
 Usage(void) 				/* print usage message */
 {
-    printf("Usage: cad_parea [ -i input] [ -o output]\n");
+    fprintf(stderr,"Usage: cad_parea [-i input] [-o output]\n");
 }
 
 
@@ -67,13 +67,12 @@ main(int argc, const char *argv[])			/* "cad_parea" entry point */
 
     if (!GetArgs(argc, argv)) {
 	/* process command arguments */
-	Output(0.0);
 	return 1;
     }
 
     if (ttyin && ttyout && argc == 1) {
     		Usage();	/* print usage message */
-    		printf("       Program continues running:\n");
+    		fprintf(stderr,"       Program continues running:\n");
     }
 
     saved = 0;
@@ -142,8 +141,7 @@ GetArgs(int argc, const char *argv[])			/* process command arguments */
 		}
 		break;
 
-	    case '?':
-	    case 'h':
+	    default:
 		Usage();	/* print usage message */
 		return 0;
 	}
@@ -171,7 +169,6 @@ Input(point *coop)				/* input a coordinate record */
 	    return 1;	/* successfully converted */
 
 	printf("cad_parea: bad input:\n%s\n", inbuf);
-	Output(0.0);
 	bu_exit(2, NULL);		/* return false insufficient */
     }
 
