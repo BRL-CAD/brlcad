@@ -60,7 +60,7 @@ int outy = 512;
 
 
 static char usage[] = "\
-Usage: bwscale [-h] [-r] [-s squareinsize] [-w inwidth] [-n inheight]\n\
+Usage: bwscale [-r] [-s squareinsize] [-w inwidth] [-n inheight]\n\
 	[-S squareoutsize] [-W outwidth] [-N outheight] [in.bw] > out.bw\n";
 
 static int
@@ -68,15 +68,11 @@ get_args(int argc, char **argv)
 {
     int c;
 
-    while ((c = bu_getopt(argc, argv, "rhs:w:n:S:W:N:")) != -1) {
+    while ((c = bu_getopt(argc, argv, "rs:w:n:S:W:N:h?")) != -1) {
 	switch (c) {
 	    case 'r':
 		/* pixel replication */
 		rflag = 1;
-		break;
-	    case 'h':
-		/* high-res */
-		inx = iny = 1024;
 		break;
 	    case 'S':
 		/* square size */
