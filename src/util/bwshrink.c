@@ -36,7 +36,7 @@
 
 
 /* declarations to support use of bu_getopt() system call */
-char *options = "uhs:w:n:f:";
+char *options = "us:w:n:f:h?";
 
 char *progname = "(noname)";
 char *filename = "(stdin)";
@@ -105,7 +105,7 @@ int method = METH_BOXCAR;
 void usage(void)
 {
     (void) fprintf(stderr,
-		   "Usage: %s [-u] [-h] [-w width] [-n scanlines] [-s squaresize]\n\
+		   "Usage: %s [-u] [-w width] [-n scanlines] [-s squaresize]\n\
 		[-f shrink_factor] [bwfile] > bwfile\n", progname);
     bu_exit (1, NULL);
 }
@@ -121,18 +121,12 @@ void parse_args(int ac, char **av)
     if (!(progname = strrchr(*av, '/')))
 	progname = *av;
 
-    /* Turn off bu_getopt's error messages */
-    bu_opterr = 0;
-
     /* get all the option flags from the command line */
     while ((c=bu_getopt(ac, av, options)) != -1)
 	switch (c) {
 	    case 'f':
 		if ((c = atoi(bu_optarg)) > 1)
 		    factor = c;
-		break;
-	    case 'h':
-		width = height = 1024;
 		break;
 	    case 'n':
 		if ((c=atoi(bu_optarg)) > 0)
@@ -150,7 +144,6 @@ void parse_args(int ac, char **av)
 		: method = METH_UNDERSAMPLE;
 		break;
 
-	    case '?':
 	    default:
 		usage();
 		break;
