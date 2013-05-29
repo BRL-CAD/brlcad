@@ -54,6 +54,9 @@ main(int argc, char **argv)
     unsigned char white[3*512];
     FILE *fp;
 
+    if ( BU_STR_EQUAL(argv[1], "-h") || BU_STR_EQUAL(argv[1], "-?") )
+	bu_exit(1, "%s", Usage);
+
     /* check for verbose flag */
     if (argc > 1 && BU_STR_EQUAL(argv[1], "-v")) {
 	verbose++;
@@ -72,9 +75,8 @@ main(int argc, char **argv)
 	fp = stdin;
 
     /* check usage */
-    if (argc > 1 || isatty(fileno(fp))) {
+    if (argc > 1 || isatty(fileno(fp)))
 	bu_exit(1, "%s", Usage);
-    }
 
     for (i = 0; i < 3*512; i++)
 	white[i] = 255;
