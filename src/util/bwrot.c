@@ -70,7 +70,10 @@ get_args(int argc, char **argv, FILE **ifp, FILE **ofp, double *angle)
     if (!ifp || !ofp || !angle)
 	bu_exit(1, "bwrot: internal error processing arguments\n");
 
-    while ((c = bu_getopt(argc, argv, "fbrih#:a:s:o:w:n:S:W:N:")) != -1) {
+    if ( isatty(fileno(stdin)) && isatty(fileno(stdout)) && argc == 1)
+	return 0;
+
+    while ((c = bu_getopt(argc, argv, "fbri#:a:s:o:w:n:S:W:N:h?")) != -1) {
 	switch (c) {
 	    case 'f':
 		minus90++;
@@ -83,10 +86,6 @@ get_args(int argc, char **argv, FILE **ifp, FILE **ofp, double *angle)
 		break;
 	    case 'i':
 		invert++;
-		break;
-	    case 'h':
-		/* high-res */
-		nxin = nyin = 1024;
 		break;
 	    case '#':
 		pixbytes = atoi(bu_optarg);
