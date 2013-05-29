@@ -34,7 +34,7 @@
 #include "vmath.h"
 
 /* declarations to support use of bu_getopt() */
-char *options = "w:h:d:W:H:sn:t:Du:mc:C:?";
+char *options = "w:n:d:W:N:sB:t:Du:mc:C:h?";
 
 char *progname = "(noname)";
 double brick_width=8.0;
@@ -66,8 +66,8 @@ usage(char *s)
 		   progname,
 		   "  [ -u units ] [ -s(tandalone) ] [-t tolerance ]",
 		   "  [-m(ortar) ] [ -c R/G/B (brick) ] [ -C R/G/B (mortar)]",
-		   "  -w brick_width -h brick_height -d brick_depth -n brick_name",
-		   "  -W wall_width -H wall_height\n  > mged_commands \n");
+		   "  -w brick_width -n brick_height -d brick_depth -B brick_name",
+		   "  -W wall_width -N wall_height\n  > mged_commands \n");
 
     bu_exit(1, NULL);
 }
@@ -122,7 +122,7 @@ int parse_args(int ac, char **av)
 		if (!ZERO(d))
 		    brick_width = d;
 		break;
-	    case 'h':
+	    case 'n':
 		d=atof(bu_optarg);
 		if (!ZERO(d))
 		    brick_height = d;
@@ -137,12 +137,12 @@ int parse_args(int ac, char **av)
 		if (!ZERO(d))
 		    wall_width = d;
 		break;
-	    case 'H':
+	    case 'N':
 		d=atof(bu_optarg);
 		if (!ZERO(d))
 		    wall_height = d;
 		break;
-	    case 'n':
+	    case 'B':
 		brick_name = bu_optarg;
 		break;
 	    case 's':
