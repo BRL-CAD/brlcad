@@ -80,7 +80,7 @@ get_args(int argc, char **argv)
 {
     int c;
 
-    while ((c = bu_getopt(argc, argv, "vf:d:o:w:n:s:")) != -1) {
+    while ((c = bu_getopt(argc, argv, "vf:d:o:w:n:s:h?")) != -1) {
 	switch (c) {
 	    case 'v':
 		verbose++;
