@@ -31,10 +31,11 @@
 #include "bio.h"
 #include "bu.h"
 
-void
-printusage (void) {
-	fprintf(stderr, "Usage: chan_mult factor num_columns column [col ... ] < in.file > out.file\n");
-	bu_exit(-1, NULL);
+static void
+printusage (void)
+{
+    fprintf(stderr, "Usage: chan_mult factor num_columns column [col ... ] < in.file > out.file\n");
+    bu_exit(-1, NULL);
 }
 
 int

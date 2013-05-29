@@ -123,7 +123,8 @@ mat_t m_axes, m_rev_axes;	/* matrices to and from alternate axes */
 double first_tracklen;
 
 static void
-usage(const char *argv0) {
+usage(const char *argv0)
+{
     bu_log("Usage: %s [options] wheelfile < in.table > out.script\n", argv0);
     bu_log("\n\tOptions:\n");
     bu_log("\t  [-w parent/basename] to specify wheels to animate\n");

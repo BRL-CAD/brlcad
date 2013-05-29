@@ -53,7 +53,8 @@ double factor = 1.0;
 
 
 static void
-usage(void){
+usage(void)
+{
     fprintf(stderr,"Usage: anim_turn -l length [-a angle] [-r radius] [-f factor] [-p integer] < in.table > out.table\n");
 }
 

@@ -31,10 +31,11 @@
 #include "bio.h"
 #include "bu.h"
 
-void
-printusage (void) {
-	fprintf(stderr, "Usage: chan_add value num_columns column [column ...] < in.file > out.file\n");
-	bu_exit(-1, NULL);
+static void
+printusage (void)
+{
+    fprintf(stderr, "Usage: chan_add value num_columns column [column ...] < in.file > out.file\n");
+    bu_exit(-1, NULL);
 }
 
 int

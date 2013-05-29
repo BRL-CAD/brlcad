@@ -62,11 +62,12 @@ struct unit {
 char ihead[] = "-i";
 char ohead[] = "-o";
 
-void
-printusage (void) {
-	fprintf(stderr,
-		"Usage: chan_permute -i infile1 id id id ... [-i infile2 ...] -o outfile1 id id ... [-o outfile2 ...]\n");
-	bu_exit(-1, NULL);
+static void
+printusage (void)
+{
+    fprintf(stderr,
+	    "Usage: chan_permute -i infile1 id id id ... [-i infile2 ...] -o outfile1 id id ... [-o outfile2 ...]\n");
+    bu_exit(-1, NULL);
 }
 
 int
