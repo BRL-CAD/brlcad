@@ -16,7 +16,7 @@
 <refsynopsisdiv xml:id="synopsis">
 <cmdsynopsis sepchar=" ">
   <command>cmap-fb</command>
-    <arg choice="opt" rep="norepeat">-h </arg>
+    <arg choice="opt" rep="norepeat">-H </arg>
     <arg choice="opt" rep="norepeat">-o </arg>
     <arg choice="opt" rep="norepeat"><replaceable>colormap</replaceable></arg>
 </cmdsynopsis>
@@ -40,7 +40,7 @@ the framebuffer will be retained (one can view this as
 
 <para>By default, the display is assumed to be 512x512 pixels;
 by specifying the
-<option>-h</option>
+<option>-H</option>
 flag, the size is changed to 1024x1024.
 This size distinction is important for devices like the Adage
 framebuffers which have different operating modes based on the

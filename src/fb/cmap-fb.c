@@ -89,7 +89,7 @@ int
 main(int argc, char **argv)
 {
     ColorMap cm;
-    char usage[] = "Usage: cmap-fb [-h -o] [colormap]\n";
+    char usage[] = "Usage: cmap-fb [-H -o] [colormap]\n";
 
     FBIO *fbp;
     FILE *fp;
@@ -99,12 +99,12 @@ main(int argc, char **argv)
     char line[512], buf[512], *str;
 
     while (argc > 1) {
-	if (BU_STR_EQUAL(argv[1], "-h")) {
+	if (BU_STR_EQUAL(argv[1], "-H")) {
 	    fbsize = 1024;
 	} else if (BU_STR_EQUAL(argv[1], "-o")) {
 	    overlay++;
 	} else if (argv[1][0] == '-') {
-	    if (!BU_STR_EQUAL(argv[1], "-?"))
+	    if ( (!BU_STR_EQUAL(argv[1], "-?")) && (!BU_STR_EQUAL(argv[1], "-h")) )
 		fprintf(stderr, "cmap-fb: unknown flag %s\n", argv[1]);
 	    bu_exit(1, "%s", usage);
 	} else
