@@ -47,7 +47,7 @@ void	disp_inten(double *buf, int size);
 void	disp_bars(double *buf, int size);
 
 static const char usage[] = "\
-Usage: ddisp [-v -b -p -c -h] [width (512)] < inputfile\n";
+Usage: ddisp [-v -b -p -c -H] [width (512)] < inputfile\n";
 
 int
 main(int argc, char **argv)
@@ -71,10 +71,14 @@ main(int argc, char **argv)
 	    pause_time = 3;
 	} else if ( BU_STR_EQUAL(argv[1], "-c") ) {
 	    Clear++;
-	} else if ( BU_STR_EQUAL(argv[1], "-h") ) {
+	} else if ( BU_STR_EQUAL(argv[1], "-H") ) {
 	    fbsize = 1024;
-	} else
-	    break;
+	    bu_exit(1, "%s", usage );
+	} else {
+	    if (! BU_STR_EQUAL(argv[1], "-h") && ! BU_STR_EQUAL(argv[1], "-?") )
+		fprintf(stderr,"Illegal option -- %s\n",argv[1]);
+	    bu_exit(1, "%s", usage );
+	}
 	argc--;
 	argv++;
     }
