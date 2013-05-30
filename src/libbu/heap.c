@@ -28,21 +28,21 @@
  * memory allocations.  Any request outside this range will get passed
  * to bu_calloc().
  *
- * 1-to-BINS byte size allocations are allocated in PAGESIZE chunks as
+ * 1-to-BU_HEAP_BINS byte size allocations are allocated in PAGESIZE chunks as
  * they are requested.  There's minimal penalty for making this
  * arbitrarily large except where there are very few allocations (each
  * size will allocate at least one page).  PAGESIZE should be some
- * multiple larger than BINS.
+ * multiple larger than BU_HEAP_BINS.
  *
  * Embedded or memory-constrained environments probably want to set
  * this a lot smaller than the default.
  */
-#define BINS 1024
+#define BU_HEAP_BINS 1024
 
 /**
  * This specifies how much memory we should preallocate for each
  * allocation size.  Note that this number should be some multiple of
- * BINS and system page size in order to be useful.  Ideally sized to
+ * BU_HEAP_BINS and system page size in order to be useful.  Ideally sized to
  * keep the allocation size with the most requests down to
  * single-digit page counts.  Testing showed a 1M page size was very
  * effective at eliminating allocation overhead.
@@ -50,9 +50,7 @@
  * Embedded or memory-constrained environments probably want to set
  * this a lot smaller than the default.
  */
-#ifndef PAGESIZE
-#  define PAGESIZE (BINS * 1024)
-#endif
+#define BU_HEAP_PAGESIZE (BU_HEAP_BINS * 1024)
 
 
 struct heap {
@@ -77,7 +75,7 @@ struct heap {
 
 struct cpus {
     /** each allocation size gets a bin for holding memory pages */
-    struct heap heap[BINS];
+    struct heap heap[BU_HEAP_BINS];
 
     /** keep track of allocation sizes outside our supported range */
     size_t misses;
@@ -114,14 +112,14 @@ heap_print()
 	   "-----------------------\n");
 
     for (h=0; h < ncpu; h++) {
-	for (i=0; i < BINS; i++) {
+	for (i=0; i < BU_HEAP_BINS; i++) {
 
 	    /* capacity across all pages */
-	    got = per_cpu[h].heap[i].count * (PAGESIZE/(i+1));
+	    got = per_cpu[h].heap[i].count * (BU_HEAP_PAGESIZE/(i+1));
 
 	    if (got > 0) {
 		/* last page is partial */
-		got -= (PAGESIZE - per_cpu[h].heap[i].given)/(i+1);
+		got -= (BU_HEAP_PAGESIZE - per_cpu[h].heap[i].given)/(i+1);
 		bu_log("%04zu [%02zu] => %zu\n", i, per_cpu[h].heap[i].count, got);
 		allocs += got;
 	    }
@@ -135,7 +133,7 @@ heap_print()
 	   "Page size: %d bytes\n"
 	   "Pages: %zu (%.2lfMB)\n"
 	   "%zu allocs, %zu misses\n"
-	   "=======================\n", BINS, PAGESIZE, total_pages, (double)(total_pages * PAGESIZE) / (1024.0*1024.0), allocs, misses);
+	   "=======================\n", BU_HEAP_BINS, BU_HEAP_PAGESIZE, total_pages, (double)(total_pages * BU_HEAP_PAGESIZE) / (1024.0*1024.0), allocs, misses);
 }
 
 
@@ -151,7 +149,7 @@ bu_heap_get(size_t sz)
     /* what thread are we? */
     oncpu = bu_parallel_id();
 
-    if (sz > BINS || sz == 0) {
+    if (sz > BU_HEAP_BINS || sz == 0) {
 	per_cpu[oncpu].misses++;
 
 	if (bu_debug) {
@@ -176,15 +174,15 @@ bu_heap_get(size_t sz)
 
 	heap->count++;
 	heap->pages = (char **)bu_malloc(1 * sizeof(char *), "heap malloc pages[]");
-	heap->pages[0] = (char *)bu_calloc(1, PAGESIZE, "heap calloc pages[][0]");
+	heap->pages[0] = (char *)bu_calloc(1, BU_HEAP_PAGESIZE, "heap calloc pages[][0]");
 	heap->given = 0;
     }
 
     /* grow */
-    if (heap->given+sz > PAGESIZE) {
+    if (heap->given+sz > BU_HEAP_PAGESIZE) {
 	heap->count++;
 	heap->pages = (char **)bu_realloc(heap->pages, heap->count * sizeof(char *), "heap realloc pages[]");
-	heap->pages[heap->count-1] = (char *)bu_calloc(1, PAGESIZE, "heap calloc pages[][]");
+	heap->pages[heap->count-1] = (char *)bu_calloc(1, BU_HEAP_PAGESIZE, "heap calloc pages[][]");
 	heap->given = 0;
     }
 
@@ -199,7 +197,7 @@ bu_heap_get(size_t sz)
 void
 bu_heap_put(void *ptr, size_t sz)
 {
-    if (sz > BINS || sz == 0) {
+    if (sz > BU_HEAP_BINS || sz == 0) {
 	bu_free(ptr, "heap free");
 	return;
     }
@@ -223,7 +221,7 @@ int main (int ac, char *av[])
     srand(time(0));
 
     for (i=0; i<1024*1024*50; i++) {
-	size_t sz = (((double)rand() / (double)(RAND_MAX-1)) * (double)BINS) + 1;
+	size_t sz = (((double)rand() / (double)(RAND_MAX-1)) * (double)BU_HEAP_BINS) + 1;
 	bu_log("allocating %d: %zd\n", i, sz);
 #ifdef USE_MALLOC
 	ptr = malloc(sz);
@@ -268,7 +266,7 @@ int main (int ac, char *av[])
 
 
 /* sanity */
-#if PAGESIZE < BINS
+#if BU_HEAP_PAGESIZE < BU_HEAP_BINS
 #  error "ERROR: heap page size cannot be smaller than bin range"
 #endif
 
