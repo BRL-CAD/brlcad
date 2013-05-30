@@ -398,6 +398,7 @@ BU_EXPORT extern const char *bu_version(void);
  */
 #if !defined(GENPTR_NULL)
 typedef void *genptr_t;
+typedef const void *const_genptr_t;
 #  define GENPTR_NULL ((genptr_t)0)
 #endif
 
@@ -688,9 +689,9 @@ BU_EXPORT extern size_t bu_cv_htonul(genptr_t,
 #  define BU_CKMAG(_ptr, _magic, _str) IGNORE((_ptr))
 #else
 #  define BU_CKMAG(_ptr, _magic, _str) { \
-	uintptr_t _ptrval = (uintptr_t)(_ptr); \
-	if (UNLIKELY((_ptrval == 0) || (_ptrval & (sizeof(_ptrval)-1)) || *((uint32_t *)(_ptr)) != (uint32_t)(_magic))) { \
-	    bu_badmagic((uint32_t *)(_ptr), (uint32_t)_magic, _str, __FILE__, __LINE__); \
+	const uintptr_t _ptrval = (const uintptr_t)(_ptr); \
+	if (UNLIKELY((_ptrval == 0) || (_ptrval & (sizeof(_ptrval)-1)) || *((const uint32_t *)(_ptr)) != (uint32_t)(_magic))) { \
+	    bu_badmagic((const uint32_t *)(_ptr), (uint32_t)_magic, _str, __FILE__, __LINE__); \
 	} \
     }
 #endif
@@ -1910,7 +1911,7 @@ typedef struct bu_attribute_value_set bu_avs_t;
  *
  */
 #define BU_AVS_FOR(_pp, _avp) \
-    (_pp) = ((void *)(_avp) != (void *)NULL) ? ((_avp)->count > 0 ? &(_avp)->avp[(_avp)->count-1] : NULL) : NULL; ((void *)(_pp) != (void *)NULL) && ((void *)(_avp) != (void *)NULL) && (_avp)->avp && (_pp) >= (_avp)->avp; (_pp)--
+    (_pp) = ((const void *)(_avp) != (const void *)NULL) ? ((_avp)->count > 0 ? &(_avp)->avp[(_avp)->count-1] : NULL) : NULL; ((const void *)(_pp) != (const void *)NULL) && ((const void *)(_avp) != (const void *)NULL) && (_avp)->avp && (_pp) >= (_avp)->avp; (_pp)--
 
 /**
  * Some (but not all) attribute name and value string pointers are
@@ -1919,8 +1920,9 @@ typedef struct bu_attribute_value_set bu_avs_t;
  * whether the pointer needs to be freed or not.
  */
 #define AVS_IS_FREEABLE(_avsp, _p)	\
-    ((_avsp)->readonly_max == NULL ||	\
-     ((genptr_t)(_p) < (genptr_t)(_avsp)->readonly_min || (genptr_t)(_p) > (genptr_t)(_avsp)->readonly_max))
+    ((_avsp)->readonly_max == NULL \
+     || (const_genptr_t)(_p) < (_avsp)->readonly_min \
+     || (const_genptr_t)(_p) > (_avsp)->readonly_max)
 
 /** @} */
 
