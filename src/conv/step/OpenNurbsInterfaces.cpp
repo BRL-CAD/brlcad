@@ -1249,11 +1249,12 @@ ON_BoundingBox *
 Path::GetEdgeBounds(ON_Brep *brep)
 {
     ON_BoundingBox *u = NULL;
+
     LIST_OF_ORIENTED_EDGES::iterator i;
     for (i = edge_list.begin(); i != edge_list.end(); i++) {
 	if (!(*i)->LoadONBrep(brep)) {
 	    std::cerr << "Error: " << entityname << "::LoadONBrep() - Error loading openNURBS brep." << std::endl;
-	    return false;
+	    return NULL;
 	}
 	if (u == NULL) {
 	    u = new ON_BoundingBox();
