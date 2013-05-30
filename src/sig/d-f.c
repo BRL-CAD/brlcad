@@ -46,10 +46,8 @@ float	obuf[512] = { 0.0f};
 int main(int argc, char **argv)
 {
     int	i, num;
-    double	scale;
+    double	scale = 1.0;
     size_t ret;
-
-    scale = 1.0;
 
     if ( argc > 1 ) {
 	if ( ! BU_STR_EQUAL( argv[1], "-n" ) )
