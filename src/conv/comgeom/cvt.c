@@ -91,7 +91,7 @@ get_args(int argc, char **argv)
 	return 0;
     }
 
-    while ((c = bu_getopt(argc, argv, "d:v:s:")) != -1) {
+    while ((c = bu_getopt(argc, argv, "d:v:s:h?")) != -1) {
 	switch (c) {
 	    case 'd':
 		verbose = atoi(bu_optarg);
