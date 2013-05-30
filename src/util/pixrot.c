@@ -73,7 +73,7 @@ get_args(int argc, char **argv)
 {
     int c;
 
-    while ((c = bu_getopt(argc, argv, "fbrih#:s:w:n:S:W:N:")) != -1) {
+    while ((c = bu_getopt(argc, argv, "fbri#:s:w:n:S:W:N:h?")) != -1) {
 	switch (c) {
 	    case 'f':
 		minus90++;
@@ -89,10 +89,6 @@ get_args(int argc, char **argv)
 		break;
 	    case '#':
 		pixbytes = atoi(bu_optarg);
-		break;
-	    case 'h':
-		/* high-res */
-		nxin = nyin = 1024;
 		break;
 	    case 'S':
 	    case 's':
