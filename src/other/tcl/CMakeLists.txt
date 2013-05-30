@@ -132,7 +132,7 @@ ADD_SUBDIRECTORY(doc)
 add_definitions(-DPACKAGE_NAME="tcl")
 add_definitions(-DPACKAGE_TARNAME="tcl")
 add_definitions(-DPACKAGE_VERSION="${TCL_VERSION_MAJOR}.${TCL_VERSION_MINOR}")
-add_definitions(-DPACKAGE_STRING="tcl ${TCL_VERSION_MAJOR}.${TCL_VERSION_MINOR}")
+add_definitions(-DPACKAGE_STRING="tcl_${TCL_VERSION_MAJOR}.${TCL_VERSION_MINOR}")
 add_definitions(-DPACKAGE_BUGREPORT="")
 
 # We're building Tcl
