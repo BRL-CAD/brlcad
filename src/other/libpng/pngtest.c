@@ -54,9 +54,9 @@ typedef FILE                * png_FILE_p;
 #endif
 
 #if PNG_DEBUG > 1
-#  define pngtest_debug(m)        ((void)fprintf(stderr, m "\n"))
-#  define pngtest_debug1(m,p1)    ((void)fprintf(stderr, m "\n", p1))
-#  define pngtest_debug2(m,p1,p2) ((void)fprintf(stderr, m "\n", p1, p2))
+#  define pngtest_debug(m)        (fprintf(stderr, m "\n"))
+#  define pngtest_debug1(m,p1)    (fprintf(stderr, m "\n", p1))
+#  define pngtest_debug2(m,p1,p2) (fprintf(stderr, m "\n", p1, p2))
 #else
 #  define pngtest_debug(m)        ((void)0)
 #  define pngtest_debug1(m,p1)    ((void)0)
@@ -1817,4 +1817,4 @@ main(int argc, char *argv[])
 }
 
 /* Generate a compiler error if there is an old png.h in the search path. */
-typedef png_libpng_version_1_5_10 Your_png_h_is_not_version_1_5_10;
+typedef png_libpng_version_1_5_12 Your_png_h_is_not_version_1_5_12;

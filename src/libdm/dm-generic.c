@@ -1,7 +1,7 @@
 /*                    D M - G E N E R I C . C
  * BRL-CAD
  *
- * Copyright (c) 1999-2012 United States Government as represented by
+ * Copyright (c) 1999-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -33,6 +33,8 @@
 #include "bu.h"
 #include "vmath.h"
 #include "dm.h"
+
+#include "dm-Null.h"
 
 
 extern struct dm *plot_open(Tcl_Interp *interp, int argc, const char *argv[]);
@@ -70,18 +72,16 @@ extern int wgl_share_dlist();
 
 
 HIDDEN struct dm *
-Nu_open(Tcl_Interp *interp, int argc, const char *argv[])
+null_open(Tcl_Interp *interp, int argc, const char *argv[])
 {
     struct dm *dmp;
 
     if (argc < 0 || !argv)
 	return DM_NULL;
 
-    BU_GET(dmp, struct dm);
-    if (dmp == DM_NULL)
-	return DM_NULL;
+    BU_ALLOC(dmp, struct dm);
 
-    *dmp = dm_Null;
+    *dmp = dm_null;
     dmp->dm_interp = interp;
 
     return dmp;
@@ -93,7 +93,7 @@ dm_open(Tcl_Interp *interp, int type, int argc, const char *argv[])
 {
     switch (type) {
 	case DM_TYPE_NULL:
-	    return Nu_open(interp, argc, argv);
+	    return null_open(interp, argc, argv);
 	case DM_TYPE_PLOT:
 	    return plot_open(interp, argc, argv);
 	case DM_TYPE_PS:

@@ -1,7 +1,7 @@
 /*                         P U S H . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2012 United States Government as represented by
+ * Copyright (c) 2008-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -125,7 +125,7 @@ push_leaf(struct db_tree_state *tsp,
 /*
  * XXX - This will work but is not the best method.  dp->d_uses tells us
  * if this solid (leaf) has been seen before.  If it hasn't just add
- * it to the list.  If it has, search the list to see if the matricies
+ * it to the list.  If it has, search the list to see if the matrices
  * match and do the "right" thing.
  *
  * (There is a question as to whether dp->d_uses is reset to zero
@@ -153,7 +153,7 @@ push_leaf(struct db_tree_state *tsp,
 /*
  * This is the first time we have seen this solid.
  */
-    gpip = (struct push_id *) bu_malloc(sizeof(struct push_id), "Push ident");
+    BU_ALLOC(gpip, struct push_id);
     gpip->magic = PUSH_MAGIC_ID;
     gpip->pi_dir = dp;
     MAT_COPY(gpip->pi_mat, tsp->ts_mat);
@@ -263,7 +263,7 @@ ged_push(struct ged *gedp, int argc, const char *argv[])
 	    bu_free((genptr_t)gpip, "Push ident");
 	}
 	rt_g.debug = old_debug;
-	bu_free((genptr_t)gpdp, "ged_push: gpdp");
+	BU_PUT(gpdp, struct push_data);
 	bu_vls_printf(gedp->ged_result_str, "ged_push:\tdb_walk_tree failed or there was a solid moving\n\tin two or more directions");
 	return GED_ERROR;
     }
@@ -287,10 +287,10 @@ ged_push(struct ged *gedp, int argc, const char *argv[])
 
     /*
      * Now use the wdb_identitize() tree walker to turn all the
-     * matricies in a combination to the identity matrix.
+     * matrices in a combination to the identity matrix.
      * It would be nice to use db_tree_walker() but the tree
      * walker does not give us all combinations, just regions.
-     * This would work if we just processed all matricies backwards
+     * This would work if we just processed all matrices backwards
      * from the leaf (solid) towards the root, but all in all it
      * seems that this is a better method.
      */
@@ -315,7 +315,7 @@ ged_push(struct ged *gedp, int argc, const char *argv[])
 
     rt_g.debug = old_debug;
     push_error = gpdp->push_error;
-    bu_free((genptr_t)gpdp, "ged_push: gpdp");
+    BU_PUT(gpdp, struct push_data);
 
     return push_error ? GED_ERROR : GED_OK;
 }

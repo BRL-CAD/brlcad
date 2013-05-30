@@ -1,7 +1,7 @@
 /*                          M A I N . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2012 United  States Government as represented by
+ * Copyright (c) 1985-2013 United  States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -24,7 +24,7 @@
  *
  * Invoked by MGED for quick pictures.
  * Is linked with each of several "back ends":
- *	view.c, viewpp.c, viewray.c, viewcheck.c, etc
+ *	view.c, viewpp.c, viewray.c, viewcheck.c, etc.
  * to produce different executable programs:
  *	rt, rtpp, rtray, rtcheck, etc.
  *
@@ -188,7 +188,7 @@ int main(int argc, const char **argv)
     }
     /* Identify the versions of the libraries we are using. */
     if (rt_verbosity & VERBOSE_LIBVERSIONS) {
-	(void)fprintf(stderr, "%s%s%s%s\n",
+	fprintf(stderr, "%s%s%s%s\n",
 		      brlcad_ident(title),
 		      rt_version(),
 		      bn_version(),
@@ -196,10 +196,10 @@ int main(int argc, const char **argv)
 	    );
     }
 #if defined(DEBUG)
-    (void)fprintf(stderr, "Compile-time debug symbols are available\n");
+    fprintf(stderr, "Compile-time debug symbols are available\n");
 #endif
-#if defined(NO_BOMBING_MACROS) || defined(NO_MAGIC_CHECKING) || defined(NO_BADRAY_CECHKING) || defined(NO_DEBUG_CHECKING)
-    (void)fprintf(stderr, "WARNING: Run-time debugging is disabled and may enhance performance\n");
+#if defined(NO_BOMBING_MACROS) || defined(NO_MAGIC_CHECKING) || defined(NO_BADRAY_CHECKING) || defined(NO_DEBUG_CHECKING)
+    fprintf(stderr, "WARNING: Run-time debugging is disabled and may enhance performance\n");
 #endif
 
     /* Identify what host we're running on */
@@ -208,10 +208,10 @@ int main(int argc, const char **argv)
 #ifndef _WIN32
 	if (gethostname(hostname, sizeof(hostname)) >= 0 &&
 	    hostname[0] != '\0' )
-	    (void)fprintf(stderr, "Running on %s\n", hostname);
+	    fprintf(stderr, "Running on %s\n", hostname);
 #else
 	sprintf(hostname, "Microsoft Windows");
-	(void)fprintf(stderr, "Running on %s\n", hostname);
+	fprintf(stderr, "Running on %s\n", hostname);
 #endif
     }
 
@@ -326,7 +326,7 @@ int main(int argc, const char **argv)
 	return 1;
     }
 
-    /* Echo back the command line arugments as given, in 3 Tcl commands */
+    /* Echo back the command line arguments as given, in 3 Tcl commands */
     if (rt_verbosity & VERBOSE_MODELTITLE) {
 	struct bu_vls str = BU_VLS_INIT_ZERO;
 
@@ -454,7 +454,7 @@ int main(int argc, const char **argv)
 	int frame_retval;
 
 	def_tree(rtip);		/* Load the default trees */
-	/* orientation command has not been used */	
+	/* orientation command has not been used */
 	if (!orientflag)
 	    do_ae(azimuth, elevation);
 	frame_retval = do_frame(curframe);

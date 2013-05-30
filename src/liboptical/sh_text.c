@@ -1,7 +1,7 @@
 /*                       S H _ T E X T . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2012 United States Government as represented by
+ * Copyright (c) 1998-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -54,7 +54,6 @@ struct txt_specific {
 };
 #define TX_NULL ((struct txt_specific *)0)
 #define TX_O(m) bu_offsetof(struct txt_specific, m)
-#define TX_AO(m) bu_offsetofarray(struct txt_specific, m)
 
 
 HIDDEN void txt_transp_hook(struct bu_structparse *ptab, char *name, char *cp, char *value);
@@ -63,17 +62,17 @@ HIDDEN int txt_load_datasource(struct txt_specific *texture, struct db_i *dbInst
 
 
 struct bu_structparse txt_parse[] = {
-    {"%d",	1, "transp",	bu_offsetofarray(struct txt_specific, tx_transp),	txt_transp_hook, NULL, NULL },
+    {"%d",	1, "transp",	TX_O(tx_transp),	txt_transp_hook, NULL, NULL },
     {"%V",	1, "file", TX_O(tx_name),		txt_source_hook, NULL, NULL },
     {"%V",	1, "obj", TX_O(tx_name),		txt_source_hook, NULL, NULL },
     {"%V",	1, "object", TX_O(tx_name),		txt_source_hook, NULL, NULL },
     {"%V",	1, "texture", TX_O(tx_name),	 BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%d",	1, "w",		TX_O(tx_w),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%d",	1, "n",		TX_O(tx_n),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%d",	1, "l",		TX_O(tx_n),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }, {
-    /*compat*/"%d",	1, "trans_valid", TX_O(tx_trans_valid),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%d",	1, "l",		TX_O(tx_n),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%d",	1, "trans_valid", TX_O(tx_trans_valid),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },/*compat*/
     {"%d",	1, "t",		TX_O(tx_trans_valid),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f",  2, "uv",	TX_AO(tx_scale), 	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",	2, "uv",	TX_O(tx_scale), 	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%d",	1, "m",		TX_O(tx_mirror),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"",	0, (char *)0,	0,			BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
@@ -150,7 +149,9 @@ txt_load_datasource(struct txt_specific *texture, struct db_i *dbInstance, const
 		return -1;
 	    }
 	} else {
-	    struct rt_db_internal *dbip=(struct rt_db_internal *)bu_malloc(sizeof(struct rt_db_internal), "txt_load_datasource");
+	    struct rt_db_internal *dbip;
+
+	    BU_ALLOC(dbip, struct rt_db_internal);
 
 	    RT_DB_INTERNAL_INIT(dbip);
 	    RT_CK_DB_INTERNAL(dbip);
@@ -174,7 +175,7 @@ txt_load_datasource(struct txt_specific *texture, struct db_i *dbInstance, const
 
 	    /* check size of object */
 	    if (texture->tx_binunifp->count < size) {
-		bu_log("\nWARNING: %V needs %d bytes, binary object only has %d\n", texture->tx_name, size, texture->tx_binunifp->count);
+		bu_log("\nWARNING: %V needs %d bytes, binary object only has %lu\n", texture->tx_name, size, texture->tx_binunifp->count);
 	    } else if (texture->tx_binunifp->count > size) {
 		bu_log("\nWARNING: Binary object is larger than specified texture size\n\tBinary Object: %zu pixels\n\tSpecified Texture Size: %zu pixels\n...continuing to load using image subsection...", texture->tx_binunifp->count);
 	    }
@@ -192,9 +193,9 @@ txt_load_datasource(struct txt_specific *texture, struct db_i *dbInstance, const
 	    return -1;				/* FAIL */
 
 	if (texture->tx_mp->buflen < size) {
-	    bu_log("\nWARNING: %V needs %d bytes, file only has %d\n", &texture->tx_name, size, texture->tx_mp->buflen);
+	    bu_log("\nWARNING: %V needs %d bytes, file only has %lu\n", &texture->tx_name, size, texture->tx_mp->buflen);
 	} else if (texture->tx_mp->buflen > size) {
-	    bu_log("\nWARNING: Texture file size is larger than specified texture size\n\tInput File: %zu pixels\n\tSpecified Texture Size: %d pixels\n...continuing to load using image subsection...", texture->tx_mp->buflen, size);
+	    bu_log("\nWARNING: Texture file size is larger than specified texture size\n\tInput File: %zu pixels\n\tSpecified Texture Size: %lu pixels\n...continuing to load using image subsection...", texture->tx_mp->buflen, size);
 	}
 
     }
@@ -627,7 +628,7 @@ txt_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, con
 
     /* load given values */
     if (bu_struct_parse(matparm, txt_parse, (char *)tp) < 0) {
-	bu_free((genptr_t)tp, "txt_specific");
+	BU_PUT(tp, struct txt_specific);
 	return -1;
     }
 
@@ -680,7 +681,7 @@ txt_free(genptr_t cp)
     if (tp->tx_mp) bu_close_mapped_file(tp->tx_mp);
     tp->tx_binunifp = GENPTR_NULL; /* sanity */
     tp->tx_mp = GENPTR_NULL; /* sanity */
-    bu_free(cp, "txt_specific");
+    BU_PUT(cp, struct txt_specific);
 }
 
 
@@ -693,9 +694,9 @@ struct ckr_specific {
 #define CKR_O(m) bu_offsetof(struct ckr_specific, m)
 
 struct bu_structparse ckr_parse[] = {
-    {"%d",	3, "a",	bu_offsetofarray(struct ckr_specific, ckr_a), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%d",	3, "b",	bu_offsetofarray(struct ckr_specific, ckr_b), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f",	1, "s", bu_offsetof(struct ckr_specific, ckr_scale), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%d",	3, "a",	CKR_O(ckr_a), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%d",	3, "b",	CKR_O(ckr_b), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%g",	1, "s", CKR_O(ckr_scale), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"",	0, (char *)0,	0,			BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 
@@ -750,7 +751,7 @@ ckr_setup(register struct region *UNUSED(rp), struct bu_vls *matparm, genptr_t *
     ckp->ckr_b[0] = ckp->ckr_b[1] = ckp->ckr_b[2] = 0;
     ckp->ckr_scale = 2.0;
     if (bu_struct_parse(matparm, ckr_parse, (char *)ckp) < 0) {
-	bu_free((genptr_t)ckp, "ckr_specific");
+	BU_PUT(ckp, struct ckr_specific);
 	return -1;
     }
     ckp->ckr_a[0] &= 0x0ff;
@@ -779,14 +780,14 @@ ckr_print(register struct region *rp, genptr_t UNUSED(dp))
 HIDDEN void
 ckr_free(genptr_t cp)
 {
-    bu_free(cp, "ckr_specific");
+    BU_PUT(cp, struct ckr_specific);
 }
 
 
 /*
  * T S T M _ R E N D E R
  *
- * Render a map which varries red with U and blue with V values.
+ * Render a map which varies red with U and blue with V values.
  * Mostly useful for debugging ft_uv() routines.
  */
 HIDDEN int
@@ -864,7 +865,7 @@ bmp_render(struct application *ap, const struct partition *pp, struct shadework 
     fastf_t pertU, pertV;
     vect_t y;		/* world coordinate axis vectors */
     vect_t u, v;		/* surface coord system vectors */
-    int i, j;		/* bump map pixel indicies */
+    int i, j;		/* bump map pixel indices */
 
     /*
      * If no texture file present, or if
@@ -962,7 +963,6 @@ envmap_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *UNUSE
     }
     if (mlib_setup(&shaders, &env_region, rtip) < 0)
 	bu_log("envmap_setup() material '%s' failed\n", env_region.reg_mater);
-
 
 
     return 0;		/* This region should be dropped */

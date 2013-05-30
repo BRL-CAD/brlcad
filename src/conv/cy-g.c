@@ -1,7 +1,7 @@
 /*                          C Y - G . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2012 United States Government as represented by
+ * Copyright (c) 2004-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -110,18 +110,18 @@ main(int argc, char **argv)
     }
 
     if ((infp=fopen(argv[1], "rb")) == NULL) {
-	bu_log("Cannot open input file (%s)\n", argv[1]);
+	bu_log("%s: cannot open input file (%s)\n", argv[0] , argv[1]);
 	bu_exit(1, "%s", usage);
     }
 
     if ((outfp = wdb_fopen(argv[2])) == NULL) {
-	bu_log("Cannot open output file (%s)\n", argv[2]);
+	bu_log("%s: cannot open output file (%s)\n", argv[0] , argv[2]);
 	bu_exit(1, "%s", usage);
     }
 
     /* read first line, should identify */
     if (bu_fgets(line, LINE_LEN, infp) == NULL) {
-	bu_exit(1, "Unexpected EOF encounterd while looking for file identifier\n");
+	bu_exit(1, "Unexpected EOF encountered while looking for file identifier\n");
     }
     if (line[strlen(line)-1] == '\n') {
 	line[strlen(line)-1] = '\0';
@@ -145,7 +145,7 @@ main(int argc, char **argv)
 	if (bu_fgets(line, LINE_LEN, infp) == NULL) {
 	    bu_exit(1, "Unexpected EOF encountered while looking for data\n");
 	}
-	while (isspace(line[strlen(line)-1])) {
+	while (isspace((int)line[strlen(line)-1])) {
 	    line[strlen(line)-1] = '\0';
 	}
 
@@ -403,7 +403,7 @@ main(int argc, char **argv)
 	curves[y] = (fastf_t *)bu_calloc((unsigned int)(nlg+1)*3, sizeof(fastf_t), "ars curve");
     }
 
-    /* allocate memory for a table os sines and cosines */
+    /* allocate memory for a table of sines and cosines */
     sins = (fastf_t *)bu_calloc((unsigned int)nlg+1, sizeof(fastf_t), "sines");
     coss = (fastf_t *)bu_calloc((unsigned int)nlg+1, sizeof(fastf_t), "cosines");
 

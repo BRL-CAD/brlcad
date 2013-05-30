@@ -3,6 +3,12 @@ lib_LTLIBRARIES = libwdb.la
 noinst_LTLIBRARIES = libwdb_nil.la
 
 BREP_CPPFLAGS=-DOBJ_BREP=1 $(OPENNURBS_CPPFLAGS)
+AM_CFLAGS = \
+	${STD_C99_FLAGS} \
+	${STRICT_FLAGS} \
+	${TCL_CPPFLAGS} \
+	${BREP_CPPFLAGS}
+
 AM_CPPFLAGS = \
 	${STRICT_FLAGS} \
 	${TCL_CPPFLAGS} \
@@ -38,10 +44,7 @@ libwdb_la_LIBADD = \
 	libwdb_nil.la \
 	${WDB_LIBS}
 
-man_MANS = libwdb.3
-
 EXTRA_DIST = \
-	$(man_MANS) \
 	CMakeLists.txt
 
 DEPS = src/librt

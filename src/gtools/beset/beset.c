@@ -1,7 +1,7 @@
 /*                         B E S E T . C
  * BRL-CAD
  *
- * Copyright (c) 2007-2012 United States Government as represented by
+ * Copyright (c) 2007-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -110,7 +110,6 @@ parse_args (int ac, char *av[], struct beset_options *opts)
 }
 
 
-
 int main(int argc, char *argv[]) {
     int i, g; /* generation and parent counters */
     int parent1, parent2;
@@ -139,7 +138,7 @@ int main(int argc, char *argv[]) {
     pop_init(&pop, opts.pop_size);
     pop_spawn(&pop);
 
-    source_db = db_open(argv[ac+1], "r+w");
+    source_db = db_open(argv[ac+1], DB_OPEN_READWRITE);
     db_dirbuild(source_db);
     pop.db_c = db_create("testdb", 5);
     db_close(pop.db_c);
@@ -157,7 +156,6 @@ int main(int argc, char *argv[]) {
 	pop.db_c = db_create(dbname, 5);
 
 	pop_gop(REPRODUCE, argv[ac+2], NULL, argv[ac+2], NULL, source_db, pop.db_c, &rt_uniresource);
-
 
 
 	/* calculate sum of all fitnesses and find
@@ -214,13 +212,12 @@ int main(int argc, char *argv[]) {
 #ifdef VERBOSE
 		printf("x(%s, %s) --> (%s, %s)\n", NL(pop.parent[parent1].id), NL(pop.parent[parent2].id), pop.child[i-1].id, pop.child[i].id);
 #endif
-		/* perform the genetic operation and output the children to the cihld database */
+		/* perform the genetic operation and output the children to the child database */
 		pop_gop(gop, NL(pop.parent[parent1].id), NL(pop.parent[parent2].id), NL(pop.child[i-1].id), NL(pop.child[i].id),
 			pop.db_p, pop.db_c, &rt_uniresource);
 	    }
 
 	}
-
 
 
 	/* Close parent db and move children
@@ -250,7 +247,6 @@ int main(int argc, char *argv[]) {
     fit_clean(&fstate);
     return 0;
 }
-
 
 
 /*

@@ -1,7 +1,7 @@
 /*                         P U T _ C O M B . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2012 United States Government as represented by
+ * Copyright (c) 2008-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -149,7 +149,7 @@ mktemp_comb(struct ged *gedp, const char *str)
 static const char *
 save_comb(struct ged *gedp, struct directory *dpold)
 {
-    /* Save a combination under a temporory name */
+    /* Save a combination under a temporary name */
 
     struct directory *dp;
     struct rt_db_internal intern;
@@ -317,7 +317,7 @@ put_tree_into_comb(struct ged *gedp, struct rt_comb_internal *comb, struct direc
 	    bu_free(str, "dealloc bu_strdup str");
 	    return GED_ERROR;
 	} else if (n > 0) {
-	    BU_GET(llp, struct line_list);
+	    BU_ALLOC(llp, struct line_list);
 	    BU_LIST_INSERT(&HeadLines.l, &llp->l);
 	    llp->line = line;
 
@@ -369,7 +369,7 @@ put_tree_into_comb(struct ged *gedp, struct rt_comb_internal *comb, struct direc
 
 	    /* Eliminate trailing white space from name */
 	    i = (int)strlen(ptr);
-	    while (isspace(name[--i]))
+	    while (isspace((int)name[--i]))
 		name[i] = '\0';
 
 	    /* Check for existence of member */
@@ -430,7 +430,7 @@ put_tree_into_comb(struct ged *gedp, struct rt_comb_internal *comb, struct direc
 		    break;
 	    }
 
-	    BU_GET(tp, union tree);
+	    BU_ALLOC(tp, union tree);
 	    RT_TREE_INIT(tp);
 	    rt_tree_array[tree_index].tl_tree = tp;
 	    tp->tr_l.tl_op = OP_DB_LEAF;
@@ -539,7 +539,7 @@ ged_put_comb(struct ged *gedp, int argc, const char *argv[])
 	comb->tree = NULL;
     } else {
 	/* make an empty combination structure */
-	BU_GET(comb, struct rt_comb_internal);
+	BU_ALLOC(comb, struct rt_comb_internal);
 	if (comb == NULL)
 	    bu_bomb("Unable to allocate comb memory");
 	RT_COMB_INTERNAL_INIT(comb);

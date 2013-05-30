@@ -1,7 +1,7 @@
 /*                 EdgeCurve.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2012 United States Government as represented by
+ * Copyright (c) 1994-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -35,9 +35,10 @@
 
 #define CLASSNAME "EdgeCurve"
 #define ENTITYNAME "Edge_Curve"
-string EdgeCurve::entityname = Factory::RegisterClass(ENTITYNAME,(FactoryMethod)EdgeCurve::Create);
+string EdgeCurve::entityname = Factory::RegisterClass(ENTITYNAME, (FactoryMethod)EdgeCurve::Create);
 
-EdgeCurve::EdgeCurve() {
+EdgeCurve::EdgeCurve()
+{
     step = NULL;
     id = 0;
     edge_start = NULL;
@@ -46,7 +47,8 @@ EdgeCurve::EdgeCurve() {
     same_sense = BUnset;
 }
 
-EdgeCurve::EdgeCurve(STEPWrapper *sw,int step_id) {
+EdgeCurve::EdgeCurve(STEPWrapper *sw, int step_id)
+{
     step = sw;
     id = step_id;
     edge_start = NULL;
@@ -55,30 +57,32 @@ EdgeCurve::EdgeCurve(STEPWrapper *sw,int step_id) {
     same_sense = BUnset;
 }
 
-EdgeCurve::~EdgeCurve() {
+EdgeCurve::~EdgeCurve()
+{
     edge_geometry = NULL;
 }
 
 bool
-EdgeCurve::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
-    step=sw;
+EdgeCurve::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
+    step = sw;
     id = sse->STEPfile_id;
 
-    if ( !Edge::Load(step,sse) ) {
+    if (!Edge::Load(step, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::Edge." << std::endl;
 	return false;
     }
 
     // need to do this for local attributes to makes sure we have
     // the actual entity and not a complex/supertype parent
-    sse = step->getEntity(sse,ENTITYNAME);
+    sse = step->getEntity(sse, ENTITYNAME);
 
     if (edge_geometry == NULL) {
-	SDAI_Application_instance *entity = step->getEntityAttribute(sse,"edge_geometry");
+	SDAI_Application_instance *entity = step->getEntityAttribute(sse, "edge_geometry");
 	if (entity) {
-	    edge_geometry = dynamic_cast<Curve *>(Factory::CreateObject(sw,entity)); //CreateCurveObject(sw,entity));
+	    edge_geometry = dynamic_cast<Curve *>(Factory::CreateObject(sw, entity)); //CreateCurveObject(sw,entity));
 	    if (edge_geometry != NULL) {
-		same_sense = step->getBooleanAttribute(sse,"same_sense");
+		same_sense = step->getBooleanAttribute(sse, "same_sense");
 
 		if (same_sense) {
 		    edge_geometry->Start(edge_start);
@@ -101,37 +105,36 @@ EdgeCurve::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
 }
 
 void
-EdgeCurve::Print(int level) {
-    TAB(level); std::cout << CLASSNAME << ":" << name << "(";
+EdgeCurve::Print(int level)
+{
+    TAB(level);
+    std::cout << CLASSNAME << ":" << name << "(";
     std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-    TAB(level); std::cout << "Attributes:" << std::endl;
-    TAB(level+1); std::cout << "edge_geometry:" << std::endl;
-    edge_geometry->Print(level+1);
+    TAB(level);
+    std::cout << "Attributes:" << std::endl;
+    TAB(level + 1);
+    std::cout << "edge_geometry:" << std::endl;
+    edge_geometry->Print(level + 1);
 
-    TAB(level+1); std::cout << "same_sense:" << step->getBooleanString((Boolean)same_sense) << std::endl;
+    TAB(level + 1);
+    std::cout << "same_sense:" << step->getBooleanString((Boolean)same_sense) << std::endl;
 
-    TAB(level); std::cout << "Inherited Attributes:" << std::endl;
-    Edge::Print(level+1);
+    TAB(level);
+    std::cout << "Inherited Attributes:" << std::endl;
+    Edge::Print(level + 1);
 }
 
 STEPEntity *
-EdgeCurve::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
-    Factory::OBJECTS::iterator i;
-    if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
-	EdgeCurve *object = new EdgeCurve(sw,sse->STEPfile_id);
+EdgeCurve::GetInstance(STEPWrapper *sw, int id)
+{
+    return new EdgeCurve(sw, id);
+}
 
-	Factory::AddObject(object);
-
-	if (!object->Load(sw, sse)) {
-	    std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
-	    delete object;
-	    return NULL;
-	}
-	return static_cast<STEPEntity *>(object);
-    } else {
-	return (*i).second;
-    }
+STEPEntity *
+EdgeCurve::Create(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
+    return STEPEntity::CreateEntity(sw, sse, GetInstance, CLASSNAME);
 }
 
 // Local Variables:

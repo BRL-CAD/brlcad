@@ -1,7 +1,7 @@
 /*                         C O N C A T . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2012 United States Government as represented by
+ * Copyright (c) 2008-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -421,10 +421,10 @@ ged_concat(struct ged *gedp, int argc, const char *argv[])
     }
 
     /* open the input file */
-    if ((newdbp = db_open(oldfile, "r")) == DBI_NULL) {
+    if ((newdbp = db_open(oldfile, DB_OPEN_READONLY)) == DBI_NULL) {
 	bu_vls_free(&cc_data.affix);
 	perror(oldfile);
-	bu_vls_printf(gedp->ged_result_str, "%s: Can't open %s", commandName, oldfile);
+	bu_vls_printf(gedp->ged_result_str, "%s: Can't open geometry database file %s", commandName, oldfile);
 	return GED_ERROR;
     }
 

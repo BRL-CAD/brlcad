@@ -1,7 +1,7 @@
 /*                 VolumeConversionBasedUnit.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2012 United States Government as represented by
+ * Copyright (c) 1994-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -34,33 +34,37 @@
 
 #define CLASSNAME "VolumeConversionBasedUnit"
 #define ENTITYNAME "Volume_Conversion_Based_Unit"
-string VolumeConversionBasedUnit::entityname = Factory::RegisterClass(ENTITYNAME,(FactoryMethod)VolumeConversionBasedUnit::Create);
+string VolumeConversionBasedUnit::entityname = Factory::RegisterClass(ENTITYNAME, (FactoryMethod)VolumeConversionBasedUnit::Create);
 
-VolumeConversionBasedUnit::VolumeConversionBasedUnit() {
+VolumeConversionBasedUnit::VolumeConversionBasedUnit()
+{
     step = NULL;
     id = 0;
 }
 
-VolumeConversionBasedUnit::VolumeConversionBasedUnit(STEPWrapper *sw,int step_id) {
+VolumeConversionBasedUnit::VolumeConversionBasedUnit(STEPWrapper *sw, int step_id)
+{
     step = sw;
     id = step_id;
 }
 
-VolumeConversionBasedUnit::~VolumeConversionBasedUnit() {
+VolumeConversionBasedUnit::~VolumeConversionBasedUnit()
+{
 }
 
 bool
-VolumeConversionBasedUnit::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
-    step=sw;
+VolumeConversionBasedUnit::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
+    step = sw;
     id = sse->STEPfile_id;
 
 
     // load base class attributes
-    if ( !VolumeUnit::Load(step,sse) ) {
+    if (!VolumeUnit::Load(step, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::Unit." << std::endl;
 	return false;
     }
-    if ( !ConversionBasedUnit::Load(step,sse) ) {
+    if (!ConversionBasedUnit::Load(step, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::Unit." << std::endl;
 	return false;
     }
@@ -69,32 +73,29 @@ VolumeConversionBasedUnit::Load(STEPWrapper *sw,SDAI_Application_instance *sse) 
 }
 
 void
-VolumeConversionBasedUnit::Print(int level) {
-    TAB(level); std::cout << CLASSNAME << ":" << "(";
+VolumeConversionBasedUnit::Print(int level)
+{
+    TAB(level);
+    std::cout << CLASSNAME << ":" << "(";
     std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-    TAB(level); std::cout << "Inherited Attributes:" << std::endl;
-    VolumeUnit::Print(level+1);
-    ConversionBasedUnit::Print(level+1);
+    TAB(level);
+    std::cout << "Inherited Attributes:" << std::endl;
+    VolumeUnit::Print(level + 1);
+    ConversionBasedUnit::Print(level + 1);
 
 }
+
 STEPEntity *
-VolumeConversionBasedUnit::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
-    Factory::OBJECTS::iterator i;
-    if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
-	VolumeConversionBasedUnit *object = new VolumeConversionBasedUnit(sw,sse->STEPfile_id);
+VolumeConversionBasedUnit::GetInstance(STEPWrapper *sw, int id)
+{
+    return new VolumeConversionBasedUnit(sw, id);
+}
 
-	Factory::AddObject(object);
-
-	if (!object->Load(sw, sse)) {
-	    std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
-	    delete object;
-	    return NULL;
-	}
-	return static_cast<STEPEntity *>(object);
-    } else {
-	return (*i).second;
-    }
+STEPEntity *
+VolumeConversionBasedUnit::Create(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
+    return STEPEntity::CreateEntity(sw, sse, GetInstance, CLASSNAME);
 }
 
 // Local Variables:

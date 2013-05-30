@@ -1,7 +1,7 @@
 /*                        S H _ T C L . C
  * BRL-CAD
  *
- * Copyright (c) 1997-2012 United States Government as represented by
+ * Copyright (c) 1997-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -68,9 +68,9 @@ sh_directchange_rgb(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc,
 	return TCL_ERROR;
     }
 
-    r = atoi(argv[3+0]) / 255.;
-    g = atoi(argv[3+1]) / 255.;
-    b = atoi(argv[3+2]) / 255.;
+    r = atoi(argv[3+0]) / 255.0;
+    g = atoi(argv[3+1]) / 255.0;
+    b = atoi(argv[3+2]) / 255.0;
 
     rtip = (struct rt_i *)atol(argv[1]);
     RT_CK_RTI(rtip);

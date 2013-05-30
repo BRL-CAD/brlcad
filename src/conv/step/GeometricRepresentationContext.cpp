@@ -1,7 +1,7 @@
 /*                 GeometricRepresentationContext.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2012 United States Government as represented by
+ * Copyright (c) 1994-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -31,71 +31,74 @@
 
 #define CLASSNAME "GeometricRepresentationContext"
 #define ENTITYNAME "Geometric_Representation_Context"
-string GeometricRepresentationContext::entityname = Factory::RegisterClass(ENTITYNAME,(FactoryMethod)GeometricRepresentationContext::Create);
+string GeometricRepresentationContext::entityname = Factory::RegisterClass(ENTITYNAME, (FactoryMethod)GeometricRepresentationContext::Create);
 
-GeometricRepresentationContext::GeometricRepresentationContext() {
+GeometricRepresentationContext::GeometricRepresentationContext()
+{
     step = NULL;
     id = 0;
     coordinate_space_dimension = 0;
 }
 
-GeometricRepresentationContext::GeometricRepresentationContext(STEPWrapper *sw,int step_id) {
+GeometricRepresentationContext::GeometricRepresentationContext(STEPWrapper *sw, int step_id)
+{
     step = sw;
     id = step_id;
     coordinate_space_dimension = 0;
 }
 
-GeometricRepresentationContext::~GeometricRepresentationContext() {
+GeometricRepresentationContext::~GeometricRepresentationContext()
+{
 }
 
 bool
-GeometricRepresentationContext::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
-    step=sw;
+GeometricRepresentationContext::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
+    step = sw;
     id = sse->STEPfile_id;
 
     // load base class attributes
-    if ( !RepresentationContext::Load(sw,sse) ) {
+    if (!RepresentationContext::Load(sw, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::RepresentationContext." << std::endl;
 	return false;
     }
 
     // need to do this for local attributes to makes sure we have
     // the actual entity and not a complex/supertype parent
-    sse = step->getEntity(sse,ENTITYNAME);
+    sse = step->getEntity(sse, ENTITYNAME);
 
-    coordinate_space_dimension = step->getIntegerAttribute(sse,"coordinate_space_dimension");
+    coordinate_space_dimension = step->getIntegerAttribute(sse, "coordinate_space_dimension");
 
     return true;
 }
 
 void
-GeometricRepresentationContext::Print(int level) {
-    TAB(level); std::cout << CLASSNAME << ":" << "(";
+GeometricRepresentationContext::Print(int level)
+{
+    TAB(level);
+    std::cout << CLASSNAME << ":" << "(";
     std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-    TAB(level); std::cout << "Attributes:" << std::endl;
-    TAB(level+1); std::cout << "coordinate_space_dimension:" << coordinate_space_dimension << std::endl;
+    TAB(level);
+    std::cout << "Attributes:" << std::endl;
+    TAB(level + 1);
+    std::cout << "coordinate_space_dimension:" << coordinate_space_dimension << std::endl;
 
-    TAB(level); std::cout << "Inherited Attributes:" << std::endl;
-    RepresentationContext::Print(level+1);
+    TAB(level);
+    std::cout << "Inherited Attributes:" << std::endl;
+    RepresentationContext::Print(level + 1);
 }
+
 STEPEntity *
-GeometricRepresentationContext::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
-    Factory::OBJECTS::iterator i;
-    if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
-	GeometricRepresentationContext *object = new GeometricRepresentationContext(sw,sse->STEPfile_id);
+GeometricRepresentationContext::GetInstance(STEPWrapper *sw, int id)
+{
+    return new GeometricRepresentationContext(sw, id);
+}
 
-	Factory::AddObject(object);
-
-	if (!object->Load(sw, sse)) {
-	    std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
-	    delete object;
-	    return NULL;
-	}
-	return static_cast<STEPEntity *>(object);
-    } else {
-	return (*i).second;
-    }
+STEPEntity *
+GeometricRepresentationContext::Create(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
+    return STEPEntity::CreateEntity(sw, sse, GetInstance, CLASSNAME);
 }
 
 // Local Variables:

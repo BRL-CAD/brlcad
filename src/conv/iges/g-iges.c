@@ -1,7 +1,7 @@
 /*                        G - I G E S . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2012 United States Government as represented by
+ * Copyright (c) 2004-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -85,7 +85,7 @@ usage(const char *argv0)
     bu_log("	options:\n");
     bu_log("		f - convert each region to faceted BREP before output\n");
     bu_log("		t - produce a file of trimmed surfaces (experimental)\n");
-    bu_log("		m - produces a seperate IGES file for each region, \n");
+    bu_log("		m - produces a separate IGES file for each region, \n");
     bu_log("			implies -t, -o gives directory for output IGES file\n");
     bu_log("		s - produce NURBS for faces of any BREP objects\n");
     bu_log("		v - verbose\n");
@@ -106,7 +106,7 @@ usage(const char *argv0)
 int verbose = 0;
 static char *db_name;	/* name of the BRL-CAD database */
 static char *prog_name;	/* name of this program as it was invoked */
-static int multi_file = 0;	/* Flag to indicate output of seperate IGES file for each region */
+static int multi_file = 0;	/* Flag to indicate output of separate IGES file for each region */
 static int NMG_debug;	/* saved arg of -X, for longjmp handling */
 static int scale_error = 0;	/* Count indicating how many scaled objects were encountered */
 static int solid_error = 0;	/* Count indicating how many solids were not converted */
@@ -269,7 +269,7 @@ main(int argc, char *argv[])
 		sscanf(bu_optarg, "%x", (unsigned int *)&rt_g.NMG_debug);
 		NMG_debug = rt_g.NMG_debug;
 		break;
-            case 'o':		/* Output file name. */
+	    case 'o':		/* Output file name. */
 		output_file = bu_optarg;
 		break;
 	    case 'P':
@@ -290,9 +290,9 @@ main(int argc, char *argv[])
     argc -= bu_optind;
     argv += bu_optind;
     db_name = argv[0];
-    if ((DBIP = db_open(db_name, "r")) == DBI_NULL) {
+    if ((DBIP = db_open(db_name, DB_OPEN_READONLY)) == DBI_NULL) {
 	perror("g-iges");
-	bu_exit(1, "ERROR: unable to open geometry file (%s)\n", db_name);
+	bu_exit(1, "ERROR: unable to open geometry database file (%s)\n", db_name);
     }
 
     /* Scan the database */
@@ -404,7 +404,7 @@ main(int argc, char *argv[])
 
     if (!multi_file) {
 	/* Copy the parameter section from the temporary file to the output file */
-	if ((fseek(fp_param, (long) 0, 0))) {
+	if ((bu_fseek(fp_param, 0, 0))) {
 	    perror("g-iges");
 	    bu_exit(1, "Cannot seek to start of temporary file\n");
 	}
@@ -623,7 +623,7 @@ do_nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, u
 	    char copy_buffer[CP_BUF_SIZE] = {0};
 
 	    /* Copy the parameter section from the temporary file to the output file */
-	    if ((fseek(fp_param, (long) 0, 0))) {
+	    if ((bu_fseek(fp_param, 0, 0))) {
 		perror("g-iges");
 		bu_exit(1, "Cannot seek to start of temporary file\n");
 	    }
@@ -649,7 +649,7 @@ do_nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, u
      */
     db_free_tree(curtree, &rt_uniresource);		/* Does an nmg_kr() */
 
-    BU_GET(curtree, union tree);
+    BU_ALLOC(curtree, union tree);
     RT_TREE_INIT(curtree);
     curtree->tr_op = OP_NOP;
     return curtree;

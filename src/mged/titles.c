@@ -1,7 +1,7 @@
 /*                        T I T L E S . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2012 United States Government as represented by
+ * Copyright (c) 1985-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -211,7 +211,7 @@ screen_vls(
 /*
  * D O T I T L E S
  *
- * Produce titles, etc, on the screen.
+ * Produce titles, etc., on the screen.
  * NOTE that this routine depends on being called AFTER dozoom();
  */
 void

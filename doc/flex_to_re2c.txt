@@ -27,7 +27,7 @@ function yourself, and embed the re2c syntax inside it.
  Non-Trivial Stuff
 ===================
 
- re2c Doesn't Have an Equivlant to 'yytext'
+ re2c Doesn't Have an Equivalent to 'yytext'
 --------------------------------------------
 One way to simulate yytext is to define it as a macro that calls a function which returns the token text:
 
@@ -87,7 +87,7 @@ symbols implicitly include unmarked rules. %x is used to specify
     /* ...this... */
     <S1>/rule1/
     <X1>/rule2/
-        /rule3/
+	/rule3/
 
     /* ...is equivalent to this */
 
@@ -98,7 +98,7 @@ symbols implicitly include unmarked rules. %x is used to specify
     /* unmarked rules have initial AND inclusive states */
     <INITIAL,S1,S2>/rule3/
 
-re2c does not allow unmakred rules if start conditions are used! Each rule has
+re2c does not allow unmarked rules if start conditions are used! Each rule has
 only the marked conditions and no others. Thus, if your flex app uses
 inclusive (%s) symbols, you will need to explicitly mark any unmarked rules
 with the inclusive symbols.

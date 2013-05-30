@@ -1,7 +1,7 @@
 /*                         P R O T A T E . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2012 United States Government as represented by
+ * Copyright (c) 2008-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -38,11 +38,14 @@ int
 ged_protate(struct ged *gedp, int argc, const char *argv[])
 {
     int ret;
-    struct rt_db_internal intern;
-    fastf_t rx, ry, rz;
     mat_t rmat;
     char *last;
+    struct rt_db_internal intern;
     struct directory *dp;
+
+    /* intentionally double for scan */
+    double rx, ry, rz;
+
     static const char *usage = "obj attribute rvec";
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);

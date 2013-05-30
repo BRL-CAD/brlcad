@@ -1,7 +1,7 @@
 /*                         C O U N T . C
  * BRL-CAD
  *
- * Copyright (c) 2005-2012 United States Government as represented by
+ * Copyright (c) 2005-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -22,8 +22,6 @@
  *
  * Basic counting structure and functions.
  *
- * Author -
- *   Christopher Sean Morrison
  */
 
 #include "common.h"
@@ -44,7 +42,7 @@ static void incr_token(int id)
 
     /* allocate and initialize on first use */
     if (!counter) {
-	counter = bu_malloc(sizeof(counter_t), "count()");
+	BU_ALLOC(counter, counter_t);
 	INIT_COUNTER_T(*counter);
     }
 
@@ -59,7 +57,7 @@ static void incr_token(int id)
 
 	/* add new */
 	if (t->next == NULL) {
-	    t->next = bu_calloc(1, sizeof(token_t), "incr_token()");
+	    BU_ALLOC(t->next, token_t);
 	    t->next->id = id;
 	    t->next->count = 1;
 	    return;
@@ -77,7 +75,7 @@ void tabulate(long int id, const char *text)
 
     /* allocate and initialize on first use */
     if (!counter) {
-	counter = bu_malloc(sizeof(counter_t), "count()");
+	BU_ALLOC(counter, counter_t);
 	INIT_COUNTER_T(*counter);
     }
 

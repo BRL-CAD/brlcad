@@ -1,7 +1,7 @@
 /*                       G L O B A L S . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2012 United States Government as represented by
+ * Copyright (c) 2008-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -67,14 +67,6 @@ const char bu_vls_message[] = "bu_vls_str";
  * NOT published in a public header.
  */
 const char bu_strdup_message[] = "bu_strdup string";
-
-/**
- * process id of the initiating thread. used to shutdown bu_parallel
- * threads/procs.
- *
- * NOT published in a public header.
- */
-int bu_pid_of_initiating_thread = 0;
 
 /**
  * bu_setjmp_valid is global because BU_SETJUMP() *must* be a macro.

@@ -1,7 +1,7 @@
 /*                      V I E W E D G E . C
  * BRL-CAD
  *
- * Copyright (c) 2001-2012 United States Government as represented by
+ * Copyright (c) 2001-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -35,7 +35,7 @@
  * cell at an awkward gridding.
  *
  * TODO: horribly inefficient at the moment with the current
- * book-keeping with 2x as much work occuring as necessary on default
+ * book-keeping with 2x as much work occurring as necessary on default
  * renders due to double-firing of the "below" row.  antialiasing
  * makes it even worse with entire subgrids being refired (although
  * they should all at least be unique).
@@ -159,7 +159,7 @@ color bgcolor = {0, 0, 0};
  *
  * detect_ids -> detect boundaries region id codes.
  * detect_regions -> detect region boundaries.
- * detect_distance -> detect noticable differences in hit distance.
+ * detect_distance -> detect noticeable differences in hit distance.
  * detect_normals -> detect rapid change in surface normals
  */
 int detect_ids = 1;
@@ -289,7 +289,7 @@ usage(const char *argv0)
     bu_log(" -x #		librt debug flags\n");
     bu_log(" -N #		NMG debug flags\n");
     bu_log(" -X #		rt debug flags\n");
-    bu_log(" -c		Auxillary commands (see man page)\n");
+    bu_log(" -c		Auxiliary commands (see man page)\n");
 }
 
 
@@ -451,8 +451,8 @@ view_init(struct application *ap, char *file, char *UNUSED(obj), int minus_o, in
 	}
 
 
-	if ((dbip = db_open(file, "r")) == DBI_NULL)
-	    bu_exit(EXIT_FAILURE, "rtedge: could not open database.\n");
+	if ((dbip = db_open(file, DB_OPEN_READONLY)) == DBI_NULL)
+	    bu_exit(EXIT_FAILURE, "rtedge: could not open geometry database file %s.\n", file);
 	RT_CK_DBI(dbip);
 
 #if 0
@@ -494,8 +494,7 @@ view_init(struct application *ap, char *file, char *UNUSED(obj), int minus_o, in
 	occlusion_apps = bu_calloc(npsw, sizeof(struct application *),
 				   "occlusion application structure array");
 	for (i=0; i<npsw; ++i) {
-	    occlusion_apps[i] = bu_malloc(sizeof(struct application), "occlusion_application structure");
-
+	    BU_ALLOC(occlusion_apps[i], struct application);
 	    RT_APPLICATION_INIT(occlusion_apps[i]);
 
 	    occlusion_apps[i]->a_rt_i = occlusion_rtip;
@@ -557,7 +556,7 @@ view_init(struct application *ap, char *file, char *UNUSED(obj), int minus_o, in
 	bu_log("view_init: deactivating parallelism due to -o option.\n");
 	/*
 	 * The overlay and blend cannot be used in -o mode.  Note that
-	 * the overlay directive takes precendence, they can't be used
+	 * the overlay directive takes precedence, they can't be used
 	 * together.
 	 */
 	overlay = 0;
@@ -616,7 +615,7 @@ view_2init(struct application *UNUSED(ap), char *UNUSED(framename))
      */
     for (i = 0; i < npsw; ++i) {
 	if (saved[i] == NULL)
-	    saved[i] = (struct cell *) bu_calloc(1, sizeof(struct cell), "saved cell info");
+	    BU_ALLOC(saved[i], struct cell);
 	if (writeable[i] == NULL)
 	    writeable[i] = (unsigned char *) bu_calloc(1, per_processor_chunk, "writeable pixel flag buffer");
 	if (scanline[i] == NULL)
@@ -845,9 +844,9 @@ void view_cleanup(struct rt_i *UNUSED(rtip))
 /**
  * end of each frame
  */
-void view_end(struct application *UNUSED(ap)) { 
+void view_end(struct application *UNUSED(ap)) {
     if (bif)
-	icv_image_save_close(bif); 
+	icv_image_save_close(bif);
     bif = NULL;
 }
 
@@ -1306,7 +1305,7 @@ handle_main_ray(struct application *ap, register struct partition *PartHeadp,
 	VMOVE(a2.a_ray.r_dir, ap->a_ray.r_dir);
 	a2.a_uptr = (genptr_t)&above;
 	rt_shootray(&a2);
- 
+
 	VADD2(a2.a_ray.r_pt, ap->a_ray.r_pt, dx_model); /* right */
 	VMOVE(a2.a_ray.r_dir, ap->a_ray.r_dir);
 	a2.a_uptr = (genptr_t)&right;
@@ -1328,8 +1327,8 @@ handle_main_ray(struct application *ap, register struct partition *PartHeadp,
      * check on edges as well since right side and top edges are
      * actually misses.
      */
-    if (occlusion_mode != OCCLUSION_MODE_NONE) 
-	if (me.c_ishit || edge) 
+    if (occlusion_mode != OCCLUSION_MODE_NONE)
+	if (me.c_ishit || edge)
 	    oc = occludes(ap, &me);
 
     /*

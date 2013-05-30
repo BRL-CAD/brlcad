@@ -1,0 +1,197 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='patchg1'>
+<refmeta>
+    <refentrytitle>PATCH-G
+</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class='source'>BRL-CAD</refmiscinfo>
+<refmiscinfo class='manual'>BRL-CAD</refmiscinfo>
+</refmeta>
+
+<refnamediv>
+<refname>patch-g</refname>
+<refpurpose>convert FASTGEN ASCII databases into binary MGED databases.</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<cmdsynopsis>
+  <command>patch-g</command>    <arg choice='opt'><replaceable>options</replaceable></arg>
+    <arg choice='plain'><replaceable>output.g</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para>This program converts FASTGEN geometry into BRL-CAD
+<citerefentry><refentrytitle>mged</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+formats. FASTGEN is
+a modeling system used by the Air Force and Navy to create military target
+descriptions. FASTGEN databases consist of the following primitives which
+can be converted by
+<command>patch-g</command>
+: polygons, plates, boxes, wedges, cylinders, spheres, and rods.
+It is recommended that
+<command>patch-g</command>
+be run with the
+<option>-p</option>
+option for most uses.</para>
+
+<para><command>patch-g</command>
+requires that the FASTGEN file be run through the pre-processor
+<emphasis remap='I'>rpatch.</emphasis>
+This is achieved by executing
+<emphasis remap='I'>rpatch</emphasis>&lt;<emphasis remap='I'>fastgen_file</emphasis>&gt;<emphasis remap='I'>file.rpatch</emphasis>.
+Once this step is executed,
+<command>patch-g</command>
+can be used to convert the intermediate file into a binary
+<citerefentry><refentrytitle>brlcad</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+".g" file.</para>
+
+<para><command>patch-g</command>
+will provide messages when encountering problems in the conversion of FASTGEN
+geometry. For further debugging information, the -d flag with levels 1-3 of
+debugging can be provided.</para>
+
+<para>The available options are:</para>
+<variablelist remap='TP'>
+  <varlistentry>
+  <term><option>-T tolerance_distance</option></term>
+  <listitem>
+<para>The
+<emphasis remap='I'>tolerance_distance</emphasis>
+is specified in inches. Any two vertices within this distance
+from each other will be considered the same vertex.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-A perp_tolerance</option></term>
+  <listitem>
+<para>the
+<emphasis remap='I'>perp_tolerance</emphasis>
+is specified as the cosine of an angle (0.0 through 1.0). If the
+cosine of the angle between two vectors is less than the specified
+tolerance, then the vectors are considered perpendicular.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-x librt_debug_flag</option></term>
+  <listitem>
+<para>Specifies a flag for debugging the
+<emphasis remap='I'>librt</emphasis>
+package.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-X NMG_debug_flag</option></term>
+  <listitem>
+<para>Specifies a flag for NMG routine debugging.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-p</option></term>
+  <listitem>
+<para>Produce polysolid output rather than the default NMG solids.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-6</option></term>
+  <listitem>
+<para>Convert plate-mode triangles using ARB6 solids.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-f preprocessed_input_file</option></term>
+  <listitem>
+<para>Use the specified file as the input for conversion.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-i labels_file</option></term>
+  <listitem>
+<para>Specifies desired group names to override defaults.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-m materials_file</option></term>
+  <listitem>
+<para>Specifies material properties to be assigned to components.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-a</option></term>
+  <listitem>
+<para>Process phantom armor.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-n</option></term>
+  <listitem>
+<para>Process volume mode as plate mode.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-t title</option></term>
+  <listitem>
+<para>Specifies a title for the output model.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-o top_level_name</option></term>
+  <listitem>
+<para>Specifies a name for the top level object (default is
+<emphasis remap='B'>all</emphasis>
+).</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-r</option></term>
+  <listitem>
+<para>Reverse normals for plate mode triangles.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-c “X Y Z”</option></term>
+  <listitem>
+<para>Specifies centroid for some plate mode surface normal calculations.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-d debug_level</option></term>
+  <listitem>
+<para>Specifies a debug level (1-3).</para>
+  </listitem>
+  </varlistentry>
+</variablelist>
+</refsect1>
+
+<refsect1 xml:id='example'><title>EXAMPLE</title>
+<para><emphasis remap='I'>rpatch &lt; fastgen_file &gt; file.rpatch</emphasis>
+<!-- .br -->
+<emphasis remap='I'>patch-g -p -f file.rpatch  file.g</emphasis></para>
+</refsect1>
+
+<refsect1 xml:id='diagnostics'><title>DIAGNOSTICS</title>
+<para>The diagnostics are intended to be self-explanatory.</para>
+</refsect1>
+
+<refsect1 xml:id='see_also'><title>SEE ALSO</title>
+<para><citerefentry><refentrytitle>brlcad</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>mged</refentrytitle><manvolnum>1</manvolnum></citerefentry></para>
+</refsect1>
+
+<refsect1 xml:id='author'><title>AUTHOR</title>
+<para>Bill Mermagen, Jr.</para>
+
+</refsect1>
+
+<refsect1 xml:id='copyright'><title>COPYRIGHT</title>
+<para>This software is Copyright (c) 1991-2013 by the United States
+Government as represented by U.S. Army Research Laboratory.</para>
+</refsect1>
+
+<refsect1 xml:id='bug_reports'><title>BUG REPORTS</title>
+<para>Reports of bugs or problems should be submitted via electronic
+mail to &lt;devs@brlcad.org&gt;.</para>
+</refsect1>
+</refentry>
+

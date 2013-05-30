@@ -1,7 +1,7 @@
 /*                        V S H O O T . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2012 United States Government as represented by
+ * Copyright (c) 1985-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -35,7 +35,7 @@
 
 
 /**
- * Stub function which will "similate" a call to a vector shot routine
+ * Stub function which will "simulate" a call to a vector shot routine
  */
 HIDDEN void
 vshot_stub(struct soltab **stp, struct xray **rp, struct seg *segp, int n, struct application *ap)
@@ -106,7 +106,7 @@ vshot_stub(struct soltab **stp, struct xray **rp, struct seg *segp, int n, struc
  *
  * Returns: whatever the application function returns (an int).
  *
- * NOTE: The appliction functions may call rt_shootray() recursively.
+ * NOTE: The application functions may call rt_shootray() recursively.
  * Thus, none of the local variables may be static.
  *
  * An open issue for execution in a PARALLEL environment is locking of
@@ -172,10 +172,9 @@ rt_vshootray(struct application *ap)
     HeadSeg = RT_SEG_NULL;
 
     solidbits = rt_get_solidbitv(rtip->nsolids, ap->a_resource);
-    bu_bitv_clear(solidbits);
 
     if (BU_LIST_IS_EMPTY(&ap->a_resource->re_region_ptbl)) {
-	BU_GET(regionbits, struct bu_ptbl);
+	BU_ALLOC(regionbits, struct bu_ptbl);
 	bu_ptbl_init(regionbits, 7, "rt_shootray() regionbits ptbl");
     } else {
 	regionbits = BU_LIST_FIRST(bu_ptbl, &ap->a_resource->re_region_ptbl);

@@ -1,7 +1,7 @@
 /*                        J A C K - G . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2012 United States Government as represented by
+ * Copyright (c) 2004-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -165,14 +165,14 @@ read_psurf_vertices(FILE *fp, struct vlist *vert)
 /* Psurf file pointer. */
 /* Array of read in vertices. */
 {
-    fastf_t	x, y, z;
+    double x, y, z;
     int	i;
     int	bomb=0;
     size_t ret;
 
     /* Read vertices. */
     for (i = 0; fscanf(fp, "%lf %lf %lf", &x, &y, &z) == 3; i++) {
-        if (i >= MAX_NUM_PTS) {
+	if (i >= MAX_NUM_PTS) {
 	    bomb = 1;
 	} else {
 	    vert->pt[3*i+0] = x * 10.;	/* Convert cm to mm. */
@@ -272,7 +272,7 @@ psurf_to_nmg(struct model *m, FILE *fp, char *jfile)
 			jfile, i+1);
     }
 
-    nmg_model_vertex_fuse(m, &tol);
+    nmg_vertex_fuse(&m->magic, &tol);
 
     /* Associate the face geometry. */
     for (i = 0, fail = 0; i < face; i++)
@@ -294,18 +294,18 @@ psurf_to_nmg(struct model *m, FILE *fp, char *jfile)
 
     if (face)
     {
-        int empty_model;
+	int empty_model;
 	empty_model = nmg_kill_zero_length_edgeuses(m);
 	if (!empty_model) {
 
 	  /* Compute "geometry" for region and shell */
 	  nmg_region_a(r, &tol);
 
-	  nmg_model_break_e_on_v(m, &tol);
+	  nmg_break_e_on_v(&m->magic, &tol);
 	  empty_model = nmg_kill_zero_length_edgeuses(m);
 
 	  /* Glue edges of outward pointing face uses together. */
-	  if (!empty_model) nmg_model_edge_fuse(m, &tol);
+	  if (!empty_model) nmg_edge_fuse(&m->magic, &tol);
 	}
     }
 

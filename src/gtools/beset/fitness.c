@@ -1,7 +1,7 @@
 /*                       F I T N E S S . C
  * BRL-CAD
  *
- * Copyright (c) 2007-2012 United States Government as represented by
+ * Copyright (c) 2007-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -19,13 +19,13 @@
  */
 /** @file fitness.c
  *
- * Compare rays of source and population
- * usage: global variable struct fitness_state *fstate must exist
+ * Compare rays of source and population.
+ *
+ * Usage: global variable struct fitness_state *fstate must exist
  *	fit_prep(db, rows, cols);
  *	fit_store(source_object);
  *	int linear_difference = fit_diff(test_object);
  *	fit_clear();
- * Author - Ben Poole
  *
  */
 
@@ -58,10 +58,10 @@ fit_store (char *obj, char *dbname, struct fitness_state *fstate)
 {
     struct db_i *db;
 
-    if ( (db=db_open(dbname, "r")) == DBI_NULL)
-	bu_exit(EXIT_FAILURE, "Failed to open model database");
+    if ( (db=db_open(dbname, DB_OPEN_READONLY)) == DBI_NULL)
+	bu_exit(EXIT_FAILURE, "Failed to open geometry database file");
     if (db_dirbuild(db) < 0)
-	bu_exit(EXIT_FAILURE, "Failed to build directory sturcutre");
+	bu_exit(EXIT_FAILURE, "Failed to build directory structure");
 
     fstate->capture = 1;
     fit_rt(obj, db, fstate);
@@ -80,12 +80,12 @@ capture_hit(register struct application *ap, struct partition *partHeadp, struct
     struct part *add;
 
     /* initialize list of partitions */
-    ((struct fitness_state *)ap->a_uptr)->ray[ap->a_user] = bu_malloc(sizeof(struct part), "part");
+    BU_ALLOC(((struct fitness_state *)ap->a_uptr)->ray[ap->a_user], struct part);
     BU_LIST_INIT(&((struct fitness_state *)ap->a_uptr)->ray[ap->a_user]->l);
 
     /* save ray */
     for (pp = partHeadp->pt_forw; pp != partHeadp; pp = pp->pt_forw) {
-	add = bu_malloc(sizeof(struct part), "part");
+	BU_ALLOC(add, struct part);
 	add->inhit_dist = pp->pt_inhit->hit_dist;
 	add->outhit_dist = pp->pt_outhit->hit_dist;
 	BU_LIST_INSERT(&((struct fitness_state *)ap->a_uptr)->ray[ap->a_user]->l, &add->l);
@@ -261,8 +261,6 @@ compare_hit(register struct application *ap, struct partition *partHeadp, struct
 }
 
 
-
-
 /**
  *	C O M P A R E _ M I S S --- compares missed ray to real ray
  */
@@ -411,7 +409,7 @@ fit_rt(char *obj, struct db_i *db, struct fitness_state *fstate)
 	fstate->gridSpacing[X] = (fstate->rtip->mdl_max[X] - fstate->rtip->mdl_min[X]) / (fstate->res[X] + 1);
 	fstate->gridSpacing[Y] = (fstate->rtip->mdl_max[Y] - fstate->rtip->mdl_min[Y]) / (fstate->res[Y] + 1);
 	fstate->a_len = fstate->max[Z]-fstate->rtip->mdl_min[Z]; /* maximum ray length (z-dist of bounding box) */
-	fstate->volume = fstate->a_len * fstate->res[X] * fstate->res[Y]; /* volume of vounding box */
+	fstate->volume = fstate->a_len * fstate->res[X] * fstate->res[Y]; /* volume of bounding box */
 
 	/* allocate storage for saved rays */
 	fstate->ray = bu_malloc(sizeof(struct part *) * fstate->res[X] * fstate->res[Y], "ray");
@@ -464,7 +462,7 @@ fit_rt(char *obj, struct db_i *db, struct fitness_state *fstate)
 }
 
 /**
- *	F I T _ D I F F --- returns the difference between input geometry and indivdual  (compares rays)
+ *	F I T _ D I F F --- returns the difference between input geometry and individual  (compares rays)
  */
 void
 fit_diff(char *obj, struct db_i *db, struct fitness_state *fstate)
@@ -537,12 +535,6 @@ free_rays(struct fitness_state *fstate)
 
   }
 */
-
-
-
-
-
-
 
 
 /*

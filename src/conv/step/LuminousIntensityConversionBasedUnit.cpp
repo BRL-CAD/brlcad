@@ -1,7 +1,7 @@
 /*                 LuminousIntensityConversionBasedUnit.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2012 United States Government as represented by
+ * Copyright (c) 1994-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -34,33 +34,37 @@
 
 #define CLASSNAME "LuminousIntensityConversionBasedUnit"
 #define ENTITYNAME "Luminous_Intensity_Conversion_Based_Unit"
-string LuminousIntensityConversionBasedUnit::entityname = Factory::RegisterClass(ENTITYNAME,(FactoryMethod)LuminousIntensityConversionBasedUnit::Create);
+string LuminousIntensityConversionBasedUnit::entityname = Factory::RegisterClass(ENTITYNAME, (FactoryMethod)LuminousIntensityConversionBasedUnit::Create);
 
-LuminousIntensityConversionBasedUnit::LuminousIntensityConversionBasedUnit() {
+LuminousIntensityConversionBasedUnit::LuminousIntensityConversionBasedUnit()
+{
     step = NULL;
     id = 0;
 }
 
-LuminousIntensityConversionBasedUnit::LuminousIntensityConversionBasedUnit(STEPWrapper *sw,int step_id) {
+LuminousIntensityConversionBasedUnit::LuminousIntensityConversionBasedUnit(STEPWrapper *sw, int step_id)
+{
     step = sw;
     id = step_id;
 }
 
-LuminousIntensityConversionBasedUnit::~LuminousIntensityConversionBasedUnit() {
+LuminousIntensityConversionBasedUnit::~LuminousIntensityConversionBasedUnit()
+{
 }
 
 bool
-LuminousIntensityConversionBasedUnit::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
-    step=sw;
+LuminousIntensityConversionBasedUnit::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
+    step = sw;
     id = sse->STEPfile_id;
 
 
     // load base class attributes
-    if ( !LuminousIntensityUnit::Load(step,sse) ) {
+    if (!LuminousIntensityUnit::Load(step, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::Unit." << std::endl;
 	return false;
     }
-    if ( !ConversionBasedUnit::Load(step,sse) ) {
+    if (!ConversionBasedUnit::Load(step, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::Unit." << std::endl;
 	return false;
     }
@@ -69,32 +73,29 @@ LuminousIntensityConversionBasedUnit::Load(STEPWrapper *sw,SDAI_Application_inst
 }
 
 void
-LuminousIntensityConversionBasedUnit::Print(int level) {
-    TAB(level); std::cout << CLASSNAME << ":" << "(";
+LuminousIntensityConversionBasedUnit::Print(int level)
+{
+    TAB(level);
+    std::cout << CLASSNAME << ":" << "(";
     std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-    TAB(level); std::cout << "Inherited Attributes:" << std::endl;
-    LuminousIntensityUnit::Print(level+1);
-    ConversionBasedUnit::Print(level+1);
+    TAB(level);
+    std::cout << "Inherited Attributes:" << std::endl;
+    LuminousIntensityUnit::Print(level + 1);
+    ConversionBasedUnit::Print(level + 1);
 
 }
+
 STEPEntity *
-LuminousIntensityConversionBasedUnit::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
-    Factory::OBJECTS::iterator i;
-    if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
-	LuminousIntensityConversionBasedUnit *object = new LuminousIntensityConversionBasedUnit(sw,sse->STEPfile_id);
+LuminousIntensityConversionBasedUnit::GetInstance(STEPWrapper *sw, int id)
+{
+    return new LuminousIntensityConversionBasedUnit(sw, id);
+}
 
-	Factory::AddObject(object);
-
-	if (!object->Load(sw, sse)) {
-	    std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
-	    delete object;
-	    return NULL;
-	}
-	return static_cast<STEPEntity *>(object);
-    } else {
-	return (*i).second;
-    }
+STEPEntity *
+LuminousIntensityConversionBasedUnit::Create(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
+    return STEPEntity::CreateEntity(sw, sse, GetInstance, CLASSNAME);
 }
 
 // Local Variables:

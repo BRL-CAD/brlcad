@@ -33,9 +33,9 @@ namespace eval ::hv3::bugreport {
     <DIV class=block>
       <H2>Quick Bug Report</H2>
       <DIV id="formcontainer">
-        <FORM 
-          name=quickreport 
-          action="http://tkhtml.tcl.tk/cvstrac/tktnew" 
+        <FORM
+          name=quickreport
+          action="http://tkhtml.tcl.tk/cvstrac/tktnew"
           method=POST
         >
           <TABLE>
@@ -73,8 +73,8 @@ namespace eval ::hv3::bugreport {
         At this stage in the project, obtaining bug reports is very important.
 	Don't worry about submitting duplicates or accidentally reporting a
 	non-bug. Such reports take mere seconds to close and cause nobody any
-	inconveniance. Be as brief as you like - typing something like "the
-	page is busted because the menu is rendered wrong" is often all that 
+	inconvenience. Be as brief as you like - typing something like "the
+	page is busted because the menu is rendered wrong" is often all that
         is required.
       </P>
       <P>
@@ -100,10 +100,10 @@ namespace eval ::hv3::bugreport {
           http://tkhtml.tcl.tk/cvstrac/
         </A>
       </P>
-  
+
       <P>
         There are two ways to submit a bug into the system. The first is to
-        add the bug directly into cvstrac via the web-interface by visiting 
+        add the bug directly into cvstrac via the web-interface by visiting
         the following link:
       </P>
       <P>

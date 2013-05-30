@@ -4,27 +4,20 @@ noinst_LTLIBRARIES = \
 	librt_nil.la \
 	librt_xxx.la
 
-BREP_TEST = brep_test
 BREP_CPPFLAGS = ${SSE} -DOBJ_BREP=1 ${TNT_CPPFLAGS} ${OPENNURBS_CPPFLAGS}
-BREP_LIBADD = ${OPENNURBS}
-
-brep_test_SOURCES = brep_test.cpp
-# cannot set per-target CPPFLAGS until automake 1.7+
-brep_test_CXXFLAGS = ${SSE}
-brep_test_LDADD = \
-	librt.la \
-	${RT_LIBS}
+BREP_LIBADD = ${OPENNURBS} ${BREP} ${BREP_LIBS}
 
 # cannot set per-target CPPFLAGS until automake 1.7+
 AM_CPPFLAGS = \
 	${REGEX_CPPFLAGS} \
 	${TCL_CPPFLAGS} \
-	${BREP_CPPFLAGS}
+	${BREP_CPPFLAGS} \
+	${LIBVDS_CPPFLAGS} \
+        ${LIBP2T_CPPFLAGS}
 
-AM_CFLAGS = ${STRICT_FLAGS}
+AM_CFLAGS = ${STD_C99_FLAGS} ${STRICT_FLAGS}
 
 noinst_PROGRAMS = \
-	${BREP_TEST} \
 	namegen \
 	nurb_example \
 	parsetest \
@@ -77,7 +70,6 @@ librt_nil_la_SOURCES = \
 	mater.c \
 	memalloc.c \
 	mkbundle.c \
-	opennurbs_ext.cpp \
 	oslo_calc.c \
 	oslo_map.c \
 	pr.c \
@@ -89,6 +81,7 @@ librt_nil_la_SOURCES = \
 	primitives/arbn/arbn_brep.cpp \
 	primitives/arbn/arbn_mirror.c \
 	primitives/ars/ars.c \
+	primitives/ars/ars_brep.cpp \
 	primitives/ars/ars_mirror.c \
 	primitives/bot/bot.c \
 	primitives/bot/bot_brep.cpp \
@@ -124,6 +117,7 @@ librt_nil_la_SOURCES = \
 	primitives/bspline/nurb_util.c \
 	primitives/bspline/nurb_xsplit.c \
 	primitives/cline/cline.c \
+	primitives/cline/cline_brep.cpp \
 	primitives/dsp/dsp.c \
 	primitives/dsp/dsp_brep.cpp \
 	primitives/dsp/dsp_mirror.c \
@@ -145,10 +139,13 @@ librt_nil_la_SOURCES = \
 	primitives/extrude/extrude_brep.cpp \
 	primitives/generic.c \
 	primitives/grip/grip.c \
+	primitives/grip/grip_brep.cpp \
 	primitives/grip/grip_mirror.c \
 	primitives/half/half.c \
+	primitives/half/half_brep.cpp \
 	primitives/half/half_mirror.c \
 	primitives/hf/hf.c \
+	primitives/hf/hf_brep.cpp \
 	primitives/hyp/hyp.c \
 	primitives/hyp/hyp_brep.cpp \
 	primitives/hyp/hyp_mirror.c \
@@ -204,14 +201,17 @@ librt_nil_la_SOURCES = \
 	primitives/obj_vshot.c \
 	primitives/obj_xform.c \
 	primitives/part/part.c \
+	primitives/part/part_brep.cpp \
 	primitives/part/part_mirror.c \
 	primitives/pipe/pipe.c \
 	primitives/pipe/pipe_brep.cpp \
 	primitives/pipe/pipe_mirror.c \
 	primitives/pnts/pnts.c \
+	primitives/pnts/pnts_brep.cpp \
 	primitives/poly/poly.c \
 	primitives/poly/poly_brep.cpp \
 	primitives/poly/poly_mirror.c \
+	primitives/primitive_util.c \
 	primitives/rec/rec.c \
 	primitives/revolve/revolve.c \
 	primitives/revolve/revolve_brep.cpp \
@@ -223,10 +223,12 @@ librt_nil_la_SOURCES = \
 	primitives/rpc/rpc_mirror.c \
 	primitives/sketch/sketch.c \
 	primitives/sketch/sketch_brep.cpp \
+	primitives/sketch/sketch_tess.cpp \
 	primitives/sph/sph.c \
 	primitives/sph/sph_brep.cpp \
 	primitives/submodel/submodel.c \
 	primitives/superell/superell.c \
+	primitives/superell/superell_brep.cpp \
 	primitives/superell/superell_mirror.c \
 	primitives/table.c \
 	primitives/tgc/tgc.c \
@@ -284,17 +286,15 @@ parsetest_LDADD = \
 
 noinst_HEADERS = \
 	librt_private.h \
-	opennurbs_ext.h \
 	primitives/bot/btg.h \
 	primitives/bot/tieprivate.h \
 	primitives/brep/brep_debug.h \
+	primitives/brep/brep_local.h \
 	primitives/dsp/dsp.h \
 	primitives/fixpt.h \
 	primitives/metaball/metaball.h \
 	primitives/revolve/revolve.h \
 	primitives/xxx/xxx.h
-
-dist_man_MANS = librt.3
 
 sample_applicationsdir = $(SAMPLE_APPLICATIONS_DIR)
 
@@ -305,8 +305,11 @@ sample_applications_DATA = \
 # XXX need to fix these so the timers are selected by configure.ac
 EXTRA_DIST = \
 	$(sample_applications_DATA) \
+	tests/CMakeLists.txt \
+	tests/nurbs_surfaces.g \
+	tests/nurbs_tests.cpp \
+	tests/test_dvec.cpp \
 	CMakeLists.txt \
-	brep_test.cpp \
 	columnparse.c \
 	namegen.c \
 	primitives/bot/g_bot_include.c \
@@ -322,7 +325,7 @@ if BUILD_REGEX
 DEPADD = src/other/libregex
 endif
 
-DEPENDS = src/libbn src/libsysv src/other/openNURBS ${DEPADD}
+DEPENDS = src/libbn src/libsysv src/libbrep src/other/openNURBS src/other/libvds ${DEPADD}
 
 include $(top_srcdir)/misc/Makefile.defs
 

@@ -1,8 +1,9 @@
 /* $NoKeywords: $ */
 /*
 //
-// Copyright (c) 1993-2007 Robert McNeel & Associates. All rights reserved.
-// Rhinoceros is a registered trademark of Robert McNeel & Assoicates.
+// Copyright (c) 1993-2012 Robert McNeel & Associates. All rights reserved.
+// OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
+// McNeel & Associates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
@@ -12,7 +13,6 @@
 //
 ////////////////////////////////////////////////////////////////
 */
-
 #include "opennurbs.h"
 
 ON_OBJECT_IMPLEMENT(ON_PlaneSurface,ON_Surface,"4ED7D4DF-E947-11d3-BFE5-0010830122F0");
@@ -305,7 +305,7 @@ bool ON_PlaneSurface::IsContinuous(
     double point_tolerance, // default=ON_ZERO_TOLERANCE
     double d1_tolerance, // default==ON_ZERO_TOLERANCE
     double d2_tolerance, // default==ON_ZERO_TOLERANCE
-    double cos_angle_tolerance, // default==0.99984769515639123915701155881391
+    double cos_angle_tolerance, // default==ON_DEFAULT_ANGLE_TOLERANCE_COSINE
     double curvature_tolerance  // default==ON_SQRT_EPSILON
     ) const
 {
@@ -384,7 +384,7 @@ ON_PlaneSurface::Evaluate( // returns false if unable to evaluate
 ON_Curve* ON_PlaneSurface::IsoCurve( int dir, double c ) const
 {
   ON_LineCurve* line_curve = 0;
-  if ( dir == 0 || dir == 1 && IsValid() ) 
+  if ( (dir == 0 || dir == 1) && IsValid() ) 
   {
     ON_Line line;
     ON_Interval domain = Domain(dir);
@@ -403,721 +403,6 @@ ON_Curve* ON_PlaneSurface::IsoCurve( int dir, double c ) const
     line_curve->m_t = domain;
   }
   return line_curve;
-}
-
-ON_Curve* ON_PlaneSurface::Pushup( const ON_Curve& curve_2d,
-                  double tolerance,
-                  const ON_Interval* curve_2d_subdomain
-                  ) const
-{
-  // see if it's an easy iso curve
-  ON_Curve* curve = ON_Surface::Pushup( curve_2d, tolerance, curve_2d_subdomain );
-
-  if ( 0 == curve )
-  {
-    const ON_PolyCurve* polycurve = ON_PolyCurve::Cast(&curve_2d);
-    if ( 0 != polycurve )
-    {
-      return PushupPolyCurve( *polycurve, tolerance, curve_2d_subdomain );
-    }
-
-    const ON_CurveProxy* proxycurve = ON_CurveProxy::Cast(&curve_2d);
-    if ( 0 != proxycurve )
-    {
-      return PushupCurveProxy( *proxycurve, tolerance, curve_2d_subdomain );
-    }
-
-    ON_NurbsCurve* nurbs_curve = new ON_NurbsCurve();
-    if ( curve_2d.GetNurbForm(*nurbs_curve,0.0,curve_2d_subdomain) )
-    {
-      ON_Xform xform;
-      xform.ChangeBasis( m_plane, ON_xy_plane );
-      nurbs_curve->ChangeDimension(3);
-      // kill z coordinate if somebody passed in a fat curve_2d.
-      for ( int i = 0; i < nurbs_curve->m_cv_count; i++ )
-        nurbs_curve->CV(i)[2] = 0.0;
-      if ( m_domain[0] != m_extents[0] || m_domain[1] != m_extents[1] )
-      {
-        // transform curve to plane's coordinate system;
-        ON_Xform cs_change(1);
-        ON_Interval s = Domain(0);
-        ON_Interval t = Domain(1);
-        ON_Interval x = Extents(0);
-        ON_Interval y = Extents(1);
-        if ( s != x )
-        {
-          double ds = s.Length();
-          double dx = x.Length();
-          cs_change.m_xform[0][0] = dx/ds;
-          cs_change.m_xform[0][3] = (s[1]*x[0] - s[0]*x[1])/ds;
-        }
-        if ( t != y )
-        {
-          double dt = t.Length();
-          double dy = y.Length();
-          cs_change.m_xform[1][1] = dy/dt;
-          cs_change.m_xform[1][3] = (t[1]*y[0] - t[0]*y[1])/dt;
-        }
-        xform = xform*cs_change;
-      }
-      nurbs_curve->Transform(xform);
-
-      // TODO check for and remove degenerate spans created by projecting
-      //      spans that are perp to the plane.
-
-      curve = nurbs_curve;
-    }
-    if (0 == curve)
-      delete nurbs_curve;
-  }
-
-  return curve;
-}
-
-ON_Curve* ON_Surface::PushupPolyCurve( 
-                  const ON_PolyCurve& polycurve, // 2d polycurve
-                  double tolerance,
-                  const ON_Interval* curve_2d_subdomain
-                  ) const
-{
-  ON_Curve* pushup = 0;
-  
-  ON_PolyCurve* polycurve_pushup = 0;
-
-  ON_Curve* segment_pushup = 0;
-  const ON_Curve* segment_curve = 0;
-  ON_Interval segment_curve_domain;
-
-  ON_3dPoint prev_segment_2d_end = ON_UNSET_POINT;
-
-  int i, count = polycurve.Count();
-  for ( i = 0; i < count; i++ )
-  {
-    segment_pushup=0;
-    segment_curve = polycurve.SegmentCurve(i);
-    ON_Interval segment_domain = polycurve.SegmentDomain(i); // polycurve parameters
-    
-    if ( 0 != curve_2d_subdomain )
-    {
-      if ( curve_2d_subdomain->Max() <= segment_domain[0] ) 
-        continue;
-      if ( curve_2d_subdomain->Min() >= segment_domain[1] ) 
-        continue;
-    }
-
-    if ( 0 != segment_curve )
-    {
-      // get sub-domain of this segment to pushup
-      segment_curve_domain = segment_curve->Domain();
-      if ( 0 != curve_2d_subdomain )
-      {
-        ON_Interval d0 = segment_domain;
-        d0.Intersection( *curve_2d_subdomain );
-        if ( !d0.IsIncreasing() )
-          continue;
-        if ( d0 != segment_domain )
-        {
-          if ( segment_domain == segment_curve_domain )
-            segment_curve_domain = d0;
-          else
-          {
-            double t0 = segment_curve_domain.ParameterAt(segment_domain.NormalizedParameterAt(d0[0]));
-            double t1 = segment_curve_domain.ParameterAt(segment_domain.NormalizedParameterAt(d0[1]));
-            segment_curve_domain.Intersection(ON_Interval(t0,t1));
-            if ( !segment_curve_domain.IsIncreasing() )
-              continue;
-          }
-          segment_domain = d0;
-        }
-      }
-
-      segment_pushup = Pushup(*segment_curve,tolerance,&segment_curve_domain);
-
-      if (prev_segment_2d_end.x != ON_UNSET_VALUE && 0 != pushup && 0 != segment_pushup )
-      {
-        ON_3dPoint this_segment_2d_start = segment_curve->PointAt(segment_curve_domain[0]);
-        if ( 0 == ON_ComparePoint( 3, 0, &this_segment_2d_start.x, &prev_segment_2d_end.x ) )
-        {
-          // ends of input curve match - make sure pushups also match
-          ON_3dPoint prev_pushup_end = pushup->PointAtEnd();
-          ON_3dPoint this_pushup_start = segment_pushup->PointAtStart();
-          if ( ON_ComparePoint( 3, 0, &prev_pushup_end.x, &this_pushup_start.x ) )
-          {
-            pushup->SetEndPoint(this_pushup_start);
-          }
-        }
-      }
-
-      prev_segment_2d_end = segment_curve->PointAt(segment_curve_domain[1]);
-    }
-
-    if ( 0 == segment_pushup )
-    {
-      if ( 0 != pushup )
-      {
-        delete pushup;
-        pushup = 0;
-        polycurve_pushup = 0;
-      }
-      break;
-    }
-
-    segment_pushup->SetDomain( segment_domain[0], segment_domain[1] );
-    if ( 0 == pushup )
-    {
-      pushup = segment_pushup;
-    }
-    else
-    {
-      if ( 0 == polycurve_pushup )
-      {
-        polycurve_pushup = new ON_PolyCurve();
-        polycurve_pushup->Append(pushup);
-        pushup = polycurve_pushup;
-      }      
-      polycurve_pushup->Append(segment_pushup);
-    }
-  }
-
-  return pushup;    
-}
-
-
-static int PullbackSegOnSeam( const ON_Interval& udom, const ON_Interval& vdom,
-                               ON_BOOL32 bClosedU, ON_BOOL32 bClosedV,
-                               const ON_Curve* segment_pullback
-                               )
-{
-  int seg_on_seam = 0;
-  if ( 0 != segment_pullback )
-  {
-    if ( bClosedU || bClosedV )
-    {
-      const double side_tol = 0.0001;
-      ON_BoundingBox bbox = segment_pullback->BoundingBox();
-      if ( bbox.IsValid() )
-      {
-        double u0 = udom.NormalizedParameterAt(bbox.m_min.x);
-        double u1 = udom.NormalizedParameterAt(bbox.m_max.x);
-        double v0 = vdom.NormalizedParameterAt(bbox.m_min.y);
-        double v1 = vdom.NormalizedParameterAt(bbox.m_max.y);
-
-        if ( v1 <= side_tol && bClosedV  )
-          seg_on_seam = 1; // south side
-        else if ( v0 >= 1.0-side_tol && bClosedV )
-          seg_on_seam = 3; // north side
-
-        if ( u1 <= side_tol && bClosedU  )
-        {
-          if ( 0 == seg_on_seam )
-            seg_on_seam = 4; // west side
-          else
-            seg_on_seam = 0;
-        }
-        else if ( u0 >= 1.0-side_tol && bClosedU  )
-        {
-          if ( 0 == seg_on_seam )
-            seg_on_seam = 1; // east side
-          else
-            seg_on_seam = 0;
-        }
-      }
-    }
-  }
-  return seg_on_seam;
-}
-
-
-ON_Curve* ON_Surface::PullbackPolyCurve( 
-                  const ON_PolyCurve&  polycurve,
-                  double tolerance,
-                  const ON_Interval* curve_3d_subdomain,
-                  ON_3dPoint start_uv,
-                  ON_3dPoint end_uv
-                  ) const
-{
-  // tool for ON_Surface::Pullback overrides to call to pullback
-  // polycurves segment-by-segment
-  
-  ON_Curve* pullback = 0;
-  
-  ON_PolyCurve* polycurve_pullback = 0;
-
-  ON_Curve* segment_pullback = 0;
-  const ON_Curve* segment_curve = 0;
-  ON_Interval segment_curve_domain;
-
-  ON_3dPoint segment_start_uv = ON_UNSET_POINT;
-  ON_3dPoint segment_end_uv = ON_UNSET_POINT;
-  ON_3dPoint prev_segment_3d_end = ON_UNSET_POINT;
-  bool bUseStartPoint = true;
-  bool bLastSegment = false;
-  int first_seg_on_seam = 0; // 0 = no, 1 = south side, 2 = east, 3 = north, 4 = west
-  ON_Interval first_seg_pullback_domain; // used for backup pullback
-  const ON_Curve* first_seg_3d_curve = 0;
-
-  ON_BOOL32 bClosedU = false;
-  ON_BOOL32 bClosedV = false;
-  const ON_Interval udom = Domain(0);
-  const ON_Interval vdom = Domain(1);
-
-  int i, count = polycurve.Count();
-  for ( i = 0; i < count; i++ )
-  {
-    segment_pullback=0;
-    segment_curve = polycurve.SegmentCurve(i);
-    ON_Interval segment_domain = polycurve.SegmentDomain(i); // polycurve parameters
-    
-    if ( 0 != curve_3d_subdomain )
-    {
-      if ( curve_3d_subdomain->Max() <= segment_domain[0] ) 
-        break;
-
-      if ( curve_3d_subdomain->Min() >= segment_domain[1] ) 
-        continue;
-
-      if ( i == count-1 || curve_3d_subdomain->Max() <= segment_domain[1] )
-        bLastSegment = true;
-    }
-    else if ( i == count-1 )
-      bLastSegment = true;
-
-    if ( 0 != segment_curve )
-    {
-      // get sub-domain of this segment to pullback
-      segment_curve_domain = segment_curve->Domain();
-      if ( 0 != curve_3d_subdomain )
-      {
-        ON_Interval d0 = segment_domain;
-        d0.Intersection( *curve_3d_subdomain );
-        if ( !d0.IsIncreasing() )
-          continue;
-        if ( d0 != segment_domain )
-        {
-          if ( segment_domain == segment_curve_domain )
-            segment_curve_domain = d0;
-          else
-          {
-            double t0 = segment_curve_domain.ParameterAt(segment_domain.NormalizedParameterAt(d0[0]));
-            double t1 = segment_curve_domain.ParameterAt(segment_domain.NormalizedParameterAt(d0[1]));
-            segment_curve_domain.Intersection(ON_Interval(t0,t1));
-            if ( !segment_curve_domain.IsIncreasing() )
-              continue;
-          }
-          segment_domain = d0;
-        }
-      }
-
-      // start start uv
-      segment_start_uv = ON_UNSET_POINT;
-
-      //use start point if this is the first segment with domain intersecting subdom
-      //if ( i == 0 )
-      if (bUseStartPoint)
-      {
-        segment_start_uv = start_uv;
-        bUseStartPoint = false;
-      }
-      else if ( prev_segment_3d_end.x != ON_UNSET_VALUE && 0 != pullback )
-      {
-        double d = segment_curve->PointAt(segment_curve_domain[0]).DistanceTo(prev_segment_3d_end);
-        if ( d <= tolerance )
-        {
-          segment_start_uv = pullback->PointAtEnd();
-        }
-      }
-
-      // set end uv
-
-      //use end point if this is the last segment with domain intersecting subdom
-      //segment_end_uv = ( i == count-1 ) ? end_uv : ON_UNSET_POINT;
-      segment_end_uv = bLastSegment ? end_uv : ON_UNSET_POINT;
-
-      segment_pullback = Pullback(*segment_curve,tolerance,&segment_curve_domain,segment_start_uv,segment_end_uv);
-      prev_segment_3d_end = segment_curve->PointAt(segment_curve_domain[1]);
-      if ( 0 == pullback
-           && count > 1 
-           && 0 != segment_pullback 
-           && ON_UNSET_VALUE == segment_start_uv.x 
-           && ON_UNSET_VALUE == segment_end_uv.x )
-      {
-        // 19 September 2003 Dale Lear
-        //     Add more seam side detection to fix bugs like RR 10464 DE 12061.
-        //     This is the first segment we have pulled back and we don't know where
-        //     it starts or ends.  If first_seg_on_seam is set to 1,2,3, or 4, then
-        //     the result lies along a surface seam.  It is possible that we choose
-        //     the wrong side of parameter space and we need to double check when we
-        //     pullback the next segment.
-        bClosedU = IsClosed(0);
-        bClosedV = IsClosed(1);
-        first_seg_on_seam = PullbackSegOnSeam( udom, vdom,bClosedU, bClosedV,segment_pullback);
-        if ( 0 != first_seg_on_seam )
-        {
-          // save the information we need if we have to 
-          // redo this pullback below.
-          first_seg_3d_curve = segment_curve;
-          first_seg_pullback_domain = segment_curve_domain;
-        }
-      }
-      else if ( 0 != pullback && 0 == polycurve_pullback
-                && 0 != first_seg_on_seam 
-                && 0 != segment_pullback 
-                && ON_IsValid(segment_start_uv.x)
-                && ON_IsValid(segment_start_uv.y)
-                && (! segment_end_uv.IsValid() || segment_end_uv != end_uv )
-                )
-      {
-        // This is the second segment we have pulled back.  The firt segment
-        // was on a seam.  If the 2nd segment is not on a seam, we will run
-        // a few tests to make sure the first segment is on the correct side
-        // of parameter space.
-        int second_seg_on_seam = PullbackSegOnSeam( udom, vdom,bClosedU, bClosedV,segment_pullback);
-        if ( 0 == second_seg_on_seam )
-        {
-          // 19 September 2003 Dale Lear
-          //     Add more seam side detection to fix bugs like RR 10464 DE 12061.
-          //     This is the second segment we have pulled back.  This segment starts
-          //     on a surface seam but we were not certain which side of parameter space
-          //     the start point was on.   This code double checks the answer by pulling back the
-          //     second segment without the suggested start point.
-
-          ON_Curve* test_pullback = Pullback(*segment_curve,tolerance,&segment_curve_domain,ON_UNSET_POINT,ON_UNSET_POINT);
-          if ( 0 != test_pullback && 0 == PullbackSegOnSeam( udom, vdom,bClosedU, bClosedV,test_pullback) )
-          {
-            bool bUseTestSegment = false;
-            ON_3dPoint new_first_seg_end_uv = test_pullback->PointAtStart();
-            new_first_seg_end_uv.z = 0.0;
-
-            // See if the starts of segment_pullback and test_pullback are on opposite 
-            // sides of parameter space.
-            ON_3dPoint segStart = segment_pullback->PointAtStart();
-            ON_3dPoint testStart = test_pullback->PointAtStart();
-            double startSeg_t, testSeg_t;
-            const double on_side_tol = 0.0001;
-            switch ( first_seg_on_seam )
-            {
-            case 1: // first seg was on south side
-              startSeg_t = vdom.NormalizedParameterAt(segStart.y);
-              testSeg_t = vdom.NormalizedParameterAt(testStart.y);
-              if ( startSeg_t <= on_side_tol && testSeg_t >= 1.0-on_side_tol )
-              {
-                // first seg should be on north side
-                new_first_seg_end_uv.y = vdom[1];
-                bUseTestSegment = true;
-              }
-              break;
-            case 2: // first seg was on east side
-              startSeg_t = vdom.NormalizedParameterAt(segStart.x);
-              testSeg_t = vdom.NormalizedParameterAt(testStart.x);
-              if ( startSeg_t >= 1.0-on_side_tol && testSeg_t <= on_side_tol )
-              {
-                // first seg should be on west side
-                new_first_seg_end_uv.x = udom[0];
-                bUseTestSegment = true;
-              }
-              break;
-            case 3: // first seg was on north side
-              startSeg_t = vdom.NormalizedParameterAt(segStart.y);
-              testSeg_t = vdom.NormalizedParameterAt(testStart.y);
-              if ( startSeg_t >= 1.0-on_side_tol && testSeg_t <= on_side_tol )
-              {
-                // first seg should be on south side
-                new_first_seg_end_uv.y = vdom[0];
-                bUseTestSegment = true;
-              }
-              break;
-            case 4: // first seg was on west side
-              startSeg_t = vdom.NormalizedParameterAt(segStart.x);
-              testSeg_t = vdom.NormalizedParameterAt(testStart.x);
-              if ( startSeg_t <= on_side_tol && testSeg_t >= 1.0-on_side_tol )
-              {
-                // first seg should be on east side
-                new_first_seg_end_uv.x = udom[1];
-                bUseTestSegment = true;
-              }
-              break;
-            }
-
-            if ( bUseTestSegment 
-                 && 0 != first_seg_3d_curve
-                 && first_seg_pullback_domain.IsIncreasing()
-                 )
-            {
-              // We put the first segment on the wrong side of parameter space.
-              // Fix things up here.
-              ON_Curve* new_first_seg_pullback = Pullback(*first_seg_3d_curve,tolerance,
-                                                 &first_seg_pullback_domain,
-                                                 ON_UNSET_POINT,
-                                                 new_first_seg_end_uv
-                                                 );
-              if ( 0 != new_first_seg_pullback )
-              {
-                // Replace what we had with a polycurve that has
-                // new_first_pullback + test_pullback as the initial
-                // segments.
-                ON_Interval dom = pullback->Domain();
-                delete pullback;
-                pullback = new_first_seg_pullback;
-                pullback->SetDomain(dom[0],dom[1]);
-                new_first_seg_pullback = 0;
-                
-                delete segment_pullback;
-                segment_pullback = test_pullback;
-                test_pullback = 0;       
-              }
-            }
-          }
-          
-          if ( 0 != test_pullback )
-          {
-            // clean up unused test segment
-            delete test_pullback;
-          }
-        }
-      }
-    }
-    
-    if ( 0 == segment_pullback )
-    {
-      if ( 0 != pullback )
-      {
-        delete pullback;
-        pullback = 0;
-        polycurve_pullback = 0;
-      }
-      break;
-    }
-
-    segment_pullback->SetDomain( segment_domain[0], segment_domain[1] );
-    if ( 0 == pullback )
-    {
-      pullback = segment_pullback;
-    }
-    else
-    {
-      if ( 0 == polycurve_pullback )
-      {
-        polycurve_pullback = new ON_PolyCurve();
-        polycurve_pullback->Append(pullback);
-        pullback = polycurve_pullback;
-      }      
-      polycurve_pullback->Append(segment_pullback);
-    }
-  }
-
-  return pullback;    
-} 
-
-
-ON_Curve* ON_Surface::PullbackCurveProxy( 
-                const ON_CurveProxy& curveproxy_3d,
-                double tolerance,
-                const ON_Interval* curve_3d_subdomain,
-                ON_3dPoint start_uv,
-                ON_3dPoint end_uv
-                ) const
-{
-  bool bRev = curveproxy_3d.ProxyCurveIsReversed();
-
-  const ON_Curve* real_curve = curveproxy_3d.ProxyCurve();
-  if ( 0 == real_curve || real_curve == &curveproxy_3d)
-    return 0;
-
-  ON_Interval real_dom = curveproxy_3d.ProxyCurveDomain();
-  ON_Interval dom = curveproxy_3d.Domain();
-  const ON_Interval* real_c_subdom = 0;
-  if ( 0 != curve_3d_subdomain )
-  {
-    ON_Interval tmp = *curve_3d_subdomain;
-    if ( tmp.IsDecreasing() )
-    {
-      bRev = !bRev;
-      tmp.Swap();
-    }
-    tmp.Intersection(dom);
-    if ( !tmp.IsIncreasing() )
-      return 0;
-
-    if ( dom.Includes(tmp,true) )
-    {
-      if ( real_dom == dom )
-        real_dom = tmp;
-      else
-      {
-        double a = real_dom.ParameterAt(dom.NormalizedParameterAt(tmp[0]));
-        double b = real_dom.ParameterAt(dom.NormalizedParameterAt(tmp[1]));
-        real_dom.Set(a,b);
-      }
-      if ( !real_dom.IsIncreasing() )
-        return 0;
-      real_c_subdom = &real_dom;
-      dom = tmp;
-    }
-    else real_c_subdom = &real_dom;
-  }
-  else if (real_dom != real_curve->Domain())
-    real_c_subdom = &real_dom;
-
-  if ( bRev )
-  {
-    ON_3dPoint p = start_uv; start_uv = end_uv; end_uv = p;
-  }
-
-  ON_Curve* p2dCrv = Pullback( *real_curve, tolerance, real_c_subdom, start_uv, end_uv );
-  if ( 0 != p2dCrv )
-  {
-    if ( bRev )
-      p2dCrv->Reverse();
-    p2dCrv->SetDomain(dom);
-  }
-
-  return p2dCrv;
-}
-
-ON_Curve* ON_Surface::PushupCurveProxy( const ON_CurveProxy& curveproxy_2d,
-                  double tolerance,
-                  const ON_Interval* curve_2d_subdomain
-                  ) const
-{
-  bool bRev = curveproxy_2d.ProxyCurveIsReversed();
-
-  const ON_Curve* real_curve = curveproxy_2d.ProxyCurve();
-  if ( 0 == real_curve || real_curve == &curveproxy_2d)
-    return 0;
-
-  ON_Interval real_dom = curveproxy_2d.ProxyCurveDomain();
-  ON_Interval dom = curveproxy_2d.Domain();
-  const ON_Interval* real_c_subdom = 0;
-  if ( 0 != curve_2d_subdomain )
-  {
-    ON_Interval tmp = *curve_2d_subdomain;
-    if ( tmp.IsDecreasing() )
-    {
-      bRev = !bRev;
-      tmp.Swap();
-    }
-    tmp.Intersection(dom);
-    if ( !tmp.IsIncreasing() )
-      return 0;
-
-    if ( dom.Includes(tmp,true) )
-    {
-      if ( real_dom == dom )
-        real_dom = tmp;
-      else
-      {
-        double a = real_dom.ParameterAt(dom.NormalizedParameterAt(tmp[0]));
-        double b = real_dom.ParameterAt(dom.NormalizedParameterAt(tmp[1]));
-        real_dom.Set(a,b);
-      }
-      if ( !real_dom.IsIncreasing() )
-        return 0;
-      real_c_subdom = &real_dom;
-      dom = tmp;
-    }
-  }
-
-  ON_Curve* p3dCrv = Pushup( *real_curve, tolerance, real_c_subdom );
-  if ( 0 != p3dCrv )
-  {
-    if ( bRev )
-      p3dCrv->Reverse();
-    p3dCrv->SetDomain(dom);
-  }
-
-  return p3dCrv;
-}
-
-
-ON_Curve* ON_PlaneSurface::Pullback( const ON_Curve& curve_3d,
-                  double tolerance,
-                  const ON_Interval* curve_3d_subdomain,
-                  ON_3dPoint start_uv,
-                  ON_3dPoint end_uv
-                  ) const
-{
-  const ON_PolyCurve* polycurve = ON_PolyCurve::Cast(&curve_3d);
-  if ( 0 != polycurve )
-  {
-    return PullbackPolyCurve( *polycurve, tolerance, curve_3d_subdomain, start_uv, end_uv );
-  }
-
-  const ON_CurveProxy* proxycurve = ON_CurveProxy::Cast(&curve_3d);
-  if ( 0 != proxycurve )
-  {
-    return PullbackCurveProxy( *proxycurve, tolerance, 
-                               curve_3d_subdomain, 
-                               start_uv, end_uv );
-  }
-
-  // Do not call ON_Surface::Pullback().  The projection done below
-  // is exact.
-
-  ON_NurbsCurve* nurbs_curve = new ON_NurbsCurve();
-  if ( curve_3d.GetNurbForm( *nurbs_curve, tolerance, curve_3d_subdomain ) < 1 )
-  {
-    delete nurbs_curve;
-    nurbs_curve = 0;
-  }
-  else
-  {
-    ON_Xform xform;
-    xform.ChangeBasis(ON_xy_plane,m_plane);
-    if ( m_domain[0] != m_extents[0] || m_domain[1] != m_extents[1] )
-    {
-      // transform curve to plane's evaluation coordinates
-      ON_Xform cs_change(1);
-      ON_Interval s = Domain(0);
-      ON_Interval t = Domain(1);
-      ON_Interval x = Extents(0);
-      ON_Interval y = Extents(1);
-      if ( s != x )
-      {
-        double ds = s.Length();
-        double dx = x.Length();
-        cs_change.m_xform[0][0] = ds/dx;
-        cs_change.m_xform[0][3] = (x[1]*s[0] - x[0]*s[1])/dx;
-      }
-      if ( t != y )
-      {
-        double dt = t.Length();
-        double dy = y.Length();
-        cs_change.m_xform[1][1] = dt/dy;
-        cs_change.m_xform[1][3] = (y[1]*t[0] - y[0]*t[1])/dy;
-      }
-      xform = cs_change*xform;
-    }
-    nurbs_curve->ClampEnd(2);
-    nurbs_curve->Transform(xform);
-
-    ON_BOOL32 is_rat = nurbs_curve->IsRational();
-    if ( start_uv != ON_UNSET_POINT )
-    {
-      start_uv.z = 0.0;
-      double w = 1.0;
-      if (is_rat){
-        w = nurbs_curve->Weight(0);
-        start_uv *= w;
-      }
-      nurbs_curve->SetCV(0,start_uv);
-      if (is_rat)
-        nurbs_curve->SetWeight(0,w);
-    }
-    if ( end_uv != ON_UNSET_POINT )
-    {
-      double w = 1.0;
-      if (is_rat){
-        w = nurbs_curve->Weight(nurbs_curve->m_cv_count-1);
-        end_uv *= w;
-      }
-      end_uv.z = 0.0;
-      nurbs_curve->SetCV(nurbs_curve->m_cv_count-1,end_uv);
-      if (is_rat)
-        nurbs_curve->SetWeight(nurbs_curve->m_cv_count-1,w);
-    }
-    nurbs_curve->ChangeDimension(2);
-  }
-  return nurbs_curve;
 }
 
 ON_BOOL32 ON_PlaneSurface::Trim(
@@ -1429,6 +714,86 @@ ON_Interval ON_PlaneSurface::Extents(
   return dir ? m_extents[1] : m_extents[0];
 }
 
+bool ON_PlaneSurface::CreatePseudoInfinitePlane( 
+        ON_PlaneEquation plane_equation,
+        const ON_BoundingBox& bbox,
+        double padding
+        )
+{
+  ON_Plane plane(&plane_equation.x);
+  return CreatePseudoInfinitePlane(plane,bbox,padding);
+}
+
+bool ON_PlaneSurface::CreatePseudoInfinitePlane( 
+        const ON_Plane& plane,
+        const ON_BoundingBox& bbox,
+        double padding
+        )
+{
+  ON_3dPoint bbox_corners[8];
+  if ( !bbox.GetCorners(bbox_corners) )
+    return false;
+  return CreatePseudoInfinitePlane(plane,8,bbox_corners,padding);
+}
+
+bool ON_PlaneSurface::CreatePseudoInfinitePlane( 
+        const ON_Plane& plane,
+        int point_count,
+        const ON_3dPoint* point_list,
+        double padding
+        )
+{
+  if ( !plane.IsValid() )
+    return false;
+  if ( point_count < 1 )
+    return false;
+  if ( 0 == point_list )
+    return false;
+  if ( !ON_IsValid(padding) || padding < 0.0 )
+    return false;
+
+  ON_Interval plane_domain[2];
+  double s, t;
+  s = ON_UNSET_VALUE;
+  t = ON_UNSET_VALUE;
+  if ( !plane.ClosestPointTo( point_list[0], &s, &t ) || !ON_IsValid(s) || !ON_IsValid(t) )
+    return 0;
+  plane_domain[0].m_t[1] = plane_domain[0].m_t[0] = s;
+  plane_domain[1].m_t[1] = plane_domain[1].m_t[0] = t;
+  
+  for ( int i = 1; i < point_count; i++ )
+  {
+    s = ON_UNSET_VALUE;
+    t = ON_UNSET_VALUE;
+    if ( !plane.ClosestPointTo( point_list[i], &s, &t ) || !ON_IsValid(s) || !ON_IsValid(t) )
+      return 0;
+    if ( s < plane_domain[0].m_t[0] ) plane_domain[0].m_t[0] = s; else if ( s > plane_domain[0].m_t[1] ) plane_domain[0].m_t[1] = s;
+    if ( t < plane_domain[1].m_t[0] ) plane_domain[1].m_t[0] = t; else if ( t > plane_domain[1].m_t[1] ) plane_domain[1].m_t[1] = t;
+  }
+
+  s = padding*plane_domain[0].Length() + padding;
+  if ( !(s > 0.0) && !plane_domain[0].IsIncreasing() )
+    s = 1.0;
+  plane_domain[0].m_t[0] -= s;
+  plane_domain[0].m_t[1] += s;
+
+  t = padding*plane_domain[1].Length() + padding;
+  if ( !(t > 0.0) && !plane_domain[1].IsIncreasing() )
+    t = 1.0;
+  plane_domain[1].m_t[0] -= t;
+  plane_domain[1].m_t[1] += t;
+
+  m_plane = plane;
+  m_domain[0] = plane_domain[0];
+  m_domain[1] = plane_domain[1];
+  m_extents[0] = plane_domain[0];
+  m_extents[1] = plane_domain[1];
+
+  return IsValid()?true:false;
+}
+
+
+
 ON_BOOL32 ON_PlaneSurface::SetDomain( 
   int dir, 
   double t0, 
@@ -1444,6 +809,71 @@ ON_BOOL32 ON_PlaneSurface::SetDomain(
   }
   return rc;
 }
+
+void ON_ClippingPlaneInfo::Default()
+{
+  memset(this,0,sizeof(*this));
+}
+
+bool ON_ClippingPlaneInfo::Write( ON_BinaryArchive& file ) const
+{
+  bool rc = file.BeginWrite3dmChunk(TCODE_ANONYMOUS_CHUNK,1,0);
+  if (!rc)
+    return false;
+  
+  for(;;)
+  {
+    rc = file.WritePlaneEquation(m_plane_equation);
+    if (!rc) break;
+
+    rc = file.WriteUuid(m_plane_id);
+    if (!rc) break;
+
+    rc = file.WriteBool(m_bEnabled);
+    if (!rc) break;
+
+    break;
+  }
+
+  if ( !file.EndWrite3dmChunk() )
+    rc = false;
+
+  return rc;
+}
+
+bool ON_ClippingPlaneInfo::Read( ON_BinaryArchive& file )
+{
+  Default();
+
+  int major_version = 0;
+  int minor_version = 0;
+  bool rc = file.BeginRead3dmChunk(TCODE_ANONYMOUS_CHUNK,&major_version,&minor_version);
+  if (!rc)
+    return false;
+  
+  for(;;)
+  {
+    rc = (1 == major_version);
+    if (!rc) break;
+
+    rc = file.ReadPlaneEquation(m_plane_equation);
+    if (!rc) break;
+
+    rc = file.ReadUuid(m_plane_id);
+    if (!rc) break;
+
+    rc = file.ReadBool(&m_bEnabled);
+    if (!rc) break;
+
+    break;
+  }
+
+  if ( !file.EndRead3dmChunk() )
+    rc = false;
+
+  return rc;
+}
+
 
 void ON_ClippingPlane::Default()
 {
@@ -1720,4 +1150,5 @@ ON_BOOL32 ON_ClippingPlaneSurface::Read( ON_BinaryArchive& file )
 
   return rc;
 }
+
 

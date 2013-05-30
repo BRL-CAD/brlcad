@@ -1,7 +1,7 @@
 /*                          B W - A . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2012 United States Government as represented by
+ * Copyright (c) 1986-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -22,7 +22,7 @@
  *
  * Convert a bw file into an ASCII bitmap.
  *
- * The output of bw-a can be feed to the X11 program atobm to generated
+ * The output of bw-a can be fed to the X11 program atobm to generate
  * a bitmap that X11 programs can use.
  *
  * It is assumed that the file is in inverse order.
@@ -46,13 +46,15 @@
 
 
 static long int file_width = 512L;
+static long int file_height = 512L;
+static long int squarefilesize = 512L;
 static int autosize = 0;
 static char *file_name;
 static FILE *infp;
 static int fileinput = 0;
 
 static char usage[] = "\
-Usage: bw-a [a] [-s squarefilesize] [-w file_width] [-n file_height]\n\
+Usage: bw-a [-a] [-s squarefilesize] [-w file_width] [-n file_height]\n\
 	[file.bw]\n";
 
 int
@@ -60,16 +62,17 @@ get_args(int argc, char **argv)
 {
     int c;
 
-    while ((c=bu_getopt(argc, argv, "as:w:n:")) != -1) {
+    while ((c=bu_getopt(argc, argv, "as:w:n:h?")) != -1) {
 	switch (c) {
 	    case 'a':
 		autosize = 1;
 		break;
 	    case 's':
-		file_width = atol(bu_optarg);
+		squarefilesize = atol(bu_optarg);
 		autosize = 0;
 		break;
 	    case 'n':
+		file_height = atol(bu_optarg);
 		autosize = 0;
 		break;
 	    case 'w':

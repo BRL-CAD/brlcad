@@ -1,7 +1,7 @@
 /*                      S U B M O D E L . C
  * BRL-CAD
  *
- * Copyright (c) 2000-2012 United States Government as represented by
+ * Copyright (c) 2000-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -108,7 +108,7 @@ rt_submodel_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rti
 	sub_dbip = rtip->rti_dbip;
     } else {
 	/* db_open will cache dbip's via bu_open_mapped_file() */
-	if ((sub_dbip = db_open(bu_vls_addr(&sip->file), "r")) == DBI_NULL)
+	if ((sub_dbip = db_open(bu_vls_addr(&sip->file), DB_OPEN_READONLY)) == DBI_NULL)
 	    return -1;
 
 	/* Save the overhead of stat() calls on subsequent opens */
@@ -171,7 +171,7 @@ rt_submodel_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rti
      * rt_gettrees() will pluck the 0th resource out of the rtip table.
      * rt_submodel_shot() will get additional resources as needed.
      */
-    BU_GET(resp, struct resource);
+    BU_ALLOC(resp, struct resource);
     BU_PTBL_SET(&sub_rtip->rti_resources, 0, resp);
     rt_init_resource(resp, 0, sub_rtip);
 
@@ -227,7 +227,7 @@ rt_submodel_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rti
     bn_mat_inv(submodel->m2subm, sip->root2leaf);
     submodel->rtip = sub_rtip;
 
-    /* Propagage submodel bounding box back upwards, rotated&scaled. */
+    /* Propagate submodel bounding box back upwards, rotated&scaled. */
     bn_rotate_bbox(stp->st_min, stp->st_max,
 		   submodel->subm2m,
 		   sub_rtip->mdl_min, sub_rtip->mdl_max);
@@ -495,7 +495,7 @@ rt_submodel_shot(struct soltab *stp, struct xray *rp, struct application *ap, st
     BU_ASSERT_LONG(cpu, <, BU_PTBL_END(restbl));
     if ((resp = (struct resource *)BU_PTBL_GET(restbl, cpu)) == NULL) {
 	/* First ray for this cpu for this submodel, alloc up */
-	BU_GET(resp, struct resource);
+	BU_ALLOC(resp, struct resource);
 	BU_PTBL_SET(restbl, cpu, resp);
 	rt_init_resource(resp, cpu, submodel->rtip);
     }
@@ -611,7 +611,7 @@ rt_submodel_free(struct soltab *stp)
     rtip = submodel->rtip;
     RT_CK_RTI(rtip);
 
-    /* Specificially free resource structures here */
+    /* Specifically free resource structures here */
     BU_CK_PTBL(&rtip->rti_resources);
     for (BU_PTBL_FOR(rpp, (struct resource **), &rtip->rti_resources)) {
 	if (*rpp == NULL) continue;
@@ -627,7 +627,7 @@ rt_submodel_free(struct soltab *stp)
 
     rt_free_rti(submodel->rtip);
 
-    bu_free((genptr_t)submodel, "submodel_specific");
+    BU_PUT(submodel, struct submodel_specific);
 }
 
 
@@ -739,8 +739,8 @@ rt_submodel_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct 
 
     if (bu_vls_strlen(&sip->file) != 0) {
 	/* db_open will cache dbip's via bu_open_mapped_file() */
-	if ((good.dbip = db_open(bu_vls_addr(&sip->file), "r")) == DBI_NULL) {
-	    bu_log("rt_submodel_plot() db_open(%s) failure\n", bu_vls_addr(&sip->file));
+	if ((good.dbip = db_open(bu_vls_addr(&sip->file), DB_OPEN_READONLY)) == DBI_NULL) {
+	    bu_log("Cannot open geometry database file (%s) to store plot\n", bu_vls_addr(&sip->file));
 	    return -1;
 	}
 	if (!db_is_directory_non_empty(good.dbip)) {
@@ -826,7 +826,8 @@ rt_submodel_import4(struct rt_db_internal *ip, const struct bu_external *ep, con
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_SUBMODEL;
     ip->idb_meth = &rt_functab[ID_SUBMODEL];
-    ip->idb_ptr = bu_malloc(sizeof(struct rt_submodel_internal), "rt_submodel_internal");
+    BU_ALLOC(ip->idb_ptr, struct rt_submodel_internal);
+
     sip = (struct rt_submodel_internal *)ip->idb_ptr;
     sip->magic = RT_SUBMODEL_INTERNAL_MAGIC;
     sip->dbip = dbip;
@@ -912,7 +913,8 @@ rt_submodel_import5(struct rt_db_internal *ip, const struct bu_external *ep, con
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_SUBMODEL;
     ip->idb_meth = &rt_functab[ID_SUBMODEL];
-    ip->idb_ptr = bu_malloc(sizeof(struct rt_submodel_internal), "rt_submodel_internal");
+    BU_ALLOC(ip->idb_ptr, struct rt_submodel_internal);
+
     sip = (struct rt_submodel_internal *)ip->idb_ptr;
     sip->magic = RT_SUBMODEL_INTERNAL_MAGIC;
     sip->dbip = dbip;

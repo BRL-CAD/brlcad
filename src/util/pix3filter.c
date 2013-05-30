@@ -1,7 +1,7 @@
 /*                    P I X 3 F I L T E R . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2012 United States Government as represented by
+ * Copyright (c) 1986-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -129,23 +129,23 @@ get_args(int argc, char **argv)
     } else if (bu_optind + 3 <= argc) {
 
 	if ((oldfp = fopen(argv[bu_optind], "r")) == NULL) {
-	    (void)fprintf(stderr,
-			  "pix3filter: cannot open \"%s\" for reading\n",
-			  argv[bu_optind]);
+	    fprintf(stderr,
+		    "pix3filter: cannot open \"%s\" for reading\n",
+		    argv[bu_optind]);
 	    return 0;
 	}
 
 	if ((curfp = fopen(argv[++bu_optind], "r")) == NULL) {
-	    (void)fprintf(stderr,
-			  "pix3filter: cannot open \"%s\" for reading\n",
-			  argv[bu_optind]);
+	    fprintf(stderr,
+		    "pix3filter: cannot open \"%s\" for reading\n",
+		    argv[bu_optind]);
 	    return 0;
 	}
 
 	if ((newfp = fopen(argv[++bu_optind], "r")) == NULL) {
-	    (void)fprintf(stderr,
-			  "pix3filter: cannot open \"%s\" for reading\n",
-			  argv[bu_optind]);
+	    fprintf(stderr,
+		    "pix3filter: cannot open \"%s\" for reading\n",
+		    argv[bu_optind]);
 	    return 0;
 	}
 	bu_optind += 3;
@@ -157,10 +157,10 @@ get_args(int argc, char **argv)
 	working_name = (char *)bu_malloc(strlen(file_name)+5, "working_name");
 
 	if ((curfp = fopen(file_name, "r")) == NULL) {
-	    (void)fprintf(stderr,
-			  "pix3filter: cannot open \"%s\" for reading\n",
-			  file_name);
-            bu_free(working_name, "free working_name");
+	    fprintf(stderr,
+		    "pix3filter: cannot open \"%s\" for reading\n",
+		    file_name);
+	    bu_free(working_name, "free working_name");
 	    return 0;
 	}
 	idx = file_name + strlen(file_name) -1;
@@ -173,37 +173,37 @@ get_args(int argc, char **argv)
 	    (void) fprintf(stderr,
 			   "pix3filter: no frame number on %s.\n",
 			   file_name);
-            bu_free(working_name, "free working_name");
+	    bu_free(working_name, "free working_name");
 	    return 0;
 	}
 
 	snprintf(working_name, strlen(file_name)+5, "%s.%d", file_name, frameNumber-1);
 	if ((oldfp = fopen(working_name, "r")) == NULL) {
 	    if (frameNumber-1 != 0) {
-		(void)fprintf(stderr,
-			      "pix3filter: cannot open \"%s\" for reading.\n",
-			      working_name);
-                bu_free(working_name, "free working_name");
+		fprintf(stderr,
+			"pix3filter: cannot open \"%s\" for reading.\n",
+			working_name);
+		bu_free(working_name, "free working_name");
 		return 0;
 	    }
 	    if ((oldfp = fopen(file_name, "r")) == NULL) {
-		(void)fprintf(stderr,
-			      "pix3filter: cannot open \"%s\" for reading.\n",
-			      file_name);
-                bu_free(working_name, "free working_name");
+		fprintf(stderr,
+			"pix3filter: cannot open \"%s\" for reading.\n",
+			file_name);
+		bu_free(working_name, "free working_name");
 		return 0;
 	    }
 	}
 
 	snprintf(working_name, strlen(file_name)+5, "%s.%d", file_name, frameNumber+1);
 	if ((newfp = fopen(working_name, "r")) == NULL) {
-	    (void)fprintf(stderr,
-			  "pix3filter: cannot open \"%s\" for reading.\n",
-			  working_name);
-            bu_free(working_name, "free working_name");
+	    fprintf(stderr,
+		    "pix3filter: cannot open \"%s\" for reading.\n",
+		    working_name);
+	    bu_free(working_name, "free working_name");
 	    return 0;
 	}
-        bu_free(working_name, "free working_name");
+	bu_free(working_name, "free working_name");
 	bu_optind += 1;
     }
 
@@ -211,7 +211,7 @@ get_args(int argc, char **argv)
 	return 0;
 
     if (argc > bu_optind)
-	(void)fprintf(stderr, "pix3filter: excess argument(s) ignored\n");
+	fprintf(stderr, "pix3filter: excess argument(s) ignored\n");
 
     return 1;		/* OK */
 }
@@ -281,7 +281,7 @@ main(int argc, char **argv)
     if (ret == 0)
 	perror("fread");
     /*
-     * Write out the bottome row.
+     * Write out the bottom row.
      */
     ret = fwrite(bottomcur, sizeof(char), 3*width, stdout);
     if (ret == 0)

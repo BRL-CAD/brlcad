@@ -1,7 +1,7 @@
 /*                 AreaContextDependentUnit.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2012 United States Government as represented by
+ * Copyright (c) 1994-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -31,33 +31,37 @@
 
 #define CLASSNAME "AreaContextDependentUnit"
 #define ENTITYNAME "Area_Context_Dependent_Unit"
-string AreaContextDependentUnit::entityname = Factory::RegisterClass(ENTITYNAME,(FactoryMethod)AreaContextDependentUnit::Create);
+string AreaContextDependentUnit::entityname = Factory::RegisterClass(ENTITYNAME, (FactoryMethod)AreaContextDependentUnit::Create);
 
-AreaContextDependentUnit::AreaContextDependentUnit() {
+AreaContextDependentUnit::AreaContextDependentUnit()
+{
     step = NULL;
     id = 0;
 }
 
-AreaContextDependentUnit::AreaContextDependentUnit(STEPWrapper *sw,int step_id) {
+AreaContextDependentUnit::AreaContextDependentUnit(STEPWrapper *sw, int step_id)
+{
     step = sw;
     id = step_id;
 }
 
-AreaContextDependentUnit::~AreaContextDependentUnit() {
+AreaContextDependentUnit::~AreaContextDependentUnit()
+{
 }
 
 bool
-AreaContextDependentUnit::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
-    step=sw;
+AreaContextDependentUnit::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
+    step = sw;
     id = sse->STEPfile_id;
 
 
     // load base class attributes
-    if ( !AreaUnit::Load(step,sse) ) {
+    if (!AreaUnit::Load(step, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::Unit." << std::endl;
 	return false;
     }
-    if ( !ContextDependentUnit::Load(step,sse) ) {
+    if (!ContextDependentUnit::Load(step, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::Unit." << std::endl;
 	return false;
     }
@@ -66,32 +70,29 @@ AreaContextDependentUnit::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
 }
 
 void
-AreaContextDependentUnit::Print(int level) {
-    TAB(level); std::cout << CLASSNAME << ":" << "(";
+AreaContextDependentUnit::Print(int level)
+{
+    TAB(level);
+    std::cout << CLASSNAME << ":" << "(";
     std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-    TAB(level); std::cout << "Inherited Attributes:" << std::endl;
-    AreaUnit::Print(level+1);
-    ContextDependentUnit::Print(level+1);
+    TAB(level);
+    std::cout << "Inherited Attributes:" << std::endl;
+    AreaUnit::Print(level + 1);
+    ContextDependentUnit::Print(level + 1);
 
 }
+
 STEPEntity *
-AreaContextDependentUnit::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
-    Factory::OBJECTS::iterator i;
-    if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
-	AreaContextDependentUnit *object = new AreaContextDependentUnit(sw,sse->STEPfile_id);
+AreaContextDependentUnit::GetInstance(STEPWrapper *sw, int id)
+{
+    return new AreaContextDependentUnit(sw, id);
+}
 
-	Factory::AddObject(object);
-
-	if (!object->Load(sw, sse)) {
-	    std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
-	    delete object;
-	    return NULL;
-	}
-	return static_cast<STEPEntity *>(object);
-    } else {
-	return (*i).second;
-    }
+STEPEntity *
+AreaContextDependentUnit::Create(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
+    return STEPEntity::CreateEntity(sw, sse, GetInstance, CLASSNAME);
 }
 
 // Local Variables:

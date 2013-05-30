@@ -1,7 +1,7 @@
 /*                           S E T . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2012 United States Government as represented by
+ * Copyright (c) 1990-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -49,9 +49,9 @@ static void toggle_perspective(void);
 static void set_coords(void);
 static void set_rotate_about(void);
 
-static char *read_var(ClientData clientData, Tcl_Interp *interp, char *name1, char *name2, int flags);
-static char *write_var(ClientData clientData, Tcl_Interp *interp, char *name1, char *name2, int flags);
-static char *unset_var(ClientData clientData, Tcl_Interp *interp, char *name1, char *name2, int flags);
+static char *read_var(ClientData clientData, Tcl_Interp *interp, const char *name1, const char *name2, int flags);
+static char *write_var(ClientData clientData, Tcl_Interp *interp, const char *name1, const char *name2, int flags);
+static char *unset_var(ClientData clientData, Tcl_Interp *interp, const char *name1, const char *name2, int flags);
 
 void set_scroll_private(void);
 void set_absolute_tran(void);
@@ -92,12 +92,11 @@ struct _mged_variables default_mged_variables = {
     /* mv_eye_sep_dist */	0.0,
     /* mv_union lexeme */	"u",
     /* mv_intersection lexeme */"n",
-    /* mv_difference lexeme */	"-"
+    /* mv_difference lexeme */	"-",
 };
 
 
 #define MV_O(_m) bu_offsetof(struct _mged_variables, _m)
-#define MV_OA(_m) bu_offsetofarray(struct _mged_variables, _m)
 #define LINE RT_MAXLINE
 struct bu_structparse mged_vparse[] = {
     {"%d", 1, "autosize",		MV_O(mv_autosize),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
@@ -121,19 +120,18 @@ struct bu_structparse mged_vparse[] = {
     {"%c", 1, "rotate_about",		MV_O(mv_rotate_about),		set_rotate_about, NULL, NULL },
     {"%c", 1, "transform",		MV_O(mv_transform),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%d", 1, "predictor",		MV_O(mv_predictor),		predictor_hook, NULL, NULL },
-    {"%f", 1, "predictor_advance",	MV_O(mv_predictor_advance),	predictor_hook, NULL, NULL },
-    {"%f", 1, "predictor_length",	MV_O(mv_predictor_length),	predictor_hook, NULL, NULL },
-    {"%f", 1, "perspective",		MV_O(mv_perspective),		set_perspective, NULL, NULL },
+    {"%g", 1, "predictor_advance",	MV_O(mv_predictor_advance),	predictor_hook, NULL, NULL },
+    {"%g", 1, "predictor_length",	MV_O(mv_predictor_length),	predictor_hook, NULL, NULL },
+    {"%g", 1, "perspective",		MV_O(mv_perspective),		set_perspective, NULL, NULL },
     {"%d", 1, "perspective_mode",	MV_O(mv_perspective_mode),	establish_perspective, NULL, NULL },
     {"%d", 1, "toggle_perspective",	MV_O(mv_toggle_perspective),	toggle_perspective, NULL, NULL },
-    {"%f", 1, "nmg_eu_dist",		MV_O(mv_nmg_eu_dist),		nmg_eu_dist_set, NULL, NULL },
-    {"%f", 1, "eye_sep_dist",		MV_O(mv_eye_sep_dist),		set_dirty_flag, NULL, NULL },
-    {"%s", LINE, "union_op",		MV_O(mv_union_lexeme[0]),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%s", LINE, "intersection_op",	MV_O(mv_intersection_lexeme[0]),BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%s", LINE, "difference_op",	MV_O(mv_difference_lexeme[0]),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%g", 1, "nmg_eu_dist",		MV_O(mv_nmg_eu_dist),		nmg_eu_dist_set, NULL, NULL },
+    {"%g", 1, "eye_sep_dist",		MV_O(mv_eye_sep_dist),		set_dirty_flag, NULL, NULL },
+    {"%s", LINE, "union_op",		MV_O(mv_union_lexeme),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%s", LINE, "intersection_op",	MV_O(mv_intersection_lexeme),BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%s", LINE, "difference_op",	MV_O(mv_difference_lexeme),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"",   0, NULL,			0,				BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
-
 
 static void
 set_dirty_flag(void)
@@ -168,7 +166,7 @@ nmg_eu_dist_set(void)
  **/
 
 static char *
-read_var(ClientData clientData, Tcl_Interp *interp, char *UNUSED(name1), char *UNUSED(name2), int flags)
+read_var(ClientData clientData, Tcl_Interp *interp, const char *UNUSED(name1), const char *UNUSED(name2), int flags)
     /* Contains pointer to bu_struct_parse entry */
 
 
@@ -198,7 +196,7 @@ read_var(ClientData clientData, Tcl_Interp *interp, char *UNUSED(name1), char *U
  **/
 
 static char *
-write_var(ClientData clientData, Tcl_Interp *interp, char *name1, char *name2, int flags)
+write_var(ClientData clientData, Tcl_Interp *interp, const char *name1, const char *name2, int flags)
 {
     struct bu_structparse *sp = (struct bu_structparse *)clientData;
     struct bu_vls str = BU_VLS_INIT_ZERO;
@@ -208,7 +206,7 @@ write_var(ClientData clientData, Tcl_Interp *interp, char *name1, char *name2, i
 			  (flags&TCL_GLOBAL_ONLY)|TCL_LEAVE_ERR_MSG);
     bu_vls_printf(&str, "%s=\"%s\"", name1, newvalue);
     if (bu_struct_parse(&str, mged_vparse, (char *)mged_variables) < 0) {
-	Tcl_AppendResult(interp, "ERROR OCCURED WHEN SETTING ", name1,
+	Tcl_AppendResult(interp, "ERROR OCCURRED WHEN SETTING ", name1,
 			 " TO ", newvalue, "\n", (char *)NULL);
     }
 
@@ -226,7 +224,7 @@ write_var(ClientData clientData, Tcl_Interp *interp, char *name1, char *name2, i
  **/
 
 static char *
-unset_var(ClientData clientData, Tcl_Interp *interp, char *name1, char *name2, int flags)
+unset_var(ClientData clientData, Tcl_Interp *interp, const char *name1, const char *name2, int flags)
 {
     struct bu_structparse *sp = (struct bu_structparse *)clientData;
 
@@ -417,7 +415,8 @@ set_dlist(void)
 		    while (BU_LIST_NOT_HEAD(gdlp, &gedp->ged_gdp->gd_headDisplay)) {
 			next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
 
-			DM_FREEDLISTS(dlp1->dml_dmp,
+			(void)DM_MAKE_CURRENT(dlp1->dml_dmp);
+			(void)DM_FREEDLISTS(dlp1->dml_dmp,
 				      BU_LIST_FIRST(solid, &gdlp->gdl_headSolid)->s_dlist,
 				      BU_LIST_LAST(solid, &gdlp->gdl_headSolid)->s_dlist -
 				      BU_LIST_FIRST(solid, &gdlp->gdl_headSolid)->s_dlist + 1);

@@ -172,10 +172,12 @@ static_inline void ERRORflush_messages( void ) {
 
 extern SCL_EXPRESS_EXPORT void ERRORinitialize PROTO( ( void ) );
 extern SCL_EXPRESS_EXPORT void ERRORinitialize_after_LIST PROTO( ( void ) );
+extern SCL_EXPRESS_EXPORT void ERRORcleanup PROTO( ( void ) );
 extern SCL_EXPRESS_EXPORT void ERRORnospace PROTO( ( void ) );
 extern SCL_EXPRESS_EXPORT void ERRORabort PROTO( ( int ) );
 extern SCL_EXPRESS_EXPORT Error    ERRORcreate PROTO( ( char *, Severity ) );
 extern SCL_EXPRESS_EXPORT void ERRORreport PROTO( ( Error, ... ) );
+extern SCL_EXPRESS_EXPORT void ERRORdestroy PROTO( ( Error ) );
 
 struct Symbol_; /* mention Symbol to avoid warning on following line */
 extern SCL_EXPRESS_EXPORT void ERRORreport_with_symbol PROTO( ( Error, struct Symbol_ *, ... ) );

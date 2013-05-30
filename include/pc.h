@@ -1,7 +1,7 @@
 /*                            P C . H
  * BRL-CAD
  *
- * Copyright (c) 2008-2012 United States Government as represented by
+ * Copyright (c) 2008-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -71,20 +71,20 @@ extern "C" {
 #endif
 
 /**
- * A composite set of parameters constraints with respect to those 
+ * A composite set of parameters constraints with respect to those
  * parameters. Used for declaration by each geometry object
  */
 struct pc_param {
     struct bu_list l;
     struct bu_vls name; /** Name of the parameter */
-    
+
     /** @todo convert to enum after pc becomes a dependency of rt */
     int ctype;	/** Container type used for storing data */
     int dtype; 	/** Data type of the data pointed to */
-    
+
     union {		/** The Actual data / pointer */
-    	struct bu_vls expression;
-    	void * ptr;
+	struct bu_vls expression;
+	void * ptr;
     } data;
 };
 
@@ -99,7 +99,7 @@ struct pc_constrnt {
     struct bu_vls name;
     int ctype;
     union {
-    	struct bu_vls expression;
+	struct bu_vls expression;
 	struct pc_constraint_fp cf;
     } data;
     const char **args;

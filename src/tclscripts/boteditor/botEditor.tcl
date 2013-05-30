@@ -1,25 +1,33 @@
+#                   B O T E D I T O R . T C L
+# BRL-CAD
+#
+# Copyright (c) 2013 United States Government as represented by
+# the U.S. Army Research Laboratory.
+#
+# This library is free software; you can redistribute it and/or
+# modify it under the terms of the GNU Lesser General Public License
+# version 2.1 as published by the Free Software Foundation.
+#
+# This library is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# Lesser General Public License for more details.
+#
+# You should have received a copy of the GNU Lesser General Public
+# License along with this file; see the file named COPYING for more
+# information.
+#
+###
 # BotEditor class for editing a BoT primitive
 #
 # Usage: BotEditor <instance name> <bot name> [-prefix <Archer instance name>]
-# 
+#
 # The -prefix option is used when this class is instanced in Archer,
 # where the ged commands are methods of the Archer mega-widget instance.
 #
 package require Tk
 package require Itcl
 package require Itk
-
-# manually sourcing dependencies for now
-if {[catch {
-    set script [file join [bu_brlcad_data "tclscripts"] boteditor botPropertyBox.tcl]
-    source $script
-
-    set script [file join [bu_brlcad_data "tclscripts"] boteditor botTools.tcl]
-    source $script
-} errMsg] > 0} {
-    puts "Couldn't load \"$script\"\n$errMsg"
-    exit
-} 
 
 ::itcl::class BotEditor {
     inherit ::itk::Toplevel
@@ -28,7 +36,7 @@ if {[catch {
 
     public {
 	common _ ""
-	
+
 	proc defineCommands {prefix}
 	proc localizeDialog {d}
 	proc focusOnEnter {d}
@@ -40,7 +48,7 @@ if {[catch {
 	method accept {}
 	method reject {}
 	method cancel {}
-    }    
+    }
 
     private {
 	variable original ""
@@ -104,7 +112,7 @@ if {[catch {
 	    -text {Start Over} \
 	    -command "$this cancel"
     } {}
-    
+
     # add widgets to close frame
     itk_component add accept {
 	ttk::button $itk_component(closeframe).accept \
@@ -156,12 +164,12 @@ if {[catch {
 	-columnspan 2 \
 	-sticky ew
     grid $itk_component(status) -row 1 -column 0 \
-        -sticky ew
+	-sticky ew
     grid $itk_component(progress) -row 1 -column 1 \
-        -sticky ew \
+	-sticky ew \
 	-padx {5 20}
     grid $itk_component(mask) -row 1 -column 1 \
-        -sticky news \
+	-sticky news \
 	-padx {5 20}
 }
 
@@ -170,9 +178,9 @@ if {[catch {
 
     if {$show} {
 
-	# append '*' to title to indicate unapplyed change
+	# append '*' to title to indicate unapplied change
 	set title [eval $this cget -title]
-	
+
 	if {[regexp ^.*\\*$ $title] == 0} {
 	    $this configure -title $title*
 	}
@@ -211,7 +219,7 @@ if {[catch {
     # initialize
     set cmdDone 0
     set lastTime [clock milliseconds]
-    $itk_component(progress) configure -value 0 
+    $itk_component(progress) configure -value 0
 
     # display bar
     raise $itk_component(progress)
@@ -307,7 +315,7 @@ if {[catch {
 # discard all changes
 ::itcl::body BotEditor::cancel {} {
 
-    # overwirte copy with original
+    # overwrite copy with original
     set cmd "kill $copy; cp $original $copy; $this onChange"
 
     # get confirmation
@@ -339,7 +347,7 @@ if {[catch {
     set width [winfo reqwidth $d]
     set height [winfo reqheight $d]
 
-    # draw again, properly centered 
+    # draw again, properly centered
     set x [expr "$px + ($pwidth - $width) / 2"]
     set y [expr "$py + ($pheight - $height) / 2"]
     wm geometry $d ${width}x${height}+${x}+${y}
@@ -379,7 +387,7 @@ if {[catch {
 	itk_component add msg {
 	    ttk::label $itk_component(info).message \
 		-text $itk_option(-text) \
-		-wraplength 300 
+		-wraplength 300
 	} {}
 	itk_component add yes {
 	    ttk::button $itk_component(act).confirm \
@@ -490,3 +498,12 @@ if {[catch {
 	method update {bot} {$itk_component(props) update $bot}
     }
 }
+
+# Local Variables:
+# tab-width: 8
+# mode: Tcl
+# c-basic-offset: 4
+# tcl-indent-level: 4
+# indent-tabs-mode: t
+# End:
+# ex: shiftwidth=4 tabstop=8

@@ -1,7 +1,7 @@
 /*                           R E V O L V E . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2012 United States Government as represented by
+ * Copyright (c) 1990-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -56,32 +56,59 @@ extern int rt_sketch_contains(struct rt_sketch_internal *, point2d_t);
 extern void rt_sketch_bounds(struct rt_sketch_internal *, fastf_t *);
 
 /**
+ * Routine to make a new REVOLVE solid. The only purpose of this routine
+ * is to initialize the internal to legal values (e.g., vls)
+ */
+void
+rt_revolve_make(const struct rt_functab *ftp, struct rt_db_internal *intern)
+{
+    struct rt_revolve_internal *rev;
+
+    intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
+    intern->idb_type = ID_REVOLVE;
+    BU_ASSERT(&rt_functab[intern->idb_type] == ftp);
+
+    intern->idb_meth = ftp;
+    BU_ALLOC(rev, struct rt_revolve_internal);
+
+    intern->idb_ptr = (genptr_t)rev;
+    rev->magic = RT_REVOLVE_INTERNAL_MAGIC;
+
+    BU_VLS_INIT(&rev->sketch_name);
+    rev->skt = NULL;
+}
+
+
+/**
  * R T _ R E V O L V E _ B B O X
  *
  * Calculate a bounding RPP around a sketch
  */
 int
-rt_revolve_bbox(struct rt_db_internal *ip, point_t *min, point_t *max) {
+rt_revolve_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct bn_tol *UNUSED(tol)) {
     struct rt_revolve_internal *rip;
     vect_t zUnit;
     fastf_t bounds[4]; /* 2D sketch bounds */
     fastf_t radius;
     point_t center;
 
-    int *endcount;
+    int *endcount = NULL;
     size_t nseg, i, j, k;
 
     RT_CK_DB_INTERNAL(ip);
     rip = (struct rt_revolve_internal *)ip->idb_ptr;
     RT_REVOLVE_CK_MAGIC(rip);
 
+    /* if there's no sketch, there's no bounding box */
+    if (!rip->skt || rip->skt->vert_count < 1) {
+	return -1;
+    }
+
     /* count the number of times an endpoint is used:
      * if even, the point is ok
      * if odd, the point is at the end of a path
      */
     endcount = (int *)bu_calloc(rip->skt->vert_count, sizeof(int), "endcount");
-    for (i=0; i<rip->skt->vert_count; i++)
-	endcount[i] = 0;
     nseg = rip->skt->curve.count;
 
     for (i=0; i<nseg; i++) {
@@ -139,7 +166,8 @@ rt_revolve_bbox(struct rt_db_internal *ip, point_t *min, point_t *max) {
 	    j++;
 	}
     }
-    while (j < rip->skt->vert_count) endcount[j++] = -1;
+    while (j < rip->skt->vert_count)
+	endcount[j++] = -1;
 
     VMOVE(zUnit, rip->axis3d);
     VUNITIZE(zUnit);
@@ -186,7 +214,7 @@ rt_revolve_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip
 
     vect_t xEnd, yEnd;
 
-    int *endcount;
+    int *endcount = NULL;
     size_t nseg, i, j, k;
 
     if (rtip) RT_CK_RTI(rtip);
@@ -194,6 +222,11 @@ rt_revolve_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip
     RT_CK_DB_INTERNAL(ip);
     rip = (struct rt_revolve_internal *)ip->idb_ptr;
     RT_REVOLVE_CK_MAGIC(rip);
+
+    /* if there's no sketch, there's nothing to do */
+    if (!rip->skt || rip->skt->vert_count < 1) {
+	return -1;
+    }
 
     stp->st_id = ID_REVOLVE;
     stp->st_meth = &rt_functab[ID_REVOLVE];
@@ -227,8 +260,6 @@ rt_revolve_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip
      * if odd, the point is at the end of a path
      */
     endcount = (int *)bu_calloc(rev->skt->vert_count, sizeof(int), "endcount");
-    for (i=0; i<rev->skt->vert_count; i++)
-	endcount[i] = 0;
     nseg = rev->skt->curve.count;
 
     for (i=0; i<nseg; i++) {
@@ -286,7 +317,8 @@ rt_revolve_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip
 	    j++;
 	}
     }
-    while (j < rev->skt->vert_count) endcount[j++] = -1;
+    while (j < rev->skt->vert_count)
+	endcount[j++] = -1;
 
     rev->ends = endcount;
 
@@ -1181,7 +1213,7 @@ rt_revolve_free(struct soltab *stp)
     struct revolve_specific *revolve =
 	(struct revolve_specific *)stp->st_specific;
     bu_free(revolve->ends, "endcount");
-    bu_free((char *)revolve, "revolve_specific");
+    BU_PUT(revolve, struct revolve_specific);
 }
 
 
@@ -1210,7 +1242,7 @@ rt_revolve_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct r
     vect_t ell[16], cir[16], ucir[16], height, xdir, ydir, ux, uy, uz, rEnd, xEnd, yEnd;
     fastf_t cos22_5 = 0.9238795325112867385;
     fastf_t cos67_5 = 0.3826834323650898373;
-    int *endcount;
+    int *endcount = NULL;
     point_t add, add2, add3;
 
     BU_CK_LIST_HEAD(vhead);
@@ -1273,10 +1305,9 @@ rt_revolve_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct r
     VREVERSE(ucir[12], ucir[4]);
 
     /* find open endpoints, and determine which points are used */
-    endcount = (int *)bu_calloc(rip->skt->vert_count, sizeof(int), "endcount");
-    for (i=0; i<rip->skt->vert_count; i++) {
-	endcount[i] = 0;
-    }
+    if (nvert)
+	endcount = (int *)bu_calloc(nvert, sizeof(int), "endcount");
+
     nseg = rip->skt->curve.count;
 
     for (i=0; i<nseg; i++) {
@@ -1356,7 +1387,9 @@ rt_revolve_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct r
 	}
     }
     nadd = j;
-    while (j < rip->skt->vert_count) endcount[j++] = -1;
+    while (j < rip->skt->vert_count) {
+	endcount[j++] = -1;
+    }
 
     /* draw sketch outlines */
     for (i=0; i<narc; i++) {
@@ -1406,7 +1439,8 @@ rt_revolve_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct r
 	}
     }
 
-    bu_free(endcount, "endcount");
+    if (nvert)
+	bu_free(endcount, "endcount");
     return 0;
 }
 
@@ -1463,7 +1497,9 @@ int
 rt_revolve_import5(struct rt_db_internal *ip, const struct bu_external *ep, const mat_t mat, const struct db_i *dbip, struct resource *resp)
 {
     struct rt_revolve_internal *rip;
-    fastf_t vv[ELEMENTS_PER_VECT*3 + 1];
+
+    /* must be double for import and export */
+    double vv[ELEMENTS_PER_VECT*3 + 1];
 
     char *sketch_name;
     unsigned char *ptr;
@@ -1479,7 +1515,8 @@ rt_revolve_import5(struct rt_db_internal *ip, const struct bu_external *ep, cons
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_REVOLVE;
     ip->idb_meth = &rt_functab[ID_REVOLVE];
-    ip->idb_ptr = bu_malloc(sizeof(struct rt_revolve_internal), "rt_revolve_internal");
+    BU_ALLOC(ip->idb_ptr, struct rt_revolve_internal);
+
     rip = (struct rt_revolve_internal *)ip->idb_ptr;
     rip->magic = RT_REVOLVE_INTERNAL_MAGIC;
 
@@ -1555,7 +1592,7 @@ rt_revolve_xform(
 
     if (op != ip) {
 	RT_DB_INTERNAL_INIT(op);
-	rop = (struct rt_revolve_internal *)bu_malloc(sizeof(struct rt_revolve_internal), "rop");
+	BU_ALLOC(rop, struct rt_revolve_internal);
 	rop->magic = RT_REVOLVE_INTERNAL_MAGIC;
 	bu_vls_init(&rop->sketch_name);
 	bu_vls_vlscat(&rop->sketch_name, &rip->sketch_name);
@@ -1609,7 +1646,10 @@ int
 rt_revolve_export5(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
     struct rt_revolve_internal *rip;
-    fastf_t vec[ELEMENTS_PER_VECT*3 + 1];
+
+    /* must be double for import and export */
+    double vec[ELEMENTS_PER_VECT*3 + 1];
+
     unsigned char *ptr;
 
     if (dbip) RT_CK_DBI(dbip);

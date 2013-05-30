@@ -1,7 +1,7 @@
 #                F I N D X S L T P R O C . C M A K E
 # BRL-CAD
 #
-# Copyright (c) 2010-2012 United States Government as represented by
+# Copyright (c) 2010-2013 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -33,7 +33,7 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 ###
-# - Find xsltproc executable 
+# - Find xsltproc executable
 #
 #  The module defines the following variables:
 #  XSLTPROC_FOUND - true is xsltproc executable is found

@@ -1033,7 +1033,7 @@ if test -n "$_LT_AC_TAGVAR(hardcode_libdir_flag_spec, $1)" || \
    test -n "$_LT_AC_TAGVAR(runpath_var, $1)" || \
    test "X$_LT_AC_TAGVAR(hardcode_automatic, $1)" = "Xyes" ; then
 
-  # We can hardcode non-existant directories.
+  # We can hardcode non-existent directories.
   if test "$_LT_AC_TAGVAR(hardcode_direct, $1)" != no &&
      # If the only mechanism to avoid hardcoding is shlibpath_var, we
      # have to relink, otherwise we might link with an installed library
@@ -2557,7 +2557,7 @@ AC_LIBTOOL_PROG_LD_HARDCODE_LIBPATH($1)
 AC_LIBTOOL_SYS_LIB_STRIP
 AC_LIBTOOL_DLOPEN_SELF($1)
 
-# Report which librarie types wil actually be built
+# Report which library types will actually be built
 AC_MSG_CHECKING([if libtool supports shared libraries])
 AC_MSG_RESULT([$can_build_shared])
 
@@ -2842,7 +2842,7 @@ case $host_os in
 	# Exported symbols can be pulled into shared objects from archives
 	_LT_AC_TAGVAR(whole_archive_flag_spec, $1)=' '
 	_LT_AC_TAGVAR(archive_cmds_need_lc, $1)=yes
-	# This is similar to how AIX traditionally builds it's shared libraries.
+	# This is similar to how AIX traditionally builds its shared libraries.
 	_LT_AC_TAGVAR(archive_expsym_cmds, $1)="\$CC $shared_flag"' -o $output_objdir/$soname $libobjs $deplibs $compiler_flags ${wl}-bE:$export_symbols ${wl}-bnoentry${allow_undefined_flag}~$AR $AR_FLAGS $output_objdir/$libname$release.a $output_objdir/$soname'
       fi
     fi
@@ -4439,7 +4439,7 @@ case `$NM -V 2>&1` in
   symcode='[[ABCDGIRSTW]]' ;;
 esac
 
-# Try without a prefix undercore, then with it.
+# Try without a prefix underscore, then with it.
 for ac_symprfx in "" "_"; do
 
   # Write the raw and C identifiers.
@@ -5398,7 +5398,7 @@ $echo "local: *; };" >> $output_objdir/$libname.ver~
 	  # Exported symbols can be pulled into shared objects from archives
 	  _LT_AC_TAGVAR(whole_archive_flag_spec, $1)=' '
 	  _LT_AC_TAGVAR(archive_cmds_need_lc, $1)=yes
-	  # This is similar to how AIX traditionally builds it's shared libraries.
+	  # This is similar to how AIX traditionally builds its shared libraries.
 	  _LT_AC_TAGVAR(archive_expsym_cmds, $1)="\$CC $shared_flag"' -o $output_objdir/$soname $libobjs $deplibs $compiler_flags ${wl}-bE:$export_symbols ${wl}-bnoentry${allow_undefined_flag}~$AR $AR_FLAGS $output_objdir/$libname$release.a $output_objdir/$soname'
 	fi
       fi

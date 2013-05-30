@@ -1,7 +1,7 @@
 /*                 LocalUnits.h
  * BRL-CAD
  *
- * Copyright (c) 1994-2012 United States Government as represented by
+ * Copyright (c) 1994-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -26,13 +26,14 @@
 #ifndef LOCALUNITS_H_
 #define LOCALUNITS_H_
 
-class LocalUnits {
+class LocalUnits
+{
 public:
-	static double length;
-	static double planeangle;
-	static double solidangle;
-	LocalUnits();
-	virtual ~LocalUnits();
+    static double length;
+    static double planeangle;
+    static double solidangle;
+    LocalUnits();
+    virtual ~LocalUnits();
 };
 
 #endif /* LOCALUNITS_H_ */

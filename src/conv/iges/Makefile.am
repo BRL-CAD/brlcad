@@ -5,9 +5,8 @@ IGES_FLAGS = -g $(OPENNURBS_CPPFLAGS) $(TNT_CPPFLAGS)
 bin_PROGRAMS = iges-g g-iges
 EXTRA_PROGRAMS = iges
 
+AM_CFLAGS = ${STD_C99_FLAGS} ${TCL_CPPFLAGS} ${IGES_FLAGS}
 AM_CPPFLAGS = ${TCL_CPPFLAGS} ${IGES_FLAGS}
-
-man_MANS = g-iges.1 iges-g.1
 
 noinst_HEADERS = \
 	PullbackCurve.h \

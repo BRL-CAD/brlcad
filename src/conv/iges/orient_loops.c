@@ -1,7 +1,7 @@
 /*                  O R I E N T _ L O O P S . C
  * BRL-CAD
  *
- * Copyright (c) 1994-2012 United States Government as represented by
+ * Copyright (c) 1994-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -48,15 +48,13 @@ Find_inner_loops(struct faceuse *fu, struct loop_list *lptr)
 	if (nmg_classify_lu_lu(lu, lptr->lu, &tol) == NMG_CLASS_AinB) {
 
 	    if (lptr->inner_loops == (struct loop_list *)NULL) {
-		lptr->inner_loops = (struct loop_list *)bu_malloc(sizeof(struct loop_list),
-								  "Find_inner_loops: lptr->inner_loops");
+		BU_ALLOC(lptr->inner_loops, struct loop_list);
 		inner = lptr->inner_loops;
 	    } else {
 		inner = lptr->inner_loops;
 		while (inner->next != (struct loop_list *)NULL)
 		    inner = inner->next;
-		inner->next = (struct loop_list *)bu_malloc(sizeof(struct loop_list),
-							    "Find_inner_loops: inner->next");
+		BU_ALLOC(inner->next, struct loop_list);
 		inner = inner->next;
 	    }
 	    inner->next = (struct loop_list *)NULL;
@@ -152,7 +150,7 @@ Orient_face_loops(fu)
 	}
     }
 
-    loop_root = (struct loop_list *)bu_malloc(sizeof(struct loop_list), "Orient_face_loops: loop_root");
+    BU_ALLOC(loop_root, struct loop_list);
     loop_root->lu = lu_outer;
     loop_root->next = (struct loop_list *)NULL;
     loop_root->inner_loops = (struct loop_list *)NULL;
@@ -230,7 +228,7 @@ Orient_nurb_face_loops(fu)
 
 	/* if area is in +Z-direction loop encloses area counter-clockwise
 	 * and must be OT_SAME. if area is in -Z-direction, loop encloses
-	 * area in clockwise direction nad must be OT_OPPOOSITE
+	 * area in clockwise direction and must be OT_OPPOOSITE
 	 */
 	if ((loop_uv_orient == OT_SAME && !flipped) ||
 	    (loop_uv_orient == OT_OPPOSITE && flipped)) {

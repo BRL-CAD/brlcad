@@ -1,8 +1,9 @@
 /* $NoKeywords: $ */
 /*
 //
-// Copyright (c) 1993-2007 Robert McNeel & Associates. All rights reserved.
-// Rhinoceros is a registered trademark of Robert McNeel & Assoicates.
+// Copyright (c) 1993-2012 Robert McNeel & Associates. All rights reserved.
+// OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
+// McNeel & Associates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
@@ -126,6 +127,8 @@ public:
   // index operators mimic float[2] behavior
   float& operator[](int);
   float operator[](int) const;
+  float& operator[](unsigned int);
+  float operator[](unsigned int) const;
 
   // set 2d point value
   void Set(float,float);
@@ -257,6 +260,8 @@ public:
   // index operators mimic float[3] behavior
   float& operator[](int);
   float operator[](int) const;
+  float& operator[](unsigned int);
+  float operator[](unsigned int) const;
 
   // set 3d point value
   void Set(float,float,float);
@@ -362,6 +367,8 @@ public:
   // index operators mimic float[4] behavior
   float& operator[](int);
   float operator[](int) const;
+  float& operator[](unsigned int);
+  float operator[](unsigned int) const;
 
   // set 4d point value
   void Set(float,float,float,float);
@@ -490,6 +497,8 @@ public:
   // index operators mimic float[2] behavior
   float& operator[](int);
   float operator[](int) const;
+  float& operator[](unsigned int);
+  float operator[](unsigned int) const;
 
   // set 2d vector value
   void Set(float,float);
@@ -596,7 +605,7 @@ ON_CrossProduct(
 
 ON_DECL
 bool 
-ON_IsOrthogonalFrame( // true if X, Y are nonzero and mutually perpindicular
+ON_IsOrthogonalFrame( // true if X, Y are nonzero and mutually perpendicular
     const ON_2fVector&, // X
     const ON_2fVector&  // Y
     );
@@ -725,6 +734,8 @@ public:
   // index operators mimic float[3] behavior
   float& operator[](int);
   float operator[](int) const;
+  float& operator[](unsigned int);
+  float operator[](unsigned int) const;
 
   // set 3d vector value
   void Set(float,float,float);
@@ -846,7 +857,7 @@ ON_TripleProduct(  // 3d triple product for old fashioned arrays
 
 ON_DECL
 bool 
-ON_IsOrthogonalFrame( // true if X, Y, Z are nonzero and mutually perpindicular
+ON_IsOrthogonalFrame( // true if X, Y, Z are nonzero and mutually perpendicular
     const ON_3fVector&, // X
     const ON_3fVector&, // Y
     const ON_3fVector&  // Z 

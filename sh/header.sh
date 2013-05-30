@@ -2,7 +2,7 @@
 #                       H E A D E R . S H
 # BRL-CAD
 #
-# Copyright (c) 2004-2012 United States Government as represented by
+# Copyright (c) 2004-2013 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -126,8 +126,8 @@ fi
 ########################
 # figure out file type #
 ########################
-# wrap is whether or not in needs to be incased in /* */
-# commentprefix is the comment character to prefex each line
+# wrap is whether or not it needs to be encased in /* */
+# commentprefix is the comment character to prefix each line
 ###
 case $FILE in
     *.sh )
@@ -393,24 +393,24 @@ $c"
 
 if [ "x$COPY" = "x" ] ; then
     if [ "x$LICE" = "xPD" ] ; then
-        block="${block}
+	block="${block}
 $c Published in $copyright by the United States Government.
 $c This work is in the public domain.
 $c"
     else
-        block="${block}
+	block="${block}
 $c Copyright (c) $copyright United States Government as represented by
 $c the U.S. Army Research Laboratory.
 $c"
     fi
 else
     if [ "x$LICE" = "xPD" ] ; then
-        block="${block}
+	block="${block}
 $c Published in $copyright by $COPY
 $c This work is in the public domain.
 $c"
     else
-        block="${block}
+	block="${block}
 $c Copyright (c) $copyright $COPY
 $c"
     fi
@@ -452,7 +452,7 @@ $c SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
     xBDL)
 	block="${block}
 $c Redistribution and use in source (Docbook format) and 'compiled'
-$c forms (PDF, PostScript, HTML, RTF, etc), with or without
+$c forms (PDF, PostScript, HTML, RTF, etc.), with or without
 $c modification, are permitted provided that the following conditions
 $c are met:
 $c
@@ -501,6 +501,8 @@ $c information.
 "
 	;;
     xPD)
+	block="${block}
+"
 	echo "Public domain specified, no license applies."
 	;;
     *)

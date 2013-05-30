@@ -1,7 +1,7 @@
 /*                           T I E . H
  * BRL-CAD
  *
- * Copyright (c) 2008-2012 United States Government as represented by
+ * Copyright (c) 2008-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -128,7 +128,7 @@ RT_EXPORT extern void TIE_VAL(tie_kdtree_free)(struct tie_s *tie);
 RT_EXPORT extern void TIE_VAL(tie_kdtree_prep)(struct tie_s *tie);
 RT_EXPORT extern fastf_t TIE_PREC;
 
-/* compatability macros */
+/* compatibility macros */
 #define tie_kdtree_free TIE_VAL(tie_kdtree_free)
 #define tie_kdtree_prep TIE_VAL(tie_kdtree_prep)
 

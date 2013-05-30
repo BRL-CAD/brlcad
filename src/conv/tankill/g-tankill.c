@@ -1,7 +1,7 @@
 /*                     G - T A N K I L L . C
  * BRL-CAD
  *
- * Copyright (c) 1993-2012 United States Government as represented by
+ * Copyright (c) 1993-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -48,9 +48,9 @@ static const char usage[] = "Usage:\n\
 		v - verbose\n\
 		x - librt debug level\n\
 		X - NMG debug level\n\
-		a - absolute tolerance for tesselation\n\
-		r - relative tolerance for tesselation\n\
-		n - surface normal tolerance for tesselation\n\
+		a - absolute tolerance for tessellation\n\
+		r - relative tolerance for tessellation\n\
+		n - surface normal tolerance for tessellation\n\
 		s - surroundings code to use in tankill file\n\
 		i - assign new idents sequentially and output ident list\n\
 		o - TANKILL output file\n";
@@ -472,10 +472,10 @@ main(int argc, char **argv)
     }
 
     /* Open BRL-CAD database */
-    if ((dbip = db_open( argv[bu_optind], "r")) == DBI_NULL)
+    if ((dbip = db_open(argv[bu_optind], DB_OPEN_READONLY)) == DBI_NULL)
     {
 	perror(argv[0]);
-	bu_exit(1, "Cannot open %s\n", argv[bu_optind] );
+	bu_exit(1, "Cannot open geometry database file %s\n", argv[bu_optind] );
     }
     if ( db_dirbuild( dbip ) ) {
 	bu_exit(1, "db_dirbuild failed\n" );
@@ -743,7 +743,7 @@ union tree *do_region_end(struct db_tree_state *tsp, const struct db_full_path *
      */
     db_free_tree(curtree, &rt_uniresource);		/* Does an nmg_kr() */
 
-    BU_GET(curtree, union tree);
+    BU_ALLOC(curtree, union tree);
     RT_TREE_INIT(curtree);
     curtree->tr_op = OP_NOP;
     return curtree;

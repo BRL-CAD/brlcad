@@ -1,7 +1,7 @@
 /*                 B O T _ S H E L L - V T K . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2012 United States Government as represented by
+ * Copyright (c) 2004-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -34,7 +34,7 @@
  *
  * The "-m" option specifies that triangles that are first or last on
  * each ray should be included in the output. This can improve
- * performance, but can also degrade performance considerabley. With
+ * performance, but can also degrade performance considerably. With
  * the "-m" option, "onehit" processing is turned off.
  *
  * If a "-g" option is provided, then rays are shot from a uniform
@@ -77,8 +77,7 @@ static long max_faces = 0;
 static long num_faces = 0;
 #define FACES_BLOCK	512
 
-static char *usage = "Usage:\n\
-	%s [-m] [-n] [-d debug_level] [-g cell_size] -o vtk_polydata_output_file database.g object1 object2...\n";
+static char *usage = "Usage: %s [-m] [-n] [-d debug_level] [-g cell_size] -o vtk_polydata_output_file database.g object1 object2...\n";
 
 /* routine to replace default overlap handler.
  * overlaps are irrelevant to this application
@@ -396,7 +395,7 @@ main(int argc, char *argv[])
     /* Get command line arguments. */
     memset(&ap, 0, sizeof(struct application));
     ap.a_onehit = 1;
-    while ((c=bu_getopt(argc, argv, "nmd:g:o:")) != -1) {
+    while ((c=bu_getopt(argc, argv, "nmd:g:o:h?")) != -1) {
 	switch (c) {
 	    case 'd':	/* debug level */
 		debug = atoi(bu_optarg);
@@ -416,6 +415,8 @@ main(int argc, char *argv[])
 	    case 'n':	/* include normals in the VTK data */
 		use_normals = 1;
 		break;
+	    default:
+		bu_exit(1, usage, argv[0]);
 	}
     }
 
@@ -437,7 +438,7 @@ main(int argc, char *argv[])
     database_index = bu_optind;
     if ((rtip=rt_dirbuild(argv[bu_optind], idbuf, sizeof(idbuf))) == RTI_NULL)
     {
-	bu_exit(1, "rt_durbuild FAILED on %s\n", argv[bu_optind]);
+	bu_exit(1, "rt_dirbuild FAILED on %s\n", argv[bu_optind]);
     }
 
     rtip->rti_space_partition = RT_PART_NUBSPT;

@@ -98,6 +98,7 @@ extern SCL_EXPRESS_EXPORT char DICT_type;  /**< set as a side-effect of DICT loo
 /***********************/
 
 extern SCL_EXPRESS_EXPORT void     DICTinitialize PROTO( ( void ) );
+extern SCL_EXPRESS_EXPORT void     DICTcleanup PROTO( ( void ) );
 extern SCL_EXPRESS_EXPORT int      DICTdefine PROTO( ( Dictionary, char *, Generic, Symbol *, char ) );
 extern SCL_EXPRESS_EXPORT int      DICT_define PROTO( ( Dictionary, char *, Generic, Symbol *, char ) );
 extern SCL_EXPRESS_EXPORT void     DICTundefine PROTO( ( Dictionary, char * ) );

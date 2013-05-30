@@ -1,7 +1,7 @@
 /*                      N M G _ B O O L . C
  * BRL-CAD
  *
- * Copyright (c) 1993-2012 United States Government as represented by
+ * Copyright (c) 1993-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -42,6 +42,7 @@
 #include "vmath.h"
 #include "nmg.h"
 #include "raytrace.h"
+#include "plot3.h"
 
 
 extern int nmg_class_nothing_broken;
@@ -55,6 +56,99 @@ struct dangling_faceuse_state {
 
 
 int debug_file_count=0;
+
+
+/**
+ * N M G _ P L O T _ O P E N _ E D G E S
+ *
+ * Find open edges, if any, in NMG object pointed to by magic_p and
+ * create a UNIX plot file containing these edges.
+ *
+ * The prefix string will be appended to the front of the file name
+ * of the plot file.
+ *
+ * Returns -
+ * 0  No open edges, no plot file created.
+ * !0 Has open edges, plot file created.
+ */
+size_t
+nmg_plot_open_edges(const uint32_t *magic_p, const char *prefix)
+{
+    struct loopuse *lu;
+    struct edgeuse *eu;
+    const struct edgeuse *eur;
+    struct faceuse *newfu;
+    struct bu_ptbl faces;
+    struct face *fp;
+    struct faceuse *fu, *fu1, *fu2;
+    int done;
+    const char *manifolds = NULL;
+    point_t pt1, pt2;
+    size_t i;
+    FILE *plotfp = NULL;
+    struct bu_vls plot_file_name = BU_VLS_INIT_ZERO;
+    size_t cnt;
+
+    bu_ptbl_init(&faces, 64, "faces buffer");
+    nmg_face_tabulate(&faces, magic_p);
+
+    cnt = 0;
+    for (i = 0; i < (size_t)BU_PTBL_END(&faces) ; i++) {
+	fp = (struct face *)BU_PTBL_GET(&faces, i);
+	NMG_CK_FACE(fp);
+	fu = fu1 = fp->fu_p;
+	NMG_CK_FACEUSE(fu1);
+	fu2 = fp->fu_p->fumate_p;
+	NMG_CK_FACEUSE(fu2);
+	done = 0;
+	while (!done) {
+	    NMG_CK_FACEUSE(fu);
+	    for (BU_LIST_FOR(lu, loopuse, &fu->lu_hd)) {
+		NMG_CK_LOOPUSE(lu);
+		if (BU_LIST_FIRST_MAGIC(&lu->down_hd) == NMG_EDGEUSE_MAGIC) {
+		    for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
+			NMG_CK_EDGEUSE(eu);
+			eur = nmg_radial_face_edge_in_shell(eu);
+			newfu = eur->up.lu_p->up.fu_p;
+			while (manifolds &&
+			       NMG_MANIFOLDS(manifolds, newfu) &
+			       NMG_2MANIFOLD &&
+			       eur != eu->eumate_p) {
+			    eur = nmg_radial_face_edge_in_shell(eur->eumate_p);
+			    newfu = eur->up.lu_p->up.fu_p;
+			}
+			if (eur == eu->eumate_p) {
+			    VMOVE(pt1, eu->vu_p->v_p->vg_p->coord);
+			    VMOVE(pt2, eu->eumate_p->vu_p->v_p->vg_p->coord);
+			    if (!plotfp) {
+				bu_vls_sprintf(&plot_file_name, "%s.%zu.pl", prefix, magic_p);
+				if ((plotfp = fopen(bu_vls_addr(&plot_file_name), "wb")) == (FILE *)NULL) {
+				    bu_log("nmg_plot_open_edges(): Unable to create plot file (%s)\n", bu_vls_addr(&plot_file_name));
+				    bu_bomb("nmg_plot_open_edges(): Unable to create plot file.");
+				}
+			    }
+			    pdv_3line(plotfp, pt1, pt2);
+			    cnt++;
+			}
+		    }
+		}
+	    }
+	    if (fu == fu1) fu = fu2;
+	    if (fu == fu2) done = 1;
+	};
+
+    }
+
+    if (plotfp) {
+	(void)fclose(plotfp);
+	bu_vls_free(&plot_file_name);
+    }
+
+    bu_ptbl_free(&faces);
+
+    return cnt;
+}
+
 
 static void
 nmg_dangling_handler(uint32_t *longp, genptr_t state, int UNUSED(unused))
@@ -565,10 +659,11 @@ static struct shell * nmg_bool(struct shell *sA, struct shell *sB, const int ope
 	bu_bomb("nmg_bool(): internal error, both shells are not in the same nmg model\n");
     }
 
-    /* for the simple case where shells sA and sB do not overlap, we
-     * can skip most of the steps to perform the boolean operation
+    /* for the simple case where shells sA and sB are disjoint by at
+     * least distance tolerance, we can skip most of the steps to
+     * perform the boolean operation
      */
-    if (!V3RPP_OVERLAP_TOL(sA->sa_p->min_pt, sA->sa_p->max_pt,
+    if (V3RPP_DISJOINT_TOL(sA->sa_p->min_pt, sA->sa_p->max_pt,
 			   sB->sa_p->min_pt, sB->sa_p->max_pt, tol->dist)) {
 	switch (oper) {
 	    case NMG_BOOL_ADD: {
@@ -631,7 +726,7 @@ static struct shell * nmg_bool(struct shell *sA, struct shell *sB, const int ope
 
     debug_file_count++;
     if (rt_g.NMG_debug & DEBUG_VERIFY) {
-	/* Sometimes the tessllations of non-participating regions
+	/* Sometimes the tessellations of non-participating regions
 	 * are damaged during a boolean operation.  Check everything.
 	 */
 	nmg_vmodel(m);
@@ -691,7 +786,7 @@ static struct shell * nmg_bool(struct shell *sA, struct shell *sB, const int ope
     }
 
     if (rt_g.NMG_debug & DEBUG_VERIFY) {
-	/* Sometimes the tessllations of non-participating regions
+	/* Sometimes the tessellations of non-participating regions
 	 * are damaged during a boolean operation.  Check everything.
 	 */
 	nmg_vmodel(m);
@@ -716,24 +811,10 @@ static struct shell * nmg_bool(struct shell *sA, struct shell *sB, const int ope
 	nmg_pr_s_briefly(sB, 0);
     }
 
-    (void)nmg_model_vertex_fuse(m, tol);
+    (void)nmg_vertex_fuse(&m->magic, tol);
 
     (void)nmg_kill_anti_loops(sA);
     (void)nmg_kill_anti_loops(sB);
-
-    nmg_m_reindex(m, 0);
-
-    /* Allocate storage for classlist[]. Allocate each of the 8 class
-     * lists one at a time. This will assist with debugging to
-     * determine if each array read/write is within its allocated space.
-     */
-
-    nelem = m->maxindex;
-    for (i = 0; i < 8; i++) {
-	classlist[i] = (char *)bu_calloc(nelem, sizeof(char), "nmg_bool classlist");
-    }
-
-    nmg_classify_shared_edges_verts(sA, sB, classlist);
 
     /* clean things up now that the intersections have been built */
     nmg_sanitize_s_lv(sA, OT_BOOLPLACE);
@@ -752,16 +833,16 @@ static struct shell * nmg_bool(struct shell *sA, struct shell *sB, const int ope
     (void)nmg_kill_cracks(sA);
     (void)nmg_kill_cracks(sB);
 
-    /* eliminate unecessary breaks in edges */
+    /* eliminate unnecessary breaks in edges */
     (void)nmg_simplify_shell_edges(sA, tol);
     (void)nmg_simplify_shell_edges(sB, tol);
 
-    (void)nmg_model_break_e_on_v(m, tol);
+    (void)nmg_break_e_on_v(&m->magic, tol);
 
-    (void)nmg_model_edge_fuse(m, tol);
+    (void)nmg_edge_fuse(&m->magic, tol);
 
     if (rt_g.NMG_debug & DEBUG_VERIFY) {
-	/* Sometimes the tessllations of non-participating regions
+	/* Sometimes the tessellations of non-participating regions
 	 * are damaged during a boolean operation.  Check everything.
 	 */
 	nmg_vmodel(m);
@@ -792,7 +873,7 @@ static struct shell * nmg_bool(struct shell *sA, struct shell *sB, const int ope
     }
 
     if (rt_g.NMG_debug & DEBUG_VERIFY) {
-	/* Sometimes the tessllations of non-participating regions
+	/* Sometimes the tessellations of non-participating regions
 	 * are damaged during a boolean operation.  Check everything.
 	 */
 	nmg_vmodel(m);
@@ -856,11 +937,24 @@ static struct shell * nmg_bool(struct shell *sA, struct shell *sB, const int ope
 	bu_log("nmg_bool() WARNING: sB unclosed before classification.  Boldly pressing on.\n");
 
     if (rt_g.NMG_debug & DEBUG_VERIFY) {
-	/* Sometimes the tessllations of non-participating regions
+	/* Sometimes the tessellations of non-participating regions
 	 * are damaged during a boolean operation.  Check everything.
 	 */
 	nmg_vmodel(m);
     }
+
+    nmg_m_reindex(m, 0);
+
+    /* Allocate storage for classlist[]. Allocate each of the 8 class
+     * lists one at a time. This will assist with debugging to
+     * determine if each array read/write is within its allocated space.
+     */
+    nelem = m->maxindex;
+    for (i = 0; i < 8; i++) {
+	classlist[i] = (char *)bu_calloc(nelem, sizeof(char), "nmg_bool classlist");
+    }
+
+    nmg_classify_shared_edges_verts(sA, sB, classlist);
 
     nmg_class_nothing_broken = 1;
     if (rt_g.NMG_debug & (DEBUG_GRAPHCL|DEBUG_PL_LOOP)) {
@@ -966,6 +1060,7 @@ static struct shell * nmg_bool(struct shell *sA, struct shell *sB, const int ope
 	    }
 	} else {
 	    if (nmg_has_dangling_faces((uint32_t *)rA, (char *)NULL)) {
+		(void)nmg_plot_open_edges((const uint32_t *)rA, "open_edges");
 		bu_bomb("nmg_bool(): Dangling faces detected in rA after boolean\n");
 	    }
 	}
@@ -1018,7 +1113,7 @@ static struct shell * nmg_bool(struct shell *sA, struct shell *sB, const int ope
 	bu_log("Returning from NMG_BOOL\n");
     }
     if (rt_g.NMG_debug & DEBUG_VERIFY) {
-	/* Sometimes the tessllations of non-participating regions
+	/* Sometimes the tessellations of non-participating regions
 	 * are damaged during a boolean operation.  Check everything.
 	 */
 	nmg_vmodel(m);
@@ -1199,7 +1294,7 @@ int nmg_bool_eval_silent=0;
 /**
  * N M G _ B O O L T R E E _ E V A L U A T E
  *
- * Given a tree of leaf nodes tesselated earlier by
+ * Given a tree of leaf nodes tessellated earlier by
  * nmg_booltree_leaf_tess(), use recursion to do a depth-first
  * traversal of the tree, evaluating each pair of boolean operations
  * and reducing that result to a single nmgregion.

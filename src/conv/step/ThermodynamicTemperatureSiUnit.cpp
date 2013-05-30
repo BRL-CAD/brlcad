@@ -1,7 +1,7 @@
 /*                 ThermodynamicTemperatureSiUnit.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2012 United States Government as represented by
+ * Copyright (c) 1994-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -31,33 +31,37 @@
 
 #define CLASSNAME "ThermodynamicTemperatureSiUnit"
 #define ENTITYNAME "Thermodynamic_Temperature_Si_Unit"
-string ThermodynamicTemperatureSiUnit::entityname = Factory::RegisterClass(ENTITYNAME,(FactoryMethod)ThermodynamicTemperatureSiUnit::Create);
+string ThermodynamicTemperatureSiUnit::entityname = Factory::RegisterClass(ENTITYNAME, (FactoryMethod)ThermodynamicTemperatureSiUnit::Create);
 
-ThermodynamicTemperatureSiUnit::ThermodynamicTemperatureSiUnit() {
+ThermodynamicTemperatureSiUnit::ThermodynamicTemperatureSiUnit()
+{
     step = NULL;
     id = 0;
 }
 
-ThermodynamicTemperatureSiUnit::ThermodynamicTemperatureSiUnit(STEPWrapper *sw,int step_id) {
+ThermodynamicTemperatureSiUnit::ThermodynamicTemperatureSiUnit(STEPWrapper *sw, int step_id)
+{
     step = sw;
     id = step_id;
 }
 
-ThermodynamicTemperatureSiUnit::~ThermodynamicTemperatureSiUnit() {
+ThermodynamicTemperatureSiUnit::~ThermodynamicTemperatureSiUnit()
+{
 }
 
 bool
-ThermodynamicTemperatureSiUnit::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
-    step=sw;
+ThermodynamicTemperatureSiUnit::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
+    step = sw;
     id = sse->STEPfile_id;
 
 
     // load base class attributes
-    if ( !ThermodynamicTemperatureUnit::Load(step,sse) ) {
+    if (!ThermodynamicTemperatureUnit::Load(step, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::Unit." << std::endl;
 	return false;
     }
-    if ( !SiUnit::Load(step,sse) ) {
+    if (!SiUnit::Load(step, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::Unit." << std::endl;
 	return false;
     }
@@ -66,32 +70,29 @@ ThermodynamicTemperatureSiUnit::Load(STEPWrapper *sw,SDAI_Application_instance *
 }
 
 void
-ThermodynamicTemperatureSiUnit::Print(int level) {
-    TAB(level); std::cout << CLASSNAME << ":" << "(";
+ThermodynamicTemperatureSiUnit::Print(int level)
+{
+    TAB(level);
+    std::cout << CLASSNAME << ":" << "(";
     std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-    TAB(level); std::cout << "Inherited Attributes:" << std::endl;
-    ThermodynamicTemperatureUnit::Print(level+1);
-    SiUnit::Print(level+1);
+    TAB(level);
+    std::cout << "Inherited Attributes:" << std::endl;
+    ThermodynamicTemperatureUnit::Print(level + 1);
+    SiUnit::Print(level + 1);
 
 }
+
 STEPEntity *
-ThermodynamicTemperatureSiUnit::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
-    Factory::OBJECTS::iterator i;
-    if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
-	ThermodynamicTemperatureSiUnit *object = new ThermodynamicTemperatureSiUnit(sw,sse->STEPfile_id);
+ThermodynamicTemperatureSiUnit::GetInstance(STEPWrapper *sw, int id)
+{
+    return new ThermodynamicTemperatureSiUnit(sw, id);
+}
 
-	Factory::AddObject(object);
-
-	if (!object->Load(sw, sse)) {
-	    std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
-	    delete object;
-	    return NULL;
-	}
-	return static_cast<STEPEntity *>(object);
-    } else {
-	return (*i).second;
-    }
+STEPEntity *
+ThermodynamicTemperatureSiUnit::Create(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
+    return STEPEntity::CreateEntity(sw, sse, GetInstance, CLASSNAME);
 }
 
 // Local Variables:

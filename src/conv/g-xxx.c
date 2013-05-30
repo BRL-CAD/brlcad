@@ -1,7 +1,7 @@
 /*                         G - X X X . C
  * BRL-CAD
  *
- * Copyright (c) 1993-2012 United States Government as represented by
+ * Copyright (c) 1993-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -156,7 +156,7 @@ main(int argc, char *argv[])
  *      R E G I O N _ S T A R T
  *
  * @brief This routine is called when a region is first encountered in the
- * heirarchy when processing a tree
+ * hierarchy when processing a tree
  *
  *      @param tsp tree state (for parsing the tree)
  *      @param pathp A listing of all the nodes traversed to get to this node in the database
@@ -208,7 +208,7 @@ region_start(struct db_tree_state *tsp,
  *      @param curtree
  *
  *      @return TREE_NULL if data in curtree was "stolen", otherwise db_walk_tree will
- *      clean up the dta in the union tree * that is returned
+ *      clean up the data in the union tree * that is returned
  *
  * If it wants to retain the data in curtree it can by returning TREE_NULL.  Otherwise
  * db_walk_tree will clean up the data in the union tree * that is returned.

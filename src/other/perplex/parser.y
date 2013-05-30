@@ -39,6 +39,7 @@
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include "perplex.h"
 #include "token_type.h"
 
@@ -209,7 +210,7 @@ rule ::= empty_condition opt_special opt_code.
 opt_condition ::= /* empty */. [TOKEN_WORD]
 {
     if (appData->conditions) {
-	fprintf(appData->out, appData->conditions);
+	fprintf(appData->out, "%s", appData->conditions);
     }
 }
 opt_condition ::= TOKEN_CONDITION(C). [TOKEN_WORD]

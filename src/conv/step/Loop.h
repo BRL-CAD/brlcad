@@ -1,7 +1,7 @@
 /*                 Loop.h
  * BRL-CAD
  *
- * Copyright (c) 1994-2012 United States Government as represented by
+ * Copyright (c) 1994-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -32,25 +32,29 @@
 class ON_BoundingBox;
 class ON_Brep;
 
-class Loop : public TopologicalRepresentationItem {
+class Loop : public TopologicalRepresentationItem
+{
 private:
-	static string entityname;
+    static string entityname;
+    static EntityInstanceFunc GetInstance;
 
 protected:
-	int ON_loop_index;
+    int ON_loop_index;
 
 public:
-	Loop();
-	virtual ~Loop();
-	Loop(STEPWrapper *sw,int step_id);
-	virtual ON_BoundingBox *GetEdgeBounds(ON_Brep *brep);
-	bool Load(STEPWrapper *sw,SDAI_Application_instance *sse);
-	virtual bool LoadONBrep(ON_Brep *brep);
-	virtual void Print(int level);
-	void SetLoopIndex(int index) { ON_loop_index = index; };
+    Loop();
+    virtual ~Loop();
+    Loop(STEPWrapper *sw, int step_id);
+    virtual ON_BoundingBox *GetEdgeBounds(ON_Brep *brep);
+    bool Load(STEPWrapper *sw, SDAI_Application_instance *sse);
+    virtual bool LoadONBrep(ON_Brep *brep);
+    virtual void Print(int level);
+    void SetLoopIndex(int index) {
+	ON_loop_index = index;
+    };
 
-	//static methods
-	static STEPEntity *Create(STEPWrapper *sw,SDAI_Application_instance *sse);
+    //static methods
+    static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
 #endif /* LOOP_H_ */

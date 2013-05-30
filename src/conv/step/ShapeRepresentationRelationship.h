@@ -1,7 +1,7 @@
 /*                 ShapeRepresentationRelationship.h
  * BRL-CAD
  *
- * Copyright (c) 1994-2012 United States Government as represented by
+ * Copyright (c) 1994-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -35,9 +35,11 @@
 // forward declaration of class
 class ON_Brep;
 
-class ShapeRepresentationRelationship: public RepresentationRelationship {
+class ShapeRepresentationRelationship: public RepresentationRelationship
+{
 private:
     static string entityname;
+    static EntityInstanceFunc GetInstance;
 
 protected:
 

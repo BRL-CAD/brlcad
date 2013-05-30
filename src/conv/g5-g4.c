@@ -1,7 +1,7 @@
 /*                          G 5 - G 4 . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2012 United States Government as represented by
+ * Copyright (c) 2004-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -77,7 +77,7 @@ main(int argc, char **argv)
 	return 1;
     }
 
-    if ( (dbip = db_open( argv[1], "r" )) == DBI_NULL )  {
+    if ( (dbip = db_open(argv[1], DB_OPEN_READONLY)) == DBI_NULL )  {
 	perror( argv[1] );
 	return 2;
     }

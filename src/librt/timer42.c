@@ -1,7 +1,7 @@
 /*                       T I M E R 4 2 . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2012 United States Government as represented by
+ * Copyright (c) 1985-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -16,13 +16,6 @@
  * You should have received a copy of the GNU Lesser General Public
  * License along with this file; see the file named COPYING for more
  * information.
- */
-/** @addtogroup timer */
-/** @{ */
-/** @file librt/timer42.c
- *
- * To provide timing information for RT when running on 4.2 BSD UNIX.
- *
  */
 
 #include "common.h"
@@ -41,7 +34,7 @@
 #include "vmath.h"
 #include "raytrace.h"
 
-static struct timeval time0;	/* Time at which timeing started */
+static struct timeval time0;	/* Time at which timing started */
 static struct rusage ru0;	/* Resource utilization at the start */
 static struct rusage ru0c;	/* Resource utilization at the start */
 
@@ -50,9 +43,6 @@ static void tvsub(struct timeval *tdiff, struct timeval *t1, struct timeval *t0)
 static void psecs(long int l, struct bu_vls *vp);
 
 
-/**
- *
- */
 void
 rt_prep_timer(void)
 {
@@ -62,12 +52,6 @@ rt_prep_timer(void)
 }
 
 
-/**
- * Reports on the passage of time, since rt_prep_timer() was called.
- * Explicit return is number of CPU seconds.  String return is
- * descriptive.  If "elapsed" pointer is non-null, number of elapsed
- * seconds are returned.  Times returned will never be zero.
- */
 double
 rt_get_timer(struct bu_vls *vp, double *elapsed)
 {
@@ -222,14 +206,11 @@ psecs(long int l, struct bu_vls *vp)
 	i = l;
 	bu_vls_printf(vp, "%d", i / 60);
     }
-    i = i % 60; /* GSM: bug in Alliant CE optimization prohibits "%=" here */
+    i = i % 60;
     bu_vls_printf(vp, ":%d%d", i / 10, i % 10);
 }
 
 
-/**
- * Compatability routine
- */
 double
 rt_read_timer(char *str, int len)
 {
@@ -251,7 +232,6 @@ rt_read_timer(char *str, int len)
 }
 
 
-/** @} */
 /*
  * Local Variables:
  * mode: C

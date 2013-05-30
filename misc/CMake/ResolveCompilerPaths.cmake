@@ -1,23 +1,23 @@
 #=============================================================================
 # Copyright 2008 Jed Brown
 # All rights reserved.
-# 
+#
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
 # are met:
-#  
+#
 # * Redistributions of source code must retain the above copyright
 #   notice, this list of conditions and the following disclaimer.
-# 
+#
 # * Redistributions in binary form must reproduce the above copyright
 #   notice, this list of conditions and the following disclaimer in the
 #   documentation and/or other materials provided with the distribution.
-# 
+#
 # * Neither the names of Kitware, Inc., the Insight Software Consortium,
-#   Jed Brown, nor the names of their contributors may be used to endorse 
-#   or promote products derived from this software without specific prior 
+#   Jed Brown, nor the names of their contributors may be used to endorse
+#   or promote products derived from this software without specific prior
 #   written permission.
-# 
+#
 # THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 # "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 # LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -103,7 +103,7 @@ macro (RESOLVE_LIBRARIES LIBS LINK_LINE)
     endif (token MATCHES "-L([^\" ]+|\"[^\"]+\")")
   endforeach (token)
   set (_lib "NOTFOUND" CACHE INTERNAL "Scratch variable" FORCE)
-  # only the LAST occurence of each library is required since there should be no circular dependencies
+  # only the LAST occurrence of each library is required since there should be no circular dependencies
   if (_libs_found)
     list (REVERSE _libs_found)
     list (REMOVE_DUPLICATES _libs_found)

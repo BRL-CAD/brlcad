@@ -1,7 +1,7 @@
 /*                         E N F - G . C
  * BRL-CAD
  *
- * Copyright (c) 2001-2012 United States Government as represented by
+ * Copyright (c) 2001-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -276,7 +276,7 @@ Make_brlcad_names( struct obj_info *part )
 	    tmp_name = bu_strdup( part->obj_name );
 	    ptr = tmp_name;
 	    while ( *ptr != '\0' ) {
-		if ( !(isalnum( *ptr ) || *ptr == '-')) {
+		if ( !(isalnum( (int)*ptr ) || *ptr == '-')) {
 		    *ptr = '_';
 		}
 		ptr++;
@@ -390,7 +390,7 @@ Part_import( int id_start )
 
     VSETALL( rgb, 128 );
 
-    part = (struct obj_info *)bu_calloc( 1, sizeof( struct obj_info ), "part" );
+    BU_ALLOC(part, struct obj_info);
     part->obj_type = PART_TYPE;
     part->obj_id = id_start;
     while ( bu_fgets( line, MAX_LINE_SIZE, fd_in ) ) {
@@ -436,7 +436,7 @@ Part_import( int id_start )
 	    }
 	} else if ( !bu_strncmp( line, "TriangleCount", 13 ) ) {
 	    /* get number of triangles for this surface */
-	} else if ( !bu_strncmp( line, "Verticies", 9 ) ) {
+	} else if ( !bu_strncmp( line, "Vertices", 9 ) ) {
 	    /* get vertex list for this triangle */
 	} else if ( !bu_strncmp( line, "Vertex", 6 ) ) {
 	    /* get a vertex */
@@ -444,7 +444,7 @@ Part_import( int id_start )
 	    vect_t v = VINIT_ZERO;
 
 	    i = 7;
-	    while ( !isspace( line[i] ) && line[i] != '\0' )
+	    while ( !isspace( (int)line[i] ) && line[i] != '\0' )
 		i++;
 	    ptr = strtok( &line[i], " \t" );
 	    for ( i=0; i<3 && ptr; i++ ) {
@@ -521,8 +521,8 @@ Assembly_import( int id_start )
     int id_end, member_id;
     size_t i;
 
-    this_assem = (struct obj_info *)bu_calloc( 1, sizeof( struct obj_info ),
-					       "this_assem" );
+    BU_ALLOC(this_assem, struct obj_info);
+
     this_assem->obj_type = ASSEMBLY_TYPE;
     this_assem->obj_id = id_start;
     this_assem->part_count = 0;

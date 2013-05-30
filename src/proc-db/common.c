@@ -1,7 +1,7 @@
 /*                        C O M M O N . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2012 United States Government as represented by
+ * Copyright (c) 2004-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -66,12 +66,13 @@ void
 get_rgb(unsigned char *rgb)
 {
     struct colors *cp;
-    if (++curcolor >= ncolors)  curcolor = 0;
+    if (++curcolor >= ncolors) curcolor = 0;
     cp = &colortab[curcolor];
     rgb[0] = cp->c_pixel[0];
     rgb[1] = cp->c_pixel[1];
     rgb[2] = cp->c_pixel[2];
 }
+
 
 void
 do_light(char *name, fastf_t *pos, fastf_t *dir_at, int da_flag, double r, unsigned char *rgb, struct wmember *headp)
@@ -107,7 +108,7 @@ do_light(char *name, fastf_t *pos, fastf_t *dir_at, int da_flag, double r, unsig
      * then xlate to final position.
      */
     VSET(from, 0, 0, -1);
-    bn_mat_fromto(rot, from, dir);
+    bn_mat_fromto(rot, from, dir, &outfp->wdb_tol);
     MAT_IDN(xlate);
     MAT_DELTAS_VEC(xlate, pos);
     bn_mat_mul(both, xlate, rot);
@@ -115,6 +116,7 @@ do_light(char *name, fastf_t *pos, fastf_t *dir_at, int da_flag, double r, unsig
     mk_region1(outfp, name, nbuf, "light", "shadows=1", rgb);
     (void)mk_addmember(name, &(headp->l), NULL, WMOP_UNION);
 }
+
 
 /*
  * Local Variables:

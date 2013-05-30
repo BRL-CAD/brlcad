@@ -1,7 +1,7 @@
 /*                       G - S A T . C P P
  * BRL-CAD
  *
- * Copyright (c) 1993-2012 United States Government as represented by
+ * Copyright (c) 1993-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -77,7 +77,7 @@ int verbose = 0;
 
 static  db_i		*dbip;
 
-static  rt_tess_tol     ttol;   /* tesselation tolerance in mm */
+static  rt_tess_tol     ttol;   /* tessellation tolerance in mm */
 static  bn_tol          tol;    /* calculation tolerance */
 
 // Global map for bodies names in the CGM global list
@@ -406,7 +406,7 @@ int parse_args( int ac, char **av )
  *      R E G I O N _ S T A R T
  *
  * @brief This routine is called when a region is first encountered in the
- * heirarchy when processing a tree
+ * hierarchy when processing a tree
  *
  *      @param tsp tree state (for parsing the tree)
  *      @param pathp A listing of all the nodes traversed to get to this node in the database
@@ -1166,8 +1166,8 @@ make_bot( nmgregion *r,
     point_t bot_cp;
 
     // initialize  bot_min and bot_max
-    VSETALL( bot_min, MAX_FASTF );
-    VSETALL( bot_max, -MAX_FASTF );
+    VSETALL( bot_min, INFINITY );
+    VSETALL( bot_max, -INFINITY );
 
     for( BU_LIST_FOR( s, shell, &r->s_hd ) ) {
 	faceuse *fu;
@@ -1240,17 +1240,17 @@ make_bot( nmgregion *r,
 	}
 	else {
 	    cout << "make_bot did not made a Body! Substituted bounding box instead of Body." << endl;
-	    
+
 	    double bb_width = fabs(bot_max[0] - bot_min[0]);
 	    double bb_depth = fabs(bot_max[1] - bot_min[1]);
 	    double bb_height = fabs(bot_max[2] - bot_min[2]);
-	    
+
 	    gmt->brick(bb_width, bb_depth, bb_height);
-	    
+
 	    VSUB2SCALE(bot_cp, bot_max, bot_min, 0.5);
 	    VADD2(bot_cp, bot_cp, bot_min);
 	    CubitVector bbox_cp( V3ARGS(bot_cp) );
-	    
+
 	    status = gqt->translate(gqt->get_last_body(), bbox_cp);
 	}
     }
@@ -1321,7 +1321,7 @@ booltree_evaluate( tree *tp, resource *resp )
 	    bu_log("booltree_evaluate: bad op %d\n", tp->tr_op);
 	    return 0;
     }
-    /* Handle a boolean operation node.  First get it's leaves. */
+    /* Handle a boolean operation node.  First get its leaves. */
     tl = booltree_evaluate(tp->tr_b.tb_left, resp);
     tr = booltree_evaluate(tp->tr_b.tb_right, resp);
 

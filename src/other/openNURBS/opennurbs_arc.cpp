@@ -1,13 +1,14 @@
 /* $NoKeywords: $ */
 /*
 //
-// Copyright (c) 1993-2007 Robert McNeel & Associates. All rights reserved.
-// Rhinoceros is a registered trademark of Robert McNeel & Assoicates.
+// Copyright (c) 1993-2012 Robert McNeel & Associates. All rights reserved.
+// OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
+// McNeel & Associates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
 // MERCHANTABILITY ARE HEREBY DISCLAIMED.
-//				
+//
 // For complete openNURBS copyright information see <http://www.opennurbs.org>.
 //
 ////////////////////////////////////////////////////////////////
@@ -20,13 +21,13 @@ ON_Arc::ON_Arc() : m_angle(0.0,2.0*ON_PI)
   radius=1.0;
 }
 
-ON_Arc::ON_Arc( const ON_Circle& c, double angle_in_radians ) 
+ON_Arc::ON_Arc( const ON_Circle& c, double angle_in_radians )
        : m_angle(0.0,2.0*ON_PI)
 {
   Create( c, angle_in_radians );
 }
 
-ON_Arc::ON_Arc( const ON_Circle& c, ON_Interval angle_interval_in_radians ) 
+ON_Arc::ON_Arc( const ON_Circle& c, ON_Interval angle_interval_in_radians )
        : m_angle(0.0,2.0*ON_PI)
 {
   Create( c, angle_interval_in_radians );
@@ -50,7 +51,7 @@ ON_Arc::ON_Arc( const ON_Plane& pln, const ON_3dPoint& C, double r, double angle
   Create( pln, C, r, angle_in_radians );
 }
 
-ON_Arc::ON_Arc( const ON_2dPoint& P, const ON_2dPoint& Q, const ON_2dPoint& R ) 
+ON_Arc::ON_Arc( const ON_2dPoint& P, const ON_2dPoint& Q, const ON_2dPoint& R )
        : m_angle(0.0,2.0*ON_PI)
 {
   Create( P, Q, R );
@@ -164,10 +165,32 @@ bool ON_Arc::Create( // arc through 3 3d points
   const ON_3dPoint& R  // point R
   )
 {
-  ON_Circle c(P,Q,R);
+  ON_Circle c;
   double a = 0.0;
-  c.ClosestPointTo( R, &a );
-  return Create( c, ON_Interval(0.0,a) );
+
+  for (;;)
+  {
+
+    if ( !c.Create(P,Q,R) )
+      break;
+
+    if ( !c.ClosestPointTo( R, &a ) )
+      break;
+
+    if ( !(a > 0.0) )
+      break;
+    
+    if ( !Create( c, ON_Interval(0.0,a) ) )
+      break;
+
+    return true;
+  }
+
+  plane = ON_Plane::World_xy;
+  radius = 0.0;
+  m_angle.Set(0.0,0.0);
+
+  return false;
 }
 
 //////////
@@ -241,10 +264,10 @@ ON_3dPoint ON_Arc::EndPoint() const
 
 bool ON_Arc::IsValid() const
 {
-  return (    ON_Circle::IsValid() 
+  return (    ON_Circle::IsValid()
            && m_angle.IsValid()
-           && AngleRadians() > ON_ZERO_TOLERANCE 
-           && AngleRadians() <= 2.0*ON_PI+ON_ZERO_TOLERANCE) 
+           && AngleRadians() > ON_ZERO_TOLERANCE
+           && AngleRadians() <= 2.0*ON_PI+ON_ZERO_TOLERANCE)
          ? true : false;
 }
 
@@ -281,7 +304,7 @@ bool ON_Arc::GetBoundingBox(
 
 bool ON_Arc::IsCircle() const
 {
-  return (fabs(fabs(AngleRadians()) - 2.0*ON_PI) <= ON_ZERO_TOLERANCE) 
+  return (fabs(fabs(AngleRadians()) - 2.0*ON_PI) <= ON_ZERO_TOLERANCE)
          ? true : false;
 }
 
@@ -316,7 +339,7 @@ ON_Interval ON_Arc::DomainDegrees() const
 
 bool ON_Arc::SetAngleRadians( double a )
 {
-  if ( a < 0.0 ) 
+  if ( a < 0.0 )
   {
     double a0 = m_angle.m_t[0];
     m_angle.Set(a0+a,a0);
@@ -331,7 +354,7 @@ bool ON_Arc::SetAngleRadians( double a )
 
 bool ON_Arc::SetAngleIntervalRadians( ON_Interval angle_in_radians )
 {
-  bool rc = angle_in_radians.IsIncreasing() 
+  bool rc = angle_in_radians.IsIncreasing()
             && angle_in_radians.Length() < (1.0+ON_SQRT_EPSILON)*2.0*ON_PI;
   if (rc)
   {
@@ -359,7 +382,7 @@ bool ON_Arc::Trim( ON_Interval domain)
 
 bool ON_ArcCurve::IsContinuous(
     ON::continuity c,
-    double t, 
+    double t,
     int*,   // hint                - formal parameter intentionally ignored in this virtual function
     double, // point_tolerance     - formal parameter intentionally ignored in this virtual function
     double, // d1_tolerance        - formal parameter intentionally ignored in this virtual function
@@ -385,7 +408,9 @@ bool ON_ArcCurve::IsContinuous(
     case ON::C2_continuous:
     case ON::G1_continuous:
     case ON::G2_continuous:
-      rc = true;
+    case ON::Cinfinity_continuous:
+    case ON::Gsmooth_continuous:
+      // rc = true;
       break;
 
     case ON::C0_locus_continuous:
@@ -398,9 +423,6 @@ bool ON_ArcCurve::IsContinuous(
       // is locus continuous at start parameter.
       if ( t >= Domain()[1] )
         rc = false;
-      break;
-
-    case ON::Cinfinity_continuous:
       break;
     }
   }
@@ -423,6 +445,39 @@ double ON_Arc::Length() const
 {
   return fabs(AngleRadians()*radius);
 }
+
+double ON_Arc::SectorArea() const
+{
+  return fabs(0.5*AngleRadians()*radius*radius);
+}
+
+ON_3dPoint ON_Arc::SectorAreaCentroid() const
+{
+  double a = 0.5*fabs(AngleRadians());
+  double d = (a > 0.0) ? sin(a)/a : 0.0;
+  d *= 2.0*radius/3.0;
+  a = 0.5*(m_angle[1]+m_angle[0]);
+  return plane.PointAt(d*cos(a),d*sin(a));
+}
+
+double ON_Arc::SegmentArea() const
+{
+  double a = fabs(AngleRadians());
+  return (0.5*(a - sin(a))*radius*radius);
+}
+
+ON_3dPoint ON_Arc::SegmentAreaCentroid() const
+{
+  double a = fabs(AngleRadians());
+  double sin_halfa = sin(0.5*a);
+  double d = 3.0*(a - sin(a));
+  if ( d > 0.0 )
+    d = (sin_halfa*sin_halfa*sin_halfa)/d;
+  d *= 4.0*radius;
+  a = 0.5*(m_angle[1]+m_angle[0]);
+  return plane.PointAt(d*cos(a),d*sin(a));
+}
+
 
 /* moved to opennurbs_arccurve.cpp
 
@@ -484,7 +539,7 @@ int ON_Arc::GetNurbForm( ON_NurbsCurve& nurbscurve ) const
 		    CV[i].z +=  b * plane.origin.z;
 		    CV[i].w = a;
 	    }
-      
+
       //for ( i = 1; i < span_count; i += 2 ) {
       //  t = CV[i].w;
       //  c = 1.0/t;
@@ -500,8 +555,8 @@ int ON_Arc::GetNurbForm( ON_NurbsCurve& nurbscurve ) const
 */
 
 // returns parameters of point on arc that is closest to given point
-bool ON_Arc::ClosestPointTo( 
-       const ON_3dPoint& pt, 
+bool ON_Arc::ClosestPointTo(
+       const ON_3dPoint& pt,
        double* t
        ) const
 {
@@ -515,14 +570,14 @@ bool ON_Arc::ClosestPointTo(
       a = 0.5*(m_angle[0] + m_angle[1] - 2.0*ON_PI);
       if ( *t < a )
         *t = m_angle[1];
-      else 
+      else
         *t = m_angle[0];
     }
     else if ( *t > m_angle[1] ) {
       a = 0.5*(m_angle[0] + m_angle[1] + 2.0*ON_PI);
       if ( *t > a )
         *t = m_angle[0];
-      else 
+      else
         *t = m_angle[1];
     }
   }
@@ -552,12 +607,12 @@ bool ON_Arc::ClosestPointTo(
       *t = m_angle[0] + s;
   }
 
-      
+
   return rc;
 }
 
 // returns point on circle that is arc to given point
-ON_3dPoint ON_Arc::ClosestPointTo( 
+ON_3dPoint ON_Arc::ClosestPointTo(
        const ON_3dPoint& pt
        ) const
 {

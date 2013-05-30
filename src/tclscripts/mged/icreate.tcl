@@ -1,7 +1,7 @@
 #                     I C R E A T E . T C L
 # BRL-CAD
 #
-# Copyright (c) 1995-2012 United States Government as represented by
+# Copyright (c) 1995-2013 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -59,7 +59,7 @@ proc icreate { id args } {
     toplevel $w -screen $mged_gui($id,screen)
     wm title $w "Instance Creation"
 
-    # Make two frames: top one for entry fields and labels, buttom one for
+    # Make two frames: top one for entry fields and labels, bottom one for
     # create and quit buttons
 
     frame $w.t

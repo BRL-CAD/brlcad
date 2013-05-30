@@ -1,7 +1,7 @@
 /*                          M E N U . H
  * BRL-CAD
  *
- * Copyright (c) 2007-2012 United States Government as represented by
+ * Copyright (c) 2007-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -19,7 +19,7 @@
  */
 /** @file mged/menu.h
  *
- * Each active menu is installed by haveing a non-null entry in
+ * Each active menu is installed by having a non-null entry in
  * menu_array[] which is a pointer
  * to an array of menu items.  The first ([0]) menu item is the title
  * for the menu, and the remaining items are individual menu entries.

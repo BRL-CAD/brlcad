@@ -1,7 +1,7 @@
 /*                        F B C M A P . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2012 United States Government as represented by
+ * Copyright (c) 1986-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -625,7 +625,7 @@ pars_Argv(int argc, char **argv)
 static void
 usage()
 {
-    (void) fprintf(stderr, "Usage : fbcmap [-h] [-F framebuffer]\n");
+    (void) fprintf(stderr, "Usage: fbcmap [-h] [-F framebuffer]\n");
     (void) fprintf(stderr, "	[-{sS} squarescrsize] [-{wW} scr_width] [-{nN} scr_height]\n");
     (void) fprintf(stderr, "	[map_number]\n");
     (void) fprintf(stderr,
@@ -688,7 +688,7 @@ main(int argc, char **argv)
 			   "Color map #2, corrected for POLAROID 809/891 film.\n");
 	    /* First entry black */
 #define BOOST(point, bias) \
-	((int)((bias)+((float)(point)/256.*(255-(bias)))))
+	    ((int)((bias)+((float)(point)/256.*(255-(bias)))))
 	    for (i = 1; i < 256; i++) {
 		fudge = BOOST(i, 70);
 		cp->cm_red[i] = fudge << 8;		/* B */

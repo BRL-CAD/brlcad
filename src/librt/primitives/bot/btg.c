@@ -1,7 +1,7 @@
 /*                    B T G . C
  * BRL-CAD
  *
- * Copyright (c) 2010-2012 United States Government as represented by
+ * Copyright (c) 2010-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -46,10 +46,7 @@ void *
 bottie_allocn_double(unsigned long long ntri)
 {
     struct tie_s *tie;
-    tie = bu_malloc(sizeof(struct tie_s), "TIE");
-    if(tie == NULL)
-	return NULL;
-
+    BU_ALLOC(tie, struct tie_s);
     tie_init1(tie, ntri, TIE_KDTREE_FAST);
     return tie;
 }
@@ -67,7 +64,7 @@ bottie_prep_double(struct soltab *stp, struct rt_bot_internal *bot_ip, struct rt
 {
     struct tie_s *tie;
     struct bot_specific *bot;
-    unsigned int i;
+    size_t tri_index, i;
     TIE_3 *tribuf = NULL, **tribufp = NULL;
 
     RT_BOT_CK_MAGIC(bot_ip);
@@ -77,6 +74,14 @@ bottie_prep_double(struct soltab *stp, struct rt_bot_internal *bot_ip, struct rt
     bot->bot_mode = bot_ip->mode;
     bot->bot_orientation = bot_ip->orientation;
     bot->bot_flags = bot_ip->bot_flags;
+    if (bot_ip->thickness) {
+	bot->bot_thickness = (fastf_t *)bu_calloc(bot_ip->num_faces, sizeof(fastf_t), "bot_thickness");
+	for (tri_index=0; tri_index < bot_ip->num_faces; tri_index++)
+	    bot->bot_thickness[tri_index] = bot_ip->thickness[tri_index];
+    }
+    if (bot_ip->face_mode)
+	bot->bot_facemode = bu_bitv_dup(bot_ip->face_mode);
+    bot->bot_facelist = NULL;
 
     if((tie = bot_ip->tie = bot->tie = bottie_allocn_double(bot_ip->num_faces)) == NULL)
 	return -1;

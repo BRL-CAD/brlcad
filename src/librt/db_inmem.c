@@ -1,7 +1,7 @@
 /*                     D B _ I N M E M . C
  * BRL-CAD
  *
- * Copyright (c) 2006-2012 United States Government as represented by
+ * Copyright (c) 2006-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -45,18 +45,13 @@
 
 #define DEFAULT_DB_TITLE "Untitled BRL-CAD Database"
 
-/**
- * "open" an in-memory-only database instance.  this initializes a
- * dbip for use, creating an inmem dbi_wdbp as the means to add
- * geometry to the directory (use wdb_export_external()).
- */
 struct db_i *
 db_open_inmem(void)
 {
     register struct db_i *dbip = DBI_NULL;
     register int i;
 
-    BU_GET(dbip, struct db_i);
+    BU_ALLOC(dbip, struct db_i);
     dbip->dbi_eof = (off_t)-1L;
     dbip->dbi_fp = NULL;
     dbip->dbi_mf = NULL;
@@ -94,12 +89,6 @@ db_open_inmem(void)
     return dbip;
 }
 
-
-/**
- * creates an in-memory-only database.  this is very similar to
- * db_open_inmem() with the exception that the this routine adds a
- * default _GLOBAL object.
- */
 struct db_i *
 db_create_inmem(void) {
     struct db_i *dbip;
@@ -137,11 +126,6 @@ db_create_inmem(void) {
     return dbip;
 }
 
-
-/**
- * Transmogrify an existing directory entry to be an in-memory-only
- * one, stealing the external representation from 'ext'.
- */
 void
 db_inmem(struct directory *dp, struct bu_external *ext, int flags, struct db_i *dbip)
 {

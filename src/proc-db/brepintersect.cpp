@@ -1,7 +1,7 @@
 /*                 B R E P I N T E R S E C T . C P P
  * BRL-CAD
  *
- * Copyright (c) 2008-2012 United States Government as represented by
+ * Copyright (c) 2008-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -27,8 +27,11 @@
  * This code is written and maintained by Joe Doliner: jdoliner@gmail.com
  */
 
-#include "assert.h"
+/* interface header */
 #include "brepintersect.h"
+
+/* implementation system header */
+#include <assert.h>
 
 
 int PolylineBBox(
@@ -45,6 +48,7 @@ int PolylineBBox(
     bbox->m_max = max;
     return 0;
 }
+
 
 /**
  * tests whether a point is inside of the triangle using vector math
@@ -125,6 +129,7 @@ bool PointInTriangle(
 	return false;
 }
 
+
 bool PointInPolyline(
     const ON_3dPoint& P,
     const ON_Polyline pline,
@@ -165,6 +170,7 @@ bool PointInPolyline(
     return inside;
 }
 
+
 /**
  * determines whether or not a point is inside the given mesh
  */
@@ -196,6 +202,7 @@ bool PointInMesh(
     }
     return 0;
 }
+
 
 /**
  * finds the intersection point between segments x1, x2 and x3, x4 and
@@ -292,7 +299,7 @@ int SegmentSegmentIntersect(
 	     * So here's the plan we. We're going to use dot products,
 	     * The aspect of dot products that's important:
 	     * A dot B is positive if A and B point the same way
-	     * and negitive when they point in opposite directions
+	     * and negative when they point in opposite directions
 	     * so --> dot --> is positive, but <-- dot --> is negative
 	     * so if (x3-x1) dot (x4-x1) is negative, then x1 lies on the segment (x3, x4)
 	     * which means that x1 should be one of the points we return so we just go
@@ -347,6 +354,7 @@ int SegmentSegmentIntersect(
     return 0;
 }
 
+
 /**
  * uses iteration of SegmentSegmentIntersect.
  *
@@ -374,6 +382,7 @@ int SegmentPolylineIntersect(
     }
     return my_rv;
 }
+
 
 /**
  * intersects a triangle ABC with a line PQ
@@ -508,7 +517,7 @@ int SegmentTriangleIntersect(
  * When the triangles intersect in 2 points the order of the points is
  * meaningful as they indicate the ternality of the faces the
  * condition we want to meet is that the edge (result[1] - result[0])
- * is parallal to (Norm2 X Norm1)
+ * is parallel to (Norm2 X Norm1)
  */
 
 enum EdgeIndex {ab = 0, bc = 1, ca = 2, de = 3, ef = 4, fd = 5};
@@ -601,6 +610,7 @@ int TriangleTriangleIntersect(
     return number_found;
 }
 
+
 /**
  * checks whether two Polylines are inside one another.
  *
@@ -638,6 +648,7 @@ int PolylinePolylineInternal(
 	return 0;
     }
 }
+
 
 /**
  * This class has the responsibility of keeping track of the points
@@ -708,6 +719,7 @@ TriIntersections::TriIntersections(
     }
 }
 
+
 int TriIntersections::InsertPoint(
     ON_3dPoint P,
     uint8_t direction,
@@ -732,6 +744,7 @@ int TriIntersections::InsertPoint(
     return 0;
 }
 
+
 int TriIntersections::AddLine(
     ON_Line line
     )
@@ -739,6 +752,7 @@ int TriIntersections::AddLine(
     intersections.Append(line);
     return intersections.Count();
 }
+
 
 int TriIntersections::Faces(
     ON_ClassArray<ON_3dPoint[3]> UNUSED(faces)
@@ -830,6 +844,7 @@ int TriIntersections::Faces(
     return 0;
 }
 
+
 /**
  * the point index is responsible for keeping track of the points we
  * put into a mesh.  if we give it a point it doesn't have it puts it
@@ -844,10 +859,12 @@ public:
     int InsertPoint(ON_3dPoint);
 };
 
+
 PointIndex::PointIndex(ON_Mesh *m) : tol(0.0)
 {
     mesh = m;
 }
+
 
 int PointIndex::InsertPoint(
     ON_3dPoint P
@@ -862,6 +879,7 @@ int PointIndex::InsertPoint(
     mesh->m_V.Append(ON_3fPoint(P));
     return mesh->m_V.Count();
 }
+
 
 /**
  * Outputs an array of the same size as this.m_V.Count() in which the
@@ -889,6 +907,7 @@ int GenerateFaceConnectivityList(
     return 0;
 }
 
+
 /**
  * converts all quads in a mesh to triangles
  */
@@ -910,6 +929,7 @@ int MeshTriangulate(
 
     return 0;
 }
+
 
 /**
  * Intersect two meshes and returns their intersection in Polylines
@@ -940,6 +960,7 @@ int MeshMeshIntersect(
 
     return 0;
 }
+
 
 int main()
 {
@@ -1015,6 +1036,7 @@ int main()
     /* int rv = MeshMeshIntersect(&mesh1, &mesh2, &out, 1.0e-10); */
     /* assert(rv == 2); */
 }
+
 
 /** @} */
 /*

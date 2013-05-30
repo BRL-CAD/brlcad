@@ -31,7 +31,7 @@
  * table which Tom DiGiacinto used in "sh_marble." In my case, the
  * access is still limited to 10x10x10, but the table itself is
  * expanded to 20x20x20.  There is a MATPARM "dither" field which is
- * used to "dither the dither." IE, the "dither" parameter is a
+ * used to "dither the dither." I.e., the "dither" parameter is a
  * coefficient which is summed into Tom's interpolation routine,
  * thereby allowing each wood-shaded combination to have a different
  * noise pattern, and prevents all similar combinations from looking
@@ -55,7 +55,7 @@
  *	    de{pth} = f		Amount of dither to add to sine
  *	    r{otation} = a/b/c	3-D rotation of rings' vertex
  *	    V = X/Y/Z		Vertex of rings' center
- *	    D = X/Y/Z		XYZ of where rings's center is aimed at
+ *	    D = X/Y/Z		XYZ of where rings' center is aimed at
  *
  * Source -
  * Gull Island Consultants, Inc.
@@ -145,7 +145,6 @@ HIDDEN void wood_setup_2(struct wood_specific *);
 
 #define WOOD_NULL ((struct wood_specific *)0)
 #define WOOD_O(m) bu_offsetof(struct wood_specific, m)
-#define WOOD_OA(m) bu_offsetofarray(struct wood_specific, m)
 
 #define EXPLICIT_VERTEX 1
 #define EXPLICIT_DIRECTION 2
@@ -168,10 +167,10 @@ struct bu_structparse wood_parse[] = {
     {"%d",	1, "ns",		WOOD_O(ns),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%f",	1, "jitter",		WOOD_O(jitter),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%f",	1, "j",			WOOD_O(jitter),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f",	3, "lt_rgb",		WOOD_OA(lt_rgb),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f",	3, "lt",		WOOD_OA(lt_rgb),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f",	3, "dk_rgb",		WOOD_OA(dk_rgb),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f",	3, "dk",		WOOD_OA(dk_rgb),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",	3, "lt_rgb",		WOOD_O(lt_rgb),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",	3, "lt",		WOOD_O(lt_rgb),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",	3, "dk_rgb",		WOOD_O(dk_rgb),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",	3, "dk",		WOOD_O(dk_rgb),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%f",	1, "spacing",		WOOD_O(spacing),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%f",	1, "s",			WOOD_O(spacing),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%f",	1, "scale",		WOOD_O(scale),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
@@ -180,16 +179,16 @@ struct bu_structparse wood_parse[] = {
     {"%f",	1, "p",			WOOD_O(phase),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%f",	1, "qd",		WOOD_O(qd),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%f",	1, "qp",		WOOD_O(qp),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f",	3, "dither",		WOOD_OA(dither),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f",	3, "di",		WOOD_OA(dither),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",	3, "dither",		WOOD_O(dither),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",	3, "di",		WOOD_O(dither),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%f",	1, "depth",		WOOD_O(depth),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%f",	1, "de",		WOOD_O(depth),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%f",	1, "dd",		WOOD_O(dd),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%f",	1, "dz",		WOOD_O(dz),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f",	3, "rotation",		WOOD_OA(rot),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f",	3, "r",			WOOD_OA(rot),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f",	3, "D",			WOOD_OA(D),		wood_D_set, NULL, NULL },
-    {"%f",	3, "V",			WOOD_OA(V),		wood_V_set, NULL, NULL },
+    {"%f",	3, "rotation",		WOOD_O(rot),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",	3, "r",			WOOD_O(rot),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",	3, "D",			WOOD_O(D),		wood_D_set, NULL, NULL },
+    {"%f",	3, "V",			WOOD_O(V),		wood_V_set, NULL, NULL },
     {"",	0, (char *)0,		0,			BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 
@@ -301,7 +300,7 @@ wood_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, co
      */
 
     if (bu_struct_parse(matparm, wood_parse, (char *)wd) < 0) {
-	bu_free((genptr_t)wd, "wood_specific");
+	BU_PUT(wd, struct wood_specific);
 	return -1;
     }
 
@@ -318,12 +317,12 @@ wood_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, co
     }
 
     if (wd->flags == EXPLICIT_VERTEX) {
-	bu_log("wood_setup(%s):  Explicit vertex specfied without direction\n", rp->reg_name);
+	bu_log("wood_setup(%s):  Explicit vertex specified without direction\n", rp->reg_name);
 	return -1;
     }
 
     if (wd->flags == EXPLICIT_DIRECTION) {
-	bu_log("wood_setup(%s):  Explicit direction specfied without vertex\n", rp->reg_name);
+	bu_log("wood_setup(%s):  Explicit direction specified without vertex\n", rp->reg_name);
 	return -1;
     }
 
@@ -482,7 +481,7 @@ wood_free(genptr_t cp)
     if (Wood_Chain == wd) {
 /* bu_log ("wood_free(%s):  Releasing region (at head).\n", wd->rp->reg_name); */
 	Wood_Chain = wd->forw;
-	bu_free((genptr_t)wd, "wood_specific");
+	BU_PUT(wd, struct wood_specific);
 	return;
     }
 
@@ -490,12 +489,12 @@ wood_free(genptr_t cp)
 	if (wc->forw == wd) {
 /* bu_log("wood_free(%s):  Releasing region.\n", wd->rp->reg_name); */
 	    wc->forw = wd->forw;
-	    bu_free((genptr_t)wd, "wood_specific");
+	    BU_PUT(wd, struct wood_specific);
 	    return;
 	}
     }
 
-    bu_free((genptr_t)wd, "wood_specific");
+    BU_PUT(wd, struct wood_specific);
 }
 
 
@@ -575,9 +574,9 @@ wood_turb(double x, double y, double z, struct wood_specific *wd)
  * W O O D _ R E N D E R
  *
  * Given an XYZ hit point, compute the concentric ring structure.  We do
- * this by computing the dot-product of the hit point vs the ring vertex,
+ * this by computing the dot-product of the hit point vs. the ring vertex,
  * which is then used to compute the distance from the ring center.  This
- * distance is then multiplied by a velocity coefficient that is sined.
+ * distance is then multiplied by a velocity coefficient that is signed.
  */
 HIDDEN int
 wood_render(struct application *UNUSED(ap), const struct partition *UNUSED(partp), struct shadework *swp, genptr_t dp)

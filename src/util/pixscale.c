@@ -1,7 +1,7 @@
 /*                      P I X S C A L E . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2012 United States Government as represented by
+ * Copyright (c) 1986-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -45,11 +45,11 @@
 
 unsigned char *outbuf;
 unsigned char *buffer;
-int scanlen;			/* length of infile (and buffer) scanlines */
-int buflines;			/* Number of lines held in buffer */
-int buf_start = -1000;		/* First line in buffer */
+ssize_t scanlen;		/* length of infile (and buffer) scanlines */
+ssize_t buflines;		/* Number of lines held in buffer */
+off_t buf_start = -1000;	/* First line in buffer */
 
-int bufy;				/* y coordinate in buffer */
+ssize_t bufy;				/* y coordinate in buffer */
 FILE *buffp;
 static char *file_name;
 
@@ -79,14 +79,14 @@ Usage: pixscale [-h] [-r] [-s squareinsize] [-w inwidth] [-n inheight]\n\
 void
 fill_buffer(int y)
 {
-    static int file_pos = 0;
+    static off_t file_pos = 0;
     size_t ret;
 
     buf_start = y - buflines/2;
     if (buf_start < 0) buf_start = 0;
 
     if (file_pos != buf_start * scanlen) {
-	if (fseek(buffp, buf_start * scanlen, 0) < 0) {
+	if (bu_fseek(buffp, buf_start * scanlen, 0) < 0) {
 	    bu_exit(3, "pixscale: Can't seek to input pixel! y=%d\n", y);
 	}
 	file_pos = buf_start * scanlen;
@@ -375,7 +375,7 @@ get_args(int argc, char **argv)
 	}
     }
 
-    /* XXX - backward compatability hack */
+    /* XXX - backward compatibility hack */
     if (bu_optind+5 == argc) {
 	file_name = argv[bu_optind++];
 	if ((buffp = fopen(file_name, "r")) == NULL) {
@@ -430,7 +430,7 @@ main(int argc, char **argv)
     outbuf = bu_malloc(i, "outbuf");
 
     /* Here we go */
-    i = scale(stdout, inx, iny, outx, outy);
+    scale(stdout, inx, iny, outx, outy);
     bu_free(outbuf, "outbuf");
     bu_free(buffer, "buffer");
     return 0;

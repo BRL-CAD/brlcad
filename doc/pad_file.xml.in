@@ -3,7 +3,7 @@
     <MASTER_PAD_VERSION_INFO>
         <MASTER_PAD_VERSION>2.01</MASTER_PAD_VERSION>
 	<MASTER_PAD_EDITOR>Emacs</MASTER_PAD_EDITOR>
-	<MASTER_PAD_INFO>Portable Application Description (PAD) is an XML data description used by application authors to dissemminate information to anyone interested in their software products.  For more information, see http://en.wikipedia.org/wiki/Portable_Application_Description</MASTER_PAD_INFO>
+	<MASTER_PAD_INFO>Portable Application Description (PAD) is an XML data description used by application authors to disseminate information to anyone interested in their software products.  For more information, see http://en.wikipedia.org/wiki/Portable_Application_Description</MASTER_PAD_INFO>
     </MASTER_PAD_VERSION_INFO>
     <Company_Info>
 	<Company_Name>BRL-CAD Open Source</Company_Name>

@@ -1,7 +1,7 @@
 /*                  S H _ T R E E T H E R M . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2012 United States Government as represented by
+ * Copyright (c) 2004-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -41,7 +41,7 @@
 
 /*
  * The thermal data file starts with a long indicating the number of
- * "cylinder" structures that follow.  The cyliner structure consists
+ * "cylinder" structures that follow.  The cylinder structure consists
  * of 18 bytes in 5 entries.  First is a 2 byte short integer indicating the
  * number of "segments" that follow.  Max Lorenzo promises this value is
  * always "1".  A segment consists of n tuples.  Max Lorenzo promises that
@@ -130,8 +130,6 @@ struct tthrm_specific {
 /* The default values for the variables in the shader specific structure */
 #define SHDR_NULL ((struct tthrm_specific *)0)
 #define SHDR_O(m) bu_offsetof(struct tthrm_specific, m)
-#define SHDR_AO(m) bu_offsetofarray(struct tthrm_specific, m)
-
 
 /* description of how to parse/print the arguments to the shader
  * There is at least one line here for each variable in the shader specific
@@ -328,7 +326,7 @@ tthrm_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, c
 	    }
 	    break;
 	default:
-	    bu_log("a long int is %d bytes on this machine\n", sizeof(long));
+	    bu_log("a long int is %lu bytes on this machine\n", sizeof(long));
 	    bu_bomb("I can only handle 4 or 8 byte longs\n");
 	    break;
     }
@@ -366,7 +364,7 @@ tthrm_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, c
 	    /* make sure we don't have any "infinity" values */
 	    for (i=0; i < 4; i++) {
 		if (fv[i] > MAX_FASTF || fv[i] < -MAX_FASTF) {
-		    bu_log("%s:%d seg %d node %d coord %d out of bounds: %g\n",
+		    bu_log("%s:%d seg %ld node %d coord %d out of bounds: %g\n",
 			   __FILE__, __LINE__, tseg, node, i, fv[i]);
 		    bu_bomb("choke, gasp, *croak*\n");
 		}
@@ -487,7 +485,7 @@ tthrm_free(genptr_t cp)
     tthrm_sp->tt_name[0] = '\0';
     tthrm_sp->magic = 0;
 
-    bu_free(cp, "tthrm_specific");
+    BU_PUT(cp, struct tthrm_specific);
 }
 
 
@@ -599,14 +597,14 @@ tthrm_render(struct application *ap, const struct partition *pp, struct shadewor
     if (MAGSQ(v) > 100.0) {
 	double dist;
 	dist = MAGNITUDE(v);
-	/* Distance between particle origin and centroid of themal
+	/* Distance between particle origin and centroid of thermal
 	 * segment nodes is > 10.0mm (1cm).  This suggests that
-	 * they aren't related
+	 * they aren't related.
 	 */
 	bu_log(
 	    "----------------------------- W A R N I N G -----------------------------\n\
 %s:%d distance %g between origin of particle and thermal node centroid is\n\
-too large.  Probable mis-match between geometry and thermal data\n"
+too large.  Probable mis-match between geometry and thermal data\n",
 	    __FILE__, __LINE__, dist);
 	bu_bomb("");
     }

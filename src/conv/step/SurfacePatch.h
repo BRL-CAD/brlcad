@@ -1,7 +1,7 @@
 /*                 SurfacePatch.h
  * BRL-CAD
  *
- * Copyright (c) 1994-2012 United States Government as represented by
+ * Copyright (c) 1994-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -31,27 +31,29 @@
 
 class BoundedSurface;
 
-class SurfacePatch : public FoundedItem {
+class SurfacePatch : public FoundedItem
+{
 private:
-	static string entityname;
+    static string entityname;
+    static EntityInstanceFunc GetInstance;
 
 protected:
-	BoundedSurface *parent_surface;
-	Transition_code u_transition;
-	Transition_code v_transition;
-	Boolean u_sense;
-	Boolean v_sense;
+    BoundedSurface *parent_surface;
+    Transition_code u_transition;
+    Transition_code v_transition;
+    Boolean u_sense;
+    Boolean v_sense;
 
 public:
-	SurfacePatch();
-	virtual ~SurfacePatch();
-	SurfacePatch(STEPWrapper *sw,int step_id);
-	bool Load(STEPWrapper *sw,SDAI_Application_instance *sse);
-	virtual bool LoadONBrep(ON_Brep *brep);
-	virtual void Print(int level);
+    SurfacePatch();
+    virtual ~SurfacePatch();
+    SurfacePatch(STEPWrapper *sw, int step_id);
+    bool Load(STEPWrapper *sw, SDAI_Application_instance *sse);
+    virtual bool LoadONBrep(ON_Brep *brep);
+    virtual void Print(int level);
 
-	//static methods
-	static STEPEntity *Create(STEPWrapper *sw,SDAI_Application_instance *sse);
+    //static methods
+    static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
 #endif /* SURFACE_PATCH_H_ */

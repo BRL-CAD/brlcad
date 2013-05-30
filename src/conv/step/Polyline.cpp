@@ -1,7 +1,7 @@
 /*                 Polyline.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2012 United States Government as represented by
+ * Copyright (c) 1994-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -32,19 +32,22 @@
 
 #define CLASSNAME "Polyline"
 #define ENTITYNAME "Polyline"
-string Polyline::entityname = Factory::RegisterClass(ENTITYNAME,(FactoryMethod)Polyline::Create);
+string Polyline::entityname = Factory::RegisterClass(ENTITYNAME, (FactoryMethod)Polyline::Create);
 
-Polyline::Polyline() {
+Polyline::Polyline()
+{
     step = NULL;
     id = 0;
 }
 
-Polyline::Polyline(STEPWrapper *sw,int step_id) {
+Polyline::Polyline(STEPWrapper *sw, int step_id)
+{
     step = sw;
     id = step_id;
 }
 
-Polyline::~Polyline() {
+Polyline::~Polyline()
+{
     /* list clear
        LIST_OF_POINTS::iterator i = points.begin();
 
@@ -57,26 +60,27 @@ Polyline::~Polyline() {
 }
 
 bool
-Polyline::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
-    step=sw;
+Polyline::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
+    step = sw;
     id = sse->STEPfile_id;
 
-    if ( !BoundedCurve::Load(step,sse) ) {
+    if (!BoundedCurve::Load(step, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::BoundedCurve." << std::endl;
 	return false;
     }
 
     // need to do this for local attributes to makes sure we have
     // the actual entity and not a complex/supertype parent
-    sse = step->getEntity(sse,ENTITYNAME);
+    sse = step->getEntity(sse, ENTITYNAME);
 
     if (points.empty()) {
-	LIST_OF_ENTITIES *l = step->getListOfEntities(sse,"points");
+	LIST_OF_ENTITIES *l = step->getListOfEntities(sse, "points");
 	LIST_OF_ENTITIES::iterator i;
-	for(i=l->begin();i!=l->end();i++) {
+	for (i = l->begin(); i != l->end(); i++) {
 	    SDAI_Application_instance *entity = (*i);
 	    if (entity) {
-		CartesianPoint *aCP = dynamic_cast<CartesianPoint *>(Factory::CreateObject(sw,entity));
+		CartesianPoint *aCP = dynamic_cast<CartesianPoint *>(Factory::CreateObject(sw, entity));
 
 		points.push_back(aCP);
 	    } else {
@@ -94,7 +98,8 @@ Polyline::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
 }
 
 const double *
-Polyline::PointAtEnd() {
+Polyline::PointAtEnd()
+{
     LIST_OF_POINTS::reverse_iterator i = points.rbegin();
     if (i != points.rend()) {
 	CartesianPoint *p = (*i);
@@ -104,7 +109,8 @@ Polyline::PointAtEnd() {
 }
 
 const double *
-Polyline::PointAtStart() {
+Polyline::PointAtStart()
+{
     LIST_OF_POINTS::iterator i = points.begin();
     if (i != points.end()) {
 	CartesianPoint *p = (*i);
@@ -114,34 +120,32 @@ Polyline::PointAtStart() {
 }
 
 void
-Polyline::Print(int level) {
-    TAB(level); std::cout << CLASSNAME << ":" << name << "(";
+Polyline::Print(int level)
+{
+    TAB(level);
+    std::cout << CLASSNAME << ":" << name << "(";
     std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-    TAB(level); std::cout << "Attributes:" << std::endl;
-    TAB(level); std::cout << "segments:" << std::endl;
+    TAB(level);
+    std::cout << "Attributes:" << std::endl;
+    TAB(level);
+    std::cout << "segments:" << std::endl;
     LIST_OF_POINTS::iterator i;
-    for(i=points.begin();i!=points.end();i++) {
-	(*i)->Print(level+1);
+    for (i = points.begin(); i != points.end(); i++) {
+	(*i)->Print(level + 1);
     }
 }
+
 STEPEntity *
-Polyline::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
-    Factory::OBJECTS::iterator i;
-    if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
-	Polyline *object = new Polyline(sw,sse->STEPfile_id);
+Polyline::GetInstance(STEPWrapper *sw, int id)
+{
+    return new Polyline(sw, id);
+}
 
-	Factory::AddObject(object);
-
-	if (!object->Load(sw, sse)) {
-	    std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
-	    delete object;
-	    return NULL;
-	}
-	return static_cast<STEPEntity *>(object);
-    } else {
-	return (*i).second;
-    }
+STEPEntity *
+Polyline::Create(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
+    return STEPEntity::CreateEntity(sw, sse, GetInstance, CLASSNAME);
 }
 
 // Local Variables:

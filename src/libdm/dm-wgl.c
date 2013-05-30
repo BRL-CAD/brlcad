@@ -1,7 +1,7 @@
 /*                       D M - W G L . C
  * BRL-CAD
  *
- * Copyright (c) 1988-2012 United States Government as represented by
+ * Copyright (c) 1988-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -43,9 +43,12 @@
 #include "bn.h"
 #include "raytrace.h"
 #include "dm.h"
+#include "dm-Null.h"
 #include "dm-wgl.h"
 #include "dm_xvars.h"
 #include "solid.h"
+
+#include "./dm_util.h"
 
 #define VIEWFACTOR      (1.0/(*dmp->dm_vp))
 #define VIEWSIZE        (2.0*(*dmp->dm_vp))
@@ -174,12 +177,6 @@ wgl_setBGColor(struct dm *dmp,
     ((struct wgl_vars *)dmp->dm_vars.priv_vars)->b = b / 255.0;
 
     if (((struct wgl_vars *)dmp->dm_vars.priv_vars)->mvars.doublebuffer) {
-	if (!wglMakeCurrent(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc,
-			    ((struct wgl_vars *)dmp->dm_vars.priv_vars)->glxc)) {
-	    bu_log("wgl_setBGColor: Couldn't make context current\n");
-	    return TCL_ERROR;
-	}
-
 	SwapBuffers(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc);
 	glClearColor(((struct wgl_vars *)dmp->dm_vars.priv_vars)->r,
 		     ((struct wgl_vars *)dmp->dm_vars.priv_vars)->g,
@@ -217,26 +214,13 @@ wgl_open(Tcl_Interp *interp, int argc, char *argv[])
 	return DM_NULL;
     }
 
-    BU_GET(dmp, struct dm);
-    if (dmp == DM_NULL) {
-	return DM_NULL;
-    }
+    BU_ALLOC(dmp, struct dm);
 
     *dmp = dm_wgl; /* struct copy */
     dmp->dm_interp = interp;
 
-    dmp->dm_vars.pub_vars = (genptr_t)bu_calloc(1, sizeof(struct dm_xvars), "wgl_open: dm_xvars");
-    if (dmp->dm_vars.pub_vars == (genptr_t)NULL) {
-	bu_free(dmp, "wgl_open: dmp");
-	return DM_NULL;
-    }
-
-    dmp->dm_vars.priv_vars = (genptr_t)bu_calloc(1, sizeof(struct wgl_vars), "wgl_open: wgl_vars");
-    if (dmp->dm_vars.priv_vars == (genptr_t)NULL) {
-	bu_free(dmp->dm_vars.pub_vars, "wgl_open: dmp->dm_vars.pub_vars");
-	bu_free(dmp, "wgl_open: dmp");
-	return DM_NULL;
-    }
+    BU_ALLOC(dmp->dm_vars.pub_vars, struct dm_xvars);
+    BU_ALLOC(dmp->dm_vars.priv_vars, struct wgl_vars);
 
     dmp->dm_vp = &default_viewscale;
 
@@ -814,25 +798,6 @@ wgl_drawEnd(struct dm *dmp)
     glFinish();
 #endif
 
-    if (!wglMakeCurrent((HDC)NULL, (HGLRC)NULL)) {
-	LPVOID buf;
-
-	FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER |
-		      FORMAT_MESSAGE_FROM_SYSTEM |
-		      FORMAT_MESSAGE_IGNORE_INSERTS,
-		      NULL,
-		      GetLastError(),
-		      MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
-		      (LPTSTR)&buf,
-		      0,
-		      NULL);
-	bu_log("wgl_drawBegin: Couldn't release the current context.\n");
-	bu_log("wgl_drawBegin: %s", buf);
-	LocalFree(buf);
-
-	return TCL_ERROR;
-    }
-
     wgl_actively_drawing = 0;
     return TCL_OK;
 }
@@ -908,6 +873,64 @@ wgl_loadMatrix(struct dm *dmp, mat_t mat, int which_eye)
     gtmat[15] = *(mptr++);
 
     glMatrixMode(GL_MODELVIEW);
+    glLoadIdentity();
+    glLoadMatrixf(gtmat);
+
+    return TCL_OK;
+}
+
+
+/*
+ * W G L _ L O A D P M A T R I X
+ *
+ * Load a new projection matrix.
+ *
+ */
+HIDDEN int
+wgl_loadPMatrix(struct dm *dmp, fastf_t *mat)
+{
+    fastf_t *mptr;
+    GLfloat gtmat[16];
+
+    glMatrixMode(GL_PROJECTION);
+
+    if (mat == (fastf_t *)NULL) {
+	if (((struct wgl_vars *)dmp->dm_vars.priv_vars)->face_flag) {
+	    glPopMatrix();
+	    glLoadIdentity();
+	    glOrtho(-xlim_view, xlim_view, -ylim_view, ylim_view, dmp->dm_clipmin[2], dmp->dm_clipmax[2]);
+	    glPushMatrix();
+	    glLoadMatrixd(((struct wgl_vars *)dmp->dm_vars.priv_vars)->faceplate_mat);
+	} else {
+	    glLoadIdentity();
+	    glOrtho(-xlim_view, xlim_view, -ylim_view, ylim_view, dmp->dm_clipmin[2], dmp->dm_clipmax[2]);
+	}
+
+	return TCL_OK;
+    }
+
+    mptr = mat;
+
+    gtmat[0] = *(mptr++);
+    gtmat[4] = *(mptr++);
+    gtmat[8] = *(mptr++);
+    gtmat[12] = *(mptr++);
+
+    gtmat[1] = *(mptr++);
+    gtmat[5] = *(mptr++);
+    gtmat[9] = *(mptr++);
+    gtmat[13] = *(mptr++);
+
+    gtmat[2] = *(mptr++);
+    gtmat[6] = *(mptr++);
+    gtmat[10] = -*(mptr++);
+    gtmat[14] = -*(mptr++);
+
+    gtmat[3] = *(mptr++);
+    gtmat[7] = *(mptr++);
+    gtmat[11] = *(mptr++);
+    gtmat[15] = *(mptr++);
+
     glLoadIdentity();
     glLoadMatrixf(gtmat);
 
@@ -1251,7 +1274,7 @@ wgl_draw(struct dm *dmp, struct bn_vlist *(*callback_function)(void *), genptr_t
  *			W G L _ N O R M A L
  *
  * Restore the display processor to a normal mode of operation
- * (ie, not scaled, rotated, displaced, etc).
+ * (i.e., not scaled, rotated, displaced, etc.).
  */
 HIDDEN int
 wgl_normal(struct dm *dmp)
@@ -1285,7 +1308,7 @@ wgl_normal(struct dm *dmp)
  * The starting position of the beam is as specified.
  */
 HIDDEN int
-wgl_drawString2D(struct dm *dmp, char *str, fastf_t x, fastf_t y, int size, int use_aspect)
+wgl_drawString2D(struct dm *dmp, const char *str, fastf_t x, fastf_t y, int size, int use_aspect)
 {
     if (dmp->dm_debugLevel)
 	bu_log("wgl_drawString2D()\n");
@@ -1346,44 +1369,7 @@ wgl_drawLine2D(struct dm *dmp, fastf_t x1, fastf_t y1, fastf_t x2, fastf_t y2)
 HIDDEN int
 wgl_drawLine3D(struct dm *dmp, point_t pt1, point_t pt2)
 {
-    static float black[4] = {0.0, 0.0, 0.0, 0.0};
-
-    if (dmp->dm_debugLevel)
-	bu_log("wgl_drawLine3D()\n");
-
-    if (dmp->dm_debugLevel) {
-	GLfloat pmat[16];
-
-	glGetFloatv(GL_PROJECTION_MATRIX, pmat);
-	bu_log("projection matrix:\n");
-	bu_log("%g %g %g %g\n", pmat[0], pmat[4], pmat[8], pmat[12]);
-	bu_log("%g %g %g %g\n", pmat[1], pmat[5], pmat[9], pmat[13]);
-	bu_log("%g %g %g %g\n", pmat[2], pmat[6], pmat[10], pmat[14]);
-	bu_log("%g %g %g %g\n", pmat[3], pmat[7], pmat[11], pmat[15]);
-	glGetFloatv(GL_MODELVIEW_MATRIX, pmat);
-	bu_log("modelview matrix:\n");
-	bu_log("%g %g %g %g\n", pmat[0], pmat[4], pmat[8], pmat[12]);
-	bu_log("%g %g %g %g\n", pmat[1], pmat[5], pmat[9], pmat[13]);
-	bu_log("%g %g %g %g\n", pmat[2], pmat[6], pmat[10], pmat[14]);
-	bu_log("%g %g %g %g\n", pmat[3], pmat[7], pmat[11], pmat[15]);
-    }
-
-    if (dmp->dm_light) {
-	glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, wireColor);
-	glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, black);
-	glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, black);
-	glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, black);
-
-	if (dmp->dm_transparency)
-	    glDisable(GL_BLEND);
-    }
-
-    glBegin(GL_LINES);
-    glVertex3dv(pt1);
-    glVertex3dv(pt2);
-    glEnd();
-
-    return TCL_OK;
+    return drawLine3D(dmp, pt1, pt2, "wgl_drawLine3D()\n", wireColor);
 }
 
 
@@ -1394,53 +1380,7 @@ wgl_drawLine3D(struct dm *dmp, point_t pt1, point_t pt2)
 HIDDEN int
 wgl_drawLines3D(struct dm *dmp, int npoints, point_t *points, int sflag)
 {
-    register int i;
-    static float black[4] = {0.0, 0.0, 0.0, 0.0};
-
-    if (dmp->dm_debugLevel)
-	bu_log("wgl_drawLine3D()\n");
-
-    if (dmp->dm_debugLevel) {
-	GLfloat pmat[16];
-
-	glGetFloatv(GL_PROJECTION_MATRIX, pmat);
-	bu_log("projection matrix:\n");
-	bu_log("%g %g %g %g\n", pmat[0], pmat[4], pmat[8], pmat[12]);
-	bu_log("%g %g %g %g\n", pmat[1], pmat[5], pmat[9], pmat[13]);
-	bu_log("%g %g %g %g\n", pmat[2], pmat[6], pmat[10], pmat[14]);
-	bu_log("%g %g %g %g\n", pmat[3], pmat[7], pmat[11], pmat[15]);
-	glGetFloatv(GL_MODELVIEW_MATRIX, pmat);
-	bu_log("modelview matrix:\n");
-	bu_log("%g %g %g %g\n", pmat[0], pmat[4], pmat[8], pmat[12]);
-	bu_log("%g %g %g %g\n", pmat[1], pmat[5], pmat[9], pmat[13]);
-	bu_log("%g %g %g %g\n", pmat[2], pmat[6], pmat[10], pmat[14]);
-	bu_log("%g %g %g %g\n", pmat[3], pmat[7], pmat[11], pmat[15]);
-    }
-
-    if (npoints < 2 || (!sflag && npoints%2))
-	return TCL_OK;
-
-    if (dmp->dm_light) {
-	glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, wireColor);
-	glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, black);
-	glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, black);
-	glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, black);
-
-	if (dmp->dm_transparency)
-	    glDisable(GL_BLEND);
-    }
-
-    if (sflag)
-	glBegin(GL_LINE_STRIP);
-    else
-	glBegin(GL_LINES);
-
-    for (i = 0; i < npoints; ++i)
-	glVertex3dv(points[i]);
-
-    glEnd();
-
-    return TCL_OK;
+    return drawLines3D(dmp, npoints, points, sflag, "wgl_drawLine3D()\n", wireColor);
 }
 
 
@@ -1538,12 +1478,6 @@ wgl_setWinBounds(struct dm *dmp, fastf_t w[6])
     if (dmp->dm_debugLevel)
 	bu_log("wgl_setWinBounds()\n");
 
-    if (!wglMakeCurrent(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc,
-			((struct wgl_vars *)dmp->dm_vars.priv_vars)->glxc)) {
-	bu_log("wgl_setWinBounds: Couldn't make context current\n");
-	return TCL_ERROR;
-    }
-
     dmp->dm_clipmin[0] = w[0];
     dmp->dm_clipmin[1] = w[2];
     dmp->dm_clipmin[2] = w[4];
@@ -1640,12 +1574,6 @@ wgl_configureWin_guts(struct dm *dmp,
 
     if (dmp->dm_debugLevel)
 	bu_log("wgl_configureWin_guts()\n");
-
-    if (!wglMakeCurrent(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc,
-			((struct wgl_vars *)dmp->dm_vars.priv_vars)->glxc)) {
-	bu_log("wgl_configureWin_guts: Couldn't make context current\n");
-	return TCL_ERROR;
-    }
 
     hwnd = WindowFromDC(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc);
     GetWindowRect(hwnd, &xwa);
@@ -1968,7 +1896,7 @@ wgl_reshape(struct dm *dmp, int width, int height)
     dmp->dm_aspect = (fastf_t)dmp->dm_width / (fastf_t)dmp->dm_height;
 
     if (dmp->dm_debugLevel) {
-	bu_log("wgl_configureWin_guts()\n");
+	bu_log("wgl_reshape()\n");
 	bu_log("width = %d, height = %d\n", dmp->dm_width, dmp->dm_height);
     }
 
@@ -1989,8 +1917,30 @@ wgl_reshape(struct dm *dmp, int width, int height)
 
 
 HIDDEN int
+wgl_makeCurrent(struct dm *dmp)
+{
+    if (dmp->dm_debugLevel)
+	bu_log("wgl_makeCurrent()\n");
+
+    if (!wglMakeCurrent(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc,
+			((struct wgl_vars *)dmp->dm_vars.priv_vars)->glxc)) {
+	bu_log("wgl_makeCurrent: Couldn't make context current\n");
+	return TCL_ERROR;
+    }
+
+    return TCL_OK;
+}
+
+
+HIDDEN int
 wgl_configureWin(struct dm *dmp, int force)
 {
+    if (!wglMakeCurrent(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc,
+			((struct wgl_vars *)dmp->dm_vars.priv_vars)->glxc)) {
+	bu_log("wgl_configureWin: Couldn't make context current\n");
+	return TCL_ERROR;
+    }
+
     return wgl_configureWin_guts(dmp, force);
 }
 
@@ -2003,12 +1953,6 @@ wgl_setLight(struct dm *dmp, int lighting_on)
 
     dmp->dm_light = lighting_on;
     ((struct wgl_vars *)dmp->dm_vars.priv_vars)->mvars.lighting_on = dmp->dm_light;
-
-    if (!wglMakeCurrent(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc,
-			((struct wgl_vars *)dmp->dm_vars.priv_vars)->glxc)) {
-	bu_log("wgl_setLight: Couldn't make context current\n");
-	return TCL_ERROR;
-    }
 
     if (!dmp->dm_light) {
 	/* Turn it off */
@@ -2045,12 +1989,6 @@ wgl_setTransparency(struct dm *dmp,
     dmp->dm_transparency = transparency_on;
     ((struct wgl_vars *)dmp->dm_vars.priv_vars)->mvars.transparency_on = dmp->dm_transparency;
 
-    if (!wglMakeCurrent(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc,
-			((struct wgl_vars *)dmp->dm_vars.priv_vars)->glxc)) {
-	bu_log("wgl_setTransparency: Couldn't make context current\n");
-	return TCL_ERROR;
-    }
-
     if (transparency_on) {
 	/* Turn it on */
 	glEnable(GL_BLEND);
@@ -2072,12 +2010,6 @@ wgl_setDepthMask(struct dm *dmp,
 
     dmp->dm_depthMask = enable;
 
-    if (!wglMakeCurrent(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc,
-			((struct wgl_vars *)dmp->dm_vars.priv_vars)->glxc)) {
-	bu_log("wgl_setDepthMask: Couldn't make context current\n");
-	return TCL_ERROR;
-    }
-
     if (enable)
 	glDepthMask(GL_TRUE);
     else
@@ -2095,12 +2027,6 @@ wgl_setZBuffer(struct dm *dmp, int zbuffer_on)
 
     dmp->dm_zbuffer = zbuffer_on;
     ((struct wgl_vars *)dmp->dm_vars.priv_vars)->mvars.zbuffer_on = dmp->dm_zbuffer;
-
-    if (!wglMakeCurrent(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc,
-			((struct wgl_vars *)dmp->dm_vars.priv_vars)->glxc)) {
-	bu_log("wgl_setZBuffer: Couldn't make context current\n");
-	return TCL_ERROR;
-    }
 
     if (((struct wgl_vars *)dmp->dm_vars.priv_vars)->mvars.zbuf == 0) {
 	dmp->dm_zbuffer = 0;
@@ -2123,12 +2049,6 @@ wgl_beginDList(struct dm *dmp, unsigned int list)
 {
     if (dmp->dm_debugLevel)
 	bu_log("wgl_beginDList()\n");
-
-    if (!wglMakeCurrent(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc,
-			((struct wgl_vars *)dmp->dm_vars.priv_vars)->glxc)) {
-	bu_log("wgl_beginDList: Couldn't make context current\n");
-	return TCL_ERROR;
-    }
 
     glNewList((GLuint)list, GL_COMPILE);
     return TCL_OK;
@@ -2159,12 +2079,6 @@ wgl_freeDLists(struct dm *dmp, unsigned int list, int range)
     if (dmp->dm_debugLevel)
 	bu_log("wgl_freeDLists()\n");
 
-    if (!wglMakeCurrent(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc,
-			((struct wgl_vars *)dmp->dm_vars.priv_vars)->glxc)) {
-	bu_log("wgl_freeDLists: Couldn't make context current\n");
-	return TCL_ERROR;
-    }
-
     glDeleteLists((GLuint)list, (GLsizei)range);
     return TCL_OK;
 }
@@ -2176,12 +2090,6 @@ wgl_genDLists(struct dm *dmp, size_t range)
     if (dmp->dm_debugLevel)
 	bu_log("wgl_freeDLists()\n");
 
-    if (!wglMakeCurrent(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc,
-			((struct wgl_vars *)dmp->dm_vars.priv_vars)->glxc)) {
-	bu_log("wgl_freeDLists: Couldn't make context current\n");
-	return TCL_ERROR;
-    }
-
     return glGenLists((GLsizei)range);
 }
 
@@ -2192,6 +2100,7 @@ struct dm dm_wgl = {
     wgl_drawEnd,
     wgl_normal,
     wgl_loadMatrix,
+    wgl_loadPMatrix,
     wgl_drawString2D,
     wgl_drawLine2D,
     wgl_drawLine3D,
@@ -2217,12 +2126,13 @@ struct dm dm_wgl = {
     wgl_drawDList,
     wgl_freeDLists,
     wgl_genDLists,
-    Nu_int0, /* display to image function */
+    null_getDisplayImage,	/* display to image function */
     wgl_reshape,
+    wgl_makeCurrent,
     0,
     1,				/* has displaylist */
-    0,                            /* no stereo by default */
-    1.0,				/* zoom-in limit */
+    0,                          /* no stereo by default */
+    1.0,			/* zoom-in limit */
     1,				/* bound flag */
     "wgl",
     "Windows with OpenGL graphics",

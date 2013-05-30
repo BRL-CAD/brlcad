@@ -1,7 +1,7 @@
 /*                         S U M M A R Y . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2012 United States Government as represented by
+ * Copyright (c) 2008-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -36,7 +36,7 @@
 /*
  * Summarize the contents of the directory by categories
  * (solid, comb, region).  If flag is != 0, it is interpreted
- * as a request to print all the names in that category (eg, RT_DIR_SOLID).
+ * as a request to print all the names in that category (e.g., RT_DIR_SOLID).
  */
 static void
 summary_dir(struct ged *gedp,
@@ -125,7 +125,7 @@ ged_summary(struct ged *gedp, int argc, const char *argv[])
 		flags |= RT_DIR_COMB;
 		break;
 	    default:
-		bu_vls_printf(gedp->ged_result_str, "%s:  p, r or g are the only valid parmaters\n", argv[0]);
+		bu_vls_printf(gedp->ged_result_str, "%s:  p, r or g are the only valid parameters\n", argv[0]);
 		return GED_ERROR;
 	}
     }

@@ -1,7 +1,7 @@
 /*                       T E X T U R E . H
  * BRL-CAD / ADRT
  *
- * Copyright (c) 2002-2012 United States Government as represented by
+ * Copyright (c) 2002-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -66,7 +66,6 @@ struct texture_bump_s {
 BU_EXPORT extern void texture_bump_init(struct texture_s *texture, vect_t rgb);
 BU_EXPORT extern void texture_bump_free(struct texture_s *texture);
 BU_EXPORT extern void texture_bump_work(__TEXTURE_WORK_PROTOTYPE__);
-
 
 
 struct texture_camo_s {

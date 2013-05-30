@@ -4,7 +4,7 @@
 #
 # This application is used for testing the HTML widget.  It can
 # also server as an example of how to use the HTML widget.
-# 
+#
 # @(#) $Id$
 #
 wm title . {HTML File Viewer}
@@ -129,14 +129,14 @@ if {$HtmlTraceMask} {
 # A font chooser routine.
 #
 # .h.h config -fontcommand pickFont
-proc pickFont {size attrs} { 
+proc pickFont {size attrs} {
   puts "FontCmd: $size $attrs"
   set a [expr {-1<[lsearch $attrs fixed]?{courier}:{charter}}]
   set b [expr {-1<[lsearch $attrs italic]?{italic}:{roman}}]
   set c [expr {-1<[lsearch $attrs bold]?{bold}:{normal}}]
   set d [expr {int(12*pow(1.2,$size-4))}]
   list $a $d $b $c
-} 
+}
 
 # This routine is called for each form element
 #
@@ -245,7 +245,7 @@ bind .h.h.x <1> {HrefBinding %x %y}
 bind .h.h.x <B1-Motion> {
     %W selection set @$::tkhtml::Priv(mark) @%x,%y
     clipboard clear
-    # avoid tkhtml0.0 errors 
+    # avoid tkhtml0.0 errors
     # anyone can fix this for tkhtml0.0
     catch {
         clipboard append [selection get]
@@ -347,7 +347,7 @@ proc Refresh {args} {
   LoadFile $LastFile
 }
 
-# If an arguent was specified, read it into the HTML widget.
+# If an argument was specified, read it into the HTML widget.
 #
 update
 if {$file!=""} {
@@ -360,7 +360,7 @@ if {$file!=""} {
 #
 bind HtmlClip <Motion> {
   set parent [winfo parent %W]
-  set url [$parent href %x %y] 
+  set url [$parent href %x %y]
   if {[string length $url] > 0} {
     $parent configure -cursor hand2
   } else {

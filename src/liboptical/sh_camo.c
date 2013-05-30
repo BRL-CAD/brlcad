@@ -1,7 +1,7 @@
 /*                       S H _ C A M O . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2012 United States Government as represented by
+ * Copyright (c) 2004-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -19,7 +19,7 @@
  */
 /** @file liboptical/sh_camo.c
  *
- * A shader to apply a crude camoflage color pattern to an object
+ * A shader to apply a crude camouflage color pattern to an object
  * using a fractional Brownian motion of 3 colors
  *
  * At each hit point, the shader evaluate the fbm to obtain a "Noise"
@@ -75,7 +75,7 @@ void
 camo_cvt_parse(register const struct bu_structparse *sdp, register const char *UNUSED(name), char *base, const char *value)
 /* structure description */
 /* struct member name */
-/* begining of structure */
+/* beginning of structure */
 /* string containing value */
 {
     double *p = (double *)(base+sdp->sp_offset);
@@ -121,44 +121,43 @@ static struct camo_specific marble_defaults = {
 
 #define SHDR_NULL ((struct camo_specific *)0)
 #define SHDR_O(m) bu_offsetof(struct camo_specific, m)
-#define SHDR_AO(m) bu_offsetofarray(struct camo_specific, m)
 
 void color_fix(register const struct bu_structparse *sdp, register const char *name, char *base, const char *value);
 
 struct bu_structparse camo_print_tab[] = {
-    {"%f", 1, "lacunarity",	SHDR_O(noise_lacunarity),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f", 1, "H", 		SHDR_O(noise_h_val),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f", 1, "octaves", 	SHDR_O(noise_octaves),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f", 1, "size",		SHDR_O(noise_size),	bu_mm_cvt, NULL, NULL },
-    {"%f", 3, "vscale",		SHDR_AO(noise_vscale),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f", 1, "thresh1",	SHDR_O(t1),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f", 1, "thresh2",	SHDR_O(t2),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f", 3, "color1",		SHDR_AO(c1),		color_fix, NULL, NULL },
-    {"%f", 3, "color2",		SHDR_AO(c2),		color_fix, NULL, NULL },
-    {"%f", 3, "color3",		SHDR_AO(c3),		color_fix, NULL, NULL },
-    {"%f", 3, "delta",		SHDR_AO(noise_delta),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%g", 1, "lacunarity",	SHDR_O(noise_lacunarity),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%g", 1, "H", 		SHDR_O(noise_h_val),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%g", 1, "octaves", 	SHDR_O(noise_octaves),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%g", 1, "size",		SHDR_O(noise_size),	bu_mm_cvt, NULL, NULL },
+    {"%f", 3, "vscale",		SHDR_O(noise_vscale),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%g", 1, "thresh1",	SHDR_O(t1),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%g", 1, "thresh2",	SHDR_O(t2),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f", 3, "color1",		SHDR_O(c1),		color_fix, NULL, NULL },
+    {"%f", 3, "color2",		SHDR_O(c2),		color_fix, NULL, NULL },
+    {"%f", 3, "color3",		SHDR_O(c3),		color_fix, NULL, NULL },
+    {"%f", 3, "delta",		SHDR_O(noise_delta),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"",   0, (char *)0,		0,		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 
 
 struct bu_structparse camo_parse[] = {
-    {"%f", 1, "lacunarity",	SHDR_O(noise_lacunarity),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f", 1, "l",		SHDR_O(noise_lacunarity),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f", 1, "H", 		SHDR_O(noise_h_val),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f", 1, "octaves",	SHDR_O(noise_octaves),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f", 1, "o", 		SHDR_O(noise_octaves),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f", 1, "t1",		SHDR_O(t1),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f", 1, "t2",		SHDR_O(t2),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f", 1, "size",		SHDR_O(noise_size),	bu_mm_cvt, NULL, NULL },
-    {"%f", 1, "s",		SHDR_O(noise_size),	bu_mm_cvt, NULL, NULL },
-    {"%f", 3, "vscale",		SHDR_AO(noise_vscale),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f", 3, "vs",		SHDR_AO(noise_vscale),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f", 3, "v",		SHDR_AO(noise_vscale),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f", 3, "c1",		SHDR_AO(c1),		color_fix, NULL, NULL },
-    {"%f", 3, "c2",		SHDR_AO(c2),		color_fix, NULL, NULL },
-    {"%f", 3, "c3",		SHDR_AO(c3),		color_fix, NULL, NULL },
-    {"%f", 3, "delta",		SHDR_AO(noise_delta),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f", 3, "d",		SHDR_AO(noise_delta),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%g", 1, "lacunarity",	SHDR_O(noise_lacunarity),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%g", 1, "l",		SHDR_O(noise_lacunarity),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%g", 1, "H", 		SHDR_O(noise_h_val),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%g", 1, "octaves",	SHDR_O(noise_octaves),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%g", 1, "o", 		SHDR_O(noise_octaves),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%g", 1, "t1",		SHDR_O(t1),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%g", 1, "t2",		SHDR_O(t2),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%g", 1, "size",		SHDR_O(noise_size),	bu_mm_cvt, NULL, NULL },
+    {"%g", 1, "s",		SHDR_O(noise_size),	bu_mm_cvt, NULL, NULL },
+    {"%f", 3, "vscale",		SHDR_O(noise_vscale),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f", 3, "vs",		SHDR_O(noise_vscale),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f", 3, "v",		SHDR_O(noise_vscale),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f", 3, "c1",		SHDR_O(c1),		color_fix, NULL, NULL },
+    {"%f", 3, "c2",		SHDR_O(c2),		color_fix, NULL, NULL },
+    {"%f", 3, "c3",		SHDR_O(c3),		color_fix, NULL, NULL },
+    {"%f", 3, "delta",		SHDR_O(noise_delta),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f", 3, "d",		SHDR_O(noise_delta),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"",   0, (char *)0,	0,			BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 
@@ -190,7 +189,7 @@ void
 color_fix(register const struct bu_structparse *sdp, register const char *UNUSED(name), char *base, const char *UNUSED(value))
 /* structure description */
 /* struct member name */
-/* begining of structure */
+/* beginning of structure */
 /* string containing value */
 {
     register double *p = (double *)(base+sdp->sp_offset);
@@ -213,20 +212,12 @@ color_fix(register const struct bu_structparse *sdp, register const char *UNUSED
 }
 
 
-/* C A M O _ S E T U P
- *
- * This routine is called (at prep time)
- * once for each region which uses this shader.
- * Any shader-specific initialization should be done here.
- */
 HIDDEN int
-camo_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, const struct mfuncs *UNUSED(mfp), struct rt_i *rtip)
-
-
+setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, struct rt_i *rtip, char *parameters, struct camo_specific defaults)
+{
 /* pointer to reg_udata in *rp */
 
 /* New since 4.4 release */
-{
     register struct camo_specific *camo_sp;
     mat_t model_to_region;
     mat_t tmp;
@@ -238,9 +229,9 @@ camo_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, co
     *dpp = camo_sp;
 
     if (rdebug&RDEBUG_SHADE) {
-	bu_log("camouflage parameters = '%s'\n", bu_vls_addr(matparm));
+	bu_log("%s'%s'\n", parameters, bu_vls_addr(matparm));
     }
-    memcpy(camo_sp, &camo_defaults, sizeof(struct camo_specific));
+    memcpy(camo_sp, &defaults, sizeof(struct camo_specific));
 
     if (bu_struct_parse(matparm, camo_parse, (char *)camo_sp) < 0)
 	return -1;
@@ -282,6 +273,19 @@ camo_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, co
 }
 
 
+/* C A M O _ S E T U P
+ *
+ * This routine is called (at prep time)
+ * once for each region which uses this shader.
+ * Any shader-specific initialization should be done here.
+ */
+HIDDEN int
+camo_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, const struct mfuncs *UNUSED(mfp), struct rt_i *rtip)
+{
+    return setup(rp, matparm, dpp, rtip, "camouflage parameters = ", camo_defaults);
+}
+
+
 /*
  * C A M O _ P R I N T
  */
@@ -298,7 +302,7 @@ camo_print(register struct region *rp, genptr_t dp)
 HIDDEN void
 camo_free(genptr_t cp)
 {
-    bu_free(cp, "camo_specific");
+    BU_PUT(cp, struct camo_specific);
 }
 
 
@@ -368,64 +372,8 @@ camo_render(struct application *ap, const struct partition *pp, struct shadework
  */
 HIDDEN int
 marble_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, const struct mfuncs *UNUSED(mfp), struct rt_i *rtip)
-
-
-/* pointer to reg_udata in *rp */
-
-/* New since 4.4 release */
 {
-    register struct camo_specific *camo_sp;
-    mat_t model_to_region;
-    mat_t tmp;
-
-    RT_CHECK_RTI(rtip);
-    BU_CK_VLS(matparm);
-    RT_CK_REGION(rp);
-    BU_GET(camo_sp, struct camo_specific);
-    *dpp = camo_sp;
-
-    if (rdebug&RDEBUG_SHADE) {
-	bu_log("marble parameters = '%s'\n", bu_vls_addr(matparm));
-    }
-    memcpy(camo_sp, &marble_defaults, sizeof(struct camo_specific));
-
-    if (bu_struct_parse(matparm, camo_parse, (char *)camo_sp) < 0)
-	return -1;
-
-    /* Optional:  get the matrix which maps model space into
-     * "region" or "shader" space
-     */
-    db_region_mat(model_to_region, rtip->rti_dbip, rp->reg_name, &rt_uniresource);
-
-    /* add the noise-space scaling */
-    MAT_IDN(tmp);
-    if (!EQUAL(camo_sp->noise_size, 1.0)) {
-	/* the user sets "noise_size" to the size of the biggest
-	 * noise-space blob in model coordinates
-	 */
-	tmp[0] = tmp[5] = tmp[10] = 1.0/camo_sp->noise_size;
-    } else {
-	tmp[0] = 1.0/camo_sp->noise_vscale[0];
-	tmp[5] = 1.0/camo_sp->noise_vscale[1];
-	tmp[10] = 1.0/camo_sp->noise_vscale[2];
-    }
-
-    bn_mat_mul(camo_sp->xform, tmp, model_to_region);
-
-    /* Add any translation within shader/region space */
-    MAT_IDN(tmp);
-    tmp[MDX] = camo_sp->noise_delta[0];
-    tmp[MDY] = camo_sp->noise_delta[1];
-    tmp[MDZ] = camo_sp->noise_delta[2];
-    bn_mat_mul2(tmp, camo_sp->xform);
-
-    if (rdebug&RDEBUG_SHADE) {
-	bu_struct_print(rp->reg_name, camo_print_tab,
-			(char *)camo_sp);
-	bn_mat_print("xform", camo_sp->xform);
-    }
-
-    return 1;
+    return setup(rp, matparm, dpp, rtip, "marble parameters = ", marble_defaults);
 }
 
 

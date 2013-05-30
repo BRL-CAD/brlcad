@@ -232,6 +232,20 @@ void EXPinitialize( void ) {
     EXPop_init();
 }
 
+void EXPcleanup( void ) {
+    ERRORdestroy( ERROR_integer_expression_expected );
+    ERRORdestroy( ERROR_internal_unrecognized_op_in_EXPresolve );
+    ERRORdestroy( ERROR_attribute_reference_on_aggregate );
+    ERRORdestroy( ERROR_attribute_ref_from_nonentity );
+    ERRORdestroy( ERROR_indexing_illegal );
+    ERRORdestroy( ERROR_warn_indexing_mixed );
+    ERRORdestroy( ERROR_enum_no_such_item );
+    ERRORdestroy( ERROR_group_ref_no_such_entity );
+    ERRORdestroy( ERROR_group_ref_unexpected_type );
+    ERRORdestroy( ERROR_implicit_downcast );
+    ERRORdestroy( ERROR_ambig_implicit_downcast );
+}
+
 /**
  * \param s_id the search id, a parameter to avoid colliding with ENTITYfind...
  * there will be no ambiguities, since we're looking at (and marking)
@@ -385,8 +399,7 @@ Type EXPresolve_op_dot( Expression expr, Scope scope ) {
                 return( Type_Bad );
             }
             if( DICT_type != OBJ_VARIABLE ) {
-                printf( "EXPresolved_op_dot: attribute not an attribute? - press ^C now to trap to debugger\n" );
-                pause();
+                fprintf( stderr, "ERROR: EXPresolved_op_dot: attribute not an attribute?\n" );
             }
 
             op2->u.variable = v;
@@ -563,12 +576,16 @@ Type EXPresolve_op_group( Expression expr, Scope scope ) {
                     /*                  &op2->symbol, op2->symbol.name);*/
                     return( Type_Runtime );
             }
+        case array_:
+            if( op1->type->u.type->body->type == self_ ) {
+                return( Type_Runtime ); //not sure if there are other cases where Type_Runtime should be returned, or not
+            } // else fallthrough
         case unknown_:  /* unable to resolve operand */
             /* presumably error has already been reported */
             resolve_failed( expr );
             return( Type_Bad );
         case aggregate_:
-        case array_:
+
         case bag_:
         case list_:
         case set_:

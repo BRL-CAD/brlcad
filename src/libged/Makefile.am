@@ -27,6 +27,7 @@ libged_nil_la_SOURCES = \
 	bot_dump.c \
 	bot_face_fuse.c \
 	bot_face_sort.c \
+	bot_fuse.c \
 	bot_flip.c \
 	bot_merge.c \
 	bot_smooth.c \
@@ -40,6 +41,7 @@ libged_nil_la_SOURCES = \
 	clip.c \
 	clone.c \
 	color.c \
+	columns.c \
 	comb.c \
 	combmem.c \
 	comb_color.c \
@@ -49,6 +51,7 @@ libged_nil_la_SOURCES = \
 	copymat.c \
 	copyeval.c \
 	cpi.c \
+	dag.cpp \
 	dbip.c \
 	debugbu.c \
 	debugdir.c \
@@ -60,13 +63,17 @@ libged_nil_la_SOURCES = \
 	dg_obj.c \
 	dir2ae.c \
 	draw.c \
+	draw_calc.cpp \
 	dump.c \
 	dup.c \
 	eac.c \
 	echo.c \
+	edarb.c \
+	edbot.c \
 	edcodes.c \
 	edcomb.c \
 	edpipe.c \
+	edit_metaball.c \
 	edit.c \
 	editit.c \
 	edmater.c \
@@ -75,6 +82,7 @@ libged_nil_la_SOURCES = \
 	expand.c \
 	eye.c \
 	eye_pos.c \
+	facedef.c \
 	facetize.c \
 	fb2pix.c \
 	find.c \
@@ -105,6 +113,7 @@ libged_nil_la_SOURCES = \
 	instance.c \
 	isize.c \
 	item.c \
+	joint.c \
 	keep.c \
 	keypoint.c \
 	kill.c \
@@ -114,6 +123,7 @@ libged_nil_la_SOURCES = \
 	label.c \
 	list.c \
 	loadview.c \
+	lod.c \
 	log.c \
 	lookat.c \
 	ls.c \
@@ -154,6 +164,7 @@ libged_nil_la_SOURCES = \
 	pmat.c \
 	pmodel2view.c \
 	png.c \
+	polybinout.c \
 	polyclip.cpp \
 	pov.c \
 	prcolor.c \
@@ -162,6 +173,7 @@ libged_nil_la_SOURCES = \
 	ps.c \
 	protate.c \
 	pscale.c \
+	pset.c \
 	ptranslate.c \
 	push.c \
 	put.c \
@@ -252,6 +264,7 @@ libged_nil_la_SOURCES = \
 	view2model_vec.c \
 	view_obj.c \
 	viewdir.c \
+	voxelize.c \
 	vrot.c \
 	vutil.c \
 	wcodes.c \
@@ -273,7 +286,9 @@ libged_nil_la_SOURCES = \
 	zap.c \
 	zoom/zoom.c
 
-AM_CFLAGS = ${STRICT_FLAGS}
+AM_CFLAGS = \
+	${STD_C99_FLAGS} \
+	${STRICT_FLAGS}
 
 # cannot set per-target CPPFLAGS until automake 1.7+
 AM_CPPFLAGS = \
@@ -284,6 +299,7 @@ AM_CPPFLAGS = \
 
 noinst_HEADERS = \
 	ged_private.h \
+	joint.h \
 	qray.h \
 	simulate/simulate.h \
 	wdb_qray.h
@@ -300,8 +316,7 @@ libged_la_LIBADD = \
 	${GED_LIBS}
 
 EXTRA_DIST = \
-	CMakeLists.txt \
-        dag.cpp
+	CMakeLists.txt
 
 DEPENDS = src/librt src/libwdb src/libanalyze src/libfb
 

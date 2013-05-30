@@ -13,6 +13,7 @@ bin_PROGRAMS = \
 	wire
 
 AM_CPPFLAGS = \
+	${STD_C99_FLAGS} \
 	${STRICT_FLAGS} \
 	${TCL_CPPFLAGS}
 

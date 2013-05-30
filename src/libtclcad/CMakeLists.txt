@@ -22,7 +22,10 @@ add_definitions(
   ${XOPEN_DEFINE}
   )
 
-set(TCLCAD_XLIBS ${TCLCAD_XLIBS} ${X11_LIBRARIES})
+if(BRLCAD_ENABLE_X11)
+  set(TCLCAD_XLIBS ${TCLCAD_XLIBS} ${X11_LIBRARIES} ${X11_Xi_LIB})
+endif(BRLCAD_ENABLE_X11)
+
 set(LIBTCLCAD_SRCS
   tclcad.c
   tclcadAutoPath.c
@@ -30,7 +33,7 @@ set(LIBTCLCAD_SRCS
   tkImgFmtPIX.c
   cmdhist_obj.c
   )
-BRLCAD_ADDLIB(libtclcad "${LIBTCLCAD_SRCS}" "libged;libdm;${TCLCAD_XLIBS};${X11_Xi_LIB}")
+BRLCAD_ADDLIB(libtclcad "${LIBTCLCAD_SRCS}" "libged;libdm;${TCLCAD_XLIBS}")
 SET_TARGET_PROPERTIES(libtclcad PROPERTIES VERSION 20.0.1 SOVERSION 20)
 set(tclcad_ignore_files tclcad_private.h)
 CMAKEFILES(${tclcad_ignore_files})

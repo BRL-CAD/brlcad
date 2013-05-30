@@ -1,7 +1,7 @@
 #                   A T T R _ E D I T . T C L
 # BRL-CAD
 #
-# Copyright (c) 2004-2012 United States Government as represented by
+# Copyright (c) 2004-2013 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -365,7 +365,7 @@ class Attr_editor {
 
 	if { [attr_name_is_valid $cur_attr_name] == 0 } {
 	    tk_messageBox -icon error -type ok -title "Error: illegal attribute name"\
-		-message "Attribute names must not have imbedded white space nor non-printable characters"
+		-message "Attribute names must not have embedded white space nor non-printable characters"
 	    return
 	}
 
@@ -401,7 +401,7 @@ class Attr_editor {
 	set attr_entry_label "New Attribute Name:"
     }
 
-    # attribute names may not contain embedded white space nor non-priontable chars
+    # attribute names may not contain embedded white space or non-printable chars
     method attr_name_is_valid { name } {
 	set len [string length $name]
 	if { $len < 1 } {
@@ -435,7 +435,7 @@ class Attr_editor {
 
 	if { [attr_name_is_valid $cur_attr_name] == 0 } {
 	    tk_messageBox -icon error -type ok -title "Error: illegal attribute name"\
-		-message "Attribute names must not have imbedded white space nor non-printable characters"
+		-message "Attribute names must not have embedded white space nor non-printable characters"
 	    return
 	}
 
@@ -476,7 +476,7 @@ class Attr_editor {
 	$textb see 1.0
     }
 
-    # save the edits to the database, called by "apply" button and indiretcly by "ok" button
+    # save the edits to the database, called by "apply" button and indirectly by "ok" button
     # returns 0 if all is well
     # returns 1 otherwise
     method do_apply {} {

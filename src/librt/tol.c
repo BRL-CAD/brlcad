@@ -1,7 +1,7 @@
 /*                           T O L . C
  * BRL-CAD
  *
- * Copyright (c) 2011-2012 United States Government as represented by
+ * Copyright (c) 2011-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -25,7 +25,7 @@ struct bn_tol *
 rt_tol_default(struct bn_tol *tol)
 {
     if (!tol) {
-	BU_GET(tol, struct bn_tol);
+	BU_ALLOC(tol, struct bn_tol);
 	BN_TOL_INIT(tol);
     }
 

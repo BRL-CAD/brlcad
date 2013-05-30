@@ -8,32 +8,32 @@
     <refmiscinfo class="source">BRL-CAD</refmiscinfo>
     <refmiscinfo class="manual">BRL-CAD User Commands</refmiscinfo>
   </refmeta>
-  
+
   <refnamediv xml:id="name">
     <refname>center</refname>
-    <refpurpose>Positions the center of the <emphasis>mged</emphasis> viewing 
+    <refpurpose>Positions the center of the <emphasis>mged</emphasis> viewing
     cube at the specified model coordinates.
     </refpurpose>
   </refnamediv>
-  
+
   <!-- body begins here -->
   <refsynopsisdiv xml:id="synopsis">
     <cmdsynopsis sepchar=" ">
-      <command>center</command>    
+      <command>center</command>
       <arg choice="opt" rep="norepeat"><replaceable>x y z</replaceable></arg>
     </cmdsynopsis>
   </refsynopsisdiv>
-  
-  <refsection xml:id="description"><info><title>DESCRIPTION</title></info>
-    
+
+  <refsection xml:id="description"><title>DESCRIPTION</title>
+
     <para>
       Positions the center of the <emphasis>mged</emphasis> viewing cube at the specified
       model coordinates. This is accomplished by moving the eye position while not
-      changing the viewing direction. (The <command>lookat</command> command performs a 
-      related function by changing the viewing direction, but not moving the eye location.) 
-      The coordinates are expected in the current editing units. In case the coordinates 
-      are the result of evaluating a formula, they are echoed back. If no coordinates are 
-      provided, the current center coordinates (in current editing units, not mm) are 
+      changing the viewing direction. (The <command>lookat</command> command performs a
+      related function by changing the viewing direction, but not moving the eye location.)
+      The coordinates are expected in the current editing units. In case the coordinates
+      are the result of evaluating a formula, they are echoed back. If no coordinates are
+      provided, the current center coordinates (in current editing units, not mm) are
       printed and can be used in subsequent calculations.
     </para>
     <para>
@@ -46,36 +46,36 @@
       numerically.
     </para>
   </refsection>
-  
-  <refsection xml:id="examples"><info><title>EXAMPLES</title></info>
-    
+
+  <refsection xml:id="examples"><title>EXAMPLES</title>
+
     <para>
-      The examples show the use of the <command>center</command> command to print 
-      coordinates of the center of the mged display, move the center of the 
-      <emphasis>mged</emphasis> display to a given point, set a Tcl variable to the 
-      display center coodinates, move the center point a given distance
-      in a given direction, and update a vertex in the database to be located at 
+      The examples show the use of the <command>center</command> command to print
+      coordinates of the center of the mged display, move the center of the
+      <emphasis>mged</emphasis> display to a given point, set a Tcl variable to the
+      display center coordinates, move the center point a given distance
+      in a given direction, and update a vertex in the database to be located at
       the current center of view.
     </para>
-    <example><info><title>Printing the coordinates of the center of the <emphasis>mged</emphasis> display.</title></info>
-      
+    <example><title>Printing the coordinates of the center of the <emphasis>mged</emphasis> display.</title>
+
       <para>
 	<prompt>mged&gt;</prompt> <userinput>center</userinput>
       </para>
       <para>Prints out the coordinates of the center of the mged display.
       </para>
     </example>
-    
-    <example><info><title>Moving the center of the <emphasis>mged</emphasis> display to a specified point.</title></info>
-      
+
+    <example><title>Moving the center of the <emphasis>mged</emphasis> display to a specified point.</title>
+
       <para>
 	<prompt>mged&gt;</prompt><userinput>center 12.5 5.6 8.7&gt;</userinput>
       </para>
       <para>The center of the <emphasis>mged</emphasis> display is moved to the point (12.5, 5.6, 8.7).</para>
     </example>
-    
-    <example><info><title>Set Tcl variable $oldcent to the display center coordinates.</title></info>
-      
+
+    <example><title>Set Tcl variable $oldcent to the display center coordinates.</title>
+
       <para>
 	<prompt>mged&gt;</prompt><userinput>set oldcent [center]</userinput>
       </para>
@@ -83,15 +83,17 @@
 	Sets the Tcl variable $oldcent to the display center coordinates.
       </para>
     </example>
-    
-    <example><info><title>Move the center point a given distance in a given direction.</title></info>
-      
+
+    <example><title>Move the center point a given distance in a given direction.</title>
+
       <variablelist>
 	<varlistentry>
 	  <term><prompt>mged&gt;</prompt> <userinput>set glob_compat_mode 0</userinput></term>
+      <listitem><para/></listitem>
       </varlistentry>
       <varlistentry>
 	   <term><prompt>mged</prompt> <userinput>units mm</userinput></term>
+      <listitem><para/></listitem>
       </varlistentry>
       <varlistentry>
 	<term><prompt>mged</prompt> <userinput>eval center [vadd2[center] {2 0 0}]</userinput></term>
@@ -103,22 +105,24 @@
       </varlistentry>
       </variablelist>
     </example>
-    <example><info><title>Update the vertex of a shape in the database to be located at the current
-      center of the view and recreate the vector display lists of objects that were affected by the change.</title></info>
-      
+    <example><title>Update the vertex of a shape in the database to be located at the current
+      center of the view and recreate the vector display lists of objects that were affected by the change.</title>
+
       <variablelist>
 	<varlistentry>
 	   <term><prompt>mged&gt;</prompt> <userinput>units mm</userinput></term>
+      <listitem><para/></listitem>
 	</varlistentry>
 	<varlistentry>
 	  <term><prompt>mged</prompt> <userinput>db adjust sphere.s  V [center]</userinput></term>
+      <listitem><para/></listitem>
 	</varlistentry>
 	<varlistentry>
 	  <term><prompt>mged</prompt> <userinput>redraw_vlist sphere.s</userinput></term>
 	  <listitem>
 	    <para>
 	      Updates the "V" vertex of shape sphere.s in the database to be located at
-	      the current center of the view, and recreates the vector display lists of 
+	      the current center of the view, and recreates the vector display lists of
 	      only those object(s) that were affected by the change.
 	    </para>
 	  </listitem>
@@ -126,11 +130,11 @@
       </variablelist>
     </example>
   </refsection>
-  
-  <info><corpauthor>BRL-CAD Team</corpauthor></info>
-  
-  <refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
-    
+
+  <refsection xml:id="author"><title>AUTHOR</title><para>BRL-CAD Team</para></refsection>
+
+  <refsection xml:id="bug_reports"><title>BUG REPORTS</title>
+
     <para>
       Reports of bugs or problems should be submitted via electronic
       mail to &lt;devs@brlcad.org&gt;, or via the "cadbug.sh" script.

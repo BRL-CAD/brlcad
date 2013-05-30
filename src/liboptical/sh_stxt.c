@@ -1,7 +1,7 @@
 /*                       S H _ S T X T . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2012 United States Government as represented by
+ * Copyright (c) 1986-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -19,7 +19,7 @@
  */
 /** @file liboptical/sh_stxt.c
  *
- * Routines to implement solid (ie, 3-D) texture maps.
+ * Routines to implement solid (i.e., 3-D) texture maps.
  *
  * XXX Solid texturing is still preliminary.
  *
@@ -64,8 +64,8 @@ struct stxt_specific {
 #define SOL_O(m) bu_offsetof(struct stxt_specific, m)
 
 struct bu_structparse stxt_parse[] = {
-    {"%d",	1, "transp",	bu_offsetofarray(struct stxt_specific, stx_transp),	stxt_transp_hook, NULL, NULL },
-    {"%s",	STX_NAME_LEN, "file",	bu_offsetofarray(struct stxt_specific, stx_file),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%d",	1, "transp",	SOL_O(stx_transp),	stxt_transp_hook, NULL, NULL },
+    {"%s",	STX_NAME_LEN, "file",	SOL_O(stx_file),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%d",	1, "w",			SOL_O(stx_w),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%d",	1, "n",			SOL_O(stx_n),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%d",	1, "d",			SOL_O(stx_d),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
@@ -183,7 +183,7 @@ stxt_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, co
 
     /** Get input values **/
     if (bu_struct_parse(matparm, stxt_parse, (char *)stp) < 0) {
-	bu_free((genptr_t)stp, "stxt_specific");
+	BU_PUT(stp, struct stxt_specific);
 	return -1;
     }
     /*** DEFAULT SIZE OF STXT FILES ***/
@@ -216,7 +216,7 @@ stxt_free(genptr_t cp)
 
     if (stp->stx_pixels)
 	bu_free(stp->stx_pixels, "solid texture pixel array");
-    bu_free(cp, "stx_specific");
+    BU_PUT(cp, struct stxt_specific);
 }
 
 

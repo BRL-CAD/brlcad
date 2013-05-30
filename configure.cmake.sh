@@ -18,18 +18,6 @@ do
                                   shift;;
      --disable-opengl)                options="$options -DBRLCAD_ENABLE_OPENGL=OFF";
                                   shift;;
-     --enable-docs)                options="$options -DBRLCAD_EXTRADOCS=ON";
-                                  shift;;
-     --disable-docs)                options="$options -DBRLCAD_EXTRADOCS=OFF";
-                                  shift;;
-     --enable-extra-docs)                options="$options -DBRLCAD_EXTRADOCS=ON";
-                                  shift;;
-     --disable-extra-docs)                options="$options -DBRLCAD_EXTRADOCS=OFF";
-                                  shift;;
-     --enable-docbook)                options="$options -DBRLCAD_EXTRADOCS=ON";
-                                  shift;;
-     --disable-docbook)                options="$options -DBRLCAD_EXTRADOCS=OFF";
-                                  shift;;
      --enable-runtime-debug)                options="$options -DBRLCAD_ENABLE_RUNTIME_DEBUG=ON";
                                   shift;;
      --disable-runtime-debug)                options="$options -DBRLCAD_ENABLE_RUNTIME_DEBUG=OFF";
@@ -77,6 +65,18 @@ do
      --enable-strict-compile-flags)                options="$options -DBRLCAD_ENABLE_STRICT=ON";
                                   shift;;
      --disable-strict-compile-flags)                options="$options -DBRLCAD_ENABLE_STRICT=OFF";
+                                  shift;;
+     --enable-docs)                options="$options -DBRLCAD_EXTRADOCS=ON";
+                                  shift;;
+     --disable-docs)                options="$options -DBRLCAD_EXTRADOCS=OFF";
+                                  shift;;
+     --enable-extra-docs)                options="$options -DBRLCAD_EXTRADOCS=ON";
+                                  shift;;
+     --disable-extra-docs)                options="$options -DBRLCAD_EXTRADOCS=OFF";
+                                  shift;;
+     --enable-docbook)                options="$options -DBRLCAD_EXTRADOCS=ON";
+                                  shift;;
+     --disable-docbook)                options="$options -DBRLCAD_EXTRADOCS=OFF";
                                   shift;;
      --enable-regex)                options="$options -DBRLCAD_REGEX=BUNDLED";
                                   shift;;
@@ -174,12 +174,16 @@ do
                                   shift;;
      --disable-step-class-libraries)                options="$options -DBRLCAD_SCL=SYSTEM";
                                   shift;;
+     --enable-vds)                options="$options -DBRLCAD_LIBVDS=BUNDLED";
+                                  shift;;
+     --disable-vds)                options="$options -DBRLCAD_LIBVDS=SYSTEM";
+                                  shift;;
      --prefix=*)   	          inputstr=$1;
-     		   	          options="$options -DCMAKE_INSTALL_PREFIX=${inputstr#--prefix=}";
-     		   	          shift;;
+				  options="$options -DCMAKE_INSTALL_PREFIX=${inputstr#--prefix=}";
+				  shift;;
      *) 	   	          echo "Warning: unknown option $1";
-     		   	          shift;;
+				  shift;;
    esac
-done 
+done
 echo cmake $options
 cmake $options

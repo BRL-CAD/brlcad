@@ -1,7 +1,7 @@
 /*                          U G - G . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2012 United States Government as represented by
+ * Copyright (c) 2004-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -114,7 +114,7 @@ static int ident=1000;			/* ident number for BRL-CAD regions */
 
 static double tol_dist=0.0005;	/* (mm) minimum distance between two distinct vertices */
 static double tol_dist_sq;
-static double surf_tol=3.175;	/* (mm) allowable surface tesselation tolerance (default is 1/8 inch) */
+static double surf_tol=3.175;	/* (mm) allowable surface tessellation tolerance (default is 1/8 inch) */
 static double ang_tol=0.0;
 static double min_chamfer=0.0;	/* (mm) chamfers smaller than this are ignored */
 static double min_round=0.0;	/* (mm) rounds smaller than this are ignored */
@@ -202,7 +202,7 @@ add_to_obj_list( char *name )
 {
     struct obj_list *ptr;
 
-    ptr = (struct obj_list *)bu_malloc( sizeof( struct obj_list ), "obj_list" );
+    BU_ALLOC(ptr, struct obj_list);
     fprintf( stderr, "In add_to_obj_list(%s), &ptr = x%x, name=x%x, brlcad_objs_root = x%x, ptr = x%x\n",
 	     name, &ptr, name, brlcad_objs_root, ptr );
     ptr->next = brlcad_objs_root;
@@ -719,7 +719,7 @@ make_curve_particles( tag_t guide_curve, fastf_t outer_diam, fastf_t inner_diam,
 	UF_func( UF_EVAL_evaluate( evaluator, 0, t, tmp_pt, NULL ) );
 
 	VSCALE( tmp_pt, tmp_pt, units_conv );
-	pt = (struct pt_list *)bu_malloc( sizeof( struct pt_list ), "struct pt_list" );
+	BU_ALLOC(pt, struct pt_list);
 	BU_LIST_INIT( &pt->l );
 	pt->t = t;
 	MAT4X3PNT( pt->pt, curr_xform, tmp_pt );
@@ -774,7 +774,7 @@ make_curve_particles( tag_t guide_curve, fastf_t outer_diam, fastf_t inner_diam,
 		continue;
 	    }
 
-	    newlist = (struct pt_list *)bu_malloc( sizeof( struct pt_list), "struct pt_list" );
+	    BU_ALLOC(newlist, struct pt_list);
 	    BU_LIST_INIT( &newlist->l );
 	    newlist->t = t;
 	    VMOVE( newlist->pt, this_pt );
@@ -1150,7 +1150,7 @@ get_cone_data( tag_t feat_tag, int n_exps, tag_t *exps, char **descs, double uni
     (void)get_exp_value( "Height", n_exps, exps, descs, &ht );
 
     if ( half_angle > 0.0 ) {
-	half_angle *= M_PI / 180.0;
+	half_angle *= DEG2RAD;
     } else {
 	half_angle = atan2( (base_diam - top_diam)/2.0, ht );
     }
@@ -1313,7 +1313,7 @@ conv_extrusion( tag_t feat_tag, char *part_name, char *refset_name, char *inst_n
 	bu_log( "Failed to get taper angle for extrusion\n" );
 	return (char *)NULL;
     }
-    taper_angle = tmp * M_PI / 180.0;
+    taper_angle = tmp * DEG2RAD;
 
     if ( taper_angle != 0.0 ) {
 	bu_log( "Cannot handle tapered extrusions yet\n" );
@@ -1358,7 +1358,7 @@ conv_extrusion( tag_t feat_tag, char *part_name, char *refset_name, char *inst_n
 
 	} else {
 
-	    bu_log( "Apparrently, a sketch(%d) is not a sketch\n", sketch_tag );
+	    bu_log( "Apparently, a sketch(%d) is not a sketch\n", sketch_tag );
 	    UF_free( curves );
 	    UF_MODL_delete_list( &sketch_list );
 
@@ -1375,7 +1375,7 @@ conv_extrusion( tag_t feat_tag, char *part_name, char *refset_name, char *inst_n
 
     seg_count = num_curves;
 
-    skt = (struct rt_sketch_internal *)bu_calloc( 1, sizeof( struct rt_sketch_internal ), "sketch" );
+    BU_ALLOC(skt, struct rt_sketch_internal);
     skt->magic = RT_SKETCH_INTERNAL_MAGIC;
     skt->curve.seg_count = seg_count;
     skt->curve.reverse = (int *)bu_calloc( seg_count, sizeof( int ), "sketch reverse flags" );
@@ -1417,7 +1417,7 @@ conv_extrusion( tag_t feat_tag, char *part_name, char *refset_name, char *inst_n
 	    bu_log( "Illegal tag for curve (%d)\n", curves[j] );
 	    bu_free( (char *)z_coords, "z_coords" );
 	    for ( i=j+1; i<num_curves; i++ ) {
-		lsg = (struct line_seg *)bu_malloc( sizeof( struct line_seg ), "fake line seg" );
+		BU_ALLOC(lsg, struct line_seg);
 		lsg->magic = CURVE_LSEG_MAGIC;
 		skt->curve.segment[i] = (genptr_t)lsg;
 	    }
@@ -1439,7 +1439,7 @@ conv_extrusion( tag_t feat_tag, char *part_name, char *refset_name, char *inst_n
 		DO_INDENT;
 		bu_log( "Line from (%g %g %g) to (%g %g %g)\n",
 			V3ARGS( line_data.start_point ), V3ARGS( line_data.end_point ) );
-		lsg = (struct line_seg *)bu_malloc( sizeof( struct line_seg ), "line seg" );
+		BU_ALLOC(lsg, struct line_seg);
 		skt->curve.segment[j] = (genptr_t)lsg;
 		lsg->magic = CURVE_LSEG_MAGIC;
 		UF_MTX3_vec_multiply( line_data.start_point, csys, pt );
@@ -1456,7 +1456,7 @@ conv_extrusion( tag_t feat_tag, char *part_name, char *refset_name, char *inst_n
 		    /* for simplicity, malloc up the rest of a sketch internal object for freeing */
 		    bu_free( (char *)z_coords, "z_coords" );
 		    for ( i=j+1; i<num_curves; i++ ) {
-			lsg = (struct line_seg *)bu_malloc( sizeof( struct line_seg ), "fake line seg" );
+			BU_ALLOC(lsg, struct line_seg);
 			lsg->magic = CURVE_LSEG_MAGIC;
 			skt->curve.segment[i] = (genptr_t)lsg;
 		    }
@@ -1475,11 +1475,11 @@ conv_extrusion( tag_t feat_tag, char *part_name, char *refset_name, char *inst_n
 		break;
 	    case UF_circle_type:
 		UF_func( UF_CURVE_ask_arc_data( curves[j], &arc_data ) );
-		csg = (struct carc_seg *)bu_malloc( sizeof( struct carc_seg ), "carc seg" );
+		BU_ALLOC(csg, struct carc_seg);
 		DO_INDENT;
 		bu_log( "Arc centered at (%g %g %g), start angle = %g end angle = %g, radius = %g\n",
-			V3ARGS( arc_data.arc_center ), arc_data.start_angle*180.0/M_PI,
-			arc_data.end_angle*180.0/M_PI, arc_data.radius );
+			V3ARGS( arc_data.arc_center ), arc_data.start_angle*RAD2DEG,
+			arc_data.end_angle*RAD2DEG, arc_data.radius );
 		csg->magic = CURVE_CARC_MAGIC;
 		csg->radius = arc_data.radius * units_conv;
 		if ( arc_data.end_angle > arc_data.start_angle ) {
@@ -1529,7 +1529,7 @@ conv_extrusion( tag_t feat_tag, char *part_name, char *refset_name, char *inst_n
 		    /* for simplicity, malloc up the rest of a sketch internal object for freeing */
 		    bu_free( (char *)z_coords, "z_coords" );
 		    for ( i=j+1; i<num_curves; i++ ) {
-			lsg = (struct line_seg *)bu_malloc( sizeof( struct line_seg ), "fake line seg" );
+			BU_ALLOC(lsg, struct line_seg);
 			lsg->magic = CURVE_LSEG_MAGIC;
 			skt->curve.segment[i] = (genptr_t)lsg;
 		    }
@@ -1551,7 +1551,7 @@ conv_extrusion( tag_t feat_tag, char *part_name, char *refset_name, char *inst_n
 		/* for simplicity, malloc up the rest of a sketch internal object for freeing */
 		bu_free( (char *)z_coords, "z_coords" );
 		for ( i=j; i<num_curves; i++ ) {
-		    lsg = (struct line_seg *)bu_malloc( sizeof( struct line_seg ), "fake line seg" );
+		    BU_ALLOC(lsg, struct line_seg);
 		    lsg->magic = CURVE_LSEG_MAGIC;
 		    skt->curve.segment[i] = (genptr_t)lsg;
 		}
@@ -1583,7 +1583,7 @@ conv_extrusion( tag_t feat_tag, char *part_name, char *refset_name, char *inst_n
 	    /* for simplicity, malloc up the rest of a sketch internal object for freeing */
 	    bu_free( (char *)z_coords, "z_coords" );
 	    for ( i=j+1; i<num_curves; i++ ) {
-		lsg = (struct line_seg *)bu_malloc( sizeof( struct line_seg ), "fake line seg" );
+		BU_ALLOC(lsg, struct line_seg);
 		lsg->magic = CURVE_LSEG_MAGIC;
 		skt->curve.segment[i] = (genptr_t)lsg;
 	    }
@@ -1986,7 +1986,7 @@ get_thru_faces_length( tag_t feat_tag,
 
     if ( face2 ) {
 	length = max_len - min_len;
-	/* occaisionally UG places the "base" at an unreasonable position along the dir direction
+	/* occasionally UG places the "base" at an unreasonable position along the dir direction
 	 * move it to the midpoint along the dir direction
 	 */
 
@@ -2143,7 +2143,7 @@ do_hole( int hole_type, tag_t feat_tag, int n_exps, tag_t *exps, char ** descs, 
 	    bu_log( "Failed to get hole depth\n" );
 	    return 1;
 	}
-	bu_log( "\t calulated depth = %g\n", Depth );
+	bu_log( "\t calculated depth = %g\n", Depth );
     }
 
     if ( hole_type == COUNTER_BORE_HOLE_TYPE ) {
@@ -2275,7 +2275,7 @@ do_rect_pocket(
 	bu_log( "Failed to get taper angle for rectangular pocket.\n" );
 	return 1;
     }
-    angle = tmp * M_PI / 180.0;
+    angle = tmp * DEG2RAD;
 
     DO_INDENT;
     bu_log( "rect pocket: ylen = %g, zlen = %g, depth = %g, c_radius = %g, f_radius = %g, angle = %g\n",
@@ -2522,7 +2522,7 @@ do_rect_pocket(
 	add_to_obj_list( solid_name );
 	(void)mk_addmember( solid_name, &head->l, NULL, WMOP_SUBTRACT );
 
-	/* 4 RCC's and 4 combinations to get the flooe corners right */
+	/* 4 RCC's and 4 combinations to get the floor corners right */
 	VJOIN1( trc_base, &pts[0], -f_radius, diry );
 	VJOIN1( trc_top, &pts[3], f_radius, diry );
 	VSUB2( trc_height, trc_top, trc_base );
@@ -2743,7 +2743,7 @@ do_cyl_pocket(
 	bu_log( "Failed to get taper angle for cylindrical pocket.\n" );
 	return 1;
     }
-    angle = tmp * M_PI / 180.0;
+    angle = tmp * DEG2RAD;
     radius2 = radius1 - ht * tan( angle );
     if ( radius2 < MIN_RADIUS ) {
 	radius2 = MIN_RADIUS;
@@ -2832,7 +2832,7 @@ do_cyl_pocket(
 	    VSCALE( height, dir, ht - tmp_ht );
 	    solid_name = create_unique_brlcad_solid_name();
 	    if ( mk_rcc( wdb_fd, solid_name, base2, height, radius4 ) ) {
-		bu_log( "Failed to make RCC for cylinderical pocket feature!\n" );
+		bu_log( "Failed to make RCC for cylindrical pocket feature!\n" );
 		bu_free( solid_name, "solid_name" );
 		return 1;
 	    }
@@ -2842,7 +2842,7 @@ do_cyl_pocket(
 	    VJOIN1( base2, base, ht - round_rad, dir );
 	    solid_name = create_unique_brlcad_solid_name();
 	    if ( mk_tor( wdb_fd, solid_name, base2, dir, radius4, round_rad ) ) {
-		bu_log( "Failed to make TOR for cylinderical pocket feature!\n" );
+		bu_log( "Failed to make TOR for cylindrical pocket feature!\n" );
 		bu_free( solid_name, "solid_name" );
 		return 1;
 	    }
@@ -2891,7 +2891,7 @@ do_rect_slot(
     double tmp;
 
     UF_func( UF_MODL_ask_feat_location( feat_tag, loc_orig ) );
-    bu_log( "Rectangulat Slot:\n" );
+    bu_log( "Rectangular Slot:\n" );
     UF_func( UF_MODL_ask_feat_direction( feat_tag, dir1, dir2 ) );
     MAT4X3VEC( dirx, curr_xform, dir1 );
     MAT4X3VEC( diry, curr_xform, dir2 );
@@ -3009,7 +3009,7 @@ do_rect_pad(
 	bu_log( "Failed to get taper angle for rectangular pad.\n" );
 	return 1;
     }
-    angle = tmp * M_PI / 180.0;
+    angle = tmp * DEG2RAD;
 
     d = depth * tan( angle );
     c_radius_end = c_radius - d;
@@ -3186,7 +3186,7 @@ do_ball_end_slot(
     VSCALE( location, loc_orig, units_conv );
     MAT4X3PNT( base, curr_xform, location );
 
-    /* use one arb8, one partices and two RCC's */
+    /* use one arb8, one particle and two RCC's */
     if ( length > radius*2.0 ) {
 	fastf_t pts[24];
 	point_t rcc_base;
@@ -3682,7 +3682,7 @@ do_dove_tail_slot( tag_t feat_tag,
 	bu_log( "Failed to get angle for dove-tail slot.\n" );
 	return 1;
     }
-    angle = tmp * M_PI / 180.0;
+    angle = tmp * DEG2RAD;
     if ( !thru_flag ) {
 	if ( get_exp_value( "Length", n_exps, exps, descs, &tmp ) ) {
 	    bu_log( "Failed to get length for dove-tail slot.\n" );
@@ -4458,7 +4458,7 @@ convert_a_feature( tag_t feat_tag,
 	    failed = 1;
 	    goto out;
 	}
-	ang = tmp * M_PI / 180.0;
+	ang = tmp * DEG2RAD;
 	radius2 = radius1 - ht * tan( ang );
 	if ( radius2 < MIN_RADIUS ) {
 	    radius2 = MIN_RADIUS;
@@ -4725,12 +4725,12 @@ facetize( tag_t solid_tag, char *part_name, char *refset_name, char *inst_name, 
 		bu_log( "%s\n", err_message );
 	    }
 	    DO_INDENT;
-	    bu_log( "Continueing without this part\n" );
+	    bu_log( "Continuing without this part\n" );
 	    return (char *)NULL;
 	}
     }
 
-    /* find out what the maximum number of vertecies per facet is */
+    /* find out what the maximum number of vertices per facet is */
     UF_func(UF_FACET_ask_max_facet_verts( model, &max_verts ));
     DO_INDENT;
     bu_log( "max_verts = %d\n", max_verts );
@@ -4753,7 +4753,7 @@ facetize( tag_t solid_tag, char *part_name, char *refset_name, char *inst_name, 
 	UF_FACET_ask_solid_face_of_facet (model, facet_id, &face_tag);
 	UF_FACET_ask_face_id_of_facet (model, facet_id, &face_id );
 
-	/* retrieve the verticies & normals for this facet */
+	/* retrieve the vertices & normals for this facet */
 	UF_func(UF_FACET_ask_vertices_of_facet(model, facet_id,
 					       &vert_count, v));
 	UF_func(UF_FACET_ask_normals_of_facet( model, facet_id,
@@ -5164,10 +5164,10 @@ convert_reference_set( tag_t node, char *p_name, char *refset_name, char *inst_n
 
 	UF_free(members);
 	if ( !ref_root ) {
-	    ref_root = (struct refset_list *)bu_malloc( sizeof( struct refset_list ), "ref_root" );
+	    BU_ALLOC(ref_root, struct refset_list);
 	    ref_ptr = ref_root;
 	} else {
-	    ref_ptr->next = (struct refset_list *)bu_malloc( sizeof( struct refset_list ), "ref_root" );
+	    BU_ALLOC(ref_ptr->next, struct refset_list);
 	    ref_ptr = ref_ptr->next;
 	}
 	ref_ptr->next = NULL;
@@ -5690,7 +5690,7 @@ int parse_args(int ac, char *av[])
 	    case 'o'	: output_file = strdup( bu_optarg ); break;
 	    case 'd'	: debug = atoi(bu_optarg); break;
 	    case 't'	: surf_tol = atof( bu_optarg ); break;
-	    case 'a'	: ang_tol = atof( bu_optarg ) * M_PI / 180.0; break;
+	    case 'a'	: ang_tol = atof( bu_optarg ) * DEG2RAD; break;
 	    case 'n'	: part_name_file = bu_optarg; use_part_name_hash = 1; break;
 	    case 'R'	: use_refset_name = bu_optarg; break;
 	    case 'c'	: min_chamfer = atof( bu_optarg ); break;

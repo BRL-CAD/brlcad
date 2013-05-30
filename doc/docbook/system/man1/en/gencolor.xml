@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='gencolor1'>
+<refmeta>
+    <refentrytitle>GENCOLOR
+</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class='source'>BRL-CAD</refmiscinfo>
+<refmiscinfo class='manual'>BRL-CAD</refmiscinfo>
+</refmeta>
+
+<refnamediv>
+<refname>gencolor</refname>
+<refpurpose>output a pattern of byte values</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<cmdsynopsis>
+  <command>gencolor</command>
+    <arg choice='opt'>-r# </arg>
+    <arg choice='opt'><arg choice='plain' rep='repeat'><replaceable>val1</replaceable></arg><arg choice='plain'><replaceable>valN</replaceable></arg></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para><emphasis remap='I'>Gencolor</emphasis>
+repeats a pattern of up to 8192 8-bit values on its standard output.
+The values, which range from 0 to 255, are taken either from the command
+line, or in binary from its standard input.  The
+<option>-r</option>
+flag can be used to specify the number of times to repeat the given
+pattern, the default being infinity.
+This program is useful for producing a given grey value or
+color. Note that
+<command>gencolor</command>
+will refuse to write its output to a window, you must redirect the output to a file.</para>
+</refsect1>
+
+<refsect1 xml:id='example'><title>EXAMPLE</title>
+<para><userinput>gencolor -r512 0 255 0 &gt; foo.pix</userinput>
+<!-- .br -->
+Will output 512 "green" pixels</para>
+</refsect1>
+
+<refsect1 xml:id='see_also'><title>SEE ALSO</title>
+<para><citerefentry><refentrytitle>brlcad</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>pix</refentrytitle><manvolnum>5</manvolnum></citerefentry>, <citerefentry><refentrytitle>bw</refentrytitle><manvolnum>5</manvolnum></citerefentry></para>
+</refsect1>
+
+<refsect1 xml:id='author'><title>AUTHOR</title>
+<para>BRL-CAD Team</para>
+</refsect1>
+
+<refsect1 xml:id='copyright'><title>COPYRIGHT</title>
+<para>This software is Copyright (c) 1989-2013 by the United States
+Government as represented by U.S. Army Research Laboratory.</para>
+</refsect1>
+
+<refsect1 xml:id='bug_reports'><title>BUG REPORTS</title>
+<para>Reports of bugs or problems should be submitted via electronic
+mail to &lt;devs@brlcad.org&gt;.</para>
+</refsect1>
+</refentry>
+

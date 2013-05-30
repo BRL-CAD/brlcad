@@ -23,14 +23,14 @@ snit::type ::hv3::visiteddb {
     # Make sure the database table has been created.
     catch {::hv3::sqlitedb eval "
       CREATE TABLE visiteddb(
-          uri TEXT PRIMARY KEY, 
+          uri TEXT PRIMARY KEY,
           title TEXT,
           lastvisited TIMESTAMP
       );
     "}
   }
 
-  # This method is called whenever the application constructs a new 
+  # This method is called whenever the application constructs a new
   # ::hv3::hv3 mega-widget. Argument $hv3 is the new mega-widget.
   #
   method init {hv3} {
@@ -79,9 +79,9 @@ snit::type ::hv3::visiteddb {
   # $pattern is interpreted by the SQLite GLOB operator.
   #
   method keys {pattern} {
-    set sql { 
-      SELECT uri FROM visiteddb 
-      WHERE uri GLOB $pattern 
+    set sql {
+      SELECT uri FROM visiteddb
+      WHERE uri GLOB $pattern
       ORDER BY lastvisited DESC
     }
     return [::hv3::sqlitedb eval $sql]
@@ -91,18 +91,18 @@ snit::type ::hv3::visiteddb {
 #--------------------------------------------------------------------------
 # ::hv3::cookiemanager
 #
-#     A cookie manager is a database of http cookies. It supports the 
+#     A cookie manager is a database of http cookies. It supports the
 #     following operations:
-#    
+#
 #         * Add cookie to database,
 #         * Retrieve applicable cookies for an http request, and
 #         * Delete the contents of the cookie database.
-#    
-#     Also, a GUI to inspect and manipulate the database in a new top-level 
+#
+#     Also, a GUI to inspect and manipulate the database in a new top-level
 #     window is provided.
-#    
+#
 #     Interface:
-#    
+#
 #         $pathName SetCookie URI DATA
 #         $pathName Cookie URI
 #         $pathName debug
@@ -143,11 +143,11 @@ snit::type ::hv3::cookiemanager {
   #--------------------------------------------------------------------
   # Cookie expiration policy. All text taken from the reference above.
   #
-  # * The "expires" attribute specifies a date string that defines the 
-  #   valid life time of that cookie. Once the expiration date has 
+  # * The "expires" attribute specifies a date string that defines the
+  #   valid life time of that cookie. Once the expiration date has
   #   been reached, the cookie will no longer be stored or given out.
   #
-  # * "expires" is an optional attribute. If not specified, the cookie 
+  # * "expires" is an optional attribute. If not specified, the cookie
   #   will expire when the user's session ends.
   #
   # * This is a specification of the minimum number of cookies that a client
@@ -176,7 +176,7 @@ snit::type ::hv3::cookiemanager {
 
     # SQL to get a list of any hosts that have more than $MAX_PERHOST cookies.
     set sql1 {
-        SELECT domain FROM cookiesdb GROUP BY domain 
+        SELECT domain FROM cookiesdb GROUP BY domain
         HAVING count(*) > $MAX_PERHOST
     }
 
@@ -184,20 +184,20 @@ snit::type ::hv3::cookiemanager {
     # $domain. This will be executed once for each domain returned by
     # query $sql1.
     set sql2 {
-        DELETE FROM cookiesdb 
+        DELETE FROM cookiesdb
         WHERE oid IN (
-            SELECT oid FROM cookiesdb WHERE domain = $domain 
-            ORDER BY lastused ASC 
+            SELECT oid FROM cookiesdb WHERE domain = $domain
+            ORDER BY lastused ASC
             LIMIT -1 OFFSET $MAX_PERHOST
         )
     }
 
     # Delete all but the most recent $MAX_TOTAL cookies.
     set sql3 {
-        DELETE FROM cookiesdb 
+        DELETE FROM cookiesdb
         WHERE oid IN (
             SELECT oid FROM cookiesdb
-            ORDER BY lastused ASC 
+            ORDER BY lastused ASC
             LIMIT -1 OFFSET $MAX_TOTAL
         )
     }
@@ -225,7 +225,7 @@ snit::type ::hv3::cookiemanager {
     $obj destroy
 
     set  v(flag) TRUE
-    
+
     set d [string trim $data]
     while {$d ne ""} {
       regexp {^([^;]*)(.*)} $d dummy pair d
@@ -250,7 +250,7 @@ snit::type ::hv3::cookiemanager {
     }
 
     # Try to convert the "expires" header to a time_t time. This
-    # may fail, if the header specifies a date too far in the future 
+    # may fail, if the header specifies a date too far in the future
     # or if it get's the format wrong. In any case it's not particularly
     # important, just set the cookie to never expire and move on.
     set rc [catch {
@@ -269,7 +269,7 @@ snit::type ::hv3::cookiemanager {
       ::hv3::sqlitedb eval $sql
     } else {
       puts "::hv3::cookiemanager SetCookie - parse failed"
-      # puts $uri 
+      # puts $uri
       # puts $data
     }
   }
@@ -319,7 +319,7 @@ snit::type ::hv3::cookiemanager {
       <body>
         <h1>Hv3 Cookies</h1>
         <p>
-	  <b>Note:</b> This window is automatically updated when Hv3's 
+	  <b>Note:</b> This window is automatically updated when Hv3's
 	  internal cookies database is modified in any way. There is no need to
           close and reopen the window to refresh it's contents.
         </p>
@@ -333,10 +333,10 @@ snit::type ::hv3::cookiemanager {
     set Style {
       .authority { margin-top: 2em; font-weight: bold; }
       .name      { padding-right: 5ex; }
-      #clear { 
-        float: left; 
-        margin: 1em; 
-        margin-top: 0px; 
+      #clear {
+        float: left;
+        margin: 1em;
+        margin-top: 0px;
       }
     }
 
@@ -358,7 +358,7 @@ snit::type ::hv3::cookiemanager {
     append Content "</table>"
 
     return [subst $Template]
-  } 
+  }
 
   method cookies_request {downloadHandle} {
     $downloadHandle append [$self Report]

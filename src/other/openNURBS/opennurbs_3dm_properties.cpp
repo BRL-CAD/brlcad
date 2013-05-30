@@ -1,13 +1,14 @@
 /* $NoKeywords: $ */
 /*
 //
-// Copyright (c) 1993-2007 Robert McNeel & Associates. All rights reserved.
-// Rhinoceros is a registered trademark of Robert McNeel & Assoicates.
+// Copyright (c) 1993-2012 Robert McNeel & Associates. All rights reserved.
+// OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
+// McNeel & Associates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
 // MERCHANTABILITY ARE HEREBY DISCLAIMED.
-//				
+//
 // For complete openNURBS copyright information see <http://www.opennurbs.org>.
 //
 ////////////////////////////////////////////////////////////////
@@ -40,9 +41,78 @@ void ON_3dmRevisionHistory::Default()
   m_revision_count = 0;
 }
 
+static int ON_CompareRevisionHistoryTime( const struct tm* time0, const struct tm* time1 )
+{
+  if ( 0 == time0 || 0 == time1 )
+  {
+    if ( 0 != time0 )
+      return 1;
+    if ( 0 != time1 )
+      return -1;
+    return 0;
+  }
+
+  if (time0->tm_year < time1->tm_year)
+    return -1;
+  if (time0->tm_year > time1->tm_year)
+    return 1;
+
+  if (time0->tm_mon < time1->tm_mon)
+    return -1;
+  if (time0->tm_mon > time1->tm_mon)
+    return 1;
+
+  if (time0->tm_mday < time1->tm_mday)
+    return -1;
+  if (time0->tm_mday > time1->tm_mday)
+    return 1;
+
+  if (time0->tm_hour < time1->tm_hour)
+    return -1;
+  if (time0->tm_hour > time1->tm_hour)
+    return 1;
+
+  if (time0->tm_min < time1->tm_min)
+    return -1;
+  if (time0->tm_min > time1->tm_min)
+    return 1;
+
+  if (time0->tm_sec < time1->tm_sec)
+    return -1;
+  if (time0->tm_sec > time1->tm_sec)
+    return 1;
+
+  return 0;
+}
+
+bool ON_3dmRevisionHistory::CreateTimeIsSet() const
+{
+  struct tm jan_1_1970;
+  memset(&jan_1_1970,0,sizeof(jan_1_1970));
+  jan_1_1970.tm_mday = 1;    /* day of the month - [1,31] */
+  jan_1_1970.tm_year = 70;   /* years since 1900 */
+  return ( ON_CompareRevisionHistoryTime(&jan_1_1970,&m_create_time) >= 0 );
+}
+/*
+Returns:
+  true 
+    if m_last_edit_time is >= January 1, 1970
+*/
+bool ON_3dmRevisionHistory::LastEditedTimeIsSet() const
+{
+  struct tm jan_1_1970;
+  memset(&jan_1_1970,0,sizeof(jan_1_1970));
+  jan_1_1970.tm_mday = 1;    /* day of the month - [1,31] */
+  jan_1_1970.tm_year = 70;   /* years since 1900 */
+  return ( ON_CompareRevisionHistoryTime(&jan_1_1970,&m_last_edit_time) <= 0 );
+}
+
+
 ON_BOOL32 ON_3dmRevisionHistory::IsValid() const
 {
-  return ( m_last_edit_time.tm_year > 0 ) ? true : false;
+  return (     LastEditedTimeIsSet() 
+            && ON_CompareRevisionHistoryTime(&m_create_time, &m_last_edit_time) <= 0
+         );
 }
 
 int ON_3dmRevisionHistory::NewRevision()
@@ -57,7 +127,7 @@ int ON_3dmRevisionHistory::NewRevision()
   }
   m_last_edit_time = current_time;
 
-#if defined(ON_OS_WINDOWS)  
+#if defined(ON_OS_WINDOWS)
   // use Windows ::GetUserNameW() to get current user name
   wchar_t current_user[512];
   memset( current_user, 0, sizeof(current_user) );
@@ -67,11 +137,15 @@ int ON_3dmRevisionHistory::NewRevision()
   m_sLastEditedBy = current_user;
 #endif
 
-  if ( m_revision_count == 0 ) {
+  if ( m_revision_count <= 0 ) 
+  {
+    m_revision_count = 0;
     m_sCreatedBy = m_sLastEditedBy;
     m_create_time = current_time;
   };
+
   m_revision_count++;
+
   return m_revision_count;
 }
 
@@ -105,15 +179,15 @@ ON_BOOL32 ON_3dmRevisionHistory::Read( ON_BinaryArchive& file )
 
 void ON_3dmRevisionHistory::Dump( ON_TextLog& dump ) const
 {
-  const wchar_t* s = m_sCreatedBy;
-  if ( !s ) s = L"";
-  dump.Print("Created by: %S\n", s );
+  const wchar_t* ws = m_sCreatedBy;
+  if ( !ws ) ws = L"";
+  dump.Print("Created by: %ls\n", ws );
   dump.Print("Created on: "); dump.PrintTime(m_create_time); dump.Print("\n");
 
-  
-  s = m_sLastEditedBy;
-  if ( !s ) s = L"";
-  dump.Print("Last edited by: %S\n", s );
+
+  ws = m_sLastEditedBy;
+  if ( !ws ) ws = L"";
+  dump.Print("Last edited by: %ls\n", ws );
   dump.Print("Last edited on: "); dump.PrintTime(m_last_edit_time); dump.Print("\n");
 
   dump.Print("Revision count: %d\n",m_revision_count);
@@ -125,7 +199,7 @@ void ON_3dmRevisionHistory::Dump( ON_TextLog& dump ) const
 //
 
 ON_3dmNotes::ON_3dmNotes()
-            : m_bVisible(0), 
+            : m_bVisible(0),
               m_bHTML(0),
               m_window_left(0),
               m_window_top(0),
@@ -134,7 +208,7 @@ ON_3dmNotes::ON_3dmNotes()
 {}
 
 ON_3dmNotes::ON_3dmNotes( const ON_3dmNotes& src )
-            : m_bVisible(0), 
+            : m_bVisible(0),
               m_bHTML(0),
               m_window_left(0),
               m_window_top(0),
@@ -264,13 +338,13 @@ void ON_3dmApplication::Dump( ON_TextLog& dump ) const
 {
   const wchar_t* s = m_application_name;
   if ( s )
-    dump.Print("Name: %S\n",s);
+    dump.Print("Name: %ls\n",s);
   s = m_application_URL;
   if ( s )
-    dump.Print("URL: %S\n",s);
+    dump.Print("URL: %ls\n",s);
   s = m_application_details;
   if ( s )
-    dump.Print("Details: %S\n",s);
+    dump.Print("Details: %ls\n",s);
 }
 
 ON_BOOL32 ON_3dmApplication::IsValid() const
@@ -370,7 +444,7 @@ ON_BOOL32 ON_3dmProperties::Read(ON_BinaryArchive& file )
     switch(tcode) {
 
     case TCODE_PROPERTIES_OPENNURBS_VERSION:
-      { 
+      {
         int on_version = 0;
         if ( value > 299912319 || (value != 0 && value < 200101010) )
         {
@@ -384,27 +458,27 @@ ON_BOOL32 ON_3dmProperties::Read(ON_BinaryArchive& file )
         ON_SetBinaryArchiveOpenNURBSVersion(file,on_version);
       }
       break;
-      
+
     case TCODE_PROPERTIES_REVISIONHISTORY: // file creation/revision information
       m_RevisionHistory.Read(file);
       break;
-      
+
     case TCODE_PROPERTIES_NOTES: // file notes
       m_Notes.Read(file);
       break;
-      
+
     case TCODE_PROPERTIES_PREVIEWIMAGE: // uncompressed preview image
       m_PreviewImage.ReadUncompressed(file);
       break;
-      
+
     case TCODE_PROPERTIES_COMPRESSED_PREVIEWIMAGE: // compressed preview image
       m_PreviewImage.ReadCompressed(file);
       break;
-      
+
     case TCODE_PROPERTIES_APPLICATION: // application that created 3dm file
       m_Application.Read(file);
       break;
-      
+
     default:
       // information added in future will be skipped by file.EndRead3dmChunk()
       break;

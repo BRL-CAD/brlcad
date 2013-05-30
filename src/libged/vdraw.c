@@ -1,7 +1,7 @@
 /*                         V D R A W . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2012 United States Government as represented by
+ * Copyright (c) 2004-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -721,7 +721,7 @@ vdraw_vlist(void *data, int argc, const char *argv[])
 		}
 	    }
 	    RT_FREE_VLIST(&(rcp2->vdc_vhd));
-	    bu_free((genptr_t) rcp2, "vd_curve");
+	    BU_PUT(rcp2, struct vd_curve);
 	    return GED_OK;
 	default:
 	    bu_vls_printf(gedp->ged_result_str, "%s %s: unknown option to vdraw vlist", argv[0], argv[1]);

@@ -1,7 +1,7 @@
 /*                     N A S T R A N - G . C
  * BRL-CAD
  *
- * Copyright (c) 1997-2012 United States Government as represented by
+ * Copyright (c) 1997-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -107,7 +107,7 @@ static struct rt_wdb *fpout;		/* brlcad output file */
 static FILE *fpin;			/* NASTRAN input file */
 static FILE *fptmp;			/* temporary version of NASTRAN input */
 static char *Usage="Usage:\n\t%s [-p] [-xX lvl] [-t tol.dist] [-i NASTRAN_file] -o BRL-CAD_file\n";
-static long start_off;
+static off_t start_off;
 static char *delims=", \t";
 static struct coord_sys coord_head;	/* head of linked list of coordinate systems */
 static struct pbar pbar_head;		/* head of linked list of PBAR's */
@@ -153,7 +153,7 @@ reset_input(void)
     for (i=0; i < 20; i++)
 	prev_rec[i][0] = '\0';
 
-    fseek(fpin, start_off, SEEK_SET);
+    bu_fseek(fpin, start_off, SEEK_SET);
     line_count = bulk_data_start_line;
 
     tmp = bu_fgets(next_line, MAX_LINE_SIZE, fpin);
@@ -176,13 +176,13 @@ write_fields(void)
     for (i=0; i<NO_OF_FIELDS; i++) {
 	/* eliminate trailing blanks */
 	j = strlen(curr_rec[i]) - 1;
-	while (j && (isspace(curr_rec[i][j]) || curr_rec[i][j] == '\012' || curr_rec[i][j] == '\015'))
+	while (j && (isspace((int)curr_rec[i][j]) || curr_rec[i][j] == '\012' || curr_rec[i][j] == '\015'))
 	    j--;
 	curr_rec[i][++j] = '\0';
 
 	/* skip leading blanks */
 	j = 0;
-	while (curr_rec[i][j] != '\0' && isspace(curr_rec[i][j]))
+	while (curr_rec[i][j] != '\0' && isspace((int)curr_rec[i][j]))
 	    j++;
 	fprintf(fptmp, "%s, ", &curr_rec[i][j]);
     }
@@ -257,7 +257,7 @@ get_large_field_input(FILE *fp, int write_flag)
 
     /* remove the newline from the end of the last field */
     i = strlen(curr_rec[last_field-1]) - 1;
-    while (isspace(curr_rec[last_field-1][i]) || curr_rec[last_field-1][i] == '\012' || curr_rec[last_field-1][i] == '\015')
+    while (isspace((int)curr_rec[last_field-1][i]) || curr_rec[last_field-1][i] == '\012' || curr_rec[last_field-1][i] == '\015')
 	i--;
     curr_rec[last_field-1][++i] = '\0';
 
@@ -343,15 +343,15 @@ get_free_form_input(FILE *fp, int write_flag)
     int i, j;
 
     i = (-1);
-    while (isspace(line[++i]));
-    if (line[i] == '=' && isdigit(line[i+1])) {
+    while (isspace((int)line[++i]));
+    if (line[i] == '=' && isdigit((int)line[i+1])) {
 	int count;
 
 	count = atoi(&line[i+1]);
 
 	i = (-1);
-	while (isspace(prev_line[++i]));
-	if (prev_line[i] == '=' && isdigit(prev_line[i+1])) {
+	while (isspace((int)prev_line[++i]));
+	if (prev_line[i] == '=' && isdigit((int)prev_line[i+1])) {
 	    bu_log("Cannot use consecutive replication cards:\n");
 	    bu_log("%s", prev_line);
 	    bu_log("%s", line);
@@ -374,10 +374,10 @@ get_free_form_input(FILE *fp, int write_flag)
 	field_no = (-1);
 	i = 0;
 	while (++field_no < NO_OF_FIELDS && line[i] != '\0') {
-	    while (line[i] != '\0' && isspace(line[i]))
+	    while (line[i] != '\0' && isspace((int)line[i]))
 		i++;
 	    j = (-1);
-	    while (line[i] != '\0' && line[i] != COMMA && !isspace(line[i]))
+	    while (line[i] != '\0' && line[i] != COMMA && !isspace((int)line[i]))
 		curr_rec[field_no][++j] = line[i++];
 	    curr_rec[field_no][++j] = '\0';
 	    if (line[i] == COMMA)
@@ -392,10 +392,10 @@ get_free_form_input(FILE *fp, int write_flag)
 
 	    i = 0;
 	    while (++field_no < NO_OF_FIELDS && line[i] != '\0') {
-		while (line[i] != '\0' && isspace(line[i]))
+		while (line[i] != '\0' && isspace((int)line[i]))
 		    i++;
 		j = (-1);
-		while (line[i] != '\0' && line[i] != COMMA && !isspace(line[i]))
+		while (line[i] != '\0' && line[i] != COMMA && !isspace((int)line[i]))
 		    curr_rec[field_no][++j] = line[i++];
 		curr_rec[field_no][++j] = '\0';
 		if (line[i] == COMMA)
@@ -432,8 +432,8 @@ get_next_record(FILE *fp, int call_input, int write_flag)
     /* Convert to all UPPER case */
     i = (-1);
     while (prev_line[++i] != '\0') {
-	if (isalpha(prev_line[i]))
-	    prev_line[i] = toupper(prev_line[i]);
+	if (isalpha((int)prev_line[i]))
+	    prev_line[i] = toupper((int)prev_line[i]);
     }
 
     if (tmp == (char *)NULL) {
@@ -472,7 +472,7 @@ get_next_record(FILE *fp, int call_input, int write_flag)
 	    form = FREE_FIELD;
     }
 
-    /* if this is FREE_FIELD, call approporiate processor */
+    /* if this is FREE_FIELD, call appropriate processor */
     if (form == FREE_FIELD) {
 	get_free_form_input(fp, write_flag);
 	return 1;
@@ -480,7 +480,7 @@ get_next_record(FILE *fp, int call_input, int write_flag)
 
     /* not FREE_FIELD, check for LARGE_FIELD */
     i = (-1);
-    while (++i < 8 && (isalpha(line[i]) || isspace(line[i])));
+    while (++i < 8 && (isalpha((int)line[i]) || isspace((int)line[i])));
     if (i < 8 && line[i] == '*')
 	form = LARGE_FIELD;
 
@@ -732,7 +732,7 @@ get_coord_sys(void)
 	return;
     }
 
-    BU_GET(cs, struct coord_sys);
+    BU_ALLOC(cs, struct coord_sys);
 
     switch (form) {
 	case 1:
@@ -755,7 +755,7 @@ get_coord_sys(void)
 	    if (!strlen(curr_rec[5]))
 		break;
 
-	    BU_GET(cs, struct coord_sys);
+	    BU_ALLOC(cs, struct coord_sys);
 	    cs->type = type;
 	    cs->cid = atoi(curr_rec[5]);
 	    gid = atoi(curr_rec[6]);
@@ -1187,7 +1187,7 @@ main(int argc, char **argv)
 	if (bu_strncmp(line, "BEGIN BULK", 10))
 	    continue;
 
-	start_off = ftell(fpin);
+	start_off = bu_ftell(fpin);
 	break;
     }
 
@@ -1213,7 +1213,7 @@ main(int argc, char **argv)
     nmg_model = (struct model *)NULL;
 
     /* count grid points */
-    fseek(fptmp, 0, SEEK_SET);
+    bu_fseek(fptmp, 0, SEEK_SET);
     while (bu_fgets(line, MAX_LINE_SIZE, fptmp)) {
 	if (!bu_strncmp(line, "GRID", 4))
 	    grid_count++;
@@ -1223,7 +1223,7 @@ main(int argc, char **argv)
     }
 
     /* get default values and properties */
-    fseek(fptmp, 0, SEEK_SET);
+    bu_fseek(fptmp, 0, SEEK_SET);
     while (get_next_record(fptmp, 1, 0)) {
 	if (!bu_strncmp(curr_rec[0], "BAROR", 5)) {
 	    /* get BAR defaults */
@@ -1231,7 +1231,7 @@ main(int argc, char **argv)
 	} else if (!bu_strncmp(curr_rec[0], "PBAR", 4)) {
 	    struct pbar *pb;
 
-	    BU_GET(pb, struct pbar);
+	    BU_ALLOC(pb, struct pbar);
 
 	    pb->pid = atoi(curr_rec[1]);
 	    pb->mid = atoi(curr_rec[2]);
@@ -1241,7 +1241,7 @@ main(int argc, char **argv)
 
 	    BU_LIST_INSERT(&pbar_head.l, &pb->l);
 	} else if (!bu_strncmp(curr_rec[0], "PSHELL", 6)) {
-	    BU_GET(psh, struct pshell);
+	    BU_ALLOC(psh, struct pshell);
 
 	    psh->s = (struct shell *)NULL;
 	    psh->pid = atoi(curr_rec[1]);
@@ -1256,7 +1256,7 @@ main(int argc, char **argv)
     g_pts = (struct grid_point *)bu_calloc(grid_count, sizeof(struct grid_point), "grid points");
 
     /* get all grid points */
-    fseek(fptmp, 0, SEEK_SET);
+    bu_fseek(fptmp, 0, SEEK_SET);
     while (get_next_record(fptmp, 1, 0)) {
 	int gid;
 	int cid;
@@ -1281,7 +1281,7 @@ main(int argc, char **argv)
 
 
     /* find coordinate systems */
-    fseek(fptmp, 0, SEEK_SET);
+    bu_fseek(fptmp, 0, SEEK_SET);
     while (get_next_record(fptmp, 1, 0)) {
 	if (bu_strncmp(curr_rec[0], "CORD", 4))
 	    continue;
@@ -1300,7 +1300,7 @@ main(int argc, char **argv)
     mk_id(fpout, nastran_file);
 
     /* get elements */
-    fseek(fptmp, 0, SEEK_SET);
+    bu_fseek(fptmp, 0, SEEK_SET);
     while (get_next_record(fptmp, 1, 0)) {
 	if (!bu_strncmp(curr_rec[0], "CBAR", 4))
 	    get_cbar();

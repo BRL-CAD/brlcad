@@ -1,8 +1,9 @@
 /* $NoKeywords: $ */
 /*
 //
-// Copyright (c) 1993-2007 Robert McNeel & Associates. All rights reserved.
-// Rhinoceros is a registered trademark of Robert McNeel & Assoicates.
+// Copyright (c) 1993-2012 Robert McNeel & Associates. All rights reserved.
+// OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
+// McNeel & Associates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
@@ -21,19 +22,20 @@
 // functions are defined in opennurbs_error.cpp.
 */
 
+#if defined(__FUNCTION__)
+// __FUNCTION__ macro exists
+#define ON_ERROR(msg) ON_ErrorEx(__FILE__,__LINE__,__FUNCTION__,msg)
+#define ON_WARNING(msg) ON_WarningEx(__FILE__,__LINE__,__FUNCTION__,msg)
+#define ON_ASSERT(cond) ON_AssertEx(cond,__FILE__,__LINE__,__FUNCTION__, #cond " is false")
+#define ON_ASSERT_OR_RETURN(cond,returncode) do{if (!(cond)) {ON_AssertEx(false,__FILE__,__LINE__,__FUNCTION__, #cond " is false");return(returncode);}}while(0)
+#else
+// __FUNCTION__ macro does not exist
 #define ON_ERROR(msg) ON_Error(__FILE__,__LINE__,msg)
 #define ON_WARNING(msg) ON_Warning(__FILE__,__LINE__,msg)
-
-// 15 May 2008 Dale Lear
-// Never, ever, make system error handling macros that work
-// differently in release and debug builds.
-//#if defined(ON_DEBUG)
 #define ON_ASSERT(cond) ON_Assert(cond,__FILE__,__LINE__, #cond " is false")
 #define ON_ASSERT_OR_RETURN(cond,returncode) do{if (!(cond)) {ON_Assert(false,__FILE__,__LINE__, #cond " is false");return(returncode);}}while(0)
-//#else
-//#define ON_ASSERT(cond)
-//#define ON_ASSERT_OR_RETURN(cond,returncode) do{if (!(cond)) return(returncode);}while(0)
-//#endif
+#endif
+
 
 ON_BEGIN_EXTERNC
 
@@ -71,25 +73,25 @@ ON_DECL
 int     ON_GetMathErrorCount(void);
 
 ON_DECL
-int     ON_GetDebugBreak(void);
-ON_DECL
-void    ON_EnableDebugBreak( int bEnableDebugBreak );
-
-ON_DECL
-int ON_GetDebugBreakOnFirstError(void);
-ON_DECL
-void ON_EnableDebugBreakOnFirstError( int bEnableDebugBreak );
-
-ON_DECL
 int     ON_GetDebugErrorMessage(void);
+
 ON_DECL
 void    ON_EnableDebugErrorMessage( int bEnableDebugErrorMessage );
+
 
 ON_DECL
 void    ON_Error( const char*, /* sFileName:   __FILE__ will do fine */
                   int,         /* line number: __LINE__ will do fine */
                   const char*, /* printf() style format string */
                   ...          /* printf() style ags */
+                  );
+
+ON_DECL
+void    ON_ErrorEx( const char*, // sFileName:   __FILE__ will do fine
+                  int,           // line number: __LINE__ will do fine
+                  const char*,   // sFunctionName: __FUNCTION__ will do fine
+                  const char*,   // printf() style format string
+                  ...            // printf() style ags
                   );
 ON_DECL
 void    ON_Warning( const char*, /* sFileName:   __FILE__ will do fine */
@@ -98,12 +100,31 @@ void    ON_Warning( const char*, /* sFileName:   __FILE__ will do fine */
                     ...          /* printf() style ags */
                   );
 ON_DECL
-void    ON_Assert( int,         /* if false, execution is halted in debugged code */
+void    ON_WarningEx( const char*, // sFileName:   __FILE__ will do fine
+                  int,           // line number: __LINE__ will do fine
+                  const char*,   // sFunctionName: __FUNCTION__ will do fine
+                  const char*,   // printf() style format string
+                  ...            // printf() style ags
+                  );
+
+// Ideally - these "assert" functions will be deleted when the SDK can be changed.
+ON_DECL
+void    ON_Assert( int,         /* if false, error is flagged */
                    const char*, /* sFileName:   __FILE__ will do fine */
                    int,         /* line number: __LINE__ will do fine */
                    const char*, /* printf() style format string */
                    ...          /* printf() style ags */
                   );
+
+ON_DECL
+void    ON_AssertEx( int,        // if false, error is flagged
+                  const char*,   // sFileName:   __FILE__ will do fine
+                  int,           // line number: __LINE__ will do fine
+                  const char*,   // sFunctionName: __FUNCTION__ will do fine
+                  const char*,   // printf() style format string
+                  ...            // printf() style ags
+                  );
+
 ON_DECL
 void    ON_MathError( 
         const char*, /* sModuleName */

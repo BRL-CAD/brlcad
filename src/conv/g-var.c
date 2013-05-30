@@ -1,7 +1,7 @@
 /*                     G - V A R . C
  * BRL-CAD
  *
- * Copyright (c) 2002-2012 United States Government as represented by
+ * Copyright (c) 2002-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -89,13 +89,13 @@ void mesh_tracker(struct db_i *dbip, struct directory *dp, genptr_t UNUSED(ptr))
     }
     /* track bot */
     if (NULL == curr) {
-	head = (struct mesh *)bu_malloc(sizeof(struct mesh), dp->d_namep);
+	BU_ALLOC(head, struct mesh);
 	head->name = dp->d_namep;
 	head->bot = (struct rt_bot_internal *)internal.idb_ptr;
 	head->next = NULL;
 	curr = head;
     } else {
-	curr->next = (struct mesh *)bu_malloc(sizeof(struct mesh), dp->d_namep);
+	BU_ALLOC(curr->next, struct mesh);
 	curr = curr->next;
 	curr->name = dp->d_namep;
 	curr->bot = (struct rt_bot_internal *)internal.idb_ptr;
@@ -157,7 +157,7 @@ void write_header(struct db_i *dbip)
 	perror("fwrite");
     /* model name string */
     ret = fwrite(dbip->dbi_title, sizeof(char), len, fp_out);
-    if (ret != 1)
+    if (ret != len)
 	perror("fwrite");
     /* mesh count */
     ret = fwrite(&mesh_count, sizeof(uint32_t), 1, fp_out);
@@ -182,7 +182,7 @@ void get_vertex(struct rt_bot_internal *bot, int idx, float *dest)
 
     if (yup) {
 	/* perform 90deg x-axis rotation */
-	float q = -(M_PI/2.0f);
+	float q = -(M_PI_2);
 	float y = dest[1];
 	float z = dest[2];
 	dest[1] = y * cos(q) - z * sin(q);
@@ -286,7 +286,7 @@ void write_mesh_data()
 	    perror("fwrite");
 	/* mesh name string */
 	ret = fwrite(curr->name, 1, len, fp_out);
-	if (ret != 1)
+	if (ret != len)
 	    perror("fwrite");
 	nvert = curr->bot->num_vertices;
 	nface = curr->bot->num_faces;
@@ -303,7 +303,7 @@ void write_mesh_data()
 	for (i = 0; i < curr->bot->num_vertices; i++) {
 	    get_vertex(curr->bot, i, vec);
 	    ret = fwrite(vec, sizeof(float), 3, fp_out);
-	    if (ret != 1)
+	    if (ret != 3)
 		perror("fwrite");
 	}
 	/* normal triples */
@@ -312,7 +312,7 @@ void write_mesh_data()
 		fprintf(stderr, ">> .. normals found!\n");
 	    /* normals are provided */
 	    ret = fwrite(curr->bot->normals, sizeof(float), curr->bot->num_normals * 3, fp_out);
-	    if (ret != 1)
+	    if (ret != curr->bot->num_normals * 3)
 		perror("fwrite");
 	} else {
 	    float *normals;
@@ -323,7 +323,7 @@ void write_mesh_data()
 	    normals = bu_calloc(sizeof(float), curr->bot->num_vertices * 3, "normals");
 	    get_normals(curr->bot, normals);
 	    ret = fwrite(normals, sizeof(float), curr->bot->num_vertices * 3, fp_out);
-	    if (ret != 1)
+	    if (ret != curr->bot->num_vertices * 3)
 		perror("fwrite");
 	    bu_free(normals, "normals");
 	}
@@ -352,7 +352,7 @@ void write_mesh_data()
 			ind8[2] = curr->bot->faces[3*i+2];
 		    }
 		    ret = fwrite(&ind8, 1, 3, fp_out);
-		    if (ret != 1)
+		    if (ret != 3)
 			perror("fwrite");
 		}
 		break;
@@ -367,7 +367,7 @@ void write_mesh_data()
 			ind16[2] = curr->bot->faces[3*i+2];
 		    }
 		    ret = fwrite(&ind16, 2, 3, fp_out);
-		    if (ret != 1)
+		    if (ret != 3)
 			perror("fwrite");
 		}
 		break;
@@ -382,7 +382,7 @@ void write_mesh_data()
 			ind32[2] = curr->bot->faces[3*i+2];
 		    }
 		    ret = fwrite(&ind32, 4, 3, fp_out);
-		    if (ret != 1)
+		    if (ret != 3)
 			perror("fwrite");
 		}
 		break;
@@ -441,9 +441,9 @@ int main(int argc, char *argv[])
     object = argv[bu_optind];
 
     /* open BRL-CAD database */
-    if ((dbip = db_open(db_file, "r")) == DBI_NULL) {
+    if ((dbip = db_open(db_file, DB_OPEN_READONLY)) == DBI_NULL) {
 	perror(argv[0]);
-	bu_exit(1, "Cannot open %s\n", db_file);
+	bu_exit(1, "Cannot open geometry database file %s\n", db_file);
     }
     if (db_dirbuild(dbip)) {
 	bu_exit(1, "db_dirbuild() failed!\n");
@@ -480,10 +480,10 @@ int main(int argc, char *argv[])
 	fprintf(stderr, ">> mesh count: %d\n", mesh_count);
     }
 
-    /* writeout header */
+    /* write out header */
     write_header(dbip);
 
-    /* writeout meshes */
+    /* write out meshes */
     write_mesh_data();
 
     /* finish */

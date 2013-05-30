@@ -1,7 +1,7 @@
 /*                 CurveBoundedSurface.h
  * BRL-CAD
  *
- * Copyright (c) 1994-2012 United States Government as represented by
+ * Copyright (c) 1994-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -33,26 +33,28 @@ class Surface;
 class BoundaryCurve;
 typedef list<BoundaryCurve *> LIST_OF_BOUNDARIES;
 
-class CurveBoundedSurface: public BoundedSurface {
+class CurveBoundedSurface: public BoundedSurface
+{
 private:
-	static string entityname;
+    static string entityname;
+    static EntityInstanceFunc GetInstance;
 
 protected:
-	Surface* basis_surface;
-	LIST_OF_BOUNDARIES boundaries;
-	Boolean implicit_outer;
+    Surface *basis_surface;
+    LIST_OF_BOUNDARIES boundaries;
+    Boolean implicit_outer;
 
 
 public:
-	CurveBoundedSurface();
-	virtual ~CurveBoundedSurface();
-	CurveBoundedSurface(STEPWrapper *sw,int step_id);
-	bool Load(STEPWrapper *sw,SDAI_Application_instance *sse);
-	virtual bool LoadONBrep(ON_Brep *brep);
-	virtual void Print(int level);
+    CurveBoundedSurface();
+    virtual ~CurveBoundedSurface();
+    CurveBoundedSurface(STEPWrapper *sw, int step_id);
+    bool Load(STEPWrapper *sw, SDAI_Application_instance *sse);
+    virtual bool LoadONBrep(ON_Brep *brep);
+    virtual void Print(int level);
 
-	//static methods
-	static STEPEntity *Create(STEPWrapper *sw,SDAI_Application_instance *sse);
+    //static methods
+    static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
 #endif /* CURVE_BOUNDED_SURFACE_H_ */

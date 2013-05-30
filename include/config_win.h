@@ -1,7 +1,7 @@
 /*                          C O N F I G _ W I N . H
  * BRL-CAD
  *
- * Copyright (c) 1993-2012 United States Government as represented by
+ * Copyright (c) 1993-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -31,6 +31,9 @@
 
 #ifndef IGNORE_CONFIG_H
 #if defined(_WIN32)
+
+#include <fcntl.h>
+#include <errno.h>
 
 /* !!! this should not be here, should fix the build system settings */
 #define __STDC__ 1
@@ -123,7 +126,6 @@
 /* #define filelength _filelength */
 #define isatty _isatty
 #define locking _locking
-#define lseek _lseek
 /* #define mktemp _mktemp */
 #define open _open
 #define unlink _unlink
@@ -139,11 +141,15 @@
  * other functions declared elsewhere (many in stdio.h)
  */
 
+#define nextafter _nextafter
+#define nextafterf(x,y) ((y)>0?(x)+FLT_EPSILON:(x)-FLT_EPSILON)
+#define nextafterl(x,y) ((y)>0?(x)+DBL_EPSILON:(x)-DBL_EPSILON)
 #define	isnan _isnan
+#define isinf(x) (!_finite(x))
+#define asinh(x) (log(x + sqrt(x * x + 1)))
 #define execvp _execvp
 #define fdopen _fdopen
 #define fileno _fileno
-#define fstat _fstat
 #define getpid _getpid
 #define hypot _hypot
 #define isascii __isascii
@@ -153,12 +159,32 @@
 #define snprintf _snprintf
 #define snprintf _snprintf
 #define sopen _sopen
-#define stat _stat
 #define strcasecmp _stricmp
 #define strncasecmp _strnicmp
 #define strdup _strdup
 #define sys_errlist _sys_errlist
 #define sys_nerr _sys_nerr
+
+
+#if defined(_WIN32) || defined(WIN32) && (SIZEOF_VOID_P != SIZEOF_LONG)
+#  define stat __stat64
+#elif defined(_WIN32) || defined(WIN32) && (SIZEOF_VOID_P == SIZEOF_LONG)
+#  define stat __stat32
+#else
+#  define stat _stat
+#endif
+
+
+/* #if defined(SIZEOF_VOID_P) && SIZEOF_VOID_P == 8 */
+/* #  define fseek _fseeki64 */
+/* #  define fstat _fstati64 */
+/* #  define ftell _ftelli64 */
+/* #  define lseek _lseeki64 */
+/* #  define stat _stati64 */
+/* #else */
+/* #  define stat _stat */
+/* ... */
+/* #endif */
 
 #define fmax __max
 #define ioctl ioctlsocket
@@ -175,7 +201,7 @@ typedef void (*sig_t)(int);
  * types
  */
 
-#define off_t _off_t
+#define off_t ptrdiff_t
 
 typedef int pid_t;
 typedef int socklen_t;

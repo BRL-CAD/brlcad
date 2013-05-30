@@ -1,7 +1,7 @@
 /*                    A T T R I B U T E S . C
  * BRL-CAD
  *
- * Copyright (c) 2010-2012 United States Government as represented by
+ * Copyright (c) 2010-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -26,24 +26,6 @@
 #include "raytrace.h"
 
 
-/**
- * D B 5 _ I M P O R T _ A T T R I B U T E S
- *
- * Convert the on-disk encoding into a handy easy-to-use
- * bu_attribute_value_set structure.
- *
- * Take advantage of the readonly_min/readonly_max capability so that
- * we don't have to bu_strdup() each string, but can simply point to
- * it in the provided buffer *ap.  Important implication: don't free
- * *ap until you're done with this avs.
- *
- * The upshot of this is that bu_avs_add() and bu_avs_remove() can be
- * safely used with this *avs.
- *
- * Returns -
- * >0 count of attributes successfully imported
- * -1 Error, mal-formed input
- */
 int
 db5_import_attributes(struct bu_attribute_value_set *avs, const struct bu_external *ap)
 {
@@ -78,16 +60,13 @@ db5_import_attributes(struct bu_attribute_value_set *avs, const struct bu_extern
      */
     bu_avs_init(avs, count, "db5_import_attributes");
 
-    /* Second pass -- populate attributes.  Peek inside struct for non AVS_ADD. */
+    /* Second pass -- populate attributes. */
 
-/* Use AVS_ADD to copy the values from the external buffer instead of
- * using them directly without copying.  This presumes ap will not get
- * free'd before we're done with the avs.  Preference should be to
- * leave AVS_ADD undefined for performance reasons.
- */
-#define AVS_ADD 1
+    /* Copy the values from the external buffer instead of using them
+     * directly without copying.  This presumes ap will not get free'd
+     * before we're done with the avs.
+     */
 
-#if AVS_ADD
     cp = (const char *)ap->ext_buf;
     while (*cp != '\0') {
 	const char *name = cp;  /* name */
@@ -95,28 +74,6 @@ db5_import_attributes(struct bu_attribute_value_set *avs, const struct bu_extern
 	bu_avs_add(avs, name, cp);
 	cp += strlen(cp)+1; /* next name */
     }
-#else
-    /* Conserve malloc/free activity -- use strings in input buffer */
-    /* Signal region of memory that input comes from */
-    cp = (const char *)ap->ext_buf;
-    app = avs->avp;
-    while (*cp != '\0') {
-	app->name = cp;  /* name */
-	cp += strlen(cp)+1;
-	app->value = cp;  /* value */
-	cp += strlen(cp)+1;
-	app++;
-	avs->count++;
-    }
-
-    /* expand the readonly section if necessary */
-    if ((!avs->readonly_min) || ((genptr_t)avs->readonly_min > (genptr_t)ap->ext_buf)) {
-	avs->readonly_min = (genptr_t)ap->ext_buf;
-    }
-    if ((!avs->readonly_max) || ((genptr_t)avs->readonly_max < (genptr_t)(avs->readonly_min + ap->ext_nbytes))) {
-	avs->readonly_max = (genptr_t)avs->readonly_min + ap->ext_nbytes;
-    }
-#endif
 
     BU_ASSERT_PTR(cp+1, ==, ep);
     BU_ASSERT_LONG(avs->count, <=, avs->max);
@@ -129,18 +86,6 @@ db5_import_attributes(struct bu_attribute_value_set *avs, const struct bu_extern
 }
 
 
-/**
- * D B 5 _ E X P O R T _ A T T R I B U T E S
- *
- * Encode the attribute-value pair information into the external
- * on-disk format.
- *
- * The on-disk encoding is:
- *
- * name1 NULL value1 NULL ... nameN NULL valueN NULL NULL
- *
- * 'ext' is initialized on behalf of the caller.
- */
 void
 db5_export_attributes(struct bu_external *ext, const struct bu_attribute_value_set *avs)
 {
@@ -214,19 +159,6 @@ db5_export_attributes(struct bu_external *ext, const struct bu_attribute_value_s
 }
 
 
-/**
- * D B 5 _ R E P L A C E _ A T T R I B U T E S
- *
- * Replace the attributes of a given database object.
- *
- * For efficiency, this is done without looking at the object body at
- * all.  Contents of the bu_attribute_value_set are freed, but not the
- * struct itself.
- *
- * Returns -
- * 0 on success
- * <0 on error
- */
 int
 db5_replace_attributes(struct directory *dp, struct bu_attribute_value_set *avsp, struct db_i *dbip)
 {
@@ -289,20 +221,6 @@ db5_replace_attributes(struct directory *dp, struct bu_attribute_value_set *avsp
 }
 
 
-/**
- * D B 5 _ U P D A T E _ A T T R I B U T E S
- *
- * Update an arbitrary number of attributes on a given database
- * object.  For efficiency, this is done without looking at the object
- * body at all.
- *
- * Contents of the bu_attribute_value_set are freed, but not the
- * struct itself.
- *
- * Returns -
- * 0 on success
- * <0 on error
- */
 int
 db5_update_attributes(struct directory *dp, struct bu_attribute_value_set *avsp, struct db_i *dbip)
 {
@@ -383,15 +301,6 @@ db5_update_attributes(struct directory *dp, struct bu_attribute_value_set *avsp,
 }
 
 
-/**
- * D B 5 _ U P D A T E _ A T T R I B U T E
- *
- * A convenience routine to update the value of a single attribute.
- *
- * Returns -
- * 0 on success
- * <0 on error
- */
 int
 db5_update_attribute(const char *obj_name, const char *name, const char *value, struct db_i *dbip)
 {
@@ -409,18 +318,6 @@ db5_update_attribute(const char *obj_name, const char *name, const char *value, 
 }
 
 
-/**
- * D B 5 _ U P D A T E _ I D E N T
- *
- * Update the _GLOBAL object, which in v5 serves the place of the
- * "ident" header record in v4 as the place to stash global
- * information.  Since every database will have one of these things,
- * it's no problem to update it.
- *
- * Returns -
- * 0 Success
- * -1 Fatal Error
- */
 int db5_update_ident(struct db_i *dbip, const char *title, double local2mm)
 {
     struct bu_attribute_value_set avs;
@@ -479,29 +376,6 @@ int db5_update_ident(struct db_i *dbip, const char *title, double local2mm)
 }
 
 
-/**
- * D B 5 _ F W R I T E _ I D E N T
- *
- * Create a header for a v5 database.
- *
- * This routine has the same calling sequence as db_fwrite_ident()
- * which makes a v4 database header.
- *
- * In the v5 database, two database objects must be created to match
- * the semantics of what was in the v4 header:
- *
- * First, a database header object.
- *
- * Second, create a specially named attribute-only object which
- * contains the attributes "title=" and "units=".
- *
- * This routine should only be used by db_create().  Everyone else
- * should use db5_update_ident().
- *
- * Returns -
- * 0 Success
- * -1 Fatal Error
- */
 int
 db5_fwrite_ident(FILE *fp, const char *title, double local2mm)
 {

@@ -141,8 +141,9 @@ Severity IntValidLevel( const char * attrValue, ErrorDescriptor * err,
     return err->severity();
 }
 
-char * WriteReal( SDAI_Real  val, std::string & s ) {
+std::string WriteReal( SDAI_Real val ) {
     char rbuf[64];
+    std::string s;
 
 //        out << form("%.*G", (int) Real_Num_Precision,tmp);
     // replace the above line with this code so that writing the '.' is
@@ -176,13 +177,11 @@ char * WriteReal( SDAI_Real  val, std::string & s ) {
     } else {
         s = rbuf;
     }
-    return const_cast<char *>( s.c_str() );
+    return s;
 }
 
 void WriteReal( SDAI_Real  val, ostream & out ) {
-    std::string s;
-
-    out << WriteReal( val, s );
+    out << WriteReal( val );
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -885,8 +884,7 @@ const char * ReadComment( istream & in, std::string & s ) {
  ** "\F\" == formfeed
  ** "\N\" == newline
  ***************************/
-Severity
-ReadPcd( istream & in ) {
+Severity ReadPcd( istream & in ) {
     char c;
     in.get( c );
     if( c == '\\' ) {

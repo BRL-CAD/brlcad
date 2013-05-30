@@ -1,7 +1,7 @@
 /*                          B O O L . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2012 United States Government as represented by
+ * Copyright (c) 1985-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -45,7 +45,7 @@
 #include "bu.h"
 
 
-/* Boolean values.  Not easy to change, but defined symbolicly */
+/* Boolean values.  Not easy to change, but defined symbolically */
 #define BOOL_FALSE 0
 #define BOOL_TRUE 1
 
@@ -53,7 +53,7 @@
 /**
  * R T _ W E A V E 0 S E G
  *
- * If a zero thickness segment abutts another partition, it will be
+ * If a zero thickness segment abuts another partition, it will be
  * fused in, later.
  *
  * If it is free standing, then it will remain as a zero thickness
@@ -143,32 +143,6 @@ rt_weave0seg(struct seg *segp, struct partition *PartHdp, struct application *ap
 }
 
 
-/**
- * R T _ B O O L W E A V E
- *
- * Weave a chain of segments into an existing set of partitions.  The
- * edge of each partition is an inhit or outhit of some solid (seg).
- *
- * NOTE: When the final partitions are completed, it is the users
- * responsibility to honor the inflip and outflip flags.  They can not
- * be flipped here because an outflip=1 edge and an inflip=0 edge
- * following it may in fact be the same edge.  This could be dealt
- * with by giving the partition struct a COPY of the inhit and outhit
- * rather than a pointer, but that's more cycles than the neatness is
- * worth.
- *
- * Inputs -
- * Pointer to first segment in seg chain.
- * Pointer to head of circular doubly-linked list of
- * partitions of the original ray.
- *
- * Outputs -
- * Partitions, queued on doubly-linked list specified.
- *
- * Notes -
- * It is the responsibility of the CALLER to free the seg chain, as
- * well as the partition list that we return.
- */
 void
 rt_boolweave(struct seg *out_hd, struct seg *in_hd, struct partition *PartHdp, struct application *ap)
 {
@@ -458,7 +432,7 @@ rt_boolweave(struct seg *out_hd, struct seg *in_hd, struct partition *PartHdp, s
 		if (RT_G_DEBUG&DEBUG_PARTITION) bu_log("equal_start\n");
 		/*
 		 * Segment and partition start at (roughly) the same
-		 * point.  When fuseing 2 points together i.e., when
+		 * point.  When fusing 2 points together i.e., when
 		 * NEAR_ZERO(diff, tol) is true, the two points MUST
 		 * be forced to become exactly equal!
 		 */
@@ -621,16 +595,6 @@ rt_boolweave(struct seg *out_hd, struct seg *in_hd, struct partition *PartHdp, s
 }
 
 
-/**
- * R T _ D E F O V E R L A P
- *
- * Default handler for overlaps in rt_boolfinal().
- *
- * Returns -
- * 0 to eliminate partition with overlap entirely
- * 1 to retain partition in output list, claimed by reg1
- * 2 to retain partition in output list, claimed by reg2
- */
 int
 rt_defoverlap (register struct application *ap, register struct partition *pp, struct region *reg1, struct region *reg2, struct partition *pheadp)
 {
@@ -810,7 +774,7 @@ rt_fastgen_vol_vol_overlap(struct region **fr1, struct region **fr2, const struc
 	    /* keep fr1, delete fr2 */
 	    *fr2 = REGION_NULL;
 	} else {
-	    /* keep fr2, depete fr1 */
+	    /* keep fr2, delete fr1 */
 	    *fr1 = REGION_NULL;
 	}
     } else {
@@ -829,25 +793,6 @@ rt_fastgen_vol_vol_overlap(struct region **fr1, struct region **fr2, const struc
     bu_ptbl_free(&sl2);
 }
 
-
-/**
- * R T _ F D I F F
- *
- * Compares two floating point numbers.  If they are within "epsilon"
- * of each other, they are considered the same.
- *
- * NOTE: This is a "fuzzy" difference.  It is important NOT to use the
- * results of this function in compound comparisons, because a return
- * of 0 makes no statement about the PRECISE relationships between the
- * two numbers.  Eg, * if (rt_fdiff(a, b) <= 0) is poison!
- *
- * Returns -
- * -1 if a < b
- *  0 if a ~= b
- * +1 if a > b
- *
- * DEVELOPER DEPRECATION NOTICE: use NEAR_ZERO instead.
- */
 int
 rt_fdiff(double a, double b)
 {
@@ -903,10 +848,10 @@ out:
  *
  * Handle FASTGEN plate/volume overlap.
  *
- * Measure width of _preceeding_ partition, which must have been
+ * Measure width of _preceding_ partition, which must have been
  * claimed by the volume mode region fr2.
  *
- * If less than 1/4", delete preceeding partition, and plate wins this
+ * If less than 1/4", delete preceding partition, and plate wins this
  * part.  If less than 1/4", plate wins this part, previous partition
  * untouched.  If previous partition is claimed by plate mode region
  * fr1, then overlap is left in output???
@@ -933,7 +878,10 @@ rt_fastgen_plate_vol_overlap(struct region **fr1, struct region **fr2, struct pa
 	return;
     }
 
-    /* arbitrary tolerance is the dominant absolute tolerance from f_diff() */
+    /* arbitrary tolerance is the dominant absolute tolerance from the
+     * now-deprecated rt_fdiff().  need to test sensitivity before
+     * changing to the distance tolerance.
+     */
     if (!NEAR_EQUAL(prev->pt_outhit->hit_dist, pp->pt_inhit->hit_dist, 0.001)) {
 	/* There is a gap between previous partition and this one.  So
 	 * both plate and vol start at same place, d=0, plate wins.
@@ -964,38 +912,13 @@ rt_fastgen_plate_vol_overlap(struct region **fr1, struct region **fr2, struct pa
 	/* For now, volume mode region just loses. */
 	*fr2 = REGION_NULL;
     } else {
-	/* Some other region preceeds this partition */
+	/* Some other region precedes this partition */
 	/* So both plate and vol start at same place, d=0, plate wins */
 	*fr2 = REGION_NULL;
     }
 }
 
 
-/**
- * R T _ D E F A U L T _ M U L T I O V E R L A P
- *
- * Default version of a_multioverlap().
- *
- * Resolve the overlap of multiple regions withing a single partition.
- * There are no null pointers in the table (they have been compressed
- * out by our caller).  Consider BU_PTBL_LEN(regiontable) overlapping
- * regions, and reduce to zero or one "claiming" regions, by setting
- * pointers in the bu_ptbl of non-claiming regions to NULL.
- *
- * This default routine reproduces the behavior of BRL-CAD Release 5.0
- * by considering the regions pairwise and calling the old
- * a_overlap().
- *
- * An application which knew how to handle multiple overlapping air
- * regions would provide its own very different version of this
- * routine as the a_multioverlap() handler.
- *
- * This routine is for resolving overlaps only, and should not print
- * any messages in normal operation; a_logoverlap() is for logging.
- *
- * InputHdp is the list of partitions up to this point.  It allows us
- * to look at the regions that have come before in deciding what to do
- */
 void
 rt_default_multioverlap(struct application *ap, struct partition *pp, struct bu_ptbl *regiontable, struct partition *InputHdp)
 {
@@ -1205,12 +1128,6 @@ rt_default_multioverlap(struct application *ap, struct partition *pp, struct bu_
 }
 
 
-/**
- * R T _ S I L E N T _ L O G O V E R L A P
- *
- * If an application doesn't want any logging from LIBRT, it should
- * just set ap->a_logoverlap = rt_silent_logoverlap.
- */
 void
 rt_silent_logoverlap(struct application *ap, const struct partition *pp, const struct bu_ptbl *regiontable, const struct partition *UNUSED(InputHdp))
 {
@@ -1221,14 +1138,6 @@ rt_silent_logoverlap(struct application *ap, const struct partition *pp, const s
 }
 
 
-/**
- * R T _ D E F A U L T _ L O G O V E R L A P
- *
- * Log a multiplicity of overlaps within a single partition.  This
- * function is intended for logging only, and a_multioverlap() is
- * intended for resolving the overlap, only.  This function can be
- * replaced by an application setting a_logoverlap().
- */
 void
 rt_default_logoverlap(struct application *ap, const struct partition *pp, const struct bu_ptbl *regiontable, const struct partition *UNUSED(InputHdp))
 {
@@ -1413,15 +1322,6 @@ rt_bool_partition_eligible(register const struct bu_ptbl *regiontable, register 
 }
 
 
-/**
- * R T _ G R O W _ B O O L S T A C K
- *
- * Increase the size of re_boolstack to double the previous size.
- * Depend on bu_realloc() to copy the previous data to the new area
- * when the size is increased.
- *
- * Return the new pointer for what was previously the last element.
- */
 void
 rt_grow_boolstack(register struct resource *resp)
 {
@@ -1604,79 +1504,6 @@ pop:
 }
 
 
-/**
- * R T _ B O O L F I N A L
- *
- * Consider each partition on the sorted & woven input partition list.
- * If the partition ends before this box's start, discard it
- * immediately.  If the partition begins beyond this box's end,
- * return.
- *
- * Next, evaluate the boolean expression tree for all regions that
- * have some presence in the partition.
- *
- * If 0 regions result, continue with next partition.
- *
- * If 1 region results, a valid hit has occured, so transfer the
- * partition from the Input list to the Final list.
- *
- * If 2 or more regions claim the partition, then an overlap exists.
- *
- * If the overlap handler gives a non-zero return, then the
- * overlapping partition is kept, with the region ID being the first
- * one encountered.
- *
- * Otherwise, the partition is eliminated from further consideration.
- *
- * All partitions in the indicated range of the ray are evaluated.
- * All partitions which really exist (booleval is true) are appended
- * to the Final partition list.  All partitions on the Final partition
- * list have completely valid entry and exit information, except for
- * the last partition's exit information when a_onehit!=0 and a_onehit
- * is odd.
- *
- * The flag a_onehit is interpreted as follows:
- *
- * If a_onehit = 0, then the ray is traced to +infinity, and all hit
- * points in the final partition list are valid.
- *
- * If a_onehit != 0, the ray is traced through a_onehit hit points.
- * (Recall that each partition has 2 hit points, entry and exit).
- * Thus, if a_onehit is odd, the value of pt_outhit.hit_dist in the
- * last partition may be incorrect; this should not mater because the
- * application specifically said it only wanted pt_inhit there.  This
- * is most commonly seen when a_onehit = 1, which is useful for
- * lighting models.  Not having to correctly determine the exit point
- * can result in a significant savings of computer time.
- *
- * If a_onehit is negative, it indicates the number of non-air hits
- * needed.
- *
- * Returns -
- * 0 If more partitions need to be done
- * 1 Requested number of hits are available in FinalHdp
- *
- * The caller must free whatever is in both partition chains.
- *
- * NOTES for code improvements -
- *
- * With a_onehit != 0, it is difficult to stop at the 'enddist' value
- * (or the a_ray_length value), and always get correct results.  Need
- * to take into account some additional factors:
- *
- * 1) A region shouldn't be evaluated until all its solids have been
- * intersected, to prevent the "CERN" problem of out points being
- * wrong because subtracted solids aren't intersected yet.
- *
- * Maybe "all" solids don't have to be intersected, but some strong
- * statements are needed along these lines.
- *
- * A region is definitely ready to be evaluated IF all its solids
- * have been intersected.
- *
- * 2) A partition shouldn't be evaluated until all the regions within
- * it are ready to be evaluated.
- */
 int
 rt_boolfinal(struct partition *InputHdp, struct partition *FinalHdp, fastf_t startdist, fastf_t enddist, struct bu_ptbl *regiontable, struct application *ap, const struct bu_bitv *solidbits)
 {
@@ -1818,7 +1645,7 @@ rt_boolfinal(struct partition *InputHdp, struct partition *FinalHdp, fastf_t sta
 	 * Partition may start before current box starts, because it's
 	 * still waiting for all its solids to be shot.
 	 */
-	if (pp->pt_outhit->hit_dist <= 0.001 /* milimeters */) {
+	if (pp->pt_outhit->hit_dist < ap->a_rt_i->rti_tol.dist) {
 	    register struct partition *zap_pp;
 	    if (RT_G_DEBUG&DEBUG_PARTITION)
 		bu_log("discarding partition %p behind ray start, out dist=%g\n",
@@ -1916,7 +1743,7 @@ rt_boolfinal(struct partition *InputHdp, struct partition *FinalHdp, fastf_t sta
 		goto out;
 	    }
 	    if (RT_G_DEBUG&DEBUG_PARTITION)
-		bu_log("Partition is eligibile for evaluation.\n");
+		bu_log("Partition is eligible for evaluation.\n");
 	}
 
 	/* Evaluate the boolean trees of any regions involved */
@@ -2103,16 +1930,6 @@ out:
 }
 
 
-/**
- * R T _ R E L D I F F
- *
- * Compute the relative difference of two floating point numbers.
- *
- * Returns 0.0 if exactly the same, otherwise ratio of difference,
- * relative to the larger of the two (range 0.0-1.0)
- *
- * DEVELOPER DEPRECATION NOTICE: use NEAR_ZERO instead.
- */
 double
 rt_reldiff(double a, double b)
 {
@@ -2133,11 +1950,6 @@ rt_reldiff(double a, double b)
 }
 
 
-/**
- * R T _ P A R T I T I O N _ L E N
- *
- * Return the length of a partition linked list.
- */
 int
 rt_partition_len(const struct partition *partheadp)
 {
@@ -2158,10 +1970,6 @@ rt_partition_len(const struct partition *partheadp)
 }
 
 
-/**
- * XXX This routine seems to free things more than once.  For a
- * temporary measure, don't free things.
- */
 void
 rt_rebuild_overlaps(struct partition *PartHdp, struct application *ap, int rebuild_fastgen_plates_only)
 {

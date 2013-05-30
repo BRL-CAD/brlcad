@@ -1,7 +1,7 @@
 /*                       F B C M R O T . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2012 United States Government as represented by
+ * Copyright (c) 1986-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -20,7 +20,7 @@
  */
 /** @file fbcmrot.c
  *
- * Dynamicly rotate the color map
+ * Dynamically rotate the color map
  *
  */
 
@@ -83,10 +83,11 @@ get_args(int argc, char **argv)
     }
 
     if (argc > ++bu_optind)
-	(void)fprintf(stderr, "fbcmrot: excess argument(s) ignored\n");
+	fprintf(stderr, "fbcmrot: excess argument(s) ignored\n");
 
     return 1;		/* OK */
 }
+
 
 int
 main(int argc, char **argv)
@@ -106,7 +107,7 @@ main(int argc, char **argv)
 
     if ((fbp = fb_open(NULL, size, size)) == FBIO_NULL) {
 	fprintf(stderr, "fbcmrot:  fb_open failed\n");
-	return	1;
+	return 1;
     }
 
     local_inp = &cm1;
@@ -144,8 +145,9 @@ main(int argc, char **argv)
 	    break;
     }
     fb_close(fbp);
-    return	0;
+    return 0;
 }
+
 
 /*
  * Local Variables:

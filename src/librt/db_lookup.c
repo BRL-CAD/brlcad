@@ -1,7 +1,7 @@
 /*                     D B _ L O O K U P . C
  * BRL-CAD
  *
- * Copyright (c) 1988-2012 United States Government as represented by
+ * Copyright (c) 1988-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -36,14 +36,6 @@
 #include "raytrace.h"
 
 
-/**
- * D B _ I S _ D I R E C T O R Y _ N O N _ E M P T Y
- *
- * Returns -
- * 0 if the in-memory directory is empty
- * 1 if the in-memory directory has entries,
- * which implies that a db_scan() has already been performed.
- */
 int
 db_is_directory_non_empty(const struct db_i *dbip)
 {
@@ -76,12 +68,6 @@ db_directory_size(const struct db_i *dbip)
 }
 
 
-/**
- * D B _ C K _ D I R E C T O R Y
- *
- * For debugging, ensure that all the linked-lists for the directory
- * structure are intact.
- */
 void
 db_ck_directory(const struct db_i *dbip)
 {
@@ -97,17 +83,11 @@ db_ck_directory(const struct db_i *dbip)
 }
 
 
-/**
- * D B _ D I R H A S H
- *
- * Returns a hash index for a given string that corresponds with the
- * head of that string's hash chain.
- */
 int
 db_dirhash(const char *str)
 {
     const unsigned char *s = (unsigned char *)str;
-    long sum = 0;
+    size_t sum = 0;
     int i = 1;
 
     /* sanity */
@@ -116,35 +96,12 @@ db_dirhash(const char *str)
 
     /* BSD name hashing starts i=0, discarding first char.  why? */
     while(*s)
-	sum += (long)*s++ * i++;
+	sum += (size_t)*s++ * i++;
 
     return RT_DBHASH(sum);
 }
 
 
-/**
- * Name -
- * D B _ D I R C H E C K
- *
- * Description -
- * This routine ensures that ret_name is not already in the
- * directory. If it is, it tries a fixed number of times to
- * modify ret_name before giving up. Note - most of the time,
- * the hash for ret_name is computed once.
- *
- * Inputs -
- * dbip database instance pointer
- * ret_name the original name
- * noisy to blather or not
- *
- * Outputs -
- * ret_name the name to use
- * headp pointer to the first (struct directory *) in the bucket
- *
- * Returns -
- * 0 success
- * <0 fail
- */
 int
 db_dircheck(struct db_i *dbip,
 	    struct bu_vls *ret_name,
@@ -193,20 +150,6 @@ db_dircheck(struct db_i *dbip,
 }
 
 
-/**
- * D B _ L O O K U P
- *
- * This routine takes a name and looks it up in the directory table.
- * If the name is present, a pointer to the directory struct element
- * is returned, otherwise NULL is returned.
- *
- * If noisy is non-zero, a print occurs, else only the return code
- * indicates failure.
- *
- * Returns -
- * struct directory if name is found
- * RT_DIR_NULL on failure
- */
 struct directory *
 db_lookup(const struct db_i *dbip, const char *name, int noisy)
 {
@@ -244,28 +187,6 @@ db_lookup(const struct db_i *dbip, const char *name, int noisy)
 }
 
 
-/**
- * D B _ D I R A D D
- *
- * Add an entry to the directory.  Try to make the regular path
- * through the code as fast as possible, to speed up building the
- * table of contents.
- *
- * dbip is a pointer to a valid/opened database instance
- *
- * name is the string name of the object being added
- *
- * laddr is the offset into the file to the object
- *
- * len is the length of the object, number of db granules used
- *
- * flags are defined in raytrace.h (RT_DIR_SOLID, RT_DIR_COMB, RT_DIR_REGION,
- * RT_DIR_INMEM, etc) for db version 5, ptr is the minor_type
- * (non-null pointer to valid unsigned char code)
- *
- * an laddr of RT_DIR_PHONY_ADDR means that database storage has not
- * been allocated yet.
- */
 struct directory *
 db_diradd(struct db_i *dbip, const char *name, off_t laddr, size_t len, int flags, genptr_t ptr)
 {
@@ -338,19 +259,6 @@ db_diradd(struct db_i *dbip, const char *name, off_t laddr, size_t len, int flag
 }
 
 
-/**
- * D B _ D I R D E L E T E
- *
- * Given a pointer to a directory entry, remove it from the linked
- * list, and free the associated memory.
- *
- * It is the responsibility of the caller to have released whatever
- * structures have been hung on the d_use_hd bu_list, first.
- *
- * Returns -
- * 0 on success
- * non-0 on failure
- */
 int
 db_dirdelete(struct db_i *dbip, struct directory *dp)
 {
@@ -391,16 +299,6 @@ db_dirdelete(struct db_i *dbip, struct directory *dp)
 }
 
 
-/**
- * D B _ R E N A M E
- *
- * Change the name string of a directory entry.  Because of the
- * hashing function, this takes some extra work.
- *
- * Returns -
- * 0 on success
- * non-0 on failure
- */
 int
 db_rename(struct db_i *dbip, struct directory *dp, const char *newname)
 {
@@ -439,11 +337,6 @@ out:
 }
 
 
-/**
- * D B _ P R _ D I R
- *
- * For debugging, print the entire contents of the database directory.
- */
 void
 db_pr_dir(const struct db_i *dbip)
 {
@@ -472,7 +365,7 @@ db_pr_dir(const struct db_i *dbip)
 		flags = "COM";
 	    else
 		flags = "Bad";
-	    bu_log("x%.8x %s %s=x%.8x len=%.5zu use=%.2d nref=%.2d %s",
+	    bu_log("x%.8x %s %s=x%.8x len=%.5zu use=%.2ld nref=%.2ld %s",
 		   dp,
 		   flags,
 		   dp->d_flags & RT_DIR_INMEM ? "  ptr " : "d_addr",
@@ -490,27 +383,6 @@ db_pr_dir(const struct db_i *dbip)
 }
 
 
-/**
- * D B _ L O O K U P _ B Y _ A T T R
- *
- * lookup directory entries based on directory flags (dp->d_flags) and
- * attributes the "dir_flags" arg is a mask for the directory flags
- * the *"avs" is an attribute value set used to select from the
- * objects that *pass the flags mask. if "op" is 1, then the object
- * must have all the *attributes and values that appear in "avs" in
- * order to be *selected. If "op" is 2, then the object must have at
- * least one of *the attribute/value pairs from "avs".
- *
- * dir_flags are in the form used in struct directory (d_flags)
- *
- * for op:
- * 1 -> all attribute name/value pairs must be present and match
- * 2 -> at least one of the name/value pairs must be present and match
- *
- * returns a ptbl list of selected directory pointers an empty list
- * means nothing met the requirements a NULL return means something
- * went wrong.
- */
 struct bu_ptbl *
 db_lookup_by_attr(struct db_i *dbip, int dir_flags, struct bu_attribute_value_set *avs, int op)
 {
@@ -531,7 +403,7 @@ db_lookup_by_attr(struct db_i *dbip, int dir_flags, struct bu_attribute_value_se
 	attr_count = 0;
     }
 
-    tbl = (struct bu_ptbl *)bu_calloc(sizeof(struct bu_ptbl), 1, "wdb_get_by_attr ptbl");
+    BU_ALLOC(tbl, struct bu_ptbl);
     bu_ptbl_init(tbl, 128, "wdb_get_by_attr ptbl_init");
 
     FOR_ALL_DIRECTORY_START(dp, dbip) {

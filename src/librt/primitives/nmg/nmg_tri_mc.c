@@ -1,7 +1,7 @@
 /*                     N M G _ T R I _ M C . C
  * BRL-CAD
  *
- * Copyright (c) 1994-2012 United States Government as represented by
+ * Copyright (c) 1994-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -43,7 +43,7 @@
 /** @} */
 
 /* rough game plan
- *   [ ] develop/proof metaball primitive tesselation using MC (end of Jan10)
+ *   [ ] develop/proof metaball primitive tessellation using MC (end of Jan10)
  *       [ ] asc-g/g-asc of metaballs for regression/comparison testing
  *           [X] asc-g
  *           [X] g-asc
@@ -559,7 +559,7 @@ rt_nmg_mc_pew(struct shell *s, struct whack  *primp[4], struct application *a, f
 	    for(i=0;i<4;i++)
 		if(primp[i]->in>0 && primp[i]->hit[Z] < b) b = primp[i]->hit[Z];
 	    b = bin(b, step);
-	} else { /* iff we know we're intersecting the surface, walk slow. */
+	} else { /* if we know we're intersecting the surface, walk slow. */
 	    if(NEAR_ZERO(last_b+VOODOO, tol->dist))
 		bu_log("teh fux? lastb = %g\n", last_b);
 	    b = last_b + step;
@@ -716,7 +716,7 @@ fire_row(int cpu, void * ptr)
 	    count += rt_nmg_mc_pew(m->s, primp, &a, x, y, z, m->step, m->tol);
 	}
     }
-    bu_log("%d done, %d\n", cpu, count);
+    bu_log("%d done, %lu\n", cpu, count);
     m->count += count;
     /* free the rt stuff we don't need anymore */
 }

@@ -1,7 +1,7 @@
 /*                 DesignContext.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2012 United States Government as represented by
+ * Copyright (c) 1994-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -76,23 +76,15 @@ void DesignContext::Print(int level)
 }
 
 STEPEntity *
+DesignContext::GetInstance(STEPWrapper *sw, int id)
+{
+    return new DesignContext(sw, id);
+}
+
+STEPEntity *
 DesignContext::Create(STEPWrapper *sw, SDAI_Application_instance *sse)
 {
-    Factory::OBJECTS::iterator i;
-    if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
-	DesignContext *object = new DesignContext(sw, sse->STEPfile_id);
-
-	Factory::AddObject(object);
-
-	if (!object->Load(sw, sse)) {
-	    std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
-	    delete object;
-	    return NULL;
-	}
-	return static_cast<STEPEntity *>(object);
-    } else {
-	return (*i).second;
-    }
+    return STEPEntity::CreateEntity(sw, sse, GetInstance, CLASSNAME);
 }
 
 bool DesignContext::LoadONBrep(ON_Brep *brep)

@@ -1,7 +1,7 @@
 /*                       N M G _ T R I . C
  * BRL-CAD
  *
- * Copyright (c) 1994-2012 United States Government as represented by
+ * Copyright (c) 1994-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -351,8 +351,7 @@ map_vu_to_2d(struct vertexuse *vu, struct bu_list *tbl2d, fastf_t *mat, struct f
     /* if this vertexuse has already been transformed, we're done */
     if (find_pt2d(tbl2d, vu)) return;
 
-
-    np = (struct pt2d *)bu_calloc(1, sizeof(struct pt2d), "pt2d struct");
+    BU_ALLOC(np, struct pt2d);
     np->coord[2] = 0.0;
     np->vu_p = vu;
     BU_LIST_MAGIC_SET(&np->l, NMG_PT2D_MAGIC);
@@ -414,7 +413,7 @@ map_vu_to_2d(struct vertexuse *vu, struct bu_list *tbl2d, fastf_t *mat, struct f
 	}
 
 	/* add vertexuse to list */
-	p = (struct pt2d *)bu_calloc(1, sizeof(struct pt2d), "pt2d");
+	BU_ALLOC(p, struct pt2d);
 	p->vu_p = vu_p;
 	VMOVE(p->coord, np->coord);
 	BU_LIST_MAGIC_SET(&p->l, NMG_PT2D_MAGIC);
@@ -422,10 +421,10 @@ map_vu_to_2d(struct vertexuse *vu, struct bu_list *tbl2d, fastf_t *mat, struct f
 	BU_LIST_APPEND(&np->l, &p->l);
 
 	if (rt_g.NMG_debug & DEBUG_TRI && flatten_debug)
-	    (void)bu_log("vertexuse transformed\n");
+	    bu_log("vertexuse transformed\n");
     }
     if (rt_g.NMG_debug & DEBUG_TRI && flatten_debug)
-	(void)bu_log("Done.\n");
+	bu_log("Done.\n");
 }
 
 
@@ -446,7 +445,7 @@ map_vu_to_2d(struct vertexuse *vu, struct bu_list *tbl2d, fastf_t *mat, struct f
  * of the map
  */
 struct bu_list *
-nmg_flatten_face(struct faceuse *fu, fastf_t *TformMat)
+nmg_flatten_face(struct faceuse *fu, fastf_t *TformMat, const struct bn_tol *tol)
 {
     static const vect_t twoDspace = { 0.0, 0.0, 1.0 };
     struct bu_list *tbl2d;
@@ -457,11 +456,10 @@ nmg_flatten_face(struct faceuse *fu, fastf_t *TformMat)
 
     NMG_CK_FACEUSE(fu);
 
-    tbl2d = (struct bu_list *)bu_calloc(1, sizeof(struct bu_list),
-					"2D coordinate list");
+    BU_ALLOC(tbl2d, struct bu_list);
 
     /* we use the 0 index entry in the table as the head of the sorted
-     * list of verticies.  This is safe since the 0 index is always for
+     * list of vertices.  This is safe since the 0 index is always for
      * the model structure
      */
 
@@ -470,7 +468,7 @@ nmg_flatten_face(struct faceuse *fu, fastf_t *TformMat)
 
     /* construct the matrix that maps the 3D coordinates into 2D space */
     NMG_GET_FU_NORMAL(Normal, fu);
-    bn_mat_fromto(TformMat, Normal, twoDspace);
+    bn_mat_fromto(TformMat, Normal, twoDspace, tol);
 
     if (rt_g.NMG_debug & DEBUG_TRI && flatten_debug)
 	bn_mat_print("TformMat", TformMat);
@@ -700,7 +698,7 @@ poly_start_vertex(struct pt2d *pt, struct bu_list *tbl2d, struct bu_list *tlist)
 	bu_log("%g %g is polygon start vertex\n",
 	       pt->coord[X], pt->coord[Y]);
 
-    new_trap = (struct trap *)bu_calloc(sizeof(struct trap), 1, "new poly_start trap");
+    BU_ALLOC(new_trap, struct trap);
     new_trap->top = pt;
     new_trap->bot = (struct pt2d *)NULL;
     new_trap->e_left = pt->vu_p->up.eu_p;
@@ -781,7 +779,7 @@ poly_side_vertex(struct pt2d *pt, struct pt2d *tbl2d, struct bu_list *tlist)
     tp->bot = pt;
 
     /* create new trapezoid with other (not upper) edge */
-    new_trap = (struct trap *)bu_calloc(sizeof(struct trap), 1, "new side trap");
+    BU_ALLOC(new_trap, struct trap);
     BU_LIST_MAGIC_SET(&new_trap->l, NMG_TRAP_MAGIC);
     new_trap->top = pt;
     new_trap->bot = (struct pt2d *)NULL;
@@ -975,7 +973,7 @@ hole_start_vertex(struct pt2d *pt, struct bu_list *tbl2d, struct bu_list *tlist)
     tp->bot = pt;
     /* create new left and right trapezoids */
 
-    new_trap = (struct trap *)bu_calloc(sizeof(struct trap), 1, "New hole start trapezoids");
+    BU_ALLOC(new_trap, struct trap);
     new_trap->top = pt;
     new_trap->bot = (struct pt2d *)NULL;
     new_trap->e_left = tp->e_left;
@@ -983,7 +981,7 @@ hole_start_vertex(struct pt2d *pt, struct bu_list *tbl2d, struct bu_list *tlist)
     BU_LIST_MAGIC_SET(&new_trap->l, NMG_TRAP_MAGIC);
     BU_LIST_APPEND(&tp->l, &new_trap->l);
 
-    new_trap = (struct trap *)bu_calloc(sizeof(struct trap), 1, "New hole start trapezoids");
+    BU_ALLOC(new_trap, struct trap);
     new_trap->top = pt;
     new_trap->bot = (struct pt2d *)NULL;
     new_trap->e_left = pt->vu_p->up.eu_p;
@@ -1068,7 +1066,7 @@ hole_end_vertex(struct pt2d *pt, struct bu_list *tbl2d, struct bu_list *tlist)
 
     /* start one new trapezoid */
 
-    tp = (struct trap *)bu_calloc(1, sizeof(struct pt2d), "pt2d struct");
+    BU_ALLOC(tp, struct trap);
     tp->top = pt;
     tp->bot = (struct pt2d *)NULL;
     if (tpnext->e_left == eunext) {
@@ -1150,8 +1148,7 @@ map_new_vertexuse(struct bu_list *tbl2d, struct vertexuse *vu_p)
 	return;
     }
     /* allocate memory for new 2D point */
-    new_pt2d = (struct pt2d *)
-	bu_calloc(1, sizeof(struct pt2d), "pt2d struct");
+    BU_ALLOC(new_pt2d, struct pt2d);
 
     /* find another use of the same vertex that is already mapped */
     for (BU_LIST_FOR(vu, vertexuse, &vu_p->v_p->vu_hd)) {
@@ -1216,7 +1213,7 @@ pick_edges(struct vertex *v, struct vertexuse **vu_first, int *min_dir, struct v
 	NMG_CK_VERTEX_G(vu->v_p->vg_p);
 
 	if (vu->v_p != v)
-	    bu_bomb("vertexuse does not acknoledge parents\n");
+	    bu_bomb("vertexuse does not acknowledge parents\n");
 
 	if (nmg_find_fu_of_vu(vu) != fu ||
 	    *vu->up.magic_p == NMG_LOOPUSE_MAGIC) {
@@ -1828,9 +1825,9 @@ cut_mapped_loop(struct bu_list *tbl2d, struct pt2d *p1, struct pt2d *p2, const i
 	fu = nmg_find_fu_of_vu(p1->vu_p);
 	NMG_CK_FACEUSE(fu);
 	if (fu->orientation == OT_OPPOSITE)
-	    VREVERSE(ot_same_normal, ot_same_normal)
+	    VREVERSE(ot_same_normal, ot_same_normal);
 
-		VREVERSE(ot_opposite_normal, ot_same_normal);
+	VREVERSE(ot_opposite_normal, ot_same_normal);
 
 	/* look for new vertexuses in new_lu and old_lu */
 	for (BU_LIST_FOR(vu, vertexuse, &p1->vu_p->v_p->vu_hd)) {
@@ -1862,9 +1859,9 @@ cut_mapped_loop(struct bu_list *tbl2d, struct pt2d *p1, struct pt2d *p2, const i
 	fu = nmg_find_fu_of_vu(p2->vu_p);
 	NMG_CK_FACEUSE(fu);
 	if (fu->orientation == OT_OPPOSITE)
-	    VREVERSE(ot_same_normal, ot_same_normal)
+	    VREVERSE(ot_same_normal, ot_same_normal);
 
-		VREVERSE(ot_opposite_normal, ot_same_normal);
+	VREVERSE(ot_opposite_normal, ot_same_normal);
 
 	/* look for new vertexuses in new_lu and old_lu */
 	for (BU_LIST_FOR(vu, vertexuse, &p2->vu_p->v_p->vu_hd)) {
@@ -2380,8 +2377,8 @@ cut_unimonotone(struct bu_list *tbl2d, struct loopuse *lu, const struct bn_tol *
 
 	loop_count++;
 	if (loop_count > vert_count_sq) {
-	    bu_log("Cut_unimontone is in an infinite loop!!!\n");
-	    bu_bomb("Cut_unimontone is in an infinite loop");
+	    bu_log("Cut_unimonotone is in an infinite loop!!!\n");
+	    bu_bomb("Cut_unimonotone is in an infinite loop");
 	}
 
 	prev = PT2D_PREV(tbl2d, current);
@@ -2542,6 +2539,10 @@ nmg_plot_fu(const char *prefix, const struct faceuse *fu, const struct bn_tol *U
 
     for (BU_LIST_FOR(lu, loopuse, &fu->lu_hd)) {
 
+	/* skip loops which do not contain edges */
+	if (BU_LIST_FIRST_MAGIC(&lu->down_hd) != NMG_EDGEUSE_MAGIC) {
+	    continue;
+	}
 	non_consec_edgeuse_vert_count = 0;
 	edgeuse_vert_count = 0;
 	prev_v_p = (struct vertex *)NULL;
@@ -2609,18 +2610,179 @@ nmg_plot_fu(const char *prefix, const struct faceuse *fu, const struct bn_tol *U
     }
 }
 
+/*
+ * 0 = no isect (out)
+ * 1 = isect edge, but not vertex (on)
+ * 2 = isect vertex (shared, vertex fused)
+ * 3 = isect vertex (non-shared, vertex not fused)
+ * 4 = inside (on)
+ */
+
+int
+nmg_isect_pt_facet(struct vertex *v, struct vertex *v0, struct vertex *v1, struct vertex *v2, const struct bn_tol *tol)
+{
+    fastf_t *p, *p0, *p1, *p2;
+    fastf_t dp0p1, dp0p2, dp1p2; /* dist p0->p1, p0->p2, p1->p2 */
+    fastf_t dpp0, dpp1, dpp2;    /* dist p->p0, p->p1, p->p2 */
+    point_t bb_min, bb_max;
+    vect_t p0_p2, p0_p1, p0_p;
+    fastf_t p0_p2_magsq, p0_p1_magsq;
+    fastf_t p0_p2__p0_p1, p0_p2__p0_p, p0_p1__p0_p;
+    fastf_t u, v00, u_numerator, v_numerator, denom;
+    int degen_p0p1, degen_p0p2, degen_p1p2;
+    int para_p0_p1__p0_p;
+    int para_p0_p2__p0_p;
+    int para_p1_p2__p1_p;
+
+    NMG_CK_VERTEX(v);
+    NMG_CK_VERTEX(v0);
+    NMG_CK_VERTEX(v1);
+    NMG_CK_VERTEX(v2);
+    NMG_CK_VERTEX_G(v->vg_p);
+    NMG_CK_VERTEX_G(v0->vg_p);
+    NMG_CK_VERTEX_G(v1->vg_p);
+    NMG_CK_VERTEX_G(v2->vg_p);
+
+    p = v->vg_p->coord;
+    p0 = v0->vg_p->coord;
+    p1 = v1->vg_p->coord;
+    p2 = v2->vg_p->coord;
+
+    degen_p0p1 = degen_p0p2 = degen_p1p2 = 0;
+    if (v0 == v1) {
+	degen_p0p1 = 1;
+    }
+    if (v0 == v2) {
+	degen_p0p2 = 1;
+    }
+    if (v1 == v2) {
+	degen_p1p2 = 1;
+    }
+
+    if (v == v0 || v == v1 || v == v2) {
+	return 2; /* isect vertex (shared, vertex fused) */
+    }
+
+    /* find facet bounding box */
+    VSETALL(bb_min, INFINITY);
+    VSETALL(bb_max, -INFINITY);
+    VMINMAX(bb_min, bb_max, p0);
+    VMINMAX(bb_min, bb_max, p1);
+    VMINMAX(bb_min, bb_max, p2);
+
+    if (V3PT_OUT_RPP_TOL(p, bb_min, bb_max, tol->dist)) {
+	return 0; /* no isect */
+    }
+
+    dp0p1 = bn_dist_pt3_pt3(p0, p1);
+    dp0p2 = bn_dist_pt3_pt3(p0, p2);
+    dp1p2 = bn_dist_pt3_pt3(p1, p2);
+
+    if (!degen_p0p1 && (dp0p1 < tol->dist)) {
+	degen_p0p1 = 2;
+    }
+    if (!degen_p0p2 && (dp0p2 < tol->dist)) {
+	degen_p0p2 = 2;
+    }
+    if (!degen_p1p2 && (dp1p2 < tol->dist)) {
+	degen_p1p2 = 2;
+    }
+
+    dpp0 = bn_dist_pt3_pt3(p, p0);
+    dpp1 = bn_dist_pt3_pt3(p, p1);
+    dpp2 = bn_dist_pt3_pt3(p, p2);
+
+    if (dpp0 < tol->dist || dpp1 < tol->dist || dpp2 < tol->dist) {
+	return 3; /* isect vertex (non-shared, vertex not fused) */
+    }
+
+    para_p0_p1__p0_p = para_p0_p2__p0_p = para_p1_p2__p1_p = 0;
+    /* test p against edge p0->p1 */
+    if (!degen_p0p1 && bn_lseg3_lseg3_parallel(p0, p1, p0, p, tol)) {
+	/* p might be on edge p0->p1 */
+	para_p0_p1__p0_p = 1;
+	if (NEAR_EQUAL(dpp0 + dpp1, dp0p1, tol->dist)) {
+	    /* p on edge p0->p1 */
+	    return 1; /* isect edge, but not vertex (on) */
+	}
+    }
+    /* test p against edge p0->p2 */
+    if (!degen_p0p2 && bn_lseg3_lseg3_parallel(p0, p2, p0, p, tol)) {
+	/* p might be on edge p0->p2 */
+	para_p0_p2__p0_p = 1;
+	if (NEAR_EQUAL(dpp0 + dpp2, dp0p2, tol->dist)) {
+	    /* p on edge p0->p2 */
+	    return 1; /* isect edge, but not vertex (on) */
+	}
+    }
+    /* test p against edge p1->p2 */
+    if (!degen_p1p2 && bn_lseg3_lseg3_parallel(p1, p2, p1, p, tol)) {
+	/* p might be on edge p1->p2 */
+	para_p1_p2__p1_p = 1;
+	if (NEAR_EQUAL(dpp1 + dpp2, dp1p2, tol->dist)) {
+	    /* p on edge p1->p2 */
+	    return 1; /* isect edge, but not vertex (on) */
+	}
+    }
+
+    if (degen_p0p1 || degen_p0p2 || degen_p1p2) {
+	return 0; /* no isect (out) */
+    }
+    if (para_p0_p1__p0_p || para_p0_p2__p0_p || para_p1_p2__p1_p) {
+	return 0; /* no isect (out) */
+    }
+
+    VSUB2(p0_p2, p2, p0);
+    VSUB2(p0_p1, p1, p0);
+    VSUB2(p0_p, p, p0);
+
+    p0_p2_magsq = MAGSQ(p0_p2);
+    p0_p1_magsq = MAGSQ(p0_p1);
+    p0_p2__p0_p1 = VDOT(p0_p2, p0_p1);
+    p0_p2__p0_p = VDOT(p0_p2, p0_p);
+    p0_p1__p0_p = VDOT(p0_p1, p0_p);
+
+    u_numerator = ( p0_p1_magsq * p0_p2__p0_p - p0_p2__p0_p1 * p0_p1__p0_p );
+    v_numerator = ( p0_p2_magsq * p0_p1__p0_p - p0_p2__p0_p1 * p0_p2__p0_p );
+    denom = ( p0_p2_magsq * p0_p1_magsq - p0_p2__p0_p1 * p0_p2__p0_p1 );
+
+    if (ZERO(denom)) {
+	denom = 1.0;
+    }
+
+    if (NEAR_ZERO(u_numerator, tol->dist)) {
+	u_numerator = 0.0;
+	u = 0.0;
+    } else {
+	u = u_numerator / denom;
+    }
+
+    if (NEAR_ZERO(v_numerator, tol->dist)) {
+	v_numerator = 0.0;
+	v00 = 0.0;
+    } else {
+	v00 = v_numerator / denom;
+    }
+
+    if ((u > SMALL_FASTF) && (v00 > SMALL_FASTF) && ((u + v00) < (1.0 - SMALL_FASTF))) {
+	return 4; /* inside (on) */
+    }
+
+    return 0; /* no isect (out) */
+}
+
 
 /**
- * N M G _ I S E C T _ L S E G 3 _ E U
+ * N M G _ I S E C T _ P O T C U T _ F U
  *
- * Given the faceuse 'fu' test if the line segment, defined by
- * vertexuse vu1 and vu2, intersects any edgeuse of any loopuse of
+ * Given the faceuse 'fu' test if the potential cut, defined by an
+ * edgeuse from 'eu1->vu_p' to 'eu2->vu_p', intersects any edgeuse of
  * the faceuse.
  *
  * Return 1 if intersect found otherwise return 0.
  */
 int
-nmg_isect_lseg3_eu(struct vertexuse *vu1, struct vertexuse *vu2, struct faceuse *fu, const struct bn_tol *tol)
+nmg_isect_potcut_fu(struct edgeuse *eu1, struct edgeuse *eu2, struct faceuse *fu, const struct bn_tol *tol)
 {
     point_t p1, p2, q1, q2;
     vect_t  pdir, qdir;
@@ -2629,10 +2791,20 @@ nmg_isect_lseg3_eu(struct vertexuse *vu1, struct vertexuse *vu2, struct faceuse 
     int hit = 0;
     struct loopuse *lu;
     struct edgeuse *eu;
+    struct vertexuse *vu1b, *vu2b;
+    struct vertexuse *vu1, *vu2;
+
+    vu1 = eu1->vu_p;
+    vu1b = (BU_LIST_PNEXT_CIRC(edgeuse, &eu1->eumate_p->l))->vu_p;
+    vu2 = eu2->vu_p;
+    vu2b = (BU_LIST_PNEXT_CIRC(edgeuse, &eu2->eumate_p->l))->vu_p;
+
+    /* vu1b and vu2b are the vertexuse of the faceuse mate that shares
+     * the same vertex as vu1 and vu2, respectively.
+     */
 
     BN_CK_TOL(tol);
     NMG_CK_FACEUSE(fu);
-
 
     /* Loop thru all loopuse, looking for intersections */
     hit = 0;
@@ -2640,6 +2812,12 @@ nmg_isect_lseg3_eu(struct vertexuse *vu1, struct vertexuse *vu2, struct faceuse 
 	NMG_CK_LOOPUSE(lu);
 
 	for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
+
+	    /* skip testing eu1 and eu2 */
+	    if (eu->vu_p == vu1 || eu->vu_p == vu1b || eu->vu_p == vu2 || eu->vu_p == vu2b) {
+		continue;
+	    }
+
 	    NMG_CK_EDGEUSE(eu);
 
 	    NMG_CK_VERTEXUSE(vu2);
@@ -2835,7 +3013,9 @@ nmg_triangulate_rm_holes(struct faceuse *fu, struct bu_list *tbl2d, const struct
 				    continue;
 				}
 
-				hit = nmg_isect_lseg3_eu(eu1->vu_p, eu2->vu_p, fu, tol);
+				/* eu1 part of hole lu */
+				/* eu2 part of non-hole lu */
+				hit = nmg_isect_potcut_fu(eu1, eu2, fu, tol);
 
 				if (!hit) {
 				    /* perform cut */
@@ -2937,8 +3117,11 @@ nmg_triangulate_rm_holes(struct faceuse *fu, struct bu_list *tbl2d, const struct
     return;
 }
 
-
-void
+/*
+ * return 1 when faceuse is empty, otherwise return 0
+ *
+ */
+int
 nmg_triangulate_rm_degen_loopuse(struct faceuse *fu, const struct bn_tol *tol)
 {
     struct loopuse *lu;
@@ -2955,6 +3138,7 @@ nmg_triangulate_rm_degen_loopuse(struct faceuse *fu, const struct bn_tol *tol)
     int done = 0;
     int match = 0;
     int killed_lu = 0;
+    int ret = 0;
 
     BN_CK_TOL(tol);
     NMG_CK_FACEUSE(fu);
@@ -3014,10 +3198,12 @@ nmg_triangulate_rm_degen_loopuse(struct faceuse *fu, const struct bn_tol *tol)
 			    (unsigned long)fu, loopuse_count_tmp, (unsigned long)lu_tmp);
 		}
 		if (loopuse_count_tmp < 1) {
-		    lu_done = 1;
-		    bu_log("nmg_triangulate_rm_degen_loopuse(): faceuse 0x%lx -- contains no loopuse\n",
-			    (unsigned long)fu);
-		    bu_bomb("nmg_triangulate_rm_degen_loopuse(): faceuse contains no loopuse\n");
+		    if (rt_g.NMG_debug & DEBUG_TRI) {
+			bu_log("nmg_triangulate_rm_degen_loopuse(): faceuse 0x%lx -- contains no loopuse\n",
+				(unsigned long)fu);
+		    }
+		    ret = 1;
+		    goto out;
 		}
 
 		lu = BU_LIST_FIRST(loopuse, &fu->lu_hd);
@@ -3090,8 +3276,11 @@ nmg_triangulate_rm_degen_loopuse(struct faceuse *fu, const struct bn_tol *tol)
 			bu_log("nmg_triangulate_rm_degen_loopuse(): %d remaining loopuse in faceuse after killing loopuse 0x%lx\n", loopuse_count_tmp, (unsigned long)lu_tmp);
 		    }
 		    if (loopuse_count_tmp < 1) {
-			lu_done = 1;
-			bu_bomb("nmg_triangulate_rm_degen_loopuse(): faceuse contains no loopuse\n");
+			if (rt_g.NMG_debug & DEBUG_TRI) {
+			    bu_log("nmg_triangulate_rm_degen_loopuse(): faceuse contains no loopuse\n");
+			}
+			ret = 1;
+			goto out;
 		    }
 
 		    lu = BU_LIST_FIRST(loopuse, &fu->lu_hd);
@@ -3103,8 +3292,9 @@ nmg_triangulate_rm_degen_loopuse(struct faceuse *fu, const struct bn_tol *tol)
 	}
     }
 
+out:
     bu_free(book_keeping_array, "book_keeping_array");
-    return;
+    return ret;
 }
 
 
@@ -3152,7 +3342,7 @@ nmg_dump_model(struct model *m)
 			NMG_CK_VERTEX(eu->vu_p->v_p);
 			NMG_CK_VERTEX_G(eu->vu_p->v_p->vg_p);
 			vg = eu->vu_p->v_p->vg_p;
-			(void)fprintf(fp, "%ld %ld %ld %ld %ld %g %g %g\n",
+			fprintf(fp, "%ld %ld %ld %ld %ld %g %g %g\n",
 			      (unsigned long)r_cnt,
 			      (unsigned long)s_cnt,
 			      (unsigned long)fu_cnt,
@@ -4086,7 +4276,8 @@ insert_above(struct loopuse *lu, struct loopuse_tree_node *node, const struct bn
     }
 
     NMG_CK_LOOPUSE(lu);
-    BU_GET(new_node, struct loopuse_tree_node);
+    /* XXX -  where is this released? */
+    BU_ALLOC(new_node, struct loopuse_tree_node);
     BU_LIST_INIT(&(new_node->l));
     new_node->l.magic = 0;
     new_node->lu = lu;
@@ -4197,7 +4388,8 @@ insert_node(struct loopuse *lu, struct bu_list *head,
     }
 
     if (!found || (result2 == NMG_CLASS_AinB)) {
-	BU_GET(new_node, struct loopuse_tree_node);
+	/* XXX -  where is this released? */
+	BU_ALLOC(new_node, struct loopuse_tree_node);
 	BU_LIST_INIT(&(new_node->l));
 	/* unset magic from BU_LIST_HEAD_MAGIC to zero since this node
 	 * is not going to be a head
@@ -4231,7 +4423,8 @@ nmg_build_loopuse_tree(struct faceuse *fu, struct loopuse_tree_node **root, cons
     NMG_CK_FACEUSE(fu);
 
     /* create initial head node */
-    BU_GET(*root, struct loopuse_tree_node);
+    /* XXX -  where is this released? */
+    BU_ALLOC(*root, struct loopuse_tree_node);
     BU_LIST_INIT(&((*root)->l));
     BU_LIST_INIT(&((*root)->children_hd));
     (*root)->parent = (struct loopuse_tree_node *)NULL;
@@ -4255,12 +4448,16 @@ nmg_build_loopuse_tree(struct faceuse *fu, struct loopuse_tree_node **root, cons
     }
 }
 
-
-void
+/*
+ * return 1 when faceuse is empty, otherwise return 0.
+ *
+ */
+int
 nmg_triangulate_fu(struct faceuse *fu, const struct bn_tol *tol)
 {
     int ccw_result;
     int vert_count = 0;
+    int ret = 0;
 
     /* boolean variables */
     int cut = 0;
@@ -4324,7 +4521,7 @@ nmg_triangulate_fu(struct faceuse *fu, const struct bn_tol *tol)
 	}
     }
     if (!need_triangulation) {
-	return;
+	goto out2;
     }
 
     /* do some cleanup before anything else */
@@ -4338,15 +4535,11 @@ nmg_triangulate_fu(struct faceuse *fu, const struct bn_tol *tol)
 	nmg_lu_reorient(lu);
     }
 
-    /* remove loopuse with < 3 vertices i.e. degenerate loopuse, this
-     * function does not check if returning faceuse contains no loopuse.
-     * the above cleanup can create loopuse with < 3 vertices
-     */
-    nmg_triangulate_rm_degen_loopuse(fu, tol);
-
-    if (BU_LIST_IS_EMPTY(&fu->lu_hd)) {
-	/* faceuse contains no loopuse */
-	return;
+    /* remove loopuse with < 3 vertices i.e. degenerate loopuse */
+    if (nmg_triangulate_rm_degen_loopuse(fu, tol)) {
+	/* true when faceuse is empty */
+	ret = 1;
+	goto out2;
     }
 
     if (rt_g.NMG_debug & DEBUG_TRI) {
@@ -4358,7 +4551,7 @@ nmg_triangulate_fu(struct faceuse *fu, const struct bn_tol *tol)
     }
 
     /* convert 3D face to face in the X-Y plane */
-    tbl2d = nmg_flatten_face(fu, TformMat);
+    tbl2d = nmg_flatten_face(fu, TformMat, tol);
 
     if (rt_g.NMG_debug & DEBUG_TRI) {
 	validate_tbl2d("before nmg_triangulate_rm_holes", tbl2d, fu);
@@ -4400,7 +4593,7 @@ nmg_triangulate_fu(struct faceuse *fu, const struct bn_tol *tol)
 	    if (vert_count > 3) {
 		/* test loopuse rotation */
 		ccw_result = nmg_loop_is_ccw(lu, fu_normal, tol);
-		if (ccw_result == 1) {
+		if (ccw_result == 1 || ccw_result == 0) {
 		    /* true when loopuse rotation is ccw */
 		    if (lu->orientation != OT_SAME) {
 			/* set loopuse orientation to OT_SAME */
@@ -4409,7 +4602,7 @@ nmg_triangulate_fu(struct faceuse *fu, const struct bn_tol *tol)
 		    /* ear clip loopuse */
 		    cut_unimonotone(tbl2d, lu, tol);
 		    cut = 1;
-		} else if (ccw_result == -1 || ccw_result == 0) {
+		} else if (ccw_result == -1) {
 		    /* true when loopuse rotation is cw or unknown */
 		    bu_log("nmg_triangulate_fu(): lu = 0x%lx ccw_result = %d\n",
 			   (unsigned long)lu, ccw_result);
@@ -4466,8 +4659,11 @@ nmg_triangulate_fu(struct faceuse *fu, const struct bn_tol *tol)
     }
 
     /* removes loopuse with < 3 vertices i.e. degenerate loopuse */
-    /* does not check if returning faceuse contains no loopuse */
-    nmg_triangulate_rm_degen_loopuse(fu, tol);
+    if (nmg_triangulate_rm_degen_loopuse(fu, tol)) {
+	/* true when faceuse is empty */
+	ret = 1;
+	goto out1;
+    }
 
     for (BU_LIST_FOR(lu, loopuse, &fu->lu_hd)) {
 	/* set the loopuse orientation to OT_SAME */
@@ -4478,12 +4674,16 @@ nmg_triangulate_fu(struct faceuse *fu, const struct bn_tol *tol)
 	validate_tbl2d("nmg_triangulate_fu() after triangulation, after lu_reorient", tbl2d, fu);
     }
 
+out1:
     while (BU_LIST_WHILE(pt, pt2d, tbl2d)) {
 	BU_LIST_DEQUEUE(&pt->l);
 	bu_free((char *)pt, "pt2d free");
     }
 
     bu_free((char *)tbl2d, "discard tbl2d");
+
+out2:
+    return ret;
 }
 
 
@@ -4530,7 +4730,7 @@ nmg_triangulate_fu(struct faceuse *fu, const struct bn_tol *tol)
 	for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd))
 	    if (++vert_count > 3) {
 		if (rt_g.NMG_debug & DEBUG_TRI)
-		    bu_log("loop has more than 3 verticies\n");
+		    bu_log("loop has more than 3 vertices\n");
 		goto triangulate;
 	    }
     }
@@ -4606,7 +4806,7 @@ nmg_triangulate_fu(struct faceuse *fu, const struct bn_tol *tol)
 	sprintf(db_name, "uni%d.g", iter);
 	nmg_stash_model_to_file(db_name,
 				nmg_find_model(&fu->s_p->l.magic),
-				"trangles and unimonotones");
+				"triangles and unimonotones");
     }
 
     for (BU_LIST_FOR(lu, loopuse, &fu->lu_hd))
@@ -4626,7 +4826,7 @@ nmg_triangulate_fu(struct faceuse *fu, const struct bn_tol *tol)
 	sprintf(db_name, "uni_split%d.g", iter++);
 	nmg_stash_model_to_file(db_name,
 				nmg_find_model(&fu->s_p->l.magic),
-				"split trangles and unimonotones");
+				"split triangles and unimonotones");
     }
 
     /* now we're left with a face that has some triangle loops and some
@@ -4690,27 +4890,53 @@ nmg_triangulate_fu(struct faceuse *fu, const struct bn_tol *tol)
 void
 nmg_triangulate_shell(struct shell *s, const struct bn_tol *tol)
 {
-    struct faceuse *fu;
+    struct faceuse *fu, *fu_next;
 
     BN_CK_TOL(tol);
     NMG_CK_SHELL(s);
 
-    if (rt_g.NMG_debug & DEBUG_TRI) {
+    if (UNLIKELY(rt_g.NMG_debug & DEBUG_TRI)) {
 	bu_log("nmg_triangulate_shell(): Triangulating NMG shell.\n");
     }
 
     (void)nmg_edge_g_fuse(&s->l.magic, tol);
     (void)nmg_unbreak_region_edges(&s->l.magic);
 
-    for (BU_LIST_FOR(fu, faceuse, &s->fu_hd)) {
+    fu = BU_LIST_FIRST(faceuse, &s->fu_hd);
+    while (BU_LIST_NOT_HEAD(fu, &s->fu_hd)) {
 	NMG_CK_FACEUSE(fu);
-	if (fu->orientation == OT_SAME)
-	    nmg_triangulate_fu(fu, tol);
+	fu_next = BU_LIST_PNEXT(faceuse, &fu->l);
+
+	if (UNLIKELY(fu->orientation != OT_SAME && fu->orientation != OT_OPPOSITE)) {
+	    /* sanity check */
+	    bu_bomb("nmg_triangulate_shell(): Invalid faceuse orientation. (1)\n");
+	}
+
+	if (fu->orientation == OT_SAME) {
+	    if (fu_next == fu->fumate_p) {
+		/* Make sure that fu_next is not the mate of fu
+		 * because if fu is killed so will its mate
+		 * resulting in an invalid fu_next.
+		 */
+		fu_next = BU_LIST_PNEXT(faceuse, &fu_next->l);
+	    }
+	    if (UNLIKELY(fu->fumate_p->orientation != OT_OPPOSITE)) {
+		/* sanity check */
+		bu_bomb("nmg_triangulate_shell(): Invalid faceuse orientation. (2)\n");
+	    }
+	    if (nmg_triangulate_fu(fu, tol)) {
+		/* true when faceuse is empty */
+		if (nmg_kfu(fu)) {
+		    bu_bomb("nmg_triangulate_shell(): Shell contains no faceuse.\n");
+		}
+	    }
+	}
+	fu = fu_next;
     }
 
     nmg_vsshell(s, s->r_p);
 
-    if (rt_g.NMG_debug & DEBUG_TRI) {
+    if (UNLIKELY(rt_g.NMG_debug & DEBUG_TRI)) {
 	bu_log("nmg_triangulate_shell(): Triangulating NMG shell completed.\n");
     }
 }

@@ -142,6 +142,14 @@ void ERRORinitialize( void ) {
 #endif
 }
 
+/** Clean up the Error module */
+void ERRORcleanup( void ) {
+    ERRORdestroy( ERROR_subordinate_failed );
+    ERRORdestroy( ERROR_syntax_expecting );
+
+    scl_free( ERROR_string_base );
+}
+
 /** Need the LIST routines to complete ERROR initialization */
 void ERRORinitialize_after_LIST( void ) {
     ERRORwarnings = LISTcreate();
@@ -436,6 +444,10 @@ Error ERRORcreate( char * message, Severity severity ) {
     return n;
 }
 
+void ERRORdestroy( Error error ) {
+    scl_free( error );
+}
+
 /** \fn ERRORbuffer_messages
 ** \param flag    - to buffer or not to buffer
 ** Selects buffering of error messages
@@ -500,9 +512,6 @@ void ERRORabort( int sig ) {
 #endif
         abort();
     }
-
-    fprintf( stderr, "pausing...press ^C now to enter debugger: " );
-    pause();
 }
 
 void ERRORsafe( jmp_buf env ) {

@@ -12,6 +12,8 @@
 */
 
 #include <scl_export.h>
+#include <limits>
+
 
 class SCL_DAI_EXPORT SDAI_String {
     private:
@@ -19,7 +21,7 @@ class SCL_DAI_EXPORT SDAI_String {
     public:
 
         //constructor(s) & destructor
-        SDAI_String( const char * str = 0, int max = 0 );
+        SDAI_String( const char * str = "", size_t max = std::string::npos);
         SDAI_String( const std::string & s );
         SDAI_String( const SDAI_String & s );
         ~SDAI_String( void );

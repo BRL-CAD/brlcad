@@ -1,7 +1,7 @@
 #                        M G E D . T C L
 # BRL-CAD
 #
-# Copyright (c) 1995-2012 United States Government as represented by
+# Copyright (c) 1995-2013 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -109,7 +109,6 @@ proc mged_help { w1 screen } {
 }
 
 
-
 proc ia_apropos { parent screen } {
     set w $parent.apropos
 
@@ -174,22 +173,22 @@ proc do_New { id } {
 
     set ftypes {{{MGED Database} {.g}} {{All Files} *}}
     set filename [tk_getSaveFile -parent .$id \
-                                 -filetypes $ftypes \
-                                 -initialdir $mged_gui(databaseDir) \
-                                 -title "Create a New Database"]
+				 -filetypes $ftypes \
+				 -initialdir $mged_gui(databaseDir) \
+				 -title "Create a New Database"]
 
     if {$filename != ""} {
-        # save the current directory for subsequent file saves
-        set mged_gui(databaseDir) [file dirname $filename]
+	# save the current directory for subsequent file saves
+	set mged_gui(databaseDir) [file dirname $filename]
 
-        file delete $filename
-        if [catch {opendb $filename y} msg] {
-            cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen) \
-            "Error" $msg info 0 OK
-        } else {
-            cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen) \
-            "File created" $msg info 0 OK
-        }
+	file delete $filename
+	if [catch {opendb $filename y} msg] {
+	    cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen) \
+	    "Error" $msg info 0 OK
+	} else {
+	    cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen) \
+	    "File created" $msg info 0 OK
+	}
     }
 }
 
@@ -439,7 +438,11 @@ proc ia_invoke { w } {
 	    set result [catch { uplevel \#0 $cmd } ia_msg]
 	} else {
 	    catch { db_glob $cmd } globbed_cmd
-	    set result [catch { uplevel \#0 $globbed_cmd } ia_msg]
+	    if {$globbed_cmd == ""} {
+		set result [catch { uplevel \#0 $cmd } ia_msg]
+	    } else {
+		set result [catch { uplevel \#0 $globbed_cmd } ia_msg]
+	    }
 	}
 
 	if { ![winfo exists $w] } {
@@ -567,7 +570,7 @@ proc HMlink_callback { w href } {
     lappend ia_url(last) $ia_url(current)
     set ia_url(backtrack) [lrange $ia_url(last) 0 \
 			       [expr [llength $ia_url(last)]-2]]
-    
+
     HMreset_win $w
     HMparse_html [ia_get_html $ia_url(current)] "HMrender $w"
     update

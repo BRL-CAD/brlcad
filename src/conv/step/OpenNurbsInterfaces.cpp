@@ -1,7 +1,7 @@
 /*                 OpenNurbsInterfaces.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2012 United States Government as represented by
+ * Copyright (c) 1994-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -94,11 +94,7 @@ class SDAI_Application_instance;
 #include "AdvancedBrepShapeRepresentation.h"
 #include "PullbackCurve.h"
 
-
-/* FIXME: should not be peeking into a private header and cannot be a
- * public header (of librt).
- */
-#include "../../librt/opennurbs_ext.h"
+#include "brep.h"
 
 
 ON_Brep *
@@ -166,12 +162,13 @@ BSplineCurve::LoadONBrep(ON_Brep *brep)
 	return false;
     }
 
-    if (ON_id >= 0)
+    if (ON_id >= 0) {
 	return true;
+    }
 
     int t_size = control_points_list.size();
 
-    ON_NurbsCurve* curve = ON_NurbsCurve::New(3, false, degree + 1, t_size);
+    ON_NurbsCurve *curve = ON_NurbsCurve::New(3, false, degree + 1, t_size);
 
     // knot index (>= 0 and < Order + CV_count - 2)
     // generate u-knots
@@ -182,7 +179,7 @@ BSplineCurve::LoadONBrep(ON_Brep *brep)
 	curve->SetKnot(i, 0.0);
     }
     for (int j = 1; j < n - p; j++) {
-	double x = (double) j / (double) (n - p);
+	double x = (double)j / (double)(n - p);
 	int knot_index = j + p - 1;
 	curve->SetKnot(knot_index, x);
     }
@@ -210,12 +207,13 @@ BSplineCurveWithKnots::LoadONBrep(ON_Brep *brep)
 	return false;
     }
 
-    if (ON_id >= 0)
+    if (ON_id >= 0) {
 	return true;
+    }
 
     int t_size = control_points_list.size();
 
-    ON_NurbsCurve* curve = ON_NurbsCurve::New(3, false, degree + 1, t_size);
+    ON_NurbsCurve *curve = ON_NurbsCurve::New(3, false, degree + 1, t_size);
 
     if (closed_curve == 1) {
 	LIST_OF_INTEGERS::iterator m = knot_multiplicities.begin();
@@ -237,8 +235,9 @@ BSplineCurveWithKnots::LoadONBrep(ON_Brep *brep)
 	    if (n == knot_multiplicities.end() && (multiplicity < degree) && (knot_value > 1.0)) {
 		break;
 	    }
-	    if ((multiplicity > degree) || (n == knot_multiplicities.end()))
+	    if ((multiplicity > degree) || (n == knot_multiplicities.end())) {
 		multiplicity = degree;
+	    }
 	    for (int j = 0; j < multiplicity; j++, knot_index++) {
 		curve->SetKnot(knot_index, knot_value);
 	    }
@@ -255,8 +254,9 @@ BSplineCurveWithKnots::LoadONBrep(ON_Brep *brep)
 	    n++;
 	    int multiplicity = (*m);
 	    double knot_value = (*r);
-	    if ((multiplicity > degree) || (n == knot_multiplicities.end()))
+	    if ((multiplicity > degree) || (n == knot_multiplicities.end())) {
 		multiplicity = degree;
+	    }
 	    for (int j = 0; j < multiplicity; j++, knot_index++) {
 		curve->SetKnot(knot_index, knot_value);
 	    }
@@ -285,8 +285,9 @@ QuasiUniformCurve::LoadONBrep(ON_Brep *brep)
 	return false;
     }
 
-    if (ON_id >= 0)
+    if (ON_id >= 0) {
 	return true;
+    }
 
     if (!BSplineCurve::LoadONBrep(brep)) {
 	std::cerr << "Error: ::LoadONBrep(ON_Brep *brep<" << std::hex << brep << std::dec << ">) not implemented for " << entityname << " id: " << id << std::endl;
@@ -317,12 +318,13 @@ RationalBSplineCurve::LoadONBrep(ON_Brep *brep)
 	return false;
     }
 
-    if (ON_id >= 0)
+    if (ON_id >= 0) {
 	return true;
+    }
 
     int t_size = control_points_list.size();
 
-    ON_NurbsCurve* curve = ON_NurbsCurve::New(3, true, degree + 1, t_size);
+    ON_NurbsCurve *curve = ON_NurbsCurve::New(3, true, degree + 1, t_size);
 
     // knot index (>= 0 and < Order + CV_count - 2)
     // generate u-knots
@@ -333,7 +335,7 @@ RationalBSplineCurve::LoadONBrep(ON_Brep *brep)
 	curve->SetKnot(i, 0.0);
     }
     for (int j = 1; j < n - p; j++) {
-	double x = (double) j / (double) (n - p);
+	double x = (double)j / (double)(n - p);
 	int knot_index = j + p - 1;
 	curve->SetKnot(knot_index, x);
     }
@@ -365,12 +367,13 @@ RationalBSplineCurveWithKnots::LoadONBrep(ON_Brep *brep)
 	return false;
     }
 
-    if (ON_id >= 0)
+    if (ON_id >= 0) {
 	return true;
+    }
 
     int t_size = control_points_list.size();
 
-    ON_NurbsCurve* curve = ON_NurbsCurve::New(3, true, degree + 1, t_size);
+    ON_NurbsCurve *curve = ON_NurbsCurve::New(3, true, degree + 1, t_size);
 
     if (closed_curve == 1) {
 	LIST_OF_INTEGERS::iterator m = knot_multiplicities.begin();
@@ -392,8 +395,9 @@ RationalBSplineCurveWithKnots::LoadONBrep(ON_Brep *brep)
 	    if (n == knot_multiplicities.end() && (multiplicity < degree) && (knot_value > 1.0)) {
 		break;
 	    }
-	    if ((multiplicity > degree) || (n == knot_multiplicities.end()))
+	    if ((multiplicity > degree) || (n == knot_multiplicities.end())) {
 		multiplicity = degree;
+	    }
 	    for (int j = 0; j < multiplicity; j++, knot_index++) {
 		curve->SetKnot(knot_index, knot_value);
 	    }
@@ -407,8 +411,9 @@ RationalBSplineCurveWithKnots::LoadONBrep(ON_Brep *brep)
 	while (m != knot_multiplicities.end()) {
 	    int multiplicity = (*m);
 	    double knot_value = (*r);
-	    if (multiplicity > degree)
+	    if (multiplicity > degree) {
 		multiplicity = degree;
+	    }
 	    for (int j = 0; j < multiplicity; j++, knot_index++) {
 		curve->SetKnot(knot_index, knot_value);
 	    }
@@ -441,8 +446,9 @@ RationalQuasiUniformCurve::LoadONBrep(ON_Brep *brep)
 	return false;
     }
 
-    if (ON_id >= 0)
+    if (ON_id >= 0) {
 	return true;
+    }
 
     if (!RationalBSplineCurve::LoadONBrep(brep)) {
 	std::cerr << "Error: ::LoadONBrep(ON_Brep *brep<" << std::hex << brep << std::dec << ">) not implemented for " << entityname << " id: " << id << std::endl;
@@ -460,8 +466,9 @@ RationalUniformCurve::LoadONBrep(ON_Brep *brep)
 	return false;
     }
 
-    if (ON_id >= 0)
+    if (ON_id >= 0) {
 	return true;
+    }
 
     if (!RationalBSplineCurve::LoadONBrep(brep)) {
 	std::cerr << "Error: ::LoadONBrep(ON_Brep *brep<" << std::hex << brep << std::dec << ">) not implemented for " << entityname << " id: " << id << std::endl;
@@ -479,8 +486,9 @@ UniformCurve::LoadONBrep(ON_Brep *brep)
 	return false;
     }
 
-    if (ON_id >= 0)
+    if (ON_id >= 0) {
 	return true;
+    }
 
     if (!BSplineCurve::LoadONBrep(brep)) {
 	std::cerr << "Error: ::LoadONBrep(ON_Brep *brep<" << std::hex << brep << std::dec << ">) not implemented for " << entityname << " id: " << id << std::endl;
@@ -519,7 +527,7 @@ BSplineSurface::LoadONBrep(ON_Brep *brep)
 	return false;
     }
 
-    ON_NurbsSurface* surf = ON_NurbsSurface::New(3, false, u_degree + 1, v_degree + 1, u_size, v_size);
+    ON_NurbsSurface *surf = ON_NurbsSurface::New(3, false, u_degree + 1, v_degree + 1, u_size, v_size);
 
     // knot index (>= 0 and < Order + CV_count - 2)
     // generate u-knots
@@ -530,7 +538,7 @@ BSplineSurface::LoadONBrep(ON_Brep *brep)
 	surf->SetKnot(0, i, 0.0);
     }
     for (int j = 1; j < n - p; j++) {
-	double x = (double) j / (double) (n - p);
+	double x = (double)j / (double)(n - p);
 	int knot_index = j + p - 1;
 	surf->SetKnot(0, knot_index, x);
     }
@@ -545,7 +553,7 @@ BSplineSurface::LoadONBrep(ON_Brep *brep)
 	surf->SetKnot(1, i, 0.0);
     }
     for (int j = 1; j < n - p; j++) {
-	double x = (double) j / (double) (n - p);
+	double x = (double)j / (double)(n - p);
 	int knot_index = j + p - 1;
 	surf->SetKnot(1, knot_index, x);
     }
@@ -582,7 +590,7 @@ BSplineSurfaceWithKnots::LoadONBrep(ON_Brep *brep)
 	return false;
     }
 
-    ON_NurbsSurface* surf = ON_NurbsSurface::New(3, false, u_degree + 1, v_degree + 1, u_size, v_size);
+    ON_NurbsSurface *surf = ON_NurbsSurface::New(3, false, u_degree + 1, v_degree + 1, u_size, v_size);
 
     if (u_closed == 1) {
 	LIST_OF_INTEGERS::iterator m = u_multiplicities.begin();
@@ -607,8 +615,9 @@ BSplineSurfaceWithKnots::LoadONBrep(ON_Brep *brep)
 		break;
 	    }
 
-	    if (multiplicity > u_degree)
+	    if (multiplicity > u_degree) {
 		multiplicity = u_degree;
+	    }
 	    for (int j = 0; j < multiplicity; j++) {
 		surf->SetKnot(0, knot_index++, knot_value);
 	    }
@@ -622,8 +631,9 @@ BSplineSurfaceWithKnots::LoadONBrep(ON_Brep *brep)
 	while (m != u_multiplicities.end()) {
 	    int multiplicity = (*m);
 	    double knot_value = (*r);
-	    if (multiplicity > u_degree)
+	    if (multiplicity > u_degree) {
 		multiplicity = u_degree;
+	    }
 	    for (int j = 0; j < multiplicity; j++) {
 		surf->SetKnot(0, knot_index++, knot_value);
 	    }
@@ -654,8 +664,9 @@ BSplineSurfaceWithKnots::LoadONBrep(ON_Brep *brep)
 		break;
 	    }
 
-	    if (multiplicity > v_degree)
+	    if (multiplicity > v_degree) {
 		multiplicity = v_degree;
+	    }
 	    for (int j = 0; j < multiplicity; j++, knot_index++) {
 		surf->SetKnot(1, knot_index, knot_value);
 	    }
@@ -669,8 +680,9 @@ BSplineSurfaceWithKnots::LoadONBrep(ON_Brep *brep)
 	while (m != v_multiplicities.end()) {
 	    int multiplicity = (*m);
 	    double knot_value = (*r);
-	    if (multiplicity > v_degree)
+	    if (multiplicity > v_degree) {
 		multiplicity = v_degree;
+	    }
 	    for (int j = 0; j < multiplicity; j++, knot_index++) {
 		surf->SetKnot(1, knot_index, knot_value);
 	    }
@@ -737,7 +749,7 @@ RationalBSplineSurface::LoadONBrep(ON_Brep *brep)
 	return false;
     }
 
-    ON_NurbsSurface* surf = ON_NurbsSurface::New(3, false, u_degree + 1, v_degree + 1, u_size, v_size);
+    ON_NurbsSurface *surf = ON_NurbsSurface::New(3, false, u_degree + 1, v_degree + 1, u_size, v_size);
 
     // knot index (>= 0 and < Order + CV_count - 2)
     // generate u-knots
@@ -748,7 +760,7 @@ RationalBSplineSurface::LoadONBrep(ON_Brep *brep)
 	surf->SetKnot(0, i, 0.0);
     }
     for (int j = 1; j < n - p; j++) {
-	double x = (double) j / (double) (n - p);
+	double x = (double)j / (double)(n - p);
 	int knot_index = j + p - 1;
 	surf->SetKnot(0, knot_index, x);
     }
@@ -763,7 +775,7 @@ RationalBSplineSurface::LoadONBrep(ON_Brep *brep)
 	surf->SetKnot(1, i, 0.0);
     }
     for (int j = 1; j < n - p; j++) {
-	double x = (double) j / (double) (n - p);
+	double x = (double)j / (double)(n - p);
 	int knot_index = j + p - 1;
 	surf->SetKnot(1, knot_index, x);
     }
@@ -811,7 +823,7 @@ RationalBSplineSurfaceWithKnots::LoadONBrep(ON_Brep *brep)
     if (v_closed) {
     }
 
-    ON_NurbsSurface* surf = ON_NurbsSurface::New(3, true, u_degree + 1, v_degree + 1, u_size, v_size);
+    ON_NurbsSurface *surf = ON_NurbsSurface::New(3, true, u_degree + 1, v_degree + 1, u_size, v_size);
 
     // knot index (>= 0 and < Order + CV_count - 2)
     LIST_OF_INTEGERS::iterator m = u_multiplicities.begin();
@@ -820,8 +832,9 @@ RationalBSplineSurfaceWithKnots::LoadONBrep(ON_Brep *brep)
     while (m != u_multiplicities.end()) {
 	int multiplicity = (*m);
 	double knot_value = (*r);
-	if (multiplicity > u_degree)
+	if (multiplicity > u_degree) {
 	    multiplicity = u_degree;
+	}
 	for (int j = 0; j < multiplicity; j++, knot_index++) {
 	    surf->SetKnot(0, knot_index, knot_value);
 	}
@@ -834,8 +847,9 @@ RationalBSplineSurfaceWithKnots::LoadONBrep(ON_Brep *brep)
     while (m != v_multiplicities.end()) {
 	int multiplicity = (*m);
 	double knot_value = (*r);
-	if (multiplicity > v_degree)
+	if (multiplicity > v_degree) {
 	    multiplicity = v_degree;
+	}
 	for (int j = 0; j < multiplicity; j++) {
 	    surf->SetKnot(1, knot_index++, knot_value);
 	}
@@ -919,7 +933,7 @@ FaceSurface::AddFace(ON_Brep *brep)
 	return;
     }
 
-    ON_BrepFace& face = brep->NewFace(face_geometry->GetONId());
+    ON_BrepFace &face = brep->NewFace(face_geometry->GetONId());
     if (same_sense == 1) {
 	face.m_bRev = false;
     } else {
@@ -991,7 +1005,7 @@ CartesianPoint::AddVertex(ON_Brep *brep)
 
     if (vertex_index < 0) {
 	ON_3dPoint p(coordinates[0] * LocalUnits::length, coordinates[1] * LocalUnits::length, coordinates[2] * LocalUnits::length);
-	ON_BrepVertex& v = brep->NewVertex(p);
+	ON_BrepVertex &v = brep->NewVertex(p);
 	vertex_index = v.m_vertex_index;
 	v.m_tolerance = 1e-3;
 	ON_id = v.m_vertex_index;
@@ -1017,11 +1031,11 @@ BSplineCurve::AddPolyLine(ON_Brep *brep)
 		ON_3dPoint start_point(cp->X() * LocalUnits::length, cp->Y() * LocalUnits::length, cp->Z() * LocalUnits::length);
 		cp = (*i);
 		ON_3dPoint end_point(cp->X() * LocalUnits::length, cp->Y() * LocalUnits::length, cp->Z() * LocalUnits::length);
-		ON_LineCurve* line = new ON_LineCurve(ON_3dPoint(start_point), ON_3dPoint(end_point));
+		ON_LineCurve *line = new ON_LineCurve(ON_3dPoint(start_point), ON_3dPoint(end_point));
 		brep->m_C3.Append(line);
 	    }
 	} else if (num_control_points > 2) {
-	    ON_NurbsCurve* c = ON_NurbsCurve::New(3, false, degree + 1, num_control_points);
+	    ON_NurbsCurve *c = ON_NurbsCurve::New(3, false, degree + 1, num_control_points);
 	    /* FIXME: do something with c */
 	    delete c;
 	} else {
@@ -1046,8 +1060,9 @@ Face::GetEdgeBounds(ON_Brep *brep)
     for (i = bounds.begin(); i != bounds.end(); i++) {
 	ON_BoundingBox *bb = (*i)->GetEdgeBounds(brep);
 	if (bb != NULL) {
-	    if (u == NULL)
+	    if (u == NULL) {
 		u = new ON_BoundingBox();
+	    }
 	    u->Union(*bb);
 	}
 	delete bb;
@@ -1116,7 +1131,7 @@ FaceBound::LoadONBrep(ON_Brep *brep)
 	} else {
 	    btype = ON_BrepLoop::outer;
 	}
-	ON_BrepLoop& loop = brep->NewLoop(btype, brep->m_F[ON_face_index]);
+	ON_BrepLoop &loop = brep->NewLoop(btype, brep->m_F[ON_face_index]);
 	ON_id = loop.m_loop_index;
     }
     bound->SetLoopIndex(ON_id);
@@ -1125,24 +1140,24 @@ FaceBound::LoadONBrep(ON_Brep *brep)
 	return false;
     }
     if (!Oriented()) {
-	ON_BrepLoop& loop = brep->m_L[ON_id];
+	ON_BrepLoop &loop = brep->m_L[ON_id];
 	brep->FlipLoop(loop);
     }
-/* lets use the cues from STEP (Oriented) for now but leave this here
- * in case we have to go back to brute force
+    /* lets use the cues from STEP (Oriented) for now but leave this here
+     * in case we have to go back to brute force
 
- if (IsInner()) {
- ON_BrepLoop& loop = brep->m_L[ON_id];
- if (brep->LoopDirection((const ON_BrepLoop&) loop) > 0) {
- brep->FlipLoop(loop);
- }
- } else {
- ON_BrepLoop& loop = brep->m_L[ON_id];
- if (brep->LoopDirection((const ON_BrepLoop&) loop) < 0) {
- brep->FlipLoop(loop);
- }
- }
-*/
+     if (IsInner()) {
+     ON_BrepLoop& loop = brep->m_L[ON_id];
+     if (brep->LoopDirection((const ON_BrepLoop&) loop) > 0) {
+     brep->FlipLoop(loop);
+     }
+     } else {
+     ON_BrepLoop& loop = brep->m_L[ON_id];
+     if (brep->LoopDirection((const ON_BrepLoop&) loop) < 0) {
+     brep->FlipLoop(loop);
+     }
+     }
+    */
 
     return true;
 }
@@ -1155,8 +1170,9 @@ EdgeCurve::LoadONBrep(ON_Brep *brep)
 	return false;
     }
 
-    if (ON_id >= 0)
-	return true; // already loaded
+    if (ON_id >= 0) {
+	return true;    // already loaded
+    }
 
     if ((false) && (brep->m_E.Count() == 484)) {
 	std::cerr << "Debug:LoadONBrep for EdgeCurve:" << brep->m_E.Count() << std::endl;
@@ -1179,7 +1195,7 @@ EdgeCurve::LoadONBrep(ON_Brep *brep)
 	return false;
     }
 
-    ON_BrepEdge& edge = brep->NewEdge(brep->m_V[start->GetONId()], brep->m_V[end->GetONId()], edge_geometry->GetONId());
+    ON_BrepEdge &edge = brep->NewEdge(brep->m_V[start->GetONId()], brep->m_V[end->GetONId()], edge_geometry->GetONId());
     edge.m_tolerance = 1e-3; //TODO: - need tolerance definition or constant
     ON_id = edge.m_edge_index;
     if (same_sense != 1) {
@@ -1197,12 +1213,13 @@ OrientedEdge::LoadONBrep(ON_Brep *brep)
 	return false;
     }
 
-    if (ON_id >= 0)
-	return true; //already loaded
+    if (ON_id >= 0) {
+	return true;    //already loaded
+    }
 
-	//TODO: remove debugging code
+    //TODO: remove debugging code
     //if ((false) && (brep->m_E.Count() == 5)) {
-	//std::cerr << "Debug:LoadONBrep for OrientedEdge:" << brep->m_E.Count() << std::endl;
+    //std::cerr << "Debug:LoadONBrep for OrientedEdge:" << brep->m_E.Count() << std::endl;
     //}
 
     if (!edge_start->LoadONBrep(brep)) {
@@ -1222,7 +1239,7 @@ OrientedEdge::LoadONBrep(ON_Brep *brep)
 
     //TODO: remove debugging code
     //if ((true) && (ON_id == 12)) {
-	//std::cerr << "Debug:LoadONBrep for OrientedEdge:" << ON_id << std::endl;
+    //std::cerr << "Debug:LoadONBrep for OrientedEdge:" << ON_id << std::endl;
     //}
     return true;
 }
@@ -1232,16 +1249,18 @@ ON_BoundingBox *
 Path::GetEdgeBounds(ON_Brep *brep)
 {
     ON_BoundingBox *u = NULL;
+
     LIST_OF_ORIENTED_EDGES::iterator i;
     for (i = edge_list.begin(); i != edge_list.end(); i++) {
 	if (!(*i)->LoadONBrep(brep)) {
 	    std::cerr << "Error: " << entityname << "::LoadONBrep() - Error loading openNURBS brep." << std::endl;
-	    return false;
+	    return NULL;
 	}
-	if (u == NULL)
+	if (u == NULL) {
 	    u = new ON_BoundingBox();
-	const ON_BrepEdge* edge = &brep->m_E[(*i)->GetONId()];
-	const ON_Curve* curve = edge->EdgeCurveOf();
+	}
+	const ON_BrepEdge *edge = &brep->m_E[(*i)->GetONId()];
+	const ON_Curve *curve = edge->EdgeCurveOf();
 	u->Union(curve->BoundingBox());
     }
 
@@ -1280,9 +1299,9 @@ Path::LoadONBrep(ON_Brep *brep)
 bool
 Path::ShiftSurfaceSeam(ON_Brep *brep, double *t)
 {
-    const ON_BrepLoop* loop = NULL;
-    const ON_BrepFace* face = NULL;
-    const ON_Surface* surface = NULL;
+    const ON_BrepLoop *loop = NULL;
+    const ON_BrepFace *face = NULL;
+    const ON_Surface *surface = NULL;
     double ang_min = 0.0;
     double smin, smax;
 
@@ -1292,22 +1311,22 @@ Path::ShiftSurfaceSeam(ON_Brep *brep, double *t)
     }
 
     loop = &brep->m_L[ON_path_index];
-    if (!loop){
+    if (!loop) {
 	/* nothing to do */
 	return false;
     }
 
     face = loop->Face();
-    if (!face){
-    	/* nothing to do */
-    	return false;
-        }
+    if (!face) {
+	/* nothing to do */
+	return false;
+    }
 
     surface = face->SurfaceOf();
-    if (!surface){
-    	/* nothing to do */
-    	return false;
-        }
+    if (!surface) {
+	/* nothing to do */
+	return false;
+    }
 
     if (surface->IsCone() || surface->IsCylinder()) {
 	if (surface->IsClosed(0)) {
@@ -1319,14 +1338,15 @@ Path::ShiftSurfaceSeam(ON_Brep *brep, double *t)
 	LIST_OF_ORIENTED_EDGES::iterator i;
 	for (i = edge_list.begin(); i != edge_list.end(); i++) {
 	    // grab the curve for this edge, face and surface
-	    const ON_BrepEdge* edge = &brep->m_E[(*i)->GetONId()];
-	    const ON_Curve* curve = edge->EdgeCurveOf();
+	    const ON_BrepEdge *edge = &brep->m_E[(*i)->GetONId()];
+	    const ON_Curve *curve = edge->EdgeCurveOf();
 	    double tmin, tmax;
 	    curve->GetDomain(&tmin, &tmax);
 
 	    if (((tmin < 0.0) && (tmax > 0.0)) && ((tmin > smin) || (tmax < smax))) {
-		if (tmin < ang_min)
+		if (tmin < ang_min) {
 		    ang_min = tmin;
+		}
 	    }
 
 	}
@@ -1352,14 +1372,14 @@ Path::LoadONTrimmingCurves(ON_Brep *brep)
 	return false;
     }
 
-    const ON_BrepLoop* loop = &brep->m_L[ON_path_index];
-    const ON_BrepFace* face = loop->Face();
-    const ON_Surface* surface = face->SurfaceOf();
+    const ON_BrepLoop *loop = &brep->m_L[ON_path_index];
+    const ON_BrepFace *face = loop->Face();
+    const ON_Surface *surface = face->SurfaceOf();
 
     // build surface tree making sure not to remove trimmed subsurfaces
     // since currently building trims and need full tree
     bool removeTrimmed = false;
-    brlcad::SurfaceTree* st = new brlcad::SurfaceTree((ON_BrepFace*) face, removeTrimmed);
+    brlcad::SurfaceTree *st = new brlcad::SurfaceTree((ON_BrepFace *) face, removeTrimmed);
 
     //TODO: remove debugging code
     if ((false) && (id == 24894)) {
@@ -1369,8 +1389,8 @@ Path::LoadONTrimmingCurves(ON_Brep *brep)
     LIST_OF_ORIENTED_EDGES::iterator prev, next;
     for (i = edge_list.begin(); i != edge_list.end(); i++) {
 	// grab the curve for this edge, face and surface
-	const ON_BrepEdge* edge = &brep->m_E[(*i)->GetONId()];
-	const ON_Curve* curve = edge->EdgeCurveOf();
+	const ON_BrepEdge *edge = &brep->m_E[(*i)->GetONId()];
+	const ON_Curve *curve = edge->EdgeCurveOf();
 	ON_BoundingBox bb = curve->BoundingBox();
 	bool orientWithCurve = (*i)->OrientWithEdge();
 
@@ -1378,8 +1398,9 @@ Path::LoadONTrimmingCurves(ON_Brep *brep)
 	    std::cerr << "Debug:LoadONTrimmingCurves for Path:" << id << std::endl;
 	}
 	data = pullback_samples(st, curve);
-	if (data == NULL)
+	if (data == NULL) {
 	    continue;
+	}
 
 	if (!orientWithCurve) {
 	    data->order_reversed = true;
@@ -1389,11 +1410,11 @@ Path::LoadONTrimmingCurves(ON_Brep *brep)
 	data->edge = edge;
 	curve_pullback_samples.push_back(data);
 	if (!orientWithCurve) {
-	    list<ON_2dPointArray*>::iterator si;
+	    list<ON_2dPointArray *>::iterator si;
 	    si = data->segments.begin();
-	    list<ON_2dPointArray*> rsegs;
+	    list<ON_2dPointArray *> rsegs;
 	    while (si != data->segments.end()) {
-		ON_2dPointArray* samples = (*si);
+		ON_2dPointArray *samples = (*si);
 		samples->Reverse();
 		rsegs.push_front(samples);
 		si++;
@@ -1401,7 +1422,7 @@ Path::LoadONTrimmingCurves(ON_Brep *brep)
 	    data->segments.clear();
 	    si = rsegs.begin();
 	    while (si != rsegs.end()) {
-		ON_2dPointArray* samples = (*si);
+		ON_2dPointArray *samples = (*si);
 		data->segments.push_back(samples);
 		si++;
 	    }
@@ -1419,15 +1440,16 @@ Path::LoadONTrimmingCurves(ON_Brep *brep)
     while (cs != curve_pullback_samples.end()) {
 	next_cs = cs;
 	next_cs++;
-	if (next_cs == curve_pullback_samples.end())
+	if (next_cs == curve_pullback_samples.end()) {
 	    next_cs = curve_pullback_samples.begin();
+	}
 	data = (*cs);
-	list<ON_2dPointArray*>::iterator si;
+	list<ON_2dPointArray *>::iterator si;
 	si = data->segments.begin();
 	PBCData *ndata = (*next_cs);
-	list<ON_2dPointArray*>::iterator nsi;
+	list<ON_2dPointArray *>::iterator nsi;
 	nsi = ndata->segments.begin();
-	ON_2dPointArray* nsamples = (*nsi);
+	ON_2dPointArray *nsamples = (*nsi);
 
 	while (si != data->segments.end()) {
 	    nsi = si;
@@ -1436,7 +1458,7 @@ Path::LoadONTrimmingCurves(ON_Brep *brep)
 		PBCData *nsidata = (*next_cs);
 		nsi = nsidata->segments.begin();
 	    }
-	    ON_2dPointArray* samples = (*si);
+	    ON_2dPointArray *samples = (*si);
 	    nsamples = (*nsi);
 
 	    //TODO:Fix this shouldn't have sample counts less than 2
@@ -1449,10 +1471,10 @@ Path::LoadONTrimmingCurves(ON_Brep *brep)
 	    if ((false) && (trimCurve == 68)) {
 		std::cerr << "Debug:LoadONTrimmingCurves for Path:" << trimCurve << std::endl;
 	    }
-	    ON_Curve* c2d = interpolateCurve(*samples);
+	    ON_Curve *c2d = interpolateCurve(*samples);
 	    brep->m_C2.Append(c2d);
 
-	    ON_BrepTrim& trim = brep->NewTrim((ON_BrepEdge&) *data->edge, data->order_reversed, (ON_BrepLoop&) *loop, trimCurve);
+	    ON_BrepTrim &trim = brep->NewTrim((ON_BrepEdge &) * data->edge, data->order_reversed, (ON_BrepLoop &) * loop, trimCurve);
 	    trim.m_tolerance[0] = 1e-3; // FIXME: tolerance?
 	    trim.m_tolerance[1] = 1e-3;
 	    ON_Interval PD = trim.ProxyCurveDomain();
@@ -1509,17 +1531,18 @@ Path::LoadONTrimmingCurves(ON_Brep *brep)
 			    iso = ON_Surface::W_iso;
 		    }
 
-		    ON_Curve* sing_c2d = new ON_LineCurve(end_current, start_next);
+		    ON_Curve *sing_c2d = new ON_LineCurve(end_current, start_next);
 		    trimCurve = brep->m_C2.Count();
 		    brep->m_C2.Append(sing_c2d);
 
 		    int vi;
-		    if (data->order_reversed)
+		    if (data->order_reversed) {
 			vi = data->edge->m_vi[0];
-		    else
+		    } else {
 			vi = data->edge->m_vi[1];
+		    }
 
-		    ON_BrepTrim& sing_trim = brep->NewSingularTrim(brep->m_V[vi], (ON_BrepLoop&) *loop, iso, trimCurve);
+		    ON_BrepTrim &sing_trim = brep->NewSingularTrim(brep->m_V[vi], (ON_BrepLoop &) * loop, iso, trimCurve);
 
 		    sing_trim.m_tolerance[0] = 1e-3; //TODO: need constant tolerance?
 		    sing_trim.m_tolerance[1] = 1e-3;
@@ -1600,13 +1623,14 @@ Plane::LoadONBrep(ON_Brep *brep)
 	return false;
     }
 
-    if (ON_id >= 0)
-	return true; // already loaded
+    if (ON_id >= 0) {
+	return true;    // already loaded
+    }
 
     ON_3dPoint origin = GetOrigin();
     ON_3dVector xaxis = GetXAxis();
     ON_3dVector yaxis = GetYAxis();
-    ON_3dVector norm = GetNormal();
+    // ON_3dVector norm = GetNormal();
 
     origin = origin * LocalUnits::length;
 
@@ -1618,7 +1642,7 @@ Plane::LoadONBrep(ON_Brep *brep)
     // origin may not lie within face so include in extent
     double maxdist = origin.DistanceTo(trim_curve_3d_bbox->m_max);
     double mindist = origin.DistanceTo(trim_curve_3d_bbox->m_min);
-    bbdiag += MAX(maxdist, mindist);
+    bbdiag += FMAX(maxdist, mindist);
 
     //TODO: look into line curves that are just point and direction
     ON_Interval extents(-bbdiag, bbdiag);
@@ -1649,9 +1673,9 @@ CylindricalSurface::LoadONBrep(ON_Brep *brep)
 	std::cerr << "LoadONBrep for CylindricalSurface: " << 55 << std::endl;
     }
     ON_3dPoint origin = GetOrigin();
-    ON_3dVector norm = GetNormal();
     ON_3dVector xaxis = GetXAxis();
     ON_3dVector yaxis = GetYAxis();
+    ON_3dVector norm = GetNormal();
 
     origin = origin * LocalUnits::length;
 
@@ -1669,11 +1693,12 @@ CylindricalSurface::LoadONBrep(ON_Brep *brep)
     //ON_Cylinder cyl(c, ON_DBL_MAX);
     ON_Cylinder cyl(c, 2.0 * bbdiag);
 
-    ON_RevSurface* s = cyl.RevSurfaceForm();
+    ON_RevSurface *s = cyl.RevSurfaceForm();
     if (s) {
 	double r = fabs(cyl.circle.radius);
-	if (r <= ON_SQRT_EPSILON)
+	if (r <= ON_SQRT_EPSILON) {
 	    r = 1.0;
+	}
 	s->SetDomain(0, 0.0, 2.0 * ON_PI * r);
     }
     ON_id = brep->AddSurface(s);
@@ -1690,13 +1715,14 @@ ConicalSurface::LoadONBrep(ON_Brep *brep)
 	return false;
     }
 
-    if (ON_id >= 0)
-	return true; // already loaded
+    if (ON_id >= 0) {
+	return true;    // already loaded
+    }
 
     ON_3dPoint origin = GetOrigin();
-    ON_3dVector norm = GetNormal();
     ON_3dVector xaxis = GetXAxis();
     ON_3dVector yaxis = GetYAxis();
+    ON_3dVector norm = GetNormal();
 
     origin = origin * LocalUnits::length;
 
@@ -1709,11 +1735,12 @@ ConicalSurface::LoadONBrep(ON_Brep *brep)
     ON_Plane p(origin, xaxis, yaxis);
     ON_Cone c(p, hplus, r1);
 
-    ON_RevSurface* s = c.RevSurfaceForm();
+    ON_RevSurface *s = c.RevSurfaceForm();
     if (s) {
 	double r = fabs(c.radius);
-	if (r <= ON_SQRT_EPSILON)
+	if (r <= ON_SQRT_EPSILON) {
 	    r = 1.0;
+	}
 	s->SetDomain(0, 0.0, 2.0 * ON_PI);
     }
 
@@ -1724,32 +1751,36 @@ ConicalSurface::LoadONBrep(ON_Brep *brep)
 
 
 int
-intersectLines(ON_Line &l1, ON_Line &l2, ON_3dPoint &out)
+intersectLines(const ON_Line &l1, const ON_Line &l2, ON_3dPoint &out)
 {
-    fastf_t t, u;
-    point_t p, a;
-    vect_t d, c;
     struct bn_tol tol;
 
     tol.magic = BN_TOL_MAGIC;
-    tol.dist = 0.0005;
+    tol.dist = BN_TOL_DIST;
     tol.dist_sq = tol.dist * tol.dist;
     tol.perp = 1e-6;
     tol.para = 1 - tol.perp;
 
-    VMOVE(p, l1.from);
-    VMOVE(a, l2.from);
-    ON_3dVector l1dir = l1.Direction();
-    l1dir.Unitize();
-    VMOVE(d, l1dir);
-    ON_3dVector l2dir = l2.Direction();
-    l2dir.Unitize();
-    VMOVE(c, l2dir);
+    point_t l1_from, l2_from;
+    VMOVE(l1_from, l1.from);
+    VMOVE(l2_from, l2.from);
 
-    int i = bn_isect_line3_line3(&t, &u, p, d, a, c, &tol);
+    ON_3dVector d;
+    vect_t l1_dir, l2_dir;
+
+    d = l1.Direction();
+    VMOVE(l1_dir, d);
+    d = l2.Direction();
+    VMOVE(l2_dir, d);
+
+    fastf_t l1_dist, l2_dist;
+    int i = bn_isect_line3_line3(&l1_dist, &l2_dist, l1_from, l1_dir,
+				 l2_from, l2_dir, &tol);
     if (i == 1) {
-	VMOVE(out, l1.from);
-	out = out + t * l1dir;
+	ON_3dVector l1_unit_dir = l1.Direction();
+	l1_unit_dir.Unitize();
+
+	out = l1.from + l1_unit_dir * l1_dist;
     }
     return i;
 }
@@ -1775,7 +1806,7 @@ Circle::SetParameterTrim(double start_param, double end_param)
 
     // Creates a circle parallel to the plane
     // with given center and radius.
-    ON_Circle c(p, center, radius* LocalUnits::length);
+    ON_Circle c(p, center, radius * LocalUnits::length);
 
     ON_3dPoint P = c.PointAt(t);
 
@@ -1793,9 +1824,49 @@ Circle::SetParameterTrim(double start_param, double end_param)
     SetPointTrim(startpoint, endpoint);
 }
 
+#define ANGLE_ZERO_TOL 1.0e-6
+
+static double
+simplify_angle(double rad)
+{
+    double result;
+
+    result = fmod(rad, 2.0 * ON_PI);
+
+    if (NEAR_ZERO(result, ANGLE_ZERO_TOL)) {
+	result = 0.0;
+    } else if (result < 0.0) {
+	result += 2.0 * ON_PI;
+    }
+
+    return result;
+}
+
+static double
+radians_from_xaxis_to_ellipse_point(Conic *conic, ON_3dPoint p, double a = 1.0, double b = 1.0)
+{
+    ON_3dPoint origin = conic->GetOrigin();
+    ON_3dPoint center = origin * LocalUnits::length;
+    ON_3dVector xaxis = conic->GetXAxis();
+    ON_3dVector yaxis = conic->GetYAxis();
+
+    // get p after translating to origin
+    ON_3dPoint canonical_p = p - center;
+
+    // decompose into x and y components
+    double x = canonical_p * xaxis;
+    double y = canonical_p * yaxis;
+
+    // ellipse scaling
+    x /= a;
+    y /= b;
+
+    return atan2(y, x);
+}
 
 bool
-Circle::LoadONBrep(ON_Brep *brep) {
+Circle::LoadONBrep(ON_Brep *brep)
+{
     ON_TextLog dump;
 
     if (!brep) {
@@ -1811,108 +1882,66 @@ Circle::LoadONBrep(ON_Brep *brep) {
 
     ON_3dPoint origin = GetOrigin();
     ON_3dPoint center = origin * LocalUnits::length;
-    ON_3dVector norm = GetNormal();
     ON_3dVector xaxis = GetXAxis();
     ON_3dVector yaxis = GetYAxis();
+    // ON_3dVector norm = GetNormal();
+
     double r = radius * LocalUnits::length;
     ON_Plane plane(origin, xaxis, yaxis);
     // Creates a circle parallel to the plane
     // with given center and radius.
     ON_Circle circle(plane, center, r);
 
-    ON_3dPoint pnt1;
-    ON_3dPoint pnt2;
-    double TOL = 1e-9;
-    if (trimmed) { //explicitly trimmed
-	if (parameter_trim) {
-	    if (NEAR_ZERO(t, TOL)) {
-		t = 0.0;
-	    } else if (t < 0.0) {
-		t = t + 2 * ON_PI;
-	    }
-	    if (NEAR_ZERO(s, TOL)) {
-		s = 2 * ON_PI;
-	    } else if (s < 0.0) {
-		s = s + 2 * ON_PI;
-	    }
-	    if (s < t) {
-		s = s + 2 * ON_PI;
-	    }
-	    pnt1 = circle.PointAt(t);
-	    pnt2 = circle.PointAt(s);
-	    //TODO: check sense agreement
-	} else {
+    ON_3dPoint startpt;
+    ON_3dPoint endpt;
 
-	    //must be point trim so calc t, s from points
-	    pnt1 = trim_startpoint;
-	    pnt2 = trim_endpoint;
-
-	    // NOTE: point from point trim entity already converted to proper units
-
-	    ON_3dVector fp = pnt1 - center;
-	    double xdot = fp * xaxis;
-	    double ydot = fp * yaxis;
-	    t = atan2(ydot, xdot);
-	    if (NEAR_ZERO(t, TOL)) {
-		t = 0.0;
-	    } else if (t < 0.0) {
-		t = t + 2 * ON_PI;
-	    }
-
-	    fp = pnt2 - center;
-	    xdot = fp * xaxis;
-	    ydot = fp * yaxis;
-	    s = atan2(ydot, xdot);
-	    if (NEAR_ZERO(s, TOL)) {
-		s = 2 * ON_PI;
-	    } else if (s < 0.0) {
-		s = s + 2 * ON_PI;
-	    }
-
-	    if (s < t) {
-		s = s + 2 * ON_PI;
-	    }
+    // get explicit start and end points
+    if (trimmed) {
+	if (!parameter_trim) {
+	    startpt = trim_startpoint;
+	    endpt = trim_endpoint;
 	}
-    } else if ((start != NULL) && (end != NULL)) { //not explicit let's try edge vertices
-	pnt1 = start->Point3d();
-	pnt2 = end->Point3d();
+    } else if (start && end) {
+	startpt = start->Point3d();
+	endpt = end->Point3d();
 
-	pnt1 = pnt1 * LocalUnits::length;
-	pnt2 = pnt2 * LocalUnits::length;
-
-	ON_3dVector fp = pnt1 - center;
-	double xdot = fp * xaxis;
-	double ydot = fp * yaxis;
-	t = atan2(ydot, xdot);
-	if (NEAR_ZERO(t, TOL)) {
-	    t = 0.0;
-	} else if (t < 0.0) {
-	    t = t + 2 * ON_PI;
-	}
-
-	fp = pnt2 - center;
-	xdot = fp * xaxis;
-	ydot = fp * yaxis;
-	s = atan2(ydot, xdot);
-	if (NEAR_ZERO(s, TOL)) {
-	    s = 2 * ON_PI;
-	} else if (s < 0.0) {
-	    s = s + 2 * ON_PI;
-	}
-
-	if (s < t) {
-	    s = s + 2 * ON_PI;
-	    ;
-	}
+	startpt *= LocalUnits::length;
+	endpt *= LocalUnits::length;
     } else {
 	std::cerr << "Error: ::LoadONBrep(ON_Brep *brep<" << std::hex << brep << std::dec
 		  << ">) not endpoints for specified for curve " << entityname << std::endl;
 	return false;
     }
 
-    ON_3dPoint PB = pnt1;
-    ON_3dPoint PE = pnt2;
+    // if we have start and end points, get corresponding t and s
+    if ((trimmed && !parameter_trim) || (start && end)) {
+	t = radians_from_xaxis_to_ellipse_point(this, startpt);
+	s = radians_from_xaxis_to_ellipse_point(this, endpt);
+    }
+
+    t = simplify_angle(t);
+    s = simplify_angle(s);
+
+    if (NEAR_ZERO(s, ANGLE_ZERO_TOL)) {
+	s = 2.0 * ON_PI;
+    }
+
+    while (s < t) {
+	s += 2.0 * ON_PI;
+    }
+
+    // if we have only t and s, get corresponding start and end points
+    if (parameter_trim) {
+	startpt = circle.PointAt(t);
+	endpt = circle.PointAt(s);
+    }
+
     double theta = s - t;
+
+    if (VNEAR_EQUAL(startpt, endpt, BN_TOL_DIST)) {
+	theta = 2.0 * ON_PI;
+    }
+
     int narcs = 1;
     if (theta < ON_PI / 2.0) {
 	narcs = 1;
@@ -1923,38 +1952,43 @@ Circle::LoadONBrep(ON_Brep *brep) {
     } else {
 	narcs = 4;
     }
+
     double dtheta = theta / narcs;
     double w = cos(dtheta / 2.0);
     ON_3dPointArray cpts(2 * narcs + 1);
     double angle = t;
     double W[2 * 4 + 1]; /* 2 * max narcs + 1 */
-    ON_3dPoint P0, P1, P2, PM, PT;
-    ON_3dVector T0, T2;
+    ON_3dPoint circleP1, isect, circleP2, PM, PT;
+    ON_3dVector tangentP1, tangentP2;
 
-    P0 = PB;
-    T0 = circle.TangentAt(t);
+    circleP1 = startpt;
+    tangentP1 = circle.TangentAt(t);
 
     for (int i = 0; i < narcs; i++) {
 	angle = angle + dtheta;
-	P2 = circle.PointAt(angle);
-	T2 = circle.TangentAt(angle);
-	ON_Line tangent1(P0, P0 + r * T0);
-	ON_Line tangent2(P2, P2 + r * T2);
-	if (intersectLines(tangent1, tangent2, P1) != 1) {
+
+	circleP2 = circle.PointAt(angle);
+	tangentP2 = circle.TangentAt(angle);
+	ON_Line tangent1(circleP1, circleP1 + r * tangentP1);
+	ON_Line tangent2(circleP2, circleP2 + r * tangentP2);
+
+	if (intersectLines(tangent1, tangent2, isect) != 1) {
 	    std::cerr << entityname << ": Error: Control point can not be calculated." << std::endl;
 	    return false;
 	}
 
-	P1 = (w) * P1; // must pre-weight before putting into NURB
-	cpts.Append(P0);
+	cpts.Append(circleP1);
+
+	isect *= w; // must pre-weight before putting into NURB
+	cpts.Append(isect);
+
 	W[2 * i] = 1.0;
-	cpts.Append(P1);
 	W[2 * i + 1] = w;
 
-	P0 = P2;
-	T0 = T2;
+	circleP1 = circleP2;
+	tangentP1 = tangentP2;
     }
-    cpts.Append(PE);
+    cpts.Append(endpt);
     W[2 * narcs] = 1.0;
 
     int degree = 2;
@@ -1965,10 +1999,10 @@ Circle::LoadONBrep(ON_Brep *brep) {
     double u[4 + 1]; /* max narcs + 1 */
 
     for (int k = 0; k < narcs + 1; k++) {
-	u[k] = ((double) k) / narcs;
+	u[k] = ((double)k) / narcs;
     }
 
-    ON_NurbsCurve* c = ON_NurbsCurve::New(dimension, true, degree + 1, n);
+    ON_NurbsCurve *c = ON_NurbsCurve::New(dimension, true, degree + 1, n);
 
     c->ReserveKnotCapacity(m + 1);
     for (int i = 0; i < degree; i++) {
@@ -1995,7 +2029,8 @@ Circle::LoadONBrep(ON_Brep *brep) {
 }
 
 void
-Ellipse::SetParameterTrim(double start_param, double end_param) {
+Ellipse::SetParameterTrim(double start_param, double end_param)
+{
     double startpoint[3];
     double endpoint[3];
 
@@ -2008,7 +2043,7 @@ Ellipse::SetParameterTrim(double start_param, double end_param) {
     ON_3dPoint origin = GetOrigin();
     ON_3dVector xaxis = GetXAxis();
     ON_3dVector yaxis = GetYAxis();
-    ON_3dPoint center = origin * LocalUnits::length;
+    // ON_3dPoint center = origin * LocalUnits::length;
 
     double a = semi_axis_1 * LocalUnits::length;
     double b = semi_axis_2 * LocalUnits::length;
@@ -2031,7 +2066,8 @@ Ellipse::SetParameterTrim(double start_param, double end_param) {
 }
 
 bool
-Ellipse::LoadONBrep(ON_Brep *brep) {
+Ellipse::LoadONBrep(ON_Brep *brep)
+{
     ON_TextLog dump;
 
     if (!brep) {
@@ -2056,98 +2092,59 @@ Ellipse::LoadONBrep(ON_Brep *brep) {
     double b = semi_axis_2 * LocalUnits::length;
     ON_Ellipse ellipse(plane, a, b);
 
-    double eccentricity = sqrt(1.0 - (b * b) / (a * a));
-    ON_3dPoint focus_1 = center + (eccentricity * a) * xaxis;
-    ON_3dPoint focus_2 = center - (eccentricity * a) * xaxis;
+    // double eccentricity = sqrt(1.0 - (b * b) / (a * a));
+    // ON_3dPoint focus_1 = center + (eccentricity * a) * xaxis;
+    // ON_3dPoint focus_2 = center - (eccentricity * a) * xaxis;
 
-    ON_3dPoint pnt1;
-    ON_3dPoint pnt2;
-    if (trimmed) { //explicitly trimmed
-	if (parameter_trim) {
-	    if (s < t) {
-		double tmp = s;
-		s = t;
-		t = tmp;
-	    }
-	    pnt1 = ellipse.PointAt(t);
-	    pnt2 = ellipse.PointAt(s);
-	    //TODO: check sense agreement
-	} else {
-	    double TOL = 1e-9;
+    ON_3dPoint startpt;
+    ON_3dPoint endpt;
 
-	    //must be point trim so calc t, s from points
-	    pnt1 = trim_startpoint;
-	    pnt2 = trim_endpoint;
-
-	    // NOTE: point from point trim entity already converted to proper units
-
-	    ON_3dVector fp = pnt1 - center;
-	    double xdot = fp * xaxis;
-	    double ydot = fp * yaxis;
-	    t = atan2(ydot / b, xdot / a);
-	    if (NEAR_ZERO(t, TOL)) {
-		t = 0.0;
-	    } else if (t < 0.0) {
-		t = t + 2 * ON_PI;
-	    }
-
-	    fp = pnt2 - center;
-	    xdot = fp * xaxis;
-	    ydot = fp * yaxis;
-	    s = atan2(ydot / b, xdot / a);
-	    if (NEAR_ZERO(s, TOL)) {
-		s = 2 * ON_PI;
-	    } else if (s < 0.0) {
-		s = s + 2 * ON_PI;
-	    }
-
-	    if (s < t) {
-		double tmp = s;
-		s = t;
-		t = tmp;
-	    }
+    // get explicit start and end points
+    if (trimmed) {
+	if (!parameter_trim) {
+	    startpt = trim_startpoint;
+	    endpt = trim_endpoint;
 	}
-    } else if ((start != NULL) && (end != NULL)) { //not explicit let's try edge vertices
-	double TOL = 1e-9;
+    } else if (start && end) {
+	startpt = start->Point3d();
+	endpt = end->Point3d();
 
-	pnt1 = start->Point3d();
-	pnt2 = end->Point3d();
-
-	pnt1 = pnt1 * LocalUnits::length;
-	pnt2 = pnt2 * LocalUnits::length;
-
-	ON_3dVector fp = pnt1 - center;
-	double xdot = fp * xaxis;
-	double ydot = fp * yaxis;
-	t = atan2(ydot / b, xdot / a);
-	if (NEAR_ZERO(t, TOL)) {
-	    t = 0.0;
-	} else if (t < 0.0) {
-	    t = t + 2 * ON_PI;
-	}
-
-	fp = pnt2 - center;
-	xdot = fp * xaxis;
-	ydot = fp * yaxis;
-	s = atan2(ydot / b, xdot / a);
-	if (NEAR_ZERO(s, TOL)) {
-	    s = 2 * ON_PI;
-	} else if (s < 0.0) {
-	    s = s + 2 * ON_PI;
-	}
-
-	if (s < t) {
-	    double tmp = s;
-	    s = t;
-	    t = tmp;
-	}
+	startpt *= LocalUnits::length;
+	endpt *= LocalUnits::length;
     } else {
 	std::cerr << "Error: ::LoadONBrep(ON_Brep *brep<" << std::hex << brep << std::dec
 		  << ">) not endpoints for specified for curve " << entityname << std::endl;
 	return false;
     }
 
+    // if we have start and end points, get corresponding t and s
+    if ((trimmed && !parameter_trim) || (start && end)) {
+	t = radians_from_xaxis_to_ellipse_point(this, startpt, a, b);
+	s = radians_from_xaxis_to_ellipse_point(this, endpt, a, b);
+    }
+
+    t = simplify_angle(t);
+    s = simplify_angle(s);
+
+    if (NEAR_ZERO(s, ANGLE_ZERO_TOL)) {
+	s = 2.0 * ON_PI;
+    }
+
+    while (s < t) {
+	s += 2.0 * ON_PI;
+    }
+
+    // if we have only t and s, get corresponding start and end points
+    if (parameter_trim) {
+	startpt = ellipse.PointAt(t);
+	endpt = ellipse.PointAt(s);
+    }
+
     double theta = s - t;
+
+    if (VNEAR_EQUAL(startpt, endpt, BN_TOL_DIST)) {
+	theta = 2.0 * ON_PI;
+    }
 
     int narcs = 1;
     if (theta < ON_PI / 2.0) {
@@ -2217,10 +2214,10 @@ Ellipse::LoadONBrep(ON_Brep *brep) {
     double u[4 + 1]; /* max narcs + 1 */
 
     for (int k = 0; k < narcs + 1; k++) {
-	u[k] = ((double) k) / narcs;
+	u[k] = ((double)k) / narcs;
     }
 
-    ON_NurbsCurve* c = ON_NurbsCurve::New(dimension, true, degree + 1, n);
+    ON_NurbsCurve *c = ON_NurbsCurve::New(dimension, true, degree + 1, n);
 
     c->ReserveKnotCapacity(m + 1);
     for (int i = 0; i < degree; i++) {
@@ -2256,9 +2253,9 @@ Hyperbola::SetParameterTrim(double start_param, double end_param)
     s = end_param;
 
     ON_3dPoint origin = GetOrigin();
-    ON_3dVector norm = GetNormal();
     ON_3dVector xaxis = GetXAxis();
     ON_3dVector yaxis = GetYAxis();
+    // ON_3dVector norm = GetNormal();
 
     ON_3dPoint center = origin;
     double a = semi_axis;
@@ -2310,9 +2307,9 @@ Hyperbola::LoadONBrep(ON_Brep *brep)
     //	return true; // already loaded
 
     ON_3dPoint origin = GetOrigin();
-    ON_3dVector norm = GetNormal();
     ON_3dVector xaxis = GetXAxis();
     ON_3dVector yaxis = GetYAxis();
+    ON_3dVector norm = GetNormal();
 
     norm.Unitize();
     xaxis.Unitize();
@@ -2323,10 +2320,10 @@ Hyperbola::LoadONBrep(ON_Brep *brep)
     double b = semi_imag_axis * LocalUnits::length;
 
     double eccentricity = sqrt(1.0 + (b * b) / (a * a));
-    ON_3dPoint vertex = center + a * xaxis;
-    ON_3dPoint directrix = center + (a / eccentricity) * xaxis;
     ON_3dPoint focus = center + (eccentricity * a) * xaxis;
     ON_3dPoint focusprime = center - (eccentricity * a) * xaxis;
+    // ON_3dPoint vertex = center + a * xaxis;
+    // ON_3dPoint directrix = center + (a / eccentricity) * xaxis;
 
     ON_3dPoint pnt1;
     ON_3dPoint pnt2;
@@ -2404,7 +2401,7 @@ Hyperbola::LoadONBrep(ON_Brep *brep)
     bcurve->MakeRational();
     bcurve->SetWeight(1, w);
 
-    ON_NurbsCurve* hypernurbscurve = ON_NurbsCurve::New();
+    ON_NurbsCurve *hypernurbscurve = ON_NurbsCurve::New();
 
     bcurve->GetNurbForm(*hypernurbscurve);
 
@@ -2477,14 +2474,14 @@ Parabola::LoadONBrep(ON_Brep *brep)
     //	return true; // already loaded
 
     ON_3dPoint origin = GetOrigin();
-    ON_3dVector normal = GetNormal();
     ON_3dVector xaxis = GetXAxis();
-    ON_3dVector yaxis = GetYAxis();
+    // ON_3dVector yaxis = GetYAxis();
+    // ON_3dVector normal = GetNormal();
 
     ON_3dPoint center = origin * LocalUnits::length;
     double fd = focal_dist * LocalUnits::length;
     ON_3dPoint focus = center + fd * xaxis;
-    ON_3dPoint directrix = center - fd * xaxis;
+    // ON_3dPoint directrix = center - fd * xaxis;
 
     ON_3dPoint pnt1;
     ON_3dPoint pnt2;
@@ -2531,7 +2528,7 @@ Parabola::LoadONBrep(ON_Brep *brep)
     ON_BezierCurve *bcurve = new ON_BezierCurve(cpts);
     bcurve->MakeRational();
 
-    ON_NurbsCurve* parabnurbscurve = ON_NurbsCurve::New();
+    ON_NurbsCurve *parabnurbscurve = ON_NurbsCurve::New();
 
     bcurve->GetNurbForm(*parabnurbscurve);
     ON_id = brep->AddEdgeCurve(parabnurbscurve);
@@ -2575,8 +2572,9 @@ SurfaceOfLinearExtrusion::LoadONBrep(ON_Brep *brep)
 	return false;
     }
 
-    if (ON_id >= 0)
-	return true; // already loaded
+    if (ON_id >= 0) {
+	return true;    // already loaded
+    }
 
     // load parent class
     if (!SweptSurface::LoadONBrep(brep)) {
@@ -2595,7 +2593,7 @@ SurfaceOfLinearExtrusion::LoadONBrep(ON_Brep *brep)
 
     ON_3dPoint dir = extrusion_axis->Orientation();
     double mag = extrusion_axis->Magnitude() * LocalUnits::length;
-    mag = MAX(mag, bbdiag);
+    mag = FMAX(mag, bbdiag);
 
     ON_3dPoint startpnt;
     if (swept_curve->PointAtStart() == NULL) {
@@ -2617,18 +2615,19 @@ SurfaceOfLinearExtrusion::LoadONBrep(ON_Brep *brep)
     path_line.from = extrusion_startpnt;
     path_line.to = extrusion_endpnt;
     ON_3dVector path_vector = path_line.Direction();
-    if (path_vector.IsZero())
+    if (path_vector.IsZero()) {
 	return false;
+    }
 
-    ON_SumSurface* sum_srf = 0;
+    ON_SumSurface *sum_srf = 0;
 
-    ON_Curve* srf_base_curve = curve->Duplicate();
+    ON_Curve *srf_base_curve = curve->Duplicate();
     srf_base_curve->Translate(-mag * dir);
 
     ON_3dPoint sum_basepoint = ON_origin - l->PointAtStart();
     sum_srf = new ON_SumSurface();
 
-    if (!sum_srf){
+    if (!sum_srf) {
 	return false;
     }
     sum_srf->m_curve[0] = srf_base_curve;
@@ -2653,8 +2652,9 @@ SurfaceOfRevolution::LoadONBrep(ON_Brep *brep)
 	return false;
     }
 
-    if (ON_id >= 0)
-	return true; // already loaded
+    if (ON_id >= 0) {
+	return true;    // already loaded
+    }
 
     // load parent class
     if (!SweptSurface::LoadONBrep(brep)) {
@@ -2667,7 +2667,7 @@ SurfaceOfRevolution::LoadONBrep(ON_Brep *brep)
     ON_3dPoint end = start + dir;
 
     ON_Line axisline(start, end);
-    ON_RevSurface* revsurf = ON_RevSurface::New();
+    ON_RevSurface *revsurf = ON_RevSurface::New();
 
     if (!revsurf) {
 	return false;
@@ -2679,7 +2679,7 @@ SurfaceOfRevolution::LoadONBrep(ON_Brep *brep)
     //ON_Brep* b = ON_BrepRevSurface(revsurf, true, true);
 
     //if (!revsurf)
-	//return false;
+    //return false;
 
     ON_id = brep->AddSurface(revsurf);
 
@@ -2702,11 +2702,12 @@ SphericalSurface::LoadONBrep(ON_Brep *brep)
     // Creates a sphere with given center and radius.
     ON_Sphere sphere(center, radius * LocalUnits::length);
 
-    ON_RevSurface* s = sphere.RevSurfaceForm();
+    ON_RevSurface *s = sphere.RevSurfaceForm();
     if (s) {
 	double r = fabs(sphere.radius);
-	if (r <= ON_SQRT_EPSILON)
+	if (r <= ON_SQRT_EPSILON) {
 	    r = 1.0;
+	}
 	r *= ON_PI;
 	s->SetDomain(0, 0.0, 2.0 * r);
 	s->SetDomain(1, -r, r);
@@ -2726,9 +2727,9 @@ ToroidalSurface::LoadONBrep(ON_Brep *brep)
     }
 
     ON_3dPoint origin = GetOrigin();
-    ON_3dVector norm = GetNormal();
     ON_3dVector xaxis = GetXAxis();
     ON_3dVector yaxis = GetYAxis();
+    // ON_3dVector norm = GetNormal();
 
     origin = origin * LocalUnits::length;
 
@@ -2738,16 +2739,18 @@ ToroidalSurface::LoadONBrep(ON_Brep *brep)
     // with given major and minor radius.
     ON_Torus torus(p, major_radius * LocalUnits::length, minor_radius * LocalUnits::length);
 
-    ON_RevSurface* s = torus.RevSurfaceForm();
+    ON_RevSurface *s = torus.RevSurfaceForm();
     if (s) {
 	double r = fabs(torus.major_radius);
-	if (r <= ON_SQRT_EPSILON)
+	if (r <= ON_SQRT_EPSILON) {
 	    r = 1.0;
+	}
 	r *= ON_PI;
 	s->SetDomain(0, 0.0, 2.0 * r);
 	r = fabs(torus.minor_radius);
-	if (r <= ON_SQRT_EPSILON)
+	if (r <= ON_SQRT_EPSILON) {
 	    r = 1.0;
+	}
 	r *= ON_PI;
 	s->SetDomain(1, 0.0, 2.0 * r);
     }
@@ -2771,7 +2774,7 @@ VertexLoop::LoadONBrep(ON_Brep *brep)
     ON_3dPoint vertex = loop_vertex->Point3d();
 
     // create singular trim;
-    ON_BrepLoop& loop = brep->m_L[ON_loop_index];
+    ON_BrepLoop &loop = brep->m_L[ON_loop_index];
     ON_BrepFace *face = loop.Face();
     const ON_Surface *surface = face->SurfaceOf();
 
@@ -2811,7 +2814,7 @@ VertexLoop::LoadONBrep(ON_Brep *brep)
 	    iso = ON_Surface::N_iso;
 	}
     }
-    ON_Curve* c2d = new ON_LineCurve(start, end);
+    ON_Curve *c2d = new ON_LineCurve(start, end);
     int trimCurve = brep->m_C2.Count();
     brep->m_C2.Append(c2d);
 

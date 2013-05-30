@@ -1,5 +1,5 @@
-/*****************************************************************************
- * complexlist.cc                                                            *
+/*************************************************************************//**
+ * complexlist.cc      \class ComplexList                                    *
  *                                                                           *
  * Description: ComplexList is a class type which represents inheritance     *
  *              information for a set of entities related through supertype  *

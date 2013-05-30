@@ -1,7 +1,7 @@
 /*                           M G E D . C
  * BRL-CAD
  *
- * Copyright (c) 1993-2012 United States Government as represented by
+ * Copyright (c) 1993-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -19,7 +19,7 @@
  */
 /** @file mged/mged.c
  *
- * Mainline portion of the Mutliple-display Graphics EDitor (MGED)
+ * Mainline portion of the Multiple-display Graphics EDitor (MGED)
  *
  */
 
@@ -84,20 +84,6 @@
 #  define COMMAND_LINE_EDITING 1
 #endif
 
-#ifdef DEBUG
-#  ifndef _WIN32
-#    ifndef LOGFILE
-#      define LOGFILE "mged.log"	/* usage log */
-#    endif
-#  else
-#    ifndef LOGFILE
-#      define LOGFILE "C:\\mged.log"		/* usage log */
-#    endif
-#  endif
-#else
-#  define LOGFILE "/dev/null"
-#endif
-
 #define SPACES "                                                                                                                                                                                                                                                                                                           "
 
 
@@ -113,7 +99,7 @@ extern struct bu_vls *history_prev(const char *);
 extern struct bu_vls *history_cur(const char *);
 extern struct bu_vls *history_next(const char *);
 
-/* defined in dodraw.c */
+/* defined in dozoom.c */
 extern unsigned char geometry_default_color[];
 
 /* defined in set.c */
@@ -134,12 +120,23 @@ extern struct _rubber_band default_rubber_band;
 /* should only be accessed via INTERP define in mged.h */
 Tcl_Interp *ged_interp = (Tcl_Interp *)NULL;
 
-int pipe_out[2];
-int pipe_err[2];
+/* these two file descriptors are where we store fileno(stdout) and
+ * fileno(stderr) during graphical startup so that we may restore them
+ * when we're done (which is needed so atexit() calls to bu_log() will
+ * still work).
+ */
+static int stdfd[2] = {1, 2};
+
+/* FIXME: these are problematic globals */
 struct ged *gedp = GED_NULL;
 struct db_i *dbip = DBI_NULL;	/* database instance pointer */
 struct rt_wdb *wdbp = RT_WDB_NULL;
+
+/* called by numerous functions to indicate truthfully whether the
+ * views need to be redrawn.
+ */
 int update_views = 0;
+
 int (*cmdline_hook)() = NULL;
 jmp_buf jmp_env;		/* For non-local gotos */
 double frametime;		/* time needed to draw last frame */
@@ -191,7 +188,6 @@ int mged_db_version = 5;
 
 struct bn_tol mged_tol;	/* calculation tolerance */
 struct rt_tess_tol mged_ttol;	/* XXX needs to replace mged_abs_tol, et.al. */
-
 
 
 #if !defined(_WIN32) || defined(__CYGWIN__)
@@ -531,30 +527,30 @@ do_tab_expansion()
     bu_vls_free(&tab_expansion);
 
     if (ret == TCL_OK) {
-        result = Tcl_GetObjResult(INTERP);
-        Tcl_ListObjIndex(INTERP, result, 0, &newCommand);
-        Tcl_ListObjIndex(INTERP, result, 1, &matches);
-        Tcl_ListObjLength(INTERP, matches, &numExpansions);
-        if (numExpansions > 1) {
-            /* show the possible matches */
-            bu_log("\n%s\n", Tcl_GetString(matches));
-        }
+	result = Tcl_GetObjResult(INTERP);
+	Tcl_ListObjIndex(INTERP, result, 0, &newCommand);
+	Tcl_ListObjIndex(INTERP, result, 1, &matches);
+	Tcl_ListObjLength(INTERP, matches, &numExpansions);
+	if (numExpansions > 1) {
+	    /* show the possible matches */
+	    bu_log("\n%s\n", Tcl_GetString(matches));
+	}
 
 	/* display the expanded line */
-        pr_prompt(interactive);
-        input_str_index = 0;
-        bu_vls_trunc(&input_str, 0);
-        bu_vls_strcat(&input_str, Tcl_GetString(newCommand));
+	pr_prompt(interactive);
+	input_str_index = 0;
+	bu_vls_trunc(&input_str, 0);
+	bu_vls_strcat(&input_str, Tcl_GetString(newCommand));
 
 	/* only one match remaining, pad space so we can keep going */
 	if (numExpansions == 1)
 	    bu_vls_strcat(&input_str, " ");
 
-        input_str_index = bu_vls_strlen(&input_str);
-        bu_log("%V", &input_str);
+	input_str_index = bu_vls_strlen(&input_str);
+	bu_log("%V", &input_str);
     } else {
-        bu_log("ERROR\n");
-        bu_log("%s\n", Tcl_GetStringResult(INTERP));
+	bu_log("ERROR\n");
+	bu_log("%s\n", Tcl_GetStringResult(INTERP));
     }
 }
 
@@ -723,9 +719,9 @@ mged_process_char(char ch)
 	    --input_str_index;
 	    escaped = bracketed = 0;
 	    break;
-        case '\t':                      /* do TAB expansion */
-            do_tab_expansion();
-            break;
+	case '\t':                      /* do TAB expansion */
+	    do_tab_expansion();
+	    break;
 	case CTRL_A:                    /* Go to beginning of line */
 	    pr_prompt(interactive);
 	    input_str_index = 0;
@@ -1029,7 +1025,7 @@ mged_process_char(char ch)
 	    }
 	    /* Fall through if not escaped! */
 	default:
-	    if (!isprint(ch))
+	    if (!isprint((int)ch))
 		break;
 
 	    mged_insert_char(ch);
@@ -1045,6 +1041,12 @@ mged_process_char(char ch)
 int
 main(int argc, char *argv[])
 {
+    /* pipes used for setting up read/write channels during graphical
+     * initialization.
+     */
+    int pipe_out[2];
+    int pipe_err[2];
+
     int rateflag = 0;
     int c;
     int read_only_flag=0;
@@ -1055,7 +1057,6 @@ main(int argc, char *argv[])
 
     Tcl_Channel chan;
     struct timeval timeout;
-    FILE *out = stdout;
 
 #if !defined(_WIN32) || defined(__CYGWIN__)
     fd_set read_set;
@@ -1143,11 +1144,6 @@ main(int argc, char *argv[])
     argc -= bu_optind;
     argv += bu_optind;
 
-    if (bu_debug > 0)
-	out = fopen("/tmp/stdout", "w+"); /* I/O testing */
-    if (!out)
-	out = stdout;
-
     if (argc > 1) {
 	/* if there is more than a file name remaining, mged is not interactive */
 	interactive = 0;
@@ -1161,7 +1157,7 @@ main(int argc, char *argv[])
 	FD_SET(fileno(stdin), &read_set);
 	result = select(fileno(stdin)+1, &read_set, NULL, NULL, &timeout);
 	if (bu_debug > 0)
-	    fprintf(out, "DEBUG: select result: %d, stdin read: %d\n", result, FD_ISSET(fileno(stdin), &read_set));
+	    fprintf(stdout, "DEBUG: select result: %d, stdin read: %d\n", result, FD_ISSET(fileno(stdin), &read_set));
 
 	if (result > 0 && FD_ISSET(fileno(stdin), &read_set)) {
 	    /* stdin pending, probably not interactive */
@@ -1172,7 +1168,7 @@ main(int argc, char *argv[])
 	    FD_SET(fileno(stdin), &exception_set);
 	    result = select(fileno(stdin)+1, NULL, NULL, &exception_set, &timeout);
 	    if (bu_debug > 0)
-		fprintf(out, "DEBUG: select result: %d, stdin exception: %d\n", result, FD_ISSET(fileno(stdin), &exception_set));
+		fprintf(stdout, "DEBUG: select result: %d, stdin exception: %d\n", result, FD_ISSET(fileno(stdin), &exception_set));
 
 	    /* see if there's valid input waiting (more reliable than select) */
 	    if (result > 0 && FD_ISSET(fileno(stdin), &exception_set)) {
@@ -1184,7 +1180,7 @@ main(int argc, char *argv[])
 
 		result = poll(&pfd, 1, 100);
 		if (bu_debug > 0)
-		    fprintf(out, "DEBUG: poll result: %d, revents: %d\n", result, pfd.revents);
+		    fprintf(stdout, "DEBUG: poll result: %d, revents: %d\n", result, pfd.revents);
 
 		if (pfd.revents & POLLNVAL) {
 		    interactive = 1;
@@ -1201,14 +1197,10 @@ main(int argc, char *argv[])
 	} /* read_set */
 #endif
 
-	if (bu_debug && out != stdout) {
-	    fflush(out);
-	    fclose(out);
-	}
     } /* argc > 1 */
 
     if (bu_debug > 0)
-	fprintf(out, "DEBUG: interactive=%d, classic_mged=%d\n", interactive, classic_mged);
+	fprintf(stdout, "DEBUG: interactive=%d, classic_mged=%d\n", interactive, classic_mged);
 
 
 #if defined(SIGPIPE) && defined(SIGINT)
@@ -1287,7 +1279,7 @@ main(int argc, char *argv[])
     memset((void *)&head_dm_list, 0, sizeof(struct dm_list));
     BU_LIST_INIT(&head_dm_list.l);
 
-    BU_GET(curr_dm_list, struct dm_list);
+    BU_ALLOC(curr_dm_list, struct dm_list);
     BU_LIST_APPEND(&head_dm_list.l, &curr_dm_list->l);
     netfd = -1;
 
@@ -1295,40 +1287,40 @@ main(int argc, char *argv[])
     BU_LIST_INIT(&curr_dm_list->dml_p_vlist);
     predictor_init();
 
-    BU_GET(dmp, struct dm);
-    *dmp = dm_Null;
+    BU_ALLOC(dmp, struct dm);
+    *dmp = dm_null;
     bu_vls_init(&pathName);
     bu_vls_init(&tkName);
     bu_vls_init(&dName);
     bu_vls_strcpy(&pathName, "nu");
     bu_vls_strcpy(&tkName, "nu");
 
-    BU_GET(rubber_band, struct _rubber_band);
+    BU_ALLOC(rubber_band, struct _rubber_band);
     *rubber_band = default_rubber_band;		/* struct copy */
 
-    BU_GET(mged_variables, struct _mged_variables);
+    BU_ALLOC(mged_variables, struct _mged_variables);
     *mged_variables = default_mged_variables;	/* struct copy */
 
-    BU_GET(color_scheme, struct _color_scheme);
+    BU_ALLOC(color_scheme, struct _color_scheme);
     *color_scheme = default_color_scheme;	/* struct copy */
 
-    BU_GET(grid_state, struct _grid_state);
+    BU_ALLOC(grid_state, struct _grid_state);
     *grid_state = default_grid_state;		/* struct copy */
 
-    BU_GET(axes_state, struct _axes_state);
+    BU_ALLOC(axes_state, struct _axes_state);
     *axes_state = default_axes_state;		/* struct copy */
 
-    BU_GET(adc_state, struct _adc_state);
+    BU_ALLOC(adc_state, struct _adc_state);
     adc_state->adc_rc = 1;
     adc_state->adc_a1 = adc_state->adc_a2 = 45.0;
 
-    BU_GET(menu_state, struct _menu_state);
+    BU_ALLOC(menu_state, struct _menu_state);
     menu_state->ms_rc = 1;
 
-    BU_GET(dlist_state, struct _dlist_state);
+    BU_ALLOC(dlist_state, struct _dlist_state);
     dlist_state->dl_rc = 1;
 
-    BU_GET(view_state, struct _view_state);
+    BU_ALLOC(view_state, struct _view_state);
     view_state->vs_rc = 1;
     view_ring_init(curr_dm_list->dml_view_state, (struct _view_state *)NULL);
     MAT_IDN(view_state->vs_ModelDelta);
@@ -1466,17 +1458,20 @@ main(int argc, char *argv[])
 	do_rc();
 
 	/*
-	 * Initialze variables here in case the user specified changes
+	 * Initialize variables here in case the user specified changes
 	 * to the defaults in their .mgedrc file.
 	 */
 
 	if (classic_mged) {
+	    /* start up a text command console */
 
 	    if (!run_in_foreground && use_pipe) {
 		notify_parent_done(parent_pipe[1]);
 	    }
 
 	} else {
+	    /* start up the GUI */
+
 	    struct bu_vls vls = BU_VLS_INIT_ZERO;
 	    int status;
 
@@ -1529,8 +1524,10 @@ main(int argc, char *argv[])
 
 	    } else {
 
-		/* close out stdout/stderr as we're proceeding in GUI mode */
 #ifdef HAVE_PIPE
+		/* we're going to close out stdout/stderr as we
+		 * proceed in GUI mode, so create some pipes.
+		 */
 		result = pipe(pipe_out);
 		if (result == -1)
 		    perror("pipe");
@@ -1539,6 +1536,9 @@ main(int argc, char *argv[])
 		    perror("pipe");
 #endif  /* HAVE_PIPE */
 
+		/* since we're in GUI mode, display any bu_bomb()
+		 * calls in text dialog windows.
+		 */
 		bu_bomb_add_hook(mged_bomb_hook, INTERP);
 	    } /* status -- gui initialized */
 	} /* classic */
@@ -1609,32 +1609,48 @@ main(int argc, char *argv[])
 #endif
     } else {
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
+	int sout = fileno(stdout);
+	int serr = fileno(stderr);
+
+	/* stash stdout */
+	stdfd[0] = dup(sout);
+	if (stdfd[0] == -1)
+	    perror("dup");
+
+	/* stash stderr */
+	stdfd[1] = dup(serr);
+	if (stdfd[1] == -1)
+	    perror("dup");
 
 	bu_vls_printf(&vls, "output_hook output_callback");
 	Tcl_Eval(INTERP, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 
+/* FIXME: windows has dup() and dup2(), so this should work there too */
 #if !defined(_WIN32) || defined(__CYGWIN__)
 	{
 	    ClientData outpipe, errpipe;
 
-	    /* Redirect stdout */
-	    (void)close(1);
+	    (void)close(fileno(stdout));
+
+	    /* since we just closed stdout, fd 1 is what dup() should return */
 	    result = dup(pipe_out[1]);
 	    if (result == -1)
 		perror("dup");
-	    (void)close(pipe_out[1]);
+	    (void)close(pipe_out[1]); /* only a write pipe */
 
-	    /* Redirect stderr */
-	    (void)close(2);
+	    (void)close(fileno(stderr));
+
+	    /* since we just closed stderr, fd 2 is what dup() should return */
 	    result = dup(pipe_err[1]);
 	    if (result == -1)
 		perror("dup");
-	    (void)close(pipe_err[1]);
+	    (void)close(pipe_err[1]); /* only a write pipe */
 
 	    outpipe = (ClientData)(size_t)pipe_out[0];
 	    chan = Tcl_MakeFileChannel(outpipe, TCL_READABLE);
 	    Tcl_CreateChannelHandler(chan, TCL_READABLE, std_out_or_err, outpipe);
+
 	    errpipe = (ClientData)(size_t)pipe_err[0];
 	    chan = Tcl_MakeFileChannel(errpipe, TCL_READABLE);
 	    Tcl_CreateChannelHandler(chan, TCL_READABLE, std_out_or_err, errpipe);
@@ -2309,7 +2325,8 @@ refresh(void)
 	    if (mged_variables->mv_fb &&
 		dmp->dm_zbuffer) {
 		restore_zbuffer = 1;
-		DM_SET_ZBUFFER(dmp, 0);
+		(void)DM_MAKE_CURRENT(dmp);
+		(void)DM_SET_ZBUFFER(dmp, 0);
 	    }
 
 	    dirty = 0;
@@ -2455,6 +2472,7 @@ mged_finish(int exitcode)
     char place[64];
     struct dm_list *p;
     struct cmd_list *c;
+    int ret;
 
     (void)sprintf(place, "exit_status=%d", exitcode);
 
@@ -2477,6 +2495,19 @@ mged_finish(int exitcode)
 	bu_vls_free(&c->cl_name);
 	bu_vls_free(&c->cl_more_default);
     }
+
+    /* no longer send bu_log() output to Tcl */
+    bu_log_delete_hook(gui_output, (genptr_t)INTERP);
+
+    /* restore stdout/stderr just in case anyone tries to write before
+     * we finally exit (e.g., an atexit() callback).
+     */
+    ret = dup2(stdfd[0], fileno(stdout));
+    if (ret == -1)
+	perror("dup2");
+    ret = dup2(stdfd[1], fileno(stderr));
+    if (ret == -1)
+	perror("dup2");
 
     /* Be certain to close the database cleanly before exiting */
     Tcl_Preserve((ClientData)INTERP);
@@ -2593,8 +2624,8 @@ f_opendb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *a
     rt_new_material_head(MATER_NULL);
 
     /* Get input file */
-    if (((dbip = db_open(argv[1], "r+w")) == DBI_NULL) &&
-	((dbip = db_open(argv[1], "r")) == DBI_NULL)) {
+    if (((dbip = db_open(argv[1], DB_OPEN_READWRITE)) == DBI_NULL) &&
+	((dbip = db_open(argv[1], DB_OPEN_READONLY)) == DBI_NULL)) {
 	char line[128];
 
 	/*
@@ -2760,7 +2791,7 @@ f_opendb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *a
      * that hooks into a libged callback.
      */
     if (!gedp) {
-	BU_GET(gedp, struct ged);
+	BU_ALLOC(gedp, struct ged);
     }
 
     /* initialize a separate wdbp for libged to manage */

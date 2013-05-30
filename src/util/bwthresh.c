@@ -1,7 +1,7 @@
 /*                      B W T H R E S H . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2012 United States Government as represented by
+ * Copyright (c) 1990-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -37,7 +37,7 @@
 #include "bu.h"
 
 
-#define USAGE "Usage: 'bwthresh val ...'\n"
+#define USAGE "Usage: bwthresh values ...\n"
 
 
 int
@@ -49,26 +49,30 @@ main (int argc, char **argv)
     int i;
     unsigned char *bin_color = (unsigned char *)0;/* resultant pixel values */
 
-    if ((nm_threshs = argc - 1) < 1) {
+    if ( (BU_STR_EQUAL(argv[1],"-h") || BU_STR_EQUAL(argv[1],"-?")) && argc == 2)
 	bu_exit(1, "%s", USAGE);
-    }
+    if ((nm_threshs = argc - 1) < 1)
+	bu_exit(1, "%s", USAGE);
+
     if (nm_threshs > 255) {
-	bu_exit(1, "Too many thresholds!\n");
+	bu_exit(1, "bwthresh: Too many thresholds!\n");
     }
     thresh_val = (int *)bu_malloc((unsigned) (nm_threshs * sizeof(int)), "thresh_val");
     bin_color = (unsigned char *)bu_malloc((unsigned) ((nm_threshs + 1) * sizeof(int)), "bin_color");
 
     for (i = 0; i < nm_threshs; ++i) {
 	if (sscanf(*++argv, "%d", thresh_val + i) != 1) {
-	    bu_log("Illegal threshold value: '%s'\n", *argv);
+	    bu_log("bwthresh: Illegal threshold value: '%s'\n", *argv);
 	    bu_exit(1, "%s", USAGE);
 	}
 	if ((unsigned char) thresh_val[i] != thresh_val[i]) {
-	    bu_exit(1, "Threshold[%d] value %d out of range.  Need 0 <= v <= 255\n",
+	    bu_exit(1, "bwthresh: Threshold[%d] value %d out of range.  Need 0 <= value <= 255\n",
 		    i, thresh_val[i]);
 	}
-	if ((i > 0) && (thresh_val[i] <= thresh_val[i - 1])) {
-	    bu_exit(1, "Threshold values not strictly increasing\n");
+	if (i > 0) {
+	    if (thresh_val[i] <= thresh_val[i - 1]) {
+		bu_exit(1, "bwthresh: Threshold values not strictly increasing\n");
+	    }
 	}
 	bin_color[i] = 256 * i / nm_threshs;
     }

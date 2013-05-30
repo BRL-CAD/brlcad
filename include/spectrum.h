@@ -1,7 +1,7 @@
 /*                      S P E C T R U M . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2012 United States Government as represented by
+ * Copyright (c) 2004-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -41,7 +41,7 @@
  *  For example, if the val[] array contains power values, then
  *  val[j] contains the integral of the power from wavel[j] to wavel[j+1]
  *
- *  As an exmple, assume nwave=2, wavel[0]=500, wavel[1]=600, wavel[2]=700.
+ *  As an example, assume nwave=2, wavel[0]=500, wavel[1]=600, wavel[2]=700.
  *  Then val[0] would contain data for the 500 to 600nm interval,
  *  and val[1] would contain data for the 600 to 700nm interval.
  *  There would be no storage allocated for val[2] -- don't use it!
@@ -58,7 +58,7 @@
  *
  *  Wavelength Units -
  *	cm = 10** -2 m	centimeters
- *	mm = 10** -3 m	milimeters
+ *	mm = 10** -3 m	millimeters
  *	um = 10** -6 m	micrometers, or microns
  *	nm = 10** -9 m	nanometers
  *

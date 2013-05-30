@@ -70,6 +70,7 @@ void STEPattributeList::push( STEPattribute * a ) {
     }
 
     if( push ) {
+        a->refCount ++;
         AttrListNode * saln = new AttrListNode( a );
         AppendNode( saln );
     }

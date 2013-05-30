@@ -1,7 +1,7 @@
 /*              S U R F A C E I N T E R S E C T . H
  * BRL-CAD
  *
- * Copyright (c) 2009-2012 United States Government as represented by
+ * Copyright (c) 2009-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -33,7 +33,7 @@
 /**
  * Canonical_start, Canonical_end
  *
- * @brief conanical domain for ON_Curves
+ * @brief canonical domain for ON_Curves
  */
 #define Canonical_start (0.0)
 #define Canonical_end (1.0)

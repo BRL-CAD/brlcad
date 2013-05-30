@@ -1,7 +1,7 @@
 /*                          B A R Y . C
  * BRL-CAD
  *
- * Copyright (c) 1995-2012 United States Government as represented by
+ * Copyright (c) 1995-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -24,8 +24,8 @@
 #include "common.h"
 
 #include <stdlib.h>
-#include <stdio.h>
 #include <math.h>
+#include "bio.h"
 
 #include "bu.h"
 #include "vmath.h"
@@ -42,11 +42,13 @@ struct site
 #define SITE_NULL ((struct site *) 0)
 #define SITE_MAGIC 0x73697465
 #define s_magic l.magic
-#define OPT_STRING "ns:t?"
+#define OPT_STRING "ns:t?h"
+
+#define usage "Usage: bary [-nt] [-s \"x y z\"] [file]"
 
 void print_usage (void)
 {
-    bu_exit(1, "Usage: 'bary [-nt] [-s \"x y z\"] [file]'\n");
+    bu_exit(1, "%s\n", usage);
 }
 
 
@@ -56,7 +58,7 @@ void enqueue_site (struct bu_list *sl, fastf_t x, fastf_t y, fastf_t z)
 
     BU_CK_LIST_HEAD(sl);
 
-    sp = (struct site *) bu_malloc(sizeof(struct site), "site structure");
+    BU_ALLOC(sp, struct site);
     sp->s_magic = SITE_MAGIC;
     sp->s_x = x;
     sp->s_y = y;
@@ -123,7 +125,7 @@ int read_point (FILE *fp, fastf_t *c_p, int c_len, int normalize, struct bu_vls 
 	goto wrap_up;
     }
 
- wrap_up:
+wrap_up:
     if ((return_code == 1) && (tail != 0)) {
 	bu_vls_trunc(tail, 0);
 	bu_vls_strcat(tail, cp);
@@ -142,11 +144,18 @@ main (int argc, char **argv)
     int nm_sites;
     int normalize = 0;	/* Make all weights sum to one? */
     fastf_t *coeff;
-    fastf_t x, y, z;
     FILE *infp = NULL;
     struct bu_list site_list;
     struct bu_vls *tail_buf = 0;
     struct site *sp;
+
+    /* intentionally double for scan */
+    double x, y, z;
+
+    if (isatty(fileno(stdin)) && isatty(fileno(stdout)) && argc == 1) {
+	bu_log("%s\n", usage);
+	bu_log("       Program continues running:\n");
+    }
 
     BU_LIST_INIT(&site_list);
     while ((ch = bu_getopt(argc, argv, OPT_STRING)) != -1)
@@ -165,14 +174,12 @@ main (int argc, char **argv)
 		if (tail_buf == 0)	 /* Only initialize it once */
 		    tail_buf = bu_vls_vlsinit();
 		break;
-	    case '?':
 	    default:
 		print_usage();
 	}
 
     switch (argc - bu_optind) {
 	case 0:
-	    inf_name = "stdin";
 	    infp = stdin;
 	    break;
 	case 1:

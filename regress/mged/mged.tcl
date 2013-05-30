@@ -1,7 +1,7 @@
 #                         M G E D . T C L
 # BRL-CAD
 #
-# Copyright (c) 2004-2012 United States Government as represented by
+# Copyright (c) 2004-2013 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -56,18 +56,18 @@ if {![string match $top_bindir ""]} {
       global CMD_NAME test_binary_name top_bindir
       set candidate_name $top_bindir/src/$test_binary_name/$test_binary_name
       if {[file executable $candidate_name] && ![file isdirectory $candidate_name]} {
-         global CMD_NAME candidate_name
-	 set CMD_NAME $candidate_name      
+	 global CMD_NAME candidate_name
+	 set CMD_NAME $candidate_name
       }
    } else {
       global CMD_NAME test_binary_name top_bindir
-      if {[string match $test_binary_name [file tail $top_bindir]] &&     
-          [file executable $top_bindir]} {   
-          global CMD_NAME top_bindir
-          set CMD_NAME $top_bindir
-      } 
+      if {[string match $test_binary_name [file tail $top_bindir]] &&
+	  [file executable $top_bindir]} {
+	  global CMD_NAME top_bindir
+	  set CMD_NAME $top_bindir
+      }
    }
-  
+
    # If we don't have a CMD_NAME, wipeout
    if {[string match $CMD_NAME ""]} {
       global top_bindir test_binary_name
@@ -76,10 +76,10 @@ if {![string match $top_bindir ""]} {
       return 0
    }
 } else {
-   # OK, top_bindir is empty and we're on our own for a binary directory.  
-   # Check ../../src/$binaryname/$binaryname first, since both in and out of source 
-   # builds should have (for example) mged located there.  If that fails, check 
-   # $top_srcdir/src/$binaryname/$binaryname, which could be different if top_srcdir 
+   # OK, top_bindir is empty and we're on our own for a binary directory.
+   # Check ../../src/$binaryname/$binaryname first, since both in and out of source
+   # builds should have (for example) mged located there.  If that fails, check
+   # $top_srcdir/src/$binaryname/$binaryname, which could be different if top_srcdir
    # is not equivalent to ../../ - if THAT fails, stop
    #
    global CMD_NAME top_srcdir test_binary_name
@@ -91,10 +91,10 @@ if {![string match $top_bindir ""]} {
       global candidate_name CMD_NAME top_srcdir test_binary_name
       set candidate_name $top_srcdir/src/$test_binary_name/$test_binary_name
       if {[file executable $candidate_name] && ![file isdirectory $candidate_name]} {
-            global CMD_NAME candidate_name
-            set CMD_NAME $candidate_name
+	    global CMD_NAME candidate_name
+	    set CMD_NAME $candidate_name
       }
-  } 
+  }
    # If we don't have a CMD_NAME, wipeout
    if {[string match $CMD_NAME ""]} {
       global top_srcdir test_binary_name
@@ -111,15 +111,15 @@ proc add_test {cmdname {testfilerootname ""}} {
      global test_binary_name
      set testfilename ""
      if {[string match $testfilerootname ""]} {
-        set testfilename [format ./%s_test.%s $cmdname $test_binary_name]
+	set testfilename [format ./%s_test.%s $cmdname $test_binary_name]
      } else {
-        set testfilename [format ./%s_test.%s $testfilerootname $test_binary_name]
+	set testfilename [format ./%s_test.%s $testfilerootname $test_binary_name]
      }
      set testfile [open $testfilename a]
      puts $testfile "source [format %s/regress/%s/regression_resources.tcl $top_srcdir $test_binary_name]"
      set inputtestfile [open [format %s/regress/%s/%s.%s $top_srcdir $test_binary_name $cmdname $test_binary_name] r]
      while {[gets $inputtestfile line] >= 0} {
-        puts $testfile $line
+	puts $testfile $line
      }
      close $testfile
      close $inputtestfile
@@ -130,11 +130,11 @@ proc run_test {cmdname {testfilename ""}} {
      global test_binary_name
      if {[string match $testfilename ""]} {set testfilename [format %s_test.%s $cmdname $test_binary_name]}
      if {[file exists $testfilename]} {
-        exec $CMD_NAME -c [format %s.g $cmdname] < $testfilename >>& [format %s.log $cmdname]
+	exec $CMD_NAME -c [format %s.g $cmdname] < $testfilename >>& [format %s.log $cmdname]
      } else {
-        add_test $cmdname 
-        exec $CMD_NAME -c [format %s.g $cmdname] < $testfilename >>& [format %s.log $cmdname]
-        file delete [format %s_test.mged $cmdname]
+	add_test $cmdname
+	exec $CMD_NAME -c [format %s.g $cmdname] < $testfilename >>& [format %s.log $cmdname]
+	file delete [format %s_test.mged $cmdname]
      }
 }
 
@@ -242,5 +242,3 @@ add_test adc mged
 
 #  Having assembled the tests, run them:
 run_test mged
-
-

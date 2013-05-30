@@ -1,7 +1,7 @@
 /*                       P I X - S U N . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2012 United States Government as represented by
+ * Copyright (c) 1986-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -124,7 +124,7 @@ unsigned char blumap[MAPSIZE] =
   119, 136, 170, 187, 221, 238, 17, 34, 68, 85, 119, 136, 170, 187, 221, 238 };
 
 
-/* indicies of the primary colors and grey values in the color map */
+/* indices of the primary colors and grey values in the color map */
 static unsigned char rvec[16] = { 0, 216, 217, 1, 218, 219, 2, 220, 221,
 				  3, 222, 223, 4, 224, 225, 5};
 static unsigned char gvec[16] = { 0, 226, 227,  6, 228, 229, 12, 230,
@@ -153,40 +153,40 @@ double *end_table = &table[10];
 	dg = NOISE(); DITHER(_g, green, dg, MAG1); _g = (_g+26) / 51; \
 	db = NOISE(); DITHER(_b, blue, db, MAG1); _b = (_b+26) / 51; \
 	if (_r == _g) { \
-		if (_r == _b) { \
- 			/* grey */ \
-			DITHER(_r, red, dr, MAG2); \
-			DITHER(_g, green, dg, MAG2); \
-			DITHER(_b, blue, db, MAG2); \
-			i = nvec[ ((_r+_g+_b)/3) >> 4]; \
-		} else if (_r == 0) { \
- 			/* all blue */ \
-			DITHER(_r, red, dr, MAG2); \
-			DITHER(_g, green, dg, MAG2); \
-			DITHER(_b, blue, db, MAG2); \
-			i = bvec[ _b >> 4]; \
-		} else { \
-			/* color cube # */ \
-			i = (unsigned char)(_r + _g * 6 + _b * 36); \
-		} \
-	} \
-	else if (_g == _b && _g == 0) { \
- 		/* all red */ \
+	    if (_r == _b) { \
+		/* grey */ \
 		DITHER(_r, red, dr, MAG2); \
 		DITHER(_g, green, dg, MAG2); \
 		DITHER(_b, blue, db, MAG2); \
-		i = rvec[ _r >> 4]; \
-	} else if (_r == _b && _r == 0) { \
-		/* all green */ \
+		i = nvec[ ((_r+_g+_b)/3) >> 4]; \
+	    } else if (_r == 0) { \
+		/* all blue */ \
 		DITHER(_r, red, dr, MAG2); \
 		DITHER(_g, green, dg, MAG2); \
 		DITHER(_b, blue, db, MAG2); \
-		i = gvec[_g >> 4]; \
-	} else { \
+		i = bvec[ _b >> 4]; \
+	    } else { \
 		/* color cube # */ \
 		i = (unsigned char)(_r + _g * 6 + _b * 36); \
+	    } \
 	} \
-}
+	else if (_g == _b && _g == 0) { \
+	    /* all red */ \
+	    DITHER(_r, red, dr, MAG2); \
+	    DITHER(_g, green, dg, MAG2); \
+	    DITHER(_b, blue, db, MAG2); \
+	    i = rvec[ _r >> 4]; \
+	} else if (_r == _b && _r == 0) { \
+	    /* all green */ \
+	    DITHER(_r, red, dr, MAG2); \
+	    DITHER(_g, green, dg, MAG2); \
+	    DITHER(_b, blue, db, MAG2); \
+	    i = gvec[_g >> 4]; \
+	} else { \
+	    /* color cube # */ \
+	    i = (unsigned char)(_r + _g * 6 + _b * 36); \
+	} \
+    }
 
 
 #define REMAPIXEL(red, green, blue, i) {\
@@ -200,7 +200,7 @@ double *end_table = &table[10];
 	else if (_g == _b && _g == 0) i = rvec[red/16];   /* all red */ \
 	else if (_r == _b && _r == 0) i = gvec[green/16]; /* all green */ \
 	else i = (unsigned char)(_r + _g * 6 + _b * 36);  /* color cube # */ \
-}
+    }
 
 
 /*
@@ -267,7 +267,7 @@ doit(void)
      */
     free(pix);
 
-    /* fill in miscelaneous rasterfile header fields */
+    /* fill in miscellaneous rasterfile header fields */
     ras.ras_length = ras.ras_width * ras.ras_height;
 
     /* write the rasterfile header */
@@ -301,8 +301,8 @@ void
 usage(void)
 {
 
-    (void)fprintf(stderr, "Usage: %s [-s squaresize] [-w width] [-n height] [ -d ]\n", progname);
-    (void)fprintf(stderr, "\t< BRLpixfile > rasterfile\n");
+    fprintf(stderr, "Usage: %s [-s squaresize] [-w width] [-n height] [ -d ]\n", progname);
+    fprintf(stderr, "\t< BRLpixfile > rasterfile\n");
     bu_exit (1, NULL);
 }
 
@@ -310,7 +310,7 @@ usage(void)
 /*
  * M A I N
  *
- * Perform miscelaneous tasks such as argument parsing and
+ * Perform miscellaneous tasks such as argument parsing and
  * I/O setup and then call "doit" to perform the task at hand
  */
 int

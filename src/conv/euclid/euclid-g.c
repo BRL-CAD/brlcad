@@ -1,7 +1,7 @@
 /*                      E U C L I D - G . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2012 United States Government as represented by
+ * Copyright (c) 2004-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -555,13 +555,13 @@ cvt_euclid_region(FILE *fp, struct rt_wdb *fpdb, int reg_id)
     }
 
     if ( debug )
-	bu_log( "Calling nmg_model_vertex_fuse()\n" );
-    (void)nmg_model_vertex_fuse( m, &tol );
+	bu_log( "Calling nmg_vertex_fuse()\n" );
+    (void)nmg_vertex_fuse(&m->magic, &tol );
 
     /* Break edges on vertices */
     if ( debug )
-	bu_log( "Calling nmg_model_break_e_on_v()\n" );
-    (void)nmg_model_break_e_on_v( m, &tol );
+	bu_log( "Calling nmg_break_e_on_v()\n" );
+    (void)nmg_break_e_on_v( &m->magic, &tol );
 
     /* kill zero length edgeuses */
     if ( nmg_kill_zero_length_edgeuses( m ) )
@@ -602,12 +602,12 @@ cvt_euclid_region(FILE *fp, struct rt_wdb *fpdb, int reg_id)
     nmg_rebound( m, &tol );
 
     if ( RT_G_DEBUG&DEBUG_MEM_FULL )
-	bu_prmem( "Before glueing faces:\n" );
+	bu_prmem( "Before gluing faces:\n" );
 
     /* Glue faceuses together. */
     if ( debug )
 	bu_log( "Glueing faces\n" );
-    (void)nmg_model_edge_fuse( m, &tol );
+    (void)nmg_edge_fuse( &m->magic, &tol );
 
     /* Compute "geometry" for model, region, and shell */
     if ( debug )

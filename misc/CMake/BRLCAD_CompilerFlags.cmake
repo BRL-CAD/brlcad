@@ -1,7 +1,7 @@
 #      B R L C A D _ C O M P I L E R F L A G S . C M A K E
 # BRL-CAD
 #
-# Copyright (c) 2011-2012 United States Government as represented by
+# Copyright (c) 2011-2013 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -40,6 +40,25 @@
 # -fast-math results in non-IEEE floating point math among a handful
 # of other optimizations that cause substantial error in ray tracing
 # and tessellation (and probably more).
+BRLCAD_CHECK_C_FLAG(O3 GROUPS OPTIMIZE_C_FLAGS)
+BRLCAD_CHECK_C_FLAG(fstrength-reduce GROUPS OPTIMIZE_C_FLAGS)
+BRLCAD_CHECK_C_FLAG(fexpensive-optimizations GROUPS OPTIMIZE_C_FLAGS)
+BRLCAD_CHECK_C_FLAG(finline-functions GROUPS OPTIMIZE_C_FLAGS)
+BRLCAD_CHECK_C_FLAG("finline-limit=10000 --param inline-unit-growth=300 --param large-function-growth=300" GROUPS OPTIMIZE_C_FLAGS)
+BRLCAD_CHECK_CXX_FLAG(O3 GROUPS OPTIMIZE_CXX_FLAGS)
+BRLCAD_CHECK_CXX_FLAG(fstrength-reduce GROUPS OPTIMIZE_CXX_FLAGS)
+BRLCAD_CHECK_CXX_FLAG(fexpensive-optimizations GROUPS OPTIMIZE_CXX_FLAGS)
+BRLCAD_CHECK_CXX_FLAG(finline-functions GROUPS OPTIMIZE_CXX_FLAGS)
+BRLCAD_CHECK_CXX_FLAG("finline-limit=10000 --param inline-unit-growth=300 --param large-function-growth=300" GROUPS OPTIMIZE_CXX_FLAGS)
+if(${BRLCAD_OPTIMIZED_BUILD} MATCHES "ON")
+  if(NOT BRLCAD_ENABLE_PROFILING AND NOT BRLCAD_FLAGS_DEBUG)
+    BRLCAD_CHECK_C_FLAG(fomit-frame-pointer GROUPS OPTIMIZE_C_FLAGS)
+    BRLCAD_CHECK_CXX_FLAG(fomit-frame-pointer GROUPS OPTIMIZE_CXX_FLAGS)
+  else(NOT BRLCAD_ENABLE_PROFILING AND NOT BRLCAD_FLAGS_DEBUG)
+    BRLCAD_CHECK_C_FLAG(fno-omit-frame-pointer GROUPS OPTIMIZE_C_FLAGS)
+    BRLCAD_CHECK_CXX_FLAG(fno-omit-frame-pointer GROUPS OPTIMIZE_CXX_FLAGS)
+  endif(NOT BRLCAD_ENABLE_PROFILING AND NOT BRLCAD_FLAGS_DEBUG)
+endif(${BRLCAD_OPTIMIZED_BUILD} MATCHES "ON")
 
 if(${BRLCAD_FLAGS_OPTIMIZATION} MATCHES "AUTO")
   if(CMAKE_CONFIGURATION_TYPES)
@@ -55,25 +74,8 @@ else(${BRLCAD_FLAGS_OPTIMIZATION} MATCHES "AUTO")
   endif(${BRLCAD_OPTIMIZED_BUILD} MATCHES "ON")
 endif(${BRLCAD_FLAGS_OPTIMIZATION} MATCHES "AUTO")
 if(opt_conf_list)
-  BRLCAD_CHECK_C_FLAG(O3 "${opt_conf_list}")
-  BRLCAD_CHECK_C_FLAG(fstrength-reduce "${opt_conf_list}")
-  BRLCAD_CHECK_C_FLAG(fexpensive-optimizations "${opt_conf_list}")
-  BRLCAD_CHECK_C_FLAG(finline-functions "${opt_conf_list}")
-  BRLCAD_CHECK_C_FLAG("finline-limit=10000" "${opt_conf_list}")
-  BRLCAD_CHECK_CXX_FLAG(O3 "${opt_conf_list}")
-  BRLCAD_CHECK_CXX_FLAG(fstrength-reduce "${opt_conf_list}")
-  BRLCAD_CHECK_CXX_FLAG(fexpensive-optimizations "${opt_conf_list}")
-  BRLCAD_CHECK_CXX_FLAG(finline-functions "${opt_conf_list}")
-  BRLCAD_CHECK_CXX_FLAG("finline-limit=10000" "${opt_conf_list}")
-  if(${BRLCAD_OPTIMIZED_BUILD} MATCHES "ON")
-    if(NOT BRLCAD_ENABLE_PROFILING AND NOT BRLCAD_FLAGS_DEBUG)
-      BRLCAD_CHECK_C_FLAG(fomit-frame-pointer "${opt_conf_list}")
-      BRLCAD_CHECK_CXX_FLAG(fomit-frame-pointer "${opt_conf_list}")
-    else(NOT BRLCAD_ENABLE_PROFILING AND NOT BRLCAD_FLAGS_DEBUG)
-      BRLCAD_CHECK_C_FLAG(fno-omit-frame-pointer "${opt_conf_list}")
-      BRLCAD_CHECK_CXX_FLAG(fno-omit-frame-pointer "${opt_conf_list}")
-    endif(NOT BRLCAD_ENABLE_PROFILING AND NOT BRLCAD_FLAGS_DEBUG)
-  endif(${BRLCAD_OPTIMIZED_BUILD} MATCHES "ON")
+  ADD_NEW_FLAG(C OPTIMIZE_C_FLAGS "${opt_conf_list}")
+  ADD_NEW_FLAG(CXX OPTIMIZE_CXX_FLAGS "${opt_conf_list}")
 endif(opt_conf_list)
 
 # verbose warning flags
@@ -105,11 +107,14 @@ if(BRLCAD_ENABLE_COMPILER_WARNINGS OR BRLCAD_ENABLE_STRICT)
   BRLCAD_CHECK_C_FLAG(Wshadow)
   BRLCAD_CHECK_CXX_FLAG(Wshadow)
 
+  # want C inline warnings, but versions of g++ (circa 4.7) spew
+  # unquellable bogus warnings on default constructors that we don't
+  # have access to (e.g., in opennurbs and boost), so turn them off
   BRLCAD_CHECK_C_FLAG(Winline)
-  BRLCAD_CHECK_CXX_FLAG(Winline)
+  BRLCAD_CHECK_CXX_FLAG(Wno-inline)
 
   # Need this for tcl.h
-  BRLCAD_CHECK_C_FLAG(Wno-long-long) 
+  BRLCAD_CHECK_C_FLAG(Wno-long-long)
   BRLCAD_CHECK_CXX_FLAG(Wno-long-long)
 
   # Need this for X11 headers using variadic macros

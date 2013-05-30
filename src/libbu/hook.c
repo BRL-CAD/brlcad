@@ -1,7 +1,7 @@
 /*                          H O O K . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2012 United States Government as represented by
+ * Copyright (c) 2004-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -34,6 +34,7 @@ bu_hook_list_init(struct bu_hook_list *hlp)
     hlp->clientdata = GENPTR_NULL;
 }
 
+
 void
 bu_hook_add(struct bu_hook_list *hlp, bu_hook_t func, genptr_t clientdata)
 {
@@ -46,6 +47,7 @@ bu_hook_add(struct bu_hook_list *hlp, bu_hook_t func, genptr_t clientdata)
     BU_LIST_APPEND(&hlp->l, &new_hook->l);
 }
 
+
 void
 bu_hook_delete(struct bu_hook_list *hlp, bu_hook_t func, genptr_t clientdata)
 {
@@ -55,11 +57,12 @@ bu_hook_delete(struct bu_hook_list *hlp, bu_hook_t func, genptr_t clientdata)
 	if (cur->hookfunc == func && cur->clientdata == clientdata) {
 	    struct bu_hook_list *old = BU_LIST_PLAST(bu_hook_list, cur);
 	    BU_LIST_DEQUEUE(&(cur->l));
-	    bu_free((genptr_t)cur, "bu_hook_delete");
+	    BU_PUT(cur, struct bu_hook_list);
 	    cur = old;
 	}
     }
 }
+
 
 void
 bu_hook_call(struct bu_hook_list *hlp, genptr_t buf)
@@ -96,7 +99,7 @@ bu_hook_delete_all(struct bu_hook_list *hlp)
 
     while(BU_LIST_WHILE(cur, bu_hook_list, &hlp->l)) {
 	BU_LIST_DEQUEUE(&(cur->l));
-	bu_free((genptr_t)cur, "bu_hook_delete_all");
+	BU_PUT(cur, struct bu_hook_list);
     }
 }
 
@@ -117,6 +120,7 @@ bu_hook_restore_all(struct bu_hook_list *hlp, struct bu_hook_list *restore_hlp)
 	BU_LIST_APPEND(&hlp->l, &cur->l);
     }
 }
+
 
 /*
  * Local Variables:

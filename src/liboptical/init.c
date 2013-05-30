@@ -1,7 +1,7 @@
 /*                          I N I T . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2012 United States Government as represented by
+ * Copyright (c) 1998-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -36,7 +36,7 @@
 #include "raytrace.h"
 #include "optical.h"
 
-int rt_verbosity = -1;	/* blather incesantly by default */
+int rt_verbosity = -1;	/* blather incessantly by default */
 int rdebug;			/* RT program debugging */
 double AmbientIntensity = 0.4;	/* Ambient light intensity */
 struct bn_table *spectrum = NULL;
@@ -56,7 +56,6 @@ struct region env_region;
 
 #define DMFUNCS(_name)							\
     { extern struct mfuncs _name[]; mlib_add_shader(headp, _name); }
-
 
 
 void

@@ -1,7 +1,7 @@
 /*                        V L S _ V P R I N T F . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2012 United States Government as represented by
+ * Copyright (c) 2004-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -136,7 +136,7 @@ format_part_status(const char c)
 	  status |= VP_MISC;
 	  break;
 
-          /* OBSOLETE ===================================== */
+	  /* OBSOLETE ===================================== */
 	  /* obsolete or not recommended (considered obsolete for bu_vls): */
       case 'm': /* glibc extension for printing strerror(errno) (not same as %m$ or %*mS) */
       case 'C': /* Synonym for lc. (Not in C99, but in SUSv2. Don't use.) */
@@ -350,12 +350,12 @@ specifications:
       "http://www.unix.com/man-page/POSIX/3/printf/" regarding the
       definition of a format specifier.
 
-  2.  Then modify [1] to accomodate a compatible subset of parts
+  2.  Then modify [1] to accommodate a compatible subset of parts
       applicable to a wide range of standard C libraries including
       GNU/Linux, Windows, FreeBSD, and others as differences are
       brought to our attention.
 
-  3.  The subset [2] shall be the "valid" flags, length modifers, and
+  3.  The subset [2] shall be the "valid" flags, length modifiers, and
       conversion specifiers ("parts") accepted by this function.
       Those are defined in the following local function:
 
@@ -388,7 +388,7 @@ bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
     vflags_t f;
 
     char buf[BUFSIZ] = {0};
-    char c;
+    int c;
 
     struct bu_vls fbuf = BU_VLS_INIT_ZERO; /* % format buffer */
     const char *fbufp  = NULL;
@@ -466,7 +466,7 @@ bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
 		}
 		/* all length modifiers below here */
 	    } else if (format_part_status(c) == (VP_VALID | VP_LENGTH_MOD)) {
- 	        handle_format_part(VP_LENGTH_MOD, &f, c, VP_PRINT);
+		handle_format_part(VP_LENGTH_MOD, &f, c, VP_PRINT);
 	    } else {
 		/* Anything else must be the end of the fmt specifier
 		   (i.e., the conversion specifier)*/
@@ -493,20 +493,19 @@ bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
 	fbufp = bu_vls_addr(&fbuf);
 
 #ifndef HAVE_C99_FORMAT_SPECIFIERS
-	/* if the format string uses the %z width specifier, we need
-	 * to replace it with something more palatable to this busted
-	 * compiler.
+	/* if the format string uses the %z or %t width specifier, we need to
+	 * replace it with something more palatable to this busted compiler.
 	 */
 
-	if (f.flags & SIZETINT) {
+	if ((f.flags & SIZETINT) || (f.flags & PTRDIFFT)) {
 	    char *fp = fbufp;
 	    while (*fp) {
 		if (*fp == '%') {
 		    /* found the next format specifier */
 		    while (*fp) {
 			fp++;
-			/* possible characters that can preceed the
-			 * field length character (before the type).
+			/* possible characters that can precede the field
+			 * length character (before the type).
 			 */
 			if (isdigit(*fp)
 			    || *fp == '$'
@@ -518,10 +517,10 @@ bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
 			    || *fp == '*') {
 			    continue;
 			}
-			if (*fp == 'z') {
-			    /* assume MSVC replacing instances of %z
-			     * with %I (capital i) until we encounter
-			     * anything different.
+			if (*fp == 'z' || *fp == 't') {
+			    /* assume MSVC replacing instances of %z or %t with
+			     * %I (capital i) until we encounter anything
+			     * different.
 			     */
 			    *fp = 'I';
 			}
@@ -809,16 +808,16 @@ bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
 		    fprintf(stderr, "  Status flags: %x.\n", format_part_status(c));
 		    bu_bomb("ERROR: Shouldn't get here.\n");
 		}
-                /* try to get some kind of output, assume it's an int */
-                {
+		/* try to get some kind of output, assume it's an int */
+		{
 		    int d = va_arg(ap, int);
 		    if (f.flags & FIELDLEN)
 			snprintf(buf, BUFSIZ, fbufp, f.fieldlen, d);
 		    else
 			snprintf(buf, BUFSIZ, fbufp, d);
-                }
+		}
 		bu_vls_strcat(vls, buf);
-                break;
+		break;
 	}
 	sp = ep + 1;
     }

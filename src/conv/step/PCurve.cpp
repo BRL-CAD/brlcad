@@ -1,7 +1,7 @@
 /*                 PCurve.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2012 United States Government as represented by
+ * Copyright (c) 1994-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -33,44 +33,48 @@
 
 #define CLASSNAME "PCurve"
 #define ENTITYNAME "Pcurve"
-string PCurve::entityname = Factory::RegisterClass(ENTITYNAME,(FactoryMethod)PCurve::Create);
+string PCurve::entityname = Factory::RegisterClass(ENTITYNAME, (FactoryMethod)PCurve::Create);
 
-PCurve::PCurve() {
+PCurve::PCurve()
+{
     step = NULL;
     id = 0;
     basis_surface = NULL;
     reference_to_curve = NULL;
 }
 
-PCurve::PCurve(STEPWrapper *sw,int step_id) {
+PCurve::PCurve(STEPWrapper *sw, int step_id)
+{
     step = sw;
     id = step_id;
     basis_surface = NULL;
     reference_to_curve = NULL;
 }
 
-PCurve::~PCurve() {
+PCurve::~PCurve()
+{
     basis_surface = NULL;
     reference_to_curve = NULL;
 }
 
 bool
-PCurve::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
-    step=sw;
+PCurve::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
+    step = sw;
     id = sse->STEPfile_id;
 
-    if ( !Curve::Load(sw,sse) ) {
+    if (!Curve::Load(sw, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::Curve." << std::endl;
 	return false;
     }
 
     // need to do this for local attributes to makes sure we have
     // the actual entity and not a complex/supertype parent
-    sse = step->getEntity(sse,ENTITYNAME);
+    sse = step->getEntity(sse, ENTITYNAME);
 
     if (basis_surface == NULL) {
 	SDAI_Application_instance *entity = step->getEntityAttribute(sse,
-									"basis_surface");
+					    "basis_surface");
 	if (entity) {
 	    basis_surface = dynamic_cast<Surface *>(Factory::CreateObject(sw, entity)); // CreateSurfaceObject(sw, entity));
 	} else {
@@ -81,9 +85,9 @@ PCurve::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
     }
 
     if (reference_to_curve == NULL) {
-	SDAI_Application_instance *entity = step->getEntityAttribute(sse,"reference_to_curve");
+	SDAI_Application_instance *entity = step->getEntityAttribute(sse, "reference_to_curve");
 	if (entity) {
-	    reference_to_curve = dynamic_cast<DefinitionalRepresentation*>(Factory::CreateObject(sw, entity));
+	    reference_to_curve = dynamic_cast<DefinitionalRepresentation *>(Factory::CreateObject(sw, entity));
 	} else {
 	    std::cerr << CLASSNAME << ": Error loading entity attribute 'reference_to_curve'" << std::endl;
 	    return false;
@@ -94,47 +98,48 @@ PCurve::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
 }
 
 const double *
-PCurve::PointAtEnd() {
+PCurve::PointAtEnd()
+{
     //TODO: complete pcurve support
     std::cerr << CLASSNAME << ": Error: virtual function PointAtEnd() not implemented for this type of curve.";
     return NULL;
 }
 
 const double *
-PCurve::PointAtStart() {
+PCurve::PointAtStart()
+{
     //TODO: complete pcurve support
     std::cerr << CLASSNAME << ": Error: virtual function PointAtStart() not implemented for this type of curve.";
     return NULL;
 }
 
 void
-PCurve::Print(int level) {
-    TAB(level); std::cout << CLASSNAME << ":" << name << "(";
+PCurve::Print(int level)
+{
+    TAB(level);
+    std::cout << CLASSNAME << ":" << name << "(";
     std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-    TAB(level); std::cout << "Attributes:" << std::endl;
-    TAB(level+1); std::cout << "basis_surface:" << std::endl;
-    basis_surface->Print(level+1);
-    TAB(level+1); std::cout << "reference_to_curve:" << std::endl;
-    reference_to_curve->Print(level+1);
+    TAB(level);
+    std::cout << "Attributes:" << std::endl;
+    TAB(level + 1);
+    std::cout << "basis_surface:" << std::endl;
+    basis_surface->Print(level + 1);
+    TAB(level + 1);
+    std::cout << "reference_to_curve:" << std::endl;
+    reference_to_curve->Print(level + 1);
 }
+
 STEPEntity *
-PCurve::Create(STEPWrapper *sw,SDAI_Application_instance *sse){
-    Factory::OBJECTS::iterator i;
-    if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
-	PCurve *object = new PCurve(sw,sse->STEPfile_id);
+PCurve::GetInstance(STEPWrapper *sw, int id)
+{
+    return new PCurve(sw, id);
+}
 
-	Factory::AddObject(object);
-
-	if (!object->Load(sw,sse)) {
-	    std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
-	    delete object;
-	    return NULL;
-	}
-	return static_cast<STEPEntity *>(object);
-    } else {
-	return (*i).second;
-    }
+STEPEntity *
+PCurve::Create(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
+    return STEPEntity::CreateEntity(sw, sse, GetInstance, CLASSNAME);
 }
 
 // Local Variables:

@@ -1,7 +1,7 @@
 /*                       V I E W D I R . C
  * BRL-CAD
  *
- * Copyright (c) 1993-2012 United States Government as represented by
+ * Copyright (c) 1993-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -93,7 +93,7 @@ view_init(register struct application *ap, char *file, char *obj, int minus_o)
  *  boxes, for example, need to be computed once per frame.
  *  Never preclude a new and nifty animation: rule: if it's a variable, it can
  *  change from frame to frame ( frame/picture width; angle between surface
- *  normals triggering shading.... etc).
+ *  normals triggering shading.... etc.).
  */
 
 void

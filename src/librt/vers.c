@@ -1,7 +1,7 @@
 /*                          V E R S . C
  * BRL-CAD
  *
- * Copyright (c) 2007-2012 United States Government as represented by
+ * Copyright (c) 2007-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,11 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file librt/vers.c
- *
- * version information about LIBRT
- *
- */
+
 
 #include "common.h"
 
@@ -31,9 +27,6 @@
 #include "brlcad_version.h"
 
 
-/**
- * returns the compile-time version of librt
- */
 const char *
 rt_version(void)
 {

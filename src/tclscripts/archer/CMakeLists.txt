@@ -9,6 +9,7 @@ set(archer_TCLSCRIPTS
   Archer.tcl
   ArcherCore.tcl
   AttrGroupsDisplayUtility.tcl
+  BotEditFrame.tcl
   BotUtility.tcl
   CombEditFrame.tcl
   DataUtils.tcl
@@ -22,12 +23,15 @@ set(archer_TCLSCRIPTS
   HalfEditFrame.tcl
   HypEditFrame.tcl
   LoadArcherLibs.tcl
+  LODUtility.tcl
+  MetaballEditFrame.tcl
   PartEditFrame.tcl
   PipeEditFrame.tcl
   Plugin.tcl
   RhcEditFrame.tcl
   RpcEditFrame.tcl
   ShaderEdit.tcl
+  SketchEditFrame.tcl
   SphereEditFrame.tcl
   SuperellEditFrame.tcl
   TgcEditFrame.tcl
@@ -39,8 +43,8 @@ set(archer_TCLSCRIPTS
   tabwindow.itk
   )
 BRLCAD_ADDDATA(archer_TCLSCRIPTS tclscripts/archer)
-pkgIndex_BUILD(archer tclscripts/archer)
-tclIndex_BUILD(archer tclscripts/archer)
+pkgIndex_BUILD(tclscripts/archer)
+tclIndex_BUILD(tclscripts/archer)
 
 CMAKEFILES(pkgIndex.tcl tclIndex)
 CMAKEFILES(Makefile.am)

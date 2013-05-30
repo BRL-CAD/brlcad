@@ -1,7 +1,7 @@
 /*                      V E C T F O N T . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2012 United States Government as represented by
+ * Copyright (c) 2004-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,11 +17,12 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+
 /** @addtogroup plot */
 /** @{ */
 /** @file libbn/vectfont.c
  *
- *	Terminal Independant Graphics Display Package.
+ *	Terminal Independent Graphics Display Package.
  *		Mike Muuss  July 31, 1978
  *
  *	This routine is used to plot a string of ASCII symbols
@@ -35,7 +36,7 @@
  *  factors less than 10.0 are unlikely to be legible.
  *
  *  The vector font table here was provided courtesy of Dr. Bruce
- *  Henriksen and Dr. Stephen Wolff, US Army Ballistic Research
+ *  Henrikson and Dr. Stephen Wolff, US Army Ballistic Research
  *  Laboratory, Summer of 1978.  They had developed it for their
  *  remote Houston Instruments pen plotter package for the
  *  GE Tymeshare system.
@@ -56,11 +57,7 @@
 
 int *tp_cindex[256];	/* index to stroke tokens */
 
-/**
- * @brief
- *  Once-only setup routine
- *  Used by libplot3/symbol.c, so it can't be static.
- */
+
 void
 tp_setup(void)
 {

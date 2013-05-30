@@ -1,7 +1,7 @@
 /*                      V F O N T - I F . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2012 United States Government as represented by
+ * Copyright (c) 2004-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -87,7 +87,7 @@ struct vfont {
 
 /** @file vfont.c
  *
- * @brief Berkely Vector Fonts
+ * @brief Berkeley Vector Fonts
  *
  * Provide a machine-independent interface to files containing
  * Berkeley VFONT format fonts, stored with VAX byte ordering and word

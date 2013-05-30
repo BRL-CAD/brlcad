@@ -1,7 +1,7 @@
 /*                     S T E P - G . C P P
  * BRL-CAD
  *
- * Copyright (c) 1994-2012 United States Government as represented by
+ * Copyright (c) 1994-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -30,22 +30,20 @@
 #include "bu.h"
 
 //
+// step-g related headers
+//
+#include <BRLCADWrapper.h>
+#include <STEPWrapper.h>
+
+//
 // include NIST step related headers
 //
 #include <sdai.h>
 #include <STEPfile.h>
 #include <SdaiCONFIG_CONTROL_DESIGN.h>
-//
-// step-g related headers
-//
-#include <STEPWrapper.h>
-#include <BRLCADWrapper.h>
 
 #include "Factory.h"
-
-
-extern void SchemaInit (class Registry &);
-
+#include "schema.h"
 
 void
 usage()
@@ -74,8 +72,8 @@ main(int argc, char *argv[])
 
     // process command line arguments
     int c;
-    char *output_file=(char *)NULL;
-    while ((c=bu_getopt(argc, argv, "o:")) != -1) {
+    char *output_file = (char *)NULL;
+    while ((c = bu_getopt(argc, argv, "o:")) != -1) {
 	switch (c) {
 	    case 'o':
 		output_file = bu_optarg;

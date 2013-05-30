@@ -1,7 +1,7 @@
 /*                 ProductRelatedProductCategory.h
  * BRL-CAD
  *
- * Copyright (c) 1994-2012 United States Government as represented by
+ * Copyright (c) 1994-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -38,9 +38,11 @@ class ON_Brep;
 class Product;
 typedef list<Product *> LIST_OF_PRODUCTS;
 
-class ProductRelatedProductCategory: public ProductCategory {
+class ProductRelatedProductCategory: public ProductCategory
+{
 private:
     static string entityname;
+    static EntityInstanceFunc GetInstance;
 
 protected:
     LIST_OF_PRODUCTS products;

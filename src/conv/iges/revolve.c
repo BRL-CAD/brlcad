@@ -1,7 +1,7 @@
 /*                       R E V O L V E . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2012 United States Government as represented by
+ * Copyright (c) 1990-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -57,7 +57,7 @@ revolve(int entityno)
     int sol_num;		/* IGES solid type number */
     point_t pt;			/* Point on axis of revolution */
     vect_t adir;			/* Direction of axis of revolution */
-    int curve;			/* Pointer to driectory entry for curve */
+    int curve;			/* Pointer to directory entry for curve */
     fastf_t fract;			/* Fraction of circle for rotation (0 < fract <= 1.0) */
     vect_t v1;			/* Vector from "pt" to any point along curve */
     fastf_t h;			/* height of "TRC" */
@@ -122,7 +122,7 @@ revolve(int entityno)
 
     npts = Getcurve(curve, &curv_pts);
     if (npts == 0) {
-	bu_log("Could not get points along curve for revovling\n");
+	bu_log("Could not get points along curve for revolving\n");
 	bu_log("Illegal parameters for entity D%07d (%s)\n" ,
 	       dir[entityno]->direct, dir[entityno]->name);
 	return 0;
@@ -149,13 +149,11 @@ revolve(int entityno)
 	fastf_t h1;
 
 	if (trcs == NULL) {
-	    trcs = (struct trclist *)bu_malloc(sizeof(struct trclist),
-					       "Revolve: trcs");
+	    BU_ALLOC(trcs, struct trclist);
 	    trcptr = trcs;
 	    prev = NULL;
 	} else if (trcptr->name[0] != '\0') {
-	    trcptr->next = (struct trclist *)bu_malloc(sizeof(struct trclist),
-						       "Revolve: trcptr->next");
+	    BU_ALLOC(trcptr->next, struct trclist);
 	    prev = trcptr;
 	    trcptr = trcptr->next;
 	} else prev = NULL;
@@ -419,15 +417,13 @@ Addsub(trc, ptr)
     struct subtracts *subp;
 
     if (trc->subtr == NULL) {
-	trc->subtr = (struct subtracts *)bu_malloc(sizeof(struct subtracts),
-						   "Revolve: trc->subtr");
+	BU_ALLOC(trc->subtr, struct subtracts);
 	subp = trc->subtr;
     } else {
 	subp = trc->subtr;
 	while (subp->next != NULL)
 	    subp = subp->next;
-	subp->next = (struct subtracts *)bu_malloc(sizeof(struct subtracts),
-						   "Revolve: subp->next");
+	BU_ALLOC(subp->next, struct subtracts);
 	subp = subp->next;
     }
 

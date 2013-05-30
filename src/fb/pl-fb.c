@@ -1,7 +1,7 @@
 /*                         P L - F B . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2012 United States Government as represented by
+ * Copyright (c) 1986-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -33,7 +33,7 @@
  * Method:
  *
  * Inputs vector data and builds a rasterization descriptor for each
- * visible stroke.  (Strokes are limited to frame boundaries.)  X goes
+ * visible stroke.  (Strokes are limited to frame boundaries.) X goes
  * down the page, Y goes from left to right.  To obtain a different
  * orientation, pre-process data with the "rot" filter.  (Quadrant 1
  * graphics devices)
@@ -66,7 +66,7 @@
  * Note:
  *
  * UNIX-Plot files are defined to be machine-independent, with
- * "little-endian" (eg, VAX) byte-ordering.
+ * "little-endian" (e.g., VAX) byte-ordering.
  *
  */
 
@@ -134,16 +134,16 @@
 
 /* helper macros */
 #define GET_STROKE(vp) { \
-			while (((vp)=freep) == STROKE_NULL) \
-				get_strokes(); \
-			freep = (vp)->freep; \
-			CK_STROKE(vp); \
-			(vp)->freep = STROKE_NULL; }
+	while (((vp)=freep) == STROKE_NULL) \
+	    get_strokes(); \
+	freep = (vp)->freep; \
+	CK_STROKE(vp); \
+	(vp)->freep = STROKE_NULL; }
 
 #define FREE_STROKE(vp) { \
-			CK_STROKE(vp); \
-			(vp)->freep = freep; \
-			freep = (vp); }
+	CK_STROKE(vp); \
+	(vp)->freep = freep; \
+	freep = (vp); }
 
 
 /* Data structure definitions:	*/
@@ -170,7 +170,7 @@ typedef struct descr {
     coords pixel;		/* starting scan, nib */
     tiny xsign;			/* 0 or +1 */
     tiny ysign;			/* -1, 0, or +1 */
-    int ymajor; 		/* true iff Y is major dir. */
+    int ymajor; 		/* true if Y is major dir. */
 #undef major
 #undef minor
     short major;		/* major dir delta (nonneg) */
@@ -331,7 +331,7 @@ static struct descr *freep = STROKE_NULL;	/* head of free stroke list */
  */
 static stroke *
 Dequeue(struct band *bp, stroke **hp)
-    /* *hp -> first descr in list */
+/* *hp -> first descr in list */
 {
     stroke *vp;		/* -> descriptor */
 
@@ -376,8 +376,8 @@ Requeue(struct band *bp, stroke *vp)
  */
 static void
 Raster(stroke *vp, struct band *np)
-    /* -> rasterization descr */
-    /* *np -> next band 1st descr */
+/* -> rasterization descr */
+/* *np -> next band 1st descr */
 {
     short dy;		/* raster within active band */
 
@@ -593,7 +593,7 @@ get_args(int argc, char **argv)
     }
 
     if (argc > ++bu_optind)
-	(void)fprintf(stderr, "pl-fb: excess argument(s) ignored\n");
+	fprintf(stderr, "pl-fb: excess argument(s) ignored\n");
 
     return 1;		/* OK */
 }
@@ -683,7 +683,7 @@ prep_dda(stroke *vp, coords *pt1, coords *pt2)
 /*
  * BuildStr - set up DDA parameters and queue stroke
  *
- * Given two end points of a line, allocate and intialize a stroke
+ * Given two end points of a line, allocate and initialize a stroke
  * descriptor for it.  If we are drawing "thick" lines we generate
  * several extra stroke descriptors as well.  In immediate or memory
  * buffered mode we rasterize it and free it right away.  In "regular"
@@ -692,7 +692,7 @@ prep_dda(stroke *vp, coords *pt1, coords *pt2)
  */
 static void
 BuildStr(coords *pt1, coords *pt2)		/* returns true or dies */
-    /* endpoints */
+/* endpoints */
 {
     stroke *vp;		/* -> rasterization descr */
     int thick;
@@ -744,7 +744,7 @@ BuildStr(coords *pt1, coords *pt2)		/* returns true or dies */
 
 static int
 GetCoords(coords *coop)
-    /* -> input coordinates */
+/* -> input coordinates */
 {
     unsigned char buf[4];
     double x, y;
@@ -837,7 +837,7 @@ int Get3DCoords(coords *coop)
 
 int
 GetDCoords(coords *coop)
-    /* -> input coordinates */
+/* -> input coordinates */
 {
     static unsigned char in[2*8];
     static double out[2];
@@ -904,8 +904,8 @@ put_vector_char(char c, coords *pos)
 
     if (!isascii(c))
 	c = '?';
-    if (islower(c))
-	c = toupper(c);
+    if (islower((int)c))
+	c = toupper((int)c);
 
     for (vc = &charset[0]; vc->ascii; vc++)
 	if (vc->ascii == c)
@@ -1217,7 +1217,7 @@ DoFile(void)	/* returns vpl status code */
 			space.top   = sxt16((long)(buf2[7]<<8) | buf2[6]); /* y2 */
 		    }
 
-	    spacend:
+		spacend:
 		    delta = space.right - space.left;
 		    deltao2 = space.top - space.bottom;
 		    if (deltao2 > delta)
@@ -1312,7 +1312,7 @@ DoFile(void)	/* returns vpl status code */
 */
 static void
 Catch(int sig)
-    /* signal number */
+/* signal number */
 {
     int pid;		/* this process's ID */
     int i;

@@ -1,7 +1,7 @@
 /*                          P O L Y . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2012 United States Government as represented by
+ * Copyright (c) 2004-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,6 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+
 /** @addtogroup poly */
 /** @{ */
 /** @file libbn/poly.c
@@ -36,14 +37,11 @@
 #include "bn.h"
 
 
-#define Max(a, b)		((a) > (b) ? (a) : (b))
+#define CUBEROOT(a)	(((a) > 0.0) ? pow(a, THIRD) : -pow(-(a), THIRD))
 
-#define PI_DIV_3 (M_PI/3.0)
 
-#define SQRT3			1.732050808
-#define THIRD			0.333333333333333333333333333
-#define INV_TWENTYSEVEN		0.037037037037037037037037037
-#define CUBEROOT(a)	(((a) >= 0.0) ? pow(a, THIRD) : -pow(-(a), THIRD))
+static const fastf_t THIRD = 1.0 / 3.0;
+static const fastf_t TWENTYSEVENTH = 1.0 / 27.0;
 
 static const struct bn_poly bn_Zero_poly = { BN_POLY_MAGIC, 0, {0.0} };
 static int bn_expecting_fpe = 0;
@@ -62,11 +60,6 @@ HIDDEN void bn_catch_FPE(int sig)
 }
 
 
-/**
- * bn_poly_mul
- *
- * @brief multiply two polynomials
- */
 struct bn_poly *
 bn_poly_mul(register struct bn_poly *product, register const struct bn_poly *m1, register const struct bn_poly *m2)
 {
@@ -116,11 +109,6 @@ bn_poly_mul(register struct bn_poly *product, register const struct bn_poly *m1,
 }
 
 
-/**
- * bn_poly_scale
- * @brief
- * scale a polynomial
- */
 struct bn_poly *
 bn_poly_scale(register struct bn_poly *eqn, double factor)
 {
@@ -133,11 +121,6 @@ bn_poly_scale(register struct bn_poly *eqn, double factor)
 }
 
 
-/**
- * bn_poly_add
- * @brief
- * add two polynomials
- */
 struct bn_poly *
 bn_poly_add(register struct bn_poly *sum, register const struct bn_poly *poly1, register const struct bn_poly *poly2)
 {
@@ -167,11 +150,6 @@ bn_poly_add(register struct bn_poly *sum, register const struct bn_poly *poly1, 
 }
 
 
-/**
- * bn_poly_sub
- * @brief
- * subtract two polynomials
- */
 struct bn_poly *
 bn_poly_sub(register struct bn_poly *diff, register const struct bn_poly *poly1, register const struct bn_poly *poly2)
 {
@@ -203,12 +181,6 @@ bn_poly_sub(register struct bn_poly *diff, register const struct bn_poly *poly1,
 }
 
 
-/**
- * s y n D i v
- * @brief
- * Divides any polynomial into any other polynomial using synthetic
- * division.  Both polynomials must have real coefficients.
- */
 void
 bn_poly_synthetic_division(register struct bn_poly *quo, register struct bn_poly *rem, register const struct bn_poly *dvdend, register const struct bn_poly *dvsor)
 {
@@ -239,15 +211,6 @@ bn_poly_synthetic_division(register struct bn_poly *quo, register struct bn_poly
 }
 
 
-/**
- * b n _ p o l y _ q u a d r a t i c _ r o o t s
- *@brief
- * Uses the quadratic formula to find the roots (in `complex' form) of
- * any quadratic equation with real coefficients.
- *
- *	@return 1 for success
- *	@return 0 for fail.
- */
 int
 bn_poly_quadratic_roots(register struct bn_complex *roots, register const struct bn_poly *quadrat)
 {
@@ -308,36 +271,6 @@ bn_poly_quadratic_roots(register struct bn_complex *roots, register const struct
 }
 
 
-/**
- * b n _ p o l y _ c u b i c _ r o o t s
- *@brief
- * Uses the cubic formula to find the roots (in `complex' form)
- * of any cubic equation with real coefficients.
- *
- * to solve a polynomial of the form:
- *
- * X**3 + c1*X**2 + c2*X + c3 = 0,
- *
- * first reduce it to the form:
- *
- * Y**3 + a*Y + b = 0,
- *
- * where
- * Y = X + c1/3,
- * and
- * a = c2 - c1**2/3,
- * b = (2*c1**3 - 9*c1*c2 + 27*c3)/27.
- *
- * Then we define the value delta,   D = b**2/4 + a**3/27.
- *
- * If D > 0, there will be one real root and two conjugate
- * complex roots.
- * If D = 0, there will be three real roots at least two of
- * which are equal.
- * If D < 0, there will be three unequal real roots.
- *
- * Returns 1 for success, 0 for fail.
- */
 int
 bn_poly_cubic_roots(register struct bn_complex *roots, register const struct bn_poly *eqn)
 {
@@ -365,11 +298,11 @@ bn_poly_cubic_roots(register struct bn_complex *roots, register const struct bn_
     c1_3rd = c1 * THIRD;
     a = eqn->cf[2] - c1*c1_3rd;
     if (abs(a) > SQRT_MAX_FASTF)  return 0;	/* FAIL */
-    b = (2.0*c1*c1*c1 - 9.0*c1*eqn->cf[2] + 27.0*eqn->cf[3])*INV_TWENTYSEVEN;
+    b = (2.0*c1*c1*c1 - 9.0*c1*eqn->cf[2] + 27.0*eqn->cf[3])*TWENTYSEVENTH;
     if (abs(b) > SQRT_MAX_FASTF)  return 0;	/* FAIL */
 
     if ((delta = a*a) > SQRT_MAX_FASTF) return 0;	/* FAIL */
-    delta = b*b*0.25 + delta*a*INV_TWENTYSEVEN;
+    delta = b*b*0.25 + delta*a*TWENTYSEVENTH;
 
     if (delta > 0.0) {
 	fastf_t r_delta, A, B;
@@ -385,7 +318,7 @@ bn_poly_cubic_roots(register struct bn_complex *roots, register const struct bn_
 	roots[2].re = roots[1].re = -0.5 * (roots[0].re = A + B);
 
 	roots[0].im = 0.0;
-	roots[2].im = -(roots[1].im = (A - B)*SQRT3*0.5);
+	roots[2].im = -(roots[1].im = (A - B)*M_SQRT3*0.5);
     } else if (ZERO(delta)) {
 	fastf_t b_2;
 	b_2 = -0.5 * b;
@@ -399,25 +332,23 @@ bn_poly_cubic_roots(register struct bn_complex *roots, register const struct bn_
 
 	if (a >= 0.0) {
 	    fact = 0.0;
-	    phi = 0.0;
 	    cs_phi = 1.0;		/* cos(phi); */
-	    sn_phi_s3 = 0.0;	/* sin(phi) * SQRT3; */
+	    sn_phi_s3 = 0.0;	/* sin(phi) * M_SQRT3; */
 	} else {
 	    register fastf_t f;
 	    a *= -THIRD;
 	    fact = sqrt(a);
 	    if ((f = b * (-0.5) / (a*fact)) >= 1.0) {
-		phi = 0.0;
 		cs_phi = 1.0;		/* cos(phi); */
-		sn_phi_s3 = 0.0;	/* sin(phi) * SQRT3; */
+		sn_phi_s3 = 0.0;	/* sin(phi) * M_SQRT3; */
 	    }  else if (f <= -1.0) {
-		phi = PI_DIV_3;
+		phi = M_PI_3;
 		cs_phi = cos(phi);
-		sn_phi_s3 = sin(phi) * SQRT3;
+		sn_phi_s3 = sin(phi) * M_SQRT3;
 	    }  else  {
 		phi = acos(f) * THIRD;
 		cs_phi = cos(phi);
-		sn_phi_s3 = sin(phi) * SQRT3;
+		sn_phi_s3 = sin(phi) * M_SQRT3;
 	    }
 	}
 
@@ -436,15 +367,6 @@ bn_poly_cubic_roots(register struct bn_complex *roots, register const struct bn_
 }
 
 
-/**
- * b n _ p o l y _ q u a r t i c _ r o o t s
- *@brief
- * Uses the quartic formula to find the roots (in `complex' form)
- * of any quartic equation with real coefficients.
- *
- *	@return 1 for success
- *	@return 0 for fail.
- */
 int
 bn_poly_quartic_roots(register struct bn_complex *roots, register const struct bn_poly *eqn)
 {
@@ -524,11 +446,6 @@ bn_poly_quartic_roots(register struct bn_complex *roots, register const struct b
 }
 
 
-/**
- * b n _ p r _ p o l y
- *
- * Print out the polynomial.
- */
 void
 bn_pr_poly(const char *title, register const struct bn_poly *eqn)
 {
@@ -568,11 +485,7 @@ bn_pr_poly(const char *title, register const struct bn_poly *eqn)
     bu_vls_free(&str);
 }
 
-/**
- * b n _ p r _ r o o t s
- *
- * Print out the roots of a given polynomial (complex numbers)
- */
+
 void
 bn_pr_roots(const char *title, const struct bn_complex *roots, int n)
 {

@@ -2,7 +2,7 @@
 #                        B O T S . S H
 # BRL-CAD
 #
-# Copyright (c) 2008-2012 United States Government as represented by
+# Copyright (c) 2008-2013 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -102,7 +102,7 @@ echo "Getting BoT orientations"
 
 rh="`$MGED -c bots.g get sph.volume.rh.bot orient 2>&1 | grep -v Using`"
 if test "x`echo $rh`" != "xrh" ; then
-    echo "ERROR: right-hand BoT orientation (faceitize) failure [$rh]"
+    echo "ERROR: right-hand BoT orientation (facetize) failure [$rh]"
     FAILED="`expr $FAILED + 1`"
 fi
 lh="`$MGED -c bots.g get sph.volume.lh.bot orient 2>&1 | grep -v Using`"

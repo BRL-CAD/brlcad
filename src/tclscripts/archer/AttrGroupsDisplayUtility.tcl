@@ -1,7 +1,7 @@
 #                A T T R G R O U P S U T I L I T Y . T C L
 # BRL-CAD
 #
-# Copyright (c) 2002-2012 United States Government as represented by
+# Copyright (c) 2002-2013 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -415,9 +415,9 @@
 
     if {$mHighlightedAttr != ""} {
 	set i [lsearch $alist $mHighlightedAttr]
-        if {$i != -1} {
-            $itk_component(alist) itemconfigure $i -background white
-        }
+	if {$i != -1} {
+	    $itk_component(alist) itemconfigure $i -background white
+	}
 
 	set rlist [getAttrArgs $mCurrentAttr $mHighlightedAttr]
 	set slist [lindex $rlist 0]
@@ -434,9 +434,9 @@
     set mHighlightedAttr [getSelectedAttr]
     if {$mHighlightedAttr != ""} {
 	set i [lsearch $alist $mHighlightedAttr]
-        if {$i != -1} {
-            $itk_component(alist) itemconfigure $i -background \#c3c3c3
-        }
+	if {$i != -1} {
+	    $itk_component(alist) itemconfigure $i -background \#c3c3c3
+	}
     }
     set rlist [highlightCurrentAttr]
     if {$rlist != {}} {
@@ -584,7 +584,7 @@
     set i [lsearch $alist $_aval]
     if {$i != -1} {
 	$mArchersGed erase -oA $attr $_aval
-	
+
 	set alist [lreplace $alist $i $i]
 	set glist [list $gname $attr $alist]
 	set mMasterAttrGroups [lreplace $mMasterAttrGroups $gindex $gindex $glist]
@@ -723,7 +723,7 @@
 
     set csindex [lsearch -index 0 $mMasterAttrGroups $cs]
     if {$csindex == -1} {
-        return
+	return
     }
 
     set glist [lindex $mMasterAttrGroups $csindex]
@@ -739,10 +739,10 @@
     }
 
     if {$mCurrentGroup != ""} {
-        set i [lsearch -index 0 $mMasterAttrGroups $mCurrentGroup]
-        if {$i != -1} {
-            $itk_component(glist) itemconfigure $i -background white
-        }
+	set i [lsearch -index 0 $mMasterAttrGroups $mCurrentGroup]
+	if {$i != -1} {
+	    $itk_component(glist) itemconfigure $i -background white
+	}
     }
     $itk_component(glist) itemconfigure $csindex -background \#c3c3c3
 
@@ -835,7 +835,7 @@
 	}
 
 	lappend rmap($rid) $region
-    }    
+    }
 
     set sflag 0
     foreach line $lines {

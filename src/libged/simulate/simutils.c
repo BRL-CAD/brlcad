@@ -1,7 +1,7 @@
 /*                         S I M U T I L S . C
  * BRL-CAD
  *
- * Copyright (c) 2011-2012 United States Government as represented by
+ * Copyright (c) 2011-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -24,6 +24,10 @@
  *
  */
 
+#include "common.h"
+
+#ifdef HAVE_BULLET
+
 /* Private Header */
 #include "simutils.h"
 
@@ -40,7 +44,7 @@ print_usage(struct bu_vls *str)
     bu_vls_printf(str, "Currently this command adds all regions in the model database to a \n\
     simulation having only gravity as a force. The objects should fall towards the ground plane XY.\n");
     bu_vls_printf(str, "The positions of the regions are set after <steps> number of simulation steps.\n");
-    bu_vls_printf(str, "-f <n> <x> <y> <z>\t- Specifies frequency of update(eg 1/60 Hz)(WIP)\n");
+    bu_vls_printf(str, "-f <n> <x> <y> <z>\t- Specifies frequency of update(e.g. 1/60 Hz)(WIP)\n");
     bu_vls_printf(str, "-t <x> <y> <z>\t\t  - Specifies time for which to run(alternative to -n)(WIP)\n");
     return;
 }
@@ -128,9 +132,9 @@ find_solid(struct db_i *dbip,
 
     obj_name = (char *)object;
     if (BU_STR_EQUAL(comb_leaf->tr_l.tl_name, obj_name))
-    	return FOUND;
+	return FOUND;
     else
-    	return NOT_FOUND;
+	return NOT_FOUND;
 }
 
 
@@ -161,7 +165,7 @@ check_tree_funcleaf(
 	case OP_XOR:
 	    rv = check_tree_funcleaf(dbip, comb, comb_tree->tr_b.tb_left, leaf_func, user_ptr1);
 	    if(rv == NOT_FOUND)
-	    	rv = check_tree_funcleaf(dbip, comb, comb_tree->tr_b.tb_right, leaf_func, user_ptr1);
+		rv = check_tree_funcleaf(dbip, comb, comb_tree->tr_b.tb_right, leaf_func, user_ptr1);
 	    break;
 	default:
 	    bu_log("check_tree_funcleaf: bad op %d\n", comb_tree->tr_op);
@@ -171,7 +175,6 @@ check_tree_funcleaf(
 
     return rv;
 }
-
 
 
 int
@@ -670,15 +673,21 @@ insert_AABB(struct ged *gedp, struct simulation_params *sim_params, struct rigid
     sprintf(buffer, "%f", v[1]); cmd_args[25] = bu_strdup(buffer);
     sprintf(buffer, "%f", v[2]); cmd_args[26] = bu_strdup(buffer);
 
+    bu_log("reached here");
+
     /* Finally make the bb primitive, phew ! */
     cmd_args[27] = (char *)0;
     rv = ged_in(gedp, argc, (const char **)cmd_args);
     if (rv != GED_OK) {
-	bu_log("insertAABB: WARNING Could not draw bounding box for \"%s\"\n",
+	    bu_log("insertAABB: WARNING Could not draw bounding box for \"%s\"\n",
 	       current_node->rb_namep);
     }
 
+    bu_log("after command");
+
     bu_free_array(argc, cmd_args, "make_rpp: free cmd_args");
+
+    bu_log("after free");
 
     /* Make the region for the bb primitive */
     add_to_comb(gedp, prefixed_reg_name, prefixed_name);
@@ -691,6 +700,8 @@ insert_AABB(struct ged *gedp, struct simulation_params *sim_params, struct rigid
 
     bu_vls_free(&buffer1);
     bu_vls_free(&buffer2);
+
+    bu_log("reached out");
 
     return GED_OK;
 
@@ -878,6 +889,7 @@ insert_manifolds(struct ged *gedp, struct simulation_params *sim_params, struct 
 
 }
 
+#endif
 
 /*
  * Local Variables:

@@ -1,8 +1,9 @@
 /* $NoKeywords: $ */
 /*
 //
-// Copyright (c) 1993-2007 Robert McNeel & Associates. All rights reserved.
-// Rhinoceros is a registered trademark of Robert McNeel & Assoicates.
+// Copyright (c) 1993-2012 Robert McNeel & Associates. All rights reserved.
+// OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
+// McNeel & Associates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
@@ -277,12 +278,6 @@ public:
         int j
         );
 
-  // virtual ON_Geometry override
-  bool Morph( const ON_SpaceMorph& morph );
-
-  // virtual ON_Geometry override
-  bool IsMorphable() const;
-
   /////////////////////////////////////////////////////////////////
   // ON_Curve overrides
 
@@ -445,9 +440,16 @@ public:
         of the angle between two tangent vectors 
         is <= cos_angle_tolerance, then a G1 discontinuity is reported.
     curvature_tolerance - [in] (default = ON_SQRT_EPSILON) Used only when
-        c is ON::G2_continuous.  If K0 and K1 are curvatures evaluated
-        from above and below and |K0 - K1| > curvature_tolerance,
-        then a curvature discontinuity is reported.
+        c is ON::G2_continuous or ON::Gsmooth_continuous.  
+        ON::G2_continuous:
+          If K0 and K1 are curvatures evaluated
+          from above and below and |K0 - K1| > curvature_tolerance,
+          then a curvature discontinuity is reported.
+        ON::Gsmooth_continuous:
+          If K0 and K1 are curvatures evaluated from above and below
+          and the angle between K0 and K1 is at least twice angle tolerance
+          or ||K0| - |K1|| > (max(|K0|,|K1|) > curvature_tolerance,
+          then a curvature discontinuity is reported.
   Returns:
     true if a discontinuity was found on the interior of the interval (t0,t1).
   Remarks:
@@ -460,7 +462,7 @@ public:
                   double* t,
                   int* hint=NULL,
                   int* dtype=NULL,
-                  double cos_angle_tolerance=0.99984769515639123915701155881391,
+                  double cos_angle_tolerance=ON_DEFAULT_ANGLE_TOLERANCE_COSINE,
                   double curvature_tolerance=ON_SQRT_EPSILON
                   ) const;
 
@@ -482,9 +484,16 @@ public:
         of the angle between two tangent vectors 
         is <= cos_angle_tolerance, then a G1 discontinuity is reported.
     curvature_tolerance - [in] (default = ON_SQRT_EPSILON) Used only when
-        c is ON::G2_continuous.  If K0 and K1 are curvatures evaluated
-        from above and below and |K0 - K1| > curvature_tolerance,
-        then a curvature discontinuity is reported.
+        c is ON::G2_continuous or ON::Gsmooth_continuous.  
+        ON::G2_continuous:
+          If K0 and K1 are curvatures evaluated
+          from above and below and |K0 - K1| > curvature_tolerance,
+          then a curvature discontinuity is reported.
+        ON::Gsmooth_continuous:
+          If K0 and K1 are curvatures evaluated from above and below
+          and the angle between K0 and K1 is at least twice angle tolerance
+          or ||K0| - |K1|| > (max(|K0|,|K1|) > curvature_tolerance,
+          then a curvature discontinuity is reported.
   Returns:
     true if the curve has at least the c type continuity at the parameter t.
   Remarks:
@@ -497,7 +506,7 @@ public:
     double point_tolerance=ON_ZERO_TOLERANCE,
     double d1_tolerance=ON_ZERO_TOLERANCE,
     double d2_tolerance=ON_ZERO_TOLERANCE,
-    double cos_angle_tolerance=0.99984769515639123915701155881391,
+    double cos_angle_tolerance=ON_DEFAULT_ANGLE_TOLERANCE_COSINE,
     double curvature_tolerance=ON_SQRT_EPSILON
     ) const;
 
@@ -564,59 +573,38 @@ public:
                          //            repeated evaluations
          ) const;
 
-  bool GetClosestPoint( 
-          const ON_3dPoint&, // test_point
-          double* t,       // parameter of local closest point returned here
-          double maximum_distance = 0.0,  // maximum_distance
-          const ON_Interval* sub_domain = NULL // sub_domain
-          ) const;
-
-  // Description:
-  //   Get the length of the curve.
-  // Parameters:
-  //   length - [out] length returned here.
-  //   t - [out] parameter such that the length of the curve
-  //      from its start to t is arc_length.
-  //   fractional_tolerance - [in] desired fractional precision.
-  //       fabs(("exact" length from start to t) - arc_length)/arc_length <= fractional_tolerance
-  //   sub_domain - [in] If not NULL, the calculation is performed on
-  //       the specified sub-domain of the curve.
-  // Returns:
-  //   true if returned if the length calculation is successful.
-  //   false is returned if the length is not calculated.
-  // Remarks:
-  //   The arc length will be computed so that
-  //   (returned length - real length)/(real length) <= fractional_tolerance
-  //   More simply, if you want N significant figures in the answer, set the
-  //   fractional_tolerance to 1.0e-N.  For "nice" curves, 1.0e-8 works
-  //   fine.  For very high degree NURBS and NURBS with bad parameterizations,
-  //   use larger values of fractional_tolerance.
-  ON_BOOL32 GetLength(
-          double* length,
-          double fractional_tolerance = 1.0e-8,
-          const ON_Interval* sub_domain = NULL
-          ) const;
-
   /*
-  Description:
-    Looks for segments that are shorter than tolerance
-    that can be removed. If bRemoveShortSegments is true,
-    then the short segments are removed. Does not change the 
-    domain, but it will change the relative parameterization.
   Parameters:
-    tolerance - [in]
-    bRemoveShortSegments - [in] If true, then short segments
-                                are removed.
-  Returns:
-    True if removable short segments can were found.
-    False if no removable short segments can were found.
-  See Also:
-    ON_NurbsCurve::RepairBadKnots
+    span_index - [in]
+      (0 <= span_index <= m_cv_count-m_order)
+    min_length -[in]
+      minimum length of a linear span
+    tolerance -[in]
+      distance tolerance to use when checking control points
+      between the span ends
+  Returns 
+    true if the span is a non-degenrate line.  This means:
+    - dimension = 2 or 3
+    - There are full multiplicity knots at each end of the span.
+    - The length of the the line segment from the span's initial 
+      control point to the span's final control point is 
+      >= min_length.
+    - The distance from the line segment to the interior control points
+      is <= tolerance and the projections of these points onto
+      the line increases monotonically.
   */
-  bool RemoveShortSegments(
+  bool SpanIsLinear( 
+    int span_index, 
+    double min_length,
+    double tolerance
+    ) const;
+
+  bool SpanIsLinear( 
+    int span_index, 
+    double min_length,
     double tolerance,
-    bool bRemoveShortSegments = true
-    );
+    ON_Line* line
+    ) const;
 
   /*
   Description:
@@ -671,9 +659,9 @@ public:
   // would split crv at the parametric midpoint, put the left side in crv,
   // and return the right side in right_side.
   ON_BOOL32 Split(
-      double,    // t = curve parameter to split curve at
-      ON_Curve*&, // left portion returned here (must be an ON_NurbsCurve)
-      ON_Curve*&  // right portion returned here (must be an ON_NurbsCurve)
+      double split_param,    // t = curve parameter to split curve at
+      ON_Curve*& left_result, // left portion returned here (must be an ON_NurbsCurve)
+      ON_Curve*& right_result // right portion returned here (must be an ON_NurbsCurve)
     ) const;
 
   // Description:
@@ -688,9 +676,9 @@ public:
                    //            curve's parameterization and the NURBS
                    //            parameterization may not match to the 
                    //            desired accuracy.
-        ON_NurbsCurve&,
-        double = 0.0,
-        const ON_Interval* = NULL     // OPTIONAL subdomain of curve
+        ON_NurbsCurve& nurbsform,
+        double tolerance = 0.0,
+        const ON_Interval* subdomain = NULL     // OPTIONAL subdomain of curve
         ) const;
 
   // Description:
@@ -710,15 +698,15 @@ public:
   // Description:
   //   virtual ON_Curve::GetCurveParameterFromNurbFormParameter override
   ON_BOOL32 GetCurveParameterFromNurbFormParameter(
-        double, // nurbs_t
-        double* // curve_t
+        double  nurbs_t,
+        double* curve_t
         ) const;
 
   // Description:
   //   virtual ON_Curve::GetNurbFormParameterFromCurveParameter override
   ON_BOOL32 GetNurbFormParameterFromCurveParameter(
-        double, // curve_t
-        double* // nurbs_t
+        double  curve_t,
+        double* nurbs_t
         ) const;
 
 public:
@@ -989,6 +977,62 @@ public:
       int,            // span_index (0 <= span_index <= m_cv_count-m_order)
       ON_BezierCurve& // bezier returned here
       ) const;
+
+  /*
+  Paramaters:
+    span_index - [in]
+      The index of a non-empty span to test.
+        span_index >= 0
+        span_index <= m_cv_count-m_order
+        m_knot[span_index+m_order-2] < m_knot[span_index+m_order-1]
+  Returns:
+    true if the span_index parameter is valid and the span is singular
+    (collapsed to a point).
+    false if the span is not singular or span_index does not identify
+    a non-empty span.
+  */
+  bool SpanIsSingular( 
+    int span_index 
+    ) const;
+
+  /*
+  Returns:
+    True if every span in the NURBS curve is singular.
+  See Also:
+    ON_NurbsCurve::RepairBadKnots()
+    ON_NurbsCurve::RemoveShortSegments()
+  */
+  bool IsSingular() const;
+
+  /*
+  Paramaters:
+    span_index - [in]
+      The index of a non-empty span to remove.
+        span_index >= 0
+        span_index <= m_cv_count-m_order
+        m_knot[span_index+m_order-2] < m_knot[span_index+m_order-1]
+  Returns:
+    True if the span was successfully removed.
+  Remarks:
+    The NURBS curve must have 2 or more spans (m_cv_count > m_order).
+    Set m0 = mulitiplicity of the knot at m_knot[span_index+m_order-2]
+    and m1 = mulitiplicity of the knot at m_knot[span_index+m_order-1].
+    If (m0 + m1) < degree, then the degree-(m0+m1) cvs will be added
+    to the NURBS curve. If (m0+m1) > degree, then (m0+m1)-degree cvs will
+    be removed from the curve.
+  See Also:
+    ON_NurbsCurve::RepairBadKnots()
+    ON_NurbsCurve::RemoveShortSegments()
+  */
+  bool RemoveSpan(
+    int span_index 
+    );
+
+  /*
+  Returns:
+    Number of spans removed.
+  */
+  int RemoveSingularSpans();
 
   ////////
   // Returns true if the NURBS curve has bezier spans 

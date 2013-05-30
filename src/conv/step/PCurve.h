@@ -1,7 +1,7 @@
 /*                 PCurve.h
  * BRL-CAD
  *
- * Copyright (c) 1994-2012 United States Government as represented by
+ * Copyright (c) 1994-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -32,26 +32,30 @@
 class Surface;
 class DefinitionalRepresentation;
 
-class PCurve : public Curve {
+class PCurve : public Curve
+{
 private:
-	static string entityname;
+    static string entityname;
+    static EntityInstanceFunc GetInstance;
 
 protected:
-	Surface *basis_surface;
-	DefinitionalRepresentation *reference_to_curve;
+    Surface *basis_surface;
+    DefinitionalRepresentation *reference_to_curve;
 
 public:
-	PCurve();
-	virtual ~PCurve();
-	PCurve(STEPWrapper *sw,int step_id);
-	virtual curve_type CurveType() { return PCURVE; };
-	bool Load(STEPWrapper *sw,SDAI_Application_instance *sse);
-	virtual const double *PointAtEnd();
-	virtual const double *PointAtStart();
-	virtual void Print(int level);
+    PCurve();
+    virtual ~PCurve();
+    PCurve(STEPWrapper *sw, int step_id);
+    virtual curve_type CurveType() {
+	return PCURVE;
+    };
+    bool Load(STEPWrapper *sw, SDAI_Application_instance *sse);
+    virtual const double *PointAtEnd();
+    virtual const double *PointAtStart();
+    virtual void Print(int level);
 
-	//static methods
-	static STEPEntity *Create(STEPWrapper *sw,SDAI_Application_instance *sse);
+    //static methods
+    static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
 #endif /* PCURVE_H_ */

@@ -1,7 +1,7 @@
 /*                 CompositeCurve.h
  * BRL-CAD
  *
- * Copyright (c) 1994-2012 United States Government as represented by
+ * Copyright (c) 1994-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -32,25 +32,27 @@
 class CompositeCurveSegment;
 typedef list<CompositeCurveSegment *> LIST_OF_SEGMENTS;
 
-class CompositeCurve : public BoundedCurve {
+class CompositeCurve : public BoundedCurve
+{
 private:
-	static string entityname;
+    static string entityname;
+    static EntityInstanceFunc GetInstance;
 
 protected:
-	LIST_OF_SEGMENTS segments;
-	Logical self_intersect;
+    LIST_OF_SEGMENTS segments;
+    Logical self_intersect;
 
 public:
-	CompositeCurve();
-	virtual ~CompositeCurve();
-	CompositeCurve(STEPWrapper *sw,int step_id);
-	bool Load(STEPWrapper *sw,SDAI_Application_instance *sse);
-	virtual const double *PointAtEnd();
-	virtual const double *PointAtStart();
-	virtual void Print(int level);
+    CompositeCurve();
+    virtual ~CompositeCurve();
+    CompositeCurve(STEPWrapper *sw, int step_id);
+    bool Load(STEPWrapper *sw, SDAI_Application_instance *sse);
+    virtual const double *PointAtEnd();
+    virtual const double *PointAtStart();
+    virtual void Print(int level);
 
-	//static methods
-	static STEPEntity *Create(STEPWrapper *sw,SDAI_Application_instance *sse);
+    //static methods
+    static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
 #endif /* COMPOSITECURVE_H_ */

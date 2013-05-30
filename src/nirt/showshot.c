@@ -1,7 +1,7 @@
 /*                      S H O W S H O T . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2012 United States Government as represented by
+ * Copyright (c) 2004-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -49,14 +49,16 @@ main (int argc, char **argv)
     char *nlp;			/* Location of newline in buf */
     char rname[BUF_LEN];	/* Name of current region */
     char rayname[BUF_LEN];	/* Name of ray */
-    fastf_t ray_radius = 1.0;	/* Thickness of the RCC */
     int i;			/* Index into rname */
     int line_nm = 0;		/* Number of current line of input */
     int opt;			/* Command-line option returned by bu_getopt */
     int pid;			/* Process ID for unique group name */
-    point_t entryp = VINIT_ZERO;	/* Ray's entry into current region */
-    point_t exitp = VINIT_ZERO;		/* Ray's exit from current region */
     point_t first_entryp = VINIT_ZERO;	/* Ray's entry into the entire geometry */
+
+    /* intentionally double for scan */
+    double ray_radius = 1.0;	/* Thickness of the RCC */
+    double entryp[3] = VINIT_ZERO;	/* Ray's entry into current region */
+    double exitp[3] = VINIT_ZERO;		/* Ray's exit from current region */
 
     pid = bu_process_id();
 
@@ -105,11 +107,11 @@ main (int argc, char **argv)
 	    *nlp = '\0';
 
 	/* Skip initial white space */
-	while (isspace(*bp))
+	while (isspace((int)*bp))
 	    ++bp;
 
 	/* Get region name */
-	for (i = 0; ! isspace(*bp) && (*bp != '\0'); ++i, ++bp)
+	for (i = 0; ! isspace((int)*bp) && (*bp != '\0'); ++i, ++bp)
 	    rname[i] = *bp;
 	rname[i] = '\0';
 

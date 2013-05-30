@@ -1,8 +1,9 @@
 /* $NoKeywords: $ */
 /*
 //
-// Copyright (c) 1993-2007 Robert McNeel & Associates. All rights reserved.
-// Rhinoceros is a registered trademark of Robert McNeel & Assoicates.
+// Copyright (c) 1993-2012 Robert McNeel & Associates. All rights reserved.
+// OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
+// McNeel & Associates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
@@ -247,35 +248,6 @@ Returns:
 ON_DECL
 ON_UUID ON_GetMostRecentClassIdCreateUuid();
 
-typedef int (*ON_Vtable_func)(void);
-
-struct ON_Vtable
-{
-  // The actual number of virtual functions depends on the class.
-  // The four in f[4] is just there to make it easy to see the 
-  // first four in the debugger.  There can be fewer or more
-  // than four virtual functions.  The function prototype
-  // also depends on the class defintion.  In particular,
-  // it is probably not int function(void).
-  ON_Vtable_func f[4];
-};
-
-/*
-Description:
-  Expert user function to get a pointer to 
-  a class's vtable.
-Parameters:
-  pClass - [in] a class that has a vtable.
-    If you pass a class that does not have
-    a vtable, then the returned pointer is
-    garbage.
-Returns:
-  A pointer to the vtable.
-*/
-ON_DECL
-struct ON_Vtable* ON_ClassVtable(void* p);
-
-
 /*
 All classes derived from ON_Object must have 
 
@@ -384,6 +356,18 @@ ON_DLL_TEMPLATE template class ON_CLASS ON_ClassArray<ON_UserString>;
 #pragma warning( pop )
 #endif
 
+/*
+Description:
+  When ON_Object::IsValid() fails and returns false, ON_IsNotValid()
+  is called.  This way, a developer can put a breakpoint in
+  ON_IsNotValid() and stop execution at the exact place IsValid()
+  fails.
+Returns:
+  false;
+*/
+ON_DECL
+bool ON_IsNotValid();
+
 ////////////////////////////////////////////////////////////////
 
 // Description:
@@ -426,26 +410,16 @@ public:
 
 public:
 
-#if defined(ON_DLL_EXPORTS) || defined(ON_DLL_IMPORTS)
-  // See comments at the top of opennurbs_object.cpp for details.
-
-  // new/delete
-  void* operator new(size_t);
-  void  operator delete(void*);
-
-  // array new/delete
-  void* operator new[] (size_t);
-  void  operator delete[] (void*);
-
-  // in place new/delete
-  void* operator new(size_t,void*);
-  void  operator delete(void*,void*);
-#endif
-
   ON_Object();
   ON_Object( const ON_Object& );
   ON_Object& operator=( const ON_Object& );
   virtual ~ON_Object();
+
+  /*
+  Description:
+    Sets m_user_data_list = 0.
+  */
+  void EmergencyDestroy();
 
   /*
   Description:
@@ -638,18 +612,14 @@ public:
   virtual
   ON_UUID ModelObjectId() const;
 
-  /////////////////////////////////////////////////////////////////
+  //////////////////////////////////////////////////////////////////
   //
-  // User data provides a standard way for extra information to
-  // be attached to any class derived from ON_Object.  The attached
-  // information can persist and be transformed.  If you use user
-  // data, please carefully read all the comments from here to the
-  // end of the file.
+  // BEGIN: User string support
   //
 
   /*
   Description:
-    Attach a user string to an object.  This information will
+    Attach a user string to the object.  This information will
     perisist through copy construction, operator=, and file IO.
   Parameters:
     key - [in] id used to retrieve this string.
@@ -665,7 +635,24 @@ public:
 
   /*
   Description:
-    Get user string from an object.
+    Append entries to the user string list
+  Parameters:
+    count - [in]
+      number of element in us[] array
+    user_strings - [in]
+      entries to append.
+    bReplace - [in]
+      If bReplace is true, then existing entries with the same key are
+      updated with the new entry's value.  If bReplace is false, then
+      existing entries are not updated.
+  Returns:
+    Number of entries added, deleted, or modified.
+  */
+  int SetUserStrings( int count, const ON_UserString* user_strings, bool bReplace );
+
+  /*
+  Description:
+    Get user string from the object.
   Parameters:
     key - [in] id used to retrieve the string.
     string_value - [out]
@@ -679,7 +666,7 @@ public:
 
   /*
   Description:
-    Get a list of all user strings on an object.
+    Get a list of all user strings on the object.
   Parameters:
     user_strings - [out]
       user strings are appended to this list.
@@ -692,7 +679,7 @@ public:
 
   /*
   Description:
-    Get a list of all user string keys on an object.
+    Get a list of all user string keys on the object.
   Parameters:
     user_string_keys - [out]
       user string keys are appended to this list.
@@ -702,6 +689,26 @@ public:
   int GetUserStringKeys( 
     ON_ClassArray<ON_wString>& user_string_keys 
     ) const;
+
+  /*
+  Returns:
+    Number of user strings on the object.
+  */
+  int UserStringCount() const;
+
+  //
+  // END: User string support
+  //
+  //////////////////////////////////////////////////////////////////
+
+  /////////////////////////////////////////////////////////////////
+  //
+  // User data provides a standard way for extra information to
+  // be attached to any class derived from ON_Object.  The attached
+  // information can persist and be transformed.  If you use user
+  // data, please carefully read all the comments from here to the
+  // end of the file.
+  //
 
   /*
   Description:
@@ -843,7 +850,6 @@ public:
   virtual
   void DestroyRuntimeCache( bool bDelete = true );
 
-  ON_MEMORY_POOL* m_mempool; // memory pool for this object (typically null)
 private:
   friend int ON_BinaryArchive::ReadObject( ON_Object** );
   friend bool ON_BinaryArchive::WriteObject( const ON_Object& );

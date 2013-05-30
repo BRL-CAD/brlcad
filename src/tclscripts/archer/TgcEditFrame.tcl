@@ -1,7 +1,7 @@
 #                T G C E D I T F R A M E . T C L
 # BRL-CAD
 #
-# Copyright (c) 2002-2012 United States Government as represented by
+# Copyright (c) 2002-2013 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -38,6 +38,7 @@
 	method initGeometry {gdata}
 	method updateGeometry {}
 	method createGeometry {obj}
+	method moveElement {_dm _obj _vx _vy _ocenter}
 	method p {obj args}
     }
 
@@ -54,9 +55,9 @@
 	common setHV   10
 	common setHVAB 11
 	common rotH    12
-	common rotHAB  13
-	common moveH   14
-	common moveHH  15
+	common rotAB  13
+	common moveHR  14
+	common moveH  15
 
 	variable mVx ""
 	variable mVy ""
@@ -168,9 +169,31 @@
 	H [list 0 0 [expr {$mDelta * 3.0}]] \
 	A [list $mDelta 0 0] \
 	B [list 0 $mDelta 0] \
-	C {0.0 0.0 0.0} \
-	D {0.0 0.0 0.0}
+	C [list $mDelta 0 0] \
+	D [list 0 $mDelta 0]
 }
+
+
+::itcl::body TgcEditFrame::moveElement {_dm _obj _vx _vy _ocenter} {
+    set param1 [string tolower $GeometryEditFrame::mEditParam1]
+    switch -- $param1 {
+	h -
+	hr {
+	    set h [$itk_option(-mged) get $itk_option(-geometryObject) H]
+	    set v [$itk_option(-mged) get $itk_option(-geometryObject) V]
+	    set model_h [::vadd2 $h $v]
+	    set view_h [$itk_option(-mged) pane_m2v_point $_dm $model_h]
+	    set vz [lindex $view_h 2]
+	    set new_view_h [list $_vx $_vy $vz]
+	    set new_model_h [$itk_option(-mged) pane_v2m_point $_dm $new_view_h]
+	    $itk_option(-mged) ptranslate $_obj $mEditParam1 $new_model_h
+	}
+	default {
+	    $::ArcherCore::application putString "TgcEditFrame:moveTgcElement: bad parameter - $mEditParam1"
+	}
+    }
+}
+
 
 ::itcl::body TgcEditFrame::p {obj args} {
     switch -- $GeometryEditFrame::mEditClass \
@@ -233,14 +256,14 @@
 	$rotH {
 	    $::ArcherCore::application p_protate $obj h $args
 	} \
-	$rotHAB {
+	$rotAB {
 	    $::ArcherCore::application p_protate $obj hab $args
+	} \
+	$moveHR {
+	    $::ArcherCore::application p_ptranslate $obj hr $args
 	} \
 	$moveH {
 	    $::ArcherCore::application p_ptranslate $obj h $args
-	} \
-	$moveHH {
-	    $::ArcherCore::application p_ptranslate $obj hh $args
 	}
 
     return ""
@@ -287,19 +310,19 @@
 	::ttk::entry $parent.tgcVxE \
 	    -textvariable [::itcl::scope mVx] \
 	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add tgcVyE {
 	::ttk::entry $parent.tgcVyE \
 	    -textvariable [::itcl::scope mVy] \
 	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add tgcVzE {
 	::ttk::entry $parent.tgcVzE \
 	    -textvariable [::itcl::scope mVz] \
 	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add tgcVUnitsL {
 	::ttk::label $parent.tgcVUnitsL \
@@ -315,19 +338,19 @@
 	::ttk::entry $parent.tgcHxE \
 	    -textvariable [::itcl::scope mHx] \
 	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add tgcHyE {
 	::ttk::entry $parent.tgcHyE \
 	    -textvariable [::itcl::scope mHy] \
 	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add tgcHzE {
 	::ttk::entry $parent.tgcHzE \
 	    -textvariable [::itcl::scope mHz] \
 	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add tgcHUnitsL {
 	::ttk::label $parent.tgcHUnitsL \
@@ -344,21 +367,21 @@
 	    -textvariable [::itcl::scope mAx] \
 	    -state disabled \
 	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add tgcAyE {
 	::ttk::entry $parent.tgcAyE \
 	    -textvariable [::itcl::scope mAy] \
 	    -state disabled \
 	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add tgcAzE {
 	::ttk::entry $parent.tgcAzE \
 	    -textvariable [::itcl::scope mAz] \
 	    -state disabled \
 	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add tgcAUnitsL {
 	::ttk::label $parent.tgcAUnitsL \
@@ -375,21 +398,21 @@
 	    -textvariable [::itcl::scope mBx] \
 	    -state disabled \
 	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add tgcByE {
 	::ttk::entry $parent.tgcByE \
 	    -textvariable [::itcl::scope mBy] \
 	    -state disabled \
 	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add tgcBzE {
 	::ttk::entry $parent.tgcBzE \
 	    -textvariable [::itcl::scope mBz] \
 	    -state disabled \
 	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add tgcBUnitsL {
 	::ttk::label $parent.tgcBUnitsL \
@@ -406,21 +429,21 @@
 	    -textvariable [::itcl::scope mCx] \
 	    -state disabled \
 	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add tgcCyE {
 	::ttk::entry $parent.tgcCyE \
 	    -textvariable [::itcl::scope mCy] \
 	    -state disabled \
 	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add tgcCzE {
 	::ttk::entry $parent.tgcCzE \
 	    -textvariable [::itcl::scope mCz] \
 	    -state disabled \
 	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add tgcCUnitsL {
 	::ttk::label $parent.tgcCUnitsL \
@@ -437,21 +460,21 @@
 	    -textvariable [::itcl::scope mDx] \
 	    -state disabled \
 	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add tgcDyE {
 	::ttk::entry $parent.tgcDyE \
 	    -textvariable [::itcl::scope mDy] \
 	    -state disabled \
 	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add tgcDzE {
 	::ttk::entry $parent.tgcDzE \
 	    -textvariable [::itcl::scope mDz] \
 	    -state disabled \
 	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add tgcDUnitsL {
 	::ttk::label $parent.tgcDUnitsL \
@@ -554,9 +577,11 @@
 		   A set Set B set Set C set Set D set Set \
 		   AB set Set CD set Set ABCD set Set \
 		   H set Set HV set Set HVAB set Set HCD set Set \
-		   H rot Rotate HAB rot Rotate H move Move HH move Move \
+		   H rot Rotate AB rot Rotate HR move {Move End} \
+		   H move {Move End} \
 		  ]
 
+    set row 0
     foreach {attribute op opLabel} $alist {
 	itk_component add $op$attribute {
 	    ::ttk::radiobutton $parent.$op\_$attribute \
@@ -566,10 +591,11 @@
 		-command [::itcl::code $this initEditState]
 	} {}
 
-	pack $itk_component($op$attribute) \
-	    -anchor w \
-	    -expand yes
+	grid $itk_component($op$attribute) -row $row -column 0 -sticky nsew
+	incr row
     }
+
+    grid rowconfigure $parent $row -weight 1
 }
 
 ::itcl::body TgcEditFrame::updateGeometryIfMod {} {
@@ -670,97 +696,88 @@
 
 ::itcl::body TgcEditFrame::initEditState {} {
     set mEditPCommand [::itcl::code $this p]
+    configure -valueUnits "mm"
 
     switch -- $mEditMode \
 	$setA {
 	    set mEditCommand pscale
 	    set mEditClass $EDIT_CLASS_SCALE
 	    set mEditParam1 a
-	    configure -valueUnits "mm"
 	} \
 	$setB {
 	    set mEditCommand pscale
 	    set mEditClass $EDIT_CLASS_SCALE
 	    set mEditParam1 b
-	    configure -valueUnits "mm"
 	} \
 	$setC {
 	    set mEditCommand pscale
 	    set mEditClass $EDIT_CLASS_SCALE
 	    set mEditParam1 c
-	    configure -valueUnits "mm"
 	} \
 	$setD {
 	    set mEditCommand pscale
 	    set mEditClass $EDIT_CLASS_SCALE
 	    set mEditParam1 d
-	    configure -valueUnits "mm"
 	} \
 	$setAB {
 	    set mEditCommand pscale
 	    set mEditClass $EDIT_CLASS_SCALE
 	    set mEditParam1 ab
-	    configure -valueUnits "mm"
 	} \
 	$setCD {
 	    set mEditCommand pscale
 	    set mEditClass $EDIT_CLASS_SCALE
 	    set mEditParam1 cd
-	    configure -valueUnits "mm"
 	} \
 	$setABCD {
 	    set mEditCommand pscale
 	    set mEditClass $EDIT_CLASS_SCALE
 	    set mEditParam1 abcd
-	    configure -valueUnits "mm"
 	} \
 	$setH {
 	    set mEditCommand pscale
 	    set mEditClass $EDIT_CLASS_SCALE
 	    set mEditParam1 h
-	    configure -valueUnits "mm"
 	} \
 	$setHCD {
 	    set mEditCommand pscale
 	    set mEditClass $EDIT_CLASS_SCALE
 	    set mEditParam1 hcd
-	    configure -valueUnits "mm"
 	} \
 	$setHV {
 	    set mEditCommand pscale
 	    set mEditClass $EDIT_CLASS_SCALE
 	    set mEditParam1 hv
-	    configure -valueUnits "mm"
 	} \
 	$setHVAB {
 	    set mEditCommand pscale
 	    set mEditClass $EDIT_CLASS_SCALE
 	    set mEditParam1 hvab
-	    configure -valueUnits "mm"
 	} \
 	$rotH {
 	    set mEditCommand protate
 	    set mEditClass $EDIT_CLASS_ROT
 	    set mEditParam1 h
-	    configure -valueUnits "mm"
 	} \
-	$rotHAB {
+	$rotAB {
 	    set mEditCommand protate
 	    set mEditClass $EDIT_CLASS_ROT
 	    set mEditParam1 hab
-	    configure -valueUnits "mm"
+	} \
+	$moveHR {
+	    set mEditCommand ptranslate
+	    set mEditClass $EDIT_CLASS_TRANS
+	    set mEditParam1 hr
 	} \
 	$moveH {
 	    set mEditCommand ptranslate
 	    set mEditClass $EDIT_CLASS_TRANS
 	    set mEditParam1 h
-	    configure -valueUnits "mm"
 	} \
-	$moveHH {
-	    set mEditCommand ptranslate
-	    set mEditClass $EDIT_CLASS_TRANS
-	    set mEditParam1 hh
-	    configure -valueUnits "mm"
+	default {
+	    set mEditCommand ""
+	    set mEditPCommand ""
+	    set mEditParam1 ""
 	}
 
     GeometryEditFrame::initEditState

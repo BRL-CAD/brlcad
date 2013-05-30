@@ -1,7 +1,7 @@
 /*                          N U R B . C
  * BRL-CAD
  *
- * Copyright (c) 1987-2012 United States Government as represented by
+ * Copyright (c) 1987-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,6 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+
 /** @file libwdb/nurb.c
  *
  * Library for writing NURB objects into
@@ -40,18 +41,13 @@
 #include "rtgeom.h"
 #include "wdb.h"
 
-/**
- * M K _ B S P L I N E
- *
- * Output an array of B-spline (NURBS) surfaces which comprise a
- * solid.  The surface is freed when it is written.
- */
+
 int
 mk_bspline(struct rt_wdb *wdbp, const char *name, struct face_g_snurb **surfs)
 {
     struct rt_nurb_internal *ni;
 
-    BU_GET(ni, struct rt_nurb_internal);
+    BU_ALLOC(ni, struct rt_nurb_internal);
     ni->magic = RT_NURB_INTERNAL_MAGIC;
     ni->srfs = surfs;
 

@@ -17,8 +17,6 @@
 <!-- body begins here -->
 <refsynopsisdiv xml:id="synopsis">
   <cmdsynopsis sepchar=" ">
-    <!-- hv3 hack to prevent line insertion -->
-    <link linkend="dummy_id">&#09;</link>
     <command xml:id="dummy_id">edit</command>
     <arg>
       <synopfragmentref linkend="subcommands">subcommand</synopfragmentref>
@@ -38,7 +36,6 @@
       </group>
     </synopfragment>
 
-    <sbr/>
     <synopfragment xml:id="args">
       <group><synopfragmentref linkend="from">from</synopfragmentref></group>
       <arg choice="plain">
@@ -49,7 +46,6 @@
       </arg>
     </synopfragment>
 
-    <sbr/>
     <synopfragment xml:id="from">
       <arg><option>-n</option></arg>
       <arg choice="plain"><option>-k</option></arg>
@@ -63,12 +59,11 @@
       </group>
     </synopfragment>
 
-    <sbr/>
     <synopfragment xml:id="to">
       <arg><option>-n</option></arg>
       <group>
-	<arg choice="plain"><option choice="plain">-a</option></arg>
-	<arg choice="plain"><option choice="plain">-r</option></arg>
+	<arg choice="plain"><option>-a</option></arg>
+	<arg choice="plain"><option>-r</option></arg>
       </group>
       <group choice="req">
 	<arg choice="plain">
@@ -80,7 +75,6 @@
       </group>
     </synopfragment>
 
-    <sbr/>
     <synopfragment xml:id="pos">
       <group choice="plain">
 	<arg choice="req">
@@ -118,7 +112,6 @@
       </group>
     </synopfragment>
 
-    <sbr/>
     <synopfragment xml:id="obj">
       <arg choice="plain">
 	<arg><replaceable>path/</replaceable></arg>
@@ -129,7 +122,6 @@
       </arg>
     </synopfragment>
 
-    <sbr/>
     <synopfragment xml:id="coord">
       <arg choice="plain"><replaceable>x</replaceable></arg>
       <arg>
@@ -141,7 +133,7 @@
 </refsynopsisdiv>
 
 <refsection xml:id="description">
-  <info><title>DESCRIPTION</title></info>
+  <title>DESCRIPTION</title>
   <para>
     Operates on objects in the database, solely through the use
     of <emphasis>subcommand</emphasis>s. The flexibility of the
@@ -150,15 +142,15 @@
     Coordinates in model space, offsets, and objects are all
     accepted interchangeably as reference points. A single
     reference point is equivalent to an absolute point in model
-    space. A pair of refence points specifies a distance or an
+    space. A pair of reference points specifies a distance or an
     angle, and is supplied as a set of
     <emphasis>from</emphasis> - <emphasis>to</emphasis> arguments (a
     <emphasis>from</emphasis> argument is similar to the concept
     of a keypoint). Reference points may be incomplete, and
     specify only one or two coordinates.
-  </para> 
+  </para>
   <para>
-    The format of the standard options accepted by subcommands, 
+    The format of the standard options accepted by subcommands,
     <option>-n</option>,
     <option>-k</option>,
     <option>-a</option>/<option>-r</option>, and
@@ -169,9 +161,9 @@
   </para>
   <para>
     All edit commands interpret a lone point
-    (<arg choice="plain"> . </arg>) as a special
+    (<command> . </command>) as a special
     operator, called the batch operator. The batch operator is
-    accepted as an argument to the options 
+    accepted as an argument to the options
     <option>-k</option>, <option>-a</option>, and <option>-r</option>.
     In a batch operation, each individual
     <emphasis>object</emphasis> is operated on using the bounding
@@ -195,15 +187,14 @@
 
   <para>
     The quantity and arrangement of standard <command>edit</command>
-    arguments as well as their intepretation depends upon the
+    arguments as well as their interpretation depends upon the
     subcommand. See the manual page for a given subcommand for more
-    information on its usage:<sbr/>
-    <prompt>&gt; </prompt>
-    <userinput>man edit_<replaceable>subcommandName</replaceable></userinput>
+    information on its usage:
+    <literallayout><prompt>&gt; </prompt> <userinput>man edit_<replaceable>subcommandName</replaceable></userinput></literallayout>
   </para>
 </refsection>
 
-<refsection xml:id="options"><info><title>OPTIONS</title></info>
+<refsection xml:id="options"><title>OPTIONS</title>
   <variablelist remap="TP">
     <varlistentry>
       <term><option>-n</option></term>
@@ -221,7 +212,7 @@
 	<para>
 	  Sets the keypoint <emphasis>from</emphasis> to either
 	  <emphasis>from_object</emphasis>'s bounding box center or
-	  <emphasis>from_position</emphasis>. 
+	  <emphasis>from_position</emphasis>.
 	</para>
       </listitem>
     </varlistentry>
@@ -231,7 +222,7 @@
 	<para>
 	  Sets the destination point <emphasis>to</emphasis> to
 	  either <emphasis>to_object</emphasis>'s bounding box center
-	  or <emphasis>to_position</emphasis>. 
+	  or <emphasis>to_position</emphasis>.
 	</para>
       </listitem>
     </varlistentry>
@@ -239,7 +230,7 @@
       <term><option>-r</option></term>
       <listitem>
 	<para>
-	  Sets the destination point <emphasis>to</emphasis> to 
+	  Sets the destination point <emphasis>to</emphasis> to
 	  a point offset by <emphasis>to_position</emphasis> from
 	  the <emphasis>from</emphasis> point.
 	</para>
@@ -247,11 +238,9 @@
     </varlistentry>
     <varlistentry>
       <term>
-	<group choice="plain">
-	  <arg choice="plain"><option>-x</option></arg>
-	  <arg choice="plain"><option>-y</option></arg>
-	  <arg choice="plain"><option>-z</option></arg>
-	  </group>
+	  <option>-x</option>
+	  <option>-y</option>
+	  <option>-z</option>
       </term>
       <listitem>
 	<para>
@@ -262,17 +251,18 @@
   </variablelist>
 </refsection>
 
-<refsection xml:id="examples"><info><title>EXAMPLES</title></info>
+<refsection xml:id="examples"><title>EXAMPLES</title>
   <example>
-    <info><title>
+    <title>
       Get the authoritative list of available subcommands.
-    </title></info>
+    </title>
     <variablelist>
       <varlistentry>
 	<term>
 	  <prompt>&gt; </prompt>
 	  <userinput>edit</userinput>
 	</term>
+    <listitem><para/></listitem>
       </varlistentry>
       <varlistentry>
 	<term>
@@ -288,32 +278,33 @@
     </variablelist>
   </example>
 
-  <example><info><title>Get the usage of a subcommand.</title></info>
+  <example><title>Get the usage of a subcommand.</title>
     <variablelist>
       <varlistentry>
-        <term>
-          <prompt>&gt; </prompt>
-          <userinput>edit translate</userinput>
-        </term>
-        <listitem>
-          <para>
+	<term>
+	  <prompt>&gt; </prompt>
+	  <userinput>edit translate</userinput>
+	</term>
+	<listitem>
+	  <para>
 	    Print usage of the translate subcommand
-          </para>
+	  </para>
 	</listitem>
       </varlistentry>
     </variablelist>
   </example>
 
   <example>
-    <info><title>
+    <title>
       Use the help subcommand to print extended usage of subcommands.
-    </title></info>
+    </title>
     <variablelist>
       <varlistentry>
 	<term>
 	  <prompt>&gt; </prompt>
 	  <userinput>edit translate help</userinput>
 	</term>
+    <listitem><para/></listitem>
       </varlistentry>
 
       <varlistentry>
@@ -335,19 +326,19 @@
   </example>
 
   <example>
-    <info><title>
+    <title>
 	A fake subcommand is used to show how standard
 	<command>edit</command> arguments and nonstandard
 	<command>edit</command> arguments are used.
-    </title></info>
+    </title>
     <variablelist>
       <varlistentry>
-        <term>
-          <prompt>&gt; </prompt>
-          <userinput>edit fake_subcmd -B 12 -k sph.s 1.5 7 -a 0 0 0 cube.s</userinput>
-        </term>
-        <listitem>
-          <para>
+	<term>
+	  <prompt>&gt; </prompt>
+	  <userinput>edit fake_subcmd -B 12 -k sph.s 1.5 7 -a 0 0 0 cube.s</userinput>
+	</term>
+	<listitem>
+	  <para>
 	    The nonstandard <option>-B</option> option is unique to
 	    <command>fake_subcmd</command>. An explanation of how it
 	    is used would be found in the manual for fake_subcmd, if
@@ -359,18 +350,18 @@
 	    The interpretation of the vector created by these points
 	    would be defined in the <command>fake_subcmd</command>
 	    manual.
-          </para>
+	  </para>
 	</listitem>
       </varlistentry>
     </variablelist>
   </example>
-       
+
 </refsection>
 
-<info><corpauthor>BRL-CAD Team</corpauthor></info>
+<refsection xml:id="author"><title>AUTHOR</title><para>BRL-CAD Team</para></refsection>
 
-<refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
-  
+<refsection xml:id="bug_reports"><title>BUG REPORTS</title>
+
   <para>
     Reports of bugs or problems should be submitted via electronic
     mail to &lt;devs@brlcad.org&gt;, or via the "cadbug.sh" script.

@@ -1,7 +1,7 @@
 /*                       G E N E R I C . C
  * BRL-CAD
  *
- * Copyright (c) 1989-2012 United States Government as represented by
+ * Copyright (c) 1989-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -210,7 +210,7 @@ rt_generic_make(const struct rt_functab *ftp, struct rt_db_internal *intern)
     BU_ASSERT(&rt_functab[intern->idb_type] == ftp);
 
     intern->idb_meth = ftp;
-    intern->idb_ptr = bu_calloc((unsigned int)ftp->ft_internal_size, 1, "rt_generic_make");
+    intern->idb_ptr = bu_calloc(1, (unsigned int)ftp->ft_internal_size, "rt_generic_make");
     *((uint32_t *)(intern->idb_ptr)) = ftp->ft_internal_magic;
 }
 

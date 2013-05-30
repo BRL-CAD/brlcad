@@ -1,7 +1,7 @@
 /*                         H M E N U . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2012 United States Government as represented by
+ * Copyright (c) 2004-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -445,7 +445,7 @@ hmenuhit(HMenu *menup, int menux, int menuy)
 	/*prnt_HMllist( llhead.next );*/
 
 	/* Steal the field that the user isn't using temporarily to
-	   emmulate the static allocation of menu items.
+	   emulate the static allocation of menu items.
 	*/
 	if ( i > 0 )
 	{

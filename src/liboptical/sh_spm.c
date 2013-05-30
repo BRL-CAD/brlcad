@@ -1,7 +1,7 @@
 /*                        S H _ S P M . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2012 United States Government as represented by
+ * Copyright (c) 1986-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -46,7 +46,7 @@ struct spm_specific {
 #define SP_O(m) bu_offsetof(struct spm_specific, m)
 
 struct bu_structparse spm_parse[] = {
-    {"%s",	SPM_NAME_LEN, "file",		bu_offsetofarray(struct spm_specific, sp_file),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%s",	SPM_NAME_LEN, "file",		SP_O(sp_file),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%d",	1, "w",		SP_O(sp_w),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%d",	1, "n",		SP_O(sp_w),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },	/*compat*/
     {"",	0, (char *)0,	0,		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
@@ -86,7 +86,7 @@ spm_render(struct application *UNUSED(ap), const struct partition *UNUSED(pp), s
     VSET(swp->sw_color,
 	 ((double)cp[RED])/256.,
 	 ((double)cp[GRN])/256.,
-	 ((double)cp[BLU])/256.);
+	 ((double)cp[BLU])/256.0);
     return 1;
 }
 
@@ -101,7 +101,7 @@ spm_mfree(genptr_t cp)
     if (spm->sp_map)
 	bn_spm_free(spm->sp_map);
     spm->sp_map = BN_SPM_MAP_NULL;
-    bu_free(cp, "spm_specific");
+    BU_PUT(cp, struct spm_specific);
 }
 
 
@@ -127,7 +127,7 @@ spm_setup(register struct region *UNUSED(rp), struct bu_vls *matparm, genptr_t *
     spp->sp_file[0] = '\0';
     spp->sp_w = -1;
     if (bu_struct_parse(matparm, spm_parse, (char *)spp) < 0) {
-	bu_free((genptr_t)spp, "spm_specific");
+	BU_PUT(spp, struct spm_specific);
 	return -1;
     }
     if (spp->sp_w < 0) spp->sp_w = 512;
@@ -158,7 +158,6 @@ spm_print(register struct region *rp, genptr_t dp)
     (void)bu_struct_print("spm_print", spm_parse, (char *)dp);
     if (spm->sp_map) bn_spm_dump(spm->sp_map, 0);
 }
-
 
 
 /*

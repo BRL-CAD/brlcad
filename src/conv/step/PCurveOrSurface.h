@@ -1,7 +1,7 @@
 /*                 PCurveOrSurface.h
  * BRL-CAD
  *
- * Copyright (c) 1994-2012 United States Government as represented by
+ * Copyright (c) 1994-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -32,31 +32,33 @@
 class PCurve;
 class Surface;
 
-class PCurveOrSurface : virtual public STEPEntity {
+class PCurveOrSurface : virtual public STEPEntity
+{
 public:
     enum pcurve_or_surface_type {
-    	PCURVE,
-    	SURFACE,
-    	UNKNOWN
+	PCURVE,
+	SURFACE,
+	UNKNOWN
     };
 
 private:
-	static string entityname;
+    static string entityname;
+    static EntityInstanceFunc GetInstance;
 
 protected:
-	PCurve *pcurve;
-	Surface *surface;
-	pcurve_or_surface_type type;
+    PCurve *pcurve;
+    Surface *surface;
+    pcurve_or_surface_type type;
 
 public:
-	PCurveOrSurface();
-	virtual ~PCurveOrSurface();
-	PCurveOrSurface(STEPWrapper *sw,int step_id);
-	bool Load(STEPWrapper *sw,SDAI_Select *sse);
-	virtual void Print(int level);
+    PCurveOrSurface();
+    virtual ~PCurveOrSurface();
+    PCurveOrSurface(STEPWrapper *sw, int step_id);
+    bool Load(STEPWrapper *sw, SDAI_Select *sse);
+    virtual void Print(int level);
 
-	//static methods
-	static STEPEntity *Create(STEPWrapper *sw,SDAI_Application_instance *sse);
+    //static methods
+    static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
 #endif /* PCURVEORSURFACE_H_ */

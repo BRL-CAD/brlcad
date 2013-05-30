@@ -1,7 +1,7 @@
 /*                         P L O T 3 . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2012 United States Government as represented by
+ * Copyright (c) 2004-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -21,11 +21,12 @@
 /** @{ */
 /** @file plot3.h
  *
- * This is a ANSI C header for LIBPLOT3 giving function prototypes.
- * This header file will also work if called by a "traditional" C
- * compiler.
+ *  The basic UNIX-plot routines.  The calling sequence is the same as
+ *  the original Bell Labs routines, with the exception of the pl_
+ *  prefix on the name.
  *
  */
+
 #ifndef	PLOT3_H
 #define	PLOT3_H
 
@@ -39,6 +40,7 @@ extern "C" {
 #include "vmath.h"
 #include "bn.h"
 
+
 #define	pl_mat_idn( _mat )		MAT_IDN( _mat )
 #define pl_mat_zero( _mat )		MAT_ZERO( _mat )
 #define pl_mat_copy( _mat1, _mat2 )	MAT_COPY( _mat1, _mat2 )
@@ -46,11 +48,7 @@ extern "C" {
 #define PL_OUTPUT_MODE_BINARY 0
 #define PL_OUTPUT_MODE_TEXT 1
 
-/*
- *  The basic UNIX-plot routines.
- *  The calling sequence is the same as the original Bell Labs routines,
- *  with the exception of the pl_ prefix on the name.
- */
+
 BN_EXPORT extern int pl_getOutputMode();
 BN_EXPORT extern void pl_setOutputMode(int mode);
 BN_EXPORT extern void pl_point(FILE *plotfp,
@@ -62,7 +60,7 @@ BN_EXPORT extern void pl_line(FILE *plotfp,
 		     int tx,
 		     int ty);
 BN_EXPORT extern void pl_linmod(FILE *plotfp,
-		     char *s);
+		     const char *s);
 BN_EXPORT extern void pl_move(FILE *plotfp,
 		     int x,
 		     int y);
@@ -70,7 +68,7 @@ BN_EXPORT extern void pl_cont(FILE *plotfp,
 		     int x,
 		     int y);
 BN_EXPORT extern void pl_label(FILE *plotfp,
-		     char *s);
+		     const char *s);
 BN_EXPORT extern void pl_space(FILE *plotfp,
 		     int x_1,
 		     int y_1,
@@ -238,10 +236,26 @@ BN_EXPORT extern void pdv_3ray(FILE *fp,
 
 #define PL_FORTRAN(lc, uc)	BU_FORTRAN(lc, uc)
 
+/**
+ * Take a set of x, y coordinates, and plot them as a polyline, i.e.,
+ * connect them with line segments.  For markers, use tp_mlist(),
+ * below.  This "C" interface expects arrays of INTs.
+ */
 BN_EXPORT extern void tp_i2list(FILE *fp,
 		     int *x,
 		     int *y,
 		     int npoints);
+
+/**
+ * Take a set of x, y coordinates, and plot them as a polyline, i.e.,
+ * connect them with line segments.  For markers, use tp_mlist(),
+ * below.  This "C" interface expects arrays of DOUBLES.
+ *
+ * NOTE: tp_2list() and tp_3list() are good candidates to become
+ * intrinsic parts of plot3.c, for efficiency reasons.
+ *
+ * Originally written in August 04, 1978
+ */
 BN_EXPORT extern void tp_2list(FILE *fp,
 		     double *x,
 		     double *y,
@@ -250,6 +264,13 @@ BN_EXPORT extern void BU_FORTRAN(f2list, F2LIST)(FILE **fpp,
 		     float *x,
 		     float *y,
 		     int *n);
+
+/**
+ * NOTE: tp_2list() and tp_3list() are good candidates to become
+ * intrinsic parts of plot3.c, for efficiency reasons.
+ *
+ * Originally written in August 04, 1978
+ */
 BN_EXPORT extern void tp_3list(FILE *fp,
 		     double *x,
 		     double *y,
@@ -260,6 +281,27 @@ BN_EXPORT extern void BU_FORTRAN(f3list, F3LIST)(FILE **fpp,
 		     float *y,
 		     float *z,
 		     int *n);
+
+/**
+ * Take a set of x, y co-ordinates and plots them, with a combination
+ * of connecting lines and/or place markers.  It is important to note
+ * that the arrays are arrays of doubles, and express UNIX-plot
+ * coordinates in the current pl_space().
+ *
+ * tp_scale(TIG) may be called first to optionally re-scale the data.
+ *
+ * The 'mark' character to be used for marking points off can be any
+ * printing ASCII character, or 001 to 005 for the special marker
+ * characters.
+ *
+ * In addition, the value of the 'flag' variable determines the type
+ * of line to be drawn, as follows:
+ *
+ *@li	0	Draw nothing (rather silly)
+ *@li	1	Marks only, no connecting lines.  Suggested interval=1.
+ *@li	2	Draw connecting lines only.
+ *@li	3	Draw line and marks
+ */
 BN_EXPORT extern void tp_2mlist(FILE *fp,
 		     double *x,
 		     double *y,
@@ -268,6 +310,10 @@ BN_EXPORT extern void tp_2mlist(FILE *fp,
 		     int mark,
 		     int interval,
 		     double size);
+
+/**
+ * This FORTRAN interface expects arrays of REALs (single precision).
+ */
 BN_EXPORT extern void BU_FORTRAN(f2mlst, F2MLST)(FILE **fp,
 		     float *x,
 		     float *y,
@@ -374,7 +420,22 @@ BN_EXPORT extern void tp_sep(float x,
 		     int *ex);
 BN_EXPORT extern double tp_ipow(double x,
 		     int n);
-#ifdef __VMATH_H__
+
+
+/**
+ * This routine is used to generate an axis for a graph.  It draws an
+ * axis with a linear scale, places tic marks every inch, labels the
+ * tics, and uses the supplied title for the axis.
+ *
+ * The strategy behind this routine is to split the axis into
+ * SEGMENTS, which run from one tick to the next.  The origin of the
+ * first segment (x, y), the origin of the bottom of the first tick
+ * (xbott, ybott), and the origin of the first tick label (xnum, ynum)
+ * are computed along with the delta x and delta y (xincr, yincr)
+ * which describes the interval to the start of the next tick.
+ *
+ * Originally written on August 01, 1978
+ */
 BN_EXPORT extern void tp_3axis(FILE *fp,
 		     char *string,
 		     point_t origin,
@@ -418,7 +479,6 @@ BN_EXPORT extern void BU_FORTRAN(f3vect, F3VECT)(FILE **fp,
 		     float *tz,
 		     float *fl,
 		     float *tl);
-#endif /* __VMATH_H__ */
 
 #ifdef __cplusplus
 }

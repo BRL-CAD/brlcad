@@ -1,7 +1,7 @@
 /*                   F B _ P A G E D _ I O . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2012 United States Government as represented by
+ * Copyright (c) 1986-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -39,7 +39,7 @@
 #define PAGE_SCANS (ifp->if_ppixels/ifp->if_width)
 
 #define Malloc_Bomb(_bytes_)					\
-    fb_log("\"%s\"(%d) : allocation of %d bytes failed.\n",	\
+    fb_log("\"%s\"(%d) : allocation of %lu bytes failed.\n",	\
 	   __FILE__, __LINE__, _bytes_)
 
 

@@ -1,7 +1,7 @@
 /*                        S H _ T O O N . C
  * BRL-CAD
  *
- * Copyright (c) 2010-2012 United States Government as represented by
+ * Copyright (c) 2010-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -60,8 +60,6 @@ struct toon_specific toon_defaults = {
 
 #define SHDR_NULL ((struct toon_specific *)0)
 #define SHDR_O(m) bu_offsetof(struct toon_specific, m)
-#define SHDR_AO(m) bu_offsetofarray(struct toon_specific, m)
-
 
 /* description of how to parse/print the arguments to the shader
  * There is at least one line here for each variable in the shader specific
@@ -163,7 +161,7 @@ toon_print(register struct region *rp, genptr_t dp)
 HIDDEN void
 toon_free(genptr_t cp)
 {
-    bu_free(cp, "toon_specific");
+    BU_PUT(cp, struct toon_specific);
 }
 
 
@@ -213,7 +211,7 @@ toon_render(struct application *ap, const struct partition *pp, struct shadework
 	VSCALE(swp->sw_color, swp->sw_color, scale);
 	return 1;
     }
-    
+
     /* no paths to light source, so just paint it black */
     VSETALL(swp->sw_color, 0);
 

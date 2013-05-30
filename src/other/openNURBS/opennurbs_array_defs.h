@@ -1,8 +1,9 @@
 /* $NoKeywords: $ */
 /*
 //
-// Copyright (c) 1993-2007 Robert McNeel & Associates. All rights reserved.
-// Rhinoceros is a registered trademark of Robert McNeel & Assoicates.
+// Copyright (c) 1993-2012 Robert McNeel & Associates. All rights reserved.
+// OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
+// McNeel & Associates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
@@ -132,6 +133,12 @@ int ON_SimpleArray<T>::Count() const
 }
 
 template <class T>
+unsigned int ON_SimpleArray<T>::UnsignedCount() const
+{
+  return ((unsigned int)m_count);
+}
+
+template <class T>
 int ON_SimpleArray<T>::Capacity() const
 {
   return m_capacity;
@@ -144,6 +151,13 @@ unsigned int ON_SimpleArray<T>::SizeOfArray() const
 }
 
 template <class T>
+unsigned int ON_SimpleArray<T>::SizeOfElement() const
+{
+  return ((unsigned int)(sizeof(T)));
+}
+
+
+template <class T>
 ON__UINT32 ON_SimpleArray<T>::DataCRC(ON__UINT32 current_remainder) const
 {
   return ON_CRC32(current_remainder,m_count*sizeof(m_a[0]),m_a);
@@ -153,7 +167,47 @@ template <class T>
 T& ON_SimpleArray<T>::operator[]( int i )
 { 
 #if defined(ON_DEBUG)
-  ON_ASSERT( i >=0 && i < m_capacity);
+  if ( i < 0 || i > m_capacity )
+  {
+    ON_ERROR("ON_SimpleArray[i]: i out of range.");
+  }
+#endif
+  return m_a[i]; 
+}
+
+template <class T>
+T& ON_SimpleArray<T>::operator[]( unsigned int i )
+{ 
+#if defined(ON_DEBUG)
+  if ( i > (unsigned int)m_capacity )
+  {
+    ON_ERROR("ON_SimpleArray[i]: i out of range.");
+  }
+#endif
+  return m_a[i]; 
+}
+
+
+template <class T>
+T& ON_SimpleArray<T>::operator[]( ON__INT64 i )
+{ 
+#if defined(ON_DEBUG)
+  if ( i < 0 || i > (ON__INT64)m_capacity )
+  {
+    ON_ERROR("ON_SimpleArray[i]: i out of range.");
+  }
+#endif
+  return m_a[i]; 
+}
+
+template <class T>
+T& ON_SimpleArray<T>::operator[]( ON__UINT64 i )
+{ 
+#if defined(ON_DEBUG)
+  if ( i > (ON__UINT64)m_capacity )
+  {
+    ON_ERROR("ON_SimpleArray[i]: i out of range.");
+  }
 #endif
   return m_a[i]; 
 }
@@ -162,10 +216,51 @@ template <class T>
 const T& ON_SimpleArray<T>::operator[](int i) const
 {
 #if defined(ON_DEBUG)
-  ON_ASSERT( i >=0 && i < m_capacity);
+  if ( i < 0 || i > m_capacity )
+  {
+    ON_ERROR("ON_SimpleArray[i]: i out of range.");
+  }
 #endif
   return m_a[i];
 }
+
+template <class T>
+const T& ON_SimpleArray<T>::operator[](unsigned int i) const
+{
+#if defined(ON_DEBUG)
+  if ( i > (unsigned int)m_capacity )
+  {
+    ON_ERROR("ON_SimpleArray[i]: i out of range.");
+  }
+#endif
+  return m_a[i];
+}
+
+
+template <class T>
+const T& ON_SimpleArray<T>::operator[](ON__INT64 i) const
+{
+#if defined(ON_DEBUG)
+  if ( i < 0 || i > ((ON__INT64)m_capacity) )
+  {
+    ON_ERROR("ON_SimpleArray[i]: i out of range.");
+  }
+#endif
+  return m_a[i];
+}
+
+template <class T>
+const T& ON_SimpleArray<T>::operator[](ON__UINT64 i) const
+{
+#if defined(ON_DEBUG)
+  if ( i > (ON__UINT64)m_capacity )
+  {
+    ON_ERROR("ON_SimpleArray[i]: i out of range.");
+  }
+#endif
+  return m_a[i];
+}
+
 
 template <class T>
 ON_SimpleArray<T>::operator T*()
@@ -195,18 +290,29 @@ template <class T>
 T* ON_SimpleArray<T>::KeepArray()
 {
   T* p = m_a;
+  m_a = 0;
   m_count = 0;
   m_capacity = 0;
-  m_a = NULL;
   return p;
 }
 
 template <class T>
 void ON_SimpleArray<T>::SetArray(T* p)
 {
+  if ( m_a && m_a != p )
+    onfree(m_a);
   m_a = p;
 }
 
+template <class T>
+void ON_SimpleArray<T>::SetArray(T* p, int count, int capacity)
+{
+  if ( m_a && m_a != p )
+    onfree(m_a);
+  m_a = p;
+  m_count = count;
+  m_capacity = capacity;
+}
 
 template <class T>
 T* ON_SimpleArray<T>::First()
@@ -227,9 +333,45 @@ T* ON_SimpleArray<T>::At( int i )
 }
 
 template <class T>
+T* ON_SimpleArray<T>::At( unsigned int i )
+{ 
+  return (i < (unsigned int)m_count) ? m_a+i : 0;
+}
+
+template <class T>
 const T* ON_SimpleArray<T>::At( int i) const
 {
   return (i >= 0 && i < m_count) ? m_a+i : 0;
+}
+
+template <class T>
+const T* ON_SimpleArray<T>::At( unsigned int i) const
+{
+  return (i < (unsigned int)m_count) ? m_a+i : 0;
+}
+
+template <class T>
+T* ON_SimpleArray<T>::At( ON__INT64 i )
+{ 
+  return (i >= 0 && i < (ON__INT64)m_count) ? m_a+i : 0;
+}
+
+template <class T>
+T* ON_SimpleArray<T>::At( ON__UINT64 i )
+{ 
+  return (i < (ON__UINT64)m_count) ? m_a+i : 0;
+}
+
+template <class T>
+const T* ON_SimpleArray<T>::At( ON__INT64 i) const
+{
+  return (i >= 0 && i < (ON__INT64)m_count) ? m_a+i : 0;
+}
+
+template <class T>
+const T* ON_SimpleArray<T>::At( ON__UINT64 i) const
+{
+  return (i < (ON__UINT64)m_count) ? m_a+i : 0;
 }
 
 template <class T>
@@ -455,6 +597,56 @@ int ON_SimpleArray<T>::BinarySearch( const T* key, int (*compar)(const T*,const 
 }
 
 /*
+int ON_SimpleArray<T>::BinarySearch( const T* key, int (*compar)(const T*,const T*), int count ) const
+{
+  if ( count > m_count )
+    count = m_count;
+  if ( count <= 0 )
+    return -1;
+  const T* found = (key&&m_a&&m_count>0) 
+                 ? (const T*)bsearch( key, m_a, count, sizeof(T), (int(*)(const void*,const void*))compar ) 
+                 : 0;
+
+  // This worked on a wide range of 32 bit compilers.
+
+  int rc;
+  if ( 0 != found )
+  {
+    // Convert "found" pointer to array index.
+
+#if defined(ON_COMPILER_MSC1300)
+    rc = ((int)(found - m_a));
+#elif 8 == ON_SIZEOF_POINTER
+    // In an ideal world, return ((int)(found - m_a)) would work everywhere.
+    // In practice, this should work any 64 bit compiler and we can hope
+    // the optimzer generates efficient code.
+    const ON__UINT64 fptr = (ON__UINT64)found;
+    const ON__UINT64 aptr = (ON__UINT64)m_a;
+    const ON__UINT64 sz   = (ON__UINT64)sizeof(T);
+    const ON__UINT64 i    = (fptr - aptr)/sz;
+    rc = (int)i;
+#else
+    // In an ideal world, return ((int)(found - m_a)) would work everywhere.
+    // In practice, this should work any 32 bit compiler and we can hope
+    // the optimzer generates efficient code.
+    const ON__UINT32 fptr = (ON__UINT32)found;
+    const ON__UINT32 aptr = (ON__UINT32)m_a;
+    const ON__UINT32 sz   = (ON__UINT32)sizeof(T);
+    const ON__UINT32 i    = (fptr - aptr)/sz;
+    rc = (int)i;
+#endif
+  }
+  else
+  {
+    // "key" not found
+    rc = -1;
+  }
+  return rc;
+}
+
+
+
+template <class T>
 Description:
   heap sort analogue of qsort()
 Parameters
@@ -527,7 +719,7 @@ bool ON_SimpleArray<T>::QuickSort( int (*compar)(const T*,const T*) )
   bool rc = false;
   if ( m_a && m_count > 0 && compar ) {
     if ( m_count > 1 )
-      qsort( m_a, m_count, sizeof(T), (int(*)(const void*,const void*))compar );
+      ON_qsort( m_a, m_count, sizeof(T), (int(*)(const void*,const void*))compar );
     rc = true;
   }
   return rc;
@@ -871,6 +1063,12 @@ int ON_ClassArray<T>::Count() const
 }
 
 template <class T>
+unsigned int ON_ClassArray<T>::UnsignedCount() const
+{
+  return ((unsigned int)m_count);
+}
+
+template <class T>
 int ON_ClassArray<T>::Capacity() const
 {
   return m_capacity;
@@ -883,10 +1081,56 @@ unsigned int ON_ClassArray<T>::SizeOfArray() const
 }
 
 template <class T>
+unsigned int ON_ClassArray<T>::SizeOfElement() const
+{
+  return ((unsigned int)(sizeof(T)));
+}
+
+template <class T>
 T& ON_ClassArray<T>::operator[]( int i )
 { 
 #if defined(ON_DEBUG)
-  ON_ASSERT( i >=0 && i < m_capacity);
+  if ( i < 0 || i > m_capacity )
+  {
+    ON_ERROR("ON_ClassArray[i]: i out of range.");
+  }
+#endif
+  return m_a[i]; 
+}
+
+
+template <class T>
+T& ON_ClassArray<T>::operator[]( ON__INT64 i )
+{ 
+#if defined(ON_DEBUG)
+  if ( i < 0 || i > (ON__INT64)m_capacity )
+  {
+    ON_ERROR("ON_ClassArray[i]: i out of range.");
+  }
+#endif
+  return m_a[i]; 
+}
+
+template <class T>
+T& ON_ClassArray<T>::operator[]( unsigned int i )
+{ 
+#if defined(ON_DEBUG)
+  if ( i > (unsigned int)m_capacity )
+  {
+    ON_ERROR("ON_ClassArray[i]: i out of range.");
+  }
+#endif
+  return m_a[i]; 
+}
+
+template <class T>
+T& ON_ClassArray<T>::operator[]( ON__UINT64 i )
+{ 
+#if defined(ON_DEBUG)
+  if ( i > (ON__UINT64)m_capacity )
+  {
+    ON_ERROR("ON_ClassArray[i]: i out of range.");
+  }
 #endif
   return m_a[i]; 
 }
@@ -895,7 +1139,46 @@ template <class T>
 const T& ON_ClassArray<T>::operator[](int i) const
 {
 #if defined(ON_DEBUG)
-  ON_ASSERT( i >=0 && i < m_capacity);
+  if ( i < 0 || i > m_capacity )
+  {
+    ON_ERROR("ON_ClassArray[i]: i out of range.");
+  }
+#endif
+  return m_a[i];
+}
+
+template <class T>
+const T& ON_ClassArray<T>::operator[](ON__INT64 i) const
+{
+#if defined(ON_DEBUG)
+  if ( i < 0 || i > (ON__INT64)m_capacity )
+  {
+    ON_ERROR("ON_ClassArray[i]: i out of range.");
+  }
+#endif
+  return m_a[i];
+}
+
+template <class T>
+const T& ON_ClassArray<T>::operator[](unsigned int i) const
+{
+#if defined(ON_DEBUG)
+  if ( i > (unsigned int)m_capacity )
+  {
+    ON_ERROR("ON_ClassArray[i]: i out of range.");
+  }
+#endif
+  return m_a[i];
+}
+ 
+template <class T>
+const T& ON_ClassArray<T>::operator[](ON__UINT64 i) const
+{
+#if defined(ON_DEBUG)
+  if ( i > (ON__UINT64)m_capacity )
+  {
+    ON_ERROR("ON_ClassArray[i]: i out of range.");
+  }
 #endif
   return m_a[i];
 }
@@ -928,16 +1211,28 @@ template <class T>
 T* ON_ClassArray<T>::KeepArray()
 {
   T* p = m_a;
+  m_a = 0;
   m_count = 0;
   m_capacity = 0;
-  m_a = NULL;
   return p;
 }
 
 template <class T>
 void ON_ClassArray<T>::SetArray(T* p)
 {
+  if ( m_a && m_a != p )
+    Destroy();
   m_a = p;
+}
+
+template <class T>
+void ON_ClassArray<T>::SetArray(T* p, int count, int capacity)
+{
+  if ( m_a && m_a != p )
+    Destroy();
+  m_a = p;
+  m_count = count;
+  m_capacity = capacity;
 }
 
 template <class T>
@@ -959,9 +1254,46 @@ T* ON_ClassArray<T>::At( int i )
 }
 
 template <class T>
+T* ON_ClassArray<T>::At( unsigned int i )
+{
+  return (i < (unsigned int)m_count) ? m_a+i : 0;
+}
+
+template <class T>
 const T* ON_ClassArray<T>::At( int i) const
 {
   return (i >= 0 && i < m_count) ? m_a+i : 0;
+}
+
+template <class T>
+const T* ON_ClassArray<T>::At( unsigned int i) const
+{
+  return (i < (unsigned int)m_count) ? m_a+i : 0;
+}
+
+
+template <class T>
+T* ON_ClassArray<T>::At( ON__INT64 i )
+{ 
+  return (i >= 0 && i < (ON__INT64)m_count) ? m_a+i : 0;
+}
+
+template <class T>
+T* ON_ClassArray<T>::At( ON__UINT64 i )
+{ 
+  return (i < (ON__UINT64)m_count) ? m_a+i : 0;
+}
+
+template <class T>
+const T* ON_ClassArray<T>::At( ON__INT64 i) const
+{
+  return (i >= 0 && i < (ON__INT64)m_count) ? m_a+i : 0;
+}
+
+template <class T>
+const T* ON_ClassArray<T>::At( ON__UINT64 i) const
+{
+  return (i < (ON__UINT64)m_count) ? m_a+i : 0;
 }
 
 template <class T>
@@ -995,7 +1327,11 @@ void ON_ClassArray<T>::Move( int dest_i, int src_i, int ele_cnt )
     SetCapacity( capacity );
   }
 
-  memmove( &m_a[dest_i], &m_a[src_i], ele_cnt*sizeof(T) );
+  // This call to memmove is ok, even when T is a class with a vtable
+  // because the it doesn't change the vtable for the class.
+  // Classes that have back pointers, like ON_UserData, are
+  // handled elsewhere and cannot be in ON_ClassArray<>s.
+  memmove( (void*)(&m_a[dest_i]), (const void*)(&m_a[src_i]), ele_cnt*sizeof(T) );
 }
 
 template <class T>
@@ -1091,7 +1427,9 @@ void ON_ClassArray<T>::Insert( int i, const T& x )
 	  m_count++;
     if ( i < m_count-1 ) {
       Move( i+1, i, m_count-1-i );
-      memset( &m_a[i], 0, sizeof(T) );
+      // This call to memset is ok even when T has a vtable
+      // because in-place construction is used later.
+      memset( (void*)(&m_a[i]), 0, sizeof(T) );
       ConstructDefaultElement( &m_a[i] );
     }
     else {
@@ -1113,9 +1451,13 @@ void ON_ClassArray<T>::Remove( int i )
   if ( i >= 0 && i < m_count ) 
   {
     DestroyElement( m_a[i] );
-    memset( &m_a[i], 0, sizeof(T) );
+    // This call to memset is ok even when T has a vtable
+    // because in-place construction is used later.
+    memset( (void*)(&m_a[i]), 0, sizeof(T) );
     Move( i, i+1, m_count-1-i );
-    memset( &m_a[m_count-1], 0, sizeof(T) );
+    // This call to memset is ok even when T has a vtable
+    // because in-place construction is used later.
+    memset( (void*)(&m_a[m_count-1]), 0, sizeof(T) );
     ConstructDefaultElement(&m_a[m_count-1]);
     m_count--;
   }
@@ -1127,7 +1469,9 @@ void ON_ClassArray<T>::Empty()
   int i;
   for ( i = m_count-1; i >= 0; i-- ) {
     DestroyElement( m_a[i] );
-    memset( &m_a[i], 0, sizeof(T) );
+    // This call to memset is ok even when T has a vtable
+    // because in-place construction is used later.
+    memset( (void*)(&m_a[i]), 0, sizeof(T) );
     ConstructDefaultElement( &m_a[i] );
   }
   m_count = 0;
@@ -1185,6 +1529,23 @@ int ON_ClassArray<T>::BinarySearch( const T* key, int (*compar)(const T*,const T
 }
 
 template <class T>
+int ON_ClassArray<T>::BinarySearch( const T* key, int (*compar)(const T*,const T*), int count ) const
+{
+  if ( count > m_count )
+    count = m_count;
+  if ( count <= 0 )
+    return -1;
+  const T* found = (key&&m_a&&m_count>0) ? (const T*)bsearch( key, m_a, count, sizeof(T), (int(*)(const void*,const void*))compar ) : 0;
+#if defined(ON_COMPILER_MSC1300)
+  // for 32 and 64 bit compilers - the (int) converts 64 bit size_t 
+  return found ? ((int)(found - m_a)) : -1;
+#else
+  // for lamer 64 bit compilers
+  return found ? ((int)((((ON__UINT64)found) - ((ON__UINT64)m_a))/sizeof(T))) : -1;
+#endif
+}
+
+template <class T>
 bool ON_ClassArray<T>::HeapSort( int (*compar)(const T*,const T*) )
 {
   bool rc = false;
@@ -1204,7 +1565,7 @@ bool ON_ClassArray<T>::QuickSort( int (*compar)(const T*,const T*) )
   if ( m_a && m_count > 0 && compar ) 
   {
     if ( m_count > 1 )
-      qsort( m_a, m_count, sizeof(T), (int(*)(const void*,const void*))compar );
+      ON_qsort( m_a, m_count, sizeof(T), (int(*)(const void*,const void*))compar );
     rc = true;
   }
   return rc;
@@ -1247,7 +1608,7 @@ bool ON_ObjectArray<T>::QuickSort( int (*compar)(const T*,const T*) )
   {
     if ( this->m_count > 1 )
     {
-      qsort( this->m_a, this->m_count, sizeof(T), (int(*)(const void*,const void*))compar );
+      ON_qsort( this->m_a, this->m_count, sizeof(T), (int(*)(const void*,const void*))compar );
 
       // The MemoryRelocate step is required to synch userdata back pointers
       // so the user data destructor will work correctly.
@@ -1317,7 +1678,9 @@ void ON_ClassArray<T>::Zero()
   if ( m_a && m_capacity > 0 ) {
     for ( i = m_capacity-1; i >= 0; i-- ) {
       DestroyElement(m_a[i]);
-      memset( &m_a[i], 0, sizeof(T) );
+      // This call to memset is ok even when T has a vtable
+      // because in-place construction is used later.
+      memset( (void*)(&m_a[i]), 0, sizeof(T) );
       ConstructDefaultElement(&m_a[i]);
     }
   }
@@ -1375,7 +1738,11 @@ void ON_ClassArray<T>::SetCapacity( int capacity )
     // initialize new elements with default constructor
     if ( 0 != m_a )
     {
-      memset( m_a + m_capacity, 0, (capacity-m_capacity)*sizeof(T) );
+      // even when m_a is an array of classes with vtable pointers,
+      // this call to memset(..., 0, ...) is what I want to do
+      // because in-place construction will be used when needed
+      // on this memory.
+      memset( (void*)(m_a + m_capacity), 0, (capacity-m_capacity)*sizeof(T) );
       for ( i = m_capacity; i < capacity; i++ ) {
         ConstructDefaultElement(&m_a[i]);
       }

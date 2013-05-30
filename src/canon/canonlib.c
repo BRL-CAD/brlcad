@@ -1,7 +1,7 @@
 /*                      C A N O N L I B . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2012 United States Government as represented by
+ * Copyright (c) 2004-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -149,7 +149,7 @@ int parse_args(ac, av)
 	switch (c) {
 	    case 'a'	: autosize = !autosize; break;
 	    case 'c'	: clear = !clear; break;
-	    case 'd'	: if (isprint(*bu_optarg)) {
+	    case 'd'	: if (isprint((int)*bu_optarg)) {
 		memset(scsi_device, 0, sizeof(scsi_device));
 		bu_strlcpy(scsi_device, bu_optarg, sizeof(scsi_device));
 	    } else

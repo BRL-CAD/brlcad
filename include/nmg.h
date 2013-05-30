@@ -1,7 +1,7 @@
 /*                           N M G . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2012 United States Government as represented by
+ * Copyright (c) 2004-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -88,7 +88,7 @@
 /* Boolean operations */
 #define NMG_BOOL_SUB   1	/**< @brief subtraction */
 #define NMG_BOOL_ADD   2	/**< @brief addition/union */
-#define NMG_BOOL_ISECT 4	/**< @brief intsersection */
+#define NMG_BOOL_ISECT 4	/**< @brief intersection */
 
 /* Boolean classifications */
 #define NMG_CLASS_Unknown   -1
@@ -232,7 +232,7 @@ struct nmgregion_a {
  * enclose either volume or surface area.
  *
  * The wire edgeuses are disconnected line segments.  There is a
- * special interpetation to the eu_hd list of wire edgeuses.  Unlike
+ * special interpretation to the eu_hd list of wire edgeuses.  Unlike
  * edgeuses seen in loops, the eu_hd list contains eu1, eu1mate, eu2,
  * eu2mate, ..., where each edgeuse and its mate comprise a
  * *non-connected* "wire" edge which starts at eu1->vu_p->v_p and ends
@@ -547,11 +547,7 @@ struct vertexuse_a_cnurb {
  * storage de-allocation support
  * OBSOLETE
  */
-#define NMG_FREESTRUCT(ptr, str) { \
-    memset((char *)(ptr), 0, sizeof(struct str)); \
-    bu_free((char *)(ptr), "freestruct " #str); \
-    (ptr) = NULL; \
-}
+#define NMG_FREESTRUCT(ptr, str) BU_PUT(ptr, struct str)
 
 
 /*
@@ -564,29 +560,8 @@ struct vertexuse_a_cnurb {
 #define NMG_INCR_INDEX(_p, _m)	\
 	NMG_CK_MODEL(_m); (_p)->index = ((_m)->maxindex)++
 
-#if 1
-#define GET_REGION(p, m)            {p = (struct nmgregion *)bu_pool_get(sizeof(struct nmgregion)); NMG_INCR_INDEX(p, m);}
-#define GET_REGION_A(p, m)          {p = (struct nmgregion_a *)bu_pool_get(sizeof(struct nmgregion_a)); NMG_INCR_INDEX(p, m);}
-#define GET_SHELL(p, m)             {p = (struct shell *)bu_pool_get(sizeof(struct shell)); NMG_INCR_INDEX(p, m);}
-#define GET_SHELL_A(p, m)           {p = (struct shell_a *)bu_pool_get(sizeof(struct shell_a)); NMG_INCR_INDEX(p, m);}
-#define GET_FACE(p, m)              {p = (struct face *)bu_pool_get(sizeof(struct face)); NMG_INCR_INDEX(p, m);}
-#define GET_FACE_G_PLANE(p, m)      {p = (struct face_g_plane *)bu_pool_get(sizeof(struct face_g_plane)); NMG_INCR_INDEX(p, m);}
-#define GET_FACE_G_SNURB(p, m)      {p = (struct face_g_snurb *)bu_pool_get(sizeof(struct face_g_snurb)); NMG_INCR_INDEX(p, m);}
-#define GET_FACEUSE(p, m)           {p = (struct faceuse *)bu_pool_get(sizeof(struct faceuse)); NMG_INCR_INDEX(p, m);}
-#define GET_LOOP(p, m)              {p = (struct loop *)bu_pool_get(sizeof(struct loop)); NMG_INCR_INDEX(p, m);}
-#define GET_LOOP_G(p, m)            {p = (struct loop_g *)bu_pool_get(sizeof(struct loop_g)); NMG_INCR_INDEX(p, m);}
-#define GET_LOOPUSE(p, m)           {p = (struct loopuse *)bu_pool_get(sizeof(struct loopuse)); NMG_INCR_INDEX(p, m);}
-#define GET_EDGE(p, m)              {p = (struct edge *)bu_pool_get(sizeof(struct edge)); NMG_INCR_INDEX(p, m);}
-#define GET_EDGE_G_LSEG(p, m)       {p = (struct edge_g_lseg *)bu_pool_get(sizeof(struct edge_g_lseg)); NMG_INCR_INDEX(p, m);}
-#define GET_EDGE_G_CNURB(p, m)      {p = (struct edge_g_cnurb *)bu_pool_get(sizeof(struct edge_g_cnurb)); NMG_INCR_INDEX(p, m);}
-#define GET_EDGEUSE(p, m)           {p = (struct edgeuse *)bu_pool_get(sizeof(struct edgeuse)); NMG_INCR_INDEX(p, m);}
-#define GET_VERTEX(p, m)            {p = (struct vertex *)bu_pool_get(sizeof(struct vertex)); NMG_INCR_INDEX(p, m);}
-#define GET_VERTEX_G(p, m)          {p = (struct vertex_g *)bu_pool_get(sizeof(struct vertex_g)); NMG_INCR_INDEX(p, m);}
-#define GET_VERTEXUSE(p, m)         {p = (struct vertexuse *)bu_pool_get(sizeof(struct vertexuse)); NMG_INCR_INDEX(p, m);}
-#define GET_VERTEXUSE_A_PLANE(p, m) {p = (struct vertexuse_a_plane *)bu_pool_get(sizeof(struct vertexuse_a_plane)); NMG_INCR_INDEX(p, m);}
-#define GET_VERTEXUSE_A_CNURB(p, m) {p = (struct vertexuse_a_cnurb *)bu_pool_get(sizeof(struct vertexuse_a_cnurb)); NMG_INCR_INDEX(p, m);}
-#else
-/* there was no get model */
+
+#define GET_MODEL(p, m)             {NMG_GETSTRUCT(p, model); NMG_INCR_INDEX(p, m);}
 #define GET_REGION(p, m)            {NMG_GETSTRUCT(p, nmgregion); NMG_INCR_INDEX(p, m);}
 #define GET_REGION_A(p, m)          {NMG_GETSTRUCT(p, nmgregion_a); NMG_INCR_INDEX(p, m);}
 #define GET_SHELL(p, m)             {NMG_GETSTRUCT(p, shell); NMG_INCR_INDEX(p, m);}
@@ -598,7 +573,7 @@ struct vertexuse_a_cnurb {
 #define GET_LOOP(p, m)              {NMG_GETSTRUCT(p, loop); NMG_INCR_INDEX(p, m);}
 #define GET_LOOP_G(p, m)            {NMG_GETSTRUCT(p, loop_g); NMG_INCR_INDEX(p, m);}
 #define GET_LOOPUSE(p, m)           {NMG_GETSTRUCT(p, loopuse); NMG_INCR_INDEX(p, m);}
-/* there was no get loopuse_a */
+#define GET_LOOPUSE_A(p, m)         {NMG_GETSTRUCT(p, loopuse_a); NMG_INCR_INDEX(p, m);}
 #define GET_EDGE(p, m)              {NMG_GETSTRUCT(p, edge); NMG_INCR_INDEX(p, m);}
 #define GET_EDGE_G_LSEG(p, m)       {NMG_GETSTRUCT(p, edge_g_lseg); NMG_INCR_INDEX(p, m);}
 #define GET_EDGE_G_CNURB(p, m)      {NMG_GETSTRUCT(p, edge_g_cnurb); NMG_INCR_INDEX(p, m);}
@@ -608,32 +583,8 @@ struct vertexuse_a_cnurb {
 #define GET_VERTEXUSE(p, m)         {NMG_GETSTRUCT(p, vertexuse); NMG_INCR_INDEX(p, m);}
 #define GET_VERTEXUSE_A_PLANE(p, m) {NMG_GETSTRUCT(p, vertexuse_a_plane); NMG_INCR_INDEX(p, m);}
 #define GET_VERTEXUSE_A_CNURB(p, m) {NMG_GETSTRUCT(p, vertexuse_a_cnurb); NMG_INCR_INDEX(p, m);}
-#endif
 
-#if 1
-#define FREE_MODEL(p)             NMG_FREESTRUCT(p, model)
-#define FREE_REGION(p)            {bu_pool_put((void *)p, sizeof(struct nmgregion));}
-#define FREE_REGION_A(p)          {bu_pool_put((void *)p, sizeof(struct nmgregion_a));}
-#define FREE_SHELL(p)             {bu_pool_put((void *)p, sizeof(struct shell));}
-#define FREE_SHELL_A(p)           {bu_pool_put((void *)p, sizeof(struct shell_a));}
-#define FREE_FACE(p)              {bu_pool_put((void *)p, sizeof(struct face));}
-#define FREE_FACE_G_PLANE(p)      {bu_pool_put((void *)p, sizeof(struct face_g_plane));}
-#define FREE_FACE_G_SNURB(p)      {bu_pool_put((void *)p, sizeof(struct face_g_snurb));}
-#define FREE_FACEUSE(p)           {bu_pool_put((void *)p, sizeof(struct faceuse));}
-#define FREE_LOOP(p)              {bu_pool_put((void *)p, sizeof(struct loop));}
-#define FREE_LOOP_G(p)            {bu_pool_put((void *)p, sizeof(struct loop_g));}
-#define FREE_LOOPUSE(p)           {bu_pool_put((void *)p, sizeof(struct loopuse));}
-#define FREE_LOOPUSE_A(p)         NMG_FREESTRUCT(p, loopuse_a)
-#define FREE_EDGE(p)              {bu_pool_put((void *)p, sizeof(struct edge));}
-#define FREE_EDGE_G_LSEG(p)       {bu_pool_put((void *)p, sizeof(struct edge_g_lseg));}
-#define FREE_EDGE_G_CNURB(p)      {bu_pool_put((void *)p, sizeof(struct edge_g_cnurb));}
-#define FREE_EDGEUSE(p)           {bu_pool_put((void *)p, sizeof(struct edgeuse));}
-#define FREE_VERTEX(p)            {bu_pool_put((void *)p, sizeof(struct vertex));}
-#define FREE_VERTEX_G(p)          {bu_pool_put((void *)p, sizeof(struct vertex_g));}
-#define FREE_VERTEXUSE(p)         {bu_pool_put((void *)p, sizeof(struct vertexuse));}
-#define FREE_VERTEXUSE_A_PLANE(p) {bu_pool_put((void *)p, sizeof(struct vertexuse_a_plane));}
-#define FREE_VERTEXUSE_A_CNURB(p) {bu_pool_put((void *)p, sizeof(struct vertexuse_a_cnurb));}
-#else
+
 #define FREE_MODEL(p)             NMG_FREESTRUCT(p, model)
 #define FREE_REGION(p)            NMG_FREESTRUCT(p, nmgregion)
 #define FREE_REGION_A(p)          NMG_FREESTRUCT(p, nmgregion_a)
@@ -656,7 +607,7 @@ struct vertexuse_a_cnurb {
 #define FREE_VERTEXUSE(p)         NMG_FREESTRUCT(p, vertexuse)
 #define FREE_VERTEXUSE_A_PLANE(p) NMG_FREESTRUCT(p, vertexuse_a_plane)
 #define FREE_VERTEXUSE_A_CNURB(p) NMG_FREESTRUCT(p, vertexuse_a_cnurb)
-#endif
+
 
 /**
  * Do two edgeuses share the same two vertices? If yes, eu's should be
@@ -801,7 +752,7 @@ struct nmg_struct_counts {
 /**
  * Function table, for use with nmg_visit().
  *
- * Indended to have same generally the organization as
+ * Intended to have same generally the organization as
  * nmg_struct_counts.  The handler's args are long* to allow generic
  * handlers to be written, in which case the magic number at long*
  * specifies the object type.

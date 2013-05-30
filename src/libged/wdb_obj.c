@@ -1,7 +1,7 @@
 /*                       W D B _ O B J . C
  * BRL-CAD
  *
- * Copyright (c) 2000-2012 United States Government as represented by
+ * Copyright (c) 2000-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -72,7 +72,7 @@
 
 #define WDB_TCL_ALLOC_ERR { \
 	Tcl_AppendResult(wdbp->wdb_interp, "\
-An error has occured while adding a new object to the database.\n", (char *)NULL); \
+An error has occurred while adding a new object to the database.\n", (char *)NULL); \
 	WDB_TCL_ERROR_RECOVERY_SUGGESTION; }
 
 #define WDB_TCL_ALLOC_ERR_return { \
@@ -112,7 +112,7 @@ you should exit now, and resolve the I/O problem, before continuing.\n", (char *
 
 /* For errors from db_diradd() or db_alloc() */
 #define WDB_ALLOC_ERR { \
-	bu_log("\nAn error has occured while adding a new object to the database.\n"); \
+	bu_log("\nAn error has occurred while adding a new object to the database.\n"); \
 	WDB_ERROR_RECOVERY_SUGGESTION; }
 
 #define WDB_ALLOC_ERR_return { \
@@ -659,11 +659,11 @@ wdb_combadd(struct db_i *dbip,
 	/* Update the in-core directory */
 	dp = db_diradd(dbip, combname, RT_DIR_PHONY_ADDR, 0, flags, (genptr_t)&intern.idb_type);
 	if (dp == RT_DIR_NULL) {
-	    bu_log("An error has occured while adding '%s' to the database.\n", combname);
+	    bu_log("An error has occurred while adding '%s' to the database.\n", combname);
 	    return RT_DIR_NULL;
 	}
 
-	BU_GET(comb, struct rt_comb_internal);
+	BU_ALLOC(comb, struct rt_comb_internal);
 	intern.idb_ptr = (genptr_t)comb;
 	RT_COMB_INTERNAL_INIT(comb);
 
@@ -873,7 +873,7 @@ wdb_dir_getspace(struct db_i *dbip,
  *
  * Summarize the contents of the directory by categories
  * (solid, comb, region).  If flag is != 0, it is interpreted
- * as a request to print all the names in that category (eg, RT_DIR_SOLID).
+ * as a request to print all the names in that category (e.g., RT_DIR_SOLID).
  */
 static void
 wdb_dir_summary(struct db_i *dbip,
@@ -1125,6 +1125,7 @@ wdb_move_arb_edge_cmd(struct rt_wdb *wdbp,
     int edge;
     int bad_edge_id = 0;
     point_t pt;
+    double scan[3];
     struct bu_vls error_msg;
 
     if (argc != 4) {
@@ -1169,7 +1170,7 @@ wdb_move_arb_edge_cmd(struct rt_wdb *wdbp,
     }
     edge -= 1;
 
-    if (sscanf(argv[3], "%lf %lf %lf", &pt[X], &pt[Y], &pt[Z]) != 3) {
+    if (sscanf(argv[3], "%lf %lf %lf", &scan[X], &scan[Y], &scan[Z]) != 3) {
 	struct bu_vls vls;
 
 	bu_vls_init(&vls);
@@ -1180,6 +1181,8 @@ wdb_move_arb_edge_cmd(struct rt_wdb *wdbp,
 
 	return TCL_ERROR;
     }
+    /* convert double to fastf_t */
+    VMOVE(pt, scan);
 
     arb = (struct rt_arb_internal *)intern.idb_ptr;
     RT_ARB_CK_MAGIC(arb);
@@ -1297,8 +1300,10 @@ wdb_move_arb_face_cmd(struct rt_wdb *wdbp,
     fastf_t planes[7][4];		/* ARBs defining plane equations */
     int arb_type;
     int face;
-    point_t pt;
     struct bu_vls error_msg;
+
+    /* intentionally double for scan */
+    double pt[3];
 
     if (argc != 4) {
 	struct bu_vls vls;
@@ -1449,10 +1454,12 @@ wdb_rotate_arb_face_cmd(struct rt_wdb *wdbp,
     int arb_type;
     int face;
     int vi;
-    point_t pt;
     int i;
     int pnt5;		/* special arb7 case */
     struct bu_vls error_msg;
+
+    /* intentionally double for scan */
+    double pt[3];
 
     if (argc != 5) {
 	struct bu_vls vls;
@@ -1661,8 +1668,8 @@ wdb_prep_dbip(const char *filename)
     struct db_i *dbip;
 
     /* open database */
-    if (((dbip = db_open(filename, "r+w")) == DBI_NULL) &&
-	((dbip = db_open(filename, "r")) == DBI_NULL)) {
+    if (((dbip = db_open(filename, DB_OPEN_READWRITE)) == DBI_NULL) &&
+	((dbip = db_open(filename, DB_OPEN_READONLY)) == DBI_NULL)) {
 
 	/*
 	 * Check to see if we can access the database
@@ -2083,7 +2090,7 @@ wdb_put_cmd(struct rt_wdb *wdbp,
 
     /* place values in type at 0-14, place null terminator at 15 */
     for (i = 0; argv[2][i] != 0 && i < 15; i++) {
-	type[i] = isupper(argv[2][i]) ? tolower(argv[2][i]) : argv[2][i];
+	type[i] = isupper((int)argv[2][i]) ? tolower((int)argv[2][i]) : argv[2][i];
     }
     type[i] = '\0';
 
@@ -2483,11 +2490,11 @@ wdb_rt_gettrees_cmd(struct rt_wdb *wdbp,
      * which in this case would trash rt_uniresource.
      * Once on the rti_resources list, rt_clean() will clean 'em up.
      */
-    BU_GET(resp, struct resource);
+    BU_ALLOC(resp, struct resource);
     rt_init_resource(resp, 0, rtip);
     BU_ASSERT_PTR(BU_PTBL_GET(&rtip->rti_resources, 0), !=, NULL);
 
-    ap = (struct application *)bu_malloc(sizeof(struct application), "wdb_rt_gettrees_cmd: ap");
+    BU_ALLOC(ap, struct application);
     RT_APPLICATION_INIT(ap);
     ap->a_magic = RT_AP_MAGIC;
     ap->a_resource = resp;
@@ -3752,9 +3759,9 @@ wdb_copy_cmd(struct rt_wdb *wdbp,
     dp = db_diradd(wdbp->dbip, argv[2], RT_DIR_PHONY_ADDR, 0, proto->d_flags, (genptr_t)&proto->d_minor_type);
     if (dp == RT_DIR_NULL) {
 	if (wdbp->wdb_interp) {
-	    Tcl_AppendResult(wdbp->wdb_interp, "An error has occured while adding a new object to the database.", (char *)NULL);
+	    Tcl_AppendResult(wdbp->wdb_interp, "An error has occurred while adding a new object to the database.", (char *)NULL);
 	} else {
-	    bu_log("An error has occured while adding a new object to the database.");
+	    bu_log("An error has occurred while adding a new object to the database.");
 	}
 	return TCL_ERROR;
     }
@@ -4027,7 +4034,7 @@ wdb_move_all_cmd(struct rt_wdb *wdbp,
 
 /**
  * @brief
- * Rename all occurences of an object
+ * Rename all occurrences of an object
  *
  * @par Usage:
  * procname mvall from to
@@ -4131,7 +4138,7 @@ get_new_name(const char *name,
 	/* make sure it fits for v4 */
 	if (db_version(cc_data->old_dbip) < 5) {
 	    if (bu_vls_strlen(&new_name) > V4_MAXNAME) {
-		bu_log("ERROR: generated new name [%s] is too long (%ld > %ld)\n", bu_vls_addr(&new_name), bu_vls_strlen(&new_name), V4_MAXNAME);
+		bu_log("ERROR: generated new name [%s] is too long (%ld > %d)\n", bu_vls_addr(&new_name), bu_vls_strlen(&new_name), V4_MAXNAME);
 	    }
 	    return NULL;
 	}
@@ -4391,7 +4398,7 @@ wdb_concat_cmd(struct rt_wdb *wdbp,
     }
 
     /* open the input file */
-    if ((newdbp = db_open(oldfile, "r")) == DBI_NULL) {
+    if ((newdbp = db_open(oldfile, DB_OPEN_READONLY)) == DBI_NULL) {
 	bu_vls_free(&cc_data.affix);
 	perror(oldfile);
 	Tcl_AppendResult(wdbp->wdb_interp, "%s: Can't open ", argv[0], oldfile, (char *)NULL);
@@ -4785,7 +4792,7 @@ wdb_dup_cmd(struct rt_wdb *wdbp,
     }
 
     /* open the input file */
-    if ((newdbp = db_open(argv[1], "r")) == DBI_NULL) {
+    if ((newdbp = db_open(argv[1], DB_OPEN_READONLY)) == DBI_NULL) {
 	perror(argv[1]);
 	Tcl_AppendResult(wdbp->wdb_interp, "dup: Can't open ", argv[1], (char *)NULL);
 	return TCL_ERROR;
@@ -5226,7 +5233,7 @@ facetize_region_end(struct db_tree_state *UNUSED(tsp), const struct db_full_path
 
     if (*facetize_tree) {
 	union tree *tr;
-	BU_GET(tr, union tree);
+	BU_ALLOC(tr, union tree);
 	RT_TREE_INIT(tr);
 	tr->tr_op = OP_UNION;
 	tr->tr_b.tb_regionp = REGION_NULL;
@@ -5281,7 +5288,7 @@ wdb_facetize_cmd(struct rt_wdb *wdbp,
     init_state.ts_ttol = &wdbp->wdb_ttol;
     init_state.ts_tol = &wdbp->wdb_tol;
 
-    /* Initial vaues for options, must be reset each time */
+    /* Initial values for options, must be reset each time */
     triangulate = 0;
     make_bot = 1;
 
@@ -5633,7 +5640,7 @@ wdb_rmap_cmd(struct rt_wdb *wdbp,
 		if ((comb->region_id == itnp->id) ||
 		    (comb->aircode != 0 && -comb->aircode == itnp->id)) {
 		    /* add region name to our name list for this region */
-		    BU_GET(inp, struct wdb_id_names);
+		    BU_ALLOC(inp, struct wdb_id_names);
 		    bu_vls_init(&inp->name);
 		    bu_vls_strcpy(&inp->name, dp->d_namep);
 		    BU_LIST_INSERT(&itnp->headName.l, &inp->l);
@@ -5644,7 +5651,7 @@ wdb_rmap_cmd(struct rt_wdb *wdbp,
 
 	    if (!found) {
 		/* create new id_to_names node */
-		BU_GET(itnp, struct wdb_id_to_names);
+		BU_ALLOC(itnp, struct wdb_id_to_names);
 		if (0 < comb->region_id)
 		    itnp->id = comb->region_id;
 		else
@@ -5653,7 +5660,7 @@ wdb_rmap_cmd(struct rt_wdb *wdbp,
 		BU_LIST_INIT(&itnp->headName.l);
 
 		/* add region name to our name list for this region */
-		BU_GET(inp, struct wdb_id_names);
+		BU_ALLOC(inp, struct wdb_id_names);
 		bu_vls_init(&inp->name);
 		bu_vls_strcpy(&inp->name, dp->d_namep);
 		BU_LIST_INSERT(&itnp->headName.l, &inp->l);
@@ -5779,7 +5786,7 @@ wdb_which_cmd(struct rt_wdb *wdbp,
 
 		/* id not found */
 		if (BU_LIST_IS_HEAD(itnp, &headIdName.l)) {
-		    BU_GET(itnp, struct wdb_id_to_names);
+		    BU_ALLOC(itnp, struct wdb_id_to_names);
 		    itnp->id = start;
 		    BU_LIST_INSERT(&headIdName.l, &itnp->l);
 		    BU_LIST_INIT(&itnp->headName.l);
@@ -5804,7 +5811,7 @@ wdb_which_cmd(struct rt_wdb *wdbp,
 
 		    /* id not found */
 		    if (BU_LIST_IS_HEAD(itnp, &headIdName.l)) {
-			BU_GET(itnp, struct wdb_id_to_names);
+			BU_ALLOC(itnp, struct wdb_id_to_names);
 			itnp->id = id;
 			BU_LIST_INSERT(&headIdName.l, &itnp->l);
 			BU_LIST_INIT(&itnp->headName.l);
@@ -5831,7 +5838,7 @@ wdb_which_cmd(struct rt_wdb *wdbp,
 		if ((!isAir && comb->region_id == itnp->id) ||
 		    (isAir && comb->aircode == itnp->id)) {
 		    /* add region name to our name list for this region */
-		    BU_GET(inp, struct wdb_id_names);
+		    BU_ALLOC(inp, struct wdb_id_names);
 		    bu_vls_init(&inp->name);
 		    bu_vls_strcpy(&inp->name, dp->d_namep);
 		    BU_LIST_INSERT(&itnp->headName.l, &inp->l);
@@ -6162,8 +6169,8 @@ wdb_print_node(struct rt_wdb *wdbp,
 	return;
 
     /*
-     * This node is a combination (eg, a directory).
-     * Process all the arcs (eg, directory members).
+     * This node is a combination (e.g., a directory).
+     * Process all the arcs (e.g., directory members).
      */
 
     if (rt_db_get_internal(&intern, dp, wdbp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
@@ -6340,7 +6347,7 @@ wdb_tol_cmd(struct rt_wdb *wdbp,
     /* print all tolerance settings */
     if (argc == 1) {
 	Tcl_AppendResult(wdbp->wdb_interp, "Current tolerance settings are:\n", (char *)NULL);
-	Tcl_AppendResult(wdbp->wdb_interp, "Tesselation tolerances:\n", (char *)NULL);
+	Tcl_AppendResult(wdbp->wdb_interp, "Tessellation tolerances:\n", (char *)NULL);
 
 	if (wdbp->wdb_ttol.abs > 0.0) {
 	    bu_vls_init(&vls);
@@ -6603,7 +6610,7 @@ wdb_push_leaf(struct db_tree_state *tsp,
 /*
  * XXX - This will work but is not the best method.  dp->d_uses tells us
  * if this solid (leaf) has been seen before.  If it hasn't just add
- * it to the list.  If it has, search the list to see if the matricies
+ * it to the list.  If it has, search the list to see if the matrices
  * match and do the "right" thing.
  *
  * (There is a question as to whether dp->d_uses is reset to zero
@@ -6632,7 +6639,7 @@ wdb_push_leaf(struct db_tree_state *tsp,
 /*
  * This is the first time we have seen this solid.
  */
-    pip = (struct wdb_push_id *) bu_malloc(sizeof(struct wdb_push_id), "Push ident");
+    BU_ALLOC(pip, struct wdb_push_id);
     pip->magic = WDB_MAGIC_PUSH_ID;
     pip->pi_dir = dp;
     MAT_COPY(pip->pi_mat, tsp->ts_mat);
@@ -6687,7 +6694,7 @@ wdb_push_cmd(struct rt_wdb *wdbp,
 
     RT_CHECK_DBI(wdbp->dbip);
 
-    BU_GET(wpdp, struct wdb_push_data);
+    BU_ALLOC(wpdp, struct wdb_push_data);
     wpdp->interp = wdbp->wdb_interp;
     wpdp->push_error = 0;
     wpdp->pi_head.magic = WDB_MAGIC_PUSH_ID;
@@ -6773,10 +6780,10 @@ wdb_push_cmd(struct rt_wdb *wdbp,
 
     /*
      * Now use the wdb_identitize() tree walker to turn all the
-     * matricies in a combination to the identity matrix.
+     * matrices in a combination to the identity matrix.
      * It would be nice to use db_tree_walker() but the tree
      * walker does not give us all combinations, just regions.
-     * This would work if we just processed all matricies backwards
+     * This would work if we just processed all matrices backwards
      * from the leaf (solid) towards the root, but all in all it
      * seems that this is a better method.
      */
@@ -6935,7 +6942,7 @@ Make_new_name(struct db_i *dbip,
     j = 0;
     for (use_no=0; use_no<dp->d_uses; use_no++) {
 	j++;
-	use = (struct object_use *)bu_malloc(sizeof(struct object_use), "Make_new_name: use");
+	BU_ALLOC(use, struct object_use);
 
 	/* set xform for this object_use to all zeros */
 	MAT_ZERO(use->xform);
@@ -7101,7 +7108,7 @@ Do_copy_membs(struct db_i *dbip,
 	MAT_COPY(new_xform, xform);
     }
 
-    /* Copy member with current tranform matrix */
+    /* Copy member with current transform matrix */
     dp_new=Copy_object(dbip, dp, new_xform, wdbp);
     if (dp_new == RT_DIR_NULL) {
 	Tcl_AppendResult(wdbp->wdb_interp, "Failed to copy object ",
@@ -7413,7 +7420,7 @@ wdb_whatid_cmd(struct rt_wdb *wdbp,
     comb = (struct rt_comb_internal *)intern.idb_ptr;
 
     bu_vls_init(&vls);
-    bu_vls_printf(&vls, "%d", comb->region_id);
+    bu_vls_printf(&vls, "%ld", comb->region_id);
     rt_db_free_internal(&intern);
     Tcl_AppendResult(wdbp->wdb_interp, bu_vls_addr(&vls), (char *)NULL);
     bu_vls_free(&vls);
@@ -7526,7 +7533,7 @@ wdb_keep_cmd(struct rt_wdb *wdbp,
 
     /* Alert user if named file already exists */
 
-    new_dbip = db_open(argv[1], "w");
+    new_dbip = db_open(argv[1], DB_OPEN_READWRITE);
 
 
     if (new_dbip != DBI_NULL) {
@@ -7816,7 +7823,7 @@ wdb_make_bb_cmd(struct rt_wdb *wdbp,
     ged_free(&ged);
 
     /* build bounding RPP */
-    arb = (struct rt_arb_internal *)bu_malloc(sizeof(struct rt_arb_internal), "arb");
+    BU_ALLOC(arb, struct rt_arb_internal);
     VMOVE(arb->pt[0], rpp_min);
     VSET(arb->pt[1], rpp_min[X], rpp_min[Y], rpp_max[Z]);
     VSET(arb->pt[2], rpp_min[X], rpp_max[Y], rpp_max[Z]);
@@ -8600,7 +8607,7 @@ wdb_nmg_simplify_cmd(struct rt_wdb *wdbp,
     if ((do_arb || do_all) && shell_count == 1) {
 	struct rt_arb_internal *arb_int;
 
-	BU_GET(arb_int, struct rt_arb_internal);
+	BU_ALLOC(arb_int, struct rt_arb_internal);
 
 	if (nmg_to_arb(m, arb_int)) {
 	    new_intern.idb_ptr = (genptr_t)(arb_int);
@@ -8615,7 +8622,7 @@ wdb_nmg_simplify_cmd(struct rt_wdb *wdbp,
 	    s = BU_LIST_FIRST(shell, &r->s_hd);
 	    nmg_shell_coplanar_face_merge(s, &wdbp->wdb_tol, 1);
 	    if (!nmg_kill_cracks(s)) {
-		(void) nmg_model_edge_fuse(m, &wdbp->wdb_tol);
+		(void) nmg_edge_fuse(&m->magic, &wdbp->wdb_tol);
 		(void) nmg_edge_g_fuse(&m->magic, &wdbp->wdb_tol);
 		(void) nmg_unbreak_region_edges(&r->l.magic);
 		if (nmg_to_arb(m, arb_int)) {
@@ -8638,7 +8645,7 @@ wdb_nmg_simplify_cmd(struct rt_wdb *wdbp,
     if ((do_tgc || do_all) && !success && shell_count == 1) {
 	struct rt_tgc_internal *tgc_int;
 
-	BU_GET(tgc_int, struct rt_tgc_internal);
+	BU_ALLOC(tgc_int, struct rt_tgc_internal);
 
 	if (nmg_to_tgc(m, tgc_int, &wdbp->wdb_tol)) {
 	    new_intern.idb_ptr = (genptr_t)(tgc_int);
@@ -8657,7 +8664,7 @@ wdb_nmg_simplify_cmd(struct rt_wdb *wdbp,
     if ((do_poly || do_all) && !success) {
 	struct rt_pg_internal *poly_int;
 
-	poly_int = (struct rt_pg_internal *)bu_malloc(sizeof(struct rt_pg_internal), "f_nmg_simplify: poly_int");
+	BU_ALLOC(poly_int, struct rt_pg_internal);
 
 	if (nmg_to_poly(m, poly_int, &wdbp->wdb_tol)) {
 	    new_intern.idb_ptr = (genptr_t)(poly_int);
@@ -8891,7 +8898,7 @@ wdb_summary_cmd(struct rt_wdb *wdbp,
 		flags |= RT_DIR_COMB;
 		break;
 	    default:
-		Tcl_AppendResult(wdbp->wdb_interp, "summary:  P R or G are only valid parmaters\n",
+		Tcl_AppendResult(wdbp->wdb_interp, "summary:  P R or G are only valid parameters\n",
 				 (char *)NULL);
 		bad = 1;
 		break;

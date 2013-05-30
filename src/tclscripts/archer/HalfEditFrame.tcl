@@ -1,7 +1,7 @@
 #               H A L F E D I T F R A M E . T C L
 # BRL-CAD
 #
-# Copyright (c) 2002-2012 United States Government as represented by
+# Copyright (c) 2002-2013 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -96,21 +96,21 @@
 	    -textvariable [::itcl::scope mNx] \
 	    -state disabled \
 	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add halfNyE {
 	::ttk::entry $parent.halfNyE \
 	    -textvariable [::itcl::scope mNy] \
 	    -state disabled \
 	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add halfNzE {
 	::ttk::entry $parent.halfNzE \
 	    -textvariable [::itcl::scope mNz] \
 	    -state disabled \
 	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add halfNUnitsL {
 	::ttk::label $parent.halfNUnitsL \
@@ -125,7 +125,7 @@
 	::ttk::entry $parent.halfDE \
 	    -textvariable [::itcl::scope mD] \
 	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add halfDUnitsL {
 	::ttk::label $parent.halfDUnitsL \

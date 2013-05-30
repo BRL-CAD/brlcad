@@ -1,7 +1,7 @@
 #                     L G T _ M A T . T C L
 # BRL-CAD
 #
-# Copyright (c) 2004-2012 United States Government as represented by
+# Copyright (c) 2004-2013 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -175,8 +175,8 @@ proc apply_lgt_mat { args } {
 proc make_lgt_light { args } {
     set num_args [llength $args]
     if { $num_args != 1 && $num_args != 4 } {
-	puts "ERROR: usage:"
-	puts "\tmake_lgt_light light_region [x y z]"
+	puts "ERROR: invalid number or arguments"
+	puts "Usage: make_lgt_light light_region [x y z]"
 	return
     }
 

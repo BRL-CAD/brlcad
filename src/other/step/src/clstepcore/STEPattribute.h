@@ -91,6 +91,7 @@ class SCL_CORE_EXPORT STEPattribute {
 
     public:
         const AttrDescriptor * aDesc;
+        int refCount;
 
         // You know which of these to use based on the return value of
         // NonRefType() - see below. BASE_TYPE is defined in baseType.h

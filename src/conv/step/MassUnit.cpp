@@ -1,7 +1,7 @@
 /*                 MassUnit.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2012 United States Government as represented by
+ * Copyright (c) 1994-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -31,32 +31,36 @@
 
 #define CLASSNAME "MassUnit"
 #define ENTITYNAME "Mass_Unit"
-string MassUnit::entityname = Factory::RegisterClass(ENTITYNAME,(FactoryMethod)MassUnit::Create);
+string MassUnit::entityname = Factory::RegisterClass(ENTITYNAME, (FactoryMethod)MassUnit::Create);
 
-MassUnit::MassUnit() {
+MassUnit::MassUnit()
+{
     step = NULL;
     id = 0;
 }
 
-MassUnit::MassUnit(STEPWrapper *sw,int step_id) {
+MassUnit::MassUnit(STEPWrapper *sw, int step_id)
+{
     step = sw;
     id = step_id;
 }
 
-MassUnit::~MassUnit() {
+MassUnit::~MassUnit()
+{
 }
 
 bool
-MassUnit::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
-    step=sw;
+MassUnit::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
+    step = sw;
     id = sse->STEPfile_id;
 
 
     // load base class attributes
-    if ( !NamedUnit::Load(step,sse) ) {
+    if (!NamedUnit::Load(step, sse)) {
 	std::string err = CLASSNAME;
 	err += ":Error loading base class ::Unit.";
-	ERROR(err);
+	REPORT_ERROR(err);
 	return false;
     }
 
@@ -64,31 +68,28 @@ MassUnit::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
 }
 
 void
-MassUnit::Print(int level) {
-    TAB(level); std::cout << CLASSNAME << ":" << "(";
+MassUnit::Print(int level)
+{
+    TAB(level);
+    std::cout << CLASSNAME << ":" << "(";
     std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-    TAB(level); std::cout << "Inherited Attributes:" << std::endl;
-    NamedUnit::Print(level+1);
+    TAB(level);
+    std::cout << "Inherited Attributes:" << std::endl;
+    NamedUnit::Print(level + 1);
 
 }
+
 STEPEntity *
-MassUnit::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
-    Factory::OBJECTS::iterator i;
-    if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
-	MassUnit *object = new MassUnit(sw,sse->STEPfile_id);
+MassUnit::GetInstance(STEPWrapper *sw, int id)
+{
+    return new MassUnit(sw, id);
+}
 
-	Factory::AddObject(object);
-
-	if (!object->Load(sw, sse)) {
-	    std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
-	    delete object;
-	    return NULL;
-	}
-	return static_cast<STEPEntity *>(object);
-    } else {
-	return (*i).second;
-    }
+STEPEntity *
+MassUnit::Create(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
+    return STEPEntity::CreateEntity(sw, sse, GetInstance, CLASSNAME);
 }
 
 // Local Variables:

@@ -25,14 +25,14 @@ set(LIBSTEPCORE_SRCS
     match-ors.cc
     trynext.cc
     print.cc
+    instmgr.cc
+    mgrnode.cc
+    mgrnodearray.cc
+    mgrnodelist.cc
+    dispnode.cc
+    dispnodelist.cc
+    needFunc.cc
 )
-if(MSVC OR BORLAND)
-	add_definitions( -DSCL_CORE_DLL_EXPORTS )
-	add_definitions( -DSCL_BASE_DLL_IMPORTS )
-	add_definitions( -DSCL_EXPRESS_DLL_IMPORTS )
-	add_definitions( -DSCL_UTILS_DLL_IMPORTS )
-	add_definitions( -DSCL_DAI_DLL_IMPORTS )
-endif()
 
 SET(LIBSTEPCORE_PRIVATE_HDRS
     baseType.h
@@ -50,6 +50,13 @@ SET(LIBSTEPCORE_PRIVATE_HDRS
     STEPattributeList.h
     STEPcomplex.h
     STEPundefined.h
+    instmgr.h
+    mgrnode.h
+    mgrnodearray.h
+    mgrnodelist.h
+    dispnode.h
+    dispnodelist.h
+    needFunc.h
 )
 
 include_directories(
@@ -61,6 +68,3 @@ include_directories(
 )
 
 SCL_ADDLIB(stepcore "${LIBSTEPCORE_SRCS}" "express;steputils;stepdai;base")
-if(APPLE)
-   set_target_properties(stepcore PROPERTIES LINK_FLAGS "-flat_namespace -undefined suppress")
-endif(APPLE)

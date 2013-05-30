@@ -1,8 +1,9 @@
 /* $NoKeywords: $ */
 /*
 //
-// Copyright (c) 1993-2007 Robert McNeel & Associates. All rights reserved.
-// Rhinoceros is a registered trademark of Robert McNeel & Assoicates.
+// Copyright (c) 1993-2012 Robert McNeel & Associates. All rights reserved.
+// OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
+// McNeel & Associates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
@@ -12,7 +13,6 @@
 //
 ////////////////////////////////////////////////////////////////
 */
-
 #include "opennurbs.h"
 
 
@@ -1665,19 +1665,19 @@ int ON__CIndexMaps::CreateHelper()
 
   // Sort the maps
   if ( m_bRemapLayerIndex )
-    m_layer_map.HeapSort( ON__CIndexPair::CompareOldAndNewIndex );
+    m_layer_map.QuickSort( ON__CIndexPair::CompareOldAndNewIndex );
   if ( m_bRemapGroupIndex )
-    m_group_map.HeapSort( ON__CIndexPair::CompareOldAndNewIndex );
+    m_group_map.QuickSort( ON__CIndexPair::CompareOldAndNewIndex );
   if ( m_bRemapMaterialIndex )
-    m_material_map.HeapSort( ON__CIndexPair::CompareOldAndNewIndex );
+    m_material_map.QuickSort( ON__CIndexPair::CompareOldAndNewIndex );
   if ( m_bRemapLinetypeIndex )
-    m_linetype_map.HeapSort( ON__CIndexPair::CompareOldAndNewIndex );
+    m_linetype_map.QuickSort( ON__CIndexPair::CompareOldAndNewIndex );
   if ( m_bRemapFontIndex )
-    m_font_map.HeapSort( ON__CIndexPair::CompareOldAndNewIndex );
+    m_font_map.QuickSort( ON__CIndexPair::CompareOldAndNewIndex );
   if ( m_bRemapDimstyleIndex )
-    m_dimstyle_map.HeapSort( ON__CIndexPair::CompareOldAndNewIndex );
+    m_dimstyle_map.QuickSort( ON__CIndexPair::CompareOldAndNewIndex );
   if ( m_bRemapHatchPatternIndex )
-    m_hatch_pattern_map.HeapSort( ON__CIndexPair::CompareOldAndNewIndex );
+    m_hatch_pattern_map.QuickSort( ON__CIndexPair::CompareOldAndNewIndex );
 
   return change_count;
 }
@@ -2897,6 +2897,12 @@ bool ONX_Model::Read(
   // you can store anything you want in a user table.
   for(count=0;true;count++)
   {
+    if ( archive.Archive3dmVersion() <= 1 )
+    {
+      // no user tables in version 1 archives.
+      break;
+    }
+
     {
       ON__UINT32 tcode = 0;
       ON__INT64 big_value = 0;
@@ -2960,7 +2966,14 @@ bool ONX_Model::Read(
 
   // Remap layer, material, linetype, font, dimstyle, hatch pattern, etc., 
   // indices so the correspond to the model's table array index.
+  //
+  // Polish also sets revision history information if it is missing.
+  // In this case, that is not appropriate so the value of
+  // m_properties.m_RevisionHistory is saved before calling Polish()
+  // and restored afterwards.
+  const ON_3dmRevisionHistory saved_revision_history(m_properties.m_RevisionHistory);
   Polish();
+  m_properties.m_RevisionHistory = saved_revision_history;
 
   return return_code;
 }
@@ -3034,12 +3047,19 @@ bool ONX_Model::Write(
     return false;
   }
 
-  if ( version < 2 || version > 5 )
+  if ( 0 != version )
   {
-    // version must be 2, 3, 4 or 5
-    version = 5;
-    if ( error_log) error_log->Print("ONX_Model::Write version parameter = %d; it must be 2, 3, or 4.\n",
-                    version);
+    if (    version < 2 
+         || version > ON_BinaryArchive::CurrentArchiveVersion() 
+         || (version >= 50 && 0 != (version%10))
+         || (version < 50 && version > ON_BinaryArchive::CurrentArchiveVersion()/10)
+         )
+    {
+      // version must be 0, 2, 3, 4, 5 or 50
+      version = 0;
+      if ( error_log) error_log->Print("ONX_Model::Write version parameter = %d; it must be 0, or >= 2 and <= %d, or a multiple of 10 >= 50 and <= %d.\n",
+                      version,ON_BinaryArchive::CurrentArchiveVersion()/10,ON_BinaryArchive::CurrentArchiveVersion());
+    }
   }
 
   if ( !archive.WriteMode() )
@@ -3701,6 +3721,150 @@ void ONX_Model::GetUnusedLayerName( ON_wString& layer_name ) const
   return;
 }
 
+
+
+bool ONX_Model::SetDocumentUserString( const wchar_t* key, const wchar_t* string_value )
+{
+  // This is a slow and stupid way to set a single string,
+  // but I cannot modify the ONX_Model class to transparently
+  // store document user string information until I can break
+  // the public SDK in V6.
+  bool rc = false;
+  if ( 0 != key && 0 != key[0] )
+  {
+    ON_UUID doc_userstring_id = ON_DocumentUserStringList::m_ON_DocumentUserStringList_class_id.Uuid();
+    for (int i = 0; i < m_userdata_table.Count(); i++ )
+    {
+      ONX_Model_UserData& ud = m_userdata_table[i];
+      if ( ud.m_uuid == doc_userstring_id )
+      {
+        if ( TCODE_USER_RECORD == ud.m_goo.m_typecode && ud.m_goo.m_value != 0 )
+        {
+          ON_Read3dmBufferArchive ba( 
+            (unsigned int)ud.m_goo.m_value,
+            ud.m_goo.m_goo, 
+            false,
+            m_3dm_file_version,
+            m_3dm_opennurbs_version
+            );
+          ON_Object* p = 0;
+          if ( ba.ReadObject(&p) )
+          {
+            ON_DocumentUserStringList* sl = ON_DocumentUserStringList::Cast(p);
+            if ( 0 != sl )
+            {
+              // modify the user string information
+              rc = sl->SetUserString(key,string_value);
+              if ( rc )
+              {
+                // write the new informtion to a memory buffer
+                ON_Write3dmBufferArchive newgoo(ud.m_goo.m_value+1024,0,m_3dm_file_version,ON::Version());
+                if (    newgoo.BeginWrite3dmUserTable(doc_userstring_id,false,0,0)
+                     && newgoo.WriteObject(sl) 
+                     && newgoo.EndWrite3dmUserTable()
+                     )
+                {
+                  if (    newgoo.SizeOfArchive() > 0 
+                       && newgoo.SizeOfArchive() <= 0xFFFFFFFF // max goo size if 4GB because we used an unsigned int back in the ice ages
+                     )
+                  {
+                    // update the "goo"
+                    unsigned char* goo = (unsigned char*)newgoo.HarvestBuffer();
+                    unsigned int value = (unsigned int)newgoo.SizeOfArchive();
+                    if ( 0 != goo && value > 0 )
+                    {
+                      onfree(ud.m_goo.m_goo); // delete old "goo"
+                      ud.m_goo.m_value = (int)value;
+                      ud.m_goo.m_goo = goo;
+                    }
+                  }
+                }
+              }
+            }
+          }
+          if ( 0 != p )
+          {
+            delete p;
+            p = 0;
+          }
+        }
+        break;
+      }
+    }
+  }
+  return rc;
+}
+
+
+bool ONX_Model::GetDocumentUserString( const wchar_t* key, ON_wString& string_value ) const
+{
+  const wchar_t* s = 0;
+  if ( 0 != key && 0 != key[0] )
+  {
+    // This is a slow and stupid way to get a single string,
+    // but I cannot modify the ONX_Model class to transparently
+    // store document user string information until I can break
+    // the public SDK in V6.
+    ON_ClassArray<ON_UserString> user_strings;
+    GetDocumentUserStrings( user_strings );
+    for ( int i = 0; i < user_strings.Count(); i++ )
+    {
+      if ( !user_strings[i].m_key.CompareNoCase(key) )
+      {
+        s = user_strings[i].m_string_value;
+        break;
+      }
+    }
+  }
+  string_value = s;
+  return (0 != s);
+}
+
+
+int ONX_Model::GetDocumentUserStrings( ON_ClassArray<ON_UserString>& user_strings ) const
+{
+  int rc = 0;
+  // user strings are stored as ON_Object user strings on
+  // an ON_DocumentUserStringList object in a user table 
+  // with id = doc_userstring_id.
+  ON_UUID doc_userstring_id = ON_DocumentUserStringList::m_ON_DocumentUserStringList_class_id.Uuid();
+  for (int i = 0; i < m_userdata_table.Count(); i++ )
+  {
+    const ONX_Model_UserData& ud = m_userdata_table[i];
+    if ( ud.m_uuid == doc_userstring_id )
+    {
+      if ( TCODE_USER_RECORD == ud.m_goo.m_typecode && ud.m_goo.m_value != 0 )
+      {
+        ON_Read3dmBufferArchive ba( 
+          (unsigned int)ud.m_goo.m_value,
+          ud.m_goo.m_goo, 
+          false,
+          m_3dm_file_version,
+          m_3dm_opennurbs_version
+          );
+
+        ON_Object* p = 0;
+        if ( ba.ReadObject(&p) )
+        {
+          const ON_DocumentUserStringList* sl = ON_DocumentUserStringList::Cast(p);
+          if ( 0 != sl )
+          {
+            rc = sl->GetUserStrings(user_strings);
+          }
+        }
+        if ( 0 != p )
+        {
+          delete p;
+          p = 0;
+        }
+      }
+      break;
+    }
+  }
+  return rc;
+}
+
+
 static int AuditTextureMappingTableHelper( 
       ONX_Model& model,
       bool bAttemptRepair,
@@ -3727,7 +3891,7 @@ static int AuditTextureMappingTableHelper(
         if ( text_log )
         {
           text_log->PushIndent();
-          text_log->Print(L"Repaired.\n");
+          text_log->Print("Repaired.\n");
           text_log->PopIndent();
         }
         if ( repair_count )
@@ -3771,7 +3935,7 @@ static int AuditGroupTableHelper(
         if ( text_log )
         {
           text_log->PushIndent();
-          text_log->Print(L"Repaired.\n");
+          text_log->Print("Repaired.\n");
           text_log->PopIndent();
         }
         if ( repair_count )
@@ -3815,7 +3979,7 @@ static int AuditFontTableHelper(
         if ( text_log )
         {
           text_log->PushIndent();
-          text_log->Print(L"Repaired.\n");
+          text_log->Print("Repaired.\n");
           text_log->PopIndent();
         }
         if ( repair_count )
@@ -3859,7 +4023,7 @@ static int AuditDimStyleTableHelper(
         if ( text_log )
         {
           text_log->PushIndent();
-          text_log->Print(L"Repaired.\n");
+          text_log->Print("Repaired.\n");
           text_log->PopIndent();
         }
         if ( repair_count )
@@ -3903,7 +4067,7 @@ static int AuditHatchPatternTableHelper(
         if ( text_log )
         {
           text_log->PushIndent();
-          text_log->Print(L"Repaired.\n");
+          text_log->Print("Repaired.\n");
           text_log->PopIndent();
         }
         if ( repair_count )
@@ -3924,7 +4088,7 @@ static int AuditHatchPatternTableHelper(
 static int AuditObjectAttributesHelper(
       ONX_Model& model,
       ON_3dmObjectAttributes& attributes,
-      const wchar_t* parent_name,
+      const char* parent_name,
       int parent_index,
       bool bAttemptRepair,
       int* repair_count,
@@ -4051,7 +4215,7 @@ static int AuditLightTableHelper(
         if ( text_log )
         {
           text_log->PushIndent();
-          text_log->Print(L"Repaired.\n");
+          text_log->Print("Repaired.\n");
           text_log->PopIndent();
         }
         if ( repair_count )
@@ -4065,7 +4229,7 @@ static int AuditLightTableHelper(
 
     int attrc = AuditObjectAttributesHelper(model,
       xlight.m_attributes,
-      L"m_light_table[%d].m_attributes",
+      "m_light_table[%d].m_attributes",
       i,
       bAttemptRepair,
       repair_count,
@@ -4111,7 +4275,7 @@ static int AuditMaterialTableHelper(
         if ( text_log )
         {
           text_log->PushIndent();
-          text_log->Print(L"Repaired.\n");
+          text_log->Print("Repaired.\n");
           text_log->PopIndent();
         }
         if ( repair_count )
@@ -4154,7 +4318,7 @@ static int AuditLinetypeTableHelper(
         if ( text_log )
         {
           text_log->PushIndent();
-          text_log->Print(L"Repaired.\n");
+          text_log->Print("Repaired.\n");
           text_log->PopIndent();
         }
         if ( repair_count )
@@ -4200,7 +4364,7 @@ static int AuditLayerTableHelper(
         if ( text_log )
         {
           text_log->PushIndent();
-          text_log->Print(L"Repaired.\n");
+          text_log->Print("Repaired.\n");
           text_log->PopIndent();
         }
         if ( repair_count )
@@ -4228,7 +4392,7 @@ static int AuditLayerTableHelper(
         if ( text_log )
         {
           text_log->PushIndent();
-          text_log->Print(L"Repaired.\n");
+          text_log->Print("Repaired.\n");
           text_log->PopIndent();
         }
         if ( repair_count )
@@ -4255,7 +4419,7 @@ static int AuditLayerTableHelper(
         if ( text_log )
         {
           text_log->PushIndent();
-          text_log->Print(L"Repaired.\n");
+          text_log->Print("Repaired.\n");
           text_log->PopIndent();
         }
         if ( repair_count )
@@ -4283,7 +4447,7 @@ static int AuditLayerTableHelper(
         if ( text_log )
         {
           text_log->PushIndent();
-          text_log->Print(L"Repaired.\n");
+          text_log->Print("Repaired.\n");
           text_log->PopIndent();
         }
         if ( repair_count )
@@ -4307,8 +4471,8 @@ static int AuditIdsHelper(
       bool bAttemptRepair,
       int* repair_count,
       ON_TextLog* text_log,
-      const wchar_t* nil_id_msg,
-      const wchar_t* dup_id_msg
+      const char* nil_id_msg,
+      const char* dup_id_msg
       )
 {
   int nil_count = 0;
@@ -4341,18 +4505,18 @@ static int AuditIdsHelper(
             id_list[i].m_id = id;
             rep_count++;
             if ( text_log )
-              text_log->Print(L" Repaired.");
+              text_log->Print(" Repaired.");
           }
         }
         if ( text_log )
-          text_log->Print(L"\n");
+          text_log->Print("\n");
       }
     }
 
     if ( count > 1 )
     {
       // Make sure objects have unique ids
-      id_list.HeapSort( ON_UuidIndex::CompareIdAndIndex );
+      id_list.QuickSort( ON_UuidIndex::CompareIdAndIndex );
       ON_UuidIndex id0 = id_list[0];
       for ( i = 1; i < count; i++ )
       {
@@ -4380,11 +4544,11 @@ static int AuditIdsHelper(
               rep_count++;
               id_list[i].m_id = id;
               if ( text_log )
-                text_log->Print(L" Repaired.");
+                text_log->Print(" Repaired.");
             }
           }
           if ( text_log )
-            text_log->Print(L"\n");
+            text_log->Print("\n");
         }
         else
         {
@@ -4434,8 +4598,8 @@ static int AuditObjectIdsHelper(
               bAttemptRepair,
               repair_count,
               text_log,
-              L"m_object_table[%d].m_attributes.m_uuid is nil.",
-              L"m_object_table[%d] and [%d] have the same id."
+              "m_object_table[%d].m_attributes.m_uuid is nil.",
+              "m_object_table[%d] and [%d] have the same id."
               );
     if (rc && bAttemptRepair )
     {
@@ -4504,8 +4668,8 @@ static int AuditLightIdsHelper(
               bAttemptRepair,
               repair_count,
               text_log,
-              L"m_light_table[%d] light id is nil.",
-              L"m_light_table[%d] and[%d] have the same id."
+              "m_light_table[%d] light id is nil.",
+              "m_light_table[%d] and[%d] have the same id."
               );
 
     rc += mismatch_count;
@@ -4530,7 +4694,7 @@ static int AuditLightIdsHelper(
         rc++;
         if ( text_log )
         {
-          text_log->Print(L"m_light_table[%d] and m_object_table[%d] have same id.",
+          text_log->Print("m_light_table[%d] and m_object_table[%d] have same id.",
                           i,
                           oi
                           );
@@ -4589,8 +4753,8 @@ static int AuditIDefIdsHelper(
               bAttemptRepair,
               repair_count,
               text_log,
-              L"m_idef_table[%d].m_attributes.m_uuid is nil.",
-              L"m_idef_table[%d] and[%d] are the same."
+              "m_idef_table[%d].m_attributes.m_uuid is nil.",
+              "m_idef_table[%d] and[%d] are the same."
               );
     if (rc && bAttemptRepair )
     {
@@ -4627,8 +4791,8 @@ static int AuditMappingIdsHelper(
               bAttemptRepair,
               repair_count,
               text_log,
-              L"m_mapping_table[%d].m_mapping_id is nil.",
-              L"m_mapping_table[%d] and[%d] are the same."
+              "m_mapping_table[%d].m_mapping_id is nil.",
+              "m_mapping_table[%d] and[%d] are the same."
               );
     if (rc && bAttemptRepair )
     {
@@ -4666,8 +4830,8 @@ static int AuditMaterialIdsHelper(
               bAttemptRepair,
               repair_count,
               text_log,
-              L"m_material_table[%d].m_material_id is nil.",
-              L"m_material_table[%d] and[%d] are the same."
+              "m_material_table[%d].m_material_id is nil.",
+              "m_material_table[%d] and[%d] are the same."
               );
     if (rc && bAttemptRepair )
     {
@@ -4773,7 +4937,7 @@ static int AuditIDefTableHelper(
     if ( !ONX_IsValidName(idef_name) )
     {
       if ( text_log )
-        text_log->Print("m_idef_table[%d].Name() = \"%S\" is not valid.\n",i,idef_name);
+        text_log->Print("m_idef_table[%d].Name() = \"%ls\" is not valid.\n",i,idef_name);
       idef_ok = false;
     }
     else
@@ -4961,7 +5125,7 @@ static int AuditObjectTableHelper(
 
     int attrc = AuditObjectAttributesHelper(model,
                                 obj.m_attributes,
-                                L"m_object_table[%d].m_attributes",
+                                "m_object_table[%d].m_attributes",
                                 i,
                                 bAttemptRepair,
                                 repair_count,
@@ -5117,6 +5281,173 @@ int ONX_Model::Audit(
   return warning_count;
 }
 
+static const ON_UnknownUserData* RDKObjectUserDataHelper(const ON_UserData* objectud)
+{
+  // CRhRdkUserData object id: AFA82772-1525-43dd-A63C-C84AC5806911
+  // CRhRdkUserData::m_userdata_uuid = B63ED079-CF67-416c-800D-22023AE1BE21
+
+  // CRhRdkUserData object id
+  // {AFA82772-1525-43dd-A63C-C84AC5806911}
+  static const ON_UUID CRhRdkUserData_object_id = 
+  { 0xAFA82772, 0x1525, 0x43dd, { 0xA6, 0x3C, 0xC8, 0x4A, 0xC5, 0x80, 0x69, 0x11 } };
+
+  // CRhRdkUserData::m_userdata_uuid
+  // {B63ED079-CF67-416c-800D-22023AE1BE21}
+  static const ON_UUID CRhRdkUserData_userdata_uuid = 
+  { 0xB63ED079, 0xCF67, 0x416c, { 0x80, 0x0D, 0x22, 0x02, 0x3A, 0xE1, 0xBE, 0x21 } };
+  
+  const ON_UnknownUserData* unknown_ud = ON_UnknownUserData::Cast(objectud);
+  
+  bool rc = ( 0 != unknown_ud 
+              && unknown_ud->m_sizeof_buffer > 0
+              && 0 != unknown_ud->m_buffer
+              && 0 == ON_UuidCompare(CRhRdkUserData_object_id,unknown_ud->m_unknownclass_uuid)
+              && 0 == ON_UuidCompare(CRhRdkUserData_userdata_uuid,unknown_ud->m_userdata_uuid)
+            );
+  return rc ? unknown_ud : 0;
+}
+
+bool ONX_Model::IsRDKObjectInformation(const ON_UserData& objectud)
+{
+  return 0 != RDKObjectUserDataHelper(&objectud);
+}
+
+bool ONX_Model::GetRDKObjectInformation(const ON_Object& object,ON_wString& rdk_xml_object_data)
+{
+  rdk_xml_object_data.SetLength(0);
+  const ON_UnknownUserData* unknown_ud = 0;
+  const ON_UserData* ud = ON_UserData::Cast(&object);
+  if ( 0 != ud )
+  {
+    unknown_ud = RDKObjectUserDataHelper(ud);
+  }
+  else
+  {
+    for ( ud = object.FirstUserData(); 0 != ud && 0 == unknown_ud; ud = ud->Next() )
+    {
+      unknown_ud = RDKObjectUserDataHelper(ud);
+    }
+  }
+
+  if ( 0 == unknown_ud )
+    return false;
+
+  ON_Read3dmBufferArchive a(unknown_ud->m_sizeof_buffer,unknown_ud->m_buffer,false,unknown_ud->m_3dm_version,unknown_ud->m_3dm_opennurbs_version);
+  int version = 0;
+  if (!a.ReadInt(&version) )
+    return false;
+  
+  if ( 1 == version )
+  {
+    if ( !a.ReadString(rdk_xml_object_data) )
+      return false;
+  }
+  else if ( 2 == version )
+  {
+    // UTF8 string
+    ON_SimpleArray< char > s;
+    int slen = 0;
+    if ( !a.ReadInt(&slen) )
+      return false;
+    if ( slen <= 0 )
+      return false;
+    if ( slen + 4 > unknown_ud->m_sizeof_buffer )
+      return false;
+    s.Reserve(slen+1);
+    s.SetCount(slen+1);
+    s[slen] = 0;
+    if ( !a.ReadChar(slen,s.Array() ) ) 
+      return false;
+    const char* sArray = s.Array();
+    if ( 0 != sArray && 0 != sArray[0] )
+    {
+      unsigned int error_status = 0;
+      int wLen = ON_ConvertUTF8ToWideChar(sArray,-1,0,0,&error_status,0,0,0);
+      if ( wLen > 0 && 0 == error_status )
+      {
+        rdk_xml_object_data.SetLength(wLen+2);
+        wLen = ON_ConvertUTF8ToWideChar(sArray,-1,rdk_xml_object_data.Array(),wLen+1,&error_status,0,0,0);
+        if ( wLen > 0 && 0 == error_status )
+          rdk_xml_object_data.SetLength(wLen);
+        else
+          rdk_xml_object_data.SetLength(0);
+      }
+      if ( 0 != error_status )
+      {
+        ON_ERROR("RDK xml object information is not a valid UTF-8 string.");
+      }
+    }
+  }
+
+  return rdk_xml_object_data.Length() > 0;
+}
+
+bool ONX_Model::IsRDKDocumentInformation(const ONX_Model_UserData& docud)
+{
+  // {16592D58-4A2F-401D-BF5E-3B87741C1B1B}
+  static const ON_UUID rdk_plugin_id = 
+  { 0x16592D58, 0x4A2F, 0x401D, { 0xBF, 0x5E, 0x3B, 0x87, 0x74, 0x1C, 0x1B, 0x1B } };
+
+  return ( 0 == ON_UuidCompare(rdk_plugin_id,docud.m_uuid) && docud.m_goo.m_value >= 4 && 0 != docud.m_goo.m_goo );
+}
+
+
+bool ONX_Model::GetRDKDocumentInformation(const ONX_Model_UserData& docud,ON_wString& rdk_xml_document_data)
+{
+  if ( !ONX_Model::IsRDKDocumentInformation(docud) )
+    return false;
+
+  ON_Read3dmBufferArchive a(docud.m_goo.m_value,docud.m_goo.m_goo,false,docud.m_usertable_3dm_version,docud.m_usertable_opennurbs_version);
+
+  int version = 0;
+  if (!a.ReadInt(&version) )
+    return false;
+  
+  if ( 1 == version )
+  {
+    // UTF-16 string
+    if ( !a.ReadString(rdk_xml_document_data) )
+      return false;
+  }
+  else if ( 3 == version )
+  {
+    // UTF-8 string
+    int slen = 0;
+    if ( !a.ReadInt(&slen) )
+      return 0;
+    if ( slen <= 0 )
+      return 0;
+    if ( slen + 4 > docud.m_goo.m_value )
+      return 0;
+    ON_String s;
+    s.SetLength(slen);
+    if ( !a.ReadChar(slen,s.Array()) )
+      return 0;
+    const char* sArray = s.Array();
+    if ( 0 != sArray && 0 != sArray[0] )
+    {
+      unsigned int error_status = 0;
+      int wLen = ON_ConvertUTF8ToWideChar(sArray,-1,0,0,&error_status,0,0,0);
+      if ( wLen > 0 && 0 == error_status )
+      {
+        rdk_xml_document_data.SetLength(wLen+2);
+        wLen = ON_ConvertUTF8ToWideChar(sArray,-1,rdk_xml_document_data.Array(),wLen+1,&error_status,0,0,0);
+        if ( wLen > 0 && 0 == error_status )
+          rdk_xml_document_data.SetLength(wLen);
+        else
+        {
+          rdk_xml_document_data.SetLength(0);
+        }
+      }
+      if ( 0 != error_status )
+      {
+        ON_ERROR("RDK xml document settings is not a valid UTF-8 string.");
+      }
+    }
+  }
+
+  return rdk_xml_document_data.Length() > 0;
+}
 
 #if defined(ON_COMPILER_MSC)
 #pragma warning( pop )

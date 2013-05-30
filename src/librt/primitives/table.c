@@ -1,7 +1,7 @@
 /*                         T A B L E . C
  * BRL-CAD
  *
- * Copyright (c) 1989-2012 United States Government as represented by
+ * Copyright (c) 1989-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -53,6 +53,7 @@
     extern int rt_##name##_class(); \
     extern void rt_##name##_free(struct soltab *stp); \
     extern int rt_##name##_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol, const struct rt_view_info *info); \
+    extern int rt_##name##_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info); \
     extern void rt_##name##_vshot(struct soltab *stp[], struct xray *rp[], struct seg *segp, int n, struct application *ap); \
     extern int rt_##name##_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol); \
     extern int rt_##name##_tnurb(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct bn_tol *tol); \
@@ -68,7 +69,7 @@
     extern void rt_##name##_make(const struct rt_functab *ftp, struct rt_db_internal *intern); \
     extern int rt_##name##_xform(struct rt_db_internal *op, const mat_t mat, struct rt_db_internal *ip, int release, struct db_i *dbip, struct resource *resp); \
     extern int rt_##name##_params(struct pc_pc_set *ps, const struct rt_db_internal *ip); \
-    extern int rt_##name##_bbox(struct rt_db_internal *ip, point_t *min, point_t *max); \
+    extern int rt_##name##_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct bn_tol *tol); \
     extern int rt_##name##_mirror(struct rt_db_internal *ip, const plane_t *plane); \
     extern const struct bu_structparse rt_##name##_parse[]; \
     extern void rt_##name##_volume(fastf_t *vol, const struct rt_db_internal *ip); \
@@ -178,6 +179,7 @@ const struct rt_functab rt_functab[] = {
 	NULL,
 	NULL,
 	NULL,
+	NULL,
 	0,
 	0,
 	NULL,
@@ -186,9 +188,9 @@ const struct rt_functab rt_functab[] = {
 	NULL,
 	NULL,
 	NULL,
-    NULL,
-    NULL,
-    NULL,
+	NULL,
+	NULL,
+	NULL,
     },
 
     {
@@ -206,6 +208,7 @@ const struct rt_functab rt_functab[] = {
 	rt_tor_class,
 	rt_tor_free,
 	rt_tor_plot,
+	rt_tor_adaptive_plot,
 	rt_tor_vshot,
 	rt_tor_tess,
 	NULL,
@@ -226,9 +229,9 @@ const struct rt_functab rt_functab[] = {
 	NULL,
 	rt_tor_params,
 	rt_tor_bbox,
-    rt_tor_volume,
-    rt_tor_surf_area,
-    rt_tor_centroid,
+	rt_tor_volume,
+	rt_tor_surf_area,
+	rt_tor_centroid,
     },
 
     {
@@ -246,6 +249,7 @@ const struct rt_functab rt_functab[] = {
 	rt_tgc_class,
 	rt_tgc_free,
 	rt_tgc_plot,
+	rt_tgc_adaptive_plot,
 	rt_tgc_vshot,
 	rt_tgc_tess,
 	rt_tgc_tnurb,
@@ -266,9 +270,9 @@ const struct rt_functab rt_functab[] = {
 	NULL,
 	rt_tgc_params,
 	rt_tgc_bbox,
-    rt_tgc_volume,
-    rt_tgc_surf_area,
-    rt_tgc_centroid,
+	rt_tgc_volume,
+	rt_tgc_surf_area,
+	rt_tgc_centroid,
     },
 
     {
@@ -286,6 +290,7 @@ const struct rt_functab rt_functab[] = {
 	rt_ell_class,
 	rt_ell_free,
 	rt_ell_plot,
+	rt_ell_adaptive_plot,
 	rt_ell_vshot,
 	rt_ell_tess,
 	rt_ell_tnurb,
@@ -306,9 +311,9 @@ const struct rt_functab rt_functab[] = {
 	NULL,
 	rt_ell_params,
 	rt_ell_bbox,
-    rt_ell_volume,
-    rt_ell_surf_area,
-    rt_ell_centroid,
+	rt_ell_volume,
+	rt_ell_surf_area,
+	rt_ell_centroid,
     },
 
     {
@@ -326,6 +331,7 @@ const struct rt_functab rt_functab[] = {
 	rt_arb_class,
 	rt_arb_free,
 	rt_arb_plot,
+	NULL,
 	rt_arb_vshot,
 	rt_arb_tess,
 	rt_arb_tnurb,
@@ -346,9 +352,9 @@ const struct rt_functab rt_functab[] = {
 	NULL,
 	rt_arb_params,
 	rt_arb_bbox,
-    rt_arb_volume,
-    NULL,
-    NULL,
+	rt_arb_volume,
+	NULL,
+	rt_arb_centroid,
     },
 
     {
@@ -367,9 +373,10 @@ const struct rt_functab rt_functab[] = {
 	rt_bot_free,
 	rt_ars_plot,
 	NULL,
+	NULL,
 	rt_ars_tess,
 	NULL,
-	NULL,
+	rt_ars_brep,
 	rt_ars_import5,
 	rt_ars_export5,
 	rt_ars_import4,
@@ -386,9 +393,9 @@ const struct rt_functab rt_functab[] = {
 	NULL,
 	rt_ars_params,
 	rt_ars_bbox,
-    NULL,
-    NULL,
-    NULL,
+	NULL,
+	NULL,
+	NULL,
     },
 
     {
@@ -406,10 +413,11 @@ const struct rt_functab rt_functab[] = {
 	rt_hlf_class,
 	rt_hlf_free,
 	rt_hlf_plot,
+	NULL,
 	rt_hlf_vshot,
 	rt_hlf_tess,
 	NULL,
-	NULL,
+	rt_hlf_brep,
 	rt_hlf_import5,
 	rt_hlf_export5,
 	rt_hlf_import4,
@@ -426,9 +434,9 @@ const struct rt_functab rt_functab[] = {
 	NULL,
 	rt_hlf_params,
 	NULL,
-    NULL,
-    NULL,
-    NULL
+	NULL,
+	NULL,
+	NULL
     },
 
     {
@@ -446,6 +454,7 @@ const struct rt_functab rt_functab[] = {
 	rt_rec_class,
 	rt_rec_free,
 	rt_tgc_plot,
+	rt_tgc_adaptive_plot,
 	rt_rec_vshot,
 	rt_tgc_tess,
 	NULL,
@@ -466,9 +475,9 @@ const struct rt_functab rt_functab[] = {
 	NULL,
 	rt_rec_params,
 	rt_rec_bbox,
-    rt_tgc_volume,
-    rt_tgc_surf_area,
-    rt_tgc_centroid,
+	rt_tgc_volume,
+	rt_tgc_surf_area,
+	rt_tgc_centroid,
     },
 
     {
@@ -486,6 +495,7 @@ const struct rt_functab rt_functab[] = {
 	rt_pg_class,
 	rt_pg_free,
 	rt_pg_plot,
+	NULL,
 	NULL,
 	rt_pg_tess,
 	NULL,
@@ -506,9 +516,9 @@ const struct rt_functab rt_functab[] = {
 	NULL,
 	rt_pg_params,
 	rt_pg_bbox,
-    NULL,
-    NULL,
-    NULL,
+	NULL,
+	NULL,
+	NULL,
     },
 
     {
@@ -526,6 +536,7 @@ const struct rt_functab rt_functab[] = {
 	rt_nurb_class,
 	rt_nurb_free,
 	rt_nurb_plot,
+	NULL,
 	NULL,
 	rt_nurb_tess,
 	NULL,
@@ -546,9 +557,9 @@ const struct rt_functab rt_functab[] = {
 	NULL,
 	rt_nurb_params,
 	rt_nurb_bbox,
-    NULL,
-    NULL,
-    NULL,
+	NULL,
+	NULL,
+	NULL,
     },
 
     {
@@ -566,6 +577,7 @@ const struct rt_functab rt_functab[] = {
 	rt_sph_class,
 	rt_sph_free,
 	rt_ell_plot,
+	rt_ell_adaptive_plot,
 	rt_sph_vshot,
 	rt_ell_tess,
 	rt_ell_tnurb,
@@ -586,9 +598,9 @@ const struct rt_functab rt_functab[] = {
 	NULL,
 	rt_sph_params,
 	rt_ell_bbox,
-    rt_ell_volume,
-    rt_ell_surf_area,
-    rt_ell_centroid,
+	rt_ell_volume,
+	rt_ell_surf_area,
+	rt_ell_centroid,
     },
 
     {
@@ -606,6 +618,7 @@ const struct rt_functab rt_functab[] = {
 	rt_nmg_class,
 	rt_nmg_free,
 	rt_nmg_plot,
+	NULL,
 	NULL,
 	rt_nmg_tess,
 	NULL,
@@ -626,9 +639,9 @@ const struct rt_functab rt_functab[] = {
 	rt_nmg_make,
 	rt_nmg_params,
 	rt_nmg_bbox,
-    NULL,
-    NULL,
-    NULL,
+	NULL,
+	NULL,
+	NULL,
     },
 
     {
@@ -646,6 +659,7 @@ const struct rt_functab rt_functab[] = {
 	rt_ebm_class,
 	rt_ebm_free,
 	rt_ebm_plot,
+	NULL,
 	NULL,
 	rt_ebm_tess,
 	NULL,
@@ -666,9 +680,9 @@ const struct rt_functab rt_functab[] = {
 	rt_ebm_make,
 	rt_ebm_params,
 	rt_ebm_bbox,
-    NULL,
-    NULL,
-    NULL,
+	NULL,
+	NULL,
+	NULL,
     },
 
     {
@@ -686,6 +700,7 @@ const struct rt_functab rt_functab[] = {
 	rt_vol_class,
 	rt_vol_free,
 	rt_vol_plot,
+	NULL,
 	NULL,
 	rt_vol_tess,
 	NULL,
@@ -706,9 +721,9 @@ const struct rt_functab rt_functab[] = {
 	NULL,
 	rt_vol_params,
 	rt_vol_bbox,
-    NULL,
-    NULL,
-    NULL,
+	NULL,
+	NULL,
+	NULL,
     },
 
     {
@@ -726,6 +741,7 @@ const struct rt_functab rt_functab[] = {
 	rt_arbn_class,
 	rt_arbn_free,
 	rt_arbn_plot,
+	NULL,
 	NULL,
 	rt_arbn_tess,
 	NULL,
@@ -746,9 +762,9 @@ const struct rt_functab rt_functab[] = {
 	NULL,
 	rt_arbn_params,
 	rt_arbn_bbox,
-    NULL,
-    NULL,
-    NULL,
+	NULL,
+	NULL,
+	NULL,
     },
 
     {
@@ -766,6 +782,7 @@ const struct rt_functab rt_functab[] = {
 	rt_pipe_class,
 	rt_pipe_free,
 	rt_pipe_plot,
+	rt_pipe_adaptive_plot,
 	NULL,
 	rt_pipe_tess,
 	NULL,
@@ -786,9 +803,9 @@ const struct rt_functab rt_functab[] = {
 	NULL,
 	rt_pipe_params,
 	rt_pipe_bbox,
-    NULL,
-    NULL,
-    NULL,
+	NULL,
+	NULL,
+	NULL,
     },
 
     {
@@ -807,9 +824,10 @@ const struct rt_functab rt_functab[] = {
 	rt_part_free,
 	rt_part_plot,
 	NULL,
+	NULL,
 	rt_part_tess,
 	NULL,
-	NULL,
+	rt_part_brep,
 	rt_part_import5,
 	rt_part_export5,
 	rt_part_import4,
@@ -826,9 +844,9 @@ const struct rt_functab rt_functab[] = {
 	NULL,
 	rt_part_params,
 	rt_part_bbox,
-    NULL,
-    NULL,
-    NULL,
+	rt_part_volume,
+	rt_part_surf_area,
+	NULL,
     },
 
     {
@@ -846,6 +864,7 @@ const struct rt_functab rt_functab[] = {
 	rt_rpc_class,
 	rt_rpc_free,
 	rt_rpc_plot,
+	rt_rpc_adaptive_plot,
 	NULL,
 	rt_rpc_tess,
 	NULL,
@@ -866,9 +885,9 @@ const struct rt_functab rt_functab[] = {
 	NULL,
 	rt_rpc_params,
 	rt_rpc_bbox,
-    NULL,
-    NULL,
-    NULL,
+	rt_rpc_volume,
+	rt_rpc_surf_area,
+	rt_rpc_centroid,
     },
 
     {
@@ -886,6 +905,7 @@ const struct rt_functab rt_functab[] = {
 	rt_rhc_class,
 	rt_rhc_free,
 	rt_rhc_plot,
+	rt_rhc_adaptive_plot,
 	NULL,
 	rt_rhc_tess,
 	NULL,
@@ -906,9 +926,9 @@ const struct rt_functab rt_functab[] = {
 	NULL,
 	rt_rhc_params,
 	rt_rhc_bbox,
-    NULL,
-    NULL,
-    NULL,
+	NULL,
+	rt_rhc_surf_area,
+	NULL,
     },
 
     {
@@ -926,6 +946,7 @@ const struct rt_functab rt_functab[] = {
 	rt_epa_class,
 	rt_epa_free,
 	rt_epa_plot,
+	rt_epa_adaptive_plot,
 	NULL,
 	rt_epa_tess,
 	NULL,
@@ -946,9 +967,9 @@ const struct rt_functab rt_functab[] = {
 	NULL,
 	rt_epa_params,
 	rt_epa_bbox,
-    NULL,
-    NULL,
-    NULL,
+	rt_epa_volume,
+	rt_epa_surf_area,
+	rt_epa_centroid,
     },
 
     {
@@ -966,6 +987,7 @@ const struct rt_functab rt_functab[] = {
 	rt_ehy_class,
 	rt_ehy_free,
 	rt_ehy_plot,
+	rt_ehy_adaptive_plot,
 	NULL,
 	rt_ehy_tess,
 	NULL,
@@ -986,9 +1008,9 @@ const struct rt_functab rt_functab[] = {
 	NULL,
 	rt_ehy_params,
 	rt_ehy_bbox,
-    NULL,
-    NULL,
-    NULL,
+	NULL,
+	NULL,
+	NULL,
     },
 
     {
@@ -1006,6 +1028,7 @@ const struct rt_functab rt_functab[] = {
 	rt_eto_class,
 	rt_eto_free,
 	rt_eto_plot,
+	rt_eto_adaptive_plot,
 	NULL,
 	rt_eto_tess,
 	NULL,
@@ -1026,9 +1049,9 @@ const struct rt_functab rt_functab[] = {
 	NULL,
 	rt_eto_params,
 	rt_eto_bbox,
-    NULL,
-    NULL,
-    NULL,
+	rt_eto_volume,
+	rt_eto_surf_area,
+	rt_eto_centroid,
     },
 
     {
@@ -1047,9 +1070,10 @@ const struct rt_functab rt_functab[] = {
 	rt_grp_free,
 	rt_grp_plot,
 	NULL,
+	NULL,
 	rt_grp_tess,
 	NULL,
-	NULL,
+	rt_grp_brep,
 	rt_grp_import5,
 	rt_grp_export5,
 	rt_grp_import4,
@@ -1066,9 +1090,9 @@ const struct rt_functab rt_functab[] = {
 	NULL,
 	rt_grp_params,
 	NULL,
-    NULL,
-    NULL,
-    NULL,
+	NULL,
+	NULL,
+	NULL,
     },
 
     {
@@ -1098,6 +1122,7 @@ const struct rt_functab rt_functab[] = {
 	NULL,
 	NULL,
 	NULL,
+	NULL,
 	0,
 	0,
 	NULL,
@@ -1106,9 +1131,9 @@ const struct rt_functab rt_functab[] = {
 	NULL,
 	NULL,
 	NULL,
-    NULL,
-    NULL,
-    NULL,
+	NULL,
+	NULL,
+	NULL,
     },
 
     {
@@ -1127,9 +1152,10 @@ const struct rt_functab rt_functab[] = {
 	rt_hf_free,
 	rt_hf_plot,
 	NULL,
+	NULL,
 	rt_hf_tess,
 	NULL,
-	NULL,
+	rt_hf_brep,
 	rt_hf_import5,
 	rt_hf_export5,
 	rt_hf_import4,
@@ -1146,9 +1172,9 @@ const struct rt_functab rt_functab[] = {
 	NULL,
 	rt_hf_params,
 	rt_hf_bbox,
-    NULL,
-    NULL,
-    NULL,
+	NULL,
+	NULL,
+	NULL,
     },
 
     {
@@ -1166,6 +1192,7 @@ const struct rt_functab rt_functab[] = {
 	rt_dsp_class,
 	rt_dsp_free,
 	rt_dsp_plot,
+	NULL,
 	NULL,
 	rt_dsp_tess,
 	NULL,
@@ -1186,9 +1213,9 @@ const struct rt_functab rt_functab[] = {
 	rt_dsp_make,
 	rt_dsp_params,
 	rt_dsp_bbox,
-    NULL,
-    NULL,
-    NULL,
+	NULL,
+	NULL,
+	NULL,
     },
 
     {
@@ -1209,6 +1236,7 @@ const struct rt_functab rt_functab[] = {
 	NULL,
 	NULL,
 	NULL,
+	NULL,
 	rt_sketch_brep,
 	rt_sketch_import5,
 	rt_sketch_export5,
@@ -1226,9 +1254,9 @@ const struct rt_functab rt_functab[] = {
 	NULL,
 	rt_sketch_params,
 	NULL,
-    NULL,
-    NULL,
-    NULL,
+	NULL,
+	rt_sketch_surf_area,
+	NULL,
     },
 
     {
@@ -1246,6 +1274,7 @@ const struct rt_functab rt_functab[] = {
 	rt_extrude_class,
 	rt_extrude_free,
 	rt_extrude_plot,
+	NULL,
 	NULL,
 	rt_extrude_tess,
 	NULL,
@@ -1266,9 +1295,9 @@ const struct rt_functab rt_functab[] = {
 	NULL,
 	rt_extrude_params,
 	rt_extrude_bbox,
-    NULL,
-    NULL,
-    NULL,
+	NULL,
+	NULL,
+	NULL,
     },
 
     {
@@ -1286,6 +1315,7 @@ const struct rt_functab rt_functab[] = {
 	rt_submodel_class,
 	rt_submodel_free,
 	rt_submodel_plot,
+	NULL,
 	NULL,
 	rt_submodel_tess,
 	NULL,
@@ -1306,9 +1336,9 @@ const struct rt_functab rt_functab[] = {
 	NULL,
 	rt_submodel_params,
 	NULL,
-    NULL,
-    NULL,
-    NULL,
+	NULL,
+	NULL,
+	NULL,
     },
 
     {
@@ -1327,9 +1357,10 @@ const struct rt_functab rt_functab[] = {
 	rt_cline_free,
 	rt_cline_plot,
 	NULL,
+	NULL,
 	rt_cline_tess,
 	NULL,
-	NULL,
+	rt_cline_brep,
 	rt_cline_import5,
 	rt_cline_export5,
 	rt_cline_import4,
@@ -1346,9 +1377,9 @@ const struct rt_functab rt_functab[] = {
 	NULL,
 	rt_cline_params,
 	rt_cline_bbox,
-    NULL,
-    NULL,
-    NULL,
+	NULL,
+	NULL,
+	NULL,
     },
 
     {
@@ -1366,6 +1397,7 @@ const struct rt_functab rt_functab[] = {
 	rt_bot_class,
 	rt_bot_free,
 	rt_bot_plot,
+	rt_bot_adaptive_plot,
 	NULL,
 	rt_bot_tess,
 	NULL,
@@ -1386,15 +1418,16 @@ const struct rt_functab rt_functab[] = {
 	NULL,
 	rt_bot_params,
 	rt_bot_bbox,
-    NULL,
-    NULL,
-    NULL,
+	NULL,
+	NULL,
+	rt_bot_centroid,
     },
 
     {
 	/* 31 combination objects (should not be in this table) */
 	RT_FUNCTAB_MAGIC, "ID_COMBINATION", "comb",
 	0,
+	NULL,
 	NULL,
 	NULL,
 	NULL,
@@ -1426,9 +1459,9 @@ const struct rt_functab rt_functab[] = {
 	rt_comb_make,
 	NULL,
 	NULL,
-    NULL,
-    NULL,
-    NULL,
+	NULL,
+	NULL,
+	NULL,
     },
 
     {
@@ -1460,15 +1493,16 @@ const struct rt_functab rt_functab[] = {
 	NULL,
 	NULL,
 	NULL,
+	NULL,
 	0,
 	0,
 	NULL,
 	NULL,
 	NULL,
 	NULL,
-    NULL,
-    NULL,
-    NULL,
+	NULL,
+	NULL,
+	NULL,
 	NULL,
 	NULL,
     },
@@ -1477,6 +1511,7 @@ const struct rt_functab rt_functab[] = {
 	/* 33 */
 	RT_FUNCTAB_MAGIC, "ID_BINUNIF", "binunif",
 	0,
+	NULL,
 	NULL,
 	NULL,
 	NULL,
@@ -1508,9 +1543,9 @@ const struct rt_functab rt_functab[] = {
 	rt_binunif_make,
 	NULL,
 	NULL,
-    NULL,
-    NULL,
-    NULL,
+	NULL,
+	NULL,
+	NULL,
     },
 
     {
@@ -1542,15 +1577,16 @@ const struct rt_functab rt_functab[] = {
 	NULL,
 	NULL,
 	NULL,
+	NULL,
 	0,
 	0,
 	NULL,
 	NULL,
 	NULL,
 	NULL,
-    NULL,
-    NULL,
-    NULL,
+	NULL,
+	NULL,
+	NULL,
 	NULL,
 	NULL,
     },
@@ -1571,9 +1607,10 @@ const struct rt_functab rt_functab[] = {
 	rt_superell_free,
 	rt_superell_plot,
 	NULL,
+	NULL,
 	rt_superell_tess,
 	NULL,
-	NULL,
+	rt_superell_brep,
 	rt_superell_import5,
 	rt_superell_export5,
 	rt_superell_import4,
@@ -1590,9 +1627,9 @@ const struct rt_functab rt_functab[] = {
 	NULL,
 	rt_superell_params,
 	rt_superell_bbox,
-    NULL,
-    NULL,
-    NULL,
+	NULL,
+	NULL,
+	NULL,
     },
 
     {
@@ -1610,6 +1647,7 @@ const struct rt_functab rt_functab[] = {
 	rt_metaball_class,
 	rt_metaball_free,
 	rt_metaball_plot,
+	NULL,
 	NULL,
 	rt_metaball_tess,
 	NULL,
@@ -1630,9 +1668,9 @@ const struct rt_functab rt_functab[] = {
 	NULL,
 	rt_metaball_params,
 	rt_metaball_bbox,
-    NULL,
-    NULL,
-    NULL,
+	NULL,
+	NULL,
+	NULL,
     },
 
 #if OBJ_BREP
@@ -1651,6 +1689,7 @@ const struct rt_functab rt_functab[] = {
 	rt_brep_class,
 	rt_brep_free,
 	rt_brep_plot,
+	rt_brep_adaptive_plot,
 	NULL,
 	rt_brep_tess,
 	NULL,
@@ -1671,9 +1710,9 @@ const struct rt_functab rt_functab[] = {
 	NULL,
 	rt_brep_params,
 	rt_brep_bbox,
-    NULL,
-    NULL,
-    NULL,
+	NULL,
+	NULL,
+	NULL,
     },
 #else
     {
@@ -1702,6 +1741,7 @@ const struct rt_functab rt_functab[] = {
 	NULL,
 	NULL,
 	NULL,
+	NULL,
 	0,
 	0,
 	0,
@@ -1710,9 +1750,9 @@ const struct rt_functab rt_functab[] = {
 	NULL,
 	NULL,
 	NULL,
-    NULL,
-    NULL,
-    NULL,
+	NULL,
+	NULL,
+	NULL,
     },
 #endif
 
@@ -1731,6 +1771,7 @@ const struct rt_functab rt_functab[] = {
 	NULL,
 	rt_hyp_free,
 	rt_hyp_plot,
+	NULL,
 	NULL,
 	rt_hyp_tess,
 	NULL,
@@ -1751,15 +1792,16 @@ const struct rt_functab rt_functab[] = {
 	NULL,
 	rt_hyp_params,
 	rt_hyp_bbox,
-    NULL,
-    NULL,
-    NULL,
+	rt_hyp_volume,
+	rt_hyp_surf_area,
+	rt_hyp_centroid,
     },
 
     {
 	/* 39 */
 	RT_FUNCTAB_MAGIC, "ID_CONSTRAINT", "constrnt",
 	0,
+	NULL,
 	NULL,
 	NULL,
 	NULL,
@@ -1791,9 +1833,9 @@ const struct rt_functab rt_functab[] = {
 	NULL,
 	NULL,
 	NULL,
-    NULL,
-    NULL,
-    NULL,
+	NULL,
+	NULL,
+	NULL,
     },
 
     {
@@ -1812,6 +1854,7 @@ const struct rt_functab rt_functab[] = {
 	rt_revolve_free,
 	rt_revolve_plot,
 	NULL,
+	NULL,
 	rt_revolve_tess,
 	NULL,
 	rt_revolve_brep,
@@ -1828,12 +1871,12 @@ const struct rt_functab rt_functab[] = {
 	rt_generic_get,
 	rt_generic_adjust,
 	rt_generic_form,
-	NULL,
+	rt_revolve_make,
 	NULL,
 	rt_revolve_bbox,
-    NULL,
-    NULL,
-    NULL,
+	NULL,
+	NULL,
+	NULL,
     },
 
     {
@@ -1855,6 +1898,7 @@ const struct rt_functab rt_functab[] = {
 	NULL,
 	NULL,
 	NULL,
+	rt_pnts_brep,
 	rt_pnts_import5,
 	rt_pnts_export5,
 	NULL,
@@ -1871,15 +1915,16 @@ const struct rt_functab rt_functab[] = {
 	NULL,
 	NULL,
 	rt_pnts_bbox,
-    NULL,
-    NULL,
-    NULL,
+	NULL,
+	NULL,
+	NULL,
     },
 
     {
 	/* 42 */
 	RT_FUNCTAB_MAGIC, "ID_ANNOTATION", "anno",
 	0,
+	NULL,
 	NULL,
 	NULL,
 	NULL,
@@ -1911,9 +1956,9 @@ const struct rt_functab rt_functab[] = {
 	NULL,
 	NULL,
 	NULL,
-    NULL,
-    NULL,
-    NULL,
+	NULL,
+	NULL,
+	NULL,
     },
 
     {
@@ -1943,6 +1988,7 @@ const struct rt_functab rt_functab[] = {
 	NULL,
 	NULL,
 	NULL,
+	NULL,
 	0,
 	0,
 	NULL,
@@ -1951,9 +1997,9 @@ const struct rt_functab rt_functab[] = {
 	NULL,
 	NULL,
 	NULL,
-    NULL,
-    NULL,
-    NULL,
+	NULL,
+	NULL,
+	NULL,
     }
 };
 
@@ -1961,8 +2007,8 @@ const struct rt_functab rt_functab[] = {
 /* Map for database solidrec objects to internal objects */
 static char idmap[] = {
     ID_NULL,	/* undefined, 0 */
-    ID_NULL,	/* RPP	1 axis-aligned rectangular parallelopiped */
-    ID_NULL,	/* BOX	2 arbitrary rectangular parallelopiped */
+    ID_NULL,	/* RPP	1 axis-aligned rectangular parallelepiped */
+    ID_NULL,	/* BOX	2 arbitrary rectangular parallelepiped */
     ID_NULL,	/* RAW	3 right-angle wedge */
     ID_NULL,	/* ARB4	4 tetrahedron */
     ID_NULL,	/* ARB5	5 pyramid */

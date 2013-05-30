@@ -1,7 +1,7 @@
 /*                         F B _ I K . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2012 United States Government as represented by
+ * Copyright (c) 2004-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -67,7 +67,7 @@
 #define BPS	IK(020500, 0)	/* beginning of bps registers */
 #define BPSPC	IK(020500, 0)	/* bps program counter (read only) */
 #define BPSSTAT	IK(020500, 0)	/* bps status register (write only) */
-#define SR	IK(020200, 0)	/* beginnig of scratch pad registers */
+#define SR	IK(020200, 0)	/* beginning of scratch pad registers */
 #define MCM	IK(020000, 0)	/* beginning of microcode memory */
 #define MA	IK(020400, 0)	/* beginning of multiplier/accumulator */
 #define MACM	IK(020400, 0)	/* ma coefficient memory */

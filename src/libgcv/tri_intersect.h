@@ -1,7 +1,7 @@
 /*                 T R I _ I N T E R S E C T . H
  * BRL-CAD
  *
- * Copyright (c) 2011-2012 United States Government as represented by
+ * Copyright (c) 2011-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -20,17 +20,17 @@
 
 /** @file libgcv/tri_intersect.h
  *
- * Intersect 2 triangles using a modified Möller routine.
+ * Intersect 2 triangles using a modified MÃ¶ller routine.
  */
 
 
 int gcv_tri_tri_intersect_with_isectline(
-		struct soup_s *UNUSED(left), 
-		struct soup_s *UNUSED(right), 
-		struct face_s *lf, 
-		struct face_s *rf, 
-		int *coplanar, 
-		point_t *isectpt, 
+		struct soup_s *UNUSED(left),
+		struct soup_s *UNUSED(right),
+		struct face_s *lf,
+		struct face_s *rf,
+		int *coplanar,
+		point_t *isectpt,
 		const struct bn_tol *tol);
 
 /*
@@ -39,6 +39,7 @@ int gcv_tri_tri_intersect_with_isectline(
  * mode: C
  * indent-tabs-mode: t
  * c-file-style: "stroustrup"
+ * coding: utf-8
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

@@ -1,7 +1,7 @@
 /*                          N I R T . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2012 United States Government as represented by
+ * Copyright (c) 2004-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -65,7 +65,6 @@ const com_table ComTab[] = {
     { "bot_mintie", bot_mintie, "Get/Set value for rt_bot_mintie (0 means do not use pieces, default is 4294967295)", "min_tie" },
     { "libdebug", cm_libdebug, "set/query librt debug flags", "hex_flag_value" },
     { "debug", cm_debug, "set/query nirt debug flags", "hex_flag_value" },
-    { "!", sh_esc, "escape to the shell", NULL },
     { "q", quit, "quit", NULL },
     { "?", show_menu, "display this help menu", NULL },
     { (char *)NULL, NULL, (char *)NULL, (char *)NULL }
@@ -235,8 +234,7 @@ enqueue_script(struct bu_list *qp, int type, char *string)
 
     BU_CK_LIST_HEAD(qp);
 
-    srp = (struct script_rec *)
-	bu_malloc(sizeof(struct script_rec), "script record");
+    BU_ALLOC(srp, struct script_rec);
     srp->sr_magic = SCRIPT_REC_MAGIC;
     srp->sr_type = type;
     bu_vls_init(&(srp->sr_script));

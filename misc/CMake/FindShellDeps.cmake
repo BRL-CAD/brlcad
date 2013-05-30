@@ -1,7 +1,7 @@
 #             F I N D S H E L L D E P S . C M A K E
 # BRL-CAD
 #
-# Copyright (c) 2011-2012 United States Government as represented by
+# Copyright (c) 2011-2013 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -37,7 +37,7 @@
 
 # The following variables are set:
 #
-# SH_EXEC 
+# SH_EXEC
 # CP_EXEC
 # MV_EXEC
 # RM_EXEC

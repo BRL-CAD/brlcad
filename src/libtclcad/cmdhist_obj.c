@@ -1,7 +1,7 @@
 /*                   C M D H I S T _ O B J . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2012 United States Government as represented by
+ * Copyright (c) 1998-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -87,7 +87,7 @@ cho_deleteProc(ClientData clientData)
     bu_vls_free(&chop->cho_head.h_command);
 
     BU_LIST_DEQUEUE(&chop->l);
-    bu_free((genptr_t)chop, "cho_deleteProc: chop");
+    BU_PUT(chop, struct bu_cmdhist_obj);
 }
 
 

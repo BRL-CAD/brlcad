@@ -1,7 +1,7 @@
 /*                   A N I M _ L O O K A T . C
  * BRL-CAD
  *
- * Copyright (c) 1993-2012 United States Government as represented by
+ * Copyright (c) 1993-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -39,7 +39,7 @@
 #include "vmath.h"
 
 
-#define OPT_STR "f:yqv"
+#define OPT_STR "f:yqvh?"
 
 #define LOOKAT_SCRIPT 0
 #define LOOKAT_YPR 1
@@ -50,6 +50,12 @@ int frame = 0;
 int print_mode = LOOKAT_SCRIPT;
 int print_viewsize = 0;
 
+static void
+usage(void)
+{
+    fprintf(stderr,"Usage: anim_lookat [-f #] [-v] in.table out.script\n");
+    fprintf(stderr,"   or: anim_lookat - [y | q] [-v] in.table out.table\n");
+}
 
 int
 get_args(int argc, char **argv)
@@ -70,7 +76,6 @@ get_args(int argc, char **argv)
 		print_viewsize = 1;
 		break;
 	    default:
-		fprintf(stderr, "Unknown option: -%c\n", c);
 		return 0;
 	}
     }
@@ -81,17 +86,29 @@ get_args(int argc, char **argv)
 int
 main(int argc, char *argv[])
 {
-    fastf_t t /* time */, vsize=0.0;
-    vect_t eye, look, dir, angles, norm, temp = VINIT_ZERO;
+    fastf_t vsize=0.0;
+    vect_t dir, angles, norm, temp = VINIT_ZERO;
     quat_t quat;
     mat_t mat;
     int val = 0;
 
+    /* intentionally double for scan */
+    double t /* time */;
+    double eye[3];
+    double look[3];
+
     VSETALL(look, 0.0);
     VSETALL(eye, 0.0);
 
-    if (argc > 1)
-	get_args(argc, argv);
+    if (argc == 1 && isatty(fileno(stdin)) && isatty(fileno(stdout))){
+	usage();
+	return 0;
+    }
+
+    if (!get_args(argc, argv)){
+	usage();
+	return 0;
+    }
 
     VSET(norm, 0.0, 1.0, 0.0);
     while (!feof(stdin)) {

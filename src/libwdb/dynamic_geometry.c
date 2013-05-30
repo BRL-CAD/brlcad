@@ -1,7 +1,7 @@
 /*              D Y N A M I C _ G E O M E T R Y . C
  * BRL-CAD
  *
- * Copyright (c) 2003-2012 United States Government as represented by
+ * Copyright (c) 2003-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -96,14 +96,14 @@
  * changes that only exist in memory and will not be permanently
  * stored in the original database.
  *
- * This routine should be preceeded by a call to "rt_unprep" and
+ * This routine should be preceded by a call to "rt_unprep" and
  * followed by a call to "rt_reprep".
  */
 
 int
-make_hole(struct rt_wdb *wdbp,		/* datbase to be modified */
+make_hole(struct rt_wdb *wdbp,		/* database to be modified */
 	  point_t hole_start,		/* center of start of hole */
-	  vect_t hole_depth,		/* depth and directio of hole */
+	  vect_t hole_depth,		/* depth and direction of hole */
 	  fastf_t hole_radius,		/* radius of hole */
 	  int num_objs,			/* number of objects that this hole affects */
 	  struct directory **dp)	/* array of directory pointers
@@ -162,14 +162,14 @@ make_hole(struct rt_wdb *wdbp,		/* datbase to be modified */
 	comb = (struct rt_comb_internal *)intern.idb_ptr;
 
 	/* Build a new "subtract" node (will be the root of the new tree) */
-	BU_GET(tree, union tree);
+	BU_ALLOC(tree, union tree);
 	RT_TREE_INIT(tree);
 	tree->tr_b.tb_op = OP_SUBTRACT;
 	tree->tr_b.tb_left = comb->tree;	/* subtract from the original tree */
 	comb->tree = tree;
 
 	/* Build a node for the RCC to be subtracted */
-	BU_GET(tree, union tree);
+	BU_ALLOC(tree, union tree);
 	RT_TREE_INIT(tree);
 	tree->tr_l.tl_op = OP_DB_LEAF;
 	tree->tr_l.tl_mat = NULL;
@@ -196,7 +196,7 @@ make_hole(struct rt_wdb *wdbp,		/* datbase to be modified */
  *
  * This routine provides a quick approach to simply adding a hole to
  * existing prepped geometry.  The geometry must already be prepped
- * prior to caling this routine. After calling this routine, the
+ * prior to calling this routine. After calling this routine, the
  * geometry is ready for raytracing (no other routine need to be
  * called).
  *
@@ -264,7 +264,7 @@ make_hole_in_prepped_regions(struct rt_wdb *wdbp,	/* database to be modified */
     }
 
     /* Build a soltab structure for the new RCC */
-    BU_GET(stp, struct soltab);
+    BU_ALLOC(stp, struct soltab);
     stp->l.magic = RT_SOLTAB_MAGIC;
     stp->l2.magic = RT_SOLTAB2_MAGIC;
     stp->st_uses = 1;
@@ -298,7 +298,7 @@ make_hole_in_prepped_regions(struct rt_wdb *wdbp,	/* database to be modified */
 	RT_CK_REGION(rp);
 
 	/* create a tree node for the subtraction operation, this will be the new tree root */
-	BU_GET(treep, union tree);
+	BU_ALLOC(treep, union tree);
 	RT_TREE_INIT(treep);
 	treep->tr_b.tb_op = OP_SUBTRACT;
 	treep->tr_b.tb_left = rp->reg_treetop;	/* subtract from the old treetop */
@@ -308,7 +308,7 @@ make_hole_in_prepped_regions(struct rt_wdb *wdbp,	/* database to be modified */
 	rp->reg_treetop = treep;
 
 	/* create a tree node for the new RCC */
-	BU_GET(treep, union tree);
+	BU_ALLOC(treep, union tree);
 	RT_TREE_INIT(treep);
 	treep->tr_a.tu_op = OP_SOLID;
 	treep->tr_a.tu_stp = stp;

@@ -1,7 +1,7 @@
 /*                     P I X - A L I A S . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2012 United States Government as represented by
+ * Copyright (c) 2004-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -19,7 +19,7 @@
  */
 /** @file util/pix-alias.c
  *
- * Convert BRL PIX format image files to ALIAS(tm) PIX fomat files.
+ * Convert BRL PIX format image files to ALIAS(tm) PIX format files.
  *
  * Format of a BRL PIX file:
  * RGB RGB RGB RGB .... RGB
@@ -81,7 +81,7 @@ void doit(void)
     for (n=y-1; n >= 0; --n)
 	if (fread(&image[n*x*3], x*3, 1, stdin) != 1) {
 	    (void) fprintf(stderr, "Error reading image at scanline %u\n", n);
-            free(image);
+	    bu_free(image, "image alloc from malloc");
 	    bu_exit (-2, NULL);
 	}
 
@@ -122,14 +122,14 @@ void doit(void)
 	(void) putchar(image[cpix+1]);
 	(void) putchar(image[cpix]);
     }
-    free(image);
+    bu_free(image, "image alloc from malloc");
 }
 
 
 void usage(void)
 {
-    (void)fprintf(stderr, "Usage: %s [ -s squaresize ] [-w file_width ] [-n file_height ]\n", progname);
-    (void)fprintf(stderr, "\t< BRLpixfile > ALIASpixfile\n");
+    fprintf(stderr, "Usage: %s [ -s squaresize ] [-w file_width ] [-n file_height ]\n", progname);
+    fprintf(stderr, "\t< BRLpixfile > ALIASpixfile\n");
     bu_exit (1, NULL);
 }
 

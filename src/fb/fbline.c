@@ -1,7 +1,7 @@
 /*                        F B L I N E . C
  * BRL-CAD
  *
- * Copyright (c) 1988-2012 United States Government as represented by
+ * Copyright (c) 1988-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -229,7 +229,7 @@ get_args(int argc, char **argv)
     fby2 = atoi(argv[bu_optind++]);
 
     if (argc > bu_optind)
-	(void)fprintf(stderr, "fbline: excess argument(s) ignored\n");
+	fprintf(stderr, "fbline: excess argument(s) ignored\n");
 
     return 1;		/* OK */
 }

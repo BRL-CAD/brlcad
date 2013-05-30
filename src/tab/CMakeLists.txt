@@ -21,12 +21,6 @@ BRLCAD_ADDEXEC(script-tab script-tab.c "librt;libbn;libbu;${M_LIBRARY}")
 BRLCAD_ADDEXEC(tabinterp tabinterp.c "librt;libbu;${M_LIBRARY}")
 BRLCAD_ADDEXEC(tabsub tabsub.c "libbn;libbu;${M_LIBRARY}")
 
-set(tab_MANS
-  tabinterp.1
-  tabsub.1
-  scriptsort.1
-  )
-ADD_MAN_PAGES(1 tab_MANS)
 CMAKEFILES(script.l tokens.h)
 CMAKEFILES(Makefile.am)
 

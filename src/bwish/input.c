@@ -1,7 +1,7 @@
 /*                         I N P U T . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2012 United States Government as represented by
+ * Copyright (c) 1998-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -515,7 +515,7 @@ processChar(char ch)
 	    }
 	    /* Fall through if not escaped! */
 	default:
-	    if (!isprint(ch))
+	    if (!isprint((int)ch))
 		break;
 
 	    insert_char(ch);

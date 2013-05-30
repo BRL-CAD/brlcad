@@ -10,7 +10,7 @@
   <!-- ====================================================== -->
   <!--
        Center tables in print, based on the example on p. 474 in
-       "DocBool XSL: The Complete Guide,", 4th Ed., by Bob Stayton.
+       "DocBook XSL: The Complete Guide,", 4th Ed., by Bob Stayton.
 
        Version 1.0
 

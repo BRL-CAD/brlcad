@@ -1,7 +1,7 @@
 /*                     T E X T U R E _ C L O U D S . C
  * BRL-CAD / ADRT
  *
- * Copyright (c) 2002-2012 United States Government as represented by
+ * Copyright (c) 2002-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -34,7 +34,7 @@ void
 texture_clouds_init(struct texture_s *texture, tfloat size, int octaves, int absolute, vect_t scale, vect_t translate) {
     struct texture_clouds_s *td;
 
-    texture->data = bu_malloc(sizeof(struct texture_clouds_s), "cloud data");
+    BU_ALLOC(texture->data, struct texture_clouds_s);
     texture->free = texture_clouds_free;
     texture->work = (texture_work_t *)texture_clouds_work;
 

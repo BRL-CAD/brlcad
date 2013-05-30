@@ -1,7 +1,7 @@
 /*                        D O Z O O M . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2012 United States Government as represented by
+ * Copyright (c) 1985-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -44,8 +44,9 @@ mat_t incr_change;
 mat_t modelchanges;
 mat_t identity;
 
+
 /* This is a holding place for the current display managers default wireframe color */
-extern unsigned char geometry_default_color[];		/* defined in dodraw.c */
+unsigned char geometry_default_color[] = { 255, 0, 0 };
 
 
 /*
@@ -60,7 +61,7 @@ persp_mat(mat_t m, fastf_t fovy, fastf_t aspect, fastf_t near1, fastf_t far1, fa
 {
     mat_t m2, tra;
 
-    fovy *= 3.1415926535/180.0;
+    fovy *= DEG2RAD;
 
     MAT_IDN(m2);
     m2[5] = cos(fovy/2.0) / sin(fovy/2.0);
@@ -81,7 +82,7 @@ persp_mat(mat_t m, fastf_t fovy, fastf_t aspect, fastf_t near1, fastf_t far1, fa
 /*
  *
  * Create a perspective matrix that transforms the +/1 viewing cube,
- * with the acutal eye position (not at Z=+1) specified in viewing coords,
+ * with the actual eye position (not at Z=+1) specified in viewing coords,
  * into a related space where the eye has been sheared onto the Z axis
  * and repositioned at Z=(0, 0, 1), with the same perspective field of view
  * as before.
@@ -241,10 +242,10 @@ drawSolid(struct solid *sp,
 	sp->s_flag = UP;
 	curr_dm_list->dml_ndrawn++;
     } else {
-        if (DM_DRAW_VLIST(dmp, (struct bn_vlist *)&sp->s_vlist) == TCL_OK) {
-            sp->s_flag = UP;
-            curr_dm_list->dml_ndrawn++;
-        }
+	if (DM_DRAW_VLIST(dmp, (struct bn_vlist *)&sp->s_vlist) == TCL_OK) {
+	    sp->s_flag = UP;
+	    curr_dm_list->dml_ndrawn++;
+	}
     }
 }
 
@@ -360,15 +361,15 @@ dozoom(int which_eye)
     /* dm rtgl has its own way of drawing */
     if (IS_DM_TYPE_RTGL(dmp->dm_type)) {
 
-        /* dm-rtgl needs database info for ray tracing */
-        RTGL_GEDP = gedp;
+	/* dm-rtgl needs database info for ray tracing */
+	RTGL_GEDP = gedp;
 
 	/* will ray trace visible objects and draw the intersection points */
-        DM_DRAW_VLIST(dmp, (struct bn_vlist *)NULL);
+	DM_DRAW_VLIST(dmp, (struct bn_vlist *)NULL);
 	/* force update if needed */
 	dirty = RTGL_DIRTY;
 
-        return;
+	return;
     }
 #endif
 
@@ -607,16 +608,17 @@ createDList(struct solid *sp)
     if (sp->s_dlist == 0)
 	sp->s_dlist = DM_GEN_DLISTS(dmp, 1);
 
-    DM_BEGINDLIST(dmp, sp->s_dlist);
+    (void)DM_MAKE_CURRENT(dmp);
+    (void)DM_BEGINDLIST(dmp, sp->s_dlist);
     if (sp->s_iflag == UP)
-	DM_SET_FGCOLOR(dmp, 255, 255, 255, 0, sp->s_transparency);
+	(void)DM_SET_FGCOLOR(dmp, 255, 255, 255, 0, sp->s_transparency);
     else
-	DM_SET_FGCOLOR(dmp,
+	(void)DM_SET_FGCOLOR(dmp,
 		       (unsigned char)sp->s_color[0],
 		       (unsigned char)sp->s_color[1],
 		       (unsigned char)sp->s_color[2], 0, sp->s_transparency);
-    DM_DRAW_VLIST(dmp, (struct bn_vlist *)&sp->s_vlist);
-    DM_ENDDLIST(dmp);
+    (void)DM_DRAW_VLIST(dmp, (struct bn_vlist *)&sp->s_vlist);
+    (void)DM_ENDDLIST(dmp);
 }
 
 
@@ -684,7 +686,8 @@ freeDListsAll(unsigned int dlist, int range)
     FOR_ALL_DISPLAYS(dlp, &head_dm_list.l) {
 	if (dlp->dml_dmp->dm_displaylist &&
 	    dlp->dml_mged_variables->mv_dlist) {
-	    DM_FREEDLISTS(dlp->dml_dmp, dlist, range);
+	    (void)DM_MAKE_CURRENT(dmp);
+	    (void)DM_FREEDLISTS(dlp->dml_dmp, dlist, range);
 	}
 
 	dlp->dml_dirty = 1;

@@ -1,7 +1,7 @@
 /*                          D M - T K . C
  * BRL-CAD
  *
- * Copyright (c) 1988-2012 United States Government as represented by
+ * Copyright (c) 1988-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -60,6 +60,7 @@
 #include "dm.h"
 #include "dm-tk.h"
 #include "dm-X.h"
+#include "dm-Null.h"
 #include "dm_xvars.h"
 #include "solid.h"
 
@@ -321,11 +322,11 @@ tk_drawVList(struct dm *dmp, struct bn_vlist *vp)
 				alpha = (dist_prev - delta) / (dist_prev - dist);
 				VJOIN1(tmp_pt, *pt_prev, alpha, diff);
 				MAT4X3PNT(pnt, ((struct x_vars *)dmp->dm_vars.priv_vars)->xmat, tmp_pt);
-                                }
+				}
 			    }
 			} else {
 			    if (dist_prev <= 0.0) {
-                                if (pt_prev) {
+				if (pt_prev) {
 				fastf_t alpha;
 				vect_t diff;
 				point_t tmp_pt;
@@ -339,7 +340,7 @@ tk_drawVList(struct dm *dmp, struct bn_vlist *vp)
 				lpnt[1] *= 2047 * dmp->dm_aspect;
 				lpnt[2] *= 2047;
 				MAT4X3PNT(pnt, ((struct x_vars *)dmp->dm_vars.priv_vars)->xmat, *pt);
-                                }
+				}
 			    } else {
 				MAT4X3PNT(pnt, ((struct x_vars *)dmp->dm_vars.priv_vars)->xmat, *pt);
 			    }
@@ -473,7 +474,7 @@ tk_draw(struct dm *dmp, struct bn_vlist *(*callback_function)(void *), genptr_t 
  * X _ N O R M A L
  *
  * Restore the display processor to a normal mode of operation
- * (ie, not scaled, rotated, displaced, etc).
+ * (i.e., not scaled, rotated, displaced, etc.).
  */
 HIDDEN int
 tk_normal(struct dm *dmp)
@@ -493,7 +494,7 @@ tk_normal(struct dm *dmp)
  */
 /* ARGSUSED */
 HIDDEN int
-tk_drawString2D(struct dm *dmp, char *str, fastf_t x, fastf_t y, int size, int use_aspect)
+tk_drawString2D(struct dm *dmp, const char *str, fastf_t x, fastf_t y, int size, int use_aspect)
 {
     int sx, sy;
 
@@ -504,7 +505,7 @@ tk_drawString2D(struct dm *dmp, char *str, fastf_t x, fastf_t y, int size, int u
 	bu_log("\ty - %g\n", y);
 	bu_log("\tsize - %d\n", size);
 
-	bu_log("color = %d\n", ((struct x_vars *)dmp->dm_vars.priv_vars)->fg);
+	bu_log("color = %lu\n", ((struct x_vars *)dmp->dm_vars.priv_vars)->fg);
 	/* bu_log("real_color = %d\n", ((struct x_vars *)dmp->dm_vars.priv_vars)->gc->foreground); */
 
 	if (use_aspect) {
@@ -543,7 +544,7 @@ tk_drawLine2D(struct dm *dmp, fastf_t xpos1, fastf_t ypos1, fastf_t xpos2, fastf
 	bu_log("x2 = %g, y2 = %g\n", xpos2, ypos2);
 	bu_log("sx1 = %d, sy1 = %d\n", sx1, sy1);
 	bu_log("sx2 = %d, sy2 = %d\n", sx2, sy2);
-	bu_log("color = %d\n", ((struct x_vars *)dmp->dm_vars.priv_vars)->fg);
+	bu_log("color = %lu\n", ((struct x_vars *)dmp->dm_vars.priv_vars)->fg);
     }
 
     XDrawLine(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
@@ -813,13 +814,14 @@ struct dm dm_tk = {
     tk_drawEnd,
     tk_normal,
     tk_loadMatrix,
+    null_loadPMatrix,
     tk_drawString2D,
     tk_drawLine2D,
     tk_drawLine3D,
     tk_drawLines3D,
     tk_drawPoint2D,
-    Nu_int0,
-    Nu_int0,
+    null_drawPoint3D,
+    null_drawPoints3D,
     tk_drawVList,
     tk_drawVList,
     tk_draw,
@@ -829,20 +831,21 @@ struct dm dm_tk = {
     tk_configureWin,
     tk_setWinBounds,
     tk_setLight,
-    Nu_int0,
-    Nu_int0,
+    null_setTransparency,
+    null_setDepthMask,
     tk_setZBuffer,
     tk_debug,
-    Nu_int0,
-    Nu_int0,
-    Nu_void,
-    Nu_int0,
-    Nu_int0,
-    Nu_int0, /* display to image function */
-    Nu_void,
+    null_beginDList,
+    null_endDList,
+    null_drawDList,
+    null_freeDLists,
+    null_genDLists,
+    null_getDisplayImage,	/* display to image function */
+    null_reshape,
+    null_makeCurrent,
     0,
     0,				/* no displaylist */
-    0,                            /* no stereo */
+    0,				/* no stereo */
     PLOTBOUND,			/* zoom-in limit */
     1,				/* bound flag */
     "Tk",
@@ -910,25 +913,13 @@ tk_open_dm(Tcl_Interp *interp, int argc, char **argv)
 	return DM_NULL;
     }
 
-    BU_GET(dmp, struct dm);
-    if (dmp == DM_NULL)
-	return DM_NULL;
+    BU_ALLOC(dmp, struct dm);
 
     *dmp = dm_tk; /* struct copy */
     dmp->dm_interp = interp;
 
-    dmp->dm_vars.pub_vars = (genptr_t)bu_calloc(1, sizeof(struct dm_xvars), "tk_open: dm_xvars");
-    if (dmp->dm_vars.pub_vars == (genptr_t)NULL) {
-	bu_free(dmp, "tk_open: dmp");
-	return DM_NULL;
-    }
-
-    dmp->dm_vars.priv_vars = (genptr_t)bu_calloc(1, sizeof(struct tk_vars), "tk_open: tk_vars");
-    if (dmp->dm_vars.priv_vars == (genptr_t)NULL) {
-	bu_free(dmp->dm_vars.pub_vars, "tk_open: dmp->dm_vars.pub_vars");
-	bu_free(dmp, "tk_open: dmp");
-	return DM_NULL;
-    }
+    BU_ALLOC(dmp->dm_vars.pub_vars, struct dm_xvars);
+    BU_ALLOC(dmp->dm_vars.priv_vars, struct tk_vars);
 
     bu_vls_init(&dmp->dm_pathName);
     bu_vls_init(&dmp->dm_tkName);

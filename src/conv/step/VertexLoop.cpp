@@ -1,7 +1,7 @@
 /*                 VertexLoop.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2012 United States Government as represented by
+ * Copyright (c) 1994-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -32,41 +32,45 @@
 
 #define CLASSNAME "VertexLoop"
 #define ENTITYNAME "Vertex_Loop"
-string VertexLoop::entityname = Factory::RegisterClass(ENTITYNAME,(FactoryMethod)VertexLoop::Create);
+string VertexLoop::entityname = Factory::RegisterClass(ENTITYNAME, (FactoryMethod)VertexLoop::Create);
 
-VertexLoop::VertexLoop() {
+VertexLoop::VertexLoop()
+{
     step = NULL;
     id = 0;
     loop_vertex = NULL;
 }
 
-VertexLoop::VertexLoop(STEPWrapper *sw,int step_id) {
+VertexLoop::VertexLoop(STEPWrapper *sw, int step_id)
+{
     step = sw;
     id = step_id;
     loop_vertex = NULL;
 }
 
-VertexLoop::~VertexLoop() {
+VertexLoop::~VertexLoop()
+{
 }
 
 bool
-VertexLoop::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
-    step=sw;
+VertexLoop::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
+    step = sw;
     id = sse->STEPfile_id;
 
-    if ( !Loop::Load(step,sse) ) {
+    if (!Loop::Load(step, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::Path." << std::endl;
 	return false;
     }
 
     // need to do this for local attributes to makes sure we have
     // the actual entity and not a complex/supertype parent
-    sse = step->getEntity(sse,ENTITYNAME);
+    sse = step->getEntity(sse, ENTITYNAME);
 
     if (loop_vertex == NULL) {
-	SDAI_Application_instance *entity = step->getEntityAttribute(sse,"loop_vertex");
+	SDAI_Application_instance *entity = step->getEntityAttribute(sse, "loop_vertex");
 	if (entity) {
-	    loop_vertex = dynamic_cast<Vertex *>(Factory::CreateObject(sw,entity)); //CreateCurveObject(sw,entity));
+	    loop_vertex = dynamic_cast<Vertex *>(Factory::CreateObject(sw, entity)); //CreateCurveObject(sw,entity));
 	} else {
 	    std::cerr << CLASSNAME << ": Error loading entity attribute 'loop_vertex'." << std::endl;
 	    return false;
@@ -77,34 +81,31 @@ VertexLoop::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
 }
 
 void
-VertexLoop::Print(int level) {
-    TAB(level); std::cout << CLASSNAME << ":" << "(";
+VertexLoop::Print(int level)
+{
+    TAB(level);
+    std::cout << CLASSNAME << ":" << "(";
     std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-    TAB(level); std::cout << "Local Attributes:" << std::endl;
-    loop_vertex->Print(level+1);
+    TAB(level);
+    std::cout << "Local Attributes:" << std::endl;
+    loop_vertex->Print(level + 1);
 
-    TAB(level); std::cout << "Inherited Attributes:" << std::endl;
-    Loop::Print(level+1);
+    TAB(level);
+    std::cout << "Inherited Attributes:" << std::endl;
+    Loop::Print(level + 1);
 }
 
 STEPEntity *
-VertexLoop::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
-    Factory::OBJECTS::iterator i;
-    if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
-	VertexLoop *object = new VertexLoop(sw,sse->STEPfile_id);
+VertexLoop::GetInstance(STEPWrapper *sw, int id)
+{
+    return new VertexLoop(sw, id);
+}
 
-	Factory::AddObject(object);
-
-	if (!object->Load(sw, sse)) {
-	    std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
-	    delete object;
-	    return NULL;
-	}
-	return static_cast<STEPEntity *>(object);
-    } else {
-	return (*i).second;
-    }
+STEPEntity *
+VertexLoop::Create(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
+    return STEPEntity::CreateEntity(sw, sse, GetInstance, CLASSNAME);
 }
 
 // Local Variables:

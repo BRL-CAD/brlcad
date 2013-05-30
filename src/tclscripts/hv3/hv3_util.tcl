@@ -19,12 +19,12 @@ namespace eval hv3 {
   #     html, canvas or text).
   #
   namespace eval scrolledwidget {
-  
+
     proc new {me widget args} {
       upvar #0 $me O
       set w $O(win)
 
-      set O(-propagate) 0 
+      set O(-propagate) 0
       set O(-scrollbarpolicy) auto
       set O(-takefocus) 0
 
@@ -32,7 +32,7 @@ namespace eval hv3 {
 
       # Create the three widgets - one user widget and two scrollbars.
       set O(myWidget) [eval [linsert $widget 1 ${w}.widget]]
-      set O(myVsb) [::hv3::scrollbar ${w}.vsb -orient vertical -takefocus 0] 
+      set O(myVsb) [::hv3::scrollbar ${w}.vsb -orient vertical -takefocus 0]
       set O(myHsb) [::hv3::scrollbar ${w}.hsb -orient horizontal -takefocus 0]
 
       set wid $O(myWidget)
@@ -44,28 +44,28 @@ namespace eval hv3 {
       bind $w <KeyPress-Next>   [list $me scrollme $wid yview scroll  1 pages]
       bind $w <KeyPress-space>  [list $me scrollme $wid yview scroll  1 pages]
       bind $w <KeyPress-Prior>  [list $me scrollme $wid yview scroll -1 pages]
-  
+
       $O(myVsb) configure -cursor "top_left_arrow"
       $O(myHsb) configure -cursor "top_left_arrow"
-  
+
       grid configure $O(myWidget) -column 0 -row 1 -sticky nsew
       grid columnconfigure $w 0 -weight 1
       grid rowconfigure    $w 1 -weight 1
       grid propagate       $w $O(-propagate)
-  
-      # First, set the values of -width and -height to the defaults for 
+
+      # First, set the values of -width and -height to the defaults for
       # the scrolled widget class. Then configure this widget with the
       # arguments provided.
-      $me configure -width  [$O(myWidget) cget -width] 
+      $me configure -width  [$O(myWidget) cget -width]
       $me configure -height [$O(myWidget) cget -height]
       eval $me configure $args
-  
+
       # Wire up the scrollbars using the standard Tk idiom.
       $O(myWidget) configure -yscrollcommand [list $me scrollcallback $O(myVsb)]
       $O(myWidget) configure -xscrollcommand [list $me scrollcallback $O(myHsb)]
       $O(myVsb) configure -command [list $me scrollme $O(myWidget) yview]
       $O(myHsb) configure -command [list $me scrollme $O(myWidget) xview]
-  
+
       # Propagate events from the scrolled widget to this one.
       bindtags $O(myWidget) [concat [bindtags $O(myWidget)] $O(win)]
     }
@@ -74,48 +74,48 @@ namespace eval hv3 {
       uplevel #0 [list unset $me]
       rename $me ""
     }
-  
+
     proc configure-propagate {me} {
       upvar #0 $me O
       grid propagate $O(win) $O(-propagate)
     }
-  
+
     proc take_control {me callback} {
       upvar #0 $me O
       if {$O(myTakeControlCb) ne ""} {
-        uplevel #0 $O(myTakeControlCb)
+	uplevel #0 $O(myTakeControlCb)
       }
       set O(myTakeControlCb) $callback
     }
-  
+
     proc scrollme {me args} {
       upvar #0 $me O
       if {$O(myTakeControlCb) ne ""} {
-        uplevel #0 $O(myTakeControlCb)
-        set O(myTakeControlCb) ""
+	uplevel #0 $O(myTakeControlCb)
+	set O(myTakeControlCb) ""
       }
       eval $args
     }
-  
+
     proc scrollcallback {me scrollbar first last} {
       upvar #0 $me O
 
       $scrollbar set $first $last
       set ismapped   [expr [winfo ismapped $scrollbar] ? 1 : 0]
-  
+
       if {$O(-scrollbarpolicy) eq "auto"} {
-        set isrequired [expr ($first == 0.0 && $last == 1.0) ? 0 : 1]
+	set isrequired [expr ($first == 0.0 && $last == 1.0) ? 0 : 1]
       } else {
-        set isrequired $O(-scrollbarpolicy)
+	set isrequired $O(-scrollbarpolicy)
       }
-  
+
       if {$isrequired && !$ismapped} {
-        switch [$scrollbar cget -orient] {
-          vertical   {grid configure $scrollbar  -column 1 -row 1 -sticky ns}
-          horizontal {grid configure $scrollbar  -column 0 -row 2 -sticky ew}
-        }
+	switch [$scrollbar cget -orient] {
+	  vertical   {grid configure $scrollbar  -column 1 -row 1 -sticky ns}
+	  horizontal {grid configure $scrollbar  -column 0 -row 2 -sticky ew}
+	}
       } elseif {$ismapped && !$isrequired} {
-        grid forget $scrollbar
+	grid forget $scrollbar
       }
     }
 
@@ -124,7 +124,7 @@ namespace eval hv3 {
       eval $me scrollcallback $O(myHsb) [$O(myWidget) xview]
       eval $me scrollcallback $O(myVsb) [$O(myWidget) yview]
     }
-  
+
     proc widget {me} {
       upvar #0 $me O
       return $O(myWidget)
@@ -143,9 +143,9 @@ namespace eval hv3 {
     set DelegateOption(*) myWidget
   }
 
-  # Wrapper around the ::hv3::scrolledwidget constructor. 
+  # Wrapper around the ::hv3::scrolledwidget constructor.
   #
-  # Example usage to create a 400x400 canvas widget named ".c" with 
+  # Example usage to create a 400x400 canvas widget named ".c" with
   # automatic scrollbars:
   #
   #     ::hv3::scrolled canvas .c -width 400 -height 400
@@ -173,39 +173,39 @@ namespace eval ::hv3::string {
   proc tokenise {input} {
     set tokens [list]
     set zIn [string trim $input]
-  
+
     while {[string length $zIn] > 0} {
-  
+
       if {[ regexp {^([[:alnum:]_.-]+)(.*)$} $zIn -> zToken zIn ]} {
-        # Contiguous alpha-numeric characters
-        lappend tokens $zToken
-  
+	# Contiguous alpha-numeric characters
+	lappend tokens $zToken
+
       } elseif {[ regexp {^(["'])} $zIn -> zQuote]} {      #;'"
-        # Quoted string
-  
-        set nEsc 0
-        for {set nToken 1} {$nToken < [string length $zIn]} {incr nToken} {
-          set c [string range $zIn $nToken $nToken]
-          if {$c eq $zQuote && 0 == ($nEsc%2)} break
-          set nEsc [expr {($c eq "\\") ? $nEsc+1 : 0}]
-        }
-        set zToken [string range $zIn 0 $nToken]
-        set zIn [string range $zIn [expr {$nToken+1}] end]
-  
-        lappend tokens $zToken
-  
+	# Quoted string
+
+	set nEsc 0
+	for {set nToken 1} {$nToken < [string length $zIn]} {incr nToken} {
+	  set c [string range $zIn $nToken $nToken]
+	  if {$c eq $zQuote && 0 == ($nEsc%2)} break
+	  set nEsc [expr {($c eq "\\") ? $nEsc+1 : 0}]
+	}
+	set zToken [string range $zIn 0 $nToken]
+	set zIn [string range $zIn [expr {$nToken+1}] end]
+
+	lappend tokens $zToken
+
       } else {
-        lappend tokens [string range $zIn 0 0]
-        set zIn [string range $zIn 1 end]
+	lappend tokens [string range $zIn 0 0]
+	set zIn [string range $zIn 1 end]
       }
-  
+
       set zIn [string trimleft $zIn]
     }
-  
+
     return $tokens
   }
 
-  # Dequote $input, if it appears to be a quoted string (starts with 
+  # Dequote $input, if it appears to be a quoted string (starts with
   # a single or double quote character).
   #
   proc dequote {input} {
@@ -214,7 +214,7 @@ namespace eval ::hv3::string {
     if {$zQuote eq "\"" || $zQuote eq "\'"} {
       set zIn [string range $zIn 1 end]
       if {[string range $zIn end end] eq $zQuote} {
-        set zIn [string range $zIn 0 end-1]
+	set zIn [string range $zIn 0 end-1]
       }
       set zIn [regsub {\\(.)} $zIn {\1}]
     }
@@ -239,8 +239,8 @@ namespace eval ::hv3::string {
     set enc ""
     foreach idx [lsearch -regexp -all $tokens (?i)charset] {
       if {[lindex $tokens [expr {$idx+1}]] eq "="} {
-        set enc [::hv3::string::dequote [lindex $tokens [expr {$idx+2}]]]
-        break
+	set enc [::hv3::string::dequote [lindex $tokens [expr {$idx+2}]]]
+	break
       }
     }
 
@@ -263,15 +263,15 @@ proc ::hv3::next_word {text idx idx_out} {
   while {[char $text $idx] eq " "} { incr idx }
 
   set idx2 $idx
-  set c [char $text $idx2] 
+  set c [char $text $idx2]
 
   if {$c eq "\""} {
     # Quoted identifier
     incr idx2
-    set c [char $text $idx2] 
+    set c [char $text $idx2]
     while {$c ne "\"" && $c ne ""} {
       incr idx2
-      set c [char $text $idx2] 
+      set c [char $text $idx2]
     }
     incr idx2
     set word [string range $text [expr $idx+1] [expr $idx2 - 2]]
@@ -279,7 +279,7 @@ proc ::hv3::next_word {text idx idx_out} {
     # Unquoted identifier
     while {$c ne ">" && $c ne " " && $c ne ""} {
       incr idx2
-      set c [char $text $idx2] 
+      set c [char $text $idx2]
     }
     set word [string range $text $idx [expr $idx2 - 1]]
   }
@@ -393,10 +393,10 @@ proc ::hv3::sniff_doctype {text pIsXhtml} {
   if {$Availability eq "public"} {
     set s [expr [string length $Url] > 0]
     if {
-         $Identifier eq "-//w3c//dtd xhtml 1.0 transitional//en" ||
-         $Identifier eq "-//w3c//dtd xhtml 1.0 frameset//en" ||
-         ($s && $Identifier eq "-//w3c//dtd html 4.01 transitional//en") ||
-         ($s && $Identifier eq "-//w3c//dtd html 4.01 frameset//en")
+	 $Identifier eq "-//w3c//dtd xhtml 1.0 transitional//en" ||
+	 $Identifier eq "-//w3c//dtd xhtml 1.0 frameset//en" ||
+	 ($s && $Identifier eq "-//w3c//dtd html 4.01 transitional//en") ||
+	 ($s && $Identifier eq "-//w3c//dtd html 4.01 frameset//en")
     } {
       return "almost standards"
     }
@@ -447,7 +447,7 @@ namespace eval ::hv3 {
     set PROC proc
     if {[info commands real_proc] ne ""} {
       set PROC real_proc
-    } 
+    }
 
     set isWidget [expr {[string range $obj 0 0] eq "."}]
 
@@ -506,20 +506,20 @@ namespace eval ::hv3 {
     #
     namespace eval $ns "
       proc cget {me option} {
-        upvar \$me O
-        if {!\[info exists O(\$option)\]} {
-          variable DelegateOption
-          if {\[info exists DelegateOption(\$option)\]} {
-            return \[
-              eval \$O(\$DelegateOption(\$option)) [list cget \$option]
-            \]
-            return
-          } elseif {\[info exists DelegateOption(*)\]} {
-            return \[eval \$O(\$DelegateOption(*)) [list cget \$option ]\]
-          }
-          error \"unknown option: \$option\"
-        }
-        return \$O(\$option)
+	upvar \$me O
+	if {!\[info exists O(\$option)\]} {
+	  variable DelegateOption
+	  if {\[info exists DelegateOption(\$option)\]} {
+	    return \[
+	      eval \$O(\$DelegateOption(\$option)) [list cget \$option]
+	    \]
+	    return
+	  } elseif {\[info exists DelegateOption(*)\]} {
+	    return \[eval \$O(\$DelegateOption(*)) [list cget \$option ]\]
+	  }
+	  error \"unknown option: \$option\"
+	}
+	return \$O(\$option)
       }
     "
     # Create the [configure] method.
@@ -531,27 +531,25 @@ namespace eval ::hv3 {
     }
     namespace eval $ns "
       proc configure {me args} {
-        upvar \$me O
-        foreach {option value} \$args {
-          if {!\[info exists O(\$option)\]} {
-            variable DelegateOption
-            if {\[info exists DelegateOption(\$option)\]} {
-              eval \$O(\$DelegateOption(\$option)) [list configure \$option \$value]
-            } elseif {\[info exists DelegateOption(*)\]} {
-              eval \$O(\$DelegateOption(*)) [list configure \$option \$value]
-            } else {
-              error \"unknown option: \$option\"
-            }
-          } elseif {\$O(\$option) != \$value} {
-            set O(\$option) \$value
-            $cc
-          }
-        }
+	upvar \$me O
+	foreach {option value} \$args {
+	  if {!\[info exists O(\$option)\]} {
+	    variable DelegateOption
+	    if {\[info exists DelegateOption(\$option)\]} {
+	      eval \$O(\$DelegateOption(\$option)) [list configure \$option \$value]
+	    } elseif {\[info exists DelegateOption(*)\]} {
+	      eval \$O(\$DelegateOption(*)) [list configure \$option \$value]
+	    } else {
+	      error \"unknown option: \$option\"
+	    }
+	  } elseif {\$O(\$option) != \$value} {
+	    set O(\$option) \$value
+	    $cc
+	  }
+	}
       }
     "
   }
 }
 
 ::hv3::make_constructor ::hv3::scrolledwidget
-
-

@@ -1,7 +1,7 @@
 /*                            H E X . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2012 United States Government as represented by
+ * Copyright (c) 2004-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -23,7 +23,7 @@
  *
  * Options
  * h    help
- * o    offset from begining of data from which to start dump
+ * o    offset from beginning of data from which to start dump
  */
 
 #include "common.h"
@@ -40,7 +40,7 @@
 static char *options = "o:";
 static char *progname = "(noname)";
 
-static long offset=0;	 /* offset from begining of file from which to start */
+static off_t offset=0;	 /* offset from beginning of file from which to start */
 
 #define DUMPLEN 16    /* number of bytes to dump on one line */
 
@@ -49,15 +49,15 @@ static long offset=0;	 /* offset from begining of file from which to start */
  */
 void dump(FILE *fd)
 {
-    int i;
+    size_t i;
     char *p;
-    int bytes;
-    long addr = 0L;
+    size_t bytes;
+    off_t addr = 0;
     static char buf[DUMPLEN];    /* input buffer */
 
     if (offset != 0) {
-  	/* skip over "offset" bytes first */
-	if (fseek(fd, offset, 0)) {
+	/* skip over "offset" bytes first */
+	if (bu_fseek(fd, offset, 0)) {
 
 	    /* If fseek fails, try reading our way to the desired offset.
 	     * The fseek will fail if we're reading from a pipe.
@@ -77,7 +77,7 @@ void dump(FILE *fd)
     while ((bytes=fread(buf, 1, sizeof(buf), fd)) > 0) {
 
 	/* print the offset into the file */
-	printf("%08lx", addr);
+	printf("%08llx", (unsigned long long)addr);
 
 	/* produce the hexadecimal dump */
 	for (i=0, p=buf; i < DUMPLEN; ++i) {
@@ -121,7 +121,7 @@ void usage(void)
 
 /* M A I N
  *
- * Parse arguemnts and call 'dump' to perform primary task.
+ * Parse arguments and call 'dump' to perform primary task.
  */
 int
 main(int ac, char **av)
@@ -129,7 +129,7 @@ main(int ac, char **av)
     int c, optlen, files;
     FILE *fd;
     char *eos;
-    long newoffset;
+    off_t newoffset;
 
     progname = *av;
 

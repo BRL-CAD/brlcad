@@ -2,7 +2,7 @@
 #                       N I R T . S H
 # BRL-CAD
 #
-# Copyright (c) 2012 United States Government as represented by
+# Copyright (c) 2012-2013 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -53,7 +53,7 @@ if test ! -f "$NIRT" ; then
     exit 1
 fi
 
-# Clear old files 
+# Clear old files
 rm -f nirt.mged nirt_g.log nirt.g nirt.ref nirt.out nirt.log
 
 cat > nirt.mged <<EOF

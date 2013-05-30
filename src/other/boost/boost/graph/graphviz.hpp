@@ -68,7 +68,7 @@ namespace boost {
       return s;
     } else {
       boost::algorithm::replace_all(s, "\"", "\\\"");
-      return "\"" + s + "\"";
+      return std::string("\"") + s + std::string("\"");
     }
   }
 

@@ -1,7 +1,7 @@
 /*                         R E M R T . C
  * BRL-CAD
  *
- * Copyright (c) 1989-2012 United States Government as represented by
+ * Copyright (c) 1989-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -22,7 +22,7 @@
  * Controller for network ray-tracing
  *
  * Operating as both a network client and server, starts remote
- * invocations of "rtsrv" via "rsh", then handles incomming
+ * invocations of "rtsrv" via "rsh", then handles incoming
  * connections offering cycles, accepting input (solicited and
  * unsolicited) via the pkg.c routines, and storing the results in
  * files and/or a framebuffer.
@@ -182,7 +182,7 @@ struct servers {
     double		sr_s_e;		/* sum of all elapsed seconds */
     double		sr_s_sq_cpu;	/* sum of cpu times squared */
     double		sr_s_sq_pix;	/* sum of pixels squared */
-    double		sr_s_sq_e;	/* sum of all elapsed seceonds squared */
+    double		sr_s_sq_e;	/* sum of all elapsed seconds squared */
     int		sr_nsamp;	/* number of samples summed over */
     double		sr_prep_cpu;	/* sum of cpu time for preps */
     double		sr_l_percent;	/* last: percent of CPU */
@@ -253,7 +253,6 @@ struct pkg_switch pkgswitch[] = {
 
 fd_set clients;
 int print_on = 1;
-char *frame_script = NULL;
 
 int save_overlaps=0;
 
@@ -278,7 +277,7 @@ struct bu_list 		FreeList;
 #define LIST_MAGIC	0x4c494c49
 
 #define GET_LIST(p)	if ( BU_LIST_IS_EMPTY( &FreeList ) )  { \
-				BU_GET((p), struct list); \
+				BU_ALLOC((p), struct list); \
 				(p)->l.magic = LIST_MAGIC; \
 			} else { \
 				(p) = BU_LIST_FIRST(list, &FreeList); \
@@ -303,7 +302,7 @@ struct frame *FreeFrame;
 
 #define GET_FRAME(p)	{ \
 		if ( ((p)=FreeFrame) == FRAME_NULL ) {\
-			BU_GET(p, struct frame); \
+			BU_ALLOC(p, struct frame); \
 		} else { \
 			FreeFrame = (p)->fr_forw; (p)->fr_forw = FRAME_NULL; \
 		} \
@@ -341,7 +340,7 @@ struct frame *FreeFrame;
 
 /* variables shared with viewing model */
 extern double	AmbientIntensity;
-extern double	azimuth, elevation;
+extern fastf_t	azimuth, elevation;
 extern int	lightmodel;
 extern int	use_air;
 
@@ -390,7 +389,7 @@ int		rem_debug;		/* dispatcher debugging flag */
 int	work_allocate_method = OPT_MOVIE;
 char *allocate_method[] = {
     "Frame",
-    "Load Avaraging",
+    "Load Averaging",
     "One per Frame"};
 
 
@@ -584,7 +583,7 @@ main(int argc, char *argv[])
 	       stamp(), pkg_permport);
 	FD_ZERO(&clients);
 
-	/* parse command line args for sizes, etc */
+	/* parse command line args for sizes, etc. */
 	finalframe = -1;
 	if ( !get_args( argc, (const char **)argv ) )  {
 	    fprintf(stderr, "remrt:  bad arg list\n");
@@ -999,7 +998,7 @@ start_servers(struct timeval *nowp)
 /*
  *			I S _ N I G H T
  *
- *  Indicate whether the given time is "night", ie, off-peak time.
+ *  Indicate whether the given time is "night", i.e., off-peak time.
  *  The simple algorithm used here does not take into account
  *  using machines in another time zone, nor is it nice to
  *  machines used by hackers who stay up late.
@@ -1023,7 +1022,7 @@ is_night( struct timeval *tv )
 /*
  *			I S _ H A C K E R S _ N I G H T
  *
- *  Indicate whether the given time is "night", ie, off-peak time,
+ *  Indicate whether the given time is "night", i.e., off-peak time,
  *  for a computer hacker, who stays up late.
  *  The simple algorithm used here does not take into account
  *  using machines in another time zone.
@@ -1055,7 +1054,7 @@ is_hackers_night( struct timeval *tv )
  *
  *	a trailer that follows the end command, before the next
  *	start command.  While this *might* include more changes
- *	of viewsize, etc, in actual practice, if it exists at all,
+ *	of viewsize, etc., in actual practice, if it exists at all,
  *	it contains shell escapes, e.g., to compress the frame just
  *	finished.  As such, it should be performed locally, after
  *	the frame is done.
@@ -1204,7 +1203,7 @@ get_server_by_name(char *str)
     struct servers *sp;
     struct ihost	*ihp;
 
-    if ( isdigit( *str ) )  {
+    if ( isdigit( (int)*str ) )  {
 	int	i;
 	i = atoi( str );
 	if ( i < 0 || i >= (int)MAXSERVERS )  return SERVERS_NULL;
@@ -1354,8 +1353,8 @@ do_a_frame(void)
  *  The .pix file for this frame already has some pixels stored in it
  *  from some earlier, aborted run.
  *  view_pixel() is always careful to write (0, 0, 1) or some other
- *  non-zero tripple in all rendered pixels.
- *  Therefore, if a (0, 0, 0) tripple is found in the file, it is
+ *  non-zero triple in all rendered pixels.
+ *  Therefore, if a (0, 0, 0) triple is found in the file, it is
  *  part of some span which was not yet rendered.
  *
  *  At the outset, the frame is assumed to be entirely un-rendered.
@@ -1419,7 +1418,7 @@ scan_frame_for_finished_pixels(struct frame *fr)
     }
     bu_log("%s Scanning %s complete, %d non-black spans, %d non-black pixels\n",
 	   stamp(), fr->fr_filename, nspans, npix );
-    fclose(fp); 
+    fclose(fp);
     return 0;
 }
 
@@ -1517,20 +1516,6 @@ frame_is_done(struct frame *fr)
 	       bu_vls_addr(&fr->fr_after_cmd) );
 	(void)rt_do_cmd( (struct rt_i *)0,
 			 bu_vls_addr(&fr->fr_after_cmd), cmd_tab );
-    }
-
-    /* Run global end-of-frame script from 'EOFrame' in .remrtrc file */
-    if (frame_script) {
-	char *cmd;
-	int len = strlen(frame_script) + strlen(fr->fr_filename) + 20;
-	cmd = malloc(len); /* spaces and frame number */
-	snprintf(cmd, len, "%s %s %ld", frame_script, fr->fr_filename,
-		 fr->fr_number);
-	if (rem_debug) bu_log("%s %s\n", stamp(), cmd);
-	len = system(cmd);
-	if (len < 0)
-	    perror("system");
-	(void) free(cmd);
     }
 
     /* Final processing of output file */
@@ -1679,7 +1664,7 @@ all_done(void)
  *  If there is work to do, and a free server, send work.
  *  One assignment will be given to each free server.  If there are
  *  servers that do not have a proper number of assignments (to ensure
- *  good pipelining), then additional passes will be made, untill all
+ *  good pipelining), then additional passes will be made, until all
  *  servers have a proper number of assignments.
  *
  *  There could be some difficulties with the linked lists changing
@@ -1972,7 +1957,7 @@ task_server( struct servers *sp, struct frame *fr, struct timeval *nowp )
 
     /* If each frame has a dedicated server, make lumps big */
     if ( work_allocate_method == OPT_MOVIE )  {
-	lump = fr->fr_width * 2;	/* 2 scanlines at a wack */
+	lump = fr->fr_width * 2;	/* 2 scanlines at a whack */
     } else {
 	/* Limit growth in assignment size to 2X each assignment */
 	if ( lump > 2*sp->sr_lump )  lump = 2*sp->sr_lump;
@@ -2110,7 +2095,7 @@ ph_default(struct pkg_conn *pc, char *buf)
 /*
  *			P H _ D I R B U I L D _ R E P L Y
  *
- *  The server answers our MSG_DIRBUILD with various prints, etc,
+ *  The server answers our MSG_DIRBUILD with various prints, etc.,
  *  and then responds with a MSG_DIRBUILD_REPLY in return, which indicates
  *  that he is ready to accept work now.
  */
@@ -2140,7 +2125,7 @@ ph_dirbuild_reply(struct pkg_conn *pc, char *buf)
 /*
  *			P H _ G E T T R E E S _ R E P L Y
  *
- *  The server answers our MSG_GETTREES with various prints, etc,
+ *  The server answers our MSG_GETTREES with various prints, etc.,
  *  and then responds with a MSG_GETTREES_REPLY in return, which indicates
  *  that he is ready to accept work now.
  */
@@ -2344,7 +2329,7 @@ ph_pixels(struct pkg_conn *pc, char *buf)
     if ( (fd = open( fr->fr_filename, 2 )) < 0 )  {
 	/* open failed */
 	perror( fr->fr_filename );
-    } else if ( lseek( fd, info.li_startpix*3L, 0 ) < 0 )  {
+    } else if ( lseek( fd, info.li_startpix*3, 0 ) < 0 )  {
 	/* seek failed */
 	perror( fr->fr_filename );
 	(void)close(fd);
@@ -2826,7 +2811,7 @@ add_host(struct ihost *ihp)
     }
     fflush( helper_fp );
 
-    /* Wait briefly to try and catch the incomming connection,
+    /* Wait briefly to try and catch the incoming connection,
      * in case there are several of these spawned in a row.
      */
     check_input(1);
@@ -2879,7 +2864,7 @@ host_helper(FILE *fp)
 	}
 
 	if ( cnt == 3 )  {
-	    snprintf(cmd, 128, 
+	    snprintf(cmd, 128,
 		     "cd %s; rtsrv %s %d",
 		     rem_dir, our_hostname, port );
 	    if (rem_debug)  {
@@ -2910,7 +2895,7 @@ host_helper(FILE *fp)
 		(void)wait(0);
 	    }
 	} else {
-	    snprintf(cmd, 128, 
+	    snprintf(cmd, 128,
 		     "g2asc<%s|%s %s \"cd %s; asc2g>%s; rtsrv %s %d\"",
 		     loc_db,
 		     RSH, host,
@@ -3475,7 +3460,7 @@ cd_release(int UNUSED(argc), char **UNUSED(argv))
 /*
  *			C D _ F R A M E S
  *
- *  Sumarize frames waiting
+ *  Summarize frames waiting
  *	Usage: frames [-v]
  */
 int
@@ -3806,7 +3791,7 @@ cd_host(int argc, char **argv)
 	ihp->ht_rs_miss = 0;
 	ihp->ht_rs_wait = 0;
 	ihp->ht_rs = 500;
-	if ( isdigit(*argv[argpoint])) {
+	if ( isdigit((int)*argv[argpoint])) {
 	    ihp->ht_rs = atoi(argv[argpoint++]);
 	}
     }
@@ -3835,33 +3820,6 @@ cd_exit(int UNUSED(argc), char **UNUSED(argv))
 {
     bu_exit(0, NULL);
     /*NOTREACHED*/
-    return 0;
-}
-
-/* 		C D _ F R A M E
- *
- * Entry:
- *	argc	argument count
- *	argv	argument list
- *
- * Exit:
- *	frame_script is set to the shell script to execute.
- *
- */
-int
-cd_EOFrame(int argc, char **argv)
-{
-    if (argc < 2)
-	return 1;
-
-    if (frame_script) {
-	(void) free(frame_script);
-	frame_script = (char *)0;
-    }
-
-    if (!BU_STR_EQUAL(argv[1], "off") ) {
-	frame_script = bu_strdup(argv[1]);
-    }
     return 0;
 }
 
@@ -3900,7 +3858,7 @@ struct command_tab cmd_tab[] = {
      cd_stat,	1, 1},
     {"status", "",		"full worker status",
      cd_status,	1, 1},
-    {"detach", "",		"detatch from interactive keyboard",
+    {"detach", "",		"detach from interactive keyboard",
      cd_detach,	1, 1},
     {"host", "name always|night|passive|rs[ rays/sec]|passrs[ rays/sec] cd|convert path", "server host",
      cd_host,	1, 6},
@@ -3908,8 +3866,6 @@ struct command_tab cmd_tab[] = {
      cd_wait,	1, 1},
     {"exit", "",		"terminate remrt",
      cd_exit,	1, 1},
-    {"EOFrame", "EOFrame command|'off'", "Run command/script on dispatcher at End Of Frame",
-     cd_EOFrame,	2, 2},
     /* FRAME BUFFER */
     {"attach", "[fb]",	"attach to frame buffer",
      cd_attach,	1, 2},

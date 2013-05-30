@@ -1,7 +1,7 @@
 #             B R L C A D _ O P T I O N S . C M A K E
 # BRL-CAD
 #
-# Copyright (c) 2011-2012 United States Government as represented by
+# Copyright (c) 2011-2013 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -57,13 +57,13 @@ macro(AUTO_OPTION username varname debug_state release_state)
     set(${varname} ${${username}})
   endif(NOT ${${username}} MATCHES "AUTO")
 
-  # If we we don't understand the build type and have an AUTO setting 
+  # If we don't understand the build type and have an AUTO setting,
   # varname is not set.
-  if(NOT "${CMAKE_BUILD_TYPE}" MATCHES "Release" AND NOT "${CMAKE_BUILD_TYPE}" MATCHES "Debug")
+  if(CMAKE_BUILD_TYPE AND NOT "${CMAKE_BUILD_TYPE}" MATCHES "Release" AND NOT "${CMAKE_BUILD_TYPE}" MATCHES "Debug")
     if(NOT ${${username}} MATCHES "AUTO")
       set(${varname} ${${username}})
     endif(NOT ${${username}} MATCHES "AUTO")
-  endif(NOT "${CMAKE_BUILD_TYPE}" MATCHES "Release" AND NOT "${CMAKE_BUILD_TYPE}" MATCHES "Debug")
+  endif(CMAKE_BUILD_TYPE AND NOT "${CMAKE_BUILD_TYPE}" MATCHES "Release" AND NOT "${CMAKE_BUILD_TYPE}" MATCHES "Debug")
 
   # If we DO understand the build type and have AUTO, be smart
   if("${CMAKE_BUILD_TYPE}" MATCHES "Release" AND ${${username}} MATCHES "AUTO")
@@ -75,6 +75,12 @@ macro(AUTO_OPTION username varname debug_state release_state)
     set(${varname} ${debug_state})
     set(${username} "${debug_state} (AUTO)" CACHE STRING "auto option" FORCE)
   endif("${CMAKE_BUILD_TYPE}" MATCHES "Debug" AND ${${username}} MATCHES "AUTO")
+
+  if(NOT CMAKE_BUILD_TYPE AND ${${username}} MATCHES "AUTO")
+    set(${varname} ${debug_state})
+    set(${username} "${debug_state} (AUTO)" CACHE STRING "auto option" FORCE)
+  endif(NOT CMAKE_BUILD_TYPE AND ${${username}} MATCHES "AUTO")
+
 endmacro(AUTO_OPTION varname release_state debug_state)
 
 #-----------------------------------------------------------------------------
@@ -169,12 +175,12 @@ macro(OPTION_DESCRIPTION opt opt_ALIASES opt_DESCRIPTION)
     endif(${LL} GREATER 80)
   endforeach(item ${${opt_ALIASES}})
 
-  if(ALIASES_LIST)	
+  if(ALIASES_LIST)
     string(STRIP ALIASES_LIST ${ALIASES_LIST})
-    if(ALIASES_LIST)	
+    if(ALIASES_LIST)
       file(APPEND ${CMAKE_BINARY_DIR}/OPTIONS "${ALIASES_LIST}")
-    endif(ALIASES_LIST)	
-  endif(ALIASES_LIST)	
+    endif(ALIASES_LIST)
+  endif(ALIASES_LIST)
 
   file(APPEND ${CMAKE_BINARY_DIR}/OPTIONS "\n\n")
 endmacro(OPTION_DESCRIPTION)

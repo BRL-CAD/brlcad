@@ -19,13 +19,13 @@ of the ray-tracing applications.
 
 The procedure generally followed in building a model is:
 
-	1.  Build the primitives at desired locations, etc
+	1.  Build the primitives at desired locations, etc.
 	2.  Make the regions of these solids to produce the
 	    desired shape.
 	3.  Make higher level groups of these regions,
-	    generally according to function, etc
+	    generally according to function, etc.
 	    NOTE: using this procedure, the regions
-	    cannot occupy the same volume in space(overlap)
+	    cannot occupy the same volume in space (overlap)
 
 I got your "castle" today and took a quick look at castle.g.  The use of
 all regions (using the union operation) allows just about everything to
@@ -120,7 +120,7 @@ region flagged node is actually defining a single, solid, self-consistent
 chunk of 3-d space.  Therefore, regions are chunks of 3-space, and
 regions are grouped together to form the model.  It is permitted in RT,
 but not in some earlier software, to perform non-union operations on
-regions (ie, subtract one region from another).
+regions (i.e., subtract one region from another).
 
 The "big-E" command in MGED is slated for overhaul.  The task of
 "facetizing" a CSG model is a difficult one;  the current code in MGED,
@@ -151,7 +151,7 @@ are finished it is time to create the region[s], which tell how to combine
 the solids to represent the object.  The region[s] are then given
 the desired item/air and material codes.  I usually use the "edcodes"
 command to do this.  The region[s] are then put into a group, usually
-for function.  A group is just a collection of objectslity definition.
+for function.  A group is just a collection of objects
 for functionality definition.  A group really has no operation as such,
 and is really just a collection of objects.
 
@@ -183,7 +183,7 @@ must be aware of possible interference between the two regions.
 
 Note,  r region1 u solid1 - solid2   and   r region1 + solid1 - solid2
 produce the exact same results; however, for good practice one should use the
-union only when the region is really intended for unions (ie more than
+union only when the region is really intended for unions (i.e. more than
 one union operation).
 
 Members of regions are generally solids, however other regions are
@@ -208,7 +208,7 @@ command, with precedence following a couple of rules;
 	1] operations are applied "left to right" (the current operation
 	is done to the current solid with respect to the existing region).
 
-	2] there are implied parenthesis that lie in-between union operators.
+	2] there are implied parentheses that lie in-between union operators.
 
 so
 
@@ -219,7 +219,7 @@ is equivalent to:
 	((s1 - s2) + s3) u (s4 - s5) u s6
 
 that is, if parenthesis were allowed.  Therefore, you can think of the
-solids between unions (surrounded by implied parenthesis) as sub-regions.
+solids between unions (surrounded by implied parentheses) as sub-regions.
 The order of the region members (which can be printed out with the "l"
 command) is critical, and must be scrutinized when members are added or
 deleted from a region.
@@ -256,7 +256,7 @@ a single region if possible.  Back in the days of GIFT, it was common
 practice to describe a component with more than one region.  We tried to
 stay away from complex regions mainly because the more complicated the
 region, the harder it is to figure out what is going on and what effects
-a single change might have. Therfore, a component was often a series of
+a single change might have. Therefore, a component was often a series of
 simple regions with the same ident code.  I use the term "component" to
 refer to an object with a particular ident code, but I'm not sure this
 is still the accepted definition.  I have no qualms about letting "mged"

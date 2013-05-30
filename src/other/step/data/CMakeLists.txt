@@ -51,7 +51,7 @@ FUNCTION(BUILD_A_SCHEMA SCHEMA_FILE)
     # multiple schemas, each one will use the include dirs from all previous schemas. Since
     # one header (schema.h) is always named the same, this will not work. only workaround
     # seems to be set_target_properties( <target> PROPERTIES COMPILE_FLAGS <flags> )
-    set( ${PROJECT_NAME}_COMPILE_FLAGS "-I${CMAKE_CURRENT_SOURCE_DIR} -I${SCL_SOURCE_DIR}/src/cldai -I${SCL_SOURCE_DIR}/src/cleditor -I${SCL_SOURCE_DIR}/src/clutils -I${SCHEMA_OUTPUT_DIR} -I${SCL_SOURCE_DIR}/src/clstepcore" )
+    set( ${PROJECT_NAME}_COMPILE_FLAGS "-I${CMAKE_CURRENT_SOURCE_DIR} -I${SCL_SOURCE_DIR}/src/cldai -I${SCL_SOURCE_DIR}/src/cleditor -I${SCL_SOURCE_DIR}/src/clutils -I${SCHEMA_OUTPUT_DIR} -I${SCL_SOURCE_DIR}/src/clstepcore -I${SCL_SOURCE_DIR}/src/base" )
 
     add_custom_target( generate_cpp_${SCHEMA_SHORT_NAME} SOURCES ${FEDEX_OUT} )
     add_custom_command( OUTPUT ${SCHEMA_OUTPUT_DIR}
@@ -63,22 +63,11 @@ FUNCTION(BUILD_A_SCHEMA SCHEMA_FILE)
                         WORKING_DIRECTORY ${SCHEMA_OUTPUT_DIR}
                         COMMENT "Running fedex_plus for ${SCHEMA_SHORT_NAME}..."
                         VERBATIM )
-    if(MSVC OR BORLAND)
-        add_definitions( -DSCL_SCHEMA_DLL_EXPORTS )
-        add_definitions( -DSCL_EXPRESS_DLL_IMPORTS )
-        add_definitions( -DSCL_UTILS_DLL_IMPORTS )
-        add_definitions( -DSCL_DAI_DLL_IMPORTS )
-        add_definitions( -DSCL_CORE_DLL_IMPORTS )
-        add_definitions( -DSCL_EDITOR_DLL_IMPORTS )
-    endif()
     add_library( ${PROJECT_NAME} SHARED ${FEDEX_OUT} )
-    target_link_libraries(${PROJECT_NAME} stepdai stepcore express stepeditor steputils )
+    target_link_libraries(${PROJECT_NAME} stepdai stepcore express stepeditor steputils base )
     add_dependencies( ${PROJECT_NAME} generate_cpp_${SCHEMA_SHORT_NAME} )
     set_target_properties( ${PROJECT_NAME} PROPERTIES COMPILE_FLAGS
                            ${${PROJECT_NAME}_COMPILE_FLAGS} )
-    if(APPLE)
-        set_target_properties(${PROJECT_NAME} PROPERTIES LINK_FLAGS "-flat_namespace -undefined suppress")
-    endif(APPLE)
     TESTABLE_TARGET( ${PROJECT_NAME} )
 
     add_test( NAME generate_cpp_${SCHEMA_SHORT_NAME}
@@ -96,13 +85,8 @@ FUNCTION(BUILD_A_SCHEMA SCHEMA_FILE)
     set_tests_properties( generate_cpp_${SCHEMA_SHORT_NAME} PROPERTIES LABELS cpp_schema_gen )
     set_tests_properties( build_cpp_${PROJECT_NAME} PROPERTIES DEPENDS generate_cpp_${SCHEMA_SHORT_NAME} LABELS cpp_schema_build )
 
-    if(MSVC OR BORLAND)
-        add_executable( p21read_${PROJECT_NAME} ${SCL_SOURCE_DIR}/src/test/p21read/p21read.cc ${SCL_SOURCE_DIR}/src/fedex_plus/xgetopt.cc )
-    else()
-        add_executable( p21read_${PROJECT_NAME} ${SCL_SOURCE_DIR}/src/test/p21read/p21read.cc )
-    endif()
+    SCL_ADDEXEC( p21read_${PROJECT_NAME} "${SCL_SOURCE_DIR}/src/test/p21read/p21read.cc" "${PROJECT_NAME};base" )
     add_dependencies( p21read_${PROJECT_NAME} version_string )
-    target_link_libraries( p21read_${PROJECT_NAME} ${PROJECT_NAME} )
     set_target_properties( p21read_${PROJECT_NAME} PROPERTIES COMPILE_FLAGS
                            ${${PROJECT_NAME}_COMPILE_FLAGS} )
     TESTABLE_TARGET( p21read_${PROJECT_NAME} )

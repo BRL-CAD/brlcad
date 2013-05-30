@@ -1,7 +1,7 @@
 /*                      R T S E R V E R . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2012 United States Government as represented by
+ * Copyright (c) 2004-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -26,7 +26,7 @@
  *
  */
 
-/* Attempt to handle different sizes of the TCL ClientData on differing acjitectures */
+/* Attempt to handle different sizes of the TCL ClientData on differing architectures */
 #if SIZEOF_VOID_P == SIZEOF_INT
 typedef int CLIENTDATA_INT;
 #elif SIZEOF_VOID_P == SIZEOF_LONG

@@ -1,7 +1,7 @@
 /*                R B _ O R D E R _ S T A T S . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2012 United States Government as represented by
+ * Copyright (c) 1998-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -36,7 +36,7 @@
  *
  * This function has three parameters: the root of the tree to search,
  * the order on which to do the searching, and the rank of interest.
- * _rb_select() returns the discovered node.  It is an implemenation
+ * _rb_select() returns the discovered node.  It is an implementation
  * of the routine OS-SELECT on p. 282 of Cormen et al.
  */
 HIDDEN struct bu_rb_node *

@@ -1,7 +1,7 @@
 /*                 SphericalSurface.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2012 United States Government as represented by
+ * Copyright (c) 1994-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -31,90 +31,94 @@
 
 #define CLASSNAME "SphericalSurface"
 #define ENTITYNAME "Spherical_Surface"
-string SphericalSurface::entityname = Factory::RegisterClass(ENTITYNAME,(FactoryMethod)SphericalSurface::Create);
+string SphericalSurface::entityname = Factory::RegisterClass(ENTITYNAME, (FactoryMethod)SphericalSurface::Create);
 
-SphericalSurface::SphericalSurface() {
+SphericalSurface::SphericalSurface()
+{
     step = NULL;
     id = 0;
     radius = 0.0;
 }
 
-SphericalSurface::SphericalSurface(STEPWrapper *sw,int step_id) {
-    step=sw;
+SphericalSurface::SphericalSurface(STEPWrapper *sw, int step_id)
+{
+    step = sw;
     id = step_id;
     radius = 0.0;
 }
 
-SphericalSurface::~SphericalSurface() {
+SphericalSurface::~SphericalSurface()
+{
 }
 
 const double *
-SphericalSurface::GetOrigin() {
+SphericalSurface::GetOrigin()
+{
     return position->GetOrigin();
 }
 
 const double *
-SphericalSurface::GetNormal() {
+SphericalSurface::GetNormal()
+{
     return position->GetAxis(2);
 }
 
 const double *
-SphericalSurface::GetXAxis() {
+SphericalSurface::GetXAxis()
+{
     return position->GetXAxis();
 }
 
 const double *
-SphericalSurface::GetYAxis() {
+SphericalSurface::GetYAxis()
+{
     return position->GetYAxis();
 }
 
 
 bool
-SphericalSurface::Load(STEPWrapper *sw, SDAI_Application_instance *sse) {
-    step=sw;
+SphericalSurface::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
+    step = sw;
     id = sse->STEPfile_id;
 
-    if ( !ElementarySurface::Load(step,sse) ) {
+    if (!ElementarySurface::Load(step, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::Surface." << std::endl;
 	return false;
     }
 
     // need to do this for local attributes to makes sure we have
     // the actual entity and not a complex/supertype parent
-    sse = step->getEntity(sse,ENTITYNAME);
+    sse = step->getEntity(sse, ENTITYNAME);
 
-    radius = step->getRealAttribute(sse,"radius");
+    radius = step->getRealAttribute(sse, "radius");
 
     return true;
 }
 
 void
-SphericalSurface::Print(int level) {
-    TAB(level); std::cout << CLASSNAME << ":" << name << "(";
+SphericalSurface::Print(int level)
+{
+    TAB(level);
+    std::cout << CLASSNAME << ":" << name << "(";
     std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-    TAB(level+1); std::cout << "radius: " << radius << std::endl;
+    TAB(level + 1);
+    std::cout << "radius: " << radius << std::endl;
 
-    ElementarySurface::Print(level+1);
+    ElementarySurface::Print(level + 1);
 }
 
 STEPEntity *
-SphericalSurface::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
-    Factory::OBJECTS::iterator i;
-    if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
-	SphericalSurface *object = new SphericalSurface(sw,sse->STEPfile_id);
+SphericalSurface::GetInstance(STEPWrapper *sw, int id)
+{
+    return new SphericalSurface(sw, id);
+}
 
-	Factory::AddObject(object);
-
-	if (!object->Load(sw, sse)) {
-	    std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
-	    delete object;
-	    return NULL;
-	}
-	return static_cast<STEPEntity *>(object);
-    } else {
-	return (*i).second;
-    }
+STEPEntity *
+SphericalSurface::Create(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
+    return STEPEntity::CreateEntity(sw, sse, GetInstance, CLASSNAME);
 }
 // Local Variables:
 // tab-width: 8

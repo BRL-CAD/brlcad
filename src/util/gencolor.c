@@ -1,7 +1,7 @@
 /*                      G E N C O L O R . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2012 United States Government as represented by
+ * Copyright (c) 1986-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -37,7 +37,7 @@
 
 #define MAX_BYTES (128*1024)
 
-static const char Usage[] = "usage: gencolor [-r#] [val1 .. valN] > output_file\n";
+static const char Usage[] = "Usage: gencolor [-r#] [val1 .. valN] > output_file\n";
 
 int bytes_in_buf, copies_per_buf;
 

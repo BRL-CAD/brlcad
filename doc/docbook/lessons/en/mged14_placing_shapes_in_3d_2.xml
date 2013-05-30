@@ -2,7 +2,7 @@
 
 <article xmlns="http://docbook.org/ns/docbook" version="5.0">
   <info><title>Additional Exercises Placing Shapes in 3-D Space</title>
-    
+
 
     <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../books/en/tutorial_series_authors.xml" xpointer="Intro_MGED_Tutorial_Series_II_authors"/>
 
@@ -34,20 +34,20 @@
       3-D space. This lesson provides more advanced practice in these areas
       using the candle design you created in the last lesson.
     </para>
-    
+
     <para xml:id="placing_shapes_in_3d_2_intro2">
       Open the candle.g database if it isn't already open and draw candle1.c.
     </para>
 
     <section xml:id="candle_base_1st_sphere"><info><title>Making the First Sphere</title></info>
-      
-      
+
+
       <para>
 	Using the GUI, create a sphere named sph1.s. Go to the View menu and
 	select Top view. Go to the Edit menu, select Scale, and size the sphere
 	until it is proportionally about the same size as the one in the following
 	illustration:
-	
+
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
@@ -65,8 +65,8 @@
     </section>
 
     <section xml:id="draw_grid_feature"><info><title>Using the Draw Grid Feature</title></info>
-      
-      
+
+
       <para>
 	Drag the sphere into position on the rcc, as shown in the previous
 	illustration. To make this task a little easier, you can go to the Modes
@@ -77,7 +77,7 @@
     </section>
 
     <section xml:id="multipane_feature"><info><title>Using the Multipane Feature</title></info>
-      
+
       <para>
 	As discussed earlier, another feature that is available to help you
 	position each sphere is the Multipane  option under the Modes  menu. This
@@ -110,7 +110,7 @@
     </section>
 
     <section xml:id="copies_of_shapes"><info><title>Creating Copies of a Shape</title></info>
-      
+
       <para>
 	To make more jewels for the base, you could use the copy command on the
 	Command Line (cp sph1.s sph2.s), but another way to do this is to go to
@@ -158,7 +158,7 @@
 	Click on sph2.s and drag it into position. Once you have positioned the
 	eight spheres around the rcc, your design should look similar to the
 	following ones when viewed from the top and front.
-	
+
 	<informaltable>
 	  <tgroup cols="2">
 	    <tbody>
@@ -202,64 +202,64 @@
     </section>
 
     <section xml:id="practice_make_regions_spheres"><info><title>Making Regions of the Spheres</title></info>
-      
+
       <para>
 	Now that all your spheres are made and in place, it is time to make a
 	region of each sphere. To do this, type the following in the Command
 	Window:
-	
+
 	<command>r sph1.r u sph1.s[Enter]</command>
-	
+
 	<command>r sph2.r u sph2.s[Enter]</command>
-	
+
 	<command>r sph3.r u sph3.s[Enter]</command>
-	
+
 	<command>r sph4.r u sph4.s[Enter]</command>
-	
+
 	<command>r sph5.r u sph5.s[Enter]</command>
-	
+
 	<command>r sph6.r u sph6.s[Enter]</command>
-	
+
 	<command>r sph7.r u sph7.s[Enter]</command>
-	
+
 	<command>r sph8.r u sph8.s[Enter]</command>
       </para>
 
       <note>
 	<para>
-	  There are three easier ways to make all of the regions. The first     
-	  involves typing the first command:                                    
-	  
-	  <command>r sph1.r u sph1.s[Enter]</command>                           
-	  
-	  and then using the up arrow to recall this command. Now use the left  
-	  arrow to move backward in the Command Line to replace both            
-	  occurrences of the number "1" with "2" and press ENTER. Repeat this   
-	  for each of the numbers 3 through 8.                                  
+	  There are three easier ways to make all of the regions. The first
+	  involves typing the first command:
+
+	  <command>r sph1.r u sph1.s[Enter]</command>
+
+	  and then using the up arrow to recall this command. Now use the left
+	  arrow to move backward in the Command Line to replace both
+	  occurrences of the number "1" with "2" and press ENTER. Repeat this
+	  for each of the numbers 3 through 8.
 	</para>
 	<para>
-	  The second approach is based upon the fact that the Command Line      
-	  interpreter of <application>MGED</application> uses the Tcl/Tk language. This gives us access to 
-	  some convenient loop commands. The following will make all of the     
-	  regions for us in a single command:                                   
-	  
-	  <command>foreach i { 1 2 3 4 5 6 7 8 } { [Enter]</command>            
-	  
-	  <command>r sph$i.r u sph$i.s [Enter]</command>                        
-	  
-	  <command>}[Enter]  </command>                                         
+	  The second approach is based upon the fact that the Command Line
+	  interpreter of <application>MGED</application> uses the Tcl/Tk language. This gives us access to
+	  some convenient loop commands. The following will make all of the
+	  regions for us in a single command:
+
+	  <command>foreach i { 1 2 3 4 5 6 7 8 } { [Enter]</command>
+
+	  <command>r sph$i.r u sph$i.s [Enter]</command>
+
+	  <command>}[Enter]  </command>
 	</para>
 	<para>
-	  This is much easier and faster than either of the previous methods.   
-	  However, if there were many more spheres (say 1000 or more), then it  
-	  might be easier to use a third approach, which employs a different    
-	  loop type:                                                            
-	  <literallayout class="normal">                                              
-    for {set i 1} {i `&lt;= 1000} {incr i} {[Enter]                           
-                                                                          
-    r sph$i.r u sph$i.s [Enter]                                           
-                                                                          
-    }                                                                     
+	  This is much easier and faster than either of the previous methods.
+	  However, if there were many more spheres (say 1000 or more), then it
+	  might be easier to use a third approach, which employs a different
+	  loop type:
+	  <literallayout class="normal">
+    for {set i 1} {i `&lt;= 1000} {incr i} {[Enter]
+
+    r sph$i.r u sph$i.s [Enter]
+
+    }
 	  </literallayout>
 	</para>
       </note>
@@ -277,31 +277,31 @@
 
       <note>
 	<para>
-	  Once again, we are performing the same operation multiple times. This 
-	  is another good opportunity to use a loop.                            
-	  
-	  <command>foreach i { 1 2 3 4 5 6 7 8 } {[Enter]</command>             
-	  
-	  <command>mater sph$i.r "plastic" 255 0 0 0[Enter]</command>           
-	  
-	  <command>}[Enter]</command>                                           
+	  Once again, we are performing the same operation multiple times. This
+	  is another good opportunity to use a loop.
+
+	  <command>foreach i { 1 2 3 4 5 6 7 8 } {[Enter]</command>
+
+	  <command>mater sph$i.r "plastic" 255 0 0 0[Enter]</command>
+
+	  <command>}[Enter]</command>
 	</para>
 	<para>
-	  In general, the graphical interface is good for doing one thing at a  
-	  time or doing highly visual operations. Repetitive operations are     
-	  best performed using a Command Line interface.                        
+	  In general, the graphical interface is good for doing one thing at a
+	  time or doing highly visual operations. Repetitive operations are
+	  best performed using a Command Line interface.
 	</para>
       </note>
     </section>
 
     <section xml:id="candle_base_spheres_combine"><info><title>Combining the Spheres with the Candle Base</title></info>
-      
+
       <para>
 	We are now faced with an important decision. At the moment, the jewels
 	overlap a portion of the candle base (specifically, the rcc1.s portion).
 	Because two objects cannot occupy the same space, we must decide how to
 	resolve this situation. There are two choices:
-	
+
 	<itemizedlist>
 	  <listitem>
 	    <para>
@@ -316,7 +316,7 @@
 	    </para>
 	  </listitem>
 	</itemizedlist>
-	
+
 	For this lesson, we will use the first choice.
       </para>
       <para>
@@ -326,14 +326,14 @@
       </para>
       <para>
 	On the Command Line, create rcc1.c by typing:
-	
+
 	<command>comb rcc1.c u rcc1.s - sph1.r - sph2.r - sph3.r - sph4.r - sph5.r - sph6.r
 	- sph7.r - sph8.r[Enter]</command>
-	
+
 	Next, bring up the Combination Editor and select base1.r. Change the union
 	of rcc1.s in the Boolean Expression window to a union of rcc1.c, and click
 	OK.
-	
+
 	The tree of base1.r should now look like:
 	<literallayout class="normal">
    u base1.r/R
@@ -383,120 +383,120 @@
       </para>
       <note>
 	<para>
-	  Note that we could have achieved the same results on the Command Line 
-	  by using the rm (remove) command to remove rcc1.s from base1.r and    
-	  then adding rcc1.c:                                                   
-	  
-	  <command>rm base1.r rcc1.s[Enter] </command>                          
-	  
-	  <command>r base1.r u rcc1.c[Enter] </command>                         
+	  Note that we could have achieved the same results on the Command Line
+	  by using the rm (remove) command to remove rcc1.s from base1.r and
+	  then adding rcc1.c:
+
+	  <command>rm base1.r rcc1.s[Enter] </command>
+
+	  <command>r base1.r u rcc1.c[Enter] </command>
 	</para>
 	<para>
-	  This would have resulted in a very similar tree as above:             
+	  This would have resulted in a very similar tree as above:
 	  <literallayout class="normal">
-    u base1.r/R                                                           
-                                                                          
-    u eto1.s                                                              
-                                                                          
-    u eto2.s                                                              
-                                                                          
-    - rcc2.s                                                              
-                                                                          
-    u rcc1.c                                                              
-                                                                          
-    u rcc1.s                                                              
-                                                                          
-    - sph1.r/R                                                            
-                                                                          
-    u sph1.s                                                              
-                                                                          
-    - sph2.r/R                                                            
-                                                                          
-    u sph2.s                                                              
-                                                                          
-    - sph3.r/R                                                            
-                                                                          
-    u sph3.s                                                              
-                                                                          
-    - sph4.r/R                                                            
-                                                                          
-    u sph4.s                                                              
-                                                                          
-    - sph5.r/R                                                            
-                                                                          
-    u sph5.s                                                              
-                                                                          
-    - sph6.r/R                                                            
-                                                                          
-    u sph6.s                                                              
-                                                                          
-    - sph7.r/R                                                            
-                                                                          
-    u sph7.s                                                              
-                                                                          
-    - sph8.r/R                                                            
-                                                                          
-    u sph8.s                                                              
+    u base1.r/R
+
+    u eto1.s
+
+    u eto2.s
+
+    - rcc2.s
+
+    u rcc1.c
+
+    u rcc1.s
+
+    - sph1.r/R
+
+    u sph1.s
+
+    - sph2.r/R
+
+    u sph2.s
+
+    - sph3.r/R
+
+    u sph3.s
+
+    - sph4.r/R
+
+    u sph4.s
+
+    - sph5.r/R
+
+    u sph5.s
+
+    - sph6.r/R
+
+    u sph6.s
+
+    - sph7.r/R
+
+    u sph7.s
+
+    - sph8.r/R
+
+    u sph8.s
 	  </literallayout>
 	</para>
 	<para>
-	  Finally, we could have avoided making an intermediate object in the   
-	  database by moving rcc1.s to the end of the Boolean equation for      
-	  base1.r and then subtracting each of the jewels from base1.r (hence,  
-	  removing material from rcc1.s). This would have resulted in:          
-	  
+	  Finally, we could have avoided making an intermediate object in the
+	  database by moving rcc1.s to the end of the Boolean equation for
+	  base1.r and then subtracting each of the jewels from base1.r (hence,
+	  removing material from rcc1.s). This would have resulted in:
+
 	  <literallayout class="normal">
-    u base1.r/R                                                           
-                                                                          
-    u eto1.s                                                              
-                                                                          
-    u eto2.s                                                              
-                                                                          
-    - rcc2.s                                                              
-                                                                          
-    u rcc1.s                                                              
-                                                                          
-    - sph1.r/R                                                            
-                                                                          
-    u sph1.s                                                              
-                                                                          
-    - sph2.r/R                                                            
-                                                                          
-    u sph2.s                                                              
-                                                                          
-    - sph3.r/R                                                            
-                                                                          
-    u sph3.s                                                              
-                                                                          
-    - sph4.r/R                                                            
-                                                                          
-    u sph4.s                                                              
-                                                                          
-    - sph5.r/R                                                            
-                                                                          
-    u sph5.s                                                              
-                                                                          
-    - sph6.r/R                                                            
-                                                                          
-    u sph6.s                                                              
-                                                                          
-    - sph7.r/R                                                            
-                                                                          
-    u sph7.s                                                              
-                                                                          
-    - sph8.r/R                                                            
-                                                                          
-    u sph8.s                                                              
+    u base1.r/R
+
+    u eto1.s
+
+    u eto2.s
+
+    - rcc2.s
+
+    u rcc1.s
+
+    - sph1.r/R
+
+    u sph1.s
+
+    - sph2.r/R
+
+    u sph2.s
+
+    - sph3.r/R
+
+    u sph3.s
+
+    - sph4.r/R
+
+    u sph4.s
+
+    - sph5.r/R
+
+    u sph5.s
+
+    - sph6.r/R
+
+    u sph6.s
+
+    - sph7.r/R
+
+    u sph7.s
+
+    - sph8.r/R
+
+    u sph8.s
 	  </literallayout>
 	</para>
 	<para>
-	  It would be good practice to consider the relative merits of each of  
-	  the approaches discussed.                                            
+	  It would be good practice to consider the relative merits of each of
+	  the approaches discussed.
 	</para>
       </note>
       <para>
 	Now we need to add the jewels to the whole of candle1.c:
-	
+
 	<command>comb candle1.c u sph1.r u sph2.r u sph3.r u sph4.r u sph5.r u sph6.r u
 	sph7.r u sph8.r[Enter]</command>
       </para>
@@ -505,9 +505,9 @@
 	design. If you have enabled Multipanes or Draw Grid, go back to the Modes
 	menu and disable them. Then, clear your screen and draw your new design by
 	typing in the Command Window:
-	
+
 	<command>B candle1.c table1.r</command>
-	
+
 	Your new design should appear in the Graphics Window. Open the  Raytrace
 	Control Panel and select a pale blue color (200 236 242) by typing the
 	three values in the Background Color entry box. When you raytrace your
@@ -530,7 +530,7 @@
     </section>
 
     <section xml:id="placing_shapes_in_3d_2_review"><info><title>Review</title></info>
-      
+
       <para>
 	In this lesson, you:
 	<itemizedlist mark="bullet">

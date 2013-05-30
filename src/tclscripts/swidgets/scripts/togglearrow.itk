@@ -1,7 +1,7 @@
 #                 T O G G L E A R R O W . I T K
 # BRL-CAD
 #
-# Copyright (c) 2006-2012 United States Government as represented by
+# Copyright (c) 2006-2013 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -51,8 +51,8 @@ itcl::class swidgets::Togglearrow {
 
     itk_option define -color color Color "blue"
     itk_option define -outline outline Outline "grey"
-    itk_option define -disabledcolor disabledColor DisalbledColor "grey"
-    itk_option define -disabledoutline disabledOutline DisalbledOutline "black"
+    itk_option define -disabledcolor disabledColor DisabledColor "grey"
+    itk_option define -disabledoutline disabledOutline DisabledOutline "black"
 
     itk_option define -command command Command {}
     itk_option define -state state State normal

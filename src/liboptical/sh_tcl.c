@@ -1,7 +1,7 @@
 /*                        S H _ T C L . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2012 United States Government as represented by
+ * Copyright (c) 2004-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -70,8 +70,6 @@ struct tcl_specific tcl_defaults = {
 
 #define SHDR_NULL ((struct tcl_specific *)0)
 #define SHDR_O(m) bu_offsetof(struct tcl_specific, m)
-#define SHDR_AO(m) bu_offsetofarray(struct tcl_specific, m)
-
 
 /* description of how to parse/print the arguments to the shader
  * There is at least one line here for each variable in the shader specific
@@ -189,7 +187,7 @@ tcl_print(register struct region *rp, genptr_t dp)
 HIDDEN void
 tcl_free(genptr_t cp)
 {
-    bu_free(cp, "tcl_specific");
+    BU_PUT(cp, struct tcl_specific);
 }
 
 

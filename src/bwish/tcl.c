@@ -1,7 +1,7 @@
 /*                           T C L . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2012 United States Government as represented by
+ * Copyright (c) 1998-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -48,7 +48,7 @@
 
 /* We need to be careful about tty resetting - xcodebuild
  * and resetTty were locking up.  Add a tty check
- * along the lines of 
+ * along the lines of
  * http://stackoverflow.com/questions/1594251/how-to-check-if-stdin-is-still-opened-without-blocking
  */
 #ifdef HAVE_SYS_SELECT_H

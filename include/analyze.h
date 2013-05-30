@@ -1,7 +1,7 @@
 /*                       A N A L Y Z E . H
  * BRL-CAD
  *
- * Copyright (c) 2008-2012 United States Government as represented by
+ * Copyright (c) 2008-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -66,13 +66,37 @@ struct density_entry {
 struct region_pair {
     struct bu_list l;
     union {
-        char *name;
-        struct region *r1;
+	char *name;
+	struct region *r1;
     } r;
     struct region *r2;
     unsigned long count;
     double max_dist;
     vect_t coord;
+};
+
+/*
+ *      Voxel specific structures
+ */
+
+/**
+ * This structure is for lists that store region names for each voxel
+ */
+
+struct voxelRegion {
+    char *regionName;
+    fastf_t regionDistance;
+    struct voxelRegion *nextRegion;
+};
+
+/**
+ * This structure stores the information about voxels provided by a single raytrace.
+ */
+
+struct rayInfo {
+    fastf_t sizeVoxel;
+    fastf_t *fillDistances;
+    struct voxelRegion *regionList;
 };
 
 /**
@@ -85,12 +109,19 @@ ANALYZE_EXPORT extern int parse_densities_buffer(char *buf,
 						 int *num_densities);
 
 /**
- *     region_pair for gqa 
+ *     region_pair for gqa
  */
 ANALYZE_EXPORT extern struct region_pair *add_unique_pair(struct region_pair *list,
 							  struct region *r1,
 							  struct region *r2,
 							  double dist, point_t pt);
+
+
+/**
+ * voxelize function takes raytrace instance and user parameters as inputs
+ */
+ANALYZE_EXPORT extern void
+voxelize(struct rt_i *rtip, fastf_t voxelSize[3], int levelOfDetail, void (*create_boxes)(genptr_t callBackData, int x, int y, int z, const char *regionName, fastf_t percentageFill), genptr_t callBackData);
 
 
 __END_DECLS

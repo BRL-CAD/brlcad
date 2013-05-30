@@ -1,7 +1,7 @@
 /*                         S E T U P . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2012 United States Government as represented by
+ * Copyright (c) 1985-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -94,6 +94,7 @@ static struct cmdtab mged_cmdtab[] = {
     {"bot_face_fuse", cmd_ged_plain_wrapper, ged_bot_face_fuse},
     {"bot_face_sort", cmd_ged_plain_wrapper, ged_bot_face_sort},
     {"bot_flip", cmd_ged_plain_wrapper, ged_bot_flip},
+    {"bot_fuse", cmd_ged_plain_wrapper, ged_bot_fuse},
     {"bot_merge", cmd_ged_plain_wrapper, ged_bot_merge},
     {"bot_smooth", cmd_ged_plain_wrapper, ged_bot_smooth},
     {"bot_split", cmd_ged_plain_wrapper, ged_bot_split},
@@ -170,6 +171,7 @@ static struct cmdtab mged_cmdtab[] = {
     {"get_sed", f_get_sedit, GED_FUNC_PTR_NULL},
     {"get_sed_menus", f_get_sedit_menus, GED_FUNC_PTR_NULL},
     {"get_solid_keypoint", f_get_solid_keypoint, GED_FUNC_PTR_NULL},
+    {"graph", cmd_ged_plain_wrapper, ged_graph},
     {"gqa", cmd_ged_gqa, ged_gqa},
     {"grid2model_lu", cmd_ged_plain_wrapper, ged_grid2model_lu},
     {"grid2view_lu", cmd_ged_plain_wrapper, ged_grid2view_lu},
@@ -183,7 +185,7 @@ static struct cmdtab mged_cmdtab[] = {
     {"in", cmd_ged_in, ged_in},
     {"inside", cmd_ged_inside, ged_inside},
     {"item", cmd_ged_plain_wrapper, ged_item},
-    {"joint", f_joint, GED_FUNC_PTR_NULL},
+    {"joint", cmd_ged_plain_wrapper, ged_joint},
     {"journal", f_journal, GED_FUNC_PTR_NULL},
     {"keep", cmd_ged_plain_wrapper, ged_keep},
     {"keypoint", f_keypoint, GED_FUNC_PTR_NULL},
@@ -196,13 +198,14 @@ static struct cmdtab mged_cmdtab[] = {
     {"l_muves", f_l_muves, GED_FUNC_PTR_NULL},
     {"labelvert", f_labelvert, GED_FUNC_PTR_NULL},
     {"left", f_bv_left, GED_FUNC_PTR_NULL},
-    {"lm", cmd_lm, GED_FUNC_PTR_NULL},
-    {"lt", cmd_ged_plain_wrapper, ged_lt},
-    {"loadtk", cmd_tk, GED_FUNC_PTR_NULL},
     {"listeval", cmd_ged_plain_wrapper, ged_pathsum},
+    {"lm", cmd_lm, GED_FUNC_PTR_NULL},
+    {"loadtk", cmd_tk, GED_FUNC_PTR_NULL},
     {"loadview", cmd_ged_view_wrapper, ged_loadview},
+    {"lod", cmd_ged_plain_wrapper, ged_lod},
     {"lookat", cmd_ged_view_wrapper, ged_lookat},
     {"ls", cmd_ged_plain_wrapper, ged_ls},
+    {"lt", cmd_ged_plain_wrapper, ged_lt},
     {"M", f_mouse, GED_FUNC_PTR_NULL},
     {"m2v_point", cmd_ged_plain_wrapper, ged_m2v_point},
     {"make", f_make, GED_FUNC_PTR_NULL},
@@ -324,9 +327,7 @@ static struct cmdtab mged_cmdtab[] = {
     {"showmats", cmd_ged_plain_wrapper, ged_showmats},
     {"sill", f_be_s_illuminate, GED_FUNC_PTR_NULL},
     {"size", cmd_size, GED_FUNC_PTR_NULL},
-#ifdef HAVE_BULLET
     {"simulate", cmd_ged_simulate_wrapper, ged_simulate},
-#endif
     {"solid_report", cmd_ged_plain_wrapper, ged_report},
     {"solids", cmd_ged_plain_wrapper, ged_tables},
     {"solids_on_ray", cmd_ged_plain_wrapper, ged_solids_on_ray},
@@ -371,10 +372,8 @@ static struct cmdtab mged_cmdtab[] = {
     {"viewdir", cmd_ged_plain_wrapper, ged_viewdir},
     {"viewsize", cmd_size, GED_FUNC_PTR_NULL}, /* alias "size" for saveview scripts */
     {"vnirt", f_vnirt, GED_FUNC_PTR_NULL},
+    {"voxelize", cmd_ged_plain_wrapper, ged_voxelize},
     {"vquery_ray", f_vnirt, GED_FUNC_PTR_NULL},
-#if 0
-    {"vrmgr", f_vrmgr, GED_FUNC_PTR_NULL},
-#endif
     {"vrot", cmd_vrot, GED_FUNC_PTR_NULL},
 #if 0
     {"vrot_center", f_vrot_center, GED_FUNC_PTR_NULL},
@@ -573,7 +572,7 @@ mged_setup(Tcl_Interp **interpreter)
 	Tcl_ResetResult(*interpreter);
     }
 
-    BU_GET(view_state->vs_gvp, struct ged_view);
+    BU_ALLOC(view_state->vs_gvp, struct ged_view);
     ged_view_init(view_state->vs_gvp);
 
     view_state->vs_gvp->gv_callback = mged_view_callback;
@@ -584,7 +583,7 @@ mged_setup(Tcl_Interp **interpreter)
 	/* release any allocated memory */
 	ged_free(gedp);
     } else {
-	BU_GET(gedp, struct ged);
+	BU_ALLOC(gedp, struct ged);
     }
     GED_INIT(gedp, NULL);
 

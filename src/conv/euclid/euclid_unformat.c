@@ -1,7 +1,7 @@
 /*               E U C L I D _ U N F O R M A T . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2012 United States Government as represented by
+ * Copyright (c) 2004-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -55,7 +55,7 @@ main(int argc, char *argv[])
 
     if (argc != 1) {
 	if (argc > 1)
-	    bu_log("Unexpected paramter [%s]\n", argv[1]);
+	    bu_log("Unexpected parameter [%s]\n", argv[1]);
 
 	bu_log("Usage: %s < inputfile]\n  Primary input lines are as follows:\n    face# #npts face_type e ident a\n", argv[0]);
     }
@@ -76,10 +76,10 @@ main(int argc, char *argv[])
 	    break;
 
 	sscanf( str, "%f %f %f %f", &a, &b, &c, &d );
-	QSET( pl, a, b, c, d )
+	QSET( pl, a, b, c, d );
 
-	    if ( npts > 2 )
-		printf( "%10d%3d%7.0f%5d%5d", old_id, face_type, 0.0, 1, npts );
+	if ( npts > 2 )
+	    printf( "%10d%3d%7.0f%5d%5d", old_id, face_type, 0.0, 1, npts );
 
 	for ( i=0; i<npts; i++ )
 	{

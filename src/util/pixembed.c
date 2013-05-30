@@ -1,7 +1,7 @@
 /*                      P I X E M B E D . C
  * BRL-CAD
  *
- * Copyright (c) 1992-2012 United States Government as represented by
+ * Copyright (c) 1992-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -104,15 +104,15 @@ get_args(int argc, char **argv)
     } else {
 	file_name = argv[bu_optind];
 	if ((buffp = fopen(file_name, "r")) == NULL) {
-	    (void)fprintf(stderr,
-			  "pixembed: cannot open \"%s\" for reading\n",
-			  file_name);
+	    fprintf(stderr,
+		    "pixembed: cannot open \"%s\" for reading\n",
+		    file_name);
 	    return 0;
 	}
     }
 
     if (argc > ++bu_optind)
-	(void)fprintf(stderr, "pixembed: excess argument(s) ignored\n");
+	fprintf(stderr, "pixembed: excess argument(s) ignored\n");
 
     return 1;		/* OK */
 }

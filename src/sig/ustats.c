@@ -1,7 +1,7 @@
 /*                         U S T A T S . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2012 United States Government as represented by
+ * Copyright (c) 2004-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -100,7 +100,7 @@ comp_stats(FILE *fd)
 
     stdev = sqrt(((num * sum_sq) - (sum*sum)) / (num * (num-1)));
 
-    (void)printf("   Num: %g\n   Min: %u\n   Max: %u\n   Sum: %g\n  Mean: %g\nSStdev: %g\n",
+    printf("   Num: %g\n   Min: %u\n   Max: %u\n   Sum: %g\n  Mean: %g\nSStdev: %g\n",
 		 num, min, max, sum, sum/num, stdev);
 
     bu_free(buffer, "buffer");

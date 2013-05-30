@@ -1,7 +1,7 @@
 #                E P A E D I T F R A M E . T C L
 # BRL-CAD
 #
-# Copyright (c) 2002-2012 United States Government as represented by
+# Copyright (c) 2002-2013 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -202,19 +202,19 @@
 	::ttk::entry $parent.epaVxE \
 	    -textvariable [::itcl::scope mVx] \
 	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add epaVyE {
 	::ttk::entry $parent.epaVyE \
 	    -textvariable [::itcl::scope mVy] \
 	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add epaVzE {
 	::ttk::entry $parent.epaVzE \
 	    -textvariable [::itcl::scope mVz] \
 	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add epaVUnitsL {
 	::ttk::label $parent.epaVUnitsL \
@@ -231,21 +231,21 @@
 	    -textvariable [::itcl::scope mHx] \
 	    -state disabled \
 	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add epaHyE {
 	::ttk::entry $parent.epaHyE \
 	    -textvariable [::itcl::scope mHy] \
 	    -state disabled \
 	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add epaHzE {
 	::ttk::entry $parent.epaHzE \
 	    -textvariable [::itcl::scope mHz] \
 	    -state disabled \
 	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add epaHUnitsL {
 	::ttk::label $parent.epaHUnitsL \
@@ -262,21 +262,21 @@
 	    -textvariable [::itcl::scope mAx] \
 	    -state disabled \
 	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add epaAyE {
 	::ttk::entry $parent.epaAyE \
 	    -textvariable [::itcl::scope mAy] \
 	    -state disabled \
 	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add epaAzE {
 	::ttk::entry $parent.epaAzE \
 	    -textvariable [::itcl::scope mAz] \
 	    -state disabled \
 	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add epaAUnitsL {
 	::ttk::label $parent.epaAUnitsL \
@@ -291,7 +291,7 @@
 	::ttk::entry $parent.epaR_1E \
 	    -textvariable [::itcl::scope mR_1] \
 	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add epaR_1UnitsL {
 	::ttk::label $parent.epaR_1UnitsL \
@@ -307,7 +307,7 @@
 	::ttk::entry $parent.epaR_2E \
 	    -textvariable [::itcl::scope mR_2] \
 	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add epaR_2UnitsL {
 	::ttk::label $parent.epaR_2UnitsL \
@@ -390,7 +390,7 @@
 
 ::itcl::body EpaEditFrame::buildLowerPanel {} {
     set parent [$this childsite lower]
-
+    set row 0
     foreach attribute {H A B} {
 	itk_component add set$attribute {
 	    ::ttk::radiobutton $parent.set_$attribute \
@@ -400,9 +400,8 @@
 		-command [::itcl::code $this initEditState]
 	} {}
 
-	pack $itk_component(set$attribute) \
-	    -anchor w \
-	    -expand yes
+	grid $itk_component(set$attribute) -row $row -column 0 -sticky nsew
+	incr row
     }
 }
 
@@ -474,19 +473,26 @@
 
 ::itcl::body EpaEditFrame::initEditState {} {
     set mEditCommand pscale
-    set mEditClass $EDIT_CLASS_SCALE
     set mEditPCommand [::itcl::code $this p]
     configure -valueUnits "mm"
 
     switch -- $mEditMode \
 	$setH {
 	    set mEditParam1 h
+	    set mEditClass $EDIT_CLASS_SCALE
 	} \
 	$setA {
 	    set mEditParam1 a
+	    set mEditClass $EDIT_CLASS_SCALE
 	} \
 	$setB {
 	    set mEditParam1 b
+	    set mEditClass $EDIT_CLASS_SCALE
+	} \
+	default {
+	    set mEditCommand ""
+	    set mEditPCommand ""
+	    set mEditParam1 ""
 	}
 
     GeometryEditFrame::initEditState

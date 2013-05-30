@@ -1,7 +1,7 @@
 #                       S T A G E . M 4
 # BRL-CAD
 #
-# Copyright (c) 2005-2012 United States Government as represented by
+# Copyright (c) 2005-2013 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -42,7 +42,7 @@
 #
 # BC_CONFIGURE_STAGE
 #
-# outputs status on the the specified configure stage being started.
+# outputs status on the specified configure stage being started.
 #
 ###
 

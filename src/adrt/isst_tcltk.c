@@ -1,7 +1,7 @@
 /*                    I S S T _ T C L T K . C
  * BRL-CAD
  *
- * Copyright (c) 2005-2012 United States Government as represented by
+ * Copyright (c) 2005-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -60,7 +60,7 @@ void resize_isst(struct isst_s *);
 /* new window size or exposure */
 static int
 reshape(ClientData UNUSED(clientData), Tcl_Interp *interp, int objc,
-        Tcl_Obj *const *objv)
+	Tcl_Obj *const *objv)
 {
     Togl   *togl;
     struct isst_s *isst;
@@ -133,19 +133,19 @@ isst_load_g(ClientData UNUSED(clientData), Tcl_Interp *interp, int objc,
     Togl   *togl;
 
     if (objc < 4) {
-        Tcl_WrongNumArgs(interp, 1, objv, "load_g pathname object");
-        return TCL_ERROR;
+	Tcl_WrongNumArgs(interp, 1, objv, "load_g pathname object");
+	return TCL_ERROR;
     }
 
     if (Togl_GetToglFromObj(interp, objv[1], &togl) != TCL_OK) {
-        return TCL_ERROR;
+	return TCL_ERROR;
     }
 
     isst = (struct isst_s *) Togl_GetClientData(togl);
 
     argv = (char **)malloc(sizeof(char *) * (strlen(Tcl_GetString(objv[3])) + 1));	/* allocate way too much. */
     argc = bu_argv_from_string(argv, strlen(Tcl_GetString(objv[3])), Tcl_GetString(objv[3]));
-    
+
     load_g(isst->tie, Tcl_GetString(objv[2]), argc, (const char **)argv, &(isst->meshes));
     free(argv);
 
@@ -154,7 +154,7 @@ isst_load_g(ClientData UNUSED(clientData), Tcl_Interp *interp, int objc,
     VMOVE(isst->camera_pos_init, isst->camera.pos);
     VMOVE(isst->camera_focus_init, isst->camera.focus);
 
-    /* Set the inital az and el values in Tcl/Tk */
+    /* Set the initial az and el values in Tcl/Tk */
     VSUB2(vec, isst->camera.pos, isst->camera.focus);
     VUNITIZE(vec);
     AZEL_FROM_V3DIR(az, el, vec);
@@ -184,18 +184,18 @@ static int
 list_geometry(ClientData UNUSED(clientData), Tcl_Interp *interp, int objc, Tcl_Obj *const *objv)
 {
     static struct db_i *dbip;
-    struct directory *dp;   
+    struct directory *dp;
     int i;
     struct bu_vls tclstr = BU_VLS_INIT_ZERO;
 
     if (objc < 3) {
-        Tcl_WrongNumArgs(interp, 1, objv, "file varname");
-        return TCL_ERROR;
+	Tcl_WrongNumArgs(interp, 1, objv, "file varname");
+	return TCL_ERROR;
     }
 
-    if ((dbip = db_open(Tcl_GetString(objv[1]), "r")) == DBI_NULL) {
-        bu_log("Unable to open geometry file (%s)\n", Tcl_GetString(objv[1]));
-        return TCL_ERROR;
+    if ((dbip = db_open(Tcl_GetString(objv[1]), DB_OPEN_READONLY)) == DBI_NULL) {
+	bu_log("Unable to open geometry database file (%s)\n", Tcl_GetString(objv[1]));
+	return TCL_ERROR;
     }
     db_dirbuild(dbip);
     for (i = 0; i < RT_DBNHASH; i++) {
@@ -203,13 +203,13 @@ list_geometry(ClientData UNUSED(clientData), Tcl_Interp *interp, int objc, Tcl_O
 	    if (dp->d_flags & RT_DIR_HIDDEN) continue;
 	    bu_vls_sprintf(&tclstr, "set %s [concat $%s [list %s]]", Tcl_GetString(objv[2]), Tcl_GetString(objv[2]), dp->d_namep);
 	    Tcl_Eval(interp, bu_vls_addr(&tclstr));
-        }
+	}
     }
     db_close(dbip);
     bu_vls_free(&tclstr);
     return TCL_OK;
-} 
-   
+}
+
 
 static int
 paint_window(ClientData UNUSED(clientData), Tcl_Interp *interp, int objc, Tcl_Obj *const *objv)
@@ -220,14 +220,14 @@ paint_window(ClientData UNUSED(clientData), Tcl_Interp *interp, int objc, Tcl_Ob
     int glclrbts = GL_DEPTH_BUFFER_BIT;
 
     if (objc != 2) {
-        Tcl_WrongNumArgs(interp, 1, objv, "pathName");
-        return TCL_ERROR;
+	Tcl_WrongNumArgs(interp, 1, objv, "pathName");
+	return TCL_ERROR;
     }
 
     if (Togl_GetToglFromObj(interp, objv[1], &togl) != TCL_OK) {
-        return TCL_ERROR;
+	return TCL_ERROR;
     }
-    
+
     isst = (struct isst_s *) Togl_GetClientData(togl);
 
     isst->t2 = bu_gettime();
@@ -272,16 +272,16 @@ set_resolution(ClientData UNUSED(clientData), Tcl_Interp *interp, int objc, Tcl_
     int resolution;
 
     if (objc != 3) {
-        Tcl_WrongNumArgs(interp, 1, objv, "pathName resolution");
-        return TCL_ERROR;
+	Tcl_WrongNumArgs(interp, 1, objv, "pathName resolution");
+	return TCL_ERROR;
     }
 
     if (Togl_GetToglFromObj(interp, objv[1], &togl) != TCL_OK) {
-        return TCL_ERROR;
+	return TCL_ERROR;
     }
 
     if (Tcl_GetIntFromObj(interp, objv[2], &resolution) != TCL_OK) {
-        return TCL_ERROR;
+	return TCL_ERROR;
     }
 
     isst = (struct isst_s *) Togl_GetClientData(togl);
@@ -304,12 +304,12 @@ idle(ClientData UNUSED(clientData), Tcl_Interp *interp, int objc, Tcl_Obj *const
     Togl   *togl;
 
     if (objc != 2) {
-        Tcl_WrongNumArgs(interp, 1, objv, "pathName");
-        return TCL_ERROR;
+	Tcl_WrongNumArgs(interp, 1, objv, "pathName");
+	return TCL_ERROR;
     }
 
     if (Togl_GetToglFromObj(interp, objv[1], &togl) != TCL_OK) {
-        return TCL_ERROR;
+	return TCL_ERROR;
     }
 
     (void)Togl_GetClientData(togl);
@@ -326,20 +326,22 @@ isst_init(ClientData UNUSED(clientData), Tcl_Interp *interp, int objc, Tcl_Obj *
     Togl   *togl;
 
     if (objc != 2) {
-        Tcl_WrongNumArgs(interp, 1, objv, "pathName");
-        return TCL_ERROR;
+	Tcl_WrongNumArgs(interp, 1, objv, "pathName");
+	return TCL_ERROR;
     }
 
     if (Togl_GetToglFromObj(interp, objv[1], &togl) != TCL_OK) {
-        return TCL_ERROR;
+	return TCL_ERROR;
     }
 
-    isst = (struct isst_s *)bu_calloc(1, sizeof(struct isst_s), "allocate isst struct");
+    BU_ALLOC(isst, struct isst_s);
     isst->ui = 0;
     isst->uic = 0;
-    isst->tie = (struct tie_s *)bu_calloc(1,sizeof(struct tie_s), "tie");
+
+    BU_ALLOC(isst->tie, struct tie_s);
     TIENET_BUFFER_INIT(isst->buffer_image);
     render_camera_init(&isst->camera, bu_avail_cpus());
+
     isst->camera.type = RENDER_CAMERA_PERSPECTIVE;
     isst->camera.fov = 25;
 
@@ -354,12 +356,12 @@ isst_zap(ClientData UNUSED(clientData), Tcl_Interp *interp, int objc, Tcl_Obj *c
     struct isst_s *isst;
     Togl   *togl;
     if (objc != 2) {
-        Tcl_WrongNumArgs(interp, 1, objv, "pathName");
-        return TCL_ERROR;
+	Tcl_WrongNumArgs(interp, 1, objv, "pathName");
+	return TCL_ERROR;
     }
 
     if (Togl_GetToglFromObj(interp, objv[1], &togl) != TCL_OK) {
-        return TCL_ERROR;
+	return TCL_ERROR;
     }
 
     isst = (struct isst_s *) Togl_GetClientData(togl);
@@ -377,12 +379,12 @@ render_mode(ClientData UNUSED(clientData), Tcl_Interp *interp, int objc, Tcl_Obj
     char buf[BUFSIZ];
 
     if (objc < 3) {
-        Tcl_WrongNumArgs(interp, 1, objv, "pathName mode [arguments]");
-        return TCL_ERROR;
+	Tcl_WrongNumArgs(interp, 1, objv, "pathName mode [arguments]");
+	return TCL_ERROR;
     }
 
     if (Togl_GetToglFromObj(interp, objv[1], &togl) != TCL_OK)
-        return TCL_ERROR;
+	return TCL_ERROR;
 
     isst = (struct isst_s *) Togl_GetClientData(togl);
 
@@ -406,7 +408,7 @@ zero_view(ClientData UNUSED(clientData), Tcl_Interp *interp, int UNUSED(objc), T
     double mag_vec;
 
     if (Togl_GetToglFromObj(interp, objv[1], &togl) != TCL_OK)
-        return TCL_ERROR;
+	return TCL_ERROR;
 
     isst = (struct isst_s *) Togl_GetClientData(togl);
 
@@ -431,12 +433,12 @@ move_walk(ClientData UNUSED(clientData), Tcl_Interp *interp, int UNUSED(objc), T
     int flag;
 
     if (Togl_GetToglFromObj(interp, objv[1], &togl) != TCL_OK)
-        return TCL_ERROR;
+	return TCL_ERROR;
 
     isst = (struct isst_s *) Togl_GetClientData(togl);
 
     if (Tcl_GetIntFromObj(interp, objv[2], &flag) != TCL_OK)
-        return TCL_ERROR;
+	return TCL_ERROR;
 
     if (flag >= 0) {
 	VSUB2(vec, isst->camera.focus, isst->camera.pos);
@@ -463,28 +465,28 @@ move_strafe(ClientData UNUSED(clientData), Tcl_Interp *interp, int UNUSED(objc),
     int flag;
 
     if (Togl_GetToglFromObj(interp, objv[1], &togl) != TCL_OK)
-        return TCL_ERROR;
+	return TCL_ERROR;
 
     isst = (struct isst_s *) Togl_GetClientData(togl);
 
     if (Tcl_GetIntFromObj(interp, objv[2], &flag) != TCL_OK)
-        return TCL_ERROR;
+	return TCL_ERROR;
 
     VSET(up, 0, 0, 1);
-    
+
     if (flag >= 0) {
-        VSUB2(dir, isst->camera.focus, isst->camera.pos);
-        VCROSS(vec, dir, up);
-        VSCALE(vec, vec, 0.1 * isst->tie->radius);
-        VADD2(isst->camera.pos, isst->camera.pos, vec);
-        VADD2(isst->camera.focus, isst->camera.pos, dir);
+	VSUB2(dir, isst->camera.focus, isst->camera.pos);
+	VCROSS(vec, dir, up);
+	VSCALE(vec, vec, 0.1 * isst->tie->radius);
+	VADD2(isst->camera.pos, isst->camera.pos, vec);
+	VADD2(isst->camera.focus, isst->camera.pos, dir);
     } else {
-        VSUB2(dir, isst->camera.focus, isst->camera.pos);
-        VCROSS(vec, dir, up);
-        VSCALE(vec, vec, -0.1 * isst->tie->radius);
-        VADD2(isst->camera.pos, isst->camera.pos, vec);
-        VADD2(isst->camera.focus, isst->camera.pos, dir);
-    } 
+	VSUB2(dir, isst->camera.focus, isst->camera.pos);
+	VCROSS(vec, dir, up);
+	VSCALE(vec, vec, -0.1 * isst->tie->radius);
+	VADD2(isst->camera.pos, isst->camera.pos, vec);
+	VADD2(isst->camera.focus, isst->camera.pos, dir);
+    }
 
     isst->dirty = 1;
     return TCL_OK;
@@ -497,7 +499,7 @@ move_float(ClientData UNUSED(clientData), Tcl_Interp *interp, int UNUSED(objc), 
     Togl *togl;
 
     if (Togl_GetToglFromObj(interp, objv[1], &togl) != TCL_OK)
-        return TCL_ERROR;
+	return TCL_ERROR;
 
     isst = (struct isst_s *) Togl_GetClientData(togl);
 
@@ -519,19 +521,19 @@ aetolookat(ClientData UNUSED(clientData), Tcl_Interp *interp, int objc, Tcl_Obj 
     double mag_vec;
 
     if (objc < 4) {
-        Tcl_WrongNumArgs(interp, 1, objv, "pathName az el");
-        return TCL_ERROR;
+	Tcl_WrongNumArgs(interp, 1, objv, "pathName az el");
+	return TCL_ERROR;
     }
 
     if (Togl_GetToglFromObj(interp, objv[1], &togl) != TCL_OK)
-        return TCL_ERROR;
+	return TCL_ERROR;
 
     isst = (struct isst_s *) Togl_GetClientData(togl);
 
     if (Tcl_GetDoubleFromObj(interp, objv[2], &x) != TCL_OK)
-        return TCL_ERROR;
+	return TCL_ERROR;
     if (Tcl_GetDoubleFromObj(interp, objv[3], &y) != TCL_OK)
-        return TCL_ERROR;
+	return TCL_ERROR;
 
     mag_vec = DIST_PT_PT(isst->camera.pos, isst->camera.focus);
 
@@ -544,7 +546,7 @@ aetolookat(ClientData UNUSED(clientData), Tcl_Interp *interp, int objc, Tcl_Obj 
     VUNITIZE(vecdfoc);
     VSCALE(vecdfoc, vecdfoc, mag_vec);
     VADD2(isst->camera.focus, isst->camera.pos, vecdfoc);
-   
+
     isst->dirty = 1;
     return TCL_OK;
 }
@@ -561,19 +563,19 @@ aerotate(ClientData UNUSED(clientData), Tcl_Interp *interp, int objc, Tcl_Obj *c
     struct bu_vls tclstr = BU_VLS_INIT_ZERO;
 
     if (objc < 4) {
-        Tcl_WrongNumArgs(interp, 1, objv, "pathName x y");
-        return TCL_ERROR;
+	Tcl_WrongNumArgs(interp, 1, objv, "pathName x y");
+	return TCL_ERROR;
     }
 
     if (Togl_GetToglFromObj(interp, objv[1], &togl) != TCL_OK)
-        return TCL_ERROR;
+	return TCL_ERROR;
 
     isst = (struct isst_s *) Togl_GetClientData(togl);
 
     if (Tcl_GetDoubleFromObj(interp, objv[2], &x) != TCL_OK)
-        return TCL_ERROR;
+	return TCL_ERROR;
     if (Tcl_GetDoubleFromObj(interp, objv[3], &y) != TCL_OK)
-        return TCL_ERROR;
+	return TCL_ERROR;
 
     mag_pos = DIST_PT_PT(isst->camera.pos, isst->camera_focus_init);
 
@@ -596,20 +598,20 @@ aerotate(ClientData UNUSED(clientData), Tcl_Interp *interp, int objc, Tcl_Obj *c
     VADD2(isst->camera.pos, isst->camera_focus_init, vecdpos);
     if (mag_focus > 0) {
 	VSUB2(vecdfoc, isst->camera_focus_init, isst->camera.focus);
-    	VUNITIZE(vecdfoc);
-    	AZEL_FROM_V3DIR(az, el, vecdfoc);
-    	az = az * -DEG2RAD - x;
-    	el = el * -DEG2RAD + y;
+	VUNITIZE(vecdfoc);
+	AZEL_FROM_V3DIR(az, el, vecdfoc);
+	az = az * -DEG2RAD - x;
+	el = el * -DEG2RAD + y;
 
-   	/* clamp to sane values */
-    	while(az > 2*M_PI) az -= 2*M_PI;
-    	while(az < 0) az += 2*M_PI;
-    	if(el>M_PI_2) el=M_PI_2 - 0.001;
-    	if(el<-M_PI_2) el=-M_PI_2 + 0.001;
+	/* clamp to sane values */
+	while(az > 2*M_PI) az -= 2*M_PI;
+	while(az < 0) az += 2*M_PI;
+	if(el>M_PI_2) el=M_PI_2 - 0.001;
+	if(el<-M_PI_2) el=-M_PI_2 + 0.001;
 
-    	V3DIR_FROM_AZEL(vecdfoc, az, el);
-    	VSCALE(vecdfoc, vecdfoc, mag_focus);
-    	VADD2(isst->camera.focus, isst->camera_focus_init, vecdfoc);
+	V3DIR_FROM_AZEL(vecdfoc, az, el);
+	VSCALE(vecdfoc, vecdfoc, mag_focus);
+	VADD2(isst->camera.focus, isst->camera_focus_init, vecdfoc);
     }
     /* Update the tcl copies of the az/el vars */
     VSUB2(vec, isst->camera.focus, isst->camera.pos);
@@ -632,18 +634,18 @@ int
 Isst_Init(Tcl_Interp *interp)
 {
     if (Tcl_PkgProvide(interp, "isst", "0.1") != TCL_OK) {
-        return TCL_ERROR;
+	return TCL_ERROR;
     }
 
-    /* 
+    /*
      * Initialize Tcl and the Togl widget module.
      */
     if (Tcl_InitStubs(interp, "8.1", 0) == NULL
 	|| Togl_InitStubs(interp, "2.0", 0) == NULL) {
-        return TCL_ERROR;
+	return TCL_ERROR;
     }
 
-    /* 
+    /*
      * Specify the C callback functions for widget creation, display,
      * and reshape.
      */
@@ -665,7 +667,6 @@ Isst_Init(Tcl_Interp *interp)
 
     return TCL_OK;
 }
-
 
 
 /*

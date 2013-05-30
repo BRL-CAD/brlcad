@@ -1,7 +1,7 @@
 #                      A C C O R D I A N . T C L
 # BRL-CAD
 #
-# Copyright (c) 2011-2012 United States Government as represented by
+# Copyright (c) 2011-2013 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -97,7 +97,6 @@
 	resetSingleSelect
     }
 }
-
 
 
 ################################# Public Methods ################################
@@ -239,7 +238,7 @@
 	set name "$ACC_PREFIX[regsub -all { } $item "_"]"
 
 	if {[lsearch $mItemList $item] != -1} {
- 	    puts "Accordian::insert: $item has already been added."
+	    puts "Accordian::insert: $item has already been added."
 	    continue
 	}
 
@@ -328,7 +327,6 @@
     set item [lindex $mItemList $i]
     toggleDisplay $item
 }
-
 
 
 ################################# Protected Methods ################################

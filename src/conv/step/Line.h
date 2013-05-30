@@ -1,7 +1,7 @@
 /*                 Line.h
  * BRL-CAD
  *
- * Copyright (c) 1994-2012 United States Government as represented by
+ * Copyright (c) 1994-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -32,31 +32,35 @@
 class CartesianPoint;
 class Vector;
 
-class Line : public Curve {
+class Line : public Curve
+{
 private:
-	static string entityname;
+    static string entityname;
+    static EntityInstanceFunc GetInstance;
 
 protected:
-	CartesianPoint *pnt;
-	Vector *dir;
+    CartesianPoint *pnt;
+    Vector *dir;
 
 public:
-	Line();
-	virtual ~Line();
-	Line(STEPWrapper *sw,int step_id);
-	virtual curve_type CurveType() { return LINE; };
-	void StartPoint(double *p);
-	void EndPoint(double *p);
-	bool Load(STEPWrapper *sw,SDAI_Application_instance *sse);
-	virtual bool LoadONBrep(ON_Brep *brep);
-/*TODO: remove
-	virtual const double *PointAtEnd();
-	virtual const double *PointAtStart();
-*/
-	virtual void Print(int level);
+    Line();
+    virtual ~Line();
+    Line(STEPWrapper *sw, int step_id);
+    virtual curve_type CurveType() {
+	return LINE;
+    };
+    void StartPoint(double *p);
+    void EndPoint(double *p);
+    bool Load(STEPWrapper *sw, SDAI_Application_instance *sse);
+    virtual bool LoadONBrep(ON_Brep *brep);
+    /*TODO: remove
+    	virtual const double *PointAtEnd();
+    	virtual const double *PointAtStart();
+    */
+    virtual void Print(int level);
 
-	//static methods
-	static STEPEntity *Create(STEPWrapper *sw,SDAI_Application_instance *sse);
+    //static methods
+    static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
 #endif /* LINE_H_ */

@@ -1,7 +1,7 @@
 /*                       T E R R A I N . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2012 United States Government as represented by
+ * Copyright (c) 2004-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -59,11 +59,13 @@ double fbm_lacunarity = 2.1753974;		/* noise_lacunarity */
 double fbm_h = 1.0;
 double fbm_octaves = 7.0;
 double fbm_size = 1.0;
-vect_t fbm_vscale = {0.0125, 0.0125, 0.0125};
-vect_t fbm_delta = {1000.0, 1000.0, 1000.0};
 double fbm_offset = 1.0;
-int quiet = 0;
 
+/* intentionally double for scan */
+double fbm_vscale[3] = {0.0125, 0.0125, 0.0125};
+double fbm_delta[3] = {1000.0, 1000.0, 1000.0};
+
+int quiet = 0;
 int debug;
 
 /* transform a point in integer X, Y, Z space to appropriate noise space */

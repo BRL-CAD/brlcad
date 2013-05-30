@@ -1,7 +1,7 @@
 /*                         P N G . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2012 United States Government as represented by
+ * Copyright (c) 2008-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -36,7 +36,6 @@
 #include "vmath.h"
 #include "bn.h"
 #include "solid.h"
-#include "dm.h"
 
 #include "./ged_private.h"
 

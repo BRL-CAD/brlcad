@@ -1,7 +1,7 @@
 /*                        S H _ A I R . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2012 United States Government as represented by
+ * Copyright (c) 2004-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -54,15 +54,14 @@ static struct air_specific air_defaults = {
 
 #define SHDR_NULL ((struct air_specific *)0)
 #define SHDR_O(m) bu_offsetof(struct air_specific, m)
-#define SHDR_AO(m) bu_offsetofarray(struct air_specific, m)
 
 static void dpm_hook(register const struct bu_structparse *sdp, register const char *name, char *base, const char *value);
 
 struct bu_structparse air_parse[] = {
-    {"%f",  1, "dpm",		SHDR_O(d_p_mm),		dpm_hook, NULL, NULL },
-    {"%f",  1, "scale",		SHDR_O(scale),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f",  1, "s",		SHDR_O(scale),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f",  1, "delta",		SHDR_O(delta),		bu_mm_cvt, NULL, NULL },
+    {"%g",  1, "dpm",		SHDR_O(d_p_mm),		dpm_hook, NULL, NULL },
+    {"%g",  1, "scale",		SHDR_O(scale),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%g",  1, "s",		SHDR_O(scale),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%g",  1, "delta",		SHDR_O(delta),		bu_mm_cvt, NULL, NULL },
     {"%f",  1, "d",		SHDR_O(delta),		bu_mm_cvt, NULL, NULL },
     {"",	0, (char *)0,	0,			BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
@@ -99,7 +98,7 @@ static void
 dpm_hook(register const struct bu_structparse *UNUSED(sdp), register const char *UNUSED(name), char *base, const char *UNUSED(value))
 /* structure description */
 /* struct member name */
-/* begining of structure */
+/* beginning of structure */
 /* string containing value */
 {
 #define meters_to_millimeters 0.001
@@ -169,7 +168,7 @@ air_free(genptr_t cp)
 {
     if (rdebug&RDEBUG_SHADE)
 	bu_log("air_free(%s:%d)\n", __FILE__, __LINE__);
-    bu_free(cp, "air_specific");
+    BU_PUT(cp, struct air_specific);
 }
 
 
@@ -249,7 +248,7 @@ air_render(struct application *ap, const struct partition *pp, struct shadework 
     if (swp->sw_transmit > 1.0) swp->sw_transmit = 1.0;
     else if (swp->sw_transmit < 0.0) swp->sw_transmit = 0.0;
 
-    /* extinction = 1. - transmission.  Extinguished part replaced by
+    /* extinction = 1.0 - transmission.  Extinguished part replaced by
      * the "color of the air".
      */
 

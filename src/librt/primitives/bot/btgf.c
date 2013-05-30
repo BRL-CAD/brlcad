@@ -1,7 +1,7 @@
 /*                    B T G F . C
  * BRL-CAD
  *
- * Copyright (c) 2010-2012 United States Government as represented by
+ * Copyright (c) 2010-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -39,10 +39,7 @@ void *
 bottie_allocn_float(unsigned long long ntri)
 {
     struct tie_s *tie;
-    tie = bu_malloc(sizeof(struct tie_s), "TIE");
-    if(tie == NULL)
-	return NULL;
-
+    BU_ALLOC(tie, struct tie_s);
     tie_init(tie, ntri, TIE_KDTREE_FAST);
     return (void *)tie;
 }

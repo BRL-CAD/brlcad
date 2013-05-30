@@ -55,7 +55,7 @@ BRLCAD_ADDEXEC(bw-imp bw-imp.c libbu)
 BRLCAD_ADDEXEC(bw-pix bw-pix.c libbu)
 BRLCAD_ADDEXEC(bw-png bw-png.c "libfb;libbu;${PNG_LIBRARY}")
 BRLCAD_ADDEXEC(bw-ps bw-ps.c libbu)
-BRLCAD_ADDEXEC(bw-rle bw-rle.c "libbu;libsysv;${UTAHRLE_LIBRARY}")
+BRLCAD_ADDEXEC(bw-rle "bw-rle.c;rle_args.c" "libbu;libsysv;${UTAHRLE_LIBRARY}")
 BRLCAD_ADDEXEC(bw3-pix bw3-pix.c libbu)
 BRLCAD_ADDEXEC(bwcrop bwcrop.c libbu)
 BRLCAD_ADDEXEC(bwdiff bwdiff.c libbu)
@@ -100,7 +100,7 @@ BRLCAD_ADDEXEC(pix-orle pix-orle.c "libfb;liborle;libbu")
 BRLCAD_ADDEXEC(pix-png pix-png.c "libfb;libbu;${PNG_LIBRARY}")
 BRLCAD_ADDEXEC(pix-ppm pix-ppm.c "libfb;libbu")
 BRLCAD_ADDEXEC(pix-ps pix-ps.c libbu)
-BRLCAD_ADDEXEC(pix-rle pix-rle.c "libbu;libsysv;${UTAHRLE_LIBRARY}")
+BRLCAD_ADDEXEC(pix-rle "pix-rle.c;rle_args.c" "libbu;libsysv;${UTAHRLE_LIBRARY}")
 BRLCAD_ADDEXEC(pix-spm pix-spm.c libbn)
 BRLCAD_ADDEXEC(pix-sun pix-sun.c libbu)
 BRLCAD_ADDEXEC(pix-yuv pix-yuv.c "libfb;libbn;libbu")
@@ -176,103 +176,7 @@ install(PROGRAMS morphedit.tcl DESTINATION bin)
 BRLCAD_ADDEXEC(roots_example roots_example.c "libbu;librt" NO_INSTALL)
 BRLCAD_ADDDATA(roots_example.c sample_applications)
 
-set(util_MANS
-  ap-pix.1
-  asc-pl.1
-  azel.1
-  bary.1
-  brlcad.1
-  buffer.1
-  bw-imp.1
-  bw-pix.1
-  bw-png.1
-  bw-ps.1
-  bw-rle.1
-  bw3-pix.1
-  bwcrop.1
-  bwdiff.1
-  bwfilter.1
-  bwhist.1
-  bwhisteq.1
-  bwmod.1
-  bwrect.1
-  bwrot.1
-  bwshrink.1
-  bwstat.1
-  bwthresh.1
-  cv.1
-  dbcp.1
-  decimate.1
-  dpix-pix.1
-  dunncolor.1
-  dunnsnap.1
-  gencolor.1
-  hex.1
-  imgdims.1
-  loop.1
-  mac-pix.1
-  morphedit.1
-  orle-pix.1
-  pix-alias.1
-  pix-bw.1
-  pix-bw3.1
-  pix-orle.1
-  pix-png.1
-  pix-ppm.1
-  pix-ps.1
-  pix-rle.1
-  pix-sun.1
-  pixbackgnd.1
-  pixbgstrip.1
-  pixblend.1
-  pixborder.1
-  pixbustup.1
-  pixclump.1
-  pixcolors.1
-  pixcut.1
-  pixdiff.1
-  pixdsplit.1
-  pixfade.1
-  pixfilter.1
-  pixhalve.1
-  pixhist.1
-  pixhist3d-pl.1
-  pixhist3d.1
-  pixinterp2x.1
-  pixmatte.1
-  pixmerge.1
-  pixmorph.1
-  pixrect.1
-  pixrot.1
-  pixsaturate.1
-  pixscale.1
-  pixshrink.1
-  pixstat.1
-  pixsubst.1
-  pixtile.1
-  pixuntile.1
-  pl-X.1
-  pl-asc.1
-  pl-hpgl.1
-  pl-pl.1
-  pl-ps.1
-  pl-tek.1
-  plcolor.1
-  pldebug.1
-  plgetframe.1
-  plline2.1
-  plrot.1
-  png-bw.1
-  png-pix.1
-  png_info.1
-  random.1
-  rle-pix.1
-  sun-pix.1
-  terrain.1
-  wavelet.1
-  )
-ADD_MAN_PAGES(1 util_MANS)
-CMAKEFILES(bombardier.h morphedit.tcl pldebug.c)
+CMAKEFILES(bombardier.h rle_args.h morphedit.tcl pldebug.c)
 CMAKEFILES(Makefile.am)
 
 # Local Variables:

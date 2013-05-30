@@ -1,7 +1,7 @@
 /*                           T C L . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2012 United States Government as represented by
+ * Copyright (c) 1998-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -29,6 +29,8 @@
 #include "tcl.h"
 #include "cmd.h"		/* this includes bu.h */
 #include "bu.h"
+#include "vmath.h"
+
 
 /*XXX Temporary global interp */
 Tcl_Interp *brlcad_interp = (Tcl_Interp *)0;
@@ -254,6 +256,7 @@ tcl_bu_hsv_to_rgb(void *clientData,
 {
     Tcl_Interp *interp = (Tcl_Interp *)clientData;
 
+    double vals[3];
     fastf_t hsv[3];
     unsigned char rgb[3];
     struct bu_vls result = BU_VLS_INIT_ZERO;
@@ -262,14 +265,17 @@ tcl_bu_hsv_to_rgb(void *clientData,
 	bu_log("Usage: bu_hsv_to_rgb H S V\n");
 	return BRLCAD_ERROR;
     }
-    if (sscanf(argv[1], "%lf", &hsv[0]) != 1
-	|| sscanf(argv[2], "%lf", &hsv[1]) != 1
-	|| sscanf(argv[3], "%lf", &hsv[2]) != 1
-	|| (bu_hsv_to_rgb(hsv, rgb) == 0)) {
-	bu_vls_printf(&result, "bu_hsv_to_rgb: Bad HSV (%s, %s, %s)\n",
-		      argv[1], argv[2], argv[3]);
-	bu_log("%s", bu_vls_addr(&result));
-	bu_vls_free(&result);
+    if (sscanf(argv[1], "%lf", &vals[0]) != 1
+	|| sscanf(argv[2], "%lf", &vals[1]) != 1
+	|| sscanf(argv[3], "%lf", &vals[2]) != 1)
+    {
+	bu_log("Bad HSV parsing (%s, %s, %s)\n", argv[1], argv[2], argv[3]);
+	return BRLCAD_ERROR;
+    }
+
+    VMOVE(hsv, vals);
+    if (bu_hsv_to_rgb(hsv, rgb) == 0) {
+	bu_log("HSV to RGB conversion failed (%s, %s, %s)\n", argv[1], argv[2], argv[3]);
 	return BRLCAD_ERROR;
     }
 
@@ -280,6 +286,28 @@ tcl_bu_hsv_to_rgb(void *clientData,
 
 }
 
+/**
+ * A wrapper for bu_brlcad_dir.
+ *
+ * @param clientData	- associated data/state
+ * @param argc		- number of elements in argv
+ * @param argv		- command name and arguments
+ *
+ * @return BRLCAD_OK if successful, otherwise, BRLCAD_ERROR.
+ */
+HIDDEN int
+tcl_bu_brlcad_dir(void *clientData,
+		   int argc,
+		   const char **argv)
+{
+    Tcl_Interp *interp = (Tcl_Interp *)clientData;
+    if (argc != 2) {
+	bu_log("Usage: bu_brlcad_dir dirkey\n");
+	return BRLCAD_ERROR;
+    }
+    Tcl_AppendResult(interp, bu_brlcad_dir(argv[1], 1), NULL);
+    return BRLCAD_OK;
+}
 
 /**
  * A wrapper for bu_brlcad_root.
@@ -393,6 +421,7 @@ Bu_Init(void *p)
     static struct bu_cmdtab cmds[] = {
 	{"bu_units_conversion",		tcl_bu_units_conversion},
 	{"bu_brlcad_data",		tcl_bu_brlcad_data},
+	{"bu_brlcad_dir",		tcl_bu_brlcad_dir},
 	{"bu_brlcad_root",		tcl_bu_brlcad_root},
 	{"bu_mem_barriercheck",		tcl_bu_mem_barriercheck},
 	{"bu_prmem",			tcl_bu_prmem},

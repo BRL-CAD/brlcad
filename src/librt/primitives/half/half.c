@@ -1,7 +1,7 @@
 /*                          H A L F . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2012 United States Government as represented by
+ * Copyright (c) 1985-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -61,8 +61,8 @@ struct half_specific {
 #define HALF_NULL ((struct half_specific *)0)
 
 const struct bu_structparse rt_hlf_parse[] = {
-    { "%f", 3, "N", bu_offsetof(struct rt_half_internal, eqn[X]), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    { "%f", 1, "d", bu_offsetof(struct rt_half_internal, eqn[W]), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    { "%f", 3, "N", bu_offsetofarray(struct rt_half_internal, eqn, fastf_t, X), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    { "%f", 1, "d", bu_offsetofarray(struct rt_half_internal, eqn, fastf_t, W), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     { {'\0', '\0', '\0', '\0'}, 0, (char *)NULL, 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 
@@ -160,11 +160,15 @@ rt_hlf_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 	if ((slant_factor = -VDOT(halfp->half_eqn, rp->r_dir)) < -1.0e-10) {
 	    /* exit point, when dir.N < 0.  out = min(out, s) */
 	    out = norm_dist/slant_factor;
+
+	    /* ensure a legal distance between +inf/-inf */
 	    if (!NEAR_ZERO(out, INFINITY))
 		return 0;	/* MISS */
 	} else if (slant_factor > 1.0e-10) {
 	    /* entry point, when dir.N > 0.  in = max(in, s) */
 	    in = norm_dist/slant_factor;
+
+	    /* ensure a legal distance between +inf/-inf */
 	    if (!NEAR_ZERO(in, INFINITY))
 		return 0;	/* MISS */
 	} else {
@@ -391,7 +395,7 @@ rt_hlf_free(struct soltab *stp)
     register struct half_specific *halfp =
 	(struct half_specific *)stp->st_specific;
 
-    bu_free((char *)halfp, "half_specific");
+    BU_PUT(halfp, struct half_specific);
 }
 
 
@@ -504,7 +508,7 @@ rt_hlf_xform(
 
     if (op != ip) {
 	RT_DB_INTERNAL_INIT(op);
-	hop = (struct rt_half_internal *)bu_malloc(sizeof(struct rt_half_internal), "hop");
+	BU_ALLOC(hop, struct rt_half_internal);
 	hop->magic = RT_HALF_INTERNAL_MAGIC;
 	op->idb_ptr = (genptr_t)hop;
 	op->idb_meth = &rt_functab[ID_HALF];
@@ -534,7 +538,7 @@ rt_hlf_xform(
 
     /*
      * The transformed normal is all that is required.
-     * The new distance is found from the transforemd point on the plane.
+     * The new distance is found from the transformed point on the plane.
      */
     hop->eqn[W] = VDOT(pt, hop->eqn);
 
@@ -585,7 +589,8 @@ rt_hlf_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_HALF;
     ip->idb_meth = &rt_functab[ID_HALF];
-    ip->idb_ptr = bu_malloc(sizeof(struct rt_half_internal), "rt_half_internal");
+    BU_ALLOC(ip->idb_ptr, struct rt_half_internal);
+
     hip = (struct rt_half_internal *)ip->idb_ptr;
     hip->magic = RT_HALF_INTERNAL_MAGIC;
 
@@ -657,28 +662,30 @@ rt_hlf_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
 int
 rt_hlf_import5(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip)
 {
+    register double f, t;
     struct rt_half_internal *hip;
     point_t tmp_pt, new_pt;
-    plane_t tmp_plane;
-    register double f, t;
+
+    /* must be double for import and export */
+    double tmp_plane[ELEMENTS_PER_PLANE];
 
     if (dbip) RT_CK_DBI(dbip);
 
     BU_CK_EXTERNAL(ep);
 
-    BU_ASSERT_LONG(ep->ext_nbytes, ==, SIZEOF_NETWORK_DOUBLE * 4);
+    BU_ASSERT_LONG(ep->ext_nbytes, ==, SIZEOF_NETWORK_DOUBLE * ELEMENTS_PER_PLANE);
 
     RT_CK_DB_INTERNAL(ip);
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_HALF;
     ip->idb_meth = &rt_functab[ID_HALF];
-    ip->idb_ptr = bu_malloc(sizeof(struct rt_half_internal), "rt_half_internal");
+    BU_ALLOC(ip->idb_ptr, struct rt_half_internal);
 
     hip = (struct rt_half_internal *)ip->idb_ptr;
     hip->magic = RT_HALF_INTERNAL_MAGIC;
 
     /* Convert from database (network) to internal (host) format */
-    ntohd((unsigned char *)tmp_plane, ep->ext_buf, 4);
+    ntohd((unsigned char *)tmp_plane, ep->ext_buf, ELEMENTS_PER_PLANE);
 
     /* to apply modeling transformations, create a temporary normal
      * vector and point on the plane
@@ -718,7 +725,10 @@ int
 rt_hlf_export5(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
     struct rt_half_internal *hip;
-    fastf_t scaled_dist;
+
+    /* must be double for import and export */
+    double scaled_dist;
+    double eqn[ELEMENTS_PER_VECT];
 
     if (dbip) RT_CK_DBI(dbip);
 
@@ -735,10 +745,13 @@ rt_hlf_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
     scaled_dist = hip->eqn[W] * local2mm;
 
     /* Convert from internal (host) to database (network) format */
+
     /* the normal */
-    htond((unsigned char *)ep->ext_buf, (unsigned char *)hip->eqn, 3);
+    VMOVE(eqn, hip->eqn); /* convert fastf_t to double */
+    htond((unsigned char *)ep->ext_buf, (unsigned char *)eqn, ELEMENTS_PER_VECT);
+
     /* the distance */
-    htond(((unsigned char *)(ep->ext_buf)) + SIZEOF_NETWORK_DOUBLE*3,
+    htond(((unsigned char *)(ep->ext_buf)) + SIZEOF_NETWORK_DOUBLE*ELEMENTS_PER_VECT,
 	  (unsigned char *)&scaled_dist, 1);
 
     return 0;

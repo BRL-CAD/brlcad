@@ -1,7 +1,7 @@
 /*                     N M G _ I N D E X . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2012 United States Government as represented by
+ * Copyright (c) 1990-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -335,7 +335,7 @@ nmg_m_reindex(struct model *m, register long int newindex)
 	}
 
     NMG_CK_MODEL(m);
-    if (m->index != 0) bu_log("nmg_m_reindex() m->index=%d\n", m->index);
+    if (m->index != 0) bu_log("nmg_m_reindex() m->index=%ld\n", m->index);
     if (newindex < 0) bu_log("nmg_m_reindex() newindex(%ld) < 0\n", newindex);
 
     /* First pass:  set high bits */
@@ -462,7 +462,7 @@ nmg_m_reindex(struct model *m, register long int newindex)
 #undef ASSIGN_VU
 
     if (rt_g.NMG_debug & DEBUG_BASIC) {
-	bu_log("nmg_m_reindex() oldmax=%d, new%d=>%d\n",
+	bu_log("nmg_m_reindex() oldmax=%ld, new%ld=>%ld\n",
 	       m->maxindex, m->index, newindex);
     }
     m->maxindex = newindex;
@@ -554,7 +554,7 @@ nmg_m_struct_count(register struct nmg_struct_counts *ctr, const struct model *m
 
 #define NMG_UNIQ_INDEX(_p, _type)	\
 	if ((_p)->index > m->maxindex) { \
-		bu_log("x%x (%s) has index %d, m->maxindex=%d\n", (_p), \
+		bu_log("x%x (%s) has index %ld, m->maxindex=%ld\n", (_p), \
 			bu_identify_magic(*((uint32_t *)(_p))), (_p)->index, m->maxindex); \
 		bu_bomb("nmg_m_struct_count index overflow\n"); \
 	} \

@@ -1,7 +1,7 @@
 /*                       M A C - P I X . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2012 United States Government as represented by
+ * Copyright (c) 1986-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -168,15 +168,15 @@ get_args(int argc, char **argv)
     } else {
 	file_name = argv[bu_optind];
 	if ((infp = fopen(file_name, "r")) == NULL) {
-	    (void)fprintf(stderr,
-			  "mac-pix: cannot open \"%s\" for reading\n",
-			  file_name);
+	    fprintf(stderr,
+		    "mac-pix: cannot open \"%s\" for reading\n",
+		    file_name);
 	    return 0;
 	}
     }
 
     if (argc > ++bu_optind)
-	(void)fprintf(stderr, "mac-pix: excess argument(s) ignored\n");
+	fprintf(stderr, "mac-pix: excess argument(s) ignored\n");
 
     return 1;		/* OK */
 }

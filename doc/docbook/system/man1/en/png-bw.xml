@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='pngbw1'>
+<refmeta>
+    <refentrytitle>PNG-BW
+</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class='source'>BRL-CAD</refmiscinfo>
+<refmiscinfo class='manual'>BRL-CAD</refmiscinfo>
+</refmeta>
+
+<refnamediv>
+<refname>png-bw</refname>
+<refpurpose>convert a Portable Networks Graphics (PNG) format file to a BW format</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<cmdsynopsis>
+  <command>png-bw</command>
+    <arg choice='opt'>-ntsc </arg>
+    <arg choice='opt'>-crt </arg>
+    <arg choice='opt'><arg choice='plain'>-R </arg><arg choice='opt'><replaceable>num</replaceable></arg></arg>
+    <arg choice='opt'><arg choice='plain'>-G </arg><arg choice='opt'><replaceable>num</replaceable></arg></arg>
+    <arg choice='opt'><arg choice='plain'>-B </arg><arg choice='opt'><replaceable>num</replaceable></arg></arg>
+    <arg choice='opt'><replaceable>in.png</replaceable></arg>
+    <arg choice='plain'><replaceable>&gt;</replaceable></arg>
+    <arg choice='plain'><replaceable>out.bw</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para><emphasis remap='I'>Pix-bw</emphasis>
+will convert a
+<emphasis remap='I'>PNG</emphasis>
+format
+file from its standard input
+and produce a black and white
+<citerefentry><refentrytitle>bw</refentrytitle><manvolnum>5</manvolnum></citerefentry>
+file on its standard output, If the PNG file contains a B/W image the conversion is direct, however, if the PNG file contains a color image, then
+by default all three colors are weighted equally.  The
+<option>-ntsc</option>
+uses weighting based on the NTSC primaries and the D6500
+alignment white.  The
+<option>-crt</option>
+flag applies weights for "typical" CRT phosphor chromaticities
+and the D6500 white.</para>
+
+<para>Individual color plane(s) can be selected via the
+<option>-R -G</option>
+and
+<option>-B</option>
+flags.
+If one or more of these flags is followed by a value,
+the value will be treated as a weight
+to be applied to that color
+This value is implicitly 1.0 divided by
+the number of colors selected for the flags which are not followed
+by a value.</para>
+</refsect1>
+
+<refsect1 xml:id='examples'><title>EXAMPLES</title>
+<para><emphasis remap='I'>png-bw -R -B &lt; file.png &gt; file.bw</emphasis>
+<!-- .br -->
+will equally blend the red and blue color planes.</para>
+
+<para><emphasis remap='I'>png-bw bw_file.png &lt; file.bw</emphasis>
+will convert a b/w PNG file to
+<emphasis remap='I'>bw(5)</emphasis>
+format.</para>
+
+<para><emphasis remap='I'>png-bw -R0.30 -G0.59 -B0.11 &lt; file.png &gt; file.bw</emphasis>
+<!-- .br -->
+has the same effect as the
+<option>-ntsc</option>
+flag.
+<!-- .br -->
+[The
+<option>-crt</option>
+weights are: 0.26, 0.66, 0.08]</para>
+</refsect1>
+
+<refsect1 xml:id='see_also'><title>SEE ALSO</title>
+<para><citerefentry><refentrytitle>brlcad</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>png-pix</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>bw-png</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>pix-png</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>pix</refentrytitle><manvolnum>5</manvolnum></citerefentry>, <citerefentry><refentrytitle>bw</refentrytitle><manvolnum>5</manvolnum></citerefentry>.</para>
+</refsect1>
+
+<refsect1 xml:id='author'><title>AUTHOR</title>
+<para>John R. Anderson</para>
+
+</refsect1>
+
+<refsect1 xml:id='copyright'><title>COPYRIGHT</title>
+<para>This software is Copyright (c) 1998-2013 by the United States
+Government as represented by U.S. Army Research Laboratory.</para>
+</refsect1>
+
+<refsect1 xml:id='bug_reports'><title>BUG REPORTS</title>
+<para>Reports of bugs or problems should be submitted via electronic
+mail to &lt;devs@brlcad.org&gt;.</para>
+</refsect1>
+</refentry>
+

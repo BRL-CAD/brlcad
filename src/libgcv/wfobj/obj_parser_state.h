@@ -1,7 +1,7 @@
 /*             O B J _ P A R S E R _ S T A T E . H
  * BRL-CAD
  *
- * Copyright (c) 2010-2012 United States Government as represented by
+ * Copyright (c) 2010-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -81,7 +81,7 @@ inline bool operator==(const tuple<T, N> &lhs, const tuple<T, N> &rhs)
 }
 
 /**
- *  Basic parser object, persistant across multiple file parsings
+ *  Basic parser object, persistent across multiple file parsings
  *
  *  Lifetime is controlled by the user via obj_parser_create
  *  and obj_parser_destroy.
@@ -91,7 +91,7 @@ template<typename charT=char,
 	 typename Allocator=std::allocator<char> >
 struct basic_obj_parser {
     typedef std::basic_string<charT, traits, Allocator> string_type;
-    // include paths etc
+    // include paths etc.
 
     string_type last_error;
 };
@@ -832,7 +832,7 @@ void set_working_polygattributes(basic_parser_extra<PrecisionT, charT, traits,
 
 
 /**
- *  Set the inital values of the lookup tables to the first element in the
+ *  Set the initial values of the lookup tables to the first element in the
  *  contents
  */
 template<typename PrecisionT,

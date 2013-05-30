@@ -23,13 +23,13 @@ in a commercial application. See FOP's audit page
 
         Licenses
 
- 
+
 Czech hyphenation patterns
 File name: 	cs.xml
 Original file name: 	czhyph.tex
 <http://www.ctan.org/tex-archive/language/hyphenation/czhyph.tex>
 License: 	GNU General Public License <http://www.fsf.org/copyleft/gpl.html>
- 
+
 Danish hyphenation patterns
 File name: 	da.xml
 Original file names: 	dkhyphen.tex
@@ -43,7 +43,7 @@ License: 	Apache License, Version 2.0
 <http://www.apache.org/licenses/LICENSE-2.0>
 Note: 	The original file contains no license. The ASF has obtained a
 grant from the author to distribute this file under the Apache license.
- 
+
 New German hyphenation patterns
 File name: 	de_DR.xml
 Original file name: 	dehyphn.tex
@@ -52,7 +52,7 @@ License: 	LaTeX Project Public License
 <http://mirror.ctan.org/macros/latex/base/lppl.txt>
 Restrictions: 	Do not publish a modified version under the above
 mentioned original file name.
- 
+
 German traditional hyphenation patterns
 File name: 	de.xml
 Original file name: 	dehypht.tex
@@ -61,7 +61,7 @@ License: 	LaTeX Project Public License
 <http://mirror.ctan.org/macros/latex/base/lppl.txt>
 Restrictions: 	Do not publish a modified version under the above
 mentioned original file name.
- 
+
 Greek hyphenation patterns
 File name: 	el.xml
 Original file name: 	GRMTex.tex, of which GRMhyph4.tex
@@ -71,21 +71,21 @@ License: 	LaTeX Project Public License
 <http://mirror.ctan.org/macros/latex/base/lppl.txt>
 Restrictions: 	Do not publish a modified version under the above
 mentioned original file name.
- 
+
 English hyphenation patterns
 File name: 	en_GB.xml
 Original file name: 	ukhyphen.tex
 <http://www.ctan.org/tex-archive/language/hyphenation/ukhyphen.tex>
 License: 	This file of hyphenation patterns may be freely distributed
 Restriction: 	These hyphenation patterns may not be changed in any way
- 
+
 US English hyphenation patterns
 File name: 	en.xml
 Original file name: 	Probably hyphen.tex
 <http://www.ctan.org/tex-archive/systems/knuth/lib/hyphen.tex>
 License: 	D.E. Knuth's TeX license (no longer available at CTAN)
 Note: 	These are TeX's original hyphenation patterns.
- 
+
 US English hyphenation patterns, version 2
 File name: 	en_US.xml
 Original file name: 	Probably ushyph2.tex
@@ -95,7 +95,7 @@ License: 	D.E. Knuth's TeX license
 additional condition: ‘Can be used freely for non-commercial purposes’
 Note: 	The additional license condition is applicable to G.D.C. Kuiken's
 additional patterns at the bottom of the file.
- 
+
 Spanish hyphenation patterns
 File name: 	es.xml
 Original file name: 	spanish.lh <http://snark.ptc.spbu.ru/~uwe/lout/>
@@ -107,13 +107,13 @@ Note: 	The first license applies to the original TeX file. The second
 license applies to the changes made when the file was included in the
 Lout software; the changes concern the encoding, not the patterns
 themselves.
- 
+
 Finnish hyphenation patterns
 File name: 	fi.xml
 Original file name: 	fihyph.tex
 <http://www.ctan.org/tex-archive/language/hyphenation/fihyph.tex>
 License: 	‘Patterns may be freely distributed’
- 
+
 French hyphenation patterns
 File name: 	fr.xml
 Original file name: 	french.lh <http://snark.ptc.spbu.ru/~uwe/lout/>,
@@ -122,13 +122,13 @@ itself derived from an earlier version of frhyph.tex
 License: 	GNU General Public License <http://www.fsf.org/copyleft/gpl.html>
 Note: 	The file itself carries no license information. The Lout package
 is published under the GPL.
- 
+
 Hungarian hyphenation patterns
 File name: 	hu.xml
 Original file name: 	huhyph.tex
 <http://www.ctan.org/tex-archive/language/hyphenation/huhyph.tex>
 License: 	The file contains no license information
- 
+
 Italian hyphenation patterns
 File name: 	it.xml
 Original file name: 	ithyph.tex
@@ -139,14 +139,14 @@ Note: 	The file mentions that use of the original work was granted (to
 FOP, under the Apache license?) by the author. The original file is
 available under the LaTeX Project Public License
 <http://mirror.ctan.org/macros/latex/base/lppl.txt>.
- 
+
 Latin hyphenation patterns
 File name: 	la.xml
 License: 	Apache License, Version 2.0
 <http://www.apache.org/licenses/LICENSE-2.0>
 Note: 	The Latin hyphenation patterns were derived from the Italian
 <#it> hyphenation patterns.
- 
+
 Dutch hyphenation patterns
 File name: 	nl.xml
 Original file name: 	nehyph.tex
@@ -155,12 +155,12 @@ License: 	LaTeX Project Public License
 <http://mirror.ctan.org/macros/latex/base/lppl.txt>
 Restrictions: 	Do not publish a modified version under the above
 mentioned original file name.
- 
+
 Norwegian hyphenation patterns
 File name: 	no.xml
 Original file name: 	nohyphb.tex <http://www.uio.no/~runekl/nohyphb.tex>
 License: 	GNU General Public License <http://www.fsf.org/copyleft/gpl.html>
- 
+
 Polish hyphenation patterns
 File name: 	pl.xml
 Original file name: 	plhyph.tex
@@ -169,12 +169,12 @@ License: 	D.E. Knuth's TeX license
 <http://www.ctan.org/tex-archive/systems/knuth/lib/README>
 Note: 	The file says: ‘This macro file belongs to the public domain
 under the conditions specified by the author of TeX’.
- 
+
 Portuguese hyphenation patterns
 File name: 	pt.xml
 License: 	Apache License, Version 2.0
 <http://www.apache.org/licenses/LICENSE-2.0>
- 
+
 Russian hyphenation patterns
 File name: 	ru.xml
 Original file name: 	brhyphen.tex (URL unknown)
@@ -182,13 +182,13 @@ License: 	Apache License, Version 2.0
 <http://www.apache.org/licenses/LICENSE-2.0>
 Note: 	The original file is in the public domain. It was taken from the
 CyrTUG-EmTeX distribution.
- 
+
 Slovak hyphenation patterns
 File name: 	sk.xml
 Original file name: 	skhyphen.tex
 <http://ftp.fi.muni.cz/pub/tex/local/cstug/olsak/csplain/skhyphen.tex?N=A>
 License: 	GNU General Public License <http://www.fsf.org/copyleft/gpl.html>
- 
+
 Swedish hyphenation patterns
 File name: 	se.xml
 Original file name: 	sehyphen.tex
@@ -196,7 +196,7 @@ Original file name: 	sehyphen.tex
 License: 	LaTeX Project Public License
 <http://www.latex-project.org/lppl.txt>, either version 1.2 of this
 license or (at your option) any later version
- 
+
 Turkish hyphenation patterns
 File name: 	tr.xml
 Original file name: 	trhyphen.tex (URL unknown)
@@ -220,5 +220,5 @@ All OSI-approved licenses can also be found at the OSI website
 Send feedback about the website to the OFFO project maintainers
 <http://sourceforge.net/sendmessage.php?touser=1071219&subject=Feedback
 about OFFO%C2%A0hyphenation/old-patterns/licenses.html>
-	
+
 

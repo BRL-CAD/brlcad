@@ -1,7 +1,7 @@
 /*                C O M B _ B O O L _ S C A N . L
  * BRL-CAD
  *
- * Copyright (c) 2008-2012 United States Government as represented by
+ * Copyright (c) 2008-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -19,7 +19,7 @@
  */
 /** @file comb_bool_scan.l
  *
- *	LEX(1) specifiation to scan Boolean expressions for
+ *	LEX(1) specification to scan Boolean expressions for
  *			the 'c' command
  *
  */

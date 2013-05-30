@@ -422,6 +422,12 @@ void TYPEinitialize() {
         ERRORcreate( "Undefined type tag %s", SEVERITY_ERROR );
 }
 
+/** Clean up the Type module */
+void TYPEcleanup( void ) {
+    ERRORdestroy( ERROR_corrupted_type );
+    ERRORdestroy( ERROR_undefined_tag );
+}
+
 /**
  * \param t type to examine
  * \return the base type of the aggregate type

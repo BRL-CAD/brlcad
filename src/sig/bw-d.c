@@ -1,7 +1,7 @@
 /*                          B W - D . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2012 United States Government as represented by
+ * Copyright (c) 2004-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -40,12 +40,20 @@
 unsigned char	ibuf[512];
 double	obuf[512];
 
+void
+printusage(void)
+{
+	bu_exit(1, "Usage: bw-d [-n || scale] < unsigned_chars > doubles\n");
+}
 
 int main(int argc, char **argv)
 {
     int	i, num;
     double	scale;
     size_t ret;
+
+    if ( BU_STR_EQUAL( argv[1], "-h" ) || BU_STR_EQUAL( argv[1], "-?" ) )
+	printusage();
 
     scale = 1.0;
 
@@ -58,7 +66,8 @@ int main(int argc, char **argv)
     }
 
     if ( argc > 1 || ZERO(scale) || isatty(fileno(stdin)) ) {
-	bu_exit(1, "Usage: bw-d [-n || scale] < unsigned_chars > doubles\n");
+    	fprintf(stderr,"bad argument\n");
+	printusage();
     }
 
     while ( (num = fread( &ibuf[0], sizeof( ibuf[0] ), 512, stdin)) > 0 ) {

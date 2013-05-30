@@ -1,7 +1,7 @@
 /*                     N M G _ M A N I F . C
  * BRL-CAD
  *
- * Copyright (c) 1994-2012 United States Government as represented by
+ * Copyright (c) 1994-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -374,7 +374,7 @@ nmg_shell_manifolds(struct shell *sp, char *tbl)
 
     /* all the faces painted with "interior" paint are 2manifolds
      * those faces still painted with "exterior" paint are
-     * 3manifolds, ie. part of the enclosing surface
+     * 3manifolds, i.e. part of the enclosing surface
      */
     for (BU_LIST_FOR(fu_p, faceuse, &sp->fu_hd)) {
 	BU_LIST_LINK_CHECK(&fu_p->l);

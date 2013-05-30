@@ -1,7 +1,7 @@
 /*                     P I X U N T I L E . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2012 United States Government as represented by
+ * Copyright (c) 1986-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -162,7 +162,7 @@ main(int argc, char **argv)
 	}
 	y = (y + 1) % out_height;
     }
- done:
+done:
     fprintf(stderr, "\n");
 
     return 0;

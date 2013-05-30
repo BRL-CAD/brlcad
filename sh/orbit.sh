@@ -2,7 +2,7 @@
 #                          O R B I T . S H
 # BRL-CAD
 #
-# Copyright (c) 2010-2012 United States Government as represented by
+# Copyright (c) 2010-2013 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -52,7 +52,7 @@ set -- `getopt e:s:S:w:n:W:N: $*`
 while : ; do
     case $1 in
 	-e)
-	    ELEVATION=$2; shift;;	
+	    ELEVATION=$2; shift;;
 	-s|-S)
 	    WIDTH=$2; HEIGHT=$2; shift;;
 	-w|-W)

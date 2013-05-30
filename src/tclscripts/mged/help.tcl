@@ -1,7 +1,7 @@
 #                        H E L P . T C L
 # BRL-CAD
 #
-# Copyright (c) 2004-2012 United States Government as represented by
+# Copyright (c) 2004-2013 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -173,6 +173,7 @@ set mged_help_data(fracture)	{{NMGsolid [prefix]}	{fracture an NMG solid into ma
 set mged_help_data(g)		$helplib_data(wdb_group)
 set mged_help_data(garbage_collect)	{{}	{eliminate unused space in database file}}
 set mged_help_data(get)		$helplib_data(wdb_get)
+set mged_help_data(graph)       {{}    {query and manipulate properties of the graph that corresponds to the currently opened .g database}}
 set mged_help_data(gui)	{{[-config b|c|g] [-d display_string]
     [-gd graphics_display_string] [-dt graphics_type]
     [-id name] [-c -h -j -s]}	{create display/command window pair}}
@@ -183,6 +184,7 @@ set mged_help_data(hide)        $helplib_data(wdb_hide)
 set mged_help_data(history)	{{[-delays]}	{list command history}}
 set mged_help_data(i)		$helplib_data(wdb_instance)
 set mged_help_data(idents)		{{file object(s)}	{make ascii summary of region idents}}
+set mged_help_data(igraph)      {{}    {interactive graph for the objects of the currently opened .g database}}
 set mged_help_data(ill)		{{name}	{illuminate object}}
 set mged_help_data(in)		{{[-f] [-s] parameters...}	{keyboard entry of solids.  -f for no drawing, -s to enter solid edit}}
 set mged_help_data(inside)	{{[outside_solid new_inside_solid thicknesses]}	{finds inside solid per specified thicknesses. Note that in an edit mode the edited solid is used for the outside_solid and should not appear on the command line }}
@@ -201,6 +203,7 @@ set mged_help_data(labelvert)	{{object[s]}	{label vertices of wireframes of obje
 set mged_help_data(listeval)	$helplib_data(wdb_listeval)
 set mged_help_data(loadtk)	{{[DISPLAY]}	{initializes the Tk window library}}
 set mged_help_data(loadview)	{{file}	{load view from raytrace script file}}
+set mged_help_data(lod)		{{} {configure Level of Detail drawing}}
 set mged_help_data(lookat)	$helplib_data(vo_lookat)
 set mged_help_data(ls)		$helplib_data(wdb_ls)
 set mged_help_data(lm)          {{[-l] value [value value...]} {DEPRECATED: list all regions that have a MUVES_Component attribute with any of the listed values}}
@@ -311,8 +314,8 @@ set mged_help_data(size)	$helplib_data(vo_size)
 set mged_help_data(solids)	{{file object(s)}	{make ascii summary of solid parameters}}
 set mged_help_data(sph-part)	{{sph1name sph2name newname}	{create a part from two sph's}}
 set mged_help_data(status)	{{[state|Viewscale|base2local|local2base|
-				   toViewcenter|Viewrot|model2view|view2model|
-				   model2objview|objview2model|help]}	{get view status}}
+	toViewcenter|Viewrot|model2view|view2model|
+	model2objview|objview2model|help]}	{get view status}}
 set mged_help_data(summary)	$helplib_data(wdb_summary)
 set mged_help_data(sv)		$helplib_data(vo_slew)
 set mged_help_data(sync)	{{}	{forces UNIX sync}}
@@ -330,11 +333,19 @@ set mged_help_data(t_muves)	{{}	{DEPRECATED: list all the known MUVES components
 set mged_help_data(unhide)	$helplib_data(wdb_unhide)
 set mged_help_data(units)	$helplib_data(wdb_units)
 set mged_help_data(vars)	{{[var=opt]}	{get/set mged variables}}
-set mged_help_data(vdraw)	{{write|insert|delete|read|length|send [args]}	{Expermental drawing (cnuzman)}}
+set mged_help_data(vdraw)	{{write|insert|delete|read|length|send [args]}	{Experimental drawing (cnuzman)}}
 set mged_help_data(view)	{{center|size|eye|ypr|quat|aet}	{get/set view parameters (local units).}}
 set mged_help_data(vnirt)	{{x y}  	{trace a single ray from x y}}
+set mged_help_data(voxelize)	{{[-s "dx dy dz"] [-d n] [-t f] new_obj old_obj [old_obj2 old_obj3 ...]} {convert object to its constituent voxels, i.e.the RPPs which approximate it.
+
+Options:
+	-d n		    - Specifies the level of detail(precision in approximation of volume) required. An input of n means that n * n rays will be shot through each row, and an approximation of volume filled is reached averaging these n * n values
+
+	-s "dx dy dz"       - Specifies the voxel size in each direction.
+
+	-t f		    - Specifies the threshold volume to decide if voxel is to be included in the voxelized output.
+  }}
 set mged_help_data(vquery_ray)	{{x y}  	{trace a single ray from x y}}
-#set mged_help_data(vrmgr)	{{host {master|slave|overview}}	{link with Virtual Reality manager}}
 set mged_help_data(vrot)	$helplib_data(vo_vrot)
 set mged_help_data(wcodes)	{{filename object(s)}	{write region ident codes to filename}}
 set mged_help_data(whatid)	$helplib_data(wdb_whatid)

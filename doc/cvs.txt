@@ -2,22 +2,11 @@ BRL-CAD Concurrent Versions System Policy and Guidelines
 ========================================================
 
 
-
-
-
-
-
 **********************************************************************
 NOTE: THESE INSTRUCTIONS ARE OUT-OF-DATE AS BRL-CAD NOW USES
 SUBVERSION INSTEAD OF CVS.  CONSULT WITH CAUTION AS SOME PORTIONS ARE
 STILL RELEVANT BUT OTHERS THAT ARE CVS-SPECIFIC ARE NOT.
 **********************************************************************
-
-
-
-
-
-
 
 
 The document includes a set of requirements and recommended procedures
@@ -43,7 +32,7 @@ the following general rules should always be adhered to:
    for correct and proper functionality.
 
 4. Commit and update frequently.  Large or complicated changes should
-   be broken up into smaller succint commits as best possible to make
+   be broken up into smaller succinct commits as best possible to make
    reviewing easier.  Commit working code early and commit often.
 
 5. Be consistent and informative.  Tags need to follow a consistent
@@ -99,7 +88,7 @@ OVERVIEW
     The intent of this document is to cover the broad aspects of how
     CVS is to be organized and used.  This includes branch management,
     tag naming conventions, checking sources in and out, and other
-    relevent usage policy.
+    relevant usage policy.
 
     CVS branches should be used to separate out the various types of
     source code revisions.  These include:
@@ -116,7 +105,7 @@ OVERVIEW
     maintenance branch may and should exist for making patch releases.
     Finally, various experimental and developer undertakings that may
     benefit by being isolated from changes to HEAD or STABLE, or would
-    likewise be distruptive to normal HEAD functionality, may live on
+    likewise be disruptive to normal HEAD functionality, may live on
     a branch of their own.
 
     It's very important that the main CVS HEAD revision be a "mostly"
@@ -153,7 +142,7 @@ CHECKING OUT SOURCES
     will checkout using the default implicit :ext: method and will
     need to provide an authorized username.  Be sure to use the "-P"
     checkout option to remove (prune) empty directories.  The "-z9"
-    global CVS option is encouraged to minimze network utilization.
+    global CVS option is encouraged to minimize network utilization.
 
 
     FROM HEAD:
@@ -457,7 +446,7 @@ TAG NAMING CONVENTIONS
     FORMAT FOR MISCELLANEOUS TAGS:
 
 	For everything else, the basic structure of the tags still
-	applies.  Lower case, dash-separated, and hopefully succintly
+	applies.  Lower case, dash-separated, and hopefully succinctly
 	informative tag names should be used.  Dates are highly
 	recommended as CVS tags are not associated by date, but rather
 	to the individual revision of a file.
@@ -530,7 +519,7 @@ MAKING A RELEASE
     In this example, brlcad is an unmodified top-level source
     directory and "brlcad.modified" is a top-level source directory
     that has been modified.  That same patch file may then be applied
-    to a checkout and commited to CVS.
+    to a checkout and committed to CVS.
 
     If there is an active maintenance branch that a patch was started
     from, it is generally easier to apply the patch to the maintenance
@@ -541,7 +530,7 @@ MAKING A RELEASE
     chunks.  See the patch manual documentation for more details.
 
     Failing any of the above, patches may also be applied manually.
-    This is often even desireable to become more familiar with the
+    This is often even desirable to become more familiar with the
     changes being made providing an opportunity for a healthy peer
     review.
 
@@ -557,14 +546,14 @@ MERGING A BRANCH
 
     Regardless if the branch is a maintenance branch or the STABLE
     branch, the fundamental "action" in performing a merge is called a
-    CVS join.  You can join code commited to one branch revision into
+    CVS join.  You can join code committed to one branch revision into
     another branch revision by passing the "-j" option to the cvs
     update command.  It's important to note that joins occur from code
     that is already committed.
 
     Once the code is joined, it may be committed to CVS.  If you have
-    changes on a branch that have not yet been commited, they should
-    first be commited before attempting the join.
+    changes on a branch that have not yet been committed, they should
+    first be committed before attempting the join.
 
 
     MERGING A BRANCH INTO HEAD:
@@ -589,12 +578,12 @@ MERGING A BRANCH
 
     The comment should contain or be the keyword of the branch being
     merged in.  For example, "premerge-20040315-windows" indicates a
-    merge that occured on March 15th, 2004, from the windows-branch.
+    merge that occurred on March 15th, 2004, from the windows-branch.
 
     If there are any conflicts, they would of course need to be
     manually resolved.  Once any conflicts are resolved and the
     sources are tested for functionality, the changes could then be
-    commited to HEAD.  Be careful to notice any file additions or
+    committed to HEAD.  Be careful to notice any file additions or
     deletions as CVS, generally speaking, will not manage those for
     you until they are committed.
 
@@ -717,7 +706,7 @@ USAGE TIPS
        way to cope.  If you still REALLY need to move a directory, a
        little find scripting can make it easy.  In case you didn't get
        the hint DO NOT MOVE/RENAME DIRECTORIES unless there's a _very_
-       good reason.  This implictly means that extra care and thought
+       good reason.  This implicitly means that extra care and thought
        should be made when naming new directories to be added to the
        repository.
 

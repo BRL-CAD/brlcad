@@ -7,4 +7,3 @@ main ()
 	;
 	return 0;
 }
-

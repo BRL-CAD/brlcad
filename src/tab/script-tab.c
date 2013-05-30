@@ -1,7 +1,7 @@
 /*                    S C R I P T - T A B . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2012 United States Government as represented by
+ * Copyright (c) 2004-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -268,7 +268,7 @@ struct command_tab rt_cmdtab[] = {
      cm_lookat_pt,	4, 5},
     {"viewrot", "4x4 matrix", "set view direction from matrix",
      cm_vrot,	17, 17},
-    {"orientation", "quaternion", "set view direction from quaturnion",
+    {"orientation", "quaternion", "set view direction from quaternion",
      cm_orientation,	5, 5},
     {"end", 	"", "end of frame setup, begin raytrace",
      cm_end,		1, 1},

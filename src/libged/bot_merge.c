@@ -1,7 +1,7 @@
 /*                         B O T _ M E R G E . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2012 United States Government as represented by
+ * Copyright (c) 2008-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -59,10 +59,10 @@ ged_bot_merge(struct ged *gedp, int argc, const char *argv[])
 	return GED_HELP;
     }
 
-    bots = bu_calloc(sizeof(struct rt_bot_internal), argc, "bot internal");
+    bots = bu_calloc(argc, sizeof(struct rt_bot_internal), "bot internal");
 
     /* create a new bot */
-    BU_GET(bots[0], struct rt_bot_internal);
+    BU_ALLOC(bots[0], struct rt_bot_internal);
     bots[0]->mode = 0;
     bots[0]->orientation = RT_BOT_UNORIENTED;
     bots[0]->bot_flags = 0;
@@ -117,7 +117,6 @@ ged_bot_merge(struct ged *gedp, int argc, const char *argv[])
 	    bots[0]->mode = bots[i]->mode;
 	}
 
-
 	if (bots[i]->bot_flags & RT_BOT_HAS_SURFACE_NORMALS) bots[0]->bot_flags |= RT_BOT_HAS_SURFACE_NORMALS;
 	if (bots[i]->bot_flags & RT_BOT_USE_NORMALS) bots[0]->bot_flags |= RT_BOT_USE_NORMALS;
 
@@ -136,6 +135,11 @@ ged_bot_merge(struct ged *gedp, int argc, const char *argv[])
     bots[0]->vertices = bu_calloc(bots[0]->num_vertices*3, sizeof(fastf_t), "verts");
     bots[0]->faces = bu_calloc(bots[0]->num_faces*3, sizeof(int), "verts");
 
+    if (bots[0]->mode == RT_BOT_PLATE || bots[0]->mode == RT_BOT_PLATE_NOCOS) {
+	bots[0]->thickness = bu_calloc(bots[0]->num_faces, sizeof(fastf_t), "thickness");
+	bots[0]->face_mode = bu_calloc(bots[0]->num_faces, sizeof(struct bu_bitv), "face_mode");
+    }
+
     avail_vert = 0;
     avail_face = 0;
 
@@ -152,6 +156,11 @@ ged_bot_merge(struct ged *gedp, int argc, const char *argv[])
 		bots[0]->faces[avail_face*3+face*3+2] = bots[i]->faces[face*3  ] + avail_vert;
 		bots[0]->faces[avail_face*3+face*3+1] = bots[i]->faces[face*3+1] + avail_vert;
 		bots[0]->faces[avail_face*3+face*3  ] = bots[i]->faces[face*3+2] + avail_vert;
+
+		if (bots[0]->mode == RT_BOT_PLATE || bots[0]->mode == RT_BOT_PLATE_NOCOS) {
+		    bots[0]->thickness[avail_face+face] = bots[i]->thickness[face];
+		    bots[0]->face_mode[avail_face+face] = bots[i]->face_mode[face];
+		}
 	    }
 	} else {
 	    /* just copy */
@@ -160,6 +169,11 @@ ged_bot_merge(struct ged *gedp, int argc, const char *argv[])
 		bots[0]->faces[avail_face*3+face*3  ] = bots[i]->faces[face*3  ] + avail_vert;
 		bots[0]->faces[avail_face*3+face*3+1] = bots[i]->faces[face*3+1] + avail_vert;
 		bots[0]->faces[avail_face*3+face*3+2] = bots[i]->faces[face*3+2] + avail_vert;
+
+		if (bots[0]->mode == RT_BOT_PLATE || bots[0]->mode == RT_BOT_PLATE_NOCOS) {
+		    bots[0]->thickness[avail_face+face] = bots[i]->thickness[face];
+		    bots[0]->face_mode[avail_face+face] = bots[i]->face_mode[face];
+		}
 	    }
 	}
 
@@ -170,7 +184,6 @@ ged_bot_merge(struct ged *gedp, int argc, const char *argv[])
 	    } else {
 	    }
 	}
-
 
 	avail_vert += bots[i]->num_vertices;
 	avail_face += bots[i]->num_faces;

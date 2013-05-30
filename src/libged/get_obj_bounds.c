@@ -1,7 +1,7 @@
 /*                         G E T _ O B J _ B O U N D S . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2012 United States Government as represented by
+ * Copyright (c) 2008-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -47,7 +47,7 @@ _ged_get_obj_bounds(struct ged *gedp,
     struct db_full_path path;
     struct region *regp;
 
-    /* Make a new rt_i instance from the existing db_i sructure */
+    /* Make a new rt_i instance from the existing db_i structure */
     if ((rtip=rt_new_rti(gedp->ged_wdbp->dbip)) == RTI_NULL) {
 	bu_vls_printf(gedp->ged_result_str, "rt_new_rti failure for %s\n", gedp->ged_wdbp->dbip->dbi_filename);
 	return GED_ERROR;
@@ -100,8 +100,8 @@ _ged_get_obj_bounds(struct ged *gedp,
     rt_prep(rtip);
 
     /* initialize RPP bounds */
-    VSETALL(rpp_min, MAX_FASTF);
-    VREVERSE(rpp_max, rpp_min);
+    VSETALL(rpp_min, INFINITY);
+    VSETALL(rpp_max, -INFINITY);
     for (i = 0; i < argc; i++) {
 	vect_t reg_min, reg_max;
 	const char *reg_name;
@@ -236,7 +236,7 @@ _ged_get_obj_bounds2(struct ged *gedp,
     struct directory *dp;
     struct rt_db_internal intern;
     struct rt_i *rtip;
-    struct soltab *stp;
+    struct soltab st;
     mat_t imat;
 
     /* initialize RPP bounds */
@@ -255,25 +255,25 @@ _ged_get_obj_bounds2(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    BU_GET(stp, struct soltab);
-    stp->l.magic = RT_SOLTAB_MAGIC;
-    stp->l2.magic = RT_SOLTAB2_MAGIC;
-    stp->st_dp = dp;
+    memset(&st, 0, sizeof(struct soltab));
+
+    st.l.magic = RT_SOLTAB_MAGIC;
+    st.l2.magic = RT_SOLTAB2_MAGIC;
+    st.st_dp = dp;
     MAT_IDN(imat);
-    stp->st_matp = imat;
-    stp->st_meth = intern.idb_meth;
+    st.st_matp = imat;
+    st.st_meth = intern.idb_meth;
 
     /* Get bounds from internal object */
-    VMOVE(stp->st_min, rpp_min);
-    VMOVE(stp->st_max, rpp_max);
+    VMOVE(st.st_min, rpp_min);
+    VMOVE(st.st_max, rpp_max);
     if (intern.idb_meth->ft_prep)
-	intern.idb_meth->ft_prep(stp, &intern, rtip);
-    VMOVE(rpp_min, stp->st_min);
-    VMOVE(rpp_max, stp->st_max);
+	intern.idb_meth->ft_prep(&st, &intern, rtip);
+    VMOVE(rpp_min, st.st_min);
+    VMOVE(rpp_max, st.st_max);
 
     rt_free_rti(rtip);
     rt_db_free_internal(&intern);
-    bu_free((char *)stp, "struct soltab");
 
     return GED_OK;
 }

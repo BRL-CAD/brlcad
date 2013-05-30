@@ -23,8 +23,7 @@ int
 main ()
 {
 	char *p = (char *) alloca (1);
-	                                    if (p) return 0;
+					    if (p) return 0;
 					      ;
-					        return 0;
+						return 0;
 }
-

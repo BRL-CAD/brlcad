@@ -1,7 +1,7 @@
 /*                      N M G _ C O P Y . C
  * BRL-CAD
  *
- * Copyright (c) 2011-2012 United States Government as represented by
+ * Copyright (c) 2011-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -94,7 +94,7 @@ nmg_construct_face_g_plane(const struct face_g_plane *original, genptr_t *struct
     ret->magic = NMG_FACE_G_PLANE_MAGIC;
 
     BU_LIST_INIT(&ret->f_hd);
-    HMOVE(ret->N, original->N)
+    HMOVE(ret->N, original->N);
 
     ret->index              = original->index;
     structArray[ret->index] = ret;

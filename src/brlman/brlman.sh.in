@@ -2,7 +2,7 @@
 #                       B R L M A N . S H
 # BRL-CAD
 #
-# Copyright (c) 1991-2012 United States Government as represented by
+# Copyright (c) 1991-2013 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -36,7 +36,7 @@
 ###
 #
 #  A minimal wrapper around the core Tcl logic of brlman.  Because Tcl
-#  doesn't support lanuching man from a script interactively, this
+#  doesn't support launching man from a script interactively, this
 #  minimal wrapper is needed - thanks to Nick Reed for the idea.
 #
 ###

@@ -1,7 +1,7 @@
 /*                 T I E N E T _ M A S T E R . C
  * BRL-CAD / ADRT
  *
- * Copyright (c) 2002-2012 United States Government as represented by
+ * Copyright (c) 2002-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -65,7 +65,6 @@
 #endif
 
 
-
 void tienet_sem_init(tienet_sem_t *sem, int val)
 {
     pthread_mutex_init(&sem->mut, 0);
@@ -91,12 +90,10 @@ void tienet_sem_wait(tienet_sem_t *sem)
 {
     pthread_mutex_lock(&sem->mut);
     if (!sem->val)
-        pthread_cond_wait(&sem->cond, &sem->mut);
+	pthread_cond_wait(&sem->cond, &sem->mut);
     sem->val--;
     pthread_mutex_unlock(&sem->mut);
 }
-
-
 
 
 typedef struct tienet_master_data_s {
@@ -184,7 +181,8 @@ void tienet_master_init(int port, void fcb_result(tienet_buffer_t *result), char
     tienet_master_port = port;
     tienet_master_verbose = verbose;
     tienet_master_buffer_size = buffer_size;
-    tienet_master_buffer = (tienet_master_data_t *)bu_malloc(sizeof(tienet_master_data_t) * tienet_master_buffer_size, "initial tienet buffer");
+
+    BU_ALLOC(tienet_master_buffer, tienet_master_data_t)
 
     tienet_master_fcb_result = fcb_result;
     tienet_master_active_slaves = 0;
@@ -412,7 +410,8 @@ void tienet_master_connect_slaves(fd_set *readfds)
 
 			    /* Append to select list */
 			    tmp = tienet_master_socket_list;
-			    tienet_master_socket_list = (tienet_master_socket_t *)bu_malloc(sizeof(tienet_master_socket_t), "socket list");
+
+			    BU_ALLOC(tienet_master_socket_list, tienet_master_socket_t);
 			    tienet_master_socket_list->next = tmp;
 			    tienet_master_socket_list->prev = NULL;
 			    tienet_master_socket_list->work.data = NULL;
@@ -469,7 +468,7 @@ void* tienet_master_listener(void *ptr)
     }
 
     /* Set first socket as master, rest are slaves - LIFO Stack - Always gets processed last */
-    tienet_master_socket_list = (tienet_master_socket_t *)bu_malloc(sizeof(tienet_master_socket_t), "socket list");
+    BU_ALLOC(tienet_master_socket_list, tienet_master_socket_t);
     tienet_master_socket_list->next = NULL;
     tienet_master_socket_list->prev = NULL;
     tienet_master_socket_list->work.data = NULL;
@@ -515,7 +514,8 @@ void* tienet_master_listener(void *ptr)
 			if (tienet_master_verbose)
 			    printf ("The slave %s has connected on port: %d, sock_num: %d\n", inet_ntoa(slave.sin_addr), tienet_master_port, slave_socket);
 			tmp = tienet_master_socket_list;
-			tienet_master_socket_list = (tienet_master_socket_t *)bu_malloc(sizeof(tienet_master_socket_t), "master socket list");
+
+			BU_ALLOC(tienet_master_socket_list, tienet_master_socket_t);
 			tienet_master_socket_list->next = tmp;
 			tienet_master_socket_list->prev = NULL;
 			tienet_master_socket_list->work.data = NULL;
@@ -642,7 +642,7 @@ void tienet_master_send_work(tienet_master_socket_t *sock)
 
     /*
      * Check to see if a broadcast message is sitting in the queue.
-     * The mutex prevents a read and write from occuring at the same time.
+     * The mutex prevents a read and write from occurring at the same time.
      */
     pthread_mutex_lock(&tienet_master_broadcast_mut);
     if (sock->mesg.size) {
@@ -787,7 +787,7 @@ void tienet_master_shutdown()
 	}
     }
 
-    printf("Total data transfered: %.1f MiB\n", (tfloat)tienet_master_transfer/(tfloat)(1024*1024));
+    printf("Total data transferred: %.1f MiB\n", (tfloat)tienet_master_transfer/(tfloat)(1024*1024));
 }
 
 
@@ -796,7 +796,7 @@ void tienet_master_broadcast(const void *mesg, size_t mesg_len)
 {
     tienet_master_socket_t *socket;
 
-    /* Prevent a Read and Write of the broadcast from occuring at the same time */
+    /* Prevent a Read and Write of the broadcast from occurring at the same time */
     pthread_mutex_lock(&tienet_master_broadcast_mut);
 
     /* Send a message to each available socket */

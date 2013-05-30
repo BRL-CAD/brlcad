@@ -1,7 +1,7 @@
 /*                         S H O O T . C
  * BRL-CAD
  *
- * Copyright (c) 2000-2012 United States Government as represented by
+ * Copyright (c) 2000-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,29 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup ray */
-/** @{ */
-/** @file librt/shoot.c
- *
- * Ray Tracing program shot coordinator.
- *
- * This is the heart of LIBRT's ray-tracing capability.
- *
- * Given a ray, shoot it at all the relevant parts of the model,
- * (building the finished_segs chain), and then call rt_boolregions()
- * to build and evaluate the partition chain.  If the ray actually hit
- * anything, call the application's a_hit() routine with a pointer to
- * the partition chain, otherwise, call the application's a_miss()
- * routine.
- *
- * It is important to note that rays extend infinitely only in the
- * positive direction.  The ray is composed of all points P, where
- *
- * P = r_pt + K * r_dir
- *
- * for K ranging from 0 to +infinity.  There is no looking backwards.
- *
- */
+
 
 #include "common.h"
 
@@ -64,12 +42,7 @@
      ((_step)[Z] <= 0 && (_pz) < (_lo)[Z]) ||			\
      ((_step)[Z] >= 0 && (_pz) > (_hi)[Z]))
 
-/**
- * R T _ R E S _ P I E C E S _ I N I T
- *
- * Allocate the per-processor state variables needed to support
- * rt_shootray()'s use of 'solid pieces'.
- */
+
 void
 rt_res_pieces_init(struct resource *resp, struct rt_i *rtip)
 {
@@ -80,8 +53,7 @@ rt_res_pieces_init(struct resource *resp, struct rt_i *rtip)
     RT_CK_RESOURCE(resp);
     RT_CK_RTI(rtip);
 
-    psptab = bu_calloc(sizeof(struct rt_piecestate),
-		       rtip->rti_nsolids_with_pieces, "re_pieces[]");
+    psptab = bu_calloc(rtip->rti_nsolids_with_pieces, sizeof(struct rt_piecestate), "re_pieces[]");
     resp->re_pieces = psptab;
 
     RT_VISIT_ALL_SOLTABS_START(stp, rtip) {
@@ -96,9 +68,7 @@ rt_res_pieces_init(struct resource *resp, struct rt_i *rtip)
     } RT_VISIT_ALL_SOLTABS_END
 	  }
 
-/**
- *
- */
+
 void
 rt_res_pieces_clean(struct resource *resp, struct rt_i *rtip)
 {
@@ -240,14 +210,13 @@ rt_advance_to_next_cell(register struct rt_shootray_status *ssp)
 	 * below.
 	 *
 	 * Therefore, "nudge" the point just slightly into the next
-	 * cell by adding OFFSET_DIST.
+	 * cell by adding our distance tolerance.
 	 *
 	 * XXX At present, a cell is never less than 1mm wide.
 	 *
-	 * XXX The value of OFFSET_DIST should be some percentage of
-	 * the cell's smallest dimension, rather than an absolute
-	 * distance in mm.  This will prevent doing microscopic
-	 * models.
+	 * XXX The "nudge" value was based on an absolute value defined
+	 * by OFFSET_DIST but has been changed to use distance tolerance
+	 * specified in mm and can now be overridden by a user.
 	 */
 
 	t0 = ssp->box_start;
@@ -323,8 +292,8 @@ rt_advance_to_next_cell(register struct rt_shootray_status *ssp)
 		     */
 
 		    if (cutp->cut_type == CUT_CUTNODE &&
-			t0 + OFFSET_DIST < ssp->tv[out_axis]) {
-			t0 += OFFSET_DIST;
+			t0 + ssp->ap->a_rt_i->rti_tol.dist < ssp->tv[out_axis]) {
+			t0 += ssp->ap->a_rt_i->rti_tol.dist;
 			break;
 		    }
 
@@ -407,7 +376,7 @@ rt_advance_to_next_cell(register struct rt_shootray_status *ssp)
 		 * NOTE: This portion implements Muuss' non-uniform binary
 		 * space partitioning tree.
 		 *********************************************************/
-		t0 += OFFSET_DIST;
+		t0 += ssp->ap->a_rt_i->rti_tol.dist;
 		cutp = curcut;
 		break;
 	    default:
@@ -513,7 +482,7 @@ rt_advance_to_next_cell(register struct rt_shootray_status *ssp)
 		     * Move newray point further into new box.
 		     * Try again.
 		     */
-		    t0 += OFFSET_DIST;
+		    t0 += ssp->ap->a_rt_i->rti_tol.dist;
 		    goto top;
 		}
 		/* Don't get stuck within the same box for long */
@@ -582,7 +551,7 @@ rt_advance_to_next_cell(register struct rt_shootray_status *ssp)
 		    /* See if point marched outside model RPP */
 		    if (ssp->box_start > ssp->model_end)
 			goto pop_space_stack;
-		    t0 = ssp->box_start + OFFSET_DIST;
+		    t0 = ssp->box_start + ssp->ap->a_rt_i->rti_tol.dist;
 		    goto top;
 		}
 		if (push_flag) {
@@ -629,7 +598,7 @@ rt_advance_to_next_cell(register struct rt_shootray_status *ssp)
 	    case CUT_NUGRIDNODE: {
 		struct rt_shootray_status *old;
 
-		BU_GET(old, struct rt_shootray_status);
+		BU_ALLOC(old, struct rt_shootray_status);
 		*old = *ssp;	/* struct copy */
 
 		/* Descend into node */
@@ -700,7 +669,6 @@ rt_find_backing_dist(struct rt_shootray_status *ss, struct bu_bitv *backbits) {
      * intersection calculations
      */
     solidbits = rt_get_solidbitv(rtip->nsolids, resp);
-    bu_bitv_clear(solidbits);
 
     ray = ss->ap->a_ray;	/* struct copy, don't mess with the original */
 
@@ -735,7 +703,7 @@ rt_find_backing_dist(struct rt_shootray_status *ss, struct bu_bitv *backbits) {
 	    goto done;
 	} else {
 	    /* increment cur_dist into next cell for next execution of this loop */
-	    cur_dist = ray.r_max + OFFSET_DIST;
+	    cur_dist = ray.r_max + ss->ap->a_rt_i->rti_tol.dist;
 	}
 
 	/* process this box node (look at all the pieces) */
@@ -878,31 +846,6 @@ rt_plot_cell(const union cutter *cutp, const struct rt_shootray_status *ssp, str
 }
 
 
-/**
- * Note that the direction vector r_dir must have unit length; this is
- * mandatory, and is not ordinarily checked, in the name of
- * efficiency.
- *
- * Input:  Pointer to an application structure, with these mandatory fields:
- * a_ray.r_pt ==> Starting point of ray to be fired
- * a_ray.r_dir => UNIT VECTOR with direction to fire in (dir cosines)
- * a_hit =======> Routine to call when something is hit
- * a_miss ======> Routine to call when ray misses everything
- *
- * Calls user's a_miss() or a_hit() routine as appropriate.  Passes
- * a_hit() routine list of partitions, with only hit_dist fields
- * valid.  Normal computation deferred to user code, to avoid needless
- * computation here.
- *
- * Formal Return: whatever the application function returns (an int).
- *
- * NOTE:  The appliction functions may call rt_shootray() recursively.
- * Thus, none of the local variables may be static.
- *
- * To prevent having to lock the statistics variables in a PARALLEL
- * environment, all the statistics variables have been moved into the
- * 'resource' structure, which is allocated per-CPU.
- */
 int
 rt_shootray(register struct application *ap)
 {
@@ -913,7 +856,7 @@ rt_shootray(register struct application *ap)
     fastf_t last_bool_start;
     struct bu_bitv *solidbits;	/* bits for all solids shot so far */
     struct bu_bitv *backbits=NULL;	/* bits for all solids using pieces that need to be intersected behind
-					   the the ray start point */
+					   the ray start point */
     struct bu_ptbl *regionbits;	/* table of all involved regions */
     char *status;
     auto struct partition InitialPart;	/* Head of Initial Partitions */
@@ -1017,10 +960,9 @@ rt_shootray(register struct application *ap)
 	BU_ASSERT_PTR(BU_PTBL_GET(&rtip->rti_resources, resp->re_cpu), !=, NULL);
 
     solidbits = rt_get_solidbitv(rtip->nsolids, resp);
-    bu_bitv_clear(solidbits);
 
     if (BU_LIST_IS_EMPTY(&resp->re_region_ptbl)) {
-	BU_GET(regionbits, struct bu_ptbl);
+	BU_ALLOC(regionbits, struct bu_ptbl);
 	bu_ptbl_init(regionbits, 7, "rt_shootray() regionbits ptbl");
     } else {
 	regionbits = BU_LIST_FIRST(bu_ptbl, &resp->re_region_ptbl);
@@ -1132,7 +1074,7 @@ rt_shootray(register struct application *ap)
 
     /*
      * The interesting part of the ray starts at distance 0.  If the
-     * ray enters the model at a negative distance, (ie, the ray
+     * ray enters the model at a negative distance, (i.e., the ray
      * starts within the model RPP), we only look at little bit behind
      * (BACKING_DIST) to see if we are just coming out of something,
      * but never further back than the intersection with the model
@@ -1198,7 +1140,6 @@ rt_shootray(register struct application *ap)
 	     * point and using pieces)
 	     */
 	    backbits = rt_get_solidbitv(rtip->nsolids, resp);
-	    bu_bitv_clear(backbits);
 
 	    /* call "rt_find_backing_dist()" to calculate the required
 	     * start point for calculation, and to fill in the
@@ -1240,7 +1181,7 @@ rt_shootray(register struct application *ap)
      * While the ray remains inside model space, push from box to box
      * until ray emerges from model space again (or first hit is
      * found, if user is impatient).  It is vitally important to
-     * always stay within the model RPP, or the space partitoning tree
+     * always stay within the model RPP, or the space partitioning tree
      * will pick wrong boxes & miss them.
      */
     while ((cutp = rt_advance_to_next_cell(&ss)) != CUTTER_NULL) {
@@ -1429,7 +1370,7 @@ rt_shootray(register struct application *ap)
 	 *
 	 * If a_onehit != 0, then it indicates how many hit points
 	 * (which are greater than the ray start point of 0.0) the
-	 * application requires, ie, partitions with inhit >= 0.  (If
+	 * application requires, i.e., partitions with inhit >= 0.  (If
 	 * negative, indicates number of non-air hits needed).  If
 	 * this box yielded additional segments, immediately weave
 	 * them into the partition list, and perform final boolean
@@ -1471,7 +1412,7 @@ rt_shootray(register struct application *ap)
 		    }
 		}
 
-		/* Evaluate regions upto end of good segs */
+		/* Evaluate regions up to end of good segs */
 		if (ss.box_end < pending_hit) pending_hit = ss.box_end;
 		done = rt_boolfinal(&InitialPart, &FinalPart,
 				    last_bool_start, pending_hit, regionbits, ap, solidbits);
@@ -1623,11 +1564,6 @@ out:
 }
 
 
-/**
- * Return pointer to cell 'n' along a given ray.  Used for debugging
- * of how space partitioning interacts with shootray.  Intended to
- * mirror the operation of rt_shootray().  The first cell is 0.
- */
 const union cutter *
 rt_cell_n_on_ray(register struct application *ap, int n)
 
@@ -1775,7 +1711,7 @@ rt_cell_n_on_ray(register struct application *ap, int n)
 
     /*
      * The interesting part of the ray starts at distance 0.  If the
-     * ray enters the model at a negative distance, (ie, the ray
+     * ray enters the model at a negative distance, (i.e., the ray
      * starts within the model RPP), we only look at little bit behind
      * (BACKING_DIST) to see if we are just coming out of something,
      * but never further back than the intersection with the model
@@ -1825,7 +1761,7 @@ rt_cell_n_on_ray(register struct application *ap, int n)
      * While the ray remains inside model space, push from box to box
      * until ray emerges from model space again (or first hit is
      * found, if user is impatient).  It is vitally important to
-     * always stay within the model RPP, or the space partitoning tree
+     * always stay within the model RPP, or the space partitioning tree
      * will pick wrong boxes & miss them.
      */
     while ((cutp = rt_advance_to_next_cell(&ss)) != CUTTER_NULL) {
@@ -1865,14 +1801,6 @@ rt_zero_res_stats(struct resource *resp)
 }
 
 
-/**
- * To be called only in non-parallel mode, to tally up the statistics
- * from the resource structure(s) into the rt instance structure.
- *
- * Non-parallel programs should call
- * rt_add_res_stats(rtip, RESOURCE_NULL);
- * to have the default resource results tallied in.
- */
 void
 rt_add_res_stats(register struct rt_i *rtip, register struct resource *resp)
 {
@@ -1906,23 +1834,26 @@ rt_shootray_simple_hit(struct application *a, struct partition *PartHeadp, struc
 
     for (pp = PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw) {
 	if(p) {
-	    c->pt_forw = bu_malloc(sizeof(struct partition), "shootray simple");
+	    BU_ALLOC(c->pt_forw, struct partition);
 	    c->pt_forw->pt_back = c;
 	    c = c->pt_forw;
 	} else {
-	    c = p = bu_malloc(sizeof(struct partition), "shootray simple");
+	    BU_ALLOC(p, struct partition);
+	    c = p;
 	    c->pt_forw = NULL;
 	    c->pt_back = NULL;
 	}
 	/* partial deep copy of  the partition */
 	c->pt_magic = pp->pt_magic;
 	c->pt_inseg = NULL;
-	c->pt_inhit = bu_malloc(sizeof(struct hit), "shootray simple inhit");
+
+	BU_ALLOC(c->pt_inhit, struct hit);
 	c->pt_inhit->hit_magic = pp->pt_inhit->hit_magic;
 	c->pt_inhit->hit_dist = pp->pt_inhit->hit_dist;
 	c->pt_inhit->hit_surfno = pp->pt_inhit->hit_surfno;
 	c->pt_outseg = NULL;
-	c->pt_outhit = bu_malloc(sizeof(struct hit), "shootray simple inhit");
+
+	BU_ALLOC(c->pt_outhit, struct hit);
 	c->pt_outhit->hit_magic = pp->pt_outhit->hit_magic;
 	c->pt_outhit->hit_dist = pp->pt_outhit->hit_dist;
 	c->pt_outhit->hit_surfno = pp->pt_outhit->hit_surfno;
@@ -1942,12 +1873,7 @@ rt_shootray_simple_miss(struct application *a)
     return 0;
 }
 
-/**
- * Shoot a single ray and return the partition list. Handles callback issues.
- *
- * Note that it calls malloc(), therefore should NOT be used if performance
- * matters.
- */
+
 struct partition *
 rt_shootray_simple(struct application *a, point_t origin, vect_t direction)
 {
@@ -1974,7 +1900,6 @@ rt_shootray_simple(struct application *a, point_t origin, vect_t direction)
 }
 
 
-/** @} */
 /*
  * Local Variables:
  * mode: C

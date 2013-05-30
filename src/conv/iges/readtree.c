@@ -1,7 +1,7 @@
 /*                      R E A D T R E E . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2012 United States Government as represented by
+ * Copyright (c) 1990-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -26,7 +26,7 @@ Readtree(mat_t *matp)
 {
     int length, i, k, op;
     union tree *ptr, *Pop();
-    matp_t new_mat;
+    mat_t *new_mat;
 
     Readint(&i, "");
     if (i != 180) {
@@ -40,7 +40,7 @@ Readtree(mat_t *matp)
 	Readint(&op, "");
 	if (op < 0) {
 	    /* This is an operand */
-	    BU_GET(ptr, union tree);
+	    BU_ALLOC(ptr, union tree);
 	    RT_TREE_INIT(ptr);
 	    ptr->tr_l.tl_op = OP_DB_LEAF;
 	    k = ((-op)-1)/2;
@@ -54,19 +54,19 @@ Readtree(mat_t *matp)
 	    }
 	    ptr->tr_l.tl_name = bu_strdup(dir[k]->name);
 	    if (matp && dir[k]->rot) {
-		new_mat = (matp_t)bu_malloc(sizeof(mat_t), "new_mat");
-		bn_mat_mul(new_mat, *matp, *dir[k]->rot);
+		BU_ALLOC(new_mat, mat_t);
+		bn_mat_mul((matp_t)new_mat, *matp, *dir[k]->rot);
 	    } else if (dir[k]->rot)
-		new_mat = *dir[k]->rot;
+		new_mat = (mat_t *)*dir[k]->rot;
 	    else if (matp)
-		new_mat = *matp;
+		new_mat = (mat_t *)*matp;
 	    else
-		new_mat = (matp_t)NULL;
-	    ptr->tr_l.tl_mat = new_mat;
+		new_mat = (mat_t *)NULL;
+	    ptr->tr_l.tl_mat = (matp_t)new_mat;
 	    Push(ptr);
 	} else {
 	    /* This is an operator */
-	    BU_GET(ptr, union tree);
+	    BU_ALLOC(ptr, union tree);
 	    RT_TREE_INIT(ptr);
 	    switch (op) {
 		case 1:

@@ -1,7 +1,7 @@
 /*                 Placement.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2012 United States Government as represented by
+ * Copyright (c) 1994-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -32,62 +32,70 @@
 
 #define CLASSNAME "Placement"
 #define ENTITYNAME "Placement"
-string Placement::entityname = Factory::RegisterClass(ENTITYNAME,(FactoryMethod)Placement::Create);
+string Placement::entityname = Factory::RegisterClass(ENTITYNAME, (FactoryMethod)Placement::Create);
 
-Placement::Placement() {
+Placement::Placement()
+{
     step = NULL;
     id = 0;
     location = NULL;
 }
 
-Placement::Placement(STEPWrapper *sw,int step_id) {
+Placement::Placement(STEPWrapper *sw, int step_id)
+{
     step = sw;
     id = step_id;
     location = NULL;
 }
 
-Placement::~Placement() {
+Placement::~Placement()
+{
     location = NULL;
 }
 
 const double *
-Placement::GetOrigin() {
+Placement::GetOrigin()
+{
     return NULL;
 }
 
 const double *
-Placement::GetNormal() {
+Placement::GetNormal()
+{
     return NULL;
 }
 
 const double *
-Placement::GetXAxis() {
+Placement::GetXAxis()
+{
     return NULL;
 }
 
 const double *
-Placement::GetYAxis() {
+Placement::GetYAxis()
+{
     return NULL;
 }
 
 bool
-Placement::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
-    step=sw;
+Placement::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
+    step = sw;
     id = sse->STEPfile_id;
 
-    if ( !GeometricRepresentationItem::Load(step,sse) ) {
+    if (!GeometricRepresentationItem::Load(step, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::GeometricRepresentationItem." << std::endl;
 	return false;
     }
 
     // need to do this for local attributes to makes sure we have
     // the actual entity and not a complex/supertype parent
-    sse = step->getEntity(sse,ENTITYNAME);
+    sse = step->getEntity(sse, ENTITYNAME);
 
     if (location == NULL) {
-	SDAI_Application_instance *entity = step->getEntityAttribute(sse,"location");
+	SDAI_Application_instance *entity = step->getEntityAttribute(sse, "location");
 	if (entity) {
-	    location = dynamic_cast<CartesianPoint *>(Factory::CreateObject(sw,entity));
+	    location = dynamic_cast<CartesianPoint *>(Factory::CreateObject(sw, entity));
 	} else {
 	    std::cout << CLASSNAME << ":Error loading attribute 'location'." << std::endl;
 	    return false;
@@ -98,28 +106,23 @@ Placement::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
 }
 
 void
-Placement::Print(int level) {
-    TAB(level); std::cout << CLASSNAME << ":" << std::endl;
-    location->Print(level+1);
+Placement::Print(int level)
+{
+    TAB(level);
+    std::cout << CLASSNAME << ":" << std::endl;
+    location->Print(level + 1);
 }
 
 STEPEntity *
-Placement::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
-    Factory::OBJECTS::iterator i;
-    if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
-	Placement *object = new Placement(sw,sse->STEPfile_id);
+Placement::GetInstance(STEPWrapper *sw, int id)
+{
+    return new Placement(sw, id);
+}
 
-	Factory::AddObject(object);
-
-	if (!object->Load(sw, sse)) {
-	    std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
-	    delete object;
-	    return NULL;
-	}
-	return static_cast<STEPEntity *>(object);
-    } else {
-	return (*i).second;
-    }
+STEPEntity *
+Placement::Create(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
+    return STEPEntity::CreateEntity(sw, sse, GetInstance, CLASSNAME);
 }
 
 // Local Variables:

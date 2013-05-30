@@ -2,6 +2,7 @@
 bin_PROGRAMS = halftone
 
 AM_CPPFLAGS = \
+	${STD_C99_FLAGS} \
 	${STRICT_FLAGS} \
 	${TCL_CPPFLAGS}
 
@@ -17,9 +18,7 @@ halftone_SOURCES = \
 halftone_LDADD = \
 	${RT} ${FB}
 
-man_MANS = halftone.1
-
-EXTRA_DIST = $(man_MANS) CMakeLists.txt
+EXTRA_DIST = CMakeLists.txt
 
 include $(top_srcdir)/misc/Makefile.defs
 

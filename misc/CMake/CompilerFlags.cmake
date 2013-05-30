@@ -1,7 +1,7 @@
 #             C O M P I L E R F L A G S . C M A K E
 # BRL-CAD
 #
-# Copyright (c) 2011-2012 United States Government as represented by
+# Copyright (c) 2011-2013 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -44,6 +44,8 @@ macro(ADD_NEW_FLAG FLAG_TYPE NEW_FLAG CONFIG_LIST)
   if(${NEW_FLAG})
     if("${CONFIG_LIST}" STREQUAL "ALL")
       set(CMAKE_${FLAG_TYPE}_FLAGS "${CMAKE_${FLAG_TYPE}_FLAGS} ${${NEW_FLAG}}")
+    elseif("${CONFIG_LIST}" STREQUAL "Debug" AND NOT CMAKE_BUILD_TYPE)
+      set(CMAKE_${FLAG_TYPE}_FLAGS "${CMAKE_${FLAG_TYPE}_FLAGS} ${${NEW_FLAG}}")
     else("${CONFIG_LIST}" STREQUAL "ALL")
       foreach(CFG_TYPE ${CONFIG_LIST})
 	set(VALID_CONFIG 1)
@@ -67,108 +69,119 @@ macro(ADD_NEW_FLAG FLAG_TYPE NEW_FLAG CONFIG_LIST)
   endif(${NEW_FLAG})
 endmacro(ADD_NEW_FLAG)
 
-# Synopsis:  BRLCAD_CHECK_C_FLAG(flag [CONFIGURATIONS] [GATHERING VARIABLES] [UNIQUE VAL VARIABLES])
+# Convenience language based wrapper for calling the correct compiler flag test macro
+macro(CHECK_COMPILER_FLAG FLAG_LANG NEW_FLAG RESULTVAR)
+  if("${FLAG_LANG}" STREQUAL "C")
+    CHECK_C_COMPILER_FLAG(${NEW_FLAG} ${RESULTVAR})
+  endif("${FLAG_LANG}" STREQUAL "C")
+  if("${FLAG_LANG}" STREQUAL "CXX")
+    CHECK_CXX_COMPILER_FLAG(${NEW_FLAG} ${RESULTVAR})
+  endif("${FLAG_LANG}" STREQUAL "CXX")
+endmacro(CHECK_COMPILER_FLAG LANG NEW_FLAG RESULTVAR)
+
+
+# Synopsis:  BRLCAD_CHECK_FLAG(LANG flag [BUILD_TYPES type1 type2 ...] [GROUPS group1 group2 ...] [VARS var1 var2 ...] )
 #
-# Configurations refers to the C_FLAGS variable associated with build configurations such
-# as CMAKE_C_FLAGS_DEBUG.  Gathering variables are variables intended to hold more than one
-# compilation flag.  Unique value variables are intended to hold exactly one flag, and will
-# not accept overwritting by this macro once a value has been assigned.
+# BRLCAD_CHECK_FLAG is BRL-CAD's core macro for C/C++ flag testing.  The first value
+# is the language to test (C or C++ currently).  The second entry is the flag (without
+# preliminary dash).
 #
-# For example, to test a flag and add it to the Debug configuration:
+# If the first two mandatory options are the only ones provided, the a successful test
+# of the flag will result in its being assigned to *all* compilations using the appropriate global
+# C/C++ CMake variable.  If optional parameters are included, they tell the macro what to do with the
+# test results instead of doing the default global assignment.  Options include assigning the
+# flag to one or more of the variable lists associated with build types (e.g. Debug or Release),
+# appending the variable to a string that contains a group of variables, or assigning the flag to
+# a variable if that variable does not already hold a value.  The assignments are not mutually
+# exclusive - any or all of them may be used in a given command.
 #
-# BRLCAD_CHECK_C_FLAG(ggdb3 Debug)
+# For example, to test a flag and add it to the C Debug configuration flags:
 #
-# To assign a flag to a unique variable:
+# BRLCAD_CHECK_FLAG(C ggdb3 BUILD_TYPES Debug)
 #
-# BRLCAD_CHECK_C_FLAG(c99 "" "" C99_FLAG)
+# To assign a C flag to a unique variable:
+#
+# BRLCAD_CHECK_FLAG(C c99 VARS C99_FLAG)
 #
 # To do all assignments at once, for multiple configs and vars:
 #
-# BRLCAD_CHECK_C_FLAG(ggdb3 "Debug;Release" "DEBUG_FLAGS" "DEBUG1;DEBUG2")
-#
-# For configurations, the keyword ALL is used for a flag that is
-# supposed to be present regardless of configuration - this is
-# the default.  After all flags are assigned, CMAKE_C_FLAGS (which
-# collects the general C flags) is prepended to all other active
-# C flag strings.
-macro(BRLCAD_CHECK_C_FLAG flag)
+# BRLCAD_CHECK_FLAG(C ggdb3
+#                   BUILD_TYPES Debug Release
+#                   GROUPS DEBUG_FLAGS
+#                   VARS DEBUG1 DEBUG2)
+
+include (CMakeParseArguments)
+macro(BRLCAD_CHECK_FLAG)
+  # Set up some variables and names
+  set(FLAG_LANG ${ARGV0})
+  set(flag ${ARGV1})
   string(TOUPPER ${flag} UPPER_FLAG)
   string(REGEX REPLACE "[^a-zA-Z0-9]" "_" UPPER_FLAG ${UPPER_FLAG})
   set(NEW_FLAG "-${flag}")
-  if(${ARGC} LESS 2)
-    CHECK_C_COMPILER_FLAG(-${flag} ${UPPER_FLAG}_COMPILER_FLAG_FOUND)
-    if(${UPPER_FLAG}_COMPILER_FLAG_FOUND)
-      ADD_NEW_FLAG(C NEW_FLAG ALL)
-    endif(${UPPER_FLAG}_COMPILER_FLAG_FOUND)
-  else(${ARGC} LESS 2)
-    if(NOT "${ARGV1}" STREQUAL "")
-      CHECK_C_COMPILER_FLAG(-${flag} ${UPPER_FLAG}_COMPILER_FLAG_FOUND)
-      if(${UPPER_FLAG}_COMPILER_FLAG_FOUND)
-        ADD_NEW_FLAG(C NEW_FLAG "${ARGV1}")
-      endif(${UPPER_FLAG}_COMPILER_FLAG_FOUND)
-    endif(NOT "${ARGV1}" STREQUAL "")
-    if(NOT "${ARGV2}" STREQUAL "")
-      CHECK_C_COMPILER_FLAG(-${flag} ${UPPER_FLAG}_COMPILER_FLAG_FOUND)
-      if(${UPPER_FLAG}_COMPILER_FLAG_FOUND)
-	foreach(flagvar ${ARGV2})
-	  if(${flagvar})
-	    set(${flagvar} "${${flagvar}} -${flag}")
-	  else(${flagvar})
-	    set(${flagvar} "-${flag}")
-	  endif(${flagvar})
-	endforeach(flagvar ${ARGV2})
-      endif(${UPPER_FLAG}_COMPILER_FLAG_FOUND)
-    endif(NOT "${ARGV2}" STREQUAL "")
-    if(NOT "${ARGV3}" STREQUAL "")
-      foreach(flagvar ${ARGV3})
-	if(NOT ${flagvar})
-          CHECK_C_COMPILER_FLAG(-${flag} ${UPPER_FLAG}_COMPILER_FLAG_FOUND)
-          if(${UPPER_FLAG}_COMPILER_FLAG_FOUND)
-	    set(${flagvar} "-${flag}")
-          endif(${UPPER_FLAG}_COMPILER_FLAG_FOUND)
-	endif(NOT ${flagvar})
-      endforeach(flagvar ${ARGV3})
-    endif(NOT "${ARGV3}" STREQUAL "")
-  endif(${ARGC} LESS 2)
-endmacro()
 
-macro(BRLCAD_CHECK_CXX_FLAG flag)
-  string(TOUPPER ${flag} UPPER_FLAG)
-  string(REGEX REPLACE "[^a-zA-Z0-9]" "_" UPPER_FLAG ${UPPER_FLAG})
-  CHECK_CXX_COMPILER_FLAG(-${flag} ${UPPER_FLAG}_COMPILER_FLAG_FOUND)
-  if(${UPPER_FLAG}_COMPILER_FLAG_FOUND)
-    set(NEW_FLAG "-${flag}")
-    if(${ARGC} LESS 2)
-      ADD_NEW_FLAG(CXX NEW_FLAG ALL)
-    else(${ARGC} LESS 2)
-      if(NOT "${ARGV1}" STREQUAL "")
-        ADD_NEW_FLAG(CXX NEW_FLAG "${ARGV1}")
-      endif(NOT "${ARGV1}" STREQUAL "")
-      if(NOT "${ARGV2}" STREQUAL "")
-	foreach(flagvar ${ARGV2})
-	  if(${flagvar})
-	    set(${flagvar} "${${flagvar}} -${flag}")
-	  else(${flagvar})
-	    set(${flagvar} "-${flag}")
-	  endif(${flagvar})
-	endforeach(flagvar ${ARGV2})
-      endif(NOT "${ARGV2}" STREQUAL "")
-      if(NOT "${ARGV3}" STREQUAL "")
-	foreach(flagvar ${ARGV3})
-	  if(NOT ${flagvar})
-	    set(${flagvar} "-${flag}")
-	  endif(NOT ${flagvar})
-	endforeach(flagvar ${ARGV3})
-      endif(NOT "${ARGV3}" STREQUAL "")
-    endif(${ARGC} LESS 2)
-  endif(${UPPER_FLAG}_COMPILER_FLAG_FOUND)
-endmacro()
+  # Start processing arguments
+  if(${ARGC} LESS 3)
+
+    # Handle default (global) case
+    CHECK_COMPILER_FLAG(${FLAG_LANG} ${NEW_FLAG} ${UPPER_FLAG}_COMPILER_FLAG_FOUND)
+    if(${UPPER_FLAG}_COMPILER_FLAG_FOUND)
+      ADD_NEW_FLAG(${FLAG_LANG} NEW_FLAG ALL)
+    endif(${UPPER_FLAG}_COMPILER_FLAG_FOUND)
+
+  else(${ARGC} LESS 3)
+
+    # Parse extra arguments
+    CMAKE_PARSE_ARGUMENTS(FLAG "" "" "BUILD_TYPES;GROUPS;VARS" ${ARGN})
+
+    # Iterate over listed Build types and append the flag to them if successfully tested.
+    foreach(build_type ${FLAG_BUILD_TYPES})
+      CHECK_COMPILER_FLAG(${FLAG_LANG} ${NEW_FLAG} ${UPPER_FLAG}_COMPILER_FLAG_FOUND)
+      if(${UPPER_FLAG}_COMPILER_FLAG_FOUND)
+	ADD_NEW_FLAG(C NEW_FLAG "${build_type}")
+      endif(${UPPER_FLAG}_COMPILER_FLAG_FOUND)
+    endforeach(build_type ${FLAG_BUILD_TYPES})
+
+    # Append flag to a group of flags (this apparently needs to be
+    # a string build, not a CMake list build.  Do this for all supplied
+    # group variables.
+    foreach(flag_group ${FLAG_GROUPS})
+      CHECK_COMPILER_FLAG(${FLAG_LANG} ${NEW_FLAG} ${UPPER_FLAG}_COMPILER_FLAG_FOUND)
+      if(${UPPER_FLAG}_COMPILER_FLAG_FOUND)
+	if(${flag_group})
+	  set(${flag_group} "${${flag_group}} ${NEW_FLAG}")
+	else(${flag_group})
+	  set(${flag_group} "${NEW_FLAG}")
+	endif(${flag_group})
+      endif(${UPPER_FLAG}_COMPILER_FLAG_FOUND)
+    endforeach(flag_group ${FLAG_GROUPS})
+
+    # If a variable does not have a value, check the flag and if valid assign
+    # the flag as the variable's value.  Do this for all supplied variables.
+    foreach(flag_var ${FLAG_VARS})
+      if(NOT ${flag_var})
+	CHECK_COMPILER_FLAG(${FLAG_LANG} ${NEW_FLAG} ${UPPER_FLAG}_COMPILER_FLAG_FOUND)
+	if(${UPPER_FLAG}_COMPILER_FLAG_FOUND AND NOT "${${flag_var}}")
+	  set(${flag_var} "${NEW_FLAG}")
+	endif(${UPPER_FLAG}_COMPILER_FLAG_FOUND AND NOT "${${flag_var}}")
+      endif(NOT ${flag_var})
+    endforeach(flag_var ${FLAG_VARS})
+  endif(${ARGC} LESS 3)
+
+endmacro(BRLCAD_CHECK_FLAG)
+
+# Convenience wrappers to call the primary checking function with a default language.
+macro(BRLCAD_CHECK_C_FLAG)
+  BRLCAD_CHECK_FLAG(C ${ARGN})
+endmacro(BRLCAD_CHECK_C_FLAG)
+macro(BRLCAD_CHECK_CXX_FLAG)
+  BRLCAD_CHECK_FLAG(CXX ${ARGN})
+endmacro(BRLCAD_CHECK_CXX_FLAG)
 
 # Clear out most CMake-assigned defaults - We're managing
 # our own compile flags, and don't (for example) want NDEBUG
 # if we have debugging flags enabled for a Release build.
 # At the same time, pull in any flags that have been set
-# in the environment.  
+# in the environment.
 
 set(CMAKE_C_FLAGS "")
 set(CMAKE_CXX_FLAGS "")
@@ -229,39 +242,39 @@ BRLCAD_CHECK_CXX_FLAG(ftemplate-depth-128)
 #     may still output SSE instructions (e.g., for cross-compiling).
 # BRLCAD_CHECK_C_FLAG(msse)
 # BRLCAD_CHECK_C_FLAG(msse2)
-BRLCAD_CHECK_C_FLAG(msse3 Debug)
+BRLCAD_CHECK_C_FLAG(msse3 BUILD_TYPES Debug)
 
-# Check for c90 support with gnu extensions if we're not building for a 
+# Check for c90 support with gnu extensions if we're not building for a
 # release and c99 support with gnu extensions when we are building for a
 # release just so we get broader portability testing - default development
 # mode is Debug, so the default behavior will be to keep things working
 # with the less feature-rich C standard.
 #
-# Also check for c99 conformance regardles since some platform
+# Also check for c99 conformance regardless since some platform
 # environments require it due to c99-specific system headers (e.g.,
 # /System/Library/Frameworks/OpenGL.framework/Headers/gl.h on Mac OS X
 # having '//' comments embedded).  Do as the Autotools system did
 # and use gnu99 here - c99 has problems on Linux.
 # BRLCAD_CHECK_C_FLAG("std=gnu1x")
-BRLCAD_CHECK_C_FLAG("std=gnu99" Release "" C99_FLAG)
-BRLCAD_CHECK_C_FLAG("std=gnu89" Debug)
+BRLCAD_CHECK_C_FLAG("std=gnu99" BUILD_TYPES Release VARS C99_FLAG)
+BRLCAD_CHECK_C_FLAG("std=gnu99" BUILD_TYPES Debug VARS C99_FLAG)
 
 # Silence check for unused arguments (used to silence clang warnings about
 # unused options on the command line). By default clang generates a lot of
-# warnings about such arguments, and we don't really care. 
+# warnings about such arguments, and we don't really care.
 BRLCAD_CHECK_C_FLAG(Qunused-arguments)
 BRLCAD_CHECK_CXX_FLAG(Qunused-arguments)
 
 # 64bit compilation flags
 if(${CMAKE_WORD_SIZE} MATCHES "64BIT")
-  BRLCAD_CHECK_C_FLAG(m64 "" "" 64BIT_FLAG)
-  BRLCAD_CHECK_C_FLAG("arch x86_64" "" "" 64BIT_FLAG)
-  BRLCAD_CHECK_C_FLAG(64 "" "" 64BIT_FLAG)
-  BRLCAD_CHECK_C_FLAG("mabi=64" "" ""  64BIT_FLAG)
+  BRLCAD_CHECK_C_FLAG(m64 VARS 64BIT_FLAG)
+  BRLCAD_CHECK_C_FLAG("arch x86_64" VARS 64BIT_FLAG)
+  BRLCAD_CHECK_C_FLAG(64 VARS 64BIT_FLAG)
+  BRLCAD_CHECK_C_FLAG("mabi=64" VARS  64BIT_FLAG)
   if(NOT 64BIT_FLAG AND ${CMAKE_WORD_SIZE} MATCHES "64BIT")
     message(FATAL_ERROR "Trying to compile 64BIT but all 64 bit compiler flag tests failed!")
   endif(NOT 64BIT_FLAG AND ${CMAKE_WORD_SIZE} MATCHES "64BIT")
-  BRLCAD_CHECK_C_FLAG(q64 "" "" 64BIT_FLAG)
+  BRLCAD_CHECK_C_FLAG(q64 VARS 64BIT_FLAG)
   ADD_NEW_FLAG(C 64BIT_FLAG ALL)
   ADD_NEW_FLAG(CXX 64BIT_FLAG ALL)
   ADD_NEW_FLAG(SHARED_LINKER 64BIT_FLAG ALL)
@@ -270,11 +283,11 @@ endif(${CMAKE_WORD_SIZE} MATCHES "64BIT")
 
 # 32 bit compilation flags
 if(${CMAKE_WORD_SIZE} MATCHES "32BIT" AND NOT ${BRLCAD_WORD_SIZE} MATCHES "AUTO")
-  BRLCAD_CHECK_C_FLAG(m32 "" "" 32BIT_FLAG)
-  BRLCAD_CHECK_C_FLAG("arch i686" "" "" 32BIT_FLAG)
-  BRLCAD_CHECK_C_FLAG(32 "" "" 32BIT_FLAG)
-  BRLCAD_CHECK_C_FLAG("mabi=32" "" "" 32BIT_FLAG)
-  BRLCAD_CHECK_C_FLAG(q32 32BIT_FLAG)
+  BRLCAD_CHECK_C_FLAG(m32 VARS 32BIT_FLAG)
+  BRLCAD_CHECK_C_FLAG("arch i686" VARS 32BIT_FLAG)
+  BRLCAD_CHECK_C_FLAG(32 VARS 32BIT_FLAG)
+  BRLCAD_CHECK_C_FLAG("mabi=32" VARS 32BIT_FLAG)
+  BRLCAD_CHECK_C_FLAG(q32 VARS 32BIT_FLAG)
   if(NOT 32BIT_FLAG AND ${CMAKE_WORD_SIZE} MATCHES "32BIT")
     message(FATAL_ERROR "Trying to compile 32BIT but all 32 bit compiler flag tests failed!")
   endif(NOT 32BIT_FLAG AND ${CMAKE_WORD_SIZE} MATCHES "32BIT")
@@ -285,9 +298,9 @@ if(${CMAKE_WORD_SIZE} MATCHES "32BIT" AND NOT ${BRLCAD_WORD_SIZE} MATCHES "AUTO"
 endif(${CMAKE_WORD_SIZE} MATCHES "32BIT" AND NOT ${BRLCAD_WORD_SIZE} MATCHES "AUTO")
 
 if(BRLCAD_ENABLE_PROFILING)
-  BRLCAD_CHECK_C_FLAG(pg "" "" PROFILE_FLAG)
-  BRLCAD_CHECK_C_FLAG(p "" "" PROFILE_FLAG)
-  BRLCAD_CHECK_C_FLAG(prof_gen "" "" PROFILE_FLAG)
+  BRLCAD_CHECK_C_FLAG(pg VARS PROFILE_FLAG)
+  BRLCAD_CHECK_C_FLAG(p VARS PROFILE_FLAG)
+  BRLCAD_CHECK_C_FLAG(prof_gen VARS PROFILE_FLAG)
   if(NOT PROFILE_FLAG)
     message("Warning - profiling requested, but don't know how to profile with this compiler - disabling.")
     set(BRLCAD_ENABLE_PROFILING OFF)
@@ -299,22 +312,22 @@ endif(BRLCAD_ENABLE_PROFILING)
 
 # Debugging flags
 if(BRLCAD_FLAGS_DEBUG)
-  BRLCAD_CHECK_C_FLAG(g "" "DEBUG_C_FLAGS")
-  BRLCAD_CHECK_CXX_FLAG(g "" "DEBUG_CXX_FLAGS")
+  BRLCAD_CHECK_C_FLAG(g GROUPS DEBUG_C_FLAGS)
+  BRLCAD_CHECK_CXX_FLAG(g GROUPS DEBUG_CXX_FLAGS)
   if(APPLE)
     EXEC_PROGRAM(sw_vers ARGS -productVersion OUTPUT_VARIABLE MACOSX_VERSION)
     if(${MACOSX_VERSION} VERSION_LESS "10.5")
-      BRLCAD_CHECK_C_FLAG(ggdb3 "" "DEBUG_C_FLAGS")
-      BRLCAD_CHECK_CXX_FLAG(ggdb3 "" "DEBUG_CXX_FLAGS")
+      BRLCAD_CHECK_C_FLAG(ggdb3 GROUPS DEBUG_C_FLAGS)
+      BRLCAD_CHECK_CXX_FLAG(ggdb3 GROUPS DEBUG_CXX_FLAGS)
     else(${MACOSX_VERSION} VERSION_LESS "10.5")
-		# CHECK_C_COMPILER_FLAG silently eats gstabs+ - also, compiler
-		# apparently doesn't like mixing stabs with another debug flag.
-      set(DEBUG_C_FLAGS "-gstabs+")
-      set(DEBUG_CXX_FLAGS "-gstabs+")
+      # CHECK_C_COMPILER_FLAG silently eats gstabs+ - also, compiler
+      # apparently doesn't like mixing stabs with another debug flag.
+      set(DEBUG_C_FLAGS "-ggdb")
+      set(DEBUG_CXX_FLAGS "-ggdb")
     endif(${MACOSX_VERSION} VERSION_LESS "10.5")
   else(APPLE)
-    BRLCAD_CHECK_C_FLAG(ggdb3 "" "DEBUG_C_FLAGS")
-    BRLCAD_CHECK_CXX_FLAG(ggdb3 "" "DEBUG_CXX_FLAGS")
+    BRLCAD_CHECK_C_FLAG(ggdb3 GROUPS DEBUG_C_FLAGS)
+    BRLCAD_CHECK_CXX_FLAG(ggdb3 GROUPS DEBUG_CXX_FLAGS)
   endif(APPLE)
   if(CMAKE_CONFIGURATION_TYPES)
     set(debug_config_list "${CMAKE_CONFIGURATION_TYPES}")
@@ -328,6 +341,34 @@ if(BRLCAD_FLAGS_DEBUG)
   ADD_NEW_FLAG(EXE_LINKER DEBUG_C_FLAGS "${debug_config_list}")
   mark_as_advanced(DEBUG_FLAGS)
 endif(BRLCAD_FLAGS_DEBUG)
+
+
+# Set the minimum compilation linkage for Mac systems if not already
+# set, no harm if set elsewhere.
+if(APPLE)
+  set(MACOSX_DEPLOYMENT_TARGET "$ENV{MACOSX_DEPLOYMENT_TARGET}")
+  if(NOT MACOSX_DEPLOYMENT_TARGET)
+    set(ENV(MACOSX_DEPLOYMENT_TARGET) "10.3")
+  endif(NOT MACOSX_DEPLOYMENT_TARGET)
+
+  if(MACOSX_DEPLOYMENT_TARGET STREQUAL "10.3")
+    BRLCAD_CHECK_C_FLAG("mmacosx-version-min=10.3 -isysroot /Developer/SDKs/MacOSX10.3.9.sdk" VARS SDK_FLAG)
+  endif(MACOSX_DEPLOYMENT_TARGET STREQUAL "10.3")
+  if(MACOSX_DEPLOYMENT_TARGET STREQUAL "10.4")
+    BRLCAD_CHECK_C_FLAG("mmacosx-version-min=10.4 -isysroot /Developer/SDKs/MacOSX10.4u.sdk" VARS SDK_FLAG)
+  endif(MACOSX_DEPLOYMENT_TARGET STREQUAL "10.4")
+  if(MACOSX_DEPLOYMENT_TARGET STREQUAL "10.5")
+    BRLCAD_CHECK_C_FLAG("mmacosx-version-min=10.5 -isysroot /Developer/SDKs/MacOSX10.5.sdk" VARS SDK_FLAG)
+  endif(MACOSX_DEPLOYMENT_TARGET STREQUAL "10.5")
+  if(MACOSX_DEPLOYMENT_TARGET STREQUAL "10.6")
+    BRLCAD_CHECK_C_FLAG("mmacosx-version-min=10.6 -isysroot /Developer/SDKs/MacOSX10.6.sdk" VARS SDK_FLAG)
+  endif(MACOSX_DEPLOYMENT_TARGET STREQUAL "10.6")
+
+  ADD_NEW_FLAG(C SDK_FLAG ALL)
+  ADD_NEW_FLAG(CXX SDK_FLAG ALL)
+  ADD_NEW_FLAG(SHARED_LINKER SDK_FLAG ALL)
+  ADD_NEW_FLAG(EXE_LINKER SDK_FLAG ALL)
+endif(APPLE)
 
 # Local Variables:
 # tab-width: 8

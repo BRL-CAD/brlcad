@@ -1,7 +1,7 @@
 /*                       W A V E L E T . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2012 United States Government as represented by
+ * Copyright (c) 1998-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -28,7 +28,7 @@
  * -R reconstruct
  * -1 one-dimensional transform
  * -2 two-dimensional transform
- * -# n n-elements/channels per sample (eg 3 for a pix file)
+ * -# n n-elements/channels per sample (e.g. 3 for a pix file)
  * -t[cdfils]	data type
  * -D level debug
  * -s squaresize of original image/dataset (power of 2)

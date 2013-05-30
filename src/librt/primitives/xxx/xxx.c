@@ -1,7 +1,7 @@
 /*                           X X X . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2012 United States Government as represented by
+ * Copyright (c) 1990-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -28,7 +28,7 @@
  * Design disk record
  *
  * define rt_xxx_internal --- parameters for solid
- * define xxx_specific --- raytracing form, possibly w/precomuted terms
+ * define xxx_specific --- raytracing form, possibly w/precomputed terms
  * define rt_xxx_parse --- struct bu_structparse for "db get", "db adjust", ...
  *
  * code import/export4/describe/print/ifree/plot/prep/shot/curve/uv/tess
@@ -295,7 +295,9 @@ int
 rt_xxx_import5(struct rt_db_internal *ip, const struct bu_external *ep, const mat_t mat, const struct db_i *dbip)
 {
     struct rt_xxx_internal *xxx_ip;
-    fastf_t vv[ELEMENTS_PER_VECT*1];
+
+    /* must be double for import and export */
+    double vv[ELEMENTS_PER_VECT*1];
 
     RT_CK_DB_INTERNAL(ip);
     BU_CK_EXTERNAL(ep);
@@ -307,7 +309,8 @@ rt_xxx_import5(struct rt_db_internal *ip, const struct bu_external *ep, const ma
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_XXX;
     ip->idb_meth = &rt_functab[ID_XXX];
-    ip->idb_ptr = bu_malloc(sizeof(struct rt_xxx_internal), "rt_xxx_internal");
+    BU_ALLOC(ip->idb_ptr, struct rt_xxx_internal);
+
     xxx_ip = (struct rt_xxx_internal *)ip->idb_ptr;
     xxx_ip->magic = RT_XXX_INTERNAL_MAGIC;
 
@@ -338,7 +341,9 @@ int
 rt_xxx_export5(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
     struct rt_xxx_internal *xxx_ip;
-    fastf_t vec[ELEMENTS_PER_VECT];
+
+    /* must be double for import and export */
+    double vec[ELEMENTS_PER_VECT];
 
     RT_CK_DB_INTERNAL(ip);
     if (ip->idb_type != ID_XXX) return -1;
@@ -350,7 +355,6 @@ rt_xxx_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
     ep->ext_nbytes = SIZEOF_NETWORK_DOUBLE * ELEMENTS_PER_VECT;
     ep->ext_buf = (genptr_t)bu_calloc(1, ep->ext_nbytes, "xxx external");
 
-
     /* Since libwdb users may want to operate in units other than mm,
      * we offer the opportunity to scale the solid (to get it into mm)
      * on the way out.
@@ -358,7 +362,7 @@ rt_xxx_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
     VSCALE(vec, xxx_ip->v, local2mm);
 
     /* Convert from internal (host) to database (network) format */
-    htond(ep->ext_buf, (unsigned char *)vec, ELEMENTS_PER_VECT*1);
+    htond(ep->ext_buf, (unsigned char *)vec, ELEMENTS_PER_VECT);
 
     return 0;
 }

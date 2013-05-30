@@ -1,5 +1,5 @@
 # Defines two macros - PERPLEX_TARGET, which takes perplex inputs and
-# runs both perplex and re2c to generate C source code/headers, and 
+# runs both perplex and re2c to generate C source code/headers, and
 # ADD_PERPLEX_LEMON_DEPENDENCY which is used to set up dependencies between
 # scanner and parser targets when necessary.
 #
@@ -11,7 +11,7 @@
 #   find_package(PERPLEX)
 #
 #   LEMON_TARGET(MyParser parser.y ${CMAKE_CURRENT_BINARY_DIR}/parser.cpp
-#   PERPLEX_TARGET(MyScanner scanner.re  ${CMAKE_CURRENT_BIANRY_DIR}/scanner.cpp ${CMAKE_CURRENT_BINARY_DIR}/scanner_header.hpp)
+#   PERPLEX_TARGET(MyScanner scanner.re  ${CMAKE_CURRENT_BINARY_DIR}/scanner.cpp ${CMAKE_CURRENT_BINARY_DIR}/scanner_header.hpp)
 #   ADD_PERPLEX_LEMON_DEPENDENCY(MyScanner MyParser)
 #
 #   include_directories(${CMAKE_CURRENT_BINARY_DIR})
@@ -21,28 +21,28 @@
 #      ${PERPLEX_MyScanner_OUTPUTS}
 #   )
 #  ====================================================================
-# 
+#
 #=============================================================================
 #
 # Originally based off of FindBISON.cmake from Kitware's CMake distribution
 #
-# Copyright (c) 2010-2012 United States Government as represented by
+# Copyright (c) 2010-2013 United States Government as represented by
 #                the U.S. Army Research Laboratory.
 # Copyright 2009 Kitware, Inc.
 # Copyright 2006 Tristan Carel
 # All rights reserved.
-# 
+#
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
 # are met:
-#  
+#
 # * Redistributions of source code must retain the above copyright
 #   notice, this list of conditions and the following disclaimer.
-# 
+#
 # * Redistributions in binary form must reproduce the above copyright
 #   notice, this list of conditions and the following disclaimer in the
 #   documentation and/or other materials provided with the distribution.
-# 
+#
 # * The names of the authors may not be used to endorse or promote
 #   products derived from this software without specific prior written
 #   permission.
@@ -63,11 +63,19 @@
 #============================================================
 # PERPLEX_TARGET (public macro)
 #============================================================
+#
+# TODO - rework this macro to make use of CMakeParseArguments, see
+# http://www.cmake.org/pipermail/cmake/2012-July/051309.html
+#
 macro(PERPLEX_TARGET Name Input OutputSrc OutputHeader)
   if(${ARGC} GREATER 4)
     set(Template ${ARGV4})
   else(${ARGC} GREATER 4)
-    set(Template ${BRLCAD_SOURCE_DIR}/src/other/perplex/scanner_template.c)
+    if(PERPLEX_TEMPLATE)
+      set(Template ${PERPLEX_TEMPLATE})
+    else(PERPLEX_TEMPLATE)
+      message(FATAL_ERROR "\nNo Perplex template file specified - please specify the file using the PERPLEX_TEMPLATE variable:\ncmake .. -DPERPLEX_TEMPLATE=/path/to/template_file.c\n")
+    endif(PERPLEX_TEMPLATE)
   endif(${ARGC} GREATER 4)
 
   get_filename_component(OutputName ${OutputSrc} NAME)
@@ -80,13 +88,23 @@ macro(PERPLEX_TARGET Name Input OutputSrc OutputHeader)
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
     COMMENT "[PERPLEX][${Name}] Generating re2c input with ${PERPLEX_EXECUTABLE}"
     )
-  add_custom_command(
-    OUTPUT ${OutputSrc}
-    COMMAND ${RE2C_EXECUTABLE} -c -o ${OutputSrc} ${re2c_src}
-    DEPENDS ${Input} ${re2c_src} ${OutputHeader} ${PERPLEX_EXECUTABLE_TARGET} ${RE2C_EXECUTABLE_TARGET}
-    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-    COMMENT "[RE2C][${Name}] Building scanner with ${RE2C_EXECUTABLE}"
-    )
+  if(NOT DEBUGGING_GENERATED_SOURCES)
+    add_custom_command(
+      OUTPUT ${OutputSrc}
+      COMMAND ${RE2C_EXECUTABLE} --no-debug-info --no-generation-date -c -o ${OutputSrc} ${re2c_src}
+      DEPENDS ${Input} ${re2c_src} ${OutputHeader} ${PERPLEX_EXECUTABLE_TARGET} ${RE2C_EXECUTABLE_TARGET}
+      WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+      COMMENT "[RE2C][${Name}] Building scanner with ${RE2C_EXECUTABLE}"
+      )
+  else(NOT DEBUGGING_GENERATED_SOURCES)
+    add_custom_command(
+      OUTPUT ${OutputSrc}
+      COMMAND ${RE2C_EXECUTABLE} --no-generation-date -c -o ${OutputSrc} ${re2c_src}
+      DEPENDS ${Input} ${re2c_src} ${OutputHeader} ${PERPLEX_EXECUTABLE_TARGET} ${RE2C_EXECUTABLE_TARGET}
+      WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+      COMMENT "[RE2C][${Name}] Building scanner with ${RE2C_EXECUTABLE}"
+      )
+  endif(NOT DEBUGGING_GENERATED_SOURCES)
   set(PERPLEX_${Name}_DEFINED TRUE)
   set(PERPLEX_${Name}_OUTPUTS ${OutputSrc})
   set(PERPLEX_${Name}_INPUT ${Input})

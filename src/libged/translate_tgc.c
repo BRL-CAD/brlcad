@@ -1,7 +1,7 @@
 /*                         T R A N S L A T E _ T G C . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2012 United States Government as represented by
+ * Copyright (c) 2008-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -64,29 +64,9 @@ _ged_translate_tgc(struct ged *gedp, struct rt_tgc_internal *tgc, const char *at
 
 		    VMOVE(tgc->h, hvec);
 
-		    /* have new height vector -- redefine rest of tgc */
-		    la = MAGNITUDE(tgc->a);
-		    lb = MAGNITUDE(tgc->b);
-		    lc = MAGNITUDE(tgc->c);
-		    ld = MAGNITUDE(tgc->d);
-
-		    /* find 2 perpendicular vectors normal to H for new A, B */
-		    bn_vec_perp(tgc->b, tgc->h);
-		    VCROSS(tgc->a, tgc->b, tgc->h);
-		    VUNITIZE(tgc->a);
-		    VUNITIZE(tgc->b);
-
-		    /* Create new C, D from unit length A, B, with previous len */
-		    VSCALE(tgc->c, tgc->a, lc);
-		    VSCALE(tgc->d, tgc->b, ld);
-
-		    /* Restore original vector lengths to A, B */
-		    VSCALE(tgc->a, tgc->a, la);
-		    VSCALE(tgc->b, tgc->b, lb);
-
 		    break;
-		case 'h':
-		case 'H':
+		case 'r':
+		case 'R':
 		    if (attribute[2] != '\0') {
 			bu_vls_printf(gedp->ged_result_str, "bad tgc attribute - %s", attribute);
 			return GED_ERROR;
@@ -105,6 +85,27 @@ _ged_translate_tgc(struct ged *gedp, struct rt_tgc_internal *tgc, const char *at
 		    }
 
 		    VMOVE(tgc->h, hvec);
+
+		    /* have new height vector -- redefine rest of tgc */
+		    la = MAGNITUDE(tgc->a);
+		    lb = MAGNITUDE(tgc->b);
+		    lc = MAGNITUDE(tgc->c);
+		    ld = MAGNITUDE(tgc->d);
+
+		    /* find 2 perpendicular vectors normal to H for new A, B */
+		    VCROSS(tgc->b, tgc->h, tgc->a);
+		    VCROSS(tgc->a, tgc->b, tgc->h);
+
+		    VUNITIZE(tgc->a);
+		    VUNITIZE(tgc->b);
+
+		    /* Create new C, D from unit length A, B, with previous len */
+		    VSCALE(tgc->c, tgc->a, lc);
+		    VSCALE(tgc->d, tgc->b, ld);
+
+		    /* Restore original vector lengths to A, B */
+		    VSCALE(tgc->a, tgc->a, la);
+		    VSCALE(tgc->b, tgc->b, lb);
 
 		    break;
 		default:

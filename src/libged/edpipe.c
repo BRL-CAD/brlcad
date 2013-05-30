@@ -1,7 +1,7 @@
 /*                        E D P I P E . C
  * BRL-CAD
  *
- * Copyright (c) 1995-2012 United States Government as represented by
+ * Copyright (c) 1995-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -90,6 +90,19 @@ split_pipept(struct bu_list *UNUSED(pipe_hd), struct wdb_pipept *UNUSED(ps), fas
 }
 
 
+static fastf_t
+edpipe_scale(fastf_t d, fastf_t scale)
+{
+    if (scale < 0.0) {
+	/* negative value sets the scale */
+	return (-scale);
+    }
+
+    /* positive value gets multiplied */
+    return (d * scale);
+}
+
+
 void
 pipe_scale_od(struct rt_pipe_internal *pipeip, fastf_t scale)
 {
@@ -101,10 +114,8 @@ pipe_scale_od(struct rt_pipe_internal *pipeip, fastf_t scale)
     for (BU_LIST_FOR(ps, wdb_pipept, &pipeip->pipe_segs_head)) {
 	fastf_t tmp_od;
 
-	if (scale < 0.0)
-	    tmp_od = (-scale);
-	else
-	    tmp_od = ps->pp_od*scale;
+	tmp_od = edpipe_scale(ps->pp_od, scale);
+
 	if (ps->pp_id > tmp_od) {
 	    /* Silently ignore */
 	    return;
@@ -115,8 +126,9 @@ pipe_scale_od(struct rt_pipe_internal *pipeip, fastf_t scale)
 	}
     }
 
-    for (BU_LIST_FOR(ps, wdb_pipept, &pipeip->pipe_segs_head))
-	ps->pp_od *= scale;
+    for (BU_LIST_FOR(ps, wdb_pipept, &pipeip->pipe_segs_head)) {
+	ps->pp_od = edpipe_scale(ps->pp_od, scale);
+    }
 }
 
 
@@ -131,10 +143,8 @@ pipe_scale_id(struct rt_pipe_internal *pipeip, fastf_t scale)
     for (BU_LIST_FOR(ps, wdb_pipept, &pipeip->pipe_segs_head)) {
 	fastf_t tmp_id;
 
-	if (scale > 0.0)
-	    tmp_id = ps->pp_id*scale;
-	else
-	    tmp_id = (-scale);
+	tmp_id = edpipe_scale(ps->pp_id, scale);
+
 	if (ps->pp_od < tmp_id) {
 	    /* Silently ignore */
 	    return;
@@ -146,10 +156,7 @@ pipe_scale_id(struct rt_pipe_internal *pipeip, fastf_t scale)
     }
 
     for (BU_LIST_FOR(ps, wdb_pipept, &pipeip->pipe_segs_head)) {
-	if (scale > 0.0)
-	    ps->pp_id *= scale;
-	else
-	    ps->pp_id = (-scale);
+	ps->pp_id = edpipe_scale(ps->pp_id, scale);
     }
 }
 
@@ -161,13 +168,11 @@ pipe_seg_scale_od(struct wdb_pipept *ps, fastf_t scale)
 
     BU_CKMAG(ps, WDB_PIPESEG_MAGIC, "pipe segment");
 
+    tmp_od = edpipe_scale(ps->pp_od, scale);
+
     /* need to check that the new OD is not less than ID
      * of any affected segment.
      */
-    if (scale < 0.0)
-	tmp_od = (-scale);
-    else
-	tmp_od = scale*ps->pp_od;
     if (ps->pp_id > tmp_od) {
 #if 0
 	Tcl_AppendResult(INTERP, "Cannot make OD smaller than ID\n", (char *)NULL);
@@ -181,10 +186,7 @@ pipe_seg_scale_od(struct wdb_pipept *ps, fastf_t scale)
 	return;
     }
 
-    if (scale > 0.0)
-	ps->pp_od *= scale;
-    else
-	ps->pp_od = (-scale);
+    ps->pp_od = edpipe_scale(ps->pp_od, scale);
 }
 
 
@@ -195,11 +197,9 @@ pipe_seg_scale_id(struct wdb_pipept *ps, fastf_t scale)
 
     BU_CKMAG(ps, WDB_PIPESEG_MAGIC, "pipe segment");
 
+    tmp_id = edpipe_scale(ps->pp_id, scale);
+
     /* need to check that the new ID is not greater than OD */
-    if (scale > 0.0)
-	tmp_id = scale*ps->pp_id;
-    else
-	tmp_id = (-scale);
     if (ps->pp_od < tmp_id) {
 #if 0
 	Tcl_AppendResult(INTERP, "Cannot make ID greater than OD\n", (char *)NULL);
@@ -213,10 +213,7 @@ pipe_seg_scale_id(struct wdb_pipept *ps, fastf_t scale)
 	return;
     }
 
-    if (scale > 0.0)
-	ps->pp_id *= scale;
-    else
-	ps->pp_id = (-scale);
+    ps->pp_id = edpipe_scale(ps->pp_id, scale);
 }
 
 
@@ -234,10 +231,8 @@ pipe_seg_scale_radius(struct wdb_pipept *ps, fastf_t scale)
 
     /* make sure we can make this change */
     old_radius = ps->pp_bendradius;
-    if (scale > 0.0)
-	ps->pp_bendradius *= scale;
-    else
-	ps->pp_bendradius = (-scale);
+
+    ps->pp_bendradius = edpipe_scale(ps->pp_bendradius, scale);
 
     if (ps->pp_bendradius < ps->pp_od * 0.5) {
 #if 0
@@ -292,10 +287,7 @@ pipe_scale_radius(struct rt_pipe_internal *pipeip, fastf_t scale)
 
     /* make the desired editing changes to the copy */
     for (BU_LIST_FOR(new_ps, wdb_pipept, &head)) {
-	if (scale < 0.0)
-	    new_ps->pp_bendradius = (-scale);
-	else
-	    new_ps->pp_bendradius *= scale;
+	new_ps->pp_bendradius = edpipe_scale(new_ps->pp_bendradius, scale);
     }
 
     /* check if the copy is O.K. */
@@ -304,7 +296,7 @@ pipe_scale_radius(struct rt_pipe_internal *pipeip, fastf_t scale)
 	while (BU_LIST_NON_EMPTY(&head)) {
 	    new_ps = BU_LIST_FIRST(wdb_pipept, &head);
 	    BU_LIST_DEQUEUE(&new_ps->l);
-	    bu_free((genptr_t)new_ps, "pipe_scale_radius: new_ps");
+	    BU_PUT(new_ps, struct wdb_pipept);
 	}
 	return;
     }
@@ -313,15 +305,12 @@ pipe_scale_radius(struct rt_pipe_internal *pipeip, fastf_t scale)
     while (BU_LIST_NON_EMPTY(&head)) {
 	new_ps = BU_LIST_FIRST(wdb_pipept, &head);
 	BU_LIST_DEQUEUE(&new_ps->l);
-	bu_free((genptr_t)new_ps, "pipe_scale_radius: new_ps");
+	BU_PUT(new_ps, struct wdb_pipept);
     }
 
     /* make changes to the original */
     for (BU_LIST_FOR(old_ps, wdb_pipept, &pipeip->pipe_segs_head)) {
-	if (scale < 0.0)
-	    old_ps->pp_bendradius = (-scale);
-	else
-	    old_ps->pp_bendradius *= scale;
+	old_ps->pp_bendradius = edpipe_scale(old_ps->pp_bendradius, scale);
     }
 }
 
@@ -394,16 +383,18 @@ _ged_add_pipept(struct rt_pipe_internal *pipeip, struct wdb_pipept *pp, const po
     newpp->pp_bendradius = last->pp_bendradius;
     VMOVE(newpp->pp_coord, new_pt);
 
-    if (pp) { /* append after current point */
+    if (pp) {
+	/* append after current point */
 	BU_LIST_APPEND(&pp->l, &newpp->l);
-    } else { /* add to end of pipe solid */
+    } else {
+	/* add to end of pipe solid */
 	BU_LIST_INSERT(&pipeip->pipe_segs_head, &newpp->l);
     }
 
     if (rt_pipe_ck(&pipeip->pipe_segs_head)) {
 	/* won't work here, so refuse to do it */
 	BU_LIST_DEQUEUE(&newpp->l);
-	bu_free((genptr_t)newpp, "add_pipept: newpp ");
+	BU_PUT(newpp, struct wdb_pipept);
 	return pp;
     }
 
@@ -446,16 +437,18 @@ _ged_ins_pipept(struct rt_pipe_internal *pipeip, struct wdb_pipept *pp, const po
     newpp->pp_bendradius = first->pp_bendradius;
     VMOVE(newpp->pp_coord, new_pt);
 
-    if (pp) { /* insert before current point */
+    if (pp) {
+	/* insert before current point */
 	BU_LIST_INSERT(&pp->l, &newpp->l);
-    } else { /* add to start of pipe */
+    } else {
+	/* add to start of pipe */
 	BU_LIST_APPEND(&pipeip->pipe_segs_head, &newpp->l);
     }
 
     if (rt_pipe_ck(&pipeip->pipe_segs_head)) {
 	/* won't work here, so refuse to do it */
 	BU_LIST_DEQUEUE(&newpp->l);
-	bu_free((genptr_t)newpp, "ins_pipept: newpp ");
+	BU_PUT(newpp, struct wdb_pipept);
 	return pp;
     }
 
@@ -497,16 +490,18 @@ _ged_delete_pipept(struct wdb_pipept *ps)
 #if 0
 	Tcl_AppendResult(INTERP, "Cannot delete this point, it will result in an illegal pipe\n", (char *)NULL);
 #endif
-	if (next)
-	    BU_LIST_INSERT(&next->l, &ps->l)
-		else if (prev)
-		    BU_LIST_APPEND(&prev->l, &ps->l)
-			else
-			    BU_LIST_INSERT(&head->l, &ps->l)
+	if (next) {
+	    BU_LIST_INSERT(&next->l, &ps->l);
+	} else if (prev) {
+	    BU_LIST_APPEND(&prev->l, &ps->l);
+	} else {
+	    BU_LIST_INSERT(&head->l, &ps->l);
+	}
 
-				return ps;
-    } else
-	bu_free((genptr_t)ps, "_ged_delete_pipept: ps");
+	return ps;
+    } else {
+	BU_PUT(ps, struct wdb_pipept);
+    }
 
     if (prev)
 	return prev;
@@ -547,8 +542,9 @@ _ged_scale_pipe(struct ged *gedp, struct rt_pipe_internal *pipeip, const char *a
 
     RT_PIPE_CK_MAGIC(pipeip);
 
+    /* encode rflag as a negative scale so we don't have to pass it */
     if (!rflag && sf > 0)
-	sf *= -1.0;
+	sf = -sf;
 
     switch (attribute[0]) {
 	case 'b':
@@ -606,10 +602,15 @@ _ged_append_pipept_common(struct ged *gedp, int argc, const char *argv[], struct
     struct rt_db_internal intern;
     struct rt_pipe_internal *pipeip;
     mat_t mat;
+    point_t view_ps_pt;
+    point_t view_pp_coord;
     point_t ps_pt;
+    struct wdb_pipept *prevpp;
+    double scan[3];
     char *last;
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
+    GED_CHECK_VIEW(gedp, GED_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
@@ -642,10 +643,12 @@ _ged_append_pipept_common(struct ged *gedp, int argc, const char *argv[], struct
 	return GED_ERROR;
     }
 
-    if (sscanf(argv[2], "%lf %lf %lf", &ps_pt[X], &ps_pt[Y], &ps_pt[Z]) != 3) {
+    if (sscanf(argv[2], "%lf %lf %lf", &scan[X], &scan[Y], &scan[Z]) != 3) {
 	bu_vls_printf(gedp->ged_result_str, "%s: bad point - %s", argv[0], argv[2]);
 	return GED_ERROR;
     }
+    /* convert from double to fastf_t */
+    VMOVE(view_ps_pt, scan);
 
     if (wdb_import_from_path2(gedp->ged_result_str, &intern, argv[1], gedp->ged_wdbp, mat) == GED_ERROR)
 	return GED_ERROR;
@@ -659,6 +662,17 @@ _ged_append_pipept_common(struct ged *gedp, int argc, const char *argv[], struct
     }
 
     pipeip = (struct rt_pipe_internal *)intern.idb_ptr;
+
+    /* use the view z from the first or last pipe point, depending on whether we're appending or prepending */
+    if (func == _ged_add_pipept)
+	prevpp = BU_LIST_LAST(wdb_pipept, &pipeip->pipe_segs_head);
+    else
+	prevpp = BU_LIST_FIRST(wdb_pipept, &pipeip->pipe_segs_head);
+
+    MAT4X3PNT(view_pp_coord, gedp->ged_gvp->gv_model2view, prevpp->pp_coord);
+    view_ps_pt[Z] = view_pp_coord[Z];
+    MAT4X3PNT(ps_pt, gedp->ged_gvp->gv_view2model, view_ps_pt);
+
     if ((*func)(pipeip, (struct wdb_pipept *)NULL, ps_pt) == (struct wdb_pipept *)NULL) {
 	rt_db_free_internal(&intern);
 	bu_vls_printf(gedp->ged_result_str, "%s: cannot move point there", argv[0]);
@@ -689,6 +703,7 @@ ged_append_pipept(struct ged *gedp, int argc, const char *argv[])
 {
     return _ged_append_pipept_common(gedp, argc, argv, _ged_add_pipept);
 }
+
 
 int
 ged_delete_pipept(struct ged *gedp, int argc, const char *argv[])
@@ -780,6 +795,7 @@ ged_find_pipept_nearest_pt(struct ged *gedp, int argc, const char *argv[])
     struct rt_db_internal intern;
     struct wdb_pipept *nearest;
     point_t model_pt;
+    double scan[3];
     mat_t mat;
     int seg_i;
     char *last;
@@ -819,16 +835,18 @@ ged_find_pipept_nearest_pt(struct ged *gedp, int argc, const char *argv[])
     }
 
     if (argc == 3) {
-	if (sscanf(argv[2], "%lf %lf %lf", &model_pt[X], &model_pt[Y], &model_pt[Z]) != 3) {
+	if (sscanf(argv[2], "%lf %lf %lf", &scan[X], &scan[Y], &scan[Z]) != 3) {
 	    bu_vls_printf(gedp->ged_result_str, "%s: bad point - %s", argv[0], argv[2]);
 	    return GED_ERROR;
 	}
-    } else if (sscanf(argv[2], "%lf", &model_pt[X]) != 1 ||
-	       sscanf(argv[3], "%lf", &model_pt[Y]) != 1 ||
-	       sscanf(argv[4], "%lf", &model_pt[Z]) != 1) {
+    } else if (sscanf(argv[2], "%lf", &scan[X]) != 1 ||
+	       sscanf(argv[3], "%lf", &scan[Y]) != 1 ||
+	       sscanf(argv[4], "%lf", &scan[Z]) != 1) {
 	bu_vls_printf(gedp->ged_result_str, "%s: bad X, Y or Z", argv[0]);
 	return GED_ERROR;
     }
+    /* convert from double to fastf_t */
+    VMOVE(model_pt, scan);
 
     if (wdb_import_from_path2(gedp->ged_result_str, &intern, argv[1], gedp->ged_wdbp, mat) == GED_ERROR)
 	return GED_ERROR;
@@ -858,6 +876,7 @@ ged_move_pipept(struct ged *gedp, int argc, const char *argv[])
     struct rt_pipe_internal *pipeip;
     mat_t mat;
     point_t ps_pt;
+    double scan[3];
     int seg_i;
     int rflag = 0;
     char *last;
@@ -907,15 +926,15 @@ ged_move_pipept(struct ged *gedp, int argc, const char *argv[])
     }
 
     if (sscanf(argv[2], "%d", &seg_i) != 1) {
-	bu_vls_printf(gedp->ged_result_str, "%s: bad pipe segment index - %s", argv[0], argv[3]);
+	bu_vls_printf(gedp->ged_result_str, "%s: bad pipe segment index - %s", argv[0], argv[2]);
 	return GED_ERROR;
     }
 
-    /*XXXX At the moment, ps_pt is expected to be in base units. Might need to change to local units for the "p" command. */
-    if (sscanf(argv[3], "%lf %lf %lf", &ps_pt[X], &ps_pt[Y], &ps_pt[Z]) != 3) {
+    if (sscanf(argv[3], "%lf %lf %lf", &scan[X], &scan[Y], &scan[Z]) != 3) {
 	bu_vls_printf(gedp->ged_result_str, "%s: bad point - %s", argv[0], argv[3]);
 	return GED_ERROR;
     }
+    VSCALE(ps_pt, scan, gedp->ged_wdbp->dbip->dbi_local2base);
 
     if (wdb_import_from_path2(gedp->ged_result_str, &intern, argv[1], gedp->ged_wdbp, mat) == GED_ERROR)
 	return GED_ERROR;

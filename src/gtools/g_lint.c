@@ -1,7 +1,7 @@
 /*                        G _ L I N T . C
  * BRL-CAD
  *
- * Copyright (c) 1995-2012 United States Government as represented by
+ * Copyright (c) 1995-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -56,7 +56,7 @@ struct g_lint_ctrl
 {
     uint32_t glc_magic;			/* Magic no. for integrity check */
     long glc_debug;			/* Bits to tailor diagnostics */
-    fastf_t glc_tol;			/* Overlap/void tolerance */
+    double glc_tol;			/* Overlap/void tolerance */
     unsigned long glc_what_to_report;	/* Bits to tailor the output */
     unsigned long glc_how_to_report;	/* Nature of the output */
     FILE *glc_fp;			/* The output stream */
@@ -195,7 +195,7 @@ struct g_lint_seg *create_segment(void)
 {
     struct g_lint_seg *sp;
 
-    sp = bu_malloc(sizeof(struct g_lint_seg), "g_lint segment structure");
+    BU_ALLOC(sp, struct g_lint_seg);
     sp->gls_magic = G_LINT_SEG_MAGIC;
     sp->gls_length = -1.0;
     sp->gls_next = G_LINT_SEG_NULL;
@@ -207,7 +207,7 @@ struct g_lint_seg *create_segment(void)
 /**
  * P R I N T _ S E G M E N T
  *
- * This routine writes one overlap segent to stdout.
+ * This routine writes one overlap segment to stdout.
  * It's the workhorse of the reporting process for overlaps.
  */
 void print_segment(const char *r1name, const char *r2name, double seg_length, point_t origin, point_t entrypt, point_t exitpt)
@@ -230,7 +230,7 @@ struct g_lint_ovlp *create_overlap(struct region *r1, struct region *r2)
     BU_CKMAG(r1, RT_REGION_MAGIC, "region structure");
     BU_CKMAG(r2, RT_REGION_MAGIC, "region structure");
 
-    op = bu_malloc(sizeof(struct g_lint_ovlp), "g_lint overlap structure");
+    BU_ALLOC(op, struct g_lint_ovlp);
     op->glo_magic = G_LINT_OVLP_MAGIC;
     op->glo_cum_length = 0.0;
     op->glo_segs = op->glo_seg_last = G_LINT_SEG_NULL;
@@ -803,9 +803,6 @@ main(int argc, char **argv)
     struct application ap;
     char db_title[TITLE_LEN+1];	/* Title of database */
     char *sp;			/* String from strtoul(3) */
-    fastf_t azimuth = 0.0;
-    fastf_t celsiz = 100.0;	/* Spatial sampling rate */
-    fastf_t elevation = 0.0;
     struct g_lint_ctrl control;	/* Info handed to librt(3) */
     int cell_center = 0;	/* Fire from center of cell? */
     int ch;			/* Character from getopt */
@@ -827,6 +824,11 @@ main(int argc, char **argv)
     vect_t unit_D;		/* View basis vectors */
     vect_t unit_H;
     vect_t unit_V;
+
+    /* intentionally double for scan */
+    double azimuth = 0.0;
+    double celsiz = 100.0;	/* Spatial sampling rate */
+    double elevation = 0.0;
 
     bu_log("%s\n", rt_version());
 

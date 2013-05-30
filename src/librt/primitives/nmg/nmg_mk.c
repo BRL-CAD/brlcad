@@ -1,7 +1,7 @@
 /*                        N M G _ M K . C
  * BRL-CAD
  *
- * Copyright (c) 1994-2012 United States Government as represented by
+ * Copyright (c) 1994-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -166,7 +166,7 @@
  *		case of the cube, there are 4 edgeuses per edge).
  * 48 vertexuse structures.
  *		Each vertexuse structure references one vertex structure
- *		and is in turn enroled as a member of the linked list
+ *		and is in turn enrolled as a member of the linked list
  *		headed by that vertex structure.
  *		Each vertexuse is cited by exactly one edgeuse.
  *		Also, "up" references the parent object (edgeuse, here).
@@ -229,17 +229,8 @@
  * Returns -
  * (struct model *)
  *
- * Method:
- *
- * Use BU_GET() to allocate memory and then set all components.
- * BU_GET() is used instead of the standard GET_*() macros because
- * they all expect a model pointer to get the maxindex from.  Here we
- * simply set maxindex to 1.
- *
- * N.B.:
- *
  * "maxindex" is a misnomer.  It is the value of the NEXT index
- * assigned.  This allows "ptab"s to be allocated easly using maxindex
+ * assigned.  This allows "ptab"s to be allocated easily using maxindex
  * and the index value of the structures to be the actual index into
  * the "ptab".
  */
@@ -248,7 +239,7 @@ nmg_mm(void)
 {
     struct model *m;
 
-    BU_GET(m, struct model);
+    NMG_GETSTRUCT(m, model);
 
     BU_LIST_INIT(&m->r_hd);
     m->index = 0;
@@ -585,7 +576,7 @@ nmg_mf(struct loopuse *lu1)
  * or
  * lu = BU_LIST_FIRST(loopuse, &s->lu_hd);
  *
- * N.B.  This function is made more complex than warrented by using
+ * N.B.  This function is made more complex than warranted by using
  * the "hack" of stealing a vertexuse structure from the shell if at
  * all possible.  A future enhancement to this function would be to
  * remove the vertexuse steal and have the caller pass in the vertex
@@ -767,7 +758,7 @@ nmg_me(struct vertex *v1, struct vertex *v2, struct shell *s)
     if (v1) {
 	eu1->vu_p = nmg_mvu(v1, &eu1->l.magic, m);
     } else if (s->vu_p) {
-	/* This clause of the if statment dies when no vertex stealing */
+	/* This clause of the if statement dies when no vertex stealing */
 	/* steal the vertex from the shell */
 	vu = s->vu_p;
 	s->vu_p = (struct vertexuse *)NULL;
@@ -780,7 +771,7 @@ nmg_me(struct vertex *v1, struct vertex *v2, struct shell *s)
     if (v2) {
 	eu2->vu_p = nmg_mvu(v2, &eu2->l.magic, m);
     } else if (s->vu_p) {
-	/* This clause of the if statment dies when no vertex stealing */
+	/* This clause of the if statement dies when no vertex stealing */
 	/* steal the vertex from the shell */
 	vu = s->vu_p;
 	s->vu_p = (struct vertexuse *)NULL;
@@ -790,7 +781,7 @@ nmg_me(struct vertex *v1, struct vertex *v2, struct shell *s)
 	eu2->vu_p = nmg_mvvu(&eu2->l.magic, m);
     }
 
-    /* This if statment dies when no vertex stealing */
+    /* This if statement dies when no vertex stealing */
     if (s->vu_p) {
 	/* Ensure shell no longer has any stored vertexuse */
 	(void)nmg_kvu(s->vu_p);
@@ -869,7 +860,7 @@ nmg_meonvu(struct vertexuse *vu)
 	vu->up.eu_p = eu1;	/* vu is good again */
 
 	if (s->vu_p != vu)
-	    bu_bomb("nmg_meonvu() vetexuse parent shell disowns vertexuse!\n");
+	    bu_bomb("nmg_meonvu() vertexuse parent shell disowns vertexuse!\n");
 	s->vu_p = (struct vertexuse *)NULL;	/* remove from shell */
 
 	eu2->vu_p = nmg_mvu(vu->v_p, &eu2->l.magic, m);
@@ -1029,7 +1020,7 @@ nmg_ml(struct shell *s)
 	BU_LIST_DEQUEUE(&p2->l);
 
 	/* Insert the next new edgeuse(s) at tail of the loop's list
-	 * (ie, insert just before the head).
+	 * (i.e., insert just before the head).
 	 * head, ....., p2, p1, (tail)
 	 */
 	BU_LIST_INSERT(&lu1->down_hd, &p1->l);
@@ -1038,7 +1029,7 @@ nmg_ml(struct shell *s)
 	p1->up.lu_p = lu1;
 	p2->up.lu_p = lu2;
 
-	/* If p2's vertex does not match next one comming, quit */
+	/* If p2's vertex does not match next one coming, quit */
 	if (BU_LIST_IS_EMPTY(&s->eu_hd)) break;
 	p1 = BU_LIST_FIRST(edgeuse, &s->eu_hd);
 	NMG_CK_EDGEUSE(p1);
@@ -1104,7 +1095,7 @@ nmg_ml(struct shell *s)
  *
  * Kill vertexuse, and null out parent's vu_p.
  *
- * This routine is not intented for general use by applications,
+ * This routine is not intended for general use by applications,
  * because it requires cooperation on the part of the caller to
  * properly dispose of or fix the now *quite* illegal parent.
  * (Illegal because the parent's vu_p is NULL).  It exists primarily
@@ -2384,7 +2375,7 @@ nmg_face_new_g(struct faceuse *fu, const fastf_t *pl)
     /* dequeue this face from fg's face list */
     BU_LIST_DEQUEUE(&f->l);
 
-    /* get a new geometry sructure */
+    /* get a new geometry structure */
     m = nmg_find_model(&fu->l.magic);
     GET_FACE_G_PLANE(f->g.plane_p, m);
     f->flip = 0;
@@ -2515,9 +2506,9 @@ nmg_face_bb(struct face *f, const struct bn_tol *tol)
     }
 
     /* Note, calculating the bounding box for face_g_snurbs
-     * from the extents of the the loop does not work
+     * from the extents of the loop does not work
      * since the loops are most likely in parametric space
-     * thus we need to calcualte the bounding box for the
+     * thus we need to calculate the bounding box for the
      * face_g_snurb here instead.  There may be a more efficient
      * way, and one may need some time to take a good look at
      * this
@@ -2742,7 +2733,7 @@ nmg_demote_lu(struct loopuse *lu1)
 /**
  * n m g _ d e m o t e _ e u
  *
- * Demote a wire edge into a pair of self-loop verticies
+ * Demote a wire edge into a pair of self-loop vertices
  *
  *
  * Returns -
@@ -2875,7 +2866,7 @@ nmg_je(struct edgeuse *eudst, struct edgeuse *eusrc)
 	    eudst->vu_p->v_p == eusrc_mate->vu_p->v_p) ||
 	   (eudst->vu_p->v_p == eusrc->vu_p->v_p &&
 	    eudst_mate->vu_p->v_p == eusrc_mate->vu_p->v_p))) {
-	/* edgeuses do NOT share verticies. */
+	/* edgeuses do NOT share vertices. */
 	bu_log("eusrc (v=0x%p) (%g %g %g)\n", eusrc->vu_p->v_p, V3ARGS(eusrc->vu_p->v_p->vg_p->coord));
 	bu_log("eusrc_mate (v=0x%p) (%g %g %g)\n", eusrc_mate->vu_p->v_p, V3ARGS(eusrc_mate->vu_p->v_p->vg_p->coord));
 	bu_log("eudst (v=0x%p) (%g %g %g)\n", eudst->vu_p->v_p, V3ARGS(eudst->vu_p->v_p->vg_p->coord));

@@ -9,6 +9,7 @@ SSAMPVIEW = ssampview
 
 ssampview_SOURCES = ${ssampview_SRCS}
 ssampview_CFLAGS = \
+	${STD_C99_FLAGS} \
 	${X_CFLAGS} \
 	${TK_CPPFLAGS}
 ssampview_LDADD = \
@@ -30,15 +31,16 @@ bin_PROGRAMS = \
 
 noinst_PROGRAMS = pixtest
 
+AM_CFLAGS = \
+	${STD_C99_FLAGS} \
+	${STRICT_FLAGS} \
+	${TCL_CPPFLAGS}
+
 AM_CPPFLAGS = \
 	${STRICT_FLAGS} \
 	${TCL_CPPFLAGS}
 
 dist_bin_SCRIPTS = ssampview.tcl
-
-man_MANS = \
-	rttherm.1 \
-	ssamp-bw.1
 
 rttherm_SOURCES = \
 	spectrum.c \
@@ -46,7 +48,7 @@ rttherm_SOURCES = \
 
 # have to link static due to librttherm.a, the aix linker, and duplicate symbols in optical/multispectral
 rttherm_LDFLAGS = -static
-rttherm_CFLAGS = -DRT_MULTISPECTRAL
+rttherm_CFLAGS = -DRT_MULTISPECTRAL ${STD_C99_FLAGS}
 rttherm_LDADD = \
 	$(top_builddir)/src/rt/librttherm.a \
 	${MULTISPECTRAL} \
@@ -66,7 +68,6 @@ pixtest_LDADD = \
 	${OPTICAL}
 
 EXTRA_DIST = \
-	$(man_MANS) \
 	${SSAMPVIEW_EXTRA} \
 	std_day_1km.dat \
 	test.sh \

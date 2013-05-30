@@ -7,7 +7,7 @@
 #
 
 # swproc --
-# 
+#
 #         swproc NAME ARGS BODY
 #
 #     [swproc] is very similar to the proc command, except any procedure

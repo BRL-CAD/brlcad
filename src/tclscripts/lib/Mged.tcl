@@ -1,7 +1,7 @@
 #                        M G E D . T C L
 # BRL-CAD
 #
-# Copyright (c) 1998-2012 United States Government as represented by
+# Copyright (c) 1998-2013 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -143,6 +143,7 @@ option add *Mged.height 400 widgetDefault
 	method unhide {args}
 	method units {args}
 	method vdraw {args}
+	method voxelize {args}
 	method whatid {args}
 	method whichair {args}
 	method whichid {args}
@@ -311,6 +312,11 @@ option add *Mged.height 400 widgetDefault
 
 ::itcl::body Mged::facetize {args} {
     eval $db facetize $args
+}
+
+
+::itcl::body Mged::voxelize {args} {
+    eval $db voxelize $args
 }
 
 ::itcl::body Mged::kill {args} {

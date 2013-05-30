@@ -123,7 +123,7 @@ int success( Express model ) {
 
 /* This function is called from main() which is part of the NIST Express
    Toolkit.  It assigns 2 pointers to functions which are called in main() */
-void EXPRESSinit_init() {
+void EXPRESSinit_init( void ) {
     EXPRESSbackend = print_file;
     EXPRESSsucceed = success;
     EXPRESSgetopt = Handle_FedPlus_Args;

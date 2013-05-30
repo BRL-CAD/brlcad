@@ -1,0 +1,181 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='azel1'>
+<refmeta>
+    <refentrytitle>AZEL
+</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class='source'>BRL-CAD</refmiscinfo>
+<refmiscinfo class='manual'>BRL-CAD</refmiscinfo>
+</refmeta>
+
+<refnamediv>
+<refname>azel</refname>
+<refpurpose>rotate 3-D Cartesian data in azimuth and elevation</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<cmdsynopsis>
+  <command>azel</command>    <arg choice='opt'><replaceable>options</replaceable></arg>
+    <arg choice='opt'><arg choice='plain'><replaceable>infile</replaceable></arg><arg choice='opt'><replaceable>outfile</replaceable></arg></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para><emphasis remap='I'>Azel</emphasis>
+converts between right-handed Cartesian coordinate systems,
+an application-geometry system
+<emphasis remap='I'>x</emphasis>, <emphasis remap='I'>y</emphasis>, <emphasis remap='I'>z</emphasis>
+and a viewer-embedded system
+<emphasis remap='I'>d</emphasis>, <emphasis remap='I'>h</emphasis>, <emphasis remap='I'>v</emphasis>.
+These systems differ by rotation in azimuth and elevation
+about their common origin.
+Input comes from
+<emphasis remap='I'>infile</emphasis>
+and output goes to
+<emphasis remap='I'>outfile</emphasis>
+if they are specified, otherwise
+<command>azel</command>
+uses stdin and stdout, respectively.
+Each line of input must contain three numbers separated by
+white space.
+Unless the
+<option>-i</option>
+option (q.v.) is specified,
+<command>azel</command>
+interprets each triple as the
+<emphasis remap='I'>x</emphasis>, <emphasis remap='I'>y</emphasis>, <emphasis remap='I'>z</emphasis>
+coordinates of a vector, and prints out its
+<emphasis remap='I'>d</emphasis>, <emphasis remap='I'>h</emphasis>, <emphasis remap='I'>v</emphasis>
+coordinates.
+Any other text on the input line beyond the triple is copied verbatim.</para>
+
+<refsect2 xml:id='options'><title>Options</title>
+<para>The command-line options and their meanings are given below.</para>
+<variablelist remap='TP'>
+  <varlistentry>
+  <term><option>-a</option><replaceable> azim</replaceable></term>
+  <listitem>
+<para>Specifies azimuthal rotation of
+<emphasis remap='I'>azim</emphasis>
+degrees.
+Default is 0.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-e</option><replaceable> elev</replaceable></term>
+  <listitem>
+<para>Specifies elevation rotation of
+<emphasis remap='I'>elev</emphasis>
+degrees.
+Default is 0.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-c</option><replaceable> celsiz</replaceable></term>
+  <listitem>
+<para>Specifies a cell size of
+<emphasis remap='I'>celsiz.</emphasis>
+Output vectors are scalar multiplied by
+1/<emphasis remap='I'>celsiz.</emphasis>
+Default is 1.
+Useful with the
+<option>-r</option>
+option to bin output data into cells.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-i</option></term>
+  <listitem>
+<para>Causes
+<command>azel</command>
+to perform the inverse rotation.
+The input is transformed from viewer to application-geometry coordinates
+(i.e., from
+<emphasis remap='I'>d</emphasis>, <emphasis remap='I'>h</emphasis>, <emphasis remap='I'>v</emphasis>
+to
+<emphasis remap='I'>x</emphasis>, <emphasis remap='I'>y</emphasis>, <emphasis remap='I'>z</emphasis>).
+Incompatible with the
+<option>-p</option>
+option.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-p</option></term>
+  <listitem>
+<para>Causes
+<command>azel</command>
+to project the output vectors onto the <emphasis remap='I'>hv</emphasis> plane.
+This gives grid-plane coordinates.
+Incompatible with the
+<option>-i</option>
+option.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-r</option></term>
+  <listitem>
+<para>Causes
+<command>azel</command>
+to round each coordinate of the output vectors to the nearest integer.
+Useful with the
+<option>-c</option>
+option to bin output data into cells.</para>
+  </listitem>
+  </varlistentry>
+</variablelist>
+</refsect2>
+</refsect1>
+
+<refsect1 xml:id='definitions'><title>DEFINITIONS</title>
+<para>The viewer coordinates are defined so that
+positive <emphasis remap='I'>d</emphasis> points toward the viewer,
+positive <emphasis remap='I'>h</emphasis> (horizontal) points to the viewer's right, and
+positive <emphasis remap='I'>v</emphasis> (vertical) points up.
+When <emphasis remap='I'>azim</emphasis> = <emphasis remap='I'>elev</emphasis> =0 ,
+the two coordinate systems coincide, in which case
+<command>azel</command>
+performs the identity transformation.
+Azimuth is the angle in the <emphasis remap='I'>dh</emphasis> plane
+from positive <emphasis remap='I'>h</emphasis> to positive <emphasis remap='I'>y</emphasis>,
+measured toward positive <emphasis remap='I'>d</emphasis>.
+Elevation is the angle in the <emphasis remap='I'>dv</emphasis> plane
+from positive <emphasis remap='I'>v</emphasis> to positive <emphasis remap='I'>z</emphasis>,
+measured toward positive <emphasis remap='I'>d</emphasis>.
+In the forward direction
+the azimuthal rotation is performed before the elevation,
+while in the inverse direction, the elevation is undone before the azimuth.
+Thus, the <emphasis remap='I'>z</emphasis> axis is always normal to the <emphasis remap='I'>h</emphasis> axis.
+When <emphasis remap='I'>azim</emphasis> = 90 and <emphasis remap='I'>elev</emphasis> = 0,
+<emphasis remap='I'>x</emphasis> = -<emphasis remap='I'>h</emphasis>,
+<emphasis remap='I'>y</emphasis> = <emphasis remap='I'>d</emphasis>, and
+<emphasis remap='I'>z</emphasis> = <emphasis remap='I'>v</emphasis>.
+When <emphasis remap='I'>azim</emphasis> = 0 and <emphasis remap='I'>elev</emphasis> = 90,
+<emphasis remap='I'>x</emphasis> = -<emphasis remap='I'>v</emphasis>,
+<emphasis remap='I'>y</emphasis> = <emphasis remap='I'>h</emphasis>, and
+<emphasis remap='I'>z</emphasis> = <emphasis remap='I'>d</emphasis>.</para>
+</refsect1>
+
+<refsect1 xml:id='diagnostics'><title>DIAGNOSTICS</title>
+<para>The exit status is 0 if all input was successfully transformed,
+1 otherwise.</para>
+
+</refsect1>
+
+<refsect1 xml:id='author'><title>AUTHOR</title>
+<para>BRL-CAD Team</para>
+
+</refsect1>
+
+<refsect1 xml:id='copyright'><title>COPYRIGHT</title>
+<para>This software is Copyright (c) 1991-2013 by the United States
+Government as represented by U.S. Army Research Laboratory.</para>
+</refsect1>
+
+<refsect1 xml:id='bug_reports'><title>BUG REPORTS</title>
+<para>Reports of bugs or problems should be submitted via electronic
+mail to &lt;devs@brlcad.org&gt;.</para>
+</refsect1>
+</refentry>
+

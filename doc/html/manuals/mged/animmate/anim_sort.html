@@ -32,7 +32,7 @@ movement of the virtual camera and the lighting,
 rotates
 the blades of a windmill, and
 <b>quixote.script </b>
-controlls the movement of a
+controls the movement of a
 knight. These scripts should first be concatenated together:
 <p>
 cat view.script mill.script quixote.script &gt; mixed.script
@@ -66,7 +66,7 @@ this to as the first frame number of the output file. The commands of
 all frames in
 <b>mixed.script </b>
 with that framenumber are combined in the
-ouput frame. The post-raytracing commands following all frames with that
+output frame. The post-raytracing commands following all frames with that
 framenumber are placed after the
 <b>end; </b>
 command of the output frame. This process is continued for each
@@ -101,7 +101,7 @@ instead of the middle. In the
 majority of animation situations, all of the input scripts would have
 identical frame numbers anyway.
 <p>
-The first input script may also contain some lines preceeding
+The first input script may also contain some lines preceding
 the first start command, which are copied to the beginning of the output
 script. This is useful for commands such as 'viewsize', which are often
 specified before the sequence of animations begins.

@@ -1,7 +1,7 @@
 /*                 DesignContext.h
  * BRL-CAD
  *
- * Copyright (c) 1994-2012 United States Government as represented by
+ * Copyright (c) 1994-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -29,9 +29,11 @@
 
 #include "ProductDefinitionContext.h"
 
-class DesignContext: public ProductDefinitionContext {
+class DesignContext: public ProductDefinitionContext
+{
 private:
     static string entityname;
+    static EntityInstanceFunc GetInstance;
 
 public:
     DesignContext();

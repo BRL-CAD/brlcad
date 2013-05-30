@@ -1,7 +1,7 @@
 /*                            P O L Y . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2012 United States Government as represented by
+ * Copyright (c) 1985-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -54,7 +54,7 @@ HIDDEN int rt_pgface(struct soltab *stp, fastf_t *ap, fastf_t *bp, fastf_t *cp, 
  * Calculate the bounding RPP for a poly
  */
 int
-rt_pg_bbox(struct rt_db_internal *ip, point_t *min, point_t *max)
+rt_pg_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct bn_tol *UNUSED(tol))
 {
     struct rt_pg_internal *pgp;
     size_t i;
@@ -62,6 +62,9 @@ rt_pg_bbox(struct rt_db_internal *ip, point_t *min, point_t *max)
 
     pgp = (struct rt_pg_internal *)ip->idb_ptr;
     RT_PG_CK_MAGIC(pgp);
+
+    VSETALL((*min), INFINITY);
+    VSETALL((*max), -INFINITY);
 
     for (p = 0; p < pgp->npoly; p++) {
 	vect_t work[3];
@@ -105,7 +108,7 @@ rt_pg_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     pgp = (struct rt_pg_internal *)ip->idb_ptr;
     RT_PG_CK_MAGIC(pgp);
 
-    if (rt_pg_bbox(ip, &(stp->st_min), &(stp->st_max))) return 1;
+    if (rt_pg_bbox(ip, &(stp->st_min), &(stp->st_max), &rtip->rti_tol)) return 1;
 
     for (p = 0; p < pgp->npoly; p++) {
 	vect_t work[3];
@@ -157,7 +160,7 @@ rt_pg_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
  * ap, bp, cp point to vect_t points.
  *
  * Return -
- * 0 if the 3 points didn't form a plane (eg, colinear, etc).
+ * 0 if the 3 points didn't form a plane (e.g., colinear, etc.).
  * # pts (3) if a valid plane resulted.
  */
 HIDDEN int
@@ -181,7 +184,7 @@ rt_pgface(struct soltab *stp, fastf_t *ap, fastf_t *bp, fastf_t *cp, const struc
     m4 = MAGNITUDE(trip->tri_wn);
     if (m1 < tol->dist || m2 < tol->dist ||
 	m3 < tol->dist || m4 < tol->dist) {
-	bu_free((char *)trip, "getstruct tri_specific");
+	BU_PUT(trip, struct tri_specific);
 	if (RT_G_DEBUG & DEBUG_ARB8)
 	    bu_log("pg(%s): degenerate facet\n", stp->st_name);
 	return 0;			/* BAD */
@@ -266,7 +269,7 @@ rt_pg_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct s
 	dn = VDOT(trip->tri_wn, rp->r_dir);
 
 	/*
-	 * If ray lies directly along the face, (ie, dot product
+	 * If ray lies directly along the face, (i.e., dot product
 	 * is zero), drop this face.
 	 */
 	abs_dn = dn >= 0.0 ? dn : (-dn);
@@ -389,7 +392,7 @@ rt_pg_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct s
 		dot1 = dot2;
 		dot2 = VDOT(rp->r_dir, hits[i].hit_normal);
 		if (dot1 > 0.0 && dot2 > 0.0) {
-		    /* two consectutive exits,
+		    /* two consecutive exits,
 		     * manufacture an entrance at same distance
 		     * as second exit.
 		     */
@@ -401,7 +404,7 @@ rt_pg_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct s
 		    nhits++;
 		    bu_log("\t\tadding fictitious entry at %f (%s)\n", hits[i].hit_dist, stp->st_name);
 		} else if (dot1 < 0.0 && dot2 < 0.0) {
-		    /* two consectutive entrances,
+		    /* two consecutive entrances,
 		     * manufacture an exit between them.
 		     */
 
@@ -463,7 +466,7 @@ rt_pg_free(struct soltab *stp)
     while (trip != TRI_NULL) {
 	struct tri_specific *nexttri = trip->tri_forw;
 
-	bu_free((char *)trip, "pg tri_specific");
+	BU_PUT(trip, struct tri_specific);
 	trip = nexttri;
     }
 }
@@ -702,7 +705,8 @@ rt_pg_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fas
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_POLY;
     ip->idb_meth = &rt_functab[ID_POLY];
-    ip->idb_ptr = bu_malloc(sizeof(struct rt_pg_internal), "rt_pg_internal");
+    BU_ALLOC(ip->idb_ptr, struct rt_pg_internal);
+
     pgp = (struct rt_pg_internal *)ip->idb_ptr;
     pgp->magic = RT_PG_INTERNAL_MAGIC;
 
@@ -980,7 +984,7 @@ rt_pg_to_bot(struct rt_db_internal *ip, const struct bn_tol *tol, struct resourc
 
     RT_PG_CK_MAGIC(ip_pg);
 
-    BU_GET(ip_bot, struct rt_bot_internal);
+    BU_ALLOC(ip_bot, struct rt_bot_internal);
     ip_bot->magic = RT_BOT_INTERNAL_MAGIC;
     ip_bot->mode = RT_BOT_SOLID;
     ip_bot->orientation = RT_BOT_CCW;
@@ -1057,7 +1061,7 @@ rt_pg_to_bot(struct rt_db_internal *ip, const struct bn_tol *tol, struct resourc
 	}
     }
 
-    rt_bot_vertex_fuse(ip_bot);
+    rt_bot_vertex_fuse(ip_bot, tol);
     rt_bot_face_fuse(ip_bot);
 
     rt_db_free_internal(ip);

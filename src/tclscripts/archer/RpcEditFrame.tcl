@@ -1,7 +1,7 @@
 #                R P C E D I T F R A M E . T C L
 # BRL-CAD
 #
-# Copyright (c) 2002-2012 United States Government as represented by
+# Copyright (c) 2002-2013 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -197,19 +197,19 @@
 	::ttk::entry $parent.rpcVxE \
 	    -textvariable [::itcl::scope mVx] \
 	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add rpcVyE {
 	::ttk::entry $parent.rpcVyE \
 	    -textvariable [::itcl::scope mVy] \
 	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add rpcVzE {
 	::ttk::entry $parent.rpcVzE \
 	    -textvariable [::itcl::scope mVz] \
 	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add rpcVUnitsL {
 	::ttk::label $parent.rpcVUnitsL \
@@ -226,21 +226,21 @@
 	    -textvariable [::itcl::scope mHx] \
 	    -state disabled \
 	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add rpcHyE {
 	::ttk::entry $parent.rpcHyE \
 	    -textvariable [::itcl::scope mHy] \
 	    -state disabled \
 	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add rpcHzE {
 	::ttk::entry $parent.rpcHzE \
 	    -textvariable [::itcl::scope mHz] \
 	    -state disabled \
 	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add rpcHUnitsL {
 	::ttk::label $parent.rpcHUnitsL \
@@ -257,21 +257,21 @@
 	    -textvariable [::itcl::scope mBx] \
 	    -state disabled \
 	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add rpcByE {
 	::ttk::entry $parent.rpcByE \
 	    -textvariable [::itcl::scope mBy] \
 	    -state disabled \
 	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add rpcBzE {
 	::ttk::entry $parent.rpcBzE \
 	    -textvariable [::itcl::scope mBz] \
 	    -state disabled \
 	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add rpcBUnitsL {
 	::ttk::label $parent.rpcBUnitsL \
@@ -287,7 +287,7 @@
 	::ttk::entry $parent.rpcRE \
 	    -textvariable [::itcl::scope mR] \
 	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add rpcRUnitsL {
 	::ttk::label $parent.rpcRUnitsL \
@@ -361,7 +361,7 @@
 
 ::itcl::body RpcEditFrame::buildLowerPanel {} {
     set parent [$this childsite lower]
-
+    set row 0
     foreach attribute {B H r} {
 	itk_component add set$attribute {
 	    ::ttk::radiobutton $parent.set_$attribute \
@@ -371,9 +371,8 @@
 		-command [::itcl::code $this initEditState]
 	} {}
 
-	pack $itk_component(set$attribute) \
-	    -anchor w \
-	    -expand yes
+	grid $itk_component(set$attribute) -row $row -column 0 -sticky nsew
+	incr row
     }
 }
 
@@ -441,19 +440,26 @@
 
 ::itcl::body RpcEditFrame::initEditState {} {
     set mEditCommand pscale
-    set mEditClass $EDIT_CLASS_SCALE
     set mEditPCommand [::itcl::code $this p]
     configure -valueUnits "mm"
 
     switch -- $mEditMode \
 	$setB {
 	    set mEditParam1 b
+	    set mEditClass $EDIT_CLASS_SCALE
 	} \
 	$setH {
 	    set mEditParam1 h
+	    set mEditClass $EDIT_CLASS_SCALE
 	} \
 	$setr {
 	    set mEditParam1 r
+	    set mEditClass $EDIT_CLASS_SCALE
+	} \
+	default {
+	    set mEditCommand ""
+	    set mEditPCommand ""
+	    set mEditParam1 ""
 	}
 
     GeometryEditFrame::initEditState

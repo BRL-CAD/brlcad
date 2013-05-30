@@ -1,7 +1,7 @@
 #                        T R E E . I T K
 # BRL-CAD
 #
-# Copyright (c) 2006-2012 United States Government as represented by
+# Copyright (c) 2006-2013 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -961,7 +961,7 @@ proc ::swidgets::tree {args} {
 	    $itk_component(canvas) itemconfigure $selnode \
 		-fill $fill
 
-	    # remove hilight box
+	    # remove highlight box
 	    $itk_component(canvas) delete selectBox_$node
 	    $itk_component(canvas) itemconfigure $node \
 		-fill $fill

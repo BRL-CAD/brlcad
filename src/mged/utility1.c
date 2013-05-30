@@ -1,7 +1,7 @@
 /*                      U T I L I T Y 1 . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2012 United States Government as represented by
+ * Copyright (c) 1990-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -93,7 +93,7 @@ editit(const char *command, const char *tempfile) {
     get_editor_string(&editstring);
 
     av[0] = command;
-    av[1] = "-e"; 
+    av[1] = "-e";
     av[2] = bu_vls_addr(&editstring);
     av[3] = "-f";
     av[4] = tempfile;

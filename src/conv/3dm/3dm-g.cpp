@@ -1,7 +1,7 @@
 /*                           3 D M - G . C P P
  * BRL-CAD
  *
- * Copyright (c) 2004-2012 United States Government as represented by
+ * Copyright (c) 2004-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -19,8 +19,8 @@
  */
 /** @file 3dm-g.cpp
  *
- *  Program to convert a Rhino model (in a .3dm file) to a BRL-CAD .g
- *  file.
+ * Program to convert a Rhino model (in a .3dm file) to a BRL-CAD .g
+ * file.
  *
  */
 
@@ -36,6 +36,14 @@
 #include "vmath.h"		/* BRL-CAD Vector macros */
 #include "wdb.h"
 
+
+/* generic entity name */
+#define GENERIC_NAME "rhino"
+#define Usage "Usage: 3dm-g [-v vmode] [-r] [-u] -o output_file.g input_file.3dm\n"
+/*  Did not use THIS define; some options aren't fully implemented:
+  #define Usage "Usage: 3dm-g [-d] [-s scalefactor] [-t tolerance] [-v vmode] [-r] [-u] -o output_file.g input_file.3dm\n"
+*/
+
 /* typedefs and global containers for building layer hierarchy */
 typedef std::map< std::string, std::string> STR_STR_MAP;
 typedef std::map< std::string, int> REGION_CNT_MAP;
@@ -47,14 +55,19 @@ STR_STR_MAP layer_name_uuid_map;
 REGION_CNT_MAP region_cnt_map;
 MEMBER_MAP member_map;
 
-char * itoa(int num) {
-    static char	line[10];
+char *
+itoa(int num)
+{
+    static char line[10];
 
     sprintf(line, "%d", num);
     return line;
 }
 
-void printPoints(struct rt_brep_internal* bi, ON_TextLog* dump) {
+
+void
+printPoints(struct rt_brep_internal* bi, ON_TextLog* dump)
+{
     ON_Brep* brep = bi->brep;
     if (brep) {
 	const int count = brep->m_V.Count();
@@ -67,27 +80,33 @@ void printPoints(struct rt_brep_internal* bi, ON_TextLog* dump) {
     }
 }
 
-int RegionCnt( std::string &name ) {
+
+int
+RegionCnt(std::string &name)
+{
     REGION_CNT_MAP::iterator iter = region_cnt_map.find(name);
 
     if (iter == region_cnt_map.end()) {
-	region_cnt_map.insert(std::pair<std::string,int>(name,1));
+	region_cnt_map.insert(std::pair<std::string, int>(name, 1));
 	return 1;
     } else {
 	int cnt = iter->second + 1;
 	region_cnt_map.erase(iter);
-	region_cnt_map.insert(std::pair<std::string,int>(name,cnt));
+	region_cnt_map.insert(std::pair<std::string, int>(name, cnt));
 	return cnt;
     }
 }
 
-void MapRegion(ONX_Model &model, std::string &region_name, int layer_index) {
+
+void
+MapRegion(ONX_Model &model, std::string &region_name, int layer_index)
+{
     char uuidstr[50];
     std::string parent_uuid;
 
     const ON_Layer& layer = model.m_layer_table[layer_index];
 
-    parent_uuid = ON_UuidToString( layer.m_layer_id, uuidstr );
+    parent_uuid = ON_UuidToString(layer.m_layer_id, uuidstr);
 
     MEMBER_MAP::iterator miter = member_map.find(parent_uuid);
     if (miter != member_map.end()) {
@@ -96,27 +115,33 @@ void MapRegion(ONX_Model &model, std::string &region_name, int layer_index) {
     }
 }
 
-void MapLayer(std::string &layer_name, std::string &uuid, std::string &parent_uuid) {
-    layer_uuid_name_map.insert(std::pair<std::string,std::string>(uuid,layer_name));
-    layer_name_uuid_map.insert(std::pair<std::string,std::string>(layer_name,uuid));
+
+void
+MapLayer(std::string &layer_name, std::string &uuid, std::string &parent_uuid)
+{
+    layer_uuid_name_map.insert(std::pair<std::string, std::string>(uuid, layer_name));
+    layer_name_uuid_map.insert(std::pair<std::string, std::string>(layer_name, uuid));
     MEMBER_MAP::iterator iter = member_map.find(uuid);
     if (iter == member_map.end()) {
 	MEMBER_VEC *vec = new MEMBER_VEC;
-	member_map.insert(std::pair<std::string,MEMBER_VEC *>(uuid,vec));
+	member_map.insert(std::pair<std::string, MEMBER_VEC *>(uuid, vec));
     }
 
     iter = member_map.find(parent_uuid);
     if (iter == member_map.end()) {
 	MEMBER_VEC *vec = new MEMBER_VEC;
 	vec->push_back(layer_name);
-	member_map.insert(std::pair<std::string,MEMBER_VEC *>(parent_uuid,vec));
+	member_map.insert(std::pair<std::string, MEMBER_VEC *>(parent_uuid, vec));
     } else {
 	MEMBER_VEC *vec = (MEMBER_VEC *)iter->second;
 	vec->push_back(layer_name);
     }
 }
 
-void BuildHierarchy(struct rt_wdb* outfp, std::string &uuid, ON_TextLog* dump) {
+
+void
+BuildHierarchy(struct rt_wdb* outfp, std::string &uuid, ON_TextLog* dump)
+{
     static int groupcnt = 1;
     struct wmember members;
     BU_LIST_INIT(&members.l);
@@ -135,7 +160,6 @@ void BuildHierarchy(struct rt_wdb* outfp, std::string &uuid, ON_TextLog* dump) {
     if (groupname.empty()) {
 	groupname = "g" + groupcnt;
     }
-
 
     MEMBER_MAP::iterator iter = member_map.find(uuid);
     if (iter != member_map.end()) {
@@ -157,7 +181,10 @@ void BuildHierarchy(struct rt_wdb* outfp, std::string &uuid, ON_TextLog* dump) {
     mk_lcomb(outfp, groupname.c_str(), &members, 0, NULL, NULL, NULL, 0);
 }
 
-void BuildHierarchy(struct rt_wdb* outfp, ON_TextLog* dump) {
+
+void
+BuildHierarchy(struct rt_wdb* outfp, ON_TextLog* dump)
+{
     std::string root_uuid = "00000000-0000-0000-0000-000000000000";
     MEMBER_MAP::iterator iter = member_map.find(root_uuid);
     if (iter != member_map.end()) {
@@ -166,25 +193,31 @@ void BuildHierarchy(struct rt_wdb* outfp, ON_TextLog* dump) {
     }
 }
 
-void ProcessLayers(ONX_Model &model, ON_TextLog* dump) {
+
+void
+ProcessLayers(ONX_Model &model, ON_TextLog* dump)
+{
     char name[256];
     char uuidstr[50];
-    std::string layer_name,uuid,parent_uuid;
+    std::string layer_name, uuid, parent_uuid;
     ON_UuidIndex uuidIndex;
     int i, count = model.m_layer_table.Count();
-    dump->Print("Number of LAYERS - %d\n.", count);
-    for ( i=0; i < count; i++) {
+    dump->Print("Number of layers: %d\n", count);
+    for (i=0; i < count; i++) {
 	const ON_Layer& layer = model.m_layer_table[i];
 	ON_wString lname = layer.LayerName();
-	bu_strlcpy(name, ON_String( lname ), sizeof(name));
+	bu_strlcpy(name, ON_String(lname), sizeof(name));
 	layer_name = name;
-	uuid = ON_UuidToString( layer.m_layer_id, uuidstr );
-	parent_uuid = ON_UuidToString( layer.m_parent_layer_id, uuidstr );
+	uuid = ON_UuidToString(layer.m_layer_id, uuidstr);
+	parent_uuid = ON_UuidToString(layer.m_parent_layer_id, uuidstr);
 	MapLayer(layer_name, uuid, parent_uuid);
     }
 }
 
-int main(int argc, char** argv) {
+
+int
+main(int argc, char** argv)
+{
     int mcount = 0;
     int verbose_mode = 0;
     int random_colors = 0;
@@ -201,8 +234,8 @@ int main(int argc, char** argv) {
     ON_TextLog* dump = &dump_to_stdout;
 
     int c;
-    while ((c = bu_getopt(argc, argv, "o:dv:t:s:ru")) != -1) {
-	switch ( c ) {
+    while ((c = bu_getopt(argc, argv, "o:dv:t:s:ruh?")) != -1) {
+	switch (c) {
 	    case 's':	/* scale factor */
 		break;
 	    case 'o':	/* specify output file name */
@@ -222,71 +255,84 @@ int main(int argc, char** argv) {
 		break;
 	    case 'u':
 		use_uuidnames = 1;
-	    default:
 		break;
+	    default:
+		dump->Print(Usage);
+		return 1;
 	}
     }
     argc -= bu_optind;
     argv += bu_optind;
     inputFileName  = argv[0];
     if (outFileName == NULL) {
-	dump->Print("\n** Error **\n Need an output file to continue. Syntax: \n");
-	dump->Print(" ./3dm-g  -o <output file>.g <input file>.3dm \n** Error **\n\n");
+	dump->Print(Usage);
 	return 1;
 	// strip file suffix and add .g
     }
 
     dump->Print("\n");
-    dump->Print("Input file %s.\n", inputFileName);
-    dump->Print("Output file %s.\n", outFileName);
-
-    FILE* archive_fp = ON::OpenFile(inputFileName, "rb");
-    if ( !archive_fp ) {
-	dump->Print("  Unable to open file.\n" );
-    }
-
-    // create achive object from file pointer
-    ON_BinaryFile archive( ON::read3dm, archive_fp );
+    dump->Print(" Input file: %s\n", inputFileName);
+    dump->Print("Output file: %s\n", outFileName);
 
     // read the contents of the file into "model"
-    bool rc = model.Read( archive, dump );
-
-    ON::CloseFile( archive_fp );
+    bool rc = model.Read(inputFileName, dump); //archive, dump);
 
     outfp = wdb_fopen(outFileName);
+    mk_id(outfp, id_name);
+
     // print diagnostic
-    if ( rc )
+    if (rc)
 	dump->Print("Input 3dm file successfully read.\n");
     else
 	dump->Print("Errors during reading 3dm file.\n");
 
-    // see if everything is in good shape
-    if ( model.IsValid(dump) )
-	dump->Print("Model is valid.\n");
-    else
-	dump->Print("Model is not valid.\n");
+    // see if everything is in good shape, be quiet first time around
+    if (model.IsValid(dump)) {
+	dump->Print("Model is VALID\n");
+    } else {
+	int warn_i;
+	int repair_count = 0;
+	ON_SimpleArray<int> warnings;
 
-    dump->Print("Number of NURBS objects read was %d\n.", model.m_object_table.Count());
+	dump->Print("Model is NOT valid.  Attempting repairs.\n");
+
+	model.Polish(); // fill in defaults
+	model.Audit(true, &repair_count, dump, &warnings); // repair
+
+	dump->Print("%d objects were repaired.\n", repair_count);
+	for (warn_i=0; warn_i < warnings.Count(); warn_i++) {
+	    dump->Print("%s\n", warnings[warn_i]);
+	}
+
+	if (model.IsValid(dump))
+	    dump->Print("Repair successful, model is now valid.\n");
+	else
+	    dump->Print("Repair unsuccessful, model is still NOT valid.\n");
+    }
+
+    dump->Print("Number of NURBS objects read: %d\n", model.m_object_table.Count());
 
     /* process layer table before building regions */
-    ProcessLayers(model,dump);
+    ProcessLayers(model, dump);
 
     struct wmember all_regions;
     BU_LIST_INIT(&all_regions.l);
 
-    for (int i = 0; i < model.m_object_table.Count(); i++ ) {
+    dump->Print("\n");
+    for (int i = 0; i < model.m_object_table.Count(); i++) {
+
+	dump->Print("Object %d of %d:\n\n", i + 1, model.m_object_table.Count());
+
 	dump->PushIndent();
 
-	dump->Print("\n\nObject %d of %d:\n\n", i + 1, model.m_object_table.Count());
-
-	// object's attibutes
+	// object's attributes
 	ON_3dmObjectAttributes myAttributes = model.m_object_table[i].m_attributes;
 
 	std::string geom_base;
 	myAttributes.Dump(*dump); // On debug print
 	dump->Print("\n");
 
-	if (use_uuidnames == 1) {
+	if (use_uuidnames) {
 	    char uuidstring[37];
 	    ON_UuidToString(myAttributes.m_uuid, uuidstring);
 	    ON_String constr(uuidstring);
@@ -301,21 +347,21 @@ int main(int argc, char** argv) {
 		if (myAttributes.m_layer_index > 0) {
 		    const ON_Layer& layer = model.m_layer_table[myAttributes.m_layer_index];
 		    ON_wString layer_name = layer.LayerName();
-		    bu_strlcpy(name, ON_String( layer_name ), sizeof(name));
+		    bu_strlcpy(name, ON_String(layer_name), sizeof(name));
 		    genName = name;
 		    if (genName.length() <= 0) {
-			genName = "rhino";
+			genName = GENERIC_NAME;
 		    }
 		    dump->Print("\n\nlayername:\"%s\"\n\n", name);
 		} else {
-		    genName = "rhino";
+		    genName = GENERIC_NAME;
 		}
 		/* For layer named regions use layer region count
 		 * instead of global region count
 		 */
-		if (genName.compare("rhino") == 0) {
-		genName+=itoa(mcount++);
-		geom_base = genName.c_str();
+		if (genName.compare(GENERIC_NAME) == 0) {
+		    genName+=itoa(mcount++);
+		    geom_base = genName.c_str();
 		} else {
 		    int region_cnt = RegionCnt(genName);
 		    genName+=itoa(region_cnt);
@@ -332,22 +378,19 @@ int main(int argc, char** argv) {
 	std::string region_name(geom_base+".r");
 
 	/* add region to hierarchical containers */
-	MapRegion(model,region_name,myAttributes.m_layer_index);
-
-	dump->Print("primitive is %s.\n", geom_name.c_str());
-	dump->Print("region created is %s.\n", region_name.c_str());
+	MapRegion(model, region_name, myAttributes.m_layer_index);
 
 	/* object definition
-	Ah - rather than pulling JUST the geometry from the opennurbs object here, need to
-	also get properties from ON_3dmObjectAttributes:
-	Everything looks like it is in there - m_name, m_layer_index, etc.
-	Will need to parse layers to get info for each object using a parent layer's settings
-	Long term, material objects and render objects should be implemented in BRL-CAD
-	to support conceptually similar breakouts of materials and shaders.
+	   Ah - rather than pulling JUST the geometry from the opennurbs object here, need to
+	   also get properties from ON_3dmObjectAttributes:
+	   Everything looks like it is in there - m_name, m_layer_index, etc.
+	   Will need to parse layers to get info for each object using a parent layer's settings
+	   Long term, material objects and render objects should be implemented in BRL-CAD
+	   to support conceptually similar breakouts of materials and shaders.
 	*/
 
 	const ON_Geometry* pGeometry = ON_Geometry::Cast(model.m_object_table[i].m_object);
-	if ( pGeometry ) {
+	if (pGeometry) {
 	    ON_Brep *brep;
 	    ON_Curve *curve;
 	    ON_Surface *surface;
@@ -362,7 +405,8 @@ int main(int argc, char** argv) {
 	    ON_MorphControl *morphctrl;
 	    ON_Group *group;
 	    ON_Geometry *geom;
-	    int r,g,b;
+	    int r, g, b;
+
 	    if (random_colors) {
 		r = int(256*drand48() + 1.0);
 		g = int(256*drand48() + 1.0);
@@ -372,9 +416,14 @@ int main(int argc, char** argv) {
 		g = ((model.WireframeColor(myAttributes)>>8) & 0xFF);
 		b = ((model.WireframeColor(myAttributes)>>16) & 0xFF);
 	    }
-	    bu_log("Color: %d,%d,%d\n", r,g,b);
+
+	    dump->Print("Color: %d, %d, %d\n", r, g, b);
+
 	    if ((brep = const_cast<ON_Brep * >(ON_Brep::Cast(pGeometry)))) {
-		mk_id(outfp, id_name);
+
+		dump->Print("primitive is %s.\n", geom_name.c_str());
+		dump->Print("region created is %s.\n", region_name.c_str());
+
 		mk_brep(outfp, geom_name.c_str(), brep);
 
 		unsigned char rgb[3];
@@ -384,67 +433,57 @@ int main(int argc, char** argv) {
 		mk_region1(outfp, region_name.c_str(), geom_name.c_str(), "plastic", "", rgb);
 
 		(void)mk_addmember(region_name.c_str(), &all_regions.l, NULL, WMOP_UNION);
-		if (verbose_mode > 0) brep->Dump(*dump);
-		dump->PopIndent();
+		if (verbose_mode > 0)
+		    brep->Dump(*dump);
 	    } else if (pGeometry->HasBrepForm()) {
-		dump->Print("\n\n ***** HasBrepForm. ***** \n\n");
-		dump->PopIndent();
+		dump->Print("Type: HasBrepForm\n");
 	    } else if ((curve = const_cast<ON_Curve * >(ON_Curve::Cast(pGeometry)))) {
-		dump->Print("\n\n ***** ON_Curve. ***** \n\n");
+		dump->Print("Type: ON_Curve\n");
 		if (verbose_mode > 1) curve->Dump(*dump);
-		dump->PopIndent();
 	    } else if ((surface = const_cast<ON_Surface * >(ON_Surface::Cast(pGeometry)))) {
-		dump->Print("\n\n ***** ON_Surface. ***** \n\n");
+		dump->Print("Type: ON_Surface\n");
 		if (verbose_mode > 2) surface->Dump(*dump);
-		dump->PopIndent();
 	    } else if ((mesh = const_cast<ON_Mesh * >(ON_Mesh::Cast(pGeometry)))) {
-		dump->Print("\n\n ***** ON_Mesh. ***** \n\n");
+		dump->Print("Type: ON_Mesh\n");
 		if (verbose_mode > 4) mesh->Dump(*dump);
-		dump->PopIndent();
 	    } else if ((revsurf = const_cast<ON_RevSurface * >(ON_RevSurface::Cast(pGeometry)))) {
-		dump->Print("\n\n ***** ON_RevSurface. ***** \n\n");
+		dump->Print("Type: ON_RevSurface\n");
 		if (verbose_mode > 2) revsurf->Dump(*dump);
-		dump->PopIndent();
 	    } else if ((planesurf = const_cast<ON_PlaneSurface * >(ON_PlaneSurface::Cast(pGeometry)))) {
-		dump->Print("\n\n ***** ON_PlaneSurface. ***** \n\n");
+		dump->Print("Type: ON_PlaneSurface\n");
 		if (verbose_mode > 2) planesurf->Dump(*dump);
-		dump->PopIndent();
 	    } else if ((instdef = const_cast<ON_InstanceDefinition * >(ON_InstanceDefinition::Cast(pGeometry)))) {
-		dump->Print("\n\n ***** ON_InstanceDefinition. ***** \n\n");
+		dump->Print("Type: ON_InstanceDefinition\n");
 		if (verbose_mode > 3) instdef->Dump(*dump);
-		dump->PopIndent();
 	    } else if ((instref = const_cast<ON_InstanceRef * >(ON_InstanceRef::Cast(pGeometry)))) {
-		dump->Print("\n\n ***** ON_InstanceRef. ***** \n\n");
+		dump->Print("Type: ON_InstanceRef\n");
 		if (verbose_mode > 3) instref->Dump(*dump);
-		dump->PopIndent();
 	    } else if ((layer = const_cast<ON_Layer * >(ON_Layer::Cast(pGeometry)))) {
-		dump->Print("\n\n ***** ON_Layer. ***** \n\n");
+		dump->Print("Type: ON_Layer\n");
 		if (verbose_mode > 3) layer->Dump(*dump);
-		dump->PopIndent();
 	    } else if ((light = const_cast<ON_Light * >(ON_Light::Cast(pGeometry)))) {
-		dump->Print("\n\n ***** ON_Light. ***** \n\n");
+		dump->Print("Type: ON_Light\n");
 		if (verbose_mode > 3) light->Dump(*dump);
-		dump->PopIndent();
 	    } else if ((nurbscage = const_cast<ON_NurbsCage * >(ON_NurbsCage::Cast(pGeometry)))) {
-		dump->Print("\n\n ***** ON_NurbsCage. ***** \n\n");
+		dump->Print("Type: ON_NurbsCage\n");
 		if (verbose_mode > 3) nurbscage->Dump(*dump);
-		dump->PopIndent();
 	    } else if ((morphctrl = const_cast<ON_MorphControl * >(ON_MorphControl::Cast(pGeometry)))) {
-		dump->Print("\n\n ***** ON_MorphControl. ***** \n\n");
+		dump->Print("Type: ON_MorphControl\n");
 		if (verbose_mode > 3) morphctrl->Dump(*dump);
-		dump->PopIndent();
 	    } else if ((group = const_cast<ON_Group * >(ON_Group::Cast(pGeometry)))) {
-		dump->Print("\n\n ***** ON_Group. ***** \n\n");
+		dump->Print("Type: ON_Group\n");
 		if (verbose_mode > 3) group->Dump(*dump);
-		dump->PopIndent();
 	    } else if ((geom = const_cast<ON_Geometry * >(ON_Geometry::Cast(pGeometry)))) {
-		dump->Print("\n\n ***** ON_Geometry. ***** \n\n");
+		dump->Print("Type: ON_Geometry\n");
 		if (verbose_mode > 3) geom->Dump(*dump);
-		dump->PopIndent();
 	    } else {
-		dump->Print("\n\n ***** Got a different kind of object than geometry - investigate. ***** \n\n");
+		dump->Print("WARNING: Encountered an unexpected kind of object.  Please report to devs@brlcad.org\n");
 	    }
+	} else {
+	    dump->Print("WARNING: Skipping non-Geometry entity: %s\n", geom_base.c_str());
 	}
+	dump->PopIndent();
+	dump->Print("\n\n");
     }
 
     /* use accumulated layer information to build mged hierarchy */
@@ -454,11 +493,15 @@ int main(int argc, char** argv) {
     bu_free(toplevel, "bu_basename toplevel");
     wdb_close(outfp);
 
+    /* let them know */
+    dump->Print("Done.\n");
+
     model.Destroy();
     ON::End();
 
     return 0;
 }
+
 
 #else /* !OBJ_BREP */
 
@@ -469,6 +512,7 @@ main(int argc, char *argv[])
 	   "       this compilation of BRL-CAD.\n");
     return 1;
 }
+
 
 #endif /* OBJ_BREP */
 

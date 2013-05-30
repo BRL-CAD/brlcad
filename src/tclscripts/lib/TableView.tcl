@@ -1,7 +1,7 @@
 #                   T A B L E V I E W . T C L
 # BRL-CAD
 #
-# Copyright (c) 1998-2012 United States Government as represented by
+# Copyright (c) 1998-2013 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -471,7 +471,7 @@
 # This method sets the table to $t. Before doing this
 # it checks to make sure that $t contains rows with
 # the expected number of elements. It also pads the
-# table so that it contains atleast as many rows as
+# table so that it contains at least as many rows as
 # are viewable.
 #
 ::itcl::body TableView::setTable {t} {
@@ -1649,7 +1649,7 @@
     # total height of the table
     set winh [winfo height [namespace tail $this]]
 
-    # height of visable rows
+    # height of visible rows
     set height [expr {$winh - $clh - $hsh}]
 
     #    set nrows [expr {int($height / double($erh))}]

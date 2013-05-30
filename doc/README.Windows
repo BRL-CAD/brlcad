@@ -9,7 +9,7 @@ Scriptable Install System (NSIS) tool is also required.
 
 In principle, BRL-CAD can be built using CMake and environments like
 Cygwin and/or Mingw/Msys, but the is largely untested and infrequently
-supported.  Enhancements or bug reports arewelcome.
+supported.  Enhancements or bug reports are welcome.
 
 To build with CMake and Visual Studio, the first step is to obtain the
 BRL-CAD sources and create a build directory.  In principle, it is not
@@ -43,4 +43,3 @@ ALL_BUILD.  Start compiling that target.
 Once compilation is successfully complete, you may want to produce an
 NSIS installer.  If so, locate a target named PACKAGE and run it.  The
 end result should be an .exe file capable of installing BRL-CAD.
-

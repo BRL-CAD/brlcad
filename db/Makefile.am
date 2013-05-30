@@ -14,7 +14,7 @@ G2A=$(top_builddir)/src/conv/g2asc
 	@i=0 ; while [ ! -f lockfile ] && [ $$i -lt 10 ] ; do sleep 1 ; i=`expr $$i + 1` ; done
 	@echo $(A2G) $< $@ ; \
 	LD_LIBRARY_PATH=$(top_builddir)/src/other/tcl/unix:$(top_builddir)/src/other/tk/unix:$$LD_LIBRARY_PATH \
-	DYLD_LIBRARY_PATH=$(top_builddir)/src/other/tcl/unix:$(top_buildir)/src/other/tk/unix:$$DYLD_LIBRARY_PATH \
+	DYLD_LIBRARY_PATH=$(top_builddir)/src/other/tcl/unix:$(top_builddir)/src/other/tk/unix:$$DYLD_LIBRARY_PATH \
 	$(A2G) `if test -e $< ; then echo $< ; else echo $(top_srcdir)/db/$< ; fi` $@
 
 # cause asc2g to kick off so that it compiles lt-asc2g and avoids
@@ -24,7 +24,7 @@ operators.asc2g: operators.asc $(top_builddir)/src/conv/asc2g
 	@if test -x $(A2G) ; then \
 		echo $(A2G) operators.asc $@ ; \
 		LD_LIBRARY_PATH=$(top_builddir)/src/other/tcl/unix:$(top_builddir)/src/other/tk/unix:$$LD_LIBRARY_PATH \
-		DYLD_LIBRARY_PATH=$(top_builddir)/src/other/tcl/unix:$(top_buildir)/src/other/tk/unix:$$DYLD_LIBRARY_PATH \
+		DYLD_LIBRARY_PATH=$(top_builddir)/src/other/tcl/unix:$(top_builddir)/src/other/tk/unix:$$DYLD_LIBRARY_PATH \
 		$(A2G) `if test -e operators.asc ; then echo operators.asc ; else echo $(top_srcdir)/db/operators.asc ; fi` $@ ; \
 	else \
 		echo "ls -lad $(A2G)" ; \

@@ -1,7 +1,7 @@
 /*                        S H _ P R J . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2012 United States Government as represented by
+ * Copyright (c) 2004-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -134,7 +134,9 @@ HIDDEN int img_load_datasource(struct img_specific *image, struct db_i *dbInstan
 		return -1;
 	    }
 	} else {
-	    struct rt_db_internal *dbip=(struct rt_db_internal *)bu_malloc(sizeof(struct rt_db_internal), "img_load_datasource");
+	    struct rt_db_internal *dbip;
+
+	    BU_ALLOC(dbip, struct rt_db_internal);
 
 	    RT_DB_INTERNAL_INIT(dbip);
 	    RT_CK_DB_INTERNAL(dbip);
@@ -179,9 +181,9 @@ HIDDEN int img_load_datasource(struct img_specific *image, struct db_i *dbInstan
 	    return -1;				/* FAIL */
 
 	if (image->i_data->buflen < size) {
-	    bu_log("\nWARNING: %V needs %d bytes, file only has %d\n", &image->i_name, size, image->i_data->buflen);
+	    bu_log("\nWARNING: %V needs %lu bytes, file only has %lu\n", &image->i_name, size, image->i_data->buflen);
 	} else if (image->i_data->buflen > size) {
-	    bu_log("\nWARNING: Image file size is larger than specified image size\n\tInput File: %zu pixels\n\tSpecified Image Size: %d pixels\n...continuing to load using image subsection...", image->i_data->buflen, size);
+	    bu_log("\nWARNING: Image file size is larger than specified image size\n\tInput File: %zu pixels\n\tSpecified Image Size: %lu pixels\n...continuing to load using image subsection...", image->i_data->buflen, size);
 	}
 
 	image->i_img = (unsigned char *) image->i_data->buf;
@@ -200,13 +202,13 @@ HIDDEN void
 persp_hook(register const struct bu_structparse *UNUSED(sdp), register const char *UNUSED(name), char *base, const char *value)
 /* structure description */
 /* struct member name */
-/* begining of structure */
+/* beginning of structure */
 /* string containing value */
 {
     struct img_specific *img_sp = (struct img_specific *)base;
 
     if (img_sp->i_perspective < 0.0) {
-	bu_log("perspecitve %s < 0.0\n", value);
+	bu_log("perspective %s < 0.0\n", value);
 	bu_bomb("");
     }
 
@@ -227,7 +229,7 @@ HIDDEN void
 dimen_hook(register const struct bu_structparse *sdp, register const char *UNUSED(name), char *base, const char *value)
 /* structure description */
 /* struct member name */
-/* begining of structure */
+/* beginning of structure */
 /* string containing value */
 {
     if (BU_STR_EQUAL("%f", sdp->sp_fmt)) {
@@ -262,7 +264,7 @@ static void
 orient_hook(register const struct bu_structparse *UNUSED(sdp), register const char *UNUSED(name), char *base, const char *UNUSED(value))
 /* structure description */
 /* struct member name */
-/* begining of structure */
+/* beginning of structure */
 /* string containing value */
 {
     struct prj_specific *prj_sp;
@@ -361,7 +363,6 @@ orient_hook(register const struct bu_structparse *UNUSED(sdp), register const ch
 
 
 #define IMG_O(m) bu_offsetof(struct img_specific, m)
-#define IMG_AO(m) bu_offsetofarray(struct img_specific, m)
 
 
 /** description of how to parse/print the arguments to the shader.
@@ -376,17 +377,17 @@ struct bu_structparse img_parse_tab[] = {
     {"%d",	1, "w",			IMG_O(i_width),		dimen_hook, NULL, NULL },
     {"%d",	1, "n",			IMG_O(i_height),	dimen_hook, NULL, NULL },
     {"%f",	1, "viewsize",		IMG_O(i_viewsize),	dimen_hook, NULL, NULL },
-    {"%f",	3, "eye_pt",		IMG_AO(i_eye_pt),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f",	4, "orientation",	IMG_AO(i_orient),	orient_hook, NULL, NULL },
+    {"%f",	3, "eye_pt",		IMG_O(i_eye_pt),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",	4, "orientation",	IMG_O(i_orient),	orient_hook, NULL, NULL },
     {"%c",	1, "through",		IMG_O(i_through),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%c",	1, "antialias",		IMG_O(i_antialias),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%c",	1, "behind",		IMG_O(i_behind),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%c",	1, "perspective",	IMG_O(i_perspective),	persp_hook, NULL, NULL },
+    {"%f",	1, "perspective",	IMG_O(i_perspective),	persp_hook, NULL, NULL },
     {"",	0, (char *)0,		0,			BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 struct bu_structparse img_print_tab[] = {
     {"%p", 1, "img_parse_tab", bu_byteoffset(img_parse_tab[0]), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f",	4, "i_plane",		IMG_AO(i_plane),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",	4, "i_plane",		IMG_O(i_plane),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"",	0, (char *)0,		0,			BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 
@@ -516,7 +517,7 @@ prj_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, con
 		   img_sp->i_datasrc==IMG_SRC_OBJECT?"object":img_sp->i_datasrc==IMG_SRC_FILE?"file":"auto");
 
 	    /* skip this one */
-	    img_sp->i_through=0;
+	    img_sp->i_through='0';
 	    HREVERSE(img_sp->i_plane, img_sp->i_plane);
 
 	    return -1;
@@ -593,7 +594,7 @@ prj_free(genptr_t cp)
 	bu_vls_vlsfree(&img_sp->i_name);
 
 	BU_LIST_DEQUEUE(&img_sp->l);
-	bu_free((genptr_t)img_sp, "img_specific");
+	BU_PUT(img_sp, struct img_specific);
     }
 
     if (prj_sp->prj_plfd) {
@@ -602,7 +603,7 @@ prj_free(genptr_t cp)
 	bu_semaphore_release(BU_SEM_SYSCALL);
     }
 
-    bu_free(cp, "prj_specific");
+    BU_PUT(cp, struct prj_specific);
 }
 HIDDEN const double cs = (1.0/255.0);
 HIDDEN const point_t delta = {0.5, 0.5, 0.0};
@@ -622,10 +623,33 @@ project_point(point_t sh_color, struct img_specific *img_sp, struct prj_specific
     if (rdebug&RDEBUG_SHADE) {
 	VPRINT("sh_pt", sh_pt);
     }
+
+    /* make sure we have an image to project into */
+    if (img_sp->i_width <= 0 || img_sp->i_height <= 0) {
+	return 1;
+    }
+
     x = sh_pt[X] * (img_sp->i_width-1);
     y = sh_pt[Y] * (img_sp->i_height-1);
-    pixel = &img_sp->i_img[x*3 + y*img_sp->i_width*3];
 
+    if (x<0 || y<0
+	|| (x*3 + y*img_sp->i_width*3) < 0
+	|| (x*3 + y*img_sp->i_width*3) > (img_sp->i_width * img_sp->i_height * 3))
+    {
+	static int count=0;
+	static int suppressed=0;
+	if (count++ < 10) {
+	    bu_log("INTERNAL ERROR: projection point is invalid\n");
+	} else {
+	    if (!suppressed) {
+		suppressed++;
+		bu_log("INTERNAL ERROR: suppressing further project point error messages\n");
+	    }
+	}
+	return 1;
+    }
+
+    pixel = &img_sp->i_img[x*3 + y*img_sp->i_width*3];
 
     if (x >= img_sp->i_width || x < 0 ||
 	y >= img_sp->i_height || y < 0 ||

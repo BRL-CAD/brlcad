@@ -1,7 +1,7 @@
 /*                       S H A R P E N . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2012 United States Government as represented by
+ * Copyright (c) 2004-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -188,7 +188,7 @@ sharpen(unsigned char *buf, int size, int num, FILE *file, unsigned char *Map)
  * J, J, Laplacian_filter[n] are all in the range 0.0 to 1.0
  *     sharp
  *
- * The folowing is done in mostly interger mode, there is only one
+ * The following is done in mostly integer mode, there is only one
  * floating point multiply done.
  */
 

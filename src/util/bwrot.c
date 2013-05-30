@@ -1,7 +1,7 @@
 /*                         B W R O T . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2012 United States Government as represented by
+ * Copyright (c) 1986-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -47,15 +47,15 @@
 #include "bn.h"
 
 
-size_t buflines, scanbytes;
+ssize_t buflines, scanbytes;
 ssize_t firsty = -1;	/* first "y" scanline in buffer */
 ssize_t lasty = -1;	/* last "y" scanline in buffer */
 unsigned char *bp;
 unsigned char *obp;
 
-size_t nxin = 512;
-size_t nyin = 512;
-size_t yin, xout, yout;
+ssize_t nxin = 512;
+ssize_t nyin = 512;
+ssize_t yin, xout, yout;
 int plus90, minus90, reverse, invert;
 size_t pixbytes = 1;
 
@@ -70,7 +70,10 @@ get_args(int argc, char **argv, FILE **ifp, FILE **ofp, double *angle)
     if (!ifp || !ofp || !angle)
 	bu_exit(1, "bwrot: internal error processing arguments\n");
 
-    while ((c = bu_getopt(argc, argv, "fbrih#:a:s:o:w:n:S:W:N:")) != -1) {
+    if ( isatty(fileno(stdin)) && isatty(fileno(stdout)) && argc == 1)
+	return 0;
+
+    while ((c = bu_getopt(argc, argv, "fbri#:a:s:o:w:n:S:W:N:h?")) != -1) {
 	switch (c) {
 	    case 'f':
 		minus90++;
@@ -83,10 +86,6 @@ get_args(int argc, char **argv, FILE **ifp, FILE **ofp, double *angle)
 		break;
 	    case 'i':
 		invert++;
-		break;
-	    case 'h':
-		/* high-res */
-		nxin = nyin = 1024;
 		break;
 	    case '#':
 		pixbytes = atoi(bu_optarg);
@@ -117,12 +116,13 @@ get_args(int argc, char **argv, FILE **ifp, FILE **ofp, double *angle)
 		break;
 
 	    default:		/* '?' */
-		bu_log("ERROR: %s encountered unrecognized '-%c' option\n", bu_getprogname(), c);
+/* Disabled next line; illegal-option message is already provided, and "c" variable would only show '?'. */
+/*		bu_log("ERROR: %s encountered unrecognized '-%c' option\n", bu_getprogname(), c); */
 		return 0;
 	}
     }
 
-    /* XXX - backward compatability hack */
+    /* XXX - backward compatibility hack */
     if (bu_optind+2 == argc) {
 	nxin = atoi(argv[bu_optind++]);
 	nyin = atoi(argv[bu_optind++]);
@@ -175,7 +175,8 @@ fill_buffer(FILE *ifp, unsigned char *buf)
 static void
 reverse_buffer(unsigned char *buf)
 {
-    size_t i, j;
+    ssize_t i;
+    size_t j;
     unsigned char *p1, *p2, temp;
 
     for (i = 0; i < buflines; i++) {
@@ -270,7 +271,7 @@ arbrot(double a, FILE *ifp, unsigned char *buf)
 	    {
 		putchar(buf[(int)y2*nyin + (int)x2]);
 	    } else {
-		putchar(0);	/* XXX - setable color? */
+		putchar(0);	/* XXX - settable color? */
 	    }
 	    /* "forward difference" our coordinates */
 	    x2 += cosa;
@@ -287,14 +288,15 @@ main(int argc, char **argv)
 
     char usage[] = "Usage: bwrot [-rifb | -a angle] [-s squaresize] [-w width] [-n height] [-o output.bw] input.bw [> output.bw]\n";
 
-    size_t x, y, j;
+    ssize_t x, y;
+    size_t j;
     int ret = 0;
-    long outbyte, outplace;
+    off_t outbyte, outplace;
     FILE *ifp, *ofp;
     unsigned char *obuf;
     unsigned char *buffer;
     double angle = 0.0;
-    size_t io;
+    ssize_t io;
 
     ifp = stdin;
     ofp = stdout;
@@ -350,10 +352,10 @@ main(int argc, char **argv)
 		xout = (nyin - 1) - lasty;
 		outbyte = ((yout * nyin) + xout) * pixbytes;
 		if (outplace != outbyte) {
-		    if (fseek(ofp, outbyte, SEEK_SET) < 0) {
+		    if (bu_fseek(ofp, outbyte, SEEK_SET) < 0) {
 			ret = 3;
 			perror("fseek");
-			bu_log("ERROR: %s can't seek on output (ofp=%p, outbute=%ld)\n", bu_getprogname(), (void *)ofp, outbyte);
+			bu_log("ERROR: %s can't seek on output (ofp=%p, outbyte=%zd)\n", bu_getprogname(), (void *)ofp, outbyte);
 			goto done;
 		    }
 		    outplace = outbyte;
@@ -376,10 +378,10 @@ main(int argc, char **argv)
 		xout = yin;
 		outbyte = ((yout * nyin) + xout) * pixbytes;
 		if (outplace != outbyte) {
-		    if (fseek(ofp, outbyte, SEEK_SET) < 0) {
+		    if (bu_fseek(ofp, outbyte, SEEK_SET) < 0) {
 			ret = 3;
 			perror("fseek");
-			bu_log("ERROR: %s can't seek on output (ofp=%p, outbute=%ld)\n", bu_getprogname(), (void *)ofp, outbyte);
+			bu_log("ERROR: %s can't seek on output (ofp=%p, outbyte=%zd)\n", bu_getprogname(), (void *)ofp, outbyte);
 			goto done;
 		    }
 		    outplace = outbyte;
@@ -394,10 +396,10 @@ main(int argc, char **argv)
 		yout = (nyin - 1) - y + 1;
 		outbyte = yout * scanbytes;
 		if (outplace != outbyte) {
-		    if (fseek(ofp, outbyte, SEEK_SET) < 0) {
+		    if (bu_fseek(ofp, outbyte, SEEK_SET) < 0) {
 			ret = 3;
 			perror("fseek");
-			bu_log("ERROR: %s can't seek on output (ofp=%p, outbute=%ld)\n", bu_getprogname(), (void *)ofp, outbyte);
+			bu_log("ERROR: %s can't seek on output (ofp=%p, outbyte=%zd)\n", bu_getprogname(), (void *)ofp, outbyte);
 			goto done;
 		    }
 		    outplace = outbyte;

@@ -1,7 +1,7 @@
 /*                          D F F T . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2012 United States Government as represented by
+ * Copyright (c) 2004-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -59,11 +59,13 @@ void LintoLog(double *in, double *out, int num);
 
 static const char usage[] = "\
 Usage: dfft [options] [width (1024)] < doubles > 512logmags\n\
+  Options are:\n\
   -d dB  minimum dB (default 120)\n\
   -l     log frequency scale\n\
   -c     critical band filter (3rd octave)\n\
-  -N	 normalized PSD to max magnitude\n\
-  -L	 linear output (no dB mag)\n\
+  -p     phase\n\
+  -N     normalized PSD to max magnitude\n\
+  -L     linear output (no dB mag)\n\
   -A     ascii output\n\
 ";
 
@@ -72,11 +74,7 @@ int main(int argc, char **argv)
     int i, n, c;
     int L = 1024;
 
-    if (isatty(STDIN_FILENO) || isatty(STDOUT_FILENO)) {
-	bu_exit(1, "%s", usage);
-    }
-
-    while ((c = bu_getopt(argc, argv, "d:clpLANh")) != -1) {
+    while ((c = bu_getopt(argc, argv, "d:clpLANh?")) != -1) {
 	switch (c) {
 	    case 'd': mindB = -atof(bu_optarg); break;
 	    case 'c': cflag++; break;
@@ -85,12 +83,12 @@ int main(int argc, char **argv)
 	    case 'L': linear_output++; break;
 	    case 'A': ascii_output++; break;
 	    case 'N': normalize_output++; break;
-	    case 'h': printf("%s", usage); return EXIT_SUCCESS;
-	    case ':': printf("Missing argument to %c\n%s\n", c, usage); return EXIT_FAILURE;
-	    case '?':
-	    default:  printf("Unknown argument: %c\n%s\n", c, usage); return EXIT_FAILURE;
+	    default:  bu_exit(1, "%s", usage);
 	}
     }
+
+    if (isatty(STDIN_FILENO) || isatty(STDOUT_FILENO))
+	bu_exit(1, "%s", usage);
 
     /* Calculate Critical Band filter weights */
     if (cflag) {

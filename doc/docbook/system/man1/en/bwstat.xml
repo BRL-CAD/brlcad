@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='bwstat1'>
+<refmeta>
+    <refentrytitle>BWSTAT
+</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class='source'>BRL-CAD</refmiscinfo>
+<refmiscinfo class='manual'>BRL-CAD</refmiscinfo>
+</refmeta>
+
+<refnamediv>
+<refname>bwstat</refname>
+<refpurpose>list statistics related to a black and white bw image.</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<cmdsynopsis>
+  <command>bwstat</command>
+    <arg choice='opt'>-v </arg>
+    <arg choice='opt'><replaceable>file.bw</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para><emphasis remap='I'>Bwstat</emphasis>
+will take the given
+<citerefentry><refentrytitle>bw</refentrytitle><manvolnum>5</manvolnum></citerefentry>
+format file,
+or read from standard in.  A collection of statistics
+related to the pixel intensities is produced.
+<!-- .br -->
+These include:
+<!-- .br -->
+The number of pixels (and the square root of this which is the
+file dimensions if square).
+<!-- .br -->
+The max and min values.
+<!-- .br -->
+The mean.
+<!-- .br -->
+The median (dividing line where half the pixels are above this
+value, half below).
+<!-- .br -->
+The mode (most frequently occurring value) and the number of pixels
+at this value.
+<!-- .br -->
+The variance, standard deviation, and skew.</para>
+
+<para>The
+<option>-v</option>
+flag will also dump a histogram of the pixel values.</para>
+</refsect1>
+
+<refsect1 xml:id='method'><title>METHOD</title>
+<para>Since the pixel values are quantized (have discrete values from
+0 to 255), the statistics can be computed from "lump sums" after
+building a histogram of the input.  This results in a fantastic
+savings in computation while also making a single pass over the input
+file sufficient.</para>
+</refsect1>
+
+<refsect1 xml:id='see_also'><title>SEE ALSO</title>
+<para><citerefentry><refentrytitle>brlcad</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>bwhist</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>pixstat</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>bw</refentrytitle><manvolnum>5</manvolnum></citerefentry></para>
+
+</refsect1>
+
+<refsect1 xml:id='author'><title>AUTHOR</title>
+<para>BRL-CAD Team</para>
+
+</refsect1>
+
+<refsect1 xml:id='copyright'><title>COPYRIGHT</title>
+<para>This software is Copyright (c) 1989-2013 by the United States
+Government as represented by U.S. Army Research Laboratory.</para>
+</refsect1>
+
+<refsect1 xml:id='bug_reports'><title>BUG REPORTS</title>
+<para>Reports of bugs or problems should be submitted via electronic
+mail to &lt;devs@brlcad.org&gt;.</para>
+</refsect1>
+</refentry>
+

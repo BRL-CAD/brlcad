@@ -1,7 +1,7 @@
 /*                     V E R T _ T R E E . C
  * BRL-CAD
  *
- * Copyright (c) 2002-2012 United States Government as represented by
+ * Copyright (c) 2002-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -73,18 +73,12 @@ union vert_tree {
 #define VERT_NODE	'n'
 
 
-/**		C R E A T E _ V E R T _ T R E E
- *@brief
- *	routine to create a vertex tree.
- *
- *	Possible refinements include specifying an initial size
- */
 struct vert_root *
 create_vert_tree()
 {
     struct vert_root *tree;
 
-    tree = (struct vert_root *)bu_calloc( 1, sizeof( struct vert_root ), "vert_tree_root" );
+    BU_ALLOC(tree, struct vert_root);
     tree->magic = VERT_TREE_MAGIC;
     tree->tree_type = TREE_TYPE_VERTS;
     tree->the_tree = (union vert_tree *)NULL;
@@ -95,18 +89,12 @@ create_vert_tree()
     return tree;
 }
 
-/**		C R E A T E _ V E R T _ T R E E _ W _ N O R M S
- *@brief
- *	routine to create a vertex tree.
- *
- *	Possible refinements include specifying an initial size
- */
 struct vert_root *
 create_vert_tree_w_norms()
 {
     struct vert_root *tree;
 
-    tree = (struct vert_root *)bu_calloc( 1, sizeof( struct vert_root ), "vert_tree_root" );
+    BU_ALLOC(tree, struct vert_root);
     tree->magic = VERT_TREE_MAGIC;
     tree->tree_type = TREE_TYPE_VERTS_AND_NORMS;
     tree->the_tree = (union vert_tree *)NULL;
@@ -133,11 +121,6 @@ clean_vert_tree_recurse( union vert_tree *ptr )
 
 }
 
-/**		C L E A N _ V E R T _ T R E E
- *@brief
- *	Routine to free the binary search tree and reset the current number of vertices.
- *	The vertex array is left untouched, for re-use later.
- */
 void
 clean_vert_tree( struct vert_root *tree_root )
 {
@@ -149,7 +132,6 @@ clean_vert_tree( struct vert_root *tree_root )
     tree_root->the_tree = (union vert_tree *)NULL;
     tree_root->curr_vert = 0;
 }
-
 
 /**		F R E E _ V E R T_ T R E E_ R E C U R S E
  *@brief
@@ -167,10 +149,6 @@ free_vert_tree_recurse( union vert_tree *ptr )
 
 }
 
-/**		F R E E _ V E R T_ T R E E
- *@brief
- *	Routine to free a vertex tree and all associated dynamic memory
- */
 void
 free_vert_tree( struct vert_root *vert_root )
 {
@@ -197,12 +175,6 @@ free_vert_tree( struct vert_root *vert_root )
     vert_root->max_vert = 0;
 }
 
-/**		A D D _ V E R T
- *@brief
- *	Routine to add a vertex to the current list of part vertices.
- *	The array is re-alloc'd if needed.
- *	Returns index into the array of vertices where this vertex is stored
- */
 int
 Add_vert( double x, double y, double z, struct vert_root *vert_root, fastf_t local_tol_sq )
 {
@@ -255,7 +227,7 @@ Add_vert( double x, double y, double z, struct vert_root *vert_root, fastf_t loc
     VMOVE( &vert_root->the_array[vert_root->curr_vert*3], vertex );
 
     /* add to the tree also */
-    new_leaf = (union vert_tree *)bu_malloc( sizeof( union vert_tree ), "new_leaf" );
+    BU_ALLOC(new_leaf, union vert_tree);
     new_leaf->vleaf.type = VERT_LEAF;
     new_leaf->vleaf.index = vert_root->curr_vert++;
     if ( !vert_root->the_tree ) {
@@ -263,7 +235,7 @@ Add_vert( double x, double y, double z, struct vert_root *vert_root, fastf_t loc
 	vert_root->the_tree = new_leaf;
     } else if ( ptr && ptr->type == VERT_LEAF ) {
 	/* search above ended at a leaf, need to add a node above this leaf and the new leaf */
-	new_node = (union vert_tree *)bu_malloc( sizeof( union vert_tree ), "new_node" );
+	BU_ALLOC(new_node, union vert_tree);
 	new_node->vnode.type = VERT_NODE;
 
 	/* select the cutting coord based on the biggest difference */
@@ -322,12 +294,6 @@ Add_vert( double x, double y, double z, struct vert_root *vert_root, fastf_t loc
     return new_leaf->vleaf.index;
 }
 
-/**		A D D _ V E R T _ A N D _ N O R M
- *@brief
- *	Routine to add a vertex and a normal to the current list of part vertices.
- *	The array is re-alloc'd if needed.
- *	Returns index into the array of vertices where this vertex and normal is stored
- */
 int
 Add_vert_and_norm( double x, double y, double z, double nx, double ny, double nz, struct vert_root *vert_root, fastf_t local_tol_sq )
 {
@@ -388,7 +354,7 @@ Add_vert_and_norm( double x, double y, double z, double nx, double ny, double nz
     VMOVE( &vert_root->the_array[vert_root->curr_vert*6+3], &vertex[3] );
 
     /* add to the tree also */
-    new_leaf = (union vert_tree *)bu_malloc( sizeof( union vert_tree ), "new_leaf" );
+    BU_ALLOC(new_leaf, union vert_tree);
     new_leaf->vleaf.type = VERT_LEAF;
     new_leaf->vleaf.index = vert_root->curr_vert++;
     if ( !vert_root->the_tree ) {
@@ -399,7 +365,7 @@ Add_vert_and_norm( double x, double y, double z, double nx, double ny, double nz
 	int i;
 
 	/* search above ended at a leaf, need to add a node above this leaf and the new leaf */
-	new_node = (union vert_tree *)bu_malloc( sizeof( union vert_tree ), "new_node" );
+	BU_ALLOC(new_node, union vert_tree);
 	new_node->vnode.type = VERT_NODE;
 
 	/* select the cutting coord based on the biggest difference */

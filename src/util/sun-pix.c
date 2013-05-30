@@ -1,7 +1,7 @@
 /*                       S U N - P I X . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2012 United States Government as represented by
+ * Copyright (c) 1986-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -65,13 +65,13 @@ char inbuf[sizeof(struct rasterfile)];
 #define RMT_EQUAL_RGB 1	/* red[ras_maplength/3], green[], blue[] */
 
 #define GETUC_CHECKED(uc, fp, err_msg) \
-{ \
-    int _c = getc(fp); \
-    if (_c == EOF) { \
-	bu_exit(1, err_msg); \
-    } \
-    uc = (unsigned char)_c; \
-}
+    { \
+	int _c = getc(fp); \
+	if (_c == EOF) { \
+	    bu_exit(1, err_msg); \
+	} \
+	uc = (unsigned char)_c; \
+    }
 
 /*
  * NOTES:
@@ -96,6 +96,7 @@ struct colors {
     unsigned char CL_green;
     unsigned char CL_blue;
 };
+
 
 struct colors Cmap[256];
 static size_t CMAP_MAX_INDEX = sizeof(Cmap) - 1;
@@ -161,15 +162,15 @@ get_args(int argc, char **argv)
     } else {
 	file_name = argv[bu_optind];
 	if ((fp = fopen(file_name, "r")) == NULL) {
-	    (void)fprintf(stderr,
-			  "sun-pix: cannot open \"%s\" for reading\n",
-			  file_name);
+	    fprintf(stderr,
+		    "sun-pix: cannot open \"%s\" for reading\n",
+		    file_name);
 	    return 0;
 	}
     }
 
     if (argc > ++bu_optind)
-	(void)fprintf(stderr, "sun-pix: excess argument(s) ignored\n");
+	fprintf(stderr, "sun-pix: excess argument(s) ignored\n");
 
     return 1;		/* OK */
 }
@@ -200,9 +201,9 @@ get_args(int argc, char **argv)
 static size_t
 decoderead(unsigned char *buf, int size, int length, FILE *readfp)
 
-    /* should be one! */
-    /* number of items to read */
-    /* input file pointer */
+/* should be one! */
+/* number of items to read */
+/* input file pointer */
 {
     static int repeat = -1;
     static int lastchar = 0;
@@ -364,7 +365,6 @@ main(int argc, char **argv)
     }
 
     width = header.ras_width;
-    x = 0;
 
     switch (header.ras_depth) {
 	case 1:
@@ -440,7 +440,7 @@ main(int argc, char **argv)
 	    while ((header.ras_type == RT_BYTE_ENCODED) ?
 		   decoderead(buf, sizeof(*buf), scanbytes, fp) :
 		   fread(buf, sizeof(*buf), scanbytes, fp)) {
-		for (x=0; x < width; x++) {
+		for (x = 0; x < width && x < (int)sizeof(*buf); x++) {
 		    cmap_idx = buf[x];
 		    if (cmap_idx >= CMAP_MAX_INDEX) {
 			bu_log("Warning: Read invalid index %u.\n",

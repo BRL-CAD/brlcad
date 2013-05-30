@@ -1,7 +1,7 @@
 /*                        B U F F E R . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2012 United States Government as represented by
+ * Copyright (c) 2004-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -26,7 +26,7 @@
  * amount of data may need to be buffered, so a combination of a 1
  * Mbyte memory buffer and a temporary file is used.
  *
- * The use of read() and write() is prefered over fread() and fwrite()
+ * The use of read() and write() is preferred over fread() and fwrite()
  * for reasons of efficiency, given the large buffer size in use.
  *
  */
@@ -53,8 +53,15 @@ main(int argc, char *argv[])
     int tfd = 0;
     int ret = 0;
 
-    if (argc > 1)
+    if ( (BU_STR_EQUAL(argv[1],"-h") || BU_STR_EQUAL(argv[1],"-?")) && argc == 2){
+	bu_log("Usage: %s (takes no arguments)\n",argv[0]);
+	exit(1);
+    }
+
+    if (argc > 1){
 	bu_log("%s: unrecognized argument(s)\n", argv[0]);
+	bu_log("        Program continues running:\n", argv[0]);
+    }
 
     if ((count = bu_mread(0, buf, sizeof(buf))) < (long)sizeof(buf)) {
 	if (count < 0) {
@@ -95,7 +102,7 @@ main(int argc, char *argv[])
     }
 
     /* All input read, regurgitate it all on stdout */
-    if (lseek(tfd, 0L, 0) < 0) {
+    if (lseek(tfd, 0, 0) < 0) {
 	perror("buffer: lseek");
 	goto err;
     }

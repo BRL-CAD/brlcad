@@ -1,7 +1,7 @@
 /*                         R T W I Z A R D . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2012 United States Government as represented by
+ * Copyright (c) 2008-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -116,6 +116,7 @@ _ged_run_rtwizard(struct ged *gedp)
 
     (void)fclose(fp_in);
 
+    /* must be BU_GET() to match release in _ged_rt_output_handler */
     BU_GET(run_rtp, struct ged_run_rt);
     BU_LIST_INIT(&run_rtp->l);
     BU_LIST_APPEND(&gedp->ged_gdp->gd_headRunRt.l, &run_rtp->l);
@@ -123,6 +124,7 @@ _ged_run_rtwizard(struct ged *gedp)
     run_rtp->fd = pipe_err[0];
     run_rtp->pid = pid;
 
+    /* must be BU_GET() to match release in _ged_rt_output_handler */
     BU_GET(drcdp, struct _ged_rt_client_data);
     drcdp->gedp = gedp;
     drcdp->rrtp = run_rtp;
@@ -187,6 +189,7 @@ _ged_run_rtwizard(struct ged *gedp)
 
     (void)fclose(fp_in);
 
+    /* must be BU_GET() to match release in _ged_rt_output_handler */
     BU_GET(run_rtp, struct ged_run_rt);
     BU_LIST_INIT(&run_rtp->l);
     BU_LIST_APPEND(&gedp->ged_gdp->gd_headRunRt.l, &run_rtp->l);
@@ -197,6 +200,7 @@ _ged_run_rtwizard(struct ged *gedp)
     run_rtp->aborted=0;
     run_rtp->chan = Tcl_MakeFileChannel(run_rtp->fd, TCL_READABLE);
 
+    /* must be BU_GET() to match release in _ged_rt_output_handler */
     BU_GET(drcdp, struct _ged_rt_client_data);
     drcdp->gedp = gedp;
     drcdp->rrtp = run_rtp;
@@ -220,10 +224,10 @@ ged_rtwizard(struct ged *gedp, int argc, const char *argv[])
     int args;
     quat_t quat;
     vect_t eye_model;
-    struct bu_vls perspective_vls;
-    struct bu_vls size_vls;
-    struct bu_vls orient_vls;
-    struct bu_vls eye_vls;
+    struct bu_vls perspective_vls = BU_VLS_INIT_ZERO;
+    struct bu_vls size_vls = BU_VLS_INIT_ZERO;
+    struct bu_vls orient_vls = BU_VLS_INIT_ZERO;
+    struct bu_vls eye_vls = BU_VLS_INIT_ZERO;
 
     const char *bin;
     char rt[256] = {0};
@@ -256,11 +260,6 @@ ged_rtwizard(struct ged *gedp, int argc, const char *argv[])
 
     _ged_rt_set_eye_model(gedp, eye_model);
     quat_mat2quat(quat, gedp->ged_gvp->gv_rotation);
-
-    bu_vls_init(&perspective_vls);
-    bu_vls_init(&size_vls);
-    bu_vls_init(&orient_vls);
-    bu_vls_init(&eye_vls);
 
     bu_vls_printf(&size_vls, "%.15e", gedp->ged_gvp->gv_size);
     bu_vls_printf(&orient_vls, "%.15e %.15e %.15e %.15e", V4ARGS(quat));

@@ -2,7 +2,7 @@
 #                     M A K E _ D E B . S H
 # BRL-CAD
 #
-# Copyright (c) 2005-2012 United States Government as represented by
+# Copyright (c) 2005-2013 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -94,23 +94,23 @@ E=0
 fcheck() {
     T="install ok installed"
     if test ! `dpkg -s $1 2>/dev/null | grep "$T" | wc -l` -eq 0 ; then
-        # success
-        echo "Found package $1..."
-        return
+	# success
+	echo "Found package $1..."
+	return
     fi
 
     # need to check for local, non-package versions
     # check for binaries
     if test "$2" = "x" ; then
-        if [ -f /usr/bin/$1 ]; then
-            # success
-            echo "Found /usr/bin/$1..."
-            return
-        elif [ -f /usr/local/bin/$1 ]; then
-            # success
-            echo "Found /usr/local/bin/$1..."
-            return
-        fi
+	if [ -f /usr/bin/$1 ]; then
+	    # success
+	    echo "Found /usr/bin/$1..."
+	    return
+	elif [ -f /usr/local/bin/$1 ]; then
+	    # success
+	    echo "Found /usr/local/bin/$1..."
+	    return
+	fi
     fi
 
     echo "* Missing $1..."
@@ -123,7 +123,7 @@ fcheck fakeroot x
 
 if test "$1" = "-b" ;then
     fcheck build-essential
-    fcheck make 
+    fcheck make
     fcheck cmake x
     fcheck sed x
     fcheck bison x
@@ -165,8 +165,11 @@ if test "$1" = "-s" ;then
     tar -czf "../brlcad_$BVERSION.orig.tar.gz" *
 fi
 
-# #
+# copy debian folder on project root
 cp -Rf misc/debian/ .
+
+# create "version" file
+echo $BVERSION >debian/version
 
 # update debian/changelog if needed
 if test -s $CFILE && test `sed -n '1p' $CFILE | grep "brlcad ($BVERSION-$RELEASE" | wc -l` -eq 0 ; then

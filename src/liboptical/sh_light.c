@@ -1,7 +1,7 @@
 /*                      S H _ L I G H T . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2012 United States Government as represented by
+ * Copyright (c) 1998-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -43,7 +43,6 @@
 
 
 #define LIGHT_O(m) bu_offsetof(struct light_specific, m)
-#define LIGHT_OA(m) bu_offsetofarray(struct light_specific, m)
 
 
 /** Heads linked list of lights */
@@ -73,7 +72,7 @@ struct bu_structparse light_print_tab[] = {
     {"%f",	1, "bright",	LIGHT_O(lt_intensity),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%f",	1, "angle",	LIGHT_O(lt_angle),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%f",	1, "fract",	LIGHT_O(lt_fraction),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f",	3, "target",	LIGHT_OA(lt_target),	aim_set, NULL, NULL },
+    {"%f",	3, "target",	LIGHT_O(lt_target),	aim_set, NULL, NULL },
     {"%d",	1, "shadows",	LIGHT_O(lt_shadows),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%d",	1, "infinite",	LIGHT_O(lt_infinite),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%d",	1, "visible",	LIGHT_O(lt_visible),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
@@ -95,9 +94,9 @@ struct bu_structparse light_parse[] = {
     {"%f",	1, "fract",	LIGHT_O(lt_fraction),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%f",	1, "f",		LIGHT_O(lt_fraction),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
 
-    {"%f",	3, "target",	LIGHT_OA(lt_target),	aim_set, NULL, NULL },
-    {"%f",	3, "t",		LIGHT_OA(lt_target),	aim_set, NULL, NULL },
-    {"%f",	3, "aim",	LIGHT_OA(lt_target),	aim_set, NULL, NULL },
+    {"%f",	3, "target",	LIGHT_O(lt_target),	aim_set, NULL, NULL },
+    {"%f",	3, "t",		LIGHT_O(lt_target),	aim_set, NULL, NULL },
+    {"%f",	3, "aim",	LIGHT_O(lt_target),	aim_set, NULL, NULL },
 
     {"%d",	1, "shadows",	LIGHT_O(lt_shadows),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%d",	1, "s",		LIGHT_O(lt_shadows),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
@@ -110,8 +109,8 @@ struct bu_structparse light_parse[] = {
 
     {"%d",	1, "invisible",	LIGHT_O(lt_invisible),	light_cvt_visible, NULL, NULL },
 
-    {"%f",	3, "pt",	LIGHT_OA(lt_parse_pt), light_pt_set, NULL, NULL },
-    {"%f",	6, "pn",	LIGHT_OA(lt_parse_pt), light_pt_set, NULL, NULL },
+    {"%f",	3, "pt",	LIGHT_O(lt_parse_pt), light_pt_set, NULL, NULL },
+    {"%f",	6, "pn",	LIGHT_O(lt_parse_pt), light_pt_set, NULL, NULL },
 
     {"",	0, (char *)0,	0,			BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
@@ -165,24 +164,21 @@ HIDDEN void
 light_cvt_visible(register const struct bu_structparse *sdp, register const char *name, char *base, const char *UNUSED(value))
 /* structure description */
 /* struct member name */
-/* begining of structure */
+/* beginning of structure */
 /* string containing value */
 {
     struct light_specific *lsp = (struct light_specific *)base;
 
     if (rdebug & RDEBUG_LIGHT) {
 	bu_log("light_cvt_visible(%s, %zu)\n", name, sdp->sp_offset);
-	bu_log("visible: %d invisible: %d\n",
+	bu_log("visible: %lu invisible: %lu\n",
 	       LIGHT_O(lt_visible),
 	       LIGHT_O(lt_invisible));
     }
-    switch (sdp->sp_offset) {
-	case LIGHT_O(lt_invisible):
-	    lsp->lt_visible = !lsp->lt_invisible;
-	    break;
-	case LIGHT_O(lt_visible):
-	    lsp->lt_invisible = !lsp->lt_visible;
-	    break;
+    if(sdp->sp_offset == LIGHT_O(lt_invisible)) {
+	lsp->lt_visible = !lsp->lt_invisible;
+    } else if(sdp->sp_offset == LIGHT_O(lt_visible)) {
+	lsp->lt_invisible = !lsp->lt_visible;
     }
 }
 
@@ -219,7 +215,7 @@ HIDDEN void
 light_pt_set(register const struct bu_structparse *sdp, register const char *name, char *base, const char *UNUSED(value))
 /* structure description */
 /* struct member name */
-/* begining of structure */
+/* beginning of structure */
 /* string containing value */
 {
     struct light_specific *lsp = (struct light_specific *)base;
@@ -509,7 +505,7 @@ light_gen_sample_pts(struct application *upap,
     ap.a_logoverlap = upap->a_logoverlap;
     ap.a_uptr = (genptr_t)lsp;
 
-    /* get the bounding box of the light source 
+    /* get the bounding box of the light source
      * Return if we can't get the bounding tree dimensions */
     if (rt_bound_tree(lsp->lt_rp->reg_treetop, tree_min, tree_max) < 0) return;
 
@@ -586,7 +582,7 @@ light_free(genptr_t cp)
 	bu_free(lsp->lt_sample_pts, "free light samples array");
     }
     lsp->l.magic = 0;	/* sanity */
-    bu_free((genptr_t)lsp, "light_specific");
+    bu_free(lsp, "struct light_specific");
 }
 
 
@@ -605,7 +601,7 @@ light_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, c
 
     BU_CK_VLS(matparm);
 
-    BU_GET(lsp, struct light_specific);
+    BU_ALLOC(lsp, struct light_specific);
     BU_LIST_INIT_MAGIC(&(lsp->l), LIGHT_MAGIC);
 
     lsp->lt_intensity = 1.0;	/* Lumens */
@@ -1117,7 +1113,7 @@ light_hit(struct application *ap, struct partition *PartHeadp, struct seg *finis
 	}
     }
 #endif
-    /* or something futher away than a finite invisible light */
+    /* or something further away than a finite invisible light */
     if (lsp->lt_invisible && !(lsp->lt_infinite)) {
 	vect_t tolight;
 	VSUB2(tolight, lsp->lt_pos, ap->a_ray.r_pt);
@@ -1320,8 +1316,6 @@ light_vis(struct light_obs_stuff *los, char *flags)
 
     if (rdebug & RDEBUG_LIGHT) bu_log("light_vis\n");
 
-retry:
-
     /* compute the light direction */
     if (los->lsp->lt_infinite) {
 	/* Infinite lights are point sources, no fuzzy penumbra */
@@ -1372,7 +1366,7 @@ retry:
 	     * (since the light on the surface from such would be
 	     * very small).  We also tolerance the normal on the
 	     * light to the visibility ray so that points on the
-	     * perimiter of the presented area of the light source
+	     * perimeter of the presented area of the light source
 	     * are not chosen.  This helps avoid shooting at points
 	     * on the light source which machine floating-point
 	     * inaccuracies would cause the ray to miss.
@@ -1449,7 +1443,8 @@ retry:
 
 	if (rdebug & RDEBUG_LIGHT)
 	    bu_log("shooting at approximating sphere\n");
-	/* We're going to shoot at a point on the apporximating
+
+	/* We're going to shoot at a point on the approximating
 	 * sphere for the light source.  We pick a point on the
 	 * circle (presented area) for the light source from this
 	 * angle.  This is done by picking random radius and angle
@@ -1473,7 +1468,9 @@ retry:
 	 * x = radius * cos(angle);
 	 */
 	cos_angle = M_PI_2 + angle;
-	if (cos_angle > (2.0*M_PI)) cos_angle -= (2.0*M_PI);
+	if (cos_angle > (2.0*M_PI))
+	    cos_angle -= (2.0*M_PI);
+
 	x = radius * bn_tab_sin(cos_angle);
 
 	VJOIN2(shoot_pt, los->lsp->lt_pos,
@@ -1500,7 +1497,7 @@ retry:
     if (rdebug& RDEBUG_RAYPLOT) {
 	point_t ray_endpt;
 
-	/* Yelow -- light visibility ray */
+	/* Yellow -- light visibility ray */
 	VADD2(ray_endpt, los->swp->sw_hit.hit_point, shoot_dir);
 	bu_semaphore_acquire(BU_SEM_SYSCALL);
 	pl_color(stdout, 200, 200, 0);
@@ -1577,30 +1574,10 @@ retry:
     RT_CK_AP(&sub_ap);
 
     if (rdebug & RDEBUG_LIGHT)
-	bu_log("shooting level %d from %d\n",
-	       sub_ap.a_level, __LINE__);
+	bu_log("shooting level %d from %d\n", sub_ap.a_level, __LINE__);
+
+    /* see if weare in the dark. */
     shot_status = rt_shootray(&sub_ap);
-    if (rdebug & RDEBUG_LIGHT)
-	bu_log("shot_status: %d\n", shot_status);
-
-    if (shot_status < 0) {
-	if (los->lsp->lt_infinite) {
-	}  else if (los->lsp->lt_pt_count > 0) {
-	    if (rdebug & RDEBUG_LIGHT) {
-		bu_log("was pt %d\n (%g %g %g) normal %g %g %g\n", k,
-		       V3ARGS(los->lsp->lt_sample_pts[k].lp_pt),
-		       V3ARGS(los->lsp->lt_sample_pts[k].lp_norm));
-	    }
-	} else {
-	    if (rdebug & RDEBUG_LIGHT) {
-		bu_log("was radius: %g of (%g) angle: %g\n",
-		       radius, los->lsp->lt_radius, angle);
-
-		bu_log("re-shooting\n");
-	    }
-	    goto retry;
-	}
-    }
 
     if (shot_status > 0) {
 	/* light visible */
@@ -1793,7 +1770,7 @@ light_obs(struct application *ap, struct shadework *swp, int have)
 	bu_free(flags, "free flags array");
     }
 
-    if (rdebug & RDEBUG_LIGHT) bu_log("computing Light obscruration: end\n");
+    if (rdebug & RDEBUG_LIGHT) bu_log("computing Light obscuration: end\n");
 }
 
 

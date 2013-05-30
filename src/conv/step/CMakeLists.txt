@@ -1,3 +1,10 @@
+#
+# FIXME: massively parallel builds consistently fail building step
+#        sources.  presumably, something is wrong with the dependency
+#        declarations or file protections with multiple processes
+#        trying to run perplex or fedex simultaneously.
+#
+
 set(STEP_INCLUDE_DIRS
   ${BU_INCLUDE_DIRS}
   ${RT_INCLUDE_DIRS}
@@ -11,6 +18,7 @@ include_directories(
   ${CMAKE_CURRENT_BINARY_DIR}
   ${CMAKE_CURRENT_SOURCE_DIR}
   ${BRLCAD_SOURCE_DIR}/src/other/step/include
+  ${BRLCAD_SOURCE_DIR}/src/other/step/src/base
   ${BRLCAD_SOURCE_DIR}/src/other/step/src/clstepcore
   ${BRLCAD_SOURCE_DIR}/src/other/step/src/cleditor
   ${BRLCAD_SOURCE_DIR}/src/other/step/src/clutils
@@ -18,9 +26,10 @@ include_directories(
   ${BRLCAD_SOURCE_DIR}/src/other/step/src/test
   ${CMAKE_BINARY_DIR}/src/other/step/include
   ${TNT_INCLUDE_DIR}
+  ${BRLCAD_SOURCE_DIR}/src/libbrep #Temporary until headers reworked
   )
 
-set(SCHEMA_FILE ${BRLCAD_SOURCE_DIR}/src/other/step/data/ap203edit.exp)
+set(SCHEMA_FILE ${BRLCAD_SOURCE_DIR}/src/other/step/data/ap203/ap203.exp)
 
 # read the schema name from a line like 'SCHEMA AUTOMOTIVE_DESIGN;'
 file(STRINGS ${SCHEMA_FILE} SCHEMA_STATEMENT LIMIT_COUNT 1 REGEX "SCHEMA .*")
@@ -36,14 +45,14 @@ set(fedex_srcs
 	${SCHEMA_OUT_DIR}/Sdai${SCHEMA_NAME}.cc
 	${SCHEMA_OUT_DIR}/Sdai${SCHEMA_NAME}.init.cc
 	${SCHEMA_OUT_DIR}/SdaiAll.cc
-	${SCHEMA_OUT_DIR}/compstructs.cc 
+	${SCHEMA_OUT_DIR}/compstructs.cc
 	${SCHEMA_OUT_DIR}/schema.cc
 )
 
-set(FEDEX_OUTPUT 
+set(FEDEX_OUTPUT
 	${fedex_srcs}
 	${SCHEMA_OUT_DIR}/Sdai${SCHEMA_NAME}.h
-	${SCHEMA_OUT_DIR}/Sdaiclasses.h 
+	${SCHEMA_OUT_DIR}/Sdaiclasses.h
 	${SCHEMA_OUT_DIR}/schema.h
 	)
 
@@ -186,7 +195,6 @@ set(stepg_SOURCES
   ProductDefinitionShape.cpp
   ProductRelatedProductCategory.cpp
   PropertyDefinition.cpp
-  PullbackCurve.cpp
   QuasiUniformCurve.cpp
   QuasiUniformSurface.cpp
   RatioContextDependentUnit.cpp
@@ -387,7 +395,6 @@ set(stepg_HDRS
   ProductDefinitionShape.h
   ProductRelatedProductCategory.h
   PropertyDefinition.h
-  PullbackCurve.h
   QuasiUniformCurve.h
   QuasiUniformSurface.h
   RatioContextDependentUnit.h
@@ -458,7 +465,35 @@ set(stepg_HDRS
   )
 CMAKEFILES(${stepg_HDRS})
 
-BRLCAD_ADDEXEC(step-g "${stepg_SOURCES}" "libwdb;librt;libbu;steputils;stepcore;stepdai;stepeditor;${OPENNURBS_LIBRARY}" NOSTRICT)
+set(stepg_LIBS
+  libwdb
+  librt
+  libbu
+  libbrep
+  steputils
+  stepeditor
+  stepdai
+  stepcore
+  ${OPENNURBS_LIBRARY}
+  )
+list(APPEND stepg_LIBS ${stepg_LIBS})
+
+BRLCAD_ADDEXEC(step-g "${stepg_SOURCES}" "${stepg_LIBS}" NOSTRICT)
+
+if(MSVC)
+  set(stepg_IMPORTS
+    BU_DLL_IMPORTS
+    RT_DLL_IMPORTS
+    WDB_DLL_IMPORTS
+    SCL_CORE_DLL_IMPORTS
+    SCL_DAI_DLL_IMPORTS
+    SCL_EDITOR_DLL_IMPORTS
+    SCL_UTILS_DLL_IMPORTS
+    )
+  list(APPEND stepg_IMPORTS ${stepg_IMPORTS})
+  set_target_properties(step-g PROPERTIES COMPILE_DEFINITIONS
+			"${stepg_IMPORTS}")
+endif(MSVC)
 
 DISTCLEAN(${SCHEMA_OUT_DIR}/make_schema)
 CMAKEFILES(Makefile.am)

@@ -1,7 +1,7 @@
 /*                         T O R . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2012 United States Government as represented by
+ * Copyright (c) 1985-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -31,7 +31,7 @@
  *
  * Through a series of Transformations, this set will be transformed
  * into a set of points on a unit torus (R1==1) centered at the origin
- * which lies on the X-Y plane (ie, H is on the Z axis).
+ * which lies on the X-Y plane (i.e., H is on the Z axis).
  *
  * { (x', y', z') | (x', y', z') is on unit torus at origin }
  *
@@ -77,13 +77,13 @@
  * Wx**2 = Dx**2 * t**2 +  2 * Dx * Px +  Px**2
  *
  * The real roots of the equation in 't' are the intersect points
- * along the parameteric line.
+ * along the parametric line.
  *
  * NORMALS.  Given the point W on the torus, what is the vector normal
  * to the tangent plane at that point?
  *
- * Map W onto the unit torus, ie: W' = S(R(W - V)).  In this case,
- * we find W' by solving the parameteric line given k.
+ * Map W onto the unit torus, i.e.: W' = S(R(W - V)).  In this case,
+ * we find W' by solving the parametric line given k.
  *
  * The gradient of the torus at W' is in fact the normal vector.
  *
@@ -129,15 +129,15 @@
  * The TORUS has the following input fields:
  *	V	V from origin to center
  *	H	Radius Vector, Normal to plane of torus.  |H| = R2
- *	A, B	perpindicular, to CENTER of torus.  |A|==|B|==R1
- *	F5, F6	perpindicular, for inner edge (unused)
- *	F7, F8	perpindicular, for outer edge (unused)
+ *	A, B	perpendicular, to CENTER of torus.  |A|==|B|==R1
+ *	F5, F6	perpendicular, for inner edge (unused)
+ *	F7, F8	perpendicular, for outer edge (unused)
  *
  */
 
 const struct bu_structparse rt_tor_parse[] = {
-    {"%f", 3, "V",   bu_offsetof(struct rt_tor_internal, v[X]), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
-    {"%f", 3, "H",   bu_offsetof(struct rt_tor_internal, h[X]), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+    {"%f", 3, "V",   bu_offsetofarray(struct rt_tor_internal, v, fastf_t, X), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+    {"%f", 3, "H",   bu_offsetofarray(struct rt_tor_internal, h, fastf_t, X), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
     {"%f", 1, "r_a", bu_offsetof(struct rt_tor_internal, r_a),  BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
     {"%f", 1, "r_h", bu_offsetof(struct rt_tor_internal, r_h),  BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
     {{'\0', '\0', '\0', '\0'}, 0, (char *)NULL, 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL}
@@ -160,7 +160,7 @@ struct tor_specific {
  * Compute the bounding RPP for a circular torus.
  */
 int
-rt_tor_bbox(struct rt_db_internal *ip, point_t *min, point_t *max) {
+rt_tor_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct bn_tol *UNUSED(tol)) {
     vect_t P, w1;	/* for RPP calculation */
     fastf_t f;
     struct rt_tor_internal *tip = (struct rt_tor_internal *)ip->idb_ptr;
@@ -293,7 +293,7 @@ rt_tor_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     VMOVE(stp->st_center, tor->tor_V);
     stp->st_aradius = stp->st_bradius = tor->tor_r1 + tip->r_h;
 
-    if (stp->st_meth->ft_bbox(ip, &(stp->st_min), &(stp->st_max))) {
+    if (stp->st_meth->ft_bbox(ip, &(stp->st_min), &(stp->st_max), &(rtip->rti_tol))) {
 	return 1;
     }
 
@@ -331,11 +331,11 @@ rt_tor_print(register const struct soltab *stp)
  * a point, P(x0, y0, z0) and a direction normal, D = ax + by + cz.
  * Any point on a line can be expressed by one variable 't', where
  *
- * X = a*t + x0,	eg, X = Dx*t + Px
+ * X = a*t + x0,	e.g., X = Dx*t + Px
  * Y = b*t + y0,
  * Z = c*t + z0.
  *
- * First, convert the line to the coordinate system of a "stan- dard"
+ * First, convert the line to the coordinate system of a "standard"
  * torus.  This is a torus which lies in the X-Y plane, circles the
  * origin, and whose primary radius is one.  The secondary radius is
  * alpha = (R2/R1) of the original torus where (0 < alpha <= 1).
@@ -932,7 +932,7 @@ rt_tor_free(struct soltab *stp)
     register struct tor_specific *tor =
 	(struct tor_specific *)stp->st_specific;
 
-    bu_free((char *)tor, "tor_specific");
+    BU_PUT(tor, struct tor_specific);
 }
 
 
@@ -1004,6 +1004,105 @@ rt_num_circular_segments(double maxerr, double radius)
     return n;
 }
 
+static int
+tor_ellipse_points(
+	vect_t ellipse_A,
+	vect_t ellipse_B,
+	const struct rt_view_info *info)
+{
+    fastf_t avg_radius, circumference;
+
+    avg_radius = (MAGNITUDE(ellipse_A) + MAGNITUDE(ellipse_B)) / 2.0;
+    circumference = bn_twopi * avg_radius;
+
+    return circumference / info->point_spacing;
+}
+
+int
+rt_tor_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
+{
+    vect_t a, b, tor_a, tor_b, tor_h, center;
+    fastf_t mag_a, mag_b, mag_h;
+    struct rt_tor_internal *tor;
+    fastf_t radian, radian_step;
+    int i, num_ellipses, points_per_ellipse;
+
+    BU_CK_LIST_HEAD(info->vhead);
+    RT_CK_DB_INTERNAL(ip);
+    tor = (struct rt_tor_internal *)ip->idb_ptr;
+    RT_TOR_CK_MAGIC(tor);
+
+    VMOVE(tor_a, tor->a);
+    mag_a = tor->r_a;
+
+    VSCALE(tor_h, tor->h, tor->r_h);
+    mag_h = tor->r_h;
+
+    VCROSS(tor_b, tor_a, tor_h);
+    VUNITIZE(tor_b);
+    VSCALE(tor_b, tor_b, mag_a);
+    mag_b = mag_a;
+
+    /* plot outer circular contour */
+    VJOIN1(a, tor_a, mag_h / mag_a, tor_a);
+    VJOIN1(b, tor_b, mag_h / mag_b, tor_b);
+
+    points_per_ellipse = tor_ellipse_points(a, b, info);
+    if (points_per_ellipse < 6) {
+	points_per_ellipse = 6;
+    }
+
+    plot_ellipse(info->vhead, tor->v, a, b, points_per_ellipse);
+
+    /* plot inner circular contour */
+    VJOIN1(a, tor_a, -1.0 * mag_h / mag_a, tor_a);
+    VJOIN1(b, tor_b, -1.0 * mag_h / mag_b, tor_b);
+
+    points_per_ellipse = tor_ellipse_points(a, b, info);
+    if (points_per_ellipse < 6) {
+	points_per_ellipse = 6;
+    }
+
+    plot_ellipse(info->vhead, tor->v, a, b, points_per_ellipse);
+
+    /* Draw parallel circles to show the primitive's most extreme points along
+     * +h/-h.
+     */
+    points_per_ellipse = tor_ellipse_points(tor_a, tor_b, info);
+    if (points_per_ellipse < 6) {
+	points_per_ellipse = 6;
+    }
+
+    VADD2(center, tor->v, tor_h);
+    plot_ellipse(info->vhead, center, tor_a, tor_b, points_per_ellipse);
+
+    VJOIN1(center, tor->v, -1.0, tor_h);
+    plot_ellipse(info->vhead, center, tor_a, tor_b, points_per_ellipse);
+
+    /* draw circular radial cross sections */
+    VMOVE(b, tor_h);
+
+    num_ellipses = primitive_curve_count(ip, info);
+    if (num_ellipses < 3) {
+	num_ellipses = 3;
+    }
+
+    radian_step = bn_twopi / num_ellipses;
+    radian = 0;
+    for (i = 0; i < num_ellipses; ++i) {
+	ellipse_point_at_radian(center, tor->v, tor_a, tor_b, radian);
+
+	VJOIN1(a, center, -1.0, tor->v);
+	VUNITIZE(a);
+	VSCALE(a, a, mag_h);
+
+	plot_ellipse(info->vhead, center, a, b, points_per_ellipse);
+
+	radian += radian_step;
+    }
+
+    return 0;
+}
 
 /**
  * R T _ T O R _ P L O T
@@ -1011,7 +1110,7 @@ rt_num_circular_segments(double maxerr, double radius)
  * The TORUS has the following input fields:
  * ti.v V from origin to center
  * ti.h Radius Vector, Normal to plane of torus
- * ti.a, ti.b perpindicular, to CENTER of torus (for top, bottom)
+ * ti.a, ti.b perpendicular, to CENTER of torus (for top, bottom)
  */
 int
 rt_tor_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *UNUSED(tol), const struct rt_view_info *UNUSED(info))
@@ -1036,6 +1135,8 @@ rt_tor_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
     RT_CK_DB_INTERNAL(ip);
     tip = (struct rt_tor_internal *)ip->idb_ptr;
     RT_TOR_CK_MAGIC(tip);
+
+    rel = primitive_get_absolute_tolerance(ttol, 2.0 * (tip->r_a + tip->r_h));
 
     if (ttol->rel <= 0.0 || ttol->rel >= 1.0) {
 	rel = 0.0;		/* none */
@@ -1335,7 +1436,8 @@ rt_tor_import4(struct rt_db_internal *ip, const struct bu_external *ep, register
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_TOR;
     ip->idb_meth = &rt_functab[ID_TOR];
-    ip->idb_ptr = bu_malloc(sizeof(struct rt_tor_internal), "rt_tor_internal");
+    BU_ALLOC(ip->idb_ptr, struct rt_tor_internal);
+
     tip = (struct rt_tor_internal *)ip->idb_ptr;
     tip->magic = RT_TOR_INTERNAL_MAGIC;
 
@@ -1378,8 +1480,10 @@ rt_tor_import4(struct rt_db_internal *ip, const struct bu_external *ep, register
 int
 rt_tor_export5(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
-    double vec[2*3+2];
     struct rt_tor_internal *tip;
+
+    /* must be double for export */
+    double vec[2*3+2];
 
     if (dbip) RT_CK_DBI(dbip);
 
@@ -1476,7 +1580,7 @@ rt_tor_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
 
     /*
      * The rest of these provide no real extra information,
-     * and exist for compatability with old versions of MGED.
+     * and exist for compatibility with old versions of MGED.
      */
     r3=r1-r2;	/* Radius to inner circular edge */
     r4=r1+r2;	/* Radius to outer circular edge */
@@ -1511,6 +1615,8 @@ int
 rt_tor_import5(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip)
 {
     struct rt_tor_internal *tip;
+
+    /* must be double for import and export */
     struct rec {
 	double v[3];
 	double h[3];
@@ -1533,9 +1639,9 @@ rt_tor_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_TOR;
     ip->idb_meth = &rt_functab[ID_TOR];
-    ip->idb_ptr = bu_malloc(sizeof(struct rt_tor_internal), "rt_tor_internal");
-    tip = (struct rt_tor_internal *)ip->idb_ptr;
+    BU_ALLOC(ip->idb_ptr, struct rt_tor_internal);
 
+    tip = (struct rt_tor_internal *)ip->idb_ptr;
     tip->magic = RT_TOR_INTERNAL_MAGIC;
 
     ntohd((unsigned char *)&rec, ep->ext_buf, 2*3+2);
@@ -1552,7 +1658,7 @@ rt_tor_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
     tip->r_b = tip->r_a;
 
     /* Calculate two mutually perpendicular vectors, perpendicular to N */
-    bn_vec_ortho(tip->a, tip->h);		/* a has unit length */
+    bn_vec_ortho(tip->a, tip->h);	/* a has unit length */
     VCROSS(tip->b, tip->h, tip->a);	/* |A| = |H| = 1, so |B|=1 */
 
     VSCALE(tip->a, tip->a, tip->r_a);

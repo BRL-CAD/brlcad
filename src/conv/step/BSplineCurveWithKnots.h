@@ -1,7 +1,7 @@
 /*                 BSplineCurveWithKnots.h
  * BRL-CAD
  *
- * Copyright (c) 1994-2012 United States Government as represented by
+ * Copyright (c) 1994-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -32,27 +32,29 @@
 typedef list<int> LIST_OF_INTEGERS;
 typedef list<double> LIST_OF_REALS;
 
-class BSplineCurveWithKnots : virtual public BSplineCurve {
+class BSplineCurveWithKnots : virtual public BSplineCurve
+{
 private:
-	static string entityname;
+    static string entityname;
+    static EntityInstanceFunc GetInstance;
 
 protected:
-	LIST_OF_INTEGERS knot_multiplicities;
-	LIST_OF_REALS knots;
+    LIST_OF_INTEGERS knot_multiplicities;
+    LIST_OF_REALS knots;
 
 
-	Knot_type knot_spec;
+    Knot_type knot_spec;
 
 public:
-	BSplineCurveWithKnots();
-	virtual ~BSplineCurveWithKnots();
-	BSplineCurveWithKnots(STEPWrapper *sw,int step_id);
-	bool Load(STEPWrapper *sw,SDAI_Application_instance *sse);
-	virtual bool LoadONBrep(ON_Brep *brep);
-	virtual void Print(int level);
+    BSplineCurveWithKnots();
+    virtual ~BSplineCurveWithKnots();
+    BSplineCurveWithKnots(STEPWrapper *sw, int step_id);
+    bool Load(STEPWrapper *sw, SDAI_Application_instance *sse);
+    virtual bool LoadONBrep(ON_Brep *brep);
+    virtual void Print(int level);
 
-	//static methods
-	static STEPEntity *Create(STEPWrapper *sw,SDAI_Application_instance *sse);
+    //static methods
+    static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
 #endif /* BSPLINECURVEWITHKNOTS_H_ */

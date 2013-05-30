@@ -1,6 +1,15 @@
-if(NOT MSVC)
-  add_subdirectory(step)
-endif(NOT MSVC)
+if(MSVC)
+  add_definitions(
+    -DON_DLL_IMPORTS
+    )
+endif(MSVC)
+
+add_definitions(
+  -D_CONSOLE
+  -DBRLCAD_DLL
+  )
+
+add_subdirectory(step)
 
 add_subdirectory(iges)
 add_subdirectory(intaval)
@@ -22,17 +31,6 @@ set(CONV_INCLUDE_DIRS
 
 LIST(REMOVE_DUPLICATES CONV_INCLUDE_DIRS)
 include_directories(${CONV_INCLUDE_DIRS})
-
-if(MSVC)
-  add_definitions(
-    -DON_DLL_IMPORTS
-    )
-endif(MSVC)
-
-add_definitions(
-  -D_CONSOLE
-  -DBRLCAD_DLL
-  )
 
 BRLCAD_ADDEXEC(3dm-g 3dm/3dm-g.cpp "libwdb;${OPENNURBS_LIBRARY}" NOSTRICT)
 
@@ -119,11 +117,11 @@ BRLCAD_ADDEXEC(g-acad g-acad.c "librt;libbu")
 
 BRLCAD_ADDEXEC(g-obj g-obj.c "librt;libbu")
 
-BRLCAD_ADDEXEC(g-voxel g-voxel.c "librt;libbu;libwdb")
+BRLCAD_ADDEXEC(g-voxel g-voxel.c "librt;libbu;libwdb;libanalyze;")
 
 # TODO - Until wfobj functionality is available as a libgcv API,
-# obj-g build logic is living in src/libgcv/wfobj. Once an API 
-# for libgcv is devised that exposes the wfobj functionality move 
+# obj-g build logic is living in src/libgcv/wfobj. Once an API
+# for libgcv is devised that exposes the wfobj functionality move
 # obj-g build logic back here
 #BRLCAD_ADDEXEC(obj-g ${OBJ_G_SRCS} "libbu;libbn;librt;libwdb;libgcv")
 
@@ -161,56 +159,14 @@ BRLCAD_ADDEXEC(viewpoint-g viewpoint-g.c "libwdb;librt;libbu")
 
 BRLCAD_ADDEXEC(g-xxx_facets g-xxx_facets.c "librt;libbu" NO_INSTALL)
 
+BRLCAD_ADDEXEC(walk_example walk_example.c "libbu;librt" NO_INSTALL)
+
 BRLCAD_ADDEXEC(g-shell-rect g-shell-rect.c "libwdb;librt;libbu;${M_LIBRARY}")
 
 install(PROGRAMS intaval-g.py DESTINATION bin)
 
 BRLCAD_ADDDATA(g-xxx.c sample_applications)
 BRLCAD_ADDDATA(g-xxx_facets.c sample_applications)
-
-set(conv_MANS
-  asc/asc2g.1
-  asc/asc2pix.1
-  asc/g2asc.1
-  asc/pix2asc.1
-  bot_dump.1
-  bot_shell-vtk.1
-  comgeom/comgeom-g.1
-  conv-vg2g.1
-  cy-g.1
-  dbclean.1
-  dbupgrade.1
-  dxf/dxf-g.1
-  dxf/g-dxf.1
-  enf-g.1
-  euclid/euclid-g.1
-  euclid/g-euclid.1
-  fast4-g.1
-  g-acad.1
-  g-egg.1
-  g-nff.1
-  g-obj.1
-  g-shell-rect.1
-  g-var.1
-  g-vrml.1
-  g-x3d.1
-  nastran-g.1
-  nmg/asc-nmg.1
-  nmg/g-nmg.1
-  nmg/nmg-bot.1
-  nmg/nmg-rib.1
-  patch/patch-g.1
-  patch/rpatch.1
-  ply-g.1
-  poly-bot.1
-  proe-g.1
-  stl/g-stl.1
-  stl/stl-g.1
-  tankill/g-tankill.1
-  tankill/tankill-g.1
-  viewpoint-g.1
-  )
-ADD_MAN_PAGES(1 conv_MANS)
 
 set(conv_ignore_files
   Formats.csv
@@ -227,7 +183,6 @@ set(conv_ignore_files
   shp/shapelib/license.html
   shp/shapelib/shapefil.h
   shp/README
-  walk_example.c
   )
 CMAKEFILES(${conv_ignore_files})
 CMAKEFILES(Makefile.am)

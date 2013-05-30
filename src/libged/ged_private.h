@@ -1,7 +1,7 @@
 /*                   G E D _ P R I V A T E . H
  * BRL-CAD
  *
- * Copyright (c) 2008-2012 United States Government as represented by
+ * Copyright (c) 2008-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -51,6 +51,7 @@ __BEGIN_DECLS
 #define _GED_SHADED_MODE_BOTS 1
 #define _GED_SHADED_MODE_ALL  2
 #define _GED_BOOL_EVAL        3
+#define _GED_HIDDEN_LINE      4
 
 #define _GED_TREE_AFLAG 0x01
 #define _GED_TREE_CFLAG 0x02
@@ -97,6 +98,7 @@ struct _ged_client_data {
     long nvectors;
     int do_polysolids;
     int num_halfs;
+    int autoview;
 };
 
 
@@ -110,6 +112,9 @@ struct _ged_trace_data {
     int gtd_flag;
 };
 
+
+/* defined in facedef.c */
+extern int edarb_facedef(void *data, int argc, const char *argv[]);
 
 /* defined in globals.c */
 extern struct solid _FreeSolid;
@@ -138,6 +143,14 @@ extern struct directory *_ged_combadd(struct ged *gedp,
 				      int relation,
 				      int ident,
 				      int air);
+extern int _ged_combadd2(struct ged *gedp,
+			 char *combname,
+			 int argc,
+			 const char *argv[],
+			 int region_flag,
+			 int relation,
+			 int ident,
+			 int air);
 
 /* defined in draw.c */
 extern void _ged_cvt_vlblock_to_solids(struct ged *gedp,
@@ -162,6 +175,17 @@ extern void _ged_drawH_part2(int dashflag,
 			     struct db_tree_state *tsp,
 			     struct solid *existing_sp,
 			     struct _ged_client_data *dgcdp);
+
+/* defined in edbot.c */
+extern int _ged_select_botpts(struct ged *gedp,
+			      struct rt_bot_internal *botip,
+			      double vx,
+			      double vy,
+			      double vwidth,
+			      double vheight,
+			      double vminz,
+			      int rflag);
+
 
 /* defined in editit.c */
 extern int _ged_editit(const char *editstring,
@@ -341,6 +365,17 @@ extern int _ged_scale_hyp(struct ged *gedp,
 			  const char *attribute,
 			  fastf_t sf,
 			  int rflag);
+
+/* defined in edit_metaball.c */
+extern int _ged_scale_metaball(struct ged *gedp,
+			       struct rt_metaball_internal *mbip,
+			       const char *attribute,
+			       fastf_t sf,
+			       int rflag);
+extern int _ged_set_metaball(struct ged *gedp,
+			     struct rt_metaball_internal *mbip,
+			     const char *attribute,
+			     fastf_t sf);
 
 /* defined in scale_part.c */
 extern int _ged_scale_part(struct ged *gedp,

@@ -1,7 +1,7 @@
 /*                       F B L A B E L . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2012 United States Government as represented by
+ * Copyright (c) 1986-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -337,7 +337,7 @@ get_args(int argc, char **argv)
 		}
 	    }
 		break;
-		/* backword compatability */
+		/* backward compatibility */
 	    case 'r':
 		pixcolor[RED] = atoi(bu_optarg);
 		break;
@@ -357,10 +357,10 @@ get_args(int argc, char **argv)
     xpos = atoi(argv[bu_optind++]);
     ypos = atoi(argv[bu_optind++]);
     textstring = argv[bu_optind++];
-    if (debug) (void)fprintf(stderr, "fblabel %d %d %s\n", xpos, ypos, textstring);
+    if (debug) fprintf(stderr, "fblabel %d %d %s\n", xpos, ypos, textstring);
 
     if (argc > bu_optind)
-	(void)fprintf(stderr, "fblabel: excess argument(s) ignored\n");
+	fprintf(stderr, "fblabel: excess argument(s) ignored\n");
 
     return 1;		/* OK */
 }

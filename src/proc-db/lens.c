@@ -1,7 +1,7 @@
 /*                          L E N S . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2012 United States Government as represented by
+ * Copyright (c) 2008-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -135,6 +135,7 @@ void MakeP(struct rt_wdb (*file), char *prefix, fastf_t diameter, fastf_t focal_
     }
 }
 
+
 void MakeD(struct rt_wdb (*file), char *prefix, fastf_t diameter, fastf_t focal_length, fastf_t ref_ind, fastf_t thickness)
 {
     struct wmember lensglass, lens;
@@ -210,6 +211,7 @@ void MakeD(struct rt_wdb (*file), char *prefix, fastf_t diameter, fastf_t focal_
 	bu_log("Error - specified parameters result in non-physical geometry");
     }
 }
+
 
 /* Process command line arguments */
 int ReadArgs(int argc, char **argv, int *lens_1side_2side, fastf_t *ref_ind, fastf_t *diameter, fastf_t *thickness, fastf_t *focal_length)

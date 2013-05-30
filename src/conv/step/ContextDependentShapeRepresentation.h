@@ -1,7 +1,7 @@
 /*                 ContextDependentShapeRepresentation.h
  * BRL-CAD
  *
- * Copyright (c) 1994-2012 United States Government as represented by
+ * Copyright (c) 1994-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -39,9 +39,11 @@ class ProductDefinitionShape;
 
 typedef std::list<RepresentationRelationship *> LIST_OF_REPRESENTATION_RELATIONSHIPS;
 
-class ContextDependentShapeRepresentation: virtual public STEPEntity {
+class ContextDependentShapeRepresentation: virtual public STEPEntity
+{
 private:
     static string entityname;
+    static EntityInstanceFunc GetInstance;
 
 protected:
     LIST_OF_REPRESENTATION_RELATIONSHIPS representation_relation;

@@ -1,7 +1,7 @@
 /*                          D M - T K . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2012 United States Government as represented by
+ * Copyright (c) 2004-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -55,7 +55,7 @@ static void zclip_hook(void);
 static Tk_GenericProc tk_doevent;
 
 struct bu_structparse tk_vparse[] = {
-    {"%f",  1, "bound",		 DM_O(dm_bound),	dirty_hook, NULL, NULL},
+    {"%g",  1, "bound",		 DM_O(dm_bound),	dirty_hook, NULL, NULL},
     {"%d",  1, "useBound",	 DM_O(dm_boundFlag),	dirty_hook, NULL, NULL},
     {"%d",  1, "zclip",		 DM_O(dm_zclip),	zclip_hook, NULL, NULL},
     {"%d",  1, "debug",		 DM_O(dm_debugLevel),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
@@ -166,8 +166,17 @@ dirty_hook(void)
 static void
 zclip_hook(void)
 {
+    fastf_t bounds[6] = { GED_MIN, GED_MAX, GED_MIN, GED_MAX, GED_MIN, GED_MAX };
+
     view_state->vs_gvp->gv_zclip = dmp->dm_zclip;
     dirty_hook();
+
+    if (dmp->dm_zclip) {
+	bounds[4] = -1.0;
+	bounds[5] = 1.0;
+    }
+
+    DM_SET_WIN_BOUNDS(dmp, bounds);
 }
 /*
  * Local Variables:

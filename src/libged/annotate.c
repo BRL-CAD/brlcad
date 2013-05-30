@@ -1,7 +1,7 @@
 /*                      A N N O T A T E . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2012 United States Government as represented by
+ * Copyright (c) 2008-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -87,7 +87,7 @@
  * Visibility: auto, wireframe, render, both
  *
  * linearformat: "%.2f"
- * linearunits: mm, m, in, ft, etc
+ * linearunits: mm, m, in, ft, etc.
  *
  * angularformat: "%.2f"
  * angularunits: degrees, radians
@@ -127,6 +127,7 @@ ged_annotate(struct ged *gedp, int argc, const char *argv[])
     int object_count = 0;
     int i;
 
+    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
@@ -138,7 +139,6 @@ ged_annotate(struct ged *gedp, int argc, const char *argv[])
 	return GED_HELP;
     }
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_READ_ONLY(gedp, GED_ERROR);
 
     /* stash objects, quoting them if they include spaces */
@@ -163,7 +163,7 @@ ged_annotate(struct ged *gedp, int argc, const char *argv[])
     }
 
     bu_vls_free(&objects);
-    bu_free_argv(object_count+1, object_argv);
+    bu_free((genptr_t)object_argv, "ged_annotate");
 
     return GED_OK;
 }

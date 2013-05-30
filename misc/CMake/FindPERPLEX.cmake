@@ -3,48 +3,30 @@
 # The module defines the following variables
 #
 #  PERPLEX_EXECUTABLE - path to the perplex program
-#
-# #====================================================================
-#  Example:
-#
-#   find_package(LEMON)
-#   find_package(RE2C)
-#   find_package(PERPLEX)
-#
-#   LEMON_TARGET(MyParser parser.y ${CMAKE_CURRENT_BINARY_DIR}/parser.cpp
-#   PERPLEX_TARGET(MyScanner scanner.re  ${CMAKE_CURRENT_BIANRY_DIR}/scanner.cpp ${CMAKE_CURRENT_BINARY_DIR}/scanner_header.hpp)
-#   ADD_PERPLEX_LEMON_DEPENDENCY(MyScanner MyParser)
-#
-#   include_directories(${CMAKE_CURRENT_BINARY_DIR})
-#   add_executable(Foo
-#      Foo.cc
-#      ${LEMON_MyParser_OUTPUTS}
-#      ${PERPLEX_MyScanner_OUTPUTS}
-#   )
-#  ====================================================================
-# 
+#  PERPLEX_TEMPLATE - location of the perplex template file
+
 #=============================================================================
-#               F I N D P E R P L E X . C M A K E
+#                 F I N D P E R P L E X . C M A K E
 #
 # Originally based off of FindBISON.cmake from Kitware's CMake distribution
 #
-# Copyright (c) 2010-2012 United States Government as represented by
+# Copyright (c) 2010-2013 United States Government as represented by
 #                the U.S. Army Research Laboratory.
 # Copyright 2009 Kitware, Inc.
 # Copyright 2006 Tristan Carel
 # All rights reserved.
-# 
+#
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
 # are met:
-#  
+#
 # * Redistributions of source code must retain the above copyright
 #   notice, this list of conditions and the following disclaimer.
-# 
+#
 # * Redistributions in binary form must reproduce the above copyright
 #   notice, this list of conditions and the following disclaimer in the
 #   documentation and/or other materials provided with the distribution.
-# 
+#
 # * The names of the authors may not be used to endorse or promote
 #   products derived from this software without specific prior written
 #   permission.
@@ -62,10 +44,29 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #=============================================================================
 
-find_program(PERPLEX_EXECUTABLE perplex_path DOC "path to the perplex executable")
+find_program(PERPLEX_EXECUTABLE perplex DOC "path to the perplex executable")
 mark_as_advanced(PERPLEX_EXECUTABLE)
+
+if(PERPLEX_EXECUTABLE AND NOT PERPLEX_TEMPLATE)
+  get_filename_component(perplex_path ${PERPLEX_EXECUTABLE} PATH)
+  if(perplex_path)
+    set(PERPLEX_TEMPLATE "")
+    if(EXISTS ${perplex_path}/../share/perplex/perplex_template.c)
+      get_filename_component(perplex_template_path "${perplex_path}/../share/perplex/perplex_template.c" ABSOLUTE)
+      set(PERPLEX_TEMPLATE "${perplex_template_path}")
+    endif(EXISTS ${perplex_path}/../share/perplex/perplex_template.c)
+    if(EXISTS ${perplex_path}/../share/perplex_template.c AND NOT PERPLEX_TEMPLATE)
+      get_filename_component(perplex_template_path "${perplex_path}/../share/perplex_template.c" ABSOLUTE)
+      set(PERPLEX_TEMPLATE "${perplex_template_path}")
+    endif(EXISTS ${perplex_path}/../share/perplex_template.c AND NOT PERPLEX_TEMPLATE)
+  endif(perplex_path)
+  if(EXISTS /usr/share/perplex/perplex_template.c AND NOT PERPLEX_TEMPLATE)
+    set(PERPLEX_TEMPLATE "/usr/share/perplex/perplex_template.c")
+  endif(EXISTS /usr/share/perplex/perplex_template.c AND NOT PERPLEX_TEMPLATE)
+endif(PERPLEX_EXECUTABLE AND NOT PERPLEX_TEMPLATE)
 include(FindPackageHandleStandardArgs)
-FIND_PACKAGE_HANDLE_STANDARD_ARGS(PERPLEX DEFAULT_MSG PERPLEX_EXECUTABLE)
+FIND_PACKAGE_HANDLE_STANDARD_ARGS(PERPLEX DEFAULT_MSG PERPLEX_EXECUTABLE PERPLEX_TEMPLATE)
+mark_as_advanced(PERPLEX_TEMPLATE)
 
 #============================================================
 # FindPERPLEX.cmake ends here

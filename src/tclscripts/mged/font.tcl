@@ -1,7 +1,7 @@
 #                        F O N T . T C L
 # BRL-CAD
 #
-# Copyright (c) 2004-2012 United States Government as represented by
+# Copyright (c) 2004-2013 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -628,7 +628,7 @@ proc font_name_post { id menu cmd } {
 ## - font_get_names
 #
 # Returns a list of named fonts with all
-# occurences of font_gui_font* removed.
+# occurrences of font_gui_font* removed.
 #
 proc font_get_names {} {
     set named_fonts [lsort [font names]]

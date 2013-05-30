@@ -1,7 +1,7 @@
 /*               B E Z I E R _ 2 D _ I S E C T . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2012 United States Government as represented by
+ * Copyright (c) 2004-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -24,7 +24,7 @@
  * The following routines are for 2D Bezier curves
  *
  * The following routines are borrowed from Graphics Gems I, Academic
- * Press, Inc, 1990, Andrew S. Glassner (editor), "A Bezier
+ * Press, Inc., 1990, Andrew S. Glassner (editor), "A Bezier
  * Curve-based Root-finder", Philip J. Schneider.
  *
  * Modifications have been made for inclusion in BRL-CAD and to
@@ -53,7 +53,7 @@
  */
 int CrossingCount(
     point2d_t *V,		/* 2D Control pts of Bezier curve */
-    int degree,                 /* Degreee of Bezier curve */
+    int degree,                 /* Degree of Bezier curve */
     point2d_t ray_start,	/* starting point for ray */
     point2d_t ray_perp)		/* unit vector perpendicular to ray direction */
 {
@@ -343,14 +343,14 @@ FindRoots(
 	    /* Stop recursion when the tree is deep enough */
 	    /* if deep enough, return 1 solution at midpoint */
 	    if (depth >= MAXDEPTH) {
-		*intercept = (point2d_t *)bu_malloc(sizeof(point2d_t), "FindRoots: unique solution (intercept)");
-		*normal = (point2d_t *)bu_malloc(sizeof(point2d_t), "FindRoots: unique solution (normal)");
+		BU_ALLOC(*intercept, point2d_t);
+		BU_ALLOC(*normal, point2d_t);
 		Bezier(w, degree, 0.5, NULL, NULL, *intercept[0], *normal[0]);
 		return 1;
 	    }
 	    if (ControlPolygonFlatEnough(w, degree, epsilon)) {
-		*intercept = (point2d_t *)bu_malloc(sizeof(point2d_t), "FindRoots: unique solution (intercept)");
-		*normal = (point2d_t *)bu_malloc(sizeof(point2d_t), "FindRoots: unique solution (normal)");
+		BU_ALLOC(*intercept, point2d_t);
+		BU_ALLOC(*normal, point2d_t);
 		if (!ComputeXIntercept(w, degree, ray_start, ray_dir, *intercept[0], *normal[0])) {
 		    bu_free((char *)(*intercept), "FindRoots: no solution");
 		    bu_free((char *)(*normal), "FindRoots: no solution");
@@ -414,8 +414,8 @@ subdivide_bezier(struct bezier_2d_list *bezier_in, int degree, fastf_t epsilon, 
     point2d_t pt;
 
     /* create a new head */
-    new_head = (struct bezier_2d_list *)bu_malloc(sizeof(struct bezier_2d_list),
-						  "subdivide_bezier: new_head");
+    BU_ALLOC(new_head, struct bezier_2d_list);
+
     BU_LIST_INIT(&new_head->l);
     if (depth >= MAXDEPTH) {
 	BU_LIST_APPEND(&new_head->l, &bezier_in->l);
@@ -428,9 +428,9 @@ subdivide_bezier(struct bezier_2d_list *bezier_in, int degree, fastf_t epsilon, 
     }
 
     /* allocate memory for left and right curves */
-    bz_l = (struct bezier_2d_list *)bu_malloc(sizeof(struct bezier_2d_list), "subdivide_bezier: bz_l");
+    BU_ALLOC(bz_l, struct bezier_2d_list);
     BU_LIST_INIT(&bz_l->l);
-    bz_r = (struct bezier_2d_list *)bu_malloc(sizeof(struct bezier_2d_list), "subdivide_bezier: bz_r");
+    BU_ALLOC(bz_r, struct bezier_2d_list);
     BU_LIST_INIT(&bz_r->l);
     bz_l->ctl = (point2d_t *)bu_calloc(degree + 1, sizeof(point2d_t),
 				       "subdivide_bezier: bz_l->ctl");

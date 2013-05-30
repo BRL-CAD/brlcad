@@ -1,7 +1,7 @@
 /*                   W D B _ E X A M P L E . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2012 United States Government as represented by
+ * Copyright (c) 2004-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -48,6 +48,7 @@ void usage(void)
 {
     fprintf(stderr, "Usage: %s db_file.g\n", progname);
 }
+
 
 int
 main(int ac, char *av[])
@@ -147,6 +148,7 @@ main(int ac, char *av[])
     wdb_close(db_fp);
     return 0;
 }
+
 
 /*
  * Local Variables:

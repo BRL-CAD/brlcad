@@ -23,18 +23,12 @@ LDADD = ${RT}
 scriptsort_SOURCES = $(SS_SRC)
 noinst_HEADERS = tokens.h
 
-man_MANS = \
-	scriptsort.1 \
-	tabinterp.1 \
-	tabsub.1
-
 BUILT_SOURCES = ${SS_BLT}
 
 DISTCLEANFILES = $(BUILT_SOURCES)
 
 EXTRA_DIST = \
 	$(BUILT_SOURCES) \
-	$(man_MANS) \
 	script.l \
 	scriptsort.c \
 	CMakeLists.txt

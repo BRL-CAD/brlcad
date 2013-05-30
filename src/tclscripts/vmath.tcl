@@ -1,7 +1,7 @@
 #                       V M A T H . T C L
 # BRL-CAD
 #
-# Copyright (c) 1995-2012 United States Government as represented by
+# Copyright (c) 1995-2013 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -20,27 +20,29 @@
 ###
 #
 # Description -
-# 	Simple interpreted functions for doing vmath stuff (see ../h/vmath.h
+# 	Simple interpreted functions for doing vmath stuff (see ../../include/vmath.h
 #	for the C preprocessor equivalents and comments!  Much of this was
 #	automatically generated.
 
-# math constants from math.h
-set M_E		2.7182818284590452354
-set M_LOG2E	1.4426950408889634074
-set M_LOG10E	0.43429448190325182765
-set M_LN2	0.69314718055994530942
-set M_LN10	2.30258509299404568402
-set M_PI	3.14159265358979323846
-set M_PI_2	1.57079632679489661923
-set M_PI_4	0.78539816339744830962
-set M_1_PI	0.31830988618379067154
-set M_2_PI	0.63661977236758134308
-set M_2_SQRTPI	1.12837916709551257390
-set M_SQRT2	1.41421356237309504880
-set M_SQRT1_2	0.70710678118654752440
+# math constants from ../../include/vmath.h
+set M_E		2.71828182845904523536028747135
+set M_LOG2E	1.44269504088896340735992468100
+set M_LOG10E	0.43429448190325182765112891892
+set M_LN2	0.69314718055994530941723212146
+set M_LN10	2.30258509299404568401799145468
+set M_PI	3.14159265358979323846264338328
+set M_PI_2	1.57079632679489661923132169164
+set M_PI_4	0.78539816339744830966156608458
+set M_1_PI	0.31830988618379067153776752675
+set M_2_PI	0.63661977236758134307553505349
+set M_2_SQRTPI	1.12837916709551257389615890312
+set M_SQRT2	1.41421356237309504880168872421
+set M_SQRT1_2	0.70710678118654752440084436210
+set DEG2RAD	0.0174532925199432957692369076848861271
+set RAD2DEG    57.2957795130823208767981548141051703
 
 proc init_vmath {} {
-    # this routine does nothing except ensure that the abpve global variables get set
+    # this routine does nothing except ensure that the above global variables get set
 }
 
 proc near_zero { val epsilon } {
@@ -486,13 +488,13 @@ proc quat_from_rot {r x y z} {
 }
 
 proc quat_from_rot_deg {r x y z} {
-    global M_PI
-    return [quat_from_vrot [expr $r * ( $M_PI / 180.0 )] [list $x $y $z]]
+    global DEG2RAD
+    return [quat_from_vrot [expr $r * $DEG2RAD ] [list $x $y $z]]
 }
 
 proc quat_from_vrot_deg {r v} {
-    global M_PI
-    return [quat_from_vrot [expr $r * ($M_PI / 180.0) ] $v]
+    global DEG2RAD
+    return [quat_from_vrot [expr $r *$DEG2RAD ] $v]
 }
 
 
@@ -729,7 +731,7 @@ proc vzeron { n } {
 
 #extension of vadd
 #add arbitrary number of vectors of length n
-# usage: vaddn $v1 $v2 $v3 ... $vm $n
+# Usage: vaddn $v1 $v2 $v3 ... $vm $n
 proc vaddn args {
     set cur_length [llength $args]
     if { $cur_length==1 } then {

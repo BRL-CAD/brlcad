@@ -1,7 +1,7 @@
 /*                 C O N V _ D R A W I N G S . C
  * BRL-CAD
  *
- * Copyright (c) 1994-2012 United States Government as represented by
+ * Copyright (c) 1994-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -382,8 +382,8 @@ Leader_to_vlist(entno, vhead)
 	    v2[0] = v3[1];
 	    v2[1] = (-v3[0]);
 
-	    tmp[0] = v1[0] + v2[0]*b/2.0 + v3[0]*a/2.0;
-	    tmp[1] = v1[1] + v2[1]*b/2.0 + v3[1]*a/2.0;
+	    tmp[0] = v1[0] + (v2[0]*b + v3[0]*a)/2.0;
+	    tmp[1] = v1[1] + (v2[1]*b + v3[1]*a)/2.0;
 	    tmp[2] = v1[2];
 	    MAT4X3PNT(tmp3, *dir[entno]->rot, tmp);
 	    RT_ADD_VLIST(vhead, tmp3, BN_VLIST_LINE_MOVE);
@@ -430,7 +430,7 @@ Draw_entities(struct model *m, int de_list[], int no_of_des, fastf_t x, fastf_t 
 	    continue;
 
 	if (dir[entno]->view) {
-	    /* this entitiy doesn't always get drawn */
+	    /* this entity doesn't always get drawn */
 	    int do_entity = 0;
 
 	    /* look for its view entity on the list */
@@ -469,7 +469,7 @@ Draw_entities(struct model *m, int de_list[], int no_of_des, fastf_t x, fastf_t 
 		break;
 	}
 
-	/* rotate, scale, clip, etc, ect, etc... */
+	/* rotate, scale, clip, etc., etc., etc... */
 	for (BU_LIST_FOR(vp, bn_vlist, &vhead)) {
 	    int nused = vp->nused;
 
@@ -522,7 +522,7 @@ Get_views_visible(entno)
     struct views_visible *vv;
 
     if (dir[entno]->form != 3 && dir[entno]->form != 4) {
-	bu_log("Get_views_visible called for wrong form of Associatitivity entity\n");
+	bu_log("Get_views_visible called for wrong form of Associativity entity\n");
 	return (struct views_visible *)NULL;
     }
 
@@ -535,7 +535,7 @@ Get_views_visible(entno)
 
     Readint(&no_of_views, "");
     Readint(&no_of_entities, "");
-    vv = (struct views_visible *)bu_malloc(sizeof(struct views_visible), "Get_views_visible: vv");
+    BU_ALLOC(vv, struct views_visible);
     vv->de = entno * 2 + 1;
     vv->no_of_views = no_of_views;
     vv->view_de = (int *)bu_calloc(no_of_views, sizeof(int), "Get_views_visible: vv->view_de");
@@ -827,7 +827,7 @@ Conv_drawings()
     }
     bu_log("No view entities\n");
 
-    /* no drawings or views, just convert all independent lines, arcs, etc */
+    /* no drawings or views, just convert all independent lines, arcs, etc. */
     m = nmg_mm();
 
     Draw_entities(m, (int *)NULL, 0, 0.0, 0.0, 0.0, 1.0, (mat_t *)NULL);

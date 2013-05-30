@@ -1,7 +1,7 @@
 /*                 RectangularCompositeSurface.h
  * BRL-CAD
  *
- * Copyright (c) 1994-2012 United States Government as represented by
+ * Copyright (c) 1994-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -34,23 +34,25 @@ class SurfacePatch;
 //typedef list<SurfacePatch *> LIST_OF_PATCHES;
 //typedef list<LIST_OF_PATCHES *> LIST_OF_LIST_OF_PATCHES;
 
-class RectangularCompositeSurface: public BoundedSurface {
+class RectangularCompositeSurface: public BoundedSurface
+{
 private:
-	static string entityname;
+    static string entityname;
+    static EntityInstanceFunc GetInstance;
 
 protected:
-	LIST_OF_LIST_OF_PATCHES *segments;
+    LIST_OF_LIST_OF_PATCHES *segments;
 
 public:
-	RectangularCompositeSurface();
-	virtual ~RectangularCompositeSurface();
-	RectangularCompositeSurface(STEPWrapper *sw,int step_id);
-	bool Load(STEPWrapper *sw,SDAI_Application_instance *sse);
-	virtual bool LoadONBrep(ON_Brep *brep);
-	virtual void Print(int level);
+    RectangularCompositeSurface();
+    virtual ~RectangularCompositeSurface();
+    RectangularCompositeSurface(STEPWrapper *sw, int step_id);
+    bool Load(STEPWrapper *sw, SDAI_Application_instance *sse);
+    virtual bool LoadONBrep(ON_Brep *brep);
+    virtual void Print(int level);
 
-	//static methods
-	static STEPEntity *Create(STEPWrapper *sw,SDAI_Application_instance *sse);
+    //static methods
+    static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
 #endif /* RECTANGULAR_COMPOSITE_SURFACE_H_ */

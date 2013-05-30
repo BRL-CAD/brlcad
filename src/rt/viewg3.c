@@ -1,7 +1,7 @@
 /*                        V I E W G 3 . C
  * BRL-CAD
  *
- * Copyright (c) 1989-2012 United States Government as represented by
+ * Copyright (c) 1989-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -530,7 +530,7 @@ rayhit(struct application *ap, register struct partition *PartHeadp, struct seg 
 	}
 
 	/*
-	 * Compute the obliquity angles in degrees, ie, the
+	 * Compute the obliquity angles in degrees, i.e., the
 	 * "declension" angle down off the normal vector.  RT normals
 	 * always point outwards; the "inhit" normal points opposite
 	 * the ray direction, the "outhit" normal points along the ray
@@ -562,7 +562,7 @@ rayhit(struct application *ap, register struct partition *PartHeadp, struct seg 
 	out_obliq = acos(dot_prod) *
 	    bn_radtodeg;
 
-	/* Check for exit obliquties greater than 90 degrees. */
+	/* Check for exit obliquities greater than 90 degrees. */
 
 			      if (in_obliq > 90.0)
 				  in_obliq = 90.0;
@@ -727,14 +727,14 @@ void view_cleanup(struct rt_i *UNUSED(rtip)) {}
 /*
  * P A R T _ C O M P A C T
  *
- * This routine takes at partition-head pointer, an application
+ * This routine takes a partition-head pointer, an application
  * structure pointer, and a tolerance.  It goes through the partition
  * list shot-line by shot-line and checks for regions with identical
  * region-ids abutting.  If one is found, and the distance between the
- * two abbutting regions is less than the tolerance, the two
- * corresponding partions are collapsed into one, and the outhit from
- * the second partions becomes the governing outhit.  This will
- * prevent the occurance of multiple hits per same region.
+ * two abutting regions is less than the tolerance, the two
+ * corresponding partitions are collapsed into one, and the outhit from
+ * the second partition becomes the governing outhit.  This will
+ * prevent the occurrence of multiple hits per same region.
  *
  */
 
@@ -795,7 +795,7 @@ part_compact(register struct application *ap, register struct partition *PartHea
 
 	/*
 	 * Dequeue and free the unwanted partition structure.
-	 * Referenced segments, etc, will be freed by rt_shootray().
+	 * Referenced segments, etc., will be freed by rt_shootray().
 	 */
 	DEQUEUE_PT(nextpp);
 	FREE_PT(nextpp, ap->a_resource);

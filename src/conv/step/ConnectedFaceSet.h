@@ -1,7 +1,7 @@
 /*                 ConnectedFaceSet.h
  * BRL-CAD
  *
- * Copyright (c) 1994-2012 United States Government as represented by
+ * Copyright (c) 1994-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -33,24 +33,26 @@
 class Face;
 typedef list<Face *> LIST_OF_FACES;
 
-class ConnectedFaceSet : public TopologicalRepresentationItem {
+class ConnectedFaceSet : public TopologicalRepresentationItem
+{
 private:
-	static string entityname;
+    static string entityname;
+    static EntityInstanceFunc GetInstance;
 
 protected:
-	LIST_OF_FACES cfs_faces;
+    LIST_OF_FACES cfs_faces;
 
 public:
-	ConnectedFaceSet();
-	virtual ~ConnectedFaceSet();
-	ConnectedFaceSet(STEPWrapper *sw,int step_id);
-	bool Load(STEPWrapper *sw,SDAI_Application_instance *sse);
-	virtual bool LoadONBrep(ON_Brep *brep);
-	virtual void Print(int level);
-	virtual void ReverseFaceSet();
+    ConnectedFaceSet();
+    virtual ~ConnectedFaceSet();
+    ConnectedFaceSet(STEPWrapper *sw, int step_id);
+    bool Load(STEPWrapper *sw, SDAI_Application_instance *sse);
+    virtual bool LoadONBrep(ON_Brep *brep);
+    virtual void Print(int level);
+    virtual void ReverseFaceSet();
 
-	//static methods
-	static STEPEntity *Create(STEPWrapper *sw,SDAI_Application_instance *sse);
+    //static methods
+    static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
 #endif /* CONNECTEDFACESET_H_ */

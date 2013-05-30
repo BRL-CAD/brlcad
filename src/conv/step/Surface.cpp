@@ -1,7 +1,7 @@
 /*                 Surface.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2012 United States Government as represented by
+ * Copyright (c) 1994-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -29,27 +29,31 @@
 
 #define CLASSNAME "Surface"
 #define ENTITYNAME "Surface"
-string Surface::entityname = Factory::RegisterClass(ENTITYNAME,(FactoryMethod)Surface::Create);
+string Surface::entityname = Factory::RegisterClass(ENTITYNAME, (FactoryMethod)Surface::Create);
 
-Surface::Surface() {
+Surface::Surface()
+{
     step = NULL;
     id = 0;
 }
 
-Surface::Surface(STEPWrapper *sw,int step_id) {
-    step=sw;
+Surface::Surface(STEPWrapper *sw, int step_id)
+{
+    step = sw;
     id = step_id;
 }
 
-Surface::~Surface() {
+Surface::~Surface()
+{
 }
 
 bool
-Surface::Load(STEPWrapper *sw, SDAI_Application_instance *sse) {
-    step=sw;
+Surface::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
+    step = sw;
     id = sse->STEPfile_id;
 
-    if ( !GeometricRepresentationItem::Load(step,sse) ) {
+    if (!GeometricRepresentationItem::Load(step, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::GeometricRepresentationItem." << std::endl;
 	return false;
     }
@@ -57,28 +61,23 @@ Surface::Load(STEPWrapper *sw, SDAI_Application_instance *sse) {
 }
 
 void
-Surface::Print(int level) {
-    TAB(level); std::cout << CLASSNAME << ":" << name << "(";
+Surface::Print(int level)
+{
+    TAB(level);
+    std::cout << CLASSNAME << ":" << name << "(";
     std::cout << "ID:" << STEPid() << ")" << std::endl;
 }
 
 STEPEntity *
-Surface::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
-    Factory::OBJECTS::iterator i;
-    if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
-	Surface *object = new Surface(sw,sse->STEPfile_id);
+Surface::GetInstance(STEPWrapper *sw, int id)
+{
+    return new Surface(sw, id);
+}
 
-	Factory::AddObject(object);
-
-	if (!object->Load(sw, sse)) {
-	    std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
-	    delete object;
-	    return NULL;
-	}
-	return static_cast<STEPEntity *>(object);
-    } else {
-	return (*i).second;
-    }
+STEPEntity *
+Surface::Create(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
+    return STEPEntity::CreateEntity(sw, sse, GetInstance, CLASSNAME);
 }
 
 

@@ -1,7 +1,7 @@
 /*                         I H O S T . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2012 United States Government as represented by
+ * Copyright (c) 2004-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -63,7 +63,7 @@ struct bu_list	HostHead;
  * with domain name.
  *
  * gethostbyname() will return a host table (nameserver) entry
- * where h_name is the "offical name", i.e. fully qualified.
+ * where h_name is the "official name", i.e. fully qualified.
  * Therefore the following piece of code.
  */
 char *
@@ -140,7 +140,7 @@ make_default_host(const char* name)
 {
     struct ihost	*ihp;
 
-    BU_GET(ihp, struct ihost);
+    BU_ALLOC(ihp, struct ihost);
     ihp->l.magic = IHOST_MAGIC;
 
     /* Make private copy of host name -- callers have static buffers */
@@ -210,7 +210,7 @@ host_lookup_by_name(const char* name, int enter)
     struct hostent		*addr;
 
     /* Determine name to be found */
-    if ( isdigit( *name ) )  {
+    if ( isdigit( (int)*name ) )  {
 	/* Numeric */
 	sockhim.sin_family = AF_INET;
 	sockhim.sin_addr.s_addr = inet_addr(name);

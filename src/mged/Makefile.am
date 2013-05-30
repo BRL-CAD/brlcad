@@ -1,4 +1,5 @@
 
+AM_CFLAGS = ${STD_C99_FLAGS} ${TCL_CPPFLAGS}
 AM_CPPFLAGS = ${TCL_CPPFLAGS}
 
 if WITH_OPENGL
@@ -63,7 +64,6 @@ bin_PROGRAMS = \
 
 mged_SOURCES = \
 	adc.c \
-	animedit.c \
 	arbs.c \
 	attach.c \
 	axes.c \
@@ -118,8 +118,7 @@ mged_SOURCES = \
 	update.c \
 	usepen.c \
 	utility1.c \
-	vparse.c \
-	vrlink.c
+	vparse.c
 
 # per-program CPPFLAGS wasn't added until automake 1.7
 mged_CFLAGS = \
@@ -175,7 +174,6 @@ noinst_HEADERS = \
 	comb_bool.h \
 	fbserv.h \
 	htmlLibraryUi.h \
-	joints.h \
 	menu.h \
 	mgdev.h \
 	mged.h \
@@ -185,16 +183,11 @@ noinst_HEADERS = \
 	sedit.h \
 	titles.h
 
-man_MANS = \
-	cad_boundp.1 \
-	cad_parea.1
-
 INCLUDES = \
 	${X_CFLAGS} \
 	-I$(top_srcdir)/include
 
 EXTRA_DIST = \
-	$(man_MANS) \
 	bool_rewrite.c \
 	comb_bool_parse.y \
 	comb_bool_scan.l \

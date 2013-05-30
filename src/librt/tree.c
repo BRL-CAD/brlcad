@@ -1,7 +1,7 @@
 /*                          T R E E . C
  * BRL-CAD
  *
- * Copyright (c) 1995-2012 United States Government as represented by
+ * Copyright (c) 1995-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,16 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup librt */
-/** @{ */
-/** @file librt/tree.c
- *
- * Ray Tracing library database tree walker.
- *
- * Collect and prepare regions and solids for subsequent ray-tracing.
- *
- */
-/** @} */
+
 
 #include "common.h"
 
@@ -168,7 +159,7 @@ _rt_gettree_region_end(struct db_tree_state *tsp, const struct db_full_path *pat
 	return curtree;
     }
 
-    BU_GET(rp, struct region);
+    BU_ALLOC(rp, struct region);
     rp->l.magic = RT_REGION_MAGIC;
     rp->reg_regionid = tsp->ts_regionid;
     rp->reg_is_fastgen = tsp->ts_is_fastgen;
@@ -181,12 +172,14 @@ _rt_gettree_region_end(struct db_tree_state *tsp, const struct db_full_path *pat
 	return TREE_NULL;
 
     bu_avs_init_empty(&avs);
-    if (!db5_get_attributes(tsp->ts_dbip, &avs, dp)) {
+    if (db5_get_attributes(tsp->ts_dbip, &avs, dp) == 0) {
+	/* copy avs */
 	bu_avs_init_empty(&(rp->attr_values));
-	for(BU_AVS_FOR(avpp, &(tsp->ts_attrs))) {
+	for (BU_AVS_FOR(avpp, &(tsp->ts_attrs))) {
 	    bu_avs_add(&(rp->attr_values), avpp->name, bu_avs_get(&avs, avpp->name));
 	}
     }
+    bu_avs_free(&avs);
 
     rp->reg_mater = tsp->ts_mater; /* struct copy */
     if (tsp->ts_mater.ma_shader)
@@ -249,7 +242,7 @@ _rt_gettree_region_end(struct db_tree_state *tsp, const struct db_full_path *pat
     }
 
     if (RT_G_DEBUG & DEBUG_REGIONS) {
-	bu_log("Add Region %s instnum %d\n",
+	bu_log("Add Region %s instnum %ld\n",
 	       rp->reg_name, rp->reg_instnum);
     }
 
@@ -261,7 +254,7 @@ _rt_gettree_region_end(struct db_tree_state *tsp, const struct db_full_path *pat
 /**
  * See if solid "dp" as transformed by "mat" already exists in the
  * soltab list.  If it does, return the matching stp, otherwise,
- * create a new soltab structure, enrole it in the list, and return a
+ * create a new soltab structure, enroll it in the list, and return a
  * pointer to that.
  *
  * "mat" will be a null pointer when an identity matrix is signified.
@@ -374,8 +367,8 @@ _rt_find_identical_solid(const matp_t mat, struct directory *dp, struct rt_i *rt
 	     */
 	    if (RT_G_DEBUG & DEBUG_SOLIDS) {
 		bu_log(mat ?
-		       "%s re-referenced %d\n" :
-		       "%s re-referenced %d (identity mat)\n",
+		       "%s re-referenced %ld\n" :
+		       "%s re-referenced %ld (identity mat)\n",
 		       dp->d_namep, stp->st_uses);
 	    }
 
@@ -392,7 +385,7 @@ _rt_find_identical_solid(const matp_t mat, struct directory *dp, struct rt_i *rt
      * now, while still inside the critical section, because they are
      * searched on, above.
      */
-    BU_GET(stp, struct soltab);
+    BU_ALLOC(stp, struct soltab);
     stp->l.magic = RT_SOLTAB_MAGIC;
     stp->l2.magic = RT_SOLTAB2_MAGIC;
     stp->st_rtip = rtip;
@@ -576,7 +569,7 @@ _rt_gettree_leaf(struct db_tree_state *tsp, const struct db_full_path *pathp, st
 
     if (RT_G_DEBUG&DEBUG_SOLIDS) {
 	struct bu_vls str = BU_VLS_INIT_ZERO;
-	bu_log("\n---Primitive %d: %s\n", stp->st_bit, dp->d_namep);
+	bu_log("\n---Primitive %ld: %s\n", stp->st_bit, dp->d_namep);
 
 	/* verbose=1, mm2local=1.0 */
 	ret = -1;
@@ -608,21 +601,6 @@ found_it:
 }
 
 
-/**
- * Decrement use count on soltab structure.  If no longer needed,
- * release associated storage, and free the structure.
- *
- * This routine semaphore protects against other copies of itself
- * running in parallel, and against other routines (such as
- * _rt_find_identical_solid()) which might also be modifying the
- * linked list heads.
- *
- * Called by -
- * db_free_tree()
- * rt_clean()
- * rt_gettrees()
- * rt_kill_deal_solid_refs()
- */
 void
 rt_free_soltab(struct soltab *stp)
 {
@@ -720,37 +698,6 @@ _rt_tree_kill_dead_solid_refs(union tree *tp)
 }
 
 
-/**
- * User-called function to add a set of tree hierarchies to the active
- * set. Includes getting the indicated list of attributes and a
- * Tcl_HashTable for use with the ORCA man regions. (stashed in the
- * rt_i structure).
- *
- * This function may run in parallel, but is not multiply re-entrant
- * itself, because db_walk_tree() isn't multiply re-entrant.
- *
- * Semaphores used for critical sections in parallel mode:
- * RT_SEM_TREE ====> protects rti_solidheads[] lists, d_uses(solids)
- * RT_SEM_RESULTS => protects HeadRegion, mdl_min/max, d_uses(reg), nregions
- * RT_SEM_WORKER ==> (db_walk_dispatcher, from db_walk_tree)
- * RT_SEM_STATS ===> nsolids
- *
- * INPUTS:
- *
- * rtip - RT instance pointer
- *
- * attrs - attribute value set
- *
- * argc - number of trees to get
- *
- * argv - array of char pointers to the names of the tree tops
- *
- * ncpus - number of cpus to use
- *
- * Returns -
- * 0 Ordinarily
- * -1 On major error
- */
 int
 rt_gettrees_muves(struct rt_i *rtip, const char **attrs, int argc, const char **argv, int ncpus)
 {
@@ -772,7 +719,7 @@ rt_gettrees_muves(struct rt_i *rtip, const char **attrs, int argc, const char **
 
     if (argc <= 0) return -1;	/* FAIL */
 
-    tbl = (Tcl_HashTable *)bu_malloc(sizeof(Tcl_HashTable), "rtip->Orca_hash_tbl");
+    BU_ALLOC(tbl, Tcl_HashTable);
     Tcl_InitHashTable(tbl, TCL_ONE_WORD_KEYS);
     rtip->Orca_hash_tbl = (genptr_t)tbl;
 
@@ -910,24 +857,6 @@ again:
 }
 
 
-/**
- * User-called function to add a set of tree hierarchies to the active
- * set.
- *
- * This function may run in parallel, but is not multiply re-entrant
- * itself, because db_walk_tree() isn't multiply re-entrant.
- *
- * Semaphores used for critical sections in parallel mode:
- * RT_SEM_TREE* protects rti_solidheads[] lists, d_uses(solids)
- * RT_SEM_RESULTS protects HeadRegion, mdl_min/max, d_uses(reg), nregions
- * RT_SEM_WORKER (db_walk_dispatcher, from db_walk_tree)
- * RT_SEM_STATS nsolids
- *
- * Returns -
- * 0 Ordinarily
- * -1 On major error
- * -2 If there were unresolved names
- */
 int
 rt_gettrees_and_attrs(struct rt_i *rtip, const char **attrs, int argc, const char **argv, int ncpus)
 {
@@ -935,17 +864,6 @@ rt_gettrees_and_attrs(struct rt_i *rtip, const char **attrs, int argc, const cha
 }
 
 
-/**
- * User-called function to add a tree hierarchy to the displayed set.
- *
- * This function is not multiply re-entrant.
- *
- * Returns -
- * 0 Ordinarily
- * -1 On major error
- *
- * Note: -2 returns from rt_gettrees_and_attrs are filtered.
- */
 int
 rt_gettree(struct rt_i *rtip, const char *node)
 {
@@ -979,18 +897,6 @@ rt_gettrees(struct rt_i *rtip, int argc, const char **argv, int ncpus)
 }
 
 
-/**
- * Eliminate any references to NOP nodes from the tree.  It is safe to
- * use db_free_tree() here, because there will not be any dead solids.
- * They will all have been converted to OP_NOP nodes by
- * _rt_tree_kill_dead_solid_refs(), previously, so there is no need to
- * worry about multiple db_free_tree()'s repeatedly trying to free one
- * solid that has been instanced multiple times.
- *
- * Returns -
- * 0 this node is OK.
- * -1 request caller to kill this node
- */
 int
 rt_tree_elim_nops(union tree *tp, struct resource *resp)
 {
@@ -1078,11 +984,6 @@ top:
 }
 
 
-/**
- * Given the (leaf) name of a solid, find the first occurance of it in
- * the solid list.  Used mostly to find the light source.  Returns
- * soltab pointer, or RT_SOLTAB_NULL.
- */
 struct soltab *
 rt_find_solid(const struct rt_i *rtip, const char *name)
 {
@@ -1102,9 +1003,6 @@ rt_find_solid(const struct rt_i *rtip, const char *name)
 }
 
 
-/**
- *
- */
 void
 rt_optim_tree(union tree *tp, struct resource *resp)
 {

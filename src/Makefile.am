@@ -23,6 +23,7 @@ libbrlcad_nil_la_LIBADD = \
 	$(top_builddir)/src/libbu/libbu_nil.la \
 	$(top_builddir)/src/libbn/libbn_nil.la \
 	$(top_builddir)/src/librt/librt_nil.la \
+	$(top_builddir)/src/libbrep/libbrep_nil.la \
 	$(top_builddir)/src/libwdb/libwdb_nil.la \
 	$(top_builddir)/src/libicv/libicv_nil.la \
 	$(top_builddir)/src/libged/libged_nil.la \
@@ -35,6 +36,7 @@ required_dirs = \
 	libbn \
 	libsysv \
 	${PCDIR} \
+	libbrep \
 	librt \
 	external
 
@@ -132,6 +134,7 @@ DIST_SUBDIRS= \
 	libbn \
 	libsysv \
 	libpc \
+	libbrep \
 	librt \
 	external \
 	$(bench_dirs) \

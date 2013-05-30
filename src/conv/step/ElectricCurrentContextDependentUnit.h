@@ -1,7 +1,7 @@
 /*                 ElectricCurrentContextDependentUnit.h
  * BRL-CAD
  *
- * Copyright (c) 1994-2012 United States Government as represented by
+ * Copyright (c) 1994-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -30,21 +30,23 @@
 #include "ElectricCurrentUnit.h"
 #include "ContextDependentUnit.h"
 
-class ElectricCurrentContextDependentUnit : public ElectricCurrentUnit, public ContextDependentUnit {
+class ElectricCurrentContextDependentUnit : public ElectricCurrentUnit, public ContextDependentUnit
+{
 private:
-	static string entityname;
+    static string entityname;
+    static EntityInstanceFunc GetInstance;
 
 protected:
 
 public:
-	ElectricCurrentContextDependentUnit();
-	virtual ~ElectricCurrentContextDependentUnit();
-	ElectricCurrentContextDependentUnit(STEPWrapper *sw,int step_id);
-	bool Load(STEPWrapper *sw,SDAI_Application_instance *sse);
-	virtual void Print(int level);
+    ElectricCurrentContextDependentUnit();
+    virtual ~ElectricCurrentContextDependentUnit();
+    ElectricCurrentContextDependentUnit(STEPWrapper *sw, int step_id);
+    bool Load(STEPWrapper *sw, SDAI_Application_instance *sse);
+    virtual void Print(int level);
 
-	//static methods
-	static STEPEntity *Create(STEPWrapper *sw,SDAI_Application_instance *sse);
+    //static methods
+    static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
 #endif /* ELECTRICCURRENTCONTEXTDEPENDENTUNIT_H_ */

@@ -1,7 +1,7 @@
 /*                    R E G I O N _ E N D . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2012 United States Government as represented by
+ * Copyright (c) 2008-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -48,7 +48,7 @@ _gcv_cleanup(int state, union tree *tp)
      */
     db_free_tree(tp, &rt_uniresource); /* Does an nmg_kr() */
 
-    BU_GET(tp, union tree);
+    BU_ALLOC(tp, union tree);
     RT_TREE_INIT(tp);
     tp->tr_op = OP_NOP;
     return tp;

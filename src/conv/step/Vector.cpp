@@ -1,7 +1,7 @@
 /*                 Vector.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2012 United States Government as represented by
+ * Copyright (c) 1994-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -32,91 +32,96 @@
 
 #define CLASSNAME "Vector"
 #define ENTITYNAME "Vector"
-string Vector::entityname = Factory::RegisterClass(ENTITYNAME,(FactoryMethod)Vector::Create);
+string Vector::entityname = Factory::RegisterClass(ENTITYNAME, (FactoryMethod)Vector::Create);
 
-Vector::Vector() {
+Vector::Vector()
+{
     step = NULL;
     id = 0;
     orientation = NULL;
     magnitude = 0.0;
 }
 
-Vector::Vector(STEPWrapper *sw,int step_id) {
+Vector::Vector(STEPWrapper *sw, int step_id)
+{
     step = sw;
     id = step_id;
     orientation = NULL;
     magnitude = 0.0;
 }
 
-Vector::~Vector() {
+Vector::~Vector()
+{
 }
 
 bool
-Vector::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
-    step=sw;
+Vector::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
+    step = sw;
     id = sse->STEPfile_id;
 
-    if ( !GeometricRepresentationItem::Load(step,sse) ) {
+    if (!GeometricRepresentationItem::Load(step, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::GeometricRepresentationItem." << std::endl;
 	return false;
     }
 
     // need to do this for local attributes to makes sure we have
     // the actual entity and not a complex/supertype parent
-    sse = step->getEntity(sse,ENTITYNAME);
+    sse = step->getEntity(sse, ENTITYNAME);
 
     if (orientation == NULL) {
-	SDAI_Application_instance *entity = step->getEntityAttribute(sse,"orientation");
+	SDAI_Application_instance *entity = step->getEntityAttribute(sse, "orientation");
 	if (entity) {
-	    orientation = dynamic_cast<Direction *>(Factory::CreateObject(sw,entity));
+	    orientation = dynamic_cast<Direction *>(Factory::CreateObject(sw, entity));
 	} else { // optional so no problem if not here
 	    orientation = NULL;
 	}
     }
 
 
-    magnitude = step->getRealAttribute(sse,"magnitude");
+    magnitude = step->getRealAttribute(sse, "magnitude");
 
     return true;
 }
 
 double
-Vector::Magnitude() {
+Vector::Magnitude()
+{
     return magnitude;
 }
 
 const double *
-Vector::Orientation() {
+Vector::Orientation()
+{
     return orientation->DirectionRatios();
 }
 
 void
-Vector::Print(int level) {
-    TAB(level); std::cout << CLASSNAME << ":" << name << "(";
+Vector::Print(int level)
+{
+    TAB(level);
+    std::cout << CLASSNAME << ":" << name << "(";
     std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-    TAB(level); std::cout << "Attributes:" << std::endl;
-    TAB(level+1);std::cout << "orientation:" << std::endl;
-    orientation->Print(level+1);
-    TAB(level+1);std::cout << "magnitude:" << magnitude << std::endl;
+    TAB(level);
+    std::cout << "Attributes:" << std::endl;
+    TAB(level + 1);
+    std::cout << "orientation:" << std::endl;
+    orientation->Print(level + 1);
+    TAB(level + 1);
+    std::cout << "magnitude:" << magnitude << std::endl;
 }
+
 STEPEntity *
-Vector::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
-    Factory::OBJECTS::iterator i;
-    if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
-	Vector *object = new Vector(sw,sse->STEPfile_id);
+Vector::GetInstance(STEPWrapper *sw, int id)
+{
+    return new Vector(sw, id);
+}
 
-	Factory::AddObject(object);
-
-	if (!object->Load(sw, sse)) {
-	    std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
-	    delete object;
-	    return NULL;
-	}
-	return static_cast<STEPEntity *>(object);
-    } else {
-	return (*i).second;
-    }
+STEPEntity *
+Vector::Create(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
+    return STEPEntity::CreateEntity(sw, sse, GetInstance, CLASSNAME);
 }
 
 // Local Variables:

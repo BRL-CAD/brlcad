@@ -1,7 +1,7 @@
 /*                     P I X B U S T U P . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2012 United States Government as represented by
+ * Copyright (c) 1986-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -46,10 +46,11 @@ printUsage()
     bu_log("Usage: pixbustup basename width [image_offset] [first_number] <input.pix\n");
 }
 
+
 int
 main(int argc, char **argv)
 {
-    size_t image_offset;
+    off_t image_offset;
     size_t framenumber;
     char *base_name;
     char name[128];
@@ -68,7 +69,7 @@ main(int argc, char **argv)
 	return 2;
     }
     if (nlines > UINT32_MAX) {
-	bu_log("ERROR: not ready to handle images bigger than %ld bytes square.", UINT32_MAX);
+	bu_log("ERROR: not ready to handle images bigger than %x bytes square.", UINT32_MAX);
 	printUsage();
 	return 3;
     }
@@ -102,10 +103,10 @@ main(int argc, char **argv)
 	ifname = bu_realpath(name, NULL);
 	if ((fd=creat(ifname, 0444))<0) {
 	    perror(ifname);
-	    bu_free(ifname,"ifname alloc from bu_realpath");
+	    bu_free(ifname, "ifname alloc from bu_realpath");
 	    continue;
 	}
-	bu_free(ifname,"ifname alloc from bu_realpath");
+	bu_free(ifname, "ifname alloc from bu_realpath");
 
 	rwval = write(fd, in1, scanbytes);
 	if ((size_t)rwval != scanbytes) {

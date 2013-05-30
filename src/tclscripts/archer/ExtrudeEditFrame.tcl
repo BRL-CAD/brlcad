@@ -1,7 +1,7 @@
 #            E X T R U D E E D I T F R A M E . T C L
 # BRL-CAD
 #
-# Copyright (c) 2002-2012 United States Government as represented by
+# Copyright (c) 2002-2013 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -42,9 +42,9 @@
     }
 
     protected {
-	common setH    1
-	common rotH    2
-	common moveH   3
+	common setH   1
+	common moveHR 2
+	common moveH  3
 
 	variable mVx ""
 	variable mVy ""
@@ -175,11 +175,11 @@
 	$setH {
 	    $::ArcherCore::application p_pscale $obj h $args
 	} \
+	$moveHR {
+	    $::ArcherCore::application p_ptranslate $obj hr $args
+	} \
 	$moveH {
 	    $::ArcherCore::application p_ptranslate $obj h $args
-	} \
-	$rotH {
-	    $::ArcherCore::application p_protate $obj h $args
 	}
 
     return ""
@@ -227,19 +227,19 @@
 	::ttk::entry $parent.extrudeVxE \
 	    -textvariable [::itcl::scope mVx] \
 	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add extrudeVyE {
 	::ttk::entry $parent.extrudeVyE \
 	    -textvariable [::itcl::scope mVy] \
 	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add extrudeVzE {
 	::ttk::entry $parent.extrudeVzE \
 	    -textvariable [::itcl::scope mVz] \
 	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add extrudeVUnitsL {
 	::ttk::label $parent.extrudeVUnitsL \
@@ -255,19 +255,19 @@
 	::ttk::entry $parent.extrudeHxE \
 	    -textvariable [::itcl::scope mHx] \
 	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add extrudeHyE {
 	::ttk::entry $parent.extrudeHyE \
 	    -textvariable [::itcl::scope mHy] \
 	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add extrudeHzE {
 	::ttk::entry $parent.extrudeHzE \
 	    -textvariable [::itcl::scope mHz] \
 	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add extrudeHUnitsL {
 	::ttk::label $parent.extrudeHUnitsL \
@@ -284,21 +284,21 @@
 	    -textvariable [::itcl::scope mAx] \
 	    -state disabled \
 	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add extrudeAyE {
 	::ttk::entry $parent.extrudeAyE \
 	    -textvariable [::itcl::scope mAy] \
 	    -state disabled \
 	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add extrudeAzE {
 	::ttk::entry $parent.extrudeAzE \
 	    -textvariable [::itcl::scope mAz] \
 	    -state disabled \
 	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add extrudeAUnitsL {
 	::ttk::label $parent.extrudeAUnitsL \
@@ -314,21 +314,21 @@
 	    -textvariable [::itcl::scope mBx] \
 	    -state disabled \
 	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add extrudeByE {
 	::ttk::entry $parent.extrudeByE \
 	    -textvariable [::itcl::scope mBy] \
 	    -state disabled \
 	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add extrudeBzE {
 	::ttk::entry $parent.extrudeBzE \
 	    -textvariable [::itcl::scope mBz] \
 	    -state disabled \
 	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add extrudeBUnitsL {
 	::ttk::label $parent.extrudeBUnitsL \
@@ -341,9 +341,7 @@
     } {}
     itk_component add extrudeSE {
 	::ttk::entry $parent.extrudeSE \
-	    -textvariable [::itcl::scope mS] \
-	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
+	    -textvariable [::itcl::scope mS]
     } {}
     itk_component add extrudeSUnitsL {
 	::ttk::label $parent.extrudeSUnitsL \
@@ -428,8 +426,9 @@
 ::itcl::body ExtrudeEditFrame::buildLowerPanel {} {
     set parent [$this childsite lower]
 
-    set alist [list H set Set H move Move H rot Rotate]
+    set alist [list H set Set HR move {Move End} H move {Move End}]
 
+    set row 0
     foreach {attribute op opLabel} $alist {
 	itk_component add $op$attribute {
 	    ::ttk::radiobutton $parent.$op\_$attribute \
@@ -439,10 +438,11 @@
 		-command [::itcl::code $this initEditState]
 	} {}
 
-	pack $itk_component($op$attribute) \
-	    -anchor w \
-	    -expand yes
+	grid $itk_component($op$attribute) -row $row -column 0 -sticky nsew
+	incr row
     }
+
+    grid rowconfigure $parent $row -weight 1
 }
 
 ::itcl::body ExtrudeEditFrame::updateGeometryIfMod {} {
@@ -527,15 +527,22 @@
 	    set mEditClass $EDIT_CLASS_SCALE
 	    set mEditParam1 h
 	} \
+	$moveHR {
+	    set mEditCommand ptranslate
+	    set mEditClass $EDIT_CLASS_TRANS
+	    set mEditLastTransMode $::ArcherCore::OBJECT_TRANSLATE_MODE
+	    set mEditParam1 hr
+	} \
 	$moveH {
 	    set mEditCommand ptranslate
 	    set mEditClass $EDIT_CLASS_TRANS
+	    set mEditLastTransMode $::ArcherCore::OBJECT_TRANSLATE_MODE
 	    set mEditParam1 h
-        } \
-	$rotH {
-	    set mEditCommand protate
-	    set mEditClass $EDIT_CLASS_ROT
-	    set mEditParam1 h
+	} \
+	default {
+	    set mEditCommand ""
+	    set mEditPCommand ""
+	    set mEditParam1 ""
 	}
 
     GeometryEditFrame::initEditState

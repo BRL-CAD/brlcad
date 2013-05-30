@@ -1,7 +1,7 @@
 /*                        L O A D _ G . C
  * BRL-CAD / ADRT
  *
- * Copyright (c) 2009-2012 United States Government as represented by
+ * Copyright (c) 2009-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -50,7 +50,6 @@
 #include "tie.h"
 #include "adrt.h"
 #include "adrt_struct.h"
-
 
 
 static struct bn_tol tol;		/* calculation tolerance */
@@ -171,13 +170,15 @@ nmg_to_adrt_regstart(struct db_tree_state *ts, const struct db_full_path *path, 
     if(dir->d_minor_type == ID_NMG)
 	return 0;
 
-    BU_GET(mesh, struct adrt_mesh_s);
+    /* FIXME: where is this released? */
+    BU_ALLOC(mesh, struct adrt_mesh_s);
 
     BU_LIST_PUSH(&((*gcvwriter.meshes)->l), &(mesh->l));
 
     mesh->texture = NULL;
     mesh->flags = 0;
-    mesh->attributes = (struct adrt_mesh_attributes_s *)bu_malloc(sizeof(struct adrt_mesh_attributes_s), "adrt mesh attributes");
+
+    BU_ALLOC(mesh->attributes, struct adrt_mesh_attributes_s);
     mesh->matid = ts->ts_gmater;
 
     rt_comb_get_color(rgb, rci);
@@ -225,13 +226,15 @@ nmg_to_adrt_gcvwrite(struct nmgregion *r, const struct db_full_path *pathp, int 
     /* triangulate model */
     nmg_triangulate_model(m, &tol);
 
-    BU_GET(mesh, struct adrt_mesh_s);
+    /* FIXME: where is this released? */
+    BU_ALLOC(mesh, struct adrt_mesh_s);
 
     BU_LIST_PUSH(&((*gcvwriter.meshes)->l), &(mesh->l));
 
     mesh->texture = NULL;
     mesh->flags = 0;
-    mesh->attributes = (struct adrt_mesh_attributes_s *)bu_malloc(sizeof(struct adrt_mesh_attributes_s), "adrt mesh attributes");
+
+    BU_ALLOC(mesh->attributes, struct adrt_mesh_attributes_s);
     mesh->matid = material_id;
 
     VMOVE(mesh->attributes->color.v, color);
@@ -245,7 +248,7 @@ int
 load_g (struct tie_s *tie, const char *db, int argc, const char **argv, struct adrt_mesh_s **meshes)
 {
     struct model *the_model;
-    struct rt_tess_tol ttol;		/* tesselation tolerance in mm */
+    struct rt_tess_tol ttol;		/* tessellation tolerance in mm */
     struct db_tree_state tree_state;	/* includes tol & model */
 
     cur_tie = tie;	/* blehhh, global... need locking. */
@@ -255,7 +258,7 @@ load_g (struct tie_s *tie, const char *db, int argc, const char **argv, struct a
     tree_state.ts_ttol = &ttol;
     tree_state.ts_m = &the_model;
 
-    /* Set up tesselation tolerance defaults */
+    /* Set up tessellation tolerance defaults */
     ttol.magic = RT_TESS_TOL_MAGIC;
     /* Defaults, updated by command line options. */
     ttol.abs = 0.0;
@@ -281,9 +284,9 @@ load_g (struct tie_s *tie, const char *db, int argc, const char **argv, struct a
     /*
      * these should probably encode so the result can be passed back to client
      */
-    if ((dbip = db_open(db, "r")) == DBI_NULL) {
+    if ((dbip = db_open(db, DB_OPEN_READONLY)) == DBI_NULL) {
 	perror(db);
-	bu_log("Unable to open geometry file (%s)\n", db);
+	bu_log("Unable to open geometry database file (%s)\n", db);
 	return -1;
     }
     if (db_dirbuild(dbip)) {
@@ -296,7 +299,8 @@ load_g (struct tie_s *tie, const char *db, int argc, const char **argv, struct a
 
     tie_init(cur_tie, 4096, TIE_KDTREE_FAST);
 
-    BU_GET(*meshes, struct adrt_mesh_s);
+    /* FIXME: where is this released? */
+    BU_ALLOC(*meshes, struct adrt_mesh_s);
     BU_LIST_INIT(&((*meshes)->l));
 
     gcvwriter.meshes = meshes;
@@ -307,7 +311,7 @@ load_g (struct tie_s *tie, const char *db, int argc, const char **argv, struct a
     tribuf[2] = (TIE_3 *)bu_malloc(sizeof(TIE_3) * 3, "triangle tribuffer");
 
     (void) db_walk_tree(dbip,
-			argc,			/* number of toplevel regions */			
+			argc,			/* number of toplevel regions */
 			argv,			/* region names */
 			1,			/* ncpu */
 			&tree_state,		/* initial tree state */

@@ -1,7 +1,7 @@
 /*                 ElectricCurrentConversionBasedUnit.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2012 United States Government as represented by
+ * Copyright (c) 1994-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -34,29 +34,33 @@
 
 #define CLASSNAME "ElectricCurrentConversionBasedUnit"
 #define ENTITYNAME "Electric_Current_Conversion_Based_Unit"
-string ElectricCurrentConversionBasedUnit::entityname = Factory::RegisterClass(ENTITYNAME,(FactoryMethod)ElectricCurrentConversionBasedUnit::Create);
+string ElectricCurrentConversionBasedUnit::entityname = Factory::RegisterClass(ENTITYNAME, (FactoryMethod)ElectricCurrentConversionBasedUnit::Create);
 
-ElectricCurrentConversionBasedUnit::ElectricCurrentConversionBasedUnit() {
+ElectricCurrentConversionBasedUnit::ElectricCurrentConversionBasedUnit()
+{
     step = NULL;
     id = 0;
 }
 
-ElectricCurrentConversionBasedUnit::ElectricCurrentConversionBasedUnit(STEPWrapper *sw,int step_id) {
+ElectricCurrentConversionBasedUnit::ElectricCurrentConversionBasedUnit(STEPWrapper *sw, int step_id)
+{
     step = sw;
     id = step_id;
 }
 
-ElectricCurrentConversionBasedUnit::~ElectricCurrentConversionBasedUnit() {
+ElectricCurrentConversionBasedUnit::~ElectricCurrentConversionBasedUnit()
+{
 }
 
 bool
-ElectricCurrentConversionBasedUnit::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
-    step=sw;
+ElectricCurrentConversionBasedUnit::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
+    step = sw;
     id = sse->STEPfile_id;
 
 
     // load base class attributes
-    if ( !ElectricCurrentConversionBasedUnit::Load(step,sse) ) {
+    if (!ElectricCurrentConversionBasedUnit::Load(step, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::Unit." << std::endl;
 	return false;
     }
@@ -65,32 +69,29 @@ ElectricCurrentConversionBasedUnit::Load(STEPWrapper *sw,SDAI_Application_instan
 }
 
 void
-ElectricCurrentConversionBasedUnit::Print(int level) {
-    TAB(level); std::cout << CLASSNAME << ":" << "(";
+ElectricCurrentConversionBasedUnit::Print(int level)
+{
+    TAB(level);
+    std::cout << CLASSNAME << ":" << "(";
     std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-    TAB(level); std::cout << "Inherited Attributes:" << std::endl;
-    ElectricCurrentUnit::Print(level+1);
-    ConversionBasedUnit::Print(level+1);
+    TAB(level);
+    std::cout << "Inherited Attributes:" << std::endl;
+    ElectricCurrentUnit::Print(level + 1);
+    ConversionBasedUnit::Print(level + 1);
 
 }
+
 STEPEntity *
-ElectricCurrentConversionBasedUnit::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
-    Factory::OBJECTS::iterator i;
-    if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
-	ElectricCurrentConversionBasedUnit *object = new ElectricCurrentConversionBasedUnit(sw,sse->STEPfile_id);
+ElectricCurrentConversionBasedUnit::GetInstance(STEPWrapper *sw, int id)
+{
+    return new ElectricCurrentConversionBasedUnit(sw, id);
+}
 
-	Factory::AddObject(object);
-
-	if (!object->Load(sw, sse)) {
-	    std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
-	    delete object;
-	    return NULL;
-	}
-	return static_cast<STEPEntity *>(object);
-    } else {
-	return (*i).second;
-    }
+STEPEntity *
+ElectricCurrentConversionBasedUnit::Create(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
+    return STEPEntity::CreateEntity(sw, sse, GetInstance, CLASSNAME);
 }
 
 // Local Variables:

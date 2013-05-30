@@ -1,7 +1,7 @@
 /*                          R A N D . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2012 United States Government as represented by
+ * Copyright (c) 2004-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,6 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+
 /** @addtogroup rnd */
 /** @{ */
 /** @file libbn/rand.c
@@ -32,14 +33,7 @@
 #include "vmath.h"
 #include "bn.h"
 
-/**
- * This is our table of random numbers.  Rather than calling drand48()
- * or random() or rand() we just pick numbers out of this table.  This
- * table has 4096 unique entries with floating point values ranging
- * from the open interval (i.e. exclusive) 0.0 to 1.0 range.
- *
- * There are convenience macros for access in the bn.h header.
- */
+
 const float bn_rand_table[BN_RAND_TABSIZE] = {
     0.39646477f, 0.84048537f, 0.35333610f, 0.44658343f, 0.31869277f, 0.88642843f,
     0.01558285f, 0.58409022f, 0.15936863f, 0.38371587f, 0.69100437f, 0.05885891f,
@@ -729,10 +723,7 @@ const float bn_rand_table[BN_RAND_TABSIZE] = {
 
 double bn_sin_scale = BN_SINTABSIZE / (2.0 * M_PI);
 
-/**
- * table of floating point sine values in the closed (i.e. inclusive)
- * interval -1.0 to 1.0 range.
- */
+
 const float bn_sin_table[BN_SINTABSIZE] = {
     0.0f,		0.00306796f,	0.00613588f,	0.00920375f,
     0.0122715f,	0.0153392f,	0.0184067f,	0.0214741f,
@@ -1250,12 +1241,6 @@ const float bn_sin_table[BN_SINTABSIZE] = {
 
 int bn_randhalftabsize = BN_RANDHALFTABSIZE;
 
-/**
- *  The actual table of random floating point numbers with values in
- *  the closed interval (i.e. inclusive) -0.5 to +0.5 range.
- *
- *  For benchmarking purposes, this table is zeroed.
- */
 float bn_rand_halftab[BN_RANDHALFTABSIZE] = {
     -0.500000f, -0.499015f, -0.458369f, -0.323357f, -0.135398f, -0.408669f, -0.407702f,
     -0.012783f,  0.026750f, -0.045567f, -0.266822f,  0.331292f,  0.431731f,  0.068060f,
@@ -3625,7 +3610,7 @@ float bn_rand_halftab[BN_RANDHALFTABSIZE] = {
 /**
  * Immediately after the random number table,
  * some "poison" floating point numbers,
- * intended to cause noticable difficulties if these are used.
+ * intended to cause noticeable difficulties if these are used.
  */
 float	bn_rand_poison_[] = {
     9e20f, 9e20f, 9e20f, 9e20f, 9e20f, 9e20f, 9e20f, 9e20f, 9e20f, 9e20f,
@@ -3634,12 +3619,6 @@ float	bn_rand_poison_[] = {
     9e20f, 9e20f, 9e20f, 9e20f, 9e20f, 9e20f, 9e20f, 9e20f, 9e20f, 9e20f
 };
 
-/**
- *			M A T H T A B _ C O N S T A N T
- *@brief
- *  For benchmarking purposes, make the random number table predictable.
- *  Setting to all zeros keeps dithered values at their original values.
- */
 void
 bn_mathtab_constant(void)
 {

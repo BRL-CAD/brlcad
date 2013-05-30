@@ -1,7 +1,7 @@
 /*                       P R O C E S S . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2012 United States Government as represented by
+ * Copyright (c) 2004-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -22,8 +22,6 @@
  *
  * Data structures for the comma-separated value point file parser.
  *
- * Author -
- *   Christopher Sean Morrison
  */
 
 /* private header */

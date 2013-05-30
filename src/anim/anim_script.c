@@ -1,7 +1,7 @@
 /*                   A N I M _ S C R I P T . C
  * BRL-CAD
  *
- * Copyright (c) 1993-2012 United States Government as represented by
+ * Copyright (c) 1993-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -40,18 +40,26 @@
 #include "anim.h"
 
 
-#define OPT_STR "a:b:c:d:f:m:pqrstv:"
+#define OPT_STR "a:b:c:d:f:m:pqrstv:h?"
 
 
 /* info from command line args */
 int relative_a, relative_c, axes, translate, quaternion, rotate;/*flags*/
 int steer, view, readview, permute; /* flags*/
 int first_frame;
-fastf_t viewsize;
-vect_t centroid, rcentroid, front;
+vect_t rcentroid, front;
 mat_t m_axes, m_rev_axes; /* rotational analogue of centroid */
 char mat_cmd[10];   /* default is lmul */
 
+/* intentionally double for scan */
+double centroid[3];
+double viewsize;
+
+static void
+usage(void)
+{
+    fprintf(stderr,"Usage: anim_script [-v #] [-r|t|s] [-q][-p] [-a|b # # #] [-c|d # # #] [-f #] [-m cmd] [objectname] < in.table > out.script\n");
+}
 
 int
 get_args(int argc, char **argv)
@@ -140,7 +148,6 @@ get_args(int argc, char **argv)
 		view = 1;
 		break;
 	    default:
-		fprintf(stderr, "Unknown option: -%c\n", c);
 		return 0;
 	}
     }
@@ -157,6 +164,19 @@ main(int argc, char *argv[])
     mat_t a, m_x;
     int val, go, frame, last_steer,needed;
 
+    /* intentionally double for scan */
+    double scan[4];
+
+    if (argc == 1 && isatty(fileno(stdin)) && isatty(fileno(stdout))){
+	usage();
+	return 0;
+    }
+
+    if (!get_args(argc, argv)){
+	usage();
+	return 0;
+    }
+
     frame=last_steer=go=view=relative_a=relative_c=axes=0;
     VSETALL(centroid, 0);
     VSETALL(rcentroid, 0);
@@ -168,21 +188,17 @@ main(int argc, char *argv[])
     MAT_IDN(m_rev_axes);
     MAT_IDN(a);
 
-
-    if (!get_args(argc, argv))
-	fprintf(stderr, "anim_script: Get_args error\n");
-
     frame = (steer) ? first_frame -1 : first_frame;
 
     if (view && (viewsize > 0.0))
 	printf("viewsize %.10g;\n", viewsize);
 
     if (rotate&&quaternion) {
-    	needed = 4;
+	needed = 4;
     } else if (rotate || translate) {
-    	needed = 3;
+	needed = 3;
     } else {
-    	needed = 1;
+	needed = 1;
     }
 
     while (1) {
@@ -190,16 +206,22 @@ main(int argc, char *argv[])
 	val = scanf("%*f"); /*ignore time */
 	if (readview)
 	    val = scanf("%lf", &viewsize);
-	if (translate)
-	    val = scanf("%lf %lf %lf", point, point+1, point+2);
+	if (translate) {
+	    val = scanf("%lf %lf %lf", &scan[0], &scan[1], &scan[2]);
+	    VMOVE(point, scan);
+	}
 	if (rotate&&quaternion) {
-	    val = scanf("%lf %lf %lf %lf", quat, quat+1, quat+2, quat+3);
+	    val = scanf("%lf %lf %lf %lf", &scan[0], &scan[1], &scan[2], &scan[3]);
+	    HMOVE(quat, scan);
 	} else if (rotate) {
-	    val = scanf("%lf %lf %lf", &yaw, &pitch, &roll);
+	    val = scanf("%lf %lf %lf", &scan[0], &scan[1], &scan[2]);
+	    yaw = scan[0];
+	    pitch = scan[1];
+	    roll = scan[2];
 	}
 
 	if (val < needed) {
-	    /* ie. scanf not completely successful */
+	    /* i.e. scanf not completely successful */
 	    /* with steering option, must go extra loop after end of file */
 	    if (steer && !last_steer)
 		last_steer = 1;
@@ -223,7 +245,7 @@ main(int argc, char *argv[])
 	if (permute)
 	    anim_v_unpermute(a);
 
-	/* make final matrix, including translation etc */
+	/* make final matrix, including translation etc. */
 	if (axes) {
 	    /* add pre-rotation from original axes */
 	    bn_mat_mul(m_x, a, m_rev_axes);
@@ -235,8 +257,11 @@ main(int argc, char *argv[])
 	    bn_mat_mul(m_x, m_axes, a);
 	    MAT_MOVE(a, m_x);
 	}
-	if (relative_c)
-	    anim_add_trans(a, centroid, zero); /* final translation */
+	if (relative_c) {
+	    vect_t center;
+	    VMOVE(center, centroid); /* double to fast_f */
+	    anim_add_trans(a, center, zero); /* final translation */
+	}
 
 
 	/* print one frame of script */

@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='bw5'>
+<refmeta>
+    <refentrytitle>BW
+</refentrytitle>
+<manvolnum>5</manvolnum>
+<refmiscinfo class='source'>BRL-CAD</refmiscinfo>
+<refmiscinfo class='manual'>BRL-CAD</refmiscinfo>
+</refmeta>
+
+<refnamediv>
+<refname>bw</refname>
+<refpurpose>Black and White image file format and utilities</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+
+<refsect1 xml:id='format'><title>FORMAT</title>
+<para>A
+<emphasis remap='I'>bw</emphasis>
+file contains sequences of pixels.
+Each pixel is stored as one <emphasis remap='B'>unsigned char</emphasis>, and thus
+ranges in intensity from 0 (black) to 255 (white).
+The first pixel in a
+<emphasis remap='I'>bw</emphasis>
+file is the lower left corner of the image.
+The pixels proceed from left-to-right across each scanline,
+with scanlines being written from the bottom to the top of the image.</para>
+
+<para>By convention,
+<emphasis remap='I'>bw</emphasis>
+images are usually square, and thus their dimensions
+can be determined by the file size.  If this is not the case, often
+only the file width need be known by a program reading the file.  History
+has left us with two "standard" sizes, 512x512 and the "higher" 1024x1024.
+A common practice for other file sizes is to include the file width in
+the filename.</para>
+
+<para>At some time in the future
+<emphasis remap='I'>bw</emphasis>
+files will probably get self-typing headers so that parameters such as
+their size can be automatically determined by programs.</para>
+</refsect1>
+
+<refsect1 xml:id='utilities'><title>UTILITIES</title>
+<para><emphasis remap='B'>bw-fb</emphasis>
+display a .bw format image on a framebuffer.</para>
+
+<para><emphasis remap='B'>fb-bw</emphasis>
+produce a .bw file from a framebuffer image.</para>
+
+<para><emphasis remap='B'>bw-pix</emphasis>
+convert a .bw file to a color .pix file.</para>
+
+<para><emphasis remap='B'>pix-bw</emphasis>
+convert a color .pix file to a .bw file.</para>
+
+<para><emphasis remap='B'>bwstat</emphasis>
+gives statistics concerning a .bw file.</para>
+
+<para><emphasis remap='B'>bwhist</emphasis>
+displays a histogram on a framebuffer.</para>
+
+<para><emphasis remap='B'>bwmod</emphasis>
+a filter to shift and scale pixel intensities.</para>
+
+<para><emphasis remap='B'>bwdiff</emphasis>
+yields the difference between two .bw files.</para>
+
+<para><emphasis remap='B'>bwrect</emphasis>
+extracts an arbitrary rectangle from a .bw file.</para>
+
+<para><emphasis remap='B'>bwcrop</emphasis>
+maps any quadrilateral in a .bw file into any rectangle.</para>
+
+<para><emphasis remap='B'>bwrot</emphasis>
+rotates, reverses, or inverts a .bw file.</para>
+
+<para><emphasis remap='B'>bwscale</emphasis>
+scales a .bw file larger or smaller.</para>
+
+<para><emphasis remap='B'>bwfilter</emphasis>
+a variety of 3x3 kernel filters for .bw images.</para>
+
+<para><emphasis remap='B'>bw3-pix</emphasis>
+merges three .bw files into one .pix file.</para>
+
+<para><emphasis remap='B'>pix-bw3</emphasis>
+separates .pix file RGB colors into three .bw files.</para>
+
+</refsect1>
+
+<refsect1 xml:id='files'><title>FILES</title>
+<para>file.bw</para>
+</refsect1>
+
+<refsect1 xml:id='see_also'><title>SEE ALSO</title>
+<para><citerefentry><refentrytitle>brlcad</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>pix</refentrytitle><manvolnum>5</manvolnum></citerefentry>, and above named programs.</para>
+
+</refsect1>
+
+<refsect1 xml:id='author'><title>AUTHOR</title>
+<para>BRL-CAD Team</para>
+
+</refsect1>
+
+<refsect1 xml:id='copyright'><title>COPYRIGHT</title>
+<para>This software is Copyright (c) 1989-2013 by the United States
+Government as represented by U.S. Army Research Laboratory.</para>
+
+</refsect1>
+
+<refsect1 xml:id='bug_reports'><title>BUG REPORTS</title>
+<para>Reports of bugs or problems should be submitted via electronic
+mail to &lt;devs@brlcad.org&gt;.</para>
+</refsect1>
+</refentry>
+

@@ -1,7 +1,7 @@
 /*                        R E G I O N . C
  * BRL-CAD
  *
- * Copyright (c) 1989-2012 United States Government as represented by
+ * Copyright (c) 1989-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -146,8 +146,10 @@ getregion(void)
 	    /* Remove all spaces from the number */
 	    np = nbuf;
 	    for (j = 2; j < 7; j++) {
-		if (!isascii(cp[j])) *np++ = '?';
-		else if (isspace(cp[j]))  continue;
+		if (!isascii((int)cp[j]))
+		    *np++ = '?';
+		else if (isspace((int)cp[j]))
+		    continue;
 		*np++ = cp[j];
 	    }
 	    *np = '\0';
@@ -376,7 +378,7 @@ group_write(void)
 
 	if (verbose) col_pr(wp->wm_name);
     }
-    /* Make all-encompasing "all.g" group here */
+    /* Make all-encompassing "all.g" group here */
     mk_lfcomb(outfp, "all.g", &allhead, 0);
 }
 

@@ -1,7 +1,7 @@
 /*                         Z O O M . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2012 United States Government as represented by
+ * Copyright (c) 2008-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -27,7 +27,7 @@
 
 
 HIDDEN int
-zoom(struct ged *gedp, fastf_t sf)
+zoom(struct ged *gedp, double sf)
 {
     gedp->ged_gvp->gv_scale /= sf;
     if (gedp->ged_gvp->gv_scale < RT_MINVIEWSCALE)
@@ -44,7 +44,7 @@ int
 ged_zoom(struct ged *gedp, int argc, const char *argv[])
 {
     int ret;
-    fastf_t sf = 1.0;
+    double sf = 1.0;
 
     GED_CHECK_VIEW(gedp, GED_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
@@ -67,8 +67,6 @@ ged_zoom(struct ged *gedp, int argc, const char *argv[])
 
     return zoom(gedp, sf);
 }
-
-
 
 
 HIDDEN int

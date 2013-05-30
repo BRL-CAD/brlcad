@@ -1,7 +1,7 @@
 /*                  O B J _ P A R S E R . C P P
  * BRL-CAD
  *
- * Copyright (c) 2010-2012 United States Government as represented by
+ * Copyright (c) 2010-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -143,7 +143,7 @@ static void destroyScanner(yyscan_t *scanner)
     struct extra_t *extra =
 	static_cast<struct extra_t*>(obj_parser_get_extra(*scanner));
 
-    free(extra);
+    BU_PUT(extra, struct extra_t);
     obj_parser_set_extra(*scanner, NULL);
 
     obj_parser_lex_destroy(*scanner);

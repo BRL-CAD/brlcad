@@ -60,7 +60,7 @@ FAST_OBJECTS = \
 	$(libpc_nil_la_OBJECTS) \
 	$(libpc_la_OBJECTS) \
 	$(lib_LTLIBRARIES) \
-	$(noinst_LTLIBRARIS) \
+	$(noinst_LTLIBRARIES) \
 	$(pc_test_OBJECTS) \
 	$(solver_test_OBJECTS) \
 	$(noinst_PROGRAMS)

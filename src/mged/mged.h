@@ -1,7 +1,7 @@
 /*                           M G E D . H
  * BRL-CAD
  *
- * Copyright (c) 1985-2012 United States Government as represented by
+ * Copyright (c) 1985-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -24,23 +24,23 @@
  * V E R Y   I M P O R T A N T   N O T I C E ! ! !
  *
  * Many people in the computer graphics field use post-multiplication,
- * (thanks to Newman and Sproull) with row vectors, ie:
+ * (thanks to Newman and Sproull) with row vectors, i.e.:
  *
  *	view_vec = model_vec * T
  *
  * However, in the GED system, the more traditional representation of
  * column vectors is used (ref: Gwyn).  Therefore, when transforming a
- * vector by a matrix, pre-multiplication is used, ie:
+ * vector by a matrix, pre-multiplication is used, i.e.:
  *
  *	view_vec = model2view_mat * model_vec
  *
- * Furthermore, additional transformations are multiplied on the left, ie:
+ * Furthermore, additional transformations are multiplied on the left, i.e.:
  *
  *	vec'  =  T1 * vec
  *	vec'' =  T2 * T1 * vec  =  T2 * vec'
  *
  * The most notable implication of this is the location of the
- * "delta" (translation) values in the matrix, ie:
+ * "delta" (translation) values in the matrix, i.e.:
  *
  *       x'     (R0   R1   R2   Dx) x
  *       y' =  (R4   R5   R6   Dy)  *  y
@@ -291,7 +291,7 @@ extern char *state_str[]; /* identifying strings */
 
 #define TCL_ALLOC_ERR { \
 	Tcl_AppendResult(INTERP, "\
-An error has occured while adding a new object to the database.\n", (char *)NULL); \
+An error has occurred while adding a new object to the database.\n", (char *)NULL); \
 	TCL_ERROR_RECOVERY_SUGGESTION; }
 
 #define TCL_ALLOC_ERR_return { \
@@ -327,7 +327,7 @@ you should exit MGED now, and resolve the I/O problem, before continuing.\n", (c
  */
 /* For errors from db_get() or db_getmrec() */
 #define READ_ERR { \
-	(void)printf("Database read error, aborting\n"); }
+	printf("Database read error, aborting\n"); }
 
 #define READ_ERR_return { \
 	READ_ERR; \
@@ -335,7 +335,7 @@ you should exit MGED now, and resolve the I/O problem, before continuing.\n", (c
 
 /* For errors from db_put() */
 #define WRITE_ERR { \
-	(void)printf("Database write error, aborting.\n"); \
+	printf("Database write error, aborting.\n"); \
 	ERROR_RECOVERY_SUGGESTION; }
 
 #define WRITE_ERR_return { \
@@ -344,8 +344,8 @@ you should exit MGED now, and resolve the I/O problem, before continuing.\n", (c
 
 /* For errors from db_diradd() or db_alloc() */
 #define ALLOC_ERR { \
-	(void)printf("\
-An error has occured while adding a new object to the database.\n"); \
+	printf("\
+An error has occurred while adding a new object to the database.\n"); \
 	ERROR_RECOVERY_SUGGESTION; }
 
 #define ALLOC_ERR_return { \
@@ -354,7 +354,7 @@ An error has occured while adding a new object to the database.\n"); \
 
 /* For errors from db_delete() or db_dirdelete() */
 #define DELETE_ERR(_name) { \
-	(void)printf("\
+	printf("\
 An error has occurred while deleting '%s' from the database.\n", _name); \
 	ERROR_RECOVERY_SUGGESTION; }
 
@@ -364,7 +364,7 @@ An error has occurred while deleting '%s' from the database.\n", _name); \
 
 /* A verbose message to attempt to soothe and advise the user */
 #define ERROR_RECOVERY_SUGGESTION	\
-    (void)printf("\
+    printf("\
 The in-memory table of contents may not match the status of the on-disk\n\
 database.  The on-disk database should still be intact.  For safety, \n\
 you should exit MGED now, and resolve the I/O problem, before continuing.\n")
@@ -444,6 +444,9 @@ int is_dm_null(void);
 int mged_attach(struct w_dm *wp, int argc, const char *argv[]);
 void mged_link_vars(struct dm_list *p);
 void mged_slider_free_vls(struct dm_list *p);
+int gui_setup(const char *dstr);
+int gui_output(genptr_t clientData, genptr_t str);
+
 
 /* buttons.c */
 void btn_head_menu(int i, int menu, int item);
@@ -508,6 +511,7 @@ void pathHmat(struct solid *sp, matp_t matp, int depth);
 int replot_modified_solid(struct solid *sp, struct rt_db_internal *ip, const mat_t mat);
 int replot_original_solid(struct solid *sp);
 void add_solid_path_to_result(Tcl_Interp *interpreter, struct solid *sp);
+int redraw_visible_objects(void);
 
 /* dozoom.c */
 void createDList(struct solid *sp);
@@ -653,6 +657,7 @@ void color_soltab(void);
 
 /* utility1.c */
 int editit(const char *command, const char *tempfile);
+
 
 #endif  /* __GED_H__ */
 

@@ -1,7 +1,7 @@
 /*                           V O L . C
  * BRL-CAD
  *
- * Copyright (c) 1989-2012 United States Government as represented by
+ * Copyright (c) 1989-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -65,14 +65,14 @@ struct rt_vol_specific {
 #define VOL_O(m) bu_offsetof(struct rt_vol_internal, m)
 
 const struct bu_structparse rt_vol_parse[] = {
-    {"%s", RT_VOL_NAME_LEN, "file", bu_offsetofarray(struct rt_vol_internal, file), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%s", RT_VOL_NAME_LEN, "file", bu_offsetof(struct rt_vol_internal, file), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%d", 1, "w", VOL_O(xdim), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%d", 1, "n", VOL_O(ydim), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%d", 1, "d", VOL_O(zdim), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%d", 1, "lo", VOL_O(lo), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%d", 1, "hi", VOL_O(hi), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f", ELEMENTS_PER_VECT, "size", bu_offsetofarray(struct rt_vol_internal, cellsize), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f", 16, "mat", bu_offsetofarray(struct rt_vol_internal, mat), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f", ELEMENTS_PER_VECT, "size", bu_offsetof(struct rt_vol_internal, cellsize), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f", 16, "mat", bu_offsetof(struct rt_vol_internal, mat), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"", 0, (char *)0, 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 
@@ -429,7 +429,8 @@ rt_vol_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_VOL;
     ip->idb_meth = &rt_functab[ID_VOL];
-    ip->idb_ptr = bu_calloc(1, sizeof(struct rt_vol_internal), "rt_vol_internal");
+    BU_ALLOC(ip->idb_ptr, struct rt_vol_internal);
+
     vip = (struct rt_vol_internal *)ip->idb_ptr;
     vip->magic = RT_VOL_INTERNAL_MAGIC;
 
@@ -566,7 +567,8 @@ rt_vol_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_VOL;
     ip->idb_meth = &rt_functab[ID_VOL];
-    ip->idb_ptr = bu_calloc(1, sizeof(struct rt_vol_internal), "rt_vol_internal");
+    BU_ALLOC(ip->idb_ptr, struct rt_vol_internal);
+
     vip = (struct rt_vol_internal *)ip->idb_ptr;
     vip->magic = RT_VOL_INTERNAL_MAGIC;
 
@@ -732,7 +734,9 @@ rt_vol_ifree(struct rt_db_internal *ip)
     vip = (struct rt_vol_internal *)ip->idb_ptr;
     RT_VOL_CK_MAGIC(vip);
 
-    if (vip->map) bu_free((char *)vip->map, "vol bitmap");
+    /* should be stolen by vol_specific, but check just in case */
+    if (vip->map)
+	bu_free((char *)vip->map, "vol bitmap");
 
     vip->magic = 0;			/* sanity */
     vip->map = (unsigned char *)0;
@@ -746,7 +750,7 @@ rt_vol_ifree(struct rt_db_internal *ip)
  * Calculate bounding RPP for vol
  */
 int
-rt_vol_bbox(struct rt_db_internal *ip, point_t *min, point_t *max)
+rt_vol_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct bn_tol *UNUSED(tol))
 {
     register struct rt_vol_internal *vip;
     vect_t v1, localspace;
@@ -808,7 +812,7 @@ rt_vol_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     stp->st_specific = (genptr_t)volp;
 
     /* Find bounding RPP of rotated local RPP */
-    if (rt_vol_bbox(ip, &(stp->st_min), &(stp->st_max))) return 1;
+    if (rt_vol_bbox(ip, &(stp->st_min), &(stp->st_max), &rtip->rti_tol)) return 1;
     VSET(volp->vol_large,
 	 volp->vol_i.xdim*vip->cellsize[0], volp->vol_i.ydim*vip->cellsize[1], volp->vol_i.zdim*vip->cellsize[2]);/* type conversion */
 
@@ -936,8 +940,12 @@ rt_vol_free(struct soltab *stp)
     register struct rt_vol_specific *volp =
 	(struct rt_vol_specific *)stp->st_specific;
 
-    bu_free((char *)volp->vol_i.map, "vol_map");
-    bu_free((char *)volp, "rt_vol_specific");
+    /* specific steals map from vip, release here */
+    if (volp->vol_i.map) {
+	bu_free((char *)volp->vol_i.map, "vol_map");
+	volp->vol_i.map = NULL; /* sanity */
+    }
+    BU_PUT(volp, struct rt_vol_specific);
 }
 
 

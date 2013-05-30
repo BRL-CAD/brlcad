@@ -1,7 +1,7 @@
 /*                 ApplicationContextElement.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2012 United States Government as represented by
+ * Copyright (c) 1994-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -95,32 +95,24 @@ void ApplicationContextElement::Print(int level)
 
     TAB(level);
     std::cout << "Attributes:" << std::endl;
-    TAB(level+1);
+    TAB(level + 1);
     std::cout << "name:" << name << std::endl;
 
-    TAB(level+1);
+    TAB(level + 1);
     std::cout << "frame_of_reference:" << std::endl;
     frame_of_reference->Print(level + 2);
 }
 
 STEPEntity *
+ApplicationContextElement::GetInstance(STEPWrapper *sw, int id)
+{
+    return new ApplicationContextElement(sw, id);
+}
+
+STEPEntity *
 ApplicationContextElement::Create(STEPWrapper *sw, SDAI_Application_instance *sse)
 {
-    Factory::OBJECTS::iterator i;
-    if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
-	ApplicationContextElement *object = new ApplicationContextElement(sw, sse->STEPfile_id);
-
-	Factory::AddObject(object);
-
-	if (!object->Load(sw, sse)) {
-	    std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
-	    delete object;
-	    return NULL;
-	}
-	return static_cast<STEPEntity *>(object);
-    } else {
-	return (*i).second;
-    }
+    return STEPEntity::CreateEntity(sw, sse, GetInstance, CLASSNAME);
 }
 
 bool ApplicationContextElement::LoadONBrep(ON_Brep *brep)

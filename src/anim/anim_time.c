@@ -1,7 +1,7 @@
 /*                     A N I M _ T I M E . C
  * BRL-CAD
  *
- * Copyright (c) 1993-2012 United States Government as represented by
+ * Copyright (c) 1993-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -20,7 +20,7 @@
  */
 /** @file anim_time.c
  *
- * Given an animation path consiting of time stamps and 3-d points,
+ * Given an animation path consisting of time stamps and 3-d points,
  * estimate new time stamps based on the distances between points, the
  * given starting and ending times, and optionally specified starting
  * and ending velocities.
@@ -31,13 +31,13 @@
 
 #include <stdlib.h>
 #include <math.h>
-#include <stdio.h>
+#include "bio.h"
 
 #include "bu.h"
 #include "vmath.h"
 
 
-#define OPT_STR "ds:e:i:f:qm:v"
+#define OPT_STR "ds:e:i:f:qm:vh?"
 
 #define MAXLEN 64
 #define MAXITS 100
@@ -48,15 +48,21 @@
 
 
 /* command line variables */
-fastf_t inv0, inv1;
 int v0_set =	 TIME_NONE;
 int v1_set =	 TIME_NONE;
 int query =	 0;
 int verbose = 	 0;
-int maxlines = 	 0;
-int domem = 	 0;
+int maxlines = 	 MAXLEN;
 int debug = 	 0;
 
+/* intentionally double for scan */
+double inv0, inv1;
+
+static void
+usage(void)
+{
+    fprintf(stderr,"Usage: anim_time [-s#] [-e#] [-d] < in.table\n");
+}
 
 fastf_t
 gettime(fastf_t dist, fastf_t a, fastf_t b, fastf_t c, fastf_t init)
@@ -96,6 +102,7 @@ int get_args(int argc, char **argv)
     int c;
 
     while ((c=bu_getopt(argc, argv, OPT_STR)) != -1) {
+
 	switch (c) {
 	    case 's':
 		sscanf(bu_optarg, "%lf", &inv0);
@@ -126,7 +133,6 @@ int get_args(int argc, char **argv)
 		break;
 	    case 'm':
 		sscanf(bu_optarg, "%d", &maxlines);
-		domem = 1;
 		break;
 	    case 'v':
 		verbose = 1;
@@ -135,7 +141,6 @@ int get_args(int argc, char **argv)
 		debug = 1;
 		break;
 	    default:
-		fprintf(stderr, "Unknown option: -%c\n", c);
 		return 0;
 	}
     }
@@ -146,34 +151,36 @@ int get_args(int argc, char **argv)
 int
 main(int argc, char **argv)
 {
-    fastf_t *l, *x, *y, *z;
-    fastf_t temp0, temp1, temp2, start=0.0, end, v0, v1;
+    fastf_t *l;
+    fastf_t temp0, temp1, temp2, start=0.0, v0, v1;
     int i, j, num, plen;
 
+    fastf_t timeval, dist, slope, a, b, c;
 
-    fastf_t time, dist, slope, a, b, c;
+    /* intentionally double for scan */
+    double end, *x, *y, *z;
 
+    if (argc == 1 && isatty(fileno(stdin)) && isatty(fileno(stdout))){
+	usage();
+	return 0;
+    }
+
+    if (!get_args(argc, argv)){
+	usage();
+	return 0;
+    }
 
     plen = 0;
 
-    if (!get_args(argc, argv)) {
-	fprintf(stderr, "Usage: anim_time [-s#] [-e#] [-d] < in.table\n");
-	return 1;
-    }
-
-    if (!domem) {
-	maxlines = MAXLEN;
-    }
-
     l = (fastf_t *) bu_malloc(maxlines*sizeof(fastf_t), "l[]");
     if (verbose) {
-	x = (fastf_t *) bu_malloc(maxlines*sizeof(fastf_t), "x[]");
-	y = (fastf_t *) bu_malloc(maxlines*sizeof(fastf_t), "y[]");
-	z = (fastf_t *) bu_malloc(maxlines*sizeof(fastf_t), "z[]");
+	x = (double *) bu_malloc(maxlines*sizeof(double), "x[]");
+	y = (double *) bu_malloc(maxlines*sizeof(double), "y[]");
+	z = (double *) bu_malloc(maxlines*sizeof(double), "z[]");
     } else {
-	x = (fastf_t *) bu_malloc(2*sizeof(fastf_t), "x[]");
-	y = (fastf_t *) bu_malloc(2*sizeof(fastf_t), "y[]");
-	z = (fastf_t *) bu_malloc(2*sizeof(fastf_t), "z[]");
+	x = (double *) bu_malloc(2*sizeof(double), "x[]");
+	y = (double *) bu_malloc(2*sizeof(double), "y[]");
+	z = (double *) bu_malloc(2*sizeof(double), "z[]");
     }
     l[0] = 0.0;
 
@@ -196,7 +203,7 @@ main(int argc, char **argv)
 	plen++;
     }
 
-    time = end - start;
+    timeval = end - start;
     dist = l[plen-1];
 
     if (query) {
@@ -204,15 +211,15 @@ main(int argc, char **argv)
 	return 0;
     }
 
-    if (time < VDIVIDE_TOL) {
-	fprintf(stderr, "anim_time: time too small. Only %f s.\n", time);
+    if (timeval < VDIVIDE_TOL) {
+	fprintf(stderr, "anim_time: time too small. Only %f s.\n", timeval);
 	return 10;
     }
     if (dist < VDIVIDE_TOL) {
 	fprintf(stderr, "anim_time: pathlength too small. Only %f\n", dist);
 	return 10;
     }
-    slope = dist/time;
+    slope = dist/timeval;
 
     switch (v0_set) {
 	case TIME_ABSOLUTE:
@@ -256,8 +263,8 @@ main(int argc, char **argv)
 	return 1;
     }
 
-    a = ((v1+v0) - 2.0*slope)/(time*time);
-    b = (3*slope - (v1+2.0*v0))/time;
+    a = ((v1+v0) - 2.0*slope)/(timeval*timeval);
+    b = (3*slope - (v1+2.0*v0))/timeval;
     c = v0;
 
     temp2 = 1.0/slope;

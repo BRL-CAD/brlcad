@@ -1,7 +1,7 @@
 /*                        G I F 2 F B . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2012 United States Government as represented by
+ * Copyright (c) 2004-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -47,32 +47,35 @@
 #include "fb.h"
 
 
-#define	LSB	0	/* Least Signifigent Byte */
-#define MSB	1	/* Most Signifigent Byte */
+#define LSB 0 /* Least Significant Byte */
+#define MSB 1 /* Most Significant Byte */
 
 struct GIF_head {
-    char		GH_Magic[6];
-    unsigned char	GH_ScreenWidth[2];	/* MSB, LSB */
-    unsigned char	GH_ScreenHeight[2];	/* MSB, LSB */
-    unsigned char	GH_Flags;
-    unsigned char	GH_Background;
-    unsigned char	GH_EOB;
+    char GH_Magic[6];
+    unsigned char GH_ScreenWidth[2];	/* MSB, LSB */
+    unsigned char GH_ScreenHeight[2];	/* MSB, LSB */
+    unsigned char GH_Flags;
+    unsigned char GH_Background;
+    unsigned char GH_EOB;
 };
+
 
 struct GIF_Image {
-    char		IH_Magic;
-    unsigned char	IH_Left[2];		/* MSB, LSB */
-    unsigned char	IH_Top[2];		/* MSB, LSB */
-    unsigned char	IH_Width[2];		/* MSB, LSB */
-    unsigned char	IH_Height[2];		/* MSB, LSB */
-    unsigned char	IH_Flags;
+    char IH_Magic;
+    unsigned char IH_Left[2];		/* MSB, LSB */
+    unsigned char IH_Top[2];		/* MSB, LSB */
+    unsigned char IH_Width[2];		/* MSB, LSB */
+    unsigned char IH_Height[2];		/* MSB, LSB */
+    unsigned char IH_Flags;
 };
 
+
 struct acolor {
-    unsigned char	red;
-    unsigned char	green;
-    unsigned char	blue;
+    unsigned char red;
+    unsigned char green;
+    unsigned char blue;
 };
+
 
 #define WORD(x)	(((int)x[MSB]<<8)+(int)x[LSB])
 
@@ -86,8 +89,8 @@ int MinBits;
 int Bits;
 int Fresh=1;
 
-struct acolor	GlobalColors[256];
-struct acolor	LocalColors[256];
+struct acolor GlobalColors[256];
+struct acolor LocalColors[256];
 
 struct GIF_head Header;
 struct GIF_Image Im;
@@ -100,13 +103,13 @@ int getByte(FILE *inp);
 int
 main(int argc, char **argv)
 {
-    int	 i, idx, n;
-    int	maxcolors;
-    int	code;
-    int	verbose=0;
-    int	headers=0;
-    int	interlaced;
-    char	*file_name;
+    int i, idx, n;
+    int maxcolors;
+    int code;
+    int verbose=0;
+    int headers=0;
+    int interlaced;
+    char *file_name;
 
     unsigned char line[3*2048];
     unsigned char *lp;
@@ -135,8 +138,8 @@ main(int argc, char **argv)
 	}
     }
 
-    if ( bu_optind >= argc )  {
-	if ( isatty(fileno(stdin)) ) {
+    if (bu_optind >= argc) {
+	if (isatty(fileno(stdin))) {
 	    (void) fprintf(stderr, "%s: No input file.\n", argv[0]);
 	    usage(argv);
 	    return 1;
@@ -145,16 +148,16 @@ main(int argc, char **argv)
 	fp = stdin;
     } else {
 	file_name = argv[bu_optind];
-	if ( (fp = fopen(file_name, "rb")) == NULL )  {
-	    (void)fprintf( stderr,
-			   "%s: cannot open \"%s\" for reading\n", argv[0],
-			   file_name );
+	if ((fp = fopen(file_name, "rb")) == NULL) {
+	    fprintf(stderr,
+		    "%s: cannot open \"%s\" for reading\n", argv[0],
+		    file_name);
 	    usage(argv);
 	    return 1;
 	}
     }
 /*
- * read in the Header and then check for consitence.
+ * read in the Header and then check for consistency.
  */
     n= fread(&Header, 1, 13, fp);
 
@@ -254,7 +257,7 @@ main(int argc, char **argv)
 	fprintf(stderr, "MinBits=%d\n", MinBits);
     }
 
-    if (interlaced ) {
+    if (interlaced) {
 	lineIdx = 0;
 
 	lineNumber = offs[lineIdx];
@@ -268,41 +271,41 @@ main(int argc, char **argv)
  * Open the frame buffer.
  */
     if ((fbp = fb_open(framebuffer, WORD(Im.IH_Width), WORD(Im.IH_Height))) != NULL) {
-      int ih_height = WORD(Im.IH_Height);
-      int ih_width = WORD(Im.IH_Width);
+	int ih_height = WORD(Im.IH_Height);
+	int ih_width = WORD(Im.IH_Width);
 
-      if(ih_height < 0 || ih_height > 0xffff || ih_width < 0 || ih_height > 0xffff)
-        bu_exit(1, "Invalid height in GIF Header\n");
+	if(ih_height < 0 || ih_height > 0xffff || ih_width < 0 || ih_height > 0xffff)
+	    bu_exit(1, "Invalid height in GIF Header\n");
 
-      /*
-       * The speed of this loop can be greatly increased by moving all of
-       * the WORD macro calls out of the loop.
-       */
-      for (i=0; i<ih_height;i++) {
-	int k;
-	lp = line;
-	for (k=0;k<ih_width;k++) {
-	  idx = getByte(fp);
-	  if (idx < 0) {
-	    fb_close(fbp);
-	    bu_exit(1, "Error: Unexpectedly reached end of input. Output may be incomplete.\n");
-	  }
-	  *lp++ = GlobalColors[idx].red;
-	  *lp++ = GlobalColors[idx].green;
-	  *lp++ = GlobalColors[idx].blue;
+	/*
+	 * The speed of this loop can be greatly increased by moving all of
+	 * the WORD macro calls out of the loop.
+	 */
+	for (i=0; i<ih_height;i++) {
+	    int k;
+	    lp = line;
+	    for (k=0;k<ih_width;k++) {
+		idx = getByte(fp);
+		if (idx < 0) {
+		    fb_close(fbp);
+		    bu_exit(1, "Error: Unexpectedly reached end of input. Output may be incomplete.\n");
+		}
+		*lp++ = GlobalColors[idx].red;
+		*lp++ = GlobalColors[idx].green;
+		*lp++ = GlobalColors[idx].blue;
+	    }
+	    fb_write(fbp, 0, ih_height-lineNumber, line, ih_width);
+	    fb_flush(fbp);
+	    lineNumber += lineInc;
+	    if (lineNumber >= ih_height) {
+		++lineIdx;
+		if (lineIdx > (int)(sizeof(lace)/sizeof(lace[0]))-1)
+		    lineIdx = (sizeof(lace)/sizeof(lace[0]))-1;
+		lineInc = lace[lineIdx];
+		lineNumber = offs[lineIdx];
+	    }
 	}
-	fb_write(fbp, 0, ih_height-lineNumber, line, ih_width);
-	fb_flush(fbp);
-	lineNumber += lineInc;
-	if (lineNumber >= ih_height) {
-	  ++lineIdx;
-	  if (lineIdx > (int)(sizeof(lace)/sizeof(lace[0]))-1)
-	      lineIdx = (sizeof(lace)/sizeof(lace[0]))-1;
-	  lineInc = lace[lineIdx];
-	  lineNumber = offs[lineIdx];
-	}
-      }
-      fb_close(fbp);
+	fb_close(fbp);
     }
     return 0;
 }
@@ -370,9 +373,10 @@ getcode(FILE *inp)
     return code;
 }
 
+
 /* getByte	get a byte from the input stream decompressing as we go.
  *
- * getByte uses the somewhat standard LWZ decompress algorthem.  Most
+ * getByte uses the somewhat standard LWZ decompress algorithm.  Most
  * of this subroutine is based on "compress.c".  I've added some and
  * deleted others but I do NOT claim that this is original code.
  *
@@ -392,7 +396,7 @@ getcode(FILE *inp)
  * Method:
  *	Being unable to read the papers that everybody else points to,
  *	I had to decipher the compress code.  This is how I thing this
- *	compression algorithem works.
+ *	compression algorithm works.
  *	if this is the first time the routine has been called then
  *		initialize the code sizes
  *		set the "tree" so that all "characters" are at the root.
@@ -400,21 +404,21 @@ getcode(FILE *inp)
  *	get a new code
  *	if the new code is greater than the current max code then
  *		add last(?) code to the tree.
- *		follow the tree from the leaf to the root outputing
+ *		follow the tree from the leaf to the root outputting
  *		    a "byte" for each node of the tree.
  *	endif
  */
 int getByte(FILE *inp)
 {
     int code, incode;
-    static int	firstcode, oldcode;
-    static int	firstTime = 1;
-    static int	clear_code, end_code;
-    static int	max_code, next_ent;
-#define	PREFIX	0
-#define SUFIX	1
-    static int	table[2][1<<12];
-    static int	stack[1<<13], *sp;
+    static int firstcode, oldcode;
+    static int firstTime = 1;
+    static int clear_code, end_code;
+    static int max_code, next_ent;
+#define PREFIX 0
+#define SUFIX 1
+    static int table[2][1<<12];
+    static int stack[1<<13], *sp;
 
     int i;
 
@@ -493,6 +497,7 @@ usage(char **argv)
 {
     fprintf(stderr, "%s [-h] [-v] [-F frame_buffer] [gif_file]\n", argv[0]);
 }
+
 
 /*
  * Local Variables:

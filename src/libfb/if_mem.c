@@ -1,7 +1,7 @@
 /*                        I F _ M E M . C
  * BRL-CAD
  *
- * Copyright (c) 1989-2012 United States Government as represented by
+ * Copyright (c) 1989-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -37,7 +37,7 @@
 
 
 /* Per connection private info */
-struct meminfo {
+struct mem_info {
     FBIO *fbp;		/* attached frame buffer (if any) */
     unsigned char *mem;	/* memory frame buffer */
     ColorMap cmap;		/* color map buffer */
@@ -45,7 +45,7 @@ struct meminfo {
     int cmap_dirty;	/* !0 implies unflushed written cmap */
     int write_thru;	/* !0 implies pass-thru write mode */
 };
-#define MI(ptr) ((struct meminfo *)((ptr)->u1.p))
+#define MI(ptr) ((struct mem_info *)((ptr)->u1.p))
 #define MIL(ptr) ((ptr)->u1.p)		/* left hand side version */
 
 #define MODE_1MASK	(1<<1)
@@ -103,9 +103,9 @@ mem_open(FBIO *ifp, const char *file, int width, int height)
 	    alpha = 0;
 	    mp = &modebuf[0];
 	    cp = &file[8];
-	    while (*cp != '\0' && !isspace(*cp)) {
+	    while (*cp != '\0' && !isspace((int)*cp)) {
 		*mp++ = *cp;	/* copy it to buffer */
-		if (isdigit(*cp)) {
+		if (isdigit((int)*cp)) {
 		    cp++;
 		    continue;
 		}
@@ -127,8 +127,8 @@ mem_open(FBIO *ifp, const char *file, int width, int height)
 	}
 
     /* build a local static info struct */
-    if ((MIL(ifp) = (char *)calloc(1, sizeof(struct meminfo))) == NULL) {
-	fb_log("mem_open:  meminfo malloc failed\n");
+    if ((MIL(ifp) = (char *)calloc(1, sizeof(struct mem_info))) == NULL) {
+	fb_log("mem_open:  mem_info malloc failed\n");
 	return -1;
     }
     cp = &file[strlen("/dev/mem")];
@@ -245,7 +245,7 @@ mem_clear(FBIO *ifp, unsigned char *pp)
 }
 
 
-HIDDEN int
+HIDDEN ssize_t
 mem_read(FBIO *ifp, int x, int y, unsigned char *pixelp, size_t count)
 {
     size_t pixels_to_end;
@@ -260,11 +260,11 @@ mem_read(FBIO *ifp, int x, int y, unsigned char *pixelp, size_t count)
 
     memcpy((char *)pixelp, &(MI(ifp)->mem[(y*ifp->if_width + x)*3]), count*3);
 
-    return (int)count;
+    return count;
 }
 
 
-HIDDEN int
+HIDDEN ssize_t
 mem_write(FBIO *ifp, int x, int y, const unsigned char *pixelp, size_t count)
 {
     size_t pixels_to_end;
@@ -284,7 +284,7 @@ mem_write(FBIO *ifp, int x, int y, const unsigned char *pixelp, size_t count)
     } else {
 	MI(ifp)->mem_dirty = 1;
     }
-    return (int)count;
+    return count;
 }
 
 

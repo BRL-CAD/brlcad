@@ -1,11 +1,12 @@
 include_directories(
+	${TK_INCLUDE_PATH}
+	${TCL_INCLUDE_DIRS}
+        ${X11_INCLUDE_DIR}
+	${OPENGL_INCLUDE_DIR_GL}
 	${CMAKE_CURRENT_SOURCE_DIR}/../include
 	${CMAKE_CURRENT_SOURCE_DIR}/Xmu
 	${CMAKE_CURRENT_BINARY_DIR}
 	${CMAKE_CURRENT_BINARY_DIR}/../include
-	${OPENGL_INCLUDE_DIR_GL}
-	${TCL_INCLUDE_DIRS}
-	${TK_INCLUDE_PATH}
 	)
 
 # Because Togl is Yet Another Tcl/Tk package that needs
@@ -87,18 +88,20 @@ IF(TOGL_WINDOWINGSYSTEM MATCHES "TOGL_X11")
 		Xmu/LookupCmap.c
 		Xmu/StdCmap.c
 		)
+    SET(TOGL_SRCS glew/glew.c)
 ENDIF(TOGL_WINDOWINGSYSTEM MATCHES "TOGL_X11")
 
 SET(TOGL_SRCS
-	glew/glew.c
-	${TOGL_XMU_SRCS}
-	togl.c
-	toglProcAddr.c
-	toglStubLib.c
-	${CMAKE_CURRENT_BINARY_DIR}/toglStubInit.c
-	)
+    ${TOGL_SRCS}
+    ${TOGL_XMU_SRCS}
+    togl.c
+    toglProcAddr.c
+    toglStubLib.c
+    ${CMAKE_CURRENT_BINARY_DIR}/toglStubInit.c
+    )
 
 add_library(togl SHARED ${TOGL_SRCS})
+set_target_properties(togl PROPERTIES VERSION 2.0.1 SOVERSION 2)
 ADD_DEPENDENCIES(togl togl_stubs_gen)
 IF(WIN32)
 	target_link_libraries(togl ${TCL_STUB_LIBRARIES} ${X11_LIBRARIES} ${OPENGL_LIBRARIES})

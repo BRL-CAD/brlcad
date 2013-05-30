@@ -1,7 +1,7 @@
 /*                         P L - P S . C
  * BRL-CAD
  *
- * Copyright (c) 1989-2012 United States Government as represented by
+ * Copyright (c) 1989-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -182,8 +182,8 @@ getieee(void)
 
 void
 draw(double x_1, double y_1, double UNUSED(z_1), double x_2, double y_2, double z_2)
-    /* from point */
-    /* to point */
+/* from point */
+/* to point */
 {
     int sx1, sy1, sx2, sy2;
 
@@ -233,7 +233,7 @@ label(double x, double y, char *str)
 void
 scaleinfo(FILE *fp, int w, int h)
 
-    /* in points */
+/* in points */
 {
     /*
      * About this PostScript scaling issue...
@@ -283,7 +283,7 @@ void
 prolog(FILE *fp, char *name, int w, int h)
 
 
-    /* in points */
+/* in points */
 {
     time_t ltime;
 
@@ -395,16 +395,16 @@ get_args(int argc, char **argv)
     } else {
 	file_name = argv[bu_optind];
 	if ((infp = fopen(file_name, "r")) == NULL) {
-	    (void)fprintf(stderr,
-			  "pl-ps: cannot open \"%s\" for reading\n",
-			  file_name);
+	    fprintf(stderr,
+		    "pl-ps: cannot open \"%s\" for reading\n",
+		    file_name);
 	    return 0;
 	}
 	/*fileinput++;*/
     }
 
     if (argc > ++bu_optind)
-	(void)fprintf(stderr, "pl-ps: excess argument(s) ignored\n");
+	fprintf(stderr, "pl-ps: excess argument(s) ignored\n");
 
     return 1;		/* OK */
 }

@@ -1,7 +1,7 @@
 /*                 Transformation.h
  * BRL-CAD
  *
- * Copyright (c) 1994-2012 United States Government as represented by
+ * Copyright (c) 1994-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -29,20 +29,23 @@
 
 #include "STEPEntity.h"
 
-class Transformation: virtual public STEPEntity {
+class Transformation: virtual public STEPEntity
+{
 private:
     static string entityname;
+    static EntityInstanceFunc GetInstance;
 
 protected:
 
 public:
     Transformation();
     virtual ~Transformation();
-    Transformation(STEPWrapper *sw, int step_id);bool Load(STEPWrapper *sw,SDAI_Application_instance *sse);
+    Transformation(STEPWrapper *sw, int step_id);
+    bool Load(STEPWrapper *sw, SDAI_Application_instance *sse);
     virtual void Print(int level);
 
     //static methods
-    static STEPEntity *Create(STEPWrapper *sw,SDAI_Application_instance *sse);
+    static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
 #endif /* TRANSFORMATION_H_ */

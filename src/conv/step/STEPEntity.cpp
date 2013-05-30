@@ -1,7 +1,7 @@
 /*                  S T E P E N T I T Y . C P P
  * BRL-CAD
  *
- * Copyright (c) 2009-2012 United States Government as represented by
+ * Copyright (c) 2009-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -25,12 +25,13 @@
 
 /* inteface header */
 #include "STEPEntity.h"
+#include "Factory.h"
 
 
 STEPEntity::STEPEntity()
 {
-    step=NULL;
-    id=0;
+    step = NULL;
+    id = 0;
     ON_id = -1;
 }
 
@@ -50,6 +51,34 @@ STEPEntity::STEPid()
 STEPWrapper *STEPEntity::Step()
 {
     return step;
+}
+
+
+
+STEPEntity *
+STEPEntity::CreateEntity(
+    STEPWrapper *sw,
+    SDAI_Application_instance *sse,
+    EntityInstanceFunc Instance,
+    const char *classname)
+{
+    Factory::OBJECTS::iterator i;
+
+    if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
+	STEPEntity *object = Instance(sw, sse->STEPfile_id);
+
+	if (!object->Load(sw, sse)) {
+	    std::cerr << classname << ":Error loading class in ::Create() method." << std::endl;
+	    delete object;
+	    return NULL;
+	}
+
+	Factory::AddObject(object);
+
+	return static_cast<STEPEntity *>(object);
+    } else {
+	return (*i).second;
+    }
 }
 
 

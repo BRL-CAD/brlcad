@@ -11,6 +11,7 @@ set(BU_LOCAL_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR})
 BRLCAD_LIB_INCLUDE_DIRS(bu BU_INCLUDE_DIRS BU_LOCAL_INCLUDE_DIRS)
 
 set(LIBBU_SOURCES
+  affinity.c
   argv.c
   avs.c
   backtrace.c
@@ -35,17 +36,17 @@ set(LIBBU_SOURCES
   fgets.c
   file.c
   fnmatch.c
-  fopen_uniq.c
   getcwd.c
+  gethostname.c
   getopt.c
   globals.c
   hash.c
+  heap.c
   hist.c
   hook.c
   htond.c
   htonf.c
   interrupt.c
-  ispar.c
   kill.c
   lex.c
   linebuf.c
@@ -58,7 +59,6 @@ set(LIBBU_SOURCES
   observer.c
   parallel.c
   parse.c
-  pool.c
   printb.c
   process.c
   progname.c
@@ -81,6 +81,7 @@ set(LIBBU_SOURCES
   str.c
   tcl.c
   temp.c
+  thread.cpp
   timer.c
   units.c
   vers.c
@@ -100,25 +101,10 @@ if("${BRLCAD_TCL_BUILD}" STREQUAL "ON")
   add_dependencies(libbu tcl)
 endif("${BRLCAD_TCL_BUILD}" STREQUAL "ON")
 
-BRLCAD_ADDEXEC(test_basename test_basename.c libbu NO_INSTALL)
-BRLCAD_ADDEXEC(test_bitv test_bitv.c libbu NO_INSTALL)
-BRLCAD_ADDEXEC(test_booleanize test_booleanize.c libbu NO_INSTALL)
-BRLCAD_ADDEXEC(test_ctype test_ctype.c libbu NO_INSTALL)
-BRLCAD_ADDEXEC(test_dirname test_dirname.c libbu NO_INSTALL)
-BRLCAD_ADDEXEC(test_escape test_escape.c libbu NO_INSTALL)
-BRLCAD_ADDEXEC(test_progname test_progname.c libbu NO_INSTALL)
-BRLCAD_ADDEXEC(test_quote test_quote.c libbu NO_INSTALL)
-BRLCAD_ADDEXEC(test_sscanf test_sscanf.c libbu NO_INSTALL)
-BRLCAD_ADDEXEC(test_timer test_timer.c libbu NO_INSTALL)
-BRLCAD_ADDEXEC(test_vls_vprintf test_vls_vprintf.c libbu NO_INSTALL)
-
-set(bu_MAN3
-  htond.3
-  redblack.3
-  )
-ADD_MAN_PAGES(3 bu_MAN3)
+add_subdirectory(tests)
 
 set(bu_ignore_files
+  parallel.h
   rb_internals.h
   uce-dirent.h
   vls_internals.h

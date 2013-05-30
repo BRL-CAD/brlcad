@@ -1,7 +1,7 @@
 /*                 BRLCADWrapper.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2012 United States Government as represented by
+ * Copyright (c) 1994-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -33,21 +33,24 @@
 #include <iostream>
 
 
-int BRLCADWrapper::sol_reg_cnt=0;
+int BRLCADWrapper::sol_reg_cnt = 0;
 
 
-BRLCADWrapper::BRLCADWrapper() {
+BRLCADWrapper::BRLCADWrapper()
+{
     outfp = NULL;
 }
 
 
-BRLCADWrapper::~BRLCADWrapper() {
+BRLCADWrapper::~BRLCADWrapper()
+{
     Close();
 }
 
 
 bool
-BRLCADWrapper::OpenFile(const char *flnm) {
+BRLCADWrapper::OpenFile(const char *flnm)
+{
     //TODO: need to check to make sure we aren't overwriting
 
     /* open brlcad instance */
@@ -66,7 +69,8 @@ BRLCADWrapper::OpenFile(const char *flnm) {
 
 
 bool
-BRLCADWrapper::WriteHeader() {
+BRLCADWrapper::WriteHeader()
+{
     db5_update_attribute("_GLOBAL", "HEADERINFO", "test header attributes", outfp->dbip);
     db5_update_attribute("_GLOBAL", "HEADERCLASS", "test header classification", outfp->dbip);
     db5_update_attribute("_GLOBAL", "HEADERAPPROVED", "test header approval", outfp->dbip);
@@ -75,17 +79,21 @@ BRLCADWrapper::WriteHeader() {
 
 
 bool
-BRLCADWrapper::WriteSphere(double *center, double radius) {
+BRLCADWrapper::WriteSphere(double *center, double radius)
+{
+    point_t pnt;
     center[X] = 0.0;
     center[Y] = 0.0;
     center[Z] = 0.0;
-    mk_sph(outfp, "s1", center, radius);
+    VMOVE(pnt, center);
+    mk_sph(outfp, "s1", pnt, radius);
     return true;
 }
 
 
 bool
-BRLCADWrapper::WriteBrep(std::string name, ON_Brep *brep) {
+BRLCADWrapper::WriteBrep(std::string name, ON_Brep *brep)
+{
     std::ostringstream str;
     std::string strcnt;
 
@@ -108,7 +116,8 @@ BRLCADWrapper::WriteBrep(std::string name, ON_Brep *brep) {
 
 
 bool
-BRLCADWrapper::Close() {
+BRLCADWrapper::Close()
+{
 
     if (outfp) {
 	wdb_close(outfp);

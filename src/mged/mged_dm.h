@@ -1,7 +1,7 @@
 /*			M G E D _ D M . H
  * BRL-CAD
  *
- * Copyright (c) 1985-2012 United States Government as represented by
+ * Copyright (c) 1985-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -30,6 +30,7 @@
 
 #include "dm.h"	/* struct dm */
 #include "dm_xvars.h"
+#include "dm-Null.h"
 
 #include "fb.h" /* FBIO */
 #include "pkg.h" /* struct pkg_conn */

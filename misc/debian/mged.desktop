@@ -1,0 +1,10 @@
+
+[Desktop Entry]
+Name=Mged
+Comment=Mged - Constructive solid geometry (CSG) solid modeling computer-aided design (CAD) system
+Exec=/usr/brlcad/bin/mged %f
+Icon=mged
+Terminal=true
+Type=Application
+Categories=BRL-CAD;
+MimeType=application/brlcad-v4;application/brlcad-v5;

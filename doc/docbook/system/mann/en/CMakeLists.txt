@@ -35,6 +35,9 @@ set(docbook_mann_EN
   bot_decimate.xml
   bot_face_fuse.xml
   bot_face_sort.xml
+  bot_flip.xml
+  bot_split.xml
+  bot_sync.xml
   bot_vertex_fuse.xml
   build_region.xml
   c.xml
@@ -51,6 +54,7 @@ set(docbook_mann_EN
   db.xml
   db_glob.xml
   dbconcat.xml
+  dbupgrade.xml
   debugbu.xml
   debugdir.xml
   debuglib.xml
@@ -92,6 +96,7 @@ set(docbook_mann_EN
   gastank.xml
   gqa.xml
   gr.xml
+  graph.xml
   gui.xml
   handle.xml
   help.xml
@@ -101,6 +106,7 @@ set(docbook_mann_EN
   history.xml
   i.xml
   idents.xml
+  igraph.xml
   ill.xml
   in.xml
   inside.xml
@@ -174,6 +180,7 @@ set(docbook_mann_EN
   regdebug.xml
   regdef.xml
   regions.xml
+  reid.xml
   release.xml
   rfarb.xml
   rm.xml
@@ -185,6 +192,7 @@ set(docbook_mann_EN
   rpp-cap.xml
   rrt.xml
   rt.xml
+  rtarea.xml
   rtcheck.xml
   savekey.xml
   saveview.xml
@@ -219,6 +227,7 @@ set(docbook_mann_EN
   view.xml
   viewsize.xml
   vnirt.xml
+  voxelize.xml
   vquery_ray.xml
   vrmgr.xml
   vrot.xml
@@ -249,7 +258,7 @@ set_source_files_properties(gr.xml PROPERTIES EXTRA_MAN_OUTPUTS "dg.nged")
 
 DOCBOOK_TO_HTML(mann docbook_mann_EN html/mann/en "")
 DOCBOOK_TO_HTML(mann docbook_mann_INTRO html/mann/en "")
-DOCBOOK_TO_MAN(mann docbook_mann_EN n nged man/mann "")
+DOCBOOK_TO_MAN(mann docbook_mann_EN n nged mann "")
 
 if(BRLCAD_EXTRADOCS_PDF_MAN)
   DOCBOOK_TO_PDF(mann docbook_mann_EN pdf/mann/en "")

@@ -1,7 +1,7 @@
 /*                     N M G _ V I S I T . C
  * BRL-CAD
  *
- * Copyright (c) 1993-2012 United States Government as represented by
+ * Copyright (c) 1993-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -25,7 +25,7 @@
  * visit all the data structures "below" a given structure.
  *
  * The caller provides a pointer to the structure to start at,
- * a table of "handlers" for each kind of strucuture,
+ * a table of "handlers" for each kind of structure,
  * and a generic pointer for private state which will be sent along
  * to the user's handlers.
  * For non-leaf structures, there are two handlers, one called

@@ -1,7 +1,7 @@
 /*                         M A T E R . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2012 United States Government as represented by
+ * Copyright (c) 2008-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -39,7 +39,7 @@ ged_mater(struct ged *gedp, int argc, const char *argv[])
 	"R, G, B color values (0 to 255)? ('del' to delete, '.' to skip) ",
 	"G component color value? ('.' to skip) ",
 	"B component color value? ('.' to skip) ",
-	"Should this object's shader override lower nodes? ([y/n] or '.' to skip) "
+	"Should this object's shader override lower nodes? (y/n or '.' to skip) "
     };
 
     struct directory *dp = NULL;

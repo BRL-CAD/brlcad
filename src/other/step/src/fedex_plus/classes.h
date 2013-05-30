@@ -1,3 +1,5 @@
+#ifndef CLASSES_H
+#define CLASSES_H
 /*
 ** Fed-x parser output module for generating C++  class definitions
 ** December  5, 1989
@@ -64,6 +66,8 @@ typedef  struct file_holder  {
                                 *    Nec. if ent1 of schemaA has attribute ent2 from schemaB.
                                 */
     FILE * names;               ///< MAP Nov 2011 - header with namespace for entity and attr descriptors
+    FILE * helpers;             /**< MAP Mar 2012 - header with inline helper functions. Currently only used for
+                                     helper functions to find runtime aggregate bounds */
 }  File_holder, FILES;
 
 /**  these fields are used so that ENTITY types are processed in order
@@ -100,6 +104,8 @@ FILE         *  FILEcreate( const char * );
 void            FILEclose( FILE * );
 const char   *  ClassName( const char * );
 const char   *  ENTITYget_classname( Entity );
+void            FUNCPrint( Function, FILES *, Schema );
+void            RULEPrint( Rule, FILES *, Schema );
 void            ENTITYPrint( Entity, FILES *, Schema );
 const char   *  StrToConstant( const char * );
 void            TYPEselect_print( Type, FILES *, Schema );
@@ -108,7 +114,9 @@ void            TYPEprint_definition( Type, FILES *, Schema );
 void            TYPEprint_new( const Type, FILE *, Schema );
 void            TYPEprint_typedefs( Type, FILE * );
 void            TYPEprint_descriptions( const Type, FILES *, Schema );
-void            TYPEprint_init( const Type, FILE *, Schema );
+void            TYPEprint_init( const Type type, FILES * files, Schema schema );
+void            AGGRprint_init( FILES* files, const Type t,
+                                const char* var_name, const char* aggr_name );
 void            TYPEselect_init_print( const Type, FILE *, Schema );
 void            MODELPrint( Entity, FILES *, Schema, int );
 void            MODELprint_new( Entity, FILES *, Schema );
@@ -140,4 +148,6 @@ void            getMCPrint( Express, FILE *, FILE * );
 int             sameSchema( Scope, Scope );
 
 void            USEREFout( Schema schema, Dictionary refdict, Linked_List reflist, char * type, FILE * file );
+
+#endif
 

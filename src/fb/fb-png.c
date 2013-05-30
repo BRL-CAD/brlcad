@@ -1,7 +1,7 @@
 /*                        F B - P N G . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2012 United States Government as represented by
+ * Copyright (c) 1998-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -189,7 +189,7 @@ Usage: fb-png [-h -i -c] [-# nbytes/pixel] [-F framebuffer] [-g gamma]\n\
 		 PNG_FILTER_TYPE_DEFAULT);
 
     /* default to no gamma correction */
-    if (!(out_gamma < 0.0))
+    if (out_gamma > 0.0)
 	png_set_gAMA(png_p, info_p, out_gamma);
 
     png_write_info(png_p, info_p);

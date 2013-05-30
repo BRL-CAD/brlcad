@@ -1,7 +1,7 @@
 /*                       B U T T O N S . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2012 United States Government as represented by
+ * Copyright (c) 1985-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -82,14 +82,14 @@ int bv_zoomout();
  * This flag indicates that Primitive editing is in effect.
  * edobj may not be set at the same time.
  * It is set to the 0 if off, or the value of the button function
- * that is currently in effect (eg, BE_S_SCALE).
+ * that is currently in effect (e.g., BE_S_SCALE).
  */
 static int edsol;
 
 /* This flag indicates that Matrix editing is in effect.
  * edsol may not be set at the same time.
  * Value is 0 if off, or the value of the button function currently
- * in effect (eg, BE_O_XY).
+ * in effect (e.g., BE_O_XY).
  */
 int edobj;		/* object editing */
 int movedir;	/* RARROW | UARROW | SARROW | ROTARROW */
@@ -325,7 +325,7 @@ f_press(ClientData clientData,
  * L A B E L _ B U T T O N
  *
  * For a given GED button number, return the "press" ID string.
- * Useful for displays with programable button lables, etc.
+ * Useful for displays with programmable button labels, etc.
  */
 char *
 label_button(int bnum)
@@ -502,7 +502,7 @@ bv_45_45() {
 
 int
 bv_35_25() {
-    /* Use Azmuth=35, Elevation=25 in GIFT's backwards space */
+    /* Use Azimuth=35, Elevation=25 in GIFT's backwards space */
     setview(270.0+25.0, 0.0, 270.0-35.0);
     return TCL_OK;
 }

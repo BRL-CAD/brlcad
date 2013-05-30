@@ -2,7 +2,7 @@
 #                      N I G H T L Y . S H
 # BRL-CAD
 #
-# Copyright (c) 2010-2012 United States Government as represented by
+# Copyright (c) 2010-2013 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -180,7 +180,7 @@ echo ../brlcad-$VERSION/configure \
     --prefix=/usr/brlcad/rel-$VERSION \
     >> $LOG_FILE 2>&1
 
-echo "runnig: $MAKE_CMD $MAKE_OPTS" >> $LOG_FILE 2>&1
+echo "running: $MAKE_CMD $MAKE_OPTS" >> $LOG_FILE 2>&1
 
 $MAKE_CMD $MAKE_OPTS > build.log 2>&1
 STATUS=$?

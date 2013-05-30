@@ -4,10 +4,10 @@ namespace eval ::hv3 {
   ::snit::widget console {
 
     # Entry field for typing commands (entry widget):
-    variable myEntryField 
+    variable myEntryField
 
     # Output window for output of typed commands (text widget):
-    variable myOutputWindow 
+    variable myOutputWindow
 
     # Viewer window for viewing HTML/CSS/Javascript code (text widget).
     variable myCodeViewer
@@ -26,7 +26,7 @@ namespace eval ::hv3 {
     # next cleared.
     variable myCodeViewerLinks [list]
 
-    # An array of tags to delete from widget $myOutputWindow when 
+    # An array of tags to delete from widget $myOutputWindow when
     # it is next cleared.
     variable myOutputWindowLinks [list]
 
@@ -47,7 +47,7 @@ namespace eval ::hv3 {
       set f [frame ${win}.f]
 
       set myEntryField [::hv3::entry ${win}.f.entry_field]
-      set sel ${win}.f.select 
+      set sel ${win}.f.select
       set om [tk_optionMenu $sel [myvar myLanguage] Tcl Javascript Search]
       $sel configure -width 9
 
@@ -133,7 +133,7 @@ namespace eval ::hv3 {
       set myHistoryIdx $iHistory
       $myEntryField delete 0 end
       $myEntryField insert 0 [lindex $myHistory $myHistoryIdx 1]
-      
+
       set lang [lindex $myHistory $myHistoryIdx 0]
       if {$lang ne ""} {set myLanguage $lang}
     }
@@ -265,8 +265,8 @@ namespace eval ::hv3 {
       $myOutputWindow configure -state disabled
     }
 
-    # This proc is called to display a page in the "code viewer" pane 
-    # (the top one). Parameter $page must be one of the following: 
+    # This proc is called to display a page in the "code viewer" pane
+    # (the top one). Parameter $page must be one of the following:
     #
     #     html
     #     index
@@ -376,8 +376,8 @@ namespace eval ::hv3 {
           foreach {id f data errors} [eval getcss $pageid] break
           $myOutputWindow insert end "Errors from CSS: $f\n" error
           foreach {i n} $errors {
-            # The offsets stored in the $errors array are 
-            # byte-offsets. Transform these to character offsets 
+            # The offsets stored in the $errors array are
+            # byte-offsets. Transform these to character offsets
             # before using them:
             set i [::tkhtml::charoffset $data $i]
             set n [::tkhtml::charoffset [string range $data $i end] $n]
@@ -414,7 +414,7 @@ namespace eval ::hv3 {
                 $myOutputWindow insert end "  ($zType $zName)"
               }
               $myOutputWindow insert end "\n"
-            } 
+            }
           }
 
           $myOutputWindow insert end "\n"
@@ -467,8 +467,8 @@ namespace eval ::hv3 {
         if {$id eq $styleid} {
           set iCurrent 0
           foreach {iStart nLen} $errors {
-            # The offsets stored in the $errors array are 
-            # byte-offsets. Transform these to character offsets 
+            # The offsets stored in the $errors array are
+            # byte-offsets. Transform these to character offsets
             # before using them:
             set iStart [::tkhtml::charoffset $data $iStart]
             set nLen   [
@@ -624,12 +624,12 @@ namespace eval ::hv3::console_commands {
       if {$t eq "draw_origin_start"} {incr iIndent 4}
       incr hist($t)
     }
-  
+
     append zRet "\n"
     foreach {key value} [array get hist] {
       append zRet $key ":" $value "\n"
     }
-  
+
     set zRet
   }
 
@@ -679,7 +679,7 @@ namespace eval ::hv3::console_commands {
 
   proc breakpoints {} {
   }
-  
+
   proc hv3 {args} {
     set hv3 [gui_current hv3]
     eval $hv3 $args
@@ -745,7 +745,7 @@ proc tree_to_report {tree indent} {
 
   append ret [format "% -40s %s\n" $i\"$name\" $uri]
   foreach child [lindex $tree 1] {
-    append ret [tree_to_report $child [expr {$indent+4}]] 
+    append ret [tree_to_report $child [expr {$indent+4}]]
   }
   set ret
 }

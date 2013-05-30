@@ -1,7 +1,7 @@
 /*                       T E A _ N M G . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2012 United States Government as represented by
+ * Copyright (c) 2004-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -184,8 +184,8 @@ main(int argc, char **argv)
 	switch (i) {
 	    case 'd' : rt_g.debug |= DEBUG_MEM | DEBUG_MEM_FULL; break;
 	    default	:
-		(void)fprintf(stderr,
-			      "Usage: %s [-d] > database.g\n", *argv);
+		fprintf(stderr,
+			"Usage: %s [-d] > database.g\n", *argv);
 		return -1;
 	}
     }
@@ -228,6 +228,7 @@ main(int argc, char **argv)
 
     return 0;
 }
+
 
 /*
  * Local Variables:

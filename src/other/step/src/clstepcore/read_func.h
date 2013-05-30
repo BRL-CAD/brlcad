@@ -21,9 +21,9 @@ extern SCL_CORE_EXPORT int ReadInteger( SDAI_Integer  &val, const char * s, Erro
 extern SCL_CORE_EXPORT Severity IntValidLevel( const char * attrValue, ErrorDescriptor * err,
                int clearError, int optional, const char * tokenList );
 
-extern SCL_CORE_EXPORT char * WriteReal( SDAI_Real  val, std::string & s );
+extern SCL_CORE_EXPORT std::string WriteReal( SDAI_Real val );
 
-extern SCL_CORE_EXPORT void WriteReal( SDAI_Real  val, ostream & out );
+extern SCL_CORE_EXPORT void WriteReal( SDAI_Real val, ostream & out );
 
 extern SCL_CORE_EXPORT int ReadReal( SDAI_Real  &val, istream & in, ErrorDescriptor * err,
           const char * tokenList );

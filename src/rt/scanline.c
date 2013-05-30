@@ -1,7 +1,7 @@
 /*                      S C A N L I N E . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2012 United States Government as represented by
+ * Copyright (c) 2008-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -31,10 +31,10 @@ free_scanlines(int height, struct scanline* scanline)
     register int y;
 
     for (y = 0; y < height; y++)  {
-        if (scanline[y].sl_buf)  {
-            bu_free(scanline[y].sl_buf, "sl_buf scanline buffer");
-	        scanline[y].sl_buf = (unsigned char *) 0;
-    	}
+	if (scanline[y].sl_buf)  {
+	    bu_free(scanline[y].sl_buf, "sl_buf scanline buffer");
+		scanline[y].sl_buf = (unsigned char *) 0;
+	}
     }
     bu_free((char*) scanline, "struct scanline[height]");
     scanline = (struct scanline*) 0;

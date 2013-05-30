@@ -1,7 +1,7 @@
 /*                         T R A C K . C
  * BRL-CAD
  *
- * Copyright (c) 1994-2012 United States Government as represented by
+ * Copyright (c) 1994-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -560,7 +560,7 @@ ged_track(struct ged *gedp, int argc, const char *argv[])
 		      0, NULL, NULL, NULL,
 		      0, 0, 0, 0,
 		      0, 1, 1) < 0) {
-	bu_vls_printf(gedp->ged_result_str, "An error has occured while adding '%s' to the database.\n", grpname);
+	bu_vls_printf(gedp->ged_result_str, "An error has occurred while adding '%s' to the database.\n", grpname);
     }
 
     Trackpos += 10;
@@ -611,15 +611,15 @@ wrobj(struct ged *gedp,
 	case ID_ARB8: {
 	    struct rt_arb_internal *arb;
 
-	    BU_GET(arb, struct rt_arb_internal);
+	    BU_ALLOC(arb, struct rt_arb_internal);
 
 	    arb->magic = RT_ARB_INTERNAL_MAGIC;
 
 	    VMOVE(arb->pt[0], &sol.s_values[0]);
 	    for (i = 1; i < 8; i++)
-		VADD2(arb->pt[i], &sol.s_values[i*3], arb->pt[0])
+		VADD2(arb->pt[i], &sol.s_values[i*3], arb->pt[0]);
 
-		    intern.idb_ptr = (genptr_t)arb;
+	    intern.idb_ptr = (genptr_t)arb;
 	    intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	    intern.idb_type = ID_ARB8;
 	    intern.idb_meth = &rt_functab[ID_ARB8];
@@ -628,7 +628,7 @@ wrobj(struct ged *gedp,
 	case ID_TGC: {
 	    struct rt_tgc_internal *tgc;
 
-	    BU_GET(tgc, struct rt_tgc_internal);
+	    BU_ALLOC(tgc, struct rt_tgc_internal);
 
 	    tgc->magic = RT_TGC_INTERNAL_MAGIC;
 
@@ -915,7 +915,7 @@ track_mk_tree_pure(struct rt_comb_internal *comb, struct bu_list *member_hd)
 
 	WDB_CK_WMEMBER(wp);
 
-	BU_GET(leafp, union tree);
+	BU_ALLOC(leafp, union tree);
 	RT_TREE_INIT(leafp);
 	leafp->tr_l.tl_op = OP_DB_LEAF;
 	leafp->tr_l.tl_name = bu_strdup(wp->wm_name);
@@ -928,7 +928,7 @@ track_mk_tree_pure(struct rt_comb_internal *comb, struct bu_list *member_hd)
 	    continue;
 	}
 	/* Build a left-heavy tree */
-	BU_GET(nodep, union tree);
+	BU_ALLOC(nodep, union tree);
 	RT_TREE_INIT(nodep);
 	switch (wp->wm_op) {
 	    case WMOP_UNION:
@@ -1019,7 +1019,7 @@ track_mk_tree_gift(struct rt_comb_internal *comb, struct bu_list *member_hd)
 	}
 
 	/* make new leaf node, and insert at end of array */
-	BU_GET(tp, union tree);
+	BU_ALLOC(tp, union tree);
 	RT_TREE_INIT(tp);
 	tree_list[node_count++].tl_tree = tp;
 	tp->tr_l.tl_op = OP_DB_LEAF;
@@ -1101,7 +1101,7 @@ track_mk_freemembers(struct bu_list *headp)
 	WDB_CK_WMEMBER(wp);
 	BU_LIST_DEQUEUE(&wp->l);
 	bu_free((char *)wp->wm_name, "wm_name");
-	bu_free((char *)wp, "wmember");
+	BU_PUT(wp, struct wmember);
     }
 }
 
@@ -1154,7 +1154,7 @@ track_mk_comb(
 	fresh_combination = 0;
     } else {
 	/* Create a fresh new object for export */
-	BU_GET(comb, struct rt_comb_internal);
+	BU_ALLOC(comb, struct rt_comb_internal);
 	RT_COMB_INTERNAL_INIT(comb);
 
 	intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;

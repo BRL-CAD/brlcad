@@ -1,7 +1,7 @@
 /*                        S S C A N F . C
  * BRL-CAD
  *
- * Copyright (c) 2012 United States Government as represented by
+ * Copyright (c) 2012-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * Copyright (c) 1990, 1993 The Regents of the University of California.
@@ -204,7 +204,7 @@ again:
 	    }
 	    UPDATE_COUNTS;
 	    continue;
-	
+
 
 	/* MODIFIER */
 	case '*':
@@ -218,12 +218,12 @@ again:
 	    goto again;
 	case 'l':
 	    if (!(flags & LONG)) {
-		/* First occurance of 'l' in this conversion specifier. */
+		/* First occurrence of 'l' in this conversion specifier. */
 		flags |= LONG;
 	    } else {
 		/* Since LONG is set, the previous conversion character must
 		 * have been 'l'. With this second 'l', we know we have an "ll"
-		 * modifer, not an 'l' modifer. We need to replace the
+		 * modifier, not an 'l' modifier. We need to replace the
 		 * incorrect flag with the correct one.
 		 */
 		flags &= ~LONG;
@@ -232,20 +232,38 @@ again:
 	    goto again;
 	case 't':
 #ifndef HAVE_C99_FORMAT_SPECIFIERS
-	    /* Assume MSVC, where equivalent of %t[dioxX] is %I[dioxX]. */
+	    /* remove C99 't' */
 	    bu_vls_trunc(&partFmt, bu_vls_strlen(&partFmt) - 1);
-	    bu_vls_putc(&partFmt, 'I');
+
+	    /* Assume MSVC.
+	     *
+	     * For 32-bit, ptrdiff_t is __int32, and equivalent of %t[dioxX] is
+	     * %[dioxX].
+	     *
+	     * For 64-bit, ptrdiff_t is __int64, and equivalent of %t[dioxX] is
+	     * %I64[dioxX].
+	     */
+#if defined(SIZEOF_SIZE_T) && SIZEOF_SIZE_T == 8
+	    bu_vls_strcat(&partFmt, "I64");
+#endif
 #endif
 	    flags |= PTRDIFFT;
 	    goto again;
 	case 'z':
 #ifndef HAVE_C99_FORMAT_SPECIFIERS
-	    /* Assume MSVC, where equivalent of %z[ouxX] is %I[ouxX]. */
+	    /* remove C99 'z' */
 	    bu_vls_trunc(&partFmt, bu_vls_strlen(&partFmt) - 1);
+
+	    /* Assume MSVC.
+	     *
+	     * For 32-bit, size_t is unsigned __int32, and equivalent of
+	     * %z[dioxX] is %[dioxX].
+	     *
+	     * For 64-bit, size_t is unsigned __int64, and equivalent of
+	     * %z[dioxX] is %I64[dioxX].
+	     */
 #if defined(SIZEOF_SIZE_T) && SIZEOF_SIZE_T == 8
-	    bu_vls_putc(&partFmt, 'I');
-#else
-	    bu_vls_putc(&partFmt, 'l');
+	    bu_vls_strcat(&partFmt, "I64");
 #endif
 #endif
 	    flags |= SIZET;
@@ -255,7 +273,7 @@ again:
 	    goto again;
 	case 'h':
 	    if (!(flags & SHORT)) {
-		/* First occurance of 'h' in this conversion specifier. */
+		/* First occurrence of 'h' in this conversion specifier. */
 		flags |= SHORT;
 	    } else {
 #ifndef HAVE_C99_FORMAT_SPECIFIERS
@@ -267,7 +285,7 @@ again:
 #endif
 		/* Since SHORT is set, the previous conversion character must
 		 * have been 'h'. With this second 'h', we know we have an "hh"
-		 * modifer, not an 'h' modifer. We need to replace the
+		 * modifier, not an 'h' modifier. We need to replace the
 		 * incorrect flag with the correct one.
 		 */
 		flags &= ~SHORT;
@@ -279,8 +297,8 @@ again:
 	/* MAXIMUM FIELD WIDTH */
 #define NUMERIC_CHAR_TO_INT(c) (c - '0')
 	case '0':
-	    /* distingish default width from width set to 0 */
-	    flags |= HAVEWIDTH; 
+	    /* distinguish default width from width set to 0 */
+	    flags |= HAVEWIDTH;
 	    /* FALLTHROUGH */
 	case '1': case '2': case '3': case '4':
 	case '5': case '6': case '7': case '8': case '9':
@@ -374,7 +392,7 @@ again:
 		 * requested assignment of the current count of consumed
 		 * characters, but then suppressed the assignment they
 		 * requested!
-	         */
+		 */
 		continue;
 	    }
 
@@ -402,7 +420,7 @@ again:
 
 	case '\0':
 	    /* Format string ends with bare '%'. Returning EOF regardless of
-	     * successfull assignments is a backwards compatability behavior.
+	     * successful assignments is a backwards compatibility behavior.
 	     */
 	    EXIT_DUE_TO_MISC_ERROR;
 
@@ -444,11 +462,11 @@ if (flags & UNSIGNED) { \
 		EXIT_DUE_TO_INPUT_FAILURE;
 	    }
 
-	    /* Leading input whitespace is skipped for %#V, and for %V iff the
-	     * conversion specification is preceeded by at least one whitespace
+	    /* Leading input whitespace is skipped for %#V, and for %V if the
+	     * conversion specification is preceded by at least one whitespace
 	     * character.
 	     */
-	    if (isspace(*bu_vls_addr(&partFmt)) || flags & ALTERNATE) {
+	    if (isspace((int)(*bu_vls_addr(&partFmt))) || flags & ALTERNATE) {
 		while (1) {
 		    c = src[numCharsConsumed];
 		    if (c == '\0' || !isspace(c)) {
@@ -519,7 +537,7 @@ if (flags & UNSIGNED) { \
 		EXIT_DUE_TO_MISC_ERROR;
 	    }
 
-	    /* unsupressed %s or %[...] conversion */
+	    /* unsuppressed %s or %[...] conversion */
 	    if (!(flags & SUPPRESS)) {
 		if (width == 0) {
 		    if (flags & HAVEWIDTH) {
@@ -532,7 +550,7 @@ if (flags & UNSIGNED) { \
 			 *
 			 * The assignment wasn't suppressed, so we'll assume
 			 * the caller provided a pointer and wants us to write
-			 * to it. Just write '\0' and call it a successfull
+			 * to it. Just write '\0' and call it a successful
 			 * assignment.
 			 */
 			*va_arg(ap, char*) = '\0';
@@ -633,7 +651,7 @@ if (flags & UNSIGNED) { \
 	    EXIT_DUE_TO_INPUT_FAILURE;
 	}
 
-        /* check that assignment was successful */
+	/* check that assignment was successful */
 	if (!(flags & SUPPRESS) && partAssigned < 1) {
 	    EXIT_DUE_TO_MATCH_FAILURE;
 	}

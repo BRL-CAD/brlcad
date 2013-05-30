@@ -1,8 +1,9 @@
 /* $NoKeywords: $ */
 /*
 //
-// Copyright (c) 1993-2007 Robert McNeel & Associates. All rights reserved.
-// Rhinoceros is a registered trademark of Robert McNeel & Assoicates.
+// Copyright (c) 1993-2012 Robert McNeel & Associates. All rights reserved.
+// OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
+// McNeel & Associates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
@@ -415,6 +416,7 @@ void ON_DecodeBase64::Output()
   // default does nothing.
 }
 
+/*
 //////////////////////////////////////////////////////////////////////////////////////////
 //
 // ON_EncodeBase64
@@ -683,3 +685,404 @@ void ON_EncodeBase64::End()
   }
   *m_output = 0;
 }
+
+*/
+
+/////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////
+
+
+ON_Base64EncodeStream::ON_Base64EncodeStream()
+: m_out_callback_function(0)
+, m_out_callback_context(0)
+, m_in_size(0)
+, m_out_size(0)
+, m_in_crc(0)
+, m_out_crc(0)
+, m_implementation(0)
+, m_reserved(0)
+{}
+
+ON_Base64EncodeStream::~ON_Base64EncodeStream()
+{
+
+  if ( 0 != m_implementation )
+  {
+    onfree(m_implementation);
+    m_implementation = 0;
+  }
+}
+
+void ON_Base64EncodeStream::ErrorHandler()
+{
+  // place holder for error handing
+  ON_ERROR("ON_UncompressStream error");
+}
+
+class ON_Base64EncodeImplementation
+{
+public:
+  // input waiting to be encoded
+  // At most 56 bytes can be waiting to be processed in m_in_buffer[].
+  // m_in_buffer[] is full when it has 57 bytes.
+  ON__UINT32 m_in_buffer_size;
+  unsigned char m_in_buffer[64];
+
+  // When the output stream handler is called, m_out_buffer[]
+  // is a null terminated string with 4 to 76 characters of 
+  // base64 encoded output.
+  char m_out_buffer[80];
+};
+
+
+bool ON_Base64EncodeStream::Begin()
+{
+  if ( 0 != m_implementation )
+  {
+    onfree(m_implementation);
+    m_implementation = 0;
+  }
+
+  // zero these because the same instance of an 
+  // ON_UncompressStream class may be used multiple times.
+  m_in_size = 0;
+  m_out_size = 0;
+  m_in_crc = 0;
+  m_out_crc = 0;
+
+  ON_Base64EncodeImplementation* imp = (ON_Base64EncodeImplementation*)onmalloc(sizeof(*imp));
+  memset(imp,0,sizeof(*imp));
+  m_implementation = imp;
+
+  return true;
+}
+
+static void EncodeBase64Helper1(const unsigned char* inbuf, char* outbuf )
+{
+  // base64 encode the final byte of input into 4 bytes of outbuf.
+  unsigned char c;
+  
+  c = (*inbuf >> 2);
+
+  if ( c < 26 ) c += 65; else if ( c < 52 ) c += 71; 
+  else if ( c < 62 ) c -= 4; else c = (c&1) ? '/' : '+';
+  *outbuf++ = c;
+
+  c = (*inbuf & 3) << 4;
+
+  if ( c < 26 ) c += 65; else if ( c < 52 ) c += 71; 
+  else if ( c < 62 ) c -= 4; else c = (c&1) ? '/' : '+';
+  *outbuf++ = c;
+
+  *outbuf++ = '=';
+  *outbuf   = '=';
+}
+
+static void EncodeBase64Helper2(const unsigned char* inbuf, char* outbuf )
+{
+  // base64 encode the final 2 bytes of input into 4 bytes of outbuf.
+  unsigned char b, c;
+  
+  b = *inbuf++;
+  c = (b >> 2);
+
+  if ( c < 26 ) c += 65; else if ( c < 52 ) c += 71; 
+  else if ( c < 62 ) c -= 4; else c = (c&1) ? '/' : '+';
+  *outbuf++ = c;
+
+  c = (b & 3) << 4;
+  b = *inbuf;
+  c |= (b & 0xF0) >> 4;
+
+  if ( c < 26 ) c += 65; else if ( c < 52 ) c += 71; 
+  else if ( c < 62 ) c -= 4; else c = (c&1) ? '/' : '+';
+  *outbuf++ = c;
+
+  c = (b & 0x0F) << 2;
+
+  if ( c < 26 ) c += 65; else if ( c < 52 ) c += 71; 
+  else if ( c < 62 ) c -= 4; else c = (c&1) ? '/' : '+';
+  *outbuf++ = c;
+
+  *outbuf  = '=';
+}
+
+
+static void EncodeBase64Helper3(const unsigned char* inbuf, char* outbuf )
+{
+  // base64 encode 3 bytes from inbuf into 4 bytes of outbuf.
+  unsigned char b, c;
+  
+  b = *inbuf++;
+  c = (b >> 2);
+
+  if ( c < 26 ) c += 65; else if ( c < 52 ) c += 71; 
+  else if ( c < 62 ) c -= 4; else c = (c&1) ? '/' : '+';
+  *outbuf++ = c;
+
+  c = (b & 3) << 4;
+  b = *inbuf++;
+  c |= (b & 0xF0) >> 4;
+
+  if ( c < 26 ) c += 65; else if ( c < 52 ) c += 71; 
+  else if ( c < 62 ) c -= 4; else c = (c&1) ? '/' : '+';
+  *outbuf++ = c;
+
+  c = (b & 0x0F) << 2;
+  b = *inbuf++;
+  c |= (b&0xC0) >> 6;
+
+  if ( c < 26 ) c += 65; else if ( c < 52 ) c += 71; 
+  else if ( c < 62 ) c -= 4; else c = (c&1) ? '/' : '+';
+  *outbuf++ = c;
+
+  b &= 0x3F;
+  if ( b < 26 ) b += 65; else if ( b < 52 ) b += 71; 
+  else if ( b < 62 ) b -= 4; else b = (b&1) ? '/' : '+';
+  *outbuf++ = b;
+}
+
+static void EncodeBase64Helper57(const unsigned char* inbuf, char* outbuf )
+{
+  // base64 encode 57 bytes from inbuf and put results in m_output[]
+  //
+  // Encoding 57 input bytes creates 76 output bytes and 76
+  // is the maximum line length for base64 encoding.
+  EncodeBase64Helper3(inbuf,outbuf); 
+  inbuf += 3; outbuf += 4;
+  EncodeBase64Helper3(inbuf,outbuf); 
+  inbuf += 3; outbuf += 4;
+  EncodeBase64Helper3(inbuf,outbuf); 
+  inbuf += 3; outbuf += 4;
+  EncodeBase64Helper3(inbuf,outbuf); 
+  inbuf += 3; outbuf += 4;
+  EncodeBase64Helper3(inbuf,outbuf); 
+  inbuf += 3; outbuf += 4;
+  EncodeBase64Helper3(inbuf,outbuf); 
+  inbuf += 3; outbuf += 4;
+  EncodeBase64Helper3(inbuf,outbuf); 
+  inbuf += 3; outbuf += 4;
+  EncodeBase64Helper3(inbuf,outbuf); 
+  inbuf += 3; outbuf += 4;
+  EncodeBase64Helper3(inbuf,outbuf); 
+  inbuf += 3; outbuf += 4;
+  EncodeBase64Helper3(inbuf,outbuf); 
+  inbuf += 3; outbuf += 4;
+  EncodeBase64Helper3(inbuf,outbuf); 
+  inbuf += 3; outbuf += 4;
+  EncodeBase64Helper3(inbuf,outbuf); 
+  inbuf += 3; outbuf += 4;
+  EncodeBase64Helper3(inbuf,outbuf); 
+  inbuf += 3; outbuf += 4;
+  EncodeBase64Helper3(inbuf,outbuf); 
+  inbuf += 3; outbuf += 4;
+  EncodeBase64Helper3(inbuf,outbuf); 
+  inbuf += 3; outbuf += 4;
+  EncodeBase64Helper3(inbuf,outbuf); 
+  inbuf += 3; outbuf += 4;
+  EncodeBase64Helper3(inbuf,outbuf); 
+  inbuf += 3; outbuf += 4;
+  EncodeBase64Helper3(inbuf,outbuf); 
+  inbuf += 3; outbuf += 4;
+  EncodeBase64Helper3(inbuf,outbuf); 
+  outbuf[4] = 0;
+}
+
+
+bool ON_Base64EncodeStream::In(
+    ON__UINT64 in_buffer_size,
+    const void* in_buffer
+    )
+{
+  if ( in_buffer_size <= 0 )
+    return true;
+
+  if ( 0 == m_implementation )
+  {
+    ErrorHandler();
+    return false;
+  }
+
+  if ( 0 == in_buffer )
+  {
+    ErrorHandler();
+    return false;
+  }
+  
+  bool rc = false;
+  ON__UINT32 crc1;
+  ON__UINT32 sz;
+
+  ON_Base64EncodeImplementation* imp = (ON_Base64EncodeImplementation*)m_implementation;
+  if ( imp->m_in_buffer_size > 0 )
+  {
+    // residual input left from the previous call to In()
+    sz = 57 - imp->m_in_buffer_size;
+    if ( in_buffer_size < sz )
+    {
+      // still don't have sizeof(imp->m_in_buffer_size) bytes of input
+      sz = (ON__UINT32)in_buffer_size; // cast is safe because in_buffer_size < sizeof(imp->m_in_buffer_size) <= 8192
+      memcpy( imp->m_in_buffer + imp->m_in_buffer_size, in_buffer, sz );
+      imp->m_in_buffer_size += sz;
+      return true;
+    }
+
+    memcpy( imp->m_in_buffer + imp->m_in_buffer_size, in_buffer, sz );
+    in_buffer = ((const unsigned char*)in_buffer) + sz;
+    in_buffer_size -= sz;
+
+    EncodeBase64Helper57(imp->m_in_buffer,imp->m_out_buffer);
+    imp->m_in_buffer_size = 0;
+
+    crc1 = ON_CRC32(m_out_crc,76,imp->m_out_buffer);
+    rc = ( 0 != m_out_callback_function )
+        ? m_out_callback_function(m_out_callback_context,76,imp->m_out_buffer)
+        : Out(m_out_callback_context,76,imp->m_out_buffer);
+    if ( !rc )
+    {
+      onfree(m_implementation);
+      m_implementation = 0;
+      return false;
+    }
+    m_in_crc = ON_CRC32(m_in_crc,57,imp->m_in_buffer);
+    m_in_size += 57;
+    m_out_crc = crc1;
+    m_out_size += 76;
+  }
+
+  while(in_buffer_size >= 57 )
+  {
+    // base 64 encode 57 input bytes to create 76 output bytes
+    EncodeBase64Helper57((const unsigned char*)in_buffer,imp->m_out_buffer);
+    crc1 = ON_CRC32(m_out_crc,76,imp->m_out_buffer);
+    rc = ( 0 != m_out_callback_function )
+        ? m_out_callback_function(m_out_callback_context,76,imp->m_out_buffer)
+        : Out(m_out_callback_context,76,imp->m_out_buffer);
+    if ( !rc )
+    {
+      onfree(m_implementation);
+      m_implementation = 0;
+      return false;
+    }
+    m_in_crc = ON_CRC32(m_in_crc,57,in_buffer);
+    m_in_size += 57;
+    m_out_crc = crc1;
+    m_out_size += 76;
+    in_buffer = ((const unsigned char*)in_buffer) + 57;
+    in_buffer_size -= 57;
+  }
+
+  if ( in_buffer_size > 0 )
+  {
+    // store what's left of the input in imp->m_in_buffer[]
+    memcpy(imp->m_in_buffer,in_buffer,(size_t)in_buffer_size);
+  }
+  imp->m_in_buffer_size = (ON__UINT32)in_buffer_size; // safe cast - sizeof_buffer < 57
+
+  return true;
+}
+
+bool ON_Base64EncodeStream::End()
+{
+  if ( 0 == m_implementation )
+  {
+    ErrorHandler();
+    return false;
+  }
+  
+  bool rc = true;
+  ON_Base64EncodeImplementation* imp = (ON_Base64EncodeImplementation*)m_implementation;
+  if ( imp->m_in_buffer_size > 0 )
+  {
+    // residual input left from the final call to In()
+    const unsigned char* in_buffer = imp->m_in_buffer;
+    ON__UINT32 in_buffer_size = imp->m_in_buffer_size;
+    ON__UINT32 out_buffer_size = 0;
+    while ( in_buffer_size >= 3 )
+    {
+      EncodeBase64Helper3( in_buffer, &imp->m_out_buffer[out_buffer_size] );
+      in_buffer += 3;
+      out_buffer_size += 4;
+      in_buffer_size -= 3;
+    }
+    if ( 1 == in_buffer_size )
+    {
+      // 1 byte of input left
+      EncodeBase64Helper1(in_buffer,&imp->m_out_buffer[out_buffer_size]);
+      out_buffer_size += 4;
+    }
+    else if ( 2 == in_buffer_size )
+    {
+      // 2 bytes of input left
+      EncodeBase64Helper2(in_buffer,&imp->m_out_buffer[out_buffer_size]);
+      out_buffer_size += 4;
+    }
+    imp->m_out_buffer[out_buffer_size] = 0;
+
+    ON__UINT32 crc1 = ON_CRC32(m_out_crc,out_buffer_size,imp->m_out_buffer);
+    rc = ( 0 != m_out_callback_function )
+        ? m_out_callback_function(m_out_callback_context,out_buffer_size,imp->m_out_buffer)
+        : Out(m_out_callback_context,out_buffer_size,imp->m_out_buffer);
+    if ( rc )
+    {
+      m_in_crc = ON_CRC32(m_in_crc,imp->m_in_buffer_size,imp->m_in_buffer);
+      m_in_size += imp->m_in_buffer_size;
+      m_out_crc = crc1;
+      m_out_size += out_buffer_size;
+    }
+  }
+
+  onfree(m_implementation);
+  m_implementation = 0;
+
+  return rc;
+}
+
+bool ON_Base64EncodeStream::Out( void*, ON__UINT32, const char* )
+{
+  // default base 64 encoded stream handler does nothing.
+  return true;
+}
+
+bool ON_Base64EncodeStream::SetCallback( 
+    ON_StreamCallbackFunction out_callback_function,
+    void* out_callback_context
+    )
+{
+  m_out_callback_function = out_callback_function;
+  m_out_callback_context = out_callback_context;
+  return true;
+}
+
+ON_StreamCallbackFunction ON_Base64EncodeStream::CallbackFunction() const
+{
+  return m_out_callback_function;
+}
+
+void* ON_Base64EncodeStream::CallbackContext() const
+{
+  return m_out_callback_context;
+}
+
+ON__UINT64 ON_Base64EncodeStream::InSize() const
+{
+  return m_in_size;
+}
+
+ON__UINT64 ON_Base64EncodeStream::OutSize() const
+{
+  return m_out_size;
+}
+
+ON__UINT32 ON_Base64EncodeStream::InCRC() const
+{
+  return m_in_crc;
+}
+
+ON__UINT32 ON_Base64EncodeStream::OutCRC() const
+{
+  return m_out_crc;
+}
+
+

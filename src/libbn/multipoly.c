@@ -1,7 +1,7 @@
 /*                         M U L T I P O L Y . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2012 United States Government as represented by
+ * Copyright (c) 2004-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,6 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+
 /** @addtogroup multipoly */
 /** @{ */
 /** @file libbn/multipoly.c
@@ -50,9 +51,10 @@
 struct bn_multipoly *
 bn_multipoly_new(int dgrs, int dgrt)
 {
-    struct bn_multipoly *newmp = bu_malloc(sizeof(struct bn_multipoly), FAILSTR);
+    struct bn_multipoly *newmp;
     int    i, s, t;
 
+    BU_ALLOC(newmp, struct bn_multipoly);
     newmp->cf = bu_malloc(dgrs * sizeof(double *), FAILSTR);
 
     for (i = 0; i < dgrs; i++) {
@@ -117,7 +119,7 @@ bn_multipoly_set(register struct bn_multipoly *P, int s, int t, double val)
  * @brief add two polynomials
  */
 struct bn_multipoly *
-bn_multpoly_add(register struct bn_multipoly *p1, register struct bn_multipoly *p2)
+bn_multipoly_add(register struct bn_multipoly *p1, register struct bn_multipoly *p2)
 {
     struct bn_multipoly *sum = bn_multipoly_new(Max(p1->dgrs, p2->dgrs), Max(p1->dgrt, p2->dgrs));
     int s, t;

@@ -1,7 +1,7 @@
 /*             S U R F A C E I N T E R S E C T . C P P
  * BRL-CAD
  *
- * Copyright (c) 2009-2012 United States Government as represented by
+ * Copyright (c) 2009-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -247,7 +247,7 @@ Curve_Compare_end(const ON_Curve **a, const ON_Curve **b)
 /**
  * Face_X_Event::Face_X_Event
  *
- * @brief create a new unintialized Face_X_Event
+ * @brief create a new uninitialized Face_X_Event
  */
 Face_X_Event::Face_X_Event() : face1(NULL), face2(NULL), curve1(NULL), curve2(NULL)
 {}
@@ -293,7 +293,7 @@ Face_X_Event::Render_Curves()
     for (i = 0; i < x.Count(); i++) {
 	ON_X_EVENT event = x[i];
 	if (active1 && active2) {
-	    /* to be deactived the curve must pass from below a curve to above it */
+	    /* to be deactivated the curve must pass from below a curve to above it */
 	    if (event.m_dirA[0] == event.from_below_dir && event.m_dirA[1] == event.to_above_dir) {
 		ON_Curve *new_curve1 = curve1->Duplicate();
 		ON_Curve *new_curve2 = curve2->Duplicate();
@@ -338,14 +338,15 @@ Face_X_Event::Render_Curves()
     return 0; /* XXX - unused */
 }
 
+
 /**
  * CurveCurveIntersect
  *
  * @brief Intersect 2 curves appending ON_X_EVENTS to the array x for
  * the intersections returns the number of ON_X_EVENTS appended
  *
- * This is not a great implementation of this function it's limited in
- * that it will only find point intersections, not overlaps. Overlaps,
+ * This is not a great implementation of this function; it's limited in
+ * that it will only find point intersections, not overlaps. Overlaps
  * will come out as long strings of points, and will probably take a
  * long time to compute.
  */
@@ -576,6 +577,7 @@ MakeLoops(
     return 0;/* XXX - unused */
 }
 
+
 /**
  * IsClosed
  *
@@ -678,7 +680,7 @@ WalkIntersection(
 /**
  * GetStartPointsInternal
  *
- * @brief Subdibivides the surface recursively to zoom in on
+ * @brief Subdivides the surface recursively to zoom in on
  * intersection points internal to the surfaces.
  */
 bool
@@ -911,7 +913,7 @@ BrepBrepIntersect(
     }
 
     /* first we intersect all of the Faces and record the
-     * intersectiosn in Face_X_Events.
+     * intersections in Face_X_Events.
      */
     ON_ClassArray<Face_X_Event> x;
     for (i = 0; i < brep1->m_F.Count(); i++) {
@@ -976,6 +978,7 @@ BrepBrepIntersect(
     return false;
 }
 
+
 namespace si {
 
     enum {
@@ -1002,6 +1005,7 @@ TwistedCubeEdgeCurve(const ON_3dPoint& from, const ON_3dPoint& to)
     return c3d;
 }
 
+
 void
 MakeTwistedCubeEdge(ON_Brep& brep, int from, int to, int curve)
 {
@@ -1010,6 +1014,7 @@ MakeTwistedCubeEdge(ON_Brep& brep, int from, int to, int curve)
     ON_BrepEdge& edge = brep.NewEdge(v0, v1, curve);
     edge.m_tolerance = 0.0; // exact!
 }
+
 
 void
 MakeTwistedCubeEdges1(ON_Brep& brep)
@@ -1020,6 +1025,7 @@ MakeTwistedCubeEdges1(ON_Brep& brep)
     MakeTwistedCubeEdge(brep, A, D, AD);
 }
 
+
 void
 MakeTwistedCubeEdges2(ON_Brep& brep)
 {
@@ -1028,6 +1034,7 @@ MakeTwistedCubeEdges2(ON_Brep& brep)
     MakeTwistedCubeEdge(brep, G, si::H, GH);
     MakeTwistedCubeEdge(brep, E, si::H, EH);
 }
+
 
 ON_Surface*
 TwistedCubeSideSurface(const ON_3dPoint& SW, const ON_3dPoint& SE, const ON_3dPoint& NE, const ON_3dPoint& NW)
@@ -1052,6 +1059,7 @@ TwistedCubeSideSurface(const ON_3dPoint& SW, const ON_3dPoint& SE, const ON_3dPo
 
     return pNurbsSurface;
 }
+
 
 ON_Curve*
 TwistedCubeTrimmingCurve(const ON_Surface& s,
@@ -1165,6 +1173,7 @@ MakeTwistedCubeTrimmingLoop(ON_Brep& brep,
     return loop.m_loop_index;
 }
 
+
 void
 MakeTwistedCubeFace(ON_Brep& brep,
 		    int surf,
@@ -1187,6 +1196,7 @@ MakeTwistedCubeFace(ON_Brep& brep,
     face.m_bRev = (orientation == -1);
 }
 
+
 void
 MakeTwistedCubeFaces1(ON_Brep& brep)
 {
@@ -1200,6 +1210,7 @@ MakeTwistedCubeFaces1(ON_Brep& brep)
 			AD, -1);
 }
 
+
 void
 MakeTwistedCubeFaces2(ON_Brep& brep)
 {
@@ -1212,6 +1223,7 @@ MakeTwistedCubeFaces2(ON_Brep& brep)
 			GH, -1,
 			FG, -1);
 }
+
 
 ON_Brep*
 MakeTwistedSquare1(ON_TextLog& error_log)
@@ -1348,6 +1360,7 @@ main()
     BrepBrepIntersect(&brep1, &brep2, 1e-3, 1e-9);
     return 0;
 }
+
 
 /** @} */
 /*

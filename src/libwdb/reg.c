@@ -1,7 +1,7 @@
 /*                           R E G . C
  * BRL-CAD
  *
- * Copyright (c) 1987-2012 United States Government as represented by
+ * Copyright (c) 1987-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -57,7 +57,7 @@ mk_tree_pure(struct rt_comb_internal *comb, struct bu_list *member_hd)
 
 	WDB_CK_WMEMBER(wp);
 
-	BU_GET(leafp, union tree);
+	BU_ALLOC(leafp, union tree);
 	RT_TREE_INIT(leafp);
 	leafp->tr_l.tl_op = OP_DB_LEAF;
 	leafp->tr_l.tl_name = bu_strdup(wp->wm_name);
@@ -70,7 +70,7 @@ mk_tree_pure(struct rt_comb_internal *comb, struct bu_list *member_hd)
 	    continue;
 	}
 	/* Build a left-heavy tree */
-	BU_GET(nodep, union tree);
+	BU_ALLOC(nodep, union tree);
 	RT_TREE_INIT(nodep);
 	switch (wp->wm_op) {
 	    case WMOP_UNION:
@@ -161,7 +161,7 @@ mk_tree_gift(struct rt_comb_internal *comb, struct bu_list *member_hd)
 	}
 
 	/* make new leaf node, and insert at end of array */
-	BU_GET(tp, union tree);
+	BU_ALLOC(tp, union tree);
 	RT_TREE_INIT(tp);
 	tree_list[node_count++].tl_tree = tp;
 	tp->tr_l.tl_op = OP_DB_LEAF;
@@ -204,7 +204,7 @@ mk_addmember(
 {
     struct wmember *wp;
 
-    BU_GET(wp, struct wmember);
+    BU_ALLOC(wp, struct wmember);
     wp->l.magic = WMEMBER_MAGIC;
     wp->wm_name = bu_strdup(name);
     switch (op) {
@@ -296,7 +296,7 @@ mk_comb(
 	fresh_combination = 0;
     } else {
 	/* Create a fresh new object for export */
-	BU_GET(comb, struct rt_comb_internal);
+	BU_ALLOC(comb, struct rt_comb_internal);
 	RT_COMB_INTERNAL_INIT(comb);
 
 	intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;

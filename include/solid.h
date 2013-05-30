@@ -1,7 +1,7 @@
 /*                         S O L I D . H
  * BRL-CAD
  *
- * Copyright (c) 1985-2012 United States Government as represented by
+ * Copyright (c) 1985-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -58,6 +58,7 @@ struct solid  {
 				 *	      3 - shaded (booleans evaluated)
 				 */
     int s_hiddenLine;         	/**< @brief  1 - hidden line */
+    mat_t s_mat;		/**< @brief mat to use for internal lookup */
 };
 
 
@@ -71,12 +72,12 @@ struct solid  {
 
 #define GET_SOLID(p, fp) { \
 	if (BU_LIST_IS_EMPTY(fp)) { \
-		BU_GET(p, struct solid); \
-		db_full_path_init(&(p)->s_fullpath); \
+	    BU_ALLOC((p), struct solid); \
+	    db_full_path_init(&(p)->s_fullpath); \
 	} else { \
-		p = BU_LIST_NEXT(solid, fp); \
-		BU_LIST_DEQUEUE(&((p)->l)); \
-		(p)->s_fullpath.fp_len = 0; \
+	    p = BU_LIST_NEXT(solid, fp); \
+	    BU_LIST_DEQUEUE(&((p)->l)); \
+	    (p)->s_fullpath.fp_len = 0; \
 	} \
 	BU_LIST_INIT( &((p)->s_vlist) ); }
 

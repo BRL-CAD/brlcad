@@ -1,7 +1,7 @@
 /*                         E D I T . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2012 United States Government as represented by
+ * Copyright (c) 2008-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -446,7 +446,7 @@
 struct edit_arg {
     struct edit_arg *next; /* nodes rel to arg in cmd args grouping */
     char cl_options[EDIT_MAX_ARG_OPTIONS]; /* unique cmd line opts */
-    unsigned int coords_used : 6; /* flag which coords will be used */
+    unsigned int coords_used : 7; /* flag which coords will be used */
     unsigned int type : 7; /* flag the arg type and type modifiers */
     struct db_full_path *object; /* path and obj */
     vect_t *vector; /* abs pos, or offset dist from an obj */
@@ -619,7 +619,7 @@ edit_arg_postfix_new(struct edit_arg *head)
 {
     struct edit_arg *arg;
 
-    BU_GET(arg, struct edit_arg);
+    BU_ALLOC(arg, struct edit_arg);
     edit_arg_postfix(head, arg);
     edit_arg_init(arg);
     return arg;
@@ -644,13 +644,12 @@ edit_arg_duplicate_in_place(struct edit_arg *const dest,
     dest->coords_used = src->coords_used;
     dest->type = src->type;
     if (src->object) {
-	BU_GET(dest->object, struct db_full_path);
+	BU_ALLOC(dest->object, struct db_full_path);
 	db_full_path_init(dest->object);
 	db_dup_full_path(dest->object, src->object);
     }
     if (src->vector) {
-	dest->vector = (vect_t *)bu_malloc(sizeof(vect_t),
-					   "vect_t block for edit_arg_duplicate_in_place()");
+	BU_ALLOC(dest->vector, vect_t);
 	(*dest->vector)[0] = (*src->vector)[0];
 	(*dest->vector)[1] = (*src->vector)[1];
 	(*dest->vector)[2] = (*src->vector)[2];
@@ -666,7 +665,7 @@ edit_arg_duplicate_in_place(struct edit_arg *const dest,
 HIDDEN void
 edit_arg_duplicate(struct edit_arg **dest, const struct edit_arg *src)
 {
-    BU_GET(*dest, struct edit_arg);
+    BU_ALLOC(*dest, struct edit_arg);
     edit_arg_duplicate_in_place(*dest, src);
 }
 
@@ -751,7 +750,7 @@ edit_arg_free_all(struct edit_arg *arg)
  * Gets the apparent coordinates of an object.
  *
  * Combines the effects of all the transformation matrices in the
- * combinations in the given path that affect the the position of the
+ * combinations in the given path that affect the position of the
  * combination or shape at the end of the path. The result is the
  * apparent coordinates of the object at the end of the path, if the
  * first combination in the path were drawn. The only flags respected
@@ -874,8 +873,7 @@ edit_arg_to_coord(struct ged *gedp, struct edit_arg *const arg, vect_t *coord)
     if (arg->vector) {
 	VADD2(**dest, *arg->vector, obj_coord);
     } else {
-	*dest = (vect_t *)bu_malloc(sizeof(vect_t),
-				    "vect_t block for edit_arg_to_coord()");
+	BU_ALLOC(*dest, vect_t);
 	VMOVE(**dest, obj_coord);
     }
 
@@ -1436,9 +1434,11 @@ edit_translate(struct ged *gedp, const vect_t *const from,
 HIDDEN int
 edit_translate_wrapper(struct ged *gedp, const union edit_cmd *const cmd)
 {
+    const vect_t *from = (const vect_t *)cmd->translate.ref_vector.from->vector;
+    const vect_t *to = (const vect_t *)cmd->translate.ref_vector.to->vector;
     return edit_translate(gedp,
-			  (const vect_t *)cmd->translate.ref_vector.from->vector,
-			  (const vect_t *)cmd->translate.ref_vector.to->vector,
+			  (const vect_t * const)from,
+			  (const vect_t * const)to,
 			  (const struct db_full_path *)cmd->translate.objects->object);
 }
 
@@ -1858,8 +1858,7 @@ edit_str_to_arg(struct ged *gedp, const char *str, struct edit_arg *arg,
 	return GED_ERROR;
     }
     if (!arg->vector)
-	arg->vector = (vect_t *)bu_malloc(sizeof(vect_t),
-					  "vect_t block for edit_str_to_arg");
+	BU_ALLOC(arg->vector, vect_t);
 
     /* Attempt to interpret/record the number as the next unset X, Y,
      * or Z coordinate/position.
@@ -1903,7 +1902,7 @@ edit_str_to_arg(struct ged *gedp, const char *str, struct edit_arg *arg,
 
 convert_obj:
     /* convert string to path/object */
-    BU_GET(arg->object, struct db_full_path);
+    BU_ALLOC(arg->object, struct db_full_path);
     if (db_string_to_path(arg->object, gedp->ged_wdbp->dbip,
 			  str)) {
 	db_free_full_path(arg->object);
@@ -1955,9 +1954,9 @@ edit_strs_to_arg(struct ged *gedp, int *argc, const char **argv[],
 	idx = 0;
 	len = strlen((*argv)[0]);
 	if ((**argv)[0] == '-') {
-	    if (len == 2 && !isdigit((**argv)[1]))
+	    if (len == 2 && !isdigit((int)(**argv)[1]))
 		break;
-	    if (len > 2 && !isdigit((**argv)[1]))
+	    if (len > 2 && !isdigit((int)(**argv)[1]))
 		/* option/arg pair with no space, i.e. "-ksph.s" */
 		idx = 2;
 	}
@@ -2159,7 +2158,7 @@ ged_edit(struct ged *gedp, int argc, const char *argv[])
      */
     edit_cmd_init(&subcmd);
 
-    BU_GET(subcmd.cmd_line.args, struct edit_arg);
+    BU_ALLOC(subcmd.cmd_line.args, struct edit_arg);
     edit_arg_init(subcmd.cmd_line.args);
     cur_arg = subcmd.cmd_line.args;
 
@@ -2252,7 +2251,7 @@ ged_edit(struct ged *gedp, int argc, const char *argv[])
      * then there is a bad arg. Let the conversion function cry about
      * what it choked on.
      */
-    if (strlen(argv[0]) > 1 && ((*argv)[0] != '-') && isdigit((*argv)[1])) {
+    if (strlen(argv[0]) > 1 && ((*argv)[0] != '-') && isdigit((int)(*argv)[1])) {
 	ret = edit_strs_to_arg(gedp, &argc, &argv, cur_arg, GED_ERROR);
 	edit_cmd_free(&subcmd);
 	BU_ASSERT(ret == GED_ERROR);
@@ -2295,7 +2294,7 @@ ged_edit(struct ged *gedp, int argc, const char *argv[])
 		if (!bu_optarg)
 		    goto err_missing_arg;
 		if ((strlen(bu_optarg) > 1) && (bu_optarg[0] == '-') &&
-		    (!isdigit(bu_optarg[1])))
+		    (!isdigit((int)bu_optarg[1])))
 		    goto err_missing_arg;
 		if (!allow_subopts) {
 		    bu_vls_printf(gedp->ged_result_str, "-%c must follow an"
@@ -2320,7 +2319,7 @@ ged_edit(struct ged *gedp, int argc, const char *argv[])
 			    conv_flags = GED_QUIET;
 			    break;
 			default:
-			    if (!isdigit(bu_optarg[1]))
+			    if (!isdigit((int)bu_optarg[1]))
 				goto err_missing_arg;
 		    }
 		}

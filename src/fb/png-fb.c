@@ -1,7 +1,7 @@
 /*                        P N G - F B . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2012 United States Government as represented by
+ * Copyright (c) 1998-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -147,16 +147,16 @@ get_args(int argc, char **argv)
 	file_name = argv[bu_optind];
 	if ((fp_in = fopen(file_name, "rb")) == NULL) {
 	    perror(file_name);
-	    (void)fprintf(stderr,
-			  "png-fb: cannot open \"%s\" for reading\n",
-			  file_name);
+	    fprintf(stderr,
+		    "png-fb: cannot open \"%s\" for reading\n",
+		    file_name);
 	    bu_exit(1, NULL);
 	}
 	fileinput++;
     }
 
     if (argc > ++bu_optind)
-	(void)fprintf(stderr, "png-fb: excess argument(s) ignored\n");
+	fprintf(stderr, "png-fb: excess argument(s) ignored\n");
 
     return 1;		/* OK */
 }
@@ -185,21 +185,21 @@ main(int argc, char **argv)
     }
 
     if (fread(header, 8, 1, fp_in) != 1) {
-	bu_exit(EXIT_FAILURE,  "ERROR: Failed while reading file header!!!\n");
+	bu_exit(EXIT_FAILURE,  "png-fb: ERROR: Failed while reading file header!!!\n");
     }
 
     if (png_sig_cmp((png_bytep)header, 0, 8)) {
-	bu_exit(EXIT_FAILURE,  "This is not a PNG file!!!\n");
+	bu_exit(EXIT_FAILURE,  "png-fb: This is not a PNG file!!!\n");
     }
 
     png_p = png_create_read_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
     if (!png_p) {
-	bu_exit(EXIT_FAILURE,  "png_create_read_struct() failed!!\n");
+	bu_exit(EXIT_FAILURE,  "png-fb: png_create_read_struct() failed!!\n");
     }
 
     info_p = png_create_info_struct(png_p);
     if (!info_p) {
-	bu_exit(EXIT_FAILURE,  "png_create_info_struct() failed!!\n");
+	bu_exit(EXIT_FAILURE,  "png-fb: png_create_info_struct() failed!!\n");
     }
 
     png_init_io(png_p, fp_in);

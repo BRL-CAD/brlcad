@@ -150,9 +150,17 @@ STEPcomplex::Initialize( const char ** names, const char * schnm )
 }
 
 STEPcomplex::~STEPcomplex() {
+    STEPcomplex_attr_data attr_data;
+
     if( sc ) {
         delete sc;
     }
+    for ( attr_data = _attr_data_list.begin();
+          attr_data != _attr_data_list.end();
+          attr_data ++ ) {
+        delete *attr_data;
+    }
+    _attr_data_list.clear();
 }
 
 void
@@ -428,13 +436,23 @@ STEPcomplex::STEPread( int id, int addFileId, class InstMgr * instance_set,
 
 #endif
 
-void
-STEPcomplex::BuildAttrs( const char * s ) {
+void STEPcomplex::BuildAttrs( const char * s ) {
+
     // assign inherited member variable
     eDesc = ( class EntityDescriptor * )_registry->FindEntity( s );
 
     if( eDesc ) {
         const AttrDescriptorList * attrList;
+        SDAI_Integer *integer_data;
+        SDAI_String *string_data;
+        SDAI_Binary *binary_data;
+        SDAI_Real *real_data;
+        SDAI_BOOLEAN *boolean_data;
+        SDAI_LOGICAL *logical_data;
+        SDAI_Application_instance **entity_data;
+        SDAI_Enum *enum_data;
+        SDAI_Select *select_data;
+        STEPaggregate *aggr_data;
         attrList = &( eDesc->ExplicitAttr() );
 
         STEPattribute * a = 0;
@@ -447,45 +465,62 @@ STEPcomplex::BuildAttrs( const char * s ) {
 
                 switch( ad->NonRefType() ) {
                     case INTEGER_TYPE:
-                        a = new STEPattribute( *ad,  new SDAI_Integer  );
+                        integer_data = new SDAI_Integer;
+                        _attr_data_list.push_back( ( void * ) integer_data );
+                        a = new STEPattribute( *ad, integer_data );
                         break;
 
                     case STRING_TYPE:
-                        a = new STEPattribute( *ad,  new SDAI_String  );
+                        string_data = new SDAI_String;
+                        _attr_data_list.push_back( ( void * ) string_data );
+                        a = new STEPattribute( *ad, string_data );
                         break;
 
                     case BINARY_TYPE:
-                        a = new STEPattribute( *ad,  new SDAI_Binary  );
+                        binary_data = new SDAI_Binary;
+                        _attr_data_list.push_back( ( void * ) binary_data );
+                        a = new STEPattribute( *ad, binary_data );
                         break;
 
                     case REAL_TYPE:
                     case NUMBER_TYPE:
-                        a = new STEPattribute( *ad,  new SDAI_Real  );
+                        real_data = new SDAI_Real;
+                        _attr_data_list.push_back( ( void * ) real_data );
+                        a = new STEPattribute( *ad,  real_data );
                         break;
 
                     case BOOLEAN_TYPE:
-                        a = new STEPattribute( *ad,  new SDAI_BOOLEAN  );
+                        boolean_data = new SDAI_BOOLEAN;
+                        _attr_data_list.push_back( ( void * ) boolean_data );
+                        a = new STEPattribute( *ad,  boolean_data );
                         break;
 
                     case LOGICAL_TYPE:
-                        a = new STEPattribute( *ad,  new SDAI_LOGICAL  );
+                        logical_data = new SDAI_LOGICAL;
+                        _attr_data_list.push_back( ( void * ) logical_data );
+                        a = new STEPattribute( *ad,  logical_data );
                         break;
 
                     case ENTITY_TYPE:
-                        a = new STEPattribute( *ad,
-                                               new( SDAI_Application_instance  * ) );
+                        entity_data = new ( SDAI_Application_instance * );
+                        _attr_data_list.push_back( ( void * ) entity_data );
+                        a = new STEPattribute( *ad, entity_data );
                         break;
 
                     case ENUM_TYPE: {
                         EnumTypeDescriptor * enumD =
                             ( EnumTypeDescriptor * )ad->ReferentType();
-                        a = new STEPattribute( *ad,  enumD->CreateEnum() );
+                        enum_data = enumD->CreateEnum();
+                        _attr_data_list.push_back( ( void * ) enum_data );
+                        a = new STEPattribute( *ad, enum_data );
                         break;
                     }
                     case SELECT_TYPE: {
                         SelectTypeDescriptor * selectD =
                             ( SelectTypeDescriptor * )ad->ReferentType();
-                        a = new STEPattribute( *ad,  selectD->CreateSelect() );
+                        select_data = selectD->CreateSelect();
+                        _attr_data_list.push_back( ( void * ) select_data );
+                        a = new STEPattribute( *ad, select_data );
                         break;
                     }
                     case AGGREGATE_TYPE:
@@ -495,7 +530,10 @@ STEPcomplex::BuildAttrs( const char * s ) {
                     case LIST_TYPE: {     // DAS
                         AggrTypeDescriptor * aggrD =
                             ( AggrTypeDescriptor * )ad->ReferentType();
-                        a = new STEPattribute( *ad,  aggrD->CreateAggregate() );
+                        aggr_data = aggrD->CreateAggregate();
+                        //_attr_data_list.push_back( ( void * ) aggr_data );
+                        _attr_data_list.push_back( aggr_data );
+                        a = new STEPattribute( *ad, aggr_data );
                         break;
                     }
                     default:
@@ -507,14 +545,6 @@ STEPcomplex::BuildAttrs( const char * s ) {
                 a -> set_null();
                 attributes.push( a );
             }
-
-            /*      // for when inverse information is included
-                    else if( (LOGICAL)( ad->Inverse() ) == sdaiTRUE)
-                    {
-                    str.Append('(');
-                    endchar = ')';
-                    }
-            */
             attrPtr = ( AttrDescLinkNode * )attrPtr->NextNode();
         }
     } else {

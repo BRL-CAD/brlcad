@@ -1,7 +1,7 @@
 /*                         C P I . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2012 United States Government as represented by
+ * Copyright (c) 2008-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -90,7 +90,7 @@ ged_cpi(struct ged *gedp, int argc, const char *argv[])
 
     dp = db_diradd(gedp->ged_wdbp->dbip, argv[2], RT_DIR_PHONY_ADDR, 0, proto->d_flags, &proto->d_minor_type);
     if (dp == RT_DIR_NULL) {
-	bu_vls_printf(gedp->ged_result_str, "%s: An error has occured while adding a new object to the database.\n", argv[0]);
+	bu_vls_printf(gedp->ged_result_str, "%s: An error has occurred while adding a new object to the database.\n", argv[0]);
 	return GED_ERROR;
     }
 

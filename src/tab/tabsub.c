@@ -1,7 +1,7 @@
 /*                        T A B S U B . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2012 United States Government as represented by
+ * Copyright (c) 1998-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -195,9 +195,9 @@ do_lines(FILE *fp, char *buffer)
 		}
 		*tp++ = '\0';
 		cp++;		/* skip ')' */
-	    } else if ( isdigit( *cp ) )  {
+	    } else if ( isdigit( (int)*cp ) )  {
 		tp = token;
-		while ( isdigit( *cp ) && tp<&token[TOKLEN-1] )  {
+		while ( isdigit( (int)*cp ) && tp<&token[TOKLEN-1] )  {
 		    *tp++ = *cp++;
 		}
 		*tp++ = '\0';
@@ -208,7 +208,7 @@ do_lines(FILE *fp, char *buffer)
 	    }
 	    if (debug) fprintf(stderr, "token='%s'\n", token);
 
-	    if ( isdigit( token[0] ) )  {
+	    if ( isdigit( (int)token[0] ) )  {
 		fputs( chanwords[str2chan_index(token)],
 		       stdout );
 		continue;
@@ -272,6 +272,13 @@ do_lines(FILE *fp, char *buffer)
 int
 multi_words( char *words[], int	word_count )
 {
+    struct bn_tol tol;
+
+    tol.magic = BN_TOL_MAGIC;
+    tol.dist = 0.0005;
+    tol.dist_sq = tol.dist * tol.dist;
+    tol.perp = 1e-6;
+    tol.para = 1 - tol.perp;
 
     if ( BU_STR_EQUAL( words[0], "rot" ) )  {
 	mat_t	mat;
@@ -457,7 +464,7 @@ multi_words( char *words[], int	word_count )
 	VSET( next, atof(words[5]), atof(words[6]), atof(words[7]) );
 	VSUB2( to, next, cur );
 	VUNITIZE(to);
-	bn_mat_fromto( mat, from, to );
+	bn_mat_fromto( mat, from, to, &tol );
 	/* Check to see if it worked. */
 	{
 	    vect_t	got;

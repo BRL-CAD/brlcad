@@ -1,7 +1,7 @@
 /*                    S T E P E N T I T Y . H
  * BRL-CAD
  *
- * Copyright (c) 2009-2012 United States Government as represented by
+ * Copyright (c) 2009-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -31,10 +31,15 @@
 /* system headers */
 #include <iostream>
 
+#include "STEPWrapper.h"
 
-class STEPWrapper;
 class ON_Brep;
+class STEPEntity;
 
+// A generic pseudo-constructor function type. Descendants of STEPEntity have
+// a private static member of this type (GetInstance) which returns a pointer
+// to a new instance of the subtype cast to a STEPEntity*.
+typedef STEPEntity *(EntityInstanceFunc)(STEPWrapper *sw, int id);
 
 #define POINT_CLOSENESS_TOLERANCE 1e-6
 #define TAB(j) \
@@ -46,19 +51,36 @@ class ON_Brep;
 class STEPEntity
 {
 protected:
-	int id;
-	int ON_id;
-	STEPWrapper *step;
+    int id;
+    int ON_id;
+    STEPWrapper *step;
+    static STEPEntity *CreateEntity(
+	STEPWrapper *sw,
+	SDAI_Application_instance *sse,
+	EntityInstanceFunc Instance,
+	const char *classname);
 
 public:
-	STEPEntity();
-	virtual ~STEPEntity();
+    STEPEntity();
+    virtual ~STEPEntity();
 
-	int GetId() {return id;}
-	int GetONId() {return ON_id;}
-	void SetONId(int on_id) {ON_id = on_id;}
-	int STEPid();
-	STEPWrapper *Step();
+    int GetId() {
+	return id;
+    }
+    void SetId(int nid) {
+	id = nid;
+    }
+    int GetONId() {
+	return ON_id;
+    }
+    void SetONId(int on_id) {
+	ON_id = on_id;
+    }
+    int STEPid();
+    STEPWrapper *Step();
+    virtual bool Load(STEPWrapper *UNUSED(sw), SDAI_Application_instance *UNUSED(sse)) {
+	return false;
+    };
 };
 
 

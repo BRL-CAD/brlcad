@@ -1,7 +1,7 @@
 dnl                    C O N F I G U R E . A C
 dnl BRL-CAD
 dnl
-dnl Copyright (c) 2004-2012 United States Government as represented by
+dnl Copyright (c) 2004-2013 United States Government as represented by
 dnl the U.S. Army Research Laboratory.
 dnl
 dnl Redistribution and use in source and binary forms, with or without
@@ -112,8 +112,8 @@ DEPRECATION NOTICE:
   is no longer necessary.
 
   This script along with the rest of the GNU Autotools build system is
-  a deprecated interface (see doc/deprecation.txt for details) subject
-  to removal in a future release of BRL-CAD and may not result in a
+  a deprecated interface (see the CHANGES file for details) subject to
+  removal in a future release of BRL-CAD and may not result in a
   complete build.
 
   That said, we plan to maintain a configure script wrapper around the
@@ -125,10 +125,10 @@ DEPRECATION NOTICE:
 i=0
 while test $i -lt 10 ; do
     sleep 1
-    echo -n "."
+    echo $ECHO_N ".$ECHO_C"
     i=`expr $i + 1`
 done
-echo "done.  You've been duly warned.  Proceeding with old build."
+echo "okay.  You've been duly warned.  Proceeding with old build."
 echo
 
 # keep track of cmd-line options for later
@@ -344,9 +344,6 @@ BC_ARG_ENABLE([build_tktable], [tktable-build], [Build the included tktable], [y
 # force enable/disable building of tnt
 BC_ARG_ENABLE([build_tnt], [tnt-install], [Install the included Template Numerical Toolkit], [auto])
 
-# jove
-BC_ARG_ENABLE([build_jove], [jove-build], [Enable compilation of jove (optional)], [no])
-
 # endgame framework simulation module
 BC_ARG_ENABLE([build_ef], [ef-build], [Enable compilation of Endgame Framework module (optional)], [no])
 
@@ -558,9 +555,6 @@ BC_ARG_ALIAS([build_tnt], [template-numerical-toolkit])
 BC_ARG_ALIAS([build_tnt], [template-numerical-toolkit-build])
 BC_ARG_ALIAS([build_tnt], [template-numerical-toolkit-install])
 
-# jove aliases (help uses jove-build)
-BC_ARG_ALIAS([build_jove], [jove])
-
 # endgame framework module aliases (help uses ef-build)
 BC_ARG_ALIAS([build_ef], [ef])
 BC_ARG_ALIAS([build_ef], [endgameframework])
@@ -709,9 +703,6 @@ if test "x$set_everything" != "x" ; then
 	if test "x$bc_build_tnt_set" = "xno" ; then
 		bc_build_tnt="$set_everything"
 	fi
-	if test "x$bc_build_jove_set" = "xno" ; then
-		bc_build_jove="$set_everything"
-	fi
 	# Singe the Endgame Framework "simulation module" will only
 	# compile if you have it installed, don't enable it even if
 	# requesting everything.  fine to disable, though.
@@ -841,9 +832,6 @@ AC_MSG_RESULT($bc_build_termlib)
 
 AC_MSG_CHECKING(whether to build the Template Numerical Toolkit)
 AC_MSG_RESULT($bc_build_tnt)
-
-AC_MSG_CHECKING(whether to compile jove or not)
-AC_MSG_RESULT($bc_build_jove)
 
 AC_MSG_CHECKING(whether to compile the Endgame Framework module)
 AC_MSG_RESULT($bc_build_ef)
@@ -1013,18 +1001,6 @@ fi
 
 AC_FUNC_ALLOCA
 
-dnl if building jove wasn't specifically requested and wasn't
-dnl disabled, see if there is either emacs or jove available.
-dnl i.e. auto for jove is dependant on what is installed
-BCEDITOR=""
-if test "x$bc_build_jove" = "xauto" ; then
-    AC_PATH_PROG(BCEDITOR, emacs, , $PATH)
-    if test "x$BCEDITOR" = "x" ; then
-	AC_PATH_PROG(BCEDITOR, jove, , $PATH)
-    fi
-fi
-
-
 dnl ***************************
 dnl *** Check for libraries ***
 dnl ***************************
@@ -1164,7 +1140,7 @@ dnl *** X11 ***
 if test "x$bc_with_x11" != "xno" ; then
 
     if test "x$bc_with_x11_val" != "x" ; then
-        if test "x$bc_with_x11_val" != "xyes" ; then
+	if test "x$bc_with_x11_val" != "xyes" ; then
 	    if test "x$x_includes" = "xNONE"; then
 		x_includes="$bc_with_x11_val/include"
 		ac_x_includes="$x_includes"
@@ -1457,9 +1433,9 @@ if test "xbc_with_agl" != "xno" ; then
     GLboolean values;
     void (*func)() = glBegin;
     if (GL_FALSE) {
-        func(GL_POINTS);
-        glGetBooleanv(GL_DEPTH_TEST, &values);
-        glEnd();
+	func(GL_POINTS);
+	glGetBooleanv(GL_DEPTH_TEST, &values);
+	glEnd();
     }
     ], [framework_opengl=yes ; FRAMEWORK_OPENGL="-framework OpenGL"])
     LIBS="$PRELIBS"
@@ -1566,6 +1542,7 @@ AC_CHECK_HEADERS( \
 	sys/mman.h \
 	sys/param.h \
 	sys/prctl.h \
+	sys/resource.h \
 	sys/select.h \
 	sys/socket.h \
 	sys/stat.h \
@@ -1649,7 +1626,7 @@ if test "x$bc_with_opengl" != "xno" -o "x$bc_with_wgl" != "xno" ; then
 	    CPPFLAGS="$PRECPPFLAGS $GLX_H_CPPFLAGS"
 	    AC_MSG_NOTICE([ .. looking in $bc_dir for glx.h])
 	    AC_CHECK_HEADER([GL/glx.h], [
-	    	AC_DEFINE(HAVE_GL_GLX_H, 1, [Define to 1 if you have the <GL/glx.h> header file.])
+		AC_DEFINE(HAVE_GL_GLX_H, 1, [Define to 1 if you have the <GL/glx.h> header file.])
 		glx_include_works="yes"
 		break
 	    ], [unset ac_cv_header_GL_glx_h])
@@ -1786,7 +1763,7 @@ if test "x$bc_with_proe" != "xno" ; then
    found_protk_h=no
    if test "x$bc_with_proe" = "xyes" ; then
       if test "x$bc_with_proe_val" = "x" ; then
-            found_proe_base=no
+	    found_proe_base=no
 	    proe_base=/usr/local/ptc/proeWildfire3.0
 	    if test -e "$proe_base" ; then
 	       found_proe_base=yes
@@ -1802,11 +1779,11 @@ if test "x$bc_with_proe" != "xno" ; then
 	       fi
 	    fi
       else
-        PROE_CFLAGS="-I$bc_with_proe_val/protoolkit/includes -I$bc_with_proe_val/prodevelop/includes"
-        CFLAGS="$CFLAGS $PROE_CFLAGS"
-        AC_CHECK_HEADER(ProToolkit.h,
-		        AC_DEFINE(HAVE_PROTOOLKIT,1,[Define to 1 if you have Pro/TOOLKIT header files])
-		        found_protk_h=yes)
+	PROE_CFLAGS="-I$bc_with_proe_val/protoolkit/includes -I$bc_with_proe_val/prodevelop/includes"
+	CFLAGS="$CFLAGS $PROE_CFLAGS"
+	AC_CHECK_HEADER(ProToolkit.h,
+			AC_DEFINE(HAVE_PROTOOLKIT,1,[Define to 1 if you have Pro/TOOLKIT header files])
+			found_protk_h=yes)
       fi
    fi
    CFLAGS="$PRE_CFLAGS"
@@ -1866,6 +1843,14 @@ AC_CHECK_TYPE([uintptr_t],
 	    ac_type=])
 	test -z "$ac_type" && break
     done])
+
+AC_CHECK_TYPES([cpu_set_t], [], [], [#include <sched.h>])
+
+AC_COMPILE_IFELSE(
+   [[static __thread int i = 0; int main() { return i; }]],
+   [AC_DEFINE(HAVE___THREAD, 1, [Define to 1 if __thread is present])],
+   []
+)
 
 dnl ******************************************
 dnl *** Check for compiler characteristics ***
@@ -2099,8 +2084,8 @@ if test "x$bc_use_debug" != "xno" ; then
 
 	if test "x$bc_debug_flag_works" = "xyes" ; then
 		# debug works
-	   	if test "x$bc_use_debug " = "xauto" ; then
-		   	# convert 'auto' to 'yes'
+		if test "x$bc_use_debug " = "xauto" ; then
+			# convert 'auto' to 'yes'
 			bc_use_debug="yes"
 		fi
 	else
@@ -2119,7 +2104,9 @@ if test "x$bc_use_debug" != "xno" ; then
 	dnl best-practice error checking on certain libc functions
 	dnl (e.g., memcpy), and provides run-time checks on buffer
 	dnl lengths and memory regions.
-	BC_COMPILER_AND_LINKER_RECOGNIZES([-D_FORTIFY_SOURCE=2])
+	dnl
+	dnl XXX Can only add with optimization with newer glibc
+	dnl 	BC_COMPILER_AND_LINKER_RECOGNIZES([-D_FORTIFY_SOURCE=2])
 fi
 
 dnl optimization flags
@@ -2160,7 +2147,7 @@ else
 fi
 AC_SUBST(NOWARN)
 if test "x$bc_build_warnings" != "xno" ; then
-	BC_COMPILER_AND_LINKER_RECOGNIZES([-pedantic -W -Wall -Wundef -Wfloat-equal -Wshadow -Winline -Wno-long-long], [warning])
+	BC_COMPILER_AND_LINKER_RECOGNIZES([-pedantic -W -Wall -Wundef -Wfloat-equal -Wshadow -Winline -Wno-long-long -Wno-variadic-macros], [warning])
 	# XXX also of interest
 	# -Wunreachable-code -Wmissing-declarations -Wmissing-prototypes -Wstrict-prototypes -ansi
 	# -Wstrict-prototypes -Wold-style-definition -Wshorten-64-to-32 -Wmissing-field-initializers
@@ -2178,10 +2165,10 @@ fi
 
 dnl we are more strict on clean dirs by default (no-long-long needed due to tcl.h)
 if test "x$bc_build_strict" = "xyes" ; then
-   BC_COMPILER_AND_LINKER_RECOGNIZES([-w -pedantic -W -Wall -Wundef -Wfloat-equal -Wshadow -Winline -Wno-long-long -Werror], [strict], [no])
+   BC_COMPILER_AND_LINKER_RECOGNIZES([-w -pedantic -W -Wall -Wundef -Wfloat-equal -Wshadow -Winline -Wno-long-long -Werror -Wno-variadic-macros], [strict], [no])
    if test "x$bc_strict_works" = "xyes" ; then
        # do not include -w as that was just to suppress any test warnings
-       STRICT_FLAGS="-pedantic -W -Wall -Wundef -Wfloat-equal -Wshadow -Winline -Wno-long-long  -Werror"
+       STRICT_FLAGS="-pedantic -W -Wall -Wundef -Wfloat-equal -Wshadow -Winline -Wno-long-long -Wno-variadic-macros -Werror"
        AC_SUBST(STRICT_FLAGS)
        AC_DEFINE([STRICT_FLAGS], [1], [Define to 1 if strict standards compliance compilation is enabled.])
    fi
@@ -2466,6 +2453,15 @@ fi
 AC_SUBST(REGEX)
 AC_SUBST(REGEX_CPPFLAGS)
 
+LIBVDS='${top_builddir}/src/other/libvds/libvds.la'
+LIBVDS_CPPFLAGS='-I${top_srcdir}/src/other/libvds'
+AC_SUBST(LIBVDS)
+AC_SUBST(LIBVDS_CPPFLAGS)
+
+LIBP2T='${top_builddir}/src/other/poly2tri/libp2t.la'
+LIBP2T_CPPFLAGS='-I${top_srcdir}/src/other/poly2tri'
+AC_SUBST(LIBP2T)
+AC_SUBST(LIBP2T_CPPFLAGS)
 
 dnl *** libz ***
 dnl See if zlib library support works
@@ -2639,7 +2635,6 @@ fi
 AC_SUBST(RLE)
 AC_SUBST(RLE_CPPFLAGS)
 
-
 dnl *** openNURBS ***
 dnl See if openNURBS library support works
 opennurbs_works=no
@@ -2767,7 +2762,7 @@ if test "x$build_brlcad_tcl" = "xyes" ; then
 	 darwin*)
 	     TCL='-L${top_builddir}/src/other/tcl/unix'" -ltcl${TCL_VERSION} $FRAMEWORK_COREFOUNDATION $THREADS_LIBS"
 	     ;;
-    	 *)
+	 *)
 	     TCL='-L${top_builddir}/src/other/tcl/unix'" -ltcl${TCL_VERSION} ${LIBDL} ${LIBM} $THREADS_LIBS"
 	     ;;
     esac
@@ -2842,7 +2837,7 @@ int main() {
 	Tcl_GetStringResult(interp)); return -1; }
     ATTEMPT(Tcl_Init(interp) == TCL_ERROR,"Tcl_Init returned error");
     ATTEMPT(Tk_ParseArgv(interp, NULL, &argl, arg, argtbl,
- 	TK_ARGV_DONT_SKIP_FIRST_ARG) != TCL_OK, "Tk_ParseArgv");
+	TK_ARGV_DONT_SKIP_FIRST_ARG) != TCL_OK, "Tk_ParseArgv");
 #if TK_MAJOR_VERSION < 8
     fprintf(stderr, "major version < 8  (it's %d)\n", TK_MAJOR_VERSION);
     return 1;
@@ -2897,7 +2892,7 @@ if test "x$build_against_tk" = "xyes" ; then
     AC_MSG_CHECKING(whether to build Tk)
     if test "x$build_brlcad_tk" = "xyes" ; then
 	AC_MSG_RESULT(yes)
-    	SC_ENABLE_THREADS
+	SC_ENABLE_THREADS
 	TK='-L${top_builddir}/src/other/tk/unix'" -ltk${TCL_VERSION} $THREADS_LIBS"
 	TKSTUB='-L${top_builddir}/src/other/tk/unix'" -ltkstub${TK_VERSION} $THREADS_LIBS"
 	TK_CPPFLAGS='-I${top_srcdir}/src/other/tk/generic -I${top_srcdir}/src/other/tk/unix -I${top_srcdir}/src/other/tk/win'
@@ -2927,7 +2922,7 @@ if test "x$build_against_tk" = "xyes" ; then
 	else
 	    AC_MSG_WARN([Unable to link against a system Tkstub library])
 	    sleep 1
-        fi
+	fi
     fi
     AC_DEFINE(HAVE_TK, 1, [Support for a Tk GUI is enabled])
 else
@@ -2947,7 +2942,7 @@ AC_SUBST(LIBTK)
 
 
 dnl *** incrTcl ***
-dnl See if libitcl and libitk seem to work, make sure it's not dependant upon libtcl
+dnl See if libitcl and libitk seem to work, make sure it's not dependent upon libtcl
 itcl_works=no
 AC_MSG_CHECKING(for incrTcl library functionality)
 PRELIBS="$LIBS"
@@ -3041,7 +3036,7 @@ if test "x$build_against_tk" = "xno" ; then
     build_brlcad_itk=no
 else
     if test "$bc_build_aquatk" = "xno" && test "x$build_against_x11" = "xno" ; then
-        build_brlcad_itk=no
+	build_brlcad_itk=no
     fi
 fi
 AC_MSG_RESULT($build_brlcad_itk)
@@ -3071,7 +3066,7 @@ PRELIBS="$LIBS"
 if test "x$tcl_link_works" = "xyes" ; then
     LIBS="$LIBS $LIBTCL $LIBITCL"
 fi
-dnl this test is probably not sufficient if iwidgets is not locateable
+dnl this test is probably not sufficient if iwidgets is not locatable
 dnl in the tcl auto_path.
 AC_TRY_RUN([
 #ifdef HAVE_TCL_H
@@ -3088,7 +3083,7 @@ int main() {
 	return 1;
     }
     if (Itcl_Init(interp) == TCL_ERROR) {
-	printf("ITCL interp failed to initaliaze: %s\n", Tcl_GetStringResult(interp));
+	printf("ITCL interp failed to initialize: %s\n", Tcl_GetStringResult(interp));
 	return 1;
     }
     res = Tcl_Eval(interp, cmd);
@@ -3099,7 +3094,7 @@ int main() {
 	while(b=strtok(b?NULL:Tcl_GetStringResult(interp)," "))
 	  if(!strncmp(b,"Iwidgets",8))
 	    return 0;
-        return 1;
+	return 1;
     }
     return 0;
 }
@@ -3356,12 +3351,12 @@ AC_MSG_RESULT([$socket_link_works])
 AC_SUBST(LIBSOCKET)
 
 dnl *** libnsl ***
-AC_MSG_CHECKING(for system network socket library availablity)
+AC_MSG_CHECKING(for system network socket library availability)
 AC_MSG_RESULT([$nsl_link_works])
 AC_SUBST(LIBNSL)
 
 dnl *** libnetwork ***
-AC_MSG_CHECKING(for system network library availablity)
+AC_MSG_CHECKING(for system network library availability)
 AC_MSG_RESULT([$network_link_works])
 AC_SUBST(LIBNETWORK)
 
@@ -3466,20 +3461,6 @@ else
     else
 	AC_MSG_WARN([Unknown pointer size: $pointer_size])
 	sleep 5
-    fi
-fi
-
-
-dnl *** Jove compilation ***
-build_brlcad_jove=no
-if test "x$bc_build_jove" = "xyes" ; then
-    build_brlcad_jove=yes
-elif test "x$bc_build_jove" = "xno" ; then
-    build_brlcad_jove=no	# body for the sake of body
-else
-    # enable jove if no suitable system emacs/jove was found
-    if test "x$BCEDITOR" = "x" ; then
-	build_brlcad_jove=yes
     fi
 fi
 
@@ -3663,7 +3644,7 @@ main(int argc, char *argv[]) {
     void (*func)() = glBegin;
     wglMakeCurrent(NULL, NULL);
     if (GL_FALSE || argc > 1) {
-        func(GL_POINTS);
+	func(GL_POINTS);
 	glGetBooleanv(GL_DEPTH_TEST, &values);
 	glEnd();
     }
@@ -3795,7 +3776,7 @@ dnl **************************************
 
 BC_CONFIGURE_STAGE([output], [9 of 9])
 
-# remove surrounding whitspace
+# remove surrounding whitespace
 CFLAGS="`echo $CFLAGS`"
 CXXFLAGS="`echo $CXXFLAGS`"
 CPPFLAGS="`echo $CPPFLAGS`"
@@ -3818,7 +3799,6 @@ AM_CONDITIONAL(BUILD_OPENNURBS, [test "x$build_brlcad_opennurbs" = "xyes"])
 AM_CONDITIONAL(BUILD_BOOST, [test "x$ac_cv_header_limits" = "xyes" && test "x$ac_cv_header_istream" = "xyes"])
 AM_CONDITIONAL(BUILD_TERMLIB, [test "x$build_brlcad_termlib" = "xyes"])
 AM_CONDITIONAL(BUILD_TNT, [test "x$build_brlcad_tnt" = "xyes"])
-AM_CONDITIONAL(BUILD_JOVE, [test "x$build_brlcad_jove" = "xyes"])
 AM_CONDITIONAL(BUILD_CUBIT, [test "x$bc_build_cubit" = "xyes"])
 AM_CONDITIONAL(BUILD_UG, [test "x$bc_build_ug" = "xyes"])
 
@@ -3912,6 +3892,7 @@ ICV='${top_builddir}/src/libicv/libicv.la'
 GCV='${top_builddir}/src/libgcv/libgcv.la'
 GED='${top_builddir}/src/libged/libged.la'
 MULTISPECTRAL='${top_builddir}/src/libmultispectral/libmultispectral.la'
+BREP='${top_builddir}/src/libbrep/libbrep.la'
 OPTICAL='${top_builddir}/src/liboptical/liboptical.la'
 ORLE='${top_builddir}/src/liborle/liborle.la'
 PC='${top_builddir}/src/libpc/libpc.la'
@@ -3932,9 +3913,9 @@ TERMIO_LIBS="${TERMLIB}"
 CURSOR_LIBS="${TERMLIB}"
 FFT_LIBS="${LIBM}"
 ANALYZE_LIBS="${RT} ${RT_LIBS} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS}"
-BU_LIBS="${TCL} ${PNG} ${LIBZ} ${LIBM} ${LIBMALLOC} ${LIBTHREAD}"
+BU_LIBS="${LIBSTDCXX} ${TCL} ${PNG} ${LIBZ} ${LIBM} ${LIBMALLOC} ${LIBTHREAD}"
 BN_LIBS="${BU} ${BU_LIBS} ${TCL} ${LIBM}"
-RT_LIBS="${BN} ${BN_LIBS} ${BU} ${BU_LIBS} ${REGEX} ${LIBM} ${SYSV} ${OPENNURBS}"
+RT_LIBS="${BN} ${BN_LIBS} ${BU} ${BU_LIBS} ${REGEX} ${LIBM} ${SYSV} ${OPENNURBS} ${BREP} ${LIBVDS} ${LIBP2T}"
 ICV_LIBS="{BN} ${BN_LIBS} ${BU} ${BU_LIBS}"
 GCV_LIBS="${RT} ${RT_LIBS} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS}"
 GED_LIBS="${WDB} ${RT} ${RT_LIBS} ${ICV} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS} ${PNG} ${TCL} ${REGEX} ${ANALYZE}"
@@ -3942,6 +3923,7 @@ WDB_LIBS="${RT} ${RT_LIBS} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS}"
 FB_LIBS="${BU} ${BU_LIBS} ${PKG} ${PKG_LIBS} ${TCL}" # additional/optional FB_LIBS: ${TK} ${X_LIBS} ${LIBGL}
 OPTICAL_LIBS="${RT} ${RT_LIBS} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS} ${TCL}"
 MULTISPECTRAL_LIBS="${OPTICAL} ${OPTICAL_LIBS} ${RT} ${RT_LIBS} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS}"
+BREP_LIBS="${LIBSTDCXX} ${BU} ${BU_LIBS} ${BN} ${BN_LIBS}"
 PC_LIBS="${LIBSTDCXX} ${BU} ${BU_LIBS}"
 if test "x$build_against_x11" = "xno" ; then
     if test "x$bc_build_aquatk" = "xyes" ; then
@@ -3968,6 +3950,7 @@ AC_SUBST(ICV)
 AC_SUBST(GCV)
 AC_SUBST(GED)
 AC_SUBST(MULTISPECTRAL)
+AC_SUBST(BREP)
 AC_SUBST(OPTICAL)
 AC_SUBST(ORLE)
 AC_SUBST(PKG)
@@ -3992,6 +3975,7 @@ AC_SUBST(ICV_LIBS)
 AC_SUBST(GCV_LIBS)
 AC_SUBST(GED_LIBS)
 AC_SUBST(MULTISPECTRAL_LIBS)
+AC_SUBST(BREP_LIBS)
 AC_SUBST(OPTICAL_LIBS)
 AC_SUBST(ORLE_LIBS)
 AC_SUBST(PC_LIBS)
@@ -4046,25 +4030,22 @@ if test "x$build_brlcad_tk" = "xyes" ; then
 fi
 AC_SUBST(TK_PATH)
 
-dnl configure libpng
-if test "x$build_brlcad_png" = "xyes" ; then
-   if test "x$LIBZ_CPPFLAGS" != "x" ; then
-	LIBZ_PATH="$PWD/${ac_top_builddir}/src/other/libz"
-	ac_configure_args="$ac_configure_args --with-sub-libs=\"${LIBZ_PATH}/libz.la\" --with-sub-cppflags=\"-I${LIBZ_PATH}\" --with-sub-cflags=\"$CFLAGS\" --with-sub-ldflags=\"$LDFLAGS\""
-    else
-	ac_configure_args="$ac_configure_args --with-sub-libs='$LIBZLIB' --with-sub-cflags=\"$CFLAGS\" --with-sub-ldflags=\"$LDFLAGS\""
-   fi
-   AC_CONFIG_SUBDIRS([src/other/libpng])
-fi
-
-dnl configure enigma
-AC_CONFIG_SUBDIRS([misc/enigma])
+#dnl configure libpng
+#if test "x$build_brlcad_png" = "xyes" ; then
+#   if test "x$LIBZ_CPPFLAGS" != "x" ; then
+#	LIBZ_PATH="$PWD/${ac_top_builddir}/src/other/libz"
+#	ac_configure_args="$ac_configure_args --with-sub-libs=\"${LIBZ_PATH}/libz.la\" --with-sub-cppflags=\"-I${LIBZ_PATH}\" --with-sub-cflags=\"$CFLAGS\" --with-sub-ldflags=\"$LDFLAGS\""
+#    else
+#	ac_configure_args="$ac_configure_args --with-sub-libs='$LIBZLIB' --with-sub-cflags=\"$CFLAGS\" --with-sub-ldflags=\"$LDFLAGS\""
+#   fi
+#   AC_CONFIG_SUBDIRS([src/other/libpng])
+#fi
 
 dnl configure tkhtml
 if test "x$build_brlcad_tkhtml" = "xyes" ; then
     ac_configure_args="$ac_configure_args --exec-prefix=\"$bc_prefix\""
     # this is a hack to all tkhtml to see when the tk headers are in odd
-    # places. it seems to ignore the CPPFLAGS in it's configure phase.
+    # places. it seems to ignore the CPPFLAGS in its configure phase.
     if test ! "x$TKINCDIR" = "x" ; then
 	    ac_configure_args="$ac_configure_args --with-tkinclude=$TKINCDIR"
     fi
@@ -4143,6 +4124,7 @@ AC_CONFIG_FILES([
 	src/archer/plugins/Utility/Makefile
 	src/archer/plugins/Utility/attrGroupsDisplayUtilityP/Makefile
 	src/archer/plugins/Utility/botUtilityP/Makefile
+	src/archer/plugins/Utility/lodUtilityP/Makefile
 	src/archer/plugins/Wizards/Makefile
 	src/archer/plugins/Wizards/humanwizard/Makefile
 	src/archer/plugins/Wizards/tankwizard/Makefile
@@ -4181,6 +4163,7 @@ AC_CONFIG_FILES([
 	src/libged/Makefile
 	src/libicv/Makefile
 	src/libmultispectral/Makefile
+	src/libbrep/Makefile
 	src/liboptical/Makefile
 	src/liborle/Makefile
 	src/libpc/Makefile
@@ -4221,14 +4204,15 @@ AC_CONFIG_FILES([
 	src/other/iwidgets/generic/Makefile
 	src/other/iwidgets/iwidgets.tcl
 	src/other/iwidgets/pkgIndex.tcl
-	src/other/jove/Makefile
-	src/other/jove/teach-jove
+	src/other/libpng/Makefile
 	src/other/libregex/Makefile
 	src/other/libtermlib/Makefile
 	src/other/libutahrle/Makefile
 	src/other/libutahrle/include/Makefile
+	src/other/libvds/Makefile
 	src/other/libz/Makefile
 	src/other/openNURBS/Makefile
+	src/other/poly2tri/Makefile
 	src/other/tcl/Makefile
 	src/other/tk/Makefile
 	src/other/tkpng/Makefile
@@ -4246,7 +4230,9 @@ AC_CONFIG_FILES([
 	src/tclscripts/archer/images/Makefile
 	src/tclscripts/boteditor/Makefile
 	src/tclscripts/geometree/Makefile
+	src/tclscripts/igraph/Makefile
 	src/tclscripts/hv3/Makefile
+	src/tclscripts/lod/Makefile
 	src/tclscripts/lib/Makefile
 	src/tclscripts/mged/Makefile
 	src/tclscripts/pl-dm/Makefile

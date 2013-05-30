@@ -1,7 +1,7 @@
 /*                     P I X B O R D E R . C
  * BRL-CAD
  *
- * Copyright (c) 1996-2012 United States Government as represented by
+ * Copyright (c) 1996-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -319,10 +319,10 @@ static int is_exterior (unsigned char *pix_rgb)
  */
 static int is_border (unsigned char *prp, unsigned char *trp, unsigned char *nrp, int col_nm)
 
-    /* Previous row */
-    /* Current (this) row */
-    /* Next row */
-    /* Current column */
+/* Previous row */
+/* Current (this) row */
+/* Next row */
+/* Current column */
 
 {
     unsigned char pix_rgb[3];

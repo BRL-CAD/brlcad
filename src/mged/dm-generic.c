@@ -1,7 +1,7 @@
 /*                    D M - G E N E R I C . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2012 United States Government as represented by
+ * Copyright (c) 2004-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -88,6 +88,21 @@ common_dm(int argc, const char *argv[])
 	return TCL_OK;
 
     if (BU_STR_EQUAL(argv[0], "idle")) {
+
+	/* redraw after scaling */
+	if (gedp && gedp->ged_gvp &&
+	    gedp->ged_gvp->gv_adaptive_plot &&
+	    gedp->ged_gvp->gv_redraw_on_zoom &&
+	    (am_mode == AMM_SCALE ||
+	     am_mode == AMM_CON_SCALE_X ||
+	     am_mode == AMM_CON_SCALE_Y ||
+	     am_mode == AMM_CON_SCALE_Z))
+	{
+	    if (redraw_visible_objects() == TCL_ERROR) {
+		return TCL_ERROR;
+	    }
+	}
+
 	am_mode = AMM_IDLE;
 	scroll_active = 0;
 	if (rubber_band->rb_active) {
@@ -152,11 +167,11 @@ common_dm(int argc, const char *argv[])
 		snap_to_grid(&fx, &fy);
 
 	    if (mged_variables->mv_perspective_mode)
-		VSET(view_pt, fx, fy, 0.0)
-		    else
-			VSET(view_pt, fx, fy, 1.0)
+		VSET(view_pt, fx, fy, 0.0);
+	    else
+		VSET(view_pt, fx, fy, 1.0);
 
-			    MAT4X3PNT(model_pt, view_state->vs_gvp->gv_view2model, view_pt);
+	    MAT4X3PNT(model_pt, view_state->vs_gvp->gv_view2model, view_pt);
 	    VSCALE(model_pt, model_pt, base2local);
 	    if (dmp->dm_zclip)
 		bu_vls_printf(&vls, "qray_nirt %lf %lf %lf",
@@ -553,6 +568,9 @@ common_dm(int argc, const char *argv[])
 	    width = atoi(argv[1]);
 	    height = atoi(argv[2]);
 
+	    dmp->dm_width = width;
+	    dmp->dm_height = height;
+
 #if defined(DM_X) || defined(DM_TK) || defined(DM_OGL) || defined(DM_WGL)
 #  if 0
 	    Tk_ResizeWindow(((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin, width, height);
@@ -624,6 +642,7 @@ common_dm(int argc, const char *argv[])
 	}
 
 	dirty = 1;
+	(void)DM_MAKE_CURRENT(dmp);
 	return DM_SET_BGCOLOR(dmp, r, g, b);
     }
 

@@ -1,7 +1,7 @@
 /*                    P O P U L A T I O N . C
  * BRL-CAD
  *
- * Copyright (c) 2007-2012 United States Government as represented by
+ * Copyright (c) 2007-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -120,7 +120,6 @@ pop_spawn (struct population *p)
 	}
 
 
-
 	p->parent[i].fitness = 0.0;
 	p->parent[i].id = i;
 	/*
@@ -144,10 +143,10 @@ pop_spawn (struct population *p)
 /*
  * reload the db so we dont
  * have to do any extra checks
- * in the main looop
+ * in the main loop
  */
     wdb_close(p->db_p->dbi_wdbp);
-    if ((p->db_p = db_open("gen000", "r")) == DBI_NULL)
+    if ((p->db_p = db_open("gen000", DB_OPEN_READONLY)) == DBI_NULL)
 	bu_exit(EXIT_FAILURE, "Failed to re-open initial population");
     if (db_dirbuild(p->db_p) < 0)
 	bu_exit(EXIT_FAILURE, "Failed to load initial database");
@@ -247,7 +246,7 @@ pop_find_nodes(	union tree *tp)
 	    n1 = pop_find_nodes(tp->tr_b.tb_left);
 	    if (n1 == crossover_node) {
 		if (tp->tr_b.tb_left->tr_op & crossover_op) {
-		    add = bu_malloc(sizeof(struct node), "node");
+		    BU_ALLOC(add, struct node);
 		    add->s_parent = &tp->tr_b.tb_left;
 		    add->s_child = tp->tr_b.tb_left;
 		    BU_LIST_INSERT(&node->l, &add->l);
@@ -258,7 +257,7 @@ pop_find_nodes(	union tree *tp)
 	    n2 = pop_find_nodes(tp->tr_b.tb_right);
 	    if (n2 == crossover_node) {
 		if (tp->tr_b.tb_right->tr_op & crossover_op) {
-		    add = bu_malloc(sizeof(struct node), "node");
+		    BU_ALLOC(add, struct node);
 		    add->s_parent = &tp->tr_b.tb_right;
 		    add->s_child = tp->tr_b.tb_right;
 		    BU_LIST_INSERT(&node->l, &add->l);
@@ -303,10 +302,6 @@ pop_mutate(int type, genptr_t ptr)
 }
 
 
-
-
-
-
 void
 pop_functree(struct db_i *dbi_p, struct db_i *dbi_c,
 	     union tree *tp,
@@ -344,7 +339,7 @@ pop_functree(struct db_i *dbi_p, struct db_i *dbi_c,
 
 	    /* if we aren't crossing over, we copy the individual into the
 	     * new database. If we're mutating, mutate the object after loading
-	     * the internetal object */
+	     * the internal object */
 
 	    if ( !rt_db_lookup_internal(dbi_p, tp->tr_l.tl_name, &dp, &in, LOOKUP_NOISY, resp))
 		bu_exit(EXIT_FAILURE, "Failed to read parent");
@@ -364,7 +359,7 @@ pop_functree(struct db_i *dbi_p, struct db_i *dbi_c,
 	    if ((dp=db_diradd(dbi_c, shape, -1, 0, dp->d_flags, (genptr_t)&dp->d_minor_type)) == RT_DIR_NULL)
 		bu_exit(EXIT_FAILURE, "Failed to add new object to the database");
 	    if (rt_db_put_internal(dp, dbi_c, &in, resp) < 0)
-		bu_exit(EXIT_FAILURE, "Failed to write new individual to databse");
+		bu_exit(EXIT_FAILURE, "Failed to write new individual to database");
 	    rt_db_free_internal(&in);
 
 	    break;
@@ -433,7 +428,7 @@ pop_gop(int gop, char *parent1_id, char *parent2_id, char *child1_id, char *chil
 		bu_exit(EXIT_FAILURE, "Failed to read parent2");
 	    parent2 = (struct rt_comb_internal *)in2.idb_ptr;
 
-	    node = bu_malloc(sizeof(struct node), "node");
+	    BU_ALLOC(node, struct node);
 	    BU_LIST_INIT(&node->l);
 	    chosen_node = NULL;
 
@@ -452,7 +447,7 @@ pop_gop(int gop, char *parent1_id, char *parent2_id, char *child1_id, char *chil
 		if (crossover_op & MASK)crossover_op = MASK;
 		crossover_node = db_count_tree_nodes(crossover_point, 0);
 		if (pop_find_nodes(parent2->tree) == crossover_node) {
-		    add = bu_malloc(sizeof(struct node), "node");
+		    BU_ALLOC(add, struct node);
 		    add->s_parent = &parent2->tree;
 		    add->s_child = parent2->tree;
 		    BU_LIST_INSERT(&node->l, &add->l);
@@ -515,8 +510,6 @@ pop_gop(int gop, char *parent1_id, char *parent2_id, char *child1_id, char *chil
 	    */
 
 
-
-
 	default:
 	    bu_exit(EXIT_FAILURE, "illegal genetic operator\nfailed to execute genetic op");
     }
@@ -529,7 +522,6 @@ pop_gop(int gop, char *parent1_id, char *parent2_id, char *child1_id, char *chil
       bu_exit(EXIT_FAILURE, "Database write failure");
     rt_db_free_internal(&in1);
 }
-
 
 
 /** @} */

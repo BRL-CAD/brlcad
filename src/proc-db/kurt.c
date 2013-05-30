@@ -1,7 +1,7 @@
 /*                          K U R T . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2012 United States Government as represented by
+ * Copyright (c) 1986-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -51,6 +51,7 @@ void do_light(char *name, fastf_t *pos, fastf_t *dir_at, int da_flag, double r, 
 
 struct rt_wdb *outfp;
 
+
 int
 main(int argc, char **argv)
 {
@@ -80,6 +81,7 @@ main(int argc, char **argv)
 
     return 0;
 }
+
 
 void
 do_cell(struct val *vp, double xc, double yc)
@@ -153,6 +155,7 @@ pnorms(fastf_t (*norms)[3], fastf_t (*verts)[3], fastf_t *out, int npts)
     }
 }
 
+
 void
 do_light(char *name, fastf_t *pos, fastf_t *dir_at, int da_flag, double r, unsigned char *rgb)
 
@@ -186,13 +189,14 @@ do_light(char *name, fastf_t *pos, fastf_t *dir_at, int da_flag, double r, unsig
      * then xlate to final position.
      */
     VSET(from, 0, 0, -1);
-    bn_mat_fromto(rot, from, dir);
+    bn_mat_fromto(rot, from, dir, &outfp->wdb_tol);
     MAT_IDN(xlate);
     MAT_DELTAS_VEC(xlate, pos);
     bn_mat_mul(both, xlate, rot);
 
     mk_region1(outfp, name, nbuf, "light", "shadows=1", rgb);
 }
+
 
 /*
  * Local Variables:

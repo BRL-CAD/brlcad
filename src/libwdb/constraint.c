@@ -1,7 +1,7 @@
 /*                  C O N S T R A I N T . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2012 United States Government as represented by
+ * Copyright (c) 2008-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -44,7 +44,7 @@ mk_constraint(struct rt_wdb *wdbp, const char *name, const char *UNUSED(expr))
     RT_DB_INTERNAL_INIT(&intern);
 
     /* Create a fresh new object for export */
-    BU_GET(constraint, struct rt_constraint_internal);
+    BU_ALLOC(constraint, struct rt_constraint_internal);
     constraint->magic = RT_CONSTRAINT_MAGIC;
     constraint->id = constraint->type = 0;
     BU_VLS_INIT(&constraint->expression);

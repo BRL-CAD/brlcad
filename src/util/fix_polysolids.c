@@ -1,7 +1,7 @@
 /*                F I X _ P O L Y S O L I D S . C
  * BRL-CAD
  *
- * Copyright (c) 1995-2012 United States Government as represented by
+ * Copyright (c) 1995-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -150,7 +150,7 @@ main(int argc, char *argv[])
 		}
 		nmg_rebound(m, &tol);
 		(void)nmg_break_long_edges(s, &tol);
-		(void)nmg_model_vertex_fuse(m, &tol);
+		(void)nmg_vertex_fuse(&m->magic, &tol);
 		nmg_gluefaces((struct faceuse **)BU_PTBL_BASEADDR(&faces), BU_PTBL_END(&faces), &tol);
 		nmg_fix_normals(s, &tol);
 

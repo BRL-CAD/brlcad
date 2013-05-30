@@ -1,7 +1,7 @@
 /*                   V I E W P O I N T - G . C
  * BRL-CAD
  *
- * Copyright (c) 1993-2012 United States Government as represented by
+ * Copyright (c) 1993-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -60,7 +60,7 @@ struct viewpoint_verts
 
 #define MAX_LINE_SIZE 256 /* max input line length from elements file */
 
-static char *tok_sep=" "; /* seperator used in input files */
+static char *tok_sep=" "; /* separator used in input files */
 static char *usage="viewpoint-g [-t tol] -c coord_file_name -e elements_file_name -o output_file_name";
 
 int
@@ -325,7 +325,7 @@ main(int argc, char **argv)
 	    }
 	}
 
-	(void)nmg_model_vertex_fuse(m, &tol);
+	(void)nmg_vertex_fuse(&m->magic, &tol);
 
 	/* calculate plane equations for faces */
 	NMG_CK_SHELL(s);

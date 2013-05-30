@@ -1,7 +1,7 @@
 /*                          G R I D . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2012 United States Government as represented by
+ * Copyright (c) 1998-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -151,7 +151,7 @@ ged_grid(struct ged *gedp, int argc, const char *argv[])
     char *command;
     char *parameter;
     char **argp = (char **)argv;
-    point_t user_pt;		/* Value(s) provided by user */
+    double user_pt[3];		/* Value(s) provided by user */
     int i;
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);

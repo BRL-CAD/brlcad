@@ -1,7 +1,7 @@
 /*                        C G A R B S . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2012 United States Government as represented by
+ * Copyright (c) 1990-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -113,7 +113,7 @@ cgarbs(int *cgtype,
 	    uniq[numuniq++] = j;
     }
 
-    /* put comgeom solid typpe into s_cgtype */
+    /* put comgeom solid type into s_cgtype */
     switch (numuniq) {
 	case 8:
 	    *cgtype = 8;  /* ARB8 */
@@ -173,7 +173,7 @@ arb_mv(point_t pts[8],
  *
  *  Rearranges arbs to be GIFT compatible
  *  The input in "gp" is not modified.
- *  The first "numvec" entires of "pts" are the GIFT format of arb "cgtype".
+ *  The first "numvec" entries of "pts" are the GIFT format of arb "cgtype".
  *
  *  Returns -
  *	1	OK
@@ -181,11 +181,11 @@ arb_mv(point_t pts[8],
  */
 int
 redoarb(point_t pts[8],
-        const struct rt_arb_internal *gp,
-        int uniq[8],
-        int svec[11],
-        const int numvec,
-        const int cgtype
+	const struct rt_arb_internal *gp,
+	int uniq[8],
+	int svec[11],
+	const int numvec,
+	const int cgtype
     )
 {
     int	i, j;

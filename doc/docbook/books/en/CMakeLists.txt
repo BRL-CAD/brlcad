@@ -51,7 +51,7 @@ set(docbook_books_EN_IMAGES
   images/v4-image010.jpg
   images/v4-image011.jpg
   )
-BRLCAD_ADDDATA(docbook_books_EN_IMAGES ${DOC_DIR}/html/books/en/images)
+ADD_DOC(docbook_books_EN_IMAGES html/books/en/images)
 
 set(docbook_books_EN
   BRL-CAD_Tutorial_Series-VolumeI.xml
@@ -145,7 +145,7 @@ if(BRLCAD_EXTRADOCS_PDF)
     install(FILES ${outfile} DESTINATION ${DATA_DIR}/${DOC_DIR}/pdf/books/en)
     get_property(BRLCAD_EXTRADOCS_PDF_TARGETS GLOBAL PROPERTY BRLCAD_EXTRADOCS_PDF_TARGETS)
     set(BRLCAD_EXTRADOCS_PDF_TARGETS ${BRLCAD_EXTRADOCS_PDF_TARGETS} ${targetname})
-    set_property(GLOBAL PROPERTY BRLCAD_EXTRADOCS_PDF_TARGETS "${BRLCAD_EXTRADOCS_PDF_TARGETS}") 
+    set_property(GLOBAL PROPERTY BRLCAD_EXTRADOCS_PDF_TARGETS "${BRLCAD_EXTRADOCS_PDF_TARGETS}")
   endforeach(filename ${docbook_books_EN})
 endif(BRLCAD_EXTRADOCS_PDF)
 

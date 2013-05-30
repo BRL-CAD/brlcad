@@ -1,7 +1,7 @@
 /*                      P I X C L U M P . C
  * BRL-CAD
  *
- * Copyright (c) 1997-2012 United States Government as represented by
+ * Copyright (c) 1997-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -85,7 +85,7 @@ static void print_debug_usage (void)
 static void add_to_table (unsigned char *rgb)
 {
     /*
-     * Ensure that the color table can accomodate the new entry
+     * Ensure that the color table can accommodate the new entry
      */
     if (next_color == color_tbl_size) {
 	color_tbl_size *= 2;
@@ -118,9 +118,9 @@ static void fill_table (char *f_name)
 	if ((*bp == '#') || (*bp == '\0'))
 	    continue;
 	if (! bu_str_to_rgb(bp, rgb)) {
-            fclose(fp);
+	    fclose(fp);
 	    bu_exit(1, "Illegal color: '%s' on line %d of file '%s'\n", bp, line_nm, f_name);
-        }
+	}
 	add_to_table(rgb);
     }
     fclose(fp);
@@ -209,7 +209,6 @@ main (int argc, char **argv)
 	}
     switch (argc - bu_optind) {
 	case 0:
-	    inf_name = "stdin";
 	    infp = stdin;
 	    /* Break intentionally missing */
 	case 1:

@@ -1,7 +1,7 @@
 /*                        B S P L I N E . C P P
  * BRL-CAD
  *
- * Copyright (c) 1991-2012 United States Government as represented by
+ * Copyright (c) 1991-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -62,7 +62,7 @@ extern "C" {
 #endif
 
 struct nurb_specific {
-    struct nurb_specific *next;	/* next surface in the the solid */
+    struct nurb_specific *next;	/* next surface in the solid */
     struct face_g_snurb *srf;	/* Original surface description */
     struct bu_list bez_hd;	/* List of Bezier face_g_snurbs */
 };
@@ -122,11 +122,15 @@ rt_nurb_grans(struct face_g_snurb *srf)
  */
 int
 rt_nurb_bbox(struct rt_db_internal *ip, point_t *min, point_t *max) {
+    int i;
     struct nurb_specific *nurbs = NULL;
     struct nurb_specific *next;
     struct rt_nurb_internal *sip;
+
     sip = (struct rt_nurb_internal *) ip->idb_ptr;
-    int i;
+    VSETALL((*min), INFINITY);
+    VSETALL((*max), -INFINITY);
+
     for (i = 0; i < sip->nsrf; i++) {
 	struct face_g_snurb * s;
 	struct nurb_specific * n;
@@ -181,7 +185,7 @@ rt_nurb_bbox(struct rt_db_internal *ip, point_t *min, point_t *max) {
 	    rt_nurb_free_snurb(s, (struct resource *)NULL);
 	}
 	rt_nurb_free_snurb(nurbs->srf, (struct resource *)NULL);	/* original surf */
-	bu_free((char *)nurbs, "nurb_specific");
+	BU_PUT(nurbs, struct nurb_specific);
     }
 
     return 0;
@@ -590,7 +594,7 @@ rt_nurb_free(register struct soltab *stp)
 	    rt_nurb_free_snurb(s, (struct resource *)NULL);
 	}
 	rt_nurb_free_snurb(nurb->srf, (struct resource *)NULL);	/* original surf */
-	bu_free((char *)nurb, "nurb_specific");
+	BU_PUT(nurb, struct nurb_specific);
     }
     return;
 #endif /* CONVERT_TO_BREP */
@@ -626,7 +630,7 @@ rt_nurb_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_t
 	int coords;
 	fastf_t bound;
 	point_t tmp_pt;
-	fastf_t rel;
+	fastf_t dtol;
 	struct knot_vector tkv1,
 	    tkv2;
 	fastf_t tess;
@@ -639,33 +643,14 @@ rt_nurb_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_t
 
 	VSUB2(tmp_pt, n->min_pt, n->max_pt);
 	bound =         MAGNITUDE(tmp_pt)/ 2.0;
-	/*
-	 * Establish tolerances
-	 */
-	if (ttol->rel <= 0.0 || ttol->rel >= 1.0) {
-	    rel = 0.0;              /* none */
-	} else {
-	    /* Convert rel to absolute by scaling by diameter */
-	    rel = ttol->rel * 2 * bound;
-	}
-	if (ttol->abs <= 0.0) {
-	    if (rel <= 0.0) {
-		/* No tolerance given, use a default */
-		rel = 2 * 0.10 * bound;        /* 10% */
-	    } else {
-		/* Use absolute-ized relative tolerance */
-	    }
-	} else {
-	    /* Absolute tolerance was given, pick smaller */
-	    if (ttol->rel <= 0.0 || rel > ttol->abs)
-		rel = ttol->abs;
-	}
+
+	dtol = primitive_get_absolute_tolerance(ttol, 2.0 * bound);
 
 	if (n->order[0] < 3 || n->order[1] < 3) {
 	    /* cannot use rt_nurb_par_edge() in this case */
 	    tess = 0.25; /* hack for now */
 	} else
-	    tess = (fastf_t) rt_nurb_par_edge(n, rel);
+	    tess = (fastf_t) rt_nurb_par_edge(n, dtol);
 
 	num_knots = (int)floor(1.0/((M_SQRT1_2 / 2.0) * tess));
 
@@ -792,7 +777,8 @@ rt_nurb_import4(struct rt_db_internal *ip, const struct bu_external *ep, registe
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_BSPLINE;
     ip->idb_meth = &rt_functab[ID_BSPLINE];
-    ip->idb_ptr = bu_malloc(sizeof(struct rt_nurb_internal), "rt_nurb_internal");
+    BU_ALLOC(ip->idb_ptr, struct rt_nurb_internal);
+
     sip = (struct rt_nurb_internal *)ip->idb_ptr;
     sip->magic = RT_NURB_INTERNAL_MAGIC;
 
@@ -953,7 +939,7 @@ rt_nurb_export4(struct bu_external *ep, const struct rt_db_internal *ip, double 
 
     /* Figure out how many recs to buffer by
      * walking through the surfaces and
-     * calculating the number of granuels
+     * calculating the number of granules
      * needed for storage and add it to the total
      */
     total_grans = 1;	/* First gran for BSOLID record */
@@ -1073,7 +1059,13 @@ rt_nurb_export5(struct bu_external *ep, const struct rt_db_internal *ip, double 
     cp += SIZEOF_NETWORK_LONG;
 
     for (s = 0; s < sip->nsrf; s++) {
-	register struct face_g_snurb *srf = sip->srfs[s];
+	int i;
+	struct face_g_snurb *srf = sip->srfs[s];
+
+	/* must be double for import and export */
+	double *uknots;
+	double *vknots;
+	double *points;
 
 	NMG_CK_SNURB(srf);
 
@@ -1092,14 +1084,36 @@ rt_nurb_export5(struct bu_external *ep, const struct rt_db_internal *ip, double 
 	cp += SIZEOF_NETWORK_LONG;
 	*(uint32_t *)cp = htonl(srf->s_size[1]);
 	cp += SIZEOF_NETWORK_LONG;
-	htond(cp, (unsigned char *)srf->u.knots, srf->u.k_size);
-	cp += srf->u.k_size * SIZEOF_NETWORK_DOUBLE;
-	htond(cp, (unsigned char *)srf->v.knots, srf->v.k_size);
-	cp += srf->v.k_size * SIZEOF_NETWORK_DOUBLE;
 
+	/* allocate for export */
+	uknots = (double *)bu_malloc(srf->u.k_size * sizeof(double), "uknots");
+	vknots = (double *)bu_malloc(srf->v.k_size * sizeof(double), "vknots");
+	points = (double *)bu_malloc(coords * srf->s_size[0] * srf->s_size[1] * sizeof(double), "points");
+
+	/* convert fastf_t to double */
+	for (i=0; i<srf->u.k_size; i++) {
+	    uknots[i] = srf->u.knots[i];
+	}
+	for (i=0; i<srf->v.k_size; i++) {
+	    vknots[i] = srf->v.knots[i];
+	}
+	for (i=0; i<coords * srf->s_size[0] * srf->s_size[1]; i++) {
+	    points[i] = srf->ctl_points[i];
+	}
+
+	/* serialize */
+	htond(cp, (unsigned char *)uknots, srf->u.k_size);
+	cp += srf->u.k_size * SIZEOF_NETWORK_DOUBLE;
+	htond(cp, (unsigned char *)vknots, srf->v.k_size);
+	cp += srf->v.k_size * SIZEOF_NETWORK_DOUBLE;
 	htond(cp, (unsigned char *)srf->ctl_points,
 	      coords * srf->s_size[0] * srf->s_size[1]);
 	cp += coords * srf->s_size[0] * srf->s_size[1] * SIZEOF_NETWORK_DOUBLE;
+
+	/* release our arrays */
+	bu_free(uknots, "uknots");
+	bu_free(vknots, "vknots");
+	bu_free(points, "points");
     }
 
     bu_log("DEPRECATED:  The 'bspline' primitive is no longer supported.  Use 'brep' NURBS instead.\n");
@@ -1128,7 +1142,8 @@ rt_nurb_import5(struct rt_db_internal *ip, const struct bu_external *ep, registe
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_BSPLINE;
     ip->idb_meth = &rt_functab[ID_BSPLINE];
-    ip->idb_ptr = bu_malloc(sizeof(struct rt_nurb_internal), "rt_nurb_internal");
+    BU_ALLOC(ip->idb_ptr, struct rt_nurb_internal);
+
     sip = (struct rt_nurb_internal *)ip->idb_ptr;
     sip->magic = RT_NURB_INTERNAL_MAGIC;
 
@@ -1144,6 +1159,11 @@ rt_nurb_import5(struct rt_db_internal *ip, const struct bu_external *ep, registe
 	int pt_type;
 	int order[2], u_size, v_size;
 	int s_size[2];
+
+	/* must be double for import and export */
+	double *uknots;
+	double *vknots;
+	double *points;
 
 	pt_type = ntohl(*(uint32_t *)cp);
 	cp += SIZEOF_NETWORK_LONG;
@@ -1173,16 +1193,38 @@ rt_nurb_import5(struct rt_db_internal *ip, const struct bu_external *ep, registe
 	srf = sip->srfs[s];
 	coords = RT_NURB_EXTRACT_COORDS(srf->pt_type);
 
-	ntohd((unsigned char *)srf->u.knots, cp, srf->u.k_size);
+	uknots = (double *)bu_malloc(srf->u.k_size * sizeof(double), "uknots");
+	vknots = (double *)bu_malloc(srf->v.k_size * sizeof(double), "vknots");
+
+	ntohd((unsigned char *)uknots, cp, srf->u.k_size);
 	cp += srf->u.k_size * SIZEOF_NETWORK_DOUBLE;
-	ntohd((unsigned char *)srf->v.knots, cp, srf->v.k_size);
+	ntohd((unsigned char *)vknots, cp, srf->v.k_size);
 	cp += srf->v.k_size * SIZEOF_NETWORK_DOUBLE;
+
+	/* convert double to fastf_t */
+	for (i=0; i<srf->u.k_size; i++) {
+	    srf->u.knots[i] = uknots[i];
+	}
+	for (i=0; i<srf->v.k_size; i++) {
+	    srf->v.knots[i] = vknots[i];
+	}
+
+	bu_free(uknots, "uknots");
+	bu_free(vknots, "vknots");
 
 	rt_nurb_kvnorm(&srf->u);
 	rt_nurb_kvnorm(&srf->v);
 
-	ntohd((unsigned char *)srf->ctl_points, cp,
-	      coords * srf->s_size[0] * srf->s_size[1]);
+	points = (double *)bu_malloc(coords * srf->s_size[0] * srf->s_size[1] * sizeof(double), "points");
+
+	ntohd((unsigned char *)points, cp, coords * srf->s_size[0] * srf->s_size[1]);
+
+	/* convert double to fastf_t */
+	for (i=0; i < coords * srf->s_size[0] * srf->s_size[1]; i++) {
+	    srf->ctl_points[i] = points[i];
+	}
+
+	bu_free(points, "points");
 
 	cp += coords * srf->s_size[0] * srf->s_size[1] * SIZEOF_NETWORK_DOUBLE;
 

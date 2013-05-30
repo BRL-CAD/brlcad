@@ -1,7 +1,7 @@
 /*                         G Q A . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2012 United States Government as represented by
+ * Copyright (c) 2008-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -19,7 +19,7 @@
  */
 /** @file libged/gqa.c
  *
- * performs a set of quantitative analysese on geometry.
+ * performs a set of quantitative analyses on geometry.
  *
  * XXX need to look at gap computation
  *
@@ -53,8 +53,8 @@
 
 
 /* bu_getopt() options */
-char *options = "A:a:de:f:g:Gn:N:pP:rS:s:t:U:u:vV:W:";
-char *options_str = "[-A A|a|b|c|e|g|m|o|p|v|w] [-a az] [-d] [-e el] [-f densityFile] [-g spacing|upper, lower|upper-lower] [-G] [-n nhits] [-N nviews] [-p] [-P ncpus] [-r] [-S nsamples] [-t overlap_tol] [-U useair] [-u len_units vol_units wt_units] [-v] [-V volume_tol] [-W weight_tol]";
+char *options = "A:a:de:f:g:Gn:N:pP:qrS:s:t:U:u:vV:W:";
+char *options_str = "[-A A|a|b|c|e|g|m|o|p|v|w] [-a az] [-d] [-e el] [-f densityFile] [-g spacing|upper, lower|upper-lower] [-G] [-n nhits] [-N nviews] [-p] [-P ncpus] [-q] [-r] [-S nsamples] [-t overlap_tol] [-U useair] [-u len_units vol_units wt_units] [-v] [-V volume_tol] [-W weight_tol]";
 
 #define ANALYSIS_VOLUME 1
 #define ANALYSIS_WEIGHT 2
@@ -67,18 +67,6 @@ char *options_str = "[-A A|a|b|c|e|g|m|o|p|v|w] [-a az] [-d] [-e el] [-f density
 #define ANALYSIS_CENTROIDS 256
 #define ANALYSIS_MOMENTS 512
 #define ANALYSIS_PLOT_OVERLAPS 1024
-
-#ifndef HUGE
-#  ifdef MAXFLT
-#    define HUGE MAXFLOAT
-#  else
-#    ifdef DBL_MAX
-#      define HUGE DBL_MAX
-#    else
-#      define HUGE ((float)3.40282346638528860e+38)
-#    endif
-#  endif
-#endif
 
 /* Note: struct parsing requires no space after the commas.  take care
  * when formatting this file.  if the compile breaks here, it means
@@ -111,6 +99,7 @@ static int num_objects; /* number of objects specified on command line */
 static int max_cpus;
 static int num_views;
 static int verbose;
+static int quiet_missed_report;
 
 static int plot_files;	/* Boolean: Should we produce plot files? */
 static FILE *plot_weight;
@@ -195,7 +184,7 @@ static struct per_obj_data {
 static struct per_region_data {
     unsigned long hits;
     double *r_lenDensity; /* for per-region per-view weight computation */
-    double *r_len;        /* for per-region, per-veiew computation */
+    double *r_len;        /* for per-region, per-view computation */
     double *r_weight;
     double *r_volume;
     struct per_obj_data *optr;
@@ -276,7 +265,7 @@ static struct region_pair overlapList = {
 
 /**
  * This structure holds the name of a unit value, and the conversion
- * factor necessary to convert from/to BRL-CAD statndard units.
+ * factor necessary to convert from/to BRL-CAD standard units.
  *
  * The standard units are millimeters, cubic millimeters, and grams.
  *
@@ -313,7 +302,7 @@ static const struct cvt_tab units_tab[3][40] = {
 	{1000000.0,	"kilometer"},
 	{25.4,		"in"},
 	{25.4,		"inch"},
-	{25.4,		"inche"},		/* for plural */
+	{25.4,		"inches"},		/* for plural */
 	{304.8,		"ft"},
 	{304.8,		"foot"},
 	{304.8,		"feet"},
@@ -651,6 +640,9 @@ parse_args(int ac, char *av[])
 		/* cannot ask for more cpu's than the machine has */
 		if ((c=atoi(bu_optarg)) > 0 && c <= max_cpus) ncpu = c;
 		break;
+	    case 'q':
+		quiet_missed_report = 1;
+		break;
 	    case 'r':
 		print_per_region_stats = 1;
 		break;
@@ -721,7 +713,7 @@ parse_args(int ac, char *av[])
 			}
 
 			if (!found_unit) {
-			    bu_vls_printf(_ged_current_gedp->ged_result_str, "Units \"%s\" not found in coversion table\n", units_name[i]);
+			    bu_vls_printf(_ged_current_gedp->ged_result_str, "Units \"%s\" not found in conversion table\n", units_name[i]);
 			    return -1;
 			}
 
@@ -827,7 +819,7 @@ get_densities_from_database(struct rt_i *rtip)
     densities = bu_calloc(128, sizeof(struct density_entry), "density entries");
     num_densities = 128;
 
-    /* Acquire one extra byte to accomodate parse_densities_buffer()
+    /* Acquire one extra byte to accommodate parse_densities_buffer()
      * (i.e. it wants to write an EOS in buf[bu->count]).
      */
     buf = bu_malloc(bu->count+1, "density buffer");
@@ -1524,7 +1516,7 @@ allocate_per_region_data(struct cstate *state, int start, int ac, const char *av
     /* build data structures for the list of objects the user
      * specified on the command line
      */
-    obj_tbl = bu_calloc(sizeof(struct per_obj_data), num_objects, "report tables");
+    obj_tbl = bu_calloc(num_objects, sizeof(struct per_obj_data), "report tables");
     for (i = 0; i < num_objects; i++) {
 	obj_tbl[i].o_name = (char *)av[start+i];
 	obj_tbl[i].o_len = bu_calloc(num_views, sizeof(double), "o_len");
@@ -1600,7 +1592,7 @@ options_prep(struct rt_i *rtip, vect_t span)
     double newGridSpacing = gridSpacing;
     int axis;
 
-    /* figure out where the density values are comming from and get
+    /* figure out where the density values are coming from and get
      * them.
      */
     if (analysis_flags & ANALYSIS_WEIGHT) {
@@ -1986,9 +1978,9 @@ terminate_check(struct cstate *state)
 		    if (hits < require_num_hits) {
 			all_hit = 0;
 			if (verbose) {
-			    if (hits == 0) {
+			    if (hits == 0 && !quiet_missed_report) {
 				bu_vls_printf(_ged_current_gedp->ged_result_str, "%s was not hit\n", regp->reg_name);
-			    } else {
+			    } else if (hits) {
 				bu_vls_printf(_ged_current_gedp->ged_result_str, "%s hit only %zu times (< %zu)\n",
 					      regp->reg_name, hits, require_num_hits);
 			    }
@@ -2128,8 +2120,8 @@ summary_reports(struct cstate *state)
 	    double *wv;
 	    bu_vls_printf(_ged_current_gedp->ged_result_str, "\tregions:\n");
 	    for (BU_LIST_FOR (regp, region, &(state->rtip->HeadRegion))) {
-		double low = HUGE;
-		double hi = -HUGE;
+		double low = INFINITY;
+		double hi = -INFINITY;
 
 		avg_mass = 0.0;
 
@@ -2256,8 +2248,8 @@ summary_reports(struct cstate *state)
 
 	    bu_vls_printf(_ged_current_gedp->ged_result_str, "\tregions:\n");
 	    for (BU_LIST_FOR (regp, region, &(state->rtip->HeadRegion))) {
-		double low = HUGE;
-		double hi = -HUGE;
+		double low = INFINITY;
+		double hi = -INFINITY;
 		avg_mass = 0.0;
 
 		for (view=0; view < num_views; view++) {
@@ -2306,18 +2298,39 @@ summary_reports(struct cstate *state)
 
     for (BU_LIST_FOR (regp, region, &(state->rtip->HeadRegion))) {
 	size_t hits;
+	struct region_pair *rp;
+	int is_overlap_only_hit;
 
 	RT_CK_REGION(regp);
 	hits = (size_t)((struct per_region_data *)regp->reg_udata)->hits;
 	if (hits < require_num_hits) {
-	    if (hits == 0) {
-		bu_vls_printf(_ged_current_gedp->ged_result_str, "%s was not hit\n", regp->reg_name);
-	    } else {
+	    if (hits == 0 && !quiet_missed_report) {
+		is_overlap_only_hit = 0;
+		if (analysis_flags & ANALYSIS_OVERLAPS) {
+		    /* If the region is in the overlap list, it has
+		     * been hit even though the hit count is zero.
+		     * Do not report zero hit regions if they are in
+		     * the overlap list.
+		     */
+		    for (BU_LIST_FOR (rp, region_pair, &(overlapList.l))) {
+			if (rp->r.r1->reg_name == regp->reg_name) {
+			    is_overlap_only_hit = 1;
+			    break;
+			} else if (rp->r2) {
+			    if (rp->r2->reg_name == regp->reg_name) {
+				is_overlap_only_hit = 1;
+				break;
+			    }
+			}
+		    }
+		}
+		if (!is_overlap_only_hit) {
+		    bu_vls_printf(_ged_current_gedp->ged_result_str, "%s was not hit\n", regp->reg_name);
+		}
+	    } else if (hits) {
 		bu_vls_printf(_ged_current_gedp->ged_result_str, "%s hit only %zu times (< %zu)\n",
 			      regp->reg_name, hits, require_num_hits);
 	    }
-
-	    return;
 	}
     }
 }
@@ -2370,6 +2383,7 @@ ged_gqa(struct ged *gedp, int argc, const char *argv[])
     num_objects = 0;
     num_views = 3;
     verbose = 0;
+    quiet_missed_report = 0;
     plot_files = 0;
     plot_weight = (FILE *)0;
     plot_volume = (FILE *)0;

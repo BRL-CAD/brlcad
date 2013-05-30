@@ -1,7 +1,7 @@
 /*                          A D R T . H
  * BRL-CAD
  *
- * Copyright (c) 2008-2012 United States Government as represented by
+ * Copyright (c) 2008-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -126,7 +126,7 @@ enum
 	if (_s > _b.size) { \
 	    _b.data = bu_realloc(_b.data, _s, "tienet buffer size"); \
 	    _b.size = _s; \
-        } }
+	} }
 
 typedef struct tienet_buffer_s {
     uint8_t *data;

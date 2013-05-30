@@ -1,7 +1,7 @@
 /*                      P R O G N A M E . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2012 United States Government as represented by
+ * Copyright (c) 2004-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -124,7 +124,7 @@ progname_argv0(void)
     }
 #endif
 
-    if (!argv0) {
+    if (!argv0 || *argv0 == '\0') {
 	argv0 = "(BRL-CAD)";
     }
 
@@ -182,7 +182,7 @@ bu_getprogname(void) {
     name = getprogname(); /* not malloc'd memory */
 #endif
 
-    if (!name) {
+    if (!name || *name == '\0') {
 	name = progname_argv0();
     }
 
@@ -206,6 +206,7 @@ bu_setprogname(const char *argv0)
 #endif
 
     if (argv0) {
+	memset(&bu_progname[0], '\0', sizeof(bu_progname));
 	snprintf(bu_progname, MAXPATHLEN, "%s", argv0);
 	if (strlen(bu_argv0_buffer) == 0)
 	    snprintf(bu_argv0_buffer, MAXPATHLEN, "%s", argv0);

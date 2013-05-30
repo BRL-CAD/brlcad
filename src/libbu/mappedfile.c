@@ -1,7 +1,7 @@
 /*                    M A P P E D F I L E . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2012 United States Government as represented by
+ * Copyright (c) 2004-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -53,6 +53,8 @@ bu_open_mapped_file(const char *name, const char *appl)
 #ifdef HAVE_SYS_STAT_H
     struct stat sb;
     int fd = -1;	/* unix file descriptor */
+    int readval;
+	ssize_t bytes_to_go, nbytes;
 #else
     FILE *fp = (FILE *)NULL;	/* stdio file pointer */
 #endif
@@ -106,13 +108,13 @@ bu_open_mapped_file(const char *name, const char *appl)
 		    fd = -1;
 		}
 		if ((size_t)sb.st_size != mp->buflen) {
-		    bu_log("bu_open_mapped_file(%s) WARNING: File size changed from %ld to %ld, opening new version.\n", real_path, (long)mp->buflen, (long)sb.st_size);
+		    bu_log("bu_open_mapped_file(%s) WARNING: File size changed from %ld to %ld, opening new version.\n", real_path, mp->buflen, sb.st_size);
 		    /* mp doesn't reflect the file any longer.  Invalidate. */
 		    mp->appl = "__STALE__";
 		    /* Can't invalidate old copy, it may still be in use. */
 		    break;
 		}
-		if ((long)sb.st_mtime != mp->modtime) {
+		if (sb.st_mtime != mp->modtime) {
 		    bu_log("bu_open_mapped_file(%s) WARNING: File modified since last mapped, opening new version.\n", real_path);
 		    /* mp doesn't reflect the file any longer.  Invalidate. */
 		    mp->appl = "__STALE__";
@@ -141,10 +143,10 @@ bu_open_mapped_file(const char *name, const char *appl)
     /* done iterating over mapped file list */
     bu_semaphore_release(BU_SEM_MAPPEDFILE);
 
-    /* necessary in case we take a 'fail' path before BU_GET() */
+    /* necessary in case we take a 'fail' path before BU_ALLOC() */
     mp = NULL;
 
-    /* File is not yet mapped or has chnaged, open file read only if
+    /* File is not yet mapped or has changed, open file read only if
      * we didn't find it earlier.
      */
 #ifdef HAVE_SYS_STAT_H
@@ -175,27 +177,26 @@ bu_open_mapped_file(const char *name, const char *appl)
     }
 #endif /* HAVE_SYS_STAT_H */
 
-    /* Optimisticly assume that things will proceed OK */
-    BU_GET(mp, struct bu_mapped_file);
+    /* Optimistically assume that things will proceed OK */
+    BU_ALLOC(mp, struct bu_mapped_file);
     mp->name = bu_strdup(real_path);
     if (appl) mp->appl = bu_strdup(appl);
 
 #ifdef HAVE_SYS_STAT_H
-    /* The buflen member of "struct bu_mapped_file" should be a size_t. */
-    mp->buflen = (long)sb.st_size;
-    mp->modtime = (long)sb.st_mtime;
+    mp->buflen = sb.st_size;
+    mp->modtime = sb.st_mtime;
 #  ifdef HAVE_SYS_MMAN_H
 
     /* Attempt to access as memory-mapped file */
     bu_semaphore_acquire(BU_SEM_SYSCALL);
-    mp->buf = mmap(NULL, (size_t)sb.st_size, PROT_READ, MAP_PRIVATE, fd, (off_t)0);
+    mp->buf = mmap(NULL, sb.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
     bu_semaphore_release(BU_SEM_SYSCALL);
 
     if (UNLIKELY(mp->buf == MAP_FAILED))
 	perror(real_path);
 
     if (mp->buf != MAP_FAILED) {
-	/* OK, it's memory mapped in! */
+	/* OK, its memory mapped in! */
 	mp->is_mapped = 1;
 	/* It's safe to close the fd now, the manuals say */
     } else
@@ -204,13 +205,26 @@ bu_open_mapped_file(const char *name, const char *appl)
 	/* Allocate a local zero'd buffer, and slurp it in always
 	 * leaving space for a trailing zero.
 	 */
-	mp->buf = bu_calloc(1, (size_t)sb.st_size+1, real_path);
+	mp->buf = bu_calloc(1, sb.st_size+1, real_path);
 
+	nbytes = 0;
+	bytes_to_go = sb.st_size;
 	bu_semaphore_acquire(BU_SEM_SYSCALL);
-	ret = read(fd, mp->buf, (size_t)sb.st_size);
+	while (nbytes < sb.st_size) {
+	    readval = read(fd, ((char *)(mp->buf)) + nbytes, ((bytes_to_go > INT_MAX) ? (INT_MAX) : (bytes_to_go)));
+	    if (UNLIKELY(readval < 0)) {
+		bu_semaphore_release(BU_SEM_SYSCALL);
+		perror(real_path);
+		bu_free(mp->buf, real_path);
+		goto fail;
+	    } else {
+		nbytes += readval;
+		bytes_to_go -= readval;
+	    }
+	}
 	bu_semaphore_release(BU_SEM_SYSCALL);
 
-	if (UNLIKELY(ret != sb.st_size)) {
+	if (UNLIKELY(nbytes != sb.st_size)) {
 	    perror(real_path);
 	    bu_free(mp->buf, real_path);
 	    goto fail;
@@ -269,7 +283,6 @@ bu_open_mapped_file(const char *name, const char *appl)
 	bu_semaphore_acquire(BU_SEM_SYSCALL);
 	(void)close(fd);
 	bu_semaphore_release(BU_SEM_SYSCALL);
-	fd = -1;
     }
 
     mp->uses = 1;
@@ -292,7 +305,6 @@ fail:
 	bu_semaphore_acquire(BU_SEM_SYSCALL);
 	(void)close(fd);
 	bu_semaphore_release(BU_SEM_SYSCALL);
-	fd = -1;
     }
 
     if (mp) {

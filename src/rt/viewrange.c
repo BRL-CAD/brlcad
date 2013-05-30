@@ -1,7 +1,7 @@
 /*                     V I E W R A N G E . C
  * BRL-CAD
  *
- * Copyright (c) 1991-2012 United States Government as represented by
+ * Copyright (c) 1991-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -114,7 +114,7 @@ view_init(struct application *ap, char *UNUSED(file), char *UNUSED(obj), int UNU
  *  boxes, for example, need to be computed once per frame.
  *  Never preclude a new and nifty animation: rule: if it's a variable, it can
  *  change from frame to frame ( frame/picture width; angle between surface
- *  normals triggering shading.... etc).
+ *  normals triggering shading.... etc.).
  */
 
 void
@@ -134,20 +134,14 @@ view_2init(struct application *ap, char *UNUSED(framename))
     }
 
 
-    /* malloc() a buffer that has room for as many struct cell 's
-     * as the incoming file is wide (width).
-     * Rather than using malloc(), though, bu_malloc() is used.  This
-     * has the advantage of inbuild error-checking and automatic aborting
-     * if there is no memory.  Also, bu_malloc() takes a string as its
-     * final parameter: this tells the user exactly where memory ran out.
+    /* allocate a buffer that has room with as many struct cell as the
+     * incoming file is wide (width).
      */
-
 
     cellp = (struct cell *)bu_malloc(sizeof(struct cell) * width,
 				     "cell buffer" );
 
-
-    /* Obtain the maximun distance within the model to use as the
+    /* Obtain the maximum distance within the model to use as the
      * background distance.  Also get the coordinates of the model's
      * bounding box and feed them to
      * pdv_3space.  This will allow the image to appear in the plot
@@ -156,7 +150,7 @@ view_2init(struct application *ap, char *UNUSED(framename))
 
     pdv_3space(outfp, ap->a_rt_i->rti_pmin, ap->a_rt_i->rti_pmax);
 
-    /* Find the max dist fron emantion plane to end of model
+    /* Find the max dist fron emanation plane to end of model
      * space.  This can be twice the radius of the bounding
      * sphere.
      */

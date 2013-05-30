@@ -1,7 +1,7 @@
 /*                       I F _ W G L . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2012 United States Government as represented by
+ * Copyright (c) 2004-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -903,7 +903,7 @@ wgl_final_close(FBIO *ifp)
 
     if (SGIL(ifp) != NULL) {
 	/* free up memory associated with image */
-      
+
 	/* free private memory */
 	(void)free(ifp->if_mem);
 	/* free state information */
@@ -1248,7 +1248,7 @@ wgl_read(FBIO *ifp, int x, int y, unsigned char *pixelp, size_t count)
 	if (y >= ifp->if_height)
 	    break;
 
-	if (count >= ifp->if_width-x)
+	if (count >= (size_t)(ifp->if_width-x))
 	    scan_count = ifp->if_width-x;
 	else
 	    scan_count = count;
@@ -1314,7 +1314,7 @@ wgl_write(FBIO *ifp, int xstart, int ystart, const unsigned char *pixelp, size_t
 	if (y >= ifp->if_height)
 	    break;
 
-	if (pix_count >= ifp->if_width-x)
+	if (pix_count >= (size_t)(ifp->if_width-x))
 	    scan_count = ifp->if_width-x;
 	else
 	    scan_count = pix_count;
@@ -1370,7 +1370,7 @@ wgl_write(FBIO *ifp, int xstart, int ystart, const unsigned char *pixelp, size_t
 	    fb_log("Warning, wgl_write: wglMakeCurrent unsuccessful.\n");
 	}
 
-	if (xstart + count <= ifp->if_width) {
+	if (xstart + count <= (size_t)ifp->if_width) {
 	    wgl_xmit_scanlines(ifp, ybase, 1, xstart, count);
 	    if (SGI(ifp)->mi_doublebuffer) {
 		SwapBuffers(WGL(ifp)->hdc);
@@ -1565,7 +1565,7 @@ wgl_rmap(FBIO *ifp, ColorMap *cmp)
  * I S _ L I N E A R _ C M A P
  *
  * Check for a color map being linear in R, G, and B.  Returns 1 for
- * linear map, 0 for non-linear map (ie, non-identity map).
+ * linear map, 0 for non-linear map (i.e., non-identity map).
  */
 HIDDEN int
 is_linear_cmap(FBIO *ifp)

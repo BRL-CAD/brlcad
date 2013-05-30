@@ -1,7 +1,7 @@
 /*                         M A T E R . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2012 United States Government as represented by
+ * Copyright (c) 1985-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -42,7 +42,7 @@
 
 /*
  * It is expected that entries on this mater list will be sorted in
- * strictly ascending order, with no overlaps (ie, monotonicly
+ * strictly ascending order, with no overlaps (i.e., monotonically
  * increasing).
  */
 static struct mater *material_head = MATER_NULL;
@@ -54,8 +54,8 @@ static struct mater *material_head = MATER_NULL;
 void
 rt_pr_mater(register const struct mater *mp)
 {
-    (void)bu_log("%5d..%d\t", mp->mt_low, mp->mt_high);
-    (void)bu_log("%d, %d, %d\t", mp->mt_r, mp->mt_g, mp->mt_b);
+    bu_log("%5d..%d\t", mp->mt_low, mp->mt_high);
+    bu_log("%d, %d, %d\t", mp->mt_r, mp->mt_g, mp->mt_b);
 }
 
 
@@ -64,7 +64,7 @@ _rt_check_overlap(struct mater *newp)
 {
     struct mater *zot;
 
-    /* Check for overlap, ie, redefinition of following colors */
+    /* Check for overlap, i.e., redefinition of following colors */
     while (newp->mt_forw != MATER_NULL &&
 	   newp->mt_high >= newp->mt_forw->mt_low)
     {
@@ -72,7 +72,7 @@ _rt_check_overlap(struct mater *newp)
 	    /* Drop this mater struct */
 	    zot = newp->mt_forw;
 	    newp->mt_forw = zot->mt_forw;
-	    bu_log("dropping overlaping region-id based material property entry:\n");
+	    bu_log("dropping overlapping region-id based material property entry:\n");
 	    rt_pr_mater(zot);
 	    bu_free((char *)zot, "getstruct mater");
 	    continue;
@@ -128,7 +128,7 @@ rt_insert_color(struct mater *newp)
 	if (mp->mt_low < newp->mt_low && mp->mt_high > newp->mt_high) {
 	    /* New range entirely contained in old range; split */
 	    bu_log("Splitting region-id based material property entry into 3 ranges\n");
-	    BU_GET(zot, struct mater);
+	    BU_ALLOC(zot, struct mater);
 	    *zot = *mp;		/* struct copy */
 	    zot->mt_daddr = MATER_NO_ADDR;
 	    /* zot->mt_high = mp->mt_high; */
@@ -144,7 +144,7 @@ rt_insert_color(struct mater *newp)
 	    return;
 	}
 	if (mp->mt_high > newp->mt_low) {
-	    /* Overlap to the left: Shorten preceeding entry */
+	    /* Overlap to the left: Shorten preceding entry */
 	    bu_log("Shortening region-id based material property entry lhs range, from:\n");
 	    rt_pr_mater(mp);
 	    bu_log("to:\n");
@@ -181,7 +181,7 @@ rt_color_addrec(int low, int hi, int r, int g, int b, off_t addr)
 {
     register struct mater *mp;
 
-    BU_GET(mp, struct mater);
+    BU_ALLOC(mp, struct mater);
     mp->mt_low = low;
     mp->mt_high = hi;
     mp->mt_r = r;
@@ -276,7 +276,7 @@ rt_dup_material_head()
 
     mp = material_head;
     while (mp != MATER_NULL) {
-	BU_GET(newmater, struct mater);
+	BU_ALLOC(newmater, struct mater);
 	*newmater = *mp; /* struct copy */
 	newmater->mt_forw = MATER_NULL;
 

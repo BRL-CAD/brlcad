@@ -6,7 +6,7 @@ set(swidgets_scripts_TCLSCRIPTS
   tree.itk
   )
 BRLCAD_ADDDATA(swidgets_scripts_TCLSCRIPTS tclscripts/swidgets/scripts)
-tclIndex_BUILD(swidgets_scripts tclscripts/swidgets/scripts)
+tclIndex_BUILD(tclscripts/swidgets/scripts)
 
 CMAKEFILES(Makefile.am tclIndex)
 

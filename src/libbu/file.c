@@ -1,7 +1,7 @@
 /*                         F I L E . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2012 United States Government as represented by
+ * Copyright (c) 2004-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -21,6 +21,7 @@
 #include "common.h"
 
 #include <string.h>
+#include <ctype.h>
 #ifdef HAVE_SYS_TYPES_H
 #  include <sys/types.h>
 #endif
@@ -323,6 +324,35 @@ bu_file_delete(const char *path)
 	/* deleted */
 	return 1;
     }
+}
+
+int
+bu_fseek(FILE *stream, off_t offset, int origin)
+{
+    int ret;
+
+#if defined(HAVE__FSEEKI64) && defined(SIZEOF_VOID_P) && SIZEOF_VOID_P == 8
+    ret = _fseeki64(stream, offset, origin);
+#else
+    ret = fseek(stream, offset, origin);
+#endif
+
+    return ret;
+}
+
+off_t
+bu_ftell(FILE *stream)
+{
+    off_t ret;
+
+#if defined(HAVE__FTELLI64) && defined(SIZEOF_VOID_P) && SIZEOF_VOID_P == 8
+    /* windows 64bit */
+    ret = _ftelli64(stream);
+#else
+    ret = ftell(stream);
+#endif
+
+    return ret;
 }
 
 /*

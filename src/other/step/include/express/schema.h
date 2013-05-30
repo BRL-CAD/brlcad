@@ -155,6 +155,7 @@ extern SCL_EXPRESS_EXPORT Generic  SCHEMAfind PROTO( ( Schema, char * name, int 
 extern SCL_EXPRESS_EXPORT Scope    SCOPEcreate PROTO( ( char ) );
 extern SCL_EXPRESS_EXPORT Scope    SCOPEcreate_tiny PROTO( ( char ) );
 extern SCL_EXPRESS_EXPORT Scope    SCOPEcreate_nostab PROTO( ( char ) );
+extern SCL_EXPRESS_EXPORT void     SCOPEdestroy PROTO( ( Scope ) );
 extern SCL_EXPRESS_EXPORT Linked_List SCHEMAget_entities_use PROTO( ( Scope ) );
 extern SCL_EXPRESS_EXPORT Linked_List SCHEMAget_entities_ref PROTO( ( Scope ) );
 

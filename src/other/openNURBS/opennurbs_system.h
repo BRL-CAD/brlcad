@@ -1,8 +1,9 @@
 /* $NoKeywords: $ */
 /*
 //
-// Copyright (c) 1993-2007 Robert McNeel & Associates. All rights reserved.
-// Rhinoceros is a registered trademark of Robert McNeel & Assoicates.
+// Copyright (c) 1993-2012 Robert McNeel & Associates. All rights reserved.
+// OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
+// McNeel & Associates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
@@ -24,14 +25,32 @@
 #if !defined(OPENNURBS_SYSTEM_INC_)
 #define OPENNURBS_SYSTEM_INC_
 
-#if defined(TL_PURIFY_BUILD) || defined(RHINO_PURIFY_BUILD)
-#if !defined(ON_PURIFY_BUILD)
-#define ON_PURIFY_BUILD
-#endif
-#endif
+// The public release of opennurbs as a source code C++
+// library is built with OPENNURBS_PUBLIC_RELEASE
+// defined.
+#define OPENNURBS_PUBLIC_RELEASE
 
 /* compiler choice */
 #if defined(_MSC_VER)
+
+#if defined(OPENNURBS_EXPORTS)
+// "OPENNURBS_EXPORTS" is Microsoft's prefered define to indicate
+// an opennurbs DLL is being compiled.
+#if !defined(ON_DLL_EXPORTS)
+#define ON_DLL_EXPORTS
+#endif
+#if !defined(ON_COMPILING_OPENNURBS)
+#define ON_COMPILING_OPENNURBS
+#endif
+#endif
+
+#if defined(OPENNURBS_IMPORTS)
+// "OPENNURBS_IMPORTS" is Microsoft's prefered define to indicate
+// an opennurbs DLL is being linked with.
+#if !defined(ON_DLL_IMPORTS)
+#define ON_DLL_IMPORTS
+#endif
+#endif
 
 /* using a Microsoft compiler */
 #define ON_COMPILER_MSC
@@ -44,7 +63,14 @@
 // the /Zc:wchar_t compiler option.
 
 #if _MSC_VER >= 1400
+// Using at least Visual C++ 8.0 (2005)
 #define ON_COMPILER_MSC1400
+
+
+#if _MSC_VER >= 1600
+// Using at least Visual C++ 10.0 (2010)
+#define ON_COMPILER_MSC1600
+#endif
 
 // We are using /W4 wrning levels and disable
 // these warnings.  I would prefer to use
@@ -90,7 +116,7 @@
 #endif
 
 #if defined(_GNU_SOURCE) && defined(__APPLE__)
-/* using Apple's OSX XCode compiler */
+/* using Apple's OSX Xcode compiler */
 #if !defined(ON_COMPILER_XCODE)
 #define ON_COMPILER_XCODE
 #endif
@@ -143,10 +169,17 @@
 // defines disable the inclusion of most of the Windows garbage.
 */
 
+#if defined(ON_COMPILER_MSC1600)
+// include SKDDDKVer.h When using the v100 platform headers.
+// Including SDKDDKVer.h defines the highest available Windows platform.
+// If you wish to build your application for a previous Windows platform, include WinSDKVer.h and
+// set the _WIN32_WINNT macro to the platform you wish to support before including SDKDDKVer.h.
+//#include <SDKDDKVer.h>
+#endif
+
 #if !defined(_WINDOWS_)
 /* windows.h has not been read - read just what we need */
 #define WIN32_LEAN_AND_MEAN  /* Exclude rarely-used stuff from Windows headers */
-#define NOMINMAX  /* Exclude the min() and max() macro */
 #include <windows.h>
 #endif
 
@@ -200,9 +233,13 @@
 extern "C" {
 #endif
 
-#include <stddef.h>
 #include <stdlib.h>
 #include <memory.h>
+#if defined(ON_COMPILER_XCODE)
+#include <malloc/malloc.h>
+#else
+#include <stdlib.h>
+#endif
 #include <string.h>
 #include <math.h>
 #include <stdio.h>
@@ -211,6 +248,18 @@ extern "C" {
 #include <time.h>
 #include <limits.h>
 #include <ctype.h>
+
+/* these are for openindiana (opensolaris fork) */
+#if 0
+/* limits.h (sys/syslimits.h) should define this, but some don't */
+#ifndef NAME_MAX
+#  define NAME_MAX 255
+#endif
+
+#ifndef isfinite
+#  define isfinite(x) (fpclassify(x) & (FP_NORMAL | FP_SUBNORMAL | FP_ZERO))
+#endif
+#endif
 
 #if defined(ON_COMPILER_IRIX) || defined(ON_COMPILER_SUN)
 #include <alloca.h>
@@ -222,19 +271,20 @@ extern "C" {
 
 #if defined(ON_OS_WINDOWS)
 #include <io.h>
-#include <sys\stat.h>
+#include <sys/stat.h>
 #include <tchar.h>
 
 // ON_CreateUuid calls Windows's ::UuidCreate() which
 // is declared in Rpcdce.h and defined in Rpcrt4.lib.
 #include <Rpc.h>
 
-#endif /* ON_OS_WINDOWS */
+#endif
 
 #if defined(ON_COMPILER_GNU)
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <wctype.h>
+#include <dirent.h>
 #if defined(ON_COMPILER_XCODE)
 #include <uuid/uuid.h>
 #endif
@@ -242,7 +292,9 @@ extern "C" {
 
 #ifdef __cplusplus
 } /* extern "C" */
-#endif  
+#endif
+
+#include <errno.h>
 
 #if defined (cplusplus) || defined(_cplusplus) || defined(__cplusplus)
 // C++ system includes
@@ -259,7 +311,7 @@ extern "C" {
 #define ON_MSC_CDECL
 #endif
 
-#if !defined(ON_OS_WINDOWS)
+#if !defined(ON_OS_WINDOWS) && !defined(_GNU_SOURCE) && !defined(ON_COMPILER_XCODE)
 
 /* define wchar_t, true, false, NULL */
 
@@ -279,12 +331,15 @@ extern "C" {
 // If you are using VC7/.NET and are having trouble linking 
 // to functions that have whcar_t types in arguments, then
 // read the documentation about the wchar_t type and
-// the /Zc:wchar_t compiler option.  Since 
+// the /Zc:wchar_t compiler option.
 
-/* 16-bit wide character ("UNICODE") */
+// When opennurbs is built on a platform that has no
+// wchar_t type, this typedef defines wchar_t to be
+// an unsigned 16-bit integer and opennurbs will
+// use UTF-16 encoding for wchar_t strings.
 
 #if !defined(ON_COMPILER_MSC) && !defined(ON_COMPILER_GNU) && !defined(ON_COMPILER_SUN)
-typedef unsigned short wchar_t;
+typedef ON__UINT16 wchar_t;
 #endif
 
 #define _WCHAR_T_DEFINED
@@ -306,23 +361,14 @@ typedef unsigned short wchar_t;
 // 64 bit (8 byte) pointers
 #define ON_SIZEOF_POINTER 8
 #define ON_64BIT_POINTER
+// ON_MAX_SIZET = maximum value of a size_t type
+#define ON_MAX_SIZE_T 0xFFFFFFFFFFFFFFFF
 #else
 // 32 bit (4 byte) pointers
 #define ON_SIZEOF_POINTER 4
 #define ON_32BIT_POINTER
-#endif
-
-#if defined(ON_PURIFY_BUILD)
-// ON_PURIFY_BUILD is defined in the DebugPurify
-// build configuration.  
-#pragma message(" --- OpenNURBS Purify build.")
-#if defined(ON_32BIT_POINTER) && defined(ON_COMPILING_OPENNURBS)
-// The header file ..\PurifyAPI\pure.h contains delclarations
-// of the Purify API functions.
-// The file ..\PurifyAPI\pure_api.c contains the definitions.
-// The versions we have only work in WIN32.
-#include "../PurifyAPI/pure.h"
-#endif
+// ON_MAX_SIZET = maximum value of a size_t type
+#define ON_MAX_SIZE_T 0xFFFFFFFF
 #endif
 
 // 8 bit integer
@@ -373,7 +419,6 @@ typedef long long ON__INT64;
 
 // 64 bit unsigned integer
 typedef unsigned long long ON__UINT64;
-
 
 #else
 
@@ -439,7 +484,16 @@ typedef unsigned int ON__UINT_PTR;
 
 #endif
 
+#if defined(ON_COMPILER_XCODE)
+/* using Apple's OSX Xcode compiler */
 
+#if (defined(__ppc__) || defined(__ppc64__))
+#define ON_BIG_ENDIAN
+#elif (defined (__i386__) || defined( __x86_64__ ))
+#define ON_LITTLE_ENDIAN
+#endif
+
+#endif
 
 
 #if defined(ON_LITTLE_ENDIAN) && defined(ON_BIG_ENDIAN)

@@ -1,7 +1,7 @@
 /*                 LuminousIntensityContextDependentUnit.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2012 United States Government as represented by
+ * Copyright (c) 1994-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -31,33 +31,37 @@
 
 #define CLASSNAME "LuminousIntensityContextDependentUnit"
 #define ENTITYNAME "Luminous_Intensity_Context_Dependent_Unit"
-string LuminousIntensityContextDependentUnit::entityname = Factory::RegisterClass(ENTITYNAME,(FactoryMethod)LuminousIntensityContextDependentUnit::Create);
+string LuminousIntensityContextDependentUnit::entityname = Factory::RegisterClass(ENTITYNAME, (FactoryMethod)LuminousIntensityContextDependentUnit::Create);
 
-LuminousIntensityContextDependentUnit::LuminousIntensityContextDependentUnit() {
+LuminousIntensityContextDependentUnit::LuminousIntensityContextDependentUnit()
+{
     step = NULL;
     id = 0;
 }
 
-LuminousIntensityContextDependentUnit::LuminousIntensityContextDependentUnit(STEPWrapper *sw,int step_id) {
+LuminousIntensityContextDependentUnit::LuminousIntensityContextDependentUnit(STEPWrapper *sw, int step_id)
+{
     step = sw;
     id = step_id;
 }
 
-LuminousIntensityContextDependentUnit::~LuminousIntensityContextDependentUnit() {
+LuminousIntensityContextDependentUnit::~LuminousIntensityContextDependentUnit()
+{
 }
 
 bool
-LuminousIntensityContextDependentUnit::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
-    step=sw;
+LuminousIntensityContextDependentUnit::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
+    step = sw;
     id = sse->STEPfile_id;
 
 
     // load base class attributes
-    if ( !LuminousIntensityUnit::Load(step,sse) ) {
+    if (!LuminousIntensityUnit::Load(step, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::Unit." << std::endl;
 	return false;
     }
-    if ( !ContextDependentUnit::Load(step,sse) ) {
+    if (!ContextDependentUnit::Load(step, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::Unit." << std::endl;
 	return false;
     }
@@ -66,32 +70,29 @@ LuminousIntensityContextDependentUnit::Load(STEPWrapper *sw,SDAI_Application_ins
 }
 
 void
-LuminousIntensityContextDependentUnit::Print(int level) {
-    TAB(level); std::cout << CLASSNAME << ":" << "(";
+LuminousIntensityContextDependentUnit::Print(int level)
+{
+    TAB(level);
+    std::cout << CLASSNAME << ":" << "(";
     std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-    TAB(level); std::cout << "Inherited Attributes:" << std::endl;
-    LuminousIntensityUnit::Print(level+1);
-    ContextDependentUnit::Print(level+1);
+    TAB(level);
+    std::cout << "Inherited Attributes:" << std::endl;
+    LuminousIntensityUnit::Print(level + 1);
+    ContextDependentUnit::Print(level + 1);
 
 }
+
 STEPEntity *
-LuminousIntensityContextDependentUnit::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
-    Factory::OBJECTS::iterator i;
-    if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
-	LuminousIntensityContextDependentUnit *object = new LuminousIntensityContextDependentUnit(sw,sse->STEPfile_id);
+LuminousIntensityContextDependentUnit::GetInstance(STEPWrapper *sw, int id)
+{
+    return new LuminousIntensityContextDependentUnit(sw, id);
+}
 
-	Factory::AddObject(object);
-
-	if (!object->Load(sw, sse)) {
-	    std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
-	    delete object;
-	    return NULL;
-	}
-	return static_cast<STEPEntity *>(object);
-    } else {
-	return (*i).second;
-    }
+STEPEntity *
+LuminousIntensityContextDependentUnit::Create(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
+    return STEPEntity::CreateEntity(sw, sse, GetInstance, CLASSNAME);
 }
 
 // Local Variables:

@@ -1,7 +1,7 @@
 /*                       M A S O N R Y . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2012 United States Government as represented by
+ * Copyright (c) 2004-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -135,6 +135,7 @@ set_translate(char *s)
     MAT_DELTAS(trans_matrix, dx*unit_conv, dy*unit_conv, dz*unit_conv);
 }
 
+
 /*
  * B U I L D H R O T
  *
@@ -166,7 +167,7 @@ buildHrot(matp_t mat, double alpha, double beta, double ggamma)
      * Gamma is angle of rotation about Z axis, and is done first.
      */
 #ifdef m_RZ_RY_RX
-    /* view = model * RZ * RY * RX (Neuman+Sproul, premultiply) */
+    /* view = model * RZ * RY * RX (Neuman+Sproull, premultiply) */
     mat[0] = cbeta * cgamma;
     mat[1] = -cbeta * sgamma;
     mat[2] = -sbeta;
@@ -194,6 +195,7 @@ buildHrot(matp_t mat, double alpha, double beta, double ggamma)
     mat[9] = calpha * sbeta * sgamma + salpha * cgamma;
     mat[10] = calpha * cbeta;
 }
+
 
 void
 set_rotate(char *s)
@@ -287,7 +289,7 @@ int parse_args(int ac, char **av)
 		if (ZERO(ol_hd.ex)) {
 		    usage("set wall dim before openings\n");
 		} else if (sscanf(bu_optarg, "%lf, %lf, %lf, %lf", &dx, &dy, &width, &height) == 4) {
-		    op = (struct opening *)bu_calloc(1, sizeof(struct opening), "calloc opening");
+		    BU_ALLOC(op, struct opening);
 		    BU_LIST_INSERT(&ol_hd.l, &op->l);
 		    op->sx = dx * unit_conv;
 		    op->sz = dy * unit_conv;
@@ -349,7 +351,7 @@ int parse_args(int ac, char **av)
 	    bu_exit(-1, NULL);
 	}
 	for (R=0; R < ac; R++)
-	    (void)fprintf(logfile, "%s ", av[R]);
+	    fprintf(logfile, "%s ", av[R]);
 	(void)putc('\n', logfile);
 	(void)fclose(logfile);
     }
@@ -365,7 +367,7 @@ h_segs(double sz, double ez, struct boardseg *seglist, double sx, double ex)
     struct opening *op;
     struct boardseg *seg, *sp;
 
-    seg = (struct boardseg *)bu_calloc(1, sizeof(struct boardseg), "initial seg");
+    BU_ALLOC(seg, struct boardseg);
     seg->s = sx;
     seg->e = ex;
     /* trim opening to X bounds of wall */
@@ -384,7 +386,7 @@ h_segs(double sz, double ez, struct boardseg *seglist, double sx, double ex)
 		if (op->sx <= seg->s) {
 		    if (op->ex >= seg->e) {
 			/* opening covers entire segment.
-			 * segement gets deleted
+			 * segment gets deleted
 			 */
 			sp = BU_LIST_PLAST(boardseg, &(seg->l));
 			BU_LIST_DEQUEUE(&(seg->l));
@@ -392,7 +394,7 @@ h_segs(double sz, double ez, struct boardseg *seglist, double sx, double ex)
 			seg = sp;
 
 		    } else if (op->ex > seg->s) {
-			/* opening covers begining of segment */
+			/* opening covers beginning of segment */
 			seg->s = op->ex;
 		    }
 		    /* else opening is entirely prior to seg->s */
@@ -405,9 +407,9 @@ h_segs(double sz, double ez, struct boardseg *seglist, double sx, double ex)
 		} else {
 		    /* there is an opening in the middle of the
 		     * segment.  We must divide the segment into
-		     * 2 segements
+		     * 2 segments
 		     */
-		    sp = (struct boardseg *)bu_calloc(1, sizeof(struct boardseg), "alloc boardseg");
+		    BU_ALLOC(sp, struct boardseg);
 		    sp->s = seg->s;
 		    sp->e = op->sx;
 		    seg->s = op->ex;
@@ -417,6 +419,7 @@ h_segs(double sz, double ez, struct boardseg *seglist, double sx, double ex)
 	}
     }
 }
+
 
 void
 mksolid(struct rt_wdb *fd, point_t (*pts), struct wmember *wm_hd)
@@ -430,6 +433,7 @@ mksolid(struct rt_wdb *fd, point_t (*pts), struct wmember *wm_hd)
     if (trans_matrix)
 	MAT_COPY(wm->wm_mat, trans_matrix);
 }
+
 
 void
 mk_h_rpp(struct rt_wdb *fd, struct wmember *wm_hd, double xmin, double xmax, double ymin, double ymax, double zmin, double zmax)
@@ -448,6 +452,7 @@ mk_h_rpp(struct rt_wdb *fd, struct wmember *wm_hd, double xmin, double xmax, dou
     mksolid(fd, pts, wm_hd);
 }
 
+
 void
 mk_v_rpp(struct rt_wdb *fd, struct wmember *wm_hd, double xmin, double xmax, double ymin, double ymax, double zmin, double zmax)
 {
@@ -464,6 +469,7 @@ mk_v_rpp(struct rt_wdb *fd, struct wmember *wm_hd, double xmin, double xmax, dou
 
     mksolid(fd, pts, wm_hd);
 }
+
 
 /*
  * put the sides on a frame opening
@@ -701,7 +707,7 @@ frame(struct rt_wdb *fd)
     mk_id(fd, "A wall");
 
     /* find the segments of the base-board */
-    s_hd = (struct boardseg *)bu_calloc(1, sizeof(struct boardseg), "s_hd");
+    BU_ALLOC(s_hd, struct boardseg);
     BU_LIST_INIT(&(s_hd->l));
 
     h_segs(0.0, bd_thin, s_hd, 0.0, WALL_WIDTH);
@@ -793,6 +799,7 @@ frame(struct rt_wdb *fd)
 	     stud_properties[0], stud_properties[1], color, 0);
 }
 
+
 void
 sheetrock(struct rt_wdb *fd)
 {
@@ -839,6 +846,7 @@ sheetrock(struct rt_wdb *fd)
     mk_lcomb(fd, sol_name, &wm_hd, 1, (char *)NULL, (char *)NULL,
 	     color, 0);
 }
+
 
 void
 mortar_brick(struct rt_wdb *UNUSED(fd))
@@ -1040,6 +1048,7 @@ int main(int ac, char **av)
     wdb_close(db_fd);
     return 0;
 }
+
 
 /*
  * Local Variables:

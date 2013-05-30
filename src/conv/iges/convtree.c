@@ -1,7 +1,7 @@
 /*                      C O N V T R E E . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2012 United States Government as represented by
+ * Copyright (c) 1990-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -105,7 +105,7 @@ Convtree()
 	if (att_de == 0)
 	    brl_att.region_flag = 1;
 
-	BU_GET(comb, struct rt_comb_internal);
+	BU_ALLOC(comb, struct rt_comb_internal);
 	RT_COMB_INTERNAL_INIT(comb);
 
 	comb->tree = ptr;

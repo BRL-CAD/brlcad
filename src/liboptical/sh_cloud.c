@@ -1,7 +1,7 @@
 /*                      S H _ C L O U D . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2012 United States Government as represented by
+ * Copyright (c) 1985-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -61,8 +61,6 @@ struct mfuncs cloud_mfuncs[] = {
 };
 
 
-#define NUMSINES 4
-
 /*
  * C L O U D _ T E X T U R E
  *
@@ -75,6 +73,21 @@ cloud_texture(register fastf_t x, register fastf_t y, fastf_t Contrast, fastf_t 
     fastf_t Px, Py, Fx, Fy, C;
     fastf_t t1, t2, k;
 
+    /* NOTE: we intentionally multiply by a truncated 0.707
+     * (truncating to three decimal places) so we get consistent
+     * results across single and double-precision computation.
+     *
+     * Not truncating is an option, but the benchmark results would
+     * need to be recomputed (they have background clouds) and the
+     * single-precision sensitivity would need to be tested.
+     *
+     * Factor compounding with and without truncation (M_SQRT1_2):
+     *                    .707     .7071067811...
+     *                    .499     .4999999998...
+     *                    .352     .3535533904...
+     */
+    static const fastf_t seven0seven = (int)(M_SQRT1_2*1000.0)/1000.0;
+
     t1 = t2 = 0;
 
     /*
@@ -85,9 +98,14 @@ cloud_texture(register fastf_t x, register fastf_t y, fastf_t Contrast, fastf_t 
     Fy = bn_twopi * initFy;
     Px = bn_halfpi * bn_tab_sin(0.5 * Fy * y);
     Py = bn_halfpi * bn_tab_sin(0.5 * Fx * x);
-    C = 1.0;	/* ??? */
 
-    for (i = 0; i < NUMSINES; i++) {
+    /* unattenuated starting factor */
+    C = 1.0;
+
+/* we iterate in pi/2 steps to 2pi */
+#define TWO_PI_OVER_PI_OVER_TWO 4
+
+    for (i = 0; i < TWO_PI_OVER_PI_OVER_TWO; i++) {
 	/*
 	 * Compute one term of each summation.
 	 */
@@ -100,14 +118,18 @@ cloud_texture(register fastf_t x, register fastf_t y, fastf_t Contrast, fastf_t 
 	 */
 	Px = bn_halfpi * bn_tab_sin(Fy * y);
 	Py = bn_halfpi * bn_tab_sin(Fx * x);
-	Fx *= 2.0;
-	Fy *= 2.0;
-	C *= 0.707;
+	Fx *= 2;
+	Fy *= 2;
+
+	/* next iteration is multiplied by a diminishing sqrt(1/2)
+	 * factor, see above note regarding precision.
+	 */
+	C *= seven0seven;
     }
 
     /* Choose a magic k! */
     /* Compute max possible summation */
-    k =  NUMSINES * 2 * NUMSINES;
+    k =  TWO_PI_OVER_PI_OVER_TWO * 2 * TWO_PI_OVER_PI_OVER_TWO;
 
     return t1 * t2 / k;
 }
@@ -150,7 +172,7 @@ cloud_print(register struct region *rp, genptr_t dp)
 HIDDEN void
 cloud_free(genptr_t cp)
 {
-    bu_free(cp, "cloud_specific");
+    BU_PUT(cp, struct cloud_specific);
 }
 
 

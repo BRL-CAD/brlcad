@@ -1,7 +1,7 @@
 /*                         P L - D M . C
  * BRL-CAD
  *
- * Copyright (c) 1999-2012 United States Government as represented by
+ * Copyright (c) 1999-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -185,7 +185,7 @@ refresh() {
 		    rgb = plp->pl_vbp->rgb[i];
 		    DM_SET_FGCOLOR(dmp, (rgb>>16) & 0xFF, (rgb>>8) & 0xFF, rgb & 0xFF, 0, (fastf_t)0.0);
 		}
-                DM_DRAW_VLIST(dmp, (struct bn_vlist *)&plp->pl_vbp->head[i]);
+		DM_DRAW_VLIST(dmp, (struct bn_vlist *)&plp->pl_vbp->head[i]);
 	    }
     }
 
@@ -225,7 +225,7 @@ buildHrot(matp_t mat, double alpha, double beta, double ggamma)
      * Gamma is angle of rotation about Z axis, and is done first.
      */
 #ifdef m_RZ_RY_RX
-    /* view = model * RZ * RY * RX (Neuman+Sproul, premultiply) */
+    /* view = model * RZ * RY * RX (Neuman+Sproull, premultiply) */
     mat[0] = cbeta * cgamma;
     mat[1] = -cbeta * sgamma;
     mat[2] = -sbeta;
@@ -623,7 +623,7 @@ cmd_openpl(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char **a
 	    }
 	}
 
-	BU_GET(plp, struct plot_list);
+	BU_ALLOC(plp, struct plot_list);
 	BU_LIST_APPEND(&HeadPlot.l, &plp->l);
 	bu_vls_init(&plp->pl_name);
 	bu_vls_strcpy(&plp->pl_name, bnp);
@@ -1056,7 +1056,7 @@ static struct cmdtab cmdtab[] = {
 static int
 X_dmInit()
 {
-    int windowbounds[6] = { 2047, -2048, 2047, -2048, 2047, -2048 };
+    fastf_t windowbounds[6] = { 2047.0, -2048.0, 2047.0, -2048.0, 2047.0, -2048.0 };
     const char *av[4];
 
     av[0] = "X_open";
@@ -1082,7 +1082,7 @@ X_dmInit()
 static int
 Ogl_dmInit()
 {
-    int windowbounds[6] = { 2047, -2048, 2047, -2048, 2047, -2048 };
+    fastf_t windowbounds[6] = { 2047.0, -2048.0, 2047.0, -2048.0, 2047.0, -2048.0 };
     char *av[4];
 
     av[0] = "Ogl_open";

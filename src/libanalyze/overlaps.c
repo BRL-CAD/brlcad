@@ -1,7 +1,7 @@
 /*                    O V E R L A P S . C
  * BRL-CAD
  *
- * Copyright (c) 2009-2012 United States Government as represented by
+ * Copyright (c) 2009-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -58,7 +58,7 @@ add_unique_pair(struct region_pair *list, /* list to add into */
 	}
     }
     /* didn't find it in the list.  Add it */
-    rpair = bu_malloc(sizeof(struct region_pair), "region_pair");
+    BU_ALLOC(rpair, struct region_pair);
     rpair->r.r1 = r1;
     rpair->r2 = r2;
     rpair->count = 1;
@@ -77,7 +77,7 @@ add_unique_pair(struct region_pair *list, /* list to add into */
     return rpair;
 }
 
-    
+
 /*
  * Local Variables:
  * tab-width: 8

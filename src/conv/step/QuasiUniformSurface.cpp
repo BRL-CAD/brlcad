@@ -1,7 +1,7 @@
 /*                 QuasiUniformSurface.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2012 United States Government as represented by
+ * Copyright (c) 1994-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -31,28 +31,32 @@
 
 #define CLASSNAME "QuasiUniformSurface"
 #define ENTITYNAME "Quasi_Uniform_Surface"
-string QuasiUniformSurface::entityname = Factory::RegisterClass(ENTITYNAME,(FactoryMethod)QuasiUniformSurface::Create);
+string QuasiUniformSurface::entityname = Factory::RegisterClass(ENTITYNAME, (FactoryMethod)QuasiUniformSurface::Create);
 
-QuasiUniformSurface::QuasiUniformSurface() {
+QuasiUniformSurface::QuasiUniformSurface()
+{
     step = NULL;
     id = 0;
 }
 
-QuasiUniformSurface::QuasiUniformSurface(STEPWrapper *sw,int step_id) {
-    step=sw;
+QuasiUniformSurface::QuasiUniformSurface(STEPWrapper *sw, int step_id)
+{
+    step = sw;
     id = step_id;
 }
 
-QuasiUniformSurface::~QuasiUniformSurface() {
+QuasiUniformSurface::~QuasiUniformSurface()
+{
 }
 
 bool
-QuasiUniformSurface::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
+QuasiUniformSurface::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
 
-    step=sw;
+    step = sw;
     id = sse->STEPfile_id;
 
-    if (!BSplineSurface::Load(sw,sse)) {
+    if (!BSplineSurface::Load(sw, sse)) {
 	std::cout << "Error loading QuasiUniformSurface." << std::endl;
 	return false;
     }
@@ -60,30 +64,27 @@ QuasiUniformSurface::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
 }
 
 void
-QuasiUniformSurface::Print(int level) {
-    TAB(level); std::cout << CLASSNAME << ":" << name << "(";
+QuasiUniformSurface::Print(int level)
+{
+    TAB(level);
+    std::cout << CLASSNAME << ":" << name << "(";
     std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-    TAB(level); std::cout << "Inherited:" << std::endl;
-    BSplineSurface::Print(level+1);
+    TAB(level);
+    std::cout << "Inherited:" << std::endl;
+    BSplineSurface::Print(level + 1);
 }
+
 STEPEntity *
-QuasiUniformSurface::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
-    Factory::OBJECTS::iterator i;
-    if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
-	QuasiUniformSurface *object = new QuasiUniformSurface(sw,sse->STEPfile_id);
+QuasiUniformSurface::GetInstance(STEPWrapper *sw, int id)
+{
+    return new QuasiUniformSurface(sw, id);
+}
 
-	Factory::AddObject(object);
-
-	if (!object->Load(sw, sse)) {
-	    std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
-	    delete object;
-	    return NULL;
-	}
-	return static_cast<STEPEntity *>(object);
-    } else {
-	return (*i).second;
-    }
+STEPEntity *
+QuasiUniformSurface::Create(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
+    return STEPEntity::CreateEntity(sw, sse, GetInstance, CLASSNAME);
 }
 
 

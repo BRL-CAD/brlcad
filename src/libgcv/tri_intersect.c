@@ -1,7 +1,7 @@
 /*                 T R I _ I N T E R S E C T . C
  * BRL-CAD
  *
- * Copyright (c) 2011-2012 United States Government as represented by
+ * Copyright (c) 2011-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -20,7 +20,7 @@
 
 /** @file libgcv/tri_intersect.c
  *
- * Intersect 2 triangles using a modified Möller routine.
+ * Intersect 2 triangles using a modified MÃ¶ller routine.
  */
 
 #include "common.h"
@@ -44,7 +44,7 @@ gcv_fisect2(
     point_t VTX0, point_t VTX1, point_t VTX2,
     fastf_t VV0, fastf_t VV1, fastf_t VV2,
     fastf_t D0, fastf_t D1, fastf_t D2,
-    fastf_t *isect0, fastf_t *isect1, 
+    fastf_t *isect0, fastf_t *isect1,
     point_t *isectpoint0, point_t *isectpoint1)
 {
     fastf_t tmp=D0/(D0-D1);
@@ -134,7 +134,7 @@ int
 gcv_point_in_tri(point_t V0, point_t U0, point_t U1, point_t U2, int i0, int i1)
 {
     fastf_t a, b, c, d0, d1, d2;
-    /* is T1 completly inside T2? */
+    /* is T1 completely inside T2? */
     /* check if V0 is inside tri(U0, U1, U2) */
     a=U1[i1]-U0[i1];
     b=-(U1[i0]-U0[i0]);
@@ -276,32 +276,32 @@ gcv_tri_tri_intersect_with_isectline(struct soup_s *UNUSED(left), struct soup_s 
 
     if (isect2[0] < isect1[0]) {
 	if (smallest1 == 0)
-	    VMOVE(isectpt[0], isectpointA1)
+	    VMOVE(isectpt[0], isectpointA1);
 	else
-	    VMOVE(isectpt[0], isectpointA2)
-		if (isect2[1] < isect1[1])
-		    if (smallest2 == 0)
-			VMOVE(isectpt[1], isectpointB2)
-		    else
-			VMOVE(isectpt[1], isectpointB1)
-		else if (smallest1 == 0)
-		    VMOVE(isectpt[1], isectpointA2)
-		else
-		    VMOVE(isectpt[1], isectpointA1)
+	    VMOVE(isectpt[0], isectpointA2);
+	if (isect2[1] < isect1[1])
+	    if (smallest2 == 0)
+		VMOVE(isectpt[1], isectpointB2);
+	    else
+		VMOVE(isectpt[1], isectpointB1);
+	else if (smallest1 == 0)
+	    VMOVE(isectpt[1], isectpointA2);
+	else
+	    VMOVE(isectpt[1], isectpointA1);
     } else {
 	if (smallest2 == 0)
-	    VMOVE(isectpt[0], isectpointB1)
+	    VMOVE(isectpt[0], isectpointB1);
 	else
-	    VMOVE(isectpt[0], isectpointB2)
-		if (isect2[1] > isect1[1])
-		    if (smallest1 == 0)
-			VMOVE(isectpt[1], isectpointA2)
-		    else
-			VMOVE(isectpt[1], isectpointA1)
-		else if (smallest2 == 0)
-		    VMOVE(isectpt[1], isectpointB2)
-		else
-		    VMOVE(isectpt[1], isectpointB1)
+	    VMOVE(isectpt[0], isectpointB2);
+	if (isect2[1] > isect1[1])
+	    if (smallest1 == 0)
+		VMOVE(isectpt[1], isectpointA2);
+	    else
+		VMOVE(isectpt[1], isectpointA1);
+	else if (smallest2 == 0)
+	    VMOVE(isectpt[1], isectpointB2);
+	else
+	    VMOVE(isectpt[1], isectpointB1);
     }
     return 1;
 }
@@ -313,6 +313,7 @@ gcv_tri_tri_intersect_with_isectline(struct soup_s *UNUSED(left), struct soup_s 
  * mode: C
  * indent-tabs-mode: t
  * c-file-style: "stroustrup"
+ * coding: utf-8
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

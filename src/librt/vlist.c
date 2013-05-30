@@ -1,7 +1,7 @@
 /*                         V L I S T . C
  * BRL-CAD
  *
- * Copyright (c) 1992-2012 United States Government as represented by
+ * Copyright (c) 1992-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,16 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup librt */
-/** @{ */
-/** @file librt/vlist.c
- *
- * Routines for the import and export of vlist chains as:
- * Network independent binary,
- * BRL-extended UNIX-Plot files.
- *
- */
-/** @} */
+
 
 #include "common.h"
 
@@ -42,15 +33,7 @@
 #include "raytrace.h"
 #include "plot3.h"
 
-/************************************************************************
- *									*
- *			Generic VLBLOCK routines			*
- *									*
- ************************************************************************/
 
-/**
- *
- */
 struct bn_vlblock *
 bn_vlblock_init(struct bu_list *free_vlist_hd, /**< where to get/put free vlists */
 		int max_ent /**< maximum number of entities to get/put */)
@@ -61,7 +44,7 @@ bn_vlblock_init(struct bu_list *free_vlist_hd, /**< where to get/put free vlists
     if (!BU_LIST_IS_INITIALIZED(free_vlist_hd))
 	BU_LIST_INIT(free_vlist_hd);
 
-    BU_GET(vbp, struct bn_vlblock);
+    BU_ALLOC(vbp, struct bn_vlblock);
     vbp->magic = BN_VLBLOCK_MAGIC;
     vbp->free_vlist_hd = free_vlist_hd;
     vbp->max = max_ent;
@@ -83,9 +66,6 @@ bn_vlblock_init(struct bu_list *free_vlist_hd, /**< where to get/put free vlists
 }
 
 
-/**
- *
- */
 struct bn_vlblock *
 rt_vlblock_init(void)
 {
@@ -93,9 +73,6 @@ rt_vlblock_init(void)
 }
 
 
-/**
- *
- */
 void
 rt_vlblock_free(struct bn_vlblock *vbp)
 {
@@ -116,9 +93,6 @@ rt_vlblock_free(struct bn_vlblock *vbp)
 }
 
 
-/**
- *
- */
 struct bu_list *
 rt_vlblock_find(struct bn_vlblock *vbp, int r, int g, int b)
 {
@@ -185,19 +159,6 @@ rt_vlblock_find(struct bn_vlblock *vbp, int r, int g, int b)
 }
 
 
-/************************************************************************
- *									*
- *			Generic BN_VLIST routines			*
- *									*
- ************************************************************************/
-
-/**
- * Validate an bn_vlist chain for having reasonable values inside.
- * Calls bu_bomb() if not.
- *
- * Returns -
- * npts Number of point/command sets in use.
- */
 int
 rt_ck_vlist(const struct bu_list *vhead)
 {
@@ -243,10 +204,6 @@ rt_ck_vlist(const struct bu_list *vhead)
 }
 
 
-/**
- * Duplicate the contents of a vlist.  Note that the copy may be more
- * densely packed than the source.
- */
 void
 rt_vlist_copy(struct bu_list *dest, const struct bu_list *src)
 {
@@ -264,10 +221,6 @@ rt_vlist_copy(struct bu_list *dest, const struct bu_list *src)
 }
 
 
-/**
- * The macro RT_FREE_VLIST() simply appends to the list
- * &rt_g.rtg_vlfree.  Now, give those structures back to bu_free().
- */
 void
 bn_vlist_cleanup(struct bu_list *hd)
 {
@@ -286,9 +239,6 @@ bn_vlist_cleanup(struct bu_list *hd)
 }
 
 
-/**
- * XXX This needs to remain a LIBRT function.
- */
 void
 rt_vlist_cleanup(void)
 {
@@ -296,9 +246,6 @@ rt_vlist_cleanup(void)
 }
 
 
-/**
- * Given an RPP, draw the outline of it into the vlist.
- */
 void
 bn_vlist_rpp(struct bu_list *hd, const point_t minn, const point_t maxx)
 {
@@ -350,19 +297,7 @@ bn_vlist_rpp(struct bu_list *hd, const point_t minn, const point_t maxx)
     BN_ADD_VLIST(&rt_g.rtg_vlfree, hd, p, BN_VLIST_LINE_DRAW)
 	}
 
-/************************************************************************
- *									*
- *			Binary VLIST import/export routines		*
- *									*
- ************************************************************************/
 
-/**
- * Convert a vlist chain into a blob of network-independent binary,
- * for transmission to another machine.
- *
- * The result is stored in a vls string, so that both the address and
- * length are available conveniently.
- */
 void
 rt_vlist_export(struct bu_vls *vls, struct bu_list *hp, const char *name)
 {
@@ -385,7 +320,7 @@ rt_vlist_export(struct bu_vls *vls, struct bu_list *hp, const char *name)
      * nelem[4], String[n+1], cmds[nelem*1], pts[3*nelem*8]
      */
     namelen = strlen(name)+1;
-    nbytes = namelen + 4 + nelem * (1+3*8) + 2;
+    nbytes = namelen + 4 + nelem * (1+ELEMENTS_PER_VECT*SIZEOF_NETWORK_DOUBLE) + 2;
 
     /* FIXME: this is pretty much an abuse of vls.  should be using
      * vlb for variable-length byte buffers.
@@ -412,18 +347,19 @@ rt_vlist_export(struct bu_vls *vls, struct bu_list *hp, const char *name)
 	register int i;
 	register int nused = vp->nused;
 	register point_t *pt = vp->pt;
-	for (i = 0; i < nused; i++, pt++) {
-	    htond(bp, (unsigned char *)pt, 3);
-	    bp += 3*8;
+
+	/* must be double for import and export */
+	double point[ELEMENTS_PER_POINT];
+
+	for (i = 0; i < nused; i++) {
+	    VMOVE(point, pt[i]); /* convert fastf_t to double */
+	    htond(bp, (unsigned char *)point, ELEMENTS_PER_VECT);
+	    bp += ELEMENTS_PER_VECT*SIZEOF_NETWORK_DOUBLE;
 	}
     }
 }
 
 
-/**
- * Convert a blob of network-independent binary prepared by
- * vls_vlist() and received from another machine, into a vlist chain.
- */
 void
 rt_vlist_import(struct bu_list *hp, struct bu_vls *namevls, const unsigned char *buf)
 {
@@ -432,7 +368,9 @@ rt_vlist_import(struct bu_list *hp, struct bu_vls *namevls, const unsigned char 
     size_t nelem;
     size_t namelen;
     size_t i;
-    point_t point;
+
+    /* must be double for import and export */
+    double point[ELEMENTS_PER_POINT];
 
     BU_CK_VLS(namevls);
 
@@ -449,23 +387,13 @@ rt_vlist_import(struct bu_list *hp, struct bu_vls *namevls, const unsigned char 
 	int cmd;
 
 	cmd = *bp++;
-	ntohd((unsigned char *)point, pp, 3);
-	pp += 3*8;
+	ntohd((unsigned char *)point, pp, ELEMENTS_PER_POINT);
+	pp += ELEMENTS_PER_POINT*SIZEOF_NETWORK_DOUBLE;
 	BN_ADD_VLIST(&rt_g.rtg_vlfree, hp, point, cmd);
     }
 }
 
 
-/************************************************************************
- *									*
- *			UNIX-Plot VLIST import/export routines		*
- *									*
- ************************************************************************/
-
-/**
- * Output a bn_vlblock object in extended UNIX-plot format, including
- * color.
- */
 void
 rt_plot_vlblock(FILE *fp, const struct bn_vlblock *vbp)
 {
@@ -485,11 +413,6 @@ rt_plot_vlblock(FILE *fp, const struct bn_vlblock *vbp)
 }
 
 
-/**
- * Output a vlist as an extended 3-D floating point UNIX-Plot file.
- * You provide the file.  Uses libplot3 routines to create the
- * UNIX-Plot output.
- */
 void
 rt_vlist_to_uplot(FILE *fp, const struct bu_list *vhead)
 {
@@ -629,7 +552,7 @@ rt_uplot_get_args(FILE *fp, const struct uplot *up, char *carg, fastf_t *arg)
     size_t ret;
     int i, j;
     int cc = 0;
-    char inbuf[8] = {'\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0'};
+    char inbuf[SIZEOF_NETWORK_DOUBLE] = {'\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0'};
 
     for (i = 0; i < up->narg; i++) {
 	switch (up->targ) {
@@ -637,12 +560,15 @@ rt_uplot_get_args(FILE *fp, const struct uplot *up, char *carg, fastf_t *arg)
 		arg[i] = getshort(fp);
 		break;
 	    case TIEEE:
-		ret = fread(inbuf, 8, 1, fp);
+	    {
+		double scan;
+		ret = fread(inbuf, SIZEOF_NETWORK_DOUBLE, 1, fp);
 		if (ret != 1)
 		    bu_log("WARNING: uplot read failure\n");
-		ntohd((unsigned char *)&arg[i],
-		      (unsigned char *)inbuf, 1);
+		ntohd((unsigned char *)&scan, (unsigned char *)inbuf, 1);
+		arg[i] = scan; /* convert double to fastf_t */
 		break;
+	    }
 	    case TSTRING:
 		j = 0;
 		while (!feof(fp) &&
@@ -673,18 +599,23 @@ rt_uplot_get_text_args(FILE *fp, const struct uplot *up, char *carg, fastf_t *ar
     int ret;
     int i = 0;
     unsigned int tchar = 0;
+    double val;
 
     for (i = 0; i < up->narg; i++) {
 	switch (up->targ) {
 	    case TSHORT:
-		ret = fscanf(fp, "%lf", &arg[i]);
+		ret = fscanf(fp, "%lf", &val);
 		if (ret != 1)
 		    bu_log("WARNING: uplot short input failure\n");
+		else
+		    arg[i] = val;
 		break;
 	    case TIEEE:
-		ret = fscanf(fp, "%lf", &arg[i]);
+		ret = fscanf(fp, "%lf", &val);
 		if (ret != 1)
 		    bu_log("WARNING: uplot floating point input failure\n");
+		else
+		    arg[i] = val;
 		break;
 	    case TSTRING:
 		ret = fscanf(fp, "%256s\n", &carg[0]);
@@ -861,11 +792,6 @@ rt_process_uplot_value(register struct bu_list **vhead,
 }
 
 
-/**
- * Read a BRL-style 3-D UNIX-plot file into a vector list.  For now,
- * discard color information, only extract vectors.  This might be
- * more naturally located in mged/plot.c
- */
 int
 rt_uplot_to_vlist(struct bn_vlblock *vbp, register FILE *fp, double char_size, int mode)
 {
@@ -892,9 +818,6 @@ rt_uplot_to_vlist(struct bn_vlblock *vbp, register FILE *fp, double char_size, i
 }
 
 
-/**
- * Used by MGED's "labelvert" command.
- */
 void
 rt_label_vlist_verts(struct bn_vlblock *vbp, struct bu_list *src, fastf_t *mat, double sz, double mm2local)
 {

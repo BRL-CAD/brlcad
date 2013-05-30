@@ -1,7 +1,7 @@
 /*                       D B _ W A L K . C
  * BRL-CAD
  *
- * Copyright (c) 1988-2012 United States Government as represented by
+ * Copyright (c) 1988-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -196,14 +196,6 @@ db_functree_subtree(struct db_i *dbip,
     }
 }
 
-
-/**
- * This subroutine is called for a no-frills tree-walk, with the
- * provided subroutines being called at every combination and leaf
- * (solid) node, respectively.
- *
- * This routine is recursive, so no variables may be declared static.
- */
 void
 db_functree(struct db_i *dbip,
 	    struct directory *dp,

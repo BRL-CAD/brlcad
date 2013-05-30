@@ -1,7 +1,7 @@
 /*                           V L S . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2012 United States Government as represented by
+ * Copyright (c) 2004-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -88,7 +88,7 @@ bu_vls_vlsinit(void)
 {
     struct bu_vls *vp;
 
-    vp = (struct bu_vls *)bu_malloc(sizeof(struct bu_vls), "bu_vls_vlsinit struct");
+    BU_ALLOC(vp, struct bu_vls);
     bu_vls_init(vp);
 
     return vp;
@@ -638,12 +638,12 @@ bu_vls_trimspace(struct bu_vls *vp)
 
     /* Remove trailing white space */
     while ((vp->vls_len > 0) &&
-	   isspace(bu_vls_addr(vp)[bu_vls_strlen(vp)-1]))
+	   isspace((int)(bu_vls_addr(vp)[bu_vls_strlen(vp)-1])))
 	bu_vls_trunc(vp, -1);
 
     /* Remove leading white space */
     while ((vp->vls_len > 0) &&
-	   isspace(*bu_vls_addr(vp)))
+	   isspace((int)(*bu_vls_addr(vp))))
 	bu_vls_nibble(vp, 1);
 }
 

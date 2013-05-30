@@ -1,7 +1,7 @@
 /*                 RationalQuasiUniformCurve.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2012 United States Government as represented by
+ * Copyright (c) 1994-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -31,28 +31,32 @@
 
 #define CLASSNAME "RationalQuasiUniformCurve"
 #define ENTITYNAME "Rational_Quasi_Uniform_Curve"
-string RationalQuasiUniformCurve::entityname = Factory::RegisterClass(ENTITYNAME,(FactoryMethod)RationalQuasiUniformCurve::Create);
+string RationalQuasiUniformCurve::entityname = Factory::RegisterClass(ENTITYNAME, (FactoryMethod)RationalQuasiUniformCurve::Create);
 
-RationalQuasiUniformCurve::RationalQuasiUniformCurve() {
+RationalQuasiUniformCurve::RationalQuasiUniformCurve()
+{
     step = NULL;
     id = 0;
 }
 
-RationalQuasiUniformCurve::RationalQuasiUniformCurve(STEPWrapper *sw,int step_id) {
+RationalQuasiUniformCurve::RationalQuasiUniformCurve(STEPWrapper *sw, int step_id)
+{
     step = sw;
     id = step_id;
 }
 
-RationalQuasiUniformCurve::~RationalQuasiUniformCurve() {
+RationalQuasiUniformCurve::~RationalQuasiUniformCurve()
+{
 }
 
 bool
-RationalQuasiUniformCurve::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
-    step=sw;
+RationalQuasiUniformCurve::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
+    step = sw;
     id = sse->STEPfile_id;
 
     // load base class attributes (no need to add quasi here has no additional attributes)
-    if ( !RationalBSplineCurve::Load(sw,sse) ) {
+    if (!RationalBSplineCurve::Load(sw, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::RationalBSplineCurve." << std::endl;
 	return false;
     }
@@ -61,29 +65,25 @@ RationalQuasiUniformCurve::Load(STEPWrapper *sw,SDAI_Application_instance *sse) 
 }
 
 void
-RationalQuasiUniformCurve::Print(int level) {
-    TAB(level); std::cout << CLASSNAME << ":" << name << "(";
+RationalQuasiUniformCurve::Print(int level)
+{
+    TAB(level);
+    std::cout << CLASSNAME << ":" << name << "(";
     std::cout << "ID:" << STEPid() << ")" << std::endl;
 
     RationalBSplineCurve::Print(level);
 }
+
 STEPEntity *
-RationalQuasiUniformCurve::Create(STEPWrapper *sw,SDAI_Application_instance *sse){
-    Factory::OBJECTS::iterator i;
-    if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
-	RationalQuasiUniformCurve *object = new RationalQuasiUniformCurve(sw,sse->STEPfile_id);
+RationalQuasiUniformCurve::GetInstance(STEPWrapper *sw, int id)
+{
+    return new RationalQuasiUniformCurve(sw, id);
+}
 
-	Factory::AddObject(object);
-
-	if (!object->Load(sw,sse)) {
-	    std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
-	    delete object;
-	    return NULL;
-	}
-	return static_cast<STEPEntity *>(object);
-    } else {
-	return (*i).second;
-    }
+STEPEntity *
+RationalQuasiUniformCurve::Create(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
+    return STEPEntity::CreateEntity(sw, sse, GetInstance, CLASSNAME);
 }
 
 // Local Variables:

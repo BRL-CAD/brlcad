@@ -1,7 +1,7 @@
 /*                     B O T - B L D X F . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2012 United States Government as represented by
+ * Copyright (c) 2004-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -38,7 +38,8 @@
 
 
 /* declarations to support use of bu_getopt() */
-char *options = "hd:";
+char *options = "dh?";
+char *subsetoptions = "d";
 
 char *progname = "(noname)";
 #define DEBUG_NAMES 1
@@ -56,8 +57,8 @@ void usage(char *s)
 {
     if (s) (void)fputs(s, stderr);
 
-    (void) fprintf(stderr, "Usage: %s [ -%s ] [<] infile [> outfile]\n",
-		   progname, options);
+    (void) fprintf(stderr, "Usage: %s [-%s] [<] geom.g [> file.dxf] [bot1 bot2 bot3...]\n",
+		   progname, subsetoptions);
     bu_exit(1, NULL);
 }
 
@@ -78,14 +79,15 @@ int parse_args(int ac, char *av[])
     bu_opterr = 0;
 
     /* get all the option flags from the command line */
-    while ((c=bu_getopt(ac, av, options)) != -1)
+    while ((c=bu_getopt(ac, av, options)) != -1) {
+	if (bu_optopt == '?')
+	    c='h';
 	switch (c) {
 	    case 'd'	: debug = strtol(bu_optarg, NULL, 16); break;
-	    case '?'	:
-	    case 'h'	:
-	    default		: usage("Bad or help flag specified\n"); break;
+	    case 'h'	: usage(""); break;
+	    default	: usage("Bad flag specified\n"); break;
 	}
-
+    }
     return bu_optind;
 }
 
@@ -114,7 +116,7 @@ static int tbl[19][8] = {
 
 /*
  *	Compare two successive triangles to see if they are coplanar and
- *	share two verticies.
+ *	share two vertices.
  *
  */
 int
@@ -141,7 +143,7 @@ tris_are_planar_quad(struct rt_bot_internal *bot, size_t faceidx, int vidx[4])
     }
     /* compare the surface normals */
 
-    /* if the first vertex is greater than the number of verticies
+    /* if the first vertex is greater than the number of vertices
      * this is probably a bogus face, and something bad has happened
      */
     if ((size_t)vnum[0] > bot->num_vertices-1) {
@@ -190,7 +192,7 @@ tris_are_planar_quad(struct rt_bot_internal *bot, size_t faceidx, int vidx[4])
 		(long unsigned int)vnum[0], (long unsigned int)vnum[1], (long unsigned int)vnum[2], (long unsigned int)vnum[3], (long unsigned int)vnum[4], (long unsigned int)vnum[5]);
     }
 
-    /* find adjacent/matching verticies */
+    /* find adjacent/matching vertices */
 
     for (i=0; i < 18; i++) {
 	int *t;
@@ -286,7 +288,7 @@ void write_dxf(struct rt_bot_internal *bot, char *name)
     fprintf(FH, "254\n");
     fprintf(FH, "70\n");
     fprintf(FH, "64\n");
-    fprintf(FH, "71\n"); /* number of verticies */
+    fprintf(FH, "71\n"); /* number of vertices */
 
     fprintf(FH, "%lu\n", (long unsigned int)num_vertices);
 
@@ -298,7 +300,7 @@ void write_dxf(struct rt_bot_internal *bot, char *name)
 
 
     if (debug&DEBUG_STATS)
-	fprintf(stderr, "writing %lu verticies\n", (long unsigned int)num_vertices);
+	fprintf(stderr, "writing %lu vertices\n", (long unsigned int)num_vertices);
     for (i=0; i < num_vertices; i++) {
 	fprintf(FH, "VERTEX\n");
 	fprintf(FH, "8\n");
@@ -522,7 +524,7 @@ int main(int ac, char *av[])
     arg_count = parse_args(ac, av);
 
     if ((ac - arg_count) < 1) {
-	fprintf(stderr, "usage: %s geom.g [file.dxf] [bot1 bot2 bot3...]\n", progname);
+	usage("");
 	return 1;
     }
 

@@ -1,7 +1,7 @@
 /*                      S H _ N O I S E . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2012 United States Government as represented by
+ * Copyright (c) 1998-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -52,7 +52,7 @@ void
 noise_cvt_parse(register const struct bu_structparse *sdp, register const char *name, char *base, const char *value)
 /* structure description */
 /* struct member name */
-/* begining of structure */
+/* beginning of structure */
 /* string containing value */
 {
     double *p = (double *)(base+sdp->sp_offset);
@@ -72,7 +72,7 @@ void
 noise_deg_to_rad(register const struct bu_structparse *sdp, const char *UNUSED(name), char *base, const char *UNUSED(value))
 /* structure description */
 /* struct member name */
-/* begining of structure */
+/* beginning of structure */
 /* string containing value */
 {
     double *p = (double *)(base+sdp->sp_offset);
@@ -126,7 +126,6 @@ struct noise_specific noise_defaults = {
 
 #define SHDR_NULL ((struct noise_specific *)0)
 #define SHDR_O(m) bu_offsetof(struct noise_specific, m)
-#define SHDR_AO(m) bu_offsetofarray(struct noise_specific, m)
 
 
 /* description of how to parse/print the arguments to the shader
@@ -134,37 +133,37 @@ struct noise_specific noise_defaults = {
  * structure above
  */
 struct bu_structparse noise_print_tab[] = {
-    {"%f",	1, "lacunarity",	SHDR_O(lacunarity),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f",	1, "H", 		SHDR_O(h_val),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f",	1, "octaves", 		SHDR_O(octaves),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f",  3, "delta",		SHDR_AO(delta),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f",  1, "size",		SHDR_O(size),		bu_mm_cvt, NULL, NULL },
-    {"%f",  1, "angle",		SHDR_O(max_angle),	noise_deg_to_rad, NULL, NULL },
-    {"%f",  3, "vscale",		SHDR_AO(vscale),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f",  1, "min",		SHDR_O(minval),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"",	0, (char *)0,		0,			BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
+    {"%g", 1, "lacunarity",	SHDR_O(lacunarity),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%g", 1, "H", 		SHDR_O(h_val),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%g", 1, "octaves",	SHDR_O(octaves),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f", 3, "delta",		SHDR_O(delta),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%g", 1, "size",		SHDR_O(size),		bu_mm_cvt, NULL, NULL },
+    {"%g", 1, "angle",		SHDR_O(max_angle),	noise_deg_to_rad, NULL, NULL },
+    {"%f", 3, "vscale",		SHDR_O(vscale),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%g", 1, "min",		SHDR_O(minval),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"",   0, (char *)0,	0,			BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 
 
 struct bu_structparse noise_parse_tab[] = {
     {"%p", 1, "noise_print_tab", bu_byteoffset(noise_print_tab[0]), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f",	1, "lacunarity",	SHDR_O(lacunarity),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f",	1, "l",			SHDR_O(lacunarity),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f",	1, "H", 		SHDR_O(h_val),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f",	1, "octaves", 		SHDR_O(octaves),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f",	1, "o", 		SHDR_O(octaves),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f",  3, "delta",		SHDR_AO(delta),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f",  3, "d",			SHDR_AO(delta),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f",  1, "size",		SHDR_O(size),		bu_mm_cvt, NULL, NULL },
-    {"%f",  1, "s",			SHDR_O(size),		bu_mm_cvt, NULL, NULL },
-    {"%f",  1, "angle",		SHDR_O(max_angle),	noise_deg_to_rad, NULL, NULL },
-    {"%f",  1, "ang",		SHDR_O(max_angle),	noise_deg_to_rad, NULL, NULL },
-    {"%f",  1, "a",			SHDR_O(max_angle),	noise_deg_to_rad, NULL, NULL },
-    {"%f",  3, "vscale",		SHDR_AO(vscale),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f",  3, "vs",		SHDR_AO(vscale),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f",  3, "v",			SHDR_AO(vscale),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f",  1, "min",		SHDR_O(minval),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"",	0, (char *)0,		0,			BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
+    {"%g", 1, "lacunarity",	SHDR_O(lacunarity),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%g", 1, "l",		SHDR_O(lacunarity),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%g", 1, "H", 		SHDR_O(h_val),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%g", 1, "octaves", 	SHDR_O(octaves),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%g", 1, "o", 		SHDR_O(octaves),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f", 3, "delta",		SHDR_O(delta),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f", 3, "d",		SHDR_O(delta),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%g", 1, "size",		SHDR_O(size),		bu_mm_cvt, NULL, NULL },
+    {"%g", 1, "s",		SHDR_O(size),		bu_mm_cvt, NULL, NULL },
+    {"%g", 1, "angle",		SHDR_O(max_angle),	noise_deg_to_rad, NULL, NULL },
+    {"%g", 1, "ang",		SHDR_O(max_angle),	noise_deg_to_rad, NULL, NULL },
+    {"%g", 1, "a",		SHDR_O(max_angle),	noise_deg_to_rad, NULL, NULL },
+    {"%f", 3, "vscale",		SHDR_O(vscale),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f", 3, "vs",		SHDR_O(vscale),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f", 3, "v",		SHDR_O(vscale),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%g", 1, "min",		SHDR_O(minval),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"",   0, (char *)0,	0,			BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 
 
@@ -273,7 +272,7 @@ noise_print(register struct region *rp, genptr_t dp)
 HIDDEN void
 noise_free(genptr_t cp)
 {
-    bu_free(cp, "noise_specific");
+    BU_PUT(cp, struct noise_specific);
 }
 #define RESCALE_NOISE(n) n += 1.0
 
@@ -501,7 +500,6 @@ struct mfuncs noise_mfuncs[] = {
     {MF_MAGIC, "flash",	   0, MFI_NORMAL|MFI_HIT|MFI_UV, 0, noise_setup, fractal_render, noise_print, noise_free },
     {       0, NULL,       0,			      0, 0,	      0,	      0,	   0,	       0 }
 };
-
 
 
 /*

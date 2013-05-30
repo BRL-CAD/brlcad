@@ -1,7 +1,7 @@
 /*                     T I M E R U N I X . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2012 United States Government as represented by
+ * Copyright (c) 1985-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,16 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup timer */
-/** @{ */
-/** @file librt/timerunix.c
- *
- * To provide timing information for RT.  This version for any non-BSD
- * UNIX system, including System III, Vr1, Vr2.  Version 6 & 7 should
- * also be able to use this (untested).  The time() and times()
- * sys-calls are used for all timing.
- *
- */
+
 
 #include "common.h"
 
@@ -65,12 +56,6 @@ rt_prep_timer(void)
 }
 
 
-/**
- * Reports on the passage of time, since rt_prep_timer() was called.
- * Explicit return is number of CPU seconds.  String return is
- * descriptive.  If "elapsed" pointer is non-null, number of elapsed
- * seconds are returned.  Times returned will never be zero.
- */
 double
 rt_get_timer(struct bu_vls *vp, double *elapsed)
 {
@@ -115,9 +100,6 @@ rt_get_timer(struct bu_vls *vp, double *elapsed)
 }
 
 
-/**
- * Compatability routine
- */
 double
 rt_read_timer(char *str, int len)
 {
@@ -139,7 +121,6 @@ rt_read_timer(char *str, int len)
 }
 
 
-/** @} */
 /*
  * Local Variables:
  * mode: C

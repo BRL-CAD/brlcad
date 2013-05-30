@@ -1,7 +1,7 @@
 /*                          P R N T . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2012 United States Government as represented by
+ * Copyright (c) 2004-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -65,7 +65,7 @@ static const char * lgt_menu[] =
     "c flag               enable or disable tracking cursor",
     "D x y                translate image when raytracing (WRT viewport)",
     "E                    clear display",
-    "e bitmask            set debug flag (hexidecimal bitmask)",
+    "e bitmask            set debug flag (hexadecimal bitmask)",
     "F                    animate",
     "f distance           specify distance from origin of grid to model centroid",
     "G size cflag gflag view_size    grid configuration",
@@ -433,7 +433,7 @@ prnt_Scroll(const char *fmt, ... ) {
 	    }
 	    else
 		(void)vfprintf( stdout, fmt, ap );
-	/* End of line detected by existance of a newline.	*/
+	/* End of line detected by existence of a newline.	*/
 	newline = fmt[strlen( fmt )-1] == '\n';
 	hmredraw();
     }

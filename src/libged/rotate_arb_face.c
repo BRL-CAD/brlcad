@@ -1,7 +1,7 @@
 /*                  R O T A T E _ A R B _ F A C E . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2012 United States Government as represented by
+ * Copyright (c) 2008-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -48,16 +48,19 @@ ged_rotate_arb_face(struct ged *gedp, int argc, const char *argv[])
 {
     struct rt_db_internal intern;
     struct rt_arb_internal *arb;
+    struct directory *dp;
     fastf_t planes[7][4];		/* ARBs defining plane equations */
     int arb_type;
     int face;
     int vi;
-    point_t pt;
     mat_t mat;
     int i;
     int pnt5;		/* special arb7 case */
     char *last;
-    struct directory *dp;
+
+    /* intentionally double for scan */
+    double pt[3];
+
     static const char *usage = "arb face pt rvec";
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);

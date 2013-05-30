@@ -56,21 +56,55 @@ std::string STEPfile::SetFileName( const std::string newName ) {
     return _fileName;
 }
 
-/***************************
-function:     ReadHeader
-returns:      Severity
-parameters:   (istream&) The input stream from which the file is read.
-description:
-   This function reads in the header section of an exchange file. It
-   parses the header section, popluates the _headerInstances, and
-   returns an error descriptor.
-   It expects to find the "HEADER;" symbol at the beginning of the
-   istream.
-side effects: The function  gobbles all characters up to and including the
-   next "ENDSEC;" from in.
-   The STEPfile::_headerInstances may change.
-***************************/
+/** Returns read progress,scaled 0-100. Will return a value < 0 if
+ * called *immediately* after read operation starts, if no file has
+ * been specified, or if file has been closed. If result < 50,
+ * ReadData1() hasn't completed yet.
+ *
+ * This function is useless unless it is called from another thread.
+ */
+float STEPfile::GetReadProgress() const {
+    if( _iFileSize < 1 ) {
+        return -1;
+    }
+    //the file is read once by ReadData1(), and again by ReadData2. Each gets 50%.
+    float percent = ( static_cast<float>( _iFileCurrentPosition ) / _iFileSize ) * 50.0;
+    if( _iFileStage1Done ) {
+        percent += 50;
+    }
+    return percent;
+}
 
+/** Returns write progress,scaled 0-100. Will return a value < 0 if
+ * called *immediately* after write operation starts, if no file has
+ * been specified, or if file has been closed.
+ * \sa GetReadProgress()
+ *
+ * Caveat: Only works for files written via WriteExchangeFile() / WriteData().
+ *
+ * This function is useless unless it is called from another thread.
+ */
+float STEPfile::GetWriteProgress() const {
+    int total = _instances.InstanceCount();
+    if( total > 0 ) {
+        return ( static_cast<float>( _oFileInstsWritten ) / total ) * 100.0;
+    } else {
+        return -1;
+    }
+}
+
+/**
+ * \param in The input stream from which the file is read.
+ *
+ * This function reads in the header section of an exchange file. It
+ * parses the header section, popluates the _headerInstances, and
+ * returns an error descriptor.
+ * It expects to find the "HEADER;" symbol at the beginning of the istream.
+ *
+ * side effects: The function  gobbles all characters up to and including the
+ * next "ENDSEC;" from in.
+ * The STEPfile::_headerInstances may change.
+ */
 Severity STEPfile::ReadHeader( istream & in ) {
     std::string cmtStr;
 
@@ -197,15 +231,15 @@ Severity STEPfile::ReadHeader( istream & in ) {
     return _error.severity();
 }
 
-/***************************
-Verify the instances read from the header section of an exchange file.
-If some required instances aren't present, then create them,
-and populate them with default values.
-The required instances are:
-  #1 = FILE_DESCRIPTION
-  #2 = FILE_NAME
-  #3 = FILE_SCHEMA
-***************************/
+/**
+ * Verify the instances read from the header section of an exchange file.
+ * If some required instances aren't present, then create them,
+ * and populate them with default values.
+ * The required instances are:
+ *  #1 = FILE_DESCRIPTION
+ *  #2 = FILE_NAME
+ *  #3 = FILE_SCHEMA
+ */
 Severity STEPfile::HeaderVerifyInstances( InstMgr * im ) {
     int err = 0;
     int fileid;
@@ -303,25 +337,25 @@ SDAI_Application_instance * STEPfile::HeaderDefaultFileSchema() {
 
 
 
-/***************************
-This function has an effect when more than one file
-is being read into a working session.
-
-This function manages space allocation for the Instance
-Manager for the header instances. If the instances in im are
-copied onto the instances of _headerInstances, then im is
-deleted. Otherwise no space is deleted.
-
-Append the values of the given instance manager onto the _headerInstances.
-If the _headerInstances contain no instances, then copy the instances
-from im onto the _headerInstances.
-This only works for an instance manager which contains the following
-header section entites. The file id numbers are important.
-
-  #1 = FILE_DESCRIPTION
-  #2 = FILE_NAME
-  #3 = FILE_SCHEMA
-***************************/
+/**
+ * This function has an effect when more than one file
+ * is being read into a working session.
+ *
+ * This function manages space allocation for the Instance
+ * Manager for the header instances. If the instances in im are
+ * copied onto the instances of _headerInstances, then im is
+ * deleted. Otherwise no space is deleted.
+ *
+ * Append the values of the given instance manager onto the _headerInstances.
+ * If the _headerInstances contain no instances, then copy the instances
+ * from im onto the _headerInstances.
+ * This only works for an instance manager which contains the following
+ * header section entites. The file id numbers are important.
+ *
+ * #1 = FILE_DESCRIPTION
+ * #2 = FILE_NAME
+ * #3 = FILE_SCHEMA
+ */
 void STEPfile::HeaderMergeInstances( InstMgr * im ) {
     SDAI_Application_instance * se = 0;
     SDAI_Application_instance * from = 0;
@@ -404,11 +438,10 @@ stateEnum STEPfile::EntityWfState( char c ) {
     }
 }
 
-/***************************
-***************************/
-//  PASS 1:  create instances
-//  starts at the data section
-
+/**
+ * PASS 1:  create instances
+ * starts at the data section
+ */
 int STEPfile::ReadData1( istream & in ) {
     int endsec = 0;
     _entsNotCreated = 0;
@@ -467,6 +500,7 @@ int STEPfile::ReadData1( istream & in ) {
                 SkipInstance( in, tmpbuf );
             } else {
                 obj =  CreateInstance( in, cout );
+                _iFileCurrentPosition = in.tellg();
             }
 
             if( obj != ENTITY_NULL ) {
@@ -515,6 +549,7 @@ int STEPfile::ReadData1( istream & in ) {
         _error.AppendToUserMsg( "Error in input file.\n" );
     }
 
+    _iFileStage1Done = true;
     return instance_count;
 }
 
@@ -522,13 +557,10 @@ int STEPfile::ReadWorkingData1( istream & in ) {
     return ReadData1( in );
 }
 
-/******************************************************************
- ** Procedure:  ReadData2
- ** Parameters:  istream
- ** Returns:  number of valid instances read
- ** Description:  reads in the data portion of the instances
- **               in an exchange file
- ******************************************************************/
+/**
+ * \returns number of valid instances read
+ * reads in the data portion of the instances in an exchange file
+ */
 int STEPfile::ReadData2( istream & in, bool useTechCor ) {
     _entsInvalid = 0;
     _entsIncomplete = 0;
@@ -585,6 +617,7 @@ int STEPfile::ReadData2( istream & in, bool useTechCor ) {
                 SkipInstance( in, tmpbuf );
             } else {
                 obj =  ReadInstance( in, cout, cmtStr, useTechCor );
+                _iFileCurrentPosition = in.tellg();
             }
 
             cmtStr.clear();
@@ -647,11 +680,10 @@ int STEPfile::ReadWorkingData2( istream & in, bool useTechCor ) {
     return ReadData2( in, useTechCor );
 }
 
-/* Looks for the word DATA followed by optional whitespace
+/** Looks for the word DATA followed by optional whitespace
  * followed by a semicolon.  When it is looking for the word
  * DATA it skips over strings and comments.
  */
-
 int STEPfile::FindDataSection( istream & in ) {
     ErrorDescriptor errs;
     SDAI_String tmp;
@@ -729,7 +761,7 @@ int STEPfile::FindHeaderSection( istream & in ) {
 //dasdelete
 
 //dasdelete
-/***************************
+/**
  description:
     This function creates an instance based on the KEYWORD
     read from the istream.
@@ -746,7 +778,7 @@ an ENTITY_INSTANCE consists of:
    '#'(int)'=' [SCOPE] SIMPLE_RECORD ';' ||
    '#'(int)'=' [SCOPE] SUBSUPER_RECORD ';'
 The '#' is read from the istream before CreateInstance is called.
-***************************/
+ */
 SDAI_Application_instance * STEPfile::CreateInstance( istream & in, ostream & out ) {
     std::string tmpbuf;
     std::string objnm;
@@ -869,7 +901,7 @@ SDAI_Application_instance * STEPfile::CreateInstance( istream & in, ostream & ou
 }
 
 
-/**************************************************
+/**
  description:
     This function reads the SCOPE list for an entity instance,
     creates each instance on the scope list, and appending each
@@ -882,7 +914,7 @@ SDAI_Application_instance * STEPfile::CreateInstance( istream & in, ostream & ou
                       "ENDSCOPE" and the export list /#1, ... #N/
     <  SEVERITY_WARNING: the istream was read up to and including the next ";"
     < SEVERITY_BUG: fatal
-**************************************************/
+ */
 Severity STEPfile::CreateScopeInstances( istream & in, SDAI_Application_instance_ptr ** scopelist ) {
     Severity rval = SEVERITY_NULL;
     SDAI_Application_instance * se;
@@ -1024,17 +1056,24 @@ SDAI_Application_instance * STEPfile::CreateSubSuperInstance( istream & in, int 
         delete obj;
         obj = ENTITY_NULL;
     }
+
+    enaIndex = 0;
+    while ( entNmArr[enaIndex] != 0) {
+        delete entNmArr[enaIndex];
+        enaIndex ++;
+    }
+
     return obj;
 }
 
-/**************************************************
+/**
  description:
     This function reads the SCOPE list for an entity instance,
     and reads the values for each instance from the istream.
  side-effects:
     It first searches for "&SCOPE" and reads all characters
     from the istream up to and including "ENDSCOPE"
-**************************************************/
+ */
 Severity STEPfile::ReadScopeInstances( istream & in ) {
     Severity rval = SEVERITY_NULL;
     SDAI_Application_instance * se;
@@ -1109,15 +1148,14 @@ Severity STEPfile::ReadScopeInstances( istream & in ) {
     return rval;
 }
 
-/*****************************************************
- description:
+/**
  This function populates a SDAI_Application_instance with the values read from
  the istream.
 
  This function must keeps track of error messages encountered when
  reading the SDAI_Application_instance. It passes SCLP23(Application_instance error information onto
  the STEPfile ErrorDescriptor.
-*****************************************************/
+*/
 SDAI_Application_instance * STEPfile::ReadInstance( istream & in, ostream & out, std::string & cmtStr,
                         bool useTechCor ) {
     Severity sev = SEVERITY_NULL;
@@ -1425,7 +1463,7 @@ Severity STEPfile::WriteValuePairsFile( ostream & out, int validate, int clearEr
     return rval;
 }
 
-/***************************
+/**
 This function returns an integer value for
 the file id for a header section entity,
 based on a given entity name.
@@ -1438,7 +1476,7 @@ The header section entities must be numbered in the following manner:
 #1=FILE_DESCRIPTION
 #2=FILE_NAME
 #3=FILE_SCHEMA
-***************************/
+*/
 int STEPfile::HeaderId( const char * name ) {
     std::string tmp = name;
 
@@ -1553,12 +1591,14 @@ void STEPfile::WriteHeaderInstanceFileSchema( ostream & out ) {
 }
 
 void STEPfile::WriteData( ostream & out, int writeComments ) {
+    _oFileInstsWritten = 0;
     std::string currSch = schemaName();
     out << "DATA;\n";
 
     int n = instances().InstanceCount();
     for( int i = 0; i < n; ++i ) {
         instances().GetMgrNode( i )->GetApplication_instance()->STEPwrite( out, currSch.c_str(), writeComments );
+        _oFileInstsWritten++;
     }
 
     out << "ENDSEC;\n";
@@ -1797,8 +1837,7 @@ void STEPfile::WriteWorkingData( ostream & out, int writeComments ) {
     out << "ENDSEC;\n";
 }
 
-/**************************************************
- description:
+/**
     This function sends messages to 'cerr'
     based on the values in the given ErrorDescriptor (e), which is
     supposed to be from a SDAI_Application_instance object, being manipulated by one
@@ -1808,7 +1847,7 @@ void STEPfile::WriteWorkingData( ostream & out, int writeComments ) {
 
     The STEPfile's error descriptor is set no lower than SEVERITY_WARNING.
 
-**************************************************/
+*/
 Severity STEPfile::AppendEntityErrorMsg( ErrorDescriptor * e ) {
     ErrorDescriptor * ed = e;
 

@@ -1,7 +1,7 @@
 /*                         L O A D V I E W . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2012 United States Government as represented by
+ * Copyright (c) 2008-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -51,7 +51,7 @@ struct command_tab ged_loadview_cmdtab[] = {
      _ged_cm_lookat_pt,	4, 5},
     {"viewrot", "4x4 matrix", "set view direction from matrix",
      _ged_cm_vrot,	17, 17},
-    {"orientation", "quaternion", "set view direction from quaturnion",
+    {"orientation", "quaternion", "set view direction from quaternion",
      _ged_cm_orientation,	5, 5},
     {"set", 	"", "show or set parameters",
      _ged_cm_set,		1, 999},
@@ -238,7 +238,7 @@ ged_loadview(struct ged *gedp, int argc, const char *argv[])
 	    /* end iteration over rt commands */
 
 	}
-	/* end check for non-view values (dbname, etc) */
+	/* end check for non-view values (dbname, etc.) */
 
     }
     /* end iteration over file until eof */
@@ -307,7 +307,7 @@ _ged_cm_lookat_pt(int argc, char **argv)
 	vect_t neg_Z_axis;
 
 	VSET(neg_Z_axis, 0.0, 0.0, -1.0);
-	bn_mat_fromto(_ged_viewrot, dir, neg_Z_axis);
+	bn_mat_fromto(_ged_viewrot, dir, neg_Z_axis, &_ged_current_gedp->ged_wdbp->wdb_tol);
     }
 #else
     bn_mat_lookat(_ged_viewrot, dir, yflip);

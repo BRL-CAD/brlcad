@@ -1,7 +1,7 @@
 /*                          H U M A N . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2012 United States Government as represented by
+ * Copyright (c) 2008-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -260,7 +260,7 @@ setDirection(fastf_t *inVect, fastf_t *resultVect, fastf_t *outMatrix, fastf_t x
 /**
  * Create a bounding box around the individual part, this one has only
  * 1 value for depth and width.  Currently is a big mess, as the boxes
- * dont want to rotate in the correct mannor, and insit upon rotating
+ * don't want to rotate in the correct manner, and insist upon rotating
  * around an incorrect vertex.
  */
 HIDDEN void
@@ -893,7 +893,7 @@ makeBody(struct rt_wdb (*file), char *suffix, struct human_data_t *dude, fastf_t
     bu_log("Making Body\n");
     /*
      * Make sure that vectors, points, and widths are sent to each function
-     * for direction, location, and correct sizing, respectivly.
+     * for direction, location, and correct sizing, respectively.
      */
     bu_log("Setting Direction\n");
     VSET(dude->joints.headJoint, location[X], location[Y], (location[Z]+((dude->height*IN2MM)-(dude->head.headSize/2))));
@@ -963,21 +963,28 @@ HIDDEN void
 grabCoordinates(fastf_t *positions)
 {
     int ret;
+    double scan[3];
+
     printf("X: ");
-    ret = scanf("%lf", &positions[X]);
+    ret = scanf("%lf", &scan[X]);
     if (ret != 1)
 	bu_log("Failed to get position value\n");
     fflush(stdin);
+
     printf("Y: ");
-    ret = scanf("%lf", &positions[Y]);
+    ret = scanf("%lf", &scan[Y]);
     if (ret != 1)
 	bu_log("Failed to get position value\n");
     fflush(stdin);
+
     printf("Z: ");
-    ret = scanf("%lf", &positions[Z]);
+    ret = scanf("%lf", &scan[Z]);
     if (ret != 1)
 	bu_log("Failed to get position value\n");
     fflush(stdin);
+
+    /* convert from double to fastf_t */
+    VMOVE(positions, scan);
 }
 
 
@@ -1055,7 +1062,7 @@ setStance(fastf_t stance, struct human_data_t *dude)
      * 4: The Letterman
      * 5: The Captain
      * #: and more as needed
-     * 999: Custom (done interactivly)
+     * 999: Custom (done interactively)
      */
 
     VSET(downVect, 0, 180, 0); /*straight down*/
@@ -1282,152 +1289,178 @@ HIDDEN void
 Manual(struct human_data_t *dude)
 {
     int ret;
-    fastf_t x=0; /*Variable to be used for all input */
+    double x=0; /* for stashing user input */
+
     bu_log("Manual Size Mode. All data to be entered is in inches\n");
+
     bu_log("HeadSize, radius\n");
     ret = scanf("%lf", &x);
     if (ret != 1)
 	bu_log("Failed to get value\n");
     x=x*IN2MM;
     dude->head.headSize=x;
+
     bu_log("NeckLength\n");
     ret = scanf("%lf", &x);
     if (ret != 1)
 	bu_log("Failed to get value\n");
     x=x*IN2MM;
     dude->head.neckLength=x;
+
     bu_log("NeckWidth, radius\n");
     ret = scanf("%lf", &x);
     if (ret != 1)
 	bu_log("Failed to get value\n");
     x=x*IN2MM;
     dude->head.neckWidth=x;
+
     bu_log("Top Torso Length\n");
     ret = scanf("%lf", &x);
     if (ret != 1)
 	bu_log("Failed to get value\n");
     x=x*IN2MM;
     dude->torso.topTorsoLength=x;
+
     bu_log("Shoulder Width\n");
     ret = scanf("%lf", &x);
     if (ret != 1)
 	bu_log("Failed to get value\n");
     x=x*IN2MM;
     dude->torso.shoulderWidth=x;
+
     bu_log("Shoulder Depth\n");
     ret = scanf("%lf", &x);
     if (ret != 1)
 	bu_log("Failed to get value\n");
     x=x*IN2MM;
     dude->torso.shoulderDepth=x;
+
     bu_log("Low Torso Length\n");
     ret = scanf("%lf", &x);
     if (ret != 1)
 	bu_log("Failed to get value\n");
     x=x*IN2MM;
     dude->torso.lowTorsoLength=x;
+
     bu_log("Ab Width\n");
     ret = scanf("%lf", &x);
     if (ret != 1)
 	bu_log("Failed to get value\n");
     x=x*IN2MM;
     dude->torso.abWidth=x;
+
     bu_log("Ab Depth\n");
     ret = scanf("%lf", &x);
     if (ret != 1)
 	bu_log("Failed to get value\n");
     x=x*IN2MM;
     dude->torso.abDepth=x;
+
     bu_log("Pelvis Width\n");
     ret = scanf("%lf", &x);
     if (ret != 1)
 	bu_log("Failed to get value\n");
     x=x*IN2MM;
     dude->torso.pelvisWidth=x;
+
     bu_log("Pelvis Depth\n");
     ret = scanf("%lf", &x);
     if (ret != 1)
 	bu_log("Failed to get value\n");
     x=x*IN2MM;
     dude->torso.pelvisDepth=x;
+
     bu_log("Upper Arm Length\n");
     ret = scanf("%lf", &x);
     if (ret != 1)
 	bu_log("Failed to get value\n");
     x=x*IN2MM;
     dude->arms.upperArmLength=x;
+
     bu_log("Upper Arm Width\n");
     ret = scanf("%lf", &x);
     if (ret != 1)
 	bu_log("Failed to get value\n");
     x=x*IN2MM;
     dude->arms.upperArmWidth=x;
+
     bu_log("Lower Arm Length\n");
     ret = scanf("%lf", &x);
     if (ret != 1)
 	bu_log("Failed to get value\n");
     x=x*IN2MM;
     dude->arms.lowerArmLength=x;
+
     bu_log("Elbow Width, radius\n");
     ret = scanf("%lf", &x);
     if (ret != 1)
 	bu_log("Failed to get value\n");
     x=x*IN2MM;
     dude->arms.elbowWidth=x;
+
     bu_log("Wrist Width, radius\n");
     ret = scanf("%lf", &x);
     if (ret != 1)
 	bu_log("Failed to get value\n");
     x=x*IN2MM;
     dude->arms.wristWidth=x;
+
     bu_log("Hand Length\n");
     ret = scanf("%lf", &x);
     if (ret != 1)
 	bu_log("Failed to get value\n");
     x=x*IN2MM;
     dude->arms.handLength=x;
+
     bu_log("Hand Width\n");
     ret = scanf("%lf", &x);
     if (ret != 1)
 	bu_log("Failed to get value\n");
     x=x*IN2MM;
     dude->arms.handWidth=x;
+
     bu_log("Thigh Length\n");
     ret = scanf("%lf", &x);
     if (ret != 1)
 	bu_log("Failed to get value\n");
     x=x*IN2MM;
     dude->legs.thighLength=x;
+
     bu_log("Thigh Width, radius\n");
     ret = scanf("%lf", &x);
     if (ret != 1)
 	bu_log("Failed to get value\n");
     x=x*IN2MM;
     dude->legs.thighWidth=x;
+
     bu_log("Knee Width, radius\n");
     ret = scanf("%lf", &x);
     if (ret != 1)
 	bu_log("Failed to get value\n");
     x=x*IN2MM;
     dude->legs.kneeWidth=x;
+
     bu_log("Calf Length\n");
     ret = scanf("%lf", &x);
     if (ret != 1)
 	bu_log("Failed to get value\n");
     x=x*IN2MM;
     dude->legs.calfLength=x;
+
     bu_log("Ankle Width, radius\n");
     ret = scanf("%lf", &x);
     if (ret != 1)
 	bu_log("Failed to get value\n");
     x=x*IN2MM;
     dude->legs.ankleWidth=x;
+
     bu_log("Foot Length\n");
     ret = scanf("%lf", &x);
     if (ret != 1)
 	bu_log("Failed to get value\n");
     x=x*IN2MM;
     dude->legs.footLength=x;
+
     bu_log("Toe Width, radius\n");
     ret = scanf("%lf", &x);
     if (ret != 1)
@@ -1549,7 +1582,7 @@ show_help(const char *name, const char *optstr)
 	cp++;
     }
 
-    bu_log("usage: %s [%s]\n", name, bu_vls_addr(&str));
+    bu_log("Usage: %s [%s]\n", name, bu_vls_addr(&str));
     bu_log("options:\n");
     bu_log("\t-h\t\tShow help\n");
     bu_log("\t-?\t\tShow help\n");
@@ -1582,7 +1615,8 @@ HIDDEN void
 getLocation(fastf_t *location)
 {
     int ret;
-    fastf_t x, y, z;
+    double x, y, z;
+
     bu_log("Enter center point\n");
     bu_log("X: ");
     ret = scanf("%lf", &x);
@@ -1614,7 +1648,7 @@ read_args(int argc, const char **argv, char *topLevel, struct human_data_t *dude
     int soldiers=0;
     int pose=0;
     int percent=50;
-    fastf_t x = 0;
+    double x = 0; /* for stashing user input */
     int have_name = 0;
 
     /* don't report errors */
@@ -1736,7 +1770,7 @@ read_args(int argc, const char **argv, char *topLevel, struct human_data_t *dude
 		break;
 
 		/* These following arguments are for the wizard program, allowing easy access to each variable.
-		 * as they will only be callable by using a number (eg 1 = head, 2=neck width, 3=neck height etc)
+		 * as they will only be callable by using a number (e.g. 1 = head, 2=neck width, 3=neck height etc.)
 		 * and should not be called otherwise
 		 */
 	    case '1':
@@ -1903,9 +1937,9 @@ read_args(int argc, const char **argv, char *topLevel, struct human_data_t *dude
 
 
 /**
- * The text function takes the dimentions of each region on the body,
- * and finds the measurements for each bounding box to be ouput to a
- * text file. All dimentions are in mm, because it seems everyone just
+ * The text function takes the dimensions of each region on the body,
+ * and finds the measurements for each bounding box to be output to a
+ * text file. All dimensions are in mm, because it seems everyone just
  * /loves/ millimeters for analytical purposes.  Hard Coded to dump
  * out everything related to boundingboxes.
  */
@@ -1915,7 +1949,7 @@ text(struct human_data_t *dude)
     fastf_t x=0, y=0, z=0;
     FILE *dump;
 
-    bu_log("Ouputting text file\n");
+    bu_log("Outputting text file\n");
 
     dump = fopen("Stats.txt", "w+");
 
@@ -2032,7 +2066,7 @@ text(struct human_data_t *dude)
 
 /**
  * Spit out every measurement of the model in a textfile called
- * Verbose.txt Includes all measurments: sans angles, joint
+ * Verbose.txt Includes all measurements: sans angles, joint
  * information
  */
 HIDDEN void
@@ -2093,7 +2127,7 @@ getText(struct human_data_t *UNUSED(dude))
     input = fopen("Stats.txt", "r");
 
     if (input == NULL) {
-	bu_log("Non existant input file.\n");
+	bu_log("Non-existent input file.\n");
     } else {
 	bu_log("File opened, reading data:\n");
 
@@ -2115,14 +2149,14 @@ verbIn(struct human_data_t *dude)
 {
     char buffer[80];
     char s[80];
-    fastf_t holder;
+    double holder;
     FILE *input;
 
     bu_log("Reading textfile for all measurements\n");
 
     input = fopen("Verbose.txt", "r");
     if (input == NULL) {
-	bu_log("Non-existant input file\n");
+	bu_log("Non-existent input file\n");
     } else {
 	bu_log("File opened, setting measurements\n");
 
@@ -2210,7 +2244,7 @@ verbIn(struct human_data_t *dude)
 
 /**
  * ged_human is the function which is called from an outside function
- * in the /shapes directory. It's essentially a main function witout
+ * in the /shapes directory. It's essentially a main function without
  * main.
  */
 int
@@ -2265,7 +2299,7 @@ ged_human(struct ged *gedp, int ac, const char *av[])
 	makeBody(gedp->ged_wdbp, suffix, &human_data, location, showBoxes);
 	mk_id_units(gedp->ged_wdbp, "A single Human", "in");
 
-	/*This function dumps out a text file of all dimentions of bounding boxes/antrho-data/whatever on human model.*/
+	/*This function dumps out a text file of all dimensions of bounding boxes/anthro-data/whatever on human model.*/
 	if (human_data.textwrite == 1)
 	    text(&human_data);
 	if (human_data.verbwrite == 1)
@@ -2325,7 +2359,7 @@ ged_human(struct ged *gedp, int ac, const char *av[])
 /* make the .r for the bounding boxes */
 	if (showBoxes) {
 	    /*
-	     * Create opaque bounding boxes for representaions of where the person model
+	     * Create opaque bounding boxes for representations of where the person model
 	     * may lay up next to another model
 	     */
 	    BU_LIST_INIT(&boxes.l)
@@ -2430,7 +2464,7 @@ ged_human(struct ged *gedp, int ac, const char *av[])
     }
     if (troops) {
 	/*Build body regions for each troop*/
-	/*append number to end of part name, (Head.s0, LeftElbowJoint.s99, etc) */
+	/*append number to end of part name, (Head.s0, LeftElbowJoint.s99, etc.) */
 	int num=0;
 	int w=0;
 	int x=0;

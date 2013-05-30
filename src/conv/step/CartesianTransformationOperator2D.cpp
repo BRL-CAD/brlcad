@@ -1,7 +1,7 @@
 /*                 CartesianTransformationOperator2D.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2012 United States Government as represented by
+ * Copyright (c) 1994-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -31,27 +31,31 @@
 
 #define CLASSNAME "CartesianTransformationOperator2D"
 #define ENTITYNAME "Cartesian_Transformation_Operator_2d"
-string CartesianTransformationOperator2D::entityname = Factory::RegisterClass(ENTITYNAME,(FactoryMethod)CartesianTransformationOperator2D::Create);
+string CartesianTransformationOperator2D::entityname = Factory::RegisterClass(ENTITYNAME, (FactoryMethod)CartesianTransformationOperator2D::Create);
 
-CartesianTransformationOperator2D::CartesianTransformationOperator2D() {
+CartesianTransformationOperator2D::CartesianTransformationOperator2D()
+{
     step = NULL;
     id = 0;
 }
 
-CartesianTransformationOperator2D::CartesianTransformationOperator2D(STEPWrapper *sw,int step_id) {
+CartesianTransformationOperator2D::CartesianTransformationOperator2D(STEPWrapper *sw, int step_id)
+{
     step = sw;
     id = step_id;
 }
 
-CartesianTransformationOperator2D::~CartesianTransformationOperator2D() {
+CartesianTransformationOperator2D::~CartesianTransformationOperator2D()
+{
 }
 
 bool
-CartesianTransformationOperator2D::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
-    step=sw;
+CartesianTransformationOperator2D::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
+    step = sw;
     id = sse->STEPfile_id;
 
-    if ( !CartesianTransformationOperator::Load(sw,sse) ) {
+    if (!CartesianTransformationOperator::Load(sw, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::CartesianTransformationOperator." << std::endl;
 	return false;
     }
@@ -60,31 +64,27 @@ CartesianTransformationOperator2D::Load(STEPWrapper *sw,SDAI_Application_instanc
 }
 
 void
-CartesianTransformationOperator2D::Print(int level) {
-    TAB(level); std::cout << CLASSNAME << ":" << GeometricRepresentationItem::name << "(";
+CartesianTransformationOperator2D::Print(int level)
+{
+    TAB(level);
+    std::cout << CLASSNAME << ":" << GeometricRepresentationItem::name << "(";
     std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-    TAB(level); std::cout << "Inherited Attributes:" << std::endl;
-    CartesianTransformationOperator::Print(level+1);
+    TAB(level);
+    std::cout << "Inherited Attributes:" << std::endl;
+    CartesianTransformationOperator::Print(level + 1);
 }
 
 STEPEntity *
-CartesianTransformationOperator2D::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
-    Factory::OBJECTS::iterator i;
-    if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
-	CartesianTransformationOperator2D *object = new CartesianTransformationOperator2D(sw,sse->STEPfile_id);
+CartesianTransformationOperator2D::GetInstance(STEPWrapper *sw, int id)
+{
+    return new CartesianTransformationOperator2D(sw, id);
+}
 
-	Factory::AddObject(object);
-
-	if (!object->Load(sw, sse)) {
-	    std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
-	    delete object;
-	    return NULL;
-	}
-	return static_cast<STEPEntity *>(object);
-    } else {
-	return (*i).second;
-    }
+STEPEntity *
+CartesianTransformationOperator2D::Create(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
+    return STEPEntity::CreateEntity(sw, sse, GetInstance, CLASSNAME);
 }
 
 bool

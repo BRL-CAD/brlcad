@@ -1,7 +1,7 @@
 /*                         S T L - G . C
  * BRL-CAD
  *
- * Copyright (c) 2002-2012 United States Government as represented by
+ * Copyright (c) 2002-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -72,17 +72,17 @@ static int bot_fcurr=0;		/* current bot face */
 static void
 usage(const char *argv0)
 {
-    bu_log("%s [-db] [-t tolerance] [-N forced_name] [-i initial_ident] [-I constant_ident] [-m material_code] [-c units_str] [-x rt_debug_flag] input.stl output.g\n", argv0);
+    bu_log("Usage: %s [-db] [-t tolerance] [-N forced_name] [-i initial_ident] [-I constant_ident] [-m material_code] [-c units_str] [-x rt_debug_flag] input.stl output.g\n", argv0);
     bu_log("	where input.stl is a STereoLithography file\n");
     bu_log("	and output.g is the name of a BRL-CAD database file to receive the conversion.\n");
-    bu_log("	The -b option specifies that the input file is in the binary STL format (default is ASCII). \n");
-    bu_log("	The -c option specifies the units used in the STL file (units_str may be \"in\", \"ft\", ... default is \"mm\"\n");
-    bu_log("	The -N option specifies a name to use for the object.\n");
     bu_log("	The -d option prints additional debugging information.\n");
+    bu_log("	The -b option specifies that the input file is in the binary STL format (default is ASCII). \n");
+    bu_log("	The -t option specifies the minimum distance between two distinct vertices (mm).\n");
+    bu_log("	The -N option specifies a name to use for the object.\n");
     bu_log("	The -i option sets the initial region ident number (default is 1000).\n");
     bu_log("	The -I option sets the ident number that will be assigned to all regions (conflicts with -i).\n");
     bu_log("	The -m option sets the integer material code for all the parts (default is 1).\n");
-    bu_log("	The -t option specifies the minumim distance between two distinct vertices (mm).\n");
+    bu_log("	The -c option specifies the units used in the STL file (units_str may be \"in\", \"ft\", ... default is \"mm\"\n");
     bu_log("	The -x option specifies an RT debug flags (see raytrace.h).\n");
 }
 
@@ -113,7 +113,7 @@ mk_unique_brlcad_name(struct bu_vls *name)
     c = bu_vls_addr(name);
 
     while (*c != '\0') {
-	if (*c == '/' || !isprint(*c)) {
+	if (*c == '/' || !isprint((int)*c)) {
 	    *c = '_';
 	}
 	c++;
@@ -148,10 +148,10 @@ Convert_part_ascii(char line[MAX_LINE_SIZE])
     int solid_in_region=0;
 
     if (RT_G_DEBUG & DEBUG_MEM_FULL)
-	bu_prmem("At start of Conv_prt():\n");
+	bu_prmem("At start of Convert_part_ascii():\n");
 
     if (RT_G_DEBUG & DEBUG_MEM_FULL) {
-	bu_log("Barrier check at start of Convet_part:\n");
+	bu_log("Barrier check at start of Convert_part_ascii:\n");
 	if (bu_mem_barriercheck())
 	    bu_exit(EXIT_FAILURE, "Barrier check failed!\n");
     }
@@ -162,7 +162,7 @@ Convert_part_ascii(char line[MAX_LINE_SIZE])
 
     start = (-1);
     /* skip leading blanks */
-    while (isspace(line[++start]) && line[start] != '\0');
+    while (isspace((int)line[++start]) && line[start] != '\0');
     if (bu_strncmp(&line[start], "solid", 5) && bu_strncmp(&line[start], "SOLID", 5)) {
 	bu_log("Convert_part_ascii: Called for non-part\n%s\n", line);
 	return;
@@ -170,7 +170,7 @@ Convert_part_ascii(char line[MAX_LINE_SIZE])
 
     /* skip blanks before name */
     start += 4;
-    while (isspace(line[++start]) && line[start] != '\0');
+    while (isspace((int)line[++start]) && line[start] != '\0');
 
     if (forced_name) {
 	bu_vls_strcpy(&region_name, forced_name);
@@ -182,7 +182,7 @@ Convert_part_ascii(char line[MAX_LINE_SIZE])
 	bu_vls_trimspace(&region_name);
 	ptr = bu_vls_addr(&region_name);
 	while (*ptr != '\0') {
-	    if (isspace(*ptr)) {
+	    if (isspace((int)*ptr)) {
 		bu_vls_trunc(&region_name, ptr - bu_vls_addr(&region_name));
 		break;
 	    }
@@ -227,7 +227,7 @@ Convert_part_ascii(char line[MAX_LINE_SIZE])
 
     while (bu_fgets(line1, MAX_LINE_SIZE, fd_in) != NULL) {
 	start = (-1);
-	while (isspace(line1[++start]));
+	while (isspace((int)line1[++start]));
 	if (!bu_strncmp(&line1[start], "endsolid", 8) || !bu_strncmp(&line1[start], "ENDSOLID", 8)) {
 	    break;
 	} else if (!bu_strncmp(&line1[start], "color", 5) || !bu_strncmp(&line1[start], "COLOR", 5)) {
@@ -244,7 +244,7 @@ Convert_part_ascii(char line[MAX_LINE_SIZE])
 	    VSET(normal, 0.0, 0.0, 0.0);
 
 	    start += 4;
-	    while (line1[++start] && isspace(line1[start]));
+	    while (line1[++start] && isspace((int)line1[start]));
 
 	    if (line1[start]) {
 		if (!bu_strncmp(&line1[start], "normal", 6) || !bu_strncmp(&line1[start], "NORMAL", 6)) {
@@ -265,7 +265,7 @@ Convert_part_ascii(char line[MAX_LINE_SIZE])
 		    bu_exit(EXIT_FAILURE, "Unexpected EOF while reading a loop in a part!\n");
 
 		start = (-1);
-		while (isspace(line1[++start]));
+		while (isspace((int)line1[++start]));
 
 		if (!bu_strncmp(&line1[start], "endloop", 7) || !bu_strncmp(&line1[start], "ENDLOOP", 7))
 		    endloop = 1;
@@ -544,7 +544,7 @@ Convert_input()
     } else {
 	while (bu_fgets(line, MAX_LINE_SIZE, fd_in) != NULL) {
 	    int start = 0;
-	    while (line[start] != '\0' && isspace(line[start])) {
+	    while (line[start] != '\0' && isspace((int)line[start])) {
 		start++;
 	    }
 	    if (!bu_strncmp(&line[start], "solid", 5) || !bu_strncmp(&line[start], "SOLID", 5))
@@ -566,7 +566,7 @@ main(int argc, char *argv[])
 
     tol.magic = BN_TOL_MAGIC;
 
-    /* this value selected as a resaonable compromise between eliminating
+    /* this value selected as a reasonable compromise between eliminating
      * needed faces and keeping degenerate faces
      */
     tol.dist = 0.0005;	/* default, same as MGED, RT, ... */
@@ -584,6 +584,7 @@ main(int argc, char *argv[])
     }
 
     /* Get command line arguments. */
+    /* Don't need to account for -h and -? ("default" takes care of them).  */
     while ((c = bu_getopt(argc, argv, "bt:i:I:m:dx:N:c:")) != -1) {
 	double tmp;
 
@@ -662,7 +663,7 @@ main(int argc, char *argv[])
 
     BU_LIST_INIT(&all_head.l);
 
-    /* create a tree sructure to hold the input vertices */
+    /* create a tree structure to hold the input vertices */
     tree_root = create_vert_tree();
 
     Convert_input();

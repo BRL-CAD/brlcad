@@ -1,7 +1,7 @@
 /*                   S U B R O U T I N E S . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2012 United States Government as represented by
+ * Copyright (c) 1990-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -77,7 +77,7 @@ void rotate(double *p, double *a, double *np)
 	+   p[2]  * ca[0] * ca[1];
 
 /*
- *	(void)printf("End of subroutine\n");
+ *	printf("End of subroutine\n");
  *	(void)fflush(stdout);
  */
 
@@ -96,7 +96,7 @@ double radians(double a)
 
     double b;	/*  Angle in radians.  */
 
-    b = a * M_PI / 180.;
+    b = a * DEG2RAD;
 
     return b;
 

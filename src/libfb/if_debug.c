@@ -1,7 +1,7 @@
 /*                      I F _ D E B U G . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2012 United States Government as represented by
+ * Copyright (c) 2004-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -53,7 +53,7 @@ deb_open(FBIO *ifp, const char *file, int width, int height)
     /* set debug bit vector */
     if (file != NULL) {
 	const char *cp;
-	for (cp = file; *cp != '\0' && !isdigit(*cp); cp++)
+	for (cp = file; *cp != '\0' && !isdigit((int)*cp); cp++)
 	    ;
 	sscanf(cp, "%d", &ifp->if_debug);
     } else {
@@ -92,18 +92,18 @@ deb_clear(FBIO *ifp, unsigned char *pp)
 }
 
 
-HIDDEN int
+HIDDEN ssize_t
 deb_read(FBIO *ifp, int x, int y, unsigned char *pixelp, size_t count)
 {
     FB_CK_FBIO(ifp);
-    fb_log("fb_read(%p, %4d, %4d, %p, %ld)\n",
+    fb_log("fb_read(%p, %4d, %4d, %p, %lu)\n",
 	   (void *)ifp, x, y,
-	   (void *)pixelp, (long)count);
+	   (void *)pixelp, count);
     return count;
 }
 
 
-HIDDEN int
+HIDDEN ssize_t
 deb_write(FBIO *ifp, int x, int y, const unsigned char *pixelp, size_t count)
 {
     size_t i;
@@ -127,7 +127,7 @@ deb_write(FBIO *ifp, int x, int y, const unsigned char *pixelp, size_t count)
 	    fb_log("\n");
     }
 
-    return (int)count;
+    return count;
 }
 
 

@@ -1,7 +1,7 @@
 #                        R E D . S H
 # BRL-CAD
 #
-# Copyright (c) 2008-2012 United States Government as represented by
+# Copyright (c) 2008-2013 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -403,9 +403,7 @@ init "Changing color to unsafe" red.color.unsafe.out
 cat $SAMPLE | sed 's/color.*=.*/color = -123/g' > $REDFILE
 assert_different
 edit_and_dump sph.r $REDFILE.new
-should_be_different $SAMPLE $REDFILE.new
-cat $REDFILE.new | sed 's/-123//g' > $REDFILE.test
-should_be_same $SAMPLE $REDFILE.test
+should_be_same $SAMPLE $REDFILE.new
 
 ##########
 # shader #

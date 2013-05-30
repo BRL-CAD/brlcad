@@ -111,7 +111,7 @@ void
 squirtframes(int base)
 {
 
-    sf(0, base);	/* start by outputing every base entries at one */
+    sf(0, base);	/* start by outputting every base entries at one */
 
     while (base > 1 ) {
 	sf(base/2, base);
@@ -191,7 +191,7 @@ struct frame *getframe(FILE *in)
 /*
  * get a frame and set it up.
  */
-    newframe = (struct frame *) bu_calloc(1, sizeof(struct frame), "struct frame");
+    BU_ALLOC(newframe, struct frame);
     BU_LIST_INIT_MAGIC(&(newframe->l), MAGIC);
     newframe->number = atoi(yytext);
     newframe->number += frame_offset;
@@ -210,7 +210,7 @@ struct frame *getframe(FILE *in)
 	fprintf(stderr, "getframe: Inserting semi colon.\n");
     }
 /*
- * Now comes the the rest.
+ * Now comes the rest.
  */
     while ((token = yylex()) != END && (token)) {
 	if (token == CLEAN) {

@@ -1,8 +1,9 @@
 /* $NoKeywords: $ */
 /*
 //
-// Copyright (c) 1993-2007 Robert McNeel & Associates. All rights reserved.
-// Rhinoceros is a registered trademark of Robert McNeel & Assoicates.
+// Copyright (c) 1993-2012 Robert McNeel & Associates. All rights reserved.
+// OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
+// McNeel & Associates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
@@ -476,6 +477,7 @@ public:
     );
 
   /*
+  Description:
     Get near and far clipping distances of a point
   Parameters:
     point - [in] 
@@ -502,14 +504,41 @@ public:
 
   /*
   Description:
-    Get near and far clipping distances of a bounding box
+    Get the view plane depth of a point
+  Parameters:
+    point - [in] 
+    view_plane_depth - [out] 
+      positive values are in front of the camera and negative
+      values are behind the camera.
+      If 0 <= point_depth < FrustumNear(), the point's view
+      plane is between the camera and the frustum's near plane.
+      If point_depth > FrustumFar(), the point's view
+      plane is farther from the camera and the frustum's far plane.
+  Returns:
+    True if the point is ing the view frustum and
+    near_dist/far_dist were set.
+    False if the bounding box does not intesect the
+    view frustum.
+  */
+  bool GetPointDepth(       
+       ON_3dPoint point,
+       double* view_plane_depth
+       ) const;
+
+  /*
+  Description:
+    Get near and far clipping distances of a bounding box.
   Parameters:
     bbox - [in] 
       bounding box
     near_dist - [out] 
-      near distance of the box (can be < 0)
+      near distance of the box
+      This value can be zero or negative when the camera
+      location is inside bbox.
     far_dist - [out] 
-      far distance of the box (can be equal to near_dist)
+      far distance of the box
+      This value can be equal to near_dist, zero or negative 
+      when the camera location is in front of the bounding box.
     bGrowNearFar - [in]
       If true and input values of near_dist and far_dist
       are not ON_UNSET_VALUE, the near_dist and far_dist
@@ -518,6 +547,15 @@ public:
     True if the bounding box intersects the view frustum and
     near_dist/far_dist were set.
     False if the bounding box does not intesect the view frustum.
+  Remarks:
+    This function ignores the current value of the viewport's 
+    near and far settings. If the viewport is a perspective
+    projection, the it intersects the semi infinite frustum
+    volume with the bounding box and returns the near and far
+    distances of the intersection.  If the viewport is a parallel
+    projection, it instersects the infinte view region with the
+    bounding box and returns the near and far distances of the
+    projection.
   */
   bool GetBoundingBoxDepth(       
          ON_BoundingBox bbox,
@@ -577,6 +615,14 @@ public:
       If target_dist <= 0.0, it is ignored.
       If target_dist > 0, it is used as described in the
       description of the min_near_over_far parameter.
+    relative_depth_bias - [in]
+      If relative_depth_bias <= 0.0, it is ignored.
+      If relative_depth_bias > 0, it is assumed that
+      the requested near_dist and far_dist were calculated
+      assuming no depth bias and the values will be
+      appropriately adjusted to ensure the frustum's 
+      near and far clipping planes will not clip biased
+      objects.
   */
   bool SetFrustumNearFar( 
          double near_dist,
@@ -586,18 +632,33 @@ public:
          double target_dist
          );
 
+  bool SetFrustumNearFar( 
+         double near_dist,
+         double far_dist,
+         double min_near_dist,
+         double min_near_over_far,
+         double target_dist,
+         double relative_depth_bias
+         );
+
   // Description:
   //   Get near clipping plane.
   //
   //  near_plane - [out] near clipping plane if camera and frustum
   //      are valid.  The plane's frame is the same as the camera's
   //      frame.  The origin is located at the intersection of the
-  //      camera direction ray and the near clipping plane.
+  //      camera direction ray and the near clipping plane. The plane's
+  //      normal points out of the frustum towards the camera
+  //      location.
   //
   // Returns:
   //   true if camera and frustum are valid.
   bool GetNearPlane( 
     ON_Plane& near_plane 
+    ) const;
+
+  bool GetNearPlaneEquation( 
+    ON_PlaneEquation& near_plane_equation 
     ) const;
 
   // Description:
@@ -606,12 +667,47 @@ public:
   //  far_plane - [out] far clipping plane if camera and frustum
   //      are valid.  The plane's frame is the same as the camera's
   //      frame.  The origin is located at the intersection of the
-  //      camera direction ray and the far clipping plane.
+  //      camera direction ray and the far clipping plane. The plane's
+  //      normal points into the frustum towards the camera location.
   //
   // Returns:
   //   true if camera and frustum are valid.
   bool GetFarPlane( 
     ON_Plane& far_plane 
+    ) const;
+
+  bool GetFarPlaneEquation( 
+    ON_PlaneEquation& far_plane_equation 
+    ) const;
+
+  /*
+  Description:
+    Get the plane that is a specified distance from the camera.
+    This plane is parallel to the frustum's near and far planes.
+  Parameters:
+    view_plane_depth - [in]
+      The distance from the camera location to the view plane. 
+      Positive distances are in front of the camera and
+      negative distances are behind the camera.
+      A value of FrustumNear() will return the frustum's
+      near plane and a valud of FrustumFar() will return
+      the frustum's far plane.
+    view_plane - [out]
+      View plane
+    view_plane_equation - [out]
+      Equation of the view plane.
+  Returns:
+    True if the camera and frustum are valid and view_plane
+    was calculated.  False otherwise.
+  */
+  bool GetViewPlane( 
+    double view_plane_depth,
+    ON_Plane& view_plane 
+    ) const;
+
+  bool GetViewPlaneEquation( 
+    double view_plane_depth,
+    ON_PlaneEquation& view_plane_equation 
     ) const;
 
   /*
@@ -631,13 +727,17 @@ public:
     ON_Plane& left_plane 
     ) const;
 
+  bool GetFrustumLeftPlaneEquation( 
+    ON_PlaneEquation& left_plane_equation 
+    ) const;
+
   /*
   Description:
   Get right world frustum clipping plane.
   Parameters:
     right_plane - [out] 
       frustum right side clipping plane.  The normal points
-      out of the visible region of the frustum.  If the projection
+      into the visible region of the frustum.  If the projection
       is perspective, the origin is at the camera location,
       otherwise the origin isthe point on the plane that is
       closest to the camera location.
@@ -646,6 +746,10 @@ public:
   */
   bool GetFrustumRightPlane( 
     ON_Plane& right_plane 
+    ) const;
+
+  bool GetFrustumRightPlaneEquation( 
+    ON_PlaneEquation& right_plane_equation 
     ) const;
 
   /*
@@ -665,6 +769,9 @@ public:
     ON_Plane& bottom_plane 
     ) const;
 
+  bool GetFrustumBottomPlaneEquation( 
+    ON_PlaneEquation& bottom_plane_equation 
+    ) const;
   /*
   Description:
   Get right world frustum clipping plane.
@@ -680,6 +787,10 @@ public:
   */
   bool GetFrustumTopPlane( 
     ON_Plane& top_plane 
+    ) const;
+
+  bool GetFrustumTopPlaneEquation( 
+    ON_PlaneEquation& top_plane_equation 
     ) const;
 
   // Description:
@@ -712,6 +823,35 @@ public:
   // Returns:
   //   true if camera and frustum are valid.
   bool GetFarRect( 
+          ON_3dPoint& left_bottom,
+          ON_3dPoint& right_bottom,
+          ON_3dPoint& left_top,
+          ON_3dPoint& right_top
+          ) const;
+
+  /*
+  Description:
+    Get the world coordinate corners of the rectangle of
+    a view plane that is a specified distance from the camera.
+    This rectangle is parallel to the frustum's near and far planes.
+  Parameters:
+    view_plane_depth - [in]
+      The distance from the camera location to the view plane. 
+      Positive distances are in front of the camera and
+      negative distances are behind the camera.
+      A value of FrustumNear() will return the frustum's
+      near rectangle and a valud of FrustumFar() will return
+      the frustum's far rectangle.
+    left_bottom - [out]
+    right_bottom - [out]
+    left_top - [out]
+    right_top - [out]
+  Returns:
+    True if the camera and frustum are valid and view_plane
+    was calculated.  False otherwise.
+  */
+  bool GetViewPlaneRect(
+          double view_plane_depth,
           ON_3dPoint& left_bottom,
           ON_3dPoint& right_bottom,
           ON_3dPoint& left_top,
@@ -769,6 +909,18 @@ public:
         int* port_near=NULL,  
         int* port_far=NULL   
         ) const;
+
+  /* 
+  Returns:
+    abs(port_right - port_left)
+  */
+  int ScreenPortWidth() const;
+
+  /* 
+  Returns:
+    abs(port_bottom - port_top)
+  */
+  int ScreenPortHeight() const;
 
   bool GetScreenPortAspect( double& ) const; // port's |width/height|
 
@@ -921,9 +1073,6 @@ public:
   */
   bool SetViewScale( double x, double y );
   void GetViewScale( double* x, double* y ) const;
-  
-  // OBSOLETE - use SetViewScale
-  //__declspec(deprecated) bool ScaleView( double x, double y, double z );
 
   /*
   Description:
@@ -1014,8 +1163,111 @@ public:
   */
   double TargetDistance( bool bUseFrustumCenterFallback ) const;
 
-  void SetMinNearOverFar(double);
-  double MinNearOverFar() const;
+  /*
+  Description:    
+    Get suggested values for setting the perspective minimum
+    near distance and minimum near/far ratio.
+  Parameters:      
+    camera_location - [in]
+    depth_buffer_bit_depth - [in]
+      typically 32, 24, 16 or 8, but any positive value can be 
+      passed in.
+    min_near_dist - [out]
+      Suggest value for passing to SetPerspectiveMinNearDist().     
+    min_near_over_far - [out]
+      Suggest value for passing to SetPerspectiveMinNearOverFar().     
+  */
+  static void GetPerspectiveClippingPlaneConstraints( 
+        ON_3dPoint camera_location,
+        unsigned int depth_buffer_bit_depth,
+        double* min_near_dist,
+        double* min_near_over_far
+        );
+
+  /*
+  Description:
+    Calculate the value to add to homogeneous "z" clipping coordinate
+    that corresponds to moving the corresponding euclidean camera
+    coordinate by relative_depth_bias*(far - near).
+  Parameters:
+    relative_depth_bias - [in]
+      signed relative bias. 
+      = 0: no bias, 
+      > 0: bias towards frustum's near clipping plane
+      < 0: bias towards frustum's far clipping plane
+      When you have curves and points that are "on" shaded objects,
+      values around 1/256 work well to move the wire objects
+      in front of or behind shaded objects.
+    clip_z [-in]
+    clip_w [-in]
+      clip_z and clip_w are the homogeneous "w" and "w" coordinates
+      of a homogeneous clipping coordinate point.
+  Returns:
+    The clipping coordinate depth bias to add to the z-clipping
+    coordinate that corresponds to adding cam_depth_bias
+    to the z camera coordinate.
+  Remarks:
+    For perspective views, this bias is largest in the vicinity
+    of the frustum's near clipping plane and smallest in the
+    vicinity of the frustum's far clipping plane.
+    For orthographic projectsions, this bias is constant.
+  */
+  double ClipCoordDepthBias(
+    double relative_depth_bias,
+    double clip_z, 
+    double clip_w
+    ) const;
+
+  /*
+  Description:
+    Calculate a transformation to apply to clipping coordinates to
+    bias their depth.
+
+  Parameters:
+    relative_depth_bias - [in]
+      signed relative bias. 
+      = 0: no bias, 
+      > 0: bias towards frustum's near clipping plane
+      < 0: bias towards frustum's far clipping plane
+      When you have curves and points that are "on" shaded objects,
+      values around 1/512 work well to move the wire objects
+      in front of or behind shaded objects.
+
+    clip_bias - [out]
+      clip_bias = cam2clip * delta * clip2cam,
+      where delta = 1 0 0 0 
+                    0 1 0 0
+                    0 0 1 D
+                    0 0 0 1
+      and D = relative_depth_bias*(far-near).
+
+  Returns:
+    True if the function worked.  False if the frustum settings
+    are not valild, in which cate the identity matrix is returned.
+
+  Remarks:
+    The inverse of the transformations returned by 
+    GetClipCoordDepthBiasXform(+r,...) is the transformation
+    returned by GetClipCoordDepthBiasXform(-r,...).
+  */
+  bool GetClipCoordDepthBiasXform( 
+    double relative_depth_bias,
+    ON_Xform& clip_bias
+    ) const;
+
+  /*
+  Description:
+    Set suggested the perspective minimum near distance and
+    minimum near/far ratio to the suggested values returned
+    by GetPerspectiveClippingPlaneConstraints().
+  Parameters:
+    depth_buffer_bit_depth - [in]
+      typically 32, 24, 16 or 8, but any positive value can be 
+      passed in.
+  */
+  void SetPerspectiveClippingPlaneConstraints(
+        unsigned int depth_buffer_bit_depth
+        );
 
   /*
   Description:
@@ -1200,6 +1452,12 @@ private:
   // These values are not saved in 3dm files.
   double m__MIN_NEAR_DIST;
   double m__MIN_NEAR_OVER_FAR;
+
+public:
+  static const double DefaultNearDist;        // 0.005
+  static const double DefaultFarDist;         // 1000.0
+  static const double DefaultMinNearDist;     // 0.0001
+  static const double DefaultMinNearOverFar;  // 0.0001
 };
 
 ON_DECL

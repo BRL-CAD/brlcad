@@ -1,7 +1,7 @@
 /*                 AdvancedFace.h
  * BRL-CAD
  *
- * Copyright (c) 1994-2012 United States Government as represented by
+ * Copyright (c) 1994-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -29,22 +29,24 @@
 
 #include "FaceSurface.h"
 
-class AdvancedFace: public FaceSurface {
+class AdvancedFace: public FaceSurface
+{
 private:
-	static string entityname;
+    static string entityname;
+    static EntityInstanceFunc GetInstance;
 
 protected:
 
 public:
-	AdvancedFace();
-	virtual ~AdvancedFace();
-	AdvancedFace(STEPWrapper *sw,int step_id);
-	bool Load(STEPWrapper *sw, SDAI_Application_instance *sse);
-	virtual bool LoadONBrep(ON_Brep *brep);
-	virtual void Print(int level);
+    AdvancedFace();
+    virtual ~AdvancedFace();
+    AdvancedFace(STEPWrapper *sw, int step_id);
+    bool Load(STEPWrapper *sw, SDAI_Application_instance *sse);
+    virtual bool LoadONBrep(ON_Brep *brep);
+    virtual void Print(int level);
 
-	//static methods
-	static STEPEntity *Create(STEPWrapper *sw,SDAI_Application_instance *sse);
+    //static methods
+    static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
 #endif /* ADVANCEDFACE_H_ */

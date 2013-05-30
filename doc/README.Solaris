@@ -40,5 +40,5 @@ into a shared library being compiled (e.g. attempting to link a system
 libz.a into the png library distributed in src/other/libpng being
 compiled as libpng.so).  If this happens, it likely indicates a problem
 with the CMake build logic and should be reported as a bug - you may also
-need to install a shared version of the library.  Another possibility 
+need to install a shared version of the library.  Another possibility
 would be to add -mipure-text to the linker flags.

@@ -1,7 +1,7 @@
 /*                 FunctionallyDefinedTransformation.h
  * BRL-CAD
  *
- * Copyright (c) 1994-2012 United States Government as represented by
+ * Copyright (c) 1994-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -31,23 +31,25 @@
 
 #include "Transformation.h"
 
-class FunctionallyDefinedTransformation : public Transformation {
+class FunctionallyDefinedTransformation : public Transformation
+{
 private:
-	static string entityname;
+    static string entityname;
+    static EntityInstanceFunc GetInstance;
 
 protected:
-	string name;
-	string description;
+    string name;
+    string description;
 
 public:
-	FunctionallyDefinedTransformation();
-	virtual ~FunctionallyDefinedTransformation();
-	FunctionallyDefinedTransformation(STEPWrapper *sw,int step_id);
-	bool Load(STEPWrapper *sw,SDAI_Application_instance *sse);
-	virtual void Print(int level);
+    FunctionallyDefinedTransformation();
+    virtual ~FunctionallyDefinedTransformation();
+    FunctionallyDefinedTransformation(STEPWrapper *sw, int step_id);
+    bool Load(STEPWrapper *sw, SDAI_Application_instance *sse);
+    virtual void Print(int level);
 
-	//static methods
-	static STEPEntity *Create(STEPWrapper *sw,SDAI_Application_instance *sse);
+    //static methods
+    static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
 #endif /* FUNCTIONALLYDEFINEDTRANSFORMATION_H_ */

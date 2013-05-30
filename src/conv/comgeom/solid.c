@@ -1,7 +1,7 @@
 /*                         S O L I D . C
  * BRL-CAD
  *
- * Copyright (c) 1989-2012 United States Government as represented by
+ * Copyright (c) 1989-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -81,10 +81,10 @@ void eat(int count);
  *	-1	failure
  */
 int
-getsoldata(double *dp, int num, int solid_num)
+getsoldata(fastf_t *dp, int num, int solid_num)
 {
     int	cd;
-    double *fp;
+    fastf_t *fp;
     int	i;
     int	j;
 
@@ -100,7 +100,7 @@ getsoldata(double *dp, int num, int solid_num)
 	     * solid type should be blank
 	     */
 	    if ((version == 5 && scard[5] != ' ') ||
-                (version == 4 && scard[3] != ' ')) {
+		(version == 4 && scard[3] != ' ')) {
 		printf("solid %d (continuation) card %d non-blank\n",
 		       solid_num, cd);
 		return -1;
@@ -131,10 +131,10 @@ getsoldata(double *dp, int num, int solid_num)
  *	-1	failure
  */
 int
-getxsoldata(double *dp, int num, int solid_num)
+getxsoldata(fastf_t *dp, int num, int solid_num)
 {
     int	cd;
-    double *fp;
+    fastf_t *fp;
     int	i;
     int	j;
 
@@ -150,7 +150,7 @@ getxsoldata(double *dp, int num, int solid_num)
 	     * solid type should be blank
 	     */
 	    if ((version == 5 && scard[5] != ' ') ||
-                (version == 4 && scard[3] != ' ')) {
+		(version == 4 && scard[3] != ' ')) {
 		printf("solid %d (continuation) card %d non-blank\n",
 		       solid_num, cd);
 		return -1;
@@ -203,7 +203,7 @@ getsolid(void)
     vect_t	work;
     double	m1, m2;		/* Magnitude temporaries */
     char	*name = NULL;
-    double	dd[4*6];	/* 4 cards of 6 nums each */
+    fastf_t	dd[4*6];	/* 4 cards of 6 nums each */
     point_t	tmp[8];		/* 8 vectors of 3 nums each */
     int	ret;
 #define D(_i)	(&(dd[_i*3]))
@@ -264,8 +264,8 @@ getsolid(void)
 	while ((c = *cp) != '\0') {
 	    if (!isascii(c)) {
 		*cp++ = '?';
-	    } else if (isupper(c)) {
-		*cp++ = tolower(c);
+	    } else if (isupper((int)c)) {
+		*cp++ = tolower((int)c);
 	    } else {
 		cp++;
 	    }
@@ -284,45 +284,45 @@ getsolid(void)
     if (BU_STR_EQUAL(solid_type, "ars")) {
 	int		ncurves;
 	int		pts_per_curve;
-	double		**curve;
+	fastf_t		**curve;
 
 	ncurves = getint(scard, 10, 10);
 	pts_per_curve = getint(scard, 20, 10);
 
 	/* Allocate curves pointer array */
-	curve = (double **)bu_malloc((ncurves+1)*sizeof(double *), "curve");
+	curve = (fastf_t **)bu_malloc((ncurves+1)*sizeof(fastf_t *), "curve");
 
 	/* Allocate space for a curve, and read it in */
 	for (i = 0; i < ncurves; i++) {
-	    curve[i] = (double *)bu_malloc((pts_per_curve+1)*3*sizeof(double), "curve[i]");
+	    curve[i] = (fastf_t *)bu_malloc((pts_per_curve+1)*3*sizeof(fastf_t), "curve[i]");
 
 	    /* Get data for this curve */
 	    if (getxsoldata(curve[i], pts_per_curve*3, sol_work) < 0) {
 		printf("ARS %d: getxsoldata failed, curve %d\n",
 		       sol_work, i);
-                bu_free(name, "name");
+		bu_free(name, "name");
 		return -1;
 	    }
 	}
 	if ((ret = mk_ars(outfp, name, ncurves, pts_per_curve, curve)) < 0) {
 	    printf("mk_ars(%s) failed\n", name);
 	    /* Need to free memory ONLY if mk_ars fails; 'ret' is returned below */
-            for (i = 0; i < ncurves; i++) {
-	        bu_free((char *)curve[i], "curve[i]");
-            }
-            bu_free((char **)curve, "curve");
+	    for (i = 0; i < ncurves; i++) {
+		bu_free((char *)curve[i], "curve[i]");
+	    }
+	    bu_free((char **)curve, "curve");
 	}
 	bu_free(name, "name");
 	return ret;
     }
 
     if (BU_STR_EQUAL(solid_type, "rpp")) {
-	double	min[3], max[3];
+	fastf_t min[3], max[3];
 
 	if (getsoldata(dd, 2*3, sol_work) < 0) {
-            bu_free(name, "name");
+	    bu_free(name, "name");
 	    return -1;
-        }
+	}
 	VSET(min, dd[0], dd[2], dd[4]);
 	VSET(max, dd[1], dd[3], dd[5]);
 	ret = mk_rpp(outfp, name, min, max);
@@ -331,10 +331,10 @@ getsolid(void)
     }
 
     if (BU_STR_EQUAL(solid_type, "box")) {
-        if (getsoldata(dd, 4*3, sol_work) < 0) {
-            bu_free(name, "name");
+	if (getsoldata(dd, 4*3, sol_work) < 0) {
+	    bu_free(name, "name");
 	    return -1;
-        }
+	}
 	VMOVE(T(0), D(0));
 	VADD2(T(1), D(0), D(2));
 	VADD3(T(2), D(0), D(2), D(1));
@@ -352,10 +352,10 @@ getsolid(void)
     if (BU_STR_EQUAL(solid_type, "raw") ||
 	 BU_STR_EQUAL(solid_type, "wed")		/* DoE name */
 	) {
-        if (getsoldata(dd, 4*3, sol_work) < 0) {
-            bu_free(name, "name");
+	if (getsoldata(dd, 4*3, sol_work) < 0) {
+	    bu_free(name, "name");
 	    return -1;
-        }
+	}
 	VMOVE(T(0), D(0));
 	VADD2(T(1), D(0), D(2));
 	VMOVE(T(2), T(1));
@@ -378,9 +378,9 @@ getsolid(void)
 	vect_t	a, b, c;
 
 	if (getsoldata(dd, 1 * 3 + 4, sol_work) < 0) {
-            bu_free(name, "name");
+	    bu_free(name, "name");
 	    return -1;
-        }
+	}
 	a2 = dd[3];		/* XY side length */
 	theta = dd[4];
 	phi = dd[5];
@@ -410,10 +410,10 @@ getsolid(void)
 
     if (BU_STR_EQUAL(solid_type, "arw")) {
 	/* ARbitrary Wedge --- ERIM */
-        if (getsoldata(dd, 4*3, sol_work) < 0) {
-            bu_free(name, "name");
+	if (getsoldata(dd, 4*3, sol_work) < 0) {
+	    bu_free(name, "name");
 	    return -1;
-        }
+	}
 	VMOVE(T(0), D(0));
 	VADD2(T(1), D(0), D(2));
 	VADD3(T(2), D(0), D(2), D(3));
@@ -430,20 +430,20 @@ getsolid(void)
     }
 
     if (BU_STR_EQUAL(solid_type, "arb8")) {
-        if (getsoldata(dd, 8*3, sol_work) < 0) {
-            bu_free(name, "name");
+	if (getsoldata(dd, 8*3, sol_work) < 0) {
+	    bu_free(name, "name");
 	    return -1;
-        }
+	}
 	ret = mk_arb8(outfp, name, dd);
 	bu_free(name, "name");
 	return ret;
     }
 
     if (BU_STR_EQUAL(solid_type, "arb7")) {
-        if (getsoldata(dd, 7*3, sol_work) < 0) {
-            bu_free(name, "name");
+	if (getsoldata(dd, 7*3, sol_work) < 0) {
+	    bu_free(name, "name");
 	    return -1;
-        }
+	}
 	VMOVE(D(7), D(4));
 	ret = mk_arb8(outfp, name, dd);
 	bu_free(name, "name");
@@ -451,10 +451,10 @@ getsolid(void)
     }
 
     if (BU_STR_EQUAL(solid_type, "arb6")) {
-        if (getsoldata(dd, 6*3, sol_work) < 0) {
-            bu_free(name, "name");
+	if (getsoldata(dd, 6*3, sol_work) < 0) {
+	    bu_free(name, "name");
 	    return -1;
-        }
+	}
 	/* Note that the ordering is important, as data is in D(4), D(5) */
 	VMOVE(D(7), D(5));
 	VMOVE(D(6), D(5));
@@ -465,10 +465,10 @@ getsolid(void)
     }
 
     if (BU_STR_EQUAL(solid_type, "arb5")) {
-        if (getsoldata(dd, 5*3, sol_work) < 0) {
-            bu_free(name, "name");
+	if (getsoldata(dd, 5*3, sol_work) < 0) {
+	    bu_free(name, "name");
 	    return -1;
-        }
+	}
 	VMOVE(D(5), D(4));
 	VMOVE(D(6), D(4));
 	VMOVE(D(7), D(4));
@@ -478,10 +478,10 @@ getsolid(void)
     }
 
     if (BU_STR_EQUAL(solid_type, "arb4")) {
-        if (getsoldata(dd, 4*3, sol_work) < 0) {
-            bu_free(name, "name");
+	if (getsoldata(dd, 4*3, sol_work) < 0) {
+	    bu_free(name, "name");
 	    return -1;
-        }
+	}
 	ret = mk_arb4(outfp, name, dd);
 	bu_free(name, "name");
 	return ret;
@@ -489,10 +489,10 @@ getsolid(void)
 
     if (BU_STR_EQUAL(solid_type, "rcc")) {
 	/* V, H, r */
-        if (getsoldata(dd, 2*3+1, sol_work) < 0) {
-            bu_free(name, "name");
+	if (getsoldata(dd, 2*3+1, sol_work) < 0) {
+	    bu_free(name, "name");
 	    return -1;
-        }
+	}
 	ret = mk_rcc(outfp, name, D(0), D(1), dd[6]);
 	bu_free(name, "name");
 	return ret;
@@ -500,10 +500,10 @@ getsolid(void)
 
     if (BU_STR_EQUAL(solid_type, "rec")) {
 	/* V, H, A, B */
-        if (getsoldata(dd, 4*3, sol_work) < 0) {
-            bu_free(name, "name");
+	if (getsoldata(dd, 4*3, sol_work) < 0) {
+	    bu_free(name, "name");
 	    return -1;
-        }
+	}
 	ret = mk_tgc(outfp, name, D(0), D(1),
 		      D(2), D(3), D(2), D(3));
 	bu_free(name, "name");
@@ -512,10 +512,10 @@ getsolid(void)
 
     if (BU_STR_EQUAL(solid_type, "trc")) {
 	/* V, H, r1, r2 */
-        if (getsoldata(dd, 2*3+2, sol_work) < 0) {
-            bu_free(name, "name");
+	if (getsoldata(dd, 2*3+2, sol_work) < 0) {
+	    bu_free(name, "name");
 	    return -1;
-        }
+	}
 	ret = mk_trc_h(outfp, name, D(0), D(1), dd[6], dd[7]);
 	bu_free(name, "name");
 	return ret;
@@ -523,10 +523,10 @@ getsolid(void)
 
     if (BU_STR_EQUAL(solid_type, "tec")) {
 	/* V, H, A, B, p */
-        if (getsoldata(dd, 4*3+1, sol_work) < 0) {
-            bu_free(name, "name");
+	if (getsoldata(dd, 4*3+1, sol_work) < 0) {
+	    bu_free(name, "name");
 	    return -1;
-        }
+	}
 	r1 = 1.0/dd[12];	/* P */
 	VSCALE(D(4), D(2), r1);
 	VSCALE(D(5), D(3), r1);
@@ -538,10 +538,10 @@ getsolid(void)
 
     if (BU_STR_EQUAL(solid_type, "tgc")) {
 	/* V, H, A, B, r1, r2 */
-        if (getsoldata(dd, 4*3+2, sol_work) < 0) {
-            bu_free(name, "name");
+	if (getsoldata(dd, 4*3+2, sol_work) < 0) {
+	    bu_free(name, "name");
 	    return -1;
-        }
+	}
 	r1 = dd[12] / MAGNITUDE(D(2));	/* A/|A| * C */
 	r2 = dd[13] / MAGNITUDE(D(3));	/* B/|B| * D */
 	VSCALE(D(4), D(2), r1);
@@ -554,10 +554,10 @@ getsolid(void)
 
     if (BU_STR_EQUAL(solid_type, "sph")) {
 	/* V, radius */
-        if (getsoldata(dd, 1*3+1, sol_work) < 0) {
-            bu_free(name, "name");
+	if (getsoldata(dd, 1*3+1, sol_work) < 0) {
+	    bu_free(name, "name");
 	    return -1;
-        }
+	}
 	ret = mk_sph(outfp, name, D(0), dd[3]);
 	bu_free(name, "name");
 	return ret;
@@ -567,7 +567,7 @@ getsolid(void)
 	int			numpts;		/* points per wire */
 	int			num;
 	double			dia;
-	double			*pts;		/* 3 entries per pt */
+	fastf_t			*pts;		/* 3 entries per pt */
 	struct	wdb_pipept	*ps;
 	struct	bu_list		head;		/* allow a whole struct for head */
 
@@ -576,10 +576,10 @@ getsolid(void)
 	num = numpts * 3 + 1;			/* 3 entries per pt */
 
 	/* allocate space for the points array */
-	pts = (double *)bu_malloc(num * sizeof(double), "pts");
+	pts = (fastf_t *)bu_malloc(num * sizeof(fastf_t), "pts");
 
 	if (getsoldata(pts, num, sol_work) < 0) {
-            bu_free(name, "name");
+	    bu_free(name, "name");
 	    return -1;
 	}
 	dia = pts[num-1] * 2.0;	/* radius X 2.0 == diameter */
@@ -589,8 +589,7 @@ getsolid(void)
 	 */
 	BU_LIST_INIT(&head);
 	for (i = 0; i < numpts; i++) {
-	    /* malloc a new structure */
-	    ps = (struct wdb_pipept *)bu_malloc(sizeof(struct wdb_pipept), "ps");
+	    BU_ALLOC(ps, struct wdb_pipept);
 
 	    ps->l.magic = WDB_PIPESEG_MAGIC;
 	    VMOVE(ps->pp_coord, &pts[i*3]);	/* 3 pts at a time */
@@ -601,9 +600,9 @@ getsolid(void)
 	}
 
 	if (mk_pipe(outfp, name, &head) < 0) {
-            bu_free(name, "name");
+	    bu_free(name, "name");
 	    return -1;
-        }
+	}
 	mk_pipe_free(&head);
 	bu_free(name, "name");
 	return 0;		/* OK */
@@ -611,10 +610,10 @@ getsolid(void)
 
     if (BU_STR_EQUAL(solid_type, "rpc")) {
 	/* V, H, B, r */
-        if (getsoldata(dd, 3*3+1, sol_work) < 0) {
-            bu_free(name, "name");
+	if (getsoldata(dd, 3*3+1, sol_work) < 0) {
+	    bu_free(name, "name");
 	    return -1;
-        }
+	}
 	ret = mk_rpc(outfp, name, D(0), D(1),
 		      D(2), dd[9]);
 	bu_free(name, "name");
@@ -623,9 +622,9 @@ getsolid(void)
 
     if (BU_STR_EQUAL(solid_type, "rhc")) {
 	/* V, H, B, r, c */
-        if (getsoldata(dd, 3*3+2, sol_work) < 0) {
+	if (getsoldata(dd, 3*3+2, sol_work) < 0) {
 	    return -1;
-        }
+	}
 	ret = mk_rhc(outfp, name, D(0), D(1),
 		      D(2), dd[9], dd[10]);
 	bu_free(name, "name");
@@ -634,10 +633,10 @@ getsolid(void)
 
     if (BU_STR_EQUAL(solid_type, "epa")) {
 	/* V, H, Au, r1, r2 */
-        if (getsoldata(dd, 3*3+2, sol_work) < 0) {
-            bu_free(name, "name");
+	if (getsoldata(dd, 3*3+2, sol_work) < 0) {
+	    bu_free(name, "name");
 	    return -1;
-        }
+	}
 	ret = mk_epa(outfp, name, D(0), D(1),
 		      D(2), dd[9], dd[10]);
 	bu_free(name, "name");
@@ -646,10 +645,10 @@ getsolid(void)
 
     if (BU_STR_EQUAL(solid_type, "ehy")) {
 	/* V, H, Au, r1, r2, c */
-        if (getsoldata(dd, 3*3+3, sol_work) < 0) {
-            bu_free(name, "name");
+	if (getsoldata(dd, 3*3+3, sol_work) < 0) {
+	    bu_free(name, "name");
 	    return -1;
-        }
+	}
 	ret = mk_ehy(outfp, name, D(0), D(1),
 		      D(2), dd[9], dd[10], dd[11]);
 	bu_free(name, "name");
@@ -658,10 +657,10 @@ getsolid(void)
 
     if (BU_STR_EQUAL(solid_type, "eto")) {
 	/* V, N, C, r, rd */
-        if (getsoldata(dd, 3*3+2, sol_work) < 0) {
-            bu_free(name, "name");
+	if (getsoldata(dd, 3*3+2, sol_work) < 0) {
+	    bu_free(name, "name");
 	    return -1;
-        }
+	}
 	ret = mk_eto(outfp, name, D(0), D(1),
 		      D(2), dd[9], dd[10]);
 	bu_free(name, "name");
@@ -680,9 +679,9 @@ getsolid(void)
 	 * ELL1 format is V, A, r
 	 */
 	if (getsoldata(dd, 2*3+1, sol_work) < 0) {
-            bu_free(name, "name");
+	    bu_free(name, "name");
 	    return -1;
-        }
+	}
 	VADD2SCALE(v, D(0), D(1), 0.5); /* V is midpoint */
 
 	VSUB2(work, D(1), D(0));	/* work holds F2 -  F1 */
@@ -700,10 +699,10 @@ getsolid(void)
 	 BU_STR_EQUAL(solid_type, "ell1")) {
 	/* V, A, r */
 	/* GIFT4 name is "ell1", GIFT5 name is "ell" */
-        if (getsoldata(dd, 2*3+1, sol_work) < 0) {
-            bu_free(name, "name");
+	if (getsoldata(dd, 2*3+1, sol_work) < 0) {
+	    bu_free(name, "name");
 	    return -1;
-        }
+	}
 
     ell1:
 	r1 = dd[6];		/* R */
@@ -727,10 +726,10 @@ getsolid(void)
 
     if (BU_STR_EQUAL(solid_type, "ellg")) {
 	/* V, A, B, C */
-        if (getsoldata(dd, 4*3, sol_work) < 0) {
-            bu_free(name, "name");
+	if (getsoldata(dd, 4*3, sol_work) < 0) {
+	    bu_free(name, "name");
 	    return -1;
-        }
+	}
 	ret = mk_ell(outfp, name, D(0), D(1), D(2), D(3));
 	bu_free(name, "name");
 	return ret;
@@ -738,21 +737,21 @@ getsolid(void)
 
     if (BU_STR_EQUAL(solid_type, "tor")) {
 	/* V, N, r1, r2 */
-        if (getsoldata(dd, 2*3+2, sol_work) < 0) {
-            bu_free(name, "name");
+	if (getsoldata(dd, 2*3+2, sol_work) < 0) {
+	    bu_free(name, "name");
 	    return -1;
-        }
+	}
 	ret = mk_tor(outfp, name, D(0), D(1), dd[6], dd[7]);
 	bu_free(name, "name");
 	return ret;
     }
 
     if (BU_STR_EQUAL(solid_type, "haf")) {
-        /* N, d */
-        if (getsoldata(dd, 1*3+1, sol_work) < 0) {
-            bu_free(name, "name");
+	/* N, d */
+	if (getsoldata(dd, 1*3+1, sol_work) < 0) {
+	    bu_free(name, "name");
 	    return -1;
-        }
+	}
 	ret = mk_half(outfp, name, D(0), -dd[3]);
 	bu_free(name, "name");
 	return ret;
@@ -779,8 +778,8 @@ read_arbn(char *name)
     int	neq;			/* # planes from equation */
     int	nae;			/* # planes from az, el & vertex index */
     int	nface;			/* total number of faces */
-    double	*input_points = (double *)0;
-    double	*vertex = (double *)0;	/* vertex list of final solid */
+    fastf_t *input_points = NULL;
+    double	*vertex = NULL;	/* vertex list of final solid */
     int	last_vertex;		/* index of first unused vertex */
     int	max_vertex;		/* size of vertex array */
     int	*used = (int *)0;	/* plane eqn use count */
@@ -826,11 +825,11 @@ read_arbn(char *name)
 
     if (npt >= 1) {
 	/* Obtain vertex input_points */
-	input_points = (double *)bu_malloc(npt*3*sizeof(double), "input_points");
+	input_points = (fastf_t *)bu_malloc(npt*3*sizeof(fastf_t), "input_points");
 
 	if (getxsoldata(input_points, npt*3, sol_work) < 0) {
 	    bu_free((char *)input_points, "input_points");
-	    input_points = (double *)0;
+	    input_points = NULL;
 	    goto bad;
 	}
     }
@@ -978,11 +977,11 @@ read_arbn(char *name)
 
     /* Release storage for input points */
     bu_free((char *)input_points, "input_points");
-    input_points = (double *)0;
+    input_points = NULL;
 
     /*
      *  ARBN must be convex.  Test for concavity.
-     *  Byproduct is an enumeration of all the verticies.
+     *  Byproduct is an enumeration of all the vertices.
      */
     last_vertex = max_vertex = 0;
 

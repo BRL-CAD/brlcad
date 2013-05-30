@@ -66,23 +66,14 @@ chan_permute_LDADD = ${BU}
 
 noinst_HEADERS = cattrack.h
 
-man_MANS = \
-	anim_script.1 \
-	anim_sort.1 \
-	anim_time.1 \
-	anim_track.1 \
-	anim_turn.1 \
-	chan_mult.1 \
-	chan_permute.1
-
-EXTRA_DIST = $(man_MANS) CMakeLists.txt
+EXTRA_DIST = CMakeLists.txt
 
 include $(top_srcdir)/misc/Makefile.defs
 
 FAST_OBJECTS = \
 	$(anim_cascade_OBJECTS) \
 	$(anim_fly_OBJECTS) \
-	$(anim_harddrack_OBJECTS) \
+	$(anim_hardtrack_OBJECTS) \
 	$(anim_keyread_OBJECTS) \
 	$(anim_lookat_OBJECTS) \
 	$(anim_offset_OBJECTS) \

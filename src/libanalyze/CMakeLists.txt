@@ -9,13 +9,14 @@ BRLCAD_LIB_INCLUDE_DIRS(analyze ANALYZE_INCLUDE_DIRS "")
 set(LIBANALYZE_SOURCES
   density.c
   overlaps.c
+  voxels.c
   )
 
-#BRLCAD_ADDEXEC(test_density test_density.c "libanalyze;libbu" NO_INSTALL)
+add_subdirectory(tests)
 
-BRLCAD_ADDLIB(libanalyze "${LIBANALYZE_SOURCES}" libbu)
+BRLCAD_ADDLIB(libanalyze "${LIBANALYZE_SOURCES}" "libbu;librt")
 SET_TARGET_PROPERTIES(libanalyze PROPERTIES VERSION 20.0.1 SOVERSION 20)
-CMAKEFILES(Makefile.am test_density.c)
+CMAKEFILES(Makefile.am)
 
 # Local Variables:
 # tab-width: 8

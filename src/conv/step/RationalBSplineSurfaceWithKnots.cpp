@@ -1,7 +1,7 @@
 /*                 RationalBSplineSurfaceWithKnots.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2012 United States Government as represented by
+ * Copyright (c) 1994-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -31,32 +31,36 @@
 
 #define CLASSNAME "RationalBSplineSurfaceWithKnots"
 #define ENTITYNAME "Rational_B_Spline_Surface_With_Knots"
-string RationalBSplineSurfaceWithKnots::entityname = Factory::RegisterClass(ENTITYNAME,(FactoryMethod)RationalBSplineSurfaceWithKnots::Create);
+string RationalBSplineSurfaceWithKnots::entityname = Factory::RegisterClass(ENTITYNAME, (FactoryMethod)RationalBSplineSurfaceWithKnots::Create);
 
-RationalBSplineSurfaceWithKnots::RationalBSplineSurfaceWithKnots() {
+RationalBSplineSurfaceWithKnots::RationalBSplineSurfaceWithKnots()
+{
     step = NULL;
     id = 0;
 }
 
-RationalBSplineSurfaceWithKnots::RationalBSplineSurfaceWithKnots(STEPWrapper *sw,int step_id) {
+RationalBSplineSurfaceWithKnots::RationalBSplineSurfaceWithKnots(STEPWrapper *sw, int step_id)
+{
     step = sw;
     id = step_id;
 }
 
-RationalBSplineSurfaceWithKnots::~RationalBSplineSurfaceWithKnots() {
+RationalBSplineSurfaceWithKnots::~RationalBSplineSurfaceWithKnots()
+{
 }
 
 bool
-RationalBSplineSurfaceWithKnots::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
-    step=sw;
+RationalBSplineSurfaceWithKnots::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
+    step = sw;
     id = sse->STEPfile_id;
 
     // load base class attributes
-    if ( !RationalBSplineSurface::Load(step,sse) ) {
+    if (!RationalBSplineSurface::Load(step, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::RationalBSplineSurface." << std::endl;
 	return false;
     }
-    if ( !BSplineSurfaceWithKnots::Load(step,sse) ) {
+    if (!BSplineSurfaceWithKnots::Load(step, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::BSplineSurfaceWithKnots." << std::endl;
 	return false;
     }
@@ -65,30 +69,26 @@ RationalBSplineSurfaceWithKnots::Load(STEPWrapper *sw,SDAI_Application_instance 
 }
 
 void
-RationalBSplineSurfaceWithKnots::Print(int level) {
-    TAB(level); std::cout << CLASSNAME << ":" << name << "(";
+RationalBSplineSurfaceWithKnots::Print(int level)
+{
+    TAB(level);
+    std::cout << CLASSNAME << ":" << name << "(";
     std::cout << "ID:" << STEPid() << ")" << std::endl;
 
     RationalBSplineSurface::Print(level);
     BSplineSurfaceWithKnots::Print(level);
 }
+
 STEPEntity *
-RationalBSplineSurfaceWithKnots::Create(STEPWrapper *sw,SDAI_Application_instance *sse){
-    Factory::OBJECTS::iterator i;
-    if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
-	RationalBSplineSurfaceWithKnots *object = new RationalBSplineSurfaceWithKnots(sw,sse->STEPfile_id);
+RationalBSplineSurfaceWithKnots::GetInstance(STEPWrapper *sw, int id)
+{
+    return new RationalBSplineSurfaceWithKnots(sw, id);
+}
 
-	Factory::AddObject(object);
-
-	if (!object->Load(sw,sse)) {
-	    std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
-	    delete object;
-	    return NULL;
-	}
-	return static_cast<STEPEntity *>(object);
-    } else {
-	return (*i).second;
-    }
+STEPEntity *
+RationalBSplineSurfaceWithKnots::Create(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
+    return STEPEntity::CreateEntity(sw, sse, GetInstance, CLASSNAME);
 }
 
 // Local Variables:

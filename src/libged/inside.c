@@ -1,7 +1,7 @@
 /*                        I N S I D E . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2012 United States Government as represented by
+ * Copyright (c) 2008-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -84,7 +84,7 @@ static char *p_arb8[] = {
     "Enter thickness for face 1485: ",
     "Enter thickness for face 2376: ",
     "Enter thickness for face 1265: ",
-    "Enter thickness for face 3478: ",
+    "Enter thickness for face 3487: ",
 };
 
 
@@ -148,14 +148,14 @@ arbin(struct ged *gedp,
       plane_t planes[6])
 {
     struct rt_arb_internal *arb = (struct rt_arb_internal *)ip->idb_ptr;
-    point_t center_pt;
+    point_t center_pt = VINIT_ZERO;
     int num_pts=8;	/* number of points to solve using rt_arb_3face_intersect */
     int i;
 
     RT_ARB_CK_MAGIC(arb);
 
     /* find reference point (center_pt[3]) to find direction of normals */
-    rt_arb_centroid(center_pt, arb, cgtype);
+    rt_arb_centroid(&center_pt, ip);
 
     /* move new face planes for the desired thicknesses
      * don't do this yet for an arb7 */
@@ -239,7 +239,7 @@ arbin(struct ged *gedp,
 	 * Two edges of intersection have been calculated
 	 * pt[0]<->pt[2]
 	 * pt[1]<->pt[3]
-	 * the one closest to the non-invloved plane (planes[0]) is the
+	 * the one closest to the non-involved plane (planes[0]) is the
 	 * one we want
 	 */
 
@@ -459,7 +459,7 @@ tgcin(struct ged *gedp, struct rt_db_internal *ip, fastf_t thick[6])
 
     /* calculate new height vector */
     if (!ZERO(thick[1])) {
-	/* calculate new height vector using simialr triangles */
+	/* calculate new height vector using similar triangles */
 	ratio = thick[1]/normal_height;
 	VJOIN1(top, tgc->v, 1.0 - ratio, tgc->h);
 
@@ -764,7 +764,7 @@ rpcin(struct ged *UNUSED(gedp), struct rt_db_internal *ip, fastf_t thick[4])
     VSET(Norm,
 	 0.,
 	 2 * bp * yp/(rp * rp),
-	 -1.);
+	 -1.0);
     VUNITIZE(Norm)
 	th = thick[3] / Norm[Y];
     rpc->rpc_r -= th;
@@ -855,7 +855,7 @@ etoin(struct ged *UNUSED(gedp), struct rt_db_internal *ip, fastf_t thick[1])
 
     RT_ETO_CK_MAGIC(eto);
 
-    c = 1. - thick[0]/MAGNITUDE(eto->eto_C);
+    c = 1.0 - thick[0]/MAGNITUDE(eto->eto_C);
     VSCALE(eto->eto_C, eto->eto_C, c);
     eto->eto_rd -= thick[0];
 

@@ -22,11 +22,11 @@ else(HAVE_SYMLINK)
     foreach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
       string(TOUPPER "${CFG_TYPE}" CFG_TYPE_UPPER)
       add_custom_command(
-        OUTPUT ${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${BIN_DIR}/archer ${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${BIN_DIR}/archer.bat
-        COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/archer.bat ${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${BIN_DIR}/archer.bat
-        COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/archer ${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${BIN_DIR}/archer
-        DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/archer ${CMAKE_CURRENT_SOURCE_DIR}/archer.bat
-        )
+	OUTPUT ${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${BIN_DIR}/archer ${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${BIN_DIR}/archer.bat
+	COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/archer.bat ${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${BIN_DIR}/archer.bat
+	COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/archer ${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${BIN_DIR}/archer
+	DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/archer ${CMAKE_CURRENT_SOURCE_DIR}/archer.bat
+	)
       set(archer_cmd_outputs ${archer_cmd_outputs} ${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${BIN_DIR}/archer ${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${BIN_DIR}/archer.bat)
     endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
   endif(NOT CMAKE_CONFIGURATION_TYPES)
@@ -66,14 +66,16 @@ BRLCAD_ADDDATA(plugins/Core/README plugins/archer/Core)
 BRLCAD_ADDDATA(plugins/Commands/README plugins/archer/Command)
 
 set(archer_utility_FILES
-  plugins/Utility/botUtilityP.tcl
   plugins/Utility/attrGroupsDisplayUtilityP.tcl
+  plugins/Utility/botUtilityP.tcl
+  plugins/Utility/lodUtilityP.tcl
   plugins/Utility/README
   )
 BRLCAD_ADDDATA(archer_utility_FILES plugins/archer/Utility)
 
-BRLCAD_ADDDATA(plugins/Utility/botUtilityP/BotUtilityP.tcl plugins/archer/Utility/botUtilityP)
 BRLCAD_ADDDATA(plugins/Utility/attrGroupsDisplayUtilityP/AttrGroupsDisplayUtilityP.tcl	plugins/archer/Utility/attrGroupsDisplayUtilityP)
+BRLCAD_ADDDATA(plugins/Utility/botUtilityP/BotUtilityP.tcl plugins/archer/Utility/botUtilityP)
+BRLCAD_ADDDATA(plugins/Utility/lodUtilityP/LODUtilityP.tcl plugins/archer/Utility/lodUtilityP)
 
 set(archer_wizard_FILES
   plugins/Wizards/humanwizard.tcl
@@ -95,6 +97,7 @@ set(archer_ignore_files
   plugins/Core
   plugins/Utility/attrGroupsDisplayUtilityP
   plugins/Utility/botUtilityP
+  plugins/Utility/lodUtilityP
   plugins/Wizards/humanwizard
   plugins/Wizards/tankwizard
   plugins/Wizards/tirewizard

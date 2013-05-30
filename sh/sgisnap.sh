@@ -2,7 +2,7 @@
 #                      S G I S N A P . S H
 # BRL-CAD
 #
-# Copyright (c) 2004-2012 United States Government as represented by
+# Copyright (c) 2004-2013 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -39,7 +39,7 @@
 #  A general purpose script to photograph an arbitrary image    #
 #  file (.rle, .pix, .bw) on a Dunn camera connected to an      #
 #  SGI workstation.                                             #
-#  The main point of this script is to automagicly determine    #
+#  The main point of this script is to automagically determine  #
 #  the type and size of the image, and then expand it to        #
 #  occupy as much of the actual 1280x1024 screen as possible.   #
 #                                                               #
@@ -64,7 +64,7 @@ FILES="$*"
 for i in $FILES ; do
     WIDTH=0
     HEIGHT=0
-    
+
     BASENAME=`basename $i`
     if test `basename $BASENAME .pix`.pix = $BASENAME ; then
 		# .pix file
@@ -130,7 +130,7 @@ for i in $FILES ; do
 		shift
 	    done
 	    shift           # eliminate getopt provided "--" from $1
-	    
+
 	    if test $WIDTH -ge 1024 -a $HEIGHT -eq 1024 ; then
 				# crunch colormap, to avoid ruining fbgamma
 		rle-fb -c $i
@@ -147,7 +147,7 @@ for i in $FILES ; do
 	    fi
 	fi
     fi
-    
+
     echo "$i: now -w $WIDTH -n $HEIGHT"
     RETVAL=99
     while test $WIDTH -gt 0 -a $RETVAL -ne 0 ; do

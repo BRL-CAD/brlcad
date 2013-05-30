@@ -1,7 +1,7 @@
 /*                         P I X 2 G . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2012 United States Government as represented by
+ * Copyright (c) 2004-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -69,6 +69,7 @@ void usage(void)
     fprintf(stderr, "Usage: %s image_file.pix db_file.g [pixelWidth [pixelHeight [cellSize [objectSize]]]\n", progname);
     bu_exit(-1, NULL);
 }
+
 
 void computeScanline(int UNUSED(pid), genptr_t UNUSED(arg)) {
     int i=0;
@@ -163,6 +164,7 @@ void computeScanline(int UNUSED(pid), genptr_t UNUSED(arg)) {
     }
 
 }
+
 
 int
 main(int ac, char *av[])
@@ -267,6 +269,7 @@ main(int ac, char *av[])
 
     return 0;
 }
+
 
 /*
  * Local Variables:

@@ -1,7 +1,7 @@
 /*                 ContextDependentShapeRepresentation.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2012 United States Government as represented by
+ * Copyright (c) 1994-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -57,7 +57,7 @@ ContextDependentShapeRepresentation::~ContextDependentShapeRepresentation()
 	LIST_OF_REPRESENTATION_RELATIONSHIPS::iterator ic = representation_relation.begin();
 
 	while (ic != representation_relation.end()) {
-	    delete (*ic);
+	    delete(*ic);
 	    ic = representation_relation.erase(ic);
 	}
     } else {
@@ -148,35 +148,27 @@ void ContextDependentShapeRepresentation::Print(int level)
 
     TAB(level);
     std::cout << "Attributes:" << std::endl;
-    TAB(level+1);
+    TAB(level + 1);
     std::cout << "representation_relations:" << std::endl;
     LIST_OF_REPRESENTATION_RELATIONSHIPS::iterator irr;
     for (irr = representation_relation.begin(); irr != representation_relation.end(); ++irr) {
 	(*irr)->Print(level + 1);
     }
-    TAB(level+1);
+    TAB(level + 1);
     std::cout << "represented_product_relation:" << std::endl;
     represented_product_relation->Print(level + 2);
 }
 
 STEPEntity *
+ContextDependentShapeRepresentation::GetInstance(STEPWrapper *sw, int id)
+{
+    return new ContextDependentShapeRepresentation(sw, id);
+}
+
+STEPEntity *
 ContextDependentShapeRepresentation::Create(STEPWrapper *sw, SDAI_Application_instance *sse)
 {
-    Factory::OBJECTS::iterator i;
-    if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
-	ContextDependentShapeRepresentation *object = new ContextDependentShapeRepresentation(sw, sse->STEPfile_id);
-
-	Factory::AddObject(object);
-
-	if (!object->Load(sw, sse)) {
-	    std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
-	    delete object;
-	    return NULL;
-	}
-	return static_cast<STEPEntity *>(object);
-    } else {
-	return (*i).second;
-    }
+    return STEPEntity::CreateEntity(sw, sse, GetInstance, CLASSNAME);
 }
 
 bool ContextDependentShapeRepresentation::LoadONBrep(ON_Brep *brep)

@@ -1,7 +1,7 @@
 /*                        I N T E R P . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2012 United States Government as represented by
+ * Copyright (c) 2004-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -21,7 +21,7 @@
  *  Do the interpolation necessary to change a set of points from
  *  linear to log scale.
  *
- *  Input, a set of linearly seperated samples.
+ *  Input, a set of linearly separated samples.
  *  Output, the same number of samples on a log baseline.
  *
  *  This uses fourth order Lagrange Interpolation and may

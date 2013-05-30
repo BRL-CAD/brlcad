@@ -28,6 +28,10 @@ if(WIN32 AND BRLCAD_ENABLE_OPENGL)
   set(dmw32_srcs dm-wgl.c)
 endif(WIN32 AND BRLCAD_ENABLE_OPENGL)
 
+if(BRLCAD_ENABLE_X11)
+  set(DM_X_LIBS ${X11_LIBRARIES} ${X11_Xi_LIB})
+endif(BRLCAD_ENABLE_X11)
+
 if(BRLCAD_ENABLE_X11 AND BRLCAD_ENABLE_TK)
   list(APPEND libdm_DEFINES DM_X IF_X)
   set(dmx11_srcs dm-X.c)
@@ -52,7 +56,7 @@ endif(BRLCAD_ENABLE_TK AND NOT WIN32)
 set_property(GLOBAL PROPERTY libdm_DEFINES "${libdm_DEFINES}")
 
 # Unfortunately, on Mac OS X the OpenGL headers are not C90
-# compilant - anything pulling them in needs the C99 flag
+# compliant - anything pulling them in needs the C99 flag
 get_property(libdm_C_FLAGS GLOBAL PROPERTY libdm_C_FLAGS)
 list(APPEND libdm_C_DEFINES "${C99_FLAG}")
 set_property(GLOBAL PROPERTY libdm_C_FLAGS "${libdm_C_FLAGS}")
@@ -72,6 +76,7 @@ set(LIBDM_SRCS
   dm-plot.c
   dm-ps.c
   dm_obj.c
+  dm_util.c
   focus.c
   grid.c
   knob.c
@@ -84,7 +89,7 @@ set(LIBDM_SRCS
   vers.c
   )
 
-BRLCAD_ADDLIB(libdm "${LIBDM_SRCS}" "libged;librt;libfb;${X11_LIBRARIES};${X11_Xi_LIB};${DM_TKLIB};${Carbon_LIBRARIES}")
+BRLCAD_ADDLIB(libdm "${LIBDM_SRCS}" "libged;librt;libfb;${DM_X_LIBS};${DM_TKLIB};${Carbon_LIBRARIES}")
 set_target_properties(libdm PROPERTIES VERSION 20.0.1 SOVERSION 20)
 
 if(BRLCAD_BUILD_LOCAL_TK AND BRLCAD_ENABLE_TK)
@@ -99,6 +104,7 @@ set(libdm_ignore_files
   TODO
   )
 CMAKEFILES(${libdm_ignore_files})
+CMAKEFILES(dm_util.h)
 CMAKEFILES(Makefile.am)
 
 # Local Variables:

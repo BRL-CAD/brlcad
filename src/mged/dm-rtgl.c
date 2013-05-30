@@ -1,7 +1,7 @@
 /*                        D M - R T G L . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2012 United States Government as represented by
+ * Copyright (c) 2004-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -78,13 +78,13 @@ struct bu_structparse Rtgl_vparse[] = {
     {"%d", 1, "lighting",	  Rtgl_MV_O(lighting_on),     establish_lighting },
     {"%d", 1, "transparency",	  Rtgl_MV_O(transparency_on), establish_transparency },
     {"%d", 1, "fastfog",	  Rtgl_MV_O(fastfog),	      do_fogHint },
-    {"%f", 1, "density",	  Rtgl_MV_O(fogdensity),      dirty_hook },
+    {"%g", 1, "density",	  Rtgl_MV_O(fogdensity),      dirty_hook },
     {"%d", 1, "has_zbuf",	  Rtgl_MV_O(zbuf),	      BU_STRUCTPARSE_FUNC_NULL },
     {"%d", 1, "has_rgb",	  Rtgl_MV_O(rgb),	      BU_STRUCTPARSE_FUNC_NULL },
     {"%d", 1, "has_doublebuffer", Rtgl_MV_O(doublebuffer),    BU_STRUCTPARSE_FUNC_NULL },
     {"%d", 1, "depth",		  Rtgl_MV_O(depth),	      BU_STRUCTPARSE_FUNC_NULL },
     {"%d", 1, "debug",		  Rtgl_MV_O(debug),	      debug_hook },
-    {"%f", 1, "bound",		  Rtgl_MV_O(bound),	      bound_hook },
+    {"%g", 1, "bound",		  Rtgl_MV_O(bound),	      bound_hook },
     {"%d", 1, "useBound",	  Rtgl_MV_O(boundFlag),	      boundFlag_hook },
     {"",   0,  (char *)0,	  0,			      BU_STRUCTPARSE_FUNC_NULL }
 };
@@ -280,9 +280,18 @@ dirty_hook()
 static void
 zclip_hook()
 {
+    fastf_t bounds[6] = { GED_MIN, GED_MAX, GED_MIN, GED_MAX, GED_MIN, GED_MAX };
+
     dmp->dm_zclip = ((struct rtgl_vars *)dmp->dm_vars.priv_vars)->mvars.zclipping_on;
     view_state->vs_gvp->gv_zclip = dmp->dm_zclip;
     dirty_hook();
+
+    if (dmp->dm_zclip) {
+	bounds[4] = -1.0;
+	bounds[5] = 1.0;
+    }
+
+    DM_SET_WIN_BOUNDS(dmp, bounds);
 }
 
 

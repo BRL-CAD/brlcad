@@ -1,7 +1,7 @@
 /*                       F A C E D E F . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2012 United States Government as represented by
+ * Copyright (c) 1986-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -403,7 +403,7 @@ get_rotfb(fastf_t *plane, const char *argv[], const struct rt_arb_internal *arb)
     plane[2] = sin(fb);
 
     if (argv[2][0] == 'v') {
-      	/* vertex given */
+	/* vertex given */
 	/* strip off 'v', subtract 1 */
 	temp = atoi(argv[2]+1) - 1;
 	plane[W]= VDOT(&plane[0], arb->pt[temp]);

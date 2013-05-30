@@ -1,7 +1,7 @@
 /*                         E R R O R . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2012 United States Government as represented by
+ * Copyright (c) 2004-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -87,7 +87,7 @@ fb_log( const char *fmt, ... )
 	    } else
 		(void) vfprintf( stdout, fmt, ap );
 	(void) fflush( stdout );
-	/* End of line detected by existance of a newline.	*/
+	/* End of line detected by existence of a newline.	*/
 	newline = fmt[strlen( fmt )-1] == '\n';
 	hmredraw();
     } else {

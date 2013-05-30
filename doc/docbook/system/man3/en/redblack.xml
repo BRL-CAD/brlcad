@@ -1,0 +1,762 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='redblack3'>
+<refmeta>
+    <refentrytitle>REDBLACK
+</refentrytitle>
+<manvolnum>3</manvolnum>
+<refmiscinfo class='source'>BRL-CAD</refmiscinfo>
+<refmiscinfo class='manual'>BRL-CAD</refmiscinfo>
+</refmeta>
+
+<refnamediv>
+<refname>redblack</refname>
+<refpurpose>red-black tree operations</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<funcsynopsis>
+<funcsynopsisinfo>
+#include "common.h"
+
+#include &lt;stdio.h&gt;
+
+#include "bu.h"
+
+
+</funcsynopsisinfo>
+<funcprototype>
+<funcdef>struct <function>bu_rb_tree</function> *bu_rb_create</funcdef>
+<paramdef><parameter>description</parameter></paramdef>
+<paramdef><parameter>nm_orders</parameter></paramdef>
+<paramdef><parameter>order_funcs</parameter></paramdef>
+</funcprototype>
+<funcsynopsisinfo>
+
+char *description;
+
+int nm_orders;
+
+</funcsynopsisinfo>
+<funcprototype>
+<funcdef>int ( **<function>order_funcs</function> )</funcdef>
+<void/></funcprototype>
+
+<funcprototype>
+<funcdef>struct <function>bu_rb_tree</function> *bu_rb_create1</funcdef>
+<paramdef><parameter>description</parameter></paramdef>
+<paramdef><parameter>order_func</parameter></paramdef>
+</funcprototype>
+<funcsynopsisinfo>
+
+char *description;
+
+</funcsynopsisinfo>
+<funcprototype>
+<funcdef>int ( *<function>order_func</function> )</funcdef>
+<void/></funcprototype>
+
+<funcprototype>
+<funcdef>void *<function>bu_rb_curr</function></funcdef>
+<paramdef><parameter>tree</parameter></paramdef>
+<paramdef><parameter>order</parameter></paramdef>
+</funcprototype>
+<funcsynopsisinfo>
+
+struct bu_rb_tree *tree;
+
+int order;
+
+
+</funcsynopsisinfo>
+<funcprototype>
+<funcdef>void <function>bu_rb_delete</function></funcdef>
+<paramdef><parameter>tree</parameter></paramdef>
+<paramdef><parameter>order</parameter></paramdef>
+</funcprototype>
+<funcsynopsisinfo>
+
+struct bu_rb_tree *tree;
+
+int order;
+
+
+</funcsynopsisinfo>
+<funcprototype>
+<funcdef>void <function>bu_rb_diagnose_tree</function></funcdef>
+<paramdef><parameter>tree</parameter></paramdef>
+<paramdef><parameter>order</parameter></paramdef>
+<paramdef><parameter>trav_type</parameter></paramdef>
+</funcprototype>
+<funcsynopsisinfo>
+
+struct bu_rb_tree *tree;
+
+int order;
+
+int trav_type;
+
+
+</funcsynopsisinfo>
+<funcprototype>
+<funcdef>void *<function>bu_rb_extreme</function></funcdef>
+<paramdef><parameter>tree</parameter></paramdef>
+<paramdef><parameter>order</parameter></paramdef>
+<paramdef><parameter>sense</parameter></paramdef>
+</funcprototype>
+<funcsynopsisinfo>
+
+struct bu_rb_tree *tree;
+
+int order;
+
+int sense;
+
+
+</funcsynopsisinfo>
+<funcprototype>
+<funcdef>void <function>bu_rb_free</function></funcdef>
+<paramdef><parameter>tree</parameter></paramdef>
+<paramdef><parameter>free_data</parameter></paramdef>
+</funcprototype>
+<funcsynopsisinfo>
+
+struct bu_rb_tree *tree;
+
+</funcsynopsisinfo>
+<funcprototype>
+<funcdef>void ( *<function>free_data</function> )</funcdef>
+<void/></funcprototype>
+
+<funcprototype>
+<funcdef>int <function>bu_rb_insert</function></funcdef>
+<paramdef><parameter>tree</parameter></paramdef>
+<paramdef><parameter>data</parameter></paramdef>
+</funcprototype>
+<funcsynopsisinfo>
+
+struct bu_rb_tree *tree;
+
+void *data;
+
+
+</funcsynopsisinfo>
+<funcprototype>
+<funcdef>int <function>bu_rb_is_uniq</function></funcdef>
+<paramdef><parameter>tree</parameter></paramdef>
+<paramdef><parameter>order</parameter></paramdef>
+</funcprototype>
+<funcsynopsisinfo>
+
+struct bu_rb_tree *tree;
+
+int order;
+
+
+</funcsynopsisinfo>
+<funcprototype>
+<funcdef>void *<function>bu_rb_neighbor</function></funcdef>
+<paramdef><parameter>tree</parameter></paramdef>
+<paramdef><parameter>order</parameter></paramdef>
+<paramdef><parameter>sense</parameter></paramdef>
+</funcprototype>
+<funcsynopsisinfo>
+
+struct bu_rb_tree *tree;
+
+int order;
+
+int sense;
+
+
+</funcsynopsisinfo>
+<funcprototype>
+<funcdef>int <function>bu_rb_rank</function></funcdef>
+<paramdef><parameter>tree</parameter></paramdef>
+<paramdef><parameter>order</parameter></paramdef>
+</funcprototype>
+<funcsynopsisinfo>
+
+struct bu_rb_tree *tree;
+
+int order;
+
+
+</funcsynopsisinfo>
+<funcprototype>
+<funcdef>void *<function>bu_rb_search</function></funcdef>
+<paramdef><parameter>tree</parameter></paramdef>
+<paramdef><parameter>order</parameter></paramdef>
+<paramdef><parameter>data</parameter></paramdef>
+</funcprototype>
+<funcsynopsisinfo>
+
+struct bu_rb_tree *tree;
+
+int order;
+
+void *data;
+
+
+</funcsynopsisinfo>
+<funcprototype>
+<funcdef>void *<function>bu_rb_select</function></funcdef>
+<paramdef><parameter>tree</parameter></paramdef>
+<paramdef><parameter>order</parameter></paramdef>
+<paramdef><parameter>k</parameter></paramdef>
+</funcprototype>
+<funcsynopsisinfo>
+
+struct bu_rb_tree *tree;
+
+int order;
+
+int k;
+
+
+</funcsynopsisinfo>
+<funcprototype>
+<funcdef>void <function>bu_rb_set_uniqv</function></funcdef>
+<paramdef><parameter>tree</parameter></paramdef>
+<paramdef><parameter>vec</parameter></paramdef>
+</funcprototype>
+<funcsynopsisinfo>
+
+struct bu_rb_tree *tree;
+
+bitv_t vec;
+
+
+</funcsynopsisinfo>
+<funcprototype>
+<funcdef>void <function>bu_rb_summarize_tree</function></funcdef>
+<paramdef><parameter>tree</parameter></paramdef>
+</funcprototype>
+<funcsynopsisinfo>
+
+struct bu_rb_tree *tree;
+
+
+</funcsynopsisinfo>
+<funcprototype>
+<funcdef>void <function>bu_rb_uniq_all_off</function></funcdef>
+<paramdef><parameter>tree</parameter></paramdef>
+</funcprototype>
+<funcsynopsisinfo>
+
+struct bu_rb_tree *tree;
+
+
+</funcsynopsisinfo>
+<funcprototype>
+<funcdef>void <function>bu_rb_uniq_all_on</function></funcdef>
+<paramdef><parameter>tree</parameter></paramdef>
+</funcprototype>
+<funcsynopsisinfo>
+
+struct bu_rb_tree *tree;
+
+
+</funcsynopsisinfo>
+<funcprototype>
+<funcdef>int <function>bu_rb_uniq_off</function></funcdef>
+<paramdef><parameter>tree</parameter></paramdef>
+<paramdef><parameter>order</parameter></paramdef>
+</funcprototype>
+<funcsynopsisinfo>
+
+struct bu_rb_tree *tree;
+
+int order;
+
+
+</funcsynopsisinfo>
+<funcprototype>
+<funcdef>int <function>bu_rb_uniq_on</function></funcdef>
+<paramdef><parameter>tree</parameter></paramdef>
+<paramdef><parameter>order</parameter></paramdef>
+</funcprototype>
+<funcsynopsisinfo>
+
+struct bu_rb_tree *tree;
+
+int order;
+
+
+</funcsynopsisinfo>
+<funcprototype>
+<funcdef>void <function>bu_rb_walk</function></funcdef>
+<paramdef><parameter>tree</parameter></paramdef>
+<paramdef><parameter>order</parameter></paramdef>
+<paramdef><parameter>visit</parameter></paramdef>
+<paramdef><parameter>trav_type</parameter></paramdef>
+</funcprototype>
+<funcsynopsisinfo>
+
+struct bu_rb_tree *tree;
+
+int order;
+
+</funcsynopsisinfo>
+<funcprototype>
+<funcdef>void ( *<function>visit</function> )</funcdef>
+<void/></funcprototype>
+<funcsynopsisinfo>
+
+int trav_type;
+
+
+</funcsynopsisinfo>
+</funcsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para>These routines implement red-black trees,
+a form of balanced binary trees,
+in such a way that all the basic dynamic set operations
+(e.g., insertion, deletion, search, minimum, maximum,
+predecessor, and successor)
+and order-statistic operations
+(i.e., select and rank)
+require no more than
+<emphasis remap='I'>O(</emphasis>log <emphasis remap='I'>n)</emphasis>
+time,
+where
+<emphasis remap='I'>n</emphasis>
+is the number of nodes.
+They allow storage of arbitrary data structures
+at tree nodes
+and also support multiple simultaneous orders (trees)
+on the same nodes.
+The trees are based on comparison functions
+like those used by
+<emphasis remap='I'>qsort(3).</emphasis>
+The routines are available only in
+<emphasis remap='I'>libbu(3B).</emphasis></para>
+
+<para><emphasis remap='I'>bu_rb_create</emphasis>
+allocates storage for
+and initializes
+the tree header.
+<emphasis remap='I'>Description</emphasis>
+is an explanatory comment that
+the red-black tree package
+prints in its diagnostics,
+<emphasis remap='I'>nm_orders</emphasis>
+is the number of simultaneous orders,
+and
+<function>order_funcs</function>
+points to the table of comparison functions
+(one for each order).
+These are called with two arguments
+that point to the application data blocks being compared.
+Each function must return an integer
+less than, equal to, or greater than zero
+according as the first argument is to be considered
+less than, equal to, or greater than the second.
+<emphasis remap='I'>bu_rb_create</emphasis>
+returns a pointer to
+a
+<function>bu_rb_tree</function>
+structure.
+This pointer must be saved,
+as it is a required argument to all the other routines.
+<emphasis remap='I'>bu_rb_create1</emphasis>
+is similar,
+except that it creates a tree that supports only the single order
+specified by
+<emphasis remap='I'>order_func.</emphasis></para>
+
+<para>The application can specify that
+the red-black tree package
+may not insert new nodes that compare equal in any of the orders
+to an existing node.
+Such uniqueness enforcement is switch selectable
+and may be controlled independently for each order
+and modified dynamically.
+The default behavior is not to enforce any uniqueness.</para>
+
+<para><function>bu_rb_free</function>
+relinquishes the storage used by
+<emphasis remap='I'>tree,</emphasis>
+calling
+<function>free_data</function>
+to dispose of the application data in the nodes.
+If
+<function>free_data</function>
+equals
+<emphasis remap='I'>BU_RB_RETAIN_DATA</emphasis>
+(defined in <emphasis remap='I'>"bu.h"</emphasis>),
+then the application data blocks are left unaffected.
+Otherwise,
+<function>bu_rb_free</function> calls <function>free_data</function>
+once for each block of application data,
+passing a pointer to the data.
+Since
+<emphasis remap='I'>bu_rb_create1</emphasis>
+allocates its own table of comparison functions,
+a memory leak will result if
+a tree returned by
+<emphasis remap='I'>bu_rb_create1</emphasis>
+is freed before this table is freed.
+For this reason,
+<emphasis remap='I'>bu.h</emphasis>
+provides the macro
+<emphasis remap='I'>bu_rb_free1(tree, free_data),</emphasis>
+which should be used instead of
+<function>bu_rb_free</function>
+when relinquishing a tree created by
+<emphasis remap='I'>bu_rb_create1.</emphasis></para>
+
+<para><function>bu_rb_insert</function>
+creates a new node containing
+<emphasis remap='I'>data</emphasis>
+and adds it to
+<emphasis remap='I'>tree,</emphasis>
+provided that doing so would not violate current uniqueness requirements.
+If a uniqueness requirement would be violated,
+<function>bu_rb_insert</function>
+does nothing but return a negative integer,
+the absolute value of which is the first order for which a violation exists.
+Otherwise,
+the node is inserted in the appropriate place
+in each order,
+as determined by the comparison functions,
+and
+<function>bu_rb_insert</function>
+returns the number of orders
+for which the new node compared equal to an existing node in the tree.</para>
+
+<para><function>bu_rb_uniq_on</function>
+specifies that subsequent insertion of nodes into
+<emphasis remap='I'>tree</emphasis>
+should enforce uniqueness on
+<emphasis remap='I'>order,</emphasis>
+and returns the previous setting of the switch.
+<function>bu_rb_uniq_off</function>
+specifies that subsequent insertion of nodes into
+<emphasis remap='I'>tree</emphasis>
+should proceed without regard for uniqueness on
+<emphasis remap='I'>order,</emphasis>
+and returns the previous setting of the switch.
+The macros
+<emphasis remap='I'>bu_rb_uniq_on1(tree)</emphasis>
+and
+<emphasis remap='I'>bu_rb_uniq_off1(tree)</emphasis>
+available in
+<emphasis remap='I'>"bu.h"</emphasis>,
+are similar,
+except that they control the first (perhaps only) order.
+<function>bu_rb_is_uniq</function>
+returns 1 if uniqueness is currently enforced
+for
+<emphasis remap='I'>order</emphasis>
+in
+<emphasis remap='I'>tree,</emphasis>
+and 0 otherwise.
+The macro
+<emphasis remap='I'>bu_rb_is_uniq1(tree)</emphasis>
+available in
+<emphasis remap='I'>"bu.h"</emphasis>,
+is similar,
+except that it queries the first (perhaps only) order.
+<function>bu_rb_uniq_all_on</function>
+and
+<function>bu_rb_uniq_all_off</function>
+set all
+<emphasis remap='I'>nm_orders</emphasis>
+orders identically on or off,
+and
+<function>bu_rb_set_uniqv</function>
+sets the orders according to the bit vector
+<emphasis remap='I'>vec.</emphasis></para>
+
+<para><function>bu_rb_extreme</function>
+searches through
+<emphasis remap='I'>tree</emphasis>
+to find a minimum or maximum node in one of the orders
+as determined by the corresponding comparison function.
+<emphasis remap='I'>Sense</emphasis>
+is either
+<emphasis remap='I'>SENSE_MIN</emphasis>
+or
+<emphasis remap='I'>SENSE_MAX,</emphasis>
+and
+<emphasis remap='I'>order</emphasis>
+specifies which order to search.
+<function>bu_rb_extreme</function>
+returns a pointer to the extreme data.
+The macros
+<emphasis remap='I'>bu_rb_min(tree, order)</emphasis>
+and
+<emphasis remap='I'>bu_rb_max(tree, order),</emphasis>
+available in
+<emphasis remap='I'>"bu.h"</emphasis>,
+are implemented in terms of
+<function>bu_rb_extreme</function>
+in the obvious way.</para>
+
+<para><function>bu_rb_search</function>
+traverses
+<emphasis remap='I'>tree</emphasis>
+searching for a node of which the contents equals
+<emphasis remap='I'>data</emphasis>
+according to the comparison function
+specified by
+<emphasis remap='I'>order.</emphasis>
+On success,
+<function>bu_rb_search</function>
+returns a pointer to the data in the
+matching node.
+Otherwise, it returns
+<emphasis remap='I'>NULL.</emphasis>
+The macro
+<emphasis remap='I'>bu_rb_search1(tree, data),</emphasis>
+available in
+<emphasis remap='I'>"bu.h"</emphasis>,
+is similar,
+except that it searches the first (perhaps only) order.</para>
+
+<para><function>bu_rb_select</function>
+traverses
+<emphasis remap='I'>tree</emphasis>
+to retrieve the <emphasis remap='I'>k</emphasis>th order statistic
+(i.e.,
+the data block of rank
+<emphasis remap='I'>k,</emphasis>
+the <emphasis remap='I'>k</emphasis>th-smallest data block)
+according to the comparison function
+specified by
+<emphasis remap='I'>order,</emphasis>
+where
+<emphasis remap='I'>k</emphasis>
+is between 1 and the number of nodes in
+<emphasis remap='I'>tree,</emphasis>
+inclusive.
+On success,
+<function>bu_rb_select</function>
+returns a pointer to the block of data of rank
+<emphasis remap='I'>k.</emphasis>
+Otherwise, it returns
+<emphasis remap='I'>NULL.</emphasis>
+The macro
+<emphasis remap='I'>bu_rb_select1(tree, k),</emphasis>
+available in
+<emphasis remap='I'>"bu.h"</emphasis>,
+is similar,
+except that it uses the first (perhaps only) order.</para>
+
+<para><function>bu_rb_walk</function>
+traverses
+<emphasis remap='I'>tree</emphasis>
+according to the comparison function specified by
+<emphasis remap='I'>order.</emphasis>
+The function
+<function>visit</function>
+is called for each node in turn,
+being passed two arguments:
+a pointer to the data at that node
+and the depth of the node in the tree for the specified order.
+The type of tree traversal to perform,
+specified by
+<emphasis remap='I'>trav_type,</emphasis>
+may be any one of
+<emphasis remap='I'>PREORDER, INORDER,</emphasis>
+and
+<emphasis remap='I'>POSTORDER.</emphasis>
+The macro
+<emphasis remap='I'>bu_rb_walk1(tree, visit, trav_type),</emphasis>
+available in
+<emphasis remap='I'>"bu.h"</emphasis>,
+is similar,
+except that it walks the first (perhaps only) order.</para>
+
+<para><function>bu_rb_diagnose_tree</function>
+traverses
+<emphasis remap='I'>tree</emphasis>
+according to the comparison function specified by
+<emphasis remap='I'>order,</emphasis>
+printing information about the various structures.
+The application may optionally store in the
+<emphasis remap='I'>rbt_print</emphasis>
+member of the
+<function>bu_rb_tree</function>
+structure
+the address of an application-specific print routine.
+If this pointer is nonzero,
+<function>bu_rb_diagnose_tree</function>
+dereferences it to print information for the data at each node.
+The type of tree traversal to perform,
+specified by
+<emphasis remap='I'>trav_type,</emphasis>
+may be any one of
+<emphasis remap='I'>PREORDER, INORDER,</emphasis>
+and
+<emphasis remap='I'>POSTORDER.</emphasis></para>
+
+<para>The
+<function>bu_rb_tree</function>
+structure contains a pointer to
+the node most recently accessed
+(e.g., inserted, discovered in a search, or selected by rank).
+When the most recent access failed,
+this current node is undefined.
+The following commands make use of
+the current node:</para>
+
+<para><function>bu_rb_curr</function>
+returns a pointer to the data in the current node in
+<emphasis remap='I'>order,</emphasis>
+or
+<emphasis remap='I'>NULL</emphasis>
+if the current node is undefined.
+The macro
+<emphasis remap='I'>bu_rb_curr1(tree),</emphasis>
+available in
+<emphasis remap='I'>"bu.h"</emphasis>,
+is similar,
+except that it returns a pointer to the data in the current node
+in the first (perhaps only) order.</para>
+
+<para><function>bu_rb_delete</function>
+removes a block of application data from
+<emphasis remap='I'>tree.</emphasis>
+Because the algorithms sometimes cause a single block of data
+to be stored in different nodes for the different orders,
+the application specifies
+<emphasis remap='I'>order,</emphasis>
+which indicates the block of data
+(in the current node) to be removed.
+If the current node is defined,
+<function>bu_rb_delete</function>
+removes this block of data from every order.
+Otherwise,
+it prints a warning and returns.
+The macro
+<emphasis remap='I'>bu_rb_delete1(tree),</emphasis>
+available in
+<emphasis remap='I'>"bu.h"</emphasis>,
+is similar,
+except that it removes the block of data in the first (perhaps only) order.</para>
+
+<para><function>bu_rb_neighbor</function>
+returns a pointer to the data in the node adjacent (in <emphasis remap='I'>order</emphasis>) to
+the current node,
+or
+<emphasis remap='I'>NULL</emphasis>
+if the current node is undefined.
+<emphasis remap='I'>sense,</emphasis>
+which may be one of
+<emphasis remap='I'>SENSE_MIN</emphasis>
+and
+<emphasis remap='I'>SENSE_MAX,</emphasis>
+specifies either predecessor or successor, respectively.
+The macros
+<emphasis remap='I'>bu_rb_pred(tree, order)</emphasis>
+and
+<emphasis remap='I'>bu_rb_succ(tree, order),</emphasis>
+available in
+<emphasis remap='I'>"bu.h"</emphasis>,
+are implemented in terms of
+<function>bu_rb_neighbor</function>
+in the obvious way.</para>
+
+
+<para><function>bu_rb_rank</function>
+returns the rank
+(i.e., position expressed as an integer between
+1 and the number of nodes in
+<emphasis remap='I'>tree,</emphasis>
+inclusive)
+of the current node in
+<emphasis remap='I'>order,</emphasis>
+or
+<emphasis remap='I'>NULL</emphasis>
+if the current node is undefined.
+The macro
+<emphasis remap='I'>bu_rb_rank1(tree),</emphasis>
+available in
+<emphasis remap='I'>"bu.h"</emphasis>,
+is similar,
+except that it uses the first (perhaps only) order.</para>
+
+
+<para>The members
+of the
+<function>bu_rb_tree</function>
+structure,
+as defined in
+<emphasis remap='I'>"bu.h"</emphasis>,
+are classified into three classes
+based on their suitability for direct manipulation by applications.
+Class I,
+members that applications may read directly,
+includes</para>
+
+<para>    uint32_t rbt_magic;     /* Magic no. for integrity check */
+    int  rbt_nm_nodes;  /* Number of nodes */</para>
+
+<para>Class II,
+members that applications may read or write directly
+as necessary,
+includes</para>
+
+<para>    void (*rbt_print)();   /* Data pretty-print function */
+    int  rbt_debug;        /* Debug bits */
+    char *rbt_description; /* Comment for diagnostics */</para>
+
+<para>Class III comprises
+members that applications should not manipulate directly;
+any access should be through the routines provided by
+the red-black tree package.
+They include</para>
+
+<para>    int               rbt_nm_orders;   /* Number of orders */
+    int               (**rbt_order)(); /* Comparison funcs */
+    struct bu_rb_node **rbt_root;      /* The actual trees */
+    char              *rbt_unique;     /* Uniqueness flags */
+    struct bu_rb_node *rbt_current;    /* Current node */
+    struct bu_rb_list rbt_nodes;       /* All nodes */
+    struct bu_rb_list rbt_packages;    /* All packages */
+    struct bu_rb_node *rbt_empty_node; /* Sentinel for nil */</para>
+
+<para>The distinction between classes I and III is not critical,
+but any direct modification of members in either class
+will result in unpredictable (probably dire) results.
+The order of the members within the
+<function>bu_rb_tree</function>
+structure
+is subject to change in future releases.</para>
+
+<para>Diagnostic output may be requested
+by setting the debug bits in the
+<function>bu_rb_tree</function>
+structure
+using the debug bit flags defined in
+<emphasis remap='I'>"bu.h"</emphasis>.</para>
+
+</refsect1>
+
+<refsect1 xml:id='see_also'><title>SEE ALSO</title>
+<para><citerefentry><refentrytitle>libbu</refentrytitle><manvolnum>3B</manvolnum></citerefentry>, <citerefentry><refentrytitle>qsort</refentrytitle><manvolnum>3</manvolnum></citerefentry>.</para>
+
+</refsect1>
+
+<refsect1 xml:id='author'><title>AUTHOR</title>
+<para>Paul Tanenbaum</para>
+
+</refsect1>
+
+<refsect1 xml:id='copyright'><title>COPYRIGHT</title>
+<para>This software is Copyright (c) 1999-2013 by the United States
+Government as represented by U.S. Army Research Laboratory.</para>
+
+</refsect1>
+
+<refsect1 xml:id='bug_reports'><title>BUG REPORTS</title>
+<para>Reports of bugs or problems should be submitted via electronic
+mail to &lt;devs@brlcad.org&gt;.</para>
+</refsect1>
+</refentry>
+

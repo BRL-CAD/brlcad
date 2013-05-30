@@ -1,7 +1,7 @@
 /*                A N I M _ H A R D T R A C K . C
  * BRL-CAD
  *
- * Copyright (c) 1993-2012 United States Government as represented by
+ * Copyright (c) 1993-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -38,7 +38,7 @@
 #include "anim.h"
 
 
-#define OPT_STR "b:d:f:i:l:pr:w:sg:m:c"
+#define OPT_STR "b:d:f:i:l:pr:w:sg:m:ch?"
 
 #define NW num_wheels
 #define NEXT(i)	(i+1)%NW
@@ -111,6 +111,11 @@ int get_circumf;	/* flag: just return circumference of track */
 vect_t centroid, rcentroid;	/* alternate centroid and its reverse */
 mat_t m_axes, m_rev_axes;	/* matrices to and from alternate axes */
 
+static void
+usage(void)
+{
+    fprintf(stderr,"Usage: anim_hardtrack [-l num_linkslinkname] [-w wheelname] [options] wheelfile in.table out.script\n");
+}
 
 int
 get_link(fastf_t *pos, fastf_t *angle_p, fastf_t dist)
@@ -145,7 +150,10 @@ get_link(fastf_t *pos, fastf_t *angle_p, fastf_t dist)
 int
 get_args(int argc, char **argv)
 {
-    fastf_t yaw, pch, rll;
+    /* intentionally double for scan */
+    double yaw, pch, rll;
+    double scan[3];
+
     int c, i;
     axes = cent = links_placed = print_wheel = print_link = 0;
     get_circumf = 0;
@@ -167,9 +175,10 @@ get_args(int argc, char **argv)
 		break;
 	    case 'd':
 		bu_optind -= 1;
-		sscanf(argv[bu_optind+(i++)], "%lf", centroid);
-		sscanf(argv[bu_optind+(i++)], "%lf", centroid+1);
-		sscanf(argv[bu_optind+(i++)], "%lf", centroid+2);
+		sscanf(argv[bu_optind+(i++)], "%lf", &scan[0]);
+		sscanf(argv[bu_optind+(i++)], "%lf", &scan[1]);
+		sscanf(argv[bu_optind+(i++)], "%lf", &scan[2]);
+		VMOVE(centroid, scan);
 		bu_optind += 3;
 		VREVERSE(rcentroid, centroid);
 		cent = 1;
@@ -178,13 +187,15 @@ get_args(int argc, char **argv)
 		sscanf(bu_optarg, "%d", &first_frame);
 		break;
 	    case 'i':
-		sscanf(bu_optarg, "%lf", &init_dist);
+		sscanf(bu_optarg, "%lf", &scan[0]);
+		init_dist = scan[0];
 		break;
 	    case 'p':
 		links_placed = 1;
 		break;
 	    case 'r':
-		sscanf(bu_optarg, "%lf", &radius);
+		sscanf(bu_optarg, "%lf", &scan[0]);
+		radius = scan[0];
 		break;
 	    case 'w':
 		wheel_nindex = bu_optind - 1;
@@ -222,7 +233,7 @@ get_args(int argc, char **argv)
 		get_circumf = 1;
 		break;
 	    default:
-		fprintf(stderr, "Unknown option: -%c\n", c);
+		/* getopt already reported any unknown option */
 		return 0;
 	}
     }
@@ -338,9 +349,14 @@ main(int argc, char *argv[])
     MAT_IDN(m_axes);
     MAT_IDN(m_rev_axes);
 
-    if (!get_args(argc, argv)) {
-	fprintf(stderr, "anim_hardtrack: argument error.");
-	return -1;
+    if (argc == 1 && isatty(fileno(stdin)) && isatty(fileno(stdout))){
+	usage();
+	return 0;
+    }
+
+    if (!get_args(argc, argv)){
+	usage();
+	return 0;
     }
 
     if (axes || cent) {
@@ -352,7 +368,7 @@ main(int argc, char *argv[])
     /* get track information from specified file */
 
     if (!(stream = fopen(*(argv+bu_optind), "rb"))) {
-	fprintf(stderr, "Anim_hardtrack: Could not open file %s.\n", *(argv+bu_optind));
+	fprintf(stderr, "anim_hardtrack: Could not open file %s.\n", *(argv+bu_optind));
 	return 0;
     }
 
@@ -377,17 +393,20 @@ main(int argc, char *argv[])
     x = (struct all *) bu_calloc(num_wheels, sizeof(struct all), "struct all");
     /*read rest of track info */
     for (i=0;i<NW;i++) {
-	count = fscanf(stream, "%lf %lf %lf", temp, temp+1, temp+2);
+	double scan[3];
+
+	count = fscanf(stream, "%lf %lf %lf", &scan[0], &scan[1], &scan[2]);
 	if (count != 3)
 	    break;
 	if (!ZERO(radius))
 	    x[i].w.rad = radius;
 	else {
-	    count = fscanf(stream, "%lf", & x[i].w.rad);
+	    count = fscanf(stream, "%lf", &scan[0]);
+	    x[i].w.rad = scan[0]; /* double to fastf_t */
 	    if (count != 1)
 		break;
 	}
-	MAT4X3PNT(x[i].w.pos, m_rev_axes, temp);
+	MAT4X3PNT(x[i].w.pos, m_rev_axes, scan);
 	if (i==0)
 	    track_y = x[0].w.pos[1];
 	else
@@ -407,7 +426,7 @@ main(int argc, char *argv[])
     VSET(to_front, 1.0, 0.0, 0.0);
 
     if ((!print_link)&&(!print_wheel)) {
-	fprintf(stderr, "anim_hardtrack: no ouput requested. Use -l or -w.\n");
+	fprintf(stderr, "anim_hardtrack: no output requested. Use -l or -w.\n");
 	bu_exit(0, NULL);
     }
     /* main loop */
@@ -417,17 +436,26 @@ main(int argc, char *argv[])
     else
 	frame = first_frame-1;
     for (val = 3; val > 2; frame++) {
+	double scan[3];
+
 	go = 1;
 	/*p2 is current position. p3 is next;p1 is previous*/
 	VMOVE(p1, p2);
 	VMOVE(p2, p3);
 	count = scanf("%*f");/*time stamp*/
-	val = scanf("%lf %lf %lf", p3, p3+1, p3 + 2);
+	val = scanf("%lf %lf %lf", &scan[0], &scan[1], &scan[2]);
+	VMOVE(p3, scan); /* double to fastf_t */
 	if (!steer) {
-	    count = scanf("%lf %lf %lf", &yaw, &pitch, &roll);
+	    count = scanf("%lf %lf %lf", &scan[0], &scan[1], &scan[2]);
 	    if (count != 3) {
 		bu_exit(2, "Unexpected/Missing raw, pitch, roll value(s)!  Read %d values.\n", count);
 	    }
+
+	    /* double to fastf_t */
+	    yaw = scan[0];
+	    pitch = scan[1];
+	    roll = scan[2];
+
 	    anim_dy_p_r2mat(mat_v, yaw, pitch, roll);
 	    anim_add_trans(mat_v, p3, rcentroid);
 	} else {

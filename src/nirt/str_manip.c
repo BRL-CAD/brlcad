@@ -1,7 +1,7 @@
 /*                     S T R _ M A N I P . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2012 United States Government as represented by
+ * Copyright (c) 2004-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -56,7 +56,7 @@ str_dbl(char *buf, double *Result)
 	++buf;
     }
 
-    while (isdigit(*buf)) {
+    while (isdigit((int)*buf)) {
 	/* update Value while there is a digit */
 	status = 1;
 	Value *= 10.0;
@@ -68,7 +68,7 @@ str_dbl(char *buf, double *Result)
 	/* check for a decimal point */
 	++i;
 	++buf;
-	while (isdigit(*buf)) {
+	while (isdigit((int)*buf)) {
 	    /* update Value while there is a digit */
 	    ++i;
 	    status = 1;

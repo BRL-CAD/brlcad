@@ -4,7 +4,7 @@
   xmlns:xi="http://www.w3.org/2001/XInclude"
 >
   <info><title>Using the build_region Command</title>
-    
+
 
     <xi:include href="../../books/en/tutorial_series_authors.xml" xpointer="Intro_MGED_Tutorial_Series_III_authors"/>
 
@@ -39,7 +39,7 @@
       </para>
     </listitem>
   </itemizedlist>
-  
+
   <para xml:id="build_region4">
     For example, let's say we want to build the four rounded corners of a
     "tub" region for a toy metal wagon assembly (see Figure F-1). We could
@@ -49,7 +49,7 @@
   </para>
 
   <figure xml:id="build_region5"><info><title>The rounded corners of a toy wagon.</title></info>
-    
+
     <mediaobject>
       <imageobject>
 	<imagedata align="center" fileref="../../articles/en/images/build_region_fig01.png" format="PNG"/>
@@ -63,12 +63,12 @@
     named wgn.s2. To get a hollow quarter cylinder, we need to subtract a
     cylinder and intersect a bounding box (see Figure F-2). In order to relate
     the subtraction and intersecting primitives with wgn.s2, they will each
-    share the same root name, wgn.s2. The subtraction primitive will be named 
+    share the same root name, wgn.s2. The subtraction primitive will be named
     wgn.s2-1, and the intersecting primitive will be named wgn.s2+1.
   </para>
-  
+
   <figure xml:id="build_region7"><info><title>Arb8, cylinder, and two Boolean primitives.</title></info>
-    
+
     <mediaobject>
       <imageobject>
 	<imagedata align="center" fileref="../../articles/en/images/build_region_fig02.png" format="PNG"/>
@@ -100,38 +100,38 @@ u wgn.s2 + wgn.s2+1 - wgn.s2-1
 
       *****NEED IMAGE HERE*****
   </para>
- 
+
   <figure xml:id="build_region9"><info><title>The region and the subtraction primitives.</title></info>
-    
+
     <mediaobject>
       <imageobject>
 	<imagedata align="center" fileref="../../articles/en/images/build_region_fig03.png" format="PNG"/>
       </imageobject>
     </mediaobject>
   </figure>
-  
+
   <para xml:id="build_region10">
     Note that the root name stays the same so we can maintain the
     relationship, and the second number (associated with the Boolean
     operation) is incremented sequentially.
   </para>
-  
+
   <figure xml:id="build_region11"><info><title>Raytraced image with hole.</title></info>
-    
+
     <mediaobject>
       <imageobject>
 	<imagedata align="center" fileref="../../articles/en/images/build_region_fig04.png" format="PNG"/>
       </imageobject>
     </mediaobject>
   </figure>
-  
+
   <para xml:id="build_region12">
     Obviously, the overall success or failure of the build_region command
     depends on primitives being named properly. But if they are, the command
     can organize them in one automated step, creating complex regions in just
     a few keystrokes.
   </para>
-  
+
   <para xml:id="build_region13">
     Another modeling benefit of the build_region tool is that it allows the
     user to quickly organize primitives. Assume, for example, that we have

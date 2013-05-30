@@ -1,7 +1,7 @@
 #                       L U N I Q . T C L
 # BRL-CAD
 #
-# Copyright (c) 2004-2012 United States Government as represented by
+# Copyright (c) 2004-2013 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -21,7 +21,7 @@
 #
 #				L U N I Q
 #
-#	Accepts a list and replaces multiple consecutive occurences
+#	Accepts a list and replaces multiple consecutive occurrences
 #	of a value with a single copy
 #
 proc luniq {list_in} {

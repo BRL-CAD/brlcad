@@ -1,7 +1,7 @@
 /*                         V D E C K . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2012 United States Government as represented by
+ * Copyright (c) 1990-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -141,7 +141,7 @@ int	ndir;		/* Entries in directory.			*/
 /* Miscellaneous globals leftover from Keith's KARDS code.		*/
 int		delsol = 0, delreg = 0;
 char		buff[30];
-long		savsol;		/* File postion of # of solids & regions */
+off_t		savsol;		/* File position of # of solids & regions	*/
 
 /* Structures.								*/
 mat_t		identity;
@@ -528,7 +528,7 @@ region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tr
 
     /*
      *  Returned tree will be freed by caller.
-     *  To keep solid table available for seraching,
+     *  To keep solid table available for searching,
      *  add this tree to a list of trees to be released once
      *  everything is finished.
      */
@@ -606,11 +606,12 @@ gettree_leaf(struct db_tree_state *tsp, const struct db_full_path *pathp, struct
 	;
     }
 
-    BU_GET(stp, struct soltab);
+    BU_ALLOC(stp, struct soltab);
     stp->l.magic = RT_SOLTAB_MAGIC;
     stp->st_id = ip->idb_type;
     stp->st_dp = dp;
     if (mat) {
+	/* stupid matp_t */
 	stp->st_matp = (matp_t)bu_malloc(sizeof(mat_t), "st_matp");
 	MAT_COPY(stp->st_matp, mat);
     } else {
@@ -676,8 +677,8 @@ gettree_leaf(struct db_tree_state *tsp, const struct db_full_path *pathp, struct
 	    /* XXX */
 	default:
 	    (void) fprintf(stderr,
-                           "vdeck: '%s' Primitive type %s has no corresponding COMGEOM primitive, skipping\n",
-                           dp->d_namep, ip->idb_meth->ft_name);
+			   "vdeck: '%s' Primitive type %s has no corresponding COMGEOM primitive, skipping\n",
+			   dp->d_namep, ip->idb_meth->ft_name);
 	    vls_itoa(&sol, stp->st_bit+delsol, 5);
 	    bu_vls_strcat(&sol, ip->idb_meth->ft_name);
 	    vls_blanks(&sol, 5*10);
@@ -690,7 +691,7 @@ gettree_leaf(struct db_tree_state *tsp, const struct db_full_path *pathp, struct
     bu_vls_free(&sol);
 
 found_it:
-    BU_GET(curtree, union tree);
+    BU_ALLOC(curtree, union tree);
     RT_TREE_INIT(curtree);
     curtree->tr_op = OP_SOLID;
     curtree->tr_a.tu_stp = stp;
@@ -1200,7 +1201,7 @@ ewrite(FILE *fp, const char *buf, unsigned bytes)
 
     if (fwrite(buf, bytes, 1, fp) != 1) {
 	perror("write");
-	(void)fprintf(stderr, "vdeck: write error\n");
+	fprintf(stderr, "vdeck: write error\n");
 	bu_exit(2, NULL);
     }
 }
@@ -1242,7 +1243,7 @@ deck(char *prefix)
     ewrite(solfp, LF, 1);
 
     /* Save space for number of solids and regions.			*/
-    savsol = ftell(solfp);
+    savsol = bu_ftell(solfp);
     if (savsol < 0) {
 	perror("ftell");
     }
@@ -1288,15 +1289,15 @@ deck(char *prefix)
     /*  Build the whole card deck.	*/
     /*  '1' indicates one CPU.  This code isn't ready for parallelism */
     if (db_walk_tree(dbip, curr_ct, (const char **)curr_list,
-                     1, &rt_initial_tree_state,
-                     0, region_end, gettree_leaf, (genptr_t)NULL) < 0) {
+		     1, &rt_initial_tree_state,
+		     0, region_end, gettree_leaf, (genptr_t)NULL) < 0) {
 	fprintf(stderr, "Unable to treewalk any trees!\n");
 	bu_exit(11, NULL);
     }
 
     /* Go back, and add number of solids and regions on second card. */
     if (savsol >= 0)
-	fseek(solfp, savsol, 0);
+	bu_fseek(solfp, savsol, 0);
 
     itoa(nns, buff, 5);
     ewrite(solfp, buff, 5);
@@ -1324,7 +1325,7 @@ deck(char *prefix)
 /**
  * t o c
  *
- * Build a sorted list of names of all the objects accessable in the
+ * Build a sorted list of names of all the objects accessible in the
  * object file.
  */
 void
@@ -1442,7 +1443,7 @@ insert(char *args[], int ct)
 	}
 	if (nomatch)
 	    (void) fprintf(stderr,
-                           "Object \"%s\" not found.\n", args[i]);
+			   "Object \"%s\" not found.\n", args[i]);
     }
     return	curr_ct;
 }
@@ -1484,8 +1485,8 @@ delete(char *args[])
 	    else	++j;
 	if (nomatch)
 	    (void) fprintf(stderr,
-                           "Object \"%s\" not found.\n",
-                           args[i]
+			   "Object \"%s\" not found.\n",
+			   args[i]
 		);
     }
     return curr_ct;
@@ -1616,7 +1617,7 @@ vls_ftoa(struct bu_vls *v, double f, int w, int d)
 
     if (w <= d + 2) {
 	(void) fprintf(stderr,
-                       "ftoascii: incorrect format  need w.df  stop"
+		       "ftoascii: incorrect format  need w.df  stop"
 	   );
 	bu_exit(10, NULL);
     }

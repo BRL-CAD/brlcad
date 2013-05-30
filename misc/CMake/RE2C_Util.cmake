@@ -1,4 +1,4 @@
-#                  F I N D R E 2 C . C M A K E
+#                  R E 2 C _ U T I L . C M A K E
 #
 # Provides a macro to generate custom build rules:
 
@@ -6,7 +6,7 @@
 # which creates a custom command  to generate the <RE2COutput> file from
 # the <RE2CInput> file.  If  COMPILE_FLAGS option is specified, the next
 # parameter is added to the re2c  command line. Name is an alias used to
-# get  details of  this custom  command.  
+# get  details of  this custom  command.
 
 # This module also defines a macro:
 #  ADD_RE2C_LEMON_DEPENDENCY(RE2CTarget LemonTarget)
@@ -21,7 +21,7 @@
 #   find_package(RE2C)
 #
 #   LEMON_TARGET(MyParser parser.y ${CMAKE_CURRENT_BINARY_DIR}/parser.cpp
-#   RE2C_TARGET(MyScanner scanner.re  ${CMAKE_CURRENT_BIANRY_DIR}/scanner.cpp)
+#   RE2C_TARGET(MyScanner scanner.re  ${CMAKE_CURRENT_BINARY_DIR}/scanner.cpp)
 #   ADD_RE2C_LEMON_DEPENDENCY(MyScanner MyParser)
 #
 #   include_directories(${CMAKE_CURRENT_BINARY_DIR})
@@ -33,23 +33,23 @@
 #  ====================================================================
 #
 #=============================================================================
-# Copyright (c) 2010-2012 United States Government as represented by
+# Copyright (c) 2010-2013 United States Government as represented by
 #                the U.S. Army Research Laboratory.
 # Copyright 2009 Kitware, Inc.
 # Copyright 2006 Tristan Carel
 # All rights reserved.
-# 
+#
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
 # are met:
-#  
+#
 # * Redistributions of source code must retain the above copyright
 #   notice, this list of conditions and the following disclaimer.
-# 
+#
 # * Redistributions in binary form must reproduce the above copyright
 #   notice, this list of conditions and the following disclaimer in the
 #   documentation and/or other materials provided with the distribution.
-# 
+#
 # * The names of the authors may not be used to endorse or promote
 #   products derived from this software without specific prior written
 #   permission.
@@ -71,33 +71,36 @@
 # RE2C_TARGET (public macro)
 #============================================================
 #
+# TODO - rework this macro to make use of CMakeParseArguments, see
+# http://www.cmake.org/pipermail/cmake/2012-July/051309.html
+#
 macro(RE2C_TARGET Name Input Output)
-	set(RE2C_TARGET_usage "RE2C_TARGET(<Name> <Input> <Output> [COMPILE_FLAGS <string>]")
-	if(${ARGC} GREATER 3)
-		if(${ARGC} EQUAL 5)
-			if("${ARGV3}" STREQUAL "COMPILE_FLAGS")
-				set(RE2C_EXECUTABLE_opts  "${ARGV4}")
-				SEPARATE_ARGUMENTS(RE2C_EXECUTABLE_opts)
-			else()
-				message(SEND_ERROR ${RE2C_TARGET_usage})
-			endif()
-		else()
-			message(SEND_ERROR ${RE2C_TARGET_usage})
-		endif()
-	endif()
+  set(RE2C_TARGET_usage "RE2C_TARGET(<Name> <Input> <Output> [COMPILE_FLAGS <string>]")
+  if(${ARGC} GREATER 3)
+    if(${ARGC} EQUAL 5)
+      if("${ARGV3}" STREQUAL "COMPILE_FLAGS")
+	set(RE2C_EXECUTABLE_opts  "${ARGV4}")
+	SEPARATE_ARGUMENTS(RE2C_EXECUTABLE_opts)
+      else()
+	message(SEND_ERROR ${RE2C_TARGET_usage})
+      endif()
+    else()
+      message(SEND_ERROR ${RE2C_TARGET_usage})
+    endif()
+  endif()
 
-	add_custom_command(OUTPUT ${Output}
-		COMMAND ${RE2C_EXECUTABLE}
-		ARGS ${RE2C_EXECUTABLE_opts} -o${Output} ${Input}
-		DEPENDS ${Input} ${RE2C_EXECUTABLE_TARGET}
-		COMMENT "[RE2C][${Name}] Building scanner with ${RE2C_EXECUTABLE}"
-		WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+  add_custom_command(OUTPUT ${Output}
+    COMMAND ${RE2C_EXECUTABLE}
+    ARGS ${RE2C_EXECUTABLE_opts} -o${Output} ${Input}
+    DEPENDS ${Input} ${RE2C_EXECUTABLE_TARGET}
+    COMMENT "[RE2C][${Name}] Building scanner with ${RE2C_EXECUTABLE}"
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
 
-	set(RE2C_${Name}_DEFINED TRUE)
-	set(RE2C_${Name}_OUTPUTS ${Output})
-	set(RE2C_${Name}_INPUT ${Input})
-	set(RE2C_${Name}_COMPILE_FLAGS ${RE2C_EXECUTABLE_opts})
-	set_property(DIRECTORY APPEND PROPERTY ADDITIONAL_MAKE_CLEAN_FILES "${Output}")
+  set(RE2C_${Name}_DEFINED TRUE)
+  set(RE2C_${Name}_OUTPUTS ${Output})
+  set(RE2C_${Name}_INPUT ${Input})
+  set(RE2C_${Name}_COMPILE_FLAGS ${RE2C_EXECUTABLE_opts})
+  set_property(DIRECTORY APPEND PROPERTY ADDITIONAL_MAKE_CLEAN_FILES "${Output}")
 endmacro(RE2C_TARGET)
 #============================================================
 
@@ -107,16 +110,16 @@ endmacro(RE2C_TARGET)
 #
 macro(ADD_RE2C_LEMON_DEPENDENCY RE2CTarget LemonTarget)
 
-	if(NOT RE2C_${RE2CTarget}_OUTPUTS)
-		message(SEND_ERROR "RE2C target `${RE2CTarget}' does not exists.")
-	endif()
+  if(NOT RE2C_${RE2CTarget}_OUTPUTS)
+    message(SEND_ERROR "RE2C target `${RE2CTarget}' does not exists.")
+  endif()
 
-	if(NOT LEMON_${LemonTarget}_OUTPUT_HEADER)
-		message(SEND_ERROR "Lemon target `${LemonTarget}' does not exists.")
-	endif()
+  if(NOT LEMON_${LemonTarget}_OUTPUT_HEADER)
+    message(SEND_ERROR "Lemon target `${LemonTarget}' does not exists.")
+  endif()
 
-	set_source_files_properties(${RE2C_${RE2CTarget}_OUTPUTS}
-		PROPERTIES OBJECT_DEPENDS ${LEMON_${LemonTarget}_OUTPUT_HEADER})
+  set_source_files_properties(${RE2C_${RE2CTarget}_OUTPUTS}
+    PROPERTIES OBJECT_DEPENDS ${LEMON_${LemonTarget}_OUTPUT_HEADER})
 endmacro(ADD_RE2C_LEMON_DEPENDENCY)
 #============================================================
 

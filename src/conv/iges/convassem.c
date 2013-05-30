@@ -1,7 +1,7 @@
 /*                     C O N V A S S E M . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2012 United States Government as represented by
+ * Copyright (c) 1990-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -156,13 +156,13 @@ Convassem()
 	    /* Apply any matrix indicated for this group member */
 	    if (ptr->matrix > (-1)) {
 #if defined(USE_BN_MULT_)
-                /* a <= a X b */
+		/* a <= a X b */
 		bn_mat_mul2(ptr->rot, *(dir[ptr->matrix]->rot));
 #else
-                /* a X b => o */
+		/* a X b => o */
 		Matmult(ptr->rot, *(dir[ptr->matrix]->rot), ptr->rot);
 #endif
-            }
+	    }
 
 	    wmem = mk_addmember(ptr->name, &head.l, NULL, operator[Union]);
 	    flt = (fastf_t *)ptr->rot;

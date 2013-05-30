@@ -1,7 +1,7 @@
 /*                         T R A C K . C
  * BRL-CAD
  *
- * Copyright (c) 1994-2012 United States Government as represented by
+ * Copyright (c) 1994-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -520,7 +520,7 @@ f_amtrack(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[
 		0, 1, 1) < 0)
     {
 	Tcl_AppendResult(interp,
-			 "An error has occured while adding '",
+			 "An error has occurred while adding '",
 			 grpname, "' to the database.\n", (char *)NULL);
     }
 
@@ -592,15 +592,15 @@ wrobj(char name[], int flags)
 	    {
 		struct rt_arb_internal *arb;
 
-		BU_GET(arb, struct rt_arb_internal);
+		BU_ALLOC(arb, struct rt_arb_internal);
 
 		arb->magic = RT_ARB_INTERNAL_MAGIC;
 
 		VMOVE(arb->pt[0], &sol.s_values[0]);
 		for (i=1; i<8; i++)
-		    VADD2(arb->pt[i], &sol.s_values[i*3], arb->pt[0])
+		    VADD2(arb->pt[i], &sol.s_values[i*3], arb->pt[0]);
 
-			intern.idb_ptr = (genptr_t)arb;
+		intern.idb_ptr = (genptr_t)arb;
 		intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 		intern.idb_type = ID_ARB8;
 		intern.idb_meth = &rt_functab[ID_ARB8];
@@ -610,7 +610,7 @@ wrobj(char name[], int flags)
 	    {
 		struct rt_tgc_internal *tgc;
 
-		BU_GET(tgc, struct rt_tgc_internal);
+		BU_ALLOC(tgc, struct rt_tgc_internal);
 
 		tgc->magic = RT_TGC_INTERNAL_MAGIC;
 

@@ -1,7 +1,7 @@
 /*                         R T . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2012 United States Government as represented by
+ * Copyright (c) 2008-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -71,13 +71,13 @@ _ged_rt_write(struct ged *gedp,
      * from 9->14 "should" be safe as it's above our calculation
      * tolerance and above single-precision capability.
      */
-    (void)fprintf(fp, "viewsize %.14e;\n", gedp->ged_gvp->gv_size);
+    fprintf(fp, "viewsize %.14e;\n", gedp->ged_gvp->gv_size);
     quat_mat2quat(quat, gedp->ged_gvp->gv_rotation);
-    (void)fprintf(fp, "orientation %.14e %.14e %.14e %.14e;\n", V4ARGS(quat));
-    (void)fprintf(fp, "eye_pt %.14e %.14e %.14e;\n",
+    fprintf(fp, "orientation %.14e %.14e %.14e %.14e;\n", V4ARGS(quat));
+    fprintf(fp, "eye_pt %.14e %.14e %.14e;\n",
 		  eye_model[X], eye_model[Y], eye_model[Z]);
 
-    (void)fprintf(fp, "start 0; clean;\n");
+    fprintf(fp, "start 0; clean;\n");
 
     gdlp = BU_LIST_NEXT(ged_display_list, &gedp->ged_gdp->gd_headDisplay);
     while (BU_LIST_NOT_HEAD(gdlp, &gedp->ged_gdp->gd_headDisplay)) {
@@ -124,7 +124,7 @@ _ged_rt_write(struct ged *gedp,
 
 	gdlp = next_gdlp;
     }
-    (void)fprintf(fp, "end;\n");
+    fprintf(fp, "end;\n");
 }
 
 
@@ -258,10 +258,10 @@ _ged_rt_output_handler(ClientData clientData, int UNUSED(mask))
 
 	/* wait for the forked process
 	 * either EOF has been sent or there was a read error.
-	 * there is no need to block indefinately
+	 * there is no need to block indefinitely
 	 */
 	WaitForSingleObject(run_rtp->hProcess, 120);
-	/* !!! need to observe implications of being non-infinate
+	/* !!! need to observe implications of being non-infinite
 	 * WaitForSingleObject(run_rtp->hProcess, INFINITE);
 	 */
 
@@ -287,9 +287,8 @@ _ged_rt_output_handler(ClientData clientData, int UNUSED(mask))
 
 	/* free run_rtp */
 	BU_LIST_DEQUEUE(&run_rtp->l);
-	bu_free((genptr_t)run_rtp, "_ged_rt_output_handler: run_rtp");
-
-	bu_free((genptr_t)drcdp, "_ged_rt_output_handler: drcdp");
+	BU_PUT(run_rtp, struct ged_run_rt);
+	BU_PUT(drcdp, struct _ged_rt_client_data);
 
 	return;
     }

@@ -1,7 +1,7 @@
 /*                       C M D H I S T . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2012 United States Government as represented by
+ * Copyright (c) 1998-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -42,8 +42,7 @@ cmdhist_record(struct bu_cmdhist_obj *chop, struct bu_vls *cmdp, struct timeval 
     if (UNLIKELY(BU_STR_EQUAL(bu_vls_addr(cmdp), eol)))
 	return;
 
-    new_hist = (struct bu_cmdhist *)bu_malloc(sizeof(struct bu_cmdhist),
-					      "mged history");
+    BU_ALLOC(new_hist, struct bu_cmdhist);
     bu_vls_init(&new_hist->h_command);
     bu_vls_vlscat(&new_hist->h_command, cmdp);
     new_hist->h_start = *start;

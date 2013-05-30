@@ -87,13 +87,14 @@ typedef std::vector< ExPolygon > ExPolygons;
 
 enum JoinType { jtSquare, jtMiter, jtRound };
 
-bool Orientation(const Polygon &poly);
-double Area(const Polygon &poly);
-void OffsetPolygons(const Polygons &in_polys, Polygons &out_polys,
-  double delta, JoinType jointype = jtSquare, double MiterLimit = 2);
+CLIPPER_EXPORT bool Orientation(const Polygon &poly);
+CLIPPER_EXPORT double Area(const Polygon &poly);
+CLIPPER_EXPORT void OffsetPolygons(const Polygons &in_polys,
+  Polygons &out_polys, double delta, JoinType jointype = jtSquare,
+  double MiterLimit = 2);
 
-void ReversePoints(Polygon& p);
-void ReversePoints(Polygons& p);
+CLIPPER_EXPORT void ReversePoints(Polygon& p);
+CLIPPER_EXPORT void ReversePoints(Polygons& p);
 
 //used internally ...
 enum EdgeSide { esLeft, esRight };

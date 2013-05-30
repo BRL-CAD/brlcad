@@ -11,4 +11,3 @@
   driver.
 
 * decouple from Tcl/Tk (dm_open and internals)
-

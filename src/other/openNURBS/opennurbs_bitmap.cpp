@@ -1,8 +1,9 @@
 /* $NoKeywords: $ */
 /*
 //
-// Copyright (c) 1993-2007 Robert McNeel & Associates. All rights reserved.
-// Rhinoceros is a registered trademark of Robert McNeel & Assoicates.
+// Copyright (c) 1993-2012 Robert McNeel & Associates. All rights reserved.
+// OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
+// McNeel & Associates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
@@ -16,8 +17,6 @@
 #include "opennurbs.h"
 
 ON_VIRTUAL_OBJECT_IMPLEMENT( ON_Bitmap, ON_Object, "390465E9-3721-11d4-800B-0010830122F0");
-
-// OBSOLETE // ON_OBJECT_IMPLEMENT( ON_OpenGLBitmap, ON_Bitmap,   "390465EA-3721-11d4-800B-0010830122F0");
 
 ON_OBJECT_IMPLEMENT( ON_WindowsBitmap, ON_Bitmap,  "390465EB-3721-11d4-800B-0010830122F0");
 
@@ -245,21 +244,24 @@ bool ON_WindowsBitmap::Create(
 
   bool rc = false;
 
-  if ( m_bmi && palette_color_count > 0) 
+  if ( m_bmi /*&& palette_color_count > 0*/) 
   {
     m_bmi->bmiHeader = bh;
     m_bits = (unsigned char*)&m_bmi->bmiColors[palette_color_count];
 
     // default palette is gray scale
-    const int rgb_delta = 256/palette_color_count;
-    int i, rgb;
-    for ( i = 0, rgb = 0; i < palette_color_count; i++, rgb += rgb_delta ) 
+    if ( palette_color_count > 0 )
     {
-      if ( rgb >= 256 ) rgb = 255;
-      m_bmi->bmiColors[i].rgbBlue  = (unsigned char)rgb;
-      m_bmi->bmiColors[i].rgbGreen = (unsigned char)rgb;
-      m_bmi->bmiColors[i].rgbRed   = (unsigned char)rgb;
-      m_bmi->bmiColors[i].rgbReserved = 0;
+      const int rgb_delta = 256/palette_color_count;
+      int i, rgb;
+      for ( i = 0, rgb = 0; i < palette_color_count; i++, rgb += rgb_delta ) 
+      {
+        if ( rgb >= 256 ) rgb = 255;
+        m_bmi->bmiColors[i].rgbBlue  = (unsigned char)rgb;
+        m_bmi->bmiColors[i].rgbGreen = (unsigned char)rgb;
+        m_bmi->bmiColors[i].rgbRed   = (unsigned char)rgb;
+        m_bmi->bmiColors[i].rgbReserved = 0;
+      }
     }
     rc = true;
   }
@@ -611,10 +613,20 @@ ON_BOOL32 ON_WindowsBitmapEx::Read( ON_BinaryArchive& file )
   ON_BOOL32 rc = file.Read3dmChunkVersion(&major_version,&minor_version);
   if (rc && 1 == major_version )
   {
+    // Calling ON_WindowsBitmap::ReadCompressed() destroys
+    // m_bitmap_filename, so we have to read it into a local
+    // string and make the assigment after calling 
+    // ON_WindowsBitmap::ReadCompressed().
+    ON_wString bitmap_filename;
     if (rc)
-      rc = file.ReadString(m_bitmap_filename);
+      rc = file.ReadString(bitmap_filename);
+    if ( !rc)
+      bitmap_filename.Destroy();
+
     if (rc)
       rc = ON_WindowsBitmap::ReadCompressed(file);
+
+    m_bitmap_filename = bitmap_filename;
   }
   else
     rc = false;
@@ -1045,9 +1057,4 @@ int ON_EmbeddedBitmap::SizeofScan() const {return 0;}
 int ON_EmbeddedBitmap::SizeofImage() const {return 0;}
 unsigned char* ON_EmbeddedBitmap::Bits(int) {return 0;}
 const unsigned char* ON_EmbeddedBitmap::Bits(int) const {return 0;}
-
-////////////////////////////////////////////////////////////////////////////////
-//
-// OBSOLETE ON_OpenGLBitmap  - see SourceSafe version 6 for old definition
-//
 

@@ -1,7 +1,7 @@
 /*                       B I N U N I F . C
  * BRL-CAD
  *
- * Copyright (c) 2001-2012 United States Government as represented by
+ * Copyright (c) 2001-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -86,7 +86,7 @@ rt_mk_binunif(struct rt_wdb *wdbp, const char *obj_name, const char *file_name, 
     }
 
     /* create the rt_binunif internal form */
-    BU_GET(bip, struct rt_binunif_internal);
+    BU_ALLOC(bip, struct rt_binunif_internal);
     bip->magic = RT_BINUNIF_INTERNAL_MAGIC;
     bip->type = minor_type;
 
@@ -122,7 +122,7 @@ rt_mk_binunif(struct rt_wdb *wdbp, const char *obj_name, const char *file_name, 
 	ret = intern.idb_meth->ft_export5(&body, &intern, 1.0, wdbp->dbip, wdbp->wdb_resp);
     }
     if (ret != 0) {
-	bu_log("Error while attemptimg to export %s\n", obj_name);
+	bu_log("Error while attempting to export %s\n", obj_name);
 	rt_db_free_internal(&intern);
 	return -1;
     }
@@ -147,7 +147,7 @@ rt_mk_binunif(struct rt_wdb *wdbp, const char *obj_name, const char *file_name, 
     /* add this (phony until written) object to the directory */
     if ((dp=db_diradd5(wdbp->dbip, obj_name, RT_DIR_PHONY_ADDR, major_type,
 		       minor_type, 0, 0, NULL)) == RT_DIR_NULL) {
-	bu_log("Error while attemptimg to add new name (%s) to the database",
+	bu_log("Error while attempting to add new name (%s) to the database",
 	       obj_name);
 	bu_free_external(&bin_ext);
 	return -1;

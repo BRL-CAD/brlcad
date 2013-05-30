@@ -1,7 +1,7 @@
 /*                      O S L O _ M A P . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2012 United States Government as represented by
+ * Copyright (c) 1990-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -21,7 +21,7 @@
 /** @{ */
 /** @file librt/oslo_map.c
  *
- * Map the olso matrix with the old curve resulting in a new one.
+ * Map the oslo matrix with the old curve resulting in a new one.
  *
  */
 
@@ -39,7 +39,7 @@
  * old control points resulting in new control points.  (this
  * procedure should probably never called by a user program but should
  * remain internal to the library. Bounds are given to facilitate
- * easier spliting of the surface.
+ * easier splitting of the surface.
  */
 
 void

@@ -1,7 +1,7 @@
 /*                       P I X - Y U V . C
  * BRL-CAD
  *
- * Copyright (c) 1995-2012 United States Government as represented by
+ * Copyright (c) 1995-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -105,18 +105,18 @@ get_args(int argc, char **argv)
 	ifname = bu_realpath(file_name, NULL);
 	if ((infd = open(ifname, 0)) < 0) {
 	    perror(ifname);
-	    (void)fprintf(stderr,
-			  "pix-yuv: cannot open \"%s(canonical %s)\" for reading\n",
-			  file_name,ifname);
-	    bu_free(ifname,"ifname alloc from bu_realpath");
+	    fprintf(stderr,
+		    "pix-yuv: cannot open \"%s(canonical %s)\" for reading\n",
+		    file_name, ifname);
+	    bu_free(ifname, "ifname alloc from bu_realpath");
 	    return 0;
 	}
-	bu_free(ifname,"ifname alloc from bu_realpath");
+	bu_free(ifname, "ifname alloc from bu_realpath");
 	fileinput++;
     }
 
     if (argc > ++bu_optind)
-	(void)fprintf(stderr, "pix-yuv: excess argument(s) ignored\n");
+	fprintf(stderr, "pix-yuv: excess argument(s) ignored\n");
 
     return 1;		/* OK */
 }
@@ -195,9 +195,9 @@ main(int argc, char **argv)
 #define V5DOT(a, b)	(a[0]*b[0]+a[1]*b[1]+a[2]*b[2]+a[3]*b[3]+a[4]*b[4])
 #define floor(d)	(d>=0?(int)d:((int)d==d?d:(int)(d-1.0)))
 #define CLIP(out, in) { int t; \
-		if ((t = (in)) < 0)  (out) = 0; \
-		else if (t >= 255)  (out) = 255; \
-		else (out) = t; }
+	if ((t = (in)) < 0)  (out) = 0; \
+	else if (t >= 255)  (out) = 255; \
+	else (out) = t; }
 
 #define LINE_LENGTH 720
 #define FRAME_LENGTH 486

@@ -1,7 +1,7 @@
 /*                           M S R . C
  * BRL-CAD
  *
- * Copyright (c) 1994-2012 United States Government as represented by
+ * Copyright (c) 1994-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,6 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+
 /** @addtogroup msr */
 /** @{ */
 /** @file libbn/msr.c
@@ -45,41 +46,17 @@
 #define	BN_MSR_MAXTBL	4096	/* Size of random number tables. */
 
 
-/*	bn_unif_init	Initialize a random number structure.
- *
- * @par Entry
- *	setseed	seed to use
- *	method  method to use to generate numbers;
- *
- * @par Exit
- *	returns	a pointer to a bn_unif structure.
- *	returns 0 on error.
- *
- * @par Uses
- *	None.
- *
- * @par Calls
- *	bu_malloc
- *
- * @par Method @code
- *	malloc up a structure with pointers to the numbers
- *	get space for the integer table.
- *	get space for the floating table.
- *	set pointer counters
- *	set seed if one was given and setseed != 1
- @endcode
- *
- */
 #define	A	16807
 #define M	2147483647
 #define DM	2147483647.0
 #define Q	127773		/* Q = M / A */
 #define R	2836		/* R = M % A */
+
 struct bn_unif *
 bn_unif_init(long int setseed, int method)
 {
     struct bn_unif *p;
-    p = (struct bn_unif *) bu_malloc(sizeof(struct bn_unif), "bn_unif");
+    BU_ALLOC(p, struct bn_unif);
     p->msr_longs = (long *) bu_malloc(BN_MSR_MAXTBL*sizeof(long), "msr long table");
     p->msr_doubles=(double *) bu_malloc(BN_MSR_MAXTBL*sizeof(double), "msr double table");
     p->msr_seed = 1;
@@ -94,34 +71,7 @@ bn_unif_init(long int setseed, int method)
     return p;
 }
 
-/*	bn_unif_long_fill	fill a random number table.
- *
- * Use the msrad algorithm to fill a random number table
- * with values from 1 to 2^31-1.  These numbers can (and are) extracted from
- * the random number table via high speed macros and bn_unif_long_fill called
- * when the table is exauseted.
- *
- * @par Entry
- *	p	pointer to a bn_unif structure.
- *
- * @par Exit
- *	if (!p) returns 1 else returns a value between 1 and 2^31-1
- *
- * @par Calls
- *	None.  msran is inlined for speed reasons.
- *
- * @par Uses
- *	None.
- *
- * @par Method @code
- *	if (!p) return 1;
- *	if p->msr_longs != NULL
- *		msr_longs is reloaded with random numbers;
- *		msr_long_ptr is set to BN_MSR_MAXTBL
- *	endif
- *	msr_seed is updated.
- @endcode
-*/
+
 long
 bn_unif_long_fill(struct bn_unif *p)
 {
@@ -133,11 +83,11 @@ bn_unif_long_fill(struct bn_unif *p)
 
     /*
      * Gauss and uniform structures have the same format for the
-     * first part (gauss is an extention of uniform) so that a gauss
+     * first part (gauss is an extension of uniform) so that a gauss
      * structure can be passed to a uniform routine.  This means
      * that we only maintain one structure for gaussian distributions
      * rather than two.  It also means that the user can pull
-     * uniform numbers from a guass structure when the user wants.
+     * uniform numbers from a gauss structure when the user wants.
      */
     if (p->magic != BN_UNIF_MAGIC && p->magic != BN_GAUSS_MAGIC) {
 	BN_CK_UNIF(p);
@@ -158,34 +108,7 @@ bn_unif_long_fill(struct bn_unif *p)
     return p->msr_seed;
 }
 
-/*	bn_unif_double_fill	fill a random number table.
- *
- * Use the msrad algorithm to fill a random number table
- * with values from -0.5 to 0.5.  These numbers can (and are) extracted from
- * the random number table via high speed macros and bn_unif_double_fill
- * called when the table is exauseted.
- *
- * @par Entry
- *	p	pointer to a bn_unif structure.
- *
- * @par Exit
- *	if (!p) returns 0.0 else returns a value between -0.5 and 0.5
- *
- * @par Calls
- *	None.  msran is inlined for speed reasons.
- *
- * @par Uses
- *	None.
- *
- * @par Method @code
- *	if (!p) return (0.0)
- *	if p->msr_longs != NULL
- *		msr_longs is reloaded with random numbers;
- *		msr_long_ptr is set to BN_MSR_MAXTBL
- *	endif
- *	msr_seed is updated.
- @endcode
-*/
+
 double
 bn_unif_double_fill(struct bn_unif *p)
 {
@@ -197,11 +120,11 @@ bn_unif_double_fill(struct bn_unif *p)
 
     /*
      * Gauss and uniform structures have the same format for the
-     * first part (gauss is an extention of uniform) so that a gauss
+     * first part (gauss is an extension of uniform) so that a gauss
      * structure can be passed to a uniform routine.  This means
      * that we only maintain one structure for gaussian distributions
      * rather than two.  It also means that the user can pull
-     * uniform numbers from a guass structure when the user wants.
+     * uniform numbers from a gauss structure when the user wants.
      */
     if (p->magic != BN_UNIF_MAGIC && p->magic != BN_GAUSS_MAGIC) {
 	BN_CK_UNIF(p);
@@ -239,30 +162,7 @@ bn_unif_free(struct bn_unif *p)
 }
 
 
-/*	bn_gauss_init	Initialize a random number struct for gaussian
- *	numbers.
- *
- * @par Entry
- *	setseed		Seed to use.
- *	method		method to use to generate numbers (not used)
- *
- * @par Exit
- *	Returns a pointer toa bn_msr_guass structure.
- *	returns 0 on error.
- *
- * @par Calls
- *	bu_malloc
- *
- * @par Uses
- *	None.
- *
- * @par Method @code
- *	malloc up a structure
- *	get table space
- *	set seed and pointer.
- *	if setseed != 0 then seed = setseed
- @endcode
-*/
+
 struct bn_gauss *
 bn_gauss_init(long int setseed, int method)
 {
@@ -271,9 +171,9 @@ bn_gauss_init(long int setseed, int method)
     if (method != 0)
 	bu_bomb("Method not yet supported in bn_unif_init()");
 
-    p = (struct bn_gauss *) bu_malloc(sizeof(struct bn_gauss), "bn_msr_guass");
-    p->msr_gausses=(double *) bu_malloc(BN_MSR_MAXTBL*sizeof(double), "msr guass table");
-    p->msr_gauss_doubles=(double *) bu_malloc(BN_MSR_MAXTBL*sizeof(double), "msr guass doubles");
+    BU_ALLOC(p, struct bn_gauss);
+    p->msr_gausses=(double *) bu_malloc(BN_MSR_MAXTBL*sizeof(double), "msr gauss table");
+    p->msr_gauss_doubles=(double *) bu_malloc(BN_MSR_MAXTBL*sizeof(double), "msr gauss doubles");
     p->msr_gauss_seed = 1;
     p->msr_gauss_ptr = 0;
     p->msr_gauss_dbl_ptr = 0;
@@ -283,37 +183,7 @@ bn_gauss_init(long int setseed, int method)
     return p;
 }
 
-/*	bn_gauss_fill	fill a random number table.
- *
- * Use the msrad algorithm to fill a random number table.
- * hese numbers can (and are) extracted from
- * the random number table via high speed macros and bn_msr_guass_fill
- * called when the table is exauseted.
- *
- * @par Entry
- *	p	pointer to a bn_msr_guass structure.
- *
- * @par Exit
- *	if (!p) returns 0.0 else returns a value with a mean of 0 and
- *	    a variance of 1.0.
- *
- * @par Calls
- *	BN_UNIF_CIRCLE to get to uniform random number whos radius is
- *	<= 1.0. I.e. sqrt(v1*v1 + v2*v2) <= 1.0
- *	BN_UNIF_CIRCLE is a macro which can call bn_unif_double_fill.
- *
- * @par Uses
- *	None.
- *
- * @par Method @code
- *	if (!p) return (0.0)
- *	if p->msr_longs != NULL
- *		msr_longs is reloaded with random numbers;
- *		msr_long_ptr is set to BN_MSR_MAXTBL
- *	endif
- *	msr_seed is updated.
- @endcode
-*/
+
 double
 bn_gauss_fill(struct bn_gauss *p)
 {
@@ -342,15 +212,14 @@ bn_gauss_fill(struct bn_gauss *p)
     fac = sqrt(-2.0*log(r)/r);
     return v1*fac;
 }
-/*	bn_gauss_free	free random number table
- *
- */
+
+
 void
 bn_gauss_free(struct bn_gauss *p)
 {
-    bu_free(p->msr_gauss_doubles, "msr guass doubles");
-    bu_free(p->msr_gausses, "msr guass table");
-    bu_free(p, "bn_msr_guass");
+    bu_free(p->msr_gauss_doubles, "msr gauss doubles");
+    bu_free(p->msr_gausses, "msr gauss table");
+    bu_free(p, "bn_msr_gauss");
 }
 
 

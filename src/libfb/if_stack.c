@@ -1,7 +1,7 @@
 /*                      I F _ S T A C K . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2012 United States Government as represented by
+ * Copyright (c) 1986-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -70,7 +70,7 @@ stk_open(FBIO *ifp, const char *file, int width, int height)
     /* special check for a possibly user confusing case */
     if (*cp == '\0') {
 	fb_log("stack_dopen: No devices specified\n");
-	fb_log("Usage: /dev/stack device_one; device_two; [etc]\n");
+	fb_log("Usage: /dev/stack device_one; device_two; ...\n");
 	return -1;
     }
 
@@ -140,7 +140,7 @@ stk_clear(FBIO *ifp, unsigned char *pp)
 }
 
 
-HIDDEN int
+HIDDEN ssize_t
 stk_read(FBIO *ifp, int x, int y, unsigned char *pixelp, size_t count)
 {
     register FBIO **ip = SI(ifp)->if_list;
@@ -149,11 +149,11 @@ stk_read(FBIO *ifp, int x, int y, unsigned char *pixelp, size_t count)
 	fb_read((*ip), x, y, pixelp, count);
     }
 
-    return (int)count;
+    return count;
 }
 
 
-HIDDEN int
+HIDDEN ssize_t
 stk_write(FBIO *ifp, int x, int y, const unsigned char *pixelp, size_t count)
 {
     register FBIO **ip = SI(ifp)->if_list;
@@ -163,7 +163,7 @@ stk_write(FBIO *ifp, int x, int y, const unsigned char *pixelp, size_t count)
 	ip++;
     }
 
-    return (int)count;
+    return count;
 }
 
 
@@ -385,7 +385,7 @@ stk_help(FBIO *ifp)
     int i;
 
     fb_log("Device: /dev/stack\n");
-    fb_log("Usage: /dev/stack device_one; device_two; [etc]\n");
+    fb_log("Usage: /dev/stack device_one; device_two; ...\n");
 
     i = 0;
     while (*ip != (FBIO *)NULL) {

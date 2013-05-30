@@ -1,7 +1,7 @@
 /*                       G A S T A N K . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2012 United States Government as represented by
+ * Copyright (c) 2004-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -102,11 +102,11 @@ main(int argc, char **argv)
 	/* START # 3 */
 
 	/* Print info about the window. */
-	(void)printf("\nThis program constructs a solid gas tank with all\n");
-	(void)printf("edges and corners rounded.\n\n");
+	printf("\nThis program constructs a solid gas tank with all\n");
+	printf("edges and corners rounded.\n\n");
 
 	/* Find name of mged file to be created. */
-	(void)printf("Enter the mged file to be created (25 char max).\n\t");
+	printf("Enter the mged file to be created (25 char max).\n\t");
 	(void)fflush(stdout);
 	ret = scanf("%26s", filemged);
 	if (ret == 0) {
@@ -116,7 +116,7 @@ main(int argc, char **argv)
 	    bu_strlcpy(filemged, "gastank.g", sizeof(filemged));
 
 	/* Find the number of gas tanks to create. */
-	(void)printf("Enter the number of gas tanks to create (26 max).\n\t");
+	printf("Enter the number of gas tanks to create (26 max).\n\t");
 	(void)fflush(stdout);
 	ret = scanf("%d", &numtnk);
 	if (ret == 0) {
@@ -129,7 +129,7 @@ main(int argc, char **argv)
 	    numtnk = 26;
 
 	/* Find the dimensions of the gas tanks. */
-	(void)printf("Enter the height, width, and depth of the gas tank.\n\t");
+	printf("Enter the height, width, and depth of the gas tank.\n\t");
 	(void)fflush(stdout);
 	ret = scanf("%lf %lf %lf", &hgt, &wid, &dpt);
 	if (ret == 0) {
@@ -145,7 +145,7 @@ main(int argc, char **argv)
 	if (dpt < SMALL_FASTF)
 	    dpt = SMALL_FASTF;
 
-	(void)printf("Enter the radius of the corners.\n\t");
+	printf("Enter the radius of the corners.\n\t");
 	(void)fflush(stdout);
 	ret = scanf("%lf", &rds);
 	if (ret == 0) {
@@ -200,28 +200,28 @@ main(int argc, char **argv)
 		}					/* END # 9 */
 		temp1[k] = '\0';
 		if (temp[1] == 'n') {
-		    (void)sscanf(temp1, "%d", &numtnk);
+		    sscanf(temp1, "%d", &numtnk);
 		    if (numtnk > 26) numtnk = 26;
 		} else if (temp[1] == 'h') {
-		    (void)sscanf(temp1, "%lf", &hgt);
+		    sscanf(temp1, "%lf", &hgt);
 		} else if (temp[1] == 'w') {
-		    (void)sscanf(temp1, "%lf", &wid);
+		    sscanf(temp1, "%lf", &wid);
 		} else if (temp[1] == 'd') {
-		    (void)sscanf(temp1, "%lf", &dpt);
+		    sscanf(temp1, "%lf", &dpt);
 		} else if (temp[1] == 'r') {
-		    (void)sscanf(temp1, "%lf", &rds);
+		    sscanf(temp1, "%lf", &rds);
 		}
 	    }						/* END # 8 */
 	}						/* END # 5 */
     }							/* END # 4 */
 
     /* Print out all info. */
-    (void)printf("\nmged file:  %s\n", filemged);
-    (void)printf("height of gas tank:  %f mm\n", hgt);
-    (void)printf("width of gas tank:  %f mm\n", wid);
-    (void)printf("depth of gas tank:  %f mm\n", dpt);
-    (void)printf("radius of corner:  %f mm\n", rds);
-    (void)printf("number of gas tanks:  %d\n\n", numtnk);
+    printf("\nmged file:  %s\n", filemged);
+    printf("height of gas tank:  %f mm\n", hgt);
+    printf("width of gas tank:  %f mm\n", wid);
+    printf("depth of gas tank:  %f mm\n", dpt);
+    printf("radius of corner:  %f mm\n", rds);
+    printf("number of gas tanks:  %d\n\n", numtnk);
     (void)fflush(stdout);
 
     /* Open mged file. */
@@ -237,9 +237,9 @@ main(int argc, char **argv)
 
 	/* Create the 3 arb8s. */
 
-	pts[0][0] = (fastf_t)(dpt / 2.);
-	pts[0][1] = (fastf_t)(wid / 2. - rds);
-	pts[0][2] = (fastf_t)(hgt / 2. - rds);
+	pts[0][0] = (fastf_t)(dpt / 2.0);
+	pts[0][1] = (fastf_t)(wid / 2.0 - rds);
+	pts[0][2] = (fastf_t)(hgt / 2.0 - rds);
 	pts[1][0] = pts[0][0];
 	pts[1][1] = pts[0][1];
 	pts[1][2] = (-pts[0][2]);
@@ -266,8 +266,8 @@ main(int argc, char **argv)
 	solnam[7] = '1';
 	mk_arb8(fpw, solnam, &pts[0][X]);
 
-	pts[0][0] = (fastf_t)(dpt / 2. - rds);
-	pts[0][1] = (fastf_t)(wid / 2.);
+	pts[0][0] = (fastf_t)(dpt / 2.0 - rds);
+	pts[0][1] = (fastf_t)(wid / 2.0);
 	pts[1][0] = pts[0][0];
 	pts[1][1] = pts[0][1];
 	pts[2][0] = pts[0][0];
@@ -285,8 +285,8 @@ main(int argc, char **argv)
 	solnam[7] = '2';
 	mk_arb8(fpw, solnam, &pts[0][X]);
 
-	pts[0][1] = (fastf_t)(wid / 2. - rds);
-	pts[0][2] = (fastf_t)(hgt / 2.);
+	pts[0][1] = (fastf_t)(wid / 2.0 - rds);
+	pts[0][2] = (fastf_t)(hgt / 2.0);
 	pts[1][1] = pts[0][1];
 	pts[1][2] = (-pts[0][2]);
 	pts[2][1] = (-pts[0][1]);
@@ -306,9 +306,9 @@ main(int argc, char **argv)
 
 	/* Make 8 spheres. */
 
-	cent[0] = (fastf_t)(dpt / 2. - rds);
-	cent[1] = (fastf_t)(wid / 2. - rds);
-	cent[2] = (fastf_t)(hgt / 2. - rds);
+	cent[0] = (fastf_t)(dpt / 2.0 - rds);
+	cent[1] = (fastf_t)(wid / 2.0 - rds);
+	cent[2] = (fastf_t)(hgt / 2.0 - rds);
 	rad = (fastf_t)(rds);
 	solnam[7] = '4';
 	mk_sph(fpw, solnam, cent, rad);
@@ -345,12 +345,12 @@ main(int argc, char **argv)
 
 	/* Make 12 cylinders. */
 
-	bs[0] = (fastf_t)(dpt / 2. - rds);
-	bs[1] = (fastf_t)(wid / 2. - rds);
-	bs[2] = (fastf_t)(hgt / 2. - rds);
-	ht[0] = (fastf_t)(0.);
+	bs[0] = (fastf_t)(dpt / 2.0 - rds);
+	bs[1] = (fastf_t)(wid / 2.0 - rds);
+	bs[2] = (fastf_t)(hgt / 2.0 - rds);
+	ht[0] = (fastf_t)(0.0);
 	ht[1] = (fastf_t)(-wid + 2 * rds);
-	ht[2] = (fastf_t)(0.);
+	ht[2] = (fastf_t)(0.0);
 	solnam[7] = '2';
 	mk_rcc(fpw, solnam, bs, ht, rad);
 
@@ -366,11 +366,11 @@ main(int argc, char **argv)
 	solnam[7] = '5';
 	mk_rcc(fpw, solnam, bs, ht, rad);
 
-	bs[0] = (fastf_t)(dpt / 2. - rds);
-	bs[1] = (fastf_t)(wid / 2. - rds);
-	bs[2] = (fastf_t)(hgt / 2. - rds);
-	ht[0] = (fastf_t)(0.);
-	ht[1] = (fastf_t)(0.);
+	bs[0] = (fastf_t)(dpt / 2.0 - rds);
+	bs[1] = (fastf_t)(wid / 2.0 - rds);
+	bs[2] = (fastf_t)(hgt / 2.0 - rds);
+	ht[0] = (fastf_t)(0.0);
+	ht[1] = (fastf_t)(0.0);
 	ht[2] = (fastf_t)(-hgt + 2 * rds);
 	solnam[7] = '6';
 	mk_rcc(fpw, solnam, bs, ht, rad);
@@ -387,12 +387,12 @@ main(int argc, char **argv)
 	solnam[7] = '9';
 	mk_rcc(fpw, solnam, bs, ht, rad);
 
-	bs[0] = (fastf_t)(dpt / 2. - rds);
-	bs[1] = (fastf_t)(wid / 2. - rds);
-	bs[2] = (fastf_t)(hgt / 2. - rds);
+	bs[0] = (fastf_t)(dpt / 2.0 - rds);
+	bs[1] = (fastf_t)(wid / 2.0 - rds);
+	bs[2] = (fastf_t)(hgt / 2.0 - rds);
 	ht[0] = (fastf_t)(-dpt + 2 * rds);
-	ht[1] = (fastf_t)(0.);
-	ht[2] = (fastf_t)(0.);
+	ht[1] = (fastf_t)(0.0);
+	ht[2] = (fastf_t)(0.0);
 	solnam[6] = '2';
 	solnam[7] = '0';
 	mk_rcc(fpw, solnam, bs, ht, rad);

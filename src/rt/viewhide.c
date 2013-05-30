@@ -1,7 +1,7 @@
 /*                      V I E W H I D E . C
  * BRL-CAD
  *
- * Copyright (c) 1989-2012 United States Government as represented by
+ * Copyright (c) 1989-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -138,7 +138,7 @@ view_init(register struct application *ap, char *UNUSED(file), char *UNUSED(obj)
  *  boxes, for example, need to be computed once per frame.
  *  Never preclude a new and nifty animation: rule: if it's a variable, it can
  *  change from frame to frame ( frame/picture width; angle between surface
- *  normals triggering shading.... etc).
+ *  normals triggering shading.... etc.).
  */
 
 void
@@ -158,23 +158,17 @@ view_2init(struct application *ap, char *UNUSED(framename))
 	npsw = 1;		/* Disable parallel processing */
     }
 
-    /* malloc() two buffers that have room for as many struct cell 's
-     * as the incoming file is wide (width), plus two for the border.
-     * Rather than using malloc(), though, bu_malloc() is used.  This
-     * has the advantage of inbuild error-checking and automatic aborting
-     * if there is no memory.  Also, bu_malloc() takes a string as its
-     * final parameter: this tells the usr exactly where memory ran out.
-     * The file_height is counted by using ap->a_y directly. The benefit
-     * of this is WHAT?
+    /* allocate two buffers that have room with as many struct cell as
+     * the incoming file is wide (width), plus two for the border.
+     * The file_height is counted by using ap->a_y directly.
      */
-
 
     bottomp = (struct cell *)bu_malloc(sizeof(struct cell) * (width + 2),
 				    "bottom cell buffer" );
     topp = (struct cell *)bu_malloc(sizeof(struct cell) * (width + 2),
 				    "top cell buffer" );
 
-    /* Clear both in-buffers to ensure abscence of garbage.  Note
+    /* Clear both in-buffers to ensure absence of garbage.  Note
      * that the zero-filled "bottom" buffer now provides the first
      * in-memory buffer for comparisons.
      */
@@ -200,7 +194,7 @@ view_2init(struct application *ap, char *UNUSED(framename))
 	maxangle = cos( AmbientIntensity * bn_degtorad);
     }
 
-    /* Obtain the bounding boxes for the model from the rt_i(stance)
+    /* Obtain the bounding boxes for the model from the rt_i(nstance)
      * structure and feed the maximum and minimum coordinates to
      * pdv_3space.  This will allow the image to appear in the plot
      * starting with the same size as the model.
@@ -208,7 +202,7 @@ view_2init(struct application *ap, char *UNUSED(framename))
 
     pdv_3space(outfp, ap->a_rt_i->rti_pmin, ap->a_rt_i->rti_pmax);
 
-    /* Now calculated and store the minimun depth change that will
+    /* Now calculate and store the minimum depth change that will
      * trigger the drawing of "pits" and "pendula" (mountains).  In
      * this case, a change in distance of 2 pixels was picked.  Note
      * that the distance of one pixel in model space is MAGNITUDE(dx_model).
@@ -692,7 +686,7 @@ swapbuff(struct cell **onepp, struct cell **twopp)
 
 /*		C L E A N L I N E
  *
- *  This routine takes as paramenters the address of a buffer and an integer
+ *  This routine takes as parameters the address of a buffer and an integer
  *  reflecting the width of the file.  It proceeds to ZERO fill the buffer.
  *  This routine returns nothing.
  */

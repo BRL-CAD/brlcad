@@ -1,7 +1,7 @@
 /*                           I C V . H
  * BRL-CAD
  *
- * Copyright (c) 2011-2012 United States Government as represented by
+ * Copyright (c) 2011-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -111,7 +111,7 @@ typedef struct icv_image_file icv_image_file_t;
 
 /**
  * macro suitable for declaration statement initialization of a
- * icv_image_file struct.  does not allocate mmeory.
+ * icv_image_file struct.  does not allocate memory.
  */
 #define ICV_IMAGE_FILE_INIT_ZERO { ICV_IMAGE_FILE_MAGIC, NULL, 0, 0, 0, 0, 0, NULL, 0 }
 

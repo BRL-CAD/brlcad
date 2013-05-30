@@ -1,7 +1,7 @@
 /*                       P C C O N S T R A I N T . H
  * BRL-CAD
  *
- * Copyright (c) 2008-2012 United States Government as represented by
+ * Copyright (c) 2008-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -66,11 +66,11 @@ public:
     Constraint(VCSet &vcs, std::string Cid, std::string Cexpr, functor, \
 	       int count, va_list *args);
     Constraint(VCSet &vcs, pc_constrnt *);
-    
+
     bool solved();
     bool check();
     void evalfunction(functor pf) { eval = pf; };
-    
+
     /** Data access/modification methods */
     std::string getID() const { return id; }
     std::string getExp() const { return expression; }
@@ -86,7 +86,7 @@ private:
     std::string id;
     std::string expression;
     std::list<std::string> Variables;
-    functor eval; 
+    functor eval;
 };
 #endif
 /** @} */

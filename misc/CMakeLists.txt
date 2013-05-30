@@ -10,26 +10,31 @@ set(datarootdir "\${prefix}/share")
 set(datadir "\${datarootdir}")
 
 add_subdirectory(pkgconfig)
-# FIXME - need to finish porting enigma to Windows -
-# tried adding postgresql crypt function but it doesn't
-# seem to be working.
-if(NOT WIN32)
-  add_subdirectory(enigma)
-endif(NOT WIN32)
 
 if(NOT CMAKE_CONFIGURATION_TYPES)
-  configure_file(brlcad-config.in ${CMAKE_BINARY_DIR}/bin/brlcad-config @ONLY)
+  configure_file(brlcad-config.in ${CMAKE_BINARY_DIR}/misc/brlcad-config @ONLY)
+  file(COPY ${CMAKE_BINARY_DIR}/misc/brlcad-config
+    DESTINATION ${CMAKE_BINARY_DIR}/${BIN_DIR}
+    FILE_PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ
+    GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
+  DISTCLEAN(${CMAKE_BINARY_DIR}/${BIN_DIR}/brlcad-config)
+  file(REMOVE ${CMAKE_BINARY_DIR}/misc/brlcad-config)
   install(PROGRAMS ${CMAKE_BINARY_DIR}/bin/brlcad-config DESTINATION ${BIN_DIR})
 else(NOT CMAKE_CONFIGURATION_TYPES)
   foreach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
     string(TOUPPER "${CFG_TYPE}" CFG_TYPE_UPPER)
-    configure_file(brlcad-config.in ${CMAKE_BINARY_DIR}/${CFG_TYPE_UPPER}/bin/brlcad-config @ONLY)
+    configure_file(brlcad-config.in ${CMAKE_BINARY_DIR}/${CFG_TYPE_UPPER}/misc/brlcad-config @ONLY)
+    file(COPY ${CMAKE_BINARY_DIR}/${CFG_TYPE_UPPER}/misc/brlcad-config
+      DESTINATION ${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${BIN_DIR}
+      FILE_PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ
+      GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
+    DISTCLEAN(${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${BIN_DIR}/brlcad-config)
+    file(REMOVE ${CMAKE_BINARY_DIR}/${CFG_TYPE_UPPER}/misc/brlcad-config)
   endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
   install(PROGRAMS ${CMAKE_BINARY_DIR}/\${BUILD_TYPE}/bin/brlcad-config DESTINATION ${BIN_DIR})
 endif(NOT CMAKE_CONFIGURATION_TYPES)
 
 BRLCAD_ADDDATA(fortran_example.f sample_applications)
-ADD_MAN_PAGES(1 brlcad-config.1)
 
 set(density_DATAFILES
   GQA_SAMPLE_DENSITIES
@@ -42,18 +47,14 @@ BRLCAD_ADDDATA(nsis/archer.ico icons)
 
 find_package(Doxygen)
 if(DOXYGEN_FOUND)
-  if(BRLCAD_BUILD_DOXYGEN_DOCS)
-    add_custom_command(
-      OUTPUT ${CMAKE_BINARY_DIR}/doc/doxygen_output/html/index.html
-      COMMAND ${DOXYGEN_EXECUTABLE} ${CMAKE_SOURCE_DIR}/misc/Doxyfile
-      WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/doc
-      )
-    add_custom_target(dox DEPENDS ${CMAKE_BINARY_DIR}/misc/doxygen_output/html/index.html)
-  endif(BRLCAD_BUILD_DOXYGEN_DOCS)
-else(DOXYGEN_FOUND)
-  if(BRLCAD_BUILD_DOXYGEN_DOCS)
-    message("Doxygen build requested but doxygen not found, disabling")
-  endif(BRLCAD_BUILD_DOXYGEN_DOCS)
+  configure_file(Doxyfile.in ${CMAKE_BINARY_DIR}/CMakeTmp/Doxyfile @ONLY)
+  add_custom_command(
+    OUTPUT ${CMAKE_BINARY_DIR}/doc/doxygen_output/html/index.html
+    COMMAND ${DOXYGEN_EXECUTABLE} ${CMAKE_BINARY_DIR}/CMakeTmp/Doxyfile
+    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/doc
+    )
+  add_custom_target(dox DEPENDS ${CMAKE_BINARY_DIR}/doc/doxygen_output/html/index.html)
+  add_custom_target(doxygen DEPENDS ${CMAKE_BINARY_DIR}/doc/doxygen_output/html/index.html)
 endif(DOXYGEN_FOUND)
 
 set(misc_ignore_files
@@ -65,12 +66,12 @@ set(misc_ignore_files
   archlinux
   astyle.opt
   batch-indent-region.el
-  brlcad-config.1
   brlcad-config.in
   brlcad.spec.in
   debian
   doxygen_structure
   flawfinder
+  jove.emacs
   libtool.m4
   macosx
   nsis

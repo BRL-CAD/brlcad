@@ -62,7 +62,6 @@ add_definitions(
 
 set(MGED_SOURCES
   adc.c
-  animedit.c
   arbs.c
   attach.c
   axes.c
@@ -115,9 +114,6 @@ set(MGED_SOURCES
   utility1.c
   vparse.c
   )
-if(NOT WIN32)
-  set(MGED_SOURCES ${MGED_SOURCES} vrlink.c)
-endif(NOT WIN32)
 
 if(NOT WIN32)
   BRLCAD_ADDEXEC(mged "${MGED_SOURCES}" "libtclcad;libged;libwdb;libdm;libtermio;${MGED_EXTRA_LIBS};${ITCL_LIBRARY};${ITK_LIBRARY}")
@@ -157,23 +153,18 @@ else(CMAKE_CONFIGURATION_TYPES)
 endif(CMAKE_CONFIGURATION_TYPES)
 install(PROGRAMS mged.bat DESTINATION bin)
 
-set(mged_MANS
-  cad_boundp.1
-  cad_parea.1
-  )
-ADD_MAN_PAGES(1 mged_MANS)
 set(mged_ignore_files
   bool_rewrite.c
   cmd.h
   comb_bool.h
   comb_bool_parse.y
   comb_bool_scan.l
+  dm-ogl.c
   dm-rtgl.c
   dm-tk.c
   dm-wgl.c
   fbserv.h
   htmlLibraryUi.h
-  joints.h
   menu.h
   mgdev.h
   mged.bat

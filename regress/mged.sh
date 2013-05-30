@@ -2,7 +2,7 @@
 #                       M G E D . S H
 # BRL-CAD
 #
-# Copyright (c) 2008-2012 United States Government as represented by
+# Copyright (c) 2008-2013 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -107,6 +107,10 @@ EOF
 	echo "XXX: Unable to test edcolor"
 	echo "It probably shouldn't kick off an editor without an argument"
 	continue
+    elif test "x$cmd" = "xgraph" ; then
+	continue
+    elif test "x$cmd" = "xigraph" ; then
+	continue
     fi
 
     # make sure each command exists and will run without error
@@ -141,7 +145,7 @@ EOF
     # special tests for some commands due to bug reports
     if test "x$cmd" = "xregions" || test "x$cmd" = "xsolids" ; then
 	# regions or solids are special because they may core dump
-        # test is a result of bug 3392558 which was fixed at revision 48037
+	# test is a result of bug 3392558 which was fixed at revision 48037
 	rm -f $t.cmd
 	$MGED -c mged.g $cmd t.$cmd all > /dev/null 2>&1 <<EOF
 exit
@@ -167,19 +171,17 @@ if test $FAILED -eq 0 ; then
     tgms="mged.g"
     for t in $tgms ; do
       if test -f $t ; then
-        rm $t
+	rm $t
       fi
     done
     # remove test files
     tfils="t.solids t.regions"
     for t in $tfils ; do
       if test -f $t ; then
-        rm $t
+	rm $t
       fi
     done
 fi
-
-
 
 
 exit $FAILED

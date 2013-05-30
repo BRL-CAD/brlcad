@@ -1,7 +1,7 @@
 /*                        C A M E R A . C
  * BRL-CAD
  *
- * Copyright (c) 2007-2012 United States Government as represented by
+ * Copyright (c) 2007-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -37,6 +37,7 @@
 
 #define TIE_SEM_WORKER (RT_SEM_LAST)
 #define TIE_SEM_LAST (TIE_SEM_WORKER+1)
+
 
 struct render_shader_s {
 	const char *name;
@@ -135,7 +136,7 @@ render_camera_prep_ortho(render_camera_t *camera)
     /* look direction */
     VMOVE(camera->view_list[0].top_l, look);
 
-    /* gridsize is milimeters along the horizontal axis to display */
+    /* gridsize is millimeters along the horizontal axis to display */
     /* left (side) */
     VSCALE(temp,  side,  (camera->aspect * camera->gridsize * 0.5));
     VADD2(camera->view_list[0].pos,  camera->pos,  temp);
@@ -263,7 +264,7 @@ render_camera_prep_persp_dof(render_camera_t *camera)
     VCROSS(dof_side,  dof_up,  dof_look);
 
     /*
-     * Generage a camera position, top left vector, and step vectors for each DOF sample
+     * Generate a camera position, top left vector, and step vectors for each DOF sample
      */
 
     /* Obtain magnitude of reverse lookector */
@@ -592,16 +593,16 @@ render_camera_render(render_camera_t *camera, struct tie_s *tie, camera_tile_t *
 struct render_shader_s *
 render_shader_register(const char *name, int (*init)(render_t *, const char *))
 {
-	struct render_shader_s *shader = (struct render_shader_s *)bu_malloc(sizeof(struct render_shader_s), "shader");
-	if(shader == NULL)
-		return NULL;
-	/* should probably search shader list for dups */
-	shader->name = name;
-	shader->init = init;
-	shader->next = shaders;
-	shader->dlh = NULL;
-	shaders = shader;
-	return shader;
+    struct render_shader_s *shader;
+    BU_ALLOC(shader, struct render_shader_s);
+
+    /* should probably search shader list for dups */
+    shader->name = name;
+    shader->init = init;
+    shader->next = shaders;
+    shader->dlh = NULL;
+    shaders = shader;
+    return shader;
 }
 
 const char *

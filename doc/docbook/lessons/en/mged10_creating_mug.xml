@@ -2,7 +2,7 @@
 
 <article xmlns="http://docbook.org/ns/docbook" version="5.0">
   <info><title>Creating a Mug</title>
-    
+
 
     <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../books/en/tutorial_series_authors.xml" xpointer="Intro_MGED_Tutorial_Series_II_authors"/>
 
@@ -34,15 +34,15 @@
 	</listitem>
       </itemizedlist>
     </para>
-    
+
     <para xml:id="creating_mug_intro1">
       In this lesson, you will be continuing your work creating real-life
       objects-in this case, the basic body shape of a coffee mug. In the next
       lesson, you will refine the body so that it is more realistic.
     </para>
-    
+
     <section xml:id="mug_new_db"><info><title>Creating a New Database</title></info>
-      
+
       <para>
 	Create a new database and call it mug.g. Go back to the File menu and
 	select Preferences, then Units, and then inches. This will create your
@@ -50,16 +50,16 @@
 	Command Window prompt.)
       </para>
     </section>
-    
+
     <section xml:id="mug_outside_cyl"><info><title>Creating the Outside Cylinder Using the In Command</title></info>
-      
+
       <para>
 	To begin making the body, you will need to create an outside right
 	circular cylinder. At the <application>MGED</application> prompt, type:
-	
+
 	<command>in bodyout.s rcc</command>
       </para>
-      
+
       <para>
 	The diagram of this command is as follows:
       </para>
@@ -79,25 +79,25 @@
 	  </tbody>
 	</tgroup>
       </informaltable>
-      
+
       <para>
 	<application>MGED</application> will ask you the following questions about the cylinder you want to
 	make. Type in the values given in bold. Make sure you leave spaces between
 	variable values.
-	
+
 	<command>Enter X, Y, Z of vertex: 0 0 0[Enter]</command>
-	
+
 	<command>Enter X, Y, Z of height (H) vector: 0 0 3.5[Enter]</command>
-	
+
 	<command>Enter radius: 1.75[Enter]</command>
       </para>
-      
+
       <para>
 	Note that the streamlined way to do this would be to type:
-	
+
 	<command>in bodyout.s rcc 0 0 0 0 0 3.5 1.75[Enter]</command>
       </para>
-      
+
       <para>
 	The diagram of this command is as follows:
       </para>
@@ -130,7 +130,7 @@
     </section>
 
     <section xml:id="mug_inside_cyl"><info><title>Creating the Inside Cylinder</title></info>
-      
+
       <para>
 	Using this same method, type in the information for the inside right
 	circular cylinder. This cylinder will be used to hollow out the outside
@@ -138,10 +138,10 @@
 	make sure the shape creating the hole protrudes through the surface. This
 	will ensure that you don't inadvertently leave a thin film of material
 	where the two surfaces meet.
-	
+
 	<command>in bodyin.s rcc 0 0 0.25 0 0 3.5 1.5[Enter]</command>
       </para>
-      
+
       <para>
 	The diagram of this command is:
       </para>
@@ -172,17 +172,17 @@
 	Graphics Window.
       </para>
     </section>
-    
+
     <section xml:id="mug_handle"><info><title>Creating the Handle</title></info>
-      
+
       <para>
 	Now you will want to enter some information about the body's handle. The
 	shape type for the handle is an elliptical torus. At the Command Window
 	prompt, type:
-	
+
 	<command>in handle.s eto 0 2.5 1.75 1 0 0[Enter]</command>
       </para>
-      
+
       <para>
 	The diagram of this command is:
       </para>
@@ -206,34 +206,34 @@
 	  </tbody>
 	</tgroup>
       </informaltable>
-      
+
       <para>
 	The program will ask you to enter more values for the elliptical torus you
 	are creating. Type in the values shown in bold.
-	
+
 	<command>Enter X, Y, Z, of vector C: .6 0 0[Enter]</command>
-	
+
 	<command>Enter radius of revolution, r: 1.45[Enter]</command>
-	
+
 	<command>Enter elliptical semi-minor axis, d: 0.2[Enter]</command>
       </para>
-      
+
       <para>
 	A doughnut shape should appear on the right-hand side of the body. If you
 	look carefully, you can see that about one-third of the elliptical torus
 	intersects the body.
       </para>
     </section>
-    
+
     <section xml:id="mug_comb1"><info><title>Creating the Bodyout.s-Bodyin.s Combination</title></info>
-      
+
       <para>
 	The next step is to combine the two cylinders into the body of the mug. To
 	do this, type:
-	
+
 	<command>comb body.c u bodyout.s - bodyin.s[Enter]</command>
       </para>
-      
+
       <para>
 	You have told the program to make the combination body.c out of the union
 	of bodyout.s minus bodyin.s.
@@ -260,14 +260,14 @@
 	  </tbody>
 	</tgroup>
       </informaltable>
-      
+
     </section>
-    
+
     <section xml:id="mug_comb2"><info><title>Creating the Handle.s - Bodyout.s Combination</title></info>
-      
+
       <para>
 	To combine the handle with the outside cylinder, type:
-	
+
 	<command>comb handle.c u handle.s - bodyout.s[Enter]</command>
       </para>
       <informaltable>
@@ -293,14 +293,14 @@
 	</tgroup>
       </informaltable>
     </section>
-    
+
     <section xml:id="mug_region"><info><title>Creating the Region Mug.r</title></info>
-      
-      
+
+
       <para>
 	The last step, of this part of making the mug is to make a region out of
 	your combinations. Type:
-	
+
 	<command>r mug.r u body.c u handle.c[Enter]</command>
       </para>
       <informaltable>
@@ -325,11 +325,11 @@
 	  </tbody>
 	</tgroup>
       </informaltable>
-      
+
       <para>
 	If you did this correctly, the program should say something similar to:
       </para>
-      
+
       <literallayout class="normal">
    Defaulting item number to 1002
 
@@ -357,11 +357,11 @@
 	chapter. When you are ready to work again, you can continue refining your
 	design in the next lesson.
       </para>
-      
+
     </section>
-    
+
     <section xml:id="mug_review"><info><title>Review</title></info>
-      
+
       <para>
 	In this lesson you:
 	<itemizedlist mark="bullet">

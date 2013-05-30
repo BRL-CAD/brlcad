@@ -1,7 +1,7 @@
 /*                           A V S . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2012 United States Government as represented by
+ * Copyright (c) 2004-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -60,7 +60,7 @@ bu_avs_new(int len, const char *str)
 {
     struct bu_attribute_value_set *avsp;
 
-    BU_GET(avsp, struct bu_attribute_value_set);
+    BU_ALLOC(avsp, struct bu_attribute_value_set);
     bu_avs_init(avsp, len, "bu_avs_new");
 
     if (UNLIKELY(bu_debug & BU_DEBUG_AVS))

@@ -1,7 +1,7 @@
 #                      W I Z A R D . I T K
 # BRL-CAD
 #
-# Copyright (c) 2004-2012 United States Government as represented by
+# Copyright (c) 2004-2013 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -21,11 +21,11 @@
 #
 # This is the 'revised' Wizard class. It uses a notebook like the
 # original version, but it ditches the Prev/Next/Cancel buttons.
-# Rather it incoporates a menubar and help frame. Switching between
+# Rather it incorporates a menubar and help frame. Switching between
 # steps is accomplished using a menu with checkboxes. The check-
 # boxes indicate whether a particular step has been accomplished.
 #
-# Individual pages can take addvantage of the fact that the menubar
+# Individual pages can take advantage of the fact that the menubar
 # is dynamic.
 #
 
@@ -327,9 +327,9 @@ namespace eval RtWizard {
     #
     # Adds a content page to the Wizard. The page should be implemented
     # as an iwidget that inherits from labeledframe. This is primarily
-    # for consistancy.
+    # for consistency.
     #
-    # The content page must support these puplic methods.
+    # The content page must support these public methods.
     #
     # 1. onSelect - called when the page is exposed.
     # 2. onDeselect - callback for hide events
@@ -353,19 +353,19 @@ namespace eval RtWizard {
 	# Add to the pages array
 	#
 	set pages($token) $pageName
-	
+
 	#
 	# Pack it!
 	#
 	pack $pageName \
 	    -fill both -expand 1
 	pack propagate $pageName
-	
+
 	set currentPageToken $token
-	
+
 	return $pageName
     }
-    
+
     #
     # select
     #

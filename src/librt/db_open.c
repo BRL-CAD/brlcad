@@ -1,7 +1,7 @@
 /*                       D B _ O P E N . C
  * BRL-CAD
  *
- * Copyright (c) 1988-2012 United States Government as represented by
+ * Copyright (c) 1988-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -54,22 +54,6 @@
 #define DEFAULT_DB_TITLE "Untitled BRL-CAD Database"
 
 
-/**
- * D B _ O P E N
- *
- * Open the named database.
- * The 'mode' parameter specifies read-only or read-write mode.
- *
- * As a convenience, dbi_filepath is a C-style argv array of dirs to
- * search when attempting to open related files (such as data files
- * for EBM solids or texture-maps).  The default values are "." and
- * the directory containing the ".g" file.  They may be overriden by
- * setting the environment variable BRLCAD_FILE_PATH.
- *
- * Returns:
- * DBI_NULL error
- * db_i * success
- */
 struct db_i *
 db_open(const char *name, const char *mode)
 {
@@ -115,7 +99,7 @@ db_open(const char *name, const char *mode)
 	    return dbip;
 	}
 
-	BU_GET(dbip, struct db_i);
+	BU_ALLOC(dbip, struct db_i);
 	dbip->dbi_mf = mfp;
 	dbip->dbi_eof = (off_t)mfp->buflen;
 	dbip->dbi_inmem = mfp->buf;
@@ -134,7 +118,7 @@ db_open(const char *name, const char *mode)
     } else {
 	/* Read-write mode */
 
-	BU_GET(dbip, struct db_i);
+	BU_ALLOC(dbip, struct db_i);
 	dbip->dbi_eof = (off_t)-1L;
 
 	if ((dbip->dbi_fp = fopen(name, "r+b")) == NULL) {
@@ -236,20 +220,6 @@ db_open(const char *name, const char *mode)
 }
 
 
-/**
- * D B _ C R E A T E
- *
- * Create a new database containing just a header record, regardless
- * of whether the database previously existed or not, and open it for
- * reading and writing.
- *
- * This routine also calls db_dirbuild(), so the caller doesn't need
- * to.
- *
- * Returns:
- * DBI_NULL on error
- * db_i * on success
- */
 struct db_i *
 db_create(const char *name, int version)
 {
@@ -283,7 +253,7 @@ db_create(const char *name, int version)
     if (result < 0)
 	return DBI_NULL;
 
-    if ((dbip = db_open(name, "r+w")) == DBI_NULL)
+    if ((dbip = db_open(name, DB_OPEN_READWRITE)) == DBI_NULL)
 	return DBI_NULL;
 
     /* Do a quick scan to determine version, find _GLOBAL, etc. */
@@ -294,34 +264,30 @@ db_create(const char *name, int version)
 }
 
 
-/**
- * D B _ C L O S E _ C L I E N T
- *
- * De-register a client of this database instance, if provided, and
- * close out the instance.
- */
 void
 db_close_client(struct db_i *dbip, long int *client)
 {
+    if (!dbip)
+	return;
+
     RT_CK_DBI(dbip);
+
     if (client) {
 	(void)bu_ptbl_rm(&dbip->dbi_clients, client);
     }
+
     db_close(dbip);
 }
 
 
-/**
- * D B _ C L O S E
- *
- * Close a database, releasing dynamic memory Wait until last user is
- * done, though.
- */
 void
 db_close(register struct db_i *dbip)
 {
     register int i;
     register struct directory *dp, *nextdp;
+
+    if (!dbip)
+	return;
 
     RT_CK_DBI(dbip);
     if (RT_G_DEBUG&DEBUG_DB) bu_log("db_close(%s) x%x uses=%d\n",
@@ -342,7 +308,7 @@ db_close(register struct db_i *dbip)
 	/*
 	 * We're using an instance of a memory mapped file.
 	 * We have two choices:
-	 * Either deassociate from the memory mapped file
+	 * Either dissociate from the memory mapped file
 	 * by clearing dbi_mf->apbuf, or
 	 * keeping our already-scanned dbip ready for
 	 * further use, with our dbi_uses counter at 0.
@@ -413,19 +379,6 @@ db_close(register struct db_i *dbip)
     bu_free((char *)dbip, "struct db_i");
 }
 
-
-/**
- * D B _ D U M P
- *
- * Dump a full copy of one database into another.  This is a good way
- * of committing a ".inmem" database to a ".g" file.  The input is a
- * database instance, the output is a LIBWDB object, which could be a
- * disk file or another database instance.
- *
- * Returns -
- * -1 error
- * 0 success
- */
 int
 db_dump(struct rt_wdb *wdbp, struct db_i *dbip)
 /* output */
@@ -464,13 +417,6 @@ db_dump(struct rt_wdb *wdbp, struct db_i *dbip)
     return 0;
 }
 
-
-/**
- * D B _ C L O N E _ D B I
- *
- * Obtain an additional instance of this same database.  A new client
- * is registered at the same time if one is specified.
- */
 struct db_i *
 db_clone_dbi(struct db_i *dbip, long int *client)
 {
@@ -483,13 +429,6 @@ db_clone_dbi(struct db_i *dbip, long int *client)
     return dbip;
 }
 
-
-/**
- * D B _ S Y N C
- *
- * Ensure that the on-disk database has been completely written out of
- * the operating system's cache.
- */
 void
 db_sync(struct db_i *dbip)
 {

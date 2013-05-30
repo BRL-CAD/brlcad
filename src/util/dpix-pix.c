@@ -1,7 +1,7 @@
 /*                      D P I X - P I X . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2012 United States Government as represented by
+ * Copyright (c) 1990-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -20,7 +20,7 @@
 /** @file util/dpix-pix.c
  *
  * Convert double precision images in .dpix form to a .pix file.  By
- * default, will determin min/max values to drive exposure
+ * default, will determine min/max values to drive exposure
  * calculations, and perform linear interpolation on the way to 1-byte
  * values.
  *
@@ -61,10 +61,10 @@ main(int argc, char **argv)
     ifname = bu_realpath(argv[1], NULL);
     if ((fd = open(ifname, 0)) < 0) {
 	perror(ifname);
-	bu_free(ifname,"ifname alloc from bu_realpath");
+	bu_free(ifname, "ifname alloc from bu_realpath");
 	exit(1);
     }
-    bu_free(ifname,"ifname alloc from bu_realpath");
+    bu_free(ifname, "ifname alloc from bu_realpath");
 
     if (isatty(fileno(stdout))) {
 	bu_exit(2, "dpix-pix:  binary output directed to terminal, aborting\n");
@@ -72,7 +72,7 @@ main(int argc, char **argv)
 
     /* Note that the minimum is set to 1.0e20, the computer's working
      * equivalent of positive infinity.  Thus any subsequent value
-     * must be larger. Likewise, the maximun is set to -1.0e20, the
+     * must be larger. Likewise, the maximum is set to -1.0e20, the
      * equivalent of negative infinity, and any values must thus be
      * bigger than it.
      */
@@ -101,7 +101,7 @@ main(int argc, char **argv)
 	    }
 	}
 
-	lseek(fd, 0L, 0);		/* rewind(fp); */
+	lseek(fd, 0, 0);		/* rewind(fp); */
 
 
 	/* This section uses the maximum and the minimum values found to

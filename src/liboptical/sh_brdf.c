@@ -1,7 +1,7 @@
 /*                       S H _ B R D F . C
  * BRL-CAD
  *
- * Copyright (c) 1996-2012 United States Government as represented by
+ * Copyright (c) 1996-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -50,7 +50,7 @@ extern double AmbientIntensity;
 struct brdf_specific {
     uint32_t magic;
     double specular_refl;	/* specular reflectance */
-    double diffuse_refl;	/* diffuse reflectnace */
+    double diffuse_refl;	/* diffuse reflectance */
     double rms_slope;	/* Standard deviation (RMS) of surface slope (roughness) */
     double rms_sq;		/* square of above */
     double denom;		/* denominator for specular term */
@@ -64,20 +64,20 @@ struct brdf_specific {
 #define BRDF_O(m) bu_offsetof(struct brdf_specific, m)
 
 struct bu_structparse brdf_parse[] = {
-    {"%f",	1, "specular",		BRDF_O(specular_refl),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f",	1, "sp",		BRDF_O(specular_refl),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f",	1, "diffuse",		BRDF_O(diffuse_refl),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f",	1, "di",		BRDF_O(diffuse_refl),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f",	1, "rough",		BRDF_O(rms_slope),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f",	1, "rms",		BRDF_O(rms_slope),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f",	1, "transmit",		BRDF_O(transmit),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f",	1, "tr",		BRDF_O(transmit),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f",	1, "reflect",		BRDF_O(reflect),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f",	1, "re",		BRDF_O(reflect),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f",	1, "ri",		BRDF_O(refrac_index),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f",	1, "extinction_per_meter", BRDF_O(extinction),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f",	1, "extinction",	BRDF_O(extinction),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f",	1, "ex",		BRDF_O(extinction),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%g",	1, "specular",		BRDF_O(specular_refl),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%g",	1, "sp",		BRDF_O(specular_refl),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%g",	1, "diffuse",		BRDF_O(diffuse_refl),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%g",	1, "di",		BRDF_O(diffuse_refl),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%g",	1, "rough",		BRDF_O(rms_slope),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%g",	1, "rms",		BRDF_O(rms_slope),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%g",	1, "transmit",		BRDF_O(transmit),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%g",	1, "tr",		BRDF_O(transmit),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%g",	1, "reflect",		BRDF_O(reflect),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%g",	1, "re",		BRDF_O(reflect),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%g",	1, "ri",		BRDF_O(refrac_index),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%g",	1, "extinction_per_meter", BRDF_O(extinction),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%g",	1, "extinction",	BRDF_O(extinction),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%g",	1, "ex",		BRDF_O(extinction),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"",	0, (char *)0,		0,			BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 
@@ -120,7 +120,7 @@ brdf_setup(register struct region *UNUSED(rp), struct bu_vls *matparm, genptr_t 
     pp->rms_slope = 0.05;
 
     if (bu_struct_parse(matparm, brdf_parse, (char *)pp) < 0) {
-	bu_free((genptr_t)pp, "brdf_specific");
+	BU_PUT(pp, struct brdf_specific);
 	return -1;
     }
 
@@ -145,7 +145,7 @@ brdf_print(register struct region *rp, genptr_t dp)
 HIDDEN void
 brdf_free(genptr_t cp)
 {
-    bu_free(cp, "brdf_specific");
+    BU_PUT(cp, struct brdf_specific);
 }
 
 
@@ -178,7 +178,7 @@ brdf_free(genptr_t cp)
  Rd = Rp * cos(I) / PI (4)
 
  The specular reflectance is calculated by the product of the
- specular reflectance coeffient and a term dependent on the
+ specular reflectance coefficient and a term dependent on the
  surface roughness :
 
  Rs = W(I, O) * R(I, O, r)	(5)
@@ -271,8 +271,8 @@ brdf_render(register struct application *ap, const struct partition *pp, struct 
 	    /* Calculate specular reflectance. */
 	    if (ZERO(ps->rms_sq))
 		continue;
-	    VADD2(h_dir, to_eye, to_light)
-		VUNITIZE(h_dir);
+	    VADD2(h_dir, to_eye, to_light);
+	    VUNITIZE(h_dir);
 	    cos_tmp = VDOT(h_dir, swp->sw_hit.hit_normal);
 	    if (cos_tmp <= 0.0)
 		continue;

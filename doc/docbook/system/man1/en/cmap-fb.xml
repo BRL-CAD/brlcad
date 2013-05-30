@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id="cmapfb1">
+<refmeta>
+    <refentrytitle>CMAP-FB
+</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class="source">BRL-CAD</refmiscinfo>
+<refmiscinfo class="manual">BRL-CAD</refmiscinfo>
+</refmeta>
+
+<refnamediv>
+<refname>cmap-fb</refname>
+<refpurpose>load a colormap into a framebuffer</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id="synopsis">
+<cmdsynopsis sepchar=" ">
+  <command>cmap-fb</command>
+    <arg choice="opt" rep="norepeat">-H </arg>
+    <arg choice="opt" rep="norepeat">-o </arg>
+    <arg choice="opt" rep="norepeat"><replaceable>colormap</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+
+<refsection xml:id="description"><title>DESCRIPTION</title>
+<para><emphasis remap="I">Cmap-fb</emphasis>
+loads a colormap into a framebuffer.  A colormap
+file can be specified on the command line, otherwise standard
+input will be read.
+The format of the colormap input is described in
+<citerefentry><refentrytitle>cmap</refentrytitle><manvolnum>5</manvolnum></citerefentry>.</para>
+
+<para>Any colormap entries not listed in the input will be set to
+zero (black), unless the
+<option>-o</option>
+flag is specified in which case the values currently in
+the framebuffer will be retained (one can view this as
+"overlaying" the existing colormap).</para>
+
+<para>By default, the display is assumed to be 512x512 pixels;
+by specifying the
+<option>-H</option>
+flag, the size is changed to 1024x1024.
+This size distinction is important for devices like the Adage
+framebuffers which have different operating modes based on the
+display size.</para>
+</refsection>
+
+<refsection xml:id="see_also"><title>SEE ALSO</title>
+<para><citerefentry><refentrytitle>brlcad</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>fbcmap</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>fb-cmap</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>fbcmrot</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>cmap</refentrytitle><manvolnum>5</manvolnum></citerefentry></para>
+
+</refsection>
+
+<refsection xml:id="author"><title>AUTHOR</title>
+<para>BRL-CAD Team</para>
+
+</refsection>
+
+<refsection xml:id="copyright"><title>COPYRIGHT</title>
+<para>This software is Copyright (c) 1987-2013 by the United States
+Government as represented by U.S. Army Research Laboratory.</para>
+</refsection>
+
+<refsection xml:id="bug_reports"><title>BUG REPORTS</title>
+<para>Reports of bugs or problems should be submitted via electronic
+mail to &lt;devs@brlcad.org&gt;.</para>
+</refsection>
+</refentry>

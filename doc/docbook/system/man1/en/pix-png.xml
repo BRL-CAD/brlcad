@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='pixpng1'>
+<refmeta>
+    <refentrytitle>PIX-PNG
+</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class='source'>BRL-CAD</refmiscinfo>
+<refmiscinfo class='manual'>BRL-CAD</refmiscinfo>
+</refmeta>
+
+<refnamediv>
+<refname>pix-png</refname>
+<refpurpose>convert a BRL-CAD PIX format image to a PNG format image</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<cmdsynopsis>
+  <command>pix-png</command>
+    <arg choice='opt'>-a </arg>
+    <arg choice='opt'>-ggamma </arg>
+    <arg choice='opt'>-ssquaresize </arg>
+    <arg choice='opt'>-wfile_width </arg>
+    <arg choice='opt'>-nfile_height </arg>
+    <arg choice='opt'>-oPNG_file </arg>
+    <arg choice='opt'><replaceable>PIX_file</replaceable></arg>
+    <arg choice='opt'><replaceable>&gt;PNG_file</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para><command>pix-png</command>
+converts a
+<emphasis remap='I'>BRL PIX(5)</emphasis>
+format file to a
+<emphasis remap='I'>PNG</emphasis>
+(Portable Network Graphics) format file on the standard output. The
+PNG file created will be an RGB file with a bit-depth of 8 and a file
+gamma of 1.0.</para>
+
+<para>PIX image files do not contain information about their size.  The size
+of the input PIX image file must be specified if the dimensions are
+not the default 512x512 size.</para>
+</refsect1>
+
+<refsect1 xml:id='options'><title>OPTIONS</title>
+<variablelist remap='TP'>
+  <varlistentry>
+  <term><option>-a</option></term>
+  <listitem>
+<para>autosize the input file to determine file image height and width</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-g gamma</option></term>
+  <listitem>
+<para>sets the specified gamma correction value into the created PNG file.
+A value of 0.6 is a close approximation of PC display monitors.  A
+negative gamma value disables writing a gAMA chunk out entirely (and
+is the default).</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-s squaresize</option></term>
+  <listitem>
+<para>sets both the width and the height for the input to be
+<emphasis remap='I'>squaresize</emphasis></para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-w file_width</option></term>
+  <listitem>
+<para>tells
+<command>pix-png</command>
+that the input is
+<emphasis remap='I'>file_width</emphasis>
+pixels wide</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-n file_height</option></term>
+  <listitem>
+<para>tells
+<command>pix-png</command>
+that the input is
+<emphasis remap='I'>file_height</emphasis>
+scanlines tall</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-o PNG_file</option></term>
+  <listitem>
+<para>tells
+<command>pix-png</command>
+to write image data to the specified
+<emphasis remap='I'>PNG_file</emphasis>
+output file.  The
+<command>pix-png</command>
+command will not write out binary image data directly to a terminal
+device as a safeguard.</para>
+  </listitem>
+  </varlistentry>
+</variablelist>
+</refsect1>
+
+<refsect1 xml:id='see_also'><title>SEE ALSO</title>
+<para><citerefentry><refentrytitle>brlcad</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>png-pix</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>pix-fb</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>pix</refentrytitle><manvolnum>5</manvolnum></citerefentry>.</para>
+
+</refsect1>
+
+<refsect1 xml:id='author'><title>AUTHOR</title>
+<para>BRL-CAD Team</para>
+
+</refsect1>
+
+<refsect1 xml:id='copyright'><title>COPYRIGHT</title>
+<para>This software is Copyright (c) 1998-2013 by the United States
+Government as represented by U.S. Army Research Laboratory.</para>
+</refsect1>
+
+<refsect1 xml:id='bug_reports'><title>BUG REPORTS</title>
+<para>Reports of bugs or problems should be submitted via electronic
+mail to &lt;devs@brlcad.org&gt;.</para>
+</refsect1>
+</refentry>
+

@@ -1,7 +1,7 @@
 /*                 Hyperbola.h
  * BRL-CAD
  *
- * Copyright (c) 1994-2012 United States Government as represented by
+ * Copyright (c) 1994-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -29,28 +29,34 @@
 
 #include "Conic.h"
 
-class Hyperbola : public Conic {
+class Hyperbola : public Conic
+{
 private:
-	static string entityname;
+    static string entityname;
+    static EntityInstanceFunc GetInstance;
 
 protected:
-	double semi_axis;
-	double semi_imag_axis;
+    double semi_axis;
+    double semi_imag_axis;
 
-	Hyperbola();
-	Hyperbola(STEPWrapper *sw,int step_id);
+    Hyperbola();
+    Hyperbola(STEPWrapper *sw, int step_id);
 
 public:
-	virtual ~Hyperbola();
-	virtual curve_type CurveType() { return CONIC; };
-	virtual conic_type ConicType() { return HYPERBOLA; };
-	bool Load(STEPWrapper *sw,SDAI_Application_instance *sse);
-	virtual bool LoadONBrep(ON_Brep *brep);
-	virtual void Print(int level);
-	virtual void SetParameterTrim(double start, double end);
+    virtual ~Hyperbola();
+    virtual curve_type CurveType() {
+	return CONIC;
+    };
+    virtual conic_type ConicType() {
+	return HYPERBOLA;
+    };
+    bool Load(STEPWrapper *sw, SDAI_Application_instance *sse);
+    virtual bool LoadONBrep(ON_Brep *brep);
+    virtual void Print(int level);
+    virtual void SetParameterTrim(double start, double end);
 
-	//static methods
-	static STEPEntity *Create(STEPWrapper *sw,SDAI_Application_instance *sse);
+    //static methods
+    static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
 #endif /* HHYPERBOLA_H_ */

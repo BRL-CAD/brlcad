@@ -1,7 +1,7 @@
 /*                 BoundedSurface.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2012 United States Government as represented by
+ * Copyright (c) 1994-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -30,27 +30,31 @@
 
 #define CLASSNAME "BoundedSurface"
 #define ENTITYNAME "Bounded_Surface"
-string BoundedSurface::entityname = Factory::RegisterClass(ENTITYNAME,(FactoryMethod)BoundedSurface::Create);
+string BoundedSurface::entityname = Factory::RegisterClass(ENTITYNAME, (FactoryMethod)BoundedSurface::Create);
 
-BoundedSurface::BoundedSurface() {
-    step=NULL;
+BoundedSurface::BoundedSurface()
+{
+    step = NULL;
     id = 0;
 }
 
-BoundedSurface::BoundedSurface(STEPWrapper *sw,int step_id) {
-    step=sw;
+BoundedSurface::BoundedSurface(STEPWrapper *sw, int step_id)
+{
+    step = sw;
     id = step_id;
 }
 
-BoundedSurface::~BoundedSurface() {
+BoundedSurface::~BoundedSurface()
+{
 }
 
 bool
-BoundedSurface::Load(STEPWrapper *sw, SDAI_Application_instance *sse) {
-    step=sw;
+BoundedSurface::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
+    step = sw;
     id = sse->STEPfile_id;
 
-    if ( !Surface::Load(sw,sse) ) {
+    if (!Surface::Load(sw, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::Surface." << std::endl;
 	return false;
     }
@@ -59,31 +63,27 @@ BoundedSurface::Load(STEPWrapper *sw, SDAI_Application_instance *sse) {
 }
 
 void
-BoundedSurface::Print(int level) {
-    TAB(level); std::cout << CLASSNAME << ":" << name << "(";
+BoundedSurface::Print(int level)
+{
+    TAB(level);
+    std::cout << CLASSNAME << ":" << name << "(";
     std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-    TAB(level); std::cout << "Inherited Attributes:" << std::endl;
-    Surface::Print(level+1);
+    TAB(level);
+    std::cout << "Inherited Attributes:" << std::endl;
+    Surface::Print(level + 1);
 }
 
 STEPEntity *
-BoundedSurface::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
-    Factory::OBJECTS::iterator i;
-    if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
-	BoundedSurface *object = new BoundedSurface(sw,sse->STEPfile_id);
+BoundedSurface::GetInstance(STEPWrapper *sw, int id)
+{
+    return new BoundedSurface(sw, id);
+}
 
-	Factory::AddObject(object);
-
-	if (!object->Load(sw, sse)) {
-	    std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
-	    delete object;
-	    return NULL;
-	}
-	return static_cast<STEPEntity *>(object);
-    } else {
-	return (*i).second;
-    }
+STEPEntity *
+BoundedSurface::Create(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
+    return STEPEntity::CreateEntity(sw, sse, GetInstance, CLASSNAME);
 }
 
 bool

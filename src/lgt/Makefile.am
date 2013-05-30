@@ -2,6 +2,7 @@
 bin_PROGRAMS = lgt
 
 AM_CPPFLAGS = \
+	${STD_C99_FLAGS} \
 	${STRICT_FLAGS} \
 	${TCL_CPPFLAGS}
 
@@ -43,8 +44,6 @@ lgt_LDADD = \
 	${CURSOR}
 
 lgt_CFLAGS = -DBEHIND_ME_TOL=0.05
-
-dist_man_MANS = lgt.1
 
 DEPENDS = src/librt src/libfb src/vfont
 

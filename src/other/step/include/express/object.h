@@ -88,10 +88,10 @@ extern SCL_EXPRESS_EXPORT struct Object * OBJ;
 /* macro function definitions */
 /******************************/
 
-#define OBJget_symbol(obj,type)     (*OBJ[type].get_symbol)(obj)
-#define OBJget_type(_type_)     (OBJ[_type_].type)
-#define OBJget_bits(_type_)     (OBJ[_type_].bits)
-#define OBJtype_is_oneof(_type_,class)  (OBJ[_type_].bits & (class))
+#define OBJget_symbol(obj,type)     (*OBJ[(int)type].get_symbol)(obj)
+#define OBJget_type(_type_)     (OBJ[(int)_type_].type)
+#define OBJget_bits(_type_)     (OBJ[(int)_type_].bits)
+#define OBJtype_is_oneof(_type_,class)  (OBJ[(int)_type_].bits & (class))
 #define OBJget_name(obj,type)       (OBJget_symbol(obj,type)->name)
 
 /***********************/
@@ -99,6 +99,7 @@ extern SCL_EXPRESS_EXPORT struct Object * OBJ;
 /***********************/
 
 extern SCL_EXPRESS_EXPORT void OBJinitialize PROTO( ( void ) );
+extern SCL_EXPRESS_EXPORT void OBJcleanup PROTO( ( void ) );
 extern SCL_EXPRESS_EXPORT void OBJcreate PROTO( ( char, struct Symbol_ * ( * )( Generic ), char *, int ) );
 extern SCL_EXPRESS_EXPORT Symbol * UNK_get_symbol PROTO( ( Generic x ) );
 

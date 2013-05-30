@@ -1,7 +1,7 @@
 /*                      M E M A L L O C . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2012 United States Government as represented by
+ * Copyright (c) 2004-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -40,7 +40,7 @@
  * exists a queue of free buffers which are enqueued on to either of
  * the previous queues.  Initially all of the buffers are placed on
  * the `freemap' queue.  Whenever a buffer is freed because of
- * coallescing ends in rt_memfree() or zero size in rt_memalloc() the
+ * coalescing ends in rt_memfree() or zero size in rt_memalloc() the
  * mapping buffer is taken off from the respective queue and returned
  * to the `freemap' queue.
  *
@@ -66,16 +66,6 @@ static struct mem_map *rt_mem_freemap = MAP_NULL;	/* Freelist of buffers */
 #define M_TOVFL 00004	/* Top overflow */
 #define M_BOVFL 00010	/* Bottom overflow */
 
-/**
- * Takes:		& pointer of map,
- * size.
- *
- * Returns:	NULL Error
- * <addr> Othewise
- *
- * Comments:
- * Algorithm is first fit.
- */
 size_t
 rt_memalloc(struct mem_map **pp, register size_t size)
 {
@@ -111,17 +101,6 @@ rt_memalloc(struct mem_map **pp, register size_t size)
     return addr;
 }
 
-
-/**
- * Takes:		& pointer of map,
- * size.
- *
- * Returns:	NULL Error
- * <addr> Othewise
- *
- * Comments:
- * Algorithm is BEST fit.
- */
 struct mem_map *
 rt_memalloc_nosplit(struct mem_map **pp, register size_t size)
 {
@@ -159,15 +138,6 @@ rt_memalloc_nosplit(struct mem_map **pp, register size_t size)
     return best;
 }
 
-
-/**
- * Returns:	NULL Error
- * <addr> Othewise
- *
- * Comments:
- * Algorithm is first fit.
- * Free space can be split
- */
 size_t
 rt_memget(struct mem_map **pp, register size_t size, off_t place)
 {
@@ -255,15 +225,6 @@ rt_memget_nosplit(struct mem_map **pp, register size_t size, size_t place)
 }
 
 
-/**
- * Takes:
- * size,
- * address.
- *
- * Comments:
- * The routine does not check for wrap around when increasing sizes
- * or changing addresses.  Other wrap-around conditions are flagged.
- */
 void
 rt_memfree(struct mem_map **pp, size_t size, off_t addr)
 {
@@ -340,7 +301,7 @@ rt_memfree(struct mem_map **pp, size_t size, off_t addr)
 
 	default:		/* No matches; allocate and insert */
 	    if ((tmap=rt_mem_freemap) == MAP_NULL)
-		tmap = (struct mem_map *)bu_malloc(sizeof(struct mem_map), "struct mem_map " BU_FLSTR);
+		BU_ALLOC(tmap, struct mem_map);
 	    else
 		rt_mem_freemap = rt_mem_freemap->m_nxtp;	/* Click one off */
 
@@ -356,10 +317,6 @@ rt_memfree(struct mem_map **pp, size_t size, off_t addr)
 }
 
 
-/**
- * Take everything on the current memory chain, and place it on the
- * freelist.
- */
 void
 rt_mempurge(struct mem_map **pp)
 {
@@ -381,9 +338,6 @@ rt_mempurge(struct mem_map **pp)
 }
 
 
-/**
- * Print a memory chain.
- */
 void
 rt_memprint(struct mem_map **pp)
 {
@@ -395,9 +349,6 @@ rt_memprint(struct mem_map **pp)
 }
 
 
-/**
- * Return all the storage used by the rt_mem_freemap.
- */
 void
 rt_memclose(void)
 {

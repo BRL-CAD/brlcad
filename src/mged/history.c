@@ -1,7 +1,7 @@
 /*                       H I S T O R Y . C
  * BRL-CAD
  *
- * Copyright (c) 1995-2012 United States Government as represented by
+ * Copyright (c) 1995-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -68,8 +68,8 @@ history_record(
     if (BU_STR_EQUAL(bu_vls_addr(cmdp), "\n"))
 	return;
 
-    new_hist = (struct mged_hist *)bu_malloc(sizeof(struct mged_hist),
-					     "mged history");
+    BU_ALLOC(new_hist, struct mged_hist);
+
     bu_vls_init(&(new_hist->mh_command));
     bu_vls_vlscat(&(new_hist->mh_command), cmdp);
     new_hist->mh_start = *start;
@@ -218,7 +218,7 @@ f_history(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const cha
 	    if (fp != NULL) {
 		Tcl_AppendResult(interp, "history: -outfile option given more than once\n",
 				 (char *)NULL);
-                fclose(fp);
+		fclose(fp);
 		return TCL_ERROR;
 	    } else if (argc < 3 || BU_STR_EQUAL(argv[2], "-delays")) {
 		Tcl_AppendResult(interp, "history: I need a file name\n", (char *)NULL);

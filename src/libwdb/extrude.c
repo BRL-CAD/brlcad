@@ -1,7 +1,7 @@
 /*                       E X T R U D E . C
  * BRL-CAD
  *
- * Copyright (c) 2000-2012 United States Government as represented by
+ * Copyright (c) 2000-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,7 +17,8 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file libwdb/extr.c
+
+/** @file libwdb/extrude.c
  *
  * Support for extrusion solids
  *
@@ -51,7 +52,7 @@ mk_extrusion(
 {
     struct rt_extrude_internal *extr;
 
-    BU_GET(extr, struct rt_extrude_internal);
+    BU_ALLOC(extr, struct rt_extrude_internal);
     extr->magic = RT_EXTRUDE_INTERNAL_MAGIC;
     extr->sketch_name = bu_strdup(sketch_name);
     VMOVE(extr->V, V);

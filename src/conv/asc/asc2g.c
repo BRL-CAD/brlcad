@@ -1,7 +1,7 @@
 /*                         A S C 2 G . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2012 United States Government as represented by
+ * Copyright (c) 1985-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -193,7 +193,7 @@ strsolbld(void)
     if (BU_STR_EQUAL(type, "dsp")) {
 	struct rt_dsp_internal *dsp;
 
-	BU_GET(dsp, struct rt_dsp_internal);
+	BU_ALLOC(dsp, struct rt_dsp_internal);
 	bu_vls_init(&dsp->dsp_name);
 	bu_vls_strcpy(&str, args);
 	if (bu_struct_parse(&str, rt_functab[ID_DSP].ft_parsetab, (char *)dsp) < 0) {
@@ -214,7 +214,7 @@ strsolbld(void)
     } else if (BU_STR_EQUAL(type, "ebm")) {
 	struct rt_ebm_internal *ebm;
 
-	BU_GET(ebm, struct rt_ebm_internal);
+	BU_ALLOC(ebm, struct rt_ebm_internal);
 
 	MAT_IDN(ebm->mat);
 
@@ -237,7 +237,7 @@ strsolbld(void)
     } else if (BU_STR_EQUAL(type, "vol")) {
 	struct rt_vol_internal *vol;
 
-	BU_GET(vol, struct rt_vol_internal);
+	BU_ALLOC(vol, struct rt_vol_internal);
 	MAT_IDN(vol->mat);
 
 	bu_vls_strcpy(&str, args);
@@ -292,7 +292,7 @@ sktbld(void)
     cp++;
     cp++;
 
-    (void)sscanf(cp, "%200s %f %f %f %f %f %f %f %f %f %lu %lu", /* NAME_LEN */
+    sscanf(cp, "%200s %f %f %f %f %f %f %f %f %f %lu %lu", /* NAME_LEN */
 		 name,
 		 &fV[0], &fV[1], &fV[2],
 		 &fu[0], &fu[1], &fu[2],
@@ -322,7 +322,7 @@ sktbld(void)
 	    bu_exit(1, "ERROR: not enough vertices for sketch (%s)\n", name);
     }
 
-    skt = (struct rt_sketch_internal *)bu_calloc(1, sizeof(struct rt_sketch_internal), "sketch");
+    BU_ALLOC(skt, struct rt_sketch_internal);
     skt->magic = RT_SKETCH_INTERNAL_MAGIC;
     VMOVE(skt->V, V);
     VMOVE(skt->u_vec, u);
@@ -344,13 +344,13 @@ sktbld(void)
 	cp = buf + 2;
 	switch (*cp) {
 	    case LSEG:
-		lsg = (struct line_seg *)bu_malloc(sizeof(struct line_seg), "line segment");
+		BU_ALLOC(lsg, struct line_seg);
 		sscanf(cp+1, "%d %d %d", &crv->reverse[j], &lsg->start, &lsg->end);
 		lsg->magic = CURVE_LSEG_MAGIC;
 		crv->segment[j] = lsg;
 		break;
 	    case CARC:
-		csg = (struct carc_seg *)bu_malloc(sizeof(struct carc_seg), "arc segment");
+		BU_ALLOC(csg, struct carc_seg);
 		sscanf(cp+1, "%d %d %d %lf %d %d", &crv->reverse[j], &csg->start, &csg->end,
 		       &radius, &csg->center_is_left, &csg->orientation);
 		csg->radius = radius;
@@ -358,7 +358,7 @@ sktbld(void)
 		crv->segment[j] = csg;
 		break;
 	    case NURB:
-		nsg = (struct nurb_seg *)bu_malloc(sizeof(struct nurb_seg), "nurb segment");
+		BU_ALLOC(nsg, struct nurb_seg);
 		sscanf(cp+1, "%d %d %d %d %d", &crv->reverse[j], &nsg->order, &nsg->pt_type,
 		       &nsg->k.k_size, &nsg->c_size);
 		nsg->k.knots = (fastf_t *)bu_calloc(nsg->k.k_size, sizeof(fastf_t), "knots");
@@ -417,7 +417,7 @@ extrbld(void)
     cp++;
 
     cp++;
-    (void)sscanf(cp, "%200s %200s %d %f %f %f  %f %f %f %f %f %f %f %f %f", /* NAME_LEN */
+    sscanf(cp, "%200s %200s %d %f %f %f  %f %f %f %f %f %f %f %f %f", /* NAME_LEN */
 		 name, sketch_name, &keypoint, &fV[0], &fV[1], &fV[2], &fh[0], &fh[1], &fh[2],
 		 &fu_vec[0], &fu_vec[1], &fu_vec[2], &fv_vec[0], &fv_vec[1], &fv_vec[2]);
 
@@ -794,7 +794,7 @@ combbld(void)
     cp = nxt_spc(cp);
     aircode = (short)atoi(cp);
     cp = nxt_spc(cp);
-    /* DEPRECTED: number of members expected */
+    /* DEPRECATED: number of members expected */
     cp = nxt_spc(cp);
     /* DEPRECATED: Comgeom reference number */
     cp = nxt_spc(cp);
@@ -946,7 +946,7 @@ arsbbld(void)
 	    }
 	    return;
 	} else if (incr_ret == 1) {
-	    /* end of curve, ignore remainder of reocrd */
+	    /* end of curve, ignore remainder of record */
 	    return;
 	}
     }
@@ -1061,7 +1061,7 @@ polyhbld(void)
 {
     char	*cp;
     char	*name;
-    long	startpos;
+    off_t	startpos;
     size_t	nlines;
     struct rt_pg_internal	*pg;
     struct rt_db_internal	intern;
@@ -1072,7 +1072,7 @@ polyhbld(void)
     name = bu_strdup(cp);
 
     /* Count up the number of poly data lines which follow */
-    startpos = ftell(ifp);
+    startpos = bu_ftell(ifp);
     for (nlines = 0;; nlines++) {
 	if (bu_fgets(buf, BUFSIZE, ifp) == NULL)  break;
 	if (buf[0] != ID_P_DATA)  break;	/* 'Q' */
@@ -1080,7 +1080,7 @@ polyhbld(void)
     BU_ASSERT_LONG(nlines, >, 0);
 
     /* Allocate storage for the faces */
-    BU_GET(pg, struct rt_pg_internal);
+    BU_ALLOC(pg, struct rt_pg_internal);
     pg->magic = RT_PG_INTERNAL_MAGIC;
     pg->npoly = nlines;
     pg->poly = (struct rt_pg_face_internal *)bu_calloc(pg->npoly,
@@ -1088,7 +1088,7 @@ polyhbld(void)
     pg->max_npts = 0;
 
     /* Return to first 'Q' record */
-    fseek(ifp, startpos, 0);
+    bu_fseek(ifp, startpos, 0);
 
     for (nlines = 0; nlines < pg->npoly; nlines++) {
 	struct rt_pg_face_internal	*fp = &pg->poly[nlines];
@@ -1253,7 +1253,7 @@ botbld(void)
 	bu_fgets(buf, BUFSIZE, ifp);
 	sscanf(buf, "%lu: %le %le %le", &j, &a[0], &a[1], &a[2]);
 	if (i != j) {
-	    bu_log("Vertices out of order in solid %s (expecting %d, found %d)\n",
+	    bu_log("Vertices out of order in solid %s (expecting %lu, found %lu)\n",
 		   my_name, i, j);
 	    bu_free((char *)vertices, "botbld: vertices");
 	    bu_log("Skipping this solid!\n");
@@ -1276,7 +1276,7 @@ botbld(void)
 	    sscanf(buf, "%lu: %d %d %d", &j, &faces[i*3], &faces[i*3+1], &faces[i*3+2]);
 
 	if (i != j) {
-	    bu_log("Faces out of order in solid %s (expecting %d, found %d)\n",
+	    bu_log("Faces out of order in solid %s (expecting %lu, found %lu)\n",
 		   my_name, i, j);
 	    bu_free((char *)vertices, "botbld: vertices");
 	    bu_free((char *)faces, "botbld: faces");
@@ -1314,7 +1314,7 @@ botbld(void)
  * P I P E B L D
  *
  * This routine reads pipe data from standard in, constructs a
- * doublely linked list of pipe points, and sends this list to
+ * doubly linked list of pipe points, and sends this list to
  * mk_pipe().
  */
 void
@@ -1347,9 +1347,9 @@ pipebld(void)
     while (bu_strncmp (buf, "END_PIPE", 8)) {
 	double id, od, x, y, z, bendradius;
 
-	sp = (struct wdb_pipept *)bu_malloc(sizeof(struct wdb_pipept), "pipe");
+	BU_ALLOC(sp, struct wdb_pipept);
 
-	(void)sscanf(buf, "%le %le %le %le %le %le",
+	sscanf(buf, "%le %le %le %le %le %le",
 		     &id, &od,
 		     &bendradius, &x, &y, &z);
 
@@ -1385,21 +1385,26 @@ particlebld(void)
     vect_t		height;
     double		vrad;
     double		hrad;
+    double scanvertex[3];
+    double scanheight[3];
 
 
     /* Read all the information out of the existing buffer.  Note that
      * particles fit into one granule.
      */
 
-    (void)sscanf(buf, "%c %200s %le %le %le %le %le %le %le %le", /* NAME_LEN */
+    sscanf(buf, "%c %200s %le %le %le %le %le %le %le %le", /* NAME_LEN */
 		 &ident, name,
-		 &vertex[0],
-		 &vertex[1],
-		 &vertex[2],
-		 &height[0],
-		 &height[1],
-		 &height[2],
+		 &scanvertex[0],
+		 &scanvertex[1],
+		 &scanvertex[2],
+		 &scanheight[0],
+		 &scanheight[1],
+		 &scanheight[2],
 		 &vrad, &hrad);
+    /* convert double to fastf_t */
+    VMOVE(vertex, scanvertex);
+    VMOVE(height, scanheight);
 
     mk_particle(ofp, name, vertex, height, vrad, hrad);
 }
@@ -1408,7 +1413,7 @@ particlebld(void)
 /**
  * A R B N B L D
  *
- * This routine reads arbn data from standard in and sendss it to
+ * This routine reads arbn data from standard in and sends it to
  * mk_arbn().
  */
 void
@@ -1455,9 +1460,13 @@ arbnbld(void)
     /*bu_log("starting to dump eqns\n");
      */
     for (i = 0; i < neqn; i++) {
+	double scan[4];
+
 	bu_fgets(buf, BUFSIZE, ifp);
-	(void)sscanf(buf, "%200s %le %le %le %le", type, /* TYPE_LEN */
-		     &eqn[i][X], &eqn[i][Y], &eqn[i][Z], &eqn[i][W]);
+	sscanf(buf, "%200s %le %le %le %le", type, /* TYPE_LEN */
+		     &scan[0], &scan[1], &scan[2], &scan[3]);
+	/* convert double to fastf_t */
+	HMOVE(eqn[i], scan);
     }
 
     /*bu_log("sending info to mk_arbn\n");
@@ -1558,10 +1567,13 @@ main(int argc, char *argv[])
     struct bu_vls	line = BU_VLS_INIT_ZERO;
     int                 isComment=1;
 
-    bu_debug = BU_DEBUG_COREDUMP;
+    if ( BU_STR_EQUAL(argv[1],"-h") || BU_STR_EQUAL(argv[1],"-?"))
+	bu_exit(1, "%s", usage);
 
     if (argc != 3)
 	bu_exit(1, "%s", usage);
+
+    bu_debug = BU_DEBUG_COREDUMP;
 
     Tcl_FindExecutable(argv[0]);
 
@@ -1596,7 +1608,7 @@ main(int argc, char *argv[])
 	    if (str[charIndex] == '#') {
 		isComment = 1;
 		break;
-	    } else if (isspace(str[charIndex])) {
+	    } else if (isspace((int)str[charIndex])) {
 		continue;
 	    } else {
 		isComment = 0;
@@ -1799,7 +1811,6 @@ main(int argc, char *argv[])
     fclose(ifp); ifp = NULL;
     wdb_close(ofp); ofp = NULL;
 
-    bu_exit(0, "");
     return 0;
 }
 

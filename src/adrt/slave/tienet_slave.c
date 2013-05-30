@@ -1,7 +1,7 @@
 /*                  T I E N E T _ S L A V E . C
  * BRL-CAD / ADRT
  *
- * Copyright (c) 2002-2012 United States Government as represented by
+ * Copyright (c) 2002-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -58,15 +58,15 @@ typedef void tienet_slave_fcb_free_t();
 tienet_slave_fcb_free_t	*tienet_slave_fcb_free;
 
 void tienet_slave_init(int port, char *host,
-                       void fcb_work(tienet_buffer_t *work, tienet_buffer_t *result),
-                       void fcb_free(void),
-                       int ver_key)
+		       void fcb_work(tienet_buffer_t *work, tienet_buffer_t *result),
+		       void fcb_free(void),
+		       int ver_key)
 {
     tienet_slave_fcb_work = fcb_work;
     tienet_slave_fcb_free = fcb_free;
 
 
-    /* Store version key for comparisson with version key on master */
+    /* Store version key for comparison with version key on master */
     tienet_slave_ver_key = ver_key;
 
     /*

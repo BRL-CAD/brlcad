@@ -1,7 +1,7 @@
 #                S U P E R E L L E D I T F R A M E . T C L
 # BRL-CAD
 #
-# Copyright (c) 2002-2012 United States Government as represented by
+# Copyright (c) 2002-2013 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -154,7 +154,7 @@
 	    -textvariable [::itcl::scope mN] \
 	    -state disabled \
 	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add superellNUnitsL {
 	::ttk::label $parent.superellNUnitsL \
@@ -172,7 +172,7 @@
 	    -textvariable [::itcl::scope mE] \
 	    -state disabled \
 	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add superellEUnitsL {
 	::ttk::label $parent.superellEUnitsL \

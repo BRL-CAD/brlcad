@@ -1,7 +1,7 @@
 /*                      S P H F L A K E . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2012 United States Government as represented by
+ * Copyright (c) 2004-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -37,7 +37,7 @@
 #include "wdb.h"
 
 
-#define D2R(x) (((x)/180)*3.14159265358979)
+#define D2R(x) (x*DEG2RAD)
 #define MATXPNT(d, m, v) {						\
 	double _i = 1.0/((m)[12]*(v)[0] + (m)[13]*(v)[1] + (m)[14]*(v)[2] + (m)[15]*1); \
 	(d)[0] = ((m)[0]*(v)[0] + (m)[1]*(v)[1] + (m)[2]*(v)[2] + (m)[3])*_i; \
@@ -232,6 +232,7 @@ int main(int argc, char **argv)
     return 0;
 }
 
+
 void usage(char *n)
 {
     printf(
@@ -241,6 +242,7 @@ void usage(char *n)
 	  i -- use interactive mode\n\
 	  f -- specify output file\n\n", n);
 }
+
 
 void initializeInfo(params_t *p, int inter, char *name, int depth)
 {
@@ -299,7 +301,9 @@ void initializeInfo(params_t *p, int inter, char *name, int depth)
 	    len = strlen(input);
 	    if ((len > 0) && (input[len-1] == '\n')) input[len-1] = 0;
 	    if (bu_strncmp(input, "", MAX_INPUT_LENGTH) == 0) {
-		sscanf(input, "%lg %lg %lg", &(p->pos[X]), &(p->pos[Y]), &(p->pos[Z]));
+		double scan[3];
+		sscanf(input, "%lg %lg %lg", &scan[X], &scan[Y], &scan[Z]);
+		VMOVE(p->pos, scan); /* double to fastf_t */
 	    }
 	}
 	fflush(stdin);
@@ -391,6 +395,7 @@ void initializeInfo(params_t *p, int inter, char *name, int depth)
     MAT_IDN(IDENT);
 }
 
+
 void createSphereflake(params_t *p)
 {
     mat_t trans;
@@ -413,6 +418,7 @@ void createSphereflake(params_t *p)
     printf("\nSphereFlake created");
 
 }
+
 
 void createLights(params_t *p)
 {
@@ -455,6 +461,7 @@ void createLights(params_t *p)
     printf("\nLights created");
 }
 
+
 void createPlane(params_t *p)
 {
     char name[MAX_INPUT_LENGTH];
@@ -473,6 +480,7 @@ void createPlane(params_t *p)
     printf("\nPlane created");
 }
 
+
 void createEnvironMap(params_t *UNUSED(p))
 {
     char name[MAX_INPUT_LENGTH];
@@ -487,6 +495,7 @@ void createEnvironMap(params_t *UNUSED(p))
     printf("\nEnvironment map created");
 
 }
+
 
 void createScene(params_t *p)
 {
@@ -509,6 +518,7 @@ void createScene(params_t *p)
     printf("\nScene created (FILE: %s)\n", p->fileName);
 }
 
+
 void printMatrix(char *n, fastf_t *m)
 {
     int i = 0;
@@ -519,6 +529,7 @@ void printMatrix(char *n, fastf_t *m)
     }
     printf("\n-----------\n");
 }
+
 
 void getTrans(mat_t (*t), int theta, int phi, fastf_t radius)
 {
@@ -545,6 +556,7 @@ void getTrans(mat_t (*t), int theta, int phi, fastf_t radius)
     memcpy(*t, newPos, sizeof(newPos));
 }
 
+
 void getYRotMat(mat_t (*t), fastf_t theta)
 {
     fastf_t sin_ = sin(D2R(theta));
@@ -560,6 +572,7 @@ void getYRotMat(mat_t (*t), fastf_t theta)
     memcpy(*t, r, sizeof(*t));
 }
 
+
 void getZRotMat(mat_t (*t), fastf_t phi)
 {
     fastf_t sin_ = sin(D2R(phi));
@@ -574,6 +587,7 @@ void getZRotMat(mat_t (*t), fastf_t phi)
     r[15] = 1;
     memcpy(*t, r, sizeof(*t));
 }
+
 
 /*
   void makeFlake(int depth, mat_t *trans, point_t center, fastf_t radius, float delta, int maxDepth)
@@ -613,6 +627,7 @@ void makeFlake(int depth, mat_t (*trans), fastf_t *center, fastf_t radius, doubl
 	makeFlake(depth+1, &temp, pcent, newRadius, delta, maxDepth);
     }
 }
+
 
 /*
  * Local Variables:

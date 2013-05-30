@@ -1,7 +1,7 @@
 /*                       D B 5 _ B I N . C
  * BRL-CAD
  *
- * Copyright (c) 2000-2012 United States Government as represented by
+ * Copyright (c) 2000-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -139,8 +139,7 @@ rt_binunif_import5_minor_type(struct rt_db_internal *ip,
     ip->idb_major_type = DB5_MAJORTYPE_BINARY_UNIF;
     ip->idb_minor_type = minor_type;
     ip->idb_meth = &rt_functab[ID_BINUNIF];
-    ip->idb_ptr = bu_malloc( sizeof(struct rt_binunif_internal),
-			     "rt_binunif_internal");
+    BU_ALLOC(ip->idb_ptr, struct rt_binunif_internal);
 
     bip = (struct rt_binunif_internal *)ip->idb_ptr;
     bip->magic = RT_BINUNIF_INTERNAL_MAGIC;
@@ -161,8 +160,7 @@ rt_binunif_import5_minor_type(struct rt_db_internal *ip,
 	    bip->count = ep->ext_nbytes/SIZEOF_NETWORK_DOUBLE;
 	    bip->u.uint8 = (unsigned char *) bu_malloc( bip->count * sizeof(double),
 							"rt_binunif_internal" );
-	    ntohd( (unsigned char *) bip->u.uint8,
-		   ep->ext_buf, bip->count );
+	    ntohd( (unsigned char *) bip->u.uint8, ep->ext_buf, bip->count );
 	    break;
 	case DB5_MINORTYPE_BINU_8BITINT:
 	case DB5_MINORTYPE_BINU_8BITINT_U:
@@ -214,11 +212,6 @@ rt_binunif_import5_minor_type(struct rt_db_internal *ip,
 }
 
 
-/**
- * R T _ B I N U N I F _ D U M P
- *
- * Diagnostic routine
- */
 void
 rt_binunif_dump( struct rt_binunif_internal *bip) {
     RT_CK_BINUNIF(bip);
@@ -386,11 +379,6 @@ rt_binunif_describe( struct bu_vls *str,
     return 0;
 }
 
-/**
- * R T _ B I N U N I F _ F R E E
- *
- * Free the storage associated with a binunif_internal object
- */
 void
 rt_binunif_free( struct rt_binunif_internal *bip) {
     RT_CK_BINUNIF(bip);
@@ -502,7 +490,7 @@ rt_retrieve_binunif(struct rt_db_internal *intern,
 		bu_log("bip->type switch... 64bitint");
 	    break;
 	default:
-	    /* XXX	This shouln't happen!!    */
+	    /* XXX	This shouldn't happen!!    */
 	    bu_log("bip->type switch... default");
 	    break;
     }
@@ -522,8 +510,8 @@ rt_binunif_make(const struct rt_functab *ftp, struct rt_db_internal *intern)
     BU_ASSERT(&rt_functab[ID_BINUNIF] == ftp);
 
     intern->idb_meth = ftp;
-    bip = (struct rt_binunif_internal *)bu_calloc( sizeof( struct rt_binunif_internal), 1,
-						   "rt_binunif_make");
+    BU_ALLOC(bip, struct rt_binunif_internal);
+
     intern->idb_ptr = (genptr_t) bip;
     bip->magic = RT_BINUNIF_INTERNAL_MAGIC;
     bip->type = DB5_MINORTYPE_BINU_8BITINT;
@@ -601,7 +589,7 @@ rt_binunif_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc
 
 	    c = argv[1];
 	    while ( *c != '\0' ) {
-		if ( !isdigit( *c ) ) {
+		if ( !isdigit( (int)*c ) ) {
 		    type_is_digit = 0;
 		    break;
 		}

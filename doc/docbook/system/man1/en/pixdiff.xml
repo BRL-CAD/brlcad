@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='pixdiff1'>
+<refmeta>
+    <refentrytitle>PIXDIFF
+</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class='source'>BRL-CAD</refmiscinfo>
+<refmiscinfo class='manual'>BRL-CAD</refmiscinfo>
+</refmeta>
+
+<refnamediv>
+<refname>pixdiff</refname>
+<refpurpose>highlight pixel colors which differ between two files</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<cmdsynopsis>
+  <command>pixdiff</command>
+    <arg choice='plain'><replaceable>file1.pix</replaceable></arg>
+    <arg choice='plain'><replaceable>file2.pix</replaceable></arg>
+    <arg choice='plain'><replaceable>&gt;</replaceable></arg>
+    <arg choice='plain'><replaceable>out.pix</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para><emphasis remap='I'>Pixdiff</emphasis>
+highlights the pixels which differ between two color
+<citerefentry><refentrytitle>pix</refentrytitle><manvolnum>5</manvolnum></citerefentry>
+format files.
+The input files are read pixel by pixel and if any of the color
+planes red, green, or blue differ, those colors are specially marked.
+Bytes that differ by +/-1 are drawn with intensity 192, bytes
+that differ more are displayed at
+full intensity of 255.  If none of the color values differ, an NTSC
+converted black
+and white equivalent at one half the original intensity is displayed.
+This is to aid in seeing where in the image the different pixels lie.
+Upon completion,
+<command>pixdiff</command>
+reports the number of bytes matching, the number off by 1, and the number
+off by many.</para>
+
+<para>Also see
+<citerefentry><refentrytitle>bwdiff</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+which can still be used on
+<emphasis remap='I'>pix</emphasis>
+files, yet can produce different kinds
+of output.</para>
+</refsect1>
+
+<refsect1 xml:id='see_also'><title>SEE ALSO</title>
+<para><citerefentry><refentrytitle>brlcad</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>bwdiff</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>pix-fb</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>pixstat</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>pix</refentrytitle><manvolnum>5</manvolnum></citerefentry></para>
+
+</refsect1>
+
+<refsect1 xml:id='author'><title>AUTHOR</title>
+<para>BRL-CAD Team</para>
+
+</refsect1>
+
+<refsect1 xml:id='copyright'><title>COPYRIGHT</title>
+<para>This software is Copyright (c) 1989-2013 by the United States
+Government as represented by U.S. Army Research Laboratory.</para>
+</refsect1>
+
+<refsect1 xml:id='bug_reports'><title>BUG REPORTS</title>
+<para>Reports of bugs or problems should be submitted via electronic
+mail to &lt;devs@brlcad.org&gt;.</para>
+</refsect1>
+</refentry>
+

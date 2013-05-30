@@ -1,7 +1,7 @@
 /*                      M K B U N D L E . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2012 United States Government as represented by
+ * Copyright (c) 2004-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -90,13 +90,6 @@ rt_raybundle_maker(struct xray *rp, double radius, const fastf_t *avec, const fa
 }
 
 
-/**
- * Make a bundle of rays around a main ray using a uniform rectangular
- * grid pattern with a circular extent.  The radius, gridsize is given
- * in mm.
- *
- * rp[0].r_dir must have unit length.
- */
 int
 rt_gen_circular_grid(struct xrays *rays, const struct xray *center_ray, fastf_t radius, const fastf_t *up_vector, fastf_t gridsize)
 {
@@ -118,15 +111,6 @@ rt_gen_circular_grid(struct xrays *rays, const struct xray *center_ray, fastf_t 
 }
 
 
-/**
- * Make a bundle of rays around a main ray using a uniform rectangular
- * grid pattern with an elliptical extent.
- *
- * avec and bvec a.  The gridsize is
- * given in mm.
- *
- * rp[0].r_dir must have unit length.
- */
 int
 rt_gen_elliptical_grid(struct xrays *rays, const struct xray *center_ray, const fastf_t *avec, const fastf_t *bvec, fastf_t gridsize)
 {
@@ -159,9 +143,7 @@ rt_gen_elliptical_grid(struct xrays *rays, const struct xray *center_ray, const 
     for (y=gridsize * (-bcpr); y <= b; y=y+gridsize) {
 	for (x= gridsize * (-acpr); x <= a; x=x+gridsize) {
 	    if (((x*x)/(a*a) + (y*y)/(b*b)) < 1) {
-		xrayp = (struct xrays *)bu_calloc(sizeof(struct xrays),
-						  1,
-						  "bundled ray");
+		BU_ALLOC(xrayp, struct xrays);
 		VJOIN2(xrayp->ray.r_pt, C, x, a_dir, y, b_dir);
 		VMOVE(xrayp->ray.r_dir, dir);
 		xrayp->ray.index = count++;

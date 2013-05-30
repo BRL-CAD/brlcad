@@ -1,7 +1,7 @@
 /*                        S Y M B O L . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2012 United States Government as represented by
+ * Copyright (c) 2004-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -21,7 +21,7 @@
 /** @{ */
 /** @file libbn/symbol.c
  *
- *	Terminal Independant Graphics Display Package.
+ *	Terminal Independent Graphics Display Package.
  *		Mike Muuss  July 31, 1978
  *
  *	This routine is used to plot a string of ASCII symbols

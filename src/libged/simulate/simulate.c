@@ -1,7 +1,7 @@
 /*                         S I M U L A T E . C
  * BRL-CAD
  *
- * Copyright (c) 2011-2012 United States Government as represented by
+ * Copyright (c) 2011-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -91,20 +91,21 @@ add_regions(struct ged *gedp, struct simulation_params *sim_params)
     for (i = 0; i < RT_DBNHASH; i++)
 	for (dp = gedp->ged_wdbp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
 	    if ((dp->d_flags & RT_DIR_HIDDEN) ||  /* check for hidden comb/prim */
-		!(dp->d_flags & RT_DIR_REGION)     /* check if region */
-		)
-		continue;
+		   !(dp->d_flags & RT_DIR_REGION)     /* check if region */
+		) {
+		    continue;
+	    }
 
 	    if (strstr(dp->d_namep, prefix)) {
-		bu_vls_printf(gedp->ged_result_str, "add_regions: Skipping \"%s\" due to \"%s\" in name\n",
+		    bu_vls_printf(gedp->ged_result_str, "add_regions: Skipping \"%s\" due to \"%s\" in name\n",
 			      dp->d_namep, prefix);
-		continue;
+		    continue;
 	    }
 
 	    if (BU_STR_EMPTY(dp->d_namep)) {
-		bu_vls_printf(gedp->ged_result_str, "add_regions: Skipping \"%s\" due to empty name\n",
+		    bu_vls_printf(gedp->ged_result_str, "add_regions: Skipping \"%s\" due to empty name\n",
 			      dp->d_namep);
-		continue;
+		    continue;
 	    }
 
 	    /* Duplicate the region */
@@ -116,13 +117,13 @@ add_regions(struct ged *gedp, struct simulation_params *sim_params)
 
 	    /* Get the directory pointer for the object just added */
 	    if ((ndp=db_lookup(gedp->ged_wdbp->dbip, bu_vls_addr(&dp_name_vls), LOOKUP_QUIET)) == RT_DIR_NULL) {
-	    	bu_vls_printf(gedp->ged_result_str, "add_regions: db_lookup(%s) failed", bu_vls_addr(&dp_name_vls));
-	    	return GED_ERROR;
+		    bu_vls_printf(gedp->ged_result_str, "add_regions: db_lookup(%s) failed", bu_vls_addr(&dp_name_vls));
+		    return GED_ERROR;
 	    }
 
 
 	    /* Add to simulation list */
-	    current_node = (struct rigid_body *)bu_malloc(sizeof(struct rigid_body), "rigid_body: current_node");
+	    BU_ALLOC(current_node, struct rigid_body);
 	    current_node->index = sim_params->num_bodies;
 	    current_node->rb_namep = bu_strdup(bu_vls_addr(&dp_name_vls));
 	    current_node->dp = ndp;
@@ -141,13 +142,13 @@ add_regions(struct ged *gedp, struct simulation_params *sim_params)
 
 	    /* Setup the linked list */
 	    if (prev_node == NULL) {
-	    	/* first node */
-	    	prev_node = current_node;
-	    	sim_params->head_node = current_node;
+		    /* first node */
+		    prev_node = current_node;
+		    sim_params->head_node = current_node;
 	    } else {
-	    	/* past 1st node now */
-	    	prev_node->next = current_node;
-	    	prev_node = prev_node->next;
+		    /* past 1st node now */
+		    prev_node->next = current_node;
+		    prev_node = prev_node->next;
 	    }
 
 	    /* Add the new region to the simulation result */
@@ -159,8 +160,8 @@ add_regions(struct ged *gedp, struct simulation_params *sim_params)
     bu_vls_free(&dp_name_vls);
 
     if(sim_params->num_bodies == 0){
-	bu_vls_printf(gedp->ged_result_str, "add_regions: ERROR No objects were added\n");
-	return GED_ERROR;
+	    bu_vls_printf(gedp->ged_result_str, "add_regions: ERROR No objects were added\n");
+	    return GED_ERROR;
     }
 
     /* Show list of objects to be added to the sim : keep for debugging as of now */
@@ -186,35 +187,35 @@ get_bb(struct ged *gedp, struct simulation_params *sim_params)
     /* Free memory in rigid_body list */
     for (current_node = sim_params->head_node; current_node != NULL; current_node = current_node->next) {
 
-	/* Get its BB */
-	if (rt_bound_internal(gedp->ged_wdbp->dbip, current_node->dp, rpp_min, rpp_max) == 0) {
-	    bu_log("get_bb: Got the BB for \"%s\" as \
+	    /* Get its BB */
+	    if (rt_bound_internal(gedp->ged_wdbp->dbip, current_node->dp, rpp_min, rpp_max) == 0) {
+		bu_log("get_bb: Got the BB for \"%s\" as \
 					min {%f %f %f} max {%f %f %f}\n", current_node->dp->d_namep,
-		   V3ARGS(rpp_min),
-		   V3ARGS(rpp_max));
-	} else {
-	    bu_log("get_bb: ERROR Could not get the BB\n");
-	    return GED_ERROR;
-	}
+		    V3ARGS(rpp_min),
+		    V3ARGS(rpp_max));
+	    } else {
+		bu_log("get_bb: ERROR Could not get the BB\n");
+		return GED_ERROR;
+	    }
 
-	VMOVE(current_node->bb_min, rpp_min);
-	VMOVE(current_node->bb_max, rpp_max);
+	    VMOVE(current_node->bb_min, rpp_min);
+	    VMOVE(current_node->bb_max, rpp_max);
 
-	/* Get BB length, width, height */
-	VSUB2(current_node->bb_dims, current_node->bb_max, current_node->bb_min);
+	    /* Get BB length, width, height */
+	    VSUB2(current_node->bb_dims, current_node->bb_max, current_node->bb_min);
 
-	bu_log("get_bb: Dimensions of this BB : %f %f %f\n", V3ARGS(current_node->bb_dims));
+	    bu_log("get_bb: Dimensions of this BB : %f %f %f\n", V3ARGS(current_node->bb_dims));
 
-	/* Get BB position in 3D space */
-	VSCALE(current_node->bb_center, current_node->bb_dims, 0.5);
-	VADD2(current_node->bb_center, current_node->bb_center, current_node->bb_min)
+	    /* Get BB position in 3D space */
+	    VSCALE(current_node->bb_center, current_node->bb_dims, 0.5);
+	    VADD2(current_node->bb_center, current_node->bb_center, current_node->bb_min);
 
 	    MAT_IDN(current_node->m);
-	current_node->m[12] = current_node->bb_center[0];
-	current_node->m[13] = current_node->bb_center[1];
-	current_node->m[14] = current_node->bb_center[2];
+	    current_node->m[12] = current_node->bb_center[0];
+	    current_node->m[13] = current_node->bb_center[1];
+	    current_node->m[14] = current_node->bb_center[2];
 
-	MAT_COPY(current_node->m_prev, current_node->m);
+	    MAT_COPY(current_node->m_prev, current_node->m);
     }
 
     return GED_OK;
@@ -304,11 +305,11 @@ apply_transforms(struct ged *gedp, struct simulation_params *sim_params)
 		/* Store this world transformation to undo it before next world transformation */
 		MAT_COPY(current_node->m_prev, current_node->m);
 
-		insert_AABB(gedp, sim_params, current_node);
+		/*insert_AABB(gedp, sim_params, current_node);
 
 		print_manifold_list(current_node);
 
-		insert_manifolds(gedp, sim_params, current_node);
+		insert_manifolds(gedp, sim_params, current_node);*/
 
 		current_node->num_bt_manifolds = 0;
 
@@ -324,16 +325,16 @@ apply_transforms(struct ged *gedp, struct simulation_params *sim_params)
  */
 int recreate_sim_comb(struct ged *gedp, struct simulation_params *sim_params)
 {
-    struct rigid_body *current_node;
+	struct rigid_body *current_node;
 
     if (sim_kill(gedp, sim_params->sim_comb_name) != GED_OK) {
-	bu_log("sim_kill_copy: ERROR Could not delete existing \"%s\"\n", sim_params->sim_comb_name);
-	return GED_ERROR;
+	    bu_log("sim_kill_copy: ERROR Could not delete existing \"%s\"\n", sim_params->sim_comb_name);
+	    return GED_ERROR;
     }
 
     for (current_node = sim_params->head_node; current_node != NULL;
 	 current_node = current_node->next) {
-	add_to_comb(gedp, sim_params->sim_comb_name, current_node->rb_namep);
+	    add_to_comb(gedp, sim_params->sim_comb_name, current_node->rb_namep);
     }
 
     return GED_OK;
@@ -441,7 +442,7 @@ ged_simulate(struct ged *gedp, int argc, const char *argv[])
 		sim_params.rtip->useair = 1;
 
 		/* Initialize the raytrace world */
-		init_raytrace(&sim_params);
+		/*init_raytrace(&sim_params);*/
 
 		/* Recreate sim.c to clear AABBs and manifold regions from previous iteration */
 		recreate_sim_comb(gedp, &sim_params);

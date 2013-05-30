@@ -1,7 +1,7 @@
 /*                           E L L . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2012 United States Government as represented by
+ * Copyright (c) 1985-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -47,10 +47,10 @@ extern int rt_sph_prep(struct soltab *stp, struct rt_db_internal *ip,
 		       struct rt_i *rtip);
 
 const struct bu_structparse rt_ell_parse[] = {
-    { "%f", 3, "V", bu_offsetof(struct rt_ell_internal, v[X]), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    { "%f", 3, "A", bu_offsetof(struct rt_ell_internal, a[X]), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    { "%f", 3, "B", bu_offsetof(struct rt_ell_internal, b[X]), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    { "%f", 3, "C", bu_offsetof(struct rt_ell_internal, c[X]), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    { "%f", 3, "V", bu_offsetofarray(struct rt_ell_internal, v, fastf_t, X), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    { "%f", 3, "A", bu_offsetofarray(struct rt_ell_internal, a, fastf_t, X), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    { "%f", 3, "B", bu_offsetofarray(struct rt_ell_internal, b, fastf_t, X), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    { "%f", 3, "C", bu_offsetofarray(struct rt_ell_internal, c, fastf_t, X), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     { {'\0', '\0', '\0', '\0'}, 0, (char *)NULL, 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 
@@ -119,7 +119,7 @@ HIDDEN void nmg_sphere_face_snurb(struct faceuse *fu, const matp_t m);
  * NORMALS.  Given the point W on the ellipsoid, what is the vector
  * normal to the tangent plane at that point?
  *
- * Map W onto the unit sphere, ie:  W' = S(R(W - V)).
+ * Map W onto the unit sphere, i.e.:  W' = S(R(W - V)).
  *
  * Plane on unit sphere at W' has a normal vector of the same
  * value(!).  N' = W'
@@ -171,7 +171,7 @@ struct ell_specific {
  * Compute the bounding RPP for an ellipsoid
  */
 int
-rt_ell_bbox(struct rt_db_internal *ip, point_t *min, point_t *max) {
+rt_ell_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct bn_tol *UNUSED(tol)) {
     vect_t w1, w2, P;
     vect_t Au, Bu, Cu;	/* A, B, C with unit length */
     fastf_t magsq_a, magsq_b, magsq_c, f;
@@ -183,7 +183,7 @@ rt_ell_bbox(struct rt_db_internal *ip, point_t *min, point_t *max) {
     magsq_b = MAGSQ(eip->b);
     magsq_c = MAGSQ(eip->c);
 
-    /* Try a shortcut - if this is a sphere, the calculation simpifies */
+    /* Try a shortcut - if this is a sphere, the calculation simplifies */
     /* Check whether |A|, |B|, and |C| are nearly equal */
     if (EQUAL(magsq_a, magsq_b) && EQUAL(magsq_a, magsq_c)) {
 	fastf_t sph_rad = sqrt(magsq_a);
@@ -363,7 +363,7 @@ rt_ell_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     stp->st_aradius = stp->st_bradius = sqrt(f);
 
     /* Compute bounding RPP */
-    if (stp->st_meth->ft_bbox(ip, &(stp->st_min), &(stp->st_max))) return 1;
+    if (stp->st_meth->ft_bbox(ip, &(stp->st_min), &(stp->st_max), &(rtip->rti_tol))) return 1;
     return 0;			/* OK */
 }
 
@@ -614,7 +614,7 @@ rt_ell_free(register struct soltab *stp)
     register struct ell_specific *ell =
 	(struct ell_specific *)stp->st_specific;
 
-    bu_free((char *)ell, "ell_specific");
+    BU_PUT(ell, struct ell_specific);
 }
 
 
@@ -639,16 +639,16 @@ rt_ell_16pts(fastf_t *ov,
 {
     static fastf_t c, d, e, f, g, h;
 
-    e = h = .92388;	/* cos(22.5) */
-    c = d = .707107;	/* cos(45) */
-    g = f = .382683;	/* cos(67.5) */
+    e = h = .92388;	/* cos(22.5 degrees) */
+    c = d = M_SQRT1_2;	/* cos(45 degrees) */
+    g = f = .382683;	/* cos(67.5 degrees) */
 
     /*
      * For angle theta, compute surface point as
      *
      * V + cos(theta) * A + sin(theta) * B
      *
-     * note that sin(theta) is cos(90-theta).
+     * note that sin(theta) is cos(90-theta), with arguments in degrees.
      */
 
     VADD2(ELLOUT(1), V, A);
@@ -669,6 +669,154 @@ rt_ell_16pts(fastf_t *ov,
     VJOIN2(ELLOUT(16), V, e, A, -f, B);
 }
 
+struct ell_draw_configuration {
+    struct bu_list *vhead;
+    vect_t ell_center;
+    vect_t ell_axis_vector_a;
+    vect_t ell_axis_vector_b;
+    vect_t ell_travel_vector;
+    int num_cross_sections;
+    int points_per_section;
+};
+
+struct ellipse_cross_section {
+    vect_t a;
+    vect_t b;
+    vect_t translation;
+    double ellipsoid_travel_axis_mag;
+    double ellipsoid_travel_axis_position;
+};
+
+static double
+cross_section_axis_magnitude(
+	struct ellipse_cross_section cross_section,
+	double target_axis_mag)
+{
+    double travel_mag, travel_pos;
+    double fixed_term;
+
+    travel_mag = cross_section.ellipsoid_travel_axis_mag;
+    travel_pos = cross_section.ellipsoid_travel_axis_position;
+
+    fixed_term = (travel_pos * travel_pos) / (travel_mag * travel_mag);
+
+    return sqrt(target_axis_mag * target_axis_mag * (1.0 - fixed_term));
+}
+
+/* Draws elliptical cross-sections along an ell vector (the "travel vector").
+ *
+ * algorithm overview:
+ *  1 Pretend the ellipsoid is at the origin with the ell vectors axis-aligned.
+ *  2 Step along the travel vector t from -mag(t) to mag(t).
+ *  3 Calculate the axis vectors for the cross-section ellipse at that step.
+ *  4 Draw multiple points along the ellipse to define the cross-section,
+ *    using a parametric vector equation to calculate ellipse points for
+ *    given radian values.
+ */
+static void
+draw_cross_sections_along_ell_vector(struct ell_draw_configuration config)
+{
+    int i;
+    vect_t ell_a, ell_b, ell_t;
+    double ellipse_a_mag, ellipse_b_mag;
+    double ell_a_mag, ell_b_mag, ell_t_mag;
+    double num_cross_sections, points_per_section;
+    double position_step;
+    struct ellipse_cross_section cross_section = {VINIT_ZERO, VINIT_ZERO, VINIT_ZERO, 0.0, 0.0};
+
+    VMOVE(ell_a, config.ell_axis_vector_a);
+    VMOVE(ell_b, config.ell_axis_vector_b);
+    VMOVE(ell_t, config.ell_travel_vector);
+
+    ell_a_mag = MAGNITUDE(ell_a);
+    ell_b_mag = MAGNITUDE(ell_b);
+    ell_t_mag = MAGNITUDE(ell_t);
+
+    points_per_section = config.points_per_section;
+    num_cross_sections = config.num_cross_sections;
+
+    position_step = 2.0 * ell_t_mag / (num_cross_sections + 1);
+
+    cross_section.ellipsoid_travel_axis_mag = ell_t_mag;
+    cross_section.ellipsoid_travel_axis_position = -ell_t_mag;
+    for (i = 0; i < num_cross_sections; ++i) {
+	cross_section.ellipsoid_travel_axis_position += position_step;
+
+	ellipse_a_mag = cross_section_axis_magnitude(cross_section, ell_a_mag);
+	ellipse_b_mag = cross_section_axis_magnitude(cross_section, ell_b_mag);
+
+	VSCALE(cross_section.a, ell_a, ellipse_a_mag / ell_a_mag);
+	VSCALE(cross_section.b, ell_b, ellipse_b_mag / ell_b_mag);
+	VSCALE(cross_section.translation, ell_t,
+		cross_section.ellipsoid_travel_axis_position / ell_t_mag);
+	VADD2(cross_section.translation, cross_section.translation, config.ell_center);
+
+	plot_ellipse(config.vhead, cross_section.translation, cross_section.a,
+		     cross_section.b, points_per_section);
+    }
+}
+
+/* decide how many ellipse points are needed to satisfy point spacing */
+static int
+ell_ellipse_points(
+	const struct rt_ell_internal *ell,
+	const struct rt_view_info *info)
+{
+    fastf_t avg_radius, avg_circumference;
+    fastf_t ell_mag_a, ell_mag_b, ell_mag_c;
+
+    ell_mag_a = MAGNITUDE(ell->a);
+    ell_mag_b = MAGNITUDE(ell->b);
+    ell_mag_c = MAGNITUDE(ell->c);
+
+    avg_radius = (ell_mag_a + ell_mag_b + ell_mag_c) / 3.0;
+    avg_circumference = bn_twopi * avg_radius;
+
+    return avg_circumference / info->point_spacing;
+}
+
+int
+rt_ell_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
+{
+    struct ell_draw_configuration config;
+    struct rt_ell_internal *eip;
+
+    BU_CK_LIST_HEAD(info->vhead);
+    RT_CK_DB_INTERNAL(ip);
+    eip = (struct rt_ell_internal *)ip->idb_ptr;
+    RT_ELL_CK_MAGIC(eip);
+
+    config.vhead = info->vhead;
+    VMOVE(config.ell_center, eip->v);
+
+    config.points_per_section = ell_ellipse_points(eip, info);
+
+    if (config.points_per_section < 4) {
+	RT_ADD_VLIST(info->vhead, eip->v, BN_VLIST_POINT_DRAW);
+	return 0;
+    }
+
+    config.num_cross_sections = primitive_curve_count(ip, info);
+
+    VMOVE(config.ell_travel_vector, eip->a);
+    VMOVE(config.ell_axis_vector_a, eip->b);
+    VMOVE(config.ell_axis_vector_b, eip->c);
+    draw_cross_sections_along_ell_vector(config);
+
+    config.num_cross_sections = 1;
+
+    VMOVE(config.ell_travel_vector, eip->b);
+    VMOVE(config.ell_axis_vector_a, eip->a);
+    VMOVE(config.ell_axis_vector_b, eip->c);
+    draw_cross_sections_along_ell_vector(config);
+
+    VMOVE(config.ell_travel_vector, eip->c);
+    VMOVE(config.ell_axis_vector_a, eip->a);
+    VMOVE(config.ell_axis_vector_b, eip->b);
+    draw_cross_sections_along_ell_vector(config);
+
+    return 0;
+}
 
 /**
  * R T _ E L L _ P L O T
@@ -705,6 +853,7 @@ rt_ell_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
     for (i=0; i<16; i++) {
 	RT_ADD_VLIST(vhead, &middle[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_DRAW);
     }
+
     return 0;
 }
 
@@ -802,8 +951,8 @@ rt_ell_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     int boff;		/* base offset */
     int toff;		/* top offset */
     int blim;		/* base subscript limit */
-    int tlim;		/* top subscrpit limit */
-    fastf_t rel;	/* Absolutized relative tolerance */
+    int tlim;		/* top subscript limit */
+    fastf_t dtol;	/* Absolutized relative tolerance */
 
     RT_CK_DB_INTERNAL(ip);
     state.eip = (struct rt_ell_internal *)ip->idb_ptr;
@@ -881,35 +1030,16 @@ rt_ell_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     if (Clen > radius)
 	radius = Clen;
 
-    /*
-     * Establish tolerances
-     */
-    if (ttol->rel <= 0.0 || ttol->rel >= 1.0) {
-	rel = 0.0;		/* none */
-    } else {
-	/* Convert rel to absolute by scaling by radius */
-	rel = ttol->rel * radius;
-    }
-    if (ttol->abs <= 0.0) {
-	if (rel <= 0.0) {
-	    /* No tolerance given, use a default */
-	    rel = 0.10 * radius;	/* 10% */
-	} else {
-	    /* Use absolute-ized relative tolerance */
-	}
-    } else {
-	/* Absolute tolerance was given, pick smaller */
-	if (ttol->rel <= 0.0 || rel > ttol->abs) {
-	    rel = ttol->abs;
-	    if (rel > radius)
-		rel = radius;
-	}
+    dtol = primitive_get_absolute_tolerance(ttol, radius);
+
+    if (dtol > radius) {
+	dtol = radius;
     }
 
-    /* Converte distance tolerance into a maximum permissible angle
+    /* Convert distance tolerance into a maximum permissible angle
      * tolerance.  'radius' is largest radius.
      */
-    state.theta_tol = 2 * acos(1.0 - rel / radius);
+    state.theta_tol = 2 * acos(1.0 - dtol / radius);
 
     /* To ensure normal tolerance, remain below this angle */
     if (ttol->norm > 0.0 && ttol->norm < state.theta_tol) {
@@ -925,7 +1055,7 @@ rt_ell_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 
     /* Find total number of strips of vertices that will be needed.
      * nsegs for each hemisphere, plus the equator.  Note that faces
-     * are listed in the the stripe ABOVE, ie, toward the poles.
+     * are listed in the stripe ABOVE, i.e., toward the poles.
      * Thus, strips[0] will have 4 faces.
      */
     nstrips = 2 * nsegs + 1;
@@ -1088,19 +1218,19 @@ rt_ell_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	    vect_t norm_opp;
 
 	    NMG_CK_VERTEX(strips[i].vp[j]);
-	    VREVERSE(norm_opp, strips[i].norms[j])
+	    VREVERSE(norm_opp, strips[i].norms[j]);
 
-		for (BU_LIST_FOR(vu, vertexuse, &strips[i].vp[j]->vu_hd)) {
-		    fu = nmg_find_fu_of_vu(vu);
-		    NMG_CK_FACEUSE(fu);
-		    /* get correct direction of normals depending on
-		     * faceuse orientation
-		     */
-		    if (fu->orientation == OT_SAME)
-			nmg_vertexuse_nv(vu, strips[i].norms[j]);
-		    else if (fu->orientation == OT_OPPOSITE)
-			nmg_vertexuse_nv(vu, norm_opp);
-		}
+	    for (BU_LIST_FOR(vu, vertexuse, &strips[i].vp[j]->vu_hd)) {
+		fu = nmg_find_fu_of_vu(vu);
+		NMG_CK_FACEUSE(fu);
+		/* get correct direction of normals depending on
+		 * faceuse orientation
+		 */
+		if (fu->orientation == OT_SAME)
+		    nmg_vertexuse_nv(vu, strips[i].norms[j]);
+		else if (fu->orientation == OT_OPPOSITE)
+		    nmg_vertexuse_nv(vu, norm_opp);
+	    }
 	}
     }
 
@@ -1164,7 +1294,8 @@ rt_ell_import4(struct rt_db_internal *ip, const struct bu_external *ep, register
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_ELL;
     ip->idb_meth = &rt_functab[ID_ELL];
-    ip->idb_ptr = bu_malloc(sizeof(struct rt_ell_internal), "rt_ell_internal");
+    BU_ALLOC(ip->idb_ptr, struct rt_ell_internal);
+
     eip = (struct rt_ell_internal *)ip->idb_ptr;
     eip->magic = RT_ELL_INTERNAL_MAGIC;
 
@@ -1226,7 +1357,9 @@ int
 rt_ell_import5(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip)
 {
     struct rt_ell_internal *eip;
-    fastf_t vec[ELEMENTS_PER_VECT*4];
+
+    /* must be double for import and export */
+    double vec[ELEMENTS_PER_VECT*4];
 
     if (dbip) RT_CK_DBI(dbip);
     RT_CK_DB_INTERNAL(ip);
@@ -1237,7 +1370,7 @@ rt_ell_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_ELL;
     ip->idb_meth = &rt_functab[ID_ELL];
-    ip->idb_ptr = bu_malloc(sizeof(struct rt_ell_internal), "rt_ell_internal");
+    BU_ALLOC(ip->idb_ptr, struct rt_ell_internal);
 
     eip = (struct rt_ell_internal *)ip->idb_ptr;
     eip->magic = RT_ELL_INTERNAL_MAGIC;
@@ -1269,7 +1402,9 @@ int
 rt_ell_export5(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
     struct rt_ell_internal *eip;
-    fastf_t vec[ELEMENTS_PER_VECT*4];
+
+    /* must be double for import and export */
+    double vec[ELEMENTS_PER_VECT*4];
 
     if (dbip) RT_CK_DBI(dbip);
 
@@ -1778,7 +1913,7 @@ rt_ell_volume(fastf_t *volume, const struct rt_db_internal *ip)
     mag_a = MAGNITUDE(eip->a);
     mag_b = MAGNITUDE(eip->b);
     mag_c = MAGNITUDE(eip->c);
-    *volume = (4.0/3.0) * M_PI * mag_a * mag_b * mag_c;
+    *volume = 4.0/3.0 * M_PI * mag_a * mag_b * mag_c;
 }
 
 
@@ -1808,11 +1943,15 @@ void
 rt_ell_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 {
     fastf_t mag_a, mag_b, mag_c;
-    fastf_t ecc = 0;
-    fastf_t major = 0;
-    fastf_t minor = 0;
-    fastf_t major2 = 0;
-    fastf_t minor2 = 0;
+#ifdef major        /* Some systems have these defined as macros!!! */
+#undef major
+#endif
+#ifdef minor
+#undef minor
+#endif
+    fastf_t major = 0, minor = 0;
+    fastf_t major2, minor2;
+    fastf_t ecc;
     int ell_type = 0;
 
     struct rt_ell_internal *eip = (struct rt_ell_internal *)ip->idb_ptr;
@@ -1823,47 +1962,47 @@ rt_ell_surf_area(fastf_t *area, const struct rt_db_internal *ip)
     mag_c = MAGNITUDE(eip->c);
 
     if (EQUAL(mag_a, mag_b) && EQUAL(mag_b, mag_c)) {
-        /* case: sphere */
-        *area = 4.0 * M_PI * mag_a * mag_a;
-        return;
+	/* case: sphere */
+	*area = 4.0 * M_PI * mag_a * mag_a;
+	return;
     }
 
     if (EQUAL(mag_a, mag_b)) {
-        if (mag_a > mag_c) {
-            /* case: prolate spheroid */
-            ell_type = PROLATE;
-            major = mag_a;
-            minor = mag_c;
-        } else {
-            /* case: oblate spheroid */
-            ell_type = OBLATE;
-            major = mag_c;
-            minor = mag_a;
-        }
+	if (mag_a > mag_c) {
+	    /* case: prolate spheroid */
+	    ell_type = PROLATE;
+	    major = mag_a;
+	    minor = mag_c;
+	} else {
+	    /* case: oblate spheroid */
+	    ell_type = OBLATE;
+	    major = mag_c;
+	    minor = mag_a;
+	}
     } else if (EQUAL(mag_a, mag_c)) {
-        if (mag_a > mag_b) {
-            /* case: prolate spheroid */
-            ell_type = PROLATE;
-            major = mag_a;
-            minor = mag_b;
-        } else {
-            /* case: oblate spheroid */
-            ell_type = OBLATE;
-            major = mag_b;
-            minor = mag_a;
-        }
+	if (mag_a > mag_b) {
+	    /* case: prolate spheroid */
+	    ell_type = PROLATE;
+	    major = mag_a;
+	    minor = mag_b;
+	} else {
+	    /* case: oblate spheroid */
+	    ell_type = OBLATE;
+	    major = mag_b;
+	    minor = mag_a;
+	}
     } else if (EQUAL(mag_b, mag_c)) {
-        if (mag_b > mag_c) {
-            /* case: prolate spheroid */
-            ell_type = PROLATE;
-            major = mag_b;
-            minor = mag_c;
-        } else {
-            /* case: oblate spheroid */
-            ell_type = OBLATE;
-            major = mag_c;
-            minor = mag_b;
-        }
+	if (mag_a > mag_c) {
+	    /* case: prolate spheroid */
+	    ell_type = PROLATE;
+	    major = mag_a;
+	    minor = mag_c;
+	} else {
+	    /* case: oblate spheroid */
+	    ell_type = OBLATE;
+	    major = mag_c;
+	    minor = mag_a;
+	}
     }
 
     major2 = major * major;
@@ -1871,14 +2010,14 @@ rt_ell_surf_area(fastf_t *area, const struct rt_db_internal *ip)
     ecc = sqrt(1.0 - (minor2 / major2));
 
     switch (ell_type) {
-        case PROLATE:
-              *area = (2.0 * M_PI * minor2) + (2.0 * M_PI * major * minor / ecc) * asin(ecc);
-              break;
-        case OBLATE:
-              *area = (2.0 * M_PI * major2) + (M_PI * minor2 / ecc) * log((1.0 + ecc) / (1.0 - ecc));
-              break;
-        default:
-              bu_log("rt_ell_surf_area(): triaxial ellipsoid, cannot find surface area");
+    case PROLATE:
+	*area = (2.0 * M_PI * minor2) + (2.0 * M_PI * major * minor / ecc) * asin(ecc);
+	break;
+    case OBLATE:
+	*area = (2.0 * M_PI * major2) + (M_PI * minor2 / ecc) * log((1.0 + ecc) / (1.0 - ecc));
+	break;
+    default:
+	bu_log("rt_ell_surf_area(): triaxial ellipsoid, cannot find surface area");
     }
 }
 

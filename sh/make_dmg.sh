@@ -2,7 +2,7 @@
 #                     M A K E _ D M G . S H
 # BRL-CAD
 #
-# Copyright (c) 2005-2012 United States Government as represented by
+# Copyright (c) 2005-2013 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -340,7 +340,7 @@ tell application "Finder"
 	    set icon size to 96
 	    set arrangement to arranged by kind
 	    try
-                set background picture to imageFile
+		set background picture to imageFile
 	    end try
 	end tell
     end tell

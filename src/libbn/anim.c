@@ -1,7 +1,7 @@
 /*                          A N I M . C
  * BRL-CAD
  *
- * Copyright (c) 1993-2012 United States Government as represented by
+ * Copyright (c) 1993-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -628,7 +628,6 @@ anim_dirn2mat(mat_t m, const vect_t dx2, const vect_t dn)
     vect_t dx;
 
     VMOVE(dx, dx2);
-    sign = 1.0;
     mag = MAGNITUDE(dx);
     if (mag < VDIVIDE_TOL) {
 	bu_log("anim_dirn2mat: Need non-zero vector");
@@ -647,7 +646,6 @@ anim_dirn2mat(mat_t m, const vect_t dx2, const vect_t dn)
 	if (mag < VDIVIDE_TOL) {
 	    /* use default */
 	    VSET(temp, 0.0, 1.0, 0.0);
-	    mag = 1.0;
 	} else {
 	    inv = 1.0/mag;
 	    temp[0] *= inv;

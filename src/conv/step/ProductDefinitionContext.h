@@ -1,7 +1,7 @@
 /*                 ProductDefinitionContext.h
  * BRL-CAD
  *
- * Copyright (c) 1994-2012 United States Government as represented by
+ * Copyright (c) 1994-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -29,9 +29,11 @@
 
 #include "ApplicationContextElement.h"
 
-class ProductDefinitionContext: public ApplicationContextElement {
+class ProductDefinitionContext: public ApplicationContextElement
+{
 private:
     static string entityname;
+    static EntityInstanceFunc GetInstance;
     string life_cycle_stage;
 
 public:

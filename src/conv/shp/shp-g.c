@@ -1,7 +1,7 @@
 /*                         S H P - G . C
  * BRL-CAD
  *
- * Copyright (c) 2009-2012 United States Government as represented by
+ * Copyright (c) 2009-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -91,7 +91,7 @@ make_shape(struct rt_wdb *fd, int verbose, int debug, size_t idx, size_t num, po
 
     /* Insert all line segments except the last one */
     for (i = 0; i < num-1; i++) {
-	lsg = (struct line_seg *)bu_malloc(sizeof(struct line_seg), "sketch: lsg");
+	BU_ALLOC(lsg, struct line_seg);
 	lsg->magic = CURVE_LSEG_MAGIC;
 	lsg->start = i;
 	lsg->end = i + 1;
@@ -99,7 +99,7 @@ make_shape(struct rt_wdb *fd, int verbose, int debug, size_t idx, size_t num, po
     }
 
     /* Connect the last connected vertex to the first vertex */
-    lsg = (struct line_seg *)bu_malloc(sizeof(struct line_seg), "sketch: lsg");
+    BU_ALLOC(lsg, struct line_seg);
     lsg->magic = CURVE_LSEG_MAGIC;
     lsg->start = num - 1;
     lsg->end = 0;
@@ -141,8 +141,10 @@ main(int argc, char *argv[])
     size_t shp_num_invalid = 0;
     int shp_num_entities = 0;
     int shp_type = 0;
-    hvect_t shp_min = HINIT_ZERO;
-    hvect_t shp_max = HINIT_ZERO;
+
+    /* intentionally double for scan */
+    double shp_min[4] = HINIT_ZERO;
+    double shp_max[4] = HINIT_ZERO;
 
     /* geometry */
     point2d_t *verts = NULL;

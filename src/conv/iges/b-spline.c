@@ -1,7 +1,7 @@
 /*                      B - S P L I N E . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2012 United States Government as represented by
+ * Copyright (c) 1990-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -27,8 +27,8 @@
 
 #include <stdio.h>
 
+#include "bu.h"
 #include "vmath.h"
-#include "raytrace.h"		/* for declaration of bu_calloc() */
 
 
 static fastf_t *knots = (fastf_t *)NULL;

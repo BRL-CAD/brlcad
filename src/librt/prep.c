@@ -1,7 +1,7 @@
 /*                          P R E P . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2012 United States Government as represented by
+ * Copyright (c) 1990-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -75,7 +75,7 @@ rt_new_rti(struct db_i *dbip)
 	BU_LIST_INIT(&rt_g.rtg_vlfree);
     }
 
-    BU_GET(rtip, struct rt_i);
+    BU_ALLOC(rtip, struct rt_i);
     rtip->rti_magic = RTI_MAGIC;
     for (i=0; i < RT_DBNHASH; i++) {
 	BU_LIST_INIT(&(rtip->rti_solidheads[i]));
@@ -113,9 +113,9 @@ rt_new_rti(struct db_i *dbip)
     rtip->rti_ttol.norm = 0;
 
     /* This sets the space partitioning algorithm to Mike's original
-     * non-uniform binary space paritioning tree.  If you change this
+     * non-uniform binary space partitioning tree.  If you change this
      * to anything else, you must also modify "rt_find_backing_dist()"
-     * (in shoot.c), to handle the different alogorithm -JRA
+     * (in shoot.c), to handle the different algorithm -JRA
      */
     rtip->rti_space_partition = RT_PART_NUBSPT;
 
@@ -180,7 +180,7 @@ rt_free_rti(struct rt_i *rtip)
     db_close_client(rtip->rti_dbip, (long *)rtip);
     rtip->rti_dbip = (struct db_i *)NULL;
 
-    /* Freeing the actual resource structures's memory is the app's job */
+    /* Freeing the actual resource structures' memory is the app's job */
     bu_ptbl_free(&rtip->rti_resources);
     bu_ptbl_free(&rtip->delete_regs);
 
@@ -316,7 +316,7 @@ rt_prep_parallel(register struct rt_i *rtip, int ncpu)
 	/* Ensure bit numbers are unique */
 	register struct soltab **ssp = &rtip->rti_Solids[stp->st_bit];
 	if (*ssp != SOLTAB_NULL) {
-	    bu_log("rti_Solids[%d] is non-empty! rtip=x%x\n", stp->st_bit, rtip);
+	    bu_log("rti_Solids[%ld] is non-empty! rtip=x%x\n", stp->st_bit, rtip);
 	    bu_log("Existing entry is (st_rtip=x%x):\n", (*ssp)->st_rtip);
 	    rt_pr_soltab(*ssp);
 	    bu_log("2nd soltab also claiming that bit is (st_rtip=x%x):\n", stp->st_rtip);
@@ -433,7 +433,7 @@ rt_prep_parallel(register struct rt_i *rtip, int ncpu)
 
 
 /**
- * Compatability stub.  Only uses 1 CPU.
+ * Compatibility stub.  Only uses 1 CPU.
  */
 void
 rt_prep(register struct rt_i *rtip)
@@ -832,27 +832,34 @@ rt_clean_resource(struct rt_i *rtip, struct resource *resp)
 }
 
 
+/**
+ * returns a bitv zero-initialized with space for least nbits back to
+ * the caller.  if a resource pointer is provided, a previously
+ * allocated bitv may be reused or a new one will be allocated.
+ */
 struct bu_bitv *
 rt_get_solidbitv(size_t nbits, struct resource *resp)
 {
     struct bu_bitv *solidbits;
     int counter=0;
 
-    if (resp->re_solid_bitv.magic != BU_LIST_HEAD_MAGIC) {
+    if (resp && resp->re_solid_bitv.magic != BU_LIST_HEAD_MAGIC) {
 	bu_bomb("Bad magic number in re_solid_btiv list\n");
     }
 
-    if (BU_LIST_IS_EMPTY(&resp->re_solid_bitv)) {
+    if (!resp || BU_LIST_IS_EMPTY(&resp->re_solid_bitv)) {
 	solidbits = bu_bitv_new((unsigned int)nbits);
     } else {
+	/* scan list for a reusable bitv */
 	for (BU_LIST_FOR(solidbits, bu_bitv, &resp->re_solid_bitv)) {
 	    if (solidbits->nbits >= nbits) {
 		BU_LIST_DEQUEUE(&solidbits->l);
-		BU_CK_BITV(solidbits);
+		bu_bitv_clear(solidbits);
 		break;
 	    }
 	    counter++;
 	}
+	/* no match, allocate a new one */
 	if (solidbits == (struct bu_bitv *)&resp->re_solid_bitv) {
 	    solidbits = bu_bitv_new((unsigned int)nbits);
 	}
@@ -864,7 +871,7 @@ rt_get_solidbitv(size_t nbits, struct resource *resp)
 
 /**
  * Release all the dynamic storage associated with a particular rt_i
- * structure, except for the database instance information (dir, etc)
+ * structure, except for the database instance information (dir, etc.)
  * and the rti_resources ptbl.
  *
  * Note that an animation script can invoke a "clean" operation before
@@ -932,7 +939,8 @@ rt_clean(register struct rt_i *rtip)
 
     /* Free animation structures */
     /* XXX modify to only free those from this rtip */
-    db_free_anim(rtip->rti_dbip);
+    if (rtip->rti_dbip)
+	db_free_anim(rtip->rti_dbip);
 
     /* Free array of solid table pointers indexed by solid ID */
     for (i=0; i <= ID_MAX_SOLID; i++) {
@@ -999,25 +1007,28 @@ rt_clean(register struct rt_i *rtip)
     bu_hist_free(&rtip->rti_hist_cutdepth);
     bu_hist_free(&rtip->rti_hist_cell_pieces);
 
-    /*
-     * Zero the solid instancing counters in dbip database instance.
-     * Done here because the same dbip could be used by multiple
-     * rti's, and rt_gettrees() can be called multiple times on this
-     * one rtip.
-     *
-     * There is a race (collision!) here on d_uses if rt_gettrees() is
-     * called on another rtip of the same dbip before this rtip is
-     * done with all its treewalking.
-     *
-     * This must be done for each 'clean' to keep
-     * rt_find_identical_solid() working properly as d_uses goes up.
-     */
-    for (i=0; i < RT_DBNHASH; i++) {
-	register struct directory *dp;
+    if (rtip->rti_dbip) {
+	/*
+	 * Zero the solid instancing counters in dbip database
+	 * instance.  Done here because the same dbip could be used by
+	 * multiple rti's, and rt_gettrees() can be called multiple
+	 * times on this one rtip.
+	 *
+	 * FIXME: There is a race (collision!) here on d_uses if
+	 * rt_gettrees() is called on another rtip of the same dbip
+	 * before this rtip is done with all its treewalking.
+	 *
+	 * This must be done for each 'clean' to keep
+	 * rt_find_identical_solid() working properly as d_uses goes
+	 * up.
+	 */
+	for (i=0; i < RT_DBNHASH; i++) {
+	    register struct directory *dp;
 
-	dp = rtip->rti_dbip->dbi_Head[i];
-	for (; dp != RT_DIR_NULL; dp = dp->d_forw)
-	    dp->d_uses = 0;
+	    dp = rtip->rti_dbip->dbi_Head[i];
+	    for (; dp != RT_DIR_NULL; dp = dp->d_forw)
+		dp->d_uses = 0;
+	}
     }
 
     bu_ptbl_reset(&rtip->delete_regs);
@@ -1030,7 +1041,7 @@ rt_clean(register struct rt_i *rtip)
 /**
  * Remove a region from the linked list.  Used to remove a particular
  * region from the active database, presumably after some useful
- * information has been extracted (eg, a light being converted to
+ * information has been extracted (e.g., a light being converted to
  * implicit type), or for special effects.
  *
  * Returns -
@@ -1234,8 +1245,8 @@ rt_find_path(struct db_i *dbip,
 	    db_add_node_to_full_path(*curr_path, dp);
 	    if (dp == end) {
 		bu_ptbl_ins(paths, (long *)(*curr_path));
-		newpath = (struct db_full_path *)bu_malloc(sizeof(struct db_full_path),
-							   "newpath");
+		BU_ALLOC(newpath, struct db_full_path);
+
 		db_full_path_init(newpath);
 		db_dup_full_path(newpath, (*curr_path));
 		(*curr_path) = newpath;
@@ -1284,7 +1295,7 @@ rt_find_paths(struct db_i *dbip,
     struct db_full_path *path;
     struct rt_comb_internal *comb;
 
-    path = (struct db_full_path *)bu_malloc(sizeof(struct db_full_path), "path");
+    BU_ALLOC(path, struct db_full_path);
     db_full_path_init(path);
     db_add_node_to_full_path(path, start);
 
@@ -1542,8 +1553,8 @@ rt_unprep(struct rt_i *rtip, struct rt_reprep_obj_list *objs, struct resource *r
 	struct db_tree_state *tree_state;
 	char *obj_name;
 
-	tree_state = (struct db_tree_state *)bu_malloc(sizeof(struct db_tree_state),
-						       "tree_state");
+	BU_ALLOC(tree_state, struct db_tree_state);
+
 	*tree_state = rt_initial_tree_state;	/* struct copy */
 	tree_state->ts_dbip = rtip->rti_dbip;
 	tree_state->ts_resp = resp;

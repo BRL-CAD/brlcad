@@ -1,7 +1,7 @@
 /*                       C M A P - F B . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2012 United States Government as represented by
+ * Copyright (c) 1986-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -26,11 +26,11 @@
 
 #include "common.h"
 
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
 
+#include "bio.h"
 #include "bu.h"
 #include "fb.h"
 
@@ -45,10 +45,10 @@ char *
 nextsym(char *b, char *cp)
 {
     /* skip white */
-    while (isspace(*cp))
+    while (isspace((int)*cp))
 	cp++;
 
-    while (*cp != '\0' && !isspace(*cp))
+    while (*cp != '\0' && !isspace((int)*cp))
 	*b++ = *cp++;
 
     *b = '\0';
@@ -89,7 +89,7 @@ int
 main(int argc, char **argv)
 {
     ColorMap cm;
-    char usage[] = "Usage: cmap-fb [-h -o] [colormap]\n";
+    char usage[] = "Usage: cmap-fb [-H -o] [colormap]\n";
 
     FBIO *fbp;
     FILE *fp;
@@ -99,12 +99,13 @@ main(int argc, char **argv)
     char line[512], buf[512], *str;
 
     while (argc > 1) {
-	if (BU_STR_EQUAL(argv[1], "-h")) {
+	if (BU_STR_EQUAL(argv[1], "-H")) {
 	    fbsize = 1024;
 	} else if (BU_STR_EQUAL(argv[1], "-o")) {
 	    overlay++;
 	} else if (argv[1][0] == '-') {
-	    /* unknown flag */
+	    if ( (!BU_STR_EQUAL(argv[1], "-?")) && (!BU_STR_EQUAL(argv[1], "-h")) )
+		fprintf(stderr, "cmap-fb: unknown flag %s\n", argv[1]);
 	    bu_exit(1, "%s", usage);
 	} else
 	    break;	/* must be a filename */
@@ -117,8 +118,11 @@ main(int argc, char **argv)
 	    fprintf(stderr, "cmap-fb: can't open \"%s\"\n", argv[1]);
 	    bu_exit(2, "%s", usage);
 	}
-    } else
+    } else {
 	fp = stdin;
+	if(isatty(fileno(fp)))
+	    fprintf(stderr, "%s       Program continues running:\n", usage);
+    }
 
     if ((fbp = fb_open(NULL, fbsize, fbsize)) == FBIO_NULL)
 	bu_exit(3, "Unable to open framebuffer\n");
@@ -129,7 +133,7 @@ main(int argc, char **argv)
     while (bu_fgets(line, 511, fp) != NULL) {
 	str = line;
 	str = nextsym(buf, str);
-	if (! isdigit(buf[0])) {
+	if (! isdigit((int)buf[0])) {
 	    /* spare the 0 entry the garbage */
 	    continue;
 	}

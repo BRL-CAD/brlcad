@@ -9,12 +9,10 @@ noinst_HEADERS = \
 	canon.h \
 	chore.h
 
-man_MANS = canonize.1
-
 canonize_SOURCES = canonize.c canonlib.c
 canonize_LDADD = ${FB}
 
-EXTRA_DIST = $(man_MANS) CMakeLists.txt
+EXTRA_DIST = CMakeLists.txt
 
 include $(top_srcdir)/misc/Makefile.defs
 

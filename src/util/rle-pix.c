@@ -1,7 +1,7 @@
 /*                       R L E - P I X . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2012 United States Government as represented by
+ * Copyright (c) 2004-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -33,7 +33,7 @@
 #include "fb.h"
 #include "bu.h"
 
-/* 
+/*
  * system installed RLE reports a re-define, so undef it to quell the
  * warning
  */
@@ -340,7 +340,7 @@ main(int argc, char **argv)
 	if (ret == 0)
 	    perror("fwrite");
     }
- done:
+done:
 
     for (i=0; i < ncolors; i++)
 	bu_free(rows[i], "row[]");

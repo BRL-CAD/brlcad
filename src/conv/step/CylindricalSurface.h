@@ -1,7 +1,7 @@
 /*                 CylindricalSurface.h
  * BRL-CAD
  *
- * Copyright (c) 1994-2012 United States Government as represented by
+ * Copyright (c) 1994-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -28,28 +28,30 @@
 
 #include "ElementarySurface.h"
 
-class CylindricalSurface: public ElementarySurface {
+class CylindricalSurface: public ElementarySurface
+{
 private:
-	static string entityname;
+    static string entityname;
+    static EntityInstanceFunc GetInstance;
 
 protected:
-	double radius;
+    double radius;
 
 
 public:
-	CylindricalSurface();
-	virtual ~CylindricalSurface();
-	CylindricalSurface(STEPWrapper *sw,int step_id);
-	const double *GetOrigin();
-	const double *GetNormal();
-	const double *GetXAxis();
-	const double *GetYAxis();
-	bool Load(STEPWrapper *sw,SDAI_Application_instance *sse);
-	virtual bool LoadONBrep(ON_Brep *brep);
-	virtual void Print(int level);
+    CylindricalSurface();
+    virtual ~CylindricalSurface();
+    CylindricalSurface(STEPWrapper *sw, int step_id);
+    const double *GetOrigin();
+    const double *GetNormal();
+    const double *GetXAxis();
+    const double *GetYAxis();
+    bool Load(STEPWrapper *sw, SDAI_Application_instance *sse);
+    virtual bool LoadONBrep(ON_Brep *brep);
+    virtual void Print(int level);
 
-	//static methods
-	static STEPEntity *Create(STEPWrapper *sw,SDAI_Application_instance *sse);
+    //static methods
+    static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
 #endif /* CYLINDRICAL_SURFACE_H_ */

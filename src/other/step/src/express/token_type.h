@@ -79,5 +79,6 @@ typedef union YYSTYPE {
     struct subtypes      subtypes;
     struct upper_lower   upper_lower;
     struct qualifier     qualifier;
+    unsigned int val;
 } YYSTYPE;
 #endif

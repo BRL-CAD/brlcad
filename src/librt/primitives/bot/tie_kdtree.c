@@ -1,7 +1,7 @@
 /*                    T I E _ K D T R E E . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2012 United States Government as represented by
+ * Copyright (c) 2008-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -47,7 +47,7 @@
 
 #define	TIE_KDTREE_NODE_MAX	4	/* Maximum number of triangles that can reside in a given node until it should be split */
 #define	TIE_KDTREE_DEPTH_K1	1.4	/* K1 Depth Constant Coefficient */
-#define	TIE_KDTREE_DEPTH_K2	1	/* K2 Contant */
+#define	TIE_KDTREE_DEPTH_K2	1	/* K2 Constant */
 
 #define _MIN(a, b) (a)<(b)?(a):(b)
 #define _MAX(a, b) (a)>(b)?(a):(b)
@@ -124,9 +124,9 @@ tie_kdtree_free_node(struct tie_kdtree_s *node)
 	tie_kdtree_free_node(&((struct tie_kdtree_s *)(((intptr_t)(node_aligned->data)) & ~0x7L))[1]);
     } else {
 	/* This node points to a geometry node, free it */
-	free(((struct tie_geom_s *)((intptr_t)(node_aligned->data) & ~0x7L))->tri_list);
+	bu_free(((struct tie_geom_s *)((intptr_t)(node_aligned->data) & ~0x7L))->tri_list, "tri_list");
     }
-    free((void*)((intptr_t)(node_aligned->data) & ~0x7L));
+    bu_free((void*)((intptr_t)(node_aligned->data) & ~0x7L), "data");
 }
 
 static void
@@ -140,14 +140,15 @@ tie_kdtree_prep_head(struct tie_s *tie, struct tie_tri_s *tri_list, unsigned int
 	return;
 
     /* Insert all triangles into the Head Node */
-    tie->kdtree = (struct tie_kdtree_s *)bu_malloc(sizeof(struct tie_kdtree_s), __FUNCTION__);
-    tie->kdtree->data = (void *)bu_malloc(sizeof(struct tie_geom_s), __FUNCTION__);
+    BU_ALLOC(tie->kdtree, struct tie_kdtree_s);
+    BU_ALLOC(tie->kdtree->data, struct tie_geom_s);
+
     g = ((struct tie_geom_s *)(tie->kdtree->data));
     g->tri_num = 0;
     VSETALL(tie->min, +INFINITY);
     VSETALL(tie->max, -INFINITY);
 
-    g->tri_list = (struct tie_tri_s **)bu_malloc(sizeof(struct tie_tri_s *) * tri_num, __FUNCTION__);
+    g->tri_list = (struct tie_tri_s **)bu_calloc(tri_num, sizeof(struct tie_tri_s *), __FUNCTION__);
 
     /* form bounding box of scene */
     for (i = 0; i < tri_num; i++) {
@@ -173,7 +174,7 @@ tie_kdtree_tri_box_overlap(TIE_3 *center, TIE_3 *half_size, TIE_3 *triverts)
      * 1) the {x, y, z}-directions (actually, since we use the AABB of the triangle
      *    we do not even need to test these)
      * 2) normal of the triangle
-     * 3) crossproduct(edge from tri, {x, y, z}-directin)
+     * 3) crossproduct(edge from tri, {x, y, z}-direction)
      *    this gives 3x3=9 more tests
      */
     TIE_3 v0, v1, v2, normal, e0, e1, e2, fe, p;
@@ -384,7 +385,7 @@ find_split_optimal(struct tie_s *tie, struct tie_kdtree_s *node, TIE_3 *cmin, TI
 		for (n = 0; n < 2; n++) {
 		    /*
 		     * Check to see if any triangle points are inside of the node before
-		     * spending alot of cycles on the full blown triangle box overlap
+		     * spending a lot of cycles on the full blown triangle box overlap
 		     */
 		    for (j = 0; j < 3; j++)
 			if (node_gd->tri_list[i]->data[j].v[0] > cmin[n].v[0] &&
@@ -423,8 +424,8 @@ find_split_optimal(struct tie_s *tie, struct tie_kdtree_s *node, TIE_3 *cmin, TI
 
     /*
      * To eliminate "empty" areas, build a list of spans where geometric complexity is
-     * less than MIN_SPAN of the overal nodes size and then selecting the splitting plane
-     * the corresponds to the span slice domain nearest the center to bias towards a balanced tree
+     * less than MIN_SPAN of the overall nodes size and then selecting the splitting plane
+     * that corresponds to the span slice domain nearest the center to bias towards a balanced tree
      */
 
     for (d = 0; d < 3; d++) {
@@ -460,9 +461,9 @@ find_split_optimal(struct tie_s *tie, struct tie_kdtree_s *node, TIE_3 *cmin, TI
     }
 
     /*
-     * If there is a gap atleast MIN_SPAN in side wrt the nodes dimension size
-     * then use the nearest edge of the gap to 0.5 as the splitting plane,
-     * Use the the gap with the largest span.
+     * If there is a gap at least MIN_SPAN in side w/r/t the nodes dimension size
+     * then use the nearest edge of the gap to 0.5 as the splitting plane.
+     * Use the gap with the largest span.
      * If no gaps are found meeting the criteria then weight the span values to
      * bias towards a balanced kd-tree and choose the minima of that weighted curve.
      */
@@ -476,7 +477,7 @@ find_split_optimal(struct tie_s *tie, struct tie_kdtree_s *node, TIE_3 *cmin, TI
 
     /*
      * Largest gap found must meet MIN_SPAN requirements
-     * There must be atleast 500 triangles or we don't bother.
+     * There must be at least 500 triangles or we don't bother.
      * Lower triangle numbers means there is a higher probability that
      * triangles lack any sort of coherent structure.
      */
@@ -589,26 +590,26 @@ tie_kdtree_build(struct tie_s *tie, struct tie_kdtree_s *node, unsigned int dept
 	bu_bomb("Illegal tie kdtree method\n");
 
     /* Allocate 2 children nodes for the parent node */
-    node->data = (void *)bu_malloc(2 * sizeof(struct tie_kdtree_s), __FUNCTION__);
-    if(node->data == NULL || ((size_t)node->data & 7L))
-	bu_log("node->data 0x%X is not aligned! %x\n", node->data, (size_t)node->data & 7L);
+    node->data = (void *)bu_calloc(2, sizeof(struct tie_kdtree_s), __FUNCTION__);
+    if(((size_t)node->data & 7L))
+	bu_log("node->data 0x%X is not aligned! %zu\n", node->data, (size_t)node->data & 7L);
 
-    ((struct tie_kdtree_s *)(node->data))[0].data = bu_malloc(sizeof(struct tie_geom_s), __FUNCTION__);
-    if(((struct tie_kdtree_s *)(node->data))[0].data == NULL || ((size_t)((struct tie_kdtree_s *)(node->data))[0].data & 7L))
+    BU_ALLOC(((struct tie_kdtree_s *)(node->data))[0].data, struct tie_geom_s);
+    if(((size_t)((struct tie_kdtree_s *)(node->data))[0].data & 7L))
 	bu_log("node->data[0].data 0x%X is not aligned!\n", ((struct tie_kdtree_s *)(node->data))[0].data);
 
-    ((struct tie_kdtree_s *)(node->data))[1].data = bu_malloc(sizeof(struct tie_geom_s), __FUNCTION__);
-    if(((struct tie_kdtree_s *)(node->data))[1].data == NULL || ((size_t)((struct tie_kdtree_s *)(node->data))[1].data & 7L))
+    BU_ALLOC(((struct tie_kdtree_s *)(node->data))[1].data, struct tie_geom_s);
+    if(((size_t)((struct tie_kdtree_s *)(node->data))[1].data & 7L))
 	bu_log("node->data[1].data 0x%X is not aligned!\n", ((struct tie_kdtree_s *)(node->data))[1].data);
 
     /* Initialize Triangle List */
     child[0] = ((struct tie_geom_s *)(((struct tie_kdtree_s *)(node->data))[0].data));
     child[1] = ((struct tie_geom_s *)(((struct tie_kdtree_s *)(node->data))[1].data));
 
-    child[0]->tri_list = (struct tie_tri_s **)malloc(sizeof(struct tie_tri_s *) * node_gd->tri_num);
+    child[0]->tri_list = (struct tie_tri_s **)bu_calloc(node_gd->tri_num, sizeof(struct tie_tri_s *), "child[0]->tri_list");
     child[0]->tri_num = 0;
 
-    child[1]->tri_list = (struct tie_tri_s **)malloc(sizeof(struct tie_tri_s *) * node_gd->tri_num);
+    child[1]->tri_list = (struct tie_tri_s **)bu_calloc(node_gd->tri_num, sizeof(struct tie_tri_s *), "child[1]->tri_list");
     child[1]->tri_num = 0;
 
 
@@ -627,7 +628,7 @@ tie_kdtree_build(struct tie_s *tie, struct tie_kdtree_s *node, unsigned int dept
 	for (i = 0; i < node_gd->tri_num; i++) {
 	    /*
 	     * Check to see if any triangle points are inside of the node before
-	     * spending alot of cycles on the full blown triangle box overlap
+	     * spending a lot of cycles on the full blown triangle box overlap
 	     */
 	    for (j = 0; j < 3; j++)
 		if (node_gd->tri_list[i]->data[j].v[0] > cmin[n].v[0] &&
@@ -654,7 +655,7 @@ tie_kdtree_build(struct tie_s *tie, struct tie_kdtree_s *node, unsigned int dept
 	 * thing. */
 	if( child[n]->tri_num == 0 ) {
 	    if( child[n]->tri_list ) {
-		free( child[n]->tri_list);
+		bu_free( child[n]->tri_list, "tri_list");
 		child[n]->tri_list = NULL;
 	    }
 	} else
@@ -662,12 +663,12 @@ tie_kdtree_build(struct tie_s *tie, struct tie_kdtree_s *node, unsigned int dept
     }
 
     /*
-     * Now that the triangles have been propogated to the appropriate child nodes,
+     * Now that the triangles have been propagated to the appropriate child nodes,
      * free the triangle list on this node.
      */
     node_gd->tri_num = 0;
-    free(node_gd->tri_list);
-    free(node_gd);
+    bu_free(node_gd->tri_list, "tri_list");
+    bu_free(node_gd, "node");
 
     /* Push each child through the same process. */
     {
@@ -696,7 +697,7 @@ TIE_VAL(tie_kdtree_free)(struct tie_s *tie)
     /* prevent tie from crashing when a tie_free() is called right after a tie_init() */
     if (tie->kdtree)
 	tie_kdtree_free_node(tie->kdtree);
-    free(tie->kdtree);
+    bu_free(tie->kdtree, "kdtree");
 }
 
 void
@@ -725,7 +726,7 @@ TIE_VAL(tie_kdtree_prep)(struct tie_s *tie)
 	if (g->tri_num)
 	    g->tri_list = (struct tie_tri_s **)bu_realloc(g->tri_list, sizeof(struct tie_tri_s *) * g->tri_num, "prep tri_list");
     } else
-	free (g->tri_list);
+	bu_free(g->tri_list, "tri_list");
 
     /*
      * Compute Floating Fuzz Precision Value

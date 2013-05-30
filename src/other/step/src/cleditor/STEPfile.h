@@ -48,28 +48,34 @@ class SCL_EDITOR_EXPORT STEPfile {
         Registry & reg() {
             return _reg;
         }
-        int _fileIdIncr;   //Increment value to be added to FileId Numbers on input
+        int _fileIdIncr;   ///< Increment value to be added to FileId Numbers on input
 
 //header information
         InstMgr * _headerInstances;
         Registry * _headerRegistry;
 
-        int _headerId;     //STEPfile_id given to SDAI_Application_instance from header section
+        int _headerId;     ///< STEPfile_id given to SDAI_Application_instance from header section
 
 //file information
         DirObj * _currentDir;
         std::string _fileName;
 
+        //the following are used to compute read/write progress
+        std::ifstream::pos_type _iFileSize; ///< input file size
+        std::ifstream::pos_type _iFileCurrentPosition; ///< input file position (from ifstream::tellg())
+        bool _iFileStage1Done; ///< set immediately before ReadData1() returns
+        int _oFileInstsWritten; ///< number of instances that have been written
+
 //error information
         ErrorDescriptor _error;
 
         // new errors
-        int _entsNotCreated; // num entities not created in first pass
-        int _entsInvalid;    // num entities that had invalid attr values
-        int _entsIncomplete; /* num entities that had missing attr values
+        int _entsNotCreated; ///< num entities not created in first pass
+        int _entsInvalid;    ///< num entities that had invalid attr values
+        int _entsIncomplete; /**< num entities that had missing attr values
                                   (includes entities that had invalid values
                                   for required attrs)*/
-        int _entsWarning;    /*   num entities that may have had problems
+        int _entsWarning;    /**< num entities that may have had problems
                                   with attrs - reported as an attr user msg */
 
         // old errors
@@ -110,6 +116,8 @@ class SCL_EDITOR_EXPORT STEPfile {
         }
         std::string SetFileName( const std::string name = "" );
         std::string TruncFileName( const std::string name ) const;
+        float GetReadProgress() const;
+        float GetWriteProgress() const;
 
 //error information
         ErrorDescriptor & Error() { /* const */
@@ -164,7 +172,7 @@ class SCL_EDITOR_EXPORT STEPfile {
 
     protected:
 //member functions
-        std::string schemaName();       /**< Returns and copies out schema name from header instances.
+        std::string schemaName(); /**< Returns and copies out schema name from header instances.
                                              Called by ReadExchangeFile */
         istream * OpenInputFile( const std::string filename = "" );
         void CloseInputFile( istream * in );
@@ -177,9 +185,8 @@ class SCL_EDITOR_EXPORT STEPfile {
         int HeaderId( int increment = 1 );
         int HeaderId( const char * nm = "\0" );
 
-        int ReadData1( istream & in ); // first pass to create instances
-        // second pass to read instances
-        int ReadData2( istream & in, bool useTechCor = true );
+        int ReadData1( istream & in ); /**< First pass, to create instances */
+        int ReadData2( istream & in, bool useTechCor = true ); /**< Second pass, to read instances */
 
 // obsolete
         int ReadWorkingData1( istream & in );
@@ -187,9 +194,9 @@ class SCL_EDITOR_EXPORT STEPfile {
 
         void ReadRestOfFile( istream & in );
 
-        // create instance - used by ReadData1()
+        /// create instance - used by ReadData1()
         SDAI_Application_instance   * CreateInstance( istream & in, ostream & out );
-        // create complex instance - used by CreateInstance()
+        /// create complex instance - used by CreateInstance()
         SDAI_Application_instance  * CreateSubSuperInstance( istream & in, int fileid,
                 ErrorDescriptor & );
 
@@ -197,8 +204,7 @@ class SCL_EDITOR_EXPORT STEPfile {
         SDAI_Application_instance  * ReadInstance( istream & in, ostream & out,
                 std::string & cmtStr, bool useTechCor = true );
 
-        //  reading scopes are still incomplete
-        //  these functions are stubs
+        ///  reading scopes are still incomplete, CreateScopeInstances and ReadScopeInstances are stubs
         Severity CreateScopeInstances( istream & in, SDAI_Application_instance_ptr  ** scopelist );
         Severity ReadScopeInstances( istream & in );
 //    Severity ReadSubSuperInstance(istream& in);

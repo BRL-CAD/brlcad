@@ -39,6 +39,7 @@ set(LIBRENDER_SRCS
   librender/texture_stack.c
   )
 BRLCAD_ADDLIB(librender "${LIBRENDER_SRCS}" libgcv)
+set_target_properties(librender PROPERTIES VERSION 20.0.1 SOVERSION 20)
 
 set(tie_HDRS
   adrt.h
@@ -69,7 +70,7 @@ if(TOGL_LIBRARIES AND BRLCAD_ENABLE_OPENGL)
   else(WIN32)
     target_link_libraries(issttcltk librender ${TCL_LIBRARIES} ${TOGL_LIBRARIES})
   endif(WIN32)
-  install(TARGETS issttcltk 
+  install(TARGETS issttcltk
     RUNTIME DESTINATION ${BIN_DIR}/isst0.1
     LIBRARY DESTINATION ${LIB_DIR}/
     ARCHIVE DESTINATION ${LIB_DIR}/isst0.1)
@@ -93,6 +94,7 @@ if(TOGL_LIBRARIES AND BRLCAD_ENABLE_OPENGL)
   endif(NOT CMAKE_CONFIGURATION_TYPES)
   install(PROGRAMS ${isst_script} DESTINATION bin)
 endif(TOGL_LIBRARIES AND BRLCAD_ENABLE_OPENGL)
+CMAKEFILES(isst_tcltk.c)
 
 set(adrt_ignore_files
   isst.h

@@ -1,7 +1,7 @@
 /*                     N U R B _ N O R M . C
  * BRL-CAD
  *
- * Copyright (c) 1991-2012 United States Government as represented by
+ * Copyright (c) 1991-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -21,7 +21,7 @@
 /** @{ */
 /** @file primitives/bspline/nurb_norm.c
  *
- * Calulate and return the normal of a surface given the U, V
+ * Calculate and return the normal of a surface given the U, V
  * parametric values.
  *
  */

@@ -1,7 +1,7 @@
 /*                  T E S T _ B O T T E S S . C
  * BRL-CAD
  *
- * Copyright (c) 2011-2012 United States Government as represented by
+ * Copyright (c) 2011-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -75,7 +75,7 @@ test_tri_intersections()
     point_t t0[3], t1[3], p0, p1; \
     VSET(t0[0],t00x,t00y,t00z); VSET(t0[1],t01x,t01y,t01z); VSET(t0[2],t02x,t02y,t02z); \
     VSET(t1[0],t10x,t10y,t10z); VSET(t1[1],t11x,t11y,t11z); VSET(t1[2],t12x,t12y,t12z); \
-    VSET(p0,p0x,p0y,p0z); VSET(p1,p1x,p1y,p1z) \
+    VSET(p0,p0x,p0y,p0z); VSET(p1,p1x,p1y,p1z); \
     count += test_intersection(suc, t0, t1, p0, p1); }
 
     TRY(1,0,0,0,0,1,0,0,0,1,-1,0,0.5,0,1,0.5,1,0,0.5,0,0,.5,0,.5,.5);	/* ep ef */
@@ -116,28 +116,28 @@ test_face_split_single()
 
     /* NOTE THE "PREP" AND "POST" MACROS MUST BE USED IN PAIRS DUE TO THE SPLIT ENCLOSING CURLY BRACES */
 #define PREP(t00,t01,t02,t10,t11,t12,t20,t21,t22,                       \
-             ispt00,ispt01,ispt02,ispt10,ispt11,ispt12,_nsplt)          \
-          {                                                             \
-            point_t isectpt[2];                                         \
-            int urf[_nsplt+1];                                          \
-            unsigned long int failure = 0, numsplit = _nsplt;           \
-            for (i = 0; i < _nsplt + 1; ++i) urf[i] = 0;                \
-            tcount++;                                                   \
-            VSET(isectpt[0],ispt00,ispt01,ispt02);                      \
-            VSET(isectpt[1],ispt10,ispt11,ispt12);                      \
-            s.magic = SOUP_MAGIC;                                       \
-            s.faces = NULL;                                             \
-            s.maxfaces = 0;                                             \
-            s.nfaces = 0;                                               \
-            VSET(f.vert[0],t00,t01,t02);                                \
-            VSET(f.vert[1],t10,t11,t12);                                \
-            VSET(f.vert[2],t20,t21,t22);                                \
-            soup_add_face(&s,V3ARGS(f.vert),&t);                        \
-            VSET(f.plane,0,0,1);                                        \
-            nsplt = split_face_single(&s,0,isectpt,&f,&t);              \
-            if (nsplt != s.nfaces) {                                    \
-              printf("Errr, nsplit %lu != s.nfaces %lu ?\n", numsplit, s.nfaces); \
-            }
+	     ispt00,ispt01,ispt02,ispt10,ispt11,ispt12,_nsplt)          \
+	  {                                                             \
+	    point_t isectpt[2];                                         \
+	    int urf[_nsplt+1];                                          \
+	    unsigned long int failure = 0, numsplit = _nsplt;           \
+	    for (i = 0; i < _nsplt + 1; ++i) urf[i] = 0;                \
+	    tcount++;                                                   \
+	    VSET(isectpt[0],ispt00,ispt01,ispt02);                      \
+	    VSET(isectpt[1],ispt10,ispt11,ispt12);                      \
+	    s.magic = SOUP_MAGIC;                                       \
+	    s.faces = NULL;                                             \
+	    s.maxfaces = 0;                                             \
+	    s.nfaces = 0;                                               \
+	    VSET(f.vert[0],t00,t01,t02);                                \
+	    VSET(f.vert[1],t10,t11,t12);                                \
+	    VSET(f.vert[2],t20,t21,t22);                                \
+	    soup_add_face(&s,V3ARGS(f.vert),&t);                        \
+	    VSET(f.plane,0,0,1);                                        \
+	    nsplt = split_face_single(&s,0,isectpt,&f,&t);              \
+	    if (nsplt != s.nfaces) {                                    \
+	      printf("Error, nsplit %lu != s.nfaces %lu ?\n", numsplit, s.nfaces); \
+	    }
 
     /* the _splits is an array of expected triangles, as 9 fastf_t tuples */
     /* fastf_t _splits[nsplt][9] = {{...},{...}} */
@@ -154,8 +154,8 @@ test_face_split_single()
       printf("\033[1;31mFAILURE "name"\033[m\n");                       \
       printf("%lu faces now\n",s.nfaces);                               \
       for (i = 0; i < s.nfaces; i++)                                    \
-        printf("%03lu: % 2g,% 2g,% 2g | % 2g,% 2g,% 2g | % 2g,% 2g,% 2g\n", \
-               i, V3ARGS(s.faces[i].vert[0]), V3ARGS(s.faces[i].vert[1]), V3ARGS(s.faces[i].vert[2])); \
+	printf("%03lu: % 2g,% 2g,% 2g | % 2g,% 2g,% 2g | % 2g,% 2g,% 2g\n", \
+	       i, V3ARGS(s.faces[i].vert[0]), V3ARGS(s.faces[i].vert[1]), V3ARGS(s.faces[i].vert[2])); \
       count++;                                                          \
     }                                                                   \
     free(s.faces);                                                      \
@@ -253,7 +253,7 @@ int test_compose()
     t.dist_sq = t.dist * t.dist;
 
     /* assembly tree linkages */
-#define PREP l.magic = RT_TREE_MAGIC; ls.magic = SOUP_MAGIC; lm.magic = NMG_MODEL_MAGIC; lnr.m_p = &lm; ls.faces = NULL; ls.nfaces = ls.maxfaces = 0; l.tr_d.td_r = &lnr; l.tr_d.td_r->m_p = (struct model *)&ls; r = bu_malloc(sizeof(union tree), "right tree"); rs = bu_malloc(sizeof(struct soup_s), "right soup"); r->magic = RT_TREE_MAGIC; rs->magic = SOUP_MAGIC; rm.magic = NMG_MODEL_MAGIC; rnr.m_p = &rm; rs->faces = NULL; rs->nfaces = rs->maxfaces = 0; r->tr_d.td_r = &rnr; r->tr_d.td_r->m_p = (struct model *)rs;
+#define PREP l.magic = RT_TREE_MAGIC; ls.magic = SOUP_MAGIC; lm.magic = NMG_MODEL_MAGIC; lnr.m_p = &lm; ls.faces = NULL; ls.nfaces = ls.maxfaces = 0; l.tr_d.td_r = &lnr; l.tr_d.td_r->m_p = (struct model *)&ls; BU_ALLOC(r, union tree); BU_ALLOC(rs, struct soup_s); r->magic = RT_TREE_MAGIC; rs->magic = SOUP_MAGIC; rm.magic = NMG_MODEL_MAGIC; rnr.m_p = &rm; rs->faces = NULL; rs->nfaces = rs->maxfaces = 0; r->tr_d.td_r = &rnr; r->tr_d.td_r->m_p = (struct model *)rs;
 
     /* test empty tree */
     PREP;

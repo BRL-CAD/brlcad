@@ -1,7 +1,7 @@
 /*                       A R R A N G E . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2012 United States Government as represented by
+ * Copyright (c) 1990-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -48,7 +48,8 @@ Arrange(root)
 		ptrb = ptr->right->left;
 		ptrc = ptr->right->right;
 		ptr1 = ptr->right;
-		ptr2 = (struct node *)bu_malloc(sizeof(struct node), "Arrange: ptr2");
+
+		BU_ALLOC(ptr2, struct node);
 		ptr->left = ptr2;
 		ptr1->left = ptra;
 		ptr2->left = Copytree(ptra, ptr2);

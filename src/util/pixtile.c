@@ -1,7 +1,7 @@
 /*                       P I X T I L E . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2012 United States Government as represented by
+ * Copyright (c) 1986-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -151,7 +151,7 @@ main(int argc, char **argv)
     maximage = im_line * im_high;
 
     if ((obuf = (char *)malloc(swathbytes)) == (char *)0) {
-	(void)fprintf(stderr, "pixtile:  malloc %d failure\n", swathbytes);
+	fprintf(stderr, "pixtile:  malloc %d failure\n", swathbytes);
 	bu_exit (10, NULL);
     }
 
@@ -187,10 +187,10 @@ main(int argc, char **argv)
 		ifname = bu_realpath(name, NULL);
 		if ((fd=open(ifname, 0))<0) {
 		    perror(ifname);
-		    bu_free(ifname,"ifname alloc from bu_realpath");
+		    bu_free(ifname, "ifname alloc from bu_realpath");
 		    goto done;
 		}
-		bu_free(ifname,"ifname alloc from bu_realpath");
+		bu_free(ifname, "ifname alloc from bu_realpath");
 	    }
 	    /* Read in .pix file.  Bottom to top */
 	    for (i=0; i<file_height; i++) {
@@ -209,19 +209,21 @@ main(int argc, char **argv)
 	    }
 	    if (fd > 0) close(fd);
 	}
-        ret = write(1, obuf, swathbytes);
+	ret = write(1, obuf, swathbytes);
 	if (ret < 0)
 	    perror("write");
 
 	rel = 0;	/* in case we fall through */
     }
- done:
+done:
     /* Flush partial frame? */
     if (rel != 0) {
 	ret = write(1, obuf, swathbytes);
 	if (ret < 0)
 	    perror("write");
     }
+
+    bu_free(obuf, "obuf alloc from malloc");
 
     fprintf(stderr, "\n");
 

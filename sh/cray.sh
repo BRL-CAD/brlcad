@@ -2,7 +2,7 @@
 #                         C R A Y . S H
 # BRL-CAD
 #
-# Copyright (c) 2004-2012 United States Government as represented by
+# Copyright (c) 2004-2013 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -48,7 +48,7 @@
 #  If the environment variable FB_FILE is set before MGED is    #
 #  run, then we arrange to force the image to be routed to that #
 #  display (it better be in host:device form!).  This can be    #
-#  overriden by supplying a -F option to the "rrt" command.     #
+#  overridden by supplying a -F option to the "rrt" command.    #
 #                                                               #
 #  If the environment variable COMPUTE_SERVER is set before     #
 #  MGED is run, that network host is used to perform the        #

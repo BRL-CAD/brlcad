@@ -1,7 +1,7 @@
 #            B R L C A D _ S U M M A R Y . C M A K E
 # BRL-CAD
 #
-# Copyright (c) 2012 United States Government as represented by
+# Copyright (c) 2012-2013 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -39,7 +39,11 @@
 
 # Beginning line of summary
 message("\n")
-message("------ BRL-CAD Release ${BRLCAD_VERSION}, Build ${CONFIG_DATE} - ${CMAKE_BUILD_TYPE} Build  ------")
+if(CMAKE_BUILD_TYPE)
+  message("------ BRL-CAD Release ${BRLCAD_VERSION}, Build ${CONFIG_DATE} - ${CMAKE_BUILD_TYPE} Build  ------")
+else(CMAKE_BUILD_TYPE)
+  message("------------------- BRL-CAD Release ${BRLCAD_VERSION}, Build ${CONFIG_DATE} ----------------------")
+endif(CMAKE_BUILD_TYPE)
 message("\n")
 
 ###################################################
@@ -51,14 +55,15 @@ message("\n")
 # Labels
 set(CMAKE_INSTALL_PREFIX_LABEL "Prefix")
 set(BIN_DIR_LABEL "Binaries")
+set(LIB_DIR_LABEL "Libraries")
 set(MAN_DIR_LABEL "Manual pages")
 set(DATA_DIR_LABEL "Data resource files")
-set(PATH_LABELS CMAKE_INSTALL_PREFIX BIN_DIR MAN_DIR DATA_DIR)
+set(PATH_LABELS CMAKE_INSTALL_PREFIX BIN_DIR LIB_DIR MAN_DIR DATA_DIR)
 
 # Initialize length var
 set(PATH_LABEL_LENGTH 0)
 
-# Find longest label string for installation directories 
+# Find longest label string for installation directories
 foreach(path_label ${PATH_LABELS})
   string(LENGTH "${${path_label}_LABEL}" CURRENT_LENGTH)
   if (${CURRENT_LENGTH} GREATER ${PATH_LABEL_LENGTH})
@@ -111,7 +116,7 @@ foreach(setting_label ${ALL_FLAG_LABELS})
   endif(${CURRENT_LENGTH} GREATER ${MAX_LABEL_LENGTH})
 endforeach(setting_label ${ALL_FLAG_LABELS})
 
-# Add spaces to all lables to make their length uniform
+# Add spaces to all labels to make their length uniform
 foreach(setting_label ${ALL_FLAG_LABELS})
   string(LENGTH "${${setting_label}}" CURRENT_LENGTH)
   while(${MAX_LABEL_LENGTH} GREATER ${CURRENT_LENGTH})
@@ -240,8 +245,8 @@ set(BRLCAD_INSTALL_EXAMPLE_GEOMETRY_LABEL "Install example geometry models ")
 set(BRLCAD_DOCBOOK_BUILD_LABEL "Generate extra docs ")
 
 # Make sets to use for iteration over all report items
-set(BUILD_REPORT_ITEMS 
-    TCL TK INCRTCL IWIDGETS TKHTML TKPNG TKTABLE PNG REGEX ZLIB 
+set(BUILD_REPORT_ITEMS
+    TCL TK INCRTCL IWIDGETS TKHTML TKPNG TKTABLE PNG REGEX ZLIB
     TERMLIB UTAHRLE OPENNURBS SCL)
 
 set(FEATURE_REPORT_ITEMS
@@ -249,9 +254,9 @@ set(FEATURE_REPORT_ITEMS
     BRLCAD_ENABLE_RUNTIME_DEBUG)
 
 set(OTHER_REPORT_ITEMS
-    BRLCAD_ARCH_BITSETTING BRLCAD_OPTIMIZED_BUILD 
+    BRLCAD_ARCH_BITSETTING BRLCAD_OPTIMIZED_BUILD
     BRLCAD_FLAGS_DEBUG BRLCAD_ENABLE_PROFILING
-    BRLCAD_ENABLE_SMP BUILD_STATIC_LIBS BUILD_SHARED_LIBS 
+    BRLCAD_ENABLE_SMP BUILD_STATIC_LIBS BUILD_SHARED_LIBS
     BRLCAD_ENABLE_COMPILER_WARNINGS BRLCAD_ENABLE_VERBOSE_PROGRESS
     BRLCAD_INSTALL_EXAMPLE_GEOMETRY BRLCAD_DOCBOOK_BUILD)
 
@@ -297,14 +302,14 @@ endforeach(label ${ALL_LABELS})
 #                  Third Party                    #
 #                                                 #
 ###################################################
-# The actual build state (as opposed to the AUTO/BUNDLED/SYSTEM setting) 
-# of the third party libraries is not present in the global cache and 
+# The actual build state (as opposed to the AUTO/BUNDLED/SYSTEM setting)
+# of the third party libraries is not present in the global cache and
 # must be explicitly pulled from src/other
 macro(GET_BUILD_STATE ITEM)
   get_directory_property(BRLCAD_${ITEM}_BUILD DIRECTORY src/other DEFINITION BRLCAD_${ITEM}_BUILD)
   get_directory_property(BRLCAD_${ITEM}_NOTFOUND DIRECTORY src/other DEFINITION BRLCAD_${ITEM}_NOTFOUND)
   if("${BRLCAD_${ITEM}_BUILD}" STREQUAL "OFF" AND BRLCAD_${ITEM}_NOTFOUND)
-    set(BRLCAD_${ITEM}_BUILD} "OFF!")
+    set(BRLCAD_${ITEM}_BUILD "OFF!")
   endif("${BRLCAD_${ITEM}_BUILD}" STREQUAL "OFF" AND BRLCAD_${ITEM}_NOTFOUND)
 endmacro(GET_BUILD_STATE)
 

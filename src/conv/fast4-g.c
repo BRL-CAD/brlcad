@@ -1,7 +1,7 @@
 /*                       F A S T 4 - G . C
  * BRL-CAD
  *
- * Copyright (c) 1994-2012 United States Government as represented by
+ * Copyright (c) 1994-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -232,7 +232,7 @@ static void
 usage() {
     bu_log("Usage:\n\tfast4-g [-dwq] [-c component_list] [-m muves_file] [-o plot_file] [-b BU_DEBUG_FLAG] [-x RT_DEBUG_FLAG] fastgen4_bulk_data_file output.g\n");
     bu_log("	d - print debugging info\n");
-    bu_log("	q - quiet mode (don't say anyhing except error messages\n");
+    bu_log("	q - quiet mode (don't say anything except error messages\n");
     bu_log("	w - print warnings about creating default names\n");
     bu_log("	c - process only the listed region ids, may be a list (3001, 4082, 5347) or a range (2314-3527)\n");
     bu_log("	m - create a MUVES input file containing CHGCOMP and CBACKING elements\n");
@@ -350,7 +350,7 @@ Check_names(void)
 	ptr = ptr->rright;
     }
 
-    /* alpabetical order */
+    /* alphabetical order */
     ptr = name_root;
     while (1) {
 	while (ptr) {
@@ -502,7 +502,7 @@ Insert_region_name(char *name, int reg_id)
     }
 
     /* Add to tree for entire model */
-    new_ptr = (struct name_tree *)bu_malloc(sizeof(struct name_tree), "Insert_region_name: new_ptr");
+    BU_ALLOC(new_ptr, struct name_tree);
     new_ptr->rleft = (struct name_tree *)NULL;
     new_ptr->rright = (struct name_tree *)NULL;
     new_ptr->nleft = (struct name_tree *)NULL;
@@ -655,7 +655,7 @@ Insert_name(struct name_tree **root, char *name, int inner)
 	return;
     }
 
-    new_ptr = (struct name_tree *)bu_malloc(sizeof(struct name_tree), "Insert_name: new_ptr");
+    BU_ALLOC(new_ptr, struct name_tree);
 
     new_ptr->name = bu_strdup(name);
     new_ptr->nleft = (struct name_tree *)NULL;
@@ -818,13 +818,13 @@ f4_do_compsplt(void)
     z = atof(field) * 25.4;
 
     if (compsplt_root == NULL) {
-	compsplt_root = (struct compsplt *)bu_calloc(1, sizeof(struct compsplt), "compsplt_root");
+	BU_ALLOC(compsplt_root, struct compsplt);
 	splt = compsplt_root;
     } else {
 	splt = compsplt_root;
 	while (splt->next)
 	    splt = splt->next;
-	splt->next = (struct compsplt *)bu_calloc(1, sizeof(struct compsplt), "compsplt_root");
+	BU_ALLOC(splt->next, struct compsplt);
 	splt = splt->next;
     }
     splt->next = (struct compsplt *)NULL;
@@ -954,7 +954,7 @@ f4_do_name(void)
 
     /* skip leading blanks */
     i = 56;
-    while ((size_t)i < sizeof(comp_name) && isspace(line[i]))
+    while ((size_t)i < sizeof(comp_name) && isspace((int)line[i]))
 	i++;
 
     if (i == sizeof(comp_name))
@@ -964,7 +964,7 @@ f4_do_name(void)
 
     /* eliminate trailing blanks */
     i = sizeof(comp_name) - i;
-    while ( --i >= 0 && isspace(comp_name[i]))
+    while ( --i >= 0 && isspace((int)comp_name[i]))
 	comp_name[i] = '\0';
 
     /* copy comp_name to tmp_name while replacing white space with "_" */
@@ -973,7 +973,7 @@ f4_do_name(void)
 
     /* copy */
     while (comp_name[++i] != '\0') {
-	if (isspace(comp_name[i]) || comp_name[i] == '/') {
+	if (isspace((int)comp_name[i]) || comp_name[i] == '/') {
 	    if (j == (-1) || tmp_name[j] != '_')
 		tmp_name[++j] = '_';
 	} else {
@@ -1164,7 +1164,7 @@ f4_do_cline(void)
     }
 
     if (pt1 == pt2) {
-	bu_log("Ilegal grid points in CLINE (%d and %d), skipping\n", pt1, pt2);
+	bu_log("Illegal grid points in CLINE (%d and %d), skipping\n", pt1, pt2);
 	bu_log("\telement %d, component %d, group %d\n", element_id, comp_id, group_id);
 	return;
     }
@@ -1772,7 +1772,7 @@ Add_holes(int type, int gr, int comp, struct hole_list *ptr)
     }
 
     if (!hole_root) {
-	hole_root = (struct holes *)bu_malloc(sizeof(struct holes), "Add_holes: hole_root");
+	BU_ALLOC(hole_root, struct holes);
 	hole_root->group = gr;
 	hole_root->component = comp;
 	hole_root->type = type;
@@ -1804,7 +1804,7 @@ Add_holes(int type, int gr, int comp, struct hole_list *ptr)
 	    list->next = ptr;
 	}
     } else {
-	prev->next = (struct holes *)bu_malloc(sizeof(struct holes), "Add_holes: hole_ptr->next");
+	BU_ALLOC(prev->next, struct holes);
 	hole_ptr = prev->next;
 	hole_ptr->group = gr;
 	hole_ptr->component = comp;
@@ -1837,7 +1837,7 @@ f4_do_hole_wall(int type)
 
     /* eliminate trailing blanks */
     s_len = strlen(line);
-    while (isspace(line[--s_len]))
+    while (isspace((int)line[--s_len]))
 	line[s_len] = '\0';
 
     s_len = strlen(line);
@@ -1870,10 +1870,10 @@ f4_do_hole_wall(int type)
 		bu_log("Hole or wall card references itself (ignoring): (%s)\n", line);
 	    } else {
 		if (list_ptr) {
-		    list_ptr->next = (struct hole_list *)bu_malloc(sizeof(struct hole_list), "f4_do_hole_wall: list_ptr");
+		    BU_ALLOC(list_ptr->next, struct hole_list);
 		    list_ptr = list_ptr->next;
 		} else {
-		    list_ptr = (struct hole_list *)bu_malloc(sizeof(struct hole_list), "f4_do_hole_wall: list_ptr");
+		    BU_ALLOC(list_ptr, struct hole_list);
 		    list_start = list_ptr;
 		}
 
@@ -1904,7 +1904,7 @@ f4_Add_bot_face(int pt1, int pt2, int pt3, fastf_t thick, int pos)
 
     if (mode == PLATE_MODE) {
 	if (pos != POS_CENTER && pos != POS_FRONT) {
-	    bu_log("f4_Add_bot_face: illegal postion parameter (%d), must be one or two (ignoring face for group %d component %d)\n", pos, group_id, comp_id);
+	    bu_log("f4_Add_bot_face: illegal position parameter (%d), must be one or two (ignoring face for group %d component %d)\n", pos, group_id, comp_id);
 	    return;
 	}
     }
@@ -2061,7 +2061,7 @@ f4_do_quad(void)
 	    pos = POS_FRONT;
 
 	if (pos != POS_CENTER && pos != POS_FRONT) {
-	    bu_log("f4_do_quad: illegal postion parameter (%d), must be one or two\n", pos);
+	    bu_log("f4_do_quad: illegal position parameter (%d), must be one or two\n", pos);
 	    bu_log("\telement %d, component %d, group %d\n", element_id, comp_id, group_id);
 	    return;
 	}
@@ -2105,10 +2105,10 @@ make_bot_object(void)
     bot_ip.num_vertices = num_vertices;
     bot_ip.vertices = (fastf_t *)bu_calloc(num_vertices*3, sizeof(fastf_t), "BOT vertices");
     for (i=0; i<num_vertices; i++)
-	VMOVE(&bot_ip.vertices[i*3], grid_points[min_pt+i])
+	VMOVE(&bot_ip.vertices[i*3], grid_points[min_pt+i]);
 
-	    for (i=0; i<face_count*3; i++)
-		faces[i] -= min_pt;
+    for (i=0; i<face_count*3; i++)
+	faces[i] -= min_pt;
     bot_ip.num_faces = face_count;
     bot_ip.faces = bu_calloc(face_count*3, sizeof(int), "BOT faces");
     for (i=0; i<face_count*3; i++)
@@ -2135,7 +2135,7 @@ make_bot_object(void)
     bot_ip.orientation = RT_BOT_UNORIENTED;
     bot_ip.bot_flags = 0;
 
-    count = rt_bot_vertex_fuse(&bot_ip);
+    count = rt_bot_vertex_fuse(&bot_ip, &fpout->wdb_tol);
     count = rt_bot_face_fuse(&bot_ip);
     if (count)
 	bu_log("WARNING: %d duplicate faces eliminated from group %d component %d\n", count, group_id, comp_id);
@@ -2158,11 +2158,11 @@ make_bot_object(void)
 static void
 skip_section(void)
 {
-    long section_start;
+    off_t section_start;
 
     /* skip to start of next section */
-    section_start = ftell(fpin);
-    if (section_start < 0L) {
+    section_start = bu_ftell(fpin);
+    if (section_start < 0) {
 	bu_exit(1, "Error: couldn't get input file's current file position.\n");
     }
 
@@ -2172,8 +2172,8 @@ skip_section(void)
 	       bu_strncmp(line, "WALL", 4) &&
 	       bu_strncmp(line, "VEHICLE", 7))
 	{
-	    section_start = ftell(fpin);
-	    if (section_start < 0L) {
+	    section_start = bu_ftell(fpin);
+	    if (section_start < 0) {
 		bu_exit(1, "Error: couldn't get input file's current file position.\n");
 	    }
 	    if (!get_line())
@@ -2181,7 +2181,7 @@ skip_section(void)
 	}
     }
     /* seek to start of the section */
-    fseek(fpin, section_start, SEEK_SET);
+    bu_fseek(fpin, section_start, SEEK_SET);
 }
 
 
@@ -2332,7 +2332,7 @@ f4_do_hex1(void)
 	    pos = POS_FRONT;
 
 	if (pos != POS_CENTER && pos != POS_FRONT) {
-	    bu_log("f4_do_hex1: illegal postion parameter (%d), must be 1 or 2, skipping CHEX1 element\n", pos);
+	    bu_log("f4_do_hex1: illegal position parameter (%d), must be 1 or 2, skipping CHEX1 element\n", pos);
 	    bu_log("\telement %d, component %d, group %d\n", element_id, comp_id, group_id);
 	    return;
 	}
@@ -2813,7 +2813,7 @@ read_fast4_colors(char *color_file)
 	if (high < low)
 	    continue;
 
-	BU_GET(color, struct fast4_color);
+	BU_ALLOC(color, struct fast4_color);
 	color->low = low;
 	color->high = high;
 	color->rgb[0] = r;
@@ -2870,7 +2870,7 @@ main(int argc, char **argv)
 		color_file = bu_optarg;
 		break;
 	    default:
-		bu_log("Unrecognzed option (%c)\n", c);
+		bu_log("Unrecognized option (%c)\n", c);
 		usage();
 		break;
 	}
@@ -2941,7 +2941,7 @@ main(int argc, char **argv)
     BU_LIST_INIT(&hole_head.l);
 
     if (!quiet)
-	bu_log("Scanning for HOLE, WALL, and COMPLSPLT cards...\n");
+	bu_log("Scanning for HOLE, WALL, and COMPSPLT cards...\n");
 
     Process_hole_wall();
 

@@ -1,7 +1,7 @@
 /*                         P L O T 3 . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2012 United States Government as represented by
+ * Copyright (c) 2004-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -123,7 +123,7 @@ pl_line(register FILE *plotfp, int px1, int py1, int px2, int py2)
 }
 
 void
-pl_linmod(register FILE *plotfp, register char *s)
+pl_linmod(register FILE *plotfp, const char *s)
 {
     if (pl_outputMode == PL_OUTPUT_MODE_BINARY) {
 	putc('f', plotfp);
@@ -160,7 +160,7 @@ pl_cont(register FILE *plotfp, int x, int y)
 }
 
 void
-pl_label(register FILE *plotfp, register char *s)
+pl_label(register FILE *plotfp, const char *s)
 {
     if (pl_outputMode == PL_OUTPUT_MODE_BINARY) {
 	putc('t', plotfp);

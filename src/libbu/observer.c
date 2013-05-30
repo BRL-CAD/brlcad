@@ -1,7 +1,7 @@
 /*                      O B S E R V E R . C
  * BRL-CAD
  *
- * Copyright (c) 1997-2012 United States Government as represented by
+ * Copyright (c) 1997-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -99,7 +99,7 @@ observer_detach(void *clientData, int argc, const char **argv)
 	    BU_LIST_DEQUEUE(&op->l);
 	    bu_vls_free(&op->observer);
 	    bu_vls_free(&op->cmd);
-	    bu_free((genptr_t)op, "observer_detach: op");
+	    BU_PUT(op, struct bu_observer);
 
 	    return BRLCAD_OK;
 	}
@@ -169,7 +169,7 @@ bu_observer_free(struct bu_observer *headp)
 	BU_LIST_DEQUEUE(&op->l);
 	bu_vls_free(&op->observer);
 	bu_vls_free(&op->cmd);
-	bu_free((genptr_t)op, "bu_observer_free: op");
+	BU_PUT(op, struct bu_observer);
 	op = nop;
     }
 }

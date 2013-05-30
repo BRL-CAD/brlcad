@@ -1,7 +1,7 @@
 /*                         V I E W 2 G R I D _ L U . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2012 United States Government as represented by
+ * Copyright (c) 2008-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -36,8 +36,10 @@
 int
 ged_view2grid_lu(struct ged *gedp, int argc, const char *argv[])
 {
+    /* intentionally double for scan */
+    double view_pt[3];
+
     fastf_t f;
-    point_t view_pt;
     point_t model_pt;
     point_t mo_view_pt;           /* model origin in view space */
     point_t diff;

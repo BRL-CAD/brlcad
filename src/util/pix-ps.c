@@ -1,7 +1,7 @@
 /*                        P I X - P S . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2012 United States Government as represented by
+ * Copyright (c) 1986-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -63,7 +63,7 @@ void
 prolog(FILE *fp, char *name, size_t w, size_t h)
 
 
-    /* in points */
+/* in points */
 {
     time_t ltime;
 
@@ -119,7 +119,7 @@ postlog(FILE *fp)
 void
 hexout(FILE *fp, int byte)
 
-    /* 0 <= byte <= 255 */
+/* 0 <= byte <= 255 */
 {
     int high, low;
     static int symbol[16] = { '0', '1', '2', '3', '4', '5', '6',
@@ -191,16 +191,16 @@ get_args(int argc, char **argv)
     } else {
 	file_name = argv[bu_optind];
 	if ((infp = fopen(file_name, "r")) == NULL) {
-	    (void)fprintf(stderr,
-			  "pix-ps: cannot open \"%s\" for reading\n",
-			  file_name);
+	    fprintf(stderr,
+		    "pix-ps: cannot open \"%s\" for reading\n",
+		    file_name);
 	    return 0;
 	}
 	/*fileinput++;*/
     }
 
     if (argc > ++bu_optind)
-	(void)fprintf(stderr, "pix-ps: excess argument(s) ignored\n");
+	fprintf(stderr, "pix-ps: excess argument(s) ignored\n");
 
     return 1;		/* OK */
 }

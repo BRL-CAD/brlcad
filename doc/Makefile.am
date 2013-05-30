@@ -28,7 +28,6 @@ documentation_DATA = \
 	BRL-CAD.bib\
 	cvs.txt \
 	description.txt \
-	deprecation.txt \
 	ecosystem.dot \
 	flex_to_re2c.txt \
 	ged.tr \
@@ -212,15 +211,8 @@ documentation_DATA = \
 	tube.txt \
 	tool_categories.txt
 
-man_MANS = \
-	bw.5 \
-	cmap.5 \
-	pix.5 \
-	plot3.5
-
 EXTRA_DIST = \
 	$(documentation_DATA) \
-	$(man_MANS) \
 	docbook \
 	STARTERS \
 	pad_file.xml.in \

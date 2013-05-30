@@ -12,7 +12,7 @@ animate the tank.
 <p>
 If you are editing the moss.g database, from the last section, exit
 MGED. For this section, you will need a simple tank model, which is also
-included with the BRL-CAD distrubution.
+included with the BRL-CAD distribution.
 If the BRL-CAD source is located in the "/cadsrc" directory, then you
 should execute the following commands to get a copy of the tank model
 and open it with MGED:
@@ -32,7 +32,7 @@ Before proceeding, there are a few changes that must be applied to the
 geometry file to make it animation-ready. The names of the wheels must
 be changed to share a common base name, with indexes from zero to six. A
 prototype track pad must be created, and sixty copies of the pad must be made
-for the left and and right tracks. Save the following file as
+for the left and right tracks. Save the following file as
 <em>track.txt</em>, and then run it using the command:
 <pre>
 mged> <b>source track.txt</b>
@@ -53,7 +53,7 @@ g lw.4 r35
 g lw.5 r36
 g lw.6 r38
 
-#create new names for the the right wheels
+#create new names for the right wheels
 g rw.0 r44
 g rw.1 r39
 g rw.2 r40
@@ -182,7 +182,7 @@ The next line of the track animation window allows you to specify the
 track length. When <b>Minimize track length</b> is specified, the
 resulting track is wrapped tightly around the wheels. Select
 <b>Elastic track length</b>. With this option, you specify the track
-length. Any extra length is taken up by a drooping caternary arc between
+length. Any extra length is taken up by a drooping catenary arc between
 wheel zero and wheel (n-1). (This is why wheel zero is always the top
 front and wheel (n-1) is always the top back wheel.) If the track length
 you specify is too short, the elastic track will be stretched to fit.
@@ -245,7 +245,7 @@ frame, you would need to create an animation table consisting of a time
 column and a distance column. In the distance column, you would specify
 the total distance the track should be rolled in each frame. You would
 enter the identifier of the animation table next to the label
-<b>Vechicle path from table</b>, and select the <b>Distance</b> option
+<b>Vehicle path from table</b>, and select the <b>Distance</b> option
 just below that label.
 <p>
 <h3>Specifying the vehicle path</h3>
@@ -350,7 +350,7 @@ animation scripts with the vehicle animation script
 It may appear to you that the left track stops and moves backwards
 during the animation. There are two possible explanations for this
 behavior. One is that the left track may need to turn backwards while
-the right track is turning forward, if the tank's movement contains a a
+the right track is turning forward, if the tank's movement contains a
 very sharp left turn. The other possibility is that although the track
 is actually moving forward, it appears to be rolling backward due to a
 strobing effect. This is the same effect which causes wagon wheels to

@@ -1,8 +1,9 @@
 /* $NoKeywords: $ */
 /*
 //
-// Copyright (c) 1993-2007 Robert McNeel & Associates. All rights reserved.
-// Rhinoceros is a registered trademark of Robert McNeel & Assoicates.
+// Copyright (c) 1993-2012 Robert McNeel & Associates. All rights reserved.
+// OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
+// McNeel & Associates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
@@ -123,6 +124,11 @@ public:
     );
 
   // printing utilities
+  /*
+  Description:
+    Same as calling Print("\n");
+  */
+  void PrintNewLine();
 
   /*
   Description:
@@ -237,7 +243,5 @@ private:
 
 };
 
-ON_DECL
-int ON_CrashTest( int crash_type, ON_TextLog& text_log );
 
 #endif

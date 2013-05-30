@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='gx3d1'>
+<refmeta>
+    <refentrytitle>G-X3D
+</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class='source'>BRL-CAD</refmiscinfo>
+<refmiscinfo class='software'>BRL-CAD</refmiscinfo>
+<refmiscinfo class='manual'>User Commands</refmiscinfo>
+</refmeta>
+
+<refnamediv>
+<refname>g-x3d</refname>
+<refpurpose>Perform Boolean evaluations to produce an X3D facetted model</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<cmdsynopsis>
+  <command>g-x3d</command>
+    <arg choice='opt'>-v </arg>
+    <arg choice='opt'>-d <replaceable>calc_dist_tol</replaceable></arg>
+    <arg choice='opt'>-a <replaceable>abs_tess_tol</replaceable></arg>
+    <arg choice='opt'>-n <replaceable>norm_tess_tol</replaceable></arg>
+    <arg choice='opt'>-r <replaceable>rel_tess_tol</replaceable></arg>
+    <arg choice='opt'>-x <replaceable>librt_debug_flag</replaceable></arg>
+    <arg choice='opt'>-X <replaceable>NMG_debug_flag</replaceable></arg>
+    <arg choice='opt'>-u <replaceable>units_name</replaceable></arg>
+    <arg choice='opt'>-o <replaceable>outfile</replaceable></arg>
+    <arg choice='plain'><replaceable>infile.g</replaceable></arg>
+    <arg choice='plain'><replaceable>object(s)</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para><command>g-x3d</command>
+performs the Boolean operations specified in any regions in the specified
+<emphasis remap='I'>object(s)</emphasis>
+and writes the resulting facetted objects to
+<emphasis remap='I'>outfile</emphasis>
+or to
+<emphasis remap='I'>stdout</emphasis>
+if the
+<option>-o</option>
+option is not used. The output is in X3D facetted format. The
+<option>-v</option>
+option requests verbose output while the conversion is taking place. The
+<option>-d</option>
+option specifies a calculational distance tolerance (in millimeters). This
+tolerance is used to distinguish neighboring vertices. Any two vertices less than
+this tolerance distance apart will be considered the same vertex. The default value
+is 0.005mm.
+Prior to performing the Boolean operations for each region, the involved primitive solids
+are converted to a planar facetted approximation and stored as NMG solids. This tessellation
+can be controlled using the tessellation tolerances. The
+<option>-a</option>
+option may be used to specify an absolute tessellation tolerance (in millimeters). This
+requires that the maximum absolute error from the tessellated surface to the actual
+surface must not be greater than
+<emphasis remap='I'>abs_tess_tol.</emphasis>
+The
+<option>-n</option>
+option specifies a surface normal error tolerance (in degrees) for the tessellation.
+The
+<option>-r</option>
+option may be used to set a relative error tolerance. This effectively
+sets an absolute tolerance for each primitive solid by multiplying the
+overall size of the solid by
+<emphasis remap='I'>rel_tess_tol.</emphasis>
+The
+<option>-x</option>
+and
+<option>-X</option>
+options are used to set debug flags for
+<emphasis remap='I'>librt</emphasis>
+and the
+<emphasis remap='I'>NMG</emphasis>
+routines respectively. The definitions of these flags may be found in
+<emphasis remap='I'>raytrace.h</emphasis>
+and
+<emphasis remap='I'>nmg.h.</emphasis>
+The
+<option>-u</option>
+option can be used to set the units for the resulting X3D file (the default is mm).
+Any units name that MGED accepts will work here.</para>
+</refsect1>
+
+<refsect1 xml:id='example'><title>EXAMPLE</title>
+<synopsis>
+$ <emphasis remap='I'>g-x3d -o shell.x3d sample.g sample_object</emphasis>
+</synopsis>
+</refsect1>
+
+<refsect1 xml:id='diagnostics'><title>DIAGNOSTICS</title>
+<para>Error messages are intended to be self-explanatory.</para>
+</refsect1>
+
+<refsect1 xml:id='author'><title>AUTHOR</title>
+<para>Robert Parker (The SURVICE Engineering Co., Aberdeen, MD)</para>
+</refsect1>
+
+<refsect1 xml:id='copyright'><title>COPYRIGHT</title>
+<para>This software is Copyright (c) 2002-2013 by the United States
+Government as represented by U.S. Army Research Laboratory.</para>
+</refsect1>
+
+<refsect1 xml:id='bug_reports'><title>BUG REPORTS</title>
+<para>Reports of bugs or problems should be submitted via electronic
+mail to &lt;devs@brlcad.org&gt;.</para>
+</refsect1>
+</refentry>
+

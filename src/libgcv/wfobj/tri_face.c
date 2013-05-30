@@ -1,7 +1,7 @@
 /*                      T R I _ F A C E . C
  * BRL-CAD
  *
- * Copyright (c) 2011-2012 United States Government as represented by
+ * Copyright (c) 2011-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -189,7 +189,7 @@ getPointReference(
 }
 
 /* points is the specification of face points. It should contain consecutive
- * three-cordinate vertices that specify a planar N-gon in CCW/CW order.
+ * three-coordinate vertices that specify a planar N-gon in CCW/CW order.
  *
  * faces will specify numFaces triangle faces with three consecutive vertex
  * references per face. Vertex reference v refers to the three consecutive
@@ -209,7 +209,7 @@ triangulateFace(
     struct edgeuse *eu;
     size_t numFaceVertices;
     int i, ref;
-    double *point;
+    double point[3];
 
     /* get nmg faceuse that represents the face specified by points */
     fu = make_faceuse_from_face(points, numPoints);
@@ -221,7 +221,11 @@ triangulateFace(
     }
 
     /* triangulate face */
-    nmg_triangulate_fu(fu, &tol);
+    if (nmg_triangulate_fu(fu, &tol)) {
+	*faces = NULL;
+	*numFaces = 0;
+	return;
+    }
 
     /* face now composed of triangular loops */
     *numFaces = 0;
@@ -236,7 +240,7 @@ triangulateFace(
     i = 0;
     for (BU_LIST_FOR(lu, loopuse, &fu->lu_hd)) {
 	for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
-	    point = eu->vu_p->v_p->vg_p->coord;
+	    VMOVE(point, eu->vu_p->v_p->vg_p->coord);
 	    ref = getPointReference(point, points, numPoints, tol.dist);
 	    (*faces)[i++] = ref;
 	}

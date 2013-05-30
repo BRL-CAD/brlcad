@@ -1,7 +1,7 @@
       program brlcad
 
 c     This is really a pointer to a BRL-CAD data structure.  With the advent
-c     of FORTRAN-90 perhaps it should be delcared as such.
+c     of FORTRAN-90 perhaps it should be declared as such.
       integer*8 rtip
 
 c     flag: did frtree fail to read the geometry?

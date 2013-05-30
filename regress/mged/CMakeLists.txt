@@ -101,7 +101,7 @@ set(test_prev "")
 foreach(testfile ${MGED_TESTS})
   string(REGEX REPLACE "([0-9a-z_-]*).mged" "\\1" cmd_root "${testfile}")
   add_custom_target(regress-mged-${cmd_root}
-	 ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/mged -c ${CMAKE_CURRENT_BINARY_DIR}/${G_FILENAME} < ${CMAKE_CURRENT_BINARY_DIR}/regress_${testfile} 
+	 ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/mged -c ${CMAKE_CURRENT_BINARY_DIR}/${G_FILENAME} < ${CMAKE_CURRENT_BINARY_DIR}/regress_${testfile}
     DEPENDS mged ${CMAKE_CURRENT_BINARY_DIR}/${G_FILENAME} ${test_prev}
     )
   set(MGED_TEST_LIST ${MGED_TEST_LIST} regress-mged-${cmd_root})

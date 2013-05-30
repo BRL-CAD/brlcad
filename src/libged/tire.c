@@ -1,7 +1,7 @@
 /*                          T I R E . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2012 United States Government as represented by
+ * Copyright (c) 2008-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -63,7 +63,7 @@ show_help(struct ged *gedp, const char *name)
 	cp++;
     }
 
-    bu_vls_printf(gedp->ged_result_str, "usage: %s [-%s] [tire_name]\n", name, bu_vls_addr(&str));
+    bu_vls_printf(gedp->ged_result_str, "Usage: %s [-%s] [tire_name]\n", name, bu_vls_addr(&str));
     bu_vls_printf(gedp->ged_result_str, "options:\n");
     bu_vls_printf(gedp->ged_result_str, "\t-a\n\t\tAuto-generate top-level object name using\n");
     bu_vls_printf(gedp->ged_result_str, "\t\t(tire-<width>-<aspect>R<rim size>)\n");
@@ -238,16 +238,16 @@ Create_Ell1_Mat(fastf_t **mat, fastf_t dytred, fastf_t dztred, fastf_t d1, fastf
  * first define the magnitude of the z component of the distance from
  * the intersection point to the max point as:
  *
- *       ztire - dztread - zside1
+ *       ztire - dztred - zside1
  *
  * That will place the symmetric point at twice this distance down the
  * z axis from the intersection point:
  *
- *       (ztire - dztread) - 2 * (ztire - dztread - zside1)
+ *       (ztire - dztred) - 2 * (ztire - dztred - zside1)
  *
  * Simplifying, that gives the expression:
  *
- *       2 * zside1 - ztire + dztread
+ *       2 * zside1 - ztire + dztred
  *
  * Knowing this point must be on the ellipse, and the partial derivative
  * is constrained to be the negative of the partial derivative at the
@@ -431,7 +431,7 @@ SolveEchelon(fastf_t **mat, fastf_t *result1)
  *   start by looking into methods of graphing the General Conic.     *
  *   In particular, either here or even earlier in the process a      *
  *   type check should be done to ensure an elliptical geometry has   *
- *   been found, rather than parabolic or hyperboloic.                *
+ *   been found, rather than parabolic or hyperbolic.                 *
  *                                                                    *
  **********************************************************************/
 static void
@@ -796,7 +796,7 @@ MakeWheelRims(struct rt_wdb (*file), char *suffix, fastf_t dyhub,
  *                                                                    *
  *               Extrusion Creation Routines for Tire                 *
  *               Tread Patterns - makes sketch and                    *
- *               uses sketch to make extrustion                       *
+ *               uses sketch to make extrusion                        *
  *                                                                    *
  **********************************************************************/
 static void
@@ -842,7 +842,7 @@ MakeExtrude(struct rt_wdb (*file), char *suffix, point2d_t *verts,
 
     /* Insert all line segments except the last one */
     for (i = 0; i < vertcount-1; i++) {
-	lsg = (struct line_seg *)bu_malloc(sizeof(struct line_seg), "sketch: lsg");
+	BU_ALLOC(lsg, struct line_seg);
 	lsg->magic = CURVE_LSEG_MAGIC;
 	lsg->start = i;
 	lsg->end = i + 1;
@@ -850,7 +850,7 @@ MakeExtrude(struct rt_wdb (*file), char *suffix, point2d_t *verts,
     }
 
     /* Connect the last connected vertex to the first vertex */
-    lsg = (struct line_seg *)bu_malloc(sizeof(struct line_seg), "sketch: lsg");
+    BU_ALLOC(lsg, struct line_seg);
     lsg->magic = CURVE_LSEG_MAGIC;
     lsg->start = vertcount - 1;
     lsg->end = 0;
@@ -1323,7 +1323,7 @@ MakeTireSurface(struct rt_wdb (*file), char *suffix,
 /**********************************************************************
  *                                                                    *
  *           Routines to handle creation of tread solids              *
- *           and invocation of the tread pattern creater               *
+ *           and invocation of the tread pattern creator               *
  *                                                                    *
  **********************************************************************/
 static void
@@ -1588,7 +1588,7 @@ typedef void (*MakeTreadProfile)
  *                                                                    *
  *           MakeTire is the "top level" tire generation              *
  *           function - it is responsible for managing the            *
- *           matricies, calling the solvers with the correct          *
+ *           matrices, calling the solvers with the correct           *
  *           input parameters, and using the other tire               *
  *           routines to define a hollow tire with tread.             *
  *                                                                    *

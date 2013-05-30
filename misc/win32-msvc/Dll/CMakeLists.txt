@@ -35,15 +35,19 @@ add_library(BrlcadCore SHARED ${BRLCADCORE_SOURCES})
 
 target_link_libraries(BrlcadCore
   libbn-static
+  libbrep-static
   libbu-static
   libgcv-static
   libged-static
   regex-static
   librt-static
+  libbrep-static
   libsysv-static
+  libvds-static
   libwdb-static
+  p2t_static
   zlib-static
-  openNURBS
+  openNURBS-static
   tcl85
   )
 
@@ -99,14 +103,18 @@ add_library(brlcad SHARED
 
 target_link_libraries(brlcad
   libbn-static
+  libbrep-static
   libbu-static
   libged-static
   regex-static
   librt-static
+  libbrep-static
   libsysv-static
+  libvds-static
   libwdb-static
+  p2t_static
   zlib-static
-  openNURBS
+  openNURBS-static
   Ws2_32
   Psapi
   )

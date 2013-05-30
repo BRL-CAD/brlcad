@@ -1,7 +1,7 @@
 /*                          P L - X . C
  * BRL-CAD
  *
- * Copyright (c) 1988-2012 United States Government as represented by
+ * Copyright (c) 1988-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -214,8 +214,8 @@ getargs(struct uplot *up)
 
 void
 draw(double x_1, double y_1, double UNUSED(z_1), double x_2, double y_2, double z_2)
-    /* from point */
-    /* to point */
+/* from point */
+/* to point */
 {
     int sx_1, sy_1, sx_2, sy_2;
 

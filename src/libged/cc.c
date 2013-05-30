@@ -1,7 +1,7 @@
 /*                         C C . C
  * BRL-CAD
  *
- * Copyright (c) 2009-2012 United States Government as represented by
+ * Copyright (c) 2009-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -69,7 +69,8 @@ ged_cc(struct ged *gedp, int argc, const char *argv[])
     internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
     internal.idb_type = ID_CONSTRAINT;
     internal.idb_meth=&rt_functab[ID_CONSTRAINT];
-    internal.idb_ptr = (genptr_t)bu_malloc(sizeof(struct rt_constraint_internal), "rt_constraint_internal");
+
+    BU_ALLOC(internal.idb_ptr, struct rt_constraint_internal);
     con_ip = (struct rt_constraint_internal *)internal.idb_ptr;
     con_ip->magic = RT_CONSTRAINT_MAGIC;
     con_ip->id = 324;

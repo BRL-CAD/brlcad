@@ -1,7 +1,7 @@
 /*                     P I X C O L O R S . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2012 United States Government as represented by
+ * Copyright (c) 2004-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -85,26 +85,26 @@ void doit(FILE *fd)
 	    pixel = r +	(g << 8) + (b << 16);
 
 	    if (!(vals[k=(pixel >> 3)] &
-		   (mask = (1 << (pixel & 0x07))))) {
+		  (mask = (1 << (pixel & 0x07))))) {
 		vals[k] |= (unsigned char)mask;
 		++count;
 	    }
 	}
     }
-    (void)printf("%lu\n", (long unsigned)count);
+    printf("%lu\n", (long unsigned)count);
     if (verbose)
 	for (i = 0; i < 1<<24; ++i)
 	    if ((vals[i>>3] & (1<<(i & 0x07))))
-		(void)printf("%3d %3d %3d\n",
-                             i & 0x0ff,
-                             (i >> 8) & 0x0ff,
-                             (i >> 16) & 0x0ff);
+		printf("%3d %3d %3d\n",
+		       i & 0x0ff,
+		       (i >> 8) & 0x0ff,
+		       (i >> 16) & 0x0ff);
 }
 
 
 void usage(void)
 {
-    (void)fprintf(stderr, "Usage: %s [ -v ] < PIXfile\n", progname);
+    fprintf(stderr, "Usage: %s [ -v ] < PIXfile\n", progname);
     bu_exit (1, NULL);
 }
 
@@ -112,7 +112,7 @@ void usage(void)
 /*
  * M A I N
  *
- * Perform miscelaneous tasks such as argument parsing and
+ * Perform miscellaneous tasks such as argument parsing and
  * I/O setup and then call "doit" to perform the task at hand
  */
 int main(int ac, char **av)

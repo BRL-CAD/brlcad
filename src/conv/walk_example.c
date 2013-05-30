@@ -1,7 +1,7 @@
 /*                     W A L K _ E X A M P L E . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2012 United States Government as represented by
+ * Copyright (c) 2004-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -20,7 +20,7 @@
  */
 /** @file conv/walk_example.c
  *
- * @brief Example of how to traverse a BRL-CAD database heirarchy
+ * @brief Example of how to traverse a BRL-CAD database hierarchy
  *
  * This program uses the BRL-CAD librt function db_walk_tree() to
  * traverse a user-specified portion of the Directed Acyclic Graph
@@ -118,7 +118,7 @@ int parse_args(int ac, char *av[])
  *	R E G I O N _ S T A R T
  *
  * @brief This routine is called when a region is first encountered in the
- * heirarchy when processing a tree
+ * hierarchy when processing a tree
  *
  *	@param pathp A listing of all the nodes traversed to get to this node in the database
  */
@@ -147,7 +147,7 @@ region_start(struct db_tree_state *UNUSED(tsp),
  *	@param curtree
  *
  *	@return TREE_NULL if data in curtree was "stolen", otherwise db_walk_tree will
- *	clean up the dta in the union tree * that is returned
+ *	clean up the data in the union tree * that is returned
  *
  * If it wants to retain the data in curtree it can by returning TREE_NULL.  Otherwise
  * db_walk_tree will clean up the data in the union tree * that is returned.
@@ -246,7 +246,7 @@ int main(int ac, char *av[])
      */
     struct rt_i *rtip;
 
-    struct db_tree_state init_state; /* state table for the heirarchy walker */
+    struct db_tree_state init_state; /* state table for the hierarchy walker */
     char idbuf[1024] = {0};		/* Database title */
     int arg_count;
     char *tmp_basename;
@@ -269,7 +269,7 @@ int main(int ac, char *av[])
     }
 
     /*
-     *  Build an index of what's in the databse.
+     *  Build an index of what's in the database.
      *  rt_dirbuild() returns an "instance" pointer which describes
      *  the database.  It also gives you back the
      *  title string in the header (ID) record.

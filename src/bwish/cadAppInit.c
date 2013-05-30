@@ -1,7 +1,7 @@
 /*                          C A D A P P I N I T . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2012 United States Government as represented by
+ * Copyright (c) 1998-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -169,6 +169,9 @@ Cad_AppInit(Tcl_Interp *interp)
 	bu_log("Go_Init ERROR:\n%s\n", Tcl_GetStringResult(interp));
 	return TCL_ERROR;
     }
+
+    /* Initialize command history object */
+    Cho_Init(interp);
 
     return TCL_OK;
 }

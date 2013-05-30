@@ -268,6 +268,7 @@ extern SCL_EXPRESS_EXPORT Expression   BIN_EXPcreate PROTO( ( Op_Code, Expressio
 extern SCL_EXPRESS_EXPORT Expression   TERN_EXPcreate PROTO( ( Op_Code, Expression, Expression, Expression ) );
 extern SCL_EXPRESS_EXPORT Expression   QUERYcreate PROTO( ( Symbol *, Expression ) );
 extern SCL_EXPRESS_EXPORT void     EXPinitialize PROTO( ( void ) );
+extern SCL_EXPRESS_EXPORT void     EXPcleanup PROTO( ( void ) );
 extern SCL_EXPRESS_EXPORT Type     EXPtype PROTO( ( Expression, struct Scope_ * ) );
 extern SCL_EXPRESS_EXPORT int      EXPget_integer_value PROTO( ( Expression ) );
 

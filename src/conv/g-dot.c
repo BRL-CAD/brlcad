@@ -1,7 +1,7 @@
 /*                         G - D O T . C
  * BRL-CAD
  *
- * Copyright (c) 2011-2012 United States Government as represented by
+ * Copyright (c) 2011-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -214,7 +214,7 @@ static void
 help()
 {
     bu_log("\n\t-? | -h | -H    (optional) displays this help");
-    bu_log("\n\t-o output.dot   (optional) name of output Graphiz .dot file");
+    bu_log("\n\t-o output.dot   (optional) name of output Graphviz .dot file");
     bu_log("\n\tinput.g         name of input BRL-CAD .g database");
     bu_log("\n\tobject1 ...     (optional) name of object(s) to export from .g file");
     bu_log("\n");

@@ -1,7 +1,7 @@
 #                        A N I M . T C L
 # BRL-CAD
 #
-# Copyright (c) 2004-2012 United States Government as represented by
+# Copyright (c) 2004-2013 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -44,7 +44,7 @@ if ![info exists tk_version] {
 #  Currently the choices for *foo* are from the following list:
 #  {draw view table objanim track sort preview}
 # 2.> a "p" argument indicates a parent widget.
-#  eg. when calling sketch_popup_draw the calling function provides a widget
+#  e.g. when calling sketch_popup_draw the calling function provides a widget
 #  to be the new widget's parent. Whenever tk is running, there is a toplevel
 #  widget called "." which can be used.
 #-----------------------------------------------------------------
@@ -1365,8 +1365,8 @@ proc sketch_vupdate {} {
 			   [expr $i + $mged_sketch_cmdlen($cmd) - 1] ]
 	    set str [concat $str $cmd $cargs]
 	    incr i $mged_sketch_cmdlen($cmd)
-    	eval view $str
-    	set str ""
+	eval view $str
+	set str ""
 	}
 	if { $i != $len } {
 	    puts "sketch_vupdate: expected $i columns, got $len"
@@ -2059,7 +2059,7 @@ proc sketch_text_do_script {wout win rows slist} {
 
     foreach script $slist {
 	if {$script != ""} {
-	    regsub -all {@pi} $script 3.14159265358979323846 temp2
+	    regsub -all {@pi} $script M_PI temp2
 	    regsub -all {@e} $temp2 2.7182818284590452354 temp
 	    regsub -all {(@)([in])} $temp {$column(\2)} \
 		script
@@ -2710,10 +2710,10 @@ proc sketch_objanim { objorview } {
     upvar #0 mged_sketch_objncols ncols
 
     if { $objorview != "view" } {
-        # make sure animated object exists (this will create an error if it doesn't)
-        set tmp 0
-        set tmp [db get $mged_sketch_objname]
-        if { $tmp == 0 } return
+	# make sure animated object exists (this will create an error if it doesn't)
+	set tmp 0
+	set tmp [db get $mged_sketch_objname]
+	if { $tmp == 0 } return
     }
 
     set anim_fly [file join ${mged_sketch_anim_path} anim_fly]
@@ -3812,8 +3812,8 @@ proc sketch_pos_int {str} {
 }
 
 #str is a list of columns, something like "0-2,5,7,9-"
-#num is the number of columns that exist, eg "11"
-#output is an array holding the columns, eg 0,1,2,5,7,9,10
+#num is the number of columns that exist, e.g. "11"
+#output is an array holding the columns, e.g. 0,1,2,5,7,9,10
 #returns the number of columns requested, or -1 on error
 proc sketch_parse_col {str num output} {
     upvar $output out
@@ -4151,13 +4151,13 @@ proc sketch_text_from_table {tid {needcol -1}} {
 proc animmate { id {p .} } {
     global mged_gui
     global ::tk::Priv
-    
+
     if {[opendb] == ""} {
 	cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen) "No database." \
 	    "No database has been opened!" info 0 OK
 	    return
     }
-    
+
     sketch_popup_main $p
 }
 

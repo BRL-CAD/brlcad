@@ -38,6 +38,14 @@ STEPaggregate::STEPaggregate() {
 }
 
 STEPaggregate::~STEPaggregate() {
+    STEPnode *node;
+
+    node = (STEPnode*) head;
+    while ( node ) {
+        head = node->NextNode();
+        delete node;
+        node = (STEPnode*) head;
+    }
 }
 
 STEPaggregate & STEPaggregate::ShallowCopy( const STEPaggregate & a ) {
@@ -831,6 +839,7 @@ SelectNode::SelectNode() {
 }
 
 SelectNode::~SelectNode() {
+    delete node;
 }
 
 SingleLinkNode * SelectNode::NewNode() {
@@ -1401,11 +1410,11 @@ const char * RealNode::asStr( std::string & s ) {
 
 const char * RealNode::STEPwrite( std::string & s, const char * ) {
     if( value != S_REAL_NULL ) {
-        WriteReal( value, s );
+        s = WriteReal( value );
     } else {
         s.clear();
     }
-    return const_cast<char *>( s.c_str() );
+    return s.c_str();
 }
 
 void RealNode::STEPwrite( ostream & out ) {

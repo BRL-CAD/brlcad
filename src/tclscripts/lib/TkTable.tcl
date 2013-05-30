@@ -1,7 +1,7 @@
 #                     T K T A B L E . T C L
 # BRL-CAD
 #
-# Copyright (c) 1998-2012 United States Government as represented by
+# Copyright (c) 1998-2013 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -34,15 +34,19 @@
     itk_option define -validatecommand validatecommand ValidateCommand ""
     itk_option define -vclientdata vclientdata VClientData ""
     itk_option define -entercommand entercommand EnterCommand ""
+    itk_option define -multiSelectCallback multiSelectCallback MultiDataCallback ""
     itk_option define -singleSelectCallback singleSelectCallback SingleDataCallback ""
 
     public {
+	method getSelectedRows {}
 	method handlePaste {}
 	method see {_index}
 	method setDataEntry {_index _val}
 	method setTableCol {_col _val}
 	method setTableVal {_index _val}
+	method selectRow {_row}
 	method selectSingleRow {_row}
+	method unselectAllRows {}
 	method unselectRow {_row}
 	method updateTitleCol {}
 	method width {args}
@@ -58,13 +62,12 @@
 	variable mToggleSelectMode 0
 	variable mInsertMode 0
 	variable mDoBreak 0
-	variable mSingleSelectRow 0
 
 	method doBreak {}
 	method handleCopy {_win}
 	method handleCut {_win}
 	method handleEnter {_win}
-	method handleKey {_win _key}
+	method handleKey {_win _key _ucc _keynum}
 	method handleLeftRight {_win _sflag}
 	method handleTablePopup {_win _x _y _X _Y}
 	method handleUpDown {_win _up}
@@ -80,7 +83,6 @@
 # ------------------------------------------------------------
 #                        OPTIONS
 # ------------------------------------------------------------
-
 
 
 # ------------------------------------------------------------
@@ -168,7 +170,7 @@
     bind $itk_component(table) <B3-Motion>
 
     # Key Bindings
-    bind $itk_component(table) <Key> "[::itcl::code $this handleKey %W %K]; if {\[[::itcl::code $this doBreak]\]} {break}"
+    bind $itk_component(table) <Key> "[::itcl::code $this handleKey %W %K %A %N]; if {\[[::itcl::code $this doBreak]\]} {break}"
     bind $itk_component(table) <Key-Tab> "[::itcl::code $this handleLeftRight %W 0]; break"
 #    bind $itk_component(table) <Shift-Key-Tab> "[::itcl::code $this handleLeftRight %W 1]; break"
     bind $itk_component(table) <<PrevWindow>> "[::itcl::code $this handleLeftRight %W 1]; break"
@@ -206,16 +208,30 @@
     set mLastRow [expr {$mNumRows - 1}]
 }
 
+
+
 # ------------------------------------------------------------
 #                      PUBLIC METHODS
 # ------------------------------------------------------------
+
+
+::itcl::body cadwidgets::TkTable::getSelectedRows {} {
+    set rlist {}
+    foreach item [lsort [$itk_component(table) tag cell select_col]] {
+	set ilist [split $item ,]
+	lappend rlist [lindex $ilist 0]
+    }
+
+    return $rlist
+}
+
 
 ::itcl::body cadwidgets::TkTable::handlePaste {} {
     #
     # Don't allow pasting into the title cells
     #
     if {[$itk_component(table) tag includes title active]} {
-        return
+	return
     }
 
     set savestate [$itk_component(table) cget -state]
@@ -299,24 +315,43 @@
     }
 }
 
+
 ::itcl::body cadwidgets::TkTable::setTableVal {_index _val} {
     set $mTableDataVar\($_index\) $_val
 }
+
+
+::itcl::body cadwidgets::TkTable::selectRow {_row} {
+    if {$_row == 0} {
+	return
+    }
+
+    setTableVal $_row,0 "*"
+    $itk_component(table) tag cell select_col $_row,0
+}
+
 
 ::itcl::body cadwidgets::TkTable::selectSingleRow {_row} {
     if {$_row == 0} {
 	return
     }
 
-    # Turn off previously selected row
-    if {$mSingleSelectRow} {
-	unselectRow $mSingleSelectRow
-    }
+    # Turn off previously selected rows
+    unselectAllRows
 
     setTableVal $_row,0 "*"
     $itk_component(table) tag cell select_col $_row,0
-    set mSingleSelectRow $_row
 }
+
+
+::itcl::body cadwidgets::TkTable::unselectAllRows {} {
+    foreach item [lsort [$itk_component(table) tag cell select_col]] {
+	set ilist [split $item ,]
+	set r [lindex $ilist 0]
+	unselectRow $r
+    }
+}
+
 
 ::itcl::body cadwidgets::TkTable::unselectRow {_row} {
     setTableVal $_row,0 ""
@@ -396,7 +431,7 @@
     }
 }
 
-::itcl::body cadwidgets::TkTable::handleKey {_win _key} {
+::itcl::body cadwidgets::TkTable::handleKey {_win _key _ucc _keynum} {
     set index [$_win index active]
     set ilist [split $index ,]
     set row [lindex $ilist 0]
@@ -413,11 +448,11 @@
 	set mDoBreak 1
 
 	# Overwrite what's in the cell
-	if {[keyVisible $_key]} {
+	if {[keyVisible $_keynum]} {
 	    setInsertMode 1
 
 	    if {$itk_option(-validatecommand) != ""} {
-		if {[catch {$itk_option(-validatecommand) $row $col $_key $itk_option(-vclientdata)} isvalid]} {
+		if {[catch {$itk_option(-validatecommand) $row $col $_ucc $itk_option(-vclientdata)} isvalid]} {
 		    set isvalid 0
 		}
 	    } else {
@@ -425,7 +460,7 @@
 	    }
 
 	    if {$isvalid} {
-		setTableVal $index $_key
+		setTableVal $index $_ucc
 	    }
 	} else {
 	    setInsertMode 0
@@ -439,6 +474,11 @@
 		return
 	    }
 
+	    if {$itk_option(-singleSelectCallback) != ""} {
+		selectSingleRow $row
+		return
+	    }
+
 	    if {[set [subst $mTableDataVar\($index\)]] == "*"} {
 		setTableVal $index ""
 		$itk_component(table) tag cell {} $index
@@ -447,8 +487,13 @@
 		$itk_component(table) tag cell select_col $index
 	    }
 
+	    #XXX Remove this after updating the applications that use TkTable
 	    if {$itk_option(-dataCallback) != ""} {
 		catch {$itk_option(-dataCallback)}
+	    }
+
+	    if {$itk_option(-multiSelectCallback) != ""} {
+		catch {$itk_option(-multiSelectCallback)}
 	    }
 	} else {
 	    set mDoBreak 0
@@ -542,8 +587,8 @@
     }
 }
 
-::itcl::body cadwidgets::TkTable::keyVisible {_key} {
-    if {[string length $_key] == 1} {
+::itcl::body cadwidgets::TkTable::keyVisible {_keynum} {
+    if {32 <= $_keynum && $_keynum <= 126} {
 	return 1
     }
 
@@ -567,8 +612,8 @@
 ::itcl::body cadwidgets::TkTable::toggleSelect {_win _x _y} {
     set index [$_win index @$_x,$_y]
     set ilist [split $index ,]
-    set row [lindex $ilist 0] 
-    set col [lindex $ilist 1] 
+    set row [lindex $ilist 0]
+    set col [lindex $ilist 1]
 
     if {$col != 0} {
 	set mDoBreak 0
@@ -630,8 +675,13 @@
 	    }
 	}
 
+	#XXX Remove this after updating the applications that use TkTable
 	if {$itk_option(-dataCallback) != ""} {
 	    catch {$itk_option(-dataCallback)}
+	}
+
+	if {$itk_option(-multiSelectCallback) != ""} {
+	    catch {$itk_option(-multiSelectCallback)}
 	}
     }
 }
@@ -650,7 +700,6 @@
     # Always valid
     return 1
 }
-
 
 
 # Local Variables:

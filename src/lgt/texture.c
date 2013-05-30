@@ -1,7 +1,7 @@
 /*                       T E X T U R E . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2012 United States Government as represented by
+ * Copyright (c) 2004-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -122,10 +122,10 @@ init_Icon_Texture(char *file, Mat_Db_Entry *entry)
 	 != ITEMS_WIDE*hgt )
     {
 	bu_log( "Read of icon texture map failed.\n" );
-        fclose(iconfp);
+	fclose(iconfp);
 	return	NULL;
     }
-    iconp =	(struct icon_texture *) bu_malloc( sizeof( struct icon_texture ), "iconp" );
+    BU_ALLOC(iconp, struct icon_texture);
     iconp->filenm = bu_malloc( strlen(file)+1, "iconp->filenm");
 
     bu_strlcpy( iconp->filenm, file, strlen(file)+1);
@@ -171,7 +171,7 @@ init_Fb_Texture(char *file, Mat_Db_Entry *entry)
 	bu_log( "Read of frame buffer texture failed.\n" );
 	return	NULL;
     }
-    fbp = (struct fb_texture *) bu_malloc( sizeof( struct fb_texture ), "fbp");
+    BU_ALLOC(fbp, struct fb_texture);
     fbp->filenm = bu_malloc( strlen(file)+1, "fbp->filenm");
     bu_strlcpy( fbp->filenm, file, strlen(file)+1 );
     fbp->map = fbmap;

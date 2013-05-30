@@ -1,7 +1,7 @@
 /*                       F I R P A S S . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2012 United States Government as represented by
+ * Copyright (c) 1990-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -30,12 +30,12 @@
 
 /*	CHANGES		*/
 /*	10 December 1990 - 'Dimension' arrays using malloc.  */
-/*	17 December 1990 - Incorperate subroutine rotate & radians.  */
+/*	17 December 1990 - Incorporate subroutine rotate & radians.  */
 /*	19 February 1991 - No defaults for material properties.  */
 /*	 5 March 1991    - Creates PRISM, generic, or geometric file.  */
 /*	13 March 1991    - Corrects problem writing out material.  */
 /*	23 October 1991  - Writes out region # & name file.  */
-/*	30 October 1991  - Make region numbering sceme the same for all  */
+/*	30 October 1991  - Make region numbering scheme the same for all  */
 /*			   files, i.e. region numbers start at 1.  */
 /*	 5 November 1991 - Print engine air area in radius field.  Give  */
 /*			   user a choice of a PRISM 2.0 or 3.0 file.  */
@@ -75,7 +75,7 @@
 #define VOLVAR 0.1	/*  Variation in volume & surface area  */
 			/*  that is allowed, before flag is set.  */
 #define ZEROTOL 1.e-20	/*  Tolerance for dividing by zero.  */
-#define NORMTOL 1.e-2	/*  Tolerance for finding cummulative normals.  */
+#define NORMTOL 1.e-2	/*  Tolerance for finding cumulative normals.  */
 #define ALPHA 25.	/*  Rotation about z-axis.  */
 #define BETA 50.	/*  Rotation about y-axis.  */
 #define GAMMA 35.	/*  Rotation about x-axis.  */
@@ -92,12 +92,12 @@ struct table
 {
     const char *regname;		/*  region name  */
     short mat;		/*  material code  */
-    double cumnorm[3];	/*  cummulative normal vector sum  */
+    double cumnorm[3];	/*  cumulative normal vector sum  */
     /*  for the exterior free surfaces  */
-    double cumvol[3];	/*  cummulative volume sums for each  */
+    double cumvol[3];	/*  cumulative volume sums for each  */
     /*  direction fired  */
     double centroid[3];	/*  centroid calculation  */
-    double cumfs[7][3];	/*  cummulative surface area for */
+    double cumfs[7][3];	/*  cumulative surface area for */
     /*  each air type, 0-exterior air,  */
     /*  1-crew compartment air, 2-engine  */
     /*  compartment air, 3-closed compartment  */
@@ -113,7 +113,7 @@ struct table
     /*  9 => generic air 2  */
     int *adjreg;		/*  adjacent region, 0=>no touch,  */
     /*  1=>touch  */
-    double *ssurarea[3];	/*  cummulative sum of shared surface  */
+    double *ssurarea[3];	/*  cumulative sum of shared surface  */
     /*  area of adjacent regions  */
     double surarea[3];	/*  surface area of that region, one  */
     /*  for each direction rays fired  */
@@ -166,8 +166,8 @@ int main(int argc, char **argv)
     char fileden[16];	/*  used for reading material id file  */
     FILE *fp5;		/*  used for creating generic file  */
     char filegen[16];	/*  used for creating generic file  */
-    FILE *fp6;		/*  used for creating gemetric file  */
-    char filegeo[16];	/*  used for creating gemetric file  */
+    FILE *fp6;		/*  used for creating geometric file  */
+    char filegeo[16];	/*  used for creating geometric file  */
     FILE *fp7;		/*  Used for creating region # & name file.  */
     char filernn[16];	/*  Used for creating region # & name file.  */
     int numadjreg;		/*  used for finding the number of  */
@@ -241,19 +241,19 @@ int main(int argc, char **argv)
     int numsol;		/*  Number of solar loaded surfaces.  */
     int prmrel;		/*  PRISM release number 2=>2.0 & 3=>3.0.  */
     int ifire;		/*  Number of sets of rays to be fired,  */
-    /*  0=>fire from 3 orthogonal postions,  */
-    /*  1=>fire from 1 postion.  */
+    /*  0=>fire from 3 orthogonal positions,  */
+    /*  1=>fire from 1 position.  */
     double diff;		/*  Difference, used in finding variance.  */
     int ret;
 
-    /*  Check to see if arguments implimented correctly.  */
+    /*  Check to see if arguments implemented correctly.  */
     if (argc < 3 || argv[1]==NULL || argv[2]==NULL) {
-	(void)fprintf(stderr, "\nusage:  firpass file.g objects\n\n");
+	fprintf(stderr, "\nUsage:  firpass file.g objects\n\n");
     } else {
 
 	/*  Ask if output goes to standard out or a file.  */
-	(void)printf("Write output to standard out (0) or a file (1) or ");
-	(void)printf("not at all (2)?  ");
+	printf("Write output to standard out (0) or a file (1) or ");
+	printf("not at all (2)?  ");
 	(void)fflush(stdout);
 	ret = scanf("%d", &iwrite);
 	if (ret == 0)
@@ -261,8 +261,8 @@ int main(int argc, char **argv)
 	if ((iwrite != 0) && (iwrite != 1)) iwrite=2;
 	if (iwrite == 1)
 	{
-	    (void)printf("Enter name of file output is to be written ");
-	    (void)printf("to (15 char max).  ");
+	    printf("Enter name of file output is to be written ");
+	    printf("to (15 char max).  ");
 	    (void)fflush(stdout);
 	    ret = scanf("%15s", filename);
 	    if (ret == 0)
@@ -271,42 +271,42 @@ int main(int argc, char **argv)
 	}
 
 	/*  Get error file name.  */
-	(void)printf("Enter name of error file to be created ");
-	(void)printf("(15 char max).  ");
+	printf("Enter name of error file to be created ");
+	printf("(15 char max).  ");
 	(void)fflush(stdout);
 	ret = scanf("%15s", fileerr);
 	if (ret == 0)
 	    perror("scanf");
 
 	/*  Get second pass file name.  */
-	(void)printf("Enter name of second pass file to be ");
-	(void)printf("created (15 char max).  ");
+	printf("Enter name of second pass file to be ");
+	printf("created (15 char max).  ");
 	(void)fflush(stdout);
 	ret = scanf("%15s", spfile);
 	if (ret == 0)
 	    perror("scanf");
 
 	/*  Get region # & name file (for use w/shapefact).  */
-	(void)printf("Enter name of region # & name file to be  ");
-	(void)printf("created (15 char max).  ");
+	printf("Enter name of region # & name file to be  ");
+	printf("created (15 char max).  ");
 	(void)fflush(stdout);
 	ret = scanf("%15s", filernn);
 	if (ret == 0)
 	    perror("scanf");
 
 	/*  Get name of material id file.  */
-	(void)printf("Enter name of material id file to be read ");
-	(void)printf("(15 char max).  ");
+	printf("Enter name of material id file to be read ");
+	printf("(15 char max).  ");
 	(void)fflush(stdout);
 	ret = scanf("%15s", fileden);
 	if (ret == 0)
 	    perror("scanf");
 
 	/*  What types of files are to be written?  */
-	(void)printf("Enter type of file to be written.\n");
-	(void)printf("\t0 - PRISM file\n");
-	(void)printf("\t1 - Generic file\n");
-	(void)printf("\t2 - Geometric properties file\n");
+	printf("Enter type of file to be written.\n");
+	printf("\t0 - PRISM file\n");
+	printf("\t1 - Generic file\n");
+	printf("\t2 - Geometric properties file\n");
 	(void)fflush(stdout);
 	ret = scanf("%d", &typeout);
 	if (ret == 0)
@@ -315,8 +315,8 @@ int main(int argc, char **argv)
 	/*  Get facet file name.  */
 	if (typeout == 0)
 	{
-	    (void)printf("Enter name of facet file to be created. ");
-	    (void)printf("(15 char max)  ");
+	    printf("Enter name of facet file to be created. ");
+	    printf("(15 char max)  ");
 	    (void)fflush(stdout);
 	    ret = scanf("%15s", facfile);
 	    if (ret == 0)
@@ -326,8 +326,8 @@ int main(int argc, char **argv)
 	    /*  in release 3.0 is written with an I6 & in release 2.0 it  */
 	    /*  is written with I3.  */
 	    prmrel = 2;
-	    (void)printf("Which release of PRISM is being used, 2.0 (2) ");
-	    (void)printf("or 3.0 (3)?  ");
+	    printf("Which release of PRISM is being used, 2.0 (2) ");
+	    printf("or 3.0 (3)?  ");
 	    (void)fflush(stdout);
 	    ret = scanf("%d", &prmrel);
 	    if (ret == 0)
@@ -338,8 +338,8 @@ int main(int argc, char **argv)
 	/*  Get generic file name.  */
 	if (typeout == 1)
 	{
-	    (void)printf("Enter name of generic file to be created. ");
-	    (void)printf("(15 char max)  ");
+	    printf("Enter name of generic file to be created. ");
+	    printf("(15 char max)  ");
 	    (void)fflush(stdout);
 	    ret = scanf("%15s", filegen);
 	    if (ret == 0)
@@ -349,15 +349,15 @@ int main(int argc, char **argv)
 	/*  Get geometric file name.  */
 	if (typeout == 2)
 	{
-	    (void)printf("Do you want a readable (0) or non-readable (1) ");
-	    (void)printf("geometric file?  ");
+	    printf("Do you want a readable (0) or non-readable (1) ");
+	    printf("geometric file?  ");
 	    (void)fflush(stdout);
 	    ret = scanf("%d", &typeouta);
 	    if (ret == 0)
 		perror("scanf");
 	    typeout += typeouta;
-	    (void)printf("Enter name of geometric properties file to be ");
-	    (void)printf("created (15 char max).  ");
+	    printf("Enter name of geometric properties file to be ");
+	    printf("created (15 char max).  ");
 	    (void)fflush(stdout);
 	    ret = scanf("%15s", filegeo);
 	    if (ret == 0)
@@ -371,9 +371,9 @@ int main(int argc, char **argv)
 
 	/*  Determine whether to fire one set of rays or to fire  */
 	/*  three sets of orthogonal rays.  */
-	(void)printf("Should there be 3 sets of orthogonal rays fired ");
-	(void)printf("(0) or 1 set\n");
-	(void)printf("of rays fired (1)?\n\t");
+	printf("Should there be 3 sets of orthogonal rays fired ");
+	printf("(0) or 1 set\n");
+	printf("of rays fired (1)?\n\t");
 	(void)fflush(stdout);
 	ret = scanf("%d", &ifire);
 	if (ret == 0)
@@ -381,18 +381,18 @@ int main(int argc, char **argv)
 	if (ifire != 0) ifire = 1;
 	if (ifire == 0)
 	{
-	    (void)printf("3 sets of orthogonal rays will be fired.\n");
+	    printf("3 sets of orthogonal rays will be fired.\n");
 	}
 	if (ifire == 1)
 	{
-	    (void)printf("1 set of rays will be fired.\n");
+	    printf("1 set of rays will be fired.\n");
 	}
 	(void)fflush(stdout);
 
 	/*  Open & read material id file.  */
 	fp4=fopen(fileden, "rb");
 	/*
-	 *	(void)printf("Materail id file open for reading.\n");
+	 *	(void)printf("Material id file open for reading.\n");
 	 *	(void)fflush(stdout);
 	 */
 	/*  Assumption is made that material ids run from 0 to 40  */
@@ -401,7 +401,7 @@ int main(int argc, char **argv)
 	for (i=0; i<41; i++)
 	{
 	    (void)bu_fgets(line, 150, fp4);
-	    (void)sscanf(line, "%*d%lf%lf%lf%lf%lf%25c",
+	    sscanf(line, "%*d%lf%lf%lf%lf%lf%25c",
 			 &matprop[i].d, &matprop[i].sh, &matprop[i].a,
 			 &matprop[i].e1, &matprop[i].tc, matprop[i].m);
 	    matprop[i].e2 = matprop[i].e1;
@@ -433,31 +433,31 @@ int main(int argc, char **argv)
 	(void)fclose(fp4);
 
 	/*  Print out the name of the file being used.  */
-	(void)printf("File Used:  %s\n", argv[1]);
+	printf("File Used:  %s\n", argv[1]);
 	(void)fflush(stdout);
 	if (iwrite == 1)
 	{
-	    (void)fprintf(fp, "File Used:  %s,  ", argv[1]);
+	    fprintf(fp, "File Used:  %s,  ", argv[1]);
 	    (void)fflush(fp);
 	}
 
 	/*  Print out name of material id file being used.  */
-	(void)printf("Material ID File:  %s\n", fileden);
+	printf("Material ID File:  %s\n", fileden);
 	(void)fflush(stdout);
 	if (iwrite == 1)
 	{
-	    (void)fprintf(fp, "Material ID File:  %s\n", fileden);
+	    fprintf(fp, "Material ID File:  %s\n", fileden);
 	    (void)fflush(fp);
 	}
 
 	/*  Build the directory.  */
 	idx = 1;	/*  Setup index for rt_dirbuild  */
 	rtip=rt_dirbuild(argv[idx], idbuf, sizeof(idbuf));
-	(void)printf("Database Title:  %s\n", idbuf);
+	printf("Database Title:  %s\n", idbuf);
 	(void)fflush(stdout);
 	if (iwrite == 1)
 	{
-	    (void)fprintf(fp, "Database Title:  %s\n", idbuf);
+	    fprintf(fp, "Database Title:  %s\n", idbuf);
 	    (void)fflush(fp);
 	}
 
@@ -483,7 +483,7 @@ int main(int argc, char **argv)
 	/*  is time to use the malloc command to 'dimension'  */
 	/*  the appropriate arrays and structures.  */
 
-	(void)printf("Mallocing arrays.\n");
+	printf("Mallocing arrays.\n");
 	(void)fflush(stdout);
 
 	region = (struct table *)bu_malloc(num * sizeof (*region), "region");
@@ -502,36 +502,36 @@ int main(int argc, char **argv)
 
 	/*  Now that the arrays are 'dimensioned' zero ALL variables.  */
 
-	(void)printf("Zeroing variables.\n");
+	printf("Zeroing variables.\n");
 	(void)fflush(stdout);
 
 	for (i=0; i<num; i++)
 	{
 	    region[i].regname="\0";
-	    region[i].cumnorm[0]=0.;
-	    region[i].cumnorm[1]=0.;
-	    region[i].cumnorm[2]=0.;
-	    region[i].cumvol[0]=0.;
-	    region[i].cumvol[1]=0.;
-	    region[i].cumvol[2]=0.;
-	    region[i].centroid[0]=0.;
-	    region[i].centroid[1]=0.;
-	    region[i].centroid[2]=0.;
+	    region[i].cumnorm[0]=0.0;
+	    region[i].cumnorm[1]=0.0;
+	    region[i].cumnorm[2]=0.0;
+	    region[i].cumvol[0]=0.0;
+	    region[i].cumvol[1]=0.0;
+	    region[i].cumvol[2]=0.0;
+	    region[i].centroid[0]=0.0;
+	    region[i].centroid[1]=0.0;
+	    region[i].centroid[2]=0.0;
 	    for (k=0; k<7; k++)
 	    {
-		region[i].cumfs[k][0] = 0.;
-		region[i].cumfs[k][1] = 0.;
-		region[i].cumfs[k][2] = 0.;
+		region[i].cumfs[k][0] = 0.0;
+		region[i].cumfs[k][1] = 0.0;
+		region[i].cumfs[k][2] = 0.0;
 	    }
-	    region[i].surarea[0]=0.;
-	    region[i].surarea[1]=0.;
-	    region[i].surarea[2]=0.;
+	    region[i].surarea[0]=0.0;
+	    region[i].surarea[1]=0.0;
+	    region[i].surarea[2]=0.0;
 	    for (j=0; j<num; j++)
 	    {
 		region[i].adjreg[j]=0;
-		region[i].ssurarea[0][j]=0.;
-		region[i].ssurarea[1][j]=0.;
-		region[i].ssurarea[2][j]=0.;
+		region[i].ssurarea[0][j]=0.0;
+		region[i].ssurarea[1][j]=0.0;
+		region[i].ssurarea[2][j]=0.0;
 	    }
 	}
 
@@ -541,7 +541,7 @@ int main(int argc, char **argv)
 	    for (j=0; j<num; j++)
 	    {
 		overlaps[i].ovrreg[j] = 0;
-		overlaps[i].ovrdep[j] = 0.;
+		overlaps[i].ovrdep[j] = 0.0;
 	    }
 	}
 
@@ -550,11 +550,11 @@ int main(int argc, char **argv)
 
 	/*  Find center of bounding rpp.  */
 	center[X] = rtip->mdl_min[X] + (rtip->mdl_max[X]
-					- rtip->mdl_min[X]) / 2.;
+					- rtip->mdl_min[X]) / 2.0;
 	center[Y] = rtip->mdl_min[Y] + (rtip->mdl_max[Y]
-					- rtip->mdl_min[Y]) / 2.;
+					- rtip->mdl_min[Y]) / 2.0;
 	center[Z] = rtip->mdl_min[Z] + (rtip->mdl_max[Z]
-					- rtip->mdl_min[Z]) / 2.;
+					- rtip->mdl_min[Z]) / 2.0;
 
 	/*  Find length of diagonal of bounding rpp.  */
 	diagonal = (rtip->mdl_max[X] - rtip->mdl_min[X])
@@ -563,7 +563,7 @@ int main(int argc, char **argv)
 	    * (rtip->mdl_max[Y] - rtip->mdl_min[Y])
 	    + (rtip->mdl_max[Z] - rtip->mdl_min[Z])
 	    * (rtip->mdl_max[Z] - rtip->mdl_min[Z]);
-	diagonal = sqrt(diagonal) / 2. + 0.5;
+	diagonal = sqrt(diagonal) / 2.0 + 0.5;
 
 	/*  Find minimum and maximums.  */
 	xmin = center[X] - diagonal;
@@ -575,28 +575,28 @@ int main(int argc, char **argv)
 
 	/*  Print center of bounding rpp, diagonal, maximum, &  */
 	/*  minimum.  */
-	(void)printf("Center of bounding rpp (%f, %f, %f)\n",
+	printf("Center of bounding rpp (%f, %f, %f)\n",
 		     center[X], center[Y], center[Z]);
-	(void)printf("Length of diagonal of bounding rpp:  %f\n",
+	printf("Length of diagonal of bounding rpp:  %f\n",
 		     diagonal);
-	(void)printf("Minimums & maximums\n");
-	(void)printf("  x:  %f - %f\n", xmin, xmax);
-	(void)printf("  y:  %f - %f\n", ymin, ymax);
-	(void)printf("  z:  %f - %f\n", zmin, zmax);
+	printf("Minimums & maximums\n");
+	printf("  x:  %f - %f\n", xmin, xmax);
+	printf("  y:  %f - %f\n", ymin, ymax);
+	printf("  z:  %f - %f\n", zmin, zmax);
 	(void)fflush(stdout);
 
 	/*  Write model minimum & maximum.  */
-	(void)printf("Model minimum & maximum.\n");
+	printf("Model minimum & maximum.\n");
 	(void)fflush(stdout);
-	(void)printf("\tX:  %f to %f\n\tY:  %f to %f\n\tZ:  %f to %f\n\n",
+	printf("\tX:  %f to %f\n\tY:  %f to %f\n\tZ:  %f to %f\n\n",
 		     rtip->mdl_min[X], rtip->mdl_max[X],
 		     rtip->mdl_min[Y], rtip->mdl_max[Y],
 		     rtip->mdl_min[Z], rtip->mdl_max[Z]);
 	(void)fflush(stdout);
 	if (iwrite == 1)
 	{
-	    (void)fprintf(fp, "Model minimum & maximum.\n");
-	    (void)fprintf(fp, "\tX:  %f to %f\n\tY:  %f to %f\n\tZ:  %f to %f\n",
+	    fprintf(fp, "Model minimum & maximum.\n");
+	    fprintf(fp, "\tX:  %f to %f\n\tY:  %f to %f\n\tZ:  %f to %f\n",
 			  rtip->mdl_min[X], rtip->mdl_max[X],
 			  rtip->mdl_min[Y], rtip->mdl_max[Y],
 			  rtip->mdl_min[Z], rtip->mdl_max[Z]);
@@ -604,7 +604,7 @@ int main(int argc, char **argv)
 	}
 
 	/*  User enters grid spacing.  All units are in mm.  */
-	(void)printf("Enter grid spacing (mm) for fired rays.\n");
+	printf("Enter grid spacing (mm) for fired rays.\n");
 	(void)fflush(stdout);
 	ret = scanf("%lf", &gridspace);
 	if (ret == 0)
@@ -612,12 +612,12 @@ int main(int argc, char **argv)
 
 	if (iwrite == 0)
 	{
-	    (void)printf("grid spacing:  %f\n", gridspace);
+	    printf("grid spacing:  %f\n", gridspace);
 	    (void)fflush(stdout);
 	}
 	else if (iwrite == 1)
 	{
-	    (void)fprintf(fp, "grid spacing:  %f,  ", gridspace);
+	    fprintf(fp, "grid spacing:  %f,  ", gridspace);
 	    (void)fflush(fp);
 	}
 
@@ -625,12 +625,12 @@ int main(int argc, char **argv)
 	area = gridspace * gridspace;
 	if (iwrite == 0)
 	{
-	    (void)printf("area=%f\n", area);
+	    printf("area=%f\n", area);
 	    (void)fflush(stdout);
 	}
 	if (iwrite == 1)
 	{
-	    (void)fprintf(fp, "area=%f\n", area);
+	    fprintf(fp, "area=%f\n", area);
 	    (void)fflush(fp);
 	}
 
@@ -651,17 +651,17 @@ int main(int argc, char **argv)
 	/*  Set up for 1st set of fired rays, positive to negative  */
 	/*  (shooting down the x-axis).  */
 
-	(void)printf("\nSHOOTING DOWN THE 1st AXIS\n");
+	printf("\nSHOOTING DOWN THE 1st AXIS\n");
 	(void)fflush(stdout);
 
 	whichview=0;
 
 	strtpt[X] = xmax;
-	strtpt[Y] = ymin + gridspace / 2.;
-	strtpt[Z] = zmin + gridspace / 2.;
+	strtpt[Y] = ymin + gridspace / 2.0;
+	strtpt[Z] = zmin + gridspace / 2.0;
 	strtdir[X] = (-1.0);
-	strtdir[Y] = 0.;
-	strtdir[Z] = 0.;
+	strtdir[Y] = 0.0;
+	strtdir[Z] = 0.0;
 
 	/*  Put angle into radians.  */
 	angle[X] = radians((double)GAMMA);
@@ -692,9 +692,9 @@ int main(int argc, char **argv)
 
 	    /*  Set to show no previous shots.  */
 	    iprev=(-99);
-	    r[X]=xmax - center[X] + 5.;
-	    r[Y]=ymax - center[Y] + 5.;
-	    r[Z]=zmax - center[Z] + 5.;
+	    r[X]=xmax - center[X] + 5.0;
+	    r[Y]=ymax - center[Y] + 5.0;
+	    r[Z]=zmax - center[Z] + 5.0;
 
 
 	    (void)rotate(r, angle, t);
@@ -712,9 +712,9 @@ int main(int argc, char **argv)
 	     *		(void)fflush(stdout);
 	     */
 
-	    lnormal[X]=0.;
-	    lnormal[Y]=0.;
-	    lnormal[Z]=0.;
+	    lnormal[X]=0.0;
+	    lnormal[Y]=0.0;
+	    lnormal[Z]=0.0;
 
 	    /*  Call rt_shootray.  */
 	    (void)rt_shootray(&ap);
@@ -722,7 +722,7 @@ int main(int argc, char **argv)
 	    strtpt[Y] += gridspace;
 	    if (strtpt[Y] > ymax)
 	    {
-		strtpt[Y] = ymin + gridspace / 2.;
+		strtpt[Y] = ymin + gridspace / 2.0;
 		strtpt[Z] += gridspace;
 
 	    }
@@ -744,17 +744,17 @@ int main(int argc, char **argv)
 	{
 	    /*  START # 1000  */
 	    /*  Set up & fire 2nd set of arrays.  */
-	    (void)printf("\nSHOOTING DOWN THE 2nd AXIS\n");
+	    printf("\nSHOOTING DOWN THE 2nd AXIS\n");
 	    (void)fflush(stdout);
 
 	    whichview = 1;
 
-	    strtpt[X] = xmin + gridspace / 2.;
+	    strtpt[X] = xmin + gridspace / 2.0;
 	    strtpt[Y] = ymax;
-	    strtpt[Z] = xmin + gridspace / 2.;
-	    strtdir[X] = 0.;
+	    strtpt[Z] = xmin + gridspace / 2.0;
+	    strtdir[X] = 0.0;
 	    strtdir[Y] = (-1.0);
-	    strtdir[Z] = 0.;
+	    strtdir[Z] = 0.0;
 
 	    /*  Angle already in radians.  */
 
@@ -779,9 +779,9 @@ int main(int argc, char **argv)
 	    {
 		/*  Set to show no previous shots.  */
 		iprev = (-99);
-		r[X] = xmax - center[X] + 5.;
-		r[Y] = ymax - center[Y] + 5.;
-		r[Z] = zmax - center[Z] + 5.;
+		r[X] = xmax - center[X] + 5.0;
+		r[Y] = ymax - center[Y] + 5.0;
+		r[Z] = zmax - center[Z] + 5.0;
 
 		(void)rotate(r, angle, t);
 
@@ -789,9 +789,9 @@ int main(int argc, char **argv)
 		leavept[Y] = center[Y] + t[Y];
 		leavept[Z] = center[Z] + t[Z];
 
-		lnormal[X] = 0.;
-		lnormal[Y] = 0.;
-		lnormal[Z] = 0.;
+		lnormal[X] = 0.0;
+		lnormal[Y] = 0.0;
+		lnormal[Z] = 0.0;
 
 		/*  Call rt_shootray.  */
 		(void)rt_shootray(&ap);
@@ -800,7 +800,7 @@ int main(int argc, char **argv)
 
 		if (strtpt[X] > xmax)
 		{
-		    strtpt[X] = xmin + gridspace / 2.;
+		    strtpt[X] = xmin + gridspace / 2.0;
 		    strtpt[Z] += gridspace;
 		}
 
@@ -816,16 +816,16 @@ int main(int argc, char **argv)
 	    }
 
 	    /*  Set up & fire 3rd set of rays.  */
-	    (void)printf("\nSHOOTING DOWN THE 3rd AXIS.\n");
+	    printf("\nSHOOTING DOWN THE 3rd AXIS.\n");
 	    (void)fflush(stdout);
 
 	    whichview = 2;
 
-	    strtpt[X] = xmin + gridspace / 2.;
-	    strtpt[Y] = ymin + gridspace / 2.;
+	    strtpt[X] = xmin + gridspace / 2.0;
+	    strtpt[Y] = ymin + gridspace / 2.0;
 	    strtpt[Z] = zmax;
-	    strtdir[X] = 0.;
-	    strtdir[Y] = 0.;
+	    strtdir[X] = 0.0;
+	    strtdir[Y] = 0.0;
 	    strtdir[Z] = (-1.0);
 
 	    /*  Angle already in radians.  */
@@ -852,9 +852,9 @@ int main(int argc, char **argv)
 	    {
 		/*  Set to show no previous shots.  */
 		iprev = (-99);
-		r[X] = xmax - center[X] + 5.;
-		r[Y] = xmax - center[Y] + 5.;
-		r[Z] = xmax - center[Z] + 5.;
+		r[X] = xmax - center[X] + 5.0;
+		r[Y] = xmax - center[Y] + 5.0;
+		r[Z] = xmax - center[Z] + 5.0;
 
 		(void)rotate(r, angle, t);
 
@@ -862,9 +862,9 @@ int main(int argc, char **argv)
 		leavept[Y] = center[Y] + t[Y];
 		leavept[Z] = center[Z] + t[Z];
 
-		lnormal[X] = 0.;
-		lnormal[Y] = 0.;
-		lnormal[Z] = 0.;
+		lnormal[X] = 0.0;
+		lnormal[Y] = 0.0;
+		lnormal[Z] = 0.0;
 
 		/*  Call rt_shootray.  */
 		(void)rt_shootray(&ap);
@@ -873,7 +873,7 @@ int main(int argc, char **argv)
 
 		if (strtpt[X] > xmax)
 		{
-		    strtpt[X] = xmin + gridspace / 2.;
+		    strtpt[X] = xmin + gridspace / 2.0;
 		    strtpt[Y] += gridspace;
 		}
 
@@ -892,12 +892,12 @@ int main(int argc, char **argv)
 
 	if (iwrite == 0)
 	{
-	    (void)printf("\nNumber of regions:  %d\n\n", num);
+	    printf("\nNumber of regions:  %d\n\n", num);
 	    (void)fflush(stdout);
 	}
 	if (iwrite == 1)
 	{
-	    (void)fprintf(fp, "Number of regions:  %d\n", num);
+	    fprintf(fp, "Number of regions:  %d\n", num);
 	    (void)fflush(fp);
 	}
 
@@ -918,7 +918,7 @@ int main(int argc, char **argv)
 		region[i].cumvol[2];
 
 	    /*
-	     *		(void)printf("\tcummulative volume:  %f", total);
+	     *		(void)printf("\tcumulative volume:  %f", total);
 	     *		(void)fflush(stdout);
 	     */
 	    if ((total < -ZEROTOL) || (ZEROTOL < total))
@@ -939,9 +939,9 @@ int main(int argc, char **argv)
 	    if (ifire == 0)
 	    {
 		/*  START # 1040  */
-              if ((!ZERO(region[i].cumvol[0])) &&
-                  (!ZERO(region[i].cumvol[1])) &&
-                  (!ZERO(region[i].cumvol[2])))
+	      if ((!ZERO(region[i].cumvol[0])) &&
+		  (!ZERO(region[i].cumvol[1])) &&
+		  (!ZERO(region[i].cumvol[2])))
 		{
 		    /*  START # 1045  */
 		    diff = region[i].cumvol[0] - region[i].cumvol[1];
@@ -992,7 +992,7 @@ int main(int argc, char **argv)
 	    {
 		region[i].cumvol[0] = region[i].cumvol[0]
 		    + region[i].cumvol[1] + region[i].cumvol[2];
-		region[i].cumvol[0] /= 3.;
+		region[i].cumvol[0] /= 3.0;
 	    }
 	    region[i].cumvol[1]=(double)flag;
 
@@ -1002,9 +1002,9 @@ int main(int argc, char **argv)
 	    if (ifire == 0)
 	    {
 		/*  START # 1050  */
-              if ((!ZERO(region[i].surarea[0])) &&
-                  (!ZERO(region[i].surarea[1])) &&
-                  (!ZERO(region[i].surarea[2])))
+	      if ((!ZERO(region[i].surarea[0])) &&
+		  (!ZERO(region[i].surarea[1])) &&
+		  (!ZERO(region[i].surarea[2])))
 		{
 		    /*  START # 1055  */
 		    diff = region[i].surarea[0] - region[i].surarea[1];
@@ -1023,7 +1023,7 @@ int main(int argc, char **argv)
 		    if ((diff / region[i].surarea[2]) > VOLVAR) flag = 1;
 		}					/*  END # 1055  */
 
-                else if ((ZERO(region[i].surarea[0])) ||
+		else if ((ZERO(region[i].surarea[0])) ||
 			 (ZERO(region[i].surarea[1])) ||
 			 (ZERO(region[i].surarea[2])))
 		{
@@ -1054,7 +1054,7 @@ int main(int argc, char **argv)
 	    {
 		region[i].surarea[0] = region[i].surarea[0]
 		    + region[i].surarea[1] + region[i].surarea[2];
-		region[i].surarea[0] /= 3.;
+		region[i].surarea[0] /= 3.0;
 	    }
 	    region[i].surarea[1]=(double)flag;
 
@@ -1077,9 +1077,9 @@ int main(int argc, char **argv)
 		    if (ifire == 0)
 		    {
 			/*  START # 1060  */
-                      if ((!ZERO(region[i].ssurarea[0][j])) &&
-                          (!ZERO(region[i].ssurarea[1][j])) &&
-                          (!ZERO(region[i].ssurarea[2][j])))
+		      if ((!ZERO(region[i].ssurarea[0][j])) &&
+			  (!ZERO(region[i].ssurarea[1][j])) &&
+			  (!ZERO(region[i].ssurarea[2][j])))
 			{
 			    /*  START # 1065  */
 			    diff = region[i].ssurarea[0][j]
@@ -1107,9 +1107,9 @@ int main(int argc, char **argv)
 				flag = 1;
 			}				/*  END # 1065  */
 
-                      else if ((ZERO(region[i].ssurarea[0][j])) ||
-                               (ZERO(region[i].ssurarea[1][j])) ||
-                               (ZERO(region[i].ssurarea[2][j])))
+		      else if ((ZERO(region[i].ssurarea[0][j])) ||
+			       (ZERO(region[i].ssurarea[1][j])) ||
+			       (ZERO(region[i].ssurarea[2][j])))
 			{
 			    flag = 2;
 			}
@@ -1143,7 +1143,7 @@ int main(int argc, char **argv)
 			region[i].ssurarea[0][j] = region[i].ssurarea[0][j]
 			    + region[i].ssurarea[1][j]
 			    + region[i].ssurarea[2][j];
-			region[i].ssurarea[0][j] /= 3.;
+			region[i].ssurarea[0][j] /= 3.0;
 		    }
 		    region[i].ssurarea[1][j] = (double)flag;
 		}
@@ -1159,9 +1159,9 @@ int main(int argc, char **argv)
 		if (ifire == 0)
 		{
 		    /*  START # 1080  */
-                  if ((!ZERO(region[i].cumfs[k][0])) &&
-                      (!ZERO(region[i].cumfs[k][1])) &&
-                      (!ZERO(region[i].cumfs[k][2])))
+		  if ((!ZERO(region[i].cumfs[k][0])) &&
+		      (!ZERO(region[i].cumfs[k][1])) &&
+		      (!ZERO(region[i].cumfs[k][2])))
 		    {
 			/*  START # 1090  */
 			diff = region[i].cumfs[k][0]
@@ -1189,9 +1189,9 @@ int main(int argc, char **argv)
 			    flag = 1;
 		    }				/*  END # 1090  */
 
-                  else if ((ZERO(region[i].cumfs[k][0])) ||
-                           (ZERO(region[i].cumfs[k][1])) ||
-                           (ZERO(region[i].cumfs[k][2])))
+		  else if ((ZERO(region[i].cumfs[k][0])) ||
+			   (ZERO(region[i].cumfs[k][1])) ||
+			   (ZERO(region[i].cumfs[k][2])))
 		    {
 			flag = 2;
 		    }
@@ -1202,13 +1202,13 @@ int main(int argc, char **argv)
 		    region[i].cumfs[k][0] = region[i].cumfs[k][0] +
 			region[i].cumfs[k][1] +
 			region[i].cumfs[k][2];
-		    region[i].cumfs[k][0] /= 3.;
+		    region[i].cumfs[k][0] /= 3.0;
 		}
 
 		region[i].cumfs[k][1] = (double)flag;
 	    }					/*  END # 1070  */
 
-	    /*  Finish finding cummulative normal of exterior  */
+	    /*  Finish finding cumulative normal of exterior  */
 	    /*  free surface.  */
 
 	    /*  Print out normal before normalizing.  */
@@ -1226,9 +1226,9 @@ int main(int argc, char **argv)
 		 ((-NORMTOL < region[i].cumnorm[Z]) &&
 		   (region[i].cumnorm[Z] < NORMTOL)))
 	    {
-		region[i].cumnorm[X] = 0.;
-		region[i].cumnorm[Y] = 0.;
-		region[i].cumnorm[Z] = 0.;
+		region[i].cumnorm[X] = 0.0;
+		region[i].cumnorm[Y] = 0.0;
+		region[i].cumnorm[Z] = 0.0;
 	    }
 
 	    else
@@ -1244,9 +1244,9 @@ int main(int argc, char **argv)
 		}
 		else
 		{
-		    region[i].cumnorm[X] = 0.;
-		    region[i].cumnorm[Y] = 0.;
-		    region[i].cumnorm[Z] = 0.;
+		    region[i].cumnorm[X] = 0.0;
+		    region[i].cumnorm[Y] = 0.0;
+		    region[i].cumnorm[Z] = 0.0;
 		}
 	    }
 
@@ -1254,107 +1254,107 @@ int main(int argc, char **argv)
 	}
 
 	if (iwrite == 0)
-	{ (void)printf("\n\n\nPRINT OUT STRUCTURE\n");
+	{ printf("\n\n\nPRINT OUT STRUCTURE\n");
 	(void)fflush(stdout);
 	i=0;
 	while (i < num)
 	{
-	    (void)printf("region #:  %d, name:  %s\n", (i+1),
+	    printf("region #:  %d, name:  %s\n", (i+1),
 			 region[i].regname);
-	    (void)printf("\tmaterial code:  %d\n", region[i].mat);
+	    printf("\tmaterial code:  %d\n", region[i].mat);
 	    (void)fflush(stdout);
 
 	    if (EQUAL(region[i].cumvol[1],1.0))
 	    {
-		(void)printf("\tvolume:  %f - difference is above",
+		printf("\tvolume:  %f - difference is above",
 			     region[i].cumvol[0]);
-		(void)printf(" %f variance.\n", VOLVAR);
+		printf(" %f variance.\n", VOLVAR);
 		(void)fflush(stdout);
 	    }
 	    else
 	    {
-		(void)printf("\t volume:  %f - within variance.\n",
+		printf("\t volume:  %f - within variance.\n",
 			     region[i].cumvol[0]);
 		(void)fflush(stdout);
 	    }
 
 	    if (EQUAL(region[i].surarea[1],1.0))
 	    {
-		(void)printf("\tarea:  %f - difference is above",
+		printf("\tarea:  %f - difference is above",
 			     region[i].surarea[0]);
-		(void)printf(" %f variance.\n", VOLVAR);
+		printf(" %f variance.\n", VOLVAR);
 		(void)fflush(stdout);
 	    }
 	    else
 	    {
-		(void)printf("\t area:  %f - within variance.\n",
+		printf("\t area:  %f - within variance.\n",
 			     region[i].surarea[0]);
 		(void)fflush(stdout);
 	    }
 
-	    (void)printf("\tcentroid:  %f, %f, %f\n", region[i].centroid[0],
+	    printf("\tcentroid:  %f, %f, %f\n", region[i].centroid[0],
 			 region[i].centroid[1], region[i].centroid[2]);
 	    (void)fflush(stdout);
-	    (void)printf("\tcummulative normal of the exterior ");
-	    (void)printf("free surface:\n\t\t%f, %f, %f\n",
+	    printf("\tcumulative normal of the exterior ");
+	    printf("free surface:\n\t\t%f, %f, %f\n",
 			 region[i].cumnorm[X], region[i].cumnorm[Y],
 			 region[i].cumnorm[Z]);
 	    (void)fflush(stdout);
 
-	    (void)printf("\text sur air:  %f", region[i].cumfs[0][0]);
-	    if (ZERO(region[i].cumfs[0][1])) (void)printf(" - ok\n");
-	    if (EQUAL(region[i].cumfs[0][1],1.0)) (void)printf(" - not ok\n");
-	    if (EQUAL(region[i].cumfs[0][1],2.0)) (void)printf(" - none\n");
+	    printf("\text sur air:  %f", region[i].cumfs[0][0]);
+	    if (ZERO(region[i].cumfs[0][1])) printf(" - ok\n");
+	    if (EQUAL(region[i].cumfs[0][1],1.0)) printf(" - not ok\n");
+	    if (EQUAL(region[i].cumfs[0][1],2.0)) printf(" - none\n");
 
-	    (void)printf("\tcrew comp air:  %f", region[i].cumfs[1][0]);
-	    if (ZERO(region[i].cumfs[1][1])) (void)printf(" - ok\n");
-	    if (EQUAL(region[i].cumfs[1][1],1.0)) (void)printf(" - not ok\n");
-	    if (EQUAL(region[i].cumfs[1][1],2.0)) (void)printf(" - none\n");
+	    printf("\tcrew comp air:  %f", region[i].cumfs[1][0]);
+	    if (ZERO(region[i].cumfs[1][1])) printf(" - ok\n");
+	    if (EQUAL(region[i].cumfs[1][1],1.0)) printf(" - not ok\n");
+	    if (EQUAL(region[i].cumfs[1][1],2.0)) printf(" - none\n");
 
-	    (void)printf("\teng comp air:  %f", region[i].cumfs[2][0]);
-	    if (ZERO(region[i].cumfs[2][1])) (void)printf(" - ok\n");
-	    if (EQUAL(region[i].cumfs[2][1],1.0)) (void)printf(" - not ok\n");
-	    if (EQUAL(region[i].cumfs[2][1],2.0)) (void)printf(" - none\n");
+	    printf("\teng comp air:  %f", region[i].cumfs[2][0]);
+	    if (ZERO(region[i].cumfs[2][1])) printf(" - ok\n");
+	    if (EQUAL(region[i].cumfs[2][1],1.0)) printf(" - not ok\n");
+	    if (EQUAL(region[i].cumfs[2][1],2.0)) printf(" - none\n");
 
-	    (void)printf("\tclosed comp air:  %f", region[i].cumfs[3][0]);
-	    if (ZERO(region[i].cumfs[3][1])) (void)printf(" - ok\n");
-	    if (EQUAL(region[i].cumfs[3][1],1.0)) (void)printf(" - not ok\n");
-	    if (EQUAL(region[i].cumfs[3][1],2.0)) (void)printf(" - none\n");
+	    printf("\tclosed comp air:  %f", region[i].cumfs[3][0]);
+	    if (ZERO(region[i].cumfs[3][1])) printf(" - ok\n");
+	    if (EQUAL(region[i].cumfs[3][1],1.0)) printf(" - not ok\n");
+	    if (EQUAL(region[i].cumfs[3][1],2.0)) printf(" - none\n");
 
-	    (void)printf("\texhaust air:  %f", region[i].cumfs[4][0]);
-	    if (ZERO(region[i].cumfs[4][1])) (void)printf(" - ok\n");
-	    if (EQUAL(region[i].cumfs[4][1],1.0)) (void)printf(" - not ok\n");
-	    if (EQUAL(region[i].cumfs[4][1],2.0)) (void)printf(" - none\n");
+	    printf("\texhaust air:  %f", region[i].cumfs[4][0]);
+	    if (ZERO(region[i].cumfs[4][1])) printf(" - ok\n");
+	    if (EQUAL(region[i].cumfs[4][1],1.0)) printf(" - not ok\n");
+	    if (EQUAL(region[i].cumfs[4][1],2.0)) printf(" - none\n");
 
-	    (void)printf("\tgen air 1:  %f", region[i].cumfs[5][0]);
-	    if (ZERO(region[i].cumfs[5][1])) (void)printf(" - ok\n");
-	    if (EQUAL(region[i].cumfs[5][1],1.0)) (void)printf(" - not ok\n");
-	    if (EQUAL(region[i].cumfs[5][1],2.0)) (void)printf(" - none\n");
+	    printf("\tgen air 1:  %f", region[i].cumfs[5][0]);
+	    if (ZERO(region[i].cumfs[5][1])) printf(" - ok\n");
+	    if (EQUAL(region[i].cumfs[5][1],1.0)) printf(" - not ok\n");
+	    if (EQUAL(region[i].cumfs[5][1],2.0)) printf(" - none\n");
 
-	    (void)printf("\tgen air 2:  %f", region[i].cumfs[6][0]);
-	    if (ZERO(region[i].cumfs[6][1])) (void)printf(" - ok\n");
-	    if (EQUAL(region[i].cumfs[6][1],1.0)) (void)printf(" - not ok\n");
-	    if (EQUAL(region[i].cumfs[6][1],2.0)) (void)printf(" - none\n");
+	    printf("\tgen air 2:  %f", region[i].cumfs[6][0]);
+	    if (ZERO(region[i].cumfs[6][1])) printf(" - ok\n");
+	    if (EQUAL(region[i].cumfs[6][1],1.0)) printf(" - not ok\n");
+	    if (EQUAL(region[i].cumfs[6][1],2.0)) printf(" - none\n");
 
 	    (void)fflush(stdout);
 	    for (j = 0; j < num; j++)
 	    {
 		if (region[i].adjreg[j] == 1)
 		{
-		    (void)printf("\tadjreg[%d]=%d, ",
+		    printf("\tadjreg[%d]=%d, ",
 				 (j+1), region[i].adjreg[j]);
-		    (void)printf("shared surface area:  %f\n",
+		    printf("shared surface area:  %f\n",
 				 region[i].ssurarea[0][j]);
 		    (void)fflush(stdout);
 		    if (EQUAL(region[i].ssurarea[1][j],1.0))
 		    {
-			(void)printf("\tdifference is above %f variance\n",
+			printf("\tdifference is above %f variance\n",
 				     VOLVAR);
 			(void)fflush(stdout);
 		    }
 		    else
 		    {
-			(void)printf("\twithin variance\n");
+			printf("\twithin variance\n");
 			(void)fflush(stdout);
 		    }
 		}
@@ -1366,103 +1366,103 @@ int main(int argc, char **argv)
 	    i=0;
 	    while (i < num)
 	    {
-		(void)fprintf(fp, "region #:  %d, name:  %s\n",
+		fprintf(fp, "region #:  %d, name:  %s\n",
 			      (i+1), region[i].regname);
-		(void)fprintf(fp, "\tmaterial code:  %d\n", region[i].mat);
+		fprintf(fp, "\tmaterial code:  %d\n", region[i].mat);
 
 		if (EQUAL(region[i].cumvol[1],1.0))
 		{
-		    (void)fprintf(fp, "\tvolume:  %f - difference is above",
+		    fprintf(fp, "\tvolume:  %f - difference is above",
 				  region[i].cumvol[0]);
-		    (void)fprintf(fp, " %f variance.\n", VOLVAR);
+		    fprintf(fp, " %f variance.\n", VOLVAR);
 		    (void)fflush(fp);
 		}
 		else
 		{
-		    (void)fprintf(fp, "\t volume:  %f - within variance.\n",
+		    fprintf(fp, "\t volume:  %f - within variance.\n",
 				  region[i].cumvol[0]);
 		    (void)fflush(fp);
 		}
 
 		if (EQUAL(region[i].surarea[1],1.0))
 		{
-		    (void)fprintf(fp, "\tarea:  %f - difference is above",
+		    fprintf(fp, "\tarea:  %f - difference is above",
 				  region[i].surarea[0]);
-		    (void)fprintf(fp, " %f variance.\n", VOLVAR);
+		    fprintf(fp, " %f variance.\n", VOLVAR);
 		    (void)fflush(fp);
 		}
 		else
 		{
-		    (void)fprintf(fp, "\t area:  %f - within variance.\n",
+		    fprintf(fp, "\t area:  %f - within variance.\n",
 				  region[i].surarea[0]);
 		    (void)fflush(fp);
 		}
 
-		(void)fprintf(fp, "\tcentroid:  %f, %f, %f\n",
+		fprintf(fp, "\tcentroid:  %f, %f, %f\n",
 			      region[i].centroid[0],
 			      region[i].centroid[1], region[i].centroid[2]);
 		(void)fflush(fp);
-		(void)fprintf(fp, "\tcummulative normal of the exterior ");
-		(void)fprintf(fp, "free surface:\n\t\t%f, %f, %f\n",
+		fprintf(fp, "\tcumulative normal of the exterior ");
+		fprintf(fp, "free surface:\n\t\t%f, %f, %f\n",
 			      region[i].cumnorm[X], region[i].cumnorm[Y],
 			      region[i].cumnorm[Z]);
 		(void)fflush(fp);
 
-		(void)fprintf(fp, "\text sur air:  %f", region[i].cumfs[0][0]);
-		if (ZERO(region[i].cumfs[0][1])) (void)fprintf(fp, " - ok\n");
-		if (EQUAL(region[i].cumfs[0][1],1.0)) (void)fprintf(fp, " - not ok\n");
-		if (EQUAL(region[i].cumfs[0][1],2.0)) (void)fprintf(fp, " - none\n");
+		fprintf(fp, "\text sur air:  %f", region[i].cumfs[0][0]);
+		if (ZERO(region[i].cumfs[0][1])) fprintf(fp, " - ok\n");
+		if (EQUAL(region[i].cumfs[0][1],1.0)) fprintf(fp, " - not ok\n");
+		if (EQUAL(region[i].cumfs[0][1],2.0)) fprintf(fp, " - none\n");
 
-		(void)fprintf(fp, "\tcrew comp air:  %f", region[i].cumfs[1][0]);
-		if (ZERO(region[i].cumfs[1][1])) (void)fprintf(fp, " - ok\n");
-		if (EQUAL(region[i].cumfs[1][1],1.0)) (void)fprintf(fp, " - not ok\n");
-		if (EQUAL(region[i].cumfs[1][1],2.0)) (void)fprintf(fp, " - none\n");
+		fprintf(fp, "\tcrew comp air:  %f", region[i].cumfs[1][0]);
+		if (ZERO(region[i].cumfs[1][1])) fprintf(fp, " - ok\n");
+		if (EQUAL(region[i].cumfs[1][1],1.0)) fprintf(fp, " - not ok\n");
+		if (EQUAL(region[i].cumfs[1][1],2.0)) fprintf(fp, " - none\n");
 
-		(void)fprintf(fp, "\teng comp air:  %f", region[i].cumfs[2][0]);
-		if (ZERO(region[i].cumfs[2][1])) (void)fprintf(fp, " - ok\n");
-		if (EQUAL(region[i].cumfs[2][1],1.0)) (void)fprintf(fp, " - not ok\n");
-		if (EQUAL(region[i].cumfs[2][1],2.0)) (void)fprintf(fp, " - none\n");
+		fprintf(fp, "\teng comp air:  %f", region[i].cumfs[2][0]);
+		if (ZERO(region[i].cumfs[2][1])) fprintf(fp, " - ok\n");
+		if (EQUAL(region[i].cumfs[2][1],1.0)) fprintf(fp, " - not ok\n");
+		if (EQUAL(region[i].cumfs[2][1],2.0)) fprintf(fp, " - none\n");
 
-		(void)fprintf(fp, "\tclsd comp air:  %f", region[i].cumfs[3][0]);
-		if (ZERO(region[i].cumfs[3][1])) (void)fprintf(fp, " - ok\n");
-		if (EQUAL(region[i].cumfs[3][1],1.0)) (void)fprintf(fp, " - not ok\n");
-		if (EQUAL(region[i].cumfs[3][1],2.0)) (void)fprintf(fp, " - none\n");
+		fprintf(fp, "\tclsd comp air:  %f", region[i].cumfs[3][0]);
+		if (ZERO(region[i].cumfs[3][1])) fprintf(fp, " - ok\n");
+		if (EQUAL(region[i].cumfs[3][1],1.0)) fprintf(fp, " - not ok\n");
+		if (EQUAL(region[i].cumfs[3][1],2.0)) fprintf(fp, " - none\n");
 
-		(void)fprintf(fp, "\texhaust air:  %f", region[i].cumfs[4][0]);
-		if (ZERO(region[i].cumfs[4][1])) (void)fprintf(fp, " - ok\n");
-		if (EQUAL(region[i].cumfs[4][1],1.0)) (void)fprintf(fp, " - not ok\n");
-		if (EQUAL(region[i].cumfs[4][1],2.0)) (void)fprintf(fp, " - none\n");
+		fprintf(fp, "\texhaust air:  %f", region[i].cumfs[4][0]);
+		if (ZERO(region[i].cumfs[4][1])) fprintf(fp, " - ok\n");
+		if (EQUAL(region[i].cumfs[4][1],1.0)) fprintf(fp, " - not ok\n");
+		if (EQUAL(region[i].cumfs[4][1],2.0)) fprintf(fp, " - none\n");
 
-		(void)fprintf(fp, "\tgen air 1:  %f", region[i].cumfs[5][0]);
-		if (ZERO(region[i].cumfs[5][1])) (void)fprintf(fp, " - ok\n");
-		if (EQUAL(region[i].cumfs[5][1],1.0)) (void)fprintf(fp, " - not ok\n");
-		if (EQUAL(region[i].cumfs[5][1],2.0)) (void)fprintf(fp, " - none\n");
+		fprintf(fp, "\tgen air 1:  %f", region[i].cumfs[5][0]);
+		if (ZERO(region[i].cumfs[5][1])) fprintf(fp, " - ok\n");
+		if (EQUAL(region[i].cumfs[5][1],1.0)) fprintf(fp, " - not ok\n");
+		if (EQUAL(region[i].cumfs[5][1],2.0)) fprintf(fp, " - none\n");
 
-		(void)fprintf(fp, "\tgen air 2:  %f", region[i].cumfs[6][0]);
-		if (ZERO(region[i].cumfs[6][1])) (void)fprintf(fp, " - ok\n");
-		if (EQUAL(region[i].cumfs[6][1],1.0)) (void)fprintf(fp, " - not ok\n");
-		if (EQUAL(region[i].cumfs[6][1],2.0)) (void)fprintf(fp, " - none\n");
+		fprintf(fp, "\tgen air 2:  %f", region[i].cumfs[6][0]);
+		if (ZERO(region[i].cumfs[6][1])) fprintf(fp, " - ok\n");
+		if (EQUAL(region[i].cumfs[6][1],1.0)) fprintf(fp, " - not ok\n");
+		if (EQUAL(region[i].cumfs[6][1],2.0)) fprintf(fp, " - none\n");
 
 		(void)fflush(fp);
 		for (j = 0; j < num; j++)
 		{
 		    if (region[i].adjreg[j] == 1)
 		    {
-			(void)fprintf(fp, "\tadjreg[%d]=%d, ",
+			fprintf(fp, "\tadjreg[%d]=%d, ",
 				      (j+1), region[i].adjreg[j]);
-			(void)fprintf(fp, "shared surface area:  %f;\n",
+			fprintf(fp, "shared surface area:  %f;\n",
 				      region[i].ssurarea[0][j]);
 			(void)fflush(fp);
 			if (EQUAL(region[i].ssurarea[1][j],1.0))
 			{
-			    (void)fprintf(fp, "\tdifference is above ");
-			    (void)fprintf(fp, "%f variance\n",
+			    fprintf(fp, "\tdifference is above ");
+			    fprintf(fp, "%f variance\n",
 					  VOLVAR);
 			    (void)fflush(fp);
 			}
 			else
 			{
-			    (void)fprintf(fp, "\twithin variance\n");
+			    fprintf(fp, "\twithin variance\n");
 			    (void)fflush(fp);
 			}
 		    }
@@ -1471,34 +1471,34 @@ int main(int argc, char **argv)
 	    }
 
 	    /*  Print out names of all files used.  */
-	    (void)fprintf(fp, "\n\nSUMMARY OF FILES USED & CREATED\n");
-	    (void)fprintf(fp, "\t.g file used:  %s\n", argv[1]);
-	    (void)fprintf(fp, "\tregions used:\n");
+	    fprintf(fp, "\n\nSUMMARY OF FILES USED & CREATED\n");
+	    fprintf(fp, "\t.g file used:  %s\n", argv[1]);
+	    fprintf(fp, "\tregions used:\n");
 	    (void)fflush(fp);
 	    i=2;
 	    while (argv[i] != NULL)
 	    {
-		(void)fprintf(fp, "\t\t%s\n", argv[i]);
+		fprintf(fp, "\t\t%s\n", argv[i]);
 		(void)fflush(fp);
 		i++;
 	    }
-	    (void)fprintf(fp, "\tmaterial id file used:  %s\n", fileden);
+	    fprintf(fp, "\tmaterial id file used:  %s\n", fileden);
 	    if (iwrite == 1)
 	    {
-		(void)fprintf(fp, "\toutput file created:  %s\n", filename);
+		fprintf(fp, "\toutput file created:  %s\n", filename);
 	    }
-	    (void)fprintf(fp, "\tsecond pass file created:  %s\n", spfile);
-	    (void)fprintf(fp, "\terror file created:  %s\n", fileerr);
-	    (void)fprintf(fp, "\tregion # & name file created:  %s\n",
+	    fprintf(fp, "\tsecond pass file created:  %s\n", spfile);
+	    fprintf(fp, "\terror file created:  %s\n", fileerr);
+	    fprintf(fp, "\tregion # & name file created:  %s\n",
 			  filernn);
 	    if (typeout == 0)
 	    {
-		(void)fprintf(fp, "\tfacet file created:  %s\n", facfile);
-		(void)fprintf(fp, "\t  (format is PRISM %d.0)\n", prmrel);
+		fprintf(fp, "\tfacet file created:  %s\n", facfile);
+		fprintf(fp, "\t  (format is PRISM %d.0)\n", prmrel);
 	    }
-	    if (typeout == 1) (void)fprintf(fp,
+	    if (typeout == 1) fprintf(fp,
 					      "\tgeneric file created:  %s\n", filegen);
-	    if ((typeout == 2) || (typeout == 3)) (void)fprintf(fp,
+	    if ((typeout == 2) || (typeout == 3)) fprintf(fp,
 								  "\tgeometric file created:  %s\n", filegeo);
 	    (void)fflush(fp);
 
@@ -1509,7 +1509,7 @@ int main(int argc, char **argv)
 	fp7 = fopen(filernn, "wb");
 	for (i = 0; i < num; i++)
 	{
-	    (void)fprintf(fp7, "%d\t%s\n", (i+1), region[i].regname);
+	    fprintf(fp7, "%d\t%s\n", (i+1), region[i].regname);
 	    (void)fflush(fp7);
 	}
 	(void)fclose(fp7);
@@ -1521,17 +1521,17 @@ int main(int argc, char **argv)
 	    fp1=fopen(facfile, "wb");
 
 	    /*  Print type number of file (02) and description.  */
-	    (void)fprintf(fp1, "02\tFacet file for use with PRISM.\n");
+	    fprintf(fp1, "02\tFacet file for use with PRISM.\n");
 	    (void)fflush(fp1);
 
 	    /*  Print header information for facet file.  (Note:  header  */
 	    /*  info is the same for PRISM 2.0 & 3.0.0)  */
-	    (void)fprintf(fp1, " FN DESCRIPTION               TY");
-	    (void)fprintf(fp1, "    AREA    MASS  SPHEAT      E1");
-	    (void)fprintf(fp1, "      E2   ABSOR\n");
+	    fprintf(fp1, " FN DESCRIPTION               TY");
+	    fprintf(fp1, "    AREA    MASS  SPHEAT      E1");
+	    fprintf(fp1, "      E2   ABSOR\n");
 	    (void)fflush(fp1);
-	    (void)fprintf(fp1, "   SN(X)   SN(Y)   SN(Z)    CONV");
-	    (void)fprintf(fp1, "       K       L   SHAPE\n");
+	    fprintf(fp1, "   SN(X)   SN(Y)   SN(Z)    CONV");
+	    fprintf(fp1, "       K       L   SHAPE\n");
 	    (void)fflush(fp1);
 
 	    /*  Make calculations to get PRISM information & then  */
@@ -1596,17 +1596,17 @@ int main(int argc, char **argv)
 		    (ZERO(region[i].cumnorm[2])))
 		{
 		    facarea = region[i].surarea[0] * (1.e-6);
-		    (void)printf("There are no exterior surfaces on region ");
-		    (void)printf("%d.  Setting exterior surface area\n", (i+1));
-		    (void)printf("\tto total surface area %f\n", facarea);
+		    printf("There are no exterior surfaces on region ");
+		    printf("%d.  Setting exterior surface area\n", (i+1));
+		    printf("\tto total surface area %f\n", facarea);
 		    (void)fflush(stdout);
 		}
 		if (facarea < .001)
 		{
 		    facarea = .001;
-		    (void)printf("Small surface area for region %d.  ", (i+1));
-		    (void)printf("Setting exterior surface area");
-		    (void)printf("\tto %f.\n", facarea);
+		    printf("Small surface area for region %d.  ", (i+1));
+		    printf("Setting exterior surface area");
+		    printf("\tto %f.\n", facarea);
 		}
 		/*
 		 *		(void)printf("area:  %8.3f  ", facarea);
@@ -1653,7 +1653,7 @@ int main(int argc, char **argv)
 
 		/*  Convection coefficient of facet.  Currently  */
 		/*  set to 1.  */
-		faccv = 1.;
+		faccv = 1.0;
 
 		/*  Facets seen by the back & front of current  */
 		/*  facet.  Will be set to 0 thereby assuming  */
@@ -1669,18 +1669,18 @@ int main(int argc, char **argv)
 
 		/*  Shape factors for engine & track facets  */
 		/*  (between 0 & 1).  Currently set to 0.  */
-		facshape = 0.;
+		facshape = 0.0;
 
 		/*  Hub radius (m).  Currently set to 0 unless engine  */
 		/*  air area exist then print engine air area in square  */
 		/*  meters.  */
-		facradius = 0.;
+		facradius = 0.0;
 		if (region[i].cumfs[2][0] > ZEROTOL)
 		    facradius = region[i].cumfs[2][0] * (1.e-6);
 
 		/*  Bearing friction constant (J) for wheels.  */
 		/*  Currently set to 0.  */
-		facfric = 0.;
+		facfric = 0.0;
 		/*
 		 *		(void)printf("facshape:  %8.3f, facradius:  %8.3f, facfric:  %8.3f\n",
 		 *		   facshape, facradius, facfric);
@@ -1689,27 +1689,27 @@ int main(int argc, char **argv)
 
 		/*  Print information to the facet file.  */
 		if (prmrel == 2)
-		    (void)fprintf(fp1, "%3d %.25s%3d%8.3f%8.3f%8.3f",
+		    fprintf(fp1, "%3d %.25s%3d%8.3f%8.3f%8.3f",
 				  facnum, facname, factype, facarea, facmass, facspheat);
 		if (prmrel == 3)
-		    (void)fprintf(fp1, "%6d %.25s%3d%8.3f%8.3f%8.3f",
+		    fprintf(fp1, "%6d %.25s%3d%8.3f%8.3f%8.3f",
 				  facnum, facname, factype, facarea, facmass, facspheat);
-		(void)fprintf(fp1, "%8.3f%8.3f%8.3f\n", face1,
+		fprintf(fp1, "%8.3f%8.3f%8.3f\n", face1,
 			      face2, facabs);
 		(void)fflush(fp1);
 
-		(void)fprintf(fp1, "%8.3f%8.3f%8.3f%8.3f%8d%8d",
+		fprintf(fp1, "%8.3f%8.3f%8.3f%8.3f%8d%8d",
 			      facnorm[0], facnorm[1], facnorm[2], faccv, fack, facl);
-		(void)fprintf(fp1, "%8.3f%8.3f%8.3f\n", facshape,
+		fprintf(fp1, "%8.3f%8.3f%8.3f\n", facshape,
 			      facradius, facfric);
 		(void)fflush(fp1);
 
 	    }
 
 	    /*  Write last line to signify end of facet information.  */
-	    if (prmrel == 2)(void)fprintf(fp1, "%3d END OF REGIONS           999\n",
+	    if (prmrel == 2)fprintf(fp1, "%3d END OF REGIONS           999\n",
 					  (facnum+1));
-	    if (prmrel == 3)(void)fprintf(fp1, "%6d END OF REGIONS           999\n",
+	    if (prmrel == 3)fprintf(fp1, "%6d END OF REGIONS           999\n",
 					  (facnum+1));
 	    (void)fflush(fp1);
 
@@ -1769,10 +1769,10 @@ int main(int argc, char **argv)
 		if (region[i].mat <= 40) ia = (int)region[i].mat;
 		else ia = 0;
 
-		(void)fprintf(fp5, "1 %6d %.25s %.3e %.3e ",
+		fprintf(fp5, "1 %6d %.25s %.3e %.3e ",
 			      (i+1), facname, (region[i].cumvol[X]*1.e-9),
 			      matprop[ia].d);
-		(void)fprintf(fp5, "%.3e %.3e %.25s\n", matprop[ia].tc,
+		fprintf(fp5, "%.3e %.3e %.25s\n", matprop[ia].tc,
 			      matprop[ia].sh, matprop[ia].m);
 		(void)fflush(fp5);
 	    }
@@ -1793,48 +1793,48 @@ int main(int argc, char **argv)
 		if (region[i].cumfs[5][0] > ZEROTOL) numint += 1;
 		if (region[i].cumfs[6][0] > ZEROTOL) numint += 1;
 
-		(void)fprintf(fp5, "2 %6d   %3d          %3d\n",
+		fprintf(fp5, "2 %6d   %3d          %3d\n",
 			      (i+1), numext, numint);
 		(void)fflush(fp5);
 
 		if (numext == 1)
 		{
-		    (void)fprintf(fp5, "  %.3e\n", (region[i].cumfs[0][0]*1.e-6));
+		    fprintf(fp5, "  %.3e\n", (region[i].cumfs[0][0]*1.e-6));
 		    (void)fflush(fp5);
 		}
 		if (numint > 0)
 		{
 		    if (region[i].cumfs[1][0] > ZEROTOL)
 		    {
-			(void)fprintf(fp5, "  %.3e",
+			fprintf(fp5, "  %.3e",
 				      (region[i].cumfs[1][0]*1.e-6));
 		    }
 		    if (region[i].cumfs[2][0] > ZEROTOL)
 		    {
-			(void)fprintf(fp5, " %.3e",
+			fprintf(fp5, " %.3e",
 				      (region[i].cumfs[2][0]*1.e-6));
 		    }
 		    if (region[i].cumfs[3][0] > ZEROTOL)
 		    {
-			(void)fprintf(fp5, " %.3e",
+			fprintf(fp5, " %.3e",
 				      (region[i].cumfs[3][0]*1.e-6));
 		    }
 		    if (region[i].cumfs[4][0] > ZEROTOL)
 		    {
-			(void)fprintf(fp5, " %.3e",
+			fprintf(fp5, " %.3e",
 				      (region[i].cumfs[4][0]*1.e-6));
 		    }
 		    if (region[i].cumfs[5][0] > ZEROTOL)
 		    {
-			(void)fprintf(fp5, " %.3e",
+			fprintf(fp5, " %.3e",
 				      (region[i].cumfs[5][0]*1.e-6));
 		    }
 		    if (region[i].cumfs[6][0] > ZEROTOL)
 		    {
-			(void)fprintf(fp5, " %.3e",
+			fprintf(fp5, " %.3e",
 				      (region[i].cumfs[6][0]*1.e-6));
 		    }
-		    (void)fprintf(fp5, "\n");
+		    fprintf(fp5, "\n");
 		    (void)fflush(stdout);
 		}
 	    }
@@ -1844,14 +1844,14 @@ int main(int argc, char **argv)
 	    {
 		numsol = 0;
 		if (region[1].cumfs[0][0] > ZEROTOL) numsol = 1;
-		(void)fprintf(fp5, "3 %6d %3d\n", (i+1), numsol);
+		fprintf(fp5, "3 %6d %3d\n", (i+1), numsol);
 		(void)fflush(fp5);
 		if (numsol > 0)
 		{
 		    if (region[i].mat <= 40) ia = (int)region[i].mat;
 		    else ia = 0;
 
-		    (void)fprintf(fp5, "  %.3e %+.3e %+.3e %+.3e %.3e\n",
+		    fprintf(fp5, "  %.3e %+.3e %+.3e %+.3e %.3e\n",
 				  (region[i].cumfs[0][0]*1.e-6), region[i].cumnorm[X],
 				  region[i].cumnorm[Y], region[i].cumnorm[Z],
 				  matprop[ia].a);
@@ -1897,26 +1897,26 @@ int main(int argc, char **argv)
 
 	    if (typeout == 2) {
 		/*  Write to geometric file.  */
-		(void)fprintf(fp6, "\nGEOMETRIC FILE - from firpass\n");
-		(void)fprintf(fp6, "\n.gfile used:  %s\n", argv[1]);
-		(void)fprintf(fp6, "\tregions used:\n");
+		fprintf(fp6, "\nGEOMETRIC FILE - from firpass\n");
+		fprintf(fp6, "\n.gfile used:  %s\n", argv[1]);
+		fprintf(fp6, "\tregions used:\n");
 		(void)fflush(fp6);
 		i = 2;
 		while (argv[i] != NULL)
 		{
-		    (void)fprintf(fp6, "\t\t%s\n", argv[i]);
+		    fprintf(fp6, "\t\t%s\n", argv[i]);
 		    (void)fflush(fp6);
 		    i++;
 		}
-		(void)fprintf(fp6, "\n\n");
+		fprintf(fp6, "\n\n");
 		(void)fflush(fp6);
 
-		(void)fprintf(fp6, "region   region name                 ");
-		(void)fprintf(fp6, "centroid                           ");
-		(void)fprintf(fp6, "volume       mass\n");
-		(void)fprintf(fp6, "number                               ");
-		(void)fprintf(fp6, "X          Y          Z            ");
-		(void)fprintf(fp6, "(m**3)       (kg)\n");
+		fprintf(fp6, "region   region name                 ");
+		fprintf(fp6, "centroid                           ");
+		fprintf(fp6, "volume       mass\n");
+		fprintf(fp6, "number                               ");
+		fprintf(fp6, "X          Y          Z            ");
+		fprintf(fp6, "(m**3)       (kg)\n");
 		(void)fflush(fp6);
 
 		for (i=0; i<num; i++)
@@ -1948,31 +1948,31 @@ int main(int argc, char **argv)
 		    if (region[i].mat <=40) ia = (int)region[i].mat;
 		    else ia = 0;
 		    facmass = matprop[ia].d * region[i].cumvol[0] * (1.e-9);
-		    (void)fprintf(fp6, "%6d   %.25s   %+.3e %+.3e %+.3e   ",
+		    fprintf(fp6, "%6d   %.25s   %+.3e %+.3e %+.3e   ",
 				  (i+1), facname, region[i].centroid[X],
 				  region[i].centroid[Y], region[i].centroid[Z]);
-		    (void)fprintf(fp6, "%.3e   %.3e\n", (region[i].cumvol[X]*1.e-9),
+		    fprintf(fp6, "%.3e   %.3e\n", (region[i].cumvol[X]*1.e-9),
 				  facmass);
 		    (void)fflush(fp6);
 		}
 
-		(void)fprintf(fp6, "\n\n\nregion   exterior sur   engine sur    ");
-		(void)fprintf(fp6, "crew sur      closed compartment");
-		(void)fprintf(fp6, "   exhaust sur   generic 1 sur   ");
-		(void)fprintf(fp6, "generic 2 sur\n");
-		(void)fprintf(fp6, "number   area (m**2)    area (m**2)   ");
-		(void)fprintf(fp6, "area (m**2)   sur area (m**2)");
-		(void)fprintf(fp6, "      area (m**2)   area (m**2)     ");
-		(void)fprintf(fp6, "area (m**2)\n");
+		fprintf(fp6, "\n\n\nregion   exterior sur   engine sur    ");
+		fprintf(fp6, "crew sur      closed compartment");
+		fprintf(fp6, "   exhaust sur   generic 1 sur   ");
+		fprintf(fp6, "generic 2 sur\n");
+		fprintf(fp6, "number   area (m**2)    area (m**2)   ");
+		fprintf(fp6, "area (m**2)   sur area (m**2)");
+		fprintf(fp6, "      area (m**2)   area (m**2)     ");
+		fprintf(fp6, "area (m**2)\n");
 		(void)fflush(fp6);
 
 		for (i=0; i<num; i++)
 		{
-		    (void)fprintf(fp6, "%6d   %.3e      %.3e     %.3e    ",
+		    fprintf(fp6, "%6d   %.3e      %.3e     %.3e    ",
 				  (i+1), (region[i].cumfs[0][0]*1.e-6),
 				  (region[i].cumfs[2][0]*1.e-6),
 				  (region[i].cumfs[1][0]*1.e-6));
-		    (void)fprintf(fp6, " %.3e            %.3e     %.3e       %.3e\n",
+		    fprintf(fp6, " %.3e            %.3e     %.3e       %.3e\n",
 				  (region[i].cumfs[3][0]*1.e-6),
 				  (region[i].cumfs[4][0]*1.e-6),
 				  (region[i].cumfs[5][0]*1.e-6),
@@ -1980,40 +1980,40 @@ int main(int argc, char **argv)
 		    (void)fflush(fp6);
 		}
 
-		(void)fprintf(fp6, "\n\nregion   material   density      ");
-		(void)fprintf(fp6, "specific     absorptivity   emissivity   ");
-		(void)fprintf(fp6, "thermal               material\n");
-		(void)fprintf(fp6, "number   code       (kg/m3)      ");
-		(void)fprintf(fp6, "heat                                     ");
-		(void)fprintf(fp6, "conductivity (W/mK)\n");
+		fprintf(fp6, "\n\nregion   material   density      ");
+		fprintf(fp6, "specific     absorptivity   emissivity   ");
+		fprintf(fp6, "thermal               material\n");
+		fprintf(fp6, "number   code       (kg/m3)      ");
+		fprintf(fp6, "heat                                     ");
+		fprintf(fp6, "conductivity (W/mK)\n");
 
 		for (i=0; i<num; i++)
 		{
 		    if (region[i].mat <= 40) ia = (int)region[i].mat;
 		    else ia = 0;
 
-		    (void)fprintf(fp6, "%6d   %3d        %.3e    ",
+		    fprintf(fp6, "%6d   %3d        %.3e    ",
 				  (i+1), region[i].mat, matprop[ia].d);
-		    (void)fprintf(fp6, "%.3e    %.3e      %.3e    %.3e",
+		    fprintf(fp6, "%.3e    %.3e      %.3e    %.3e",
 				  matprop[ia].sh, matprop[ia].a, matprop[ia].e1,
 				  matprop[ia].tc);
-		    (void)fprintf(fp6, "           %s\n", matprop[ia].m);
+		    fprintf(fp6, "           %s\n", matprop[ia].m);
 		    (void)fflush(fp6);
 		}
 
-		(void)fprintf(fp6, "\n\nregion   adjacent\n");
-		(void)fprintf(fp6, "number   regions");
+		fprintf(fp6, "\n\nregion   adjacent\n");
+		fprintf(fp6, "number   regions");
 		(void)fflush(fp6);
 
 		for (i=0; i<num; i++)
 		{
-		    (void)fprintf(fp6, "\n%6d   ", (i+1));
+		    fprintf(fp6, "\n%6d   ", (i+1));
 
 		    for (j=0; j<num; j++)
 		    {
 			if (region[i].adjreg[j] == 1)
 			{
-			    (void)fprintf(fp6, "%4d, ", (j+1));
+			    fprintf(fp6, "%4d, ", (j+1));
 			    (void)fflush(fp6);
 			}
 		    }
@@ -2063,24 +2063,24 @@ int main(int argc, char **argv)
 		    else ia = 0;
 		    facmass = matprop[ia].d * region[i].cumvol[0] * (1.e-9);
 
-		    (void)fprintf(fp6, "%d,%s,%.3e,%.3e,%.3e,",
+		    fprintf(fp6, "%d,%s,%.3e,%.3e,%.3e,",
 				  (i+1), facname, region[i].centroid[X],
 				  region[i].centroid[Y], region[i].centroid[Z]);
 		    (void)fflush(fp6);
 
-		    (void)fprintf(fp6, "%.3e,%.3e,%.3e,%.3e,%.3e,",
+		    fprintf(fp6, "%.3e,%.3e,%.3e,%.3e,%.3e,",
 				  (region[i].cumvol[X]*1.e-9), facmass,
 				  (region[i].cumfs[0][0]*1.e-6),
 				  (region[i].cumfs[1][0]*1.e-6),
 				  (region[i].cumfs[2][0]*1.e-6));
-		    (void)fprintf(fp6, "%.3e,%.3e,%.3e,%.3e,",
+		    fprintf(fp6, "%.3e,%.3e,%.3e,%.3e,",
 				  (region[i].cumfs[3][0]*1.e-6),
 				  (region[i].cumfs[4][0]*1.e-6),
 				  (region[i].cumfs[5][0]*1.e-6),
 				  (region[i].cumfs[6][0]*1.e-6));
 		    (void)fflush(fp6);
 
-		    (void)fprintf(fp6, "%d,%.3e,%.3e,%.3e,%.3e,%.3e,",
+		    fprintf(fp6, "%d,%.3e,%.3e,%.3e,%.3e,%.3e,",
 				  region[i].mat, matprop[ia].d, matprop[ia].sh,
 				  matprop[ia].a, matprop[ia].e1, matprop[ia].tc);
 		    (void)fflush(fp6);
@@ -2090,7 +2090,7 @@ int main(int argc, char **argv)
 		    {
 			if ((region[i].adjreg[j] == 1) && (ii < 20))
 			{
-			    (void)fprintf(fp6, "%d,", (j+1));
+			    fprintf(fp6, "%d,", (j+1));
 			    (void)fflush(fp6);
 			    ii++;
 			}
@@ -2100,11 +2100,11 @@ int main(int argc, char **argv)
 		    {
 			for (j=ii; j<20; j++)
 			{
-			    (void)fprintf(fp6, "%d,", 0);
+			    fprintf(fp6, "%d,", 0);
 			    (void)fflush(fp6);
 			}
 		    }
-		    (void)fprintf(fp6, "\n");
+		    fprintf(fp6, "\n");
 		    (void)fflush(stdout);
 		}
 	    }
@@ -2120,7 +2120,7 @@ int main(int argc, char **argv)
 
 	/*  Write info to second pass file.  */
 	/*  Write number of regions to file.  */
-	(void)fprintf(fp2, "%8d\n", num);
+	fprintf(fp2, "%8d\n", num);
 	(void)fflush(fp2);
 
 	for (i=0; i<num; i++)
@@ -2128,7 +2128,7 @@ int main(int argc, char **argv)
 
 	    /*  Write region number, centroid & material id  */
 	    /*  to 2nd pass file.  */
-	    (void)fprintf(fp2, "%8d  %.6e  %.6e  %.6e  %3d\n",
+	    fprintf(fp2, "%8d  %.6e  %.6e  %.6e  %3d\n",
 			  (i+1), region[i].centroid[0], region[i].centroid[1],
 			  region[i].centroid[2], region[i].mat);
 	    (void)fflush(fp2);
@@ -2137,7 +2137,7 @@ int main(int argc, char **argv)
 	    for (j=0; j<num; j++)
 	    {
 		spsarea = region[i].ssurarea[0][j];
-		(void)fprintf(fp2, "%8d  %.6e\n",
+		fprintf(fp2, "%8d  %.6e\n",
 			      (j+1), spsarea);
 		(void)fflush(fp2);
 	    }
@@ -2152,46 +2152,46 @@ int main(int argc, char **argv)
 	fp3=fopen(fileerr, "wb");
 
 	/*  Write errors to error file.  */
-	(void)fprintf(fp3, "\nERRORS from firpass\n\n");
+	fprintf(fp3, "\nERRORS from firpass\n\n");
 	/*  Write type of file created to error file.  */
 	if (typeout == 0)
 	{
-	    (void)fprintf(fp3, "Facet file, %s, PRISM %d.0 was created.\n\n",
+	    fprintf(fp3, "Facet file, %s, PRISM %d.0 was created.\n\n",
 			  facfile, prmrel);
 	}
-	if (typeout == 1) (void)fprintf(fp3, "Generic file, %s, was created.\n\n",
+	if (typeout == 1) fprintf(fp3, "Generic file, %s, was created.\n\n",
 					filegen);
 	if (typeout == 2)
 	{
-	    (void)fprintf(fp3, "Geometric file, %s, was created.\n\n", filegeo);
+	    fprintf(fp3, "Geometric file, %s, was created.\n\n", filegeo);
 	}
 	(void)fflush(fp3);
 	for (i = 0; i < num; i++)
 	{
-            if (EQUAL(region[i].cumvol[1],1.0))
+	    if (EQUAL(region[i].cumvol[1],1.0))
 	    {
-		(void)fprintf(fp3, "region %d:  ", (i + 1));
-		(void)fprintf(fp3, "large variance on volume:  %f\n",
+		fprintf(fp3, "region %d:  ", (i + 1));
+		fprintf(fp3, "large variance on volume:  %f\n",
 			      region[i].cumvol[0]);
 		(void)fflush(fp3);
 	    }
 
 	    if (EQUAL(region[i].surarea[1],1.0))
 	    {
-		(void)fprintf(fp3, "region %d:  large variance ", (i + 1));
-		(void)fprintf(fp3, "on surface area:  %f\n",
+		fprintf(fp3, "region %d:  large variance ", (i + 1));
+		fprintf(fp3, "on surface area:  %f\n",
 			      region[i].surarea[0]);
 		(void)fflush(fp3);
 	    }
 
 	    for (j = 0; j < num; j++)
 	    {
-                if (EQUAL(region[i].ssurarea[1][j],1.0))
+		if (EQUAL(region[i].ssurarea[1][j],1.0))
 		{
-		    (void)fprintf(fp3, "region %d:  adjacent region %d:\n",
+		    fprintf(fp3, "region %d:  adjacent region %d:\n",
 				  (i + 1), (j + 1));
-		    (void)fprintf(fp3, "\tlarge variance on shared surface ");
-		    (void)fprintf(fp3, "area:  %f\n", region[i].ssurarea[0][j]);
+		    fprintf(fp3, "\tlarge variance on shared surface ");
+		    fprintf(fp3, "area:  %f\n", region[i].ssurarea[0][j]);
 		    (void)fflush(fp3);
 		}
 	    }
@@ -2199,43 +2199,43 @@ int main(int argc, char **argv)
 	    for (j = 0; j < 7; j++)
 	    {
 		/*  START # 2000  */
-                if (EQUAL(region[i].cumfs[j][1],1.0))
+		if (EQUAL(region[i].cumfs[j][1],1.0))
 		{
 		    /*  START # 2010  */
 		    if (j == 0)
 		    {
-			(void)fprintf(fp3, "\treg %d - large variance ", i);
-			(void)fprintf(fp3, "of exterior air\n");
+			fprintf(fp3, "\treg %d - large variance ", i);
+			fprintf(fp3, "of exterior air\n");
 		    }
 		    if (j == 1)
 		    {
-			(void)fprintf(fp3, "\treg %d - large variance ", i);
-			(void)fprintf(fp3, "of crew comp air\n");
+			fprintf(fp3, "\treg %d - large variance ", i);
+			fprintf(fp3, "of crew comp air\n");
 		    }
 		    if (j == 2)
 		    {
-			(void)fprintf(fp3, "\treg %d - large variance ", i);
-			(void)fprintf(fp3, "of engine comp air\n");
+			fprintf(fp3, "\treg %d - large variance ", i);
+			fprintf(fp3, "of engine comp air\n");
 		    }
 		    if (j == 3)
 		    {
-			(void)fprintf(fp3, "\treg %d - large variance ", i);
-			(void)fprintf(fp3, "of closed comp air\n");
+			fprintf(fp3, "\treg %d - large variance ", i);
+			fprintf(fp3, "of closed comp air\n");
 		    }
 		    if (j == 4)
 		    {
-			(void)fprintf(fp3, "\treg %d - large variance ", i);
-			(void)fprintf(fp3, "of exhaust air\n");
+			fprintf(fp3, "\treg %d - large variance ", i);
+			fprintf(fp3, "of exhaust air\n");
 		    }
 		    if (j == 5)
 		    {
-			(void)fprintf(fp3, "\treg %d - large variance ", i);
-			(void)fprintf(fp3, "of generic air 1\n");
+			fprintf(fp3, "\treg %d - large variance ", i);
+			fprintf(fp3, "of generic air 1\n");
 		    }
 		    if (j == 6)
 		    {
-			(void)fprintf(fp3, "\treg %d - large variance ", i);
-			(void)fprintf(fp3, "of generic air 2\n");
+			fprintf(fp3, "\treg %d - large variance ", i);
+			fprintf(fp3, "of generic air 2\n");
 		    }
 		    (void)fflush(fp3);
 		}					/*  END # 2010  */
@@ -2243,7 +2243,7 @@ int main(int argc, char **argv)
 	}
 
 	/*  Write overlaps to error file.  */
-	(void)fprintf(fp3, "\n\n\tOVERLAPS\n\n");
+	fprintf(fp3, "\n\n\tOVERLAPS\n\n");
 	(void)fflush(fp3);
 	for (i = 0; i < num; i++)
 	{
@@ -2251,18 +2251,18 @@ int main(int argc, char **argv)
 	    {
 		if (overlaps[i].ovrreg[j] == 1)
 		{
-		    (void)fprintf(fp3, "%s & %s, max depth:  %fmm  ",
+		    fprintf(fp3, "%s & %s, max depth:  %fmm  ",
 				  region[i].regname, region[j].regname,
 				  overlaps[i].ovrdep[j]);
 		    (void)fflush(fp3);
 		    if (overlaps[i].ovrdep[j] < ADJTOL)
 		    {
-			(void)fprintf(fp3, "(within tolerance)\n");
+			fprintf(fp3, "(within tolerance)\n");
 			(void)fflush(fp3);
 		    }
 		    else
 		    {
-			(void)fprintf(fp3, "\n");
+			fprintf(fp3, "\n");
 			(void)fflush(fp3);
 		    }
 		}
@@ -2270,7 +2270,7 @@ int main(int argc, char **argv)
 	}
 
 	/*  Write number of adjacent regions to error file.  */
-	(void)fprintf(fp3, "\n\nREGION NUMBER     NUMBER OF ADJACENT REGIONS\n");
+	fprintf(fp3, "\n\nREGION NUMBER     NUMBER OF ADJACENT REGIONS\n");
 	(void)fflush(fp3);
 	for (i = 0; i < num; i++)
 	{
@@ -2279,39 +2279,39 @@ int main(int argc, char **argv)
 	    {
 		if (region[i].adjreg[j] == 1) numadjreg++;
 	    }
-	    (void)fprintf(fp3, "        %5d                          ", (i+1));
-	    (void)fprintf(fp3, "%5d\n", numadjreg);
+	    fprintf(fp3, "        %5d                          ", (i+1));
+	    fprintf(fp3, "%5d\n", numadjreg);
 	    (void)fflush(fp3);
 	}
 
 	/*  Print out names of all files used.  */
-	(void)printf("\n\nSUMMARY OF FILES USED & CREATED\n");
-	(void)printf("\t.g file used:  %s\n", argv[1]);
-	(void)printf("\tregions used:\n");
+	printf("\n\nSUMMARY OF FILES USED & CREATED\n");
+	printf("\t.g file used:  %s\n", argv[1]);
+	printf("\tregions used:\n");
 	(void)fflush(stdout);
 	i=2;
 	while (argv[i] != NULL)
 	{
-	    (void)printf("\t\t%s\n", argv[i]);
+	    printf("\t\t%s\n", argv[i]);
 	    (void)fflush(stdout);
 	    i++;
 	}
-	(void)printf("\tmaterial id file used:  %s\n", fileden);
+	printf("\tmaterial id file used:  %s\n", fileden);
 	if (iwrite == 1)
 	{
-	    (void)printf("\toutput file created:  %s\n", filename);
+	    printf("\toutput file created:  %s\n", filename);
 	}
-	(void)printf("\tsecond pass file created:  %s\n", spfile);
-	(void)printf("\terror file created:  %s\n", fileerr);
-	(void)printf("\tregion # & name file created:  %s\n", filernn);
+	printf("\tsecond pass file created:  %s\n", spfile);
+	printf("\terror file created:  %s\n", fileerr);
+	printf("\tregion # & name file created:  %s\n", filernn);
 	if (typeout == 0)
 	{
-	    (void)printf("\tfacet file created:  %s\n", facfile);
-	    (void)printf("\t  (format is PRISM %d.0)\n\n\n", prmrel);
+	    printf("\tfacet file created:  %s\n", facfile);
+	    printf("\t  (format is PRISM %d.0)\n\n\n", prmrel);
 	}
-	if (typeout == 1) (void)printf(
+	if (typeout == 1) printf(
 	    "\tgeneric file created:  %s\n\n\n", filegen);
-	if ((typeout == 2) || (typeout == 3)) (void)printf(
+	if ((typeout == 2) || (typeout == 3)) printf(
 	    "\tgeometric file created:  %s\n\n\n", filegeo);
 	(void)fflush(stdout);
 
@@ -2320,7 +2320,7 @@ int main(int argc, char **argv)
 
 	/*  Everything is complete, free all memory.  */
 
-	(void)printf("Freeing memory.\n");
+	printf("Freeing memory.\n");
 	(void)fflush(stdout);
 
 	for (i = 0; i < num; i++)
@@ -2433,7 +2433,7 @@ hit(struct application *ap_p, struct partition *PartHeadp, struct seg *UNUSED(se
 	{
 	    /*  Find adjacent regions.  Occasionally a  */
 	    /*  a region will seem to be adjacent to self,  */
-	    /*  disreguard this.  */
+	    /*  disregard this.  */
 	    if (icur != iprev)
 	    {
 		region[icur].adjreg[iprev]=1;
@@ -2473,7 +2473,7 @@ hit(struct application *ap_p, struct partition *PartHeadp, struct seg *UNUSED(se
 	 *		(void)fflush(stdout);
 	 */
 
-	/*  Compute cummulative free surface normal,  */
+	/*  Compute cumulative free surface normal,  */
 	/*  free surface area, crew compartment area,  */
 	/*  engine compartment area, & other air areas  */
 	/*   when ray enters from another region.  */
@@ -2691,7 +2691,7 @@ hit(struct application *ap_p, struct partition *PartHeadp, struct seg *UNUSED(se
 	 *		(void)fflush(stdout);
 	 */
 
-	/*  Continue finding cummulative volume.  */
+	/*  Continue finding cumulative volume.  */
 	disx=(enterpt[X] - hitp->hit_point[X]) *
 	    (enterpt[X] - hitp->hit_point[X]);
 	disy=(enterpt[Y] - hitp->hit_point[Y]) *
@@ -2710,7 +2710,7 @@ hit(struct application *ap_p, struct partition *PartHeadp, struct seg *UNUSED(se
 	region[icur].centroid[Z] += (distance * area * (enterpt[Z] +
 							 hitp->hit_point[Z]) / 2.0);
 
-	/*  Find the cummulative normal & free surface area  */
+	/*  Find the cumulative normal & free surface area  */
 	/*  (exterior air)  when a ray is leaving the bounding  */
 	/*  rpp.  */
 	if ((pp->pt_forw == PartHeadp) &&

@@ -1,7 +1,7 @@
 /*                           E X T . H
  * BRL-CAD
  *
- * Copyright (c) 1989-2012 United States Government as represented by
+ * Copyright (c) 1989-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -27,7 +27,7 @@
 
 /***** Variables declared in opt.c *****/
 extern char *framebuffer;		/* desired framebuffer */
-extern double azimuth, elevation;
+extern fastf_t azimuth, elevation;
 extern double nu_gfactor;		/* constant factor in NUgrid algorithm */
 extern int Query_one_pixel;
 extern int benchmark;

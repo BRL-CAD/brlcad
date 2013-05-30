@@ -1,7 +1,7 @@
 /*                         H M E N U . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2012 United States Government as represented by
+ * Copyright (c) 2004-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -56,7 +56,7 @@ typedef struct HMenu
 {
     HMitem	*item;
     HMitem	*(*generator)();
-    short	prevtop;	/* Top entry currently visable		*/
+    short	prevtop;	/* Top entry currently visible		*/
     short	prevhit;	/* Offset from top of last select	*/
     short	sticky;		/* If set, menu stays around after SELECT,
 				   and until QUIT. */

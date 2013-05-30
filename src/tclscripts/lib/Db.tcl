@@ -1,7 +1,7 @@
 #                          D B . T C L
 # BRL-CAD
 #
-# Copyright (c) 1998-2012 United States Government as represented by
+# Copyright (c) 1998-2013 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -116,6 +116,7 @@
 	method unhide {args}
 	method units {args}
 	method version {args}
+	method voxelize {args}
 	method whatid {args}
 	method whichair {args}
 	method whichid {args}
@@ -292,6 +293,11 @@
 
 ::itcl::body Db::facetize {args} {
     eval $db facetize $args
+}
+
+
+::itcl::body Db::voxelize {args} {
+    eval $db voxelize $args
 }
 
 ::itcl::body Db::kill {args} {
@@ -623,7 +629,7 @@
     $help add rt_gettrees      {{} {}}
     $help add rotate_arb_face	{{arb face pt} {rotate an arb's face through pt}}
     $help add shader	{{comb shader_material [shader_args]} {command line version of the mater command}}
-    $help add shells	{{nmg_model}	{breaks model into seperate shells}}
+    $help add shells	{{nmg_model}	{breaks model into separate shells}}
     $help add showmats	{{path}	{show xform matrices along path}}
     $help add summary	{{[s r g]}	{count/list solid/reg/groups}}
     $help add title	{{?string?} {print or change the title}}

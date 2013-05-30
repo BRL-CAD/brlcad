@@ -1,7 +1,7 @@
 /*                         E D A R B . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2012 United States Government as represented by
+ * Copyright (c) 1985-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -228,8 +228,8 @@ editarb(vect_t pos_model)
 	    break;
 
 	case ARB7:
-	    VMOVE(arb->pt[7], arb->pt[4])
-		break;
+	    VMOVE(arb->pt[7], arb->pt[4]);
+	    break;
 
 	case ARB6:
 	    VMOVE(arb->pt[5], arb->pt[4]);
@@ -238,14 +238,14 @@ editarb(vect_t pos_model)
 
 	case ARB5:
 	    for (i=5; i<8; i++)
-		VMOVE(arb->pt[i], arb->pt[4])
-		    break;
+		VMOVE(arb->pt[i], arb->pt[4]);
+	    break;
 
 	case ARB4:
 	    VMOVE(arb->pt[3], arb->pt[0]);
 	    for (i=5; i<8; i++)
-		VMOVE(arb->pt[i], arb->pt[4])
-		    break;
+		VMOVE(arb->pt[i], arb->pt[4]);
+	    break;
     }
 
     return 0;		/* OK */
@@ -575,7 +575,7 @@ f_mirface(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const cha
     memcpy((char *)&larb, (char *)arb, sizeof(struct rt_arb_internal));
 
     if (es_type == ARB6 && face < 1000) {
-  	/* 3 point face */
+	/* 3 point face */
 	pt[0] = face / 100;
 	i = face - (pt[0]*100);
 	pt[1] = i / 10;
@@ -784,9 +784,9 @@ ext4to6(int pt1, int pt2, int pt3, struct rt_arb_internal *arb)
 
     /* copy to the original record */
     for (i=0; i<8; i++)
-	VMOVE(arb->pt[i], pts[i])
+	VMOVE(arb->pt[i], pts[i]);
+}
 
-	    }
 
 /* Permute command - permute the vertex labels of an ARB
  * Format: permute tuple */
@@ -991,7 +991,7 @@ f_permute(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const cha
 
     /*
      * Reinstall the permuted vertices back into the temporary buffer,
-     * copying redundant vertices as necessay
+     * copying redundant vertices as necessary
      *
      *		-------+-------------------------
      *		 Solid |    Redundant storage

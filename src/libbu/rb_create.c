@@ -1,7 +1,7 @@
 /*                     R B _ C R E A T E . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2012 United States Government as represented by
+ * Copyright (c) 1998-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -35,7 +35,8 @@ bu_rb_create(char *description, int nm_orders, int (**order_funcs)())
     /*
      * Allocate memory for the tree
      */
-    tree = (struct bu_rb_tree *) bu_malloc(sizeof(struct bu_rb_tree), "red-black tree");
+    BU_ALLOC(tree, struct bu_rb_tree);
+
     tree->rbt_root = (struct bu_rb_node **)
 	bu_malloc(nm_orders * sizeof(struct bu_rb_node),
 		  "red-black roots");

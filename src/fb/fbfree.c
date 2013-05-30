@@ -1,7 +1,7 @@
 /*                        F B F R E E . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2012 United States Government as represented by
+ * Copyright (c) 1986-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -20,8 +20,8 @@
  */
 /** @file fbfree.c
  *
- *  Free any resources associated with a frame buffer.
- *  Just calls fb_free().
+ * Free any resources associated with a frame buffer.
+ * Just calls fb_free().
  *
  */
 
@@ -34,7 +34,7 @@
 #include "fb.h"
 
 
-static char	*framebuffer = NULL;
+static char *framebuffer = NULL;
 
 static char usage[] = "\
 Usage: fbfree [-F framebuffer]\n";
@@ -43,10 +43,10 @@ int
 main(int argc, char **argv)
 {
     int c;
-    FBIO	*fbp;
+    FBIO *fbp;
 
-    while ( (c = bu_getopt( argc, argv, "F:" )) != -1 ) {
-	switch ( c ) {
+    while ((c = bu_getopt(argc, argv, "F:")) != -1) {
+	switch (c) {
 	    case 'F':
 		framebuffer = bu_optarg;
 		break;
@@ -55,16 +55,17 @@ main(int argc, char **argv)
 		return 1;
 	}
     }
-    if ( argc > ++bu_optind ) {
-	(void)fprintf( stderr, "fbfree: excess argument(s) ignored\n" );
+    if (argc > ++bu_optind) {
+	fprintf(stderr, "fbfree: excess argument(s) ignored\n");
     }
 
-    if ( (fbp = fb_open( framebuffer, 0, 0 )) == FBIO_NULL ) {
-	fprintf( stderr, "fbfree: Can't open frame buffer\n" );
-	return	1;
+    if ((fbp = fb_open(framebuffer, 0, 0)) == FBIO_NULL) {
+	fprintf(stderr, "fbfree: Can't open frame buffer\n");
+	return 1;
     }
-    return	fb_free( fbp );
+    return fb_free(fbp);
 }
+
 
 /*
  * Local Variables:

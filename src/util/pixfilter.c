@@ -1,7 +1,7 @@
 /*                     P I X F I L T E R . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2012 United States Government as represented by
+ * Copyright (c) 1986-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -20,8 +20,8 @@
 /** @file util/pixfilter.c
  *
  * Filters a color pix file with an arbitrary 3x3 kernel.
- * Leaves the outer rows untouched.
- * Allows an alternate divisor and offset to be given.
+ * Leaves the outer rows untouched.  Allows an alternate divisor and
+ * offset to be given.
  *
  */
 
@@ -50,7 +50,7 @@ struct kernels {
     { "Low Pass", "lo", {3, 5, 3, 5, 10, 5, 3, 5, 3}, 42, 0 },
     { "Laplacian", "la", {-1, -1, -1, -1, 8, -1, -1, -1, -1}, 16, 128 },
     { "High Pass", "hi", {-1, -2, -1, -2, 13, -2, -1, -2, -1}, 1, 0 },
-    { "Horizontal Gradiant", "hg", {1, 0, -1, 1, 0, -1, 1, 0, -1}, 6, 128 },
+    { "Horizontal Gradient", "hg", {1, 0, -1, 1, 0, -1, 1, 0, -1}, 6, 128},
     { "Vertical Gradient", "vg", {1, 1, 1, 0, 0, 0, -1, -1, -1}, 6, 128 },
     { "Boxcar Average", "b", {1, 1, 1, 1, 1, 1, 1, 1, 1}, 9, 0 },
     { NULL, NULL, {0, 0, 0, 0, 0, 0, 0, 0, 0}, 0, 0 },
@@ -118,9 +118,9 @@ get_args(int argc, char **argv)
     } else {
 	file_name = argv[bu_optind];
 	if ((infp = fopen(file_name, "r")) == NULL) {
-	    (void)fprintf(stderr,
-			  "pixfilter: cannot open \"%s\" for reading\n",
-			  file_name);
+	    fprintf(stderr,
+		    "pixfilter: cannot open \"%s\" for reading\n",
+		    file_name);
 	    return 0;
 	}
     }
@@ -129,7 +129,7 @@ get_args(int argc, char **argv)
 	return 0;
 
     if (argc > ++bu_optind)
-	(void)fprintf(stderr, "pixfilter: excess argument(s) ignored\n");
+	fprintf(stderr, "pixfilter: excess argument(s) ignored\n");
 
     return 1;		/* OK */
 }
@@ -238,8 +238,8 @@ main(int argc, char **argv)
 /*
  * S E L E C T _ F I L T E R
  *
- * Looks at the command line string and selects a filter based
- * on it.
+ * Looks at the command line string and selects a filter
+ * based on it.
  */
 void
 select_filter(char *str)
@@ -275,9 +275,10 @@ dousage(void)
     int i;
 
     fputs(usage, stderr);
+    fputs("Possible arguments for -f (type):\n", stderr);
     i = 0;
     while (kernel[i].name != NULL) {
-	fprintf(stderr, "%-10s%s\n", kernel[i].uname, kernel[i].name);
+	fprintf(stderr, "  %-10s%s\n", kernel[i].uname, kernel[i].name);
 	i++;
     }
 }

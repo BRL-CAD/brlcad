@@ -1,7 +1,7 @@
 /*                        V M _ T E S T . C P P
  * BRL-CAD
  *
- * Copyright (c) 2008-2012 United States Government as represented by
+ * Copyright (c) 2008-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -59,7 +59,7 @@ boost::shared_ptr<MathFunction> make_function(char const *name, function1_ptr f1
 }
 
 
-/* Arity based function maker 
+/* Arity based function maker
    boost::shared_ptr<MathFunction> make_function(char const *name, int arity)
    {
    return boost::shared_ptr<MathFunction>(new UserFunction(name, arity));

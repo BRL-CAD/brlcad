@@ -1,7 +1,7 @@
 /*                  C H A N _ P E R M U T E . C
  * BRL-CAD
  *
- * Copyright (c) 1993-2012 United States Government as represented by
+ * Copyright (c) 1993-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -28,7 +28,7 @@
  * tables. Usage:
  *
 
- channel -i infile1 id id id ... [-i infile2 ...] -o outfile1 id id ... [-o outfile2 ...]
+ chan_permute -i infile1 id id id ... [-i infile2 ...] -o outfile1 id id ... [-o outfile2 ...]
 
  *
  * where infiles are files to be read from, outfiles are files to be
@@ -62,6 +62,14 @@ struct unit {
 char ihead[] = "-i";
 char ohead[] = "-o";
 
+static void
+printusage (void)
+{
+    fprintf(stderr,
+	    "Usage: chan_permute -i infile1 id id id ... [-i infile2 ...] -o outfile1 id id ... [-o outfile2 ...]\n");
+    bu_exit(-1, NULL);
+}
+
 int
 main(int argc, char *argv[])
 {
@@ -69,6 +77,11 @@ main(int argc, char *argv[])
     int icount, ocount;
     struct unit *x, *y;
     Word *arrayd;
+
+    if ( BU_STR_EQUAL(argv[1], "-h") || BU_STR_EQUAL(argv[1], "-?") )
+	printusage();
+    if (argc == 1)
+	printusage();
 
     i=j=icount = ocount = maxlength = 0;
     for (i=1;i<argc;i++) {
@@ -95,14 +108,14 @@ main(int argc, char *argv[])
 		if (BU_STR_EQUAL(argv[i], "stdin"))
 		    x->file = stdin;
 		else if (!(x->file = fopen(argv[i], "rb")))
-		    fprintf(stderr, "Channel: can't open %s\n", argv[i]);
+		    fprintf(stderr, "chan_permute: can't open %s for reading\n", argv[i]);
 	    } else if (argv[i][1] == 'o') {
 		i++;
 		(x)->i_o = 0;
 		if (BU_STR_EQUAL(argv[i], "stdout"))
 		    x->file = stdout;
 		else if (!(x->file = fopen(argv[i], "wb")))
-		    fprintf(stderr, "Channel: can't write to %s\n", argv[i]);
+		    fprintf(stderr, "chan_permute: can't open %s for writing\n", argv[i]);
 	    } else {
 		fprintf(stderr, "Illegal option %c\n", argv[i][1]);
 		bu_exit(-1, NULL);

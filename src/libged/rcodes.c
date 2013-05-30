@@ -1,7 +1,7 @@
 /*                         R C O D E S . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2012 United States Government as represented by
+ * Copyright (c) 2008-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -71,7 +71,7 @@ ged_rcodes(struct ged *gedp, int argc, const char *argv[])
     while (bu_fgets(line, RT_MAXLINE, fp) != NULL) {
 	int changed;
 
-	/* character and/or whitespace deliminted numbers */
+	/* character and/or whitespace delimited numbers */
 	if (sscanf(line, "%d%*c%d%*c%d%*c%d%s", &item, &air, &mat, &los, name) != 5)
 	    continue; /* not useful */
 

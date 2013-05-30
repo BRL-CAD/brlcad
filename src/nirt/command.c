@@ -1,7 +1,7 @@
 /*                       C O M M A N D . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2012 United States Government as represented by
+ * Copyright (c) 2004-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -61,7 +61,7 @@ bot_minpieces(char *buffer, com_table *UNUSED(ctp), struct rt_i *UNUSED(rtip))
     long new_lvalue;
     int i=0;
 
-    while (isspace(*(buffer+i)))
+    while (isspace((int)*(buffer+i)))
 	++i;
     if (*(buffer+i) == '\0') {
 	/* display current rt_bot_minpieces */
@@ -88,7 +88,7 @@ bot_mintie(char *buffer, com_table *UNUSED(ctp), struct rt_i *UNUSED(rtip))
     long new_lvalue;
     int i=0;
 
-    while (isspace(*(buffer+i)))
+    while (isspace((int)*(buffer+i)))
 	++i;
     if (*(buffer+i) == '\0') {
 	/* display current rt_bot_mintie */
@@ -118,7 +118,7 @@ az_el(char *buffer, com_table *ctp, struct rt_i *UNUSED(rtip))
     double az;
     double el;
 
-    while (isspace(*(buffer+i)))
+    while (isspace((int)*(buffer+i)))
 	++i;
     if (*(buffer+i) == '\0') {
 	/* display current az and el values */
@@ -138,7 +138,7 @@ az_el(char *buffer, com_table *ctp, struct rt_i *UNUSED(rtip))
 	return;
     }
     i += rc;
-    while (isspace(*(buffer+i)))
+    while (isspace((int)*(buffer+i)))
 	++i;
     if ((rc = str_dbl(buffer+i, &el)) == 0) {
 	/* get el value */
@@ -162,47 +162,6 @@ az_el(char *buffer, com_table *ctp, struct rt_i *UNUSED(rtip))
 }
 
 void
-sh_esc(char *buffer)
-{
-    int ret;
-    static char *shell = "";
-    static char *last_cmd = "";
-    char *rshell = NULL;
-
-    while (isspace(*buffer)) {
-	++buffer;
-    }
-
-    if (*buffer == '!') {
-	ret = system(last_cmd);
-	if (ret == -1)
-	    perror("system");
-    } else if (*buffer) {
-	ret = system(buffer);
-	if (ret == -1)
-	    perror("system");
-	last_cmd = buffer;
-    } else {
-	if ((*shell == '\0') && (shell = getenv("SHELL")) == 0) {
-#ifndef _WIN32
-	    shell = DFLT_SHELL;
-#else
-	    shell = "cmd.exe";
-#endif
-	}
-
-	/* sanitize path to shell */
-	rshell = bu_realpath(shell, NULL);
-
-	ret = system(rshell);
-	if (ret == -1)
-	    perror("system");
-
-	bu_free(rshell, "free realpath");
-    }
-}
-
-void
 grid_coor(char *buffer, com_table *ctp, struct rt_i *UNUSED(rtip))
 {
     extern int str_dbl();  /* function to convert string to double */
@@ -210,7 +169,7 @@ grid_coor(char *buffer, com_table *ctp, struct rt_i *UNUSED(rtip))
     int rc = 0;    /* the return code value from str_dbl() */
     vect_t Gr;
 
-    while (isspace(*(buffer+i)))
+    while (isspace((int)*(buffer+i)))
 	++i;
     if (*(buffer+i) == '\0') {
 	/* display current grid coordinates */
@@ -226,7 +185,7 @@ grid_coor(char *buffer, com_table *ctp, struct rt_i *UNUSED(rtip))
 	return;
     }
     i += rc;
-    while (isspace(*(buffer+i)))
+    while (isspace((int)*(buffer+i)))
 	++i;
     if ((rc = str_dbl(buffer+i, &Gr[VERT])) == 0) {
 	/* get vert coor */
@@ -234,7 +193,7 @@ grid_coor(char *buffer, com_table *ctp, struct rt_i *UNUSED(rtip))
 	return;
     }
     i += rc;
-    while (isspace(*(buffer+i)))
+    while (isspace((int)*(buffer+i)))
 	++i;
     if (*(buffer+i) == '\0') {
 	/* if there is no dist coor, set default */
@@ -268,7 +227,7 @@ target_coor(char *buffer, com_table *ctp, struct rt_i *UNUSED(rtip))
     int rc = 0;     /* the return code value from str_dbl() */
     vect_t Tar;	    /* Target x, y and z */
 
-    while (isspace(*(buffer+i)))
+    while (isspace((int)*(buffer+i)))
 	++i;
     if (*(buffer+i) == '\0') {
 	/* display current target coors */
@@ -284,7 +243,7 @@ target_coor(char *buffer, com_table *ctp, struct rt_i *UNUSED(rtip))
 	return;
     }
     i += rc;
-    while (isspace(*(buffer+i)))
+    while (isspace((int)*(buffer+i)))
 	++i;
     if ((rc = str_dbl(buffer+i, &Tar[Y])) == 0) {
 	/* get target y coor */
@@ -292,7 +251,7 @@ target_coor(char *buffer, com_table *ctp, struct rt_i *UNUSED(rtip))
 	return;
     }
     i += rc;
-    while (isspace(*(buffer+i)))
+    while (isspace((int)*(buffer+i)))
 	++i;
     if ((rc = str_dbl(buffer+i, &Tar[Z])) == 0) {
 	/* get target z coor */
@@ -319,7 +278,7 @@ dir_vect(char *buffer, com_table *ctp, struct rt_i *UNUSED(rtip))
     int rc = 0;    /* the return code value from str_dbl() */
     vect_t Dir;	   /* Direction vector x, y and z */
 
-    while (isspace(*(buffer+i)))
+    while (isspace((int)*(buffer+i)))
 	++i;
     if (*(buffer+i) == '\0') {
 	/* display current direct coors */
@@ -333,7 +292,7 @@ dir_vect(char *buffer, com_table *ctp, struct rt_i *UNUSED(rtip))
 	return;
     }
     i += rc;
-    while (isspace(*(buffer+i)))
+    while (isspace((int)*(buffer+i)))
 	++i;
     if ((rc = str_dbl(buffer+i, &Dir[Y])) == 0) {
 	/* get direct y coor */
@@ -341,7 +300,7 @@ dir_vect(char *buffer, com_table *ctp, struct rt_i *UNUSED(rtip))
 	return;
     }
     i += rc;
-    while (isspace(*(buffer+i)))
+    while (isspace((int)*(buffer+i)))
 	++i;
     if ((rc = str_dbl(buffer+i, &Dir[Z])) == 0) {
 	/* get direct z coor */
@@ -411,12 +370,12 @@ shoot(char *UNUSED(buffer), com_table *UNUSED(ctp), struct rt_i *rtip)
 	    set_diameter(rtip);
 
 	/*
-	 * calculate the distance from a plane normal to the ray direction through the center of 
+	 * calculate the distance from a plane normal to the ray direction through the center of
 	 * the bounding sphere and a plane normal to the ray direction through the aim point.
 	 */
 	VADD2SCALE(center_bsphere, rtip->mdl_max, rtip->mdl_min, 0.5);
 
-	dist_to_target = DIST_PT_PT(center_bsphere, ray_point); 
+	dist_to_target = DIST_PT_PT(center_bsphere, ray_point);
 
 	VSUB2(dvec, ray_point, center_bsphere);
 	VUNITIZE(dvec);
@@ -466,18 +425,18 @@ use_air(char *buffer, com_table *ctp, struct rt_i *UNUSED(rtip))
 
     extern char *db_name;		/* Name of MGED database file */
 
-    while (isspace(*buffer))
+    while (isspace((int)*buffer))
 	++buffer;
     if (*buffer == '\0') {
 	/* display current value of use_of_air */
 	bu_log("use_air = %d\n", ap.a_rt_i->useair);
 	return;
     }
-    if (!isdigit(*buffer)) {
+    if (!isdigit((int)*buffer)) {
 	com_usage(ctp);
 	return;
     }
-    while (isdigit(*buffer)) {
+    while (isdigit((int)*buffer)) {
 	new_use *= 10;
 	new_use += *buffer++ - '0';
     }
@@ -526,7 +485,7 @@ nirt_units(char *buffer, com_table *ctp, struct rt_i *rtip)
 
     double mk_cvt_factor();
 
-    while (isspace(*(buffer+i)))
+    while (isspace((int)*(buffer+i)))
 	++i;
     if (*(buffer+i) == '\0') {
 	/* display current destination */
@@ -560,7 +519,7 @@ do_overlap_claims(char *buffer, com_table *ctp, struct rt_i *UNUSED(rtip))
     int j;
     double mk_cvt_factor();
 
-    while (isspace(*(buffer+i)))
+    while (isspace((int)*(buffer+i)))
 	++i;
     if (*(buffer+i) == '\0') {
 	/* display current destination */
@@ -593,7 +552,7 @@ do_overlap_claims(char *buffer, com_table *ctp, struct rt_i *UNUSED(rtip))
 void
 cm_attr(char *buffer, com_table *ctp, struct rt_i *UNUSED(rtip))
 {
-    while (isascii(*buffer) && isspace(*buffer)) buffer++;
+    while (isascii(*buffer) && isspace((int)*buffer)) buffer++;
 
     if (strlen(buffer) == 0) {
 	com_usage(ctp);
@@ -619,7 +578,7 @@ cm_debug(char *buffer, com_table *ctp, struct rt_i *UNUSED(rtip))
     char *cp = buffer;
 
     /* This is really icky -- should have argc, argv interface */
-    while (*cp && isascii(*cp) && isspace(*cp))  cp++;
+    while (*cp && isascii(*cp) && isspace((int)*cp))  cp++;
     if (*cp == '\0') {
 	/* display current value */
 	bu_printb("debug ", nirt_debug, DEBUG_FMT);
@@ -643,7 +602,7 @@ cm_libdebug(char *buffer, com_table *ctp, struct rt_i *UNUSED(rtip))
 
     /* This is really icky -- should have argc, argv interface */
 
-    while (*cp && isascii(*cp) && isspace(*cp))
+    while (*cp && isascii(*cp) && isspace((int)*cp))
 	cp++;
 
     if (*cp == '\0') {
@@ -666,14 +625,14 @@ void
 backout(char *buffer, com_table *UNUSED(ctp), struct rt_i *UNUSED(rtip))
 {
 
-    while (isspace(*buffer))
+    while (isspace((int)*buffer))
 	++buffer;
     if (*buffer == '\0') {
 	/* display current value of do_backout */
 	bu_log("backout = %d\n", do_backout);
 	return;
     }
-    if (!isdigit(*buffer)) {
+    if (!isdigit((int)*buffer)) {
 	bu_log("backout must be set to 0 (off) or 1 (on)\n");
 	return;
     } else {

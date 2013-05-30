@@ -3,11 +3,7 @@
 #include <stdio.h>
 #include <memory.h>
 #include <errno.h>
-#ifdef __STDC__
 #include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
 
 #include "../express/expbasic.h"
 #include "../express/express.h"
@@ -146,25 +142,16 @@ exp_output( char * buf, int len ) {
 }
 
 void
-#ifdef __STDC__
 wrap( char * fmt, ... ) {
-#else
-wrap( va_alist )
-va_dcl {
-    char * fmt;
-#endif
     char * p;
     char buf[10000];
     int len;
     va_list args;
-#ifdef __STDC__
-    va_start( args, fmt );
-#else
-    va_start( args );
-    fmt = va_arg( args, char * );
-#endif
 
+    va_start( args, fmt );
     vsprintf( buf, fmt, args );
+    va_end( args );
+
     len = strlen( buf );
 
     /* 1st condition checks if string cant fit into current line */
@@ -194,25 +181,16 @@ va_dcl {
 }
 
 void
-#ifdef __STDC__
 raw( char * fmt, ... ) {
-#else
-raw( va_alist )
-va_dcl {
-    char * fmt;
-#endif
     char * p;
     char buf[10000];
     int len;
     va_list args;
-#ifdef __STDC__
-    va_start( args, fmt );
-#else
-    va_start( args );
-    fmt = va_arg( args, char * );
-#endif
 
+    va_start( args, fmt );
     vsprintf( buf, fmt, args );
+    va_end( args );
+
     len = strlen( buf );
 
     exp_output( buf, len );

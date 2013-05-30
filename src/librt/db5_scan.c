@@ -1,7 +1,7 @@
 /*                      D B 5 _ S C A N . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2012 United States Government as represented by
+ * Copyright (c) 2004-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -84,7 +84,7 @@ db5_scan(
 	    goto fatal;
 	}
 	for (;;) {
-	    addr = ftell(dbip->dbi_fp);
+	    addr = bu_ftell(dbip->dbi_fp);
 	    if ((got = db5_get_raw_internal_fp(&raw, dbip->dbi_fp)) < 0) {
 		if (got == -1) break;		/* EOF */
 		goto fatal;
@@ -92,15 +92,11 @@ db5_scan(
 	    (*handler)(dbip, &raw, addr, client_data);
 	    nrec++;
 	    if (raw.buf) {
-#if 1
-		bu_pool_put((void *)raw.buf, (size_t)raw.object_length);
-#else
 		bu_free(raw.buf, "raw v5 object");
-#endif
 		raw.buf = NULL;
 	    }
 	}
-	dbip->dbi_eof = ftell(dbip->dbi_fp);
+	dbip->dbi_eof = bu_ftell(dbip->dbi_fp);
 	rewind(dbip->dbi_fp);
     }
 
@@ -298,7 +294,6 @@ db5_diradd_handler(
 
     return;
 }
-
 
 int
 db_dirbuild(struct db_i *dbip)

@@ -1,7 +1,7 @@
 /*                       C O N V E R T . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2012 United States Government as represented by
+ * Copyright (c) 2004-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -370,7 +370,7 @@ bu_cv_ntohul(register long unsigned int *out, size_t size, register genptr_t in,
     if (limit < count) count = limit;
 
     for (i=0; i<count; i++) {
-	*out++ = 
+	*out++ =
 	    (unsigned long)((unsigned char *)in)[0] << 24 |
 	    (unsigned long)((unsigned char *)in)[1] << 16 |
 	    (unsigned long)((unsigned char *)in)[2] <<  8 |
@@ -532,7 +532,7 @@ bu_cv_w_cookie(genptr_t out, int outcookie, size_t size, genptr_t in,  int incoo
 	    return number_done;
 
 	    /*
-	     * Well it's still the same format but the conversion are
+	     * Well it's still the same format but the conversions are
 	     * different.  Only one of the *vert variables can be HOST
 	     * therefore if inIsHost != HOST then outIsHost must be
 	     * host format.
@@ -577,7 +577,7 @@ bu_cv_w_cookie(genptr_t out, int outcookie, size_t size, genptr_t in,  int incoo
     }
     /*
      * If we get to this point then the input format is known to be of
-     * a diffrent type than the output format.  This will require a
+     * a different type than the output format.  This will require a
      * cast to, from or to and from double.
      *
      * Because the number of steps is not known initially, we get
@@ -758,7 +758,7 @@ bu_cv_w_cookie(genptr_t out, int outcookie, size_t size, genptr_t in,  int incoo
 	    }
 
 	    /*
-	     * The ouput format is something other than DOUBLE (tested
+	     * The output format is something other than DOUBLE (tested
 	     * for earlier), do a cast from double to requested
 	     * format.
 	     */
@@ -819,7 +819,7 @@ bu_cv_w_cookie(genptr_t out, int outcookie, size_t size, genptr_t in,  int incoo
 	    }
 	    from = hold;
 	    /*
-	     * The input is now pointing to a host formated buffer of
+	     * The input is now pointing to a host formatted buffer of
 	     * the requested output format.
 	     */
 

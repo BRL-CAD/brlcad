@@ -131,6 +131,7 @@ extern SCL_EXPRESS_EXPORT Linked_List LINK__l;  /* for LISTcreate_with macro - u
 /***********************/
 
 extern SCL_EXPRESS_EXPORT void LISTinitialize PROTO( ( void ) );
+extern SCL_EXPRESS_EXPORT void LISTcleanup PROTO( ( void ) );
 extern SCL_EXPRESS_EXPORT Linked_List LISTcreate PROTO( ( void ) );
 extern SCL_EXPRESS_EXPORT Linked_List LISTcopy PROTO( ( Linked_List ) );
 extern SCL_EXPRESS_EXPORT Generic  LISTadd_first PROTO( ( Linked_List, Generic ) );
@@ -144,5 +145,6 @@ extern SCL_EXPRESS_EXPORT Generic  LISTget_second PROTO( ( Linked_List ) );
 extern SCL_EXPRESS_EXPORT Generic  LISTget_nth PROTO( ( Linked_List, int ) );
 extern SCL_EXPRESS_EXPORT void LISTfree PROTO( ( Linked_List ) );
 extern SCL_EXPRESS_EXPORT int  LISTget_length PROTO( ( Linked_List ) );
+extern SCL_EXPRESS_EXPORT bool LISTempty( Linked_List list );
 
 #endif /*LINKED_LIST_H*/

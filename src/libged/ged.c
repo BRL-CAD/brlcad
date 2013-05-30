@@ -1,7 +1,7 @@
 /*                       G E D . C
  * BRL-CAD
  *
- * Copyright (c) 2000-2012 United States Government as represented by
+ * Copyright (c) 2000-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -83,12 +83,11 @@ ged_close(struct ged *gedp)
 
     if (gedp->ged_gdp != GED_DRAWABLE_NULL) {
 	qray_free(gedp->ged_gdp);
-	bu_free((genptr_t)gedp->ged_gdp, "struct ged_drawable");
-	gedp->ged_gdp = GED_DRAWABLE_NULL;
+	BU_PUT(gedp->ged_gdp, struct ged_drawable);
     }
 
     ged_free(gedp);
-    bu_free((genptr_t)gedp, "struct ged");
+    BU_PUT(gedp, struct ged);
 }
 
 
@@ -103,18 +102,18 @@ ged_free(struct ged *gedp)
 
     if (gedp->ged_log) {
 	bu_vls_free(gedp->ged_log);
-	bu_free(gedp->ged_log, "release ged_log");
+	BU_PUT(gedp->ged_log, struct bu_vls);
 	gedp->ged_log = NULL; /* sanity */
     }
 
     if (gedp->ged_result_str) {
 	bu_vls_free(gedp->ged_result_str);
-	bu_free(gedp->ged_result_str, "release ged_result_str");
+	BU_PUT(gedp->ged_result_str, struct bu_vls);
 	gedp->ged_result_str = NULL; /* sanity */
     }
 
     if (gedp->ged_gdp) {
-	bu_free(gedp->ged_gdp, "release ged_gdp");
+	BU_PUT(gedp->ged_gdp, struct ged_drawable);
 	gedp->ged_gdp = NULL; /* sanity */
     }
 }
@@ -292,7 +291,7 @@ ged_open(const char *dbtype, const char *filename, int existing_only)
 	if (dbip == DBI_NULL) {
 	    int i;
 
-	    BU_GET(dbip, struct db_i);
+	    BU_ALLOC(dbip, struct db_i);
 	    dbip->dbi_eof = (off_t)-1L;
 	    dbip->dbi_fp = NULL;
 	    dbip->dbi_mf = NULL;
@@ -352,8 +351,8 @@ _ged_open_dbip(const char *filename, int existing_only)
     struct db_i *dbip;
 
     /* open database */
-    if (((dbip = db_open(filename, "r+w")) == DBI_NULL) &&
-	((dbip = db_open(filename, "r")) == DBI_NULL)) {
+    if (((dbip = db_open(filename, DB_OPEN_READWRITE)) == DBI_NULL) &&
+	((dbip = db_open(filename, DB_OPEN_READONLY)) == DBI_NULL)) {
 
 	/*
 	 * Check to see if we can access the database
@@ -480,8 +479,8 @@ _ged_print_node(struct ged *gedp,
 	return;
 
     /*
-     * This node is a combination (eg, a directory).
-     * Process all the arcs (eg, directory members).
+     * This node is a combination (e.g., a directory).
+     * Process all the arcs (e.g., directory members).
      */
 
     if (rt_db_get_internal(&intern, dp, gedp->ged_wdbp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {

@@ -1,7 +1,7 @@
 #                  M A K E _ S O L I D . T C L
 # BRL-CAD
 #
-# Copyright (c) 1998-2012 United States Government as represented by
+# Copyright (c) 1998-2013 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -47,7 +47,7 @@ proc make_dsp { id top } {
 
     set ret [catch $command result]
     if { $ret != 0 } {
-	cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen) "ERROR creaing DSP" $result "" 0 OK
+	cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen) "ERROR creating DSP" $result "" 0 OK
     }
 
     catch {_mged_sed $mged_gui($id,solid_name)}
@@ -135,9 +135,9 @@ proc binunif_create { id } {
     toplevel $top -screen $mged_gui($id,screen)
 
     set binunif_dscr "The binunif object is an array of uniformly sized pieces of data.\n\
-        The supported data types are:\n"
+	The supported data types are:\n"
     foreach type [lsort [array name binunif_types]] {
-        append binunif_dscr "\t$type\n"
+	append binunif_dscr "\t$type\n"
     }
     append binunif_dscr "The binunif object can be used to store data, but cannot be raytraced."
 
@@ -159,7 +159,7 @@ proc binunif_create { id } {
     iwidgets::extfileselectiondialog .fsd
     .fsd buttonconfigure OK -command "setFileName .fsd $top.fileE"
     button $top.fileB -text "..." -command {.fsd activate}
-    
+
     set tmp_hoc [list [list summary $binunif_dscr] [list description "This is the name of the file that contains the data for this binunif object" ]]
     hoc_register_data $top.fileL "File Name" $tmp_hoc
     hoc_register_data $top.fileE "File Name" $tmp_hoc
@@ -175,7 +175,7 @@ proc binunif_create { id } {
     hoc_register_data $top.autonameB "Autoname" $tmp_hoc
     set tmp_hoc [list [list summary $binunif_dscr] [list description "Pressing this button will dismiss this window without creating a binunif object" ]]
     hoc_register_data $top.dismissB "Dismiss" $tmp_hoc
-    
+
     grid $top.nameL -sticky "w" -row 0 -column 0
     grid $top.nameE -sticky "ew" -row 0 -column 1
     grid $top.typeL -sticky "w" -row 1 -column 0
@@ -239,7 +239,7 @@ proc dsp_create { id } {
     set mged_gui($id,dsp_smooth) 0
     label $top.smoothL -text "Use smoothing"
     checkbutton $top.smoothC -bd 2 -variable mged_gui($id,dsp_smooth)
-    set tmp_hoc [list [list summary $dsp_dscr] [list description "If this is checked, the displacememt surface will be smoothed" ]]
+    set tmp_hoc [list [list summary $dsp_dscr] [list description "If this is checked, the displacement surface will be smoothed" ]]
     hoc_register_data $top.smoothL "Smoothing" $tmp_hoc
     hoc_register_data $top.smoothC "Smoothing" $tmp_hoc
 

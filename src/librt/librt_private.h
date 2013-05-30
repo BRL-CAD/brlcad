@@ -1,7 +1,7 @@
 /*                 L I B R T _ P R I V A T E . H
  * BRL-CAD
  *
- * Copyright (c) 2011-2012 United States Government as represented by
+ * Copyright (c) 2011-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -34,6 +34,10 @@
 #include "db.h"
 #include "raytrace.h"
 
+/* approximation formula for the circumference of an ellipse */
+#define ELL_CIRCUMFERENCE(a, b) M_PI * ((a) + (b)) * \
+    (1.0 + (3.0 * ((((a) - b))/((a) + (b))) * ((((a) - b))/((a) + (b))))) \
+    / (10.0 + sqrt(4.0 - 3.0 * ((((a) - b))/((a) + (b))) * ((((a) - b))/((a) + (b)))))
 
 __BEGIN_DECLS
 
@@ -86,6 +90,44 @@ extern const union cutter *rt_advance_to_next_cell(struct rt_shootray_status *ss
  */
 extern void rt_plot_cell(const union cutter *cutp, struct rt_shootray_status *ssp, struct bu_list *waiting_segs_hd, struct rt_i *rtip);
 
+
+extern fastf_t primitive_get_absolute_tolerance(
+	const struct rt_tess_tol *ttol,
+	fastf_t rel_to_abs);
+
+extern fastf_t primitive_diagonal_samples(
+	struct rt_db_internal *ip,
+	const struct rt_view_info *info);
+
+extern int approximate_parabolic_curve(
+	struct rt_pt_node *pts,
+	fastf_t p,
+	int num_new_points);
+
+extern fastf_t primitive_curve_count(
+	struct rt_db_internal *ip,
+	const struct rt_view_info *info);
+
+extern int approximate_hyperbolic_curve(
+	struct rt_pt_node *pts,
+	fastf_t a,
+	fastf_t b,
+	int num_new_points);
+
+extern void
+ellipse_point_at_radian(
+	point_t result,
+	const vect_t center,
+	const vect_t axis_a,
+	const vect_t axis_b,
+	fastf_t radian);
+
+extern void plot_ellipse(
+	struct bu_list *vhead,
+	const vect_t t,
+	const vect_t a,
+	const vect_t b,
+	int num_points);
 
 __END_DECLS
 

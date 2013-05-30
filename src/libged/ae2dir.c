@@ -1,7 +1,7 @@
 /*                         A E 2 D I R . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2012 United States Government as represented by
+ * Copyright (c) 2008-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -36,7 +36,7 @@
 int
 ged_ae2dir(struct ged *gedp, int argc, const char *argv[])
 {
-    fastf_t az, el;
+    double az, el;
     vect_t dir;
     int iflag;
     static const char *usage = "[-i] az el";

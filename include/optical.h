@@ -1,7 +1,7 @@
 /*                            O P T I C A L . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2012 United States Government as represented by
+ * Copyright (c) 2004-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -122,7 +122,7 @@ OPTICAL_EXPORT extern int	rdebug;
  */
 
 /* These definitions are each for one bit */
-/* Should be reogranized to put most useful ones first */
+/* Should be reorganized to put most useful ones first */
 #define RDEBUG_HITS	0x00000001	/* 1 Print hits used by view() */
 #define RDEBUG_MATERIAL	0x00000002	/* 2 Material properties */
 #define RDEBUG_SHOWERR	0x00000004	/* 3 Colorful markers on errors */

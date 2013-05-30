@@ -1,7 +1,7 @@
 #                    C E L L P L O T . T C L
 # BRL-CAD
 #
-# Copyright (c) 1998-2012 United States Government as represented by
+# Copyright (c) 1998-2013 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -87,7 +87,7 @@
 
 ## - createCell
 #
-# Transform the data coodinates into canvas coordinates,
+# Transform the data coordinates into canvas coordinates,
 # then draw the cell in the specified color.
 #
 ::itcl::body cadwidgets::CellPlot::createCell {x1 y1 x2 y2 args} {

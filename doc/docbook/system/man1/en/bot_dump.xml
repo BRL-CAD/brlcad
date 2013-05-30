@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='bot_dump1'>
+<refmeta>
+    <refentrytitle>BOT_DUMP</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class='source'>BRL-CAD</refmiscinfo>
+<refmiscinfo class='manual'>BRL-CAD</refmiscinfo>
+</refmeta>
+
+<refnamediv>
+<refname>bot_dump</refname>
+<refpurpose>export polygonal BoT primitives without performing evaluation</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<cmdsynopsis>
+  <command>bot_dump</command>    <arg choice='opt'>-b </arg>
+    <arg choice='opt'>-n </arg>
+    <arg choice='opt'>-m <replaceable>directory</replaceable></arg>
+    <arg choice='opt'>-o <replaceable>file</replaceable></arg>
+    <group choice='opt'><arg choice='plain'>-t <replaceable>dxf</replaceable></arg><arg choice='plain'><replaceable>obj</replaceable></arg><arg choice='plain'><replaceable>sat</replaceable></arg><arg choice='plain'><replaceable>stl</replaceable></arg></group>
+    <arg choice='opt'>-u <replaceable>units</replaceable></arg>
+    <arg choice='opt'>-v </arg>
+    <arg choice='plain'><replaceable>geom.g</replaceable></arg>
+    <arg choice='opt'><arg choice='plain'><replaceable>bot1</replaceable></arg><arg choice='plain' rep='repeat'><replaceable>bot2</replaceable></arg></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para><command>bot_dump</command></para>
+
+<para>The
+<option>-b</option>
+option may be specified to indicate that the output file should be in
+a binary format (e.g., for formats that support ascii and binary
+formats like stl).</para>
+
+<para>If the
+<option>-n</option>
+option is specified, BoT surface normals will be included in the output
+of
+<emphasis remap='I'>obj</emphasis>
+files. This option is specific to
+<emphasis remap='I'>obj</emphasis>
+file generation since normal vector outputs are already an integral
+part of the
+<emphasis remap='I'>stl</emphasis>
+file outputs and both the
+<emphasis remap='I'>dxf</emphasis>
+and
+<emphasis remap='I'>sat</emphasis>
+file formats do not support or require surface normal generation.</para>
+
+<para>If the
+<option>-m</option>
+option is specified, then BoTs will be output to the directory name
+specified with one BoT per file.</para>
+
+<para>The
+<option>-o</option>
+option specifies what output file the BoT data should be dumped to.</para>
+
+<para>The
+<option>-t</option>
+is used to specify the desired output file type.  The default output
+type is STL in ASCII format.</para>
+
+<para>The
+<option>-u</option>
+option takes a units string that indicates the unit conversion to
+perform during output (converting from internal millimeter values to
+the unit type specified).</para>
+</refsect1>
+
+<refsect1 xml:id='example'><title>EXAMPLE</title>
+<synopsis>
+$ <emphasis remap='I'>bot_dump  -o some_bot_dump.dxf  -t dxf  sample.g  some_bot</emphasis>
+</synopsis>
+</refsect1>
+
+<refsect1 xml:id='diagnostics'><title>DIAGNOSTICS</title>
+<para>Error messages are intended to be self-explanatory.</para>
+
+</refsect1>
+
+<refsect1 xml:id='author'><title>AUTHOR</title>
+<para>BRL-CAD Team</para>
+
+</refsect1>
+
+<refsect1 xml:id='copyright'><title>COPYRIGHT</title>
+<para>This software is Copyright (c) 2008-2013 by the United States
+Government as represented by U.S. Army Research Laboratory.</para>
+</refsect1>
+
+<refsect1 xml:id='bug_reports'><title>BUG REPORTS</title>
+<para>Reports of bugs or problems should be submitted via electronic
+mail to &lt;devs@brlcad.org&gt;.</para>
+</refsect1>
+</refentry>
+

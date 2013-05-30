@@ -1,7 +1,7 @@
 /*              I M P O R T F G 4 S E C T I O N . C
  * BRL-CAD
  *
- * Copyright (c) 1994-2012 United States Government as represented by
+ * Copyright (c) 1994-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -122,7 +122,7 @@ rt_mk_bot_w_normals(
 	bu_log("Please upgrade to the current database format by using \"dbupgrade\"\n");
     }
 
-    BU_GET(botip, struct rt_bot_internal);
+    BU_ALLOC(botip, struct rt_bot_internal);
     botip->magic = RT_BOT_INTERNAL_MAGIC;
     botip->mode = botmode;
     botip->orientation = orientation;
@@ -243,7 +243,7 @@ Add_bot_face(int pt1, int pt2, int pt3, fastf_t thick, int pos)
 
     if (mode == PLATE_MODE) {
 	if (pos != POS_CENTER && pos != POS_FRONT) {
-	    bu_log("Add_bot_face: illegal postion parameter (%d), must be one or two (ignoring face for group %d component %d)\n", pos, group_id, comp_id);
+	    bu_log("Add_bot_face: illegal position parameter (%d), must be one or two (ignoring face for group %d component %d)\n", pos, group_id, comp_id);
 	    return;
 	}
     }
@@ -391,7 +391,7 @@ do_quad(const char *line)
 	    pos = POS_FRONT;
 
 	if (pos != POS_CENTER && pos != POS_FRONT) {
-	    bu_log("do_quad: illegal postion parameter (%d), must be one or two\n", pos);
+	    bu_log("do_quad: illegal position parameter (%d), must be one or two\n", pos);
 	    bu_log("\telement %d, component %d, group %d\n", element_id, comp_id, group_id);
 	    return;
 	}
@@ -428,10 +428,10 @@ make_bot_object(const char *name,
     bot_ip.num_vertices = num_vertices;
     bot_ip.vertices = (fastf_t *)bu_calloc(num_vertices*3, sizeof(fastf_t), "BOT vertices");
     for (i = 0; i < num_vertices; i++)
-	VMOVE(&bot_ip.vertices[i*3], grid_pts[min_pt+i])
+	VMOVE(&bot_ip.vertices[i*3], grid_pts[min_pt+i]);
 
-	    for (i = 0; i < face_count*3; i++)
-		FACES[i] -= min_pt;
+    for (i = 0; i < face_count*3; i++)
+	FACES[i] -= min_pt;
     bot_ip.num_faces = face_count;
     bot_ip.faces = bu_calloc(face_count*3, sizeof(int), "BOT faces");
     for (i = 0; i < face_count*3; i++)
@@ -457,7 +457,7 @@ make_bot_object(const char *name,
     bot_ip.orientation = RT_BOT_UNORIENTED;
     bot_ip.bot_flags = 0;
 
-    count = rt_bot_vertex_fuse(&bot_ip);
+    count = rt_bot_vertex_fuse(&bot_ip, &wdbp->wdb_tol);
     count = rt_bot_face_fuse(&bot_ip);
     if (count)
 	bu_log("WARNING: %d duplicate faces eliminated from group %d component %d\n", count, group_id, comp_id);

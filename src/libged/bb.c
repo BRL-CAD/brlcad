@@ -1,7 +1,7 @@
 /*                         B B . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2012 United States Government as represented by
+ * Copyright (c) 2008-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -115,8 +115,8 @@ ged_bb(struct ged *gedp, int argc, const char *argv[])
 	return GED_HELP;
     }
 
-    VSETALL(rpp_min, MAX_FASTF);
-    VSETALL(rpp_max, -MAX_FASTF);
+    VSETALL(rpp_min, INFINITY);
+    VSETALL(rpp_max, -INFINITY);
     for (i = 0; i < argc; i++) {
 	if (_ged_get_obj_bounds(gedp, argc - i, (const char **)argv+i, use_air, obj_min, obj_max) == GED_ERROR)
 	    return GED_ERROR;
@@ -162,7 +162,8 @@ ged_bb(struct ged *gedp, int argc, const char *argv[])
 	struct directory *dp;
 	struct rt_arb_internal *arb;
 	struct rt_db_internal new_intern;
-	arb = (struct rt_arb_internal *)bu_malloc(sizeof(struct rt_arb_internal), "arb");
+
+	BU_ALLOC(arb, struct rt_arb_internal);
 	VMOVE(arb->pt[0], rpp_min);
 	VSET(arb->pt[1], rpp_min[X], rpp_min[Y], rpp_max[Z]);
 	VSET(arb->pt[2], rpp_min[X], rpp_max[Y], rpp_max[Z]);

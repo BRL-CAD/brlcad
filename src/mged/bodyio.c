@@ -1,7 +1,7 @@
 /*                        B O D Y I O . C
  * BRL-CAD
  *
- * Copyright (c) 2000-2012 United States Government as represented by
+ * Copyright (c) 2000-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -152,8 +152,7 @@ cmd_import_body(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, con
     }
     switch (major_code) {
     case DB5_MAJORTYPE_BINARY_UNIF:
-	bip = bu_malloc(sizeof(struct rt_binunif_internal),
-			"rt_binunif_internal");
+	BU_ALLOC(bip, struct rt_binunif_internal);
 	bip->magic = RT_BINUNIF_INTERNAL_MAGIC;
 	bip->type = minor_code;
 	bip->u.uint8 = (unsigned char *) bu_malloc((size_t)stat_buf.st_size, "binunif");
@@ -329,7 +328,7 @@ cmd_export_body(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, con
 	    nbytes = (size_t) (bip->count * 8);
 	    break;
 	default:
-	    /* XXX This shouln't happen!! */
+	    /* XXX This shouldn't happen!! */
 	    bu_log("bip->type switch... default");
 	    break;
 	}

@@ -1,7 +1,7 @@
 /*                        D M - R T G L . C
  * BRL-CAD
  *
- * Copyright (c) 1988-2012 United States Government as represented by
+ * Copyright (c) 1988-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -59,6 +59,8 @@
 #include "dm_xvars.h"
 #include "solid.h"
 
+#include "./dm_util.h"
+
 #define VIEWFACTOR (1.0/(*dmp->dm_vp))
 #define VIEWSIZE (2.0*(*dmp->dm_vp))
 
@@ -68,8 +70,8 @@
 #define YSTEREO 491	/* subfield height, in scanlines */
 #define YOFFSET_LEFT 532	/* YSTEREO + YBLANK ? */
 
-#define USE_VECTOR_THRESHHOLD 0
-#if USE_VECTOR_THRESHHOLD
+#define USE_VECTOR_THRESHOLD 0
+#if USE_VECTOR_THRESHOLD
 extern int vectorThreshold;	/* defined in libdm/tcl.c */
 #endif
 
@@ -91,6 +93,7 @@ struct dm dm_rtgl = {
     rtgl_drawEnd,
     rtgl_normal,
     rtgl_loadMatrix,
+    null_loadPMatrix,
     rtgl_drawString2D,
     rtgl_drawLine2D,
     rtgl_drawLine3D,
@@ -116,8 +119,9 @@ struct dm dm_rtgl = {
     rtgl_drawDList,
     rtgl_freeDLists,
     rtgl_genDLists,
-    Nu_int0, /* display to image function */
-    Nu_void,
+    null_getDisplayImage,	/* display to image function */
+    null_reshape,
+    null_makeCurrent,
     0,
     1,				/* has displaylist */
     0,                          /* no stereo by default */
@@ -246,27 +250,14 @@ rtgl_open(Tcl_Interp *interp, int argc, char **argv)
 	return DM_NULL;
     }
 
-    BU_GET(dmp, struct dm);
-    if (dmp == DM_NULL) {
-	return DM_NULL;
-    }
+    BU_ALLOC(dmp, struct dm);
 
     *dmp = dm_rtgl; /* struct copy */
     dmp->dm_interp = interp;
     dmp->dm_lineWidth = 1;
 
-    dmp->dm_vars.pub_vars = (genptr_t)bu_calloc(1, sizeof(struct dm_xvars), "rtgl_open: dm_xvars");
-    if (dmp->dm_vars.pub_vars == (genptr_t)NULL) {
-	bu_free(dmp, "rtgl_open: dmp");
-	return DM_NULL;
-    }
-
-    dmp->dm_vars.priv_vars = (genptr_t)bu_calloc(1, sizeof(struct rtgl_vars), "rtgl_open: rtgl_vars");
-    if (dmp->dm_vars.priv_vars == (genptr_t)NULL) {
-	bu_free(dmp->dm_vars.pub_vars, "rtgl_open: dmp->dm_vars.pub_vars");
-	bu_free(dmp, "rtgl_open: dmp");
-	return DM_NULL;
-    }
+    BU_ALLOC(dmp->dm_vars.pub_vars, struct dm_xvars);
+    BU_ALLOC(dmp->dm_vars.priv_vars, struct rtgl_vars);
 
     dmp->dm_vp = &default_viewscale;
 
@@ -1143,16 +1134,16 @@ addInfo(struct application *app, struct hit *hit, struct soltab *soltab, char fl
     if (newColor) {
 
 	/* create new color bin */
-	bin = bu_malloc(sizeof(struct colorBin), "dm-rtgl.c: addInfo");
+	BU_ALLOC(bin, struct colorBin);
 	VMOVE(bin->color, partColor);
 
 	/* create bin list head */
-	BU_GET(bin->list, struct ptInfoList);
+	BU_ALLOC(bin->list, struct ptInfoList);
 	head = &(bin->list->l);
 	BU_LIST_INIT(head);
 
 	/* add first list item */
-	BU_GET(rtgljob.currItem, struct ptInfoList);
+	BU_ALLOC(rtgljob.currItem, struct ptInfoList);
 	BU_LIST_PUSH(head, rtgljob.currItem);
 	rtgljob.currItem->used = 0;
 
@@ -1169,7 +1160,7 @@ addInfo(struct application *app, struct hit *hit, struct soltab *soltab, char fl
 	/* if list item is full, create a new item */
 	if (rtgljob.currItem->used == PT_ARRAY_SIZE) {
 
-	    BU_GET(rtgljob.currItem, struct ptInfoList);
+	    BU_ALLOC(rtgljob.currItem, struct ptInfoList);
 	    BU_LIST_PUSH(head, rtgljob.currItem);
 	    rtgljob.currItem->used = 0;
 	}
@@ -1453,7 +1444,7 @@ shootGrid(struct jobList *jobs, vect_t min, vect_t max, double maxSpan, int pixe
 	    /* make new job if needed */
 	    if (rtgljob.currJob->used == JOB_ARRAY_SIZE) {
 
-		BU_GET(rtgljob.currJob, struct jobList);
+		BU_ALLOC(rtgljob.currJob, struct jobList);
 		BU_LIST_PUSH(&(jobs->l), rtgljob.currJob);
 		rtgljob.currJob->used = 0;
 	    }
@@ -1833,7 +1824,7 @@ rtgl_drawVList(struct dm *dmp, struct bn_vlist *UNUSED(vp))
 	/* initialize job list */
 	BU_LIST_INIT(&(jobs.l));
 
-	BU_GET(rtgljob.currJob, struct jobList);
+	BU_ALLOC(rtgljob.currJob, struct jobList);
 	BU_LIST_PUSH(&(jobs.l), rtgljob.currJob);
 	rtgljob.currJob->used = 0;
 
@@ -1976,7 +1967,7 @@ rtgl_draw(struct dm *dmp, struct bn_vlist *(*callback_function)(void *), genptr_
  * O G L _ N O R M A L
  *
  * Restore the display processor to a normal mode of operation
- * (ie, not scaled, rotated, displaced, etc).
+ * (i.e., not scaled, rotated, displaced, etc.).
  */
 HIDDEN int
 rtgl_normal(struct dm *dmp)
@@ -2010,7 +2001,7 @@ rtgl_normal(struct dm *dmp)
  * The starting position of the beam is as specified.
  */
 HIDDEN int
-rtgl_drawString2D(struct dm *dmp, char *str, fastf_t x, fastf_t y, int UNUSED(size), int use_aspect)
+rtgl_drawString2D(struct dm *dmp, const char *str, fastf_t x, fastf_t y, int UNUSED(size), int use_aspect)
 {
     if (!dmp)
 	return TCL_ERROR;
@@ -2038,32 +2029,7 @@ HIDDEN int
 rtgl_drawLine2D(struct dm *dmp, fastf_t x1, fastf_t y1, fastf_t x2, fastf_t y2)
 {
 
-    if (dmp->dm_debugLevel)
-	bu_log("rtgl_drawLine2D()\n");
-
-    if (dmp->dm_debugLevel) {
-	GLfloat pmat[16];
-
-	glGetFloatv(GL_PROJECTION_MATRIX, pmat);
-	bu_log("projection matrix:\n");
-	bu_log("%g %g %g %g\n", pmat[0], pmat[4], pmat[8], pmat[12]);
-	bu_log("%g %g %g %g\n", pmat[1], pmat[5], pmat[9], pmat[13]);
-	bu_log("%g %g %g %g\n", pmat[2], pmat[6], pmat[10], pmat[14]);
-	bu_log("%g %g %g %g\n", pmat[3], pmat[7], pmat[11], pmat[15]);
-	glGetFloatv(GL_MODELVIEW_MATRIX, pmat);
-	bu_log("modelview matrix:\n");
-	bu_log("%g %g %g %g\n", pmat[0], pmat[4], pmat[8], pmat[12]);
-	bu_log("%g %g %g %g\n", pmat[1], pmat[5], pmat[9], pmat[13]);
-	bu_log("%g %g %g %g\n", pmat[2], pmat[6], pmat[10], pmat[14]);
-	bu_log("%g %g %g %g\n", pmat[3], pmat[7], pmat[11], pmat[15]);
-    }
-
-    glBegin(GL_LINES);
-    glVertex2f(x1, y1);
-    glVertex2f(x2, y2);
-    glEnd();
-
-    return TCL_OK;
+    return drawLine2D(dmp, x1, y1, x2, y2, "rtgl_drawLine2D()\n");
 }
 
 
@@ -2302,6 +2268,7 @@ rtgl_choose_visual(struct dm *dmp, Tk_Window tkwin)
     int fail;
 
     /* requirements */
+    int screen;
     int use;
     int rgba;
     int dbfr;
@@ -2327,10 +2294,14 @@ rtgl_choose_visual(struct dm *dmp, Tk_Window tkwin)
 
     vibase = XGetVisualInfo(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
 			    0, &vitemp, &num);
+    screen = DefaultScreen(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy);
 
     while (1) {
 	for (i=0, j=0, vip=vibase; i<num; i++, vip++) {
 	    /* requirements */
+	    if (vip->screen != screen)
+		continue;
+
 	    fail = glXGetConfig(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
 				vip, GLX_USE_GL, &use);
 	    if (fail || !use)

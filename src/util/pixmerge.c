@@ -1,7 +1,7 @@
 /*                      P I X M E R G E . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2012 United States Government as represented by
+ * Copyright (c) 1986-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -97,7 +97,7 @@ get_args(int argc, char **argv)
 		    width = c;
 		break;
 	    case 'C':
-	    case 'c':	/* backword compatability */
+	    case 'c':	/* backward compatibility */
 		{
 		    char *cp = bu_optarg;
 		    unsigned char *conp = pconst;
@@ -125,9 +125,9 @@ get_args(int argc, char **argv)
 	f1 = stdin;
     else if ((f1 = fopen(f1_name, "r")) == NULL) {
 	perror(f1_name);
-	(void)fprintf(stderr,
-		      "pixmerge: cannot open \"%s\" for reading\n",
-		      f1_name);
+	fprintf(stderr,
+		"pixmerge: cannot open \"%s\" for reading\n",
+		f1_name);
 	return 0;
     }
 
@@ -136,14 +136,14 @@ get_args(int argc, char **argv)
 	f2 = stdin;
     else if ((f2 = fopen(f2_name, "r")) == NULL) {
 	perror(f2_name);
-	(void)fprintf(stderr,
-		      "pixmerge: cannot open \"%s\" for reading\n",
-		      f2_name);
+	fprintf(stderr,
+		"pixmerge: cannot open \"%s\" for reading\n",
+		f2_name);
 	return 0;
     }
 
     if (argc > bu_optind)
-	(void)fprintf(stderr, "pixmerge: excess argument(s) ignored\n");
+	fprintf(stderr, "pixmerge: excess argument(s) ignored\n");
 
     return 1;		/* OK */
 }

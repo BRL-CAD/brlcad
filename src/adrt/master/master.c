@@ -1,7 +1,7 @@
 /*                        M A S T E R . C
  * BRL-CAD / ADRT
  *
- * Copyright (c) 2007-2012 United States Government as represented by
+ * Copyright (c) 2007-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -360,7 +360,7 @@ master_networking (void *ptr)
     }
 
     /* initialize socket list */
-    master.socklist = (master_socket_t *)bu_malloc(sizeof(master_socket_t), "master socket list");
+    BU_ALLOC(master.socklist, master_socket_t);
     master.socklist->next = NULL;
     master.socklist->prev = NULL;
     master.socklist->num = master_socket;
@@ -424,7 +424,8 @@ master_networking (void *ptr)
 		if (new_socket >= 0)
 		{
 		    tmp = master.socklist;
-		    master.socklist = (master_socket_t *)bu_malloc(sizeof(master_socket_t), "master socket connection");
+
+		    BU_ALLOC(master.socklist, master_socket_t);
 		    master.socklist->num = new_socket;
 		    master.socklist->controller = master.active_connections ? 0 : 1;
 		    master.socklist->active = 1;
@@ -647,7 +648,7 @@ static void finish(int sig) {
 }
 
 static void help() {
-    printf("%s\n", "usage: adrt_master [options]\n\
+    printf("%s\n", "Usage: adrt_master [options]\n\
   -h\t\tdisplay help.\n\
   -c\t\tconnect to component server.\n\
   -d\t\tdaemon mode.\n\
@@ -686,7 +687,7 @@ int main(int argc, char **argv) {
 	       )!= -1)
     {
 	switch (c) {
-            case 'c':
+	    case 'c':
 		bu_strlcpy(comp_host, bu_optarg, 64);
 		break;
 
@@ -694,32 +695,32 @@ int main(int argc, char **argv) {
 		go_daemon_mode = 1;
 		break;
 
-            case 'h':
+	    case 'h':
 		help();
 		return EXIT_SUCCESS;
 
-            case 'o':
+	    case 'o':
 		obs_port = atoi(bu_optarg);
 		break;
 
-            case 'p':
+	    case 'p':
 		port = atoi(bu_optarg);
 		break;
 
-            case 'l':
+	    case 'l':
 		bu_strlcpy(list, bu_optarg, 64);
 		break;
 
-            case 'e':
+	    case 'e':
 		bu_strlcpy(exec, bu_optarg, 64);
 		break;
 
-            case 'b':
+	    case 'b':
 		printf("adrt_master build: %s %s\n", __DATE__, __TIME__);
 		return EXIT_SUCCESS;
 		break;
 
-            case 'v':
+	    case 'v':
 		if(!(bu_debug & BU_DEBUG_UNUSED_1))
 		    bu_debug |= BU_DEBUG_UNUSED_1;
 		else if(!(bu_debug & BU_DEBUG_UNUSED_2))
@@ -730,7 +731,7 @@ int main(int argc, char **argv) {
 		    bu_log("Too verbose!\n");
 		break;
 
-            default:
+	    default:
 		help();
 		return EXIT_FAILURE;
 	}

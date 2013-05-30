@@ -1,7 +1,7 @@
 /*                 OrientedClosedShell.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2012 United States Government as represented by
+ * Copyright (c) 1994-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -96,40 +96,34 @@ void OrientedClosedShell::Print(int level)
 
     TAB(level);
     std::cout << "Attributes:" << std::endl;
-    TAB(level+1);
+    TAB(level + 1);
     std::cout << "closed_shell_element:" << std::endl;
     closed_shell_element->Print(level + 1);
-    TAB(level+1);
+    TAB(level + 1);
     std::cout << "orientation:" << step->getBooleanString(orientation) << std::endl;
 
     TAB(level);
     std::cout << "Inherited Attributes:" << std::endl;
     ConnectedFaceSet::Print(level + 1);
 }
+
+STEPEntity *
+OrientedClosedShell::GetInstance(STEPWrapper *sw, int id)
+{
+    return new OrientedClosedShell(sw, id);
+}
+
 STEPEntity *
 OrientedClosedShell::Create(STEPWrapper *sw, SDAI_Application_instance *sse)
 {
-    Factory::OBJECTS::iterator i;
-    if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
-	OrientedClosedShell *object = new OrientedClosedShell(sw, sse->STEPfile_id);
-
-	Factory::AddObject(object);
-
-	if (!object->Load(sw, sse)) {
-	    std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
-	    delete object;
-	    return NULL;
-	}
-	return static_cast<STEPEntity *>(object);
-    } else {
-	return (*i).second;
-    }
+    return STEPEntity::CreateEntity(sw, sse, GetInstance, CLASSNAME);
 }
 
 bool OrientedClosedShell::LoadONBrep(ON_Brep *brep)
 {
-    if (ON_id >= 0)
-	return true; //already loaded
+    if (ON_id >= 0) {
+	return true;    //already loaded
+    }
 
     if (!closed_shell_element->LoadONBrep(brep)) {
 	std::cerr << "Error: " << entityname << "::LoadONBrep() - Error loading openNURBS brep." << std::endl;

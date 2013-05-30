@@ -1,5 +1,5 @@
-The Clipper code library, the "Software" (that includes Delphi, C++ & C# 
-source code, accompanying samples and documentation), has been released 
+The Clipper code library, the "Software" (that includes Delphi, C++ & C#
+source code, accompanying samples and documentation), has been released
 under the following license, terms and conditions:
 
 Boost Software License - Version 1.0 - August 17th, 2003

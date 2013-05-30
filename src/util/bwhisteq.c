@@ -1,7 +1,7 @@
 /*                      B W H I S T E Q . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2012 United States Government as represented by
+ * Copyright (c) 1986-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -19,7 +19,7 @@
  */
 /** @file util/bwhisteq.c
  *
- * Build up the histgram of a picture and output the "equalized"
+ * Build up the histogram of a picture and output the "equalized"
  * version of it on stdout.
  *
  */
@@ -109,7 +109,7 @@ main(int argc, char **argv)
 	    fprintf(stderr, "new[%d] = %d\n", i, new[i]);
     }
 
-    fseek(fp, 0, 0);
+    bu_fseek(fp, 0, 0);
     while ((n = fread(buf, 1, 512, fp)) > 0) {
 	for (i = 0; i < n; i++) {
 	    long idx = buf[i];

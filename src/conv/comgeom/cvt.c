@@ -1,7 +1,7 @@
 /*                           C V T . C
  * BRL-CAD
  *
- * Copyright (c) 1989-2012 United States Government as represented by
+ * Copyright (c) 1989-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -76,7 +76,7 @@ void		col_pr(char *str);
 static char usage[] = "\
 Usage: comgeom-g [options] input_file output_file\n\
 Options:\n\
-	-v input_vers#		default is 5 (cg5)\n\
+	-v input_vers#		default is 5 (cg5); versions 1, 4 also available\n\
 	-d debug_lvl\n\
 	-s name_suffix\n\
 ";
@@ -149,7 +149,7 @@ get_args(int argc, char **argv)
     }
 
     if (argc > ++bu_optind)
-	(void)fprintf(stderr, "comgeom-g: excess argument(s) ignored\n");
+	fprintf(stderr, "comgeom-g: excess argument(s) ignored\n");
 
     return 1;		/* OK */
 }
@@ -180,7 +180,7 @@ main(int argc, char **argv)
     printf("Reading version %d COMGEOM file\n", version);
 
     if (verbose) {
-	printf("COMGEOM input file must have this format:\n");
+	printf("COMGEOM input file (version %d) must have this format:\n",version);
 	switch (version) {
 	    case 1:
 		printf("     1.  title card\n");
@@ -236,7 +236,8 @@ main(int argc, char **argv)
     }
 
     /* Drop leading blanks in title */
-    while (isspace(*title))  title++;
+    while (isspace((int)*title))
+	title++;
     trim_trail_spaces(title);
     trim_trail_spaces(units);
 
@@ -244,8 +245,8 @@ main(int argc, char **argv)
     {
 	char	*cp = units;
 	while (*cp) {
-	    if (isupper(*cp))
-		*cp = tolower(*cp);
+	    if (isupper((int)*cp))
+		*cp = tolower((int)*cp);
 	    cp++;
 	}
     }
@@ -285,7 +286,7 @@ main(int argc, char **argv)
 	    if (sscanf(ctitle, "%20d%10d", &sol_total, &reg_total) != 2) {
 		printf("ctitle sscanf failed .... STOP\n");
 		return 10;
-            }
+	    }
 	    break;
 	case 5:
 	    if (get_line(ctitle, sizeof(ctitle), "control card") == EOF) {

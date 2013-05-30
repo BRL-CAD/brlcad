@@ -1,7 +1,7 @@
 #                     T E M P L A T E . S H
 # BRL-CAD
 #
-# Copyright (c) 2007-2012 United States Government as represented by
+# Copyright (c) 2007-2013 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -129,15 +129,17 @@ if [ ! -f "$header_sh" ] ; then
 fi
 
 # apply the header
-output="`/bin/sh \"$header_sh\" \"$LICE\" \"$FILE\" \"$PROJ\" \"$COPY\" 2>&1`"
+output="`env bash \"$header_sh\" \"$LICE\" \"$FILE\" \"$PROJ\" \"$COPY\" 2>&1`"
 if [ $? -ne 0 ] ; then
-    cp "$FILE.backup" "$FILE"
+    if [ -f "$FILE.backup" ] ; then
+	cp "$FILE.backup" "$FILE"
+    fi
     echo "$output"
     echo "ERROR: the header failed to apply, aborting"
     exit 1
 fi
 
-# get rid of the header backup
+# get rid of any header backup
 rm -f "$FILE.backup"
 
 # find the footer script
@@ -148,7 +150,9 @@ for dir in `dirname $0` . .. sh ../sh ; do
     fi
 done
 if [ ! -f "$footer_sh" ] ; then
-    cp "$FILE.backup" "$FILE"
+    if [ -f "$FILE.backup" ] ; then
+	cp "$FILE.backup" "$FILE"
+    fi
     echo "ERROR: Unable to find the footer.sh script"
     echo "       Searched for footer.sh in:"
     echo "         `dirname $0`:.:..:sh:../sh"
@@ -156,15 +160,17 @@ if [ ! -f "$footer_sh" ] ; then
 fi
 
 # apply the footer
-output="`/bin/sh \"$footer_sh\" \"$FILE\" 2>&1`"
+output="`env bash \"$footer_sh\" \"$FILE\" 2>&1`"
 if [ $? -ne 0 ] ; then
-    cp "$FILE.backup" "$FILE"
+    if [ -f "$FILE.backup" ] ; then
+	cp "$FILE.backup" "$FILE"
+    fi
     echo "$output"
-    echo "ERROR: the header failed to apply, aborting"
+    echo "ERROR: the footer failed to apply, aborting"
     exit 1
 fi
 
-# get rid of the footer backup
+# get rid of any footer backup
 rm -f "$FILE.backup"
 
 echo "$FILE successfully created with $LICE license"

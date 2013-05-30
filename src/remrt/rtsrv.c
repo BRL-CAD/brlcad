@@ -1,7 +1,7 @@
 /*                         R T S R V . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2012 United States Government as represented by
+ * Copyright (c) 1985-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -65,7 +65,6 @@
 #include "./protocol.h"
 
 
-
 struct bu_list	WorkHead;
 
 struct pkg_queue {
@@ -119,7 +118,7 @@ struct icv_image_file *bif = NULL;
  * Package Handlers.
  */
 void	ph_unexp(struct pkg_conn *pc, char *buf);	/* foobar message handler */
-void	ph_enqueue(struct pkg_conn *pc, char *buf);	/* Addes message to linked list */
+void	ph_enqueue(struct pkg_conn *pc, char *buf);	/* Adds message to linked list */
 void	ph_dirbuild(struct pkg_conn *pc, char *buf);
 void	ph_gettrees(struct pkg_conn *pc, char *buf);
 void	ph_matrix(struct pkg_conn *pc, char *buf);
@@ -243,14 +242,9 @@ main(int argc, char **argv)
 	setpgrp();
 #endif
 
-	/* Deal with CPU limits on "those kinds" of systems */
-	if ( bu_cpulimit_get() > 0 )  {
-	    bu_cpulimit_set( 9999999 );
-	}
-
 	/*
-	 *  Unless controller process has specificially said
-	 *  that this is an interactive session, eg, for a demo,
+	 *  Unless controller process has specifically said
+	 *  that this is an interactive session, e.g., for a demo,
 	 *  drop to the lowest sensible priority.
 	 */
 	if ( !interactive )  {
@@ -377,7 +371,7 @@ main(int argc, char **argv)
 		    bu_log("bad list element, type=%d\n", lp->type );
 		    return 33;
 	    }
-	    bu_free( (char *)lp, "struct pkg_queue" );
+	    BU_PUT(lp, struct pkg_queue);
 	}
     }
 
@@ -442,7 +436,7 @@ ph_dirbuild(struct pkg_conn *UNUSED(pc), char *buf)
     if ( debug )  fprintf(stderr, "ph_dirbuild: %s\n", buf );
 
     for (n = 0; n < strlen(buf); n++) {
-	if (isspace(buf[n]))
+	if (isspace((int)buf[n]))
 	    max_argc++;
     }
     argv = bu_calloc(max_argc+1, sizeof(char *), "alloc argv");
@@ -514,7 +508,7 @@ ph_gettrees(struct pkg_conn *UNUSED(pc), char *buf)
     }
 
     for (n = 0; n < strlen(buf); n++) {
-	if (isspace(buf[n]))
+	if (isspace((int)buf[n]))
 	    max_argc++;
     }
     argv = bu_calloc(max_argc+1, sizeof(char *), "alloc argv");
@@ -629,7 +623,7 @@ ph_matrix(struct pkg_conn *UNUSED(pc), char *buf)
     hypersample = 0;
     jitter = 0;
     rt_perspective = 0;
-    eye_backoff = 1.414;
+    eye_backoff = M_SQRT2;
     aspect = 1;
     stereo = 0;
     use_air = 0;

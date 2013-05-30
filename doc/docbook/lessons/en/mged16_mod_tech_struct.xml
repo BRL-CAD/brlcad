@@ -2,7 +2,7 @@
 
 <article xmlns="http://docbook.org/ns/docbook" version="5.0">
   <info><title>Learning Modeling Techniques and Structures</title>
-    
+
 
     <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../books/en/tutorial_series_authors.xml" xpointer="Intro_MGED_Tutorial_Series_II_authors"/>
 
@@ -58,18 +58,18 @@
     </para>
 
     <section xml:id="radio_shapes_to_regions"><info><title>Making the Shapes into Regions</title></info>
-      
+
       <para>
 	Open the database radio.g that you created in Lesson 2. In the Command
 	Window, use the ls command to list all the contents of your radio. It
 	should read as follows:
-	
+
 	<literallayout class="normal">
    ant.s btn.s knob.s
 
    body.s btn2.s spkr.s
 	</literallayout>
-	
+
 	Now what does this list really contain? Parts to a model radio? Not
 	really. What the list actually comprises is just a collection of shapes
 	(which we have hinted at by using a .s suffix) that (1) do not have
@@ -77,9 +77,9 @@
       </para>
       <note>
 	<para>
-	  Remember, in <application>MGED</application> no shape truly becomes an object until it is        
-	  included in a region, which, by definition, is an object or           
-	  collection of objects that has a common material type.                
+	  Remember, in <application>MGED</application> no shape truly becomes an object until it is
+	  included in a region, which, by definition, is an object or
+	  collection of objects that has a common material type.
 	</para>
       </note>
       <para>
@@ -96,32 +96,32 @@
 	complex than just a solid box with a few shapes glued to its surface.
 	(Remember that all objects are solid unless constructed to be otherwise.)
 	Therefore, let's start with the main component of the radio-the body.
- 
+
       </para>
     </section>
     <section xml:id="body_of_radio"><info><title>The Body of the Radio</title></info>
-      
+
 
       <para>
 	If we think about it, the body of a radio is actually a hollow case. So,
 	the first thing we need to do is hollow out the case's interior to make
 	room for internal components. To do this, we can use the inside command to
 	create a shape, which we'll call cavity.s:
-	
+
 	<command>inside body.s cavity.s 1 1 1 1 1 1[Enter]</command>
-	
+
 	Now, we'll make a region called case.r and define it as what's left of
 	body.s after cavity.s has been subtracted out. The command should look
 	like this:
-	
+
 	<command>r case.r u body.s - cavity.s[Enter]</command>
       </para>
       <note>
 	<para>
-	  Remember that the inside command was originally created to hollow out 
-	  objects such as gas tanks and boxes; however, it can also be used to  
-	  create any new cutaway shape that has some relationship to a          
-	  pre-existing shape.                                                   
+	  Remember that the inside command was originally created to hollow out
+	  objects such as gas tanks and boxes; however, it can also be used to
+	  create any new cutaway shape that has some relationship to a
+	  pre-existing shape.
 	</para>
       </note>
       <para>
@@ -129,21 +129,21 @@
 	structure to accommodate the antenna, the volume control knob, and the
 	talk button. To do this, we must subtract the three shapes from the case
 	as follows:
-	
+
 	<command>r case.r - ant.s - knob.s - btn.s[Enter]</command>
-	
+
 	Finally, we need to "glue" the lip around the speaker to the case's front
 	face by typing
-	
+
 	<command>r case.r u spkr.s[Enter]</command>
       </para>
       <para>
 	Our body is now finished. Note that an experienced modeler would probably
 	have combined the preceding three Boolean functions into a single command
 	as follows:
-	
+
 	<command>r case.r u body.s - cavity.s - ant.s - knob.s - btn.s u spkr.s[Enter]</command>
-	
+
 	If we were to raytrace case.r at this point, we would see the following:
 
       <informalfigure>
@@ -170,76 +170,76 @@
 	  Precedence Review
 	</para>
 	<para>
-	  The order in which these primitives were unioned and subtracted is    
-	  important. We unioned in spkr. s last so that all the subtractions    
-	  would apply to body.s. The rules of precedence for Boolean operators  
-	  indicate that subtraction and intersection have a higher priority     
-	  than union (meaning that they are performed first).                   
+	  The order in which these primitives were unioned and subtracted is
+	  important. We unioned in spkr. s last so that all the subtractions
+	  would apply to body.s. The rules of precedence for Boolean operators
+	  indicate that subtraction and intersection have a higher priority
+	  than union (meaning that they are performed first).
 	</para>
 	<para>
-	  Although the following operation is not in proper <application>MGED</application> syntax, it     
-	  does illustrate the implied parentheses that precede and follow the   
-	  union operators in our last command:                                  
-	
+	  Although the following operation is not in proper <application>MGED</application> syntax, it
+	  does illustrate the implied parentheses that precede and follow the
+	  union operators in our last command:
+
 	  <command>r case.r u (body.s - cavity.s - ant.s - knob.s - btn.s) u (spkr.s)[Enter] </command>
-	  
-	  Optionally, we could've unioned in spkr.s before body.s as follows:   
-	  
-	  <command>r case.r u spkr.s u body.s - cavity.s - ant.s - knob.s - btn.s[Enter]</command> 
+
+	  Optionally, we could've unioned in spkr.s before body.s as follows:
+
+	  <command>r case.r u spkr.s u body.s - cavity.s - ant.s - knob.s - btn.s[Enter]</command>
 	</para>
 	<para>
-	  Let's consider, however, what would have happened if we had done the  
-	  following:                                                            
-	  
-	  <command>r case.r u body.s u spkr.s - cavity.s - ant.s - knob.s - btn.s[Enter]</command> 
-                                                                          
-	  In this last case, operator precedence would have caused the program  
-	  to subtract cavity.s, ant.s, knob.s, and btn.s from spkr.s. Nothing   
-	  would have been subtracted from body.s. Therefore, the holes in the   
-	  case would not have been created.                                     
+	  Let's consider, however, what would have happened if we had done the
+	  following:
+
+	  <command>r case.r u body.s u spkr.s - cavity.s - ant.s - knob.s - btn.s[Enter]</command>
+
+	  In this last case, operator precedence would have caused the program
+	  to subtract cavity.s, ant.s, knob.s, and btn.s from spkr.s. Nothing
+	  would have been subtracted from body.s. Therefore, the holes in the
+	  case would not have been created.
 	</para>
 	<para>
-	  Subtracting cavity.s, ant.s, knobs, and btn.s from spkr.s would have  
-	  produced no apparent effect because they do not overlap the volume of 
-	  spkr.s.                                                               
+	  Subtracting cavity.s, ant.s, knobs, and btn.s from spkr.s would have
+	  produced no apparent effect because they do not overlap the volume of
+	  spkr.s.
 	</para>
       </note>
     </section>
 
     <section xml:id="radio_other_regions"><info><title>The Other Regions</title></info>
-      
+
       <para>
 	Making the talk button is simpler than making the case. The button
 	consists of the union of two primitive shapes. To make them into a region,
 	type
-	
+
 	<command>r button.r u btn.s u btn2.s[Enter]</command>
       </para>
       <para>
 	The volume knob and antenna are even simpler. They are single primitive
 	shapes that can be made into regions by typing
-	
+
 	<command>r knob.r u knob.s[Enter]</command>
-	
+
 	<command>r ant.r u ant.s[Enter]</command>
       </para>
     </section>
 
     <section xml:id="radio_assembly_comb"><info><title>Gathering the Regions into an Assembly Combination</title></info>
-      
+
       <para>
 	Now let's take all of the regions we have made so far and gather them into
 	an assembly (or group) combination called radio.c so that we can keep all
 	of these parts together. There are several ways to do this. One way would
 	be to use a similar method to the one we used to make the regions:
-	
+
 	<command>comb radio.c u case.r u button.r u knob.r u ant.r[Enter]</command>
       </para>
       <para>
 	A shortcut, however, would be to use the g (group) command as follows:
-	
+
 	<command>g radio.c case.r button.r knob.r ant.r[Enter]</command>
-	
+
 	Unlike the comb command, the g command assumes that all of the items
 	specified will be unioned together, and so no Boolean operators need to be
 	specified.
@@ -247,9 +247,9 @@
       <para>
 	A final improvement would include using the database name wildcard *.r to
 	quickly and easily specify all of the regions in the database:
-	
+
 	<command>g radio.c *.r[Enter]</command>
-	
+
 	If we now tree radio.c, we should get the following output in the Command
 	Window.
 	<literallayout class="normal">
@@ -287,7 +287,7 @@
     </section>
 
     <section xml:id="radio_assign_mater_props"><info><title>Assigning Material Properties to the Regions</title></info>
-      
+
       <para>
 	Thus far, the objects we have created have no material properties other
 	than the gray plastic that <application>MGED</application> assigns by default to any object without
@@ -323,28 +323,28 @@
       </informalfigure>
 
       </para>
-      <para> 
+      <para>
 	As we look at our radio now, we can see that the antenna looks a little
 	bit like a straw. In reality, it should have a small cap on the end so
 	that we can raise and lower the antenna. We can approximate this shape by
 	creating an ellipsoid (which we'll call ant2.s) and unioning it in with
 	the rest of the antenna as follows:
-	
+
 	<command>in ant2.s ell1 2 2 94 0 0 1 3[Enter]</command>
-	
+
 	<command>r ant.r u ant2.s[Enter]</command>
       </para>
     </section>
 
     <section xml:id="radio_internal_components"><info><title>Adding Internal Components</title></info>
-      
+
       <para>
 	Our radio is looking more and more realistic; however, it is still just a
 	hollow shell. Let's further improve it by making a circuit board to go
 	inside the case. To do this, type:
-	
+
 	<command>in board.s rpp 3 4 1 31 1 47[Enter]</command>
-	
+
 	<command>r board.r u board.s[Enter]</command>
       </para>
       <para>
@@ -353,7 +353,7 @@
 	approach. Type:
 
 	<command>mater board.r "plastic sh=4" 0 198 0 1[Enter]</command>
-	
+
 	Diagrammed, this command says to:
 	<informaltable>
 	  <tgroup cols="5">
@@ -379,11 +379,11 @@
       <para>
 	Finally, we'll include the board with the rest of the components in
 	radio.c as follows:
-	
+
 	<command>g radio.c board.r[Enter]</command>
-	
+
 	Our radio should now look like the following:
-	
+
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
@@ -439,7 +439,7 @@
     </section>
 
     <section xml:id="radio_specialty_models"><info><title>Making Specialty Models of the Radio</title></info>
-      
+
       <para>
 	Now, what would happen to the circuit board if we were to raytrace the
 	radio at this point? It would disappear because it lies within the case.
@@ -483,15 +483,15 @@
 	done and the complexity of the original object.
       </para>
       <section><info><title>Transparent View</title></info>
-	
+
 	<para>
 	  Making a specialty radio with a transparent case would probably be the
 	  easiest way to view the circuit board inside. All we have to do is make a
 	  copy of our present radio case and modify its material properties. We'll
 	  call the specialty case case_clear.r. Type
-	  
+
 	  <command>cp case.r case_clear.r[Enter]</command>
-	  
+
 	  We can now use the Combination Editor to set the material properties on
 	  this case without affecting the "master" design of the radio. When this
 	  has been done, we can combine this modified case with the other unchanged
@@ -508,11 +508,11 @@
 	</para>
 	<para>
 	  Finally, create the specialty radio combination by typing:
-	  
+
 	  <command>g radio_clear.c case_clear.r button.r knob.r ant.r board.r[Enter]</command>
-	  
+
 	  and then Blast the display with
-	  
+
 	  <command>B radio_clear.c[Enter]</command>
 	</para>
 	<para>
@@ -577,19 +577,19 @@
 	</para>
 	<note>
 	  <para>
-	    Notice in the preceding figure that the color chosen for the          
-	    transparent case does influence the appearance of the internal        
-	    objects. Although we made the circuit board green, the filter effect  
-	    of the transparent magenta case-which allows no green light to enter  
-	    or exit the case-causes the board to appear to be dark purple. This   
-	    is okay in our situation. However, if accuracy in color is important  
-	    in a model, the modeler should remember to select a neutral color     
-	    (such as white or light gray) for the transparent object.             
+	    Notice in the preceding figure that the color chosen for the
+	    transparent case does influence the appearance of the internal
+	    objects. Although we made the circuit board green, the filter effect
+	    of the transparent magenta case-which allows no green light to enter
+	    or exit the case-causes the board to appear to be dark purple. This
+	    is okay in our situation. However, if accuracy in color is important
+	    in a model, the modeler should remember to select a neutral color
+	    (such as white or light gray) for the transparent object.
 	  </para>
 	</note>
       </section>
       <section><info><title>Cutaway View</title></info>
-	
+
 	<para>
 	  Another way we can make the interior components of the radio visible is to
 	  create a cutaway view. Although it is a little more complex to make than
@@ -616,9 +616,9 @@
 	  shape the way you want it, create the following radio_cutaway.c
 	  combination that unions in radio.c and subtracts out the shape (cutaway.s)
 	  that is covering what you want to see (board.r):
-	  
+
 	  <command>comb radio_cutaway.c u radio.c - cutaway.s[Enter]</command>
-  
+
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
@@ -637,7 +637,7 @@
 	  Blast the radio_cutaway.c combination onto the display and raytrace.
 	  Depending on how your arb8 intersected the radio, the cutaway should look
 	  similar to the following:
-   
+
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
@@ -682,7 +682,7 @@
 	  components or structures. If we don't, the master model will also be
 	  changed.
 	</para>
-	
+
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
@@ -700,7 +700,7 @@
     </section>
 
     <section xml:id="radio_structure_redefinition"><info><title>Redefining the Structure of the Radio</title></info>
-      
+
       <para>
 	As shapes are added in a design, the modeler often finds that the
 	structure or association of components needs to change. Thus, we should
@@ -727,7 +727,7 @@
        <para>
 	 If we wanted to categorize our components according to location, however,
 	 we might structure the model as follows:
-	 
+
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
@@ -750,7 +750,7 @@
 	 probably be attached to it in some way, and so they too would need to come
 	 out. Accordingly, our structure should be changed as shown in the
 	 following diagram to associate the knob and button with the circuit board.
-	 
+
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
@@ -768,18 +768,18 @@
        <para>
 	 To accomplish this restructuring according to functionality, create an
 	 assembly called electronics.c to hold these components together. Type:
-	 
+
 	 <command>g electronics.c board.r knob.r button.r[Enter]</command>
-	 
+
 	 Of course, we now need to remove board.r, knob.r, and button.r from the
 	 radio.c assembly so that when electronics.c is added to the radio.c
 	 assembly, we won't have the knob and button included twice in the model.
 	 To do this, use the rm (remove) command:
-	 
+
 	 <command>rm radio.c board.r knob.r button.r[Enter]</command>
-	 
+
 	 and then union in the electronics assembly:
-	 
+
 	 <command>g radio.c electronics.c[Enter]</command>
        </para>
        <para>
@@ -832,13 +832,13 @@
        <para>
 	 First, we need to get rid of the old radio_cutaway.c, which was based on
 	 our previous structure. To do this, type
-	 
+
 	 <command>kill radio_cutaway.c[Enter]</command>
-	 
+
 	 and then remake the combination by typing
-	 
+
 	 <command>comb radio_cutaway.c u case.r - cutaway.s u electronics.c u ant.r[Enter]</command>
-	 
+
 	 Now when we Blast the display and raytrace radio_cutaway.c, we should see
 	 the following:
 
@@ -859,7 +859,7 @@
     </section>
 
     <section xml:id="modeling_techniques_and_structures_review"><info><title>Review</title></info>
-      
+
       <para>
 	In this lesson, you:
 	<itemizedlist mark="bullet">

@@ -1,7 +1,7 @@
 /*                            I F . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2012 United States Government as represented by
+ * Copyright (c) 2004-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -185,11 +185,11 @@ if_hit(struct application *ap, struct partition *part_head, struct seg *UNUSED(f
 
 	/* format up the attribute strings into a single string */
 	bu_vls_trunc(&attr_vls, 0);
-        for (i = 0; i < a_tab.attrib_use; i++) {
+	for (i = 0; i < a_tab.attrib_use; i++) {
 	   if ((val = bu_avs_get(&part->pt_regionp->attr_values, db5_standard_attribute(db5_standardize_attribute(a_tab.attrib[i])))) != NULL) {
 	       bu_vls_printf(&attr_vls, "%s=%s ", a_tab.attrib[i], val);
 	   }
-        }
+	}
 
 	ValTab[VTI_ATTRIBUTES].value.sval = bu_vls_addr(&attr_vls);
 
@@ -278,8 +278,7 @@ if_overlap(struct application *ap, struct partition *pp, struct region *reg1, st
 {
     overlap *new_ovlp;
 
-    /* N. B. bu_malloc() only returns on successful allocation */
-    new_ovlp = (overlap *) bu_malloc(sizeof(overlap), "new_ovlp");
+    BU_ALLOC(new_ovlp, overlap);
 
     new_ovlp->ap = ap;
     new_ovlp->pp = pp;
@@ -309,7 +308,7 @@ get_obliq(fastf_t *ray, fastf_t *normal)
     fastf_t cos_obl;
     fastf_t obliquity;
 
-    cos_obl = fabs(VDOT(ray, normal) * MAGNITUDE(normal) / MAGNITUDE(ray));
+    cos_obl = fabs(VDOT(ray, normal) / (MAGNITUDE(normal) * MAGNITUDE(ray)));
     if (cos_obl < 1.001) {
 	if (cos_obl > 1)
 	    cos_obl = 1;

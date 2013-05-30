@@ -1,7 +1,7 @@
 /*                           X X X . H
  * BRL-CAD
  *
- * Copyright (c) 2012 United States Government as represented by
+ * Copyright (c) 2012-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -25,7 +25,7 @@
  * Design disk record
  *
  * define rt_xxx_internal --- parameters for solid
- * define xxx_specific --- raytracing form, possibly w/precomuted terms
+ * define xxx_specific --- raytracing form, possibly w/precomputed terms
  * define rt_xxx_parse --- struct bu_structparse for "db get", "db adjust", ...
  *
  * code import/export4/describe/print/ifree/plot/prep/shot/curve/uv/tess

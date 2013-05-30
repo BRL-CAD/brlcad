@@ -1,7 +1,7 @@
 /*                    P C N E T W O R K . H
  * BRL-CAD
  *
- * Copyright (c) 2008-2012 United States Government as represented by
+ * Copyright (c) 2008-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -92,7 +92,7 @@ public:
     BinaryNetwork();
     BinaryNetwork(std::vector<Variable<T> *>, std::vector<Constraint *>);
     BinaryNetwork(VCSet & vcset);
-    
+
     /** Data access methods */
     void getVertexbyID(std::string, Vertex&);
 

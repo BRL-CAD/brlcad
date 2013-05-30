@@ -1,7 +1,7 @@
 /*                 SolidAngleConversionBasedUnit.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2012 United States Government as represented by
+ * Copyright (c) 1994-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -34,33 +34,37 @@
 
 #define CLASSNAME "SolidAngleConversionBasedUnit"
 #define ENTITYNAME "Solid_Angle_Conversion_Based_Unit"
-string SolidAngleConversionBasedUnit::entityname = Factory::RegisterClass(ENTITYNAME,(FactoryMethod)SolidAngleConversionBasedUnit::Create);
+string SolidAngleConversionBasedUnit::entityname = Factory::RegisterClass(ENTITYNAME, (FactoryMethod)SolidAngleConversionBasedUnit::Create);
 
-SolidAngleConversionBasedUnit::SolidAngleConversionBasedUnit() {
+SolidAngleConversionBasedUnit::SolidAngleConversionBasedUnit()
+{
     step = NULL;
     id = 0;
 }
 
-SolidAngleConversionBasedUnit::SolidAngleConversionBasedUnit(STEPWrapper *sw,int step_id) {
+SolidAngleConversionBasedUnit::SolidAngleConversionBasedUnit(STEPWrapper *sw, int step_id)
+{
     step = sw;
     id = step_id;
 }
 
-SolidAngleConversionBasedUnit::~SolidAngleConversionBasedUnit() {
+SolidAngleConversionBasedUnit::~SolidAngleConversionBasedUnit()
+{
 }
 
 bool
-SolidAngleConversionBasedUnit::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
-    step=sw;
+SolidAngleConversionBasedUnit::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
+    step = sw;
     id = sse->STEPfile_id;
 
 
     // load base class attributes
-    if ( !SolidAngleUnit::Load(step,sse) ) {
+    if (!SolidAngleUnit::Load(step, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::Unit." << std::endl;
 	return false;
     }
-    if ( !ConversionBasedUnit::Load(step,sse) ) {
+    if (!ConversionBasedUnit::Load(step, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::Unit." << std::endl;
 	return false;
     }
@@ -69,32 +73,29 @@ SolidAngleConversionBasedUnit::Load(STEPWrapper *sw,SDAI_Application_instance *s
 }
 
 void
-SolidAngleConversionBasedUnit::Print(int level) {
-    TAB(level); std::cout << CLASSNAME << ":" << "(";
+SolidAngleConversionBasedUnit::Print(int level)
+{
+    TAB(level);
+    std::cout << CLASSNAME << ":" << "(";
     std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-    TAB(level); std::cout << "Inherited Attributes:" << std::endl;
-    SolidAngleUnit::Print(level+1);
-    ConversionBasedUnit::Print(level+1);
+    TAB(level);
+    std::cout << "Inherited Attributes:" << std::endl;
+    SolidAngleUnit::Print(level + 1);
+    ConversionBasedUnit::Print(level + 1);
 
 }
+
 STEPEntity *
-SolidAngleConversionBasedUnit::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
-    Factory::OBJECTS::iterator i;
-    if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
-	SolidAngleConversionBasedUnit *object = new SolidAngleConversionBasedUnit(sw,sse->STEPfile_id);
+SolidAngleConversionBasedUnit::GetInstance(STEPWrapper *sw, int id)
+{
+    return new SolidAngleConversionBasedUnit(sw, id);
+}
 
-	Factory::AddObject(object);
-
-	if (!object->Load(sw, sse)) {
-	    std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
-	    delete object;
-	    return NULL;
-	}
-	return static_cast<STEPEntity *>(object);
-    } else {
-	return (*i).second;
-    }
+STEPEntity *
+SolidAngleConversionBasedUnit::Create(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
+    return STEPEntity::CreateEntity(sw, sse, GetInstance, CLASSNAME);
 }
 
 // Local Variables:

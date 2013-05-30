@@ -1,7 +1,7 @@
 #                T A N K W I Z A R D . T C L
 # BRL-CAD
 #
-# Copyright (c) 2002-2012 United States Government as represented by
+# Copyright (c) 2002-2013 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -861,7 +861,7 @@
 
 ::itcl::body TankWizard::buildFrontSlopeView {parent} {
     itk_component add convHeightL {
-	::ttk::label $parent.convHeightL -text "Convergance Height:" \
+	::ttk::label $parent.convHeightL -text "Convergence Height:" \
 	    -anchor e
     } {}
     itk_component add convHeightE {

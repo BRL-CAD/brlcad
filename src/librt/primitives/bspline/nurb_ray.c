@@ -1,7 +1,7 @@
 /*                      N U R B _ R A Y . C
  * BRL-CAD
  *
- * Copyright (c) 1991-2012 United States Government as represented by
+ * Copyright (c) 1991-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -133,7 +133,7 @@ rt_nurb_clip_srf(const struct face_g_snurb *srf, int dir, fastf_t *min, fastf_t 
     struct internal_convex_hull ch[20]; /* max order is 10 */
     register fastf_t * mp1;
     fastf_t * p1, *p2, *p3, *p4;	/* corner points of the mesh */
-    fastf_t v1[2], v2[2], v3[2];	/* vectors from corneres */
+    fastf_t v1[2], v2[2], v3[2];	/* vectors from corners */
     struct internal_line l1;
     fastf_t norm;
     fastf_t value;
@@ -459,15 +459,15 @@ rt_nurb_intersect(const struct face_g_snurb *srf, fastf_t *plane1, fastf_t *plan
 			fastf_t inv_w;
 
 			inv_w = 1.0 / p1[coords-1];
-			VSCALE(p1, p1, inv_w)
+			VSCALE(p1, p1, inv_w);
 
-			    inv_w = 1.0 / p2[coords-1];
-			VSCALE(p2, p2, inv_w)
-			    }
+			inv_w = 1.0 / p2[coords-1];
+			VSCALE(p2, p2, inv_w);
+		    }
 
-		    VSUB2(diff, p1, p2)
-			bu_log("Precision of hit point = %g (%f %f %f) <-> (%f %f %f)\n",
-			       MAGNITUDE(diff), V3ARGS(p1), V3ARGS(p2));
+		    VSUB2(diff, p1, p2);
+		    bu_log("Precision of hit point = %g (%f %f %f) <-> (%f %f %f)\n",
+			   MAGNITUDE(diff), V3ARGS(p1), V3ARGS(p2));
 		}
 
 		hit = (struct rt_nurb_uv_hit *) bu_malloc(

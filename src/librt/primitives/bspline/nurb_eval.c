@@ -1,7 +1,7 @@
 /*                     N U R B _ E V A L . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2012 United States Government as represented by
+ * Copyright (c) 1990-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -43,7 +43,7 @@
  * Algorithm -
  *
  * The algorithm uses the traditional COX-deBoor approach found in the
- * book "Pratical Guide to Splines" Carl de Boor, pg 147 to evaluate a
+ * book "Practical Guide to Splines" Carl de Boor, pg 147 to evaluate a
  * parametric value on a curve. This is expanded to the surface.
  */
 void

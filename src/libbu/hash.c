@@ -1,7 +1,7 @@
 /*                          H A S H . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2012 United States Government as represented by
+ * Copyright (c) 2004-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -34,7 +34,6 @@ bu_hash(unsigned char *str, int len)
     unsigned long hash = 5381;
     int i, c;
 
-    c = *str;
     for (i=0; i<len; i++) {
 	c = *str;
 	hash = ((hash << 5) + hash) + c; /* hash * 33 + c */
@@ -281,7 +280,7 @@ bu_hash_tbl_free(struct bu_hash_tbl *hsh_tbl)
 	    free(hsh_entry->key);
 	    free(hsh_entry);
 
-	    /* step to next entry in libnked list */
+	    /* step to next entry in linked list */
 	    hsh_entry = tmp;
 	}
     }

@@ -2,7 +2,7 @@
 #                       F O O T E R . S H
 # BRL-CAD
 #
-# Copyright (c) 2004-2012 United States Government as represented by
+# Copyright (c) 2004-2013 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -86,7 +86,7 @@ fi
 # mode is the emacs major mode
 # mode_vars are the indentation variables that need to be set
 # wrap is whether or not in needs to be incased in /* */
-# commentchar is the comment character to prefex each line
+# commentchar is the comment character to prefix each line
 ##
 mode=""
 mode_vars=""
@@ -461,7 +461,7 @@ if [ $matching_found -eq 0 ] ; then
     do_not="Local"
     match="Variables"
     local=`cat "$FILE" | grep -i "${do_not} ${match}:" | awk '{print $1}'`
-    # w00t, no local vars so just dump a shiney new block at the end of the file
+    # w00t, no local vars so just dump a shiny new block at the end of the file
     if [ "x$local" = "x" ] ; then
 	cat >> $FILE <<EOF
 $comment_block

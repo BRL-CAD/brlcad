@@ -1,7 +1,7 @@
 /*                       S I M R T . H
  * BRL-CAD
  *
- * Copyright (c) 2011-2012 United States Government as represented by
+ * Copyright (c) 2011-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -68,7 +68,7 @@
 
 /*
  * This structure is a single node of an array
- * of overlap regions: similar to the one in nirt/usrfrmt.h
+ * of overlap regions: similar to the one in nirt/usrfmt.h
  */
 struct overlap {
     int index;
@@ -146,7 +146,7 @@ struct rayshot_results{
 /**
  * Creates the contact pairs from the raytracing results.
  * This is the core logic of the simulation and the manifold points
- * have to satisfy certain constraints(max area within overlap region etc)
+ * have to satisfy certain constraints (max area within overlap region etc.)
  * to have a successful simulation. The normals and penetration depth is also
  * generated here for each point in the contact pairs. There can be upto 4
  * contact pairs.
@@ -230,9 +230,9 @@ shoot_ray(struct rt_i *rtip,
  */
 int
 shoot_x_rays(struct sim_manifold *current_manifold,
-	         struct simulation_params *sim_params,
-	         vect_t overlap_min,
-	         vect_t overlap_max);
+		 struct simulation_params *sim_params,
+		 vect_t overlap_min,
+		 vect_t overlap_max);
 
 
 /**
@@ -261,9 +261,9 @@ shoot_z_rays(struct sim_manifold *current_manifold,
  */
 int
 shoot_normal_rays(struct sim_manifold *current_manifold,
-	     	 	 struct simulation_params *sim_params,
-	     	 	 vect_t overlap_min,
-	     	 	 vect_t overlap_max);
+			 struct simulation_params *sim_params,
+			 vect_t overlap_min,
+			 vect_t overlap_max);
 
 
 /**

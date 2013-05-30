@@ -1,7 +1,7 @@
 /*                 B R E P L I C A T O R . C P P
  * BRL-CAD
  *
- * Copyright (c) 2008-2012 United States Government as represented by
+ * Copyright (c) 2008-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -34,7 +34,7 @@
 #include "bu.h"
 
 
-ON_Brep *
+static ON_Brep *
 generate_brep(int count, ON_3dPoint *points)
 {
     ON_Brep *brep = new ON_Brep();
@@ -422,6 +422,11 @@ generate_brep(int count, ON_3dPoint *points)
 }
 
 
+static void
+printusage(void){
+	printf("Usage: breplicator (takes no arguments)\n");
+}
+
 int
 main(int argc, char *argv[])
 {
@@ -430,8 +435,14 @@ main(int argc, char *argv[])
     ON_Brep *brep = NULL;
     int ret;
 
-    if (argc > 0)
-	bu_log("Usage: %s\n", argv[0]);
+    if ( BU_STR_EQUAL(argv[1],"-h") || BU_STR_EQUAL(argv[1],"-?")){
+    	printusage();
+    	return 0;
+    }
+    if (argc >= 1){
+    	printusage();
+    	printf("       Program continues running (will create file breplicator.g):\n");
+    }
 
     bu_log("Breplicating...please wait...\n");
 
@@ -486,6 +497,7 @@ main(int argc, char *argv[])
 
     return 0;
 }
+
 
 // Local Variables:
 // tab-width: 8

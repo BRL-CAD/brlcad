@@ -69,7 +69,7 @@ int ON_Box::IsDegenerate( double tolerance ) const
 
 ON_3dPoint ON_Box::Center() const
 {
-  return plane.PointAt(dz.Mid(),dy.Mid(),dz.Mid());
+  return plane.PointAt(dx.Mid(),dy.Mid(),dz.Mid());
 }
 
 bool ON_Box::GetCorners( ON_3dPoint* corners ) const

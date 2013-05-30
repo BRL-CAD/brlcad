@@ -1,7 +1,7 @@
 /*                         G L O B . H
  * BRL-CAD
  *
- * Copyright (c) 2008-2012 United States Government as represented by
+ * Copyright (c) 2008-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -47,16 +47,16 @@ struct Form {
     int    s_compnr; // surrounding component number
     size_t npts;
 
-    union {
+    union data {
 	I_Point_t pt[MAX_NPTS];
 
-	struct {
+	struct bot {
 	    size_t num_vertices;
 	    size_t num_faces;
 	    int vertices[MAX_NPTS * 3];   // points[3][num_vertices]
 	    int faces[MAX_TRIANGLES * 3]; // faces[3][num_faces]
 	} bot;
-    };
+    } data;
 
     int tr_vec[3];
     int thickness;

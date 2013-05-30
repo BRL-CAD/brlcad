@@ -1,7 +1,7 @@
 #                          G E D . T C L
 # BRL-CAD
 #
-# Copyright (c) 1998-2012 United States Government as represented by
+# Copyright (c) 1998-2013 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -93,22 +93,33 @@ package provide cadwidgets::Ged 1.0
     itk_option define -scaleEnable scaleEnable ScaleEnable 0
     itk_option define -showViewingParams showViewingParams ShowViewingParams 0
     itk_option define -viewingParamsColor viewingParamsColor ViewingParamsColor Yellow
+    itk_option define -rayColorOdd rayColorOdd RayColor Cyan
+    itk_option define -rayColorEven rayColorEven RayColor Yellow
+    itk_option define -rayColorVoid rayColorVoid RayColor Magenta
+
+    itk_option define -pixelTol pixelTol PixelTol 8
 
     constructor {_gedOrFile args} {}
     destructor {}
 
     public {
 	common MEASURING_STICK "cad_measuring_stick"
+	common GED_RAY_ODD "ged_ray_odd"
+	common GED_RAY_EVEN "ged_ray_even"
+	common GED_RAY_VOID "ged_ray_void"
+	common GED_RAD2DEG 57.2957795130823208767981548141051703
+	common GED_DEG2RAD 0.0174532925199432957692369076848861271
 
 	variable mGedFile ""
 
 	method 3ptarb {args}
 	method adc {args}
- 	method adjust {args}
+	method adjust {args}
 	method ae {args}
 	method ae2dir {args}
 	method aet {args}
 	method analyze {args}
+	method annotate {args}
 	method arb {args}
 	method arced {args}
 	method arot {args}
@@ -121,14 +132,25 @@ package provide cadwidgets::Ged 1.0
 	method bg {args}
 	method bg_all {args}
 	method blast {args}
+	method bn_dist_pt2_lseg2 {args}
+	method bn_isect_line2_line2 {args}
+	method bn_isect_line3_line3 {args}
+	method bn_noise_fbm {args}
+	method bn_noise_perlin {args}
+	method bn_noise_slice {args}
+	method bn_noise_turb {args}
+	method bn_random {args}
 	method bo {args}
 	method bot {args}
 	method bot_condense {args}
 	method bot_decimate {args}
 	method bot_dump {args}
+	method bot_edge_split {args}
 	method bot_face_fuse {args}
 	method bot_face_sort {args}
+	method bot_face_split {args}
 	method bot_flip {args}
+	method bot_fuse {args}
 	method bot_merge {args}
 	method bot_smooth {args}
 	method bot_split {args}
@@ -136,6 +158,16 @@ package provide cadwidgets::Ged 1.0
 	method bot_vertex_fuse {args}
 	method bounds {args}
 	method bounds_all {args}
+	method brep {args}
+	method bu_units_conversion {args}
+	method bu_brlcad_data {args}
+	method bu_brlcad_dir {args}
+	method bu_brlcad_root {args}
+	method bu_mem_barriercheck {args}
+	method bu_prmem {args}
+	method bu_get_value_by_keyword {args}
+	method bu_rgb_to_hsv {args}
+	method bu_hsv_to_rgb {args}
 	method c {args}
 	method cat {args}
 	method center {args}
@@ -165,30 +197,42 @@ package provide cadwidgets::Ged 1.0
 	method dbfind {args}
 	method dbip {args}
 	method dbot_dump {args}
+	method dbversion {args}
+	method debugbu {args}
+	method debugdir {args}
+	method debuglib {args}
+	method debugmem {args}
+	method debugnmg {args}
 	method decompose {args}
 	method delay {args}
 	method dir2ae {args}
 	method dlist_on {args}
 	method draw {args}
+	method draw_ray {_start _partitions}
 	method dump {args}
 	method dup {args}
 	method E {args}
 	method eac {args}
 	method echo {args}
+	method edarb {args}
 	method edcodes {args}
 	method edcolor {args}
 	method edcomb {args}
 	method edit {args}
 	method edmater {args}
 	method erase {args}
+	method erase_ray {}
 	method ev {args}
 	method expand {args}
 	method eye {args}
 	method eye_pos {args}
+	method eye_pt {args}
 	method exists {args}
 	method faceplate {args}
 	method facetize {args}
 	method fb2pix {args}
+	method find_bot_edge_in_face {_bot _face _mx _my}
+	method find_botpt_in_face {_bot _face _mx _my}
 	method find_pipept {args}
 	method fontsize {args}
 	method form {args}
@@ -196,26 +240,35 @@ package provide cadwidgets::Ged 1.0
 	method g {args}
 	method get {args}
 	method get_autoview {args}
+	method get_bot_edges {args}
 	method get_comb {args}
 	method get_eyemodel {args}
+	method get_fbserv {_fbtype _w _n}
+	method get_prev_ged_mouse {args}
 	method get_prev_mouse {args}
 	method get_type {args}
 	method glob {args}
 	method gqa {args}
+	method graph {args}
 	method grid {args}
+	method grid2model_lu {args}
+	method grid2view_lu {args}
 	method handle_expose {args}
+	method hdivide {args}
 	method hide {args}
 	method how {args}
 	method human {args}
 	method i {args}
 	method idents {args}
 	method idle_mode {args}
+	method igraph {args}
 	method illum {args}
 	method importFg4Section {args}
 	method in {args}
 	method inside {args}
 	method isize {args}
 	method item {args}
+	method joint {args}
 	method keep {args}
 	method keypoint {args}
 	method kill {args}
@@ -231,6 +284,7 @@ package provide cadwidgets::Ged 1.0
 	method listeval {args}
 	method loadview {args}
 	method local2base {}
+	method lod {args}
 	method log {args}
 	method lookat {args}
 	method ls {args}
@@ -238,23 +292,53 @@ package provide cadwidgets::Ged 1.0
 	method m2v_point {args}
 	method make {args}
 	method make_bb {name args}
-	method get_fbserv {_fbtype _w _n}
 	method make_image_local {_bgcolor _ecolor _necolor _occmode _gamma _color_objects _ghost_objects _edge_objects}
 	method make_image {_port _w _n _viewsize _orientation _eye_pt _perspective _bgcolor _ecolor _necolor _occmode _gamma _color_objects _ghost_objects _edge_objects}
 	method make_name {args}
 	method make_pnts {args}
+	method mat_mul {args}
+	method mat_inv {args}
+	method mat_trn {args}
+	method matXvec {args}
+	method mat4x3vec {args}
+	method mat4x3pnt {args}
+	method mat_ae {args}
+	method mat_ae_vec {args}
+	method mat_aet_vec {args}
+	method mat_angles {args}
+	method mat_eigen2x2 {args}
+	method mat_fromto {args}
+	method mat_xrot {args}
+	method mat_yrot {args}
+	method mat_zrot {args}
+	method mat_lookat {args}
+	method mat_vec_ortho {args}
+	method mat_vec_perp {args}
+	method mat_scale_about_pt {args}
+	method mat_xform_about_pt {args}
+	method mat_arb_rot {args}
 	method match {args}
 	method mater {args}
+	method memprint {args}
 	method mirror {args}
+	method model2grid_lu {args}
 	method model2view {args}
+	method model2view_lu {args}
 	method model_axes {args}
+	method edit_motion_delta_callback {args}
+	method edit_motion_delta_callback_all {args}
 	method more_args_callback {args}
+	method mouse_add_metaballpt {args}
 	method mouse_append_pipept {args}
 	method mouse_constrain_rot {args}
 	method mouse_constrain_trans {args}
-	method mouse_find_pipept {args}
+	method mouse_find_arb_edge {_arb _mx _my _ptol}
+	method mouse_find_bot_edge {_bot _mx _my}
+	method mouse_find_botpt {_bot _mx _my}
+	method mouse_find_pipept {_pipe _mx _my}
 	method mouse_move_arb_edge {args}
 	method mouse_move_arb_face {args}
+	method mouse_move_metaballpt {args}
 	method mouse_move_pipept {args}
 	method mouse_orotate {args}
 	method mouse_oscale {args}
@@ -276,17 +360,25 @@ package provide cadwidgets::Ged 1.0
 	method move_arb_edge_mode {args}
 	method move_arb_face {args}
 	method move_arb_face_mode {args}
+	method move_botpt {args}
+	method move_botpts {args}
+	method move_botpt_mode {args}
+	method move_botpts_mode {args}
+	method move_metaballpt {args}
+	method move_metaballpt_mode {args}
 	method move_pipept {args}
 	method move_pipept_mode {args}
 	method mv {args}
 	method mvall {args}
 	method nirt {args}
 	method nmg_collapse {args}
+	method nmg_fix_normals {args}
 	method nmg_simplify {args}
 	method ocenter {args}
 	method open {args}
 	method opendb {args}
 	method orient {args}
+	method orientation {args}
 	method orotate {args}
 	method orotate_mode {args}
 	method oscale {args}
@@ -300,13 +392,17 @@ package provide cadwidgets::Ged 1.0
 	method pane_aet {_pane args}
 	method pane_arot {_pane args}
 	method pane_autoview {_pane args}
+	method pane_bind {_pane _event _script}
 	method pane_center {_pane args}
 	method pane_constrain_rmode {_pane args}
 	method pane_constrain_tmode {_pane args}
 	method pane_eye {_pane args}
 	method pane_eye_pos {_pane args}
 	method pane_fb2pix {_pane args}
-	method pane_find_pipept {args}
+	method pane_find_botpt {_pane args}
+	method pane_find_bot_edge_in_face {_pane _bot _face _mx _my}
+	method pane_find_botpt_in_face {_pane _bot _face _mx _my}
+	method pane_find_pipept {_pane args}
 	method pane_fontsize {_pane args}
 	method pane_get_eyemodel {_pane args}
 	method pane_grid {_pane args}
@@ -319,15 +415,29 @@ package provide cadwidgets::Ged 1.0
 	method pane_lookat {_pane args}
 	method pane_m2v_point {_pane args}
 	method pane_model2view {_pane args}
+	method pane_edit_motion_delta_callback {_pane args}
 	method pane_move_arb_edge_mode {_pane args}
 	method pane_move_arb_face_mode {_pane args}
+	method pane_move_botpt_mode {_pane args}
+	method pane_move_botpts_mode {_pane args}
+	method pane_move_metaballpt_mode {_pane args}
 	method pane_move_pipept_mode {_pane args}
+	method pane_mouse_add_metaballpt {_pane args}
 	method pane_mouse_append_pipept {_pane args}
 	method pane_mouse_constrain_rot {_pane args}
 	method pane_mouse_constrain_trans {_pane args}
-	method pane_mouse_find_pipept {_pane args}
+	method pane_mouse_find_arb_edge {_pane _arb _mx _my _ptol}
+	method pane_mouse_find_arb_face {_pane _arb _viewz _mx _my}
+	method pane_mouse_find_bot_edge {_pane _bot _viewz _mx _my}
+	method pane_mouse_find_bot_face {_pane _bot _viewz _mx _my}
+	method pane_mouse_find_botpt {_pane _bot _viewz _mx _my}
+	method pane_mouse_find_metaballpt {_pane _pipe _mx _my}
+	method pane_mouse_find_pipept {_pane _pipe _mx _my}
+	method pane_mouse_find_type_face {_pane _type _obj _viewz _mx _my _callback}
 	method pane_mouse_move_arb_edge {_pane args}
 	method pane_mouse_move_arb_face {_pane args}
+	method pane_mouse_move_botpt {_pane args}
+	method pane_mouse_move_metaballpt {_pane args}
 	method pane_mouse_move_pipept {_pane args}
 	method pane_mouse_orotate {_pane args}
 	method pane_mouse_oscale {_pane args}
@@ -418,6 +528,7 @@ package provide cadwidgets::Ged 1.0
 	method pmodel2view {args}
 	method png {args}
 	method pngwf {args}
+	method polybinout {args}
 	method pov {args}
 	method prcolor {args}
 	method prefix {args}
@@ -430,6 +541,16 @@ package provide cadwidgets::Ged 1.0
 	method putmat {args}
 	method qray {args}
 	method quat {args}
+	method quat_mat2quat {args}
+	method quat_quat2mat {args}
+	method quat_distance {args}
+	method quat_double {args}
+	method quat_bisect {args}
+	method quat_slerp {args}
+	method quat_sberp {args}
+	method quat_make_nearest {args}
+	method quat_exp {args}
+	method quat_log {args}
 	method qvrot {args}
 	method r {args}
 	method rcodes {args}
@@ -475,6 +596,7 @@ package provide cadwidgets::Ged 1.0
 	method protate_mode {args}
 	method pscale {args}
 	method pscale_mode {args}
+	method pset {args}
 	method ptranslate {args}
 	method ptranslate_mode {args}
 	method scale {args}
@@ -504,7 +626,9 @@ package provide cadwidgets::Ged 1.0
 	method solids {args}
 	method solids_on_ray {args}
 	method summary {args}
+	method sv {args}
 	method sync {args}
+	method t {args}
 	method tire {args}
 	method title {args}
 	method tol {args}
@@ -518,18 +642,24 @@ package provide cadwidgets::Ged 1.0
 	method tree {args}
 	method unhide {args}
 	method units {args}
+	method vblend {args}
 	method v2m_point {args}
 	method vdraw {args}
-	method version {args}
 	method view {args}
+	method view2grid_lu {args}
 	method view2model {args}
+	method view2model_lu {args}
+	method view2model_vec {args}
 	method view2screen {args}
 	method view_axes {args}
 	method view_callback {args}
 	method view_callback_all {args}
 	method viewdir {args}
+	method viewsize {args}
+	method vjoin1 {args}
 	method vmake {args}
 	method vnirt {args}
+	method voxelize {args}
 	method vslew {args}
 	method wcodes {args}
 	method whatid {args}
@@ -539,6 +669,7 @@ package provide cadwidgets::Ged 1.0
 	method who {args}
 	method win_size {args}
 	method wmater {args}
+	method x {args}
 	method xpush {args}
 	method ypr {args}
 	method zap {args}
@@ -562,6 +693,7 @@ package provide cadwidgets::Ged 1.0
 	method begin_view_measure {_pane _part1_button _part1_button _x _y}
 	method begin_view_measure_part2 {_pane _button _x _y}
 	method default_views {}
+	method delete_metaballpt {args}
 	method delete_pipept {args}
 	method end_data_arrow {_pane}
 	method end_data_line {_pane}
@@ -573,7 +705,7 @@ package provide cadwidgets::Ged 1.0
 	method end_data_poly_rect {_pane {_button 1}}
 	method end_view_measure {_pane _part1_button _part2_button}
 	method end_view_measure_part2 {_pane _button}
-	method end_view_rect {_pane {_button 1} {_pflag 0}}
+	method end_view_rect {_pane {_button 1} {_pflag 0} {_bot ""}}
 	method end_view_rotate {_pane}
 	method end_view_scale {_pane}
 	method end_view_translate {_pane}
@@ -583,6 +715,7 @@ package provide cadwidgets::Ged 1.0
 	method handle_view_measure_part2 {_pane _x _y}
 	method help {args}
 	method history_callback {args}
+	method init_add_metaballpt {_obj {_button 1} {_callback {}}}
 	method init_append_pipept {_obj {_button 1} {_callback {}}}
 	method init_button_no_op {{_button 1}}
 	method init_comp_pick {{_button 1}}
@@ -597,13 +730,19 @@ package provide cadwidgets::Ged 1.0
 	method init_data_poly_cont {{_button 1}}
 	method init_data_poly_ell {{_button 1}}
 	method init_data_poly_rect {{_button 1} {_sflag 0}}
+	method init_find_arb_edge {_obj {_button 1} {_callback {}}}
+	method init_find_arb_face {_obj {_button 1} {_viewz 1.0} {_callback {}}}
+	method init_find_bot_edge {_obj {_button 1} {_viewz 1.0} {_callback {}}}
+	method init_find_bot_face {_obj {_button 1} {_viewz 1.0} {_callback {}}}
+	method init_find_botpt {_obj {_button 1} {_viewz 1.0} {_callback {}}}
+	method init_find_metaballpt {_obj {_button 1} {_callback {}}}
 	method init_find_pipept {_obj {_button 1} {_callback {}}}
 	method init_prepend_pipept {_obj {_button 1} {_callback {}}}
 	method init_view_bindings {{_type default}}
 	method init_view_center {{_button 1}}
 	method init_view_measure {{_button 1} {_part2_button 2}}
 	method init_view_measure_part2 {_button}
-	method init_view_rect {{_button 1} {_pflag 0}}
+	method init_view_rect {{_button 1} {_pflag 0} {_bot ""}}
 	method init_view_rotate {{_button 1}}
 	method init_view_scale {{_button 1}}
 	method init_view_translate {{_button 1}}
@@ -614,7 +753,9 @@ package provide cadwidgets::Ged 1.0
 	method pane_mouse_data_pick {_pane _x _y}
 	method pane_mouse_ray {_pane _x _y {_pflag 0}}
 	method pane {args}
-	method shoot_ray {_start _op _target _prep _no_bool _onehit}
+	method init_shoot_ray {_rayname _prep _no_bool _onehit _bot_dflag _objects}
+	method shoot_ray_who {_start _op _target _prep _no_bool _onehit _bot_dflag}
+	method shoot_ray {_rayname _start _op _target _prep _no_bool _onehit _bot_dflag _objects}
 
 	method add_begin_data_arrow_callback {_callback}
 	method clear_begin_data_arrow_callback_list {}
@@ -669,22 +810,39 @@ package provide cadwidgets::Ged 1.0
 	method delete_view_rect_callback {_callback}
 
 	method set_data_point_callback {_callback}
- 
+	method clear_arb_callbacks {}
+	method clear_bot_callbacks {}
+
 	#XXX Still needs to be resolved
 	method set_outputHandler {args}
 	method fb_active {args}
 
+	proc color_to_tk {_color}
 	proc get_ged_color {_color}
 	proc get_rgb_color {_color}
 	proc get_vdraw_color {_color}
+	proc isDouble {_str}
 	proc rgb_to_tk {_r _g _b}
 	proc tk_to_rgb {_tkcolor}
+	proc validateDigit {_d}
+	proc validateDigitMax {_d _max}
+	proc validateDouble {_d}
+	proc validateRgb {_rgb}
+	proc validate2TupleNonZeroDigits {_t}
+	proc validate3TupleDoubles {_t}
     }
 
     protected {
 	variable mGed ""
 	variable mSharedGed 0
 	variable mHistoryCallback ""
+	variable mArbEdgeCallback ""
+	variable mArbFaceCallback ""
+	variable mArbPointCallback ""
+	variable mBotEdgeCallback ""
+	variable mBotFaceCallback ""
+	variable mBotPointCallback ""
+	variable mMetaballPointCallback ""
 	variable mPipePointCallback ""
 	variable mMeasuringStickColorVDraw2D ff00ff
 	variable mMeasuringStickColorVDraw3D ffff00
@@ -712,6 +870,8 @@ package provide cadwidgets::Ged 1.0
 	variable mEndDataMoveCallbacks ""
 	variable mMouseDataCallbacks ""
 	variable mMouseRayCallbacks ""
+	variable mPrevGedMouseX 0
+	variable mPrevGedMouseY 0
 	variable mViewMeasureCallbacks ""
 	variable mViewRectCallbacks ""
 
@@ -722,13 +882,15 @@ package provide cadwidgets::Ged 1.0
 	variable mPolyEllCallbacks ""
 	variable mPolyRectCallbacks ""
 
-	variable mRay "ray"
+	variable mRay "ged_ray"
 	variable mRayCurrWho ""
 	variable mRayLastWho ""
 	variable mRayNeedGettrees 1
 
 #	variable mLastPort -1
 	variable mLastPort 999
+
+	variable mRandomSeed 1
 
 	method init_button_no_op_prot {{_button 1}}
 	method measure_line_erase {}
@@ -832,7 +994,6 @@ package provide cadwidgets::Ged 1.0
 	rename $mGed ""
     }
 }
-
 
 
 ############################### Configuration Options ###############################
@@ -977,6 +1138,12 @@ package provide cadwidgets::Ged 1.0
     eval faceplate view_params color [get_rgb_color $itk_option(-viewingParamsColor)]
 }
 
+::itcl::configbody cadwidgets::Ged::pixelTol {
+    if {![string is digit $itk_option(-pixelTol)] || $itk_option(-pixelTol) < 1} {
+	error "-pixelTol must be a digit greater than 0"
+    }
+}
+
 
 ############################### Public Methods Wrapping Ged Objects ###############################
 
@@ -1007,6 +1174,10 @@ package provide cadwidgets::Ged 1.0
 
 ::itcl::body cadwidgets::Ged::analyze {args} {
     eval $mGed analyze $args
+}
+
+::itcl::body cadwidgets::Ged::annotate {args} {
+    eval $mGed annotate $args
 }
 
 ::itcl::body cadwidgets::Ged::arb {args} {
@@ -1062,6 +1233,43 @@ package provide cadwidgets::Ged 1.0
     eval $mGed blast $args
 }
 
+::itcl::body cadwidgets::Ged::bn_dist_pt2_lseg2 {args} {
+    eval ::bn_dist_pt2_lseg2 $args
+}
+
+::itcl::body cadwidgets::Ged::bn_isect_line2_line2 {args} {
+    eval ::bn_isect_line2_line2 $args
+}
+
+::itcl::body cadwidgets::Ged::bn_isect_line3_line3 {args} {
+    eval ::bn_isect_line3_line3 $args
+}
+
+::itcl::body cadwidgets::Ged::bn_noise_fbm {args} {
+    uplevel \#0 bn_noise_fbm $args
+}
+
+::itcl::body cadwidgets::Ged::bn_noise_perlin {args} {
+    eval ::bn_noise_perlin $args
+}
+
+::itcl::body cadwidgets::Ged::bn_noise_slice {args} {
+    uplevel \#0 bn_noise_slice $args
+}
+
+::itcl::body cadwidgets::Ged::bn_noise_turb {args} {
+    uplevel \#0 bn_noise_turb $args
+}
+
+::itcl::body cadwidgets::Ged::bn_random {args} {
+    set seed [lindex $args 0]
+    if {$seed != "" && [string is double $seed]} {
+	set mRandomSeed $seed
+    }
+
+    uplevel \#0 bn_random [list [::itcl::scope mRandomSeed]]
+}
+
 ::itcl::body cadwidgets::Ged::bo {args} {
     eval $mGed bo $args
 }
@@ -1082,6 +1290,10 @@ package provide cadwidgets::Ged 1.0
     eval $mGed bot_dump $args
 }
 
+::itcl::body cadwidgets::Ged::bot_edge_split {args} {
+    eval $mGed bot_edge_split $args
+}
+
 ::itcl::body cadwidgets::Ged::bot_face_fuse {args} {
     eval $mGed bot_face_fuse $args
 }
@@ -1090,8 +1302,16 @@ package provide cadwidgets::Ged 1.0
     eval $mGed bot_face_sort $args
 }
 
+::itcl::body cadwidgets::Ged::bot_face_split {args} {
+    eval $mGed bot_face_split $args
+}
+
 ::itcl::body cadwidgets::Ged::bot_flip {args} {
     eval $mGed bot_flip $args
+}
+
+::itcl::body cadwidgets::Ged::bot_fuse {args} {
+    eval $mGed bot_fuse $args
 }
 
 ::itcl::body cadwidgets::Ged::bot_merge {args} {
@@ -1123,6 +1343,46 @@ package provide cadwidgets::Ged 1.0
     foreach dm {ur ul ll lr} {
 	eval $mGed bounds $itk_component($dm) $args
     }
+}
+
+::itcl::body cadwidgets::Ged::brep {args} {
+    eval $mGed brep $args
+}
+
+::itcl::body cadwidgets::Ged::bu_units_conversion {args} {
+    uplevel \#0 bu_units_conversion $args
+}
+
+::itcl::body cadwidgets::Ged::bu_brlcad_data {args} {
+    uplevel \#0 bu_brlcad_data $args
+}
+
+::itcl::body cadwidgets::Ged::bu_brlcad_dir {args} {
+    uplevel \#0 bu_brlcad_dir $args
+}
+
+::itcl::body cadwidgets::Ged::bu_brlcad_root {args} {
+    uplevel \#0 bu_brlcad_root $args
+}
+
+::itcl::body cadwidgets::Ged::bu_mem_barriercheck {args} {
+    uplevel \#0 bu_mem_barriercheck $args
+}
+
+::itcl::body cadwidgets::Ged::bu_prmem {args} {
+    uplevel \#0 bu_prmem $args
+}
+
+::itcl::body cadwidgets::Ged::bu_get_value_by_keyword {args} {
+    uplevel \#0 bu_get_value_by_keyword $args
+}
+
+::itcl::body cadwidgets::Ged::bu_rgb_to_hsv {args} {
+    uplevel \#0 bu_rgb_to_hsv $args
+}
+
+::itcl::body cadwidgets::Ged::bu_hsv_to_rgb {args} {
+    uplevel \#0 bu_hsv_to_rgb $args
 }
 
 ::itcl::body cadwidgets::Ged::c {args} {
@@ -1194,7 +1454,7 @@ package provide cadwidgets::Ged 1.0
     if {$len < 2} {
 	return [eval $mGed data_arrows $itk_component($itk_option(-pane)) $args]
     }
- 
+
     foreach dm {ur ul ll lr} {
 	eval $mGed data_arrows $itk_component($dm) $args
     }
@@ -1244,6 +1504,8 @@ package provide cadwidgets::Ged 1.0
     if {$scmd == "poly_color" ||
 	$scmd == "poly_line_width" ||
 	$scmd == "poly_line_style" ||
+	$scmd == "polygons_overlap" ||
+	$scmd == "area" ||
 	$scmd == "export" ||
 	$scmd == "import"} {
 	return [eval $mGed data_polygons $itk_component($itk_option(-pane)) $args]
@@ -1290,6 +1552,30 @@ package provide cadwidgets::Ged 1.0
     eval $mGed dbot_dump $args
 }
 
+::itcl::body cadwidgets::Ged::dbversion {args} {
+    eval $mGed version $args
+}
+
+::itcl::body cadwidgets::Ged::debugbu {args} {
+    eval $mGed debugbu $args
+}
+
+::itcl::body cadwidgets::Ged::debugdir {args} {
+    eval $mGed debugdir $args
+}
+
+::itcl::body cadwidgets::Ged::debuglib {args} {
+    eval $mGed debuglib $args
+}
+
+::itcl::body cadwidgets::Ged::debugmem {args} {
+    eval $mGed debugmem $args
+}
+
+::itcl::body cadwidgets::Ged::debugnmg {args} {
+    eval $mGed debugnmg $args
+}
+
 ::itcl::body cadwidgets::Ged::decompose {args} {
     eval $mGed decompose $args
 }
@@ -1311,6 +1597,69 @@ package provide cadwidgets::Ged 1.0
     eval $mGed draw $args
 }
 
+::itcl::body cadwidgets::Ged::draw_ray {_start _partitions} {
+    measure_line_erase
+    erase_ray
+
+    set odd_color [get_vdraw_color $itk_option(-rayColorOdd)]
+    set even_color [get_vdraw_color $itk_option(-rayColorEven)]
+    set void_color [get_vdraw_color $itk_option(-rayColorVoid)]
+
+    set count 1
+    set prev_o_pt ""
+    foreach partition $_partitions {
+	if {[catch {bu_get_value_by_keyword "region" $partition} region] ||
+	    [catch {bu_get_value_by_keyword "in" $partition} in] ||
+	    [catch {bu_get_value_by_keyword "point" $in} i_pt] ||
+	    [catch {bu_get_value_by_keyword "out" $partition} out] ||
+	    [catch {bu_get_value_by_keyword "point" $out} o_pt]} {
+	    return ""
+	}
+
+	if {$prev_o_pt == ""} {
+	    if {![vnear_zero [vsub2 $_start $i_pt] 0.000001]} {
+		# The first section drawn is void
+		$mGed vdraw open $GED_RAY_VOID
+		$mGed vdraw params color $void_color
+
+		eval $mGed vdraw write next 0 $_start
+		eval $mGed vdraw write next 1 $i_pt
+		$mGed vdraw send
+	    }
+
+	    # The first partition is odd
+	    $mGed vdraw open $GED_RAY_ODD
+	    $mGed vdraw params color $odd_color
+	} else {
+	    if {![vnear_zero [vsub2 $prev_o_pt $i_pt] 0.000001]} {
+		# Here we have a void
+		$mGed vdraw open $GED_RAY_VOID
+		$mGed vdraw params color $void_color
+
+		eval $mGed vdraw write next 0 $prev_o_pt
+		eval $mGed vdraw write next 1 $i_pt
+		$mGed vdraw send
+	    }
+
+	    if {[expr {$count%2}]} {
+		# Odd
+		$mGed vdraw open $GED_RAY_ODD
+		$mGed vdraw params color $odd_color
+	    } else {
+		# Even
+		$mGed vdraw open $GED_RAY_EVEN
+		$mGed vdraw params color $even_color
+	    }
+	}
+
+	eval $mGed vdraw write next 0 $i_pt
+	eval $mGed vdraw write next 1 $o_pt
+	$mGed vdraw send
+	set prev_o_pt $o_pt
+	incr count
+    }
+}
+
 ::itcl::body cadwidgets::Ged::dump {args} {
     eval $mGed dump $args
 }
@@ -1330,6 +1679,10 @@ package provide cadwidgets::Ged 1.0
 
 ::itcl::body cadwidgets::Ged::echo {args} {
     eval $mGed echo $args
+}
+
+::itcl::body cadwidgets::Ged::edarb {args} {
+    eval $mGed edarb $args
 }
 
 ::itcl::body cadwidgets::Ged::edcodes {args} {
@@ -1358,6 +1711,15 @@ package provide cadwidgets::Ged 1.0
     eval $mGed erase $args
 }
 
+::itcl::body cadwidgets::Ged::erase_ray {} {
+    catch {$mGed vdraw vlist delete $GED_RAY_ODD}
+    catch {$mGed erase _VDRW$GED_RAY_ODD}
+    catch {$mGed vdraw vlist delete $GED_RAY_EVEN}
+    catch {$mGed erase _VDRW$GED_RAY_EVEN}
+    catch {$mGed vdraw vlist delete $GED_RAY_VOID}
+    catch {$mGed erase _VDRW$GED_RAY_VOID}
+}
+
 ::itcl::body cadwidgets::Ged::ev {args} {
     set mRayNeedGettrees 1
     eval $mGed ev $args
@@ -1373,6 +1735,10 @@ package provide cadwidgets::Ged 1.0
 
 ::itcl::body cadwidgets::Ged::eye_pos {args} {
     eval $mGed eye_pos $itk_component($itk_option(-pane)) $args
+}
+
+::itcl::body cadwidgets::Ged::eye_pt {args} {
+    eval $mGed eye_pt $itk_component($itk_option(-pane)) $args
 }
 
 ::itcl::body cadwidgets::Ged::exists {args} {
@@ -1391,9 +1757,25 @@ package provide cadwidgets::Ged 1.0
     eval $mGed facetize $args
 }
 
+
+::itcl::body cadwidgets::Ged::voxelize {args} {
+    eval $mGed voxelize $args
+}
+
 ::itcl::body cadwidgets::Ged::fb2pix {args} {
     eval $mGed fb2pix $itk_component($itk_option(-pane)) $args
 }
+
+
+::itcl::body cadwidgets::Ged::find_bot_edge_in_face {_bot _face _mx _my} {
+    pane_find_bot_edge_in_face $itk_option(-pane) $_bot $_face $_mx $_my
+}
+
+
+::itcl::body cadwidgets::Ged::find_botpt_in_face {_bot _face _mx _my} {
+    pane_find_botpt_in_face $itk_option(-pane) $_bot $_face $_mx $_my
+}
+
 
 ::itcl::body cadwidgets::Ged::find_pipept {args} {
     eval $mGed find_pipept $itk_component($itk_option(-pane)) $args
@@ -1424,6 +1806,10 @@ package provide cadwidgets::Ged 1.0
     eval $mGed get_autoview $args
 }
 
+::itcl::body cadwidgets::Ged::get_bot_edges {args} {
+    eval $mGed get_bot_edges $args
+}
+
 ::itcl::body cadwidgets::Ged::get_comb {args} {
     eval $mGed get_comb $args
 }
@@ -1432,8 +1818,24 @@ package provide cadwidgets::Ged 1.0
     eval $mGed get_eyemodel $itk_component($itk_option(-pane)) $args
 }
 
-::itcl::body cadwidgets::Ged::lastMouseRayPos {} {
-    return $mLastMouseRayPos
+::itcl::body cadwidgets::Ged::get_fbserv {_fbtype _w _n} {
+    incr mLastPort
+    set port $mLastPort
+
+    set binpath [bu_brlcad_root "bin"]
+
+    # This doesn't work (i.e. the "&" causes exec to always succeed, even when the command fails)
+    while {[catch {exec [file join $binpath fbserv] -w $_w -n $_n $port $_fbtype &} pid]} {
+	    puts $pid
+	    incr port
+    }
+
+    return "$pid $port"
+}
+
+
+::itcl::body cadwidgets::Ged::get_prev_ged_mouse {args} {
+    return "$mPrevGedMouseX $mPrevGedMouseY"
 }
 
 ::itcl::body cadwidgets::Ged::get_prev_mouse {args} {
@@ -1452,14 +1854,30 @@ package provide cadwidgets::Ged 1.0
     eval $mGed gqa $args
 }
 
+::itcl::body cadwidgets::Ged::graph {args} {
+    eval $mGed graph $args
+}
+
 ::itcl::body cadwidgets::Ged::grid {args} {
     foreach dm {ur ul ll lr} {
 	eval $mGed grid $itk_component($dm) $args
     }
 }
 
+::itcl::body cadwidgets::Ged::grid2model_lu {args} {
+    eval $mGed grid2model_lu $itk_component($itk_option(-pane)) $args
+}
+
+::itcl::body cadwidgets::Ged::grid2view_lu {args} {
+    eval $mGed grid2view_lu $itk_component($itk_option(-pane)) $args
+}
+
 ::itcl::body cadwidgets::Ged::handle_expose {args} {
     eval $mGed handle_expose $args
+}
+
+::itcl::body cadwidgets::Ged::hdivide {args} {
+    uplevel \#0 hdivide $args
 }
 
 ::itcl::body cadwidgets::Ged::hide {args} {
@@ -1480,6 +1898,10 @@ package provide cadwidgets::Ged 1.0
 
 ::itcl::body cadwidgets::Ged::idents {args} {
     eval $mGed idents $args
+}
+
+::itcl::body cadwidgets::Ged::igraph {args} {
+    eval $mGed igraph $args
 }
 
 ::itcl::body cadwidgets::Ged::idle_mode {args} {
@@ -1510,12 +1932,16 @@ package provide cadwidgets::Ged 1.0
     eval $mGed item $args
 }
 
+::itcl::body cadwidgets::Ged::joint {args} {
+    eval $mGed joint $args
+}
+
 ::itcl::body cadwidgets::Ged::keep {args} {
     eval $mGed keep $args
 }
 
 ::itcl::body cadwidgets::Ged::keypoint {args} {
-    eval $mGed $itk_component($itk_option(-pane)) $args
+    eval $mGed keypoint $itk_component($itk_option(-pane)) $args
 }
 
 ::itcl::body cadwidgets::Ged::kill {args} {
@@ -1540,6 +1966,10 @@ package provide cadwidgets::Ged 1.0
 
 ::itcl::body cadwidgets::Ged::l {args} {
     eval $mGed l $args
+}
+
+::itcl::body cadwidgets::Ged::lastMouseRayPos {} {
+    return $mLastMouseRayPos
 }
 
 ::itcl::body cadwidgets::Ged::light {args} {
@@ -1572,6 +2002,10 @@ package provide cadwidgets::Ged 1.0
     eval $mGed local2base
 }
 
+::itcl::body cadwidgets::Ged::lod {args} {
+    eval $mGed lod $args
+}
+
 ::itcl::body cadwidgets::Ged::log {args} {
     eval $mGed log $args
 }
@@ -1599,22 +2033,6 @@ package provide cadwidgets::Ged 1.0
 
 ::itcl::body cadwidgets::Ged::make_bb {name args} {
     eval $mGed make_bb $name $args
-}
-
-
-::itcl::body cadwidgets::Ged::get_fbserv {_fbtype _w _n} {
-    incr mLastPort
-    set port $mLastPort
-
-    set binpath [bu_brlcad_root "bin"]
-
-    # This doesn't work (i.e. the "&" causes exec to always succeed, even when the command fails)
-    while {[catch {exec [file join $binpath fbserv] -w $_w -n $_n $port $_fbtype &} pid]} {
-	    puts $pid
-	    incr port
-    }
-
-    return "$pid $port"
 }
 
 
@@ -1661,9 +2079,7 @@ package provide cadwidgets::Ged 1.0
     return
 }
 
-#
-# Not yet handling perspective.
-#
+
 ::itcl::body cadwidgets::Ged::make_image {_port _w _n _viewsize _orientation _eye_pt _perspective _bgcolor _ecolor _necolor _occmode _gamma _color_objects _ghost_objects _edge_objects} {
     global tcl_platform
     global env
@@ -1687,6 +2103,90 @@ package provide cadwidgets::Ged 1.0
     eval $mGed make_pnts $args
 }
 
+::itcl::body cadwidgets::Ged::mat_mul {args} {
+    uplevel \#0 mat_mul $args
+}
+
+::itcl::body cadwidgets::Ged::mat_inv {args} {
+    uplevel \#0 mat_inv $args
+}
+
+::itcl::body cadwidgets::Ged::mat_trn {args} {
+    uplevel \#0 mat_trn $args
+}
+
+::itcl::body cadwidgets::Ged::matXvec {args} {
+    uplevel \#0 matXvec $args
+}
+
+::itcl::body cadwidgets::Ged::mat4x3vec {args} {
+    uplevel \#0 mat4x3vec $args
+}
+
+::itcl::body cadwidgets::Ged::mat4x3pnt {args} {
+    uplevel \#0 mat4x3pnt $args
+}
+
+::itcl::body cadwidgets::Ged::mat_ae {args} {
+    uplevel \#0 mat_ae $args
+}
+
+::itcl::body cadwidgets::Ged::mat_ae_vec {args} {
+    uplevel \#0 mat_ae_vec $args
+}
+
+::itcl::body cadwidgets::Ged::mat_aet_vec {args} {
+    uplevel \#0 mat_aet_vec $args
+}
+
+::itcl::body cadwidgets::Ged::mat_angles {args} {
+    uplevel \#0 mat_angles $args
+}
+
+::itcl::body cadwidgets::Ged::mat_eigen2x2 {args} {
+    uplevel \#0 mat_eigen2x2 $args
+}
+
+::itcl::body cadwidgets::Ged::mat_fromto {args} {
+    uplevel \#0 mat_fromto $args
+}
+
+::itcl::body cadwidgets::Ged::mat_xrot {args} {
+    uplevel \#0 mat_xrot $args
+}
+
+::itcl::body cadwidgets::Ged::mat_yrot {args} {
+    uplevel \#0 mat_yrot $args
+}
+
+::itcl::body cadwidgets::Ged::mat_zrot {args} {
+    uplevel \#0 mat_zrot $args
+}
+
+::itcl::body cadwidgets::Ged::mat_lookat {args} {
+    uplevel \#0 mat_lookat $args
+}
+
+::itcl::body cadwidgets::Ged::mat_vec_ortho {args} {
+    uplevel \#0 mat_vec_ortho $args
+}
+
+::itcl::body cadwidgets::Ged::mat_vec_perp {args} {
+    uplevel \#0 mat_vec_perp $args
+}
+
+::itcl::body cadwidgets::Ged::mat_scale_about_pt {args} {
+    uplevel \#0 mat_scale_about_pt $args
+}
+
+::itcl::body cadwidgets::Ged::mat_xform_about_pt {args} {
+    uplevel \#0 mat_xform_about_pt $args
+}
+
+::itcl::body cadwidgets::Ged::mat_arb_rot {args} {
+    uplevel \#0 mat_arb_rot $args
+}
+
 ::itcl::body cadwidgets::Ged::match {args} {
     eval $mGed match $args
 }
@@ -1695,12 +2195,24 @@ package provide cadwidgets::Ged 1.0
     eval $mGed mater $args
 }
 
+::itcl::body cadwidgets::Ged::memprint {args} {
+    eval $mGed memprint $args
+}
+
 ::itcl::body cadwidgets::Ged::mirror {args} {
     eval $mGed mirror $args
 }
 
+::itcl::body cadwidgets::Ged::model2grid_lu {args} {
+    eval $mGed model2grid_lu $itk_component($itk_option(-pane)) $args
+}
+
 ::itcl::body cadwidgets::Ged::model2view {args} {
     eval $mGed model2view $itk_component($itk_option(-pane)) $args
+}
+
+::itcl::body cadwidgets::Ged::model2view_lu {args} {
+    eval $mGed model2view_lu $itk_component($itk_option(-pane)) $args
 }
 
 ::itcl::body cadwidgets::Ged::model_axes {args} {
@@ -1711,8 +2223,23 @@ package provide cadwidgets::Ged 1.0
     return $ret
 }
 
+::itcl::body cadwidgets::Ged::edit_motion_delta_callback {args} {
+    eval $mGed edit_motion_delta_callback $itk_component($itk_option(-pane)) $args
+}
+
+::itcl::body cadwidgets::Ged::edit_motion_delta_callback_all {args} {
+    foreach dm {ur ul ll lr} {
+	eval $mGed edit_motion_delta_callback $itk_component($dm) $args
+    }
+}
+
 ::itcl::body cadwidgets::Ged::more_args_callback {args} {
     eval $mGed more_args_callback $args
+}
+
+
+::itcl::body cadwidgets::Ged::mouse_add_metaballpt {args} {
+    eval $mGed mouse_add_metaballpt $itk_component($itk_option(-pane)) $args
 }
 
 ::itcl::body cadwidgets::Ged::mouse_append_pipept {args} {
@@ -1727,8 +2254,32 @@ package provide cadwidgets::Ged 1.0
     eval $mGed mouse_constrain_trans $itk_component($itk_option(-pane)) $args
 }
 
-::itcl::body cadwidgets::Ged::mouse_find_pipept {args} {
-    set i [eval $mGed mouse_find_pipept $itk_component($itk_option(-pane)) $args]
+::itcl::body cadwidgets::Ged::mouse_find_arb_edge {_arb _mx _my _ptol} {
+    set mPrevGedMouseX $_mx
+    set mPrevGedMouseY $_my
+
+    $mGed mouse_find_arb_edge $itk_component($itk_option(-pane)) $_arb $_mx $_my $_ptol
+}
+
+::itcl::body cadwidgets::Ged::mouse_find_bot_edge {_bot _mx _my} {
+    set mPrevGedMouseX $_mx
+    set mPrevGedMouseY $_my
+
+    $mGed mouse_find_bot_edge $itk_component($itk_option(-pane)) $_bot $_mx $_my
+}
+
+::itcl::body cadwidgets::Ged::mouse_find_botpt {_bot _mx _my} {
+    set mPrevGedMouseX $_mx
+    set mPrevGedMouseY $_my
+
+    eval $mGed mouse_find_botpt $itk_component($itk_option(-pane)) $_bot $_mx $_my
+}
+
+::itcl::body cadwidgets::Ged::mouse_find_pipept {_pipe _mx _my} {
+    set mPrevGedMouseX $_mx
+    set mPrevGedMouseY $_my
+
+    $mGed mouse_find_pipept $itk_component($itk_option(-pane)) $_pipe $_mx $_my
 }
 
 ::itcl::body cadwidgets::Ged::mouse_move_arb_edge {args} {
@@ -1739,8 +2290,11 @@ package provide cadwidgets::Ged 1.0
     eval $mGed mouse_move_arb_face $itk_component($itk_option(-pane)) $args
 }
 
+::itcl::body cadwidgets::Ged::mouse_move_metaballpt {args} {
+    eval $mGed mouse_move_metaballpt $itk_component($itk_option(-pane)) $args
+}
+
 ::itcl::body cadwidgets::Ged::mouse_move_pipept {args} {
-    puts "cadwidgets::Ged::pane_mouse_move_pipept $_pane $args"
     eval $mGed mouse_move_pipept $itk_component($itk_option(-pane)) $args
 }
 
@@ -1824,6 +2378,30 @@ package provide cadwidgets::Ged 1.0
     eval $mGed move_arb_face_mode $itk_component($itk_option(-pane)) $args
 }
 
+::itcl::body cadwidgets::Ged::move_botpt {args} {
+    eval $mGed move_botpt $args
+}
+
+::itcl::body cadwidgets::Ged::move_botpts {args} {
+    eval $mGed move_botpts $args
+}
+
+::itcl::body cadwidgets::Ged::move_botpt_mode {args} {
+    eval $mGed move_botpt_mode $itk_component($itk_option(-pane)) $args
+}
+
+::itcl::body cadwidgets::Ged::move_botpts_mode {args} {
+    eval $mGed move_botpts_mode $itk_component($itk_option(-pane)) $args
+}
+
+::itcl::body cadwidgets::Ged::move_metaballpt {args} {
+    eval $mGed move_metaballpt $args
+}
+
+::itcl::body cadwidgets::Ged::move_metaballpt_mode {args} {
+    eval $mGed move_metaballpt_mode $itk_component($itk_option(-pane)) $args
+}
+
 ::itcl::body cadwidgets::Ged::move_pipept {args} {
     eval $mGed move_pipept $args
 }
@@ -1850,6 +2428,10 @@ package provide cadwidgets::Ged 1.0
     eval $mGed nmg_collapse $args
 }
 
+::itcl::body cadwidgets::Ged::nmg_fix_normals {args} {
+    eval $mGed nmg_fix_normals $args
+}
+
 ::itcl::body cadwidgets::Ged::nmg_simplify {args} {
     eval $mGed nmg_simplify $args
 }
@@ -1870,6 +2452,10 @@ package provide cadwidgets::Ged 1.0
 
 ::itcl::body cadwidgets::Ged::orient {args} {
     eval $mGed orient $itk_component($itk_option(-pane)) $args
+}
+
+::itcl::body cadwidgets::Ged::orientation {args} {
+    eval $mGed orientation $itk_component($itk_option(-pane)) $args
 }
 
 ::itcl::body cadwidgets::Ged::orotate {args} {
@@ -1924,6 +2510,10 @@ package provide cadwidgets::Ged 1.0
     eval $mGed autoview $itk_component($_pane) $args
 }
 
+::itcl::body cadwidgets::Ged::pane_bind {_pane _event _script} {
+    bind $itk_component($_pane) $_event $_script
+}
+
 ::itcl::body cadwidgets::Ged::pane_center {_pane args} {
     eval $mGed center $itk_component($_pane) $args
 }
@@ -1947,6 +2537,112 @@ package provide cadwidgets::Ged 1.0
 ::itcl::body cadwidgets::Ged::pane_fb2pix {_pane args} {
     eval $mGed fb2pix $itk_component($_pane) $args
 }
+
+
+::itcl::body cadwidgets::Ged::pane_find_botpt {_pane args} {
+    eval $mGed find_botpt $itk_component($_pane) $args
+}
+
+
+::itcl::body cadwidgets::Ged::pane_find_bot_edge_in_face {_pane _bot _face _mx _my} {
+    set vertices [$mGed get $_bot V]
+    if {[llength $vertices] < 3} {
+	return
+    }
+
+    set faces [$mGed get $_bot F]
+    if {[llength $faces] <= $_face} {
+	return
+    }
+
+    set flist [lindex $faces $_face]
+
+    set iA [lindex $flist 0]
+    set iB [lindex $flist 1]
+    set iC [lindex $flist 2]
+
+    set A [lindex $vertices $iA]
+    set B [lindex $vertices $iB]
+    set C [lindex $vertices $iC]
+
+    set A [lrange [eval pane_m2v_point $_pane $A] 0 1]
+    set B [lrange [eval pane_m2v_point $_pane $B] 0 1]
+    set C [lrange [eval pane_m2v_point $_pane $C] 0 1]
+
+    set pt [lrange [pane_screen2view $_pane $_mx $_my] 0 1]
+
+    set distAB [bn_dist_pt2_lseg2 $A $B $pt]
+    set distBC [bn_dist_pt2_lseg2 $B $C $pt]
+    set distAC [bn_dist_pt2_lseg2 $A $C $pt]
+
+
+    if {$distAB < $distBC} {
+	if {$distAB < $distAC} {
+	    return [list $iA $iB]
+	}
+
+	return [list $iA $iC]
+    }
+
+    if {$distBC < $distAC} {
+	return [list $iB $iC]
+    }
+
+    return [list $iA $iC]
+}
+
+
+::itcl::body cadwidgets::Ged::pane_find_botpt_in_face {_pane _bot _face _mx _my} {
+    set vertices [$mGed get $_bot V]
+    if {[llength $vertices] < 3} {
+	return
+    }
+
+    set faces [$mGed get $_bot F]
+    if {[llength $faces] <= $_face} {
+	return
+    }
+
+    set flist [lindex $faces $_face]
+
+    set iA [lindex $flist 0]
+    set iB [lindex $flist 1]
+    set iC [lindex $flist 2]
+
+    set A [lindex $vertices $iA]
+    set B [lindex $vertices $iB]
+    set C [lindex $vertices $iC]
+
+    set viewA [eval pane_m2v_point $_pane $A]
+    set viewB [eval pane_m2v_point $_pane $B]
+    set viewC [eval pane_m2v_point $_pane $C]
+
+    set view [pane_screen2view $_pane $_mx $_my]
+    set viewZ [lindex $view 2]
+
+    set viewA [lreplace $viewA 2 2 $viewZ]
+    set viewB [lreplace $viewB 2 2 $viewZ]
+    set viewC [lreplace $viewC 2 2 $viewZ]
+
+    set deltaA [dist_pt_pt $view $viewA]
+    set deltaB [dist_pt_pt $view $viewB]
+    set deltaC [dist_pt_pt $view $viewC]
+
+    if {$deltaA < $deltaB} {
+	if {$deltaA < $deltaC} {
+	    return $iA
+	} else {
+	    return $iC
+	}
+    }
+
+    if {$deltaB < $deltaC} {
+	return $iB
+    }
+
+    return $iC
+}
+
 
 ::itcl::body cadwidgets::Ged::pane_find_pipept {_pane args} {
     eval $mGed find_pipept $itk_component($_pane) $args
@@ -2000,6 +2696,10 @@ package provide cadwidgets::Ged 1.0
     eval $mGed model2view $itk_component($_pane) $args
 }
 
+::itcl::body cadwidgets::Ged::pane_edit_motion_delta_callback {_pane args} {
+    eval $mGed edit_motion_delta_callback $itk_component($_pane) $args
+}
+
 ::itcl::body cadwidgets::Ged::pane_move_arb_edge_mode {_pane args} {
     eval $mGed move_arb_edge_mode $itk_component($_pane) $args
 }
@@ -2008,8 +2708,29 @@ package provide cadwidgets::Ged 1.0
     eval $mGed move_arb_face_mode $itk_component($_pane) $args
 }
 
+::itcl::body cadwidgets::Ged::pane_move_botpt_mode {_pane args} {
+    eval $mGed move_botpt_mode $itk_component($_pane) $args
+}
+
+::itcl::body cadwidgets::Ged::pane_move_botpts_mode {_pane args} {
+    eval $mGed move_botpts_mode $itk_component($_pane) $args
+}
+
+::itcl::body cadwidgets::Ged::pane_move_metaballpt_mode {_pane args} {
+    eval $mGed move_metaballpt_mode $itk_component($_pane) $args
+}
+
 ::itcl::body cadwidgets::Ged::pane_move_pipept_mode {_pane args} {
     eval $mGed move_pipept_mode $itk_component($_pane) $args
+}
+
+
+::itcl::body cadwidgets::Ged::pane_mouse_add_metaballpt {_pane args} {
+    eval $mGed mouse_add_metaballpt $itk_component($_pane) $args
+
+    if {$mMetaballPointCallback != ""} {
+	catch {$mMetaballPointCallback}
+    }
 }
 
 ::itcl::body cadwidgets::Ged::pane_mouse_append_pipept {_pane args} {
@@ -2024,17 +2745,162 @@ package provide cadwidgets::Ged 1.0
     eval $mGed mouse_constrain_rot $itk_component($_pane) $args
 }
 
+
 ::itcl::body cadwidgets::Ged::pane_mouse_constrain_trans {_pane args} {
     eval $mGed mouse_constrain_trans $itk_component($_pane) $args
 }
 
-::itcl::body cadwidgets::Ged::pane_mouse_find_pipept {_pane args} {
-    set i [eval $mGed mouse_find_pipept $itk_component($_pane) $args]
+
+::itcl::body cadwidgets::Ged::pane_mouse_find_arb_edge {_pane _arb _mx _my _ptol} {
+    set arb_type [get_type $_arb]
+    if {![regexp {arb[45678]} $arb_type]} {
+	return -1
+    }
+
+    set mPrevGedMouseX $_mx
+    set mPrevGedMouseY $_my
+
+    set elist [$mGed mouse_find_arb_edge $itk_component($_pane) $_arb $_mx $_my $_ptol]
+
+    if {$mArbEdgeCallback != ""} {
+	catch {$mArbEdgeCallback $elist}
+    }
+
+    return $elist
+}
+
+
+::itcl::body cadwidgets::Ged::pane_mouse_find_arb_face {_pane _arb _viewz _mx _my} {
+    set arb_type [get_type $_arb]
+    if {![regexp {arb[45678]} $arb_type]} {
+	return -1
+    }
+
+    set mPrevGedMouseX $_mx
+    set mPrevGedMouseY $_my
+
+    return [pane_mouse_find_type_face $_pane $arb_type $_arb $_viewz $_mx $_my $mArbFaceCallback]
+}
+
+
+::itcl::body cadwidgets::Ged::pane_mouse_find_bot_edge {_pane _bot _viewz _mx _my} {
+    set mPrevGedMouseX $_mx
+    set mPrevGedMouseY $_my
+
+    if {$_viewz < 0.0} {
+	set elist [eval $mGed mouse_find_bot_edge $itk_component($_pane) $_bot $_mx $_my]
+    } else {
+	set save_botFaceCallback $mBotFaceCallback
+	set mBotFaceCallback ""
+	set face [pane_mouse_find_bot_face $_pane $_bot $_viewz $_mx $_my]
+	set mBotFaceCallback $save_botFaceCallback
+
+	if {$face == ""} {
+	    set elist [$mGed mouse_find_bot_edge $itk_component($_pane) $_bot $_mx $_my]
+	} else {
+	    set elist [pane_find_bot_edge_in_face $_pane $_bot $face $_mx $_my]
+	}
+    }
+
+    if {$mBotEdgeCallback != ""} {
+	catch {$mBotEdgeCallback $elist}
+    }
+
+    return $elist
+}
+
+
+::itcl::body cadwidgets::Ged::pane_mouse_find_bot_face {_pane _bot _viewz _mx _my} {
+    set mPrevGedMouseX $_mx
+    set mPrevGedMouseY $_my
+
+    return [pane_mouse_find_type_face $_pane bot $_bot $_viewz $_mx $_my $mBotFaceCallback]
+}
+
+
+::itcl::body cadwidgets::Ged::pane_mouse_find_botpt {_pane _bot _viewz _mx _my} {
+    set mPrevGedMouseX $_mx
+    set mPrevGedMouseY $_my
+
+    if {$_viewz < 0.0} {
+	set i [$mGed mouse_find_botpt $itk_component($_pane) $_bot $_mx $_my]
+    } else {
+	set save_botFaceCallback $mBotFaceCallback
+	set mBotFaceCallback ""
+	set face [pane_mouse_find_bot_face $_pane $_bot $_viewz $_mx $_my]
+	set mBotFaceCallback $save_botFaceCallback
+
+	if {$face == ""} {
+	    set i [$mGed mouse_find_botpt $itk_component($_pane) $_bot $_mx $_my]
+	} else {
+	    set i [pane_find_botpt_in_face $_pane $_bot $face $_mx $_my]
+	}
+    }
+
+    if {$mBotPointCallback != ""} {
+	catch {$mBotPointCallback $i}
+    }
+
+    return $i
+}
+
+
+::itcl::body cadwidgets::Ged::pane_mouse_find_metaballpt {_pane _pipe _mx _my} {
+    set i [$mGed mouse_find_metaballpt $itk_component($_pane) $_pipe $_mx $_my]
+
+    set mPrevGedMouseX $_mx
+    set mPrevGedMouseY $_my
+
+    if {$mMetaballPointCallback != ""} {
+	catch {$mMetaballPointCallback $i}
+    }
+
+    return $i
+}
+
+
+::itcl::body cadwidgets::Ged::pane_mouse_find_pipept {_pane _pipe _mx _my} {
+    set i [$mGed mouse_find_pipept $itk_component($_pane) $_pipe $_mx $_my]
+
+    set mPrevGedMouseX $_mx
+    set mPrevGedMouseY $_my
 
     if {$mPipePointCallback != ""} {
 	catch {$mPipePointCallback $i}
     }
+
+    return $i
 }
+
+
+::itcl::body cadwidgets::Ged::pane_mouse_find_type_face {_pane _type _obj _viewz _mx _my _callback} {
+    if {[get_type $_obj] != $_type} {
+	return ""
+    }
+
+    set mPrevGedMouseX $_mx
+    set mPrevGedMouseY $_my
+
+    set view [pane_screen2view $_pane $_mx $_my]
+    set target [eval pane_v2m_point $_pane $view]
+
+    set view [lreplace $view 2 2 $_viewz]
+    set start [eval pane_v2m_point $_pane $view]
+
+    set partitions [shoot_ray obj_ray $start "at" $target 1 1 1 1 $_obj]
+    set partition [lindex $partitions 0]
+    if {[catch {bu_get_value_by_keyword in $partition} in] ||
+	[catch {bu_get_value_by_keyword surfno $in} surfno]} {
+	set surfno ""
+    }
+
+    if {$_callback != ""} {
+	catch {$_callback $surfno}
+    }
+
+    return $surfno
+}
+
 
 ::itcl::body cadwidgets::Ged::pane_mouse_move_arb_edge {_pane args} {
     eval $mGed mouse_move_arb_edge $itk_component($_pane) $args
@@ -2044,8 +2910,15 @@ package provide cadwidgets::Ged 1.0
     eval $mGed mouse_move_arb_face $itk_component($_pane) $args
 }
 
+::itcl::body cadwidgets::Ged::pane_mouse_move_botpt {_pane args} {
+    eval $mGed mouse_move_botpt $itk_component($_pane) $args
+}
+
+::itcl::body cadwidgets::Ged::pane_mouse_move_metaballpt {_pane args} {
+    eval $mGed mouse_move_metaballpt $itk_component($_pane) $args
+}
+
 ::itcl::body cadwidgets::Ged::pane_mouse_move_pipept {_pane args} {
-    puts "cadwidgets::Ged::pane_mouse_move_pipept $_pane $args"
     eval $mGed mouse_move_pipept $itk_component($_pane) $args
 }
 
@@ -2269,10 +3142,6 @@ package provide cadwidgets::Ged 1.0
     eval $mGed scale_mode $itk_component($_pane) $args
 }
 
-::itcl::body cadwidgets::Ged::pane_scale_mode {_pane args} {
-    eval $mGed scale_mode $itk_component($_pane) $args
-}
-
 ::itcl::body cadwidgets::Ged::pane_screen2view {_pane args} {
     eval $mGed screen2view $itk_component($_pane) $args
 }
@@ -2432,6 +3301,10 @@ package provide cadwidgets::Ged 1.0
     eval $mGed pngwf $itk_component($itk_option(-pane)) $args
 }
 
+::itcl::body cadwidgets::Ged::polybinout {args} {
+    eval $mGed polybinout $args
+}
+
 ::itcl::body cadwidgets::Ged::pov {args} {
     eval $mGed pov $itk_component($itk_option(-pane)) $args
 }
@@ -2484,6 +3357,46 @@ package provide cadwidgets::Ged 1.0
 
 ::itcl::body cadwidgets::Ged::quat {args} {
     eval $mGed quat $itk_component($itk_option(-pane)) $args
+}
+
+::itcl::body cadwidgets::Ged::quat_mat2quat {args} {
+    uplevel \#0 quat_mat2quat $args
+}
+
+::itcl::body cadwidgets::Ged::quat_quat2mat {args} {
+    uplevel \#0 quat_quat2mat $args
+}
+
+::itcl::body cadwidgets::Ged::quat_distance {args} {
+    uplevel \#0 quat_distance $args
+}
+
+::itcl::body cadwidgets::Ged::quat_double {args} {
+    uplevel \#0 quat_double $args
+}
+
+::itcl::body cadwidgets::Ged::quat_bisect {args} {
+    uplevel \#0 quat_bisect $args
+}
+
+::itcl::body cadwidgets::Ged::quat_slerp {args} {
+    uplevel \#0 quat_slerp $args
+}
+
+::itcl::body cadwidgets::Ged::quat_sberp {args} {
+    uplevel \#0 quat_sberp $args
+}
+
+::itcl::body cadwidgets::Ged::quat_make_nearest {args} {
+    uplevel \#0 quat_make_nearest $args
+}
+
+::itcl::body cadwidgets::Ged::quat_exp {args} {
+    uplevel \#0 quat_exp $args
+}
+
+::itcl::body cadwidgets::Ged::quat_log {args} {
+    uplevel \#0 quat_log $args
 }
 
 ::itcl::body cadwidgets::Ged::qvrot {args} {
@@ -2674,6 +3587,10 @@ package provide cadwidgets::Ged 1.0
     eval $mGed pscale_mode $itk_component($itk_option(-pane)) $args
 }
 
+::itcl::body cadwidgets::Ged::pset {args} {
+    eval $mGed pset $args
+}
+
 ::itcl::body cadwidgets::Ged::ptranslate {args} {
     eval $mGed ptranslate $args
 }
@@ -2822,8 +3739,16 @@ package provide cadwidgets::Ged 1.0
     eval $mGed summary $args
 }
 
+::itcl::body cadwidgets::Ged::sv {args} {
+    eval $mGed sv $itk_component($itk_option(-pane)) $args
+}
+
 ::itcl::body cadwidgets::Ged::sync {args} {
     eval $mGed sync $args
+}
+
+::itcl::body cadwidgets::Ged::t {args} {
+    eval $mGed t $args
 }
 
 ::itcl::body cadwidgets::Ged::tire {args} {
@@ -2884,20 +3809,32 @@ package provide cadwidgets::Ged 1.0
     eval $mGed v2m_point $itk_component($itk_option(-pane)) $args
 }
 
-::itcl::body cadwidgets::Ged::vdraw {args} {
-    eval $mGed vdraw $args
+::itcl::body cadwidgets::Ged::vblend {args} {
+    uplevel \#0 vblend $args
 }
 
-::itcl::body cadwidgets::Ged::version {args} {
-    eval $mGed version $args
+::itcl::body cadwidgets::Ged::vdraw {args} {
+    eval $mGed vdraw $args
 }
 
 ::itcl::body cadwidgets::Ged::view {args} {
     eval $mGed view $itk_component($itk_option(-pane)) $args
 }
 
+::itcl::body cadwidgets::Ged::view2grid_lu {args} {
+    eval $mGed view2grid_lu $itk_component($itk_option(-pane)) $args
+}
+
 ::itcl::body cadwidgets::Ged::view2model {args} {
     eval $mGed view2model $itk_component($itk_option(-pane)) $args
+}
+
+::itcl::body cadwidgets::Ged::view2model_lu {args} {
+    eval $mGed view2model_lu $itk_component($itk_option(-pane)) $args
+}
+
+::itcl::body cadwidgets::Ged::view2model_vec {args} {
+    eval $mGed view2model_vec $itk_component($itk_option(-pane)) $args
 }
 
 ::itcl::body cadwidgets::Ged::view2screen {args} {
@@ -2924,6 +3861,14 @@ package provide cadwidgets::Ged 1.0
 
 ::itcl::body cadwidgets::Ged::viewdir {args} {
     eval $mGed viewdir $itk_component($itk_option(-pane)) $args
+}
+
+::itcl::body cadwidgets::Ged::viewsize {args} {
+    eval size $args
+}
+
+::itcl::body cadwidgets::Ged::vjoin1 {args} {
+    uplevel \#0 vjoin1 $args
 }
 
 ::itcl::body cadwidgets::Ged::vmake {args} {
@@ -2968,6 +3913,10 @@ package provide cadwidgets::Ged 1.0
 
 ::itcl::body cadwidgets::Ged::wmater {args} {
     eval $mGed wmater $args
+}
+
+::itcl::body cadwidgets::Ged::x {args} {
+    eval $mGed x $args
 }
 
 ::itcl::body cadwidgets::Ged::xpush {args} {
@@ -3018,7 +3967,7 @@ package provide cadwidgets::Ged 1.0
 }
 
 # Create a new arrow with both points the same.
-# Go into data move mode for this arrow and it's second point.
+# Go into data move mode for this arrow and its second point.
 #
 ::itcl::body cadwidgets::Ged::begin_data_arrow {_pane _x _y} {
     set mLastMousePos "$_x $_y"
@@ -3180,6 +4129,10 @@ package provide cadwidgets::Ged 1.0
     $mGed aet $itk_component(lr) 90 0 0
 }
 
+::itcl::body cadwidgets::Ged::delete_metaballpt {args} {
+    eval $mGed delete_metaballpt $args
+}
+
 ::itcl::body cadwidgets::Ged::delete_pipept {args} {
     eval $mGed delete_pipept $args
 }
@@ -3239,7 +4192,7 @@ package provide cadwidgets::Ged 1.0
 ::itcl::body cadwidgets::Ged::end_data_move {_pane} {
     $mGed idle_mode $itk_component($_pane)
 
-    if {$mLastMousePos == "" || $mLastDataType == ""} { 
+    if {$mLastMousePos == "" || $mLastDataType == ""} {
 	return
     }
 
@@ -3312,8 +4265,9 @@ package provide cadwidgets::Ged 1.0
 }
 
 
-
 ::itcl::body cadwidgets::Ged::end_data_poly_move {_pane} {
+    refresh_off
+
     if {$itk_option(-gridSnap)} {
 	# First, get the data point being moved.
 	set point [eval $mGed data_polygons $itk_component($_pane) get_point $mLastDataIndex]
@@ -3331,11 +4285,53 @@ package provide cadwidgets::Ged 1.0
 	eval $mGed data_polygons $itk_component($_pane) replace_point $mLastDataIndex [list $point]
     }
 
+    set pindex [lindex $mLastDataIndex 0]
+    set cindex [lindex $mLastDataIndex 1]
+    set plist [$mGed data_polygons $itk_component($_pane) polygons]
+    set save_plist $plist
+
+    # clip_index will reference the clip polygon that gets appended below
+    set clip_pindex [llength $plist]
+
+    set poly [lindex $plist $pindex]
+    if {[llength $poly] < 2} {
+	foreach callback $mEndDataPolygonCallbacks {
+	    catch {$callback $mLastDataIndex}
+	}
+
+	set mLastDataIndex ""
+	refresh_on
+	refresh_all
+
+	# No clipping necessary
+	return
+    }
+
+    # Extract the contour that becomes the clip polygon
+    set clip_poly_contour [lindex $poly $cindex]
+    set poly [lreplace $poly $cindex $cindex]
+    set plist [lreplace $plist $pindex $pindex $poly]
+
+    # Append the clip polygon
+    lappend plist [list $clip_poly_contour]
+    $mGed data_polygons $itk_component($_pane) polygons $plist
+
+    if {[llength $plist] > $clip_pindex} {
+	$mGed data_polygons $itk_component($_pane) clip $pindex $clip_pindex
+
+	# Get rid of the clip polygon
+	set plist [$mGed data_polygons $itk_component($_pane) polygons]
+	set plist [lreplace $plist $clip_pindex $clip_pindex]
+	$mGed data_polygons $itk_component($_pane) polygons $plist
+    }
+
     foreach callback $mEndDataPolygonCallbacks {
 	catch {$callback $mLastDataIndex}
     }
 
     set mLastDataIndex ""
+    refresh_on
+    refresh_all
 }
 
 
@@ -3506,7 +4502,7 @@ package provide cadwidgets::Ged 1.0
     }
 
     set cos [vdot $A $B]
-    set angle [format "%.2f" [expr {acos($cos) * (180.0 / 3.141592653589793)}]]
+    set angle [format "%.2f" [expr {acos($cos) * $GED_RAD2DEG}]]
 
     if {[llength $mViewMeasureCallbacks] == 0} {
 	set mstring "Measured Distance (Leg 2):  $delta [$mGed units -s]\nMeasured Angle:  $angle"
@@ -3534,7 +4530,7 @@ package provide cadwidgets::Ged 1.0
     init_button_no_op_prot $_button
 }
 
-::itcl::body cadwidgets::Ged::end_view_rect {_pane {_button 1} {_pflag 0}} {
+::itcl::body cadwidgets::Ged::end_view_rect {_pane {_button 1} {_pflag 0} {_bot ""}} {
     $mGed idle_mode $itk_component($_pane)
 
 #    # Add specific bindings to eliminate bleed through from rectangle mode
@@ -3544,17 +4540,25 @@ package provide cadwidgets::Ged 1.0
 #    }
 
     if {[llength $mViewRectCallbacks] == 0} {
-	if {$_pflag} {
-	    tk_messageBox -message [$mGed rselect -p $itk_component($_pane)]
+	if {$_bot != ""} {
+	    tk_messageBox -message [$mGed rselect $itk_component($_pane) -b $_bot]
 	} else {
-	    tk_messageBox -message [$mGed rselect $itk_component($_pane)]
+	    if {$_pflag} {
+		tk_messageBox -message [$mGed rselect $itk_component($_pane) -p]
+	    } else {
+		tk_messageBox -message [$mGed rselect $itk_component($_pane)]
+	    }
 	}
     } else {
 	foreach callback $mViewRectCallbacks {
-	    if {$_pflag} {
-		catch {$callback [$mGed rselect $itk_component($_pane) -p]}
+	    if {$_bot != ""} {
+		catch {$callback [$mGed rselect $itk_component($_pane) -b $_bot]}
 	    } else {
-		catch {$callback [$mGed rselect $itk_component($_pane)]}
+		if {$_pflag} {
+		    catch {$callback [$mGed rselect $itk_component($_pane) -p]}
+		} else {
+		    catch {$callback [$mGed rselect $itk_component($_pane)]}
+		}
 	    }
 	}
     }
@@ -3665,6 +4669,19 @@ package provide cadwidgets::Ged 1.0
 
     return $mHistoryCallback
 }
+
+
+::itcl::body cadwidgets::Ged::init_add_metaballpt {_obj {_button 1} {_callback {}}} {
+    measure_line_erase
+
+    set mMetaballPointCallback $_callback
+
+    foreach dm {ur ul ll lr} {
+	bind $itk_component($dm) <$_button> "[::itcl::code $this pane_mouse_add_metaballpt $dm $_obj %x %y]; focus %W; break"
+	bind $itk_component($dm) <ButtonRelease-$_button> ""
+    }
+}
+
 
 ::itcl::body cadwidgets::Ged::init_append_pipept {_obj {_button 1} {_callback {}}} {
     measure_line_erase
@@ -3792,6 +4809,82 @@ package provide cadwidgets::Ged 1.0
 }
 
 
+::itcl::body cadwidgets::Ged::init_find_arb_edge {_obj {_button 1} {_callback {}}} {
+    measure_line_erase
+
+    set mArbEdgeCallback $_callback
+
+    set cdim [rect cdim]
+    set width [lindex $cdim 0]
+    set ptol [expr {[size] * [local2base] / double($width) * $itk_option(-pixelTol)}]
+
+    foreach dm {ur ul ll lr} {
+	bind $itk_component($dm) <$_button> "[::itcl::code $this pane_mouse_find_arb_edge $dm $_obj %x %y $ptol]; focus %W; break"
+	bind $itk_component($dm) <ButtonRelease-$_button> ""
+    }
+}
+
+
+::itcl::body cadwidgets::Ged::init_find_arb_face {_obj {_button 1} {_viewz 1.0} {_callback {}}} {
+    measure_line_erase
+
+    set mArbFaceCallback $_callback
+
+    foreach dm {ur ul ll lr} {
+	bind $itk_component($dm) <$_button> "[::itcl::code $this pane_mouse_find_arb_face $dm $_obj $_viewz %x %y]; focus %W; break"
+	bind $itk_component($dm) <ButtonRelease-$_button> ""
+    }
+}
+
+
+::itcl::body cadwidgets::Ged::init_find_bot_edge {_obj {_button 1} {_viewz 1.0} {_callback {}}} {
+    measure_line_erase
+
+    set mBotEdgeCallback $_callback
+
+    foreach dm {ur ul ll lr} {
+	bind $itk_component($dm) <$_button> "[::itcl::code $this pane_mouse_find_bot_edge $dm $_obj $_viewz %x %y]; focus %W; break"
+	bind $itk_component($dm) <ButtonRelease-$_button> ""
+    }
+}
+
+
+::itcl::body cadwidgets::Ged::init_find_bot_face {_obj {_button 1} {_viewz 1.0} {_callback {}}} {
+    measure_line_erase
+
+    set mBotFaceCallback $_callback
+
+    foreach dm {ur ul ll lr} {
+	bind $itk_component($dm) <$_button> "[::itcl::code $this pane_mouse_find_bot_face $dm $_obj $_viewz %x %y]; focus %W; break"
+	bind $itk_component($dm) <ButtonRelease-$_button> ""
+    }
+}
+
+
+::itcl::body cadwidgets::Ged::init_find_botpt {_obj {_button 1} {_viewz 1.0} {_callback {}}} {
+    measure_line_erase
+
+    set mBotPointCallback $_callback
+
+    foreach dm {ur ul ll lr} {
+	bind $itk_component($dm) <$_button> "[::itcl::code $this pane_mouse_find_botpt $dm $_obj $_viewz %x %y]; focus %W; break"
+	bind $itk_component($dm) <ButtonRelease-$_button> ""
+    }
+}
+
+
+::itcl::body cadwidgets::Ged::init_find_metaballpt {_obj {_button 1} {_callback {}}} {
+    measure_line_erase
+
+    set mMetaballPointCallback $_callback
+
+    foreach dm {ur ul ll lr} {
+	bind $itk_component($dm) <$_button> "[::itcl::code $this pane_mouse_find_metaballpt $dm $_obj %x %y]; focus %W; break"
+	bind $itk_component($dm) <ButtonRelease-$_button> ""
+    }
+}
+
+
 ::itcl::body cadwidgets::Ged::init_find_pipept {_obj {_button 1} {_callback {}}} {
     measure_line_erase
 
@@ -3823,7 +4916,7 @@ package provide cadwidgets::Ged 1.0
 	brlcad {
 	    foreach pane {ul ur ll lr} {
 		$mGed init_view_bindings $itk_component($pane)
-	    }	    
+	    }
 	}
 	default {
 	    foreach pane {ul ur ll lr} {
@@ -3862,6 +4955,7 @@ package provide cadwidgets::Ged 1.0
 
     foreach dm {ur ul ll lr} {
 	bind $itk_component($dm) <$_part1_button> "[::itcl::code $this begin_view_measure $dm $_part1_button $_part2_button %x %y]; focus %W; break"
+	bind $itk_component($dm) <Control-Alt-$_part1_button> "[::itcl::code $this pane_mouse_ray $dm %x %y]"
     }
 }
 
@@ -3872,12 +4966,12 @@ package provide cadwidgets::Ged 1.0
     }
 }
 
-::itcl::body cadwidgets::Ged::init_view_rect {{_button 1} {_pflag 0}} {
+::itcl::body cadwidgets::Ged::init_view_rect {{_button 1} {_pflag 0} {_bot ""}} {
     measure_line_erase
 
     foreach dm {ur ul ll lr} {
 	bind $itk_component($dm) <$_button> "$mGed rect_mode $itk_component($dm) %x %y; focus %W; break"
-	bind $itk_component($dm) <ButtonRelease-$_button> "[::itcl::code $this end_view_rect $dm $_button $_pflag]; break"
+	bind $itk_component($dm) <ButtonRelease-$_button> "[::itcl::code $this end_view_rect $dm $_button $_pflag $_bot]; break"
     }
 }
 
@@ -4026,7 +5120,7 @@ package provide cadwidgets::Ged 1.0
     set mLastMouseRayStart [$mGed v2m_point $itk_component($_pane) [lindex $view 0] [lindex $view 1] $vZ]
     set mLastMouseRayTarget [$mGed v2m_point $itk_component($_pane) [lindex $view 0] [lindex $view 1] 0]
 
-    if {[catch {shoot_ray $mLastMouseRayStart "at" $mLastMouseRayTarget 1 1 0} partitions]} {
+    if {[catch {shoot_ray_who $mLastMouseRayStart "at" $mLastMouseRayTarget 1 1 0 1} partitions]} {
 	return $partitions
     }
 
@@ -4179,26 +5273,43 @@ package provide cadwidgets::Ged 1.0
     }
 }
 
-::itcl::body cadwidgets::Ged::shoot_ray {_start _op _target _prep _no_bool _onehit} {
+
+::itcl::body cadwidgets::Ged::init_shoot_ray {_rayname _prep _no_bool _onehit _bot_dflag _objects} {
+    eval rt_gettrees $_rayname -i -u $_objects
+    $_rayname prep $_prep
+    $_rayname set no_bool $_no_bool
+    $_rayname set onehit $_onehit
+    $_rayname set bot_reverse_normal_disabled $_bot_dflag
+}
+
+
+::itcl::body cadwidgets::Ged::shoot_ray {_rayname _start _op _target _prep _no_bool _onehit _bot_dflag _objects} {
+    SetWaitCursor $this
+
+    init_shoot_ray $_rayname $_prep $_no_bool $_onehit $_bot_dflag $_objects
+    set result [$_rayname shootray $_start $_op $_target]
+
+    SetNormalCursor $this
+    return $result
+}
+
+
+::itcl::body cadwidgets::Ged::shoot_ray_who {_start _op _target _prep _no_bool _onehit _bot_dflag} {
     SetWaitCursor $this
 
     set result ""
     catch {
 	if {$mRayCurrWho != $mRayLastWho || $mRayNeedGettrees} {
 	    set mRayCurrWho [$mGed who]
-	    eval $mGed rt_gettrees $mRay -i -u $mRayCurrWho
-	    $mRay prep $_prep
-	    $mRay no_bool $_no_bool
-	    $mRay onehit $_onehit
 	    set mRayLastWho $mRayCurrWho
 	    set mRayNeedGettrees 0
+	    init_shoot_ray $mRay $_prep $_no_bool $_onehit $_bot_dflag $mRayCurrWho
 	}
 
 	set result [$mRay shootray $_start $_op $_target]
     }
 
     SetNormalCursor $this
-
     return $result
 }
 
@@ -4466,6 +5577,34 @@ package provide cadwidgets::Ged 1.0
     set mDataPointCallback $_callback
 }
 
+
+::itcl::body cadwidgets::Ged::clear_arb_callbacks {} {
+    set mArbEdgeCallback ""
+    set mArbFaceCallback ""
+    set mArbPointCallback ""
+}
+
+
+::itcl::body cadwidgets::Ged::clear_bot_callbacks {} {
+    set mBotEdgeCallback ""
+    set mBotFaceCallback ""
+    set mBotPointCallback ""
+}
+
+
+::itcl::body cadwidgets::Ged::color_to_tk {_color} {
+    if {[catch {winfo rgb . $_color} rgb]} {
+	set rgb "255 255 255"
+    }
+
+    set r [expr {int([lindex $rgb 0] / 256.0)}]
+    set g [expr {int([lindex $rgb 1] / 256.0)}]
+    set b [expr {int([lindex $rgb 2] / 256.0)}]
+
+    return [rgb_to_tk $r $g $b]
+}
+
+
 ::itcl::body cadwidgets::Ged::get_ged_color {_color} {
     switch -- $_color {
 	"Grey" {
@@ -4559,7 +5698,7 @@ package provide cadwidgets::Ged 1.0
 	    return "00ff00"
 	}
 	"Magenta" {
-	    return "ff00ff"
+	    return "770077"
 	}
 	"Red" {
 	    return "ff0000"
@@ -4574,6 +5713,21 @@ package provide cadwidgets::Ged 1.0
     }
 }
 
+
+::itcl::body cadwidgets::Ged::isDouble {_d} {
+    if {[string is double $_d] && $_d != ""} {
+	return 1
+    }
+
+    return 0
+}
+
+
+::itcl::body cadwidgets::Ged::rgb_to_tk {_r _g _b} {
+    return [format \#%.2x%.2x%.2x $_r $_g $_b]
+}
+
+
 ::itcl::body cadwidgets::Ged::tk_to_rgb {_tkcolor} {
     if {![regexp {^\#([0-9a-fA-F]{2})([0-9a-fA-F]{2})([0-9a-fA-F]{2})$} $_tkcolor all r g b]} {
 	return {128 128 128}
@@ -4582,10 +5736,90 @@ package provide cadwidgets::Ged 1.0
     return [list [expr int(0x$r)] [expr int(0x$g)] [expr int(0x$b)]]
 }
 
-::itcl::body cadwidgets::Ged::rgb_to_tk {_r _g _b} {
-    return [format \#%.2x%.2x%.2x $_r $_g $_b]
+
+::itcl::body cadwidgets::Ged::validateDigit {_d} {
+    if {[string is digit $_d]} {
+	return 1
+    }
+
+    return 0
 }
 
+::itcl::body cadwidgets::Ged::validateDigitMax {_d _max} {
+    if {![string is digit $_d]} {
+	return 0
+    }
+
+    if {$_d == "" || $_d <= $_max} {
+	return 1
+    }
+
+    return 0
+}
+
+
+::itcl::body cadwidgets::Ged::validateDouble {_d} {
+    if {[string is double $_d] || $_d == "." || $_d == "-"} {
+	return 1
+    }
+
+    return 0
+}
+
+
+::itcl::body cadwidgets::Ged::validateRgb {_rgb} {
+    if {[llength $_rgb] > 3} {
+	return 0
+    }
+
+    set r [lindex $_rgb 0]
+    set g [lindex $_rgb 1]
+    set b [lindex $_rgb 2]
+
+    if {($r == "" || ([string is digit $r] && $r <= 255)) &&
+	($g == "" || ([string is digit $g] && $g <= 255)) &&
+	($b == "" || ([string is digit $b] && $b <= 255))} {
+	return 1
+    }
+
+    return 0
+}
+
+
+::itcl::body cadwidgets::Ged::validate2TupleNonZeroDigits {_t} {
+    if {[llength $_t] > 2} {
+	return 0
+    }
+
+    set t1 [lindex $_t 0]
+    set t2 [lindex $_t 1]
+
+    if {([string is digit $t1] && $t1 > 0) &&
+	([string is digit $t2] && $t2 > 0)} {
+	return 1
+    }
+
+    return 0
+}
+
+
+::itcl::body cadwidgets::Ged::validate3TupleDoubles {_t} {
+    if {[llength $_t] > 3} {
+	return 0
+    }
+
+    set t1 [lindex $_t 0]
+    set t2 [lindex $_t 1]
+    set t3 [lindex $_t 2]
+
+    if {[string is double $t1] &&
+	[string is double $t2] &&
+	[string is double $t3]} {
+	return 1
+    }
+
+    return 0
+}
 
 
 ############################### Commands that still need to be resolved ###############################
@@ -4701,59 +5935,89 @@ package provide cadwidgets::Ged 1.0
     set help [cadwidgets::Help \#auto]
 
     $help add ?			{{} {list available commands}}
-    $help add apropos		{{key} {list relevent commands given a keyword}}
+    $help add apropos		{{key} {list relevant commands given a keyword}}
     $help add 3ptarb		{{name x1 y1 z1 x2 y2 z2 x3 y3 z3 coord c1 c2 th} {creates an arb}}
     $help add adc		{{args} {set/get adc attributes}}
     $help add adjust		{{} {adjust database object parameters}}
     $help add ae2dir		{{[-i] az el} {return the view direction}}
+    $help add ae		{{["az el tw"]} {set/get the azimuth, elevation and twist}}
     $help add aet		{{["az el tw"]} {set/get the azimuth, elevation and twist}}
     $help add analyze		{{object(s)} {analyze objects}}
+    $help add annotate		{{[object(s)] [-n name] [-p x y z]} {annotate objects}}
     $help add arb		{{name rot fb} {creates an arb}}
     $help add arced     	{{a/b anim_cmd ...} {edit the matrix, etc., along an arc}}
     $help add arot		{{x y z angle} {rotate about axis x,y,z by angle (degrees)}}
     $help add attr      	{{{set|get|rm|append} object [args]}
-	      		{set, get, remove or append to attribute values for the specified object.
-	    		for the "set" subcommand, the arguments are attribute name/value pairs
+			{set, get, remove or append to attribute values for the specified object.
+			for the "set" subcommand, the arguments are attribute name/value pairs
 			for the "get" subcommand, the arguments are attribute names
-	    		for the "rm" subcommand, the arguments are attribute names
-	    		for the "append" subcommand, the arguments are attribute name/value pairs}}
+			for the "rm" subcommand, the arguments are attribute names
+			for the "append" subcommand, the arguments are attribute name/value pairs}}
     $help add autoview		{{view_obj} {set the view object's size and center}}
     $help add bb		{{object} {Report the size of the bounding box (rpp) containing the specified object}}
     $help add bev		{{[P|t] new_obj obj1 op obj2 ...} {boolean evaluation of objects via NMG's}}
     $help add blast		{{"-C#/#/# <objects>"} {clear screen, draw objects}}
+    $help add bn_dist_pt2_lseg2 {{ptA ptB pt} {calculate distance of pt to line segment AB}}
+    $help add bn_isect_line2_line2 {{pt dir pt dir} {find the point where the lines intersect}}
+    $help add bn_isect_line3_line3 {{pt dir pt dir} {find the point where the lines intersect}}
+    $help add bn_noise_fbm {{X Y Z h_val lacunarity octaves} {}}
+    $help add bn_noise_perlin {{X Y Z} {}}
+    $help add bn_noise_slice {{xdim ydim inv h_val lac octaves dX dY dZ sX [sY sZ]} {}}
+    $help add bn_noise_turb {{X Y Z h_val lacunarity octaves} {}}
+    $help add bn_random {{[seed]} {generates a random number}}
     $help add bo		{{(-i|-o) major_type minor_type dest source}
-	      		{manipulate opaque objects.
-	    		Must specify one of -i (for creating or adjusting objects (input))
-	    		or -o for extracting objects (output).
-	    		If the major type is "u" the minor type must be one of:
-	    		"f" -> float
-	    		"d" -> double
-	    		"c" -> char (8 bit)
-	    		"s" -> short (16 bit)
-	    		"i" -> int (32 bit)
-	    		"l" -> long (64 bit)
-	    		"C" -> unsigned char (8 bit)
-	    		"S" -> unsigned short (16 bit)
-	    		"I" -> unsigned int (32 bit)
-	    		"L" -> unsigned long (64 bit)
-	    		For input, source is a file name and dest is an object name.
-	    		For output source is an object name and dest is a file name.
-	    		Only uniform array binary objects (major_type=u) are currently supported}}
+			{manipulate opaque objects.
+			Must specify one of -i (for creating or adjusting objects (input))
+			or -o for extracting objects (output).
+			If the major type is "u" the minor type must be one of:
+			"f" -> float
+			"d" -> double
+			"c" -> char (8 bit)
+			"s" -> short (16 bit)
+			"i" -> int (32 bit)
+			"l" -> long (64 bit)
+			"C" -> unsigned char (8 bit)
+			"S" -> unsigned short (16 bit)
+			"I" -> unsigned int (32 bit)
+			"L" -> unsigned long (64 bit)
+			For input, source is a file name and dest is an object name.
+			For output source is an object name and dest is a file name.
+			Only uniform array binary objects (major_type=u) are currently supported}}
     $help add bot_condense	{{new_bot old_bot} {create a new bot by condensing the old bot}}
     $help add bot_decimate	{{[options] new_bot old_bot} {create a new bot by decimating the old bot}}
     $help add bot_dump	{{[-b] [-m directory] [-o file] [-t dxf|obj|sat|stl] [-u units] [bot1 bot2 ...]\n} {dump the specified bots}}
-    $help add bot_face_fuse	{{new_bot old_bot} {eliminate duplicate faces in a BOT solid}}
+    $help add bot_face_fuse	{{new_bot old_bot} {eliminate duplicate faces in a BOT}}
     $help add bot_face_sort	{{triangles_per_piece bot_solid1 [bot_solid2 bot_solid3 ...]} {sort the facelist of BOT solids to optimize ray trace performance for a particular number of triangles per raytrace piece}}
+    $help add bot_fuse		{{new_bot old_bot} {eliminate duplicate points in a BOT}}
     $help add bot_merge		{{bot_dest bot1_src [botn_src]} {merge the specified bots into bot_dest}}
     $help add bot_smooth	{{[-t norm_tolerance_degrees] new_bot old_bot} {calculate vertex normals for BOT primitive}}
     $help add bot_split		{{bot} {split the bot}}
     $help add bot_vertex_fuse	{{new_bot old_bot} {}}
+    $help add brep	{{cmds} {Usage: brep brep obj [command|brepname|suffix] commands:
+	info - return count information for specific BREP
+	info S [index] - return information for specific BREP 'surface'
+	info F [index] - return information for specific BREP 'face'
+	plot - plot entire BREP
+	plot S [index] - plot specific BREP 'surface'
+	plot F [index] - plot specific BREP 'face'
+	intersect obj2 i j [max_dis] - intersect two surfaces
+	[brepname] - convert the non-BREP object to BREP form
+	[suffix] - convert non-BREP comb to unevaluated BREP form}}
+    $help add bu_units_conversion  {{units} {}}
+    $help add bu_brlcad_data	{{subdir} {}}
+    $help add bu_brlcad_dir	{{dirkey} {}}
+    $help add bu_brlcad_root	{{subdir} {}}
+    $help add bu_mem_barriercheck {{} {}}
+    $help add bu_prmem		{{title} {}}
+    $help add bu_get_value_by_keyword {{iwant list} {}}
+    $help add bu_rgb_to_hsv	{{rgb} {}}
+    $help add bu_hsv_to_rgb	{{hsv} {}}
     $help add c		{{[-gr] comb_name <boolean_expr>} {create or extend a combination using standard notation}}
     $help add cat	{{<objects>} {list attributes (brief)}}
     $help add center		{{["x y z"]} {set/get the view center}}
     $help add clear		{{} {clear screen}}
     $help add clone		{{[options] object} {clone the specified object}}
-    $help add coord		{{[m|v]} {set/get the coodinate system}}
+    $help add coord		{{[m|v]} {set/get the coordinate system}}
     $help add color		{{low high r g b str} {make color entry}}
     $help add comb		{{comb_name <operation solid>} {create or extend combination w/booleans}}
     $help add comb_color 	{{comb R G B} {set combination's color}}
@@ -4766,6 +6030,12 @@ package provide cadwidgets::Ged 1.0
     $help add dbfind		{{[-s] <objects>} {find all references to objects}}
     $help add dbip		{{} {get dbip}}
     $help add dbot_dump	{{[-b] [-m directory] [-o file] [-t dxf|obj|sat|stl] [-u units] \n} {dump the displayed bots}}
+    $help add dbversion		{{} {return the database version}}
+    $help add debugbu		{{[hex_code]} {activate libbu debugging}}
+    $help add debugdir		{{} {dump of database directory}}
+    $help add debuglib		{{[hex_code]} {activate librt debugging}}
+    $help add debugmem		{{[hex_code]} {activate memory debugging}}
+    $help add debugnmg		{{[hex_code]} {activate nmg debugging}}
     $help add decompose		{{nmg_solid [prefix]}	{decompose nmg_solid into maximally connected shells}}
     $help add delay		{{sec usec} {delay processing for the specified amount of time}}
     $help add dir2ae		{{az el} {returns a direction vector given the azimuth and elevation}}
@@ -4775,6 +6045,7 @@ package provide cadwidgets::Ged 1.0
     $help add E			{{[-s] <objects>} {evaluated edit of objects. Option 's' provides a slower, but better fidelity evaluation}}
     $help add eac		{{air_code(s)} {draw objects with the specified air codes}}
     $help add echo		{{args} {echo the specified args to the command window}}
+    $help add edarb		{{extrude|permute arb args} {edit an arb}}
     $help add edcodes		{{object(s)} {edit the various codes for the specified objects}}
     $help add edcolor		{{} {edit the color table}}
     $help add edcomb		{{comb rflag rid air los mid} {modify combination record information}}
@@ -4785,8 +6056,10 @@ package provide cadwidgets::Ged 1.0
     $help add expand		{{expression} {globs expression against database objects}}
     $help add eye		{{mx my mz} {set eye point to given model coordinates}}
     $help add eye_pos		{{mx my mz} {set eye position to given model coordinates}}
+    $help add eye_pt		{{mx my mz} {set eye point to given model coordinates}}
     $help add exists		{{object} {check for the existence of object}}
     $help add facetize		{{[-m] [-n] [-t] [-T] new_obj old_obj [old_obj2 old_obj3 ...]} {create a new bot object by facetizing the specified objects}}
+    $help add voxelize		{{gg} {dfdf}}
     $help add form		{{objType} {returns form of objType}}
     $help add fracture		{{} {}}
     $help add g			{{groupname <objects>} {group objects}}
@@ -4797,18 +6070,24 @@ package provide cadwidgets::Ged 1.0
     $help add get_type		{{object} {returns the object type}}
     $help add glob		{{expression} {returns a list of objects specified by expression}}
     $help add gqa		{{options object(s)} {perform quantitative analysis checks on geometry}}
+    $help add graph             {{} {query and manipulate properties of the graph that corresponds to the currently opened .g database}}
     $help add grid		{{color|draw|help|mrh|mrv|rh|rv|snap|vars|vsnap [args]} {get/set grid attributes}}
+    $help add grid2model_lu	{{x y} {convert grid xy to model coordinates (local units)}}
+    $help add grid2view_lu	{{x y} {convert grid xy to view coordinates (local units)}}
     $help add help		{{cmd} {returns a help string for cmd}}
+    $help add hdivide		{{hvect} {}}
     $help add hide		{{[objects]} {set the "hidden" flag for the specified objects so they do not appear in a "t" or "ls" command output}}
     $help add how		{{obj} {returns how an object is being displayed}}
     $help add i			{{obj combination [operation]} {add instance of obj to comb}}
     $help add idents		{{file object(s)} {dump the idents for the specified objects to file}}
+    $help add igraph            {{} {interactive graph for the objects of the currently opened .g database}}
     $help add illum		{{name} {illuminate object}}
     $help add importFg4Section	{{obj section} {create an object by importing the specified section}}
     $help add in		{{args} {creates a primitive by prompting the user for input}}
     $help add inside		{{out_prim in_prim th(s)} {Creates in_prim as the inside of out_prim}}
     $help add isize		{{} {returns the inverse of view size}}
     $help add item		{{region ident [air [material [los]]]} {set region ident codes}}
+    $help add joint		{{?} {}}
     $help add keep		{{keep_file object(s)} {save named objects in specified file}}
     $help add keypoint		{{[point]} {set/get the keypoint}}
     $help add kill		{{[-f] <objects>} {delete object[s] from file}}
@@ -4821,6 +6100,7 @@ package provide cadwidgets::Ged 1.0
     $help add listen		{{[n]} {get/set the port to listen on for rt applications}}
     $help add listeval		{{} {lists 'evaluated' path solids}}
     $help add loadview		{{file} {loads a view from file}}
+    $help add lod		{{} {configure Level of Detail drawing}}
     $help add log		{{get|start|stop} {used to control logging}}
     $help add lookat		{{x y z} {adjust view to look at given coordinates}}
     $help add ls		{{[-a -c -r -s]} {table of contents}}
@@ -4831,18 +6111,44 @@ package provide cadwidgets::Ged 1.0
     $help add make_name		{{template | -s [num]} {make a unique name}}
     $help add make_pnts		{{object_name path_and_filename file_format units_or_conv_factor default_diameter} {creates a point-cloud}}
     $help add match		{{exp} {returns all database objects matching the given expression}}
+    $help add mat_mul		{{matA matB} {multiply matB by matA}}
+    $help add mat_inv		{{mat} {find the inverse of mat}}
+    $help add mat_trn		{{mat} {find the transpose of mat}}
+    $help add matXvec		{{mat hvec} {multiply hvec by mat}}
+    $help add mat4x3vec		{{mat vec} {multiply vec by mat}}
+    $help add mat4x3pnt		{{mat pnt} {multiply pnt by mat}}
+    $help add mat_ae		{{az el} {returns the matrix for az,el}}
+    $help add mat_ae_vec	{{vec} {returns the az,el for vec}}
+    $help add mat_aet_vec	{{vec_ae vec_twist accuracy} {returns the az,el,tw}}
+    $help add mat_angles	{{a b c} {returns a rotation matrix}}
+    $help add mat_eigen2x2	{{a b c} {}}
+    $help add mat_fromto	{{vecFrom vecTo} {}}
+    $help add mat_xrot		{{sina cosa} {returns a rotation matrix}}
+    $help add mat_yrot		{{sina cosa} {returns a rotation matrix}}
+    $help add mat_zrot		{{sina cosa} {returns a rotation matrix}}
+    $help add mat_lookat	{{dir yflip} {}}
+    $help add mat_vec_ortho	{{vec} {returns a vector orthogonal to vec}}
+    $help add mat_vec_perp	{{vec} {returns a vector perpandicular to vec}}
+    $help add mat_scale_about_pt {{pt scale} {}}
+    $help add mat_xform_about_pt {{xform pt} {}}
+    $help add mat_arb_rot	{{pt dir angle} {returns a rotation matrix}}
     $help add mater		{{region shader R G B inherit} {modify region's material information}}
+    $help add memprint		{{} {print memory}}
     $help add mirror		{{[-p point] [-d dir] [-x] [-y] [-z] [-o offset] old new}	{mirror object along the specified axis}}
+    $help add model2grid_lu	{{x y z} {convert model xyz to grid coordinates (local units)}}
     $help add model2view	{{} {returns the model2view matrix}}
+    $help add model2view_lu	{{x y z} {convert model xyz to view coordinates (local units)}}
     $help add move_arb_edge	{{arb edge pt} {move an arb's edge through pt}}
     $help add move_arb_face	{{arb face pt} {move an arb's face through pt}}
     $help add mv		{{old new} {rename object}}
     $help add mvall		{{old new} {rename object everywhere}}
     $help add nirt		{{[nirt(1) options] [x y z]}	{trace a single ray from current view}}
     $help add nmg_collapse    	{{nmg_solid new_solid maximum_error_distance [minimum_allowed_angle]}	{decimate NMG solid via edge collapse}}
+    $help add nmg_fix_normals  	{{nmg}	{fix NMG normals}}
     $help add nmg_simplify    	{{[arb|tgc|ell|poly] new_solid nmg_solid}	{simplify nmg_solid, if possible}}
     $help add ocenter 		{{obj [x y z]} {get/set center for obj}}
     $help add orient		{{x y z w} {set view direction from quaternion}}
+    $help add orientation	{{x y z w} {set view direction from quaternion}}
     $help add orotate		{{x y z} {rotate object}}
     $help add oscale		{{sf} {scale object}}
     $help add otranslate 	{{x y z} {translate object}}
@@ -4853,7 +6159,8 @@ package provide cadwidgets::Ged 1.0
     $help add plot		{{file [2|3] [f] [g] [z]} {creates a plot file of the current view}}
     $help add pmat		{{} {get the perspective matrix}}
     $help add pmodel2view	{{} {get the pmodel2view matrix}}
-    $help add png		{{[-c r/g/b] [-s size] file} {creates a png file of the current view (wirefram only)}}
+    $help add png		{{[-c r/g/b] [-s size] file} {creates a png file of the current view (wireframe only)}}
+    $help add polybinout	{{file}	{write out polygons (binary) of the currently displayed geometry}}
     $help add pov		{{args}	{experimental:  set point-of-view}}
     $help add prcolor		{{} {print color and material table}}
     $help add prefix		{{new_prefix object(s)} {prefix each occurrence of object name(s)}}
@@ -4865,6 +6172,16 @@ package provide cadwidgets::Ged 1.0
     $help add putmat		{{a/b I|m0 m1 ... m15} {put the specified matrix on a/b}}
     $help add qray		{{subcommand}	{get/set query_ray characteristics}}
     $help add quat		{{[a b c d]} {get/set the view orientation as a quaternion}}
+    $help add quat_mat2quat	{{mat} {returns a quaternion}}
+    $help add quat_quat2mat	{{quat} {returns a matrix}}
+    $help add quat_distance	{{quatA quatB} {}}
+    $help add quat_double	{{quatA quatB} {}}
+    $help add quat_bisect	{{quatA quatB} {}}
+    $help add quat_slerp	{{quatA quatB factor} {}}
+    $help add quat_sberp	{{quat1 quatA quatB quat2 factor} {}}
+    $help add quat_make_nearest	{{quatA quatB} {}}
+    $help add quat_exp		{{quat} {}}
+    $help add quat_log		{{quat} {}}
     $help add qvrot		{{x y z angle} {set the view given a direction vector and an angle of rotation}}
     $help add r			{{region <operation solid>} {create or extend a Region combination}}
     $help add rcodes		{{file} {read codes from file}}
@@ -4899,14 +6216,16 @@ package provide cadwidgets::Ged 1.0
     $help add setview		{{x y z} {set the view given angles x, y, and z in degrees}}
     $help add shaded_mode	{{[0|1|2]}	{get/set shaded mode}}
     $help add shader		{{comb shader_material [shader_args]} {command line version of the mater command}}
-    $help add shells		{{nmg_model}	{breaks model into seperate shells}}
+    $help add shells		{{nmg_model}	{breaks model into separate shells}}
     $help add showmats		{{path}	{show xform matrices along path}}
     $help add size		{{vsize} {set/get the view size}}
     $help add slew		{{"x y"} {slew the view}}
     $help add snap_view		{{vx vy} {snap the view to grid}}
     $help add solids		{{file object(s)} {returns an ascii summary of solids}}
     $help add summary		{{[s r g]}	{count/list solid/reg/groups}}
+    $help add sv		{{"x y"} {slew the view}}
     $help add sync		{{} {sync the in memory database to disk}}
+    $help add t 		{{[-a -c -r -s]} {table of contents}}
     $help add tire		{{[options] tire_top} {create a tire}}
     $help add title		{{?string?} {print or change the title}}
     $help add tol		{{"[abs #] [rel #] [norm #] [dist #] [perp #]"} {show/set tessellation and calculation tolerances}}
@@ -4917,12 +6236,17 @@ package provide cadwidgets::Ged 1.0
     $help add unhide		{{[objects]} {unset the "hidden" flag for the specified objects so they will appear in a "t" or "ls" command output}}
     $help add units		{{[mm|cm|m|in|ft|...]}	{change units}}
     $help add v2m_point		{{x y z} {convert xyz in view space to xyz in model space}}
+    $help add vblend		{{} {}}
     $help add vdraw		{{write|insert|delete|read|length|show [args]} {vector drawing (cnuzman)}}
-    $help add version		{{} {return the database version}}
     $help add view		{{quat|ypr|aet|center|eye|size [args]} {get/set view parameters}}
+    $help add view2grid_lu	{{x y z} {convert view xyz to grid coordinates (local units)}}
     $help add view2model	{{} {returns the view to model matrix}}
-    $help add viewDir		{{[-i]} {return the view direction}}
-    $help add vmake		{{pname ptype} {make a primtive of ptype and size it according to the view}}
+    $help add view2model_lu	{{x y z} {convert view xyz to model coordinates (local units)}}
+    $help add view2model_vec	{{x y z} {convert view xyz to model coordinates (vec)}}
+    $help add viewdir		{{[-i]} {return the view direction}}
+    $help add viewsize		{{vsize} {set/get the view size}}
+    $help add vjoin1		{{} {}}
+    $help add vmake		{{pname ptype} {make a primitive of ptype and size it according to the view}}
     $help add vnirt		{{options vX vY} {trace a single ray aimed at (vX, vY) in view coordinates}}
     $help add wcodes		{{file object(s)} {write codes to file for the specified object(s)}}
     $help add whatid		{{region_name} {display ident number for region}}
@@ -4931,6 +6255,7 @@ package provide cadwidgets::Ged 1.0
     $help add whichid		{{[-s] ident(s)} {lists all regions with given ident code}}
     $help add who		{{[r(eal)|p(hony)|b(oth)]} {list the top-level objects currently being displayed}}
     $help add wmater		{{file comb1 [comb2 ...]} {write material properties to a file for the specified combinations}}
+    $help add x 		{{[lvl]} {print solid table & vector list}}
     $help add xpush		{{object} {Experimental Push Command}}
     $help add ypr		{{yaw pitch roll} {set the view orientation given the yaw, pitch and roll}}
     $help add zap		{{} {clear screen}}

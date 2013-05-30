@@ -1,7 +1,7 @@
 /*                       S H _ F I R E . C
  * BRL-CAD
  *
- * Copyright (c) 1997-2012 United States Government as represented by
+ * Copyright (c) 1997-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -117,7 +117,6 @@ struct fire_specific fire_defaults = {
 
 #define SHDR_NULL ((struct fire_specific *)0)
 #define SHDR_O(m) bu_offsetof(struct fire_specific, m)
-#define SHDR_AO(m) bu_offsetofarray(struct fire_specific, m)
 
 
 /* description of how to parse/print the arguments to the shader
@@ -128,14 +127,14 @@ struct bu_structparse fire_print_tab[] = {
     {"%d", 1, "debug",		SHDR_O(fire_debug),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%f", 1, "flicker",	SHDR_O(fire_flicker),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%f", 1, "stretch",	SHDR_O(fire_stretch),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f", 1, "lacunarity",	SHDR_O(noise_lacunarity),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f", 1, "H", 		SHDR_O(noise_h_val),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f", 1, "octaves", 	SHDR_O(noise_octaves),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f", 3, "scale",		SHDR_O(noise_size),		bu_mm_cvt, NULL, NULL },
-    {"%f", 3, "vscale",		SHDR_AO(noise_vscale),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f", 3, "delta",		SHDR_AO(noise_delta),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f", 3,  "max",		SHDR_AO(fire_max),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f", 3,  "min",		SHDR_AO(fire_min),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%g", 1, "lacunarity",	SHDR_O(noise_lacunarity),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%g", 1, "H", 		SHDR_O(noise_h_val),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%g", 1, "octaves", 	SHDR_O(noise_octaves),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%g", 3, "scale",		SHDR_O(noise_size),		bu_mm_cvt, NULL, NULL },
+    {"%f", 3, "vscale",		SHDR_O(noise_vscale),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f", 3, "delta",		SHDR_O(noise_delta),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f", 3,  "max",		SHDR_O(fire_max),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f", 3,  "min",		SHDR_O(fire_min),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"",   0, (char *)0,	0,				BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 
 };
@@ -143,13 +142,13 @@ struct bu_structparse fire_parse_tab[] = {
     {"%p", 1, "fire_print_tab", bu_byteoffset(fire_print_tab[0]), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%f", 1, "f",	SHDR_O(fire_flicker),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%f", 1, "st",	SHDR_O(fire_stretch),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f", 1, "l",	SHDR_O(noise_lacunarity),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f", 1, "H", 	SHDR_O(noise_h_val),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f", 1, "o", 	SHDR_O(noise_octaves),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f", 1, "s",	SHDR_O(noise_size),		bu_mm_cvt, NULL, NULL },
-    {"%f", 3, "v",	SHDR_AO(noise_vscale),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f", 3, "vs",	SHDR_AO(noise_vscale),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f", 3, "d",	SHDR_AO(noise_delta),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%g", 1, "l",	SHDR_O(noise_lacunarity),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%g", 1, "H", 	SHDR_O(noise_h_val),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%g", 1, "o", 	SHDR_O(noise_octaves),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%g", 1, "s",	SHDR_O(noise_size),		bu_mm_cvt, NULL, NULL },
+    {"%f", 3, "v",	SHDR_O(noise_vscale),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f", 3, "vs",	SHDR_O(noise_vscale),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f", 3, "d",	SHDR_O(noise_delta),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"",   0, (char *)0,	0,			BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 
@@ -287,7 +286,7 @@ fire_print(register struct region *rp, genptr_t dp)
 HIDDEN void
 fire_free(genptr_t cp)
 {
-    bu_free(cp, "fire_specific");
+    BU_PUT(cp, struct fire_specific);
 }
 
 
@@ -331,7 +330,7 @@ fire_render(struct application *ap, const struct partition *pp, struct shadework
     point_t sh_i_pt, sh_o_pt;	/* shader space in/out points */
     point_t noise_i_pt, noise_o_pt;	/* shader space in/out points */
     point_t noise_pt;
-    point_t color;
+    double color[3];
     vect_t noise_r_dir;
     double noise_r_thick;
     int i;
@@ -480,7 +479,7 @@ fire_render(struct application *ap, const struct partition *pp, struct shadework
     VMOVE(swp->sw_color, color);
 /* VSETALL(swp->sw_basecolor, 1.0);*/
 
-    swp->sw_transmit = 1.0 - (lumens * 4.);
+    swp->sw_transmit = 1.0 - (lumens * 4.0);
     if (swp->sw_reflect > 0 || swp->sw_transmit > 0)
 	(void)rr_render(ap, pp, swp);
 

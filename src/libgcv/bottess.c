@@ -1,7 +1,7 @@
 /*                    B O T T E S S . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2012 United States Government as represented by
+ * Copyright (c) 2008-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -55,7 +55,7 @@ int
 soup_rm_face(struct soup_s *s, unsigned long int i)
 {
     if(i>=s->nfaces) {
-	bu_log("trying to remove a nonexisant face? %lu/%lu\n", i, s->nfaces);
+	bu_log("trying to remove a nonexistent face? %lu/%lu\n", i, s->nfaces);
 	bu_bomb("Asploding\n");
     }
     memcpy(&s->faces[i], &s->faces[s->nfaces-1], sizeof(struct face_s));
@@ -133,7 +133,7 @@ split_face_single(struct soup_s *s, unsigned long int fid, point_t isectpt[2], s
 #define ALL_INT  (VERT_INT|LINE_INT|FACE_INT)
 
 #if NOISY
-    printf("Cutting % 2.2g,% 2.2g,% 2.2g | % 2.2g,% 2.2g,% 2.2g | % 2.2g,% 2.2g,% 2.2g along % 2.2g,% 2.2g,% 2.2g <-> % 2.2g,% 2.2g,% 2.2g\n", 
+    printf("Cutting % 2.2g,% 2.2g,% 2.2g | % 2.2g,% 2.2g,% 2.2g | % 2.2g,% 2.2g,% 2.2g along % 2.2g,% 2.2g,% 2.2g <-> % 2.2g,% 2.2g,% 2.2g\n",
 	    V3ARGS(s->faces[fid].vert[0]),
 	    V3ARGS(s->faces[fid].vert[1]),
 	    V3ARGS(s->faces[fid].vert[2]),
@@ -315,7 +315,7 @@ bot2soup(struct rt_bot_internal *bot, const struct bn_tol *tol)
     if(bot->orientation != RT_BOT_CCW)
 	bu_bomb("Bad orientation out of nmg_bot\n");
 
-    s = bu_malloc(sizeof(struct soup_s), "bot soup");
+    BU_ALLOC(s, struct soup_s);
     s->magic = SOUP_MAGIC;
     s->nfaces = 0;
     s->maxfaces = ceil(bot->num_faces / (double)faces_per_page) * faces_per_page;

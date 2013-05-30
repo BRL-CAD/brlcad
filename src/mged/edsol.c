@@ -1,7 +1,7 @@
 /*                         E D S O L . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2012 United States Government as represented by
+ * Copyright (c) 1985-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -600,7 +600,7 @@ struct menu_item ehy_menu[] = {
 
 
 struct menu_item  hyp_menu[] = {
-    { "HYPERBOLID MENU", (void (*)())NULL, 0 },
+    { "HYP MENU", (void (*)())NULL, 0 },
     { "Set H", hyp_ed, MENU_HYP_H },
     { "Set A", hyp_ed, MENU_HYP_SCALE_A },
     { "Set B", hyp_ed, MENU_HYP_SCALE_B },
@@ -971,7 +971,7 @@ arb5_edge(int arg)
     es_menu = arg;
     es_edflag = EARB;
     if (arg == 8) {
-	/* move point 5 at loaction 4 */
+	/* move point 5 at location 4 */
 	es_edflag = PTARB;
 	es_menu = 4;
     }
@@ -3380,8 +3380,8 @@ pscale(void)
 		    /* take es_mat[15] (path scaling) into account */
 		    es_para[0] *= es_mat[15];
 		    es_scale = es_para[0];
-		} 
-		VSCALE(hyp->hyp_Hi, hyp->hyp_Hi, es_scale);    
+		}
+		VSCALE(hyp->hyp_Hi, hyp->hyp_Hi, es_scale);
 	    }
 	    break;
 
@@ -3396,8 +3396,8 @@ pscale(void)
 		    /* take es_mat[15] (path scaling) into account */
 		    es_para[0] *= es_mat[15];
 		    es_scale = es_para[0];
-		} 
-		VSCALE(hyp->hyp_A, hyp->hyp_A, es_scale);    
+		}
+		VSCALE(hyp->hyp_A, hyp->hyp_A, es_scale);
 	    }
 	    break;
 
@@ -3412,8 +3412,8 @@ pscale(void)
 		    /* take es_mat[15] (path scaling) into account */
 		    es_para[0] *= es_mat[15];
 		    es_scale = es_para[0];
-		} 
-		hyp->hyp_b = hyp->hyp_b * es_scale;    
+		}
+		hyp->hyp_b = hyp->hyp_b * es_scale;
 	    }
 	    break;
 
@@ -3430,9 +3430,9 @@ pscale(void)
 		    es_para[0] *= es_mat[15];
 		    es_scale = es_para[0];
 		}
-		if (hyp->hyp_bnr * es_scale <= 1.0) { 
+		if (hyp->hyp_bnr * es_scale <= 1.0) {
 		    hyp->hyp_bnr = hyp->hyp_bnr * es_scale;
-		}    
+		}
 	    }
 	    break;
 
@@ -4091,8 +4091,8 @@ sedit(void)
 		    mged_print_result(TCL_ERROR);
 		    return;
 		} else if (es_scale > 0.0) {
-		    VSCALE(vol->cellsize, vol->cellsize, es_scale)
-			es_scale = 0.0;
+		    VSCALE(vol->cellsize, vol->cellsize, es_scale);
+		    es_scale = 0.0;
 		}
 	    }
 	    break;
@@ -4365,7 +4365,7 @@ sedit(void)
 				      " \"BOT Flags\"",
 				      " \"Select the desired flags\"",
 				      " { {Use vertex normals} {Use single precision ray-tracing} }",
-				      " { {This selection indicates that surface normals at hit points should be interpolated from vertex normals} {This selection indicates that the prepped form of the BOT triangles should use sigle precision to save memory} } ",
+				      " { {This selection indicates that surface normals at hit points should be interpolated from vertex normals} {This selection indicates that the prepped form of the BOT triangles should use single precision to save memory} } ",
 				      (char *)NULL);
 		if (ret_tcl != TCL_OK) {
 		    bu_log("ERROR: cad_list_buts: %s\n", Tcl_GetStringResult(INTERP));
@@ -4693,7 +4693,7 @@ sedit(void)
 	    pr_prompt(interactive);
 	    fixv--;
 	    es_edflag = ECMD_ARB_ROTATE_FACE;
-	    view_state->vs_flag = 1;	/* draw arrow, etc */
+	    view_state->vs_flag = 1;	/* draw arrow, etc. */
 	    set_e_axes_pos(1);
 	    break;
 
@@ -4972,8 +4972,8 @@ sedit(void)
 			MAT4X3PNT(work, es_invmat, es_para);
 			VSUB2(cli->h, work, cli->v);
 		    } else
-			VSUB2(cli->h, es_para, cli->v)
-			    }
+			VSUB2(cli->h, es_para, cli->v);
+		}
 		/* check for zero H vector */
 		if (MAGNITUDE(cli->h) <= SQRT_SMALL_FASTF) {
 		    Tcl_AppendResult(INTERP, "Zero H vector not allowed, resetting to +Z\n",
@@ -5325,7 +5325,7 @@ sedit(void)
 	    break;
 
 	case ECMD_HYP_ROT_H:
-	    /* rotate hyperolid height vector */
+	    /* rotate hyperboloid height vector */
 	    {
 		struct rt_hyp_internal *hyp =
 		    (struct rt_hyp_internal *)es_int.idb_ptr;
@@ -6256,7 +6256,7 @@ sedit(void)
 		    plane_t view_pl;
 		    fastf_t dist;
 
-		    /* construct a plane perpendiculr to view direction
+		    /* construct a plane perpendicular to view direction
 		     * that passes through ARS point being moved
 		     */
 		    VSET(view_dir, 0.0, 0.0, 1.0);
@@ -6309,7 +6309,7 @@ sedit(void)
 		    plane_t view_pl;
 		    fastf_t dist;
 
-		    /* construct a plane perpendiculr to view direction
+		    /* construct a plane perpendicular to view direction
 		     * that passes through ARS point being moved
 		     */
 		    VSET(view_dir, 0.0, 0.0, 1.0);
@@ -6361,7 +6361,7 @@ sedit(void)
 		    plane_t view_pl;
 		    fastf_t dist;
 
-		    /* construct a plane perpendiculr to view direction
+		    /* construct a plane perpendicular to view direction
 		     * that passes through ARS point being moved
 		     */
 		    VSET(view_dir, 0.0, 0.0, 1.0);
@@ -6556,18 +6556,18 @@ sedit(void)
 		tmp_tol.para = 1.0 - tmp_tol.perp;
 
 		/* get a direction vector in model space corresponding to z-direction in view */
-		VSET(work, 0.0, 0.0, 1.0)
-		    MAT4X3VEC(dir, view_state->vs_gvp->gv_view2model, work)
+		VSET(work, 0.0, 0.0, 1.0);
+		MAT4X3VEC(dir, view_state->vs_gvp->gv_view2model, work);
 
-		    for (BU_LIST_FOR(ps, wdb_metaballpt, &metaball->metaball_ctrl_head)) {
-			fastf_t dist;
+		for (BU_LIST_FOR(ps, wdb_metaballpt, &metaball->metaball_ctrl_head)) {
+		    fastf_t dist;
 
-			dist = bn_dist_line3_pt3(new_pt, dir, ps->coord);
-			if (dist < min_dist) {
-			    min_dist = dist;
-			    nearest = ps;
-			}
+		    dist = bn_dist_line3_pt3(new_pt, dir, ps->coord);
+		    if (dist < min_dist) {
+			min_dist = dist;
+			nearest = ps;
 		    }
+		}
 
 		es_metaballpt = nearest;
 
@@ -6981,7 +6981,7 @@ sedit_mouse(const vect_t mousevec)
 		    bu_vls_free(&vls);
 		}
 		if (hits == 1) {
-		    (void)sscanf(bu_vls_addr(&vls), " { { %d %d %d", &bot_verts[0], &bot_verts[1], &bot_verts[2]);
+		    sscanf(bu_vls_addr(&vls), " { { %d %d %d", &bot_verts[0], &bot_verts[1], &bot_verts[2]);
 		    bu_vls_free(&vls);
 		} else {
 		    Tcl_LinkVar(INTERP, "bot_v1", (char *)&bot_verts[0], TCL_LINK_INT);
@@ -8285,12 +8285,12 @@ label_edited_solid(
 		struct rt_hyp_internal *hyp =
 		    (struct rt_hyp_internal *)es_int.idb_ptr;
 		vect_t vB;
-	    
+
 		RT_HYP_CK_MAGIC(hyp);
 
 		MAT4X3PNT(pos_view, xform, hyp->hyp_Vi);
 		POINT_LABEL(pos_view, 'V');
-	    
+
 		VADD2(work, hyp->hyp_Vi, hyp->hyp_Hi);
 		MAT4X3PNT(pos_view, xform, work);
 		POINT_LABEL(pos_view, 'H');
@@ -8355,15 +8355,15 @@ label_edited_solid(
 
 		RT_ARS_CK_MAGIC(ars);
 
-		MAT4X3PNT(pos_view, xform, ars->curves[0])
+		MAT4X3PNT(pos_view, xform, ars->curves[0]);
 
-		    if (es_ars_crv >= 0 && es_ars_col >= 0) {
-			point_t ars_pt;
+		if (es_ars_crv >= 0 && es_ars_col >= 0) {
+		    point_t ars_pt;
 
-			VMOVE(work, &ars->curves[es_ars_crv][es_ars_col*3]);
-			MAT4X3PNT(ars_pt, xform, work);
-			POINT_LABEL_STR(ars_pt, "pt");
-		    }
+		    VMOVE(work, &ars->curves[es_ars_crv][es_ars_col*3]);
+		    MAT4X3PNT(ars_pt, xform, work);
+		    POINT_LABEL_STR(ars_pt, "pt");
+		}
 	    }
 	    POINT_LABEL(pos_view, 'V');
 	    break;

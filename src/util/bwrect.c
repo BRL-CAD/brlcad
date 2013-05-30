@@ -1,7 +1,7 @@
 /*                        B W R E C T . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2012 United States Government as represented by
+ * Copyright (c) 1986-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -42,17 +42,17 @@ main(int argc, char **argv)
 {
     FILE *ifp, *ofp;
     int row;
-    long offset;
+    off_t offset;
     size_t ret;
 
     if (argc < 3) {
-	bu_exit(1, "usage: bwrect infile outfile (I prompt!)\n");
+	bu_exit(1, "Usage: bwrect infile outfile (I prompt!)\n");
     }
     if ((ifp = fopen(argv[1], "r")) == NULL) {
-	bu_exit(2, "pixrect: can't open %s\n", argv[1]);
+	bu_exit(2, "bwrect: can't open %s for reading\n", argv[1]);
     }
     if ((ofp = fopen(argv[2], "w")) == NULL) {
-	bu_exit(3, "pixrect: can't open %s\n", argv[1]);
+	bu_exit(3, "bwrect: can't open %s for writing\n", argv[2]);
     }
 
     /* Get info */
@@ -76,7 +76,7 @@ main(int argc, char **argv)
     /* Move all points */
     for (row = 0+yorig; row < ynum+yorig; row++) {
 	offset = row * linelen + xorig;
-	fseek(ifp, offset, 0);
+	bu_fseek(ifp, offset, 0);
 	ret = fread(buf, sizeof(*buf), xnum, ifp);
 	if (ret == 0) {
 	    perror("fread");

@@ -1,7 +1,7 @@
 /*                  P I X H I S T 3 D - P L . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2012 United States Government as represented by
+ * Copyright (c) 1986-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -46,7 +46,7 @@ struct pix_element {
 };
 
 
-static const char *Usage = "usage: pixhist3d-pl [file.pix] | plot\n";
+static const char *Usage = "Usage: pixhist3d-pl [file.pix] | plot\n";
 
 int
 main(int argc, char **argv)

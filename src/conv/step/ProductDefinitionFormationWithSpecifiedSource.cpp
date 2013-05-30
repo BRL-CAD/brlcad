@@ -1,7 +1,7 @@
 /*                 ProductDefinitionFormationWithSpecifiedSource.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2012 United States Government as represented by
+ * Copyright (c) 1994-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -32,7 +32,7 @@
 #define CLASSNAME "ProductDefinitionFormationWithSpecifiedSource"
 #define ENTITYNAME "Product_Definition_Formation_With_Specified_Source"
 string ProductDefinitionFormationWithSpecifiedSource::entityname = Factory::RegisterClass(ENTITYNAME,
-        (FactoryMethod) ProductDefinitionFormationWithSpecifiedSource::Create);
+	(FactoryMethod) ProductDefinitionFormationWithSpecifiedSource::Create);
 
 ProductDefinitionFormationWithSpecifiedSource::ProductDefinitionFormationWithSpecifiedSource()
 {
@@ -61,18 +61,18 @@ string ProductDefinitionFormationWithSpecifiedSource::SourceString()
 {
     string sourcestring;
     switch (make_or_buy) {
-    case Source__made:
-	sourcestring = ".MADE.";
-	break;
-    case Source__bought:
-	sourcestring = ".BOUGHT.";
-	break;
-    case Source__not_known:
-	sourcestring = ".NOT_KNOWN.";
-	break;
-    case Source_unset:
-    default:
-	sourcestring = ".UNSET.";
+	case Source__made:
+	    sourcestring = ".MADE.";
+	    break;
+	case Source__bought:
+	    sourcestring = ".BOUGHT.";
+	    break;
+	case Source__not_known:
+	    sourcestring = ".NOT_KNOWN.";
+	    break;
+	case Source_unset:
+	default:
+	    sourcestring = ".UNSET.";
     }
     return sourcestring;
 }
@@ -92,8 +92,9 @@ bool ProductDefinitionFormationWithSpecifiedSource::Load(STEPWrapper *sw, SDAI_A
     sse = step->getEntity(sse, ENTITYNAME);
 
     make_or_buy = (Source) step->getEnumAttribute(sse, "make_or_buy");
-    if (make_or_buy > Source_unset)
+    if (make_or_buy > Source_unset) {
 	make_or_buy = Source_unset;
+    }
 
     return true;
 }
@@ -106,7 +107,7 @@ void ProductDefinitionFormationWithSpecifiedSource::Print(int level)
 
     TAB(level);
     std::cout << "Attributes:" << std::endl;
-    TAB(level+1);
+    TAB(level + 1);
     std::cout << "make_or_buy:" << SourceString() << std::endl;
 
     TAB(level);
@@ -115,23 +116,15 @@ void ProductDefinitionFormationWithSpecifiedSource::Print(int level)
 }
 
 STEPEntity *
+ProductDefinitionFormationWithSpecifiedSource::GetInstance(STEPWrapper *sw, int id)
+{
+    return new ProductDefinitionFormationWithSpecifiedSource(sw, id);
+}
+
+STEPEntity *
 ProductDefinitionFormationWithSpecifiedSource::Create(STEPWrapper *sw, SDAI_Application_instance *sse)
 {
-    Factory::OBJECTS::iterator i;
-    if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
-	ProductDefinitionFormationWithSpecifiedSource *object = new ProductDefinitionFormationWithSpecifiedSource(sw, sse->STEPfile_id);
-
-	Factory::AddObject(object);
-
-	if (!object->Load(sw, sse)) {
-	    std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
-	    delete object;
-	    return NULL;
-	}
-	return static_cast<STEPEntity *>(object);
-    } else {
-	return (*i).second;
-    }
+    return STEPEntity::CreateEntity(sw, sse, GetInstance, CLASSNAME);
 }
 
 bool ProductDefinitionFormationWithSpecifiedSource::LoadONBrep(ON_Brep *brep)

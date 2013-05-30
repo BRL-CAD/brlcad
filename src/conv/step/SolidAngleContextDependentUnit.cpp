@@ -1,7 +1,7 @@
 /*                 SolidAngleContextDependentUnit.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2012 United States Government as represented by
+ * Copyright (c) 1994-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -31,33 +31,37 @@
 
 #define CLASSNAME "SolidAngleContextDependentUnit"
 #define ENTITYNAME "Solid_Angle_Context_Dependent_Unit"
-string SolidAngleContextDependentUnit::entityname = Factory::RegisterClass(ENTITYNAME,(FactoryMethod)SolidAngleContextDependentUnit::Create);
+string SolidAngleContextDependentUnit::entityname = Factory::RegisterClass(ENTITYNAME, (FactoryMethod)SolidAngleContextDependentUnit::Create);
 
-SolidAngleContextDependentUnit::SolidAngleContextDependentUnit() {
+SolidAngleContextDependentUnit::SolidAngleContextDependentUnit()
+{
     step = NULL;
     id = 0;
 }
 
-SolidAngleContextDependentUnit::SolidAngleContextDependentUnit(STEPWrapper *sw,int step_id) {
+SolidAngleContextDependentUnit::SolidAngleContextDependentUnit(STEPWrapper *sw, int step_id)
+{
     step = sw;
     id = step_id;
 }
 
-SolidAngleContextDependentUnit::~SolidAngleContextDependentUnit() {
+SolidAngleContextDependentUnit::~SolidAngleContextDependentUnit()
+{
 }
 
 bool
-SolidAngleContextDependentUnit::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
-    step=sw;
+SolidAngleContextDependentUnit::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
+    step = sw;
     id = sse->STEPfile_id;
 
 
     // load base class attributes
-    if ( !SolidAngleUnit::Load(step,sse) ) {
+    if (!SolidAngleUnit::Load(step, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::Unit." << std::endl;
 	return false;
     }
-    if ( !ContextDependentUnit::Load(step,sse) ) {
+    if (!ContextDependentUnit::Load(step, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::Unit." << std::endl;
 	return false;
     }
@@ -66,32 +70,29 @@ SolidAngleContextDependentUnit::Load(STEPWrapper *sw,SDAI_Application_instance *
 }
 
 void
-SolidAngleContextDependentUnit::Print(int level) {
-    TAB(level); std::cout << CLASSNAME << ":" << "(";
+SolidAngleContextDependentUnit::Print(int level)
+{
+    TAB(level);
+    std::cout << CLASSNAME << ":" << "(";
     std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-    TAB(level); std::cout << "Inherited Attributes:" << std::endl;
-    SolidAngleUnit::Print(level+1);
-    ContextDependentUnit::Print(level+1);
+    TAB(level);
+    std::cout << "Inherited Attributes:" << std::endl;
+    SolidAngleUnit::Print(level + 1);
+    ContextDependentUnit::Print(level + 1);
 
 }
+
 STEPEntity *
-SolidAngleContextDependentUnit::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
-    Factory::OBJECTS::iterator i;
-    if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
-	SolidAngleContextDependentUnit *object = new SolidAngleContextDependentUnit(sw,sse->STEPfile_id);
+SolidAngleContextDependentUnit::GetInstance(STEPWrapper *sw, int id)
+{
+    return new SolidAngleContextDependentUnit(sw, id);
+}
 
-	Factory::AddObject(object);
-
-	if (!object->Load(sw, sse)) {
-	    std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
-	    delete object;
-	    return NULL;
-	}
-	return static_cast<STEPEntity *>(object);
-    } else {
-	return (*i).second;
-    }
+STEPEntity *
+SolidAngleContextDependentUnit::Create(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
+    return STEPEntity::CreateEntity(sw, sse, GetInstance, CLASSNAME);
 }
 
 // Local Variables:

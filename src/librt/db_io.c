@@ -1,7 +1,7 @@
 /*                         D B _ I O . C
  * BRL-CAD
  *
- * Copyright (c) 1988-2012 United States Government as represented by
+ * Copyright (c) 1988-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -65,7 +65,7 @@ db_read(const struct db_i *dbip, genptr_t addr, size_t count, off_t offset)
     }
     if (offset+count > (size_t)dbip->dbi_eof) {
 	/* Attempt to read off the end of the file */
-	bu_log("db_read(%s) ERROR offset=%d, count=%zu, dbi_eof=%d\n",
+	bu_log("db_read(%s) ERROR offset=%zd, count=%zu, dbi_eof=%zd\n",
 	       dbip->dbi_filename,
 	       offset, count, dbip->dbi_eof);
 	return -1;
@@ -76,7 +76,7 @@ db_read(const struct db_i *dbip, genptr_t addr, size_t count, off_t offset)
     }
     bu_semaphore_acquire(BU_SEM_SYSCALL);
 
-    ret = (int)fseek(dbip->dbi_fp, (long)offset, 0);
+    ret = bu_fseek(dbip->dbi_fp, offset, 0);
     if (ret)
 	bu_bomb("db_read: fseek error\n");
     got = (size_t)fread(addr, 1, count, dbip->dbi_fp);
@@ -92,18 +92,6 @@ db_read(const struct db_i *dbip, genptr_t addr, size_t count, off_t offset)
 }
 
 
-/**
- * Retrieve all records in the database pertaining to an object, and
- * place them in malloc()'ed storage, which the caller is responsible
- * for free()'ing.
- *
- * This loads the combination into a local record buffer.
- * This is in external v4 format.
- *
- * Returns -
- * union record * - OK
- * (union record *)0 - FAILURE
- */
 union record *
 db_getmrec(const struct db_i *dbip, const struct directory *dp)
 {
@@ -141,14 +129,6 @@ db_getmrec(const struct db_i *dbip, const struct directory *dp)
 }
 
 
-/**
- * Retrieve 'len' records from the database, "offset" granules into
- * this entry.
- *
- * Returns -
- * 0 OK
- * -1 FAILURE
- */
 int
 db_get(const struct db_i *dbip, const struct directory *dp, union record *where, off_t offset, size_t len)
 {
@@ -163,7 +143,7 @@ db_get(const struct db_i *dbip, const struct directory *dp, union record *where,
 	return -1;
     }
     if (offset < 0 || len+(size_t)offset > dp->d_len) {
-	bu_log("db_get(%s):  xfer %d..%x exceeds 0..%zu\n",
+	bu_log("db_get(%s):  xfer %d..%lu exceeds 0..%zu\n",
 	       dp->d_namep, offset, offset+len, dp->d_len);
 	where->u_id = '\0';	/* undefined id */
 	return -1;
@@ -185,17 +165,6 @@ db_get(const struct db_i *dbip, const struct directory *dp, union record *where,
 }
 
 
-/**
- * Writes 'count' bytes into at file offset 'offset' from buffer at
- * 'addr'.  A wrapper for the UNIX write() sys-call that takes into
- * account syscall semaphores, stdio-only machines, and in-memory
- * buffering.
- *
- * Returns -
- * 0 OK
- * -1 FAILURE
- */
-/* should be HIDDEN */
 int
 db_write(struct db_i *dbip, const genptr_t addr, size_t count, off_t offset)
 {
@@ -221,7 +190,7 @@ db_write(struct db_i *dbip, const genptr_t addr, size_t count, off_t offset)
     bu_semaphore_acquire(BU_SEM_SYSCALL);
     bu_suspend_interrupts();
 
-    (void)fseek(dbip->dbi_fp, offset, 0);
+    (void)bu_fseek(dbip->dbi_fp, offset, 0);
     got = fwrite(addr, 1, count, dbip->dbi_fp);
     fflush(dbip->dbi_fp);
 
@@ -238,14 +207,6 @@ db_write(struct db_i *dbip, const genptr_t addr, size_t count, off_t offset)
 }
 
 
-/**
- * Store 'len' records to the database, "offset" granules into this
- * entry.
- *
- * Returns:
- * 0 OK
- * non-0 FAILURE
- */
 int
 db_put(struct db_i *dbip, const struct directory *dp, union record *where, off_t offset, size_t len)
 {
@@ -256,7 +217,7 @@ db_put(struct db_i *dbip, const struct directory *dp, union record *where, off_t
 				    dp->d_namep, dbip, dp, where, offset, len);
 
     if ((len+(size_t)offset) > dp->d_len) {
-	bu_log("db_put(%s):  xfer %d..%x exceeds 0..%zu\n",
+	bu_log("db_put(%s):  xfer %d..%lu exceeds 0..%zu\n",
 	       dp->d_namep, offset, offset+len, dp->d_len);
 	return -1;
     }
@@ -282,20 +243,6 @@ db_put(struct db_i *dbip, const struct directory *dp, union record *where, off_t
 }
 
 
-/**
- * Obtains a object from the database, leaving it in external (on-disk)
- * format.
- *
- * The bu_external structure represented by 'ep' is initialized here,
- * the caller need not pre-initialize it.  On error, 'ep' is left
- * un-initialized and need not be freed, to simplify error recovery.
- * On success, the caller is responsible for calling
- * bu_free_external(ep);
- *
- * Returns -
- * -1 error
- * 0 success
- */
 int
 db_get_external(register struct bu_external *ep, const struct directory *dp, const struct db_i *dbip)
 {
@@ -329,24 +276,6 @@ db_get_external(register struct bu_external *ep, const struct directory *dp, con
 }
 
 
-/**
- * Given that caller already has an external representation of the
- * database object, update it to have a new name (taken from
- * dp->d_namep) in that external representation, and write the new
- * object into the database, obtaining different storage if the size
- * has changed.
- *
- * Caller is responsible for freeing memory of external
- * representation, using bu_free_external().
- *
- * This routine is used to efficiently support MGED's "cp" and "keep"
- * commands, which don't need to import objects just to rename and
- * copy them.
- *
- * Returns -
- * <0 error
- * 0 success
- */
 int
 db_put_external(struct bu_external *ep, struct directory *dp, struct db_i *dbip)
 {
@@ -403,25 +332,6 @@ db_put_external(struct bu_external *ep, struct directory *dp, struct db_i *dbip)
 }
 
 
-/**
- * Add name from dp->d_namep to external representation of solid, and
- * write it into a file.
- *
- * Caller is responsible for freeing memory of external
- * representation, using bu_free_external().
- *
- * The 'name' field of the external representation is modified to
- * contain the desired name.  The 'ep' parameter cannot be const.
- *
- * THIS ROUTINE ONLY SUPPORTS WRITING V4 GEOMETRY.
- *
- * Returns -
- * <0 error
- * 0 OK
- *
- * NOTE: Callers of this should be using wdb_export_external()
- * instead.
- */
 int
 db_fwrite_external(FILE *fp, const char *name, struct bu_external *ep)
 {

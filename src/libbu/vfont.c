@@ -1,7 +1,7 @@
 /*                         V F O N T . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2012 United States Government as represented by
+ * Copyright (c) 2004-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -89,7 +89,7 @@ vfont_get(char *font)
     }
 
     /* Read in the bit maps */
-    vfp = (struct vfont *)bu_malloc(sizeof(struct vfont), "vfont");
+    BU_ALLOC(vfp, struct vfont);
     vfp->vf_bits = (char *)bu_malloc((size_t)size, "vfont bits");
     if (fread(vfp->vf_bits, (size_t)size, 1, fp) != 1) {
 	fprintf(stderr, "vfont_get(%s):  bitmap read error\n", fname);

@@ -2,7 +2,7 @@
  Author: Marcus Boerger <helly@users.sourceforge.net>
 */
 
-/* $Id$ */
+/* Public Domain (file originally from re2c) */
 
 #include <stdio.h>
 #include <string.h>

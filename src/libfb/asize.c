@@ -1,7 +1,7 @@
 /*                         A S I Z E . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2012 United States Government as represented by
+ * Copyright (c) 2004-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -153,10 +153,10 @@ fb_common_name_size(size_t *widthp, size_t *heightp, const char *name)
 	cp = strchr(cp, '-');		/* Find a minus sign */
 	if (cp == NULL) break;
 	if (sscanf(cp, "-w%lu-n%lu", &w, &h) == 2) {
-            *widthp = w;
-            *heightp = h;
+	    *widthp = w;
+	    *heightp = h;
 	    return 1;
-        }
+	}
 	cp++;				/* skip over the minus */
     }
 

@@ -1,7 +1,7 @@
 /*                         F A C E T I Z E . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2012 United States Government as represented by
+ * Copyright (c) 2008-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -54,7 +54,7 @@ facetize_region_end(struct db_tree_state *tsp,
 
     if (*facetize_tree) {
 	union tree *tr;
-	BU_GET(tr, union tree);
+	BU_ALLOC(tr, union tree);
 	RT_TREE_INIT(tr);
 	tr->tr_op = OP_UNION;
 	tr->tr_b.tb_regionp = REGION_NULL;
@@ -119,7 +119,7 @@ ged_facetize(struct ged *gedp, int argc, const char *argv[])
     init_state.ts_ttol = &gedp->ged_wdbp->wdb_ttol;
     init_state.ts_tol = &gedp->ged_wdbp->wdb_tol;
 
-    /* Initial vaues for options, must be reset each time */
+    /* Initial values for options, must be reset each time */
     marching_cube = 0;
     triangulate = 0;
     make_bot = 1;

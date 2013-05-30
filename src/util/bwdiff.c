@@ -1,7 +1,7 @@
 /*                        B W D I F F . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2012 United States Government as represented by
+ * Copyright (c) 1986-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -49,8 +49,8 @@ int mode = DIFF;
 int backgnd = 0;
 unsigned char ibuf1[512], ibuf2[512], obuf[512];
 
-static const char usage[] = "\
-Usage: bwdiff [-b -m -g -l -e -n] file1.bw file2.bw (- stdin, . skip)\n";
+static const char usage[] =
+    "Usage: bwdiff [-b -m -g -l -e -n] file1.bw file2.bw > diff.bw\n\t(use - for stdin, . for /dev/null)\n";
 
 void
 open_file(FILE **fp, char *name)
@@ -62,7 +62,6 @@ open_file(FILE **fp, char *name)
 	*fp = fopen("/dev/null", "r");
     else if ((*fp = fopen(name, "r")) == NULL)
 	bu_exit(2, "bwdiff: Can't open \"%s\"\n", name);
-    return;
 }
 
 

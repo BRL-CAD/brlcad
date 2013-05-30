@@ -1,7 +1,7 @@
 /*                         G - S T L . C
  * BRL-CAD
  *
- * Copyright (c) 2003-2012 United States Government as represented by
+ * Copyright (c) 2003-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -66,7 +66,7 @@ static int bfd;				/* Output binary file descriptor */
 static struct db_i *dbip;
 static struct model *the_model;
 static struct bu_vls file_name = BU_VLS_INIT_ZERO;		/* file name built from region name */
-static struct rt_tess_tol ttol;		/* tesselation tolerance in mm */
+static struct rt_tess_tol ttol;		/* tessellation tolerance in mm */
 static struct bn_tol tol;		/* calculation tolerance */
 static struct db_tree_state tree_state;	/* includes tol & model */
 
@@ -74,7 +74,7 @@ static int regions_tried = 0;
 static int regions_converted = 0;
 static int regions_written = 0;
 static int inches = 0;
-static unsigned int tot_polygons = 0;
+static size_t tot_polygons = 0;
 
 
 /* Byte swaps a four byte value */
@@ -115,7 +115,7 @@ nmg_to_stl(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(reg
 	while (*c != '\0') {
 	    if (*c == '/') {
 		bu_vls_putc(&file_name, '@');
-	    } else if (*c == '.' || isspace(*c)) {
+	    } else if (*c == '.' || isspace((int)*c)) {
 		bu_vls_putc(&file_name, '_');
 	    } else {
 		bu_vls_putc(&file_name, *c);
@@ -311,6 +311,8 @@ main(int argc, char *argv[])
     int i;
     int ret;
     int use_mc = 0;
+    int mutex;
+    int missingg;
 
     bu_setlinebuf(stderr);
 
@@ -319,7 +321,7 @@ main(int argc, char *argv[])
     tree_state.ts_ttol = &ttol;
     tree_state.ts_m = &the_model;
 
-    /* Set up tesselation tolerance defaults */
+    /* Set up tessellation tolerance defaults */
     ttol.magic = RT_TESS_TOL_MAGIC;
     /* Defaults, updated by command line options. */
     ttol.abs = 0.0;
@@ -395,18 +397,18 @@ main(int argc, char *argv[])
 	}
     }
 
-    if (bu_optind+1 >= argc) {
+    mutex = (output_file && output_directory);
+    missingg = (bu_optind+1 >= argc);
+    if (mutex)
+	bu_log("%s: options \"-o\" and \"-m\" are mutually exclusive\n",argv[0]);
+    if (missingg)
+	bu_log("%s: missing .g file and object(s)\n",argv[0]);
+    if (mutex || missingg)
 	bu_exit(1, usage, argv[0]);
-    }
-
-    if (output_file && output_directory) {
-	bu_log("ERROR: options \"-o\" and \"-m\" are mutually exclusive\n");
-	bu_exit(1, usage, argv[0]);
-    }
 
     if (!output_file && !output_directory) {
 	if (binary) {
-	    bu_exit(1, "Can't output binary to stdout\n");
+	    bu_exit(1, "%s: Can't output binary to stdout\n",argv[0]);
 	}
 	fp = stdout;
     } else if (output_file) {
@@ -415,14 +417,14 @@ main(int argc, char *argv[])
 	    if ((fp=fopen(output_file, "wb+")) == NULL)
 	    {
 		perror(argv[0]);
-		bu_exit(1, "Cannot open ASCII output file (%s) for writing\n", output_file);
+		bu_exit(1, "%s: Cannot open ASCII output file (%s) for writing\n",argv[0],output_file);
 	    }
 	} else {
 	    /* Open binary output file */
 	    if ((bfd=open(output_file, O_WRONLY|O_CREAT|O_TRUNC|O_BINARY, S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH)) < 0)
 	    {
 		perror(argv[0]);
-		bu_exit(1, "Cannot open binary output file (%s) for writing\n", output_file);
+		bu_exit(1, "%s: Cannot open binary output file (%s) for writing\n",argv[0],output_file);
 	    }
 	}
     }
@@ -430,9 +432,9 @@ main(int argc, char *argv[])
     /* Open brl-cad database */
     argc -= bu_optind;
     argv += bu_optind;
-    if ((dbip = db_open(argv[0], "r")) == DBI_NULL) {
+    if ((dbip = db_open(argv[0], DB_OPEN_READONLY)) == DBI_NULL) {
 	perror(argv[0]);
-	bu_exit(1, "Unable to open geometry file (%s)\n", argv[0]);
+	bu_exit(1, "Unable to open geometry database file (%s)\n", argv[0]);
     }
     if (db_dirbuild(dbip)) {
 	bu_exit(1, "ERROR: db_dirbuild failed\n");
@@ -446,7 +448,7 @@ main(int argc, char *argv[])
 	bu_log("Objects:");
 	for (i=1; i<argc; i++)
 	    bu_log(" %s", argv[i]);
-	bu_log("\nTesselation tolerances:\n\tabs = %g mm\n\trel = %g\n\tnorm = %g\n",
+	bu_log("\nTessellation tolerances:\n\tabs = %g mm\n\trel = %g\n\tnorm = %g\n",
 	       tree_state.ts_ttol->abs, tree_state.ts_ttol->rel, tree_state.ts_ttol->norm);
 	bu_log("Calculational tolerances:\n\tdist = %g mm perp = %g\n",
 	       tree_state.ts_tol->dist, tree_state.ts_tol->perp);
@@ -498,7 +500,7 @@ main(int argc, char *argv[])
 		   regions_written, percent);
     }
 
-    bu_log("%lu triangles written\n", tot_polygons);
+    bu_log("%zu triangles written\n", tot_polygons);
 
     if (output_file) {
 	if (binary) {

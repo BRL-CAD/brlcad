@@ -23,7 +23,8 @@ IF(MSVC)
 ENDIF(MSVC)
 
 add_library(clipper clipper.cpp)
-install(TARGETS clipper 
+set_target_properties(clipper PROPERTIES VERSION 4.6.0 SOVERSION 4)
+install(TARGETS clipper
 	RUNTIME DESTINATION ${BIN_DIR}
 	LIBRARY DESTINATION ${LIB_DIR}
 	ARCHIVE DESTINATION ${LIB_DIR})

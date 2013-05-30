@@ -1,7 +1,7 @@
 /*                        F B - R L E . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2012 United States Government as represented by
+ * Copyright (c) 1986-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -69,7 +69,7 @@ static int screen_yoff;
 static char *framebuffer;
 
 static char usage[] = "\
-Usage: fb-rle [-c -h -d] [-F framebuffer] [-C r/g/b]\n\
+Usage: fb-rle [-c -d] [-F framebuffer] [-C r/g/b]\n\
 	[-S squarescrsize] [-W screen_width] [-N screen_height]\n\
 	[-X screen_xoff] [-Y screen_yoff]\n\
 	[-s squarefilesize] [-w file_width] [-n file_height]\n\
@@ -89,17 +89,13 @@ get_args(int argc, char **argv)
 {
     int c;
 
-    while ((c = bu_getopt(argc, argv, "cF:hds:w:n:S:W:N:X:Y:C:")) != -1) {
+    while ((c = bu_getopt(argc, argv, "cF:ds:w:n:S:W:N:X:Y:C:h?")) != -1) {
 	switch (c) {
 	    case 'c':
 		crunch = 1;
 		break;
 	    case 'F':
 		framebuffer = bu_optarg;
-		break;
-	    case 'h':
-		/* high-res */
-		screen_height = screen_width = 1024;
 		break;
 	    case 's':
 		/* square file size */
@@ -139,7 +135,6 @@ get_args(int argc, char **argv)
 	    }
 		break;
 	    default:
-	    case '?':
 		return 0;
 	}
     }

@@ -1,7 +1,7 @@
 /*                       W A V E L E T . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2012 United States Government as represented by
+ * Copyright (c) 2004-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,6 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+
 /** @addtogroup wavelet */
 /** @{ */
 /** @file libbn/wavelet.c
@@ -483,7 +484,7 @@ make_wlt_haar_1d_reconstruct(long)
 		/* reconstruct row y */					\
 									\
 		/* copy "average" row to tbuf and set pointer to	\
-		 * begining of "detail"					\
+		 * beginning of "detail"				\
 		 */							\
 		d = img_size * channels;				\
 		row_start = y*row_len;					\

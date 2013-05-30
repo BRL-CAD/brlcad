@@ -1,7 +1,7 @@
 /*                   G _ B O T _ I N C L U D E . C
  * BRL-CAD
  *
- * Copyright (c) 1999-2012 United States Government as represented by
+ * Copyright (c) 1999-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -38,7 +38,7 @@
  * This function is called with pointers to 3 points, and is used to
  * prepare BOT faces.  ap, bp, cp point to vect_t points.
  *
- * Returns 0 if the 3 points didn't form a plane (eg, colinear, etc).
+ * Returns 0 if the 3 points didn't form a plane (e.g., colinear, etc.).
  * Returns # pts (3) if a valid plane resulted.
  */
 int
@@ -74,7 +74,7 @@ XGLUE(rt_botface_w_normals_, TRI_TYPE)(struct soltab *stp,
 	|| m3 < tol->dist_sq
 	|| m4 < tol->dist_sq)
     {
-	bu_free((char *)trip, "getstruct tri_specific");
+	BU_PUT(trip, XGLUE(tri_specific_, TRI_TYPE));
 
 	if (RT_G_DEBUG & DEBUG_SHOOT) {
 	    bu_log("%s: degenerate facet #%zu\n",
@@ -405,15 +405,18 @@ XGLUE(rt_bot_plate_segs_, TRI_TYPE)(struct hit *hits,
 
 	surfno = hits[i].hit_surfno;
 
-	if (bot->bot_mode == RT_BOT_PLATE_NOCOS)
-	    los = bot->bot_thickness[surfno];
-	else {
-	    los = bot->bot_thickness[surfno] / hits[i].hit_vpriv[X];
-	    if (los < 0.0)
-		los = -los;
+	los = 0.0;
+	if (LIKELY(bot->bot_thickness != NULL)) {
+	    if (bot->bot_mode == RT_BOT_PLATE_NOCOS) {
+		los = bot->bot_thickness[surfno];
+	    } else {
+		los = bot->bot_thickness[surfno] / hits[i].hit_vpriv[X];
+		if (los < 0.0)
+		    los = -los;
+	    }
 	}
 
-	if (BU_BITTEST(bot->bot_facemode, hits[i].hit_surfno)) {
+	if (LIKELY(bot->bot_facemode != NULL) && BU_BITTEST(bot->bot_facemode, hits[i].hit_surfno)) {
 
 	    /* append thickness to hit point */
 	    RT_GET_SEG(segp, ap->a_resource);
@@ -928,7 +931,7 @@ XGLUE(rt_bot_makesegs_, TRI_TYPE)(struct hit *hits, size_t nhits, struct soltab 
 		dot1 = dot2;
 		dot2 = hits[i].hit_vpriv[X];
 		if (dot1 > 0.0 && dot2 > 0.0) {
-		    /* two consectutive exits, manufacture an entrance
+		    /* two consecutive exits, manufacture an entrance
 		     * at same distance as second exit.
 		     */
 		    /* XXX This consumes an extra hit structure in the array */
@@ -951,7 +954,7 @@ XGLUE(rt_bot_makesegs_, TRI_TYPE)(struct hit *hits, size_t nhits, struct soltab 
 		    bu_log("\t\tadding fictitious entry at %f (%s)\n", hits[i].hit_dist, stp->st_name);
 		    bu_log("\t\t\tray = (%g %g %g) -> (%g %g %g)\n", V3ARGS(ap->a_ray.r_pt), V3ARGS(ap->a_ray.r_dir));
 		} else if (dot1 < 0.0 && dot2 < 0.0) {
-		    /* two consectutive entrances, manufacture an exit
+		    /* two consecutive entrances, manufacture an exit
 		     * between them.
 		     */
 		    /* XXX This consumes an extra hit structure in the
@@ -1066,7 +1069,7 @@ XGLUE(rt_bot_shot_, TRI_TYPE)(struct soltab *stp, struct xray *rp, struct applic
 	dn = VDOT(trip->tri_wn, rp->r_dir);
 
 	/*
-	 * If ray lies directly along the face, (ie, dot product is
+	 * If ray lies directly along the face, (i.e., dot product is
 	 * zero), drop this face.
 	 */
 	abs_dn = dn >= 0.0 ? dn : (-dn);
@@ -1188,7 +1191,7 @@ XGLUE(rt_bot_piece_shot_, TRI_TYPE)(struct rt_piecestate *psp, struct rt_pieceli
 
 	if (BU_BITTEST(psp->shot, piecenum)) {
 	    if (debug_shoot)
-		bu_log("%s piece %d already shot\n",
+		bu_log("%s piece %ld already shot\n",
 		       stp->st_name, piecenum);
 
 	    resp->re_piece_ndup++;
@@ -1198,9 +1201,9 @@ XGLUE(rt_bot_piece_shot_, TRI_TYPE)(struct rt_piecestate *psp, struct rt_pieceli
 	/* Shoot a ray */
 	BU_BITSET(psp->shot, piecenum);
 	if (debug_shoot)
-	    bu_log("%s piece %d ...\n", stp->st_name, piecenum);
+	    bu_log("%s piece %ld ...\n", stp->st_name, piecenum);
 
-	/* Now intersect with each piece, which means intesecting with
+	/* Now intersect with each piece, which means intersecting with
 	 * each triangle that makes up the piece.
 	 */
 	face_array_index = piecenum*bot->bot_tri_per_piece;
@@ -1220,7 +1223,7 @@ XGLUE(rt_bot_piece_shot_, TRI_TYPE)(struct rt_piecestate *psp, struct rt_pieceli
 	    dN = VDOT(trip->tri_N, rp->r_dir);
 
 	    /*
-	     * If ray lies directly along the face, (ie, dot product
+	     * If ray lies directly along the face, (i.e., dot product
 	     * is zero), drop this face.
 	     */
 	    abs_dN = dN >= 0.0 ? dN : (-dN);
@@ -1262,7 +1265,7 @@ XGLUE(rt_bot_piece_shot_, TRI_TYPE)(struct rt_piecestate *psp, struct rt_pieceli
 	    hp->hit_surfno = trip->tri_surfno;
 	    hp->hit_rayp = &ap->a_ray;
 	    if (debug_shoot)
-		bu_log("%s piece %d surfno %d ... HIT %g\n",
+		bu_log("%s piece %ld surfno %d ... HIT %g\n",
 		       stp->st_name, piecenum, trip->tri_surfno, hp->hit_dist);
 	} /* for (trinum...) */
     } /* for (;sol_piece_subscr_p...) */
@@ -1361,7 +1364,6 @@ XGLUE(rt_bot_free_, TRI_TYPE)(struct bot_specific *bot)
 	bu_free((char *)bot->bot_facearray, "bot_facearray");
 	bot->bot_facearray = NULL;
     }
-
     if (bot->bot_thickness) {
 	bu_free((char *)bot->bot_thickness, "bot_thickness");
 	bot->bot_thickness = NULL;
@@ -1370,6 +1372,7 @@ XGLUE(rt_bot_free_, TRI_TYPE)(struct bot_specific *bot)
 	bu_free((char *)bot->bot_facemode, "bot_facemode");
 	bot->bot_facemode = NULL;
     }
+
     ptr = bot->bot_facelist;
     while (ptr) {
 	tri = ptr->tri_forw;
@@ -1377,12 +1380,12 @@ XGLUE(rt_bot_free_, TRI_TYPE)(struct bot_specific *bot)
 	    if (ptr->tri_normals) {
 		bu_free((char *)ptr->tri_normals, "bot tri_specific normals");
 	    }
-	    bu_free((char *)ptr, "bot tri_specific");
+	    BU_PUT(ptr, XGLUE(tri_specific_, TRI_TYPE));
 	}
 	ptr = tri;
     }
     bot->bot_facelist = NULL;
-    bu_free((char *)bot, "bot_specific");
+    BU_PUT(bot, struct bot_specific);
 }
 
 

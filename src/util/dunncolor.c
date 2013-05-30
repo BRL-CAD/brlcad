@@ -1,7 +1,7 @@
 /*                     D U N N C O L O R . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2012 United States Government as represented by
+ * Copyright (c) 1986-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -67,7 +67,7 @@ main(int argc, char **argv)
 
     /* check argument */
     if (argc != 5 && argc != 6) {
-	bu_exit(25, "usage: dunncolor [-p] baseval redval greenval blueval\n");
+	bu_exit(25, "Usage: dunncolor [-p] baseval redval greenval blueval\n");
     }
 
     dunnsend('A', atoi(*++argv));

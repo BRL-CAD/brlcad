@@ -1,7 +1,7 @@
 /*                        F B S E R V . C
  * BRL-CAD
  *
- * Copyright (c) 1995-2012 United States Government as represented by
+ * Copyright (c) 1995-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -35,7 +35,7 @@
 #  include <winsock.h>
 #else
 #  include <sys/socket.h>
-#  include <netinet/in.h>		/* For htonl(), etc */
+#  include <netinet/in.h>		/* For htonl(), etc. */
 #endif
 #include "bio.h"
 
@@ -55,7 +55,7 @@
 /*
  * C O M M _ E R R O R
  *
- * Communication error.  An error occured on the PKG link.
+ * Communication error.  An error occurred on the PKG link.
  */
 HIDDEN void
 communications_error(char *str)
@@ -184,7 +184,7 @@ HIDDEN struct pkg_conn *fbserv_makeconn(int fd, const struct pkg_switch *switchp
 HIDDEN void
 fbserv_new_client(struct pkg_conn *pcp,
 		  Tcl_Channel chan)
-	   
+
 {
     int i;
 

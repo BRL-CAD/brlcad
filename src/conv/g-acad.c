@@ -1,7 +1,7 @@
 /*                        G - A C A D . C
  * BRL-CAD
  *
- * Copyright (c) 1996-2012 United States Government as represented by
+ * Copyright (c) 1996-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -278,8 +278,9 @@ process_region(const struct db_full_path *pathp, union tree *curtree, struct db_
 	printf("Attempting to process region %s\n", db_path_to_string(pathp));
 	fflush(stdout);
 	ret_tree = nmg_booltree_evaluate(curtree, tsp->ts_tol, &rt_uniresource);
-	db_free_tree(curtree, &rt_uniresource);            /* Does an nmg_kr() */
-
+	if (ret_tree != curtree) {
+	    db_free_tree(curtree, &rt_uniresource);
+	}
 	return ret_tree;
     } else {
 	/* catch */
@@ -465,7 +466,7 @@ do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union
 	       regions_tried, regions_converted, regions_written, npercent, tpercent);
     }
 
-    BU_GET(curtree, union tree);
+    BU_ALLOC(curtree, union tree);
     RT_TREE_INIT(curtree);
     curtree->tr_op = OP_NOP;
 
@@ -589,9 +590,9 @@ main(int argc, char **argv)
     /* Open BRL-CAD database */
     argc -= bu_optind;
     argv += bu_optind;
-    if ((dbip = db_open(argv[0], "r")) == DBI_NULL) {
+    if ((dbip = db_open(argv[0], DB_OPEN_READONLY)) == DBI_NULL) {
 	perror(argv[0]);
-	bu_exit(1, "Cannot open geometry file (%s) for reading\n", argv[0]);
+	bu_exit(1, "Cannot open geometry database file (%s)\n", argv[0]);
     }
     if (db_dirbuild(dbip)) {
 	bu_exit(1, "db_dirbuild failed\n");
@@ -604,7 +605,7 @@ main(int argc, char **argv)
     fprintf(fpe, "Objects:");
     for (i=1; i<argc; i++)
 	fprintf(fpe, " %s", argv[i]);
-    fprintf(fpe, "\nTesselation tolerances:\n\tabs = %g mm\n\trel = %g\n\tnorm = %g\n",
+    fprintf(fpe, "\nTessellation tolerances:\n\tabs = %g mm\n\trel = %g\n\tnorm = %g\n",
 	    tree_state.ts_ttol->abs, tree_state.ts_ttol->rel, tree_state.ts_ttol->norm);
     fprintf(fpe, "Calculational tolerances:\n\tdist = %g mm perp = %g\n",
 	    tree_state.ts_tol->dist, tree_state.ts_tol->perp);
@@ -613,7 +614,7 @@ main(int argc, char **argv)
     bu_log("Objects:");
     for (i=1; i<argc; i++)
 	bu_log(" %s", argv[i]);
-    bu_log("\nTesselation tolerances:\n\tabs = %g mm\n\trel = %g\n\tnorm = %g\n",
+    bu_log("\nTessellation tolerances:\n\tabs = %g mm\n\trel = %g\n\tnorm = %g\n",
 	   tree_state.ts_ttol->abs, tree_state.ts_ttol->rel, tree_state.ts_ttol->norm);
     bu_log("Calculational tolerances:\n\tdist = %g mm perp = %g\n",
 	   tree_state.ts_tol->dist, tree_state.ts_tol->perp);
@@ -657,7 +658,7 @@ main(int argc, char **argv)
     /* Write out number of facet entities to .facet file */
 
     rewind(fp);
-    fseek(fp, 46, 0); /* Re-position pointer to 2nd line */
+    bu_fseek(fp, 46, 0); /* Re-position pointer to 2nd line */
     fprintf(fp, "%d\n", regions_written); /* Write out number of regions */
     fclose(fp);
 

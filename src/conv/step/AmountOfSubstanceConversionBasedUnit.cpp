@@ -1,7 +1,7 @@
 /*                 AmountOfSubstanceConversionBasedUnit.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2012 United States Government as represented by
+ * Copyright (c) 1994-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -34,33 +34,37 @@
 
 #define CLASSNAME "AmountOfSubstanceConversionBasedUnit"
 #define ENTITYNAME "Amount_Of_Substance_Conversion_Based_Unit"
-string AmountOfSubstanceConversionBasedUnit::entityname = Factory::RegisterClass(ENTITYNAME,(FactoryMethod)AmountOfSubstanceConversionBasedUnit::Create);
+string AmountOfSubstanceConversionBasedUnit::entityname = Factory::RegisterClass(ENTITYNAME, (FactoryMethod)AmountOfSubstanceConversionBasedUnit::Create);
 
-AmountOfSubstanceConversionBasedUnit::AmountOfSubstanceConversionBasedUnit() {
+AmountOfSubstanceConversionBasedUnit::AmountOfSubstanceConversionBasedUnit()
+{
     step = NULL;
     id = 0;
 }
 
-AmountOfSubstanceConversionBasedUnit::AmountOfSubstanceConversionBasedUnit(STEPWrapper *sw,int step_id) {
+AmountOfSubstanceConversionBasedUnit::AmountOfSubstanceConversionBasedUnit(STEPWrapper *sw, int step_id)
+{
     step = sw;
     id = step_id;
 }
 
-AmountOfSubstanceConversionBasedUnit::~AmountOfSubstanceConversionBasedUnit() {
+AmountOfSubstanceConversionBasedUnit::~AmountOfSubstanceConversionBasedUnit()
+{
 }
 
 bool
-AmountOfSubstanceConversionBasedUnit::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
-    step=sw;
+AmountOfSubstanceConversionBasedUnit::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
+    step = sw;
     id = sse->STEPfile_id;
 
 
     // load base class attributes
-    if ( !AmountOfSubstanceUnit::Load(step,sse) ) {
+    if (!AmountOfSubstanceUnit::Load(step, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::Unit." << std::endl;
 	return false;
     }
-    if ( !ConversionBasedUnit::Load(step,sse) ) {
+    if (!ConversionBasedUnit::Load(step, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::Unit." << std::endl;
 	return false;
     }
@@ -69,32 +73,29 @@ AmountOfSubstanceConversionBasedUnit::Load(STEPWrapper *sw,SDAI_Application_inst
 }
 
 void
-AmountOfSubstanceConversionBasedUnit::Print(int level) {
-    TAB(level); std::cout << CLASSNAME << ":" << "(";
+AmountOfSubstanceConversionBasedUnit::Print(int level)
+{
+    TAB(level);
+    std::cout << CLASSNAME << ":" << "(";
     std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-    TAB(level); std::cout << "Inherited Attributes:" << std::endl;
-    AmountOfSubstanceUnit::Print(level+1);
-    ConversionBasedUnit::Print(level+1);
+    TAB(level);
+    std::cout << "Inherited Attributes:" << std::endl;
+    AmountOfSubstanceUnit::Print(level + 1);
+    ConversionBasedUnit::Print(level + 1);
 
 }
+
 STEPEntity *
-AmountOfSubstanceConversionBasedUnit::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
-    Factory::OBJECTS::iterator i;
-    if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
-	AmountOfSubstanceConversionBasedUnit *object = new AmountOfSubstanceConversionBasedUnit(sw,sse->STEPfile_id);
+AmountOfSubstanceConversionBasedUnit::GetInstance(STEPWrapper *sw, int id)
+{
+    return new AmountOfSubstanceConversionBasedUnit(sw, id);
+}
 
-	Factory::AddObject(object);
-
-	if (!object->Load(sw, sse)) {
-	    std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
-	    delete object;
-	    return NULL;
-	}
-	return static_cast<STEPEntity *>(object);
-    } else {
-	return (*i).second;
-    }
+STEPEntity *
+AmountOfSubstanceConversionBasedUnit::Create(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
+    return STEPEntity::CreateEntity(sw, sse, GetInstance, CLASSNAME);
 }
 
 // Local Variables:

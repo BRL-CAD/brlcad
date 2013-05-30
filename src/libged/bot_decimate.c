@@ -1,7 +1,7 @@
 /*                         B O T _ D E C I M A T E . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2012 United States Government as represented by
+ * Copyright (c) 2008-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -89,7 +89,7 @@ ged_bot_decimate(struct ged *gedp, int argc, const char *argv[])
 		min_edge_length = atof(bu_optarg);
 		if (min_edge_length < 0.0) {
 		    bu_vls_printf(gedp->ged_result_str,
-				  "minumum edge length cannot be less than zero");
+				  "minimum edge length cannot be less than zero");
 		    return GED_ERROR;
 		}
 		break;

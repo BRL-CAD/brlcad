@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='stlg1'>
+<refmeta>
+    <refentrytitle>STL-G
+</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class='source'>BRL-CAD</refmiscinfo>
+<refmiscinfo class='software'>BRL-CAD</refmiscinfo>
+<refmiscinfo class='manual'>User Commands</refmiscinfo>
+</refmeta>
+
+<refnamediv>
+<refname>stl-g</refname>
+<refpurpose>Stereolithography Translator (STL to BRL-CAD)</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<cmdsynopsis>
+  <command>stl-g</command>
+    <arg choice='opt'>-db </arg>
+    <arg choice='opt'>-i <replaceable>initial_ident</replaceable></arg>
+    <arg choice='opt'>-I <replaceable>constant_ident</replaceable></arg>
+    <arg choice='opt'>-m <replaceable>material_code</replaceable></arg>
+    <arg choice='opt'>-N <replaceable>forced_name</replaceable></arg>
+    <arg choice='opt'>-c <replaceable>units</replaceable></arg>
+    <arg choice='opt'>-t <replaceable>tolerance</replaceable></arg>
+    <arg choice='opt'>-x <replaceable>RT_DEBUG_FLAG</replaceable></arg>
+    <arg choice='plain'><replaceable>file.stl</replaceable></arg>
+    <arg choice='plain'><replaceable>file.g</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para><command>stl-g</command>
+converts the specified
+<emphasis remap='I'>file.stl</emphasis>
+to a BRL-CAD
+<emphasis remap='I'>file.g</emphasis>
+file. Use the
+<option>-b</option>
+option if you have a binary STL file (the default is ASCII).
+The
+<option>-d</option>
+option prints debugging information.
+The
+<option>-c</option>
+option specifies the units that are used in the STL file. The
+<emphasis remap='I'>units</emphasis>
+string may be "mm", "in", "ft", ... (default is "mm").
+The
+<option>-t</option>
+option specifies a tolerance distance (in mm) such that any two vertices
+within tolerance distance of each other are treated as the same vertex.
+The
+<option>-i</option>
+option sets the starting ident number for the regions created. As each
+new region is created, this number will be incremented before assigning
+the next ident number (conflicts with
+<option>-I</option>
+). The
+<option>-I</option>
+option sets a constant ident number that will be assigned to all the regions created (conflicts with
+<option>-i</option>
+).
+The
+<option>-m</option>
+option sets a material code that will be assigned to all the regions created (default is 1).
+The
+<option>-N</option>
+option sets a name for the resulting BRL-CAD object. STL files typically do not contain any
+object names.
+The
+<option>-x</option>
+option sets an RT debug flag (see raytrace.h).
+The
+<emphasis remap='I'>file.stl</emphasis>
+file is expected to be a stereolithography file.</para>
+</refsect1>
+
+<refsect1 xml:id='example'><title>EXAMPLE</title>
+<synopsis>
+$ <emphasis remap='I'>stl-g sample.stl sample.g</emphasis>
+</synopsis>
+</refsect1>
+
+<refsect1 xml:id='diagnostics'><title>DIAGNOSTICS</title>
+<para>Error messages are intended to be self-explanatory.</para>
+
+</refsect1>
+
+<refsect1 xml:id='author'><title>AUTHOR</title>
+<para>BRL-CAD Team</para>
+
+</refsect1>
+
+<refsect1 xml:id='copyright'><title>COPYRIGHT</title>
+<para>This software is Copyright (c) 1999-2013 by the United States
+Government as represented by U.S. Army Research Laboratory.</para>
+</refsect1>
+
+<refsect1 xml:id='bug_reports'><title>BUG REPORTS</title>
+<para>Reports of bugs or problems should be submitted via electronic
+mail to &lt;devs@brlcad.org&gt;.</para>
+</refsect1>
+</refentry>
+

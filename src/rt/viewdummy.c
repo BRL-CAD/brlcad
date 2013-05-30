@@ -1,7 +1,7 @@
 /*                     V I E W D U M M Y . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2012 United States Government as represented by
+ * Copyright (c) 2004-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -96,7 +96,7 @@ view_2init(struct application *ap)
 /*
  *			V I E W _ P I X E L
  *
- *  Called by worker() after the end of proccessing for each pixel.
+ *  Called by worker() after the end of processing for each pixel.
  */
 void
 view_pixel(register struct application *ap)
@@ -106,7 +106,7 @@ view_pixel(register struct application *ap)
 /*
  *			V I E W _ E O L
  *
- *  Called by worker() at the end of each line.  Depricated.
+ *  Called by worker() at the end of each line.  Deprecated.
  *  Any end-of-line processing should be done in view_pixel().
  */
 void

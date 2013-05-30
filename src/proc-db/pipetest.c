@@ -1,7 +1,7 @@
 /*                      P I P E T E S T . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2012 United States Government as represented by
+ * Copyright (c) 2004-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -64,7 +64,7 @@ struct wdb_pipept pipeA[] = {
 };
 int pipeA_npts = sizeof(pipeA)/sizeof(struct wdb_pipept);
 
-#define Q 0.05	/* inset from borders of enclsing cube */
+#define Q 0.05	/* inset from borders of enclosing cube */
 #define R 0.05	/* pushout factor */
 
 #define A 0+Q
@@ -145,6 +145,7 @@ main(int argc, char **argv)
     return 0;
 }
 
+
 void
 do_bending(struct rt_wdb *fp, char *name, point_t (*pts), int npts, double bend, double od)
 {
@@ -167,6 +168,7 @@ do_bending(struct rt_wdb *fp, char *name, point_t (*pts), int npts, double bend,
 
 }
 
+
 void
 pr_pipe(const char *name, struct wdb_pipept *head)
 {
@@ -182,6 +184,7 @@ pr_pipe(const char *name, struct wdb_pipept *head)
 		psp->pp_bendradius);
     }
 }
+
 
 /*
  * Local Variables:

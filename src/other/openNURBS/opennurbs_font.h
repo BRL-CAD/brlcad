@@ -1,8 +1,9 @@
 /* $NoKeywords: $ */
 /*
 //
-// Copyright (c) 1993-2007 Robert McNeel & Associates. All rights reserved.
-// Rhinoceros is a registered trademark of Robert McNeel & Assoicates.
+// Copyright (c) 1993-2012 Robert McNeel & Associates. All rights reserved.
+// OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
+// McNeel & Associates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
@@ -23,6 +24,27 @@ public:
   ON_Font();
   ~ON_Font();
   // C++ default copy construction and operator= work fine.
+
+  /*
+  Description:
+    Create a font with a specified facename and properties.
+  Parameters:
+    face_name - [in]
+      If face_name is null or empty, then "Arial" is used.
+    bBold - [in]
+      True for a bold version of the font.
+    bItalic - [in]
+      True for an italic version of the font.
+  Returns:
+    True if the font was created.  The name of this font is
+    the face name with " Bold", " Italic" or " Bold Italic"
+    appended as
+ */
+  bool CreateFontFromFaceName( 
+    const wchar_t* face_name,
+    bool bBold,
+    bool bItalic 
+    );
 
 #if defined(ON_OS_WINDOWS_GDI)
   ON_Font( const LOGFONT& logfont );
@@ -240,7 +262,16 @@ public:
   wchar_t    m_facename[face_name_size]; // same as m_logfont.lfFaceName ( 
 
 public:
+
+  /*  
+  Description:
+    Insures the settings in the OS specific information, like 
+    the Windows m_logfont field, match the persistent m_font_* values 
+    above that are used for all OSs and used in UI code.
+  */
+  void UpdateImplementationSettings();
 #if defined(ON_OS_WINDOWS_GDI)
+  // Windows specific settins
   LOGFONT m_logfont;
 #endif
 

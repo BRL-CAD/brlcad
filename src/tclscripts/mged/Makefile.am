@@ -14,11 +14,11 @@ scripties = \
 	adc.tcl \
 	anim.tcl \
 	apply.tcl \
-	apply_mat.tcl \
 	asc2g.tcl \
 	attr_edit.tcl \
 	bindings.tcl \
 	bot_face_select.tcl \
+	bot_vertex_fuse_all.tcl \
 	botedit.tcl \
 	bots.tcl \
 	build_region.tcl \
@@ -57,6 +57,7 @@ scripties = \
 	lc.tcl \
 	lgt_mat.tcl \
 	list.tcl \
+	lodconfig.tcl \
 	make_solid.tcl \
 	menu.tcl \
 	mged.tcl \
@@ -67,8 +68,6 @@ scripties = \
 	mview.tcl \
 	openw.tcl \
 	overlap.tcl \
-	pattern.tcl \
-	pattern_gui.tcl \
 	plot.tcl \
 	points.tcl \
 	prj_add.tcl \
@@ -159,13 +158,13 @@ EXTRA_DIST = \
 pkgIndex.tcl:
 	TCL_LIBRARY=$(top_srcdir)/src/other/tcl/library \
 	LD_LIBRARY_PATH=$(top_builddir)/src/other/tcl/unix:$(top_builddir)/src/other/tk/unix:$$LD_LIBRARY_PATH \
-	DYLD_LIBRARY_PATH=$(top_builddir)/src/other/tcl/unix:$(top_buildir)/src/other/tk/unix:$$DYLD_LIBRARY_PATH \
+	DYLD_LIBRARY_PATH=$(top_builddir)/src/other/tcl/unix:$(top_builddir)/src/other/tk/unix:$$DYLD_LIBRARY_PATH \
 	$(top_builddir)/src/bwish/btclsh $(top_srcdir)/src/tclscripts/ampi.tcl $(top_srcdir)/src/$(this_dir)
 
 tclIndex:
 	TCL_LIBRARY=$(top_srcdir)/src/other/tcl/library \
 	LD_LIBRARY_PATH=$(top_builddir)/src/other/tcl/unix:$(top_builddir)/src/other/tk/unix:$$LD_LIBRARY_PATH \
-	DYLD_LIBRARY_PATH=$(top_builddir)/src/other/tcl/unix:$(top_buildir)/src/other/tk/unix:$$DYLD_LIBRARY_PATH \
+	DYLD_LIBRARY_PATH=$(top_builddir)/src/other/tcl/unix:$(top_builddir)/src/other/tk/unix:$$DYLD_LIBRARY_PATH \
 	$(top_builddir)/src/bwish/btclsh $(top_srcdir)/src/tclscripts/ami.tcl $(top_srcdir)/src/$(this_dir)
 
 include $(top_srcdir)/misc/Makefile.defs

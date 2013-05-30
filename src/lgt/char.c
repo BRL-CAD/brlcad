@@ -1,7 +1,7 @@
 /*                          C H A R . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2012 United States Government as represented by
+ * Copyright (c) 2004-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -73,12 +73,12 @@ do_line(int xpos, int ypos, char *line)
 	}
 
 	/* locate the bitmap for the character in the file */
-	if ( fseek( font.ffdes, (long)(SWABV(font.dir[char_id].addr)+font.offset), 0 )
+	if ( bu_fseek( font.ffdes, SWABV(font.dir[char_id].addr)+font.offset, 0 )
 	     == EOF
 	    )
 	{
-	    bu_log( "fseek() to %ld failed.\n",
-		    (long)(SWABV(font.dir[char_id].addr) + font.offset)
+	    bu_log( "fseek() to %zd failed.\n",
+		    (SWABV(font.dir[char_id].addr) + font.offset)
 		);
 	    return;
 	}
@@ -97,7 +97,7 @@ do_line(int xpos, int ypos, char *line)
 }
 
 /*	d o _ c h a r ( )
-	Outputs pixel representation of a chararcter by reading a row of a
+	Outputs pixel representation of a character by reading a row of a
 	bitmap from the character font file.  The file pointer is assumed
 	to be in the correct position.
 */

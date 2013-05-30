@@ -186,6 +186,12 @@ void parserInitState()
 
 %extra_argument { parse_data_t parseData }
 
+%destructor statement_list {
+    if (parseData.scanner == NULL) {
+	$$.string = (char*)NULL;
+    }
+}
+
 %type case_action			{ Case_Item }
 %type case_otherwise			{ Case_Item }
 %type entity_body			{ struct entity_body }
@@ -869,7 +875,7 @@ enumeration_type ::= TOK_ENUMERATION TOK_OF nested_id_list(A).
         /* 1st visibility */
         DICT_define(CURRENT_SCOPE->symbol_table, x->symbol.name,
             (Generic)x, &x->symbol, OBJ_EXPRESSION);
-        DICTdefine(PREVIOUS_SCOPE->symbol_table, x->symbol.name,
+        DICTdefine(PREVIOUS_SCOPE->enum_table, x->symbol.name,
             (Generic)x, &x->symbol, OBJ_EXPRESSION);
         SYMBOL_destroy(tmp);
     } LISTod;
@@ -2455,36 +2461,20 @@ while_control(A) ::= TOK_WHILE expression(B).
 }
 
 %syntax_error {
-    yyerrstatus++;
-    fprintf(stderr, "Express parser experienced syntax error at line %d.\n", yylineno);
-}
-
-%stack_overflow {
-    fprintf(stderr, "Express parser experienced stack overflow.\n");
-}
-
-%include {
-static void
-yyerror(const char *yytext, char *string)
-{
-    char buf[200];
     Symbol sym;
 
-    strcpy(buf, string);
-
-    if (yyeof) {
-	strcat(buf, " at end of input");
-    } else if (yytext[0] == 0) {
-	strcat(buf, " at null character");
-    } else if (yytext[0] < 040 || yytext[0] >= 0177) {
-	sprintf(buf + strlen(buf), " before character 0%o", yytext[0]);
-    } else {
-	sprintf(buf + strlen(buf), " before `%s'", yytext);
-    }
+    yyerrstatus++;
 
     sym.line = yylineno;
     sym.filename = current_filename;
-    ERRORreport_with_symbol(ERROR_syntax, &sym, buf,
+
+    ERRORreport_with_symbol(ERROR_syntax, &sym, "",
 	CURRENT_SCOPE_TYPE_PRINTABLE, CURRENT_SCOPE_NAME);
 }
+
+%stack_size 0
+
+%stack_overflow {
+    fprintf(stderr, "Express parser experienced stack overflow.\n");
+    fprintf(stderr, "Last token had value %x\n", yypMinor->yy0.val);
 }

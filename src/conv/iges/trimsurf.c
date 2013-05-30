@@ -1,7 +1,7 @@
 /*                      T R I M S U R F . C
  * BRL-CAD
  *
- * Copyright (c) 1994-2012 United States Government as represented by
+ * Copyright (c) 1994-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -97,9 +97,9 @@ Get_nurb_surf(entityno, m)
 
     n_u = n_cols+u_order;
     n_v = n_rows+v_order;
-    if (!m)
+    if (!m) {
 	srf = rt_nurb_new_snurb(u_order, v_order, n_u, n_v, n_rows, n_cols, pt_type, (struct resource *)NULL);
-    else {
+    } else {
 	int pnum;
 
 	GET_FACE_G_SNURB(srf, m);
@@ -163,17 +163,17 @@ Get_nurb_surf(entityno, m)
 
     /* Read control points */
     for (i = 0; i < n_cols*n_rows; i++) {
-	Readcnv(&a, "");
+	Readdbl(&a, "");
 	if (rational)
 	    pt[X] = a*srf->ctl_points[i*ncoords+3];
 	else
 	    pt[X] = a;
-	Readcnv(&a, "");
+	Readdbl(&a, "");
 	if (rational)
 	    pt[Y] = a*srf->ctl_points[i*ncoords+3];
 	else
 	    pt[Y] = a;
-	Readcnv(&a, "");
+	Readdbl(&a, "");
 	if (rational)
 	    pt[Z] = a*srf->ctl_points[i*ncoords+3];
 	else
@@ -210,11 +210,12 @@ Assign_cnurb_to_eu(eu, crv)
     ctl_points = (fastf_t *)bu_calloc(ncoords*crv->c_size, sizeof(fastf_t),
 				      "Assign_cnurb_to_eu: ctl_points");
 
-    for (i = 0; i < crv->c_size; i++)
-	VMOVEN(&ctl_points[i*ncoords], &crv->ctl_points[i*ncoords], ncoords)
+    for (i = 0; i < crv->c_size; i++) {
+	VMOVEN(&ctl_points[i*ncoords], &crv->ctl_points[i*ncoords], ncoords);
+    }
 
-	    knots = (fastf_t *)bu_calloc(crv->k.k_size, sizeof(fastf_t),
-					 "Assign_cnurb_to_eu: knots");
+    knots = (fastf_t *)bu_calloc(crv->k.k_size, sizeof(fastf_t),
+				 "Assign_cnurb_to_eu: knots");
 
     for (i = 0; i < crv->k.k_size; i++)
 	knots[i] = crv->k.knots[i];
@@ -290,15 +291,10 @@ Get_cnurb(entity_no)
 
     /* control points */
     for (i = 0; i < num_pts; i++) {
-	if (dir[entity_no]->status & 500) {
-	    Readdbl(&x, "");
-	    Readdbl(&y, "");
-	    Readdbl(&z, "");
-	} else {
-	    Readcnv(&x, "");
-	    Readcnv(&y, "");
-	    Readcnv(&z, "");
-	}
+	Readdbl(&x, "");
+	Readdbl(&y, "");
+	Readdbl(&z, "");
+
 	if (rational) {
 	    pt[X] = (x + u_translation) * crv->ctl_points[i*ncoords+2];
 	    pt[Y] = (y + v_translation) * crv->ctl_points[i*ncoords+2];
@@ -331,27 +327,27 @@ Assign_vu_geom(vu, u, v, srf)
     NMG_CK_VERTEXUSE(vu);
     NMG_CK_SNURB(srf);
 
-    VSETALLN(pt_on_srf, 0.0, 4)
+    VSETALLN(pt_on_srf, 0.0, 4);
 
-	if (u < srf->u.knots[0] || v < srf->v.knots[0] ||
-	    u > srf->u.knots[srf->u.k_size-1] || v > srf->v.knots[srf->v.k_size-1]) {
-	    bu_log("WARNING: UV point outside of domain of surface!:\n");
-	    bu_log("\tUV = (%g %g)\n", u, v);
-	    bu_log("\tsrf domain: (%g %g) <-> (%g %g)\n",
-		   srf->u.knots[0], srf->v.knots[0],
-		   srf->u.knots[srf->u.k_size-1], srf->v.knots[srf->v.k_size-1]);
+    if (u < srf->u.knots[0] || v < srf->v.knots[0] ||
+	u > srf->u.knots[srf->u.k_size-1] || v > srf->v.knots[srf->v.k_size-1]) {
+	bu_log("WARNING: UV point outside of domain of surface!:\n");
+	bu_log("\tUV = (%g %g)\n", u, v);
+	bu_log("\tsrf domain: (%g %g) <-> (%g %g)\n",
+	       srf->u.knots[0], srf->v.knots[0],
+	       srf->u.knots[srf->u.k_size-1], srf->v.knots[srf->v.k_size-1]);
 
-	    if (u < srf->u.knots[0])
-		u = srf->u.knots[0];
-	    if (v < srf->v.knots[0])
-		v = srf->v.knots[0];
-	    if (u > srf->u.knots[srf->u.k_size-1])
-		u = srf->u.knots[srf->u.k_size-1];
-	    if (v > srf->v.knots[srf->v.k_size-1])
-		v = srf->v.knots[srf->v.k_size-1];
+	if (u < srf->u.knots[0])
+	    u = srf->u.knots[0];
+	if (v < srf->v.knots[0])
+	    v = srf->v.knots[0];
+	if (u > srf->u.knots[srf->u.k_size-1])
+	    u = srf->u.knots[srf->u.k_size-1];
+	if (v > srf->v.knots[srf->v.k_size-1])
+	    v = srf->v.knots[srf->v.k_size-1];
 
-	    moved = 1;
-	}
+	moved = 1;
+    }
 
     rt_nurb_s_eval(srf, u, v, pt_on_srf);
     if (RT_NURB_IS_PT_RATIONAL(srf->pt_type)) {
@@ -426,13 +422,13 @@ Add_trim_curve(entity_no, lu, srf)
 	    Readdbl(&x, "");
 	    Readdbl(&y, "");
 	    Readdbl(&z, "");
-	    VSET(pt, x + u_translation, y + v_translation, z)
+	    VSET(pt, x + u_translation, y + v_translation, z);
 
-		/* apply transformation */
-		MAT4X3PNT(pt2, *dir[entity_no]->rot, pt)
+	    /* apply transformation */
+	    MAT4X3PNT(pt2, *dir[entity_no]->rot, pt);
 
-		/* Split last edge in loop */
-		eu = BU_LIST_LAST(edgeuse, &lu->down_hd);
+	    /* Split last edge in loop */
+	    eu = BU_LIST_LAST(edgeuse, &lu->down_hd);
 	    new_eu = nmg_eusplit((struct vertex *)NULL, eu, 0);
 	    vp = eu->vu_p->v_p;
 
@@ -444,12 +440,12 @@ Add_trim_curve(entity_no, lu, srf)
 	    Readdbl(&x, "");
 	    Readdbl(&y, "");
 	    Readdbl(&z, "");
-	    VSET(pt, x + u_translation, y + v_translation, z)
+	    VSET(pt, x + u_translation, y + v_translation, z);
 
-		/* apply transformation */
-		MAT4X3PNT(pt2, *dir[entity_no]->rot, pt)
+	    /* apply transformation */
+	    MAT4X3PNT(pt2, *dir[entity_no]->rot, pt);
 
-		Assign_vu_geom(new_eu->vu_p, pt2[X], pt2[Y], srf);
+	    Assign_vu_geom(new_eu->vu_p, pt2[X], pt2[Y], srf);
 
 	    /* assign edge geometry */
 	    nmg_edge_g_cnurb_plinear(eu);
@@ -459,28 +455,28 @@ Add_trim_curve(entity_no, lu, srf)
 	    point_t center, start, end;
 
 	    /* read Arc center start and end points */
-	    Readcnv(&z, "");	/* common Z-coord */
-	    Readcnv(&x, "");	/* center */
-	    Readcnv(&y, "");	/* center */
-	    VSET(center, y+u_translation, x+v_translation, z)
+	    Readdbl(&z, "");	/* common Z-coord */
+	    Readdbl(&x, "");	/* center */
+	    Readdbl(&y, "");	/* center */
+	    VSET(center, y+u_translation, x+v_translation, z);
 
-		Readcnv(&x, "");	/* start */
-	    Readcnv(&y, "");	/* start */
-	    VSET(start, y+u_translation, x+v_translation, z)
+	    Readdbl(&x, "");	/* start */
+	    Readdbl(&y, "");	/* start */
+	    VSET(start, y+u_translation, x+v_translation, z);
 
-		Readcnv(&x, "");	/* end */
-	    Readcnv(&y, "");	/* end */
-	    VSET(end, y+u_translation, x+v_translation, z)
+	    Readdbl(&x, "");	/* end */
+	    Readdbl(&y, "");	/* end */
+	    VSET(end, y+u_translation, x+v_translation, z);
 
 		/* build edge_g_cnurb arc */
-		crv = rt_arc2d_to_cnurb(center, start, end, RT_NURB_PT_UV, &tol);
+	    crv = rt_arc2d_to_cnurb(center, start, end, RT_NURB_PT_UV, &tol);
 
 	    /* apply transformation to control points */
 	    for (i = 0; i < crv->c_size; i++) {
-		V2MOVE(pt2, &crv->ctl_points[i*3])
-		    pt2[Z] = z;
-		MAT4X3PNT(pt, *dir[entity_no]->rot, pt2)
-		    V2MOVE(&crv->ctl_points[i*3], pt);
+		V2MOVE(pt2, &crv->ctl_points[i*3]);
+		pt2[Z] = z;
+		MAT4X3PNT(pt, *dir[entity_no]->rot, pt2);
+		V2MOVE(&crv->ctl_points[i*3], pt);
 	    }
 
 	    /* add a new edge to loop */
@@ -612,21 +608,21 @@ Make_trim_loop(entity_no, orientation, srf, fu)
 	    struct bu_list curv_hd;
 
 	    /* read Arc center start and end points */
-	    Readcnv(&z, "");	/* common Z-coord */
-	    Readcnv(&x, "");	/* center */
-	    Readcnv(&y, "");	/* center */
-	    VSET(center, x+u_translation, y+v_translation, z)
+	    Readdbl(&z, "");	/* common Z-coord */
+	    Readdbl(&x, "");	/* center */
+	    Readdbl(&y, "");	/* center */
+	    VSET(center, x+u_translation, y+v_translation, z);
 
-		Readcnv(&x, "");	/* start */
-	    Readcnv(&y, "");	/* start */
-	    VSET(start, x+u_translation, y+v_translation, z)
+	    Readdbl(&x, "");	/* start */
+	    Readdbl(&y, "");	/* start */
+	    VSET(start, x+u_translation, y+v_translation, z);
 
-		Readcnv(&x, "");	/* end */
-	    Readcnv(&y, "");	/* end */
-	    VSET(end, x+u_translation, y+v_translation, z)
+	    Readdbl(&x, "");	/* end */
+	    Readdbl(&y, "");	/* end */
+	    VSET(end, x+u_translation, y+v_translation, z);
 
-		/* build edge_g_cnurb circle */
-		crv = rt_arc2d_to_cnurb(center, start, end, RT_NURB_PT_UV, &tol);
+	    /* build edge_g_cnurb circle */
+	    crv = rt_arc2d_to_cnurb(center, start, end, RT_NURB_PT_UV, &tol);
 
 	    /* split circle into two pieces */
 	    BU_LIST_INIT(&curv_hd);
@@ -691,7 +687,7 @@ Make_trim_loop(entity_no, orientation, srf, fu)
 
 	    /* if old edge doesn't have vertex geometry, assign some */
 	    if (!vp->vg_p) {
-		/* Don't divied out rational coord */
+		/* Don't divide out rational coord */
 		if (RT_NURB_IS_PT_RATIONAL(crv1->pt_type)) {
 		    u = crv1->ctl_points[0]/crv1->ctl_points[ncoords-1];
 		    v = crv1->ctl_points[1]/crv1->ctl_points[ncoords-1];
@@ -852,9 +848,9 @@ Make_default_loop(srf, fu)
 	NMG_CK_EDGEUSE(eu);
 	vu = eu->vu_p;
 	NMG_CK_VERTEXUSE(vu);
-	if (planar)
+	if (planar) {
 	    nmg_edge_g(eu);
-	else {
+	} else {
 	    ctl_points = (fastf_t *)bu_calloc(sizeof(fastf_t), 4, "ctl_points");
 	    switch (edge_no) {
 		case 0:
@@ -978,7 +974,7 @@ trim_surf(entityno, s)
 	return (struct faceuse *)NULL;
     }
 
-    /* Make a face (with a loop to be destroted later)
+    /* Make a face (with a loop to be destroyed later)
      * because loop routines insist that face and face geometry
      * must already be assigned
      */
@@ -1166,7 +1162,7 @@ find_intersections(fu, mid_pt, ray_dir, hit_list)
 		continue;
 	    }
 
-	    myhit = (struct snurb_hit *)bu_malloc(sizeof(struct snurb_hit), "myhit");
+	    BU_ALLOC(myhit, struct snurb_hit);
 	    BU_LIST_INIT(&myhit->l);
 	    myhit->f = f;
 
@@ -1176,35 +1172,38 @@ find_intersections(fu, mid_pt, ray_dir, hit_list)
 		fastf_t inv_homo;
 
 		inv_homo = 1.0/homo_hit[3];
-		VSCALE(myhit->pt, homo_hit, inv_homo)
-		    } else
-			VMOVE(myhit->pt, homo_hit)
+		VSCALE(myhit->pt, homo_hit, inv_homo);
+	    } else {
+		VMOVE(myhit->pt, homo_hit);
+	    }
 
-			    VSUB2(to_hit, myhit->pt, mid_pt);
+	    VSUB2(to_hit, myhit->pt, mid_pt);
 	    myhit->dist = VDOT(to_hit, ray_dir);
 
 	    /* get surface normal */
 	    rt_nurb_s_norm(srf, hp->u, hp->v, myhit->norm);
 
 	    /* may need to reverse it */
-	    if (f->flip)
-		VREVERSE(myhit->norm, myhit->norm)
+	    if (f->flip) {
+		VREVERSE(myhit->norm, myhit->norm);
+	    }
 
-		    /* add hit to list */
-		    if (BU_LIST_IS_EMPTY(hit_list))
-			BU_LIST_APPEND(hit_list, &myhit->l)
-			    else {
-				struct snurb_hit *tmp;
+	    /* add hit to list */
+	    if (BU_LIST_IS_EMPTY(hit_list)) {
+		BU_LIST_APPEND(hit_list, &myhit->l);
+	    } else {
+		struct snurb_hit *tmp;
 
-				for (BU_LIST_FOR(tmp, snurb_hit, hit_list)) {
-				    if (tmp->dist >= myhit->dist) {
-					BU_LIST_INSERT(&tmp->l, &myhit->l);
-					break;
-				    }
-				}
-				if (myhit->l.forw == (struct bu_list *)0)
-				    BU_LIST_INSERT(hit_list, &myhit->l)
-					}
+		for (BU_LIST_FOR(tmp, snurb_hit, hit_list)) {
+		    if (tmp->dist >= myhit->dist) {
+			BU_LIST_INSERT(&tmp->l, &myhit->l);
+			break;
+		    }
+		}
+		if (myhit->l.forw == (struct bu_list *)0) {
+		    BU_LIST_INSERT(hit_list, &myhit->l);
+		}
+	    }
 
 	    bu_free((char *)hp, "nurb_uv_hit");
 	    hp = next;
@@ -1239,8 +1238,8 @@ adjust_flips(hit_list, ray_dir)
 	    hit->f->flip = !(hit->f->flip);
 	    for (BU_LIST_FOR(tmp, snurb_hit, hit_list)) {
 		if (tmp->f == hit->f) {
-		    VREVERSE(tmp->norm, tmp->norm)
-			}
+		    VREVERSE(tmp->norm, tmp->norm);
+		}
 	    }
 	}
 
@@ -1374,18 +1373,20 @@ Find_pt_in_fu(struct faceuse *fu, point_t pt, vect_t norm)
 	fastf_t inv_homo;
 
 	inv_homo = 1.0/homo_hit[3];
-	VSCALE(pt, homo_hit, inv_homo)
-	    } else
-		VMOVE(pt, homo_hit)
+	VSCALE(pt, homo_hit, inv_homo);
+    } else {
+	VMOVE(pt, homo_hit);
+    }
 
-		    /* get surface normal */
-		    rt_nurb_s_norm(fg, u, v, norm);
+    /* get surface normal */
+    rt_nurb_s_norm(fg, u, v, norm);
 
     /* may need to reverse it */
-    if (f->flip)
-	VREVERSE(norm, norm)
+    if (f->flip) {
+	VREVERSE(norm, norm);
+    }
 
-	    return 0;
+    return 0;
 }
 
 
@@ -1428,7 +1429,7 @@ Convtrimsurfs()
 
     nmg_rebound(m, &tol);
 
-    bu_log("\n\t%d surfaces converted, adusting surface normals....\n", convsurf);
+    bu_log("\n\t%d surfaces converted, adjusting surface normals....\n", convsurf);
 
     /* do some raytracing to get face orientations correct */
     for (BU_LIST_FOR(fu, faceuse, &s->fu_hd)) {
@@ -1473,13 +1474,13 @@ Convtrimsurfs()
 
     }
 
-    bu_log("Converted %d Trimmed Sufaces successfully out of %d total Trimmed Sufaces\n", convsurf, totsurfs);
+    bu_log("Converted %d Trimmed Surfaces successfully out of %d total Trimmed Surfaces\n", convsurf, totsurfs);
 
     if (RT_G_DEBUG & DEBUG_MEM_FULL)
 	bu_mem_barriercheck();
 
     if (convsurf) {
-	(void)nmg_model_vertex_fuse(m, &tol);
+	(void)nmg_vertex_fuse(&m->magic, &tol);
 
 	if (!BU_STR_EMPTY(curr_file->obj_name))
 	    mk_nmg(fdout, curr_file->obj_name, m);

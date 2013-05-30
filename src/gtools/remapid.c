@@ -1,7 +1,7 @@
 /*                       R E M A P I D . C
  * BRL-CAD
  *
- * Copyright (c) 1997-2012 United States Government as represented by
+ * Copyright (c) 1997-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -356,7 +356,7 @@ mk_curr_id(int region_id)
 {
     struct curr_id *cip;
 
-    cip = (struct curr_id *) bu_malloc(sizeof(struct curr_id), "curr_id");
+    BU_ALLOC(cip, struct curr_id);
 
     cip->ci_magic = CURR_ID_MAGIC;
     cip->ci_id = region_id;
@@ -475,7 +475,7 @@ mk_remap_reg(char *region_name)
 {
     struct remap_reg *rp;
 
-    rp = (struct remap_reg *) bu_malloc(sizeof(struct remap_reg), "remap_reg");
+    BU_ALLOC(rp, struct remap_reg);
 
     rp->rr_magic = REMAP_REG_MAGIC;
 
@@ -682,7 +682,7 @@ read_spec(REMAPID_FILE *sfp, char *sf_name)
 
 /************************************************************************
  *									*
- * Routines for procesing the geometry databases			*
+ * Routines for processing the geometry databases			*
  *									*
  ************************************************************************/
 
@@ -707,14 +707,14 @@ db_init(char *db_name)
     struct rt_comb_internal *comb;
     struct rt_db_internal *ip;
 
-    if ((dbip = db_open(db_name, "r+w")) == DBI_NULL)
-	bu_exit(1, "Cannot open database file '%s'\n", db_name);
+    if ((dbip = db_open(db_name, DB_OPEN_READWRITE)) == DBI_NULL)
+	bu_exit(1, "Cannot open geometry database file '%s'\n", db_name);
     db_dirbuild(dbip);
 
     FOR_ALL_DIRECTORY_START(dp, dbip) {
 	if (!(dp->d_flags & RT_DIR_REGION))
 	    continue;
-	ip = (struct rt_db_internal *) bu_malloc(sizeof(struct rt_db_internal), "rt_db_internal");
+	BU_ALLOC(ip, struct rt_db_internal);
 	if (rt_db_get_internal(ip, dp, dbip, (fastf_t *) NULL, &rt_uniresource) < 0) {
 	    bu_log("remapid: rt_db_get_internal(%s) failed.  ",
 		   dp->d_namep);
@@ -827,7 +827,7 @@ print_usage(void)
 {
     bu_exit(1, "Usage: 'remapid [-{g|t}] {file.g|file.tankill} [spec_file]'\n\
   Note: The '-g' option modifies file.g in place\n\
-        the '-t' option writes a modified file.tankill to stdout\n");
+	the '-t' option writes a modified file.tankill to stdout\n");
 }
 
 

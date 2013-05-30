@@ -1,7 +1,7 @@
 #                      P O I N T S . T C L
 # BRL-CAD
 #
-# Copyright (c) 2007-2012 United States Government as represented by
+# Copyright (c) 2007-2013 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -392,7 +392,7 @@ proc pipe {pts} {
 
     close $fd
     set asc2pl [file join [bu_brlcad_root "bin"] asc-pl]
-    exec "$asc2pl < pipe$pipe_number.plasc > pipe$pipe_nubmer.pl"
+    exec "$asc2pl < pipe$pipe_number.plasc > pipe$pipe_number.pl"
 
     incr pipe_number
 
@@ -493,7 +493,7 @@ proc plate {pts} {
     set mul [expr 1.0 / [llength $normals]]
     set plane [vscale $N $mul]
 
-    # find the averate distance to the plane
+    # find the average distance to the plane
     set avg_dist 0
 
     for {set i 0} {$i < [expr [llength $pts] - 1]} {incr i} {

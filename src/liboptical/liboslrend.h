@@ -1,7 +1,7 @@
 /*                    L I B O S L R E N D . H
  * BRL-CAD
  *
- * Copyright (c) 2011-2012 United States Government as represented by
+ * Copyright (c) 2011-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
 
@@ -69,9 +69,9 @@ struct RenderInfo {
     int depth;              /* How many times the ray hit an object */
     fastf_t surfacearea;    /* FIXME */
     ShadingAttribStateRef shader_ref;   /* Reference for the shader we're querying */
-    std::vector< Vec3 > light_dirs;     /* List of directions of lights that are visible from 
+    std::vector< Vec3 > light_dirs;     /* List of directions of lights that are visible from
 					   this query point */
-    
+
     /* -- output -- */
     point_t pc;           /* Color of the point (or multiplier) */
     int doreflection;     /* 1 if there will be reflection 0, otherwise */
@@ -81,8 +81,8 @@ struct RenderInfo {
     /* Experimental! Don't use yet */
     Color3 reflect_weight;            /* Color that will be multiplied by the
 					 color returned by the reflected ray */
-    Color3 transmit_weight;           /* Color that will be multiplied by the 
-					 color returned by the transmited ray */
+    Color3 transmit_weight;           /* Color that will be multiplied by the
+					 color returned by the transmitted ray */
 };
 
 /* Required structure to initialize an OSL shader */
@@ -91,7 +91,7 @@ struct ShaderInfo {
     typedef std::pair< TypeDesc, Vec3 > TypeVec;
 
     std::string shadername; // Name of the shader (type of shader)
-    std::string layername;  // Name of the layer  (name of this partilar instance)
+    std::string layername;  // Name of the layer  (name of this particular instance)
     std::vector< std::pair<std::string, int> > iparam;         // int parameters
     std::vector< std::pair<std::string, float> > fparam;       // float parameters
     std::vector< std::pair<std::string, Color3> > cparam;      // color parameters
@@ -119,7 +119,7 @@ struct ShaderGroupInfo {
 class OSLRenderer {
 
     ErrorHandler errhandler;
-    
+
     ShadingSystem *shadingsys;
     ShadingSystemImpl *ssi;
     SimpleRenderer rend;

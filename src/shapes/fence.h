@@ -1,7 +1,7 @@
 /*                         F E N C E . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2012 United States Government as represented by
+ * Copyright (c) 2004-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -20,7 +20,7 @@
  */
 /** @file shapes/fence.h
  *
- * This is the header file to the program that generages a chain-link
+ * This is the header file to the program that generates a chain-link
  * fence.  Every parameter of the fence may be adjusted by changing
  * the DEFAULT_* macros defined below.
  *
@@ -112,7 +112,7 @@
  *     default fence generation, however, generates the poles based on
  *     the default fence height and width.
  *
- *   mateial and material params are the two defaults that set the
+ *   material and material params are the two defaults that set the
  *     material properties of the fence poles and wires (not separate
  *     at this time)
  *
@@ -219,7 +219,7 @@
 #define DEFAULT_WIRESEGMENTLENGTH 50.0
 #define DEFAULT_WIRESEGMENTSEPARATION DEFAULT_WIRERADIUS
 /**
- * the max wire segments should not be changed as it is mearly a max
+ * the max wire segments should not be changed as it is merely a max
  * upper bound on the maximum number of segments that may be generated
  * for any wire pair.  it is provided as a saveguard against having an
  * "out-of-control" program if invalid wire values are entered.
@@ -263,8 +263,8 @@ extern "C" {
     extern char *getName(const char *base, int id, const char *suffix);
     extern char *getPrePostName(char *prefix, char *base, char *suffix);
 
-    extern int generateFence_s(struct rt_wdb *fp, char *fencename, point_t startpostion, point_t endposition);
-    extern int generateFence(struct rt_wdb *fp, char *fencename, point_t startpostion, vect_t heightvector, vect_t widthvector);
+    extern int generateFence_s(struct rt_wdb *fp, char *fencename, point_t startposition, point_t endposition);
+    extern int generateFence(struct rt_wdb *fp, char *fencename, point_t startposition, vect_t heightvector, vect_t widthvector);
 
     extern int generatePoles_s(struct rt_wdb *fp, char *polename);
     extern int generatePoles(struct rt_wdb *fp, char *polename, point_t startposition, vect_t heightvector, vect_t widthvector, double radius);

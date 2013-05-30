@@ -1,7 +1,7 @@
 /*                          N I R T . C
  * BRL-CAD
  *
- * Copyright (c) 1988-2012 United States Government as represented by
+ * Copyright (c) 1988-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -161,9 +161,14 @@ dgo_nirt_cmd(struct dg_obj *dgop,
 
     /* swipe x, y, z off the end if present */
     if (argc > 3) {
-	if (sscanf(argv[argc-3], "%lf", &center_model[X]) == 1 &&
-	    sscanf(argv[argc-2], "%lf", &center_model[Y]) == 1 &&
-	    sscanf(argv[argc-1], "%lf", &center_model[Z]) == 1) {
+	double scan[3];
+
+	if (sscanf(argv[argc-3], "%lf", &scan[X]) == 1 &&
+	    sscanf(argv[argc-2], "%lf", &scan[Y]) == 1 &&
+	    sscanf(argv[argc-1], "%lf", &scan[Z]) == 1)
+	{
+
+	    VMOVE(center_model, scan);
 	    use_input_orig = 1;
 	    argc -= 3;
 	    VSCALE(center_model, center_model, dgop->dgo_wdbp->dbip->dbi_local2base);
@@ -474,6 +479,7 @@ dgo_nirt_cmd(struct dg_obj *dgop,
 
     bu_vls_free(&p_vls);   /* use to form "partition" part of nirt command above */
     if (DG_QRAY_GRAPHICS(dgop)) {
+	double scan[4];
 
 	if (DG_QRAY_TEXT(dgop))
 	    bu_vls_free(&o_vls); /* used to form "overlap" part of nirt command above */
@@ -487,12 +493,16 @@ dgo_nirt_cmd(struct dg_obj *dgop,
 		break;
 	    }
 
-	    BU_GET(ndlp, struct dg_qray_dataList);
+	    BU_ALLOC(ndlp, struct dg_qray_dataList);
 	    BU_LIST_APPEND(HeadQRayData.l.back, &ndlp->l);
 
 	    if (sscanf(line, "%le %le %le %le",
-		       &ndlp->x_in, &ndlp->y_in, &ndlp->z_in, &ndlp->los) != 4)
+		       &scan[0], &scan[1], &scan[2], &scan[3]) != 4)
 		break;
+	    ndlp->x_in = scan[0];
+	    ndlp->y_in = scan[1];
+	    ndlp->z_in = scan[2];
+	    ndlp->los = scan[3];
 	}
 
 	vbp = rt_vlblock_init();
@@ -508,12 +518,16 @@ dgo_nirt_cmd(struct dg_obj *dgop,
 		break;
 	    }
 
-	    BU_GET(ndlp, struct dg_qray_dataList);
+	    BU_ALLOC(ndlp, struct dg_qray_dataList);
 	    BU_LIST_APPEND(HeadQRayData.l.back, &ndlp->l);
 
 	    if (sscanf(line, "%le %le %le %le",
-		       &ndlp->x_in, &ndlp->y_in, &ndlp->z_in, &ndlp->los) != 4)
+		       &scan[0], &scan[1], &scan[2], &scan[3]) != 4)
 		break;
+	    ndlp->x_in = scan[0];
+	    ndlp->y_in = scan[1];
+	    ndlp->z_in = scan[2];
+	    ndlp->los = scan[3];
 	}
 	vbp = rt_vlblock_init();
 	dgo_qray_data_to_vlist(dgop, vbp, &HeadQRayData, dir, 1);
@@ -576,12 +590,14 @@ dgo_vnirt_cmd(struct dg_obj *dgop,
     int i;
     int status;
     fastf_t sf = 1.0 * DG_INV_GED;
-    vect_t view_ray_orig;
     vect_t center_model;
     struct bu_vls x_vls = BU_VLS_INIT_ZERO;
     struct bu_vls y_vls = BU_VLS_INIT_ZERO;
     struct bu_vls z_vls = BU_VLS_INIT_ZERO;
     const char **av;
+
+    /* intentionally double for scan */
+    double view_ray_orig[3];
 
     if (argc < 3) {
 	struct bu_vls vls = BU_VLS_INIT_ZERO;

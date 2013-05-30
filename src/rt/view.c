@@ -1,7 +1,7 @@
 /*                          V I E W . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2012 United States Government as represented by
+ * Copyright (c) 1985-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -38,7 +38,7 @@
  *
  * Notes -
  * The normals on all surfaces point OUT of the solid.
- * The incomming light rays point IN.
+ * The incoming light rays point IN.
  *
  */
 
@@ -151,13 +151,13 @@ int a_onehit = -1;
 /**
  * Overlay
  *
- * If in overlay mode, and writeing to a framebuffer, only write
+ * If in overlay mode, and writing to a framebuffer, only write
  * non-background pixels.
  */
 static int overlay = 0;
 
 /* Viewing module specific "set" variables:
- * 
+ *
  * Note: The actual byte offsets will get set at run time in
  * application_init. Also, the variables associated with bounces,
  * ireflect and background are globals that live in liboptical. These
@@ -173,8 +173,8 @@ struct bu_structparse view_parse[] = {
     {"%d", 1, "overlay", 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
     {"%d", 1, "ov", 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
     {"%d", 1, "ambSamples", 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
-    {"%f", 1, "ambRadius", 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
-    {"%f", 1, "ambOffset", 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+    {"%g", 1, "ambRadius", 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+    {"%g", 1, "ambOffset", 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
     {"%d", 1, "ambSlow", 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
     {"", 0, (char *)0, 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL}
 };
@@ -218,7 +218,7 @@ view_pixel(struct application *ap)
 	 * To prevent bad color aliasing, add some color dither.  Be
 	 * certain to NOT output the background color here.  Random
 	 * numbers in the range 0 to 1 are used, so that integer
-	 * valued colors (eg, from texture maps) retain their original
+	 * valued colors (e.g., from texture maps) retain their original
 	 * values.
 	 */
 	if (!ZERO(gamma_corr)) {
@@ -320,7 +320,7 @@ view_pixel(struct application *ap)
 		    bu_semaphore_release(BU_SEM_SYSCALL);
 		} else if (outfp != NULL) {
 		    bu_semaphore_acquire(BU_SEM_SYSCALL);
-		    if (fseek(outfp, (ap->a_y*width*pwidth) + (ap->a_x*pwidth), 0) != 0)
+		    if (bu_fseek(outfp, (ap->a_y*width*pwidth) + (ap->a_x*pwidth), 0) != 0)
 			fprintf(stderr, "fseek error\n");
 		    if (fwrite(p, 3, 1, outfp) != 1)
 			bu_exit(EXIT_FAILURE, "pixel fwrite error");
@@ -472,7 +472,7 @@ view_pixel(struct application *ap)
 
 		/* Scanline buffered mode */
 		bu_semaphore_acquire(RT_SEM_RESULTS);
-	
+
 		tmp_pixel = bu_calloc(pwidth, sizeof(fastf_t), "tmp_pixel");
 		VMOVE(tmp_pixel, ap->a_color);
 		if (rpt_dist) {
@@ -493,16 +493,16 @@ view_pixel(struct application *ap)
 		       the nearest integer */
 		    tmp_color = psum_p[i]*255.0/full_incr_sample + 0.5;
 		    /* clamp */
-		    pixelp[i] = tmp_color < 0 ? 0 : tmp_color > 255 ? 255 : tmp_color; 
+		    pixelp[i] = tmp_color < 0 ? 0 : tmp_color > 255 ? 255 : tmp_color;
 		}
 		bu_free(tmp_pixel, "tmp_pixel");
 
 		bu_semaphore_release(RT_SEM_RESULTS);
 		if (--(slp->sl_left) <= 0)
 		    do_eol = 1;
-	    }		    
+	    }
 	    break;
-    
+
 	default:
 	    bu_exit(EXIT_FAILURE, "bad buf_mode: %d", buf_mode);
     }
@@ -543,7 +543,7 @@ view_pixel(struct application *ap)
 	    }
 	    break;
 
-        case BUFMODE_ACC:
+	case BUFMODE_ACC:
 	case BUFMODE_SCANLINE:
 	case BUFMODE_DYNAMIC:
 	    if (fbp != FBIO_NULL) {
@@ -574,7 +574,7 @@ view_pixel(struct application *ap)
 		size_t count;
 
 		bu_semaphore_acquire(BU_SEM_SYSCALL);
-		if (fseek(outfp, ap->a_y*width*pwidth, 0) != 0)
+		if (bu_fseek(outfp, ap->a_y*width*pwidth, 0) != 0)
 		    fprintf(stderr, "fseek error\n");
 		count = fwrite(scanline[ap->a_y].sl_buf,
 			       sizeof(char), width*pwidth, outfp);
@@ -610,7 +610,7 @@ void
 view_end(struct application *ap)
 {
     /* FIXME: this should work on windows after the bu_timer() is
-     * created to replace the librt timing mechansim.
+     * created to replace the librt timing mechanism.
      */
 #if !defined(_WIN32) || defined(__CYGWIN__)
     /* If the heat graph is on, render it after all pixels completed */
@@ -638,8 +638,8 @@ view_end(struct application *ap)
     }
 
     if (scanline) {
-    	free_scanlines(height, scanline);
-    	scanline = NULL;
+	free_scanlines(height, scanline);
+	scanline = NULL;
     }
 
     if (psum_buffer) {
@@ -663,7 +663,7 @@ view_setup(struct rt_i *rtip)
 
     /*
      * Initialize the material library for all regions.  As this may
-     * result in some regions being dropped, (eg, light solids that
+     * result in some regions being dropped, (e.g., light solids that
      * become "implicit" -- non drawn), this must be done before
      * allowing the library to prep itself.  This is a slight layering
      * violation; later it may be clear how to repackage this
@@ -980,9 +980,9 @@ ambientOcclusion(struct application *ap, struct partition *pp)
 	    } while (MAGSQ(randScale) > 1.0);
 	}
 
-	VJOIN3(amb_ap.a_ray.r_dir, origin, 
-	       randScale[X], uAxis, 
-	       randScale[Y], vAxis, 
+	VJOIN3(amb_ap.a_ray.r_dir, origin,
+	       randScale[X], uAxis,
+	       randScale[Y], vAxis,
 	       randScale[Z], inormal);
 
 	VUNITIZE(amb_ap.a_ray.r_dir);
@@ -1056,8 +1056,8 @@ colorview(struct application *ap, struct partition *PartHeadp, struct seg *finis
 		    pp->pt_inseg->seg_stp = kut_soltab;
 		    break;
 		} else if (pp->pt_inhit->hit_dist > dist) {
-                    break;
-                }
+		    break;
+		}
 	    }
 	    if (pp == PartHeadp) {
 		/* we ignored everything, this is now a miss */
@@ -1081,7 +1081,7 @@ colorview(struct application *ap, struct partition *PartHeadp, struct seg *finis
 		return 0;
 	    }
 	}
-	
+
     }
 
 
@@ -1204,7 +1204,7 @@ vdraw open oray;vdraw params c %2.2x%2.2x%2.2x;vdraw write n 0 %g %g %g;vdraw wr
 vdraw open iray;vdraw params c %2.2x%2.2x%2.2x;vdraw write n 0 %g %g %g;vdraw write n 1 %g %g %g;vdraw send\n",
 	       i, i, i,
 	       V3ARGS(inhit), V3ARGS(outhit));
-	
+
     }
 
     memset((char *)&sw, 0, sizeof(sw));
@@ -1244,7 +1244,7 @@ out:
     }
 
 
-    if (ambSamples > 0) 
+    if (ambSamples > 0)
 	ambientOcclusion(ap, pp);
 
     RT_CK_REGION(ap->a_uptr);
@@ -1282,8 +1282,6 @@ int viewit(struct application *ap,
 	bu_log("viewit:  no hit out front?\n");
 	return 0;
     }
-
-    bu_log("----------------------------------------------------------------------viewit\n");
 
     if (do_kut_plane) {
 	fastf_t slant_factor;
@@ -1325,7 +1323,7 @@ int viewit(struct application *ap,
 		return 0;
 	    }
 	}
-	
+
     }
 
     hitp = pp->pt_inhit;
@@ -1356,7 +1354,7 @@ int viewit(struct application *ap,
 	    break;
 	case 4:
 	    {
-                struct curvature cv = {{0.0, 0.0, 0.0}, 0.0, 0.0};
+		struct curvature cv = {{0.0, 0.0, 0.0}, 0.0, 0.0};
 		fastf_t f;
 
 		RT_CURVATURE(&cv, hitp, pp->pt_inflip, pp->pt_inseg->seg_stp);
@@ -1377,7 +1375,7 @@ int viewit(struct application *ap,
 	    break;
 	case 5:
 	    {
-                struct curvature cv = {{0.0, 0.0, 0.0}, 0.0, 0.0};
+		struct curvature cv = {{0.0, 0.0, 0.0}, 0.0, 0.0};
 
 		RT_CURVATURE(&cv, hitp, pp->pt_inflip, pp->pt_inseg->seg_stp);
 
@@ -1388,7 +1386,7 @@ int viewit(struct application *ap,
 	    break;
 	case 6:
 	    {
-                struct uvcoord uv = {0.0, 0.0, 0.0, 0.0};
+		struct uvcoord uv = {0.0, 0.0, 0.0, 0.0};
 
 		/* Exactly like 'testmap' shader: UV debug */
 		RT_HIT_UVCOORD(ap, pp->pt_inseg->seg_stp, hitp, &uv);
@@ -1457,12 +1455,14 @@ view_init(struct application *UNUSED(ap), char *UNUSED(file), char *UNUSED(obj),
 	struct rt_functab *functab;
 	struct directory *dp;
 
-	kut_soltab = bu_calloc(1, sizeof(struct soltab), "kut_soltab");
+	BU_ALLOC(kut_soltab, struct soltab);
 	kut_soltab->l.magic = RT_SOLTAB_MAGIC;
-	dp = bu_calloc(1, sizeof(struct directory), "kut dp");
+
+	BU_ALLOC(dp, struct directory);
 	dp->d_namep = bu_strdup("fake kut primitive");
 	kut_soltab->st_dp = dp;
-	functab = bu_calloc(1, sizeof(struct rt_functab), "kut_soltab->st_meth");
+
+	BU_ALLOC(functab, struct rt_functab);
 	functab->magic = RT_FUNCTAB_MAGIC;
 	functab->ft_norm = kut_ft_norm;
 	kut_soltab->st_meth = functab;
@@ -1659,9 +1659,9 @@ view_2init(struct application *ap, char *UNUSED(framename))
      * one in incremental mode)
      */
     if (((!incr_mode && !full_incr_mode) || !scanline) && !fullfloat_mode) {
-        if (scanline)
-            free_scanlines(height, scanline);
-        scanline = alloc_scanlines(height);
+	if (scanline)
+	    free_scanlines(height, scanline);
+	scanline = alloc_scanlines(height);
     }
     /* On fully incremental mode, allocate the scanline as the total
        size of the image */
@@ -1687,7 +1687,7 @@ view_2init(struct application *ap, char *UNUSED(framename))
 	 */
 	per_processor_chunk = width;
 	buf_mode = BUFMODE_SCANLINE;
-    } 
+    }
     else {
 	buf_mode = BUFMODE_DYNAMIC;
     }
@@ -1779,9 +1779,9 @@ view_2init(struct application *ap, char *UNUSED(framename))
 		for (i=0; i<height; i++)
 		    scanline[i].sl_left = width;
 	    }
-	    
+
 	    break;
-        case BUFMODE_ACC:
+	case BUFMODE_ACC:
 	    for (i=0; i<height; i++)
 		scanline[i].sl_left = width;
 	    bu_log("Multiple-sample, average buffering\n");
@@ -1790,7 +1790,7 @@ view_2init(struct application *ap, char *UNUSED(framename))
 	    bu_exit(EXIT_FAILURE, "bad buf_mode: %d", buf_mode);
     }
 
-    /* This is where we do Preperations for each Lighting Model if it
+    /* This is where we do Preparations for each Lighting Model if it
        needs it.  Set Photon Mapping Off by default */
     PM_Activated= 0;
     switch (lightmodel) {
@@ -1846,7 +1846,7 @@ view_2init(struct application *ap, char *UNUSED(framename))
 	     * all times to compute the ray trace, normalize times,
 	     * and then create the trace according to how long each
 	     * individual pixel took to render.  ALSO, should call a
-	     * static funtion that creates a 2D array of sizes width
+	     * static function that creates a 2D array of sizes width
 	     * and height
 	     */
 	case 8:
@@ -1855,11 +1855,11 @@ view_2init(struct application *ap, char *UNUSED(framename))
 		if (BU_LIST_IS_EMPTY(&(LightHead.l))
 		    || !BU_LIST_IS_INITIALIZED(&(LightHead.l))) {
 		    if (R_DEBUG&RDEBUG_SHOWERR)bu_log("No explicit light\n");
-		    light_maker(1, view2model);	
+		    light_maker(1, view2model);
 		}
 		break;
 	    }
-	    
+
 	default:
 	    bu_exit(EXIT_FAILURE, "bad lighting model #");
     }
@@ -1868,7 +1868,7 @@ view_2init(struct application *ap, char *UNUSED(framename))
 
     /* Now OK to delete invisible light regions.  Actually we just
      * remove the references to these regions from the soltab
-     * structures in the space paritioning tree
+     * structures in the space partitioning tree
      */
     bu_ptbl_init(&stps, 8, "soltabs to delete");
     if (R_DEBUG & RDEBUG_LIGHT) {

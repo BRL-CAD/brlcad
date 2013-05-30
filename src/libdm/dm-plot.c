@@ -1,7 +1,7 @@
 /*                       D M - P L O T . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2012 United States Government as represented by
+ * Copyright (c) 1985-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -24,7 +24,7 @@
  * contain the faceplate display as well.  Mostly, a useful hack for
  * making viewgraphs and photographs of an editing session.  We assume
  * that the UNIX-plot filter used can at least discard the
- * non-standard extention to specify color (a Doug Gwyn addition).
+ * non-standard extension to specify color (a Doug Gwyn addition).
  *
  */
 
@@ -47,9 +47,14 @@
 #include "mater.h"
 #include "raytrace.h"
 #include "dm.h"
+
 #include "dm-plot.h"
+#include "dm-Null.h"
+
 #include "solid.h"
 #include "plot3.h"
+
+#include "./dm_util.h"
 
 /* Display Manager package interface */
 
@@ -164,7 +169,7 @@ plot_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye)
  *
  * Set up for an object, transformed as indicated, and with an
  * object center as specified.  The ratio of object to screen size
- * is passed in as a convienience.
+ * is passed in as a convenience.
  *
  * Returns 0 if object could be drawn, !0 if object was omitted.
  */
@@ -247,7 +252,7 @@ plot_drawVList(struct dm *dmp, struct bn_vlist *vp)
 				pt_prev = pt;
 				continue;
 			    } else {
-                                if (pt_prev) {
+				if (pt_prev) {
 				fastf_t alpha;
 				vect_t diff;
 				point_t tmp_pt;
@@ -257,7 +262,7 @@ plot_drawVList(struct dm *dmp, struct bn_vlist *vp)
 				alpha = (dist_prev - delta) / (dist_prev - dist);
 				VJOIN1(tmp_pt, *pt_prev, alpha, diff);
 				MAT4X3PNT(fin, plotmat, tmp_pt);
-                                }
+				}
 			    }
 			} else {
 			    if (dist_prev <= 0.0) {
@@ -272,7 +277,7 @@ plot_drawVList(struct dm *dmp, struct bn_vlist *vp)
 				VJOIN1(tmp_pt, *pt_prev, alpha, diff);
 				MAT4X3PNT(last, plotmat, tmp_pt);
 				MAT4X3PNT(fin, plotmat, *pt);
-                                }
+				}
 			    } else {
 				MAT4X3PNT(fin, plotmat, *pt);
 			    }
@@ -338,8 +343,8 @@ plot_draw(struct dm *dmp, struct bn_vlist *(*callback_function)(void *), genptr_
 /**
  * P L O T _ N O R M A L
  *
- * Restore the display processor to a normal mode of operation (ie,
- * not scaled, rotated, displaced, etc).  Turns off windowing.
+ * Restore the display processor to a normal mode of operation (i.e.,
+ * not scaled, rotated, displaced, etc.).  Turns off windowing.
  */
 HIDDEN int
 plot_normal(struct dm *dmp)
@@ -358,7 +363,7 @@ plot_normal(struct dm *dmp)
  * The starting position of the beam is as specified.
  */
 HIDDEN int
-plot_drawString2D(struct dm *dmp, char *str, fastf_t x, fastf_t y, int size, int UNUSED(use_aspect))
+plot_drawString2D(struct dm *dmp, const char *str, fastf_t x, fastf_t y, int size, int UNUSED(use_aspect))
 {
     int sx, sy;
 
@@ -398,15 +403,7 @@ plot_drawLine2D(struct dm *dmp, fastf_t xpos1, fastf_t ypos1, fastf_t xpos2, fas
 HIDDEN int
 plot_drawLine3D(struct dm *dmp, point_t pt1, point_t pt2)
 {
-    if (!dmp)
-	return TCL_ERROR;
-
-    if (bn_pt3_pt3_equal(pt1, pt2, NULL)) {
-	/* nothing to do for a singular point */
-	return TCL_OK;
-    }
-
-    return TCL_OK;
+    return draw_Line3D(dmp, pt1, pt2);
 }
 
 
@@ -487,14 +484,14 @@ HIDDEN int
 plot_setWinBounds(struct dm *dmp, fastf_t *w)
 {
     /* Compute the clipping bounds */
-    dmp->dm_clipmin[0] = w[0] / 2048.;
-    dmp->dm_clipmax[0] = w[1] / 2047.;
-    dmp->dm_clipmin[1] = w[2] / 2048.;
-    dmp->dm_clipmax[1] = w[3] / 2047.;
+    dmp->dm_clipmin[0] = w[0] / 2048.0;
+    dmp->dm_clipmax[0] = w[1] / 2047.0;
+    dmp->dm_clipmin[1] = w[2] / 2048.0;
+    dmp->dm_clipmax[1] = w[3] / 2047.0;
 
     if (dmp->dm_zclip) {
-	dmp->dm_clipmin[2] = w[4] / 2048.;
-	dmp->dm_clipmax[2] = w[5] / 2047.;
+	dmp->dm_clipmin[2] = w[4] / 2048.0;
+	dmp->dm_clipmax[2] = w[5] / 2047.0;
     } else {
 	dmp->dm_clipmin[2] = -1.0e20;
 	dmp->dm_clipmax[2] = 1.0e20;
@@ -510,33 +507,35 @@ struct dm dm_plot = {
     plot_drawEnd,
     plot_normal,
     plot_loadMatrix,
+    null_loadPMatrix,
     plot_drawString2D,
     plot_drawLine2D,
     plot_drawLine3D,
     plot_drawLines3D,
     plot_drawPoint2D,
-    Nu_int0,
-    Nu_int0,
+    null_drawPoint3D,
+    null_drawPoints3D,
     plot_drawVList,
     plot_drawVList,
     plot_draw,
     plot_setFGColor,
     plot_setBGColor,
     plot_setLineAttr,
-    Nu_int0,
+    null_configureWin,
     plot_setWinBounds,
-    Nu_int0,
-    Nu_int0,
-    Nu_int0,
-    Nu_int0,
+    null_setLight,
+    null_setTransparency,
+    null_setDepthMask,
+    null_setZBuffer,
     plot_debug,
-    Nu_int0,
-    Nu_int0,
-    Nu_void,
-    Nu_int0,
-    Nu_int0,
-    Nu_int0, /* display to image function */
-    Nu_void,
+    null_beginDList,
+    null_endDList,
+    null_drawDList,
+    null_freeDLists,
+    null_genDLists,
+    null_getDisplayImage,	/* display to image function */
+    null_reshape,
+    null_makeCurrent,
     0,
     0,				/* no displaylist */
     0,				/* no stereo */
@@ -588,19 +587,12 @@ plot_open(Tcl_Interp *interp, int argc, const char *argv[])
     struct dm *dmp;
     Tcl_Obj *obj;
 
-    BU_GET(dmp, struct dm);
-    if (dmp == DM_NULL)
-	return DM_NULL;
+    BU_ALLOC(dmp, struct dm);
 
     *dmp = dm_plot; /* struct copy */
     dmp->dm_interp = interp;
 
-    dmp->dm_vars.priv_vars = (genptr_t)bu_calloc(1, sizeof(struct plot_vars), "plot_open: plot_vars");
-    BU_GET(dmp->dm_vars.priv_vars, struct plot_vars);
-    if (dmp->dm_vars.priv_vars == (genptr_t)NULL) {
-	bu_free((genptr_t)dmp, "plot_open: dmp");
-	return DM_NULL;
-    }
+    BU_ALLOC(dmp->dm_vars.priv_vars, struct plot_vars);
 
     obj = Tcl_GetObjResult(interp);
     if (Tcl_IsShared(obj))

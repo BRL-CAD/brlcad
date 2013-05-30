@@ -2,7 +2,7 @@
 #             D I S T C H E C K  _ S C R E E N . S H
 # BRL-CAD
 #
-# Copyright (c) 2012 United States Government as represented by
+# Copyright (c) 2012-2013 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -49,11 +49,11 @@
 #
 # If you want more windows for more than just the standard distcheck,
 # uncomment the "split/focus/select 3" lines + the tail command pertaining
-# to -p 3 below and add as many more similar lines as are needed.  Other 
-# window geometries are possible - this is just intended as a convenience 
+# to -p 3 below and add as many more similar lines as are needed.  Other
+# window geometries are possible - this is just intended as a convenience
 # for running the common pre-defined cases.
 #
-# To exit from the whole thing, hault the build (if necessary) and type 
+# To exit from the whole thing, halt the build (if necessary) and type
 # screen -X quit in the same window the toplevel distcheck make is being run.
 ###
 
@@ -84,4 +84,3 @@ screen -X -p 2 exec tail --retry --follow=name distcheck-release.log
 #screen -X -p 3 exec tail --retry --follow=name distcheck-no_tk.log
 
 screen -X -p 0 exec cmake ../brlcad -DBRLCAD_BUNDLED_LIBS=ON
-

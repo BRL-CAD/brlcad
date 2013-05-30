@@ -1,7 +1,7 @@
 /*                     P I X D S P L I T . C
  * BRL-CAD
  *
- * Copyright (c) 1995-2012 United States Government as represented by
+ * Copyright (c) 1995-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -118,22 +118,21 @@ main (int argc, char *argv[])
      */
     switch (argc - bu_optind) {
 	case 0:
-	    inf_name = "stdin";
 	    infd = 0;
 	    break;
 	case 1:
 	    inf_name = bu_realpath(argv[bu_optind++], NULL);
 	    if(inf_name == NULL || *inf_name == '\0') {
 		bu_log("Bad file name\n");
-		bu_free(inf_name,"realpath alloc from bu_realpath");
+		bu_free(inf_name, "realpath alloc from bu_realpath");
 		return 1;
 	    }
 	    if ((infd = open(inf_name, O_RDONLY)) == -1) {
 		bu_log("Cannot open file '%s'\n", inf_name);
-		bu_free(inf_name,"realpath alloc from bu_realpath");
+		bu_free(inf_name, "realpath alloc from bu_realpath");
 		return 1;
 	    }
-	    bu_free(inf_name,"realpath alloc from bu_realpath");
+	    bu_free(inf_name, "realpath alloc from bu_realpath");
 	    break;
 	default:
 	    print_usage();

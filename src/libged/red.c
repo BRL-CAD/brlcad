@@ -1,7 +1,7 @@
 /*                        R E D . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2012 United States Government as represented by
+ * Copyright (c) 2008-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -104,7 +104,7 @@ _ged_find_matrix(struct ged *gedp, const char *currptr, int strlength, matp_t *m
     const char *floatptr;
     const char *float_string = "[+-]?[0-9]*[.]?[0-9]+([eE][+-]?[0-9]+)?";
 
-    bu_vls_sprintf(&current_substring, "(%s)", float_string);
+    bu_vls_sprintf(&current_substring, "(%s[[:space:]]+)", float_string);
     regcomp(&matrix_entry, bu_vls_addr(&current_substring), REG_EXTENDED);
     bu_vls_sprintf(&current_substring,
 		   /* broken into two strings so auto-formatting
@@ -475,7 +475,7 @@ build_comb(struct ged *gedp, struct directory *dp, struct bu_vls *target_name)
 			"build_comb: unrecognized relation (assume UNION)\n");
 		    rt_tree_array[tree_index].tl_op = OP_UNION;
 	    }
-	    BU_GET(tp, union tree);
+	    BU_ALLOC(tp, union tree);
 	    RT_TREE_INIT(tp);
 	    rt_tree_array[tree_index].tl_tree = tp;
 	    tp->tr_l.tl_op = OP_DB_LEAF;
@@ -749,6 +749,7 @@ ged_red(struct ged *gedp, int argc, const char **argv)
     struct bu_vls comb_name = BU_VLS_INIT_ZERO;
     struct bu_vls temp_name = BU_VLS_INIT_ZERO;
     struct bu_vls final_name = BU_VLS_INIT_ZERO;
+    struct bu_vls tmp_ged_result_str = BU_VLS_INIT_ZERO;
     int force_flag = 0;
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
@@ -836,14 +837,14 @@ ged_red(struct ged *gedp, int argc, const char **argv)
 	return GED_ERROR;
     }
 
+    /* Close the temp file since 'write_comb' opens it. */
+    (void)fclose(fp);
+
     /* Write the combination components to the file */
     if (write_comb(gedp, comb, argv[1])) {
 	bu_vls_printf(gedp->ged_result_str, "Unable to edit %s\n", argv[1]);
-	(void)fclose(fp);
 	goto cleanup;
     }
-
-    (void)fclose(fp);
 
     /* Edit the file */
     if (_ged_editit(editstring, _ged_tmpfil)) {
@@ -888,7 +889,7 @@ ged_red(struct ged *gedp, int argc, const char **argv)
 
 	    GED_DB_DIRADD(gedp, tmp_dp, bu_vls_addr(&temp_name), -1, 0, RT_DIR_COMB, (genptr_t)&intern.idb_type, 0);
 
-	    BU_GET(comb, struct rt_comb_internal);
+	    BU_ALLOC(comb, struct rt_comb_internal);
 	    RT_COMB_INTERNAL_INIT(comb);
 
 	    intern.idb_ptr = (genptr_t)comb;
@@ -903,10 +904,16 @@ ged_red(struct ged *gedp, int argc, const char **argv)
 
 	    bu_vls_printf(gedp->ged_result_str, "Problem in edited region, no changes made\n");
 
+	    /* save ged_result_str */
+	    bu_vls_sprintf(&tmp_ged_result_str, "%s", bu_vls_addr(gedp->ged_result_str));
+
 	    av[0] = "kill";
 	    av[1] = bu_vls_addr(&temp_name);
 	    av[2] = NULL;
 	    (void)ged_kill(gedp, 2, (const char **)av);
+
+	    /* restore ged_result_str */
+	    bu_vls_printf(gedp->ged_result_str, "%s", bu_vls_addr(&tmp_ged_result_str));
 
 	    goto cleanup;
 	}
@@ -923,7 +930,15 @@ ged_red(struct ged *gedp, int argc, const char **argv)
 			av[0] = "kill";
 			av[1] = bu_vls_addr(&final_name);
 			av[2] = NULL;
+
+			/* save ged_result_str */
+			bu_vls_sprintf(&tmp_ged_result_str, "%s", bu_vls_addr(gedp->ged_result_str));
+
 			(void)ged_kill(gedp, 2, (const char **)av);
+
+			/* restore ged_result_str */
+			bu_vls_printf(gedp->ged_result_str, "%s", bu_vls_addr(&tmp_ged_result_str));
+
 		    } else {
 			/* not forced, can't overwrite destination, can't proceed */
 			bu_vls_printf(gedp->ged_result_str, "%s already exists\n", bu_vls_addr(&final_name));
@@ -948,14 +963,27 @@ ged_red(struct ged *gedp, int argc, const char **argv)
 		av[0] = "kill";
 		av[1] = bu_vls_addr(&comb_name);
 		av[2] = NULL;
+
+		/* save ged_result_str */
+		bu_vls_sprintf(&tmp_ged_result_str, "%s", bu_vls_addr(gedp->ged_result_str));
+
 		(void)ged_kill(gedp, 2, (const char **)av);
+
+		/* restore ged_result_str */
+		bu_vls_printf(gedp->ged_result_str, "%s", bu_vls_addr(&tmp_ged_result_str));
 	    }
 	}
 	av[0] = "mv";
 	av[1] = bu_vls_addr(&temp_name);
 	av[2] = bu_vls_addr(&final_name);
+
+	/* save ged_result_str */
+	bu_vls_sprintf(&tmp_ged_result_str, "%s", bu_vls_addr(gedp->ged_result_str));
+
 	(void)ged_move(gedp, 3, (const char **)av);
 
+	/* restore ged_result_str */
+	bu_vls_printf(gedp->ged_result_str, "%s", bu_vls_addr(&tmp_ged_result_str));
     }
     /* if we have reached cleanup by now, everything was fine */
     ret = GED_OK;
@@ -966,6 +994,7 @@ cleanup:
     bu_vls_free(&final_name);
     bu_vls_free(&comb_name);
     bu_vls_free(&temp_name);
+    bu_vls_free(&tmp_ged_result_str);
 
     return ret;
 }

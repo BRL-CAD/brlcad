@@ -1,7 +1,7 @@
 /*                 Vertex.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2012 United States Government as represented by
+ * Copyright (c) 1994-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -32,24 +32,28 @@
 
 #define CLASSNAME "Vertex"
 #define ENTITYNAME "Vertex"
-string Vertex::entityname = Factory::RegisterClass(ENTITYNAME,(FactoryMethod)Vertex::Create);
+string Vertex::entityname = Factory::RegisterClass(ENTITYNAME, (FactoryMethod)Vertex::Create);
 Vertex::OBJECTS Vertex::objects;
 
-Vertex::Vertex() {
+Vertex::Vertex()
+{
     step = NULL;
     id = 0;
 }
 
-Vertex::Vertex(STEPWrapper *sw,int step_id) {
+Vertex::Vertex(STEPWrapper *sw, int step_id)
+{
     step = sw;
     id = step_id;
 }
 
-Vertex::~Vertex() {
+Vertex::~Vertex()
+{
 }
 
 bool
-Vertex::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
+Vertex::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
     step = sw;
     id = sse->STEPfile_id;
 
@@ -65,27 +69,23 @@ Vertex::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
 }
 
 void
-Vertex::Print(int level) {
-    TAB(level); std::cout << CLASSNAME << ":" << name << "(";
+Vertex::Print(int level)
+{
+    TAB(level);
+    std::cout << CLASSNAME << ":" << name << "(";
     std::cout << "ID:" << STEPid() << ")" << std::endl;
 }
+
 STEPEntity *
-Vertex::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
-    Factory::OBJECTS::iterator i;
-    if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
-	Vertex *object = new Vertex(sw,sse->STEPfile_id);
+Vertex::GetInstance(STEPWrapper *sw, int id)
+{
+    return new Vertex(sw, id);
+}
 
-	Factory::AddObject(object);
-
-	if (!object->Load(sw, sse)) {
-	    std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
-	    delete object;
-	    return NULL;
-	}
-	return static_cast<STEPEntity *>(object);
-    } else {
-	return (*i).second;
-    }
+STEPEntity *
+Vertex::Create(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
+    return STEPEntity::CreateEntity(sw, sse, GetInstance, CLASSNAME);
 }
 
 // Local Variables:

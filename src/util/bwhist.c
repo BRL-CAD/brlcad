@@ -1,7 +1,7 @@
 /*                        B W H I S T . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2012 United States Government as represented by
+ * Copyright (c) 1986-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -39,7 +39,7 @@ long bin[256];
 int verbose = 0;
 FBIO *fbp;
 
-static char *Usage = "usage: bwhist [-v] [file.bw]\n";
+static char *Usage = "Usage: bwhist [-v] [file.bw]\n";
 
 
 int
@@ -53,6 +53,9 @@ main(int argc, char **argv)
     unsigned char *bp;
     unsigned char white[3*512];
     FILE *fp;
+
+    if ( BU_STR_EQUAL(argv[1], "-h") || BU_STR_EQUAL(argv[1], "-?") )
+	bu_exit(1, "%s", Usage);
 
     /* check for verbose flag */
     if (argc > 1 && BU_STR_EQUAL(argv[1], "-v")) {
@@ -72,9 +75,8 @@ main(int argc, char **argv)
 	fp = stdin;
 
     /* check usage */
-    if (argc > 1 || isatty(fileno(fp))) {
+    if (argc > 1 || isatty(fileno(fp)))
 	bu_exit(1, "%s", Usage);
-    }
 
     for (i = 0; i < 3*512; i++)
 	white[i] = 255;

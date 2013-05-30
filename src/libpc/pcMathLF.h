@@ -1,7 +1,7 @@
 /*                       P C M A T H L F . H
  * BRL-CAD
  *
- * Copyright (c) 2009-2012 United States Government as represented by
+ * Copyright (c) 2009-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -119,7 +119,7 @@ struct size_impl {
     template <typename T>
     std::size_t operator()(T const & t) const
     {
-    	return t.size();
+	return t.size();
     }
 };
 phoenix::function<size_impl> const size = size_impl();

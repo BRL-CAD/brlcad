@@ -1,7 +1,7 @@
 /*                    E X T R U D E _ B R E P . C P P
  * BRL-CAD
  *
- * Copyright (c) 2008-2012 United States Government as represented by
+ * Copyright (c) 2008-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -41,9 +41,12 @@ extern "C" {
 extern "C" void
 rt_extrude_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *tol)
 {
-    struct rt_db_internal *tmp_internal = (struct rt_db_internal *) bu_malloc(sizeof(struct rt_db_internal), "allocate structure");
-    RT_DB_INTERNAL_INIT(tmp_internal);
+    struct rt_db_internal *tmp_internal;
     struct rt_extrude_internal *eip;
+
+    BU_ALLOC(tmp_internal, struct rt_db_internal);
+    RT_DB_INTERNAL_INIT(tmp_internal);
+
     eip = (struct rt_extrude_internal *)ip->idb_ptr;
     RT_EXTRUDE_CK_MAGIC(eip);
 
@@ -65,6 +68,7 @@ rt_extrude_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_to
     ON_Brep& brep = *(*b);
     ON_BrepExtrudeFace(brep, 0, *extrudepath, true);
     bu_free(tmp_internal, "free temporary rt_db_internal");
+    delete extrudepath;
 }
 
 

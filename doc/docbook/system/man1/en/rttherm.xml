@@ -1,0 +1,165 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='rttherm1'>
+<refmeta>
+    <refentrytitle>RTTHERM
+</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class='source'>BRL-CAD</refmiscinfo>
+<refmiscinfo class='manual'>BRL-CAD</refmiscinfo>
+</refmeta>
+
+<refnamediv>
+<refname>rttherm</refname>
+<refpurpose>raytrace a hyper-spectral thermal image of an mged model</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<cmdsynopsis>
+  <command>rttherm</command>
+    <arg choice='opt' rep='repeat'><replaceable>options</replaceable></arg>
+    <arg choice='plain'>-o <replaceable>output.ssamp</replaceable></arg>
+    <arg choice='plain'><replaceable>model.g</replaceable></arg>
+    <arg choice='plain' rep='repeat'><replaceable>objects</replaceable></arg>
+
+</cmdsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para><citerefentry><refentrytitle>rttherm</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+is a member of the RTUIF family of programs,
+and implements the same options as
+<citerefentry><refentrytitle>rt</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+with the exception that the
+<option>-F</option>
+(framebuffer)
+option is currently not implemented and reserved for future use.
+<citerefentry><refentrytitle>rttherm</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+creates a hyper-spectral ray-trace into
+the output file
+specified with the
+<option>-o</option>
+option.
+It also writes a second file (using bn_table_write) with
+the suffix ".spect" which describes
+the spectral sampling pattern used when creating the output file.</para>
+</refsect1>
+
+<refsect1 xml:id='specifying_temperatures'><title>SPECIFYING TEMPERATURES</title>
+<para>Temperatures are always specified in degrees Kelvin ("Kelvins").</para>
+
+<para>The background (ambient) temperature may be set from the command
+line with the
+<option>-c set bg_temp=degK</option>
+command, or in the animation script with the command</para>
+
+<literallayout remap='.nf'>
+set bg_temp=293.0
+</literallayout> <!-- .fi -->
+
+<para>which is the default.  (20 degrees C is 293 degrees Kelvin).</para>
+
+<para>The spectral sampling density may be set from the command line
+with the
+<option>-c set spectrum=nsamp/lo_nm/hi_nm</option>
+option, or in the animation script with the command</para>
+
+<literallayout remap='.nf'>
+set spectrum=nsamp/lo_nm/hi_nm
+</literallayout> <!-- .fi -->
+
+<para>The default setting is 100/380/12000,
+which takes 100 samples equally spaced from 380nm (low end of the optical
+band) to 12microns (upper end of the "Far-IR" band).</para>
+
+<para><citerefentry><refentrytitle>rttherm</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+is built using
+<citerefentry><refentrytitle>libmultispectral</refentrytitle><manvolnum>3</manvolnum></citerefentry>
+rather than
+<citerefentry><refentrytitle>liboptical</refentrytitle><manvolnum>3</manvolnum></citerefentry>,
+which provides a similar set of shaders.
+Most notable is the "temp" shader,
+which applies a two-dimensional temperature map to a region
+in exactly the same way as the "texture" and "bwtexture" shaders apply
+colors to the surface.</para>
+
+<para>The temperature of a region may be modified by the
+rt animation script which is read by
+<citerefentry><refentrytitle>rttherm</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+when the
+<option>-M</option>
+flag is specified.
+The syntax of the anim command is:</para>
+
+<literallayout remap='.nf'>
+ anim path temp ## ;
+</literallayout> <!-- .fi -->
+
+<para>where
+"anim" is a keyword,
+"path" is the path specification for the affected combination(s),
+"temp" is a keyword ("temperature" is also accepted), and
+## is the new temperature for the combination(s) in Kelvins.</para>
+
+<para>The Tcl interface to the database supports adjusting region temperatures.
+The syntax of the anim command is:</para>
+
+<literallayout remap='.nf'>
+ db put|adjust combname temp ##
+</literallayout> <!-- .fi -->
+
+<para>where
+"db" is the name of the Tcl database object for the desired
+database (typically "db" or ".inmem"),
+"put" and "adjust" are keywords,
+"combname" is the name of the combination,
+"temp" is a keyword,
+and
+## is the new temperature for the combination in Kelvins.
+Note that the BRL-CAD v4 database has no place for
+storing region temperatures on disk,
+so this command won't have any effect on v4 databases.</para>
+</refsect1>
+
+<refsect1 xml:id='post_processing'><title>POST PROCESSING</title>
+<para><citerefentry><refentrytitle>ssampview</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+is a GUI tool for viewing
+the multi-spectral output files created by
+<citerefentry><refentrytitle>rttherm</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
+In the works is a post-processing tool which will
+extract a spectral window into a conventional
+8-bit/pixel
+<citerefentry><refentrytitle>bw</refentrytitle><manvolnum>5</manvolnum></citerefentry>
+file, probably in two steps:
+(1) extracting a representative power value per pixel
+into a
+<citerefentry><refentrytitle>dbw</refentrytitle><manvolnum>5</manvolnum></citerefentry>
+(double-precision .bw file),
+and then (2) using
+<citerefentry><refentrytitle>cv</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+to perform a direct conversion, or using
+<citerefentry><refentrytitle>dpix-pix</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+or similar tool to perform scaling and/or auto-ranging.</para>
+</refsect1>
+
+<refsect1 xml:id='see_also'><title>SEE ALSO</title>
+<para><citerefentry><refentrytitle>brlcad</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>mged</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>rt</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>librt</refentrytitle><manvolnum>3</manvolnum></citerefentry>.</para>
+</refsect1>
+
+<refsect1 xml:id='author'><title>AUTHOR</title>
+<para>BRL-CAD Team</para>
+</refsect1>
+
+<refsect1 xml:id='copyright'><title>COPYRIGHT</title>
+<para>This software is Copyright (c) 1999-2013 United States Government as
+represented by the U.S. Army Research Laboratory. All rights reserved.</para>
+</refsect1>
+
+<refsect1 xml:id='bug_reports'><title>BUG REPORTS</title>
+<para>Reports of bugs or problems should be submitted via electronic
+mail to &lt;devs@brlcad.org&gt;.</para>
+</refsect1>
+</refentry>
+

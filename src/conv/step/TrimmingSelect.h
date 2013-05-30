@@ -1,7 +1,7 @@
 /*                 TrimmingSelect.h
  * BRL-CAD
  *
- * Copyright (c) 1994-2012 United States Government as represented by
+ * Copyright (c) 1994-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -31,34 +31,36 @@
 
 class CartesianPoint;
 
-class TrimmingSelect : virtual public STEPEntity {
+class TrimmingSelect : virtual public STEPEntity
+{
 public:
-	enum trimming_select_type {
-		CARTESIAN_POINT,
-		PARAMETER_VALUE,
-		UNKNOWN
-	};
+    enum trimming_select_type {
+	CARTESIAN_POINT,
+	PARAMETER_VALUE,
+	UNKNOWN
+    };
 
 private:
-	static string entityname;
+    static string entityname;
+    static EntityInstanceFunc GetInstance;
 
 protected:
-	CartesianPoint *cartesian_point;
-	double parameter_value;
-	trimming_select_type type;
+    CartesianPoint *cartesian_point;
+    double parameter_value;
+    trimming_select_type type;
 
 public:
-	TrimmingSelect();
-	virtual ~TrimmingSelect();
-	TrimmingSelect(STEPWrapper *sw,int step_id);
-	double GetParameterTrim();
-	const double *GetPointTrim();
-	bool IsParameterTrim();
-	bool Load(STEPWrapper *sw,SDAI_Select *sse);
-	virtual void Print(int level);
+    TrimmingSelect();
+    virtual ~TrimmingSelect();
+    TrimmingSelect(STEPWrapper *sw, int step_id);
+    double GetParameterTrim();
+    const double *GetPointTrim();
+    bool IsParameterTrim();
+    bool Load(STEPWrapper *sw, SDAI_Select *sse);
+    virtual void Print(int level);
 
-	//static methods
-	static STEPEntity *Create(STEPWrapper *sw,SDAI_Application_instance *sse);
+    //static methods
+    static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
 #endif /* TRIMMINGSELECT_H_ */

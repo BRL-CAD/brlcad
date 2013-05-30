@@ -1,7 +1,7 @@
 /*                         R O O T S . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2012 United States Government as represented by
+ * Copyright (c) 1985-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,14 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup librt */
-/** @{ */
-/** @file librt/roots.c
- *
- * Find the roots of a polynomial
- *
- */
-/** @} */
+
 
 #include "common.h"
 
@@ -152,9 +145,6 @@ rt_poly_findroot(register bn_poly_t *eqn, /* polynomial */
 	 * termination conditions somewhat.
 	 *
 	 * diff is |p0|**2.  nxZ = Z - p0.
-	 *
-	 * SGI XNS IRIS 3.5 compiler fails if following 2 assignments
-	 * are imbedded in the IF statement, as before.
 	 */
 	b = bn_cx_amplsq(nxZ);
 	diff = bn_cx_amplsq(&p0);
@@ -273,15 +263,6 @@ rt_poly_deflate(register bn_poly_t *oldP, register bn_complex_t *root)
 }
 
 
-/**
- * WARNING: The polynomial given as input is destroyed by this
- * routine.  The caller must save it if it is important!
- *
- * NOTE : This routine is written for polynomials with real
- * coefficients ONLY.  To use with complex coefficients, the Complex
- * Math library should be used throughout.  Some changes in the
- * algorithm will also be required.
- */
 int
 rt_poly_roots(register bn_poly_t *eqn,	/* equation to be solved */
 	      register bn_complex_t roots[], /* space to put roots found */

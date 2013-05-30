@@ -1,7 +1,7 @@
 /*                           E B M . C
  * BRL-CAD
  *
- * Copyright (c) 1988-2012 United States Government as represented by
+ * Copyright (c) 1988-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -63,11 +63,11 @@ struct rt_ebm_specific {
 #define RT_EBM_O(m) bu_offsetof(struct rt_ebm_internal, m)
 
 const struct bu_structparse rt_ebm_parse[] = {
-    {"%s",	RT_EBM_NAME_LEN, "file", bu_offsetofarray(struct rt_ebm_internal, file), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%s",	RT_EBM_NAME_LEN, "file", bu_offsetof(struct rt_ebm_internal, file), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%d",	1, "w",		RT_EBM_O(xdim),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%d",	1, "n",		RT_EBM_O(ydim),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%f",	1, "d",		RT_EBM_O(tallness),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f",	16, "mat", bu_offsetofarray(struct rt_ebm_internal, mat), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",	16, "mat", bu_offsetof(struct rt_ebm_internal, mat), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"",	0, (char *)0, 0,			BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 
@@ -529,7 +529,8 @@ rt_ebm_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_EBM;
     ip->idb_meth = &rt_functab[ID_EBM];
-    ip->idb_ptr = bu_calloc(1, sizeof(struct rt_ebm_internal), "rt_ebm_internal");
+    BU_ALLOC(ip->idb_ptr, struct rt_ebm_internal);
+
     eip = (struct rt_ebm_internal *)ip->idb_ptr;
     eip->magic = RT_EBM_INTERNAL_MAGIC;
 
@@ -674,7 +675,8 @@ rt_ebm_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_EBM;
     ip->idb_meth = &rt_functab[ID_EBM];
-    ip->idb_ptr = bu_calloc(1, sizeof(struct rt_ebm_internal), "rt_ebm_internal");
+    BU_ALLOC(ip->idb_ptr, struct rt_ebm_internal);
+
     eip = (struct rt_ebm_internal *)ip->idb_ptr;
     eip->magic = RT_EBM_INTERNAL_MAGIC;
 
@@ -869,7 +871,7 @@ rt_ebm_ifree(struct rt_db_internal *ip)
  * Calculate bounding RPP for ebm
  */
 int
-rt_ebm_bbox(struct rt_db_internal *ip, point_t *min, point_t *max)
+rt_ebm_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct bn_tol *UNUSED(tol))
 {
     register struct rt_ebm_internal *eip;
     vect_t v1, localspace;
@@ -931,7 +933,7 @@ rt_ebm_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     stp->st_specific = (genptr_t)ebmp;
 
     /* Find bounding RPP of rotated local RPP */
-    rt_ebm_bbox(ip, &(stp->st_min), &(stp->st_max));
+    rt_ebm_bbox(ip, &(stp->st_min), &(stp->st_max), &rtip->rti_tol);
     VSET(ebmp->ebm_large, ebmp->ebm_i.xdim, ebmp->ebm_i.ydim, ebmp->ebm_i.tallness);
 
     /* for now, EBM origin in ideal coordinates is at origin */
@@ -1099,7 +1101,7 @@ rt_ebm_free(struct soltab *stp)
     BU_CK_MAPPED_FILE(ebmp->ebm_i.mp);
     bu_close_mapped_file(ebmp->ebm_i.mp);
 
-    bu_free((char *)ebmp, "rt_ebm_specific");
+    BU_PUT(ebmp, struct rt_ebm_specific);
 }
 
 
@@ -1212,7 +1214,7 @@ rt_ebm_edge(int x_1, int y_1, int x_2, int y_2, int left, struct ebm_edge *edges
 {
     struct ebm_edge *new_edge;
 
-    new_edge = (struct ebm_edge *)bu_malloc(sizeof(struct ebm_edge), "rt_ebm_tess: new_edge");
+    BU_ALLOC(new_edge, struct ebm_edge);
 
     /* make all edges go from lower values to larger */
     if (y_1 < y_2 || x_1 < x_2) {
@@ -1577,13 +1579,13 @@ fail:
  * Routine to format the parameters of an EBM for "db get"
  *
  * Legal requested parameters are:
- * "F" - bitmap file to extrude
+ * "F" or "file" - bitmap file to extrude
  * "W" - number of cells in X direction
  * "N" - number of cells in Y direction
  * "H" - height of each cell (mm)
  * "M" - matrix to transform EBM solid into model coordinates
  *
- * no paramaters requested returns all
+ * no parameters requested returns all
  */
 int
 rt_ebm_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const char *attr)
@@ -1601,7 +1603,7 @@ rt_ebm_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const cha
 	for (i=0; i<16; i++)
 	    bu_vls_printf(logstr, " %.25g", ebm->mat[i]);
 	bu_vls_printf(logstr, " }");
-    } else if (BU_STR_EQUAL(attr, "F")) {
+    } else if (BU_STR_EQUAL(attr, "F") || BU_STR_EQUAL(attr, "file")) {
 	bu_vls_printf(logstr, "%s", ebm->file);
     } else if (BU_STR_EQUAL(attr, "W")) {
 	bu_vls_printf(logstr, "%zu", ebm->xdim);
@@ -1627,7 +1629,7 @@ rt_ebm_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const cha
  * Routine to adjust the parameters of an EBM
  *
  * Legal parameters are:
- * "F" - bitmap file to extrude
+ * "F" or "file" - bitmap file to extrude
  * "W" - number of cells in X direction
  * "N" - number of cells in Y direction
  * "H" - height of each cell (mm)
@@ -1644,7 +1646,7 @@ rt_ebm_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, co
     RT_EBM_CK_MAGIC(ebm);
 
     while (argc >= 2) {
-	if (BU_STR_EQUAL(argv[0], "F")) {
+	if (BU_STR_EQUAL(argv[0], "F") || BU_STR_EQUAL(argv[0], "file")) {
 	    if (strlen(argv[1]) >= RT_EBM_NAME_LEN) {
 		bu_vls_printf(logstr, "ERROR: File name too long");
 		return BRLCAD_ERROR;
@@ -1665,7 +1667,7 @@ rt_ebm_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, co
 	    ar_ptr = array;
 
 	    if (tcl_list_to_fastf_array(brlcad_interp, argv[1], &ar_ptr, &len) != len) {
-		bu_vls_printf(logstr, "ERROR: incorrect number of coefficents for matrix\n");
+		bu_vls_printf(logstr, "ERROR: incorrect number of coefficients for matrix\n");
 		return BRLCAD_ERROR;
 	    }
 	    MAT_COPY(ebm->mat, array);
@@ -1708,8 +1710,8 @@ rt_ebm_make(const struct rt_functab *ftp, struct rt_db_internal *intern)
     BU_ASSERT(&rt_functab[intern->idb_type] == ftp);
 
     intern->idb_meth = ftp;
-    ebm = (struct rt_ebm_internal *)bu_calloc(sizeof(struct rt_ebm_internal), 1,
-					      "rt_ebm_internal");
+    BU_ALLOC(ebm, struct rt_ebm_internal);
+
     intern->idb_ptr = (genptr_t)ebm;
     ebm->magic = RT_EBM_INTERNAL_MAGIC;
     MAT_IDN(ebm->mat);

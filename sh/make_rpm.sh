@@ -2,7 +2,7 @@
 #                     M A K E _ R P M . S H
 # BRL-CAD
 #
-# Copyright (c) 2005-2012 United States Government as represented by
+# Copyright (c) 2005-2013 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -62,7 +62,7 @@ fdist fedora
 fdist openSUSE
 
 if test "$DNAME" = "" ;then
-    ferror "Only \"fedora\" and \"openSUSE\" suported at this time" "Exiting..."
+    ferror "Only \"fedora\" and \"openSUSE\" supported at this time" "Exiting..."
 fi
 
 # check needed packages
@@ -76,7 +76,7 @@ fcheck(){
 	LLIST=$LLIST" "$1
 	E=1
     else
-        echo "Found package $1..."
+	echo "Found package $1..."
     fi
 }
 
@@ -141,6 +141,9 @@ rm -Rf $TMPDIR
 mkdir -p $TMPDIR/tmp
 cp -Rf misc/debian/* $TMPDIR
 
+# create "version" file
+echo $BVERSION >$TMPDIR/version
+
 # compile and install in tmp dir
 cmake -DBRLCAD_BUNDLED_LIBS=ON \
       -DBRLCAD_FLAGS_OPTIMIZATION=ON \
@@ -153,7 +156,7 @@ cmake -DBRLCAD_BUNDLED_LIBS=ON \
 make -j$NJOBS
 fakeroot make install DESTDIR=`pwd`"/$TMPDIR/tmp"
 
-# copy menu files
+# copy menu files and others
 mkdir -p $TMPDIR/tmp/etc/profile.d
 cp -f $TMPDIR/brlcad.sh $TMPDIR/tmp/etc/profile.d
 
@@ -161,30 +164,39 @@ mkdir -p $TMPDIR/tmp/etc/xdg/menus/applications-merged
 cp -f $TMPDIR/brlcad.menu $TMPDIR/tmp/etc/xdg/menus/applications-merged
 
 mkdir -p $TMPDIR/tmp/usr/share/applications
-cp -f $TMPDIR/brlcad-archer.desktop $TMPDIR/tmp/usr/share/applications
-cp -f $TMPDIR/brlcad-mged.desktop $TMPDIR/tmp/usr/share/applications
-cp -f $TMPDIR/brlcad-rtwizard.desktop $TMPDIR/tmp/usr/share/applications
+cp -f $TMPDIR/archer.desktop $TMPDIR/tmp/usr/share/applications
 cp -f $TMPDIR/brlcad-db.desktop $TMPDIR/tmp/usr/share/applications
 cp -f $TMPDIR/brlcad-doc.desktop $TMPDIR/tmp/usr/share/applications
 cp -f $TMPDIR/brlcad-doc-animation.desktop $TMPDIR/tmp/usr/share/applications
 cp -f $TMPDIR/brlcad-doc-mged.desktop $TMPDIR/tmp/usr/share/applications
+cp -f $TMPDIR/mged.desktop $TMPDIR/tmp/usr/share/applications
+cp -f $TMPDIR/rtwizard.desktop $TMPDIR/tmp/usr/share/applications
 
 mkdir -p $TMPDIR/tmp/usr/share/desktop-directories
 cp -f $TMPDIR/brlcad.directory $TMPDIR/tmp/usr/share/desktop-directories
 cp -f $TMPDIR/brlcad-doc.directory $TMPDIR/tmp/usr/share/desktop-directories
 
-mkdir -p $TMPDIR/tmp/usr/share/icons/hicolor/48x48/apps
-cp -f $TMPDIR/brlcad-mged.png $TMPDIR/tmp/usr/share/icons/hicolor/48x48/apps
-cp -f $TMPDIR/brlcad-archer.png $TMPDIR/tmp/usr/share/icons/hicolor/48x48/apps
-cp -f $TMPDIR/brlcad-db.png $TMPDIR/tmp/usr/share/icons/hicolor/48x48/apps
-cp -f $TMPDIR/brlcad-doc.png $TMPDIR/tmp/usr/share/icons/hicolor/48x48/apps
-
-mkdir -p $TMPDIR/tmp/usr/share/icons/hicolor/48x48/mimetypes
-cp -f $TMPDIR/brlcad-v4.png $TMPDIR/tmp/usr/share/icons/hicolor/48x48/mimetypes
-cp -f $TMPDIR/brlcad-v5.png $TMPDIR/tmp/usr/share/icons/hicolor/48x48/mimetypes
-
 mkdir -p $TMPDIR/tmp/usr/share/mime/packages
 cp -f $TMPDIR/brlcad.xml $TMPDIR/tmp/usr/share/mime/packages
+
+mkdir -p $TMPDIR/tmp/usr/brlcad
+cp -f $TMPDIR/version $TMPDIR/tmp/usr/brlcad
+
+# copy icons
+for I in 16x16 24x24 36x36 48x48 64x64 96x96 128x128 256x256
+do
+    mkdir -p $TMPDIR/tmp/usr/share/icons/hicolor/$I/apps
+    cp -f $TMPDIR/icons/$I/archer.png $TMPDIR/tmp/usr/share/icons/hicolor/$I/apps
+    cp -f $TMPDIR/icons/$I/brlcad.png $TMPDIR/tmp/usr/share/icons/hicolor/$I/apps
+    cp -f $TMPDIR/icons/$I/brlcad-db.png $TMPDIR/tmp/usr/share/icons/hicolor/$I/apps
+    cp -f $TMPDIR/icons/$I/brlcad-doc.png $TMPDIR/tmp/usr/share/icons/hicolor/$I/apps
+    cp -f $TMPDIR/icons/$I/mged.png $TMPDIR/tmp/usr/share/icons/hicolor/$I/apps
+    cp -f $TMPDIR/icons/$I/rtwizard.png $TMPDIR/tmp/usr/share/icons/hicolor/$I/apps
+
+    mkdir -p $TMPDIR/tmp/usr/share/icons/hicolor/$I/mimetypes
+    cp -f $TMPDIR/icons/$I/brlcad-v4.png $TMPDIR/tmp/usr/share/icons/hicolor/$I/mimetypes
+    cp -f $TMPDIR/icons/$I/brlcad-v5.png $TMPDIR/tmp/usr/share/icons/hicolor/$I/mimetypes
+done
 
 #Create brlcad.spec file
 echo -e 'Name: brlcad
@@ -219,49 +231,67 @@ geometric representation and analysis.
 Homepage: http://brlcad.org
 
 %post
-set -e
 
-F="/usr/share/applications/defaults.list"
+file="/usr/share/applications/mimeapps.list"
+section="Added Associations"
+app="mged.desktop;archer.desktop;rtwizard.desktop;"
+key_v4="application/brlcad-v4=$app"
+key_v5="application/brlcad-v5=$app"
 
-if [ ! -f $F ]; then
-	echo "[Default Applications]" > $F
-else
-	sed -i "/application\/brlcad-/d" $F
+if [ ! -e $file ]
+then
+    touch $file || :
 fi
 
-echo "application/brlcad-v4=brlcad-mged.desktop" >> $F
-echo "application/brlcad-v5=brlcad-mged.desktop" >> $F
+if [ -f $file ]
+then
+    sed --follow-symlinks -i "/application\/brlcad-v[45]/d" $file || :
+    line=$(sed -n "/^\[$section\]/=" $file | tail -1) || :
+    if [ -z "$line" ]
+    then
+	echo "[$section]\n$key_v4\n$key_v5" >> $file || :
+    else
+	sed --follow-symlinks -i "$line a$key_v4\n$key_v5" $file || :
+    fi
+fi
 
-source /etc/profile.d/brlcad.sh
+update-mime-database /usr/share/mime || :
+update-desktop-database -q || :
+gtk-update-icon-cache -qf /usr/share/icons/hicolor || :' >> $TMPDIR/brlcad.spec
 
-update-desktop-database &> /dev/null || :
+if test "$DNAME" = "openSUSE" ;then
+    echo -e 'SuSEconfig || :' >> $TMPDIR/brlcad.spec
+fi
 
-update-mime-database /usr/share/mime &>/dev/null || :
-
-touch -c /usr/share/icons/hicolor &>/dev/null || :
-
-gtk-update-icon-cache /usr/share/icons/hicolor &>/dev/null || :
-
-SuSEconfig &>/dev/null || :
-
+echo -e '
 %postun
-set -e
 
-update-desktop-database &> /dev/null || :
+file="/usr/share/applications/mimeapps.list"
+section="Added Associations"
 
-update-mime-database /usr/share/mime &>/dev/null || :
+if [ -f $file ] && [ $1 -eq 0 ]
+then
+    sed --follow-symlinks -i "/application\/brlcad-v[45]/d" $file
+fi
 
-touch -c /usr/share/icons/hicolor &>/dev/null || :
+if [ -f $file ] && [ -z "$(sed "/\[$section\]/d" $file)" ]
+then
+    rm $file || :
+fi
 
-gtk-update-icon-cache /usr/share/icons/hicolor &>/dev/null || :
+update-mime-database /usr/share/mime || :
+update-desktop-database -q || :
+gtk-update-icon-cache -qf /usr/share/icons/hicolor || :' >> $TMPDIR/brlcad.spec
 
-SuSEconfig &>/dev/null || :
+if test "$DNAME" = "openSUSE" ;then
+    echo -e 'SuSEconfig || :' >> $TMPDIR/brlcad.spec
+fi
 
+echo -e '
 %files' >> $TMPDIR/brlcad.spec
 
-find $TMPDIR/tmp/ -type d | sed 's:'$TMPDIR'/tmp:%dir ":' | sed 's:$:":' >> $TMPDIR/brlcad.spec
-find $TMPDIR/tmp/ -type f | sed 's:'$TMPDIR'/tmp:":' | sed 's:$:":' >> $TMPDIR/brlcad.spec
-find $TMPDIR/tmp/ -type l | sed 's:'$TMPDIR'/tmp:":' | sed 's:$:":' >> $TMPDIR/brlcad.spec
+find $TMPDIR/tmp/usr/brlcad -type d | sed 's:'$TMPDIR'/tmp:%dir ":' | sed 's:$:":' >> $TMPDIR/brlcad.spec
+find $TMPDIR/tmp/ ! -type d | sed 's:'$TMPDIR'/tmp:":' | sed 's:$:":' >> $TMPDIR/brlcad.spec
 
 # create rpm file
 fakeroot rpmbuild -vv --buildroot=`pwd`/$TMPDIR/tmp -bb --target $ARCH $TMPDIR/brlcad.spec > $TMPDIR/rpmbuild.log

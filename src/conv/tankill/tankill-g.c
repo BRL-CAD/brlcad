@@ -1,7 +1,7 @@
 /*                     T A N K I L L - G . C
  * BRL-CAD
  *
- * Copyright (c) 1993-2012 United States Government as represented by
+ * Copyright (c) 1993-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -74,7 +74,7 @@ Add_solid(int comp_code_num)
     /* if list is empty, start one */
     if ( id_root == NULL )
     {
-	id_root = (struct comp_idents *)bu_malloc( sizeof( struct comp_idents ), "tankill-g: idents list" );
+	BU_ALLOC(id_root, struct comp_idents);
 	id_root->next = (struct comp_idents *)NULL;
 	id_root->ident = comp_code_num;
 	id_root->no_of_solids = 1;
@@ -96,7 +96,7 @@ Add_solid(int comp_code_num)
 	else
 	{
 	    /* make a new entry for this component */
-	    ptr->next = (struct comp_idents *)bu_malloc( sizeof( struct comp_idents ), "tankill-g: idents list " );
+	    BU_ALLOC(ptr->next, struct comp_idents);
 	    ptr = ptr->next;
 	    ptr->next = NULL;
 	    ptr->ident = comp_code_num;
@@ -558,7 +558,7 @@ main(int argc, char **argv)
 	    sprintf( name, "%dXXX_codes", i );
 
 	    if ( mk_addmember( name, &reg_head.l, NULL, WMOP_UNION ) == WMEMBER_NULL )
-		bu_log( "mk_admember failed for %s\n", name );
+		bu_log( "mk_addmember failed for %s\n", name );
 	    all_len++;
 	}
     }

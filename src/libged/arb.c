@@ -1,7 +1,7 @@
 /*                         A R B . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2012 United States Government as represented by
+ * Copyright (c) 2008-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -42,7 +42,7 @@ ged_arb(struct ged *gedp, int argc, const char *argv[])
     struct rt_db_internal internal;
     struct rt_arb_internal *arb;
     int i, j;
-    fastf_t rota, fb;
+    double rota, fb;
     vect_t norm1, norm2, norm3;
     static const char *usage = "name rot fb";
 
@@ -81,7 +81,7 @@ ged_arb(struct ged *gedp, int argc, const char *argv[])
     rota *= bn_degtorad;
     fb *= bn_degtorad;
 
-    BU_GET(arb, struct rt_arb_internal);
+    BU_ALLOC(arb, struct rt_arb_internal);
     RT_DB_INTERNAL_INIT(&internal);
     internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
     internal.idb_type = ID_ARB8;

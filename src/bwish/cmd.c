@@ -1,7 +1,7 @@
 /*                           C M D . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2012 United States Government as represented by
+ * Copyright (c) 1998-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -101,8 +101,8 @@ history_record_priv(struct bu_vls *cmdp, struct timeval *start, struct timeval *
     if (BU_STR_EQUAL(bu_vls_addr(cmdp), "\n"))
 	return;
 
-    new_hist = (struct bu_cmdhist *)bu_malloc(sizeof(struct bu_cmdhist),
-					      "mged history");
+    BU_ALLOC(new_hist, struct bu_cmdhist);
+
     bu_vls_init(&(new_hist->h_command));
     bu_vls_vlscat(&(new_hist->h_command), cmdp);
     new_hist->h_start = *start;

@@ -1,7 +1,7 @@
 /*                          D M - X . C
  * BRL-CAD
  *
- * Copyright (c) 1988-2012 United States Government as represented by
+ * Copyright (c) 1988-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -59,9 +59,11 @@
 #include "raytrace.h"
 #include "dm.h"
 #include "dm-X.h"
+#include "dm-Null.h"
 #include "dm_xvars.h"
 #include "solid.h"
 
+#include "./dm_util.h"
 
 #define PLOTBOUND 1000.0	/* Max magnification in Rot matrix */
 
@@ -88,7 +90,7 @@ get_color(Display *dpy, Colormap cmap, XColor *color)
     int r, g, b;
 
     if (!colors) {
-	BU_GET(colors, struct allocated_colors);
+	BU_ALLOC(colors, struct allocated_colors);
 	BU_LIST_INIT(&(colors->l));
 	colors->r = colors->g = colors->b = -1;
     }
@@ -125,7 +127,7 @@ get_color(Display *dpy, Colormap cmap, XColor *color)
     }
 
     /* got new valid color, add it to our list */
-    BU_GET(c, struct allocated_colors);
+    BU_ALLOC(c, struct allocated_colors);
     c->r = r;
     c->g = g;
     c->b = b;
@@ -274,16 +276,20 @@ X_choose_visual(struct dm *dmp)
     int desire_trueColor = 1;
     int min_depth = 8;
     int *good = NULL;
+    int screen;
     struct dm_xvars *pubvars = (struct dm_xvars *)dmp->dm_vars.pub_vars;
     struct x_vars *privars = (struct x_vars *)dmp->dm_vars.priv_vars;
 
     vibase = XGetVisualInfo(pubvars->dpy, 0, &vitemp, &num);
+    screen = DefaultScreen(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy);
 
     good = (int *)bu_malloc(sizeof(int)*num, "alloc good visuals");
 
     while (1) {
 	for (i=0, j=0, vip=vibase; i<num; i++, vip++) {
 	    /* requirements */
+	    if (vip->screen != screen)
+		continue;
 	    if (vip->depth < min_depth)
 		continue;
 	    if (desire_trueColor) {
@@ -436,27 +442,15 @@ X_open_dm(Tcl_Interp *interp, int argc, char **argv)
     }
 #endif
 
-    BU_GET(dmp, struct dm);
-    if (dmp == DM_NULL) {
-	return DM_NULL;
-    }
+    BU_ALLOC(dmp, struct dm);
 
     *dmp = dm_X; /* struct copy */
     dmp->dm_interp = interp;
 
-    dmp->dm_vars.pub_vars = (genptr_t)bu_calloc(1, sizeof(struct dm_xvars), "X_open_dm: dm_xvars");
-    if (dmp->dm_vars.pub_vars == (genptr_t)NULL) {
-	bu_free((genptr_t)dmp, "X_open_dm: dmp");
-	return DM_NULL;
-    }
+    BU_ALLOC(dmp->dm_vars.pub_vars, struct dm_xvars);
     pubvars = (struct dm_xvars *)dmp->dm_vars.pub_vars;
 
-    dmp->dm_vars.priv_vars = (genptr_t)bu_calloc(1, sizeof(struct x_vars), "X_open_dm: x_vars");
-    if (dmp->dm_vars.priv_vars == (genptr_t)NULL) {
-	bu_free((genptr_t)dmp->dm_vars.pub_vars, "X_open_dm: dmp->dm_vars.pub_vars");
-	bu_free((genptr_t)dmp, "X_open_dm: dmp");
-	return DM_NULL;
-    }
+    BU_ALLOC(dmp->dm_vars.priv_vars, struct x_vars);
     privars = (struct x_vars *)dmp->dm_vars.priv_vars;
 
     bu_vls_init(&dmp->dm_pathName);
@@ -568,7 +562,7 @@ X_open_dm(Tcl_Interp *interp, int argc, char **argv)
 #endif
     }
 
-    /* make sure there really is a screen before proceesing. */
+    /* make sure there really is a screen before processing. */
     if (!screen) {
 	bu_log("ERROR: Unable to attach to screen (%s)\n", bu_vls_addr(&dmp->dm_pathName));
 	(void)X_close(dmp);
@@ -965,11 +959,11 @@ X_drawVList(struct dm *dmp, struct bn_vlist *vp)
 				alpha = (dist_prev - delta) / (dist_prev - dist);
 				VJOIN1(tmp_pt, *pt_prev, alpha, diff);
 				MAT4X3PNT(pnt, privars->xmat, tmp_pt);
-                                }
+				}
 			    }
 			} else {
 			    if (dist_prev <= 0.0) {
-                                if (pt_prev) {
+				if (pt_prev) {
 				fastf_t alpha;
 				vect_t diff;
 				point_t tmp_pt;
@@ -983,7 +977,7 @@ X_drawVList(struct dm *dmp, struct bn_vlist *vp)
 				lpnt[1] *= 2047 * dmp->dm_aspect;
 				lpnt[2] *= 2047;
 				MAT4X3PNT(pnt, privars->xmat, *pt);
-                                }
+				}
 			    } else {
 				MAT4X3PNT(pnt, privars->xmat, *pt);
 			    }
@@ -1071,6 +1065,36 @@ X_drawVList(struct dm *dmp, struct bn_vlist *vp)
 			segp = segbuf;
 		    }
 		    break;
+		case BN_VLIST_POINT_DRAW:
+		    if (dmp->dm_debugLevel > 2) {
+			bu_log("before transformation:\n");
+			bu_log("pt - %lf %lf %lf\n", V3ARGS(*pt));
+		    }
+
+		    if (dmp->dm_perspective > 0) {
+			dist = VDOT(*pt, &privars->xmat[12]) + privars->xmat[15];
+
+			if (dist <= 0.0) {
+			    /* nothing to plot - point is behind eye plane */
+			    continue;
+			}
+		    }
+
+		    MAT4X3PNT(pnt, privars->xmat, *pt);
+
+		    pnt[0] *= 2047;
+		    pnt[1] *= 2047 * dmp->dm_aspect;
+		    pnt[2] *= 2047;
+
+		    if (dmp->dm_debugLevel > 2) {
+			bu_log("after clipping:\n");
+			bu_log("pt - %lf %lf %lf\n", pnt[X], pnt[Y], pnt[Z]);
+		    }
+
+		    XDrawPoint(pubvars->dpy, privars->pix, privars->gc,
+			    GED_TO_Xx(dmp, pnt[0]), GED_TO_Xy(dmp, pnt[1]));
+
+		    break;
 	    }
 	}
 
@@ -1123,8 +1147,8 @@ X_draw(struct dm *dmp, struct bn_vlist *(*callback_function)(void *), genptr_t *
 /**
  * X _ N O R M A L
  *
- * Restore the display processor to a normal mode of operation (ie,
- * not scaled, rotated, displaced, etc).
+ * Restore the display processor to a normal mode of operation (i.e.,
+ * not scaled, rotated, displaced, etc.).
  */
 HIDDEN int
 X_normal(struct dm *dmp)
@@ -1143,7 +1167,7 @@ X_normal(struct dm *dmp)
  * beam is as specified.
  */
 HIDDEN int
-X_drawString2D(struct dm *dmp, char *str, fastf_t x, fastf_t y, int size, int use_aspect)
+X_drawString2D(struct dm *dmp, const char *str, fastf_t x, fastf_t y, int size, int use_aspect)
 {
     int sx, sy;
     struct dm_xvars *pubvars = (struct dm_xvars *)dmp->dm_vars.pub_vars;
@@ -1205,14 +1229,7 @@ X_drawLine2D(struct dm *dmp, fastf_t x_1, fastf_t y_1, fastf_t x_2, fastf_t y_2)
 HIDDEN int
 X_drawLine3D(struct dm *dmp, point_t pt1, point_t pt2)
 {
-    if (!dmp)
-	return TCL_ERROR;
-
-    if (bn_pt3_pt3_equal(pt1, pt2, NULL)) {
-	/* nothing to do for a singular point */
-	return TCL_OK;
-    }
-    return TCL_OK;
+    return draw_Line3D(dmp, pt1, pt2);
 }
 
 
@@ -1636,13 +1653,14 @@ struct dm dm_X = {
     X_drawEnd,
     X_normal,
     X_loadMatrix,
+    null_loadPMatrix,
     X_drawString2D,
     X_drawLine2D,
     X_drawLine3D,
     X_drawLines3D,
     X_drawPoint2D,
-    Nu_int0,
-    Nu_int0,
+    null_drawPoint3D,
+    null_drawPoints3D,
     X_drawVList,
     X_drawVList,
     X_draw,
@@ -1652,17 +1670,18 @@ struct dm dm_X = {
     X_configureWin,
     X_setWinBounds,
     X_setLight,
-    Nu_int0,
-    Nu_int0,
+    null_setTransparency,
+    null_setDepthMask,
     X_setZBuffer,
     X_debug,
-    Nu_int0,
-    Nu_int0,
-    Nu_void,
-    Nu_int0,
-    Nu_int0,
+    null_beginDList,
+    null_endDList,
+    null_drawDList,
+    null_freeDLists,
+    null_genDLists,
     X_getDisplayImage, /* display to image function */
     X_reshape,
+    null_makeCurrent,
     0,
     0,				/* no displaylist */
     0,                            /* no stereo */

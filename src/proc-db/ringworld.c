@@ -1,7 +1,7 @@
 /*                    R I N G W O R L D . C
  * BRL-CAD
  *
- * Copyright (c) 2011-2012 United States Government as represented by
+ * Copyright (c) 2011-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -65,7 +65,7 @@ int
 mk_sol(struct rt_wdb *fp, double radius)
 {
     struct wmember c;
-    point_t p = { 0,0,0};
+    point_t p = { 0, 0, 0};
     /* make a sphere! tada! */
     mk_sph(fp, "sun.s", p, radius * 1000.0);
 
@@ -75,10 +75,11 @@ mk_sol(struct rt_wdb *fp, double radius)
     return 0;
 }
 
+
 int
 mk_ring(struct rt_wdb *fp, double orbit, double width, double thick, double wallthick, double wallheight)
 {
-    point_t base = {0,0,0}, height = {0,0,0};
+    point_t base = {0, 0, 0}, height = {0, 0, 0};
     struct wmember c;
     /* make 3 rcc's and glue them together */
 
@@ -107,12 +108,14 @@ mk_ring(struct rt_wdb *fp, double orbit, double width, double thick, double wall
     return 0;
 }
 
+
 int
 mk_shadowring(struct rt_wdb *UNUSED(fp), double UNUSED(orbit), int UNUSED(num), double UNUSED(width), double UNUSED(length), double UNUSED(thickness))
 {
     /* make the shadow ring, num * arb8s */
     return 0;
 }
+
 
 int
 main(int argc, char *argv[])
@@ -163,6 +166,7 @@ main(int argc, char *argv[])
 
     return EXIT_SUCCESS;
 }
+
 
 /*
  * Local Variables:

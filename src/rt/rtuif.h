@@ -1,7 +1,7 @@
 /*                         R T U I F . H
  * BRL-CAD
  *
- * Copyright (c) 1985-2012 United States Government as represented by
+ * Copyright (c) 1985-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -22,9 +22,9 @@
  * Private API header for developing applications that utilize rt's
  * common Ray Trace User Interface Framework (RTUIF).
  *
- * While not (yet) public API, it's a useable inteface for rapidly
+ * While not (yet) public API, it's a useable interface for rapidly
  * developing applications involving grids of rays.  It provides the
- * same command-line inteface as 'rt' and is the foundation for
+ * same command-line interface as 'rt' and is the foundation for
  * numerous BRL-CAD ray tracing based applications such as rtweight,
  * rtarea, and others.  See viewdummy.c for an example template.
  *
@@ -66,7 +66,7 @@ extern void view_setup(struct rt_i *rtip);
 extern void view_2init(struct application *ap, char *framename);
 
 /**
- * Called by worker() after the end of proccessing for each pixel.
+ * Called by worker() after the end of processing for each pixel.
  */
 extern void view_pixel(struct application *ap);
 

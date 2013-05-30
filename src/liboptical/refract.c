@@ -1,7 +1,7 @@
 /*                       R E F R A C T . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2012 United States Government as represented by
+ * Copyright (c) 1985-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -37,7 +37,6 @@
 extern int viewshade(struct application *ap,
 		     register const struct partition *pp,
 		     register struct shadework *swp);
-
 
 
 int max_ireflect = 5;	/* Maximum internal reflection level */
@@ -151,7 +150,7 @@ rr_hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(s
      * point, yet with the ray still validly inside the glass region.
      *
      * There is a major problem if the entry point
-     * is further ahead than the firing point, ie, >0.
+     * is further ahead than the firing point, i.e., >0.
      *
      * Because this error has not yet been encountered, it is
      * considered dreadful.  Some recovery may be possible.
@@ -471,10 +470,10 @@ rr_render(register struct application *ap,
     /*
      * If this ray is being fired from the exit point of
      * an object, and is directly entering another object,
-     * (ie, there is no intervening air-gap), and
+     * (i.e., there is no intervening air-gap), and
      * the two refractive indices match, then do not fire a
      * reflected ray -- just take the transmission contribution.
-     * This is important, eg, for glass gun tubes projecting
+     * This is important, e.g., for glass gun tubes projecting
      * through a glass armor plate. :-)
      */
     if (NEAR_ZERO(pp->pt_inhit->hit_dist, AIR_GAP_TOL)
@@ -676,7 +675,7 @@ vdraw open rr;vdraw params c 00ff00; vdraw write n 0 %g %g %g; vdraw wwrite n 1 
 	     * Internal Reflection limit exceeded -- just let
 	     * the ray escape, continuing on current course.
 	     * This will cause some energy from somewhere in the
-	     * sceen to be received through this glass,
+	     * scene to be received through this glass,
 	     * which is much better than just returning
 	     * grey or black, as before.
 	     */

@@ -1,7 +1,7 @@
 /*                         C O L O R . C
  * BRL-CAD
  *
- * Copyright (c) 1997-2012 United States Government as represented by
+ * Copyright (c) 1997-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -186,11 +186,11 @@ int bu_str_to_rgb(char *str, unsigned char *rgb)
     if (*str == '#') {
 	if (strlen(++str) != 6)
 	    return 0;
-	num = sscanf(str, "%02x%02x%02x", (unsigned int *)&r, (unsigned int *)&g, (unsigned int *)&b);
+	sscanf(str, "%02x%02x%02x", (unsigned int *)&r, (unsigned int *)&g, (unsigned int *)&b);
     } else if (isdigit((int)(*str))) {
 	num = sscanf(str, "%d/%d/%d", &r, &g, &b);
 	if (num == 1) {
-	    num = sscanf(str, "%d %d %d", &r, &g, &b);
+	    sscanf(str, "%d %d %d", &r, &g, &b);
 	}
 	VSET(rgb, r, g, b);
 	if ((r < 0) || (r > 255)

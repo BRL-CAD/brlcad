@@ -1,7 +1,7 @@
 #                   H E L P D E V E L . T C L
 # BRL-CAD
 #
-# Copyright (c) 2004-2012 United States Government as represented by
+# Copyright (c) 2004-2013 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -41,7 +41,7 @@ set mged_helpdevel_data(grid2view_lu)	{{gx gy}	{given a point in grid coordinate
     convert it to view coordinates (local units).}}
 set mged_helpdevel_data(gui_destroy)	{{id}	{destroy display/command window pair}}
 set mged_helpdevel_data(hist)		{{command}	{routine for maintaining command history}}
-set mged_helpdevel_data(make_name)	{{template | -s [num]}	{make an object name not occuring in the database}}
+set mged_helpdevel_data(make_name)	{{template | -s [num]}	{make an object name not occurring in the database}}
 set mged_helpdevel_data(mged_update)	{{non_blocking}	{handle outstanding events and refresh}}
 set mged_helpdevel_data(mged_wait)	{{}	{see tkwait}}
 set mged_helpdevel_data(mmenu_get)	{{[index]}	{get menu corresponding to index}}

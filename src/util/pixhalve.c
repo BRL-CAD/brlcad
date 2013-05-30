@@ -1,7 +1,7 @@
 /*                      P I X H A L V E . C
  * BRL-CAD
  *
- * Copyright (c) 1995-2012 United States Government as represented by
+ * Copyright (c) 1995-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -98,16 +98,16 @@ get_args(int argc, char **argv)
 	file_name = argv[bu_optind];
 	if ((infp = fopen(file_name, "r")) == NULL) {
 	    perror(file_name);
-	    (void)fprintf(stderr,
-			  "pixhalve: cannot open \"%s\" for reading\n",
-			  file_name);
+	    fprintf(stderr,
+		    "pixhalve: cannot open \"%s\" for reading\n",
+		    file_name);
 	    return 0;
 	}
 	fileinput++;
     }
 
     if (argc > ++bu_optind)
-	(void)fprintf(stderr, "pixhalve: excess argument(s) ignored\n");
+	fprintf(stderr, "pixhalve: excess argument(s) ignored\n");
 
     return 1;		/* OK */
 }
@@ -116,16 +116,16 @@ get_args(int argc, char **argv)
 /*
  * S E P A R A T E
  *
- * Unpack RGB byte tripples into three separate arrays of integers.
+ * Unpack RGB byte triples into three separate arrays of integers.
  * The first and last pixels are replicated twice, to handle border effects.
  *
  * Updated version:  the outputs are Y U V values, not R G B.
  */
 static void
 separate(int *rop, int *gop, int *bop, unsigned char *cp, long int num)
-    /* Y */
-    /* U */
-    /* V */
+/* Y */
+/* U */
+/* V */
 
 
 {
@@ -172,7 +172,7 @@ separate(int *rop, int *gop, int *bop, unsigned char *cp, long int num)
  * C O M B I N E
  *
  * Combine three separate arrays of integers into a buffer of
- * RGB byte tripples
+ * RGB byte triples
  */
 static void
 combine(unsigned char *cp, int *rip, int *gip, int *bip, long int num)

@@ -1,7 +1,7 @@
 /*                         T O R I I . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2012 United States Government as represented by
+ * Copyright (c) 2004-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -134,6 +134,7 @@ int create_torii(int level, int currentLevel, torusLevels_t *torii, point_t posi
     return 0;
 }
 
+
 int output_torii(const char *fileName, int levels, const torusLevels_t UNUSED(torii), const char *name) {
     char scratch[256];
 
@@ -212,6 +213,7 @@ main(int ac, char *av[])
 
     return 0;
 }
+
 
 /*
  * Local Variables:

@@ -1,7 +1,7 @@
 /*                      P R O E - B R L . C
  * BRL-CAD
  *
- * Copyright (c) 2001-2012 United States Government as represented by
+ * Copyright (c) 2001-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -41,7 +41,7 @@
 #include "ProMode.h"
 #include "ProMdl.h"
 #include "ProFaminstance.h"
-#include "pd_prototype.h"
+#include "pd_proto_deprecated.h"
 #include "ProPart.h"
 #include "ProSolid.h"
 #include "ProSkeleton.h"
@@ -70,8 +70,8 @@ static double proe_to_brl_conv=25.4;	/* inches to mm */
 static ProBool do_facets_only;	/* flag to indicate no CSG should be done */
 static ProBool get_normals;	/* flag to indicate surface normals should be extracted from geometry */
 static ProBool do_elims;	/* flag to indicate that small features are to be eliminated */
-static double max_error=1.5;	/* (mm) maximimum allowable error in facetized approximation */
-static double min_error=1.5;	/* (mm) maximimum allowable error in facetized approximation */
+static double max_error=1.5;	/* (mm) maximum allowable error in facetized approximation */
+static double min_error=1.5;	/* (mm) maximum allowable error in facetized approximation */
 static double tol_dist=0.0005;	/* (mm) minimum distance between two distinct vertices */
 static double max_angle_cntrl=0.5;	/* max angle control for tessellation ( 0.0 - 1.0 ) */
 static double min_angle_cntrl=0.5;	/* min angle control for tessellation ( 0.0 - 1.0 ) */
@@ -168,7 +168,7 @@ struct csg_ops *csg_root;
 static int hole_no=0;	/* hole counter for unique names */
 static char *tgc_format="tgc V {%.25G %.25G %.25G} H {%.25G %.25G %.25G} A {%.25G %.25G %.25G} B {%.25G %.25G %.25G} C {%.25G %.25G %.25G} D {%.25G %.25G %.25G}\n";
 
-/* structure to hold info about a member of the current asssembly
+/* structure to hold info about a member of the current assembly
  * this structure is created during feature visit
  */
 struct asm_member {
@@ -211,7 +211,7 @@ do_initialize()
 {
     int i;
 
-    /* initailize */
+    /* initialize */
     bu_ptbl_init( &search_path_list, 8, "search_path" );
 
     ProStringToWstring( assem_ext, "asm" );
@@ -794,8 +794,7 @@ add_to_empty_list( char *name )
     }
 
     if ( empty_parts_root == NULL ) {
-	empty_parts_root = (struct empty_parts *)bu_malloc( sizeof( struct empty_parts ),
-							    "empty parts root");
+	BU_ALLOC(empty_parts_root, struct empty_parts);
 	ptr = empty_parts_root;
     } else {
 	ptr = empty_parts_root;
@@ -807,8 +806,7 @@ add_to_empty_list( char *name )
 	    ptr = ptr->next;
 	}
 	if ( !found ) {
-	    ptr->next = (struct empty_parts *)bu_malloc( sizeof( struct empty_parts ),
-							 "empty parts node");
+	    BU_ALLOC(ptr->next, struct empty_parts);
 	    ptr = ptr->next;
 	}
     }
@@ -949,7 +947,7 @@ add_triangle( int v1, int v2, int v3 )
 	/* allocate more memory for triangles */
 	max_tri += TRI_BLOCK;
 	part_tris = (ProTriangle *)bu_realloc( part_tris, sizeof( ProTriangle ) * max_tri,
-					       "part rtiangles");
+					       "part triangles");
 	if ( !part_tris ) {
 	    (void)ProMessageDisplay(MSGFIL, "USER_ERROR",
 				    "Failed to allocate memory for part triangles" );
@@ -1026,7 +1024,7 @@ Add_to_feature_delete_list( int id )
 	feat_id_len += FEAT_ID_BLOCK;
 	feat_ids_to_delete = (int *)bu_realloc( (char *)feat_ids_to_delete,
 						feat_id_len * sizeof( int ),
-						"fetaure ids to delete");
+						"feature ids to delete");
 
     }
     feat_ids_to_delete[feat_id_count++] = id;
@@ -1336,16 +1334,16 @@ Subtract_hole()
 
     /* make a replacement hole using CSG */
     if ( hole_type == PRO_HLE_NEW_TYPE_STRAIGHT ) {
-	/* plain old striaght hole */
+	/* plain old straight hole */
 
 	if ( diameter < min_hole_diameter )
 	    return 1;
 	if ( !csg_root ) {
-	    csg_root = (struct csg_ops *)bu_malloc( sizeof( struct csg_ops ), "csg root" );
+	    BU_ALLOC(csg_root, struct csg_ops);
 	    csg = csg_root;
 	    csg->next = NULL;
 	} else {
-	    csg = (struct csg_ops *)bu_malloc( sizeof( struct csg_ops ), "csg op" );
+	    BU_ALLOC(csg, struct csg_ops);
 	    csg->next = csg_root;
 	    csg_root = csg;
 	}
@@ -1390,11 +1388,11 @@ Subtract_hole()
 	if ( add_cbore == PRO_HLE_ADD_CBORE ) {
 
 	    if ( !csg_root ) {
-		csg_root = (struct csg_ops *)bu_malloc( sizeof( struct csg_ops ), "csg root" );
+		BU_ALLOC(csg_root, struct csg_ops);
 		csg = csg_root;
 		csg->next = NULL;
 	    } else {
-		csg = (struct csg_ops *)bu_malloc( sizeof( struct csg_ops ), "csg op" );
+		BU_ALLOC(csg, struct csg_ops);
 		csg->next = csg_root;
 		csg_root = csg;
 	    }
@@ -1428,11 +1426,11 @@ Subtract_hole()
 	    double cs_radius=cs_diam / 2.0;
 
 	    if ( !csg_root ) {
-		csg_root = (struct csg_ops *)bu_malloc( sizeof( struct csg_ops ), "csg root" );
+		BU_ALLOC(csg_root, struct csg_ops);
 		csg = csg_root;
 		csg->next = NULL;
 	    } else {
-		csg = (struct csg_ops *)bu_malloc( sizeof( struct csg_ops ), "csg op" );
+		BU_ALLOC(csg, struct csg_ops);
 		csg->next = csg_root;
 		csg_root = csg;
 	    }
@@ -1467,11 +1465,11 @@ Subtract_hole()
 	}
 
 	if ( !csg_root ) {
-	    csg_root = (struct csg_ops *)bu_malloc( sizeof( struct csg_ops ), "csg root" );
+	    BU_ALLOC(csg_root, struct csg_ops);
 	    csg = csg_root;
 	    csg->next = NULL;
 	} else {
-	    csg = (struct csg_ops *)bu_malloc( sizeof( struct csg_ops ), "csg op" );
+	    BU_ALLOC(csg, struct csg_ops);
 	    csg->next = csg_root;
 	    csg_root = csg;
 	}
@@ -1505,11 +1503,11 @@ Subtract_hole()
 	    double tip_depth;
 
 	    if ( !csg_root ) {
-		csg_root = (struct csg_ops *)bu_malloc( sizeof( struct csg_ops ), "csg root" );
+		BU_ALLOC(csg_root, struct csg_ops);
 		csg = csg_root;
 		csg->next = NULL;
 	    } else {
-		csg = (struct csg_ops *)bu_malloc( sizeof( struct csg_ops ), "csg op" );
+		BU_ALLOC(csg, struct csg_ops);
 		csg->next = csg_root;
 		csg_root = csg;
 	    }
@@ -1687,7 +1685,7 @@ remove_holes_from_id_list( ProMdl model )
 	    int j;
 
 	    if ( logger_type == LOGGER_TYPE_ALL ) {
-		fprintf( logger, "\tRemoving feature id %d from deltion list\n",
+		fprintf( logger, "\tRemoving feature id %d from deletion list\n",
 			 feat_ids_to_delete[i] );
 	    }
 	    feat_id_count--;
@@ -1965,7 +1963,7 @@ output_part( ProMdl model )
     }
 
     /* can get bounding box of a solid using "ProSolidOutlineGet"
-     * may want to use this to implement relative facetization talerance
+     * may want to use this to implement relative facetization tolerance
      */
 
     /* tessellate part */
@@ -2285,7 +2283,7 @@ output_part( ProMdl model )
 		fprintf( stderr, "Failed to create dialog box for proe-brl, error = %d\n", status );
 		return 0;
 	    }
-	    snprintf( err_mess, 512, 
+	    snprintf( err_mess, 512,
 		      "During the conversion %d features of part %s\n"
 		      "were suppressed. After the conversion was complete, an\n"
 		      "attempt was made to unsuppress these same features.\n"
@@ -2587,13 +2585,11 @@ assembly_comp( ProFeature *feat, ProError status, ProAppData app_data )
 	    prev = member;
 	    member = member->next;
 	}
-	member->next = (struct asm_member *)bu_malloc( sizeof( struct asm_member ), "asm member" );
+	BU_ALLOC(member->next, struct asm_member);
 	prev = member;
 	member = member->next;
     } else {
-	curr_assem->members = (struct asm_member *)bu_malloc(
-	    sizeof( struct asm_member ),
-	    "asm member");
+	BU_ALLOC(curr_assem->members, struct asm_member);
 	member = curr_assem->members;
     }
 
@@ -2923,7 +2919,7 @@ create_name_hash( FILE *name_fd )
 	}
 	part_no = bu_strdup( ptr );
 	lower_case( part_no );
-		
+
 	/* match up to the EOL, everything up to it minus surrounding ws is the name */
 	ptr = strtok( (char *)NULL, "\n" );
 	if ( !ptr ) {
@@ -3336,7 +3332,7 @@ doit( char *dialog, char *compnent, ProAppData appdata )
 	name_hash = bu_create_hash_tbl( 512 );
     }
 
-    /* get the curently displayed model in Pro/E */
+    /* get the currently displayed model in Pro/E */
     status = ProMdlCurrentGet( &model );
     if ( status == PRO_TK_BAD_CONTEXT ) {
 	(void)ProMessageDisplay(MSGFIL, "USER_NO_MODEL" );
@@ -3368,7 +3364,7 @@ doit( char *dialog, char *compnent, ProAppData appdata )
 	return;
     }
 
-    /* can only do parts and assemblies, no drawings, etc */
+    /* can only do parts and assemblies, no drawings, etc. */
     if ( type != PRO_MDL_ASSEMBLY && type != PRO_MDL_PART ) {
 	(void)ProMessageDisplay(MSGFIL, "USER_TYPE_NOT_SOLID" );
 	ProMessageClear();
@@ -3615,7 +3611,7 @@ proe_brl( uiCmdCmdId command, uiCmdValue *p_value, void *p_push_cmd_data )
     }
 
 #else
-    /* get the curently displayed model in Pro/E */
+    /* get the currently displayed model in Pro/E */
     status = ProMdlCurrentGet( &model );
     if ( status == PRO_TK_BAD_CONTEXT ) {
 	ProName dialog_label;
@@ -3715,7 +3711,7 @@ proe_brl( uiCmdCmdId command, uiCmdValue *p_value, void *p_push_cmd_data )
 	min_chamfer_dim = 0.0;
     }
 
-    /* initailize */
+    /* initialize */
     do_initialize();
 
     /* open output file */
@@ -3738,7 +3734,7 @@ proe_brl( uiCmdCmdId command, uiCmdValue *p_value, void *p_push_cmd_data )
 	return PRO_TK_NO_ERROR;
     }
 
-    /* can only do parts and assemblies, no drawings, etc */
+    /* can only do parts and assemblies, no drawings, etc. */
     if ( type != PRO_MDL_ASSEMBLY && type != PRO_MDL_PART ) {
 	(void)ProMessageDisplay(MSGFIL, "USER_TYPE_NOT_SOLID" );
 	ProMessageClear();

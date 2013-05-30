@@ -1,7 +1,7 @@
 #                      A R C H E R C O R E . T C L
 # BRL-CAD
 #
-# Copyright (c) 2002-2012 United States Government as represented by
+# Copyright (c) 2002-2013 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -55,6 +55,8 @@ namespace eval ArcherCore {
 	common TREE_POPUP_TAG "popup"
 	common TREE_OPENED_TAG "opened"
 	common TREE_PLACEHOLDER_TAG "placeholder"
+	common TREE_POPUP_TYPE_NODE "node"
+	common TREE_POPUP_TYPE_NULL "null"
 
 	common TREE_MODE_TREE 0
 	common TREE_MODE_COLOR_OBJECTS 1
@@ -75,6 +77,16 @@ namespace eval ArcherCore {
 	common OBJECT_CENTER_MODE 10
 	common FIRST_FREE_BINDING_MODE 11
 
+	common DISPLAY_MODE_OFF -1
+	common DISPLAY_MODE_WIREFRAME 0
+	common DISPLAY_MODE_SHADED 1
+	common DISPLAY_MODE_SHADED_ALL 2
+	common DISPLAY_MODE_EVALUATED 3
+	common DISPLAY_MODE_HIDDEN 4
+
+	common MATRIX_ABOVE_MODE 0
+	common MATRIX_BELOW_MODE 1
+
 	common OBJ_EDIT_VIEW_MODE 0
 	common OBJ_ATTR_VIEW_MODE 1
 	common OBJ_TOOL_VIEW_MODE 2
@@ -93,7 +105,8 @@ namespace eval ArcherCore {
 	common COMP_SELECT_GROUP_ADD_PARTIAL_MODE 3
 	common COMP_SELECT_GROUP_REMOVE_MODE 4
 	common COMP_SELECT_GROUP_REMOVE_PARTIAL_MODE 5
-	common COMP_SELECT_MODE_NAMES {"List" "List (Partial)" "Add to Group" "Add to Group (Partial)" "Remove from Group" "Remove from Group (Partial)"}
+	common COMP_SELECT_BOT_POINTS_MODE 6
+	common COMP_SELECT_MODE_NAMES {"List" "List (Partial)" "Add to Group" "Add to Group (Partial)" "Remove from Group" "Remove from Group (Partial)" "Select BOT Points"}
 
 	common LIGHT_MODE_FRONT 1
 	common LIGHT_MODE_FRONT_AND_BACK 2
@@ -120,6 +133,9 @@ namespace eval ArcherCore {
 	proc unpackTree            {_tree}
 
 	# public window commands
+	method getCanvasArea {}
+	method restoreCanvas {}
+	method setCanvas {_canvas}
 	method dockArea            {{_position "south"}}
 	method primaryToolbarAddBtn     {_name {args ""}}
 	method primaryToolbarAddSep     {_name {args ""}}
@@ -145,6 +161,7 @@ namespace eval ArcherCore {
 	method WhatsOpen           {}
 	method Close               {}
 	method askToSave           {}
+	method freezeGUI           {{_freeze ""}}
 	method getTkColor          {_r _g _b}
 	method getRgbColor         {_color}
 	method setSave {}
@@ -163,6 +180,7 @@ namespace eval ArcherCore {
 	method attr                {args}
 	method bb                  {args}
 	method bev                 {args}
+	method B                   {args}
 	method blast               {args}
 	method bo                  {args}
 	method bot                 {args}
@@ -171,11 +189,13 @@ namespace eval ArcherCore {
 	method bot_face_fuse       {args}
 	method bot_face_sort       {args}
 	method bot_flip            {args}
+	method bot_fuse            {args}
 	method bot_merge           {args}
 	method bot_smooth          {args}
 	method bot_split           {args}
 	method bot_sync            {args}
 	method bot_vertex_fuse     {args}
+	method brep                {args}
 	method c                   {args}
 	method cd                  {args}
 	method clear               {args}
@@ -195,21 +215,28 @@ namespace eval ArcherCore {
 	method decompose           {args}
 	method delete              {args}
 	method draw                {args}
+	method e                   {args}
 	method E                   {args}
+	method edarb               {args}
 	method edcodes             {args}
 	method edcolor             {args}
 	method edcomb              {args}
 	method edmater             {args}
+	method d                   {args}
 	method erase               {args}
 	method ev                  {args}
+	method exists              {args}
 	method exit                {args}
 	method facetize            {args}
 	method fracture            {args}
+	method graph               {args}
 	method hide                {args}
 	method human               {args}
 	method g                   {args}
+	method get                 {args}
 	method group               {args}
 	method i                   {args}
+	method igraph              {args}
 	method importFg4Section    {args}
 	method in                  {args}
 	method inside              {args}
@@ -222,6 +249,7 @@ namespace eval ArcherCore {
 	method ls                  {args}
 	method make		   {args}
 	method make_bb             {args}
+	method make_name           {args}
 	method make_pnts           {args}
 	method man                 {args}
 	method mater               {args}
@@ -307,6 +335,9 @@ namespace eval ArcherCore {
 	variable mDelayCommandViewBuild 0
 	variable mRestoringTree 0
 	variable mViewOnly 0
+	variable mFreezeGUI 0
+	variable mNeedsTreeRebuild 0
+	variable mNeedsTreeSync 0
 	variable mNoTree 0
 	variable mNoToolbar 0
 	variable mTarget ""
@@ -333,9 +364,9 @@ namespace eval ArcherCore {
 	variable mSelectedObjPath ""
 	variable mSelectedObj ""
 	variable mSelectedObjType ""
-	variable mPasteActive 0
 	variable mMultiPane 0
 	variable mTransparency 0
+	variable mAllowDataClear 1
 
 	variable mHPaneFraction1 80
 	variable mHPaneFraction2 20
@@ -377,12 +408,17 @@ namespace eval ArcherCore {
 	variable mColorObjects {}
 	variable mGhostObjects {}
 	variable mEdgeObjects {}
+	variable mColorObjectsHow 0
+	variable mGhostObjectsHow 0
+	variable mEdgeObjectsHow 0
 
 	variable mAccordianCallbackActive 0
 	variable mTreeMode $TREE_MODE_TREE
 	variable mPrevTreeMode $TREE_MODE_TREE
 	variable mPrevTreeMode2 $TREE_MODE_COLOR_OBJECTS
 	variable mToolViewChange 0
+	variable mTreePopupBusy 0
+	variable mDoubleClickActive 0
 
 	variable mSavedCenter ""
 	variable mSavedViewEyePt ""
@@ -392,24 +428,15 @@ namespace eval ArcherCore {
 	variable mSeparateCommandWindowPref ""
 	variable mSepCmdPrefix "sepcmd_"
 
+	variable mRtBotMintie 0
+	variable mRtBotMintiePref ""
+
 	variable mCompPickMode $COMP_PICK_TREE_SELECT_MODE
 	variable mCompSelectMode $COMP_SELECT_LIST_MODE
 	variable mCompSelectModePref ""
 	variable mCompSelectGroup "tmp_group"
 	variable mCompSelectGroupPref ""
 	variable mCompSelectGroupList ""
-
-	variable mPerspective 0
-	variable mPerspectivePref 0
-
-	variable mZClipBack 100.0
-	variable mZClipBackPref 100.0
-	variable mZClipFront 100.0
-	variable mZClipFrontPref 100.0
-	variable mZClipBackMax 1000
-	variable mZClipBackMaxPref 1000
-	variable mZClipFrontMax 1000
-	variable mZClipFrontMaxPref 1000
 
 	variable mBindingMode Default
 	variable mBindingModePref ""
@@ -427,28 +454,51 @@ namespace eval ArcherCore {
 	variable mMeasuringStickColor Yellow
 	variable mMeasuringStickColorPref ""
 	variable mMeasuringStickColorVDraw ffff00
+	variable mRayColorOdd Cyan
+	variable mRayColorOddPref ""
+	variable mRayColorEven Yellow
+	variable mRayColorEvenPref ""
+	variable mRayColorVoid Magenta
+	variable mRayColorVoidPref ""
 	variable mEnableBigE 0
 	variable mEnableBigEPref ""
 
 	variable mFBBackgroundColor Black
 	variable mFBBackgroundColorPref ""
 	variable mRtWizardEdgeColor White
-	variable mRtWizardEdgeColorPref ""
-	variable mRtWizardNonEdgeColor Yellow
-	variable mRtWizardNonEdgeColorPref ""
+	variable mRtWizardNonEdgeColor Grey
 	variable mRtWizardOccMode 1
-	variable mRtWizardOccModePref ""
 	variable mRtWizardGhostIntensity 12
-	variable mRtWizardGhostIntensityPref ""
 
 	variable mDisplayFontSize 0
 	variable mDisplayFontSizePref ""
 	variable mDisplayFontSizes {}
 
+	variable mPerspective 0
+	variable mPerspectivePref 0
+
+	variable mMaxCombMembersShown 200
+	variable mMaxCombMembersShownPref ""
+	variable mCombWarningList ""
+
+	variable mZClipBack 100.0
+	variable mZClipBackPref 100.0
+	variable mZClipFront 100.0
+	variable mZClipFrontPref 100.0
+	variable mZClipBackMax 1000
+	variable mZClipBackMaxPref 1000
+	variable mZClipFrontMax 1000
+	variable mZClipFrontMaxPref 1000
+
 	variable mLightingMode 1
 	variable mLightingModePref ""
-	variable mDisplayListMode 0
+	variable mDisplayListMode 1
 	variable mDisplayListModePref ""
+	variable mWireframeMode 0
+	variable mWireframeModePref ""
+
+	variable mDefaultDisplayMode $DISPLAY_MODE_WIREFRAME
+	variable mDefaultDisplayModePref ""
 
 	variable mGridAnchor "0 0 0"
 	variable mGridAnchorXPref ""
@@ -516,19 +566,20 @@ namespace eval ArcherCore {
 	variable mDefaultBindingMode 0
 	variable mPrevObjViewMode 0
 	variable mObjViewMode 0
+	variable mObjMatrixMode $MATRIX_BELOW_MODE
 
 	# This is mostly a list of wrapped Ged commands. However, it also contains
 	# a few commands that are implemented here in ArcherCore.
 	variable mArcherCoreCommands { \
-	    3ptarb adjust arced attr bb bev blast bo bot bot_condense \
-	    bot_decimate bot_face_fuse bot_face_sort bot_flip \
+	    3ptarb adjust arced attr bb bev B blast bo bot bot_condense \
+	    bot_decimate bot_face_fuse bot_face_sort bot_flip bot_fuse \
 	    bot_merge bot_smooth bot_split bot_sync bot_vertex_fuse \
-	    c cd clear clone closedb color comb comb_color combmem \
+	    brep c cd clear clone closedb color comb comb_color combmem \
 	    copy copyeval copymat cp cpi dbconcat dbExpand decompose \
-	    delete draw E edcodes edcolor edcomb edit edmater erase ev \
-	    exit facetize fracture g group hide human i \
+	    delete draw e E edarb edcodes edcolor edcomb edit edmater d erase ev exists \
+	    exit facetize fracture freezeGUI g get graph group hide human i igraph \
 	    importFg4Section in inside item kill killall killrefs \
-	    killtree l ls make make_bb make_pnts man mater mirror move \
+	    killtree l ls make make_bb make_name make_pnts man mater mirror move \
 	    move_arb_edge move_arb_face mv mvall nmg_collapse \
 	    nmg_simplify ocenter opendb orotate oscale otranslate p q \
 	    quit packTree prefix protate pscale ptranslate push put \
@@ -542,7 +593,7 @@ namespace eval ArcherCore {
 	variable mUnwrappedDbCommands {}
 
 	variable mBannedDbCommands {
-	    dbip open rtabort shaded_mode
+	    dbip open shaded_mode
 	}
 
 	variable mMouseOverrideInfo "\
@@ -566,6 +617,7 @@ namespace eval ArcherCore {
 
 	method handleMoreArgs {args}
 
+	method checkIfSelectedObjExists {}
 	method gedWrapper {_cmd _eflag _hflag _sflag _tflag args}
 
 	method buildCommandView {}
@@ -594,6 +646,7 @@ namespace eval ArcherCore {
 	method launchRtApp {_app _size}
 
 	method updateDisplaySettings {}
+	method updateLightingMode {}
 	method updatePerspective {_unused}
 	method updateZClipPlanes {_unused}
 	method calculateZClipMax {}
@@ -601,6 +654,7 @@ namespace eval ArcherCore {
 	method calculateZClipFrontMax {}
 	method pushPerspectiveSettings {}
 	method pushZClipSettings {}
+	method validateZClipMax {_d}
 
 	method shootRay_doit {_start _op _target _prep _no_bool _onehit _bot_dflag _objects}
 
@@ -756,6 +810,9 @@ namespace eval ArcherCore {
 	variable mImage_rt ""
 	variable mImage_rtAbort ""
 
+	variable mImage_matrixModeAbove ""
+	variable mImage_matrixModeBelow ""
+
 	# variables for the new tree
 	variable mCNode2PList
 	variable mPNode2CList
@@ -764,6 +821,7 @@ namespace eval ArcherCore {
 	variable mNodePDrawList
 	variable mNodeDrawList
 	variable mAffectedNodeList ""
+	variable mCopyObj ""
 
 	variable mCoreCmdLevel 0
 
@@ -786,10 +844,12 @@ namespace eval ArcherCore {
 	method bot_split2 {_bot}
 
 	# tree commands
+	method dblClick {_x _y}
 	method fillTree          {_pnode _ctext _flat {_allow_multiple 0}}
 	method fillTreeColumns   {_cnode _ctext}
 	method isRegion          {_cgdata}
-	method loadMenu          {_menu _node _nodeType}
+	method loadMenu          {_menu _node _nodeType _node_id}
+	method loadTopMenu          {_menu}
 	method findTreeChildNodes {_pnode}
 	method findTreeParentNodes {_cnode}
 	method getCNodesFromCText {_pnode _text}
@@ -799,7 +859,7 @@ namespace eval ArcherCore {
 	method getTreePath {_node {_path ""}}
 	method handleTreeClose {}
 	method handleTreeOpen {}
-	method handleTreePopup {_x _y _X _Y}
+	method handleTreePopup {_type _x _y _X _Y}
 	method handleTreeSelect {}
 	method addTreeNodeTag {_node _tag}
 	method removeTreeNodeTag {_node _tag}
@@ -815,10 +875,10 @@ namespace eval ArcherCore {
 	# db/display commands
 	method getNodeChildren  {_node}
 	method getTreeFromGData  {_gdata}
-	method getTreeMembers  {_tlist {_mlist {}}}
+	method getTreeMembers  {_comb {_wflag 0}}
 	method getTreeOp {_parent _child}
 	method renderComp        {_node}
-	method render             {_node _state _trans _updateTree {_wflag 1}}
+	method render             {_node _state _trans _updateTree {_wflag 1} {_node_id ""}}
 	method selectDisplayColor  {_node}
 	method setDisplayColor	   {_node _rgb}
 	method selectTransparency  {_node}
@@ -848,9 +908,12 @@ namespace eval ArcherCore {
 	method showADC     {}
 
 	# private mged commands
-	method alterObj          {_operation _obj}
-	method deleteObj         {_obj}
-	method doCopyOrMove      {_top _obj _cmd}
+	method deleteObj     {_obj}
+	method doCopy        {_obj}
+	method doPaste       {_pobj _obj}
+	method doRename      {_top _obj}
+	method doTopPaste    {_obj}
+	method renameObj     {_obj}
 
 	method buildPrimaryToolbar {}
 
@@ -872,6 +935,7 @@ namespace eval ArcherCore {
 	method compSelectGroupRemove {_plist}
 
 	method mrayCallback_cvo {_pane _start _target _partitions}
+	method mrayCallback_nirt {_pane _start _target _partitions}
 	method mrayCallback_pick {_pane _start _target _partitions}
 
 	method initViewMeasure {}
@@ -1035,7 +1099,7 @@ namespace eval ArcherCore {
 	itk_component add canvas {
 	    ::frame $itk_component(canvasF).canvas \
 		-borderwidth 0 \
-		-relief flat 
+		-relief flat
 	} {}
 
 	grid $itk_component(canvas) -row 0 -column 0 -columnspan 3 -sticky news
@@ -1161,7 +1225,12 @@ namespace eval ArcherCore {
     trace add variable [::itcl::scope mViewAxesColor] write watchVar
     trace add variable [::itcl::scope mViewAxesLabelColor] write watchVar
 
+    trace add variable [::itcl::scope mRayColorOdd] write watchVar
+    trace add variable [::itcl::scope mRayColorEven] write watchVar
+    trace add variable [::itcl::scope mRayColorVoid] write watchVar
+
     trace add variable [::itcl::scope mDisplayFontSize] write watchVar
+    trace add variable [::itcl::scope mRtBotMintie] write watchVar
 
     eval itk_initialize $args
 
@@ -1183,7 +1252,7 @@ namespace eval ArcherCore {
     }
 
 #    Load ""
- 
+
     if {!$mNoToolbar} {
 	$itk_component(primaryToolbar) itemconfigure open -state normal
     }
@@ -1210,15 +1279,21 @@ namespace eval ArcherCore {
 # ------------------------------------------------------------
 
 
-
-
 ::itcl::body ArcherCore::handleMoreArgs {args} {
     eval $itk_component(cmd) print_more_args_prompt $args
     return [$itk_component(cmd) get_more_args]
 }
 
+
+::itcl::body ArcherCore::checkIfSelectedObjExists {} {
+    # This is a placeholder that gets overridden.
+}
+
+
 ::itcl::body ArcherCore::gedWrapper {cmd eflag hflag sflag tflag args} {
-    SetWaitCursor $this
+    if {!$mFreezeGUI} {
+	SetWaitCursor $this
+    }
 
     if {$eflag} {
 	set optionsAndArgs [eval dbExpand $args]
@@ -1230,28 +1305,35 @@ namespace eval ArcherCore {
     }
 
     if {[catch {eval gedCmd $cmd $options $expandedArgs} ret]} {
-	SetNormalCursor $this
+	if {!$mFreezeGUI} {
+	    SetNormalCursor $this
+	}
 	error $ret
     }
 
     if {$sflag} {
 	set mNeedSave 1
-	updateSaveMode
+	if {!$mFreezeGUI} {
+	    updateSaveMode
+	}
     }
 
-    gedCmd configure -primitiveLabels {}
-    switch -- $tflag {
-	0 {
-	    # Do nothing
+    if {!$mFreezeGUI} {
+	switch -- $tflag {
+	    0 {
+		# Do nothing
+	    }
+	    1 {
+		catch {updateTreeDrawLists}
+	    }
+	    default {
+		catch {syncTree}
+	    }
 	}
-	1 {
-	    catch {updateTreeDrawLists}
-	}
-	default {
-	    catch {syncTree}
-	}
+	checkIfSelectedObjExists
+
+	SetNormalCursor $this
     }
-    SetNormalCursor $this
 
     return $ret
 }
@@ -1285,7 +1367,8 @@ namespace eval ArcherCore {
 	    -scrollmargin 2 -visibleitems 80x15 \
 	    -textbackground $SystemWindow -prompt "ArcherCore> " \
 	    -prompt2 "% " -result_color black -cmd_color red \
-	    -background $LABEL_BACKGROUND_COLOR
+	    -background $LABEL_BACKGROUND_COLOR \
+	    -cmd_history_callback [::itcl::code $this addHistory]
     } {}
 
     $itk_component(cmd) component text configure -background white
@@ -1493,17 +1576,29 @@ namespace eval ArcherCore {
 
     set rmode [lindex $rdata 0]
     set rtrans [lindex $rdata 1]
-    gedCmd draw -m$rmode -x$rtrans $obj
+    set obj [file tail $obj]
+
+    foreach item [gedCmd report 0] {
+	if {[lsearch [split $item /] $obj] != -1} {
+	    gedCmd draw -m$rmode -x$rtrans $item
+	}
+    }
 }
 
 ::itcl::body ArcherCore::redrawWho {} {
+    $itk_component(ged) refresh_off
+
     foreach obj [gedCmd who] {
 	set rdata [gedCmd how -b $obj]
 	set rmode [lindex $rdata 0]
 	set rtrans [lindex $rdata 1]
 	gedCmd draw -m$rmode -x$rtrans $obj
     }
+
+    $itk_component(ged) refresh_on
+    $itk_component(ged) refresh_all
 }
+
 
 ::itcl::body ArcherCore::initImages {} {
     set dir $mImgDir
@@ -1580,17 +1675,18 @@ namespace eval ArcherCore {
 	$itk_component(treeAccordian) insert 0 "[lindex $TREE_MODE_NAMES $TREE_MODE_COLOR_OBJECTS] (Tree)"
     }
 
-    set childsite [$itk_component(treeAccordian) itemChildsite 0]
     itk_component add newtree {
 	::ttk::treeview $itk_component(treeAccordian).tree \
 	    -selectmode browse \
 	    -show tree
     } {}
 
+    bind $itk_component(newtree) <Button-3> [::itcl::code $this handleTreePopup $TREE_POPUP_TYPE_NULL %x %y %X %Y]
     bind $itk_component(newtree) <<TreeviewSelect>> [::itcl::code $this handleTreeSelect]
     bind $itk_component(newtree) <<TreeviewOpen>> [::itcl::code $this handleTreeOpen]
     bind $itk_component(newtree) <<TreeviewClose>> [::itcl::code $this handleTreeClose]
-    $itk_component(newtree) tag bind $TREE_POPUP_TAG <Button-3> [::itcl::code $this handleTreePopup %x %y %X %Y]
+    $itk_component(newtree) tag bind $TREE_POPUP_TAG <Button-3> [::itcl::code $this handleTreePopup TREE_POPUP_TYPE_NODE %x %y %X %Y]
+    $itk_component(newtree) tag bind $TREE_POPUP_TAG <Double-1> [::itcl::code $this dblClick %x %y]
     $itk_component(newtree) tag configure $TREE_FULLY_DISPLAYED_TAG \
 	-foreground red \
 	-font TkHeadingFont
@@ -1993,8 +2089,7 @@ namespace eval ArcherCore {
 
     switch -- [file extension $target] {
 	".g"   {
-	    set db [Db \#auto $target]
-	    ::itcl::delete object $db
+	    $itk_component(ged) open $target
 	}
 	default {
 	    return
@@ -2102,6 +2197,41 @@ namespace eval ArcherCore {
 #                    WINDOW COMMANDS
 # ------------------------------------------------------------
 
+::itcl::body ArcherCore::getCanvasArea {} {
+    return $itk_component(canvasF)
+}
+
+::itcl::body ArcherCore::restoreCanvas {} {
+    if {![info exists itk_component(ged)]} {
+	return
+    }
+
+    set slave [grid slaves $itk_component(canvasF)]
+    if {[llength $slave] == 1 && $slave != $itk_component(ged)} {
+	grid forget $slave
+
+	if {!$mViewOnly} {
+	    grid $itk_component(ged) -row 0 -column 0 -columnspan 3 -sticky news
+	} else {
+	    grid $itk_component(ged) -row 1 -column 0 -sticky news
+	}
+    }
+}
+
+
+::itcl::body ArcherCore::setCanvas {_canvas} {
+    if {![info exists itk_component(ged)]} {
+	return
+    }
+
+    grid forget $itk_component(ged)
+    if {!$mViewOnly} {
+	grid $_canvas -row 0 -column 0 -columnspan 3 -sticky news
+    } else {
+	grid $_canvas -row 1 -column 0 -sticky news
+    }
+}
+
 ::itcl::body ArcherCore::dockArea {{position "south"}} {
     switch -- $position {
 	"north" -
@@ -2148,7 +2278,8 @@ namespace eval ArcherCore {
 # ------------------------------------------------------------
 
 ::itcl::body ArcherCore::rebuildTree {} {
-    if {$mNoTree} {
+    if {$mNoTree || $mFreezeGUI} {
+	set mNeedsTreeRebuild 1
 	return
     }
 
@@ -2231,9 +2362,56 @@ namespace eval ArcherCore {
     # Is _pnode currently set up for children?
     if {![catch {set clists $mPNode2CList($_pnode)}]} {
 
-	set pgdata [$itk_component(ged) get $ptext]
-	set tree [getTreeFromGData $pgdata]
-	set mlist [getTreeMembers $tree]
+	set ptype [$itk_component(ged) get_type $ptext]
+
+	if {$ptype == "dsp" ||
+	    $ptype == "ebm" ||
+	    $ptype == "extrude" ||
+	    $ptype == "revolve" ||
+	    $ptype == "vol"} {
+
+	    set clist [lindex $clists 0]
+	    set old_ctext [lindex $clist 0]
+	    set cnode [lindex $clist 1]
+
+	    if {$old_ctext == $TREE_PLACEHOLDER_TAG} {
+		return
+	    }
+
+	    switch -- $ptype {
+		"dsp" -
+		"ebm" -
+		"vol" {
+		    set ctext [$itk_component(ged) get $ptext file]
+		}
+		"extrude" -
+		"revolve" {
+		    set ctext [$itk_component(ged) get $ptext sk_name]
+		}
+	    }
+
+	    if {$old_ctext != $ctext} {
+		set clist [list $ctext $cnode]
+		set clists [list $clist]
+		set mPNode2CList($_pnode) $clists
+		set mNode2Text($cnode) $ctext
+		$itk_component(newtree) item $cnode -text $ctext
+
+		set nlist [list $cnode $_pnode]
+		lappend mText2Node($ctext) $nlist
+
+		set i [lsearch -index 0 $mText2Node($old_ctext) $cnode]
+		if {$i == -1} {
+		    return
+		}
+
+		set mText2Node($old_ctext) [lreplace $mText2Node($old_ctext) $i $i]
+	    }
+
+	    return
+	}
+
+	set mlist [getTreeMembers $ptext]
 
 	# Reconcile clists (i.e. the tree's view)
 	# with mlist (i.e. the database's view).
@@ -2322,8 +2500,7 @@ namespace eval ArcherCore {
 				}
 
 			    } else {
-				set ctree [getTreeFromGData $cgdata]
-				set cmlist [getTreeMembers $ctree]
+				set cmlist [getTreeMembers $ctext]
 				if {$cmlist != ""} {
 				    removeTreeNodeTag $cnode $TREE_OPENED_TAG
 				    $itk_component(newtree) item $cnode -open false
@@ -2349,16 +2526,23 @@ namespace eval ArcherCore {
 	    }
 	}
     } else {
-	set pgdata [$itk_component(ged) get $ptext]
-	set ptype [lindex $pgdata 0]
+	set ptype [$itk_component(ged) get_type $ptext]
+
 	if {$ptype == "comb"} {
-	    set tree [getTreeFromGData $pgdata]
-	    set mlist [getTreeMembers $tree]
+	    set mlist [getTreeMembers $ptext]
 	    if {$mlist != ""} {
 		removeTreeNodeTag $_pnode $TREE_OPENED_TAG
 		$itk_component(newtree) item $_pnode -open false
 		addTreePlaceholder $_pnode
 	    }
+	} elseif {$ptype == "dsp" ||
+		  $ptype == "ebm" ||
+		  $ptype == "extrude" ||
+		  $ptype == "revolve" ||
+		  $ptype == "vol"} {
+	    removeTreeNodeTag $_pnode $TREE_OPENED_TAG
+	    $itk_component(newtree) item $_pnode -open false
+	    addTreePlaceholder $_pnode
 	}
     }
 }
@@ -2367,7 +2551,8 @@ namespace eval ArcherCore {
 # Synchronize the tree view with the database.
 #
 ::itcl::body ArcherCore::syncTree {} {
-    if {$mNoTree} {
+    if {$mNoTree || $mFreezeGUI} {
+	set mNeedsTreeSync 1
 	return
     }
 
@@ -2386,7 +2571,7 @@ namespace eval ArcherCore {
 
     # Get rid of toplevel tree nodes that are no
     # longer valid (i.e. either they don't exist or they
-    # belong to atleast one combination).
+    # belong to at least one combination).
     if {![catch {set clists $mPNode2CList()}]} {
 	foreach clist $clists {
 	    set ctext [lindex $clist 0]
@@ -2448,16 +2633,26 @@ namespace eval ArcherCore {
 
     set whoList [gedCmd who]
 
+    set who [lindex $whoList 0]
+    if {$who != ""} {
+	set how [gedCmd how $who]
+    } else {
+	set how 0
+    }
+
     switch -- $mTreeMode \
 	$TREE_MODE_TREE - \
 	$TREE_MODE_COLOR_OBJECTS {
 	    set mColorObjects $whoList
+	    set mColorObjectsHow $how
 	} \
 	$TREE_MODE_GHOST_OBJECTS {
 	    set mGhostObjects $whoList
+	    set mGhostObjectsHow $how
 	} \
 	$TREE_MODE_EDGE_OBJECTS {
 	    set mEdgeObjects $whoList
+	    set mEdgeObjectsHow $how
 	}
 
     foreach ditem $whoList {
@@ -2489,7 +2684,7 @@ namespace eval ArcherCore {
 }
 
 ::itcl::body ArcherCore::shootRay {_start _op _target _prep _no_bool _onehit _bot_dflag} {
-    objects [gedCmd who]
+    set objects [gedCmd who]
     shootRay_doit $_start $_op $_target $_prep $_no_bool $_onehit $_bot_dflag $objects
 }
 
@@ -2545,43 +2740,6 @@ namespace eval ArcherCore {
 # ------------------------------------------------------------
 #                     MGED COMMANDS
 # ------------------------------------------------------------
-::itcl::body ArcherCore::alterObj {operation comp} {
-    if {[winfo exists .alter]} {
-	destroy .alter
-    }
-
-    set top [toplevel .alter]
-    wm withdraw $top
-    wm transient $top $itk_interior
-    set x [expr [winfo rootx $itk_interior] + 100]
-    set y [expr [winfo rooty $itk_interior] + 100]
-    wm geometry $top +$x+$y
-
-    set entry [::iwidgets::entryfield $top.entry -textbackground $SystemWindow -width 20]
-    pack $entry -fill x -padx 3 -pady 2
-
-    set cmd ""
-    switch -- $operation {
-	"Copy" {
-	    wm title $top "Copy $comp"
-	    set cmd "cp"
-	    $entry configure -labeltext "New Component:"
-	}
-	"Rename" {
-	    wm title $top "Rename $comp"
-	    set cmd "mvall"
-	    $entry configure -labeltext "New Name:"
-	}
-    }
-
-    set cancel [button $top.cancel -text "Cancel" -width 7 -command "destroy $top"]
-    set ok [button $top.ok -text "OK" -width 7 -command [::itcl::code $this doCopyOrMove $top $comp $cmd]]
-    pack $cancel -side right -anchor e -padx 3 -pady 2
-    pack $ok -side right -anchor e -padx 3 -pady 2
-
-    set_focus $top $entry
-    tkwait window $top
-}
 
 ::itcl::body ArcherCore::deleteObj {comp} {
     if {[do_question "Are you sure you wish to delete `$comp'."] == "no"} {
@@ -2622,17 +2780,131 @@ namespace eval ArcherCore {
     SetNormalCursor $this
 }
 
-::itcl::body ArcherCore::doCopyOrMove {top comp cmd} {
+
+::itcl::body ArcherCore::doCopy {_obj} {
+    set mCopyObj $_obj
+}
+
+
+::itcl::body ArcherCore::doPaste {_pobj _obj} {
+    if {$_pobj == ""} {
+	doTopPaste $_obj
+    } else {
+	if {[$itk_component(ged) get_type $_pobj] != "comb"} {
+	    doTopPaste $_obj
+	    return
+	}
+
+	set isregion [$itk_component(ged) get $_pobj region]
+
+	set plist [$itk_component(ged) dbfind $_obj]
+	if {[lsearch $plist $_pobj] != -1} {
+	    set newobj [doTopPaste $_obj]
+
+	    if {$isregion} {
+		r $_pobj u $newobj
+	    } else {
+		g $_pobj $newobj
+	    }
+	} else {
+	    if {$isregion} {
+		r $_pobj u $_obj
+	    } else {
+		g $_pobj $_obj
+	    }
+	}
+    }
+}
+
+
+::itcl::body ArcherCore::doRename {_top _obj} {
+    set newobj [string trim [$_top.entry get]]
+    wm withdraw $_top
+    if {[catch {gedCmd mvall $_obj $newobj} msg]} {
+	putString $msg
+	destroy $_top
+	return
+    }
+
+    SetWaitCursor $this
+
     set mNeedSave 1
     updateSaveMode
-    SetWaitCursor $this
-    set comp2 [string trim [$top.entry get]]
-    wm withdraw $top
-    gedCmd $cmd $comp
-    syncTree
+    rebuildTree
+
+    if {$mSelectedObj == $_obj} {
+	set obj $newobj
+	set dir [file dirname $mSelectedObjPath]
+	set path "$dir/$newobj"
+    } else {
+	set obj $mSelectedObj
+	set path $mSelectedObjPath
+    }
+
+    if {$mEnableListView} {
+	selectTreePath $obj
+    } else {
+	selectTreePath $path
+    }
+
+    destroy $_top
     SetNormalCursor $this
-    destroy $top
 }
+
+
+::itcl::body ArcherCore::doTopPaste {_obj} {
+    set i 1
+    set newobj "$_obj\.$i"
+    while {[$itk_component(ged) exists $newobj]} {
+	incr i
+	set newobj "$_obj\.$i"
+    }
+
+    cp $_obj $newobj
+    return $newobj
+}
+
+
+::itcl::body ArcherCore::renameObj {_obj} {
+    if {[winfo exists .alter]} {
+	destroy .alter
+    }
+
+    if {$_obj == $mCopyObj} {
+	set mCopyObj ""
+    }
+
+    set top [::toplevel .alter]
+    wm withdraw $top
+    wm transient $top $itk_interior
+    set x [winfo pointerx $itk_interior]
+    set y [winfo pointery $itk_interior]
+    wm geometry $top +$x+$y
+
+    set entry [::iwidgets::entryfield $top.entry -textbackground $SystemWindow -width 20]
+    $entry insert 0 $_obj
+    pack $entry -fill x -padx 3 -pady 2
+
+    wm title $top "Rename $_obj"
+    $entry configure -labeltext "New Name:"
+
+    set oframe [::frame $top.oframe -bg black]
+    set ok [::button $oframe.ok -text "OK" -width 7 -command [::itcl::code $this doRename $top $_obj]]
+    pack $ok -padx 1 -pady 1
+
+    set cancel [::button $top.cancel -text "Cancel" -width 7 -command "destroy $top"]
+    pack $cancel -side right -anchor e -padx 3 -pady 2
+    pack $oframe -side right -anchor e -padx 3 -pady 2
+
+    set entryc [$entry component entry]
+    $entryc selection range 0 end
+    focus $entryc
+    bind $entryc <Return> "$ok invoke"
+
+    wm deiconify $top
+    tkwait window $top
+}
+
 
 ::itcl::body ArcherCore::buildPrimaryToolbar {} {
     # tool bar
@@ -2858,9 +3130,8 @@ namespace eval ArcherCore {
     if {[llength $add_list] > 0} {
 	eval group $mCompSelectGroup $add_list
 
-	set tree [$itk_component(ged) get $mCompSelectGroup tree]
-	if {[llength $tree] > 0} {
-	    set tlist [getTreeMembers $tree]
+	set tlist [getTreeMembers $mCompSelectGroup]
+	if {[llength $tlist] > 0} {
 	    putString "$mCompSelectGroup now contains:"
 	    putString "\t$tlist"
 	}
@@ -2881,9 +3152,10 @@ namespace eval ArcherCore {
 	    return ""
 	}
 
-	set tree [$itk_component(ged) get $mCompSelectGroup tree]
-	if {[llength $tree] > 0} {
-	    set mCompSelectGroupList [getTreeMembers $tree]
+	#set tree [$itk_component(ged) get $mCompSelectGroup tree]
+	set tlist [getTreeMembers $mCompSelectGroup]
+	if {[llength $tlist] > 0} {
+	    set mCompSelectGroupList $tlist
 	}
     }
 
@@ -2891,7 +3163,7 @@ namespace eval ArcherCore {
     foreach item $_plist {
 	lappend new_plist [file tail $item]
     }
-    
+
     return [lsort -unique -dictionary $new_plist]
 }
 
@@ -2913,9 +3185,8 @@ namespace eval ArcherCore {
     if {[llength $rem_list] > 0} {
 	eval rm $mCompSelectGroup $rem_list
 
-	set tree [$itk_component(ged) get $mCompSelectGroup tree]
-	if {[llength $tree] > 0} {
-	    set tlist [getTreeMembers $tree]
+	set tlist [getTreeMembers $mCompSelectGroup]
+	if {[llength $tlist] > 0} {
 	    putString "$mCompSelectGroup now contains:"
 	    putString "\t$tlist"
 	} else {
@@ -2948,6 +3219,55 @@ namespace eval ArcherCore {
     set point [vscale $point [$itk_component(ged) base2local]]
     $itk_component(ged) pane_center $_pane $point
 }
+
+
+::itcl::body ArcherCore::mrayCallback_nirt {_pane _start _target _partitions} {
+    #set size [$itk_component(ged) size]
+    #set cdim [$itk_component(ged) pane_rect $_pane cdim]
+    #set width [lindex $cdim 0]
+    #set height [lindex $cdim 1]
+
+    set b2l [$itk_component(ged) base2local]
+    set rad2deg [expr {180.0 / acos(-1.0)}]
+    set raydir [vunitize [vsub2 $_target $_start]]
+    set scaled_start [vscale $_start $b2l]
+
+    set rds "([format {%.4f %.4f %.4f} [lindex $raydir 0] [lindex $raydir 1] [lindex $raydir 2]])"
+    set ae [eval $itk_component(ged) dir2ae $raydir]
+    set aes "([format {%.2f %.2f} [lindex $ae 0] [lindex $ae 1]])"
+    set ors "([format {%.3f %.3f %.3f} [lindex $scaled_start 0] [lindex $scaled_start 1] [lindex $scaled_start 2]])"
+
+    putString "\nOrigin (x y z) = $ors"
+    putString "Direction (x y z) = $rds\t(az el) - $aes"
+    putString "Region Name\t\t\tEntry (x y z)\t\t\t\tLOS\tObliq_in"
+
+    # use the reverse ray direction for the cos calculation below
+    set raydir [vunitize [vsub2 $_start $_target]]
+
+    foreach partition $_partitions {
+	if {[catch {bu_get_value_by_keyword "region" $partition} region] ||
+	    [catch {bu_get_value_by_keyword "in" $partition} in] ||
+	    [catch {bu_get_value_by_keyword "normal" $in} hit_normal] ||
+	    [catch {bu_get_value_by_keyword "point" $in} i_pt] ||
+	    [catch {bu_get_value_by_keyword "out" $partition} out] ||
+	    [catch {bu_get_value_by_keyword "point" $out} o_pt]} {
+	    return ""
+	}
+
+	set hit_normal [vunitize $hit_normal]
+	set cosa [vdot $raydir $hit_normal]
+
+	set angle [format "%.3f" [expr {acos($cosa) * $rad2deg}]]
+	set los [format "%.2f" [expr {[vmagnitude [vsub2 $o_pt $i_pt]] * $b2l}]]
+	set i_pt [vscale $i_pt $b2l]
+	set i_pt [format "(%.3f %.3f %.3f)" [lindex $i_pt 0] [lindex $i_pt 1] [lindex $i_pt 2]]
+
+	putString "$region\t\t\t$i_pt\t\t\t\t$los\t$angle"
+    }
+
+    $itk_component(ged) draw_ray $_start $_partitions
+}
+
 
 ::itcl::body ArcherCore::mrayCallback_pick {_pane _start _target _partitions} {
     set partition [lindex $_partitions 0]
@@ -3008,7 +3328,9 @@ namespace eval ArcherCore {
 
 ::itcl::body ArcherCore::initViewMeasure {} {
     $itk_component(ged) clear_view_measure_callback_list
+    $itk_component(ged) clear_mouse_ray_callback_list
     $itk_component(ged) add_view_measure_callback [::itcl::code $this endViewMeasure]
+    $itk_component(ged) add_mouse_ray_callback [::itcl::code $this mrayCallback_nirt]
     $itk_component(ged) init_view_measure
     $itk_component(ged) init_button_no_op 2
 
@@ -3054,19 +3376,11 @@ namespace eval ArcherCore {
 
 
 ::itcl::body ArcherCore::validateDigit {d} {
-    if {[string is digit $d]} {
-	return 1
-    }
-
-    return 0
+    ::cadwidgets::Ged::validateDigit $d
 }
 
 ::itcl::body ArcherCore::validateDouble {d} {
-    if {$d == "-" || [string is double $d]} {
-	return 1
-    }
-
-    return 0
+    ::cadwidgets::Ged::validateDouble $d
 }
 
 ::itcl::body ArcherCore::validateTickInterval {ti} {
@@ -3074,8 +3388,8 @@ namespace eval ArcherCore {
 	return 1
     }
 
-    if {[string is double $ti]} {
-	if {0 <= $ti} {
+    if {[::cadwidgets::Ged::validateDouble $ti]} {
+	if {$ti == "." || 0 <= $ti} {
 	    return 1
 	}
 
@@ -3196,6 +3510,8 @@ namespace eval ArcherCore {
 	return
     }
 
+    set cmd [string trim $cmd]
+
     set maxlines 1000
     set tw [$itk_component(history) component text]
 
@@ -3253,13 +3569,11 @@ namespace eval ArcherCore {
 
     set i [lsearch -exact $mArcherCoreCommands $cmd]
     if {$i != -1} {
-	addHistory $args
 	return [uplevel $mCoreCmdLevel $args]
     }
 
     set i [lsearch -exact $mUnwrappedDbCommands $cmd]
     if {$i != -1} {
-	addHistory $args
 	return [eval gedCmd $args]
     }
 
@@ -3279,11 +3593,12 @@ namespace eval ArcherCore {
 	return {}
     }
 
-    if {[catch {gedCmd get $node tree} tlist]} {
+
+    if {[catch {getTreeMembers $node} tlist]} {
 	return {}
     }
 
-    return [getTreeMembers $tlist]
+    return $tlist
 }
 
 ::itcl::body ArcherCore::getTreeFromGData {_gdata} {
@@ -3296,22 +3611,34 @@ namespace eval ArcherCore {
     return {}
 }
 
-::itcl::body ArcherCore::getTreeMembers {_tlist {_mlist {}}} {
-    set len [llength $_tlist]
-    set op [lindex $_tlist 0]
-    if {$op == "l"} {
-	set name [lindex $_tlist 1]
-	lappend _mlist $name
-	return $_mlist
+
+::itcl::body ArcherCore::getTreeMembers {_comb {_wflag 0}} {
+    if {![$itk_component(ged) exists $_comb]} {
+	return ""
     }
 
-    if {$len == 3} {
-	set _mlist [getTreeMembers [lindex $_tlist 1] $_mlist]
-	set _mlist [getTreeMembers [lindex $_tlist 2] $_mlist]
-	return $_mlist
+    set i 0
+
+    set tlist {}
+    foreach item [regsub -all {/|/R} [lrange [split [$itk_component(ged) tree -d 1 $_comb] "\n"] 1 end-1] ""] {
+	lappend tlist [lindex $item 1]
+	incr i
+
+	if {$i >= $mMaxCombMembersShown} {
+	    if {$_wflag} {
+		set j [lsearch $mCombWarningList $_comb]
+
+		if {$j == -1} {
+		    tk_messageBox -message "Warning: not all members of $_comb will be visible in the tree. See the \"Max Comb Members Shown\" preference."
+		    lappend mCombWarningList $_comb
+		}
+	    }
+
+	    break
+	}
     }
 
-    return $_mlist
+    return $tlist
 }
 
 
@@ -3339,9 +3666,9 @@ namespace eval ArcherCore {
 		default {
 		    return "Union"
 		}
-		
+
 	    }
-	    return 
+	    return
 	}
     }
 
@@ -3358,16 +3685,16 @@ namespace eval ArcherCore {
 }
 
 
-::itcl::body ArcherCore::render {node state trans updateTree {wflag 1}} {
-    if {$wflag} {
+::itcl::body ArcherCore::render {_node _state _trans _updateTree {_wflag 1} {_node_id ""}} {
+    if {$_wflag} {
 	SetWaitCursor $this
     }
 
-    set tnode [file tail $node]
+    set tnode [file tail $_node]
     set saveGroundPlane 0
 
     if {$mShowPrimitiveLabels} {
-	set plnode $node
+	set plnode $_node
     } else {
 	set plnode {}
     }
@@ -3375,75 +3702,90 @@ namespace eval ArcherCore {
     $itk_component(ged) refresh_off
 
     catch {
-    if {[catch {gedCmd attr get \
-		    $tnode displayColor} displayColor]} {
-	switch -exact -- $state {
-	    "0" {
-		gedCmd configure -primitiveLabels $plnode
-		gedCmd draw -m0 -x$trans $node
-	    }
-	    "1" {
-		gedCmd configure -primitiveLabels $plnode
-		gedCmd draw -m1 -x$trans $node
-	    }
-	    "2" {
-		gedCmd configure -primitiveLabels $plnode
-		gedCmd draw -m2 -x$trans $node
-	    }
-	    "3" {
-		gedCmd configure -primitiveLabels $plnode
-		gedCmd E $node
-	    }
-	    "4" {
-		gedCmd configure -primitiveLabels $plnode
-		gedCmd draw -h $node
-	    }
-	    "-1" {
-		gedCmd configure -primitiveLabels {}
-		gedCmd erase $node
+	if {[catch {gedCmd attr get \
+			$tnode displayColor} displayColor]} {
+	    switch -exact -- $_state \
+		$DISPLAY_MODE_WIREFRAME {
+		    gedCmd draw -m0 -x$_trans $_node
+		} \
+		$DISPLAY_MODE_SHADED {
+		    gedCmd draw -m1 -x$_trans $_node
+		} \
+		$DISPLAY_MODE_SHADED_ALL {
+		    gedCmd draw -m2 -x$_trans $_node
+		} \
+		$DISPLAY_MODE_EVALUATED {
+		    gedCmd E $_node
+		} \
+		$DISPLAY_MODE_HIDDEN {
+		    gedCmd draw -h $_node
+		} \
+		$DISPLAY_MODE_OFF {
+		    gedCmd erase $_node
+		}
+	} else {
+	    switch -exact -- $_state \
+		$DISPLAY_MODE_WIREFRAME {
+		    gedCmd draw -m0 -x$_trans \
+			-C$displayColor $_node
+		} \
+		$DISPLAY_MODE_SHADED {
+		    gedCmd draw -m1 -x$_trans \
+			-C$displayColor $_node
+		} \
+		$DISPLAY_MODE_SHADED_ALL {
+		    gedCmd draw -m2 -x$_trans \
+			-C$displayColor $_node
+		} \
+		$DISPLAY_MODE_EVALUATED {
+		    gedCmd E -C$displayColor $_node
+		} \
+		$DISPLAY_MODE_HIDDEN {
+		    gedCmd draw -h -C$displayColor $_node
+		} \
+		$DISPLAY_MODE_OFF {
+		    gedCmd erase $_node
+		}
+	}
+    }
+
+    if {$_node == $mSelectedObjPath} {
+	if {$_state != -1} {
+	    gedCmd configure -primitiveLabels $plnode
+	} else {
+	    gedCmd configure -primitiveLabels {}
+
+	    if {$mAllowDataClear} {
+		gedCmd data_axes points {}
+		gedCmd data_lines points {}
 	    }
 	}
     } else {
-	switch -exact -- $state {
-	    "0" {
-		gedCmd configure -primitiveLabels $plnode
-		gedCmd draw -m0 -x$trans \
-		    -C$displayColor $node
-	    }
-	    "1" {
-		gedCmd configure -primitiveLabels $plnode
-		gedCmd draw -m1 -x$trans \
-		    -C$displayColor $node
-	    }
-	    "2" {
-		gedCmd configure -primitiveLabels $plnode
-		gedCmd draw -m2 -x$trans \
-		    -C$displayColor $node
-	    }
-	    "3" {
-		gedCmd configure -primitiveLabels $plnode
-		gedCmd E -C$displayColor $node
-	    }
-	    "4" {
-		gedCmd configure -primitiveLabels $plnode
-		gedCmd draw -h -C$displayColor $node
-	    }
-	    "-1" {
-		gedCmd configure -primitiveLabels {}
-		gedCmd erase $node
+	set soi -1
+	set tmpObjPath [file dirname $mSelectedObjPath]
+	while {$soi == -1 && $tmpObjPath != "."} {
+	    set soi [lsearch $_node $tmpObjPath]
+	    set tmpObjPath [file dirname $tmpObjPath]
+	}
+
+	if {$soi != -1} {
+	    gedCmd configure -primitiveLabels {}
+
+	    if {$mAllowDataClear} {
+		gedCmd data_axes points {}
+		gedCmd data_lines points {}
 	    }
 	}
-    }
     }
 
     if {$mSavedCenter != "" && $mTreeMode > $TREE_MODE_TREE &&
 	($mColorObjects != "" || $mGhostObjects != "" || $mEdgeObjects != "")} {
 	$itk_component(ged) center $mSavedCenter
 	$itk_component(ged) size $mSavedSize
-    } else {
-	set mSavedCenter ""
-	set mSavedSize ""
     }
+
+    set mSavedCenter ""
+    set mSavedSize ""
 
     # Get the eye pt in model coordinates
     set eyemodel [split [regsub {;} [$itk_component(ged) get_eyemodel] {}] "\n"]
@@ -3466,19 +3808,27 @@ namespace eval ArcherCore {
 
     $itk_component(ged) refresh_on
     $itk_component(ged) refresh_all
- 
+
     # Turn ground plane back on if it was on before the draw
     if {$saveGroundPlane} {
 	set mShowGroundPlane 1
 	showGroundPlane
     }
 
-    if {$updateTree} {
+    if {$_updateTree} {
 	updateTreeDrawLists
     }
 
-    if {$wflag} {
+    if {$_wflag} {
 	SetNormalCursor $this
+    }
+
+    if {$_node_id != ""} {
+	set snode [$itk_component(newtree) selection]
+
+	if {$snode != $_node_id} {
+	    $itk_component(newtree) selection set $_node_id
+	}
     }
 }
 
@@ -3569,17 +3919,20 @@ namespace eval ArcherCore {
 		      -title "Export Geometry to PNG" \
 		      -initialdir $mLastSelectedDir -filetypes $typelist]
 
-    if {$filename != ""} {
-	set mLastSelectedDir [file dirname $finename]
-
-	#XXX Hack! Hack! Hack!
-	#XXX The png command below needs to be modified to draw
-	#XXX into an off screen buffer to avoid occlusion
-	raise .
-
-	update
-	after idle [::itcl::code $this png $filename]
+    if {$filename == ""} {
+	return
     }
+
+    set mLastSelectedDir [file dirname $filename]
+
+    #XXX Hack! Hack! Hack!
+    #XXX The png command below needs to be modified to draw
+    #XXX into an off screen buffer to avoid occlusion
+    ::update idletasks
+    after 1000
+    refreshDisplay
+
+    $itk_component(ged) png $filename
 }
 
 ::itcl::body ArcherCore::setActivePane {_pane} {
@@ -3617,6 +3970,11 @@ namespace eval ArcherCore {
 
 ::itcl::body ArcherCore::doMultiPane {} {
     gedCmd configure -multi_pane $mMultiPane
+
+    if {$mMultiPane && $mDisplayListMode} {
+	::update
+	redrawWho
+    }
 }
 
 ::itcl::body ArcherCore::doLighting {} {
@@ -3632,6 +3990,8 @@ namespace eval ArcherCore {
     } else {
 	gedCmd light_all $mLighting
     }
+
+    gedCmd refresh_all
 
     SetNormalCursor $this
 }
@@ -3734,12 +4094,29 @@ namespace eval ArcherCore {
 #                     PROTECTED TREE COMMANDS
 # ------------------------------------------------------------
 
+
+::itcl::body ArcherCore::dblClick {_x _y} {
+    set mDoubleClickActive 1
+
+    set item [$itk_component(newtree) identify row $_x $_y]
+    set obj [$itk_component(newtree) item $item -text]
+    set path [getTreePath $item $obj]
+
+    set rdata [gedCmd how -b $path]
+    if {$rdata == -1} {
+	render $path $mDefaultDisplayMode 1 1 1 $item
+    } else {
+	erase $path
+    }
+}
+
+
 ::itcl::body ArcherCore::fillTree {_pnode _ctext _flat {_allow_multiple 0}} {
     global no_tree_decorate
 
     set cnodes [getCNodesFromCText $_pnode $_ctext]
 
-    # Atleast one node for _pnode/_ctext already exists
+    # At least one node for _pnode/_ctext already exists
     if {!$_allow_multiple && $cnodes != {}} {
 	return
     }
@@ -3767,9 +4144,23 @@ namespace eval ArcherCore {
     }
     fillTreeColumns $cnode $_ctext
 
-    if {!$_flat && $ctype == "comb"} {
-	set tree [getTreeFromGData $cgdata]
-	set mlist [getTreeMembers $tree]
+    if {!$_flat} {
+	set mlist ""
+	switch -- $ctype {
+	    "comb" {
+		set mlist [getTreeMembers $_ctext]
+	    }
+	    "dsp" -
+	    "ebm" -
+	    "vol" {
+		set mlist [$itk_component(ged) get $_ctext file]
+	    }
+	    "extrude" -
+	    "revolve" {
+		set mlist [$itk_component(ged) get $_ctext sk_name]
+	    }
+	}
+
 	if {$mlist != ""} {
 	    removeTreeNodeTag $cnode $TREE_OPENED_TAG
 	    $itk_component(newtree) item $cnode -open false
@@ -3849,7 +4240,9 @@ namespace eval ArcherCore {
     return 0
 }
 
-::itcl::body ArcherCore::loadMenu {_menu _node _nodeType} {
+::itcl::body ArcherCore::loadMenu {_menu _node _nodeType _node_id} {
+    set mCurrTreeMenuNode $_node_id
+
     # destroy old menu
     if [winfo exists $_menu.color] {
 	$_menu.color delete 0 end
@@ -3863,21 +4256,21 @@ namespace eval ArcherCore {
 
     set mRenderMode [gedCmd how $_node]
     # do this in case "ev" was used from the command line
-    if {!$mEnableBigE && 2 < $mRenderMode} {
+    if {!$mEnableBigE && $mRenderMode == 3} {
 	set mRenderMode 0
     }
 
     if {$_nodeType == "leaf"} {
 	$_menu add radiobutton -label "Wireframe" \
 	    -indicatoron 1 -value 0 -variable [::itcl::scope mRenderMode] \
-	    -command [::itcl::code $this render $_node 0 1 1]
+	    -command [::itcl::code $this render $_node $DISPLAY_MODE_WIREFRAME 1 1 1 $_node_id]
 
 	$_menu add radiobutton -label "Shaded" \
-	    -indicatoron 1 -value 1 -variable [::itcl::scope mRenderMode] \
-	    -command [::itcl::code $this render $_node 1 1 1]
-	$_menu add radiobutton -label "Hidden Line" \
 	    -indicatoron 1 -value 2 -variable [::itcl::scope mRenderMode] \
-	    -command [::itcl::code $this render $_node 4 1 1]
+	    -command [::itcl::code $this render $_node $DISPLAY_MODE_SHADED_ALL 1 1 1 $_node_id]
+	$_menu add radiobutton -label "Hidden Line" \
+	    -indicatoron 1 -value 4 -variable [::itcl::scope mRenderMode] \
+	    -command [::itcl::code $this render $_node $DISPLAY_MODE_HIDDEN 1 1 1 $_node_id]
 
 	if {$mEnableBigE} {
 	    $_menu add radiobutton \
@@ -3885,40 +4278,53 @@ namespace eval ArcherCore {
 		-indicatoron 1 \
 		-value 3 \
 		-variable [::itcl::scope mRenderMode] \
-		-command [::itcl::code $this render $_node 3 1 1]
+		-command [::itcl::code $this render $_node $DISPLAY_MODE_EVALUATED 1 1 1 $_node_id]
 	}
 
 	$_menu add radiobutton -label "Off" \
 	    -indicatoron 1 -value -1 -variable [::itcl::scope mRenderMode] \
-	    -command [::itcl::code $this render $_node -1 1 1]
+	    -command [::itcl::code $this render $_node $DISPLAY_MODE_OFF 1 1]
     } else {
 	$_menu add command -label "Wireframe" \
-	    -command [::itcl::code $this render $_node 0 1 1]
+	    -command [::itcl::code $this render $_node $DISPLAY_MODE_WIREFRAME 1 1 1 $_node_id]
 
 	$_menu add command -label "Shaded" \
-	    -command [::itcl::code $this render $_node 1 1 1]
+	    -command [::itcl::code $this render $_node $DISPLAY_MODE_SHADED_ALL 1 1 1 $_node_id]
 	$_menu add command -label "Hidden Line" \
-	    -command [::itcl::code $this render $_node 4 1 1]
+	    -command [::itcl::code $this render $_node $DISPLAY_MODE_HIDDEN 1 1 1 $_node_id]
 
 	if {$mEnableBigE} {
 	    $_menu add command \
 		-label "Evaluated" \
-		-command [::itcl::code $this render $_node 3 1 1]
+		-command [::itcl::code $this render $_node $DISPLAY_MODE_EVALUATED 1 1 1 $_node_id]
 	}
 
 	$_menu add command -label "Off" \
-	    -command [::itcl::code $this render $_node -1 1 1]
+	    -command [::itcl::code $this render $_node $DISPLAY_MODE_OFF 1 1]
     }
 
-    #XXX need to copy over
-    #    $_menu add separator
-    #    $_menu add command -label "Copy" \
-	#	    -command [::itcl::code $this alterObj "Copy" $mSelectedComp]
-    #    $_menu add command -label "Rename" \
-	#	    -command [::itcl::code $this alterObj "Rename" $mSelectedComp]
-    #    $_menu add command -label "Delete" \
-	#	    -command [::itcl::code $this deleteObj $mSelectedComp]
+    set nodeList [split $_node /]
+    set nodeLen [llength $nodeList]
 
+    #XXX need to copy over
+    $_menu add separator
+    $_menu add command -label "Copy" \
+	-command [::itcl::code $this doCopy [file tail $_node]]
+    if {$mCopyObj != ""} {
+	$_menu add command -label "Paste" \
+	    -command [::itcl::code $this doPaste [file tail $_node] $mCopyObj]
+    }
+    $_menu add command -label "Kill" \
+	-command [::itcl::code $this kill [file tail $_node]]
+    $_menu add command -label "Killall" \
+	-command [::itcl::code $this killall [file tail $_node]]
+    $_menu add command -label "Rename" \
+	-command [::itcl::code $this renameObj [file tail $_node]]
+
+    if {$nodeLen > 1} {
+	$_menu add command -label "Remove" \
+	    -command [::itcl::code $this rm [lindex $nodeList end-1] [lindex $nodeList end]]
+    }
 
     $_menu add separator
 
@@ -4010,6 +4416,26 @@ namespace eval ArcherCore {
     bind $color <<MenuSelect>> \
 	[::itcl::code $this colorMenuStatusCB %W]
 }
+
+
+::itcl::body ArcherCore::loadTopMenu {_menu} {
+    # destroy old menu
+    if {[winfo exists $_menu.color]} {
+	$_menu.color delete 0 end
+	destroy $_menu.color
+    }
+    if {[winfo exists $_menu.trans]} {
+	$_menu.trans delete 0 end
+	destroy $_menu.trans
+    }
+    $_menu delete 0 end
+
+    if {$mCopyObj != ""} {
+	$_menu add command -label "Paste" \
+	    -command [::itcl::code $this doPaste "" $mCopyObj]
+    }
+}
+
 
 ::itcl::body ArcherCore::findTreeChildNodes {_pnode} {
     if {![info exists mPNode2CList($_pnode)]} {
@@ -4243,7 +4669,13 @@ namespace eval ArcherCore {
     set cgdata [$itk_component(ged) get $ctext]
     set ctype [lindex $cgdata 0]
 
-    if {$ctype == "comb"} {
+    if {($ctype == "comb" ||
+	 $ctype == "dsp" ||
+	 $ctype == "ebm" ||
+	 $ctype == "extrude" ||
+	 $ctype == "revolve" ||
+	 $ctype == "vol") &&
+	[info exists mPNode2CList($cnode)]} {
 	# If this node has never been opened ...
 	if {[addTreeNodeTag $cnode $TREE_OPENED_TAG]} {
 	    # Remove placeholder
@@ -4251,32 +4683,62 @@ namespace eval ArcherCore {
 	    $itk_component(newtree) delete $placeholder
 	    unset mPNode2CList($cnode)
 
-	    set tree [getTreeFromGData $cgdata]
-	    foreach gctext [getTreeMembers $tree] {
-		if {[catch {$itk_component(ged) get $gctext} gcgdata]} {
-		    set op [getTreeOp $ctext $gctext]
-		    set img [getTreeImage $gctext "invalid" $op]
+	    switch -- $ctype {
+		"comb" {
+		    #set tree [getTreeFromGData $cgdata]
+		    foreach gctext [getTreeMembers $ctext 1] {
+			if {[catch {$itk_component(ged) get $gctext} gcgdata]} {
+			    set op [getTreeOp $ctext $gctext]
+			    set img [getTreeImage $gctext "invalid" $op]
 
+			    set gcnode [$itk_component(newtree) insert $cnode end \
+					    -tags $TREE_POPUP_TAG \
+					    -text $gctext \
+					    -image $img]
+
+			    fillTreeColumns $gcnode $gctext
+
+			    lappend mText2Node($gctext) [list $gcnode $cnode]
+			    set mNode2Text($gcnode) $gctext
+			    lappend mPNode2CList($cnode) [list $gctext $gcnode]
+			    set mCNode2PList($gcnode) [list $ctext $cnode]
+
+			    continue
+			}
+
+			# Add gchild members
+			if {$mEnableListView} {
+			    fillTree $cnode $gctext 1 1
+			} else {
+			    fillTree $cnode $gctext 0 0
+			}
+		    }
+		}
+		"dsp" -
+		"ebm" -
+		"vol" {
+		    set gctext [$itk_component(ged) get $ctext file]
 		    set gcnode [$itk_component(newtree) insert $cnode end \
 				    -tags $TREE_POPUP_TAG \
 				    -text $gctext \
-				    -image $img]
-
+				    -image $mImage_other]
 		    fillTreeColumns $gcnode $gctext
 
 		    lappend mText2Node($gctext) [list $gcnode $cnode]
 		    set mNode2Text($gcnode) $gctext
 		    lappend mPNode2CList($cnode) [list $gctext $gcnode]
 		    set mCNode2PList($gcnode) [list $ctext $cnode]
-
-		    continue
 		}
+		"extrude" -
+		"revolve" {
+		    set gctext [$itk_component(ged) get $ctext sk_name]
 
-		# Add gchild members
-		if {$mEnableListView} {
-		    fillTree $cnode $gctext 1 1
-		} else {
-		    fillTree $cnode $gctext 0 0
+		    # Add gchild members
+		    if {$mEnableListView} {
+			fillTree $cnode $gctext 1 1
+		    } else {
+			fillTree $cnode $gctext 0 0
+		    }
 		}
 	    }
 	}
@@ -4286,7 +4748,22 @@ namespace eval ArcherCore {
     SetNormalCursor $this
 }
 
-::itcl::body ArcherCore::handleTreePopup {_x _y _X _Y} {
+::itcl::body ArcherCore::handleTreePopup {_type _x _y _X _Y} {
+    if {$mTreePopupBusy} {
+	set mTreePopupBusy 0
+	return
+    }
+
+    if {$_type == $TREE_POPUP_TYPE_NULL} {
+	loadTopMenu $itk_component(newtreepopup)
+	tk_popup $itk_component(newtreepopup) $_X $_Y
+
+	return
+    }
+
+    # Relies on this routine being called twice when a popup is invoked over a node
+    set mTreePopupBusy 1
+
     set item [$itk_component(newtree) identify row $_x $_y]
     set text [$itk_component(newtree) item $item -text]
     set img [$itk_component(newtree) item $item -image]
@@ -4298,12 +4775,24 @@ namespace eval ArcherCore {
     }
 
     set path [getTreePath $item $text]
+    set dirname [file dirname $path]
+    if {$dirname != "."} {
+	set type [$itk_component(ged) get_type $dirname]
+	if {$type == "dsp" || $type == "ebm" || $type == "extrude" || $type == "revolve" || $type == "vol"} {
+	    return
+	}
+    }
 
-    loadMenu $itk_component(newtreepopup) $path $nodeType
+    loadMenu $itk_component(newtreepopup) $path $nodeType $item
     tk_popup $itk_component(newtreepopup) $_X $_Y
 }
 
 ::itcl::body ArcherCore::handleTreeSelect {} {
+    if {$mDoubleClickActive} {
+	set mDoubleClickActive 0
+	return 1
+    }
+
     foreach anode $mAffectedNodeList {
 	removeTreeNodeTag $anode $TREE_AFFECTED_TAG
     }
@@ -4312,7 +4801,7 @@ namespace eval ArcherCore {
     set snode [$itk_component(newtree) selection]
 
     if {$snode == ""} {
-	return
+	return 1
     }
 
     set mPrevSelectedObjPath $mSelectedObjPath
@@ -4331,8 +4820,12 @@ namespace eval ArcherCore {
 	}
     }
 
+    if {$mPrevSelectedObjPath == $mSelectedObjPath} {
+	return 1
+    }
+
     if {!$mEnableAffectedNodeHighlight} {
-	return
+	return 0
     }
 
     if {$mEnableListView} {
@@ -4398,6 +4891,8 @@ namespace eval ArcherCore {
 	    }
 	}
     }
+
+    return 0
 }
 
 ::itcl::body ArcherCore::addTreeNodeTag {_node _tag} {
@@ -4438,8 +4933,6 @@ namespace eval ArcherCore {
     set obj [lindex [split $_path /] end]
 
     if {$mEnableListView} {
-	set mSelectedObj $obj
-	set mSelectObjPath $obj
 	$itk_component(newtree) selection set [lindex [lindex $mText2Node($obj) 0] 0]
 	$itk_component(newtree) see [lindex [lindex $mText2Node($obj) 0] 0]
     } else {
@@ -4451,13 +4944,8 @@ namespace eval ArcherCore {
 	    set mSelectedObj ""
 	    putString $_path
 	} else {
-	    set mSelectedObj $obj
 	    $itk_component(newtree) selection set $snode
 	    $itk_component(newtree) see $snode
-	    foreach pnode [lreverse [findTreeParentNodes $snode]] {
-		append mSelectedObjPath $mNode2Text($pnode) "/"
-	    }
-	    append mSelectedObjPath $mNode2Text($snode)
 	}
     }
 }
@@ -4575,7 +5063,7 @@ namespace eval ArcherCore {
 }
 
 #
-# Delete any use of _node and its descendents in the data
+# Delete any use of _node and its descendants in the data
 # variables that are used to interact with the tree viewer.
 #
 ::itcl::body ArcherCore::purgeNodeData {_node} {
@@ -4706,14 +5194,16 @@ namespace eval ArcherCore {
 ::itcl::body ArcherCore::Load {target} {
     SetWaitCursor $this
     if {$mNeedSave} {
-	if {![askToSave]} {
-	    set mNeedSave 0
-	    updateSaveMode
-	}
+	askToSave
     }
+
+    set mNeedSave 0
+    updateSaveMode
 
     set mTarget $target
     set mDbType "BRL-CAD"
+    set mCopyObj ""
+    set mCombWarningList ""
 
     if {![catch {$mTarget ls}]} {
 	set mDbShared 1
@@ -4744,6 +5234,13 @@ namespace eval ArcherCore {
 	} else {
 	    $itk_component(ged) open $mTargetCopy
 	}
+
+	if {$mAllowDataClear} {
+	    gedCmd data_axes points {}
+	    gedCmd data_lines points {}
+	}
+
+	gedCmd configure -primitiveLabels {}
     } else {
 	initGed
 
@@ -4768,7 +5265,9 @@ namespace eval ArcherCore {
     set mSelectedObjPath ""
     set mSelectedObj ""
     set mSelectedObjType ""
-    set mPasteActive 0
+    set mColorObjects ""
+    set mGhostObjects ""
+    set mEdgeObjects ""
 
     if {!$mViewOnly} {
 	gedCmd size [expr {$mGroundPlaneSize * 1.5 * [gedCmd base2local]}]
@@ -4826,6 +5325,43 @@ namespace eval ArcherCore {
     }
 
     return 0
+}
+
+::itcl::body ArcherCore::freezeGUI {{_freeze ""}} {
+    if {$_freeze == ""} {
+	return $mFreezeGUI
+    }
+
+    if {![string is boolean $_freeze]} {
+	error "ArcherCore::freezeGUI: \"$_freeze\" is not a boolean"
+    }
+
+    if {($_freeze && $mFreezeGUI) ||
+	(!$_freeze && !$mFreezeGUI)} {
+	# Nothing to do
+	return
+    }
+
+    set mFreezeGUI $_freeze
+    if {$mFreezeGUI} {
+	$itk_component(ged) refresh_off
+	SetWaitCursor $this
+    } else {
+	if {$mNeedsTreeRebuild} {
+	    set mNeedsTreeRebuild 0
+	    set mNeedsTreeSync 0
+	    rebuildTree
+	} elseif {$mNeedsTreeSync} {
+	    set mNeedsTreeSync 0
+	    syncTree
+	}
+
+	updateSaveMode
+
+	$itk_component(ged) refresh_on
+	$itk_component(ged) refresh_all
+	SetNormalCursor $this
+    }
 }
 
 ::itcl::body ArcherCore::getTkColor {r g b} {
@@ -4949,7 +5485,7 @@ namespace eval ArcherCore {
 		set mStatusStr "Draw object as wireframe"
 	    }
 	    "Shaded" {
-		set mStatusStr "Draw object as shaded if a bot or polysolid (unevalutated)"
+		set mStatusStr "Draw object as shaded if a bot or polysolid (unevaluated)"
 	    }
 	    "Hidden Line" {
 		set mStatusStr "Draw object as hidden line"
@@ -5063,7 +5599,7 @@ namespace eval ArcherCore {
 		set mStatusStr "Draw object as wireframe"
 	    }
 	    "Shaded" {
-		set mStatusStr "Draw object as shaded if a bot or polysolid (unevalutated)"
+		set mStatusStr "Draw object as shaded if a bot or polysolid (unevaluated)"
 	    }
 	    "Hidden Line" {
 		set mStatusStr "Draw object as hidden line"
@@ -5314,8 +5850,22 @@ namespace eval ArcherCore {
     doLighting
     gedCmd dlist_on $mDisplayListMode
 
+    if {$mWireframeMode} {
+	gedCmd lod on
+    } else {
+	gedCmd lod off
+    }
+
     $itk_component(ged) refresh_on
     $itk_component(ged) refresh_all
+}
+
+::itcl::body ArcherCore::updateLightingMode {} {
+    set mLightingModeCurr $mLightingModePref
+
+    if {$mLighting} {
+	gedCmd light_all $mLightingModeCurr
+    }
 }
 
 ::itcl::body ArcherCore::updatePerspective {_unused} {
@@ -5351,6 +5901,24 @@ namespace eval ArcherCore {
     updateZClipPlanes 0
 }
 
+::itcl::body ArcherCore::validateZClipMax {_d} {
+    if {[::cadwidgets::Ged::validateDouble $_d]} {
+
+	if {$_d == "" || $_d == "."} {
+	    return 1
+	}
+
+	if {$_d < 0} {
+	    return 0
+	}
+
+	after idle [::itcl::code $this updateZClipPlanes 0]
+	return 1
+    }
+
+    return 0
+}
+
 ::itcl::body ArcherCore::pushPerspectiveSettings {} {
     set mPerspectivePref $mPerspective
     updatePerspective 0
@@ -5365,12 +5933,7 @@ namespace eval ArcherCore {
 }
 
 ::itcl::body ArcherCore::shootRay_doit {_start _op _target _prep _no_bool _onehit _bot_dflag _objects} {
-    eval $itk_component(ged) rt_gettrees ray -i -u $_objects
-    ray prep $_prep
-    ray set no_bool $_no_bool
-    ray set onehit $_onehit
-    ray set bot_reverse_normal_disabled $_bot_dflag
-
+    $itk_component(ged) init_shoot_ray ray $_prep $_no_bool $_onehit $_bot_dflag $_objects
     return [ray shootray $_start $_op $_target]
 }
 
@@ -5381,7 +5944,33 @@ namespace eval ArcherCore {
 }
 
 ::itcl::body ArcherCore::adjust {args} {
-    eval gedWrapper adjust 0 1 1 1 $args
+    set arg0 [lindex $args 0]
+
+    if {[catch {$itk_component(ged) get_type $arg0} type]} {
+	return
+    }
+
+    if {$type == "extrude" || $type == "revolve"} {
+	set arg1 [lindex $args 1]
+
+	if {$arg1 == "S" || $arg1 == "sk_name"} {
+	    set tflag 2
+	} else {
+	    set tflag 1
+	}
+    } elseif {$type == "dsp" || $type == "ebm" || $type == "vol"} {
+	set arg1 [lindex $args 1]
+
+	if {$arg1 == "F" || $arg1 == "file"} {
+	    set tflag 2
+	} else {
+	    set tflag 1
+	}
+    } else {
+	    set tflag 1
+    }
+
+    eval gedWrapper adjust 0 1 1 $tflag $args
 }
 
 ::itcl::body ArcherCore::arced {args} {
@@ -5404,6 +5993,10 @@ namespace eval ArcherCore {
 
 ::itcl::body ArcherCore::bev {args} {
     eval gedWrapper bev 0 0 1 1 $args
+}
+
+::itcl::body ArcherCore::B {args} {
+    eval blast $args
 }
 
 ::itcl::body ArcherCore::blast {args} {
@@ -5438,6 +6031,10 @@ namespace eval ArcherCore {
     eval gedWrapper bot_flip 1 0 1 0 $args
 }
 
+::itcl::body ArcherCore::bot_fuse {args} {
+    eval gedWrapper bot_fuse 0 0 1 2 $args
+}
+
 ::itcl::body ArcherCore::bot_merge {args} {
     eval gedWrapper bot_merge 1 0 1 1 $args
 }
@@ -5458,8 +6055,22 @@ namespace eval ArcherCore {
     eval gedWrapper bot_vertex_fuse 0 0 1 1 $args
 }
 
+::itcl::body ArcherCore::brep {args} {
+    eval gedWrapper brep 0 1 1 2 $args
+}
+
 ::itcl::body ArcherCore::c {args} {
     eval gedWrapper c 0 1 1 2 $args
+
+    set ilist [lsearch -all -regexp $args {^-[cr]$}]
+    if {$ilist == ""} {
+	return
+    }
+    set i [lindex $list end]
+    incr i
+
+    set oname [lindex $args $i]
+    selectTreePath $oname
 }
 
 ::itcl::body ArcherCore::cd {args} {
@@ -5478,7 +6089,7 @@ namespace eval ArcherCore {
     Load ""
 
     if {[llength $args] != 0} {
-        return "Usage: closedb\nWarning - ignored unsupported argument(s) \"$args\""
+	return "Usage: closedb\nWarning - ignored unsupported argument(s) \"$args\""
     }
 }
 
@@ -5488,6 +6099,9 @@ namespace eval ArcherCore {
 
 ::itcl::body ArcherCore::comb {args} {
     eval gedWrapper comb 0 1 1 2 $args
+
+    set oname [lindex $args 0]
+    selectTreePath $oname
 }
 
 ::itcl::body ArcherCore::comb_color {args} {
@@ -5512,6 +6126,14 @@ namespace eval ArcherCore {
 
 ::itcl::body ArcherCore::cp {args} {
     eval gedWrapper cp 0 0 1 2 $args
+
+    set oname [lindex $args 1]
+    if {$oname == ""} {
+	return ""
+    }
+
+    draw $oname
+    selectTreePath $oname
 }
 
 ::itcl::body ArcherCore::cpi {args} {
@@ -5523,7 +6145,7 @@ namespace eval ArcherCore {
 }
 
 ::itcl::body ArcherCore::dbExpand {args} {
-    # parse out preceeding options
+    # parse out preceding options
     set searchType "-glob"
     set options {}
     set objects {}
@@ -5601,7 +6223,11 @@ namespace eval ArcherCore {
 }
 
 ::itcl::body ArcherCore::delete {args} {
-    eval gedWrapper kill 1 0 1 2 $args
+    eval kill $args
+}
+
+::itcl::body ArcherCore::e {args} {
+    eval draw $args
 }
 
 ::itcl::body ArcherCore::draw {args} {
@@ -5617,7 +6243,7 @@ namespace eval ArcherCore {
 	set args [lreplace $args $i $i]
     }
 
-    if {$wflag} {
+    if {$wflag && !$mFreezeGUI} {
 	SetWaitCursor $this
     }
 
@@ -5631,18 +6257,34 @@ namespace eval ArcherCore {
 	lappend tobjects [regsub {^/} $obj ""]
     }
 
+    set soi [lsearch $tobjects $mSelectedObjPath]
+
     if {[catch {eval gedCmd draw $options $tobjects} ret]} {
-	gedCmd configure -primitiveLabels {}
-	updateTreeDrawLists
-	SetNormalCursor $this
+	if {$soi != -1} {
+	    gedCmd configure -primitiveLabels $mSelectedObjPath
+	}
+
+	if {!$mFreezeGUI} {
+	    updateTreeDrawLists
+
+	    if {$wflag} {
+		SetNormalCursor $this
+	    }
+	}
 
 	return $ret
     }
 
-    gedCmd configure -primitiveLabels {}
-    updateTreeDrawLists
-    if {$wflag} {
-	SetNormalCursor $this
+    if {$soi != -1} {
+	gedCmd configure -primitiveLabels $mSelectedObjPath
+    }
+
+    if {!$mFreezeGUI} {
+	updateTreeDrawLists
+
+	if {$wflag} {
+	    SetNormalCursor $this
+	}
     }
 
     return $ret
@@ -5650,6 +6292,19 @@ namespace eval ArcherCore {
 
 ::itcl::body ArcherCore::E {args} {
     eval gedWrapper E 1 0 0 1 $args
+}
+
+::itcl::body ArcherCore::edarb {args} {
+    if {[catch {eval gedWrapper edarb 0 1 1 0 $args} ret]} {
+	return $ret
+    }
+    set len [llength $args]
+
+    if {$len > 2} {
+	redrawObj [lindex $args 1] 0
+    }
+
+    return $ret
 }
 
 ::itcl::body ArcherCore::edcodes {args} {
@@ -5678,6 +6333,10 @@ namespace eval ArcherCore {
     eval gedWrapper edmater 0 0 1 0 $args
 }
 
+::itcl::body ArcherCore::d {args} {
+    eval erase $args
+}
+
 ::itcl::body ArcherCore::erase {args} {
     if {[llength $args] == 0} {
 	return
@@ -5695,21 +6354,43 @@ namespace eval ArcherCore {
 	lappend tobjects [regsub {^/} $obj ""]
     }
 
+    set soi [lsearch $tobjects $mSelectedObjPath]
+    set tmpObjPath [file dirname $mSelectedObjPath]
+    while {$soi == -1 && $tmpObjPath != "."} {
+	set soi [lsearch $tobjects $tmpObjPath]
+	set tmpObjPath [file dirname $tmpObjPath]
+    }
+
     if {[catch {eval gedCmd erase $options $tobjects} ret]} {
-	gedCmd configure -primitiveLabels {}
+	if {$soi != -1} {
+	    gedCmd configure -primitiveLabels {}
+	}
+
 	updateTreeDrawLists
 	SetNormalCursor $this
 
 	return $ret
     }
 
-    gedCmd configure -primitiveLabels {}
+    if {$soi != -1} {
+	gedCmd configure -primitiveLabels {}
+
+	if {$mAllowDataClear} {
+	    gedCmd data_axes points {}
+	    gedCmd data_lines points {}
+	}
+    }
+
     updateTreeDrawLists
     SetNormalCursor $this
 }
 
 ::itcl::body ArcherCore::ev {args} {
     eval gedWrapper ev 1 0 0 1 $args
+}
+
+::itcl::body ArcherCore::exists {args} {
+    eval gedWrapper exists 0 1 0 0 $args
 }
 
 ::itcl::body ArcherCore::exit {args} {
@@ -5728,8 +6409,19 @@ namespace eval ArcherCore {
     eval group $args
 }
 
+::itcl::body ArcherCore::get {args} {
+    eval gedWrapper get 0 1 0 0 $args
+}
+
+::itcl::body ArcherCore::graph {args} {
+    eval gedWrapper graph 0 1 1 1 $args
+}
+
 ::itcl::body ArcherCore::group {args} {
     eval gedWrapper g 1 1 1 2 $args
+
+    set oname [lindex $args 0]
+    selectTreePath $oname
 }
 
 ::itcl::body ArcherCore::hide {args} {
@@ -5743,6 +6435,10 @@ namespace eval ArcherCore {
 
 ::itcl::body ArcherCore::i {args} {
     eval gedWrapper i 0 1 1 1 $args
+}
+
+::itcl::body ArcherCore::igraph {args} {
+    eval ::igraph $args
 }
 
 ::itcl::body ArcherCore::importFg4Section {args} {
@@ -5785,11 +6481,22 @@ namespace eval ArcherCore {
 }
 
 ::itcl::body ArcherCore::make {args} {
+    if {$args == "" || $args == "-t"} {
+	return [eval $itk_component(ged) make $args]
+    }
+
     eval gedWrapper make 0 0 1 2 $args
+
+    set oname [lindex $args 0]
+    selectTreePath $oname
 }
 
 ::itcl::body ArcherCore::make_bb {args} {
     eval gedWrapper make_bb 0 0 1 1 $args
+}
+
+::itcl::body ArcherCore::make_name {args} {
+    eval gedWrapper make_name 0 1 0 0 $args
 }
 
 ::itcl::body ArcherCore::make_pnts {args} {
@@ -5806,9 +6513,9 @@ namespace eval ArcherCore {
 
     if {$args != {}} {
 	set page $args
-        if {![$archerMan select $page]} {
-            error "couldn't find manual page \"$page\""
-        }
+	if {![$archerMan select $page]} {
+	    error "couldn't find manual page \"$page\""
+	}
     }
     $archerMan center [namespace tail $this]
     ::update idletasks
@@ -5866,9 +6573,9 @@ namespace eval ArcherCore {
     set ret ""
 
     switch [llength $args] {
-        0 {set ret $mTarget}
-        1 {Load [lindex $args 0]}
-        default {set ret "Usage: opendb \[database.g\]"}
+	0 {set ret $mTarget}
+	1 {Load [lindex $args 0]}
+	default {set ret "Usage: opendb \[database.g\]"}
     }
 
     return $ret
@@ -5888,7 +6595,7 @@ namespace eval ArcherCore {
 ::itcl::body ArcherCore::oscale {args} {
     set result [eval gedWrapper oscale 0 0 1 0 $args]
 
-    if {[llength $args] == 5} {
+    if {[llength $args] == 2} {
 	redrawObj [lindex $args 0] 0
     }
 
@@ -6011,6 +6718,9 @@ namespace eval ArcherCore {
 
 ::itcl::body ArcherCore::r {args} {
     eval gedWrapper r 0 1 1 2 $args
+
+    set oname [lindex $args 0]
+    selectTreePath $oname
 }
 
 ::itcl::body ArcherCore::rcodes {args} {
@@ -6155,15 +6865,16 @@ namespace eval ArcherCore {
 }
 
 ::itcl::body ArcherCore::xpush {args} {
-    eval gedWrapper xpush 0 0 1 0 $args
+    eval gedWrapper xpush 0 0 1 2 $args
 }
 
 ::itcl::body ArcherCore::Z {args} {
-    eval gedWrapper clear 0 0 0 1 $args
+    eval zap $args
 }
 
 ::itcl::body ArcherCore::zap {args} {
     eval gedWrapper clear 0 0 0 1 $args
+    gedCmd configure -primitiveLabels {}
 }
 
 
@@ -6354,7 +7065,7 @@ namespace eval ArcherCore {
 	    -width 12 \
 	    -textvariable [::itcl::scope mCenterX] \
 	    -validate key \
-	    -validatecommand [::itcl::code $this validateDouble %P]
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add centerDialogXUL {
 	::ttk::label $parent.xul \
@@ -6369,7 +7080,7 @@ namespace eval ArcherCore {
 	    -width 12 \
 	    -textvariable [::itcl::scope mCenterY] \
 	    -validate key \
-	    -validatecommand [::itcl::code $this validateDouble %P]
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add centerDialogYUL {
 	::ttk::label $parent.yul \
@@ -6384,7 +7095,7 @@ namespace eval ArcherCore {
 	    -width 12 \
 	    -textvariable [::itcl::scope mCenterZ] \
 	    -validate key \
-	    -validatecommand [::itcl::code $this validateDouble %P]
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add centerDialogZUL {
 	::ttk::label $parent.zul \
@@ -6461,6 +7172,8 @@ namespace eval ArcherCore {
 }
 
 ::itcl::body ArcherCore::watchVar {_name1 _name2 _op} {
+    global rt_bot_mintie
+
     if {![info exists itk_component(ged)]} {
 	return
     }
@@ -6512,6 +7225,18 @@ namespace eval ArcherCore {
 	mViewingParamsColor {
 	    $itk_component(ged) configure -viewingParamsColor $mViewingParamsColor
 	}
+	mRayColorOdd {
+	    $itk_component(ged) configure -rayColorOdd $mRayColorOdd
+	}
+	mRayColorEven {
+	    $itk_component(ged) configure -rayColorEven $mRayColorEven
+	}
+	mRayColorVoid {
+	    $itk_component(ged) configure -rayColorVoid $mRayColorVoid
+	}
+	mRtBotMintie {
+	    set rt_bot_mintie $mRtBotMintie
+	}
     }
 }
 
@@ -6535,6 +7260,7 @@ namespace eval ArcherCore {
 
     set drawem 0
     set draw_objects ""
+    set how 0
 
     if {!$_state && !$mToolViewChange} {    # The same accordian button was pressed and there's NO tool view change
 	if {[regexp Tree $_item all]} {
@@ -6607,12 +7333,15 @@ namespace eval ArcherCore {
 		$TREE_MODE_TREE - \
 		$TREE_MODE_COLOR_OBJECTS {
 		    set draw_objects $mColorObjects
+		    set how $mColorObjectsHow
 		} \
 		$TREE_MODE_GHOST_OBJECTS {
 		    set draw_objects $mGhostObjects
+		    set how $mGhostObjectsHow
 		} \
 		$TREE_MODE_EDGE_OBJECTS {
 		    set draw_objects $mEdgeObjects
+		    set how $mEdgeObjectsHow
 		}
 	}
 
@@ -6635,7 +7364,11 @@ namespace eval ArcherCore {
 	set mSavedCenter [$itk_component(ged) center]
 	set mSavedSize [$itk_component(ged) size]
 	zap
-	eval draw $draw_objects
+
+	if {$draw_objects != ""} {
+	    eval draw -m$how $draw_objects
+	}
+
 	$itk_component(ged) center $mSavedCenter
 	$itk_component(ged) size $mSavedSize
 	$itk_component(ged) refresh_on
@@ -6650,7 +7383,6 @@ namespace eval ArcherCore {
 
     set mAccordianCallbackActive 0
 }
-
 
 
 # Local Variables:

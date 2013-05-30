@@ -1,7 +1,7 @@
 /*                    F B _ G E N E R I C . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2012 United States Government as represented by
+ * Copyright (c) 1986-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -41,7 +41,7 @@
 
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
-#endif 
+#endif
 
 #include "fb.h"
 
@@ -52,7 +52,7 @@ extern int wgl_close_existing(FBIO *ifp);
 
 
 #define Malloc_Bomb(_bytes_)					\
-    fb_log("\"%s\"(%d) : allocation of %d bytes failed.\n",	\
+    fb_log("\"%s\"(%d) : allocation of %lu bytes failed.\n",	\
 	   __FILE__, __LINE__, _bytes_)
 
 
@@ -76,7 +76,7 @@ fb_totally_numeric(const char *s)
 
 
 /**
- * Disk interface enable flag.  Used so the the remote daemon
+ * Disk interface enable flag.  Used so the remote daemon
  * can turn off the disk interface.
  */
 int _fb_disk_enable = 1;
@@ -394,7 +394,7 @@ fb_genhelp(void)
  * F B _ I S _ L I N E A R _ C M A P
  *
  * Check for a color map being linear in the upper 8 bits of R, G, and
- * B.  Returns 1 for linear map, 0 for non-linear map (ie,
+ * B.  Returns 1 for linear map, 0 for non-linear map (i.e.,
  * non-identity map).
  */
 int
@@ -510,7 +510,7 @@ fb_skip_bytes(int fd, off_t num, int fileinput, int scanbytes, unsigned char *sc
     int n, try;
 
     if (fileinput) {
-	(void)lseek(fd, (off_t)num, 1);
+	(void)lseek(fd, num, 1);
 	return 0;
     }
 

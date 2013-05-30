@@ -1,7 +1,7 @@
 /*                      S S A M P - B W . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2012 United States Government as represented by
+ * Copyright (c) 2004-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -20,7 +20,7 @@
 /** @file rttherm/ssamp-bw.c
  *
  * Program to convert spectral sample data into a single-channel
- * monocrome image.
+ * monochrome image.
  *
  */
 

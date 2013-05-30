@@ -1,7 +1,7 @@
 /*                       C U R S O R S . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2012 United States Government as represented by
+ * Copyright (c) 2004-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -19,7 +19,7 @@
  */
 /** @file lgt/cursors.h
  *	Author:		Gary S. Moss
- * From AT&T's Teletype 5620 $DMD/icon directory, reformated slightly
+ * From AT&T's Teletype 5620 $DMD/icon directory, reformatted slightly
  * to be an array of 32 unsigned chars, rather than a Texture16.
  */
 unsigned char menucursor[32] =

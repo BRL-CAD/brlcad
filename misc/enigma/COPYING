@@ -1,5 +1,0 @@
-Published in 1998 by Joerg Wunsch.  This work is in the public domain.
-
-Implementations of crypt are very common among operating systems.
-This implementation of crypt, named enigma, was taken from the public
-domain Crypt Breaker's Workbench software.

@@ -1,7 +1,7 @@
 /*                           G E D . H
  * BRL-CAD
  *
- * Copyright (c) 2008-2012 United States Government as represented by
+ * Copyright (c) 2008-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -254,6 +254,13 @@ __BEGIN_DECLS
 	return (_flags); \
     }
 
+/* From include/dm.h */
+#define GED_MAX 2047.0
+#define GED_MIN -2048.0
+#define GED_RANGE 4095.0
+#define INV_GED 0.00048828125
+#define INV_4096 0.000244140625
+
 struct ged_adc_state {
     int		gas_draw;
     int		gas_dv_x;
@@ -409,7 +416,6 @@ struct ged_rect_state {
 };
 
 
-
 struct ged_run_rt {
     struct bu_list l;
 #if defined(_WIN32) && !defined(__CYGWIN__)
@@ -525,6 +531,12 @@ struct ged_view {
     struct ged_other_state 	gv_view_params;
     struct ged_other_state 	gv_view_scale;
     struct ged_rect_state 	gv_rect;
+    int				gv_adaptive_plot;
+    int				gv_redraw_on_zoom;
+    int				gv_x_samples;
+    int				gv_y_samples;
+    fastf_t			gv_point_scale;
+    fastf_t			gv_curve_scale;
 };
 
 
@@ -560,6 +572,12 @@ struct ged {
     int (*add)(const struct ged_cmd *cmd);
     int (*del)(const char *name);
     int (*run)(int ac, char *av[]);
+
+    /* Interface to LIBDM */
+    int ged_dm_width;
+    int ged_dm_height;
+    int ged_dmp_is_null;
+    void (*ged_dm_get_display_image)();
 };
 
 typedef int (*ged_func_ptr)(struct ged *, int, const char *[]);
@@ -801,6 +819,11 @@ GED_EXPORT extern int ged_bot_dump(struct ged *gedp, int argc, const char *argv[
 GED_EXPORT extern int ged_dbot_dump(struct ged *gedp, int argc, const char *argv[]);
 
 /**
+ * Split the specified bot edge. This splits the triangles that share the edge.
+ */
+GED_EXPORT extern int ged_bot_edge_split(struct ged *gedp, int argc, const char *argv[]);
+
+/**
  * Create new_bot by fusing faces in old_bot
  */
 GED_EXPORT extern int ged_bot_face_fuse(struct ged *gedp, int argc, const char *argv[]);
@@ -812,9 +835,19 @@ GED_EXPORT extern int ged_bot_face_fuse(struct ged *gedp, int argc, const char *
 GED_EXPORT extern int ged_bot_face_sort(struct ged *gedp, int argc, const char *argv[]);
 
 /**
+ * Split the specified bot face into three parts (i.e. by adding a point to the center)
+ */
+GED_EXPORT extern int ged_bot_face_split(struct ged *gedp, int argc, const char *argv[]);
+
+/**
  * Flip/reverse the specified bot's orientation.
  */
 GED_EXPORT extern int ged_bot_flip(struct ged *gedp, int argc, const char *argv[]);
+
+/**
+ * Fuse bot
+ */
+GED_EXPORT extern int ged_bot_fuse(struct ged *gedp, int argc, const char *argv[]);
 
 /**
  * Create bot_dest by merging the bot sources.
@@ -940,6 +973,7 @@ GED_EXPORT extern int ged_debuglib(struct ged *gedp, int argc, const char *argv[
  * Provides user-level access to LIBBU's bu_prmem()
  */
 GED_EXPORT extern int ged_debugmem(struct ged *gedp, int argc, const char *argv[]);
+GED_EXPORT extern int ged_memprint(struct ged *gedp, int argc, const char *argv[]);
 
 /**
  * Set/get librt's NMG debug bit vector
@@ -995,6 +1029,11 @@ GED_EXPORT extern int ged_eac(struct ged *gedp, int argc, const char *argv[]);
  * Echo the specified arguments.
  */
 GED_EXPORT extern int ged_echo(struct ged *gedp, int argc, const char *argv[]);
+
+/**
+ * Arb specific edits.
+ */
+GED_EXPORT extern int ged_edarb(struct ged *gedp, int argc, const char *argv[]);
 
 /**
  * Text edit the color table
@@ -1074,6 +1113,41 @@ GED_EXPORT extern int ged_fb2pix(struct ged *gedp, int argc, const char *argv[])
 GED_EXPORT extern int ged_find(struct ged *gedp, int argc, const char *argv[]);
 
 /**
+ * Find the arb edge nearest the specified point in view coordinates.
+ */
+GED_EXPORT extern int ged_find_arb_edge_nearest_pt(struct ged *gedp, int argc, const char *argv[]);
+
+/**
+ * Find the bot edge nearest the specified point in view coordinates.
+ */
+GED_EXPORT extern int ged_find_bot_edge_nearest_pt(struct ged *gedp, int argc, const char *argv[]);
+
+/**
+ * Find the bot point nearest the specified point in view coordinates.
+ */
+GED_EXPORT extern int ged_find_botpt_nearest_pt(struct ged *gedp, int argc, const char *argv[]);
+
+/**
+ * Add a metaball point.
+ */
+GED_EXPORT extern int ged_add_metaballpt(struct ged *gedp, int argc, const char *argv[]);
+
+/**
+ * Delete a metaball point.
+ */
+GED_EXPORT extern int ged_delete_metaballpt(struct ged *gedp, int argc, const char *argv[]);
+
+/**
+ * Find the metaball point nearest the specified point in model coordinates.
+ */
+GED_EXPORT extern int ged_find_metaballpt_nearest_pt(struct ged *gedp, int argc, const char *argv[]);
+
+/**
+ * Move a metaball point.
+ */
+GED_EXPORT extern int ged_move_metaballpt(struct ged *gedp, int argc, const char *argv[]);
+
+/**
  * Find the pipe point nearest the specified point in model coordinates.
  */
 GED_EXPORT extern int ged_find_pipept_nearest_pt(struct ged *gedp, int argc, const char *argv[]);
@@ -1100,6 +1174,11 @@ GED_EXPORT extern int ged_get(struct ged *gedp, int argc, const char *argv[]);
 GED_EXPORT extern int ged_get_autoview(struct ged *gedp, int argc, const char *argv[]);
 
 /**
+ * Get a bot's edges
+ */
+GED_EXPORT extern int ged_get_bot_edges(struct ged *gedp, int argc, const char *argv[]);
+
+/**
  * Get combination information
  */
 GED_EXPORT extern int ged_get_comb(struct ged *gedp, int argc, const char *argv[]);
@@ -1123,6 +1202,11 @@ GED_EXPORT extern int ged_glob(struct ged *gedp, int argc, const char *argv[]);
  *
  */
 GED_EXPORT extern int ged_gqa(struct ged *gedp, int argc, const char *argv[]);
+
+/**
+ * Query or manipulate properties of a graph.
+ */
+GED_EXPORT extern int ged_graph(struct ged *gedp, int argc, const char *argv[]);
 
 /**
  * Grid utility command.
@@ -1196,6 +1280,11 @@ GED_EXPORT extern int ged_isize(struct ged *gedp, int argc, const char *argv[]);
 GED_EXPORT extern int ged_item(struct ged *gedp, int argc, const char *argv[]);
 
 /**
+  * Joint command ported to the libged library.
+  */
+GED_EXPORT extern int ged_joint(struct ged *gedp, int argc, const char *argv[]);
+
+/**
  * Save/keep the specified objects in the specified file
  */
 GED_EXPORT extern int ged_keep(struct ged *gedp, int argc, const char *argv[]);
@@ -1234,6 +1323,11 @@ GED_EXPORT extern int ged_list(struct ged *gedp, int argc, const char *argv[]);
  * Load the view
  */
 GED_EXPORT extern int ged_loadview(struct ged *gedp, int argc, const char *argv[]);
+
+/**
+ * Configure Level of Detail drawing.
+ */
+GED_EXPORT extern int ged_lod(struct ged *gedp, int argc, const char *argv[]);
 
 /**
  * Used to control logging.
@@ -1334,6 +1428,16 @@ GED_EXPORT extern int ged_move_all(struct ged *gedp, int argc, const char *argv[
  * Move an arb's face through point
  */
 GED_EXPORT extern int ged_move_arb_face(struct ged *gedp, int argc, const char *argv[]);
+
+/**
+ * Move the specified bot point. This can be relative or absolute.
+ */
+GED_EXPORT extern int ged_move_botpt(struct ged *gedp, int argc, const char *argv[]);
+
+/**
+ * Move the specified bot points. This movement is always relative.
+ */
+GED_EXPORT extern int ged_move_botpts(struct ged *gedp, int argc, const char *argv[]);
 
 /**
  * Move the specified pipe point.
@@ -1449,6 +1553,11 @@ GED_EXPORT extern int ged_png(struct ged *gedp, int argc, const char *argv[]);
 GED_EXPORT extern int ged_screen_grab(struct ged *gedp, int argc, const char *argv[]);
 
 /**
+ * Write out polygons (binary) of the currently displayed geometry.
+ */
+GED_EXPORT extern int ged_polybinout(struct ged *gedp, int argc, const char *argv[]);
+
+/**
  * Set point of view
  */
 GED_EXPORT extern int ged_pov(struct ged *gedp, int argc, const char *argv[]);
@@ -1489,12 +1598,17 @@ GED_EXPORT extern int ged_protate(struct ged *gedp, int argc, const char *argv[]
 GED_EXPORT extern int ged_pscale(struct ged *gedp, int argc, const char *argv[]);
 
 /**
+ * Set an obj's attribute to the specified value.
+ */
+GED_EXPORT extern int ged_pset(struct ged *gedp, int argc, const char *argv[]);
+
+/**
  * Translate obj's attributes by tvec.
  */
 GED_EXPORT extern int ged_ptranslate(struct ged *gedp, int argc, const char *argv[]);
 
 /**
- * Push objects' path transformations to  primitives
+ * Push objects' path transformations to primitives
  */
 GED_EXPORT extern int ged_push(struct ged *gedp, int argc, const char *argv[]);
 
@@ -1695,7 +1809,7 @@ GED_EXPORT extern int ged_shaded_mode(struct ged *gedp, int argc, const char *ar
 GED_EXPORT extern int ged_shader(struct ged *gedp, int argc, const char *argv[]);
 
 /**
- * Breaks the NMG model into seperate shells
+ * Breaks the NMG model into separate shells
  */
 GED_EXPORT extern int ged_shells(struct ged *gedp, int argc, const char *argv[]);
 
@@ -1804,6 +1918,11 @@ GED_EXPORT extern int ged_unhide(struct ged *gedp, int argc, const char *argv[])
 GED_EXPORT extern int ged_units(struct ged *gedp, int argc, const char *argv[]);
 
 /**
+ * Recalculate plots for displayed objects.
+ */
+GED_EXPORT extern int ged_redraw(struct ged *gedp, int argc, const char *argv[]);
+
+/**
  * Convert the specified view point to a model point.
  */
 GED_EXPORT extern int ged_v2m_point(struct ged *gedp, int argc, const char *argv[]);
@@ -1905,13 +2024,17 @@ GED_EXPORT extern int ged_zap(struct ged *gedp, int argc, const char *argv[]);
  * Zoom the view in or out.
  */
 GED_EXPORT extern int ged_zoom(struct ged *gedp, int argc, const char *argv[]);
-
+/**
+ * Voxelize the specified objects
+ */
+GED_EXPORT extern int ged_voxelize(struct ged *gedp, int argc, const char *argv[]);
 
 GED_EXPORT extern ged_polygon *ged_clip_polygon(GedClipType op, ged_polygon *subj, ged_polygon *clip, fastf_t sf, matp_t model2view, matp_t view2model);
 GED_EXPORT extern ged_polygon *ged_clip_polygons(GedClipType op, ged_polygons *subj, ged_polygons *clip, fastf_t sf, matp_t model2view, matp_t view2model);
 GED_EXPORT extern int ged_export_polygon(struct ged *gedp, ged_data_polygon_state *gdpsp, size_t polygon_i, const char *sname);
 GED_EXPORT extern ged_polygon *ged_import_polygon(struct ged *gedp, const char *sname);
-
+GED_EXPORT extern fastf_t ged_find_polygon_area(ged_polygon *gpoly, fastf_t sf, matp_t model2view, fastf_t size);
+GED_EXPORT extern int ged_polygons_overlap(struct ged *gedp, ged_polygon *polyA, ged_polygon *polyB);
 
 
 /***************************************
@@ -1956,4 +2079,3 @@ __END_DECLS
  * End:
  * ex: shiftwidth=4 tabstop=8
  */
-

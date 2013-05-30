@@ -1,7 +1,7 @@
 /*                    P I X B A C K G N D . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2012 United States Government as represented by
+ * Copyright (c) 1986-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -19,7 +19,7 @@
  */
 /** @file util/pixbackgnd.c
  *
- * Backgound Maker
+ * Background Maker
  *
  * Given Hue and Saturation for background, make top light and bottom dark.
  * Generates a pix(5) stream on stdout.
@@ -59,7 +59,7 @@ or	r g b\n\
  *
  * convert red green blue to hue saturation value
  */
-void
+static void
 rgbhsv(double *rgb, double *hsv)
 {
     double s, v, r, g, b, x;
@@ -74,23 +74,21 @@ rgbhsv(double *rgb, double *hsv)
     x = ((r < g) ? r : g);
     x = ((x < b) ? x : b);
     if (!ZERO(v - x)) { /* v != x */
-	dif = (double) (v - x);
+	dif = (double)(v - x);
 	if (!ZERO(r - v)) /* r != v */
 	    if (ZERO(g - v)) /* g == v */
 		if (!ZERO(b - x)) /* b != x */
-		    h = (double) (42.5 * (3. - (double)(v-b) / dif));
+		    h = (double)(42.5 * (3.0 - (double)(v-b) / dif));
 		else
-		    h = (double) (42.5 * (1. + (double)(v-r) / dif));
+		    h = (double)(42.5 * (1.0 + (double)(v-r) / dif));
+	    else if (!ZERO(r - x)) /* r != x */
+		h = (double)(42.5 * (5.0 - (double)(v-r) / dif));
 	    else
-		if (!ZERO(r - x)) /* r != x */
-		    h = (double) (42.5 * (5. - (double)(v-r) / dif));
-		else
-		    h = (double) (42.5 * (3. + (double)(v-g) / dif));
+		h = (double)(42.5 * (3.0 + (double)(v-g) / dif));
+	else if (!ZERO(g - x)) /* g != x */
+	    h = (double)(42.5 * (1.0 - (double)(v-g) / dif));
 	else
-	    if (!ZERO(g - x)) /* g != x */
-		h = (double) (42.5 * (1. - (double)(v-g) / dif));
-	    else
-		h = (double) (42.5 * (5. + (double)(v-b) / dif));
+	    h = (double)(42.5 * (5.0 + (double)(v-b) / dif));
     }
 
     if (!ZERO(v))
@@ -108,8 +106,7 @@ rgbhsv(double *rgb, double *hsv)
  *
  * convert hue saturation and value to red, green, blue
  */
-
-void
+static void
 hsvrgb(double *hsv, double *rgb)
 {
     double r, g, b, m, n, k, foo;
@@ -117,13 +114,13 @@ hsvrgb(double *hsv, double *rgb)
     double f;
 
     if (!ZERO(hsv[1])) {
-	s = (double)hsv[1] / 255.;
+	s = (double)hsv[1] / 255.0;
 	h = (double)hsv[0] / 42.666;
 	f = modf(h, &foo);
 	v = (double)hsv[2];
-	m = (double) (v * (1. - s) + .5);
-	n = (double) (v * (1. - s*f) + .5);
-	k = (double) (v * (1. - (s * (1.-f))) + .5);
+	m = (double)(v * (1.0 - s) + .5);
+	n = (double)(v * (1.0 - s*f) + .5);
+	k = (double)(v * (1.0 - (s * (1.-f))) + .5);
 	switch ((int) h) {
 	    case 0:
 		r = hsv[2];
@@ -166,7 +163,7 @@ hsvrgb(double *hsv, double *rgb)
 }
 
 
-int
+static int
 get_args(int argc, char **argv)
 {
     int c;
@@ -210,7 +207,7 @@ get_args(int argc, char **argv)
     if (bu_optind+1 >= argc)
 	return 0;		/* only 0 or 1 args */
     if (bu_optind+2 == argc) {
-	/* Paramaters are H S */
+	/* Parameters are H S */
 	HSV[0] = atof(argv[bu_optind++]);
 	HSV[1] = atof(argv[bu_optind]);
 	HSV[2] = h_start;
@@ -229,6 +226,24 @@ get_args(int argc, char **argv)
 }
 
 
+static void
+flood(unsigned char *horiz_buf, unsigned char *vert_buf, unsigned char *vp, int line)
+{
+    unsigned char *op;
+    ssize_t ret = 0;
+    vp = &vert_buf[line*3];
+    op = &horiz_buf[(file_width*3)-1];
+    while (op > horiz_buf) {
+	*op-- = vp[2];
+	*op-- = vp[1];
+	*op-- = *vp;
+    }
+    ret = write(1, horiz_buf, file_width*3);
+    if (ret < 0)
+	perror("write");
+}
+
+
 int
 main(int argc, char **argv)
 {
@@ -237,11 +252,10 @@ main(int argc, char **argv)
     unsigned char *horiz_buf;
     unsigned char *vert_buf;
     unsigned char *vp;
-    ssize_t ret;
 
     if (!get_args(argc, argv) || isatty(fileno(stdout))) {
 	(void)fputs(usage, stderr);
-	bu_exit (1, NULL);
+	bu_exit(1, NULL);
     }
 
     horiz_buf = (unsigned char *)malloc(file_width * 3);
@@ -301,37 +315,16 @@ main(int argc, char **argv)
      * for pix(5) format.
      */
     if (!invert) {
-	for (line = file_height-1; line >= 0; line--) {
-	    unsigned char *op;
-
-	    vp = &vert_buf[line*3];
-	    op = &horiz_buf[(file_width*3)-1];
-	    while (op > horiz_buf) {
-		*op-- = vp[2];
-		*op-- = vp[1];
-		*op-- = *vp;
-	    }
-	    ret = write(1, horiz_buf, file_width*3);
-	    if (ret < 0)
-		perror("write");
-	}
+	for (line = file_height-1; line >= 0; line--)
+	    flood(horiz_buf, vert_buf, vp, line);
     } else {
 	/* Inverted:  top-to-bottom.  Good with cat-fb */
-	for (line=0; line < file_height; line++) {
-	    unsigned char *op;
-
-	    vp = &vert_buf[line*3];
-	    op = &horiz_buf[(file_width*3)-1];
-	    while (op > horiz_buf) {
-		*op-- = vp[2];
-		*op-- = vp[1];
-		*op-- = *vp;
-	    }
-	    ret = write(1, horiz_buf, file_width*3);
-	    if (ret < 0)
-		perror("write");
-	}
+	for (line=0; line < file_height; line++)
+	    flood(horiz_buf, vert_buf, vp, line);
     }
+
+    bu_free(horiz_buf, "horiz_buf alloc from malloc");
+    bu_free(vp, "vp");
 
     return 0;
 }

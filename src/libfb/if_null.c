@@ -1,7 +1,7 @@
 /*                       I F _ N U L L . C
  * BRL-CAD
  *
- * Copyright (c) 1989-2012 United States Government as represented by
+ * Copyright (c) 1989-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -67,21 +67,21 @@ null_clear(FBIO *ifp, unsigned char *UNUSED(pp))
 }
 
 
-HIDDEN int
+HIDDEN ssize_t
 null_read(FBIO *ifp, int UNUSED(x), int UNUSED(y), unsigned char *UNUSED(pixelp), size_t count)
 {
     FB_CK_FBIO(ifp);
 
-    return (int)count;
+    return count;
 }
 
 
-HIDDEN int
+HIDDEN ssize_t
 null_write(FBIO *ifp, int UNUSED(x), int UNUSED(y), const unsigned char *UNUSED(pixelp), size_t count)
 {
     FB_CK_FBIO(ifp);
 
-    return (int)count;
+    return count;
 }
 
 

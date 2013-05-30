@@ -1,7 +1,7 @@
 /*                        R A W B O T . C
  * BRL-CAD
  *
- * Copyright (c) 1999-2012 United States Government as represented by
+ * Copyright (c) 1999-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -54,6 +54,7 @@ void usage(const char *progname)
     fprintf(stderr, "Usage: %s raw_vertex_file\n", progname);
     bu_exit(-1, NULL);
 }
+
 
 int main(int argc, char *argv[])
 {
@@ -176,6 +177,7 @@ int main(int argc, char *argv[])
 
     return 0;
 }
+
 
 /*
  * Local Variables:

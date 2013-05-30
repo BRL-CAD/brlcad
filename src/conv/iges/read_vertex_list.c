@@ -1,7 +1,7 @@
 /*              R E A D _ V E R T E X _ L I S T . C
  * BRL-CAD
  *
- * Copyright (c) 1993-2012 United States Government as represented by
+ * Copyright (c) 1993-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -47,8 +47,7 @@ Read_vertex_list(int vert_de)
 	return (struct iges_vertex_list *)NULL;
     }
 
-    vertex_list = (struct iges_vertex_list *)bu_malloc(sizeof(struct iges_vertex_list)  ,
-						       "Read_vertex_list: iges_vertex_list");
+    BU_ALLOC(vertex_list, struct iges_vertex_list);
 
     vertex_list->vert_de = vert_de;
     vertex_list->next = NULL;

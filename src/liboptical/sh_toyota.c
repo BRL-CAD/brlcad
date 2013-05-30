@@ -1,7 +1,7 @@
 /*                     S H _ T O Y O T A . C
  * BRL-CAD
  *
- * Copyright (c) 1992-2012 United States Government as represented by
+ * Copyright (c) 1992-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -52,8 +52,8 @@
 #define MEDIUM_SKY 1
 #define OVERCAST_SKY 2
 
-/* Sometimes found in <math.h> */
 #define MIKE_TOL	.000001
+
 
 /* Local information */
 struct toyota_specific {
@@ -79,8 +79,8 @@ struct bu_structparse toyota_parse[] = {
     {"%f", 1, "sun_sang",	CL_O(sun_sang),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%f", 1, "index_refrac", CL_O(index_refrac),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%f", 1, "atmos_trans", CL_O(atmos_trans),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f", 3, "Zenith",	bu_offsetofarray(struct toyota_specific, Zenith),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%s", 1, "material",	bu_offsetofarray(struct toyota_specific, material),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f", 3, "Zenith",	CL_O(Zenith),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%s", 1, "material",	CL_O(material),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%d", 1, "glass",	CL_O(glass),			BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"",   0, (char *)0,	0,			BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
@@ -119,21 +119,18 @@ struct mfuncs toyota_mfuncs[] = {
 
 #define RI_AIR 1.0    /* Refractive index of air.		*/
 
-/*
- * T O Y O T A _ S E T U P
- *
- * These should be measured values, but since we're lazy
- * let's use values Toyota carefully measured in Japan one day.
+/**
+ * These should be measured values, but since we're lazy let's use
+ * values Toyota carefully measured in Japan one day.
  *
  * Data measured:	11:28am, October 20, 1989 (Friday)
  *
- * Location:	Toyota-city, Aichi-prefecture, Japan
- * at 35d 2'55.07" North, 137d 9'45.26" East
+ * Location: Toyota-city, Aichi-prefecture, Japan at 35d 2'55.07"
+ * North, 137d 9'45.26" East
  *
- * Measuring Instruments: Precision pyrheliometer (Model MS-52 made
- * by Eko Co., Ltd.), Sun-photo meter (Model MS-110
- * made by Eko Co., Ltd.), Luminance meter
- * (MINOLTA CS-100)
+ * Measuring Instruments: Precision pyrheliometer (Model MS-52 made by
+ * Eko Co., Ltd.), Sun-photo meter (Model MS-110 made by Eko Co.,
+ * Ltd.), Luminance meter (MINOLTA CS-100)
  */
 HIDDEN int
 toyota_setup(register struct region *UNUSED(rp), struct bu_vls *matparm, genptr_t *dpp, const struct mfuncs *UNUSED(mfp), struct rt_i *UNUSED(rtip))
@@ -142,7 +139,7 @@ toyota_setup(register struct region *UNUSED(rp), struct bu_vls *matparm, genptr_
 /* New since 4.4 release */
 {
     char mfile[200];
-    fastf_t l, a, b;
+    double l, a, b;
     FILE *fp;
     int i, lines;
     register struct toyota_specific *tp;
@@ -158,13 +155,13 @@ toyota_setup(register struct region *UNUSED(rp), struct bu_vls *matparm, genptr_
     tp->weather = CLEAR_SKY;/* no clouds */
 
     /*            / 2*M_PI  / arctan(rs/d)
-     * sun_sang = |       |
-     *	      |       |     sin(theta) d-theta d-phi
-     *	     /       /
+     * sun_sang = |         |
+     *	          |         |     sin(theta) d-theta d-phi
+     *	          /         /
      *
      *	    = 2*M_PI*(1 - cos(arctan(rs/d)))
      *
-     *          = 2*M_PI*(1 - cos(arctan(695300/149000000)))
+     *      = 2*M_PI*(1 - cos(arctan(695300/149000000)))
      *
      *	    = 2*M_PI*(1 - cos(.00466640908179121739))
      *
@@ -180,10 +177,10 @@ toyota_setup(register struct region *UNUSED(rp), struct bu_vls *matparm, genptr_
     tp->sun_sang = 6.840922996708585e-5;	/* in steradians */
     tp->index_refrac = 1.2;
     bu_strlcpy(tp->material, "junk", sizeof(tp->material));
-    VSET(tp->Zenith, 0., 0., 1.);
+    VSET(tp->Zenith, 0., 0., 1.0);
 
     if (bu_struct_parse(matparm, toyota_parse, (char *)tp) < 0) {
-	bu_free((genptr_t)tp, "toyota_specific");
+	BU_PUT(tp, struct toyota_specific);
 	return -1;
     }
 
@@ -222,9 +219,6 @@ toyota_setup(register struct region *UNUSED(rp), struct bu_vls *matparm, genptr_
 }
 
 
-/*
- * M I R R O R _ S E T U P
- */
 HIDDEN int
 tmirror_setup(register struct region *UNUSED(rp), struct bu_vls *matparm, genptr_t *dpp, const struct mfuncs *UNUSED(mfp), struct rt_i *UNUSED(rtip))
 
@@ -244,9 +238,6 @@ tmirror_setup(register struct region *UNUSED(rp), struct bu_vls *matparm, genptr
 }
 
 
-/*
- * G L A S S _ S E T U P
- */
 HIDDEN int
 tglass_setup(register struct region *UNUSED(rp), struct bu_vls *matparm, genptr_t *dpp, const struct mfuncs *UNUSED(mfp), struct rt_i *UNUSED(rtip))
 
@@ -266,9 +257,6 @@ tglass_setup(register struct region *UNUSED(rp), struct bu_vls *matparm, genptr_
 }
 
 
-/*
- * T O Y O T A _ P R I N T
- */
 HIDDEN void
 toyota_print(register struct region *rp, genptr_t dp)
 {
@@ -276,20 +264,15 @@ toyota_print(register struct region *rp, genptr_t dp)
 }
 
 
-/*
- * T O Y O T A _ F R E E
- */
 HIDDEN void
 toyota_free(genptr_t cp)
 {
     /* need to free cp->refl */
-    bu_free(cp, "toyota_specific");
+    BU_PUT(cp, struct toyota_specific);
 }
 
 
-/*
- * A I R _ M A S S
- *
+/**
  * Return the relative optical air mass as a function of solar
  * altitude.  See Kasten, Fritz "Archiv fuer Meterologie Geophysik
  * und Bioklimateorie, Ser. B", Vol. 14, p. 14, 1966, A New Table and
@@ -301,7 +284,7 @@ fastf_t
 air_mass(fastf_t air_gamma)
 /* Solar altitude off horizon (degrees). */
 {
-    if (air_gamma <= 0.) {
+    if (air_gamma <= 0.0) {
 	bu_log("air_mass: sun altitude of %g degrees ignored.\n", air_gamma);
 	return 0;
     }
@@ -309,9 +292,7 @@ air_mass(fastf_t air_gamma)
 }
 
 
-/*
- * Z E N I T H _ L U M I N A N C E
- *
+/**
  * Return sky luminance at its zenith.
  *
  * DON'T KNOW HOW TO DO THIS YET!!!
@@ -324,13 +305,11 @@ zenith_luminance(fastf_t UNUSED(sun_alt), fastf_t UNUSED(t_vl))
 /* Solar altitude off horizon (degrees). */
 /* atmospheric turbidity (aerosol optical depth) */
 {
-    return 2000.;	/* swag */
+    return 2000.0;	/* swag */
 }
 
 
-/*
- * O V E R C A S T _ S K Y _ L U M
- *
+/**
  * CIE Standard sky luminance function.  Sky covered with clouds
  * so thick that the sun cannot be seen.
  * Luminance units: cd/m^2
@@ -344,16 +323,14 @@ overcast_sky_lum(fastf_t lz, fastf_t *Zenith, fastf_t *Sky_elmt)
 /* luminance of the zenith */
 /* vectors to zenith and a sky element */
 {
-    return lz * (1. + 2.*VDOT(Zenith, Sky_elmt)/3.);
+    return lz * (1.0 + 2.*VDOT(Zenith, Sky_elmt)/3.0);
 }
 
 
-/* H O M O G E N O U S _ S K Y _ L U M
- *
- * Intermediate homogenous sky light luminance function.  Sky in
- * which weather homogenously changes between clear and overcast skies
- * without clouds scattered in the sky.
- * Luminance units: cd/m^2
+/**
+ * Intermediate homogeneous sky light luminance function.  Sky in
+ * which weather homogeneously changes between clear and overcast
+ * skies without clouds scattered in the sky.  Luminance units: cd/m^2
  *
  * DON'T KNOW HOW TO DO THIS YET!!!
  * SENT LETTER TO CIE & TOYOTA JULY 7, 1992
@@ -363,13 +340,11 @@ homogenous_sky_lum(fastf_t *UNUSED(Sky_elmt), fastf_t *UNUSED(Sun), fastf_t UNUS
 /* vectors to a sky element and to sun */
 /* Turbidity factor. */
 {
-    return 0.;
+    return 0.0;
 }
 
 
-/*
- * C L E A R _ S K Y _ L U M
- *
+/**
  * CIE Standard sky luminance function.  Sky free from clouds.
  * Luminance units: cd/m^2
  *
@@ -399,24 +374,21 @@ clear_sky_lum(fastf_t lz, fastf_t *Sky_elmt, fastf_t *Sun, fastf_t *Zenith)
     lum =
 	lz
 	* (0.91 + 10*exp(-3.*sky_gamma) + 0.45*cos_gamma*cos_gamma)
-	* (1. - exp(-0.32/cos_theta))
+	* (1.0 - exp(-0.32/cos_theta))
 	/ 0.27385*(0.91 + 10.*exp(-3.*z0) + 0.45*cos_z0*cos_z0);
 
     return lum;
 }
 
 
-/*
- * A T M O S _ I R R A D I A N C E
- *
+/**
  * Table of solar irradiance values taken from WMO - No. 590,
  * "Commission for Instruments and Methods of Observation", Abridged
- * Final Report of the Eigth Session, Mexico City, 19-30 October 1981,
- * pp. 71-5.
+ * Final Report of the Eighth Session, Mexico City, 19-30 October
+ * 1981, pp. 71-5.
  *
- * Return the solar spectral irradiance through the atmosphere
- * for a given wavelength of light.
- * Units: W/m^2
+ * Return the solar spectral irradiance through the atmosphere for a
+ * given wavelength of light.  Units: W/m^2
  */
 fastf_t
 atmos_irradiance(fastf_t lambda)
@@ -1422,7 +1394,7 @@ atmos_irradiance(fastf_t lambda)
 	{250.00,	2.51369}
     };
 
-    if (lambda < 250. || lambda > 25000.)
+    if (lambda < 250. || lambda > 25000.0)
 	bu_bomb("atmos_irradiance: bad wavelength.");
 
 
@@ -1510,7 +1482,7 @@ ozone_absorption(fastf_t lambda)
 	{750.,	0.004}
     };
 
-    if (lambda < 200. || lambda > 750.) {
+    if (lambda < 200. || lambda > 750.0) {
 	bu_bomb("ozone absorption: bad wavelength.");
     }
     /* Find index of lower lambda in table. */
@@ -1533,14 +1505,12 @@ ozone_absorption(fastf_t lambda)
 }
 
 
-/*
- * S P E C T R A L _ D I S T _ T A B L E
- *
+/**
  * Do a table lookup to get data on spectral irradiance of daylight.
  * Table taken from Judd, D B; MacAdam, D L; Wyszecki, G J; Journal
- * for Optical Science of America, Vol. 54, 1964, "Spectral Distribution
- * of Typical Daylight as a Function of Correlated Color Temperature, "
- * pp. 1031-40.
+ * for Optical Science of America, Vol. 54, 1964, "Spectral
+ * Distribution of Typical Daylight as a Function of Correlated Color
+ * Temperature, " pp. 1031-40.
  */
 void
 spectral_dist_table(fastf_t lambda, fastf_t *e_mean, fastf_t *v1, fastf_t *v2)
@@ -1548,7 +1518,7 @@ spectral_dist_table(fastf_t lambda, fastf_t *e_mean, fastf_t *v1, fastf_t *v2)
     fastf_t ratio;
     int j;
     /* Mean and 1st two characteristic vectors of the composite data */
-    /* of the spectral absorptance of the earth's atmoshere due to */
+    /* of the spectral absorptance of the earth's atmosphere due to */
     /* ozone and water vapor. */
     /* table row: wavelength (nm), e_mean, v1, v2 */
     /* THESE ARE DIVIDED BY 10 IN "COLOR SCIENCE..." BY WYSZECKI??? */
@@ -1609,7 +1579,7 @@ spectral_dist_table(fastf_t lambda, fastf_t *e_mean, fastf_t *v1, fastf_t *v2)
 	{830.,	619.,	-98.,	65.}
     };
 
-    if (lambda < 300. || lambda > 830.) {
+    if (lambda < 300. || lambda > 830.0) {
 	bu_bomb("spectral_dist_table: bad wavelength.");
     } else {
 	/* Do linear interpolation to find approximate values. */
@@ -1622,14 +1592,12 @@ spectral_dist_table(fastf_t lambda, fastf_t *e_mean, fastf_t *v1, fastf_t *v2)
 }
 
 
-/*
- * S K Y _ L I G H T _ S P E C T R A L _ D I S T
- *
+/**
  * Return sky light spectral distribution for a sky element.  Because
  * to date there is no decisive research on the spectral distribution
- * of sky light, the CIE synthesized daylight expression is used.
- * See Judd, D B; MacAdam, D L; Wyszecki, G J; Journal for Optical
- * Science of America, Vol. 54, 1964, p. 1031.
+ * of sky light, the CIE synthesized daylight expression is used.  See
+ * Judd, D B; MacAdam, D L; Wyszecki, G J; Journal for Optical Science
+ * of America, Vol. 54, 1964, p. 1031.
  *
  * Units: W/m^2/nm/sr
  */
@@ -1653,7 +1621,7 @@ skylight_spectral_dist(fastf_t lambda, fastf_t *Zenith, fastf_t *Sky_elmt, fastf
 	/* to a given luminance.  Units: K */
 	x, y;	/* 1931 CIE chromaticity coordinates. */
 
-    sun_alt = 90 - acos(VDOT(Sun, Zenith))*180/M_PI;
+    sun_alt = 90 - acos(VDOT(Sun, Zenith))*RAD2DEG;
     lz = zenith_luminance(sun_alt, t_vl);
     /* Get luminance distribution */
     switch (weather) {
@@ -1669,11 +1637,11 @@ skylight_spectral_dist(fastf_t lambda, fastf_t *Zenith, fastf_t *Sky_elmt, fastf
 	    break;
     }
 /* XXX hack */
-    if (lum <= 0.) {/*bu_log("lum = %g\n", lum);*/ return 0.;}
+    if (lum <= 0.0) {/*bu_log("lum = %g\n", lum);*/ return 0.0;}
 
     /* Convert to color temperature.  Expression based on careful */
     /* measurements by Toyota. */
-    t_cp = 1.1985e8/pow(lum, 1.2) + 6500.;	/* Kelvin */
+    t_cp = 1.1985e8/pow(lum, 1.2) + 6500.0;	/* Kelvin */
 
     /* Convert color temperature into spectral distribution */
     /* using CIE synthesized daylight expression. */
@@ -1681,13 +1649,13 @@ skylight_spectral_dist(fastf_t lambda, fastf_t *Zenith, fastf_t *Sky_elmt, fastf
     /* Chromaticity coordinates, taken from Wyszecki, Guenter; Stiles, */
     /* WS; "Color Science: Concepts and Methods, Quantitative Data and */
     /* Formulae, " John Wiley and Sons, 1982, pp. 145-6. */
-    if (t_cp >= 4000. && t_cp < 7000.) {
+    if (t_cp >= 4000. && t_cp < 7000.0) {
 	x =
 	    -4.6070e9/(t_cp*t_cp*t_cp)
 	    + 2.9678e6/(t_cp*t_cp)
 	    + 0.09911e3/t_cp
 	    + 0.244063;
-    } else if (t_cp >= 7000. && t_cp <= 25000.) {
+    } else if (t_cp >= 7000. && t_cp <= 25000.0) {
 	x =
 	    -2.0064e9/(t_cp*t_cp*t_cp)
 	    + 1.9018e6/(t_cp*t_cp)
@@ -1704,8 +1672,8 @@ skylight_spectral_dist(fastf_t lambda, fastf_t *Zenith, fastf_t *Sky_elmt, fastf
     }
     y = 2.870*x - 3.000*x*x - 0.275;
 
-    /* Scalar multiples os 1st two characteristic vectors needed to */
-    /* reconstitue spectral distribution curves of typical daylight. */
+    /* Scalar multiples of 1st two characteristic vectors needed to */
+    /* reconstitute spectral distribution curves of typical daylight. */
     m1 = -1.3515 - 1.7703*x + 5.9114*y;
     m2 = 1./(0.0241 + 0.2562*x - 0.7341*y);
     m1 *= m2;
@@ -1721,11 +1689,8 @@ skylight_spectral_dist(fastf_t lambda, fastf_t *Zenith, fastf_t *Sky_elmt, fastf
 }
 
 
-/*
- * S U N _ R A D I A N C E
- *
- * Calculate spectral radiance of sun on ground.
- * Units: W/m^2/nm/sr.
+/**
+ * Calculate spectral radiance of sun on ground.  Units: W/m^2/nm/sr.
  */
 fastf_t
 sun_radiance(fastf_t lambda, fastf_t alpha, fastf_t beta, fastf_t sun_alt, fastf_t sun_sang)
@@ -1759,13 +1724,11 @@ sun_radiance(fastf_t lambda, fastf_t alpha, fastf_t beta, fastf_t sun_alt, fastf
 }
 
 
-/*
- * F R E S N E L _ R E F L
- *
+/**
  * Return reflectance of a material with only regular (specular)
- * reflectance using Fresnel's equations.  For materials other
- * than glass, it is better to measure the specular reflectance
- * since usually it will not follow Fresnel's formula.
+ * reflectance using Fresnel's equations.  For materials other than
+ * glass, it is better to measure the specular reflectance since
+ * usually it will not follow Fresnel's formula.
  *
  * Note: This works only for unpolarized light.  For polarized
  * skylight, the formula must be extended.
@@ -1793,7 +1756,7 @@ fresnel_refl(fastf_t cos_eps, fastf_t n1, fastf_t n2)
     fastf_t work, work2;	/* Intermediate results. */
 
     work2 = (n2/n1)*(n2/n1);
-    work = sqrt(work2 - (1. - cos_eps*cos_eps));
+    work = sqrt(work2 - (1.0 - cos_eps*cos_eps));
 
     p_parallel = (cos_eps - work)/(cos_eps + work);
     p_parallel *= p_parallel;
@@ -1808,9 +1771,7 @@ fresnel_refl(fastf_t cos_eps, fastf_t n1, fastf_t n2)
 }
 
 
-/*
- * A B S O R P _ C O E F F
- *
+/**
  * For each type of material which has had its absorption coefficient
  * measured, linear interpolation between data points is used to
  * return the absorption coefficient for a given wavelength.
@@ -1824,7 +1785,8 @@ absorp_coeff(fastf_t lambda, char *material)
 
 {
     char mfile[80];
-    fastf_t a, l, absorp, absorp_h, absorp_l, lambda_h, lambda_l;
+    double a, l;
+    fastf_t absorp, absorp_h, absorp_l, lambda_h, lambda_l;
     fastf_t abso1, lamb1, lamb2, lambrat;
     FILE *fp;
     int n;
@@ -1840,7 +1802,7 @@ absorp_coeff(fastf_t lambda, char *material)
     /* Find "nearby" values of lambda, absorption for interpolation. */
     if ((n = fscanf(fp, "%lf %lf", &l, &a)) != 2 || lambda + MIKE_TOL < l) {
 	fclose(fp);
-	return -1.;
+	return -1.0;
     }
     lambda_l = l;
     absorp_l = a;
@@ -1852,7 +1814,7 @@ absorp_coeff(fastf_t lambda, char *material)
     }
     if (n != 2) {
 	fclose(fp);
-	return -1.;
+	return -1.0;
     } else {
 	lambda_h = l;
 	absorp_h = a;
@@ -1871,9 +1833,7 @@ absorp_coeff(fastf_t lambda, char *material)
 }
 
 
-/*
- * R E F L E C T A N C E
- *
+/**
  * For each type of material which has had its spectral reflectance
  * measured, linear interpolation between data points is used to
  * return the reflectance factor for a given wavelength and a given
@@ -1966,19 +1926,16 @@ out:
 }
 
 
-/*
- * L A M B D A _ T O _ R G B
+/**
+ * Given a wavelength in nm of light, return its rgb approximation.
  *
- * Given a wavelength in nm of light, return its rgb
- * approximation.
- *
- * Taken from Wyszecki, Guenter; Stiles, WS; "Color Science:
- * Concepts and Methods, Quantitative Data and Formulae, " John
- * Wiley and Sons, 1982, pp. 615, table taken from pp. 806-7.
+ * Taken from Wyszecki, Guenter; Stiles, WS; "Color Science: Concepts
+ * and Methods, Quantitative Data and Formulae, " John Wiley and Sons,
+ * 1982, pp. 615, table taken from pp. 806-7.
  *
  * They, in turn, took the data from Vos, J J, Colorimetric and
- * photometric properties of a 2 degree fundamental observer,
- * "Color Res. & Appl. 3", 125 (1978).
+ * photometric properties of a 2 degree fundamental observer, "Color
+ * Res. & Appl. 3", 125 (1978).
  *
  * Table row: wavelength, x_bar(lambda), y_bar(lambda), z_bar(lambda).
  */
@@ -2100,7 +2057,7 @@ lambda_to_rgb(fastf_t lambda, fastf_t irrad, fastf_t *rgb)
     kbz = 0.0073215;
 
     /* Interpolate values of x, y, z. */
-    if (lambda < 380. || lambda > 825.) {
+    if (lambda < 380. || lambda > 825.0) {
 	bu_log("lambda_to_rgb: bad wavelength, %g nm.", lambda);
 	bu_bomb("");
     }
@@ -2136,9 +2093,7 @@ lambda_to_rgb(fastf_t lambda, fastf_t irrad, fastf_t *rgb)
 }
 
 
-/*
- * B A C K G R O U N D _ L I G H T
- *
+/**
  * Calculate radiance of background light.  For a given wavelength,
  * non-zero reflectance values for a range of incident light angles
  * determine the solid angle of contributing background light.
@@ -2175,7 +2130,7 @@ background_light(fastf_t lambda, struct toyota_specific *ts, fastf_t *Refl, fast
      VSETALL(Sky_elmnt, 0.0);
 
 /* Angular spread between vectors used in solid angle integration. */
-#define SPREAD (10*M_PI/180)
+#define SPREAD (10*DEG2RAD)
 
     /* Differential solid angle. */
     del_omega = M_PI*sin(SPREAD/2)*sin(SPREAD/2);
@@ -2190,7 +2145,7 @@ background_light(fastf_t lambda, struct toyota_specific *ts, fastf_t *Refl, fast
 	refl = reflectance(lambda, alpha0, ts->refl, ts->refl_lines);
     }
     alpha1 = alpha0;	/* degrees. */
-    while (refl > MIKE_TOL && alpha1 < 90.) {
+    while (refl > MIKE_TOL && alpha1 < 90.0) {
 	alpha1++;
 	refl = reflectance(lambda, alpha1, ts->refl, ts->refl_lines);
     }
@@ -2203,7 +2158,7 @@ background_light(fastf_t lambda, struct toyota_specific *ts, fastf_t *Refl, fast
     if (!NEAR_EQUAL(VDOT(swp->sw_hit.hit_normal, Refl), 1.0, MIKE_TOL)) {
 	VCROSS(Yaxis, swp->sw_hit.hit_normal, Refl);
     } else {
- 	/* R and N are the same vector. */
+	/* R and N are the same vector. */
 	bn_vec_ortho(Yaxis, swp->sw_hit.hit_normal);
     }
     VCROSS(Horiz, Yaxis, swp->sw_hit.hit_normal);
@@ -2221,20 +2176,20 @@ background_light(fastf_t lambda, struct toyota_specific *ts, fastf_t *Refl, fast
     /* Set up coord axes with Ctr as Z axis. */
     VCROSS(Xaxis, Yaxis, Ctr);
 
-    irradiance = 0.;
+    irradiance = 0.0;
     /* Integrate over solid angle. */
 /* JUST INTEGRATE OVER HEMISPHERE - THIS IS CURRENTLY WRONG */
     for (ang = SPREAD; ang < alpha_c; ang += SPREAD) {
 	r = sin(ang);
-	for (phi = 0.; phi < 2*M_PI; phi += SPREAD) {
+	for (phi = 0.0; phi < 2*M_PI; phi += SPREAD) {
 	    x = r*cos(phi);
 	    y = r*sin(phi);
 	    VJOIN2(Sky_elmnt, Ctr, x, Xaxis, y, Yaxis);
 	    VUNITIZE(Sky_elmnt);
 	    i_dot_n = VDOT(swp->sw_hit.hit_normal, Sky_elmnt);
-	    if (i_dot_n >= 1.) i_dot_n = .9999;
+	    if (i_dot_n >= 1.0) i_dot_n = .9999;
 	    if (rdebug&RDEBUG_RAYPLOT) {
-		VSCALE(work, Sky_elmnt, 200.);
+		VSCALE(work, Sky_elmnt, 200.0);
 		VADD2(work, swp->sw_hit.hit_point, work);
 		pl_color(stdout, 0, 255, 0);
 		pdv_3line(stdout, swp->sw_hit.hit_point, work);
@@ -2243,7 +2198,7 @@ background_light(fastf_t lambda, struct toyota_specific *ts, fastf_t *Refl, fast
 	    bg_radiance = skylight_spectral_dist(
 		lambda, ts->Zenith, Sky_elmnt,
 		Sun, ts->weather, t_vl);
-	    /* XXX hack */		if (i_dot_n > 0.) {
+	    /* XXX hack */		if (i_dot_n > 0.0) {
 		irradiance +=
 		    reflectance(lambda, acos(i_dot_n)*bn_radtodeg,
 				ts->refl, ts->refl_lines)
@@ -2257,7 +2212,7 @@ background_light(fastf_t lambda, struct toyota_specific *ts, fastf_t *Refl, fast
     bg_radiance = skylight_spectral_dist(lambda, ts->Zenith, Ctr,
 					 Sun, ts->weather, t_vl);
     if (rdebug&RDEBUG_RAYPLOT) {
-	VSCALE(work, Ctr, 200.);
+	VSCALE(work, Ctr, 200.0);
 	VADD2(work, swp->sw_hit.hit_point, work);
 	pl_color(stdout, 255, 50, 0);
 	pdv_3line(stdout, swp->sw_hit.hit_point, work);
@@ -2273,11 +2228,10 @@ background_light(fastf_t lambda, struct toyota_specific *ts, fastf_t *Refl, fast
 }
 
 
-/*
- * T O Y O T A _ R E N D E R
+/**
+ * Lighting model developed by Toyota.  "Technique makes it possible
+ * to:
  *
- * Lighting model developed by Toyota.  "Technique makes it
- * possible to:
  * (1) Generate an image as if it is an actual object.
  * (2) Render any material and color.
  * (3) Render the appearance at any place and time under
@@ -2314,7 +2268,7 @@ toyota_render(register struct application *ap, const struct partition *UNUSED(pp
 
     ts->wavelength = 450;	/* XXX nm */
 
-    i_refl = 0.;
+    i_refl = 0.0;
     /* Consider effects of light source (>1 doesn't make sense really). */
     for (i=ap->a_rt_i->rti_nlights-1; i >= 0; i--) {
 
@@ -2334,7 +2288,7 @@ toyota_render(register struct application *ap, const struct partition *UNUSED(pp
 
 	/* Create reflected ray. */
 	i_dot_n = VDOT(swp->sw_hit.hit_normal, ap->a_ray.r_dir);
-	if (i_dot_n > 1.) i_dot_n = .9999;
+	if (i_dot_n > 1.0) i_dot_n = .9999;
 	VSCALE(work, swp->sw_hit.hit_normal, 2*i_dot_n);
 	VSUB2(Reflected, work, ap->a_ray.r_dir);
 	VUNITIZE(Reflected);
@@ -2347,7 +2301,7 @@ toyota_render(register struct application *ap, const struct partition *UNUSED(pp
 
 	/* Direct sunlight contribution. */
 	direct_sunlight =
-	    1./M_PI
+	    M_1_PI
 	    * reflectance(ts->wavelength, acos(i_dot_n)*bn_radtodeg,
 			  ts->refl, ts->refl_lines)
 	    * sun_radiance(ts->wavelength, ts->alpha, ts->beta,
@@ -2357,7 +2311,7 @@ toyota_render(register struct application *ap, const struct partition *UNUSED(pp
 
 	/* XXX Hack:  it always misses */
 	if (rdebug&RDEBUG_RAYPLOT) {
-	    VSCALE(work, Reflected, 200.);
+	    VSCALE(work, Reflected, 200.0);
 	    VADD2(work, swp->sw_hit.hit_point, work);
 	    pl_color(stdout, 0, 150, 255);
 	    pdv_3line(stdout, swp->sw_hit.hit_point, work);

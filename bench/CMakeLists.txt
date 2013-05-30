@@ -23,11 +23,6 @@ file(WRITE ${CMAKE_BINARY_DIR}/CMakeTmp/benchmsg.cmake "message(\"---\")\n")
 file(APPEND ${CMAKE_BINARY_DIR}/CMakeTmp/benchmsg.cmake "message(\"Run 'make benchmark-clean' in the bench directory to delete the logic\")\n")
 file(APPEND ${CMAKE_BINARY_DIR}/CMakeTmp/benchmsg.cmake "message(\"and image files generated during the benchmark analysis.\")\n")
 
-set(bench_MANS
-  benchmark.1
-  pixcmp.1
-)
-ADD_MAN_PAGES(1 bench_MANS)
 CMAKEFILES(lgt.sh run.sh try.sh viewdiff.sh Makefile.am)
 
 if(SH_EXEC)

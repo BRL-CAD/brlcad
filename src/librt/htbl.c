@@ -1,7 +1,7 @@
 /*                          H T B L . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2012 United States Government as represented by
+ * Copyright (c) 2004-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -37,9 +37,7 @@
 #include "vmath.h"
 #include "raytrace.h"
 
-/**
- *
- */
+
 void
 rt_htbl_init(struct rt_htbl *b, size_t len, const char *str)
 
@@ -57,9 +55,6 @@ rt_htbl_init(struct rt_htbl *b, size_t len, const char *str)
 }
 
 
-/**
- * Reset the table to have no elements, but retain any existing storage.
- */
 void
 rt_htbl_reset(struct rt_htbl *b)
 {
@@ -70,10 +65,6 @@ rt_htbl_reset(struct rt_htbl *b)
 }
 
 
-/**
- * Deallocate dynamic hit buffer and render unusable without a
- * subsequent rt_htbl_init().
- */
 void
 rt_htbl_free(struct rt_htbl *b)
 {
@@ -87,9 +78,6 @@ rt_htbl_free(struct rt_htbl *b)
 }
 
 
-/**
- * Allocate another hit structure, extending the array if necessary.
- */
 struct hit *
 rt_htbl_get(struct rt_htbl *b)
 {

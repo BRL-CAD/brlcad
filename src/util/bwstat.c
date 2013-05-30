@@ -1,7 +1,7 @@
 /*                        B W S T A T . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2012 United States Government as represented by
+ * Copyright (c) 1986-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -49,7 +49,7 @@ int verbose = 0;
 long bin[256];		/* Histogram bins */
 
 
-static const char *Usage = "usage: bwstat [-v] [file.bw]\n";
+static const char *Usage = "Usage: bwstat [-v] [file.bw]\n";
 
 /*
  * Display the histogram values.
@@ -78,6 +78,9 @@ main(int argc, char **argv)
     int max, min, mode, median;
     double mean, var, skew;
     FILE *fp;
+
+    if ( BU_STR_EQUAL(argv[1], "-h") || BU_STR_EQUAL(argv[1], "-?") )
+	bu_exit(1, "%s", Usage);
 
     /* check for verbose flag */
     if (argc > 1 && BU_STR_EQUAL(argv[1], "-v")) {

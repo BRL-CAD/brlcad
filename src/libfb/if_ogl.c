@@ -1,7 +1,7 @@
 /*                        I F _ O G L . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2012 United States Government as represented by
+ * Copyright (c) 2004-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -1074,7 +1074,7 @@ fb_ogl_choose_visual(FBIO *ifp)
  * I S _ L I N E A R _ C M A P
  *
  * Check for a color map being linear in R, G, and B.  Returns 1 for
- * linear map, 0 for non-linear map (ie, non-identity map).
+ * linear map, 0 for non-linear map (i.e., non-identity map).
  */
 HIDDEN int
 is_linear_cmap(register FBIO *ifp)
@@ -1122,9 +1122,9 @@ fb_ogl_open(FBIO *ifp, const char *file, int width, int height)
 	    alpha = 0;
 	    mp = &modebuf[0];
 	    cp = &file[8];
-	    while (*cp != '\0' && !isspace(*cp)) {
+	    while (*cp != '\0' && !isspace((int)(*cp))) {
 		*mp++ = *cp;	/* copy it to buffer */
-		if (isdigit(*cp)) {
+		if (isdigit((int)(*cp))) {
 		    cp++;
 		    continue;
 		}
@@ -1860,13 +1860,13 @@ ogl_getview(FBIO *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom)
 
 
 /* read count pixels into pixelp starting at x, y */
-HIDDEN int
+HIDDEN ssize_t
 ogl_read(FBIO *ifp, int x, int y, unsigned char *pixelp, size_t count)
 {
     size_t n;
     size_t scan_count;	/* # pix on this scanline */
     register unsigned char *cp;
-    int ret;
+    ssize_t ret;
     register struct ogl_pixel *oglp;
 
     if (CJDEBUG) printf("entering ogl_read\n");
@@ -1899,7 +1899,7 @@ ogl_read(FBIO *ifp, int x, int y, unsigned char *pixelp, size_t count)
 	    cp += 3;
 	    n--;
 	}
-	ret += (int)scan_count;
+	ret += scan_count;
 	count -= scan_count;
 	x = 0;
 	/* Advance upwards */
@@ -1911,12 +1911,12 @@ ogl_read(FBIO *ifp, int x, int y, unsigned char *pixelp, size_t count)
 
 
 /* write count pixels from pixelp starting at xstart, ystart */
-HIDDEN int
+HIDDEN ssize_t
 ogl_write(FBIO *ifp, int xstart, int ystart, const unsigned char *pixelp, size_t count)
 {
     size_t scan_count;	/* # pix on this scanline */
     register unsigned char *cp;
-    int ret;
+    ssize_t ret;
     int ybase;
     size_t pix_count;	/* # pixels to send */
     register int x;
@@ -2278,12 +2278,12 @@ ogl_help(FBIO *ifp)
 
     switch (visual->class) {
 	case DirectColor:
-	    fb_log("\tDirectColor: Alterable RGB maps, pixel RGB subfield indicies\n");
+	    fb_log("\tDirectColor: Alterable RGB maps, pixel RGB subfield indices\n");
 	    fb_log("\tRGB Masks: 0x%x 0x%x 0x%x\n", visual->red_mask,
 		   visual->green_mask, visual->blue_mask);
 	    break;
 	case TrueColor:
-	    fb_log("\tTrueColor: Fixed RGB maps, pixel RGB subfield indicies\n");
+	    fb_log("\tTrueColor: Fixed RGB maps, pixel RGB subfield indices\n");
 	    fb_log("\tRGB Masks: 0x%x 0x%x 0x%x\n", visual->red_mask,
 		   visual->green_mask, visual->blue_mask);
 	    break;

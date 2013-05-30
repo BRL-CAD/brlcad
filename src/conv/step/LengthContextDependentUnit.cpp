@@ -1,7 +1,7 @@
 /*                 LengthContextDependentUnit.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2012 United States Government as represented by
+ * Copyright (c) 1994-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -31,33 +31,37 @@
 
 #define CLASSNAME "LengthContextDependentUnit"
 #define ENTITYNAME "Length_Context_Dependent_Unit"
-string LengthContextDependentUnit::entityname = Factory::RegisterClass(ENTITYNAME,(FactoryMethod)LengthContextDependentUnit::Create);
+string LengthContextDependentUnit::entityname = Factory::RegisterClass(ENTITYNAME, (FactoryMethod)LengthContextDependentUnit::Create);
 
-LengthContextDependentUnit::LengthContextDependentUnit() {
+LengthContextDependentUnit::LengthContextDependentUnit()
+{
     step = NULL;
     id = 0;
 }
 
-LengthContextDependentUnit::LengthContextDependentUnit(STEPWrapper *sw,int step_id) {
+LengthContextDependentUnit::LengthContextDependentUnit(STEPWrapper *sw, int step_id)
+{
     step = sw;
     id = step_id;
 }
 
-LengthContextDependentUnit::~LengthContextDependentUnit() {
+LengthContextDependentUnit::~LengthContextDependentUnit()
+{
 }
 
 bool
-LengthContextDependentUnit::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
-    step=sw;
+LengthContextDependentUnit::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
+    step = sw;
     id = sse->STEPfile_id;
 
 
     // load base class attributes
-    if ( !LengthUnit::Load(step,sse) ) {
+    if (!LengthUnit::Load(step, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::Unit." << std::endl;
 	return false;
     }
-    if ( !ContextDependentUnit::Load(step,sse) ) {
+    if (!ContextDependentUnit::Load(step, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::Unit." << std::endl;
 	return false;
     }
@@ -66,32 +70,29 @@ LengthContextDependentUnit::Load(STEPWrapper *sw,SDAI_Application_instance *sse)
 }
 
 void
-LengthContextDependentUnit::Print(int level) {
-    TAB(level); std::cout << CLASSNAME << ":" << "(";
+LengthContextDependentUnit::Print(int level)
+{
+    TAB(level);
+    std::cout << CLASSNAME << ":" << "(";
     std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-    TAB(level); std::cout << "Inherited Attributes:" << std::endl;
-    LengthUnit::Print(level+1);
-    ContextDependentUnit::Print(level+1);
+    TAB(level);
+    std::cout << "Inherited Attributes:" << std::endl;
+    LengthUnit::Print(level + 1);
+    ContextDependentUnit::Print(level + 1);
 
 }
+
 STEPEntity *
-LengthContextDependentUnit::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
-    Factory::OBJECTS::iterator i;
-    if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
-	LengthContextDependentUnit *object = new LengthContextDependentUnit(sw,sse->STEPfile_id);
+LengthContextDependentUnit::GetInstance(STEPWrapper *sw, int id)
+{
+    return new LengthContextDependentUnit(sw, id);
+}
 
-	Factory::AddObject(object);
-
-	if (!object->Load(sw, sse)) {
-	    std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
-	    delete object;
-	    return NULL;
-	}
-	return static_cast<STEPEntity *>(object);
-    } else {
-	return (*i).second;
-    }
+STEPEntity *
+LengthContextDependentUnit::Create(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
+    return STEPEntity::CreateEntity(sw, sse, GetInstance, CLASSNAME);
 }
 
 // Local Variables:

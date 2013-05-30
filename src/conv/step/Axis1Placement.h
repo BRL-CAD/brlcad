@@ -1,7 +1,7 @@
 /*                 Axis1Placement.h
  * BRL-CAD
  *
- * Copyright (c) 1994-2012 United States Government as represented by
+ * Copyright (c) 1994-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -32,31 +32,33 @@
 class Direction;
 class ON_Brep;
 
-class Axis1Placement : public Placement {
+class Axis1Placement : public Placement
+{
 private:
-	static string entityname;
-	double z[3];
+    static string entityname;
+    static EntityInstanceFunc GetInstance;
+    double z[3];
 
-	void BuildAxis();
+    void BuildAxis();
 
 protected:
-	Direction *axis;
+    Direction *axis;
 
 public:
-	Axis1Placement();
-	virtual ~Axis1Placement();
-	Axis1Placement(STEPWrapper *sw,int step_id);
-	const double *GetAxis();
-	virtual const double *GetOrigin();
-	virtual const double *GetNormal();
-	virtual const double *GetXAxis();
-	virtual const double *GetYAxis();
-	bool Load(STEPWrapper *sw,SDAI_Application_instance *sse);
-	virtual bool LoadONBrep(ON_Brep *brep);
-	virtual void Print(int level);
+    Axis1Placement();
+    virtual ~Axis1Placement();
+    Axis1Placement(STEPWrapper *sw, int step_id);
+    const double *GetAxis();
+    virtual const double *GetOrigin();
+    virtual const double *GetNormal();
+    virtual const double *GetXAxis();
+    virtual const double *GetYAxis();
+    bool Load(STEPWrapper *sw, SDAI_Application_instance *sse);
+    virtual bool LoadONBrep(ON_Brep *brep);
+    virtual void Print(int level);
 
-	//static methods
-	static STEPEntity *Create(STEPWrapper *sw,SDAI_Application_instance *sse);
+    //static methods
+    static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
 #endif /* AXIS1_PLACEMENT_H_ */

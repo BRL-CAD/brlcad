@@ -1,7 +1,7 @@
 /*                 TimeSiUnit.h
  * BRL-CAD
  *
- * Copyright (c) 1994-2012 United States Government as represented by
+ * Copyright (c) 1994-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -30,21 +30,23 @@
 #include "TimeUnit.h"
 #include "SiUnit.h"
 
-class TimeSiUnit : public TimeUnit, public SiUnit {
+class TimeSiUnit : public TimeUnit, public SiUnit
+{
 private:
-	static string entityname;
+    static string entityname;
+    static EntityInstanceFunc GetInstance;
 
 protected:
 
 public:
-	TimeSiUnit();
-	virtual ~TimeSiUnit();
-	TimeSiUnit(STEPWrapper *sw,int step_id);
-	bool Load(STEPWrapper *sw,SDAI_Application_instance *sse);
-	virtual void Print(int level);
+    TimeSiUnit();
+    virtual ~TimeSiUnit();
+    TimeSiUnit(STEPWrapper *sw, int step_id);
+    bool Load(STEPWrapper *sw, SDAI_Application_instance *sse);
+    virtual void Print(int level);
 
-	//static methods
-	static STEPEntity *Create(STEPWrapper *sw,SDAI_Application_instance *sse);
+    //static methods
+    static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
 #endif /* TIMESIUNIT_H_ */

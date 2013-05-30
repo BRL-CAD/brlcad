@@ -1,8 +1,9 @@
 /* $NoKeywords: $ */
 /*
 //
-// Copyright (c) 1993-2007 Robert McNeel & Associates. All rights reserved.
-// Rhinoceros is a registered trademark of Robert McNeel & Assoicates.
+// Copyright (c) 1993-2012 Robert McNeel & Associates. All rights reserved.
+// OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
+// McNeel & Associates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
@@ -14,6 +15,7 @@
 */
 
 #include "opennurbs.h"
+
 
 bool ON_BinaryArchive::WriteCompressedBuffer(
         size_t sizeof__inbuffer,  // sizeof uncompressed input data
@@ -239,7 +241,7 @@ size_t ON_BinaryArchive::WriteDeflate( // returns number of bytes written
     if ( zrc < 0 ) 
     {
       // Something went haywire - bail out.
-      ON_ERROR("ON_BinaryArchive::WriteDeflate - deflate failure");
+      ON_ERROR("ON_BinaryArchive::WriteDeflate - z_deflate failure");
       rc = false;
       break;
     }
@@ -437,7 +439,7 @@ bool ON_BinaryArchive::ReadInflate(
     if ( zrc < 0 ) 
     {
       // Something went haywire - bail out.
-      ON_ERROR("ON_BinaryArchive::ReadInflate - inflate failure");
+      ON_ERROR("ON_BinaryArchive::ReadInflate - z_inflate failure");
       rc = false;
       break;
     }
@@ -1097,7 +1099,7 @@ size_t ON_CompressedBuffer::DeflateHelper( // returns number of bytes written
     if ( zrc < 0 ) 
     {
       // Something went haywire - bail out.
-      ON_ERROR("ON_CompressedBuffer::DeflateHelper - deflate failure");
+      ON_ERROR("ON_CompressedBuffer::DeflateHelper - z_deflate failure");
       rc = false;
       break;
     }
@@ -1230,7 +1232,7 @@ bool ON_CompressedBuffer::InflateHelper(
     if ( zrc < 0 ) 
     {
       // Something went haywire - bail out.
-      ON_ERROR("ON_CompressedBuffer::InflateHelper - inflate failure");
+      ON_ERROR("ON_CompressedBuffer::InflateHelper - z_inflate failure");
       rc = false;
       break;
     }

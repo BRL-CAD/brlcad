@@ -1,7 +1,7 @@
 /*                      P I X C O U N T . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2012 United States Government as represented by
+ * Copyright (c) 1998-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -68,7 +68,7 @@ struct pixel *mk_pixel (unsigned char *color)
     int i;
     struct pixel *pp;
 
-    pp = (struct pixel *) bu_malloc(sizeof(struct pixel), "pixel");
+    BU_ALLOC(pp, struct pixel);
 
     pp->p_magic = PIXEL_MAGIC;
     pp->p_color = (unsigned char *)
@@ -198,11 +198,9 @@ main (int argc, char **argv)
 	}
     switch (argc - bu_optind) {
 	case 0:
-	    inf_name = "stdin";
 	    infp = stdin;
 	    /* Break intentionally missing */
 	case 1:
-	    outf_name = "stdout";
 	    outfp = stdout;
 	    /* Break intentionally missing */
 	case 2:

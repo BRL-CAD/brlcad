@@ -1,7 +1,7 @@
 /*                   T O N E _ S I M P L E . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2012 United States Government as represented by
+ * Copyright (c) 2004-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -53,7 +53,7 @@ extern struct bn_unif *RandomFlag;
  *
  * Uses:
  *	Debug	- Debug level (currently not used.)
- *	Levels	- Number of intenisty levels.
+ *	Levels	- Number of intensity levels.
  *	RandomFlag - Use random threshold flag.
  *
  * Calls:

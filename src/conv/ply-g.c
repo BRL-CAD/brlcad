@@ -1,7 +1,7 @@
 /*                         P L Y - G . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2012 United States Government as represented by
+ * Copyright (c) 2004-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -460,7 +460,7 @@ new_element(char *str)
 	bu_log( "Creating a new element structure\n" );
     }
 
-    ptr = (struct element *)bu_calloc( 1, sizeof( struct element ), "element" );
+    BU_ALLOC(ptr, struct element);
 
     if ( root ) {
 	struct element *ptr2;
@@ -516,14 +516,14 @@ get_property( struct element *ptr )
     int i;
 
     if ( !ptr->props ) {
-	ptr->props = (struct prop *)bu_calloc( 1, sizeof( struct prop ), "property" );
+	BU_ALLOC(ptr->props, struct prop);
 	p = ptr->props;
     } else {
 	p = ptr->props;
 	while ( p->next ) {
 	    p = p->next;
 	}
-	p->next = (struct prop *)bu_calloc( 1, sizeof( struct prop ), "property" );
+	BU_ALLOC(p->next, struct prop);
 	p = p->next;
     }
 
@@ -635,7 +635,7 @@ read_ply_header()
 
 	len = strlen( line );
 	len--;
-	while ( len && isspace( line[len] ) ) {
+	while ( len && isspace( (int)line[len] ) ) {
 	    line[len] = '\0';
 	    len--;
 	}
@@ -852,7 +852,7 @@ main( int argc, char *argv[] )
     }
 
     /* malloc BOT storage */
-    bot = (struct rt_bot_internal *)bu_calloc( 1, sizeof( struct rt_bot_internal ), "BOT" );
+    BU_ALLOC(bot, struct rt_bot_internal);
     bot->magic = RT_BOT_INTERNAL_MAGIC;
     bot->mode = RT_BOT_SURFACE;
     bot->orientation = RT_BOT_UNORIENTED;

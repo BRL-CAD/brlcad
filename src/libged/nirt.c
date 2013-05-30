@@ -1,7 +1,7 @@
 /*                          N I R T . C
  * BRL-CAD
  *
- * Copyright (c) 1988-2012 United States Government as represented by
+ * Copyright (c) 1988-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -91,14 +91,13 @@ ged_nirt(struct ged *gedp, int argc, const char *argv[])
     STARTUPINFO si;
     PROCESS_INFORMATION pi;
     SECURITY_ATTRIBUTES sa;
-    char name[1024] = {0};
-    char line1[2048] = {0};
-    size_t rem = 2048;
+    struct bu_vls line1 = BU_VLS_INIT_ZERO;
 #endif
     int use_input_orig = 0;
     vect_t center_model;
     vect_t dir;
     vect_t cml;
+    double scan[4]; /* holds sscanf values */
     int i = 9;
     struct solid *sp = NULL;
     char line[RT_MAXLINE] = {0};
@@ -112,7 +111,7 @@ ged_nirt(struct ged *gedp, int argc, const char *argv[])
 
     const char *bin = NULL;
     char nirt[256] = {0};
-    int args;
+    size_t args;
 
     /* for bu_fgets space trimming */
     struct bu_vls v = BU_VLS_INIT_ZERO;
@@ -145,12 +144,12 @@ ged_nirt(struct ged *gedp, int argc, const char *argv[])
 
     /* swipe x, y, z off the end if present */
     if (argc > 3) {
-	if (sscanf(argv[argc-3], "%lf", &center_model[X]) == 1 &&
-	    sscanf(argv[argc-2], "%lf", &center_model[Y]) == 1 &&
-	    sscanf(argv[argc-1], "%lf", &center_model[Z]) == 1) {
+	if (sscanf(argv[argc-3], "%lf", &scan[X]) == 1 &&
+	    sscanf(argv[argc-2], "%lf", &scan[Y]) == 1 &&
+	    sscanf(argv[argc-1], "%lf", &scan[Z]) == 1) {
 	    use_input_orig = 1;
 	    argc -= 3;
-	    VSCALE(center_model, center_model, gedp->ged_wdbp->dbip->dbi_local2base);
+	    VSCALE(center_model, scan, gedp->ged_wdbp->dbip->dbi_local2base);
 	}
     }
 
@@ -402,28 +401,23 @@ ged_nirt(struct ged *gedp, int argc, const char *argv[])
     si.hStdError   = pipe_err[1];
     si.wShowWindow = SW_HIDE;
 
-    snprintf(line1, rem, "%s ", gedp->ged_gdp->gd_rt_cmd[0]);
-    rem -= strlen(line1) - 1;
+    bu_vls_strcat(&line1, gedp->ged_gdp->gd_rt_cmd[0]);
+    bu_vls_strcat(&line1, " ");
 
     for (i = 1; i < gedp->ged_gdp->gd_rt_cmd_len; i++) {
 	/* skip commands */
-	if (BU_STR_EQUAL(gedp->ged_gdp->gd_rt_cmd[i], "-e"))
+	if (BU_STR_EQUAL(gedp->ged_gdp->gd_rt_cmd[i], "-e")) {
 	    ++i;
-	else {
+	} else {
 	    /* append other arguments (i.e. options, file and obj(s)) */
-	    snprintf(name, 1024, "\"%s\" ", gedp->ged_gdp->gd_rt_cmd[i]);
-	    if (rem - strlen(name) < 1) {
-		bu_log("Ran out of buffer space!");
-		bu_free(gedp->ged_gdp->gd_rt_cmd, "free gd_rt_cmd");
-		gedp->ged_gdp->gd_rt_cmd = NULL;
-		return TCL_ERROR;
-	    }
-	    bu_strlcat(line1, name, sizeof(line1));
-	    rem -= strlen(name);
+	    bu_vls_strcat(&line1, "\"");
+	    bu_vls_strcat(&line1, gedp->ged_gdp->gd_rt_cmd[i]);
+	    bu_vls_strcat(&line1, "\"");
+	    bu_vls_strcat(&line1, " ");
 	}
     }
 
-    CreateProcess(NULL, line1, NULL, NULL, TRUE,
+    CreateProcess(NULL, bu_vls_addr(&line1), NULL, NULL, TRUE,
 		  DETACHED_PROCESS, NULL, NULL,
 		  &si, &pi);
 
@@ -468,10 +462,14 @@ ged_nirt(struct ged *gedp, int argc, const char *argv[])
 		break;
 	    }
 
-	    BU_GET(ndlp, struct qray_dataList);
+	    BU_ALLOC(ndlp, struct qray_dataList);
 	    BU_LIST_APPEND(HeadQRayData.l.back, &ndlp->l);
 
-	    ret = sscanf(bu_vls_addr(&v), "%le %le %le %le", &ndlp->x_in, &ndlp->y_in, &ndlp->z_in, &ndlp->los);
+	    ret = sscanf(bu_vls_addr(&v), "%le %le %le %le", &scan[0], &scan[1], &scan[2], &scan[3]);
+	    ndlp->x_in = scan[0];
+	    ndlp->y_in = scan[1];
+	    ndlp->z_in = scan[2];
+	    ndlp->los = scan[3];
 	    if (ret != 4) {
 		bu_log("WARNING: Unexpected nirt line [%s]\nExpecting four numbers.\n", bu_vls_addr(&v));
 		break;
@@ -494,11 +492,14 @@ ged_nirt(struct ged *gedp, int argc, const char *argv[])
 		break;
 	    }
 
-	    BU_GET(ndlp, struct qray_dataList);
+	    BU_ALLOC(ndlp, struct qray_dataList);
 	    BU_LIST_APPEND(HeadQRayData.l.back, &ndlp->l);
 
-	    ret = sscanf(bu_vls_addr(&v), "%le %le %le %le",
-			 &ndlp->x_in, &ndlp->y_in, &ndlp->z_in, &ndlp->los);
+	    ret = sscanf(bu_vls_addr(&v), "%le %le %le %le", &scan[0], &scan[1], &scan[2], &scan[3]);
+	    ndlp->x_in = scan[0];
+	    ndlp->y_in = scan[1];
+	    ndlp->z_in = scan[2];
+	    ndlp->los = scan[3];
 	    if (ret != 4) {
 		bu_log("WARNING: Unexpected nirt line [%s]\nExpecting four numbers.\n", bu_vls_addr(&v));
 		break;
@@ -545,6 +546,7 @@ ged_nirt(struct ged *gedp, int argc, const char *argv[])
     /* Wait for program to finish */
     WaitForSingleObject(pi.hProcess, INFINITE);
 
+    bu_vls_free(&line1);
 #endif
 
     gdlp = BU_LIST_NEXT(ged_display_list, &gedp->ged_gdp->gd_headDisplay);
@@ -572,6 +574,7 @@ ged_vnirt(struct ged *gedp, int argc, const char *argv[])
     fastf_t sf = 1.0 * DG_INV_GED;
     vect_t view_ray_orig;
     vect_t center_model;
+    double scan[3];
     struct bu_vls x_vls = BU_VLS_INIT_ZERO;
     struct bu_vls y_vls = BU_VLS_INIT_ZERO;
     struct bu_vls z_vls = BU_VLS_INIT_ZERO;
@@ -605,17 +608,17 @@ ged_vnirt(struct ged *gedp, int argc, const char *argv[])
      * being handed to nirt. All other arguments are passed straight
      * through to nirt.
      */
-    if (sscanf(argv[argc-2], "%lf", &view_ray_orig[X]) != 1 ||
-	sscanf(argv[argc-1], "%lf", &view_ray_orig[Y]) != 1) {
+    if (sscanf(argv[argc-2], "%lf", &scan[X]) != 1 ||
+	sscanf(argv[argc-1], "%lf", &scan[Y]) != 1) {
 	return GED_ERROR;
     }
-    view_ray_orig[Z] = DG_GED_MAX;
+    scan[Z] = DG_GED_MAX;
     argc -= 2;
 
     av = (char **)bu_calloc(1, sizeof(char *) * (argc + 4), "gd_vnirt_cmd: av");
 
     /* Calculate point from which to fire ray */
-    VSCALE(view_ray_orig, view_ray_orig, sf);
+    VSCALE(view_ray_orig, scan, sf);
     MAT4X3PNT(center_model, gedp->ged_gvp->gv_view2model, view_ray_orig);
     VSCALE(center_model, center_model, gedp->ged_wdbp->dbip->dbi_base2local);
 

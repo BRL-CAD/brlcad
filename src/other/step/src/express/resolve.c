@@ -215,27 +215,42 @@ void RESOLVEinitialize( void ) {
     ERRORcreate_warning( "circular_subtype", ERROR_subsuper_loop );
     ERRORcreate_warning( "circular_select", ERROR_select_loop );
     ERRORcreate_warning( "entity_as_type", ERROR_type_is_entity );
+}
 
-#if 0
-
-    ERROR_undefined_object = ERRORcreate(
-                                 "Reference to undefined object %s.", SEVERITY_ERROR );
-    ERROR_undefined_entity = ERRORcreate(
-                                 "Reference to undefined entity %s.", SEVERITY_ERROR );
-    ERROR_inappropriate_use = ERRORcreate(
-                                  "Inappropriate use of symbol %s.", SEVERITY_ERROR );
-    ERROR_overshadowed_reference = ERRORcreate(
-                                       "Referenced item %s already exists on line %d.", SEVERITY_WARNING );
-    ERROR_overloaded_reference  = ERRORcreate(
-                                      "Referenced item %s already referenced on line %d.", SEVERITY_WARNING );
-    ERROR_missing_subtype = ERRORcreate(
-                                "Entity %s missing from subtype list for supertype %s.", SEVERITY_WARNING );
-    ERROR_shadow_decl = ERRORcreate(
-                            "Declaration of %s shadows previous declaration on line %d.", SEVERITY_WARNING );
-    ERROR_group_reference_syntax = ERRORcreate(
-                                       "Bad syntax in group reference syntax.  Should be entity\\supertype", SEVERITY_EXIT );
-
-#endif
+/** Clean up the Fed-X second pass */
+void RESOLVEcleanup( void ) {
+    ERRORdestroy( ERROR_undefined );
+    ERRORdestroy( ERROR_undefined_attribute );
+    ERRORdestroy( ERROR_undefined_type );
+    ERRORdestroy( ERROR_undefined_schema );
+    ERRORdestroy( ERROR_unknown_attr_in_entity );
+    ERRORdestroy( ERROR_unknown_subtype );
+    ERRORdestroy( ERROR_unknown_supertype );
+    ERRORdestroy( ERROR_circular_reference );
+    ERRORdestroy( ERROR_subsuper_loop );
+    ERRORdestroy( ERROR_subsuper_continuation );
+    ERRORdestroy( ERROR_select_loop );
+    ERRORdestroy( ERROR_select_continuation );
+    ERRORdestroy( ERROR_supertype_resolve );
+    ERRORdestroy( ERROR_subtype_resolve );
+    ERRORdestroy( ERROR_not_a_type );
+    ERRORdestroy( ERROR_funcall_not_a_function );
+    ERRORdestroy( ERROR_undefined_func );
+    ERRORdestroy( ERROR_expected_proc );
+    ERRORdestroy( ERROR_no_such_procedure );
+    ERRORdestroy( ERROR_wrong_arg_count );
+    ERRORdestroy( ERROR_query_requires_aggregate );
+    ERRORdestroy( ERROR_self_is_unknown );
+    ERRORdestroy( ERROR_inverse_bad_entity );
+    ERRORdestroy( ERROR_inverse_bad_attribute );
+    ERRORdestroy( ERROR_missing_supertype );
+    ERRORdestroy( ERROR_type_is_entity );
+    ERRORdestroy( ERROR_ambiguous_attribute );
+    ERRORdestroy( ERROR_ambiguous_group );
+    ERRORdestroy( ERROR_overloaded_attribute );
+    ERRORdestroy( ERROR_redecl_no_such_attribute );
+    ERRORdestroy( ERROR_redecl_no_such_supertype );
+    ERRORdestroy( ERROR_missing_self );
 }
 
 /**
@@ -486,8 +501,7 @@ void EXP_resolve( Expression expr, Scope scope, Type typecheck ) {
                     expr->symbol.resolved = expr->type->symbol.resolved;
                     break;
                 default:
-                    printf( "unexpected type in EXPresolve.  Press ^C now to trap to debugger\n" );
-                    pause();
+                    fprintf( stderr, "ERROR: unexpected type in EXPresolve.\n" );
                     break;
             }
             break;
@@ -555,8 +569,7 @@ void EXP_resolve( Expression expr, Scope scope, Type typecheck ) {
             resolved_all( expr );
             break;
         default:
-            printf( "unexpected type in EXPresolve.  Press ^C now to trap to debugger\n" );
-            pause();
+            fprintf( stderr, "ERROR: unexpected type in EXPresolve.\n" );
     }
 }
 

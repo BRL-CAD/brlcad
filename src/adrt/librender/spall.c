@@ -1,7 +1,7 @@
 /*                         S P A L L . C
  * BRL-CAD / ADRT
  *
- * Copyright (c) 2007-2012 United States Government as represented by
+ * Copyright (c) 2007-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -32,7 +32,7 @@
 #include "adrt_struct.h"
 #include "render.h"
 
-#define TESSELATION 32
+#define TESSELLATION 32
 #define SPALL_LEN 20
 
 struct render_spall_s {
@@ -52,7 +52,6 @@ struct render_spall_hit_s {
     fastf_t plane[4];
     fastf_t mod;
 };
-
 
 
 void
@@ -179,9 +178,13 @@ int
 render_spall_init(render_t *render, const char *buf)
 {
     struct render_spall_s *d;
-    vect_t *tri_list, *vec_list, normal, up, ray_pos, ray_dir;
+    vect_t *tri_list, *vec_list, normal, up;
     fastf_t plane[4], angle;
     int i;
+
+    /* intentionally double for scan */
+    double ray_pos[3], ray_dir[3];
+    double scan;
 
     if(buf == NULL)
 	return -1;
@@ -192,19 +195,16 @@ render_spall_init(render_t *render, const char *buf)
     sscanf(buf, "(%lg %lg %lg) (%lg %lg %lg) %lg",
 		    &ray_pos[0], &ray_pos[1], &ray_pos[2],
 		    &ray_dir[0], &ray_dir[1], &ray_dir[2],
-		    &angle);
+		    &scan);
+    angle = scan; /* double to fastf_t */
 
-    render->data = (struct render_spall_s *)bu_malloc(sizeof(struct render_spall_s), "render_spall_init");
-    if (!render->data) {
-	perror("render->data");
-	exit(1);
-    }
+    BU_ALLOC(render->data, struct render_spall_s);
     d = (struct render_spall_s *)render->data;
 
     VMOVE(d->ray_pos, ray_pos);
     VMOVE(d->ray_dir, ray_dir);
 
-    tie_init(&d->tie, TESSELATION, TIE_KDTREE_FAST);
+    tie_init(&d->tie, TESSELLATION, TIE_KDTREE_FAST);
 
     /* Calculate the normal to be used for the plane */
     up[0] = 0;
@@ -224,19 +224,19 @@ render_spall_init(render_t *render, const char *buf)
     /******************/
     /* The spall Cone */
     /******************/
-    vec_list = (vect_t *)bu_malloc(sizeof(vect_t) * TESSELATION, "vec_list");
-    tri_list = (vect_t *)bu_malloc(sizeof(vect_t) * TESSELATION * 3, "tri_list");
+    vec_list = (vect_t *)bu_malloc(sizeof(vect_t) * TESSELLATION, "vec_list");
+    tri_list = (vect_t *)bu_malloc(sizeof(vect_t) * TESSELLATION * 3, "tri_list");
 
-    render_util_spall_vec(ray_dir, angle, TESSELATION, vec_list);
+    render_util_spall_vec(d->ray_dir, angle, TESSELLATION, vec_list);
 
     /* triangles to approximate */
-    for (i = 0; i < TESSELATION; i++) {
+    for (i = 0; i < TESSELLATION; i++) {
 	VMOVE(tri_list[3*i+0], ray_pos);
 
 	VSCALE(tri_list[3*i+1],  vec_list[i],  SPALL_LEN);
 	VADD2(tri_list[3*i+1],  tri_list[3*i+1],  ray_pos);
 
-	if (i == TESSELATION - 1) {
+	if (i == TESSELLATION - 1) {
 	    VSCALE(tri_list[3*i+2],  vec_list[0],  SPALL_LEN);
 	    VADD2(tri_list[3*i+2],  tri_list[3*i+2],  ray_pos);
 	} else {
@@ -245,7 +245,7 @@ render_spall_init(render_t *render, const char *buf)
 	}
     }
 
-/*  tie_push(&d->tie, tri_list, TESSELATION, NULL, 0);   */
+/*  tie_push(&d->tie, tri_list, TESSELLATION, NULL, 0);   */
     tie_prep(&d->tie);
 
     bu_free(vec_list, "vec_list");

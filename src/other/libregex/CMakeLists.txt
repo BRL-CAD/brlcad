@@ -2,6 +2,13 @@ include_directories(
   ${CMAKE_CURRENT_SOURCE_DIR}
   ${${CMAKE_PROJECT_NAME}_SOURCE_DIR}/include)
 
+include(${CMAKE_CURRENT_SOURCE_DIR}/CheckCInline.cmake)
+CHECK_C_INLINE(C_INLINE)
+if(NOT C_INLINE STREQUAL "inline")
+	add_definitions("-Dinline=${C_INLINE}")
+endif(NOT C_INLINE STREQUAL "inline")
+
+
 set(LIBREGEX_PUBLIC_HDRS
   regex.h
   )
@@ -19,6 +26,7 @@ add_definitions(
   )
 
 add_library(regex SHARED ${LIBREGEX_SOURCES})
+set_target_properties(regex PROPERTIES VERSION 1.0.4 SOVERSION 1)
 install(TARGETS regex
 	RUNTIME DESTINATION ${BIN_DIR}
 	LIBRARY DESTINATION ${LIB_DIR}
@@ -35,3 +43,11 @@ ENDIF(NOT WIN32)
 if(NOT SKIP_INSTALL_LIBRARIES AND NOT SKIP_INSTALL_ALL)
   install(FILES ${LIBREGEX_PUBLIC_HDRS} DESTINATION include)
 endif()
+
+# Local Variables:
+# tab-width: 8
+# mode: cmake
+# indent-tabs-mode: t
+# End:
+# ex: shiftwidth=2 tabstop=8
+

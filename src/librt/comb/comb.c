@@ -1,7 +1,7 @@
 /*                          C O M B . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2012 United States Government as represented by
+ * Copyright (c) 2004-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -25,11 +25,11 @@
  *
  * The on-disk record looks like this:
  *	width byte
- *	n matricies (only non-identity matricies stored).
+ *	n matrices (only non-identity matrices stored).
  *	n leaves
  *	len of RPN expression.  (len=0 signals all-union expression)
  *	depth of stack
- *	Section 1:  matricies
+ *	Section 1:  matrices
  *	Section 2:  leaves
  *	Section 3:  (Optional) RPN expression.
  *
@@ -56,7 +56,7 @@
 
 struct db_tree_counter_state {
     uint32_t magic;
-    size_t n_mat;		/* # leaves with non-identity matricies */
+    size_t n_mat;		/* # leaves with non-identity matrices */
     size_t n_leaf;		/* # leaf nodes */
     size_t n_oper;		/* # operator nodes */
     size_t leafbytes;		/* # bytes for name section */
@@ -69,7 +69,7 @@ struct db_tree_counter_state {
 /**
  * D B _ T R E E _ C O U N T E R
  *
- * Count number of non-identity matricies, number of leaf nodes,
+ * Count number of non-identity matrices, number of leaf nodes,
  * number of operator nodes, etc.
  *
  * Returns - maximum depth of stack needed to unpack this tree, if
@@ -142,7 +142,7 @@ db_tree_counter(const union tree *tp, struct db_tree_counter_state *tcsp)
 struct rt_comb_v5_serialize_state {
     uint32_t magic;
     size_t mat_num;	/* current matrix number */
-    size_t nmat;	/* # matricies, total */
+    size_t nmat;	/* # matrices, total */
     unsigned char *matp;
     unsigned char *leafp;
     unsigned char *exprp;
@@ -195,9 +195,11 @@ rt_comb_v5_serialize(
 
 	    /* Encoding of the matrix */
 	    if (mi != (ssize_t)-1) {
-		htond(ssp->matp,
-		      (const unsigned char *)tp->tr_l.tl_mat,
-		      ELEMENTS_PER_MAT);
+		/* must be double for import and export */
+		double scanmat[ELEMENTS_PER_MAT];
+
+		MAT_COPY(scanmat, tp->tr_l.tl_mat); /* convert fastf_t to double */
+		htond(ssp->matp, (const unsigned char *)scanmat, ELEMENTS_PER_MAT);
 		ssp->matp += ELEMENTS_PER_MAT * SIZEOF_NETWORK_DOUBLE;
 	    }
 
@@ -282,7 +284,7 @@ rt_comb_export5(
     comb = (struct rt_comb_internal *)ip->idb_ptr;
     RT_CK_COMB(comb);
 
-    /* First pass -- count number of non-identity matricies, number of
+    /* First pass -- count number of non-identity matrices, number of
      * leaf nodes, number of operator nodes.
      */
     memset((char *)&tcs, 0, sizeof(tcs));
@@ -311,7 +313,7 @@ rt_comb_export5(
 
     /* Second pass -- determine amount of on-disk storage needed */
     need =  1 +			/* width code */
-	db5_enc_len[wid] + 	/* size for nmatricies */
+	db5_enc_len[wid] + 	/* size for nmatrices */
 	db5_enc_len[wid] +	/* size for nleaves */
 	db5_enc_len[wid] +	/* size for leafbytes */
 	db5_enc_len[wid] +	/* size for len of RPN */
@@ -335,12 +337,12 @@ rt_comb_export5(
 
     /*
      * The output format has three sections:
-     * Section 1:  matricies
+     * Section 1:  matrices
      * Section 2:  leaf nodes
      * Section 3:  Optional RPN expression
      *
      * We have pre-computed the exact size of all three sections, so
-     * they can all be searialized together in one pass.  Establish
+     * they can all be serialized together in one pass.  Establish
      * pointers to the start of each section.
      */
     ss.magic = RT_COMB_V5_SERIALIZE_STATE_MAGIC;
@@ -417,7 +419,7 @@ rt_comb_export5(
 	bu_avs_remove(avsp, "shader");
     }
 
-    /* GIFT compatability */
+    /* GIFT compatibility */
     if (comb->region_id != 0) {
 	bu_vls_trunc(&value, 0);
 	bu_vls_printf(&value, "%ld", comb->region_id);
@@ -451,24 +453,9 @@ rt_comb_export5(
 }
 
 
-/**
- * R T _ C O M B _ I M P O R T 5
- *
- * Read a combination object in v5 external (on-disk) format, and
- * convert it into the internal format described in rtgeom.h
- *
- * This is an unusual conversion, because some of the data is taken
- * from attributes, not just from the object body.  By the time this
- * is called, the attributes will already have been cracked into
- * ip->idb_avs, we get the attributes from there.
- *
- * Returns -
- * 0 OK
- * -1 FAIL
- */
 int
 rt_comb_import5(struct rt_db_internal *ip, const struct bu_external *ep,
-                const mat_t mat, const struct db_i *dbip, struct resource *resp)
+		const mat_t mat, const struct db_i *dbip, struct resource *resp)
 {
     struct rt_comb_internal *comb;
     unsigned char *cp;
@@ -493,7 +480,8 @@ rt_comb_import5(struct rt_db_internal *ip, const struct bu_external *ep,
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_COMBINATION;
     ip->idb_meth = &rt_functab[ID_COMBINATION];
-    BU_GET(comb, struct rt_comb_internal);
+
+    BU_ALLOC(comb, struct rt_comb_internal);
     RT_COMB_INTERNAL_INIT(comb);
 
     ip->idb_ptr = (genptr_t)comb;
@@ -516,8 +504,8 @@ rt_comb_import5(struct rt_db_internal *ip, const struct bu_external *ep,
 	/* This tree is all union operators, import it as a balanced tree */
 	struct bu_ptbl *tbl1, *tbl2;
 
-	tbl1 = (struct bu_ptbl *)bu_malloc(sizeof(struct bu_ptbl), "rt_comb_import5: tbl1");
-	tbl2 = (struct bu_ptbl *)bu_malloc(sizeof(struct bu_ptbl), "rt_comb_import5: tbl2");
+	BU_ALLOC(tbl1, struct bu_ptbl);
+	BU_ALLOC(tbl2, struct bu_ptbl);
 
 	/* insert all the leaf nodes into a bu_ptbl */
 	bu_ptbl_init(tbl1, nleaf, "rt_comb_import5: tbl");
@@ -543,11 +531,16 @@ rt_comb_import5(struct rt_db_internal *ip, const struct bu_external *ep,
 	    } else {
 		mat_t diskmat;
 
+		/* must be double for import and export */
+		double scanmat[16];
+
 		/* Unpack indicated matrix mi */
 		BU_ASSERT_SIZE_T(mi, <, nmat);
-		ntohd((unsigned char *)diskmat,
-		      &matp[mi*ELEMENTS_PER_MAT*SIZEOF_NETWORK_DOUBLE],
-		      ELEMENTS_PER_MAT);
+
+		/* read matrix */
+		ntohd((unsigned char *)scanmat, &matp[mi*ELEMENTS_PER_MAT*SIZEOF_NETWORK_DOUBLE], ELEMENTS_PER_MAT);
+		MAT_COPY(diskmat, scanmat); /* convert double to fastf_t */
+
 		if (!mat || bn_mat_is_identity(mat)) {
 		    tp->tr_l.tl_mat = bn_mat_dup(diskmat);
 		} else {
@@ -627,7 +620,7 @@ rt_comb_import5(struct rt_db_internal *ip, const struct bu_external *ep,
 
     /*
      * Bring the RPN expression back from the disk, populating leaves
-     * and matricies in the order they are encountered.
+     * and matrices in the order they are encountered.
      */
     if (max_stack_depth > MAX_V5_STACK) {
 	bu_log("Combination needs stack depth %zu, only have %d, aborted\n",
@@ -661,11 +654,16 @@ rt_comb_import5(struct rt_db_internal *ip, const struct bu_external *ep,
 		} else {
 		    mat_t diskmat;
 
+		    /* must be double for import and export */
+		    double scanmat[16];
+
 		    /* Unpack indicated matrix mi */
 		    BU_ASSERT_SIZE_T(mi, <, nmat);
-		    ntohd((unsigned char *)diskmat,
-			  &matp[mi*ELEMENTS_PER_MAT*SIZEOF_NETWORK_DOUBLE],
-			  ELEMENTS_PER_MAT);
+
+		    /* read matrix */
+		    ntohd((unsigned char *)scanmat, &matp[mi*ELEMENTS_PER_MAT*SIZEOF_NETWORK_DOUBLE], ELEMENTS_PER_MAT);
+		    MAT_COPY(diskmat, scanmat); /* convert double to fastf_t */
+
 		    if (!mat || bn_mat_is_identity(mat)) {
 			tp->tr_l.tl_mat = bn_mat_dup(diskmat);
 		    } else {
@@ -857,7 +855,7 @@ rt_comb_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const ch
 	char itemlwr[128];
 
 	for (i = 0; i < 127 && item[i]; i++) {
-	    itemlwr[i] = (isupper(item[i]) ? tolower(item[i]) :
+	    itemlwr[i] = (isupper((int)item[i]) ? tolower((int)item[i]) :
 			  item[i]);
 	}
 	itemlwr[i] = '\0';
@@ -930,7 +928,7 @@ rt_comb_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, c
     while (argc >= 2) {
 	/* Force to lower case */
 	for (i = 0; i < 1023 && argv[0][i] != '\0'; i++) {
-	    buf[i] = tolower(argv[0][i]);
+	    buf[i] = tolower((int)argv[0][i]);
 	}
 	buf[i] = '\0';
 
@@ -1068,7 +1066,7 @@ rt_comb_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, c
     /* Make sure the attributes have gotten the message */
     db5_sync_comb_to_attr(&intern->idb_avs, comb);
     db5_standardize_avs(&intern->idb_avs);
-    
+
     return BRLCAD_OK;
 
 not_region:
@@ -1105,8 +1103,7 @@ rt_comb_make(const struct rt_functab *UNUSED(ftp), struct rt_db_internal *intern
     intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     intern->idb_type = ID_COMBINATION;
     intern->idb_meth = &rt_functab[ID_COMBINATION];
-    intern->idb_ptr = bu_calloc(sizeof(struct rt_comb_internal), 1,
-				"rt_comb_internal");
+    BU_ALLOC(intern->idb_ptr, struct rt_comb_internal);
 
     comb = (struct rt_comb_internal *)intern->idb_ptr;
     RT_COMB_INTERNAL_INIT(comb);

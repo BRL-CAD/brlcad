@@ -1,7 +1,7 @@
 /*                 RationalQuasiUniformSurface.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2012 United States Government as represented by
+ * Copyright (c) 1994-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -31,28 +31,32 @@
 
 #define CLASSNAME "RationalQuasiUniformSurface"
 #define ENTITYNAME "Rational_Quasi_Uniform_Surface"
-string RationalQuasiUniformSurface::entityname = Factory::RegisterClass(ENTITYNAME,(FactoryMethod)RationalQuasiUniformSurface::Create);
+string RationalQuasiUniformSurface::entityname = Factory::RegisterClass(ENTITYNAME, (FactoryMethod)RationalQuasiUniformSurface::Create);
 
-RationalQuasiUniformSurface::RationalQuasiUniformSurface() {
+RationalQuasiUniformSurface::RationalQuasiUniformSurface()
+{
     step = NULL;
     id = 0;
 }
 
-RationalQuasiUniformSurface::RationalQuasiUniformSurface(STEPWrapper *sw,int step_id) {
+RationalQuasiUniformSurface::RationalQuasiUniformSurface(STEPWrapper *sw, int step_id)
+{
     step = sw;
     id = step_id;
 }
 
-RationalQuasiUniformSurface::~RationalQuasiUniformSurface() {
+RationalQuasiUniformSurface::~RationalQuasiUniformSurface()
+{
 }
 
 bool
-RationalQuasiUniformSurface::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
-    step=sw;
+RationalQuasiUniformSurface::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
+    step = sw;
     id = sse->STEPfile_id;
 
     // load base class attributes (no need to add quasi here has no additional attributes)
-    if ( !RationalBSplineSurface::Load(sw,sse) ) {
+    if (!RationalBSplineSurface::Load(sw, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::RationalBSplineSurface." << std::endl;
 	return false;
     }
@@ -61,29 +65,25 @@ RationalQuasiUniformSurface::Load(STEPWrapper *sw,SDAI_Application_instance *sse
 }
 
 void
-RationalQuasiUniformSurface::Print(int level) {
-    TAB(level); std::cout << CLASSNAME << ":" << name << "(";
+RationalQuasiUniformSurface::Print(int level)
+{
+    TAB(level);
+    std::cout << CLASSNAME << ":" << name << "(";
     std::cout << "ID:" << STEPid() << ")" << std::endl;
 
     RationalBSplineSurface::Print(level);
 }
+
 STEPEntity *
-RationalQuasiUniformSurface::Create(STEPWrapper *sw,SDAI_Application_instance *sse){
-    Factory::OBJECTS::iterator i;
-    if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
-	RationalQuasiUniformSurface *object = new RationalQuasiUniformSurface(sw,sse->STEPfile_id);
+RationalQuasiUniformSurface::GetInstance(STEPWrapper *sw, int id)
+{
+    return new RationalQuasiUniformSurface(sw, id);
+}
 
-	Factory::AddObject(object);
-
-	if (!object->Load(sw,sse)) {
-	    std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
-	    delete object;
-	    return NULL;
-	}
-	return static_cast<STEPEntity *>(object);
-    } else {
-	return (*i).second;
-    }
+STEPEntity *
+RationalQuasiUniformSurface::Create(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
+    return STEPEntity::CreateEntity(sw, sse, GetInstance, CLASSNAME);
 }
 
 // Local Variables:

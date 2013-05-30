@@ -1,7 +1,7 @@
 /*                       S E R V E R . C
  * BRL-CAD
  *
- * Copyright (c) 2006-2012 United States Government as represented by
+ * Copyright (c) 2006-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -59,7 +59,7 @@ usage(const char *msg, const char *argv0)
 static void
 validate_port(int port) {
     if (port < 0 || port > 0xffff) {
-        bu_bomb("Invalid negative port range\n");
+	bu_bomb("Invalid negative port range\n");
     }
 }
 

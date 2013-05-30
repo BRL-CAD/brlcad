@@ -1,7 +1,7 @@
 /*                         P L R O T . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2012 United States Government as represented by
+ * Copyright (c) 1986-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -83,11 +83,11 @@ model_rpp(const fastf_t *min, const fastf_t *max)
 {
 
     if (space_set) {
-	fprintf(stderr, "plrot:  additional SPACE command ignored\n");
-	fprintf(stderr, "got: space (%g, %g, %g) (%g, %g, %g)\n",
-		V3ARGS(min), V3ARGS(max));
-	fprintf(stderr, "still using: space (%g, %g, %g) (%g, %g, %g)\n",
-		V3ARGS(space_min), V3ARGS(space_max));
+	bu_log("plrot:  additional SPACE command ignored\n");
+	bu_log("got: space (%g, %g, %g) (%g, %g, %g)\n",
+	       V3ARGS(min), V3ARGS(max));
+	bu_log("still using: space (%g, %g, %g) (%g, %g, %g)\n",
+	       V3ARGS(space_min), V3ARGS(space_max));
 	return 0;
     }
 
@@ -146,10 +146,10 @@ model_rpp(const fastf_t *min, const fastf_t *max)
     }
 
     if (verbose) {
-	fprintf(stderr, "got: space (%g, %g, %g) (%g, %g, %g)\n",
-		V3ARGS(min), V3ARGS(max));
-	fprintf(stderr, "put: space (%g, %g, %g) (%g, %g, %g)\n",
-		V3ARGS(space_min), V3ARGS(space_max));
+	bu_log("got: space (%g, %g, %g) (%g, %g, %g)\n",
+	       V3ARGS(min), V3ARGS(max));
+	bu_log("put: space (%g, %g, %g) (%g, %g, %g)\n",
+	       V3ARGS(space_min), V3ARGS(space_max));
     }
 
     return 1;
@@ -230,7 +230,7 @@ get_args(int argc, char **argv)
 			     &mtmp[12], &mtmp[13], &mtmp[14], &mtmp[15]);
 
 		if (num != 16) {
-		    fprintf(stderr, "Num of arguments to -m only %d, should be 16\n", num);
+		    bu_log("Num of arguments to -m only %d, should be 16\n", num);
 		    bu_exit (1, NULL);
 		}
 
@@ -278,9 +278,9 @@ get_args(int argc, char **argv)
 		verbose++;
 		break;
 	    case 'S':
-		num = sscanf(bu_optarg, "%lf %lf %lf %lf %lf %lf",
-			     &mtmp[0], &mtmp[1], &mtmp[2],
-			     &mtmp[3], &mtmp[4], &mtmp[5]);
+		sscanf(bu_optarg, "%lf %lf %lf %lf %lf %lf",
+		       &mtmp[0], &mtmp[1], &mtmp[2],
+		       &mtmp[3], &mtmp[4], &mtmp[5]);
 		VSET(forced_space_min, mtmp[0], mtmp[1], mtmp[2]);
 		VSET(forced_space_max, mtmp[3], mtmp[4], mtmp[5]);
 
@@ -311,7 +311,7 @@ main(int argc, char **argv)
 {
     FILE *fp=NULL;
 
-static char opts[] = "\
+    static char opts[] = "\
    -x# -y# -z#    Rotation about axis in degrees\n\
    -X# -Y# -Z#    Translation along axis\n\
    -s#            Scale factor\n\
@@ -341,7 +341,7 @@ static char opts[] = "\
 	    if (BU_STR_EQUAL(argv[bu_optind], "-"))
 		fp = stdin;
 	    else if ((fp = fopen(argv[bu_optind], "r")) == NULL) {
-		fprintf(stderr, "plrot: can't open \"%s\"\n", argv[bu_optind]);
+		bu_log("plrot: can't open \"%s\"\n", argv[bu_optind]);
 		continue;
 	    }
 	    dofile(fp);
@@ -526,10 +526,10 @@ dofile(FILE *fp)
 		three_dcoord_out(fp, rmat);
 		break;
 	    default:
-		fprintf(stderr, "plrot: unrecognized command '%c' (0x%x)\n",
-			(isascii(c) && isprint(c)) ? c : '?',
-			c);
-		fprintf(stderr, "plrot: ftell = %ld\n", ftell(fp));
+		bu_log("plrot: unrecognized command '%c' (0x%x)\n",
+		       (isascii(c) && isprint(c)) ? c : '?',
+		       c);
+		bu_log("plrot: ftell = %ld\n", bu_ftell(fp));
 		putchar(c);
 		break;
 	}

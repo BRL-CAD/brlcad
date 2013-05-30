@@ -1,7 +1,7 @@
 /*                           R P C . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2012 United States Government as represented by
+ * Copyright (c) 1990-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -104,7 +104,7 @@
  * NORMALS.  Given the point W on the surface of the rpc, what is the
  * vector normal to the tangent plane at that point?
  *
- * Map W onto the unit rpc, ie:  W' = S(R(W - V)).
+ * Map W onto the unit rpc, i.e.:  W' = S(R(W - V)).
  *
  * Plane on unit rpc at W' has a normal vector N' where
  *
@@ -173,6 +173,7 @@
 
 #include "../../librt_private.h"
 
+static int rpc_is_valid(struct rt_rpc_internal *rpc);
 
 struct rpc_specific {
     point_t rpc_V;		/* vector to rpc origin */
@@ -187,9 +188,9 @@ struct rpc_specific {
 
 
 const struct bu_structparse rt_rpc_parse[] = {
-    { "%f", 3, "V", bu_offsetof(struct rt_rpc_internal, rpc_V[X]), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    { "%f", 3, "H", bu_offsetof(struct rt_rpc_internal, rpc_H[X]), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    { "%f", 3, "B", bu_offsetof(struct rt_rpc_internal, rpc_B[X]), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    { "%f", 3, "V", bu_offsetofarray(struct rt_rpc_internal, rpc_V, fastf_t, X), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    { "%f", 3, "H", bu_offsetofarray(struct rt_rpc_internal, rpc_H, fastf_t, X), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    { "%f", 3, "B", bu_offsetofarray(struct rt_rpc_internal, rpc_B, fastf_t, X), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     { "%f", 1, "r", bu_offsetof(struct rt_rpc_internal, rpc_r),    BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     { {'\0', '\0', '\0', '\0'}, 0, (char *)NULL, 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
@@ -200,15 +201,15 @@ const struct bu_structparse rt_rpc_parse[] = {
  * Calculate the RPP for an RPC
  */
 int
-rt_rpc_bbox(struct rt_db_internal *ip, point_t *min, point_t *max) {
+rt_rpc_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct bn_tol *UNUSED(tol)) {
     struct rt_rpc_internal *xip;
     vect_t rinv, rvect, rv2, working;
     RT_CK_DB_INTERNAL(ip);
     xip = (struct rt_rpc_internal *)ip->idb_ptr;
     RT_RPC_CK_MAGIC(xip);
 
-    VSETALL((*min), MAX_FASTF);
-    VSETALL((*max), -MAX_FASTF);
+    VSETALL((*min), INFINITY);
+    VSETALL((*max), -INFINITY);
 
     VCROSS(rvect, xip->rpc_H, xip->rpc_B);
     VREVERSE(rinv, rvect);
@@ -263,14 +264,13 @@ rt_rpc_bbox(struct rt_db_internal *ip, point_t *min, point_t *max) {
  * stp->st_specific for use by rpc_shot().
  */
 int
-rt_rpc_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *UNUSED(rtip))
+rt_rpc_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 {
     struct rt_rpc_internal *xip;
     struct rpc_specific *rpc;
 
     fastf_t magsq_b, magsq_h, magsq_r;
     fastf_t mag_b, mag_h, mag_r;
-    fastf_t f;
     mat_t R;
     mat_t Rinv;
     mat_t S;
@@ -279,7 +279,9 @@ rt_rpc_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *UNUSED(r
     RT_CK_DB_INTERNAL(ip);
 
     xip = (struct rt_rpc_internal *)ip->idb_ptr;
-    RT_RPC_CK_MAGIC(xip);
+    if (!rpc_is_valid(xip)) {
+	return 1;
+    }
 
     /* compute |B| |H| */
     mag_b = sqrt(magsq_b = MAGSQ(xip->rpc_B));
@@ -287,21 +289,6 @@ rt_rpc_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *UNUSED(r
     mag_r = xip->rpc_r;
     magsq_r = mag_r * mag_r;
 
-    /* Check for |H| > 0, |B| > 0, |R| > 0 */
-    if (NEAR_ZERO(mag_h, RT_LEN_TOL) || NEAR_ZERO(mag_b, RT_LEN_TOL)
-	|| NEAR_ZERO(mag_r, RT_LEN_TOL)) {
-	return 1;		/* BAD, too small */
-    }
-
-    /* Check for B.H == 0 */
-    f = VDOT(xip->rpc_B, xip->rpc_H) / (mag_b * mag_h);
-    if (! NEAR_ZERO(f, RT_DOT_TOL)) {
-	return 1;		/* BAD */
-    }
-
-    /*
-     * RPC is ok
-     */
     stp->st_id = ID_RPC;		/* set soltab ID */
     stp->st_meth = &rt_functab[ID_RPC];
 
@@ -347,7 +334,7 @@ rt_rpc_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *UNUSED(r
     /* approximate bounding radius */
     stp->st_aradius = stp->st_bradius;
     /* bounding RPP */
-    if (rt_rpc_bbox(ip, &(stp->st_min), &(stp->st_max))) return 1;
+    if (rt_rpc_bbox(ip, &(stp->st_min), &(stp->st_max), &rtip->rti_tol)) return 1;
     return 0;			/* OK */
 }
 
@@ -638,7 +625,9 @@ rt_rpc_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct u
 	    uvp->uv_v = len;	/* rim v = 1 for both plates */
 	    break;
 	case RPC_NORM_TOP:
-	    uvp->uv_u = 1.0 - (pprime[Y] + 1.0)/2.0;
+	/* Simplified next line:
+	    uvp->uv_u = 1.0 - (pprime[Y] + 1.0)/2.0; */
+	    uvp->uv_u = 0.5 - pprime[Y]/2.0;
 	    uvp->uv_v = -pprime[X];		/* height */
 	    break;
     }
@@ -657,7 +646,7 @@ rt_rpc_free(struct soltab *stp)
     struct rpc_specific *rpc =
 	(struct rpc_specific *)stp->st_specific;
 
-    bu_free((char *)rpc, "rpc_specific");
+    BU_PUT(rpc, struct rpc_specific);
 }
 
 
@@ -670,6 +659,264 @@ rt_rpc_class(void)
     return 0;
 }
 
+/* A canonical parabola in the Y-Z plane has equation z = y^2 / 4p, and opens
+ * toward positive z with vertex at the origin.
+ *
+ * The contour of an rpc in the plane B-R is a parabola with vertex at B,
+ * opening toward -B. We can transform this parabola to get an equivalent
+ * canonical parabola in the Y-Z plane, opening toward positive Z (-B) with
+ * vertex at the origin (B).
+ *
+ * This parabola passes through the point (r, |B|). If we plug the point (r, |B|)
+ * into our canonical equation, we see how p relates to r and |B|:
+ *
+ *   |B| = r^2 / 4p
+ *     p = (r^2) / (4|B|)
+ */
+static fastf_t
+rpc_parabola_p(fastf_t r, fastf_t mag_b)
+{
+    return (r * r) / (4 * mag_b);
+}
+
+static fastf_t
+rpc_parabola_y(fastf_t p, fastf_t z)
+{
+    return sqrt(4.0 * p * z);
+}
+
+/* The contour of an rpc in the plane B-R is a parabola with vertex at B,
+ * opening toward -B. We can transform this parabola to get an equivalent
+ * parabola in the Y-Z plane, opening toward positive Z (-B) with vertex at
+ * (0, -|B|).
+ *
+ * The part of this parabola that passes between (0, -|B|) and (r, 0) is
+ * approximated by num_points points (including (0, -|B|) and (r, 0)).
+ *
+ * The constructed point list is returned (NULL returned on error). Because the
+ * above transformation puts the rpc vertex at the origin and the parabola
+ * vertex at (0, -|B|), multiplying the z values by -1 gives corresponding
+ * distances along the rpc breadth vector B.
+ */
+static struct rt_pt_node *
+rpc_parabolic_curve(fastf_t mag_b, fastf_t r, int num_points)
+{
+    int count;
+    struct rt_pt_node *curve;
+
+    if (num_points < 2) {
+	return NULL;
+    }
+
+    BU_ALLOC(curve, struct rt_pt_node);
+    BU_ALLOC(curve->next, struct rt_pt_node);
+
+    curve->next->next = NULL;
+    VSET(curve->p,       0, 0, -mag_b);
+    VSET(curve->next->p, 0, r, 0);
+
+    if (num_points < 3) {
+	return curve;
+    }
+
+    count = approximate_parabolic_curve(curve, rpc_parabola_p(r, mag_b), num_points - 2);
+
+    if (count != (num_points - 2)) {
+	return NULL;
+    }
+
+    return curve;
+}
+
+/* plot half of a parabolic contour curve using the given (r, b) points (pts),
+ * translation along H (rpc_H), and multiplier for r (rscale)
+ */
+static void
+rpc_plot_parabolic_curve(
+	struct bu_list *vhead,
+	struct rpc_specific *rpc,
+	struct rt_pt_node *pts,
+	vect_t rpc_H,
+	fastf_t rscale)
+{
+    vect_t t, Ru, Bu;
+    point_t p;
+    struct rt_pt_node *node;
+
+    VADD2(t, rpc->rpc_V, rpc_H);
+    VMOVE(Ru, rpc->rpc_Runit);
+    VMOVE(Bu, rpc->rpc_Bunit);
+
+    VJOIN2(p, t, rscale * pts->p[Y], Ru, -pts->p[Z], Bu);
+    RT_ADD_VLIST(vhead, p, BN_VLIST_LINE_MOVE);
+
+    node = pts->next;
+    while (node != NULL) {
+	VJOIN2(p, t, rscale * node->p[Y], Ru, -node->p[Z], Bu);
+	RT_ADD_VLIST(vhead, p, BN_VLIST_LINE_DRAW);
+
+	node = node->next;
+    }
+}
+
+static void
+rpc_plot_parabolas(
+	struct bu_list *vhead,
+	struct rt_rpc_internal *rpc,
+	struct rt_pt_node *pts)
+{
+    vect_t rpc_H;
+    struct rpc_specific rpc_s;
+
+    VMOVE(rpc_s.rpc_V, rpc->rpc_V);
+
+    VMOVE(rpc_s.rpc_Bunit, rpc->rpc_B);
+    VUNITIZE(rpc_s.rpc_Bunit);
+
+    VCROSS(rpc_s.rpc_Runit, rpc_s.rpc_Bunit, rpc->rpc_H);
+    VUNITIZE(rpc_s.rpc_Runit);
+
+    /* plot parabolic contour curve of face containing V */
+    VSETALL(rpc_H, 0.0);
+    rpc_plot_parabolic_curve(vhead, &rpc_s, pts, rpc_H, 1.0);
+    rpc_plot_parabolic_curve(vhead, &rpc_s, pts, rpc_H, -1.0);
+
+    /* plot parabolic contour curve of opposing face */
+    VMOVE(rpc_H, rpc->rpc_H);
+    rpc_plot_parabolic_curve(vhead, &rpc_s, pts, rpc_H, 1.0);
+    rpc_plot_parabolic_curve(vhead, &rpc_s, pts, rpc_H, -1.0);
+}
+
+static void
+rpc_plot_curve_connections(
+	struct bu_list *vhead,
+	struct rt_rpc_internal *rpc,
+	int num_connections)
+{
+    point_t pt;
+    vect_t Yu, Zu;
+    fastf_t mag_Z;
+    fastf_t p, y, z, z_step;
+    int connections_per_half;
+
+    if (num_connections < 1) {
+	return;
+    }
+
+    VMOVE(Zu, rpc->rpc_B);
+    VCROSS(Yu, rpc->rpc_H, Zu);
+    VUNITIZE(Yu);
+    VUNITIZE(Zu);
+
+    mag_Z = MAGNITUDE(rpc->rpc_B);
+
+    p = rpc_parabola_p(rpc->rpc_r, mag_Z);
+
+    connections_per_half = .5 + num_connections / 2.0;
+    z_step = mag_Z / (connections_per_half + 1.0);
+
+    for (z = 0.0; z <= mag_Z; z += z_step) {
+	y = rpc_parabola_y(p, mag_Z - z);
+
+	/* connect faces on one side of the curve */
+	VJOIN2(pt, rpc->rpc_V, z, Zu, -y, Yu);
+	RT_ADD_VLIST(vhead, pt, BN_VLIST_LINE_MOVE);
+
+	VADD2(pt, pt, rpc->rpc_H);
+	RT_ADD_VLIST(vhead, pt, BN_VLIST_LINE_DRAW);
+
+	/* connect the faces on the other side */
+	VJOIN2(pt, rpc->rpc_V, z, Zu, y, Yu);
+	RT_ADD_VLIST(vhead, pt, BN_VLIST_LINE_MOVE);
+
+	VADD2(pt, pt, rpc->rpc_H);
+	RT_ADD_VLIST(vhead, pt, BN_VLIST_LINE_DRAW);
+    }
+}
+
+static int
+rpc_curve_points(
+	struct rt_rpc_internal *rpc,
+	const struct rt_view_info *info)
+{
+    fastf_t height, halfwidth, est_curve_length;
+    point_t p0, p1;
+
+    height = -MAGNITUDE(rpc->rpc_B);
+    halfwidth = rpc->rpc_r;
+
+    VSET(p0, 0, 0, height);
+    VSET(p1, 0, halfwidth, 0);
+
+    est_curve_length = 2.0 * DIST_PT_PT(p0, p1);
+
+    return est_curve_length / info->point_spacing;
+}
+
+int
+rt_rpc_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
+{
+    point_t p;
+    vect_t rpc_R;
+    int num_curve_points, num_connections;
+    struct rt_rpc_internal *rpc;
+    struct rt_pt_node *pts, *node, *tmp;
+
+    BU_CK_LIST_HEAD(info->vhead);
+    RT_CK_DB_INTERNAL(ip);
+
+    rpc = (struct rt_rpc_internal *)ip->idb_ptr;
+    if (!rpc_is_valid(rpc)) {
+	return -2;
+    }
+
+    num_curve_points = rpc_curve_points(rpc, info);
+
+    if (num_curve_points < 3) {
+	num_curve_points = 3;
+    }
+
+    VCROSS(rpc_R, rpc->rpc_B, rpc->rpc_H);
+    VUNITIZE(rpc_R);
+    VSCALE(rpc_R, rpc_R, rpc->rpc_r);
+
+    pts = rpc_parabolic_curve(MAGNITUDE(rpc->rpc_B), rpc->rpc_r, num_curve_points);
+    rpc_plot_parabolas(info->vhead, rpc, pts);
+
+    node = pts;
+    while (node != NULL) {
+	tmp = node;
+	node = node->next;
+
+	bu_free(tmp, "rt_pt_node");
+    }
+
+    /* connect both halves of the parabolic contours of the opposing faces */
+    num_connections = primitive_curve_count(ip, info);
+    if (num_connections < 2) {
+	num_connections = 2;
+    }
+
+    rpc_plot_curve_connections(info->vhead, rpc, num_connections);
+
+    /* plot rectangular face */
+    VADD2(p, rpc->rpc_V, rpc_R);
+    RT_ADD_VLIST(info->vhead, p, BN_VLIST_LINE_MOVE);
+
+    VADD2(p, p, rpc->rpc_H);
+    RT_ADD_VLIST(info->vhead, p, BN_VLIST_LINE_DRAW);
+
+    VJOIN1(p, p, -2.0, rpc_R);
+    RT_ADD_VLIST(info->vhead, p, BN_VLIST_LINE_DRAW);
+
+    VJOIN1(p, p, -1.0, rpc->rpc_H);
+    RT_ADD_VLIST(info->vhead, p, BN_VLIST_LINE_DRAW);
+
+    VJOIN1(p, p, 2.0, rpc_R);
+    RT_ADD_VLIST(info->vhead, p, BN_VLIST_LINE_DRAW);
+
+    return 0;
+}
 
 /**
  * R T _ R P C _ P L O T
@@ -680,36 +927,22 @@ rt_rpc_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
     struct rt_rpc_internal *xip;
     fastf_t *front;
     fastf_t *back;
-    fastf_t b, dtol, f, h, ntol, rh;
+    fastf_t b, dtol, ntol, rh;
     int i, n;
-    mat_t R;
-    mat_t invR;
     struct rt_pt_node *old, *pos, *pts;
-    vect_t Bu, Hu, Ru;
+    vect_t Bu, Hu, Ru, B, R;
 
     BU_CK_LIST_HEAD(vhead);
     RT_CK_DB_INTERNAL(ip);
+
     xip = (struct rt_rpc_internal *)ip->idb_ptr;
-    RT_RPC_CK_MAGIC(xip);
+    if (!rpc_is_valid(xip)) {
+	return -2;
+    }
 
     /* compute |B| |H| */
     b = MAGNITUDE(xip->rpc_B);	/* breadth */
     rh = xip->rpc_r;		/* rectangular halfwidth */
-    h = MAGNITUDE(xip->rpc_H);	/* height */
-
-    /* Check for |H| > 0, |B| > 0, |R| > 0 */
-    if (NEAR_ZERO(h, RT_LEN_TOL) || NEAR_ZERO(b, RT_LEN_TOL)
-	|| NEAR_ZERO(rh, RT_LEN_TOL)) {
-	bu_log("rt_rpc_plot():  zero length H, B, or rh\n");
-	return -2;		/* BAD */
-    }
-
-    /* Check for B.H == 0 */
-    f = VDOT(xip->rpc_B, xip->rpc_H) / (b * h);
-    if (! NEAR_ZERO(f, RT_DOT_TOL)) {
-	bu_log("rt_rpc_plot(): B not perpendicular to H, f=%f\n", f);
-	return -3;		/* BAD */
-    }
 
     /* make unit vectors in B, H, and BxH directions */
     VMOVE(Hu, xip->rpc_H);
@@ -718,39 +951,10 @@ rt_rpc_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
     VUNITIZE(Bu);
     VCROSS(Ru, Bu, Hu);
 
-    /* Compute R and Rinv matrices */
-    MAT_IDN(R);
-    VREVERSE(&R[0], Hu);
-    VMOVE(&R[4], Ru);
-    VREVERSE(&R[8], Bu);
-    bn_mat_trn(invR, R);			/* inv of rot mat is trn */
-
-    /*
-     * Establish tolerances
-     */
-    if (ttol->rel <= 0.0 || ttol->rel >= 1.0) {
-	dtol = 0.0;		/* none */
+    if (rh < b) {
+	dtol = primitive_get_absolute_tolerance(ttol, 2.0 * rh);
     } else {
-	/* Convert rel to absolute by scaling by smallest side */
-	if (rh < b)
-	    dtol = ttol->rel * 2 * rh;
-	else
-	    dtol = ttol->rel * 2 * b;
-    }
-    if (ttol->abs <= 0.0) {
-	if (dtol <= 0.0) {
-	    /* No tolerance given, use a default */
-	    if (rh < b)
-		dtol = 2 * 0.10 * rh;	/* 10% */
-	    else
-		dtol = 2 * 0.10 * b;	/* 10% */
-	} else {
-	    /* Use absolute-ized relative tolerance */
-	}
-    } else {
-	/* Absolute tolerance was given, pick smaller */
-	if (ttol->rel <= 0.0 || dtol > ttol->abs)
-	    dtol = ttol->abs;
+	dtol = primitive_get_absolute_tolerance(ttol, 2.0 * b);
     }
 
     /* To ensure normal tolerance, remain below this angle */
@@ -760,10 +964,10 @@ rt_rpc_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 	/* tolerate everything */
 	ntol = bn_pi;
 
-#if 1
     /* initial parabola approximation is a single segment */
-    pts = (struct rt_pt_node *)bu_malloc(sizeof(struct rt_pt_node), "rt_pt_node");
-    pts->next = (struct rt_pt_node *)bu_malloc(sizeof(struct rt_pt_node), "rt_pt_node");
+    BU_ALLOC(pts, struct rt_pt_node);
+    BU_ALLOC(pts->next, struct rt_pt_node);
+
     pts->next->next = NULL;
     VSET(pts->p,       0, -rh, 0);
     VSET(pts->next->p, 0,  rh, 0);
@@ -780,56 +984,24 @@ rt_rpc_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
     pos = pts;
     i = 0;
     while (pos) {
-	/* rotate back to original position */
-	MAT4X3VEC(&front[i], invR, pos->p);
+	/* get corresponding rpc contour point in B-R plane from the parabola
+	 * point in the Y-Z plane
+	 */
+	VSCALE(R, Ru, pos->p[Y]);
+	VSCALE(B, Bu, -pos->p[Z]);
+	VADD2(&front[i], R, B);
+
 	/* move to origin vertex origin */
 	VADD2(&front[i], &front[i], xip->rpc_V);
+
 	/* extrude front to create back plate */
 	VADD2(&back[i], &front[i], xip->rpc_H);
+
 	i += 3;
 	old = pos;
 	pos = pos->next;
 	bu_free((char *)old, "rt_pt_node");
     }
-#else
-    /* initial parabola approximation is a single segment */
-    pts = (struct rt_pt_node *)bu_malloc(sizeof(struct rt_pt_node), "rt_pt_node");
-    pts->next = (struct rt_pt_node *)bu_malloc(sizeof(struct rt_pt_node), "rt_pt_node");
-    pts->next->next = NULL;
-    VSET(pts->p,       0,   0, -b);
-    VSET(pts->next->p, 0,  rh,  0);
-    /* 2 endpoints in 1st approximation */
-    n = 2;
-    /* recursively break segment 'til within error tolerances */
-    n += rt_mk_parabola(pts, rh, b, dtol, ntol);
-
-    /* get mem for arrays */
-    front = (fastf_t *)bu_malloc((2*3*n-1) * sizeof(fastf_t), "fastf_t");
-    back  = (fastf_t *)bu_malloc((2*3*n-1) * sizeof(fastf_t), "fastf_t");
-
-    /* generate front & back plates in world coordinates */
-    pos = pts;
-    i = 0;
-    while (pos) {
-	/* rotate back to original position */
-	MAT4X3VEC(&front[i], invR, pos->p);
-	/* move to origin vertex origin */
-	VADD2(&front[i], &front[i], xip->rpc_V);
-	/* extrude front to create back plate */
-	VADD2(&back[i], &front[i], xip->rpc_H);
-	i += 3;
-	old = pos;
-	pos = pos->next;
-	bu_free((char *)old, "rt_pt_node");
-    }
-    for (i = 3*n; i < 6*n-3; i+=3) {
-	VMOVE(&front[i], &front[6*n-i-6]);
-	front[i+1] = -front[i+1];
-	VMOVE(&back[i], &back[6*n-i-6]);
-	back[i+1] = -back[i+1];
-    }
-    n = 2*n - 1;
-#endif
 
     /* Draw the front */
     RT_ADD_VLIST(vhead, &front[(n-1)*ELEMENTS_PER_VECT],
@@ -862,7 +1034,7 @@ rt_rpc_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
  *
  * Approximate a parabola with line segments.  The initial single
  * segment is broken at the point farthest from the parabola if
- * that point is not aleady within the distance and normal error
+ * that point is not already within the distance and normal error
  * tolerances.  The two resulting segments are passed recursively
  * to this routine until each segment is within tolerance.
  */
@@ -904,7 +1076,7 @@ rt_mk_parabola(struct rt_pt_node *pts, fastf_t r, fastf_t b, fastf_t dtol, fastf
     /* split segment at widest point if not within error tolerances */
     if (dist > dtol || theta0 > ntol || theta1 > ntol) {
 	/* split segment */
-	newpt = (struct rt_pt_node *)bu_malloc(sizeof(struct rt_pt_node), "rt_pt_node");
+	BU_ALLOC(newpt, struct rt_pt_node);
 	VMOVE(newpt->p, mpt);
 	newpt->next = pts->next;
 	pts->next = newpt;
@@ -931,7 +1103,7 @@ int
 rt_rpc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
 {
     int i, j, n;
-    fastf_t b, *back, f, *front, h, rh;
+    fastf_t b, *back, *front, rh;
     fastf_t dtol, ntol;
     vect_t Bu, Hu, Ru;
     mat_t R;
@@ -949,27 +1121,15 @@ rt_rpc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     RT_CK_TESS_TOL(ttol);
 
     RT_CK_DB_INTERNAL(ip);
+
     xip = (struct rt_rpc_internal *)ip->idb_ptr;
-    RT_RPC_CK_MAGIC(xip);
+    if (!rpc_is_valid(xip)) {
+	return -2;
+    }
 
     /* compute |B| |H| */
     b = MAGNITUDE(xip->rpc_B);	/* breadth */
     rh = xip->rpc_r;		/* rectangular halfwidth */
-    h = MAGNITUDE(xip->rpc_H);	/* height */
-
-    /* Check for |H| > 0, |B| > 0, |R| > 0 */
-    if (NEAR_ZERO(h, RT_LEN_TOL) || NEAR_ZERO(b, RT_LEN_TOL)
-	|| NEAR_ZERO(rh, RT_LEN_TOL)) {
-	bu_log("rt_rpc_tess():  zero length H, B, or rh\n");
-	return -2;		/* BAD */
-    }
-
-    /* Check for B.H == 0 */
-    f = VDOT(xip->rpc_B, xip->rpc_H) / (b * h);
-    if (! NEAR_ZERO(f, RT_DOT_TOL)) {
-	bu_log("rt_rpc_tess(): B not perpendicular to H, f=%f\n", f);
-	return -3;		/* BAD */
-    }
 
     /* make unit vectors in B, H, and BxH directions */
     VMOVE(Hu, xip->rpc_H);
@@ -985,32 +1145,10 @@ rt_rpc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     VREVERSE(&R[8], Bu);
     bn_mat_trn(invR, R);			/* inv of rot mat is trn */
 
-    /*
-     * Establish tolerances
-     */
-    if (ttol->rel <= 0.0 || ttol->rel >= 1.0) {
-	dtol = 0.0;		/* none */
+    if (rh < b) {
+	dtol = primitive_get_absolute_tolerance(ttol, 2.0 * rh);
     } else {
-	/* Convert rel to absolute by scaling by smallest side */
-	if (rh < b)
-	    dtol = ttol->rel * 2 * rh;
-	else
-	    dtol = ttol->rel * 2 * b;
-    }
-    if (ttol->abs <= 0.0) {
-	if (dtol <= 0.0) {
-	    /* No tolerance given, use a default */
-	    if (rh < b)
-		dtol = 2 * 0.10 * rh;	/* 10% */
-	    else
-		dtol = 2 * 0.10 * b;	/* 10% */
-	} else {
-	    /* Use absolute-ized relative tolerance */
-	}
-    } else {
-	/* Absolute tolerance was given, pick smaller */
-	if (ttol->rel <= 0.0 || dtol > ttol->abs)
-	    dtol = ttol->abs;
+	dtol = primitive_get_absolute_tolerance(ttol, 2.0 * b);
     }
 
     /* To ensure normal tolerance, remain below this angle */
@@ -1021,8 +1159,9 @@ rt_rpc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	ntol = bn_pi;
 
     /* initial parabola approximation is a single segment */
-    pts = (struct rt_pt_node *)bu_malloc(sizeof(struct rt_pt_node), "rt_pt_node");
-    pts->next = (struct rt_pt_node *)bu_malloc(sizeof(struct rt_pt_node), "rt_pt_node");
+    BU_ALLOC(pts, struct rt_pt_node);
+    BU_ALLOC(pts->next, struct rt_pt_node);
+
     pts->next->next = NULL;
     VSET(pts->p,       0, -rh, 0);
     VSET(pts->next->p, 0,  rh, 0);
@@ -1217,7 +1356,8 @@ rt_rpc_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_RPC;
     ip->idb_meth = &rt_functab[ID_RPC];
-    ip->idb_ptr = bu_malloc(sizeof(struct rt_rpc_internal), "rt_rpc_internal");
+    BU_ALLOC(ip->idb_ptr, struct rt_rpc_internal);
+
     xip = (struct rt_rpc_internal *)ip->idb_ptr;
     xip->rpc_magic = RT_RPC_INTERNAL_MAGIC;
 
@@ -1317,7 +1457,9 @@ int
 rt_rpc_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fastf_t *mat, const struct db_i *dbip)
 {
     struct rt_rpc_internal *xip;
-    fastf_t vec[10];
+
+    /* must be double for import and export */
+    double vec[10];
 
     if (dbip) RT_CK_DBI(dbip);
 
@@ -1328,7 +1470,7 @@ rt_rpc_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_RPC;
     ip->idb_meth = &rt_functab[ID_RPC];
-    ip->idb_ptr = bu_malloc(sizeof(struct rt_rpc_internal), "rt_rpc_internal");
+    BU_ALLOC(ip->idb_ptr, struct rt_rpc_internal);
 
     xip = (struct rt_rpc_internal *)ip->idb_ptr;
     xip->rpc_magic = RT_RPC_INTERNAL_MAGIC;
@@ -1362,8 +1504,10 @@ int
 rt_rpc_export5(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
     struct rt_rpc_internal *xip;
-    fastf_t vec[10];
     fastf_t f, mag_b, mag_h;
+
+    /* must be double for import and export */
+    double vec[10];
 
     if (dbip) RT_CK_DBI(dbip);
 
@@ -1483,6 +1627,105 @@ rt_rpc_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)
     return 0;			/* OK */
 }
 
+
+/**
+ * R T _ R P C _ V O L U M E
+ */
+void
+rt_rpc_volume(fastf_t *vol, const struct rt_db_internal *ip)
+{
+    fastf_t mag_h, mag_b, mag_r;
+    struct rt_rpc_internal *xip = (struct rt_rpc_internal *)ip->idb_ptr;
+    RT_RPC_CK_MAGIC(xip);
+
+    mag_h = MAGNITUDE(xip->rpc_H);
+    mag_b = MAGNITUDE(xip->rpc_B);
+    mag_r = xip->rpc_r;
+
+    *vol = 4.0/3.0 * mag_b * mag_r * mag_h;
+}
+
+
+/**
+ * R T _ R P C _ C E N T R O I D
+ */
+void
+rt_rpc_centroid(point_t *cent, const struct rt_db_internal *ip)
+{
+    struct rt_rpc_internal *xip = (struct rt_rpc_internal *)ip->idb_ptr;
+    RT_RPC_CK_MAGIC(xip);
+
+    /* centroid of a parabolic section is
+     * 0.4 * h where h is a vector from
+     * the base to the vertex of the parabola */
+    VJOIN1(*cent, xip->rpc_V, 0.4, xip->rpc_B);
+
+    /* cent now stores the centroid of the
+     * parabolic section representing the base
+     * of the rpc */
+    VJOIN1(*cent, *cent, 0.5, xip->rpc_H);
+}
+
+
+/**
+ * R T _ R P C _ S U R F _ A R E A
+ */
+void
+rt_rpc_surf_area(fastf_t *area, const struct rt_db_internal *ip)
+{
+    fastf_t area_base, area_shell, area_rect;
+    fastf_t mag_b, mag_r, mag_h;
+    fastf_t magsq_b, magsq_r;
+    struct rt_rpc_internal *xip = (struct rt_rpc_internal *)ip->idb_ptr;
+    RT_RPC_CK_MAGIC(xip);
+
+    mag_h = MAGNITUDE(xip->rpc_H);
+    magsq_b = MAGSQ(xip->rpc_B);
+    mag_r = xip->rpc_r;
+    mag_b = sqrt(magsq_b);
+    magsq_r = mag_r * mag_r;
+
+    area_base = 4.0/3.0 * mag_b * mag_r;
+
+    area_shell = 0.5 * sqrt(magsq_r + 4.0 * magsq_b) + 0.25 * magsq_r /
+	mag_b * asinh(2.0 * mag_b / mag_r);
+    area_shell *= 2.0;
+
+    area_rect = 2.0 * mag_r * mag_h;
+
+    *area = 2.0 * area_base + area_rect + area_shell;
+}
+
+static int
+rpc_is_valid(struct rt_rpc_internal *rpc)
+{
+    fastf_t mag_h, mag_b, cos_angle_bh;
+    vect_t rpc_H, rpc_B;
+
+    RT_RPC_CK_MAGIC(rpc);
+
+    VMOVE(rpc_H, rpc->rpc_H);
+    mag_h = MAGNITUDE(rpc_H);
+
+    VMOVE(rpc_B, rpc->rpc_B);
+    mag_b = MAGNITUDE(rpc_B);
+
+    /* Check for |H| > 0, |B| > 0, |R| > 0 */
+    if (NEAR_ZERO(mag_h, RT_LEN_TOL)
+	|| NEAR_ZERO(mag_b, RT_LEN_TOL)
+	|| NEAR_ZERO(rpc->rpc_r, RT_LEN_TOL))
+    {
+	return 0;
+    }
+
+    /* check B and H are orthogonal */
+    cos_angle_bh = VDOT(rpc_B, rpc_H) / (mag_b * mag_h);
+    if (!NEAR_ZERO(cos_angle_bh, RT_DOT_TOL)) {
+	return 0;
+    }
+
+    return 1;
+}
 
 /*
  * Local Variables:

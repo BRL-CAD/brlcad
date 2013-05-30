@@ -1,7 +1,7 @@
 /*                        S H _ X X X . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2012 United States Government as represented by
+ * Copyright (c) 2004-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -107,7 +107,6 @@ struct xxx_specific xxx_defaults = {
 
 #define SHDR_NULL ((struct xxx_specific *)0)
 #define SHDR_O(m) bu_offsetof(struct xxx_specific, m)
-#define SHDR_AO(m) bu_offsetofarray(struct xxx_specific, m)
 
 
 /* description of how to parse/print the arguments to the shader
@@ -115,20 +114,20 @@ struct xxx_specific xxx_defaults = {
  * structure above
  */
 struct bu_structparse xxx_print_tab[] = {
-    {"%f",  1, "val",		SHDR_O(xxx_val),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f",  1, "dist",		SHDR_O(xxx_dist),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f",  3, "delta",		SHDR_AO(xxx_delta),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f",  3, "max",		SHDR_AO(xxx_max),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f",  3, "min",		SHDR_AO(xxx_min),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"",	0, (char *)0,		0,		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
+    {"%g", 1, "val",		SHDR_O(xxx_val),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%g", 1, "dist",		SHDR_O(xxx_dist),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f", 3, "delta",		SHDR_O(xxx_delta),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f", 3, "max",		SHDR_O(xxx_max),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f", 3, "min",		SHDR_O(xxx_min),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"",   0, (char *)0,	0,			BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 
 };
 struct bu_structparse xxx_parse_tab[] = {
     {"%p", 1, "xxx_print_tab", bu_byteoffset(xxx_print_tab[0]), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f",  1, "v",		SHDR_O(xxx_val),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f",  1, "dist",	SHDR_O(xxx_dist),		bu_mm_cvt, NULL, NULL },
-    {"%f",  3, "d",		SHDR_AO(xxx_delta),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"",	0, (char *)0,	0,			BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
+    {"%g", 1, "v",		SHDR_O(xxx_val),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%g", 1, "dist",		SHDR_O(xxx_dist),	bu_mm_cvt, NULL, NULL },
+    {"%f", 3, "d",		SHDR_O(xxx_delta),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"",   0, (char *)0,	0,			BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 
 
@@ -240,7 +239,7 @@ xxx_print(register struct region *rp, genptr_t dp)
 HIDDEN void
 xxx_free(genptr_t cp)
 {
-    bu_free(cp, "xxx_specific");
+    BU_PUT(cp, struct xxx_specific);
 }
 
 

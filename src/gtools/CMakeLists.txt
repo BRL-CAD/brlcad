@@ -26,12 +26,6 @@ BRLCAD_ADDEXEC(remapid remapid.c "librt;libbu")
 BRLCAD_ADDEXEC(g_transfer g_transfer.c "librt;libpkg" NO_INSTALL)
 BRLCAD_ADDDATA(g_transfer.c sample_applications)
 
-set(gtools_MANS
-  g_diff.1
-  g_lint.1
-  remapid.1
-  )
-ADD_MAN_PAGES(1 gtools_MANS)
 set(gtools_ignore_files
   beset/beset.h
   beset/fitness.h

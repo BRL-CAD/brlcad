@@ -1,7 +1,7 @@
 /*                      N M G _ P L O T . C
  * BRL-CAD
  *
- * Copyright (c) 1993-2012 United States Government as represented by
+ * Copyright (c) 1993-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -27,7 +27,7 @@
  *
  * There are several distinct families:
  *
- * nmg_ENTITY_to_vlist - Wireframes & polgyons.  For MGED "ev".
+ * nmg_ENTITY_to_vlist - Wireframes & polygons.  For MGED "ev".
  * nmg_pl_ENTITY       - Fancy edgeuse drawing, to plot file.
  * nmg_vlblock_ENTITY  - Fancy edgeuse drawing, into vlblocks.
  * show_broken_ENTITY  - Graphical display of classifier results.
@@ -541,7 +541,7 @@ nmg_offset_eu_vert(fastf_t *base, const struct edgeuse *eu, const fastf_t *face_
  */
 static void nmg_eu_coords(const struct edgeuse *eu, fastf_t *base, fastf_t *tip60)
 {
-    point_t tip;
+    point_t tip = VINIT_ZERO;
 
     NMG_CK_EDGEUSE(eu);
 
@@ -580,7 +580,8 @@ static void nmg_eu_coords(const struct edgeuse *eu, fastf_t *base, fastf_t *tip6
  */
 static void nmg_eu_radial(const struct edgeuse *eu, fastf_t *tip)
 {
-    point_t b2, t2;
+    point_t b2 = VINIT_ZERO;
+    point_t t2 = VINIT_ZERO;
 
     NMG_CK_EDGEUSE(eu->radial_p);
     NMG_CK_VERTEXUSE(eu->radial_p->vu_p);
@@ -671,7 +672,7 @@ nmg_pl_e(FILE *fp, const struct edge *e, long *b, int red, int green, int blue)
     p1 = e->eu_p->eumate_p->vu_p->v_p->vg_p->coord;
 
     /* leave a little room between the edge endpoints and the vertex
-     * compute endpoints by forming a vector between verets, scale
+     * compute endpoints by forming a vector between verts, scale
      * vector and modify points
      */
     VSUB2SCALE(v, p1, p0, 0.95);
@@ -896,7 +897,7 @@ nmg_vlblock_e(struct bn_vlblock *vbp, const struct edge *e, long *tab, int red, 
     p1 = e->eu_p->eumate_p->vu_p->v_p->vg_p->coord;
 
     /* leave a little room between the edge endpoints and the vertex
-     * compute endpoints by forming a vector between verets, scale vector
+     * compute endpoints by forming a vector between verts, scale vector
      * and modify points
      */
     VSUB2SCALE(v, p1, p0, 0.90);
@@ -918,10 +919,11 @@ nmg_vlblock_e(struct bn_vlblock *vbp, const struct edge *e, long *tab, int red, 
 void
 nmg_vlblock_eu(struct bn_vlblock *vbp, const struct edgeuse *eu, long *tab, int red, int green, int blue, int fancy)
 {
-    point_t base, tip;
-    point_t radial_tip;
-    point_t next_base;
-    struct bu_list *vh;
+    point_t base = VINIT_ZERO;
+    point_t next_base = VINIT_ZERO;
+    point_t radial_tip = VINIT_ZERO;
+    point_t tip = VINIT_ZERO;
+    struct bu_list *vh = NULL;
 
     BN_CK_VLBLOCK(vbp);
     NMG_CK_EDGEUSE(eu);
@@ -1052,7 +1054,7 @@ nmg_vlblock_euleft(struct bu_list *vh, const struct edgeuse *eu, const fastf_t *
 
     if (nmg_find_eu_leftvec(left, eu) < 0) return;
 
-    /* fan_len is baed on length of eu */
+    /* fan_len is based on length of eu */
     fan_len = len * 0.2;
     VJOIN1(tip, center, fan_len, left);
 
@@ -1651,9 +1653,10 @@ show_broken_eu(struct bn_vlblock *vbp, const struct edgeuse *eu, int fancy)
 {
     struct bu_list *vh;
     int red, green, blue;
-    point_t base, tip;
-    point_t radial_tip;
-    point_t next_base;
+    point_t base = VINIT_ZERO;
+    point_t tip = VINIT_ZERO;
+    point_t radial_tip = VINIT_ZERO;
+    point_t next_base = VINIT_ZERO;
 
     NMG_CK_EDGEUSE(eu);
     NMG_CK_EDGE(eu->e_p);
@@ -1837,7 +1840,7 @@ nmg_show_broken_classifier_stuff(uint32_t *p, char **classlist, int all_new, int
 	broken_tab_len = m->maxindex+1;
     } else {
 	if (broken_tab_len < m->maxindex+1) {
-	    bu_log("nmg_show_broken_classifier_stuff() maxindex increased! was %d, now %d\n",
+	    bu_log("nmg_show_broken_classifier_stuff() maxindex increased! was %d, now %ld\n",
 		   broken_tab_len, m->maxindex+1);
 	    broken_tab = (long *)bu_realloc((char *)broken_tab,
 					    (m->maxindex+1) * sizeof(long),
@@ -2346,7 +2349,7 @@ nmg_cnurb_to_vlist(struct bu_list *vhead, const struct edgeuse *eu, int n_interi
 
 
     /* typ. 10 */
-    /* BN_VLIST_LINE_DRAW, etc */
+    /* BN_VLIST_LINE_DRAW, etc. */
 {
     const struct edge_g_cnurb *eg;
     const struct faceuse *fu;

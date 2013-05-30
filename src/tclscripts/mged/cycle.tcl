@@ -1,7 +1,7 @@
 #                       C Y C L E . T C L
 # BRL-CAD
 #
-# Copyright (c) 2004-2012 United States Government as represented by
+# Copyright (c) 2004-2013 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -32,7 +32,7 @@ proc get_refs { refs tree } {
 	# this is a leaf
 	set leaf [lindex $tree 1]
 
-	# if the leaf is not aleady in the list append it
+	# if the leaf is not already in the list append it
 	if { [lsearch -exact $refs $leaf] == -1 } {
 	    lappend refs $leaf
 	}

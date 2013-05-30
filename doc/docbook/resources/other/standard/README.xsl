@@ -4,7 +4,7 @@ from http://sourceforge.net/projects/docbook/files/docbook-xsl-ns/
 The filename will remain docbook-xsl-ns.tar.bz2 to simplify
 build logic - this README file and the commit logs should
 document the current version.  The tarball is set up to extract
-to the directory xsl to allow the CMake build logic to place 
+to the directory xsl to allow the CMake build logic to place
 the files correctly.
 
 LICENSE (based on COPYING file from the archive)
@@ -34,7 +34,7 @@ advertising or otherwise to promote the sale, use or other
 dealings in this Software without prior written authorization
 from the individuals in question.
 
-Any stylesheet derived from this Software that is publically
+Any stylesheet derived from this Software that is publicly
 distributed will be identified with a different name and the
 version strings in any derived Software will be changed so that
 no possibility of confusion between the derived package and this

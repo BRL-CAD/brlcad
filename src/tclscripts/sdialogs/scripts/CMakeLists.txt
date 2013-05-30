@@ -4,7 +4,7 @@ set(sdialogs_scripts_TCLSCRIPTS
 	stddlgs.tcl
 )
 BRLCAD_ADDDATA(sdialogs_scripts_TCLSCRIPTS tclscripts/sdialogs/scripts)
-tclIndex_BUILD(sdialogs_scripts tclscripts/sdialogs/scripts)
+tclIndex_BUILD(tclscripts/sdialogs/scripts)
 
 CMAKEFILES(Makefile.am tclIndex)
 

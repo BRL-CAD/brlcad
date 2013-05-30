@@ -1,7 +1,7 @@
 /*                     P A R S E _ F M T . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2012 United States Government as represented by
+ * Copyright (c) 2004-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -145,7 +145,7 @@ format_output (const char* buffer, com_table* ctp, struct rt_i *UNUSED(rtip))
     /* Handle no args, arg=='?', and obvious bad arg */
     if (*bp != '\0')
 	++bp;
-    while (isspace(*bp))
+    while (isspace((int)*bp))
 	++bp;
     switch (*bp) {
 	case 'r':
@@ -173,7 +173,7 @@ format_output (const char* buffer, com_table* ctp, struct rt_i *UNUSED(rtip))
 	    --bp;
 	    break;
     }
-    while (isspace(*++bp))
+    while (isspace((int)*++bp))
 	;
 
     switch (*bp) {
@@ -194,7 +194,7 @@ format_output (const char* buffer, com_table* ctp, struct rt_i *UNUSED(rtip))
 		use_defaults = 1;
 		break;
 	    }
-	    fprintf(stderr, "Error: Illegal format specifiation: '%s'\n", buffer);
+	    fprintf(stderr, "Error: Illegal format specification: '%s'\n", buffer);
 	    /* fall through here */
 	case '?':
 	    com_usage(ctp);
@@ -216,7 +216,7 @@ format_output (const char* buffer, com_table* ctp, struct rt_i *UNUSED(rtip))
 
 
 /**
- * uoutspect is the user's output specification (format & args).
+ * uoutspec is the user's output specification (format & args).
  * outcom_type is the type of output command
  */
 void
@@ -250,7 +250,7 @@ parse_fmt(const char *uoutspec, int outcom_type)
     while (*uos != '"') {
 	nm_cs = 0;
 	/* Allocate storage for the next item in the output list */
-	oip = (outitem *) bu_malloc(sizeof(outitem), "output item");
+	BU_ALLOC(oip, outitem);
 	oip->next = OUTITEM_NULL;
 
 	for (up = uos; *uos != '"'; ++uos) {
@@ -307,7 +307,7 @@ parse_fmt(const char *uoutspec, int outcom_type)
     }
 
     /* Skip any garbage beyond the close quote */
-    for (up = ++uos; (! isspace(*uos)) && (*uos != '\0'); ++uos)
+    for (up = ++uos; (! isspace((int)*uos)) && (*uos != '\0'); ++uos)
 	;
 
     if (up != uos) {
@@ -322,7 +322,7 @@ parse_fmt(const char *uoutspec, int outcom_type)
 	if (oip->code_nm == 0)
 	    continue;		/* outitem's format has no conversion spec */
 
-	while (isspace(*uos))
+	while (isspace((int)*uos))
 	    ++uos;
 	if (*uos == '\0') {
 	    fprintf(stderr,
@@ -330,7 +330,7 @@ parse_fmt(const char *uoutspec, int outcom_type)
 	    bu_free(mycopy, "Copy of user's output spec");
 	    return;
 	}
-	for (up = uos; (! isspace(*uos)) && (*uos != '\0'); ++uos)
+	for (up = uos; (! isspace((int)*uos)) && (*uos != '\0'); ++uos)
 	    ;
 
 	if (*uos != '\0')
@@ -351,7 +351,7 @@ parse_fmt(const char *uoutspec, int outcom_type)
 	}
     }
 
-    while (isspace(*uos))
+    while (isspace((int)*uos))
 	++uos;
 
     if (*uos != '\0') {
@@ -469,7 +469,7 @@ print_item (char *buffer, com_table *ctp, struct rt_i *UNUSED(rtip))
     if (*bp != '\0')
 	++bp;
 
-    while (isspace(*bp))
+    while (isspace((int)*bp))
 	++bp;
 
     switch (*bp) {
@@ -481,10 +481,10 @@ print_item (char *buffer, com_table *ctp, struct rt_i *UNUSED(rtip))
 
     /* Read in the list of objects to output */
     while (*bp != '\0') {
-	while (isspace(*bp))
+	while (isspace((int)*bp))
 	    ++bp;
 
-	for (bp0 = bp; (! isspace(*bp)) && (*bp != '\0'); ++bp)
+	for (bp0 = bp; (! isspace((int)*bp)) && (*bp != '\0'); ++bp)
 	    ;
 
 	if (*bp != '\0')
@@ -567,11 +567,11 @@ check_conv_spec(outitem *oip)
 	/* Skip optional crud */
 	if (*cp == '-')
 	    ++cp;
-	while (isdigit(*cp))
+	while (isdigit((int)*cp))
 	    ++cp;
 	if (*cp == '.')
 	    ++cp;
-	while (isdigit(*cp))
+	while (isdigit((int)*cp))
 	    ++cp;
 
 	oi_type = ValTab[oip->code_nm].type;
@@ -644,7 +644,7 @@ direct_output(const char *buffer, com_table *ctp, struct rt_i *UNUSED(rtip))
     static char *new_dest;
     static FILE *(*openfunc)() = 0;
 
-    while (isspace(*(buffer+i)))
+    while (isspace((int)*(buffer+i)))
 	++i;
 
     if (*(buffer+i) == '\0') {
@@ -679,7 +679,7 @@ direct_output(const char *buffer, com_table *ctp, struct rt_i *UNUSED(rtip))
 	}
 	/*Find last non-whitespace character*/
 	j = strlen(buffer);
-	while (isspace(*(buffer+j-1))) j--;
+	while (isspace((int)*(buffer+j-1))) j--;
 
 	new_dest = bu_malloc(strlen(buffer + i)+1, "new_dest");
 
@@ -721,7 +721,7 @@ state_file(const char *buffer, com_table *ctp, struct rt_i *UNUSED(rtip))
     int i = 0;      /* current position on the *buffer */
     static char *new_name;
 
-    while (isspace(*(buffer+i)))
+    while (isspace((int)*(buffer+i)))
 	++i;
 
     if (*(buffer+i) == '\0') {

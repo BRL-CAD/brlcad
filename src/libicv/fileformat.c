@@ -1,7 +1,7 @@
 /*                      F I L E F O R M A T . C
  * BRL-CAD
  *
- * Copyright (c) 2007-2012 United States Government as represented by
+ * Copyright (c) 2007-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -269,7 +269,10 @@ icv_image_save(unsigned char *data, int width, int height, int depth, char *file
 struct icv_image_file *
 icv_image_save_open(const char *filename, int format, int width, int height, int depth)
 {
-    struct icv_image_file *bif = (struct icv_image_file *)bu_malloc(sizeof(struct icv_image_file), "icv_image_save_open");
+    struct icv_image_file *bif;
+
+    BU_ALLOC(bif, struct icv_image_file);
+
     bif->magic = ICV_IMAGE_FILE_MAGIC;
     if (format == ICV_IMAGE_AUTO || ICV_IMAGE_AUTO_NO_PIX) {
 	char buf[BUFSIZ];

@@ -1,7 +1,7 @@
 /*                 SurfaceOfLinearExtrusion.h
  * BRL-CAD
  *
- * Copyright (c) 1994-2012 United States Government as represented by
+ * Copyright (c) 1994-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -31,24 +31,26 @@
 // forward declaration of class
 class Vector;
 
-class SurfaceOfLinearExtrusion: public SweptSurface {
+class SurfaceOfLinearExtrusion: public SweptSurface
+{
 private:
-	static string entityname;
+    static string entityname;
+    static EntityInstanceFunc GetInstance;
 
 protected:
-	Vector* extrusion_axis;
+    Vector *extrusion_axis;
 
 
 public:
-	SurfaceOfLinearExtrusion();
-	virtual ~SurfaceOfLinearExtrusion();
-	SurfaceOfLinearExtrusion(STEPWrapper *sw,int step_id);
-	bool Load(STEPWrapper *sw,SDAI_Application_instance *sse);
-	virtual bool LoadONBrep(ON_Brep *brep);
-	virtual void Print(int level);
+    SurfaceOfLinearExtrusion();
+    virtual ~SurfaceOfLinearExtrusion();
+    SurfaceOfLinearExtrusion(STEPWrapper *sw, int step_id);
+    bool Load(STEPWrapper *sw, SDAI_Application_instance *sse);
+    virtual bool LoadONBrep(ON_Brep *brep);
+    virtual void Print(int level);
 
-	//static methods
-	static STEPEntity *Create(STEPWrapper *sw,SDAI_Application_instance *sse);
+    //static methods
+    static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
 #endif /* SURFACE_OF_LINEAR_EXTRUSION_H_ */

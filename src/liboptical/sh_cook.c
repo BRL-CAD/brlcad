@@ -1,7 +1,7 @@
 /*                       S H _ C O O K . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2012 United States Government as represented by
+ * Copyright (c) 1985-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -21,7 +21,7 @@
  *
  * Notes -
  * The normals on all surfaces point OUT of the solid.
- * The incomming light rays point IN.  Thus the sign change.
+ * The incoming light rays point IN.  Thus the sign change.
  *
  */
 
@@ -59,18 +59,18 @@ struct cook_specific {
 #define CL_O(m) bu_offsetof(struct cook_specific, m)
 
 struct bu_structparse cook_parse[] = {
-    {"%f", 1, "m",		CL_O(m),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f", 1, "specular",	CL_O(wgt_specular),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f", 1, "sp",		CL_O(wgt_specular),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f", 1, "diffuse",	CL_O(wgt_diffuse),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f", 1, "di",		CL_O(wgt_diffuse),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f", 1, "transmit",	CL_O(transmit),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f", 1, "tr",		CL_O(transmit),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f", 1, "reflect",	CL_O(reflect),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f", 1, "re",		CL_O(reflect),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f", 1, "ri",		CL_O(refrac_index),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f", 1, "extinction",	CL_O(extinction),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f", 1, "ex",		CL_O(extinction),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%g", 1, "m",		CL_O(m),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%g", 1, "specular",	CL_O(wgt_specular),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%g", 1, "sp",		CL_O(wgt_specular),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%g", 1, "diffuse",	CL_O(wgt_diffuse),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%g", 1, "di",		CL_O(wgt_diffuse),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%g", 1, "transmit",	CL_O(transmit),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%g", 1, "tr",		CL_O(transmit),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%g", 1, "reflect",	CL_O(reflect),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%g", 1, "re",		CL_O(reflect),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%g", 1, "ri",		CL_O(refrac_index),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%g", 1, "extinction",	CL_O(extinction),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%g", 1, "ex",		CL_O(extinction),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"",   0, (char *)0,	0,			BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 
@@ -140,7 +140,7 @@ cook_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, co
     pp->rd[2] = fresnel(0.0, pp->n[2]) / bn_pi;
 
     if (bu_struct_parse(matparm, cook_parse, (char *)pp) < 0) {
-	bu_free((genptr_t)pp, "cook_specific");
+	BU_PUT(pp, struct cook_specific);
 	return -1;
     }
 
@@ -249,7 +249,7 @@ cook_print(register struct region *rp, genptr_t dp)
 HIDDEN void
 cook_free(genptr_t cp)
 {
-    bu_free(cp, "cook_specific");
+    BU_PUT(cp, struct cook_specific);
 }
 
 
@@ -264,7 +264,7 @@ cook_free(genptr_t cp)
  *
  * rs = F/Pi * [DG/((N.L)(N.S))]
  * rd = normal reflectance = F(0)/Pi if rough (Lambertian)
- * This is "a good approx for theta < ~70 degress."
+ * This is "a good approx for theta < ~70 degrees."
  */
 HIDDEN int
 cook_render(register struct application *ap, const struct partition *pp, struct shadework *swp, genptr_t dp)

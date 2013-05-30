@@ -1,7 +1,7 @@
 /*                 IntersectionCurve.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2012 United States Government as represented by
+ * Copyright (c) 1994-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -31,27 +31,31 @@
 
 #define CLASSNAME "IntersectionCurve"
 #define ENTITYNAME "Intersection_Curve"
-string IntersectionCurve::entityname = Factory::RegisterClass(ENTITYNAME,(FactoryMethod)IntersectionCurve::Create);
+string IntersectionCurve::entityname = Factory::RegisterClass(ENTITYNAME, (FactoryMethod)IntersectionCurve::Create);
 
-IntersectionCurve::IntersectionCurve() {
+IntersectionCurve::IntersectionCurve()
+{
     step = NULL;
     id = 0;
 }
 
-IntersectionCurve::IntersectionCurve(STEPWrapper *sw,int step_id) {
+IntersectionCurve::IntersectionCurve(STEPWrapper *sw, int step_id)
+{
     step = sw;
     id = step_id;
 }
 
-IntersectionCurve::~IntersectionCurve() {
+IntersectionCurve::~IntersectionCurve()
+{
 }
 
 bool
-IntersectionCurve::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
-    step=sw;
+IntersectionCurve::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
+    step = sw;
     id = sse->STEPfile_id;
 
-    if ( !SurfaceCurve::Load(sw,sse) ) {
+    if (!SurfaceCurve::Load(sw, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::SurfaceCurve." << std::endl;
 	return false;
     }
@@ -60,38 +64,45 @@ IntersectionCurve::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
 }
 
 void
-IntersectionCurve::Print(int level) {
-    TAB(level); std::cout << CLASSNAME << ":" << name << "(";
+IntersectionCurve::Print(int level)
+{
+    TAB(level);
+    std::cout << CLASSNAME << ":" << name << "(";
     std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-    TAB(level); std::cout << "Inherited Attributes:" << std::endl;
-    SurfaceCurve::Print(level+1);
+    TAB(level);
+    std::cout << "Inherited Attributes:" << std::endl;
+    SurfaceCurve::Print(level + 1);
 }
 
 STEPEntity *
-IntersectionCurve::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
-    Factory::OBJECTS::iterator i;
-    if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
-	IntersectionCurve *object = new IntersectionCurve(sw,sse->STEPfile_id);
+IntersectionCurve::GetInstance(STEPWrapper *sw, int id)
+{
+    return new IntersectionCurve(sw, id);
+}
 
-	Factory::AddObject(object);
-
-	if (!object->Load(sw, sse)) {
-	    std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
-	    delete object;
-	    return NULL;
-	}
-	return static_cast<STEPEntity *>(object);
-    } else {
-	return (*i).second;
-    }
+STEPEntity *
+IntersectionCurve::Create(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
+    return STEPEntity::CreateEntity(sw, sse, GetInstance, CLASSNAME);
 }
 
 bool
 IntersectionCurve::LoadONBrep(ON_Brep *brep)
 {
-    std::cerr << "Error: ::LoadONBrep(ON_Brep *brep<" << std::hex << brep << std::dec << ">) not implemented for " << entityname << std::endl;
-    return false;
+    bool status;
+
+    if (!brep) {
+	return false;
+    }
+
+    curve_3d->Start(start);
+    curve_3d->End(end);
+
+    status = curve_3d->LoadONBrep(brep);
+    ON_id = curve_3d->GetONId();
+
+    return status;
 }
 
 // Local Variables:

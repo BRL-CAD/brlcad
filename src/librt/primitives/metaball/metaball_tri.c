@@ -1,7 +1,7 @@
 /*                    M E T A B A L L _ T R I . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2012 United States Government as represented by
+ * Copyright (c) 1985-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -21,7 +21,7 @@
 /** @{ */
 /** @file primitives/metaball/metaball_tri.c
  *
- * Tesselation/facetization routines for the metaball primitive.
+ * Tessellation/facetization routines for the metaball primitive.
  *
  * Here be magic.
  *
@@ -99,7 +99,7 @@ rt_metaball_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *i
 	bu_log("Attempting to tesselate metaball with no control points");
 	return -1;
     }
-    rt_metaball_bbox(ip, &min, &max);
+    rt_metaball_bbox(ip, &min, &max, tol);
 
     /* TODO: get better sampling tolerance, unless this is "good enough" */
     mtol = ttol->abs;

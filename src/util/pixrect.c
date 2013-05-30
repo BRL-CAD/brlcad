@@ -1,7 +1,7 @@
 /*                       P I X R E C T . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2012 United States Government as represented by
+ * Copyright (c) 1986-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -142,7 +142,7 @@ get_args(int argc, char **argv)
 	    perror("scanf");
     }
 
-    /* Make sure nessecary variables set */
+    /* Make sure necessary variables set */
     if (linelen <= 0 || xnum <= 0 || ynum <= 0) {
 	fprintf(stderr, "%s", usage);
 	bu_exit(1, "pixrect: args for -w -W -N [-S] must be > 0\n");
@@ -154,7 +154,7 @@ get_args(int argc, char **argv)
 	if (bu_optind >= argc) {
 	    if (isatty(fileno(stdin))) {
 		fprintf(stderr,
-			"pixrect: input from sdtin\n");
+			"pixrect: input from stdin\n");
 		return 0;
 	    }
 	    ifp = stdin;
@@ -187,7 +187,7 @@ int
 main(int argc, char **argv)
 {
     int row;
-    long offset;
+    off_t offset;
     size_t ret;
 
     if (!get_args(argc, argv)) {
@@ -204,7 +204,7 @@ main(int argc, char **argv)
     /* Move all points */
     for (row = 0 + yorig; row < ynum + yorig; row++) {
 	offset = (row * linelen + xorig) * bytes_per_pixel;
-	fseek(ifp, offset, 0);
+	bu_fseek(ifp, offset, 0);
 	ret = fread(buf, sizeof(*buf), outbytes, ifp);
 	if (ret < (size_t)outbytes)
 	    perror("fread");

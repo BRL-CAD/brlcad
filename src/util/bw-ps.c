@@ -1,7 +1,7 @@
 /*                         B W - P S . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2012 United States Government as represented by
+ * Copyright (c) 1986-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -55,7 +55,7 @@ void prolog(FILE *fp, char *name, int w, int h);
 void postlog(FILE *fp);
 
 static char usage[] = "\
-Usage: bw-ps [-e] [-c] [-L] [-h]\n\
+Usage: bw-ps [-e] [-c] [-L]\n\
 	[-s input_squaresize] [-w input_width] [-n input_height]\n\
 	[-S inches_square] [-W inches_width] [-N inches_height] [file.bw]\n";
 
@@ -64,15 +64,11 @@ get_args(int argc, char **argv)
 {
     int c;
 
-    while ((c = bu_getopt(argc, argv, "ehcLs:w:n:S:W:N:")) != -1) {
+    while ((c = bu_getopt(argc, argv, "ecLs:w:n:S:W:N:h?")) != -1) {
 	switch (c) {
 	    case 'e':
 		/* Encapsulated PostScript */
 		encapsulated++;
-		break;
-	    case 'h':
-		/* high-res */
-		height = width = 1024;
 		break;
 	    case 'c':
 		center = 1;
@@ -114,16 +110,16 @@ get_args(int argc, char **argv)
     } else {
 	file_name = argv[bu_optind];
 	if ((infp = fopen(file_name, "r")) == NULL) {
-	    (void)fprintf(stderr,
-			  "bw-ps: cannot open \"%s\" for reading\n",
-			  file_name);
+	    fprintf(stderr,
+		    "bw-ps: cannot open \"%s\" for reading\n",
+		    file_name);
 	    return 0;
 	}
 	/*fileinput++;*/
     }
 
     if (argc > ++bu_optind)
-	(void)fprintf(stderr, "bw-ps: excess argument(s) ignored\n");
+	fprintf(stderr, "bw-ps: excess argument(s) ignored\n");
 
     return 1;		/* OK */
 }
@@ -188,7 +184,7 @@ void
 prolog(FILE *fp, char *name, int w, int h)
 
 
-    /* in points */
+/* in points */
 {
     time_t ltime;
 

@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='enfg1'>
+<refmeta>
+    <refentrytitle>ENF-G
+</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class='source'>BRL-CAD</refmiscinfo>
+<refmiscinfo class='manual'>BRL-CAD</refmiscinfo>
+</refmeta>
+
+<refnamediv>
+<refname>enf-g</refname>
+<refpurpose>Elysium Neutral Format Translator (ENF to BRL-CAD)</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<cmdsynopsis>
+  <command>enf-g</command>
+    <arg choice='opt'>-t <replaceable>tolerance</replaceable></arg>
+    <arg choice='opt'>-i <replaceable>starting_ident_number</replaceable></arg>
+    <arg choice='opt'>-l <replaceable>name_length_limit</replaceable></arg>
+    <arg choice='opt'>-n <replaceable>part_number_to_name_mapping</replaceable></arg>
+    <arg choice='plain'><replaceable>input_enf_facet_file</replaceable></arg>
+    <arg choice='plain'><replaceable>database.g</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para><emphasis remap='I'>enf-g</emphasis>
+converts the specified
+<emphasis remap='I'>input_enf_facet_file</emphasis>
+to a BRL-CAD
+<emphasis remap='I'>database.g</emphasis>
+file. This input file is expected to be the ASCII output from the Elysium enf2mxp tessellator. The
+<emphasis remap='I'>tolerance</emphasis>
+provided is the maximum distance (in mm) between two
+vertices at which they will be considered to be the same vertex. The
+<emphasis remap='I'>starting_ident_number</emphasis>
+is the ident number to use for the first region created, each succeeding region will have their
+ident numbers incremented by one.
+If a
+<emphasis remap='I'>name_length_limit</emphasis>
+is provided, then the resulting names in the BRL-CAD model will not be longer than
+that limit. If a
+<emphasis remap='I'>part_number_to_name_mapping</emphasis>
+file is provided, then that file will be read and used to convert part numbers in the
+<emphasis remap='I'>input_enf_facet_file</emphasis>
+to the corresponding names in the mapping. This file is expected to consist of a series
+of lines of text with each line having a part number and a legal BRL-CAD object name separated
+by a tab.</para>
+</refsect1>
+
+<refsect1 xml:id='example'><title>EXAMPLE</title>
+<synopsis>
+$ <emphasis remap='I'>enf-g sample.enf sample.g</emphasis>
+</synopsis>
+</refsect1>
+
+<refsect1 xml:id='diagnostics'><title>DIAGNOSTICS</title>
+<para>Error messages are intended to be self-explanatory.</para>
+
+</refsect1>
+
+<refsect1 xml:id='author'><title>AUTHOR</title>
+<para>BRL-CAD Team</para>
+
+</refsect1>
+
+<refsect1 xml:id='copyright'><title>COPYRIGHT</title>
+<para>This software is Copyright (c) 2001-2013 by the United States
+Government as represented by U.S. Army Research Laboratory.</para>
+</refsect1>
+
+<refsect1 xml:id='bug_reports'><title>BUG REPORTS</title>
+<para>Reports of bugs or problems should be submitted via electronic
+mail to &lt;devs@brlcad.org&gt;.</para>
+</refsect1>
+</refentry>
+

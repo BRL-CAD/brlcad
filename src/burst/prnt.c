@@ -1,7 +1,7 @@
 /*                          P R N T . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2012 United States Government as represented by
+ * Copyright (c) 2004-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -50,7 +50,6 @@
 #define FABS(a)		((a) > 0 ? (a) : -(a))
 #define AproxEq(a, b, e)	(FABS((a)-(b)) < (e))
 
-static fastf_t getNormThickness();
 
 int
 doMore(int *linesp)
@@ -161,7 +160,7 @@ notify(char *str, int mode)
 	    *p++ = NOTIFY_DELIM;
 	bu_strlcpy(p, str, LNBUFSZ);
     } else {
-        if (p) *p = NUL;
+	if (p) *p = NUL;
     }
     (void) ScMvCursor(PROMPT_X, PROMPT_Y);
     len = strlen(buf);
@@ -340,6 +339,60 @@ prntCellIdent(struct application *ap)
 
 
 /*
+  fastf_t getNormThickness(struct application *ap, struct partition *pp,
+  fastf_t cosobliquity, fastf_t normvec[3])
+
+  Given a partition structure with entry hit point and a private copy
+  of the associated normal vector, the current application structure
+  and the cosine of the obliquity at entry to the component, return
+  the normal thickness through the component at the given hit point.
+
+*/
+static fastf_t
+getNormThickness(struct application *ap, struct partition *pp, fastf_t cosobliquity, fastf_t normvec[3])
+{
+#ifdef VDEBUG
+    brst_log("getNormThickness() pp 0x%x normal %g, %g, %g\n",
+	     pp, normvec[X], normvec[Y], normvec[Z]);
+#endif
+    if (AproxEq(cosobliquity, 1.0, COS_TOL)) {
+	/* Trajectory was normal to surface, so no need
+	   to shoot another ray. */
+	fastf_t thickness = pp->pt_outhit->hit_dist -
+	    pp->pt_inhit->hit_dist;
+#ifdef VDEBUG
+	brst_log("getNormThickness: using existing partitions.\n");
+	brst_log("\tthickness=%g dout=%g din=%g normal=%g, %g, %g\n",
+		 thickness*unitconv,
+		 pp->pt_outhit->hit_dist, pp->pt_inhit->hit_dist,
+		 normvec[X], normvec[Y], normvec[Z]);
+#endif
+	return thickness;
+    } else {
+	/* need to shoot ray */
+	struct application a_thick;
+	struct hit *ihitp = pp->pt_inhit;
+	struct region *regp = pp->pt_regionp;
+	a_thick = *ap;
+	a_thick.a_hit = f_Normal;
+	a_thick.a_miss = f_Nerror;
+	a_thick.a_level++;
+	a_thick.a_user = regp->reg_regionid;
+	a_thick.a_purpose = "normal thickness";
+	VMOVE(a_thick.a_ray.r_pt, ihitp->hit_point);
+	VSCALE(a_thick.a_ray.r_dir, normvec, -1.0);
+	if (rt_shootray(&a_thick) == -1 && fatalerror) {
+	    /* Fatal error in application routine. */
+	    brst_log("Fatal error: raytracing aborted.\n");
+	    return 0.0;
+	}
+	return a_thick.a_rbeam;
+    }
+    /*NOTREACHED*/
+}
+
+
+/*
   void prntSeg(struct application *ap, struct partition *cpp, int space,
   fastf_t entrynorm[3], fastf_t exitnorm[3],
   int burstflag)
@@ -493,7 +546,7 @@ prntRayHeader(fastf_t *raydir /* burst ray direction vector */, fastf_t *shotdir
   struct partition *pp, fastf_t entrynorm[3],
   fastf_t exitnorm[3])
 
-  Burst Point Libary: intersection along burst ray.
+  Burst Point Library: intersection along burst ray.
   Ref. Figure 20., Line Number 20 of ICD.
 */
 void
@@ -570,60 +623,6 @@ prntRegionHdr(struct application *ap, struct partition *pt_headp, struct partiti
 	exitCleanly(1);
     }
     bu_semaphore_release(BU_SEM_SYSCALL);	/* unlock */
-}
-
-
-/*
-  fastf_t getNormThickness(struct application *ap, struct partition *pp,
-  fastf_t cosobliquity, fastf_t normvec[3])
-
-  Given a partition structure with entry hit point and a private copy
-  of the associated normal vector, the current application structure
-  and the cosine of the obliquity at entry to the component, return
-  the normal thickness through the component at the given hit point.
-
-*/
-static fastf_t
-getNormThickness(struct application *ap, struct partition *pp, fastf_t cosobliquity, fastf_t normvec[3])
-{
-#ifdef VDEBUG
-    brst_log("getNormThickness() pp 0x%x normal %g, %g, %g\n",
-	     pp, normvec[X], normvec[Y], normvec[Z]);
-#endif
-    if (AproxEq(cosobliquity, 1.0, COS_TOL)) {
-	/* Trajectory was normal to surface, so no need
-	   to shoot another ray. */
-	fastf_t thickness = pp->pt_outhit->hit_dist -
-	    pp->pt_inhit->hit_dist;
-#ifdef VDEBUG
-	brst_log("getNormThickness: using existing partitions.\n");
-	brst_log("\tthickness=%g dout=%g din=%g normal=%g, %g, %g\n",
-		 thickness*unitconv,
-		 pp->pt_outhit->hit_dist, pp->pt_inhit->hit_dist,
-		 normvec[X], normvec[Y], normvec[Z]);
-#endif
-	return thickness;
-    } else {
-	/* need to shoot ray */
-	struct application a_thick;
-	struct hit *ihitp = pp->pt_inhit;
-	struct region *regp = pp->pt_regionp;
-	a_thick = *ap;
-	a_thick.a_hit = f_Normal;
-	a_thick.a_miss = f_Nerror;
-	a_thick.a_level++;
-	a_thick.a_user = regp->reg_regionid;
-	a_thick.a_purpose = "normal thickness";
-	VMOVE(a_thick.a_ray.r_pt, ihitp->hit_point);
-	VSCALE(a_thick.a_ray.r_dir, normvec, -1.0);
-	if (rt_shootray(&a_thick) == -1 && fatalerror) {
-	    /* Fatal error in application routine. */
-	    brst_log("Fatal error: raytracing aborted.\n");
-	    return 0.0;
-	}
-	return a_thick.a_rbeam;
-    }
-    /*NOTREACHED*/
 }
 
 

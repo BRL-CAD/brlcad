@@ -1,7 +1,7 @@
 /*                       B O T T E S T . C
  * BRL-CAD
  *
- * Copyright (c) 1999-2012 United States Government as represented by
+ * Copyright (c) 1999-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -35,6 +35,12 @@
 #include "rtgeom.h"
 
 
+static void
+printusage(void) {
+    printf("Usage: bottest [filename]\n");
+}
+
+
 int
 main(int argc, char **argv)
 {
@@ -45,7 +51,15 @@ main(int argc, char **argv)
     struct bu_bitv *face_mode = NULL;
     static const char *filename = "bot-test.g";
 
-    if (argc > 1)
+    if (BU_STR_EQUAL(argv[1], "-h") || BU_STR_EQUAL(argv[1], "-?")) {
+    	printusage();
+    	return 0;
+    }
+    if (argc == 1) {
+    	printusage();
+    	printf("       Program continues running (will create file bot-test.g because 'filename' was blank):\n");
+    }
+    else if (argc > 1)
 	filename = argv[1];
 
     outfp = wdb_fopen(filename);
@@ -315,6 +329,7 @@ main(int argc, char **argv)
 
     return 0;
 }
+
 
 /*
  * Local Variables:

@@ -1,7 +1,7 @@
 /*                  R B _ I N T E R N A L S . H
  * BRL-CAD
  *
- * Copyright (c) 1998-2012 United States Government as represented by
+ * Copyright (c) 1998-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -138,7 +138,7 @@ extern struct bu_rb_node *rb_neighbor(struct bu_rb_node *node, int order, int se
 /**
  * R B _ R O T _ L E F T
  *
- * Perfrom left rotation on a red-black tree
+ * Perform left rotation on a red-black tree
  *
  * This function has two parameters: the node about which to rotate
  * and the order to be rotated.  rb_rot_left() is an implementation of
@@ -150,7 +150,7 @@ extern void rb_rot_left(struct bu_rb_node *x, int order);
 /**
  * R B _ R O T _ R I G H T
  *
- * Perfrom right rotation on a red-black tree
+ * Perform right rotation on a red-black tree
  *
  * This function has two parameters: the node about which to rotate
  * and the order to be rotated.  rb_rot_right() is hacked from

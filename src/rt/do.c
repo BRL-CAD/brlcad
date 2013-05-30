@@ -1,7 +1,7 @@
 /*                            D O . C
  * BRL-CAD
  *
- * Copyright (c) 1987-2012 United States Government as represented by
+ * Copyright (c) 1987-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -52,7 +52,6 @@
 
 /***** Variables shared with viewing model *** */
 extern FILE *outfp;			/* optional pixel output file */
-extern double azimuth, elevation;
 extern mat_t view2model;
 extern mat_t model2view;
 /***** end of sharing with viewing model *****/
@@ -131,9 +130,9 @@ old_way(FILE *fp)
 
     viewsize = -42.0;
 
-    /* Sneek a peek at the first character, and then put it back */
+    /* Sneak a peek at the first character, and then put it back */
     if ((c = fgetc(fp)) == EOF) {
-	/* Claim old way, all (ie, nothing) done */
+	/* Claim old way, all (i.e., nothing) done */
 	return 1;
     }
     if (ungetc(c, fp) != c)
@@ -193,10 +192,10 @@ int cm_start(int argc, char **argv)
 	register char *cp;
 
 	cp = buf;
-	while (*cp && isspace(*cp)) cp++;	/* skip spaces */
+	while (*cp && isspace((int)*cp)) cp++;	/* skip spaces */
 	if (bu_strncmp(cp, "start", 5) != 0) continue;
-	while (*cp && !isspace(*cp)) cp++;	/* skip keyword */
-	while (*cp && isspace(*cp)) cp++;	/* skip spaces */
+	while (*cp && !isspace((int)*cp)) cp++;	/* skip keyword */
+	while (*cp && isspace((int)*cp)) cp++;	/* skip spaces */
 	frame = atoi(cp);
 	bu_free(buf, "rt_read_cmd command buffer (skipping frames)");
 	buf = (char *)0;
@@ -386,7 +385,7 @@ int cm_anim(int argc, const char **argv)
  */
 int cm_clean(int UNUSED(argc), char **UNUSED(argv))
 {
-    /* Allow lighting model clean up (e.g. lights, materials, etc) */
+    /* Allow lighting model clean up (e.g. lights, materials, etc.) */
     view_cleanup(APP.a_rt_i);
 
     rt_clean(APP.a_rt_i);
@@ -518,8 +517,9 @@ def_tree(register struct rt_i *rtip)
     RT_CK_RTI(rtip);
 
     rt_prep_timer();
-    if (rt_gettrees(rtip, nobjs, (const char **)objtab, npsw) < 0)
-	bu_log("rt_gettrees(%s) FAILED\n", objtab[0]);
+    if (rt_gettrees(rtip, nobjs, (const char **)objtab, npsw) < 0) {
+	bu_log("rt_gettrees(%s) FAILED\n", (objtab && objtab[0]) ? objtab[0] : "ERROR");
+    }
     (void)rt_get_timer(&times, NULL);
 
     if (rt_verbosity & VERBOSE_STATS)
@@ -541,7 +541,7 @@ do_prep(struct rt_i *rtip)
 
     RT_CHECK_RTI(rtip);
     if (rtip->needprep) {
-	/* Allow lighting model to set up (e.g. lights, materials, etc) */
+	/* Allow lighting model to set up (e.g. lights, materials, etc.) */
 	view_setup(rtip);
 
 	/* Allow RT library to prepare itself */
@@ -583,15 +583,14 @@ do_frame(int framenumber)
     double nutime = 0.0;		/* CPU time used, normalized by ncpu */
     double wallclock = 0.0;		/* # seconds of wall clock time */
     int npix = 0;			/* # of pixel values to be done */
-    int lim = 0;
     vect_t work, temp;
     quat_t quat;
-    
+
     if (rt_verbosity & VERBOSE_FRAMENUMBER)
 	bu_log("\n...................Frame %5d...................\n",
 	       framenumber);
 
-    /* Compute model RPP, etc */
+    /* Compute model RPP, etc. */
     do_prep(rtip);
 
     if (rt_verbosity & VERBOSE_VIEWDETAIL)
@@ -694,19 +693,6 @@ do_frame(int framenumber)
 	if (xx * yy >= 0) {
 	    pix_end = yy * width + xx;
 	}
-    }
-
-    /*
-     * After the parameters for this calculation have been
-     * established, deal with CPU limits and priorities, where
-     * appropriate.  Because limits exist, they better be adequate.
-     * We assume that the Cray can produce MINRATE pixels/sec on
-     * images with extreme amounts of glass & mirrors.
-     */
-#define MINRATE 65
-    npix = width*height*(hypersample+1);
-    if ((lim = bu_cpulimit_get()) > 0) {
-	bu_cpulimit_set(lim + npix / MINRATE + 100);
     }
 
     /* Allocate data for pixel map for rerendering of black pixels */
@@ -838,10 +824,10 @@ do_frame(int framenumber)
 
 	    do_run(0, (1<<incr_level)*(1<<incr_level)-1);
 	}
-    } 
+    }
     else if (full_incr_mode){
 	/* Multiple frame buffer mode */
-	for(full_incr_sample = 1; full_incr_sample <= full_incr_nsamples; 
+	for(full_incr_sample = 1; full_incr_sample <= full_incr_nsamples;
 	    full_incr_sample++){
 	    if(full_incr_sample > 1) /* first sample was already initialized */
 		view_2init(&APP, framename);
@@ -867,16 +853,10 @@ do_frame(int framenumber)
     if (R_DEBUG&RDEBUG_RTMEM)
 	bu_debug &= ~BU_DEBUG_MEM_LOG;
 
-    /*
-     * Certain parallel systems (eg, Alliant) count the entire
-     * multi-processor complex as one computer, and charge only once.
-     * This matches the desired behavior here.  Other vendors (eg,
-     * SGI) count each processor separately, and charge for all of
-     * them.  These results need to be normalized.  Otherwise, all we
-     * would know is that a given workload takes about the same amount
-     * of CPU time, regardless of the number of CPUs.
+    /* These results need to be normalized.  Otherwise, all we would
+     * know is that a given workload takes about the same amount of
+     * CPU time, regardless of the number of CPUs.
      */
-#if !defined(alliant)
     if (npsw > 1) {
 	int avail_cpus;
 	int ncpus;
@@ -888,12 +868,12 @@ do_frame(int framenumber)
 	    ncpus = npsw;
 	}
 	nutime = utime / ncpus;			/* compensate */
-    } else
-#endif
+    } else {
 	nutime = utime;
+    }
 
-    /* prevent a bogus near-zero time to prevent infinate and
-     * near-infinate results without relying on IEEE floating point
+    /* prevent a bogus near-zero time to prevent infinite and
+     * near-infinite results without relying on IEEE floating point
      * zero comparison.
      */
     if (NEAR_ZERO(nutime, VDIVIDE_TOL)) {
@@ -957,7 +937,7 @@ do_frame(int framenumber)
  *
  * Compute the rotation specified by the azimuth and elevation
  * parameters.  First, note that these are specified relative to the
- * GIFT "front view", ie, model (X, Y, Z) is view (Z, X, Y): looking
+ * GIFT "front view", i.e., model (X, Y, Z) is view (Z, X, Y): looking
  * down X axis, Y right, Z up.
  *
  * A positive azimuth represents rotating the *eye* around the
@@ -1078,7 +1058,7 @@ struct command_tab rt_cmdtab[] = {
      cm_lookat_pt,	4, 5},
     {"viewrot", "4x4 matrix", "set view direction from matrix",
      cm_vrot,	17, 17},
-    {"orientation", "quaternion", "set view direction from quaturnion",
+    {"orientation", "quaternion", "set view direction from quaternion",
      cm_orientation,	5, 5},
     {"end", 	"", "end of frame setup, begin raytrace",
      cm_end,		1, 1},

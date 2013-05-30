@@ -1,7 +1,7 @@
 /*                        B U N D L E . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2012 United States Government as represented by
+ * Copyright (c) 1985-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -61,7 +61,7 @@
  *
  * Formal Return: whatever the application function returns (an int).
  *
- * NOTE: The appliction functions may call rt_shootray() recursively.
+ * NOTE: The application functions may call rt_shootray() recursively.
  * Thus, none of the local variables may be static.
  *
  * To prevent having to lock the statistics variables in a PARALLEL
@@ -167,10 +167,9 @@ rt_shootray_bundle(register struct application *ap, struct xray *rays, int nrays
     }
 
     solidbits = rt_get_solidbitv(rtip->nsolids, resp);
-    bu_bitv_clear(solidbits);
 
     if (BU_LIST_IS_EMPTY(&resp->re_region_ptbl)) {
-	BU_GET(regionbits, struct bu_ptbl);
+	BU_ALLOC(regionbits, struct bu_ptbl);
 	bu_ptbl_init(regionbits, 7, "rt_shootray_bundle() regionbits ptbl");
     } else {
 	regionbits = BU_LIST_FIRST(bu_ptbl, &resp->re_region_ptbl);
@@ -246,7 +245,7 @@ rt_shootray_bundle(register struct application *ap, struct xray *rays, int nrays
 
     /*
      * The interesting part of the ray starts at distance 0.  If the
-     * ray enters the model at a negative distance, (ie, the ray
+     * ray enters the model at a negative distance, (i.e., the ray
      * starts within the model RPP), we only look at little bit behind
      * (BACKING_DIST) to see if we are just coming out of something,
      * but never further back than the intersection with the model
@@ -297,7 +296,7 @@ rt_shootray_bundle(register struct application *ap, struct xray *rays, int nrays
      * While the ray remains inside model space, push from box to box
      * until ray emerges from model space again (or first hit is
      * found, if user is impatient).  It is vitally important to
-     * always stay within the model RPP, or the space partitoning tree
+     * always stay within the model RPP, or the space partitioning tree
      * will pick wrong boxes & miss them.
      */
     while ((cutp = rt_advance_to_next_cell(&ss)) != CUTTER_NULL) {
@@ -389,7 +388,7 @@ rt_shootray_bundle(register struct application *ap, struct xray *rays, int nrays
 	 *
 	 * If a_onehit != 0, then it indicates how many hit points
 	 * (which are greater than the ray start point of 0.0) the
-	 * application requires, ie, partitions with inhit >= 0.  (If
+	 * application requires, i.e., partitions with inhit >= 0.  (If
 	 * negative, indicates number of non-air hits needed).
 	 *
 	 * If this box yielded additional segments, immediately weave
@@ -492,7 +491,7 @@ hitit:
      * finished_segs is only used by special hit routines which don't
      * follow the traditional solid modeling paradigm.
      */
-    if (RT_G_DEBUG&DEBUG_ALLHITS) rt_pr_partitions(rtip, &FinalPart, "Parition list passed to a_hit() routine");
+    if (RT_G_DEBUG&DEBUG_ALLHITS) rt_pr_partitions(rtip, &FinalPart, "Partition list passed to a_hit() routine");
     if (ap->a_hit)
 	ap->a_return = ap->a_hit(ap, &FinalPart, &finished_segs);
     else
@@ -554,12 +553,12 @@ bundle_hit(register struct application *ap, struct partition *PartHeadp, struct 
 	/*
 	 * setup partition collection
 	 */
-	BU_GET(bundle->list, struct partition_list);
+	BU_ALLOC(bundle->list, struct partition_list);
 	BU_LIST_INIT(&(bundle->list->l));
     }
 
     /* add a new partition to list */
-    BU_GET(new_shotline, struct partition_list);
+    BU_ALLOC(new_shotline, struct partition_list);
 
     /* steal partition list */
     BU_LIST_INIT_MAGIC((struct bu_list *)&new_shotline->PartHeadp, PT_HD_MAGIC);
@@ -590,29 +589,6 @@ bundle_miss(register struct application *ap)
 }
 
 
-/**
- * Function for shooting a bundle of rays. Iteratively walks list of
- * rays contained in the application bundles xrays field 'b_rays'
- * passing each single ray to r_shootray().
- *
- * Input:
- *
- * bundle -  Pointer to an application_bundle structure.
- *
- * b_ap - Members in this single ray application structure should be
- * set in a similar fashion as when used with rt_shootray() with the
- * exception of a_hit() and a_miss(). Default implementaions of these
- * routines are provided that simple update hit/miss counters and
- * attach the hit partitions and segments to the partition_bundle
- * structure. Users can still override this default functionality but
- * have to make sure to move the partition and segment list to the new
- * partition_bundle structure.
- *
- * b_hit() Routine to call when something is hit by the ray bundle.
- *
- * b_miss() Routine to call when ray bundle misses everything.
- *
- */
 int
 rt_shootrays(struct application_bundle *bundle)
 {
@@ -640,10 +616,10 @@ rt_shootrays(struct application_bundle *bundle)
     /*
      * Along with updating some bundle hit/miss counters the default
      * callback functions differ from their general user defined
-     * counterparts by dettaching the ray hit partition list and
+     * counterparts by detaching the ray hit partition list and
      * segment list and attaching it to a partition bundle. Users can
-     * define there own functions but should remember to hi-jack the
-     * partition and segment list or the single ray handling funtion
+     * define their own functions but should remember to hi-jack the
+     * partition and segment list or the single ray handling function
      * will return memory allocated to these list prior to the bundle
      * b_hit() routine.
      */
@@ -655,14 +631,14 @@ rt_shootrays(struct application_bundle *bundle)
     if (!bundle->b_ap.a_miss)
 	bundle->b_ap.a_miss = bundle_miss;
 
-    pb = (struct partition_bundle *)bu_calloc(1, sizeof(struct partition_bundle), "partition bundle");
+    BU_ALLOC(pb, struct partition_bundle);
     pb->ap = &bundle->b_ap;
     pb->hits = pb->misses = 0;
 
     bundle->b_uptr = (genptr_t)pb;
 
     for (BU_LIST_FOR (r, xrays, &bundle->b_rays.l)) {
-	ray_ap = (struct application *)bu_calloc(1, sizeof(struct application), "ray application structure");
+	BU_ALLOC(ray_ap, struct application);
 	*ray_ap = bundle->b_ap; /* structure copy */
 
 	ray_ap->a_ray = r->ray;

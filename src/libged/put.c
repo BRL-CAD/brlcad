@@ -1,7 +1,7 @@
 /*                         P U T . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2012 United States Government as represented by
+ * Copyright (c) 2008-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -62,11 +62,7 @@ ged_put(struct ged *gedp, int argc, const char *argv[])
 
     name = (char *)argv[1];
 
-    /* Verify that this wdb supports lookup operations (non-null dbip).
-     * stdout/file wdb objects don't, but can still be written to.
-     * If not, just skip the lookup test and write the object
-     */
-    if (gedp->ged_wdbp->dbip && db_lookup(gedp->ged_wdbp->dbip, argv[1], LOOKUP_QUIET) != RT_DIR_NULL) {
+    if (db_lookup(gedp->ged_wdbp->dbip, argv[1], LOOKUP_QUIET) != RT_DIR_NULL) {
 	bu_vls_printf(gedp->ged_result_str, "%s already exists", argv[1]);
 	return GED_ERROR;
     }
@@ -74,7 +70,7 @@ ged_put(struct ged *gedp, int argc, const char *argv[])
     RT_DB_INTERNAL_INIT(&intern);
 
     for (i = 0; argv[2][i] != 0 && i < 15; i++) {
-	type[i] = isupper(argv[2][i]) ? tolower(argv[2][i]) :
+	type[i] = isupper((int)argv[2][i]) ? tolower((int)argv[2][i]) :
 	    argv[2][i];
     }
     type[i] = 0;

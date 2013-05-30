@@ -1,7 +1,7 @@
 #!/bin/sh
 #                        a u t o g e n . s h
 #
-# Copyright (c) 2005-2012 United States Government as represented by
+# Copyright (c) 2005-2013 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -394,8 +394,8 @@ DEPRECATION NOTICE:
   bootstrap script is no longer necessary.
 
   This script along with the rest of the GNU Autotools build system is
-  a deprecated interface (see doc/deprecation.txt for details) subject
-  to removal in a future release of BRL-CAD and may not result in a
+  a deprecated interface (see the CHANGES file for details) subject to
+  removal in a future release of BRL-CAD and may not result in a
   complete build.
 
   Please read INSTALL for new build instructions.
@@ -403,10 +403,10 @@ DEPRECATION NOTICE:
 i=0
 while [ $i -lt 10 ] ; do
     sleep 1
-    echo $ECHO_N "." $ECHO_C
+    echo $ECHO_N ".$ECHO_C"
     i=`expr $i + 1`
 done
-echo "done.  You've been duly warned.  Proceeding with old build."
+echo "okay.  You've been duly warned.  Proceeding with old build."
 echo
 
 
@@ -489,7 +489,7 @@ for sig in 1 2 13 15; do
 
 	    $VERBOSE_ECHO "rm -f acinclude.m4.$$.backup"
 	    rm -f acinclude.m4.$$.backup
-        fi
+	fi
 
 	{ (exit 1); exit 1; }
 ' $sig
@@ -870,7 +870,7 @@ recursive_protect ( ) {
 
 
 #############################
-# RESTORE_CLOBBERED FUNCION #
+# RESTORE_CLOBBERED FUNCTION #
 #############################
 restore_clobbered ( ) {
 
@@ -900,7 +900,7 @@ restore_clobbered ( ) {
 		$VERBOSE_ECHO "mv ${file}.$$.protect_from_automake.backup ${file}"
 		mv ${file}.$$.protect_from_automake.backup ${file}
 	    fi # -f ${file}
-	
+
 	    # just in case
 	    $VERBOSE_ECHO "rm -f ${file}.$$.protect_from_automake.backup"
 	    rm -f ${file}.$$.protect_from_automake.backup
@@ -1003,7 +1003,7 @@ initialize ( ) {
     if test ! -d "$_aux_dir" ; then
 	_aux_dir=.
     else
-	$VERBOSE_ECHO "Detected auxillary directory: $_aux_dir"
+	$VERBOSE_ECHO "Detected auxiliary directory: $_aux_dir"
     fi
 
     ################################
@@ -1141,7 +1141,7 @@ download_gnulib_config_guess () {
 	ret=$?
 	if [ ! $ret = 0 ] ; then
 	    continue
-        fi
+	fi
 
 	__cmd_version=`${__cmd} --version | head -n 1 | sed -e 's/^[^0-9]\+//' -e 's/ .*//'`
 	$VERBOSE_ECHO "Found ${__cmd} ${__cmd_version}"
@@ -1149,7 +1149,7 @@ download_gnulib_config_guess () {
 	opts=""
 	case ${__cmd} in
 	    wget)
-		opts="-O" 
+		opts="-O"
 		;;
 	    curl)
 		opts="-o"
@@ -1192,7 +1192,6 @@ libtoolize_needed () {
 }
 
 
-
 ############################################
 # prepare build via autoreconf or manually #
 ############################################
@@ -1231,7 +1230,7 @@ if [ "x$HAVE_AUTORECONF" = "xyes" ] ; then
 	$ECHO "Warning: $AUTORECONF failed"
 
 	if test -f ltmain.sh ; then
-	    $ECHO "libtoolize being run by autoreconf is not creating ltmain.sh in the auxillary directory like it should"
+	    $ECHO "libtoolize being run by autoreconf is not creating ltmain.sh in the auxiliary directory like it should"
 	fi
 
 	$ECHO "Attempting to run the preparation steps individually"
@@ -1530,7 +1529,7 @@ EOF
 	    $VERBOSE_ECHO "$automake_output"
 
 	    if [ ! $ret = 0 ] ; then
-	 	# test if libtool is busted
+		# test if libtool is busted
 		libtool_failure "$automake_output"
 
 		# let the user know what went wrong

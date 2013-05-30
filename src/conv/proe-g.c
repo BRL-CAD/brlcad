@@ -1,7 +1,7 @@
 /*                        P R O E - G . C
  * BRL-CAD
  *
- * Copyright (c) 1994-2012 United States Government as represented by
+ * Copyright (c) 1994-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -50,7 +50,7 @@ static char *input_file;	/* name of the input file */
 static char *brlcad_file;	/* name of output file */
 static struct bu_vls ret_name = BU_VLS_INIT_ZERO;	/* unique name built by Build_unique_name() */
 static char *forced_name=NULL;	/* name specified on command line */
-static int stl_format=0;	/* Flag, non-zero indocates raw Stereolithography format input */
+static int stl_format=0;	/* Flag, non-zero indicates raw Stereolithography format input */
 static int solid_count=0;	/* count of solids converted */
 static struct bn_tol tol;	/* Tolerance structure */
 static int id_no=1000;		/* Ident numbers */
@@ -172,7 +172,7 @@ Add_new_name(char *name, unsigned int obj, int type)
 
 
     /* Add a new name */
-    ptr = (struct name_conv_list *)bu_calloc(1, sizeof(struct name_conv_list), "Add_new_name: prev->next");
+    BU_ALLOC(ptr, struct name_conv_list);
     ptr->next = (struct name_conv_list *)NULL;
     ptr->brlcad_name = bu_strdup(name);
     ptr->obj = obj;
@@ -299,7 +299,7 @@ Convert_assy(char *line)
 
     start = (-1);
     /* skip leading blanks */
-    while (isspace(line[++start]) && line[start] != '\0');
+    while (isspace((int)line[++start]) && line[start] != '\0');
     if (bu_strncmp(&line[start], "assembly", 8) && bu_strncmp(&line[start], "ASSEMBLY", 8)) {
 	bu_log("PROE-G: Convert_assy called for non-assembly:\n%s\n", line);
 	return;
@@ -307,12 +307,12 @@ Convert_assy(char *line)
 
     /* skip blanks before name */
     start += 7;
-    while (isspace(line[++start]) && line[start] != '\0');
+    while (isspace((int)line[++start]) && line[start] != '\0');
 
     /* get name */
     i = (-1);
     start--;
-    while (!isspace(line[++start]) && line[start] != '\0' && line[start] != '\n')
+    while (!isspace((int)line[++start]) && line[start] != '\0' && line[start] != '\n')
 	name[++i] = line[start];
     name[++i] = '\0';
 
@@ -327,7 +327,7 @@ Convert_assy(char *line)
     while (bu_fgets(line1, MAX_LINE_SIZE, fd_in)) {
 	/* skip leading blanks */
 	start = (-1);
-	while (isspace(line1[++start]) && line[start] != '\0');
+	while (isspace((int)line1[++start]) && line[start] != '\0');
 
 	if (!bu_strncmp(&line1[start], "endassembly", 11) || !bu_strncmp(&line1[start], "ENDASSEMBLY", 11)) {
 
@@ -347,10 +347,10 @@ Convert_assy(char *line)
 	    break;
 	} else if (!bu_strncmp(&line1[start], "member", 6) || !bu_strncmp(&line1[start], "MEMBER", 6)) {
 	    start += 5;
-	    while (isspace(line1[++start]) && line1[start] != '\0');
+	    while (isspace((int)line1[++start]) && line1[start] != '\0');
 	    i = (-1);
 	    start--;
-	    while (!isspace(line1[++start]) && line1[start] != '\0' && line1[start] != '\n')
+	    while (!isspace((int)line1[++start]) && line1[start] != '\0' && line1[start] != '\n')
 		memb_name[++i] = line1[start];
 	    memb_name[++i] = '\0';
 
@@ -362,7 +362,7 @@ Convert_assy(char *line)
 		bu_log("\tmember (%s)\n", brlcad_name);
 	    wmem = mk_addmember(brlcad_name, &head.l, NULL, WMOP_UNION);
 	} else if (!bu_strncmp(&line1[start], "matrix", 6) || !bu_strncmp(&line1[start], "MATRIX", 6)) {
-          if (wmem) {
+	  if (wmem) {
 	    size_t j;
 	    double scale, inv_scale;
 
@@ -373,7 +373,7 @@ Convert_assy(char *line)
 		    wmem->wm_mat[4*i+j] = mat_col[i];
 	    }
 
-	    /* convert this matrix to seperate scale factor into element #15 */
+	    /* convert this matrix to separate scale factor into element #15 */
 /*			scale = MAGNITUDE(&wmem->wm_mat[0]); */
 	    scale = pow(bn_mat_det3(wmem->wm_mat), 1.0/3.0);
 	    if (debug) {
@@ -383,17 +383,17 @@ Convert_assy(char *line)
 	    if (!ZERO(scale - 1.0)) {
 		inv_scale = 1.0/scale;
 		for (j=0; j<3; j++)
-		    HSCALE(&wmem->wm_mat[j*4], &wmem->wm_mat[j*4], inv_scale)
+		    HSCALE(&wmem->wm_mat[j*4], &wmem->wm_mat[j*4], inv_scale);
 
-			/* clamp rotation elements to fabs(1.0) */
-			for (j=0; j<3; j++) {
-			    for (i=0; i<3; i++) {
-				if (wmem->wm_mat[j*4 + i] > 1.0)
-				    wmem->wm_mat[j*4 + i] = 1.0;
-				else if (wmem->wm_mat[j*4 + i] < -1.0)
-				    wmem->wm_mat[j*4 + i] = -1.0;
-			    }
-			}
+		/* clamp rotation elements to fabs(1.0) */
+		for (j=0; j<3; j++) {
+		    for (i=0; i<3; i++) {
+			if (wmem->wm_mat[j*4 + i] > 1.0)
+			    wmem->wm_mat[j*4 + i] = 1.0;
+			else if (wmem->wm_mat[j*4 + i] < -1.0)
+			    wmem->wm_mat[j*4 + i] = -1.0;
+		    }
+		}
 
 		if (top_level)
 		    wmem->wm_mat[15] *= (inv_scale/conv_factor);
@@ -412,16 +412,16 @@ Convert_assy(char *line)
 	    }
 	    if (debug)
 		bn_mat_print("final matrix", wmem->wm_mat);
-          } else {
-               bu_log("Matrix present before wmem is initialized! (%s)\n", brlcad_name);
-          }
+	  } else {
+	       bu_log("Matrix present before wmem is initialized! (%s)\n", brlcad_name);
+	  }
 	} else {
 	    bu_log("Unrecognized line in assembly (%s)\n%s\n", name, line1);
 	}
     }
 
     if (RT_G_DEBUG & DEBUG_MEM_FULL) {
-	bu_log("Barrier check at end of Convet_assy:\n");
+	bu_log("Barrier check at end of Convert_assy:\n");
 	if (bu_mem_barriercheck())
 	    bu_exit(EXIT_FAILURE,  "Barrier check failed!!!\n");
     }
@@ -553,7 +553,7 @@ do_modifiers(char *line1, int *start, struct wmember *head, char *name, fastf_t 
 	}
 	bu_fgets(line1, MAX_LINE_SIZE, fd_in);
 	(*start) = (-1);
-	while (isspace(line1[++(*start)]));
+	while (isspace((int)line1[++(*start)]));
     }
 }
 
@@ -597,7 +597,7 @@ Convert_part(char *line)
 	bu_prmem("At start of Conv_prt():\n");
 
     if (RT_G_DEBUG & DEBUG_MEM_FULL) {
-	bu_log("Barrier check at start of Convet_part:\n");
+	bu_log("Barrier check at start of Convert_part:\n");
 	if (bu_mem_barriercheck())
 	    bu_exit(EXIT_FAILURE,  "Barrier check failed!!!\n");
     }
@@ -605,14 +605,14 @@ Convert_part(char *line)
 
     bot_fcurr = 0;
     BU_LIST_INIT(&head.l);
-    VSETALL(part_min, MAX_FASTF);
-    VSETALL(part_max, -MAX_FASTF);
+    VSETALL(part_min, INFINITY);
+    VSETALL(part_max, -INFINITY);
 
     clean_vert_tree(vert_tree_root);
 
     start = (-1);
     /* skip leading blanks */
-    while (isspace(line[++start]) && line[start] != '\0');
+    while (isspace((int)line[++start]) && line[start] != '\0');
     if (bu_strncmp(&line[start], "solid", 5) && bu_strncmp(&line[start], "SOLID", 5)) {
 	bu_log("Convert_part: Called for non-part\n%s\n", line);
 	return;
@@ -620,13 +620,13 @@ Convert_part(char *line)
 
     /* skip blanks before name */
     start += 4;
-    while (isspace(line[++start]) && line[start] != '\0');
+    while (isspace((int)line[++start]) && line[start] != '\0');
 
     if (line[start] != '\0') {
 	/* get name */
 	i = (-1);
 	start--;
-	while (!isspace(line[++start]) && line[start] != '\0' && line[start] != '\n')
+	while (!isspace((int)line[++start]) && line[start] != '\0' && line[start] != '\n')
 	    name[++i] = line[start];
 	name[++i] = '\0';
 
@@ -691,7 +691,7 @@ Convert_part(char *line)
 
     while (bu_fgets(line1, MAX_LINE_SIZE, fd_in) != NULL) {
 	start = (-1);
-	while (isspace(line1[++start]));
+	while (isspace((int)line1[++start]));
 	if (!bu_strncmp(&line1[start], "endsolid", 8) || !bu_strncmp(&line1[start], "ENDSOLID", 8)) {
 	    break;
 	} else if (!bu_strncmp(&line1[start], "color", 5) || !bu_strncmp(&line1[start], "COLOR", 5)) {
@@ -708,7 +708,7 @@ Convert_part(char *line)
 	    VSET(normal, 0.0, 0.0, 0.0);
 
 	    start += 4;
-	    while (line1[++start] && isspace(line1[start]));
+	    while (line1[++start] && isspace((int)line1[start]));
 
 	    if (line1[start]) {
 		if (!bu_strncmp(&line1[start], "normal", 6) || !bu_strncmp(&line1[start], "NORMAL", 6)) {
@@ -729,7 +729,7 @@ Convert_part(char *line)
 		    bu_exit(EXIT_FAILURE,  "Unexpected EOF while reading a loop in a part!!!\n");
 
 		start = (-1);
-		while (isspace(line1[++start]));
+		while (isspace((int)line1[++start]));
 
 		if (!bu_strncmp(&line1[start], "endloop", 7) || !bu_strncmp(&line1[start], "ENDLOOP", 7)) {
 		    endloop = 1;
@@ -1019,7 +1019,7 @@ proe_usage(const char *argv0)
     bu_log("		This is to allow conversion of parts to be included in\n");
     bu_log("		previously converted Pro/E assemblies.\n");
     bu_log("	The -S option indicates that the input file is raw STL (STereoLithography) format.\n");
-    bu_log("	The -t option specifies the minumim distance between two distinct vertices (mm).\n");
+    bu_log("	The -t option specifies the minimum distance between two distinct vertices (mm).\n");
     bu_log("	The -x option specifies an RT debug flags (see raytrace.h).\n");
 }
 

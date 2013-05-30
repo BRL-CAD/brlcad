@@ -1,7 +1,7 @@
 /*                 SurfaceReplica.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2012 United States Government as represented by
+ * Copyright (c) 1994-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -32,53 +32,57 @@
 
 #define CLASSNAME "SurfaceReplica"
 #define ENTITYNAME "Surface_Replica"
-string SurfaceReplica::entityname = Factory::RegisterClass(ENTITYNAME,(FactoryMethod)SurfaceReplica::Create);
+string SurfaceReplica::entityname = Factory::RegisterClass(ENTITYNAME, (FactoryMethod)SurfaceReplica::Create);
 
-SurfaceReplica::SurfaceReplica() {
-    step=NULL;
+SurfaceReplica::SurfaceReplica()
+{
+    step = NULL;
     id = 0;
     parent_surface = NULL;
     transformation = NULL;
 }
 
-SurfaceReplica::SurfaceReplica(STEPWrapper *sw,int step_id) {
-    step=sw;
+SurfaceReplica::SurfaceReplica(STEPWrapper *sw, int step_id)
+{
+    step = sw;
     id = step_id;
     parent_surface = NULL;
     transformation = NULL;
 }
 
-SurfaceReplica::~SurfaceReplica() {
+SurfaceReplica::~SurfaceReplica()
+{
 }
 
 bool
-SurfaceReplica::Load(STEPWrapper *sw, SDAI_Application_instance *sse) {
+SurfaceReplica::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
 
-    step=sw;
+    step = sw;
     id = sse->STEPfile_id;
 
-    if ( !Surface::Load(step,sse) ) {
+    if (!Surface::Load(step, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::BoundedSurface." << std::endl;
 	return false;
     }
 
     // need to do this for local attributes to makes sure we have
     // the actual entity and not a complex/supertype parent
-    sse = step->getEntity(sse,ENTITYNAME);
+    sse = step->getEntity(sse, ENTITYNAME);
 
     if (parent_surface == NULL) {
-	SDAI_Application_instance *entity = step->getEntityAttribute(sse,"parent_surface");
+	SDAI_Application_instance *entity = step->getEntityAttribute(sse, "parent_surface");
 	if (entity) {
-	    parent_surface = dynamic_cast<Surface *>(Factory::CreateObject(sw,entity));
+	    parent_surface = dynamic_cast<Surface *>(Factory::CreateObject(sw, entity));
 	} else {
 	    std::cerr << CLASSNAME << ": error loading 'parent_surface' attribute." << std::endl;
 	    return false;
 	}
     }
     if (transformation == NULL) {
-	SDAI_Application_instance *entity = step->getEntityAttribute(sse,"transformation");
+	SDAI_Application_instance *entity = step->getEntityAttribute(sse, "transformation");
 	if (entity) {
-	    transformation = dynamic_cast<CartesianTransformationOperator3D *>(Factory::CreateObject(sw,entity));
+	    transformation = dynamic_cast<CartesianTransformationOperator3D *>(Factory::CreateObject(sw, entity));
 	} else {
 	    std::cerr << CLASSNAME << ": error loading 'transformation' attribute." << std::endl;
 	    return false;
@@ -89,37 +93,36 @@ SurfaceReplica::Load(STEPWrapper *sw, SDAI_Application_instance *sse) {
 }
 
 void
-SurfaceReplica::Print(int level) {
-    TAB(level); std::cout << CLASSNAME << ":" << name << "(";
+SurfaceReplica::Print(int level)
+{
+    TAB(level);
+    std::cout << CLASSNAME << ":" << name << "(";
     std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-    TAB(level); std::cout << "Attributes:" << std::endl;
-    TAB(level+1); std::cout << "parent_surface:" << std::endl;
-    parent_surface->Print(level+1);
-    TAB(level+1); std::cout << "transformation:" << std::endl;
-    transformation->Print(level+1);
+    TAB(level);
+    std::cout << "Attributes:" << std::endl;
+    TAB(level + 1);
+    std::cout << "parent_surface:" << std::endl;
+    parent_surface->Print(level + 1);
+    TAB(level + 1);
+    std::cout << "transformation:" << std::endl;
+    transformation->Print(level + 1);
 
-    TAB(level); std::cout << "Inherited Attributes:" << std::endl;
-    Surface::Print(level+1);
+    TAB(level);
+    std::cout << "Inherited Attributes:" << std::endl;
+    Surface::Print(level + 1);
 }
 
 STEPEntity *
-SurfaceReplica::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
-    Factory::OBJECTS::iterator i;
-    if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
-	SurfaceReplica *object = new SurfaceReplica(sw,sse->STEPfile_id);
+SurfaceReplica::GetInstance(STEPWrapper *sw, int id)
+{
+    return new SurfaceReplica(sw, id);
+}
 
-	Factory::AddObject(object);
-
-	if (!object->Load(sw, sse)) {
-	    std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
-	    delete object;
-	    return NULL;
-	}
-	return static_cast<STEPEntity *>(object);
-    } else {
-	return (*i).second;
-    }
+STEPEntity *
+SurfaceReplica::Create(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
+    return STEPEntity::CreateEntity(sw, sse, GetInstance, CLASSNAME);
 }
 
 bool

@@ -4,6 +4,7 @@ set(RT_INCLUDE_DIRS
   ${BRLCAD_SOURCE_DIR}/include
   ${BU_INCLUDE_DIRS}
   ${BN_INCLUDE_DIRS}
+  ${P2T_INCLUDE_DIR}
   ${OPENNURBS_INCLUDE_DIR}
   ${ZLIB_INCLUDE_DIR}
   )
@@ -13,6 +14,7 @@ set(RT_LOCAL_INCLUDE_DIRS
   ${CMAKE_CURRENT_SOURCE_DIR}
   ${REGEX_INCLUDE_DIR}
   ${TNT_INCLUDE_DIR}
+  ${LIBVDS_INCLUDE_DIR}
   )
 
 BRLCAD_LIB_INCLUDE_DIRS(rt RT_INCLUDE_DIRS RT_LOCAL_INCLUDE_DIRS)
@@ -59,7 +61,6 @@ set(LIBRT_SOURCES
   mater.c
   memalloc.c
   mkbundle.c
-  opennurbs_ext.cpp
   oslo_calc.c
   oslo_map.c
   pr.c
@@ -71,6 +72,7 @@ set(LIBRT_SOURCES
   primitives/arbn/arbn_brep.cpp
   primitives/arbn/arbn_mirror.c
   primitives/ars/ars.c
+  primitives/ars/ars_brep.cpp
   primitives/ars/ars_mirror.c
   primitives/bot/bot.c
   primitives/bot/bot_brep.cpp
@@ -106,6 +108,7 @@ set(LIBRT_SOURCES
   primitives/bspline/nurb_util.c
   primitives/bspline/nurb_xsplit.c
   primitives/cline/cline.c
+  primitives/cline/cline_brep.cpp
   primitives/dsp/dsp.c
   primitives/dsp/dsp_brep.cpp
   primitives/dsp/dsp_mirror.c
@@ -127,10 +130,13 @@ set(LIBRT_SOURCES
   primitives/extrude/extrude_brep.cpp
   primitives/generic.c
   primitives/grip/grip.c
+  primitives/grip/grip_brep.cpp
   primitives/grip/grip_mirror.c
   primitives/half/half.c
+  primitives/half/half_brep.cpp
   primitives/half/half_mirror.c
   primitives/hf/hf.c
+  primitives/hf/hf_brep.cpp
   primitives/hyp/hyp.c
   primitives/hyp/hyp_brep.cpp
   primitives/hyp/hyp_mirror.c
@@ -186,14 +192,17 @@ set(LIBRT_SOURCES
   primitives/obj_vshot.c
   primitives/obj_xform.c
   primitives/part/part.c
+  primitives/part/part_brep.cpp
   primitives/part/part_mirror.c
   primitives/pipe/pipe.c
   primitives/pipe/pipe_brep.cpp
   primitives/pipe/pipe_mirror.c
   primitives/pnts/pnts.c
+  primitives/pnts/pnts_brep.cpp
   primitives/poly/poly.c
   primitives/poly/poly_brep.cpp
   primitives/poly/poly_mirror.c
+  primitives/primitive_util.c
   primitives/rec/rec.c
   primitives/revolve/revolve.c
   primitives/revolve/revolve_brep.cpp
@@ -205,10 +214,12 @@ set(LIBRT_SOURCES
   primitives/rpc/rpc_mirror.c
   primitives/sketch/sketch.c
   primitives/sketch/sketch_brep.cpp
+  primitives/sketch/sketch_tess.cpp
   primitives/sph/sph.c
   primitives/sph/sph_brep.cpp
   primitives/submodel/submodel.c
   primitives/superell/superell.c
+  primitives/superell/superell_brep.cpp
   primitives/superell/superell_mirror.c
   primitives/table.c
   primitives/tgc/tgc.c
@@ -236,12 +247,13 @@ set(LIBRT_SOURCES
   )
 
 set(librt_ignored_files
-  brep_test.cpp
   columnparse.c
-  librt.3
   librt_private.h
   namegen.c
-  opennurbs_ext.h
+  test_nurbsfit.cpp
+  test_bot2nurbs.cpp
+  test_root3-subd.cpp
+  subd_test_bot.asc
   prcomb.c
   primitives/bot/btg.h
   primitives/bot/g_bot_include.c
@@ -249,6 +261,7 @@ set(librt_ignored_files
   primitives/bot/tie.c
   primitives/bot/tie_kdtree.c
   primitives/brep/brep_debug.h
+  primitives/brep/brep_local.h
   primitives/dsp/dsp.h
   primitives/fixpt.h
   primitives/metaball/metaball.h
@@ -273,34 +286,28 @@ else(MSVC)
   set(LIBRT_SOURCES ${LIBRT_SOURCES} timer42.c)
 endif(MSVC)
 
-# Initialize librt_DEFINES in case of reconfiguration
-set(librt_DEFINES "")
-
-# Set librt compile definitions
-get_property(librt_DEFINES GLOBAL PROPERTY librt_DEFINES)
-list(APPEND librt_DEFINES "OBJ_BREP=1")
-if(CPP_DLL_DEFINES)
-  list(APPEND librt_DEFINES "ON_DLL_IMPORTS")
-endif(CPP_DLL_DEFINES)
-set_property(GLOBAL PROPERTY librt_DEFINES "${librt_DEFINES}")
-
-BRLCAD_ADDLIB(librt "${LIBRT_SOURCES}" "libbn;libbu;${OPENNURBS_LIBRARY};${REGEX_LIBRARY};${ZLIB_LIBRARY};${WINSOCK_LIB};${RPCRT_LIB};${STDCXX_LIBRARIES}" NOSTRICTCXX)
-if(BUILD_STATIC_LIBS)
-  SET_PROPERTY(TARGET librt-static APPEND PROPERTY COMPILE_DEFINITIONS "OBJ_BREP=1")
-endif(BUILD_STATIC_LIBS)
+BRLCAD_ADDLIB(librt "${LIBRT_SOURCES}" "${LIBVDS_LIBRARY};libbn;libbu;${OPENNURBS_LIBRARY};${P2T_LIBRARY};libbrep;${REGEX_LIBRARY};${ZLIB_LIBRARY};${WINSOCK_LIB};${RPCRT_LIB};${STDCXX_LIBRARIES}" NOSTRICTCXX)
 
 SET_TARGET_PROPERTIES(librt PROPERTIES VERSION 20.0.1 SOVERSION 20)
 if(CPP_DLL_DEFINES)
   SET_PROPERTY(TARGET librt APPEND PROPERTY COMPILE_DEFINITIONS "TIE_DLL_EXPORTS")
   SET_PROPERTY(TARGET librt APPEND PROPERTY COMPILE_DEFINITIONS "DB5_DLL_EXPORTS")
-
-  if(BRLCAD_BUILD_STATIC_LIBS AND BRLCAD_ENABLE_BRLCAD_LIBRARY)
-    SET_PROPERTY(TARGET librt-static APPEND PROPERTY COMPILE_DEFINITIONS "ON_DLL_IMPORTS")
-  endif(BRLCAD_BUILD_STATIC_LIBS AND BRLCAD_ENABLE_BRLCAD_LIBRARY)
+  SET_PROPERTY(TARGET librt APPEND PROPERTY COMPILE_DEFINITIONS "VDS_DLL_IMPORTS")
 endif(CPP_DLL_DEFINES)
 
-install(FILES librt.3 DESTINATION ${MAN_DIR}/man3)
 CMAKEFILES(Makefile.am)
+
+include_directories(
+  ${CMAKE_SOURCE_DIR}/src/other/Eigen
+  ${CMAKE_CURRENT_SOURCE_DIR}/../libbrep
+  )
+
+#BRLCAD_ADDEXEC(test_bot2nurbs test_bot2nurbs.cpp "librt;libwdb;libbrep;libbu" NOSTRICT NO_INSTALL)
+#BRLCAD_ADDEXEC(test_nurbsfit test_nurbsfit.cpp "librt;libwdb;libbrep;libbu" NOSTRICT NO_INSTALL)
+#BRLCAD_ADDEXEC(test_root3-subd test_root3-subd.cpp "librt;libwdb;libbrep;libbu" NOSTRICT NO_INSTALL)
+#BRLCAD_ADDEXEC(test_surfacetree test_surfacetree.cpp "librt;libwdb;libbrep;libbu" NOSTRICT NO_INSTALL)
+
+add_subdirectory(tests)
 
 # Local Variables:
 # tab-width: 8

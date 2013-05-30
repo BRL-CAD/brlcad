@@ -71,25 +71,13 @@
  *
  */
 
-char * FEDEXversion( void ) {
-    return( "V2.11.4-beta CADDETC preval June 8, 1995" );
-}
-
 #include <scl_cf.h>
 #include <scl_memmgr.h>
 #include <scl_export.h>
+#include "scl_version_string.h"
 #include <stdlib.h>
 #include <stdio.h>
-#ifdef HAVE_UNISTD_H
-# include <unistd.h>
-#endif
-#ifdef HAVE_PROCESS_H
-/* process.h defines getpid() function on WIN32 systems */
-# include <process.h>
-#endif
-#ifndef HAVE_GETOPT
-# include "xgetopt.h"
-#endif
+#include "sc_getopt.h"
 #include "express/error.h"
 #include "express/express.h"
 #include "express/resolve.h"
@@ -99,10 +87,17 @@ extern int exp_yydebug;
 #endif /*YYDEBUG*/
 
 char EXPRESSgetopt_options[256] = "Bbd:e:i:w:p:rvz";
+static int no_need_to_work = 0; /* TRUE if we can exit gracefully without doing any work */
+
+void print_fedex_version( void ) {
+    fprintf( stderr, "Build info for %s: %s\nhttp://github.com/stepcode/stepcode\n", EXPRESSprogram_name, scl_version() );
+    no_need_to_work = 1;
+}
 
 static void usage( void ) {
     fprintf( stderr, "usage: %s [-v] [-d #] [-p <object_type>] {-w|-i <warning>} express_file\n", EXPRESSprogram_name );
-    fprintf( stderr, "where\t-v produces a version description\n" );
+    fprintf( stderr, "where\t-v produces the following version description:\n" );
+    print_fedex_version();
     fprintf( stderr, "\t-d turns on debugging (\"-d 0\" describes this further\n" );
     fprintf( stderr, "\t-p turns on printing when processing certain objects (see below)\n" );
     fprintf( stderr, "\t-w warning enable\n" );
@@ -124,15 +119,13 @@ static void usage( void ) {
     exit( 2 );
 }
 
-int
-main( int argc, char ** argv ) {
+int main( int argc, char ** argv ) {
     int c;
     int rc;
     char * cp;
     int no_warnings = 1;
     int resolve = 1;
-    int no_need_to_work = 0;/* TRUE if we can exit gracefully without */
-    /* doing any work */
+    int result;
 
     bool buffer_messages = false;
     char * filename = 0;
@@ -150,7 +143,7 @@ main( int argc, char ** argv ) {
     }
 
     optind = 1;
-    while( ( c = getopt( argc, argv, EXPRESSgetopt_options ) ) != -1 )
+    while( ( c = sc_getopt( argc, argv, EXPRESSgetopt_options ) ) != -1 )
         switch( c ) {
             case 'd':
                 ERRORdebugging = 1;
@@ -218,12 +211,8 @@ main( int argc, char ** argv ) {
                 }
                 break;
             case 'v':
-                printf( "%s %s\n%s\n", EXPRESSprogram_name, FEDEXversion(), EXPRESSversion() );
+                print_fedex_version();
                 no_need_to_work = 1;
-                break;
-            case 'z':
-                printf( "pid = %d\n", getpid() );
-                pause();/* to allow user to attach debugger and continue */
                 break;
             default:
                 rc = 1;
@@ -239,6 +228,7 @@ main( int argc, char ** argv ) {
     if( !filename ) {
         filename = argv[optind];
         if( !filename ) {
+            EXPRESScleanup();
             if( no_need_to_work ) {
                 return( 0 );
             } else {
@@ -259,7 +249,10 @@ main( int argc, char ** argv ) {
     model = EXPRESScreate();
     EXPRESSparse( model, ( FILE * )0, filename );
     if( ERRORoccurred ) {
-        return( EXPRESS_fail( model ) );
+        result = EXPRESS_fail( model );
+        EXPRESScleanup();
+        EXPRESSdestroy( model );
+        return result;
     }
 
 #ifdef debugging
@@ -272,7 +265,10 @@ main( int argc, char ** argv ) {
     if( resolve ) {
         EXPRESSresolve( model );
         if( ERRORoccurred ) {
-            return( EXPRESS_fail( model ) );
+            result = EXPRESS_fail( model ); 
+            EXPRESScleanup();
+            EXPRESSdestroy( model );
+            return result;
         }
     }
 
@@ -281,8 +277,14 @@ main( int argc, char ** argv ) {
     }
 
     if( ERRORoccurred ) {
-        return( EXPRESS_fail( model ) );
+        result = EXPRESS_fail( model );
+        EXPRESScleanup();
+        EXPRESSdestroy( model );
+        return result;
     }
 
-    return( EXPRESS_succeed( model ) );
+    result = EXPRESS_succeed( model ); 
+    EXPRESScleanup();
+    EXPRESSdestroy( model );
+    return result;
 }

@@ -1,17 +1,16 @@
-#!/bin/bash
+#!/bin/sh
 
-set -e
+file="/usr/share/applications/mimeapps.list"
+section="Added Associations"
 
-F='/usr/share/applications/defaults.list'
-
-if [ -f $F ]; then
-	sed -i '/application\/brlcad-/d' $F
+if [ -f $file ]
+then
+	sed --follow-symlinks -i "/application\/brlcad-v[45]/d" $file
 fi
 
-update-desktop-database &> /dev/null || :
+if [ -f $file ] && [ -z "$(sed "/\[$section\]/d" $file)" ]
+then
+	rm $file || :
+fi
 
-update-mime-database /usr/share/mime &> /dev/null || :
-
-touch -c /usr/share/icons/hicolor &>/dev/null || :
-
-gtk-update-icon-cache /usr/share/icons/hicolor &>/dev/null || :
+update-mime-database /usr/share/mime || :

@@ -1,7 +1,7 @@
 /*                         S C R E E N G R A B . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2012 United States Government as represented by
+ * Copyright (c) 2008-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -30,7 +30,6 @@
 #include <string.h>
 
 #include "bu.h"
-#include "dm.h"
 #include "icv.h"
 
 #include "./ged_private.h"
@@ -54,10 +53,14 @@ ged_screen_grab(struct ged *gedp, int argc, const char *argv[])
     unsigned char **rows = NULL;
     unsigned char *idata = NULL;
     struct icv_image_file *bif = NULL;	/* bu image for saving image formats */
-    struct dm *dmp = NULL;
 
-    if ((dmp = (struct dm *)gedp->ged_dmp) == NULL) {
+    if (gedp->ged_dmp_is_null) {
 	bu_vls_printf(gedp->ged_result_str, "Bad display pointer.");
+	return GED_ERROR;
+    }
+
+    if (gedp->ged_dm_get_display_image == NULL) {
+	bu_vls_printf(gedp->ged_result_str, "Bad display function pointer.");
 	return GED_ERROR;
     }
 
@@ -80,10 +83,16 @@ ged_screen_grab(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-    width = dmp->dm_width;
-    height = dmp->dm_height;
+    width = gedp->ged_dm_width;
+    height = gedp->ged_dm_height;
+
+    if (width <= 0 || height <= 0) {
+	bu_vls_printf(gedp->ged_result_str, "%s: invalid screen dimensions.", argv[1]);
+	return GED_ERROR;
+    }
+
     bytes_per_pixel = 3;
-    bytes_per_line = dmp->dm_width * bytes_per_pixel;
+    bytes_per_line = width * bytes_per_pixel;
 
     /* create image file */
     if ((bif = icv_image_save_open(argv[1], ICV_IMAGE_AUTO, width, height, bytes_per_pixel)) == NULL) {
@@ -93,7 +102,7 @@ ged_screen_grab(struct ged *gedp, int argc, const char *argv[])
 
     rows = (unsigned char **)bu_calloc(height, sizeof(unsigned char *), "rows");
 
-    DM_GET_DISPLAY_IMAGE(dmp, &idata);
+    gedp->ged_dm_get_display_image(gedp, &idata);
 
     for (i = 0; i < height; ++i) {
 	rows[i] = (unsigned char *)(idata + ((height-i-1)*bytes_per_line));

@@ -1,7 +1,7 @@
 /*                         P R E V I E W . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2012 United States Government as represented by
+ * Copyright (c) 2008-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -213,7 +213,7 @@ struct command_tab ged_preview_cmdtab[] = {
      _ged_cm_eyept,	4, 4},
     {"lookat_pt", "x y z [yflip]", "set eye look direction, in X-Y plane",
      _ged_cm_lookat_pt,	4, 5},
-    {"orientation", "quaternion", "set view direction from quaturnion",
+    {"orientation", "quaternion", "set view direction from quaternion",
      _ged_cm_orientation,	5, 5},
     {"viewrot", "4x4 matrix", "set view direction from matrix",
      _ged_cm_vrot,	17, 17},

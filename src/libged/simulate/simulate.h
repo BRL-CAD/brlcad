@@ -1,7 +1,7 @@
 /*                       S I M U L A T E . H
  * BRL-CAD
  *
- * Copyright (c) 2011-2012 United States Government as represented by
+ * Copyright (c) 2011-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -104,7 +104,7 @@ struct rigid_body {
      * pipeline immediately after creation thus allowing the next one to replace it
      */
     struct sim_manifold rt_manifold; /**< @brief only 1 manifold struct needed as the manifold is used
-     	 	 	 	 	 	 	 	 	 immediately after being generated in the nearphase callback*/
+									 immediately after being generated in the nearphase callback*/
 
     /* Debugging */
     int iter;

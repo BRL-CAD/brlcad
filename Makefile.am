@@ -1,7 +1,7 @@
 #                     M A K E F I L E . A M
 # BRL-CAD
 #
-# Copyright (c) 2005-2012 United States Government as represented by
+# Copyright (c) 2005-2013 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -36,7 +36,7 @@
 
 AUTOMAKE_OPTIONS = 1.8 dist-zip dist-bzip2
 ACLOCAL_AMFLAGS = -I m4
-DISTCHECK_CONFIGURE_FLAGS = --enable-all
+DISTCHECK_CONFIGURE_FLAGS = --enable-all --enable-png-build
 
 required_dirs = \
 	include \
@@ -87,6 +87,7 @@ documentationdir = $(BRLCAD_DATA)
 
 documentation_DATA = \
 	AUTHORS \
+	CHANGES \
 	COPYING \
 	HACKING \
 	INSTALL \

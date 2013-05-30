@@ -1,7 +1,7 @@
 /*                           R E C . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2012 United States Government as represented by
+ * Copyright (c) 1985-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -21,7 +21,7 @@
 /** @{ */
 /** @file primitives/rec/rec.c
  *
- * Intersect a ray with a Right Eliptical Cylinder.  This is a special
+ * Intersect a ray with a Right Elliptical Cylinder.  This is a special
  * (but common) case of the TGC, which is handled separately.
  *
  * Algorithm -
@@ -77,7 +77,7 @@
  * c = ((Px'**2 + Py'**2) - r**2) / (Dx'**2 + Dy'**2)
  * r = 1.0
  *
- * The qudratic formula yields k (which is constant):
+ * The quadratic formula yields k (which is constant):
  *
  * k = [ -b +/- sqrt(b**2 - 4 * c ] / 2.0
  *
@@ -100,10 +100,10 @@
  * NORMALS.  Given the point W on the surface of the cylinder, what is
  * the vector normal to the tangent plane at that point?
  *
- * Map W onto the unit cylinder, ie:  W' = S(R(W - V)).
+ * Map W onto the unit cylinder, i.e.:  W' = S(R(W - V)).
  *
  * Plane on unit cylinder at W' has a normal vector N' of the same
- * value as W' in x and y, with z set to zero, ie, (Wx', Wy', 0)
+ * value as W' in x and y, with z set to zero, i.e., (Wx', Wy', 0)
  *
  * The plane transforms back to the tangent plane at W, and this new
  * plane (on the original cylinder) has a normal vector of N, viz:
@@ -162,7 +162,7 @@ struct rec_specific {
  * Calculate the RPP for an REC
  */
 int
-rt_rec_bbox(struct rt_db_internal *ip, point_t *min, point_t *max) {
+rt_rec_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct bn_tol *UNUSED(tol)) {
     mat_t R;
     vect_t P, w1;
     fastf_t f, tmp, z;
@@ -380,7 +380,7 @@ rt_rec_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     {
 	fastf_t dx, dy, dz;	/* For bounding sphere */
 
-	if (stp->st_meth->ft_bbox(ip, &(stp->st_min), &(stp->st_max))) return 1;
+	if (stp->st_meth->ft_bbox(ip, &(stp->st_min), &(stp->st_max), &(rtip->rti_tol))) return 1;
 
 	VSET(stp->st_center,
 	     (stp->st_max[X] + stp->st_min[X])/2,
@@ -447,6 +447,8 @@ rt_rec_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct 
     struct hit *hitp;	/* pointer to hit point */
     int nhits = 0;	/* Number of hit points */
 
+    memset(hits, 0, 4 * sizeof(struct hit));
+
     hitp = &hits[0];
 
     /* out, Mat, vect */
@@ -457,7 +459,7 @@ rt_rec_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct 
     if (ZERO(dprime[X]) && ZERO(dprime[Y]))
 	goto check_plates;
 
-    /* Find roots of the equation, using forumla for quadratic w/ a=1 */
+    /* Find roots of the equation, using formula for quadratic w/ a=1 */
     {
 	fastf_t b;		/* coeff of polynomial */
 	fastf_t root;		/* root of radical */
@@ -625,7 +627,7 @@ rt_rec_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
 
     if (ap) RT_CK_APPLICATION(ap);
 
-    /* for each ray/right_eliptical_cylinder pair */
+    /* for each ray/right_elliptical_cylinder pair */
     for (i = 0; i < n; i++) {
 	if (stp[i] == 0) continue; /* stp[i] == 0 signals skip ray */
 
@@ -640,7 +642,7 @@ rt_rec_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
 	if (ZERO(dprime[X]) && ZERO(dprime[Y]))
 	    goto check_plates;
 
-	/* Find roots of eqn, using forumla for quadratic w/ a=1 */
+	/* Find roots of eqn, using formula for quadratic w/ a=1 */
 	b = 2 * (dprime[X]*pprime[X] + dprime[Y]*pprime[Y]) *
 	    (dx2dy2 = 1 / (dprime[X]*dprime[X] + dprime[Y]*dprime[Y]));
 	if ((root = b*b - 4 * dx2dy2 *
@@ -895,7 +897,7 @@ rt_rec_free(struct soltab *stp)
     struct rec_specific *rec =
 	(struct rec_specific *)stp->st_specific;
 
-    bu_free((char *)rec, "rec_specific");
+    BU_PUT(rec, struct rec_specific);
 }
 
 

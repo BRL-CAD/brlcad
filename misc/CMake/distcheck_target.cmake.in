@@ -1,7 +1,7 @@
 #       D I S T C H E C K _ T A R G E T . C M A K E . I N
 # BRL-CAD
 #
-# Copyright (c) 2012 United States Government as represented by
+# Copyright (c) 2012-2013 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -83,7 +83,7 @@ add_custom_target(distcheck-${TARGET_SUFFIX}
   COMMAND ${CMAKE_COMMAND} -E echo "-- distcheck-${TARGET_SUFFIX} - Cleanup..."
   COMMAND ${CMAKE_COMMAND} -E remove_directory distcheck-${TARGET_SUFFIX}
   COMMAND ${CMAKE_COMMAND} -E echo "-- distcheck-${TARGET_SUFFIX} - Cleanup... Done."
-  COMMENT "[distcheck-${TARGET_SUFFIX}] Peforming distcheck - ${TARGET_SUFFIX} configuration..."
+  COMMENT "[distcheck-${TARGET_SUFFIX}] Performing distcheck - ${TARGET_SUFFIX} configuration..."
   DEPENDS distcheck-source_archives
   )
 

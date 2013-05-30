@@ -1,7 +1,7 @@
 /*                         C L I N E . C
  * BRL-CAD
  *
- * Copyright (c) 2000-2012 United States Government as represented by
+ * Copyright (c) 2000-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -39,6 +39,7 @@
 #include "nmg.h"
 #include "rtgeom.h"
 #include "raytrace.h"
+#include "wdb.h"
 
 
 /* ray tracing form of solid, including precomputed terms */
@@ -67,7 +68,7 @@ const struct bu_structparse rt_cline_parse[] = {
  * Calculate bounding RPP for cline
  */
 int
-rt_cline_bbox(struct rt_db_internal *ip, point_t *min, point_t *max) {
+rt_cline_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct bn_tol *UNUSED(tol)) {
     struct rt_cline_internal *cline_ip;
     vect_t rad, work;
     point_t top;
@@ -82,8 +83,8 @@ rt_cline_bbox(struct rt_db_internal *ip, point_t *min, point_t *max) {
     else
 	max_tr = 0.0;
 
-    VSETALL((*min), MAX_FASTF);
-    VSETALL((*max), -MAX_FASTF);
+    VSETALL((*min), INFINITY);
+    VSETALL((*max), -INFINITY);
 
     VSETALL(rad, cline_ip->radius + max_tr);
     VADD2(work, cline_ip->v, rad);
@@ -143,7 +144,7 @@ rt_cline_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     stp->st_aradius = sqrt(tmp*tmp + cline_ip->radius*cline_ip->radius);
     stp->st_bradius = stp->st_aradius + max_tr;
 
-    if (rt_cline_bbox(ip, &(stp->st_min), &(stp->st_max))) return 1;
+    if (rt_cline_bbox(ip, &(stp->st_min), &(stp->st_max), &rtip->rti_tol)) return 1;
 
     return 0;
 }
@@ -244,7 +245,7 @@ rt_cline_shot(struct soltab *stp, register struct xray *rp, struct application *
 	    dist[1] = dist[2];
 	}
 
-	/* vloume mode */
+	/* volume mode */
 
 	RT_GET_SEG(segp, ap->a_resource);
 	segp->seg_stp = stp;
@@ -440,7 +441,7 @@ rt_cline_free(register struct soltab *stp)
 
     if (stp) RT_CK_SOLTAB(stp);
 
-    bu_free((char *)cline, "cline_specific");
+    BU_PUT(cline, struct cline_specific);
 }
 
 
@@ -829,7 +830,10 @@ rt_cline_import4(struct rt_db_internal *ip, const struct bu_external *ep, const 
 {
     struct rt_cline_internal *cline_ip;
     union record *rp;
-    point_t work;
+
+    /* must be double for import and export */
+    double work[ELEMENTS_PER_POINT];
+    double scan;
 
     BU_CK_EXTERNAL(ep);
     rp = (union record *)ep->ext_buf;
@@ -846,18 +850,19 @@ rt_cline_import4(struct rt_db_internal *ip, const struct bu_external *ep, const 
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_CLINE;
     ip->idb_meth = &rt_functab[ID_CLINE];
-    ip->idb_ptr = bu_malloc(sizeof(struct rt_cline_internal), "rt_cline_internal");
+    BU_ALLOC(ip->idb_ptr, struct rt_cline_internal);
+
     cline_ip = (struct rt_cline_internal *)ip->idb_ptr;
     cline_ip->magic = RT_CLINE_INTERNAL_MAGIC;
     if (mat == NULL) mat = bn_mat_identity;
 
-    ntohd((unsigned char *)(&cline_ip->thickness), rp->cli.cli_thick, 1);
-    cline_ip->thickness /= mat[15];
-    ntohd((unsigned char *)(&cline_ip->radius), rp->cli.cli_radius, 1);
-    cline_ip->radius /= mat[15];
-    ntohd((unsigned char *)(&work), rp->cli.cli_V, 3);
+    ntohd((unsigned char *)&scan, rp->cli.cli_thick, 1);
+    cline_ip->thickness = scan / mat[15];
+    ntohd((unsigned char *)&scan, rp->cli.cli_radius, 1);
+    cline_ip->radius = scan / mat[15];
+    ntohd((unsigned char *)&work, rp->cli.cli_V, ELEMENTS_PER_POINT);
     MAT4X3PNT(cline_ip->v, mat, work);
-    ntohd((unsigned char *)(&work), rp->cli.cli_h, 3);
+    ntohd((unsigned char *)&work, rp->cli.cli_h, ELEMENTS_PER_POINT);
     MAT4X3VEC(cline_ip->h, mat, work);
 
     return 0;			/* OK */
@@ -874,8 +879,10 @@ rt_cline_export4(struct bu_external *ep, const struct rt_db_internal *ip, double
 {
     struct rt_cline_internal *cline_ip;
     union record *rec;
-    fastf_t tmp;
-    point_t work;
+
+    /* must be double for import and export */
+    double tmp;
+    double work[ELEMENTS_PER_VECT];
 
     RT_CK_DB_INTERNAL(ip);
     if (ip->idb_type != ID_CLINE) return -1;
@@ -897,9 +904,9 @@ rt_cline_export4(struct bu_external *ep, const struct rt_db_internal *ip, double
     tmp = cline_ip->radius * local2mm;
     htond(rec->cli.cli_radius, (unsigned char *)(&tmp), 1);
     VSCALE(work, cline_ip->v, local2mm);
-    htond(rec->cli.cli_V, (unsigned char *)work, 3);
+    htond(rec->cli.cli_V, (unsigned char *)work, ELEMENTS_PER_VECT);
     VSCALE(work, cline_ip->h, local2mm);
-    htond(rec->cli.cli_h, (unsigned char *)work, 3);
+    htond(rec->cli.cli_h, (unsigned char *)work, ELEMENTS_PER_VECT);
 
     return 0;
 }
@@ -915,7 +922,9 @@ int
 rt_cline_import5(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip)
 {
     struct rt_cline_internal *cline_ip;
-    fastf_t vec[8];
+
+    /* must be double for import and export */
+    double vec[8];
 
     if (dbip) RT_CK_DBI(dbip);
 
@@ -926,7 +935,7 @@ rt_cline_import5(struct rt_db_internal *ip, const struct bu_external *ep, regist
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_CLINE;
     ip->idb_meth = &rt_functab[ID_CLINE];
-    ip->idb_ptr = bu_malloc(sizeof(struct rt_cline_internal), "rt_cline_internal");
+    BU_ALLOC(ip->idb_ptr, struct rt_cline_internal);
 
     cline_ip = (struct rt_cline_internal *)ip->idb_ptr;
     cline_ip->magic = RT_CLINE_INTERNAL_MAGIC;
@@ -953,7 +962,9 @@ int
 rt_cline_export5(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
     struct rt_cline_internal *cline_ip;
-    fastf_t vec[8];
+
+    /* must be double for import and export */
+    double vec[8];
 
     if (dbip) RT_CK_DBI(dbip);
 
@@ -1131,6 +1142,49 @@ rt_cline_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)
     if (ip) RT_CK_DB_INTERNAL(ip);
 
     return 0;			/* OK */
+}
+
+/**
+ * R T _ C L I N E _ T O _ P I P E
+ *
+ */
+int
+rt_cline_to_pipe(struct rt_pipe_internal *pipep, const struct rt_db_internal *ip)
+{
+    struct rt_cline_internal *cip;
+    struct wdb_pipept *point, *point2;
+
+    if (!ip)
+	return -1;
+
+    RT_CK_DB_INTERNAL(ip);
+    cip = (struct rt_cline_internal *)ip->idb_ptr;
+    RT_CLINE_CK_MAGIC(cip);
+
+    if (!pipep)
+	return -1;
+
+    pipep->pipe_magic = RT_PIPE_INTERNAL_MAGIC;
+    pipep->pipe_count = 1;
+
+    BU_LIST_INIT(&pipep->pipe_segs_head);
+    BU_ALLOC(point, struct wdb_pipept);
+    point->pp_bendradius = 0.0;
+    VMOVE(point->pp_coord, cip->v);
+    point->l.magic = WDB_PIPESEG_MAGIC;
+    point->pp_od = cip->radius * 2;
+    point->pp_id = (cip->radius - cip->thickness) * 2;
+    BU_LIST_APPEND(&pipep->pipe_segs_head, &point->l);
+
+    BU_ALLOC(point2, struct wdb_pipept);
+    point2->pp_bendradius = 0.0;
+    VADD2(point2->pp_coord, cip->v, cip->h);
+    point2->l.magic = WDB_PIPESEG_MAGIC;
+    point2->pp_od = cip->radius * 2;
+    point2->pp_id = (cip->radius - cip->thickness) * 2;
+    BU_LIST_APPEND(&pipep->pipe_segs_head, &point2->l);
+
+    return 0;
 }
 
 

@@ -1,7 +1,7 @@
 /*                     V I E W T H E R M . C
  * BRL-CAD
  *
- * Copyright (c) 1996-2012 United States Government as represented by
+ * Copyright (c) 1996-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -236,7 +236,7 @@ view_pixel(struct application *app)
 	/* XXX This writes an array of structures out, including magic */
 	/* XXX in machine-specific format */
 	bu_semaphore_acquire(BU_SEM_SYSCALL);
-	if (fseek(outfp, app->a_y*(long)width*BN_SIZEOF_TABDATA(spectrum), 0) != 0)
+	if (bu_fseek(outfp, app->a_y*width*BN_SIZEOF_TABDATA(spectrum), 0) != 0)
 	    bu_log("fseek error\n");
 	count = fwrite(scanline[app->a_y].sl_buf,
 		       BN_SIZEOF_TABDATA(spectrum), width, outfp);
@@ -335,7 +335,7 @@ view_setup(struct rt_i *rtip)
     RT_CHECK_RTI(rtip);
     /*
      * Initialize the material library for all regions.  As this may
-     * result in some regions being dropped, (eg, light solids that
+     * result in some regions being dropped, (e.g., light solids that
      * become "implicit" -- non drawn), this must be done before
      * allowing the library to prep itself.  This is a slight layering
      * violation; later it may be clear how to repackage this
@@ -786,7 +786,7 @@ void application_init (void)
  * hitp->hit_point and normal must be computed by caller.
  *
  * Return -
- * area of ray footprint, in mm**2 (square milimeters).
+ * area of ray footprint, in mm**2 (square millimeters).
  */
 double
 rt_pixel_footprint(const struct application *app, const struct hit *hitp, const struct seg *segp, const fastf_t *normal)

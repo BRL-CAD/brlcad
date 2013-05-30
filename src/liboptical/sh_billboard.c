@@ -1,7 +1,7 @@
 /*                  S H _ B I L L B O A R D . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2012 United States Government as represented by
+ * Copyright (c) 2004-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -98,7 +98,6 @@ struct bbd_specific bbd_defaults = {
 
 #define SHDR_NULL ((struct bbd_specific *)0)
 #define SHDR_O(m) bu_offsetof(struct bbd_specific, m)
-#define SHDR_AO(m) bu_offsetofarray(struct bbd_specific, m)
 
 void new_image(register const struct bu_structparse *sdp,
 	       register const char *name,
@@ -114,7 +113,7 @@ struct bu_structparse bbd_print_tab[] = {
     {"%ld",  1, "w",	SHDR_O(img_width),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%ld",  1, "n",	SHDR_O(img_height),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%d",  1, "t",	SHDR_O(img_threshold),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f",  1, "h",	SHDR_O(img_scale),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%g",  1, "h",	SHDR_O(img_scale),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%V",  1, "f",	SHDR_O(img_filename),	new_image, NULL, NULL },
     {"",    0, (char *)0, 0,			BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
@@ -132,7 +131,8 @@ void new_image(register const struct bu_structparse *UNUSED(sdp),	/*struct desc*
     struct bbd_specific *bbd_sp = (struct bbd_specific *)base;
     struct bbd_img *bbdi;
 
-    BU_GET(bbdi, struct bbd_img);
+    /* XXX - looks like we don't release this memory */
+    BU_ALLOC(bbdi, struct bbd_img);
 
     bbdi->img_mf = bu_open_mapped_file_with_path(
 	bbd_sp->rtip->rti_dbip->dbi_filepath,
@@ -306,7 +306,7 @@ bbd_print(struct region *rp, genptr_t dp)
 HIDDEN void
 bbd_free(genptr_t cp)
 {
-    bu_free(cp, "bbd_specific");
+    BU_PUT(cp, struct bbd_specific);
 }
 
 
@@ -493,7 +493,7 @@ do_ray_image(struct application *ap,
 
 struct imgdist {
     int status;
-    double dist;
+    fastf_t dist;
     struct bbd_img *bi;
     int index;
 };

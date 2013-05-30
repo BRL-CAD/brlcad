@@ -56,14 +56,14 @@ include(${BRLCAD_SOURCE_DIR}/misc/CMake/DocBook.cmake)
 
 # For the html files, we need brlcad.css
 if(NOT CMAKE_CONFIGURATION_TYPES)
-  configure_file(css/brlcad.css ${CMAKE_BINARY_DIR}/${DATA_DIR}/${DOC_DIR}/html/css/brlcad.css)
+  configure_file(css/brlcad.css ${CMAKE_BINARY_DIR}/${DOC_DIR}/html/css/brlcad.css)
 else(NOT CMAKE_CONFIGURATION_TYPES)
   foreach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
     string(TOUPPER "${CFG_TYPE}" CFG_TYPE_UPPER)
-    configure_file(css/brlcad.css ${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${DATA_DIR}/${DOC_DIR}/html/css/brlcad.css)
+    configure_file(css/brlcad.css ${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${DOC_DIR}/html/css/brlcad.css)
   endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
 endif(NOT CMAKE_CONFIGURATION_TYPES)
-install(FILES css/brlcad.css DESTINATION ${DATA_DIR}/${DOC_DIR}/html/css)
+install(FILES css/brlcad.css DESTINATION ${DOC_DIR}/html/css)
 
 add_subdirectory(articles)
 add_subdirectory(books)
@@ -75,19 +75,19 @@ add_subdirectory(system)
 # Now that we have all the individual targets listed by the DocBook.cmake
 # macros, define convenience targets
 if(BRLCAD_EXTRADOCS_HTML)
-  get_property(BRLCAD_EXTRADOCS_HTML_TARGETS GLOBAL PROPERTY BRLCAD_EXTRADOCS_HTML_TARGETS) 
+  get_property(BRLCAD_EXTRADOCS_HTML_TARGETS GLOBAL PROPERTY BRLCAD_EXTRADOCS_HTML_TARGETS)
   add_custom_target(html DEPENDS ${BRLCAD_EXTRADOCS_HTML_TARGETS})
 endif(BRLCAD_EXTRADOCS_HTML)
 if(BRLCAD_EXTRADOCS_MAN)
-  get_property(BRLCAD_EXTRADOCS_MAN_TARGETS GLOBAL PROPERTY BRLCAD_EXTRADOCS_MAN_TARGETS) 
+  get_property(BRLCAD_EXTRADOCS_MAN_TARGETS GLOBAL PROPERTY BRLCAD_EXTRADOCS_MAN_TARGETS)
   add_custom_target(man DEPENDS ${BRLCAD_EXTRADOCS_MAN_TARGETS})
 endif(BRLCAD_EXTRADOCS_MAN)
 if(BRLCAD_EXTRADOCS_PDF)
-  get_property(BRLCAD_EXTRADOCS_PDF_TARGETS GLOBAL PROPERTY BRLCAD_EXTRADOCS_PDF_TARGETS) 
+  get_property(BRLCAD_EXTRADOCS_PDF_TARGETS GLOBAL PROPERTY BRLCAD_EXTRADOCS_PDF_TARGETS)
   add_custom_target(pdf DEPENDS ${BRLCAD_EXTRADOCS_PDF_TARGETS})
 endif(BRLCAD_EXTRADOCS_PDF)
 if(BRLCAD_EXTRADOCS_HTML OR BRLCAD_EXTRADOCS_MAN OR BRLCAD_EXTRADOCS_PDF)
-  add_custom_target(doc DEPENDS 
+  add_custom_target(doc DEPENDS
 	${BRLCAD_EXTRADOCS_HTML_TARGETS}
 	${BRLCAD_EXTRADOCS_MAN_TARGETS}
 	${BRLCAD_EXTRADOCS_PDF_TARGETS})

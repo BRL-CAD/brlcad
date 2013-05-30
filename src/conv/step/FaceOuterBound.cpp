@@ -1,7 +1,7 @@
 /*                 FaceOuterBound.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2012 United States Government as represented by
+ * Copyright (c) 1994-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -32,29 +32,33 @@
 
 #define CLASSNAME "FaceOuterBound"
 #define ENTITYNAME "Face_Outer_Bound"
-string FaceOuterBound::entityname = Factory::RegisterClass(ENTITYNAME,(FactoryMethod)FaceOuterBound::Create);
+string FaceOuterBound::entityname = Factory::RegisterClass(ENTITYNAME, (FactoryMethod)FaceOuterBound::Create);
 
-FaceOuterBound::FaceOuterBound() {
+FaceOuterBound::FaceOuterBound()
+{
     step = NULL;
     id = 0;
 }
 
-FaceOuterBound::FaceOuterBound(STEPWrapper *sw,int step_id) {
+FaceOuterBound::FaceOuterBound(STEPWrapper *sw, int step_id)
+{
     step = sw;
     id = step_id;
 }
 
-FaceOuterBound::~FaceOuterBound() {
+FaceOuterBound::~FaceOuterBound()
+{
 }
 
 bool
-FaceOuterBound::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
+FaceOuterBound::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
     bool retValue = true;
 
-    step=sw;
+    step = sw;
     id = sse->STEPfile_id;
 
-    if ( !FaceBound::Load(step,sse)) {
+    if (!FaceBound::Load(step, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class 'FaceBound'." << std::endl;
 	retValue = false;
     }
@@ -62,31 +66,27 @@ FaceOuterBound::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
 }
 
 void
-FaceOuterBound::Print(int level) {
-    TAB(level); std::cout << CLASSNAME << ":" << name << "(";
+FaceOuterBound::Print(int level)
+{
+    TAB(level);
+    std::cout << CLASSNAME << ":" << name << "(";
     std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-    TAB(level); std::cout << "Inherited Attributes:" << std::endl;
-    FaceBound::Print(level+1);
+    TAB(level);
+    std::cout << "Inherited Attributes:" << std::endl;
+    FaceBound::Print(level + 1);
 }
 
 STEPEntity *
-FaceOuterBound::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
-    Factory::OBJECTS::iterator i;
-    if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
-	FaceOuterBound *object = new FaceOuterBound(sw,sse->STEPfile_id);
+FaceOuterBound::GetInstance(STEPWrapper *sw, int id)
+{
+    return new FaceOuterBound(sw, id);
+}
 
-	Factory::AddObject(object);
-
-	if (!object->Load(sw, sse)) {
-	    std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
-	    delete object;
-	    return NULL;
-	}
-	return static_cast<STEPEntity *>(object);
-    } else {
-	return (*i).second;
-    }
+STEPEntity *
+FaceOuterBound::Create(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
+    return STEPEntity::CreateEntity(sw, sse, GetInstance, CLASSNAME);
 }
 
 // Local Variables:

@@ -1,7 +1,7 @@
 /*                         H O W . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2012 United States Government as represented by
+ * Copyright (c) 2008-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -101,10 +101,17 @@ ged_how(struct ged *gedp, int argc, const char *argv[])
 
 
 	    /* found a match */
-	    if (both)
-		bu_vls_printf(gedp->ged_result_str, "%d %g", sp->s_dmode, sp->s_transparency);
-	    else
-		bu_vls_printf(gedp->ged_result_str, "%d", sp->s_dmode);
+	    if (sp->s_hiddenLine) {
+		if (both)
+		    bu_vls_printf(gedp->ged_result_str, "%d 1", _GED_HIDDEN_LINE);
+		else
+		    bu_vls_printf(gedp->ged_result_str, "%d", _GED_HIDDEN_LINE);
+	    } else {
+		if (both)
+		    bu_vls_printf(gedp->ged_result_str, "%d %g", sp->s_dmode, sp->s_transparency);
+		else
+		    bu_vls_printf(gedp->ged_result_str, "%d", sp->s_dmode);
+	    }
 
 	    goto good;
 	}

@@ -1,7 +1,7 @@
 #               A R B 7 E D I T F R A M E . T C L
 # BRL-CAD
 #
-# Copyright (c) 2002-2012 United States Government as represented by
+# Copyright (c) 2002-2013 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -35,32 +35,34 @@
 
     public {
 	# Override what's in Arb8EditFrame
+	method initTranslate {}
 	method updateGeometry {}
 	method createGeometry {obj}
+	method moveElement {_dm _obj _vx _vy _ocenter}
 	method p {obj args}
     }
 
     protected {
-	variable moveEdge12 1
-	variable moveEdge23 2
-	variable moveEdge34 3
-	variable moveEdge14 4
-	variable moveEdge15 5
-	variable moveEdge26 6
-	variable moveEdge56 7
-	variable moveEdge67 8
-	variable moveEdge37 9
-	variable moveEdge57 10
-	variable moveEdge45 11
-	variable movePoint5 12
-	variable moveFace1234 13
-	variable moveFace2376 14
-	variable rotateFace1234 15
-	variable rotateFace567 16
-	variable rotateFace145 17
-	variable rotateFace2376 18
-	variable rotateFace1265 19
-	variable rotateFace4375 20
+	common moveEdge12 1
+	common moveEdge23 2
+	common moveEdge34 3
+	common moveEdge14 4
+	common moveEdge15 5
+	common moveEdge26 6
+	common moveEdge56 7
+	common moveEdge67 8
+	common moveEdge37 9
+	common moveEdge57 10
+	common moveEdge45 11
+	common movePoint5 12
+	common moveFace1234 13
+	common moveFace2376 14
+	common rotateFace1234 15
+	common rotateFace567 16
+	common rotateFace145 17
+	common rotateFace2376 18
+	common rotateFace1265 19
+	common rotateFace4375 20
 
 	# Methods used by the constructor
 	method buildMoveEdgePanel {parent}
@@ -68,6 +70,7 @@
 	method buildRotateFacePanel {parent}
 
 	# Override what's in Arb8EditFrame
+	method arbFaceMoveCallback {_face}
 	method buildUpperPanel {}
 	method updateUpperPanel {normal disabled}
 
@@ -85,6 +88,30 @@
 ::itcl::body Arb7EditFrame::constructor {args} {
     eval itk_initialize $args
 }
+
+
+::itcl::body Arb7EditFrame::arbFaceMoveCallback {_face} {
+    switch -- $_face {
+	0 {
+	    set mEditMode $moveFace1234
+	}
+	3 {
+	    set mEditMode $moveFace2376
+	}
+    }
+
+    # Calling initEditState to set mEditParam1 in case a different face has been selected
+    initEditState
+
+    foreach dname {ul ur ll lr} {
+	set win [$itk_option(-mged) component $dname]
+	bind $win <ButtonRelease-1> "[::itcl::code $this endArbObjMove $dname $itk_option(-geometryObject) %x %y]; break"
+    }
+
+    set last_mouse [$itk_option(-mged) get_prev_ged_mouse]
+    eval $itk_option(-mged) move_arb_face_mode $itk_option(-geometryObject) $mEditParam1 $last_mouse
+}
+
 
 ::itcl::body Arb7EditFrame::buildUpperPanel {} {
     set parent [$this childsite upper]
@@ -124,21 +151,21 @@
 	    -textvariable [::itcl::scope mV1x] \
 	    -state disabled \
 	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add arb7V1yE {
 	::ttk::entry $parent.arb7V1yE \
 	    -textvariable [::itcl::scope mV1y] \
 	    -state disabled \
 	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add arb7V1zE {
 	::ttk::entry $parent.arb7V1zE \
 	    -textvariable [::itcl::scope mV1z] \
 	    -state disabled \
 	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add arb7V1UnitsL {
 	::ttk::label $parent.arb7V1UnitsL \
@@ -155,21 +182,21 @@
 	    -textvariable [::itcl::scope mV2x] \
 	    -state disabled \
 	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add arb7V2yE {
 	::ttk::entry $parent.arb7V2yE \
 	    -textvariable [::itcl::scope mV2y] \
 	    -state disabled \
 	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add arb7V2zE {
 	::ttk::entry $parent.arb7V2zE \
 	    -textvariable [::itcl::scope mV2z] \
 	    -state disabled \
 	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add arb7V2UnitsL {
 	::ttk::label $parent.arb7V2UnitsL \
@@ -186,21 +213,21 @@
 	    -textvariable [::itcl::scope mV3x] \
 	    -state disabled \
 	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add arb7V3yE {
 	::ttk::entry $parent.arb7V3yE \
 	    -textvariable [::itcl::scope mV3y] \
 	    -state disabled \
 	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add arb7V3zE {
 	::ttk::entry $parent.arb7V3zE \
 	    -textvariable [::itcl::scope mV3z] \
 	    -state disabled \
 	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add arb7V3UnitsL {
 	::ttk::label $parent.arb7V3UnitsL \
@@ -217,21 +244,21 @@
 	    -textvariable [::itcl::scope mV4x] \
 	    -state disabled \
 	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add arb7V4yE {
 	::ttk::entry $parent.arb7V4yE \
 	    -textvariable [::itcl::scope mV4y] \
 	    -state disabled \
 	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add arb7V4zE {
 	::ttk::entry $parent.arb7V4zE \
 	    -textvariable [::itcl::scope mV4z] \
 	    -state disabled \
 	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add arb7V4UnitsL {
 	::ttk::label $parent.arb7V4UnitsL \
@@ -248,21 +275,21 @@
 	    -textvariable [::itcl::scope mV5x] \
 	    -state disabled \
 	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add arb7V5yE {
 	::ttk::entry $parent.arb7V5yE \
 	    -textvariable [::itcl::scope mV5y] \
 	    -state disabled \
 	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add arb7V5zE {
 	::ttk::entry $parent.arb7V5zE \
 	    -textvariable [::itcl::scope mV5z] \
 	    -state disabled \
 	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add arb7V5UnitsL {
 	::ttk::label $parent.arb7V5UnitsL \
@@ -279,21 +306,21 @@
 	    -textvariable [::itcl::scope mV6x] \
 	    -state disabled \
 	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add arb7V6yE {
 	::ttk::entry $parent.arb7V6yE \
 	    -textvariable [::itcl::scope mV6y] \
 	    -state disabled \
 	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add arb7V6zE {
 	::ttk::entry $parent.arb7V6zE \
 	    -textvariable [::itcl::scope mV6z] \
 	    -state disabled \
 	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add arb7V6UnitsL {
 	::ttk::label $parent.arb7V6UnitsL \
@@ -310,21 +337,21 @@
 	    -textvariable [::itcl::scope mV7x] \
 	    -state disabled \
 	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add arb7V7yE {
 	::ttk::entry $parent.arb7V7yE \
 	    -textvariable [::itcl::scope mV7y] \
 	    -state disabled \
 	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add arb7V7zE {
 	::ttk::entry $parent.arb7V7zE \
 	    -textvariable [::itcl::scope mV7z] \
 	    -state disabled \
 	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add arb7V7UnitsL {
 	::ttk::label $parent.arb7V7UnitsL \
@@ -629,6 +656,30 @@
 #                      PUBLIC METHODS
 # ------------------------------------------------------------
 
+
+::itcl::body Arb7EditFrame::initTranslate {} {
+    switch -- $mEditMode \
+	$moveEdge12 - \
+	$moveEdge23 - \
+	$moveEdge34 - \
+	$moveEdge14 - \
+	$moveEdge15 - \
+	$moveEdge26 - \
+	$moveEdge56 - \
+	$moveEdge67 - \
+	$moveEdge37 - \
+	$moveEdge57 - \
+	$moveEdge45 - \
+	$movePoint5 {
+	    $::ArcherCore::application initFindArbEdge $itk_option(-geometryObjectPath) 1 [::itcl::code $this arbEdgeMoveCallback]
+	} \
+	$moveFace1234 - \
+	$moveFace2376 {
+	    $::ArcherCore::application initFindArbFace $itk_option(-geometryObjectPath) 1 [::itcl::code $this arbFaceMoveCallback]
+	}
+}
+
+
 ::itcl::body Arb7EditFrame::updateGeometry {} {
     if {$itk_option(-mged) == "" ||
 	$itk_option(-geometryObject) == ""} {
@@ -680,6 +731,80 @@
 
     #	V7 [list $mXmin $mYmax $mZmax]
 }
+
+
+::itcl::body Arb7EditFrame::moveElement {_dm _obj _vx _vy _ocenter} {
+    switch -- $mEditMode \
+	$moveEdge12 {
+	    set ptA [$itk_option(-mged) get $_obj V1]
+	    set ptB [$itk_option(-mged) get $_obj V2]
+	    set pt [::vscale [vadd2 $ptA $ptB] 0.5]
+	} \
+	$moveEdge23 {
+	    set ptA [$itk_option(-mged) get $_obj V2]
+	    set ptB [$itk_option(-mged) get $_obj V3]
+	    set pt [::vscale [vadd2 $ptA $ptB] 0.5]
+	} \
+	$moveEdge34 {
+	    set ptA [$itk_option(-mged) get $_obj V3]
+	    set ptB [$itk_option(-mged) get $_obj V4]
+	    set pt [::vscale [vadd2 $ptA $ptB] 0.5]
+	} \
+	$moveEdge14 {
+	    set ptA [$itk_option(-mged) get $_obj V1]
+	    set ptB [$itk_option(-mged) get $_obj V4]
+	    set pt [::vscale [vadd2 $ptA $ptB] 0.5]
+	} \
+	$moveEdge15 {
+	    set ptA [$itk_option(-mged) get $_obj V1]
+	    set ptB [$itk_option(-mged) get $_obj V5]
+	    set pt [::vscale [vadd2 $ptA $ptB] 0.5]
+	} \
+	$moveEdge26 {
+	    set ptA [$itk_option(-mged) get $_obj V2]
+	    set ptB [$itk_option(-mged) get $_obj V6]
+	    set pt [::vscale [vadd2 $ptA $ptB] 0.5]
+	} \
+	$moveEdge56 {
+	    set ptA [$itk_option(-mged) get $_obj V5]
+	    set ptB [$itk_option(-mged) get $_obj V6]
+	    set pt [::vscale [vadd2 $ptA $ptB] 0.5]
+	} \
+	$moveEdge67 {
+	    set ptA [$itk_option(-mged) get $_obj V6]
+	    set ptB [$itk_option(-mged) get $_obj V7]
+	    set pt [::vscale [vadd2 $ptA $ptB] 0.5]
+	} \
+	$moveEdge37 {
+	    set ptA [$itk_option(-mged) get $_obj V3]
+	    set ptB [$itk_option(-mged) get $_obj V7]
+	    set pt [::vscale [vadd2 $ptA $ptB] 0.5]
+	} \
+	$moveEdge57 {
+	    set ptA [$itk_option(-mged) get $_obj V5]
+	    set ptB [$itk_option(-mged) get $_obj V7]
+	    set pt [::vscale [vadd2 $ptA $ptB] 0.5]
+	} \
+	$moveEdge45 {
+	    set ptA [$itk_option(-mged) get $_obj V4]
+	    set ptB [$itk_option(-mged) get $_obj V5]
+	    set pt [::vscale [vadd2 $ptA $ptB] 0.5]
+	} \
+	$movePoint5 {
+	    set pt [$itk_option(-mged) get $_obj V5]
+	} \
+	default {
+	    $itk_option(-mged) $mEditCommand $_obj $mEditParam1 $_ocenter
+	    return
+	}
+
+    set vpt [$itk_option(-mged) pane_m2v_point $_dm $pt]
+    set vz [lindex $vpt 2]
+    set new_vpt [list $_vx $_vy $vz]
+    set new_ocenter [$itk_option(-mged) pane_v2m_point $_dm $new_vpt]
+    $itk_option(-mged) $mEditCommand $_obj $mEditParam1 $new_ocenter
+}
+
 
 ::itcl::body Arb7EditFrame::p {obj args} {
     if {[llength $args] != 3 ||
@@ -921,6 +1046,11 @@
 	    set mEditParam2 5
 	    configure -valueUnits "deg"
 	    updateUpperPanel {5} {1 2 3 4 6 7}
+	} \
+	default {
+	    set mEditCommand ""
+	    set mEditPCommand ""
+	    set mEditParam1 ""
 	}
 
     GeometryEditFrame::initEditState

@@ -1,7 +1,7 @@
 /*                      N M G _ F U S E . C
  * BRL-CAD
  *
- * Copyright (c) 1993-2012 United States Government as represented by
+ * Copyright (c) 1993-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -40,6 +40,13 @@
 #include "nmg.h"
 #include "raytrace.h"
 #include "nurb.h"
+
+
+/* The global variable edge_rr_xyp is used by function nmg_edge_g_fuse
+ * and the compare function for qsort "e_rr_xyp_comp". This is an array
+ * containing the rise over run ratios in the xy plane for each edge.
+ */
+fastf_t *edge_rr_xyp;
 
 
 extern int debug_file_count;
@@ -123,7 +130,7 @@ nmg_is_common_bigloop(const struct face *f1, const struct face *f2)
 /**
  * N M G _ R E G I O N _ V _ U N I Q U E
  *
- * Ensure that all the vertices in r1 are still geometricaly unique.
+ * Ensure that all the vertices in r1 are still geometrically unique.
  * This will be true after nmg_region_both_vfuse() has been called,
  * and should remain true throughout the intersection process.
  */
@@ -186,7 +193,7 @@ x_comp(const void *p1, const void *p2)
  * Working from the end to the front, scan for geometric duplications
  * within a single list of vertex structures.
  *
- * Exists primarily as a support routine for nmg_model_vertex_fuse().
+ * Exists primarily as a support routine for nmg_vertex_fuse().
  */
 int
 nmg_ptbl_vfuse(struct bu_ptbl *t, const struct bn_tol *tol)
@@ -304,33 +311,59 @@ nmg_region_both_vfuse(struct bu_ptbl *t1, struct bu_ptbl *t2, const struct bn_to
 
 
 /**
- * N M G _ M O D E L _ V E R T E X _ F U S E
+ * N M G _ V E R T E X _ F U S E
  *
- * Fuse together any vertices in the nmgmodel that are geometricly
- * identical, within the tolerance.
+ * Fuse together any vertices that are geometrically identical, within
+ * distance tolerance. This function may be passed a pointer to an NMG
+ * object or a pointer to a bu_ptbl structure containing a list of
+ * pointers to NMG vertex structures. If a bu_ptbl structure was passed
+ * into this function, the calling function must free this structure.
  */
 int
-nmg_model_vertex_fuse(struct model *m, const struct bn_tol *tol)
+nmg_vertex_fuse(const uint32_t *magic_p, const struct bn_tol *tol)
 {
-    struct bu_ptbl t1;
+    struct bu_ptbl *t1;
+    struct bu_ptbl tmp;
+    size_t t1_len;
     int total = 0;
+    const uint32_t *tmp_magic_p;
 
-    NMG_CK_MODEL(m);
     BN_CK_TOL(tol);
 
-    nmg_vertex_tabulate(&t1, &m->magic);
+    if (!magic_p) {
+	bu_bomb("nmg_vertex_fuse(): passed null pointer");
+    }
+
+    if (*magic_p == BU_PTBL_MAGIC) {
+	t1 = (struct bu_ptbl *)magic_p;
+	t1_len = BU_PTBL_LEN(t1);
+	if (t1_len) {
+	    tmp_magic_p = (const uint32_t *)BU_PTBL_GET((struct bu_ptbl *)magic_p, 0);
+	    if (*tmp_magic_p != NMG_VERTEX_MAGIC) {
+		bu_bomb("nmg_vertex_fuse(): passed bu_ptbl structure not containing vertex");
+	    }
+	}
+    } else {
+	t1 = &tmp;
+	nmg_vertex_tabulate(t1, magic_p);
+	t1_len = BU_PTBL_LEN(t1);
+    }
 
     /* if there are no vertex, do nothing */
-    if (!BU_PTBL_END(&t1)) {
+    if (!t1_len) {
 	return 0;
     }
 
-    total = nmg_ptbl_vfuse(&t1, tol);
+    total = nmg_ptbl_vfuse(t1, tol);
 
-    bu_ptbl_free(&t1);
+    /* if bu_ptbl was passed into this function don't free it here */
+    if (*magic_p != BU_PTBL_MAGIC) {
+	bu_ptbl_free(t1);
+    }
 
     if (rt_g.NMG_debug & DEBUG_BASIC && total > 0)
-	bu_log("nmg_model_vertex_fuse() %d\n", total);
+	bu_log("nmg_vertex_fuse() %d\n", total);
+
     return total;
 }
 
@@ -481,7 +514,7 @@ nmg_snurb_is_planar(const struct face_g_snurb *srf, const struct bn_tol *tol)
 	/* get average vertex coordinates */
 	VSCALE(vsum, vsum, one_over_vertex_count);
 
-	/* get distance from plane to orgin */
+	/* get distance from plane to origin */
 	pl[H] = VDOT(pl, vsum);
 
     } else {
@@ -516,7 +549,7 @@ nmg_snurb_is_planar(const struct face_g_snurb *srf, const struct bn_tol *tol)
 	    /* get average vertex coordinates */
 	    VSCALE(vsum, vsum, one_over_vertex_count);
 
-	    /* get distance from plane to orgin */
+	    /* get distance from plane to origin */
 	    pl[H] = VDOT(pl, vsum);
 
 	} else {
@@ -626,13 +659,14 @@ nmg_split_trim(const struct edge_g_cnurb *cnrb, const struct face_g_snurb *snrb,
     NMG_CK_EDGE_G_CNURB(cnrb);
     NMG_CK_FACE_G_SNURB(snrb);
     BN_CK_TOL(tol);
-    pt_new = (struct pt_list *)bu_malloc(sizeof(struct pt_list), "g_split_trim: pt_new");
+
+    BU_ALLOC(pt_new, struct pt_list);
     pt_new->t = t;
 
     if (pt_new->t < pt0->t || pt_new->t > pt1->t) {
 	bu_log("nmg_split_trim: split parameter (%g) is not between ends (%g and %g)\n",
 	       t, pt0->t, pt1->t);
-	bu_bomb("nmg_split_trim: split parameteris not between ends\n");
+	bu_bomb("nmg_split_trim: split parameters not between ends\n");
     }
 
     nmg_eval_trim_curve(cnrb, snrb, pt_new->t, pt_new->xyz);
@@ -667,12 +701,12 @@ nmg_eval_trim_to_tol(const struct edge_g_cnurb *cnrb, const struct face_g_snurb 
 	bu_log("nmg_eval_trim_to_tol(cnrb=x%x, snrb=x%x, t0=%g, t1=%g) START\n",
 	       cnrb, snrb, t0, t1);
 
-    pt0 = (struct pt_list *)bu_malloc(sizeof(struct pt_list), "nmg_eval_trim_to_tol: pt0 ");
+    BU_ALLOC(pt0, struct pt_list);
     pt0->t = t0;
     nmg_eval_trim_curve(cnrb, snrb, pt0->t, pt0->xyz);
     BU_LIST_INSERT(head, &pt0->l);
 
-    pt1 = (struct pt_list *)bu_malloc(sizeof(struct pt_list), "nmg_eval_trim_to_tol: pt1 ");
+    BU_ALLOC(pt1, struct pt_list);
     pt1->t = t1;
     nmg_eval_trim_curve(cnrb, snrb, pt1->t, pt1->xyz);
     BU_LIST_INSERT(head, &pt1->l);
@@ -697,7 +731,7 @@ nmg_split_linear_trim(const struct face_g_snurb *snrb, const fastf_t *uvw1, cons
     if (snrb)
 	NMG_CK_FACE_G_SNURB(snrb);
     BN_CK_TOL(tol);
-    pt_new = (struct pt_list *)bu_malloc(sizeof(struct pt_list), "g_split_trim: pt_new");
+    BU_ALLOC(pt_new, struct pt_list);
     pt_new->t = 0.5*(pt0->t + pt1->t);
 
     VBLEND2(uvw_sub, 1.0 - pt_new->t, uvw1, pt_new->t, uvw2);
@@ -738,12 +772,12 @@ nmg_eval_linear_trim_to_tol(const struct edge_g_cnurb *cnrb, const struct face_g
 	bu_log("nmg_eval_linear_trim_to_tol(cnrb=x%x, snrb=x%x, uvw1=(%g %g %g), uvw2=(%g %g %g)) START\n",
 	       cnrb, snrb, V3ARGS(uvw1), V3ARGS(uvw2));
 
-    pt0 = (struct pt_list *)bu_malloc(sizeof(struct pt_list), "nmg_eval_linear_trim_to_tol: pt0 ");
+    BU_ALLOC(pt0, struct pt_list);
     pt0->t = 0.0;
     nmg_eval_linear_trim_curve(snrb, uvw1, pt0->xyz);
     BU_LIST_INSERT(head, &pt0->l);
 
-    pt1 = (struct pt_list *)bu_malloc(sizeof(struct pt_list), "nmg_eval_linear_trim_to_tol: pt1 ");
+    BU_ALLOC(pt1, struct pt_list);
     pt1->t = 1.0;
     nmg_eval_linear_trim_curve(snrb, uvw2, pt1->xyz);
     BU_LIST_INSERT(head, &pt1->l);
@@ -1023,7 +1057,7 @@ nmg_cnurb_is_on_crv(const struct edgeuse *eu, const struct edge_g_cnurb *cnrb, c
     return coincident;
 }
 
-/* compare function for qsort within function nmg_model_edge_fuse */
+/* compare function for qsort within function nmg_edge_fuse */
 static int
 v_ptr_comp(const void *p1, const void *p2)
 {
@@ -1041,16 +1075,25 @@ v_ptr_comp(const void *p1, const void *p2)
 
 
 /**
- * N M G _ M O D E L _ E D G E _ F U S E
+ * N M G _ E D G E _ F U S E
+ *
+ * Note: If a bu_ptbl structure is passed into this function, the
+ *       structure must contain edgeuse. Vertices will then be fused
+ *       at the shell level. If an NMG structure is passed into this
+ *       function, if the structure is an NMG region or model, vertices
+ *       will be fused at the model level. If the NMG structure passed
+ *       in is a shell or anything lower, vertices will be fused at the
+ *       shell level.
  */
 int
-nmg_model_edge_fuse(struct model *m, const struct bn_tol *tol)
+nmg_edge_fuse(const uint32_t *magic_p, const struct bn_tol *tol)
 {
     typedef size_t (*edgeuse_vert_list_t)[2];
     edgeuse_vert_list_t edgeuse_vert_list;
     int count=0;
     size_t nelem;
-    struct bu_ptbl eu_list;
+    struct bu_ptbl *eu_list;
+    struct bu_ptbl tmp;
     struct edge *e1;
     struct edgeuse *eu, *eu1;
     struct vertex *v1;
@@ -1058,19 +1101,46 @@ nmg_model_edge_fuse(struct model *m, const struct bn_tol *tol)
     register struct edge *e2;
     register struct edgeuse *eu2;
     register struct vertex *v2;
+    struct shell *s;
+    struct model *m;
+    const uint32_t *tmp_magic_p;
 
-    bu_ptbl_init(&eu_list, 64, "eu1_list1 buffer");
-    nmg_edgeuse_tabulate(&eu_list, &m->magic);
+    if (*magic_p == BU_PTBL_MAGIC) {
+	tmp_magic_p = (const uint32_t *)BU_PTBL_GET((struct bu_ptbl *)magic_p, 0);
+	if (*tmp_magic_p != NMG_EDGEUSE_MAGIC) {
+	    bu_bomb("nmg_edge_fuse(): passed bu_ptbl structure not containing edgeuse");
+	}
+    } else {
+	tmp_magic_p = magic_p;
+    }
+    if (*tmp_magic_p == NMG_REGION_MAGIC || *tmp_magic_p == NMG_MODEL_MAGIC) {
+	if (*tmp_magic_p == NMG_MODEL_MAGIC) {
+	    m = (struct model *)tmp_magic_p;
+	} else {
+	    m = ((struct nmgregion *)tmp_magic_p)->m_p;
+	}
+	(void)nmg_vertex_fuse(&m->magic, tol);
+    } else {
+	s = nmg_find_shell(tmp_magic_p);
+	(void)nmg_vertex_fuse(&s->l.magic, tol);
+    }
+    if (*magic_p == BU_PTBL_MAGIC) {
+	eu_list = (struct bu_ptbl *)magic_p;
+    } else {
+	bu_ptbl_init(&tmp, 64, "eu_list buffer");
+	nmg_edgeuse_tabulate(&tmp, magic_p);
+	eu_list = &tmp;
+    }
 
-    nelem = BU_PTBL_END(&eu_list) * 2;
+    nelem = BU_PTBL_END(eu_list) * 2;
     if (nelem == 0)
        return 0;
 
     edgeuse_vert_list = (edgeuse_vert_list_t)bu_calloc(nelem, 2 * sizeof(size_t), "edgeuse_vert_list");
 
     j = 0;
-    for (i = 0; i < (size_t)BU_PTBL_END(&eu_list) ; i++) {
-	eu = (struct edgeuse *)BU_PTBL_GET(&eu_list, i);
+    for (i = 0; i < (size_t)BU_PTBL_END(eu_list) ; i++) {
+	eu = (struct edgeuse *)BU_PTBL_GET(eu_list, i);
 	edgeuse_vert_list[j][0] = (size_t)eu;
 	edgeuse_vert_list[j][1] = (size_t)eu->vu_p->v_p;
 	j++;
@@ -1122,62 +1192,236 @@ nmg_model_edge_fuse(struct model *m, const struct bn_tol *tol)
     }
 
     bu_free((char *)edgeuse_vert_list, "edgeuse_vert_list");
-    bu_ptbl_free(&eu_list);
+
+    /* if bu_ptbl was passed into this function don't free it here */
+    if (*magic_p != BU_PTBL_MAGIC) {
+	bu_ptbl_free(eu_list);
+    }
 
     return count;
+}
+
+
+/* compare function for qsort within function nmg_edge_g_fuse */
+static int
+e_rr_xyp_comp(const void *p1, const void *p2)
+{
+    fastf_t i, j;
+
+    i = edge_rr_xyp[(*((size_t *)p1))];
+    j = edge_rr_xyp[(*((size_t *)p2))];
+
+    if (EQUAL(i, j))
+	return 0;
+    else if (i > j)
+	return 1;
+    return -1;
 }
 
 
 /**
  * N M G _ E D G E _ G _ F U S E
  *
- * The present algorithm is a consequence of the old edge geom ptr structure.
- * XXX This might be better formulated by generating a list of all
- * edge_g structs in the model, and comparing *them* pairwise.
+ * Fuse edge_g structs.
  */
 int
 nmg_edge_g_fuse(const uint32_t *magic_p, const struct bn_tol *tol)
 {
-    struct bu_ptbl etab;
-    long total = 0;
-    register long i, j;
+    register size_t i, j;
+    register struct edge_g_lseg *eg1, *eg2;
+    register struct edgeuse *eu1, *eu2;
+    register struct vertex *eu1v1, *eu1v2, *eu2v1, *eu2v2;
+    struct bu_ptbl etab; /* edge table */
+    size_t etab_cnt; /* edge count */
+    int total;
+    fastf_t tmp;
+
+    /* rise over run arrays for the xz and yz planes */
+    fastf_t *edge_rr, *edge_rr_xzp, *edge_rr_yzp;
+
+    /* index into all arrays sorted by the contents of array edge_rr_xyp */
+    size_t *sort_idx_xyp;
+
+    /* arrays containing special case flags for each edge in the xy, xz and yz planes */
+    /* 0 = no special case, 1 = infinite ratio, 2 = zero ratio, 3 = point in plane (no ratio) */
+    char *edge_sc, *edge_sc_xyp, *edge_sc_xzp, *edge_sc_yzp;
 
     /* Make a list of all the edge geometry structs in the model */
     nmg_edge_g_tabulate(&etab, magic_p);
 
-    for (i = BU_PTBL_END(&etab)-1; i >= 0; i--) {
-	register struct edge_g_lseg *eg1;
-	register struct edgeuse *eu1;
+    /* number of edges in table etab */
+    etab_cnt = BU_PTBL_LEN(&etab);
+
+    if (etab_cnt == 0) {
+	return 0;
+    }
+
+    sort_idx_xyp = (size_t *)bu_calloc(etab_cnt, sizeof(size_t), "sort_idx_xyp");
+
+    edge_rr = (fastf_t *)bu_calloc(etab_cnt * 3, sizeof(fastf_t), "edge_rr_xyp");
+    /* rise over run in xy plane */
+    edge_rr_xyp = edge_rr;
+    /* rise over run in xz plane */
+    edge_rr_xzp = edge_rr + etab_cnt;
+    /* rise over run in yz plane */
+    edge_rr_yzp = edge_rr + (etab_cnt * 2);
+
+    edge_sc = (char *)bu_calloc(etab_cnt * 3, sizeof(char), "edge_sc_xyp");
+    /* special cases in xy plane */
+    edge_sc_xyp = edge_sc;
+    /* special cases in xz plane */
+    edge_sc_xzp = edge_sc + etab_cnt;
+    /* special cases in yz plane */
+    edge_sc_yzp = edge_sc + (etab_cnt * 2);
+
+    /* load arrays */
+    for (i = 0 ; i < etab_cnt ; i++) {
+	point_t pt1, pt2;
+	register fastf_t xdif, ydif, zdif;
+	register fastf_t dist = tol->dist;
 
 	eg1 = (struct edge_g_lseg *)BU_PTBL_GET(&etab, i);
+	eu1 = BU_LIST_MAIN_PTR(edgeuse, BU_LIST_FIRST(bu_list, &eg1->eu_hd2), l2);
 
-	/* XXX Need routine to compare two cnurbs geometricly */
-	if (eg1->l.magic == NMG_EDGE_G_CNURB_MAGIC) {
+	VMOVE(pt1, eu1->vu_p->v_p->vg_p->coord);
+	VMOVE(pt2, eu1->eumate_p->vu_p->v_p->vg_p->coord);
+
+	xdif = fabs(pt2[X] - pt1[X]);
+	ydif = fabs(pt2[Y] - pt1[Y]);
+	zdif = fabs(pt2[Z] - pt1[Z]);
+	sort_idx_xyp[i] = i;
+
+	if ((xdif < dist) && (ydif > dist)) {
+	    edge_rr_xyp[i] = MAX_FASTF;
+	    edge_sc_xyp[i] = 1; /* no angle in xy plane, vertical line (along y-axis) */
+	} else if ((xdif > dist) && (ydif < dist)) {
+	    edge_sc_xyp[i] = 2; /* no angle in xy plane, horz line (along x-axis) */
+	} else if ((xdif < dist) && (ydif < dist)) {
+	    edge_sc_xyp[i] = 3; /* only a point in the xy plane */
+	    edge_rr_xyp[i] = -MAX_FASTF;
+	} else {
+	    edge_rr_xyp[i] = (pt2[Y] - pt1[Y]) / (pt2[X] - pt1[X]); /* rise over run */
+	}
+
+	if ((xdif < dist) && (zdif > dist)) {
+	    edge_sc_xzp[i] = 1; /* no angle in xz plane, vertical line (along z-axis) */
+	} else if ((xdif > dist) && (zdif < dist)) {
+	    edge_sc_xzp[i] = 2; /* no angle in xz plane, horz line (along x-axis) */
+	} else if ((xdif < dist) && (zdif < dist)) {
+	    edge_sc_xzp[i] = 3; /* only a point in the xz plane */
+	} else {
+	    edge_rr_xzp[i] = (pt2[Z] - pt1[Z]) / (pt2[X] - pt1[X]); /* rise over run */
+	}
+
+	if ((ydif < dist) && (zdif > dist)) {
+	    edge_sc_yzp[i] = 1; /* no angle in yz plane, vertical line (along z-axis) */
+	} else if ((ydif > dist) && (zdif < dist)) {
+	    edge_sc_yzp[i] = 2; /* no angle in yz plane, horz line (along y-axis) */
+	} else if ((ydif < dist) && (zdif < dist)) {
+	    edge_sc_yzp[i] = 3; /* only a point in the yz plane */
+	} else {
+	    edge_rr_yzp[i] = (pt2[Z] - pt1[Z]) / (pt2[Y] - pt1[Y]); /* rise over run */
+	}
+    }
+
+    /* create sort index based on array edge_rr_xyp */
+    qsort(sort_idx_xyp, etab_cnt, sizeof(size_t), (int (*)(const void *a, const void *b))e_rr_xyp_comp);
+
+    /* main loop */
+    total = 0;
+    for (i = 0 ; i < etab_cnt ; i++) {
+
+	eg1 = (struct edge_g_lseg *)BU_PTBL_GET(&etab, sort_idx_xyp[i]);
+
+	if (!eg1) {
+	    continue;
+	}
+
+	if (UNLIKELY(eg1->l.magic == NMG_EDGE_G_CNURB_MAGIC)) {
 	    continue;
 	}
 
 	eu1 = BU_LIST_MAIN_PTR(edgeuse, BU_LIST_FIRST(bu_list, &eg1->eu_hd2), l2);
+	eu1v1 = eu1->vu_p->v_p;
+	eu1v2 = eu1->eumate_p->vu_p->v_p;
 
-	for (j = i-1; j >= 0; j--) {
-	    register struct edge_g_lseg *eg2;
-	    register struct edgeuse *eu2;
+	for (j = i+1; j < etab_cnt ; j++) {
 
-	    eg2 = (struct edge_g_lseg *)BU_PTBL_GET(&etab, j);
-	    if (eg2->l.magic == NMG_EDGE_G_CNURB_MAGIC) continue;
+	    eg2 = (struct edge_g_lseg *)BU_PTBL_GET(&etab, sort_idx_xyp[j]);
+
+	    if (!eg2) {
+		continue;
+	    }
+
+	    if (UNLIKELY(eg2->l.magic == NMG_EDGE_G_CNURB_MAGIC)) {
+		continue;
+	    }
+
+	    if (UNLIKELY(eg1 == eg2)) {
+		BU_PTBL_SET(&etab, sort_idx_xyp[j], NULL);
+		continue;
+	    }
+
 	    eu2 = BU_LIST_MAIN_PTR(edgeuse, BU_LIST_FIRST(bu_list, &eg2->eu_hd2), l2);
+	    eu2v1 = eu2->vu_p->v_p;
+	    eu2v2 = eu2->eumate_p->vu_p->v_p;
 
-	    if (!nmg_2edgeuse_g_coincident(eu1, eu2, tol)) continue;
+	    if (!(((eu1v1 == eu2v2) && (eu1v2 == eu2v1)) || ((eu1v1 == eu2v1) && (eu1v2 == eu2v2)))) {
+		/* true when vertices are not fused */
+
+		/* xy plane tests */
+		if (edge_sc_xyp[sort_idx_xyp[i]] != edge_sc_xyp[sort_idx_xyp[j]]) {
+		    /* not parallel in xy plane */
+		    break;
+		} else if (edge_sc_xyp[sort_idx_xyp[i]] == 0) {
+		    tmp = edge_rr_xyp[sort_idx_xyp[i]] - edge_rr_xyp[sort_idx_xyp[j]];
+		    if (fabs(tmp) > tol->dist) {
+			/* not parallel in xy plane */
+			break;
+		    }
+		}
+
+		/* xz plane tests */
+		if (edge_sc_xzp[sort_idx_xyp[i]] != edge_sc_xzp[sort_idx_xyp[j]]) {
+		    /* not parallel in xz plane */
+		    continue;
+		} else if (edge_sc_xzp[sort_idx_xyp[i]] == 0) {
+		    tmp = edge_rr_xzp[sort_idx_xyp[i]] - edge_rr_xzp[sort_idx_xyp[j]];
+		    if (fabs(tmp) > tol->dist) {
+			/* not parallel in xz plane */
+			continue;
+		    }
+		}
+
+		/* yz plane tests */
+		if (edge_sc_yzp[sort_idx_xyp[i]] != edge_sc_yzp[sort_idx_xyp[j]]) {
+		    /* not parallel in xz plane */
+		    continue;
+		} else if (edge_sc_yzp[sort_idx_xyp[i]] == 0) {
+		    tmp = edge_rr_yzp[sort_idx_xyp[i]] - edge_rr_yzp[sort_idx_xyp[j]];
+		    if (fabs(tmp) > tol->dist) {
+			/* not parallel in yz plane */
+			continue;
+		    }
+		}
+
+		if (!nmg_2edgeuse_g_coincident(eu1, eu2, tol)) {
+		    continue;
+		}
+	    }
 
 	    total++;
-	    nmg_jeg(eg2, eg1);
-	    BU_PTBL_GET(&etab, i) = (long *)NULL;
-	    break;
+	    nmg_jeg(eg1, eg2);
+
+	    BU_PTBL_SET(&etab, sort_idx_xyp[j], NULL);
 	}
     }
 
     bu_ptbl_free(&etab);
+    bu_free(edge_rr, "edge_rr,");
+    bu_free(edge_sc, "edge_sc");
 
-    if (rt_g.NMG_debug & DEBUG_BASIC && total > 0)
+    if (UNLIKELY(rt_g.NMG_debug & DEBUG_BASIC && total > 0))
 	bu_log("nmg_edge_g_fuse(): %d edge_g_lseg's fused\n", total);
 
     return total;
@@ -1385,10 +1629,10 @@ nmg_two_face_fuse(struct face *f1, struct face *f2, const struct bn_tol *tol)
 	return 0;
     }
 
-    /* verify the bounding box of each faceuse overlaps the other
-     * faceuse bounding box
+    /* if the bounding box of each faceuse is not within distance
+     * tolerance of each other, then skip fusing
      */
-    if (!V3RPP_OVERLAP_TOL(f1->min_pt, f1->max_pt, f2->min_pt, f2->max_pt, tol->dist)) {
+    if (V3RPP_DISJOINT_TOL(f1->min_pt, f1->max_pt, f2->min_pt, f2->max_pt, tol->dist)) {
 	return 0;
     }
 
@@ -1517,19 +1761,20 @@ nmg_break_all_es_on_v(uint32_t *magic_p, struct vertex *v, const struct bn_tol *
     int count=0;
     const char *magic_type;
 
-    if (rt_g.NMG_debug & DEBUG_BOOL)
+    if (UNLIKELY(rt_g.NMG_debug & DEBUG_BOOL)) {
 	bu_log("nmg_break_all_es_on_v(magic=x%x, v=x%x)\n", magic_p, v);
+    }
 
     magic_type = bu_identify_magic(*magic_p);
-    if (BU_STR_EQUAL(magic_type, "NULL") ||
-	BU_STR_EQUAL(magic_type, "Unknown_Magic")) {
+    if (UNLIKELY(BU_STR_EQUAL(magic_type, "NULL") ||
+	BU_STR_EQUAL(magic_type, "Unknown_Magic"))) {
 	bu_log("Bad magic pointer passed to nmg_break_all_es_on_v (%s)\n", magic_type);
 	bu_bomb("Bad magic pointer passed to nmg_break_all_es_on_v()\n");
     }
 
     nmg_edgeuse_tabulate(&eus, magic_p);
 
-    for (i=0; i<BU_PTBL_END(&eus); i++) {
+    for (i = 0; i < BU_PTBL_END(&eus); i++) {
 	struct edgeuse *eu;
 	struct vertex *va;
 	struct vertex *vb;
@@ -1538,29 +1783,35 @@ nmg_break_all_es_on_v(uint32_t *magic_p, struct vertex *v, const struct bn_tol *
 
 	eu = (struct edgeuse *)BU_PTBL_GET(&eus, i);
 
-	if (eu->g.magic_p && *eu->g.magic_p == NMG_EDGE_G_CNURB_MAGIC)
+	if (eu->g.magic_p && *eu->g.magic_p == NMG_EDGE_G_CNURB_MAGIC) {
 	    continue;
+	}
 	va = eu->vu_p->v_p;
 	vb = eu->eumate_p->vu_p->v_p;
 
-	if (va == v) continue;
-	if (vb == v) continue;
+	if (va == v || bn_pt3_pt3_equal(va->vg_p->coord, v->vg_p->coord, tol)) {
+	    continue;
+	}
+	if (vb == v || bn_pt3_pt3_equal(vb->vg_p->coord, v->vg_p->coord, tol)) {
+	    continue;
+	}
+	if (UNLIKELY(va == vb || bn_pt3_pt3_equal(va->vg_p->coord, vb->vg_p->coord, tol))) {
+	    bu_bomb("nmg_break_all_es_on_v(): found zero length edgeuse");
+	}
 
 	code = bn_isect_pt_lseg(&dist, va->vg_p->coord, vb->vg_p->coord,
 				v->vg_p->coord, tol);
 
 	if (code < 1) continue;	/* missed */
 
-	if (code == 1 || code == 2) {
-	    bu_log("nmg_break_all_es_on_v() code=%d, why wasn't this vertex fused?\n", code);
-	    bu_log("\teu=x%x, v=x%x\n", eu, v);
-	    continue;
+	if (UNLIKELY(code == 1 || code == 2)) {
+	    bu_bomb("nmg_break_all_es_on_v(): internal error");
 	}
 	/* Break edge on vertex, but don't fuse yet. */
 
-	if (rt_g.NMG_debug & DEBUG_BOOL)
+	if (UNLIKELY(rt_g.NMG_debug & DEBUG_BOOL)) {
 	    bu_log("\tnmg_break_all_es_on_v: breaking eu x%x on v x%x\n", eu, v);
-
+	}
 	(void)nmg_ebreak(v, eu);
 	count++;
     }
@@ -1570,13 +1821,13 @@ nmg_break_all_es_on_v(uint32_t *magic_p, struct vertex *v, const struct bn_tol *
 
 
 /**
- * N M G _ M O D E L _ B R E A K _ E _ O N _ V
+ * N M G _ B R E A K _ E _ O N _ V
  *
  * As the first step in evaluating a boolean formula,
  * before starting to do face/face intersections, compare every
  * edge in the model with every vertex in the model.
  * If the vertex is within tolerance of the edge, break the edge,
- * and enrole the new edge on a list of edges still to be processed.
+ * and enroll the new edge on a list of edges still to be processed.
  *
  * A list of edges and a list of vertices are built, and then processed.
  *
@@ -1587,7 +1838,7 @@ nmg_break_all_es_on_v(uint32_t *magic_p, struct vertex *v, const struct bn_tol *
  * Number of edges broken.
  */
 int
-nmg_model_break_e_on_v(struct model *m, const struct bn_tol *tol)
+nmg_break_e_on_v(const uint32_t *magic_p, const struct bn_tol *tol)
 {
     int count = 0;
     struct bu_ptbl verts;
@@ -1596,10 +1847,9 @@ nmg_model_break_e_on_v(struct model *m, const struct bn_tol *tol)
     register struct edgeuse **eup;
     vect_t e_min_pt, e_max_pt;
 
-    NMG_CK_MODEL(m);
     BN_CK_TOL(tol);
 
-    nmg_e_and_v_tabulate(&edgeuses, &verts, &m->magic);
+    nmg_e_and_v_tabulate(&edgeuses, &verts, magic_p);
 
     /* Repeat the process until no new edgeuses are created */
     while (BU_PTBL_LEN(&edgeuses) > 0) {
@@ -1651,12 +1901,12 @@ nmg_model_break_e_on_v(struct model *m, const struct bn_tol *tol)
 
 		if (code < 1) continue;	/* missed */
 		if (code == 1 || code == 2) {
-		    bu_log("nmg_model_break_e_on_v() code=%d, why wasn't this vertex fused?\n", code);
+		    bu_log("nmg_break_e_on_v() code=%d, why wasn't this vertex fused?\n", code);
 		    continue;
 		}
 
 		if (rt_g.NMG_debug & (DEBUG_BOOL|DEBUG_BASIC))
-		    bu_log("nmg_model_break_e_on_v(): breaking eu x%x (e=x%x) at vertex x%x\n", eu, eu->e_p, v);
+		    bu_log("nmg_break_e_on_v(): breaking eu x%x (e=x%x) at vertex x%x\n", eu, eu->e_p, v);
 
 		/* Break edge on vertex, but don't fuse yet. */
 		new_eu = nmg_ebreak(v, eu);
@@ -1674,10 +1924,17 @@ nmg_model_break_e_on_v(struct model *m, const struct bn_tol *tol)
     bu_ptbl_free(&edgeuses);
     bu_ptbl_free(&verts);
     if (rt_g.NMG_debug & (DEBUG_BOOL|DEBUG_BASIC))
-	bu_log("nmg_model_break_e_on_v() broke %d edges\n", count);
+	bu_log("nmg_break_e_on_v() broke %d edges\n", count);
     return count;
 }
 
+
+/* DEPRECATED: use nmg_break_e_on_v() */
+int
+nmg_model_break_e_on_v(const uint32_t *magic_p, const struct bn_tol *tol)
+{
+    return nmg_break_e_on_v(magic_p, tol);
+}
 
 /**
  * N M G _ M O D E L _ F U S E
@@ -1718,12 +1975,12 @@ nmg_model_fuse(struct model *m, const struct bn_tol *tol)
     /* Step 1 -- the vertices. */
     if (rt_g.NMG_debug & DEBUG_BASIC)
 	bu_log("nmg_model_fuse: vertices\n");
-    total += nmg_model_vertex_fuse(m, tol);
+    total += nmg_vertex_fuse(&m->magic, tol);
 
     /* Step 1.5 -- break edges on vertices, before fusing edges */
     if (rt_g.NMG_debug & DEBUG_BASIC)
 	bu_log("nmg_model_fuse: break edges\n");
-    total += nmg_model_break_e_on_v(m, tol);
+    total += nmg_break_e_on_v(&m->magic, tol);
 
     if (total) {
 	struct nmgregion *r;
@@ -1747,7 +2004,7 @@ nmg_model_fuse(struct model *m, const struct bn_tol *tol)
     /* Step 3 -- edges */
     if (rt_g.NMG_debug & DEBUG_BASIC)
 	bu_log("nmg_model_fuse: edges\n");
-    total += nmg_model_edge_fuse(m, tol);
+    total += nmg_edge_fuse(&m->magic, tol);
 
     /* Step 4 -- edge geometry */
     if (rt_g.NMG_debug & DEBUG_BASIC)
@@ -2112,7 +2369,7 @@ nmg_radial_build_list(struct bu_list *hd, struct bu_ptbl *shell_tbl, int existin
 	    break;
     }
 
-    /* Move list head so that it is inbetween min and max entries. */
+    /* Move list head so that it is in between min and max entries. */
     if (BU_LIST_PNEXT_CIRC(nmg_radial, rmax) == rmin) {
 	/* Maximum entry is followed by minimum.  Ascending --> CCW */
 	BU_LIST_DEQUEUE(hd);
@@ -2247,8 +2504,8 @@ nmg_is_crack_outie(const struct edgeuse *eu, const struct bn_tol *tol)
 	NMG_CK_FACEUSE(fu);
 	NMG_GET_FU_PLANE(pl, fu);
 	dist = DIST_PT_PLANE(midpt, pl);
-	VJOIN1(midpt, midpt, -dist, pl)
-	    dist = fabs(DIST_PT_PLANE(midpt, pl));
+	VJOIN1(midpt, midpt, -dist, pl);
+	dist = fabs(DIST_PT_PLANE(midpt, pl));
 	if (dist > SMALL_FASTF) {
 	    tmp_tol.dist = dist*2.0;
 	    tmp_tol.dist_sq = tmp_tol.dist * tmp_tol.dist;
@@ -2353,7 +2610,7 @@ nmg_find_next_use_of_2e_in_lu(const struct edgeuse *eu, const struct edge *e1, c
  * all but one edgeuse are marked as "outies",
  * and the remaining one is marked as a non-crack.
  * The "outie" edgeuses are marked off in pairs,
- * in the loopuses's edgeuse order.
+ * in the loopuse's edgeuse order.
  */
 void
 nmg_radial_mark_cracks(struct bu_list *hd, const struct edge *e1, const struct edge *e2, const struct bn_tol *tol)
@@ -3132,7 +3389,7 @@ nmg_radial_join_eu_NEW(struct edgeuse *eu1, struct edgeuse *eu2, const struct bn
     bu_ptbl_free(&shell_tbl);
     while (BU_LIST_WHILE(rad, nmg_radial, &list1)) {
 	BU_LIST_DEQUEUE(&rad->l);
-	bu_free((char *)rad, "nmg_radial");
+	BU_PUT(rad, struct nmg_radial);
     }
     return;
 }
@@ -3238,7 +3495,7 @@ nmg_s_radial_harmonize(struct shell *s, const struct bn_tol *tol)
 	/* Release the storage */
 	while (BU_LIST_WHILE(rad, nmg_radial, &list)) {
 	    BU_LIST_DEQUEUE(&rad->l);
-	    bu_free((char *)rad, "nmg_radial");
+	    BU_PUT(rad, struct nmg_radial);
 	}
     }
 

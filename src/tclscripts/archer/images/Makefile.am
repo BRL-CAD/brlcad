@@ -42,7 +42,6 @@ dist_tcl_DATA = \
 	arbn_labeled.png \
 	arbn_subtract.png \
 	arbn_union.png \
-	archer.bmp \
 	arrow_back.png \
 	arrow_forward.png \
 	ars.png \
@@ -64,7 +63,6 @@ dist_tcl_DATA = \
 	bug.png \
 	checkpoint.png \
 	closeall.png \
-	closedf.gif \
 	comb.png \
 	comb_intersect.png \
 	comb_labeled.png \
@@ -72,8 +70,8 @@ dist_tcl_DATA = \
 	comb_union.png \
 	combination.png \
 	command.png \
-	component_pick.png \
 	component_erase.png \
+	component_pick.png \
 	component_select.png \
 	configure.png \
 	cycle_az.png \
@@ -136,10 +134,10 @@ dist_tcl_DATA = \
 	folder_open_small_disabled.png \
 	framebuffer.png \
 	framebuffer_clear.png \
-	framebuffer_off.png \
-	framebuffer_underlay.png \
 	framebuffer_interlay.png \
+	framebuffer_off.png \
 	framebuffer_overlay.png \
+	framebuffer_underlay.png \
 	global_undo.png \
 	half.png \
 	half_intersect.png \
@@ -155,6 +153,8 @@ dist_tcl_DATA = \
 	invalid_intersect.png \
 	invalid_subtract.png \
 	invalid_union.png \
+	matrixModeAbove.png \
+	matrixModeBelow.png \
 	measure.png \
 	metaball.png \
 	metaball_intersect.png \
@@ -166,12 +166,10 @@ dist_tcl_DATA = \
 	nmg_labeled.png \
 	nmg_subtract.png \
 	nmg_union.png \
-	node.gif \
 	object_undo.png \
 	open.png \
-	openf.gif \
-	option_text.png \
 	option_edit.png \
+	option_text.png \
 	other.png \
 	other_intersect.png \
 	other_subtract.png \
@@ -231,6 +229,7 @@ dist_tcl_DATA = \
 	rpc_labeled.png \
 	rpc_subtract.png \
 	rpc_union.png \
+	rtimage.png \
 	run.png \
 	save.png \
 	sketch.png \

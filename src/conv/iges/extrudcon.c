@@ -1,7 +1,7 @@
 /*                     E X T R U D C O N . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2012 United States Government as represented by
+ * Copyright (c) 1990-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -38,10 +38,10 @@ Extrudcon(int entityno, int curve, vect_t evect)
     point_t start, stop;	/* starting and stopping points on arc */
     int sol_num;	/* Solid number */
     fastf_t q1, q2, q3;	/* terms for determining type of conic */
-    int ellipse;	/* flag to indicate eillipse */
+    int ellipse;	/* flag to indicate ellipse */
     fastf_t tmp;		/* scratch */
     point_t center;		/* center of ellipse */
-    fastf_t theta;		/* angle that elipse is rotated */
+    fastf_t theta;		/* angle that ellipse is rotated */
     fastf_t a1, c1, f1;	/* coefficients of translated and rotated ellipse */
     vect_t r1, r2;		/* radii vectors for ellipse and TGC */
 
@@ -116,13 +116,18 @@ Extrudcon(int entityno, int curve, vect_t evect)
 	ellipse = 0;
     else {
 	q3 = a + c;
-	q1 = a*(c*f - e*e/4.0) - 0.5*b*(b*f/2.0 + e*d/4.0) + 0.5*d*(b*e/4.0 - d*c/2.0);
+/*	Next line has been simplified in three iterations shown here:
+ *	q1 = a*(c*f - e*e/4.0) -  0.5*b*(b*f/2.0 + e*d/4.0) +  0.5*d*(b*e/4.0 - d*c/2.0);
+ *	q1 = a*(c*f - e*e/4.0) - 0.25*b*(b*f     + e*d/2.0) + 0.25*d*(b*e/2.0 - d*c    );
+ *	q1 = a*(c*f - e*e/4.0) - 0.25*(b*b*f                                +   d*d*c  );
+ */
+	q1 = a*c*f - 0.25*(a*e*e + b*b*f + d*d*c  );
 	if (q1*q3 >= 0.0)
 	    ellipse = 0;
     }
 
     if (!ellipse) {
-	bu_log("Conic arc for extrusion is not an elipse:\n");
+	bu_log("Conic arc for extrusion is not an ellipse:\n");
 	bu_log("\textrusion entity D%07d (%s)\n", dir[entityno]->direct ,
 	       dir[entityno]->name);
 	bu_log("\tarc entity D%07d (%s)\n", dir[curve]->direct, dir[curve]->name);

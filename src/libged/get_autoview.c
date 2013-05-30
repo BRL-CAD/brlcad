@@ -1,7 +1,7 @@
 /*                         G E T _ A U T O V I E W . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2012 United States Government as represented by
+ * Copyright (c) 2008-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -86,7 +86,7 @@ ged_get_autoview(struct ged *gedp, int argc, const char *argv[])
 	next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
 
 	FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid) {
-	    /* Skip psuedo-solids unless pflag is set */
+	    /* Skip pseudo-solids unless pflag is set */
 	    if (!pflag &&
 		sp->s_fullpath.fp_names != (struct directory **)0 &&
 		sp->s_fullpath.fp_names[0] != (struct directory *)0 &&

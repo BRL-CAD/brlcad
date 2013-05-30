@@ -1,7 +1,7 @@
 /*                 RationalBezierCurve.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2012 United States Government as represented by
+ * Copyright (c) 1994-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -31,28 +31,32 @@
 
 #define CLASSNAME "RationalBezierCurve"
 #define ENTITYNAME "Rational_Bezier_Curve"
-string RationalBezierCurve::entityname = Factory::RegisterClass(ENTITYNAME,(FactoryMethod)RationalBezierCurve::Create);
+string RationalBezierCurve::entityname = Factory::RegisterClass(ENTITYNAME, (FactoryMethod)RationalBezierCurve::Create);
 
-RationalBezierCurve::RationalBezierCurve() {
+RationalBezierCurve::RationalBezierCurve()
+{
     step = NULL;
     id = 0;
 }
 
-RationalBezierCurve::RationalBezierCurve(STEPWrapper *sw,int step_id) {
+RationalBezierCurve::RationalBezierCurve(STEPWrapper *sw, int step_id)
+{
     step = sw;
     id = step_id;
 }
 
-RationalBezierCurve::~RationalBezierCurve() {
+RationalBezierCurve::~RationalBezierCurve()
+{
 }
 
 bool
-RationalBezierCurve::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
-    step=sw;
+RationalBezierCurve::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
+    step = sw;
     id = sse->STEPfile_id;
 
     // load base class attributes
-    if ( !RationalBSplineCurve::Load(sw,sse) ) {
+    if (!RationalBSplineCurve::Load(sw, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::RationalBSplineCurve." << std::endl;
 	return false;
     }
@@ -61,30 +65,26 @@ RationalBezierCurve::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
 }
 
 void
-RationalBezierCurve::Print(int level) {
-    TAB(level); std::cout << CLASSNAME << ":" << name << "(";
+RationalBezierCurve::Print(int level)
+{
+    TAB(level);
+    std::cout << CLASSNAME << ":" << name << "(";
     std::cout << "ID:" << STEPid() << ")" << std::endl;
 
     RationalBSplineCurve::Print(level);
 
 }
+
 STEPEntity *
-RationalBezierCurve::Create(STEPWrapper *sw,SDAI_Application_instance *sse){
-    Factory::OBJECTS::iterator i;
-    if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
-	RationalBezierCurve *object = new RationalBezierCurve(sw,sse->STEPfile_id);
+RationalBezierCurve::GetInstance(STEPWrapper *sw, int id)
+{
+    return new RationalBezierCurve(sw, id);
+}
 
-	Factory::AddObject(object);
-
-	if (!object->Load(sw,sse)) {
-	    std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
-	    delete object;
-	    return NULL;
-	}
-	return static_cast<STEPEntity *>(object);
-    } else {
-	return (*i).second;
-    }
+STEPEntity *
+RationalBezierCurve::Create(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
+    return STEPEntity::CreateEntity(sw, sse, GetInstance, CLASSNAME);
 }
 
 // Local Variables:

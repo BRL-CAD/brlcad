@@ -2,7 +2,7 @@
 #                   R E P O S I T O R Y . S H
 # BRL-CAD
 #
-# Copyright (c) 2008-2012 United States Government as represented by
+# Copyright (c) 2008-2013 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -52,7 +52,7 @@ if test ! -f "${TOPSRC}/include/common.h" ; then
     exit 1
 fi
 
-# get a source and header file list so we only walk the sources onces
+# get a source and header file list so we only walk the sources once
 
 SRCFILES="`find ${TOPSRC}/src -type f \( -name \*.c -o -name \*.cpp -o -name \*.cxx -o -name \*.h -o -name \*.y -o -name \*.l \) -not -regex '.*src/other.*' -not -regex '.*~' -not -regex '.*\.log' -not -regex '.*Makefile.*' -not -regex '.*cache.*' -not -regex '.*\.svn.*' -not -regex '.*src/libpkg.*' -not -regex '.*/shapelib/.*'`"
 
@@ -69,7 +69,7 @@ for i in bio.h bin.h bselect.h ; do
 	exit 1
     fi
     FOUND="`grep '[^f]${i}' $INCFILES /dev/null | grep -v 'include/${i}'`"
-    
+
     if test "x$FOUND" = "x" ; then
 	echo "-> $i header check succeeded"
     else
@@ -110,35 +110,6 @@ fi
 
 
 ###
-# TEST: make sure there isn't a per-target CPPFLAGS in a Makefile.am
-# support for per-target CPPFLAGS wasn't added until automake 1.7
-echo "running CPPFLAGS check..."
-
-if test ! -f "${TOPSRC}/Makefile.am" ; then
-    echo "Unable to find the top-level Makefile.am, aborting"
-    exit 1
-fi
-
-AMFILES="`find ${TOPSRC} -type f -name Makefile.am -exec grep -n -I -e '_CPPFLAGS[[:space:]]*=' {} /dev/null \; | grep -v 'AM_CPPFLAGS' | grep -v 'BREP_CPPFLAGS' | awk '{print $1}'`"
-
-FOUND=
-for file in $AMFILES ; do
-    if test "x`echo \"$file\" | sed 's/.*#.*//g'`" = "x" ; then
-	# skip commented lines
-	continue
-    fi
-    echo "ERROR: Target-specific CPPFLAGS found in $file"
-    FOUND=1
-done
-if test "x$FOUND" = "x" ; then
-    echo "-> cppflags check succeeded"
-else
-    echo "-> cppflags check FAILED"
-    FAILED="`expr $FAILED + 1`"
-fi
-
-
-###
 # TEST: make sure consistent API standards are being used, using libbu
 # functions where they replace or wrap a standard C function
 echo "running API usage check"
@@ -168,7 +139,7 @@ for func in fgets abort dirname getopt strcat strncat strlcat strcpy strncpy str
 | sed 's/.*\/str\.c:.*strncat.*//' \
 | sed 's/.*\/str\.c:.*strncmp.*//' \
 | sed 's/.*\/str\.c:.*strncpy.*//' \
-| sed 's/.*\/test_dirname\.c:.*dirname.*//' \
+| sed 's/.*\/bu_dirname\.c:.*dirname.*//' \
 | sed 's/.*\/ttcp.c:.*//' \
 | sed 's/.*\/vls\.c:.*strncpy.*//' \
 | sed '/^$/d' \

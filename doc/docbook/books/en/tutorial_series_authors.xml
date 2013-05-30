@@ -8,7 +8,7 @@
 	  <orgdiv>Survivability/Lethality Analysis Directorate</orgdiv>
 	  <address>
 	    Aberdeen Proving Ground
-	    <state>MD</state> 
+	    <state>MD</state>
 	    <postcode>21005-5068</postcode>
 	  </address>
 	</affiliation></author>
@@ -17,7 +17,7 @@
 	  <address>
 	    <street>4695 Millennium Drive</street>
 	    <city>Belcamp</city>
-	    <state>MD</state> 
+	    <state>MD</state>
 	    <postcode>21017-1505</postcode>
 	  </address>
 	</affiliation></author>
@@ -26,7 +26,7 @@
 	  <address>
 	    <street>2014 Tollgate Rd, Suite 203</street>
 	    <city>Bel Air</city>
-	    <state>MD</state> 
+	    <state>MD</state>
 	    <postcode>21014</postcode>
 	  </address>
 	</affiliation></author>
@@ -35,7 +35,7 @@
 	  <orgdiv>Survivability/Lethality Analysis Directorate</orgdiv>
 	  <address>
 	    Aberdeen Proving Ground
-	    <state>MD</state> 
+	    <state>MD</state>
 	    <postcode>21005-5068</postcode>
 	  </address>
 	</affiliation></author>
@@ -44,7 +44,7 @@
 	  <orgdiv>Survivability/Lethality Analysis Directorate</orgdiv>
 	  <address>
 	    Aberdeen Proving Ground
-	    <state>MD</state> 
+	    <state>MD</state>
 	    <postcode>21005-5068</postcode>
 	  </address>
 	</affiliation></author>
@@ -56,7 +56,7 @@
 	  <orgdiv>Survivability/Lethality Analysis Directorate</orgdiv>
 	  <address>
 	    Aberdeen Proving Ground
-	    <state>MD</state> 
+	    <state>MD</state>
 	    <postcode>21005-5068</postcode>
 	  </address>
 	</affiliation></author>
@@ -65,18 +65,18 @@
 	  <address>
 	    <street>4695 Millennium Drive</street>
 	    <city>Belcamp</city>
-	    <state>MD</state> 
+	    <state>MD</state>
 	    <postcode>21017-1505</postcode>
 	  </address>
 	</affiliation></author>
       <author><personname><firstname>Dwayne</firstname><surname>Kregel</surname><othername role="mi">L</othername></personname><affiliation>
-          <shortaffil>SURVICE Engineering Company</shortaffil>
-          <address>
-            <street>4695 Millennium Drive</street>
-            <city>Belcamp</city>
-            <state>MD</state> 
-            <postcode>21017-1505</postcode>
-          </address>
-        </affiliation></author>
+	  <shortaffil>SURVICE Engineering Company</shortaffil>
+	  <address>
+	    <street>4695 Millennium Drive</street>
+	    <city>Belcamp</city>
+	    <state>MD</state>
+	    <postcode>21017-1505</postcode>
+	  </address>
+	</affiliation></author>
     </authorgroup>
 </info>

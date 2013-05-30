@@ -1,7 +1,7 @@
 /*                         T E D I T . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2012 United States Government as represented by
+ * Copyright (c) 1985-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -54,7 +54,6 @@ extern int classic_mged;
 #define WIN_EDITOR "\"c:/Program Files/Windows NT/Accessories/wordpad\""
 #define MAC_EDITOR "/Applications/TextEdit.app/Contents/MacOS/TextEdit"
 #define EMACS_EDITOR "emacs"
-#define JOVE_EDITOR "jove"
 #define VIM_EDITOR "vim"
 #define VI_EDITOR "vi"
 #define NANO_EDITOR "nano"
@@ -78,7 +77,7 @@ static int cgtype = 8;
 static int uvec[8];
 static int svec[11];
 static int j;
-			
+
 
 int writesolid(void), readsolid(void);
 
@@ -109,7 +108,7 @@ f_tedit(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char 
 
     if (writesolid()) {
 	bu_file_delete(tmpfil);
-        fclose(fp);
+	fclose(fp);
 	return TCL_ERROR;
     }
 
@@ -190,28 +189,28 @@ writesolid(void)
 	    return 1;
 	case ID_TOR:
 	    tor = (struct rt_tor_internal *)es_int.idb_ptr;
-	    (void)fprintf(fp, "Vertex: %.9f %.9f %.9f%s", V3BASE2LOCAL(tor->v), eol);
-	    (void)fprintf(fp, "Normal: %.9f %.9f %.9f%s", V3BASE2LOCAL(tor->h), eol);
-	    (void)fprintf(fp, "radius_1: %.9f%s", tor->r_a*base2local, eol);
-	    (void)fprintf(fp, "radius_2: %.9f%s", tor->r_h*base2local, eol);
+	    fprintf(fp, "Vertex: %.9f %.9f %.9f%s", V3BASE2LOCAL(tor->v), eol);
+	    fprintf(fp, "Normal: %.9f %.9f %.9f%s", V3BASE2LOCAL(tor->h), eol);
+	    fprintf(fp, "radius_1: %.9f%s", tor->r_a*base2local, eol);
+	    fprintf(fp, "radius_2: %.9f%s", tor->r_h*base2local, eol);
 	    break;
 	case ID_TGC:
 	case ID_REC:
 	    tgc = (struct rt_tgc_internal *)es_int.idb_ptr;
-	    (void)fprintf(fp, "Vertex: %.9f %.9f %.9f%s", V3BASE2LOCAL(tgc->v), eol);
-	    (void)fprintf(fp, "Height: %.9f %.9f %.9f%s", V3BASE2LOCAL(tgc->h), eol);
-	    (void)fprintf(fp, "A: %.9f %.9f %.9f%s", V3BASE2LOCAL(tgc->a), eol);
-	    (void)fprintf(fp, "B: %.9f %.9f %.9f%s", V3BASE2LOCAL(tgc->b), eol);
-	    (void)fprintf(fp, "C: %.9f %.9f %.9f%s", V3BASE2LOCAL(tgc->c), eol);
-	    (void)fprintf(fp, "D: %.9f %.9f %.9f%s", V3BASE2LOCAL(tgc->d), eol);
+	    fprintf(fp, "Vertex: %.9f %.9f %.9f%s", V3BASE2LOCAL(tgc->v), eol);
+	    fprintf(fp, "Height: %.9f %.9f %.9f%s", V3BASE2LOCAL(tgc->h), eol);
+	    fprintf(fp, "A: %.9f %.9f %.9f%s", V3BASE2LOCAL(tgc->a), eol);
+	    fprintf(fp, "B: %.9f %.9f %.9f%s", V3BASE2LOCAL(tgc->b), eol);
+	    fprintf(fp, "C: %.9f %.9f %.9f%s", V3BASE2LOCAL(tgc->c), eol);
+	    fprintf(fp, "D: %.9f %.9f %.9f%s", V3BASE2LOCAL(tgc->d), eol);
 	    break;
 	case ID_ELL:
 	case ID_SPH:
 	    ell = (struct rt_ell_internal *)es_int.idb_ptr;
-	    (void)fprintf(fp, "Vertex: %.9f %.9f %.9f%s", V3BASE2LOCAL(ell->v), eol);
-	    (void)fprintf(fp, "A: %.9f %.9f %.9f%s", V3BASE2LOCAL(ell->a), eol);
-	    (void)fprintf(fp, "B: %.9f %.9f %.9f%s", V3BASE2LOCAL(ell->b), eol);
-	    (void)fprintf(fp, "C: %.9f %.9f %.9f%s", V3BASE2LOCAL(ell->c), eol);
+	    fprintf(fp, "Vertex: %.9f %.9f %.9f%s", V3BASE2LOCAL(ell->v), eol);
+	    fprintf(fp, "A: %.9f %.9f %.9f%s", V3BASE2LOCAL(ell->a), eol);
+	    fprintf(fp, "B: %.9f %.9f %.9f%s", V3BASE2LOCAL(ell->b), eol);
+	    fprintf(fp, "C: %.9f %.9f %.9f%s", V3BASE2LOCAL(ell->c), eol);
 	    break;
 	case ID_ARB8:
 	    for (j=0; j<8; j++) uvec[j] = -1;
@@ -221,83 +220,83 @@ writesolid(void)
 	    for (i=0; i<8; i++) {
 		if (useThisVertex(i)) {
 		    j++;
-		    (void)fprintf(fp, "pt[%d]: %.9f %.9f %.9f%s",
+		    fprintf(fp, "pt[%d]: %.9f %.9f %.9f%s",
 				  j, V3BASE2LOCAL(arb->pt[i]), eol);
 		}
 	    }
 	    break;
 	case ID_HALF:
 	    haf = (struct rt_half_internal *)es_int.idb_ptr;
-	    (void)fprintf(fp, "Plane: %.9f %.9f %.9f %.9f%s", V4BASE2LOCAL(haf->eqn), eol);
+	    fprintf(fp, "Plane: %.9f %.9f %.9f %.9f%s", V4BASE2LOCAL(haf->eqn), eol);
 	    break;
 	case ID_GRIP:
 	    grip = (struct rt_grip_internal *)es_int.idb_ptr;
-	    (void)fprintf(fp, "Center: %.9f %.9f %.9f%s", V3BASE2LOCAL(grip->center), eol);
-	    (void)fprintf(fp, "Normal: %.9f %.9f %.9f%s", V3BASE2LOCAL(grip->normal), eol);
-	    (void)fprintf(fp, "Magnitude: %.9f%s", grip->mag*base2local, eol);
+	    fprintf(fp, "Center: %.9f %.9f %.9f%s", V3BASE2LOCAL(grip->center), eol);
+	    fprintf(fp, "Normal: %.9f %.9f %.9f%s", V3BASE2LOCAL(grip->normal), eol);
+	    fprintf(fp, "Magnitude: %.9f%s", grip->mag*base2local, eol);
 	    break;
 	case ID_PARTICLE:
 	    part = (struct rt_part_internal *)es_int.idb_ptr;
-	    (void)fprintf(fp, "Vertex: %.9f %.9f %.9f%s", V3BASE2LOCAL(part->part_V), eol);
-	    (void)fprintf(fp, "Height: %.9f %.9f %.9f%s", V3BASE2LOCAL(part->part_H), eol);
-	    (void)fprintf(fp, "v radius: %.9f%s", part->part_vrad * base2local, eol);
-	    (void)fprintf(fp, "h radius: %.9f%s", part->part_hrad * base2local, eol);
+	    fprintf(fp, "Vertex: %.9f %.9f %.9f%s", V3BASE2LOCAL(part->part_V), eol);
+	    fprintf(fp, "Height: %.9f %.9f %.9f%s", V3BASE2LOCAL(part->part_H), eol);
+	    fprintf(fp, "v radius: %.9f%s", part->part_vrad * base2local, eol);
+	    fprintf(fp, "h radius: %.9f%s", part->part_hrad * base2local, eol);
 	    break;
 	case ID_RPC:
 	    rpc = (struct rt_rpc_internal *)es_int.idb_ptr;
-	    (void)fprintf(fp, "Vertex: %.9f %.9f %.9f%s", V3BASE2LOCAL(rpc->rpc_V), eol);
-	    (void)fprintf(fp, "Height: %.9f %.9f %.9f%s", V3BASE2LOCAL(rpc->rpc_H), eol);
-	    (void)fprintf(fp, "Breadth: %.9f %.9f %.9f%s", V3BASE2LOCAL(rpc->rpc_B), eol);
-	    (void)fprintf(fp, "Half-width: %.9f%s", rpc->rpc_r * base2local, eol);
+	    fprintf(fp, "Vertex: %.9f %.9f %.9f%s", V3BASE2LOCAL(rpc->rpc_V), eol);
+	    fprintf(fp, "Height: %.9f %.9f %.9f%s", V3BASE2LOCAL(rpc->rpc_H), eol);
+	    fprintf(fp, "Breadth: %.9f %.9f %.9f%s", V3BASE2LOCAL(rpc->rpc_B), eol);
+	    fprintf(fp, "Half-width: %.9f%s", rpc->rpc_r * base2local, eol);
 	    break;
 	case ID_RHC:
 	    rhc = (struct rt_rhc_internal *)es_int.idb_ptr;
-	    (void)fprintf(fp, "Vertex: %.9f %.9f %.9f%s", V3BASE2LOCAL(rhc->rhc_V), eol);
-	    (void)fprintf(fp, "Height: %.9f %.9f %.9f%s", V3BASE2LOCAL(rhc->rhc_H), eol);
-	    (void)fprintf(fp, "Breadth: %.9f %.9f %.9f%s", V3BASE2LOCAL(rhc->rhc_B), eol);
-	    (void)fprintf(fp, "Half-width: %.9f%s", rhc->rhc_r * base2local, eol);
-	    (void)fprintf(fp, "Dist_to_asymptotes: %.9f%s", rhc->rhc_c * base2local, eol);
+	    fprintf(fp, "Vertex: %.9f %.9f %.9f%s", V3BASE2LOCAL(rhc->rhc_V), eol);
+	    fprintf(fp, "Height: %.9f %.9f %.9f%s", V3BASE2LOCAL(rhc->rhc_H), eol);
+	    fprintf(fp, "Breadth: %.9f %.9f %.9f%s", V3BASE2LOCAL(rhc->rhc_B), eol);
+	    fprintf(fp, "Half-width: %.9f%s", rhc->rhc_r * base2local, eol);
+	    fprintf(fp, "Dist_to_asymptotes: %.9f%s", rhc->rhc_c * base2local, eol);
 	    break;
 	case ID_EPA:
 	    epa = (struct rt_epa_internal *)es_int.idb_ptr;
-	    (void)fprintf(fp, "Vertex: %.9f %.9f %.9f%s", V3BASE2LOCAL(epa->epa_V), eol);
-	    (void)fprintf(fp, "Height: %.9f %.9f %.9f%s", V3BASE2LOCAL(epa->epa_H), eol);
-	    (void)fprintf(fp, "Semi-major axis: %.9f %.9f %.9f%s", V3ARGS(epa->epa_Au), eol);
-	    (void)fprintf(fp, "Semi-major length: %.9f%s", epa->epa_r1 * base2local, eol);
-	    (void)fprintf(fp, "Semi-minor length: %.9f%s", epa->epa_r2 * base2local, eol);
+	    fprintf(fp, "Vertex: %.9f %.9f %.9f%s", V3BASE2LOCAL(epa->epa_V), eol);
+	    fprintf(fp, "Height: %.9f %.9f %.9f%s", V3BASE2LOCAL(epa->epa_H), eol);
+	    fprintf(fp, "Semi-major axis: %.9f %.9f %.9f%s", V3ARGS(epa->epa_Au), eol);
+	    fprintf(fp, "Semi-major length: %.9f%s", epa->epa_r1 * base2local, eol);
+	    fprintf(fp, "Semi-minor length: %.9f%s", epa->epa_r2 * base2local, eol);
 	    break;
 	case ID_EHY:
 	    ehy = (struct rt_ehy_internal *)es_int.idb_ptr;
-	    (void)fprintf(fp, "Vertex: %.9f %.9f %.9f%s", V3BASE2LOCAL(ehy->ehy_V), eol);
-	    (void)fprintf(fp, "Height: %.9f %.9f %.9f%s", V3BASE2LOCAL(ehy->ehy_H), eol);
-	    (void)fprintf(fp, "Semi-major axis: %.9f %.9f %.9f%s", V3ARGS(ehy->ehy_Au), eol);
-	    (void)fprintf(fp, "Semi-major length: %.9f%s", ehy->ehy_r1 * base2local, eol);
-	    (void)fprintf(fp, "Semi-minor length: %.9f%s", ehy->ehy_r2 * base2local, eol);
-	    (void)fprintf(fp, "Dist to asymptotes: %.9f%s", ehy->ehy_c * base2local, eol);
+	    fprintf(fp, "Vertex: %.9f %.9f %.9f%s", V3BASE2LOCAL(ehy->ehy_V), eol);
+	    fprintf(fp, "Height: %.9f %.9f %.9f%s", V3BASE2LOCAL(ehy->ehy_H), eol);
+	    fprintf(fp, "Semi-major axis: %.9f %.9f %.9f%s", V3ARGS(ehy->ehy_Au), eol);
+	    fprintf(fp, "Semi-major length: %.9f%s", ehy->ehy_r1 * base2local, eol);
+	    fprintf(fp, "Semi-minor length: %.9f%s", ehy->ehy_r2 * base2local, eol);
+	    fprintf(fp, "Dist to asymptotes: %.9f%s", ehy->ehy_c * base2local, eol);
 	    break;
 	case ID_HYP:
 	    hyp = (struct rt_hyp_internal *)es_int.idb_ptr;
-	    (void)fprintf(fp, "Vertex: %.9f %.9f %.9f%s", V3BASE2LOCAL(hyp->hyp_Vi), eol);
-	    (void)fprintf(fp, "Height: %.9f %.9f %.9f%s", V3BASE2LOCAL(hyp->hyp_Hi), eol);
-	    (void)fprintf(fp, "Semi-major axis: %.9f %.9f %.9f%s", V3BASE2LOCAL(hyp->hyp_A), eol);
-	    (void)fprintf(fp, "Semi-minor length: %.9f%s", hyp->hyp_b * base2local, eol);
-	    (void)fprintf(fp, "Ratio of Neck to Base: %.9f%s", hyp->hyp_bnr, eol);
+	    fprintf(fp, "Vertex: %.9f %.9f %.9f%s", V3BASE2LOCAL(hyp->hyp_Vi), eol);
+	    fprintf(fp, "Height: %.9f %.9f %.9f%s", V3BASE2LOCAL(hyp->hyp_Hi), eol);
+	    fprintf(fp, "Semi-major axis: %.9f %.9f %.9f%s", V3BASE2LOCAL(hyp->hyp_A), eol);
+	    fprintf(fp, "Semi-minor length: %.9f%s", hyp->hyp_b * base2local, eol);
+	    fprintf(fp, "Ratio of Neck to Base: %.9f%s", hyp->hyp_bnr, eol);
 	    break;
 	case ID_ETO:
 	    eto = (struct rt_eto_internal *)es_int.idb_ptr;
-	    (void)fprintf(fp, "Vertex: %.9f %.9f %.9f%s", V3BASE2LOCAL(eto->eto_V), eol);
-	    (void)fprintf(fp, "Normal: %.9f %.9f %.9f%s", V3BASE2LOCAL(eto->eto_N), eol);
-	    (void)fprintf(fp, "Semi-major axis: %.9f %.9f %.9f%s", V3BASE2LOCAL(eto->eto_C), eol);
-	    (void)fprintf(fp, "Semi-minor length: %.9f%s", eto->eto_rd * base2local, eol);
-	    (void)fprintf(fp, "Radius of roation: %.9f%s", eto->eto_r * base2local, eol);
+	    fprintf(fp, "Vertex: %.9f %.9f %.9f%s", V3BASE2LOCAL(eto->eto_V), eol);
+	    fprintf(fp, "Normal: %.9f %.9f %.9f%s", V3BASE2LOCAL(eto->eto_N), eol);
+	    fprintf(fp, "Semi-major axis: %.9f %.9f %.9f%s", V3BASE2LOCAL(eto->eto_C), eol);
+	    fprintf(fp, "Semi-minor length: %.9f%s", eto->eto_rd * base2local, eol);
+	    fprintf(fp, "Radius of rotation: %.9f%s", eto->eto_r * base2local, eol);
 	    break;
 	case ID_SUPERELL:
 	    superell = (struct rt_superell_internal *)es_int.idb_ptr;
-	    (void)fprintf(fp, "Vertex: %.9f %.9f %.9f%s", V3BASE2LOCAL(superell->v), eol);
-	    (void)fprintf(fp, "A: %.9f %.9f %.9f%s", V3BASE2LOCAL(superell->a), eol);
-	    (void)fprintf(fp, "B: %.9f %.9f %.9f%s", V3BASE2LOCAL(superell->b), eol);
-	    (void)fprintf(fp, "C: %.9f %.9f %.9f%s", V3BASE2LOCAL(superell->c), eol);
-	    (void)fprintf(fp, "<n, e>: <%.9f, %.9f>%s", superell->n, superell->e, eol);
+	    fprintf(fp, "Vertex: %.9f %.9f %.9f%s", V3BASE2LOCAL(superell->v), eol);
+	    fprintf(fp, "A: %.9f %.9f %.9f%s", V3BASE2LOCAL(superell->a), eol);
+	    fprintf(fp, "B: %.9f %.9f %.9f%s", V3BASE2LOCAL(superell->b), eol);
+	    fprintf(fp, "C: %.9f %.9f %.9f%s", V3BASE2LOCAL(superell->c), eol);
+	    fprintf(fp, "<n, e>: <%.9f, %.9f>%s", superell->n, superell->e, eol);
 	    break;
     }
 
@@ -372,7 +371,7 @@ readsolid(void)
 		ret_val = 1;
 		break;
 	    }
-	    (void)sscanf(str, "%lf %lf %lf", &a, &b, &c);
+	    sscanf(str, "%lf %lf %lf", &a, &b, &c);
 	    VSET(tor->v, a, b, c);
 	    VSCALE(tor->v, tor->v, local2base);
 
@@ -380,7 +379,7 @@ readsolid(void)
 		ret_val = 1;
 		break;
 	    }
-	    (void)sscanf(str, "%lf %lf %lf", &a, &b, &c);
+	    sscanf(str, "%lf %lf %lf", &a, &b, &c);
 	    VSET(tor->h, a, b, c);
 	    VUNITIZE(tor->h);
 
@@ -388,14 +387,14 @@ readsolid(void)
 		ret_val = 1;
 		break;
 	    }
-	    (void)sscanf(str, "%lf", &a);
+	    sscanf(str, "%lf", &a);
 	    tor->r_a = a * local2base;
 
 	    if ((str=Get_next_line(fp)) == NULL) {
 		ret_val = 1;
 		break;
 	    }
-	    (void)sscanf(str, "%lf", &a);
+	    sscanf(str, "%lf", &a);
 	    tor->r_h = a * local2base;
 	    break;
 	case ID_TGC:
@@ -405,7 +404,7 @@ readsolid(void)
 		ret_val = 1;
 		break;
 	    }
-	    (void)sscanf(str, "%lf %lf %lf", &a, &b, &c);
+	    sscanf(str, "%lf %lf %lf", &a, &b, &c);
 	    VSET(tgc->v, a, b, c);
 	    VSCALE(tgc->v, tgc->v, local2base);
 
@@ -413,7 +412,7 @@ readsolid(void)
 		ret_val = 1;
 		break;
 	    }
-	    (void)sscanf(str, "%lf %lf %lf", &a, &b, &c);
+	    sscanf(str, "%lf %lf %lf", &a, &b, &c);
 	    VSET(tgc->h, a, b, c);
 	    VSCALE(tgc->h, tgc->h, local2base);
 
@@ -421,7 +420,7 @@ readsolid(void)
 		ret_val = 1;
 		break;
 	    }
-	    (void)sscanf(str, "%lf %lf %lf", &a, &b, &c);
+	    sscanf(str, "%lf %lf %lf", &a, &b, &c);
 	    VSET(tgc->a, a, b, c);
 	    VSCALE(tgc->a, tgc->a, local2base);
 
@@ -429,7 +428,7 @@ readsolid(void)
 		ret_val = 1;
 		break;
 	    }
-	    (void)sscanf(str, "%lf %lf %lf", &a, &b, &c);
+	    sscanf(str, "%lf %lf %lf", &a, &b, &c);
 	    VSET(tgc->b, a, b, c);
 	    VSCALE(tgc->b, tgc->b, local2base);
 
@@ -437,7 +436,7 @@ readsolid(void)
 		ret_val = 1;
 		break;
 	    }
-	    (void)sscanf(str, "%lf %lf %lf", &a, &b, &c);
+	    sscanf(str, "%lf %lf %lf", &a, &b, &c);
 	    VSET(tgc->c, a, b, c);
 	    VSCALE(tgc->c, tgc->c, local2base);
 
@@ -445,7 +444,7 @@ readsolid(void)
 		ret_val = 1;
 		break;
 	    }
-	    (void)sscanf(str, "%lf %lf %lf", &a, &b, &c);
+	    sscanf(str, "%lf %lf %lf", &a, &b, &c);
 	    VSET(tgc->d, a, b, c);
 	    VSCALE(tgc->d, tgc->d, local2base);
 
@@ -460,7 +459,7 @@ readsolid(void)
 		ret_val = 1;
 		break;
 	    }
-	    (void)sscanf(str, "%lf %lf %lf", &a, &b, &c);
+	    sscanf(str, "%lf %lf %lf", &a, &b, &c);
 	    VSET(ell->v, a, b, c);
 	    VSCALE(ell->v, ell->v, local2base);
 
@@ -468,7 +467,7 @@ readsolid(void)
 		ret_val = 1;
 		break;
 	    }
-	    (void)sscanf(str, "%lf %lf %lf", &a, &b, &c);
+	    sscanf(str, "%lf %lf %lf", &a, &b, &c);
 	    VSET(ell->a, a, b, c);
 	    VSCALE(ell->a, ell->a, local2base);
 
@@ -476,7 +475,7 @@ readsolid(void)
 		ret_val = 1;
 		break;
 	    }
-	    (void)sscanf(str, "%lf %lf %lf", &a, &b, &c);
+	    sscanf(str, "%lf %lf %lf", &a, &b, &c);
 	    VSET(ell->b, a, b, c);
 	    VSCALE(ell->b, ell->b, local2base);
 
@@ -484,7 +483,7 @@ readsolid(void)
 		ret_val = 1;
 		break;
 	    }
-	    (void)sscanf(str, "%lf %lf %lf", &a, &b, &c);
+	    sscanf(str, "%lf %lf %lf", &a, &b, &c);
 	    VSET(ell->c, a, b, c);
 	    VSCALE(ell->c, ell->c, local2base);
 	    break;
@@ -497,7 +496,7 @@ readsolid(void)
 			ret_val = 1;
 			break;
 		    }
-		    (void)sscanf(str, "%lf %lf %lf", &a, &b, &c);
+		    sscanf(str, "%lf %lf %lf", &a, &b, &c);
 		    VSET(arb->pt[i], a, b, c);
 		    VSCALE(arb->pt[i], arb->pt[i], local2base);
 		}
@@ -524,7 +523,7 @@ readsolid(void)
 		ret_val = 1;
 		break;
 	    }
-	    (void)sscanf(str, "%lf %lf %lf %lf", &a, &b, &c, &d);
+	    sscanf(str, "%lf %lf %lf %lf", &a, &b, &c, &d);
 	    VSET(haf->eqn, a, b, c);
 	    haf->eqn[W] = d * local2base;
 	    break;
@@ -534,7 +533,7 @@ readsolid(void)
 		ret_val = 1;
 		break;
 	    }
-	    (void)sscanf(str, "%lf %lf %lf", &a, &b, &c);
+	    sscanf(str, "%lf %lf %lf", &a, &b, &c);
 	    VSET(grip->center, a, b, c);
 	    VSCALE(grip->center, grip->center, local2base);
 
@@ -542,7 +541,7 @@ readsolid(void)
 		ret_val = 1;
 		break;
 	    }
-	    (void)sscanf(str, "%lf %lf %lf", &a, &b, &c);
+	    sscanf(str, "%lf %lf %lf", &a, &b, &c);
 	    VSET(grip->normal, a, b, c);
 	    break;
 	case ID_PARTICLE:
@@ -552,7 +551,7 @@ readsolid(void)
 		ret_val = 1;
 		break;
 	    }
-	    (void)sscanf(str, "%lf %lf %lf", &a, &b, &c);
+	    sscanf(str, "%lf %lf %lf", &a, &b, &c);
 	    VSET(part->part_V, a, b, c);
 	    VSCALE(part->part_V, part->part_V, local2base);
 
@@ -560,7 +559,7 @@ readsolid(void)
 		ret_val = 1;
 		break;
 	    }
-	    (void)sscanf(str, "%lf %lf %lf", &a, &b, &c);
+	    sscanf(str, "%lf %lf %lf", &a, &b, &c);
 	    VSET(part->part_H, a, b, c);
 	    VSCALE(part->part_H, part->part_H, local2base);
 
@@ -568,14 +567,14 @@ readsolid(void)
 		ret_val = 1;
 		break;
 	    }
-	    (void)sscanf(str, "%lf", &a);
+	    sscanf(str, "%lf", &a);
 	    part->part_vrad = a * local2base;
 
 	    if ((str=Get_next_line(fp)) == NULL) {
 		ret_val = 1;
 		break;
 	    }
-	    (void)sscanf(str, "%lf", &a);
+	    sscanf(str, "%lf", &a);
 	    part->part_hrad = a * local2base;
 
 	    break;
@@ -586,7 +585,7 @@ readsolid(void)
 		ret_val = 1;
 		break;
 	    }
-	    (void)sscanf(str, "%lf %lf %lf", &a, &b, &c);
+	    sscanf(str, "%lf %lf %lf", &a, &b, &c);
 	    VSET(rpc->rpc_V, a, b, c);
 	    VSCALE(rpc->rpc_V, rpc->rpc_V, local2base);
 
@@ -594,7 +593,7 @@ readsolid(void)
 		ret_val = 1;
 		break;
 	    }
-	    (void)sscanf(str, "%lf %lf %lf", &a, &b, &c);
+	    sscanf(str, "%lf %lf %lf", &a, &b, &c);
 	    VSET(rpc->rpc_H, a, b, c);
 	    VSCALE(rpc->rpc_H, rpc->rpc_H, local2base);
 
@@ -602,7 +601,7 @@ readsolid(void)
 		ret_val = 1;
 		break;
 	    }
-	    (void)sscanf(str, "%lf %lf %lf", &a, &b, &c);
+	    sscanf(str, "%lf %lf %lf", &a, &b, &c);
 	    VSET(rpc->rpc_B, a, b, c);
 	    VSCALE(rpc->rpc_B, rpc->rpc_B, local2base);
 
@@ -610,7 +609,7 @@ readsolid(void)
 		ret_val = 1;
 		break;
 	    }
-	    (void)sscanf(str, "%lf", &a);
+	    sscanf(str, "%lf", &a);
 	    rpc->rpc_r = a * local2base;
 	    break;
 	case ID_RHC:
@@ -619,7 +618,7 @@ readsolid(void)
 		ret_val = 1;
 		break;
 	    }
-	    (void)sscanf(str, "%lf %lf %lf", &a, &b, &c);
+	    sscanf(str, "%lf %lf %lf", &a, &b, &c);
 	    VSET(rhc->rhc_V, a, b, c);
 	    VSCALE(rhc->rhc_V, rhc->rhc_V, local2base);
 
@@ -627,7 +626,7 @@ readsolid(void)
 		ret_val = 1;
 		break;
 	    }
-	    (void)sscanf(str, "%lf %lf %lf", &a, &b, &c);
+	    sscanf(str, "%lf %lf %lf", &a, &b, &c);
 	    VSET(rhc->rhc_H, a, b, c);
 	    VSCALE(rhc->rhc_H, rhc->rhc_H, local2base);
 
@@ -635,7 +634,7 @@ readsolid(void)
 		ret_val = 1;
 		break;
 	    }
-	    (void)sscanf(str, "%lf %lf %lf", &a, &b, &c);
+	    sscanf(str, "%lf %lf %lf", &a, &b, &c);
 	    VSET(rhc->rhc_B, a, b, c);
 	    VSCALE(rhc->rhc_B, rhc->rhc_B, local2base);
 
@@ -643,14 +642,14 @@ readsolid(void)
 		ret_val = 1;
 		break;
 	    }
-	    (void)sscanf(str, "%lf", &a);
+	    sscanf(str, "%lf", &a);
 	    rhc->rhc_r = a * local2base;
 
 	    if ((str=Get_next_line(fp)) == NULL) {
 		ret_val = 1;
 		break;
 	    }
-	    (void)sscanf(str, "%lf", &a);
+	    sscanf(str, "%lf", &a);
 	    rhc->rhc_c = a * local2base;
 	    break;
 	case ID_EPA:
@@ -659,7 +658,7 @@ readsolid(void)
 		ret_val = 1;
 		break;
 	    }
-	    (void)sscanf(str, "%lf %lf %lf", &a, &b, &c);
+	    sscanf(str, "%lf %lf %lf", &a, &b, &c);
 	    VSET(epa->epa_V, a, b, c);
 	    VSCALE(epa->epa_V, epa->epa_V, local2base);
 
@@ -667,7 +666,7 @@ readsolid(void)
 		ret_val = 1;
 		break;
 	    }
-	    (void)sscanf(str, "%lf %lf %lf", &a, &b, &c);
+	    sscanf(str, "%lf %lf %lf", &a, &b, &c);
 	    VSET(epa->epa_H, a, b, c);
 	    VSCALE(epa->epa_H, epa->epa_H, local2base);
 
@@ -675,7 +674,7 @@ readsolid(void)
 		ret_val = 1;
 		break;
 	    }
-	    (void)sscanf(str, "%lf %lf %lf", &a, &b, &c);
+	    sscanf(str, "%lf %lf %lf", &a, &b, &c);
 	    VSET(epa->epa_Au, a, b, c);
 	    VUNITIZE(epa->epa_Au);
 
@@ -683,14 +682,14 @@ readsolid(void)
 		ret_val = 1;
 		break;
 	    }
-	    (void)sscanf(str, "%lf", &a);
+	    sscanf(str, "%lf", &a);
 	    epa->epa_r1 = a * local2base;
 
 	    if ((str=Get_next_line(fp)) == NULL) {
 		ret_val = 1;
 		break;
 	    }
-	    (void)sscanf(str, "%lf", &a);
+	    sscanf(str, "%lf", &a);
 	    epa->epa_r2 = a * local2base;
 	    break;
 	case ID_EHY:
@@ -699,7 +698,7 @@ readsolid(void)
 		ret_val = 1;
 		break;
 	    }
-	    (void)sscanf(str, "%lf %lf %lf", &a, &b, &c);
+	    sscanf(str, "%lf %lf %lf", &a, &b, &c);
 	    VSET(ehy->ehy_V, a, b, c);
 	    VSCALE(ehy->ehy_V, ehy->ehy_V, local2base);
 
@@ -707,7 +706,7 @@ readsolid(void)
 		ret_val = 1;
 		break;
 	    }
-	    (void)sscanf(str, "%lf %lf %lf", &a, &b, &c);
+	    sscanf(str, "%lf %lf %lf", &a, &b, &c);
 	    VSET(ehy->ehy_H, a, b, c);
 	    VSCALE(ehy->ehy_H, ehy->ehy_H, local2base);
 
@@ -715,7 +714,7 @@ readsolid(void)
 		ret_val = 1;
 		break;
 	    }
-	    (void)sscanf(str, "%lf %lf %lf", &a, &b, &c);
+	    sscanf(str, "%lf %lf %lf", &a, &b, &c);
 	    VSET(ehy->ehy_Au, a, b, c);
 	    VUNITIZE(ehy->ehy_Au);
 
@@ -723,21 +722,21 @@ readsolid(void)
 		ret_val = 1;
 		break;
 	    }
-	    (void)sscanf(str, "%lf", &a);
+	    sscanf(str, "%lf", &a);
 	    ehy->ehy_r1 = a * local2base;
 
 	    if ((str=Get_next_line(fp)) == NULL) {
 		ret_val = 1;
 		break;
 	    }
-	    (void)sscanf(str, "%lf", &a);
+	    sscanf(str, "%lf", &a);
 	    ehy->ehy_r2 = a * local2base;
 
 	    if ((str=Get_next_line(fp)) == NULL) {
 		ret_val = 1;
 		break;
 	    }
-	    (void)sscanf(str, "%lf", &a);
+	    sscanf(str, "%lf", &a);
 	    ehy->ehy_c = a * local2base;
 	    break;
 	case ID_HYP:
@@ -746,7 +745,7 @@ readsolid(void)
 		ret_val = 1;
 		break;
 	    }
-	    (void)sscanf(str, "%lf %lf %lf", &a, &b, &c);
+	    sscanf(str, "%lf %lf %lf", &a, &b, &c);
 	    VSET(hyp->hyp_Vi, a, b, c);
 	    VSCALE(hyp->hyp_Vi, hyp->hyp_Vi, local2base);
 
@@ -754,7 +753,7 @@ readsolid(void)
 		ret_val = 1;
 		break;
 	    }
-	    (void)sscanf(str, "%lf %lf %lf", &a, &b, &c);
+	    sscanf(str, "%lf %lf %lf", &a, &b, &c);
 	    VSET(hyp->hyp_Hi, a, b, c);
 	    VSCALE(hyp->hyp_Hi, hyp->hyp_Hi, local2base);
 
@@ -762,7 +761,7 @@ readsolid(void)
 		ret_val = 1;
 		break;
 	    }
-	    (void)sscanf(str, "%lf %lf %lf", &a, &b, &c);
+	    sscanf(str, "%lf %lf %lf", &a, &b, &c);
 	    VSET(hyp->hyp_A, a, b, c);
 	    VSCALE(hyp->hyp_A, hyp->hyp_A, local2base);
 
@@ -770,14 +769,14 @@ readsolid(void)
 		ret_val = 1;
 		break;
 	    }
-	    (void)sscanf(str, "%lf", &a);
+	    sscanf(str, "%lf", &a);
 	    hyp->hyp_b = a * local2base;
 
 	    if ((str=Get_next_line(fp)) == NULL) {
 		ret_val = 1;
 		break;
 	    }
-	    (void)sscanf(str, "%lf", &a);
+	    sscanf(str, "%lf", &a);
 	    hyp->hyp_bnr = a;
 
 	    break;
@@ -787,7 +786,7 @@ readsolid(void)
 		ret_val = 1;
 		break;
 	    }
-	    (void)sscanf(str, "%lf %lf %lf", &a, &b, &c);
+	    sscanf(str, "%lf %lf %lf", &a, &b, &c);
 	    VSET(eto->eto_V, a, b, c);
 	    VSCALE(eto->eto_V, eto->eto_V, local2base);
 
@@ -795,7 +794,7 @@ readsolid(void)
 		ret_val = 1;
 		break;
 	    }
-	    (void)sscanf(str, "%lf %lf %lf", &a, &b, &c);
+	    sscanf(str, "%lf %lf %lf", &a, &b, &c);
 	    VSET(eto->eto_N, a, b, c);
 	    VUNITIZE(eto->eto_N);
 
@@ -803,7 +802,7 @@ readsolid(void)
 		ret_val = 1;
 		break;
 	    }
-	    (void)sscanf(str, "%lf %lf %lf", &a, &b, &c);
+	    sscanf(str, "%lf %lf %lf", &a, &b, &c);
 	    VSET(eto->eto_C, a, b, c);
 	    VSCALE(eto->eto_C, eto->eto_C, local2base);
 
@@ -811,14 +810,14 @@ readsolid(void)
 		ret_val = 1;
 		break;
 	    }
-	    (void)sscanf(str, "%lf", &a);
+	    sscanf(str, "%lf", &a);
 	    eto->eto_rd = a * local2base;
 
 	    if ((str=Get_next_line(fp)) == NULL) {
 		ret_val = 1;
 		break;
 	    }
-	    (void)sscanf(str, "%lf", &a);
+	    sscanf(str, "%lf", &a);
 	    eto->eto_r = a * local2base;
 	    break;
 	case ID_SUPERELL:
@@ -830,7 +829,7 @@ readsolid(void)
 		ret_val = 1;
 		break;
 	    }
-	    (void)sscanf(str, "%lf %lf %lf", &a, &b, &c);
+	    sscanf(str, "%lf %lf %lf", &a, &b, &c);
 	    VSET(superell->v, a, b, c);
 	    VSCALE(superell->v, superell->v, local2base);
 
@@ -838,7 +837,7 @@ readsolid(void)
 		ret_val = 1;
 		break;
 	    }
-	    (void)sscanf(str, "%lf %lf %lf", &a, &b, &c);
+	    sscanf(str, "%lf %lf %lf", &a, &b, &c);
 	    VSET(superell->a, a, b, c);
 	    VSCALE(superell->a, superell->a, local2base);
 
@@ -846,7 +845,7 @@ readsolid(void)
 		ret_val = 1;
 		break;
 	    }
-	    (void)sscanf(str, "%lf %lf %lf", &a, &b, &c);
+	    sscanf(str, "%lf %lf %lf", &a, &b, &c);
 	    VSET(superell->b, a, b, c);
 	    VSCALE(superell->b, superell->b, local2base);
 
@@ -854,7 +853,7 @@ readsolid(void)
 		ret_val = 1;
 		break;
 	    }
-	    (void)sscanf(str, "%lf %lf %lf", &a, &b, &c);
+	    sscanf(str, "%lf %lf %lf", &a, &b, &c);
 	    VSET(superell->c, a, b, c);
 	    VSCALE(superell->c, superell->c, local2base);
 
@@ -893,9 +892,9 @@ get_editor_string(struct bu_vls *editstring)
     /* still unset? try windows */
     if (!editor || editor[0] == '\0') {
 	if (BU_STR_EQUAL(os, "Windows 95") || BU_STR_EQUAL(os, "Windows NT")) {
-    	    editor = WIN_EDITOR;
+	    editor = WIN_EDITOR;
 	} else {
-    	    editor = (char *)NULL;
+	    editor = (char *)NULL;
 	}
     }
 
@@ -916,11 +915,6 @@ get_editor_string(struct bu_vls *editstring)
 	editor = bu_which(VIM_EDITOR);
     }
 
-    /* still unset? try vi */
-    if (!editor) {
-	editor = bu_which(VI_EDITOR);
-    }
-
     /* still unset? try nano */
     if (!editor) {
 	editor = bu_which(NANO_EDITOR);
@@ -928,17 +922,12 @@ get_editor_string(struct bu_vls *editstring)
 
     /* still unset? try ed */
     if (!editor) {
-       	editor = bu_which(ED_EDITOR);
+	editor = bu_which(ED_EDITOR);
     }
 
-    /* still unset? default to jove */
+    /* still unset? as a last resort, try vi */
     if (!editor) {
-	const char *jovepath = bu_brlcad_root("bin/jove", 1);
-	editor = JOVE_EDITOR;
-	if (jovepath) {
-	    snprintf(buffer, RT_MAXLINE, "%s", jovepath);
-	    editor = buffer;
-	}
+	editor = bu_which(VI_EDITOR);
     }
 
     /* There are two possible situations for MGED - in classic mode
@@ -948,12 +937,15 @@ get_editor_string(struct bu_vls *editstring)
      * need a terminal supplied via an xterm and some will not. */
 
 
-    /* If we're in classic mode on Windows, go with jove */
+    /* If we're in classic mode on Windows, we have a problem -
+     * 64 bit versions of Windows no longer ship EDIT, so there isn't
+     * a standard console editor to fire up.  Best we can do is try for EDIT,
+     * and if not found hope one of the unix console editors is available.*/
     if (classic_mged && (BU_STR_EQUAL(os, "Windows 95") || BU_STR_EQUAL(os, "Windows NT"))) {
-	const char *jovepath = bu_brlcad_root("bin/jove", 1);
-	editor = JOVE_EDITOR;
-	if (jovepath) {
-	    snprintf(buffer, RT_MAXLINE, "%s", jovepath);
+	const char *editpath = bu_which("edit");
+	editor = "EDIT";
+	if (editpath) {
+	    snprintf(buffer, RT_MAXLINE, "%s", editpath);
 	    editor = buffer;
 	}
     }
@@ -965,9 +957,9 @@ get_editor_string(struct bu_vls *editstring)
 	 * work within the mged terminal (i.e. no launching a separate
 	 * gui, regardless of EDITOR settings. In this situation, emacs
 	 * will be invoked with the -nw option.
-	 * 
-	 * Standard:  emacs, vim, vi, ed, jove
-	 * Windows: jove
+	 *
+	 * Standard:  emacs, vim, vi, ed
+	 * Windows: EDIT, if available
 	 *
 	 * terminal and terminal_opt remain unset
 	 */
@@ -975,7 +967,7 @@ get_editor_string(struct bu_vls *editstring)
 	/* Test for any of the editor conditions that will require intervention.
 	 * Unfortunately, because we can't be certain that a user supplied EDITOR
 	 * will work in console mode, if it's not one of the known good cases
-	 * we have to attempt to set one of the known working editor configs. 
+	 * we have to attempt to set one of the known working editor configs.
 	 * Hence, check for known working AND known not-working up front - need
 	 * to satisfy both that there IS a working config already and that one
 	 * of the non-working configs isn't set.*/
@@ -994,10 +986,9 @@ get_editor_string(struct bu_vls *editstring)
 	which = bu_which(ED_EDITOR);
 	if (which)
 	    count += BU_STR_EQUAL(editor, which);
-	count += BU_STR_EQUAL(editor, JOVE_EDITOR);
 	count += BU_STR_EQUAL(editor, MAC_EDITOR);
 	if (count > 0) {
-	    /* start with emacs... */ 
+	    /* start with emacs... */
 	    editor = bu_which(EMACS_EDITOR);
 	    /* if emacs is found, set editor_opt */
 	    if (editor) {
@@ -1015,23 +1006,15 @@ get_editor_string(struct bu_vls *editstring)
 	    if (!editor) {
 		editor = bu_which(ED_EDITOR);
 	    }
-	    if (!editor) {
-		const char *binpath = bu_brlcad_root("bin", 1);
-		editor = JOVE_EDITOR;
-		if (binpath) {
-		    snprintf(buffer, RT_MAXLINE, "%s/%s", binpath, editor);
-		    editor = buffer;
-		}
-	    }
 	}
-    } else { 
-    	/* Spell out in which situations we need a terminal.
+    } else {
+	/* Spell out in which situations we need a terminal.
 	 */
-    	if (BU_STR_EQUAL(os, "Darwin")) {
-    	    /* on the mac, if it's not mac editor assume a terminal is needed. Until
+	if (BU_STR_EQUAL(os, "Darwin")) {
+	    /* on the mac, if it's not mac editor assume a terminal is needed. Until
 	     * we figure out how to use Mac terminal, use X11 xterm */
-    	    if (!BU_STR_EQUAL(editor, MAC_EDITOR)) {
-    		terminal = bu_which(XTERM_COMMAND);
+	    if (!BU_STR_EQUAL(editor, MAC_EDITOR)) {
+		terminal = bu_which(XTERM_COMMAND);
 
 		/* look a little harder if we found nothing */
 		if (!terminal) {
@@ -1043,45 +1026,40 @@ get_editor_string(struct bu_vls *editstring)
 
 		if (terminal)
 		    terminal_opt = "-e";
-    	    }
-    	}
-	
-    	/* For now, assume there aren't any situations where Windows will use a terminal */
-	
-    	/* If it's not mac, and it's not Windows, we need a controlling terminal */
-    	if (!BU_STR_EQUAL(os, "Darwin") && !BU_STR_EQUAL(os, "Windows 95") && !BU_STR_EQUAL(os, "Windows NT")) {
-    	    if (BU_STR_EQUAL(editor, EMACS_EDITOR)) {
-    		terminal = bu_which(XTERM_COMMAND);
+	    }
+	}
+
+	/* For now, assume there aren't any situations where Windows will use a terminal */
+
+	/* If it's not mac, and it's not Windows, we need a controlling terminal */
+	if (!BU_STR_EQUAL(os, "Darwin") && !BU_STR_EQUAL(os, "Windows 95") && !BU_STR_EQUAL(os, "Windows NT")) {
+	    if (BU_STR_EQUAL(editor, EMACS_EDITOR)) {
+		terminal = bu_which(XTERM_COMMAND);
 		if (terminal)
 		    terminal_opt = "-e";
-    	    }
-    	    if (BU_STR_EQUAL(editor, VIM_EDITOR)) {
-    		terminal = bu_which(XTERM_COMMAND);
+	    }
+	    if (BU_STR_EQUAL(editor, VIM_EDITOR)) {
+		terminal = bu_which(XTERM_COMMAND);
 		if (terminal)
 		    terminal_opt = "-e";
-    	    }
-    	    if (BU_STR_EQUAL(editor, VI_EDITOR)) {
-    		terminal = bu_which(XTERM_COMMAND);
+	    }
+	    if (BU_STR_EQUAL(editor, VI_EDITOR)) {
+		terminal = bu_which(XTERM_COMMAND);
 		if (terminal)
 		    terminal_opt = "-e";
-    	    }
+	    }
 	    if (BU_STR_EQUAL(editor, NANO_EDITOR)) {
 		    terminal = bu_which(XTERM_COMMAND);
 		if (terminal)
 		    terminal_opt = "-e";
-    	    }
-    	    if (BU_STR_EQUAL(editor, ED_EDITOR)) {
-    		terminal = bu_which(XTERM_COMMAND);
+	    }
+	    if (BU_STR_EQUAL(editor, ED_EDITOR)) {
+		terminal = bu_which(XTERM_COMMAND);
 		if (terminal)
 		    terminal_opt = "-e";
-    	    }
-    	    if (BU_STR_EQUAL(editor, JOVE_EDITOR)) {
-    		terminal = bu_which(XTERM_COMMAND);
-		if (terminal)
-		    terminal_opt = "-e";
-    	    }
-    	}
-    	/* if it's not something we know about, assume no terminal - user can arrange for one if needed */
+	    }
+	}
+	/* if it's not something we know about, assume no terminal - user can arrange for one if needed */
     }
 
     bu_vls_sprintf(editstring, "%s %s %s %s", terminal?terminal:"(null)", terminal_opt?terminal_opt:"(null)", editor, editor_opt?editor_opt:"(null)");

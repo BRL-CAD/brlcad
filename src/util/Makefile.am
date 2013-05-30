@@ -178,11 +178,12 @@ azel_LDADD = ${BU}
 
 bary_SOURCES = bary.c
 bary_LDADD = ${BU}
+bary_CFLAGS = ${STD_C99_FLAGS}
 
 if WITH_TK
 bombardier_SOURCES = bombardier.c bombardier.h
 bombardier_LDADD = ${TCLCAD} ${BU} ${TCL} ${TK}
-bombardier_CFLAGS = ${TK_CPPFLAGS} ${TCL_CPPFLAGS}
+bombardier_CFLAGS = ${STD_C99_FLAGS} ${TK_CPPFLAGS} ${TCL_CPPFLAGS}
 endif
 
 buffer_SOURCES = buffer.c
@@ -193,6 +194,7 @@ bw3_pix_LDADD = ${BU}
 
 bw_a_SOURCES = bw-a.c
 bw_a_LDADD = ${FB} ${BU}
+bw_a_CFLAGS = ${STD_C99_FLAGS}
 
 bw_imp_SOURCES = bw-imp.c
 bw_imp_LDADD = ${BU}
@@ -203,13 +205,13 @@ bw_pix_LDADD = ${BU}
 # per-program CPPFLAGS wasn't added until automake 1.7
 bw_png_SOURCES = bw-png.c
 bw_png_LDADD = ${FB} ${BU} ${PNG}
-bw_png_CFLAGS = ${PNG_CPPFLAGS}
+bw_png_CFLAGS = ${STD_C99_FLAGS} ${PNG_CPPFLAGS}
 
 bw_ps_LDADD = ${BU}
 bw_ps_SOURCES = bw-ps.c
 
 # per-program CPPFLAGS wasn't added until automake 1.7
-bw_rle_SOURCES = bw-rle.c
+bw_rle_SOURCES = bw-rle.c rle_args.c rle_args.h
 bw_rle_LDADD = ${RLE} ${BU} ${SYSV}
 bw_rle_CFLAGS = ${RLE_CPPFLAGS}
 
@@ -224,6 +226,7 @@ bwfilter_LDADD = ${BU}
 
 bwhist_SOURCES = bwhist.c
 bwhist_LDADD = ${FB} ${BU}
+bwhist_CFLAGS = ${STD_C99_FLAGS}
 
 bwhisteq_SOURCES = bwhisteq.c
 bwhisteq_LDADD = ${BU}
@@ -251,6 +254,7 @@ bwthresh_LDADD = ${BU}
 
 cv_SOURCES = cv.c
 cv_LDADD = ${BU}
+cv_CFLAGS = ${STD_C99_FLAGS}
 
 dbcp_SOURCES = dbcp.c
 dbcp_LDADD = ${BU}
@@ -260,6 +264,7 @@ decimate_LDADD = ${BU}
 
 double_asc_SOURCES = double-asc.c
 double_asc_LDADD = ${FB} ${BU}
+double_asc_CFLAGS = ${STD_C99_FLAGS}
 
 dpix_pix_SOURCES = dpix-pix.c
 dpix_pix_LDADD = ${BU}
@@ -272,9 +277,11 @@ dunncolor_LDADD = ${BU}
 
 dunnsnap_SOURCES = dunnsnap.c dunncomm.c
 dunnsnap_LDADD = ${FB} ${BU}
+dunnsnap_CFLAGS = ${STD_C99_FLAGS}
 
 fix_polysolids_SOURCES = fix_polysolids.c
 fix_polysolids_LDADD = ${RT} ${BU}
+fix_polysolids_CFLAGS = ${STD_C99_FLAGS}
 
 gencolor_SOURCES = gencolor.c
 gencolor_LDADD = ${BU}
@@ -284,6 +291,7 @@ hex_LDADD = ${BU}
 
 imgdims_SOURCES = imgdims.c
 imgdims_LDADD = ${FB} ${BU}
+imgdims_CFLAGS = ${STD_C99_FLAGS}
 
 loop_SOURCES = loop.c
 loop_LDADD = ${BU}
@@ -299,6 +307,7 @@ random_LDADD = ${BN} ${BU}
 
 orle_pix_SOURCES = orle-pix.c
 orle_pix_LDADD = ${FB} ${BU} ${ORLE}
+orle_pix_CFLAGS = ${STD_C99_FLAGS}
 
 pix3filter_SOURCES = pix3filter.c
 pix3filter_LDADD = ${BU}
@@ -314,20 +323,22 @@ pix_bw_LDADD = ${BU}
 
 pix_orle_SOURCES = pix-orle.c
 pix_orle_LDADD = ${FB} ${BU} ${ORLE}
+pix_orle_CFLAGS = ${STD_C99_FLAGS}
 
 # per-program CPPFLAGS wasn't added until automake 1.7
 pix_png_SOURCES = pix-png.c
-pix_png_CFLAGS = ${PNG_CPPFLAGS}
+pix_png_CFLAGS = ${STD_C99_FLAGS} ${PNG_CPPFLAGS}
 pix_png_LDADD = ${FB} ${BU}
 
 pix_ppm_SOURCES = pix-ppm.c
 pix_ppm_LDADD = ${FB} ${BU}
+pix_ppm_CFLAGS = ${STD_C99_FLAGS}
 
 pix_ps_SOURCES = pix-ps.c
 pix_ps_LDADD = ${BU}
 
 # per-program CPPFLAGS wasn't added until automake 1.7
-pix_rle_SOURCES = pix-rle.c
+pix_rle_SOURCES = pix-rle.c rle_args.c rle_args.h
 pix_rle_LDADD = ${RLE} ${BU} ${SYSV}
 pix_rle_CFLAGS = ${RLE_CPPFLAGS}
 
@@ -339,18 +350,21 @@ pix_sun_LDADD = ${BU}
 
 pix_yuv_SOURCES = pix-yuv.c
 pix_yuv_LDADD = ${FB} ${BN} ${BU}
+pix_yuv_CFLAGS = ${STD_C99_FLAGS}
 
 pixbackgnd_SOURCES = pixbackgnd.c
 pixbackgnd_LDADD = ${BU}
 
 pixbgstrip_SOURCES = pixbgstrip.c
 pixbgstrip_LDADD = ${FB} ${BU}
+pixbgstrip_CFLAGS = ${STD_C99_FLAGS}
 
 pixblend_SOURCES = pixblend.c
 pixblend_LDADD = ${BU}
 
 pixborder_SOURCES = pixborder.c
 pixborder_LDADD = ${FB} ${BN} ${BU}
+pixborder_CFLAGS = ${STD_C99_FLAGS}
 
 pixbustup_SOURCES = pixbustup.c
 pixbustup_LDADD = ${BU}
@@ -366,6 +380,7 @@ pixcount_LDADD = ${BU}
 
 pixcut_SOURCES = pixcut.c
 pixcut_LDADD = ${FB} ${BU}
+pixcut_CFLAGS = ${STD_C99_FLAGS}
 
 pixdiff_SOURCES = pixdiff.c
 pixdiff_LDADD = ${BU}
@@ -393,15 +408,18 @@ pixfilter_LDADD = ${BU}
 
 pixhalve_SOURCES = pixhalve.c
 pixhalve_LDADD = ${FB} ${BU}
+pixhalve_CFLAGS = ${STD_C99_FLAGS}
 
 pixhist3d_SOURCES = pixhist3d.c
 pixhist3d_LDADD = ${FB} ${BU}
+pixhist3d_CFLAGS = ${STD_C99_FLAGS}
 
 pixhist3d_pl_SOURCES = pixhist3d-pl.c
 pixhist3d_pl_LDADD = ${BN} ${BU}
 
 pixhist_SOURCES = pixhist.c
 pixhist_LDADD = ${FB} ${BU}
+pixhist_CFLAGS = ${STD_C99_FLAGS}
 
 pixinterp2x_SOURCES = pixinterp2x.c
 pixinterp2x_LDADD = ${BU}
@@ -414,9 +432,11 @@ pixmerge_LDADD = ${BU}
 
 pixmorph_SOURCES = pixmorph.c
 pixmorph_LDADD = ${FB} ${BU}
+pixmorph_CFLAGS = ${STD_C99_FLAGS}
 
 pixpaste_SOURCES = pixpaste.c
 pixpaste_LDADD = ${FB} ${BU}
+pixpaste_CFLAGS = ${STD_C99_FLAGS}
 
 pixrect_SOURCES = pixrect.c
 pixrect_LDADD = ${BU}
@@ -448,11 +468,11 @@ pixuntile_LDADD = ${BU}
 if WITH_X11
 pl_X_SOURCES = pl-X.c
 pl_X_LDADD = ${DM} ${DM_LIBS} ${BU}
-pl_X_CFLAGS = ${X_CFLAGS}
+pl_X_CFLAGS = ${STD_C99_FLAGS} ${X_CFLAGS}
 
 pl_dm_SOURCES = pl-dm.c
 pl_dm_LDADD = ${DM} ${DM_LIBS} ${BU} ${TK}
-pl_dm_CFLAGS = ${TK_CPPFLAGS} ${X_CFLAGS}
+pl_dm_CFLAGS = ${STD_C99_FLAGS} ${TK_CPPFLAGS} ${X_CFLAGS}
 endif
 # WITH_X11
 
@@ -510,10 +530,12 @@ rle_pix_CFLAGS = ${RLE_CPPFLAGS}
 
 roots_example_SOURCES = roots_example.c
 roots_example_LDADD = ${RT} ${BU}
+roots_example_CFLAGS = ${STD_C99_FLAGS}
 
 if BUILD_BOOST
 pc_test_SOURCES = pc_test.c
 pc_test_LDADD = ${PC} ${PC_LIBS} ${WDB} ${WDB_LIBS}
+pc_test_CFLAGS = ${STD_C99_FLAGS}
 endif
 # BUILD_BOOST
 
@@ -525,113 +547,21 @@ terrain_LDADD = ${BN} ${BU}
 
 texturescale_SOURCES = texturescale.c
 texturescale_LDADD = ${FB} ${BN} ${BU}
+texturescale_CFLAGS = ${STD_C99_FLAGS}
 
 ttcp_SOURCES = ttcp.c
 ttcp_LDADD = ${LIBSOCKET} ${LIBNSL} ${LIBNETWORK}
 
 wavelet_SOURCES = wavelet.c
 wavelet_LDADD = ${FB} ${BN} ${BU}
+wavelet_CFLAGS = ${STD_C99_FLAGS}
 
 xyz_pl_SOURCES = xyz-pl.c
 xyz_pl_LDADD = ${BN} ${BU}
 
 yuv_pix_SOURCES = yuv-pix.c
 yuv_pix_LDADD = ${FB} ${BN} ${BU}
-
-man_MANS = \
-	ap-pix.1 \
-	asc-pl.1 \
-	azel.1 \
-	bary.1 \
-	brlcad.1 \
-	buffer.1 \
-	bw-imp.1 \
-	bw-pix.1 \
-	bw-png.1 \
-	bw-ps.1 \
-	bw-rle.1 \
-	bw3-pix.1 \
-	bwcrop.1 \
-	bwdiff.1 \
-	bwfilter.1 \
-	bwhist.1 \
-	bwhisteq.1 \
-	bwmod.1 \
-	bwrect.1 \
-	bwrot.1 \
-	bwshrink.1 \
-	bwstat.1 \
-	bwthresh.1 \
-	cv.1 \
-	dbcp.1 \
-	decimate.1 \
-	dpix-pix.1 \
-	dunncolor.1 \
-	dunnsnap.1 \
-	gencolor.1 \
-	hex.1 \
-	imgdims.1 \
-	loop.1 \
-	mac-pix.1 \
-	morphedit.1 \
-	orle-pix.1 \
-	pix-alias.1 \
-	pix-bw.1 \
-	pix-bw3.1 \
-	pix-orle.1 \
-	pix-png.1 \
-	pix-ppm.1 \
-	pix-ps.1 \
-	pix-rle.1 \
-	pix-sun.1 \
-	pixbackgnd.1 \
-	pixbgstrip.1 \
-	pixblend.1 \
-	pixborder.1 \
-	pixbustup.1 \
-	pixclump.1 \
-	pixcolors.1 \
-	pixcut.1 \
-	pixdiff.1 \
-	pixdsplit.1 \
-	pixfade.1 \
-	pixfilter.1 \
-	pixhalve.1 \
-	pixhist.1 \
-	pixhist3d-pl.1 \
-	pixhist3d.1 \
-	pixinterp2x.1 \
-	pixmatte.1 \
-	pixmerge.1 \
-	pixmorph.1 \
-	pixrect.1 \
-	pixrot.1 \
-	pixsaturate.1 \
-	pixscale.1 \
-	pixshrink.1 \
-	pixstat.1 \
-	pixsubst.1 \
-	pixtile.1 \
-	pixuntile.1 \
-	pl-X.1 \
-	pl-asc.1 \
-	pl-hpgl.1 \
-	pl-pl.1 \
-	pl-ps.1 \
-	pl-tek.1 \
-	plcolor.1 \
-	pldebug.1 \
-	plgetframe.1 \
-	plline2.1 \
-	plrot.1 \
-	png-bw.1 \
-	png-pix.1 \
-	png_info.1 \
-	random.1 \
-	rle-pix.1 \
-	sun-pix.1 \
-	terrain.1 \
-	wavelet.1
+yuv_pix_CFLAGS = ${STD_C99_FLAGS}
 
 sample_applicationsdir = $(SAMPLE_APPLICATIONS_DIR)
 
@@ -640,7 +570,6 @@ sample_applications_DATA = \
 	roots_example.c
 
 EXTRA_DIST = \
-	$(man_MANS) \
 	$(sample_applications_DATA) \
 	${BOMBARDIER_EXTRA} \
 	${PC_TEST_EXTRA} \

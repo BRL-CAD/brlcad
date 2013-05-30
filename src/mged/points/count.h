@@ -1,7 +1,7 @@
 /*                         C O U N T . H
  * BRL-CAD
  *
- * Copyright (c) 2005-2012 United States Government as represented by
+ * Copyright (c) 2005-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -22,8 +22,6 @@
  *
  * Basic counting structure and functions.
  *
- * Author -
- *   Christopher Sean Morrison
  */
 
 #ifndef __COUNT_H__

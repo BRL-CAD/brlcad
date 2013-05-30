@@ -1,7 +1,7 @@
 /*                      N M G _ I N F O . C
  * BRL-CAD
  *
- * Copyright (c) 1993-2012 United States Government as represented by
+ * Copyright (c) 1993-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -63,7 +63,7 @@ nmg_find_model(const uint32_t *magic_p_arg)
 
  top:
     if (magic_p == NULL) {
-	bu_log("nmg_find_model(x%x) enountered null pointer\n",
+	bu_log("nmg_find_model(x%x) encountered null pointer\n",
 	       magic_p_arg);
 	bu_bomb("nmg_find_model() null pointer\n");
 	/* NOTREACHED */
@@ -108,6 +108,62 @@ nmg_find_model(const uint32_t *magic_p_arg)
 	    bu_bomb("nmg_find_model() failure\n");
     }
     return (struct model *)NULL;
+}
+
+
+/**
+ * N M G _ F I N D _ S H E L L
+ *
+ * Given a pointer to the magic number in any NMG data structure,
+ * return a pointer to the shell structure that contains that NMG item.
+ *
+ * The reason for the register variable is to leave the argument variable
+ * unmodified;  this may aid debugging in event of a core dump.
+ */
+struct shell *
+nmg_find_shell(const uint32_t *magic_p)
+{
+ top:
+    if (magic_p == NULL) {
+	bu_log("nmg_find_shell(x%x) encountered null pointer\n", magic_p);
+	bu_bomb("nmg_find_shell() null pointer\n");
+    }
+
+    switch (*magic_p) {
+	case NMG_SHELL_MAGIC:
+	    return (struct shell *)magic_p;
+	case NMG_FACEUSE_MAGIC:
+	    magic_p = &((struct faceuse *)magic_p)->s_p->l.magic;
+	    goto top;
+	case NMG_FACE_MAGIC:
+	    magic_p = &((struct face *)magic_p)->fu_p->l.magic;
+	    goto top;
+	case NMG_LOOP_MAGIC:
+	    magic_p = ((struct loop *)magic_p)->lu_p->up.magic_p;
+	    goto top;
+	case NMG_LOOPUSE_MAGIC:
+	    magic_p = ((struct loopuse *)magic_p)->up.magic_p;
+	    goto top;
+	case NMG_EDGE_MAGIC:
+	    magic_p = ((struct edge *)magic_p)->eu_p->up.magic_p;
+	    goto top;
+	case NMG_EDGEUSE_MAGIC:
+	    magic_p = ((struct edgeuse *)magic_p)->up.magic_p;
+	    goto top;
+	case NMG_VERTEX_MAGIC:
+	    magic_p = &(BU_LIST_FIRST(vertexuse,
+				      &((struct vertex *)magic_p)->vu_hd)->l.magic);
+	    goto top;
+	case NMG_VERTEXUSE_MAGIC:
+	    magic_p = ((struct vertexuse *)magic_p)->up.magic_p;
+	    goto top;
+
+	default:
+	    bu_log("nmg_find_shell() can't get shell for magic=x%x (%s)\n",
+		   *magic_p, bu_identify_magic(*magic_p));
+	    bu_bomb("nmg_find_shell() failure\n");
+    }
+    return (struct shell *)NULL;
 }
 
 
@@ -505,23 +561,14 @@ nmg_loop_is_a_crack(const struct loopuse *lu)
  *
  */
 int
-nmg_loop_is_ccw(const struct loopuse *lu, const fastf_t *norm, const struct bn_tol *tol)
+nmg_loop_is_ccw(const struct loopuse *lu, const fastf_t *UNUSED(norm), const struct bn_tol *tol)
 {
     fastf_t area;
-    fastf_t dot;
     plane_t pl;
-    int ret;
+    int ret = 1;
 
-    area = nmg_loop_plane_area(lu, pl);
-
-    if (area <= 0.0) {
-	if (RT_G_DEBUG & DEBUG_MATH) {
-	    bu_log("nmg_loop_is_ccw: Loop has no area\n");
-	    nmg_pr_lu_briefly(lu, " ");
-	}
-	ret = 0;
-	goto out;
-    }
+    HSETALL(pl, 0.0); /* sanity */
+    area = nmg_loop_plane_area2(lu, pl, tol);
 
     if (NEAR_ZERO(area, tol->dist_sq)) {
 	if (RT_G_DEBUG & DEBUG_MATH) {
@@ -532,26 +579,15 @@ nmg_loop_is_ccw(const struct loopuse *lu, const fastf_t *norm, const struct bn_t
 	goto out;
     }
 
-    dot = VDOT(norm, pl);
-
-    if (NEAR_ZERO(dot, tol->perp)) {
-	if (RT_G_DEBUG & DEBUG_MATH) {
-	    bu_log("nmg_loop_is_ccw: normal (%g %g %g) is in plane of loop (%g %g %g %g), dot = %g\n",
-		   V3ARGS(norm), V4ARGS(pl), dot);
-	    nmg_pr_lu_briefly(lu, " ");
-	}
-	ret = 0;
+    if (area < -SMALL_FASTF) {
+	ret = -1;
 	goto out;
     }
 
-    if (dot < 0.0)
-	ret = (-1);
-    else
-	ret = 1;
-
  out:
-    if (rt_g.NMG_debug & DEBUG_BASIC)
+    if (UNLIKELY(rt_g.NMG_debug & DEBUG_BASIC)) {
 	bu_log("nmg_loop_is_ccw(lu=x%x) ret=%d\n", lu, ret);
+    }
 
     return ret;
 }
@@ -565,7 +601,7 @@ nmg_loop_is_ccw(const struct loopuse *lu, const fastf_t *norm, const struct bn_t
  * return true.
  * This is useful for detecting "accordian pleats"
  * unexpectedly showing up in a loop.
- * Derrived from nmg_split_touchingloops().
+ * Derived from nmg_split_touchingloops().
  *
  * Returns -
  * vu Yes, the loop touches itself at least once, at this vu.
@@ -1194,7 +1230,7 @@ nmg_find_e_pt2_handler(uint32_t *lp, genptr_t state, int UNUSED(unused))
 /**
  * N M G _ F I N D _ E _ N E A R E S T _ P T 2
  *
- * A geometric search routine to find the edge that is neaest to
+ * A geometric search routine to find the edge that is nearest to
  * the given point, when all edges are projected into 2D using
  * the matrix 'mat'.
  * Useful for finding the edge nearest a mouse click, for example.
@@ -1580,7 +1616,6 @@ nmg_find_v_in_shell(const struct vertex *v, const struct shell *s, int edges_onl
 struct vertexuse *
 nmg_find_pt_in_lu(const struct loopuse *lu, const fastf_t *pt, const struct bn_tol *tol)
 {
-    vect_t delta;
     register struct edgeuse *eu;
     register struct vertex_g *vg;
     uint32_t magic1;
@@ -1590,11 +1625,12 @@ nmg_find_pt_in_lu(const struct loopuse *lu, const fastf_t *pt, const struct bn_t
 	struct vertexuse *vu;
 	vu = BU_LIST_FIRST(vertexuse, &lu->down_hd);
 	vg = vu->v_p->vg_p;
-	if (!vg)
+	if (!vg) {
 	    return (struct vertexuse *)NULL;
-	VSUB2(delta, vg->coord, pt);
-	if (MAGSQ(delta) < tol->dist_sq)
+	}
+	if (bn_pt3_pt3_equal(vg->coord, pt, tol)) {
 	    return vu;
+	}
 	return (struct vertexuse *)NULL;
     }
     if (magic1 != NMG_EDGEUSE_MAGIC) {
@@ -1603,11 +1639,12 @@ nmg_find_pt_in_lu(const struct loopuse *lu, const fastf_t *pt, const struct bn_t
 
     for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
 	vg = eu->vu_p->v_p->vg_p;
-	if (!vg)
+	if (!vg) {
 	    continue;
-	VSUB2(delta, vg->coord, pt);
-	if (MAGSQ(delta) < tol->dist_sq)
+	}
+	if (bn_pt3_pt3_equal(vg->coord, pt, tol)) {
 	    return eu->vu_p;
+	}
     }
 
     return (struct vertexuse *)NULL;
@@ -1668,7 +1705,6 @@ nmg_find_pt_in_shell(const struct shell *s, const fastf_t *pt, const struct bn_t
     const struct vertexuse *vu;
     struct vertex *v;
     const struct vertex_g *vg;
-    vect_t delta;
 
     NMG_CK_SHELL(s);
     BN_CK_TOL(tol);
@@ -1706,9 +1742,9 @@ nmg_find_pt_in_shell(const struct shell *s, const fastf_t *pt, const struct bn_t
 	vg = v->vg_p;
 
 	if (vg) {
-	    VSUB2(delta, vg->coord, pt);
-	    if (MAGSQ(delta) <= tol->dist_sq)
+	    if (bn_pt3_pt3_equal(vg->coord, pt, tol)) {
 		return v;
+	    }
 	}
     }
 
@@ -1719,9 +1755,9 @@ nmg_find_pt_in_shell(const struct shell *s, const fastf_t *pt, const struct bn_t
 	vg = v->vg_p;
 
 	if (vg) {
-	    VSUB2(delta, vg->coord, pt);
-	    if (MAGSQ(delta) <= tol->dist_sq)
+	    if (bn_pt3_pt3_equal(vg->coord, pt, tol)) {
 		return v;
+	    }
 	}
     }
     return (struct vertex *)0;

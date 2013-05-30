@@ -1,7 +1,7 @@
 /*                            B U . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2012 United States Government as represented by
+ * Copyright (c) 2004-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -57,7 +57,7 @@
  * library provides several layers of low-level utility routines,
  * providing features that make cross-platform coding easier.
  *
- * Parallel processing support:  threads, sempahores, parallel-malloc.
+ * Parallel processing support:  threads, semaphores, parallel-malloc.
  * Consolidated logging support:  bu_log(), bu_exit(), and bu_bomb().
  *
  * The intention is that these routines are general extensions to the
@@ -236,21 +236,49 @@ BU_EXPORT extern Tcl_Interp *brlcad_interp;
 
 
 /**
- * Handy dynamic memory allocator macro.  Allocated memory is
- * automatically initialized to zero and guaranteed (else bu_bomb()).
+ * Fast dynamic memory allocation macro for small pointer allocations.
+ * Memory is automatically initialized to zero and, similar to
+ * bu_calloc(), is guaranteed to return non-NULL (or bu_bomb()).
  *
- * Memory acquired with BU_GET() should be returned with BU_PUT().
+ * Memory acquired with BU_GET() should be returned with BU_PUT(), NOT
+ * with bu_free().
+ *
+ * Use BU_ALLOC() for dynamically allocating structures that are
+ * relatively large, infrequently allocated, or otherwise don't need
+ * to be fast.
  */
+#if 0
+#define BU_GET(_ptr, _type) _ptr = (_type *)bu_heap_get(sizeof(_type))
+#else
 #define BU_GET(_ptr, _type) _ptr = (_type *)bu_calloc(1, sizeof(_type), #_type " (BU_GET) " BU_FLSTR)
+#endif
 
 /**
  * Handy dynamic memory deallocator macro.  Deallocated memory has the
  * first byte zero'd for sanity (and potential early detection of
  * double-free crashing code) and the pointer is set to NULL.
  *
- * Memory acquired with BU_GET() should be returned with BU_PUT().
+ * Memory acquired with bu_malloc()/bu_calloc() should be returned
+ * with bu_free(), NOT with BU_PUT().
  */
-#define BU_PUT(_ptr, _type) (uint8_t)(*(_ptr)) = /*zap*/ 0; bu_free(_ptr, #_type " (BU_PUT) " BU_FLSTR); _ptr = NULL
+#if 0
+#define BU_PUT(_ptr, _type) *(uint8_t *)(_type *)(_ptr) = /*zap*/ 0; bu_heap_put(_ptr, sizeof(_type)); _ptr = NULL
+#else
+#define BU_PUT(_ptr, _type) do { *(uint8_t *)(_type *)(_ptr) = /*zap*/ 0; bu_free(_ptr, #_type " (BU_PUT) " BU_FLSTR); _ptr = NULL; } while (0)
+#endif
+
+/**
+ * Convenience macro for allocating a single structure on the heap.
+ * Not intended for performance-critical code.  Release memory
+ * acquired with bu_free() or BU_FREE() to dealloc and set NULL.
+ */
+#define BU_ALLOC(_ptr, _type) _ptr = (_type *)bu_calloc(1, sizeof(_type), #_type " (BU_ALLOC) " BU_FLSTR)
+
+/**
+ * Convenience macro for deallocating a single structure allocated on
+ * the heap (with bu_malloc(), bu_calloc(), BU_ALLOC()).
+ */
+#define BU_FREE(_ptr, _type) do { bu_free(_ptr, #_type " (BU_FREE) " BU_FLSTR); _ptr = (_type *)NULL; } while (0)
 
 
 /**
@@ -370,6 +398,7 @@ BU_EXPORT extern const char *bu_version(void);
  */
 #if !defined(GENPTR_NULL)
 typedef void *genptr_t;
+typedef const void *const_genptr_t;
 #  define GENPTR_NULL ((genptr_t)0)
 #endif
 
@@ -379,7 +408,7 @@ typedef void *genptr_t;
  * this hardware.  Used to allocate application-specific per-processor
  * tables at compile-time and represent a hard limit on the number of
  * processors/threads that may be spawned. The actual number of
- * available processors is found at runtime by calling rt_avail_cpus()
+ * available processors is found at runtime by calling bu_avail_cpus()
  */
 #define MAX_PSW 1024
 
@@ -403,6 +432,7 @@ typedef void *genptr_t;
 
 
 /*----------------------------------------------------------------------*/
+
 /** @addtogroup conv */
 /** @ingroup data */
 /** @{*/
@@ -480,10 +510,10 @@ BU_EXPORT extern int bu_cv_itemlen(int cookie);
  *
  * A worst case would be:	ns16 on vax to ns32
  @code
- 	ns16 	-> hs16
- 		-> hd
- 		-> hs32
- 		-> ns32
+	ns16 	-> hs16
+		-> hd
+		-> hs32
+		-> ns32
  @endcode
  * The worst case is probably the easiest to deal with because all
  * steps are done.  The more difficult cases are when only a subset of
@@ -491,70 +521,70 @@ BU_EXPORT extern int bu_cv_itemlen(int cookie);
  *
  * @par Method:
  @code
- 	HOSTDBL defined as true or false
- 	if ! hostother then
- 		hostother = (Endian == END_BIG) ? SAME : DIFFERENT;
- 	fi
- 	if (infmt == double) then
- 		if (HOSTDBL == SAME) {
- 			inIsHost = host;
- 		fi
- 	else
- 		if (hostother == SAME) {
- 			inIsHost = host;
- 		fi
- 	fi
- 	if (outfmt == double) then
- 		if (HOSTDBL == SAME) {
- 			outIsHost == host;
- 	else
- 		if (hostother == SAME) {
- 			outIsHost = host;
- 		fi
- 	fi
- 	if (infmt == outfmt) {
- 		if (inIsHost == outIsHost) {
- 			copy(in, out)
- 			exit
- 		else if (inIsHost == net) {
- 			ntoh?(in, out);
- 			exit
- 		else
- 			hton?(in, out);
- 			exit
- 		fi
- 	fi
- 
- 	while not done {
- 		from = in;
- 
- 		if (inIsHost == net) {
- 			ntoh?(from, t1);
- 			from = t1;
- 		fi
- 		if (infmt != double) {
- 			if (outIsHost == host) {
- 				to = out;
- 			else
- 				to = t2;
- 			fi
- 			castdbl(from, to);
- 			from = to;
- 		fi
- 
- 		if (outfmt == double) {
- 			if (outIsHost == net) {
- 				hton?(from, out);
- 			fi
- 		else
- 			if (outIsHost == host) {
- 				dblcast(from, out);
- 			else
- 				dblcast(from, t3);
- 				hton?(t3, out);
- 			fi
- 		fi
- 	done
+	HOSTDBL defined as true or false
+	if ! hostother then
+		hostother = (Endian == END_BIG) ? SAME : DIFFERENT;
+	fi
+	if (infmt == double) then
+		if (HOSTDBL == SAME) {
+			inIsHost = host;
+		fi
+	else
+		if (hostother == SAME) {
+			inIsHost = host;
+		fi
+	fi
+	if (outfmt == double) then
+		if (HOSTDBL == SAME) {
+			outIsHost == host;
+	else
+		if (hostother == SAME) {
+			outIsHost = host;
+		fi
+	fi
+	if (infmt == outfmt) {
+		if (inIsHost == outIsHost) {
+			copy(in, out)
+			exit
+		else if (inIsHost == net) {
+			ntoh?(in, out);
+			exit
+		else
+			hton?(in, out);
+			exit
+		fi
+	fi
+
+	while not done {
+		from = in;
+
+		if (inIsHost == net) {
+			ntoh?(from, t1);
+			from = t1;
+		fi
+		if (infmt != double) {
+			if (outIsHost == host) {
+				to = out;
+			else
+				to = t2;
+			fi
+			castdbl(from, to);
+			from = to;
+		fi
+
+		if (outfmt == double) {
+			if (outIsHost == net) {
+				hton?(from, out);
+			fi
+		else
+			if (outIsHost == host) {
+				dblcast(from, out);
+			else
+				dblcast(from, t3);
+				hton?(t3, out);
+			fi
+		fi
+	done
  @endcode
  */
 BU_EXPORT extern size_t bu_cv_w_cookie(genptr_t out, int outcookie, size_t size, genptr_t in, int incookie, size_t count);
@@ -659,10 +689,10 @@ BU_EXPORT extern size_t bu_cv_htonul(genptr_t,
 #  define BU_CKMAG(_ptr, _magic, _str) IGNORE((_ptr))
 #else
 #  define BU_CKMAG(_ptr, _magic, _str) { \
-        uintptr_t _ptrval = (uintptr_t)(_ptr); \
-        if (UNLIKELY((_ptrval == 0) || (_ptrval & (sizeof(_ptrval)-1)) || *((uint32_t *)(_ptr)) != (uint32_t)(_magic))) { \
-            bu_badmagic((uint32_t *)(_ptr), (uint32_t)_magic, _str, __FILE__, __LINE__); \
-        } \
+	const uintptr_t _ptrval = (const uintptr_t)(_ptr); \
+	if (UNLIKELY((_ptrval == 0) || (_ptrval & (sizeof(_ptrval)-1)) || *((const uint32_t *)(_ptr)) != (uint32_t)(_magic))) { \
+	    bu_badmagic((const uint32_t *)(_ptr), (uint32_t)_magic, _str, __FILE__, __LINE__); \
+	} \
     }
 #endif
 
@@ -685,7 +715,6 @@ BU_EXPORT extern void bu_badmagic(const uint32_t *ptr, uint32_t magic, const cha
  * error might have been made.
  */
 BU_EXPORT extern const char *bu_identify_magic(uint32_t magic);
-
 
 
 /*----------------------------------------------------------------------*/
@@ -784,9 +813,9 @@ BU_EXPORT extern bu_endian_t bu_byteorder(void);
  while (BU_LIST_WHILE(entry, my_structure, &(my_list->l))) {
    bu_log("Entry value is %d\n", entry->my_data);
    BU_LIST_DEQUEUE(&(entry->l));
-   bu_free(entry, "free my_structure entry");
+   BU_PUT(entry, struct my_structure);
  }
- bu_free(my_list, "free my_structure list head");
+ BU_PUT(my_list, struct my_structure);
 
  --- END EXAMPLE ---
  @endcode
@@ -1132,7 +1161,7 @@ typedef struct bu_list bu_list_t;
     ((struct structure *)(((struct bu_list *)(p))->back->back))
 
 /**
- * Return pointer to circular next element; ie, ignoring the list head
+ * Return pointer to circular next element; i.e., ignoring the list head
  */
 #define BU_LIST_PNEXT_CIRC(structure, p)	\
     ((BU_LIST_FIRST_MAGIC((struct bu_list *)(p)) == BU_LIST_HEAD_MAGIC) ? \
@@ -1140,7 +1169,7 @@ typedef struct bu_list bu_list_t;
      BU_LIST_PNEXT(structure, p))
 
 /**
- * Return pointer to circular last element; ie, ignoring the list head
+ * Return pointer to circular last element; i.e., ignoring the list head
  */
 #define BU_LIST_PPREV_CIRC(structure, p)	\
     ((BU_LIST_LAST_MAGIC((struct bu_list *)(p)) == BU_LIST_HEAD_MAGIC) ? \
@@ -1163,7 +1192,7 @@ typedef struct bu_list bu_list_t;
  * Files using BU_LIST_MAIN_PTR will need to include stddef.h
  */
 #define BU_LIST_MAIN_PTR(_type, _ptr2, _name2)	\
-    ((struct _type *)(((char *)(_ptr2)) - offsetof(struct _type, _name2.magic)))
+    ((struct _type *)(((char *)(_ptr2)) - (bu_offsetof(struct _type, _name2) + bu_offsetof(struct bu_list, magic))))
 /** @} */
 
 
@@ -1202,7 +1231,7 @@ typedef double fastf_t;
  * zero; dividing by such a number can be expected to produce a
  * divide-by-zero error.  All divisors should be checked against
  * this value before actual division is performed.  TODO: macro
- * function sytax instead of constant (DEPRECATED)
+ * function syntax instead of constant (DEPRECATED)
  *
  * SQRT_SMALL_FASTF - sqrt(SMALL_FASTF), or slightly larger.  The
  * value of this is quite a lot larger than that of SMALL_FASTF.  Any
@@ -1231,6 +1260,35 @@ typedef double fastf_t;
 
 /** DEPRECATED, do not use */
 #define SMALL SQRT_SMALL_FASTF
+
+
+/**
+ * It is necessary to have a representation of 1.0/0.0 or log(0),
+ * i.e., "infinity" that fits within the dynamic range of the machine
+ * being used.  This constant places an upper bound on the size object
+ * which can be represented in the model.  With IEEE 754 floating
+ * point, this may print as 'inf' and is represented with all 1 bits
+ * in the biased-exponent field and all 0 bits in the fraction with
+ * the sign indicating positive (0) or negative (1) infinity.
+ */
+#ifndef INFINITY
+#  if defined(HUGE_VAL)
+#    define INFINITY ((fastf_t)HUGE_VAL)
+#  elif defined(HUGE_VALF)
+#    define INFINITY ((fastf_t)HUGE_VALF)
+#  elif defined(HUGE)
+#    define INFINITY ((fastf_t)HUGE)
+#  elif defined(MAXDOUBLE)
+#    define INFINITY ((fastf_t)MAXDOUBLE)
+#  elif defined(MAXFLOAT)
+#    define INFINITY ((fastf_t)MAXFLOAT)
+#  else
+     /* all else fails, just pick something big slightly over 32-bit
+      * single-precision floating point that has worked well before.
+      */
+#    define INFINITY ((fastf_t)1.0e40)
+#  endif
+#endif
 
 
 /*----------------------------------------------------------------------*/
@@ -1303,12 +1361,12 @@ typedef unsigned char bitv_t;
  * or an extra subtraction.
  *
  * Application code should *never* peek at the bit-buffer; use the
- * macros.  The external hex form is most signigicant byte first (bit
+ * macros.  The external hex form is most significant byte first (bit
  * 0 is at the right).  Note that MUVES does it differently.
  */
 struct bu_bitv {
     struct bu_list l;		/**< linked list for caller's use */
-    unsigned int nbits;		/**< actual size of bits[], in bits */
+    size_t nbits;		/**< actual size of bits[], in bits */
     bitv_t bits[2];	/**< variable size array */
 };
 typedef struct bu_bitv bu_bitv_t;
@@ -1347,7 +1405,7 @@ typedef struct bu_bitv bu_bitv_t;
  * length sizeof(bitv_t)*8.0 bits long.  users should not call this
  * directly, instead calling the BU_BITV_SHIFT macro instead.
  */
-BU_EXPORT extern unsigned int bu_bitv_shift();
+BU_EXPORT extern size_t bu_bitv_shift();
 
 /*
  * Bit-string manipulators for arbitrarily long bit strings stored as
@@ -1468,9 +1526,8 @@ static __inline__ int BU_BITTEST(volatile void * addr, int nr)
  *
  * General purpose histogram handling routines.
  *
- * The macro RT_HISTOGRAM_TALLY is used to record items that
- * live in a single "bin", while the subroutine rt_hist_range()
- * is used to record items that may extend across multiple "bin"s.
+ * The subroutine bu_hist_range() is used to record items that may
+ * extend across multiple "bin"s.
  *
  */
 
@@ -1550,7 +1607,7 @@ typedef struct bu_hist bu_hist_t;
  * Support for generalized "pointer tables", kept compactly in a
  * dynamic array.
  *
- * The table is currently un-ordered, and is merely a array of
+ * The table is currently un-ordered, and is merely an array of
  * pointers.  The support routine nmg_tbl manipulates the array for
  * you.  Pointers to be operated on (inserted, deleted, searched for)
  * are passed as a "pointer to long".
@@ -1646,7 +1703,7 @@ typedef struct bu_ptbl bu_ptbl_t;
  * Each instance of the file has the raw data available as element
  * "buf".  If a particular application needs to transform the raw data
  * in a manner that is identical across all uses of that application
- * (e.g. height fields, EBMs, etc), then the application should
+ * (e.g. height fields, EBMs, etc.), then the application should
  * provide a non-null "appl" string, to tag the format of the "apbuf".
  * This will keep different applications from sharing that instance of
  * the file.
@@ -1686,7 +1743,7 @@ struct bu_mapped_file {
     char *appl;		/**< bu_strdup() of tag for application using 'apbuf'  */
     genptr_t apbuf;	/**< opt: application-specific buffer */
     size_t apbuflen;	/**< opt: application-specific buflen */
-    long modtime;	/**< date stamp, in case file is modified */
+    time_t modtime;	/**< date stamp, in case file is modified */
     int uses;		/**< # ptrs to this struct handed out */
     int dont_restat;	/**< 1=on subsequent opens, don't re-stat()  */
 };
@@ -1854,7 +1911,7 @@ typedef struct bu_attribute_value_set bu_avs_t;
  *
  */
 #define BU_AVS_FOR(_pp, _avp) \
-    (_pp) = ((void *)(_avp) != (void *)NULL) ? ((_avp)->count > 0 ? &(_avp)->avp[(_avp)->count-1] : NULL) : NULL; ((void *)(_pp) != (void *)NULL) && ((void *)(_avp) != (void *)NULL) && (_avp)->avp && (_pp) >= (_avp)->avp; (_pp)--
+    (_pp) = ((const void *)(_avp) != (const void *)NULL) ? ((_avp)->count > 0 ? &(_avp)->avp[(_avp)->count-1] : NULL) : NULL; ((const void *)(_pp) != (const void *)NULL) && ((const void *)(_avp) != (const void *)NULL) && (_avp)->avp && (_pp) >= (_avp)->avp; (_pp)--
 
 /**
  * Some (but not all) attribute name and value string pointers are
@@ -1863,8 +1920,9 @@ typedef struct bu_attribute_value_set bu_avs_t;
  * whether the pointer needs to be freed or not.
  */
 #define AVS_IS_FREEABLE(_avsp, _p)	\
-    ((_avsp)->readonly_max == NULL ||	\
-     ((genptr_t)(_p) < (genptr_t)(_avsp)->readonly_min || (genptr_t)(_p) > (genptr_t)(_avsp)->readonly_max))
+    ((_avsp)->readonly_max == NULL \
+     || (const_genptr_t)(_p) < (_avsp)->readonly_min \
+     || (const_genptr_t)(_p) > (_avsp)->readonly_max)
 
 /** @} */
 
@@ -1921,8 +1979,8 @@ typedef struct bu_vls bu_vls_t;
 /**
  * returns truthfully whether a bu_vls struct has been initialized.
  * is not reliable unless the struct has been allocated with
- * bu_calloc() or a previous call to bu_vls_init() or BU_VLS_INIT()
- * has been made.
+ * BU_ALLOC(), bu_calloc(), or a previous call to bu_vls_init() or
+ * BU_VLS_INIT() has been made.
  */
 #define BU_VLS_IS_INITIALIZED(_vp) (((struct bu_vls *)(_vp) != BU_VLS_NULL) && ((_vp)->vls_magic == BU_VLS_MAGIC))
 
@@ -1976,8 +2034,8 @@ typedef struct bu_vlb bu_vlb_t;
 /**
  * returns truthfully whether a bu_vlb struct has been initialized.
  * is not reliable unless the struct has been allocated with
- * bu_calloc() or a previous call to bu_vlb_init() or BU_VLB_INIT()
- * has been made.
+ * BU_ALLOC(), bu_calloc(), or a previous call to bu_vlb_init() or
+ * BU_VLB_INIT() has been made.
  */
 #define BU_VLB_IS_INITIALIZED(_vp) (((struct bu_vlb *)(_vp) != BU_VLB_NULL) && ((_vp)->magic == BU_VLB_MAGIC))
 
@@ -2065,12 +2123,10 @@ BU_EXPORT extern int bu_debug;
  *         should be a size_t.
  */
 #ifndef offsetof
-#  define bu_offsetof(_t, _m) (size_t)(&(((_t *)0)->_m))
-#  define bu_offsetofarray(_t, _m) (size_t)((((_t *)0)->_m))
-#else
-#  define bu_offsetof(_t, _m) (long)offsetof(_t, _m)
-#  define bu_offsetofarray(_t, _m) (long)offsetof(_t, _m[0])
+#  define offsetof(_t, _m) (size_t)(&(((_t *)0)->_m))
 #endif
+#define bu_offsetof(_t, _m) (size_t)offsetof(_t, _m)
+#define bu_offsetofarray(_t, _a, _d, _i) bu_offsetof(_t, _a) + sizeof(_d) * _i
 
 
 /**
@@ -2082,24 +2138,11 @@ BU_EXPORT extern int bu_debug;
  * byte address of the indicated variable.  Matching compensation code
  * for the CRAY is located in librt/parse.c
  */
-#if defined(CRAY)
-#	define bu_byteoffset(_i)	(((size_t)&(_i)))	/* actually a word offset */
+#if defined(__ia64__) || defined(__x86_64__) || defined(__sparc64__) || defined(_HPUX_SOURCE) || defined(__clang__)
+#    define bu_byteoffset(_i)	((size_t)((char *)&(_i)))
 #else
-#  if defined(IRIX) && IRIX > 5 && _MIPS_SIM != _ABIN32 && _MIPS_SIM != _MIPS_SIM_ABI32
-#      define bu_byteoffset(_i)	((size_t)__INTADDR__(&(_i)))
-#  else
-#    if defined(sgi) || defined(__convexc__) || defined(ultrix) || defined(_HPUX_SOURCE)
-/* "Lazy" way.  Works on reasonable machines with byte addressing */
-#      define bu_byteoffset(_i)	((size_t)((char *)&(_i)))
-#    else
-#      if defined(__ia64__) || defined(__x86_64__) || defined(__sparc64__)
-#          define bu_byteoffset(_i)	((size_t)((char *)&(_i)))
-#      else
 /* "Conservative" way of finding # bytes as diff of 2 char ptrs */
-#        define bu_byteoffset(_i)	((size_t)(((char *)&(_i))-((char *)0)))
-#      endif
-#    endif
-#  endif
+#  define bu_byteoffset(_i)	((size_t)(((char *)&(_i))-((char *)0)))
 #endif
 
 
@@ -2122,10 +2165,11 @@ BU_EXPORT extern int bu_debug;
    char str[32];
    short a_short;
    int a_int;
+   fastf_t a_fastf_t;
    double a_double;
  }
 
- struct data_structure default = { 'c', "the default string", 32767, 1, 1.0 };
+ struct data_structure default = { 'c', "the default string", 32767, 1, 1.0, 1.0 };
 
  struct data_structure my_values;
 
@@ -2134,7 +2178,8 @@ BU_EXPORT extern int bu_debug;
    {"%s", 32,       "str", bu_offsetofarray(data_structure, str), BU_STRUCTPARSE_FUNC_NULL,         "This is a full character string", (void*)default.str},
    {"%i", 1,    "a_short",  bu_offsetof(data_structure, a_short), BU_STRUCTPARSE_FUNC_NULL,                         "A 16bit integer", (void*)&default.a_short},
    {"%d", 1,      "a_int",    bu_offsetof(data_structure, a_int), BU_STRUCTPARSE_FUNC_NULL,                          "A full integer", (void*)&default.a_int},
-   {"%f", 1,   "a_double", bu_offsetof(data_structure, a_double), BU_STRUCTPARSE_FUNC_NULL, "A double-precision floating point value", (void*)&default.a_double},
+   {"%f", 1,   "a_fastf_t", bu_offsetof(data_structure, a_fastf_t), BU_STRUCTPARSE_FUNC_NULL, "A variable-precision fasf_t floating point value", (void*)&default.a_fastf_t},
+   {"%g", 1,   "a_double", bu_offsetof(data_structure, a_double), BU_STRUCTPARSE_FUNC_NULL, "A double-precision fasf_t floating point value", (void*)&default.a_double},
    {  "", 0, (char *)NULL,                                     0, BU_STRUCTPARSE_FUNC_NULL,                              (char *)NULL, (void *)NULL}
  };
 
@@ -2154,12 +2199,12 @@ BU_EXPORT extern int bu_debug;
  * probably shouldn't use this technique.
  */
 struct bu_structparse {
-    char sp_fmt[4];		/**< "%i" or "%f", etc */
+    const char sp_fmt[4];		/**< "%i" or "%f", etc. */
     size_t sp_count;		/**< number of elements */
-    char *sp_name;		/**< Element's symbolic name */
+    const char *sp_name;		/**< Element's symbolic name */
     size_t sp_offset;		/**< Byte offset in struct */
     void (*sp_hook)();		/**< Optional hooked function, or indir ptr */
-    char *sp_desc;		/**< description of element */
+    const char *sp_desc;		/**< description of element */
     void *sp_default;		/**< ptr to default value */
 };
 typedef struct bu_structparse bu_structparse_t;
@@ -2291,7 +2336,6 @@ typedef struct bu_color bu_color_t;
  * returns truthfully whether a bu_color has been initialized
  */
 #define BU_COLOR_IS_INITIALIZED(_c) (((struct bu_color *)(_c) != BU_COLOR_NULL) && LIKELY((_c)->magic == BU_COLOR_MAGIC))
-
 
 
 /*----------------------------------------------------------------------*/
@@ -2579,12 +2623,12 @@ BU_EXPORT extern struct bu_attribute_value_set *bu_avs_new(int len,
 							   const char *str);
 
 /**
- * If the given attribute exists it will recieve the new value,
- * othwise the set will be extended to have a new attribute/value
+ * If the given attribute exists it will receive the new value,
+ * otherwise the set will be extended to have a new attribute/value
  * pair.
  *
  * Returns -
- * 0 some error occured
+ * 0 some error occurred
  * 1 existing attribute updated with new value
  * 2 set extended with new attribute/value pair
  */
@@ -2652,7 +2696,7 @@ BU_EXPORT extern void bu_avs_add_nonunique(struct bu_attribute_value_set *avsp,
  * length.  The bit vector itself is guaranteed to be initialized to
  * all zero.
  */
-BU_EXPORT extern struct bu_bitv *bu_bitv_new(unsigned int nbits);
+BU_EXPORT extern struct bu_bitv *bu_bitv_new(size_t nbits);
 
 /**
  * Release all internal storage for this bit vector.
@@ -2753,7 +2797,7 @@ BU_EXPORT extern void bu_bomb_add_hook(bu_hook_t func, genptr_t clientdata);
  *
  * The bu_bomb routine is called on a fatal error, generally where no
  * recovery is possible.  Error handlers may, however, be registered
- * with BU_SETJMP.  This routine intentionally limits calls to other
+ * with BU_SETJUMP.  This routine intentionally limits calls to other
  * functions and intentionally uses no stack variables.  Just in case
  * the application is out of memory, bu_bomb deallocates a small
  * buffer of memory.
@@ -2984,7 +3028,7 @@ BU_EXPORT extern size_t bu_file_glob(const char *pattern, char ***matches);
 
 /**
  * Call canonicalization routines to both expand and validate
- * a path name.  
+ * a path name.
  *
  * returns a pointer to the canonical path.  Caller must free
  * the path.
@@ -3040,7 +3084,7 @@ BU_EXPORT extern size_t bu_dir_list(const char *path, const char *pattern, char 
 
 /**
  * Call canonicalization routines to both expand and validate
- * a path name.  
+ * a path name.
  *
  * Returns a pointer to the canonical path. If resolved_path is
  * NULL, caller is responsible for freeing the returned path
@@ -3106,6 +3150,27 @@ BU_EXPORT extern void bu_setprogname(const char *path);
 BU_EXPORT extern char *bu_getcwd(char *buf, size_t size);
 
 /**
+ * Report the relative paths being used to hold BRL-CAD applications,
+ * libraries, and data.
+ *
+ * Recognized keys include:
+ *
+ *   bin     - Directory containing binary applications
+ *   lib     - Directory containing libraries
+ *   include - Directory containing headers
+ *   data    - Directory containing shared data
+ *   share   - Directory containing shared data
+ *   doc     - Directory containing documentation
+ *   man     - Directory containing Unix man pages
+ *
+ * @return
+ * A STATIC buffer is returned.  It is the caller's responsibility to
+ * call bu_strdup() or make other provisions to save the returned
+ * string, before calling again.
+ */
+BU_EXPORT extern const char *bu_brlcad_dir(const char *dirkey, int fail_quietly);
+
+/**
  * Locate where the BRL-CAD applications and libraries are installed.
  *
  * The BRL-CAD root is searched for in the following order of
@@ -3134,8 +3199,8 @@ BU_EXPORT extern const char *bu_brlcad_root(const char *rhs, int fail_quietly);
  *
  *   BRLCAD_DATA environment variable if set
  *   BRLCAD_DATA compile-time path
- *   bu_brlcad_root/share/brlcad/VERSION path
- *   bu_brlcad_root path
+ *   bu_brlcad_root/DATA_DIR path
+ *   bu_brlcad_root/share path
  *   current directory
  *
  * A STATIC buffer is returned.  It is the caller's responsibility to
@@ -3174,36 +3239,6 @@ BU_EXPORT extern const char *bu_which(const char *cmd);
  */
 BU_EXPORT extern const char *bu_whereis(const char *cmd);
 
-/** @file libbu/fopen_uniq.c
- *
- * DEPRECATED: Routine to open a unique filename.
- *
- */
-
-/**
- * DEPRECATED.  Do not use.
- *
- * Open a file for output assuring that the file did not previously
- * exist.
- *
- * Typical usage:
- @code
- 	static int n = 0;
- 	FILE *fp;
- 
- 	fp = bu_fopen_uniq("writing to %s for results", "output%d.pl", n++);
- 	...
- 	fclose(fp);
- 
- 
- 	fp = bu_fopen_uniq((char *)NULL, "output%d.pl", n++);
- 	...
- 	fclose(fp);
- @endcode
- *
- */
-DEPRECATED BU_EXPORT extern FILE *bu_fopen_uniq(const char *outfmt, const char *namefmt, int n);
-
 /** @file libbu/temp.c
  *
  * Routine to open a temporary file.
@@ -3234,7 +3269,7 @@ DEPRECATED BU_EXPORT extern FILE *bu_fopen_uniq(const char *outfmt, const char *
   char filename[MAXPATHLEN];
   fp = bu_temp_file(&filename, MAXPATHLEN); // get file name
   ...
-  fclose(fp); // optional, auto-closed on exit
+  fclose(fp); // close the file when you're done
   ...
   fp = bu_temp_file(NULL, 0); // don't need file name
   bu_fchmod(fileno(fp), 0777);
@@ -3337,7 +3372,7 @@ BU_EXPORT extern void bu_hist_pr(const struct bu_hist *histp, const char *title)
  *
  * Library routines for conversion between the local host 64-bit
  * ("double precision") representation, and 64-bit IEEE double
- * precision representation, in "network order", ie, big-endian, the
+ * precision representation, in "network order", i.e., big-endian, the
  * MSB in byte [0], on the left.
  *
  * As a quick review, the IEEE double precision format is as follows:
@@ -3355,7 +3390,7 @@ BU_EXPORT extern void bu_hist_pr(const struct bu_hist *histp, const char *title)
  *		msb of mantissa=1:  quiet NAN
  *
  * Note that neither the input or output buffers need be word aligned,
- * for greatest flexability in converting data, even though this
+ * for greatest flexibility in converting data, even though this
  * imposes a speed penalty here.
  *
  * These subroutines operate on a sequential block of numbers, to save
@@ -3409,7 +3444,7 @@ BU_EXPORT extern void ntohf(unsigned char *out,
 /** @addtogroup thread */
 /** @ingroup parallel */
 /** @{ */
-/** @file libbu/ispar.c
+/** @file libbu/parallel.c
  *
  * subroutine to determine if we are multi-threaded
  *
@@ -3432,6 +3467,12 @@ BU_EXPORT extern int bu_is_parallel();
  * without dragging in the whole parallel library if it isn't being used.
  */
 BU_EXPORT extern void bu_kill_parallel();
+
+/**
+ * returns the CPU number of the current bu_parallel() invoked thread.
+ */
+BU_EXPORT extern int bu_parallel_id(void);
+
 
 /** @} */
 
@@ -3473,10 +3514,10 @@ BU_EXPORT extern int bu_list_len(const struct bu_list *hd);
 BU_EXPORT extern void bu_list_reverse(struct bu_list *hd);
 
 /**
- * Given a list of structures allocated with bu_malloc() enrolled
- * on a bu_list head, walk the list and free the structures.
- * This routine can only be used when the structures have no interior
- * pointers.
+ * Given a list of structures allocated with bu_malloc() or
+ * bu_calloc() enrolled on a bu_list head, walk the list and free the
+ * structures.  This routine can only be used when the structures have
+ * no interior pointers.
  */
 BU_EXPORT extern void bu_list_free(struct bu_list *hd);
 
@@ -3653,7 +3694,7 @@ BU_EXPORT extern void bu_flog(FILE *, const char *, ...) _BU_ATTR_PRINTF23;
  *
  *  - %V and %#V have been added as valid conversions. Both expect a pointer to
  *    a struct bu_vls as their argument.
- *   
+ *
  *    %V is comparable to %[^]. It instructs bu_vsscanf to read arbitrary
  *    characters from the source and store them in the vls buffer. The default
  *    maximum field width is infinity.
@@ -3699,7 +3740,7 @@ BU_EXPORT extern int bu_sscanf(const char *src, const char *fmt, ...) _BU_ATTR_S
  * with standardized error checking, optional memory-use logging, and
  * optional run-time pointer and memory corruption testing.
  *
- * The bu_malloc() routines can't use bu_log() because that uses the
+ * The bu_*alloc() routines can't use bu_log() because that uses the
  * bu_vls() routines which depend on bu_malloc().  So it goes direct
  * to stderr, semaphore protected.
  *
@@ -3770,9 +3811,9 @@ BU_EXPORT extern void bu_prmem(const char *str);
 BU_EXPORT extern int bu_malloc_len_roundup(int nbytes);
 
 /**
- * For a given pointer allocated by bu_malloc(), check the magic
- * number stored after the allocation area when BU_DEBUG_MEM_CHECK is
- * set.
+ * For a given pointer allocated by bu_malloc(), bu_calloc(), or
+ * BU_ALLOC() check the magic number stored after the allocation area
+ * when BU_DEBUG_MEM_CHECK is set.
  *
  * This is the individual version of bu_mem_barriercheck().
  *
@@ -3783,7 +3824,7 @@ BU_EXPORT extern void bu_ck_malloc_ptr(genptr_t ptr, const char *str);
 
 /**
  * Check *all* entries in the memory debug table for barrier word
- * corruption.  Intended to be called periodicly through an
+ * corruption.  Intended to be called periodically through an
  * application during debugging.  Has to run single-threaded, to
  * prevent table mutation.
  *
@@ -3794,6 +3835,30 @@ BU_EXPORT extern void bu_ck_malloc_ptr(genptr_t ptr, const char *str);
  *   0	all is OK;
  */
 BU_EXPORT extern int bu_mem_barriercheck();
+
+/**
+ * really fast heap-based memory allocation intended for "small"
+ * allocation sizes (e.g., single structs).
+ *
+ * the implementation allocates chunks of memory ('pages') in order to
+ * substantially reduce calls to system malloc.  it has a nice
+ * property of having O(1) constant time complexity and profiles
+ * significantly faster than system malloc().
+ *
+ * release memory with bu_heap_put() only.
+ */
+BU_EXPORT extern void *bu_heap_get(size_t sz);
+
+/**
+ * counterpart to bu_heap_get() for releasing fast heap-based memory
+ * allocations.
+ *
+ * the implementation may do nothing, relying on free-on-exit, or may
+ * mark deallocations for reuse.  pass a NULL pointer and zero size to
+ * force compaction of any unused memory.
+ */
+BU_EXPORT extern void bu_heap_put(void *ptr, size_t sz);
+
 /** @} */
 
 /** @addtogroup log */
@@ -3982,58 +4047,10 @@ BU_EXPORT extern int bu_process_id();
 BU_EXPORT extern void bu_nice_set(int newnice);
 
 /**
- * Return the current CPU limit, in seconds. Zero or negative return
- * indicates that limits are not in effect.
- */
-BU_EXPORT extern int bu_cpulimit_get();
-
-/**
- * Set CPU time limit, in seconds.
- */
-BU_EXPORT extern void bu_cpulimit_set(int sec);
-
-/**
  * Return the maximum number of physical CPUs that are considered to
  * be available to this process now.
  */
 BU_EXPORT extern int bu_avail_cpus();
-
-/**
- * A generally portable method for obtaining the 1-minute load average.
- * Vendor-specific methods which don't involve a fork/exec sequence
- * would be preferable.
- * Alas, very very few systems put the load average in /proc,
- * most still grunge the avenrun[3] array out of /dev/kmem,
- * which requires special privleges to open.
- */
-BU_EXPORT extern fastf_t bu_get_load_average();
-
-/**
- * DEPRECATED: this routine's use of a temporary file is deprecated
- * and should not be relied upon.  a future implementation will
- * utilize environment variables instead of temporary files.
- *
- * A general mechanism for non-privleged users of a server system to
- * control how many processors of their server get consumed by
- * multi-thread cruncher processes, by leaving a world-writable file.
- *
- * If the number in the file is negative, it means "all but that
- * many."
- *
- * Returns the number of processors presently available for "public"
- * use.
- */
-DEPRECATED BU_EXPORT extern int bu_get_public_cpus();
-
-/**
- * If possible, mark this process for real-time scheduler priority.
- * Will often need root privs to succeed.
- *
- * Returns -
- * 1 realtime priority obtained
- * 0 running with non-realtime scheduler behavior
- */
-BU_EXPORT extern int bu_set_realtime();
 
 /**
  * Create 'ncpu' copies of function 'func' all running in parallel,
@@ -4041,16 +4058,16 @@ BU_EXPORT extern int bu_set_realtime();
  * by 'func' using a "self-dispatching" paradigm.
  *
  * 'func' is called with one parameter, its thread number.  Threads
- * are given increasing numbers, starting with zero.
+ * are given increasing numbers, starting with zero.  Processes may
+ * also call bu_parallel_id() to obtain their thread number.
+ *
+ * Threads created with bu_parallel() automatically set CPU affinity
+ * where available for improved performance.  This behavior can be
+ * disabled at runtime by setting the LIBBU_AFFINITY environment
+ * variable to 0.
  *
  * This function will not return control until all invocations of the
  * subroutine are finished.
- *
- * Don't use registers in this function (bu_parallel).  At least on
- * the Alliant, register context is NOT preserved when exiting the
- * parallel mode, because the serial portion resumes on some arbitrary
- * processor, not necessarily the one that serial execution started
- * on.  The registers are not shared.
  */
 BU_EXPORT extern void bu_parallel(void (*func)(int ncpu, genptr_t arg), int ncpu, genptr_t arg);
 
@@ -4069,22 +4086,41 @@ BU_EXPORT extern void bu_parallel(void (*func)(int ncpu, genptr_t arg), int ncpu
  * offset from the beginning of the structure, and a pointer to an
  * optional "hooked" function that is called whenever that structure
  * element is changed.
- *
- * @par There are four basic operations supported:
- * @arg	print	struct elements to ASCII
- * @arg	parse	ASCII to struct elements
- * @arg	export	struct elements to machine-independent binary
- * @arg	import	machine-independent binary to struct elements
- *
  */
 
 /**
+ * ASCII to struct elements.
+ *
+ * Parse the structure element description in the vls string "vls"
+ * according to the structure description in "parsetab"
+ *
+ * @return <0 failure
+ * @return  0 OK
+ */
+BU_EXPORT extern int bu_struct_parse(const struct bu_vls *in_vls,
+				     const struct bu_structparse *desc,
+				     const char *base);
+
+/**
+ * struct elements to ASCII.
+ */
+BU_EXPORT extern void bu_struct_print(const char *title,
+				      const struct bu_structparse *parsetab,
+				      const char *base);
+
+/**
+ * struct elements to machine-independent binary.
+ *
+ * copies ext data to base
  */
 BU_EXPORT extern int bu_struct_export(struct bu_external *ext,
 				      const genptr_t base,
 				      const struct bu_structparse *imp);
 
 /**
+ * machine-independent binary to struct elements.
+ *
+ * copies ext data to base
  */
 BU_EXPORT extern int bu_struct_import(genptr_t base,
 				      const struct bu_structparse *imp,
@@ -4118,23 +4154,6 @@ BU_EXPORT extern size_t bu_struct_get(struct bu_external *ext,
  */
 BU_EXPORT extern void bu_struct_wrap_buf(struct bu_external *ext,
 					 genptr_t buf);
-
-/**
- * Parse the structure element description in the vls string "vls"
- * according to the structure description in "parsetab"
- *
- * @return <0 failure
- * @return  0 OK
- */
-BU_EXPORT extern int bu_struct_parse(const struct bu_vls *in_vls,
-				     const struct bu_structparse *desc,
-				     const char *base);
-
-/**
- */
-BU_EXPORT extern void bu_struct_print(const char *title,
-				      const struct bu_structparse *parsetab,
-				      const char *base);
 
 /**
  * This differs from bu_struct_print in that this output is less
@@ -4327,9 +4346,9 @@ BU_EXPORT extern int bu_str_false(const char *str);
  * @param   v		the integer with the bits in it
  * @param   bits	a string which starts with the desired base (8 or 16)
  * as \\010 or \\020, followed by
- * words preceeded with embedded low-value bytes indicating
+ * words preceded with embedded low-value bytes indicating
  * bit number plus one,
- * in little-endian order, eg:
+ * in little-endian order, e.g.:
  * "\010\2Bit_one\1BIT_zero"
  */
 BU_EXPORT extern void bu_vls_printb(struct bu_vls *vls,
@@ -4350,7 +4369,7 @@ BU_EXPORT extern void bu_printb(const char *s,
 /** @{ */
 /**
  * This collection of routines implements a "pointer table" data
- * structure providing a convenient mechanism for managin a collection
+ * structure providing a convenient mechanism for managing a collection
  * of pointers to objects.  This is useful where the size of the array
  * is not known in advance and may change with time.  It's convenient
  * to be able to write code that can say "remember this object", and
@@ -4783,7 +4802,7 @@ BU_EXPORT extern void bu_rb_walk(struct bu_rb_tree *tree, int order, void (*visi
  * whatever storage is needed to implement each semaphore.
  *
  * Note that these routines can't use bu_log() for error logging,
- * because bu_log() accquires semaphore #0 (BU_SEM_SYSCALL).
+ * because bu_log() acquires semaphore #0 (BU_SEM_SYSCALL).
  */
 
 /*
@@ -4793,7 +4812,8 @@ BU_EXPORT extern void bu_rb_walk(struct bu_rb_tree *tree, int order, void (*visi
 #define BU_SEM_LISTS 1
 #define BU_SEM_BN_NOISE 2
 #define BU_SEM_MAPPEDFILE 3
-#define BU_SEM_LAST (BU_SEM_MAPPEDFILE+1)	/* allocate this many for LIBBU+LIBBN */
+#define BU_SEM_THREAD 4
+#define BU_SEM_LAST (BU_SEM_THREAD+1)	/* allocate this many for LIBBU+LIBBN */
 /*
  * Automatic restart capability in bu_bomb().  The return from
  * BU_SETJUMP is the return from the setjmp().  It is 0 on the first
@@ -4804,7 +4824,7 @@ BU_EXPORT extern void bu_rb_walk(struct bu_rb_tree *tree, int order, void (*visi
 #define BU_UNSETJUMP (bu_setjmp_valid=0)
 /* These are global because BU_SETJUMP must be macro.  Please don't touch. */
 BU_EXPORT extern int bu_setjmp_valid;		/* !0 = bu_jmpbuf is valid */
-BU_EXPORT extern jmp_buf bu_jmpbuf;			/* for BU_SETJMP() */
+BU_EXPORT extern jmp_buf bu_jmpbuf;			/* for BU_SETJUMP() */
 
 
 /**
@@ -4817,6 +4837,11 @@ BU_EXPORT extern jmp_buf bu_jmpbuf;			/* for BU_SETJMP() */
  *
  */
 BU_EXPORT extern void bu_semaphore_init(unsigned int nsemaphores);
+
+/**
+ * Release all initialized semaphores and any associated memory.
+ */
+BU_EXPORT extern void bu_semaphore_free();
 
 /**
  * Prepare 'nsemaphores' independent critical section semaphores.  Die
@@ -4846,7 +4871,7 @@ BU_EXPORT extern void bu_vls_init(struct bu_vls *vp);
 /**
  * DEPRECATED: use if (!vls) bu_vls_init(vls)
  *
- * If a VLS is unitialized, initialize it.  If it is already
+ * If a VLS is uninitialized, initialize it.  If it is already
  * initialized, leave it alone, caller wants to append to it.
  */
 DEPRECATED BU_EXPORT extern void bu_vls_init_if_uninit(struct bu_vls *vp);
@@ -4937,7 +4962,7 @@ BU_EXPORT extern char *bu_vls_strdup(const struct bu_vls *vp);
  * Like bu_vls_strdup(), but destructively grab the string from the
  * source argument 'vp'.  This is more efficient than bu_vls_strdup()
  * for those instances where the source argument 'vp' is no longer
- * needed by the caller, as it avoides a potentially long buffer copy.
+ * needed by the caller, as it avoids a potentially long buffer copy.
  *
  * The source string is destroyed, as if bu_vls_free() had been
  * called.
@@ -5063,7 +5088,7 @@ BU_EXPORT extern void bu_vls_trimspace(struct bu_vls *vp);
 
 /**
  * Format a string into a vls.  This version should work on
- * practically any machine, but it serves to highlight the the
+ * practically any machine, but it serves to highlight the
  * grossness of the varargs package requiring the size of a parameter
  * to be known at compile time.
  *
@@ -5123,7 +5148,7 @@ BU_EXPORT extern int bu_vls_print_positions_used(const struct bu_vls *vp);
 BU_EXPORT extern void bu_vls_detab(struct bu_vls *vp);
 
 /**
- * Add a string to the begining of the vls.
+ * Add a string to the beginning of the vls.
  */
 BU_EXPORT extern void bu_vls_prepend(struct bu_vls *vp,
 				     char *str);
@@ -5171,7 +5196,7 @@ BU_EXPORT extern const char *bu_vls_decode(struct bu_vls *vp, const char *str);
  * Initialize the specified bu_vlb structure and mallocs the initial
  * block of memory.
  *
- * @param vlb Pointer to an unitialized bu_vlb structure
+ * @param vlb Pointer to an uninitialized bu_vlb structure
  */
 BU_EXPORT extern void bu_vlb_init(struct bu_vlb *vlb);
 
@@ -5179,7 +5204,7 @@ BU_EXPORT extern void bu_vlb_init(struct bu_vlb *vlb);
  * Initialize the specified bu_vlb structure and mallocs the initial
  * block of memory with the specified size
  *
- * @param vlb Pointer to an unitialized bu_vlb structure
+ * @param vlb Pointer to an uninitialized bu_vlb structure
  * @param initialSize The desired initial size of the buffer
  */
 BU_EXPORT extern void bu_vlb_initialize(struct bu_vlb *vlb,
@@ -5199,7 +5224,7 @@ BU_EXPORT extern void bu_vlb_write(struct bu_vlb *vlb,
 
 /**
  * Reset the bu_vlb counter to the start of its byte array. This
- * essentially ignores any bytes currenty in the buffer, but does not
+ * essentially ignores any bytes currently in the buffer, but does not
  * free any memory.
  *
  * @param vlb Pointer to the bu_vlb structure to be reset
@@ -5224,7 +5249,7 @@ BU_EXPORT extern size_t bu_vlb_buflen(struct bu_vlb *vlb);
 
 /**
  * Free the memory allocated for the byte array in the bu_vlb
- * structure.  Also unitializes the structure.
+ * structure.  Also uninitializes the structure.
  *
  * @param vlb Pointer to the bu_vlb structure
  */
@@ -5272,8 +5297,9 @@ BU_EXPORT extern size_t bu_strlcpym(char *dst, const char *src, size_t size, con
 #define bu_strlcpy(dst, src, size) bu_strlcpym(dst, src, size, BU_FLSTR)
 
 /**
- * Given a string, allocate enough memory to hold it using bu_malloc(),
- * duplicate the strings, returns a pointer to the new string.
+ * Given a string, allocate enough memory to hold it using
+ * bu_malloc(), duplicate the strings, returns a pointer to the new
+ * string.
  *
  * bu_strdup() is a macro that includes the current file name and line
  * number that can be used when bu debugging is enabled.
@@ -5355,7 +5381,7 @@ BU_EXPORT extern int bu_strncasecmp(const char *string1, const char *string2, si
  */
 
 /**
- * Escapes an input string with preceeding '\'s for any characters
+ * Escapes an input string with preceding '\'s for any characters
  * defined in the 'expression' string.  The input string is written to the
  * specified output buffer of 'size' capacity.  The input and output
  * pointers may overlap or be the same memory (assuming adequate space
@@ -5398,7 +5424,7 @@ BU_EXPORT extern int bu_strncasecmp(const char *string1, const char *string2, si
  *
  * A non-NULL output string is always returned.  This allows
  * expression chaining and embedding as function arguments but care
- * should be taken to free the dynamic memory beging returned when
+ * should be taken to free the dynamic memory being returned when
  * 'output' is NULL.
  *
  * If output 'size' is inadequate for holding the escaped input
@@ -5430,7 +5456,7 @@ BU_EXPORT extern char *bu_str_escape(const char *input, const char *expression, 
  *
  * A non-NULL output string is always returned.  This allows
  * expression chaining and embedding as function arguments but care
- * should be taken to free the dynamic memory beging returned when
+ * should be taken to free the dynamic memory being returned when
  * 'output' is NULL.
  *
  * If output 'size' is inadequate for holding the unescaped input
@@ -5465,7 +5491,7 @@ BU_EXPORT extern char *bu_str_unescape(const char *input, char *output, size_t s
  */
 
 /**
- * Given a string representation of a unit of distance (eg, "feet"),
+ * Given a string representation of a unit of distance (e.g., "feet"),
  * return the multiplier which will convert that unit into the default
  * unit for the dimension (millimeters for length, mm^3 for volume,
  * and grams for mass.)
@@ -5478,7 +5504,7 @@ BU_EXPORT extern double bu_units_conversion(const char *str);
  * Given a conversion factor to mm, search the table to find what unit
  * this represents.
  *
- * To accomodate floating point fuzz, a "near miss" is allowed.  The
+ * To accommodate floating point fuzz, a "near miss" is allowed.  The
  * algorithm depends on the table being sorted small-to-large.
  *
  * Returns -
@@ -5541,7 +5567,7 @@ BU_EXPORT extern void bu_mm_cvt(const struct bu_structparse *sdp,
  * big-endian, twos-compliment fixed point, and IEEE floating point.
  *
  * Routines to insert/extract short/long's into char arrays,
- * independend of machine byte order and word-alignment.
+ * independent of machine byte order and word-alignment.
  * Uses encoding compatible with routines found in libpkg,
  * and BSD system routines htonl(), htons(), ntohl(), ntohs().
  *
@@ -5729,7 +5755,7 @@ BU_EXPORT extern long int bu_mread(int fd, void *bufp, long int n);
 /** @file libbu/hash.c
  *
  * @brief
- * An implimentation of hash tables.
+ * An implementation of hash tables.
  */
 
 /**
@@ -5907,7 +5933,7 @@ BU_EXPORT extern unsigned char *bu_get_hash_key(struct bu_hash_entry *hsh_entry)
 /**
  * Add an new entry to a hash table
  *
- * @param[in] hsh_tbl - the hash table to accept thye new entry
+ * @param[in] hsh_tbl - the hash table to accept the new entry
  * @param[in] key - the key (any byte string)
  * @param[in] key_len - the number of bytes in the key
  *
@@ -5949,7 +5975,7 @@ BU_EXPORT extern void bu_hash_tbl_free(struct bu_hash_tbl *hsh_tbl);
  *
  * @return
  * the first non-null entry in the hash table, or NULL if there are no
- * entries (Note that the order of enties is not likely to have any
+ * entries (Note that the order of entries is not likely to have any
  * significance)
  */
 BU_EXPORT extern struct bu_hash_entry *bu_hash_tbl_first(struct bu_hash_tbl *hsh_tbl,
@@ -6045,7 +6071,7 @@ BU_EXPORT extern char **bu_dup_argv(int argc, const char *argv[]);
  * If insert is negative, the insertArgv array elements will be
  * prepended into the new argv array.  If insert is greater than or
  * equal to argc, the insertArgv array elements will be appended after
- * all duplicated elementes in the specified argv array.  Otherwise,
+ * all duplicated elements in the specified argv array.  Otherwise,
  * the insert argument is the position where the insertArgv array
  * elements will be merged with the specified argv array.
  */
@@ -6160,13 +6186,13 @@ BU_EXPORT extern void *bu_dlsym(void *path, const char *symbol);
 BU_EXPORT extern int bu_dlclose(void *handle);
 BU_EXPORT extern const char *bu_dlerror();
 
+/** NEW: Do not use. */
+BU_EXPORT extern int bu_fseek(FILE *stream, off_t offset, int origin);
+/** NEW: Do not use. */
+BU_EXPORT extern off_t bu_ftell(FILE *stream);
+
 /** @} file */
 
-/**
- * Definitions for memory pool "get" and "free" functions.
- */
-BU_EXPORT extern void *bu_pool_get(size_t elem_byte_size);
-BU_EXPORT extern void bu_pool_put(void *ptr, size_t elem_byte_size);
 
 /** @file libbu/ctype.c
  *
@@ -6175,7 +6201,12 @@ BU_EXPORT extern void bu_pool_put(void *ptr, size_t elem_byte_size);
  */
 BU_EXPORT extern int bu_str_isprint(const char *cp);
 
-
+/** @file libbu/gethostname.c
+ *
+ * Portable gethostname()
+ *
+ */
+BU_EXPORT extern int bu_gethostname(char *, size_t);
 
 __END_DECLS
 

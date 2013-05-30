@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='rtwalk1'>
+<refmeta>
+    <refentrytitle>RTWALK
+</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class='source'>BRL-CAD</refmiscinfo>
+<refmiscinfo class='manual'>BRL-CAD</refmiscinfo>
+</refmeta>
+
+<refnamediv>
+<refname>rtwalk</refname>
+<refpurpose>generate viewpoint animation between two points</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<cmdsynopsis>
+  <command>rtwalk</command>
+    <arg choice='opt' rep='repeat'><replaceable>options</replaceable></arg>
+    <arg choice='plain'><replaceable>startX</replaceable></arg>
+    <arg choice='plain'><replaceable>startY</replaceable></arg>
+    <arg choice='plain'><replaceable>startZ</replaceable></arg>
+    <arg choice='plain'><replaceable>destX</replaceable></arg>
+    <arg choice='plain'><replaceable>destY</replaceable></arg>
+    <arg choice='plain'><replaceable>destZ</replaceable></arg>
+    <arg choice='plain'><replaceable>model.g</replaceable></arg>
+    <arg choice='plain' rep='repeat'><replaceable>objects</replaceable></arg>
+
+</cmdsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para><emphasis remap='I'>Rtwalk</emphasis>
+generates a viewpoint animation control script that takes the eye
+between given start and end points, without walking through any
+geometry.
+The model geometry is the list of
+<emphasis remap='I'>objects</emphasis>
+in the input database
+<emphasis remap='I'>model.g</emphasis>.
+The primary output is in the form of an old-format
+RT viewpoint animation control script
+(which is also suitable for input to the MGED "rmat" command)
+in the file "rtwalk.mat".</para>
+<itemizedlist remap='TP'>
+
+  <listitem><para><option>-X #</option></para></listitem>
+
+  <listitem>
+<para>Set rtwalk debug flags to (hexadecimal) number.
+A flag value of 1 causes 3-D plot output to be written to stdout.
+All solid RPPs are plotted as grey boxes, and the walk path is
+in alternating blue and green segments.
+A flag value of 2 adds red segments for all attempted steps,
+as well as the final steps.
+A flag value of 3 adds some debugging prints to stderr in addition
+to the plots.  This is useful for immediate path review, e.g.,</para>
+
+<para>	rtwalk -X 1 ... | tiris</para>
+  </listitem>
+
+
+  <listitem><para><option>-x #</option></para></listitem>
+
+  <listitem>
+<para>Set librt debug flags to (hexadecimal) number.</para>
+  </listitem>
+
+
+  <listitem><para><option>-n # of steps</option></para></listitem>
+  <listitem><para><option>-v viewsize</option></para></listitem>
+
+</itemizedlist>
+
+<para>The
+<command>rtwalk</command>
+program employs
+<citerefentry><refentrytitle>librt</refentrytitle><manvolnum>3</manvolnum></citerefentry>
+for the geometry interrogation.
+This program is currently in fledgling form, and is likely to
+evolve into an important tool for motion path generation and
+validation, interference checking in part articulation,
+and numerically controlled milling.</para>
+
+<para>This program is especially interesting when used on complex scenes
+like those made by proc-db/clutter.c, e.g.:</para>
+
+<para>      rtwalk -X1 -- -3470 -3470 650 3470 3470 650 ../proc-db/c.g clut |
+      plot-fb -i</para>
+
+</refsect1>
+
+<refsect1 xml:id='see_also'><title>SEE ALSO</title>
+<para><citerefentry><refentrytitle>mged</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>rt</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>pix-fb</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>rtray</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>rtpp</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>librt</refentrytitle><manvolnum>3</manvolnum></citerefentry>, <citerefentry><refentrytitle>ray</refentrytitle><manvolnum>5V</manvolnum></citerefentry>, <citerefentry><refentrytitle>pix</refentrytitle><manvolnum>5</manvolnum></citerefentry>.</para>
+</refsect1>
+
+<refsect1 xml:id='diagnostics'><title>DIAGNOSTICS</title>
+<para>Numerous error conditions are possible.
+Descriptive messages are printed on standard error.</para>
+</refsect1>
+
+<refsect1 xml:id='bugs'><title>BUGS</title>
+<para>Most deficiencies observed while using the
+<command>rtwalk</command>
+program are usually with the
+<citerefentry><refentrytitle>librt</refentrytitle><manvolnum>3</manvolnum></citerefentry>
+package instead.</para>
+</refsect1>
+
+<refsect1 xml:id='author'><title>AUTHOR</title>
+<para>BRL-CAD Team</para>
+</refsect1>
+
+<refsect1 xml:id='copyright'><title>COPYRIGHT</title>
+<para>This software is Copyright (c) 1987-2013 United States Government as
+represented by the U.S. Army Research Laboratory. All rights reserved.</para>
+</refsect1>
+
+<refsect1 xml:id='bug_reports'><title>BUG REPORTS</title>
+<para>Reports of bugs or problems should be submitted via electronic
+mail to &lt;devs@brlcad.org&gt;.</para>
+</refsect1>
+</refentry>
+

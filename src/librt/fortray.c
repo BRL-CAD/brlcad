@@ -1,7 +1,7 @@
 /*                       F O R T R A Y . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2012 United States Government as represented by
+ * Copyright (c) 1986-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -120,7 +120,7 @@ fr_string_f2c(char *str, int maxlen)
  * argument, by value.  Other systems probably are different.
  *
  * XXX On some systems, the C standard I/O library may need to be
- * initialized here (eg, Cray).
+ * initialized here (e.g., Cray).
  */
 void
 BU_FORTRAN(frdir, FRDIR)(struct rt_i **rtip, char *filename, int *filelen)
@@ -314,7 +314,7 @@ BU_FORTRAN(frnreg, FRNREG)(int *nreg, struct rt_i **rtip)
  * Given a region number (range 1..nregions), return the right-hand
  * portion of the name in the provided buffer.
  *
- * XXX buflen is provided "automaticly" on the Apollo.
+ * XXX buflen is provided "automatically" on the Apollo.
  */
 void
 BU_FORTRAN(frname, FRNAME)(char *fbuf,

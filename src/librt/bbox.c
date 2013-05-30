@@ -1,7 +1,7 @@
 /*                          B B O X . C
  * BRL-CAD
  *
- * Copyright (c) 1995-2012 United States Government as represented by
+ * Copyright (c) 1995-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -34,17 +34,6 @@
 #include "raytrace.h"
 
 
-/**
- * R T _ B O U N D _ T R E E
- *
- * Calculate the bounding RPP of the region whose boolean tree is
- * 'tp'.  The bounding RPP is returned in tree_min and tree_max, which
- * need not have been initialized first.
- *
- * Returns -
- * 0 success
- * -1 failure (tree_min and tree_max may have been altered)
- */
 int
 rt_bound_tree(const union tree *tp, fastf_t *tree_min, fastf_t *tree_max)
 {
@@ -153,14 +142,6 @@ _rt_getregion(struct rt_i *rtip, const char *reg_name)
 }
 
 
-/**
- * R T _ R P P _ R E G I O N
- *
- * Calculate the bounding RPP for a region given the name of the
- * region node in the database.  See remarks in _rt_getregion() above
- * for name conventions.  Returns 0 for failure (and prints a
- * diagnostic), or 1 for success.
- */
 int
 rt_rpp_region(struct rt_i *rtip, const char *reg_name, fastf_t *min_rpp, fastf_t *max_rpp)
 {
@@ -176,29 +157,6 @@ rt_rpp_region(struct rt_i *rtip, const char *reg_name, fastf_t *min_rpp, fastf_t
 }
 
 
-/**
- * R T _ I N _ R P P
- *
- * Compute the intersections of a ray with a rectangular parallelpiped
- * (RPP) that has faces parallel to the coordinate planes
- *
- * The algorithm here was developed by Gary Kuehl for GIFT.  A good
- * description of the approach used can be found in "??" by XYZZY and
- * Barsky, ACM Transactions on Graphics, Vol 3 No 1, January 1984.
- *
- * Note: The computation of entry and exit distance is mandatory, as
- * the final test catches the majority of misses.
- *
- * Note: A hit is returned if the intersect is behind the start point.
- *
- * Returns -
- * 0 if ray does not hit RPP,
- * !0 if ray hits RPP.
- *
- * Implicit return -
- * rp->r_min = dist from start of ray to point at which ray ENTERS solid
- * rp->r_max = dist from start of ray to point at which ray LEAVES solid
- */
 int
 rt_in_rpp(struct xray *rp,
 	  register const fastf_t *invdir,	/* inverses of rp->r_dir[] */
@@ -208,20 +166,20 @@ rt_in_rpp(struct xray *rp,
     register const fastf_t *pt = &rp->r_pt[0];
     register fastf_t sv;
 #define st sv			/* reuse the register */
-    register fastf_t rmin = -INFINITY;
-    register fastf_t rmax =  INFINITY;
+    register fastf_t rmin = -MAX_FASTF;
+    register fastf_t rmax =  MAX_FASTF;
 
     /* Start with infinite ray, and trim it down */
 
     /* X axis */
-    if (*invdir < 0.0) {
+    if (*invdir < -SMALL_FASTF) {
 	/* Heading towards smaller numbers */
 	/* if (*min > *pt) miss */
 	if (rmax > (sv = (*min - *pt) * *invdir))
 	    rmax = sv;
 	if (rmin < (st = (*max - *pt) * *invdir))
 	    rmin = st;
-    }  else if (*invdir > 0.0) {
+    }  else if (*invdir > SMALL_FASTF) {
 	/* Heading towards larger numbers */
 	/* if (*max < *pt) miss */
 	if (rmax > (st = (*max - *pt) * *invdir))
@@ -240,12 +198,12 @@ rt_in_rpp(struct xray *rp,
 
     /* Y axis */
     pt++; invdir++; max++; min++;
-    if (*invdir < 0.0) {
+    if (*invdir < -SMALL_FASTF) {
 	if (rmax > (sv = (*min - *pt) * *invdir))
 	    rmax = sv;
 	if (rmin < (st = (*max - *pt) * *invdir))
 	    rmin = st;
-    }  else if (*invdir > 0.0) {
+    }  else if (*invdir > SMALL_FASTF) {
 	if (rmax > (st = (*max - *pt) * *invdir))
 	    rmax = st;
 	if (rmin < ((sv = (*min - *pt) * *invdir)))
@@ -257,12 +215,12 @@ rt_in_rpp(struct xray *rp,
 
     /* Z axis */
     pt++; invdir++; max++; min++;
-    if (*invdir < 0.0) {
+    if (*invdir < -SMALL_FASTF) {
 	if (rmax > (sv = (*min - *pt) * *invdir))
 	    rmax = sv;
 	if (rmin < (st = (*max - *pt) * *invdir))
 	    rmin = st;
-    }  else if (*invdir > 0.0) {
+    }  else if (*invdir > SMALL_FASTF) {
 	if (rmax > (st = (*max - *pt) * *invdir))
 	    rmax = st;
 	if (rmin < ((sv = (*min - *pt) * *invdir)))
@@ -445,24 +403,6 @@ rt_traverse_tree(struct rt_i *rtip, const union tree *tp, fastf_t *tree_min, fas
 }
 
 
-/**
- * R T _ B O U N D _ I N T E R N A L
- *
- * Calculate the bounding RPP of the internal format passed in 'ip'.
- * The bounding RPP is returned in rpp_min and rpp_max in mm
- * FIXME: This function needs to be modified to eliminate the rt_gettree() call and the related
- * parameters. In that case calling code needs to call another function before calling this function
- * That function must create a union tree with tr_a.tu_op=OP_SOLID. It can look as follows :
- * union tree * rt_comb_tree(const struct db_i *dbip, const struct rt_db_internal *ip). The tree is set
- * in the struct rt_db_internal * ip argument.
- * Once a suitable tree is set in the ip, then this function can be called with the struct rt_db_internal *
- * to return the BB properly without getting stuck during tree traversal in rt_bound_tree()
- *
- * Returns -
- *  0 success
- * -1 failure, the model bounds could not be got
- *
- */
 int
 rt_bound_internal(struct db_i *dbip, struct directory *dp,
 		  point_t rpp_min, point_t rpp_max)
@@ -501,7 +441,7 @@ rt_bound_internal(struct db_i *dbip, struct directory *dp,
 	combp = (struct rt_comb_internal *)intern.idb_ptr;
     } else {
 	/* A primitive was passed, construct a struct rt_comb_internal with a single leaf node */
-	BU_GET(combp, struct rt_comb_internal);
+	BU_ALLOC(combp, struct rt_comb_internal);
 	RT_COMB_INTERNAL_INIT(combp);
 	combp->region_flag = 0;
 

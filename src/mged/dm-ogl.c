@@ -1,7 +1,7 @@
 /*                        D M - O G L . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2012 United States Government as represented by
+ * Copyright (c) 2004-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -95,13 +95,13 @@ struct bu_structparse Ogl_vparse[] = {
     {"%d",  1, "lighting",		Ogl_MV_O(lighting_on),	establish_lighting, NULL, NULL },
     {"%d",  1, "transparency",	Ogl_MV_O(transparency_on), establish_transparency, NULL, NULL },
     {"%d",  1, "fastfog",		Ogl_MV_O(fastfog),	do_fogHint, NULL, NULL },
-    {"%f",  1, "density",		Ogl_MV_O(fogdensity),	dirty_hook, NULL, NULL },
+    {"%g",  1, "density",		Ogl_MV_O(fogdensity),	dirty_hook, NULL, NULL },
     {"%d",  1, "has_zbuf",		Ogl_MV_O(zbuf),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%d",  1, "has_rgb",		Ogl_MV_O(rgb),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%d",  1, "has_doublebuffer",	Ogl_MV_O(doublebuffer), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%d",  1, "depth",		Ogl_MV_O(depth),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%d",  1, "debug",		Ogl_MV_O(debug),	debug_hook, NULL, NULL },
-    {"%f",  1, "bound",		Ogl_MV_O(bound),	bound_hook, NULL, NULL },
+    {"%g",  1, "bound",		Ogl_MV_O(bound),	bound_hook, NULL, NULL },
     {"%d",  1, "useBound",		Ogl_MV_O(boundFlag),	boundFlag_hook, NULL, NULL },
     {"",	0,  (char *)0,		0,			BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
@@ -176,13 +176,13 @@ static int
 Ogl_doevent(ClientData UNUSED(clientData),
 	    XEvent *eventPtr)
 {
-    if (!glXMakeCurrent(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
-			((struct dm_xvars *)dmp->dm_vars.pub_vars)->win,
-			((struct ogl_vars *)dmp->dm_vars.priv_vars)->glxc))
-	/* allow further processing of this event */
-	return TCL_OK;
-
     if (eventPtr->type == Expose && eventPtr->xexpose.count == 0) {
+	if (!glXMakeCurrent(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
+			    ((struct dm_xvars *)dmp->dm_vars.pub_vars)->win,
+			    ((struct ogl_vars *)dmp->dm_vars.priv_vars)->glxc))
+	    /* allow further processing of this event */
+	    return TCL_OK;
+
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	dirty = 1;
@@ -263,6 +263,7 @@ Ogl_colorchange()
 static void
 establish_zbuffer()
 {
+    (void)DM_MAKE_CURRENT(dmp);
     (void)DM_SET_ZBUFFER(dmp, ((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.zbuffer_on);
     view_state->vs_flag = 1;
 }
@@ -271,6 +272,7 @@ establish_zbuffer()
 static void
 establish_lighting()
 {
+    (void)DM_MAKE_CURRENT(dmp);
     (void)DM_SET_LIGHT(dmp, ((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.lighting_on);
     view_state->vs_flag = 1;
 }
@@ -279,6 +281,7 @@ establish_lighting()
 static void
 establish_transparency()
 {
+    (void)DM_MAKE_CURRENT(dmp);
     (void)DM_SET_TRANSPARENCY(dmp, ((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.transparency_on);
     view_state->vs_flag = 1;
 }
@@ -302,9 +305,19 @@ dirty_hook()
 static void
 zclip_hook()
 {
+    fastf_t bounds[6] = { GED_MIN, GED_MAX, GED_MIN, GED_MAX, GED_MIN, GED_MAX };
+
     dmp->dm_zclip = ((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.zclipping_on;
     view_state->vs_gvp->gv_zclip = dmp->dm_zclip;
     dirty_hook();
+
+    if (dmp->dm_zclip) {
+	bounds[4] = -1.0;
+	bounds[5] = 1.0;
+    }
+
+    (void)DM_MAKE_CURRENT(dmp);
+    (void)DM_SET_WIN_BOUNDS(dmp, bounds);
 }
 
 

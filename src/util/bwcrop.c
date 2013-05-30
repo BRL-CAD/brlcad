@@ -1,7 +1,7 @@
 /*                        B W C R O P . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2012 United States Government as represented by
+ * Copyright (c) 1986-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -43,9 +43,9 @@
 #define MAXBUFBYTES 1024*1024	/* max bytes to malloc in buffer space */
 
 unsigned char *buffer;
-size_t scanlen;			/* length of infile scanlines */
-size_t buflines;		/* Number of lines held in buffer */
-int buf_start = -1000;		/* First line in buffer */
+ssize_t scanlen;			/* length of infile scanlines */
+ssize_t buflines;		/* Number of lines held in buffer */
+off_t buf_start = -1000;	/* First line in buffer */
 
 unsigned long xnum, ynum;	/* Number of pixels in new file */
 float ulx, uly, urx, ury, lrx, lry, llx, lly;	/* Corners of original file */
@@ -94,7 +94,7 @@ fill_buffer(int y)
     buf_start = y - buflines/2;
     if (buf_start < 0) buf_start = 0;
 
-    fseek(ifp, buf_start * scanlen, 0);
+    bu_fseek(ifp, buf_start * scanlen, 0);
     ret = fread(buffer, scanlen, buflines, ifp);
     if (ret == 0)
 	perror("fread");
@@ -106,7 +106,7 @@ main(int argc, char **argv)
 {
     float x1, y1, x2, y2, x, y;
     size_t row, col;
-    size_t yindex;
+    ssize_t yindex;
     char value;
     size_t ret;
 
@@ -116,10 +116,10 @@ main(int argc, char **argv)
 	bu_exit(1, "%s", usage);
     }
     if ((ifp = fopen(argv[1], "r")) == NULL) {
-	bu_exit(2, "bwcrop: can't open %s\n", argv[1]);
+	bu_exit(2, "bwcrop: can't open %s for reading\n", argv[1]);
     }
     if ((ofp = fopen(argv[2], "w")) == NULL) {
-	bu_exit(3, "bwcrop: can't open %s\n", argv[1]);
+	bu_exit(3, "bwcrop: can't open %s for writing\n", argv[2]);
     }
 
     if (argc == 14) {
@@ -246,7 +246,7 @@ main(int argc, char **argv)
     init_buffer(scanlen);
 
     /* Check for silly buffer syndrome */
-    if ((unsigned)abs((int)(ury - uly)) > buflines/2 || (unsigned)abs((int)(lry - lly)) > buflines/2) {
+    if ((ssize_t)abs((int)(ury - uly)) > buflines/2 || (ssize_t)abs((int)(lry - lly)) > buflines/2) {
 	fprintf(stderr, "bwcrop: Warning: You are skewing enough in the y direction\n");
 	fprintf(stderr, "bwcrop: relative to my buffer size that I will exhibit silly\n");
 	fprintf(stderr, "bwcrop: buffer syndrome (two replacements per scanline).\n");

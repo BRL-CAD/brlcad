@@ -1,7 +1,7 @@
 /*                       S H _ F L A T . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2012 United States Government as represented by
+ * Copyright (c) 2004-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -21,7 +21,7 @@
  *
  * Notes -
  * This is a basic flat shader.  It will display an object with a set color
- * without taking any effects such as curvature, emission, reflection, etc
+ * without taking any effects such as curvature, emission, reflection, etc.
  * into consideration.  It simply shades an object constantly with either
  * (in order of reverse priority) 1) the default flat color (white),
  * 2) its set region color, 2) the specified flat shader color (given via
@@ -83,8 +83,6 @@ struct flat_specific flat_defaults = {
 
 #define SHDR_FLAT ((struct flat_specific *)0)
 #define SHDR_O(m) bu_offsetof(struct flat_specific, m)
-#define SHDR_AO(m) bu_offsetofarray(struct flat_specific, m)
-
 
 /* description of how to parse/print the arguments to the shader
  * There is at least one line here for each variable in the shader specific
@@ -133,7 +131,7 @@ struct mfuncs flat_mfuncs[] = {
  *
  * sdp == structure description
  * name == struct member name
- * base == begining of structure
+ * base == beginning of structure
  * value == string containing value
  */
 void
@@ -301,7 +299,7 @@ flat_print(register struct region *rp, genptr_t dp) {
  */
 HIDDEN void
 flat_free(genptr_t cp) {
-    bu_free(cp, "flat_specific");
+    BU_PUT(cp, struct flat_specific);
 }
 
 

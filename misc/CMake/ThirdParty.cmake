@@ -1,7 +1,7 @@
 #                T H I R D P A R T Y . C M A K E
 # BRL-CAD
 #
-# Copyright (c) 2011-2012 United States Government as represented by
+# Copyright (c) 2011-2013 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -58,17 +58,17 @@ macro(THIRD_PARTY lower dir required_vars aliases description)
   set(${upper}_MET_CONDITION 0)
 
   # 1. If any of the required flags are off, this extension is a no-go.
-  set(DISABLE_STR "") 
+  set(DISABLE_STR "")
   foreach(item ${required_vars})
     if(NOT ${item})
       set(${upper}_DISABLED 1)
       set(${upper}_DISABLE_TEST 1)
       set(${CMAKE_PROJECT_NAME}_${upper}_BUILD OFF)
-      if(NOT DISABLE_STR) 
+      if(NOT DISABLE_STR)
 	set(DISABLE_STR "${item}")
-      else(NOT DISABLE_STR) 
+      else(NOT DISABLE_STR)
 	set(DISABLE_STR "${DISABLE_STR},${item}")
-      endif(NOT DISABLE_STR) 
+      endif(NOT DISABLE_STR)
     endif(NOT ${item})
   endforeach(item ${required_vars})
   if(DISABLE_STR)
@@ -99,10 +99,10 @@ macro(THIRD_PARTY lower dir required_vars aliases description)
     endif("${OPT_STR_UPPER}" STREQUAL "SYSTEM")
   endif(OPT_STR_UPPER)
 
-  # 3. If we have a NOSYS flag and aren't explicitly disabled, ALWAYS use the bundled version.  
-  # The NOSYS flag signifies that the BRL-CAD project requires modifications in the local src/other 
-  # version of a library or tool that are not likely to be present in a system version.  These flags 
-  # should be periodically reviewed to determine if they can be removed (i.e. system packages have 
+  # 3. If we have a NOSYS flag and aren't explicitly disabled, ALWAYS use the bundled version.
+  # The NOSYS flag signifies that the BRL-CAD project requires modifications in the local src/other
+  # version of a library or tool that are not likely to be present in a system version.  These flags
+  # should be periodically reviewed to determine if they can be removed (i.e. system packages have
   # appeared in modern OS distributions with the fixes needed by BRL-CAD...)
   if(NOT ${upper}_MET_CONDITION)
     foreach(extraarg ${ARGN})
@@ -115,7 +115,7 @@ macro(THIRD_PARTY lower dir required_vars aliases description)
     endforeach(extraarg ${ARGN})
   endif(NOT ${upper}_MET_CONDITION)
 
-  # 4. If we have an explicit BUNDLE request for this particular library,  honor it as long as 
+  # 4. If we have an explicit BUNDLE request for this particular library,  honor it as long as
   # features are satisfied.  No point in testing if we know we're turning it on - set vars accordingly.
   if(OPT_STR_UPPER)
     if("${OPT_STR_UPPER}" STREQUAL "BUNDLED")
@@ -195,11 +195,11 @@ macro(THIRD_PARTY lower dir required_vars aliases description)
     endif(${upper}_FOUND)
   endif(NOT ${upper}_DISABLE_TEST)
 
-  # If we're going with a system version of a library, we have to remove any previously built 
-  # output from enabled bundled copies of the library in question, or the linker will get 
-  # confused - a system lib was found and system libraries are to be preferred with current 
-  # options.  This is unfortunate in that it may introduce extra build work just from trying 
-  # configure options, but appears to be essential to ensuring that the build "just works" 
+  # If we're going with a system version of a library, we have to remove any previously built
+  # output from enabled bundled copies of the library in question, or the linker will get
+  # confused - a system lib was found and system libraries are to be preferred with current
+  # options.  This is unfortunate in that it may introduce extra build work just from trying
+  # configure options, but appears to be essential to ensuring that the build "just works"
   # each time.
   if(NOT ${CMAKE_PROJECT_NAME}_${upper}_BUILD)
     string(REGEX REPLACE "lib" "" rootname "${lower}")
@@ -222,7 +222,7 @@ macro(THIRD_PARTY lower dir required_vars aliases description)
 
   # After all that, we know now what to do about src/other/${dir} - do it
   if(${CMAKE_PROJECT_NAME}_${upper}_BUILD)
-    ADD_SUBDIRECTORY(${dir})
+    add_subdirectory(${dir})
     set(${upper}_LIBRARY "${lower}" CACHE STRING "${upper}_LIBRARY" FORCE)
     set(${upper}_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/${dir};${CMAKE_CURRENT_BINARY_DIR}/${dir} CACHE STRING "set by THIRD_PARTY_SUBDIR macro" FORCE)
     if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${dir}.dist)
@@ -287,7 +287,7 @@ macro(THIRD_PARTY_EXECUTABLE lower dir required_vars aliases description)
 	if(EXISTS ${FULL_PATH_EXEC})
 	  set(EXEC_CACHED ${${upper}_EXECUTABLE})
 	else(EXISTS ${FULL_PATH_EXEC})
-	  # This path not being present may indicate the user specified a path 
+	  # This path not being present may indicate the user specified a path
 	  # and made a mistake doing so - warn that this might be the case.
 	  message(WARNING "File path ${${upper}_EXECUTABLE} specified for ${upper}_EXECUTABLE does not exist - this path will not override ${lower} executable search results.")
 	endif(EXISTS ${FULL_PATH_EXEC})
@@ -301,17 +301,17 @@ macro(THIRD_PARTY_EXECUTABLE lower dir required_vars aliases description)
   set(${upper}_MET_CONDITION 0)
 
   # 1. If any of the required flags are off, this tool is a no-go.
-  set(DISABLE_STR "") 
+  set(DISABLE_STR "")
   foreach(item ${required_vars})
     if(NOT ${item})
       set(${upper}_DISABLED 1)
       set(${upper}_DISABLE_TEST 1)
       set(${CMAKE_PROJECT_NAME}_${upper}_BUILD OFF)
-      if(NOT DISABLE_STR) 
+      if(NOT DISABLE_STR)
 	set(DISABLE_STR "${item}")
-      else(NOT DISABLE_STR) 
+      else(NOT DISABLE_STR)
 	set(DISABLE_STR "${DISABLE_STR},${item}")
-      endif(NOT DISABLE_STR) 
+      endif(NOT DISABLE_STR)
     endif(NOT ${item})
   endforeach(item ${required_vars})
   if(DISABLE_STR)
@@ -344,9 +344,9 @@ macro(THIRD_PARTY_EXECUTABLE lower dir required_vars aliases description)
   # the BRL-CAD project requires modifications in the local src/other version of a library or
   # tool that are not likely to be present in a system version.  These flags should be periodically
   # reviewed to determine if they can be removed (i.e. system packages have appeared in modern
-  # OS distributions with the fixes needed by BRL-CAD...).  
-  # 
-  # * In the case of executables, we'll allow a cached value from the user to override the NOSYS 
+  # OS distributions with the fixes needed by BRL-CAD...).
+  #
+  # * In the case of executables, we'll allow a cached value from the user to override the NOSYS
   # flag, since that's a likely scenario for testing, but that shouldn't be done except for testing
   # purposes with a NOSYS target.
   if(NOT ${upper}_MET_CONDITION)
@@ -360,7 +360,7 @@ macro(THIRD_PARTY_EXECUTABLE lower dir required_vars aliases description)
     endforeach(extraarg ${ARGN})
   endif(NOT ${upper}_MET_CONDITION)
 
-  # 4. If we have an explicit BUNDLE request for this particular executable,  honor it as long as 
+  # 4. If we have an explicit BUNDLE request for this particular executable,  honor it as long as
   # features are satisfied.  No point in testing if we know we're turning it on - set vars accordingly.
   if(OPT_STR_UPPER)
     if("${OPT_STR_UPPER}" STREQUAL "BUNDLED")
@@ -478,12 +478,12 @@ macro(THIRD_PARTY_EXECUTABLE lower dir required_vars aliases description)
 
   if(${CMAKE_PROJECT_NAME}_${upper}_BUILD)
     # In the case of executables, it is possible that a directory may define more than one
-    # executable target.  If this is the case, we may have already added this directory - 
+    # executable target.  If this is the case, we may have already added this directory -
     # if so, don't do it again.
     if(SRC_OTHER_ADDED_DIRS)
       list(FIND SRC_OTHER_ADDED_DIRS ${dir} ADDED_RESULT)
       if("${ADDED_RESULT}" STREQUAL "-1")
-	ADD_SUBDIRECTORY(${dir})
+	add_subdirectory(${dir})
 	set(SRC_OTHER_ADDED_DIRS ${SRC_OTHER_ADDED_DIRS} ${dir})
 	list(REMOVE_DUPLICATES SRC_OTHER_ADDED_DIRS)
 	set(SRC_OTHER_ADDED_DIRS ${SRC_OTHER_ADDED_DIRS} CACHE STRING "Enabled 3rd party sub-directories" FORCE)
@@ -496,7 +496,7 @@ macro(THIRD_PARTY_EXECUTABLE lower dir required_vars aliases description)
 	endif(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${dir}.dist)
       endif("${ADDED_RESULT}" STREQUAL "-1")
     else(SRC_OTHER_ADDED_DIRS)
-      ADD_SUBDIRECTORY(${dir})
+      add_subdirectory(${dir})
       set(SRC_OTHER_ADDED_DIRS ${dir} CACHE STRING "Enabled 3rd party sub-directories" FORCE)
       mark_as_advanced(SRC_OTHER_ADDED_DIRS)
       if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${dir}.dist)

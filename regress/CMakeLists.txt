@@ -61,10 +61,10 @@ if(SH_EXEC)
     ${SH_EXEC} ${CMAKE_SOURCE_DIR}/regress/red.sh ${CMAKE_SOURCE_DIR}
     DEPENDS mged
     )
-  add_custom_target(regress-vls_vprintf
-    ${SH_EXEC} ${CMAKE_SOURCE_DIR}/regress/vls_vprintf.sh ${CMAKE_SOURCE_DIR}
-    DEPENDS test_vls_vprintf
-    )
+  #add_custom_target(regress-vls_vprintf
+  #  ${SH_EXEC} ${CMAKE_SOURCE_DIR}/regress/vls_vprintf.sh ${CMAKE_SOURCE_DIR}
+  #  DEPENDS test_vls_vprintf
+  #  )
   add_custom_target(regress-nirt
     ${SH_EXEC} ${CMAKE_SOURCE_DIR}/regress/nirt.sh ${CMAKE_SOURCE_DIR}
     DEPENDS mged nirt
@@ -81,13 +81,13 @@ if(SH_EXEC)
     ${SH_EXEC} ${CMAKE_SOURCE_DIR}/regress/g-dot.sh ${CMAKE_SOURCE_DIR}
     DEPENDS mged g-dot
     )
-  add_custom_target(regress-quote
-    ${SH_EXEC} ${CMAKE_SOURCE_DIR}/regress/quote.sh ${CMAKE_SOURCE_DIR}
-    DEPENDS test_quote
-    )
+  #add_custom_target(regress-quote
+  #  ${SH_EXEC} ${CMAKE_SOURCE_DIR}/regress/quote.sh ${CMAKE_SOURCE_DIR}
+  #  DEPENDS test_quote
+  #  )
   add_custom_target(regress-rtwizard
     ${SH_EXEC} ${CMAKE_SOURCE_DIR}/regress/rtwizard.sh ${CMAKE_SOURCE_DIR}
-    DEPENDS btclsh rt rtedge fbclear fbserv pix-fb fb-pix pix-bw bw-pix 
+    DEPENDS btclsh rt rtedge fbclear fbserv pix-fb fb-pix pix-bw bw-pix
     pixmatte asc2g asc2pix pixdiff util_tclIndex util_pkgIndex.tcl
     rtwizard_lib_tclIndex rtwizard_lib_pkgIndex.tcl rtwizard_tclIndex
     rtwizard_pkgIndex.tcl rtwizard_TCLSCRIPTS_cp lib_tclIndex
@@ -107,7 +107,7 @@ if(SH_EXEC)
     regress-solids regress-shaders regress-spdi regress-iges
     regress-weight regress-gqa regress-fastgen regress-bots
     regress-repository regress-red regress-nirt
-    regress-vls_vprintf regress-comgeom regress-gnff regress-gdot
+    regress-comgeom regress-gnff regress-gdot
     regress-dsp regress-asc2dsp
     )
 

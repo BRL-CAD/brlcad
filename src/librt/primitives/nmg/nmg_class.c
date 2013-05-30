@@ -1,7 +1,7 @@
 /*                     N M G _ C L A S S . C
  * BRL-CAD
  *
- * Copyright (c) 1993-2012 United States Government as represented by
+ * Copyright (c) 1993-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -145,9 +145,9 @@ joint_hitmiss2(struct neighbor *closest, const struct edgeuse *eu, int code)
     if (eu_rinf == eu) {
 	bu_bomb("joint_hitmiss2: radial eu is me?\n");
     }
-    /* If eu_rinf == eu->eumate_p, thats OK, this is a dangling face,
+    /* If eu_rinf == eu->eumate_p, that's OK, this is a dangling face,
      * or a face that has not been fully hooked up yet.
-     * It's OK as long the the orientations both match.
+     * It's OK as long as the orientations both match.
      */
     if (eu->up.lu_p->orientation == eu_rinf->up.lu_p->orientation) {
 	if (eu->up.lu_p->orientation == OT_SAME) {
@@ -200,7 +200,7 @@ joint_hitmiss2(struct neighbor *closest, const struct edgeuse *eu, int code)
  * is closer to this edgeuse than the previous neighbor(s) as given
  * in the "closest" structure.
  * If it is, record how close the point is, and whether it is IN, ON, or OUT.
- * The neighor's "p" element will indicate the edgeuse or vertexuse closest.
+ * The neighbor's "p" element will indicate the edgeuse or vertexuse closest.
  *
  * This routine should print everything indented two tab stops.
  *
@@ -620,7 +620,7 @@ static const point_t nmg_good_dirs[MAX_DIR_TRYS] = {
  * the number of times it crosses a face.
  *
  * The flag "in_or_out_only" specifies that the point is known to not
- * be on the shell, therfore only returns of NMG_CLASS_AinB or
+ * be on the shell, therefore only returns of NMG_CLASS_AinB or
  * NMG_CLASS_AoutB are acceptable.
  *
  * The point is "A", and the face is "B".
@@ -826,7 +826,7 @@ class_vu_vs_s(struct vertexuse *vu, struct shell *sB, char **classlist, const st
 	goto out;
     }
 
-    /* we use topology to determing if the vertex is "ON" the
+    /* we use topology to determine if the vertex is "ON" the
      * other shell.
      */
     for (BU_LIST_FOR(vup, vertexuse, &vu->v_p->vu_hd)) {
@@ -967,11 +967,11 @@ class_eu_vs_s(struct edgeuse *eu, struct shell *s, char **classlist, const struc
     VMOVE(e_max_pt, eu->vu_p->v_p->vg_p->coord);
     VMAX(e_max_pt, eu->eumate_p->vu_p->v_p->vg_p->coord);
 
-    /* if the edge and shell bounding boxes do not overlap
-     * then the edge is outside the shell. also both vertices
-     * of the edge are outside the shell.
+    /* if the edge and shell bounding boxes are disjoint by at least
+     * distance tolerance then the edge is outside the shell. also
+     * both vertices of the edge are outside the shell.
      */
-    if (!V3RPP_OVERLAP_TOL(e_min_pt, e_max_pt, s->sa_p->min_pt, s->sa_p->max_pt, tol->dist)) {
+    if (V3RPP_DISJOINT_TOL(e_min_pt, e_max_pt, s->sa_p->min_pt, s->sa_p->max_pt, tol->dist)) {
 	NMG_INDEX_SET(classlist[NMG_CLASS_AoutB], eu->e_p);
 	NMG_INDEX_SET(classlist[NMG_CLASS_AoutB], eu->vu_p->v_p);
 	NMG_INDEX_SET(classlist[NMG_CLASS_AoutB], eu->eumate_p->vu_p->v_p);
@@ -1191,7 +1191,7 @@ nmg_2lu_identical(const struct edgeuse *eu1, const struct edgeuse *eu2)
     if (eu2->vu_p->v_p != eu1->vu_p->v_p) {
 	eu2 = eu2->eumate_p;
 	if (eu2->vu_p->v_p != eu1->vu_p->v_p)
-	    bu_bomb("nmg_2lu_identical() radial edgeuse doesn't share verticies\n");
+	    bu_bomb("nmg_2lu_identical() radial edgeuse doesn't share vertices\n");
     }
 
     lu1 = eu1->up.lu_p;

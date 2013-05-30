@@ -1,7 +1,7 @@
 /*                        P N G - B W . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2012 United States Government as represented by
+ * Copyright (c) 1998-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -87,26 +87,28 @@ main(int argc, char **argv)
 	    gweight = 0.66;
 	    bweight = 0.08;
 	    red = green = blue = 1;
-	} else switch (argv[1][1]) {
-	    case 'R':
-		red++;
-		if (argv[1][2] != '\0')
-		    rweight = atof(&argv[1][2]);
-		break;
-	    case 'G':
-		green++;
-		if (argv[1][2] != '\0')
-		    gweight = atof(&argv[1][2]);
-		break;
-	    case 'B':
-		blue++;
-		if (argv[1][2] != '\0')
-		    bweight = atof(&argv[1][2]);
-		break;
-	    default:
-		bu_log("Illegal option (%s)\n", argv[1]);
-		bu_log(usage, "png-bw");
-		bu_exit(EXIT_FAILURE, "Illegal option\n");
+	} else {
+	    switch (argv[1][1]) {
+		case 'R':
+		    red++;
+		    if (argv[1][2] != '\0')
+			rweight = atof(&argv[1][2]);
+		    break;
+		case 'G':
+		    green++;
+		    if (argv[1][2] != '\0')
+			gweight = atof(&argv[1][2]);
+		    break;
+		case 'B':
+		    blue++;
+		    if (argv[1][2] != '\0')
+			bweight = atof(&argv[1][2]);
+		    break;
+		default:
+		    bu_log("Illegal option (%s)\n", argv[1]);
+		    bu_log(usage, "png-bw");
+		    bu_exit(EXIT_FAILURE, "Illegal option\n");
+	    }
 	}
 	argc--;
 	argv++;
@@ -289,8 +291,8 @@ main(int argc, char **argv)
     }
 
     ret = fwrite(obuf, sizeof(char), num/3, stdout);
-	if (ret < (size_t)num/3)
-	    perror("fwrite");
+    if (ret < (size_t)num/3)
+	perror("fwrite");
 
     if (clip_high != 0 || clip_low != 0) {
 	fprintf(stderr, "png-bw: clipped %d high, %d, low\n",

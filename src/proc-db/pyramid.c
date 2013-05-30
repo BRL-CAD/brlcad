@@ -1,7 +1,7 @@
 /*                       P Y R A M I D . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2012 United States Government as represented by
+ * Copyright (c) 1986-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -20,7 +20,7 @@
 /** @file proc-db/pyramid.c
  *
  * Program to generate recursive 3-d pyramids (arb4).
- * Inspired by the SigGraph paper of Glasser.
+ * Inspired by the SigGraph paper of Glassner.
  *
  */
 
@@ -53,7 +53,7 @@ main(int argc, char **argv)
 	return 1;
     }
     depth = atoi(argv[1]);
-    sin60 = sin(60.0 * 3.14159265358979323846264 / 180.0);
+    sin60 = sin(60.0 * DEG2RAD);
 
     outfp = wdb_fopen("pyramid.g");
 
@@ -64,6 +64,7 @@ main(int argc, char **argv)
 
     return 0;
 }
+
 
 /* Make a leaf node out of an ARB4 */
 void
@@ -108,6 +109,7 @@ pnorms(fastf_t (*norms)[3], fastf_t (*verts)[3], fastf_t *centroid, int npts)
 	VMOVE(norms[i], n);
     }
 }
+
 
 void
 do_tree(char *name, char *lname, int level)
@@ -157,6 +159,7 @@ do_tree(char *name, char *lname, int level)
 	do_tree(nm, lname, level-1);
     }
 }
+
 
 /*
  * Local Variables:

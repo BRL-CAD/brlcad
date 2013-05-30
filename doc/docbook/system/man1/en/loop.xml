@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='loop1'>
+<refmeta>
+    <refentrytitle>LOOP
+</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class='source'>BRL-CAD</refmiscinfo>
+<refmiscinfo class='manual'>BRL-CAD</refmiscinfo>
+</refmeta>
+
+<refnamediv>
+<refname>loop</refname>
+<refpurpose>generate numerical indices for shell loops, etc.</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<cmdsynopsis>
+  <command>loop</command>
+    <arg choice='plain'><replaceable>start</replaceable></arg>
+    <arg choice='plain'><replaceable>finish</replaceable></arg>
+    <arg choice='opt'><replaceable>increment</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para><emphasis remap='I'>Loop</emphasis>
+generates a sequence of numbers between
+<emphasis remap='I'>start</emphasis>
+and
+<emphasis remap='I'>finish</emphasis>
+inclusive, one per line, on stdout.
+This is mostly useful for driving loops when writing Shell programs
+<citerefentry><refentrytitle>sh</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
+The default increment is +1 when start&lt;finish, and -1 when start&gt;finish.
+An optional
+<emphasis remap='I'>increment</emphasis>
+may be specified.
+If
+<emphasis remap='I'>increment</emphasis>
+is zero, then the
+<emphasis remap='I'>start</emphasis>
+value will be generated continuously.</para>
+
+<para>Both floating point and integer arguments can be used.  On
+integer arguments, if leading zeros are specified, they will
+be preserver on output.  This is useful for generating sequences
+of file names which are numbered with leading zeros.</para>
+</refsect1>
+
+<refsect1 xml:id='examples'><title>EXAMPLES</title>
+<literallayout remap='.nf'>
+for i in `loop 10 30 5`
+do
+  echo $i
+done
+</literallayout> <!-- .fi -->
+
+<para>Will display the values 10, 15, 20, 25, and 30.</para>
+
+
+<literallayout remap='.nf'>
+for i in `loop 008 005`
+do
+  echo $i
+done
+</literallayout> <!-- .fi -->
+
+<para>Will display the values 008, 007, 006, 005.</para>
+
+
+<literallayout remap='.nf'>
+for i in `loop 0.1 2.9 0.5`
+do
+  echo $i
+done
+</literallayout> <!-- .fi -->
+
+<para>Will display the values 0.1, 0.6, 1.1, 1.6, 2.1, 2.6.</para>
+</refsect1>
+
+<refsect1 xml:id='bugs'><title>BUGS</title>
+<para>This program just scratches the surface.
+The shells could benefit from a greater ability to perform math.
+Limitless opportunities for extensions exist, but
+this simple version is adequate for most shell scripts
+dealing with sequences of images, etc.</para>
+
+</refsect1>
+
+<refsect1 xml:id='author'><title>AUTHOR</title>
+<para>BRL-CAD Team</para>
+
+</refsect1>
+
+<refsect1 xml:id='copyright'><title>COPYRIGHT</title>
+<para>This software is Copyright (c) 1986-2013 by the United States
+Government as represented by U.S. Army Research Laboratory.</para>
+</refsect1>
+
+<refsect1 xml:id='bug_reports'><title>BUG REPORTS</title>
+<para>Reports of bugs or problems should be submitted via electronic
+mail to &lt;devs@brlcad.org&gt;.</para>
+</refsect1>
+</refentry>
+

@@ -1,7 +1,7 @@
 /*                         T R A C K . C
  * BRL-CAD
  *
- * Copyright (c) 1994-2012 United States Government as represented by
+ * Copyright (c) 1994-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -103,15 +103,15 @@ wrobj(struct rt_wdb *wdbp,
 	case ID_ARB8: {
 	    struct rt_arb_internal *arb;
 
-	    BU_GET(arb, struct rt_arb_internal);
+	    BU_ALLOC(arb, struct rt_arb_internal);
 
 	    arb->magic = RT_ARB_INTERNAL_MAGIC;
 
 	    VMOVE(arb->pt[0], &sol.s_values[0]);
 	    for (i = 1; i < 8; i++)
-		VADD2(arb->pt[i], &sol.s_values[i*3], arb->pt[0])
+		VADD2(arb->pt[i], &sol.s_values[i*3], arb->pt[0]);
 
-		    intern.idb_ptr = (genptr_t)arb;
+	    intern.idb_ptr = (genptr_t)arb;
 	    intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	    intern.idb_type = ID_ARB8;
 	    intern.idb_meth = &rt_functab[ID_ARB8];
@@ -120,7 +120,7 @@ wrobj(struct rt_wdb *wdbp,
 	case ID_TGC: {
 	    struct rt_tgc_internal *tgc;
 
-	    BU_GET(tgc, struct rt_tgc_internal);
+	    BU_ALLOC(tgc, struct rt_tgc_internal);
 
 	    tgc->magic = RT_TGC_INTERNAL_MAGIC;
 
@@ -257,9 +257,9 @@ slope(fastf_t wh1[],
     work[1] = t[1] - t[0];
     VMOVE(&sol.s_values[12], work);
     for (i = 3; i <= 9; i += 3) {
-		j = i + 12;
-		VADD2(&sol.s_values[j], &sol.s_values[i], work);
-	}
+	j = i + 12;
+	VADD2(&sol.s_values[j], &sol.s_values[i], work);
+    }
 
     return;
 }
@@ -299,9 +299,9 @@ crdummy(fastf_t w[3], fastf_t t[3], int flag)
     vec[1] = t[1] - t[0] + 2.0;
     VMOVE(&sol.s_values[12], vec);
     for (i = 3; i <= 9; i += 3) {
-		j = i + 12;
-		VADD2(&sol.s_values[j], &sol.s_values[i], vec);
-	}
+	j = i + 12;
+	VADD2(&sol.s_values[j], &sol.s_values[i], vec);
+    }
 
     return;
 
@@ -341,9 +341,9 @@ bottom(vect_t vec1, vect_t vec2, fastf_t t[])
     VMOVE(&sol.s_values[12], tvec);
 
     for (i = 3; i <= 9; i += 3) {
-		j = i + 12;
-		VADD2(&sol.s_values[j], &sol.s_values[i], tvec);
-	}
+	j = i + 12;
+	VADD2(&sol.s_values[j], &sol.s_values[i], tvec);
+    }
 }
 
 
@@ -374,9 +374,9 @@ top(vect_t vec1, vect_t vec2, fastf_t t[])
     VMOVE(&sol.s_values[12], tvec);
 
     for (i = 3; i <= 9; i += 3) {
-		j = i + 12;
-		VADD2(&sol.s_values[j], &sol.s_values[i], tvec);
-	}
+	j = i + 12;
+	VADD2(&sol.s_values[j], &sol.s_values[i], tvec);
+    }
 }
 
 
@@ -492,7 +492,7 @@ track_mk_tree_gift(struct rt_comb_internal *comb, struct bu_list *member_hd)
 	}
 
 	/* make new leaf node, and insert at end of array */
-	BU_GET(tp, union tree);
+	BU_ALLOC(tp, union tree);
 	RT_TREE_INIT(tp);
 	tree_list[node_count++].tl_tree = tp;
 	tp->tr_l.tl_op = OP_DB_LEAF;
@@ -549,7 +549,7 @@ track_mk_tree_pure(struct rt_comb_internal *comb, struct bu_list *member_hd)
 
 	WDB_CK_WMEMBER(wp);
 
-	BU_GET(leafp, union tree);
+	BU_ALLOC(leafp, union tree);
 	RT_TREE_INIT(leafp);
 	leafp->tr_l.tl_op = OP_DB_LEAF;
 	leafp->tr_l.tl_name = bu_strdup(wp->wm_name);
@@ -562,7 +562,7 @@ track_mk_tree_pure(struct rt_comb_internal *comb, struct bu_list *member_hd)
 	    continue;
 	}
 	/* Build a left-heavy tree */
-	BU_GET(nodep, union tree);
+	BU_ALLOC(nodep, union tree);
 	RT_TREE_INIT(nodep);
 	switch (wp->wm_op) {
 	    case WMOP_UNION:
@@ -632,7 +632,7 @@ track_mk_comb(
 	fresh_combination = 0;
     } else {
 	/* Create a fresh new object for export */
-	BU_GET(comb, struct rt_comb_internal);
+	BU_ALLOC(comb, struct rt_comb_internal);
 	RT_COMB_INTERNAL_INIT(comb);
 
 	intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
@@ -726,7 +726,7 @@ track_mk_addmember(
 {
     struct wmember *wp;
 
-    BU_GET(wp, struct wmember);
+    BU_ALLOC(wp, struct wmember);
     wp->l.magic = WMEMBER_MAGIC;
     wp->wm_name = bu_strdup(name);
     switch (op) {
@@ -1185,7 +1185,7 @@ wdb_track_cmd(void *data,
 		      0, NULL, NULL, NULL,
 		      0, 0, 0, 0,
 		      0, 1, 1) < 0) {
-	bu_log("An error has occured while adding '%s' to the database.\n", grpname);
+	bu_log("An error has occurred while adding '%s' to the database.\n", grpname);
     }
 
     Trackpos += 10;

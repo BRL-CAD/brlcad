@@ -1,14 +1,14 @@
-/*                 DerivedUnitElement.cpp
+/*          D E R I V E D U N I T E L E M E N T . C P P
  * BRL-CAD
  *
- * Copyright (c) 1994-2010 DerivedUnitElemented States Government as represented by
+ * Copyright (c) 1994-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
- * This program is free software; you can redistribute it and/or
+ * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public License
  * version 2.1 as published by the Free Software Foundation.
  *
- * This program is distributed in the hope that it will be useful, but
+ * This library is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file step/DerivedUnitElement.cpp
+/** @file DerivedUnitElement.cpp
  *
  * Routines to convert STEP "DerivedUnitElement" to BRL-CAD BREP
  * structures.
@@ -32,81 +32,84 @@
 
 #define CLASSNAME "DerivedUnitElement"
 #define ENTITYNAME "Derived_Unit_Element"
-string DerivedUnitElement::entityname = Factory::RegisterClass(ENTITYNAME,(FactoryMethod)DerivedUnitElement::Create);
+string DerivedUnitElement::entityname = Factory::RegisterClass(ENTITYNAME, (FactoryMethod)DerivedUnitElement::Create);
 
-DerivedUnitElement::DerivedUnitElement() {
+DerivedUnitElement::DerivedUnitElement()
+{
     step = NULL;
     id = 0;
     unit = NULL;
     exponent = 0.0;
 }
 
-DerivedUnitElement::DerivedUnitElement(STEPWrapper *sw,int step_id) {
+DerivedUnitElement::DerivedUnitElement(STEPWrapper *sw, int step_id)
+{
     step = sw;
     id = step_id;
     unit = NULL;
     exponent = 0.0;
 }
 
-DerivedUnitElement::~DerivedUnitElement() {
+DerivedUnitElement::~DerivedUnitElement()
+{
 }
 
 bool
-DerivedUnitElement::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
-    step=sw;
+DerivedUnitElement::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
+    step = sw;
     id = sse->STEPfile_id;
 
     // need to do this for local attributes to makes sure we have
     // the actual entity and not a complex/supertype parent
-    sse = step->getEntity(sse,ENTITYNAME);
+    sse = step->getEntity(sse, ENTITYNAME);
 
     if (unit == NULL) {
-	SDAI_Application_instance *se = step->getEntityAttribute(sse,"unit");
+	SDAI_Application_instance *se = step->getEntityAttribute(sse, "unit");
 
 	if (se != NULL) {
 	    //unit = dynamic_cast<NamedUnit*>(Factory::CreateNamedUnitObject(sw,se));
-	    unit = dynamic_cast<NamedUnit*>(Factory::CreateObject(sw,se));
+	    unit = dynamic_cast<NamedUnit *>(Factory::CreateObject(sw, se));
 	    if (unit == NULL) {
-	    	std::cout << CLASSNAME << ":Error loading member field \"unit\"." << std::endl;
-	    	return false;
+		std::cout << CLASSNAME << ":Error loading member field \"unit\"." << std::endl;
+		return false;
 	    }
 	} else {
 	    std::cout << CLASSNAME << ":Error loading member field \"unit\"." << std::endl;
 	    return false;
 	}
     }
-    exponent = step->getRealAttribute(sse,"exponent");
+    exponent = step->getRealAttribute(sse, "exponent");
 
     return true;
 }
 
 void
-DerivedUnitElement::Print(int level) {
-    TAB(level); std::cout << CLASSNAME << ":" << "(";
+DerivedUnitElement::Print(int level)
+{
+    TAB(level);
+    std::cout << CLASSNAME << ":" << "(";
     std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-    TAB(level); std::cout << "Attributes:" << std::endl;
-    TAB(level+1); std::cout << "unit:" << std::endl;
-    unit->Print(level+1);
-    TAB(level+1); std::cout << "exponent:" << exponent << std::endl;
+    TAB(level);
+    std::cout << "Attributes:" << std::endl;
+    TAB(level + 1);
+    std::cout << "unit:" << std::endl;
+    unit->Print(level + 1);
+    TAB(level + 1);
+    std::cout << "exponent:" << exponent << std::endl;
 }
+
 STEPEntity *
-DerivedUnitElement::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
-    Factory::OBJECTS::iterator i;
-    if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
-	DerivedUnitElement *object = new DerivedUnitElement(sw,sse->STEPfile_id);
+DerivedUnitElement::GetInstance(STEPWrapper *sw, int id)
+{
+    return new DerivedUnitElement(sw, id);
+}
 
-	Factory::AddObject(object);
-
-	if (!object->Load(sw, sse)) {
-	    std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
-	    delete object;
-	    return NULL;
-	}
-	return static_cast<STEPEntity *>(object);
-    } else {
-	return (*i).second;
-    }
+STEPEntity *
+DerivedUnitElement::Create(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
+    return STEPEntity::CreateEntity(sw, sse, GetInstance, CLASSNAME);
 }
 
 // Local Variables:

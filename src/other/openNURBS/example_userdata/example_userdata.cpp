@@ -1,5 +1,7 @@
+// uncomment the "ON_DLL_IMPORTS" define to use opennurbs as a Windows DLL
+//#define ON_DLL_IMPORTS
 #include "../opennurbs.h"
-#include "../opennurbs_staticlib_linking_pragmas.h"
+#include "../examples_linking_pragmas.h"
 
 // This example demonstrates how to attach customized "user data"
 // to any class derived from ON_Object.  In particular, you can
@@ -179,8 +181,7 @@ static void write_file( const char* filename, const ON_Point& point )
   mo.m_object = &point;
   mo.m_bDeleteObject = false;
 
-  int version = 4; // File can be read by Rhino 4 and Rhino 5
-  //int version = 5; // File can be read by Rhino 5
+  int version = 0; // version will be ON_BinaryArchive::CurrentArchiveVersion()
 
   model.Polish();
   model.Write( filename, version, "example_userdata.cpp file" );
@@ -252,7 +253,7 @@ int main()
 
   // When the point is saved to a file, the virtual ON_Object::Write() is
   // called to write the attached user data.
-  const char* filename = "point_with_user_Data.3dm";
+  const char* filename = "my_point_with_user_data.3dm";
   write_file( filename, point );
 
   // When the point is read from a file, the virtual ON_Object::Read() is

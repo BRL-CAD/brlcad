@@ -5,33 +5,33 @@
 >
 
   <info><title><application>BRL-CAD</application> Tutorial Series: Volume II - Introduction to MGED</title>
-    
+
 
     <xi:include href="./tutorial_series_authors.xml" xpointer="Intro_MGED_Tutorial_Series_II_authors"/>
 
     <publishername>Army Research Laboratory</publishername>
     <biblioid class="pubsnumber">ARL-SR-102</biblioid>
     <pubdate>April 2001</pubdate>
-    
+
     <legalnotice>
       <para>Approved for public release; distribution is unlimited</para>
-      
+
       <para>The findings in this report are not to be construed as an
-      official Department of the Army position unless so designated 
+      official Department of the Army position unless so designated
       by other authorized documents.</para>
-      
+
       <para>Citation of manufacturer's or trade names does not constitute
       an official endorsement or approval of the use thereof.</para>
-      
+
       <para>Destroy this report when it is no longer needed. Do not return
       it to the originator.</para>
-    </legalnotice>      
-    
-    
+    </legalnotice>
+
+
   </info>
 
   <preface><info><title>Preface</title></info>
-    
+
     <para>
       Since 1979, the U.S. Army Research Laboratory (formerly the Ballistic
       Research Laboratory) has been developing the <application>BRL-CAD</application> constructive solid
@@ -42,14 +42,14 @@
       subtraction, and intersection and by assigning real-world material
       attributes.
     </para>
-    
+
     <para>
       The package comprises a large collection of tools, utilities, and
       libraries including an interactive geometry editor, ray-tracing and
       generic framebuffer libraries, a network-distributed image-processing and
       signal-processing capability, and an embedded scripting language.
     </para>
-    
+
     <para>
       Although <application>BRL-CAD</application> has continued to mature in performance and utility,
       developers have strived to keep the package approachable and easy to use,
@@ -57,7 +57,7 @@
       graphical user interface (GUI), and its customization potential through
       user scripting.
     </para>
-    
+
     <para>
       In addition, a multivolume tutorial series is being developed to assist
       users in a variety of <application>BRL-CAD</application> areas and applications. The "Introduction to
@@ -67,16 +67,16 @@
       installation procedures, advanced features, and programming.
     </para>
   </preface>
-  
+
   <preface><info><title>Acknowledgements</title></info>
-    
+
     <para>
       The authors would like to thank Paul Tanenbaum, TraNese Christy, Sean
       Morrison, and the other members of the Advanced Computer Systems Team who
       reviewed this document in a timely manner and made many helpful
       suggestions to improve its accuracy and presentation.
     </para>
-    
+
     <para>
       In addition, the authors would like to acknowledge team member Mike Muuss,
       who passed away while this volume was in preparation. Mike was the
@@ -88,7 +88,7 @@
       a passion for excellence and a child-like enthusiasm, which helped drive
       <application>BRL-CAD</application> far beyond expectations.
     </para>
-    
+
     <para>
       Although he never got a chance to review this document, much of this work
       is a result of his vision and attention to detail. Therefore, the <application>BRL-CAD</application>
@@ -98,7 +98,7 @@
   </preface>
 
   <chapter xml:id="Lesson-1"><info><title>Creating Primitive Shapes</title></info>
-    
+
     <xi:include href="../../lessons/en/mged01_creating_primitive_shapes.xml" xpointer="creating_primitive_shapes_overviewlist"/>
     <xi:include href="../../lessons/en/mged01_creating_primitive_shapes.xml" xpointer="launching_mged"/>
     <xi:include href="../../lessons/en/mged01_creating_primitive_shapes.xml" xpointer="entering_commands"/>
@@ -119,10 +119,10 @@
     <xi:include href="../../lessons/en/mged01_creating_primitive_shapes.xml" xpointer="editing_commands"/>
     <xi:include href="../../lessons/en/mged01_creating_primitive_shapes.xml" xpointer="quitting"/>
     <xi:include href="../../lessons/en/mged01_creating_primitive_shapes.xml" xpointer="creating_primitive_shapes_review"/>
-  </chapter> 
+  </chapter>
 
   <chapter xml:id="Lesson-2"><info><title>Learning the Viewing Options</title></info>
-    
+
     <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged02_learning_viewing_options.xml" xpointer="learning_viewing_options_overviewlist"/>
     <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged02_learning_viewing_options.xml" xpointer="learning_viewing_options_intropara1"/>
     <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged02_learning_viewing_options.xml" xpointer="learning_viewing_options_intropara2"/>
@@ -134,9 +134,9 @@
     <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged02_learning_viewing_options.xml" xpointer="shift_grips"/>
     <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged02_learning_viewing_options.xml" xpointer="learning_viewing_options_review"/>
   </chapter>
-  
+
   <chapter xml:id="Lesson-3"><info><title>Using the Insert Command to Size and Place Shapes</title></info>
-    
+
     <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged03_using_insert_command.xml" xpointer="using_insert_command_overviewlist"/>
     <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged03_using_insert_command.xml" xpointer="using_insert_command_intropara1"/>
     <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged03_using_insert_command.xml" xpointer="new_db_myShapes"/>
@@ -151,7 +151,7 @@
   </chapter>
 
   <chapter xml:id="Lesson-4"><info><title>Assigning Material Properties and Raytracing</title></info>
-    
+
     <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged04_assign_mat_prop_rt.xml" xpointer="assigning_material_properties_and_raytracing_overviewlist"/>
     <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged04_assign_mat_prop_rt.xml" xpointer="assigning_material_properties_and_raytracing_opendb"/>
     <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged04_assign_mat_prop_rt.xml" xpointer="create_region"/>
@@ -164,7 +164,7 @@
   </chapter>
 
   <chapter xml:id="Lesson-5"><info><title>Lesson 5: Learning About Boolean Expressions</title></info>
-    
+
     <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged05_learning_boolean_expressions.xml" xpointer="learning_boolean_expressions_overviewlist"/>
     <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged05_learning_boolean_expressions.xml" xpointer="boolean_tools"/>
     <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged05_learning_boolean_expressions.xml" xpointer="boolean_operations"/>
@@ -174,7 +174,7 @@
   </chapter>
 
   <chapter xml:id="Lesson-6"><info><title>Creating a Goblet</title></info>
-    
+
     <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged06_creating_a_goblet.xml" xpointer="creating_a_goblet_overviewlist"/>
     <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged06_creating_a_goblet.xml" xpointer="creating_a_goblet_intro"/>
     <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged06_creating_a_goblet.xml" xpointer="goblet_new_database"/>
@@ -185,9 +185,9 @@
     <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged06_creating_a_goblet.xml" xpointer="raytracing_goblet"/>
     <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged06_creating_a_goblet.xml" xpointer="creating_goblet_review"/>
   </chapter>
-  
+
   <chapter xml:id="Lesson-7"><info><title>Assigning Material Properties to Your Goblet</title></info>
-    
+
     <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged07_goblet_material_properties.xml" xpointer="goblet_material_properties_overviewlist"/>
     <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged07_goblet_material_properties.xml" xpointer="goblet_material_properties_intro1"/>
     <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged07_goblet_material_properties.xml" xpointer="goblet_review_opening_db"/>
@@ -198,7 +198,7 @@
   </chapter>
 
   <chapter xml:id="Lesson-8"><info><title>Assigning More Material Properties to Your Goblet</title></info>
-    
+
     <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged08_goblet_material_properties2.xml" xpointer="goblet_material_properties2_overviewlist"/>
     <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged08_goblet_material_properties2.xml" xpointer="goblet_material_properties2_intro1"/>
     <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged08_goblet_material_properties2.xml" xpointer="goblet_material_properties2_intro2"/>
@@ -214,7 +214,7 @@
  </chapter>
 
   <chapter xml:id="Lesson-9"><info><title>Creating a Globe in a Display Box</title></info>
-    
+
     <para>
       In previous lessons, you combined various shapes into new objects. These
       new objects have been created using solid building blocks, much like those
@@ -222,7 +222,7 @@
       that you will design will consist of an outside shell and various inside
       parts.
     </para>
-    
+
     <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged09_globe_in_display_box.xml" xpointer="globe_in_display_overviewlist"/>
     <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged09_globe_in_display_box.xml" xpointer="globe_in_display_newdb"/>
     <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged09_globe_in_display_box.xml" xpointer="globe_create_display_box"/>
@@ -232,9 +232,9 @@
     <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged09_globe_in_display_box.xml" xpointer="globe_use_color_tool"/>
     <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged09_globe_in_display_box.xml" xpointer="globe_in_display_box_review"/>
   </chapter>
-  
+
   <chapter xml:id="Lesson-10"><info><title>Creating a Mug</title></info>
-    
+
     <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged10_creating_mug.xml" xpointer="creating_mug_overviewlist"/>
     <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged10_creating_mug.xml" xpointer="creating_mug_intro1"/>
     <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged10_creating_mug.xml" xpointer="mug_new_db"/>
@@ -248,7 +248,7 @@
   </chapter>
 
   <chapter xml:id="Lesson-11"><info><title>Refining the Mug</title></info>
-    
+
      <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged11_refining_mug.xml" xpointer="refining_mug_overviewlist"/>
      <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged11_refining_mug.xml" xpointer="refining_mug_intro1"/>
      <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged11_refining_mug.xml" xpointer="mug_mater_prop_mater_cmd"/>
@@ -259,7 +259,7 @@
   </chapter>
 
   <chapter xml:id="Lesson-12"><info><title>Creating the Mug Through the GUI</title></info>
-    
+
      <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged12_mug_through_gui.xml" xpointer="mug_through_gui_overviewlist"/>
      <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged12_mug_through_gui.xml" xpointer="mug_through_gui_intro1"/>
      <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged12_mug_through_gui.xml" xpointer="mug_through_gui_intro2"/>
@@ -273,9 +273,9 @@
      <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged12_mug_through_gui.xml" xpointer="mug_gui_raytracing"/>
      <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged12_mug_through_gui.xml" xpointer="mug_through_gui_review"/>
   </chapter>
- 
+
   <chapter xml:id="lesson-13"><info><title>Placing Shapes in 3-D Space</title></info>
-    
+
      <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged13_placing_shapes_in_3d.xml" xpointer="placing_shapes_in_3d_overviewlist"/>
      <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged13_placing_shapes_in_3d.xml" xpointer="placing_shapes_in_3d_intro1"/>
      <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged13_placing_shapes_in_3d.xml" xpointer="placing_shapes_in_3d_intro2"/>
@@ -292,7 +292,7 @@
   </chapter>
 
   <chapter xml:id="lesson-14"><info><title>Gaining More Practice Placing Shapes in Space</title></info>
-    
+
      <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged14_placing_shapes_in_3d_2.xml" xpointer="placing_shapes_in_3d_2_overviewlist"/>
      <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged14_placing_shapes_in_3d_2.xml" xpointer="placing_shapes_in_3d_2_intro1"/>
      <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged14_placing_shapes_in_3d_2.xml" xpointer="placing_shapes_in_3d_2_intro2"/>
@@ -306,7 +306,7 @@
   </chapter>
 
   <chapter xml:id="lesson-15"><info><title>Creating a Toy Truck</title></info>
-    
+
      <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged15_creating_a_toy_truck.xml" xpointer="creating_toy_truck_overviewlist"/>
      <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged15_creating_a_toy_truck.xml" xpointer="creating_toy_truck_intro1"/>
      <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged15_creating_a_toy_truck.xml" xpointer="creating_toy_truck_intro2"/>
@@ -332,9 +332,8 @@
   </chapter>
 
 
-
   <chapter xml:id="lesson-16"><info><title>Learning Modeling Techniques and Structures</title></info>
-    
+
      <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged16_mod_tech_struct.xml" xpointer="modeling_techniques_and_structures_overviewlist"/>
      <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged16_mod_tech_struct.xml" xpointer="modeling_techniques_and_structures_intro1"/>
      <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged16_mod_tech_struct.xml" xpointer="radio_shapes_to_regions"/>
@@ -349,7 +348,7 @@
   </chapter>
 
 <appendix label="A"><info><title><application>MGED</application> Commands</title></info>
-	<para>Appendix</para>  
+	<para>Appendix</para>
 </appendix>
 
 </book>

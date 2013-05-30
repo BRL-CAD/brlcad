@@ -1,7 +1,7 @@
 /*                     P I X H I S T 3 D . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2012 United States Government as represented by
+ * Copyright (c) 1986-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -57,7 +57,7 @@ unsigned char ibuf[8*1024*3];
 
 void disp_array(long int (*v)[256], int xoff, int yoff);
 
-static const char *Usage = "usage: pixhist3d [file.pix]\n";
+static const char *Usage = "Usage: pixhist3d [file.pix]\n";
 
 int
 main(int argc, char **argv)
@@ -81,9 +81,9 @@ main(int argc, char **argv)
     }
 
 #define CHECK_INDEX(idx) \
-if (idx > MAX_INDEX) { \
-    bu_exit(3, "pixhist3d: read invalid index %u\n", (unsigned int)idx); \
-}
+    if (idx > MAX_INDEX) { \
+	bu_exit(3, "pixhist3d: read invalid index %u\n", (unsigned int)idx); \
+    }
 
     while ((n = fread(&ibuf[0], sizeof(*ibuf), sizeof(ibuf), fp)) > 0) {
 	unsigned char *bp;
@@ -114,9 +114,9 @@ if (idx > MAX_INDEX) { \
 	    if (UNLIKELY(b > 255))
 		b = 255;
 
- 	    rxb[ r ][ b ]++;
- 	    rxg[ r ][ g ]++;
- 	    bxg[ b ][ g ]++;
+	    rxb[ r ][ b ]++;
+	    rxg[ r ][ g ]++;
+	    bxg[ b ][ g ]++;
 	}
     }
 

@@ -1,7 +1,7 @@
 /*                         M A T E R . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2012 United States Government as represented by
+ * Copyright (c) 1985-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -24,7 +24,7 @@
  * outboard database "handles").
  *
  * It is expected that entries on this mater list will be sorted in
- * strictly ascending order, with no overlaps (ie, monotonicly
+ * strictly ascending order, with no overlaps (i.e., monotonically
  * increasing).
  *
  */

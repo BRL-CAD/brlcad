@@ -1,7 +1,7 @@
 /*                          P N T S . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2012 United States Government as represented by
+ * Copyright (c) 2008-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -62,7 +62,7 @@ pnts_unpack_double(unsigned char *buf, unsigned char *data, unsigned int count)
  * Calculate a bounding box for a set of points
  */
 int
-rt_pnts_bbox(struct rt_db_internal *ip, point_t *min, point_t *max) {
+rt_pnts_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct bn_tol *UNUSED(tol)) {
     struct rt_pnts_internal *pnts;
     struct bu_list *head;
     struct pnt *point;
@@ -78,6 +78,9 @@ rt_pnts_bbox(struct rt_db_internal *ip, point_t *min, point_t *max) {
     } else {
 	return 0;
     }
+
+    VSETALL((*min), INFINITY);
+    VSETALL((*max), -INFINITY);
 
     if (pnts->scale > 0) {
 	/* we're making spheres out of these, so the bbox
@@ -113,6 +116,9 @@ rt_pnts_export5(struct bu_external *external, const struct rt_db_internal *inter
     unsigned long pointDataSize;
     unsigned char *buf = NULL;
 
+    /* must be double for import and export */
+    double scan;
+
     if (dbip) RT_CK_DBI(dbip);
 
     /* acquire internal pnts structure */
@@ -128,7 +134,8 @@ rt_pnts_export5(struct bu_external *external, const struct rt_db_internal *inter
     external->ext_buf = (genptr_t) bu_calloc(sizeof(unsigned char), external->ext_nbytes, "pnts external");
     buf = (unsigned char *)external->ext_buf;
 
-    htond(buf, (unsigned char *)&pnts->scale, 1);
+    scan = pnts->scale; /* convert fastf_t to double */
+    htond(buf, (unsigned char *)&scan, 1);
     buf += SIZEOF_NETWORK_DOUBLE;
     *(uint16_t *)buf = htons((unsigned short)pnts->type);
     buf += SIZEOF_NETWORK_SHORT;
@@ -165,7 +172,7 @@ rt_pnts_export5(struct bu_external *external, const struct rt_db_internal *inter
 	    register struct pnt *point;
 
 	    for (BU_LIST_FOR(point, pnt, &(((struct pnt *)pnts->point)->l))) {
-		point_t v;
+		double v[3];
 
 		/* pack v */
 		VSCALE(v, point->v, local2mm);
@@ -178,15 +185,17 @@ rt_pnts_export5(struct bu_external *external, const struct rt_db_internal *inter
 	    register struct pnt_color *point;
 
 	    for (BU_LIST_FOR(point, pnt_color, &(((struct pnt_color *)pnts->point)->l))) {
-		point_t v;
+		double v[3];
 		double c[3];
+		fastf_t cf[3];
 
 		/* pack v */
 		VSCALE(v, point->v, local2mm);
 		buf = pnts_pack_double(buf, (unsigned char *)v, ELEMENTS_PER_POINT);
 
 		/* pack c */
-		bu_color_to_rgb_floats(&point->c, c);
+		bu_color_to_rgb_floats(&point->c, cf);
+		VMOVE(c, cf);
 		buf = pnts_pack_double(buf, (unsigned char *)c, 3);
 	    }
 
@@ -196,7 +205,7 @@ rt_pnts_export5(struct bu_external *external, const struct rt_db_internal *inter
 	    register struct pnt_scale *point;
 
 	    for (BU_LIST_FOR(point, pnt_scale, &(((struct pnt_scale *)pnts->point)->l))) {
-		point_t v;
+		double v[3];
 		double s[1];
 
 		/* pack v */
@@ -214,8 +223,8 @@ rt_pnts_export5(struct bu_external *external, const struct rt_db_internal *inter
 	    register struct pnt_normal *point;
 
 	    for (BU_LIST_FOR(point, pnt_normal, &(((struct pnt_normal *)pnts->point)->l))) {
-		point_t v;
-		vect_t n;
+		double v[3];
+		double n[3];
 
 		/* pack v */
 		VSCALE(v, point->v, local2mm);
@@ -232,8 +241,9 @@ rt_pnts_export5(struct bu_external *external, const struct rt_db_internal *inter
 	    register struct pnt_color_scale *point;
 
 	    for (BU_LIST_FOR(point, pnt_color_scale, &(((struct pnt_color_scale *)pnts->point)->l))) {
-		point_t v;
+		double v[3];
 		double c[3];
+		fastf_t cf[3];
 		double s[1];
 
 		/* pack v */
@@ -241,7 +251,8 @@ rt_pnts_export5(struct bu_external *external, const struct rt_db_internal *inter
 		buf = pnts_pack_double(buf, (unsigned char *)v, ELEMENTS_PER_POINT);
 
 		/* pack c */
-		bu_color_to_rgb_floats(&point->c, c);
+		bu_color_to_rgb_floats(&point->c, cf);
+		VMOVE(c, cf);
 		buf = pnts_pack_double(buf, (unsigned char *)c, 3);
 
 		/* pack s */
@@ -255,16 +266,18 @@ rt_pnts_export5(struct bu_external *external, const struct rt_db_internal *inter
 	    register struct pnt_color_normal *point;
 
 	    for (BU_LIST_FOR(point, pnt_color_normal, &(((struct pnt_color_normal *)pnts->point)->l))) {
-		point_t v;
+		double v[3];
 		double c[3];
-		vect_t n;
+		fastf_t cf[3];
+		double n[3];
 
 		/* pack v */
 		VSCALE(v, point->v, local2mm);
 		buf = pnts_pack_double(buf, (unsigned char *)v, ELEMENTS_PER_POINT);
 
 		/* pack c */
-		bu_color_to_rgb_floats(&point->c, c);
+		bu_color_to_rgb_floats(&point->c, cf);
+		VMOVE(c, cf);
 		buf = pnts_pack_double(buf, (unsigned char *)c, 3);
 
 		/* pack n */
@@ -278,9 +291,9 @@ rt_pnts_export5(struct bu_external *external, const struct rt_db_internal *inter
 	    register struct pnt_scale_normal *point;
 
 	    for (BU_LIST_FOR(point, pnt_scale_normal, &(((struct pnt_scale_normal *)pnts->point)->l))) {
-		point_t v;
+		double v[3];
 		double s[1];
-		vect_t n;
+		double n[3];
 
 		/* pack v */
 		VSCALE(v, point->v, local2mm);
@@ -301,17 +314,19 @@ rt_pnts_export5(struct bu_external *external, const struct rt_db_internal *inter
 	    register struct pnt_color_scale_normal *point;
 
 	    for (BU_LIST_FOR(point, pnt_color_scale_normal, &(((struct pnt_color_scale_normal *)pnts->point)->l))) {
-		point_t v;
-		double c[3];
+		double v[3];
 		double s[1];
-		vect_t n;
+		double c[3];
+		fastf_t cf[3];
+		double n[3];
 
 		/* pack v */
 		VSCALE(v, point->v, local2mm);
 		buf = pnts_pack_double(buf, (unsigned char *)v, ELEMENTS_PER_POINT);
 
 		/* pack c */
-		bu_color_to_rgb_floats(&point->c, c);
+		bu_color_to_rgb_floats(&point->c, cf);
+		VMOVE(c, cf);
 		buf = pnts_pack_double(buf, (unsigned char *)c, 3);
 
 		/* pack s */
@@ -348,6 +363,9 @@ rt_pnts_import5(struct rt_db_internal *internal, const struct bu_external *exter
     unsigned char *buf = NULL;
     unsigned long i;
 
+    /* must be double for import and export */
+    double scan;
+
     if (dbip) RT_CK_DBI(dbip);
 
     RT_CK_DB_INTERNAL(internal);
@@ -358,7 +376,7 @@ rt_pnts_import5(struct rt_db_internal *internal, const struct bu_external *exter
     internal->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     internal->idb_type = ID_PNTS;
     internal->idb_meth = &rt_functab[ID_PNTS];
-    internal->idb_ptr = bu_malloc(sizeof(struct rt_pnts_internal), "rt_pnts_internal");
+    BU_ALLOC(internal->idb_ptr, struct rt_pnts_internal);
 
     /* initialize internal structure */
     pnts = (struct rt_pnts_internal *) internal->idb_ptr;
@@ -366,7 +384,8 @@ rt_pnts_import5(struct rt_db_internal *internal, const struct bu_external *exter
     pnts->point = NULL;
 
     /* unpack the header */
-    ntohd((unsigned char *)&pnts->scale, buf, 1);
+    ntohd((unsigned char *)&scan, buf, 1);
+    pnts->scale = scan; /* convert double to fastf_t */
     buf += SIZEOF_NETWORK_DOUBLE;
     pnts->type = (rt_pnt_type)ntohs(*(uint16_t *)buf);
     buf += SIZEOF_NETWORK_SHORT;
@@ -387,15 +406,15 @@ rt_pnts_import5(struct rt_db_internal *internal, const struct bu_external *exter
 	case RT_PNT_TYPE_PNT: {
 	    register struct pnt *point;
 
-	    BU_GET(point, struct pnt);
+	    BU_ALLOC(point, struct pnt);
 	    head = &point->l;
 	    BU_LIST_INIT(head);
 	    pnts->point = point;
 
 	    for (i = 0; i < pnts->count; i++) {
-		point_t v;
+		double v[3];
 
-		BU_GET(point, struct pnt);
+		BU_ALLOC(point, struct pnt);
 
 		/* unpack v */
 		buf = pnts_unpack_double(buf, (unsigned char *)v, ELEMENTS_PER_POINT);
@@ -409,16 +428,17 @@ rt_pnts_import5(struct rt_db_internal *internal, const struct bu_external *exter
 	case RT_PNT_TYPE_COL: {
 	    register struct pnt_color *point;
 
-	    BU_GET(point, struct pnt_color);
+	    BU_ALLOC(point, struct pnt_color);
 	    head = &point->l;
 	    BU_LIST_INIT(head);
 	    pnts->point = point;
 
 	    for (i = 0; i < pnts->count; i++) {
-		point_t v;
+		double v[3];
 		double c[3];
+		fastf_t cf[3];
 
-		BU_GET(point, struct pnt_color);
+		BU_ALLOC(point, struct pnt_color);
 
 		/* unpack v */
 		buf = pnts_unpack_double(buf, (unsigned char *)v, ELEMENTS_PER_POINT);
@@ -426,7 +446,8 @@ rt_pnts_import5(struct rt_db_internal *internal, const struct bu_external *exter
 
 		/* unpack c */
 		buf = pnts_unpack_double(buf, (unsigned char *)c, 3);
-		bu_color_from_rgb_floats(&point->c, c);
+		VMOVE(cf, c);
+		bu_color_from_rgb_floats(&point->c, cf);
 
 		BU_LIST_PUSH(head, &point->l);
 	    }
@@ -436,16 +457,16 @@ rt_pnts_import5(struct rt_db_internal *internal, const struct bu_external *exter
 	case RT_PNT_TYPE_SCA: {
 	    register struct pnt_scale *point;
 
-	    BU_GET(point, struct pnt_scale);
+	    BU_ALLOC(point, struct pnt_scale);
 	    head = &point->l;
 	    BU_LIST_INIT(head);
 	    pnts->point = point;
 
 	    for (i = 0; i < pnts->count; i++) {
-		point_t v;
+		double v[3];
 		double s[1];
 
-		BU_GET(point, struct pnt_scale);
+		BU_ALLOC(point, struct pnt_scale);
 
 		/* unpack v */
 		buf = pnts_unpack_double(buf, (unsigned char *)v, ELEMENTS_PER_POINT);
@@ -463,16 +484,16 @@ rt_pnts_import5(struct rt_db_internal *internal, const struct bu_external *exter
 	case RT_PNT_TYPE_NRM: {
 	    register struct pnt_normal *point;
 
-	    BU_GET(point, struct pnt_normal);
+	    BU_ALLOC(point, struct pnt_normal);
 	    head = &point->l;
 	    BU_LIST_INIT(head);
 	    pnts->point = point;
 
 	    for (i = 0; i < pnts->count; i++) {
-		point_t v;
-		vect_t n;
+		double v[3];
+		double n[3];
 
-		BU_GET(point, struct pnt_normal);
+		BU_ALLOC(point, struct pnt_normal);
 
 		/* unpack v */
 		buf = pnts_unpack_double(buf, (unsigned char *)v, ELEMENTS_PER_POINT);
@@ -490,17 +511,18 @@ rt_pnts_import5(struct rt_db_internal *internal, const struct bu_external *exter
 	case RT_PNT_TYPE_COL_SCA: {
 	    register struct pnt_color_scale *point;
 
-	    BU_GET(point, struct pnt_color_scale);
+	    BU_ALLOC(point, struct pnt_color_scale);
 	    head = &point->l;
 	    BU_LIST_INIT(head);
 	    pnts->point = point;
 
 	    for (i = 0; i < pnts->count; i++) {
-		point_t v;
+		double v[3];
 		double c[3];
+		fastf_t cf[3];
 		double s[1];
 
-		BU_GET(point, struct pnt_color_scale);
+		BU_ALLOC(point, struct pnt_color_scale);
 
 		/* unpack v */
 		buf = pnts_unpack_double(buf, (unsigned char *)v, ELEMENTS_PER_POINT);
@@ -508,7 +530,8 @@ rt_pnts_import5(struct rt_db_internal *internal, const struct bu_external *exter
 
 		/* unpack c */
 		buf = pnts_unpack_double(buf, (unsigned char *)c, 3);
-		bu_color_from_rgb_floats(&point->c, c);
+		VMOVE(cf, c);
+		bu_color_from_rgb_floats(&point->c, cf);
 
 		/* unpack s */
 		buf = pnts_unpack_double(buf, (unsigned char *)s, 1);
@@ -522,17 +545,18 @@ rt_pnts_import5(struct rt_db_internal *internal, const struct bu_external *exter
 	case RT_PNT_TYPE_COL_NRM: {
 	    register struct pnt_color_normal *point;
 
-	    BU_GET(point, struct pnt_color_normal);
+	    BU_ALLOC(point, struct pnt_color_normal);
 	    head = &point->l;
 	    BU_LIST_INIT(head);
 	    pnts->point = point;
 
 	    for (i = 0; i < pnts->count; i++) {
-		point_t v;
+		double v[3];
 		double c[3];
-		vect_t n;
+		fastf_t cf[3];
+		double n[3];
 
-		BU_GET(point, struct pnt_color_normal);
+		BU_ALLOC(point, struct pnt_color_normal);
 
 		/* unpack v */
 		buf = pnts_unpack_double(buf, (unsigned char *)v, ELEMENTS_PER_POINT);
@@ -540,7 +564,8 @@ rt_pnts_import5(struct rt_db_internal *internal, const struct bu_external *exter
 
 		/* unpack c */
 		buf = pnts_unpack_double(buf, (unsigned char *)c, 3);
-		bu_color_from_rgb_floats(&point->c, c);
+		VMOVE(cf, c);
+		bu_color_from_rgb_floats(&point->c, cf);
 
 		/* unpack n */
 		buf = pnts_unpack_double(buf, (unsigned char *)n, ELEMENTS_PER_VECT);
@@ -554,17 +579,17 @@ rt_pnts_import5(struct rt_db_internal *internal, const struct bu_external *exter
 	case RT_PNT_TYPE_SCA_NRM: {
 	    register struct pnt_scale_normal *point;
 
-	    BU_GET(point, struct pnt_scale_normal);
+	    BU_ALLOC(point, struct pnt_scale_normal);
 	    head = &point->l;
 	    BU_LIST_INIT(head);
 	    pnts->point = point;
 
 	    for (i = 0; i < pnts->count; i++) {
-		point_t v;
+		double v[3];
 		double s[1];
-		vect_t n;
+		double n[3];
 
-		BU_GET(point, struct pnt_scale_normal);
+		BU_ALLOC(point, struct pnt_scale_normal);
 
 		/* unpack v */
 		buf = pnts_unpack_double(buf, (unsigned char *)v, ELEMENTS_PER_POINT);
@@ -586,18 +611,19 @@ rt_pnts_import5(struct rt_db_internal *internal, const struct bu_external *exter
 	case RT_PNT_TYPE_COL_SCA_NRM: {
 	    register struct pnt_color_scale_normal *point;
 
-	    BU_GET(point, struct pnt_color_scale_normal);
+	    BU_ALLOC(point, struct pnt_color_scale_normal);
 	    head = &point->l;
 	    BU_LIST_INIT(head);
 	    pnts->point = point;
 
 	    for (i = 0; i < pnts->count; i++) {
-		point_t v;
-		double c[3];
+		double v[3];
 		double s[1];
-		vect_t n;
+		double c[3];
+		fastf_t cf[3];
+		double n[3];
 
-		BU_GET(point, struct pnt_color_scale_normal);
+		BU_ALLOC(point, struct pnt_color_scale_normal);
 
 		/* unpack v */
 		buf = pnts_unpack_double(buf, (unsigned char *)v, ELEMENTS_PER_POINT);
@@ -605,7 +631,8 @@ rt_pnts_import5(struct rt_db_internal *internal, const struct bu_external *exter
 
 		/* unpack c */
 		buf = pnts_unpack_double(buf, (unsigned char *)c, 3);
-		bu_color_from_rgb_floats(&point->c, c);
+		VMOVE(cf, c);
+		bu_color_from_rgb_floats(&point->c, cf);
 
 		/* unpack s */
 		buf = pnts_unpack_double(buf, (unsigned char *)s, 1);

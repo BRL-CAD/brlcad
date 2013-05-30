@@ -1,7 +1,7 @@
 #                H Y P E D I T F R A M E . T C L
 # BRL-CAD
 #
-# Copyright (c) 2002-2012 United States Government as represented by
+# Copyright (c) 2002-2013 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -140,7 +140,7 @@
 	V [list $mCenterX $mCenterY $mCenterZ] \
 	H [list 0 0 $mDelta] \
 	A [list 0 [expr {$mDelta * 0.5}] 0] \
-	b [expr {$mDelta * 0.25} \
+	b [expr {$mDelta * 0.25}] \
 	bnr [expr {$mDelta * 0.1}]
 }
 
@@ -225,19 +225,19 @@
 	::ttk::entry $parent.hypVxE \
 	    -textvariable [::itcl::scope mVx] \
 	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add hypVyE {
 	::ttk::entry $parent.hypVyE \
 	    -textvariable [::itcl::scope mVy] \
 	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add hypVzE {
 	::ttk::entry $parent.hypVzE \
 	    -textvariable [::itcl::scope mVz] \
 	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add hypVUnitsL {
 	::ttk::label $parent.hypVUnitsL \
@@ -254,21 +254,21 @@
 	    -textvariable [::itcl::scope mHx] \
 	    -state disabled \
 	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add hypHyE {
 	::ttk::entry $parent.hypHyE \
 	    -textvariable [::itcl::scope mHy] \
 	    -state disabled \
 	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add hypHzE {
 	::ttk::entry $parent.hypHzE \
 	    -textvariable [::itcl::scope mHz] \
 	    -state disabled \
 	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add hypHUnitsL {
 	::ttk::label $parent.hypHUnitsL \
@@ -284,21 +284,21 @@
 	    -textvariable [::itcl::scope mAx] \
 	    -state disabled \
 	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add hypAyE {
 	::ttk::entry $parent.hypAyE \
 	    -textvariable [::itcl::scope mAy] \
 	    -state disabled \
 	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add hypAzE {
 	::ttk::entry $parent.hypAzE \
 	    -textvariable [::itcl::scope mAz] \
 	    -state disabled \
 	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add hypAUnitsL {
 	::ttk::label $parent.hypAUnitsL \
@@ -314,7 +314,7 @@
 	::ttk::entry $parent.hypBE \
 	    -textvariable [::itcl::scope mB] \
 	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add hypBUnitsL {
 	::ttk::label $parent.hypBVUnitsL \
@@ -330,7 +330,7 @@
 	::ttk::entry $parent.hypCE \
 	    -textvariable [::itcl::scope mC] \
 	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add hypCUnitsL {
 	::ttk::label $parent.hypCUnitsL \
@@ -413,7 +413,7 @@
 
 ::itcl::body HypEditFrame::buildLowerPanel {} {
     set parent [$this childsite lower]
-
+    set row 0
     set alist [list H set Set HV set Set A set Set B set Set C set Set H rot Rotate]
     foreach {attribute op opLabel} $alist {
 	itk_component add $op$attribute {
@@ -424,9 +424,8 @@
 		-command [::itcl::code $this initEditState]
 	} {}
 
-	pack $itk_component($op$attribute) \
-	    -anchor w \
-	    -expand yes
+	grid $itk_component($op$attribute) -row $row -column 0 -sticky nsew
+	incr row
     }
 }
 
@@ -529,6 +528,11 @@
 	    set mEditCommand protate
 	    set mEditClass $EDIT_CLASS_ROT
 	    set mEditParam1 h
+	} \
+	default {
+	    set mEditCommand ""
+	    set mEditPCommand ""
+	    set mEditParam1 ""
 	}
 
     GeometryEditFrame::initEditState

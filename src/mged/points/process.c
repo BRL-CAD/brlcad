@@ -1,7 +1,7 @@
 /*                       P R O C E S S . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2012 United States Government as represented by
+ * Copyright (c) 2004-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -22,8 +22,6 @@
  *
  * Data structures for the comma-separated value point file parser.
  *
- * Author -
- *   Christopher Sean Morrison
  */
 
 #include "common.h"
@@ -63,7 +61,7 @@ extern Tcl_Interp *twerp;
 
 #define PRINT_ARRAY 0
 #if PRINT_ARRAY
-static int 
+static int
 print_array(point_line_t **plta, int count) {
     int i;
     point_line_t *plt = NULL;
@@ -81,7 +79,7 @@ print_array(point_line_t **plta, int count) {
 #endif
 
 /* FIXME: not verified in the least bit */
-static int 
+static int
 create_cyl(point_line_t **plta, int count) {
     int i;
     point_line_t *plt = NULL;
@@ -112,7 +110,7 @@ create_cyl(point_line_t **plta, int count) {
 }
 
 /* FIXME: takes a list of points, not triplets */
-static int 
+static int
 create_sphere(point_line_t **plta, int count) {
     int i;
     point_line_t *plt = NULL;
@@ -135,14 +133,14 @@ create_sphere(point_line_t **plta, int count) {
     result = Tcl_GetStringResult(twerp);
     if (result && result[0] != '\0')
 	bu_log("create_cylinder failure: %s\n", result);
-    else 
+    else
 	bu_log("create_cylinder created\n");
 #endif
 
     return 1;
 }
 
-void 
+void
 process_value(point_line_t *plt, double value) {
     if (!plt) {
 	printf("WARNING: Unexpected call to process_value with a NULL point structure\n");
@@ -159,7 +157,7 @@ process_value(point_line_t *plt, double value) {
     return;
 }
 
-void 
+void
 process_type(point_line_t *plt, const char *type, int code) {
     if (!plt) {
 	printf("WARNING: Unexpected call to process_value with a NULL point structure\n");
@@ -172,7 +170,7 @@ process_type(point_line_t *plt, const char *type, int code) {
     return;
 }
 
-void 
+void
 process_point(point_line_t *plt) {
     static int code_state = INT32_MAX;
     static int points = 0;
@@ -211,7 +209,7 @@ process_point(point_line_t *plt) {
     points++;
 }
 
-int 
+int
 condense_points(point_line_t **plta, int count) {
     int i;
     point_line_t *plt = NULL;
@@ -244,7 +242,7 @@ condense_points(point_line_t **plta, int count) {
     return valid_count;
 }
 
-int 
+int
 delete_points(point_line_t **plta, int count, double tolerance) {
     int i;
     point_line_t *plt = NULL;
@@ -338,7 +336,7 @@ delete_points(point_line_t **plta, int count, double tolerance) {
  * handle a group of points of a particular type, with potentially
  * multiple sets delimited by triplicate points.
  */
-void 
+void
 process_multi_group(point_line_t **plta, int count, double tolerance) {
     int i;
     point_line_t *plt = NULL;
@@ -384,7 +382,7 @@ process_multi_group(point_line_t **plta, int count, double tolerance) {
 	/* if this is the first point of a group, allocate and initialize */
 	if (!prev_plt) {
 	    prev_plt = &(*plta)[i];
-	    pltg = (point_line_t *) bu_malloc(sizeof(point_line_t), "begin point_line_t subgroup");
+	    BU_ALLOC(pltg, point_line_t);
 	    COPY_POINT_LINE_T(*pltg, *prev_plt);
 	    marker = 0;
 	    continue;
@@ -460,7 +458,7 @@ process_multi_group(point_line_t **plta, int count, double tolerance) {
 
 }
 
-int 
+int
 create_plate(point_line_t **plta, int count) {
     int i;
     point_line_t *plt = NULL;
@@ -491,7 +489,7 @@ create_plate(point_line_t **plta, int count) {
     return 1;
 }
 
-int 
+int
 create_arb(point_line_t **plta, int count) {
     int i;
     point_line_t *plt = NULL;
@@ -522,7 +520,7 @@ create_arb(point_line_t **plta, int count) {
     return 1;
 }
 
-int 
+int
 create_cylinder(point_line_t **plta, int count) {
     int i;
     point_line_t *plt = NULL;
@@ -552,7 +550,7 @@ create_cylinder(point_line_t **plta, int count) {
     return 1;
 }
 
-int 
+int
 create_pipe(point_line_t **plta, int count) {
     int i;
     point_line_t *plt = NULL;
@@ -575,14 +573,14 @@ create_pipe(point_line_t **plta, int count) {
     result = Tcl_GetStringResult(twerp);
     if (result && result[0] != '\0')
 	bu_log("create_pipe failure: %s\n", result);
-    else 
+    else
 	bu_log("create_pipe created\n");
 #endif
 
     return 1;
 }
 
-int 
+int
 create_points(point_line_t **plta, int count) {
     int i;
     point_line_t *plt = NULL;
@@ -593,7 +591,7 @@ create_points(point_line_t **plta, int count) {
 
     for (i = 0; i < count; i++) {
 	plt = &(*plta)[i];
-	if (plt && plt->type) 
+	if (plt && plt->type)
 	    bu_vls_printf(&vls, " %f %f %f  ", plt->val[X], plt->val[Y], plt->val[Z]);
     }
     bu_vls_printf(&vls2, "points { %V }", &vls);
@@ -605,14 +603,14 @@ create_points(point_line_t **plta, int count) {
     result = Tcl_GetStringResult(twerp);
     if (result && result[0] != '\0')
 	bu_log("create_points failure: %s\n", result);
-    else 
+    else
 	bu_log("create_points created\n");
 #endif
 
     return 1;
 }
 
-/** 
+/**
  * wrapper func to validate the block of points being processed and to
  * call the appropriate handler.
  */

@@ -1,7 +1,7 @@
 /*                     C S G B R E P . C P P
  * BRL-CAD
  *
- * Copyright (c) 2004-2012 United States Government as represented by
+ * Copyright (c) 2004-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -24,6 +24,7 @@
 #include "rtgeom.h"
 #include "wdb.h"
 
+#define DEFAULT_FILENAME "csgbrep.g"
 
 /* without OBJ_BREP, this entire procedural example is disabled */
 #ifdef OBJ_BREP
@@ -95,11 +96,15 @@ main(int argc, char** argv)
     tol.para = 1.0 - tol.perp;
 
     if (argc > 1)
+	bu_log("Usage: %s (arguments ignored)\n", argv[0]);
+    else
 	bu_log("Usage: %s\n", argv[0]);
+
+    bu_log("Writing objects to %s:\n", DEFAULT_FILENAME);
 
     ON::Begin();
 
-    outfp = wdb_fopen("csgbrep.g");
+    outfp = wdb_fopen(DEFAULT_FILENAME);
     const char* id_name = "CSG B-Rep Examples";
     mk_id(outfp, id_name);
 
@@ -218,14 +223,14 @@ main(int argc, char** argv)
     bu_log("NMG\n");
     struct rt_arb_internal arbnmg8;
     arbnmg8.magic = RT_ARB_INTERNAL_MAGIC;
-    VSET(arbnmg8.pt[0], 0,0,0);
-    VSET(arbnmg8.pt[1], 0,2000,0);
-    VSET(arbnmg8.pt[2], 0,2000,2000);
-    VSET(arbnmg8.pt[3], 0,0,2000);
-    VSET(arbnmg8.pt[4], -2000,0, 0);
-    VSET(arbnmg8.pt[5], -2000,2000,0);
-    VSET(arbnmg8.pt[6], -2000,2000,2000);
-    VSET(arbnmg8.pt[7], -2000,0,2000);
+    VSET(arbnmg8.pt[0], 0, 0, 0);
+    VSET(arbnmg8.pt[1], 0, 2000, 0);
+    VSET(arbnmg8.pt[2], 0, 2000, 2000);
+    VSET(arbnmg8.pt[3], 0, 0, 2000);
+    VSET(arbnmg8.pt[4], -2000, 0, 0);
+    VSET(arbnmg8.pt[5], -2000, 2000, 0);
+    VSET(arbnmg8.pt[6], -2000, 2000, 2000);
+    VSET(arbnmg8.pt[7], -2000, 0, 2000);
     tmp_internal.idb_ptr = (genptr_t)&arbnmg8;
 
     // Now, need nmg form of the arb
@@ -386,17 +391,17 @@ main(int argc, char** argv)
 	{
 	    {WDB_PIPESEG_MAGIC, 0, 0},
 	    {4000, 5000, 0},
-	    50,100,2000
+	    50, 100, 2000
 	},
 	{
 	    {WDB_PIPESEG_MAGIC, 0, 0},
 	    {4000, 9000, 0},
-	    50,100,1500
+	    50, 100, 1500
 	},
 	{
 	    {WDB_PIPESEG_MAGIC, 0, 0},
 	    {9000, 9000, 0},
-	    50,100,100
+	    50, 100, 100
 	}
     };
     int pipe1_npts = sizeof(pipe1)/sizeof(struct wdb_pipept);
@@ -511,26 +516,26 @@ main(int argc, char** argv)
     write_out(outfp, &tmp_internal, "revolve", &tol);
 
 /*
-    bu_log("DSP\n");
-    struct rt_dsp_internal dsp;
-    dsp.magic = RT_DSP_INTERNAL_MAGIC;
-    bu_vls_init(&(dsp.dsp_name));
-    bu_vls_printf(&(dsp.dsp_name), "data.dsp");
-    dsp.dsp_xcnt = 256;
-    dsp.dsp_ycnt = 256;
-    dsp.dsp_smooth = 1;
-    dsp.dsp_cuttype = 'a';
-    MAT_IDN(dsp.dsp_mtos);
-    MAT_IDN(dsp.dsp_stom);
-    dsp.dsp_buf = NULL;
-    dsp.dsp_mp = NULL;
-    dsp.dsp_bip = NULL;
-    dsp.dsp_datasrc = RT_DSP_SRC_FILE;
-    tmp_internal.idb_ptr = (genptr_t)&dsp;
-    tmp_internal.idb_minor_type = ID_DSP;
-    tmp_internal.idb_meth = &rt_functab[ID_DSP];
-    write_out(outfp, &tmp_internal, "dsp", &tol);
-    bu_vls_free(&dsp.dsp_name);
+  bu_log("DSP\n");
+  struct rt_dsp_internal dsp;
+  dsp.magic = RT_DSP_INTERNAL_MAGIC;
+  bu_vls_init(&(dsp.dsp_name));
+  bu_vls_printf(&(dsp.dsp_name), "data.dsp");
+  dsp.dsp_xcnt = 256;
+  dsp.dsp_ycnt = 256;
+  dsp.dsp_smooth = 1;
+  dsp.dsp_cuttype = 'a';
+  MAT_IDN(dsp.dsp_mtos);
+  MAT_IDN(dsp.dsp_stom);
+  dsp.dsp_buf = NULL;
+  dsp.dsp_mp = NULL;
+  dsp.dsp_bip = NULL;
+  dsp.dsp_datasrc = RT_DSP_SRC_FILE;
+  tmp_internal.idb_ptr = (genptr_t)&dsp;
+  tmp_internal.idb_minor_type = ID_DSP;
+  tmp_internal.idb_meth = &rt_functab[ID_DSP];
+  write_out(outfp, &tmp_internal, "dsp", &tol);
+  bu_vls_free(&dsp.dsp_name);
 */
 
     /* clean up */
@@ -541,6 +546,7 @@ main(int argc, char** argv)
     return 0;
 }
 
+
 #else /* !OBJ_BREP */
 
 int
@@ -550,6 +556,7 @@ main(int argc, char *argv[])
 	   "       this compilation of BRL-CAD.\n");
     return 1;
 }
+
 
 #endif /* OBJ_BREP */
 

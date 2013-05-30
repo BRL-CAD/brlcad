@@ -1,6 +1,6 @@
 #cmakedefine HAVE_TERMLIB_H
 #cmakedefine HAVE_NCURSES_H
-#cmakedefine HAVE_CURSES_H 
+#cmakedefine HAVE_CURSES_H
 #cmakedefine HAVE_TERMCAP_H
 #cmakedefine HAVE_TERMINFO_H
 #cmakedefine HAVE_TINFO_H
@@ -32,7 +32,7 @@
 #endif
 int main () {
 	char buffer[2048] = {0};
-	int result = tgetent(buffer, "vt100");
+	(void)tgetent(buffer, "vt100");
 	return 0;
 }
 

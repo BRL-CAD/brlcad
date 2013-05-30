@@ -1,7 +1,7 @@
 /*                         A D J U S T . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2012 United States Government as represented by
+ * Copyright (c) 2008-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -60,9 +60,6 @@ ged_adjust(struct ged *gedp, int argc, const char *argv[])
     }
 
     name = (char *)argv[1];
-
-    /* Verify that this wdb supports lookup operations (non-null dbip) */
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
 
     GED_DB_LOOKUP(gedp, dp, name, LOOKUP_QUIET, GED_ERROR);
 

@@ -1,7 +1,7 @@
 /*                      C O P Y T R E E . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2012 United States Government as represented by
+ * Copyright (c) 1990-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -36,7 +36,7 @@ struct node *Copytree(struct node *root, struct node *parent)
 	return (struct node *)NULL;
 
 
-    ptr = (struct node *)bu_malloc(sizeof(struct node), "Copytree: ptr");
+    BU_ALLOC(ptr, struct node);
 
     *ptr = (*root);
     ptr->parent = parent;

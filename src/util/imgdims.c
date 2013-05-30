@@ -1,7 +1,7 @@
 /*                       I M G D I M S . C
  * BRL-CAD
  *
- * Copyright (c) 1997-2012 United States Government as represented by
+ * Copyright (c) 1997-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -59,7 +59,7 @@ static int grab_number (char *buf, int *np)
     char *bp;
 
     for (bp = buf; *bp != '\0'; ++bp)
-	if (!isdigit(*bp))
+	if (!isdigit((int)*bp))
 	    return 0;
     if (sscanf(buf, "%d", np) != 1)
 	bu_exit (1, "imgdims: grab_number(%s) failed.  This shouldn't happen\n", buf);
@@ -132,9 +132,10 @@ main (int argc, char **argv)
     }
 
     argument = bu_realpath(argv[bu_optind], NULL);
-    if (!bu_file_exists(argument, NULL))
+    if (!bu_file_exists(argument, NULL)) {
 	bu_free(argument, "argument realpath");
 	bu_exit(1, "image file [%s] does not exist\n", argument);
+    }
 
     if ((stat(argument, &stat_buf) != 0)
 	&& (!grab_number(argument, &nm_bytes)))
@@ -172,7 +173,7 @@ main (int argc, char **argv)
     if (!fb_common_image_size(&width, &height, nm_pixels))
 	bu_exit (0, NULL);
 
- done:
+done:
     bu_log("%zu %zu\n", width, height);
     return 0;
 }

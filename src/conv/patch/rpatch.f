@@ -18,8 +18,8 @@ c     haracter minus*1
 c     Set volume mode / plate mode flag
 
       if (tmp.lt.0) then
-         tmp = abs(tmp)
-         minus = '-'
+	 tmp = abs(tmp)
+	 minus = '-'
       end if
 
       hold = real(tmp/10000.0)

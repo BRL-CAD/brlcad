@@ -1,7 +1,7 @@
 /*                           A R S . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2012 United States Government as represented by
+ * Copyright (c) 1985-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -170,7 +170,8 @@ rt_ars_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_ARS;
     ip->idb_meth = &rt_functab[ID_ARS];
-    ip->idb_ptr = bu_malloc(sizeof(struct rt_ars_internal), "rt_ars_internal");
+    BU_ALLOC(ip->idb_ptr, struct rt_ars_internal);
+
     ari = (struct rt_ars_internal *)ip->idb_ptr;
     ari->magic = RT_ARS_INTERNAL_MAGIC;
 
@@ -314,8 +315,10 @@ rt_ars_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     struct rt_ars_internal *ari;
     register size_t i, j;
     register unsigned char *cp;
-    vect_t tmp_vec;
     register fastf_t *fp;
+
+    /* must be double for import and export */
+    double tmp_pnt[ELEMENTS_PER_POINT];
 
     RT_CK_DB_INTERNAL(ip);
     BU_CK_EXTERNAL(ep);
@@ -324,7 +327,7 @@ rt_ars_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_ARS;
     ip->idb_meth = &rt_functab[ID_ARS];
-    ip->idb_ptr = bu_malloc(sizeof(struct rt_ars_internal), "rt_ars_internal");
+    BU_ALLOC(ip->idb_ptr, struct rt_ars_internal);
 
     ari = (struct rt_ars_internal *)ip->idb_ptr;
     ari->magic = RT_ARS_INTERNAL_MAGIC;
@@ -342,14 +345,14 @@ rt_ars_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 	(ari->ncurves+1), sizeof(fastf_t *), "ars curve ptrs");
     if (mat == NULL) mat = bn_mat_identity;
     for (i=0; i < ari->ncurves; i++) {
-	ari->curves[i] = (fastf_t *)bu_calloc((ari->pts_per_curve + 1) * 3,
+	ari->curves[i] = (fastf_t *)bu_calloc((ari->pts_per_curve + 1) * ELEMENTS_PER_POINT,
 					      sizeof(fastf_t), "ARS points");
 	fp = ari->curves[i];
 	for (j=0; j<ari->pts_per_curve; j++) {
-	    ntohd((unsigned char *)tmp_vec, cp, 3);
-	    MAT4X3PNT(fp, mat, tmp_vec);
-	    cp += 3 * SIZEOF_NETWORK_DOUBLE;
-	    fp += ELEMENTS_PER_VECT;
+	    ntohd((unsigned char *)tmp_pnt, cp, ELEMENTS_PER_POINT);
+	    MAT4X3PNT(fp, mat, tmp_pnt);
+	    cp += ELEMENTS_PER_POINT * SIZEOF_NETWORK_DOUBLE;
+	    fp += ELEMENTS_PER_POINT;
 	}
 	VMOVE(fp, ari->curves[i]);	/* duplicate first point */
     }
@@ -368,8 +371,10 @@ rt_ars_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
 {
     struct rt_ars_internal *arip;
     unsigned char *cp;
-    vect_t tmp_vec;
     size_t cur;		/* current curve number */
+
+    /* must be double for import and export */
+    double tmp_pnt[ELEMENTS_PER_POINT];
 
     RT_CK_DB_INTERNAL(ip);
     if (ip->idb_type != ID_ARS) return -1;
@@ -379,8 +384,7 @@ rt_ars_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
     if (dbip) RT_CK_DBI(dbip);
 
     BU_CK_EXTERNAL(ep);
-    ep->ext_nbytes = 2 * SIZEOF_NETWORK_LONG +
-	3 * arip->ncurves * arip->pts_per_curve * SIZEOF_NETWORK_DOUBLE;
+    ep->ext_nbytes = 2 * SIZEOF_NETWORK_LONG + ELEMENTS_PER_POINT * arip->ncurves * arip->pts_per_curve * SIZEOF_NETWORK_DOUBLE;
     ep->ext_buf = (genptr_t)bu_calloc(1, ep->ext_nbytes, "ars external");
     cp = (unsigned char *)ep->ext_buf;
 
@@ -395,10 +399,10 @@ rt_ars_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
 
 	fp = arip->curves[cur];
 	for (npts=0; npts < arip->pts_per_curve; npts++) {
-	    VSCALE(tmp_vec, fp, local2mm);
-	    ntohd(cp, (unsigned char *)tmp_vec, 3);
-	    cp += 3 * SIZEOF_NETWORK_DOUBLE;
-	    fp += ELEMENTS_PER_VECT;
+	    VSCALE(tmp_pnt, fp, local2mm);
+	    htond(cp, (unsigned char *)tmp_pnt, ELEMENTS_PER_POINT);
+	    cp += ELEMENTS_PER_POINT * SIZEOF_NETWORK_DOUBLE;
+	    fp += ELEMENTS_PER_POINT;
 	}
     }
     return 0;
@@ -531,7 +535,7 @@ rt_ars_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     }
 
     if (bad_ars) {
-	bu_log("TESSELATION FAILURE: This ARS solid has not been tesselated.\n\tAny result you may obtain is incorrect.\n");
+	bu_log("TESSELLATION FAILURE: This ARS solid has not been tessellated.\n\tAny result you may obtain is incorrect.\n");
 	return -1;
     }
 
@@ -544,7 +548,7 @@ rt_ars_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 
     verts = (struct vertex **)bu_calloc(arip->ncurves * (arip->pts_per_curve+1),
 					sizeof(struct vertex *),
-					"rt_tor_tess *verts[]");
+					"rt_ars_tess *verts[]");
 
     /*
      * Draw the "waterlines", by tracing each curve.  n+1th point is
@@ -668,7 +672,7 @@ rt_ars_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
  * TODO:  produces bboxes that are waaay too big.
  */
 int
-rt_ars_bbox(struct rt_db_internal *ip, point_t *min, point_t *max)
+rt_ars_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct bn_tol *UNUSED(tol))
 {
     register size_t i;
     register size_t j;
@@ -678,8 +682,8 @@ rt_ars_bbox(struct rt_db_internal *ip, point_t *min, point_t *max)
     arip = (struct rt_ars_internal *)ip->idb_ptr;
     RT_ARS_CK_MAGIC(arip);
 
-    VSETALL((*min), MAX_FASTF);
-    VSETALL((*max), -MAX_FASTF);
+    VSETALL((*min), INFINITY);
+    VSETALL((*max), -INFINITY);
 
     /*
      * Iterate over the curves.
@@ -722,7 +726,7 @@ rt_ars_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     int ret;
 
     /*point_t min, max;*/
-    /*if (rt_ars_bbox(ip, &min, &max)) return -1;*/
+    /*if (rt_ars_bbox(ip, &min, &max, &rtip->rti_tol)) return -1;*/
 
     m = nmg_mm();
     r = BU_LIST_FIRST(nmgregion, &m->r_hd);
@@ -1160,7 +1164,7 @@ rt_ars_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const cha
 		}
 		bu_vls_printf(logstr, " }");
 	    }
-	} else if (!isdigit(attr[1])) {
+	} else if (!isdigit((int)attr[1])) {
 	    bu_vls_printf(logstr,
 			  "ERROR: illegal argument, must be NC, PPC, C, C#, or C#P#\n");
 	    return BRLCAD_ERROR;
@@ -1169,7 +1173,7 @@ rt_ars_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const cha
 	ptr = strchr(attr, 'P');
 	if (ptr) {
 	    /* a specific point on a specific curve */
-	    if (!isdigit(*(ptr+1))) {
+	    if (!isdigit((int)*(ptr+1))) {
 		bu_vls_printf(logstr,
 			      "ERROR: illegal argument, must be NC, PPC, C, C#, or C#P#\n");
 		return BRLCAD_ERROR;
@@ -1274,7 +1278,7 @@ rt_ars_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, co
 		ars->pts_per_curve = i;
 	    }
 	} else if (argv[0][0] == 'C') {
-	    if (isdigit(argv[0][1])) {
+	    if (isdigit((int)argv[0][1])) {
 		char *ptr;
 
 		/* a specific curve */

@@ -1,7 +1,7 @@
 /*                        R T S H O T . C
  * BRL-CAD
  *
- * Copyright (c) 1987-2012 United States Government as represented by
+ * Copyright (c) 1987-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -157,11 +157,11 @@ main(int argc, char **argv)
 		    return 1;
 
 		while (*ptr) {
-		    while (*ptr && *ptr > 0 && *ptr < CHAR_MAX && isspace(*ptr))
+		    while (*ptr && *ptr > 0 && *ptr < CHAR_MAX && isspace((int)*ptr))
 			ptr++;
 		    if (*ptr)
 			attr_count++;
-		    while (*ptr && *ptr > 0 && *ptr < CHAR_MAX && !isspace(*ptr))
+		    while (*ptr && *ptr > 0 && *ptr < CHAR_MAX && !isspace((int)*ptr))
 			ptr++;
 		}
 
@@ -449,7 +449,7 @@ int hit(register struct application *ap, struct partition *PartHeadp, struct seg
     register struct soltab *stp;
     fastf_t out;
     point_t inpt, outpt;
-    vect_t inormal, onormal; 
+    vect_t inormal, onormal;
     struct curvature cur;
     cur.crv_c1 = 0.0;
     cur.crv_c2 = 0.0;
@@ -538,7 +538,7 @@ int hit(register struct application *ap, struct partition *PartHeadp, struct seg
 	    MAT4X3PNT(out_trans, inv_mat, outpt);
 	    MAT4X3VEC(dir_trans, inv_mat, ap->a_ray.r_dir);
 	    VUNITIZE(dir_trans);
-	    bu_log("\ttranformed ORCA outhit = (%g %g %g)\n", V3ARGS(out_trans));
+	    bu_log("\ttransformed ORCA outhit = (%g %g %g)\n", V3ARGS(out_trans));
 	    bu_log("\ttransformed ORCA ray direction = (%g %g %g)\n", V3ARGS(dir_trans));
 	}
 
@@ -697,7 +697,7 @@ int bundle_hit(register struct application_bundle *bundle, struct partition_bund
 		MAT4X3PNT(out_trans, inv_mat, outpt);
 		MAT4X3VEC(dir_trans, inv_mat, pl->ap->a_ray.r_dir);
 		VUNITIZE(dir_trans);
-		bu_log("\ttranformed ORCA outhit = (%g %g %g)\n", V3ARGS(
+		bu_log("\ttransformed ORCA outhit = (%g %g %g)\n", V3ARGS(
 			   out_trans));
 		bu_log("\ttransformed ORCA ray direction = (%g %g %g)\n",
 		       V3ARGS(dir_trans));

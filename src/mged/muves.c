@@ -1,7 +1,7 @@
 /*                         M U V E S . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2012 United States Government as represented by
+ * Copyright (c) 2004-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -101,7 +101,7 @@ struct muves_sys
 static char *regionmap_delims=" \t";
 static char *sysdef_delims=" \t\n@?!~&-^><|*+";
 
-static struct muves_sys muves_sys_head = { 
+static struct muves_sys muves_sys_head = {
     {BU_LIST_HEAD_MAGIC, &muves_sys_head.l, &muves_sys_head.l}, /* l */
     (char *)NULL,  /* muves_name */
     {
@@ -110,7 +110,7 @@ static struct muves_sys muves_sys_head = {
 	{NULL} /* member_head.mem */
     }
 };
-static struct muves_comp muves_comp_head = { 
+static struct muves_comp muves_comp_head = {
     {BU_LIST_HEAD_MAGIC, &muves_comp_head.l, &muves_comp_head.l}, /* l */
     (char *)NULL, /* muves_name */
     {
@@ -269,7 +269,7 @@ f_read_muves(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const 
 
 	    c = ptr;
 	    while (*c != '\0') {
-		if (isalpha(*c)) {
+		if (isalpha((int)*c)) {
 		    size_t length;
 
 		    /* found a new component name, save the old one */
@@ -285,7 +285,7 @@ f_read_muves(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const 
 
 		    /* if name doesn't exist, create a new list */
 		    if (BU_LIST_IS_HEAD(&new_comp->l, &muves_comp_head.l)) {
-			new_comp = (struct muves_comp *)bu_malloc(sizeof(struct muves_comp), "new_comp");
+			BU_ALLOC(new_comp, struct muves_comp);
 			BU_LIST_INIT(&new_comp->l);
 			length = strlen(ptr);
 			new_comp->muves_name = (char *)bu_malloc(length+1, "muves_comp.name");
@@ -328,7 +328,7 @@ f_read_muves(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const 
 		    continue;
 
 		/* this region is part of the current MUVES component */
-		comp = (struct cad_comp_list *)bu_malloc(sizeof(struct cad_comp_list), "comp");
+		BU_ALLOC(comp, struct cad_comp_list);
 		comp->dp = regions[i].dp;
 		BU_LIST_INSERT(&new_comp->comp_head.l, &comp->l);
 	    }
@@ -366,7 +366,7 @@ f_read_muves(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const 
 	char *equal_sign=(char *)NULL;
 
 	i = 0;
-	while (isspace(line[i]) && line[i] != '\0')
+	while (isspace((int)line[i]) && line[i] != '\0')
 	    i++;
 	if (line[i] == '#')	/* comment */
 	    continue;
@@ -394,7 +394,7 @@ f_read_muves(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const 
 
 	    /* mark end of system name */
 	    j = i;
-	    while (line[j] != '\0' && !isspace(line[j]))
+	    while (line[j] != '\0' && !isspace((int)line[j]))
 		j++;
 	    line[j] = '\0';
 
@@ -412,7 +412,7 @@ f_read_muves(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const 
 		size_t length;
 
 		/* need to create a new system */
-		new_sys = (struct muves_sys *)bu_malloc(sizeof(struct muves_sys), "new_sys");
+		BU_ALLOC(new_sys, struct muves_sys);
 		length = strlen(&line[i]);
 		new_sys->muves_name = (char *)bu_malloc(length+1, "new_sys->muves_name");
 		bu_strlcpy(new_sys->muves_name, &line[i], length+1);
@@ -460,7 +460,7 @@ f_read_muves(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const 
 	    c = ptr;
 	    is_constant = 1;
 	    while (*c != '\0') {
-		if (isalpha(*c)) {
+		if (isalpha((int)*c)) {
 		    is_constant = 0;
 		    break;
 		}
@@ -500,7 +500,7 @@ f_read_muves(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const 
 		continue;
 	    }
 
-	    member = (struct member_list *)bu_malloc(sizeof(struct member_list), "member");
+	    BU_ALLOC(member, struct member_list);
 	    member->object_type = MUVES_TYPE_UNKNOWN;
 	    for (BU_LIST_FOR(sys, muves_sys, &muves_sys_head.l)) {
 		if (BU_STR_EQUAL(ptr, sys->muves_name)) {
@@ -633,7 +633,7 @@ f_e_muves(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interp), int argc, c
 
 /* F _ L _ M U V E S
  *
- * routine to list the muves comoponents
+ * routine to list the muves components
  */
 int
 f_l_muves(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *argv[])
@@ -709,7 +709,7 @@ f_l_muves(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const cha
 
 /* F _ T _ M U V E S
  *
- * routine to list the muves comoponents
+ * routine to list the muves components
  */
 int
 f_t_muves(ClientData UNUSED(clientData), Tcl_Interp *interp, int UNUSED(argc), const char *UNUSED(argv[]))

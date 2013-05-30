@@ -1,7 +1,7 @@
 /*                     T E X T U R E _ C A M O . C
  * BRL-CAD / ADRT
  *
- * Copyright (c) 2002-2012 United States Government as represented by
+ * Copyright (c) 2002-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -20,7 +20,7 @@
 /** @file librender/texture.h
  *
  *  Comments -
- *      Texture Library - Applies a 3 color camoflauge
+ *      Texture Library - Applies a 3 color camouflage
  *
  */
 
@@ -34,7 +34,7 @@ void
 texture_camo_init(struct texture_s *texture, fastf_t size, int octaves, int absolute, vect_t color1, vect_t color2, vect_t color3) {
     struct texture_camo_s   *sd;
 
-    texture->data = bu_malloc(sizeof(struct texture_camo_s), "camo data");
+    BU_ALLOC(texture->data, struct texture_camo_s);
     texture->free = texture_camo_free;
     texture->work = (texture_work_t *)texture_camo_work;
 

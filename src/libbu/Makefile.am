@@ -2,20 +2,8 @@
 lib_LTLIBRARIES = libbu.la
 noinst_LTLIBRARIES = libbu_nil.la
 
-noinst_PROGRAMS = \
-	test_basename \
-	test_booleanize \
-	test_ctype \
-	test_dirname \
-	test_escape \
-	test_progname \
-	test_quote \
-	test_timer \
-	test_vls_vprintf \
-	test_sscanf \
-	test_bitv
-
 libbu_nil_la_SOURCES = \
+	affinity.c \
 	argv.c \
 	avs.c \
 	backtrace.c \
@@ -40,17 +28,16 @@ libbu_nil_la_SOURCES = \
 	fgets.c \
 	file.c \
 	fnmatch.c \
-	fopen_uniq.c \
 	getcwd.c \
 	getopt.c \
 	globals.c \
 	hash.c \
+	heap.c \
 	hist.c \
 	hook.c \
 	htond.c \
 	htonf.c \
 	interrupt.c \
-	ispar.c \
 	kill.c \
 	lex.c \
 	linebuf.c \
@@ -63,7 +50,6 @@ libbu_nil_la_SOURCES = \
 	observer.c \
 	parallel.c \
 	parse.c \
-	pool.c \
 	printb.c \
 	process.c \
 	progname.c \
@@ -86,6 +72,7 @@ libbu_nil_la_SOURCES = \
 	str.c \
 	tcl.c \
 	temp.c \
+	thread.cpp \
 	timer.c \
 	units.c \
 	vers.c \
@@ -103,73 +90,15 @@ libbu_la_LIBADD = \
 	libbu_nil.la \
 	${BU_LIBS}
 
-test_booleanize_SOURCES = test_booleanize.c
-test_booleanize_LDADD = \
-	libbu.la \
-	${BU_LIBS}
-
-test_bitv_SOURCES = test_bitv.c
-test_bitv_LDADD = \
-	libbu.la \
-	${BU_LIBS}
-
-test_ctype_SOURCES = test_ctype.c
-test_ctype_LDADD = \
-	libbu.la \
-	${BU_LIBS}
-
-test_timer_SOURCES = test_timer.c
-test_timer_LDADD = \
-	libbu.la \
-	${BU_LIBS}
-
-test_basename_SOURCES = test_basename.c
-test_basename_LDADD = \
-	libbu.la \
-	${BU_LIBS}
-
-test_escape_SOURCES = test_escape.c
-test_escape_LDADD = \
-	libbu.la \
-	${BU_LIBS}
-
-test_dirname_SOURCES = test_dirname.c
-test_dirname_LDADD = \
-	libbu.la \
-	${BU_LIBS}
-
-test_progname_SOURCES = test_progname.c
-test_progname_LDADD = \
-	libbu.la \
-	${BU_LIBS}
-
-test_quote_SOURCES = test_quote.c
-test_quote_LDADD = \
-	libbu.la \
-	${BU_LIBS}
-
-test_vls_vprintf_SOURCES = test_vls_vprintf.c
-test_vls_vprintf_LDADD = \
-	libbu.la \
-	${BU_LIBS}
-
-test_sscanf_SOURCES = test_sscanf.c
-test_sscanf_LDADD = \
-	libbu.la \
-	${BU_LIBS}
-
 noinst_HEADERS = \
+	parallel.h \
 	rb_internals.h \
 	vls_internals.h
 
-man_MANS = \
-	htond.3 \
-	redblack.3
-
 EXTRA_DIST = \
-	$(man_MANS) \
 	uce-dirent.h \
-	CMakeLists.txt
+	CMakeLists.txt \
+	tests
 
 AM_CPPFLAGS = \
 	-DPREFIX=\"$(prefix)\" \

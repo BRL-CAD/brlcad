@@ -1,7 +1,7 @@
 /*                           P K G . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2012 United States Government as represented by
+ * Copyright (c) 2004-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -107,6 +107,7 @@ struct pkg_conn {
     /* neg->read new hdr, 0->all here, >0 ->more to come */
     char *pkc_buf;				/**< @brief start of dynamic buf */
     char *pkc_curpos;				/**< @brief current position in pkg_buf */
+    void *pkc_server_data;			/**< @brief used to hold server data for callbacks */
 };
 #define PKC_NULL	((struct pkg_conn *)0)
 #define PKC_ERROR	((struct pkg_conn *)(-1L))
@@ -134,7 +135,7 @@ PKG_EXPORT PKG_EXTERN(struct pkg_conn *pkg_open, (const char *host, const char *
 PKG_EXPORT PKG_EXTERN(void pkg_close, (struct pkg_conn* pc));
 
 /**
- * 
+ *
  */
 PKG_EXPORT PKG_EXTERN(int pkg_process, (struct pkg_conn *));
 

@@ -1,7 +1,7 @@
 #                H U M A N W I Z A R D . T C L
 # BRL-CAD
 #
-# Copyright (c) 2002-2012 United States Government as represented by
+# Copyright (c) 2002-2013 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -250,7 +250,7 @@
     # Create numberSoldiers entry field
     itk_component add paramnumberSoldiersL {
 	::ttk::label $itk_component(paramNonArrowF).numberSoldiersL \
-	    -text "Number of soldiers (to be squard):" \
+	    -text "Number of soldiers (to be squared):" \
 	    -anchor e
     } {}
     itk_component add paramnumberSoldiersE {
@@ -268,19 +268,19 @@
 	::ttk::entry $itk_component(paramNonArrowF).percentileE \
 	    -textvariable [::itcl::scope percentile]
     } {}
-	
+
     # Create stance entry field
     itk_component add paramstanceL {
-        ::ttk::label $itk_component(paramNonArrowF).stanceL \
-            -text "stance:" \
-            -anchor e
+	::ttk::label $itk_component(paramNonArrowF).stanceL \
+	    -text "stance:" \
+	    -anchor e
     } {}
 
     itk_component add paramstanceCB {
-        ::ttk::combobox $itk_component(paramNonArrowF).stanceCB \
-            -textvariable [::itcl::scope stanceString] \
-            -state readonly \
-            -values {Standing Sitting Driving ArmsOut FancySit Custom}
+	::ttk::combobox $itk_component(paramNonArrowF).stanceCB \
+	    -textvariable [::itcl::scope stanceString] \
+	    -state readonly \
+	    -values {Standing Sitting Driving ArmsOut FancySit Custom}
     } {}
 
     # Create empty label
@@ -299,16 +299,16 @@
 
     # Create "manualMode" checkbutton
     itk_component add parammanualModeCB {
-        ::ttk::checkbutton $itk_component(paramNonArrowF).manualModeCB \
-            -text "manualMode" \
-            -variable [::itcl::scope manualMode]
+	::ttk::checkbutton $itk_component(paramNonArrowF).manualModeCB \
+	    -text "manualMode" \
+	    -variable [::itcl::scope manualMode]
     } {}
 
     # Create "boundingBoxes" checkbutton
     itk_component add paramBoundingBoxCB {
-        ::ttk::checkbutton $itk_component(paramNonArrowF).boundingBoxCB \
-            -text "boundingBoxes" \
-            -variable [::itcl::scope boundingBoxes]
+	::ttk::checkbutton $itk_component(paramNonArrowF).boundingBoxCB \
+	    -text "boundingBoxes" \
+	    -variable [::itcl::scope boundingBoxes]
     } {}
 
     set row 0
@@ -345,12 +345,12 @@
 
     incr row
     grid $itk_component(parammanualModeCB) -columnspan 2 \
-        -row $row -stick nsew
+	-row $row -stick nsew
     grid columnconfigure $itk_component(paramNonArrowF) 1 -weight 1
 
     incr row
     grid $itk_component(paramBoundingBoxCB) -columnspan 2 \
-        -row $row -stick nsew
+	-row $row -stick nsew
     grid columnconfigure $itk_component(paramNonArrowF) 1 -weight 1
 
     set row 0
@@ -449,10 +449,10 @@
     after 50
 
     set wizardState \
-        [list \
-             autoMode $autoMode \
-             height $height \
-             stance $stance]
+	[list \
+	     autoMode $autoMode \
+	     height $height \
+	     stance $stance]
 
 #    set wizardState \
 #	[list \
@@ -475,14 +475,14 @@ puts "$archersGed human -A -s$stance $wizardTop"
 #	-m \
 #	-N $numberSoldiers \
 #	-p $percentile \
-#	-s $stance \ 
+#	-s $stance \
 #	$wizardTop
 
     # Add wizard attributes
     addWizardAttrs $wizardTop 0
 
     drawHuman
-    
+
     $archer pluginUpdateProgressBar 0.6
     after 100
     $archer pluginUpdateStatusBar "Almost Done..."

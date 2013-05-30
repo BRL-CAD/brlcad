@@ -1,7 +1,7 @@
 /*                     T E X T U R E _ B U M P . C
  * BRL-CAD / ADRT
  *
- * Copyright (c) 2002-2012 United States Government as represented by
+ * Copyright (c) 2002-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -33,7 +33,7 @@ void
 texture_bump_init(struct texture_s *texture, vect_t coef) {
     struct texture_bump_s *sd;
 
-    texture->data = bu_malloc(sizeof(struct texture_bump_s), "texture data");
+    BU_ALLOC(texture->data, struct texture_bump_s);
     texture->free = texture_bump_free;
     texture->work = (texture_work_t *)texture_bump_work;
 

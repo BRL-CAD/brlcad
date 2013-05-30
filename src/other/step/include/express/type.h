@@ -237,6 +237,8 @@ extern SCL_EXPRESS_EXPORT Error ERROR_corrupted_type;
 #define TYPEis_identifier(t)    ((t)->u.type->body->type == identifier_)
 #define TYPEis_logical(t)   ((t)->u.type->body->type == logical_)
 #define TYPEis_boolean(t)   ((t)->u.type->body->type == boolean_)
+#define TYPEis_real(t)   ((t)->u.type->body->type == real_)
+#define TYPEis_integer(t)   ((t)->u.type->body->type == integer_)
 #define TYPEis_string(t)    ((t)->u.type->body->type == string_)
 #define TYPEis_expression(t)    ((t)->u.type->body->type == op_)
 #define TYPEis_oneof(t)     ((t)->u.type->body->type == oneof_)
@@ -309,6 +311,7 @@ extern SCL_EXPRESS_EXPORT Type TYPEcreate_name PROTO( ( struct Symbol_ * ) );
 extern SCL_EXPRESS_EXPORT Type TYPEcreate_nostab PROTO( ( struct Symbol_ *, Scope, char ) );
 extern SCL_EXPRESS_EXPORT TypeBody TYPEBODYcreate PROTO( ( enum type_enum ) );
 extern SCL_EXPRESS_EXPORT void TYPEinitialize PROTO( ( void ) );
+extern SCL_EXPRESS_EXPORT void TYPEcleanup PROTO( ( void ) );
 
 extern SCL_EXPRESS_EXPORT bool TYPEinherits_from PROTO( ( Type, enum type_enum ) );
 extern SCL_EXPRESS_EXPORT Type TYPEget_nonaggregate_base_type PROTO( ( Type ) );

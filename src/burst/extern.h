@@ -1,7 +1,7 @@
 /*                        E X T E R N . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2012 United States Government as represented by
+ * Copyright (c) 2004-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -57,7 +57,6 @@ extern int findIdents();
 extern int readColors();
 extern int readIdents();
 extern int notify();
-extern int roundToInt();
 extern void closeUi();
 extern void colorPartition();
 extern void exitCleanly();
@@ -89,8 +88,6 @@ extern void prntRayIntersect();
 extern void prntTimer();
 extern void prompt();
 extern void readCmdFile();
-extern void prntScr(const char *, ...);
-extern void brst_log(const char *, ...);
 extern void warning();
 extern void prntUsage();
 extern void clr_Tabs();
@@ -112,6 +109,11 @@ extern void save_Tty();
 extern void (*norml_sig)(), (*abort_sig)();
 extern void abort_RT();
 extern void intr_sig();
+
+/* proper prototype */
+extern void prntScr(const char *, ...);
+extern void brst_log(const char *, ...);
+extern int roundToInt(fastf_t f);
 
 extern Colors colorids;
 extern FBIO *fbiop;

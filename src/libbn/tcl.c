@@ -1,7 +1,7 @@
 /*                           T C L . C
  * BRL-CAD
  *
- * Copyright (c) 1995-2012 United States Government as represented by
+ * Copyright (c) 1995-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,6 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+
 /** @addtogroup bntcl */
 /** @{ */
 /** @file libbn/tcl.c
@@ -39,50 +40,61 @@
 #include "vmath.h"
 #include "bn.h"
 
-/* Support routines for the math functions */
-
-/* XXX Really need a decode_array function that uses atof(),
- * XXX so that junk like leading { and commas between inputs
- * XXX don't spoil the conversion.
- */
 
 int
-bn_decode_mat(fastf_t *m, const char *str)
+bn_decode_mat(fastf_t *mat, const char *str)
 {
+    double m[16];
+    int ret;
+
     if (BU_STR_EQUAL(str, "I")) {
 	MAT_IDN(m);
 	return 16;
     }
     if (*str == '{') str++;
 
-    return sscanf(str,
+    ret = sscanf(str,
 		  "%lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf",
 		  &m[0], &m[1], &m[2], &m[3], &m[4], &m[5], &m[6], &m[7],
 		  &m[8], &m[9], &m[10], &m[11], &m[12], &m[13], &m[14], &m[15]);
+    MAT_COPY(mat, m);
+
+    return ret;
 }
 
 
 int
-bn_decode_quat(fastf_t *q, const char *str)
+bn_decode_quat(fastf_t *quat, const char *str)
 {
+    double q[4];
+    int ret;
+
     if (*str == '{') str++;
-    return sscanf(str, "%lf %lf %lf %lf", &q[0], &q[1], &q[2], &q[3]);
+    ret = sscanf(str, "%lf %lf %lf %lf", &q[0], &q[1], &q[2], &q[3]);
+    HMOVE(quat, q);
+
+    return ret;
 }
 
 
 int
-bn_decode_vect(fastf_t *v, const char *str)
+bn_decode_vect(fastf_t *vec, const char *str)
 {
+    double v[3];
+    int ret;
+
     if (*str == '{') str++;
-    return sscanf(str, "%lf %lf %lf", &v[0], &v[1], &v[2]);
+    ret = sscanf(str, "%lf %lf %lf", &v[0], &v[1], &v[2]);
+    VMOVE(vec, v);
+
+    return ret;
 }
 
 
 int
 bn_decode_hvect(fastf_t *v, const char *str)
 {
-    if (*str == '{') str++;
-    return sscanf(str, "%lf %lf %lf %lf", &v[0], &v[1], &v[2], &v[3]);
+    return bn_decode_quat(v, str);
 }
 
 
@@ -175,6 +187,7 @@ static struct math_func_link {
     char *name;
     void (*func)();
 } math_funcs[] = {
+    {"bn_dist_pt2_lseg2",	(void (*)())bn_dist_pt2_lseg2},
     {"bn_isect_line2_line2",	(void (*)())bn_isect_line2_line2},
     {"bn_isect_line3_line3",	(void (*)())bn_isect_line3_line3},
     {"mat_mul",            bn_mat_mul},
@@ -185,12 +198,12 @@ static struct math_func_link {
     {"mat4x3pnt",          bn_mat4x3pnt},
     {"hdivide",            bn_hdivide},
     {"vjoin1",	           bn_vjoin1},
-    {"vblend",	           bn_vblend},
+    {"vblend",	           (void (*)())bn_vblend},
     {"mat_ae",             bn_mat_ae},
     {"mat_ae_vec",         bn_ae_vec},
-    {"mat_aet_vec",        bn_aet_vec},
+    {"mat_aet_vec",        (void (*)())bn_aet_vec},
     {"mat_angles",         bn_mat_angles},
-    {"mat_eigen2x2",       bn_eigen2x2},
+    {"mat_eigen2x2",       (void (*)())bn_eigen2x2},
     {"mat_fromto",         bn_mat_fromto},
     {"mat_xrot",           bn_mat_xrot},
     {"mat_yrot",           bn_mat_yrot},
@@ -200,7 +213,7 @@ static struct math_func_link {
     {"mat_vec_perp",       bn_vec_perp},
     {"mat_scale_about_pt", bn_mat_scale_about_pt_wrapper},
     {"mat_xform_about_pt", bn_mat_xform_about_pt},
-    {"mat_arb_rot",        bn_mat_arb_rot},
+    {"mat_arb_rot",        (void (*)())bn_mat_arb_rot},
     {"quat_mat2quat",      quat_mat2quat},
     {"quat_quat2mat",      quat_quat2mat},
     {"quat_distance",      bn_quat_distance_wrapper},
@@ -264,6 +277,7 @@ bn_math_cmd(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     } else if (math_func == bn_mat4x3pnt) {
 	mat_t m;
 	point_t i, o;
+	MAT_ZERO(m);
 	if (argc < 3 || bn_decode_mat(m, argv[1]) < 16 ||
 	    bn_decode_vect(i, argv[2]) < 3) {
 	    bu_vls_printf(&result, "usage: %s mat point", argv[0]);
@@ -274,6 +288,7 @@ bn_math_cmd(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     } else if (math_func == bn_mat4x3vec) {
 	mat_t m;
 	vect_t i, o;
+	MAT_ZERO(m);
 	if (argc < 3 || bn_decode_mat(m, argv[1]) < 16 ||
 	    bn_decode_vect(i, argv[2]) < 3) {
 	    bu_vls_printf(&result, "usage: %s mat vect", argv[0]);
@@ -293,7 +308,7 @@ bn_math_cmd(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     } else if (math_func == bn_vjoin1) {
 	point_t o;
 	point_t b, d;
-	fastf_t c;
+	double c;
 
 	if (argc < 4) {
 	    bu_vls_printf(&result, "usage: %s pnt scale dir", argv[0]);
@@ -306,9 +321,9 @@ bn_math_cmd(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	VJOIN1(o, b, c, d);	/* bn_vjoin1(o, b, c, d) */
 	bn_encode_vect(&result, o);
 
-    } else if (math_func == bn_vblend) {
+    } else if (math_func == (void (*)())bn_vblend) {
 	point_t a, c, e;
-	fastf_t b, d;
+	double b, d;
 
 	if (argc < 5) {
 	    bu_vls_printf(&result, "usage: %s scale pnt scale pnt", argv[0]);
@@ -320,8 +335,8 @@ bn_math_cmd(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	if (Tcl_GetDouble(interp, argv[3], &d) != TCL_OK) goto error;
 	if (bn_decode_vect(e, argv[4]) < 3) goto error;
 
-	VBLEND2(a, b, c, d, e)
-	    bn_encode_vect(&result, a);
+	VBLEND2(a, b, c, d, e);
+	bn_encode_vect(&result, a);
 
     } else if (math_func == bn_mat_ae) {
 	mat_t o;
@@ -347,17 +362,19 @@ bn_math_cmd(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
 	bn_ae_vec(&az, &el, v);
 	bu_vls_printf(&result, "%g %g", az, el);
-    } else if (math_func == bn_aet_vec) {
+    } else if (math_func == (void (*)())bn_aet_vec) {
+	double acc;
 	fastf_t az, el, twist, accuracy;
 	vect_t vec_ae, vec_twist;
 
 	if (argc < 4 || bn_decode_vect(vec_ae, argv[1]) < 3 ||
 	    bn_decode_vect(vec_twist, argv[2]) < 3 ||
-	    sscanf(argv[3], "%lf", &accuracy) < 1) {
+	    sscanf(argv[3], "%lf", &acc) < 1) {
 	    bu_vls_printf(&result, "usage: %s vec_ae vec_twist accuracy",
 			  argv[0]);
 	    goto error;
 	}
+	accuracy = acc;
 
 	bn_aet_vec(&az, &el, &twist, vec_ae, vec_twist, accuracy);
 	bu_vls_printf(&result, "%g %g %g", az, el, twist);
@@ -375,7 +392,7 @@ bn_math_cmd(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
 	bn_mat_angles(o, alpha, beta, ggamma);
 	bn_encode_mat(&result, o);
-    } else if (math_func == bn_eigen2x2) {
+    } else if (math_func == (void (*)())bn_eigen2x2) {
 	fastf_t val1, val2;
 	vect_t vec1, vec2;
 	double a, b, c;
@@ -395,13 +412,16 @@ bn_math_cmd(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     } else if (math_func == bn_mat_fromto) {
 	mat_t o;
 	vect_t from, to;
+	static const struct bn_tol tol = {
+	    BN_TOL_MAGIC, BN_TOL_DIST, BN_TOL_DIST*BN_TOL_DIST, 1e-6, 1-1e-6
+	};
 
 	if (argc < 3 || bn_decode_vect(from, argv[1]) < 3 ||
 	    bn_decode_vect(to, argv[2]) < 3) {
 	    bu_vls_printf(&result, "usage: %s vecFrom vecTo", argv[0]);
 	    goto error;
 	}
-	bn_mat_fromto(o, from, to);
+	bn_mat_fromto(o, from, to, &tol);
 	bn_encode_mat(&result, o);
     } else if (math_func == bn_mat_xrot || math_func == bn_mat_yrot ||
 	       math_func == bn_mat_zrot) {
@@ -468,7 +488,7 @@ bn_math_cmd(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
 	bn_mat_xform_about_pt(o, xform, v);
 	bn_encode_mat(&result, o);
-    } else if (math_func == bn_mat_arb_rot) {
+    } else if (math_func == (void (*)())bn_mat_arb_rot) {
 	mat_t o;
 	point_t pt;
 	vect_t dir;
@@ -569,7 +589,7 @@ bn_math_cmd(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	(*math_func)(qout, qin);
 	bn_encode_quat(&result, qout);
     } else if (math_func == (void (*)())bn_isect_line3_line3) {
-	double t, u;
+	fastf_t t, u;
 	point_t pt, a;
 	vect_t dir, c;
 	int i;
@@ -609,7 +629,7 @@ bn_math_cmd(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	bn_encode_vect(&result, a);
 
     } else if (math_func == (void (*)())bn_isect_line2_line2) {
-	double dist[2];
+	fastf_t dist[2];
 	point_t pt, a;
 	vect_t dir, c;
 	int i;
@@ -656,6 +676,48 @@ bn_math_cmd(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	VJOIN1(a, pt, dist[0], dir);
 	bu_vls_printf(&result, "%g %g", V2INTCLAMPARGS(a));
 
+    } else if (math_func == (void (*)())bn_dist_pt2_lseg2) {
+	point_t ptA, ptB, pca;
+	point_t pt;
+	fastf_t dist;
+	int ret;
+	static const struct bn_tol tol = {
+	    BN_TOL_MAGIC, BN_TOL_DIST, BN_TOL_DIST*BN_TOL_DIST, 1e-6, 1-1e-6
+	};
+
+	if (argc != 4) {
+	    bu_vls_printf(&result,
+			  "Usage: bn_dist_pt2_lseg2 ptA ptB pt (%d args specified)", argc-1);
+	    goto error;
+	}
+
+	if (bn_decode_vect(ptA, argv[1]) < 2) {
+	    bu_vls_printf(&result, "bn_dist_pt2_lseg2 no ptA: %s\n", argv[0]);
+	    goto error;
+	}
+
+	if (bn_decode_vect(ptB, argv[2]) < 2) {
+	    bu_vls_printf(&result, "bn_dist_pt2_lseg2 no ptB: %s\n", argv[0]);
+	    goto error;
+	}
+
+	if (bn_decode_vect(pt, argv[3]) < 2) {
+	    bu_vls_printf(&result, "bn_dist_pt2_lseg2 no pt: %s\n", argv[0]);
+	    goto error;
+	}
+
+	ret = bn_dist_pt2_lseg2(&dist, pca, ptA, ptB, pt, &tol);
+	switch (ret) {
+	case 0:
+	case 1:
+	case 2:
+	    dist = 0.0;
+	    break;
+	default:
+	    break;
+	}
+
+	bu_vls_printf(&result, "%g", dist);
     } else {
 	bu_vls_printf(&result, "libbn/bn_tcl.c: math function %s not supported yet\n", argv[0]);
 	goto error;
@@ -809,7 +871,7 @@ bn_cmd_noise_slice(ClientData UNUSED(clientData),
 		for (xval = 0; xval < xdim; xval++) {
 		    pt[X] = xval * scale[X] + delta[X];
 
-		    val = bn_noise_fbm(pt, h_val, lacunarity, octaves);
+		    bn_noise_fbm(pt, h_val, lacunarity, octaves);
 
 		}
 	    }
@@ -899,9 +961,6 @@ bn_cmd_random(ClientData UNUSED(clientData),
 }
 
 
-/**
- * B N _ M A T _ P R I N T
- */
 void
 bn_tcl_mat_print(Tcl_Interp *interp,
 		 const char *title,
@@ -914,12 +973,6 @@ bn_tcl_mat_print(Tcl_Interp *interp,
 }
 
 
-/**
- * B N _ T C L _ S E T U P
- *@brief
- * Add all the supported Tcl interfaces to LIBBN routines to
- * the list of commands known by the given interpreter.
- */
 void
 bn_tcl_setup(Tcl_Interp *interp)
 {
@@ -954,14 +1007,6 @@ bn_tcl_setup(Tcl_Interp *interp)
 }
 
 
-/**
- * B N _ I N I T
- *@brief
- * Allows LIBBN to be dynamically loade to a vanilla tclsh/wish with
- * "load /usr/brlcad/lib/libbn.so"
- *
- * The name of this function is specified by TCL.
- */
 int
 Bn_Init(Tcl_Interp *interp)
 {

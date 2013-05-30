@@ -1,7 +1,7 @@
 /*                            C V . C
  * BRL-CAD
  *
- * Copyright (c) 1991-2012 United States Government as represented by
+ * Copyright (c) 1991-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -36,7 +36,7 @@
 char usage[] = "\
 Usage: cv in_pat out_pat [[infile] outfile]\n\
 \n\
-Where a pattern is: [h|n][s|u] c|s|i|l|d|8|16|32|64\n\
+Where a pattern (no embedded blanks) is: [h|n] [s|u] [c|s|i|l|d|8|16|32|64]\n\
 e.g., hui is host unsigned int, nl is network (signed) long\n\
 ";
 
@@ -69,25 +69,22 @@ main(int argc, char **argv)
     }
 
     in_pat = argv[1];
-    if (BU_STR_EQUAL(in_pat, ""))
+    if (BU_STR_EQUAL(in_pat, "")) {
 	in_pat = "huc";
-    if (strlen(in_pat) > 4 || strlen(in_pat) < 1) {
+    } else if (strlen(in_pat) > 4 || strlen(in_pat) < 1) {
 	fprintf(stderr, "cv: unrecognized input pattern\n");
 	return 1;
     }
 
     out_pat = argv[2];
-    if (BU_STR_EQUAL(out_pat, ""))
+    if (BU_STR_EQUAL(out_pat, "")) {
 	out_pat = "nuc";
-    if (strlen(out_pat) > 4 || strlen(out_pat) < 1) {
+    } else if (strlen(out_pat) > 4 || strlen(out_pat) < 1) {
 	fprintf(stderr, "cv: unrecognized output pattern\n");
 	return 1;
     }
 
-    in_cookie = bu_cv_cookie(in_pat);
-    out_cookie = bu_cv_cookie(out_pat);
-
-    if (argc >= 5) {
+    if (argc == 5) {
 	if ((outfp = fopen(argv[4], "w")) == NULL) {
 	    perror(argv[4]);
 	    return 2;
@@ -110,6 +107,8 @@ main(int argc, char **argv)
 	return 5;
     }
 
+    in_cookie = bu_cv_cookie(in_pat);
+    out_cookie = bu_cv_cookie(out_pat);
     iitem = bu_cv_itemlen(in_cookie);
     oitem = bu_cv_itemlen(out_cookie);
 #define NITEMS (64*1024)

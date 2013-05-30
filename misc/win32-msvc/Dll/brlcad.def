@@ -8,6 +8,7 @@ bu_bitv_clear
 bu_bitv_free
 bu_bitv_new
 bu_calloc
+bu_debug
 bu_file_exists
 bu_free
 bu_getopt
@@ -15,6 +16,7 @@ bu_jmpbuf
 bu_log
 bu_log_add_hook
 bu_optarg
+bu_prmem
 bu_ptbl_free
 bu_ptbl_init
 bu_setjmp_valid

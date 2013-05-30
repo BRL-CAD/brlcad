@@ -1,7 +1,7 @@
 /*                         T R A N S L A T E _ E X T R U D E . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2012 United States Government as represented by
+ * Copyright (c) 2008-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -47,19 +47,58 @@ _ged_translate_extrude(struct ged *gedp, struct rt_extrude_internal *extrude, co
     switch (attribute[0]) {
 	case 'h':
 	case 'H':
-	    if (rflag) {
-		VADD2(hvec, extrude->h, tvec);
-	    } else {
-		VSUB2(hvec, tvec, extrude->V);
-	    }
+	    switch (attribute[1]) {
+	    case '\0':
+		if (rflag) {
+		    VADD2(hvec, extrude->h, tvec);
+		} else {
+		    VSUB2(hvec, tvec, extrude->V);
+		}
 
-	    /* check for zero H vector */
-	    if (MAGNITUDE(hvec) <= SQRT_SMALL_FASTF) {
-		bu_vls_printf(gedp->ged_result_str, "Zero H vector not allowed.");
+		/* check for zero H vector */
+		if (MAGNITUDE(hvec) <= SQRT_SMALL_FASTF) {
+		    bu_vls_printf(gedp->ged_result_str, "Zero H vector not allowed.");
+		    return GED_ERROR;
+		}
+
+		VMOVE(extrude->h, hvec);
+
+		break;
+	    case 'r':
+	    case 'R':
+		if (attribute[2] != '\0') {
+		    bu_vls_printf(gedp->ged_result_str, "bad extrude attribute - %s", attribute);
+		    return GED_ERROR;
+		}
+
+		if (rflag) {
+		    VADD2(hvec, extrude->h, tvec);
+		} else {
+		    VSUB2(hvec, tvec, extrude->V);
+		}
+
+		/* check for zero H vector */
+		if (MAGNITUDE(hvec) <= SQRT_SMALL_FASTF) {
+		    bu_vls_printf(gedp->ged_result_str, "Zero H vector not allowed.");
+		    return GED_ERROR;
+		}
+
+		VMOVE(extrude->h, hvec);
+
+		/* Cross h with the existing u_vec to insure that the new v_vec is perpendicular to h */
+		VCROSS(extrude->v_vec, extrude->h, extrude->u_vec);
+
+		/* Cross v_vec with h to insure that the new u_vec is perpendicular to h as well as v_vec */
+		VCROSS(extrude->u_vec, extrude->v_vec, extrude->h);
+
+		VUNITIZE(extrude->v_vec);
+		VUNITIZE(extrude->u_vec);
+
+		break;
+	    default:
+		bu_vls_printf(gedp->ged_result_str, "bad extrude attribute - %s", attribute);
 		return GED_ERROR;
 	    }
-
-	    VMOVE(extrude->h, hvec);
 
 	    break;
 	default:

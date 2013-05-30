@@ -43,7 +43,7 @@
 #include "perplex.h"
 #include "mbo_getopt.h"
 
-#if 0
+/*
 Desired Features:
 - string and file inputs w/ autobuffering
 - autogenerate scanner function
@@ -67,9 +67,10 @@ Possible Options (borrowed from flex usage message):
 -o,  --outfile=FILE	specify output filename (stdout by default?)
 -P,  --prefix=STRING	use STRING as prefix instead of "yy"
 -t,  --template=FILE    specify path to scanner template file
--V,  --version		report perplex version
+-v,  --version		report perplex version
      --yylineno		track line count in yylineno
-#endif
+*/
+
 using namespace re2c;
 
 static const mbo_opt_struct options[] =
@@ -81,8 +82,11 @@ static const mbo_opt_struct options[] =
     mbo_opt_struct('o', 1, "output"),
     mbo_opt_struct('s', 0, "safe-mode"),
     mbo_opt_struct('t', 1, "template"),
+    mbo_opt_struct('v', 0, "version"),
     mbo_opt_struct('-', 0, NULL)
 };
+
+static const char version[] = "1.0.0";
 
 static const char usage[] =
 "Usage: perplex [options] input\n"
@@ -91,8 +95,9 @@ static const char usage[] =
 "  -c, --conditions\tenable support for start conditions\n"
 "  -i, --header PATH\tspecify path of header file\n"
 "  -o, --output\t\tspecify path of output file\n"
-"  -s, --safe-mode\t\tprevent rule fall-through by skipping matched text by default"
+"  -s, --safe-mode\tprevent rule fall-through by skipping matched text by default\n"
 "  -t, --template PATH\tspecify path to scanner template file\n"
+"  -v, --version\t\tprint perplex version number and exit\n"
 ;
 
 int main(int argc, char *argv[])
@@ -104,7 +109,7 @@ int main(int argc, char *argv[])
     void *parser;
     perplex_t scanner;
     appData_t *appData;
-    char defaultTemplate[] = "scanner_template.c";
+    char defaultTemplate[] = "perplex_template.c";
     FILE *inFile;
     FILE *outFile = stdout;
     FILE *templateFile = NULL;
@@ -159,6 +164,9 @@ int main(int argc, char *argv[])
 		    exit(1);
 		}
 		break;
+            case 'v':
+                puts(version);
+                exit(0);
 	    default:
 		fprintf(stderr, "Error: Error in option string.\n");
 		puts(usage);

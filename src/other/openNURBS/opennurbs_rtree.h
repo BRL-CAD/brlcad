@@ -1,8 +1,9 @@
 /* $NoKeywords: $ */
 /*
 //
-// Copyright (c) 1993-2009 Robert McNeel & Associates. All rights reserved.
-// Rhinoceros is a registered trademark of Robert McNeel & Assoicates.
+// Copyright (c) 1993-2012 Robert McNeel & Associates. All rights reserved.
+// OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
+// McNeel & Associates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
@@ -84,6 +85,19 @@ struct ON_RTreeBBox
 {
   double m_min[3];
   double m_max[3];
+};
+
+struct ON_RTreeSphere
+{
+  double m_point[3];
+  double m_radius;
+};
+
+struct ON_RTreeCapsule
+{
+  double m_point[2][3];
+  double m_radius;
+  double m_domain[2];
 };
 
 struct ON_RTreeBranch
@@ -432,49 +446,136 @@ public:
   */
   void RemoveAll();
 
-
   /*
   Description:
     Search the R-tree for all elements whose bounding boxes overlap
-    (a_min, a_max).
+    a_rect.
   Parameters:
+    a_rect - [in/out]
+      The version of search that has ON_RTreeBBox* a_rect as the first
+      argument, allows you to shrink the a_rect as the search progresses.
+      This is useful for doing things like searching for closest points.
+      If you want to shrink a_rect, you must use a_context to pass it
+      to the resultCallback function and shrink it in the resultCallback
+      function. In the callback, the modified rect must be contained
+      in the previous rect.
+    a_sphere - [in/out]
+      The version of search that has ON_RTreeSphere* a_sphere as the first
+      argument, allows you to shrink the a_sphere as the search progresses.
+      This is useful for doing things like searching for closest points.
+      If you want to shrink a_sphere, you must use a_context to pass it
+      to the resultCallback function and shrink it in the resultCallback
+      function. In the callback, the modified sphere must be contained
+      in the previous sphere.
+    a_capsule - [in/out]
+      The version of search that has ON_RTreeSphere* a_capsule as the first
+      argument, allows you to shrink the a_capsule as the search progresses.
+      This is useful for doing things like searching for closest points.
+      If you want to shrink a_capsule, you must use a_context to pass it
+      to the resultCallback function and shrink it in the resultCallback
+      function. In the callback, the modified capsule must be contained
+      in the previous capsule.
     a_min - [in]
     a_max - [in]
       (a_min,a_max) is the bounding box of the search region.
     a_results - [out]
       The ids of elements that overlaps the search region.
+    resultCallback - [in]
+      A function to call when leaf nodes overlap.
+    a_context - [in]
+      pointer passed to the resultCallback() function.
   Returns:
     True if entire tree was searched.  It is possible no results were found.
+  Remarks:
+    If you are using a Search() that uses a resultCallback() function,
+    then return true to keep searching and false to terminate the search.
   */
+  bool Search( 
+    ON_RTreeSphere* a_sphere,
+    bool ON_MSC_CDECL resultCallback(void* a_context, ON__INT_PTR a_id), 
+    void* a_context
+    ) const;
+
+  bool Search( 
+    ON_RTreeCapsule* a_capsule,
+    bool ON_MSC_CDECL resultCallback(void* a_context, ON__INT_PTR a_id), 
+    void* a_context
+    ) const;
+
+  bool Search( 
+    ON_RTreeBBox* a_rect,
+    bool ON_MSC_CDECL resultCallback(void* a_context, ON__INT_PTR a_id), 
+    void* a_context
+    ) const;
+
+  /*
+  Description:
+    Search the R-tree for all elements whose bounding boxes overlap
+    the set of points between to parallel planes.
+  Parameters:
+    a_plane_eqn - [in]
+    a_min - [in]
+    a_max - [in]
+      The region between the parallel planes is the set point points
+      where the value of the plane equation is >= a_min and <= a_max.
+    resultCallback - [in]
+      A function to call when leaf nodes overlap the region between
+      the parallel planes.
+    a_context - [in]
+      pointer passed to the resultCallback() function.
+  Returns:
+    True if entire tree was searched.  It is possible no results were found.
+  Remarks:
+    If you are using a Search() that uses a resultCallback() function,
+    then return true to keep searching and false to terminate the search.
+  */
+  bool Search(
+    const double a_plane_eqn[4],
+    double a_min,
+    double a_max,
+    bool ON_MSC_CDECL resultCallback(void* a_context, ON__INT_PTR a_id), 
+    void* a_context
+    ) const;
+
   bool Search(const double a_min[3], const double a_max[3],
-    bool ON_MSC_CDECL resultCallback(void* a_context, ON__INT_PTR a_id), void* a_context ) const;
+    bool ON_MSC_CDECL resultCallback(void* a_context, ON__INT_PTR a_id), void* a_context 
+    ) const;
 
 	bool Search(const double a_min[3], const double a_max[3],
-    ON_RTreeSearchResult& a_result ) const;
+    ON_RTreeSearchResult& a_result 
+    ) const;
 
 	bool Search(const double a_min[3], const double a_max[3],
-    ON_SimpleArray<ON_RTreeLeaf>& a_result ) const;
+    ON_SimpleArray<ON_RTreeLeaf>& a_result 
+    ) const;
 
   bool Search(const double a_min[3], const double a_max[3],
-    ON_SimpleArray<void*>& a_result ) const;
+    ON_SimpleArray<void*>& a_result 
+    ) const;
 
   bool Search(const double a_min[3], const double a_max[3],
-    ON_SimpleArray<int>& a_result ) const;
+    ON_SimpleArray<int>& a_result 
+    ) const;
 
   bool Search2d(const double a_min[2], const double a_max[2],
-    bool ON_MSC_CDECL resultCallback(void* a_context, ON__INT_PTR a_id), void* a_context ) const;
+    bool ON_MSC_CDECL resultCallback(void* a_context, ON__INT_PTR a_id), void* a_context
+    ) const;
 
 	bool Search2d(const double a_min[2], const double a_max[2],
-    ON_RTreeSearchResult& a_result ) const;
+    ON_RTreeSearchResult& a_result
+    ) const;
 
 	bool Search2d(const double a_min[2], const double a_max[2],
-    ON_SimpleArray<ON_RTreeLeaf>& a_result ) const;
+    ON_SimpleArray<ON_RTreeLeaf>& a_result
+    ) const;
 
   bool Search2d(const double a_min[2], const double a_max[2],
-    ON_SimpleArray<void*>& a_result ) const;
+    ON_SimpleArray<void*>& a_result
+    ) const;
 
   bool Search2d(const double a_min[2], const double a_max[2],
-    ON_SimpleArray<int>& a_result ) const;
+    ON_SimpleArray<int>& a_result
+    ) const;
 
   /*
   Description:
@@ -521,6 +622,29 @@ public:
           );
 
   /*
+  Description:
+    Search two R-trees for all pairs elements whose bounding boxes overlap.
+  Parameters:
+    a_rtreeA - [in]
+    a_rtreeB - [in]
+    tolerance - [in]
+      If the distance between a pair of bounding boxes is <= tolerance, 
+      then resultCallback() is called.
+    resultCallback - [out]
+      callback function
+      Return true for the search to continue and false to terminate the search.
+    a_context - [in] argument passed through to resultCallback().
+  Returns:
+    True if entire tree was searched.  It is possible no results were found.
+  */
+  static bool Search( 
+          const ON_RTree& a_rtreeA,
+          const ON_RTree& a_rtreeB, 
+          double tolerance,
+          bool ON_MSC_CDECL resultCallback(void* a_context, ON__INT_PTR a_idA, ON__INT_PTR a_idB),
+          void* a_context
+          );
+  /*
   Returns:
     Number of elements (leaves).
   Remark:
@@ -535,6 +659,12 @@ public:
     Pointer to the root node.
   */
   const ON_RTreeNode* Root() const;
+  
+  /*
+  Returns:
+    Bounding box of the entire R-tree;
+  */
+  ON_BoundingBox BoundingBox() const;
 
   /*
   Returns:

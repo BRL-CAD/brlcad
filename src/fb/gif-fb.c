@@ -1,7 +1,7 @@
 /*                        G I F - F B . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2012 United States Government as represented by
+ * Copyright (c) 2004-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -287,7 +287,7 @@ static short exp_buffer[(1 << 11) - 2];	/* reverse-order atomic codes */
 /* Non-recursive version, for wimpy systems: */
 static void
 Expand(int c)
-    /* LZW code */
+/* LZW code */
 {
     short *bp = exp_buffer;
 
@@ -726,7 +726,7 @@ main(int argc, char **argv)
 		continue;	/* so says the GIF spec */
 
 	    case GIF_TERMINATOR:	/* GIF terminator */
-	terminate:
+	    terminate:
 		/* GIF spec suggests pause and wait for go-ahead here,
 		   also "screen clear", but they're impractical. */
 

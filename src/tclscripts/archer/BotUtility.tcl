@@ -1,7 +1,7 @@
 #                B O T U T I L I T Y . T C L
 # BRL-CAD
 #
-# Copyright (c) 2002-2012 United States Government as represented by
+# Copyright (c) 2002-2013 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -26,19 +26,6 @@
 package require Tk
 package require Itcl
 package require Itk
-
-if {$tcl_platform(platform) == "windows"} {
-    load [file join [bu_brlcad_root "bin"] libbu[info sharedlibextension]]
-} else {
-    load [file join [bu_brlcad_root "lib"] libbu[info sharedlibextension]]
-}
-
-if {[catch {
-    set script [file join [bu_brlcad_data "tclscripts"] boteditor botEditor.tcl]
-    source $script
-} errMsg] > 0} {
-    puts "Couldn't load \"$script\"\n$errMsg"
-} 
 
 ::itcl::class BotUtility {
     inherit Utility
@@ -99,7 +86,7 @@ if {[catch {
 	    ttk::label $itk_interior.noticeLbl \
 		-text {There are no bots to edit.}
 	} {}
-	
+
 	grid $itk_component(noBots)
 
     } else {
@@ -150,19 +137,19 @@ if {[catch {
     # auto-select first bot
     # - initialize selectedbot variable to first bot
     # - make combobox show firstbot
-    namespace eval :: "$this configure -selectedbot [lindex $bots 0]"    
+    namespace eval :: "$this configure -selectedbot [lindex $bots 0]"
     $itk_component(combo) current 0
 
     # will update selectedbot variable whenever user changes combobox selection
     # 0 return value prevents user from editing the combobox entry
     $itk_component(combo) configure \
-        -validate all \
+	-validate all \
 	-validatecommand "$this configure -selectedbot %s; return 0"
 
     # create button that starts editing for the selected bot
     itk_component add button {
-        ttk::button $itk_component(sframe).editButton \
-            -text {Edit Selected} \
+	ttk::button $itk_component(sframe).editButton \
+	    -text {Edit Selected} \
 	    -command "$this editSelected"
     } {}
 
@@ -208,9 +195,9 @@ if {[catch {
     # close original plugin window
     set top [winfo toplevel $itk_interior]
     destroy $top
-    
+
 }
-	
+
 # Local Variables:
 # mode: Tcl
 # tab-width: 8

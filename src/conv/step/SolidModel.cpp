@@ -1,7 +1,7 @@
 /*                 SolidModel.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2012 United States Government as represented by
+ * Copyright (c) 1994-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -31,27 +31,31 @@
 
 #define CLASSNAME "SolidModel"
 #define ENTITYNAME "Solid_Model"
-string SolidModel::entityname = Factory::RegisterClass(ENTITYNAME,(FactoryMethod)SolidModel::Create);
+string SolidModel::entityname = Factory::RegisterClass(ENTITYNAME, (FactoryMethod)SolidModel::Create);
 
-SolidModel::SolidModel() {
+SolidModel::SolidModel()
+{
     step = NULL;
     id = 0;
 }
 
-SolidModel::SolidModel(STEPWrapper *sw,int step_id) {
-    step=sw;
+SolidModel::SolidModel(STEPWrapper *sw, int step_id)
+{
+    step = sw;
     id = step_id;
 }
 
-SolidModel::~SolidModel() {
+SolidModel::~SolidModel()
+{
 }
 
 bool
-SolidModel::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
-    step=sw;
+SolidModel::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
+    step = sw;
     id = sse->STEPfile_id;
 
-    if ( !GeometricRepresentationItem::Load(step,sse) ) {
+    if (!GeometricRepresentationItem::Load(step, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::GeometricRepresentationItem." << std::endl;
 	return false;
     }
@@ -59,36 +63,31 @@ SolidModel::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
 }
 
 void
-SolidModel::Print(int level) {
-    TAB(level); std::cout << CLASSNAME << ":" << name << "(";
+SolidModel::Print(int level)
+{
+    TAB(level);
+    std::cout << CLASSNAME << ":" << name << "(";
     std::cout << "ID:" << STEPid() << ")" << std::endl;
 
     GeometricRepresentationItem::Print(level);
 }
 
 STEPEntity *
-SolidModel::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
-    Factory::OBJECTS::iterator i;
-    if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
-	SolidModel *object = new SolidModel(sw,sse->STEPfile_id);
+SolidModel::GetInstance(STEPWrapper *sw, int id)
+{
+    return new SolidModel(sw, id);
+}
 
-	Factory::AddObject(object);
-
-	if (!object->Load(sw, sse)) {
-	    std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
-	    delete object;
-	    return NULL;
-	}
-	return static_cast<STEPEntity *>(object);
-    } else {
-	return (*i).second;
-    }
+STEPEntity *
+SolidModel::Create(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
+    return STEPEntity::CreateEntity(sw, sse, GetInstance, CLASSNAME);
 }
 /*
   void
   SolidModel::LoadONBrep(ON_Brep *brep)
   {
-  std::cerr << "Error: ::LoadONBrep(ON_Brep *brep<" << std::hex << brep << std::dec << ">) not implememnted for " << entityname << std::endl;
+  std::cerr << "Error: ::LoadONBrep(ON_Brep *brep<" << std::hex << brep << std::dec << ">) not implemented for " << entityname << std::endl;
   return; // false;
   }
 */

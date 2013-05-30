@@ -1,7 +1,7 @@
 /*               A D D _ I N N E R _ S H E L L . C
  * BRL-CAD
  *
- * Copyright (c) 1993-2012 United States Government as represented by
+ * Copyright (c) 1993-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -28,7 +28,7 @@ Add_inner_shell(struct nmgregion *r, int entityno)
     int sol_num;		/* IGES solid type number */
     int no_of_faces;		/* Number of faces in shell */
     int face_count = 0;		/* Actual number of faces made */
-    int *face_de;		/* Directory seqence numbers for faces */
+    int *face_de;		/* Directory sequence numbers for faces */
     int *face_orient;		/* Orientation of faces */
     int face;
     struct shell *s;			/* NMG shell */

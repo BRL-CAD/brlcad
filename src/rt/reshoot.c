@@ -1,7 +1,7 @@
 /*                       R E S H O O T . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2012 United States Government as represented by
+ * Copyright (c) 2004-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -59,7 +59,7 @@
  Dir=4, 5, 6
  region=/all.g/platform.r in=platform.s indist=10016.8 out=platform.s outdist=10023.8
  @endverbatim
- * where the line begining with "region" may be repeated any number of times, representing each
+ * where the line beginning with "region" may be repeated any number of times, representing each
  * region encountered along the ray.
  * now run this program as follows: @verbatim
  reshoot geom.g obj [obj...] < inputfile
@@ -105,8 +105,8 @@ struct shot {
  * The parse table for a struct shot
  */
 static const struct bu_structparse shot_sp[] = {
-    { "%f", 3, "Pnt", bu_offsetofarray(struct shot, pt), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
-    { "%f", 3, "Dir", bu_offsetofarray(struct shot, dir), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+    { "%f", 3, "Pnt", bu_offsetof(struct shot, pt), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+    { "%f", 3, "Dir", bu_offsetof(struct shot, dir), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
     {"", 0, (char *)0, 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 
@@ -128,8 +128,8 @@ static const struct bu_structparse reg_sp[] = {
     {"%V", 1, "region", bu_offsetof(struct reg_hit, regname), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%V", 1, "in", bu_offsetof(struct reg_hit, in_primitive), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
     {"%V", 1, "out", bu_offsetof(struct reg_hit, out_primitive), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
-    {"%f", 1, "indist", bu_offsetof(struct reg_hit, indist), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
-    {"%f", 1, "outdist", bu_offsetof(struct reg_hit, outdist), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+    {"%g", 1, "indist", bu_offsetof(struct reg_hit, indist), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+    {"%g", 1, "outdist", bu_offsetof(struct reg_hit, outdist), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
     {"", 0, (char *)0, 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 
@@ -169,7 +169,7 @@ hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segs
 	double val;
     } vs;
     static struct bu_structparse val_sp[] = {
-	{"%f", 1, "val", bu_offsetof(struct valstruct, val), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+	{"%g", 1, "val", bu_offsetof(struct valstruct, val), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
     };
 
     /* examine each partition until we get back to the head */
@@ -240,7 +240,7 @@ hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segs
  * Function called when ray misses all geometry
  * A pointer to this function is stored in the application structure
  * field a_miss.  rt_shootray() will call this when the ray misses all geometry.
- * it passees the application structure.
+ * it passes the application structure.
  * @return
  *	Typically 0, and becomes the return value from rt_shootray()
  */
@@ -335,7 +335,7 @@ main(int argc, char **argv)
 	bu_exit(2, "rtexample: rt_dirbuild failure\n");
     }
 
-    /* intialize the application structure to all zeros */
+    /* initialize the application structure to all zeros */
     RT_APPLICATION_INIT(&ap);
 
     ap.a_rt_i = rtip;	/* your application uses this instance */
@@ -386,7 +386,8 @@ main(int argc, char **argv)
 
 	    default:
 	    {
-		struct reg_hit *rh = bu_calloc(1, sizeof (struct reg_hit), "");
+		struct reg_hit *rh;
+		BU_ALLOC(rh, struct reg_hit);
 		BU_VLS_INIT(&rh->regname);
 		BU_VLS_INIT(&rh->in_primitive);
 		BU_VLS_INIT(&rh->out_primitive);

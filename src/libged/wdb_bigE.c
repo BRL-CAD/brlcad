@@ -1,7 +1,7 @@
 /*                          B I G E . C
  * BRL-CAD
  *
- * Copyright (c) 1997-2012 United States Government as represented by
+ * Copyright (c) 1997-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -130,7 +130,7 @@ wdb_add_solid(const struct directory *dp,
     int id;
     int solid_is_plate_mode_bot=0;
 
-    BU_GET(eptr, union E_tree);
+    BU_ALLOC(eptr, union E_tree);
     eptr->magic = E_TREE_MAGIC;
 
     id = rt_db_get_internal(&intern, dp, dgcdp->dgop->dgo_wdbp->dbip, mat, &rt_uniresource);
@@ -172,7 +172,7 @@ wdb_add_solid(const struct directory *dp,
     }
 
     /* get the soltab stuff */
-    BU_GET(eptr->l.stp, struct soltab);
+    BU_ALLOC(eptr->l.stp, struct soltab);
     eptr->l.stp->l.magic = RT_SOLTAB_MAGIC;
     eptr->l.stp->l2.magic = RT_SOLTAB2_MAGIC;
     eptr->l.stp->st_dp = dp;
@@ -251,7 +251,7 @@ wdb_build_etree(union tree *tp,
 	case OP_UNION:
 	case OP_SUBTRACT:
 	case OP_INTERSECT:
-	    BU_GET(eptr, union E_tree);
+	    BU_ALLOC(eptr, union E_tree);
 	    eptr->magic = E_TREE_MAGIC;
 	    eptr->n.op = tp->tr_op;
 	    eptr->n.left = wdb_build_etree(tp->tr_b.tb_left, dgcdp);
@@ -273,7 +273,7 @@ wdb_build_etree(union tree *tp,
 	    break;
 	case OP_NOP:
 	    /* add a NULL solid */
-	    BU_GET(eptr, union E_tree);
+	    BU_ALLOC(eptr, union E_tree);
 	    eptr->magic = E_TREE_MAGIC;
 	    eptr->l.m = (struct model *)NULL;
 	    break;
@@ -286,7 +286,7 @@ wdb_build_etree(union tree *tp,
 
 /* a handy routine (for debugging) that prints asegment list */
 void
-wdb_show_seg(struct bu_list *seg, int str)
+wdb_show_seg(struct bu_list *seg, char *str)
 {
     struct seg *ptr;
 
@@ -919,7 +919,7 @@ wdb_eval_op(struct bu_list *A,
 		sega = next;
 	    }
 
-	    /* put the resuling ONS list on the result list */
+	    /* put the resulting ONS list on the result list */
 	    BU_LIST_INSERT_LIST(&ret, &ons);
 
 	    /* add INS to the return list (maintain order) */
@@ -983,7 +983,7 @@ wdb_eval_etree(union E_tree *eptr,
     switch (eptr->l.op) {
 	case OP_DB_LEAF:
 	case OP_SOLID:
-	    A = (struct bu_list *)bu_malloc(sizeof(struct bu_list), "bu_list");
+	    BU_ALLOC(A, struct bu_list);
 	    BU_LIST_INIT(A);
 	    BU_LIST_INSERT_LIST(A, &eptr->l.seghead);
 
@@ -1044,13 +1044,13 @@ wdb_classify_seg(struct seg *seg, struct soltab *shoot, struct xray *rp, struct 
 
     memset(&rd, 0, sizeof(struct ray_data));
 
-    BU_GET(rd.seghead, struct seg);
+    BU_ALLOC(rd.seghead, struct seg);
     BU_LIST_INIT(&rd.seghead->l);
 
     mid_dist = (seg->seg_in.hit_dist + seg->seg_out.hit_dist) / 2.0;
     VJOIN1(new_rp.r_pt, rp->r_pt, mid_dist, rp->r_dir);
 #ifdef debug
-    bu_log("Classifying segment with mid_pt (%g %g %g) with respct to %s\n", V3ARGS(new_rp.r_pt), shoot->st_dp->d_namep);
+    bu_log("Classifying segment with mid_pt (%g %g %g) with respect to %s\n", V3ARGS(new_rp.r_pt), shoot->st_dp->d_namep);
 #endif
 
     bn_vec_ortho(new_rp.r_dir, rp->r_dir);
@@ -1147,18 +1147,18 @@ wdb_shoot_and_plot(point_t start_pt,
 
     memset(&rd, 0, sizeof(struct ray_data));
 
-    BU_GET(rd.seghead, struct seg);
+    BU_ALLOC(rd.seghead, struct seg);
     BU_LIST_INIT(&rd.seghead->l);
 
-    VMOVE(rp.r_pt, start_pt)
-	VMOVE(rp.r_dir, dir)
-	/* Compute the inverse of the direction cosines */
-	if (!ZERO(rp.r_dir[X])) {
-	    rd.rd_invdir[X]=1.0/rp.r_dir[X];
-	} else {
-	    rd.rd_invdir[X] = INFINITY;
-	    rp.r_dir[X] = 0.0;
-	}
+    VMOVE(rp.r_pt, start_pt);
+    VMOVE(rp.r_dir, dir);
+    /* Compute the inverse of the direction cosines */
+    if (!ZERO(rp.r_dir[X])) {
+	rd.rd_invdir[X]=1.0/rp.r_dir[X];
+    } else {
+	rd.rd_invdir[X] = INFINITY;
+	rp.r_dir[X] = 0.0;
+    }
     if (!ZERO(rp.r_dir[Y])) {
 	rd.rd_invdir[Y]=1.0/rp.r_dir[Y];
     } else {
@@ -1310,7 +1310,7 @@ wdb_shoot_and_plot(point_t start_pt,
     if (final_segs) {
 	struct seg *seg;
 
-	/* add the segemnts to the VLIST */
+	/* add the segments to the VLIST */
 	for (BU_LIST_FOR(seg, seg, final_segs)) {
 	    point_t pt;
 
@@ -1319,17 +1319,17 @@ wdb_shoot_and_plot(point_t start_pt,
 		continue;
 
 	    dgcdp->nvectors++;
-	    VJOIN1(pt, rp.r_pt, seg->seg_in.hit_dist, rp.r_dir)
+	    VJOIN1(pt, rp.r_pt, seg->seg_in.hit_dist, rp.r_dir);
 
 #ifdef debug
-		bu_log("\t\tDRAW (%g %g %g)", V3ARGS(pt));
+	    bu_log("\t\tDRAW (%g %g %g)", V3ARGS(pt));
 #endif
 
 	    RT_ADD_VLIST(vhead, pt, BN_VLIST_LINE_MOVE);
-	    VJOIN1(pt, rp.r_pt, seg->seg_out.hit_dist, rp.r_dir)
+	    VJOIN1(pt, rp.r_pt, seg->seg_out.hit_dist, rp.r_dir);
 
 #ifdef debug
-		bu_log("<->(%g %g %g)\n", V3ARGS(pt));
+	    bu_log("<->(%g %g %g)\n", V3ARGS(pt));
 #endif
 
 	    RT_ADD_VLIST(vhead, pt, BN_VLIST_LINE_DRAW);
@@ -1646,8 +1646,9 @@ wdb_Eplot(union E_tree *eptr,
 		    }
 
 		    /* build a segment list for each solid */
-		    A = (struct bu_list *)bu_calloc(1, sizeof(struct bu_list), "A");
-		    B = (struct bu_list *)bu_calloc(1, sizeof(struct bu_list), "B");
+		    BU_ALLOC(A, struct bu_list);
+		    BU_ALLOC(B, struct bu_list);
+
 		    BU_LIST_INIT(A);
 		    BU_LIST_INIT(B);
 
@@ -1753,8 +1754,8 @@ wdb_fix_halfs(struct dg_client_data *dgcdp)
 
     tol = &dgcdp->dgop->dgo_wdbp->wdb_tol;
 
-    VSETALL(max, -MAX_FASTF);
-    VSETALL(min, MAX_FASTF);
+    VSETALL(max, -INFINITY);
+    VSETALL(min, INFINITY);
 
     for (i = 0; i < BU_PTBL_END(&dgcdp->leaf_list); i++) {
 	union E_tree *tp;
@@ -1989,7 +1990,7 @@ wdb_fix_halfs(struct dg_client_data *dgcdp)
 	nmg_close_shell(s, tol);
 	nmg_rebound(tp->l.m, tol);
 
-	BU_GET(pg, struct rt_pg_internal);
+	BU_ALLOC(pg, struct rt_pg_internal);
 
 	if (!nmg_to_poly(tp->l.m, pg, tol)) {
 	    bu_free((char *)pg, "rt_pg_internal");
@@ -2041,7 +2042,7 @@ dgo_E_cmd(struct dg_obj *dgop,
     if (bu_debug&BU_DEBUG_MEM_CHECK && bu_mem_barriercheck())
 	bu_log("Error at start of 'E'\n");
 
-    BU_GET(dgcdp, struct dg_client_data);
+    BU_ALLOC(dgcdp, struct dg_client_data);
     dgcdp->dgop = dgop;
     dgcdp->interp = dgop->interp;
     dgcdp->do_polysolids = 0;
@@ -2092,7 +2093,7 @@ dgo_E_cmd(struct dg_obj *dgop,
 
     dgo_eraseobjpath(dgop, argc, argv, LOOKUP_QUIET, 0);
 
-    dgcdp->ap = (struct application *)bu_malloc(sizeof(struct application), "Big E app");
+    BU_ALLOC(dgcdp->ap, struct application);
     RT_APPLICATION_INIT(dgcdp->ap);
     dgcdp->ap->a_resource = &rt_uniresource;
     rt_uniresource.re_magic = RESOURCE_MAGIC;

@@ -1,7 +1,7 @@
 /*                         S H A R E . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2012 United States Government as represented by
+ * Copyright (c) 1998-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -56,7 +56,7 @@
 	    if (dlp1->resource->rc > 1) {   /* must be sharing this resource */ \
 		--dlp1->resource->rc; \
 		strp = dlp1->resource; \
-		BU_GET(dlp1->resource, struct str); \
+		BU_ALLOC(dlp1->resource, struct str); \
 		*dlp1->resource = *strp;        /* struct copy */ \
 		dlp1->resource->rc = 1; \
 	    } \

@@ -1,7 +1,7 @@
 /*                  A N I M _ C A S C A D E . C
  * BRL-CAD
  *
- * Copyright (c) 1993-2012 United States Government as represented by
+ * Copyright (c) 1993-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -53,17 +53,23 @@
 #include "vmath.h"
 
 
-#define OPT_STR "so:f:r:a:"
+#define OPT_STR "so:f:r:a:h?"
 
 #define CASCADE_A 0
 #define CASCADE_R 1
 #define CASCADE_F 2
 
 
-vect_t fcenter, fypr, rcenter, rypr, acenter, aypr;
+/* intentionally double for scan */
+double fcenter[3], fypr[3], rcenter[3], rypr[3], acenter[3], aypr[3];
 int cmd_fcen, cmd_fypr, cmd_rcen, cmd_rypr, cmd_acen, cmd_aypr;
 int output_mode, read_time, print_time;
 
+static void
+usage(void)
+{
+    fprintf(stderr,"Usage: anim_cascade [-s] [-o(f|r|a)] [-(f|r|a)(c|y) # # #] input.table output.table\n");
+}
 
 int get_args(int argc, char **argv)
 {
@@ -151,7 +157,6 @@ int get_args(int argc, char **argv)
 		print_time = 0;
 		break;
 	    default:
-		fprintf(stderr, "anim_cascade: unknown option: -%c\n", c);
 		return 0;
 	}
     }
@@ -163,15 +168,25 @@ int
 main (int argc, char *argv[])
 {
     int val;
-    fastf_t elapsed, yaw1, pitch1, roll1, yaw2, pitch2, roll2;
-    vect_t cen1, cen2, cen_ans, ang_ans, rad_ang_ans, rotated = VINIT_ZERO;
+    /* intentionally double for scan */
+    double elapsed, yaw1, pitch1, roll1, yaw2, pitch2, roll2;
+    double cen1[3], cen2[3];
+
+    vect_t rad_ang_ans, cen_ans, ang_ans, rotated = VINIT_ZERO;
     mat_t m_rot1, m_rot2, m_ans;
     int one_time, read_cen1, read_cen2, read_rot1, read_rot2;
 
-    read_cen1 = read_cen2 = read_rot1 = read_rot2 = 1;
+    if (argc == 1 && isatty(fileno(stdin)) && isatty(fileno(stdout))){
+	usage();
+	return 0;
+    }
 
-    if (!get_args(argc, argv))
-	fprintf(stderr, "anim_cascade: Argument error.");
+    if (!get_args(argc, argv)){
+	usage();
+	return 0;
+    }
+
+    read_cen1 = read_cen2 = read_rot1 = read_rot2 = 1;
 
     switch (output_mode) {
 	case CASCADE_A:

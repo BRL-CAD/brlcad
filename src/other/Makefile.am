@@ -17,12 +17,6 @@ else !BUILD_PNG
 PNGDIR=
 endif
 
-if BUILD_JOVE
-JOVEDIR=jove
-else !BUILD_JOVE
-JOVEDIR=
-endif
-
 if BUILD_URT
 URTDIR=URToolkit
 UTAHRLEDIR=libutahrle
@@ -113,6 +107,9 @@ else !BUILD_TNT
 TNTDIR=
 endif
 
+VDSDIR=libvds
+
+P2TDIR=poly2tri
 
 if ONLY_BENCHMARK
 SUBDIRS = \
@@ -121,6 +118,7 @@ SUBDIRS = \
 	${REGEXDIR} \
 	${TCLDIR} \
 	${OPENNURBSDIR} \
+        ${P2TDIR} \
 	${TNTDIR}
 
 else !ONLY_BENCHMARK
@@ -132,6 +130,7 @@ SUBDIRS = \
 	${REGEXDIR} \
 	${TCLDIR} \
 	${OPENNURBSDIR} \
+        ${P2TDIR} \
 	${TNTDIR}
 
 else !ONLY_RTS
@@ -153,7 +152,9 @@ SUBDIRS = \
 	${TKHTMLDIR} \
 	${TKTABLEDIR} \
 	${OPENNURBSDIR} \
-	${TNTDIR} 
+        ${P2TDIR} \
+	${TNTDIR} \
+        ${VDSDIR}
 
 endif
 # end ONLY_RTS
@@ -162,15 +163,16 @@ endif
 # end ONLY_BENCHMARK
 
 EXTRA_DIST = \
+	README \
 	boost \
 	clipper \
 	togl \
 	hv3 \
+        Eigen \
 	CMakeLists.txt \
 	itcl.dist \
 	itk.dist \
 	iwidgets.dist \
-	jove.dist \
 	lemon \
 	lemon.dist \
 	libpng \
@@ -209,6 +211,8 @@ EXTRA_DIST = \
 	tktable.dist \
 	togl.dist \
 	URToolkit.dist \
+	libvds.dist \
+	poly2tri.dist \
 	xmltools \
 	xmltools.dist
 
@@ -217,12 +221,13 @@ DIST_SUBDIRS = \
 	URToolkit \
 	incrTcl \
 	iwidgets \
-	jove \
 	libregex \
 	libtermlib \
 	libutahrle \
+	libvds \
 	libz \
 	openNURBS \
+	poly2tri \
 	tcl \
 	tk \
 	tkpng \

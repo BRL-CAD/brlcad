@@ -1,7 +1,7 @@
 /*                        P R C O M B . C
  * BRL-CAD
  *
- * Copyright (c) 1996-2012 United States Government as represented by
+ * Copyright (c) 1996-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -70,8 +70,8 @@ main(int argc, char *argv[])
 
     MAT_IDN(identity_mat);
 
-    if ((dbip = db_open(argv[1], "r")) == NULL) {
-	fprintf(stderr, "Cannot open %s\n", argv[1]);
+    if ((dbip = db_open(argv[1], DB_OPEN_READONLY)) == NULL) {
+	fprintf(stderr, "Cannot open geometry database file %s\n", argv[1]);
 	perror("test");
 	return 1;
     }

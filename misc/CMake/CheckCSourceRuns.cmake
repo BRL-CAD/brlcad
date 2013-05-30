@@ -14,23 +14,23 @@
 #=============================================================================
 # Copyright 2006-2009 Kitware, Inc.
 # All rights reserved.
-# 
+#
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
 # are met:
-# 
+#
 # * Redistributions of source code must retain the above copyright
 #   notice, this list of conditions and the following disclaimer.
-# 
+#
 # * Redistributions in binary form must reproduce the above copyright
 #   notice, this list of conditions and the following disclaimer in the
 #   documentation and/or other materials provided with the distribution.
-# 
+#
 # * Neither the names of Kitware, Inc., the Insight Software Consortium,
 #   nor the names of their contributors may be used to endorse or promote
 #   products derived from this software without specific prior written
 #   permission.
-# 
+#
 # THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 # "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 # LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -42,37 +42,37 @@
 # THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-# 
+#
 # ------------------------------------------------------------------------------
-# 
+#
 # The above copyright and license notice applies to distributions of
 # CMake in source and binary form.  Some source files contain additional
 # notices of original copyright by their contributors; see each source
 # for details.  Third-party software packages supplied with CMake under
 # compatible licenses provide their own copyright notices documented in
 # corresponding subdirectories.
-# 
+#
 # ------------------------------------------------------------------------------
-# 
+#
 # CMake was initially developed by Kitware with the following sponsorship:
-# 
+#
 #  * National Library of Medicine at the National Institutes of Health
 #    as part of the Insight Segmentation and Registration Toolkit (ITK).
-# 
+#
 #  * US National Labs (Los Alamos, Livermore, Sandia) ASC Parallel
 #    Visualization Initiative.
-# 
+#
 #  * National Alliance for Medical Image Computing (NAMIC) is funded by the
 #    National Institutes of Health through the NIH Roadmap for Medical Research,
 #    Grant U54 EB005149.
-# 
+#
 #  * Kitware, Inc.
-# 
+#
 #=============================================================================
 
 MACRO(CHECK_C_SOURCE_RUNS SOURCE VAR)
   IF("${VAR}" MATCHES "^${VAR}$")
-    SET(MACRO_CHECK_FUNCTION_DEFINITIONS 
+    SET(MACRO_CHECK_FUNCTION_DEFINITIONS
       "-D${VAR} ${CMAKE_REQUIRED_FLAGS}")
     IF(CMAKE_REQUIRED_LIBRARIES)
       SET(CHECK_C_SOURCE_COMPILES_ADD_LIBRARIES
@@ -93,7 +93,7 @@ MACRO(CHECK_C_SOURCE_RUNS SOURCE VAR)
         "${SOURCE}\n")
       SET(CHECK_SRC "${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/CMakeTmp/src.c")
     ENDIF(EXISTS "${SOURCE}")
-    
+
     MESSAGE(STATUS "Performing Test ${VAR}")
     TRY_RUN(${VAR}_EXITCODE ${VAR}_COMPILED
       ${CMAKE_BINARY_DIR}
@@ -112,8 +112,8 @@ MACRO(CHECK_C_SOURCE_RUNS SOURCE VAR)
     IF("${${VAR}_EXITCODE}" EQUAL 0)
       SET(${VAR} 1 CACHE INTERNAL "Test ${VAR}")
       MESSAGE(STATUS "Performing Test ${VAR} - Success")
-      FILE(APPEND ${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/CMakeOutput.log 
-        "Performing C SOURCE FILE Test ${VAR} succeded with the following output:\n"
+      FILE(APPEND ${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/CMakeOutput.log
+        "Performing C SOURCE FILE Test ${VAR} succeeded with the following output:\n"
         "${OUTPUT}\n"
         "Return value: ${${VAR}}\n"
         "Source file was:\n${SOURCE}\n")
@@ -125,7 +125,7 @@ MACRO(CHECK_C_SOURCE_RUNS SOURCE VAR)
       ENDIF(CMAKE_CROSSCOMPILING AND "${${VAR}_EXITCODE}" MATCHES  "FAILED_TO_RUN")
 
       MESSAGE(STATUS "Performing Test ${VAR} - Failed")
-      FILE(APPEND ${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/CMakeError.log 
+      FILE(APPEND ${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/CMakeError.log
         "Performing C SOURCE FILE Test ${VAR} failed with the following output:\n"
         "${OUTPUT}\n"
         "Return value: ${${VAR}_EXITCODE}\n"

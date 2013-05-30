@@ -1,7 +1,7 @@
 /*                           G C V . H
  * BRL-CAD
  *
- * Copyright (c) 2008-2012 United States Government as represented by
+ * Copyright (c) 2008-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -79,7 +79,6 @@ GCV_EXPORT extern union tree *gcv_bottess_region_end(struct db_tree_state *tsp, 
  *
  */
 GCV_EXPORT extern union tree *gcv_bottess(int argc, const char **argv, struct db_i *dbip, struct rt_tess_tol *ttol);
-
 
 
 __END_DECLS

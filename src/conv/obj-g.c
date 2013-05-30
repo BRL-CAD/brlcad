@@ -1,7 +1,7 @@
 /*                     O B J - G . C
  * BRL-CAD
  *
- * Copyright (c) 2010-2012 United States Government as represented by
+ * Copyright (c) 2010-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -22,7 +22,7 @@
  * This is a program to convert a WaveFront Object file to a BRL-CAD
  * database file.
  *
- * Example usage: obj-g -u mm input.obj output.g
+ * Usage: obj-g -u mm input.obj output.g
  *
  * Recommended Improvements (not already listed in function comments):
  * - Support obj file texture vertices and materials
@@ -99,7 +99,7 @@ usage(const char *argv0)
 	   "\t\t\ts = surface (default)\n"
 	   "  -p\t\tCreates a plot/overlay (.pl) file of open edges for bots that\n"
 	   "\t\taren't closed volumes. <bot_name>.pl will be created in the\n"
-	   "\t\tcurrent directory and will overwrite any exisiting file with the\n"
+	   "\t\tcurrent directory and will overwrite any existing file with the\n"
 	   "\t\tsame name.\n"
 	   "  -r orient\tSelect the bot orientation mode:\n"
 	   "\t\t\t1 = unoriented (default)\n"
@@ -135,7 +135,7 @@ static int verbose = 0;
 #define GRP_GROUP    1 /* create bot for each obj file 'g' grouping */
 #define GRP_OBJECT   2 /* create bot for each obj file 'o' grouping */
 #define GRP_MATERIAL 3 /* create bot for each obj file 'usemtl' grouping */
-#define GRP_TEXTURE  4 /* create bot for eacg obj file 'usemap' grouping */
+#define GRP_TEXTURE  4 /* create bot for each obj file 'usemap' grouping */
 
 /* face type */
 #define FACE_V    1 /* polygonal faces only identified by vertices */
@@ -202,7 +202,7 @@ struct gfi_t {
     short int closure_status;         /* i.e. SURF_UNTESTED, SURF_CLOSED, SURF_OPEN */
     size_t tot_vertices;              /* sum of contents of num_vertices_arr. note: if the face_type
 				       * includes normals and/or texture vertices, each vertex must have
-				       * an associated normal and/or texture vertice. therefore this
+				       * an associated normal and/or texture vertices. therefore this
 				       * total is also the total of the associated normals and/or texture
 				       * vertices.
 				       */
@@ -382,7 +382,7 @@ collect_global_obj_file_attributes(struct ga_t *ga)
     bu_log("\tNumber of oriented polygonal faces; numNorFaces = (%zu)\n", ga->numNorFaces);
 
     ga->numFaces = obj_polygonal_v_faces(ga->contents, &ga->attindex_arr_v_faces);
-    bu_log("\tNumber of polygonal faces only identifed by vertices; numFaces = (%zu)\n", ga->numFaces);
+    bu_log("\tNumber of polygonal faces only identified by vertices; numFaces = (%zu)\n", ga->numFaces);
 
     ga->numTexFaces = obj_polygonal_tv_faces(ga->contents, &ga->attindex_arr_tv_faces);
     bu_log("\tNumber of textured polygonal faces; numTexFaces = (%zu)\n", ga->numTexFaces);
@@ -1044,7 +1044,7 @@ collect_grouping_faces_indexes(struct ga_t *ga,
 	 */
 	if (found && (numFacesFound == 0)) {
 	    /* allocate memory for gfi structure */
-	    *gfi = (struct gfi_t *)bu_calloc(1, sizeof(struct gfi_t), "gfi");
+	    BU_ALLOC((*gfi), struct gfi_t);
 
 	    /* initialize gfi structure */
 	    (*gfi)->index_arr_faces = (void *)NULL;
@@ -1071,7 +1071,7 @@ collect_grouping_faces_indexes(struct ga_t *ga,
 
 	    /* set face_type, grouping_type, grouping_index inside gfi
 	     * structure, the purpose of this is so functions called
-	     * later do not need to pass this in seperately
+	     * later do not need to pass this in separately
 	     */
 	    (*gfi)->face_type = face_type;
 	    (*gfi)->grouping_type = grouping_type;
@@ -1419,7 +1419,7 @@ populate_triangle_indexes(struct ga_t *ga,
 	    nmg_km(fu->s_p->r_p->m_p);
 	} else {
 	    triangulateFace(&triFaces, &num_new_tri, facePoints, numFacePoints, *tol);
-	} 
+	}
     } else {
 	num_new_tri = 0;
     }
@@ -1783,13 +1783,13 @@ create_bot_float_arrays(struct ga_t *ga,
     }
 
     if ((ti->bot_mode == RT_BOT_PLATE) || (ti->bot_mode == RT_BOT_PLATE_NOCOS)) {
-	/* allocate and polulate bot_thickness array */
+	/* allocate and populate bot_thickness array */
 	ti->bot_thickness = (fastf_t *)bu_calloc(ti->bot_num_faces, sizeof(fastf_t), "ti->bot_thickness");
 	for (i = 0 ; i < ti->bot_num_faces ; i++) {
 	    ti->bot_thickness[i] = bot_thickness;
 	}
 
-	/* allocate and polulate bot_face_mode array */
+	/* allocate and populate bot_face_mode array */
 	ti->bot_face_mode = bu_bitv_new(ti->bot_num_faces);
 	BU_BITSET(ti->bot_face_mode, 1); /* 1 indicates thickness is appended to hit
 					  * point in ray direction, 0 indicates thickness
@@ -2432,7 +2432,7 @@ fuse_vertex(struct ga_t *ga,
  * edge of triangle 1 to determine this is a closed edge. Note: In the
  * diagram below, the top vertex of triangle 1 is the same vertex as
  * the top left vertex of triangle 2, the same goes for the bottom
- * right vertex of trinagle 1 and the bottom vertex of triangle 3. The
+ * right vertex of triangle 1 and the bottom vertex of triangle 3. The
  * bottom vertex of triangle 2 (i.e. top left vertex of triangle 3)
  * does not exist in triangle 1.
  *
@@ -2609,10 +2609,10 @@ test_closure(struct ga_t *ga,
  * file for the current grouping of faces will be included in the bot
  * primitive. If the provided normals are smoothing normals, the
  * resulting raytrace of the bot will be smooth. The type of bot
- * created is choosen by the bot_output_mode. If the type of bot
+ * created is chosen by the bot_output_mode. If the type of bot
  * selected is RT_BOT_PLATE or RT_BOT_PLATE_NOCOS the thickness of the
  * bot plates is defined by the parameter bot_thickness. This function
- * will return a non-zero value if an error occured. Bot primitives
+ * will return a non-zero value if an error occurred. Bot primitives
  * will be named according to the grouping name in the obj file with
  * the following exceptions. Characters invalid for BRL-CAD primitive
  * names and operating system file names are converted to
@@ -2771,10 +2771,10 @@ output_to_bot(struct ga_t *ga,
  * Only face groupings with closed surfaces will be output. Closure is
  * determined by the function nmg_check_closed_shell. A primitive will
  * not be output if the face grouping fails the closure test or an
- * error occured during processing. A return value of 1 indicates no
+ * error occurred during processing. A return value of 1 indicates no
  * primitive was output because the geometry was not closed. A return
  * value of 2 indicates no primitive was output because an nmg bomb
- * occured. The output_mode option determines if an nmg or
+ * occurred. The output_mode option determines if an nmg or
  * volume-mode-bot will be output. The normal_mode will determine if
  * normals provided in the obj file will be inserted into the nmg
  * structure. Normal_mode should be set to IGNR_NORM since, inserted
@@ -2847,12 +2847,6 @@ output_to_nmg(struct ga_t *ga,
     NMG_CK_REGION(r);
     NMG_CK_SHELL(s);
 
-    /* initialize tables */
-    bu_ptbl_init(&faces, 64, " &faces ");
-
-    verts = (struct vertex **)bu_calloc(gfi->tot_vertices, sizeof(struct vertex *), "verts");
-    memset((void *)verts, 0, sizeof(struct vertex *) * gfi->tot_vertices);
-
     /* begin bomb protection */
     if (BU_SETJUMP) {
 	BU_UNSETJUMP; /* relinquish bomb protection */
@@ -2862,8 +2856,8 @@ output_to_nmg(struct ga_t *ga,
 	 */
 	rt_g.NMG_debug = NMG_debug; /* restore mode */
 
-	bu_ptbl_reset(&faces);
-	bu_free(verts, "verts");
+	if (verts)
+	    bu_free(verts, "verts");
 
 	if (m != (struct model *)NULL) {
 	    /* sanity check */
@@ -2873,8 +2867,14 @@ output_to_nmg(struct ga_t *ga,
 	bu_log("ERROR: caught nmg bomb for obj file face grouping name (%s), obj file face grouping index (%zu)\n",
 	       bu_vls_addr(gfi->raw_grouping_name), gfi->grouping_index + 1);
 
-	return 2; /* return code 2 indicates nmg bomb occured */
+	return 2; /* return code 2 indicates nmg bomb occurred */
     }
+
+    /* initialize tables */
+    bu_ptbl_init(&faces, 64, " &faces ");
+
+    verts = (struct vertex **)bu_calloc(gfi->tot_vertices, sizeof(struct vertex *), "verts");
+    memset((void *)verts, 0, sizeof(struct vertex *) * gfi->tot_vertices);
 
     shell_vert_idx = 0;
     NMG_CK_SHELL(s);
@@ -2979,7 +2979,7 @@ output_to_nmg(struct ga_t *ga,
 	    bu_log("Fused (%d) entities in obj file face grouping name (%s), obj file face grouping index (%zu)\n", num_entities_fused, bu_vls_addr(gfi->raw_grouping_name), gfi->grouping_index + 1);
 	}
 
-	/* run nmg_gluefaces, run nmg_model_vertex_fuse before nmg_gluefaces */
+	/* run nmg_gluefaces, run nmg_vertex_fuse before nmg_gluefaces */
 	if ((verbose > 1) || debug) {
 	    bu_log("Running nmg_gluefaces on (%ld) faces from obj file face grouping name (%s), obj file face grouping index (%zu)\n", BU_PTBL_END(&faces), bu_vls_addr(gfi->raw_grouping_name), gfi->grouping_index + 1);
 	}
@@ -3023,7 +3023,7 @@ output_to_nmg(struct ga_t *ga,
 	    if ((verbose > 1) || debug) {
 		bu_log("Completed nmg_rebound for obj file face grouping name (%s), obj file face grouping index (%zu)\n", bu_vls_addr(gfi->raw_grouping_name), gfi->grouping_index + 1);
 	    }
-	    /* run nmg_model_vertex_fuse before nmg_check_closed_shell */
+	    /* run nmg_vertex_fuse before nmg_check_closed_shell */
 	    if ((verbose > 1) || debug) {
 		bu_log("Running nmg_check_closed_shell with approx (%ld) faces from obj file face grouping name (%s), obj file face grouping index (%zu)\n", BU_PTBL_END(&faces), bu_vls_addr(gfi->raw_grouping_name), gfi->grouping_index + 1);
 	    }
@@ -3195,7 +3195,7 @@ process_b_mode_option(struct ga_t *ga,
  * occurs then no primitive will be output unless cont_on_nmg_bomb is
  * set to true which will then cause output of the grouping to be
  * attempted to 'native bot'. A return value of 0 indicates no
- * nmg-bomb occured, a return of 1 indicates an nmg-bomb occured
+ * nmg-bomb occurred, a return of 1 indicates an nmg-bomb occurred
  * and cont_on_nmg_bomb_flag was set to false.
  */
 int
@@ -3319,8 +3319,8 @@ main(int argc, char **argv)
     tol->para = 1 - tol->perp;
 
     if (argc < 2) {
-        bu_vls_free(&input_file_name);
-        bu_vls_free(&brlcad_file_name);
+	bu_vls_free(&input_file_name);
+	bu_vls_free(&brlcad_file_name);
 	usage(argv[0]);
 	bu_exit(1, NULL);
     }
@@ -3361,8 +3361,8 @@ main(int argc, char **argv)
 		dist_tmp = (double)atof(bu_optarg);
 		if (dist_tmp <= 0.0) {
 		    bu_log("Distance tolerance must be greater then zero.\n");
-                    bu_vls_free(&input_file_name);
-                    bu_vls_free(&brlcad_file_name);
+		    bu_vls_free(&input_file_name);
+		    bu_vls_free(&brlcad_file_name);
 		    bu_exit(EXIT_FAILURE, "Type '%s' for usage.\n", argv[0]);
 		}
 		tol->dist = dist_tmp;
@@ -3387,8 +3387,8 @@ main(int argc, char **argv)
 			break;
 		    default:
 			bu_log("Invalid mode option '%c'.\n", bu_optarg[0]);
-                        bu_vls_free(&input_file_name);
-                        bu_vls_free(&brlcad_file_name);
+			bu_vls_free(&input_file_name);
+			bu_vls_free(&brlcad_file_name);
 			bu_exit(EXIT_FAILURE, "Type '%s' for usage.\n",
 				argv[0]);
 			break;
@@ -3396,8 +3396,8 @@ main(int argc, char **argv)
 		break;
 	    case 'u': /* units */
 		if (str2mm(bu_optarg, &conv_factor)) {
-                    bu_vls_free(&input_file_name);
-                    bu_vls_free(&brlcad_file_name);
+		    bu_vls_free(&input_file_name);
+		    bu_vls_free(&brlcad_file_name);
 		    bu_exit(EXIT_FAILURE, "Type '%s' for usage.\n", argv[0]);
 		}
 		break;
@@ -3412,8 +3412,8 @@ main(int argc, char **argv)
 			break;
 		    default:
 			bu_log("Invalid grouping option '%c'.\n", bu_optarg[0]);
-                        bu_vls_free(&input_file_name);
-                        bu_vls_free(&brlcad_file_name);
+			bu_vls_free(&input_file_name);
+			bu_vls_free(&brlcad_file_name);
 			bu_exit(EXIT_FAILURE, "Type '%s' for usage.\n",
 				argv[0]);
 			break;
@@ -3433,8 +3433,8 @@ main(int argc, char **argv)
 		    default:
 			bu_log("Invalid open surface 'native-bot' output bot "
 			       "type '%c'.\n", bu_optarg[0]);
-                        bu_vls_free(&input_file_name);
-                        bu_vls_free(&brlcad_file_name);
+			bu_vls_free(&input_file_name);
+			bu_vls_free(&brlcad_file_name);
 			bu_exit(EXIT_FAILURE, "Type '%s' for usage.\n",
 				argv[0]);
 			break;
@@ -3454,24 +3454,24 @@ main(int argc, char **argv)
 		    default:
 			bu_log("Invalid bot orientation type '%c'.\n",
 				bu_optarg[0]);
-                        bu_vls_free(&input_file_name);
-                        bu_vls_free(&brlcad_file_name);
+			bu_vls_free(&input_file_name);
+			bu_vls_free(&brlcad_file_name);
 			bu_exit(EXIT_FAILURE, "Type '%s' for usage.\n",
 				argv[0]);
 		}
 		break;
 	    default:
 		bu_log("Invalid option '%c'.\n", c);
-                bu_vls_free(&input_file_name);
-                bu_vls_free(&brlcad_file_name);
+		bu_vls_free(&input_file_name);
+		bu_vls_free(&brlcad_file_name);
 		bu_exit(EXIT_FAILURE, "Type '%s' for usage.\n", argv[0]);
 		break;
 	}
     }
 
     if (argc - bu_optind != 2) {
-        bu_vls_free(&input_file_name);
-        bu_vls_free(&brlcad_file_name);
+	bu_vls_free(&input_file_name);
+	bu_vls_free(&brlcad_file_name);
 	bu_exit(EXIT_FAILURE, "Invalid number of arguments.\nType '%s' for "
 		"usage.\n", argv[0]);
     }
@@ -3488,8 +3488,8 @@ main(int argc, char **argv)
 				       || (open_bot_output_mode == RT_BOT_PLATE_NOCOS)))
     {
 	bu_log("'plate_thickness' was not specified but is required\n");
-        bu_vls_free(&input_file_name);
-        bu_vls_free(&brlcad_file_name);
+	bu_vls_free(&input_file_name);
+	bu_vls_free(&brlcad_file_name);
 	bu_exit(EXIT_FAILURE, "Type '%s' for usage.\n", argv[0]);
     }
 
@@ -3594,16 +3594,16 @@ main(int argc, char **argv)
     if ((my_stream = fopen(bu_vls_addr(&input_file_name), "r")) == NULL) {
 	bu_log("Cannot open input file (%s)\n", bu_vls_addr(&input_file_name));
 	perror(prog);
-        bu_vls_free(&input_file_name);
-        bu_vls_free(&brlcad_file_name);
+	bu_vls_free(&input_file_name);
+	bu_vls_free(&brlcad_file_name);
 	return EXIT_FAILURE;
     }
 
     if ((fd_out = wdb_fopen(bu_vls_addr(&brlcad_file_name))) == NULL) {
 	bu_log("Cannot create new BRL-CAD file (%s)\n", bu_vls_addr(&brlcad_file_name));
 	perror(prog);
-        bu_vls_free(&input_file_name);
-        bu_vls_free(&brlcad_file_name);
+	bu_vls_free(&input_file_name);
+	bu_vls_free(&brlcad_file_name);
 	bu_exit(1, NULL);
     }
 
@@ -3625,8 +3625,8 @@ main(int argc, char **argv)
 	}
 
 	perror(prog);
-        bu_vls_free(&input_file_name);
-        bu_vls_free(&brlcad_file_name);
+	bu_vls_free(&input_file_name);
+	bu_vls_free(&brlcad_file_name);
 	return EXIT_FAILURE;
     }
 
@@ -3652,8 +3652,8 @@ main(int argc, char **argv)
 	    bu_log("Unable to close file.\n");
 	}
 
-        bu_vls_free(&input_file_name);
-        bu_vls_free(&brlcad_file_name);
+	bu_vls_free(&input_file_name);
+	bu_vls_free(&brlcad_file_name);
 	return EXIT_FAILURE;
     }
 
@@ -3830,7 +3830,7 @@ main(int argc, char **argv)
 			switch (mode_option) {
 			    case 'b':
 				process_b_mode_option(&ga, gfi, fd_out, conv_factor, tol, bot_thickness,
-						      normal_mode, plot_mode, open_bot_output_mode, bot_orientation, 
+						      normal_mode, plot_mode, open_bot_output_mode, bot_orientation,
 						      native_face_test_type);
 				break;
 			    case 'n':
@@ -3935,8 +3935,8 @@ main(int argc, char **argv)
     if (fclose(my_stream) != 0) {
 	bu_log("Unable to close file.\n");
 	perror(prog);
-        bu_vls_free(&input_file_name);
-        bu_vls_free(&brlcad_file_name);
+	bu_vls_free(&input_file_name);
+	bu_vls_free(&brlcad_file_name);
 	return EXIT_FAILURE;
     }
 

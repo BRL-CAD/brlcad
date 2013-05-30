@@ -1,7 +1,7 @@
 /*                     S P L I T D I T C . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2012 United States Government as represented by
+ * Copyright (c) 2004-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -172,7 +172,7 @@ splitdit(int N, int M)
 	}
     }
 
-    /* For some reason the Imag part is comming out with the wrong
+    /* For some reason the Imag part is coming out with the wrong
      * sign, so we reverse it here!  We need to figure this out!
      */
     printf("\n    /* reverse Imag part! */\n");

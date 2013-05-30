@@ -1,7 +1,7 @@
 /*                         F B - F B . C
  * BRL-CAD
  *
- * Copyright (c) 1991-2012 United States Government as represented by
+ * Copyright (c) 1991-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -76,7 +76,7 @@ get_args(int argc, char **argv)
     out_fb_name = argv[bu_optind++];
 
     if (argc > bu_optind)
-	(void)fprintf(stderr, "fb-fb: excess argument(s) ignored\n");
+	fprintf(stderr, "fb-fb: excess argument(s) ignored\n");
 
     return 1;		/* OK */
 }

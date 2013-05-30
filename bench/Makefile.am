@@ -9,12 +9,7 @@ pixcmp_LDADD = ${BU} ${BU_LIBS}
 dist_bin_SCRIPTS = \
 	benchmark
 
-man_MANS = \
-	benchmark.1 \
-	pixcmp.1
-
 EXTRA_DIST = \
-	$(man_MANS) \
 	${dist_bin_SCRIPTS} \
 	lgt.sh \
 	run.sh \
@@ -28,9 +23,9 @@ benchmark: run.sh
 run: all
 	@if test -r ${srcdir}/run.sh ; then \
 		LD_LIBRARY_PATH=$(top_builddir)/src/other/tcl/unix:$(top_builddir)/src/other/tk/unix:$$LD_LIBRARY_PATH \
-		DYLD_LIBRARY_PATH=$(top_builddir)/src/other/tcl/unix:$(top_buildir)/src/other/tk/unix:$$DYLD_LIBRARY_PATH \
+		DYLD_LIBRARY_PATH=$(top_builddir)/src/other/tcl/unix:$(top_builddir)/src/other/tk/unix:$$DYLD_LIBRARY_PATH \
 		${SH} ${srcdir}/run.sh run ; \
-	        ret=$$? ; \
+		ret=$$? ; \
 		if test "x$$ret" != "x0" ; then \
 			echo "*** BENCHMARK TESTING FAILED ***" ; \
 			exit 1 ; \

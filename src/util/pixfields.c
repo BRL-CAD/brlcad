@@ -1,7 +1,7 @@
 /*                     P I X F I E L D S . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2012 United States Government as represented by
+ * Copyright (c) 2004-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -80,16 +80,16 @@ get_args(int argc, char **argv)
     } else {
 
 	if ((fldonefp = fopen(argv[bu_optind], "r")) == NULL) {
-	    (void)fprintf(stderr,
-			  "pixfields: cannot open \"%s\" for reading\n",
-			  argv[bu_optind]);
+	    fprintf(stderr,
+		    "pixfields: cannot open \"%s\" for reading\n",
+		    argv[bu_optind]);
 	    return 0;
 	}
 
 	if ((fldtwofp = fopen(argv[++bu_optind], "r")) == NULL) {
-	    (void)fprintf(stderr,
-			  "pixfields: cannot open \"%s\" for reading\n",
-			  argv[bu_optind]);
+	    fprintf(stderr,
+		    "pixfields: cannot open \"%s\" for reading\n",
+		    argv[bu_optind]);
 	    return 0;
 	}
 
@@ -99,7 +99,7 @@ get_args(int argc, char **argv)
 	return 0;
 
     if (argc > ++bu_optind)
-	(void)fprintf(stderr, "pixfields: excess argument(s) ignored\n");
+	fprintf(stderr, "pixfields: excess argument(s) ignored\n");
 
     return 1;		/* OK */
 }
@@ -144,6 +144,8 @@ main(int argc, char **argv)
 	}
 	line_number++;
     }
+
+    bu_free(line2, "line2 alloc from malloc");
 
     return 0;
 }

@@ -1,7 +1,7 @@
 /*                     V I E W C H E C K . C
  * BRL-CAD
  *
- * Copyright (c) 1988-2012 United States Government as represented by
+ * Copyright (c) 1988-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -159,13 +159,14 @@ overlap(struct application *ap, struct partition *pp, struct region *reg1, struc
 
 	/* If we report overlaps, don't print if already noted once.
 	 * Build up a linked list of known overlapping regions and compare
-	 * againt it.
+	 * against it.
 	 */
     } else {
 	struct overlap_list *prev_ol = (struct overlap_list *)0;
 	struct overlap_list *op;		/* overlap list */
 	struct overlap_list *new_op;
-	new_op =(struct overlap_list *)bu_malloc(sizeof(struct overlap_list), "overlap list");
+
+	BU_ALLOC(new_op, struct overlap_list);
 
 	/* look for it in our list */
 	bu_semaphore_acquire(BU_SEM_SYSCALL);

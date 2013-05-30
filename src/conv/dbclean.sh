@@ -2,7 +2,7 @@
 #                      D B C L E A N . S H
 # BRL-CAD
 #
-# Copyright (c) 1991-2012 United States Government as represented by
+# Copyright (c) 1991-2013 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This program is free software; you can redistribute it and/or
@@ -62,7 +62,7 @@ echo $TMP
 rm -f $2
 trap "rm -f $TMP; exit 1"  1 2 3 15
 
-# Check to see that the output file is writeable.  If not, complain and
+# Check to see that the output file is writable.  If not, complain and
 # abort
 
 if touch $2

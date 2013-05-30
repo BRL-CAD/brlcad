@@ -1,7 +1,7 @@
 #             G A R B A G E _ C O L L E C T . T C L
 # BRL-CAD
 #
-# Copyright (c) 2004-2012 United States Government as represented by
+# Copyright (c) 2004-2013 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -184,7 +184,7 @@ proc garbage_collect { args } {
     set new_size [file size $new_file]
 
     # make sure the new copy is correct (first make sure we have the same number
-    # of top level ovjects)
+    # of top level objects)
     set new_top_list [tops -n]
     set new_list_len [llength $new_top_list]
     if { $new_list_len != $old_list_len } {

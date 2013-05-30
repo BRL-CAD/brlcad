@@ -1,7 +1,7 @@
 /*                          G R I P . C
  * BRL-CAD
  *
- * Copyright (c) 1993-2012 United States Government as represented by
+ * Copyright (c) 1993-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -23,13 +23,13 @@
  *
  * Intersect a ray with a "grip" and return nothing.
  *
- * A GRIP is defiend by a direction normal, a center and a
- * height/magnitued vector.  The center is the control point used for
+ * A GRIP is defined by a direction normal, a center and a
+ * height/magnitude vector.  The center is the control point used for
  * all grip movements.
  *
  * All Ray intersections return "missed"
  *
- * The bounding box for a grip is emtpy.
+ * The bounding box for a grip is empty.
  *
  */
 
@@ -58,8 +58,8 @@ struct grip_specific {
 #define GRIP_NULL ((struct grip_specific *)0)
 
 const struct bu_structparse rt_grp_parse[] = {
-    { "%f", 3, "V", bu_offsetof(struct rt_grip_internal, center[X]), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    { "%f", 3, "N", bu_offsetof(struct rt_grip_internal, normal[X]), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    { "%f", 3, "V", bu_offsetofarray(struct rt_grip_internal, center, fastf_t, X), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    { "%f", 3, "N", bu_offsetofarray(struct rt_grip_internal, normal, fastf_t, X), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     { "%f", 1, "L", bu_offsetof(struct rt_grip_internal, mag), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     { {'\0', '\0', '\0', '\0'}, 0, (char *)NULL, 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
@@ -202,7 +202,7 @@ rt_grp_free(struct soltab *stp)
 {
     struct grip_specific *gripp = (struct grip_specific *)stp->st_specific;
 
-    bu_free((char *)gripp, "grip_specific");
+    BU_PUT(gripp, struct grip_specific);
 }
 
 
@@ -221,7 +221,7 @@ rt_grp_class(void)
  *
  * We represent a GRIP as a pyramid.  The center describes where the
  * center of the base is.  The normal describes which direction the
- * tip of the pyramid is.  Mag describes the distence from the center
+ * tip of the pyramid is.  Mag describes the distance from the center
  * to the tip. 1/4 of the width is the length of a base side.
  *
  */
@@ -302,7 +302,8 @@ rt_grp_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_GRIP;
     ip->idb_meth = &rt_functab[ID_GRIP];
-    ip->idb_ptr = bu_malloc(sizeof(struct rt_grip_internal), "rt_grip_internal");
+    BU_ALLOC(ip->idb_ptr, struct rt_grip_internal);
+
     gip = (struct rt_grip_internal *)ip->idb_ptr;
     gip->magic = RT_GRIP_INTERNAL_MAGIC;
 
@@ -368,8 +369,10 @@ int
 rt_grp_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fastf_t *mat, const struct db_i *dbip)
 {
     struct rt_grip_internal *gip;
-    fastf_t vec[7];
     double f, t;
+
+    /* must be double for import and export */
+    double vec[7];
 
     if (dbip) RT_CK_DBI(dbip);
     RT_CK_DB_INTERNAL(ip);
@@ -380,7 +383,7 @@ rt_grp_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_GRIP;
     ip->idb_meth = &rt_functab[ID_GRIP];
-    ip->idb_ptr = bu_malloc(sizeof(struct rt_grip_internal), "rt_grip_internal");
+    BU_ALLOC(ip->idb_ptr, struct rt_grip_internal);
 
     gip = (struct rt_grip_internal *)ip->idb_ptr;
     gip->magic = RT_GRIP_INTERNAL_MAGIC;
@@ -420,7 +423,9 @@ int
 rt_grp_export5(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
     struct rt_grip_internal *gip;
-    fastf_t vec[7];
+
+    /* must be double for import and export */
+    double vec[7];
 
     if (dbip) RT_CK_DBI(dbip);
 

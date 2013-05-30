@@ -1,8 +1,9 @@
 /* $NoKeywords: $ */
 /*
 //
-// Copyright (c) 1993-2007 Robert McNeel & Associates. All rights reserved.
-// Rhinoceros is a registered trademark of Robert McNeel & Assoicates.
+// Copyright (c) 1993-2012 Robert McNeel & Associates. All rights reserved.
+// OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
+// McNeel & Associates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
@@ -120,10 +121,6 @@ public:
 
   /////////////////////////////////////////////////////////////////
   // ON_Surface overrides
-  ON_Mesh* CreateMesh( 
-             const ON_MeshParameters& mp,
-             ON_Mesh* mesh = NULL
-             ) const;
 
   ON_Interval Domain(
     int // 0 gets first parameter's domain, 1 gets second parameter's domain
@@ -271,7 +268,7 @@ public:
                   double* t,
                   int* hint=NULL,
                   int* dtype=NULL,
-                  double cos_angle_tolerance=0.99984769515639123915701155881391,
+                  double cos_angle_tolerance=ON_DEFAULT_ANGLE_TOLERANCE_COSINE,
                   double curvature_tolerance=ON_SQRT_EPSILON
                   ) const;
 
@@ -310,7 +307,7 @@ public:
     double point_tolerance=ON_ZERO_TOLERANCE,
     double d1_tolerance=ON_ZERO_TOLERANCE,
     double d2_tolerance=ON_ZERO_TOLERANCE,
-    double cos_angle_tolerance=0.99984769515639123915701155881391,
+    double cos_angle_tolerance=ON_DEFAULT_ANGLE_TOLERANCE_COSINE,
     double curvature_tolerance=ON_SQRT_EPSILON
     ) const;
 
@@ -341,90 +338,6 @@ public:
          int dir,
          double c
          ) const;
-
-  ON_Curve* Pushup( const ON_Curve& curve_2d,
-                    double tolerance,
-                    const ON_Interval* curve_2d_subdomain = NULL
-                    ) const;
-
-  ON_Curve* Pullback( const ON_Curve& curve_3d,
-                    double tolerance,
-                    const ON_Interval* curve_3d_subdomain = NULL,
-                    ON_3dPoint start_uv = ON_UNSET_POINT,
-                    ON_3dPoint end_uv = ON_UNSET_POINT
-                    ) const;
-
-
-  /*
-  Description:
-    Get the parameters of the point on the surface that is closest to P.
-  Parameters:
-    P - [in] 
-            test point
-    s - [out]
-    t - [out] 
-            (*s,*t) = parameters of the surface point that 
-            is closest to P.
-    maximum_distance = 0.0 - [in] 
-            optional upper bound on the distance from P to 
-            the surface.  If you are only interested in 
-            finding a point Q on the surface when 
-            P.DistanceTo(Q) < maximum_distance, then set
-            maximum_distance to that value.
-    sdomain = 0 - [in] optional domain restriction
-    tdomain = 0 - [in] optional domain restriction
-  Returns:
-    True if successful.  If false, the values of *s and *t
-    are undefined.
-  See Also:
-    ON_Surface::GetLocalClosestPoint.
-  */
-  bool GetClosestPoint( 
-          const ON_3dPoint& P,
-          double* s,
-          double* t,
-          double maximum_distance = 0.0,
-          const ON_Interval* sdomain = 0,
-          const ON_Interval* tdomain = 0
-          ) const;
-
-  //////////
-  // Find parameters of the point on a surface that is locally closest to 
-  // the test_point.  The search for a local close point starts at 
-  // seed parameters. If a sub_domain parameter is not NULL, then
-  // the search is restricted to the specified portion of the surface.
-  //
-  // true if returned if the search is successful.  false is returned if
-  // the search fails.
-  ON_BOOL32 GetLocalClosestPoint( const ON_3dPoint&, // test_point
-          double,double,     // seed_parameters
-          double*,double*,   // parameters of local closest point returned here
-          const ON_Interval* = NULL, // first parameter sub_domain
-          const ON_Interval* = NULL  // second parameter sub_domain
-          ) const;
-
-  /*
-  Description:
-    Offset surface.
-  Parameters:
-    offset_distance - [in] offset distance
-    tolerance - [in] Some surfaces do not have an exact offset that
-      can be represented using the same class of surface definition.
-      In that case, the tolerance specifies the desired accuracy.
-    max_deviation - [out] If this parameter is not NULL, the maximum
-      deviation from the returned offset to the true offset is returned
-      here.  This deviation is zero except for cases where an exact
-      offset cannot be computed using the same class of surface definition.
-  Remarks:
-    Overrides virtual ON_Surface::Offset.
-  Returns:
-    Offset surface.
-  */
-  ON_Surface* Offset(
-        double offset_distance, 
-        double tolerance, 
-        double* max_deviation = NULL
-        ) const;
 
   int GetNurbForm( // returns 0: unable to create NURBS representation
                    //            with desired accuracy.

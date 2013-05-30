@@ -1,7 +1,7 @@
 /*                        N M G _ C K . C
  * BRL-CAD
  *
- * Copyright (c) 1993-2012 United States Government as represented by
+ * Copyright (c) 1993-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -345,7 +345,7 @@ nmg_veu(const struct bu_list *hp, const uint32_t *up_magic_p)
 	    case OT_SAME	: break;
 	    case OT_OPPOSITE: break;
 	    case OT_UNSPEC	: break;
-	    default		: bu_bomb("nmg_veu() unknown loopuse orintation\n");
+	    default		: bu_bomb("nmg_veu() unknown loopuse orientation\n");
 		break;
 	}
 
@@ -431,7 +431,7 @@ nmg_vlu(const struct bu_list *hp, const uint32_t *up)
 	    case OT_BOOLPLACE:	break;
 	    default:
 		bu_log("lu=x%x, orientation=%d\n", lu, lu->orientation);
-		bu_bomb("nmg_vlu() unknown loopuse orintation\n");
+		bu_bomb("nmg_vlu() unknown loopuse orientation\n");
 		break;
 	}
 	if (lu->lumate_p->orientation != lu->orientation)
@@ -546,7 +546,7 @@ nmg_vfu(const struct bu_list *hp, const struct shell *s)
 		bu_bomb("nmg_vfu() faceuse of \"OPPOSITE\" orientation has mate that is not \"SAME\" orientation\n");
 		break;
 	    case OT_UNSPEC	: break;
-	    default		: bu_bomb("nmg_vfu() unknown faceuse orintation\n"); break;
+	    default		: bu_bomb("nmg_vfu() unknown faceuse orientation\n"); break;
 	}
 
 	NMG_CK_FACE(fu->f_p);
@@ -686,7 +686,7 @@ nmg_ck_e(const struct edgeuse *eu, const struct edge *e, const char *str)
     struct edgeuse *eparent;
     int len = (int)strlen(str)+128;
 
-    errstr = bu_calloc(len, 1, "nmg_ck_e error str");
+    errstr = bu_calloc(len, sizeof(char), "nmg_ck_e error str");
     snprintf(errstr, len, "%sedge %p\n", str, (void *)e);
 
     NMG_CK_EDGE(e);
@@ -720,7 +720,7 @@ nmg_ck_vu(const uint32_t *parent, const struct vertexuse *vu, const char *str)
     char *errstr;
     int len = (int)strlen(str)+128;
 
-    errstr = bu_calloc(len, 1, "nmg_ck_vu error str");
+    errstr = bu_calloc(len, sizeof(char), "nmg_ck_vu error str");
     snprintf(errstr, len, "%svertexuse %p\n", str, (void *)vu);
 
     if (vu->up.magic_p != parent) {
@@ -742,7 +742,7 @@ nmg_ck_eu(const uint32_t *parent, const struct edgeuse *eu, const char *str)
     struct edgeuse *eur, *eu_next, *eu_last;
     int len = (int)strlen(str)+128;
 
-    errstr = bu_calloc(len, 1, "nmg_ck_eu error str");
+    errstr = bu_calloc(len, sizeof(char), "nmg_ck_eu error str");
     snprintf(errstr, len, "%sedgeuse %p\n", str, (void *)eu);
 
     NMG_CK_EDGEUSE(eu);
@@ -753,7 +753,7 @@ nmg_ck_eu(const uint32_t *parent, const struct edgeuse *eu, const char *str)
     }
 
     if (*eu->eumate_p->up.magic_p != *eu->up.magic_p) {
-	bu_strlcat(errstr, "nmg_ck_eu() eumate has differnt kind of parent\n", len);
+	bu_strlcat(errstr, "nmg_ck_eu() eumate has different kind of parent\n", len);
 	bu_bomb(errstr);
     }
     if (*eu->up.magic_p == NMG_SHELL_MAGIC) {
@@ -822,7 +822,7 @@ nmg_ck_lg(const struct loop *l, const struct loop_g *lg, const char *str)
     char *errstr;
     int len = (int)strlen(str)+128;
 
-    errstr = bu_calloc(len, 1, "nmg_ck_lg error str");
+    errstr = bu_calloc(len, sizeof(char), "nmg_ck_lg error str");
     snprintf(errstr, len, "%sloop_g %p\n", str, (void *)lg);
 
     NMG_CK_LOOP_G(lg);
@@ -841,7 +841,7 @@ nmg_ck_l(const struct loopuse *lu, const struct loop *l, const char *str)
     char *errstr;
     int len = (int)strlen(str)+128;
 
-    errstr = bu_calloc(len, 1, "nmg_ck_l error str");
+    errstr = bu_calloc(len, sizeof(char), "nmg_ck_l error str");
     snprintf(errstr, len, "%sloop %p\n", str, (void *)l);
 
     NMG_CK_LOOP(l);
@@ -872,7 +872,7 @@ nmg_ck_lu(const uint32_t *parent, const struct loopuse *lu, const char *str)
     uint32_t magic1;
     int len = (int)strlen(str)+128;
 
-    errstr = bu_calloc(len, 1, "nmg_ck_lu error str");
+    errstr = bu_calloc(len, sizeof(char), "nmg_ck_lu error str");
     snprintf(errstr, len, "%sloopuse %p\n", str, (void *)lu);
 
     NMG_CK_LOOPUSE(lu);
@@ -938,7 +938,7 @@ nmg_ck_fg(const struct face *f, const struct face_g_plane *fg, const char *str)
     char *errstr;
     int len = (int)strlen(str)+128;
 
-    errstr = bu_calloc(len, 1, "nmg_ck_fg error str");
+    errstr = bu_calloc(len, sizeof(char), "nmg_ck_fg error str");
     snprintf(errstr, len, "%sFace_g %p\n", str, (void *)f);
 
     NMG_CK_FACE_G_PLANE(fg);
@@ -962,7 +962,7 @@ nmg_ck_f(const struct faceuse *fu, const struct face *f, const char *str)
     char *errstr;
     int len = (int)strlen(str)+128;
 
-    errstr = bu_calloc(len, 1, "nmg_ck_f error str");
+    errstr = bu_calloc(len, sizeof(char), "nmg_ck_f error str");
     snprintf(errstr, len, "%sFace %p\n", str, (void *)f);
 
     NMG_CK_FACE(f);
@@ -994,7 +994,7 @@ nmg_ck_fu(const struct shell *s, const struct faceuse *fu, const char *str)
     NMG_CK_FACEUSE(fu);
     NMG_CK_SHELL(s);
 
-    errstr = bu_calloc(len, 1, "nmg_ck_fu error str");
+    errstr = bu_calloc(len, sizeof(char), "nmg_ck_fu error str");
     snprintf(errstr, len, "%sFaceuse %p\n", str, (void *)fu);
 
     if (fu->s_p != s) {
@@ -1039,7 +1039,7 @@ nmg_ck_fu(const struct shell *s, const struct faceuse *fu, const char *str)
 /** N M G _ C K _ E G _ V E R T S
  *
  * Check if vertices from edgeuses using this edge geometry
- * actually lie on the edge geomatry.
+ * actually lie on the edge geometry.
  *
  * "eg" must be LSEG
  * returns number of vertices not on edge line
@@ -1196,7 +1196,7 @@ nmg_ck_face_worthless_edges(const struct faceuse *fu)
  * N M G _ C K _ L U E U
  *
  * check all the edgeuses of a loopuse to make sure these children
- * know who thier parent really is.
+ * know who their parent really is.
  */
 void
 nmg_ck_lueu(const struct loopuse *cklu, const char *s)
@@ -1328,7 +1328,7 @@ nmg_check_radial(const struct edgeuse *eu, const struct bn_tol *tol)
 	/* if that radial edgeuse doesn't have the
 	 * correct orientation, print & bomb
 	 * If radial (eur) is my (virtual, this-shell) mate (eu1),
-	 * then it's ok, a mis-match is to be expected.
+	 * then it's OK, a mis-match is to be expected.
 	 */
 	NMG_CK_LOOPUSE(eur->up.lu_p);
 	fu = eur->up.lu_p->up.fu_p;

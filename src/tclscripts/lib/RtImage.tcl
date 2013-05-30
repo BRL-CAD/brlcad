@@ -1,7 +1,7 @@
 #                          R T I M A G E . T C L
 # BRL-CAD
 #
-# Copyright (c) 1998-2012 United States Government as represented by
+# Copyright (c) 1998-2013 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -159,8 +159,8 @@ proc rtimage {_dbfile
 
     if {[llength $_ghost_objects]} {
 
-        # Pull the image from the framebuffer
-        catch {exec [file join $binpath fb-pix] -w $_w -n $_n -F $_port $tfci}
+	# Pull the image from the framebuffer
+	catch {exec [file join $binpath fb-pix] -w $_w -n $_n -F $_port $tfci}
 
 	set have_ghost_objects 1
 	set cmd [list [file join $binpath rt] -w $_w -n $_n \

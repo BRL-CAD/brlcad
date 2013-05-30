@@ -1,7 +1,7 @@
 /*                           C M D . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2012 United States Government as represented by
+ * Copyright (c) 2004-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -189,7 +189,6 @@ extern int f_view2model_lu(ClientData, Tcl_Interp *, int, const char *[]);
 extern int f_view2model_vec(ClientData, Tcl_Interp *, int, const char *[]);
 extern int f_view_ring(ClientData, Tcl_Interp *, int, const char *[]);
 extern int f_vnirt(ClientData, Tcl_Interp *, int, const char *[]);
-extern int f_vrmgr(ClientData, Tcl_Interp *, int, const char *[]);
 extern int f_vrot_center(ClientData, Tcl_Interp *, int, const char *[]);
 extern int f_wait(ClientData, Tcl_Interp *, int, const char *[]);
 extern int f_winset(ClientData, Tcl_Interp *, int, const char *[]);

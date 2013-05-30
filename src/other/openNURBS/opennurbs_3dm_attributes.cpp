@@ -1,13 +1,14 @@
 /* $NoKeywords: $ */
 /*
 //
-// Copyright (c) 1993-2007 Robert McNeel & Associates. All rights reserved.
-// Rhinoceros is a registered trademark of Robert McNeel & Assoicates.
+// Copyright (c) 1993-2012 Robert McNeel & Associates. All rights reserved.
+// OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
+// McNeel & Associates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
 // MERCHANTABILITY ARE HEREBY DISCLAIMED.
-//				
+//
 // For complete openNURBS copyright information see <http://www.opennurbs.org>.
 //
 ////////////////////////////////////////////////////////////////
@@ -133,7 +134,7 @@ bool ON_3dmObjectAttributes::operator!=(const ON_3dmObjectAttributes& other) con
 /*
 ON_3dmObjectAttributes& ON_3dmObjectAttributes::operator=(const ON_3dmObjectAttributes& src )
 {
-  if ( this != &src ) 
+  if ( this != &src )
   {
     ON_Object::operator=(src);
     CopyHelper(src);
@@ -149,8 +150,9 @@ void ON_3dmObjectAttributes::Default()
   m_name.Destroy();
   m_url.Destroy();
   m_layer_index = 0;
-  m_material_index = -1; // white diffuse
   m_linetype_index = -1; // continuous
+  m_material_index = -1; // white diffuse
+  m_rendering_attributes.Default();
   m_color = ON_Color(0,0,0);
   m_plot_color = ON_Color(0,0,0); // Do not change to ON_UNSET_COLOR
   m_display_order = 0;
@@ -200,7 +202,7 @@ bool ON_3dmObjectAttributes::ReadV5Helper( ON_BinaryArchive& file )
     if (!rc) break;
     if ( 0 == itemid )
       break;
-    
+
     if ( 1 == itemid )
     {
       rc = file.ReadString(m_name);
@@ -395,7 +397,7 @@ bool ON_3dmObjectAttributes::ReadV5Helper( ON_BinaryArchive& file )
 ON_BOOL32 ON_3dmObjectAttributes::Read( ON_BinaryArchive& file )
 {
   Default();
-  if (    file.Archive3dmVersion() >= 5 
+  if (    file.Archive3dmVersion() >= 5
        && file.ArchiveOpenNURBSVersion() >= 200712190 )
   {
     return ReadV5Helper(file);
@@ -404,20 +406,20 @@ ON_BOOL32 ON_3dmObjectAttributes::Read( ON_BinaryArchive& file )
   int major_version = 0;
   int minor_version = 0;
   bool rc = file.Read3dmChunkVersion(&major_version,&minor_version);
-  if ( rc && major_version == 1 ) 
+  if ( rc && major_version == 1 )
   {
     if (rc) rc = file.ReadUuid(m_uuid);
     if (rc) rc = file.ReadInt(&m_layer_index);
     if (rc) rc = file.ReadInt(&m_material_index);
     if (rc) rc = file.ReadColor(m_color);
-    
+
     while(rc)
     {
       // OBSOLETE if (rc) rc = file.ReadLineStyle(m_line_style); // 23 March 2005 Dale Lear
       // replaced with
       short s = 0;
       double x;
-      rc = file.ReadShort(&s); 
+      rc = file.ReadShort(&s);
       if (!rc) break;
       if ( file.Archive3dmVersion() < 4 || file.ArchiveOpenNURBSVersion() < 200503170 )
       {
@@ -450,7 +452,7 @@ ON_BOOL32 ON_3dmObjectAttributes::Read( ON_BinaryArchive& file )
     if (rc) rc = file.ReadString(m_url);
 
     m_bVisible = (Mode() != ON::hidden_object);
-    if ( rc && minor_version >= 1 ) 
+    if ( rc && minor_version >= 1 )
     {
       rc = file.ReadArray( m_group );
       if ( rc && minor_version >= 2 )
@@ -459,7 +461,7 @@ ON_BOOL32 ON_3dmObjectAttributes::Read( ON_BinaryArchive& file )
 
         if ( rc && minor_version >= 3 )
         {
-          rc = file.ReadArray(m_dmref);     
+          rc = file.ReadArray(m_dmref);
 
           if (rc && minor_version >= 4 )
           {
@@ -531,7 +533,7 @@ ON_BOOL32 ON_3dmObjectAttributes::Read( ON_BinaryArchive& file )
       }
     }
   }
-  else 
+  else
   {
     rc = false;
   }
@@ -589,6 +591,7 @@ bool ON_3dmObjectAttributes::WriteV5Helper( ON_BinaryArchive& file ) const
          || m_rendering_attributes.m_materials.Count() > 0
          || true != m_rendering_attributes.m_bCastsShadows
          || true != m_rendering_attributes.m_bReceivesShadows
+         || false != m_rendering_attributes.AdvancedTexturePreview()
          )
     {
       c = 5;
@@ -880,7 +883,7 @@ ON_BOOL32 ON_3dmObjectAttributes::IsValid( ON_TextLog* text_log ) const
 
 unsigned int ON_3dmObjectAttributes::SizeOf() const
 {
-  unsigned int sz = sizeof(*this) - sizeof(ON_Object) 
+  unsigned int sz = sizeof(*this) - sizeof(ON_Object)
                   + m_name.Length()*sizeof(wchar_t)
                   + m_url.Length()*sizeof(wchar_t)
                   + m_group.SizeOfArray()
@@ -890,8 +893,15 @@ unsigned int ON_3dmObjectAttributes::SizeOf() const
 
 void ON_3dmObjectAttributes::Dump( ON_TextLog& dump ) const
 {
-  const wchar_t* s = m_name;
-  if ( !s ) s = L"";
+  const wchar_t* wsName = m_name;
+  if ( !wsName )
+    wsName = L"";
+  dump.Print("object name = \"%ls\"\n",wsName);
+
+  dump.Print("object uuid = ");
+  dump.Print(m_uuid);
+  dump.Print("\n");
+
   const char* sMode = "unknown";
   switch( Mode() )
   {
@@ -908,11 +918,8 @@ void ON_3dmObjectAttributes::Dump( ON_TextLog& dump ) const
     sMode = "unknown";
     break;
   }
-  dump.Print("object name = \"%S\"\n",s);
-  dump.Print("object uuid = ");
-  dump.Print(m_uuid);
-  dump.Print("\n");
-  dump.Print("object mode = %s\n",sMode);
+  dump.Print("object mode = %s\n",sMode); // sSMode is const char*
+
   dump.Print("object layer index = %d\n",m_layer_index);
   dump.Print("object material index = %d\n",m_material_index);
   const char* sMaterialSource = "unknown";
@@ -921,7 +928,7 @@ void ON_3dmObjectAttributes::Dump( ON_TextLog& dump ) const
   case ON::material_from_object: sMaterialSource = "object material"; break;
   case ON::material_from_parent: sMaterialSource = "parent material"; break;
   }
-  dump.Print("material source = %s\n",sMaterialSource);
+  dump.Print("material source = %s\n",sMaterialSource); // sMaterialSource is const char*
   const int group_count = GroupCount();
   if ( group_count > 0 ) {
     const int* group = GroupList();
@@ -980,7 +987,7 @@ ON::display_mode ON_3dmObjectAttributes::DisplayMode() const
   return ON::DisplayMode( m_mode/16 );
 }
 
-unsigned int ON_3dmObjectAttributes::ApplyParentalControl( 
+unsigned int ON_3dmObjectAttributes::ApplyParentalControl(
         const ON_3dmObjectAttributes& parents_attributes,
         unsigned int control_limits
         )
@@ -991,7 +998,7 @@ unsigned int ON_3dmObjectAttributes::ApplyParentalControl(
   return ApplyParentalControl(parents_attributes,bogus_layer,control_limits);
 }
 
-unsigned int ON_3dmObjectAttributes::ApplyParentalControl( 
+unsigned int ON_3dmObjectAttributes::ApplyParentalControl(
         const ON_3dmObjectAttributes& parents_attributes,
         const ON_Layer& parent_layer,
         unsigned int control_limits
@@ -1095,7 +1102,7 @@ unsigned int ON_3dmObjectAttributes::ApplyParentalControl(
       }
     }
   }
-  
+
   if ( 0 != (0x40 & control_limits) )
   {
     rc |= 0x40;
@@ -1282,8 +1289,8 @@ void ON_3dmObjectAttributes::RemoveFromAllGroups()
 }
 
 
-bool ON_3dmObjectAttributes::FindDisplayMaterialId( 
-      const ON_UUID& viewport_id, 
+bool ON_3dmObjectAttributes::FindDisplayMaterialId(
+      const ON_UUID& viewport_id,
       ON_UUID* display_material_id
       ) const
 {
@@ -1471,7 +1478,7 @@ int ON_3dmObjectAttributes::DisplayMaterialRefCount() const
 }
 
 // {1403A7E4-E7AD-4a01-A2AA-41DAE6BE7ECB}
-const ON_UUID ON_DisplayMaterialRef::m_invisible_in_detail_id = 
+const ON_UUID ON_DisplayMaterialRef::m_invisible_in_detail_id =
 { 0x1403a7e4, 0xe7ad, 0x4a01, { 0xa2, 0xaa, 0x41, 0xda, 0xe6, 0xbe, 0x7e, 0xcb } };
 
 
@@ -1483,12 +1490,12 @@ ON_DisplayMaterialRef::ON_DisplayMaterialRef()
 
 bool ON_DisplayMaterialRef::operator==(const ON_DisplayMaterialRef& other) const
 {
-  return (Compare(other)==0); 
+  return (Compare(other)==0);
 }
 
 bool ON_DisplayMaterialRef::operator!=(const ON_DisplayMaterialRef& other) const
 {
-  return (Compare(other)!=0); 
+  return (Compare(other)!=0);
 }
 
 int ON_DisplayMaterialRef::Compare(const ON_DisplayMaterialRef& other) const
@@ -1501,21 +1508,21 @@ int ON_DisplayMaterialRef::Compare(const ON_DisplayMaterialRef& other) const
 
 bool ON_DisplayMaterialRef::operator<(const ON_DisplayMaterialRef& other) const
 {
-  return (Compare(other)<0); 
+  return (Compare(other)<0);
 }
 
 bool ON_DisplayMaterialRef::operator<=(const ON_DisplayMaterialRef& other) const
 {
-  return (Compare(other)<=0); 
+  return (Compare(other)<=0);
 }
 
 bool ON_DisplayMaterialRef::operator>(const ON_DisplayMaterialRef& other) const
 {
-  return (Compare(other)>0); 
+  return (Compare(other)>0);
 }
 
 bool ON_DisplayMaterialRef::operator>=(const ON_DisplayMaterialRef& other) const
 {
-  return (Compare(other)>=0); 
+  return (Compare(other)>=0);
 }
 

@@ -1,7 +1,7 @@
 /*                           O P T . C
  * BRL-CAD
  *
- * Copyright (c) 1989-2012 United States Government as represented by
+ * Copyright (c) 1989-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -53,7 +53,7 @@ size_t		height = 0;		/* # of lines in Y */
 
 /***** Variables shared with viewing model *** */
 int		doubles_out = 0;	/* u_char or double .pix output file */
-double		azimuth = 0.0, elevation = 0.0;
+fastf_t		azimuth = 0.0, elevation = 0.0;
 int		lightmodel = 0;		/* Select lighting model */
 int		rpt_overlap = 1;	/* report overlapping region names */
 int		default_background = 1; /* Default is black */
@@ -80,7 +80,7 @@ fastf_t		cell_width = (fastf_t)0.0;		/* model space grid cell width */
 fastf_t		cell_height = (fastf_t)0.0;	/* model space grid cell height */
 int		cell_newsize = 0;		/* new grid cell size */
 point_t		eye_model = {(fastf_t)0.0, (fastf_t)0.0, (fastf_t)0.0};		/* model-space location of eye */
-fastf_t         eye_backoff = (fastf_t)1.414;	/* dist from eye to center */
+fastf_t         eye_backoff = (fastf_t)M_SQRT2;	/* dist from eye to center */
 mat_t		Viewrotscale = { (fastf_t)0.0, (fastf_t)0.0, (fastf_t)0.0, (fastf_t)0.0,
 				 (fastf_t)0.0, (fastf_t)0.0, (fastf_t)0.0, (fastf_t)0.0,
 				 (fastf_t)0.0, (fastf_t)0.0, (fastf_t)0.0, (fastf_t)0.0,
@@ -239,13 +239,14 @@ get_args(int argc, const char *argv[])
 	    case 'k':      /* define cutting plane */
 	    {
 		fastf_t f;
+		double scan[4];
 
 		do_kut_plane = 1;
-		i = sscanf(bu_optarg, "%lg,%lg,%lg,%lg",
-			   &kut_plane[X], &kut_plane[Y], &kut_plane[Z], &kut_plane[H]);
+		i = sscanf(bu_optarg, "%lg,%lg,%lg,%lg", &scan[0], &scan[1], &scan[2], &scan[3]);
 		if( i != 4 ) {
 		    bu_exit( EXIT_FAILURE, "ERROR: bad cutting plane\n" );
 		}
+		HMOVE(kut_plane, scan); /* double to fastf_t */
 
 		/* verify that normal has unit length */
 		f = MAGNITUDE( kut_plane );
@@ -477,18 +478,18 @@ get_args(int argc, const char *argv[])
 		}
 		break;
 	    case 'u':
-	    	if (BU_STR_EQUAL(bu_optarg,"model")) {
-	    		model_units = 1;
-	    		default_units = 0;
-	    	} else {
-	    		units = bu_units_conversion(bu_optarg);
-	    		if (units <= 0.0) {
-	    			units = 1.0;
-	    			default_units = 1;
-	    			bu_log("WARNING: bad units, using default (%s)\n", bu_units_string(units));
-	    		} else {
-	    			default_units = 0;
-	    		}
+		if (BU_STR_EQUAL(bu_optarg,"model")) {
+			model_units = 1;
+			default_units = 0;
+		} else {
+			units = bu_units_conversion(bu_optarg);
+			if (units <= 0.0) {
+				units = 1.0;
+				default_units = 1;
+				bu_log("WARNING: bad units, using default (%s)\n", bu_units_string(units));
+			} else {
+				default_units = 0;
+			}
 			}
 		break;
 	    case 'v': /* Set level of "non-debug" debugging output */
@@ -541,7 +542,7 @@ get_args(int argc, const char *argv[])
 		break;
 	    case 'B':
 		/*  Remove all intentional random effects
-		 *  (dither, etc) for benchmarking purposes.
+		 *  (dither, etc.) for benchmarking purposes.
 		 */
 		benchmark = 1;
 		bn_mathtab_constant();

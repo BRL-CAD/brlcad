@@ -1,7 +1,7 @@
 /*                       P I X - P N G . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2012 United States Government as represented by
+ * Copyright (c) 1998-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -62,7 +62,7 @@ double out_gamma = -1.0;
 int
 get_args(int argc, char **argv, size_t *width, size_t *height, FILE **infp, FILE **outfp)
 {
-    int c;
+    int c, ttyin, ttyout;
 
     while ((c = bu_getopt(argc, argv, "ag:s:w:n:o:h?")) != -1) {
 	switch (c) {
@@ -92,7 +92,7 @@ get_args(int argc, char **argv, size_t *width, size_t *height, FILE **infp, FILE
 		}
 		break;
 	    }
-		
+
 	    case '?':
 	    case 'h':
 	    default: /* help */
@@ -112,14 +112,16 @@ get_args(int argc, char **argv, size_t *width, size_t *height, FILE **infp, FILE
 	fileinput++;
     }
 
-    if (isatty(fileno(*infp))) {
-	bu_log("ERROR: %s will not read pix data from a tty\n", bu_getprogname());
+    ttyin = isatty(fileno(*infp));
+    ttyout = isatty(fileno(*outfp));
+    if (ttyin && ttyout && argc == 1)
+	return 0; /* usage */ /* running the command with no arguments (AND no file pipes) */
+    if (ttyin)
+	bu_log("%s: will not read pix data from a tty\n", bu_getprogname());
+    if (ttyout)
+	bu_log("%s: will not write png data to a tty\n", bu_getprogname());
+    if (ttyin || ttyout)
 	return 0; /* usage */
-    }
-    if (isatty(fileno(*outfp))) {
-	bu_log("ERROR: %s will not write png data to a tty\n", bu_getprogname());
-	return 0; /* usage */
-    }
     if (argc > ++bu_optind) {
 	bu_log("%s: excess argument(s) ignored\n", bu_getprogname());
     }
@@ -165,7 +167,8 @@ write_png(FILE *outfp, unsigned char **scanlines, long int width, long int heigh
      * representing the value needed to un-do the 2.2 correction
      * auto-applied by PowerPoint for PC monitors.
      */
-    png_set_gAMA(png_p, info_p, out_gamma);
+    if (out_gamma > 0.0)
+	png_set_gAMA(png_p, info_p, out_gamma);
 
     png_write_info(png_p, info_p);
     png_write_image(png_p, scanlines);
@@ -189,7 +192,7 @@ main(int argc, char *argv[])
     size_t file_width = 512; /* default input width */
     size_t file_height = 512; /* default input height */
 
-    char usage[] = "Usage: pix-png [-a] [-w file_width] [-n file_height]\n\
+    char usage[] = "Usage: pix-png [-a] [-w file_width] [-n file_height] [-g gamma]\n\
 	[-s square_file_size] [-o file.png] [file.pix] [> file.png]\n";
 
     bu_setprogname(argv[0]);

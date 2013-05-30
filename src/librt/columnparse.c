@@ -1,7 +1,7 @@
 /*                           C O L U M N P A R S E . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2012 United States Government as represented by
+ * Copyright (c) 2008-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -127,17 +127,17 @@ int
 main()
 {
     FILE *fp;
-    struct col_properties *cp;
+    struct col_properties cp;
     struct bu_vls currentline = BU_VLS_INIT_ZERO;
 
-    BU_GET(cp, struct col_properties);
-    cp->col_sizes = (int *)bu_malloc(sizeof(int) * 10, "initial array of column sizes");
-    cp->col_attrnames = (char **)bu_malloc(sizeof(char *) * 11, "initial array of attribute names");
-    cp->col_cnt = 0;
+
+    cp.col_cnt = 0;
+    cp.col_sizes = (int *)bu_malloc(sizeof(int) * 10, "initial array of column sizes");
+    cp.col_attrnames = (char **)bu_malloc(sizeof(char *) * 11, "initial array of attribute names");
 
     fp = fopen("./test.txt", "r");
     bu_vls_gets(&currentline, fp);
-    find_columns(bu_vls_addr(&currentline), cp);
+    find_columns(bu_vls_addr(&currentline), &cp);
 
     /* header separator is a throwaway */
     bu_vls_gets(&currentline, fp);
@@ -145,7 +145,7 @@ main()
 
     while (!(bu_vls_gets(&currentline, fp) < 0)) {
 	/*printf("line:  %s\n\n", bu_vls_addr(&currentline));*/
-	parse_line(&currentline, cp);
+	parse_line(&currentline, &cp);
 	bu_vls_trunc(&currentline, 0);
     }
 

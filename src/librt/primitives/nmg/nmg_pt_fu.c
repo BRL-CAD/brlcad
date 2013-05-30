@@ -1,7 +1,7 @@
 /*                     N M G _ P T _ F U . C
  * BRL-CAD
  *
- * Copyright (c) 1994-2012 United States Government as represented by
+ * Copyright (c) 1994-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -46,8 +46,8 @@
  */
 struct ve_dist {
     struct bu_list l;
-    uint32_t *magic_p;/* pointer to edge/vertex structure */
-    double dist;	/* distance squared from point to edge */
+    uint32_t *magic_p;	/* pointer to edge/vertex structure */
+    fastf_t dist;	/* distance squared from point to edge */
     struct vertex *v1;
     struct vertex *v2;
     int status;	/* return code from bn_dist_pt3_lseg3 */
@@ -167,6 +167,12 @@ bn_distsq_pt3_lseg3(fastf_t *dist, const fastf_t *a, const fastf_t *b, const fas
     dot = VDOT(PtoA, AtoB);
     t = dot * dot / B_A_sq;
 
+    if (t < tol->dist_sq) {
+	/* PCA is at A */
+	*dist = P_A_sq;
+	return 3;
+    }
+
     if (dot < -SMALL_FASTF && t > tol->dist_sq) {
 	/* P is "left" of A */
 	*dist = P_A_sq;
@@ -222,7 +228,7 @@ nmg_class_pt_vu(struct fpi *fpi, struct vertexuse *vu)
      */
     VSUB2(delta, vu->v_p->vg_p->coord, fpi->pt);
 
-    ved = (struct ve_dist *) bu_malloc(sizeof(struct ve_dist), "ve_dist structure");
+    BU_ALLOC(ved, struct ve_dist);
     ved->magic_p = &vu->v_p->magic;
     ved->dist = MAGNITUDE(delta);
     if (ved->dist < fpi->tol->dist_sq) {
@@ -249,13 +255,13 @@ nmg_class_pt_vu(struct fpi *fpi, struct vertexuse *vu)
 static int
 Quadrant(fastf_t x, fastf_t y)
 {
-    if (x >= 0.0) {
-	if (y >= 0.0)
+    if (x > -SMALL_FASTF) {
+	if (y > -SMALL_FASTF)
 	    return 1;
 	else
 	    return 4;
     } else {
-	if (y >= 0.0)
+	if (y > -SMALL_FASTF)
 	    return 2;
 	else
 	    return 3;
@@ -331,10 +337,10 @@ nmg_class_pt_euvu(const fastf_t *pt, struct edgeuse *eu_in, const struct bn_tol 
 
     eu = eu_in;
 
-    if (rt_g.NMG_debug & DEBUG_PT_FU)
+    if (UNLIKELY(rt_g.NMG_debug & DEBUG_PT_FU))
 	bu_log("nmg_class_pt_euvu((%g %g %g), eu=x%x)\n", V3ARGS(pt), eu);
 
-    if (*eu->up.magic_p != NMG_LOOPUSE_MAGIC) {
+    if (UNLIKELY(*eu->up.magic_p != NMG_LOOPUSE_MAGIC)) {
 	bu_log("nmg_class_pt_euvu() called with eu (x%x) that isn't part of a loop\n", eu);
 	bu_bomb("nmg_class_pt_euvu() called with eu that isn't part of a loop");
     }
@@ -355,7 +361,7 @@ nmg_class_pt_euvu(const fastf_t *pt, struct edgeuse *eu_in, const struct bn_tol 
 	struct edgeuse *eu_test;
 	int done=0;
 
-	if (rt_g.NMG_debug & DEBUG_PT_FU)
+	if (UNLIKELY(rt_g.NMG_debug & DEBUG_PT_FU))
 	    bu_log("nmg_class_pt_euvu: eu x%x is a crack\n", eu);
 
 	/* find next eu from this vertex that is not a crack */
@@ -379,7 +385,7 @@ nmg_class_pt_euvu(const fastf_t *pt, struct edgeuse *eu_in, const struct bn_tol 
 	else
 	    eu = eu_test;
 
-	if (rt_g.NMG_debug & DEBUG_PT_FU)
+	if (UNLIKELY(rt_g.NMG_debug & DEBUG_PT_FU))
 	    bu_log("\tUsing eu x%x instead\n", eu);
     }
 
@@ -387,7 +393,7 @@ nmg_class_pt_euvu(const fastf_t *pt, struct edgeuse *eu_in, const struct bn_tol 
 	struct edgeuse *eu_test;
 	int done=0;
 
-	if (rt_g.NMG_debug & DEBUG_PT_FU)
+	if (UNLIKELY(rt_g.NMG_debug & DEBUG_PT_FU))
 	    bu_log("nmg_class_pt_euvu: prev_eu (x%x) is a crack\n", prev_eu);
 
 	/* find previous eu ending at this vertex that is not a crack */
@@ -411,20 +417,20 @@ nmg_class_pt_euvu(const fastf_t *pt, struct edgeuse *eu_in, const struct bn_tol 
 	else
 	    prev_eu = eu_test;
 
-	if (rt_g.NMG_debug & DEBUG_PT_FU)
+	if (UNLIKELY(rt_g.NMG_debug & DEBUG_PT_FU))
 	    bu_log("\tUsing prev_eu x%x instead\n", prev_eu);
     }
 
     /* left is the Y-axis of our XY-coordinate system */
-    if (nmg_find_eu_leftvec(left,  eu)) {
+    if (UNLIKELY(nmg_find_eu_leftvec(left, eu))) {
 	bu_log("nmg_class_pt_euvu: nmg_find_eu_leftvec() for eu=x%x failed!\n", eu);
 	bu_bomb("nmg_class_pt_euvu: nmg_find_eu_leftvec() failed!");
     }
 
-    if (rt_g.NMG_debug & DEBUG_PT_FU)
+    if (UNLIKELY(rt_g.NMG_debug & DEBUG_PT_FU))
 	bu_log("\tprev_eu = x%x, left = (%g %g %g)\n", prev_eu, V3ARGS(left));
 
-    /* v0 is the origin of the XY-coordinat system */
+    /* v0 is the origin of the XY-coordinate system */
     v0 = eu->vu_p->v_p;
     NMG_CK_VERTEX(v0);
 
@@ -436,7 +442,7 @@ nmg_class_pt_euvu(const fastf_t *pt, struct edgeuse *eu_in, const struct bn_tol 
     v2 = prev_eu->vu_p->v_p;
     NMG_CK_VERTEX(v2);
 
-    if (rt_g.NMG_debug & DEBUG_PT_FU)
+    if (UNLIKELY(rt_g.NMG_debug & DEBUG_PT_FU))
 	bu_log("\tv0=x%x, v1=x%x, v2=x%x\n", v0, v1, v2);
 
     /* eu_dir is our X-direction */
@@ -445,7 +451,7 @@ nmg_class_pt_euvu(const fastf_t *pt, struct edgeuse *eu_in, const struct bn_tol 
     /* other_eudir is direction along the previous EU (from origin) */
     VSUB2(other_eudir, v2->vg_p->coord, v0->vg_p->coord);
 
-    if (rt_g.NMG_debug & DEBUG_PT_FU)
+    if (UNLIKELY(rt_g.NMG_debug & DEBUG_PT_FU))
 	bu_log("\teu_dir=(%g %g %g), other_eudir=(%x %x %x)\n", V3ARGS(eu_dir), V3ARGS(other_eudir));
 
     /* get X and Y components for other_eu */
@@ -455,13 +461,13 @@ nmg_class_pt_euvu(const fastf_t *pt, struct edgeuse *eu_in, const struct bn_tol 
     /* which quadrant does this XY point lie in */
     quado = Quadrant(xo, yo);
 
-    if (rt_g.NMG_debug & DEBUG_PT_FU)
-	bu_log("\txo=%g, yo=%g, qudarant=%d\n", xo, yo, quado);
+    if (UNLIKELY(rt_g.NMG_debug & DEBUG_PT_FU))
+	bu_log("\txo=%g, yo=%g, quadrant=%d\n", xo, yo, quado);
 
     /* get direction to PT from origin */
     VSUB2(pt_dir, pt, v0->vg_p->coord);
 
-    if (rt_g.NMG_debug & DEBUG_PT_FU)
+    if (UNLIKELY(rt_g.NMG_debug & DEBUG_PT_FU))
 	bu_log("\tpt_dir=(%g %g %g)\n", V3ARGS(pt_dir));
 
     /* get X and Y components for PT */
@@ -471,8 +477,8 @@ nmg_class_pt_euvu(const fastf_t *pt, struct edgeuse *eu_in, const struct bn_tol 
     /* which quadrant does this XY point lie in */
     quadpt = Quadrant(xpt, ypt);
 
-    if (rt_g.NMG_debug & DEBUG_PT_FU)
-	bu_log("\txpt=%g, ypt=%g, qudarant=%d\n", xpt, ypt, quadpt);
+    if (UNLIKELY(rt_g.NMG_debug & DEBUG_PT_FU))
+	bu_log("\txpt=%g, ypt=%g, quadrant=%d\n", xpt, ypt, quadpt);
 
     /* do a quadrant comparison first (cheap!!!) */
     if (quadpt < quado)
@@ -481,7 +487,7 @@ nmg_class_pt_euvu(const fastf_t *pt, struct edgeuse *eu_in, const struct bn_tol 
     if (quadpt > quado)
 	return NMG_CLASS_AoutB;
 
-    /* both are in the same quadrant, need to normalize the corrdinates */
+    /* both are in the same quadrant, need to normalize the coordinates */
     len = sqrt(xo*xo + yo*yo);
     xo = xo/len;
     yo = yo/len;
@@ -490,7 +496,7 @@ nmg_class_pt_euvu(const fastf_t *pt, struct edgeuse *eu_in, const struct bn_tol 
     xpt = xpt/len;
     ypt = ypt/len;
 
-    if (rt_g.NMG_debug & DEBUG_PT_FU)
+    if (UNLIKELY(rt_g.NMG_debug & DEBUG_PT_FU))
 	bu_log("\tNormalized xo, yo=(%g %g), xpt, ypt=(%g %g)\n", xo, yo, xpt, ypt);
 
     switch (quadpt) {
@@ -523,7 +529,7 @@ nmg_class_pt_euvu(const fastf_t *pt, struct edgeuse *eu_in, const struct bn_tol 
 	    bu_bomb("This can't happen (illegal quadrant)\n");
 	    break;
     }
-    if (rt_g.NMG_debug & DEBUG_PT_FU)
+    if (UNLIKELY(rt_g.NMG_debug & DEBUG_PT_FU))
 	bu_log("returning %s\n", nmg_class_name(class));
 
     return class;
@@ -569,7 +575,7 @@ nmg_class_pt_eu(struct fpi *fpi, struct edgeuse *eu, struct edge_info *edge_list
 	tmp_tol.dist_sq = 0.0;
     }
 
-    ved = (struct ve_dist *)bu_malloc(sizeof(struct ve_dist), "ve_dist structure");
+    BU_ALLOC(ved, struct ve_dist);
     ved->magic_p = &eu->e_p->magic;
     ved->status = bn_distsq_pt3_lseg3(&ved->dist,
 				      eu->vu_p->v_p->vg_p->coord,
@@ -594,7 +600,7 @@ nmg_class_pt_eu(struct fpi *fpi, struct edgeuse *eu, struct edge_info *edge_list
     /* Add a struct for this edgeuse to the loop's list of dist-sorted
      * edgeuses.
      */
-    ei = (struct edge_info *)bu_malloc(sizeof(struct edge_info), "struct edge_info");
+    BU_ALLOC(ei, struct edge_info);
     ei->ved_p = ved;
     ei->eu_p = eu;
     BU_LIST_MAGIC_SET(&ei->l, NMG_EDGE_INFO_MAGIC);
@@ -616,7 +622,7 @@ nmg_class_pt_eu(struct fpi *fpi, struct edgeuse *eu, struct edge_info *edge_list
 	     * other uses of this vertex will claim the point is within
 	     * tolerance without re-computing
 	     */
-	    ed = (struct ve_dist *)bu_malloc(sizeof(struct ve_dist), "ve_dist structure");
+	    BU_ALLOC(ed, struct ve_dist);
 	    ed->magic_p = &ved->v1->magic;
 	    ed->status = ved->status;
 	    ed->v1 = ed->v2 = ved->v1;
@@ -637,7 +643,7 @@ nmg_class_pt_eu(struct fpi *fpi, struct edgeuse *eu, struct edge_info *edge_list
 	     * other uses of this vertex will claim the point is within
 	     * tolerance without re-computing
 	     */
-	    ed = (struct ve_dist *)bu_malloc(sizeof(struct ve_dist), "ve_dist structure");
+	    BU_ALLOC(ed, struct ve_dist);
 	    ed->magic_p = &ved->v2->magic;
 	    ed->status = ved->status;
 	    ed->v1 = ed->v2 = ved->v2;
@@ -718,7 +724,7 @@ HIDDEN void make_near_list(struct edge_info *edge_list, struct bu_list *near1, c
     struct edge_info *ei;
     struct edge_info *ei_p;
     struct edge_info *tmp;
-    double dist;
+    fastf_t dist;
 
     BU_CK_LIST_HEAD(&edge_list->l);
     BU_CK_LIST_HEAD(near1);
@@ -738,7 +744,7 @@ HIDDEN void make_near_list(struct edge_info *edge_list, struct bu_list *near1, c
 	    if (ei_p->ved_p->magic_p == ei->ved_p->magic_p &&
 		ei_p->eu_p->eumate_p->vu_p->v_p == ei->eu_p->vu_p->v_p &&
 		ei_p->eu_p->vu_p->v_p == ei->eu_p->eumate_p->vu_p->v_p) {
-		if (rt_g.NMG_debug & DEBUG_PT_FU) {
+		if (UNLIKELY(rt_g.NMG_debug & DEBUG_PT_FU)) {
 		    bu_log("tossing edgeuse pair:\n");
 		    bu_log("(%g %g %g) -> (%g %g %g)\n",
 			   V3ARGS(ei->eu_p->vu_p->v_p->vg_p->coord),
@@ -783,7 +789,7 @@ HIDDEN void make_near_list(struct edge_info *edge_list, struct bu_list *near1, c
 	}
     }
 
-    if (rt_g.NMG_debug & DEBUG_PT_FU) {
+    if (UNLIKELY(rt_g.NMG_debug & DEBUG_PT_FU)) {
 	bu_log("dist %g near list\n", dist);
 	for (BU_LIST_FOR(ei, edge_info, near1)) {
 	    bu_log("\t(%g %g %g) -> (%g %g %g)\n",
@@ -886,7 +892,7 @@ compute_loop_class(struct fpi *fpi,
     struct bu_list near1;
     int lu_class = NMG_CLASS_Unknown;
 
-    if (rt_g.NMG_debug & DEBUG_PT_FU) {
+    if (UNLIKELY(rt_g.NMG_debug & DEBUG_PT_FU)) {
 	bu_log("compute_loop_class()\n");
 	for (BU_LIST_FOR(ei, edge_info, &edge_list->l)) {
 	    bu_log("dist:%g class:%s status:%d\n\tv1(%g %g %g) v2(%g %g %g)\n",
@@ -917,7 +923,7 @@ compute_loop_class(struct fpi *fpi,
 	} else
 	    bu_bomb("bad lu orientation\n");
 
-	if (rt_g.NMG_debug & DEBUG_PT_FU) {
+	if (UNLIKELY(rt_g.NMG_debug & DEBUG_PT_FU)) {
 	    bu_log("list was empty, so class is %s\n",
 		   nmg_class_name(lu_class));
 	}
@@ -934,7 +940,7 @@ compute_loop_class(struct fpi *fpi,
 	    case 1: /* pt is on ei->ved_p->v1 */
 	    case 2: /* pt is on ei->ved_p->v2 */
 		lu_class = NMG_CLASS_AonBshared;
-		if (rt_g.NMG_debug & DEBUG_PT_FU)
+		if (UNLIKELY(rt_g.NMG_debug & DEBUG_PT_FU))
 		    pl_pt_lu(fpi, lu, ei);
 		done = 1;
 		break;
@@ -942,11 +948,11 @@ compute_loop_class(struct fpi *fpi,
 	    case 4: /* pt pca is v2 */
 	    case 5: /* pt pca between v1 and v2 */
 		lu_class = ei->class;
-		if (rt_g.NMG_debug & DEBUG_PT_FU) {
+		if (UNLIKELY(rt_g.NMG_debug & DEBUG_PT_FU)) {
 		    bu_log("found status 5 edge, loop class is %s\n",
 			   nmg_class_name(lu_class));
 		}
-		if (rt_g.NMG_debug & DEBUG_PT_FU)
+		if (UNLIKELY(rt_g.NMG_debug & DEBUG_PT_FU))
 		    pl_pt_lu(fpi, lu, ei);
 		done = 1;
 		break;
@@ -969,7 +975,7 @@ compute_loop_class(struct fpi *fpi,
 	bu_free((char *)ei, "edge_info struct");
     }
 
-    if (rt_g.NMG_debug & DEBUG_PT_FU) {
+    if (UNLIKELY(rt_g.NMG_debug & DEBUG_PT_FU)) {
 	bu_log("compute_loop_class() returns %s\n",
 	       nmg_class_name(lu_class));
     }
@@ -1255,7 +1261,7 @@ nmg_class_pt_fu_except(const fastf_t *pt, const struct faceuse *fu, const struct
 	 * is anything but OUTSIDE
 	 */
 	if (rt_g.NMG_debug & DEBUG_PT_FU)
-	    bu_log("nmg_class_pt_fu_except((%g %g %g) ouside face RPP\n",
+	    bu_log("nmg_class_pt_fu_except((%g %g %g) outside face RPP\n",
 		   V3ARGS(pt));
 
 	return NMG_CLASS_AoutB;
@@ -1279,7 +1285,7 @@ nmg_class_pt_fu_except(const fastf_t *pt, const struct faceuse *fu, const struct
 	if (ignore_lu && (ignore_lu==lu || ignore_lu==lu->lumate_p))
 	    continue;
 
-	/* Ignore OT_BOOLPLACE, etc */
+	/* Ignore OT_BOOLPLACE, etc. */
 	if (lu->orientation != OT_SAME && lu->orientation != OT_OPPOSITE) {
 	    if (lu->orientation != OT_BOOLPLACE) {
 		bu_bomb("nmg_class_pt_fu_except() lu orientation is not OT_SAME, OT_OPPOSITE or OT_BOOLPLACE\n");
@@ -1306,13 +1312,10 @@ nmg_class_pt_fu_except(const fastf_t *pt, const struct faceuse *fu, const struct
 	    }
 	} else if (lu->orientation == OT_SAME) {
 	    ot_same[lu_class]++;
-	    if (lu_class == NMG_CLASS_AinB ||
-		lu_class == NMG_CLASS_AonBshared ||
-		lu_class == NMG_CLASS_AonBanti) {
-#if 0
-	    if (lu_class == NMG_CLASS_AinB ||
-		lu_class == NMG_CLASS_AonBshared)
-#endif
+	    if (lu_class == NMG_CLASS_AinB
+		|| lu_class == NMG_CLASS_AonBshared
+		|| lu_class == NMG_CLASS_AonBanti)
+	    {
 		ot_same_in++;
 	    }
 	}
@@ -1326,10 +1329,7 @@ nmg_class_pt_fu_except(const fastf_t *pt, const struct faceuse *fu, const struct
 	       ot_opposite[0], ot_opposite[1], ot_opposite[2], ot_opposite[3]);
     }
 
-    if (ot_same_in <= ot_opposite_out) {
-#if 0
     if (ot_same_in == ot_opposite_out) {
-#endif
 	/* All the holes cancel out the solid loops */
 	fu_class = NMG_CLASS_AoutB;
     } else if (ot_same_in > ot_opposite_out) {

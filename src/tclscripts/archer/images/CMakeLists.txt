@@ -152,6 +152,8 @@ set(archer_images
   invalid_intersect.png
   invalid_subtract.png
   invalid_union.png
+  matrixModeAbove.png
+  matrixModeBelow.png
   measure.png
   metaball.png
   metaball_intersect.png
@@ -260,6 +262,46 @@ set(archer_images
   view_top_bottom_small.png
   view_translate.png
   wizard.png
+  l_i0_v0_s0.gif
+  l_i0_v0_s1.gif
+  l_i0_v0_s2.gif
+  l_i0_v0_s3.gif
+  l_i0_v0_s4.gif
+  l_i0_v0_s5.gif
+  l_i0_v0_s6.gif
+  l_i0_v0_s7.gif
+  l_i0_v0_s8.gif
+  l_i0_v0_s9.gif
+  l_i0_v1_s0.gif
+  l_i0_v1_s1.gif
+  l_i0_v1_s2.gif
+  l_i0_v1_s3.gif
+  l_i0_v1_s4.gif
+  l_i0_v1_s5.gif
+  l_i0_v1_s6.gif
+  l_i0_v1_s7.gif
+  l_i0_v1_s8.gif
+  l_i0_v1_s9.gif
+  l_i1_v0_s0.gif
+  l_i1_v0_s1.gif
+  l_i1_v0_s2.gif
+  l_i1_v0_s3.gif
+  l_i1_v0_s4.gif
+  l_i1_v0_s5.gif
+  l_i1_v0_s6.gif
+  l_i1_v0_s7.gif
+  l_i1_v0_s8.gif
+  l_i1_v0_s9.gif
+  l_i1_v1_s0.gif
+  l_i1_v1_s1.gif
+  l_i1_v1_s2.gif
+  l_i1_v1_s3.gif
+  l_i1_v1_s4.gif
+  l_i1_v1_s5.gif
+  l_i1_v1_s6.gif
+  l_i1_v1_s7.gif
+  l_i1_v1_s8.gif
+  l_i1_v1_s9.gif
   )
 
 BRLCAD_ADDDATA(archer_images tclscripts/archer/images)

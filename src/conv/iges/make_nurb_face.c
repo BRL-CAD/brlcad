@@ -1,7 +1,7 @@
 /*                M A K E _ N U R B _ F A C E . C
  * BRL-CAD
  *
- * Copyright (c) 1995-2012 United States Government as represented by
+ * Copyright (c) 1995-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -77,8 +77,8 @@ Add_nurb_loop_to_face(struct shell *s, struct faceuse *fu, int loop_entityno)
 	    struct iges_param_curve *crv;
 
 	    Readint(&k, "");	/* ignore iso-parametric flag */
-	    new_crv = (struct iges_param_curve *)bu_malloc(sizeof(struct iges_param_curve),
-							   "Add_nurb_loop_to_face: new_crv");
+	    BU_ALLOC(new_crv, struct iges_param_curve);
+
 	    if (edge_uses[i].root == (struct iges_param_curve *)NULL)
 		edge_uses[i].root = new_crv;
 	    else {

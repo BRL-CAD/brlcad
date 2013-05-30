@@ -1,7 +1,7 @@
 /*                         G - N M G . C
  * BRL-CAD
  *
- * Copyright (c) 1993-2012 United States Government as represented by
+ * Copyright (c) 1993-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -271,7 +271,7 @@ union tree *do_region_end(struct db_tree_state *tsp, const struct db_full_path *
     if (RT_G_DEBUG&DEBUG_MEM_FULL)
 	bu_prmem("At end of do_region_end()");
 
-    BU_GET(curtree, union tree);
+    BU_ALLOC(curtree, union tree);
     RT_TREE_INIT(curtree);
     curtree->tr_op = OP_NOP;
     return curtree;
@@ -314,12 +314,12 @@ csg_comb_func(struct db_i *db, struct directory *dp, genptr_t UNUSED(ptr))
 	name = (&(dp->d_namep));
 
 	(void) db_walk_tree(db, 1, (const char **)name,
-                            1,
-                            &tree_state,
-                            0,
-                            do_region_end,
-                            nmg_booltree_leaf_tess,
-                            (genptr_t)NULL);
+			    1,
+			    &tree_state,
+			    0,
+			    do_region_end,
+			    nmg_booltree_leaf_tess,
+			    (genptr_t)NULL);
 
 	/* Release dynamic storage */
 	nmg_km(the_model);
@@ -410,10 +410,10 @@ csg_comb_func(struct db_i *db, struct directory *dp, genptr_t UNUSED(ptr))
     }
 
     if (mk_lrcomb(fp_out, dp->d_namep, &headp, comb->region_flag,
-                  matname, matparm,
-                  color, comb->region_id,
-                  comb->aircode, comb->GIFTmater, comb->los,
-                  comb->inherit)) {
+		  matname, matparm,
+		  color, comb->region_id,
+		  comb->aircode, comb->GIFTmater, comb->los,
+		  comb->inherit)) {
 	bu_log("G-nmg: error in making region (%s)\n", dp->d_namep);
     }
 }
@@ -499,9 +499,9 @@ main(int argc, char **argv)
     }
 
     /* Open BRL-CAD database */
-    if ((dbip = db_open(argv[bu_optind], "r")) == DBI_NULL) {
+    if ((dbip = db_open(argv[bu_optind], DB_OPEN_READONLY)) == DBI_NULL) {
 	perror(argv[0]);
-	bu_exit(1, "Cannot open %s\n", argv[bu_optind]);
+	bu_exit(1, "Cannot open geometry database file %s\n", argv[bu_optind]);
     }
     if (db_dirbuild(dbip)) {
 	bu_exit(1, "db_dirbuild failed\n");

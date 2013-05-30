@@ -16,7 +16,7 @@ scanner.re and parser.y
     Inputs for re2c scanner-generator and lemon parser-generator respectively.
     These files implement the perplex input file parser.
 
-scanner_template.c
+perplex_template.c
     Template file with a basic re2c scanner implementation.
     Used as the basis for generated scanner sources.
 
@@ -25,7 +25,7 @@ Licensing and Copyrights
 mbo_getopt.cpp and mbo_getopt.h are in the Public Domain, written by
 Marcus Boerger.
 
-scanner.re and scanner_template.c include code taken from the flex project,
+scanner.re and perplex_template.c include code taken from the flex project,
 and are released under a BSD License with joint copyright held by the U.S.
 Government and The Regents of the University of California.
 
@@ -106,7 +106,7 @@ yyextra
 
 2) Run perplex on the input to generate an re2c input file.
 
-    perplex -t /path/to/scanner_template.c -h header.h -o output.re input.l
+    perplex -t /path/to/perplex_template.c -h header.h -o output.re input.l
 
 * Input defaults to stdin and output defaults to stdout.
 

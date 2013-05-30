@@ -1,7 +1,7 @@
 /*                        S E A R C H . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2012 United States Government as represented by
+ * Copyright (c) 2008-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -105,8 +105,8 @@ static OPTION options[] = {
     { "-above",     N_ABOVE,        c_above,        O_ZERO },
     { "-and",       N_AND,          NULL,           O_NONE },
     { "-attr",	    N_ATTR,	    c_attr,	    O_ARGV },
-    { "-bl",        N_BELOW,        c_below,        O_ZERO },
     { "-below",     N_BELOW,        c_below,        O_ZERO },
+    { "-bl",        N_BELOW,        c_below,        O_ZERO },
     { "-iname",     N_INAME,        c_iname,        O_ARGV },
     { "-iregex",    N_IREGEX,       c_iregex,       O_ARGV },
     { "-maxdepth",  N_MAXDEPTH,     c_maxdepth,     O_ARGV },
@@ -124,9 +124,6 @@ static OPTION options[] = {
 };
 
 
-/**
- * Free all entries and the list of a db_full_path_list
- */
 void
 db_free_full_path_list(struct db_full_path_list *path_list)
 {
@@ -257,7 +254,7 @@ db_fullpath_traverse(struct db_i *dbip,
 	    struct rt_db_internal in;
 	    struct rt_comb_internal *comb;
 
-	    if (rt_db_get_internal5(&in, dp, dbip, NULL, resp) < 0)
+	    if (rt_db_get_internal(&in, dp, dbip, NULL, resp) < 0)
 		return;
 
 	    comb = (struct rt_comb_internal *)in.idb_ptr;
@@ -280,7 +277,7 @@ palloc(enum db_search_ntype t, int (*f)(struct db_plan_t *, struct db_full_path 
 {
     struct db_plan_t *newplan;
 
-    newplan = bu_calloc(1, sizeof(struct db_plan_t), "Allocate struct db_plan_t structure");
+    BU_GET(newplan, struct db_plan_t);
     newplan->type = t;
     newplan->eval = f;
     return newplan;
@@ -478,7 +475,7 @@ db_fullpath_stateful_traverse_subtree(union tree *tp,
  * Unlike db_preorder_traverse, this routine and its subroutines
  * use db_full_path structures instead of directory structures.
  *
- * This walker will hault if either comb_func or leaf_func return
+ * This walker will halt if either comb_func or leaf_func return
  * a value > 0 and return that value.
  */
 HIDDEN int
@@ -533,7 +530,7 @@ db_fullpath_stateful_traverse(struct db_i *dbip, struct rt_wdb *wdbp, struct db_
 	    struct rt_db_internal in;
 	    struct rt_comb_internal *comb;
 
-	    if (rt_db_get_internal5(&in, dp, dbip, NULL, resp) < 0)
+	    if (rt_db_get_internal(&in, dp, dbip, NULL, resp) < 0)
 		return 0;
 
 	    comb = (struct rt_comb_internal *)in.idb_ptr;
@@ -586,7 +583,7 @@ f_below(struct db_plan_t *plan, struct db_full_path *entry, struct db_i *dbip, s
 	return 0;
 
     if (dp->d_flags & RT_DIR_COMB) {
-	if (rt_db_get_internal5(&in, dp, dbip, NULL, wdbp->wdb_resp) < 0)
+	if (rt_db_get_internal(&in, dp, dbip, NULL, wdbp->wdb_resp) < 0)
 	    return 0;
 
 	comb = (struct rt_comb_internal *)in.idb_ptr;
@@ -821,7 +818,7 @@ f_attr(struct db_plan_t *plan, struct db_full_path *entry, struct db_i *dbip, st
      */
 
     for (i = 0; i < strlen(bu_vls_addr(&value)); i++) {
-	if (!(isdigit(bu_vls_addr(&value)[i]))) strcomparison = 1;
+	if (!(isdigit((int)(bu_vls_addr(&value)[i])))) strcomparison = 1;
     }
 
     /* Get attributes for object.
@@ -1355,7 +1352,7 @@ f_nnodes(struct db_plan_t *plan, struct db_full_path *entry, struct db_i *dbip, 
      * positions.
      */
 
-    if (isdigit(plan->node_data[0])) {
+    if (isdigit((int)plan->node_data[0])) {
 	doequal = 1;
 	node_count_target = (size_t)atoi(plan->node_data);
     } else {
@@ -1367,13 +1364,13 @@ f_nnodes(struct db_plan_t *plan, struct db_full_path *entry, struct db_i *dbip, 
 	}
 	if (plan->node_data[1] == '=') {
 	    doequal = 1;
-	    if (isdigit(plan->node_data[2])) {
+	    if (isdigit((int)plan->node_data[2])) {
 		node_count_target = (size_t)atoi((plan->node_data)+2);
 	    } else {
 		return 0;
 	    }
 	} else {
-	    if (isdigit(plan->node_data[1])) {
+	    if (isdigit((int)plan->node_data[1])) {
 		node_count_target = (size_t)atoi((plan->node_data)+1);
 	    } else {
 		return 0;
@@ -1391,7 +1388,7 @@ f_nnodes(struct db_plan_t *plan, struct db_full_path *entry, struct db_i *dbip, 
 	return 0;
 
     if (dp->d_flags & RT_DIR_COMB) {
-	rt_db_get_internal5(&in, dp, dbip, (fastf_t *)NULL, &rt_uniresource);
+	rt_db_get_internal(&in, dp, dbip, (fastf_t *)NULL, &rt_uniresource);
 	comb = (struct rt_comb_internal *)in.idb_ptr;
 	if (comb->tree == NULL) {
 	    node_count = 0;
@@ -1463,15 +1460,17 @@ c_path(char *pattern, char ***UNUSED(ignored), int UNUSED(unused), struct db_pla
 /*
  * -print functions --
  *
- * Always true, causes the current pathame to be added to the results
+ * Always true, causes the current pathname to be added to the results
  * list.
  */
 HIDDEN int
 f_print(struct db_plan_t *UNUSED(plan), struct db_full_path *entry, struct db_i *UNUSED(dbip), struct rt_wdb *UNUSED(wdbp), struct db_full_path_list *results)
 {
     struct db_full_path_list *new_entry;
-    BU_GET(new_entry, struct db_full_path_list);
-    new_entry->path = (struct db_full_path *) bu_malloc(sizeof(struct db_full_path), "new full path");
+
+    BU_ALLOC(new_entry, struct db_full_path_list);
+    BU_ALLOC(new_entry->path, struct db_full_path);
+
     db_full_path_init(new_entry->path);
     db_dup_full_path(new_entry->path, (const struct db_full_path *)entry);
     BU_LIST_PUSH(&(results->l), &(new_entry->l));
@@ -1636,7 +1635,7 @@ yankexpr(struct db_plan_t **planp, struct db_plan_t **resultplan)          /* po
 
 
 /*
- * replaces "parentheisized" plans in our search plan with "expr"
+ * replaces "parenthesized" plans in our search plan with "expr"
  * nodes.
  */
 HIDDEN int
@@ -2026,7 +2025,7 @@ db_search_freeplan(void **vplan) {
     struct db_plan_t *plan = (struct db_plan_t *)*vplan;
     for (p = plan; p;) {
 	plan = p->next;
-	bu_free(p, "Deallocate struct db_plan_t structure");
+	BU_PUT(p, struct db_plan_t);
 	p = plan;
     }
     /* sanity */
@@ -2046,7 +2045,7 @@ db_search_full_paths(void *searchplan,        /* search plan */
     struct db_full_path_list *new_entry = NULL;
     struct db_full_path_list *currentpath = NULL;
     struct db_full_path_list *searchresults = NULL;
-    BU_GET(searchresults, struct db_full_path_list);
+    BU_ALLOC(searchresults, struct db_full_path_list);
     BU_LIST_INIT(&(searchresults->l));
     /* If nothing is passed in, try to get the list of toplevel objects */
     if (BU_LIST_IS_EMPTY(&(pathnames->l))) {
@@ -2056,8 +2055,10 @@ db_search_full_paths(void *searchplan,        /* search plan */
 		if (dp->d_nref == 0 && !(dp->d_flags & RT_DIR_HIDDEN) && (dp->d_addr != RT_DIR_PHONY_ADDR)) {
 		    if (db_string_to_path(&dfp, dbip, dp->d_namep) < 0)
 			continue; /* skip */
-		    BU_GET(new_entry, struct db_full_path_list);
-		    new_entry->path = (struct db_full_path *) bu_malloc(sizeof(struct db_full_path), "new full path");
+
+		    BU_ALLOC(new_entry, struct db_full_path_list);
+		    BU_ALLOC(new_entry->path, struct db_full_path);
+
 		    db_full_path_init(new_entry->path);
 		    db_dup_full_path(new_entry->path, (const struct db_full_path *)&dfp);
 		    BU_LIST_PUSH(&(pathnames->l), &(new_entry->l));
@@ -2082,15 +2083,19 @@ db_search_unique_objects(void *searchplan,        /* search plan */
 			 struct db_i *dbip,
 			 struct rt_wdb *wdbp)
 {
-    struct bu_ptbl *uniq_db_objs = (struct bu_ptbl *) bu_malloc(sizeof(struct bu_ptbl), "new pointer table");
+    struct bu_ptbl *uniq_db_objs = NULL;
     struct db_full_path_list *entry = NULL;
     struct db_full_path_list *search_results = NULL;
+
+    BU_ALLOC(uniq_db_objs, struct bu_ptbl);
+
     search_results = db_search_full_paths(searchplan, pathnames, dbip, wdbp);
     bu_ptbl_init(uniq_db_objs, 8, "initialize ptr table");
     for (BU_LIST_FOR(entry, db_full_path_list, &(search_results->l))) {
 	bu_ptbl_ins_unique(uniq_db_objs, (long *)entry->path->fp_names[entry->path->fp_len - 1]);
     }
     db_free_full_path_list(search_results);
+
     return uniq_db_objs;
 }
 

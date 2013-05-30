@@ -1,7 +1,7 @@
 #                    M G E D P A G E . I T K
 # BRL-CAD
 #
-# Copyright (c) 2004-2012 United States Government as represented by
+# Copyright (c) 2004-2013 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -281,7 +281,7 @@ namespace eval RtWizard {
 
 	#
 	# Create a frame for the center of the panel. On the left
-	# will be the hierachy window, on the right will be the
+	# will be the hierarchy window, on the right will be the
 	# mged window over its controls
 	#
 	itk_component add midFrame {
@@ -319,7 +319,7 @@ namespace eval RtWizard {
 	}
 
 	#
-	# Create a frame to manage the contols
+	# Create a frame to manage the controls
 	#
 	itk_component add conFrame {
 	    iwidgets::labeledframe $itk_component(hierFrame).conFrame \
@@ -688,7 +688,7 @@ namespace eval RtWizard {
 	    set objs [lsort $objs]
 	} else {
 	    #
-	    # For the given parent, get its consituents using the 'lt'
+	    # For the given parent, get its constituents using the 'lt'
 	    # command. This produces a tcl list of the items.
 	    #
 	    set t [file tail $parent]

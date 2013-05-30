@@ -1,7 +1,7 @@
 /*                         D E C O M P O S E . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2012 United States Government as represented by
+ * Copyright (c) 2008-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -166,7 +166,7 @@ ged_decompose(struct ged *gedp, int argc, const char *argv[])
 		    return GED_ERROR;
 		}
 
-		/* write this model as a seperate nmg solid */
+		/* write this model as a separate nmg solid */
 		RT_DB_INTERNAL_INIT(&new_intern);
 		new_intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 		new_intern.idb_type = ID_NMG;

@@ -1,7 +1,7 @@
 /*                      P R O T O C O L . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2012 United States Government as represented by
+ * Copyright (c) 2004-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -69,8 +69,8 @@ struct bu_structparse desc_line_info[] =  {
     {"%d", 1, "li_endpix",	LINE_O(li_endpix),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%d", 1, "li_frame",	LINE_O(li_frame),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%d", 1, "li_nrays",	LINE_O(li_nrays),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f", 1, "li_cpusec",	LINE_O(li_cpusec),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f", 1, "li_percent",	LINE_O(li_percent),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%g", 1, "li_cpusec",	LINE_O(li_cpusec),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%g", 1, "li_percent",	LINE_O(li_percent),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"",   0, NULL,		0,			BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 

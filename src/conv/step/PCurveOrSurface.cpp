@@ -1,7 +1,7 @@
 /*                 PCurveOrSurface.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2012 United States Government as represented by
+ * Copyright (c) 1994-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -36,7 +36,7 @@
 
 #define CLASSNAME "PCurveOrSurface"
 #define ENTITYNAME "Pcurve_Or_Surface"
-string PCurveOrSurface::entityname = Factory::RegisterClass(ENTITYNAME,(FactoryMethod)PCurveOrSurface::Create);
+string PCurveOrSurface::entityname = Factory::RegisterClass(ENTITYNAME, (FactoryMethod)PCurveOrSurface::Create);
 
 const char *pcurve_or_surface_type_names[] = {
     "PCURVE",
@@ -45,7 +45,8 @@ const char *pcurve_or_surface_type_names[] = {
     NULL
 };
 
-PCurveOrSurface::PCurveOrSurface() {
+PCurveOrSurface::PCurveOrSurface()
+{
     step = NULL;
     id = 0;
     pcurve = NULL;
@@ -53,7 +54,8 @@ PCurveOrSurface::PCurveOrSurface() {
     type = PCurveOrSurface::UNKNOWN;
 }
 
-PCurveOrSurface::PCurveOrSurface(STEPWrapper *sw,int step_id) {
+PCurveOrSurface::PCurveOrSurface(STEPWrapper *sw, int step_id)
+{
     step = sw;
     id = step_id;
     pcurve = NULL;
@@ -61,59 +63,59 @@ PCurveOrSurface::PCurveOrSurface(STEPWrapper *sw,int step_id) {
     type = PCurveOrSurface::UNKNOWN;
 }
 
-PCurveOrSurface::~PCurveOrSurface() {
+PCurveOrSurface::~PCurveOrSurface()
+{
     pcurve = NULL;
     surface = NULL;
 }
 
 bool
-PCurveOrSurface::Load(STEPWrapper *sw,SDAI_Select *sse) {
-    step=sw;
+PCurveOrSurface::Load(STEPWrapper *sw, SDAI_Select *sse)
+{
+    step = sw;
 
     std::cout << sse->UnderlyingTypeName().c_str() << std::endl;
     SdaiPcurve_or_surface *v = (SdaiPcurve_or_surface *)sse;
 
-    if ( v->IsPcurve() ) {
+    if (v->IsPcurve()) {
 	type = PCURVE;
 	SdaiPcurve *p = *v;
-	pcurve = dynamic_cast<PCurve *>(Factory::CreateObject(sw,(SDAI_Application_instance *)p)); //CreateCurveObject(sw,(SDAI_Application_instance *)p));
+	pcurve = dynamic_cast<PCurve *>(Factory::CreateObject(sw, (SDAI_Application_instance *)p)); //CreateCurveObject(sw,(SDAI_Application_instance *)p));
     } else if (v->IsSurface()) {
 	type = SURFACE;
 	SdaiSurface *s = *v;
-	surface = dynamic_cast<Surface *>(Factory::CreateObject(sw,(SDAI_Application_instance*)s)); //CreateSurfaceObject(sw,(SDAI_Application_instance*)s));
+	surface = dynamic_cast<Surface *>(Factory::CreateObject(sw, (SDAI_Application_instance *)s)); //CreateSurfaceObject(sw,(SDAI_Application_instance*)s));
     }
 
     return true;
 }
 
 void
-PCurveOrSurface::Print(int level) {
-    TAB(level); std::cout << CLASSNAME << ":" << std::endl;
+PCurveOrSurface::Print(int level)
+{
+    TAB(level);
+    std::cout << CLASSNAME << ":" << std::endl;
     if (type == PCURVE) {
-	TAB(level); std::cout << "Type:" << pcurve_or_surface_type_names[type] << " Value:" << std::endl;
-	pcurve->Print(level+1);
+	TAB(level);
+	std::cout << "Type:" << pcurve_or_surface_type_names[type] << " Value:" << std::endl;
+	pcurve->Print(level + 1);
     } else if (type == SURFACE) {
-	TAB(level); std::cout << "Type:" << pcurve_or_surface_type_names[type] << " Value:" << std::endl;
-	surface->Print(level+1);
+	TAB(level);
+	std::cout << "Type:" << pcurve_or_surface_type_names[type] << " Value:" << std::endl;
+	surface->Print(level + 1);
     }
 }
+
 STEPEntity *
-PCurveOrSurface::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
-    Factory::OBJECTS::iterator i;
-    if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
-	PCurveOrSurface *object = new PCurveOrSurface(sw,sse->STEPfile_id);
+PCurveOrSurface::GetInstance(STEPWrapper *sw, int id)
+{
+    return new PCurveOrSurface(sw, id);
+}
 
-	Factory::AddObject(object);
-
-	if (!object->Load(sw, (SDAI_Select *)sse)) {
-	    std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
-	    delete object;
-	    return NULL;
-	}
-	return static_cast<STEPEntity *>(object);
-    } else {
-	return (*i).second;
-    }
+STEPEntity *
+PCurveOrSurface::Create(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
+    return STEPEntity::CreateEntity(sw, sse, GetInstance, CLASSNAME);
 }
 
 // Local Variables:

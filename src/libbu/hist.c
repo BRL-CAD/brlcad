@@ -1,7 +1,7 @@
 /*                          H I S T . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2012 United States Government as represented by
+ * Copyright (c) 1990-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -123,7 +123,7 @@ hist_pr_suppress(register const struct bu_hist *histp, const char *title, int ze
 
     nbins = histp->hg_nbins;
     if (zero_suppress) {
-	/* Supress trailing bins with zero counts.  nbins s/b >= 1 */
+	/* Suppress trailing bins with zero counts.  nbins s/b >= 1 */
 	for (; nbins >= 1; nbins--)
 	    if (histp->hg_bins[nbins] > 0)  break;
     }
@@ -138,7 +138,7 @@ hist_pr_suppress(register const struct bu_hist *histp, const char *title, int ze
     /* Print each bin. */
     i = 0;
     if (zero_suppress) {
-	/* Leading bins with zero counts are supressed. */
+	/* Leading bins with zero counts are suppressed. */
 	for (; i <= nbins; i++) {
 	    if (histp->hg_bins[i] > 0)  break;
 	}

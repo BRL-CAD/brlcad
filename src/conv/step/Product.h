@@ -1,7 +1,7 @@
 /*                 Product.h
  * BRL-CAD
  *
- * Copyright (c) 1994-2012 United States Government as represented by
+ * Copyright (c) 1994-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -36,9 +36,11 @@ class ON_Brep;
 class ProductContext;
 typedef list<ProductContext *> LIST_OF_PRODUCT_CONTEXT;
 
-class Product: virtual public STEPEntity {
+class Product: virtual public STEPEntity
+{
 private:
     static string entityname;
+    static EntityInstanceFunc GetInstance;
 
 protected:
     string name;

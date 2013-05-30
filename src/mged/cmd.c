@@ -1,7 +1,7 @@
 /*                           C M D . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2012 United States Government as represented by
+ * Copyright (c) 1985-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -62,7 +62,6 @@
 extern void update_grids(fastf_t sf);		/* in grid.c */
 extern void set_localunit_TclVar(void);		/* in chgmodel.c */
 extern void init_qray(void);			/* in qray.c */
-extern int gui_setup(const char *dstr);		/* in attach.c */
 extern int mged_default_dlist;			/* in attach.c */
 extern int classic_mged;
 struct cmd_list head_cmd_list;
@@ -81,6 +80,37 @@ Tk_Window tkwin = NULL;
  * run with output.
  */
 static struct bu_vls tcl_output_hook = BU_VLS_INIT_ZERO;
+
+static int
+mged_dm_width(struct ged *gedpp)
+{
+    struct dm *dmpp = (struct dm *)gedpp->ged_dmp;
+    return dmpp->dm_width;
+}
+
+
+static int
+mged_dm_height(struct ged *gedpp)
+{
+    struct dm *dmpp = (struct dm *)gedpp->ged_dmp;
+    return dmpp->dm_height;
+}
+
+
+static int
+mged_dmp_is_null(struct ged *gedpp)
+{
+    struct dm *dmpp = (struct dm *)gedpp->ged_dmp;
+    return dmpp == NULL;
+}
+
+
+static void
+mged_dm_get_display_image(struct ged *gedpp, unsigned char **idata)
+{
+    struct dm *dmpp = (struct dm *)gedpp->ged_dmp;
+    DM_GET_DISPLAY_IMAGE(dmpp, idata);
+}
 
 
 /**
@@ -180,7 +210,7 @@ cmd_ged_simulate_wrapper(ClientData clientData, Tcl_Interp *interpreter, int arg
     av[1] = argv[1];
     av[2] = NULL;
     cmd_draw(clientData, interpreter, 2, av);
-       
+
 
     return TCL_OK;
 }
@@ -196,10 +226,10 @@ cmd_ged_info_wrapper(ClientData clientData, Tcl_Interp *interpreter, int argc, c
 	return TCL_OK;
 
     if (argc >= 2) {
-        (void)(*ctp->ged_func)(gedp, argc, (const char **)argv);
-        Tcl_AppendResult(interpreter, bu_vls_addr(gedp->ged_result_str), NULL);
+	(void)(*ctp->ged_func)(gedp, argc, (const char **)argv);
+	Tcl_AppendResult(interpreter, bu_vls_addr(gedp->ged_result_str), NULL);
     } else {
-        if ((argc == 1) && (STATE == ST_S_EDIT)) {
+	if ((argc == 1) && (STATE == ST_S_EDIT)) {
 	    argc = 2;
 	    av = (const char **)bu_malloc(sizeof(char *)*(argc + 1), "f_list: av");
 	    av[0] = (const char *)argv[0];
@@ -208,10 +238,10 @@ cmd_ged_info_wrapper(ClientData clientData, Tcl_Interp *interpreter, int argc, c
 	    (void)(*ctp->ged_func)(gedp, argc, (const char **)av);
 	    Tcl_AppendResult(interpreter, bu_vls_addr(gedp->ged_result_str), NULL);
 	    bu_free(av, "cmd_ged_info_wrapper: av");
-        } else {
-	    (void)(*ctp->ged_func)(gedp, argc, (const char **)argv);    
+	} else {
+	    (void)(*ctp->ged_func)(gedp, argc, (const char **)argv);
 	    Tcl_AppendResult(interpreter, bu_vls_addr(gedp->ged_result_str), NULL);
-        }
+	}
     }
 
     return TCL_OK;
@@ -572,7 +602,7 @@ cmd_ged_plain_wrapper(ClientData clientData, Tcl_Interp *interpreter, int argc, 
 	    bu_free(str, "result strdup");
 	}
     }
-    
+
     if (ret & GED_HELP || ret == GED_OK)
 	return TCL_OK;
 
@@ -624,6 +654,10 @@ cmd_ged_dm_wrapper(ClientData clientData, Tcl_Interp *interpreter, int argc, con
     if (!gedp->ged_gvp)
 	gedp->ged_gvp = view_state->vs_gvp;
     gedp->ged_dmp = (void *)curr_dm_list->dml_dmp;
+    gedp->ged_dm_width = mged_dm_width(gedp);
+    gedp->ged_dm_height = mged_dm_height(gedp);
+    gedp->ged_dmp_is_null = mged_dmp_is_null(gedp);
+    gedp->ged_dm_get_display_image = mged_dm_get_display_image;
 
     ret = (*ctp->ged_func)(gedp, argc, (const char **)argv);
     Tcl_AppendResult(interpreter, bu_vls_addr(gedp->ged_result_str), NULL);
@@ -1834,7 +1868,7 @@ cmd_units(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, cons
 
 
 /**
- * C M D _ S E A R C H 
+ * C M D _ S E A R C H
  *
  * Search command in the style of the Unix find command for db
  * objects.
@@ -1997,7 +2031,7 @@ cmd_blast(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interpreter), int ar
     ret = ged_zap(gedp, 1, av);
     if (ret)
 	return TCL_ERROR;
-        
+
     if (argc == 1) /* "B" alone is same as "Z" */
 	return TCL_OK;
 
@@ -2011,6 +2045,16 @@ cmd_blast(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interpreter), int ar
 int
 cmd_draw(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interpreter), int argc, const char *argv[])
 {
+    struct ged_view *gvp = NULL;
+
+    if (gedp)
+	gvp = gedp->ged_gvp;
+
+    if (gvp && dmp) {
+	gvp->gv_x_samples = dmp->dm_width;
+	gvp->gv_y_samples = dmp->dm_height;
+    }
+
     return edit_com(argc, argv, 1, 1);
 }
 
@@ -2018,7 +2062,7 @@ cmd_draw(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interpreter), int arg
 extern int emuves_com(int argc, const char *argv[]);	/* from chgview.c */
 
 /**
- * Add regions with attribute MUVES_Component haveing the specified values
+ * Add regions with attribute MUVES_Component having the specified values
  * Format: em value [value value ...]
  */
 int

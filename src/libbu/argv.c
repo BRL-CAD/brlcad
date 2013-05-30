@@ -1,7 +1,7 @@
 /*                          A R G V . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2012 United States Government as represented by
+ * Copyright (c) 2008-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -286,7 +286,7 @@ bu_argv_from_path(const char *path, int *ac)
 	return (char **)0;
     }
 
-    /* If we get here, there is alteast one path element */
+    /* If we get here, there is at least one path element */
     *ac = 1;
     headpath = &newstr[i];
 

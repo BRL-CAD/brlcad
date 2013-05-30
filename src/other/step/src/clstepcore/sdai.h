@@ -49,6 +49,10 @@ class STEPattribute;
 #define BINARY_DELIM '\"'
 #endif
 
+//  STRING
+#define S_STRING_NULL        ""
+
+
 typedef long           SDAI_Integer;
 typedef short          SDAI_Short;
 typedef unsigned short SDAI_UShort;

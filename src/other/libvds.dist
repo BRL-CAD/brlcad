@@ -1,0 +1,14 @@
+SET(libvds_ignore_files
+Makefile.am
+COPYING
+README
+docs
+docs/fold.png
+docs/intro.html
+notes.txt
+path.h
+stdvds.h
+vds.h
+vdsprivate.h
+vector.h
+)

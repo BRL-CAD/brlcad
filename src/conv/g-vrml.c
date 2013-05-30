@@ -1,7 +1,7 @@
 /*                        G - V R M L . C
  * BRL-CAD
  *
- * Copyright (c) 1995-2012 United States Government as represented by
+ * Copyright (c) 1995-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -21,7 +21,7 @@
 /** @file conv/g-vrml.c
  *
  * Program to convert a BRL-CAD model (in a .g file) to a VRML (2.0)
- * facetted model by calling on the NMG booleans.
+ * faceted model by calling on the NMG booleans.
  *
  */
 
@@ -60,7 +60,7 @@ struct vrml_mat {
     int shininess;
     double transparency;
 
-    /* light paramaters */
+    /* light parameters */
     fastf_t lt_fraction;
     vect_t  lt_dir;
     fastf_t lt_angle;
@@ -72,20 +72,19 @@ struct vrml_mat {
 };
 
 #define PL_O(_m) bu_offsetof(struct vrml_mat, _m)
-#define PL_OA(_m) bu_offsetofarray(struct vrml_mat, _m)
 
 const struct bu_structparse vrml_mat_parse[]={
-    {"%s", TXT_NAME_SIZE, "ma_shader", PL_OA(shader), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%s", TXT_NAME_SIZE, "ma_shader", PL_O(shader), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%d", 1, "shine",PL_O(shininess),BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%d", 1, "sh",PL_O(shininess),BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f", 1, "transmit",PL_O(transparency),BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f", 1, "tr",PL_O(transparency),BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%g", 1, "transmit",PL_O(transparency),BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%g", 1, "tr",PL_O(transparency),BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%f", 1, "angle",PL_O(lt_angle),BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%f", 1, "fract",PL_O(lt_fraction),BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f", 3, "aim",PL_OA(lt_dir),BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f", 3, "aim",PL_O(lt_dir),BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%d", 1, "w", PL_O(tx_w), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%d", 1, "n", PL_O(tx_n), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%s", TXT_NAME_SIZE, "file",PL_OA(tx_file), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%s", TXT_NAME_SIZE, "file",PL_O(tx_file), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"",0, (char *)0,0,BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 
@@ -154,7 +153,7 @@ dup_bot(struct rt_bot_internal *bot_in)
 
     RT_BOT_CK_MAGIC(bot_in);
 
-    bot = (struct rt_bot_internal *)bu_calloc(1, sizeof(struct rt_bot_internal), "dup bot");
+    BU_ALLOC(bot, struct rt_bot_internal);
 
     bot->magic = bot_in->magic;
     bot->mode = bot_in->mode;
@@ -200,7 +199,7 @@ dup_bot(struct rt_bot_internal *bot_in)
     return bot;
 }
 
-/* return 0 when object is NOT a light or an error occured. regions
+/* return 0 when object is NOT a light or an error occurred. regions
  * are skipped when this function returns 0.
  */
 static int
@@ -221,7 +220,7 @@ select_lights(struct db_tree_state *UNUSED(tsp), const struct db_full_path *path
 
     id = rt_db_get_internal(&intern, dp, dbip, (matp_t)NULL, &rt_uniresource);
     if (id < 0) {
-	/* error occured retrieving object */
+	/* error occurred retrieving object */
 	bu_log("Warning: Can not load internal form of %s\n", dp->d_namep);
 	return 0;
     }
@@ -244,7 +243,7 @@ select_lights(struct db_tree_state *UNUSED(tsp), const struct db_full_path *path
 }
 
 
-/* return 0 when IS a light or an error occured. regions are skipped
+/* return 0 when IS a light or an error occurred. regions are skipped
  * when this function returns 0.
  */
 static int
@@ -260,7 +259,7 @@ select_non_lights(struct db_tree_state *UNUSED(tsp), const struct db_full_path *
 
     id = rt_db_get_internal(&intern, dp, dbip, (matp_t)NULL, &rt_uniresource);
     if (id < 0) {
-	/* error occured retrieving object */
+	/* error occurred retrieving object */
 	bu_log("Warning: Can not load internal form of %s\n", dp->d_namep);
 	return 0;
     }
@@ -278,9 +277,9 @@ select_non_lights(struct db_tree_state *UNUSED(tsp), const struct db_full_path *
 }
 
 
-/* CSG objects are tesselated and stored in the tree. BOTs are
+/* CSG objects are tessellated and stored in the tree. BOTs are
  * processed but stored outside tree. This leaf-tess function is
- * used when we want CSG objects tesselated and evaluated but we
+ * used when we want CSG objects tessellated and evaluated but we
  * want to output BOTs without boolean evaluation.
  */
 union tree *
@@ -680,9 +679,9 @@ main(int argc, char **argv)
     }
 
     /* Open BRL-CAD database */
-    if ((dbip = db_open(argv[bu_optind], "r")) == DBI_NULL) {
+    if ((dbip = db_open(argv[bu_optind], DB_OPEN_READONLY)) == DBI_NULL) {
 	perror(argv[0]);
-	bu_exit(1, "Cannot open %s\n", argv[bu_optind]);
+	bu_exit(1, "Cannot open geometry database file %s\n", argv[bu_optind]);
     }
     if (db_dirbuild(dbip)) {
 	bu_exit(1, "db_dirbuild() failed!\n");
@@ -704,7 +703,7 @@ main(int argc, char **argv)
     fprintf(fp_out, "#Units are %s\n", units);
     /* NOTE: We may want to inquire about bounding boxes for the
      * various groups and add Viewpoints nodes that point the camera
-     * to the center and orient for Top, Side, etc Views. We will add
+     * to the center and orient for Top, Side, etc. Views. We will add
      * some default Material Color definitions (for thousands groups)
      * before we start defining the geometry.
      */
@@ -1200,7 +1199,7 @@ bot2vrml(struct plate_mode *pmp, const struct db_full_path *pathp, int region_id
 		     (long unsigned int)vert_count+bot->faces[i*3],
 		     (long unsigned int)vert_count+bot->faces[i*3+1],
 		     (long unsigned int)vert_count+bot->faces[i*3+2]);
-        }
+	}
 	vert_count += bot->num_vertices;
     }
     fprintf(fp_out, "\t\t\t\t]\n\t\t\t\tnormalPerVertex FALSE\n");
@@ -1391,7 +1390,7 @@ nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, unio
      */
     db_free_tree(curtree, &rt_uniresource); /* does a nmg_kr (i.e. kill nmg region) */
 
-    BU_GET(curtree, union tree);
+    BU_ALLOC(curtree, union tree);
     RT_TREE_INIT(curtree);
     curtree->tr_op = OP_NOP;
     return curtree;

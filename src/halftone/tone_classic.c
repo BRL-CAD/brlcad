@@ -1,7 +1,7 @@
 /*                  T O N E _ C L A S S I C . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2012 United States Government as represented by
+ * Copyright (c) 2004-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -47,7 +47,7 @@ static unsigned char	ordered[6][6] = {
     {13, 18, 17, 6, 1, 2},
     {10, 12, 11, 9, 7, 8}};
 
-/*	tone_classic	classic diaginal clustered halftones.
+/*	tone_classic	classic diagonal clustered halftones.
  *
  * Entry:
  *	Pix	Pixel value	0-255

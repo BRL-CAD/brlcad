@@ -1,7 +1,7 @@
 /*                 NamedUnit.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2012 United States Government as represented by
+ * Copyright (c) 1994-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -32,50 +32,55 @@
 
 #define CLASSNAME "NamedUnit"
 #define ENTITYNAME "Named_Unit"
-string NamedUnit::entityname = Factory::RegisterClass(ENTITYNAME,(FactoryMethod)NamedUnit::Create);
+string NamedUnit::entityname = Factory::RegisterClass(ENTITYNAME, (FactoryMethod)NamedUnit::Create);
 
-NamedUnit::NamedUnit() {
+NamedUnit::NamedUnit()
+{
     step = NULL;
     id = 0;
     dimensions = NULL;
 
 }
 
-NamedUnit::NamedUnit(STEPWrapper *sw,int step_id) {
+NamedUnit::NamedUnit(STEPWrapper *sw, int step_id)
+{
     step = sw;
     id = step_id;
     dimensions = NULL;
 }
 
-NamedUnit::~NamedUnit() {
-    if (dimensions != NULL ) {
+NamedUnit::~NamedUnit()
+{
+    if (dimensions != NULL) {
 	delete dimensions;
 	dimensions = NULL;
     }
 }
 
 bool
-NamedUnit::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
-    step=sw;
+NamedUnit::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
+    step = sw;
     id = sse->STEPfile_id;
 
 
     // load base class attributes
-    if ( !Unit::Load(step,sse) ) {
+    if (!Unit::Load(step, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::Unit." << std::endl;
 	return false;
     }
 
     // need to do this for local attributes to makes sure we have
     // the actual entity and not a complex/supertype parent
-    sse = step->getEntity(sse,ENTITYNAME);
+    sse = step->getEntity(sse, ENTITYNAME);
 
     if (dimensions == NULL) {
-	SDAI_Application_instance *se = step->getEntityAttribute(sse,"dimensions");
-	if (se != NULL ) {
-	    if (dimensions == NULL)
+	SDAI_Application_instance *se = step->getEntityAttribute(sse, "dimensions");
+	if (se != NULL) {
+	    if (dimensions == NULL) {
 		dimensions = new DimensionalExponents();
-	    if (!dimensions->Load(step,se)) {
+	    }
+	    if (!dimensions->Load(step, se)) {
 		return false;
 	    }
 	}
@@ -85,35 +90,34 @@ NamedUnit::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
 }
 
 void
-NamedUnit::Print(int level) {
-    TAB(level); std::cout << CLASSNAME << ":" << "(";
+NamedUnit::Print(int level)
+{
+    TAB(level);
+    std::cout << CLASSNAME << ":" << "(";
     std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-    TAB(level); std::cout << "Local Attributes:" << std::endl;
-    TAB(level+1); std::cout << "dimensions:" << std::endl;
-    dimensions->Print(level+1);
+    TAB(level);
+    std::cout << "Local Attributes:" << std::endl;
+    TAB(level + 1);
+    std::cout << "dimensions:" << std::endl;
+    dimensions->Print(level + 1);
 
-    TAB(level); std::cout << "Inherited Attributes:" << std::endl;
-    Unit::Print(level+1);
+    TAB(level);
+    std::cout << "Inherited Attributes:" << std::endl;
+    Unit::Print(level + 1);
 
 }
+
 STEPEntity *
-NamedUnit::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
-    Factory::OBJECTS::iterator i;
-    if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
-	NamedUnit *object = new NamedUnit(sw,sse->STEPfile_id);
+NamedUnit::GetInstance(STEPWrapper *sw, int id)
+{
+    return new NamedUnit(sw, id);
+}
 
-	Factory::AddObject(object);
-
-	if (!object->Load(sw, sse)) {
-	    std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
-	    delete object;
-	    return NULL;
-	}
-	return static_cast<STEPEntity *>(object);
-    } else {
-	return (*i).second;
-    }
+STEPEntity *
+NamedUnit::Create(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
+    return STEPEntity::CreateEntity(sw, sse, GetInstance, CLASSNAME);
 }
 
 // Local Variables:

@@ -1,7 +1,7 @@
 /*                        R T G E O M . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2012 United States Government as represented by
+ * Copyright (c) 2004-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -44,8 +44,6 @@
 
 __BEGIN_DECLS
 
-#undef r_a /* defined on alliant in <machine/reg.h> included in signal.h */
-
 #define NAMELEN 16	/* NAMESIZE from db.h (can't call it NAMESIZE!!!!!) */
 
 /*
@@ -69,7 +67,7 @@ struct rt_tor_internal {
  */
 struct rt_tgc_internal {
     uint32_t magic;
-    vect_t	v;
+    point_t	v;
     vect_t	h;
     vect_t	a;
     vect_t	b;
@@ -111,13 +109,13 @@ struct rt_superell_internal {
  * an unordered set of control points. Each control point contains a
  * 3d location, a "field strength", and possibly a "blobbiness" value
  * (called "goo" in rt_metaball_add_point).
- *  
+ *
  * There are three method ID's defined:
- *  
+ *
  * 1. "metaball", which is the Tokyo Metaball approximation of the
  *    Blinn Blobby Surface. This method is not implemented yet.
- *  
- * 2. "blob", the Blinn method. 
+ *
+ * 2. "blob", the Blinn method.
  *
  * 3. "iso", which is a simple computation like you'd see for
  *    computing gravitational magnitude or point charge in a basic
@@ -126,11 +124,11 @@ struct rt_superell_internal {
  @code
 		\Sum_{i}\frac{f_{i}}{d^{2}}
  @endcode
- *  
+ *
  * The surface of the primitive exists where the summation of the
  * points contribution is equal to the threshold, with the general
  * fldstr/distance^2 pattern.
- *  
+ *
  * The blobbiness value is only used in the blob method, and modifies
  * the gusseting effect.
  *
@@ -187,7 +185,7 @@ struct rt_half_internal  {
 struct rt_grip_internal {
     uint32_t magic;
     point_t	center;
-    /* Remaining elemnts are used for display purposes only */
+    /* Remaining elements are used for display purposes only */
     vect_t	normal;
     fastf_t	mag;
 };
@@ -290,7 +288,7 @@ struct rt_vol_internal  {
  */
 struct rt_hf_internal {
     uint32_t magic;
-    /* BEGIN USER SETABLE VARIABLES */
+    /* BEGIN USER SETTABLE VARIABLES */
     char		cfile[128];	/**< @brief  name of control file (optional) */
     char		dfile[128];	/**< @brief  name of data file */
     char		fmt[8];		/**< @brief  CV style file format descriptor */
@@ -307,7 +305,7 @@ struct rt_hf_internal {
     fastf_t		xlen;		/**< @brief  model len of HT rpp in "w" dir */
     fastf_t		ylen;		/**< @brief  model len of HT rpp in "n" dir */
     fastf_t		zscale;		/**< @brief  scale of data in ''up'' dir (after file2mm is applied) */
-    /* END USER SETABLE VARIABLES, BEGIN INTERNAL STUFF */
+    /* END USER SETTABLE VARIABLES, BEGIN INTERNAL STUFF */
     struct bu_mapped_file	*mp;	/**< @brief  actual data */
 };
 #define RT_HF_CK_MAGIC(_p)	BU_CKMAG(_p, RT_HF_INTERNAL_MAGIC, "rt_hf_internal")
@@ -451,7 +449,7 @@ struct rt_dsp_internal{
     unsigned char dsp_cuttype;	/**< @brief  type of cut to make */
 
     mat_t dsp_mtos;	/**< @brief  model to solid space */
-    /* END OF USER SETABLE VARIABLES, BEGIN INTERNAL STUFF */
+    /* END OF USER SETTABLE VARIABLES, BEGIN INTERNAL STUFF */
     mat_t dsp_stom;	/**< @brief  solid to model space
 					 * computed from dsp_mtos */
     unsigned short *dsp_buf;	/**< @brief  actual data */
@@ -512,7 +510,7 @@ struct nurb_seg		/**< @brief  NURB curve segment */
     int			pt_type;	/**< @brief  type of NURB curve */
     struct knot_vector	k;		/**< @brief  knot vector for NURB curve */
     int			c_size;		/**< @brief  number of control points */
-    int			*ctl_points;	/**< @brief  array of indicies for control points */
+    int			*ctl_points;	/**< @brief  array of indices for control points */
     fastf_t		*weights;	/**< @brief  array of weights for control points (NULL if non_rational) */
 };
 
@@ -668,14 +666,14 @@ struct rt_bot_list {
     struct rt_bot_internal *bot;
 };
 
-/* orientationss for BOT */
+/* orientations for BOT */
 #define	RT_BOT_UNORIENTED		1	/**< @brief  unoriented triangles */
 #define RT_BOT_CCW			2	/**< @brief  oriented counter-clockwise */
 #define RT_BOT_CW			3	/**< @brief  oriented clockwise */
 
 /* modes for BOT */
 #define RT_BOT_SURFACE			1	/**< @brief  triangles represent a surface (no volume) */
-#define RT_BOT_SOLID			2	/**< @brief  triangles respresent the boundary of a solid object */
+#define RT_BOT_SOLID			2	/**< @brief  triangles represent the boundary of a solid object */
 
 /**
  * triangles represent plates. Thicknesses are specified in

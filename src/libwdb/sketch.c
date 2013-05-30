@@ -1,7 +1,7 @@
 /*                        S K E T C H . C
  * BRL-CAD
  *
- * Copyright (c) 2000-2012 United States Government as represented by
+ * Copyright (c) 2000-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,7 +17,8 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file libwdb/skt.c
+
+/** @file libwdb/sketch.c
  *
  * Support for sketches
  *

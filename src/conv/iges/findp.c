@@ -1,7 +1,7 @@
 /*                         F I N D P . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2012 United States Government as represented by
+ * Copyright (c) 1990-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -43,13 +43,13 @@ Findp()
 
     saverec = currec;	/* save current record number */
 
-    if (fseek(fd, 0L, 2)) {
+    if (bu_fseek(fd, 0, 2)) {
 	/* go to end of file */
 	bu_log("Cannot seek to end of file\n");
 	perror("Findp");
 	bu_exit(1, NULL);
     }
-    offset = ftell(fd);	/* get file length */
+    offset = bu_ftell(fd);	/* get file length */
     rec2 = offset/reclen;	/* calculate record number for last record */
     Readrec(rec2);	/* read last record into "card" buffer */
     dstart = 0;
@@ -77,7 +77,7 @@ Findp()
 						  "IGES directory*");
 
 	for (i = 0; i < totentities; i++) {
-	    dir[i] = (struct iges_directory *)bu_malloc(sizeof(struct iges_directory), "IGES directory");
+	    BU_ALLOC(dir[i], struct iges_directory);
 	    dir[i]->name = (char *)NULL;
 	    dir[i]->trans = (-1);
 	}

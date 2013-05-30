@@ -1,7 +1,7 @@
 #                P I P E E D I T F R A M E . T C L
 # BRL-CAD
 #
-# Copyright (c) 2002-2012 United States Government as represented by
+# Copyright (c) 2002-2013 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -69,15 +69,19 @@
 	}
 
 	# Override what's in GeometryEditFrame
+	method clearAllTables {}
 	method initGeometry {gdata}
+	method initTranslate {}
 	method updateGeometry {}
 	method createGeometry {_name}
+	method moveElement {_dm _obj _vx _vy _ocenter}
 	method p {obj args}
     }
 
     protected {
 	variable mDetail
-	variable mCurrentPipePoint 1
+	variable mCurrentPipePoint 0
+	variable mPrevPipeObject ""
 
 	# Methods used by the constructor
 	# override methods in GeometryEditFrame
@@ -90,10 +94,13 @@
 
 	method applyData {}
 	method detailBrowseCommand {_row _col}
+	method endPipePointMove {_dm _obj _mx _my}
 	method handleDetailPopup {_index _X _Y}
 	method handleEnter {_row _col}
+	method highlightCurrentPipePoint {}
 	method pipePointAppendCallback {}
 	method pipePointDeleteCallback {_pindex}
+	method pipePointMoveCallback {_pindex}
 	method pipePointPrependCallback {}
 	method pipePointSelectCallback {_pindex}
 	method singleSelectCallback {_pindex}
@@ -121,6 +128,16 @@
 #                      PUBLIC METHODS
 # ------------------------------------------------------------
 
+
+::itcl::body PipeEditFrame::clearAllTables {} {
+    $itk_option(-mged) data_axes points {}
+    $itk_option(-mged) data_lines points {}
+
+    set mCurrentPipePoint 0
+    $itk_component(detailTab) unselectAllRows
+}
+
+
 ## - initGeometry
 #
 # Initialize the variables containing the object's specification.
@@ -146,17 +163,21 @@
 
 	switch -regexp -- $attr {
 	    {[Vv][0-9]+} {
+		set val [format "%.6f %.6f %.6f" [lindex $val 0] [lindex $val 1] [lindex $val 2]]
 		set mDetail($index,$PX_COL) [lindex $val 0]
 		set mDetail($index,$PY_COL) [lindex $val 1]
 		set mDetail($index,$PZ_COL) [lindex $val 2]
 	    }
 	    {[Oo][0-9]+} {
+		set val [format "%.6f" $val]
 		set mDetail($index,$OD_COL) $val
 	    }
 	    {[Ii][0-9]+} {
+		set val [format "%.6f" $val]
 		set mDetail($index,$ID_COL) $val
 	    }
 	    {[Rr][0-9]+} {
+		set val [format "%.6f" $val]
 		set mDetail($index,$RADIUS_COL) $val
 	    }
 	    default {
@@ -168,12 +189,25 @@
 
     GeometryEditFrame::initGeometry $gdata
 
-    if {$itk_option(-geometryObject) != $mPrevGeometryObject} {
-	set mCurrentPipePoint 1
-	set mPrevGeometryObject $itk_option(-geometryObject)
+    if {$itk_option(-geometryObject) != $itk_option(-prevGeometryObject)} {
+	set mCurrentPipePoint 0
+	set itk_option(-prevGeometryObject) $itk_option(-geometryObject)
+    } elseif {$mCurrentPipePoint > 0} {
+	pipePointSelectCallback [expr {$mCurrentPipePoint - 1}]
     }
-    pipePointSelectCallback [expr {$mCurrentPipePoint - 1}]
 }
+
+
+::itcl::body PipeEditFrame::initTranslate {} {
+    switch -- $mEditMode \
+	$movePoint {
+	    $::ArcherCore::application initFindPipePoint $itk_option(-geometryObjectPath) 1 [::itcl::code $this pipePointMoveCallback]
+	} \
+	default {
+	    $::ArcherCore::application putString "PipeEditFrame::initTranslate: bad mode - $mEditMode, only movePoint allowed!"
+	}
+}
+
 
 ::itcl::body PipeEditFrame::updateGeometry {} {
     if {$itk_option(-mged) == "" ||
@@ -249,25 +283,42 @@
 	R1 $br
 }
 
+
+::itcl::body PipeEditFrame::moveElement {_dm _obj _vx _vy _ocenter} {
+    set seg_i [expr {$mCurrentPipePoint - 1}]
+    set pt [$itk_option(-mged) get $_obj V$seg_i]
+    set vpt [$itk_option(-mged) pane_m2v_point $_dm $pt]
+    set vz [lindex $vpt 2]
+    set mpt [$itk_option(-mged) pane_v2m_point $_dm [list $_vx $_vy $vz]]
+    $itk_option(-mged) move_pipept $_obj $seg_i $mpt
+}
+
+
 ::itcl::body PipeEditFrame::p {obj args} {
     if {[llength $args] != 1 || ![string is double $args]} {
 	return "Usage: p sf"
     }
-#XXX Need to update this method
-    return
+
+    set seg_i [expr {$mCurrentPipePoint - 1}]
 
     switch -- $mEditMode \
-	$setA {
-	    $::ArcherCore::application p_pscale $obj a $args
+	$setPipeBend {
+	    $::ArcherCore::application p_pscale $obj B $args
 	} \
-	$setB {
-	    $::ArcherCore::application p_pscale $obj b $args
+	$setPipeID {
+	    $::ArcherCore::application p_pscale $obj I $args
 	} \
-	$setC {
-	    $::ArcherCore::application p_pscale $obj c $args
+	$setPipeOD {
+	    $::ArcherCore::application p_pscale $obj O $args
 	} \
-	$setABC {
-	    $::ArcherCore::application p_pscale $obj abc $args
+	$setPointBend {
+	    $::ArcherCore::application p_pscale $obj b$seg_i $args
+	} \
+	$setPointID {
+	    $::ArcherCore::application p_pscale $obj i$seg_i $args
+	} \
+	$setPointOD {
+	    $::ArcherCore::application p_pscale $obj o$seg_i $args
 	}
 
     return ""
@@ -309,22 +360,50 @@
 
 ::itcl::body PipeEditFrame::buildLowerPanel {} {
     set parent [$this childsite lower]
-    set i 1
+    set row 1
     foreach label $mEditLabels {
-	itk_component add editRB$i {
-	    ::ttk::radiobutton $parent.editRB$i \
+	itk_component add editRB$row {
+	    ::ttk::radiobutton $parent.editRB$row \
 		-variable [::itcl::scope mEditMode] \
-		-value $i \
+		-value $row \
 		-text $label \
 		-command [::itcl::code $this initEditState]
 	} {}
 
-	pack $itk_component(editRB$i) \
-	    -anchor w \
-	    -expand yes
-
-	incr i
+	grid $itk_component(editRB$row) -row $row -column 0 -sticky nsew
+	incr row
     }
+
+    itk_component add hlPointsCB {
+	::ttk::checkbutton $parent.hlPointsCB \
+	    -text "Highlight Points" \
+	    -command [::itcl::code $this highlightCurrentPipePoint] \
+	    -variable ::GeometryEditFrame::mHighlightPoints
+    } {}
+
+    itk_component add pointSizeL {
+	::ttk::label $parent.pointSizeL \
+	    -anchor e \
+	    -text "Highlight Point Size"
+    } {}
+    itk_component add pointSizeE {
+	::ttk::entry $parent.pointSizeE \
+	    -width 12 \
+	    -textvariable [::itcl::scope mHighlightPointSize] \
+	    -validate key \
+	    -validatecommand [::itcl::code $this validatePointSize %P]
+    } {}
+
+    bind $itk_component(pointSizeE) <Return> [::itcl::code $this updatePointSize]
+
+    incr row
+    grid rowconfigure $parent $row -weight 1
+    incr row
+    grid $itk_component(hlPointsCB) -row $row -column 0 -sticky w
+    incr row
+    grid $itk_component(pointSizeL) -column 0 -row $row -sticky e
+    grid $itk_component(pointSizeE) -column 1 -row $row -sticky ew
+    grid columnconfigure $parent 1 -weight 1
 }
 
 ::itcl::body PipeEditFrame::updateGeometryIfMod {} {
@@ -382,30 +461,28 @@
 }
 
 ::itcl::body PipeEditFrame::initEditState {} {
-#    set mEditCommand pscale
-#    set mEditClass $EDIT_CLASS_SCALE
-#    configure -valueUnits "mm"
-
     set mEditPCommand [::itcl::code $this p]
     set seg_i [expr {$mCurrentPipePoint - 1}]
+    highlightCurrentPipePoint
 
     switch -- $mEditMode \
 	$selectPoint {
 	    set mEditCommand ""
 	    set mEditClass ""
 	    set mEditParam1 ""
-	    $::ArcherCore::application initFindPipePoint $itk_option(-geometryObjectPath) 1 [::itcl::code $this pipePointSelectCallback]
+	    $::ArcherCore::application initFindPipePoint $itk_option(-geometryObjectPath) 1 [::itcl::code $this pipePointSelectCallback] 1
 	} \
 	$movePoint {
 	    set mEditCommand move_pipept
 	    set mEditClass $EDIT_CLASS_TRANS
-	    set mEditParam1 $seg_i
+	    set mEditLastTransMode $::ArcherCore::OBJECT_TRANSLATE_MODE
+	    set mEditParam1 ""
 	} \
 	$deletePoint {
 	    set mEditCommand ""
 	    set mEditClass ""
 	    set mEditParam1 ""
-	    $::ArcherCore::application initFindPipePoint $itk_option(-geometryObjectPath) 1 [::itcl::code $this pipePointDeleteCallback]
+	    $::ArcherCore::application initFindPipePoint $itk_option(-geometryObjectPath) 1 [::itcl::code $this pipePointDeleteCallback] 1
 	} \
 	$appendPoint {
 	    set mEditCommand ""
@@ -424,39 +501,38 @@
 	} \
 	$setPointOD {
 	    set mEditCommand pscale
-	    set mEditPCommand [::itcl::code $this p]
 	    set mEditClass $EDIT_CLASS_SCALE
 	    set mEditParam1 "o$seg_i"
 	} \
 	$setPointID {
 	    set mEditCommand pscale
-	    set mEditPCommand [::itcl::code $this p]
 	    set mEditClass $EDIT_CLASS_SCALE
 	    set mEditParam1 "i$seg_i"
 	} \
 	$setPointBend {
 	    set mEditCommand pscale
-	    set mEditPCommand [::itcl::code $this p]
 	    set mEditClass $EDIT_CLASS_SCALE
 	    set mEditParam1 "b$seg_i"
 	} \
 	$setPipeOD {
 	    set mEditCommand pscale
-	    set mEditPCommand [::itcl::code $this p]
 	    set mEditClass $EDIT_CLASS_SCALE
 	    set mEditParam1 O
 	} \
 	$setPipeID {
 	    set mEditCommand pscale
-	    set mEditPCommand [::itcl::code $this p]
 	    set mEditClass $EDIT_CLASS_SCALE
 	    set mEditParam1 I
 	} \
 	$setPipeBend {
 	    set mEditCommand pscale
-	    set mEditPCommand [::itcl::code $this p]
 	    set mEditClass $EDIT_CLASS_SCALE
 	    set mEditParam1 B
+	} \
+	default {
+	    set mEditCommand ""
+	    set mEditPCommand ""
+	    set mEditParam1 ""
 	}
 
     GeometryEditFrame::initEditState
@@ -473,6 +549,12 @@
     $itk_component(detailTab) see $_row,$_col
 }
 
+
+::itcl::body PipeEditFrame::endPipePointMove {_dm _obj _mx _my} {
+    $::ArcherCore::application endObjTranslate $_dm $_obj $_mx $_my
+}
+
+
 ::itcl::body PipeEditFrame::handleDetailPopup {_index _X _Y} {
 }
 
@@ -488,6 +570,28 @@
     updateGeometryIfMod
 }
 
+
+::itcl::body PipeEditFrame::highlightCurrentPipePoint {} {
+    if {$itk_option(-mged) == "" ||
+	[$itk_option(-mged) how $itk_option(-geometryObjectPath)] < 0 ||
+	$mCurrentPipePoint < 1} {
+	return
+    }
+
+    $itk_option(-mged) refresh_off
+    set hlcolor [$::ArcherCore::application getRgbColor [$itk_option(-mged) cget -primitiveLabelColor]]
+    $itk_option(-mged) data_axes draw $mHighlightPoints
+    $itk_option(-mged) data_axes size $mHighlightPointSize
+    eval $itk_option(-mged) data_axes color $hlcolor
+    $itk_option(-mged) refresh_on
+
+    set seg_i [expr {$mCurrentPipePoint - 1}]
+    set pt [$itk_option(-mged) get $itk_option(-geometryObjectPath) V$seg_i]
+
+    $itk_option(-mged) data_axes points [list $pt]
+}
+
+
 ::itcl::body PipeEditFrame::pipePointAppendCallback {} {
     if {$itk_option(-mged) == ""} {
 	return
@@ -496,6 +600,7 @@
     set odata [lrange [$itk_option(-mged) get $itk_option(-geometryObject)] 1 end]
     set mCurrentPipePoint [expr {int([llength $odata] * 0.125)}]
     initGeometry $odata
+    $::ArcherCore::application setSave
 }
 
 ::itcl::body PipeEditFrame::pipePointDeleteCallback {_pindex} {
@@ -514,7 +619,27 @@
     }
 
     initGeometry $odata
+    $::ArcherCore::application setSave
 }
+
+
+::itcl::body PipeEditFrame::pipePointMoveCallback {_pindex} {
+    if {$itk_option(-mged) == ""} {
+	return
+    }
+
+    pipePointSelectCallback $_pindex
+
+    foreach dname {ul ur ll lr} {
+	set win [$itk_option(-mged) component $dname]
+	bind $win <ButtonRelease-1> "[::itcl::code $this endPipePointMove $dname $itk_option(-geometryObject) %x %y]; break"
+    }
+
+    set last_mouse [$itk_option(-mged) get_prev_ged_mouse]
+    set seg_i [expr {$mCurrentPipePoint - 1}]
+    eval $itk_option(-mged) move_pipept_mode $itk_option(-geometryObject) $seg_i $last_mouse
+}
+
 
 ::itcl::body PipeEditFrame::pipePointPrependCallback {} {
     if {$itk_option(-mged) == ""} {
@@ -524,12 +649,15 @@
     set odata [lrange [$itk_option(-mged) get $itk_option(-geometryObject)] 1 end]
     set mCurrentPipePoint 1
     initGeometry $odata
+    $::ArcherCore::application setSave
 }
 
 ::itcl::body PipeEditFrame::pipePointSelectCallback {_pindex} {
+    set mEditParam1 $_pindex
     incr _pindex
     set mCurrentPipePoint $_pindex
     $itk_component(detailTab) selectSingleRow $_pindex
+    highlightCurrentPipePoint
 }
 
 ::itcl::body PipeEditFrame::singleSelectCallback {_pindex} {
@@ -542,11 +670,7 @@
 	return 0
     }
 
-    if {[string is double $_newval]} {
-	return 1
-    }
-
-    return 0
+    return [::cadwidgets::Ged::validateDouble $_newval]
 }
 
 

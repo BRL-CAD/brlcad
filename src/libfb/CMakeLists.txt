@@ -30,6 +30,8 @@ if(WIN32)
   set(fbwgl_srcs if_wgl.c)
 endif(WIN32)
 if(BRLCAD_ENABLE_TK)
+  set(FBTKDEFS "-DIF_TK")
+  set(LINKLIBS ${LINKLIBS} ${TK_LIBRARY})
   set(fbtk_srcs if_tk.c)
 endif(BRLCAD_ENABLE_TK)
 
@@ -57,7 +59,7 @@ set(LIBFB_SOURCES
   )
 
 # Unfortunately, on Mac OS X the OpenGL headers are not C90
-# compilant - anything pulling them in needs the C99 flag
+# compliant - anything pulling them in needs the C99 flag
 get_property(libfb_C_FLAGS GLOBAL PROPERTY libfb_C_FLAGS)
 LIST(APPEND libfb_C_FLAGS "${C99_FLAG}")
 set_property(GLOBAL PROPERTY libfb_C_FLAGS "${libfb_C_FLAGS}")
@@ -67,6 +69,7 @@ add_definitions(
   -DIF_AB
   ${FBX11DEFS}
   ${FBOGLDEFS}
+  ${FBTKDEFS}
   ${XOPEN_DEFINE}
   )
 

@@ -1,7 +1,7 @@
 /*                     R E G I O N F I X . C
  * BRL-CAD
  *
- * Copyright (c) 1989-2012 United States Government as represented by
+ * Copyright (c) 1989-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,15 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup librt */
-/** @{ */
-/** @file librt/regionfix.c
- *
- * Subroutines for adjusting old GIFT-style region-IDs, to take into
- * account the presence of instancing.
- *
- */
-/** @} */
+
 
 #include "common.h"
 
@@ -40,13 +32,6 @@
 #include "raytrace.h"
 
 
-/**
- * Apply any deltas to reg_regionid values to allow old applications
- * that use the reg_regionid number to distinguish between different
- * instances of the same prototype region.
- *
- * Called once, from rt_prep(), before raytracing begins.
- */
 void
 rt_regionfix(struct rt_i *rtip)
 {
@@ -99,7 +84,7 @@ rt_regionfix(struct rt_i *rtip)
 	}
 
 	*tabp++ = '\0';
-	while (*tabp && isspace(*tabp)) tabp++;
+	while (*tabp && isspace((int)*tabp)) tabp++;
 	if ((ret = regcomp(&re_space, line, 0)) != 0) {
 	    bu_log("%s: line %d, regcomp error '%d'\n", file, line, ret);
 	    continue;		/* just ignore it */
@@ -139,7 +124,7 @@ rt_regionfix(struct rt_i *rtip)
 		if (newid == 0) bu_log("%s, line %d Warning:  new id = 0\n", file, linenum);
 	    }
 	    if (RT_G_DEBUG&DEBUG_INSTANCE) {
-		bu_log("%s instance %d:  region id changed from %d to %d\n",
+		bu_log("%s instance %ld:  region id changed from %d to %d\n",
 		       rp->reg_name, rp->reg_instnum,
 		       oldid, newid);
 	    }

@@ -1,7 +1,7 @@
 /*                          I F _ X . C
  * BRL-CAD
  *
- * Copyright (c) 1988-2012 United States Government as represented by
+ * Copyright (c) 1988-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -162,7 +162,7 @@ static unsigned char primary[10] = {
 };
 
 
-/* Arrays containing the indicies of the primary colors and grey values
+/* Arrays containing the indices of the primary colors and grey values
  * in the color map
  */
 static unsigned short redvec[16] = {
@@ -245,12 +245,12 @@ x_print_display_info(Display *dpy)
 
     switch (visual->class) {
 	case DirectColor:
-	    printf("DirectColor: Alterable RGB maps, pixel RGB subfield indicies\n");
+	    printf("DirectColor: Alterable RGB maps, pixel RGB subfield indices\n");
 	    printf("RGB Masks: 0x%lx 0x%lx 0x%lx\n", visual->red_mask,
 		   visual->green_mask, visual->blue_mask);
 	    break;
 	case TrueColor:
-	    printf("TrueColor: Fixed RGB maps, pixel RGB subfield indicies\n");
+	    printf("TrueColor: Fixed RGB maps, pixel RGB subfield indices\n");
 	    printf("RGB Masks: 0x%lx 0x%lx 0x%lx\n", visual->red_mask,
 		   visual->green_mask, visual->blue_mask);
 	    break;
@@ -557,9 +557,9 @@ X_open_fb(FBIO *ifp, const char *file, int width, int height)
 	    alpha = 0;
 	    mp = &modebuf[0];
 	    cp = &file[6];
-	    while (*cp != '\0' && !isspace(*cp)) {
+	    while (*cp != '\0' && !isspace((int)(*cp))) {
 		*mp++ = *cp;	/* copy it to buffer */
-		if (isdigit(*cp)) {
+		if (isdigit((int)(*cp))) {
 		    cp++;
 		    continue;
 		}
@@ -639,13 +639,13 @@ X_open_fb(FBIO *ifp, const char *file, int width, int height)
     }
     if ((bitbuf = (unsigned char *)calloc(1, (width*height)/8)) == NULL) {
 	fb_log("X_open_fb: bitbuf malloc failed\n");
-        free(bytebuf);
+	free(bytebuf);
 	return -1;
     }
     if ((scanbuf = (unsigned char *)calloc(1, width)) == NULL) {
 	fb_log("X_open_fb: scanbuf malloc failed\n");
-        free(bytebuf);
-        free(bitbuf);
+	free(bytebuf);
+	free(bitbuf);
 	return -1;
     }
     XI(ifp)->bytebuf = bytebuf;
@@ -768,7 +768,7 @@ X_clear(FBIO *ifp, unsigned char *pp)
 }
 
 
-HIDDEN int
+HIDDEN ssize_t
 X_read(FBIO *ifp, int x, int y, unsigned char *pixelp, size_t count)
 {
     unsigned char *bytebuf = XI(ifp)->bytebuf;
@@ -781,7 +781,7 @@ X_read(FBIO *ifp, int x, int y, unsigned char *pixelp, size_t count)
     /* return 24bit store if available */
     if (XI(ifp)->mem) {
 	memcpy(pixelp, &(XI(ifp)->mem[(y*ifp->if_width+x)*sizeof(RGBpixel)]), count*sizeof(RGBpixel));
-	return (int)count;
+	return count;
     }
 
     /* 1st -> 4th quadrant */
@@ -794,7 +794,7 @@ X_read(FBIO *ifp, int x, int y, unsigned char *pixelp, size_t count)
 	*pixelp++ = *cp;
 	*pixelp++ = *cp++;
     }
-    return (int)count;
+    return count;
 }
 
 
@@ -912,7 +912,7 @@ slowrect(FBIO *ifp, int xmin, int xmax, int ymin, int ymax)
     int sxlen, sylen;	/* screen pixels in x, y */
     int ix, iy;		/* image x, y */
     int sy;		/* screen x, y */
-    int x, y;		/* dummys */
+    int x, y;		/* dummies */
     /* window height, width, and center */
     struct {
 	int width;
@@ -1097,12 +1097,12 @@ done:
  * Decompose a write of more than one scanline into multiple single
  * scanline writes.
  */
-HIDDEN int
+HIDDEN ssize_t
 X_write(FBIO *ifp, int x, int y, const unsigned char *pixelp, size_t count)
 {
     size_t maxcount;
     size_t todo;
-    int num;
+    size_t num;
 
     /* check origin bounds */
     if (x < 0 || x >= ifp->if_width || y < 0 || y >= ifp->if_height)
@@ -1123,7 +1123,7 @@ X_write(FBIO *ifp, int x, int y, const unsigned char *pixelp, size_t count)
 	if (x + todo > (size_t)ifp->if_width)
 	    num = ifp->if_width - x;
 	else
-	    num = (int)todo;
+	    num = todo;
 	if (X_scanwrite(ifp, x, y, pixelp, num, 1) == 0)
 	    return 0;
 	x = 0;
@@ -1131,7 +1131,7 @@ X_write(FBIO *ifp, int x, int y, const unsigned char *pixelp, size_t count)
 	todo -= num;
 	pixelp += num;
     }
-    return (int)count;
+    return count;
 }
 
 
@@ -1658,7 +1658,7 @@ HIDDEN unsigned char convRGB(register const unsigned char *v)
 /*
  * G E N M A P
  *
- * initialize the Sun harware colormap
+ * initialize the Sun hardware colormap
  */
 HIDDEN void genmap(unsigned char *rmap, unsigned char *gmap, unsigned char *bmap)
 {

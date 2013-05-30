@@ -1,7 +1,7 @@
 /*                      N M G _ F C U T . C
  * BRL-CAD
  *
- * Copyright (c) 2007-2012 United States Government as represented by
+ * Copyright (c) 2007-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -796,7 +796,7 @@ struct nmg_vu_stuff {
     fastf_t lo_ang;		/* small if RIGHT, large if LEFT */
     fastf_t hi_ang;
     int seq;		/* seq # after lsp->min_vu */
-    int wedge_class;	/* WEDGE_LEFT, etc */
+    int wedge_class;	/* WEDGE_LEFT, etc. */
 };
 struct nmg_loop_stuff {
     struct loopuse *lu;
@@ -1943,7 +1943,8 @@ nmg_face_rs_init(struct nmg_ray_state *rs, struct bu_ptbl *b, struct faceuse *fu
     NMG_CK_FACEUSE(fu2);
     if (eg) NMG_CK_EDGE_G_LSEG(eg);
 
-    memset((char *)rs, 0, sizeof(*rs));
+    memset((char *)rs, 0, sizeof(rs));
+
     rs->magic = NMG_RAYSTATE_MAGIC;
     rs->tol = tol;
     rs->vu = (struct vertexuse **)b->buffer;
@@ -2226,9 +2227,9 @@ find_loop_to_cut(int *index1, int *index2, int prior_start, int prior_end, int n
 
 		    if (!match_lu) {
 			match_lu = next_lu;
-			cuts = (struct bu_ptbl *)bu_malloc(sizeof(struct bu_ptbl), "cuts");
+			BU_ALLOC(cuts, struct bu_ptbl);
 			bu_ptbl_init(cuts, 64, " cuts");
-			lcut = (struct loop_cuts *)bu_malloc(sizeof(struct loop_cuts), "lcut");
+			BU_ALLOC(lcut, struct loop_cuts);
 			lcut->lu = match_lu;
 			bu_ptbl_ins(cuts, (long *)lcut);
 			continue;
@@ -2264,7 +2265,7 @@ find_loop_to_cut(int *index1, int *index2, int prior_start, int prior_end, int n
 			}
 			if (!found) {
 			    done = 0;
-			    lcut = (struct loop_cuts *)bu_malloc(sizeof(struct loop_cuts), "lcut");
+			    BU_ALLOC(lcut, struct loop_cuts);
 			    lcut->lu = match_lu;
 			    bu_ptbl_ins(cuts, (long *)lcut);
 			}

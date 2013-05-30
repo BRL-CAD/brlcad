@@ -8,13 +8,18 @@
 #include <ExpDict.h>
 #include <Registry.h>
 
+#include <list>
+
+typedef std::list<void*>            STEPcomplex_attr_data_list;
+typedef std::list<void*>::iterator  STEPcomplex_attr_data;
+
 class SCL_CORE_EXPORT STEPcomplex : public SDAI_Application_instance  {
     public:
         STEPcomplex * sc;
         STEPcomplex * head;
         Registry * _registry;
         int visited; ///< used when reading (or as you wish?)
-
+        STEPcomplex_attr_data_list _attr_data_list;
     public:
         STEPcomplex( Registry * registry, int fileid );
         STEPcomplex( Registry * registry, const std::string ** names, int fileid,

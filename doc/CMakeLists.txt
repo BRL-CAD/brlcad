@@ -27,7 +27,6 @@ set(documentation_DATA
   BRL-CAD.bib
   cvs.txt
   description.txt
-  deprecation.txt
   flex_to_re2c.txt
   ged.tr
   history.txt
@@ -36,7 +35,7 @@ set(documentation_DATA
   mater.txt
   matrix.txt
   )
-BRLCAD_ADDDATA(documentation_DATA ${DOC_DIR})
+ADD_DOC(documentation_DATA ".")
 
 set(documentation_mged_old_DATA
   mged/a.tex
@@ -214,18 +213,10 @@ set(documentation_mged_old_DATA
   tool_categories.txt
   ecosystem.dot
   )
-BRLCAD_ADDDATA(documentation_mged_old_DATA ${DOC_DIR}/mged_old)
+ADD_DOC(documentation_mged_old_DATA mged_old)
 
-set(doc_MANS
-  bw.5
-  cmap.5
-  pix.5
-  plot3.5
-  )
-ADD_MAN_PAGES(5 doc_MANS)
-
-CONFIGURE_file(pad_file.xml.in ${CMAKE_CURRENT_BINARY_DIR}/pad_file.xml @ONLY)
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/pad_file.xml DESTINATION ${DATA_DIR}/${DOC_DIR})
+configure_file(pad_file.xml.in ${CMAKE_CURRENT_BINARY_DIR}/pad_file.xml @ONLY)
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/pad_file.xml DESTINATION ${DOC_DIR})
 
 CMAKEFILES(Makefile.am pad_file.xml.in STARTERS)
 

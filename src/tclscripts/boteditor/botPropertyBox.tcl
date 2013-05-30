@@ -1,8 +1,28 @@
+#              B O T P R O P E R T Y B O X . T C L
+# BRL-CAD
+#
+# Copyright (c) 2013 United States Government as represented by
+# the U.S. Army Research Laboratory.
+#
+# This library is free software; you can redistribute it and/or
+# modify it under the terms of the GNU Lesser General Public License
+# version 2.1 as published by the Free Software Foundation.
+#
+# This library is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# Lesser General Public License for more details.
+#
+# You should have received a copy of the GNU Lesser General Public
+# License along with this file; see the file named COPYING for more
+# information.
+#
+###
 # BotPropertyBox class for viewing/manipulating BoT properties
 #
 # Usage: BotPropertyBox <instance name> <bot name> \
-#    [-command <callback>] 
-# 
+#    [-command <callback>]
+#
 # The callback function passed in the -command option is called whenever
 # the supplied bot is modified.
 #
@@ -52,10 +72,10 @@ package require Itk
 
     # display tab panes in notebook
     $itk_component(nb) add $itk_component(gpane) \
-        -text Geometry \
+	-text Geometry \
 	-sticky nw
     $itk_component(nb) add $itk_component(tpane) \
-        -text Properties \
+	-text Properties \
 	-sticky nw
 }
 
@@ -170,7 +190,7 @@ package require Itk
 	# add layout frames to container frame
 	itk_component add cframe {
 	    ttk::frame $itk_component(main).contentFrame \
-	        -padding 5
+		-padding 5
 	} {}
 	itk_component add sframe {
 	    ttk::frame $itk_component(main).springFrame
@@ -179,11 +199,11 @@ package require Itk
 	# add header widgets
 	itk_component add faceslbl {
 	    ttk::label $itk_component(cframe).facesLabel \
-	        -text {Faces}
+		-text {Faces}
 	} {}
 	itk_component add vertlbl {
 	    ttk::label $itk_component(cframe).verticesLabel \
-	        -text {Vertices}
+		-text {Vertices}
 	} {}
 	itk_component add orglbl {
 	    ttk::label $itk_component(cframe).originalLabel \
@@ -205,21 +225,21 @@ package require Itk
 	# add widgets for original geometry
 	itk_component add orgfaces {
 	    ttk::label $itk_component(cframe).originalFaces \
-	        -text [bot get faces $bot]
+		-text [bot get faces $bot]
 	} {}
 	itk_component add orgverts {
 	    ttk::label $itk_component(cframe).originalVertices \
-	        -text [bot get vertices $bot]
+		-text [bot get vertices $bot]
 	} {}
 
-	# add widgets for modified geometry 
+	# add widgets for modified geometry
 	itk_component add modfaces {
 	    ttk::label $itk_component(cframe).faces \
-	        -text [bot get faces $bot]
+		-text [bot get faces $bot]
 	} {}
 	itk_component add modverts {
 	    ttk::label $itk_component(cframe).vertices \
-	        -text [bot get vertices $bot]
+		-text [bot get vertices $bot]
 	} {}
 
 	# display container frame
@@ -235,7 +255,7 @@ package require Itk
 	grid rowconfigure $itk_component(cframe) {1 2 3} -weight 1
 	grid columnconfigure $itk_component(cframe) {1 2 3} -weight 1
 
-	# display top headers 
+	# display top headers
 	grid $itk_component(modlbl) -row 0 -column 2 \
 	    -padx {0 5}
 	grid $itk_component(orglbl) -row 0 -column 3 \
@@ -260,3 +280,12 @@ package require Itk
 	grid $itk_component(orgverts) -row 3 -column 3
     }
 }
+
+# Local Variables:
+# tab-width: 8
+# mode: Tcl
+# c-basic-offset: 4
+# tcl-indent-level: 4
+# indent-tabs-mode: t
+# End:
+# ex: shiftwidth=4 tabstop=8

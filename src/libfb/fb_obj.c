@@ -1,7 +1,7 @@
 /*                        F B _ O B J . C
  * BRL-CAD
  *
- * Copyright (c) 1997-2012 United States Government as represented by
+ * Copyright (c) 1997-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -230,7 +230,7 @@ fbo_cursor_tcl(void *clientData, int argc, const char **argv)
     }
 
     if (sscanf(argv[4], "%d", &y) != 1) {
-	bu_log("fb_cursor: bad y value - ", argv[4]);
+	bu_log("fb_cursor: bad y value - %s", argv[4]);
 	return BRLCAD_ERROR;
     }
 
@@ -299,7 +299,7 @@ fbo_refresh_tcl(void *clientData, int argc, const char **argv)
 	w = fbop->fbo_fbs.fbs_fbp->if_width;
 	h = fbop->fbo_fbs.fbs_fbp->if_height;
     } else if (sscanf(argv[2], "%d %d %d %d", &x, &y, &w, &h) != 4) {
-	/* refresh rectanglar area */
+	/* refresh rectangular area */
 	bu_log("fb_refresh: bad rectangle - %s", argv[2]);
 	return BRLCAD_ERROR;
     }
@@ -628,13 +628,13 @@ fbo_rect_tcl(void *clientData, int argc, const char **argv)
     }
 
     if (sscanf(argv[2], "%d", &xmin) != 1) {
-	bu_log("fb_rect: bad xmin value - ",
+	bu_log("fb_rect: bad xmin value - %s",
 			 argv[2], (char *)NULL);
 	return BRLCAD_ERROR;
     }
 
     if (sscanf(argv[3], "%d", &ymin) != 1) {
-	bu_log("fb_rect: bad ymin value - ",
+	bu_log("fb_rect: bad ymin value - %s",
 			 argv[3], (char *)NULL);
 	return BRLCAD_ERROR;
     }
@@ -667,7 +667,7 @@ fbo_rect_tcl(void *clientData, int argc, const char **argv)
      * For now must be in the form of rrr ggg bbb.
      */
     if (fbo_tcllist2color(argv[6], pixel) == BRLCAD_ERROR) {
-	bu_log("fb_rect: invalid color spec: ", argv[6]);
+	bu_log("fb_rect: invalid color spec: %s", argv[6]);
 	return BRLCAD_ERROR;
     }
 
@@ -820,14 +820,14 @@ fbo_open_tcl(void *UNUSED(clientData), Tcl_Interp *interp, int argc, const char 
 		break;
 	    case '?':
 	    default:
-		bu_log("fb_open: bad option - ",
+		bu_log("fb_open: bad option - %s",
 				 bu_optarg, (char *)NULL);
 		return BRLCAD_ERROR;
 	}
     }
 
     if ((ifp = fb_open(argv[2], width, height)) == FBIO_NULL) {
-	bu_log("fb_open: bad device - ", argv[2], (char *)NULL);
+	bu_log("fb_open: bad device - %s", argv[2], (char *)NULL);
 	return BRLCAD_ERROR;
     }
 
@@ -836,7 +836,7 @@ fbo_open_tcl(void *UNUSED(clientData), Tcl_Interp *interp, int argc, const char 
 	return BRLCAD_ERROR;
     }
 
-    BU_GET(fbop, struct fb_obj);
+    BU_ALLOC(fbop, struct fb_obj);
     bu_vls_init(&fbop->fbo_name);
     bu_vls_strcpy(&fbop->fbo_name, argv[1]);
     fbop->fbo_fbs.fbs_fbp = ifp;

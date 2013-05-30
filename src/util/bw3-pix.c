@@ -1,7 +1,7 @@
 /*                       B W 3 - P I X . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2012 United States Government as represented by
+ * Copyright (c) 1986-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -40,13 +40,9 @@ open_file(FILE **fp, char *name)
     /* check for special names */
     if (BU_STR_EQUAL(name, "-")) {
 	*fp = stdin;
-	return;
     } else if (BU_STR_EQUAL(name, ".")) {
 	*fp = fopen("/dev/null", "r");
-	return;
-    }
-
-    if ((*fp = fopen(name, "r")) == NULL) {
+    } else if ((*fp = fopen(name, "r")) == NULL) {
 	bu_exit(2, "bw3-pix: Can't open \"%s\"\n", name);
     }
 }
@@ -64,7 +60,7 @@ main(int argc, char **argv)
     FILE *rfp, *bfp, *gfp;
 
     if (argc != 4 || isatty(fileno(stdout))) {
-	bu_exit(1, "usage: bw3-pix redin greenin bluein > file.pix (- stdin, . skip)\n");
+	bu_exit(1, "Usage: bw3-pix redin greenin bluein > file.pix (use - for stdin, . for /dev/null)\n");
     }
 
     open_file(&rfp, argv[1]);

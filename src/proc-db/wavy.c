@@ -1,7 +1,7 @@
 /*                          W A V Y . C
  * BRL-CAD
  *
- * Copyright (c) 1991-2012 United States Government as represented by
+ * Copyright (c) 1991-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -36,7 +36,7 @@
 #include "wdb.h"
 
 
-/* Interpoate the data using b-splines */
+/* Interpolate the data using b-splines */
 struct face_g_snurb **
 interpolate_data(fastf_t *grid)
 {
@@ -44,7 +44,7 @@ interpolate_data(fastf_t *grid)
     struct face_g_snurb *srf;
     fastf_t rt_nurb_par_edge();
 
-    BU_GET(srf, struct face_g_snurb);
+    BU_ALLOC(srf, struct face_g_snurb);
 
     rt_nurb_sinterp(srf, 4, grid, 10, 10);
     rt_nurb_kvnorm(&srf->u);
@@ -114,6 +114,7 @@ main(int argc, char **argv)
 
     return 0;
 }
+
 
 /*
  * Local Variables:

@@ -1,7 +1,7 @@
 /*                           A R S . C
  * BRL-CAD
  *
- * Copyright (c) 1989-2012 United States Government as represented by
+ * Copyright (c) 1989-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -53,7 +53,7 @@ mk_ars(struct rt_wdb *filep, const char *name, size_t ncurves, size_t pts_per_cu
 {
     struct rt_ars_internal *ars;
 
-    BU_GET(ars, struct rt_ars_internal);
+    BU_ALLOC(ars, struct rt_ars_internal);
     ars->magic = RT_ARS_INTERNAL_MAGIC;
     ars->ncurves = ncurves;
     ars->pts_per_curve = pts_per_curve;

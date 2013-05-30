@@ -39,6 +39,10 @@ LISTinitialize( void ) {
 
 }
 
+void LISTcleanup( void ) {
+    ERRORdestroy( ERROR_empty_list );
+}
+
 Linked_List
 LISTcreate() {
     Linked_List list = LIST_new();
@@ -224,4 +228,15 @@ LISTget_length( Linked_List list ) {
         count++;
     }
     return count;
+}
+
+
+bool LISTempty( Linked_List list ) {
+    if( !list ) {
+        return true;
+    }
+    if( list->mark->next == list->mark ) {
+        return true;
+    }
+    return false;
 }

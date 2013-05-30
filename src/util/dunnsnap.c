@@ -1,7 +1,7 @@
 /*                      D U N N S N A P . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2012 United States Government as represented by
+ * Copyright (c) 1986-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -92,7 +92,7 @@ get_args(int argc, char **argv)
 	nframes = atoi(argv[bu_optind]);
     }
     if (argc > ++bu_optind)
-	(void)fprintf(stderr, "dunnsnap: excess argument(s) ignored\n");
+	fprintf(stderr, "dunnsnap: excess argument(s) ignored\n");
 
     return 1;		/* OK */
 }
@@ -162,7 +162,7 @@ main(int argc, char **argv)
 
     return 0;
 
- bad:
+bad:
     if (fbp != FBIO_NULL)
 	fb_close(fbp);
 

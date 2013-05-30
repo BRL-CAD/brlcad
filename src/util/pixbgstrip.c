@@ -1,7 +1,7 @@
 /*                    P I X B G S T R I P . C
  * BRL-CAD
  *
- * Copyright (c) 1991-2012 United States Government as represented by
+ * Copyright (c) 1991-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -19,7 +19,7 @@
  */
 /** @file util/pixbgstrip.c
  *
- * Backgound Un-Maker
+ * Background Un-Maker
  *
  */
 
@@ -101,16 +101,16 @@ get_args(int argc, char **argv)
 	file_name = argv[bu_optind];
 	if ((infp = fopen(file_name, "r")) == NULL) {
 	    perror(file_name);
-	    (void)fprintf(stderr,
-			  "pixbgstrip: cannot open \"%s\" for reading\n",
-			  file_name);
+	    fprintf(stderr,
+		    "pixbgstrip: cannot open \"%s\" for reading\n",
+		    file_name);
 	    bu_exit (1, NULL);
 	}
 	fileinput++;
     }
 
     if (argc > ++bu_optind)
-	(void)fprintf(stderr, "pixbgstrip: excess argument(s) ignored\n");
+	fprintf(stderr, "pixbgstrip: excess argument(s) ignored\n");
 
     return 1;		/* OK */
 }

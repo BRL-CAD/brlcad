@@ -1,7 +1,7 @@
 /*                 RepresentationRelationshipWithTransformation.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2012 United States Government as represented by
+ * Copyright (c) 1994-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -33,7 +33,7 @@
 #define CLASSNAME "RepresentationRelationshipWithTransformation"
 #define ENTITYNAME "Representation_Relationship_With_Transformation"
 string RepresentationRelationshipWithTransformation::entityname = Factory::RegisterClass(ENTITYNAME,
-        (FactoryMethod) RepresentationRelationshipWithTransformation::Create);
+	(FactoryMethod) RepresentationRelationshipWithTransformation::Create);
 
 RepresentationRelationshipWithTransformation::RepresentationRelationshipWithTransformation()
 {
@@ -78,10 +78,10 @@ bool RepresentationRelationshipWithTransformation::Load(STEPWrapper *sw, SDAI_Ap
 	    SdaiTransformation *t = (SdaiTransformation *) select;
 	    if (t->IsItem_defined_transformation()) {
 		SdaiItem_defined_transformation *idt = *t;
-		transformation_operator = dynamic_cast<Transformation*>(Factory::CreateObject(sw, (SDAI_Application_instance *) idt));
+		transformation_operator = dynamic_cast<Transformation *>(Factory::CreateObject(sw, (SDAI_Application_instance *) idt));
 	    } else if (t->IsFunctionally_defined_transformation()) {
 		SdaiFunctionally_defined_transformation *fdt = *t;
-		transformation_operator = dynamic_cast<Transformation*>(Factory::CreateObject(sw, (SDAI_Application_instance *) fdt));
+		transformation_operator = dynamic_cast<Transformation *>(Factory::CreateObject(sw, (SDAI_Application_instance *) fdt));
 	    } else {
 		std::cerr << CLASSNAME << ": Unknown 'Transformation' type from select." << std::endl;
 		return false;
@@ -109,23 +109,15 @@ void RepresentationRelationshipWithTransformation::Print(int level)
 }
 
 STEPEntity *
+RepresentationRelationshipWithTransformation::GetInstance(STEPWrapper *sw, int id)
+{
+    return new RepresentationRelationshipWithTransformation(sw, id);
+}
+
+STEPEntity *
 RepresentationRelationshipWithTransformation::Create(STEPWrapper *sw, SDAI_Application_instance *sse)
 {
-    Factory::OBJECTS::iterator i;
-    if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
-	RepresentationRelationshipWithTransformation *object = new RepresentationRelationshipWithTransformation(sw, sse->STEPfile_id);
-
-	Factory::AddObject(object);
-
-	if (!object->Load(sw, sse)) {
-	    std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
-	    delete object;
-	    return NULL;
-	}
-	return static_cast<STEPEntity *>(object);
-    } else {
-	return (*i).second;
-    }
+    return STEPEntity::CreateEntity(sw, sse, GetInstance, CLASSNAME);
 }
 
 bool RepresentationRelationshipWithTransformation::LoadONBrep(ON_Brep *brep)

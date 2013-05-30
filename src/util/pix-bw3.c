@@ -1,7 +1,7 @@
 /*                       P I X - B W 3 . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2012 United States Government as represented by
+ * Copyright (c) 1986-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -20,7 +20,7 @@
 /** @file util/pix-bw3.c
  *
  * Converts a RGB pix file into 3 8-bit BW files.
- * (i.e. seperates the colors)
+ * (i.e. separates the colors)
  *
  */
 
@@ -46,7 +46,7 @@ main(int argc, char **argv)
     size_t ret;
 
     if (argc != 4 || isatty(fileno(stdin))) {
-	bu_exit(1, "usage: pix-bw3 redout greenout blueout < file.pix\n");
+	bu_exit(1, "Usage: pix-bw3 redout greenout blueout < file.pix\n");
     }
 
     rfp = fopen(argv[1], "w");

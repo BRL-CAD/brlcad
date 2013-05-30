@@ -1,7 +1,7 @@
 # Minimal directories required for any BRL-CAD functionality
 
 # Define some common definitions here that are used
-# in most BRL-CAD directories 
+# in most BRL-CAD directories
 
 add_definitions(
   -DHAVE_CONFIG_H
@@ -32,6 +32,7 @@ set(level_1_dirs
   libbu
   libbn
   libsysv
+  libbrep
   librt
   )
 
@@ -155,6 +156,23 @@ while(${current_level} LESS ${HIGHEST_TARGET_LEVEL})
     endif(${current_level} LESS ${BRLCAD_ENABLE_TARGETS} OR ${current_level} EQUAL ${BRLCAD_ENABLE_TARGETS} )
   endforeach(subdir ${level_${current_level}_dirs})
 endwhile(${current_level} LESS ${HIGHEST_TARGET_LEVEL})
+
+# This corresponds roughly to the libbrlcad definition in
+# the autotools build.  It needs CMake 2.8.8 plus changes
+# to the BRLCAD_ADDLIB macro to define OBJECT add_library
+# targets, and is commented out for now, but this is the
+# starting point for a "proper" libbrlcad
+#if(${HIGHEST_TARGET_LEVEL} GREATER 1)
+#  add_library(libbrlcad STATIC
+#    $<TARGET_OBJECTS:libbu_OBJECTS>
+#    $<TARGET_OBJECTS:libbn_OBJECTS>
+#    $<TARGET_OBJECTS:librt_OBJECTS>
+#    $<TARGET_OBJECTS:libwdb_OBJECTS>
+#    $<TARGET_OBJECTS:libicv_OBJECTS>
+#    $<TARGET_OBJECTS:libged_OBJECTS>
+#    )
+#  target_link_libraries(libbrlcad ${OPENNURBS_LIBRARY} ${TCL_LIBRARY})
+#endif(${HIGHEST_TARGET_LEVEL} GREATER 1)
 
 CMAKEFILES(README external)
 CMAKEFILES(Makefile.am)

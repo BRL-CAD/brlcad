@@ -1,7 +1,7 @@
 /*                          N I R T . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2012 United States Government as represented by
+ * Copyright (c) 2004-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -21,25 +21,10 @@
  *
  * Common defines and declarations used by nirt.
  *
- * Author:
- * Natalie L. Barker
- *
- * Date:
- * Jan 90
- *
  */
 
 #ifndef __NIRT_H__
 #define __NIRT_H__
-
-#ifdef __NetBSD__
-#define fmax(x, y) nbsd_fmax(x, y)
-static double nbsd_fmax(double x, double y)
-{
-    return x > y ? x : y;
-}
-#endif /* __NetBSD__ */
-
 
 #include "common.h"
 
@@ -153,7 +138,6 @@ extern void quit();
 extern void read_mat(struct rt_i *rtip);
 extern void report(int outcom_type);
 extern void set_diameter(struct rt_i *);
-extern void sh_esc(char *buffer);
 extern void shoot(char *buffer, com_table *ctp, struct rt_i *rtip);
 extern void show_menu();
 extern void state_file(const char* buffer, com_table* ctp, struct rt_i *rtip);

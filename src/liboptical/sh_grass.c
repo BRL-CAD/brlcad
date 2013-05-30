@@ -1,7 +1,7 @@
 /*                      S H _ G R A S S . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2012 United States Government as represented by
+ * Copyright (c) 1998-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -180,39 +180,38 @@ static const struct grass_specific grass_defaults = {
 
 #define SHDR_NULL ((struct grass_specific *)0)
 #define SHDR_O(m) bu_offsetof(struct grass_specific, m)
-#define SHDR_AO(m) bu_offsetofarray(struct grass_specific, m)
 
 /* description of how to parse/print the arguments to the shader
  * There is at least one line here for each variable in the shader specific
  * structure above
  */
 struct bu_structparse grass_print_tab[] = {
-    {"%f", 2, "cell",		SHDR_AO(cell),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f",	1, "ppc",		SHDR_O(ppc),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f",	1, "ppcd",		SHDR_O(ppcd),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f",	1, "t",			SHDR_O(t),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f",	1, "width",		SHDR_O(blade_width),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f",	1, "lacunarity",	SHDR_O(lacunarity),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f",	1, "H", 		SHDR_O(h_val),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f",	1, "octaves", 		SHDR_O(octaves),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f", 1, "size",		SHDR_O(size),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%d",	1, "nsegs",		SHDR_O(nsegs),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f",	1, "seg_ratio",		SHDR_O(seg_ratio),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"",	0, (char *)0,		0,			BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
+    {"%g", 2, "cell",		SHDR_O(cell),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%g", 1, "ppc",		SHDR_O(ppc),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%g", 1, "ppcd",		SHDR_O(ppcd),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%g", 1, "t",		SHDR_O(t),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%g", 1, "width",		SHDR_O(blade_width),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%g", 1, "lacunarity",	SHDR_O(lacunarity),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%g", 1, "H", 		SHDR_O(h_val),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%g", 1, "octaves", 	SHDR_O(octaves),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%g", 1, "size",		SHDR_O(size),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%d", 1, "nsegs",		SHDR_O(nsegs),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%g", 1, "seg_ratio",	SHDR_O(seg_ratio),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"",   0, (char *)0,	0,			BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 struct bu_structparse grass_parse_tab[] = {
     {"%p", 1, "grass_print_tab", bu_byteoffset(grass_print_tab[0]), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f", 2, "c",			SHDR_AO(cell),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f",	1, "p",			SHDR_O(ppc),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f",	1, "pd",		SHDR_O(ppcd),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f",	1, "l",			SHDR_O(lacunarity),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f",	1, "o", 		SHDR_O(octaves),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f", 1, "s",			SHDR_O(size),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f",	1, "w",			SHDR_O(blade_width),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%d",	1, "n",			SHDR_O(nsegs),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f",	1, "r",			SHDR_O(seg_ratio),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%d",	1, "d",			SHDR_O(debug),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"",	0, (char *)0,		0,			BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
+    {"%g", 2, "c",			SHDR_O(cell),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%g", 1, "p",			SHDR_O(ppc),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%g", 1, "pd",			SHDR_O(ppcd),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%g", 1, "l",			SHDR_O(lacunarity),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%g", 1, "o", 			SHDR_O(octaves),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%g", 1, "s",			SHDR_O(size),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%g", 1, "w",			SHDR_O(blade_width),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%d", 1, "n",			SHDR_O(nsegs),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%g", 1, "r",			SHDR_O(seg_ratio),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%d", 1, "d",			SHDR_O(debug),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"",   0, (char *)0,		0,			BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 
 
@@ -568,7 +567,7 @@ grass_print(register struct region *rp, genptr_t dp)
 HIDDEN void
 grass_free(genptr_t cp)
 {
-    bu_free(cp, "grass_specific");
+    BU_PUT(cp, struct grass_specific);
 }
 
 
@@ -621,7 +620,7 @@ make_bush(struct plant *pl, double seed, const fastf_t *cell_pos, const struct g
 /* derived from cell_num */
 
 
-/* cell specific weght for count, height */
+/* cell specific weight for count, height */
 
 {
     point_t pt;
@@ -674,7 +673,7 @@ make_bush(struct plant *pl, double seed, const fastf_t *cell_pos, const struct g
  *
  */
 static void
-hit_blade(const struct blade *UNUSED(bl), struct grass_ray *r, struct shadework *UNUSED(swp), const struct grass_specific *grass_sp, int UNUSED(seg), double *UNUSED(ldist), int UNUSED(blade_num), double UNUSED(fract))
+hit_blade(const struct blade *UNUSED(bl), struct grass_ray *r, struct shadework *UNUSED(swp), const struct grass_specific *grass_sp, int UNUSED(seg), fastf_t *UNUSED(ldist), int UNUSED(blade_num), double UNUSED(fract))
 
 
 /* defined in material.h */
@@ -705,7 +704,7 @@ isect_blade(const struct blade *bl, const fastf_t *root, struct grass_ray *r, st
 
 
 {
-    double ldist[2];
+    fastf_t ldist[2];
     point_t pt;
     int cond;
     int seg;
@@ -742,12 +741,12 @@ isect_blade(const struct blade *bl, const fastf_t *root, struct grass_ray *r, st
 	if (rdebug&RDEBUG_SHADE) {
 	    bu_log("\t    ");
 	    switch (cond) {
-		case -2: bu_log("lines paralell  "); break;
+		case -2: bu_log("lines parallel  "); break;
 		case -1: bu_log("lines colinear  "); break;
 		case  0: bu_log("lines intersect "); break;
 		case  1: bu_log("lines miss      "); break;
 	    }
-	    bu_log("d1:%g d2:%g\n", cond, V2ARGS(ldist));
+	    bu_log("d1:%d d2:%g\n", cond, V2ARGS(ldist));
 	}
 	if (ldist[0] < 0.0 		/* behind ray */ ||
 	    ldist[0] >= r->d_max	/* beyond out point */ ||
@@ -921,7 +920,7 @@ plot_cell(long int *cell, struct grass_ray *r, struct grass_specific *grass_sp)
     CK_grass_SP(grass_sp);
 
     CELL_POS(cell_pos, grass_sp, cell);
-    bu_log("plotting cell %d, %d (%g, %g) %g %g\n",
+    bu_log("plotting cell %ld, %ld (%g, %g) %g %g\n",
 	   V2ARGS(cell), V2ARGS(cell_pos), V2ARGS(grass_sp->cell));
 
     bu_semaphore_acquire(BU_SEM_SYSCALL);
@@ -1102,7 +1101,7 @@ do_cells(long int *cell_num, struct grass_ray *r, short int flags, struct shadew
 	    cell[Y] = cell_num[Y] + y;
 
 	    if (rdebug&RDEBUG_SHADE)
-		bu_log("checking relative cell %2d, %2d at(%d, %d)\n",
+		bu_log("checking relative cell %2d, %2d at(%ld, %ld)\n",
 		       x, y, V2ARGS(cell));
 
 	    isect_cell(cell, r, swp, out_dist, grass_sp, curr_dist);
@@ -1292,7 +1291,7 @@ grass_render(struct application *ap, const struct partition *pp, struct shadewor
      *
      * A set bit indicates that the cell has NOT been processed.
      */
-    flags = 0777;	/* no ajacent cells processed */
+    flags = 0777;	/* no adjacent cells processed */
     VMOVE(curr_pt, in_pt);
     cell_num[X] = (long)(in_pt[X] / grass_sp->cell[X]);
     cell_num[Y] = (long)(in_pt[Y] / grass_sp->cell[Y]);
@@ -1308,7 +1307,7 @@ grass_render(struct application *ap, const struct partition *pp, struct shadewor
 	    if (rdebug&RDEBUG_SHADE) {
 		bu_log("dist:%g (%g %g %g)\n", curr_dist,
 		       V3ARGS(curr_pt));
-		bu_log("cell num: %d %d\n", V2ARGS(cell_num));
+		bu_log("cell num: %ld %ld\n", V2ARGS(cell_num));
 	    }
 	    CELL_POS(cell_pos, grass_sp, cell_num);
 

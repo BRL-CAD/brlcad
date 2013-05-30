@@ -1,7 +1,7 @@
 /*                        N M G _ P R . C
  * BRL-CAD
  *
- * Copyright (c) 1993-2012 United States Government as represented by
+ * Copyright (c) 1993-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -71,7 +71,7 @@ nmg_orientation(int orientation)
 /**
  * N M G _ P R _ O R I E N T
  *
- * Print the orientation in a nice, english form
+ * Print the orientation in a nice, English form
  */
 void
 nmg_pr_orient(int orientation, const char *h)

@@ -1,7 +1,7 @@
 /*                          S M O D . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2012 United States Government as represented by
+ * Copyright (c) 1986-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -38,14 +38,14 @@
 #include "vmath.h"
 
 
+char *progname = "smod";
+
+
 #define ADD 1
 #define MULT 2
 #define ABS 3
 #define POW 4
 #define BUFLEN 65536
-
-
-char *progname = "(noname)";
 
 int numop = 0;		/* number of operations */
 int op[256];		/* operations */
@@ -54,6 +54,7 @@ short mapbuf[BUFLEN];		/* translation buffer/lookup table */
 unsigned char clip_h[BUFLEN];	/* map of values which clip high */
 unsigned char clip_l[BUFLEN];	/* map of values which clip low */
 
+static const char usage[] = "Usage: smod [-a add | -s sub | -m mult | -d div | -A | -e exp | -r root] [file.s]\n";
 
 int
 get_args(int argc, char *argv[])
@@ -62,7 +63,7 @@ get_args(int argc, char *argv[])
     int c;
     double d;
 
-    while ((c = bu_getopt(argc, argv, "a:s:m:d:Ae:r:")) != -1) {
+    while ((c = bu_getopt(argc, argv, "a:s:m:d:Ae:r:h?")) != -1) {
 	switch (c) {
 	    case 'a':
 		op[ numop ] = ADD;
@@ -80,7 +81,7 @@ get_args(int argc, char *argv[])
 		op[ numop ] = MULT;
 		d = atof(bu_optarg);
 		if (ZERO(d)) {
-		    bu_exit(2, "bwmod: divide by zero!\n");
+		    bu_exit(2, "%s: divide by zero!\n",progname);
 		}
 		val[ numop++ ] = 1.0 / d;
 		break;
@@ -96,13 +97,13 @@ get_args(int argc, char *argv[])
 		op[ numop ] = POW;
 		d = atof(bu_optarg);
 		if (ZERO(d)) {
-		    bu_exit(2, "bwmod: zero root!\n");
+		    bu_exit(2, "%s: zero root!\n",progname);
 		}
 		val[ numop++ ] = 1.0 / d;
 		break;
 
 	    default:		/* '?' */
-		return 0;
+		bu_exit(1, "%s", usage);
 	}
     }
 
@@ -115,9 +116,9 @@ get_args(int argc, char *argv[])
 	file_name = argv[bu_optind];
 	ifname = bu_realpath(file_name, NULL);
 	if (freopen(ifname, "r", stdin) == NULL) {
-	    (void)fprintf(stderr,
-			  "bwmod: cannot open \"%s(canonical %s)\" for reading\n",
-			  file_name,ifname);
+	    fprintf(stderr,
+			  "%s: cannot open \"%s(canonical %s)\" for reading\n",
+			  progname,file_name,ifname);
 	    bu_free(ifname,"ifname alloc from bu_realpath");
 	    return 0;
 	}
@@ -125,7 +126,7 @@ get_args(int argc, char *argv[])
     }
 
     if (argc > ++bu_optind)
-	(void)fprintf(stderr, "bwmod: excess argument(s) ignored\n");
+	fprintf(stderr, "%s: excess argument(s) ignored\n",progname);
 
     return 1;		/* OK */
 }
@@ -150,7 +151,7 @@ mk_trans_tbl()
 		case MULT: d *= val[i]; break;
 		case POW : d = pow(d, val[i]); break;
 		case ABS : if (d < 0.0) d = - d; break;
-		default  : (void)fprintf(stderr, "%s: error in op\n",
+		default  : fprintf(stderr, "%s: error in op\n",
 					 progname); break;
 	    }
 	}
@@ -180,7 +181,7 @@ main(int argc, char *argv[])
 	progname = *argv;
 
     if (!get_args(argc, argv) || isatty(fileno(stdin)) || isatty(fileno(stdout))) {
-	bu_exit(1, "Usage: smod {-a add -s sub -m mult -d div -A(abs) -e exp -r root} [file.s]\n");
+	bu_exit(1, "%s", usage);
     }
 
     mk_trans_tbl();
@@ -194,12 +195,12 @@ main(int argc, char *argv[])
 	    long mdx;
 	    if (idx < 0)
 		idx = 0;
-	    if (idx > BUFLEN-1)
+	    else if (idx > BUFLEN-1)
 		idx = BUFLEN-1;
 	    mdx = iobuf[idx] + 32768;
 	    if (mdx < 0)
 		mdx = 0;
-	    if (mdx > BUFLEN-1)
+	    else if (mdx > BUFLEN-1)
 		mdx = BUFLEN-1;
 
 	    iobuf[idx] = mapbuf[mdx];
@@ -216,7 +217,7 @@ main(int argc, char *argv[])
     }
 
     if (clip_high != 0 || clip_low != 0) {
-	(void)fprintf(stderr, "%s: clipped %lu high, %lu low\n", progname, (long unsigned)clip_high, (long unsigned)clip_low);
+	fprintf(stderr, "%s: clipped %lu high, %lu low\n", progname, (long unsigned)clip_high, (long unsigned)clip_low);
     }
 
     return 0;

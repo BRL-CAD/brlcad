@@ -1,7 +1,7 @@
 /*                        C O M M O N . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2012 United States Government as represented by
+ * Copyright (c) 2004-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -72,7 +72,7 @@
 /* Functions local to one file IN A LIBRARY should be declared HIDDEN.
  * Disabling the static classifier is sometimes helpful for debugging.
  * It can help prevent some compilers from inlining functions that one
- * might want to set a breakpoint on.
+ * might want to set a breakpoint on.  Do not use on variables.
  */
 #if !defined(HIDDEN)
 #  if defined(NDEBUG)
@@ -116,8 +116,8 @@ typedef ptrdiff_t ssize_t;
  * optional uintptr_t type.
  */
 #if !defined(INT8_MAX) || !defined(INT16_MAX) || !defined(INT32_MAX) || !defined(INT64_MAX)
-#  if (defined _MSC_VER && (_MSC_VER <= 1500))	
-     /* Older Versions of Visual C++ seem to need pstdint.h 
+#  if (defined _MSC_VER && (_MSC_VER <= 1500))
+     /* Older Versions of Visual C++ seem to need pstdint.h
       * but still pass the tests below, so force it based on
       * version (ugh.) */
 #    include "pstdint.h"
@@ -172,7 +172,7 @@ typedef ptrdiff_t ssize_t;
 #endif
 
 /* This is so we can use gcc's "format string vs arguments"-check for
- * various printf-like functions, and still maintain compatability.
+ * various printf-like functions, and still maintain compatibility.
  */
 #ifndef __attribute__
 /* This feature is only available in gcc versions 2.5 and later. */
@@ -221,7 +221,7 @@ typedef ptrdiff_t ssize_t;
 #      endif
 #    else
 #      if defined(_MSC_VER)
-         /* disable reporting an "unreferenced formal parameter" */
+	 /* disable reporting an "unreferenced formal parameter" */
 #        pragma warning( disable : 4100 )
 #      endif
 #      define UNUSED(parameter) (parameter)
@@ -283,7 +283,7 @@ typedef ptrdiff_t ssize_t;
 /**
  * UNLIKELY provides a common mechanism for providing branch
  * prediction hints to the compiler so that it can better optimize.
- * It should be used when it's exceptionaly unlikely that a given code
+ * It should be used when it's exceptionally unlikely that a given code
  * path will ever be executed.  Use it like this:
  *
  *  if (UNLIKELY(x == 0)) {
@@ -335,6 +335,12 @@ typedef ptrdiff_t ssize_t;
    typedef _TCHAR TCHAR;
 #endif
 
+/* Avoid -Wundef warnings for system headers that use __STDC_VERSION__ without
+ * checking if it's defined.
+ */
+#if !defined(__STDC_VERSION__)
+#  define __STDC_VERSION__ 0
+#endif
 
 #endif  /* __COMMON_H__ */
 /** @} */

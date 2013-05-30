@@ -1,7 +1,7 @@
 /*                      O R L E - P I X . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2012 United States Government as represented by
+ * Copyright (c) 1986-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -34,7 +34,7 @@ static char *usage[] =
 {
     "Usage: rle-pix [-dv] [-b (rgbBG)] [file.rle]",
     "",
-    "If no rle file is specifed, rle-pix will read its standard input.",
+    "If no rle file is specified, rle-pix will read its standard input.",
     "Pix(5B) format is written to the standard output.",
     0
 };
@@ -110,8 +110,8 @@ main(int argc, char **argv)
 	/* Standard linear colormap */
 	non_linear_cmap = 0;
     }
-    if (rle_verbose)  (void)fprintf(stderr, "Using %s colormap\n",
-				    non_linear_cmap ? "stored" : "linear");
+    if (rle_verbose) fprintf(stderr, "Using %s colormap\n",
+			     non_linear_cmap ? "stored" : "linear");
 
     /* Fill buffer with background.	*/
     if ((get_flags & NO_BOX_SAVE)) {

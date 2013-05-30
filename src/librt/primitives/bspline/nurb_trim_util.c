@@ -1,7 +1,7 @@
 /*                N U R B _ T R I M _ U T I L . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2012 United States Government as represented by
+ * Copyright (c) 1990-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -37,11 +37,11 @@
 #include "nurb.h"
 
 /**
- * Check to see if the curve conmtrol polygon wonders outside the
- * parametric range given.  This is usefull if a trimming curve
+ * Check to see if the curve control polygon wanders outside the
+ * parametric range given.  This is useful if a trimming curve
  * control polygon is outside but the evaluated curve is not. We will
- * want to refine the curve so that is lies within the range;
- * otherwise it breaks the surface evaluation
+ * want to refine the curve so that it lies within the range;
+ * otherwise it breaks the surface evaluation.
  */
 int
 rt_nurb_crv_in_range(struct edge_g_cnurb *crv, fastf_t u_min, fastf_t u_max, fastf_t v_min, fastf_t v_max)

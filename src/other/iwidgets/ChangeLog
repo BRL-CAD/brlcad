@@ -119,7 +119,7 @@
 
 2002-03-24  Marty Backe <mgbacke@usa.net>
     * generic/disjointlistbox.itk
-        Applied patch sumitted by Brett Schwarz to add two new sort
+        Applied patch submitted by Brett Schwarz to add two new sort
         options which determine how items are added to each
         scrolledlistbox. Did some various code formatting cleanup.
     * doc/disjointlistbox.n
@@ -128,7 +128,7 @@
     * demos/html/disjointlistbox.n.html
         Updated the html version of the man page
     * tests/disjointlistbox.test
-        Added tests for the the two new options. 
+        Added tests for the the two new options.
 
 2002-03-19  Marty Backe <mgbacke@usa.net>
     * generic/messagebox.itk
@@ -173,7 +173,7 @@
         Rearranged the layout of the popup menu. Moved the 'Clear' menu
         to the end of the list. It was too easy to generate the popup and
         accidentally choose the 'Clear' function.
-    
+
     * generic/hyperhelp.itk
         Removed the 'error' statement that would cause any application that
         used Hyperhelp to stacktrace if a file to be rendered couldn't be
@@ -222,12 +222,12 @@
     * generic/scrolledlistbox.ikt: SF ticket 521326
         The <B1-Motion> binding was removed to eliminate multiple triggers
         of the command specified by the -selectioncommand option if the
-        mouse is moved while the item is being selected. 
-        
+        mouse is moved while the item is being selected.
+
 2002-02-16  Marty Backe <mgbacke@usa.net>
     * generic/scrolledhtml.itk: SF ticket 481956
         Fixed potential for lengthy page renderings to throw a bgerror.
-        
+
 2001-12-11  Chad Smith  <csmith@adc.com>
 	* generic/combobox.itk: SF ticket 474817
 		Fixed an auto-completion problem.
@@ -560,7 +560,7 @@
 2000-12-19  smithc
 	* generic/combobox.itk:
 		Fixed 3 bugs:
-		
+
 		1) bug with -state config option
 		2) added some performance enhancements
 		3) added code to restore grabs following dropdown listbox unmap
@@ -578,7 +578,7 @@
 	* generic/scrolledlistbox.itk:
 		Patch submitted by Shaun Lowry - I don't know the ticket number, but here's
 		part of the ticket description:
-		
+
 		Name:  Shaun Lowry
 		email:  slowry@iss.net
 		Support:  Gold
@@ -587,7 +587,7 @@
 		OperatingSystemVersion:  NT4 SP6
 		Machine:  Beige :-) (home built PC)
 		Synopsis:  scrolledlistbox "pattern" based selection doesn't work properly
-		
+
 		ReproducibleScript:
 		package require Iwidgets
 		iwidgets::scrolledlistbox .f
@@ -609,7 +609,7 @@
 	* generic/timeentry.itk:
 		Same problem as dateentry.  See documentation for dateentry version 1.2 in
 		CVS.  I don't have a ticket number.
-		
+
 		-chad smith
 
 	* generic/dateentry.itk:
@@ -618,10 +618,10 @@
 		told Michael about it, and he's fixed it in 3.2.  This broke the dateentry
 		because it was explicitly unsetting the component from the itk_component
 		array.  I simply deleted that line of code.
-		
+
 		I need to make a pass at the rest of the iwidgets to see which other ones were
 		also unsetting the component.
-		
+
 		-chad smith
 
 2000-08-08  csmith
@@ -634,7 +634,7 @@
 			-imagedblcommand
 			-imagemenuloadcommand
 			-textmenuloadcommand
-		
+
 		He also added two public methods: expanded and expState.  Multiple non-public
 		methods were added to support the new configuration options.  I have updated
 		the man page for each new option and public method.
@@ -680,15 +680,15 @@
 	* unix/install-sh:
 	* unix/iwidgets.tcl.in:
 	* unix/pkgIndex.tcl.in:
-		
+
 		6/26/00 (bug fix)
 		  Fixed Itcl_ClassVarResolver so that the formal parameters in a
 		  method/proc take precedence over class data members.
-		
+
 		6/30/00 (bug fix)
 		  Fixed all itcl/itk/iwidgets3.0.0 tests to run cleanly with the new
 		  tcltest package.
-		
+
 		7/1/00 (bug fix)
 		  Fixed "itk_component delete" so that the composite option list is
 		  cleaned up whenever a component is deleted.  For example, suppose
@@ -697,14 +697,14 @@
 		  as well.  Also fixed the handling of the itk-delete-* binding for
 		  the component.  When the component is removed, the binding tag
 		  is also removed by itk::remove_destroy_hook.
-		
+
 		7/5/00 (bug fix)
 		  Fixed the check done during object creation to avoid clobbering
 		  existing commands.  Previously, itcl would look for any command--
 		  in the local *and* global namespace--that might be clobbered.
 		  Now, it looks for commands only in the local namespace, since
 		  those are the only ones that could truly be clobbered.
-		
+
 		7/5/00 (cleanup)
 		  Removed obsolete Makefile/configure files in the various "unix"
 		  directories.  Makefiles and configure files now reside one level
@@ -772,8 +772,8 @@
 	* generic/timefield.itk:
 		Here are the comments from an itcl mailing list poster as well as
 		my comments interspersed.
-		
-		
+
+
 		iwidgets::timefield
 
 2000-04-26  csmith
@@ -784,14 +784,14 @@
 2000-04-19  mmc
 	* configure:
 	* configure.in:
-		
+
 		- fixed itcl::find to find classes/objects in *all* namespaces
 		- fixed tests to run cleanly
 
 2000-03-28  csmith
 	* generic/scrolledhtml.itk:
 		Applied patches submitted by Brian Griffin.  The patches are as follows:
-		
+
 		*** scrolledhtml.itk	1999/02/21 02:50:38	1.3
 		--- scrolledhtml.itk	2000/03/14 18:07:27
 		*************** class iwidgets::Scrolledhtml {
@@ -1005,7 +1005,7 @@
 2000-03-21  csmith
 	* generic/fileselectionbox.itk:
 		From a patch I received from Brett Schwarz:
-		
+
 		BUG
 		---
 		When the -fileson option is set to false, then only the directory
@@ -1013,12 +1013,12 @@
 		However, when single clicking on a directory, the selection entry widget
 		only gets updated with the tail of the directory name (what is actually
 		in the directory listbox), not the whole path.
-		
+
 		DESIRED BEHAVIOR
 
 	* generic/extfileselectionbox.itk:
 		From a patch I received from Brett Schwarz:
-		
+
 		BUG
 		---
 		When the -fileson option is set to false, then only the directory
@@ -1026,12 +1026,12 @@
 		However, when single clicking on a directory, the selection entry widget
 		only gets updated with the tail of the directory name (what is actually
 		in the directory listbox), not the whole path.
-		
+
 		DESIRED BEHAVIOR
 
 2000-03-10  csmith
 	* doc/checkbox.n:
-		Updated man page to reflect addition of new config option: 
+		Updated man page to reflect addition of new config option:
 		orient.
 
 	* generic/radiobox.itk:
@@ -1039,12 +1039,12 @@
 		orientation of the radiobuttons within the radiobox.
 
 	* generic/checkbox.itk:
-		Added a new config option to the checkbox: -oritent, which allows the user to
+		Added a new config option to the checkbox: -orient, which allows the user to
 		specify the orientation of the checkbuttons, either horizontally or
 		vertically (default).
 
 	* doc/radiobox.n:
-		Updated man page to reflect the new config option I added: 
+		Updated man page to reflect the new config option I added:
 		orient.
 
 2000-03-09  csmith
@@ -1179,14 +1179,14 @@
 		   class definition: -command, -disabledforeground, and -selectcolor.
 		   These options are now only applicable after checkbuttons have been
 		   added to the checkbox.
-		
+
 			a) The -command option never worked anyway.  It was defined
 			   via 'itk_option define' but was not implemented.  The easiest
 			   solution was to keep this option when adding a new checkbutton.
 			   This at least adds -command functionality but doesn't provide
 			   for % variable substitutions, which would be a nice addition
 			   for future revisions.
-		
+
 			b) The -disabledforeground and -selectcolor options were valid
 			   options for initial checkbox creation but had no error checking.
 			   You could therefore create a new checkbox with -selectcolor set
@@ -1196,9 +1196,9 @@
 			   confusion, so these two options are now only valid after (or
 			   during) the addition of checkbuttons.  Tk then handles the error
 			   checking.
-		
+
 		2) Added -state to the keep fragment during checkbutton addition.
-		
+
 		So in a nutshell, these 4 options are now valid checkbox options after
 		at least one checkbutton has been added:
 			-command
@@ -1227,9 +1227,9 @@
 
 	* configure:
 		tcl.m4:  Updated to reflect recent TEA changes
-		
-		*/configure:  Regnereated with new tcl.m4
-		
+
+		*/configure:  Regenerated with new tcl.m4
+
 		iwidgets2.2.0/Makefile.in:  Don't copy nonexistent files
 
 1999-11-18  csmith
@@ -1262,14 +1262,14 @@
 1999-09-10  wart
 	* Makefile.in:
 		Fixed bug when calling mkIndex.tcl for itk
-		
+
 		reduced amount of output from "make install" in iwidgets
 
 1999-09-09  wart
 	* iwidgets.tcl.in:
 	* pkgIndex.tcl.in:
 		Added pkgIndex files for Iwidgets
-		
+
 		Top level Makefile should no longer loop endlessly if the configure went bad.
 
 1999-09-04  wart
@@ -1279,12 +1279,12 @@
 	* configure.in:
 		TEA changes.  Itcl now uses the same Makefiles and configure scripts for
 		both Windows and Unix.
-		
+
 		Note that static shells are not yet done in this TEA implementation.
 
 1999-08-21  matt
 	* win/makefile.vc:
-		Moved HTML install to seperate non-default target, since the files that
+		Moved HTML install to separate non-default target, since the files that
 		it tries to install don't exist and cause a failure during the install.
 
 1999-07-26  csmith
@@ -1310,18 +1310,18 @@
 1999-07-08  rjohnson
 	* demos/html/iwidgets2.2.0UserCmds.html:
 	* demos/html/iwidgets3.0.0UserCmds.htm:
-		
+
 		Updated html index file to 3.0.
 
 	* demos/html/iwidgets3.0.0UserCmds.htm:
 	* demos/html/iwidgets3.0.0UserCmds.html:
-		
+
 		Messed up extension.
 
 1999-06-16  csmith
 	* generic/toolbar.itk:
 		This fix is contributed by Raviv Gil.  Below is his description of the bug.
-		
+
 		"Working with iwidgets3.0.0 we've encountered the following problem :
 		We created a toolbar containing several buttons, each button with a short
 		help string. Passing above the toolbar and then closing the window sometimes
@@ -1332,14 +1332,14 @@
 		There were several places in the code that looped from 1 to the number of
 		actual panes in the panedwindow when the code should be looping over the
 		number of active panes.  Each of these areas in the code could cause a stack
-		dump, complaining about an invalid pathanme regarding a sash or a separator.
+		dump, complaining about an invalid pathname regarding a sash or a separator.
 		I've changed each of these areas to use _activePanes instead of _panes.
 
 1999-05-25  redman
 	* unix/configure.in:
 		Fix the makefile and configure files, etc., for Unix
 		in order to compile with Tcl/Tk 8.1 with stubs.
-		
+
 		Builds itclsh and itkwish properly.
 
 1999-03-30  csmith
@@ -1373,7 +1373,7 @@
 	   kill any expr's since the integer is too large for tcl to handle.
 	2) The _keyPress method hardcoded state comparisons for <Ctrl>, <Alt>,
 	   <NumLock><Ctrl>, and <NumLock><Alt>.  The problem was that these
-	   hardcoded values were UNIX-specific.  I added platform-independant code.
+	   hardcoded values were UNIX-specific.  I added platform-independent code.
 
 	* CHANGES:
 		Added to entries under the Entryfield section: 1) documented new configuration
@@ -1395,7 +1395,7 @@
 
 1999-02-21  rjohnson
 	* generic/scrolledhtml.itk:
-		
+
 		Removed stack trace error in widget.  However, the widget still
 		doesn't display correctly...
 

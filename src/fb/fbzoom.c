@@ -1,7 +1,7 @@
 /*                        F B Z O O M . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2012 United States Government as represented by
+ * Copyright (c) 1986-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -20,7 +20,7 @@
  */
 /** @file fbzoom.c
  *
- * Dynamicly modify Ikonas Zoom and Window parameters, using VI and/or
+ * Dynamically modify Ikonas Zoom and Window parameters, using VI and/or
  * EMACS-like keystrokes on a regular terminal.
  *
  */
@@ -49,7 +49,7 @@ int doKeyPad(void);
 #define MaxYPan (fb_getheight(fbp)-1)
 #define MinPan (0)
 
-static int PanFactor;			/* Speed with whitch to pan.	*/
+static int PanFactor;			/* Speed with which to pan.	*/
 static int xPan, yPan;			/* Pan Location.		*/
 static int xZoom, yZoom;		/* Zoom Factor.			*/
 static int new_xPan, new_yPan;
@@ -163,6 +163,7 @@ printUsage()
     bu_log("q	Exit\n");
     bu_log("RETURN	Exit\n");
 }
+
 
 int
 doKeyPad(void)

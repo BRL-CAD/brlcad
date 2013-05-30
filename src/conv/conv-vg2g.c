@@ -1,7 +1,7 @@
 /*                     C O N V - V G 2 G . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2012 United States Government as represented by
+ * Copyright (c) 1985-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -63,7 +63,7 @@ main(int argc, char **argv)
     bu_setprogname(argv[0]);
 
     if ( argc != 3 )  {
-	printf("Usage: conv-vg2g file.vg file.g\n");
+	printf("Usage: conv-vg2g file.vg file.g\n(I prompt as necessary)\n");
 	return 11;
     }
 
@@ -97,33 +97,33 @@ main(int argc, char **argv)
     if (rec.u_id == ID_IDENT) {
 	/* have an mged type file - check its version */
 	if ( BU_STR_EQUAL(rec.i.i_version, ID_VERSION) ) {
-	    (void)printf("%s: NO conversion necessary\n", argv[1]);
+	    printf("%s: NO conversion necessary\n", argv[1]);
 	    (void)putchar(7);
 	    return 0;
 	}
 
 	else {
 	    /* convert from version 3 to version 4 */
-	    (void)printf("convert from ver 3 to ver 4\n");
+	    printf("convert from ver 3 to ver 4\n");
 	    units = ID_IN_UNIT;
 	    rec.i.i_version[0] = '\0';
 	    bu_strlcpy(rec.i.i_version, ID_VERSION, sizeof(rec.i.i_version));
 	}
     }
     else {
-	lseek(ifd, (off_t)0L, 0);
+	lseek(ifd, 0, 0);
 	/* have an old vged file to convert */
 
-	/* units are inportant now because:
+	/* units are important now because:
 	 *	The ged data records will be stored in a constant BASE unit
-	 *	of MiliMeters (MM).
+	 *	of MilliMeters (MM).
 	 *	At any time the ged user can change his local units.
 	 *    	Hence cv must know the original units of the ".vg" file so
 	 *	that they can be converted to BASE units.
 	 */
-	(void)printf("* *  V E R Y    I M P O R T A N T    N O T I C E  * *\n");
-	(void)printf("    You must KNOW the units of the %s file\n", argv[1]);
-	(void)printf("    If you don't know, DON'T guess....find out\n");
+	printf("* *  V E R Y    I M P O R T A N T    N O T I C E  * *\n");
+	printf("    You must KNOW the units of the %s file\n", argv[1]);
+	printf("    If you don't know, DON'T guess....find out\n");
 	(void)putchar( 7 );
 
 	rec.i.i_id = ID_IDENT;
@@ -195,7 +195,7 @@ main(int argc, char **argv)
 	    case ID_COMB:
 		if ( rec.c.c_name[0] == '\0' )  {
 		    /* This is an old-style flag for a deleted combination */
-		    /* Skip any folowing member records */
+		    /* Skip any following member records */
 		    do  {
 			if (read( ifd, &rec, sizeof(rec) ) == -1) {
 			    perror("READ ERROR");
@@ -212,8 +212,7 @@ main(int argc, char **argv)
 	    case ID_ARS_A:
 		if ( rec.a.a_name[0] == '\0' )  {
 		    /* Skip deleted junk */
-		    lseek( ifd, (off_t)(rec.a.a_totlen) *
-			   (long)(sizeof rec), 1 );
+		    lseek( ifd, (off_t)(rec.a.a_totlen * sizeof(rec)), 1 );
 		    goto top;
 		}
 		rec.a.a_xmin *= factor;

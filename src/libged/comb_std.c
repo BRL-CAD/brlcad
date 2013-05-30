@@ -1,7 +1,7 @@
 /*                  C O M B _ S T D . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2012 United States Government as represented by
+ * Copyright (c) 2008-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -76,7 +76,7 @@ append_union(struct bu_list *hp)
 
     BU_CK_LIST_HEAD(hp);
 
-    tok = (struct tokens *)bu_malloc(sizeof(struct tokens), "tok");
+    BU_ALLOC(tok, struct tokens);
     tok->type = TOK_UNION;
     tok->tp = (union tree *)NULL;
     BU_LIST_INSERT(hp, &tok->l);
@@ -90,7 +90,7 @@ append_inter(struct bu_list *hp)
 
     BU_CK_LIST_HEAD(hp);
 
-    tok = (struct tokens *)bu_malloc(sizeof(struct tokens), "tok");
+    BU_ALLOC(tok, struct tokens);
     tok->type = TOK_INTER;
     tok->tp = (union tree *)NULL;
     BU_LIST_INSERT(hp, &tok->l);
@@ -104,7 +104,7 @@ append_subtr(struct bu_list *hp)
 
     BU_CK_LIST_HEAD(hp);
 
-    tok = (struct tokens *)bu_malloc(sizeof(struct tokens), "tok");
+    BU_ALLOC(tok, struct tokens);
     tok->type = TOK_SUBTR;
     tok->tp = (union tree *)NULL;
     BU_LIST_INSERT(hp, &tok->l);
@@ -118,7 +118,7 @@ append_lparen(struct bu_list *hp)
 
     BU_CK_LIST_HEAD(hp);
 
-    tok = (struct tokens *)bu_malloc(sizeof(struct tokens), "tok");
+    BU_ALLOC(tok, struct tokens);
     tok->type = TOK_LPAREN;
     tok->tp = (union tree *)NULL;
     BU_LIST_INSERT(hp, &tok->l);
@@ -132,7 +132,7 @@ append_rparen(struct bu_list *hp)
 
     BU_CK_LIST_HEAD(hp);
 
-    tok = (struct tokens *)bu_malloc(sizeof(struct tokens), "tok");
+    BU_ALLOC(tok, struct tokens);
     tok->type = TOK_RPAREN;
     tok->tp = (union tree *)NULL;
     BU_LIST_INSERT(hp, &tok->l);
@@ -218,7 +218,7 @@ add_operand(struct ged *gedp, struct bu_list *hp, char *name)
     node->tr_l.tl_name = (char *)bu_malloc(name_len+1, "node name");
     bu_strlcpy(node->tr_l.tl_name, name, name_len+1);
 
-    tok = (struct tokens *)bu_malloc(sizeof(struct tokens), "tok");
+    BU_ALLOC(tok, struct tokens);
     tok->type = TOK_TREE;
     tok->tp = node;
     BU_LIST_INSERT(hp, &tok->l);
@@ -245,7 +245,7 @@ do_inter(struct bu_list *hp)
 	    continue;
 
 	/* this is an eligible intersection operation */
-	BU_GET(tp, union tree);
+	BU_ALLOC(tp, union tree);
 	RT_TREE_INIT(tp);
 	tp->tr_b.tb_op = OP_INTERSECT;
 	tp->tr_b.tb_regionp = (struct region *)NULL;
@@ -280,7 +280,7 @@ do_union_subtr(struct bu_list *hp)
 	    continue;
 
 	/* this is an eligible operation */
-	BU_GET(tp, union tree);
+	BU_ALLOC(tp, union tree);
 	RT_TREE_INIT(tp);
 	if (tok->type == TOK_UNION)
 	    tp->tr_b.tb_op = OP_UNION;
@@ -616,7 +616,7 @@ ged_comb_std(struct ged *gedp, int argc, const char *argv[])
 	int flags;
 
 	flags = RT_DIR_COMB;
-	BU_GET(comb, struct rt_comb_internal);
+	BU_ALLOC(comb, struct rt_comb_internal);
 	RT_COMB_INTERNAL_INIT(comb);
 
 	comb->tree = final_tree;

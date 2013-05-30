@@ -1,8 +1,9 @@
 /* $NoKeywords: $ */
 /*
 //
-// Copyright (c) 1993-2007 Robert McNeel & Associates. All rights reserved.
-// Rhinoceros is a registered trademark of Robert McNeel & Assoicates.
+// Copyright (c) 1993-2012 Robert McNeel & Associates. All rights reserved.
+// OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
+// McNeel & Associates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
@@ -128,17 +129,28 @@ bool ON_Intersect( const ON_Plane&,
                   ON_3dPoint& // intersection point is returned here
                   );
 
+/*
+Description:
+  Intersect a plane and a sphere.
+Parameters:
+  plane - [in]
+  sphere - [in]
+  circle - [out]
+Returns:
+  0: no intersection
+    circle radius = 0 and circle origin = point on the plane
+    closest to the sphere.
+  1: intersection is a single point
+    circle radius = 0;
+  2: intersection is a circle
+    circle radius > 0.
+*/
 ON_DECL
-int ON_Intersect( // returns 0 = no intersections, 
-                  // 1 = intersection = single point, 
-                  // 2 = intersection = circle
-                  // If 0 is returned, returned circle has radius=0
-                  // and center = point on sphere closest to plane.
-                  // If 1 is returned, intersection is a single
-                  // point and returned circle has radius=0
-                  // and center = intersection point on sphere.
-                 const ON_Plane&, const ON_Sphere&, ON_Circle&
-                  );
+int ON_Intersect(
+          const ON_Plane& plane, 
+          const ON_Sphere& sphere,
+          ON_Circle& circle
+          );
 
 ON_DECL
 int ON_Intersect( // returns 0 = no intersections, 
@@ -178,8 +190,15 @@ Parameters:
   tolerance - [in]  If tolerance > 0.0, then the intersection is
                    performed against a box that has each side
                    moved out by tolerance.
-  line_parameters - [out] The chord from line.PointAt(line_parameters[0])
-     to line.PointAt(line_parameters[1]) is the intersection.
+  line_parameters - [out] 
+    Pass null if you do not need the parameters.
+    If true is returned and line.from != line.to,
+    then the chord from line.PointAt(line_parameters[0])
+    to line.PointAt(line_parameters[1]) is the intersection.
+    If true is returned and line.from = line.to, then line.from
+    is in the box and the interval (0.0,0.0) is returned.
+    If false is returned, the input value of line_parameters
+    is not changed.
 Returns:
   True if the line intersects the box and false otherwise.
 */

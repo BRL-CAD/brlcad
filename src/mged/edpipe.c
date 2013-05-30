@@ -1,7 +1,7 @@
 /*                        E D P I P E . C
  * BRL-CAD
  *
- * Copyright (c) 1995-2012 United States Government as represented by
+ * Copyright (c) 1995-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -239,7 +239,7 @@ pipe_scale_radius(struct rt_db_internal *db_int, fastf_t scale)
     /* make temporary copy of this pipe solid */
     BU_LIST_INIT(&head);
     for (BU_LIST_FOR(old_ps, wdb_pipept, &pipeip->pipe_segs_head)) {
-	BU_GET(new_ps, struct wdb_pipept);
+	BU_ALLOC(new_ps, struct wdb_pipept);
 	*new_ps = (*old_ps);
 	BU_LIST_APPEND(&head, &new_ps->l);
     }
@@ -297,18 +297,18 @@ find_pipept_nearest_pt(const struct bu_list *pipe_hd, const point_t pt)
     tmp_tol.para = 1.0 - tmp_tol.perp;
 
     /* get a direction vector in model space corresponding to z-direction in view */
-    VSET(work, 0.0, 0.0, 1.0)
-	MAT4X3VEC(dir, view_state->vs_gvp->gv_view2model, work)
+    VSET(work, 0.0, 0.0, 1.0);
+    MAT4X3VEC(dir, view_state->vs_gvp->gv_view2model, work);
 
-	for (BU_LIST_FOR(ps, wdb_pipept, pipe_hd)) {
-	    fastf_t dist;
+    for (BU_LIST_FOR(ps, wdb_pipept, pipe_hd)) {
+	fastf_t dist;
 
-	    dist = bn_dist_line3_pt3(pt, dir, ps->pp_coord);
-	    if (dist < min_dist) {
-		min_dist = dist;
-		nearest = ps;
-	    }
+	dist = bn_dist_line3_pt3(pt, dir, ps->pp_coord);
+	if (dist < min_dist) {
+	    min_dist = dist;
+	    nearest = ps;
 	}
+    }
     return nearest;
 }
 
@@ -329,7 +329,7 @@ add_pipept(struct rt_pipe_internal *pipeip, struct wdb_pipept *pp, const point_t
 	/* add new point to end of pipe solid */
 	last = BU_LIST_LAST(wdb_pipept, &pipeip->pipe_segs_head);
 	if (last->l.magic == BU_LIST_HEAD_MAGIC) {
-	    BU_GET(newpp, struct wdb_pipept);
+	    BU_ALLOC(newpp, struct wdb_pipept);
 	    newpp->l.magic = WDB_PIPESEG_MAGIC;
 	    newpp->pp_od = 30.0;
 	    newpp->pp_id = 0.0;
@@ -341,7 +341,7 @@ add_pipept(struct rt_pipe_internal *pipeip, struct wdb_pipept *pp, const point_t
     }
 
     /* build new point */
-    BU_GET(newpp, struct wdb_pipept);
+    BU_ALLOC(newpp, struct wdb_pipept);
     newpp->l.magic = WDB_PIPESEG_MAGIC;
     newpp->pp_od = last->pp_od;
     newpp->pp_id = last->pp_id;
@@ -379,7 +379,7 @@ ins_pipept(struct rt_pipe_internal *pipeip, struct wdb_pipept *pp, const point_t
 	/* insert new point at start of pipe solid */
 	first = BU_LIST_FIRST(wdb_pipept, &pipeip->pipe_segs_head);
 	if (first->l.magic == BU_LIST_HEAD_MAGIC) {
-	    BU_GET(newpp, struct wdb_pipept);
+	    BU_ALLOC(newpp, struct wdb_pipept);
 	    newpp->l.magic = WDB_PIPESEG_MAGIC;
 	    newpp->pp_od = 30.0;
 	    newpp->pp_id = 0.0;
@@ -391,7 +391,7 @@ ins_pipept(struct rt_pipe_internal *pipeip, struct wdb_pipept *pp, const point_t
     }
 
     /* build new point */
-    BU_GET(newpp, struct wdb_pipept);
+    BU_ALLOC(newpp, struct wdb_pipept);
     newpp->l.magic = WDB_PIPESEG_MAGIC;
     newpp->pp_od = first->pp_od;
     newpp->pp_id = first->pp_id;

@@ -1,7 +1,7 @@
 /*                        T C L C A D . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2012 United States Government as represented by
+ * Copyright (c) 2004-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -73,9 +73,12 @@ __BEGIN_DECLS
 #define TCLCAD_POLY_RECTANGLE_MODE 18
 #define TCLCAD_POLY_SQUARE_MODE 19
 #define TCLCAD_RECTANGLE_MODE 20
-#define TCLCAD_MOVE_PIPE_POINT_MODE 21
-#define TCLCAD_DATA_MOVE_OBJECT_MODE 22
-#define TCLCAD_DATA_MOVE_POINT_MODE 23
+#define TCLCAD_MOVE_METABALL_POINT_MODE 21
+#define TCLCAD_MOVE_PIPE_POINT_MODE 22
+#define TCLCAD_MOVE_BOT_POINT_MODE 23
+#define TCLCAD_MOVE_BOT_POINTS_MODE 24
+#define TCLCAD_DATA_MOVE_OBJECT_MODE 25
+#define TCLCAD_DATA_MOVE_POINT_MODE 26
 
 #define TCLCAD_OBJ_FB_MODE_OFF 0
 #define TCLCAD_OBJ_FB_MODE_UNDERLAY 1
@@ -85,6 +88,7 @@ __BEGIN_DECLS
 struct ged_dm_view {
     struct bu_list		l;
     struct bu_vls		gdv_callback;
+    struct bu_vls		gdv_edit_motion_delta_callback;
     struct bu_vls		gdv_name;
     struct ged_view		*gdv_view;
     struct dm			*gdv_dmp;

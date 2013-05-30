@@ -1,7 +1,7 @@
 /*                          U - B W . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2012 United States Government as represented by
+ * Copyright (c) 2004-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -36,7 +36,7 @@ int main(int ac, char **av)
     size_t num, i;
 
     if (isatty(fileno(stdin)) || isatty(fileno(stdout))) {
-	(void)fprintf(stderr, "Usage: %s < u_shorts > bwfile\n",
+	fprintf(stderr, "Usage: %s < u_shorts > bwfile\n",
 		      *av);
 	return -1;
     }
@@ -47,7 +47,7 @@ int main(int ac, char **av)
 		obuf[i] = (unsigned char)ibuf[i];
 
 	    if (fwrite(&obuf[0], sizeof(*obuf), num, stdout)!=num) {
-		(void)fprintf(stderr, "%s: error writing output\n", *av);
+		fprintf(stderr, "%s: error writing output\n", *av);
 		return -1;
 	    }
 	}
@@ -57,7 +57,7 @@ int main(int ac, char **av)
 		obuf[i] = (unsigned char)(ibuf[i] >> 8);
 
 	    if (fwrite(&obuf[0], sizeof(*obuf), num, stdout)!=num) {
-		(void)fprintf(stderr, "%s: error writing output\n", *av);
+		fprintf(stderr, "%s: error writing output\n", *av);
 		return -1;
 	    }
 	}

@@ -1,7 +1,7 @@
 /*                           P K G . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2012 United States Government as represented by
+ * Copyright (c) 2004-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -51,7 +51,7 @@
 #else
 #  include <sys/socket.h>
 #  include <sys/ioctl.h>	/* for FIONBIO */
-#  include <netinet/in.h>	/* for htons(), etc */
+#  include <netinet/in.h>	/* for htons(), etc. */
 #  include <netdb.h>
 #  include <netinet/tcp.h>	/* for TCP_NODELAY sockopt */
 #  include <arpa/inet.h>	/* for inet_addr() */
@@ -552,7 +552,7 @@ _pkg_permserver_impl(struct in_addr iface, const char *service, const char *prot
     int on = 1;
 #endif
 
-    if (service == NULL) 
+    if (service == NULL)
       return -1;
 
     _pkg_ck_debug();
@@ -734,7 +734,6 @@ struct pkg_conn *
 pkg_getclient(int fd, const struct pkg_switch *switchp, void (*errlog) (char *msg), int nodelay)
 {
     int s2;
-    auto int onoff;
 #ifdef HAVE_WINSOCK_H
     WORD wVersionRequested;		/* initialize Windows socket networking, increment reference count */
     WSADATA wsaData;
@@ -757,6 +756,7 @@ pkg_getclient(int fd, const struct pkg_switch *switchp, void (*errlog) (char *ms
 
 #ifdef FIONBIO
     if (nodelay) {
+	int onoff;
 	onoff = 1;
 	if (ioctl(fd, FIONBIO, &onoff) < 0)
 	    _pkg_perror(errlog, "pkg_getclient: FIONBIO 1");
@@ -793,10 +793,11 @@ pkg_getclient(int fd, const struct pkg_switch *switchp, void (*errlog) (char *ms
     }  while (s2 < 0);
 #ifdef FIONBIO
     if (nodelay) {
-	onoff = 0;
-	if (ioctl(fd, FIONBIO, &onoff) < 0)
+	int onoff2;
+	onoff2 = 0;
+	if (ioctl(fd, FIONBIO, &onoff2) < 0)
 	    _pkg_perror(errlog, "pkg_getclient: FIONBIO 2");
-	if (ioctl(s2, FIONBIO, &onoff) < 0)
+	if (ioctl(s2, FIONBIO, &onoff2) < 0)
 	    _pkg_perror(errlog, "pkg_getclient: FIONBIO 3");
     }
 #endif
@@ -1407,7 +1408,7 @@ pkg_waitfor (int type, char *buf, size_t len, struct pkg_conn *pc)
     if (pc->pkc_len == 0)
 	return 0;
 
-    /* See if incomming message is larger than user's buffer */
+    /* See if incoming message is larger than user's buffer */
     if (pc->pkc_len > len) {
 	char *bp;
 	size_t excess;
@@ -1496,7 +1497,7 @@ pkg_bwaitfor (int type, struct pkg_conn *pc)
 	snprintf(_pkg_errbuf, MAX_PKG_ERRBUF_SIZE,
 	    "pkg_bwaitfor: _pkg_inget %ld gave %ld\n", (long)pc->pkc_len, (long)i);
 	(pc->pkc_errlog)(_pkg_errbuf);
-      } 
+      }
     } else {
       snprintf(_pkg_errbuf, MAX_PKG_ERRBUF_SIZE, "pkg_bwaitfor: tried to read from null pc->pkc_buf!\n");
       return (char *)0;

@@ -48,7 +48,7 @@ class SCL_UTILS_EXPORT GenNodeArray {
         virtual int Index( GenericNode * gn );
         virtual int Index( GenericNode ** gn );
 
-        int Count();
+        int Count() const;
 
         virtual void Append( GenericNode * gn );
         virtual int Insert( GenericNode * gn );
@@ -74,7 +74,7 @@ inline GenericNode *& GenNodeArray::operator[]( int index ) {
     return _buf[index];
 }
 
-inline int GenNodeArray::Count() {
+inline int GenNodeArray::Count() const {
     return _count;
 }
 

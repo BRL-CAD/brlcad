@@ -1,7 +1,7 @@
 /*                          P I P E . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2012 United States Government as represented by
+ * Copyright (c) 2004-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -19,7 +19,7 @@
  */
 /** @file proc-db/pipe.c
  *
- * Generate piping (fuel, hydraulic lines, etc) in MGED format from
+ * Generate piping (fuel, hydraulic lines, etc.) in MGED format from
  * input (points in space defining the routing).  Makes both tubing
  * regions and fluid regions or solid cable.  Automatically generates
  * elbow regions (and fluid in the elbows) when the piping changes
@@ -111,11 +111,12 @@ Make_name(char *ptr, const char *form, const char *base, int number)
     bu_strlcat(ptr, scrat, NAMESIZE);
 }
 
+
 void
 Readpoints(void)
 {
     struct points *ptr, *prev;
-    fastf_t x, y, z;
+    double x, y, z;
 
     ptr = root;
     prev = NULL;
@@ -124,10 +125,10 @@ Readpoints(void)
     printf("X Y Z (^D for end): ");
     while (scanf("%lf%lf%lf", &x, &y, &z) ==  3) {
 	if (ptr == NULL) {
-	    ptr = (struct points *)bu_malloc(sizeof(struct points), "ptr");
+	    BU_ALLOC(ptr, struct points);
 	    root = ptr;
 	} else {
-	    ptr->next = (struct points *)bu_malloc(sizeof(struct points), "ptr->next");
+	    BU_ALLOC(ptr->next, struct points);
 	    ptr = ptr->next;
 	}
 	ptr->next = NULL;
@@ -142,6 +143,7 @@ Readpoints(void)
 	printf("X Y Z (^D for end): ");
     }
 }
+
 
 void
 Names(void)
@@ -208,6 +210,7 @@ Names(void)
     ptr->elbflu_r[0] = '\0';
 }
 
+
 void
 Normals(void)
 {
@@ -240,6 +243,7 @@ Normals(void)
 	ptr = ptr->next;
     }
 }
+
 
 void
 Adjust(void)
@@ -288,6 +292,7 @@ Adjust(void)
     VMOVE(ptr->p1, ptr->p);
     VMOVE(ptr->p2, ptr->p);
 }
+
 
 void
 Pipes(void)
@@ -452,6 +457,7 @@ Pipes(void)
     }
 }
 
+
 void
 Elbows(void)	/* make a tubing elbow and fluid elbow */
 {
@@ -542,6 +548,7 @@ Elbows(void)	/* make a tubing elbow and fluid elbow */
     }
 }
 
+
 void
 Groups(void)
 {
@@ -601,6 +608,7 @@ Groups(void)
 	}
     }
 }
+
 
 int
 main(int argc, char **argv)
@@ -757,6 +765,7 @@ main(int argc, char **argv)
     return 0;
 }
 
+
 void
 Usage(void)
 {
@@ -769,6 +778,7 @@ Usage(void)
     fprintf(stderr, "   -n -> nothing at the corners\n");
     fprintf(stderr, "   -c -> cable (no fluid)\n");
 }
+
 
 /*
  * Local Variables:

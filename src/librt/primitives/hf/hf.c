@@ -1,7 +1,7 @@
 /*                            H F . C
  * BRL-CAD
  *
- * Copyright (c) 1994-2012 United States Government as represented by
+ * Copyright (c) 1994-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -64,16 +64,16 @@
 
 /* All fields valid in string solid */
 const struct bu_structparse rt_hf_parse[] = {
-    {"%s",	128,	"cfile",	bu_offsetofarray(struct rt_hf_internal, cfile), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
-    {"%s",	128,	"dfile",	bu_offsetofarray(struct rt_hf_internal, dfile), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
-    {"%s",	8,	"fmt",		bu_offsetofarray(struct rt_hf_internal, fmt), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+    {"%s",	128,	"cfile",	HF_O(cfile), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+    {"%s",	128,	"dfile",	HF_O(dfile), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+    {"%s",	8,	"fmt",		HF_O(fmt), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
     {"%d",	1,	"w",		HF_O(w),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%d",	1,	"n",		HF_O(n),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%d",	1,	"shorts",	HF_O(shorts),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%f",	1,	"file2mm",	HF_O(file2mm),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f",	3,	"v",		HF_O(v[0]),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f",	3,	"x",		HF_O(x[0]),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f",	3,	"y",		HF_O(y[0]),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",	3,	"v",		HF_O(v),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",	3,	"x",		HF_O(x),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",	3,	"y",		HF_O(y),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%f",	1,	"xlen",		HF_O(xlen),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%f",	1,	"ylen",		HF_O(ylen),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%f",	1,	"zscale",	HF_O(zscale),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
@@ -81,8 +81,8 @@ const struct bu_structparse rt_hf_parse[] = {
 };
 /* Subset of fields found in cfile */
 const struct bu_structparse rt_hf_cparse[] = {
-    {"%s",	128,	"dfile",	bu_offsetofarray(struct rt_hf_internal, dfile), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
-    {"%s",	8,	"fmt",		bu_offsetofarray(struct rt_hf_internal, fmt), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+    {"%s",	128,	"dfile",	HF_O(dfile), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+    {"%s",	8,	"fmt",		HF_O(fmt), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
     {"%d",	1,	"w",		HF_O(w),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%d",	1,	"n",		HF_O(n),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%d",	1,	"shorts",	HF_O(shorts),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
@@ -131,7 +131,7 @@ rt_hf_to_dsp(struct rt_db_internal *db_intern)
 	return -1;
     }
 
-    BU_GET(dsp, struct rt_dsp_internal);
+    BU_ALLOC(dsp, struct rt_dsp_internal);
     bu_vls_init(&dsp->dsp_name);
     bu_vls_strcat(&dsp->dsp_name, hip->dfile);
     dsp->dsp_xcnt = hip->w;
@@ -197,7 +197,7 @@ rt_hf_to_dsp(struct rt_db_internal *db_intern)
  * Calculate the bounding RPP for an hf
  */
 int
-rt_hf_bbox(struct rt_db_internal *ip, point_t *min_pt, point_t *max_pt) {
+rt_hf_bbox(struct rt_db_internal *ip, point_t *min_pt, point_t *max_pt, const struct bn_tol *UNUSED(tol)) {
     struct rt_hf_internal *hip;
     vect_t height, work;
     vect_t hf_N, hf_X, hf_Y;
@@ -328,7 +328,7 @@ rt_hf_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
      */
 
     /*
-     * Start finding the location of the oposite vertex to V
+     * Start finding the location of the opposite vertex to V
      */
     VJOIN2(hf->hf_VO, hip->v, hip->xlen, hip->x, hip->ylen, hip->y);
 
@@ -339,8 +339,8 @@ rt_hf_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     if (fabs(dot) >tol->perp) {
 	/* not perpendicular, bad hf */
 	bu_log("Hf(%s): X not perpendicular to Y.\n", stp->st_name);
-	bu_free((genptr_t)hf, "struct hf");
-	stp->st_specific = (genptr_t) 0;
+	BU_PUT(hf, struct hf_specific);
+	stp->st_specific = (struct hf_specific *)NULL;
 	return 1;	/* BAD */
     }
     VCROSS(hf->hf_N, hf->hf_X, hf->hf_Y);
@@ -653,7 +653,7 @@ hf_cell_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct
     }
     /*
      * This is the two hit situation which can cause interesting
-     * problems.  Three are basicly five different cases that must be
+     * problems.  There are basically five different cases that must be
      * dealt with and each one requires that the ray be classified
      *
      * 1) The ray has hit two different planes at two different
@@ -834,8 +834,8 @@ rt_hf_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct s
      */
     for (j=-1; j>-7; j--) {
 	fastf_t dn;	/* Direction dot Normal */
-	fastf_t dxbdn;	/* distence beteen d and b * dn */
-	fastf_t s;	/* actual distence in mm */
+	fastf_t dxbdn;	/* distance between d and b * dn */
+	fastf_t s;	/* actual distance in mm */
 	int allIndex;
 
 	switch (j) {
@@ -957,7 +957,7 @@ rt_hf_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct s
     axis_plane_isect(oplane, out, rp, hf, xWidth, yWidth, &hp, &nhits);
 
     /*
-     * Gee, we've gotten much closer, we know that we hit the the
+     * Gee, we've gotten much closer, we know that we hit the
      * solid. Now it's time to see which cell we hit.  The Key here is
      * to use a fast DDA to check ONLY the cells we are interested in.
      * The basic idea and some of the pseudo code comes from:
@@ -1657,7 +1657,7 @@ rt_hf_free(struct soltab *stp)
 	bu_close_mapped_file(hf->hf_mp);
 	hf->hf_mp = (struct bu_mapped_file *)0;
     }
-    bu_free((char *)hf, "hf_specific");
+    BU_PUT(hf, struct hf_specific);
 }
 
 
@@ -1979,7 +1979,8 @@ rt_hf_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fas
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_HF;
     ip->idb_meth = &rt_functab[ID_HF];
-    ip->idb_ptr = bu_calloc(1, sizeof(struct rt_hf_internal), "rt_hf_internal");
+    BU_ALLOC(ip->idb_ptr, struct rt_hf_internal);
+
     xip = (struct rt_hf_internal *)ip->idb_ptr;
     xip->magic = RT_HF_INTERNAL_MAGIC;
 

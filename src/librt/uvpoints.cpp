@@ -1,7 +1,7 @@
 /*               U V P O I N T S . C P P
  * BRL-CAD
  *
- * Copyright (c) 2010-2012 United States Government as represented by
+ * Copyright (c) 2010-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -129,7 +129,7 @@ public:
 /**
  * QuadNode - Holds information about the UV coordinates associated with
  * a node in a subdivision quad tree.  Assumes the following relationship
- * between point indicies and positioning:
+ * between point indices and positioning:
  *
  *
  *                   3-------------------2

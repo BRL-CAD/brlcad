@@ -2,7 +2,7 @@
 #                         M O S S . S H
 # BRL-CAD
 #
-# Copyright (c) 2010-2012 United States Government as represented by
+# Copyright (c) 2010-2013 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -133,7 +133,7 @@ else
 	$A2P < "$1/regress/mosspix.asc" > moss_ref.pix
 	$PIXDIFF moss.pix moss_ref.pix > moss.pix.diff 2> moss-diff.log
 
-	echo -n moss.pix
+	echo "moss.pix vs moss_ref.pix differences:"
 	tr , '\012' < moss-diff.log | grep many
 	if test $? -ne 0 ; then
 	    echo ""

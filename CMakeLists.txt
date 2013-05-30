@@ -1,7 +1,7 @@
 #                     C M A K E L I S T S . T X T
 # BRL-CAD
 #
-# Copyright (c) 2010-2012 United States Government as represented by
+# Copyright (c) 2010-2013 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -98,9 +98,7 @@ cmake_minimum_required(VERSION 2.8.4)
 if(COMMAND CMAKE_POLICY)
   CMAKE_POLICY(SET CMP0003 NEW)
   CMAKE_POLICY(SET CMP0007 OLD)
-  if(${CMAKE_VERSION} VERSION_GREATER 2.8.3)
-    CMAKE_POLICY(SET CMP0017 OLD)
-  endif(${CMAKE_VERSION} VERSION_GREATER 2.8.3)
+  CMAKE_POLICY(SET CMP0017 OLD)
 endif(COMMAND CMAKE_POLICY)
 
 # set CMake project name
@@ -198,6 +196,11 @@ include(${CMAKE_SOURCE_DIR}/misc/CMake/BRLCAD_Util.cmake)
 # Define CMake routines for bookkeeping of build files
 include(${CMAKE_SOURCE_DIR}/misc/CMake/BRLCAD_CMakeFiles.cmake)
 
+# Make sure the BRL-CAD library list is initialized empty - this way
+# if pieces are disabled between one configure and the next, they
+# won't linger in the list
+set(BRLCAD_LIBS "" CACHE STRING "BRL-CAD libraries" FORCE)
+
 #---------------------------------------------------------------------
 # Define the current BRL-CAD version.
 # See HACKING for details on how to properly update the version
@@ -216,12 +219,12 @@ set(BRLCAD_VERSION "${BRLCAD_MAJOR_VERSION}.${BRLCAD_MINOR_VERSION}.${BRLCAD_PAT
 # been set by some other means (like a higher level CMakeLists.txt file
 # including this one.)
 
-# The location in which to install BRLCAD executables.
+# The location in which to install BRL-CAD executables.
 if(NOT BIN_DIR)
   set(BIN_DIR bin)
 endif(NOT BIN_DIR)
 
-# The location in which to install BRLCAD header files.
+# The location in which to install BRL-CAD header files.
 if(NOT INCLUDE_DIR)
   set(INCLUDE_DIR include)
 endif(NOT INCLUDE_DIR)
@@ -236,14 +239,9 @@ if(NOT CONF_DIR)
   set(CONF_DIR etc)
 endif(NOT CONF_DIR)
 
-# The location in which to install CMake scripts for packaging BRLCAD.
-if(NOT PACKAGE_DIR)
-  set(PACKAGE_DIR lib)
-endif(NOT PACKAGE_DIR)
-
 # The location in which to install BRL-CAD data files
 if(NOT DATA_DIR)
-  set(DATA_DIR share/brlcad/${BRLCAD_VERSION})
+  set(DATA_DIR share)
 endif(NOT DATA_DIR)
 
 # The location in which to install BRL-CAD Manual pages
@@ -253,8 +251,18 @@ endif(NOT MAN_DIR)
 
 # The location in which to install BRL-CAD documentation files
 if(NOT DOC_DIR)
-  set(DOC_DIR doc)
+  set(DOC_DIR ${DATA_DIR}/doc)
 endif(NOT DOC_DIR)
+
+# Make sure no absolute paths have been supplied to these variables
+set(INSTALL_DIRS BIN INCLUDE LIB CONF DATA MAN DOC)
+foreach(instdir ${INSTALL_DIRS})
+  get_filename_component(instdir_full ${${instdir}_DIR} ABSOLUTE)
+  if("${${instdir}_DIR}" STREQUAL "${instdir_full}")
+    message(FATAL_ERROR "Error - absolute path supplied for ${instdir}_DIR.  This path must be relative - e.g. \"bin\" instead of \"/usr/bin\"")
+    set(HAVE_INSTALL_DIR_FULL_PATH 1)
+  endif("${${instdir}_DIR}" STREQUAL "${instdir_full}")
+endforeach(instdir ${INSTALL_DIRS})
 
 #---------------------------------------------------------------------
 # Searching the system for packages presents something of a dilemma -
@@ -322,11 +330,12 @@ mark_as_advanced(CMAKE_SYSTEM_IGNORE_PATH)
 # For cleaning files as part of the distclean command, CMake needs
 # to be aware of what various generators will (or might) write out
 # in each build directory.
+set(DISTCLEAN_OUTFILES CTestTestfile.cmake)
 if("${CMAKE_GENERATOR}" MATCHES "Make")
-  set(DISTCLEAN_OUTFILES Makefile)
+  set(DISTCLEAN_OUTFILES ${DISTCLEAN_OUTFILES} Makefile)
 endif("${CMAKE_GENERATOR}" MATCHES "Make")
 if("${CMAKE_GENERATOR}" MATCHES "Ninja")
-  set(DISTCLEAN_OUTFILES build.ninja rules.ninja)
+  set(DISTCLEAN_OUTFILES ${DISTCLEAN_OUTFILES} build.ninja rules.ninja)
 endif("${CMAKE_GENERATOR}" MATCHES "Ninja")
 
 #---------------------------------------------------------------------
@@ -401,7 +410,7 @@ if(NOT BRLCAD_IS_SUBBUILD)
   # check that the file is part of the source tree and not itself a
   # generated file, but not reject full-path entries since there are quite a
   # few of them. This means that, unlike CMAKEFILES's reliance on full vs.
-  # relative path comparisions, generated files supplied to configure_file
+  # relative path comparisons, generated files supplied to configure_file
   # need to have the GENERATED property set in order to reliably tell which
   # files should be added to the build system's lists.  Not
   # so critical with not-in-src-dir builds, but makes a big difference
@@ -435,7 +444,7 @@ if(NOT BRLCAD_IS_SUBBUILD)
     endif(NOT ${targetfile} MATCHES "distclean")
   endfunction(configure_file)
 
-  # Override and wrap add_subdirctory.
+  # Override and wrap add_subdirectory.
   function(add_subdirectory name)
     _add_subdirectory(${name} ${ARGN})
     set_property(GLOBAL APPEND PROPERTY CMAKE_IGNORE_FILES "${CMAKE_CURRENT_SOURCE_DIR}/${name}")
@@ -569,48 +578,28 @@ set(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} /usr/local)
 set(CMAKE_REQUIRED_INCLUDES ${CMAKE_REQUIRED_INCLUDES} /usr/local/include)
 
 #---------------------------------------------------------------------
-# In the case of CMake, we're usually doing one of several Build
-# Types.  It's very rare to want to NOT specify a build type, so
-# make it a little more work to do so.
-if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_BUILD_TYPE_MSG AND NOT CMAKE_CONFIGURATION_TYPES)
-  message("CMake build type not set - performing Debug build.")
-  message("* To use optimized settings intended for a package or system install,")
-  message("  specify a Release build (on the command line, -DCMAKE_BUILD_TYPE=Release).")
-  message("* To force CMake to not set build type, specify -DCMAKE_BUILD_TYPE=NONE")
-  set(CMAKE_BUILD_TYPE "Debug" CACHE STRING "Build Type" FORCE)
-  set(CMAKE_BUILD_TYPE_MSG TRUE CACHE INTERNAL "Printed build type info message")
-endif(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_BUILD_TYPE_MSG AND NOT CMAKE_CONFIGURATION_TYPES)
-if(NOT CMAKE_CONFIGURATION_TYPES)
-  set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS Debug Release)
-else(NOT CMAKE_CONFIGURATION_TYPES)
-  mark_as_advanced(CMAKE_BUILD_TYPE)
-endif(NOT CMAKE_CONFIGURATION_TYPES)
 
 # Normalize the build type capitalization and handle NONE case
-string(TOUPPER "${CMAKE_BUILD_TYPE}" BUILD_TYPE_UPPER)
-if ("${BUILD_TYPE_UPPER}" STREQUAL "RELEASE")
-  set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Build Type" FORCE)
-endif ("${BUILD_TYPE_UPPER}" STREQUAL "RELEASE")
-if ("${BUILD_TYPE_UPPER}" STREQUAL "DEBUG")
-  set(CMAKE_BUILD_TYPE "Debug" CACHE STRING "Build Type" FORCE)
-endif ("${BUILD_TYPE_UPPER}" STREQUAL "DEBUG")
-
-if(CMAKE_BUILD_TYPE MATCHES "NONE")
-  set(CMAKE_BUILD_TYPE "")
-endif(CMAKE_BUILD_TYPE MATCHES "NONE")
+if(CMAKE_BUILD_TYPE)
+  string(TOUPPER "${CMAKE_BUILD_TYPE}" BUILD_TYPE_UPPER)
+  if ("${BUILD_TYPE_UPPER}" STREQUAL "RELEASE")
+    set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Build Type" FORCE)
+  endif ("${BUILD_TYPE_UPPER}" STREQUAL "RELEASE")
+  if ("${BUILD_TYPE_UPPER}" STREQUAL "DEBUG")
+    set(CMAKE_BUILD_TYPE "Debug" CACHE STRING "Build Type" FORCE)
+  endif ("${BUILD_TYPE_UPPER}" STREQUAL "DEBUG")
+endif(CMAKE_BUILD_TYPE)
 
 #---------------------------------------------------------------------
-# The location in which to install BRLCAD.  Only do this if
+# The location in which to install BRL-CAD.  Only do this if
 # CMAKE_INSTALL_PREFIX hasn't been set already, to try and allow
 # parent builds (if any) some control.
 if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT OR NOT CMAKE_INSTALL_PREFIX)
   if(NOT CMAKE_CONFIGURATION_TYPES)
     if("${CMAKE_BUILD_TYPE}" MATCHES "Release")
       set(CMAKE_INSTALL_PREFIX "/usr/brlcad/rel-${BRLCAD_VERSION}")
-    elseif("${CMAKE_BUILD_TYPE}" MATCHES "Debug")
-      set(CMAKE_INSTALL_PREFIX "/usr/brlcad/dev-${BRLCAD_VERSION}")
     else("${CMAKE_BUILD_TYPE}" MATCHES "Release")
-      set(CMAKE_INSTALL_PREFIX "/usr/brlcad")
+      set(CMAKE_INSTALL_PREFIX "/usr/brlcad/dev-${BRLCAD_VERSION}")
     endif("${CMAKE_BUILD_TYPE}" MATCHES "Release")
   else(NOT CMAKE_CONFIGURATION_TYPES)
     if(MSVC)
@@ -620,24 +609,25 @@ if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT OR NOT CMAKE_INSTALL_PREFIX)
 	set(CMAKE_INSTALL_PREFIX "C:/Program Files (x86)/BRL-CAD ${BRLCAD_VERSION}")
       endif(CMAKE_CL_64)
     else(MSVC)
-      set(CMAKE_INSTALL_PREFIX "/usr/brlcad/\${BUILD_TYPE}-${BRLCAD_VERSION}")
+      set(CMAKE_INSTALL_PREFIX "/usr/brlcad/dev-${BRLCAD_VERSION}")
     endif(MSVC)
   endif(NOT CMAKE_CONFIGURATION_TYPES)
-  set(CMAKE_INSTALL_PREFIX ${CMAKE_INSTALL_PREFIX} CACHE STRING "BRL-CAD install prefix" FORCE)
+  set(CMAKE_INSTALL_PREFIX ${CMAKE_INSTALL_PREFIX} CACHE PATH "BRL-CAD install prefix" FORCE)
   set(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT 0)
 endif(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT OR NOT CMAKE_INSTALL_PREFIX)
 set(BRLCAD_PREFIX ${CMAKE_INSTALL_PREFIX} CACHE STRING "BRL-CAD install prefix")
 mark_as_advanced(BRLCAD_PREFIX)
 
-# If we've got a Release build with a Debug path or vice versa, change it - that
-# is probably the most "expected" behavior.
+# If we've got a Release build with a Debug path or vice versa, warn about it
+# A "make install" of a Release build into a dev install directory or vice
+# versa is going to result in an install that doesn't respect BRL-CAD standard
+# naming conventions
 if("${CMAKE_BUILD_TYPE}" MATCHES "Release" AND ${CMAKE_INSTALL_PREFIX} STREQUAL "/usr/brlcad/dev-${BRLCAD_VERSION}")
-  set(CMAKE_INSTALL_PREFIX "/usr/brlcad/rel-${BRLCAD_VERSION}" CACHE STRING "BRL-CAD install prefix" FORCE)
+  message(FATAL_ERROR "\nInstallation directory (CMAKE_INSTALL_PREFIX) is set to /usr/brlcad/dev-${BRLCAD_VERSION}, but build type is set to Release!\n")
 endif("${CMAKE_BUILD_TYPE}" MATCHES "Release" AND ${CMAKE_INSTALL_PREFIX} STREQUAL "/usr/brlcad/dev-${BRLCAD_VERSION}")
 if("${CMAKE_BUILD_TYPE}" MATCHES "Debug" AND ${CMAKE_INSTALL_PREFIX} STREQUAL "/usr/brlcad/rel-${BRLCAD_VERSION}")
-  set(CMAKE_INSTALL_PREFIX "/usr/brlcad/dev-${BRLCAD_VERSION}" CACHE STRING "BRL-CAD install prefix" FORCE)
-endif("${CMAKE_BUILD_TYPE}" MATCHES "Debug" AND ${CMAKE_INSTALL_PREFIX}	STREQUAL "/usr/brlcad/rel-${BRLCAD_VERSION}")
-
+  message(FATAL_ERROR "\nInstallation directory (CMAKE_INSTALL_PREFIX) is set to /usr/brlcad/rel-${BRLCAD_VERSION}, but build type is set to Debug!\n")
+endif("${CMAKE_BUILD_TYPE}" MATCHES "Debug" AND ${CMAKE_INSTALL_PREFIX} STREQUAL "/usr/brlcad/rel-${BRLCAD_VERSION}")
 
 #---------------------------------------------------------------------
 # The following logic is what allows binaries to run successfully in
@@ -766,11 +756,6 @@ CONFIG_H_APPEND(BRLCAD "/**** Define statements for CMake ****/\n")
 CONFIG_H_APPEND(BRLCAD "#ifndef __CONFIG_H__\n")
 CONFIG_H_APPEND(BRLCAD "#define __CONFIG_H__\n")
 
-# If we're building on Windows, start off with the config_win.h file
-if(WIN32)
-  CONFIG_H_APPEND(BRLCAD "#include \"config_win_cmake.h\"\n")
-endif(WIN32)
-
 # Set up some of the define statements for path information and other basics
 CONFIG_H_APPEND(BRLCAD "#define PACKAGE \"brlcad\"\n")
 CONFIG_H_APPEND(BRLCAD "#define PACKAGE_BUGREPORT \"http://brlcad.org\"\n")
@@ -778,8 +763,13 @@ CONFIG_H_APPEND(BRLCAD "#define PACKAGE_NAME \"BRL-CAD\"\n")
 CONFIG_H_APPEND(BRLCAD "#define PACKAGE_STRING \"BRL-CAD ${BRLCAD_VERSION}\"\n")
 CONFIG_H_APPEND(BRLCAD "#define PACKAGE_TARNAME \"brlcad\"\n")
 CONFIG_H_APPEND(BRLCAD "#define BRLCAD_DATA \"${CMAKE_INSTALL_PREFIX}/${DATA_DIR}\"\n")
-CONFIG_H_APPEND(BRLCAD "#define BRLCAD_DATA_SUBPATH \"${DATA_DIR}\"\n")
 CONFIG_H_APPEND(BRLCAD "#define BRLCAD_ROOT \"${CMAKE_INSTALL_PREFIX}\"\n")
+CONFIG_H_APPEND(BRLCAD "#define BRLCAD_BIN_DIR \"${BIN_DIR}\"\n")
+CONFIG_H_APPEND(BRLCAD "#define BRLCAD_LIB_DIR \"${LIB_DIR}\"\n")
+CONFIG_H_APPEND(BRLCAD "#define BRLCAD_INCLUDE_DIR \"${INCLUDE_DIR}\"\n")
+CONFIG_H_APPEND(BRLCAD "#define BRLCAD_DATA_DIR \"${DATA_DIR}\"\n")
+CONFIG_H_APPEND(BRLCAD "#define BRLCAD_DOC_DIR \"${DOC_DIR}\"\n")
+CONFIG_H_APPEND(BRLCAD "#define BRLCAD_MAN_DIR \"${MAN_DIR}\"\n")
 CONFIG_H_APPEND(BRLCAD "#define PACKAGE_VERSION \"${BRLCAD_VERSION}\"\n")
 CONFIG_H_APPEND(BRLCAD "#define VERSION \"${BRLCAD_VERSION}\"\n")
 
@@ -849,6 +839,7 @@ if(MSVC)
 	set(BRLCAD_WORD_SIZE "64BIT" CACHE STRING WORD_SIZE_LABEL FORCE)
       endif(NOT "${BRLCAD_WORD_SIZE}" MATCHES "AUTO")
     endif(NOT ${CMAKE_WORD_SIZE} MATCHES "64BIT")
+    add_definitions("-D_WIN64")
   else(CMAKE_CL_64)
     if(NOT ${CMAKE_WORD_SIZE} MATCHES "32BIT")
       set(CMAKE_WORD_SIZE "32BIT")
@@ -1012,15 +1003,27 @@ mark_as_advanced(BRLCAD_ENABLE_AQUA)
 # Install example BRL-CAD Geometry Files
 option(BRLCAD_INSTALL_EXAMPLE_GEOMETRY "Install the example BRL-CAD geometry files." ON)
 
-# Enable features requiring X11
+# test for X11 on all platforms since we don't know when/where we'll find it
+include(${BRLCAD_CMAKE_DIR}/FindX11.cmake)
+
+# Set whether X11 is enabled or disabled by default
 if(WIN32)
+  # even if there is x11, we default to native
   option(BRLCAD_ENABLE_X11 "Use X11." OFF)
-  mark_as_advanced(BRLCAD_ENABLE_X11)
 elseif(BRLCAD_ENABLE_AQUA)
+  # aqua implies no X11
   option(BRLCAD_ENABLE_X11 "Use X11." OFF)
 else(WIN32)
-  option(BRLCAD_ENABLE_X11 "Use X11." ON)
+  # make everywhere else depend on whether we found a suitable X11
+  if(X11_X11_LIB AND X11_Xext_LIB AND X11_Xi_LIB AND X11_Xlib_INCLUDE_PATH)
+    option(BRLCAD_ENABLE_X11 "Use X11." ON)
+  else(X11_X11_LIB AND X11_Xext_LIB AND X11_Xi_LIB AND X11_Xlib_INCLUDE_PATH)
+    option(BRLCAD_ENABLE_X11 "Use X11." OFF)
+  endif(X11_X11_LIB AND X11_Xext_LIB AND X11_Xi_LIB AND X11_Xlib_INCLUDE_PATH)
 endif(WIN32)
+mark_as_advanced(BRLCAD_ENABLE_X11)
+
+# if X11 is enabled, make sure aqua is off
 if(BRLCAD_ENABLE_X11)
   set(BRLCAD_ENABLE_AQUA OFF CACHE STRING "Don't use Aqua if we're doing X11" FORCE)
   set(OPENGL_USE_AQUA OFF CACHE STRING "Don't use Aqua if we're doing X11" FORCE)
@@ -1031,24 +1034,14 @@ mark_as_advanced(OPENGL_USE_AQUA)
 # be on, as a lot of functionality in BRL-CAD depends on Tk
 option(BRLCAD_ENABLE_TK "Enable features requiring the Tk toolkit" ON)
 mark_as_advanced(BRLCAD_ENABLE_TK)
-if(NOT WIN32)
-  if(APPLE)
-    if(NOT BRLCAD_ENABLE_X11 AND NOT BRLCAD_ENABLE_AQUA)
-      set(BRLCAD_ENABLE_TK OFF)
-    endif(NOT BRLCAD_ENABLE_X11 AND NOT BRLCAD_ENABLE_AQUA)
-    if(BRLCAD_ENABLE_X11)
-      set(TK_X11_GRAPHICS ON CACHE STRING "Need X11 Tk" FORCE)
-    endif(BRLCAD_ENABLE_X11)
-  else(APPLE)
-    if(NOT BRLCAD_ENABLE_X11)
-      set(BRLCAD_ENABLE_TK OFF)
-    else(NOT BRLCAD_ENABLE_X11)
-      set(TK_X11_GRAPHICS ON CACHE STRING "Need X11 Tk" FORCE)
-    endif(NOT BRLCAD_ENABLE_X11)
-  endif(APPLE)
-endif(NOT WIN32)
+if(NOT BRLCAD_ENABLE_X11 AND NOT BRLCAD_ENABLE_AQUA AND NOT WIN32)
+  set(BRLCAD_ENABLE_TK OFF)
+endif(NOT BRLCAD_ENABLE_X11 AND NOT BRLCAD_ENABLE_AQUA AND NOT WIN32)
+if(BRLCAD_ENABLE_X11)
+  set(TK_X11_GRAPHICS ON CACHE STRING "Need X11 Tk" FORCE)
+endif(BRLCAD_ENABLE_X11)
 
-# Enable features requring OPENGL
+# Enable features requiring OPENGL
 # Be smart about this - if we don't have X11 or Aqua and we're
 # not on Windows, we're non-graphical and that means OpenGL is
 # a no-go.  The Windows version would have to be some sort of
@@ -1056,29 +1049,12 @@ endif(NOT WIN32)
 # about that... for now, on Win32 don't try OpenGL if Tk is
 # off.  That'll hold until we get a non-Tk based GUI - then
 # setting non-graphical on Windows will take more thought.
-if(NOT WIN32)
-  if(APPLE)
-    if(NOT BRLCAD_ENABLE_X11 AND NOT BRLCAD_ENABLE_AQUA)
-      set(OPENGL_FOUND OFF)
-      set(BRLCAD_ENABLE_OPENGL OFF CACHE BOOL "Disabled - NOT BRLCAD_ENABLE_X11 AND NOT BRLCAD_ENABLE_AQUA" FORCE)
-    else(NOT BRLCAD_ENABLE_X11 AND NOT BRLCAD_ENABLE_AQUA)
-      include(${BRLCAD_CMAKE_DIR}/FindGL.cmake)
-    endif(NOT BRLCAD_ENABLE_X11 AND NOT BRLCAD_ENABLE_AQUA)
-  else(APPLE)
-    if(NOT BRLCAD_ENABLE_X11)
-      set(OPENGL_FOUND OFF)
-      set(BRLCAD_ENABLE_OPENGL OFF CACHE BOOL "Disabled - NOT BRLCAD_ENABLE_X11" FORCE)
-    else(NOT BRLCAD_ENABLE_X11)
-      include(${BRLCAD_CMAKE_DIR}/FindGL.cmake)
-    endif(NOT BRLCAD_ENABLE_X11)
-  endif(APPLE)
-else(NOT WIN32)
-  if(BRLCAD_ENABLE_TK)
-    include(${BRLCAD_CMAKE_DIR}/FindGL.cmake)
-  else(BRLCAD_ENABLE_TK)
-    set(BRLCAD_ENABLE_OPENGL OFF CACHE BOOL "Disabled - WIN32 AND NOT BRLCAD_ENABLE_TK" FORCE)
-  endif(BRLCAD_ENABLE_TK)
-endif(NOT WIN32)
+if(NOT BRLCAD_ENABLE_X11 AND NOT BRLCAD_ENABLE_AQUA AND NOT WIN32)
+  set(OPENGL_FOUND OFF)
+  set(BRLCAD_ENABLE_OPENGL OFF CACHE BOOL "Disabled - NOT BRLCAD_ENABLE_X11 and NOT BRLCAD_ENABLE_AQUA" FORCE)
+else(NOT BRLCAD_ENABLE_X11 AND NOT BRLCAD_ENABLE_AQUA AND NOT WIN32)
+  include(${BRLCAD_CMAKE_DIR}/FindGL.cmake)
+endif(NOT BRLCAD_ENABLE_X11 AND NOT BRLCAD_ENABLE_AQUA AND NOT WIN32)
 
 set(BRLCAD_ENABLE_OPENGL_ALIASES
   ENABLE_OPENGL
@@ -1105,16 +1081,146 @@ if(BRLCAD_ENABLE_AQUA)
   set(OPENGL_USE_AQUA ON CACHE STRING "Aqua enabled - use Aqua OpenGL" FORCE)
 endif(BRLCAD_ENABLE_AQUA)
 
+#----------------------------------------------------------------------
+# The following are fine-grained options for enabling/disabling compiler
+# and source code definition settings.  Typically these are set to
+# various configurations by the toplevel CMAKE_BUILD_TYPE setting, but
+# can also be individually set.
 
-# Enable JOVE.
-option(BRLCAD_ENABLE_JOVE "Enable jove editor build." OFF)
-mark_as_advanced(BRLCAD_ENABLE_JOVE)
+# Enable/disable runtime debugging - these are protections for
+# minimizing the possibility of corrupted data files.  Generally
+# speaking these should be left on.
+set(BRLCAD_ENABLE_RUNTIME_DEBUG_ALIASES
+  ENABLE_RUNTIME_DEBUG
+  ENABLE_RUN_TIME_DEBUG
+  ENABLE_RUNTIME_DEBUGGING
+  ENABLE_RUN_TIME_DEBUGGING)
+set(BRLCAD_ENABLE_RUNTIME_DEBUG_DESCRIPTION "
+Enables support for application and library debugging facilities.
+Disabling the run-time debugging facilities can provide a significant
+(10%-30%) performance boost at the expense of extensive error
+checking (that in turn help prevent corruption of your data).
+Default is "ON", and should only be disabled for read-only render
+work where performance is critical.
+")
+BRLCAD_OPTION(ON BRLCAD_ENABLE_RUNTIME_DEBUG BRLCAD_ENABLE_RUNTIME_DEBUG_ALIASES BRLCAD_ENABLE_RUNTIME_DEBUG_DESCRIPTION)
+mark_as_advanced(BRLCAD_ENABLE_RUNTIME_DEBUG)
+if(NOT BRLCAD_ENABLE_RUNTIME_DEBUG)
+  message("}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}")
+  message("While disabling run-time debugging should increase")
+  message("performance, it will likewise remove several")
+  message("data-protection safeguards that are in place to")
+  message("minimize the possibility of corrupted data files")
+  message("in the inevitable event of a user encountering a bug.")
+  message("You have been warned.  Proceed at your own risk.")
+  message("{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{")
+  CONFIG_H_APPEND(BRLCAD "/*Define to not do anything for macros that only bomb on a fatal error. */\n")
+  CONFIG_H_APPEND(BRLCAD "#define NO_BOMBING_MACROS 1\n")
+  CONFIG_H_APPEND(BRLCAD "/*Define to not perform magic number checking */\n")
+  CONFIG_H_APPEND(BRLCAD "#define NO_MAGIC_CHECKING 1\n")
+  CONFIG_H_APPEND(BRLCAD "/*Define to not check for divide by zero during ray shots */\n")
+  CONFIG_H_APPEND(BRLCAD "#define NO_BADRAY_CHECKING 1\n")
+  CONFIG_H_APPEND(BRLCAD "/*Define to not provide run-time debug facilities via rt_g.debug */\n")
+  CONFIG_H_APPEND(BRLCAD "#define NO_DEBUG_CHECKING 1\n")
+endif(NOT BRLCAD_ENABLE_RUNTIME_DEBUG)
 
+# Enable debug flags during compilation - we always want to use these
+# unless explicitly told not to.
+set(BRLCAD_FLAGS_DEBUG_ALIASES
+  ENABLE_DEBUG
+  ENABLE_FLAGS_DEBUG
+  ENABLE_DEBUG_FLAGS
+  )
+set(BRLCAD_FLAGS_DEBUG_DESCRIPTION "
+Add compiler flags to aid in program debugging.  Defaults to ON.
+")
+BRLCAD_OPTION(ON BRLCAD_FLAGS_DEBUG BRLCAD_FLAGS_DEBUG_ALIASES BRLCAD_FLAGS_DEBUG_DESCRIPTION)
+
+# A variety of debugging messages in the code key off of the DEBUG
+# definition - set it according to whether we're using debug flags.
+if(BRLCAD_FLAGS_DEBUG)
+  CONFIG_H_APPEND(BRLCAD "#define DEBUG 1\n")
+endif(BRLCAD_FLAGS_DEBUG)
+
+# Build with compiler warning flags
+set(BRLCAD_ENABLE_COMPILER_WARNINGS_ALIASES
+  ENABLE_WARNINGS
+  ENABLE_COMPILER_WARNINGS
+  )
+set(BRLCAD_ENABLE_COMPILER_WARNINGS_DESCRIPTION "
+Use extra compiler warning flags when compiling C/C++ code.  Defaults to ON.
+")
+BRLCAD_OPTION(ON BRLCAD_ENABLE_COMPILER_WARNINGS
+  BRLCAD_ENABLE_COMPILER_WARNINGS_ALIASES
+  BRLCAD_ENABLE_COMPILER_WARNINGS_DESCRIPTION)
+mark_as_advanced(BRLCAD_ENABLE_COMPILER_WARNINGS)
+
+# Enable/disable strict compiler settings - these are used for building
+# BRL-CAD by default, but not src/other code.  Always used for BRL-CAD
+# code unless the NOSTRICT option is specified when defining a target
+# with BRLCAD_ADDEXEC or BRLCAD_ADDLIB.  If only C++ files in a target
+# are not compatible with strict, the NOSTRICTCXX option can be used.
+set(BRLCAD_ENABLE_STRICT_ALIASES
+  ENABLE_STRICT
+  ENABLE_STRICT_COMPILE
+  ENABLE_STRICT_COMPILE_FLAGS)
+set(BRLCAD_ENABLE_STRICT_DESCRIPTION "
+Causes all compilation warnings for C code to be treated as errors.  This is now
+the default for BRL-CAD source code, and developers should address issues
+discovered by these flags whenever possible rather than disabling strict
+mode.
+")
+BRLCAD_OPTION(ON BRLCAD_ENABLE_STRICT BRLCAD_ENABLE_STRICT_ALIASES BRLCAD_ENABLE_STRICT_DESCRIPTION)
+if(BRLCAD_ENABLE_STRICT)
+  mark_as_advanced(BRLCAD_ENABLE_STRICT)
+  CONFIG_H_APPEND(BRLCAD "#define STRICT_FLAGS 1\n")
+endif(BRLCAD_ENABLE_STRICT)
+
+# Build with compiler optimization flags.  This should normally be on for
+# release builds.
+AUTO_OPTION(BRLCAD_FLAGS_OPTIMIZATION BRLCAD_OPTIMIZED_BUILD "OFF" "ON")
+
+# By default, we don't want any error reports at all from src/other
+option(BRLCAD_DISABLE_SRC_OTHER_WARN "Disable warnings for src/other" ON)
+mark_as_advanced(BRLCAD_DISABLE_SRC_OTHER_WARN)
+
+# Build with full compiler lines visible by default (won't need make
+# VERBOSE=1) on command line
+option(BRLCAD_ENABLE_VERBOSE_PROGRESS "verbose output" OFF)
+mark_as_advanced(BRLCAD_ENABLE_VERBOSE_PROGRESS)
+if(BRLCAD_ENABLE_VERBOSE_PROGRESS)
+  set(CMAKE_VERBOSE_MAKEFILE ON)
+endif(BRLCAD_ENABLE_VERBOSE_PROGRESS)
+
+# Build with profiling support
+option(BRLCAD_ENABLE_PROFILING "Build with profiling support" OFF)
+mark_as_advanced(BRLCAD_ENABLE_PROFILING)
+
+# Build with dtrace support
+option(BRLCAD_ENABLE_DTRACE "Build with dtrace support" OFF)
+mark_as_advanced(BRLCAD_ENABLE_DTRACE)
+if(BRLCAD_ENABLE_DTRACE)
+  BRLCAD_INCLUDE_FILE(sys/sdt.h HAVE_SYS_SDT_H)
+  if(NOT HAVE_SYS_SDT_H)
+    set(BRLCAD_ENABLE_DTRACE OFF)
+  endif(NOT HAVE_SYS_SDT_H)
+endif(BRLCAD_ENABLE_DTRACE)
+
+# Take advantage of parallel processors if available - highly recommended
+option(BRLCAD_ENABLE_SMP "Enable SMP architecture parallel computation support" ON)
+if(WIN32 AND BRLCAD_ENABLE_SMP)
+  message("SMP Support is not ready on Windows - disabling")
+  set(BRLCAD_ENABLE_SMP OFF)
+endif(WIN32 AND BRLCAD_ENABLE_SMP)
+mark_as_advanced(BRLCAD_ENABLE_SMP)
+if(BRLCAD_ENABLE_SMP)
+  CONFIG_H_APPEND(BRLCAD "#define PARALLEL 1\n")
+endif(BRLCAD_ENABLE_SMP)
 
 #----------------------------------------------------------------------
 # There are extra documentation files available requiring DocBook
 # They are quite useful in graphical interfaces, but also add considerably
-# to the overall build time.  If necesssary BRL-CAD  provides its own
+# to the overall build time.  If necessary BRL-CAD  provides its own
 # xsltproc (see src/other/xmltools), so the html and man page
 # outputs are always potentially available.  PDF output, on the other hand,
 # needs Apache FOP.  FOP is not a candidate for bundling with BRL-CAD for
@@ -1202,148 +1308,18 @@ for man pages only.  Defaults to OFF.
 CMAKE_DEPENDENT_OPTION(BRLCAD_EXTRADOCS_PDF "Build PDF output from DocBook documentation" OFF "BRLCAD_EXTRADOCS;APACHE_FOP" OFF)
 CMAKE_DEPENDENT_OPTION(BRLCAD_EXTRADOCS_PDF_MAN "Build PDF output from DocBook documentation for man pages" ON "BRLCAD_EXTRADOCS_PDF" OFF)
 
-# Don't do it by default, but provide an option to perform validation as part
-# of the DocBook build - sort of a "strict flags" mode for DocBook
-CMAKE_DEPENDENT_OPTION(BRLCAD_EXTRADOCS_VALIDATE "Perform validation for DocBook documentation" OFF "BRLCAD_EXTRADOCS" OFF)
+# Provide an option to enable/disable XML validation as part
+# of the DocBook build - sort of a "strict flags" mode for DocBook.
+# By default, this will be enabled when extra docs are built and
+# the toplevel BRLCAD_ENABLE_STRICT setting is enabled.
+# Unfortunately, Visual Studio 2010 seems to have issues when we
+# enable validation on top of everything else... not clear why,
+# unless build target counts >1800 are beyond MSVC's practical
+# limit.  Until we either find a resolution or a way to reduce
+# the target count on MSVC, disable validation there.
+CMAKE_DEPENDENT_OPTION(BRLCAD_EXTRADOCS_VALIDATE "Perform validation for DocBook documentation" ON "BRLCAD_EXTRADOCS;BRLCAD_ENABLE_STRICT" OFF)
 mark_as_advanced(BRLCAD_EXTRADOCS_VALIDATE)
 
-#----------------------------------------------------------------------
-# The following are fine-grained options for enabling/disabling compiler
-# and source code definition settings.  Typically these are set to
-# various configurations by the toplevel CMAKE_BUILD_TYPE setting, but
-# can also be individually set.
-
-# Enable/disable runtime debugging - these are protections for
-# minimizing the possibility of corrupted data files.  Generally
-# speaking these should be left on.
-set(BRLCAD_ENABLE_RUNTIME_DEBUG_ALIASES
-  ENABLE_RUNTIME_DEBUG
-  ENABLE_RUN_TIME_DEBUG
-  ENABLE_RUNTIME_DEBUGGING
-  ENABLE_RUN_TIME_DEBUGGING)
-set(BRLCAD_ENABLE_RUNTIME_DEBUG_DESCRIPTION "
-Enables support for application and library debugging facilities.
-Disabling the run-time debugging facilities can provide a significant
-(10%-30%) performance boost at the expense of extensive error
-checking (that in turn help prevent corruption of your data).
-Default is "ON", and should only be disabled for read-only render
-work where performance is critical.
-")
-BRLCAD_OPTION(ON BRLCAD_ENABLE_RUNTIME_DEBUG BRLCAD_ENABLE_RUNTIME_DEBUG_ALIASES BRLCAD_ENABLE_RUNTIME_DEBUG_DESCRIPTION)
-mark_as_advanced(BRLCAD_ENABLE_RUNTIME_DEBUG)
-if(NOT BRLCAD_ENABLE_RUNTIME_DEBUG)
-  message("}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}")
-  message("While disabling run-time debugging should increase")
-  message("performance, it will likewise remove several")
-  message("data-protection safeguards that are in place to")
-  message("minimize the possibility of corrupted data files")
-  message("in the inevitable event of a user encountering a bug.")
-  message("You have been warned.  Proceed at your own risk.")
-  message("{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{")
-  CONFIG_H_APPEND(BRLCAD "/*Define to not do anything for macros that only bomb on a fatal error. */\n")
-  CONFIG_H_APPEND(BRLCAD "#define NO_BOMBING_MACROS 1\n")
-  CONFIG_H_APPEND(BRLCAD "/*Define to not perform magic number checking */\n")
-  CONFIG_H_APPEND(BRLCAD "#define NO_MAGIC_CHECKING 1\n")
-  CONFIG_H_APPEND(BRLCAD "/*Define to not check for divide by zero during ray shots */\n")
-  CONFIG_H_APPEND(BRLCAD "#define NO_BADRAY_CHECKING 1\n")
-  CONFIG_H_APPEND(BRLCAD "/*Define to not provide run-time debug facilities via rt_g.debug */\n")
-  CONFIG_H_APPEND(BRLCAD "#define NO_DEBUG_CHECKING 1\n")
-endif(NOT BRLCAD_ENABLE_RUNTIME_DEBUG)
-
-# Enable debug flags during compilation - we always want to use these
-# unless explicitly told not to.
-set(BRLCAD_FLAGS_DEBUG_ALIASES
-  ENABLE_DEBUG
-  ENABLE_FLAGS_DEBUG
-  ENABLE_DEBUG_FLAGS
-  )
-set(BRLCAD_FLAGS_DEBUG_DESCRIPTION "
-Add compiler flags to aid in program debugging.  Defaults to ON.
-")
-BRLCAD_OPTION(ON BRLCAD_FLAGS_DEBUG BRLCAD_FLAGS_DEBUG_ALIASES BRLCAD_FLAGS_DEBUG_DESCRIPTION)
-
-# A variety of debugging messages in the code key off of the DEBUG
-# definition - set it according to whether we're using debug flags.
-if(BRLCAD_FLAGS_DEBUG)
-  CONFIG_H_APPEND(BRLCAD "#define DEBUG 1\n")
-endif(BRLCAD_FLAGS_DEBUG)
-
-
-
-# Build with compiler warning flags
-set(BRLCAD_ENABLE_COMPILER_WARNINGS_ALIASES
-  ENABLE_WARNINGS
-  ENABLE_COMPILER_WARNINGS
-  )
-set(BRLCAD_ENABLE_COMPILER_WARNINGS_DESCRIPTION "
-Use extra compiler warning flags when compiling C/C++ code.  Defaults to ON.
-")
-BRLCAD_OPTION(ON BRLCAD_ENABLE_COMPILER_WARNINGS
-  BRLCAD_ENABLE_COMPILER_WARNINGS_ALIASES
-  BRLCAD_ENABLE_COMPILER_WARNINGS_DESCRIPTION)
-mark_as_advanced(BRLCAD_ENABLE_COMPILER_WARNINGS)
-
-# Enable/disable strict compiler settings - these are used for building
-# BRL-CAD by default, but not src/other code.  Always used for BRL-CAD
-# code unless the NOSTRICT option is specified when defining a target
-# with BRLCAD_ADDEXEC or BRLCAD_ADDLIB.  If only C++ files in a target
-# are not compatible with strict, the NOSTRICTCXX option can be used.
-set(BRLCAD_ENABLE_STRICT_ALIASES
-  ENABLE_STRICT
-  ENABLE_STRICT_COMPILE
-  ENABLE_STRICT_COMPILE_FLAGS)
-set(BRLCAD_ENABLE_STRICT_DESCRIPTION "
-Causes all compilation warnings for C code to be treated as errors.  This is now
-the default for BRL-CAD source code, and developers should address issues
-discovered by these flags whenever possible rather than disabling strict
-mode.
-")
-BRLCAD_OPTION(ON BRLCAD_ENABLE_STRICT BRLCAD_ENABLE_STRICT_ALIASES BRLCAD_ENABLE_STRICT_DESCRIPTION)
-if(BRLCAD_ENABLE_STRICT)
-  mark_as_advanced(BRLCAD_ENABLE_STRICT)
-  CONFIG_H_APPEND(BRLCAD "#define STRICT_FLAGS 1\n")
-endif(BRLCAD_ENABLE_STRICT)
-
-# Build with compiler optimization flags.  This should normally be on for
-# release builds.
-AUTO_OPTION(BRLCAD_FLAGS_OPTIMIZATION BRLCAD_OPTIMIZED_BUILD "OFF" "ON")
-
-# By default, we don't want any error reports at all from src/other
-option(BRLCAD_DISABLE_SRC_OTHER_WARN "Disable warnings for src/other" ON)
-mark_as_advanced(BRLCAD_DISABLE_SRC_OTHER_WARN)
-
-# Build with full compiler lines visible by default (won't need make
-# VERBOSE=1) on command line
-option(BRLCAD_ENABLE_VERBOSE_PROGRESS "verbose output" OFF)
-mark_as_advanced(BRLCAD_ENABLE_VERBOSE_PROGRESS)
-if(BRLCAD_ENABLE_VERBOSE_PROGRESS)
-  set(CMAKE_VERBOSE_MAKEFILE ON)
-endif(BRLCAD_ENABLE_VERBOSE_PROGRESS)
-
-# Build with profiling support
-option(BRLCAD_ENABLE_PROFILING "Build with profiling support" OFF)
-mark_as_advanced(BRLCAD_ENABLE_PROFILING)
-
-# Build with dtrace support
-option(BRLCAD_ENABLE_DTRACE "Build with dtrace support" OFF)
-mark_as_advanced(BRLCAD_ENABLE_DTRACE)
-if(BRLCAD_ENABLE_DTRACE)
-  BRLCAD_INCLUDE_FILE(sys/sdt.h HAVE_SYS_SDT_H)
-  if(NOT HAVE_SYS_SDT_H)
-    set(BRLCAD_ENABLE_DTRACE OFF)
-  endif(NOT HAVE_SYS_SDT_H)
-endif(BRLCAD_ENABLE_DTRACE)
-
-# Take advantage of parallel processors if available - highly recommended
-option(BRLCAD_ENABLE_SMP "Enable SMP architecture parallel computation support" ON)
-if(WIN32 AND BRLCAD_ENABLE_SMP)
-  message("SMP Support is not ready on Windows - disabling")
-  set(BRLCAD_ENABLE_SMP OFF)
-endif(WIN32 AND BRLCAD_ENABLE_SMP)
-mark_as_advanced(BRLCAD_ENABLE_SMP)
-if(BRLCAD_ENABLE_SMP)
-  CONFIG_H_APPEND(BRLCAD "#define PARALLEL 1\n")
-endif(BRLCAD_ENABLE_SMP)
 
 # *******************************************************************
 # ***            Check for Programs - Stage 2 of 9                ***
@@ -1382,13 +1358,6 @@ if(NOT MSVC)
   include(${BRLCAD_CMAKE_DIR}/CompilerFlags.cmake)
 endif(NOT MSVC)
 
-# determine whether the compiler supports an 'inline' keyword variant
-include(${BRLCAD_CMAKE_DIR}/CheckCInline.cmake)
-CHECK_C_INLINE(C_INLINE)
-if(NOT C_INLINE STREQUAL "inline")
-  add_definitions("-Dinline=${C_INLINE}")
-endif(NOT C_INLINE STREQUAL "inline")
-
 # The src/other subdirectory does not share (at least, not universally)
 # certain definitions common to all other directories in BRL-CAD.  Also,
 # we don't want flags that are otherwise global to BRL-CAD to be passed
@@ -1396,18 +1365,28 @@ endif(NOT C_INLINE STREQUAL "inline")
 # flags) so add src/other before any of that setup occurs.
 add_subdirectory(src/other)
 
+# Most of the src/other projects have their own logic for handling
+# the C inline issue - BRL-CAD needs a fine-grained approach.  Mixed
+# C and C++ sources require different treatment for the same build
+# target, since C++11 doesn't allow inline to be re-defined. See
+# misc/CMake/BRLCAD_Targets.cmake for handling of C_INLINE.
+include(${BRLCAD_CMAKE_DIR}/CheckCInline.cmake)
+CHECK_C_INLINE(C_INLINE)
+
 # Requires that CompilerFlags.cmake already be loaded
 if(NOT MSVC)
   include(${BRLCAD_CMAKE_DIR}/BRLCAD_CompilerFlags.cmake)
 endif(NOT MSVC)
 
-# If doing a debug build, set _FORTIFY_SOURCE to 2. Provides
-# compile-time best-practice error checking on certain libc
-# functions (e.g., memcpy), and provides run-time checks on buffer
-# lengths and memory regions.
-if(${BRLCAD_DEBUG_BUILD} MATCHES "ON")
+# If doing an optimized build, set _FORTIFY_SOURCE to 2.  Provides
+# compile-time best-practice error checking on certain libc functions
+# (e.g., memcpy), and provides run-time checks on buffer lengths and
+# memory regions.  Unfortunately, glibc-1.6 made _FORTIFY_SOURCE spew
+# an unquellable warning if optimization is disabled so we can't tie
+# the flag to debug builds.
+if(${BRLCAD_OPTIMIZED_BUILD} MATCHES "ON")
   CONFIG_H_APPEND(BRLCAD "#define _FORTIFY_SOURCE 2\n")
-endif(${BRLCAD_DEBUG_BUILD} MATCHES "ON")
+endif(${BRLCAD_OPTIMIZED_BUILD} MATCHES "ON")
 
 #CHECK_C_COMPILER_FLAG("Wl,--no-undefined" NO_UNDEFINED_LINKER_FLAG)
 
@@ -1429,7 +1408,6 @@ endif(${BRLCAD_DEBUG_BUILD} MATCHES "ON")
 # The variable CMAKE_THREAD_LIBS_INIT is the one of interest
 # when writing target_link_libraries lists.
 find_package(Threads)
-BRLCAD_INCLUDE_FILE(pthread.h HAVE_PTHREAD_H)
 
 # Check for the C++ STL library - need to link it explicitly in
 # some compilation situations
@@ -1459,10 +1437,6 @@ if(APPLE)
   mark_as_advanced(CoreFoundation_LIBRARIES Carbon_LIBRARIES Cocoa_LIBRARIES)
 endif(APPLE)
 
-# crypt library (needed on some platforms for enigma)
-FIND_LIBRARY(CRYPT_LIBRARY NAMES crypt)
-mark_as_advanced(CRYPT_LIBRARY)
-
 # Do some extra Java related checks.
 if(JNI_FOUND AND JAVA_FOUND)
   BRLCAD_INCLUDE_FILE(JavaVM/jni.h HAVE_JAVAVM_JNI_H)
@@ -1479,10 +1453,12 @@ else(JNI_FOUND AND JAVA_FOUND)
 endif(JNI_FOUND AND JAVA_FOUND)
 mark_as_advanced(BRLCAD_ENABLE_RTSERVER)
 
-# Find X11 if it is enabled
+# Mark X11 as available if it is enabled and we find Xlib.h
 if(BRLCAD_ENABLE_X11)
-  include(${BRLCAD_CMAKE_DIR}/FindX11.cmake)
-  BRLCAD_INCLUDE_FILE(X11/Xlib.h HAVE_X11_XLIB_H)
+  if(X11_Xlib_INCLUDE_PATH AND CONFIG_H_FILE)
+    set(HAVE_X11_XLIB_H 1)
+    CONFIG_H_APPEND(BRLCAD "#cmakedefine HAVE_X11_XLIB_H 1\n")
+  endif(X11_Xlib_INCLUDE_PATH AND CONFIG_H_FILE)
 endif(BRLCAD_ENABLE_X11)
 
 # math library
@@ -1506,14 +1482,6 @@ BRLCAD_CHECK_LIBRARY(DL dl dlopen)
 
 # Solaris lexer library
 BRLCAD_CHECK_LIBRARY(SOLARIS_LEXER l yyless)
-
-# Bullet physics library
-FIND_PACKAGE(Bullet)
-if(BULLET_FOUND)
-  CONFIG_H_APPEND(BRLCAD "#define HAVE_BULLET 1\n")
-endif(BULLET_FOUND)
-mark_as_advanced(BULLET_INCLUDE_DIR)
-
 
 # *******************************************************************
 # ***             Check for Headers - Stage 5 of 9                ***
@@ -1556,6 +1524,7 @@ BRLCAD_INCLUDE_FILE(arpa/inet.h HAVE_ARPA_INET_H)
 BRLCAD_INCLUDE_FILE(curses.h HAVE_CURSES_H)
 BRLCAD_INCLUDE_FILE(dlfcn.h HAVE_DLFCN_H)
 BRLCAD_INCLUDE_FILE(dslib.h HAVE_DSLIB_H)
+BRLCAD_INCLUDE_FILE(emmintrin.h HAVE_EMMINTRIN_H)
 BRLCAD_INCLUDE_FILE(getopt.h HAVE_GETOPT_H)
 BRLCAD_INCLUDE_FILE(gl/device.h HAVE_GL_DEVICE_H)
 BRLCAD_INCLUDE_FILE(gl/glext.h HAVE_GL_GLEXT_H)
@@ -1564,19 +1533,24 @@ BRLCAD_INCLUDE_FILE(grp.h HAVE_GRP_H)
 BRLCAD_INCLUDE_FILE(inttypes.h HAVE_INTTYPES_H)
 BRLCAD_INCLUDE_FILE(io.h HAVE_IO_H)
 BRLCAD_INCLUDE_FILE(libgen.h HAVE_LIBGEN_H)
+BRLCAD_INCLUDE_FILE(mach/thread_policy.h HAVE_MACH_THREAD_POLICY_H)
 BRLCAD_INCLUDE_FILE(memory.h HAVE_MEMORY_H)
 BRLCAD_INCLUDE_FILE(ncurses.h HAVE_NCURSES_H)
 BRLCAD_INCLUDE_FILE(netdb.h HAVE_NETDB_H)
 BRLCAD_INCLUDE_FILE(netinet/in.h HAVE_NETINET_IN_H)
 BRLCAD_INCLUDE_FILE(poll.h HAVE_POLL_H)
+BRLCAD_INCLUDE_FILE(pthread.h HAVE_PTHREAD_H)
+BRLCAD_INCLUDE_FILE(pthread_np.h HAVE_PTHREAD_NP_H)
 BRLCAD_INCLUDE_FILE(pwd.h HAVE_PWD_H)
 BRLCAD_INCLUDE_FILE(rle.h HAVE_RLE_H)
 BRLCAD_INCLUDE_FILE(sched.h HAVE_SCHED_H)
 BRLCAD_INCLUDE_FILE(sgtty.h HAVE_SGTTY_H)
 BRLCAD_INCLUDE_FILE(stdint.h HAVE_STDINT_H)
+BRLCAD_INCLUDE_FILE(stdlib.h HAVE_STDLIB_H)
 BRLCAD_INCLUDE_FILE(string.h HAVE_STRING_H)
 BRLCAD_INCLUDE_FILE(strings.h HAVE_STRINGS_H)
 BRLCAD_INCLUDE_FILE(sys/_ioctl.h HAVE_SYS__IOCTL_H)
+BRLCAD_INCLUDE_FILE(sys/cpuset.h HAVE_SYS_CPUSET_H)
 BRLCAD_INCLUDE_FILE(sys/file.h HAVE_SYS_FILE_H)
 BRLCAD_INCLUDE_FILE(sys/ioctl.h HAVE_SYS_IOCTL_H)
 BRLCAD_INCLUDE_FILE(sys/ioctl_compat.h HAVE_SYS_IOCTL_COMPAT_H)
@@ -1643,6 +1617,7 @@ BRLCAD_TYPE_SIZE("socklen_t" "sys/types.h")
 if(NOT HAVE_SOCKLEN_T)
   BRLCAD_TYPE_SIZE("socklen_t" "sys/socket.h")
 endif(NOT HAVE_SOCKLEN_T)
+BRLCAD_TYPE_SIZE("cpu_set_t" "sched.h")
 
 BRLCAD_TYPE_SIZE("int" "")
 BRLCAD_TYPE_SIZE("long" "")
@@ -1652,6 +1627,24 @@ BRLCAD_TYPE_SIZE("ssize_t" "")
 BRLCAD_TYPE_SIZE("uint64_t" "")
 BRLCAD_TYPE_SIZE("uintptr_t" "")
 BRLCAD_TYPE_SIZE("sig_t" "signal.h")
+
+# see if we have a TLS intrinsic, first check C++11 compliance
+check_cxx_source_compiles("static thread_local int i = 0; int main() { return i; }" HAVE_THREAD_LOCAL)
+if (HAVE_THREAD_LOCAL)
+  CONFIG_H_APPEND(BRLCAD "#define HAVE_THREAD_LOCAL 1\n")
+else (HAVE_THREAD_LOCAL)
+  # try GCC except Mac OS X
+  check_cxx_source_compiles("static __thread int i = 0; int main() { return i; }" HAVE___THREAD)
+  if (HAVE___THREAD)
+    CONFIG_H_APPEND(BRLCAD "#define HAVE___THREAD 1\n")
+  else (HAVE___THREAD)
+    # try Windows
+    check_cxx_source_compiles("static __declspec(thread) int i = 0; int main() { return i; }" HAVE___DECLSPEC_THREAD)
+    if (HAVE___DECLSPEC_THREAD)
+      CONFIG_H_APPEND(BRLCAD "#define HAVE___DECLSPEC_THREAD 1\n")
+    endif (HAVE___DECLSPEC_THREAD)
+  endif (HAVE___THREAD)
+endif (HAVE_THREAD_LOCAL)
 
 # see if the compiler supports %z as a size_t print width specifier
 BRLCAD_CHECK_C99_FORMAT_SPECIFIERS()
@@ -1723,6 +1716,10 @@ if(WIN32)
   if(NOT HAVE_ASINH)
     set(asinh 1)
   endif(NOT HAVE_ASINH)
+
+  BRLCAD_FUNCTION_EXISTS(_fseeki64 HAVE__FSEEKI64)
+  BRLCAD_FUNCTION_EXISTS(_ftelli64 HAVE__FTELLI64)
+
 endif(WIN32)
 
 # Check whether we need to add import/export lines to libraries
@@ -1752,6 +1749,11 @@ if(MSVC)
   set(CMAKE_MODULE_LINKER_FLAGS_INIT ${CMAKE_EXE_LINKER_FLAGS_INIT} /NOLOGO)
 endif(MSVC)
 
+# Enable CTest Testing support - this is done after src/other is
+# added to avoid incorporating src/other CTests into BRL-CAD's own
+# testing.  TODO - probably should control this with an option.
+ENABLE_TESTING()
+
 # We've done the toplevel configure steps, now add the subdirectories
 add_subdirectory(src)
 add_subdirectory(include)
@@ -1767,6 +1769,11 @@ else(NOT BRLCAD_ENABLE_TARGETS OR "${BRLCAD_ENABLE_TARGETS}" GREATER 2)
   CMAKEFILES(doc pix bench regress db)
 endif(NOT BRLCAD_ENABLE_TARGETS OR "${BRLCAD_ENABLE_TARGETS}" GREATER 2)
 
+# If we're building on Windows, use config_win.h file
+if(WIN32)
+  CONFIG_H_APPEND(BRLCAD "#include \"config_win_cmake.h\"\n")
+endif(WIN32)
+
 # Now that all the tests are done, configure the brlcad_config.h file:
 CONFIG_H_APPEND(BRLCAD "#endif /* __CONFIG_H__ */\n")
 get_property(CONFIG_H_FILE_CONTENTS GLOBAL PROPERTY ${CMAKE_PROJECT_NAME}_CONFIG_H_CONTENTS)
@@ -1776,6 +1783,7 @@ configure_file(${CONFIG_H_FILE} ${BRLCAD_BINARY_DIR}/include/brlcad_config.h)
 # Rules for the toplevel documentation files
 set(toplevel_DOCFILES
   AUTHORS
+  CHANGES
   COPYING
   HACKING
   INSTALL
@@ -1874,14 +1882,23 @@ if(NOT BRLCAD_IS_SUBBUILD)
     list(REMOVE_DUPLICATES CMAKE_EXTERNAL_TARGET_LIST)
   endif(CMAKE_EXTERNAL_TARGET_LIST)
   foreach(libtarget ${CMAKE_LIBRARY_TARGET_LIST})
-    get_target_property(target_location ${libtarget} LOCATION_${CMAKE_BUILD_TYPE})
+    #TODO - can this locate test be replaced with if(TARGET ${libtarget}) ?
+    if(NOT CMAKE_BUILD_TYPE)
+      get_target_property(target_location ${libtarget} LOCATION)
+    else(NOT CMAKE_BUILD_TYPE)
+      get_target_property(target_location ${libtarget} LOCATION_${CMAKE_BUILD_TYPE})
+    endif(NOT CMAKE_BUILD_TYPE)
     if(target_location)
       add_dependencies(${libtarget} timestamp)
       add_dependencies(buildtimedelta ${libtarget})
     endif(target_location)
   endforeach(libtarget ${CMAKE_LIBRARY_TARGET_LIST})
   foreach(exectarget ${CMAKE_EXEC_TARGET_LIST})
-    get_target_property(target_location ${exectarget} LOCATION_${CMAKE_BUILD_TYPE})
+    if(NOT CMAKE_BUILD_TYPE)
+      get_target_property(target_location ${exectarget} LOCATION)
+    else(NOT CMAKE_BUILD_TYPE)
+      get_target_property(target_location ${exectarget} LOCATION_${CMAKE_BUILD_TYPE})
+    endif(NOT CMAKE_BUILD_TYPE)
     if(target_location)
       if(NOT ${exectarget} MATCHES "printtimestamp" AND NOT ${exectarget} MATCHES "buildtimestart")
 	add_dependencies(${exectarget} timestamp)
@@ -1987,7 +2004,7 @@ DISTCLEAN(${BRLCAD_BINARY_DIR}/include/conf/PATH)
 # we are detecting a configuration change by looking at the previous version
 # of the CMakeCache.txt file and looking for changes between values stored
 # there and settings in the current environment.  This has the disadvantage
-# of not spotting completely new variables in the current enviornment, but
+# of not spotting completely new variables in the current environment, but
 # the internal CMake variable list is too noisy so at the moment this looks
 # like the best alternative we have.
 
@@ -2071,16 +2088,19 @@ if(NOT BRLCAD_IS_SUBBUILD)
       #	else(LINUX_DIST_TYPE)
       #		set(LINUX_DIST_TYPE "rh")
       #	endif(LINUX_DIST_TYPE)
-      #	set(CPACK_RPM_PACKAGE_RELEASE 2.${LINUX_DIST_TYPE}${REDHAT_VERSION})
+      #	set(CPACK_RPM_PACKAGE_RELEASE 1.${LINUX_DIST_TYPE}${REDHAT_VERSION})
       #else(EXISTS /etc/redhat-release)
       #	#set(CPACK_RPM_PACKAGE_RELEASE 2)
       #endif(EXISTS /etc/redhat-release)
     endif(RPMBUILD_EXEC)
     set(CPACK_RPM_PACKAGE_ARCHITECTURE "${CMAKE_SYSTEM_PROCESSOR}")
+    if(NOT CPACK_RPM_PACKAGE_RELEASE)
+      set(CPACK_RPM_PACKAGE_RELEASE 1)
+    endif(NOT CPACK_RPM_PACKAGE_RELEASE)
     if(${CMAKE_WORD_SIZE} MATCHES "32BIT" AND ${CMAKE_SYSTEM_PROCESSOR} STREQUAL "x86_64")
-      set(CPACK_PACKAGE_FILE_NAME "BRL-CAD_${BRLCAD_VERSION}_${CMAKE_SYSTEM_NAME}_x86")
+      set(CPACK_PACKAGE_FILE_NAME "BRL-CAD_${BRLCAD_VERSION}_x86_${CMAKE_SYSTEM_NAME}_${CPACK_RPM_PACKAGE_RELEASE}")
     else(${CMAKE_WORD_SIZE} MATCHES "32BIT" AND ${CMAKE_SYSTEM_PROCESSOR} STREQUAL "x86_64")
-      set(CPACK_PACKAGE_FILE_NAME "BRL-CAD_${BRLCAD_VERSION}_${CMAKE_SYSTEM_NAME}_${CMAKE_SYSTEM_PROCESSOR}")
+      set(CPACK_PACKAGE_FILE_NAME "BRL-CAD_${BRLCAD_VERSION}_${CMAKE_SYSTEM_PROCESSOR}_${CMAKE_SYSTEM_NAME}_${CPACK_RPM_PACKAGE_RELEASE}")
     endif(${CMAKE_WORD_SIZE} MATCHES "32BIT" AND ${CMAKE_SYSTEM_PROCESSOR} STREQUAL "x86_64")
   else(UNIX AND NOT APPLE)
     set(CPACK_PACKAGE_FILE_NAME "BRL-CAD_${BRLCAD_VERSION}_${CMAKE_SYSTEM_PROCESSOR}")
@@ -2090,9 +2110,9 @@ if(NOT BRLCAD_IS_SUBBUILD)
     set(CPACK_GENERATOR NSIS)
     set(CPACK_NSIS_PACKAGE_NAME "BRL-CAD")
     set(CPACK_SOURCE_DIR ${CMAKE_SOURCE_DIR})
-    set(CPACK_DATA_DIR "share\\\\brlcad\\\\${BRLCAD_VERSION}")
+    set(CPACK_DATA_DIR "${DATA_DIR}")
     # There is a bug in NSI that does not handle full unix paths properly. Make
-    # sure there is at least one set of four (4) backlasshes.
+    # sure there is at least one set of four (4) backslashes.
     set(CPACK_NSIS_MUI_ICON "${CMAKE_SOURCE_DIR}/misc/nsis\\\\brlcad.ico")
     set(CPACK_NSIS_MUI_UNIICON "${CMAKE_SOURCE_DIR}/misc/nsis\\\\uninstall.ico")
     set(CPACK_NSIS_DISPLAY_NAME "BRL-CAD")
@@ -2154,7 +2174,7 @@ if(NOT BRLCAD_IS_SUBBUILD)
   # Define some custom distcheck targets for distcheck-full (not run by default)
   #
   # CREATE_DISTCHECK(TARGET_SUFFIX CMAKE_OPTS source_dir build_dir install_dir [custom_template])
-
+  CREATE_DISTCHECK(default_build_type "-DBRLCAD_BUNDLED_LIBS=AUTO" "${CPACK_SOURCE_PACKAGE_FILE_NAME}" "build" "install")
   CREATE_DISTCHECK(no_tk "-DCMAKE_BUILD_TYPE=Debug -DBRLCAD_BUNDLED_LIBS=BUNDLED -DBRLCAD_ENABLE_TK=OFF" "${CPACK_SOURCE_PACKAGE_FILE_NAME}" "build" "install")
   CREATE_DISTCHECK(autodetect_debug "-DCMAKE_BUILD_TYPE=Debug -DBRLCAD_BUNDLED_LIBS=AUTO" "${CPACK_SOURCE_PACKAGE_FILE_NAME}" "build" "install")
   CREATE_DISTCHECK(autodetect_release "-DCMAKE_BUILD_TYPE=Release -DBRLCAD_BUNDLED_LIBS=AUTO" "${CPACK_SOURCE_PACKAGE_FILE_NAME}" "build" "install")
@@ -2176,11 +2196,25 @@ mark_as_advanced(CMAKE_BACKWARDS_COMPATIBILITY)
 mark_as_advanced(EXECUTABLE_OUTPUT_PATH)
 mark_as_advanced(LIBRARY_OUTPUT_PATH)
 
+# ----------------------------------------------------------------------------
 # If options have been defined that we are going to document, by now they've
 # been documented.  Make an updated copy of the "INSTALL" file and see whether
-# anything has changed - we're not going to overwrite the copy in the src
-# directory (principle of this build is to leave the src dir pristine after
-# configuration and compilation) but check for changes and report if found.
+# anything has changed.
+#
+# Although the general principle of this build is to leave the src dir
+# pristine after configuration and compilation, the INSTALL and configure files
+# represent one of two cases where the default behavior is to alter the files
+# if changes have occurred.  (The other is cached generated outputs from tools
+# such as re2c and lemon.)  For the purposes of this project, a given
+# option's documentation is defined in the CMakeLists.txt source file with
+# the option definition logic - the text in INSTALL is simply an output from
+# that, and is never the correct place for manual changes.
+#
+# As with generated outputs, this auto-updating behavior can be overridden
+# by setting the CMake variable LOCKED_SOURCE_DIR to ON - in that case, a
+# warning about out-of-sync files is printed but no automatic updating takes
+# place in the source tree.
+
 file(READ ${BRLCAD_SOURCE_DIR}/INSTALL SRC_INSTALL_STR)
 string(REGEX REPLACE "${CONFIG_OPT_STRING}.*" "" INSTALL_PREFIX	"${SRC_INSTALL_STR}")
 file(WRITE ${BRLCAD_BINARY_DIR}/INSTALL.new "${INSTALL_PREFIX}")
@@ -2197,7 +2231,12 @@ execute_process(COMMAND ${CMAKE_COMMAND} -E compare_files
   RESULT_VARIABLE IS_DIFFERENT OUTPUT_VARIABLE DIFF_OUTPUT ERROR_VARIABLE
   DIFF_ERROR)
 if(IS_DIFFERENT)
-  message(WARNING "\n${BRLCAD_SOURCE_DIR}/INSTALL is out of date.  An updated version has been generated at ${BRLCAD_BINARY_DIR}/INSTALL.new\nTo clear this warning, replace ${BRLCAD_SOURCE_DIR}/INSTALL with ${BRLCAD_BINARY_DIR}/INSTALL.new\n")
+  if(LOCKED_SOURCE_DIR)
+    message(WARNING "\n${BRLCAD_SOURCE_DIR}/INSTALL is out of date.  An updated version has been generated at ${BRLCAD_BINARY_DIR}/INSTALL.new\nTo clear this warning, replace ${BRLCAD_SOURCE_DIR}/INSTALL with ${BRLCAD_BINARY_DIR}/INSTALL.new\n")
+  else(LOCKED_SOURCE_DIR)
+    set_source_files_properties(${BRLCAD_BINARY_DIR}/INSTALL.new PROPERTIES GENERATED TRUE)
+    configure_file(${BRLCAD_BINARY_DIR}/INSTALL.new ${BRLCAD_SOURCE_DIR}/INSTALL COPYONLY)
+  endif(LOCKED_SOURCE_DIR)
 endif(IS_DIFFERENT)
 
 # Do the same thing for the configure shell script - finish it and check
@@ -2210,7 +2249,12 @@ execute_process(COMMAND ${CMAKE_COMMAND} -E compare_files
   RESULT_VARIABLE IS_CONFIG_SH_DIFFERENT OUTPUT_VARIABLE DIFF_OUTPUT ERROR_VARIABLE
   DIFF_ERROR)
 if(IS_CONFIG_SH_DIFFERENT)
-  message(WARNING "\n${BRLCAD_SOURCE_DIR}/configure.cmake.sh is out of date. An updated version has been generated at ${BRLCAD_BINARY_DIR}/configure.new\nTo clear this warning, replace ${BRLCAD_SOURCE_DIR}/configure.cmake.sh with ${BRLCAD_BINARY_DIR}/configure.new\n")
+  if(LOCKED_SOURCE_DIR)
+    message(WARNING "\n${BRLCAD_SOURCE_DIR}/configure.cmake.sh is out of date. An updated version has been generated at ${BRLCAD_BINARY_DIR}/configure.new\nTo clear this warning, replace ${BRLCAD_SOURCE_DIR}/configure.cmake.sh with ${BRLCAD_BINARY_DIR}/configure.new\n")
+  else(LOCKED_SOURCE_DIR)
+    set_source_files_properties(${BRLCAD_BINARY_DIR}/configure.new PROPERTIES GENERATED TRUE)
+    configure_file(${BRLCAD_BINARY_DIR}/configure.new ${BRLCAD_SOURCE_DIR}/configure.cmake.sh COPYONLY)
+  endif(LOCKED_SOURCE_DIR)
 endif(IS_CONFIG_SH_DIFFERENT)
 
 
@@ -2218,9 +2262,7 @@ endif(IS_CONFIG_SH_DIFFERENT)
 # end of the CMake configure, the preparation of the final distclean
 # list must account for it.  Also, the distclean script itself must
 # be added to the list, as it is generated by CMake
-file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/distclean.sh "#!/bin/sh\n")
 DISTCLEAN(${CMAKE_BINARY_DIR}/CMakeTmp/timedelta_end.c)
-DISTCLEAN(${CMAKE_BINARY_DIR}/distclean.sh)
 get_property(CMAKE_DISTCLEAN_TARGET_LIST GLOBAL PROPERTY CMAKE_DISTCLEAN_TARGET_LIST)
 list(REMOVE_DUPLICATES CMAKE_DISTCLEAN_TARGET_LIST)
 configure_file(${BRLCAD_CMAKE_DIR}/distclean.cmake.in	${BRLCAD_BINARY_DIR}/distclean.cmake @ONLY)
@@ -2253,12 +2295,12 @@ if(NOT BRLCAD_IS_SUBBUILD)
     ${CMAKE_BINARY_DIR}/CMakeTmp/timedelta_end.c
     OUTPUT_VARIABLE COMPILEMESSAGES)
   file(READ ${DELTA_END} CONFIG_TIME_MSG)
-  string(STRIP ${CONFIG_TIME_MSG} CONFIG_TIME_MSG)
+  string(STRIP "${CONFIG_TIME_MSG}" CONFIG_TIME_MSG)
   set(CONFIG_TIME_MSG_LABEL "Elapsed configuration time")
-  string(LENGTH ${CONFIG_TIME_MSG_LABEL} CURRENTLENGTH)
+  string(LENGTH "${CONFIG_TIME_MSG_LABEL}" CURRENTLENGTH)
   while(${SETTINGLABELLENGTH} GREATER ${CURRENTLENGTH})
     set(CONFIG_TIME_MSG_LABEL "${CONFIG_TIME_MSG_LABEL}.")
-    string(LENGTH ${CONFIG_TIME_MSG_LABEL} CURRENTLENGTH)
+    string(LENGTH "${CONFIG_TIME_MSG_LABEL}" CURRENTLENGTH)
   endwhile(${SETTINGLABELLENGTH} GREATER ${CURRENTLENGTH})
   message("${CONFIG_TIME_MSG_LABEL}..: ${CONFIG_TIME_MSG}")
 endif(NOT BRLCAD_IS_SUBBUILD)

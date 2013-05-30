@@ -1,7 +1,7 @@
 /*                       T E S T L I B . C
  * BRL-CAD
  *
- * Copyright (c) 2009-2012 United States Government as represented by
+ * Copyright (c) 2009-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -65,7 +65,7 @@ main(int ac, char *av[])
 	printf("couldn't open libbu\n");
     }
 
-    for (i = 1; i < ac; i++) { 
+    for (i = 1; i < ac; i++) {
 	printf("Loading %s\n", av[i]);
 	func = (func_t)dlsym(handle, av[i]);
 	error = dlerror();

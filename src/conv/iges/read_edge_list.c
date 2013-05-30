@@ -1,7 +1,7 @@
 /*                R E A D _ E D G E _ L I S T . C
  * BRL-CAD
  *
- * Copyright (c) 1993-2012 United States Government as represented by
+ * Copyright (c) 1993-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -47,8 +47,7 @@ Read_edge_list(struct iges_edge_use *edge)
 	return (struct iges_edge_list *)NULL;
     }
 
-    edge_list = (struct iges_edge_list *)bu_malloc(sizeof(struct iges_edge_list)  ,
-						   "Read_edge_list: iges_edge_list");
+    BU_ALLOC(edge_list, struct iges_edge_list);
 
     edge_list->edge_de = edge->edge_de;
     edge_list->next = NULL;

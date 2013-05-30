@@ -1,7 +1,7 @@
 #                   E D I T _ M E N U . T C L
 # BRL-CAD
 #
-# Copyright (c) 1998-2012 United States Government as represented by
+# Copyright (c) 1998-2013 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -911,10 +911,10 @@ proc init_solid_edit_menu_hoc { stype } {
 	}
 	metaball {
 	    # METABALL
-	    hoc_register_menu_data "Edit" "set threshhold" \
-		"Primitive Edit - set threshhold" \
-		{{summary "set threshhold"}}
-	    hoc_register_menu_data "Edit" "set threshhold" \
+	    hoc_register_menu_data "Edit" "set threshold" \
+		"Primitive Edit - set threshold" \
+		{{summary "set threshold"}}
+	    hoc_register_menu_data "Edit" "set threshold" \
 		"Primitive Edit - select point" \
 		{{summary "select point"}}
 	    hoc_register_menu_data "Edit" "next point" \

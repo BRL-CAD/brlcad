@@ -1,0 +1,173 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='pixdsplit1'>
+<refmeta>
+    <refentrytitle>PIXDSPLIT
+</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class='source'>BRL-CAD</refmiscinfo>
+<refmiscinfo class='manual'>BRL-CAD</refmiscinfo>
+</refmeta>
+
+<refnamediv>
+<refname>pixdsplit</refname>
+<refpurpose>disentangle chars from doubles in a stream</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<cmdsynopsis>
+  <command>pixdsplit</command>    <arg choice='opt'><replaceable>options</replaceable></arg>
+    <arg choice='opt'><replaceable>infile</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para><emphasis remap='I'>Pixdsplit</emphasis>
+separates out interwoven characters and doubles
+from a single input stream.
+It treats the stream as consisting of successive "pixels",
+each of which is made up of
+<emphasis remap='I'>n</emphasis>
+unsigned chars
+followed by
+<emphasis remap='I'>m</emphasis>
+64-bit doubles,
+and writes the chars to one output stream
+and the doubles to another.
+The pixels are read from
+<emphasis remap='I'>infile</emphasis>
+if it is specified;
+otherwise,
+<command>pixdsplit</command>
+reads from the standard input.</para>
+
+
+<refsect2 xml:id='options'><title>Options</title>
+<para>The command-line options and their meanings are:</para>
+
+<variablelist remap='TP'>
+  <varlistentry>
+  <term><option>-c</option><replaceable> charfile</replaceable></term>
+  <listitem>
+<para>Causes
+<command>pixdsplit</command>
+to write the chars to the specified file.
+If
+<emphasis remap='I'>charfile</emphasis>
+is the empty string,
+then
+<command>pixdsplit</command>
+does not write out the chars.
+Default is "-",
+so the chars are written to the standard output.</para>
+
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-d</option><replaceable> doublefile</replaceable></term>
+  <listitem>
+<para>Causes
+<command>pixdsplit</command>
+to write the doubles to the specified file.
+If
+<emphasis remap='I'>doublefile</emphasis>
+is the empty string,
+then
+<command>pixdsplit</command>
+does not write out the doubles.
+Default is ``'',
+so the doubles are not output.</para>
+
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-#</option><replaceable> n.m</replaceable></term>
+  <listitem>
+<para>Defines a pixel to be made up of
+<emphasis remap='I'>n</emphasis>
+unsigned chars and
+<emphasis remap='I'>m</emphasis>
+64-bit doubles,
+where
+<emphasis remap='I'>n</emphasis> and <emphasis remap='I'>m</emphasis>
+are positive integers.
+Either of
+<emphasis remap='I'>n</emphasis> and <emphasis remap='I'>m</emphasis>
+(but not both)
+may be omitted
+and if
+<emphasis remap='I'>m</emphasis>
+is omitted,
+then the separating period, too, may be omitted.
+The variable for which a value was omitted
+retains its previous value.
+By default,
+<emphasis remap='I'>n</emphasis> = 3
+and
+<emphasis remap='I'>m</emphasis> = 1<emphasis remap='I'>,</emphasis>
+so
+the input stream is assumed to be in
+<citerefentry><refentrytitle>pixd</refentrytitle><manvolnum>5</manvolnum></citerefentry>
+format
+as produced by the
+<option>-d</option>
+option of
+<citerefentry><refentrytitle>rt</refentrytitle><manvolnum>1</manvolnum></citerefentry>.</para>
+
+  </listitem>
+  </varlistentry>
+</variablelist>
+</refsect2>
+</refsect1>
+
+<refsect1 xml:id='examples'><title>EXAMPLES</title>
+<para>The command</para>
+
+<literallayout remap='.nf'>
+<!-- .in +4 -->
+pixdsplit file.pixd | pix-fb
+<!-- .in &bsol;-4 -->
+</literallayout> <!-- .fi -->
+
+<para>extracts the
+<citerefentry><refentrytitle>pix</refentrytitle><manvolnum>5</manvolnum></citerefentry>
+data from
+<emphasis remap='I'>file.pixd,</emphasis>
+sending it for display to
+<citerefentry><refentrytitle>pix-fb</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+while</para>
+
+<literallayout remap='.nf'>
+<!-- .in +4 -->
+pixdsplit -# 3.2 -c '' -d coords datafile
+<!-- .in &bsol;-4 -->
+</literallayout> <!-- .fi -->
+
+<para>ignores the RGB information in
+<emphasis remap='I'>datafile</emphasis>
+but writes its pairs of doubles to
+<emphasis remap='I'>coords.</emphasis></para>
+</refsect1>
+
+<refsect1 xml:id='see_also'><title>SEE ALSO</title>
+<para><citerefentry><refentrytitle>rt</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>pix</refentrytitle><manvolnum>5</manvolnum></citerefentry>, <citerefentry><refentrytitle>pixd</refentrytitle><manvolnum>5</manvolnum></citerefentry></para>
+</refsect1>
+
+<refsect1 xml:id='author'><title>AUTHOR</title>
+<para>Paul Tanenbaum</para>
+
+</refsect1>
+
+<refsect1 xml:id='copyright'><title>COPYRIGHT</title>
+<para>This software is Copyright (c) 1996-2013 by the United States
+Government as represented by U.S. Army Research Laboratory.</para>
+
+</refsect1>
+
+<refsect1 xml:id='bug_reports'><title>BUG REPORTS</title>
+<para>Reports of bugs or problems should be submitted via electronic
+mail to &lt;devs@brlcad.org&gt;.</para>
+</refsect1>
+</refentry>
+

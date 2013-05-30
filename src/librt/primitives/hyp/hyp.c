@@ -1,7 +1,7 @@
 /*                           H Y P . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2012 United States Government as represented by
+ * Copyright (c) 1990-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -105,9 +105,9 @@ hyp_internal_to_specific(struct rt_hyp_internal *hyp_in) {
 
 
 const struct bu_structparse rt_hyp_parse[] = {
-    { "%f", 3, "V",   bu_offsetof(struct rt_hyp_internal, hyp_Vi[X]), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    { "%f", 3, "H",   bu_offsetof(struct rt_hyp_internal, hyp_Hi[X]), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    { "%f", 3, "A",   bu_offsetof(struct rt_hyp_internal, hyp_A[X]), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    { "%f", 3, "V",   bu_offsetofarray(struct rt_hyp_internal, hyp_Vi, fastf_t, X), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    { "%f", 3, "H",   bu_offsetofarray(struct rt_hyp_internal, hyp_Hi, fastf_t, X), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    { "%f", 3, "A",   bu_offsetofarray(struct rt_hyp_internal, hyp_A, fastf_t, X), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     { "%f", 1, "b", bu_offsetof(struct rt_hyp_internal, hyp_b), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     { "%f", 1, "bnr",   bu_offsetof(struct rt_hyp_internal, hyp_bnr), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     { {'\0', '\0', '\0', '\0'}, 0, (char *)NULL, 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
@@ -119,7 +119,7 @@ const struct bu_structparse rt_hyp_parse[] = {
  * Create a bounding RPP for an hyp
  */
 int
-rt_hyp_bbox(struct rt_db_internal *ip, point_t *min, point_t *max) {
+rt_hyp_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct bn_tol *UNUSED(tol)) {
     struct rt_hyp_internal *xip;
     vect_t hyp_Au, hyp_B, hyp_An, hyp_Bn, hyp_H;
     vect_t pt1, pt2, pt3, pt4, pt5, pt6, pt7, pt8;
@@ -133,8 +133,8 @@ rt_hyp_bbox(struct rt_db_internal *ip, point_t *min, point_t *max) {
     VUNITIZE(hyp_Au);
     VCROSS(hyp_B, hyp_Au, hyp_H);
 
-    VSETALL((*min), MAX_FASTF);
-    VSETALL((*max), -MAX_FASTF);
+    VSETALL((*min), INFINITY);
+    VSETALL((*max), -INFINITY);
 
     VSCALE(hyp_B, hyp_B, xip->hyp_b);
     VREVERSE(hyp_An, xip->hyp_A);
@@ -183,7 +183,7 @@ rt_hyp_bbox(struct rt_db_internal *ip, point_t *min, point_t *max) {
  * stp->st_specific for use by hyp_shot().
  */
 int
-rt_hyp_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *UNUSED(rtip))
+rt_hyp_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 {
     struct rt_hyp_internal *hyp_ip;
     struct hyp_specific *hyp;
@@ -209,7 +209,7 @@ rt_hyp_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *UNUSED(r
     stp->st_bradius = stp->st_aradius;
 
     /* calculate bounding RPP */
-    if (rt_hyp_bbox(ip, &(stp->st_min), &(stp->st_max))) return 1;
+    if (rt_hyp_bbox(ip, &(stp->st_min), &(stp->st_max), &rtip->rti_tol)) return 1;
     return 0;			/* OK */
 }
 
@@ -234,7 +234,7 @@ rt_hyp_print(const struct soltab *stp)
 /* hit_surfno is set to one of these */
 #define HYP_NORM_BODY	(1)		/* compute normal */
 #define HYP_NORM_TOP	(2)		/* copy hyp_Hunit */
-#define HYP_NORM_BOTTOM	(3)		/* copy -hyp_Huint */
+#define HYP_NORM_BOTTOM	(3)		/* copy -hyp_Hunit */
 
 
 /**
@@ -600,7 +600,7 @@ rt_hyp_free(struct soltab *stp)
     struct hyp_specific *hyp =
 	(struct hyp_specific *)stp->st_specific;
 
-    bu_free((char *)hyp, "hyp_specific");
+    BU_PUT(hyp, struct hyp_specific);
 }
 
 
@@ -612,7 +612,7 @@ rt_hyp_plot(struct bu_list *vhead, struct rt_db_internal *incoming, const struct
 {
     int i, j;		/* loop indices */
     struct rt_hyp_internal *hyp_in;
-    struct hyp_specific *hyp_ip;
+    struct hyp_specific *hyp;
     vect_t majorAxis[8],	/* vector offsets along major axis */
 	minorAxis[8],		/* vector offsets along minor axis */
 	heightAxis[7],		/* vector offsets for layers */
@@ -628,12 +628,12 @@ rt_hyp_plot(struct bu_list *vhead, struct rt_db_internal *incoming, const struct
     hyp_in = (struct rt_hyp_internal *)incoming->idb_ptr;
     RT_HYP_CK_MAGIC(hyp_in);
 
-    hyp_ip = hyp_internal_to_specific(hyp_in);
+    hyp = hyp_internal_to_specific(hyp_in);
 
-    VCROSS(Bunit, hyp_ip->hyp_H, hyp_ip->hyp_Au);
+    VCROSS(Bunit, hyp->hyp_H, hyp->hyp_Au);
     VUNITIZE(Bunit);
 
-    VMOVE(heightAxis[0], hyp_ip->hyp_H);
+    VMOVE(heightAxis[0], hyp->hyp_H);
     VSCALE(heightAxis[1], heightAxis[0], 0.5);
     VSCALE(heightAxis[2], heightAxis[0], 0.25);
     VSETALL(heightAxis[3], 0);
@@ -643,10 +643,10 @@ rt_hyp_plot(struct bu_list *vhead, struct rt_db_internal *incoming, const struct
 
     for (i = 0; i < 7; i++) {
 	/* determine Z height depending on i */
-	scale = sqrt(MAGSQ(heightAxis[i])*(hyp_ip->hyp_c * hyp_ip->hyp_c)/(hyp_ip->hyp_r1 * hyp_ip->hyp_r1) + 1);
+	scale = sqrt(MAGSQ(heightAxis[i])*(hyp->hyp_c * hyp->hyp_c)/(hyp->hyp_r1 * hyp->hyp_r1) + 1);
 
 	/* calculate vectors for offset */
-	VSCALE(majorAxis[0], hyp_ip->hyp_Au, hyp_ip->hyp_r1 * scale);
+	VSCALE(majorAxis[0], hyp->hyp_Au, hyp->hyp_r1 * scale);
 	VSCALE(majorAxis[1], majorAxis[0], cos22_5);
 	VSCALE(majorAxis[2], majorAxis[0], M_SQRT1_2);
 	VSCALE(majorAxis[3], majorAxis[0], cos67_5);
@@ -655,7 +655,7 @@ rt_hyp_plot(struct bu_list *vhead, struct rt_db_internal *incoming, const struct
 	VREVERSE(majorAxis[6], majorAxis[1]);
 	VREVERSE(majorAxis[7], majorAxis[0]);
 
-	VSCALE(minorAxis[0], Bunit, hyp_ip->hyp_r2 * scale);
+	VSCALE(minorAxis[0], Bunit, hyp->hyp_r2 * scale);
 	VSCALE(minorAxis[1], minorAxis[0], cos22_5);
 	VSCALE(minorAxis[2], minorAxis[0], M_SQRT1_2);
 	VSCALE(minorAxis[3], minorAxis[0], cos67_5);
@@ -665,22 +665,22 @@ rt_hyp_plot(struct bu_list *vhead, struct rt_db_internal *incoming, const struct
 	VREVERSE(minorAxis[7], minorAxis[0]);
 
 	/* calculate ellipse */
-	VADD3(ell[ 0], hyp_ip->hyp_V, heightAxis[i], majorAxis[0]);
-	VADD4(ell[ 1], hyp_ip->hyp_V, heightAxis[i], majorAxis[1], minorAxis[3]);
-	VADD4(ell[ 2], hyp_ip->hyp_V, heightAxis[i], majorAxis[2], minorAxis[2]);
-	VADD4(ell[ 3], hyp_ip->hyp_V, heightAxis[i], majorAxis[3], minorAxis[1]);
-	VADD3(ell[ 4], hyp_ip->hyp_V, heightAxis[i], minorAxis[0]);
-	VADD4(ell[ 5], hyp_ip->hyp_V, heightAxis[i], majorAxis[4], minorAxis[1]);
-	VADD4(ell[ 6], hyp_ip->hyp_V, heightAxis[i], majorAxis[5], minorAxis[2]);
-	VADD4(ell[ 7], hyp_ip->hyp_V, heightAxis[i], majorAxis[6], minorAxis[3]);
-	VADD3(ell[ 8], hyp_ip->hyp_V, heightAxis[i], majorAxis[7]);
-	VADD4(ell[ 9], hyp_ip->hyp_V, heightAxis[i], majorAxis[6], minorAxis[4]);
-	VADD4(ell[10], hyp_ip->hyp_V, heightAxis[i], majorAxis[5], minorAxis[5]);
-	VADD4(ell[11], hyp_ip->hyp_V, heightAxis[i], majorAxis[4], minorAxis[6]);
-	VADD3(ell[12], hyp_ip->hyp_V, heightAxis[i], minorAxis[7]);
-	VADD4(ell[13], hyp_ip->hyp_V, heightAxis[i], majorAxis[3], minorAxis[6]);
-	VADD4(ell[14], hyp_ip->hyp_V, heightAxis[i], majorAxis[2], minorAxis[5]);
-	VADD4(ell[15], hyp_ip->hyp_V, heightAxis[i], majorAxis[1], minorAxis[4]);
+	VADD3(ell[ 0], hyp->hyp_V, heightAxis[i], majorAxis[0]);
+	VADD4(ell[ 1], hyp->hyp_V, heightAxis[i], majorAxis[1], minorAxis[3]);
+	VADD4(ell[ 2], hyp->hyp_V, heightAxis[i], majorAxis[2], minorAxis[2]);
+	VADD4(ell[ 3], hyp->hyp_V, heightAxis[i], majorAxis[3], minorAxis[1]);
+	VADD3(ell[ 4], hyp->hyp_V, heightAxis[i], minorAxis[0]);
+	VADD4(ell[ 5], hyp->hyp_V, heightAxis[i], majorAxis[4], minorAxis[1]);
+	VADD4(ell[ 6], hyp->hyp_V, heightAxis[i], majorAxis[5], minorAxis[2]);
+	VADD4(ell[ 7], hyp->hyp_V, heightAxis[i], majorAxis[6], minorAxis[3]);
+	VADD3(ell[ 8], hyp->hyp_V, heightAxis[i], majorAxis[7]);
+	VADD4(ell[ 9], hyp->hyp_V, heightAxis[i], majorAxis[6], minorAxis[4]);
+	VADD4(ell[10], hyp->hyp_V, heightAxis[i], majorAxis[5], minorAxis[5]);
+	VADD4(ell[11], hyp->hyp_V, heightAxis[i], majorAxis[4], minorAxis[6]);
+	VADD3(ell[12], hyp->hyp_V, heightAxis[i], minorAxis[7]);
+	VADD4(ell[13], hyp->hyp_V, heightAxis[i], majorAxis[3], minorAxis[6]);
+	VADD4(ell[14], hyp->hyp_V, heightAxis[i], majorAxis[2], minorAxis[5]);
+	VADD4(ell[15], hyp->hyp_V, heightAxis[i], majorAxis[1], minorAxis[4]);
 
 	/* draw ellipse */
 	RT_ADD_VLIST(vhead, ell[15], BN_VLIST_LINE_MOVE);
@@ -703,6 +703,8 @@ rt_hyp_plot(struct bu_list *vhead, struct rt_db_internal *incoming, const struct
 
     }
 
+    BU_PUT(hyp, struct hyp_specific);
+
     return 0;
 }
 
@@ -718,7 +720,8 @@ int
 rt_hyp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
 {
     fastf_t c, dtol, f, mag_a, mag_h, ntol, r1, r2, r3, cprime;
-    fastf_t **ellipses, theta_new;
+    fastf_t **ellipses = NULL;
+    fastf_t theta_new;
     int *pts_dbl, face, i, j, nseg;
     int jj, nell;
     mat_t invRoS;
@@ -776,25 +779,7 @@ rt_hyp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     VMOVE(Au, xip->hyp_Au);
     VCROSS(Bu, Hu, Au);
 
-    /*
-     * Establish tolerances
-     */
-    if (ttol->rel <= 0.0 || ttol->rel >= 1.0)
-	dtol = 0.0;		/* none */
-    else
-	/* Convert rel to absolute by scaling by smallest side */
-	dtol = ttol->rel * 2 * r2;
-    if (ttol->abs <= 0.0) {
-	if (dtol <= 0.0) {
-	    /* No tolerance given, use a default */
-	    dtol = 2 * 0.10 * r2;	/* 10% */
-	}
-	/* else, use absolute-ized relative tolerance */
-    } else {
-	/* Absolute tolerance was given, pick smaller */
-	if (ttol->rel <= 0.0 || dtol > ttol->abs)
-	    dtol = ttol->abs;
-    }
+    dtol = primitive_get_absolute_tolerance(ttol, 2.0 * r2);
 
     /* To ensure normal tolerance, remain below this angle */
     if (ttol->norm > 0.0)
@@ -808,15 +793,15 @@ rt_hyp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
      */
 
     /* calculate major axis hyperbola */
-    pts_a = (struct rt_pt_node *)bu_malloc(sizeof(struct rt_pt_node), "rt_pt_node");
+    BU_ALLOC(pts_a, struct rt_pt_node);
 
     /* set base, center, and top points */
     pos_a = pts_a;
     VSET(pos_a->p, sqrt((mag_h*mag_h) * (c*c) + (r1*r1)), 0, -mag_h);
-    pos_a->next = (struct rt_pt_node *)bu_malloc(sizeof(struct rt_pt_node), "rt_pt_node");
+    BU_ALLOC(pos_a->next, struct rt_pt_node);
     pos_a = pos_a->next;
     VSET(pos_a->p, r1, 0, 0);
-    pos_a->next = (struct rt_pt_node *)bu_malloc(sizeof(struct rt_pt_node), "rt_pt_node");
+    BU_ALLOC(pos_a->next, struct rt_pt_node);
     pos_a = pos_a->next;
     VSET(pos_a->p, sqrt((mag_h*mag_h) * (c*c) + (r1*r1)), 0, mag_h);
     pos_a->next = NULL;
@@ -868,7 +853,7 @@ rt_hyp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 
 		if (dist > dtol || ang0 > ntol || ang2 > ntol) {
 		    /* split segment */
-		    add = (struct rt_pt_node *)bu_malloc(sizeof(struct rt_pt_node), "rt_pt_node");
+		    BU_ALLOC(add, struct rt_pt_node);
 		    VMOVE(add->p, p1);
 		    add->next = pos_a->next;
 		    pos_a->next = add;
@@ -882,7 +867,7 @@ rt_hyp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     }
 
     /* calculate minor axis hyperbola */
-    pts_b = (struct rt_pt_node *)bu_malloc(sizeof(struct rt_pt_node), "rt_pt_node");
+    BU_ALLOC(pts_b, struct rt_pt_node);
 
     pos_a = pts_a;
     pos_b = pts_b;
@@ -893,7 +878,7 @@ rt_hyp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	pos_b->p[Y] = r2 * sqrt(pos_b->p[Z] * pos_b->p[Z]/(r3*r3) + 1.0);
 	pos_a = pos_a->next;
 	if (pos_a) {
-	    pos_b->next = (struct rt_pt_node *)bu_malloc(sizeof(struct rt_pt_node), "rt_pt_node");
+	    BU_ALLOC(pos_b->next, struct rt_pt_node);
 	    pos_b = pos_b->next;
 	} else {
 	    pos_b->next = NULL;
@@ -1136,13 +1121,18 @@ rt_hyp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     nmg_shell_coplanar_face_merge(s, tol, 1);
 
     /* free mem */
-    bu_free((char *)outfaceuses, "faceuse []");
+    if (outfaceuses)
+	bu_free((char *)outfaceuses, "faceuse []");
     for (i = 0; i < nell; i++) {
-	bu_free((char *)ellipses[i], "pts ell");
-	bu_free((char *)vells[i], "vertex []");
+	if (ellipses)
+	    bu_free((char *)ellipses[i], "pts ell");
+	if (vells)
+	    bu_free((char *)vells[i], "vertex []");
     }
-    bu_free((char *)ellipses, "fastf_t ell[]");
-    bu_free((char *)vells, "vertex [][]");
+    if (ellipses)
+	bu_free((char *)ellipses, "fastf_t ell[]");
+    if (vells)
+	bu_free((char *)vells, "vertex [][]");
 
     /* Assign vertexuse normals */
     nmg_vertex_tabulate(&vert_tab, &s->l.magic);
@@ -1184,17 +1174,25 @@ rt_hyp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     }
 
     bu_ptbl_free(&vert_tab);
+    BU_PUT(xip, struct hyp_specific);
     return 0;
 
  fail:
     /* free mem */
-    bu_free((char *)outfaceuses, "faceuse []");
+    if (xip)
+	BU_PUT(xip, struct hyp_specific);
+    if (outfaceuses)
+	bu_free((char *)outfaceuses, "faceuse []");
     for (i = 0; i < nell; i++) {
-	bu_free((char *)ellipses[i], "pts ell");
-	bu_free((char *)vells[i], "vertex []");
+	if (ellipses)
+	    bu_free((char *)ellipses[i], "pts ell");
+	if (vells)
+	    bu_free((char *)vells[i], "vertex []");
     }
-    bu_free((char *)ellipses, "fastf_t ell[]");
-    bu_free((char *)vells, "vertex [][]");
+    if (ellipses)
+	bu_free((char *)ellipses, "fastf_t ell[]");
+    if (vells)
+	bu_free((char *)vells, "vertex [][]");
 
     return -1;
 }
@@ -1213,7 +1211,9 @@ int
 rt_hyp_import5(struct rt_db_internal *ip, const struct bu_external *ep, const mat_t mat, const struct db_i *dbip)
 {
     struct rt_hyp_internal *hyp_ip;
-    fastf_t vec[ELEMENTS_PER_VECT*4];
+
+    /* must be double for import and export */
+    double vec[ELEMENTS_PER_VECT*4];
 
     RT_CK_DB_INTERNAL(ip);
     BU_CK_EXTERNAL(ep);
@@ -1225,7 +1225,8 @@ rt_hyp_import5(struct rt_db_internal *ip, const struct bu_external *ep, const ma
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_HYP;
     ip->idb_meth = &rt_functab[ID_HYP];
-    ip->idb_ptr = bu_malloc(sizeof(struct rt_hyp_internal), "rt_hyp_internal");
+    BU_ALLOC(ip->idb_ptr, struct rt_hyp_internal);
+
     hyp_ip = (struct rt_hyp_internal *)ip->idb_ptr;
     hyp_ip->hyp_magic = RT_HYP_INTERNAL_MAGIC;
 
@@ -1242,7 +1243,7 @@ rt_hyp_import5(struct rt_db_internal *ip, const struct bu_external *ep, const ma
     MAT4X3VEC(hyp_ip->hyp_A, mat, &vec[2*3]);
 
     if (!ZERO(mat[15]))
-	hyp_ip->hyp_b = vec[ 9] / mat[15];
+	hyp_ip->hyp_b = vec[9] / mat[15];
     else
 	hyp_ip->hyp_b = INFINITY;
     hyp_ip->hyp_bnr = vec[10] ;
@@ -1264,7 +1265,9 @@ int
 rt_hyp_export5(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
     struct rt_hyp_internal *hyp_ip;
-    fastf_t vec[ELEMENTS_PER_VECT * 4];
+
+    /* must be double for import and export */
+    double vec[ELEMENTS_PER_VECT * 4];
 
     if (dbip) RT_CK_DBI(dbip);
 
@@ -1375,6 +1378,57 @@ rt_hyp_params(struct pc_pc_set * UNUSED(ps), const struct rt_db_internal *ip)
     if (ip) RT_CK_DB_INTERNAL(ip);
 
     return 0;			/* OK */
+}
+
+
+/**
+ * R T _ H Y P _ C E N T R O I D
+ */
+void
+rt_hyp_centroid(point_t *cent, const struct rt_db_internal *ip)
+{
+    if (cent != NULL && ip != NULL) {
+	struct rt_hyp_internal *hip;
+
+	RT_CK_DB_INTERNAL(ip);
+	hip = (struct rt_hyp_internal *)ip->idb_ptr;
+	RT_HYP_CK_MAGIC(hip);
+
+	VSCALE(*cent, hip->hyp_Hi, 0.5);
+	VADD2(*cent, hip->hyp_Vi, *cent);
+    }
+}
+
+
+/**
+ * R T _ H Y P _ S U R F _ A R E A
+ *
+ * only the stub to make analyze happy
+ * TODO: needs an implementation
+ */
+void
+rt_hyp_surf_area(fastf_t *UNUSED(area), const struct rt_db_internal *UNUSED(ip)) {}
+
+
+/**
+ * R T _ H Y P _ V O L U M E
+ */
+void
+rt_hyp_volume(fastf_t *volume, const struct rt_db_internal *ip)
+{
+    if (volume != NULL || ip != NULL) {
+	struct rt_hyp_internal *hip;
+	struct hyp_specific *hyp;
+
+	RT_CK_DB_INTERNAL(ip);
+	hip = (struct rt_hyp_internal *)ip->idb_ptr;
+	RT_HYP_CK_MAGIC(hip);
+
+	hyp = hyp_internal_to_specific(hip);
+	*volume = M_PI * hyp->hyp_r1 * hyp->hyp_r2 * hyp->hyp_Hmag * 2 *
+	    (1 + hyp->hyp_Hmag * hyp->hyp_Hmag * hyp->hyp_c * hyp->hyp_c / (12 * hyp->hyp_r1 * hyp->hyp_r1));
+	bu_free(hyp, "hyp volume");
+    }
 }
 
 

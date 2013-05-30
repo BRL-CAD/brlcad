@@ -1,7 +1,7 @@
 /*                         D M - P S . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2012 United States Government as represented by
+ * Copyright (c) 1985-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -44,9 +44,14 @@
 #include "bn.h"
 #include "mater.h"
 #include "raytrace.h"
+
 #include "dm.h"
 #include "dm-ps.h"
+#include "dm-Null.h"
+
 #include "solid.h"
+
+#include "./dm_util.h"
 
 #define EPSILON 0.0001
 
@@ -241,7 +246,7 @@ ps_drawVList(struct dm *dmp, struct bn_vlist *vp)
 				pt_prev = pt;
 				continue;
 			    } else {
-                                if (pt_prev) {
+				if (pt_prev) {
 				fastf_t alpha;
 				vect_t diff;
 				point_t tmp_pt;
@@ -251,11 +256,11 @@ ps_drawVList(struct dm *dmp, struct bn_vlist *vp)
 				alpha = (dist_prev - delta) / (dist_prev - dist);
 				VJOIN1(tmp_pt, *pt_prev, alpha, diff);
 				MAT4X3PNT(fin, psmat, tmp_pt);
-                                }
+				}
 			    }
 			} else {
 			    if (dist_prev <= 0.0) {
-                                if (pt_prev) {
+				if (pt_prev) {
 				fastf_t alpha;
 				vect_t diff;
 				point_t tmp_pt;
@@ -266,7 +271,7 @@ ps_drawVList(struct dm *dmp, struct bn_vlist *vp)
 				VJOIN1(tmp_pt, *pt_prev, alpha, diff);
 				MAT4X3PNT(last, psmat, tmp_pt);
 				MAT4X3PNT(fin, psmat, *pt);
-                                }
+				}
 			    } else {
 				MAT4X3PNT(fin, psmat, *pt);
 			    }
@@ -308,16 +313,16 @@ ps_draw(struct dm *dmp, struct bn_vlist *(*callback_function)(void *), genptr_t 
 {
     struct bn_vlist *vp;
     if (!callback_function) {
-        if (data) {
-            vp = (struct bn_vlist *)data;
+	if (data) {
+	    vp = (struct bn_vlist *)data;
 	    ps_drawVList(dmp, vp);
-        }
+	}
     } else {
-        if (!data) {
-            return TCL_ERROR;
-        } else {
-            (void)callback_function(data);
-        }
+	if (!data) {
+	    return TCL_ERROR;
+	} else {
+	    (void)callback_function(data);
+	}
     }
     return TCL_OK;
 }
@@ -327,7 +332,7 @@ ps_draw(struct dm *dmp, struct bn_vlist *(*callback_function)(void *), genptr_t 
  * P S _ N O R M A L
  *
  * Restore the display processor to a normal mode of operation
- * (ie, not scaled, rotated, displaced, etc).
+ * (i.e., not scaled, rotated, displaced, etc.).
  * Turns off windowing.
  */
 HIDDEN int
@@ -348,7 +353,7 @@ ps_normal(struct dm *dmp)
  */
 /* ARGSUSED */
 HIDDEN int
-ps_drawString2D(struct dm *dmp, char *str, fastf_t x, fastf_t y, int size, int UNUSED(use_aspect))
+ps_drawString2D(struct dm *dmp, const char *str, fastf_t x, fastf_t y, int size, int UNUSED(use_aspect))
 {
     int sx, sy;
 
@@ -410,15 +415,7 @@ ps_drawLine2D(struct dm *dmp, fastf_t xpos1, fastf_t ypos1, fastf_t xpos2, fastf
 HIDDEN int
 ps_drawLine3D(struct dm *dmp, point_t pt1, point_t pt2)
 {
-    if (!dmp)
-	return TCL_ERROR;
-
-    if (bn_pt3_pt3_equal(pt1, pt2, NULL)) {
-	/* nothing to do for a singular point */
-	return TCL_OK;
-    }
-
-    return TCL_OK;
+    return draw_Line3D(dmp, pt1, pt2);
 }
 
 
@@ -491,14 +488,14 @@ HIDDEN int
 ps_setWinBounds(struct dm *dmp, fastf_t *w)
 {
     /* Compute the clipping bounds */
-    dmp->dm_clipmin[0] = w[0] / 2048.;
-    dmp->dm_clipmax[0] = w[1] / 2047.;
-    dmp->dm_clipmin[1] = w[2] / 2048.;
-    dmp->dm_clipmax[1] = w[3] / 2047.;
+    dmp->dm_clipmin[0] = w[0] / 2048.0;
+    dmp->dm_clipmax[0] = w[1] / 2047.0;
+    dmp->dm_clipmin[1] = w[2] / 2048.0;
+    dmp->dm_clipmax[1] = w[3] / 2047.0;
 
     if (dmp->dm_zclip) {
-	dmp->dm_clipmin[2] = w[4] / 2048.;
-	dmp->dm_clipmax[2] = w[5] / 2047.;
+	dmp->dm_clipmin[2] = w[4] / 2048.0;
+	dmp->dm_clipmax[2] = w[5] / 2047.0;
     } else {
 	dmp->dm_clipmin[2] = -1.0e20;
 	dmp->dm_clipmax[2] = 1.0e20;
@@ -514,33 +511,35 @@ struct dm dm_ps = {
     ps_drawEnd,
     ps_normal,
     ps_loadMatrix,
+    null_loadPMatrix,
     ps_drawString2D,
     ps_drawLine2D,
     ps_drawLine3D,
     ps_drawLines3D,
     ps_drawPoint2D,
-    Nu_int0,
-    Nu_int0,
+    null_drawPoint3D,
+    null_drawPoints3D,
     ps_drawVList,
     ps_drawVList,
     ps_draw,
     ps_setFGColor,
     ps_setBGColor,
     ps_setLineAttr,
-    Nu_int0,
+    null_configureWin,
     ps_setWinBounds,
-    Nu_int0,
-    Nu_int0,
-    Nu_int0,
-    Nu_int0,
+    null_setLight,
+    null_setTransparency,
+    null_setDepthMask,
+    null_setZBuffer,
     ps_debug,
-    Nu_int0,
-    Nu_int0,
-    Nu_void,
-    Nu_int0,
-    Nu_int0,
-    Nu_int0, /* display to image function */
-    Nu_void,
+    null_beginDList,
+    null_endDList,
+    null_drawDList,
+    null_freeDLists,
+    null_genDLists,
+    null_getDisplayImage,	/* display to image function */
+    null_reshape,
+    null_makeCurrent,
     0,
     0,				/* no displaylist */
     0,                            /* no stereo */
@@ -592,18 +591,12 @@ ps_open(Tcl_Interp *interp, int argc, const char *argv[])
     struct dm *dmp;
     Tcl_Obj *obj;
 
-    BU_GET(dmp, struct dm);
-    if (dmp == DM_NULL)
-	return DM_NULL;
+    BU_ALLOC(dmp, struct dm);
 
     *dmp = dm_ps;  /* struct copy */
     dmp->dm_interp = interp;
 
-    dmp->dm_vars.priv_vars = (genptr_t)bu_calloc(1, sizeof(struct ps_vars), "ps_open: ps_vars");
-    if (dmp->dm_vars.priv_vars == (genptr_t)NULL) {
-	bu_free((genptr_t)dmp, "ps_open: dmp");
-	return DM_NULL;
-    }
+    BU_ALLOC(dmp->dm_vars.priv_vars, struct ps_vars);
 
     obj = Tcl_GetObjResult(interp);
     if (Tcl_IsShared(obj))
@@ -680,7 +673,7 @@ ps_open(Tcl_Interp *interp, int argc, const char *argv[])
 		break;
 	    case 's':               /* size in inches */
 		{
-		    fastf_t size;
+		    double size;
 
 		    if (argv[0][2] != '\0')
 			sscanf(&argv[0][2], "%lf", &size);

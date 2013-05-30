@@ -1,7 +1,7 @@
 /*                 Product.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2012 United States Government as represented by
+ * Copyright (c) 1994-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -112,12 +112,12 @@ void Product::Print(int level)
 
     TAB(level);
     std::cout << "Attributes:" << std::endl;
-    TAB(level+1);
+    TAB(level + 1);
     std::cout << "name:" << name << std::endl;
-    TAB(level+1);
+    TAB(level + 1);
     std::cout << "description:" << description << std::endl;
 
-    TAB(level+1);
+    TAB(level + 1);
     std::cout << "frame_of_reference:" << std::endl;
     LIST_OF_PRODUCT_CONTEXT::iterator i;
     for (i = frame_of_reference.begin(); i != frame_of_reference.end(); ++i) {
@@ -126,23 +126,15 @@ void Product::Print(int level)
 }
 
 STEPEntity *
+Product::GetInstance(STEPWrapper *sw, int id)
+{
+    return new Product(sw, id);
+}
+
+STEPEntity *
 Product::Create(STEPWrapper *sw, SDAI_Application_instance *sse)
 {
-    Factory::OBJECTS::iterator i;
-    if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
-	Product *object = new Product(sw, sse->STEPfile_id);
-
-	Factory::AddObject(object);
-
-	if (!object->Load(sw, sse)) {
-	    std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
-	    delete object;
-	    return NULL;
-	}
-	return static_cast<STEPEntity *>(object);
-    } else {
-	return (*i).second;
-    }
+    return STEPEntity::CreateEntity(sw, sse, GetInstance, CLASSNAME);
 }
 
 bool Product::LoadONBrep(ON_Brep *brep)

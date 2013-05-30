@@ -1,7 +1,7 @@
 #                E T O E D I T F R A M E . T C L
 # BRL-CAD
 #
-# Copyright (c) 2002-2012 United States Government as represented by
+# Copyright (c) 2002-2013 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -217,19 +217,19 @@
 	::ttk::entry $parent.etoVxE \
 	    -textvariable [::itcl::scope mVx] \
 	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add etoVyE {
 	::ttk::entry $parent.etoVyE \
 	    -textvariable [::itcl::scope mVy] \
 	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add etoVzE {
 	::ttk::entry $parent.etoVzE \
 	    -textvariable [::itcl::scope mVz] \
 	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add etoVUnitsL {
 	::ttk::label $parent.etoVUnitsL \
@@ -246,21 +246,21 @@
 	    -textvariable [::itcl::scope mNx] \
 	    -state disabled \
 	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add etoNyE {
 	::ttk::entry $parent.etoNyE \
 	    -textvariable [::itcl::scope mNy] \
 	    -state disabled \
 	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add etoNzE {
 	::ttk::entry $parent.etoNzE \
 	    -textvariable [::itcl::scope mNz] \
 	    -state disabled \
 	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add etoNUnitsL {
 	::ttk::label $parent.etoNUnitsL \
@@ -276,21 +276,21 @@
 	    -textvariable [::itcl::scope mCx] \
 	    -state disabled \
 	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add etoCyE {
 	::ttk::entry $parent.etoCyE \
 	    -textvariable [::itcl::scope mCy] \
 	    -state disabled \
 	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add etoCzE {
 	::ttk::entry $parent.etoCzE \
 	    -textvariable [::itcl::scope mCz] \
 	    -state disabled \
 	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add etoCUnitsL {
 	::ttk::label $parent.etoCUnitsL \
@@ -306,7 +306,7 @@
 	::ttk::entry $parent.etoRE \
 	    -textvariable [::itcl::scope mR] \
 	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add etoRUnitsL {
 	::ttk::label $parent.etoRVUnitsL \
@@ -322,7 +322,7 @@
 	::ttk::entry $parent.etoR_dE \
 	    -textvariable [::itcl::scope mR_d] \
 	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add etoR_dUnitsL {
 	::ttk::label $parent.etoR_dUnitsL \
@@ -405,7 +405,7 @@
 
 ::itcl::body EtoEditFrame::buildLowerPanel {} {
     set parent [$this childsite lower]
-
+    set row 0
     foreach {attribute op opLabel} {r set Set r_d set Set C set Set C rot Rotate} {
 	itk_component add $op$attribute {
 	    ::ttk::radiobutton $parent.$op\_$attribute \
@@ -415,9 +415,8 @@
 		-command [::itcl::code $this initEditState]
 	} {}
 
-	pack $itk_component($op$attribute) \
-	    -anchor w \
-	    -expand yes
+	grid $itk_component($op$attribute) -row $row -column 0 -sticky nsew
+	incr row
     }
 }
 
@@ -510,6 +509,11 @@
 	    set mEditCommand protate
 	    set mEditClass $EDIT_CLASS_ROT
 	    set mEditParam1 c
+	} \
+	default {
+	    set mEditCommand ""
+	    set mEditPCommand ""
+	    set mEditParam1 ""
 	}
 
     GeometryEditFrame::initEditState

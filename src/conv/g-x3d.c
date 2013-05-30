@@ -1,7 +1,7 @@
 /*                         G - X 3 D . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2012 United States Government as represented by
+ * Copyright (c) 2004-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -20,7 +20,7 @@
  */
 /** @file conv/g-x3d.c
  *
- * Program to convert a BRL-CAD model (in a .g file) to a X3D facetted
+ * Program to convert a BRL-CAD model (in a .g file) to a X3D faceted
  * model by calling on the NMG booleans. This program is a modified
  * version of g-vrml (authored by John R. Anderson).
  *
@@ -74,7 +74,7 @@ struct vrml_mat {
     int shininess;
     double transparency;
 
-    /* light paramaters */
+    /* light parameters */
     fastf_t lt_fraction;
     vect_t  lt_dir;
     fastf_t lt_angle;
@@ -86,20 +86,19 @@ struct vrml_mat {
 };
 
 #define PL_O(_m)	bu_offsetof(struct vrml_mat, _m)
-#define PL_OA(_m)	bu_offsetofarray(struct vrml_mat, _m)
 
 struct bu_structparse vrml_mat_parse[]={
-    {"%s", TXT_NAME_SIZE, "ma_shader", PL_OA(shader),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%s", TXT_NAME_SIZE, "ma_shader", PL_O(shader),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%d", 1, "shine",		PL_O(shininess),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%d", 1, "sh",		PL_O(shininess),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f", 1, "transmit",	PL_O(transparency),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f", 1, "tr",		PL_O(transparency),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f",	1, "angle",	PL_O(lt_angle),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f",	1, "fract",	PL_O(lt_fraction),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f",	3, "aim",	PL_OA(lt_dir),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%g", 1, "transmit",	PL_O(transparency),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%g", 1, "tr",		PL_O(transparency),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f", 1, "angle",		PL_O(lt_angle),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f", 1, "fract",		PL_O(lt_fraction),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f", 3, "aim",		PL_O(lt_dir),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%d",  1, "w",         	PL_O(tx_w),             BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%d",  1, "n",         	PL_O(tx_n),             BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%s",  TXT_NAME_SIZE, "file", PL_OA(tx_file), 	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%s",  TXT_NAME_SIZE, "file", PL_O(tx_file), 	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"",    0, (char *)0,	0,			BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 
@@ -129,7 +128,7 @@ static int	regions_converted = 0;
 
 
 /*
- * Replace all occurences of "old" with "new" in str.
+ * Replace all occurrences of "old" with "new" in str.
  */
 static void
 char_replace(char *str,
@@ -180,7 +179,7 @@ dup_bot( struct rt_bot_internal *bot_in )
 
     RT_BOT_CK_MAGIC( bot_in );
 
-    bot = (struct rt_bot_internal *)bu_malloc( sizeof( struct rt_bot_internal ), "dup bot" );
+    BU_ALLOC(bot, struct rt_bot_internal);
 
     *bot = *bot_in;	/* struct copy */
 
@@ -327,7 +326,7 @@ writeX3dHeader(FILE *fp_out, char *x3dFileName)
     fprintf(fp_out, "  <Scene>\n");
 
     /* Note we may want to inquire about bounding boxes for the various groups and add Viewpoints nodes that
-     * point the camera to the center and orient for Top, Side, etc Views
+     * point the camera to the center and orient for Top, Side, etc. Views
      *
      * We will add some default Material Color definitions (for thousands groups) before we start defining the geometry
      */
@@ -449,10 +448,10 @@ main(int argc, char **argv)
 	units = "mm";
 
     /* Open BRL-CAD database */
-    if ((dbip = db_open( argv[bu_optind], "r")) == DBI_NULL)
+    if ((dbip = db_open( argv[bu_optind], DB_OPEN_READONLY)) == DBI_NULL)
     {
 	perror(argv[0]);
-	bu_exit(1, "Cannot open %s\n", argv[bu_optind] );
+	bu_exit(1, "Cannot open geometry database file %s\n", argv[bu_optind] );
     }
     if ( db_dirbuild( dbip ) ) {
 	bu_exit(1, "db_dirbuild() failed!\n" );
@@ -492,7 +491,7 @@ main(int argc, char **argv)
 	    continue;
 	}
 
-	/* light source must be a combibation */
+	/* light source must be a combination */
 	if ( !(dp->d_flags & RT_DIR_COMB) )
 	    continue;
 
@@ -568,6 +567,13 @@ process_non_light(struct model *m) {
 		    continue;
 		}
 
+		if ( fu->fumate_p == next_fu )
+		{
+		    /* make sure next_fu is not the mate of fu */
+		    next_fu = BU_LIST_PNEXT( faceuse, &next_fu->l );
+		}
+
+
 		/* check if this faceuse has any holes */
 		for ( BU_LIST_FOR( lu, loopuse, &fu->lu_hd ) )
 		{
@@ -580,7 +586,15 @@ process_non_light(struct model *m) {
 			if ( !BU_SETJUMP )
 			{
 			    /* try */
-			    nmg_triangulate_fu( fu, &tol );
+			    if ( nmg_triangulate_fu( fu, &tol ) )
+			    {
+				if ( nmg_kfu( fu ) )
+				{
+				    (void) nmg_ks( s );
+				    shell_is_dead = 1;
+
+				}
+			    }
 			} else {
 			    /* catch */
 			    bu_log( "A face has failed triangulation!\n" );
@@ -635,7 +649,7 @@ nmg_2_vrml(FILE *fp, const struct db_full_path *pathp, struct model *m, struct m
 
     full_path = db_path_to_string( pathp );
 
-    /* replace all occurences of '.' with '_' */
+    /* replace all occurrences of '.' with '_' */
     char_replace(full_path, '.', '_');
 
     RT_CK_FULL_PATH( pathp );
@@ -830,16 +844,16 @@ nmg_2_vrml(FILE *fp, const struct db_full_path *pathp, struct model *m, struct m
 	VSCALE( pt_meters, vg->coord, scale_factor );
 
 	if ( is_light )
-	    VADD2( ave_pt, ave_pt, pt_meters )
-		if ( first )
-		{
-		    if ( !is_light )
-			fprintf( fp, " %10.10e %10.10e %10.10e, ", V3ARGS(pt_meters));
-		    first = 0;
-		}
-		else
-		    if ( !is_light )
-			fprintf( fp, "%10.10e %10.10e %10.10e, ", V3ARGS( pt_meters ));
+	    VADD2( ave_pt, ave_pt, pt_meters );
+	if ( first )
+	{
+	    if ( !is_light )
+		fprintf( fp, " %10.10e %10.10e %10.10e, ", V3ARGS(pt_meters));
+	    first = 0;
+	}
+	else
+	    if ( !is_light )
+		fprintf( fp, "%10.10e %10.10e %10.10e, ", V3ARGS( pt_meters ));
     }
 
     /* close point */
@@ -867,7 +881,7 @@ bot2vrml( struct plate_mode *pmp, const struct db_full_path *pathp, int region_i
     BARRIER_CHECK;
 
     path_str = db_path_to_string( pathp );
-    /* replace all occurences of '.' with '_' */
+    /* replace all occurrences of '.' with '_' */
     char_replace(path_str, '.', '_');
 
     fprintf( outfp, "\t<Shape DEF=\"%s\">\n", path_str);
@@ -1103,7 +1117,7 @@ nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, unio
      */
     db_free_tree(curtree, &rt_uniresource);		/* Does an nmg_kr() */
 
-    BU_GET(curtree, union tree);
+    BU_ALLOC(curtree, union tree);
     RT_TREE_INIT(curtree);
     curtree->tr_op = OP_NOP;
     BARRIER_CHECK;

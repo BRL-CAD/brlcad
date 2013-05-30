@@ -1,7 +1,7 @@
 /*                      M E T A B A L L . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2012 United States Government as represented by
+ * Copyright (c) 2008-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -120,7 +120,7 @@ mix_balls(struct db_i *dbip, const char *name, int ac, const char *av[])
      * manually fill in with points from the other metaballs being
      * joined together.
      */
-    BU_GET(newmp, struct rt_metaball_internal);
+    BU_ALLOC(newmp, struct rt_metaball_internal);
     newmp->magic = RT_METABALL_INTERNAL_MAGIC;
     newmp->threshold = 1.0;
     newmp->method = 1;
@@ -151,7 +151,7 @@ mix_balls(struct db_i *dbip, const char *name, int ac, const char *av[])
 	mp = (struct rt_metaball_internal *)dir.idb_ptr;
 	RT_METABALL_CK_MAGIC(mp);
 
-	/* iterate over each point in that database objct and add it
+	/* iterate over each point in that database object and add it
 	 * to our new metaball.
 	 */
 	for (BU_LIST_FOR(mpt, wdb_metaballpt, &mp->metaball_ctrl_head)) {
@@ -208,7 +208,7 @@ make_spaghetti(const char *filename, const char *name, long count)
     wdb_close(fp);
 
     /* done with the write-only, now begins read/write */
-    dbip = db_open(filename, "rw");
+    dbip = db_open(filename, DB_OPEN_READWRITE);
     if (dbip == DBI_NULL) {
 	perror("ERROR");
 	bu_exit(EXIT_FAILURE, "Failed to open geometry file [%s].  Aborting.\n", filename);
@@ -267,6 +267,7 @@ main(int argc, char *argv[])
 
     return EXIT_SUCCESS;
 }
+
 
 /*
  * Local Variables:

@@ -1,7 +1,7 @@
 /*                         V D R A W . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2012 United States Government as represented by
+ * Copyright (c) 2004-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -438,7 +438,7 @@ vdraw_read_tcl(void *clientData, int argc, const char *argv[])
 	return TCL_OK;
     }
     if (argv[1][0] == 'l') {
-	/* return lenght of list */
+	/* return length of list */
 	length = 0;
 	vp = BU_LIST_FIRST(bn_vlist, &(dgop->dgo_currVHead->vdc_vhd));
 	while (!BU_LIST_IS_HEAD(vp, &(dgop->dgo_currVHead->vdc_vhd))) {
@@ -516,7 +516,6 @@ vdraw_send_tcl(void *clientData, int UNUSED(argc), const char *UNUSED(argv[]))
 
     /* 0 means OK, -1 means conflict with real solid name */
     idx = dgo_invent_solid(dgop,
-			   dgop->interp,
 			   solid_name,
 			   &(dgop->dgo_currVHead->vdc_vhd),
 			   dgop->dgo_currVHead->vdc_rgb,
@@ -622,7 +621,7 @@ vdraw_open_tcl(void *clientData, int argc, const char *argv[])
 
     if (!dgop->dgo_currVHead) {
 	/* create new entry */
-	BU_GET(rcp, struct vd_curve);
+	BU_ALLOC(rcp, struct vd_curve);
 	BU_LIST_APPEND(&dgop->dgo_headVDraw, &(rcp->l));
 
 	bu_strlcpy(rcp->vdc_name, temp_name, RT_VDRW_MAXNAME);

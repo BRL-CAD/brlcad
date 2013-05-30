@@ -1,7 +1,7 @@
 /*                      R T S E R V E R . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2012 United States Government as represented by
+ * Copyright (c) 2004-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -95,12 +95,12 @@ static pthread_mutex_t apps_mutex = PTHREAD_MUTEX_INITIALIZER;
 	} else {							\
 	    int app_no = app_count++;					\
 	    pthread_mutex_unlock( &apps_mutex );			\
-	    _p = (struct application *)bu_malloc( sizeof(struct application), "struct application"); \
+	    BU_ALLOC(_p, struct application); \
 	    RT_APPLICATION_INIT(_p);					\
 	    _p->a_rt_i = myrtip;					\
-	    _p->a_uptr = (struct bu_vlb *)bu_calloc( sizeof(struct bu_vlb), 1, "bu_vlb GET_APPLICATION"); \
+	    BU_ALLOC(_p->a_uptr, struct bu_vlb); \
 	    bu_vlb_init(_p->a_uptr);					\
-	    _p->a_resource = (struct resource *)bu_calloc( sizeof(struct resource), 1, "resource"); \
+	    BU_ALLOC(_p->a_resource, struct resource); \
 	    rt_init_resource( _p->a_resource, app_no, _p->a_rt_i );	\
 	    _p->a_hit = rts_hit;					\
 	    _p->a_miss = rts_miss;					\
@@ -473,17 +473,13 @@ rts_load_geometry( char *filename, int num_trees, char **objects )
 
     /* load the specified objects */
     /* malloc some memory for the rtserver geometry structure (bu_calloc zeros the memory) */
-    rts_geometry[sessionid] = (struct rtserver_geometry *)bu_calloc( 1,
-								     sizeof( struct rtserver_geometry ),
-								     "rtserver geometry" );
+    BU_ALLOC(rts_geometry[sessionid], struct rtserver_geometry);
 
     /* just one RT instance */
     rts_geometry[sessionid]->rts_number_of_rtis = 1;
-    rts_geometry[sessionid]->rts_rtis = (struct rtserver_rti **)bu_malloc( sizeof( struct rtserver_rti *),
-									   "rtserver_rti *" );
-    rts_geometry[sessionid]->rts_rtis[0] = (struct rtserver_rti *)bu_calloc( 1,
-									     sizeof( struct rtserver_rti ),
-									     "rtserver_rti" );
+    BU_ALLOC(rts_geometry[sessionid]->rts_rtis, struct rtserver_rti *);
+    BU_ALLOC(rts_geometry[sessionid]->rts_rtis[0], struct rtserver_rti);
+
     rts_geometry[sessionid]->rts_rtis[0]->rtrti_rtip = rtip;
     rts_geometry[sessionid]->rts_rtis[0]->rtrti_num_trees = num_trees;
     if ( verbose ) {
@@ -491,8 +487,8 @@ rts_load_geometry( char *filename, int num_trees, char **objects )
     }
 
     /* initialize our overall bounding box */
-    VSETALL( rts_geometry[sessionid]->rts_mdl_min, MAX_FASTF );
-    VREVERSE( rts_geometry[sessionid]->rts_mdl_max, rts_geometry[sessionid]->rts_mdl_min );
+    VSETALL( rts_geometry[sessionid]->rts_mdl_min, INFINITY );
+    VSETALL( rts_geometry[sessionid]->rts_mdl_max, -INFINITY );
 
     /* for each RT instance, get its trees */
     for ( i=0; i<rts_geometry[sessionid]->rts_number_of_rtis; i++ ) {
@@ -528,7 +524,7 @@ rts_load_geometry( char *filename, int num_trees, char **objects )
 	rt_prep_parallel( rtip, 1 );
 
 	/* create the hash table of region names */
-	rts_rtip->rtrti_region_names = (Tcl_HashTable *)bu_calloc(1, sizeof(Tcl_HashTable), "region names hash table");
+	BU_ALLOC(rts_rtip->rtrti_region_names, Tcl_HashTable);
 	Tcl_InitHashTable(rts_rtip->rtrti_region_names, TCL_STRING_KEYS);
 	for( regno=0 ; regno<rtip->nregions ; regno++ ) {
 	    int newPtr = 0;
@@ -606,7 +602,7 @@ rts_hit( struct application *ap, struct partition *partHeadp, struct seg *UNUSED
     for ( BU_LIST_FOR( pp, partition, (struct bu_list *)partHeadp ) ) {
 	numPartitions++;
     };
-    /* write the number of partitiions to the byte array */
+    /* write the number of partitions to the byte array */
     *(uint32_t *)buffer = htonl(numPartitions);
     bu_vlb_write(vlb, buffer, SIZEOF_NETWORK_LONG);
 
@@ -1056,7 +1052,7 @@ JNIEXPORT jint JNICALL Java_mil_army_muves_brlcadservice_impl_BrlcadJNIWrapper_r
 	return (jint) 1;
     }
 
-    /* get the aruments from the JAVA args object array */
+    /* get the arguments from the JAVA args object array */
     jfile_name = (jstring)(*env)->GetObjectArrayElement( env, args, 0 );
     file_name = (char *)(*env)->GetStringUTFChars(env, jfile_name, 0);
 
@@ -1851,7 +1847,7 @@ Java_mil_army_muves_brlcadservice_impl_BrlcadJNIWrapper_getItemTree(JNIEnv *env,
 	return (jobject)NULL;
     }
 
-    /* get the JAVA method id for the ItemTree addSubcomponent method */
+    /* get the JAVA method id for the ItemTree addSubComponent method */
     if ( (itemTree_addcomponent_id=(*env)->GetMethodID( env, itemTree_class, "addSubComponent",
 							"(Lmil/army/muves/geometryservice/datatypes/ItemTree;)V" )) == NULL ) {
 	fprintf( stderr, "Failed to get method id for ItemTree addSubComponent method\n" );

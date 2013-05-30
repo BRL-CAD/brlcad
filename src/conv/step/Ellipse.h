@@ -1,7 +1,7 @@
 /*                 Ellipse.h
  * BRL-CAD
  *
- * Copyright (c) 1994-2012 United States Government as represented by
+ * Copyright (c) 1994-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -29,28 +29,34 @@
 
 #include "Conic.h"
 
-class Ellipse : public Conic {
+class Ellipse : public Conic
+{
 private:
-	static string entityname;
+    static string entityname;
+    static EntityInstanceFunc GetInstance;
 
 protected:
-	double semi_axis_1;
-	double semi_axis_2;
+    double semi_axis_1;
+    double semi_axis_2;
 
-	Ellipse();
-	Ellipse(STEPWrapper *sw,int step_id);
+    Ellipse();
+    Ellipse(STEPWrapper *sw, int step_id);
 
 public:
-	virtual ~Ellipse();
-	virtual curve_type CurveType() { return CONIC; };
-	virtual conic_type ConicType() { return ELLIPSE; };
-	bool Load(STEPWrapper *sw,SDAI_Application_instance *sse);
-	virtual bool LoadONBrep(ON_Brep *brep);
-	virtual void Print(int level);
-	virtual void SetParameterTrim(double start, double end);
+    virtual ~Ellipse();
+    virtual curve_type CurveType() {
+	return CONIC;
+    };
+    virtual conic_type ConicType() {
+	return ELLIPSE;
+    };
+    bool Load(STEPWrapper *sw, SDAI_Application_instance *sse);
+    virtual bool LoadONBrep(ON_Brep *brep);
+    virtual void Print(int level);
+    virtual void SetParameterTrim(double start, double end);
 
-	//static methods
-	static STEPEntity *Create(STEPWrapper *sw,SDAI_Application_instance *sse);
+    //static methods
+    static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
 #endif /* ELLIPSE_H_ */

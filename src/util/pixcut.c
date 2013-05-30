@@ -1,7 +1,7 @@
 /*                        P I X C U T . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2012 United States Government as represented by
+ * Copyright (c) 2004-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -152,16 +152,16 @@ get_args(int argc, char **argv)
 	} else {
 	    if ((input = fopen(in_name, "r")) == NULL) {
 		perror(in_name);
-		(void)fprintf(stderr,
-			      "pixcut: cannot open \"%s\" for reading\n",
-			      in_name);
+		fprintf(stderr,
+			"pixcut: cannot open \"%s\" for reading\n",
+			in_name);
 		return 0;
 	    }
 	    isfile = 1;
 	}
     }
     if (argc > ++bu_optind) {
-	(void)fprintf(stderr, "pixcut: excess argument(s) ignored\n");
+	fprintf(stderr, "pixcut: excess argument(s) ignored\n");
     }
     return 1;	/* OK */
 }
@@ -180,7 +180,7 @@ main(int argc, char **argv)
     background[2] = 1;
 
     if (!get_args(argc, argv)) {
-	(void)fprintf(stderr, "%s", usage);
+	fprintf(stderr, "%s", usage);
 	bu_exit (1, NULL);
     }
     /* Should we autosize the input? */
@@ -212,15 +212,15 @@ main(int argc, char **argv)
  * Spew at the user if they asked.
  */
     if (Verbose) {
-	(void)fprintf(stderr, "pixcut: Copyright (C) 1992 Paladin Software\n");
-	(void)fprintf(stderr, "pixcut: All rights reserved.\npixcut:\n");
-	(void)fprintf(stderr, "pixcut: original image %ldx%ld\n",
-		      org_width, org_height);
-	(void)fprintf(stderr, "pixcut: new image %ldx%ld\n",
-		      new_width, new_height);
-	(void)fprintf(stderr, "pixcut: offset %ldx%ld\n", base_x, base_y);
-	(void)fprintf(stderr, "pixcut: background color %d/%d/%d\n",
-		      background[0], background[1], background[2]);
+	fprintf(stderr, "pixcut: Copyright (C) 1992 Paladin Software\n");
+	fprintf(stderr, "pixcut: All rights reserved.\npixcut:\n");
+	fprintf(stderr, "pixcut: original image %ldx%ld\n",
+		org_width, org_height);
+	fprintf(stderr, "pixcut: new image %ldx%ld\n",
+		new_width, new_height);
+	fprintf(stderr, "pixcut: offset %ldx%ld\n", base_x, base_y);
+	fprintf(stderr, "pixcut: background color %d/%d/%d\n",
+		background[0], background[1], background[2]);
 
 	if (base_x < 0 || base_y < 0 ||
 	    base_x+new_width >org_width ||
@@ -243,9 +243,9 @@ main(int argc, char **argv)
 	    if (base_x+new_width >org_width) {
 		if (last) {
 		    if (comma) {
-			(void)fprintf(stderr, ", %s", last);
+			fprintf(stderr, ", %s", last);
 		    } else {
-			(void)fprintf(stderr, " %s", last);
+			fprintf(stderr, " %s", last);
 		    }
 		    comma=1;
 		}
@@ -253,24 +253,24 @@ main(int argc, char **argv)
 	    if (base_y+new_height > org_height) {
 		if (last) {
 		    if (comma) {
-			(void)fprintf(stderr, ", %s", last);
+			fprintf(stderr, ", %s", last);
 		    } else {
-			(void)fprintf(stderr, " %s", last);
+			fprintf(stderr, " %s", last);
 		    }
 		    comma = 1;
 		}
 		last = "top";
 	    }
 	    if (comma) {
-		(void)fprintf(stderr, " and %s.\n", last);
+		fprintf(stderr, " and %s.\n", last);
 	    } else {
-		(void)fprintf(stderr, " %s.\n", last);
+		fprintf(stderr, " %s.\n", last);
 	    }
 	}
     }
 /*
  * If the new image does not intersect the original, then set the base_x
- * so that it does not overlap the original but at the same time minmizes
+ * so that it does not overlap the original but at the same time minimizes
  * the memory hit.
  */
     if (base_x + new_width < 0 || base_x > org_width) {
@@ -318,6 +318,10 @@ main(int argc, char **argv)
 
     while (row < base_y) {
 	result = fread(inbuf, num_bytes, org_width, input);
+	if (result != org_width) {
+	    perror("pixcut: fread");
+	    bu_exit (3, NULL);
+	}
 	row++;
     }
 /*
@@ -342,7 +346,7 @@ main(int argc, char **argv)
 	row++;
     }
 /*
- * Refill the output buffer if we are going to be outputing background
+ * Refill the output buffer if we are going to be outputting background
  * lines.
  */
     if (row >= org_height) {

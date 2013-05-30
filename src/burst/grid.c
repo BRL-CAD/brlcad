@@ -1,7 +1,7 @@
 /*                          G R I D . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2012 United States Government as represented by
+ * Copyright (c) 2004-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -43,7 +43,7 @@
 #define DEBUG_GRID	0
 #define DEBUG_SHOT	1
 #ifndef	EPSILON
-#define EPSILON		0.000001
+#  define EPSILON	0.000001
 #endif
 #define FABS(a)		((a) > 0 ? (a) : -(a))
 #define AproxEq(a, b, e)	(FABS((a)-(b)) < (e))
@@ -78,11 +78,9 @@ static int f_ShotMiss();
 static int getRayOrigin();
 static int readBurst();
 static int readShot();
-static void consVector();
 static void lgtModel();
 static void view_end();
 static void view_pix();
-static void spallVec();
 
 /*
   void colorPartition(struct region *regp, int type)
@@ -577,7 +575,7 @@ f_ShotHit(struct application *ap, struct partition *pt_headp, struct seg *UNUSED
 		    prntSeg(ap, pp, OUTSIDE_AIR,
 			    entrynorm, exitnorm, pp == bp);
 		} else
-		    /* If air expicitly follows, output space code. */
+		    /* If air explicitly follows, output space code. */
 		    if (np != pt_headp && Air(nregp)) {
 			/* Check for interior burst point. */
 #if DEBUG_GRID
@@ -689,7 +687,7 @@ f_ShotHit(struct application *ap, struct partition *pt_headp, struct seg *UNUSED
 	    } else	  /* Interior burst point: no fuzing offset. */
 		VMOVE(burstpt, bp->pt_outhit->hit_point);
 
-	/* Only generate burst rays if nspallrays is greater then
+	/* Only generate burst rays if nspallrays is greater than
 	   zero. */
 	if (nspallrays < 1)
 	    return	1;
@@ -707,7 +705,7 @@ f_ShotHit(struct application *ap, struct partition *pt_headp, struct seg *UNUSED
   Fill normal and hit point into hit struct and if the flipped
   flag is set, reverse the normal.  Return a private copy of the
   flipped normal in normvec.  NOTE: the normal placed in the hit
-  struct should not be modified (ie reversed) by the application
+  struct should not be modified (i.e. reversed) by the application
   because it can be instanced by other solids.
 */
 void
@@ -957,6 +955,23 @@ getRayOrigin(struct application *ap)
     VADD2(ap->a_ray.r_pt, gridsoff, gridyinc);
     VADD2(ap->a_ray.r_pt, ap->a_ray.r_pt, gridxinc);
     return	1;
+}
+
+
+/*	c o n s _ V e c t o r ()
+	Construct a direction vector out of azimuth and elevation angles
+	in radians, allocating storage for it and returning its address.
+*/
+static void
+consVector(fastf_t *vec, fastf_t azim, fastf_t elev)
+{
+    /* Store cosine of the elevation to save calculating twice. */
+    fastf_t	cosE;
+    cosE = cos(elev);
+    vec[0] = cos(azim) * cosE;
+    vec[1] = sin(azim) * cosE;
+    vec[2] = sin(elev);
+    return;
 }
 
 
@@ -1327,16 +1342,21 @@ static int
 readBurst(fastf_t *vec)
 {
     int	items;
+    double scan[3];
+
     assert(burstfp != (FILE *) NULL);
     /* read 3D firing coordinates from input stream */
-    if ((items = fscanf(burstfp, "%lf %lf %lf", &vec[X], &vec[Y], &vec[Z])) != 3) {
+    items = fscanf(burstfp, "%lf %lf %lf", &scan[0], &scan[1], &scan[2]);
+    VMOVE(vec, scan); /* double to fastf_t */
+    if (items != 3) {
 	if (items != EOF) {
 	    brst_log("Fatal error: %d burst coordinates read.\n",
 		     items);
 	    fatalerror = 1;
 	    return	0;
-	} else
+	} else {
 	    return	EOF;
+	}
     } else {
 	vec[X] /= unitconv;
 	vec[Y] /= unitconv;
@@ -1358,18 +1378,25 @@ readBurst(fastf_t *vec)
 static int
 readShot(fastf_t *vec)
 {
+    double scan[3] = VINIT_ZERO;
+
     assert(shotfp != (FILE *) NULL);
+
     if (! TSTBIT(firemode, FM_3DIM)) {
 	/* absence of 3D flag means 2D */
 	int	items;
+
 	/* read 2D firing coordinates from input stream */
-	if ((items = fscanf(shotfp, "%lf %lf", &vec[X], &vec[Y])) != 2) {
+	items = fscanf(shotfp, "%lf %lf", &scan[0], &scan[1]);
+	VMOVE(vec, scan);
+	if (items != 2) {
 	    if (items != EOF) {
 		brst_log("Fatal error: only %d firing coordinates read.\n", items);
 		fatalerror = 1;
 		return	0;
-	    } else
+	    } else {
 		return	EOF;
+	    }
 	} else {
 	    vec[X] /= unitconv;
 	    vec[Y] /= unitconv;
@@ -1378,15 +1405,18 @@ readShot(fastf_t *vec)
 	if (TSTBIT(firemode, FM_3DIM)) {
 	    /* 3D coordinates */
 	    int	items;
+
 	    /* read 3D firing coordinates from input stream */
-	    if ((items = fscanf(shotfp, "%lf %lf %lf", &vec[X], &vec[Y], &vec[Z])) != 3)
-	    {
+	    items = fscanf(shotfp, "%lf %lf %lf", &scan[0], &scan[1], &scan[2]);
+	    VMOVE(vec, scan); /* double to fastf_t */
+	    if (items != 3) {
 		if (items != EOF) {
 		    brst_log("Fatal error: %d firing coordinates read.\n", items);
 		    fatalerror = 1;
 		    return	0;
-		} else
+		} else {
 		    return	EOF;
+		}
 	    } else {
 		vec[X] /= unitconv;
 		vec[Y] /= unitconv;
@@ -1502,22 +1532,51 @@ burstPoint(struct application *ap, fastf_t *normal, fastf_t *bpt)
        axis. */
     if (cantwarhead) {
 	VADD2(a_burst.a_ray.r_dir, a_burst.a_ray.r_dir, cantdelta);
-	VUNITIZE(a_burst.a_ray.r_dir)
-	    }
+	VUNITIZE(a_burst.a_ray.r_dir);
+    }
     /* If a deflected cone is specified (the default) the spall cone
        axis is half way between the main penetrator axis and exit
        normal of the spalling component.
     */
     if (deflectcone) {
 	VADD2(a_burst.a_ray.r_dir, a_burst.a_ray.r_dir, normal);
-	VUNITIZE(a_burst.a_ray.r_dir)
-	    }
+	VUNITIZE(a_burst.a_ray.r_dir);
+    }
     VMOVE(a_burst.a_ray.r_pt, bpt);
 
     comphi = 0.0; /* Initialize global for concurrent access. */
 
     /* SERIAL case -- one CPU does all the work. */
     return	burstRay();
+}
+
+
+static void
+spallVec(fastf_t *dvec, fastf_t *s_rdir, fastf_t phi, fastf_t gammaval)
+{
+    fastf_t			cosphi = cos(phi);
+    fastf_t			singamma = sin(gammaval);
+    fastf_t			cosgamma = cos(gammaval);
+    fastf_t			csgaphi, ssgaphi;
+    fastf_t			sinphi = sin(phi);
+    fastf_t			cosdphi[3];
+    fastf_t			fvec[3];
+    fastf_t			evec[3];
+
+    if (AproxEqVec(dvec, zaxis, VEC_TOL)
+	||	AproxEqVec(dvec, negzaxis, VEC_TOL)
+	) {
+	VMOVE(evec, xaxis);
+    } else {
+	VCROSS(evec, dvec, zaxis);
+    }
+    VCROSS(fvec, evec, dvec);
+    VSCALE(cosdphi, dvec, cosphi);
+    ssgaphi = singamma * sinphi;
+    csgaphi = cosgamma * sinphi;
+    VJOIN2(s_rdir, cosdphi, ssgaphi, evec, csgaphi, fvec);
+    VUNITIZE(s_rdir);
+    return;
 }
 
 
@@ -1580,52 +1639,6 @@ burstRay()
 	    paintCellFb(&a_spall, pixbhit, pixtarg);
     }
     return	1;
-}
-
-
-static void
-spallVec(fastf_t *dvec, fastf_t *s_rdir, fastf_t phi, fastf_t gammaval)
-{
-    fastf_t			cosphi = cos(phi);
-    fastf_t			singamma = sin(gammaval);
-    fastf_t			cosgamma = cos(gammaval);
-    fastf_t			csgaphi, ssgaphi;
-    fastf_t			sinphi = sin(phi);
-    fastf_t			cosdphi[3];
-    fastf_t			fvec[3];
-    fastf_t			evec[3];
-
-    if (AproxEqVec(dvec, zaxis, VEC_TOL)
-	||	AproxEqVec(dvec, negzaxis, VEC_TOL)
-	) {
-	VMOVE(evec, xaxis);
-    } else {
-	VCROSS(evec, dvec, zaxis);
-    }
-    VCROSS(fvec, evec, dvec);
-    VSCALE(cosdphi, dvec, cosphi);
-    ssgaphi = singamma * sinphi;
-    csgaphi = cosgamma * sinphi;
-    VJOIN2(s_rdir, cosdphi, ssgaphi, evec, csgaphi, fvec);
-    VUNITIZE(s_rdir);
-    return;
-}
-
-
-/*	c o n s _ V e c t o r ()
-	Construct a direction vector out of azimuth and elevation angles
-	in radians, allocating storage for it and returning its address.
-*/
-static void
-consVector(fastf_t *vec, fastf_t azim, fastf_t elev)
-{
-    /* Store cosine of the elevation to save calculating twice. */
-    fastf_t	cosE;
-    cosE = cos(elev);
-    vec[0] = cos(azim) * cosE;
-    vec[1] = sin(azim) * cosE;
-    vec[2] = sin(elev);
-    return;
 }
 
 

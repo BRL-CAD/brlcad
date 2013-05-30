@@ -1,7 +1,7 @@
 /*                       F B - O R L E . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2012 United States Government as represented by
+ * Copyright (c) 1986-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -41,7 +41,7 @@
 static char *usage[] = {
     "Usage: fb-rle [-CScdhvw] [-l X Y] [-F Frame_buffer] [-p X Y] [file.rle]",
     "",
-    "If no RLE file is specifed, fb-rle will write to its standard output.",
+    "If no RLE file is specified, fb-rle will write to its standard output.",
     "If the environment variable FB_FILE is set, its value will be used to",
     "specify the framebuffer file or device to read from.",
     0

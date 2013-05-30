@@ -1,7 +1,7 @@
 /*                 ToroidalSurface.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2012 United States Government as represented by
+ * Copyright (c) 1994-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -31,93 +31,98 @@
 
 #define CLASSNAME "ToroidalSurface"
 #define ENTITYNAME "Toroidal_Surface"
-string ToroidalSurface::entityname = Factory::RegisterClass(ENTITYNAME,(FactoryMethod)ToroidalSurface::Create);
+string ToroidalSurface::entityname = Factory::RegisterClass(ENTITYNAME, (FactoryMethod)ToroidalSurface::Create);
 
-ToroidalSurface::ToroidalSurface() {
+ToroidalSurface::ToroidalSurface()
+{
     step = NULL;
     id = 0;
     major_radius = 0.0;
     minor_radius = 0.0;
 }
 
-ToroidalSurface::ToroidalSurface(STEPWrapper *sw,int step_id) {
-    step=sw;
+ToroidalSurface::ToroidalSurface(STEPWrapper *sw, int step_id)
+{
+    step = sw;
     id = step_id;
     major_radius = 0.0;
     minor_radius = 0.0;
 }
 
-ToroidalSurface::~ToroidalSurface() {
+ToroidalSurface::~ToroidalSurface()
+{
 }
 
 const double *
-ToroidalSurface::GetOrigin() {
+ToroidalSurface::GetOrigin()
+{
     return position->GetOrigin();
 }
 
 const double *
-ToroidalSurface::GetNormal() {
+ToroidalSurface::GetNormal()
+{
     return position->GetAxis(2);
 }
 
 const double *
-ToroidalSurface::GetXAxis() {
+ToroidalSurface::GetXAxis()
+{
     return position->GetXAxis();
 }
 
 const double *
-ToroidalSurface::GetYAxis() {
+ToroidalSurface::GetYAxis()
+{
     return position->GetYAxis();
 }
 
 bool
-ToroidalSurface::Load(STEPWrapper *sw, SDAI_Application_instance *sse) {
-    step=sw;
+ToroidalSurface::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
+    step = sw;
     id = sse->STEPfile_id;
 
-    if ( !ElementarySurface::Load(step,sse) ) {
+    if (!ElementarySurface::Load(step, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::Surface." << std::endl;
 	return false;
     }
 
     // need to do this for local attributes to makes sure we have
     // the actual entity and not a complex/supertype parent
-    sse = step->getEntity(sse,ENTITYNAME);
+    sse = step->getEntity(sse, ENTITYNAME);
 
-    major_radius = step->getRealAttribute(sse,"major_radius");
-    minor_radius = step->getRealAttribute(sse,"minor_radius");
+    major_radius = step->getRealAttribute(sse, "major_radius");
+    minor_radius = step->getRealAttribute(sse, "minor_radius");
 
     return true;
 }
 
 void
-ToroidalSurface::Print(int level) {
-    TAB(level); std::cout << CLASSNAME << ":" << name << "(";
+ToroidalSurface::Print(int level)
+{
+    TAB(level);
+    std::cout << CLASSNAME << ":" << name << "(";
     std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-    TAB(level+1); std::cout << "major_radius: " << major_radius << std::endl;
-    TAB(level+1); std::cout << "minor_radius: " << minor_radius << std::endl;
+    TAB(level + 1);
+    std::cout << "major_radius: " << major_radius << std::endl;
+    TAB(level + 1);
+    std::cout << "minor_radius: " << minor_radius << std::endl;
 
-    ElementarySurface::Print(level+1);
+    ElementarySurface::Print(level + 1);
 }
 
 STEPEntity *
-ToroidalSurface::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
-    Factory::OBJECTS::iterator i;
-    if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
-	ToroidalSurface *object = new ToroidalSurface(sw,sse->STEPfile_id);
+ToroidalSurface::GetInstance(STEPWrapper *sw, int id)
+{
+    return new ToroidalSurface(sw, id);
+}
 
-	Factory::AddObject(object);
-
-	if (!object->Load(sw, sse)) {
-	    std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
-	    delete object;
-	    return NULL;
-	}
-	return static_cast<STEPEntity *>(object);
-    } else {
-	return (*i).second;
-    }
+STEPEntity *
+ToroidalSurface::Create(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
+    return STEPEntity::CreateEntity(sw, sse, GetInstance, CLASSNAME);
 }
 
 // Local Variables:

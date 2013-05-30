@@ -1,7 +1,7 @@
 /*                       P A T C H - G . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2012 United States Government as represented by
+ * Copyright (c) 2004-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -17,9 +17,18 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file patch-g.h
+
+#include "vmath.h"
+
+/* structures are currently using approximately this much memory:
  *
+ *   ((NAMESIZE * 2) + 320) * MAX_INPUTS
+ *
+ * which is approximately 80MB with 256 and 100000 respectively
  */
+#define NAMESIZE 256
+#define MAX_INPUTS 100000
+
 
 struct input {
     fastf_t x;
@@ -35,18 +44,20 @@ struct input {
     int vc;
     int prevsurf_type;
     char surf_mode;
-} in[10000];
+} *in = NULL;
 
 struct patch_verts {
     struct vertex *vp;
     point_t coord;
 };
 
+
 struct patch_faces
 {
     struct faceuse *fu;
     fastf_t thick;
 };
+
 
 struct patches{
     fastf_t x;
@@ -58,13 +69,13 @@ struct patches{
     fastf_t thick;
 };
 
-#define NAMESIZE 16
+
 struct names{
     char ug[NAMESIZE+1];
     char lg[NAMESIZE+1];
     int eqlos;
     int matcode;
-} nm[9999];
+} *nm = NULL;
 
 struct subtract_list{
     int outsolid;
@@ -73,11 +84,12 @@ struct subtract_list{
     struct subtract_list *next;
 };
 
+
 point_t pt[4];
 fastf_t vertice[5][3];
 fastf_t first[5][3];
 point_t ce[4];
-point_t Centroid;	/* object, description centroids */
+point_t Centroid;			/* object, description centroids */
 unsigned char rgb[3];
 int debug = 0;
 float mmtin = 25.4;
@@ -92,34 +104,30 @@ char space[2];
 
 int numobj = 0;
 int nflg = 1;
-int aflg = 1;		/* use phantom armor */
-int num_unions = 5;	/* number of unions per region */
-char *title = "Untitled MGED database";	/* database title */
-char *top_level = "all"; /* top-level node name in the database */
-int rev_norms = 0;	/* reverse normals for plate mode triangles */
-int polysolid = 0;	/* convert triangle-facetted objects to polysolids */
-int arb6 = 0;		/* flag: convert plate-mode objects to arb6s */
+int aflg = 1;				/* use phantom armor */
+int num_unions = 5;			/* number of unions per region */
+char *title = "patch-g conversion";	/* database title */
+char *top_level = "all";		/* top-level node name in the database */
+int rev_norms = 0;			/* reverse normals for plate mode triangles */
+int polysolid = 0;			/* convert triangle-facetted objects to polysolids */
+int arb6 = 0;				/* flag: convert plate-mode objects to arb6s */
 
-char *patchfile;
-char *labelfile=NULL;
-char *matfile;
+char *patchfile = NULL;
+char *labelfile = NULL;
+char *matfile = NULL;
 
-/* Maximum number of different thicknesses for a single plate mode
- * solid.
- */
-#define MAX_THICKNESSES 500
+struct patches *list = NULL;
+fastf_t *XVAL = NULL;
+fastf_t *YVAL = NULL;
+fastf_t *ZVAL = NULL;
 
-fastf_t thicks[MAX_THICKNESSES];	/* array of unique plate thicknesses */
+fastf_t *thicks = NULL;			/* array of unique plate thicknesses */
 int nthicks;				/* number of unique plate thicknesses
 					   for a single plate mode solid */
+fastf_t *RADIUS = NULL;
+fastf_t *thk = NULL;
 
-struct patches list[15000];
-fastf_t XVAL[1500];
-fastf_t YVAL[1500];
-fastf_t ZVAL[1500];
-int mirror[1500];
-fastf_t RADIUS[1500];
-fastf_t thk[1500];
+int *mirror = NULL;
 
 struct wmember head;			/* solids for current region */
 struct wmember heada;			/* for component, regions on one side */
@@ -128,6 +136,12 @@ struct wmember headc;			/* second level grouping ? */
 struct wmember headd;			/* current thousand series group */
 struct wmember heade;			/* group containing everything */
 struct wmember headf;			/* check solids group */
+
+struct bn_tol TOL;
+int scratch_num;
+
+struct rt_wdb *outfp;
+
 
 /*
  * Local Variables:

@@ -1,7 +1,7 @@
 /*                      N M G _ M I S C . C
  * BRL-CAD
  *
- * Copyright (c) 1993-2012 United States Government as represented by
+ * Copyright (c) 1993-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -69,7 +69,7 @@ nmg_snurb_calc_lu_uv_orient(const struct loopuse *lu)
     if (*lu->up.fu_p->f_p->g.magic_p != NMG_FACE_G_SNURB_MAGIC)
 	bu_bomb("nmg_snurb_calc_lu_uv_orient: LU is not part of a SNURB face\n");
 
-    /* count "psuedo-vertices" in loop */
+    /* count "pseudo-vertices" in loop */
     for (BU_LIST_FOR (eu, edgeuse, &lu->down_hd)) {
 	struct edge_g_cnurb *eg;
 
@@ -87,10 +87,10 @@ nmg_snurb_calc_lu_uv_orient(const struct loopuse *lu)
 	    edge_count += 5;
     }
 
-    /* allocate memory for "psuedo-vertices" */
+    /* allocate memory for "pseudo-vertices" */
     pts = (point_t *)bu_calloc(edge_count, sizeof(point_t), "Orient_nurb_face_loops: pts");
 
-    /* Assign uv geometry to each "psuedo-vertex" */
+    /* Assign uv geometry to each "pseudo-vertex" */
     edge_no = 0;
     for (BU_LIST_FOR (eu, edgeuse, &lu->down_hd)) {
 	struct edge_g_cnurb *eg;
@@ -830,8 +830,7 @@ nmg_find_outer_and_void_shells(struct nmgregion *r, struct bu_ptbl ***shells, co
     *shells = (struct bu_ptbl **)bu_calloc(BU_PTBL_END(outer_shells), sizeof(struct bu_ptbl *) ,
 					   "nmg_find_outer_and_void_shells: shells");
     for (i=0; i<BU_PTBL_END(outer_shells); i++) {
-	(*shells)[i] = (struct bu_ptbl *)bu_malloc(sizeof(struct bu_ptbl) ,
-						   "nmg_find_outer_and_void_shells: shells[]");
+	BU_ALLOC((*shells)[i], struct bu_ptbl);
 
 	bu_ptbl_init((*shells)[i], 64, "(*shells)[i]");
 	BU_CK_PTBL((*shells)[i]);
@@ -1122,7 +1121,7 @@ nmg_prev_radial_eu(const struct edgeuse *eu, const struct shell *s, const int wi
  * edgeuses are not counted.
  *
  * returns:
- * number of edgeuse/mate pairs radiall around eu that meet restrictions
+ * number of edgeuse/mate pairs radially around eu that meet restrictions
  */
 int
 nmg_radial_face_count(const struct edgeuse *eu, const struct shell *s)
@@ -1152,7 +1151,7 @@ nmg_radial_face_count(const struct edgeuse *eu, const struct shell *s)
  * N M G _ C H E C K _ C L O S E D _ S H E L L
  *
  * Looks at every eu in OT_SAME fu's. If any eu has no radials, then
- * it must be the edge of a dangling face and therfore the edge of an
+ * it must be the edge of a dangling face and therefore the edge of an
  * opening.
  *
  * returns:
@@ -1346,8 +1345,6 @@ nmg_loop_plane_area(const struct loopuse *lu, fastf_t *pl)
     fastf_t area;
     fastf_t pt_count=0.0;
     fastf_t pt_dot_plane=0.0;
-    fastf_t vect_mag;
-    fastf_t vect_mag_inv;
     plane_t plane = HINIT_ZERO;
     struct edgeuse *eu;
     vect_t trans;
@@ -1404,16 +1401,11 @@ nmg_loop_plane_area(const struct loopuse *lu, fastf_t *pl)
 	VADD2(plane, plane, cross);
     }
 
-    vect_mag = MAGNITUDE(plane);
+    area = 0.5 * MAGNITUDE(plane);
 
     /* Error if the area is too small to unitize the normal vector */
-    if (vect_mag <= SMALL_FASTF)
-	return (fastf_t)(-1.0);
-
-    area = 0.5 * vect_mag;
-    vect_mag_inv = 1.0/vect_mag;
-
-    VSCALE(plane, plane, vect_mag_inv);
+    if (MAGNITUDE(plane) < VDIVIDE_TOL) return -1.0;
+    VUNITIZE(plane);
 
     /* calculate plane[W] as average distance to plane */
     for (BU_LIST_FOR (eu, edgeuse, &lu->down_hd)) {
@@ -1428,6 +1420,145 @@ nmg_loop_plane_area(const struct loopuse *lu, fastf_t *pl)
     plane[W] = pt_dot_plane/pt_count;
     HMOVE(pl, plane);
 
+    return area;
+}
+
+
+/**
+ * N M G _ L O O P _ P L A N E _ A R E A 2
+ *
+ * Calculates a plane equation and the area of a loop
+ *
+ * This function only works correctly when the loop represents a
+ * "simple polygon" (i.e. simple meaning not self intersecting) and
+ * the loop is "not" a "weakly simple polygon" (i.e. weakly simple
+ * meaning is simple and at least one vertex is reused by the polygon).
+ *
+ * returns:
+ * the area of the loop
+ * positive area is ccw loop
+ * negative area is cw loop
+ * zero is no area or degenerate loop
+ *
+ * pl is assigned the plane equation for the loop
+ *
+ * NOTE: The rotation cw/ccw is actual, meaning not relative to the
+ *       faceuse normal.
+ */
+fastf_t
+nmg_loop_plane_area2(const struct loopuse *lu, fastf_t *pl, const struct bn_tol *tol)
+{
+    struct edgeuse *eu;
+    size_t cnt;
+    vect_t zaxis = {0.0, 0.0, 1.0};
+    vect_t sum, cog;
+    mat_t mat;
+    point_t pt, pt_next, pt_1st;
+    fastf_t scale;
+    fastf_t area = 0.0;
+    fastf_t min, abs_coord, mag;
+    fastf_t *tmp;
+    int i;
+
+    NMG_CK_LOOPUSE(lu);
+
+    HSETALL(pl, 0.0);
+
+    if (UNLIKELY(BU_LIST_FIRST_MAGIC(&lu->down_hd) != NMG_EDGEUSE_MAGIC)) {
+	area = 0.0;
+	goto out;
+    }
+
+    cnt = 0;
+    min = MAX_FASTF;
+    /* find the smallest floating point value which will be used
+     * to determine the scaling factor, which is done to improve
+     * floating point precision
+     */
+    for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
+	tmp = eu->vu_p->v_p->vg_p->coord;
+	for (i = 0; i < 3 ; i++) {
+	    abs_coord = fabs(tmp[i]);
+	    if ((abs_coord) < min && (abs_coord > SMALL_FASTF)) {
+		min = abs_coord;
+	    }
+	}
+	cnt++;
+    }
+
+    if (cnt < 3) {
+	area = 0.0;
+	goto out;
+    }
+
+    scale = 0.5 / min;
+    if (scale < 1.0) {
+	scale = 1.0;
+    } else if (scale > (1.0 / tol->dist)) {
+	scale = 1.0 / tol->dist;
+    }
+
+    /* find and scale first vertex of polygon */
+    VMOVE(pt_1st, (BU_LIST_FIRST(edgeuse, &eu->l))->vu_p->v_p->vg_p->coord);
+    VCLAMP(pt_1st);
+    VSCALE(pt_1st, pt_1st, scale);
+
+    VSETALL(sum, 0.0);
+    for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
+	NMG_CK_EDGEUSE(eu);
+	/* scale up the coordinates to reduce floating point error */
+	VSCALE(pt, eu->vu_p->v_p->vg_p->coord, scale);
+	VSCALE(pt_next, (BU_LIST_PNEXT_CIRC(edgeuse, &eu->l))->vu_p->v_p->vg_p->coord, scale);
+	/* move polygon to origin */
+	VSUB2(pt, pt, pt_1st);
+	VSUB2(pt_next, pt_next, pt_1st);
+	/* clamp coordinates to zero if they are within tolerance of zero */
+	VCLAMP(pt);
+	VCLAMP(pt_next);
+	pl[X] += (EQUAL(pt[Y], pt_next[Y]) ? (0.0) : (pt[Y] - pt_next[Y])) * (pt[Z] + pt_next[Z]);
+	pl[Y] += (EQUAL(pt[Z], pt_next[Z]) ? (0.0) : (pt[Z] - pt_next[Z])) * (pt[X] + pt_next[X]);
+	pl[Z] += (EQUAL(pt[X], pt_next[X]) ? (0.0) : (pt[X] - pt_next[X])) * (pt[Y] + pt_next[Y]);
+	VADD2(sum, sum, pt);
+    }
+
+    if (ZERO(pl[X]) && ZERO(pl[Y]) && ZERO(pl[Z])) {
+	HSETALL(pl, 0.0);
+	area = 0.0;
+	goto out;
+    }
+
+    /* clamp coordinates to zero if they are within tolerance of zero */
+    VCLAMP(pl);
+
+    /* undo scaling of center of polygon (i.e. center of gravity) */
+    VSCALE(cog, sum, 1.0/(cnt * scale));
+
+    /* Unitize plane. If magnitude is zero, the plane is undefined and
+     * we can not compute the area with this function.
+     */
+    mag = MAGNITUDE(pl);
+    if (ZERO(mag)) {
+	HSETALL(pl, 0.0);
+	area = 0.0;
+	goto out;
+    }
+    VSCALE(pl, pl, 1.0/mag);
+    pl[H] = VDOT(cog, pl);
+
+    /* find rotation matrix of polygon normal to z-axis */
+    bn_mat_fromto(mat, (const fastf_t *)pl, (const fastf_t *)zaxis, tol);
+
+    /* compute area of polygon */
+    area = 0.0;
+    for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
+	/* rotate coordinates to xy plane */
+	MAT4X3PNT(pt, mat, eu->vu_p->v_p->vg_p->coord);
+	MAT4X3PNT(pt_next, mat, (BU_LIST_PNEXT_CIRC(edgeuse, &eu->l))->vu_p->v_p->vg_p->coord);
+	area += ((pt[X]*pt_next[Y]) - (pt_next[X]*pt[Y]));
+    }
+    area = area / 2.0;
+
+out:
     return area;
 }
 
@@ -1589,7 +1720,7 @@ nmg_calc_face_plane(struct faceuse *fu_in, fastf_t *pl)
 	/* get average vertex coordinates */
 	VSCALE(vsum, vsum, one_over_vertex_count);
 
-	/* get distance from plane to orgin */
+	/* get distance from plane to origin */
 	pl[H] = VDOT(pl, vsum);
 
 	/* make sure it points in the correct direction */
@@ -1632,7 +1763,7 @@ nmg_calc_face_plane(struct faceuse *fu_in, fastf_t *pl)
 	    /* get average vertex coordinates */
 	    VSCALE(vsum, vsum, one_over_vertex_count);
 
-	    /* get distance from plane to orgin */
+	    /* get distance from plane to origin */
 	    pl[H] = VDOT(pl, vsum);
 
 	    /* make sure it points in the correct direction */
@@ -1941,7 +2072,7 @@ nmg_purge_unwanted_intersection_points(struct bu_ptbl *vert_list, fastf_t *mag_l
  * N M G _ I N _ O R _ R E F
  *
  * if the given vertexuse "vu" is in the table given by "b" or if "vu"
- * references a vertex which is refernced by a vertexuse in the table,
+ * references a vertex which is referenced by a vertexuse in the table,
  * then we return 1.  Otherwise, we return 0.
  */
 int
@@ -2172,7 +2303,7 @@ nmg_close_shell(struct shell *s, const struct bn_tol *tol)
     struct bu_ptbl eu_tbl;		/* table of free edgeuses from shell */
     struct bu_ptbl vert_tbl;	/* table of vertices for use in nmg_cface */
     int *idx;			/* array of indices into eu_tbl, ordered to form a loop */
-    int loop_size;			/* number of edgeueses in loop */
+    int loop_size;			/* number of edgeuses in loop */
     struct faceuse *fu;
     struct loopuse *lu;
     struct edgeuse *eu;
@@ -2239,7 +2370,7 @@ nmg_close_shell(struct shell *s, const struct bn_tol *tol)
 	/* Create new faces to close the shell */
 	while (loop_size > 3) {
 	    struct edgeuse *eu1, *eu2=NULL, *eu_new = NULL;
-	    struct edgeuse **eu_used;	/* array of edgueses used, for deletion */
+	    struct edgeuse **eu_used;	/* array of edgeuses used, for deletion */
 	    int edges_used=0;			/* number of edges used in making a face */
 	    int found_face=0;		/* flag - indicates that a face with the correct normal will be created */
 	    int start_idx, end_idx;	/* start and stop index for loop */
@@ -2516,7 +2647,7 @@ nmg_close_shell(struct shell *s, const struct bn_tol *tol)
 		    nmg_kfu(fu);
 		}
 	    } else
-		bu_log("Not makeing face, edges are collinear!\n");
+		bu_log("Not making face, edges are collinear!\n");
 
 	    loop_size = 0;
 	    continue;
@@ -2545,7 +2676,7 @@ nmg_close_shell(struct shell *s, const struct bn_tol *tol)
 		bu_log("Failed planeeq\n");
 
 	} else
-	    bu_log("Not makeing face, edges are collinear!\n");
+	    bu_log("Not making face, edges are collinear!\n");
 
 	/* remove the last three edges from the table */
 	{
@@ -2576,7 +2707,7 @@ nmg_close_shell(struct shell *s, const struct bn_tol *tol)
  *
  * The vertex geometry is copied from the source faces into
  * topologically distinct (new) vertex and vertex_g structs.  They
- * will start out being geometricly coincident, but it is anticipated
+ * will start out being geometrically coincident, but it is anticipated
  * that the caller will modify the geometry, e.g. as in an extrude
  * operation.
  *
@@ -2606,7 +2737,7 @@ nmg_dup_shell(struct shell *s, long int ***trans_tbl, const struct bn_tol *tol)
 
     m = nmg_find_model((uint32_t *)s);
 
-    /* create translation table double size to accomodate both copies */
+    /* create translation table double size to accommodate both copies */
     tbl_size = m->maxindex * 3;
     (*trans_tbl) = (long **)bu_calloc(tbl_size, sizeof(long *),
 				      "nmg_dup_shell trans_tbl");
@@ -3177,7 +3308,7 @@ nmg_disconnect_shells(struct nmgregion *r)
  * N M G _ C O N N E C T _ S A M E _ F U _ O R I E N T S
  *
  * looks for radially connected faceuses that have disagreeing
- * orientations.  if such a condiftion is found, the radial pointers
+ * orientations.  if such a condition is found, the radial pointers
  * are rearranged to make the radial faces agree in orientation.
  */
 void
@@ -3419,7 +3550,7 @@ nmg_mk_model_from_region(struct nmgregion *r, int reindex)
 /**
  * N M G _ F I X _ N O R M A L S
  *
- * Routine to set faceuse normlas to correct direction.
+ * Routine to set faceuse normals to correct direction.
  *
  * Method:
  *   1. Make a copy of the shell in another model.
@@ -3553,7 +3684,7 @@ nmg_fix_normals(struct shell *s_orig, const struct bn_tol *tol)
 	}
     }
 
-    /* now set faces in orignal shell to match our calculations */
+    /* now set faces in original shell to match our calculations */
     nmg_connect_same_fu_orients(s_orig);
 
     for (BU_LIST_FOR (s1, shell, &tmp_r->s_hd)) {
@@ -3574,7 +3705,7 @@ nmg_fix_normals(struct shell *s_orig, const struct bn_tol *tol)
 
 	    fu_in_s = NMG_INDEX_GETP(faceuse, trans_tbl, fu);
 	    if (!fu_in_s) {
-		bu_log("fu x%x does not have corrrespondence in original shell\n", fu);
+		bu_log("fu x%x does not have correspondence in original shell\n", fu);
 		nmg_pr_fu_briefly(fu, "");
 		continue;
 	    }
@@ -3583,9 +3714,9 @@ nmg_fix_normals(struct shell *s_orig, const struct bn_tol *tol)
 
 	    NMG_GET_FU_NORMAL(normal, fu);
 	    if (reversed)
-		VREVERSE(normal, normal)
+		VREVERSE(normal, normal);
 
-		    NMG_GET_FU_NORMAL(normal_in_s, fu_in_s);
+	    NMG_GET_FU_NORMAL(normal_in_s, fu_in_s);
 
 	    if (VDOT(normal, normal_in_s) < 0.0) {
 		nmg_reverse_face_and_radials(fu_in_s, tol);
@@ -3609,7 +3740,7 @@ nmg_fix_normals(struct shell *s_orig, const struct bn_tol *tol)
  *   *<----------------------------*
  *
  * where one long edgeuse (the bottom one above) and two or more
- * shorter edgeusess (the tops ones) are collinear and have the same
+ * shorter edgeuses (the top ones) are collinear and have the same
  * start and end vertices.  The code breaks the longer edgeuse into
  * ones that can be radials of the shorter ones.  Returns the number
  * of splits performed.
@@ -3818,7 +3949,7 @@ nmg_split_loops_handler(uint32_t *fu_p, genptr_t sl_state, int UNUSED(unused))
 	else if (lu->orientation == OT_OPPOSITE)
 	    otopp_loops++;
 	else {
-	    bu_log("nmg_split_loops_into_faces: facuse (x%x) with %s loopuse (x%x)\n",
+	    bu_log("nmg_split_loops_into_faces: faceuse (x%x) with %s loopuse (x%x)\n",
 		   fu, nmg_orientation(lu->orientation), lu);
 	    return;
 	}
@@ -3954,7 +4085,7 @@ nmg_split_loops_handler(uint32_t *fu_p, genptr_t sl_state, int UNUSED(unused))
 /**
  * N M G _ S P L I T _ L O O P S _ I N T O _ F A C E S
  *
- * Visits each faceuse and splits disjoint loops into seperate faces.
+ * Visits each faceuse and splits disjoint loops into separate faces.
  *
  * Returns the number of faces modified.
  */
@@ -4155,7 +4286,7 @@ nmg_decompose_shell(struct shell *s, const struct bn_tol *tol)
 	     * shells_at_edge[i] is the number of edgeuses of this
 	     * edge that have been assigned to shell number i.
 	     * shells_at_edge[0] is the number of uses of this edge
-	     * that have not been asigned to any shell yet
+	     * that have not been assigned to any shell yet
 	     */
 	    for (k=0; k<=no_of_shells; k++)
 		shells_at_edge[k] = 0;
@@ -4498,7 +4629,7 @@ struct nmg_unbreak_state
  * edgeuse visit routine for nmg_unbreak_region_edges.
  *
  * checks if edgeuse "eu" and its successor are candidates to be
- * unbroken.  looks for two consectutive edgeuses sharing the same
+ * unbroken.  looks for two consecutive edgeuses sharing the same
  * edge geometry. Checks that the middle vertex has no other uses,
  * and, if so, kills the second edgeuse.  Also moves the vu of the
  * first edgeuse mate to the vu of the killed edgeuse mate.
@@ -5080,7 +5211,7 @@ nmg_get_edge_lines(struct vertex *new_v, struct bu_ptbl *int_faces, const struct
 	    struct intersect_fus *i_fus;
 
 	    /* create and initialize an intersect_fus struct for this edge */
-	    i_fus = (struct intersect_fus *)bu_malloc(sizeof(struct intersect_fus), "nmg_get_edge_lines: i_fus");
+	    BU_ALLOC(i_fus, struct intersect_fus);
 	    i_fus->fu[0] = NULL;
 	    i_fus->fu[1] = fu;
 	    i_fus->eu = eu;
@@ -5164,7 +5295,7 @@ nmg_get_edge_lines(struct vertex *new_v, struct bu_ptbl *int_faces, const struct
 	fu2 = nmg_find_fu_of_eu(eu->radial_p);
 
 	/* initialize the intersect structure for this edge */
-	i_fus = (struct intersect_fus *)bu_malloc(sizeof(struct intersect_fus), "nmg_inside_vert: intersection list");
+	BU_ALLOC(i_fus, struct intersect_fus);
 	i_fus->fu[0] = fu1;
 	if (eu->radial_p == eu->eumate_p) {
 	    i_fus->fu[1] = (struct faceuse *)NULL;
@@ -5301,7 +5432,7 @@ nmg_get_max_edge_inters(const struct vertex *new_v, struct bu_ptbl *int_faces, c
 
 	other_fus = (struct intersect_fus *)BU_PTBL_GET(int_faces, next_edge_no);
 
-	/* skip over edges betwen loops of same face */
+	/* skip over edges between loops of same face */
 	while (other_fus->fu[0] == other_fus->fu[1] && other_fus != edge_fus) {
 	    next_edge_no++;
 	    if (next_edge_no == BU_PTBL_END(int_faces))
@@ -5752,7 +5883,7 @@ nmg_simplify_inter(const struct vertex *new_v, struct bu_ptbl *int_faces, const 
 	struct intersect_fus *i_fus;
 	struct intersect_fus *j_fus;
 
-	/* get two consectutive structures */
+	/* get two consecutive structures */
 	i_fus = (struct intersect_fus *)BU_PTBL_GET(int_faces, edge_no);
 	next_edge_no = edge_no+1;
 	if (next_edge_no == BU_PTBL_END(int_faces))
@@ -5811,7 +5942,7 @@ nmg_simplify_inter(const struct vertex *new_v, struct bu_ptbl *int_faces, const 
 	    VSUB2(j_dist_to_new_v, new_v->vg_p->coord, j_fus->vp->vg_p->coord);
 
 	    if (VDOT(i_dist_to_new_v, j_dist_to_new_v) < 0.0) {
-		/* points are collinear with new_v, but in opoosit directions */
+		/* points are collinear with new_v, but in opposite directions */
 		edge_no++;
 		continue;
 	    }
@@ -5931,7 +6062,7 @@ nmg_make_faces_at_vert(struct vertex *new_v, struct bu_ptbl *int_faces, const st
 	struct faceuse *new_fu;
 	struct faceuse *fu;
 
-	/* get two consectutive structures */
+	/* get two consecutive structures */
 	i_fus = (struct intersect_fus *)BU_PTBL_GET(int_faces, edge_no);
 	next_edge_no = edge_no+1;
 	if (next_edge_no == BU_PTBL_END(int_faces))
@@ -6641,7 +6772,7 @@ nmg_calc_new_v(struct vertex *new_v, const struct bu_ptbl *int_faces, const stru
  * This routine may create new edges and/or faces and Modifies the
  * location of "new_v"
  *
- * if approximate is non-zero, the new geomatry is approximated by
+ * if approximate is non-zero, the new geometry is approximated by
  * calculating the point with minimum distance to all the intersecting
  * faces
  *
@@ -6843,7 +6974,7 @@ nmg_bad_face_normals(const struct shell *s, const struct bn_tol *tol)
 
 	NMG_CK_FACEUSE(fu);
 
-	/* only check OT_SAME faseuses */
+	/* only check OT_SAME faceuses */
 	if (fu->orientation != OT_SAME)
 	    continue;
 
@@ -7851,7 +7982,7 @@ struct dangle
  * N M G _ O P E N _ S H E L L S _ C O N N E C T
  *
  * Two open shells are connected along their free edges by building
- * new faces.  The resluting closed shell is in "dst", and "src" shell
+ * new faces.  The resulting closed shell is in "dst", and "src" shell
  * is destroyed.  The "copy_tbl" is a translation table that provides
  * a one-to-one translation between the vertices in the two shells,
  * i.e., NMG_INDEX_GETP(vertex, copy_tbl, v), where v is a pointer to
@@ -8228,9 +8359,9 @@ nmg_kill_cracks(struct shell *s)
     NMG_CK_SHELL(s);
 
     /* Loops may be inadvertently connected with a crack,
-     * this code is to dissconnect them and kill the connecting crack.
+     * this code is to disconnect them and kill the connecting crack.
      * Look for cracks that are two EU's from one loop that
-     * share the same edge, but are not consectutive in the loop.
+     * share the same edge, but are not consecutive in the loop.
      * This will require a split_lu to handle.
      */
     for (BU_LIST_FOR (fu, faceuse, &s->fu_hd)) {
@@ -8490,7 +8621,7 @@ nmg_kill_zero_length_edgeuses(struct model *m)
  *
  * Check all vertices on faces of specified shell. Any face containing
  * vertices more than tol->dist off the plane of the face will be
- * triangulated and broken into seperate faces
+ * triangulated and broken into separate faces
  */
 void
 nmg_make_faces_within_tol(struct shell *s, const struct bn_tol *tol)
@@ -8514,6 +8645,7 @@ nmg_make_faces_within_tol(struct shell *s, const struct bn_tol *tol)
     }
 
     for (i = 0; i < BU_PTBL_END(&faceuses); i++) {
+
 	fu = (struct faceuse *)BU_PTBL_GET(&faceuses, i);
 
 	/* check if all the vertices for this face lie on the plane */
@@ -8521,7 +8653,10 @@ nmg_make_faces_within_tol(struct shell *s, const struct bn_tol *tol)
 	    plane_t pl = HINIT_ZERO; /* sanity */
 
 	    /* Need to triangulate this face */
-	    nmg_triangulate_fu(fu, tol);
+	    if (nmg_triangulate_fu(fu, tol)) {
+		/* true when faceuse is empty */
+		continue;
+	    }
 
 	    /* split each triangular loop into its own face */
 	    (void)nmg_split_loops_into_faces(&fu->l.magic, tol);
@@ -8682,7 +8817,7 @@ rt_join_cnurbs(struct bu_list *crv_head)
     BU_CK_LIST_HEAD(crv_head);
 
     /* Check that all curves are the same pt_type and
-     * have mutliplicity equal to order at endpoints.
+     * have multiplicity equal to order at endpoints.
      */
     for (BU_LIST_FOR (crv, edge_g_cnurb, crv_head)) {
 	curve_count++;
@@ -8734,7 +8869,7 @@ rt_join_cnurbs(struct bu_list *crv_head)
 	bu_bomb("rt_join_cnurbs: Need to raise order of curve\n");
     }
 
-    /* Check that endponts match */
+    /* Check that endpoints match */
     crv = BU_LIST_FIRST(edge_g_cnurb, crv_head);
     ncoords = RT_NURB_EXTRACT_COORDS(crv->pt_type);
     next_crv = BU_LIST_NEXT(edge_g_cnurb, &crv->l);
@@ -9023,7 +9158,7 @@ rt_arc2d_to_cnurb(fastf_t *i_center, fastf_t *i_start, fastf_t *i_end, int point
 /**
  * n m g _ b r e a k _ e d g e _ a t _ v e r t s
  *
- * split an edge into multiple edges at specified vertices iff they
+ * split an edge into multiple edges at specified vertices if they
  * are within tolerance distance.
  *
  * Returns the number of additional edges that were created.
@@ -10890,7 +11025,7 @@ nmg_bot(struct shell *s, const struct bn_tol *tol)
     nmg_face_tabulate(&nmg_faces, &s->l.magic);
 
     /* now build the BOT */
-    bot = (struct rt_bot_internal *)bu_calloc(1, sizeof(struct rt_bot_internal), "BOT from NMG");
+    BU_ALLOC(bot, struct rt_bot_internal);
 
     bot->magic = RT_BOT_INTERNAL_MAGIC;
     bot->mode = RT_BOT_SOLID;

@@ -1,7 +1,7 @@
 /*                          B I G E . C
  * BRL-CAD
  *
- * Copyright (c) 1997-2012 United States Government as represented by
+ * Copyright (c) 1997-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -117,7 +117,7 @@ add_solid(const struct directory *dp,
     int id;
     int solid_is_plate_mode_bot=0;
 
-    BU_GET(eptr, union E_tree);
+    BU_ALLOC(eptr, union E_tree);
     eptr->magic = E_TREE_MAGIC;
 
     id = rt_db_get_internal(&intern, dp, dgcdp->gedp->ged_wdbp->dbip, mat, &rt_uniresource);
@@ -162,7 +162,7 @@ add_solid(const struct directory *dp,
     }
 
     /* get the soltab stuff */
-    BU_GET(eptr->l.stp, struct soltab);
+    BU_ALLOC(eptr->l.stp, struct soltab);
     eptr->l.stp->l.magic = RT_SOLTAB_MAGIC;
     eptr->l.stp->l2.magic = RT_SOLTAB2_MAGIC;
     eptr->l.stp->st_dp = dp;
@@ -239,7 +239,7 @@ build_etree(union tree *tp,
 	case OP_UNION:
 	case OP_SUBTRACT:
 	case OP_INTERSECT:
-	    BU_GET(eptr, union E_tree);
+	    BU_ALLOC(eptr, union E_tree);
 	    eptr->magic = E_TREE_MAGIC;
 	    eptr->n.op = tp->tr_op;
 	    eptr->n.left = build_etree(tp->tr_b.tb_left, dgcdp);
@@ -261,7 +261,7 @@ build_etree(union tree *tp,
 	    break;
 	case OP_NOP:
 	    /* add a NULL solid */
-	    BU_GET(eptr, union E_tree);
+	    BU_ALLOC(eptr, union E_tree);
 	    eptr->magic = E_TREE_MAGIC;
 	    eptr->l.m = (struct model *)NULL;
 	    break;
@@ -910,7 +910,7 @@ eval_op(struct bu_list *A,
 		sega = next;
 	    }
 
-	    /* put the resuling ONS list on the result list */
+	    /* put the resulting ONS list on the result list */
 	    BU_LIST_INSERT_LIST(&ret, &ons);
 
 	    /* add INS to the return list (maintain order) */
@@ -973,7 +973,7 @@ eval_etree(union E_tree *eptr,
     switch (eptr->l.op) {
 	case OP_DB_LEAF:
 	case OP_SOLID:
-	    A = (struct bu_list *)bu_malloc(sizeof(struct bu_list), "bu_list");
+	    BU_ALLOC(A, struct bu_list);
 	    BU_LIST_INIT(A);
 	    BU_LIST_INSERT_LIST(A, &eptr->l.seghead);
 
@@ -1034,13 +1034,13 @@ classify_seg(struct seg *segp, struct soltab *shoot, struct xray *rp, struct _ge
 
     memset(&rd, 0, sizeof(struct ray_data));
 
-    BU_GET(rd.seghead, struct seg);
+    BU_ALLOC(rd.seghead, struct seg);
     BU_LIST_INIT(&rd.seghead->l);
 
     mid_dist = (segp->seg_in.hit_dist + segp->seg_out.hit_dist) / 2.0;
     VJOIN1(new_rp.r_pt, rp->r_pt, mid_dist, rp->r_dir);
 #ifdef debug
-    bu_log("Classifying segment with mid_pt (%g %g %g) with respct to %s\n", V3ARGS(new_rp.r_pt), shoot->st_dp->d_namep);
+    bu_log("Classifying segment with mid_pt (%g %g %g) with respect to %s\n", V3ARGS(new_rp.r_pt), shoot->st_dp->d_namep);
 #endif
 
     bn_vec_ortho(new_rp.r_dir, rp->r_dir);
@@ -1137,7 +1137,7 @@ shoot_and_plot(point_t start_pt,
 
     memset(&rd, 0, sizeof(struct ray_data));
 
-    BU_GET(rd.seghead, struct seg);
+    BU_ALLOC(rd.seghead, struct seg);
     BU_LIST_INIT(&rd.seghead->l);
 
     VMOVE(rp.r_pt, start_pt);
@@ -1306,7 +1306,7 @@ shoot_and_plot(point_t start_pt,
     if (final_segs) {
 	struct seg *seg;
 
-	/* add the segemnts to the VLIST */
+	/* add the segments to the VLIST */
 	for (BU_LIST_FOR (seg, seg, final_segs)) {
 	    point_t pt;
 
@@ -1644,8 +1644,8 @@ Eplot(union E_tree *eptr,
 		    }
 
 		    /* build a segment list for each solid */
-		    A = (struct bu_list *)bu_calloc(1, sizeof(struct bu_list), "A");
-		    B = (struct bu_list *)bu_calloc(1, sizeof(struct bu_list), "B");
+		    BU_ALLOC(A, struct bu_list);
+		    BU_ALLOC(B, struct bu_list);
 		    BU_LIST_INIT(A);
 		    BU_LIST_INIT(B);
 
@@ -1757,8 +1757,8 @@ fix_halfs(struct _ged_client_data *dgcdp)
 
     tol = &dgcdp->gedp->ged_wdbp->wdb_tol;
 
-    VSETALL(max, -MAX_FASTF);
-    VSETALL(min, MAX_FASTF);
+    VSETALL(max, -INFINITY);
+    VSETALL(min, INFINITY);
 
     for (i = 0; i < BU_PTBL_END(&dgcdp->leaf_list); i++) {
 	union E_tree *tp;
@@ -1993,7 +1993,7 @@ fix_halfs(struct _ged_client_data *dgcdp)
 	nmg_close_shell(s, tol);
 	nmg_rebound(tp->l.m, tol);
 
-	BU_GET(pg, struct rt_pg_internal);
+	BU_ALLOC(pg, struct rt_pg_internal);
 
 	if (!nmg_to_poly(tp->l.m, pg, tol)) {
 	    bu_free((char *)pg, "rt_pg_internal");
@@ -2050,7 +2050,8 @@ ged_E(struct ged *gedp, int argc, const char *argv[])
     if (bu_debug&BU_DEBUG_MEM_CHECK && bu_mem_barriercheck())
 	bu_log("Error at start of 'E'\n");
 
-    BU_GET(dgcdp, struct _ged_client_data);
+    /* XXX: where is this released? */
+    BU_ALLOC(dgcdp, struct _ged_client_data);
     dgcdp->gedp = gedp;
     dgcdp->do_polysolids = 0;
     dgcdp->wireframe_color_override = 0;
@@ -2106,7 +2107,7 @@ ged_E(struct ged *gedp, int argc, const char *argv[])
 	ged_erasePathFromDisplay(gedp, argv[i], 0);
 	dgcdp->gdlp = ged_addToDisplay(dgcdp->gedp, argv[i]);
 
-	dgcdp->ap = (struct application *)bu_malloc(sizeof(struct application), "Big E app");
+	BU_ALLOC(dgcdp->ap, struct application);
 	RT_APPLICATION_INIT(dgcdp->ap);
 	dgcdp->ap->a_resource = &rt_uniresource;
 	rt_uniresource.re_magic = RESOURCE_MAGIC;

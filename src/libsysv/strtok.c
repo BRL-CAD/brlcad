@@ -25,7 +25,7 @@ static char *scanpoint = 0;
 /**
  * Get next token from string s (0 on 2nd, 3rd, etc. calls),
  * where tokens are nonempty strings separated by runs of
- * chars from delim.  Writes NULs into s to end tokens.  delim need not
+ * chars from delim.  Writes NULLs into s to end tokens.  delim need not
  * remain constant from call to call.
  */
 char *				/* 0 if no token left */

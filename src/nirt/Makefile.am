@@ -7,6 +7,7 @@ bin_PROGRAMS = \
 	showshot
 
 AM_CPPFLAGS = \
+	${STD_C99_FLAGS} \
 	${STRICT_FLAGS} \
 	${TCL_CPPFLAGS}
 
@@ -27,15 +28,11 @@ nirt_LDADD = ${FB} ${RT}
 showshot_SOURCES = showshot.c
 showshot_LDADD = ${BN}
 
-man_MANS = \
-	showshot.1
-
 noinst_HEADERS = \
 	nirt.h \
 	usrfmt.h
 
 EXTRA_DIST = \
-	$(man_MANS) \
 	CMakeLists.txt
 
 DEPENDS = src/libfb src/librt

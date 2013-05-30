@@ -1,7 +1,7 @@
 /*                         R F A R B . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2012 United States Government as represented by
+ * Copyright (c) 2008-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -38,15 +38,21 @@ int
 ged_rfarb(struct ged *gedp, int argc, const char *argv[])
 {
     struct directory *dp;
-    int i;
-    int solve[3];
-    fastf_t pt[3][2];
-    fastf_t thick, rota, fba;
-    vect_t norm;
-    fastf_t ndotv;
-    point_t known_pt;
     struct rt_db_internal internal;
     struct rt_arb_internal *aip;
+
+    int i;
+    int solve[3];
+    vect_t norm;
+    fastf_t ndotv;
+
+    /* intentionally double for scan */
+    double known_pt[3];
+    double pt[3][2];
+    double thick;
+    double rota;
+    double fba;
+
     static const char *usage = "name pX pY pZ rA fbA c X Y c X Y c X Y th";
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
@@ -109,7 +115,7 @@ ged_rfarb(struct ged *gedp, int argc, const char *argv[])
 
 		if (sscanf(argv[7+3*i+1], "%lf", &pt[i][X]) != 1 ||
 		    sscanf(argv[7+3*i+2], "%lf", &pt[i][Y]) != 1) {
-		    bu_vls_printf(gedp->ged_result_str, "%s: atleast one bad value - %s %s",
+		    bu_vls_printf(gedp->ged_result_str, "%s: at least one bad value - %s %s",
 				  argv[0], argv[7+3*i+1], argv[7+3*i+2]);
 		}
 
@@ -126,7 +132,7 @@ ged_rfarb(struct ged *gedp, int argc, const char *argv[])
 
 		if (sscanf(argv[7+3*i+1], "%lf", &pt[i][X]) != 1 ||
 		    sscanf(argv[7+3*i+2], "%lf", &pt[i][Y]) != 1) {
-		    bu_vls_printf(gedp->ged_result_str, "%s: atleast one bad value - %s %s",
+		    bu_vls_printf(gedp->ged_result_str, "%s: at least one bad value - %s %s",
 				  argv[0], argv[7+3*i+1], argv[7+3*i+2]);
 		}
 
@@ -143,7 +149,7 @@ ged_rfarb(struct ged *gedp, int argc, const char *argv[])
 
 		if (sscanf(argv[7+3*i+1], "%lf", &pt[i][X]) != 1 ||
 		    sscanf(argv[7+3*i+2], "%lf", &pt[i][Y]) != 1) {
-		    bu_vls_printf(gedp->ged_result_str, "%s: atleast one bad value - %s %s",
+		    bu_vls_printf(gedp->ged_result_str, "%s: at least one bad value - %s %s",
 				  argv[0], argv[7+3*i+1], argv[7+3*i+2]);
 		}
 
@@ -158,7 +164,7 @@ ged_rfarb(struct ged *gedp, int argc, const char *argv[])
     }
 
     if (sscanf(argv[7+3*3], "%lf", &thick) != 1 || ZERO(thick)) {
-	bu_vls_printf(gedp->ged_result_str, "%s: bad thicknes - %s", argv[0], argv[7+3*3]);
+	bu_vls_printf(gedp->ged_result_str, "%s: bad thickness - %s", argv[0], argv[7+3*3]);
 	return GED_ERROR;
     }
     thick *= gedp->ged_wdbp->dbip->dbi_local2base;
@@ -167,7 +173,7 @@ ged_rfarb(struct ged *gedp, int argc, const char *argv[])
     internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
     internal.idb_type = ID_ARB8;
     internal.idb_meth = &rt_functab[ID_ARB8];
-    internal.idb_ptr = (genptr_t)bu_malloc(sizeof(struct rt_arb_internal), "rt_arb_internal");
+    BU_ALLOC(internal.idb_ptr, struct rt_arb_internal);
     aip = (struct rt_arb_internal *)internal.idb_ptr;
     aip->magic = RT_ARB_INTERNAL_MAGIC;
 

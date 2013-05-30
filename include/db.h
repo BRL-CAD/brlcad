@@ -1,7 +1,7 @@
 /*                            D B . H
  * BRL-CAD
  *
- * Copyright (c) 1985-2012 United States Government as represented by
+ * Copyright (c) 1985-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -156,7 +156,7 @@ union record  {
 #define EHY	29	/* Elliptical Hyperboloid */
 #define ETO	30	/* Elliptical Torus */
 #define GRP	31	/* Grip pseudo solid */
-#define SUPERELL 32     /* Superquadtratic Ellipsoid */
+#define SUPERELL 32     /* Superquadratic Ellipsoid */
 #define HYP	33	/* Hyperboloid of one sheet */
 	char	s_name[NAMESIZE];	/* unique name */
 	short	s_cgtype;		/* COMGEOM solid type */

@@ -1,7 +1,7 @@
 /*                     T E X T U R E _ G R A D I E N T . C
  * BRL-CAD / ADRT
  *
- * Copyright (c) 2002-2012 United States Government as represented by
+ * Copyright (c) 2002-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -34,7 +34,7 @@ void
 texture_gradient_init(struct texture_s *texture, int axis) {
     struct texture_gradient_s *td;
 
-    texture->data = bu_malloc(sizeof(struct texture_gradient_s), "gradient data");
+    BU_ALLOC(texture->data, struct texture_gradient_s);
     texture->free = texture_gradient_free;
     texture->work = (texture_work_t *)texture_gradient_work;
 

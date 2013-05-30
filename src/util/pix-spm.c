@@ -1,7 +1,7 @@
 /*                       P I X - S P M . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2012 United States Government as represented by
+ * Copyright (c) 2004-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -40,7 +40,7 @@ main(int argc, char **argv)
     bn_spm_map_t *mp;
 
     if (argc != 3) {
-	bu_exit(1, "usage: pix-spm file.pix size > file.spm\n");
+	bu_exit(1, "Usage: pix-spm file.pix size > file.spm\n");
     }
 
     size = atoi(argv[2]);

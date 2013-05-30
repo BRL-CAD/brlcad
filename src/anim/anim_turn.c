@@ -1,7 +1,7 @@
 /*                     A N I M _ T U R N . C
  * BRL-CAD
  *
- * Copyright (c) 1993-2012 United States Government as represented by
+ * Copyright (c) 1993-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -40,14 +40,23 @@
 #include "vmath.h"
 
 
-#define OPT_STR "r:l:a:f:p:"
+#define OPT_STR "r:l:a:f:p:h?"
 
 
 int print_int = 1;
 int angle_set = 0;
 int turn_wheels = 0;
-fastf_t length, angle, radius;
-fastf_t factor = 1.0;
+
+/* intentionally double for scan */
+double length, angle, radius;
+double factor = 1.0;
+
+
+static void
+usage(void)
+{
+    fprintf(stderr,"Usage: anim_turn -l length [-a angle] [-r radius] [-f factor] [-p integer] < in.table > out.table\n");
+}
 
 
 int
@@ -76,7 +85,6 @@ get_args(int argc, char **argv)
 		sscanf(bu_optarg, "%d", &print_int);
 		break;
 	    default:
-		fprintf(stderr, "Unknown option: -%c\n", c);
 		return 0;
 	}
     }
@@ -88,9 +96,23 @@ int
 main(int argc, char *argv[])
 {
     int count;
-    fastf_t val, t /* time */, roll_ang, yaw, sign;
+    fastf_t val, roll_ang, yaw, sign;
     vect_t v, point, front, back, zero, temp1, temp2;
     mat_t m_from_world, m_to_world;
+
+    /* intentionally double for scan */
+    double scan[3];
+    double t /* time */;
+
+    if (argc == 1 && isatty(fileno(stdin)) && isatty(fileno(stdout))){
+	usage();
+	return 0;
+    }
+
+    if (!get_args(argc, argv)){
+	usage();
+	return 0;
+    }
 
     /* initialize variables */
     VSETALL(zero, 0.0);
@@ -104,20 +126,19 @@ main(int argc, char *argv[])
 	m_from_world[count]=m_to_world[count]=0.0;
     length = angle = radius = roll_ang = 0.0;
 
-    if (!get_args(argc, argv))
-	fprintf(stderr, "ascript: Get_args error");
-
     if (!angle_set) {
 	/* set angle if not yet done */
 	count = scanf("%*f%*[^-0123456789]");
-	count = VSCAN(temp1);
+	count = VSCAN(scan);
 	if (count != 3)
 	    return 1;
+	VMOVE(temp1, scan); /* double to fastf_t */
 
 	count = scanf("%*f%*[^-0123456789]");
-	count = VSCAN(temp2);
+	count = VSCAN(scan);
 	if (count != 3)
 	    return 1;
+	VMOVE(temp2, scan); /* double to fastf_t */
 
 	angle = bn_atan2((temp2[1]-temp1[1]), (temp2[0]-temp1[0]));
 	rewind(stdin);
@@ -126,16 +147,17 @@ main(int argc, char *argv[])
     while (1) {
 	/* read one line of table */
 	val = scanf("%lf%*[^-0123456789]", &t); /*read time, ignore garbage*/
-	val = scanf("%lf %lf %lf", point, point+1, point +2);
+	val = scanf("%lf %lf %lf", &scan[0], &scan[1], &scan[2]);
 	if (val < 3) {
 	    break;
 	}
+	VMOVE(point, scan); /* double to fastf_t */
 
 	/*update to and from matrices */
 
 	if (count) {
 	    /* not first time through */
-	    /* calculate matrices corrsponding to last position*/
+	    /* calculate matrices corresponding to last position*/
 	    anim_y_p_r2mat(m_to_world, angle, 0.0, 0.0);
 	    anim_add_trans(m_to_world, front, zero);
 	    anim_y_p_r2mat(m_from_world, -angle, 0.0, 0.0);

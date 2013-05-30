@@ -1,7 +1,7 @@
 /*                         G - D X F . C
  * BRL-CAD
  *
- * Copyright (c) 2003-2012 United States Government as represented by
+ * Copyright (c) 2003-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -88,7 +88,7 @@ static int	polyface_mesh = 0;	/* flag for output type (default is 3DFACE) */
 static char	*output_file = NULL;	/* output filename */
 static FILE	*fp;		/* Output file pointer */
 static struct db_i		*dbip;
-static struct rt_tess_tol	ttol;	/* tesselation tolerance in mm */
+static struct rt_tess_tol	ttol;	/* tessellation tolerance in mm */
 static struct bn_tol		tol;	/* calculation tolerance */
 static struct model		*the_model;
 
@@ -397,7 +397,7 @@ main(int argc, char *argv[])
     tree_state.ts_ttol = &ttol;
     tree_state.ts_m = &the_model;
 
-    /* Set up tesselation tolerance defaults */
+    /* Set up tessellation tolerance defaults */
     ttol.magic = RT_TESS_TOL_MAGIC;
     /* Defaults, updated by command line options. */
     ttol.abs = 0.0;
@@ -487,9 +487,9 @@ main(int argc, char *argv[])
     /* Open BRL-CAD database */
     argc -= bu_optind;
     argv += bu_optind;
-    if ((dbip = db_open(argv[0], "r")) == DBI_NULL) {
+    if ((dbip = db_open(argv[0], DB_OPEN_READONLY)) == DBI_NULL) {
 	perror(argv[0]);
-	bu_exit(1, "Unable to open geometry file (%s) for reading\n", argv[0]);
+	bu_exit(1, "Unable to open geometry database file (%s)\n", argv[0]);
     }
 
     if (db_dirbuild(dbip)) {
@@ -504,7 +504,7 @@ main(int argc, char *argv[])
 	bu_log("Objects:");
 	for (i = 1; i < argc; i++)
 	    bu_log(" %s", argv[i]);
-	bu_log("\nTesselation tolerances:\n\tabs = %g mm\n\trel = %g\n\tnorm = %g\n",
+	bu_log("\nTessellation tolerances:\n\tabs = %g mm\n\trel = %g\n\tnorm = %g\n",
 		tree_state.ts_ttol->abs, tree_state.ts_ttol->rel, tree_state.ts_ttol->norm);
 	bu_log("Calculational tolerances:\n\tdist = %g mm perp = %g\n",
 		tree_state.ts_tol->dist, tree_state.ts_tol->perp);
@@ -517,14 +517,14 @@ main(int argc, char *argv[])
 
     /* Walk indicated tree(s) just for layer names to put in TABLES section */
     (void)db_walk_tree(dbip, argc-1, (const char **)(argv+1),
-                       1,			/* ncpu */
-                       &tree_state,
-                       0,			/* take all regions */
-                       get_layer,
-                       NULL,
-                       (genptr_t)NULL);	/* in librt/nmg_bool.c */
+		       1,			/* ncpu */
+		       &tree_state,
+		       0,			/* take all regions */
+		       get_layer,
+		       NULL,
+		       (genptr_t)NULL);	/* in librt/nmg_bool.c */
 
-    /* end of layers section, start of ENTOTIES SECTION */
+    /* end of layers section, start of ENTITIES SECTION */
     fprintf(fp, "0\nENDTAB\n0\nENDSEC\n0\nSECTION\n2\nENTITIES\n");
 
     /* Walk indicated tree(s).  Each region will be output separately */

@@ -1,7 +1,7 @@
 /*                 MeasureWithUnit.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2012 United States Government as represented by
+ * Copyright (c) 1994-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -35,26 +35,30 @@
 
 #define CLASSNAME "MeasureWithUnit"
 #define ENTITYNAME "Measure_With_Unit"
-string MeasureWithUnit::entityname = Factory::RegisterClass(ENTITYNAME,(FactoryMethod)MeasureWithUnit::Create);
+string MeasureWithUnit::entityname = Factory::RegisterClass(ENTITYNAME, (FactoryMethod)MeasureWithUnit::Create);
 
-MeasureWithUnit::MeasureWithUnit() {
+MeasureWithUnit::MeasureWithUnit()
+{
     step = NULL;
     id = 0;
     unit_component = NULL;
 }
 
-MeasureWithUnit::MeasureWithUnit(STEPWrapper *sw,int step_id) {
+MeasureWithUnit::MeasureWithUnit(STEPWrapper *sw, int step_id)
+{
     step = sw;
     id = step_id;
     unit_component = NULL;
 }
 
-MeasureWithUnit::~MeasureWithUnit() {
-    unit_component=NULL;
+MeasureWithUnit::~MeasureWithUnit()
+{
+    unit_component = NULL;
 }
 
 double
-MeasureWithUnit::GetLengthConversionFactor() {
+MeasureWithUnit::GetLengthConversionFactor()
+{
     double sifactor = 0.0;
     double mfactor = 0.0;
     SiUnit *si = dynamic_cast<SiUnit *>(unit_component);
@@ -68,7 +72,8 @@ MeasureWithUnit::GetLengthConversionFactor() {
 }
 
 double
-MeasureWithUnit::GetPlaneAngleConversionFactor() {
+MeasureWithUnit::GetPlaneAngleConversionFactor()
+{
     double sifactor = 0.0;
     double mfactor = 0.0;
     SiUnit *si = dynamic_cast<SiUnit *>(unit_component);
@@ -82,7 +87,8 @@ MeasureWithUnit::GetPlaneAngleConversionFactor() {
 }
 
 double
-MeasureWithUnit::GetSolidAngleConversionFactor() {
+MeasureWithUnit::GetSolidAngleConversionFactor()
+{
     double sifactor = 0.0;
     double mfactor = 0.0;
     SiUnit *si = dynamic_cast<SiUnit *>(unit_component);
@@ -96,17 +102,18 @@ MeasureWithUnit::GetSolidAngleConversionFactor() {
 }
 
 bool
-MeasureWithUnit::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
-    step=sw;
+MeasureWithUnit::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
+    step = sw;
     id = sse->STEPfile_id;
 
     // need to do this for local attributes to makes sure we have
     // the actual entity and not a complex/supertype parent
-    sse = step->getEntity(sse,ENTITYNAME);
+    sse = step->getEntity(sse, ENTITYNAME);
 
-    SDAI_Select *select = step->getSelectAttribute(sse,"value_component");
+    SDAI_Select *select = step->getSelectAttribute(sse, "value_component");
     if (select) {
-	if (!value_component.Load(step,select)) {
+	if (!value_component.Load(step, select)) {
 	    std::cout << CLASSNAME << ":Error loading MeasureValue." << std::endl;
 	    return false;
 	}
@@ -116,16 +123,16 @@ MeasureWithUnit::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
 
     if (unit_component == NULL) {
 	// select-select
-	select = step->getSelectAttribute(sse,"unit_component");
+	select = step->getSelectAttribute(sse, "unit_component");
 	if (select) {
 	    SdaiUnit *u = (SdaiUnit *)select;
-	    if ( u->IsNamed_unit() ) {
+	    if (u->IsNamed_unit()) {
 		SdaiNamed_unit *nu = *u;
-		unit_component = dynamic_cast<Unit*>(Factory::CreateObject(sw,(SDAI_Application_instance *)nu));
+		unit_component = dynamic_cast<Unit *>(Factory::CreateObject(sw, (SDAI_Application_instance *)nu));
 #ifdef AP203e
 	    } else if (u->IsDerived_unit()) {
 		SdaiDerived_unit *du = *u;
-		unit_component = dynamic_cast<Unit*>(Factory::CreateObject(sw,(SDAI_Application_instance *)du));
+		unit_component = dynamic_cast<Unit *>(Factory::CreateObject(sw, (SDAI_Application_instance *)du));
 #endif
 	    } else {
 		std::cerr << CLASSNAME << ": Unknown 'Unit' type from select." << std::endl;
@@ -139,35 +146,33 @@ MeasureWithUnit::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
 }
 
 void
-MeasureWithUnit::Print(int level) {
-    TAB(level); std::cout << CLASSNAME << ":" << "(";
+MeasureWithUnit::Print(int level)
+{
+    TAB(level);
+    std::cout << CLASSNAME << ":" << "(";
     std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-    TAB(level); std::cout << "Attributes:" << std::endl;
-    TAB(level+1); std::cout << "value_component:" << std::endl;
-    value_component.Print(level+1);
+    TAB(level);
+    std::cout << "Attributes:" << std::endl;
+    TAB(level + 1);
+    std::cout << "value_component:" << std::endl;
+    value_component.Print(level + 1);
 
-    TAB(level+1); std::cout << "unit_component:" << std::endl;
-    unit_component->Print(level+1);
+    TAB(level + 1);
+    std::cout << "unit_component:" << std::endl;
+    unit_component->Print(level + 1);
 }
 
 STEPEntity *
-MeasureWithUnit::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
-    Factory::OBJECTS::iterator i;
-    if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
-	MeasureWithUnit *object = new MeasureWithUnit(sw,sse->STEPfile_id);
+MeasureWithUnit::GetInstance(STEPWrapper *sw, int id)
+{
+    return new MeasureWithUnit(sw, id);
+}
 
-	Factory::AddObject(object);
-
-	if (!object->Load(sw, sse)) {
-	    std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
-	    delete object;
-	    return NULL;
-	}
-	return static_cast<STEPEntity *>(object);
-    } else {
-	return (*i).second;
-    }
+STEPEntity *
+MeasureWithUnit::Create(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
+    return STEPEntity::CreateEntity(sw, sse, GetInstance, CLASSNAME);
 }
 
 // Local Variables:

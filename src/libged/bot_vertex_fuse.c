@@ -1,7 +1,7 @@
 /*                         B O T _ V E R T E X _ F U S E . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2012 United States Government as represented by
+ * Copyright (c) 2008-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -73,8 +73,8 @@ ged_bot_vertex_fuse(struct ged *gedp, int argc, const char *argv[])
     bot = (struct rt_bot_internal *)intern.idb_ptr;
     RT_BOT_CK_MAGIC(bot);
 
-    count = rt_bot_vertex_fuse(bot);
-    bu_log("Fused %d vertices\n", count);
+    count = rt_bot_vertex_fuse(bot, &gedp->ged_wdbp->wdb_tol);
+    bu_vls_printf(gedp->ged_result_str, "Fused %d vertices\n", count);
 
     GED_DB_DIRADD(gedp, new_dp, argv[1], RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (genptr_t)&intern.idb_type, GED_ERROR);
     GED_DB_PUT_INTERNAL(gedp, new_dp, &intern, &rt_uniresource, GED_ERROR);

@@ -1,7 +1,7 @@
 /*                     S S A M P V I E W . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2012 United States Government as represented by
+ * Copyright (c) 2004-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -133,7 +133,7 @@ getntsccurves(ClientData UNUSED(cd), Tcl_Interp *interp, int UNUSED(argc), char 
     assign_tabdata_to_tcl_var(interp, "ntsc_g_samp", ntsc_g);
     assign_tabdata_to_tcl_var(interp, "ntsc_b_samp", ntsc_b);
 
-    /* Sum togther the sampled curves */
+    /* Sum together the sampled curves */
     {
 	struct bn_tabdata *sum;
 	BN_GET_TABDATA(sum, ntsc_r->table);
@@ -350,7 +350,7 @@ tcl_fb_cursor(ClientData UNUSED(cd), Tcl_Interp *interp, int argc, char **argv)
 
 
 /*
- * Return value of one pixel as RGB tripple, in decimal
+ * Return value of one pixel as RGB triple, in decimal
  */
 int
 tcl_fb_readpixel(ClientData UNUSED(cd), Tcl_Interp *interp, int argc, char **argv)
@@ -511,7 +511,7 @@ conduct_tests(void)
 	bu_vls_free(&str);
     }
 
-/* "A flat spectral curve is represente by equal XYZ values".  Hall pg 52 */
+/* "A flat spectral curve is represented by equal XYZ values".  Hall pg 52 */
     flat = bn_tabdata_get_constval(42.0, spectrum);
     bu_log("flat:\n");bn_print_table_and_tabdata("/dev/tty", flat);
     spect_curve_to_xyz(xyz, flat, cie_x, cie_y, cie_z);

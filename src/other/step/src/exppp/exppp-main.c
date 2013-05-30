@@ -38,8 +38,7 @@ int Handle_Exppp_Args( int i, char * arg ) {
     return 0;
 }
 
-void
-EXPRESSinit_init() {
+void EXPRESSinit_init( void ) {
     EXPRESSbackend = EXPRESSout;
     ERRORusage_function = exppp_usage;
     strcat( EXPRESSgetopt_options, "aA" );

@@ -1,7 +1,7 @@
 /*                      S U P E R E L L . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2012 United States Government as represented by
+ * Copyright (c) 1985-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -23,8 +23,8 @@
  *
  * Intersect a ray with a Superquadratic Ellipsoid.
  *
- * NOTICE: this primitive is incomplete and should beconsidered
- * experimental.  this primitive will exhibit several
+ * NOTICE: this primitive is incomplete and should be considered
+ * experimental.  This primitive will exhibit several
  * instabilities in the existing root solver method.
  *
  */
@@ -48,12 +48,12 @@
 
 
 const struct bu_structparse rt_superell_parse[] = {
-    { "%f", 3, "V", bu_offsetof(struct rt_superell_internal, v[X]), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    { "%f", 3, "A", bu_offsetof(struct rt_superell_internal, a[X]), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    { "%f", 3, "B", bu_offsetof(struct rt_superell_internal, b[X]), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    { "%f", 3, "C", bu_offsetof(struct rt_superell_internal, c[X]), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    { "%f", 1, "n", bu_offsetof(struct rt_superell_internal, n), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    { "%f", 1, "e", bu_offsetof(struct rt_superell_internal, e), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    { "%f", 3, "V", bu_offsetofarray(struct rt_superell_internal, v, fastf_t, X), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    { "%f", 3, "A", bu_offsetofarray(struct rt_superell_internal, a, fastf_t, X), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    { "%f", 3, "B", bu_offsetofarray(struct rt_superell_internal, b, fastf_t, X), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    { "%f", 3, "C", bu_offsetofarray(struct rt_superell_internal, c, fastf_t, X), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    { "%g", 1, "n", bu_offsetof(struct rt_superell_internal, n), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    { "%g", 1, "e", bu_offsetof(struct rt_superell_internal, e), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     { {'\0', '\0', '\0', '\0'}, 0, (char *)NULL, 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 
@@ -120,7 +120,7 @@ const struct bu_structparse rt_superell_parse[] = {
  * NORMALS.  Given the point W on the superellipsoid, what is the
  * vector normal to the tangent plane at that point?
  *
- * Map W onto the unit sphere, ie:  W' = S(R(W - V)).
+ * Map W onto the unit sphere, i.e.:  W' = S(R(W - V)).
  *
  * Plane on unit sphere at W' has a normal vector of the same value(!).
  * N' = W'
@@ -164,7 +164,7 @@ struct superell_specific {
     double superell_invmsBu; /* 1.0 / |Bu|^2 */
     double superell_invmsCu; /* 1.0 / |Cu|^2 */
     vect_t superell_invsq;
-    mat_t superell_SoR; /* matrix for local cordinate system, Scale(Rotate(V))*/
+    mat_t superell_SoR; /* matrix for local coordinate system, Scale(Rotate(V))*/
     mat_t superell_invRSSR; /* invR(Scale(Scale(Rot(V)))) */
     mat_t superell_invR; /* transposed rotation matrix */
 };
@@ -176,7 +176,7 @@ struct superell_specific {
  * Calculate a bounding RPP for a superell
  */
 int
-rt_superell_bbox(struct rt_db_internal *ip, point_t *min, point_t *max) {
+rt_superell_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct bn_tol *UNUSED(tol)) {
 
     struct rt_superell_internal *eip;
     fastf_t magsq_a, magsq_b, magsq_c;
@@ -366,7 +366,7 @@ rt_superell_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rti
     stp->st_aradius = stp->st_bradius = sqrt(f);
 
     /* Compute bounding RPP */
-    if (rt_superell_bbox(ip, &(stp->st_min), &(stp->st_max))) return 1;
+    if (rt_superell_bbox(ip, &(stp->st_min), &(stp->st_max), &rtip->rti_tol)) return 1;
 
     return 0;			/* OK */
 }
@@ -434,7 +434,7 @@ rt_superell_shot(struct soltab *stp, struct xray *rp, struct application *ap, st
     MAT4X3VEC(newShotDir, superell->superell_SoR, rp->r_dir);
     VUNITIZE(newShotDir);
 
-    /* normalize distance from the superell.  substitues a corrected ray
+    /* normalize distance from the superell.  substitutes a corrected ray
      * point, which contains a translation along the ray direction to the
      * closest approach to vertex of the superell.  Translating the ray
      * along the direction of the ray to the closest point near the
@@ -641,7 +641,7 @@ rt_superell_free(struct soltab *stp)
     struct superell_specific *superell =
 	(struct superell_specific *)stp->st_specific;
 
-    bu_free((char *)superell, "superell_specific");
+    BU_PUT(superell, struct superell_specific);
 }
 
 
@@ -666,16 +666,16 @@ rt_superell_16pts(fastf_t *ov,
 {
     static fastf_t c, d, e, f, g, h;
 
-    e = h = .92388;			/* cos(22.5) */
-    c = d = .707107;		/* cos(45) */
-    g = f = .382683;		/* cos(67.5) */
+    e = h = .92388;		/* cos(22.5 degrees) */
+    c = d = M_SQRT1_2;		/* cos(45 degrees) */
+    g = f = .382683;		/* cos(67.5 degrees) */
 
     /*
      * For angle theta, compute surface point as
      *
      * V + cos(theta) * A + sin(theta) * B
      *
-     * note that sin(theta) is cos(90-theta).
+     * note that sin(theta) is cos(90-theta); arguments in degrees.
      */
 
     VADD2(SUPERELLOUT(1), V, A);
@@ -825,7 +825,8 @@ rt_superell_import4(struct rt_db_internal *ip, const struct bu_external *ep, con
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_SUPERELL;
     ip->idb_meth = &rt_functab[ID_SUPERELL];
-    ip->idb_ptr = bu_malloc(sizeof(struct rt_superell_internal), "rt_superell_internal");
+    BU_ALLOC(ip->idb_ptr, struct rt_superell_internal);
+
     eip = (struct rt_superell_internal *)ip->idb_ptr;
     eip->magic = RT_SUPERELL_INTERNAL_MAGIC;
 
@@ -900,7 +901,9 @@ int
 rt_superell_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fastf_t *mat, const struct db_i *dbip)
 {
     struct rt_superell_internal *eip;
-    fastf_t vec[ELEMENTS_PER_VECT*4 + 2];
+
+    /* must be double for import and export */
+    double vec[ELEMENTS_PER_VECT*4 + 2];
 
     if (dbip) RT_CK_DBI(dbip);
 
@@ -912,7 +915,7 @@ rt_superell_import5(struct rt_db_internal *ip, const struct bu_external *ep, con
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_SUPERELL;
     ip->idb_meth = &rt_functab[ID_SUPERELL];
-    ip->idb_ptr = bu_malloc(sizeof(struct rt_superell_internal), "rt_superell_internal");
+    BU_ALLOC(ip->idb_ptr, struct rt_superell_internal);
 
     eip = (struct rt_superell_internal *)ip->idb_ptr;
     eip->magic = RT_SUPERELL_INTERNAL_MAGIC;
@@ -946,7 +949,9 @@ int
 rt_superell_export5(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
     struct rt_superell_internal *eip;
-    fastf_t vec[ELEMENTS_PER_VECT*4 + 2];
+
+    /* must be double for import and export */
+    double vec[ELEMENTS_PER_VECT*4 + 2];
 
     if (dbip) RT_CK_DBI(dbip);
 

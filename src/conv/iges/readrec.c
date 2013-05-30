@@ -1,7 +1,7 @@
 /*                       R E A D R E C . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2012 United States Government as represented by
+ * Copyright (c) 1990-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -40,11 +40,11 @@ Readrec(int recno)
 {
 
     int i, ch;
-    long offset;
+    off_t offset;
 
     currec = recno;
     offset = (recno - 1) * reclen;
-    if (fseek(fd, offset, 0)) {
+    if (bu_fseek(fd, offset, 0)) {
 	bu_log("Error in seek\n");
 	perror("Readrec");
 	bu_exit(1, NULL);

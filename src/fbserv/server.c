@@ -1,7 +1,7 @@
 /*                        S E R V E R . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2012 United States Government as represented by
+ * Copyright (c) 1998-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -168,7 +168,7 @@ fb_server_fb_close(struct pkg_conn *pcp, char *buf)
  * F B _ S E R V E R _ F B _ F R E E
  *
  * The fb_free() call is more potent than fb_close(), which it
- * must preceed; it causes shared memory to be returned & stuff like that.
+ * must precede; it causes shared memory to be returned & stuff like that.
  * The current FBSERV program exits after getting one.
  *
  * We set fb_server_got_fb_free as an indicator to calling application.
@@ -533,7 +533,7 @@ fb_server_fb_setcursor(struct pkg_conn *pcp, char *buf)
 /*
  * F B _ S E R V E R _ F B _ S C U R S O R
  *
- * An OLD iterface.  Retained so old clients can still be served.
+ * An OLD interface.  Retained so old clients can still be served.
  */
 static void
 fb_server_fb_scursor(struct pkg_conn *pcp, char *buf)
@@ -557,7 +557,7 @@ fb_server_fb_scursor(struct pkg_conn *pcp, char *buf)
 /*
  * F B _ S E R V E R _ F B _ W I N D O W
  *
- * An OLD iterface.  Retained so old clients can still be served.
+ * An OLD interface.  Retained so old clients can still be served.
  */
 static void
 fb_server_fb_window(struct pkg_conn *pcp, char *buf)
@@ -580,7 +580,7 @@ fb_server_fb_window(struct pkg_conn *pcp, char *buf)
 /*
  * F B _ S E R V E R _ F B _ Z O O M
  *
- * An OLD iterface.  Retained so old clients can still be served.
+ * An OLD interface.  Retained so old clients can still be served.
  */
 static void
 fb_server_fb_zoom(struct pkg_conn *pcp, char *buf)

@@ -1,7 +1,7 @@
 /*                 CartesianTransformationOperator.h
  * BRL-CAD
  *
- * Copyright (c) 1994-2012 United States Government as represented by
+ * Copyright (c) 1994-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -34,26 +34,28 @@ class Direction;
 class CartesianPoint;
 
 class CartesianTransformationOperator : public GeometricRepresentationItem,
-	public FunctionallyDefinedTransformation {
+    public FunctionallyDefinedTransformation
+{
 private:
-	static string entityname;
+    static string entityname;
+    static EntityInstanceFunc GetInstance;
 
 protected:
-	Direction *axis1;//optional
-	Direction *axis2;//optional
-	CartesianPoint *local_origin;
-	double scale; //optional
+    Direction *axis1;//optional
+    Direction *axis2;//optional
+    CartesianPoint *local_origin;
+    double scale; //optional
 
 public:
-	CartesianTransformationOperator();
-	virtual ~CartesianTransformationOperator();
-	CartesianTransformationOperator(STEPWrapper *sw,int step_id);
-	bool Load(STEPWrapper *sw,SDAI_Application_instance *sse);
-	virtual bool LoadONBrep(ON_Brep *brep);
-	virtual void Print(int level);
+    CartesianTransformationOperator();
+    virtual ~CartesianTransformationOperator();
+    CartesianTransformationOperator(STEPWrapper *sw, int step_id);
+    bool Load(STEPWrapper *sw, SDAI_Application_instance *sse);
+    virtual bool LoadONBrep(ON_Brep *brep);
+    virtual void Print(int level);
 
-	//static methods
-	static STEPEntity *Create(STEPWrapper *sw,SDAI_Application_instance *sse);
+    //static methods
+    static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
 #endif /* CARTESIANTRANSFORMATIONOPERATOR_H_ */

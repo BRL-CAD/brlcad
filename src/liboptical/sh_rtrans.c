@@ -1,7 +1,7 @@
 /*                     S H _ R T R A N S . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2012 United States Government as represented by
+ * Copyright (c) 1998-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -54,11 +54,10 @@ static struct rtrans_specific rtrans_defaults = {
 
 #define SHDR_NULL ((struct rtrans_specific *)0)
 #define SHDR_O(m) bu_offsetof(struct rtrans_specific, m)
-#define SHDR_AO(m) bu_offsetofarray(struct rtrans_specific, m)
 
 struct bu_structparse rtrans_parse[] = {
-    {"%f",  1, "threshold",		SHDR_O(threshold),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f",  1, "t",			SHDR_O(threshold),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%g",  1, "threshold",		SHDR_O(threshold),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%g",  1, "t",			SHDR_O(threshold),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"",	0, (char *)0,		0,			BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 
@@ -126,7 +125,7 @@ rtrans_print(register struct region *rp, genptr_t dp)
 HIDDEN void
 rtrans_free(genptr_t cp)
 {
-    bu_free(cp, "rtrans_specific");
+    BU_PUT(cp, struct rtrans_specific);
 }
 
 

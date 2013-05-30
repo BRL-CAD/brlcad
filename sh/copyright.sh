@@ -2,7 +2,7 @@
 #                    C O P Y R I G H T . S H
 # BRL-CAD
 #
-# Copyright (c) 2004-2012 United States Government as represented by
+# Copyright (c) 2004-2013 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -53,9 +53,10 @@ LC_ALL=C
 if [ "x$files" = "x" ] ; then
     files="`find . -type f | \
 	grep -v '/.#' | \
-	grep -v '.deps/' | \
-	grep -v '.libs/' | \
-	grep -v '.svn/' | \
+	grep -v '\.cmake/' | \
+	grep -v '\.deps/' | \
+	grep -v '\.libs/' | \
+	grep -v '\.svn/' | \
 	grep -v 'CVS' | \
 	grep -v 'Makefile$' |\
 	grep -v 'Makefile.in$' |\

@@ -1,7 +1,7 @@
 /*                        F B S E R V . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2012 United States Government as represented by
+ * Copyright (c) 2004-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -292,7 +292,7 @@ drop_client(int sub)
 /*
  *			C O M M _ E R R O R
  *
- *  Communication error.  An error occured on the PKG link.
+ *  Communication error.  An error occurred on the PKG link.
  *  It may be local, or it may be between us and the client we are serving.
  *  We send a copy to syslog or stderr.
  *  Don't send one down the wire, this can cause loops.
@@ -522,7 +522,7 @@ main(int argc, char **argv)
 	    /* 1st level child process */
 	    (void)close(netfd);	/* Child is not listener */
 
-	    /* Create 2nd level child process, "double detatch" */
+	    /* Create 2nd level child process, "double detach" */
 	    if ( fork() == 0 )  {
 		/* 2nd level child -- start work! */
 		new_client( pcp );
@@ -557,7 +557,7 @@ main(int argc, char **argv)
  *
  *  Log an FB library event, when _doprnt() is not available.
  *  This version should work on practically any machine, but
- *  it serves to highlight the the grossness of the varargs package
+ *  it serves to highlight the grossness of the varargs package
  *  requiring the size of a parameter to be known at compile time.
  */
 void

@@ -8,12 +8,12 @@ Volumes of modeled air can be given a realistic appearance by using this shader.
 The shader performs basic Beer's Law extinction and contrast reduction.
 It should be applied only on regions where the air code has been set to
 a non-zero value.
-See <a href="mged_cmds.html#edcodes">edcodes</a> for imformation
+See <a href="mged_cmds.html#edcodes">edcodes</a> for information
 about setting the air flag on the region).
 <p>
-The ``air'' shader assumes that the volume is a homogenous volume of
-non-turbulent air.  The shader provides crude modeling of absorbtion
-and scattering effects in the atmosphere.  Absorbtion and/or extinction
+The ``air'' shader assumes that the volume is a homogeneous volume of
+non-turbulent air.  The shader provides crude modeling of absorption
+and scattering effects in the atmosphere.  Absorption and/or extinction
 effects are modeled by reducing the transmission of the air volume by
 an amount proportional to the distance traveled through the air.
 <pre>
@@ -30,7 +30,7 @@ the color of the air.
 
 <H3>Parameters</h3>
 <p><center><table border=1>
-<tr><th>Parameter</th><th>Abreviation</th><th>Default Value</th></tr>
+<tr><th>Parameter</th><th>Abbreviation</th><th>Default Value</th></tr>
 <tr></tr>
 <tr><td>dpm</td><td align=center> - </td><td>0.1</td></tr>
 </table></center>
@@ -56,7 +56,7 @@ Below this level, density increases exponentially.
 
 <H3>Parameters</h3>
 <p><center><table border=1>
-<tr><th>Parameter</th><th>Abreviation</th><th>Default Value</th></tr>
+<tr><th>Parameter</th><th>Abbreviation</th><th>Default Value</th></tr>
 <tr></tr>
 <tr><td>dpm</td><td align=center> - </td><td>0.1</td></tr>
 <tr><td>delta</td><td>d</td><td>0.0</td></tr>
@@ -70,7 +70,7 @@ Below this level, density increases exponentially.
 	<DD>This is the height (above the Z=0 plane) at which the fog starts
 	to get exponentially denser.  From this altitude downward density
 	increases.  By default this value is specified in millimeters,
-	(regardless of the currend MGED editing units).  It is possible
+	(regardless of the current MGED editing units).  It is possible
 	to specify values in other units by appending the units as a suffix
 	to the value.  For example: ``2ft''.
 	</DL>
@@ -100,7 +100,7 @@ the color splashes never become pixelated, no mater how close the eyepoint is
 to the surface.
 
 <p><center><table border=1>
-<tr><th>Parameter</th><th>Abreviation</th><th>Default Value</th></tr>
+<tr><th>Parameter</th><th>Abbreviation</th><th>Default Value</th></tr>
 <tr></tr>
 <tr><th colspan=3>Noise Parameters</th></tr>
 <tr><td>lacunarity</td><td>l</td><td>2.1753974</td></tr>
@@ -130,7 +130,7 @@ would tend to be no larger than 5-10mm.  If non-uniform scaling is required,
 Vscale can specify the grid size in X, Y and Z.
 <dt><b>Delta</b>
 <dd>This specifies a translation in noise space for the origin of region space.
-Since the origin of noise space is reflected 8 ways, it is undesireable to have
+Since the origin of noise space is reflected 8 ways, it is undesirable to have
 that portion of noise space overlap with region space.
 </dl>
 <H3>Examples</h3>
@@ -140,7 +140,7 @@ that portion of noise space overlap with region space.
 </DD>
 <HR>
 <DT><a name="camo"><b>camo</b></a></DT>
-<DD>The "camo" shader creates a pseudo-random tri-color camoflage pattern on
+<DD>The "camo" shader creates a pseudo-random tri-color camouflage pattern on
 the object using a fractal noise pattern.  This is a procedural shader based
 upon a fractal noise function known as fractional brownian motion or fBm.
 <p>
@@ -165,7 +165,7 @@ The parameters associated with the noise function are common to all shaders
 based upon the noise functions.
 
 <p><center><table border=1>
-<tr><th>Parameter</th><th>Abreviation</th><th>Default Value</th></tr>
+<tr><th>Parameter</th><th>Abbreviation</th><th>Default Value</th></tr>
 <tr></tr>
 <tr><th colspan=3>Noise Parameters</th></tr>
 <tr><td>lacunarity</td><td>l</td><td>2.1753974</td></tr>
@@ -199,7 +199,7 @@ would tend to be no larger than 5-10mm.  If non-uniform scaling is required,
 Vscale can specify the grid size in X, Y and Z.
 <dt><b>Delta</b>
 <dd>This specifies a translation in noise space for the origin of region space.
-Since the origin of noise space is reflected 8 ways, it is undesireable to have
+Since the origin of noise space is reflected 8 ways, it is undesirable to have
 that portion of noise space overlap with region space.
 </dl>
 
@@ -219,7 +219,7 @@ to get a splash of color1 directly adjacent to a splash of color3.
 texture that resembles fire.
 <H3>Parameters</h3>
 <p><center><table border=1>
-<tr><th>Parameter</th><th>Abreviation</th><th>Default Value</th></tr>
+<tr><th>Parameter</th><th>Abbreviation</th><th>Default Value</th></tr>
 <tr></tr>
 <tr><th colspan=3>Noise Parameters</th></tr>
 <tr><td>lacunarity</td><td>l</td><td>2.1753974</td></tr>
@@ -240,7 +240,7 @@ texture that resembles fire.
 	animation.  Animation frametime*flicker produces a delta
 	of Z in noise space for the given frame/pixel.  Useful
 	values are probably in the range 0 .. 10.</DD>
-	<DT>strectch</DT>
+	<DT>stretch</DT>
 	<DD>Specifies a scaling of the exponential stretch of the
 	flames.  Flame stretch effect = exp(pos[Z] * - stretch)</DD>
 	</DL>
@@ -259,7 +259,7 @@ The color of the region defines the color of the light.
 </DD>
 <H3>Parameters</h3>
 <p><center><table border=1>
-<tr><th>Parameter</th><th>Abreviation</th><th>Default Value</th></tr>
+<tr><th>Parameter</th><th>Abbreviation</th><th>Default Value</th></tr>
 <tr></tr>
 <tr><td>inten</td><td align=center> - </td><td>1000</td></tr>
 <tr><td>angle</td><td align=center> - </td><td>180</td></tr>
@@ -274,7 +274,7 @@ The color of the region defines the color of the light.
 	<DT>intensity</DT>
 	<DD>Intensity of the light source (nominally in lumens)</DD>
 	<DT>angle&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</DT>
-	<DD>Beam displersion angle (degrees 0..180)</DD>
+	<DD>Beam dispersion angle (degrees 0..180)</DD>
 	<DT>fraction</DT>
 	<DD>Fraction of total light</DD>
 	<DT>shadows</DT>
@@ -306,7 +306,7 @@ noise to the intensity of the surface color.
 </DD>
 <H3>Parameters</h3>
 <p><center><table border=1>
-<tr><th>Parameter</th><th>Abreviation</th><th>Default Value</th></tr>
+<tr><th>Parameter</th><th>Abbreviation</th><th>Default Value</th></tr>
 <tr></tr>
 <tr><th colspan=3>Noise Parameters</th></tr>
 <tr><td>lacunarity</td><td>l</td><td>2.1753974</td></tr>
@@ -344,7 +344,7 @@ noise to the intensity of the surface color.
 </DD>
 <H3>Parameters</h3>
 <p><center><table border=1>
-<tr><th rowspan=2>Parameter</th><th rowspan=2>Abreviation</th><th colspan=3>Default Value</th></tr>
+<tr><th rowspan=2>Parameter</th><th rowspan=2>Abbreviation</th><th colspan=3>Default Value</th></tr>
 
 <tr><th>plastic</th><th>mirror</th><th>glass</th></tr>
 <tr></tr>
@@ -368,14 +368,14 @@ noise to the intensity of the surface color.
 <p>
 	<DL COMPACT>
 	<DT>shine</DT>
-	<DD>Deescribes the shininess of the object [4..20] where 4 is a very higly polished surface, and 20 defines a very rough
+	<DD>Describes the shininess of the object [4..20] where 4 is a very highly polished surface, and 20 defines a very rough
 	surface</DD>
 	<DT>specular</DT>
 	<DD>Defines the amount of energy due to directional reflection
-	of energy (eg. due to light sources in the scene)</DD>
+	of energy (e.g. due to light sources in the scene)</DD>
 	<DT>diffuse</DT>
 	<DD>Defines the portion of energy due to diffuse (non directional)
-	surface reflection, eg. due to ambient illumination</DD>
+	surface reflection, e.g. due to ambient illumination</DD>
 	<DT>transmit</DT>
 	<DD>Defines the portion of light [0..1] due to energy transmitted
 	through the object</DD>
@@ -399,7 +399,7 @@ noise to the intensity of the surface color.
 <DD>Phil Dykstra's points shader</DD>
 <H3>Parameters</h3>
 <p><center><table border=1>
-<tr><th>Parameter</th><th>Abreviation</th><th>Default Value</th></tr>
+<tr><th>Parameter</th><th>Abbreviation</th><th>Default Value</th></tr>
 <tr></tr>
 </table></center>
 <p>
@@ -420,7 +420,7 @@ noise to the intensity of the surface color.
 <DD>Lee's ``Solid Clouds''</DD>
 <H3>Parameters</h3>
 <p><center><table border=1>
-<tr><th>Parameter</th><th>Abreviation</th><th>Default Value</th></tr>
+<tr><th>Parameter</th><th>Abbreviation</th><th>Default Value</th></tr>
 <tr></tr>
 </table></center>
 <p>
@@ -442,7 +442,7 @@ noise to the intensity of the surface color.
 <DD>Geoffrey Gardner style 2D cloud texture</DD>
 <H3>Parameters</h3>
 <p><center><table border=1>
-<tr><th>Parameter</th><th>Abreviation</th><th>Default Value</th></tr>
+<tr><th>Parameter</th><th>Abbreviation</th><th>Default Value</th></tr>
 <tr></tr>
 </table></center>
 <p>
@@ -463,7 +463,7 @@ noise to the intensity of the surface color.
 <DD>Lee's Color space.  Maps RPP of region onto color cube</DD>
 <H3>Parameters</h3>
 <p><center><table border=1>
-<tr><th>Parameter</th><th>Abreviation</th><th>Default Value</th></tr>
+<tr><th>Parameter</th><th>Abbreviation</th><th>Default Value</th></tr>
 <tr></tr>
 </table></center>
 <p>
@@ -484,7 +484,7 @@ noise to the intensity of the surface color.
 <DD>John's random transmission shader</DD>
 <H3>Parameters</h3>
 <p><center><table border=1>
-<tr><th>Parameter</th><th>Abreviation</th><th>Default Value</th></tr>
+<tr><th>Parameter</th><th>Abbreviation</th><th>Default Value</th></tr>
 <tr></tr>
 </table></center>
 <p>
@@ -505,7 +505,7 @@ noise to the intensity of the surface color.
 <DD>Spherical pixmap texture</DD>
 <H3>Parameters</h3>
 <p><center><table border=1>
-<tr><th>Parameter</th><th>Abreviation</th><th>Default Value</th></tr>
+<tr><th>Parameter</th><th>Abbreviation</th><th>Default Value</th></tr>
 <tr></tr>
 </table></center>
 <p>
@@ -526,7 +526,7 @@ noise to the intensity of the surface color.
 <DD>Shader stacker</DD>
 <H3>Parameters</h3>
 <p><center><table border=1>
-<tr><th>Parameter</th><th>Abreviation</th><th>Default Value</th></tr>
+<tr><th>Parameter</th><th>Abbreviation</th><th>Default Value</th></tr>
 <tr></tr>
 </table></center>
 <p>
@@ -585,7 +585,7 @@ characters available for the shader parameter string.
 <DD>Broken and antiquated attempt at solid textures</DD>
 <H3>Parameters</h3>
 <p><center><table border=1>
-<tr><th>Parameter</th><th>Abreviation</th><th>Default Value</th></tr>
+<tr><th>Parameter</th><th>Abbreviation</th><th>Default Value</th></tr>
 <tr></tr>
 </table></center>
 <p>
@@ -605,7 +605,7 @@ characters available for the shader parameter string.
 <DD>checkerboard color texture</DD>
 <H3>Parameters</h3>
 <p><center><table border=1>
-<tr><th>Parameter</th><th>Abreviation</th><th>Default Value</th></tr>
+<tr><th>Parameter</th><th>Abbreviation</th><th>Default Value</th></tr>
 <tr></tr>
 </table></center>
 <p>
@@ -630,7 +630,7 @@ characters available for the shader parameter string.
 <DD>A fake star skymap texture</DD>
 <H3>Parameters</h3>
 <p><center><table border=1>
-<tr><th>Parameter</th><th>Abreviation</th><th>Default Value</th></tr>
+<tr><th>Parameter</th><th>Abbreviation</th><th>Default Value</th></tr>
 <tr></tr>
 </table></center>
 <p>
@@ -648,12 +648,12 @@ characters available for the shader parameter string.
 
 <DT><a NAME="texture"><B>texture</B></DT>
 <DD>maps a .pix file onto an object using u,v coordinates.
-This is usually undesireable for objects made up of more than one primitive solid.
+This is usually undesirable for objects made up of more than one primitive solid.
 </DD>
 
 <H3>Parameters</h3>
 <p><center><table border=1>
-<tr><th>Parameter</th><th>Abreviation</th><th>Default Value</th></tr>
+<tr><th>Parameter</th><th>Abbreviation</th><th>Default Value</th></tr>
 <TR><td>file</td>	<td>&nbsp;</td>	<td>&nbsp;</td></td>
 <TR><td>w</td>		<td>&nbsp;</td>	<td>512</td></td>
 <TR><td>n</td>		<td>l</td>	<td>w</td></td>
@@ -688,7 +688,7 @@ If the "transp" parameter is not set by the user, then no values are deemed tran
 <DD>maps a .bw file onto an object using u,v coordinates</DD>
 <H3>Parameters</h3>
 <p><center><table border=1>
-<tr><th>Parameter</th><th>Abreviation</th><th>Default Value</th></tr>
+<tr><th>Parameter</th><th>Abbreviation</th><th>Default Value</th></tr>
 <tr></tr>
 </table></center>
 <p>
@@ -709,7 +709,7 @@ If the "transp" parameter is not set by the user, then no values are deemed tran
 bump map</DD>
 <H3>Parameters</h3>
 <p><center><table border=1>
-<tr><th>Parameter</th><th>Abreviation</th><th>Default Value</th></tr>
+<tr><th>Parameter</th><th>Abbreviation</th><th>Default Value</th></tr>
 <tr></tr>
 </table></center>
 <p>
@@ -730,7 +730,7 @@ bump map</DD>
 For debugging.</DD>
 <H3>Parameters</h3>
 <p><center><table border=1>
-<tr><th>Parameter</th><th>Abreviation</th><th>Default Value</th></tr>
+<tr><th>Parameter</th><th>Abbreviation</th><th>Default Value</th></tr>
 <tr></tr>
 </table></center>
 <p>

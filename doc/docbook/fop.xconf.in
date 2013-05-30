@@ -15,23 +15,23 @@ the location of this file.
   <strict-validation>true</strict-validation>
   <use-cache>0</use-cache>
 
-  <!-- 
+  <!--
 
-      Base URL for resolving relative URLs 
+      Base URL for resolving relative URLs
       use current ./doc/docbook directory
 
    -->
   <base>@srcdir@/articles/en</base>
-  
+
   <!-- Source resolution in dpi (dots/pixels per inch) for determining the size of pixels in SVG and bitmap images, default: 72dpi -->
   <source-resolution>72</source-resolution>
   <!-- Target resolution in dpi (dots/pixels per inch) for specifying the target resolution for generated bitmaps, default: 72dpi -->
   <target-resolution>72</target-resolution>
-  
+
   <!-- Default page-height and page-width, in case
        value is specified as auto -->
   <default-page-settings height="11in" width="8.50in"/><!-- TB: width was originally 8.26! -->
-  
+
   <!-- SUBSTITUTIONS =========================================== -->
   <!--
 
@@ -134,11 +134,11 @@ the location of this file.
       <filterList>
         <!-- provides compression using zlib flate (default is on) -->
         <value>flate</value>
-  
+
         <!-- encodes binary data into printable ascii characters (default off)
              This provides about a 4:5 expansion of data size -->
         <!-- <value>ascii-85</value> -->
-  
+
         <!-- encodes binary data with hex representation (default off)
              This filter is not recommended as it doubles the data size -->
         <!-- <value>ascii-hex</value> -->
@@ -174,69 +174,69 @@ the location of this file.
 
 
         <!-- free fonts ============================================== -->
-        <font kerning="yes" 
+        <font kerning="yes"
           embed-url="@CMAKE_BINARY_DIR@/doc/docbook/resources/other/fonts/stix/STIXGeneral-Regular.ttf">
           <font-triplet name="STIXGeneral" style="normal" weight="normal"/>
         </font>
-        <font kerning="yes" 
+        <font kerning="yes"
           embed-url="@CMAKE_BINARY_DIR@/doc/docbook/resources/other/fonts/stix/STIXGeneral-Bold.ttf">
           <font-triplet name="STIXGeneral" style="normal" weight="bold"/>
         </font>
-        <font kerning="yes" 
+        <font kerning="yes"
           embed-url="@CMAKE_BINARY_DIR@/doc/docbook/resources/other/fonts/stix/STIXGeneral-Italic.ttf">
           <font-triplet name="STIXGeneral" style="italic" weight="normal"/>
         </font>
-        <font kerning="yes" 
+        <font kerning="yes"
           embed-url="@CMAKE_BINARY_DIR@/doc/docbook/resources/other/fonts/stix/STIXGeneral-BoldItalic.ttf">
           <font-triplet name="STIXGeneral" style="italic" weight="bold"/>
         </font>
 
-        <font kerning="yes" 
+        <font kerning="yes"
           embed-url="@CMAKE_BINARY_DIR@/doc/docbook/resources/other/fonts/dejavu-lgc/ttf/DejaVuLGCSans.ttf">
           <font-triplet name="DejaVuLGCSans" style="normal" weight="normal"/>
         </font>
 
-        <font kerning="yes" 
+        <font kerning="yes"
           embed-url="@CMAKE_BINARY_DIR@/doc/docbook/resources/other/fonts/dejavu-lgc/ttf/DejaVuLGCSans-Bold.ttf">
           <font-triplet name="DejaVuLGCSans" style="normal" weight="bold"/>
         </font>
 
-        <font kerning="yes" 
+        <font kerning="yes"
           embed-url="@CMAKE_BINARY_DIR@/doc/docbook/resources/other/fonts/dejavu-lgc/ttf/DejaVuLGCSans-Bold.ttf">
           <font-triplet name="DejaVuLGCSans" style="normal" weight="700"/>
         </font>
 
-        <font kerning="yes" 
+        <font kerning="yes"
           embed-url="@CMAKE_BINARY_DIR@/doc/docbook/resources/other/fonts/dejavu-lgc/ttf/DejaVuLGCSans-Oblique.ttf">
           <font-triplet name="DejaVuLGCSans" style="oblique" weight="normal"/>
         </font>
 
-        <font kerning="yes" 
+        <font kerning="yes"
           embed-url="@CMAKE_BINARY_DIR@/doc/docbook/resources/other/fonts/dejavu-lgc/ttf/DejaVuLGCSans-BoldOblique.ttf">
           <font-triplet name="DejaVuLGCSans" style="oblique" weight="bold"/>
         </font>
 
-        <font kerning="yes" 
+        <font kerning="yes"
           embed-url="@CMAKE_BINARY_DIR@/doc/docbook/resources/other/fonts/dejavu-lgc/ttf/DejaVuLGCSansMono.ttf">
           <font-triplet name="DejaVuLGCSansMono" style="normal" weight="normal"/>
         </font>
 
-        <font kerning="yes" 
+        <font kerning="yes"
           embed-url="@CMAKE_BINARY_DIR@/doc/docbook/resources/other/fonts/dejavu-lgc/ttf/DejaVuLGCSansMono-Bold.ttf">
           <font-triplet name="DejaVuLGCSansMono" style="normal" weight="bold"/>
         </font>
 
-        <font kerning="yes" 
+        <font kerning="yes"
           embed-url="@CMAKE_BINARY_DIR@/doc/docbook/resources/other/fonts/dejavu-lgc/ttf/DejaVuLGCSansMono-Bold.ttf">
           <font-triplet name="DejaVuLGCSansMono" style="normal" weight="700"/>
         </font>
 
-        <font kerning="yes" 
+        <font kerning="yes"
           embed-url="@CMAKE_BINARY_DIR@/doc/docbook/resources/other/fonts/dejavu-lgc/ttf/DejaVuLGCSansMono-Oblique.ttf">
           <font-triplet name="DejaVuLGCSansMono" style="oblique" weight="normal"/>
         </font>
 
-        <font kerning="yes" 
+        <font kerning="yes"
           embed-url="@CMAKE_BINARY_DIR@/doc/docbook/resources/other/fonts/dejavu-lgc/ttf/DejaVuLGCSansMono-BoldOblique.ttf">
           <font-triplet name="DejaVuLGCSansMono" style="oblique" weight="bold"/>
         </font>

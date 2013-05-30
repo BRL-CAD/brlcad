@@ -2,7 +2,7 @@
 #                    P U L L _ C O M P . S H
 # BRL-CAD
 #
-# Copyright (c) 2007-2012 United States Government as represented by
+# Copyright (c) 2007-2013 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -41,9 +41,9 @@
 
 nawk '
 BEGIN {
-	while( getline < ARGV[1] ){
-		for( i=2; i<ARGC; i++ ){
-			if( (substr($0,32,4)+0) == ARGV[i] )
+	while(getline < ARGV[1]) {
+		for(i=2; i<ARGC; i++) {
+			if((substr($0, 32, 4)+0) == ARGV[i])
 				print $0
 		}
 	}

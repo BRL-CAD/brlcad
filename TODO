@@ -18,45 +18,154 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
+
+
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------------
 
-* test illuminate (e.g. oed) + Z, report of crash (on Windows)
+* investigate INFINITY spatial partitioning issue.
+
+* closing the graphics window brings down X11 on Mac due to a bad
+  context.  fix or revert recent close window behavior.
+
+* Investigate replacing togl for adrt/isst
+
+* Rework p2t so it doesn't take down the application
+  when a NURBS tessellation fails - should just abandon the
+  problem input and continue.
+
+
+THESE ARE UNSCHEDULED BACKLOG TASKS
+-----------------------------------
+
+* finish the DSP tutorial on the wiki
+
+* implement a null spatial partitioning method so we can determine
+  what other intersection hits are being masked (and what impact a
+  given method has on performance)
+
+* [hn]to[hn]* conversion functions were usurped by windows 8 so we
+  need to either wrap them or undeprecate our xdr API or see if a
+  simple config header fix might work (ideal)
+
+* The sph wireframe drawing routine doesn't seem to like drawing very
+  small spheres far from the origin:
+
+  in test_2.s sph 1, 2, 1 0.0007  (draws a sphere wireframe correctly)
+  in test_1.s sph 10000 -15000 3000 0.0007 (incorrect wireframe)
+
+* use spatial partitioning during boolean processing of polygonal
+  meshes.  good approach might be to generalize TIE's kd-tree to
+  polygons or even create a new scheme (e.g., an integer-indexed grid
+  layout).  data coherence would be nice (but not essential).  current
+  approach is at least O(N^2) with large constant time.  New should be
+  O(N*log(N)).
+
+* rework the database object hash to push the iteration up into librt
+  as API instead of expecting callers to use RT_DBNHASH and
+  RT_DBHASH() manually.  consider using bu_hash or other container.
+
+* rename chan_add, chan_mult, chan_permute and look into possibly
+  merging them into one tool in the util directory.  similar to the
+  'join' command, but arguably easier to use.
+
+* temp colors and temp matrices during ray tracing, need a
+  command-line and mged method to override parameters temporarily.
+
+* fix bottie crash on 32b builds
+
+* resolve bot bin sort optimization crash, disabled during release
+
+* test new edit command
+
+* fix 64b detection across platforms. Fix rhel 32/64 confusion
 
 * bu_bomb not printing stack trace as it is supposed to
 
-* g-nff man page is out of sync with g-nff options
- 
-* investigate bu_vls_encode/decode failures on g-dot.c (see that 
+* test/fix patch-g on windows.  the input file read loops assume
+  unix-style files resulting in parser errors.
+
+* merge conv-vg2g into dbupgrade
+
+* add the ability for search to filter objects based on whether
+  they are being unioned, intersected or subtracted from a parent
+
+* add option to rtedge to also show back-facing hidden edges
+
+* add option to push/xpush to stop at the region level, to stop before
+  primitives, to stop after N levels, to stop before N levels.
+
+* consolidate push/xpush together
+
+* make rt_dirbuild()+rt_dirbuild() work without vomiting error
+  messages about duplicate geometry.  should be able to open the same
+  database multiple times without running into rt_uniresource
+  directory duplication
+
+* add an export menu to MGED that connects to auto-detected available
+  exporters (g-* tools).
+
+* add an export menu to Archer that connects to auto-detected
+  available exporters (g-* tools).
+
+* convert teapot to use nurbs surfaces instead of bspline
+
+* add an option to the bb command for calculating a bounding box that
+  encompasses subtracted objects and trimmed surfaces and default to
+  calculating a tight-fitting fbounding box once we have a robust path
+  from geom->NURBS+CSG->NURBS.
+
+* create a FASTGEN sample geometry with all entities defined and a
+  corresponding regression test to make sure outputs don't change.
+
+* create a BRL-CAD .g with all possible object types embedded.  The
+  csgbrep command is a good starting point, but only about half of
+  them.
+
+* investigate bu_vls_encode/decode failures on g-dot.c (see that
   file for FIXME note); add tests for both functions (note only
   g-dot.c wants to use the functions at the moment)
- 
-* fix bottie crash on 32b builds
-
-* investigate bottie '1 unit closer' issue indianlarry saw in frv
-
-* check libbu implementation of red-black trees (see note in bu.h
-  referencing an error in the Cormen book used as a basis)
 
 * verify/fix/improve rtarea.  There are reports that the rtarea
   command may have a bug in its calculations.  This needs to be
   investigated along with a review of the taxonomy used by rtarea for
   describing presented/projected areas.
 
-* fix 64b detection across platforms. Fix rhel 32/64 confusion
-
-* test new edit command
-
-* hook marching cubes into libged facetize
-
 * eliminate dbi_filepath (perhaps replace with dbi_filedir) as we
   shouldn't need to search.  we were told where the database was.
 
-* resolve bot bin sort optimization crash, disabled during release
+* hook marching cubes into libged facetize
 
+* check libbu implementation of red-black trees (see note in bu.h
+  referencing an error in the Cormen book used as a basis)
 
-THESE ARE UNSCHEDULED BACKLOG TASKS
------------------------------------
+* make libfb parallel-safe.  use bu memory management.  remove
+  semaphore locks in src/rt/main.c and elsewhere.
+
+* eliminate the need for bu_semaphore_init().  allocate up to the
+  index requested on demand (so we can retain O(1) lookups) and
+  reserve the first N semaphores for BRL-CAD library use.  change
+  index to a uint8_t or uint16_t type.
+
+* make libbn/plot3.c functions parallel-safe so callers do not have to
+  manually wrap with bu_semaphore_acquire().
+
+* fix ged 'joint' command, need to figure out how libged should handle
+  non-object additions to the wireframe (or maybe they should be
+  objects, but not mged's faked solids ala cvt_vlblock_to_solids()).
+
+* implement a "bu_locate" function to consolidate bu_brlcad_root,
+  bu_brlcad_data, and bu_brlcad_dir.  Pass in a bu_locate_t enum,
+  the relative path, and the log/no-log flag.  Intent is to support
+  flexibility implied by presence of BIN_DIR, LIB_DIR, etc. build
+  settings.  Will need great care to ensure correct behavior is
+  preserved - bu_brlcad_root and bu_brlcad_data will need verbose
+  deprecation process, once bu_locate is implemented.  Also will
+  need matching tcl function.
+
+* rendering of the 'part' primitive is wrong for cases where H is less
+  than r1 (i.e., smaller cap is partially or fully within the larger
+  cap's radius).  It ends up rendering the larger sphere.
 
 * something wrong with brep/nurbs subdivision spatial partitioning
   causing inline failure in BANode<ON_BoundingBox>::addChild().
@@ -65,16 +174,9 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   data members are correct and, iff correct, expand inline-unit-growth
   to accommodate.
 
-* investigate why Eric Raymond's doclifter
-  (http://www.catb.org/~esr/doclifter/)is failing on these man page
-  source files:
+* get dev consensus on format of these man page source files which
+  describe library APIs:
 
-    ./src/anim/anim_sort.1
-    ./src/canon/canonize.1
-    ./src/util/pixrot.1
-    ./src/tab/tabinterp.1
-    ./src/tab/tabsub.1
-    ./src/anim/anim_time.1
     ./src/libbn/libplot3.3
     ./src/libbu/htond.3
     ./src/libbu/redblack.3
@@ -86,17 +188,14 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 * update mged to not call wdb_init_obj and wdb_create_cmd, trace down
   other vestiges of wdb_obj for removal
 
-* migrate the mged 'joint' command to libged
-
 * add support to rt tools and gtools for specifying az/el in radians
   or degrees, propagate throughout mged commands that take angles too.
   probably best implemented as a general libbn string to val function.
   perhaps an explicit 'rad' suffix and an implicit 'deg' suffix, e.g.
   rt -a 0.3rad -e 0.5rad and aet 0.3rad 45deg 0
 
-* change fbserv usage to require a flag for its non-daemon mode
-
-* default IF_OGL to single-buffer mode
+* change fbserv usage to require a flag for its non-daemon mode, make
+  the device type optional for both daemon and non-daemon mode
 
 * make sure we can run db_dirbuild() multiple times without creating
   duplicate entries.
@@ -104,9 +203,9 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 * work on vdeck/comgeom-g converters needed:
   - primitives recognized by comgeom-g but not vdeck:
       ehy, epa, eto, rhc, rpc
-  - primitives recognized by comgeom-g (but not vdeck) but 
+  - primitives recognized by comgeom-g (but not vdeck) but
     with possible equivalent versions in BRL-CAD:
-      haf (half), rvw (right vertical wedge), raw (arb8), wed (DoE name 
+      haf (half), rvw (right vertical wedge), raw (arb8), wed (DoE name
       for 'raw'), wir (pipe), arw (arbitrary wedge [ERIM?])
   - generate new comgeom-g tests with tgms from old GIFT docs
 
@@ -164,7 +263,7 @@ comp.r4 ID 5678 material code 5 LOS 75
 * struct rt_bot_internal should be using "size_t *" instead of "int *"
   for the faces and face_normals members
 
-* fix the "(type)(size_t)val" hacks (using ints like ptrs, etc)
+* fix the "(type)(size_t)val" hacks (using ints like ptrs, etc.)
 
 * Mac OS X mouse input binding problem seems to be back with rotations
   stalling during interactive use.
@@ -192,9 +291,9 @@ comp.r4 ID 5678 material code 5 LOS 75
 
 * DocBook source: add xsl customizations for figure and table title
   positions, float centering, etc.; add automatic figure, table, and
-  other similar references; add separate html and fo image sizing and
-  placement; remove unnecessary image markup; lift child namespaces to
-  each document's root element.
+  other similar references; add separate markup for html (role='html')
+  and pdf (role='fo') image sizing and placement; remove unnecessary
+  image markup; lift child namespaces to each document's root element.
 
 * pixdiff reports bytes, but reports incorrect (off-by-one) bytes for
   .bw input files.  cause is due to tool assuming input is rgb triplets
@@ -210,7 +309,7 @@ comp.r4 ID 5678 material code 5 LOS 75
   options specific to testing geometry (like whether two objects
   overlap, whether an object's volume is greater than some value or
   equal to zero, whether two objects are actually the same object
-  (geometrically), etc).
+  (geometrically), etc.).
 
 * rewrite nmg->brep conversion routine
   (src/librt/primitives/brep/brep_brep.cpp) to use a simple 2d
@@ -277,32 +376,32 @@ comp.r4 ID 5678 material code 5 LOS 75
 
   Types of annotations:
 	text:                   text.
-                                                   text --,
-        leader:                 text ---->.                \
-                                      .            .        \           .        .         .  .
-        linear dimension:             |            |         .          |        |         |  |
-                            .         |<-- text -->|                --->|  text  |<--   -->|  |<---- text
+						   text --,
+	leader:                 text ---->.                \
+				      .            .        \           .        .         .  .
+	linear dimension:             |            |         .          |        |         |  |
+			    .         |<-- text -->|                --->|  text  |<--   -->|  |<---- text
 	angular dimension:   \  text
-                              \_____.
+			      \_____.
 
   Annotation placement:
-        xyz position:             (1.0, 3.5, 2.1)
-        named reference(s):        hull.r
-        above/below/left/right:    below
-        offset:                    33.4
-                (e.g., "at 1.0,3.5,2.1" or "below hull.r offset 33.4" or "at hull.r", etc)        
+	xyz position:             (1.0, 3.5, 2.1)
+	named reference(s):        hull.r
+	above/below/left/right:    below
+	offset:                    33.4
+		(e.g., "at 1.0,3.5,2.1" or "below hull.r offset 33.4" or "at hull.r", etc.)
 
   Text:
-        user-defined string:     my awesome component -----> .
+	user-defined string:     my awesome component -----> .
 
-        named/point reference:        hull.r1 -----> .
-                                                  .               .
-        automatic dimension (two points):         |_______________|
-                                   .        .           5.4 mm
-        custom dimension label:    |<------>|<--.
-                                                 \ Length of hull.r1: 5.4mm
+	named/point reference:        hull.r1 -----> .
+						  .               .
+	automatic dimension (two points):         |_______________|
+				   .        .           5.4 mm
+	custom dimension label:    |<------>|<--.
+						 \ Length of hull.r1: 5.4mm
 
-              (custom label specified via format specifier: "Length of %target: %size")
+	      (custom label specified via format specifier: "Length of %target: %size")
 
   Text properties:
        font name
@@ -317,8 +416,8 @@ comp.r4 ID 5678 material code 5 LOS 75
        tail style (point o-, arrow_to >-, arrow_from, <-, square #-)
        line weight (thickness)                    .___.                     target        .---- text
        2d points:               text  ._____.     |    \                    .     .      /
-                                             \    |     .---> target        |     |     /
-                                              .___.                      -->|     |<---.
+					     \    |     .---> target        |     |     /
+					      .___.                      -->|     |<---.
   Symbol type:
        degree:   (superscript circle)
        radius:   ('R', e.g., 'R10.5')
@@ -366,7 +465,7 @@ comp.r4 ID 5678 material code 5 LOS 75
 * make bu_basename/bu_dirname not allocation memory.  have caller pass
   buffer in as a parameter with size ala snprintf/memcpy.
 
-* solids regression is failing in optimized builds  - 3 off by many. 
+* solids regression is failing in optimized builds  - 3 off by many.
   Looks to be floating fuzz overlap/pick issue? pixel 131329.
 
 * restore libged axis/grid commands code made in r44153 but with
@@ -391,7 +490,7 @@ comp.r4 ID 5678 material code 5 LOS 75
   desired.
 
 * provide libdm mechanism for drawing spline curves (to help visualize
-  flight paths, show object trajectories, etc).
+  flight paths, show object trajectories, etc.).
 
 * provide option for displaying object bounding boxes while rotating.
   visualization feature to help with rotation operations, showing
@@ -408,20 +507,18 @@ comp.r4 ID 5678 material code 5 LOS 75
 * deprecate dbcp and merge functionality (and improved
   double-buffering) with the buffer tool.
 
-* make the converters export all top-level objects by default
-
 * rename all the g_* tools sans "_" [save until 7.22]
 
 * vls name wrapping (reversible argv-to-vls, vls-to-argv).  look at
   src/libged/glob.c code, very similar.
 
+* refactor rt_mirror (src/librt/primitives/mirror.c) into the functab
+
 * refactor rt_functab accessors to go through an api call or calls so
   that the array is not accessed directly.  either an rt_eval() style
   interface with data-driven keys to tell it with function(s) to call,
   or simply have an rt_*() for each function (e.g., rt_mirror(),
-  rt_shot(), rt_describe(), etc).
-
-* explore the g_qa/plot issue
+  rt_shot(), rt_describe(), etc.).
 
 * release dm X get_color() memory
 
@@ -432,7 +529,7 @@ comp.r4 ID 5678 material code 5 LOS 75
   instead of strcmp()).
 
 * add support for user-specified sorting for the attr command (case,
-  case-insensitive, creation, value, etc)
+  case-insensitive, creation, value, etc.)
 
 * investigate why solids.sh fails on three pixels on some 64-bit
   platforms. it grazingly hits/misses a tgc causing a regression
@@ -441,8 +538,6 @@ comp.r4 ID 5678 material code 5 LOS 75
   havoc.g s.nos5g reliably exhibits the grazing edge bug where only
   one hit point is being returned.  to reproduce:
   e s.nos5g ; ae 35 25 ; units mm ; center 26912.4 7089.08 7168.96 ; nirt
-
-* deprecate rtg3 and burst
 
 * make sure 'preview' works, particularly the 'tree' subcommand.
 
@@ -483,10 +578,6 @@ comp.r4 ID 5678 material code 5 LOS 75
 * add support for a custom unit conversion factor to the units command
   (e.g. 'units 9.3120223' or 'units metertons 9.3120223')
 
-* write up a brief DSP overview on the wiki
-
-* merge conv-vg2g into dbupgrade
-
 * usage statistics.  similar to the eclipse Usage Data Collector, keep
   track of which BRL-CAD command-line commands and MGED/libged
   commands are run.  Give the user the option of uploading those
@@ -518,18 +609,42 @@ comp.r4 ID 5678 material code 5 LOS 75
   encountered (possibly using bilinear filtering scheme, improve upon
   rtedge's current simple filter)
 
-* kdtree spatial partitioning option in librt
-
 * implement rt_volume() API for computing geometry volume (g_qa style
   for complex, direct for primitives)
 
 * improve compile-time version management -- port brlcad-version to
   windows, reconsider providing compile-time header constants.
 
+* have gqa calculate the volume of overlapping regions, not just
+  shotline overlap distances.  that will allow output to be sorted by
+  volumetrically significant regions and should eliminate a common
+  source of user misunderstanding.  It should eliminate the perception
+  that large overlaps are suddenly appearing when there are changes in
+  grid alignment/density.
+
 * fix gqa spewing of massive amounts of plot data with th -Av -v
   options:
   ../src/gtools/g_qa -u m,m^3,kg -g 0.25m-0.5mm -p -Av -v gqa.g closed_box.r
   -rw-rw-r--  1 morrison users 41572569618 Apr 23 15:14 volume.pl
+
+* make gqa overlap reporting suck less.  uselessly reports the same
+  objects multiple times instead of keeping track of uniquely
+  overlapping pairs of objects (rtcheck used to have this problem but
+  not now).  also reports overlaps even when not requested (e.g. -Aa)
+
+* gqa semaphore locking on results is very slow and gets worse as the
+  number of cores and speed of cpu increases.  resource contention on
+  semaphores slows everything down substantially.
+
+* g_qa (gqa in mged) needs to be more informative when it runs -
+  needs a header letting you know what it's doing, and if possible
+  a "progress report" for longer runs that provides some notion of
+  how much of the total job is done.
+
+* refactor .density file and density database reading code in files
+  src/rt/viewweight.c, src/libged/analyze.c and src/libged/gqa.c into
+  common code in src/libanalyze (there may be more candidates around
+  the tree)
 
 * all of the rt* tracers share common code and common options, but do
   not share common documentation.  refactor documentation to use
@@ -583,7 +698,7 @@ comp.r4 ID 5678 material code 5 LOS 75
 
   # same as mvall -f file.txt
   batch file.txt -exec "mvall \$*"
-  
+
   # create an alternate hierarchy based on some mapping file
   batch file.txt -exec "g \$*"
 
@@ -597,7 +712,7 @@ comp.r4 ID 5678 material code 5 LOS 75
   # parent assembly and set a specified material ID
   search . -name "*.r" -exec batch file.txt -field 1 -eq {} -exec "g \$1 {}" -exec "mater {} \$3" \;
 
-  # run awk, get 4th column, run sed to change name, 
+  # run awk, get 4th column, run sed to change name,
   batch file.txt -awk '{print $4}' -sed 's/^r\.(.*)/\1\.r/g' -exec "mv \$1 \$$"
 
   # outside of MGED, the above would have been similar to:
@@ -605,12 +720,12 @@ comp.r4 ID 5678 material code 5 LOS 75
 
   The command becomes more of a stream processor on the input file, as
   if piped on the shell line.  To embed awk, sed, cut, see qse:
-          http://code.google.com/p/qse/
+	  http://code.google.com/p/qse/
 
   The search and batch commands probably can't nor shouldn't use the
-  same replacement markers, with batch using $*, $1, $2, etc, to
+  same replacement markers, with batch using $*, $1, $2, etc., to
   represent file columns (in a poor man's awk fashion) and search
-  simply using "{}" as the the object name replacement marker.
+  simply using "{}" as the object name replacement marker.
 
 * fix !!! in src/libged/tables.c where a temporary file is getting
   used.  needs to call bu_temp_file().
@@ -664,17 +779,13 @@ comp.r4 ID 5678 material code 5 LOS 75
 * complete conversion of existing manual pages into docbook format
 
   note that Eric Raymond's "manlifter" (a driver for his "doclifter")
-  can be used to aid the project (see 
+  can be used to aid the project (see
   http://www.catb.org/~esr/doclifter/)
 
 * add an option to bot_dump for outputting surface normals.  Make sure
-  all supported dump formats (obj, dxf, etc) optionally write out
+  all supported dump formats (obj, dxf, etc.) optionally write out
   normals.  Consider adding an option to smoothly interpolate normals
   (per face or vertex).
-
-* add option to push/xpush to stop at the region level.
-
-* consolidate push/xpush together
 
 * modify g_qa to search for >1 region flag in a tree path.
 
@@ -692,12 +803,7 @@ comp.r4 ID 5678 material code 5 LOS 75
   to select specific objects and create/return a temporary reference
   name. this provides a command-line mechanism for implementing band
   selection in the GUI, area-based selections, and object highlighting
-        - can replace unpublished 'sphgroup' command with this
-
-* make gqa overlap reporting suck less.  uselessly reports the same
-  objects multiple times instead of keeping track of uniquely
-  overlapping pairs of objects (rtcheck used to have this problem but
-  not now).  also reports overlaps even when not requested (e.g. -Aa)
+	- can replace unpublished 'sphgroup' command with this
 
 * refactor the libtclcad go_*() functions and invocation wrappers
   (also in mged) into libged where appropriate. the 'png' command
@@ -741,15 +847,6 @@ comp.r4 ID 5678 material code 5 LOS 75
 * add support to 'rtxray' for outputting inverted pixel values so that
   we have pixel values that are directly related to material thickness
 
-* gqa semaphore locking on results is very slow and gets worse as the
-  number of cores and speed of cpu increases.  resource contention on
-  semaphores slows everything down substantially.
-
-* g_qa (gqa in mged) needs to be more informative when it runs - 
-  needs a header letting you know what it's doing, and if possible
-  a "progress report" for longer runs that provides some notion of
-  how much of the total job is done.
-
 * make color and vectors on pnts work
 
 * mged inconsistently ignores signals.  initially allowing mged to be
@@ -757,7 +854,7 @@ comp.r4 ID 5678 material code 5 LOS 75
   ignore or not ignore them, ideally the latter.
 
 * libfb needs to have the fb_open/close_existing functions refactored
-  into the function table and hav the #ifdef sections removed.
+  into the function table and have the #ifdef sections removed.
 
 * integrate library tester into regression suite that validates
   exported library symbols published in headers.  make sure they at
@@ -773,16 +870,16 @@ comp.r4 ID 5678 material code 5 LOS 75
   minimally should probably support the basic drafting elements
   (predominantly from collada, dxf, iges, and step specifications):
 
-        point := x, y, z
-        line := start point, end point
-        polyline := various (closed, open, paired, modified, etc)
-        circle := center point, radius
-        ellipse := center point, major radius, minor radius
-        hyperbola := center point, major radius, minor radius
-        parabola := center point, focal length
-        arc := center point, radius, start angle, end angle
-        spline := degree, control points, knot values
-        text := string, insertion point, size, style, alignment
+	point := x, y, z
+	line := start point, end point
+	polyline := various (closed, open, paired, modified, etc.)
+	circle := center point, radius
+	ellipse := center point, major radius, minor radius
+	hyperbola := center point, major radius, minor radius
+	parabola := center point, focal length
+	arc := center point, radius, start angle, end angle
+	spline := degree, control points, knot values
+	text := string, insertion point, size, style, alignment
 
 * make _plot() callbacks fill in plot objects instead of returning
   line segments.
@@ -806,7 +903,7 @@ comp.r4 ID 5678 material code 5 LOS 75
   surface, distance from medial axis, distance from centroid, distance
   from plane, etc.  this supports parametric descriptions of materials
   that have highly variable densities (e.g., bone, certain alloys and
-  plastics, etc).
+  plastics, etc.).
 
 * shader objects (non-geometric attribute-only objects) for v5
   geometry files.  allow shader string to refer to said objects for
@@ -835,7 +932,7 @@ comp.r4 ID 5678 material code 5 LOS 75
 * deprecate either orot or rotobj
 
 * refactor mged's signal handling to make it possible to safely
-  interrtupt long-running commands
+  interrupt long-running commands
 
 * add a -color option to all mged commands that draw geometry (B, eid,
   and E come to mind)
@@ -868,7 +965,7 @@ comp.r4 ID 5678 material code 5 LOS 75
 
 * readd support for vrml v1 to g-vrml so that users can select whether
   they want v2 (default) or previous v1 output format via a
-  command-line switch.  see http://brlcad.svn.sf.net/viewvc/brlcad/brlcad/trunk/conv/g-vrml.c?view=diff&pathrev=22798&r1=16900&r2=16901 
+  command-line switch.  see http://brlcad.svn.sf.net/viewvc/brlcad/brlcad/trunk/conv/g-vrml.c?view=diff&pathrev=22798&r1=16900&r2=16901
 
 * make Mac OS X universal binaries actually work.
 
@@ -885,6 +982,12 @@ comp.r4 ID 5678 material code 5 LOS 75
 
 * extend analyze output formatting to user-specified formats ala nirt
 
+* prevent nirt from outputting a trailing space after values when
+  there are no attributes to be displayed.  the problem is in the nirt
+  format strings where they use " %s" for displaying any attributes.
+  need to left-pad a space conditionally, perhaps by supporting %*s
+  and sizeof(var).
+
 * implement make, ted, edsol, mirror, and analyze for revolve
   primitive.  implement tess() too.
 
@@ -899,18 +1002,12 @@ comp.r4 ID 5678 material code 5 LOS 75
 
 * give bot-bldxf the axe (reconcile and merge with bot_dump)
 
-* implement support for exporting sketch objects via g-iges
-
 * implement mged object name globbing similar to tclsh's globbing
   (i.e. via a globbing command and quoting globs that use []).  testing
   shows db_glob doesn't seem to behave correctly, at least not like
   glob.  hook globbing into all commands so glob_compat_mode
   statefulness can go away.  a db_glob expression that doesn't match
   anything should not return the expression.
-
-* Explore possibility of "level of detail" wireframe renderings,
-  possibly using the previous "smooth" wireframe work as a start,
-  to provide better visualization of models.
 
 * come up with a new tool that automatically generates "inside"
   regions for a given model as a way to automatically model air.
@@ -937,8 +1034,11 @@ comp.r4 ID 5678 material code 5 LOS 75
 * fix parallel crash report generation (multiple BU_MAPPED_FILE's
   getting acquired)
 
-* make closing both the command window and graphics window shut down
-  mged (i.e., fix unintentional behavior)
+* make only closing BOTH the command window and graphics window shut
+  down mged (i.e., fix unintentional behavior), not either alone.
+
+* add keybinding to restore a command window if only the graphics
+  window remains.
 
 * remove hit_normal and hit_point from struct hit.  add RT_HIT_POINT
   macro.  refactor all callers as needed.
@@ -977,10 +1077,7 @@ comp.r4 ID 5678 material code 5 LOS 75
 * preserve an arb8 as an arb8 (instead of writing as arb6 or arb5) and
   similarly for the other arb# sizes
 
-* validate primitives during export so that it is guaranteed that
-  illegal primitives will not be written to file
-
-* implement a region annointment command where the user can turn an
+* implement a region anointment command where the user can turn an
   assembly into a region and change all lower or higher regions into
   combinations
 
@@ -1027,9 +1124,9 @@ comp.r4 ID 5678 material code 5 LOS 75
   computing surface area and weight/mass.
 
 * add verification and validation tests confirming behavior of the
-  ray-tracer and computations of area, mass, volume, etc
+  ray-tracer and computations of area, mass, volume, etc.
 
-* testing suite for all binaries: 
+* testing suite for all binaries:
 
      for cmd2 in $(for cmd in `find . -name Makefile.am | xargs cat | perl -pi -e 's/\\\\\n//g'| grep -E "PROGRAMS ?=" | sed 's/.*=//g'` ; do echo $cmd ; done | sort | uniq ) ; do echo command: $cmd2 ; done
 
@@ -1080,11 +1177,11 @@ comp.r4 ID 5678 material code 5 LOS 75
 * investigate performance impact of using sched_setaffinity and/or
   pthread_attr_setaffinity_np for linux threading affinity in librt.
 
-* rtedge-style tracer that outputs tool paths (splines/segments, etc)
+* rtedge-style tracer that outputs tool paths (splines/segments, etc.)
   for CNC/CAM style toolpath cutting descriptions (g-code files).
 
 * rtedge shoots twice as many rays as it needs to (shoots the 'below'
-  ray for each primary, only reusing current scanline cells.
+  ray for each primary, only reusing current scanline cells).
 
 * support for fillets and chamfers as object/combination operations
 
@@ -1097,8 +1194,6 @@ comp.r4 ID 5678 material code 5 LOS 75
 
 * investigate why g-iges followed by iges-g on a single box results in
   permuted vertex lists
-
-* add xml, nff, bzw, pov, blend geometry import and export support
 
 * add support for filesystem-based geometry collections
 
@@ -1224,7 +1319,7 @@ comp.r4 ID 5678 material code 5 LOS 75
 * design plugin system to allow domain specific tools (say, for example,
   a tool to create propeller parts) to identify themselves and their
   features to BRL-CAD, and to allow BRL-CAD to incorporate those features
-  as an integrated part of interaction environments.  
+  as an integrated part of interaction environments.
 
 * see if it is possible to use tec/ehy primitives to create a proc-db
   for airfoil/wing shapes.  Interesting possibilities with boolean combinations
@@ -1234,23 +1329,18 @@ comp.r4 ID 5678 material code 5 LOS 75
 * incorporate some variety of spatial partitioning into the facetize command
   (may involve just rewriting it) to try and realize MUCH faster tessellation
   of CSG geometry.  Current routines are doing a lot of unnecessary work that
-  tends to result in explosive completion times for worst-case scenarios - 
+  tends to result in explosive completion times for worst-case scenarios -
   try to get closer to the "only do the work we need to" ideal.  Once a new
   idea is proven in that command, it should be made into a libgcv routine
   and convertors/other commands retargeted to use it.
 
-* write up some documentation on other build tools besides make - 
+* write up some documentation on other build tools besides make -
   CMake supports other generators, wouldn't hurt to detail how to
   trigger builds in them (MSVC is partially covered, make sure to
   coverage is complete - others include Eclipse, XCode once we get
-  the kinks ironed out there, CodeBlocks.  New experimental ninja 
-  build tool and its (also experimental) CMake support are promising - 
+  the kinks ironed out there, CodeBlocks.  New experimental ninja
+  build tool and its (also experimental) CMake support are promising -
   if/when CMake support goes mainstream, document that too.)
-
-* refactor .density file and density database reading code in files
-  src/rt/viewweight.c, src/libged/analyze.c and src/libged/gqa.c into
-  common code in src/libanalyze (there may be more candidates around
-  the tree)
 
 * look into embedding both rgb[3] and complex[n] data types in a union to
   allow unification of libmultispectral and liboptical APIs to a single
@@ -1259,7 +1349,7 @@ comp.r4 ID 5678 material code 5 LOS 75
 
 * we need to define a libbu api for option handling that supports more
   features than getopt:
-   
+
   - need support for long options (e.g. --help and --color, not just -h
     and -C)
 
@@ -1271,11 +1361,11 @@ comp.r4 ID 5678 material code 5 LOS 75
       there to other formats than vice versa.
 
     + should support printing out the options and documentation in formatted
-      structures that allow our build system to build the command and have 
+      structures that allow our build system to build the command and have
       the command itself supply a generated snippit of text or markup that
-      could be incorporated into the final document - e.g. the DocBook 
+      could be incorporated into the final document - e.g. the DocBook
       man page for a command would be set up to expect the <command>_options.xml
-      file generated by <command> --print-options DocBook (or some other 
+      file generated by <command> --print-options DocBook (or some other
       mechanism, that's just an idea) and the CMake build could first build and
       then run the command at compilation time to provide the absolute most
       current option listing and short descriptions for the other docs.
@@ -1289,7 +1379,7 @@ comp.r4 ID 5678 material code 5 LOS 75
     definitions API - i.e. in the C definition of an option, there could
     be optional parameters to indicate the type and bounds of valid input
     to that option.  Won't always be possible, but may be a good feature
-    to have if it can save lots of repetivite coding of bounds checking in
+    to have if it can save lots of repetitive coding of bounds checking in
     programs.
 
   *might* be worth taking a look at http://rpm5.org/files/popt/ to see if
@@ -1300,9 +1390,63 @@ comp.r4 ID 5678 material code 5 LOS 75
 * add per-face analysis of primitives like tgc, arb to their respective
   analyze commands in libged
 
+* investigate the libngpcore and libngput libraries from the ngPlant
+  project as a possible means of procedurally generating plant models
+  in BRL-CAD (libraries are BSD licensed: http://ngplant.sourceforge.net)
+
+
+WINDOWS
+-------
+
+The following binaries are not yet available on Windows.  The reason
+is identified in parentheses.
+
+bombardier (possibly just a problem with the build logic)
+burst      (TERMLIB)
+enigma     (not ported)
+fbcolor    (TERMLIB)
+fbed       (TERMLIB)
+fbpoint    (TERMLIB)
+fbzoom     (TERMLIB)
+ir-X       (X11 specific)
+irdisp     (X11 specific)
+isst       (Togl widget on Windows, possibly other issues)
+lgt        (TERMLIB)
+pl-X       (X11 specific)
+pl-dm      (possibly X11 specific)
+pp-fb      (TERMLIB)
+remrt      (remrt dir commented out for WIN32 in src/CMakeLists.txt)
+rtsrv      (remrt dir commented out for WIN32 in src/CMakeLists.txt)
+rttherm    (rttherm dir commented out for WIN32 in src/CMakeLists.txt)
+scriptsort (lex)
+ssamp-bw   (rttherm dir commented out for WIN32 in src/CMakeLists.txt)
+ssampview  (rttherm dir commented out for WIN32 in src/CMakeLists.txt)
+ttcp       (not ported)
+
+The MGED points support doesn't appear as an executable, but it is
+missing on Windows due to needing lex.
+
 
 CONVERTERS
 ----------
+
+* implement 3dm-g support for ON_InstanceRef entities.  These are
+  instances of existing geometry that have prescribed referencing edit
+  behavior and can have their own matrices.  Basically, they're combs
+  that should sometimes reference copies of geometry and sometimes not
+  (there's a flag).  unveiled via sf bug report 3575774 where the
+  geometry export from solidworks was predominantly references
+  resulting in a load of geometry missing after import and objects in
+  the wrong position.
+
+* make the converters export all top-level objects by default
+
+* implement support for exporting sketch objects via g-iges
+
+* validate primitives during export so that it is guaranteed that
+  illegal primitives will not be written to file
+
+* add csv, xml, nff, bzw, pov, blend geometry import and export support
 
 * finish obj-g importer.  need to test more inputs and make sure all
   geometry is preserved on import in some form.  make sure new libobj
@@ -1377,9 +1521,6 @@ BREP/NURBS
 
 * update to openNURBS 5.0 (2011-02-02)
 
-* implement conversion of implicit CSG to NURBS CSG.  partially
-  complete, but primitives are still fixed at origin.
-
 * identify useful concepts implemented in the old NURBS code that are not
   present in openNURBS, and port that code to openNURBS data structures
   and routines.  This will eventually allow us to remove the old NURBS code.
@@ -1410,7 +1551,7 @@ NMG/BoT
   that external users can manage mesh geometry without needing to pull
   in everything else in librt.  consider moving other polygonal
   specific logic to libnmg, eventually moving all polygonal logic out
-  of librt/libtie/etc and into libnmg.
+  of librt, libtie, etc., and into libnmg.
 
 * enhance the bot data structure to contain a generic pointer that
   could be used to point back to the NMG it was generated from.  This
@@ -1419,7 +1560,7 @@ NMG/BoT
   raytracing code.
 
 * optimization of NMG ray tracing.  the hitmiss bookkeeping presently
-  used has a malloc/free occuring per shot().  allocations need to
+  used has a malloc/free occurring per shot().  allocations need to
   occur during prep only.  the presently render more than an order of
   magnitude slower than tracing that nmg converted to an equivalent
   BoT due to malloc/free calls being made during shot(). Confirmable
@@ -1469,7 +1610,7 @@ LIBPC
 * Make better pc_pc_set, pc_param and pc_constraint structures
 instead of the current ugly ones.
 
-* Test constraint solution via Read->Generate->Solve->Update routine 
+* Test constraint solution via Read->Generate->Solve->Update routine
 
 * Implement Non-deterministic solution techniques:  Backjumping,
 Backmarking
@@ -1478,7 +1619,7 @@ Backmarking
 
 * Check STL structures in public API ; wrapping with bu_list
 
-* Boost constrained_value based functor integration for 'compiled' 
+* Boost constrained_value based functor integration for 'compiled'
 constraints
 
 * Implement Hypergraph representation system
@@ -1568,16 +1709,23 @@ CMAKE
      printout, was my (CY) understanding...
 
 * move cmake documentation files into place
-   
-  -- Have done so now that the deprecation warning is directing 
-     users to INSTALL, but will still need to look over old 
+
+  -- Have done so now that the deprecation warning is directing
+     users to INSTALL, but will still need to look over old
      INSTALL docs when reviewing option documentation coverage.
 
 * investigate ignoring .hidden directories/files from dist packing so
   that internal build directories can be used instead of external ones
 
-  -- is this needed?  what's not working with make package and 
+  -- is this needed?  what's not working with make package and
      make package_source?
+
+* ensure it's possible to set global CFLAGS/CPPFLAGS/LDFLAGS that are
+  in addition to any/all that we automatically set
+
+* fix failure disabling IF_X when X11 headers are not found.
+  include/fb.h still ends up entering the IF_X section and declaring a
+  function that takes a Display and other X11 objects
 
 ODDITIES
 --------
@@ -1609,7 +1757,7 @@ THESE BREAK PROTOCOL OR ARE BACKWARDS-INCOMPATIBLE
 * remove the hf primitive
 
 * support for features either as primitives or operations or both
-  e.g. chamfer, fillet, round, cut, etc
+  e.g. chamfer, fillet, round, cut, etc.
 
 * a cut feature edit.  implementation could be represented as the cube
   that bounds a geometry object.  eight points somewhere on the edges
@@ -1632,8 +1780,8 @@ THESE BREAK PROTOCOL OR ARE BACKWARDS-INCOMPATIBLE
 * add database support for constraints, expressions, parametric
   values, construction history, and timestamping.
 
-* see doc/deprecation.txt for items that have been marked as
-  deprecated or available to be removed as obsolete items.
+* see the CHANGES file for items that have been marked as deprecated
+  or available to be removed as obsolete items.
 
 * make struct rt_functab's ft_label bigger and/or dynamic (e.g. vls)
 
@@ -1666,7 +1814,7 @@ THESE BREAK PROTOCOL OR ARE BACKWARDS-INCOMPATIBLE
 
     png-pix   file.png > file.pix
     pix-bw  < file.pix > file.bw
- 
+
   (desired style to be determined)
 
 FUNCTIONALITY NEEDED TO SPEED UP RAYTRACING
@@ -1708,22 +1856,22 @@ DOCUMENTATION
 
 * Introduction to BRL-CAD Tutorial
 	mged, rt, pix-png, rtcheck, rtarea, rtweight, g_qa, fbserv,
-	nirt.  Succint overview of less than 10% of the core
+	nirt.  Succinct overview of less than 10% of the core
 	functionality in 10 pages or less (plus pictures).
 
 * Technical Overview of BRL-CAD
-        Describes everything in the package succinctly yet
-        comprehensively.  Survey of all the major features,
-        methodologies, and tools implemented in BRL-CAD with coverage
-        on code maturity, library encapsulation, and tool aggregation.
+	Describes everything in the package succinctly yet
+	comprehensively.  Survey of all the major features,
+	methodologies, and tools implemented in BRL-CAD with coverage
+	on code maturity, library encapsulation, and tool aggregation.
 
 * BRL-CAD Validation and Verification
-        Overview of how contributions to BRL-CAD are reviewed and
-        tested including regression, performance, and system
-        integration testing as well as independent ARL configuration
-        review.  This specifically addresses the issue of world-wide
-        and potentially anonymous contributions to BRL-CAD and how
-        those changes are managed.
+	Overview of how contributions to BRL-CAD are reviewed and
+	tested including regression, performance, and system
+	integration testing as well as independent ARL configuration
+	review.  This specifically addresses the issue of world-wide
+	and potentially anonymous contributions to BRL-CAD and how
+	those changes are managed.
 
 * DoD V/L M&S Industry Diagram
 	Similar to existing Industry Diagram.  Survey of all the major
@@ -1734,68 +1882,68 @@ DOCUMENTATION
 	codes interoperate in terms of features and scope.
 
 * Commercial CAD Comparison Diagram
-        Comparison of how BRL-CAD overlaps feature-wise with various
-        major commercial CAD systems.
+	Comparison of how BRL-CAD overlaps feature-wise with various
+	major commercial CAD systems.
 
 * Solid Geometry Representation Comparisons
-        Describe the implications, tradeoffs, and conversion issues
-        involved when converting between different geometry
-        representations.  Includes describing implicit geometry,
-        explicit polygonal boundary representations, explicit spline
-        surface representations, volumetric models, wireframes,
-        boolean operations, feature edit operations, and parametric
-        modeling.
+	Describe the implications, tradeoffs, and conversion issues
+	involved when converting between different geometry
+	representations.  Includes describing implicit geometry,
+	explicit polygonal boundary representations, explicit spline
+	surface representations, volumetric models, wireframes,
+	boolean operations, feature edit operations, and parametric
+	modeling.
 
 * BRL-CAD Primitives
-        An overview of the various primitive object types in BRL-CAD,
-        their range of features, and a description of their input
-        parameters.
+	An overview of the various primitive object types in BRL-CAD,
+	their range of features, and a description of their input
+	parameters.
 
 * BRL-CAD Ray Tracing Shaders
-        An overview of the various shaders and shader options
-        available in BRL-CAD.
+	An overview of the various shaders and shader options
+	available in BRL-CAD.
 
 * BRL-CAD Open Source
 	An overview of how BRL-CAD is organized as an open source
 	project and community describing the developer meritocracy,
 	code reviews, development prioritization, and change
 	management.  This introduces and explains the concept and
-	philosophy of open source software, it's fundamental tenants,
+	philosophy of open source software, its fundamental tenants,
 	and the basic "why and how" it works.
 
 * History of BRL-CAD
-        Covers the 30-years development history of BRL-CAD, from 1979
-        to 2009, documenting the origins of the project, major
-        development achievements, the conversion to open source, and
-        lesson's learned.
+	Covers the 30-years development history of BRL-CAD, from 1979
+	to 2009, documenting the origins of the project, major
+	development achievements, the conversion to open source, and
+	lesson's learned.
 
 * BRL-CAD Manifesto
 	Vision & Scope
 
 * BRL-CAD Taxonomy
-        Description of the common terminology used throughout BRL-CAD,
-        conventions employed, and tool categorization.
+	Description of the common terminology used throughout BRL-CAD,
+	conventions employed, and tool categorization.
 
 * Implementing a BRL-CAD Primitive
-        How-To for creating a new primitive in BRL-CAD that can be
-        ray-traced, tessellated, plotted, and transformed seamlessly.
+	How-To for creating a new primitive in BRL-CAD that can be
+	ray-traced, tessellated, plotted, and transformed seamlessly.
 
 * Procedural Geometry in BRL-CAD
-        How-To for creating new tools that create geometry.
+	How-To for creating new tools that create geometry.
 
 * BRL-CAD Ray Tracing Shader Development
-        How-To for creating new shaders.
+	How-To for creating new shaders.
 
 * Geometry Conversion with BRL-CAD
-        Overview of the various geometry conversion facilities in
-        BRL-CAD and how they related to solid geometry
-        representations.
+	Overview of the various geometry conversion facilities in
+	BRL-CAD and how they related to solid geometry
+	representations.
 
 * A Developer's Introduction to BRL-CAD
-        An overview of BRL-CAD from a developer perspective intended
-        for new developers.  Provides overview of structure, important
-        sections, operating procedures, and answers to FAQ development
-        questions.
+	An overview of BRL-CAD from a developer perspective intended
+	for new developers.  Provides overview of structure, important
+	sections, operating procedures, and answers to FAQ development
+	questions.
 
 ---
 See the feature request and bug trackers for more tasks and future

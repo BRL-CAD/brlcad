@@ -1,7 +1,7 @@
 /*                           T C L . C
  * BRL-CAD
  *
- * Copyright (c) 1997-2012 United States Government as represented by
+ * Copyright (c) 1997-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -154,7 +154,7 @@ fb_cmd_open_existing(void *clientData, int argc, const char **argv)
 
 #ifdef IF_TK
 #if 0
-/* XXX TJM implment tk_open_existing */
+/* XXX TJM implement tk_open_existing */
     if (BU_STR_EQUIV(argv[1], tk_device_name)) {
 	found=1;
 	*ifp = tk_interface; /* struct copy */
@@ -218,7 +218,7 @@ fb_cmd_open_existing(void *clientData, int argc, const char **argv)
     }
 #endif  /* IF_OGL */
 
-    /* FIXME: a printed pointer address string is a blatent security
+    /* FIXME: a printed pointer address string is a blatant security
      * and integrity violation worst practice.  do not use, do not
      * pass go, find a better data-based approach.
      */
@@ -281,14 +281,10 @@ fb_cmd_close_existing(ClientData UNUSED(clientData), int argc, const char **argv
 
 
 void
-#if !defined(IF_X) && !defined(IF_WGL) && !defined(IF_OGL) && !defined(IF_TK)
-fb_configureWindow(FBIO *UNUSED(ifp), int UNUSED(width), int UNUSED(height))
-#else
 fb_configureWindow(FBIO *ifp, int width, int height)
-#endif
 {
     /* unknown/unset framebuffer */
-    if (!ifp || !ifp->if_name) {
+    if (!ifp || !ifp->if_name || width < 0 || height < 0) {
 	return;
     }
 
@@ -319,23 +315,24 @@ fb_configureWindow(FBIO *ifp, int width, int height)
 
 
 int
-#if !defined(IF_X) && !defined(IF_WGL) && !defined(IF_OGL) && !defined(IF_TK)
-fb_refresh(FBIO *ifp, int UNUSED(x), int UNUSED(y), int w, int h)
-#else
 fb_refresh(FBIO *ifp, int x, int y, int w, int h)
-#endif
 {
     int status=0;
 
-#if 1
-    if (w == 0 || h == 0)
-	return TCL_OK;
-#else
-    if (w <= 0 || h <= 0) {
+    /* what does negative mean? */
+    if (x < 0)
+	x = 0;
+    if (y < 0)
+	y = 0;
+    if (w < 0)
+	w = 0;
+    if (h < 0)
+	h = 0;
+
+    if (w == 0 || h == 0) {
 	/* nothing to refresh */
 	return TCL_OK;
     }
-#endif
 
     if (!ifp || !ifp->if_name) {
 	/* unset/unknown framebuffer */

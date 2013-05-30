@@ -1,7 +1,7 @@
 /*                     D B _ F L A G S . C
  * BRL-CAD
  *
- * Copyright (c) 2006-2012 United States Government as represented by
+ * Copyright (c) 2006-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -39,11 +39,6 @@
 #include "raytrace.h"
 
 
-/**
- * Given the internal form of a database object, return the
- * appropriate 'flags' word for stashing in the in-memory directory of
- * objects.
- */
 int
 db_flags_internal(const struct rt_db_internal *intern)
 {
@@ -62,13 +57,6 @@ db_flags_internal(const struct rt_db_internal *intern)
     return RT_DIR_COMB;
 }
 
-
-/* XXX - should use in db5_diradd() */
-/**
- * Given a database object in "raw" internal form, return the
- * appropriate 'flags' word for stashing in the in-memory directory of
- * objects.
- */
 int
 db_flags_raw_internal(const struct db5_raw_internal *raw)
 {

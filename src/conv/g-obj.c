@@ -1,7 +1,7 @@
 /*                         G - O B J . C
  * BRL-CAD
  *
- * Copyright (c) 1996-2012 United States Government as represented by
+ * Copyright (c) 1996-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -195,9 +195,9 @@ main(int argc, char **argv)
     /* Open BRL-CAD database */
     argc -= bu_optind;
     argv += bu_optind;
-    if ((dbip = db_open(argv[0], "r")) == DBI_NULL) {
+    if ((dbip = db_open(argv[0], DB_OPEN_READONLY)) == DBI_NULL) {
 	perror(argv[0]);
-	bu_exit(1, "Unable to open geometry file (%s) for reading\n", argv[0]);
+	bu_exit(1, "Unable to open geometry database file (%s)\n", argv[0]);
     }
     if (db_dirbuild(dbip)) {
 	bu_exit(1, "db_dirbuild failed\n");
@@ -665,7 +665,7 @@ do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union
 	       regions_tried, regions_converted, regions_written, npercent, tpercent);
     }
 
-    BU_GET(curtree, union tree);
+    BU_ALLOC(curtree, union tree);
     RT_TREE_INIT(curtree);
     curtree->tr_op = OP_NOP;
     return curtree;

@@ -1,7 +1,7 @@
 /*                           B O T . C
  * BRL-CAD
  *
- * Copyright (c) 1999-2012 United States Government as represented by
+ * Copyright (c) 1999-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,6 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+
 /** @file libwdb/bot.c
  *
  * Support for BOT solid (Bag O'Triangles)
@@ -74,7 +75,7 @@ mk_bot_w_normals(
 	bu_log("Please upgrade to the current database format by using \"dbupgrade\"\n");
     }
 
-    BU_GET(bot, struct rt_bot_internal);
+    BU_ALLOC(bot, struct rt_bot_internal);
     bot->magic = RT_BOT_INTERNAL_MAGIC;
     bot->mode = mode;
     bot->orientation = orientation;

@@ -1,7 +1,7 @@
 /*                           S P H . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2012 United States Government as represented by
+ * Copyright (c) 1985-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -168,7 +168,7 @@ rt_sph_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     stp->st_aradius = stp->st_bradius = sph->sph_rad;
 
     /* Compute bounding RPP */
-    if (stp->st_meth->ft_bbox(ip, &(stp->st_min), &(stp->st_max))) return 1;
+    if (stp->st_meth->ft_bbox(ip, &(stp->st_min), &(stp->st_max), &(rtip->rti_tol))) return 1;
     return 0;			/* OK */
 }
 
@@ -218,7 +218,7 @@ rt_sph_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 	(struct sph_specific *)stp->st_specific;
     register struct seg *segp;
 
-    vect_t ov;		/* ray orgin to center (V - P) */
+    vect_t ov;		/* ray origin to center (V - P) */
     fastf_t magsq_ov;	/* length squared of ov */
     fastf_t b;		/* second term of quadratic eqn */
     fastf_t root;		/* root of radical */
@@ -273,7 +273,7 @@ rt_sph_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
     register struct sph_specific *sph;
     register int i;
 
-    vect_t ov;		/* ray orgin to center (V - P) */
+    vect_t ov;		/* ray origin to center (V - P) */
     fastf_t magsq_ov;	/* length squared of ov */
     fastf_t b;		/* second term of quadratic eqn */
     fastf_t root;		/* root of radical */
@@ -406,7 +406,7 @@ rt_sph_free(register struct soltab *stp)
     register struct sph_specific *sph =
 	(struct sph_specific *)stp->st_specific;
 
-    bu_free((char *)sph, "sph_specific");
+    BU_PUT(sph, struct sph_specific);
 }
 
 

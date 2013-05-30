@@ -1,7 +1,7 @@
 /*                           F 2 A . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2012 United States Government as represented by
+ * Copyright (c) 2004-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -72,8 +72,8 @@ f2a(float f, char *s, int w, int d)
 		i++,	j--)
     {
 	c    = s[i];
-        s[i] = s[j];
-        s[j] =    c;
+	s[i] = s[j];
+	s[j] =    c;
     }
 }
 

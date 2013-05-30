@@ -1,7 +1,7 @@
 /*                       G L O B A L S . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2012 United States Government as represented by
+ * Copyright (c) 2004-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -36,34 +36,16 @@
 #include "db.h"
 
 
-/**
- * global ray-trace geometry state
- */
 struct rt_g rt_g;
 
-/**
- * Resources for uniprocessor
- */
 struct resource rt_uniresource;
 
-/**
- * global nmg animation plot callback
- */
 void (*nmg_plot_anim_upcall)();
 
-/**
- * global nmg animation vblock callback
- */
 void (*nmg_vlblock_anim_upcall)();
 
-/**
- * global nmg mged display debug callback
- */
 void (*nmg_mged_debug_display_hack)();
 
-/**
- * edge use distance tolerance
- */
 double nmg_eue_dist = 0.05;
 
 /**
@@ -108,7 +90,7 @@ extern const struct rt_functab rt_functab[];
 const int rt_arb_faces[5][24] = {
     {0,1,2,3, 0,1,4,5, 1,2,4,5, 0,2,4,5, -1,-1,-1,-1, -1,-1,-1,-1},	/* ARB4 */
     {0,1,2,3, 4,0,1,5, 4,1,2,5, 4,2,3,5, 4,3,0,5, -1,-1,-1,-1},		/* ARB5 */
-    {0,1,2,3, 1,2,4,6, 0,4,6,3, 4,1,0,5, 6,2,3,7, -1,-1,-1,-1},		/* ARB6 */
+    {0,1,2,3, 1,2,6,4, 0,4,6,3, 4,1,0,5, 6,2,3,7, -1,-1,-1,-1},		/* ARB6 */
     {0,1,2,3, 4,5,6,7, 0,3,4,7, 1,2,6,5, 0,1,5,4, 3,2,6,4},		/* ARB7 */
     {0,1,2,3, 4,5,6,7, 0,4,7,3, 1,2,6,5, 0,1,5,4, 3,2,6,7},		/* ARB8 */
 };
@@ -271,11 +253,6 @@ short arb4_edge_vertex_mapping[5][2] = {
 };
 
 
-/**
- * radius of a FASTGEN cline element.
- *
- * shared with rt/do.c
- */
 fastf_t rt_cline_radius = (fastf_t)-1.0;
 
 /**
@@ -313,12 +290,6 @@ const char *rt_vlist_cmd_descriptions[] = {
     "**unknown*"
 };
 
-/**
- * initial tree start for db tree walkers.
- *
- * Also used by converters in conv/ directory.  Don't forget to
- * initialize ts_dbip before use.
- */
 const struct db_tree_state rt_initial_tree_state = {
     RT_DBTS_MAGIC,		/* magic */
     0,				/* ts_dbip */

@@ -1,7 +1,7 @@
 /*                     P H O T O N M A P . C
  * BRL-CAD
  *
- * Copyright (c) 2002-2012 United States Government as represented by
+ * Copyright (c) 2002-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -19,7 +19,7 @@
  */
 /** @file liboptical/photonmap.c
  *
- * Implemention of Photon Mapping
+ * Implementation of Photon Mapping
  *
  */
 
@@ -46,7 +46,7 @@ struct Photon *Emit[PM_MAPS];	/* Emitted Photons */
 struct Photon CurPh;
 vect_t BBMin;			/* Min Bounding Box */
 vect_t BBMax;			/* Max Bounding Box */
-int Depth;			/* Used to determine how many times the photon has propogated */
+int Depth;			/* Used to determine how many times the photon has propagated */
 int PType;			/* Used to determine the type of Photon: Direct, Indirect, Specular, Caustic */
 int PInit;
 int EPL;			/* Emitted Photons For the Light */
@@ -152,14 +152,14 @@ BuildTree(struct Photon *EList, int ESize, struct PNode *Root)
     /* With Left and Right if either contain any photons then repeat this process */
     /* if (LInd) bu_log("Left Branch\n");*/
     if (LInd) {
-	Root->L = (struct PNode*)bu_calloc(1, sizeof(struct PNode), "Root left");
+	BU_ALLOC(Root->L, struct PNode);
 	Root->L->L = 0;
 	Root->L->R = 0;
 	BuildTree(LList, LInd, Root->L);
     }
     /* if (RInd) bu_log("Right Branch\n");*/
     if (RInd) {
-	Root->R = (struct PNode*)bu_calloc(1, sizeof(struct PNode), "Root right");
+	BU_ALLOC(Root->R, struct PNode);
 	Root->R->L = 0;
 	Root->R->R = 0;
 	BuildTree(RList, RInd, Root->R);
@@ -367,7 +367,7 @@ GetMaterial(char *MS, vect_t spec, fastf_t *refi, fastf_t *transmit)
     struct phong_specific *phong_sp;
     struct bu_vls matparm = BU_VLS_INIT_ZERO;
 
-    phong_sp = (struct phong_specific*)bu_malloc(sizeof(struct phong_specific), "phong specific");
+    BU_GET(phong_sp, struct phong_specific);
 
     /* Initialize spec and refi */
     spec[0] = spec[1] = spec[2] = *refi = *transmit = 0;
@@ -382,13 +382,10 @@ GetMaterial(char *MS, vect_t spec, fastf_t *refi, fastf_t *transmit)
 	phong_sp->reflect = 0.0;
 	phong_sp->refrac_index = 1.0;
 	phong_sp->extinction = 0.0;
-	/*
-	  BU_GET(phong_sp, struct phong_specific);
-	  memcpy(phong_sp, &phong_defaults, sizeof(struct phong_specific));
-	*/
+
 	MS += 7;
 	bu_vls_printf(&matparm, "%s", MS);
-	if (bu_struct_parse(&matparm, phong_parse, (char *)phong_sp) < 0) 
+	if (bu_struct_parse(&matparm, phong_parse, (char *)phong_sp) < 0)
 	  bu_log("Warning - bu_struct_parse failure (matparm, phone_parse, material = plastic) in GetMaterial!\n");
 	bu_vls_free(&matparm);
 
@@ -418,10 +415,6 @@ GetMaterial(char *MS, vect_t spec, fastf_t *refi, fastf_t *transmit)
 	phong_sp->refrac_index = 1.65;
 	phong_sp->extinction = 0.0;
 
-	/*
-	  BU_GET(phong_sp, struct phong_specific);
-	  memcpy(phong_sp, &phong_defaults, sizeof(struct phong_specific));
-	*/
 	MS += 5; /* move pointer past "pm " (3 characters) */
 	bu_vls_printf(&matparm, "%s", MS);
 	if (bu_struct_parse(&matparm, phong_parse, (char *)phong_sp) < 0)
@@ -442,7 +435,7 @@ GetMaterial(char *MS, vect_t spec, fastf_t *refi, fastf_t *transmit)
 	*/
     }
 
-    bu_free(phong_sp, "phong_specific");
+    BU_PUT(phong_sp, struct phong_specific);
 }
 
 
@@ -1027,8 +1020,7 @@ Irradiance(int pid, struct Photon *P, struct application *ap)
     int i, j, M, N;
     double theta, phi, Coef;
 
-
-    lap = (struct application*)bu_malloc(sizeof(struct application), "app");
+    BU_ALLOC(lap, struct application);
     RT_APPLICATION_INIT(lap);
     lap->a_rt_i = ap->a_rt_i;
     lap->a_hit = ap->a_hit;
@@ -1118,7 +1110,7 @@ alarmhandler(int sig)
     t = time(NULL) - starttime;
     p = (float)ICSize/PMap[PM_GLOBAL]->MaxPhotons + .015;
     tl = (float)t*1.0/p - t;
-    bu_log("    Irradiance Cache Progress: %d%%  Approximate time left: %d%d",
+    bu_log("    Irradiance Cache Progress: %d%%  Approximate time left: %f%f",
 	   (int)(100.0*p), (1.0/p-1.0)*(float)t, (float)t*1.0/p);
 #define BAH(s, w) if (tl > (s)) { float d = floor(tl / (((s) == 0)?1.0:(float)(s))); \
 	tl -= d * (s); bu_log("%d "w, (int)d, d>1?"s":""); }
@@ -1152,12 +1144,13 @@ IrradianceThread(int pid, genptr_t arg)
 void
 Initialize(int MAP, int MapSize)
 {
-    PMap[MAP] = (struct PhotonMap*)bu_malloc(sizeof(struct PhotonMap), "PhotoMap");
+    BU_ALLOC(PMap[MAP], struct PhotonMap);
     PMap[MAP]->MaxPhotons = MapSize;
-    PMap[MAP]->Root = (struct PNode*)bu_malloc(sizeof(struct PNode), "PNode");
+
+    BU_ALLOC(PMap[MAP]->Root, struct PNode);
     PMap[MAP]->StoredPhotons = 0;
     if (MapSize > 0)
-	Emit[MAP] = (struct Photon*)bu_malloc(sizeof(struct Photon)*MapSize, "Photon");
+	BU_ALLOC(Emit[MAP], struct Photon);
     else
 	Emit[MAP] = NULL;
 }
@@ -1177,7 +1170,7 @@ LoadFile(char *pmfile)
 	bu_log("  Reading Irradiance Cache File...\n");
 	ret = fread(&S1, sizeof(short), 1, FH);
 	if (ret != 1) {
- 	    fclose(FH);
+	    fclose(FH);
 	    bu_log("Error reading irradiance cache file (endian)\n");
 	    return 0;
 	}
@@ -1186,7 +1179,7 @@ LoadFile(char *pmfile)
 
 	ret = fread(&S1, sizeof(short), 1, FH);
 	if (ret != 1) {
- 	    fclose(FH);
+	    fclose(FH);
 	    bu_log("Error reading irradiance cache file (revision)\n");
 	    return 0;
 	}
@@ -1194,7 +1187,7 @@ LoadFile(char *pmfile)
 
 	ret = fread(&ScaleFactor, sizeof(double), 1, FH);
 	if (ret != 1) {
- 	    fclose(FH);
+	    fclose(FH);
 	    bu_log("Error reading irradiance cache file (scale factor)\n");
 	    return 0;
 	}
@@ -1203,13 +1196,13 @@ LoadFile(char *pmfile)
 	/* Read in Map Type */
 	ret = fread(&C1, sizeof(char), 1, FH);
 	if (ret != 1) {
- 	    fclose(FH);
+	    fclose(FH);
 	    bu_log("Error reading irradiance cache file (map type)\n");
 	    return 0;
 	}
 	ret = fread(&I1, sizeof(int), 1, FH);
 	if (ret != 1 || I1 < 0 || I1 > INT_MAX) {
- 	    fclose(FH);
+	    fclose(FH);
 	    bu_log("Error reading irradiance cache file (map type)\n");
 	    return 0;
 	}
@@ -1219,7 +1212,7 @@ LoadFile(char *pmfile)
 	for (i = 0; i < I1; i++) {
 	    ret = fread(&Emit[PM_GLOBAL][i], sizeof(struct Photon), 1, FH);
 	    if (ret != 1) {
- 	        fclose(FH);
+		fclose(FH);
 		bu_log("Error reading irradiance cache file (global)\n");
 	    /* bu_log("Pos: [%.3f, %.3f, %.3f], Power: [%.3f, %.3f, %.3f]\n", Emit[PM_GLOBAL][i].Pos[0], Emit[PM_GLOBAL][i].Pos[1], Emit[PM_GLOBAL][i].Pos[2], Emit[PM_GLOBAL][i].Power[0], Emit[PM_GLOBAL][i].Power[1], Emit[PM_GLOBAL][i].Power[2]);*/
 	    /* bu_log("Pos: [%.3f, %.3f, %.3f], Irrad: [%.3f, %.3f, %.3f]\n", Emit[PM_GLOBAL][i].Pos[0], Emit[PM_GLOBAL][i].Pos[1], Emit[PM_GLOBAL][i].Pos[2], Emit[PM_GLOBAL][i].Irrad[0], Emit[PM_GLOBAL][i].Irrad[1], Emit[PM_GLOBAL][i].Irrad[2]);*/
@@ -1229,14 +1222,14 @@ LoadFile(char *pmfile)
 
 	ret = fread(&C1, sizeof(char), 1, FH);
 	if (ret != 1) {
- 	    fclose(FH);
+	    fclose(FH);
 	    bu_log("Error reading irradiance cache file (C1)\n");
 	    return 0;
 	}
 
 	ret = fread(&I1, sizeof(int), 1, FH);
 	if (ret != 1 || I1 < 0 || I1 > INT_MAX) {
- 	    fclose(FH);
+	    fclose(FH);
 	    bu_log("Error reading irradiance cache file (l1)\n");
 	    return 0;
 	}
@@ -1246,7 +1239,7 @@ LoadFile(char *pmfile)
 	for (i = 0; i < I1; i++) {
 	    ret = fread(&Emit[PM_CAUSTIC][i], sizeof(struct Photon), 1, FH);
 	    if (ret != 1) {
- 	        fclose(FH);
+		fclose(FH);
 		bu_log("Error reading irradiance cache file (caustic)\n");
 		return 0;
 	    }
@@ -1484,7 +1477,7 @@ BuildPhotonMap(struct application *ap, point_t eye_pos, int cpus, int width, int
 	    Map = (char*)bu_calloc(width*height, sizeof(char), "Map");
 	    IC = (struct IrradCache*)bu_malloc(sizeof(struct IrradCache)*width*height, "IrradCache");
 	    for (i = 0; i < width*height; i++) {
-		IC[i].List = (struct IrradNode*)bu_malloc(sizeof(struct IrradNode), "IrradNode");
+		BU_ALLOC(IC[i].List, struct IrradNode);
 		IC[i].Num = 0;
 	    }
 	}
@@ -1555,7 +1548,7 @@ HeapUp(struct PhotonSearch *S, int ind)
 /*
   Sift the new Root node down, by choosing the child with the highest number
   since choosing a child with the highest number may reduce the number of
-  recursions the number will have to propogate
+  recursions the number will have to propagate
 */
 void
 HeapDown(struct PhotonSearch *S, int ind)
@@ -1608,7 +1601,7 @@ IrradianceEstimate(struct application *ap, vect_t irrad, point_t pos, vect_t nor
 	}
 
 	/* There is no precomputed irradiance for this point, allocate space
-	   for a new one if neccessary. */
+	   for a new one if necessary. */
 	if (IC[idx].Num) {
 	    IC[idx].List = (struct IrradNode*)bu_realloc(IC[idx].List, sizeof(struct IrradNode)*(IC[idx].Num+1), "List");
 	}

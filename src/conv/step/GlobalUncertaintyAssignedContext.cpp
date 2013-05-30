@@ -1,7 +1,7 @@
 /*                 GlobalUncertaintyAssignedContext.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2012 United States Government as represented by
+ * Copyright (c) 1994-2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -34,19 +34,22 @@
 
 #define CLASSNAME "GlobalUncertaintyAssignedContext"
 #define ENTITYNAME "Global_Uncertainty_Assigned_Context"
-string GlobalUncertaintyAssignedContext::entityname = Factory::RegisterClass(ENTITYNAME,(FactoryMethod)GlobalUncertaintyAssignedContext::Create);
+string GlobalUncertaintyAssignedContext::entityname = Factory::RegisterClass(ENTITYNAME, (FactoryMethod)GlobalUncertaintyAssignedContext::Create);
 
-GlobalUncertaintyAssignedContext::GlobalUncertaintyAssignedContext() {
+GlobalUncertaintyAssignedContext::GlobalUncertaintyAssignedContext()
+{
     step = NULL;
     id = 0;
 }
 
-GlobalUncertaintyAssignedContext::GlobalUncertaintyAssignedContext(STEPWrapper *sw,int step_id) {
+GlobalUncertaintyAssignedContext::GlobalUncertaintyAssignedContext(STEPWrapper *sw, int step_id)
+{
     step = sw;
     id = step_id;
 }
 
-GlobalUncertaintyAssignedContext::~GlobalUncertaintyAssignedContext() {
+GlobalUncertaintyAssignedContext::~GlobalUncertaintyAssignedContext()
+{
     /*
       LIST_OF_UNCERTAINTY_MEASURE_WITH_UNIT::iterator i = uncertainty.begin();
 
@@ -59,27 +62,28 @@ GlobalUncertaintyAssignedContext::~GlobalUncertaintyAssignedContext() {
 }
 
 bool
-GlobalUncertaintyAssignedContext::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
-    step=sw;
+GlobalUncertaintyAssignedContext::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
+    step = sw;
     id = sse->STEPfile_id;
 
     // load base class attributes
-    if ( !RepresentationContext::Load(sw,sse) ) {
+    if (!RepresentationContext::Load(sw, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::RepresentationContext." << std::endl;
 	return false;
     }
 
     // need to do this for local attributes to makes sure we have
     // the actual entity and not a complex/supertype parent
-    sse = step->getEntity(sse,ENTITYNAME);
+    sse = step->getEntity(sse, ENTITYNAME);
 
     if (uncertainty.empty()) {
-	LIST_OF_ENTITIES *l = step->getListOfEntities(sse,"uncertainty");
+	LIST_OF_ENTITIES *l = step->getListOfEntities(sse, "uncertainty");
 	LIST_OF_ENTITIES::iterator i;
-	for(i=l->begin();i!=l->end();i++) {
+	for (i = l->begin(); i != l->end(); i++) {
 	    SDAI_Application_instance *entity = (*i);
 	    if (entity) {
-		UncertaintyMeasureWithUnit *aUMWU = dynamic_cast<UncertaintyMeasureWithUnit *>(Factory::CreateObject(sw,entity));
+		UncertaintyMeasureWithUnit *aUMWU = dynamic_cast<UncertaintyMeasureWithUnit *>(Factory::CreateObject(sw, entity));
 
 		uncertainty.push_back(aUMWU);
 	    } else {
@@ -96,38 +100,37 @@ GlobalUncertaintyAssignedContext::Load(STEPWrapper *sw,SDAI_Application_instance
 }
 
 void
-GlobalUncertaintyAssignedContext::Print(int level) {
-    TAB(level); std::cout << CLASSNAME << ":" << "(";
+GlobalUncertaintyAssignedContext::Print(int level)
+{
+    TAB(level);
+    std::cout << CLASSNAME << ":" << "(";
     std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-    TAB(level); std::cout << "Attributes:" << std::endl;
-    TAB(level+1); std::cout << "uncertainty(list):" << std::endl;
+    TAB(level);
+    std::cout << "Attributes:" << std::endl;
+    TAB(level + 1);
+    std::cout << "uncertainty(list):" << std::endl;
     LIST_OF_UNCERTAINTY_MEASURE_WITH_UNIT::iterator i;
-    for(i=uncertainty.begin();i!=uncertainty.end();i++) {
-	(*i)->Print(level+1);
+    for (i = uncertainty.begin(); i != uncertainty.end(); i++) {
+	(*i)->Print(level + 1);
 	std::cout << std::endl;
     }
 
-    TAB(level); std::cout << "Inherited Attributes:" << std::endl;
-    RepresentationContext::Print(level+1);
+    TAB(level);
+    std::cout << "Inherited Attributes:" << std::endl;
+    RepresentationContext::Print(level + 1);
 }
+
 STEPEntity *
-GlobalUncertaintyAssignedContext::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
-    Factory::OBJECTS::iterator i;
-    if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
-	GlobalUncertaintyAssignedContext *object = new GlobalUncertaintyAssignedContext(sw,sse->STEPfile_id);
+GlobalUncertaintyAssignedContext::GetInstance(STEPWrapper *sw, int id)
+{
+    return new GlobalUncertaintyAssignedContext(sw, id);
+}
 
-	Factory::AddObject(object);
-
-	if (!object->Load(sw, sse)) {
-	    std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
-	    delete object;
-	    return NULL;
-	}
-	return static_cast<STEPEntity *>(object);
-    } else {
-	return (*i).second;
-    }
+STEPEntity *
+GlobalUncertaintyAssignedContext::Create(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
+    return STEPEntity::CreateEntity(sw, sse, GetInstance, CLASSNAME);
 }
 
 // Local Variables:
