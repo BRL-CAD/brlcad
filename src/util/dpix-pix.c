@@ -72,9 +72,9 @@ main(int argc, char **argv)
 
     /* Note that the minimum is set to 1.0e20, the computer's working
      * equivalent of positive infinity.  Thus any subsequent value
-     * must be larger. Likewise, the maximum is set to -1.0e20, the
-     * equivalent of negative infinity, and any values must thus be
-     * bigger than it.
+     * must be smaller than it. Likewise, the maximum is set to -1.0e20,
+     * the equivalent of negative infinity, and any subsequent values
+     * must thus be bigger than it.
      */
     {
 	double min, max;		/* high usage items */
