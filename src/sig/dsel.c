@@ -33,6 +33,7 @@
 
 #define INTEGER_MAX ( ((int) ~0) >> 1 )
 
+static char usage[]="Usage: dsel keep ...\n       or\n       dsel skip keep ...\n\n(must use <inputfile >outputfile)\n";
 
 double	buf[4096] = {0};
 
@@ -72,9 +73,10 @@ int main(int argc, char **argv)
     int	nskip;	/* number to skip */
     int	nkeep;	/* number to keep */
 
-    if ( argc < 1 || isatty(fileno(stdin)) || isatty(fileno(stdout)) ) {
-	bu_exit(1, "Usage: dsel num\n       dsel skip keep ...\n");
-    }
+    if ( isatty(fileno(stdin)) || isatty(fileno(stdout)) )
+	bu_exit(1, "%s",usage);
+    if ( BU_STR_EQUAL( argv[1], "-h" ) || BU_STR_EQUAL( argv[1], "-?" ) )
+	bu_exit(1, "%s",usage);
 
     if ( argc == 2 ) {
 	keep( atoi(argv[1]) );
