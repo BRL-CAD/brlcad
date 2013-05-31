@@ -238,7 +238,7 @@ edcolor(struct ged *gedp, int argc, const char *argv[])
 
     /* if there are drawables, update their colors */
     if (gedp->ged_gdp)
-	ged_color_soltab(&gedp->ged_gdp->gd_headDisplay);
+	ged_color_soltab(gedp->ged_gdp->gd_headDisplay);
 
     return GED_OK;
 }

@@ -1415,6 +1415,8 @@ to_deleteProc(ClientData clientData)
     BU_LIST_DEQUEUE(&top->l);
     bu_vls_free(&top->to_gop->go_name);
     ged_close(top->to_gop->go_gedp);
+    if (top->to_gop->go_gedp)
+	BU_PUT(top->to_gop->go_gedp, struct ged);
 
     while (BU_LIST_WHILE(gdvp, ged_dm_view, &top->to_gop->go_head_views.l)) {
 	BU_LIST_DEQUEUE(&(gdvp->l));
@@ -12397,16 +12399,16 @@ to_edit_redraw(struct ged *gedp,
     if (argc != 2)
 	return GED_ERROR;
 
-    gdlp = BU_LIST_NEXT(ged_display_list, &gedp->ged_gdp->gd_headDisplay);
-    while (BU_LIST_NOT_HEAD(gdlp, &gedp->ged_gdp->gd_headDisplay)) {
+    gdlp = BU_LIST_NEXT(ged_display_list, gedp->ged_gdp->gd_headDisplay);
+    while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
 	gdlp->gdl_wflag = 0;
 	gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
     }
 
     if (db_string_to_path(&subpath, gedp->ged_wdbp->dbip, argv[1]) == 0) {
 	for (i = 0; i < subpath.fp_len; ++i) {
-	    gdlp = BU_LIST_NEXT(ged_display_list, &gedp->ged_gdp->gd_headDisplay);
-	    while (BU_LIST_NOT_HEAD(gdlp, &gedp->ged_gdp->gd_headDisplay)) {
+	    gdlp = BU_LIST_NEXT(ged_display_list, gedp->ged_gdp->gd_headDisplay);
+	    while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
 		register struct solid *curr_sp;
 
 		next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
@@ -12446,7 +12448,7 @@ to_edit_redraw(struct ged *gedp,
 			 * second to last list items play leap frog
 			 * with the end of list.
 			 */
-			last_gdlp = BU_LIST_PREV(ged_display_list, &gedp->ged_gdp->gd_headDisplay);
+			last_gdlp = BU_LIST_PREV(ged_display_list, gedp->ged_gdp->gd_headDisplay);
 			BU_LIST_DEQUEUE(&last_gdlp->l);
 			BU_LIST_INSERT(&next_gdlp->l, &last_gdlp->l);
 			last_gdlp->gdl_wflag = 1;
@@ -13273,7 +13275,7 @@ go_draw(struct ged_dm_view *gdvp)
     else
 	(void)DM_LOADPMATRIX(gdvp->gdv_dmp, (fastf_t *)NULL);
 
-    go_draw_dlist(gdvp->gdv_gop, gdvp->gdv_dmp, &gdvp->gdv_gop->go_gedp->ged_gdp->gd_headDisplay);
+    go_draw_dlist(gdvp->gdv_gop, gdvp->gdv_dmp, gdvp->gdv_gop->go_gedp->ged_gdp->gd_headDisplay);
 }
 
 

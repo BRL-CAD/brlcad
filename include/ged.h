@@ -459,8 +459,8 @@ struct ged_display_list {
 /* FIXME: should be private */
 struct ged_drawable {
     struct bu_list		l;
-    struct bu_list		gd_headDisplay;		/**< @brief  head of display list */
-    struct bu_list		gd_headVDraw;		/**< @brief  head of vdraw list */
+    struct bu_list		*gd_headDisplay;		/**< @brief  head of display list */
+    struct bu_list		*gd_headVDraw;		/**< @brief  head of vdraw list */
     struct vd_curve		*gd_currVHead;		/**< @brief  current vdraw head */
     struct solid		*gd_freeSolids;		/**< @brief  ptr to head of free solid list */
 
@@ -639,6 +639,7 @@ GED_EXPORT extern void ged_erasePathFromDisplay(struct ged *gedp,
 GED_EXPORT extern void ged_close(struct ged *gedp);
 GED_EXPORT extern void ged_free(struct ged *gedp);
 GED_EXPORT extern void ged_init(struct ged *gedp);
+/* Call BU_PUT to release returned ged structure */
 GED_EXPORT extern struct ged *ged_open(const char *dbtype,
 				       const char *filename,
 				       int existing_only);

@@ -81,13 +81,7 @@ ged_close(struct ged *gedp)
 	gedp->ged_wdbp = RT_WDB_NULL;
     }
 
-    if (gedp->ged_gdp != GED_DRAWABLE_NULL) {
-	qray_free(gedp->ged_gdp);
-	BU_PUT(gedp->ged_gdp, struct ged_drawable);
-    }
-
     ged_free(gedp);
-    BU_PUT(gedp, struct ged);
 }
 
 
@@ -98,24 +92,26 @@ ged_free(struct ged *gedp)
 	return;
 
     gedp->ged_wdbp = RT_WDB_NULL;
-    gedp->ged_gdp = GED_DRAWABLE_NULL;
+
+    if (gedp->ged_gdp != GED_DRAWABLE_NULL) {
+	if (gedp->ged_gdp->gd_headDisplay)
+	    BU_PUT(gedp->ged_gdp->gd_headDisplay, struct bu_vls);
+	if (gedp->ged_gdp->gd_headVDraw)
+	    BU_PUT(gedp->ged_gdp->gd_headVDraw, struct bu_vls);
+	qray_free(gedp->ged_gdp);
+	BU_PUT(gedp->ged_gdp, struct ged_drawable);
+    }
 
     if (gedp->ged_log) {
 	bu_vls_free(gedp->ged_log);
 	BU_PUT(gedp->ged_log, struct bu_vls);
-	gedp->ged_log = NULL; /* sanity */
     }
 
     if (gedp->ged_result_str) {
 	bu_vls_free(gedp->ged_result_str);
 	BU_PUT(gedp->ged_result_str, struct bu_vls);
-	gedp->ged_result_str = NULL; /* sanity */
     }
 
-    if (gedp->ged_gdp) {
-	BU_PUT(gedp->ged_gdp, struct ged_drawable);
-	gedp->ged_gdp = NULL; /* sanity */
-    }
 }
 
 
@@ -135,8 +131,10 @@ ged_init(struct ged *gedp)
     bu_vls_init(gedp->ged_result_str);
 
     BU_GET(gedp->ged_gdp, struct ged_drawable);
-    BU_LIST_INIT(&gedp->ged_gdp->gd_headDisplay);
-    BU_LIST_INIT(&gedp->ged_gdp->gd_headVDraw);
+    BU_GET(gedp->ged_gdp->gd_headDisplay, struct bu_list);
+    BU_LIST_INIT(gedp->ged_gdp->gd_headDisplay);
+    BU_GET(gedp->ged_gdp->gd_headVDraw, struct bu_list);
+    BU_LIST_INIT(gedp->ged_gdp->gd_headVDraw);
     BU_LIST_INIT(&gedp->ged_gdp->gd_headRunRt.l);
 
     /* yuck */

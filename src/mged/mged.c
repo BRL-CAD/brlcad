@@ -2515,7 +2515,9 @@ mged_finish(int exitcode)
     Tcl_Release((ClientData)INTERP);
 
     ged_close(gedp);
-    gedp = GED_NULL;
+    if (gedp)
+	BU_PUT(gedp, struct ged);
+
     wdbp = RT_WDB_NULL;
     dbip = DBI_NULL;
 
@@ -2952,7 +2954,8 @@ f_closedb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *
 
     /* close the geometry instance */
     ged_close(gedp);
-    gedp = GED_NULL;
+    BU_PUT(gedp, struct ged);
+
     wdbp = RT_WDB_NULL;
     dbip = DBI_NULL;
 
