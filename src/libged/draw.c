@@ -442,6 +442,9 @@ append_solid_to_display_list(
     BN_CK_TOL(tsp->ts_tol);
     RT_CK_RESOURCE(tsp->ts_resp);
 
+    VSETALL(min, INFINITY);
+    VSETALL(max, -INFINITY);
+
     if (!dgcdp) {
 	return TREE_NULL;
     }
