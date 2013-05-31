@@ -1318,6 +1318,7 @@ plane_worker (int cpu, genptr_t ptr)
     int u, v;
     double v_coord;
     struct cstate *state = (struct cstate *)ptr;
+    unsigned long shot_cnt;
 
     if (aborted)
 	return;
@@ -1342,6 +1343,7 @@ plane_worker (int cpu, genptr_t ptr)
 
     v = get_next_row(state);
 
+    shot_cnt = 0;
     while (v) {
 
 	v_coord = v * gridSpacing;
@@ -1373,16 +1375,7 @@ plane_worker (int cpu, genptr_t ptr)
 		if (aborted)
 		    return;
 
-		/* FIXME: This shots increment and its twin in the else clause below
-		 * are presenting a significant drag on gqa performance via
-		 * heavy duty semaphore locking and unlocking.  Can a way
-		 * be found to do this job without needing to trigger the
-		 * semaphore locks?  Seems to be the major contributor to
-		 * semaphore overhead.
-		 */
-		bu_semaphore_acquire(GED_SEM_STATS);
-		state->shots[state->curr_view]++;
-		bu_semaphore_release(GED_SEM_STATS);
+		shot_cnt++;
 	    }
 	} else {
 	    /* shoot only the rays we need to on this row.  Some of
@@ -1405,9 +1398,7 @@ plane_worker (int cpu, genptr_t ptr)
 		if (aborted)
 		    return;
 
-		bu_semaphore_acquire(GED_SEM_STATS);
-		state->shots[state->curr_view]++;
-		bu_semaphore_release(GED_SEM_STATS);
+		shot_cnt++;
 
 		if (debug)
 		    if (u+1 < state->steps[state->u_axis]) {
@@ -1434,6 +1425,7 @@ plane_worker (int cpu, genptr_t ptr)
      * we'll have returned to serial computation.
      */
     bu_semaphore_acquire(GED_SEM_STATS);
+    state->shots[state->curr_view] += shot_cnt;
     state->m_lenDensity[state->curr_view] += ap.A_LENDEN; /* add our length*density value */
     state->m_len[state->curr_view] += ap.A_LEN; /* add our volume value */
     bu_semaphore_release(GED_SEM_STATS);
