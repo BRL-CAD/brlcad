@@ -56,6 +56,8 @@ main(int argc, char **argv)
     double b;			/* intercept */
     char *ifname;
 
+    double min, max;		/* high usage items */
+
     if (argc < 2) {
 	bu_exit(1, "Usage: dpix-pix file.dpix > file.pix\n");
     }
@@ -72,45 +74,40 @@ main(int argc, char **argv)
 	bu_exit(2, "dpix-pix:  binary output directed to terminal, aborting\n");
     }
 
-    {
-	double min, max;		/* high usage items */
+    min = INFINITY;
+    max = -INFINITY;
 
-	min = INFINITY;
-	max = -INFINITY;
-
-	while (1) {
-	    got = read(fd, (char *)&doub[0], NUM*sizeof(doub[0]));
-	    if (got <= 0) {
-		if (got < 0) {
-		    perror("dpix-pix READ ERROR");
-		}
-		break;
+    while (1) {
+	got = read(fd, (char *)&doub[0], NUM*sizeof(doub[0]));
+	if (got <= 0) {
+	    if (got < 0) {
+		perror("dpix-pix READ ERROR");
 	    }
-	    count = got / sizeof(doub[0]);
-	    ep = &doub[count];
-	    for (dp = &doub[0]; dp < ep;) {
-		double val = *dp++;
-
-		V_MIN(min, val);
-		V_MAX(max, val);
-	    }
+	    break;
 	}
+	count = got / sizeof(doub[0]);
+	ep = &doub[count];
+	for (dp = &doub[0]; dp < ep;) {
+	    double val = *dp++;
 
-	lseek(fd, 0, 0);		/* rewind(fp); */
-
-
-	/* This section uses the maximum and the minimum values found to
-	 * compute the m and the b of the line as specified by the
-	 * equation y = mx + b.
-	 */
-	fprintf(stderr, "min=%f, max=%f\n", min, max);
-	if (max < min) {
-	    bu_exit(1, "MINMAX: max less than min!\n");
+	    V_MIN(min, val);
+	    V_MAX(max, val);
 	}
-
-	m = (255 - 0)/(max - min);
-	b = (-255 * min)/(max - min);
     }
+
+    lseek(fd, 0, 0);		/* rewind(fp); */
+
+    /* This section uses the maximum and the minimum values found to
+     * compute the m and the b of the line as specified by the
+     * equation y = mx + b.
+     */
+    fprintf(stderr, "min=%f, max=%f\n", min, max);
+    if (max < min) {
+	bu_exit(1, "MINMAX: max less than min!\n");
+    }
+
+    m = (255 - 0)/(max - min);
+    b = (-255 * min)/(max - min);
 
     while (1) {
 	char *cp;		/* ptr to c */
