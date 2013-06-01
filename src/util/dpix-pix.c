@@ -34,17 +34,19 @@
 #include <stdlib.h>
 #include "bio.h"
 
+#include "vmath.h"
 #include "bu.h"
 
 
 #define NUM (1024 * 16)	/* Note the powers of 2 -- v. efficient */
-static double doub[NUM];
-static unsigned char cha[NUM];
 
 
 int
 main(int argc, char **argv)
 {
+    double doub[NUM];
+    unsigned char cha[NUM];
+
     size_t count;			/* count of items */
     ssize_t got;			/* count of bytes */
     int fd;			/* UNIX file descriptor */
@@ -70,17 +72,11 @@ main(int argc, char **argv)
 	bu_exit(2, "dpix-pix:  binary output directed to terminal, aborting\n");
     }
 
-    /* Note that the minimum is set to 1.0e20, the computer's working
-     * equivalent of positive infinity.  Thus any subsequent value
-     * must be smaller than it. Likewise, the maximum is set to -1.0e20,
-     * the equivalent of negative infinity, and any subsequent values
-     * must thus be bigger than it.
-     */
     {
 	double min, max;		/* high usage items */
 
-	min = 1.0e20;
-	max = -1.0e20;
+	min = INFINITY;
+	max = -INFINITY;
 
 	while (1) {
 	    got = read(fd, (char *)&doub[0], NUM*sizeof(doub[0]));
@@ -93,11 +89,10 @@ main(int argc, char **argv)
 	    count = got / sizeof(doub[0]);
 	    ep = &doub[count];
 	    for (dp = &doub[0]; dp < ep;) {
-		double val;
-		if ((val = *dp++) < min)
-		    min = val;
-		else if (val > max)
-		    max = val;
+		double val = *dp++;
+
+		V_MIN(min, val);
+		V_MAX(max, val);
 	    }
 	}
 
