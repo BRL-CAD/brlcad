@@ -18,16 +18,16 @@
  * information.
  */
 /** @file interp.c
- *  Do the interpolation necessary to change a set of points from
- *  linear to log scale.
+ * Do the interpolation necessary to change a set of points from
+ * linear to log scale.
  *
- *  Input, a set of linearly separated samples.
- *  Output, the same number of samples on a log baseline.
+ * Input, a set of linearly separated samples.
+ * Output, the same number of samples on a log baseline.
  *
- *  This uses fourth order Lagrange Interpolation and may
- *  be too wigly for our purposes.
+ * This uses fourth order Lagrange Interpolation and may
+ * be too wigly for our purposes.
  *
- *  Sure this is ugly.... I'll be happy if it works at all.
+ * Sure this is ugly.... I'll be happy if it works at all.
  */
 
 #include "common.h"
@@ -36,40 +36,40 @@
 #include <math.h>
 
 
-#define	MAXBUF	16*1024
+#define MAXBUF 16*1024
 
 void
 LintoLog(double *in, double *out, int num)
 {
-    int	i;
-    double	place, step;
-    double	linpt[MAXBUF] = {0.0};
-    double	x, y, x1, x2, x3, x4;
+    int i;
+    double place, step;
+    double linpt[MAXBUF] = {0.0};
+    double x, y, x1, x2, x3, x4;
 
     /*
      * Compute the break points, i.e. the fractional input
      * sample number corresponding to each of our "num" output
      * samples.
      */
-    step = pow( (double)num, 1.0/(double)(num-1) );
+    step = pow((double)num, 1.0/(double)(num-1));
     place = 1.0;
-    for ( i = 0; i < num; i++ ) {
+    for (i = 0; i < num; i++) {
 	linpt[i] = place - 1.0;
 	place *= step;
     }
 #ifdef DEBUG
-    for ( i = 0; i < num; i++ ) {
+    for (i = 0; i < num; i++) {
 	printf("linpt[%d] = %f\n", i, linpt[i]);
     }
 #endif /* DEBUG */
 
-    for ( i = 0; i < num; i++ ) {
+    for (i = 0; i < num; i++) {
 	/*
 	 * Compute polynomial to interp with.
 	 */
 	x1 = (int)linpt[i] - 1;
-	if ( x1 < 0 ) x1 = 0;
-	if ( x1 > num - 4 ) x1 = num - 4;
+	if (x1 < 0) x1 = 0;
+	if (x1 > num - 4) x1 = num - 4;
 	x2 = x1 + 1; x3 = x1 + 2; x4 = x1 + 3;
 
 	x  = linpt[i];
@@ -80,6 +80,7 @@ LintoLog(double *in, double *out, int num)
 	out[i] = y;
     }
 }
+
 
 /*
  * Local Variables:

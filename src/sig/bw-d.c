@@ -19,7 +19,7 @@
  */
 /** @file bw-d.c
  *
- *  Convert unsigned bytes to doubles.
+ * Convert unsigned bytes to doubles.
  *
  *	% bw-d [-n || scale]
  *
@@ -37,54 +37,56 @@
 #include "bu.h"
 #include "vmath.h"
 
-unsigned char	ibuf[512];
-double	obuf[512];
+unsigned char ibuf[512];
+double obuf[512];
 
 void
 printusage(void)
 {
-	bu_exit(1, "Usage: bw-d [-n || scale] < unsigned_chars > doubles\n");
+    bu_exit(1, "Usage: bw-d [-n || scale] < unsigned_chars > doubles\n");
 }
+
 
 int main(int argc, char **argv)
 {
-    int	i, num;
-    double	scale;
+    int i, num;
+    double scale;
     size_t ret;
 
-    if ( BU_STR_EQUAL( argv[1], "-h" ) || BU_STR_EQUAL( argv[1], "-?" ) )
+    if (BU_STR_EQUAL(argv[1], "-h") || BU_STR_EQUAL(argv[1], "-?"))
 	printusage();
 
     scale = 1.0;
 
-    if ( argc > 1 ) {
-	if ( BU_STR_EQUAL( argv[1], "-n" ) )
+    if (argc > 1) {
+	if (BU_STR_EQUAL(argv[1], "-n"))
 	    scale = 1.0/255.0;
 	else
-	    scale = atof( argv[1] );
+	    scale = atof(argv[1]);
 	argc--;
     }
 
-    if ( argc > 1 || ZERO(scale) || isatty(fileno(stdin)) ) {
-    	fprintf(stderr,"bad argument\n");
+    if (argc > 1 || ZERO(scale) || isatty(fileno(stdin))) {
+	fprintf(stderr, "bad argument\n");
 	printusage();
     }
 
-    while ( (num = fread( &ibuf[0], sizeof( ibuf[0] ), 512, stdin)) > 0 ) {
-	if ( EQUAL(scale, 1.0) ) {
-	    for ( i = 0; i < num; i++ )
+    while ((num = fread(&ibuf[0], sizeof(ibuf[0]), 512, stdin)) > 0) {
+	if (EQUAL(scale, 1.0)) {
+	    for (i = 0; i < num; i++)
 		obuf[i] = ibuf[i];
 	} else {
-	    for ( i = 0; i < num; i++ )
+	    for (i = 0; i < num; i++)
 		obuf[i] = (double)ibuf[i] * scale;
 	}
-	ret = fwrite( &obuf[0], sizeof( obuf[0] ), num, stdout );
+	ret = fwrite(&obuf[0], sizeof(obuf[0]), num, stdout);
 	if (ret != (size_t)num)
 	    perror("fwrite");
     }
 
     return 0;
 }
+
 
 /*
  * Local Variables:

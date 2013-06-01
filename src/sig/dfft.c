@@ -118,6 +118,7 @@ int main(int argc, char **argv)
     return 0;
 }
 
+
 void
 fftdisp(double *dat, int N)
 {
@@ -197,6 +198,7 @@ fftdisp(double *dat, int N)
     }
 }
 
+
 void
 fftmag2(double *mags, double *dat, int N)
 {
@@ -228,6 +230,7 @@ fftmag2(double *mags, double *dat, int N)
     }
 }
 
+
 void
 fftphase(double *dat, int N)
 {
@@ -249,6 +252,7 @@ fftphase(double *dat, int N)
     if (ret != (size_t)(N/2))
 	perror("fwrite");
 }
+
 
 /*
  * Local Variables:

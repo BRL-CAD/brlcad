@@ -31,66 +31,68 @@
 
 #include "bu.h"
 
-#define INTEGER_MAX ( ((int) ~0) >> 1 )
+#define INTEGER_MAX (((int) ~0) >> 1)
 
 static char usage[]="Usage: dsel keep ...\n       or\n       dsel skip keep ...\n\n(must use <inputfile >outputfile)\n";
 
-double	buf[4096] = {0};
+double buf[4096] = {0};
 
 
 void
 skip(int num)
 {
-    int	n, m;
+    int n, m;
 
-    while ( num > 0 ) {
+    while (num > 0) {
 	n = num > 1024 ? 1024 : num;
-	if ( (m = fread( buf, sizeof(*buf), n, stdin )) == 0 )
-	    exit( 0 );
+	if ((m = fread(buf, sizeof(*buf), n, stdin)) == 0)
+	    exit(0);
 	num -= m;
     }
 }
 
+
 void
 keep(int num)
 {
-    int	n, m;
+    int n, m;
     size_t ret;
 
-    while ( num > 0 ) {
+    while (num > 0) {
 	n = num > 1024 ? 1024 : num;
-	if ( (m = fread( buf, sizeof(*buf), n, stdin )) == 0 )
-	    exit( 0 );
-	ret = fwrite( buf, sizeof(*buf), m, stdout );
+	if ((m = fread(buf, sizeof(*buf), n, stdin)) == 0)
+	    exit(0);
+	ret = fwrite(buf, sizeof(*buf), m, stdout);
 	if (ret != (size_t)m)
 	    perror("fwrite");
 	num -= n;
     }
 }
 
+
 int main(int argc, char **argv)
 {
-    int	nskip;	/* number to skip */
-    int	nkeep;	/* number to keep */
+    int nskip;	/* number to skip */
+    int nkeep;	/* number to keep */
 
-    if ( isatty(fileno(stdin)) || isatty(fileno(stdout)) )
-	bu_exit(1, "%s",usage);
-    if ( BU_STR_EQUAL( argv[1], "-h" ) || BU_STR_EQUAL( argv[1], "-?" ) )
-	bu_exit(1, "%s",usage);
+    if (isatty(fileno(stdin)) || isatty(fileno(stdout)))
+	bu_exit(1, "%s", usage);
+    if (BU_STR_EQUAL(argv[1], "-h") || BU_STR_EQUAL(argv[1], "-?"))
+	bu_exit(1, "%s", usage);
 
-    if ( argc == 2 ) {
-	keep( atoi(argv[1]) );
-	exit( 0 );
+    if (argc == 2) {
+	keep(atoi(argv[1]));
+	exit(0);
     }
 
-    while ( argc > 1 ) {
+    while (argc > 1) {
 	nskip = atoi(argv[1]);
 	argc--;
 	argv++;
-	if ( nskip > 0 )
-	    skip( nskip );
+	if (nskip > 0)
+	    skip(nskip);
 
-	if ( argc > 1 ) {
+	if (argc > 1) {
 	    nkeep = atoi(argv[1]);
 	    argc--;
 	    argv++;
@@ -98,9 +100,9 @@ int main(int argc, char **argv)
 	    nkeep = INTEGER_MAX;
 	}
 
-	if ( nkeep <= 0 )
-	    exit( 0 );
-	keep( nkeep );
+	if (nkeep <= 0)
+	    exit(0);
+	keep(nkeep);
     }
     return 0;
 }

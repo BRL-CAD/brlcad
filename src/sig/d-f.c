@@ -19,7 +19,7 @@
  */
 /** @file d-f.c
  *
- *  Convert doubles to floats.
+ * Convert doubles to floats.
  *
  *	% d-f [-n || scale]
  *
@@ -39,41 +39,42 @@
 #include "vmath.h"
 
 
-double	ibuf[512] = { 0.0 };
-float	obuf[512] = { 0.0f};
+double ibuf[512] = { 0.0 };
+float obuf[512] = { 0.0f};
 
 
 int main(int argc, char **argv)
 {
-    int	i, num;
-    double	scale = 1.0;
+    int i, num;
+    double scale = 1.0;
     size_t ret;
 
-    if ( argc > 1 ) {
-	if ( ! BU_STR_EQUAL( argv[1], "-n" ) )
-	    scale = atof( argv[1] );
+    if (argc > 1) {
+	if (! BU_STR_EQUAL(argv[1], "-n"))
+	    scale = atof(argv[1]);
 	argc--;
     }
 
-    if ( argc > 1 || ZERO(scale) || isatty(fileno(stdin)) ) {
+    if (argc > 1 || ZERO(scale) || isatty(fileno(stdin))) {
 	bu_exit(1, "Usage: d-f [-n || scale] < doubles > floats\n");
     }
 
-    while ( (num = fread( &ibuf[0], sizeof( ibuf[0] ), 512, stdin)) > 0 ) {
-	if ( EQUAL(scale, 1.0) ) {
-	    for ( i = 0; i < num; i++ )
+    while ((num = fread(&ibuf[0], sizeof(ibuf[0]), 512, stdin)) > 0) {
+	if (EQUAL(scale, 1.0)) {
+	    for (i = 0; i < num; i++)
 		obuf[i] = ibuf[i];
 	} else {
-	    for ( i = 0; i < num; i++ )
+	    for (i = 0; i < num; i++)
 		obuf[i] = ibuf[i] * scale;
 	}
 
-	ret = fwrite( &obuf[0], sizeof( obuf[0] ), num, stdout );
+	ret = fwrite(&obuf[0], sizeof(obuf[0]), num, stdout);
 	if (ret != (size_t)num)
 	    perror("fwrite");
     }
     return 0;
 }
+
 
 /*
  * Local Variables:

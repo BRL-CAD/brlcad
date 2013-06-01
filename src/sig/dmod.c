@@ -116,8 +116,8 @@ get_args(int argc, char **argv)
 	file_name = argv[bu_optind];
 	if ( (infp = fopen(file_name, "r")) == NULL )  {
 	    fprintf( stderr,
-			   "%s: cannot open \"%s\" for reading\n",
-			   progname,file_name );
+		     "%s: cannot open \"%s\" for reading\n",
+		     progname,file_name );
 	    return 0;
 	}
     }

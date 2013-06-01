@@ -30,39 +30,39 @@
 #include <stdlib.h>
 #include "bio.h"
 
-#include  "bu.h"
+#include "bu.h"
 
 
-int	nflag = 0;
+int nflag = 0;
 
 static const char usage[] = "\
 Usage: d-a [-n] < doubles > ascii\n";
 
 int main(int argc, char **argv)
 {
-    double	d;
+    double d;
 
-    while ( argc > 1 ) {
-	if ( BU_STR_EQUAL( argv[1], "-n" ) )
+    while (argc > 1) {
+	if (BU_STR_EQUAL(argv[1], "-n"))
 	    nflag++;
 	else
 	    break;
 	argc--;
 	argv++;
     }
-    if ( argc > 1 || isatty(fileno(stdin)) ) {
-	bu_exit(1, "%s", usage );
+    if (argc > 1 || isatty(fileno(stdin))) {
+	bu_exit(1, "%s", usage);
     }
 
-    if ( nflag ) {
-	long	n;
+    if (nflag) {
+	long n;
 	n = 0;
-	while ( fread(&d, sizeof(d), 1, stdin) == 1 ) {
-	    printf( "%ld %9g\n", n++, d );
+	while (fread(&d, sizeof(d), 1, stdin) == 1) {
+	    printf("%ld %9g\n", n++, d);
 	}
     } else {
-	while ( fread(&d, sizeof(d), 1, stdin) == 1 ) {
-	    printf( "%9g\n", d );
+	while (fread(&d, sizeof(d), 1, stdin) == 1) {
+	    printf("%9g\n", d);
 	}
     }
     return 0;

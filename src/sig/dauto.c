@@ -36,53 +36,53 @@
 
 #include "bu.h"
 
-double	*data;			/* Input buffer */
-double	*r;			/* autocor output */
-double	*weight;		/* weights to unbias estimation */
+double *data;			/* Input buffer */
+double *r;			/* autocor output */
+double *weight;		/* weights to unbias estimation */
 
 static const char usage[] = "Usage: dauto [window_size (512)] < doubles >outputfile\n";
 
 int main(int argc, char **argv)
 {
-    int	i, j, n, L;
+    int i, j, n, L;
     double *dp1, *dp2;
     size_t ret;
 
-    if ( isatty(fileno(stdin)) || isatty(fileno(stdout)) ) {
-	bu_exit(1, "%s", usage );
+    if (isatty(fileno(stdin)) || isatty(fileno(stdout))) {
+	bu_exit(1, "%s", usage);
     }
 
     L = (argc > 1) ? atoi(argv[1]) : 512;
-    data = (double *)bu_calloc( L, sizeof(double), "data" );
-    r = (double *)bu_calloc( L, sizeof(double), "r" );
-    weight = (double *)bu_calloc( L, sizeof(double), "weight" );
+    data = (double *)bu_calloc(L, sizeof(double), "data");
+    r = (double *)bu_calloc(L, sizeof(double), "r");
+    weight = (double *)bu_calloc(L, sizeof(double), "weight");
 
-    for ( i = 0; i < L; i++ ) {
+    for (i = 0; i < L; i++) {
 	weight[i] = 1.0 / (double)(L-i);
     }
 
-    while ( !feof( stdin ) ) {
-	n = fread( data, sizeof(*data), L, stdin );
-	if ( n <= 0 )
+    while (!feof(stdin)) {
+	n = fread(data, sizeof(*data), L, stdin);
+	if (n <= 0)
 	    break;
-	if ( n < L )
+	if (n < L)
 	    memset((char *)&data[n], 0, (L-n)*sizeof(*data));
 
-	for ( i = 0; i < L; i++ ) {
+	for (i = 0; i < L; i++) {
 	    r[i] = 0;
 	    dp1 = &data[0];
 	    dp2 = &data[i];
-	    for ( j = L-i; j > 0; j-- ) {
+	    for (j = L-i; j > 0; j--) {
 		r[i] += *dp1++ * *dp2++;
 	    }
 	}
 
 	/* unbias the estimation */
-	for ( i = 0; i < L; i++ ) {
+	for (i = 0; i < L; i++) {
 	    r[i] *= weight[i];
 	}
 
-	ret = fwrite( r, sizeof(*r), L, stdout );
+	ret = fwrite(r, sizeof(*r), L, stdout);
 	if (ret != (size_t)L)
 	    perror("fwrite");
     }
@@ -93,6 +93,7 @@ int main(int argc, char **argv)
 
     return 0;
 }
+
 
 /*
  * Local Variables:

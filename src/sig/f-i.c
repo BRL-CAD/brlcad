@@ -19,7 +19,7 @@
  */
 /** @file f-i.c
  *
- *  Convert floats to 16bit ints
+ * Convert floats to 16bit ints
  *
  *	% f-i [-n || scale]
  *
@@ -39,58 +39,59 @@
 #include "vmath.h"
 
 
-float	ibuf[512];
-short	obuf[512];
+float ibuf[512];
+short obuf[512];
 
 
 int main(int argc, char **argv)
 {
-    int	i, num;
-    double	scale;
-    double	value;
-    int	clip_high, clip_low;
+    int i, num;
+    double scale;
+    double value;
+    int clip_high, clip_low;
     size_t ret;
 
     scale = 1.0;
 
-    if ( argc > 1 ) {
-	if ( BU_STR_EQUAL( argv[1], "-n" ) )
+    if (argc > 1) {
+	if (BU_STR_EQUAL(argv[1], "-n"))
 	    scale = 32767.0;
 	else
-	    scale = atof( argv[1] );
+	    scale = atof(argv[1]);
 	argc--;
     }
 
-    if ( argc > 1 || ZERO(scale) || isatty(fileno(stdin)) ) {
-	bu_exit( 1, "Usage: f-i [-n || scale] < floats > shorts\n" );
+    if (argc > 1 || ZERO(scale) || isatty(fileno(stdin))) {
+	bu_exit(1, "Usage: f-i [-n || scale] < floats > shorts\n");
     }
 
     clip_high = clip_low = 0;
 
-    while ( (num = fread( &ibuf[0], sizeof( ibuf[0] ), 512, stdin)) > 0 ) {
-	for ( i = 0; i < num; i++ ) {
+    while ((num = fread(&ibuf[0], sizeof(ibuf[0]), 512, stdin)) > 0) {
+	for (i = 0; i < num; i++) {
 	    value = ibuf[i] * scale;
-	    if ( value > 32767.0 ) {
+	    if (value > 32767.0) {
 		obuf[i] = 32767;
 		clip_high++;
-	    } else if ( value < -32768.0 ) {
+	    } else if (value < -32768.0) {
 		obuf[i] = -32768;
 		clip_low++;
 	    } else
 		obuf[i] = (int)value;
 	}
 
-	ret = fwrite( &obuf[0], sizeof( obuf[0] ), num, stdout );
+	ret = fwrite(&obuf[0], sizeof(obuf[0]), num, stdout);
 	if (ret != (size_t)num)
 	    perror("fwrite");
     }
 
-    if ( clip_low != 0 || clip_high != 0 )
-	fprintf( stderr, "Warning: Clipped %d high, %d low\n",
-		 clip_high, clip_low );
+    if (clip_low != 0 || clip_high != 0)
+	fprintf(stderr, "Warning: Clipped %d high, %d low\n",
+		clip_high, clip_low);
 
     return 0;
 }
+
 
 /*
  * Local Variables:

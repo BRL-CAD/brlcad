@@ -19,8 +19,8 @@
  */
 /** @file dwin.c
  *
- *  Extract sliding windows of double values.
- *  Apply window functions if desired.
+ * Extract sliding windows of double values.
+ * Apply window functions if desired.
  *
  */
 
@@ -37,34 +37,34 @@
 /*
  * Buffering stuff
  */
-#define	BSIZE	16*1024		/* Must be AT LEAST 2*Points in spectrum */
-double	buf[BSIZE];		/* input data buffer */
-double	temp[BSIZE];		/* windowed data buffer */
-int	input_sample = 0;	/* The *next* input sample ("file pointer") */
+#define BSIZE 16*1024		/* Must be AT LEAST 2*Points in spectrum */
+double buf[BSIZE];		/* input data buffer */
+double temp[BSIZE];		/* windowed data buffer */
+int input_sample = 0;	/* The *next* input sample ("file pointer") */
 
-int	buf_start = 0;		/* sample number in buf[0] */
-int	buf_num = 0;		/* number of samples currently in buffer */
-int	buf_index = 0;		/* buffer offset for current window */
+int buf_start = 0;		/* sample number in buf[0] */
+int buf_num = 0;		/* number of samples currently in buffer */
+int buf_index = 0;		/* buffer offset for current window */
 
-int	xform_start = 0;	/* current window start/end */
-int	xform_end = 0;
+int xform_start = 0;	/* current window start/end */
+int xform_end = 0;
 
-#define	START_IN_BUFFER		(xform_start < buf_start+buf_num)
-#define	END_NOT_IN_BUFFER	(xform_end >= buf_start+buf_num)
+#define START_IN_BUFFER (xform_start < buf_start+buf_num)
+#define END_NOT_IN_BUFFER (xform_end >= buf_start+buf_num)
 
-int	window = 0;
-int	hamming = 0;
-int	bias = 0;
-int	bartlett = 0;
-static int	endwin = 0;
-int	midwin = 0;
+int window = 0;
+int hamming = 0;
+int bias = 0;
+int bartlett = 0;
+static int endwin = 0;
+int midwin = 0;
 
-void	fill_buffer(void);
-void	seek_sample(int n);
-void	biaswin(double *data, int L);
-void	bartwin(double *data, int L);
-void	hamwin(double *data, int length);
-void	coswin(double *data, int length, double percent);
+void fill_buffer(void);
+void seek_sample(int n);
+void biaswin(double *data, int L);
+void bartwin(double *data, int L);
+void hamwin(double *data, int length);
+void coswin(double *data, int length, double percent);
 
 static const char usage[] = "\
 Usage: dwin [options] [width (1024)] [step (width)] [start]\n\
@@ -78,28 +78,28 @@ Usage: dwin [options] [width (1024)] [step (width)] [start]\n\
 
 int main(int argc, char **argv)
 {
-    int	L, step;
+    int L, step;
     size_t ret;
 
-    if ( isatty(fileno(stdin)) || isatty(fileno(stdout)) ) {
-	bu_exit(1, "%s", usage );
+    if (isatty(fileno(stdin)) || isatty(fileno(stdout))) {
+	bu_exit(1, "%s", usage);
     }
 
-    while ( argc > 1 ) {
-	if ( BU_STR_EQUAL(argv[1], "-w") ) {
+    while (argc > 1) {
+	if (BU_STR_EQUAL(argv[1], "-w")) {
 	    window++;
-	} else if ( BU_STR_EQUAL(argv[1], "-h") ) {
+	} else if (BU_STR_EQUAL(argv[1], "-h")) {
 	    window++;
 	    hamming++;
-	} else if ( BU_STR_EQUAL(argv[1], "-B") ) {
+	} else if (BU_STR_EQUAL(argv[1], "-B")) {
 	    window++;
 	    bias++;
-	} else if ( BU_STR_EQUAL(argv[1], "-b") ) {
+	} else if (BU_STR_EQUAL(argv[1], "-b")) {
 	    window++;
 	    bartlett++;
-	} else if ( BU_STR_EQUAL(argv[1], "-e") ) {
+	} else if (BU_STR_EQUAL(argv[1], "-e")) {
 	    endwin++;
-	} else if ( BU_STR_EQUAL(argv[1], "-m") ) {
+	} else if (BU_STR_EQUAL(argv[1], "-m")) {
 	    midwin++;
 	} else
 	    break;
@@ -108,10 +108,10 @@ int main(int argc, char **argv)
     }
 
     L = (argc > 1) ? atoi(argv[1]) : 1024;
-    if ( argc > 2 ) {
-	double	f;
+    if (argc > 2) {
+	double f;
 	f = atof(argv[2]);
-	if ( f < 1.0 )
+	if (f < 1.0)
 	    step = f * L;
 	else
 	    step = f;
@@ -119,9 +119,9 @@ int main(int argc, char **argv)
 	step = L;
 
     /* compute xform start/end */
-    if ( endwin )
+    if (endwin)
 	xform_start = -L + 1;	/* one sample at end */
-    else if ( midwin )
+    else if (midwin)
 	xform_start = -L/2;	/* odd - center, even - just after */
     else
 	xform_start = 0;
@@ -133,14 +133,14 @@ int main(int argc, char **argv)
     buf_num = BSIZE;
     buf_index = 0;
 
-    while ( !feof( stdin ) ) {
+    while (!feof(stdin)) {
 #ifdef DEBUG
-	fprintf(stderr, "\nWant to xform [%d %d]\n", xform_start, xform_end );
-	fprintf(stderr, "Buffer contains %d samples, from [%d (%d)]\n", buf_num, buf_start, buf_start+buf_num-1 );
+	fprintf(stderr, "\nWant to xform [%d %d]\n", xform_start, xform_end);
+	fprintf(stderr, "Buffer contains %d samples, from [%d (%d)]\n", buf_num, buf_start, buf_start+buf_num-1);
 #endif /* DEBUG */
-	if ( START_IN_BUFFER ) {
+	if (START_IN_BUFFER) {
 	    buf_index = xform_start - buf_start;
-	    if ( END_NOT_IN_BUFFER ) {
+	    if (END_NOT_IN_BUFFER) {
 #ifdef DEBUG
 		fprintf(stderr, "\tend isn't in buffer.\n");
 #endif /* DEBUG */
@@ -155,32 +155,32 @@ int main(int argc, char **argv)
 #ifdef DEBUG
 	    fprintf(stderr, "\tstart isn't in buffer.\n");
 #endif /* DEBUG */
-	    if ( input_sample != xform_start )
-		seek_sample( xform_start );
+	    if (input_sample != xform_start)
+		seek_sample(xform_start);
 	    buf_start = xform_start;
 	    buf_num = 0;
 	    buf_index = 0;
 	    fill_buffer();
-	    if ( feof( stdin ) )
+	    if (feof(stdin))
 		break;
 	}
 
 #ifdef DEBUG
-	fprintf(stderr, "Did samples %d to %d (buf_index = %d)\n", xform_start, xform_end, buf_index );
+	fprintf(stderr, "Did samples %d to %d (buf_index = %d)\n", xform_start, xform_end, buf_index);
 #endif /* DEBUG */
-	if ( window ) {
+	if (window) {
 	    memcpy(temp, &buf[buf_index], L*sizeof(*temp));
-	    if ( hamming )
-		hamwin( temp, L ); /* Hamming window */
-	    else if ( bartlett )
-		bartwin( temp, L ); /* Bartlett window */
-	    else if ( bias )
-		biaswin( temp, L ); /* Bias window */
+	    if (hamming)
+		hamwin(temp, L); /* Hamming window */
+	    else if (bartlett)
+		bartwin(temp, L); /* Bartlett window */
+	    else if (bias)
+		biaswin(temp, L); /* Bias window */
 	    else
-		coswin( temp, L, 0.80 ); /* 80% cosine window */
-	    ret = fwrite( temp, sizeof(*temp), L, stdout );
+		coswin(temp, L, 0.80); /* 80% cosine window */
+	    ret = fwrite(temp, sizeof(*temp), L, stdout);
 	} else {
-	    ret = fwrite( &buf[buf_index], sizeof(*buf), L, stdout );
+	    ret = fwrite(&buf[buf_index], sizeof(*buf), L, stdout);
 	}
 	if (ret != (size_t)L)
 	    perror("fwrite");
@@ -193,6 +193,7 @@ int main(int argc, char **argv)
     return 0;
 }
 
+
 /*
  * Move input pointer to sample n.
  * Since we may be reading from a pipe, we actually
@@ -202,17 +203,18 @@ int main(int argc, char **argv)
 void
 seek_sample(int n)
 {
-    double	foo;
+    double foo;
     size_t ret;
 
-    fprintf(stderr, "seeking sample %d\n", n );
-    while ( input_sample < n ) {
-	ret = fread( &foo, sizeof(foo), 1, stdin );
+    fprintf(stderr, "seeking sample %d\n", n);
+    while (input_sample < n) {
+	ret = fread(&foo, sizeof(foo), 1, stdin);
 	if (ret != 1)
 	    perror("fread");
 	input_sample++;
     }
 }
+
 
 /*
  * Fill the data buffer from the current input location.
@@ -220,48 +222,50 @@ seek_sample(int n)
 void
 fill_buffer(void)
 {
-    int	n, num_to_read;
+    int n, num_to_read;
 
     num_to_read = BSIZE - buf_num;
 
 #ifdef DEBUG
     fprintf(stderr, "fillbuffer: buf_start = %d, buf_num = %d, numtoread = %d, buf_index = %d\n",
-	    buf_start, buf_num, num_to_read, buf_index );
+	    buf_start, buf_num, num_to_read, buf_index);
 #endif /* DEBUG */
-    n = fread( &buf[buf_num], sizeof(*buf), num_to_read, stdin );
-    if ( n == 0 ) {
-	/*fprintf( stderr, "EOF\n" );*/
+    n = fread(&buf[buf_num], sizeof(*buf), num_to_read, stdin);
+    if (n == 0) {
+	/*fprintf(stderr, "EOF\n");*/
 	memset((char *)&buf[buf_num], 0, sizeof(*buf)*num_to_read);
 	return;
     }
     input_sample += n;
     buf_num += n;
-    if ( n < num_to_read ) {
+    if (n < num_to_read) {
 	memset((char *)&buf[buf_num], 0, sizeof(*buf)*(num_to_read-n));
 	clearerr(stdin);	/* XXX HACK */
     }
 
 #ifdef DEBUG
-    fprintf(stderr, "filled buffer now has %d samples, [%d (%d)].  Input at %d\n", buf_num, buf_start, buf_start+buf_num-1, input_sample );
+    fprintf(stderr, "filled buffer now has %d samples, [%d (%d)].  Input at %d\n", buf_num, buf_start, buf_start+buf_num-1, input_sample);
 #endif /* DEBUG */
 }
+
 
 /* Bias window (half triangle) */
 void
 biaswin(double *data, int L)
 {
-    int	i;
+    int i;
 
     for (i = 0; i < L; i++) {
 	data[i] *= (double)(L-i)/(double)L;
     }
 }
 
+
 /* Bartlett window (triangle) */
 void
 bartwin(double *data, int L)
 {
-    int	i;
+    int i;
 
     for (i = 0; i < L/2; i++) {
 	data[i] *= (double)i/(L/2.0);
@@ -270,6 +274,7 @@ bartwin(double *data, int L)
 	data[i] *= (double)(L-i)/(L/2.0);
     }
 }
+
 
 /*
  * Local Variables:
