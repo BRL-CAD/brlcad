@@ -2916,7 +2916,6 @@ void poly2tri_CDT(struct bu_list *vhead, ON_BrepFace &face,
 	for (int lti = 0; lti < loop->TrimCount(); lti++) {
 	    ON_BrepTrim *trim = loop->Trim(lti);
 	    //ON_BrepEdge *edge = trim->Edge();
-	    bool removeedgepoints = false;
 
 	    if (trim->m_type == ON_BrepTrim::singular) {
 		ON_BrepVertex& v1 = face.Brep()->m_V[trim->m_vi[0]];
@@ -2933,7 +2932,6 @@ void poly2tri_CDT(struct bu_list *vhead, ON_BrepFace &face,
 
 	    if (!trim->m_trim_user.p) {
 		(void) getEdgePoints(*trim, max_dist, ttol, tol, info);
-		removeedgepoints = true;
 	    }
 	    if (trim->m_trim_user.p) {
 		std::map<double, ON_3dPoint *> *param_points3d = (std::map<
@@ -2946,11 +2944,7 @@ void poly2tri_CDT(struct bu_list *vhead, ON_BrepFace &face,
 		    double t0, t1;
 		    trim->GetDomain(&t0, &t1);
 		    ON_2dPoint p2d = trim->PointAtStart();
-		    ON_3dPoint ts3d = s->PointAt(p2d.x, p2d.y);
 		    ON_2dPoint end_p2d = trim->PointAtEnd();
-		    ON_3dPoint te3d = s->PointAt(end_p2d.x, end_p2d.y);
-		    ON_3dVector norm = s->NormalAt(trim->PointAtStart().x,
-			    trim->PointAtStart().y);
 		    std::map<double, ON_3dPoint*>::const_iterator i;
 		    for (i = param_points3d->begin();
 			    i != param_points3d->end();) {
@@ -3092,7 +3086,6 @@ void poly2tri_CDT(struct bu_list *vhead, ON_BrepFace &face,
 	    ON_3dPoint pnt[3];
 	    ON_3dVector norm[3];
 	    point_t pt[3];
-	    vect_t nv[3];
 	    for (size_t i = 0; i < tris.size(); i++) {
 		p2t::Triangle *t = tris[i];
 		p2t::Point *p = NULL;
@@ -3110,7 +3103,6 @@ void poly2tri_CDT(struct bu_list *vhead, ON_BrepFace &face,
 			    norm[j] = norm[j] * -1.0;
 			}
 			VMOVE(pt[j], pnt[j]);
-			VMOVE(nv[j], norm[j]);
 		    }
 		}
 		//tri one
@@ -3516,7 +3508,9 @@ int rt_brep_plot_poly(struct bu_list *vhead, const struct db_full_path *pathp, s
 
 #ifndef TESTIT
 #ifndef WATER_TIGHT
+#ifdef DRAW_FACE
 	fastf_t  max_dist = 0;
+#endif
 	for (int index = 0; index < brep->m_F.Count(); index++) {
 		ON_BrepFace *face = brep->Face(index);
 		const ON_Surface *s = face->SurfaceOf();
@@ -3527,7 +3521,9 @@ int rt_brep_plot_poly(struct bu_list *vhead, const struct db_full_path *pathp, s
 		    // curves to minimize distortion in the map from parameter space to 3d..
 		    face->SetDomain(0, 0.0, surface_width);
 		    face->SetDomain(1, 0.0, surface_height);
+#ifdef DRAW_FACE
 		    max_dist = sqrt(surface_width*surface_width + surface_height*surface_height) / 10.0;
+#endif
 		}
 	}
 #ifdef DRAW_FACE
