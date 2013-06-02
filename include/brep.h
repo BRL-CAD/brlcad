@@ -177,7 +177,7 @@ public:
     bool IntersectRay(const ON_Ray& v, ON_2dPoint& isect) const
     {
 	double uxv, q_pxv;
-	// consider parallel and collinear cases
+	/* consider parallel and collinear cases */
 	if (ZERO(uxv = V2CROSS(m_dir, v.m_dir))
 	    || (ZERO(q_pxv = V2CROSS(v.m_origin - m_origin, v.m_dir)))) {
 	    return false;
@@ -226,7 +226,7 @@ BREP_EXPORT bool ON_NearZero(double x, double tolerance = ON_ZERO_TOLERANCE);
 #define BREP_EDGE_MISS_TOLERANCE 5e-3
 #define BREP_SAME_POINT_TOLERANCE 1e-6
 
-// FIXME: debugging crapola (clean up later)
+/* FIXME: debugging crapola (clean up later) */
 #define ON_PRINT4(p) "[" << (p)[0] << ", " << (p)[1] << ", " << (p)[2] << ", " << (p)[3] << "]"
 #define ON_PRINT3(p) "(" << (p)[0] << ", " << (p)[1] << ", " << (p)[2] << ")"
 #define ON_PRINT2(p) "(" << (p)[0] << ", " << (p)[1] << ")"
@@ -236,9 +236,9 @@ BREP_EXPORT bool ON_NearZero(double x, double tolerance = ON_ZERO_TOLERANCE);
 #define TRACE(s)
 #define TRACE1(s)
 #define TRACE2(s)
-//#define TRACE(s) std::cerr << s << std::endl;
-//#define TRACE1(s) std::cerr << s << std::endl;
-//#define TRACE2(s) std::cerr << s << std::endl;
+/* #define TRACE(s) std::cerr << s << std::endl; */
+/* #define TRACE1(s) std::cerr << s << std::endl; */
+/* #define TRACE2(s) std::cerr << s << std::endl; */
 
 namespace brlcad {
 
@@ -350,9 +350,9 @@ BANode<BA>::BANode(const ON_Curve* curve, int adj_face_index, const BA& node,
 {
     m_start = curve->PointAt(m_t[0]);
     m_end = curve->PointAt(m_t[1]);
-    // check for vertical segments they can be removed
-    // from trims above (can't tell direction and don't
-    // need
+    /* check for vertical segments they can be removed from trims
+     * above (can't tell direction and don't need
+     */
     m_Horizontal = false;
     m_Vertical = false;
 
