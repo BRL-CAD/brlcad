@@ -40,9 +40,6 @@
 /* generic entity name */
 #define GENERIC_NAME "rhino"
 #define Usage "Usage: 3dm-g [-v vmode] [-r] [-u] -o output_file.g input_file.3dm\n"
-/*  Did not use THIS define; some options aren't fully implemented:
-  #define Usage "Usage: 3dm-g [-d] [-s scalefactor] [-t tolerance] [-v vmode] [-r] [-u] -o output_file.g input_file.3dm\n"
-*/
 
 /* typedefs and global containers for building layer hierarchy */
 typedef std::map< std::string, std::string> STR_STR_MAP;
