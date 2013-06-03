@@ -543,6 +543,7 @@ tthrm_render(struct application *ap, const struct partition *pp, struct shadewor
     register struct tthrm_specific *tthrm_sp =
 	(struct tthrm_specific *)dp;
     struct rt_part_internal *part_p;
+    char *solid_name;
 
     point_t pt;
     vect_t pt_v;
@@ -553,6 +554,8 @@ tthrm_render(struct application *ap, const struct partition *pp, struct shadewor
     double best_val;
     double Vdot;
     int node;
+
+    solid_name = pp->pt_inseg->seg_stp->st_dp->d_namep;
 
     /* check the validity of the arguments we got */
     RT_AP_CHECK(ap);
@@ -574,7 +577,7 @@ tthrm_render(struct application *ap, const struct partition *pp, struct shadewor
 
     if (solid_number > tthrm_sp->tt_max_seg) {
 	bu_log("%s:%d solid name %s has solid number higher than %ld\n",
-	       __FILE__, __LINE__, tthrm_sp->tt_max_seg);
+	       __FILE__, __LINE__, solid_name, tthrm_sp->tt_max_seg);
 	bu_bomb("Choke! ack! gasp! wheeeeeeze.\n");
     }
 
