@@ -17,7 +17,8 @@ libbrep_nil_la_SOURCES = \
 	intersect.cpp \
 	PullbackCurve.cpp \
 	opennurbs_ext.cpp 	\
-	ssx_event.cpp
+	ssx_event.cpp \
+	px_event.cpp
 
 libbrep_nil_la_LIBADD = ${OPENNURBS}
 

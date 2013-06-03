@@ -45,15 +45,15 @@ ON_PX_EVENT::Compare(const ON_PX_EVENT* a, const ON_PX_EVENT* b)
 }
 
 bool
-ON_PX_EVENT::IsValid(ON_TextLog* text_log,
-		     double intersection_tolerance,
-		     const class ON_3dPoint* pointA,
-		     const class ON_3dPoint* pointB,
-		     const class ON_Curve* curveB,
-		     const class ON_Interval* curveB_domain,
-		     const class ON_Surface* surfaceB,
-		     const class ON_Interval* surfaceB_domain0,
-		     const class ON_Interval* surfaceB_domain1) const
+ON_PX_EVENT::IsValid(ON_TextLog*,
+		     double,
+		     const class ON_3dPoint*,
+		     const class ON_3dPoint*,
+		     const class ON_Curve*,
+		     const class ON_Interval*,
+		     const class ON_Surface*,
+		     const class ON_Interval*,
+		     const class ON_Interval*) const
 {
     // Implement later.
     return true;
