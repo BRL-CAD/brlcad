@@ -64,11 +64,11 @@ ON_Intersect(const ON_3dPoint& pointA,
  * Point-curve intersections (PCI)
  */
 bool
-ON_Intersect(const ON_3dPoint& pointA,
-	     const ON_Curve& curveB,
-	     ON_ClassArray<ON_PX_EVENT>& x,
-	     double tolerance,
-	     const ON_Interval* curveB_domain)
+ON_Intersect(const ON_3dPoint&,
+	     const ON_Curve&,
+	     ON_ClassArray<ON_PX_EVENT>&,
+	     double,
+	     const ON_Interval*)
 {
     // Implement later.
     return false;
@@ -78,12 +78,12 @@ ON_Intersect(const ON_3dPoint& pointA,
  * Point-surface intersections (PSI)
  */
 bool
-ON_Intersect(const ON_3dPoint& pointA,
-	     const ON_Surface& surfaceB,
-	     ON_ClassArray<ON_PX_EVENT>& x,
-	     double tolerance,
-	     const ON_Interval* surfaceB_udomain,
-	     const ON_Interval* surfaceB_vdomain)
+ON_Intersect(const ON_3dPoint&,
+	     const ON_Surface&,
+	     ON_ClassArray<ON_PX_EVENT>&,
+	     double,
+	     const ON_Interval*,
+	     const ON_Interval*)
 {
     // Implement later.
     return false;
