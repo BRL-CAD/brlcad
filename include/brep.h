@@ -1849,7 +1849,7 @@ public:
 	no_px_event =  0,
 	ppx_point   =  1, // point-point intersection
 	pcx_point   =  2, // point-curve intersection
-	psx_point   =  3, // point-surface intersection
+	psx_point   =  3  // point-surface intersection
     };
 
     TYPE m_type;
