@@ -36,6 +36,61 @@
 #include "brep.h"
 
 /**
+ * Point-point intersections (PPI)
+ */
+bool
+ON_Intersect(const ON_3dPoint& pointA,
+	     const ON_3dPoint& pointB,
+	     ON_ClassArray<ON_PX_EVENT>& x,
+	     double tolerance)
+{
+    if (tolerance <= 0.0)
+	tolerance = 0.01;
+
+    if (pointA.DistanceTo(pointB) <= tolerance) {
+	ON_PX_EVENT Event;
+	Event.m_type = ON_PX_EVENT::ppx_point;
+	Event.m_A = pointA;
+	Event.m_B = pointB;
+	Event.m_Mid = (pointA + pointB) * 0.5;
+	Event.m_radius = pointA.DistanceTo(pointB) * 0.5;
+	x.Append(Event);
+	return true;
+    }
+    return false;
+}
+
+/**
+ * Point-curve intersections (PCI)
+ */
+bool
+ON_Intersect(const ON_3dPoint& pointA,
+	     const ON_Curve& curveB,
+	     ON_ClassArray<ON_PX_EVENT>& x,
+	     double tolerance,
+	     const ON_Interval* curveB_domain)
+{
+    // Implement later.
+    return false;
+}
+
+/**
+ * Point-surface intersections (PSI)
+ */
+bool
+ON_Intersect(const ON_3dPoint& pointA,
+	     const ON_Surface& surfaceB,
+	     ON_ClassArray<ON_PX_EVENT>& x,
+	     double tolerance,
+	     const ON_Interval* surfaceB_udomain,
+	     const ON_Interval* surfaceB_vdomain)
+{
+    // Implement later.
+    return false;
+}
+
+
+/**
  * Surface-surface intersections (SSI)
  *
  * approach:

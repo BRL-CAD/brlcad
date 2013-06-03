@@ -1784,6 +1784,177 @@ ON_Intersect(const ON_Surface* surfA,
 	     const ON_Interval* surfaceB_udomain = 0,
 	     const ON_Interval* surfaceB_vdomain = 0);
 
+// The ON_PX_EVENT class is used to report point-point, point-curve
+// and point-surface intersection events.
+class ON_CLASS BREP_EXPORT ON_PX_EVENT
+{
+public:
+    // Default construction sets everything to zero.
+    ON_PX_EVENT();
+
+    /*
+      Description:
+	Compares point intersection events and sorts them in the 
+	canonical order.
+      Returns:
+	@untitled table
+	-1    this  < other
+	 0    this == other
+	+1    this  > other
+      Remarks:
+	ON_PX_EVENT::Compare is used to sort intersection events into canonical
+	order.
+    */
+    static
+    int Compare(const ON_PX_EVENT* a, const ON_PX_EVENT* b);
+
+    /*
+      Description:
+	Check point intersection event values to make sure they are valid.
+      Parameters:
+	text_log - [in] If not null and an error is found, then a description
+			of the error is printed to text_log.
+	intersection_tolerance - [in] 
+	     0.0 or value used in intersection calculation.
+	pointA - [in] 
+	     NULL or pointA passed to intersection calculation.
+	pointB - [in]
+	     NULL or pointB passed to intersection calculation.
+	curveB - [in]
+	     NULL or curveB passed to intersection calculation.
+	curveB_domain - [in]
+	     NULL or curveB domain used in intersection calculation.
+	surfaceB - [in]
+	     NULL or surfaceB passed to intersection calculation.
+	surfaceB_domain0 - [in]
+	     NULL or surfaceB "u" domain used in intersection calculation.
+	surfaceB_domain1 - [in]
+	     NULL or surfaceB "v" domain used in intersection calculation.
+      Returns:
+	True if event is valid.
+    */
+    bool IsValid(ON_TextLog* text_log,
+		 double intersection_tolerance,
+		 const class ON_3dPoint* pointA,
+		 const class ON_3dPoint* pointB,
+		 const class ON_Curve* curveB,
+		 const class ON_Interval* curveB_domain,
+		 const class ON_Surface* surfaceB,
+		 const class ON_Interval* surfaceB_domain0,
+		 const class ON_Interval* surfaceB_domain1) const;
+
+    void Dump(ON_TextLog& text_log) const;
+
+    enum TYPE { 
+	no_px_event =  0,
+	ppx_point   =  1, // point-point intersection
+	pcx_point   =  2, // point-curve intersection
+	psx_point   =  3, // point-surface intersection
+    };
+
+    TYPE m_type;
+
+    ON_3dPoint m_A;	// Point A in 3D space
+    ON_3dPoint m_B;	// Point B in 3D space
+
+    ON_2dPoint m_b;	// Point B in 2D space for the curve/surface
+			// For a curve, m_b[1] == 0
+			// For a point, m_b[0] == m_b[1] == 0
+
+    ON_3dPoint m_Mid;	// The mid-point of Point A and Point B
+    double m_radius;	// To trace the uncertainty area
+};
+
+/**
+ * An overload of ON_Intersect for point-point intersection.
+ *
+ * Description:
+ *   Intersect pointA with pointB.
+ *
+ * Parameters:
+ *   pointA - [in]
+ *
+ *   pointB - [in]
+ *
+ *   x - [out]
+ *     Intersection events are appended to this array.
+ *
+ *   tolerance - [in]
+ *     If the input intersection_tolerance <= 0.0, then 0.001 is used.
+ *
+ * Returns:
+ *    True for an intersection. False for no intersection.
+ */
+extern BREP_EXPORT bool
+ON_Intersect(const ON_3dPoint& pointA,
+	     const ON_3dPoint& pointB,
+	     ON_ClassArray<ON_PX_EVENT>& x,
+	     double tolerance = 0.0);
+
+/**
+ * An overload of ON_Intersect for point-curve intersection.
+ *
+ * Description:
+ *   Intersect pointA with curveB.
+ *
+ * Parameters:
+ *   pointA - [in]
+ *
+ *   curveB - [in]
+ *
+ *   x - [out]
+ *     Intersection events are appended to this array.
+ *
+ *   tolerance - [in]
+ *     If the input intersection_tolerance <= 0.0, then 0.001 is used.
+ *
+ *   curveB_domain - [in]
+ *     optional restriction on curveB t domain
+ *
+ * Returns:
+ *    True for an intersection. False for no intersection.
+ */
+extern BREP_EXPORT bool
+ON_Intersect(const ON_3dPoint& pointA,
+	     const ON_Curve& curveB,
+	     ON_ClassArray<ON_PX_EVENT>& x,
+	     double tolerance = 0.0,
+	     const ON_Interval* curveB_domain = 0);
+
+/**
+ * An overload of ON_Intersect for point-surface intersection.
+ *
+ * Description:
+ *   Intersect pointA with surfaceB.
+ *
+ * Parameters:
+ *   pointA - [in]
+ *
+ *   surfaceB - [in]
+ *
+ *   x - [out]
+ *     Intersection events are appended to this array.
+ *
+ *   tolerance - [in]
+ *     If the input intersection_tolerance <= 0.0, then 0.001 is used.
+ *
+ *   surfaceB_udomain - [in]
+ *     optional restriction on surfaceB u domain
+ *
+ *   surfaceB_vdomain - [in]
+ *     optional restriction on surfaceB v domain
+ *
+ * Returns:
+ *    True for an intersection. False for no intersection.
+ */
+extern BREP_EXPORT bool
+ON_Intersect(const ON_3dPoint& pointA,
+	     const ON_Surface& surfaceB,
+	     ON_ClassArray<ON_PX_EVENT>& x,
+	     double tolerance = 0.0,
+	     const ON_Interval* surfaceB_udomain = 0,
+	     const ON_Interval* surfaceB_vdomain = 0);
+
 } /* extern C++ */
 #endif
 
