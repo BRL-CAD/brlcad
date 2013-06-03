@@ -37,7 +37,7 @@
 
 
 /* declarations to support use of bu_getopt() system call */
-char *options = "h";
+char *options = "h?";
 char *progname = "(noname)";
 
 #define ADD_STYLE_INT 0
@@ -51,8 +51,8 @@ void usage(char *s)
 {
     if (s) (void)fputs(s, stderr);
 
-    (void) fprintf(stderr, "Usage: %s [ -%s ] dsp_1 dsp_2 > dsp_3\n",
-		   progname, options);
+    (void) fprintf(stderr, "Usage: %s dsp_1 dsp_2 > dsp_3\n",
+		   progname);
     bu_exit (1, NULL);
 }
 
@@ -70,15 +70,11 @@ int parse_args(int ac, char *av[])
     else
 	++progname;
 
-    /* Turn off bu_getopt's error messages */
-    bu_opterr = 0;
-
     /* get all the option flags from the command line */
     while ((c=bu_getopt(ac, av, options)) != -1)
 	switch (c) {
-	    case '?'	:
-	    case 'h'	:
-	    default		: usage("Bad or help flag specified\n"); break;
+	    default:
+		usage("");
 	}
 
     return bu_optind;
@@ -181,9 +177,9 @@ main(int ac, char *av[])
     struct stat sb;
     size_t ret;
 
-    next_arg = parse_args(ac, av);
+    if (isatty(fileno(stdout))) usage("Must redirect standard output\n");
 
-    if (isatty(fileno(stdout))) usage("Redirect standard output\n");
+    next_arg = parse_args(ac, av);
 
     if (next_arg >= ac) usage("No files specified\n");
 
