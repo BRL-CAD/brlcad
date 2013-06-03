@@ -2944,7 +2944,6 @@ void poly2tri_CDT(struct bu_list *vhead, ON_BrepFace &face,
 		    double t0, t1;
 		    trim->GetDomain(&t0, &t1);
 		    ON_2dPoint p2d = trim->PointAtStart();
-		    ON_2dPoint end_p2d = trim->PointAtEnd();
 		    std::map<double, ON_3dPoint*>::const_iterator i;
 		    for (i = param_points3d->begin();
 			    i != param_points3d->end();) {
