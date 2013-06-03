@@ -1784,17 +1784,18 @@ ON_Intersect(const ON_Surface* surfA,
 	     const ON_Interval* surfaceB_udomain = 0,
 	     const ON_Interval* surfaceB_vdomain = 0);
 
-// The ON_PX_EVENT class is used to report point-point, point-curve
-// and point-surface intersection events.
+/* The ON_PX_EVENT class is used to report point-point, point-curve
+ * and point-surface intersection events.
+ */
 class ON_CLASS BREP_EXPORT ON_PX_EVENT
 {
 public:
-    // Default construction sets everything to zero.
+    /* Default construction sets everything to zero. */
     ON_PX_EVENT();
 
     /*
       Description:
-	Compares point intersection events and sorts them in the 
+	Compares point intersection events and sorts them in the
 	canonical order.
       Returns:
 	@untitled table
@@ -1814,9 +1815,9 @@ public:
       Parameters:
 	text_log - [in] If not null and an error is found, then a description
 			of the error is printed to text_log.
-	intersection_tolerance - [in] 
+	intersection_tolerance - [in]
 	     0.0 or value used in intersection calculation.
-	pointA - [in] 
+	pointA - [in]
 	     NULL or pointA passed to intersection calculation.
 	pointB - [in]
 	     NULL or pointB passed to intersection calculation.
@@ -1845,25 +1846,27 @@ public:
 
     void Dump(ON_TextLog& text_log) const;
 
-    enum TYPE { 
+    enum TYPE {
 	no_px_event =  0,
-	ppx_point   =  1, // point-point intersection
-	pcx_point   =  2, // point-curve intersection
-	psx_point   =  3  // point-surface intersection
+	ppx_point   =  1, /* point-point intersection */
+	pcx_point   =  2, /* point-curve intersection */
+	psx_point   =  3  /* point-surface intersection */
     };
 
     TYPE m_type;
 
-    ON_3dPoint m_A;	// Point A in 3D space
-    ON_3dPoint m_B;	// Point B in 3D space
+    ON_3dPoint m_A;	/* Point A in 3D space */
+    ON_3dPoint m_B;	/* Point B in 3D space */
 
-    ON_2dPoint m_b;	// Point B in 2D space for the curve/surface
-			// For a curve, m_b[1] == 0
-			// For a point, m_b[0] == m_b[1] == 0
+    ON_2dPoint m_b;	/* Point B in 2D space for the curve/surface
+			 * For a curve, m_b[1] == 0
+			 * For a point, m_b[0] == m_b[1] == 0
+			 */
 
-    ON_3dPoint m_Mid;	// The mid-point of Point A and Point B
-    double m_radius;	// To trace the uncertainty area
+    ON_3dPoint m_Mid;	/* The mid-point of Point A and Point B */
+    double m_radius;	/* To trace the uncertainty area */
 };
+
 
 /**
  * An overload of ON_Intersect for point-point intersection.
