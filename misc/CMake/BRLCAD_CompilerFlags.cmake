@@ -107,6 +107,14 @@ if(BRLCAD_ENABLE_COMPILER_WARNINGS OR BRLCAD_ENABLE_STRICT)
   BRLCAD_CHECK_C_FLAG(Wshadow)
   BRLCAD_CHECK_CXX_FLAG(Wshadow)
 
+# report where we throw away const
+#  BRLCAD_CHECK_C_FLAG(Wcast-qual)
+#  BRLCAD_CHECK_CXX_FLAG(Wcast-qual)
+
+# check for redundant declarations
+#  BRLCAD_CHECK_C_FLAG(Wredundant-decls)
+#  BRLCAD_CHECK_CXX_FLAG(Wredundant-decls)
+
   # want C inline warnings, but versions of g++ (circa 4.7) spew
   # unquellable bogus warnings on default constructors that we don't
   # have access to (e.g., in opennurbs and boost), so turn them off
