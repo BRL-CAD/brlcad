@@ -1699,10 +1699,30 @@ BRLCAD_FUNCTION_EXISTS(vsscanf HAVE_VSSCANF)
 BRLCAD_FUNCTION_EXISTS(writev HAVE_WRITEV)
 
 # we may compile in strict pedantic mode, but still want access to
-# some POSIX functions.  test whether these symbols are declared in
-# addition to whether they resolve (above).
-CHECK_SYMBOL_EXISTS(kill "sys/types.h;signal.h" HAVE_DECL_KILL)
-CHECK_SYMBOL_EXISTS(fileno "stdio.h" HAVE_DECL_FILENO)
+# some POSIX functions.  test whether some symbols (below) are
+# declared in addition to whether they resolve (above).
+#
+# we do this manually for now because CHECK_SYMBOL_EXISTS and
+# CHECK_PROTOTYPE_EXISTS are both terribly broken.
+#
+# FIXME: wrap these into a BRLCAD_CHECK_SYMBOL() macro or similar.
+
+# test for kill()
+if("${HAVE_DECL_KILL}" MATCHES "^${HAVE_DECL_KILL}$")
+  check_c_source_compiles("#include <sys/types.h>\n#include <signal.h>\nint main() { (void)kill; return 0; }" HAVE_DECL_KILL)
+  if(HAVE_DECL_KILL)
+    CONFIG_H_APPEND(BRLCAD "#cmakedefine HAVE_DECL_KILL 1\n")
+  endif(HAVE_DECL_KILL)
+endif("${HAVE_DECL_KILL}" MATCHES "^${HAVE_DECL_KILL}$")
+
+# test for fileno()
+if("${HAVE_DECL_FILENO}" MATCHES "^${HAVE_DECL_FILENO}$")
+  check_c_source_compiles("#include <stdio.h>\nint main() { (void)fileno; return 0; }" HAVE_DECL_FILENO)
+  if(HAVE_DECL_FILENO)
+    CONFIG_H_APPEND(BRLCAD "#cmakedefine HAVE_DECL_FILENO 1\n")
+  endif(HAVE_DECL_FILENO)
+endif("${HAVE_DECL_FILENO}" MATCHES "^${HAVE_DECL_FILENO}$")
+
 
 # On Windows, we need to check for hypot etc..  This test pertains
 # to the windows specific config file, not CONFIG_H_FILE - hence,
