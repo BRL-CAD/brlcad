@@ -86,16 +86,19 @@ ON_PX_EVENT::Dump(ON_TextLog& text_log) const
     text_log.Print("Intersection Point: \n");
     text_log.PushIndent();
     text_log.Print(m_Mid);
+    text_log.Print("\n");
     text_log.PopIndent();
     text_log.Print("With uncertainty radius: \n");
     text_log.PushIndent();
     text_log.Print(m_radius);
+    text_log.Print("\n");
     text_log.PopIndent();
     text_log.PopIndent();
 
     text_log.Print("pointA = \n");
     text_log.PushIndent();
     text_log.Print(m_A);
+    text_log.Print("\n");
     text_log.PopIndent();
 
     switch (m_type) {
@@ -121,6 +124,7 @@ ON_PX_EVENT::Dump(ON_TextLog& text_log) const
 
     text_log.PushIndent();
     text_log.Print(m_B);
+    text_log.Print("\n");
     text_log.PopIndent();
 
     text_log.PopIndent();
