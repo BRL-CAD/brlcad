@@ -486,9 +486,9 @@ CurveTree::getHVTangents(const ON_Curve* curve, ON_Interval& t, std::list<fastf_
 	    double midpoint = (t[1]+t[0])/2.0;
 	    ON_Interval left(t[0], midpoint);
 	    ON_Interval right(midpoint, t[1]);
-            if (left.Length() > TOL)
+	    if (left.Length() > TOL)
 		getHVTangents(curve, left, list);
-            if (right.Length() > TOL)
+	    if (right.Length() > TOL)
 		getHVTangents(curve, right, list);
 	    return true;
 	} else if (tanx_changed) {//find horz

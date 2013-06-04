@@ -327,16 +327,16 @@ solveSparseLinearSystemLQ (Eigen::SparseMatrix<double>* A, Eigen::MatrixXd* b, E
       solver.compute(AtA);
       if(solver.info()!=Eigen::Success) {
 	  // decomposition failed
-          std::cout << "decomposition failed\n";
+	  std::cout << "decomposition failed\n";
       }
 
       (*x) = solver.solve(Atb);
 
       if(solver.info()!=Eigen::Success) {
-          std::cout << "solver failed: " << solver.info() << "\n";
+	  std::cout << "solver failed: " << solver.info() << "\n";
 	  return false;
       } else {
-          return true;
+	  return true;
       }
 }
 

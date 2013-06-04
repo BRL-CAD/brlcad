@@ -29,38 +29,38 @@
 
 // For any pre-existing surface passed as one of the t* args, this is a no-op
 void ON_Surface_Create_Scratch_Surfaces(
-        ON_Surface **t1,
-        ON_Surface **t2,
-        ON_Surface **t3,
-        ON_Surface **t4)
+	ON_Surface **t1,
+	ON_Surface **t2,
+	ON_Surface **t3,
+	ON_Surface **t4)
 {
     if (!(*t1)) {
-        ON_NurbsSurface *nt1 = ON_NurbsSurface::New();
-        (*t1)= (ON_Surface *)(nt1);
+	ON_NurbsSurface *nt1 = ON_NurbsSurface::New();
+	(*t1)= (ON_Surface *)(nt1);
     }
     if (!(*t2)) {
-        ON_NurbsSurface *nt2 = ON_NurbsSurface::New();
-        (*t2)= (ON_Surface *)(nt2);
+	ON_NurbsSurface *nt2 = ON_NurbsSurface::New();
+	(*t2)= (ON_Surface *)(nt2);
     }
     if (!(*t3)) {
-        ON_NurbsSurface *nt3 = ON_NurbsSurface::New();
-        (*t3)= (ON_Surface *)(nt3);
+	ON_NurbsSurface *nt3 = ON_NurbsSurface::New();
+	(*t3)= (ON_Surface *)(nt3);
     }
     if (!(*t4)) {
-        ON_NurbsSurface *nt4 = ON_NurbsSurface::New();
-        (*t4)= (ON_Surface *)(nt4);
+	ON_NurbsSurface *nt4 = ON_NurbsSurface::New();
+	(*t4)= (ON_Surface *)(nt4);
     }
 }
 
 bool ON_Surface_SubSurface(
-        const ON_Surface *srf,
-        ON_Interval *u_val,
-        ON_Interval *v_val,
-        ON_Surface **t1,
-        ON_Surface **t2,
-        ON_Surface **t3,
-        ON_Surface **t4,
-        ON_Surface **result
+	const ON_Surface *srf,
+	ON_Interval *u_val,
+	ON_Interval *v_val,
+	ON_Surface **t1,
+	ON_Surface **t2,
+	ON_Surface **t3,
+	ON_Surface **t4,
+	ON_Surface **result
 	)
 {
     bool split = true;
@@ -70,15 +70,15 @@ bool ON_Surface_SubSurface(
 
     // Make sure we have intervals with non-zero lengths
     if ((u_val->Length() <= ON_ZERO_TOLERANCE) || (v_val->Length() <= ON_ZERO_TOLERANCE))
-        return false;
+	return false;
 
     // If we have the original surface domain, just return true
     if ((fabs(u_val->Min() - srf->Domain(0).m_t[0]) <= ON_ZERO_TOLERANCE) &&
-        (fabs(u_val->Max() - srf->Domain(0).m_t[1]) <= ON_ZERO_TOLERANCE) &&
-        (fabs(v_val->Min() - srf->Domain(1).m_t[0]) <= ON_ZERO_TOLERANCE) &&
-        (fabs(v_val->Max() - srf->Domain(1).m_t[1]) <= ON_ZERO_TOLERANCE)) {
-        (*result) = (ON_Surface *)srf;
-        return true;
+	(fabs(u_val->Max() - srf->Domain(0).m_t[1]) <= ON_ZERO_TOLERANCE) &&
+	(fabs(v_val->Min() - srf->Domain(1).m_t[0]) <= ON_ZERO_TOLERANCE) &&
+	(fabs(v_val->Max() - srf->Domain(1).m_t[1]) <= ON_ZERO_TOLERANCE)) {
+	(*result) = (ON_Surface *)srf;
+	return true;
     }
     if (fabs(u_val->Min() - srf->Domain(0).m_t[0]) > ON_ZERO_TOLERANCE) last_split = 1;
     if (fabs(u_val->Max() - srf->Domain(0).m_t[1]) > ON_ZERO_TOLERANCE) last_split = 2;
@@ -90,22 +90,22 @@ bool ON_Surface_SubSurface(
     ON_Surface *ssplit = (ON_Surface *)srf;
     ON_Surface_Create_Scratch_Surfaces(t1, t2, t3, t4);
     if (fabs(u_val->Min() - srf->Domain(0).m_t[0]) > ON_ZERO_TOLERANCE) {
-        if (last_split == 1) {target = t4;} else {target = t2;}
-        split = ssplit->Split(0, u_val->Min(), *t1, *target);
-        ssplit = *target;
+	if (last_split == 1) {target = t4;} else {target = t2;}
+	split = ssplit->Split(0, u_val->Min(), *t1, *target);
+	ssplit = *target;
     }
     if ((fabs(u_val->Max() - srf->Domain(0).m_t[1]) > ON_ZERO_TOLERANCE) && split) {
-        if (last_split == 2) {target = t4;} else {target = t1;}
-        split = ssplit->Split(0, u_val->Max(), *target, *t3);
-        ssplit = *target;
+	if (last_split == 2) {target = t4;} else {target = t1;}
+	split = ssplit->Split(0, u_val->Max(), *target, *t3);
+	ssplit = *target;
     }
     if ((fabs(v_val->Min() - srf->Domain(1).m_t[0]) > ON_ZERO_TOLERANCE) && split) {
-        if (last_split == 3) {target = t4;} else {target = t3;}
-        split = ssplit->Split(1, v_val->Min(), *t2, *target);
-        ssplit = *target;
+	if (last_split == 3) {target = t4;} else {target = t3;}
+	split = ssplit->Split(1, v_val->Min(), *t2, *target);
+	ssplit = *target;
     }
     if ((fabs(v_val->Max() - srf->Domain(1).m_t[1]) > ON_ZERO_TOLERANCE) && split) {
-        split = ssplit->Split(1, v_val->Max(), *t4, *t2);
+	split = ssplit->Split(1, v_val->Max(), *t4, *t2);
     }
     (*result) = *t4;
     if (t1_del) delete *t1;
@@ -115,7 +115,6 @@ bool ON_Surface_SubSurface(
     (*result)->SetDomain(1,v_val->Min(), v_val->Max());
     return split;
 }
-
 
 
 // Local Variables:
