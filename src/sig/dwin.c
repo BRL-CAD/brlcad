@@ -67,9 +67,10 @@ void hamwin(double *data, int length);
 void coswin(double *data, int length, double percent);
 
 static const char usage[] = "\
-Usage: dwin [options] [width (1024)] [step (width)] [start]\n\
+Usage: dwin [options] [width (1024)] [step (width)] [start] <inputfile >outputfile\n\
+  Options:\n\
   -w  apply window (80%% split Cosine)\n\
-  -h  apply Hamming window\n\
+  -H  apply Hamming window\n\
   -b  apply Bartlett window (triangle)\n\
   -B  apply bias window (half triangle)\n\
   -e  start first sample at end of buffer\n\
@@ -81,14 +82,13 @@ int main(int argc, char **argv)
     int L, step;
     size_t ret;
 
-    if (isatty(fileno(stdin)) || isatty(fileno(stdout))) {
+    if (isatty(fileno(stdin)) || isatty(fileno(stdout)))
 	bu_exit(1, "%s", usage);
-    }
 
     while (argc > 1) {
 	if (BU_STR_EQUAL(argv[1], "-w")) {
 	    window++;
-	} else if (BU_STR_EQUAL(argv[1], "-h")) {
+	} else if (BU_STR_EQUAL(argv[1], "-H")) {
 	    window++;
 	    hamming++;
 	} else if (BU_STR_EQUAL(argv[1], "-B")) {
@@ -101,8 +101,11 @@ int main(int argc, char **argv)
 	    endwin++;
 	} else if (BU_STR_EQUAL(argv[1], "-m")) {
 	    midwin++;
-	} else
-	    break;
+	} else {
+	    if ( ! BU_STR_EQUAL(argv[1], "-h") && ! BU_STR_EQUAL(argv[1], "-?") )
+		fprintf(stderr,"dwin: illegal option %s\n",argv[1]);
+	    bu_exit(1, "%s", usage);
+	}
 	argc--;
 	argv++;
     }
