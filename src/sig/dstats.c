@@ -36,8 +36,10 @@
 #define IBUFSIZE 1024		/* Max read size */
 double buf[IBUFSIZE];		/* Input buffer */
 
-int verbose = 0;
-
+void printusage (void)
+{
+	bu_exit(1, "Usage: dstats [file.doubles]\n");
+}
 
 int main(int ac, char *av[])
 {
@@ -49,15 +51,13 @@ int main(int ac, char *av[])
     double mean, var;
     FILE *fp;
 
-    /* check for verbose flag */
-    if (ac > 1 && BU_STR_EQUAL(av[1], "-v")) {
-	verbose++;
-	av++;
-	ac--;
-    }
+    if ( ac == 1 && isatty(fileno(stdin)) && isatty(fileno(stdout)) )
+	printusage();
 
-    /* look for optional input file */
+    /* look for optional input file, after checking for -h and -? */
     if (ac > 1) {
+	if ( BU_STR_EQUAL(av[1], "-h") ||  BU_STR_EQUAL(av[1], "-?") )
+	    printusage();
 	if ((fp = fopen(av[1], "r")) == 0) {
 	    bu_exit(1, "dstats: can't open \"%s\"\n", av[1]);
 	}
@@ -66,13 +66,8 @@ int main(int ac, char *av[])
     } else
 	fp = stdin;
 
-    /* check usage */
-    if (ac > 1 || isatty(fileno(fp))) {
-	bu_exit(1, "Usage: dstats [-v] [file.doubles]\n");
-    }
-
     /*
-     * Find sum, min, max, mode.
+     * Find sum, min, max.
      */
     num_values = 0;
     sum = sum2 = 0;
