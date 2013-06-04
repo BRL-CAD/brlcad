@@ -1,12 +1,12 @@
 include_directories(
-	${TK_INCLUDE_PATH}
-	${TCL_INCLUDE_DIRS}
-        ${X11_INCLUDE_DIR}
-	${OPENGL_INCLUDE_DIR_GL}
 	${CMAKE_CURRENT_SOURCE_DIR}/../include
 	${CMAKE_CURRENT_SOURCE_DIR}/Xmu
 	${CMAKE_CURRENT_BINARY_DIR}
 	${CMAKE_CURRENT_BINARY_DIR}/../include
+	${TK_INCLUDE_PATH}
+	${TCL_INCLUDE_DIRS}
+        ${X11_INCLUDE_DIR}
+	${OPENGL_INCLUDE_DIR_GL}
 	)
 
 # Because Togl is Yet Another Tcl/Tk package that needs
