@@ -46,12 +46,15 @@
 #include "bu.h"
 
 
-/* c99 doesn't declare these */
-#ifdef HAVE_KILL
+/* strict c99 doesn't declare kill() (but POSIX does) */
+#if defined(HAVE_KILL) && !defined(HAVE_DECL_KILL)
 extern int kill(pid_t, int);
 #endif
 
-#ifndef fileno
+/* fileno() may be a macro (e.g., Windows) or may not even be declared
+ * when compiling strict, but declare it as needed
+ */
+#if defined(HAVE_FILENO) && !defined(HAVE_DECL_FILENO)
 extern int fileno(FILE*);
 #endif
 
