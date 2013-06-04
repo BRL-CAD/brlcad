@@ -42,7 +42,7 @@
 RT_EXPORT extern int brep_command(struct bu_vls *vls, const char *solid_name, const struct rt_tess_tol *ttol, const struct bn_tol *tol, struct brep_specific* bs, struct rt_brep_internal* bi, struct bn_vlblock *vbp, int argc, const char *argv[], char *commtag);
 RT_EXPORT extern int brep_conversion(struct rt_db_internal *intern, ON_Brep **brep);
 RT_EXPORT extern int brep_conversion_comb(struct rt_db_internal *old_internal, char *name, char *suffix, struct rt_wdb *wdbp, fastf_t local2mm);
-RT_EXPORT extern int brep_intersect(struct rt_db_internal *intern1, struct rt_db_internal *intern2, int i, int j, struct bn_vlblock *vbp, double max_dis);
+RT_EXPORT extern int brep_intersect(struct rt_db_internal *intern1, struct rt_db_internal *intern2, int i, int j, struct bn_vlblock *vbp);
 RT_EXPORT extern int rt_brep_boolean(struct rt_db_internal *out, const struct rt_db_internal *ip1, const struct rt_db_internal *ip2, const int operation);
 #else
 extern int brep_surface_plot(struct ged *gedp, struct brep_specific* bs, struct rt_brep_internal* bi, struct bn_vlblock *vbp, int index);
@@ -80,7 +80,7 @@ ged_brep(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_printf(gedp->ged_result_str, "\tplot - plot entire BREP\n");
 	bu_vls_printf(gedp->ged_result_str, "\tplot S [index] - plot specific BREP 'surface'\n");
 	bu_vls_printf(gedp->ged_result_str, "\tplot F [index] - plot specific BREP 'face'\n");
-	bu_vls_printf(gedp->ged_result_str, "\tintersect obj2 i j [max_dis] - intersect two surfaces\n");
+	bu_vls_printf(gedp->ged_result_str, "\tintersect obj2 i j - intersect two surfaces\n");
 	bu_vls_printf(gedp->ged_result_str, "\t[brepname] - convert the non-BREP object to BREP form\n");
 	bu_vls_printf(gedp->ged_result_str, "\t[suffix] - convert non-BREP comb to unevaluated BREP form\n");
 	return GED_HELP;
@@ -116,9 +116,12 @@ ged_brep(struct ged *gedp, int argc, const char *argv[])
 	struct rt_db_internal intern2;
 	int i, j;
 
-	/* we need at least 6 arguments */
-	if (argc < 6)
+	/* we need exactly 6 arguments */
+	if (argc != 6) {
+	    bu_vls_printf(gedp->ged_result_str, "There should be 6 arguments for intersection.\n");
+	    bu_vls_printf(gedp->ged_result_str, "See the usage for help.\n");
 	    return GED_ERROR;
+	}
 
 	/* get the other solid */
 	if ((ndp = db_lookup(gedp->ged_wdbp->dbip,  argv[3], LOOKUP_NOISY)) == RT_DIR_NULL) {
@@ -141,9 +144,7 @@ ged_brep(struct ged *gedp, int argc, const char *argv[])
 	vbp = rt_vlblock_init();
 
 	if (argc == 6) {
-	    brep_intersect(&intern, &intern2, i, j, vbp, 0.0);
-	} else {
-	    brep_intersect(&intern, &intern2, i, j, vbp, atof(argv[6]));
+	    brep_intersect(&intern, &intern2, i, j, vbp);
 	}
 
 	_ged_cvt_vlblock_to_solids(gedp, vbp, namebuf, 0);

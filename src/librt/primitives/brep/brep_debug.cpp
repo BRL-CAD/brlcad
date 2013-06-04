@@ -55,7 +55,7 @@ extern "C" {
     RT_EXPORT extern int brep_command(struct bu_vls *vls, const char *solid_name, const struct rt_tess_tol* ttol, const struct bn_tol* tol, struct brep_specific* bs, struct rt_brep_internal* bi, struct bn_vlblock *vbp, int argc, const char *argv[], char *commtag);
     RT_EXPORT extern int brep_conversion(struct rt_db_internal* intern, ON_Brep** brep);
     RT_EXPORT extern int brep_conversion_comb(struct rt_db_internal *old_internal, char *name, char *suffix, struct rt_wdb *wdbp, fastf_t local2mm);
-    RT_EXPORT extern int brep_intersect(struct rt_db_internal *intern1, struct rt_db_internal *intern2, int i, int j, struct bn_vlblock* vbp, double max_dis);
+    RT_EXPORT extern int brep_intersect(struct rt_db_internal *intern1, struct rt_db_internal *intern2, int i, int j, struct bn_vlblock* vbp);
 #ifdef __cplusplus
 }
 #endif
@@ -2769,7 +2769,7 @@ brep_command(struct bu_vls *vls, const char *solid_name, const struct rt_tess_to
 }
 
 
-int brep_intersect(struct rt_db_internal *intern1, struct rt_db_internal *intern2, int i, int j, struct bn_vlblock *vbp, double)
+int brep_intersect(struct rt_db_internal *intern1, struct rt_db_internal *intern2, int i, int j, struct bn_vlblock *vbp)
 {
     RT_CK_DB_INTERNAL(intern1);
     RT_CK_DB_INTERNAL(intern2);
