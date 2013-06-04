@@ -1628,13 +1628,15 @@ BRLCAD_TYPE_SIZE("uint64_t" "")
 BRLCAD_TYPE_SIZE("uintptr_t" "")
 BRLCAD_TYPE_SIZE("sig_t" "signal.h")
 
+
 # see if we have a TLS intrinsic, first check C++11 compliance
 check_cxx_source_compiles("static thread_local int i = 0; int main() { return i; }" HAVE_THREAD_LOCAL)
 if (HAVE_THREAD_LOCAL)
   CONFIG_H_APPEND(BRLCAD "#define HAVE_THREAD_LOCAL 1\n")
 else (HAVE_THREAD_LOCAL)
   # try GCC except Mac OS X
-  check_cxx_source_compiles("static __thread int i = 0; int main() { return i; }" HAVE___THREAD)
+  include(CheckCXXSourceRuns)
+  check_cxx_source_runs("static __thread int i = 0; int main() { return i; }" HAVE___THREAD)
   if (HAVE___THREAD)
     CONFIG_H_APPEND(BRLCAD "#define HAVE___THREAD 1\n")
   else (HAVE___THREAD)
