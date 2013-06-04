@@ -256,7 +256,7 @@ BRLCAD_CHECK_C_FLAG("std=gnu89" BUILD_TYPES Debug)
 # Also check for c99 conformance (with extensions) since some platform
 # environments require it due to c99-specific system headers (e.g.,
 # /System/Library/Frameworks/OpenGL.framework/Headers/gl.h on Mac OS X
-# having '//' comments embedded).  BRLCAD_CHECK_C_FLAG("std=gnu1x")
+# having '//' comments embedded).
 BRLCAD_CHECK_C_FLAG("std=gnu99" BUILD_TYPES Release VARS C99_FLAG)
 
 # Silence check for unused arguments (used to silence clang warnings about
