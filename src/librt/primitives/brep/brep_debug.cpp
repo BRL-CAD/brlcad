@@ -55,7 +55,12 @@ extern "C" {
     RT_EXPORT extern int brep_command(struct bu_vls *vls, const char *solid_name, const struct rt_tess_tol* ttol, const struct bn_tol* tol, struct brep_specific* bs, struct rt_brep_internal* bi, struct bn_vlblock *vbp, int argc, const char *argv[], char *commtag);
     RT_EXPORT extern int brep_conversion(struct rt_db_internal* intern, ON_Brep** brep);
     RT_EXPORT extern int brep_conversion_comb(struct rt_db_internal *old_internal, char *name, char *suffix, struct rt_wdb *wdbp, fastf_t local2mm);
-    RT_EXPORT extern int brep_intersect(struct rt_db_internal *intern1, struct rt_db_internal *intern2, int i, int j, struct bn_vlblock* vbp);
+    RT_EXPORT extern int brep_intersect_point_point(struct rt_db_internal *intern1, struct rt_db_internal *intern2, int i, int j);
+    RT_EXPORT extern int brep_intersect_point_curve(struct rt_db_internal *intern1, struct rt_db_internal *intern2, int i, int j);
+    RT_EXPORT extern int brep_intersect_point_surface(struct rt_db_internal *intern1, struct rt_db_internal *intern2, int i, int j);
+    RT_EXPORT extern int brep_intersect_curve_curve(struct rt_db_internal *intern1, struct rt_db_internal *intern2, int i, int j);
+    RT_EXPORT extern int brep_intersect_curve_surface(struct rt_db_internal *intern1, struct rt_db_internal *intern2, int i, int j);
+    RT_EXPORT extern int brep_intersect_surface_surface(struct rt_db_internal *intern1, struct rt_db_internal *intern2, int i, int j, struct bn_vlblock *vbp);
 #ifdef __cplusplus
 }
 #endif
@@ -2769,7 +2774,138 @@ brep_command(struct bu_vls *vls, const char *solid_name, const struct rt_tess_to
 }
 
 
-int brep_intersect(struct rt_db_internal *intern1, struct rt_db_internal *intern2, int i, int j, struct bn_vlblock *vbp)
+int
+brep_intersect_point_point(struct rt_db_internal *intern1, struct rt_db_internal *intern2, int i, int j)
+{
+    RT_CK_DB_INTERNAL(intern1);
+    RT_CK_DB_INTERNAL(intern2);
+    struct rt_brep_internal *bi1, *bi2;
+    bi1 = (struct rt_brep_internal *)intern1->idb_ptr;
+    bi2 = (struct rt_brep_internal *)intern2->idb_ptr;
+    RT_BREP_CK_MAGIC(bi1);
+    RT_BREP_CK_MAGIC(bi2);
+
+    ON_Brep *brep1 = bi1->brep;
+    ON_Brep *brep2 = bi2->brep;
+
+    if (i < 0 || i >= brep1->m_V.Count() || j < 0 || j >= brep2->m_V.Count()) {
+	bu_log("Out of range: \n");
+	bu_log("\t0 <= i <= %d\n", brep1->m_V.Count() - 1);
+	bu_log("\t0 <= j <= %d\n", brep2->m_V.Count() - 1);
+	return -1;
+    }
+
+    ON_ClassArray<ON_PX_EVENT> events;
+    if (ON_Intersect(brep1->m_V[i].Point(), brep2->m_V[j].Point(), events)) {
+	for (int k = 0; k < events.Count(); k++) {
+	    ON_wString wstr;
+	    ON_TextLog textlog(wstr);
+	    events[i].Dump(textlog);
+	    ON_String str = ON_String(wstr);
+	    bu_log("Intersection event %d:\n %s", k + 1, str.Array());
+	}
+    } else {
+	bu_log("No intersection.\n");
+    }
+
+    return 0;
+}
+
+
+int
+brep_intersect_point_curve(struct rt_db_internal *intern1, struct rt_db_internal *intern2, int i, int j)
+{
+    RT_CK_DB_INTERNAL(intern1);
+    RT_CK_DB_INTERNAL(intern2);
+    struct rt_brep_internal *bi1, *bi2;
+    bi1 = (struct rt_brep_internal *)intern1->idb_ptr;
+    bi2 = (struct rt_brep_internal *)intern2->idb_ptr;
+    RT_BREP_CK_MAGIC(bi1);
+    RT_BREP_CK_MAGIC(bi2);
+
+    ON_Brep *brep1 = bi1->brep;
+    ON_Brep *brep2 = bi2->brep;
+
+    if (i < 0 || i >= brep1->m_V.Count() || j < 0 || j >= brep2->m_C3.Count()) {
+	bu_log("Out of range: \n");
+	bu_log("\t0 <= i <= %d\n", brep1->m_V.Count() - 1);
+	bu_log("\t0 <= j <= %d\n", brep2->m_C3.Count() - 1);
+	return -1;
+    }
+
+    ON_ClassArray<ON_PX_EVENT> events;
+    if (ON_Intersect(brep1->m_V[i].Point(), *(brep2->m_C3[j]), events)) {
+	for (int k = 0; k < events.Count(); k++) {
+	    ON_wString wstr;
+	    ON_TextLog textlog(wstr);
+	    events[i].Dump(textlog);
+	    ON_String str = ON_String(wstr);
+	    bu_log("Intersection event %d:\n %s", k + 1, str.Array());
+	}
+    } else {
+	bu_log("No intersection.\n");
+    }
+
+    return 0;
+}
+
+
+int
+brep_intersect_point_surface(struct rt_db_internal *intern1, struct rt_db_internal *intern2, int i, int j)
+{
+    RT_CK_DB_INTERNAL(intern1);
+    RT_CK_DB_INTERNAL(intern2);
+    struct rt_brep_internal *bi1, *bi2;
+    bi1 = (struct rt_brep_internal *)intern1->idb_ptr;
+    bi2 = (struct rt_brep_internal *)intern2->idb_ptr;
+    RT_BREP_CK_MAGIC(bi1);
+    RT_BREP_CK_MAGIC(bi2);
+
+    ON_Brep *brep1 = bi1->brep;
+    ON_Brep *brep2 = bi2->brep;
+
+    if (i < 0 || i >= brep1->m_V.Count() || j < 0 || j >= brep2->m_S.Count()) {
+	bu_log("Out of range: \n");
+	bu_log("\t0 <= i <= %d\n", brep1->m_V.Count() - 1);
+	bu_log("\t0 <= j <= %d\n", brep2->m_S.Count() - 1);
+	return -1;
+    }
+
+    ON_ClassArray<ON_PX_EVENT> events;
+    if (ON_Intersect(brep1->m_V[i].Point(), *(brep2->m_S[j]), events)) {
+	for (int k = 0; k < events.Count(); k++) {
+	    ON_wString wstr;
+	    ON_TextLog textlog(wstr);
+	    events[i].Dump(textlog);
+	    ON_String str = ON_String(wstr);
+	    bu_log("Intersection event %d:\n %s", k + 1, str.Array());
+	}
+    } else {
+	bu_log("No intersection.\n");
+    }
+
+    return 0;
+}
+
+
+int
+brep_intersect_curve_curve(struct rt_db_internal *, struct rt_db_internal *, int, int)
+{
+    // Curve-curve intersection is to be implemented.
+    return -1;
+}
+
+
+int
+brep_intersect_curve_surface(struct rt_db_internal *, struct rt_db_internal *, int, int)
+{
+    // Curve-surface intersection is to be implemented.
+    return -1;
+}
+
+
+int
+brep_intersect_surface_surface(struct rt_db_internal *intern1, struct rt_db_internal *intern2, int i, int j, struct bn_vlblock *vbp)
 {
     RT_CK_DB_INTERNAL(intern1);
     RT_CK_DB_INTERNAL(intern2);
