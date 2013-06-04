@@ -28,7 +28,7 @@
 
 #include "common.h"
 
-#include <stdio.h>
+#include "bio.h"
 #include <string.h>
 #include <stdlib.h>
 
@@ -44,15 +44,23 @@ extern int ready(int nsecs);
 extern void getexposure(char *title);
 extern int dunnsend(char color, int val);
 
+static char usage[] = "Usage: dunncolor [-p] baseval redval greenval blueval";
 
 int
 main(int argc, char **argv)
 {
 
+    if (argc == 1 && isatty(fileno(stdin)) && isatty(fileno(stdout)) ) {
+	fprintf(stderr,"%s\n",usage);
+    	fprintf(stderr,"       Program continues running:\n");
+    }
+    else if ( BU_STR_EQUAL(argv[1], "-h") ||  BU_STR_EQUAL(argv[1], "-?") )
+	bu_exit(25, "%s\n", usage);
+
     dunnopen();
 
     if (!ready(5)) {
-	bu_exit(50, "dunncolor:  camera not ready\n");
+	bu_exit(50, "dunncolor: camera not ready\n");
     }
 
     if (argc > 2 && BU_STR_EQUAL(argv[1], "-p")) {
@@ -67,7 +75,7 @@ main(int argc, char **argv)
 
     /* check argument */
     if (argc != 5 && argc != 6) {
-	bu_exit(25, "Usage: dunncolor [-p] baseval redval greenval blueval\n");
+	bu_exit(25, "%s\n", usage);
     }
 
     dunnsend('A', atoi(*++argv));
