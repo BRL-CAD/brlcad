@@ -183,28 +183,28 @@ units_name_matches(const char *input, const char *name)
 	name = "";
 
     /* skip spaces */
-    while (isspace(*input))
+    while (isspace((unsigned char)*input))
 	input++;
-    while (isspace(*name))
+    while (isspace((unsigned char)*name))
 	name++;
 
     /* quick exit */
-    if (tolower(input[0]) != tolower(name[0]))
+    if (tolower((unsigned char)input[0]) != tolower((unsigned char)name[0]))
 	return 0;
 
     cp = input;
     /* skip spaces, convert to lowercase */
     while (*cp != '\0') {
-	if (!isspace(*cp))
-	    bu_vls_putc(&normalized_input, tolower(*cp));
+	if (!isspace((unsigned char)*cp))
+	    bu_vls_putc(&normalized_input, tolower((unsigned char)*cp));
 	cp++;
     }
 
     cp = name;
     /* skip spaces, convert to lowercase */
     while (*cp != '\0') {
-	if (!isspace(*cp))
-	    bu_vls_putc(&normalized_name, tolower(*cp));
+	if (!isspace((unsigned char)*cp))
+	    bu_vls_putc(&normalized_name, tolower((unsigned char)*cp));
 	cp++;
     }
 
