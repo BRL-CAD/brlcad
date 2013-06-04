@@ -244,20 +244,20 @@ BRLCAD_CHECK_CXX_FLAG(ftemplate-depth-128)
 # BRLCAD_CHECK_C_FLAG(msse2)
 BRLCAD_CHECK_C_FLAG(msse3 BUILD_TYPES Debug)
 
-# Check for c90 support with gnu extensions if we're not building for a
-# release and c99 support with gnu extensions when we are building for a
-# release just so we get broader portability testing - default development
-# mode is Debug, so the default behavior will be to keep things working
-# with the less feature-rich C standard.
+# Check for c90 support with gnu extensions if we're not building for
+# a release so we get more broad portability testing.  Since the
+# default is debug, it will be the more difficult to keep working
+# given it's the lesser feature-rich C standard.
+BRLCAD_CHECK_C_FLAG("std=gnu89" BUILD_TYPES Debug)
+
+# Check for c99 support with gnu extensions when we are building for a
+# release so we get to leverage more system features where available.
 #
-# Also check for c99 conformance regardless since some platform
+# Also check for c99 conformance (with extensions) since some platform
 # environments require it due to c99-specific system headers (e.g.,
 # /System/Library/Frameworks/OpenGL.framework/Headers/gl.h on Mac OS X
-# having '//' comments embedded).  Do as the Autotools system did
-# and use gnu99 here - c99 has problems on Linux.
-# BRLCAD_CHECK_C_FLAG("std=gnu1x")
+# having '//' comments embedded).  BRLCAD_CHECK_C_FLAG("std=gnu1x")
 BRLCAD_CHECK_C_FLAG("std=gnu99" BUILD_TYPES Release VARS C99_FLAG)
-BRLCAD_CHECK_C_FLAG("std=gnu89" BUILD_TYPES Debug)
 
 # Silence check for unused arguments (used to silence clang warnings about
 # unused options on the command line). By default clang generates a lot of
