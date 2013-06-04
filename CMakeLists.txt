@@ -1700,9 +1700,9 @@ BRLCAD_FUNCTION_EXISTS(writev HAVE_WRITEV)
 
 # we may compile in strict pedantic mode, but still want access to
 # some POSIX functions.  test whether these symbols are declared in
-# addition to whether they exist (above).
-CHECK_PROTOTYPE_EXISTS(kill "sys/types.h;signal.h" HAVE_DECL_KILL)
-CHECK_PROTOTYPE_EXISTS(fileno "stdio.h" HAVE_DECL_FILENO)
+# addition to whether they resolve (above).
+CHECK_SYMBOL_EXISTS(kill "sys/types.h;signal.h" HAVE_DECL_KILL)
+CHECK_SYMBOL_EXISTS(fileno "stdio.h" HAVE_DECL_FILENO)
 
 # On Windows, we need to check for hypot etc..  This test pertains
 # to the windows specific config file, not CONFIG_H_FILE - hence,
