@@ -1142,14 +1142,14 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
     } else {
 	struct ged_view *gvp;
 
+	memset(&dgcdp, 0, sizeof(struct _ged_client_data));
+	dgcdp.gedp = gedp;
+
 	gvp = gedp->ged_gvp;
 	if (gvp && gvp->gv_adaptive_plot)
 	    dgcdp.autoview = 1;
 	else
 	    dgcdp.autoview = 0;
-
-	memset(&dgcdp, 0, sizeof(struct _ged_client_data));
-	dgcdp.gedp = gedp;
 
 	/* Initial values for options, must be reset each time */
 	dgcdp.draw_nmg_only = 0;	/* no booleans */
