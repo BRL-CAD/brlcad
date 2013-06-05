@@ -23,6 +23,7 @@
  *
  */
 
+#include "common.h"
 #include <stdlib.h>
 
 #include "ged.h"
