@@ -40,11 +40,15 @@
  *
  */
 
+#include "common.h"
+
 #include <ctype.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
+
 #include "bu.h"
+
 
 /*
  * Flags used during conversion.
