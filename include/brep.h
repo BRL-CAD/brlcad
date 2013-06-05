@@ -107,9 +107,11 @@ typedef struct _brep_cdbitem {
     int dummy; /* MS Visual C hack which can be removed if the struct contains something meaningful */
 } brep_cdbitem;
 
-__END_DECLS
 
 #ifdef __cplusplus
+
+__END_DECLS
+
 extern "C++" {
 
 class plane_ray {
