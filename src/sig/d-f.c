@@ -50,12 +50,12 @@ int main(int argc, char **argv)
     size_t ret;
 
     if (argc > 1) {
-	if (! BU_STR_EQUAL(argv[1], "-n"))
+	if (!BU_STR_EQUAL(argv[1], "-n"))
 	    scale = atof(argv[1]);
 	argc--;
     }
 
-    if (argc > 1 || ZERO(scale) || isatty(fileno(stdin))) {
+    if (argc > 1 || ZERO(scale) || isatty(fileno(stdin)) || isatty(fileno(stdout))) {
 	bu_exit(1, "Usage: d-f [-n || scale] < doubles > floats\n");
     }
 

@@ -46,13 +46,11 @@ double obuf[512];
 int main(int argc, char **argv)
 {
     int i, num;
-    double scale;
+    double scale = 1.0;
     size_t ret;
 
     if (argc > 1) {
-	if (BU_STR_EQUAL(argv[1], "-n"))
-	    scale = 1.0;
-	else
+	if (!BU_STR_EQUAL(argv[1], "-n"))
 	    scale = atof(argv[1]);
 	argc--;
     }
