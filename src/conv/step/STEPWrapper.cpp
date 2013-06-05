@@ -23,6 +23,7 @@
  *
  */
 
+#include "common.h"
 #include <cctype>
 #include <algorithm>
 

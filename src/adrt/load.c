@@ -25,6 +25,7 @@
 # define TIE_PRECISION 0
 #endif
 
+#include "common.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

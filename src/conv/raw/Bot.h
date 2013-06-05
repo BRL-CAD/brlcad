@@ -29,8 +29,8 @@
 #ifndef BOT_INCLUDED
 #define BOT_INCLUDED
 
+#include "common.h"
 #include <vector>
-
 #include "wdb.h"
 
 
