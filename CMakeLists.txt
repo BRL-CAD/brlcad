@@ -1603,6 +1603,14 @@ if(BRLCAD_ENABLE_OPENGL)
   endif(OPENGL_INCLUDE_DIR_GLX)
 endif(BRLCAD_ENABLE_OPENGL)
 
+# may have the header, but ensure it works in pedantic mode (gcc bug)
+if (HAVE_EMMINTRIN_H
+    check_cxx_source_compiles("#include <emmintrin.h>\nint main() { return 0; }" HAVE_EMMINTRIN)
+    if (HAVE_EMMINTRIN)
+      CONFIG_H_APPEND(BRLCAD "#define HAVE_EMMINTRIN 1\n")
+    endif (HAVE_EMMINTRIN)
+endif (HAVE_EMMINTRIN_H)
+
 
 # *******************************************************************
 # ***         Check for Types/Structures - Stage 6 of 9           ***
@@ -1627,7 +1635,6 @@ BRLCAD_TYPE_SIZE("ssize_t" "")
 BRLCAD_TYPE_SIZE("uint64_t" "")
 BRLCAD_TYPE_SIZE("uintptr_t" "")
 BRLCAD_TYPE_SIZE("sig_t" "signal.h")
-
 
 # see if we have a TLS intrinsic, first check C++11 compliance
 check_cxx_source_compiles("static thread_local int i = 0; int main() { return i; }" HAVE_THREAD_LOCAL)
