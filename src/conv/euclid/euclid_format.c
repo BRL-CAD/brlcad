@@ -68,9 +68,7 @@ main(void)
 		bu_exit(1, "Unexpected EOF\n");
 
 	    if ( j != i+1 )
-	    {
 		bu_exit(1, "Points out of order\n");
-	    }
 
 	    VSET( pts[i], a, b, c );
 	}
