@@ -16,13 +16,13 @@
 <refsynopsisdiv xml:id="synopsis">
 <cmdsynopsis sepchar=" ">
   <command>fbclear</command>
-    <arg choice="opt" rep="norepeat"><arg choice="plain" rep="norepeat">-h </arg><arg choice="plain" rep="norepeat">-c </arg></arg>
+    <arg choice="opt" rep="norepeat"></arg><arg choice="plain" rep="norepeat">-c </arg></arg>
     <arg choice="opt" rep="norepeat">-F <replaceable>framebuffer</replaceable></arg>
     <arg choice="opt" rep="norepeat"><arg choice="plain" rep="norepeat"><replaceable>red</replaceable></arg><arg choice="plain" rep="norepeat"><replaceable>green</replaceable></arg><arg choice="plain" rep="norepeat"><replaceable>blue</replaceable></arg></arg>
 </cmdsynopsis>
 <cmdsynopsis sepchar=" ">
   <command>fbclear</command>
-    <arg choice="opt" rep="norepeat"><arg choice="plain" rep="norepeat">-h </arg><arg choice="plain" rep="norepeat">-c </arg></arg>
+    <arg choice="opt" rep="norepeat"></arg><arg choice="plain" rep="norepeat">-c </arg></arg>
     <arg choice="opt" rep="norepeat">-F <replaceable>framebuffer</replaceable></arg>
     <arg choice="opt" rep="norepeat"><replaceable>gray_value</replaceable></arg>
 </cmdsynopsis>
@@ -57,17 +57,7 @@ Otherwise the environment variable
 is used to select the display device (see
 <citerefentry><refentrytitle>brlcad</refentrytitle><manvolnum>1</manvolnum></citerefentry>).
 If this variable is not set, the default device for your system will
-be used.
-If the
-<option>-h</option>
-option is used on those devices where it makes a difference (e.g. Adage),
-the
-<!-- SM elided -->
-<emphasis remap="B">HIRES</emphasis>
-(1024x1024x24) memory is cleared; otherwise a
-<!-- SM elided -->
-<emphasis remap="B">LORES</emphasis>
-(512x512x24) device is assumed.</para>
+be used.</para>
 
 <para>In addition to those flags shown above, the
 <option>-W </option><replaceable>width</replaceable>
