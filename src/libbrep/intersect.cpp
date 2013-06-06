@@ -25,15 +25,16 @@
 
 #include "common.h"
 
-#include "bio.h"
 #include <assert.h>
 #include <vector>
 #include <algorithm>
+#include "bio.h"
 
 #include "vmath.h"
 #include "bu.h"
 
 #include "brep.h"
+
 
 /**
  * Point-point intersections (PPI)
