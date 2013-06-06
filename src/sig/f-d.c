@@ -31,8 +31,8 @@
 #include "common.h"
 
 #include <stdlib.h> /* for atof() */
-#include <math.h>
 #include <string.h>
+#include <math.h>
 #include "bio.h"
 
 #include "bu.h"
@@ -60,19 +60,18 @@ int main(int argc, char **argv)
     }
 
     while ((num = fread(&ibuf[0], sizeof(ibuf[0]), 512, stdin)) > 0) {
-	if (!EQUAL(scale, 1.0)) {
-	    for (i = 0; i < num; i++)
-		obuf[i] = ibuf[i] * scale;
-	} else {
+	if (EQUAL(scale, 1.0)) {
 	    for (i = 0; i < num; i++)
 		obuf[i] = ibuf[i];
+	} else {
+	    for (i = 0; i < num; i++)
+		obuf[i] = ibuf[i] * scale;
 	}
 
 	ret = fwrite(&obuf[0], sizeof(obuf[0]), num, stdout);
 	if (ret != (size_t)num)
 	    perror("fwrite");
     }
-
     return 0;
 }
 
