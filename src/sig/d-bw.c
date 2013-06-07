@@ -37,10 +37,14 @@
 #include "bu.h"
 #include "vmath.h"
 
-
 double ibuf[512];
 unsigned char obuf[512];
 
+void
+printusage(void)
+{
+    bu_exit(1, "Usage: d-bw [-n || scale] < doubles > unsigned_chars\n");
+}
 
 int main(int argc, char **argv)
 {
@@ -49,6 +53,9 @@ int main(int argc, char **argv)
     double value;
     int clip_high, clip_low;
     size_t ret;
+
+    if (BU_STR_EQUAL(argv[1], "-h") || BU_STR_EQUAL(argv[1], "-?"))
+	printusage();
 
     if (argc > 1) {
 	if (BU_STR_EQUAL(argv[1], "-n"))
@@ -59,7 +66,8 @@ int main(int argc, char **argv)
     }
 
     if (argc > 1 || ZERO(scale) || isatty(fileno(stdin))) {
-	bu_exit(1, "Usage: d-bw [-n || scale] < doubles > unsigned_chars\n");
+	fprintf(stderr, "bad argument\n");
+	printusage();
     }
 
     clip_high = clip_low = 0;

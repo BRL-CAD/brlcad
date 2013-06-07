@@ -46,17 +46,14 @@ printusage(void)
     bu_exit(1, "Usage: bw-d [-n || scale] < unsigned_chars > doubles\n");
 }
 
-
 int main(int argc, char **argv)
 {
     int i, num;
-    double scale;
+    double scale = 1.0;
     size_t ret;
 
     if (BU_STR_EQUAL(argv[1], "-h") || BU_STR_EQUAL(argv[1], "-?"))
 	printusage();
-
-    scale = 1.0;
 
     if (argc > 1) {
 	if (BU_STR_EQUAL(argv[1], "-n"))
@@ -79,6 +76,7 @@ int main(int argc, char **argv)
 	    for (i = 0; i < num; i++)
 		obuf[i] = (double)ibuf[i] * scale;
 	}
+
 	ret = fwrite(&obuf[0], sizeof(obuf[0]), num, stdout);
 	if (ret != (size_t)num)
 	    perror("fwrite");
