@@ -54,7 +54,7 @@ static FILE *infp;
 
 
 static char usage[] = "\
-Usage: pix-ps [-e] [-c|-l] [-L] [-h]\n\
+Usage: pix-ps [-e] [-c|-l] [-L]\n\
 	[-s input_squaresize] [-w input_width] [-n input_height]\n\
 	[-S inches_square] [-W inches_width] [-N inches_height] [file.pix]\n";
 
@@ -138,15 +138,11 @@ get_args(int argc, char **argv)
 {
     int c;
 
-    while ((c = bu_getopt(argc, argv, "ehclLs:w:n:S:W:N:")) != -1) {
+    while ((c = bu_getopt(argc, argv, "eclLs:w:n:S:W:N:h?")) != -1) {
 	switch (c) {
 	    case 'e':
 		/* Encapsulated PostScript */
 		encapsulated++;
-		break;
-	    case 'h':
-		/* high-res */
-		height = width = 1024;
 		break;
 	    case 'c':
 		center = 1;
@@ -205,6 +201,12 @@ get_args(int argc, char **argv)
     return 1;		/* OK */
 }
 
+void
+printusage(void)
+{
+	(void)fputs(usage, stderr);
+	bu_exit (1, NULL);
+}
 
 int
 main(int argc, char **argv)
@@ -214,12 +216,12 @@ main(int argc, char **argv)
     size_t scans_per_patch, bytes_per_patch;
     size_t y;
 
-    outwidth = outheight = DEFAULT_SIZE;
+    if (argc == 1 && isatty(fileno(stdin)) && isatty(fileno(stdout)) )
+	printusage();
+    if (!get_args(argc, argv))
+	printusage();
 
-    if (!get_args(argc, argv)) {
-	(void)fputs(usage, stderr);
-	bu_exit (1, NULL);
-    }
+    outwidth = outheight = DEFAULT_SIZE;
 
     if (encapsulated) {
 	xpoints = width;
