@@ -30,7 +30,6 @@
 
 #include "common.h"
 
-#include <stdio.h>
 #include <stdlib.h> /* for atof() */
 #include <string.h>
 #include "bio.h"
