@@ -31,7 +31,6 @@
 
 #include <stdlib.h> /* for atof() */
 #include <string.h>
-#include <math.h>
 #include "bio.h"
 
 #include "bu.h"
