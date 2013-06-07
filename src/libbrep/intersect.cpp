@@ -38,6 +38,14 @@
 
 /**
  * Point-point intersections (PPI)
+ *
+ * approach:
+ *
+ * - Calculate the distance of the two points.
+ *
+ * - If the distance is within the tolerance, the two points
+ *   intersect. Thd mid-point of them is the intersection point,
+ *   and half of the distance is the uncertainty radius.
  */
 bool
 ON_Intersect(const ON_3dPoint& pointA,
@@ -79,14 +87,49 @@ ON_Intersect(const ON_3dPoint&,
  * Point-surface intersections (PSI)
  */
 bool
-ON_Intersect(const ON_3dPoint&,
-	     const ON_Surface&,
-	     ON_ClassArray<ON_PX_EVENT>&,
-	     double,
-	     const ON_Interval*,
-	     const ON_Interval*)
+ON_Intersect(const ON_3dPoint& pointA,
+	     const ON_Surface& surfaceB,
+	     ON_ClassArray<ON_PX_EVENT>& x,
+	     double tolerance,
+	     const ON_Interval* surfaceB_udomain,
+	     const ON_Interval* surfaceB_vdomain)
 {
-    // Implement later.
+    if (tolerance <= 0.0)
+	tolerance = 0.01;
+
+    ON_Interval u_domain, v_domain;
+    if (surfaceB_udomain == 0)
+	u_domain = surfaceB.Domain(0);
+    else
+	u_domain = *surfaceB_udomain;
+    if (surfaceB_vdomain == 0)
+	v_domain = surfaceB.Domain(1);
+    else
+	v_domain = *surfaceB_vdomain;
+
+    // We need ON_BrepFace for get_closest_point().
+    // TODO: Use routines like SubSurface in SSI to reduce computation.
+    ON_Brep *brep = ON_Brep::New();
+    brep->AddSurface(surfaceB.Duplicate());
+    brep->NewFace(0);
+    ON_2dPoint closest_point_uv;
+    brlcad::get_closest_point(closest_point_uv, brep->Face(0), pointA);
+    delete brep;
+
+    ON_3dPoint closest_point_3d = surfaceB.PointAt(closest_point_uv.x, closest_point_uv.y);
+    bu_log("%lf %lf %lf\n", pointA.x, pointA.y, pointA.z);
+    bu_log("%lf %lf %lf\n", closest_point_3d.x, closest_point_3d.y, closest_point_3d.z);
+    if (pointA.DistanceTo(closest_point_3d) <= tolerance) {
+	ON_PX_EVENT Event;
+	Event.m_type = ON_PX_EVENT::psx_point;
+	Event.m_A = pointA;
+	Event.m_b = closest_point_uv;
+	Event.m_B = closest_point_3d;
+	Event.m_Mid = (pointA + Event.m_B) * 0.5;
+	Event.m_radius = pointA.DistanceTo(Event.m_B) * 0.5;
+	x.Append(Event);
+	return true;
+    }
     return false;
 }
 
