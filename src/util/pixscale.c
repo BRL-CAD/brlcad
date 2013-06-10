@@ -61,7 +61,7 @@ int outy = 512;
 
 
 static char usage[] = "\
-Usage: pixscale [-h] [-r] [-s squareinsize] [-w inwidth] [-n inheight]\n\
+Usage: pixscale [-r] [-s squareinsize] [-w inwidth] [-n inheight]\n\
 	[-S squareoutsize] [-W outwidth] [-N outheight] [in.pix] > out.pix\n";
 
 /****** THIS PROBABLY SHOULD BE ELSEWHERE *******/
@@ -339,15 +339,11 @@ get_args(int argc, char **argv)
 {
     int c;
 
-    while ((c = bu_getopt(argc, argv, "rhs:w:n:S:W:N:")) != -1) {
+    while ((c = bu_getopt(argc, argv, "rs:w:n:S:W:N:h?")) != -1) {
 	switch (c) {
 	    case 'r':
 		/* pixel replication */
 		rflag = 1;
-		break;
-	    case 'h':
-		/* high-res */
-		inx = iny = 1024;
 		break;
 	    case 'S':
 		/* square size */
@@ -413,9 +409,10 @@ main(int argc, char **argv)
 {
     int i;
 
-    if (!get_args(argc, argv) || isatty(fileno(stdout))) {
+    if ( argc == 1 && isatty(fileno(stdin)) && isatty(fileno(stdout)) )
 	bu_exit(1, "%s", usage);
-    }
+    if (!get_args(argc, argv) || isatty(fileno(stdout)))
+	bu_exit(1, "%s", usage);
 
     if (inx <= 0 || iny <= 0 || outx <= 0 || outy <= 0) {
 	bu_exit(2, "pixscale: bad size\n");

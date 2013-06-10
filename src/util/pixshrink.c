@@ -35,7 +35,7 @@
 #define UCHAR unsigned char
 
 /* declarations to support use of bu_getopt() system call */
-char *options = "uhs:w:n:f:";
+char *options = "us:w:n:f:h?";
 
 char *progname = "(noname)";
 char *filename = "(stdin)";
@@ -173,7 +173,7 @@ int method = METH_BOXCAR;
 void usage(void)
 {
     (void) fprintf(stderr,
-		   "Usage: %s [-u] [-h] [-w width] [-n scanlines] [-s squaresize]\n\
+		   "Usage: %s [-u] [-w width] [-n scanlines] [-s squaresize]\n\
 		 [-f shrink_factor] [pixfile] > pixfile\n", progname);
     bu_exit (1, NULL);
 }
@@ -182,15 +182,13 @@ void usage(void)
 /*
  * P A R S E _ A R G S --- Parse through command line flags
  */
-void parse_args(int ac, char **av)
+void
+parse_args(int ac, char **av)
 {
     int c;
 
     if (!(progname = strrchr(*av, '/')))
 	progname = *av;
-
-    /* Turn off bu_getopt's error messages */
-    bu_opterr = 0;
 
     /* get all the option flags from the command line */
     while ((c=bu_getopt(ac, av, options)) != -1)
@@ -198,9 +196,6 @@ void parse_args(int ac, char **av)
 	    case 'f':
 		if ((c = atoi(bu_optarg)) > 1)
 		    factor = c;
-		break;
-	    case 'h':
-		width = height = 1024;
 		break;
 	    case 'n':
 		if ((c=atoi(bu_optarg)) > 0)
@@ -217,7 +212,6 @@ void parse_args(int ac, char **av)
 	    case 'u':
 		method = METH_UNDERSAMPLE;
 		break;
-	    case '?':
 	    default:
 		usage();
 		break;
@@ -254,7 +248,8 @@ int main(int ac, char **av)
     UCHAR *buffer = (UCHAR *)NULL;
 
     (void)parse_args(ac, av);
-    if (isatty(fileno(stdin))) usage();
+    if (isatty(fileno(stdin)))
+	usage();
 
     /* process stdin */
     scanlen = width * 3;
