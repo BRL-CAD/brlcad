@@ -30,8 +30,8 @@
 #include "common.h"
 
 #include <stdlib.h> /* for atof() */
-#include <math.h>
 #include <string.h>
+#include <math.h>
 #include "bio.h"
 
 #include "bu.h"
@@ -68,11 +68,11 @@ int main(int argc, char **argv)
 	    for (i = 0; i < num; i++)
 		obuf[i] = (double)ibuf[i] * scale;
 	}
+
 	ret = fwrite(&obuf[0], sizeof(obuf[0]), num, stdout);
 	if (ret != (size_t)num)
 	    perror("fwrite");
     }
-
     return 0;
 }
 
