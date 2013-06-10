@@ -71,7 +71,7 @@ static int pause_sec = 0; 	/* Pause that many seconds before
 				   closing the FB and exiting */
 
 static char usage[] = "\
-Usage: pix-fb [-a -h -i -c -z -1] [-m #lines] [-F framebuffer]\n\
+Usage: pix-fb [-a -i -c -z -1] [-m #lines] [-F framebuffer]\n\
 	[-s squarefilesize] [-w file_width] [-n file_height]\n\
 	[-x file_xoff] [-y file_yoff] [-X scr_xoff] [-Y scr_yoff]\n\
 	[-S squarescrsize] [-W scr_width] [-N scr_height] [-p seconds]\n\
@@ -82,7 +82,7 @@ get_args(int argc, char **argv)
 {
     int c;
 
-    while ((c = bu_getopt(argc, argv, "1m:ahiczF:p:s:w:n:x:y:X:Y:S:W:N:")) != -1) {
+    while ((c = bu_getopt(argc, argv, "1m:aiczF:p:s:w:n:x:y:X:Y:S:W:N:h?")) != -1) {
 	switch (c) {
 	    case '1':
 		one_line_only = 1;
@@ -92,12 +92,6 @@ get_args(int argc, char **argv)
 		break;
 	    case 'a':
 		autosize = 1;
-		break;
-	    case 'h':
-		/* high-res */
-		file_height = file_width = 1024;
-		scr_height = scr_width = 1024;
-		autosize = 0;
 		break;
 	    case 'i':
 		inverse = 1;
