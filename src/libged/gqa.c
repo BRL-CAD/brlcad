@@ -2358,9 +2358,19 @@ ged_gqa(struct ged *gedp, int argc, const char *argv[])
     azimuth_deg = 0.0;
     elevation_deg = 0.0;
     densityFileName = (char *)0;
+
+    /* FIXME: this is completely arbitrary, should probably be based
+     * on the model size.
+     */
     gridSpacing = 50.0;
-    /* set default grid spacing limit based on distance tolerance */
-    gridSpacingLimit = 4.0 * gedp->ged_wdbp->wdb_tol.dist;
+
+    /* default grid spacing limit is based on the current distance
+     * tolerance, one order of magnitude greater.
+     *
+     * FIXME: should probably be based on the model size.
+     */
+    gridSpacingLimit = 10.0 * gedp->ged_wdbp->wdb_tol.dist;
+
     makeOverlapAssemblies = 0;
     require_num_hits = 1;
     max_cpus = ncpu = bu_avail_cpus();
