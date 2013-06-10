@@ -87,7 +87,7 @@
  *
  * TODO: test removal of __STRICT_ANSI__ on Windows.
  */
-#if defined(__STRICT_ANSI__) || defined(__GNUC_GNU_INLINE__)
+#if !defined __cplusplus && (defined(__STRICT_ANSI__) || defined(__GNUC_GNU_INLINE__))
 #  ifndef inline
 #    define inline /***/
 #  endif
