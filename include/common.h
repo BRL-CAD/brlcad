@@ -82,8 +82,12 @@
 #  endif
 #endif
 
-/* ansi c89 does not allow the 'inline' keyword */
-#ifdef __STRICT_ANSI__
+/* ansi c89 does not allow the 'inline' keyword, check if GNU inline
+ * rules are in effect.
+ *
+ * TODO: test removal of __STRICT_ANSI__ on Windows.
+ */
+#if defined(__STRICT_ANSI__) || defined(__GNUC_GNU_INLINE__)
 #  ifndef inline
 #    define inline /***/
 #  endif
