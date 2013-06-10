@@ -59,9 +59,8 @@ int main(int argc, char **argv)
 	argc--;
     }
 
-    if (argc > 1 || ZERO(scale) || isatty(fileno(stdin))) {
+    if (argc > 1 || ZERO(scale) || isatty(fileno(stdin)))
 	bu_exit(1, "Usage: f-i [-n || scale] < floats > shorts\n");
-    }
 
     clip_high = clip_low = 0;
 
