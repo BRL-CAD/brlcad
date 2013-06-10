@@ -1621,7 +1621,8 @@ options_prep(struct rt_i *rtip, vect_t span)
     /* if the vol/weight tolerances are not set, pick something */
     if (analysis_flags & ANALYSIS_VOLUME) {
 	char *name = "volume.pl";
-	if (EQUAL(volume_tolerance, -1)) {
+	if (volume_tolerance < 0.0) {
+	    /* using 1/1000th the volume as a default tolerance, no particular reason */
 	    volume_tolerance = span[X] * span[Y] * span[Z] * 0.001;
 	    bu_log("Using estimated volume tolerance %g %s\n",
 			  volume_tolerance / units[VOL]->val, units[VOL]->name);
@@ -1634,7 +1635,7 @@ options_prep(struct rt_i *rtip, vect_t span)
 	    }
     }
     if (analysis_flags & ANALYSIS_WEIGHT) {
-	if (EQUAL(weight_tolerance, -1)) {
+	if (weight_tolerance < 0.0) {
 	    double max_den = 0.0;
 	    int i;
 	    for (i = 0; i < num_densities; i++) {
