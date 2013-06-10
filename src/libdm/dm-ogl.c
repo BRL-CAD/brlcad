@@ -133,9 +133,6 @@ HIDDEN int ogl_getDisplayImage(struct dm *dmp, unsigned char **image);
 HIDDEN void ogl_reshape(struct dm *dmp, int width, int height);
 HIDDEN int ogl_makeCurrent(struct dm *dmp);
 
-HIDDEN int ogl_setLight(struct dm *dmp, int lighting_on);
-HIDDEN int ogl_setZBuffer(struct dm *dmp, int zbuffer_on);
-
 
 struct dm dm_ogl = {
     ogl_close,
