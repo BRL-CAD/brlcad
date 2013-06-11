@@ -35,7 +35,7 @@
 
 ColorMap cm;
 static char usage[] = "\
-Usage: fb-cmap [-h] [colormap]\n";
+Usage: fb-cmap [-H] [colormap]\n";
 
 int
 main(int argc, char **argv)
@@ -46,10 +46,11 @@ main(int argc, char **argv)
     int i;
 
     while (argc > 1) {
-	if (BU_STR_EQUAL(argv[1], "-h")) {
+	if (BU_STR_EQUAL(argv[1], "-H")) {
 	    fbsize = 1024;
 	} else if (argv[1][0] == '-') {
-	    /* unknown flag */
+	    if ( (!BU_STR_EQUAL(argv[1], "-?")) && (!BU_STR_EQUAL(argv[1], "-h")) )
+		fprintf(stderr, "fb-cmap: unknown flag %s\n", argv[1]);
 	    bu_exit(1, "%s", usage);
 	} else
 	    break;	/* must be a filename */
@@ -62,8 +63,11 @@ main(int argc, char **argv)
 	    fprintf(stderr, "fb-cmap: can't open \"%s\"\n", argv[1]);
 	    bu_exit(2, "%s", usage);
 	}
-    } else
+    } else {
 	fp = stdout;
+	if(isatty(fileno(fp)))
+	    fprintf(stderr, "%s       Program continues running:\n", usage);
+    }
 
     if ((fbp = fb_open(NULL, fbsize, fbsize)) == FBIO_NULL)
 	bu_exit(2, "Unable to open framebuffer\n");
