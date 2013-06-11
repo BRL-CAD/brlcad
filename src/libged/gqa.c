@@ -1779,34 +1779,33 @@ weight_volume_terminate(struct cstate *state)
 	int obj;
 
 	for (obj = 0; obj < num_objects; obj++) {
-	    int view = 0;
+	    int view;
+	    double tmp;
+
 	    if (verbose)
 		bu_vls_printf(_ged_current_gedp->ged_result_str, "object %d\n", obj);
-	    /* compute weight of object for given view */
-	    val = obj_tbl[obj].o_weight[view] =
-		obj_tbl[obj].o_lenDensity[view] * (state->area[view] / state->shots[view]);
 
+	    /* compute weight of object for given view */
 	    low = INFINITY;
 	    hi = -INFINITY;
-	    /* compute the per-view weight of this object */
-	    for (view=1; view < num_views; view++) {
-		obj_tbl[obj].o_weight[view] =
-		    obj_tbl[obj].o_lenDensity[view] *
-		    (state->area[view] / state->shots[view]);
-
-		delta = fabs(val - obj_tbl[obj].o_weight[view]);
-		if (delta < low) low = delta;
-		if (delta > hi) hi = delta;
+	    tmp = 0.0;
+	    for (view = 0; view < num_views; view++) {
+		val = obj_tbl[obj].o_weight[view] =
+		    obj_tbl[obj].o_lenDensity[view] * (state->area[view] / state->shots[view]);
+		V_MIN(low, val);
+		V_MAX(hi, val);
+		tmp += val;
 	    }
 	    delta = hi - low;
 
 	    if (verbose)
-		bu_vls_printf(_ged_current_gedp->ged_result_str, "\t%s weight %g %s +%g -%g\n",
-			      obj_tbl[obj].o_name,
-			      val / units[WGT]->val,
-			      units[WGT]->name,
-			      fabs(hi / units[WGT]->val),
-			      fabs(low / units[WGT]->val));
+		bu_vls_printf(_ged_current_gedp->ged_result_str, 
+		    "\t%s running avg weight %g %s hi=(%g) low=(%g)\n",
+		    obj_tbl[obj].o_name,
+		    (tmp / num_views) / units[WGT]->val,
+		    units[WGT]->name,
+		    hi / units[WGT]->val,
+		    low / units[WGT]->val);
 
 	    if (delta > weight_tolerance) {
 		/* this object differs too much in each view, so we
@@ -1831,31 +1830,29 @@ weight_volume_terminate(struct cstate *state)
 
 	/* for each object, compute the volume for all views */
 	for (obj = 0; obj < num_objects; obj++) {
+	    int view;
+	    double tmp;
 
 	    /* compute volume of object for given view */
-	    int view = 0;
-	    val = obj_tbl[obj].o_volume[view] =
-		obj_tbl[obj].o_len[view] * (state->area[view] / state->shots[view]);
-
 	    low = INFINITY;
 	    hi = -INFINITY;
-	    /* compute the per-view volume of this object */
-	    for (view=1; view < num_views; view++) {
-		obj_tbl[obj].o_volume[view] =
+	    tmp = 0.0;
+	    for (view = 0; view < num_views; view++) {
+		val = obj_tbl[obj].o_volume[view] =
 		    obj_tbl[obj].o_len[view] * (state->area[view] / state->shots[view]);
-
-		delta = fabs(val - obj_tbl[obj].o_volume[view]);
-		if (delta < low) low = delta;
-		if (delta > hi) hi = delta;
+		V_MIN(low, val);
+		V_MAX(hi, val);
+		tmp += val;
 	    }
 	    delta = hi - low;
 
 	    if (verbose)
-		bu_vls_printf(_ged_current_gedp->ged_result_str, "\t%s volume %g %s +(%g) -(%g)\n",
-			      obj_tbl[obj].o_name,
-			      val / units[VOL]->val, units[VOL]->name,
-			      hi / units[VOL]->val,
-			      fabs(low / units[VOL]->val));
+		bu_vls_printf(_ged_current_gedp->ged_result_str, 
+		    "\t%s running avg volume %g %s hi=(%g) low=(%g)\n",
+		    obj_tbl[obj].o_name,
+		    (tmp / num_views) / units[VOL]->val, units[VOL]->name,
+		    hi / units[VOL]->val,
+		    low / units[VOL]->val);
 
 	    if (delta > volume_tolerance) {
 		/* this object differs too much in each view, so we
