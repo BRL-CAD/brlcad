@@ -137,7 +137,7 @@ macro(BRLCAD_CHECK_FLAG)
     foreach(build_type ${FLAG_BUILD_TYPES})
       CHECK_COMPILER_FLAG(${FLAG_LANG} ${NEW_FLAG} ${UPPER_FLAG}_COMPILER_FLAG_FOUND)
       if(${UPPER_FLAG}_COMPILER_FLAG_FOUND)
-	ADD_NEW_FLAG(C NEW_FLAG "${build_type}")
+	ADD_NEW_FLAG(${FLAG_LANG} NEW_FLAG "${build_type}")
       endif(${UPPER_FLAG}_COMPILER_FLAG_FOUND)
     endforeach(build_type ${FLAG_BUILD_TYPES})
 
