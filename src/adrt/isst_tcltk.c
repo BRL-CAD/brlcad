@@ -298,7 +298,6 @@ isst_init(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interp), int UNUSED(
 static int
 isst_zap(ClientData UNUSED(clientData), Tcl_Interp *interp, int objc, Tcl_Obj *const *objv)
 {
-    printf(">>> %s\n", __FUNCTION__);
     if (objc != 2) {
 	Tcl_WrongNumArgs(interp, 1, objv, "pathName");
 	return TCL_ERROR;
@@ -314,7 +313,6 @@ static int
 render_mode(ClientData UNUSED(clientData), Tcl_Interp *interp, int objc, Tcl_Obj *const *objv)
 {
     char buf[BUFSIZ];
-    printf(">>> %s\n", __FUNCTION__);
 
     if (objc < 3) {
 	Tcl_WrongNumArgs(interp, 1, objv, "pathName mode [arguments]");
@@ -337,7 +335,6 @@ zero_view(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interp), int UNUSED(
 {
     vect_t vec;
     double mag_vec;
-    printf(">>> %s\n", __FUNCTION__);
 
     mag_vec = DIST_PT_PT(isst->camera.pos, isst->camera.focus);
 
