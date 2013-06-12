@@ -25,9 +25,9 @@
 
 #include "common.h"
 
-#include <string.h>
-#include <ctype.h>
 #include <stdlib.h>
+#include <ctype.h>
+#include <string.h>
 #include "bio.h"
 
 #include "bu.h"
@@ -38,7 +38,8 @@ int nflag = 0;
 static const char usage[] = "\
 Usage: d-a [-n] < doubles > ascii\n";
 
-int main(int argc, char **argv)
+int
+main(int argc, char **argv)
 {
     double d;
 
