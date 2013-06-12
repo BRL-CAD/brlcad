@@ -19,7 +19,6 @@
     <arg choice="opt" rep="norepeat">-e </arg>
     <arg choice="opt" rep="norepeat">-f </arg>
     <arg choice="opt" rep="norepeat">-s </arg>
-    <arg choice="opt" rep="norepeat">-h </arg>
     <arg choice="opt" rep="norepeat">-F <replaceable>framebuffer</replaceable></arg>
     <arg choice="opt" rep="norepeat">-S <replaceable>squarescrsize</replaceable></arg>
     <arg choice="opt" rep="norepeat">-W <replaceable>scr_width</replaceable></arg>
@@ -71,9 +70,6 @@ by using the
 flag.</para>
 
 <para>Ordinarily, the requested framebuffer size is the device default.
-Specifying the
-<option>-h</option>
-flag changes the size to 1024x1024.</para>
 
 <para>The
 <option>-W </option><replaceable>scr_width</replaceable>
