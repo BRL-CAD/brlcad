@@ -28,6 +28,10 @@
 
 #include <stdio.h>
 
+#ifdef _WIN32
+#include "tkWinInt.h"
+#endif
+
 #include <GL/gl.h>
 
 #include "tcl.h"
