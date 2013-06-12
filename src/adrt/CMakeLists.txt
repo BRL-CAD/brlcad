@@ -56,18 +56,16 @@ CMAKEFILES(${tie_HDRS})
 
 # Tcl/Tk based ISST
 INCLUDE_DIRECTORIES(
-  ${TOGL_INCLUDE_DIRS}
   ${OPENGL_INCLUDE_DIR_GL}
   ${OPENGL_INCLUDE_DIR_GLX}
   ${X11_INCLUDE_DIR}
   ${CMAKE_CURRENT_BINARY_DIR}/../other/togl/src
   )
-if(TOGL_LIBRARIES AND BRLCAD_ENABLE_OPENGL)
-  add_definitions(-DTOGL_USE_EXTERNAL_CONFIG_H=1)
+if(BRLCAD_ENABLE_OPENGL)
   if(WIN32)
-    BRLCAD_ADDLIB(issttcltk isst_tcltk.c "librender;${TCL_LIBRARIES};${TOGL_STUB_LIBRARIES};${OPENGL_LIBRARIES};opengl32.lib" NO_INSTALL)
+    BRLCAD_ADDLIB(issttcltk isst_tcltk.c "librender;libdm;${TCL_LIBRARIES};${OPENGL_LIBRARIES};opengl32.lib" NO_INSTALL)
   else(WIN32)
-    BRLCAD_ADDLIB(issttcltk isst_tcltk.c "librender;${TCL_LIBRARIES};${TOGL_LIBRARIES}" NO_INSTALL)
+    BRLCAD_ADDLIB(issttcltk isst_tcltk.c "librender;libdm;${TCL_LIBRARIES};" NO_INSTALL)
   endif(WIN32)
   install(TARGETS issttcltk
     RUNTIME DESTINATION ${BIN_DIR}/isst0.1
@@ -92,7 +90,7 @@ if(TOGL_LIBRARIES AND BRLCAD_ENABLE_OPENGL)
     endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
   endif(NOT CMAKE_CONFIGURATION_TYPES)
   install(PROGRAMS ${isst_script} DESTINATION bin)
-endif(TOGL_LIBRARIES AND BRLCAD_ENABLE_OPENGL)
+endif(BRLCAD_ENABLE_OPENGL)
 CMAKEFILES(isst_tcltk.c)
 
 set(adrt_ignore_files
