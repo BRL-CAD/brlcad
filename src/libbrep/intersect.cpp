@@ -307,7 +307,7 @@ ON_Intersect(const ON_3dPoint& pointA,
 	    closest_point_t = t;
 	ON_3dPoint closest_point = line.PointAt(closest_point_t);
 	dis = pointA.DistanceTo(closest_point);
-	
+
 	if (dis <= tolerance) {
 	    ON_PX_EVENT *Event = new ON_PX_EVENT;
 	    Event->m_type = ON_PX_EVENT::pcx_point;
