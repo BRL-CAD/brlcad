@@ -28,8 +28,6 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 * closing the graphics window brings down X11 on Mac due to a bad
   context.  fix or revert recent close window behavior.
 
-* Investigate replacing togl for adrt/isst
-
 * Rework p2t so it doesn't take down the application
   when a NURBS tessellation fails - should just abandon the
   problem input and continue.

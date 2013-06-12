@@ -994,7 +994,7 @@ if(NOT BRLCAD_BUNDLED_LIBS MATCHES "AUTO" AND NOT BRLCAD_BUNDLED_LIBS MATCHES "B
 endif(NOT BRLCAD_BUNDLED_LIBS MATCHES "AUTO" AND NOT BRLCAD_BUNDLED_LIBS MATCHES "BUNDLED" AND NOT BRLCAD_BUNDLED_LIBS MATCHES "SYSTEM")
 
 # Enable Aqua widgets on Mac OSX.  This impacts Tcl/Tk building and OpenGL
-# building. Not currently working - needs work in at least Tk and togl
+# building. Not currently working - needs work in at least Tk
 # CMake logic (probably more), and the display manager/framebuffer codes are known to depend
 # on either GLX or WGL specifically in their current forms.
 option(BRLCAD_ENABLE_AQUA "Use Aqua instead of X11 whenever possible on OSX." OFF)

@@ -678,40 +678,6 @@ endif(BRLCAD_ITK_BUILD)
 mark_as_advanced(ITK_VERSION)
 mark_as_advanced(ITK_LIBRARY)
 
-# For now only turn on Togl for X11, but will need it everywhere
-# eventually.  Will need some logic to both look for package require
-# and the C library, as both APIs will be needed.
-
-set(togl_ALIASES ENABLE_TOGL)
-set(togl_DESCRIPTION "
-Option for enabling and disabling compilation of the Togl package for
-Tcl/Tk OpenGL support provided with BRL-CAD's source distribution.
-Default is AUTO, auto-enabling if the BRLCAD_TCL option is set to
-BUNDLED and testing first for a system version if BRLCAD_TCL is set to
-AUTO or SYSTEM.  If BRLCAD_TOGL is set to BUNDLED, local copy is built
-even if a system version is present.  This package will be disabled if
-either BRLCAD_ENABLE_OPENGL or BRLCAD_ENABLE_TK are OFF.
-")
-THIRD_PARTY_TCL_PACKAGE(Togl togl "${TCL_WISH_EXECUTABLE}" "tcl;tk" "BRLCAD_ENABLE_TK;BRLCAD_ENABLE_OPENGL;BRLCAD_ENABLE_X11;BRLCAD_LEVEL3" "togl" togl_ALIASES togl_DESCRIPTION)
-if(BRLCAD_TOGL_BUILD)
-  set(TOGL_LIBRARIES togl CACHE STRING "TOGL_LIBRARIES" FORCE)
-  set(TOGL_STUB_LIBRARIES toglstub CACHE STRING "TOGL_STUB_LIBRARIES" FORCE)
-  set(TOGL_INCLUDE_DIRS "${CMAKE_CURRENT_BINARY_DIR}/togl/include;${CMAKE_CURRENT_SOURCE_DIR}/togl/include" CACHE STRING "Togl include path" FORCE)
-  DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/togl/pkgIndex.tcl
-    ${CMAKE_CURRENT_BINARY_DIR}/togl/src/pkgIndex.tcl)
-  DISTCLEAN(${CMAKE_BINARY_DIR}/lib/Togl2.1)
-ELSE(BRLCAD_TOGL_BUILD)
-  # No Togl enabled - fix this so a system one has a chance...
-  #set(TOGL_LIBRARIES "" CACHE STRING "Tcl/Tk OpenGL disabled" FORCE)
-  #set(TOGL_STUB_LIBRARIES "" CACHE STRING "Tcl/Tk OpenGL disabled" FORCE)
-  #set(TOGL_INCLUDE_DIRS "" CACHE STRING "Tcl/Tk OpenGL disabled" FORCE)
-  set(TOGL_INCLUDE_DIRS "${CMAKE_CURRENT_BINARY_DIR}/togl/include;${CMAKE_CURRENT_SOURCE_DIR}/togl/include" CACHE STRING "Togl include path" FORCE)
-endif(BRLCAD_TOGL_BUILD)
-mark_as_advanced(TOGL_LIBRARY)
-mark_as_advanced(TOGL_LIBRARIES)
-mark_as_advanced(TOGL_STUB_LIBRARIES)
-mark_as_advanced(TOGL_INCLUDE_DIRS)
-
 set(iwidgets_ALIASES ENABLE_IWIDGETS)
 set(iwidgets_DESCRIPTION "
 Option for enabling and disabling compilation of the IWidgets Tk
