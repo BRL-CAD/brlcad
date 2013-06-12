@@ -38,16 +38,6 @@
 #include "fb.h"
 #include "orle.h"
 
-static char *usage[] = {
-    "Usage: fb-rle [-CScdhvw] [-l X Y] [-F Frame_buffer] [-p X Y] [file.rle]",
-    "",
-    "If no RLE file is specified, fb-rle will write to its standard output.",
-    "If the environment variable FB_FILE is set, its value will be used to",
-    "specify the framebuffer file or device to read from.",
-    0
-};
-
-
 static FBIO *fbp;
 static FILE *fp;
 static RGBpixel bgpixel;
@@ -167,8 +157,11 @@ parsArgv(int argc, char **argv)
 {
     int c;
 
+    if (isatty(fileno(stdin)) && isatty(fileno(stdout)) && argc == 1)
+	return 0;
+
     /* Parse options.						*/
-    while ((c = bu_getopt(argc, argv, "CF:Scdhl:p:vw")) != -1) {
+    while ((c = bu_getopt(argc, argv, "CF:ScdHl:p:vwh?")) != -1) {
 	switch (c) {
 	    case 'C' : /* Crunch color map.				*/
 		crunch = 1;
@@ -183,7 +176,7 @@ parsArgv(int argc, char **argv)
 	    case 'd' : /* For debugging.				*/
 		rle_debug = 1;
 		break;
-	    case 'h' : /* High resolution.				*/
+	    case 'H' : /* High resolution.				*/
 		width = 1024;
 		break;
 	    case 'l' : /* Length in x and y.			*/
@@ -214,7 +207,7 @@ parsArgv(int argc, char **argv)
 		break;
 	    case 'F' : fb_file = bu_optarg;
 		break;
-	    case '?' :
+	    default :
 		return 0;
 	}
     }
@@ -235,8 +228,7 @@ parsArgv(int argc, char **argv)
 	(void) fprintf(stderr, "Too many arguments!\n");
 	return 0;
     }
-    if (isatty(fileno(fp)))
-	return 0;
+
     if (xlen == 0)
 	xlen = width;
     if (ylen == 0)
@@ -244,21 +236,17 @@ parsArgv(int argc, char **argv)
     return 1;
 }
 
-
 /* p r n t U s a g e ()
    Print usage message.
 */
 static void
 prntUsage(void)
 {
-    char **p = usage;
-
-    while (*p) {
-	(void) fprintf(stderr, "%s\n", *p++);
-    }
-    return;
+	fprintf(stderr, "Usage: fb-orle [-CScdHvw] [-l X Y] [-F Frame_buffer] [-p X Y] [file.rle]\n\n");
+	fprintf(stderr, "If no RLE file is specified, fb-orle will write to its standard output.\n");
+	fprintf(stderr, "If the environment variable FB_FILE is set, its value will be used.\n");
 }
-
+   
 
 /*
  * Local Variables:
