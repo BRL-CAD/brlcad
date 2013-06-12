@@ -162,8 +162,11 @@ macro(BRLCAD_ADDEXEC execname srcslist libslist)
   add_executable(${execname} ${srcslist})
   target_link_libraries(${execname} ${libslist})
 
-  # Make sure we don't have a non-installed exec target.  If it is to
-  # be installed, call the install function
+
+  # If an executable isn't to be installed or needs to be installed 
+  # somewhere other than the default location, the NO_INSTALL argument
+  # bypasses the standard install command call.  Otherwise, call install
+  # with standard arguments.
   CHECK_OPT("NO_INSTALL" NO_EXEC_INSTALL "${ARGN}")
   if(NOT NO_EXEC_INSTALL)
     install(TARGETS ${execname} DESTINATION ${BIN_DIR})
@@ -284,11 +287,17 @@ macro(BRLCAD_ADDLIB libname srcslist libslist)
       target_link_libraries(${libname} ${libslist})
     endif(NOT "${libslist}" STREQUAL "" AND NOT "${libslist}" STREQUAL "NONE")
 
-    # Call install to setup the installation logic.
-    install(TARGETS ${libname}
-      RUNTIME DESTINATION ${BIN_DIR}
-      LIBRARY DESTINATION ${LIB_DIR}
-      ARCHIVE DESTINATION ${LIB_DIR})
+    # If a library isn't to be installed or needs to be installed 
+    # somewhere other than the default location, the NO_INSTALL argument
+    # bypasses the standard install command call. Otherwise, call install 
+    # with standard arguments.
+    CHECK_OPT("NO_INSTALL" NO_LIB_INSTALL "${ARGN}")
+    if(NOT NO_LIB_INSTALL)
+      install(TARGETS ${libname}
+	RUNTIME DESTINATION ${BIN_DIR}
+	LIBRARY DESTINATION ${LIB_DIR}
+	ARCHIVE DESTINATION ${LIB_DIR})
+    endif(NOT NO_LIB_INSTALL)
 
     # Apply the definitions.
     foreach(lib_define ${${libname}_DEFINES})
@@ -337,10 +346,17 @@ macro(BRLCAD_ADDLIB libname srcslist libslist)
       set_target_properties(${libname}-static PROPERTIES OUTPUT_NAME "${libname}")
     endif(NOT MSVC)
 
-    install(TARGETS ${libname}-static
-      RUNTIME DESTINATION ${BIN_DIR}
-      LIBRARY DESTINATION ${LIB_DIR}
-      ARCHIVE DESTINATION ${LIB_DIR})
+    # If a library isn't to be installed or needs to be installed 
+    # somewhere other than the default location, the NO_INSTALL argument
+    # bypasses the standard install command call. Otherwise, call install 
+    # with standard arguments.
+    CHECK_OPT("NO_INSTALL" NO_LIB_INSTALL "${ARGN}")
+    if(NOT NO_LIB_INSTALL)
+      install(TARGETS ${libname}-static
+	RUNTIME DESTINATION ${BIN_DIR}
+	LIBRARY DESTINATION ${LIB_DIR}
+	ARCHIVE DESTINATION ${LIB_DIR})
+    endif(NOT NO_LIB_INSTALL)
 
     foreach(lib_define ${${libname}_DEFINES})
       set_property(TARGET ${libname}-static APPEND PROPERTY COMPILE_DEFINITIONS "${lib_define}")

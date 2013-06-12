@@ -64,11 +64,10 @@ INCLUDE_DIRECTORIES(
   )
 if(TOGL_LIBRARIES AND BRLCAD_ENABLE_OPENGL)
   add_definitions(-DTOGL_USE_EXTERNAL_CONFIG_H=1)
-  add_library(issttcltk isst_tcltk.c)
   if(WIN32)
-    target_link_libraries(issttcltk librender ${TCL_LIBRARIES} ${TOGL_STUB_LIBRARIES} ${OPENGL_LIBRARIES} opengl32.lib)
+    BRLCAD_ADDLIB(issttcltk isst_tcltk.c "librender;${TCL_LIBRARIES};${TOGL_STUB_LIBRARIES};${OPENGL_LIBRARIES};opengl32.lib" NO_INSTALL)
   else(WIN32)
-    target_link_libraries(issttcltk librender ${TCL_LIBRARIES} ${TOGL_LIBRARIES})
+    BRLCAD_ADDLIB(issttcltk isst_tcltk.c "librender;${TCL_LIBRARIES};${TOGL_LIBRARIES}" NO_INSTALL)
   endif(WIN32)
   install(TARGETS issttcltk
     RUNTIME DESTINATION ${BIN_DIR}/isst0.1
