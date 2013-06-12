@@ -602,7 +602,12 @@ macro(BRLCAD_MANAGE_FILES inputdata targetdir)
 
   # The installation rule relates only to the original source directory copy, and so doesn't
   # need to explicitly concern itself with configurations.
-  install(FILES ${datalist} DESTINATION ${targetdir})
+  CHECK_OPT("EXEC" EXEC_INSTALL "${ARGN}")
+  if(EXEC_INSTALL)
+    install(PROGRAMS ${datalist} DESTINATION ${targetdir})
+  else(EXEC_INSTALL)
+    install(FILES ${datalist} DESTINATION ${targetdir})
+  endif(EXEC_INSTALL)
 
 endmacro(BRLCAD_MANAGE_FILES)
 
