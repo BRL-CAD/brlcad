@@ -61,14 +61,10 @@ get_args(int argc, char **argv)
 {
     int c;
 
-    while ((c = bu_getopt(argc, argv, "chiF:s:w:n:")) != -1) {
+    while ((c = bu_getopt(argc, argv, "ciF:s:w:n:h?")) != -1) {
 	switch (c) {
 	    case 'c':
 		crunch = 1;
-		break;
-	    case 'h':
-		/* high-res */
-		screen_height = screen_width = 1024;
 		break;
 	    case 'i':
 		inverse = 1;
@@ -127,7 +123,7 @@ main(int argc, char **argv)
     ColorMap cmap;		/* libfb color map */
 
     char usage[] = "\
-Usage: fb-pix [-h -i -c] [-F framebuffer]\n\
+Usage: fb-pix [-i -c] [-F framebuffer]\n\
 	[-s squaresize] [-w width] [-n height] [file.pix]\n";
 
     screen_height = screen_width = 512;		/* Defaults */
