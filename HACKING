@@ -1173,8 +1173,9 @@ Get the date from the NEWS file.
 Passing regression tests, benchmark, and two build configurations are
 critically required.  Manually test mged and archer.
 
-    cmake ../brlcad && make distcheck
-    cmake ../brlcad -BRLCAD_BUNDLED_LIBS=ON && make distcheck
+    mkdir -p .release && cd .release
+    cmake .. && make distcheck && rm -rf ../.release/*
+    cmake .. -DBRLCAD_BUNDLED_LIBS=ON -DCMAKE_BUILD_TYPE=Release && make distcheck
 
 5) Sync trunk with the STABLE branch.  Make sure all changes since the
 previous sync are included and that STABLE matches trunk.
