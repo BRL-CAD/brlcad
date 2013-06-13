@@ -185,7 +185,6 @@ set(conv_ignore_files
   shp/README
   )
 CMAKEFILES(${conv_ignore_files})
-CMAKEFILES(Makefile.am)
 
 # Local Variables:
 # tab-width: 8

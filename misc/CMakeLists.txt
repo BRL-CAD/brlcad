@@ -76,7 +76,6 @@ set(misc_ignore_files
   macosx
   nsis
   win32-msvc
-  Makefile.am
   )
 CMAKEFILES(${misc_ignore_files})
 

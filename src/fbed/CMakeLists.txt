@@ -27,7 +27,6 @@ if(HAVE_TERMLIB)
 
   CMAKEFILES(ascii.h cursorbits.h extern.h fb_ik.h popup.h std.h try.h)
 endif(HAVE_TERMLIB)
-CMAKEFILES(Makefile.am)
 
 # Local Variables:
 # tab-width: 8

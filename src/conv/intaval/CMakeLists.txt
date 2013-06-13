@@ -28,7 +28,6 @@ set(intaval_ignore_files
   write_brl.h
   )
 CMAKEFILES(${intaval_ignore_files})
-CMAKEFILES(Makefile.am)
 
 # Local Variables:
 # tab-width: 8

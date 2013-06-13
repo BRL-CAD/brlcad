@@ -175,7 +175,6 @@ endwhile(${current_level} LESS ${HIGHEST_TARGET_LEVEL})
 #endif(${HIGHEST_TARGET_LEVEL} GREATER 1)
 
 CMAKEFILES(README external)
-CMAKEFILES(Makefile.am)
 
 # Local Variables:
 # tab-width: 8

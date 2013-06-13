@@ -24,7 +24,6 @@ set(RAW_IGNORE_FILES
   RegionList.h
   )
 CMAKEFILES(${RAW_IGNORE_FILES})
-CMAKEFILES(Makefile.am)
 
 # Local Variables:
 # tab-width: 8

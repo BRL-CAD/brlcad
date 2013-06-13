@@ -5,7 +5,7 @@ set(doc_legal
   )
 ADD_DOC(doc_legal legal)
 
-CMAKEFILES(Makefile.am bsd.txt bdl.txt lgpl.txt)
+CMAKEFILES(bsd.txt bdl.txt lgpl.txt)
 
 # Local Variables:
 # tab-width: 8

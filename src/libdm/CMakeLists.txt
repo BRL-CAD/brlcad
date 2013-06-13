@@ -105,7 +105,6 @@ set(libdm_ignore_files
   )
 CMAKEFILES(${libdm_ignore_files})
 CMAKEFILES(dm_util.h)
-CMAKEFILES(Makefile.am)
 
 # Local Variables:
 # tab-width: 8

@@ -49,7 +49,6 @@ SET_TARGET_PROPERTIES(libfft PROPERTIES VERSION 20.0.1 SOVERSION 20)
 
 add_executable(fftest fftest.c)
 target_link_libraries(fftest libfft ${M_LIBRARY})
-CMAKEFILES(Makefile.am)
 
 # Local Variables:
 # tab-width: 8

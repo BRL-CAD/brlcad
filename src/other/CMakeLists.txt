@@ -914,7 +914,6 @@ if(BRLCAD_ENABLE_OSL)
 endif(BRLCAD_ENABLE_OSL)
 
 CMAKEFILES(README)
-CMAKEFILES(Makefile.am)
 
 # Local Variables:
 # tab-width: 8

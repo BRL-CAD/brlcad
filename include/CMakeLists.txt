@@ -97,7 +97,6 @@ set(include_misc
 CMAKEFILES(${include_hdrs})
 CMAKEFILES(${noinst_HEADERS})
 CMAKEFILES(${include_misc})
-CMAKEFILES(Makefile.am)
 
 # Local Variables:
 # tab-width: 8

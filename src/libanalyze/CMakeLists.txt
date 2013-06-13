@@ -16,7 +16,6 @@ add_subdirectory(tests)
 
 BRLCAD_ADDLIB(libanalyze "${LIBANALYZE_SOURCES}" "libbu;librt")
 SET_TARGET_PROPERTIES(libanalyze PROPERTIES VERSION 20.0.1 SOVERSION 20)
-CMAKEFILES(Makefile.am)
 
 # Local Variables:
 # tab-width: 8

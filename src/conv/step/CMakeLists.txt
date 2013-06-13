@@ -496,7 +496,6 @@ if(MSVC)
 endif(MSVC)
 
 DISTCLEAN(${SCHEMA_OUT_DIR}/make_schema)
-CMAKEFILES(Makefile.am)
 
 # Local Variables:
 # tab-width: 8

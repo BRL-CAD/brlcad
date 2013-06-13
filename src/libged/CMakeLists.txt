@@ -344,7 +344,6 @@ set(ged_ignore_files
   simulate/simutils.h
   )
 CMAKEFILES(${ged_ignore_files})
-CMAKEFILES(Makefile.am)
 
 # Local Variables:
 # tab-width: 8

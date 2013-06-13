@@ -114,7 +114,6 @@ if(SH_EXEC)
 endif(SH_EXEC)
 
 CMAKEFILES(
-  Makefile.am
   analyze.asc
   asc2dsp.sh
   bots.sh

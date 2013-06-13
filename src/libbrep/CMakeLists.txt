@@ -35,7 +35,6 @@ set(libbrep_ignored_files
   PullbackCurve.h
   )
 CMAKEFILES(${libbrep_ignored_files})
-CMAKEFILES(Makefile.am)
 
 # Initialize libbrep_DEFINES in case of reconfiguration
 set(libbrep_DEFINES "")

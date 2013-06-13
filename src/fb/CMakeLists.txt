@@ -73,7 +73,6 @@ BRLCAD_ADDEXEC(spm-fb spm-fb.c "libfb;libbn")
 
 add_subdirectory(tests)
 
-CMAKEFILES(Makefile.am)
 
 # Local Variables:
 # tab-width: 8

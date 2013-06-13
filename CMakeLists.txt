@@ -2174,11 +2174,7 @@ if(NOT BRLCAD_IS_SUBBUILD)
     BUGS
     ChangeLog
     TODO
-    autogen.sh
-    configure.ac
-    configure.cmake.sh
-    m4
-    Makefile.am
+    configure
     CMakeLists.txt
     )
   CMAKEFILES(${toplevel_ignore_files})

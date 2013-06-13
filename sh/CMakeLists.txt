@@ -54,7 +54,6 @@ set(noinst_SCRIPTS
   )
 CMAKEFILES(${sh_SCRIPTS})
 CMAKEFILES(${noinst_SCRIPTS})
-CMAKEFILES(Makefile.am)
 
 # Local Variables:
 # tab-width: 8

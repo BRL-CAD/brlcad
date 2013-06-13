@@ -177,7 +177,6 @@ BRLCAD_ADDEXEC(roots_example roots_example.c "libbu;librt" NO_INSTALL)
 BRLCAD_ADDDATA(roots_example.c sample_applications)
 
 CMAKEFILES(bombardier.h rle_args.h morphedit.tcl pldebug.c)
-CMAKEFILES(Makefile.am)
 
 # Local Variables:
 # tab-width: 8

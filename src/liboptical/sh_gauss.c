@@ -34,7 +34,7 @@
  *		edit the gauss_render function to do the actual rendering
  *	3) Edit view.c to add extern for gauss_mfuncs and call to mlib_add
  *		to function view_init()
- *	4) Edit Makefile.am to add shader file to the compilation
+ *	4) Edit CMakeLists.txt to add shader file to the compilation
  *	5) replace this list with a description of the shader, its parameters
  *		and use.
  *

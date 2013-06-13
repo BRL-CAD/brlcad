@@ -110,7 +110,6 @@ set(bu_ignore_files
   vls_internals.h
   )
 CMAKEFILES(${bu_ignore_files})
-CMAKEFILES(Makefile.am)
 
 # Local Variables:
 # tab-width: 8

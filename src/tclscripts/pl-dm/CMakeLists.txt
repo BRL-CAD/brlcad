@@ -8,7 +8,6 @@ pkgIndex_BUILD(tclscripts/pl-dm)
 tclIndex_BUILD(tclscripts/pl-dm)
 
 CMAKEFILES(pkgIndex.tcl tclIndex)
-CMAKEFILES(Makefile.am)
 
 # Local Variables:
 # tab-width: 8

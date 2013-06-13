@@ -42,7 +42,7 @@
  *
  * Go add an "ifdef IF_DEVNAME" to fb_generic.c (two places).
  *
- * Add defines to Makefile.am
+ * Add defines to CMakeLists.txt
  *
  * Replace this header.
  */

@@ -110,7 +110,7 @@ BRLCAD_ADDDATA(tclscripts_TCLSCRIPTS tclscripts)
 pkgIndex_BUILD(tclscripts)
 tclIndex_BUILD(tclscripts)
 
-CMAKEFILES(README Makefile.am pkgIndex.tcl tclIndex hv3_man_browser_test.tcl)
+CMAKEFILES(README pkgIndex.tcl tclIndex hv3_man_browser_test.tcl)
 
 # Local Variables:
 # tab-width: 8

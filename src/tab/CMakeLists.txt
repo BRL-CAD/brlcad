@@ -22,7 +22,6 @@ BRLCAD_ADDEXEC(tabinterp tabinterp.c "librt;libbu;${M_LIBRARY}")
 BRLCAD_ADDEXEC(tabsub tabsub.c "libbn;libbu;${M_LIBRARY}")
 
 CMAKEFILES(script.l tokens.h)
-CMAKEFILES(Makefile.am)
 
 # Local Variables:
 # tab-width: 8

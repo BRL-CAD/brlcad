@@ -47,7 +47,6 @@ pkgIndex_BUILD(tclscripts/archer)
 tclIndex_BUILD(tclscripts/archer)
 
 CMAKEFILES(pkgIndex.tcl tclIndex)
-CMAKEFILES(Makefile.am)
 
 # Local Variables:
 # tab-width: 8

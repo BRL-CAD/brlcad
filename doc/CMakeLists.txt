@@ -218,7 +218,7 @@ ADD_DOC(documentation_mged_old_DATA mged_old)
 configure_file(pad_file.xml.in ${CMAKE_CURRENT_BINARY_DIR}/pad_file.xml @ONLY)
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/pad_file.xml DESTINATION ${DOC_DIR})
 
-CMAKEFILES(Makefile.am pad_file.xml.in STARTERS)
+CMAKEFILES(pad_file.xml.in STARTERS)
 
 # Local Variables:
 # tab-width: 8
