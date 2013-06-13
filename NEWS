@@ -10,8 +10,30 @@ descriptive text that emphasizes or further describes significant
 changes made.  See document footer for additional details.
 
 ----------------------------------------------------------------------
---- 2013-05-27  Release 7.24.0                                     ---
+--- 2013-06-13  Release 7.24.0                                     ---
 ----------------------------------------------------------------------
+
+This major update to BRL-CAD comes after nearly a full year of
+development.  This is the alpha release unveiling of Archer/MGED, a
+preliminary interface update to BRL-CAD's graphical geometry editor.
+As alpha software, this new MGED prototype aims to provide functional
+feature parity with the antecedent MGED interface while introducing
+various changes.  Included is an integrated graphical tree view, a
+single window framework, drag-and-drop geometry editing, information
+panels, shortcut buttons, improved polygonal mesh and 2D sketch
+editing, level-of-detail wireframes, NURBS shaded display support, and
+much more.  Prior to upcoming beta testing where the emphasis will
+predominantly be on stability and usability, this alpha status
+solicits feedback from the community on capability and features.
+
+This release also includes various improvements to BRL-CAD's ray
+tracing infrastructure including CPU thread affinity locking for
+faster performance, more consistent grazing hit behavior, expanded
+volume and surface area calculations, numerous bug fixes, and more
+robust NURBS evaluation.  Following BRL-CAD's interface deprecation
+policy (see CHANGES file), the Jove text editor is no longer being
+bundled.  Numerous converters receive robustness improvements
+including the STEP, Patch, and 3DM importers.
 
 * improved gqa performance on parallel SMP hardware - Richard Weiss
 * fixed bounding box size calculation for pipe geometry - Bob Parker
