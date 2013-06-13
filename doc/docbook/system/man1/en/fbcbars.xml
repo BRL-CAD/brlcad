@@ -69,7 +69,7 @@ by using the
 <option>-F</option>
 flag.</para>
 
-<para>Ordinarily, the requested framebuffer size is the device default.
+<para>Ordinarily, the requested framebuffer size is the device default.</para>
 
 <para>The
 <option>-W </option><replaceable>scr_width</replaceable>
