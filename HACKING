@@ -1190,7 +1190,7 @@ previous sync are included and that STABLE matches trunk.
     # merge that range of changes into STABLE and make sure it works
     svn co https://svn.code.sourceforge.net/p/brlcad/code/brlcad/branches/STABLE brlcad.STABLE && cd brlcad.STABLE
     svn merge https://svn.code.sourceforge.net/p/brlcad/code/brlcad/trunk@$PREV https://svn.code.sourceforge.net/p/brlcad/code/brlcad/trunk@HEAD .
-    sh autogen.sh && ./configure --enable-all && make distcheck
+    mkdir .release && cd .release && cmake .. -DBRLCAD_BUNDLED_LIBS=ON -DCMAKE_BUILD_TYPE=Release && make distcheck
     export CURR=`svn log --xml https://svn.code.sourceforge.net/p/brlcad/code/brlcad/trunk | grep 'revision=' | head -n 1 | sed 's/.*="\([0-9][0-9]*\)".*/\1/g'`
     echo "CURR=$CURR"
     svn commit -m "merging trunk to STABLE from r$PREV to HEAD r$CURR"
