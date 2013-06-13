@@ -47,21 +47,16 @@ static int clear_and_reset = 0;
 
 #define u_char unsigned char
 
-static char usage[] = "\
-Usage: fbclear [-h -c] [-F framebuffer]\n\
-	[-S squarescrsize] [-W scr_width] [-N scr_height] [gray | r g b]\n";
+static char usage[] = "Usage: fbclear [-c] [-F framebuffer]\n\
+	[-{sS} squarescrsize] [-{wW} scr_width] [-{nN} scr_height] [gray | r g b]\n";
 
 int
 get_args(int argc, char **argv)
 {
     int c;
 
-    while ((c = bu_getopt(argc, argv, "hcF:s:w:n:S:W:N:")) != -1) {
+    while ((c = bu_getopt(argc, argv, "cF:s:w:n:S:W:N:h?")) != -1) {
 	switch (c) {
-	    case 'h':
-		/* high-res */
-		scr_height = scr_width = 1024;
-		break;
 	    case 'c':
 		/* clear only, no cmap, pan, and zoom */
 		clear_and_reset++;

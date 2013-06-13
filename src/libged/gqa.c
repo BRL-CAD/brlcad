@@ -611,10 +611,6 @@ parse_args(int ac, char *av[])
 
 			gridSpacing = 0.0; /* flag it */
 		    }
-
-		    bu_vls_printf(_ged_current_gedp->ged_result_str, "set grid spacing:%g %s limit:%g %s\n",
-				  gridSpacing / units[LINE]->val, units[LINE]->name,
-				  gridSpacingLimit / units[LINE]->val, units[LINE]->name);
 		    break;
 		}
 	    case 'G':
@@ -1318,6 +1314,7 @@ plane_worker (int cpu, genptr_t ptr)
     int u, v;
     double v_coord;
     struct cstate *state = (struct cstate *)ptr;
+    unsigned long shot_cnt;
 
     if (aborted)
 	return;
@@ -1342,6 +1339,7 @@ plane_worker (int cpu, genptr_t ptr)
 
     v = get_next_row(state);
 
+    shot_cnt = 0;
     while (v) {
 
 	v_coord = v * gridSpacing;
@@ -1373,16 +1371,7 @@ plane_worker (int cpu, genptr_t ptr)
 		if (aborted)
 		    return;
 
-		/* FIXME: This shots increment and its twin in the else clause below
-		 * are presenting a significant drag on gqa performance via
-		 * heavy duty semaphore locking and unlocking.  Can a way
-		 * be found to do this job without needing to trigger the
-		 * semaphore locks?  Seems to be the major contributor to
-		 * semaphore overhead.
-		 */
-		bu_semaphore_acquire(GED_SEM_STATS);
-		state->shots[state->curr_view]++;
-		bu_semaphore_release(GED_SEM_STATS);
+		shot_cnt++;
 	    }
 	} else {
 	    /* shoot only the rays we need to on this row.  Some of
@@ -1405,9 +1394,7 @@ plane_worker (int cpu, genptr_t ptr)
 		if (aborted)
 		    return;
 
-		bu_semaphore_acquire(GED_SEM_STATS);
-		state->shots[state->curr_view]++;
-		bu_semaphore_release(GED_SEM_STATS);
+		shot_cnt++;
 
 		if (debug)
 		    if (u+1 < state->steps[state->u_axis]) {
@@ -1434,6 +1421,7 @@ plane_worker (int cpu, genptr_t ptr)
      * we'll have returned to serial computation.
      */
     bu_semaphore_acquire(GED_SEM_STATS);
+    state->shots[state->curr_view] += shot_cnt;
     state->m_lenDensity[state->curr_view] += ap.A_LENDEN; /* add our length*density value */
     state->m_len[state->curr_view] += ap.A_LEN; /* add our volume value */
     bu_semaphore_release(GED_SEM_STATS);
@@ -1621,10 +1609,10 @@ options_prep(struct rt_i *rtip, vect_t span)
     }
 
     if (!ZERO(newGridSpacing - gridSpacing)) {
-	bu_vls_printf(_ged_current_gedp->ged_result_str, "Grid spacing %g %s is does not allow %g samples per axis\n",
+	bu_log("Initial grid spacing %g %s does not allow %g samples per axis.\n",
 		      gridSpacing / units[LINE]->val, units[LINE]->name, Samples_per_model_axis - 1);
 
-	bu_vls_printf(_ged_current_gedp->ged_result_str, "Adjusted to %g %s to get %g samples per model axis\n",
+	bu_log("Adjusted initial grid spacing to %g %s to get %g samples per model axis.\n",
 		      newGridSpacing / units[LINE]->val, units[LINE]->name, Samples_per_model_axis);
 
 	gridSpacing = newGridSpacing;
@@ -1633,19 +1621,21 @@ options_prep(struct rt_i *rtip, vect_t span)
     /* if the vol/weight tolerances are not set, pick something */
     if (analysis_flags & ANALYSIS_VOLUME) {
 	char *name = "volume.pl";
-	if (ZERO(volume_tolerance - 1.0)) {
+	if (volume_tolerance < 0.0) {
+	    /* using 1/1000th the volume as a default tolerance, no particular reason */
 	    volume_tolerance = span[X] * span[Y] * span[Z] * 0.001;
-	    bu_vls_printf(_ged_current_gedp->ged_result_str, "setting volume tolerance to %g %s\n",
+	    bu_log("Using estimated volume tolerance %g %s\n",
 			  volume_tolerance / units[VOL]->val, units[VOL]->name);
 	} else
-	    bu_vls_printf(_ged_current_gedp->ged_result_str, "volume tolerance   %g\n", volume_tolerance);
+	    bu_log("Using volume tolerance %g %s\n",
+			  volume_tolerance / units[VOL]->val, units[VOL]->name);
 	if (plot_files)
 	    if ((plot_volume=fopen(name, "wb")) == (FILE *)NULL) {
 		bu_vls_printf(_ged_current_gedp->ged_result_str, "cannot open plot file %s\n", name);
 	    }
     }
     if (analysis_flags & ANALYSIS_WEIGHT) {
-	if (ZERO(weight_tolerance - 1.0)) {
+	if (weight_tolerance < 0.0) {
 	    double max_den = 0.0;
 	    int i;
 	    for (i = 0; i < num_densities; i++) {
@@ -1789,34 +1779,33 @@ weight_volume_terminate(struct cstate *state)
 	int obj;
 
 	for (obj = 0; obj < num_objects; obj++) {
-	    int view = 0;
+	    int view;
+	    double tmp;
+
 	    if (verbose)
 		bu_vls_printf(_ged_current_gedp->ged_result_str, "object %d\n", obj);
+
 	    /* compute weight of object for given view */
-	    val = obj_tbl[obj].o_weight[view] =
-		obj_tbl[obj].o_lenDensity[view] * (state->area[view] / state->shots[view]);
-
-	    low = hi = 0.0;
-
-	    /* compute the per-view weight of this object */
-	    for (view=1; view < num_views; view++) {
-		obj_tbl[obj].o_weight[view] =
-		    obj_tbl[obj].o_lenDensity[view] *
-		    (state->area[view] / state->shots[view]);
-
-		delta = val - obj_tbl[obj].o_weight[view];
-		if (delta < low) low = delta;
-		if (delta > hi) hi = delta;
+	    low = INFINITY;
+	    hi = -INFINITY;
+	    tmp = 0.0;
+	    for (view = 0; view < num_views; view++) {
+		val = obj_tbl[obj].o_weight[view] =
+		    obj_tbl[obj].o_lenDensity[view] * (state->area[view] / state->shots[view]);
+		V_MIN(low, val);
+		V_MAX(hi, val);
+		tmp += val;
 	    }
 	    delta = hi - low;
 
 	    if (verbose)
-		bu_vls_printf(_ged_current_gedp->ged_result_str, "\t%s weight %g %s +%g -%g\n",
-			      obj_tbl[obj].o_name,
-			      val / units[WGT]->val,
-			      units[WGT]->name,
-			      fabs(hi / units[WGT]->val),
-			      fabs(low / units[WGT]->val));
+		bu_vls_printf(_ged_current_gedp->ged_result_str, 
+		    "\t%s running avg weight %g %s hi=(%g) low=(%g)\n",
+		    obj_tbl[obj].o_name,
+		    (tmp / num_views) / units[WGT]->val,
+		    units[WGT]->name,
+		    hi / units[WGT]->val,
+		    low / units[WGT]->val);
 
 	    if (delta > weight_tolerance) {
 		/* this object differs too much in each view, so we
@@ -1841,30 +1830,29 @@ weight_volume_terminate(struct cstate *state)
 
 	/* for each object, compute the volume for all views */
 	for (obj = 0; obj < num_objects; obj++) {
+	    int view;
+	    double tmp;
 
 	    /* compute volume of object for given view */
-	    int view = 0;
-	    val = obj_tbl[obj].o_volume[view] =
-		obj_tbl[obj].o_len[view] * (state->area[view] / state->shots[view]);
-
-	    low = hi = 0.0;
-	    /* compute the per-view volume of this object */
-	    for (view=1; view < num_views; view++) {
-		obj_tbl[obj].o_volume[view] =
+	    low = INFINITY;
+	    hi = -INFINITY;
+	    tmp = 0.0;
+	    for (view = 0; view < num_views; view++) {
+		val = obj_tbl[obj].o_volume[view] =
 		    obj_tbl[obj].o_len[view] * (state->area[view] / state->shots[view]);
-
-		delta = val - obj_tbl[obj].o_volume[view];
-		if (delta < low) low = delta;
-		if (delta > hi) hi = delta;
+		V_MIN(low, val);
+		V_MAX(hi, val);
+		tmp += val;
 	    }
 	    delta = hi - low;
 
 	    if (verbose)
-		bu_vls_printf(_ged_current_gedp->ged_result_str, "\t%s volume %g %s +(%g) -(%g)\n",
-			      obj_tbl[obj].o_name,
-			      val / units[VOL]->val, units[VOL]->name,
-			      hi / units[VOL]->val,
-			      fabs(low / units[VOL]->val));
+		bu_vls_printf(_ged_current_gedp->ged_result_str, 
+		    "\t%s running avg volume %g %s hi=(%g) low=(%g)\n",
+		    obj_tbl[obj].o_name,
+		    (tmp / num_views) / units[VOL]->val, units[VOL]->name,
+		    hi / units[VOL]->val,
+		    low / units[VOL]->val);
 
 	    if (delta > volume_tolerance) {
 		/* this object differs too much in each view, so we
@@ -1919,9 +1907,8 @@ terminate_check(struct cstate *state)
 
     /* if we've reached the grid limit, we're done, no matter what */
     if (gridSpacing < gridSpacingLimit) {
-	if (verbose)
-	    bu_vls_printf(_ged_current_gedp->ged_result_str, "grid spacing refined to %g (below lower limit %g)\n",
-			  gridSpacing, gridSpacingLimit);
+	bu_vls_printf(_ged_current_gedp->ged_result_str, "NOTE: Stopped, grid spacing refined to %g (below lower limit %g).\n",
+	    gridSpacing, gridSpacingLimit);
 	return 0;
     }
 
@@ -2368,8 +2355,19 @@ ged_gqa(struct ged *gedp, int argc, const char *argv[])
     azimuth_deg = 0.0;
     elevation_deg = 0.0;
     densityFileName = (char *)0;
+
+    /* FIXME: this is completely arbitrary, should probably be based
+     * on the model size.
+     */
     gridSpacing = 50.0;
-    gridSpacingLimit = 0.25;
+
+    /* default grid spacing limit is based on the current distance
+     * tolerance, one order of magnitude greater.
+     *
+     * FIXME: should probably be based on the model size.
+     */
+    gridSpacingLimit = 10.0 * gedp->ged_wdbp->wdb_tol.dist;
+
     makeOverlapAssemblies = 0;
     require_num_hits = 1;
     max_cpus = ncpu = bu_avail_cpus();
@@ -2466,10 +2464,19 @@ ged_gqa(struct ged *gedp, int argc, const char *argv[])
 	do {
 	    gridSpacing *= 2.0;
 	} while (gridSpacing < min_span);
+
 	gridSpacing *= 0.25;
 	if (gridSpacing < gridSpacingLimit) gridSpacing = gridSpacingLimit;
-	bu_vls_printf(gedp->ged_result_str, "initial spacing %g\n", gridSpacing);
+
+	bu_log("Trying estimated initial grid spacing: %g %s\n", 
+	    gridSpacing / units[LINE]->val, units[LINE]->name);
+    } else {
+	bu_log("Trying initial grid spacing: %g %s\n", 
+	    gridSpacing / units[LINE]->val, units[LINE]->name);
     }
+
+    bu_log("Using grid spacing lower limit: %g %s\n", 
+	    gridSpacingLimit / units[LINE]->val, units[LINE]->name);
 
     if (options_prep(rtip, state.span) != GED_OK) return GED_ERROR;
 
@@ -2485,7 +2492,7 @@ ged_gqa(struct ged *gedp, int argc, const char *argv[])
 
 	VSCALE(state.steps, state.span, inv_spacing);
 
-	bu_vls_printf(gedp->ged_result_str, "grid spacing %g %s %ld x %ld x %ld\n",
+	bu_log("Processing with grid spacing %g %s %ld x %ld x %ld\n",
 		      gridSpacing / units[LINE]->val,
 		      units[LINE]->name,
 		      state.steps[0]-1,

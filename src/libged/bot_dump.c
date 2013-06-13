@@ -1499,7 +1499,7 @@ ged_dbot_dump(struct ged *gedp, int argc, const char *argv[])
 
     MAT_IDN(mat);
 
-    for (BU_LIST_FOR(gdlp, ged_display_list, &gedp->ged_gdp->gd_headDisplay)) {
+    for (BU_LIST_FOR(gdlp, ged_display_list, gedp->ged_gdp->gd_headDisplay)) {
 	struct solid *sp;
 
 	FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid) {

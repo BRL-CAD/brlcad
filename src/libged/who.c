@@ -75,7 +75,7 @@ ged_who(struct ged *gedp, int argc, const char *argv[])
 	}
     }
 
-    for (BU_LIST_FOR(gdlp, ged_display_list, &gedp->ged_gdp->gd_headDisplay)) {
+    for (BU_LIST_FOR(gdlp, ged_display_list, gedp->ged_gdp->gd_headDisplay)) {
 	if (gdlp->gdl_dp->d_addr == RT_DIR_PHONY_ADDR) {
 	    if (skip_phony) continue;
 	} else {

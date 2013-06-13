@@ -237,6 +237,8 @@
  *
  */
 
+#include "common.h"
+
 #include "shapefil.h"
 
 #include <math.h>

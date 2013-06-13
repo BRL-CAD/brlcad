@@ -386,7 +386,9 @@ parallel_interface(void)
 {
     struct thread_data user_thread_data_pi;
     char *libbu_affinity = NULL;
-    int affinity = 1;
+
+    /* OFF by default until linux issue is debugged */
+    int affinity = 0;
 
     user_thread_data_pi.user_func = parallel_func;
     user_thread_data_pi.user_arg  = parallel_arg;
@@ -431,7 +433,9 @@ bu_parallel(void (*func)(int, genptr_t), int ncpu, genptr_t arg)
     int x;
 
     char *libbu_affinity = NULL;
-    int affinity = 1;
+
+    /* OFF by default until linux issue is debugged */
+    int affinity = 0;
 
     /*
      * multithreading support for SunOS 5.X / Solaris 2.x

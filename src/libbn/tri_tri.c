@@ -55,6 +55,7 @@
  *
  */
 
+#include "common.h"
 #include <math.h>
 #include <bn.h>
 #define FABS(x) fabs(x)        /* implement as is fastest on your machine */

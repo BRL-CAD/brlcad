@@ -332,7 +332,7 @@ drawH_part2(int dashflag, struct bu_list *vhead, const struct db_full_path *path
 	bu_semaphore_acquire(RT_SEM_MODEL);
 
 	/* Grab the last display list */
-	gdlp = BU_LIST_PREV(ged_display_list, &gedp->ged_gdp->gd_headDisplay);
+	gdlp = BU_LIST_PREV(ged_display_list, gedp->ged_gdp->gd_headDisplay);
 	BU_LIST_APPEND(gdlp->gdl_headSolid.back, &sp->l);
 
 	bu_semaphore_release(RT_SEM_MODEL);
@@ -1135,8 +1135,8 @@ cmd_redraw_vlist(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, co
 	if ((dp = db_lookup(dbip, argv[i], LOOKUP_NOISY)) == NULL)
 	    continue;
 
-	gdlp = BU_LIST_NEXT(ged_display_list, &gedp->ged_gdp->gd_headDisplay);
-	while (BU_LIST_NOT_HEAD(gdlp, &gedp->ged_gdp->gd_headDisplay)) {
+	gdlp = BU_LIST_NEXT(ged_display_list, gedp->ged_gdp->gd_headDisplay);
+	while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
 	    next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
 
 	    FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid) {

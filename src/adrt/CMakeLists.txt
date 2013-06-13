@@ -56,19 +56,16 @@ CMAKEFILES(${tie_HDRS})
 
 # Tcl/Tk based ISST
 INCLUDE_DIRECTORIES(
-  ${TOGL_INCLUDE_DIRS}
   ${OPENGL_INCLUDE_DIR_GL}
   ${OPENGL_INCLUDE_DIR_GLX}
   ${X11_INCLUDE_DIR}
   ${CMAKE_CURRENT_BINARY_DIR}/../other/togl/src
   )
-if(TOGL_LIBRARIES AND BRLCAD_ENABLE_OPENGL)
-  add_definitions(-DTOGL_USE_EXTERNAL_CONFIG_H=1)
-  add_library(issttcltk isst_tcltk.c)
+if(BRLCAD_ENABLE_OPENGL AND BRLCAD_ENABLE_TK)
   if(WIN32)
-    target_link_libraries(issttcltk librender ${TCL_LIBRARIES} ${TOGL_STUB_LIBRARIES} ${OPENGL_LIBRARIES} opengl32.lib)
+    BRLCAD_ADDLIB(issttcltk isst_tcltk.c "librender;libdm;${TCL_LIBRARIES};${OPENGL_LIBRARIES};opengl32.lib" NO_INSTALL)
   else(WIN32)
-    target_link_libraries(issttcltk librender ${TCL_LIBRARIES} ${TOGL_LIBRARIES})
+    BRLCAD_ADDLIB(issttcltk isst_tcltk.c "librender;libdm;${TCL_LIBRARIES};" NO_INSTALL)
   endif(WIN32)
   install(TARGETS issttcltk
     RUNTIME DESTINATION ${BIN_DIR}/isst0.1
@@ -76,24 +73,11 @@ if(TOGL_LIBRARIES AND BRLCAD_ENABLE_OPENGL)
     ARCHIVE DESTINATION ${LIB_DIR}/isst0.1)
   include(${BRLCAD_SOURCE_DIR}/misc/CMake/TCL_PKGINDEX.cmake)
   TCL_PKGINDEX(issttcltk isst "0.1")
-  # TODO - need to make this configure line into a real target ala
-  # BRLCAD_ADDDATA in order for the build dir copy to be updated when it
-  # is changed.
   if(WIN32)
-    set(isst_script isst.bat)
-  else(WIN32)
-    set(isst_script isst)
+    BRLCAD_MANAGE_FILES("isst.bat" ${BIN_DIR} EXEC)
   endif(WIN32)
-  if(NOT CMAKE_CONFIGURATION_TYPES)
-    configure_file(${isst_script} ${CMAKE_BINARY_DIR}/bin/${isst_script} COPYONLY)
-  else(NOT CMAKE_CONFIGURATION_TYPES)
-    foreach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
-      string(TOUPPER "${CFG_TYPE}" CFG_TYPE_UPPER)
-      configure_file(${isst_script} ${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/bin/${isst_script} COPY_ONLY)
-    endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
-  endif(NOT CMAKE_CONFIGURATION_TYPES)
-  install(PROGRAMS ${isst_script} DESTINATION bin)
-endif(TOGL_LIBRARIES AND BRLCAD_ENABLE_OPENGL)
+  BRLCAD_MANAGE_FILES("isst" ${BIN_DIR} EXEC)
+endif(BRLCAD_ENABLE_OPENGL AND BRLCAD_ENABLE_TK)
 CMAKEFILES(isst_tcltk.c)
 
 set(adrt_ignore_files

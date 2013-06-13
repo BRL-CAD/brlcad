@@ -113,7 +113,7 @@ fb_tk_open(FBIO *ifp, const char *file, int width, int height)
     /* set debug bit vector */
     if (file != NULL) {
 	const char *cp;
-	for (cp = file; *cp != '\0' && !isdigit(*cp); cp++)
+	for (cp = file; *cp != '\0' && !isdigit((unsigned char)*cp); cp++)
 	    ;
 	sscanf(cp, "%d", &ifp->if_debug);
     } else {

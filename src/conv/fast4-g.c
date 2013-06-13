@@ -230,9 +230,9 @@ static point_t *grid_points = NULL;
 
 static void
 usage() {
-    bu_log("Usage:\n\tfast4-g [-dwq] [-c component_list] [-m muves_file] [-o plot_file] [-b BU_DEBUG_FLAG] [-x RT_DEBUG_FLAG] fastgen4_bulk_data_file output.g\n");
+    bu_log("Usage: fast4-g [-dwq] [-c component_list] [-m muves_file] [-o plot_file] [-b BU_DEBUG_FLAG] [-x RT_DEBUG_FLAG] fastgen4_bulk_data_file output.g\n");
     bu_log("	d - print debugging info\n");
-    bu_log("	q - quiet mode (don't say anything except error messages\n");
+    bu_log("	q - quiet mode (don't say anything except error messages)\n");
     bu_log("	w - print warnings about creating default names\n");
     bu_log("	c - process only the listed region ids, may be a list (3001, 4082, 5347) or a range (2314-3527)\n");
     bu_log("	m - create a MUVES input file containing CHGCOMP and CBACKING elements\n");
@@ -2835,7 +2835,7 @@ main(int argc, char **argv)
 
     bu_setprogname(argv[0]);
 
-    while ((c=bu_getopt(argc, argv, "qm:o:c:dwx:b:X:C:")) != -1) {
+    while ((c=bu_getopt(argc, argv, "qm:o:c:dwx:b:X:C:h?")) != -1) {
 	switch (c) {
 	    case 'q':	/* quiet mode */
 		quiet = 1;
@@ -2870,7 +2870,6 @@ main(int argc, char **argv)
 		color_file = bu_optarg;
 		break;
 	    default:
-		bu_log("Unrecognized option (%c)\n", c);
 		usage();
 		break;
 	}

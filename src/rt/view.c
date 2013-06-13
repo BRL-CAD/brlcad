@@ -1871,9 +1871,9 @@ view_2init(struct application *ap, char *UNUSED(framename))
      * structures in the space partitioning tree
      */
     bu_ptbl_init(&stps, 8, "soltabs to delete");
-    if (R_DEBUG & RDEBUG_LIGHT) {
-	bu_log("deleting %d invisible light regions\n", BU_PTBL_LEN(&ap->a_rt_i->delete_regs));
-    }
+    if (R_DEBUG & RDEBUG_LIGHT)
+	bu_log("deleting %lu invisible light regions\n", BU_PTBL_LEN(&ap->a_rt_i->delete_regs));
+
     for (i=0; i<BU_PTBL_LEN(&ap->a_rt_i->delete_regs); i++) {
 	struct region *rp;
 	struct soltab *stp;
@@ -1890,10 +1890,10 @@ view_2init(struct application *ap, char *UNUSED(framename))
 	/* remove the invisible light region pointers from the soltab
 	 * structs.
 	 */
-	if (R_DEBUG & RDEBUG_LIGHT) {
-	    bu_log("Removing invisible light region pointers from %d soltabs\n",
+	if (R_DEBUG & RDEBUG_LIGHT)
+	    bu_log("Removing invisible light region pointers from %lu soltabs\n",
 		   BU_PTBL_LEN(&stps));
-	}
+
 	for (j=0; j<BU_PTBL_LEN(&stps); j++) {
 	    int k;
 	    struct region *rp2;

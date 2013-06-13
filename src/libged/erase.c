@@ -257,9 +257,9 @@ ged_erasePathFromDisplay(struct ged *gedp,
     else
 	found_subpath = 0;
 
-    gdlp = BU_LIST_NEXT(ged_display_list, &gedp->ged_gdp->gd_headDisplay);
-    last_gdlp = BU_LIST_LAST(ged_display_list, &gedp->ged_gdp->gd_headDisplay);
-    while (BU_LIST_NOT_HEAD(gdlp, &gedp->ged_gdp->gd_headDisplay)) {
+    gdlp = BU_LIST_NEXT(ged_display_list, gedp->ged_gdp->gd_headDisplay);
+    last_gdlp = BU_LIST_LAST(ged_display_list, gedp->ged_gdp->gd_headDisplay);
+    while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
 	next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
 
 	if (BU_STR_EQUAL(path, bu_vls_addr(&gdlp->gdl_path))) {
@@ -328,7 +328,7 @@ ged_erasePathFromDisplay(struct ged *gedp,
 	}
 
 	if (gdlp == last_gdlp)
-	    gdlp = (struct ged_display_list *)&gedp->ged_gdp->gd_headDisplay;
+	    gdlp = (struct ged_display_list *)gedp->ged_gdp->gd_headDisplay;
 	else
 	    gdlp = next_gdlp;
     }
@@ -377,8 +377,8 @@ _ged_eraseAllNamesFromDisplay(struct ged *gedp,
     struct ged_display_list *gdlp;
     struct ged_display_list *next_gdlp;
 
-    gdlp = BU_LIST_NEXT(ged_display_list, &gedp->ged_gdp->gd_headDisplay);
-    while (BU_LIST_NOT_HEAD(gdlp, &gedp->ged_gdp->gd_headDisplay)) {
+    gdlp = BU_LIST_NEXT(ged_display_list, gedp->ged_gdp->gd_headDisplay);
+    while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
 	char *dup_path;
 	char *tok;
 	int first = 1;
@@ -489,14 +489,14 @@ _ged_eraseAllPathsFromDisplay(struct ged *gedp,
     struct db_full_path fullpath, subpath;
 
     if (db_string_to_path(&subpath, gedp->ged_wdbp->dbip, path) == 0) {
-	gdlp = BU_LIST_NEXT(ged_display_list, &gedp->ged_gdp->gd_headDisplay);
-	while (BU_LIST_NOT_HEAD(gdlp, &gedp->ged_gdp->gd_headDisplay)) {
+	gdlp = BU_LIST_NEXT(ged_display_list, gedp->ged_gdp->gd_headDisplay);
+	while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
 	    gdlp->gdl_wflag = 0;
 	    gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
 	}
 
-	gdlp = BU_LIST_NEXT(ged_display_list, &gedp->ged_gdp->gd_headDisplay);
-	while (BU_LIST_NOT_HEAD(gdlp, &gedp->ged_gdp->gd_headDisplay)) {
+	gdlp = BU_LIST_NEXT(ged_display_list, gedp->ged_gdp->gd_headDisplay);
+	while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
 	    next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
 
 	    /* This display list has already been visited. */
@@ -512,7 +512,7 @@ _ged_eraseAllPathsFromDisplay(struct ged *gedp,
 		if (db_full_path_subset(&fullpath, &subpath, skip_first)) {
 		    _ged_freeDisplayListItem(gedp, gdlp);
 		} else if (_ged_eraseFirstSubpath(gedp, gdlp, &subpath, skip_first)) {
-		    gdlp = BU_LIST_NEXT(ged_display_list, &gedp->ged_gdp->gd_headDisplay);
+		    gdlp = BU_LIST_NEXT(ged_display_list, gedp->ged_gdp->gd_headDisplay);
 		    db_free_full_path(&fullpath);
 		    continue;
 		}

@@ -442,6 +442,9 @@ append_solid_to_display_list(
     BN_CK_TOL(tsp->ts_tol);
     RT_CK_RESOURCE(tsp->ts_resp);
 
+    VSETALL(min, INFINITY);
+    VSETALL(max, -INFINITY);
+
     if (!dgcdp) {
 	return TREE_NULL;
     }
@@ -1139,14 +1142,14 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
     } else {
 	struct ged_view *gvp;
 
+	memset(&dgcdp, 0, sizeof(struct _ged_client_data));
+	dgcdp.gedp = gedp;
+
 	gvp = gedp->ged_gvp;
 	if (gvp && gvp->gv_adaptive_plot)
 	    dgcdp.autoview = 1;
 	else
 	    dgcdp.autoview = 0;
-
-	memset(&dgcdp, 0, sizeof(struct _ged_client_data));
-	dgcdp.gedp = gedp;
 
 	/* Initial values for options, must be reset each time */
 	dgcdp.draw_nmg_only = 0;	/* no booleans */
@@ -1607,7 +1610,7 @@ ged_draw_guts(struct ged *gedp, int argc, const char *argv[], int kind)
 	    /* Done checking options. If our display is non-empty,
 	     * add -R to keep current view.
 	     */
-	    if (BU_LIST_NON_EMPTY(&gedp->ged_gdp->gd_headDisplay)) {
+	    if (BU_LIST_NON_EMPTY(gedp->ged_gdp->gd_headDisplay)) {
 		bu_vls_strcat(&vls, " -R");
 	    }
 	    break;
@@ -1723,7 +1726,7 @@ ged_draw_guts(struct ged *gedp, int argc, const char *argv[], int kind)
 	bu_vls_free(&vls);
 
 	empty_display = 1;
-	if (BU_LIST_NON_EMPTY(&gedp->ged_gdp->gd_headDisplay)) {
+	if (BU_LIST_NON_EMPTY(gedp->ged_gdp->gd_headDisplay)) {
 	    empty_display = 0;
 	}
 
@@ -1804,8 +1807,8 @@ ged_addToDisplay(struct ged *gedp,
 	found_namepath = 1;
 
     /* Make sure name is not already in the list */
-    gdlp = BU_LIST_NEXT(ged_display_list, &gedp->ged_gdp->gd_headDisplay);
-    while (BU_LIST_NOT_HEAD(gdlp, &gedp->ged_gdp->gd_headDisplay)) {
+    gdlp = BU_LIST_NEXT(ged_display_list, gedp->ged_gdp->gd_headDisplay);
+    while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
 	if (BU_STR_EQUAL(name, bu_vls_addr(&gdlp->gdl_path)))
 	    goto end;
 
@@ -1829,7 +1832,7 @@ ged_addToDisplay(struct ged *gedp,
 
     BU_ALLOC(gdlp, struct ged_display_list);
     BU_LIST_INIT(&gdlp->l);
-    BU_LIST_INSERT(&gedp->ged_gdp->gd_headDisplay, &gdlp->l);
+    BU_LIST_INSERT(gedp->ged_gdp->gd_headDisplay, &gdlp->l);
     BU_LIST_INIT(&gdlp->gdl_headSolid);
     gdlp->gdl_dp = dp;
     bu_vls_init(&gdlp->gdl_path);
@@ -1858,8 +1861,7 @@ ged_redraw(struct ged *gedp, int argc, const char *argv[])
 
     if (argc == 1) {
 	/* redraw everything */
-	for (BU_LIST_FOR(gdlp, ged_display_list,
-	     &gedp->ged_gdp->gd_headDisplay))
+	for (BU_LIST_FOR(gdlp, ged_display_list, gedp->ged_gdp->gd_headDisplay))
 	{
 	    for (BU_LIST_FOR(sp, solid, &gdlp->gdl_headSolid)) {
 		ret = redraw_solid(gedp, sp);
@@ -1885,8 +1887,7 @@ ged_redraw(struct ged *gedp, int argc, const char *argv[])
 	    }
 
 	    found_path = 0;
-	    for (BU_LIST_FOR(gdlp, ged_display_list,
-		 &gedp->ged_gdp->gd_headDisplay))
+	    for (BU_LIST_FOR(gdlp, ged_display_list, gedp->ged_gdp->gd_headDisplay))
 	    {
 		ret = db_string_to_path(&dl_path, gedp->ged_wdbp->dbip,
 			bu_vls_addr(&gdlp->gdl_path));

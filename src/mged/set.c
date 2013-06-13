@@ -377,7 +377,7 @@ set_dlist(void)
 	    if (dlp1->dml_dmp->dm_displaylist &&
 		dlp1->dml_dlist_state->dl_active == 0) {
 		curr_dm_list = dlp1;
-		createDLists(&gedp->ged_gdp->gd_headDisplay);
+		createDLists(gedp->ged_gdp->gd_headDisplay);
 		dlp1->dml_dlist_state->dl_active = 1;
 		dlp1->dml_dirty = 1;
 	    }
@@ -411,8 +411,8 @@ set_dlist(void)
 
 		    dlp1->dml_dlist_state->dl_active = 0;
 
-		    gdlp = BU_LIST_NEXT(ged_display_list, &gedp->ged_gdp->gd_headDisplay);
-		    while (BU_LIST_NOT_HEAD(gdlp, &gedp->ged_gdp->gd_headDisplay)) {
+		    gdlp = BU_LIST_NEXT(ged_display_list, gedp->ged_gdp->gd_headDisplay);
+		    while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
 			next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
 
 			(void)DM_MAKE_CURRENT(dlp1->dml_dmp);

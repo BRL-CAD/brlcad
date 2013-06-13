@@ -55,7 +55,6 @@ sqlite3		http://www.sqlite.org/				Although sqlite has many potential uses, curr
 tkhtml		fork of http://tkhtml.tcl.tk/tkhtml.html 	Used by MGED and Archer help systems now, and by hv3 once it is up and running.
 tkpng		http://www.muonics.com/FreeStuff/TkPNG/ 	PNG photo image support for Tk - used by Archer
 tktable		http://tktable.sourceforge.net/			High performing table widget for Tcl/Tk, used by Archer
-togl		fork of http://togl.sourceforge.net/		Tk OpenGL widget, used by ISST
 
 6.  Misc
 osl

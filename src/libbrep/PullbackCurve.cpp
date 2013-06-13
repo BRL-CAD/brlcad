@@ -927,7 +927,7 @@ resolve_seam_point_from_prev(
     }
 
     if (surf->IsClosed(1) &&
-        (NEAR_EQUAL(pt.y, vmin, PBC_TOL) || NEAR_EQUAL(pt.y, vmax, PBC_TOL)))
+	(NEAR_EQUAL(pt.y, vmin, PBC_TOL) || NEAR_EQUAL(pt.y, vmax, PBC_TOL)))
     {
 	if (fabs(prev_pt.y - vmin) < fabs(prev_pt.y - vmax)) {
 	    newpt.y = vmin;

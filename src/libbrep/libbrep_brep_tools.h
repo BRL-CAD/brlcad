@@ -69,14 +69,14 @@
 */
 NURBS_EXPORT
 bool ON_Surface_SubSurface(
-        const ON_Surface *srf,
-        ON_Interval *u_val,
-        ON_Interval *v_val,
-        ON_Surface **t1,
-        ON_Surface **t2,
-        ON_Surface **t3,
-        ON_Surface **t4,
-        ON_Surface **result
+	const ON_Surface *srf,
+	ON_Interval *u_val,
+	ON_Interval *v_val,
+	ON_Surface **t1,
+	ON_Surface **t2,
+	ON_Surface **t3,
+	ON_Surface **t4,
+	ON_Surface **result
 	);
 
 #endif /* __LIBBREP_BREP_TOOLS */

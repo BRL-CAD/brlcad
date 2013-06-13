@@ -181,9 +181,6 @@ main (int argc, char **argv)
 		Round = 1;
 		break;
 	    default:
-		if (Ch != '?' && Ch != 'h') {
-		    fprintf(stderr, "Bad option '-%c'\n", Ch);
-		}
 		PrintUsage();
 	}
 

@@ -994,7 +994,7 @@ if(NOT BRLCAD_BUNDLED_LIBS MATCHES "AUTO" AND NOT BRLCAD_BUNDLED_LIBS MATCHES "B
 endif(NOT BRLCAD_BUNDLED_LIBS MATCHES "AUTO" AND NOT BRLCAD_BUNDLED_LIBS MATCHES "BUNDLED" AND NOT BRLCAD_BUNDLED_LIBS MATCHES "SYSTEM")
 
 # Enable Aqua widgets on Mac OSX.  This impacts Tcl/Tk building and OpenGL
-# building. Not currently working - needs work in at least Tk and togl
+# building. Not currently working - needs work in at least Tk
 # CMake logic (probably more), and the display manager/framebuffer codes are known to depend
 # on either GLX or WGL specifically in their current forms.
 option(BRLCAD_ENABLE_AQUA "Use Aqua instead of X11 whenever possible on OSX." OFF)
@@ -1603,6 +1603,14 @@ if(BRLCAD_ENABLE_OPENGL)
   endif(OPENGL_INCLUDE_DIR_GLX)
 endif(BRLCAD_ENABLE_OPENGL)
 
+# may have the header, but ensure it works in pedantic mode (gcc bug)
+if(HAVE_EMMINTRIN_H)
+  check_cxx_source_compiles("#include <emmintrin.h>\nint main() { return 0; }" HAVE_EMMINTRIN)
+  if(HAVE_EMMINTRIN)
+    CONFIG_H_APPEND(BRLCAD "#define HAVE_EMMINTRIN 1\n")
+  endif(HAVE_EMMINTRIN)
+endif(HAVE_EMMINTRIN_H)
+
 
 # *******************************************************************
 # ***         Check for Types/Structures - Stage 6 of 9           ***
@@ -1634,7 +1642,8 @@ if (HAVE_THREAD_LOCAL)
   CONFIG_H_APPEND(BRLCAD "#define HAVE_THREAD_LOCAL 1\n")
 else (HAVE_THREAD_LOCAL)
   # try GCC except Mac OS X
-  check_cxx_source_compiles("static __thread int i = 0; int main() { return i; }" HAVE___THREAD)
+  include(CheckCXXSourceRuns)
+  check_cxx_source_runs("static __thread int i = 0; int main() { return i; }" HAVE___THREAD)
   if (HAVE___THREAD)
     CONFIG_H_APPEND(BRLCAD "#define HAVE___THREAD 1\n")
   else (HAVE___THREAD)
@@ -1662,6 +1671,7 @@ BRLCAD_FUNCTION_EXISTS(alarm HAVE_ALARM)
 BRLCAD_FUNCTION_EXISTS(dlopen HAVE_DLOPEN)
 BRLCAD_FUNCTION_EXISTS(drand48 HAVE_DRAND48)
 BRLCAD_FUNCTION_EXISTS(fchmod HAVE_FCHMOD)
+BRLCAD_FUNCTION_EXISTS(fileno HAVE_FILENO)
 BRLCAD_FUNCTION_EXISTS(fsync HAVE_FSYNC)
 BRLCAD_FUNCTION_EXISTS(getcwd HAVE_GETCWD)
 BRLCAD_FUNCTION_EXISTS(getegid HAVE_GETEGID)
@@ -1696,6 +1706,32 @@ BRLCAD_FUNCTION_EXISTS(sysmp HAVE_SYSMP)
 BRLCAD_FUNCTION_EXISTS(vfork HAVE_VFORK)
 BRLCAD_FUNCTION_EXISTS(vsscanf HAVE_VSSCANF)
 BRLCAD_FUNCTION_EXISTS(writev HAVE_WRITEV)
+
+# we may compile in strict pedantic mode, but still want access to
+# some POSIX functions.  test whether some symbols (below) are
+# declared in addition to whether they resolve (above).
+#
+# we do this manually for now because CHECK_SYMBOL_EXISTS and
+# CHECK_PROTOTYPE_EXISTS are both terribly broken.
+#
+# FIXME: wrap these into a BRLCAD_CHECK_SYMBOL() macro or similar.
+
+# test for kill()
+if("${HAVE_DECL_KILL}" MATCHES "^${HAVE_DECL_KILL}$")
+  check_c_source_compiles("#include <sys/types.h>\n#include <signal.h>\nint main() { (void)kill; return 0; }" HAVE_DECL_KILL)
+  if(HAVE_DECL_KILL)
+    CONFIG_H_APPEND(BRLCAD "#cmakedefine HAVE_DECL_KILL 1\n")
+  endif(HAVE_DECL_KILL)
+endif("${HAVE_DECL_KILL}" MATCHES "^${HAVE_DECL_KILL}$")
+
+# test for fileno()
+if("${HAVE_DECL_FILENO}" MATCHES "^${HAVE_DECL_FILENO}$")
+  check_c_source_compiles("#include <stdio.h>\nint main() { (void)fileno; return 0; }" HAVE_DECL_FILENO)
+  if(HAVE_DECL_FILENO)
+    CONFIG_H_APPEND(BRLCAD "#cmakedefine HAVE_DECL_FILENO 1\n")
+  endif(HAVE_DECL_FILENO)
+endif("${HAVE_DECL_FILENO}" MATCHES "^${HAVE_DECL_FILENO}$")
+
 
 # On Windows, we need to check for hypot etc..  This test pertains
 # to the windows specific config file, not CONFIG_H_FILE - hence,

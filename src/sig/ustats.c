@@ -46,6 +46,7 @@ usage(void)
     bu_exit(1, "Usage: %s [ file ]\n", progname);
 }
 
+
 /*
  * P A R S E _ A R G S --- Parse through command line flags
  */
@@ -71,6 +72,7 @@ parse_args(int ac, char **av)
 
     return bu_optind;
 }
+
 
 void
 comp_stats(FILE *fd)
@@ -101,7 +103,7 @@ comp_stats(FILE *fd)
     stdev = sqrt(((num * sum_sq) - (sum*sum)) / (num * (num-1)));
 
     printf("   Num: %g\n   Min: %u\n   Max: %u\n   Sum: %g\n  Mean: %g\nSStdev: %g\n",
-		 num, min, max, sum, sum/num, stdev);
+	   num, min, max, sum, sum/num, stdev);
 
     bu_free(buffer, "buffer");
 }
@@ -126,10 +128,10 @@ main(int ac, char *av[])
 	/* open file of shorts */
 	if (freopen(ifname, "r", stdin) == (FILE *)NULL) {
 	    perror(ifname);
-	    bu_free(ifname,"ifname alloc from bu_realpath");
+	    bu_free(ifname, "ifname alloc from bu_realpath");
 	    return -1;
 	}
-	bu_free(ifname,"ifname alloc from bu_realpath");
+	bu_free(ifname, "ifname alloc from bu_realpath");
     } else if (isatty((int)fileno(stdin))) {
 	usage();
     }
@@ -138,6 +140,7 @@ main(int ac, char *av[])
 
     return 0;
 }
+
 
 /*
  * Local Variables:

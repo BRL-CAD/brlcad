@@ -29,6 +29,8 @@
 #ifndef REGIONLIST_INCLUDED
 #define REGIONLIST_INCLUDED
 
+#include "common.h"
+
 #include <map>
 #include <sstream>
 

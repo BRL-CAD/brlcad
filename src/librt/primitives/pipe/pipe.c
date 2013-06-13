@@ -134,8 +134,6 @@ struct pipe_bend {
 };
 
 
-#define PIPE_MM(_v) VMINMAX((*min), (*max), _v)
-
 #define PIPE_CONNECTING_ARCS 4 /* number of connecting arcs to draw between points */
 #define PIPE_CIRCLE_SEGS 16    /* number of segments used to plot a circle */
 
@@ -412,12 +410,12 @@ rt_bend_pipe_prep(
     work[X] -= f;
     work[Y] -= f;
     work[Z] -= f;
-    PIPE_MM(work);
+    VMINMAX(*min, *max, work);
     VMOVE(work, bp->bend_bound_center);
     work[X] += f;
     work[Y] += f;
     work[Z] += f;
-    PIPE_MM(work);
+    VMINMAX(*min, *max, work);
 
     if (head) {
 	BU_LIST_INSERT(head, &bp->l);
@@ -492,29 +490,29 @@ rt_linear_pipe_prep(
     VSETALL(lp->pipe_max, -INFINITY);
 
     VJOIN2(work, pt1, od1, v1, od1, v2);
-    PIPE_MM(work);
+    VMINMAX(*min, *max, work);
     VMINMAX(lp->pipe_min, lp->pipe_max, work);
     VJOIN2(work, pt1, -od1, v1, od1, v2);
-    PIPE_MM(work);
+    VMINMAX(*min, *max, work);
     VMINMAX(lp->pipe_min, lp->pipe_max, work);
     VJOIN2(work, pt1, od1, v1, -od1, v2);
-    PIPE_MM(work);
+    VMINMAX(*min, *max, work);
     VMINMAX(lp->pipe_min, lp->pipe_max, work);
     VJOIN2(work, pt1, -od1, v1, -od1, v2);
-    PIPE_MM(work);
+    VMINMAX(*min, *max, work);
     VMINMAX(lp->pipe_min, lp->pipe_max, work);
 
     VJOIN2(work, pt2, od2, v1, od2, v2);
-    PIPE_MM(work);
+    VMINMAX(*min, *max, work);
     VMINMAX(lp->pipe_min, lp->pipe_max, work);
     VJOIN2(work, pt2, -od2, v1, od2, v2);
-    PIPE_MM(work);
+    VMINMAX(*min, *max, work);
     VMINMAX(lp->pipe_min, lp->pipe_max, work);
     VJOIN2(work, pt2, od2, v1, -od2, v2);
-    PIPE_MM(work);
+    VMINMAX(*min, *max, work);
     VMINMAX(lp->pipe_min, lp->pipe_max, work);
     VJOIN2(work, pt2, -od2, v1, -od2, v2);
-    PIPE_MM(work);
+    VMINMAX(*min, *max, work);
     VMINMAX(lp->pipe_min, lp->pipe_max, work);
 
     if (head) {
@@ -537,6 +535,9 @@ pipe_elements_calculate(struct bu_list *elements_head, struct rt_db_internal *ip
     RT_CK_DB_INTERNAL(ip);
     pip = (struct rt_pipe_internal *)ip->idb_ptr;
     RT_PIPE_CK_MAGIC(pip);
+
+    VSETALL(*min, INFINITY);
+    VSETALL(*max, -INFINITY);
 
     if (BU_LIST_IS_EMPTY(&(pip->pipe_segs_head))) {
 	return;

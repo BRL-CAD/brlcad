@@ -51,8 +51,8 @@ static char *framebuffer;
 static int scr_width = 0;
 static int scr_height = 0;
 
-static char usage[] = "\
-Usage: dunnsnap [-h] [-F framebuffer]\n\
+static char usage[] =
+"Usage: dunnsnap [-F framebuffer]\n\
 	[-{sS} squarescrsize] [-{wW} scr_width] [-{nN} scr_height]\n\
 	[num_frames]\n";
 
@@ -61,12 +61,8 @@ get_args(int argc, char **argv)
 {
     int c;
 
-    while ((c = bu_getopt(argc, argv, "hF:s:S:w:W:n:N:")) != -1) {
+    while ((c = bu_getopt(argc, argv, "F:s:S:w:W:n:N:h?")) != -1) {
 	switch (c) {
-	    case 'h':
-		/* high-res */
-		scr_height = scr_width = 1024;
-		break;
 	    case 'F':
 		framebuffer = bu_optarg;
 		break;
@@ -108,6 +104,13 @@ main(int argc, char **argv)
 	(void)fputs(usage, stderr);
 	bu_exit (1, NULL);
     }
+
+    if (argc == 1 && isatty(fileno(stdin)) && isatty(fileno(stdout)) ) {
+	fprintf(stderr,"%s",usage);
+    	fprintf(stderr,"       Program continues running:\n");
+    }
+    else if ( BU_STR_EQUAL(argv[1], "-h") ||  BU_STR_EQUAL(argv[1], "-?") )
+	bu_exit(25, "%s", usage);
 
     dunnopen();
 

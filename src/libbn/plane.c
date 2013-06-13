@@ -28,9 +28,10 @@
 
 #include "common.h"
 
+#include <stdlib.h>
+#include <string.h>
 #include <stdio.h>
 #include <math.h>
-#include <string.h>
 
 #include "bu.h"
 #include "vmath.h"
@@ -1756,11 +1757,6 @@ are_equal(fastf_t a_in, fastf_t b_in, fastf_t t)
 	b = nextafter((double)b_in, (double)a_in);
 	af = modf((double)a, (double *)&ai);
 	bf = modf((double)b, (double *)&bi);
-    } else if (sizeof(fastf_t) == sizeof(long double)) {
-	a = nextafterl((long double)a_in, (long double)b_in);
-	b = nextafterl((long double)b_in, (long double)a_in);
-	af = modfl((long double)a, (long double *)&ai);
-	bf = modfl((long double)b, (long double *)&bi);
     } else {
 	bu_bomb("are_equal(): unexpect size for type fastf_t");
     }

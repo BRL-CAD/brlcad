@@ -257,6 +257,7 @@ set(librt_ignored_files
   prcomb.c
   primitives/bot/btg.h
   primitives/bot/g_bot_include.c
+  primitives/bot/bot_wireframe.cpp
   primitives/bot/tieprivate.h
   primitives/bot/tie.c
   primitives/bot/tie_kdtree.c

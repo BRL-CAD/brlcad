@@ -37,12 +37,12 @@ int main(int ac, char **av)
 
     if (isatty(fileno(stdin)) || isatty(fileno(stdout))) {
 	fprintf(stderr, "Usage: %s < u_shorts > bwfile\n",
-		      *av);
+		*av);
 	return -1;
     }
 
     if (ac > 1 && *av[1] == '-' && *av[2] == 'l')
-	while ((num = fread(&ibuf[0], sizeof(*ibuf), 512, stdin)) > 0 ) {
+	while ((num = fread(&ibuf[0], sizeof(*ibuf), 512, stdin)) > 0) {
 	    for (i=0; i < num; i++)
 		obuf[i] = (unsigned char)ibuf[i];
 
@@ -52,7 +52,7 @@ int main(int ac, char **av)
 	    }
 	}
     else
-	while ((num = fread(&ibuf[0], sizeof(*ibuf), 512, stdin)) > 0 ) {
+	while ((num = fread(&ibuf[0], sizeof(*ibuf), 512, stdin)) > 0) {
 	    for (i=0; i < num; i++)
 		obuf[i] = (unsigned char)(ibuf[i] >> 8);
 
@@ -63,6 +63,7 @@ int main(int ac, char **av)
 	}
     return 0;
 }
+
 
 /*
  * Local Variables:

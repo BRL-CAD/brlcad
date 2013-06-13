@@ -138,10 +138,6 @@ do
                                   shift;;
      --disable-itk)                options="$options -DBRLCAD_ITK=SYSTEM";
                                   shift;;
-     --enable-togl)                options="$options -DBRLCAD_TOGL=BUNDLED";
-                                  shift;;
-     --disable-togl)                options="$options -DBRLCAD_TOGL=SYSTEM";
-                                  shift;;
      --enable-iwidgets)                options="$options -DBRLCAD_IWIDGETS=BUNDLED";
                                   shift;;
      --disable-iwidgets)                options="$options -DBRLCAD_IWIDGETS=SYSTEM";

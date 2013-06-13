@@ -19,11 +19,11 @@
  */
 /** @file imod.c
  *
- *  Modify intensities in a stream of short (16 bit) unsigned integers.
+ * Modify intensities in a stream of short (16 bit) unsigned integers.
  *
- *  Allows any number of add, subtract, multiply, divide, or
- *  exponentiation operations to be performed on a picture.
- *  Keeps track of and reports clipping.
+ * Allows any number of add, subtract, multiply, divide, or
+ * exponentiation operations to be performed on a picture.
+ * Keeps track of and reports clipping.
  *
  */
 
@@ -42,15 +42,15 @@ char *progname = "(noname)";
 char *file_name = NULL;
 
 
-#define	ADD	1
-#define MULT	2
-#define	ABS	3
-#define	POW	4
-#define	BUFLEN	(8192*2)	/* usually 2 pages of memory, 16KB */
+#define ADD 1
+#define MULT 2
+#define ABS 3
+#define POW 4
+#define BUFLEN (8192*2)	/* usually 2 pages of memory, 16KB */
 
-int	numop = 0;		/* number of operations */
-int	op[256];		/* operations */
-double	val[256];		/* arguments to operations */
+int numop = 0;		/* number of operations */
+int op[256];		/* operations */
+double val[256];		/* arguments to operations */
 short iobuf[BUFLEN];		/* input buffer */
 int mapbuf[65536];		/* translation buffer/lookup table */
 
@@ -58,10 +58,10 @@ int
 get_args(int argc, char **argv)
 {
     int c;
-    double	d;
+    double d;
 
-    while ( (c = bu_getopt( argc, argv, "a:s:m:d:Ae:r:" )) != -1 )  {
-	switch ( c )  {
+    while ((c = bu_getopt(argc, argv, "a:s:m:d:Ae:r:")) != -1) {
+	switch (c) {
 	    case 'a':
 		op[ numop ] = ADD;
 		val[ numop++ ] = atof(bu_optarg);
@@ -77,8 +77,8 @@ get_args(int argc, char **argv)
 	    case 'd':
 		op[ numop ] = MULT;
 		d = atof(bu_optarg);
-		if ( ZERO(d) ) {
-		    bu_exit(2, "bwmod: divide by zero!\n" );
+		if (ZERO(d)) {
+		    bu_exit(2, "bwmod: divide by zero!\n");
 		}
 		val[ numop++ ] = 1.0 / d;
 		break;
@@ -93,8 +93,8 @@ get_args(int argc, char **argv)
 	    case 'r':
 		op[ numop ] = POW;
 		d = atof(bu_optarg);
-		if ( ZERO(d) ) {
-		    bu_exit(2, "bwmod: zero root!\n" );
+		if (ZERO(d)) {
+		    bu_exit(2, "bwmod: zero root!\n");
 		}
 		val[ numop++ ] = 1.0 / d;
 		break;
@@ -104,29 +104,30 @@ get_args(int argc, char **argv)
 	}
     }
 
-    if ( bu_optind >= argc )  {
-	if ( isatty((int)fileno(stdin)) )
+    if (bu_optind >= argc) {
+	if (isatty((int)fileno(stdin)))
 	    return 0;
 	file_name = "-";
     } else {
 	char *ifname;
 	file_name = argv[bu_optind];
 	ifname = bu_realpath(file_name, NULL);
-	if ( freopen(ifname, "r", stdin) == NULL )  {
-	    fprintf( stderr,
-			   "bwmod: cannot open \"%s(canonical %s)\" for reading\n",
-			   file_name,ifname);
-	    bu_free(ifname,"ifname alloc from bu_realpath");
+	if (freopen(ifname, "r", stdin) == NULL) {
+	    fprintf(stderr,
+		    "bwmod: cannot open \"%s(canonical %s)\" for reading\n",
+		    file_name, ifname);
+	    bu_free(ifname, "ifname alloc from bu_realpath");
 	    return 0;
 	}
-	bu_free(ifname,"ifname alloc from bu_realpath");
+	bu_free(ifname, "ifname alloc from bu_realpath");
     }
 
-    if ( argc > ++bu_optind )
-	fprintf( stderr, "bwmod: excess argument(s) ignored\n" );
+    if (argc > ++bu_optind)
+	fprintf(stderr, "bwmod: excess argument(s) ignored\n");
 
     return 1;		/* OK */
 }
+
 
 void mk_trans_tbl(void)
 {
@@ -140,10 +141,10 @@ void mk_trans_tbl(void)
 	    switch (op[i]) {
 		case ADD : d += val[i]; break;
 		case MULT: d *= val[i]; break;
-		case POW : d = pow( d, val[i]); break;
+		case POW : d = pow(d, val[i]); break;
 		case ABS : if (d < 0.0) d = - d; break;
 		default  : fprintf(stderr, "%s: error in op\n",
-					 progname); break;
+				   progname); break;
 	    }
 	}
 
@@ -158,25 +159,26 @@ void mk_trans_tbl(void)
     }
 }
 
+
 int main(int argc, char **argv)
 {
     short *p, *q;
     int i;
-    unsigned int	n;
+    unsigned int n;
     unsigned long clip_high, clip_low;
 
     if (!(progname=strrchr(*argv, '/')))
 	progname = *argv;
 
-    if ( !get_args( argc, argv ) || isatty(fileno(stdin)) || isatty(fileno(stdout)) ) {
-	bu_exit( 1, "Usage: imod {-a add -s sub -m mult -d div -A(abs) -e exp -r root} [file.s]\n" );
+    if (!get_args(argc, argv) || isatty(fileno(stdin)) || isatty(fileno(stdout))) {
+	bu_exit(1, "Usage: imod {-a add -s sub -m mult -d div -A(abs) -e exp -r root} [file.s]\n");
     }
 
     mk_trans_tbl();
 
     clip_high = clip_low = 0;
 
-    while ( (n=fread(iobuf, sizeof(*iobuf), BUFLEN, stdin)) > 0) {
+    while ((n=fread(iobuf, sizeof(*iobuf), BUFLEN, stdin)) > 0) {
 
 	/* translate */
 	for (p=iobuf, q= &iobuf[n]; p < q; ++p) {
@@ -202,12 +204,13 @@ int main(int argc, char **argv)
 	}
     }
 
-    if ( clip_high != 0L || clip_low != 0L ) {
-	fprintf( stderr, "%s: clipped %lu high, %lu low\n", progname, (long unsigned)clip_high, (long unsigned)clip_low );
+    if (clip_high != 0L || clip_low != 0L) {
+	fprintf(stderr, "%s: clipped %lu high, %lu low\n", progname, (long unsigned)clip_high, (long unsigned)clip_low);
     }
 
     return 0;
 }
+
 
 /*
  * Local Variables:

@@ -26,6 +26,7 @@
  *        IABG mbH (Germany)
  */
 
+#include "common.h"
 #include <cassert>
 
 #include "RegionList.h"

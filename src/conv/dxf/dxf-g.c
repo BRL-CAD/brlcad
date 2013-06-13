@@ -208,7 +208,7 @@ static int invisible=0;
 #define MAX_LINE_SIZE	2050
 char line[MAX_LINE_SIZE];
 
-static char *usage="dxf-g [-c] [-d] [-v] [-t tolerance] [-s scale_factor] input_file.dxf output_file.g\n";
+static char *usage="Usage: dxf-g [-c] [-d] [-v] [-t tolerance] [-s scale_factor] input_file.dxf output_file.g\n";
 
 static FILE *dxf;
 static struct rt_wdb *out_fp;
@@ -3147,7 +3147,7 @@ main(int argc, char *argv[])
 
     /* get command line arguments */
     scale_factor = 1.0;
-    while ((c = bu_getopt(argc, argv, "cdvt:s:")) != -1)
+    while ((c = bu_getopt(argc, argv, "cdvt:s:h?")) != -1)
     {
 	switch (c)
 	{
@@ -3173,7 +3173,6 @@ main(int argc, char *argv[])
 		break;
 	    default:
 		bu_exit(1, "%s", usage);
-		break;
 	}
     }
 

@@ -100,6 +100,7 @@ main(int argc, char** argv)
     else
 	bu_log("Usage: %s\n", argv[0]);
 
+    bu_log("       Program continues running (will create file csgbrep.g):\n");
     bu_log("Writing objects to %s:\n", DEFAULT_FILENAME);
 
     ON::Begin();

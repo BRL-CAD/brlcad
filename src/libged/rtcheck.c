@@ -120,8 +120,8 @@ rtcheck_vector_handler(ClientData clientData, int UNUSED(mask))
 	Tcl_DeleteFileHandler(rtcp->fd);
 	fclose(rtcp->fp);
 
-	gdlp = BU_LIST_NEXT(ged_display_list, &rtcp->gedp->ged_gdp->gd_headDisplay);
-	while (BU_LIST_NOT_HEAD(gdlp, &rtcp->gedp->ged_gdp->gd_headDisplay)) {
+	gdlp = BU_LIST_NEXT(ged_display_list, rtcp->gedp->ged_gdp->gd_headDisplay);
+	while (BU_LIST_NOT_HEAD(gdlp, rtcp->gedp->ged_gdp->gd_headDisplay)) {
 	    next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
 
 	    FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid)
@@ -201,8 +201,8 @@ rtcheck_vector_handler(ClientData clientData, int mask)
 				 (ClientData)rtcp);
 	Tcl_Close(rtcp->interp, rtcp->chan);
 
-	gdlp = BU_LIST_NEXT(ged_display_list, &rtcp->gedp->ged_gdp->gd_headDisplay);
-	while (BU_LIST_NOT_HEAD(gdlp, &rtcp->gedp->ged_gdp->gd_headDisplay)) {
+	gdlp = BU_LIST_NEXT(ged_display_list, rtcp->gedp->ged_gdp->gd_headDisplay);
+	while (BU_LIST_NOT_HEAD(gdlp, rtcp->gedp->ged_gdp->gd_headDisplay)) {
 	    next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
 
 	    FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid)

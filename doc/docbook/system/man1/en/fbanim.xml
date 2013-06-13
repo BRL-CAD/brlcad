@@ -16,7 +16,7 @@
 <refsynopsisdiv xml:id="synopsis">
 <cmdsynopsis sepchar=" ">
   <command>fbanim</command>
-    <arg choice="opt" rep="norepeat">-hirv </arg>
+    <arg choice="opt" rep="norepeat">-irv </arg>
     <arg choice="opt" rep="norepeat"><arg choice="plain" rep="norepeat">-S <replaceable>screen</replaceable></arg><arg choice="plain" rep="norepeat"><replaceable>squaresize</replaceable></arg></arg>
     <arg choice="opt" rep="norepeat"><arg choice="plain" rep="norepeat">-W <replaceable>screen</replaceable></arg><arg choice="plain" rep="norepeat"><replaceable>width</replaceable></arg></arg>
     <arg choice="opt" rep="norepeat"><arg choice="plain" rep="norepeat">-N <replaceable>screen</replaceable></arg><arg choice="plain" rep="norepeat"><replaceable>height</replaceable></arg></arg>
@@ -58,9 +58,7 @@ Slower rates may also be used.  The default is 8 frames/second.</para>
 
 <para>By default, the framebuffer is assumed to be
 loaded with a 512x512 pixel image.
-Specifying the
-<option>-h</option>
-flag, changes the default to 1024x1024.  Alternatively, the
+Alternatively, the
 <option>-SWN</option>
 flags can be used in the normal way to specify the size of
 the screen (see

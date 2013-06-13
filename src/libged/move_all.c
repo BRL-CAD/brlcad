@@ -182,7 +182,7 @@ move_all_func(struct ged *gedp, int nflag, const char *old, const char *new)
 
     if (!nflag) {
 	/* Change object name anywhere in the display list path. */
-	for (BU_LIST_FOR(gdlp, ged_display_list, &gedp->ged_gdp->gd_headDisplay)) {
+	for (BU_LIST_FOR(gdlp, ged_display_list, gedp->ged_gdp->gd_headDisplay)) {
 	    int first = 1;
 	    int found = 0;
 	    struct bu_vls new_path = BU_VLS_INIT_ZERO;

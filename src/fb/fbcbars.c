@@ -154,11 +154,11 @@ static RGBpixel botpart[5] = {
 
 
 static char usage[] = "\
-Usage: fbcbars [-fs] [-h] [-F framebuffer]\n\
+Usage: fbcbars [-fes] [-F framebuffer]\n\
 	[-S squarescrsize] [-W scr_width] [-N scr_height]\n\
-	-f	FCC/EBU bars\n\
-	-e	EIA bars\n\
-	-s	SMPTE bars\n";
+	-f	sets mode to FCC/EBU bars\n\
+	-e	sets mode to EIA bars\n\
+	-s	sets mode to SMPTE bars\n";
 
 #define M_EIA 0
 #define M_FCC 1
@@ -170,7 +170,7 @@ get_args(int argc, char **argv)
 {
     int c;
 
-    while ((c = bu_getopt(argc, argv, "efshF:S:W:N:")) != -1) {
+    while ((c = bu_getopt(argc, argv, "efsF:S:W:N:h?")) != -1) {
 	switch (c) {
 	    case 'e':
 		mode = M_EIA;
@@ -180,10 +180,6 @@ get_args(int argc, char **argv)
 		break;
 	    case 'f':
 		mode = M_FCC;
-		break;
-	    case 'h':
-		/* high-res */
-		scr_height = scr_width = 1024;
 		break;
 	    case 'F':
 		framebuffer = bu_optarg;
@@ -209,6 +205,11 @@ get_args(int argc, char **argv)
     return 1;		/* OK */
 }
 
+void
+printusage(void) {
+	(void)fputs(usage, stderr);
+	bu_exit(1, NULL);
+}
 
 int
 main(int argc, char **argv)
@@ -216,10 +217,10 @@ main(int argc, char **argv)
     int x, y;
     FBIO *fbp;
 
-    if (!get_args(argc, argv)) {
-	(void)fputs(usage, stderr);
-	bu_exit(1, NULL);
-    }
+    if (argc == 1 && isatty(fileno(stdin)) && isatty(fileno(stdout)))
+	printusage();
+    if (!get_args(argc, argv))
+	printusage();
 
     if ((fbp = fb_open(framebuffer, scr_width, scr_height)) == NULL)
 	bu_exit(12, NULL);

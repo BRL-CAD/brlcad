@@ -315,7 +315,7 @@ make_coil(struct rt_wdb (*file), char *prefix, struct bu_list *sections, int sta
 
 void usage()
 {
-    bu_log("Usage: coil [-d mean_outer_diameter] [-w wire_diameter] [-h helix_angle] [-p pitch]\n");
+    bu_log("Usage: coil [-d mean_outer_diameter] [-w wire_diameter] [-H helix_angle] [-p pitch]\n");
     bu_log("            [-n number_of_turns] [-s start_cap_type] [-e end_cap_type]\n");
     bu_log("            [-S coil_data_structure] [-l overall_length] [-L]\n");
 }
@@ -326,7 +326,7 @@ int
 ReadArgs(int argc, char **argv, struct bu_list *sections, fastf_t *mean_outer_diameter, fastf_t *wire_diameter, fastf_t *helix_angle, fastf_t *pitch, int *nt, int *start_cap_type, int *end_cap_type, fastf_t *overall_length, int *lhf)
 {
     int c = 0;
-    char *options="d:w:h:p:n:s:e:S:l:L";
+    char *options="d:w:H:p:n:s:e:S:l:Lh?";
     int numturns, stype, etype, lhflag;
     float mean_od, wired, h_angle, ptch, lngth;
     int d1, d6;
@@ -334,8 +334,6 @@ ReadArgs(int argc, char **argv, struct bu_list *sections, fastf_t *mean_outer_di
     char s1, s2, s3, s4, s5;
 
     struct coil_data_t *coil_data;
-
-    bu_opterr = 0;
 
     if (argc == 1) {
 	usage();
@@ -352,7 +350,7 @@ ReadArgs(int argc, char **argv, struct bu_list *sections, fastf_t *mean_outer_di
 		sscanf(bu_optarg, "%f", &wired);
 		*wire_diameter = wired;
 		break;
-	    case 'h':
+	    case 'H':
 		sscanf(bu_optarg, "%f", &h_angle);
 		*helix_angle = h_angle;
 		break;
@@ -395,17 +393,7 @@ ReadArgs(int argc, char **argv, struct bu_list *sections, fastf_t *mean_outer_di
 		}
 		BU_LIST_INSERT(&(*sections), &((*coil_data).l));
 		break;
-	    case '?':
-		if (argc == 2)
-		    usedefaults=1;
-		usage();
-		break;
 	    default:
-		/* since c (bu_getopt() return value) holds '?',
-		 * instead print bu_optopt global which holds the
-		 * parsed character.
-		 */
-		bu_log("%s: illegal option -- %c\n", bu_getprogname(), bu_optopt);
 		usage();
 		bu_exit(EXIT_FAILURE, NULL);
 	}

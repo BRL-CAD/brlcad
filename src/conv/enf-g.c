@@ -88,6 +88,7 @@ struct obj_info {
 static int *part_tris=NULL;		/* list of triangles for current part */
 static size_t max_tri=0;		/* number of triangles currently malloced */
 static size_t curr_tri=0;		/* number of triangles currently being used */
+static char progname[]="enf-g";
 
 #define TRI_BLOCK 512			/* number of triangles to malloc per call */
 
@@ -117,12 +118,12 @@ create_name_hash( FILE *fd )
 
 	ptr = strtok( line, " \t\n" );
 	if ( !ptr )
-	    bu_exit( 1, "*****Error processing part name file at line:\n\t%s\n", line );
+	    bu_exit( 1, "%s: *****Error processing part name file at line:\n\t%s\n", progname,line );
 	part_no = bu_strdup( ptr );
 	lower_case( part_no );
 	ptr = strtok( (char *)NULL, " \t\n" );
 	if ( !ptr )
-	    bu_exit( 1, "*****Error processing part name file at line:\n\t%s\n", line );
+	    bu_exit( 1, "%s: *****Error processing part name file at line:\n\t%s\n", progname,line );
 	desc = bu_strdup( ptr );
 	lower_case( desc );
 
@@ -219,7 +220,7 @@ List_assem( struct obj_info *assem )
 void
 Usage(void)
 {
-    bu_log( "Usage:\n\tenf-g [-i starting_ident] [-t tolerance] [-l name_length_limit] [-n part_number_to_name_list] input_facets_file output_brlcad_file.g\n" );
+    bu_log( "Usage: %s [-i starting_ident] [-t tolerance] [-l name_length_limit] [-n part_number_to_name_list] input_facets_file output_brlcad_file.g\n",progname);
 }
 
 void
@@ -408,7 +409,7 @@ Part_import( int id_start )
 	    /* found end of part, check id */
 	    id_end = atoi( &line[10] );
 	    if ( id_end != id_start )
-		bu_exit( 1, "ERROR: found end of part id %d while processing part %d\n", id_end, id_start );
+		bu_exit( 1, "%s: ERROR: found end of part id %d while processing part %d\n", progname,id_end, id_start );
 	    if ( last_surf ) {
 		break;
 	    }
@@ -462,7 +463,7 @@ Part_import( int id_start )
 	} else if ( !bu_strncmp( line, "PointCount", 10 ) ) {
 	    /* get number of vertices for this surface */
 	} else
-	    bu_exit( 1, "ERROR: unrecognized line encountered while processing part id %d:\n%s\n", id_start, line );
+	    bu_exit( 1, "%s: ERROR: unrecognized line encountered while processing part id %d:\n%s\n", progname,id_start, line );
     }
 
     if ( curr_tri == 0 ) {
@@ -474,7 +475,7 @@ Part_import( int id_start )
 	/* write this part to database, first make a primitive solid */
 	if ( mk_bot( fd_out, part->brlcad_solid, RT_BOT_SOLID, RT_BOT_UNORIENTED, 0,
 		     tree_root->curr_vert, curr_tri, tree_root->the_array, part_tris, NULL, NULL ) )
-	    bu_exit( 1, "Failed to write primitive %s (%s) to database\n", part->brlcad_solid, part->obj_name );
+	    bu_exit( 1, "%s: Failed to write primitive %s (%s) to database\n", progname,part->brlcad_solid, part->obj_name );
 	if ( verbose ) {
 	    DO_INDENT;
 	    bu_log( "Wrote BOT %s\n", part->brlcad_solid );
@@ -483,10 +484,10 @@ Part_import( int id_start )
 	/* then a region */
 	BU_LIST_INIT( &reg_head.l );
 	if ( mk_addmember( part->brlcad_solid, &reg_head.l, NULL, WMOP_UNION ) == WMEMBER_NULL )
-	    bu_exit( 1, "ERROR: Failed to add solid (%s), to region (%s)\n", part->brlcad_solid, part->brlcad_comb );
+	    bu_exit( 1, "%s: ERROR: Failed to add solid (%s), to region (%s)\n", progname,part->brlcad_solid, part->brlcad_comb );
 	if ( mk_comb( fd_out, part->brlcad_comb, &reg_head.l, 1, NULL, NULL, rgb, ident++,
 		      0, 1, 100, 0, 0, 0 ) )
-	    bu_exit( 1, "Failed to write region %s (%s) to database\n", part->brlcad_comb, part->obj_name );
+	    bu_exit( 1, "%s: Failed to write region %s (%s) to database\n", progname,part->brlcad_comb, part->obj_name );
 	if ( verbose ) {
 	    DO_INDENT;
 	    bu_log( "Wrote region %s\n", part->brlcad_comb );
@@ -561,14 +562,13 @@ Assembly_import( int id_start )
 	    /* found end of assembly, make sure it is this one */
 	    id_end = atoi( &line[14] );
 	    if ( id_end != id_start )
-		bu_exit( 1, "ERROR: found end of assembly id %d while processing id %d\n", id_end, id_start );
+		bu_exit( 1, "%s: ERROR: found end of assembly id %d while processing id %d\n", progname,id_end, id_start );
 	    indent_level -= indent_delta;
 	    DO_INDENT;
 	    bu_log( "Found end of assembly %s (id = %d)\n",  this_assem->obj_name, id_start );
 	    break;
 	} else {
-	    bu_log( "Unrecognized line encountered while processing assembly id %d:\n",
-		    id_start );
+	    bu_log( "%s: Unrecognized line encountered while processing assembly id %d:\n", progname,id_start );
 	    bu_exit( 1, "%s\n", line );
 	}
     }
@@ -581,11 +581,12 @@ Assembly_import( int id_start )
     for ( i=0; i<this_assem->part_count; i++ )
 	if ( mk_addmember( this_assem->members[i]->brlcad_comb,
 			   &assem_head.l, NULL, WMOP_UNION ) == WMEMBER_NULL )
-	    bu_exit( 1, "ERROR: Failed to add region %s to assembly %s\n", this_assem->members[i]->brlcad_comb, this_assem->brlcad_comb );
+	    bu_exit( 1, "%s: ERROR: Failed to add region %s to assembly %s\n",
+                        progname,this_assem->members[i]->brlcad_comb, this_assem->brlcad_comb );
 
     if ( mk_comb( fd_out, this_assem->brlcad_comb, &assem_head.l, 0, NULL, NULL, NULL,
 		  0, 0, 0, 0, 0, 0, 0 ) )
-	bu_exit( 1, "ERROR: Failed to write combination (%s) to database\n", this_assem->brlcad_comb );
+	bu_exit( 1, "%s: ERROR: Failed to write combination (%s) to database\n", progname,this_assem->brlcad_comb );
     if ( use_part_name_hash ) {
 	if ( db5_update_attribute( this_assem->brlcad_comb, "Part_No",
 				   this_assem->obj_name, fd_out->dbip ) ) {
@@ -616,7 +617,7 @@ main( int argc, char *argv[] )
     local_tol_sq = local_tol * local_tol;
     ident = 1000;
 
-    while ( (c=bu_getopt( argc, argv, "vi:t:n:l:" ) ) != -1 ) {
+    while ( (c=bu_getopt( argc, argv, "vi:t:n:l:h?" ) ) != -1 ) {
 	switch ( c ) {
 	    case 'v':	/* verbose */
 		verbose = 1;
@@ -627,7 +628,7 @@ main( int argc, char *argv[] )
 	    case 't':	/* tolerance */
 		tmp = atof( bu_optarg );
 		if ( tmp <= 0.0 )
-		    bu_exit( 1, "Illegal tolerance (%g), musy be > 0.0\n", tmp );
+		    bu_exit( 1, "%s: Illegal tolerance (%g), must be > 0.0\n", progname,tmp );
 		break;
 	    case 'n':	/* part name list */
 		part_name_file = bu_optarg;
@@ -636,39 +637,39 @@ main( int argc, char *argv[] )
 	    case 'l':	/* max name length */
 		max_name_len = atoi( bu_optarg );
 		if ( max_name_len < 5 )
-		    bu_exit( 1, "Unreasonable name length limitation\n" );
+		    bu_exit( 1, "%s: Unreasonable name length limitation\n",progname );
 		break;
 	    default:
-		bu_log( "Unrecognized option %c\n", c );
 		Usage();
 		bu_exit( 1, NULL );
 	}
     }
 
     if ( argc - bu_optind != 2 ) {
-	bu_log( "Not enough arguments!!\n" );
+	bu_log( "Not enough arguments!! (need at least input & output file names)\n" );
 	Usage();
 	bu_exit( 1, NULL );
     }
 
     input_file = bu_strdup( argv[bu_optind] );
-    output_file = bu_strdup( argv[bu_optind+1] );
 
     if ((fd_in=fopen(input_file, "rb")) == NULL) {
-	bu_log( "Cannot open %s for reading\n", input_file );
+	bu_log( "%s: Cannot open %s for reading\n", progname,input_file );
 	perror( argv[0] );
 	bu_exit( 1, NULL );
     }
 
+    output_file = bu_strdup( argv[bu_optind+1] );
+
     if ( (fd_out=wdb_fopen( output_file )) == NULL ) {
-	bu_log( "Cannot open %s for writing\n", output_file );
+	bu_log( "%s: Cannot open %s for writing\n", progname,output_file );
 	perror( argv[0] );
 	bu_exit( 1, NULL );
     }
 
     if ( use_part_name_hash ) {
 	if ( (fd_parts=fopen( part_name_file, "rb" )) == NULL ) {
-	    bu_log( "Cannot open part name file (%s)\n", part_name_file );
+	    bu_log( "%s,Cannot open part name file (%s)\n", progname,part_name_file );
 	    perror( argv[0] );
 	    bu_exit( 1, NULL );
 	}

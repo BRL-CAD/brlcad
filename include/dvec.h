@@ -125,7 +125,7 @@ extern "C++" {
 #define VEC_ALIGN
 
 /*#undef __SSE2__*/ // Test FPU version
-#if defined(__SSE2__) && defined(__GNUC__) && defined(HAVE_EMMINTRIN_H)
+#if defined(__SSE2__) && defined(__GNUC__) && defined(HAVE_EMMINTRIN_H) && defined(HAVE_EMMINTRIN)
 #  define __x86_vector__
 #  include "vector_x86.h"
 #else

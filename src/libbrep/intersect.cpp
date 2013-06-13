@@ -25,15 +25,356 @@
 
 #include "common.h"
 
-#include "bio.h"
 #include <assert.h>
 #include <vector>
 #include <algorithm>
+#include "bio.h"
 
 #include "vmath.h"
 #include "bu.h"
 
 #include "brep.h"
+
+
+/* Sub-division support for a curve.
+ * It's similar to generating the bounding box tree, when the Split()
+ * method is called, the curve is splitted into two parts, whose bounding
+ * boxes become the children of the original curve's bbox.
+ */
+struct Subcurve {
+private:
+    ON_BoundingBox m_node;
+public:
+    ON_Curve *m_curve;
+    ON_Interval m_t;
+    Subcurve *m_children[2];
+    ON_BOOL32 m_islinear;
+
+    Subcurve() : m_curve(NULL), m_islinear(false)
+    {
+	m_children[0] = m_children[1] = NULL;
+    }
+    Subcurve(const Subcurve &_scurve)
+    {
+	m_islinear = _scurve.m_islinear;
+	m_curve = _scurve.m_curve->Duplicate();
+	m_t = _scurve.m_t;
+	m_children[0] = m_children[1] = NULL;
+	SetBBox(_scurve.m_node);
+    }
+    ~Subcurve()
+    {
+	for (int i = 0; i < 2; i++) {
+	    if (m_children[i])
+		delete m_children[i];
+	}
+	delete m_curve;
+    }
+    int Split()
+    {
+	for (int i = 0; i < 2; i++)
+	    m_children[i] = new Subcurve();
+
+	if (m_curve->Split(m_t.Mid(), m_children[0]->m_curve, m_children[1]->m_curve) == false)
+	    return -1;
+
+	m_children[0]->m_t = ON_Interval(m_t.Min(), m_t.Mid());
+	m_children[0]->SetBBox(m_children[0]->m_curve->BoundingBox());
+	m_children[0]->m_islinear = m_children[0]->m_curve->IsLinear();
+	m_children[1]->m_t = ON_Interval(m_t.Mid(), m_t.Max());
+	m_children[1]->SetBBox(m_children[1]->m_curve->BoundingBox());
+	m_children[1]->m_islinear = m_children[1]->m_curve->IsLinear();
+
+	return 0;
+    }
+    void GetBBox(ON_3dPoint &min, ON_3dPoint &max)
+    {
+	min = m_node.m_min;
+	max = m_node.m_max;
+    }
+    void SetBBox(const ON_BoundingBox &bbox)
+    {
+	m_node = bbox;
+    }
+    bool IsPointIn(const ON_3dPoint &pt)
+    {
+	return m_node.IsPointIn(pt);
+    }
+};
+
+
+/* Sub-division support for a surface.
+ * It's similar to generating the bounding box tree, when the Split()
+ * method is called, the surface is splitted into two parts, whose bounding
+ * boxes become the children of the original surface's bbox.
+ */
+struct Subsurface {
+private:
+    ON_BoundingBox m_node;
+public:
+    ON_Surface *m_surf;
+    ON_Interval m_u, m_v;
+    Subsurface *m_children[4];
+
+    Subsurface() : m_surf(NULL)
+    {
+	m_children[0] = m_children[1] = m_children[2] = m_children[3] = NULL;
+    }
+    Subsurface(const Subsurface &_ssurf)
+    {
+	m_surf = _ssurf.m_surf->Duplicate();
+	m_u = _ssurf.m_u;
+	m_v = _ssurf.m_v;
+	m_children[0] = m_children[1] = m_children[2] = m_children[3] = NULL;
+	SetBBox(_ssurf.m_node);
+    }
+    ~Subsurface()
+    {
+	for (int i = 0; i < 4; i++) {
+	    if (m_children[i])
+		delete m_children[i];
+	}
+	delete m_surf;
+    }
+    int Split()
+    {
+	for (int i = 0; i < 4; i++)
+	    m_children[i] = new Subsurface();
+	ON_Surface *temp_surf1 = NULL, *temp_surf2 = NULL;
+	ON_BOOL32 ret = true;
+	ret = m_surf->Split(0, m_u.Mid(), temp_surf1, temp_surf2);
+	if (!ret) {
+	    delete temp_surf1;
+	    delete temp_surf2;
+	    return -1;
+	}
+
+	ret = temp_surf1->Split(1, m_v.Mid(), m_children[0]->m_surf, m_children[1]->m_surf);
+	delete temp_surf1;
+	if (!ret) {
+	    delete temp_surf2;
+	    return -1;
+	}
+	m_children[0]->m_u = ON_Interval(m_u.Min(), m_u.Mid());
+	m_children[0]->m_v = ON_Interval(m_v.Min(), m_v.Mid());
+	m_children[0]->SetBBox(m_children[0]->m_surf->BoundingBox());
+	m_children[1]->m_u = ON_Interval(m_u.Min(), m_u.Mid());
+	m_children[1]->m_v = ON_Interval(m_v.Mid(), m_v.Max());
+	m_children[1]->SetBBox(m_children[1]->m_surf->BoundingBox());
+
+	ret = temp_surf2->Split(1, m_v.Mid(), m_children[2]->m_surf, m_children[3]->m_surf);
+	delete temp_surf2;
+	if (!ret)
+	    return -1;
+	m_children[2]->m_u = ON_Interval(m_u.Mid(), m_u.Max());
+	m_children[2]->m_v = ON_Interval(m_v.Min(), m_v.Mid());
+	m_children[2]->SetBBox(m_children[2]->m_surf->BoundingBox());
+	m_children[3]->m_u = ON_Interval(m_u.Mid(), m_u.Max());
+	m_children[3]->m_v = ON_Interval(m_v.Mid(), m_v.Max());
+	m_children[3]->SetBBox(m_children[3]->m_surf->BoundingBox());
+
+	return 0;
+    }
+    void GetBBox(ON_3dPoint &min, ON_3dPoint &max)
+    {
+	min = m_node.m_min;
+	max = m_node.m_max;
+    }
+    void SetBBox(const ON_BoundingBox &bbox)
+    {
+	m_node = bbox;
+	/* Make sure that each dimension of the bounding box is greater than
+	 * ON_ZERO_TOLERANCE.
+	 * It does the same work as building the surface tree when ray tracing
+	 */
+	for (int i = 0; i < 3; i++) {
+	    double d = m_node.m_max[i] - m_node.m_min[i];
+	    if (ON_NearZero(d, ON_ZERO_TOLERANCE)) {
+		m_node.m_min[i] -= 0.001;
+		m_node.m_max[i] += 0.001;
+	    }
+	}
+    }
+};
+
+
+/**
+ * Point-point intersections (PPI)
+ *
+ * approach:
+ *
+ * - Calculate the distance of the two points.
+ *
+ * - If the distance is within the tolerance, the two points
+ *   intersect. Thd mid-point of them is the intersection point,
+ *   and half of the distance is the uncertainty radius.
+ */
+bool
+ON_Intersect(const ON_3dPoint& pointA,
+	     const ON_3dPoint& pointB,
+	     ON_ClassArray<ON_PX_EVENT>& x,
+	     double tolerance)
+{
+    if (tolerance <= 0.0)
+	tolerance = 0.01;
+
+    if (pointA.DistanceTo(pointB) <= tolerance) {
+	ON_PX_EVENT Event;
+	Event.m_type = ON_PX_EVENT::ppx_point;
+	Event.m_A = pointA;
+	Event.m_B = pointB;
+	Event.m_Mid = (pointA + pointB) * 0.5;
+	Event.m_radius = pointA.DistanceTo(pointB) * 0.5;
+	x.Append(Event);
+	return true;
+    }
+    return false;
+}
+
+
+#define MAX_PCI_DEPTH 8
+/**
+ * Point-curve intersections (PCI)
+ */
+bool
+ON_Intersect(const ON_3dPoint& pointA,
+	     const ON_Curve& curveB,
+	     ON_ClassArray<ON_PX_EVENT>& x,
+	     double tolerance,
+	     const ON_Interval* curveB_domain)
+{
+    bu_log("PCI called.\n");
+    Subcurve root;
+    if (curveB_domain == NULL) {
+	root.m_curve = curveB.Duplicate();
+	root.m_t = curveB.Domain();
+    }
+    else {
+	// Use ON_Curve::Split() to get the sub-curve inside curveB_domain
+	ON_Curve *temp_curve1 = NULL, *temp_curve2 = NULL, *temp_curve3 = NULL;
+	if (!curveB.Split(curveB_domain->Min(), temp_curve1, temp_curve2))
+	    return false;
+	delete temp_curve1;
+	temp_curve1 = NULL;
+	if (!temp_curve2->Split(curveB_domain->Max(), temp_curve1, temp_curve3))
+	    return false;
+	delete temp_curve1;
+	delete temp_curve2;
+	root.m_curve = temp_curve3;
+	root.m_t = *curveB_domain;
+    }
+
+    root.SetBBox(root.m_curve->BoundingBox());
+    root.m_islinear = root.m_curve->IsLinear();
+
+    if (!root.IsPointIn(pointA))
+	return false;
+
+    std::vector<Subcurve*> candidates, next_candidates;
+    candidates.push_back(&root);
+
+    // Find the sub-curves that are possibly intersected with the point.
+    for (int i = 0; i < MAX_PCI_DEPTH; i++) {
+	next_candidates.clear();
+	for (unsigned int j = 0; j < candidates.size(); j++) {
+	    if (candidates[j]->m_islinear) {
+		next_candidates.push_back(candidates[j]);
+	    } else {
+		if (candidates[j]->Split() == 0) {
+		    if (candidates[j]->m_children[0]->IsPointIn(pointA))
+			next_candidates.push_back(candidates[j]->m_children[0]);
+		    if (candidates[j]->m_children[1]->IsPointIn(pointA))
+			next_candidates.push_back(candidates[j]->m_children[1]);
+		} else
+		    next_candidates.push_back(candidates[j]);
+	    }
+	}
+	candidates = next_candidates;
+    }
+
+    for (unsigned int i = 0; i < candidates.size(); i++) {
+	// Use linear approximation to get the intersection point
+	ON_Line line(candidates[i]->m_curve->PointAtStart(), candidates[i]->m_curve->PointAtEnd());
+	double t, dis;
+	line.ClosestPointTo(pointA, &t);
+	// Get the closest point on the line *segment* to the point
+	double closest_point_t;
+	if (t < 0)
+	    closest_point_t = 0;
+	else if (t > 1)
+	    closest_point_t = 1;
+	else
+	    closest_point_t = t;
+	ON_3dPoint closest_point = line.PointAt(closest_point_t);
+	dis = pointA.DistanceTo(closest_point);
+
+	if (dis <= tolerance) {
+	    ON_PX_EVENT *Event = new ON_PX_EVENT;
+	    Event->m_type = ON_PX_EVENT::pcx_point;
+	    Event->m_A = pointA;
+	    Event->m_B = closest_point;
+	    Event->m_b[0] = candidates[i]->m_t.Min()+candidates[i]->m_t.Length()*closest_point_t;
+	    Event->m_Mid = (pointA + Event->m_B) * 0.5;
+	    Event->m_radius = dis * 0.5;
+	    x.Append(*Event);
+	    return true;
+	}
+    }
+    // All candidates have no intersection
+    return false;
+}
+
+
+/**
+ * Point-surface intersections (PSI)
+ */
+bool
+ON_Intersect(const ON_3dPoint& pointA,
+	     const ON_Surface& surfaceB,
+	     ON_ClassArray<ON_PX_EVENT>& x,
+	     double tolerance,
+	     const ON_Interval* surfaceB_udomain,
+	     const ON_Interval* surfaceB_vdomain)
+{
+    if (tolerance <= 0.0)
+	tolerance = 0.01;
+
+    ON_Interval u_domain, v_domain;
+    if (surfaceB_udomain == 0)
+	u_domain = surfaceB.Domain(0);
+    else
+	u_domain = *surfaceB_udomain;
+    if (surfaceB_vdomain == 0)
+	v_domain = surfaceB.Domain(1);
+    else
+	v_domain = *surfaceB_vdomain;
+
+    // We need ON_BrepFace for get_closest_point().
+    // TODO: Use routines like SubSurface in SSI to reduce computation.
+    ON_Brep *brep = ON_Brep::New();
+    brep->AddSurface(surfaceB.Duplicate());
+    brep->NewFace(0);
+    ON_2dPoint closest_point_uv;
+    brlcad::get_closest_point(closest_point_uv, brep->Face(0), pointA);
+    delete brep;
+
+    ON_3dPoint closest_point_3d = surfaceB.PointAt(closest_point_uv.x, closest_point_uv.y);
+    bu_log("%lf %lf %lf\n", pointA.x, pointA.y, pointA.z);
+    bu_log("%lf %lf %lf\n", closest_point_3d.x, closest_point_3d.y, closest_point_3d.z);
+    if (pointA.DistanceTo(closest_point_3d) <= tolerance) {
+	ON_PX_EVENT Event;
+	Event.m_type = ON_PX_EVENT::psx_point;
+	Event.m_A = pointA;
+	Event.m_b = closest_point_uv;
+	Event.m_B = closest_point_3d;
+	Event.m_Mid = (pointA + Event.m_B) * 0.5;
+	Event.m_radius = pointA.DistanceTo(Event.m_B) * 0.5;
+	x.Append(Event);
+	return true;
+    }
+    return false;
+}
+
 
 /**
  * Surface-surface intersections (SSI)
@@ -197,97 +538,7 @@ struct PointPair {
 };
 
 
-struct Subsurface {
-private:
-    ON_BoundingBox m_node;
-public:
-    ON_Surface *m_surf;
-    ON_Interval m_u, m_v;
-    Subsurface *m_children[4];
-
-    Subsurface() : m_surf(NULL)
-    {
-	m_children[0] = m_children[1] = m_children[2] = m_children[3] = NULL;
-    }
-    Subsurface(const Subsurface &_ssurf)
-    {
-	m_surf = _ssurf.m_surf->Duplicate();
-	m_u = _ssurf.m_u;
-	m_v = _ssurf.m_v;
-	m_children[0] = m_children[1] = m_children[2] = m_children[3] = NULL;
-	SetBBox(_ssurf.m_node);
-    }
-    ~Subsurface()
-    {
-	for (int i = 0; i < 4; i++) {
-	    if (m_children[i])
-		delete m_children[i];
-	}
-	delete m_surf;
-    }
-    int Split()
-    {
-	for (int i = 0; i < 4; i++)
-	    m_children[i] = new Subsurface();
-	ON_Surface *temp_surf1 = NULL, *temp_surf2 = NULL;
-	ON_BOOL32 ret = true;
-	ret = m_surf->Split(0, m_u.Mid(), temp_surf1, temp_surf2);
-	if (!ret) {
-	    delete temp_surf1;
-	    delete temp_surf2;
-	    return -1;
-	}
-
-	ret = temp_surf1->Split(1, m_v.Mid(), m_children[0]->m_surf, m_children[1]->m_surf);
-	delete temp_surf1;
-	if (!ret) {
-	    delete temp_surf2;
-	    return -1;
-	}
-	m_children[0]->m_u = ON_Interval(m_u.Min(), m_u.Mid());
-	m_children[0]->m_v = ON_Interval(m_v.Min(), m_v.Mid());
-	m_children[0]->SetBBox(m_children[0]->m_surf->BoundingBox());
-	m_children[1]->m_u = ON_Interval(m_u.Min(), m_u.Mid());
-	m_children[1]->m_v = ON_Interval(m_v.Mid(), m_v.Max());
-	m_children[1]->SetBBox(m_children[1]->m_surf->BoundingBox());
-
-	ret = temp_surf2->Split(1, m_v.Mid(), m_children[2]->m_surf, m_children[3]->m_surf);
-	delete temp_surf2;
-	if (!ret)
-	    return -1;
-	m_children[2]->m_u = ON_Interval(m_u.Mid(), m_u.Max());
-	m_children[2]->m_v = ON_Interval(m_v.Min(), m_v.Mid());
-	m_children[2]->SetBBox(m_children[2]->m_surf->BoundingBox());
-	m_children[3]->m_u = ON_Interval(m_u.Mid(), m_u.Max());
-	m_children[3]->m_v = ON_Interval(m_v.Mid(), m_v.Max());
-	m_children[3]->SetBBox(m_children[3]->m_surf->BoundingBox());
-
-	return 0;
-    }
-    void GetBBox(ON_3dPoint &min, ON_3dPoint &max)
-    {
-	min = m_node.m_min;
-	max = m_node.m_max;
-    }
-    void SetBBox(const ON_BoundingBox &bbox)
-    {
-	m_node = bbox;
-	/* Make sure that each dimension of the bounding box is greater than
-	 * ON_ZERO_TOLERANCE.
-	 * It does the same work as building the surface tree when ray tracing
-	 */
-	for (int i = 0; i < 3; i++) {
-	    double d = m_node.m_max[i] - m_node.m_min[i];
-	    if (ON_NearZero(d, ON_ZERO_TOLERANCE)) {
-		m_node.m_min[i] -= 0.001;
-		m_node.m_max[i] += 0.001;
-	    }
-	}
-    }
-};
-
-
-#define INTERSECT_MAX_DEPTH 8
+#define MAX_SSI_DEPTH 8
 int
 ON_Intersect(const ON_Surface* surfA,
 	     const ON_Surface* surfB,
@@ -330,7 +581,7 @@ ON_Intersect(const ON_Surface* surfA,
      * method of splitting a NURBS surface.
      * So finally only a small subset of the surface tree is created.
      */
-    for (int h = 0; h <= INTERSECT_MAX_DEPTH; h++) {
+    for (int h = 0; h <= MAX_SSI_DEPTH; h++) {
 	if (nodepairs.empty())
 	    break;
 	NodePairs tmp_pairs;
@@ -345,7 +596,7 @@ ON_Intersect(const ON_Surface* surfA,
 		if (ret1) {
 		    if (ret2) { /* both splits failed */
 			tmp_pairs.push_back(*i);
-			h = INTERSECT_MAX_DEPTH;
+			h = MAX_SSI_DEPTH;
 		    } else { /* the first failed */
 			for (int j = 0; j < 4; j++)
 			    tmp_pairs.push_back(std::make_pair((*i).first, (*i).second->m_children[j]));
@@ -370,7 +621,7 @@ ON_Intersect(const ON_Surface* surfA,
 	    (*i).first->GetBBox(box_a.m_min, box_a.m_max);
 	    (*i).second->GetBBox(box_b.m_min, box_b.m_max);
 	    if (box_intersect.Intersection(box_a, box_b)) {
-		if (h == INTERSECT_MAX_DEPTH) {
+		if (h == MAX_SSI_DEPTH) {
 		    // We have arrived at the bottom of the trees.
 		    // Get an estimate of the intersection point lying on the intersection curve
 

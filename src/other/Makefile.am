@@ -65,16 +65,6 @@ else
 TKHTMLDIR=
 endif
 
-#if BUILD_TOGL
-#if WITH_TK
-#TOGLDIR=togl
-#else
-#TOGLDIR=
-#endif
-#else
-#TOGLDIR=
-#endif
-
 if BUILD_TKPNG
 if WITH_TK
 TKPNGDIR=tkpng
@@ -166,7 +156,6 @@ EXTRA_DIST = \
 	README \
 	boost \
 	clipper \
-	togl \
 	hv3 \
         Eigen \
 	CMakeLists.txt \
@@ -209,7 +198,6 @@ EXTRA_DIST = \
 	tkhtml.dist \
 	tkpng.dist \
 	tktable.dist \
-	togl.dist \
 	URToolkit.dist \
 	libvds.dist \
 	poly2tri.dist \

@@ -60,7 +60,7 @@ int passes = 100;		/* limit on number of passes */
 int inverse;			/* for old 4th quadrant sequences */
 
 char Usage[] = "\
-Usage: fbanim [-h -i -r -v] [-p passes]\n\
+Usage: fbanim [-i -r -v] [-p passes]\n\
 	[-S squarescrsize] [-W scr_width] [-N scr_height]\n\
 	[-s square_subimage_size] [-w subimage_width] [-n subimage_height]\n\
 	subimage_width nframes [fps]\n";
@@ -70,7 +70,7 @@ get_args(int argc, char **argv)
 {
     int c;
 
-    while ((c = bu_getopt(argc, argv, "s:w:n:hirvp:S:W:N:")) != -1) {
+    while ((c = bu_getopt(argc, argv, "s:w:n:hirvp:S:W:N:h?")) != -1) {
 	switch (c) {
 	    case 's':
 		subimage_width = subimage_height = atoi(bu_optarg);
@@ -93,10 +93,6 @@ get_args(int argc, char **argv)
 		break;
 	    case 'v':
 		verbose = 1;
-		break;
-	    case 'h':
-		/* high-res screen */
-		screen_width = screen_height = 1024;
 		break;
 	    case 'S':
 		screen_height = screen_width = atoi(bu_optarg);

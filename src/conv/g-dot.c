@@ -402,6 +402,8 @@ main(int ac, char *av[])
     bu_ptbl_free(&o.groups);
 
     ged_close(gp);
+    if (gp)
+	BU_PUT(gp, struct ged);
 
     bu_free_argv(c, objs);
 

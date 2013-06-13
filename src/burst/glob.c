@@ -21,6 +21,8 @@
 /** @file burst/glob.c
  *
  */
+
+#include "common.h"
 #include <stdio.h>
 #include <signal.h>
 

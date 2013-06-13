@@ -5087,23 +5087,31 @@ BU_EXPORT extern void bu_vls_trimspace(struct bu_vls *vp);
 
 
 /**
- * Format a string into a vls.  This version should work on
- * practically any machine, but it serves to highlight the
- * grossness of the varargs package requiring the size of a parameter
- * to be known at compile time.
+ * Format a string into a vls using a varargs list.
  *
- * %s continues to be a regular 'C' string, null terminated.
- * %V is a pointer to a (struct bu_vls *) string.
+ * %s continues to be a regular null-terminated 'C' string (char *).
+ * %V is a libbu variable-length string (struct bu_vls *).
+ *
+ * Other format specifiers should behave identical to printf().
  *
  * This routine appends to the given vls similar to how vprintf
- * appends to stdout (see bu_vls_printf for overwriting the vls).
+ * appends to stdout (see bu_vls_sprintf for overwriting the vls).
  */
 BU_EXPORT extern void bu_vls_vprintf(struct bu_vls *vls,
 				     const char *fmt,
 				     va_list ap);
 
 /**
- * Initializes the va_list, then calls the above bu_vls_vprintf.
+ * Format a string into a vls using standard variable arguments.
+ *
+ * %s continues to be a regular null-terminated 'C' string (char *).
+ * %V is a libbu variable-length string (struct bu_vls *).
+ *
+ * Other format specifiers should behave identical to printf().
+ *
+ * This routine appends to the given vls similar to how vprintf
+ * appends to stdout (see bu_vls_sprintf for overwriting the vls).
+ * The implementation ends up calling bu_vls_vprintf().
  */
 BU_EXPORT extern void bu_vls_printf(struct bu_vls *vls,
 				    const char *fmt, ...) _BU_ATTR_PRINTF23;

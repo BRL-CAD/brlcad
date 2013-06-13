@@ -81,7 +81,7 @@ get_args(int argc, char *argv[])
 		op[ numop ] = MULT;
 		d = atof(bu_optarg);
 		if (ZERO(d)) {
-		    bu_exit(2, "%s: divide by zero!\n",progname);
+		    bu_exit(2, "%s: divide by zero!\n", progname);
 		}
 		val[ numop++ ] = 1.0 / d;
 		break;
@@ -97,7 +97,7 @@ get_args(int argc, char *argv[])
 		op[ numop ] = POW;
 		d = atof(bu_optarg);
 		if (ZERO(d)) {
-		    bu_exit(2, "%s: zero root!\n",progname);
+		    bu_exit(2, "%s: zero root!\n", progname);
 		}
 		val[ numop++ ] = 1.0 / d;
 		break;
@@ -117,16 +117,16 @@ get_args(int argc, char *argv[])
 	ifname = bu_realpath(file_name, NULL);
 	if (freopen(ifname, "r", stdin) == NULL) {
 	    fprintf(stderr,
-			  "%s: cannot open \"%s(canonical %s)\" for reading\n",
-			  progname,file_name,ifname);
-	    bu_free(ifname,"ifname alloc from bu_realpath");
+		    "%s: cannot open \"%s(canonical %s)\" for reading\n",
+		    progname, file_name, ifname);
+	    bu_free(ifname, "ifname alloc from bu_realpath");
 	    return 0;
 	}
-	bu_free(ifname,"ifname alloc from bu_realpath");
+	bu_free(ifname, "ifname alloc from bu_realpath");
     }
 
     if (argc > ++bu_optind)
-	fprintf(stderr, "%s: excess argument(s) ignored\n",progname);
+	fprintf(stderr, "%s: excess argument(s) ignored\n", progname);
 
     return 1;		/* OK */
 }
@@ -152,7 +152,7 @@ mk_trans_tbl()
 		case POW : d = pow(d, val[i]); break;
 		case ABS : if (d < 0.0) d = - d; break;
 		default  : fprintf(stderr, "%s: error in op\n",
-					 progname); break;
+				   progname); break;
 	    }
 	}
 
@@ -222,6 +222,7 @@ main(int argc, char *argv[])
 
     return 0;
 }
+
 
 /*
  * Local Variables:

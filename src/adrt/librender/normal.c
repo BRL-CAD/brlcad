@@ -21,6 +21,7 @@
  *
  */
 
+#include "common.h"
 #include <stdio.h>
 #include "adrt_struct.h"
 

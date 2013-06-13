@@ -32,6 +32,7 @@
  * With thanks to Russ Moulton Jr, EOSoft Inc. for his "rad.c" module.
  */
 
+#include "common.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
