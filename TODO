@@ -28,6 +28,9 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 
 * investigate thread affinity locking on Linux
 
+* perform final syncing of our step code with the
+  main stepcode project and switch to their tree
+
 
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------------
