@@ -18,12 +18,19 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
+* re-do the sh/enumerate.sh script for CMake
+
+* audit src/other for removable auto* stuff
+
+* attempt to replicate the GTK+ ISST interface in TCL
+
+* provide a viable FindBRLCAD.cmake
+
+* investigate thread affinity locking on Linux
 
 
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------------
-
-* investigate thread affinity locking on Linux
 
 * investigate INFINITY spatial partitioning issue.
 
@@ -34,6 +41,7 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
   when a NURBS tessellation fails - should just abandon the
   problem input and continue.
 
+* fix bottie crash on 32b builds
 
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
@@ -71,8 +79,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 
 * temp colors and temp matrices during ray tracing, need a
   command-line and mged method to override parameters temporarily.
-
-* fix bottie crash on 32b builds
 
 * resolve bot bin sort optimization crash, disabled during release
 
