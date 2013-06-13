@@ -85,7 +85,6 @@ if(NOT WIN32)
 endif(NOT WIN32)
 
 set(level_3_dirs
-  adrt
   anim
   brlman
   burst
@@ -108,10 +107,13 @@ set(level_3_dirs
   util
   vfont
   ${non_win32_dirs}
-  # tclscripts must come before mged and archer, so the
-  # target lists are defined when the archer and mged
-  # targets are defined
+  # tclscripts must come before applications like
+  # mged and archer that need the scripts in place to
+  # run. The script target lists are defined when the tclscripts
+  # directories are configured, and those lists are needed
+  # as dependencies for the targets in these directories
   tclscripts
+  adrt
   archer
   mged
   )

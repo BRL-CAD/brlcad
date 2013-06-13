@@ -55,11 +55,10 @@ install(FILES ${tie_HDRS} DESTINATION include/tie)
 CMAKEFILES(${tie_HDRS})
 
 # Tcl/Tk based ISST
-INCLUDE_DIRECTORIES(
+include_directories(
   ${OPENGL_INCLUDE_DIR_GL}
   ${OPENGL_INCLUDE_DIR_GLX}
   ${X11_INCLUDE_DIR}
-  ${CMAKE_CURRENT_BINARY_DIR}/../other/togl/src
   )
 if(BRLCAD_ENABLE_OPENGL AND BRLCAD_ENABLE_TK)
   if(WIN32)
@@ -77,7 +76,16 @@ if(BRLCAD_ENABLE_OPENGL AND BRLCAD_ENABLE_TK)
     BRLCAD_MANAGE_FILES("isst.bat" ${BIN_DIR} EXEC)
   endif(WIN32)
   BRLCAD_MANAGE_FILES("isst" ${BIN_DIR} EXEC)
+  add_custom_target(isst ALL DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/isst)
+  add_dependencies(isst issttcltk bwish)
+  foreach(item ${pkgIndex_target_list})
+    add_dependencies(isst ${item})
+  endforeach(item ${pkgIndex_target_list})
+  foreach(item ${tclIndex_target_list})
+    add_dependencies(isst ${item})
+  endforeach(item ${tclIndex_target_list})
 endif(BRLCAD_ENABLE_OPENGL AND BRLCAD_ENABLE_TK)
+
 CMAKEFILES(isst_tcltk.c)
 
 set(adrt_ignore_files
