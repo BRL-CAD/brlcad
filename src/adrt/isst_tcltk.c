@@ -60,7 +60,13 @@ static struct dm *dmp;
 static struct isst_s *isst;
 
 /* ISST functions */
-RT_EXPORT extern int (Issttcltk_Init)(Tcl_Interp *interp);
+#ifdef _WIN32
+__declspec(dllexport) int Isst_Init(Tcl_Interp *interp);
+__declspec(dllexport) extern int Issttcltk_Init(Tcl_Interp *interp) { return Isst_Init(interp); }
+#define DM_TYPE_ISST DM_TYPE_WGL
+#else
+#define DM_TYPE_ISST DM_TYPE_OGL
+#endif
 
 void resize_isst(struct isst_s *);
 
@@ -520,7 +526,7 @@ open_dm(ClientData UNUSED(cdata), Tcl_Interp *interp, int UNUSED(objc), Tcl_Obj 
 {
     char *av[] = { "Ogl_open", "-t", "0", "-n", ".w0", "-W", "800", "-N", "600", NULL };
 
-    dmp = DM_OPEN(interp, DM_TYPE_OGL, sizeof(av)/sizeof(void*)-1, (const char **)av);
+    dmp = DM_OPEN(interp, DM_TYPE_ISST, sizeof(av)/sizeof(void*)-1, (const char **)av);
     DM_SET_BGCOLOR(dmp, 0, 0, 0x30);
 
     if(dmp == DM_NULL) {
