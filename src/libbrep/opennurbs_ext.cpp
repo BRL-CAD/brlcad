@@ -36,6 +36,7 @@
 #include "bu.h"
 
 #include "brep.h"
+#include "libbrep_brep_tools.h"
 #include "dvec.h"
 
 #define RANGE_HI 0.55
@@ -52,12 +53,6 @@
 
 /// another arbitrary calculation tolerance (need to try VDIVIDE_TOL or VUNITIZE_TOL to tighten the bounds)
 #define TOL2 0.00001
-
-
-bool
-ON_NearZero(double x, double tolerance) {
-    return (x > -tolerance) && (x < tolerance);
-}
 
 void
 brep_get_plane_ray(ON_Ray& r, plane_ray& pr)
@@ -462,80 +457,38 @@ CurveTree::getHorizontalTangent(const ON_Curve *curve, fastf_t min, fastf_t max)
 bool
 CurveTree::getHVTangents(const ON_Curve* curve, ON_Interval& t, std::list<fastf_t>& list)
 {
-    bool tanx1, tanx2, tanx_changed;
-    bool tany1, tany2, tany_changed;
-    bool tan_changed;
-    ON_3dVector tangent1, tangent2;
-    ON_3dPoint p1, p2;
+    double x;
+    double midpoint = (t[1]+t[0])/2.0;
+    ON_Interval left(t[0], midpoint);
+    ON_Interval right(midpoint, t[1]);
+    int status = ON_Curve_Has_Tangent(curve, t[0], t[1], TOL);
 
-    tangent1 = curve->TangentAt(t[0]);
-    tangent2 = curve->TangentAt(t[1]);
+    switch (status) {
 
-    tanx1 = (tangent1[X] < 0.0);
-    tanx2 = (tangent2[X] < 0.0);
-    tany1 = (tangent1[Y] < 0.0);
-    tany2 = (tangent2[Y] < 0.0);
+	case 1: /* 1 Vertical tangent */
+	    x = getVerticalTangent(curve, t[0], t[1]);
+	    list.push_back(x);
+	    return true;
 
-    tanx_changed =(tanx1 != tanx2);
-    tany_changed =(tany1 != tany2);
+	case 2: /* 1 Horizontal tangent */
+	    x = getHorizontalTangent(curve, t[0], t[1]);
+	    list.push_back(x);
+	    return true;
 
-    tan_changed = tanx_changed || tany_changed;
-
-    if (tan_changed) {
-	if (tanx_changed && tany_changed) {//horz & vert simply split
-	    double midpoint = (t[1]+t[0])/2.0;
-	    ON_Interval left(t[0], midpoint);
-	    ON_Interval right(midpoint, t[1]);
+	case 3: /* Horizontal and vertical tangents present - Simple midpoint split */
 	    if (left.Length() > TOL)
 		getHVTangents(curve, left, list);
 	    if (right.Length() > TOL)
 		getHVTangents(curve, right, list);
 	    return true;
-	} else if (tanx_changed) {//find horz
-	    double x = getVerticalTangent(curve, t[0], t[1]);
-	    list.push_back(x);
-	} else { //find vert
-	    double x = getHorizontalTangent(curve, t[0], t[1]);
-	    list.push_back(x);
-	}
-    } else { // check point slope for change
-	bool slopex, slopex_changed;
-	bool slopey, slopey_changed;
-	bool slope_changed;
-	fastf_t xdelta, ydelta;
 
-	p1 = curve->PointAt(t[0]);
-	p2 = curve->PointAt(t[1]);
+	default:
+	    return false;
 
-	xdelta = (p2[X] - p1[X]);
-	slopex = (xdelta < 0.0);
-	ydelta = (p2[Y] - p1[Y]);
-	slopey = (ydelta < 0.0);
-
-	if (NEAR_ZERO(xdelta, TOL) ||
-	    NEAR_ZERO(ydelta, TOL)) {
-	    return true;
-	}
-
-	slopex_changed = (slopex != tanx1);
-	slopey_changed = (slopey != tany1);
-
-	slope_changed = slopex_changed || slopey_changed;
-
-	if (slope_changed) {  //2 horz or 2 vert changes simply split
-	    double midpoint = (t[1]+t[0])/2.0;
-	    ON_Interval left(t[0], midpoint);
-	    ON_Interval right(midpoint, t[1]);
-	    if (left.Length() > TOL)
-		getHVTangents(curve, left, list);
-	    if (right.Length() > TOL)
-		getHVTangents(curve, right, list);
-	    return true;
-	}
     }
-    return true;
-}
 
+    return false;  //Should never get here
+}
 
 BRNode*
 CurveTree::curveBBox(const ON_Curve* curve, int adj_face_index, ON_Interval& t, bool isLeaf, bool innerTrim, const ON_BoundingBox& bb)
@@ -2396,102 +2349,28 @@ SurfaceTree::subdivideSurface(const ON_Surface *localsurf,
 bool
 SurfaceTree::isFlat(ON_Plane *frames)
 {
-    double Ndot=1.0;
-
-    /* The flatness test compares flatness criteria to running product of the normal vector of
-     * the frenet frame projected onto each other normal in the frame set.
-     */
-    for(int i=0; i<8; i++) {
-	for( int j=i+1; j<9; j++) {
-	    if ((Ndot = Ndot * frames[i].zaxis * frames[j].zaxis) < BREP_SURFACE_FLATNESS) {
-		    return false;
-	    }
-	}
-    }
-
-    return true;
+    return ON_Surface_IsFlat(frames, BREP_SURFACE_FLATNESS);
 }
 
 
 bool
 SurfaceTree::isStraight(ON_Plane *frames)
 {
-    double Xdot=1.0;
-
-    /* The straightness test compares flatness criteria to running product of the tangent vector of
-     * the frenet frame projected onto each other tangent in the frame set.
-     */
-    for(int i=0; i<8; i++) {
-	for( int j=i+1; j<9; j++) {
-	    if ((Xdot = Xdot * frames[0].xaxis * frames[1].xaxis) < BREP_SURFACE_FLATNESS) {
-		    return false;
-	    }
-	}
-    }
-
-    return true;
+    return ON_Surface_IsStraight(frames, BREP_SURFACE_FLATNESS);
 }
 
 
 bool
 SurfaceTree::isFlatU(ON_Plane *frames)
 {
-    // check surface normals in U direction
-	double Ndot = 1.0;
-    if ((Ndot=frames[0].zaxis * frames[1].zaxis) < BREP_SURFACE_FLATNESS) {
-	return false;
-    } else if ((Ndot=Ndot * frames[2].zaxis * frames[3].zaxis) < BREP_SURFACE_FLATNESS) {
-	return false;
-    } else if ((Ndot=Ndot * frames[5].zaxis * frames[7].zaxis) < BREP_SURFACE_FLATNESS) {
-	return false;
-    } else if ((Ndot=Ndot * frames[6].zaxis * frames[8].zaxis) < BREP_SURFACE_FLATNESS) {
-	return false;
-    }
-
-    // check for U twist within plane
-    double Xdot = 1.0;
-    if ((Xdot=frames[0].xaxis * frames[1].xaxis) < BREP_SURFACE_FLATNESS) {
-	return false;
-    } else if ((Xdot=Xdot * frames[2].xaxis * frames[3].xaxis) < BREP_SURFACE_FLATNESS) {
-	return false;
-    } else if ((Xdot=Xdot * frames[5].xaxis * frames[7].xaxis) < BREP_SURFACE_FLATNESS) {
-	return false;
-    } else if ((Xdot=Xdot * frames[6].xaxis * frames[8].xaxis) < BREP_SURFACE_FLATNESS) {
-	return false;
-    }
-
-    return true;
+    ON_Surface_IsFlat_U(frames, BREP_SURFACE_FLATNESS);
 }
 
 
 bool
 SurfaceTree::isFlatV(ON_Plane *frames)
 {
-    // check surface normals in V direction
-	double Ndot = 1.0;
-    if ((Ndot=frames[0].zaxis * frames[3].zaxis) < BREP_SURFACE_FLATNESS) {
-	return false;
-    } else if ((Ndot=Ndot * frames[1].zaxis * frames[2].zaxis) < BREP_SURFACE_FLATNESS) {
-	return false;
-    } else if ((Ndot=Ndot * frames[5].zaxis * frames[6].zaxis) < BREP_SURFACE_FLATNESS) {
-	return false;
-    } else if ((Ndot=Ndot * frames[7].zaxis * frames[8].zaxis) < BREP_SURFACE_FLATNESS) {
-	return false;
-    }
-
-    // check for V twist within plane
-    double Xdot = 1.0;
-    if ((Xdot=frames[0].xaxis * frames[3].xaxis) < BREP_SURFACE_FLATNESS) {
-	return false;
-    } else if ((Xdot=Xdot * frames[1].xaxis * frames[2].xaxis) < BREP_SURFACE_FLATNESS) {
-	return false;
-    } else if ((Xdot=Xdot * frames[5].xaxis * frames[6].xaxis) < BREP_SURFACE_FLATNESS) {
-	return false;
-    } else if ((Xdot=Xdot * frames[7].xaxis * frames[8].xaxis) < BREP_SURFACE_FLATNESS) {
-	return false;
-    }
-
-    return true;
+    ON_Surface_IsFlat_V(frames, BREP_SURFACE_FLATNESS);
 }
 
 

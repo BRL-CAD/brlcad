@@ -27,8 +27,151 @@
 
 #include "opennurbs.h"
 
-// For any pre-existing surface passed as one of the t* args, this is a no-op
-void ON_Surface_Create_Scratch_Surfaces(
+bool ON_NearZero(double val, double epsilon) {
+    return (val > -epsilon) && (val < epsilon);
+}
+
+int ON_Curve_Has_Tangent(const ON_Curve* curve, double ct_min, double ct_max, double t_tol) {
+
+    bool tanx1, tanx2, x_changed;
+    bool tany1, tany2, y_changed;
+    bool slopex, slopey;
+    double xdelta, ydelta;
+    ON_3dVector tangent1, tangent2;
+    ON_3dPoint p1, p2;
+    ON_Interval t(ct_min, ct_max);
+
+    tangent1 = curve->TangentAt(t[0]);
+    tangent2 = curve->TangentAt(t[1]);
+
+    tanx1 = (tangent1[0] < 0.0);
+    tanx2 = (tangent2[0] < 0.0);
+    tany1 = (tangent1[1] < 0.0);
+    tany2 = (tangent2[1] < 0.0);
+
+    x_changed =(tanx1 != tanx2);
+    y_changed =(tany1 != tany2);
+
+    if (x_changed && y_changed) return 3; //horz & vert 
+    if (x_changed) return 1;//need to get vertical tangent
+    if (y_changed) return 2;//need to find horizontal tangent
+
+    p1 = curve->PointAt(t[0]);
+    p2 = curve->PointAt(t[1]);
+
+    xdelta = (p2[0] - p1[0]);
+    slopex = (xdelta < 0.0);
+    ydelta = (p2[1] - p1[1]);
+    slopey = (ydelta < 0.0);
+
+    // If we have no slope change
+    // in x or y, we have a tangent line
+    if (ON_NearZero(xdelta, t_tol) || ON_NearZero(ydelta, t_tol)) return 0;
+
+    if ((slopex != tanx1) || (slopey != tany1)) return 3;
+
+    return 0;
+}
+
+bool ON_Surface_IsFlat(ON_Plane *frames, double f_tol) 
+{
+    double Ndot=1.0;
+
+    for(int i=0; i<8; i++) {
+	for( int j=i+1; j<9; j++) {
+	    if ((Ndot = Ndot * frames[i].zaxis * frames[j].zaxis) < f_tol) {
+		return false;
+	    }
+	}
+    }
+
+    return true;
+}
+
+bool ON_Surface_IsFlat_U(ON_Plane *frames, double f_tol)
+{
+    // check surface normals in U direction
+    double Ndot = 1.0;
+    if ((Ndot=frames[0].zaxis * frames[1].zaxis) < f_tol) {
+	return false;
+    } else if ((Ndot=Ndot * frames[2].zaxis * frames[3].zaxis) < f_tol) {
+	return false;
+    } else if ((Ndot=Ndot * frames[5].zaxis * frames[7].zaxis) < f_tol) {
+	return false;
+    } else if ((Ndot=Ndot * frames[6].zaxis * frames[8].zaxis) < f_tol) {
+	return false;
+    }
+
+    // check for U twist within plane
+    double Xdot = 1.0;
+    if ((Xdot=frames[0].xaxis * frames[1].xaxis) < f_tol) {
+	return false;
+    } else if ((Xdot=Xdot * frames[2].xaxis * frames[3].xaxis) < f_tol) {
+	return false;
+    } else if ((Xdot=Xdot * frames[5].xaxis * frames[7].xaxis) < f_tol) {
+	return false;
+    } else if ((Xdot=Xdot * frames[6].xaxis * frames[8].xaxis) < f_tol) {
+	return false;
+    }
+
+    return true;
+}
+
+bool ON_Surface_IsFlat_V(ON_Plane *frames, double f_tol)
+{
+    // check surface normals in V direction
+    double Ndot = 1.0;
+    if ((Ndot=frames[0].zaxis * frames[3].zaxis) < f_tol) {
+	return false;
+    } else if ((Ndot=Ndot * frames[1].zaxis * frames[2].zaxis) < f_tol) {
+	return false;
+    } else if ((Ndot=Ndot * frames[5].zaxis * frames[6].zaxis) < f_tol) {
+	return false;
+    } else if ((Ndot=Ndot * frames[7].zaxis * frames[8].zaxis) < f_tol) {
+	return false;
+    }
+
+    // check for V twist within plane
+    double Xdot = 1.0;
+    if ((Xdot=frames[0].xaxis * frames[3].xaxis) < f_tol) {
+	return false;
+    } else if ((Xdot=Xdot * frames[1].xaxis * frames[2].xaxis) < f_tol) {
+	return false;
+    } else if ((Xdot=Xdot * frames[5].xaxis * frames[6].xaxis) < f_tol) {
+	return false;
+    } else if ((Xdot=Xdot * frames[7].xaxis * frames[8].xaxis) < f_tol) {
+	return false;
+    }
+
+    return true;
+}
+
+bool ON_Surface_IsStraight(ON_Plane *frames, double s_tol) 
+{
+    double Xdot=1.0;
+
+    for(int i=0; i<8; i++) {
+        for( int j=i+1; j<9; j++) {
+            if ((Xdot = Xdot * frames[0].xaxis * frames[1].xaxis) < s_tol) {
+                    return false;
+            }
+        }
+    }
+
+    return true;
+}
+
+/**
+ \brief Create surfaces and store their pointers in the t* arguments.  
+
+ For any pre-existing surface passed as one of the t* args, this is a no-op.
+
+ @param t1 Pointer to pointer addressing first surface
+ @param t2 Pointer to pointer addressing second surface
+ @param t3 Pointer to pointer addressing third surface
+ @param t4 Pointer to pointer addressing fourth surface
+*/
+ void ON_Surface_Create_Scratch_Surfaces(
 	ON_Surface **t1,
 	ON_Surface **t2,
 	ON_Surface **t3,
