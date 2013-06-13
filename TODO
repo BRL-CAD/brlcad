@@ -31,6 +31,10 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 * perform final syncing of our step code with the
   main stepcode project and switch to their tree
 
+* revisit ami.tcl and ampi.tcl scrips used to build
+  tclIndex and pkgIndex files - should be able to
+  simplify that whole process and possibly eliminate
+  the need for the tcl scripts
 
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------------
