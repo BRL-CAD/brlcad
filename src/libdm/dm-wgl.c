@@ -28,6 +28,7 @@
 #ifdef DM_WGL
 
 #include "tk.h"
+/* needed for TkWinGetHWND() */
 #include "TkWinInt.h"
 
 #undef VMIN		/* is used in vmath.h, too */
