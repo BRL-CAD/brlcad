@@ -28,8 +28,9 @@
 
 #include <stdio.h>
 
+/* required for GL */
 #ifdef _WIN32
-#include "tkWinInt.h"
+# include "windows.h"
 #endif
 
 #include <GL/gl.h>
