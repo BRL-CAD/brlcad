@@ -28,10 +28,7 @@
 
 #include <stdio.h>
 
-/* required for GL */
-#ifdef _WIN32
-# include "windows.h"
-#endif
+#include "bio.h"
 
 #include <GL/gl.h>
 
