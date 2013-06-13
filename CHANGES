@@ -254,9 +254,9 @@ include/raytrace.h
 7.24.0
 ------
 include/bu.h
-	bu_get_public_cpus(), remove [deprecated 7.16]
-	bu_get_load_average(), remove [deprecated 7.12]
-	bu_fopen_uniq -> fopen [deprecated 7.14]
+	bu_get_public_cpus() [deprecated 7.16]
+	bu_get_load_average() [deprecated 7.12]
+	bu_fopen_uniq() -> fopen() [deprecated 7.14]
 src/other/jove
 	jove -> emacs [deprecated 7.14]
 
@@ -297,7 +297,7 @@ src/librt/bomb.c
 include/machine.h
 	machine.h -> common.h && bu.h [deprecated 7.10]
 src/vas4
-	vas4, remove [deprecated 7.12]
+	vas4 [deprecated 7.12]
 
 7.16.4
 ------
