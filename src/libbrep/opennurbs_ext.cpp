@@ -2363,14 +2363,14 @@ SurfaceTree::isStraight(ON_Plane *frames)
 bool
 SurfaceTree::isFlatU(ON_Plane *frames)
 {
-    ON_Surface_IsFlat_U(frames, BREP_SURFACE_FLATNESS);
+    return ON_Surface_IsFlat_U(frames, BREP_SURFACE_FLATNESS);
 }
 
 
 bool
 SurfaceTree::isFlatV(ON_Plane *frames)
 {
-    ON_Surface_IsFlat_V(frames, BREP_SURFACE_FLATNESS);
+    return ON_Surface_IsFlat_V(frames, BREP_SURFACE_FLATNESS);
 }
 
 
