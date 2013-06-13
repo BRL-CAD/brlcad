@@ -181,9 +181,7 @@ parsArgv(int argc, char **argv)
 		break;
 	    case 'l' : /* Length in x and y.			*/
 		if (argc - bu_optind < 1) {
-		    (void) fprintf(stderr,
-				   "-l option requires an X and Y argument!\n"
-			);
+		    (void) fprintf(stderr,"-l option requires an X and Y argument!\n");
 		    return 0;
 		}
 		xlen = atoi(bu_optarg);
@@ -191,9 +189,7 @@ parsArgv(int argc, char **argv)
 		break;
 	    case 'p' : /* Position of bottom-left corner.		*/
 		if (argc - bu_optind < 1) {
-		    (void) fprintf(stderr,
-				   "-p option requires an X and Y argument!\n"
-			);
+		    (void) fprintf(stderr,"-p option requires an X and Y argument!\n");
 		    return 0;
 		}
 		xpos = atoi(bu_optarg);
@@ -213,10 +209,7 @@ parsArgv(int argc, char **argv)
     }
     if (argv[bu_optind] != NULL) {
 	if (bu_file_exists(argv[bu_optind], NULL)) {
-	    (void) fprintf(stderr,
-			   "\"%s\" already exists.\n",
-			   argv[bu_optind]
-		);
+	    (void) fprintf(stderr,"\"%s\" already exists.\n",argv[bu_optind]);
 	    bu_exit(1, NULL);
 	}
 	if ((fp = fopen(argv[bu_optind], "wb")) == NULL) {
@@ -246,7 +239,7 @@ prntUsage(void)
 	fprintf(stderr, "If no RLE file is specified, fb-orle will write to its standard output.\n");
 	fprintf(stderr, "If the environment variable FB_FILE is set, its value will be used.\n");
 }
-   
+
 
 /*
  * Local Variables:
