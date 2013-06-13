@@ -788,10 +788,13 @@ utah_newton_solver(const BBNode* sbv, const ON_Surface* surf, const ON_Ray& r, O
 	}
 
 	if (rootdist < ROOT_TOL) {
-	    if (sbv->m_u.Includes(uv.x) && sbv->m_v.Includes(uv.y)) {
+	    int ulow = (sbv->m_u.m_t[0] <= sbv->m_u.m_t[1]) ? 0 : 1;
+	    int vlow = (sbv->m_v.m_t[0] <= sbv->m_v.m_t[1]) ? 0 : 1;
+	    if ((sbv->m_u.m_t[ulow]-VUNITIZE_TOL < uv.x && uv.x < sbv->m_u.m_t[1-ulow]+VUNITIZE_TOL) &&
+		    (sbv->m_v.m_t[vlow]-VUNITIZE_TOL < uv.y && uv.y < sbv->m_v.m_t[1-vlow]-VUNITIZE_TOL)) {
 		bool new_point = true;
 		for (int j=0;j<count;j++) {
-		    if (NEAR_EQUAL(uv.x, ouv[j].x, 0.0001) && NEAR_EQUAL(uv.y, ouv[j].y, 0.0001)) {
+		    if (NEAR_EQUAL(uv.x, ouv[j].x, VUNITIZE_TOL) && NEAR_EQUAL(uv.y, ouv[j].y, VUNITIZE_TOL)) {
 			new_point = false;
 		    }
 		}
