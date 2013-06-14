@@ -64,6 +64,9 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
   one hit point is being returned.  to reproduce:
   e s.nos5g ; ae 35 25 ; units mm ; center 26912.4 7089.08 7168.96 ; nirt
 
+* improve compile-time version management -- port brlcad-version to
+  windows, reconsider providing compile-time header constants.
+
 
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
@@ -264,24 +267,8 @@ comp.r4 ID 5678 material code 5 LOS 75
 * Mac OS X mouse input binding problem seems to be back with rotations
   stalling during interactive use.
 
-* group public library headers into subdirs, e.g. include/bu/bu.h, so
-  it's clear when you're using headers from another library and
-  breaking encapsulation.
-
 * killall command reports db_lookup failures if the target object
   doesn't exist (maybe we only care about refs).  should keep quiet.
-
-* DocBook: create a DB index.xml to generate a doc listing (with
-  hot links) for the html and pdf collection
-
-* DocBook source: fix all SEVERE messages for extradocs builds (html
-  and pdf).
-
-* DocBook source: add xsl customizations for figure and table title
-  positions, float centering, etc.; add automatic figure, table, and
-  other similar references; add separate markup for html (role='html')
-  and pdf (role='fo') image sizing and placement; remove unnecessary
-  image markup; lift child namespaces to each document's root element.
 
 * pixdiff reports bytes, but reports incorrect (off-by-one) bytes for
   .bw input files.  cause is due to tool assuming input is rgb triplets
@@ -430,19 +417,6 @@ comp.r4 ID 5678 material code 5 LOS 75
   improving workflows, documentation, robustness, and new development
   areas.
 
-* update the msvc build to not use installTree.tcl -- the build
-  shouldn't really be reliant upon tclsh or be all contained within
-  the tclsh project.  sub-projects should build and install by
-  themselves (e.g. tkhtml3 should generate its htmltokens.h file).
-  the "brlcad" project, if any, can build up the installation tree and
-  generate the final installation exe.
-
-* implement namespacing for attributes as a means to group attributes
-  together.  this can predominantly be a naming convention, but
-  requires awareness in the attribute-searching routines to search
-  without the namespace unless one is specified, and to reserve :: in
-  attribute names unless they're quoted.
-
 * clean up default attributes to be consistent and upgrade old
   attributes to their new names.  includes likes of region, region_id,
   material_id, air, los, rgb, oshader, and inherit.  see
@@ -454,9 +428,6 @@ comp.r4 ID 5678 material code 5 LOS 75
 
 * implement rt_volume() API for computing geometry volume (g_qa style
   for complex, direct for primitives)
-
-* improve compile-time version management -- port brlcad-version to
-  windows, reconsider providing compile-time header constants.
 
 * have gqa calculate the volume of overlapping regions, not just
   shotline overlap distances.  that will allow output to be sorted by
@@ -489,22 +460,9 @@ comp.r4 ID 5678 material code 5 LOS 75
   common code in src/libanalyze (there may be more candidates around
   the tree)
 
-* all of the rt* tracers share common code and common options, but do
-  not share common documentation.  refactor documentation to use
-  include directives so that there is one place where all of the
-  common options are documented.  update usage statements to reflect
-  commonality as well.
-
-* document the saveview/loadview options.  migrate them to libged if
-  they're not already.
-
 * make loadview still load the view if the database doesn't match the
   currently open database, only load geometry as an option (and then
   just ignore the db).
-
-* improve rtedge documentation, explain how it computes its "centroid"
-  (as it's not exactly the center of bounding box of all objects -- it
-  depends on the booleans).
 
 * add a force option to the tracers to support overwriting the current
   output file (so long as we're going to make it read-only by default).
@@ -601,22 +559,12 @@ comp.r4 ID 5678 material code 5 LOS 75
 * MINOR: add tolerance parameters to the bn_*() functions that have
   near-zero tests.
 
-* complete conversion of existing manual pages into docbook format
-
-  note that Eric Raymond's "manlifter" (a driver for his "doclifter")
-  can be used to aid the project (see
-  http://www.catb.org/~esr/doclifter/)
-
 * add an option to bot_dump for outputting surface normals.  Make sure
   all supported dump formats (obj, dxf, etc.) optionally write out
   normals.  Consider adding an option to smoothly interpolate normals
   (per face or vertex).
 
 * modify g_qa to search for >1 region flag in a tree path.
-
-* the binary windows installer is missing headers for our external
-  dependencies (Tcl, zlib, and OpenNURBS in particular as the likes of
-  bu.h and raytrace.h requires them)
 
 * make rtarea display a cross-hair and perhaps coordinates for the
   center of area if run from within mged.
@@ -692,14 +640,6 @@ comp.r4 ID 5678 material code 5 LOS 75
 * refactor wdb_obj and view_obj in libged.  with the de-tcl'ing of the
   base libs, it should disappear but shouldn't have wdb_*() funcs in
   libged regardless.  work in progress.
-
-* make our C headers C++-convenient with proper extern "C" wrapping.
-
-* reorganize the header files in include so it is clear which headers
-  pertain to which libraries.
-
-* break up library headers into subheaders so includes can be more
-  specific (and help speed up compilation) and locally documented.
 
 * implement a jitter-style option to rt that makes it average the ray
   results to take a weighted light contribution for a given
@@ -921,8 +861,6 @@ comp.r4 ID 5678 material code 5 LOS 75
   so you could return primitives to local coordinates.  See sf feature
   request 2826720 from cericole.
 
-* ensure successful build on mingw
-
 * test for USE_FORKED_THREADS in configure
 
 * optimize CSG structures automatically: automatic simplification,
@@ -951,8 +889,6 @@ comp.r4 ID 5678 material code 5 LOS 75
   database, with some back-end functionality placed into libbu.
 
 * add callback data parameters to libpkg hook functions
-
-* add performance options for the intel compiler on Altix
 
 * investigate performance impact of using sched_setaffinity and/or
   pthread_attr_setaffinity_np for linux threading affinity in librt.
@@ -1111,14 +1047,6 @@ comp.r4 ID 5678 material code 5 LOS 75
   try to get closer to the "only do the work we need to" ideal.  Once a new
   idea is proven in that command, it should be made into a libgcv routine
   and convertors/other commands retargeted to use it.
-
-* write up some documentation on other build tools besides make -
-  CMake supports other generators, wouldn't hurt to detail how to
-  trigger builds in them (MSVC is partially covered, make sure to
-  coverage is complete - others include Eclipse, XCode once we get
-  the kinks ironed out there, CodeBlocks.  New experimental ninja
-  build tool and its (also experimental) CMake support are promising -
-  if/when CMake support goes mainstream, document that too.)
 
 * look into embedding both rgb[3] and complex[n] data types in a union to
   allow unification of libmultispectral and liboptical APIs to a single
@@ -1290,6 +1218,12 @@ NEW OBJECTS
   raytrace objects containing the intersection results for a given
   view (i.e., a grid of primary rays), and 3) rtgl point samples
   (which is a variant of 2 but potentially view independent).
+
+* implement namespacing for attributes as a means to group attributes
+  together.  this can predominantly be a naming convention, but
+  requires awareness in the attribute-searching routines to search
+  without the namespace unless one is specified, and to reserve :: in
+  attribute names unless they're quoted.
 
 * alias objects.  this is an object handle in a geometry database that
   refers to another geometry database object.  in effect, it
@@ -1467,6 +1401,7 @@ STEP
 * implement g-step exporter (see above)
 
 * see additional TODO items in file './src/other/step/README'
+
 
 BREP/NURBS
 ----------
@@ -1656,27 +1591,27 @@ ARCHER
 CMAKE
 -----
 
+* ensure successful build on mingw
+
+* update the msvc build to not use installTree.tcl -- the build
+  shouldn't really be reliant upon tclsh or be all contained within
+  the tclsh project.  sub-projects should build and install by
+  themselves (e.g. tkhtml3 should generate its htmltokens.h file).
+  the "brlcad" project, if any, can build up the installation tree and
+  generate the final installation exe.
+
+* the binary windows installer is missing headers for our external
+  dependencies (Tcl, zlib, and OpenNURBS in particular as the likes of
+  bu.h and raytrace.h requires them)
+
 * remove all of the MSVC sections in the CMakeLists.txt files.
   perform proper library/function/flag tests where necessary.
-
-* write/update INSTALL with ALL cmake options documented (make sure
-  there are equivalent cmake options for all configure options or
-  document the ones not included (e.g., proe options))
-
-  -- Have the majority of these auto-generated and included, need to
-     review and see what's still missing.
 
 * ensure primary cmake option parity with summary option listing
 
   -- Um.  Not sure this is fully achieveable - we only want to
      summarize a subset of the src/other settings in the summary
      printout, was my (CY) understanding...
-
-* move cmake documentation files into place
-
-  -- Have done so now that the deprecation warning is directing
-     users to INSTALL, but will still need to look over old
-     INSTALL docs when reviewing option documentation coverage.
 
 * investigate ignoring .hidden directories/files from dist packing so
   that internal build directories can be used instead of external ones
@@ -1690,6 +1625,7 @@ CMAKE
 * fix failure disabling IF_X when X11 headers are not found.
   include/fb.h still ends up entering the IF_X section and declaring a
   function that takes a Display and other X11 objects
+
 
 ODDITIES
 --------
@@ -1781,6 +1717,7 @@ THESE BREAK PROTOCOL OR ARE BACKWARDS-INCOMPATIBLE
 
   (desired style to be determined)
 
+
 FUNCTIONALITY NEEDED TO SPEED UP RAYTRACING
 -------------------------------------------
 
@@ -1802,6 +1739,47 @@ FUNCTIONALITY NEEDED TO SPEED UP RAYTRACING
 
 DOCUMENTATION
 -------------
+
+* DocBook: create a DB index.xml to generate a doc listing (with
+  hot links) for the html and pdf collection
+
+* DocBook source: add xsl customizations for figure and table title
+  positions, float centering, etc.; add automatic figure, table, and
+  other similar references; add separate markup for html (role='html')
+  and pdf (role='fo') image sizing and placement; remove unnecessary
+  image markup; lift child namespaces to each document's root element.
+
+* group public library headers into subdirs, e.g. include/bu/bu.h, so
+  it's clear when you're using headers from another library and
+  breaking encapsulation.
+
+* make our C headers C++-convenient with proper extern "C" wrapping.
+
+* reorganize the header files in include so it is clear which headers
+  pertain to which libraries.
+
+* improve rtedge documentation, explain how it computes its "centroid"
+  (as it's not exactly the center of bounding box of all objects -- it
+  depends on the booleans).
+
+* break up library headers into subheaders so includes can be more
+  specific (and help speed up compilation) and locally documented.
+
+* write up some documentation on other build tools besides make -
+  CMake supports other generators, wouldn't hurt to detail how to
+  trigger builds in them (MSVC is partially covered, make sure to
+  coverage is complete - others include Eclipse, XCode once we get
+  the kinks ironed out there, CodeBlocks.  New experimental ninja
+  build tool and its (also experimental) CMake support are promising -
+  if/when CMake support goes mainstream, document that too.)
+
+* all of the rt* tracers share common code and common options, but do
+  not share common documentation.  refactor documentation to use
+  include directives so that there is one place where all of the
+  common options are documented.  update usage statements to reflect
+  commonality as well.
+
+* document the saveview/loadview options.
 
 * BRL-CAD Overview Diagram
 	Completed, but not integrated
