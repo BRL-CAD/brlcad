@@ -1175,23 +1175,23 @@ critically required.  Manually test mged and archer.
 
     mkdir -p .release && cd .release
     cmake .. && make distcheck && rm -rf ../.release/*
-    cmake .. -DBRLCAD_BUNDLED_LIBS=ON -DCMAKE_BUILD_TYPE=Release && make distcheck
+    cmake .. -DBRLCAD_BUNDLED_LIBS=ON -DCMAKE_BUILD_TYPE=Release && make distcheck && cd .. && rm -rf .release
 
 5) Sync trunk with the STABLE branch.  Make sure all changes since the
 previous sync are included and that STABLE matches trunk.
 
     # review the log and obtain the last trunk merge revision number from comments
     svn log --stop-on-copy https://svn.code.sf.net/p/brlcad/code/brlcad/branches/STABLE . | more
-    export PREV=[[last_trunk_rev]]
+    PREV=[[last_trunk_rev]]
 	*** OR ***
-    export PREV=`svn log --xml --stop-on-copy https://svn.code.sf.net/p/brlcad/code/brlcad/branches/STABLE | grep 'revision=' | head -n 1 | sed 's/.*revision="\([0-9][0-9]*\)".*/\1/g'`
+    PREV=`svn log --xml --stop-on-copy https://svn.code.sf.net/p/brlcad/code/brlcad/branches/STABLE | grep 'revision=' | head -n 1 | sed 's/.*revision="\([0-9][0-9]*\)".*/\1/g'`
     echo "PREV=$PREV"
 
     # merge that range of changes into STABLE and make sure it works
     svn co https://svn.code.sf.net/p/brlcad/code/brlcad/branches/STABLE brlcad.STABLE && cd brlcad.STABLE
     svn merge https://svn.code.sf.net/p/brlcad/code/brlcad/trunk@$PREV https://svn.code.sf.net/p/brlcad/code/brlcad/trunk@HEAD .
-    mkdir .release && cd .release && cmake .. -DBRLCAD_BUNDLED_LIBS=ON -DCMAKE_BUILD_TYPE=Release && make distcheck
-    export CURR=`svn log --xml https://svn.code.sf.net/p/brlcad/code/brlcad/trunk | grep 'revision=' | head -n 1 | sed 's/.*="\([0-9][0-9]*\)".*/\1/g'`
+    mkdir .release && cd .release && cmake .. -DBRLCAD_BUNDLED_LIBS=ON -DCMAKE_BUILD_TYPE=Release && make distcheck && cd .. && rm -rf .release
+    CURR=`svn log --xml https://svn.code.sf.net/p/brlcad/code/brlcad/trunk | grep 'revision=' | head -n 1 | sed 's/.*="\([0-9][0-9]*\)".*/\1/g'`
     echo "CURR=$CURR"
     svn commit -m "merging trunk to STABLE from r$PREV to HEAD r$CURR"
 
@@ -1208,8 +1208,12 @@ previous sync are included and that STABLE matches trunk.
 
     svn checkout https://svn.code.sf.net/p/brlcad/code/brlcad/tags/rel-$MAJOR-$MINOR-$PATCH brlcad-$MAJOR.$MINOR.$PATCH
 
-8) Perform another "make distcheck" on the exported/updated sources to
-generate distributable compressed source tarballs.
+8) Perform a distcheck on the exported/updated sources to generate
+distributable compressed source tarballs:
+
+    cd brlcad-$MAJOR.$MINOR.$PATCH
+    mkdir -p .build && cd .build
+    cmake .. -DBRLCAD_BUNDLED_LIBS=ON -DCMAKE_BUILD_TYPE=Release && make && make distcheck
 
 9) Use one of the source distribution tarballs to verify a binary
 build.  Use the NAMING A BINARY RELEASE section above if the binary
@@ -1221,27 +1225,34 @@ build will be distributed.  Minimally test:
     rtwizard  # displays gui
     mged      # displays gui, run: opendb test2.g ; make sph sph ; rt
 
-10) Post the source and platform-specific binary distributions to
-SourceForge and then select them on the sf.net File Release System:
+10) Upload the source distributions and release notes:
 
-SFUSERNAME=`ls ~/.subversion/auth/svn.simple/* | xargs -n 1 grep -A4 sourceforge | tail -1`
-echo "SFUSERNAME=$SFUSERNAME MAJOR=$MAJOR MINOR=$MINOR PATCH=$PATCH"
-ssh -v $SFUSERNAME,brlcad@shell.sf.net create
-ssh -v $SFUSERNAME,brlcad@shell.sf.net mkdir "/home/frs/project/b/br/brlcad/BRL-CAD\ Source/$MAJOR.$MINOR.$PATCH"
-scp brlcad-$MAJOR.$MINOR.$PATCH* "$SFUSERNAME,brlcad@shell.sf.net:/home/frs/project/b/br/brlcad/BRL-CAD\ Source/$MAJOR.$MINOR.$PATCH/."
+    # create a shell session
+    SFUSERNAME=`ls ~/.subversion/auth/svn.simple/* | xargs -n 1 grep -A4 sourceforge | tail -1`
+    echo "SFUSERNAME=$SFUSERNAME MAJOR=$MAJOR MINOR=$MINOR PATCH=$PATCH"
+    ssh -v $SFUSERNAME,brlcad@shell.sf.net create
+    ssh -v $SFUSERNAME,brlcad@shell.sf.net mkdir "/home/frs/project/b/br/brlcad/BRL-CAD\ Source/$MAJOR.$MINOR.$PATCH"
 
-This can all be done through the sf.net project web interface too.
-Extract and upload the release notes:
+    # upload source dist
+    scp brlcad-$MAJOR.$MINOR.$PATCH* "$SFUSERNAME,brlcad@shell.sf.net:/home/frs/project/b/br/brlcad/BRL-CAD\ Source/$MAJOR.$MINOR.$PATCH/."
 
-cat NEWS | tr '\n' '$' | perl -pi -e 's/.*(\$--*\$---[[:space:]]*[0-9-]*[[:space:]]*Release[[:space:]]*7.20.4[[:space:]]*---\$-*\$.*?)\$---.*/\1/g' | tr '$' '\n' > README-$MAJOR-$MINOR-$PATCH.txt
-scp README-$MAJOR-$MINOR-$PATCH.txt "$SFUSERNAME,brlcad@shell.sf.net:/home/frs/project/b/br/brlcad/BRL-CAD\ Source/$MAJOR.$MINOR.$PATCH/."
-ssh -v $SFUSERNAME,brlcad@shell.sf.net shutdown
+    # Extract and upload the release notes:
+    cat ../NEWS | tr '\n' '$' | perl -pi -e 's/.*(\$--*\$---[[:space:]]*[0-9-]*[[:space:]]*Release[[:space:]]*7.20.4[[:space:]]*---\$-*\$.*?)\$---.*/\1/g' | tr '$' '\n' > README-$MAJOR-$MINOR-$PATCH.txt
+    echo "Release notes for $MAJOR.$MINOR.$PATCH" && echo "==="
+    cat README-$MAJOR-$MINOR-$PATCH.txt && echo "==="
+    scp README-$MAJOR-$MINOR-$PATCH.txt "$SFUSERNAME,brlcad@shell.sf.net:/home/frs/project/b/br/brlcad/BRL-CAD\ Source/$MAJOR.$MINOR.$PATCH/."
+
+    # upload any binary dists as needed then close shell session
+    ssh -v $SFUSERNAME,brlcad@shell.sf.net shutdown
 
 11) Increment and commit the next BRL-CAD release numbers to SVN;
 update the include/conf/(MAJOR|MINOR|PATCH) version files immediately
 to an odd-numbered minor version or a new patch developer version
 (e.g. 7.11.0 or 7.4.1).  Update README and NEWS version to next
 _expected_ release number (e.g. 7.12.0 or 7.4.2).
+
+    echo "`expr $PATCH + 1`" > ../include/conf/PATCH
+    svn commit -m "bump to next development revision after tagging the $MAJOR.$MINOR.$PATCH release" ../include/conf/PATCH
 
 12) Notify binary platform maintainers:
 
