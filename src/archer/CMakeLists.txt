@@ -6,6 +6,7 @@ BRLCAD_MANAGE_FILES("archer" ${BIN_DIR} EXEC)
 # archer depends on the creation/installation of all the
 # tclscripts.
 add_custom_target(archer ALL DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/archer)
+add_dependencies(archer bwish rtwizard)
 foreach(item ${pkgIndex_target_list})
   add_dependencies(archer ${item})
 endforeach(item ${pkgIndex_target_list})

@@ -1,47 +1,8 @@
 add_subdirectory(lib)
 
-if(HAVE_SYMLINK)
-  if(NOT CMAKE_CONFIGURATION_TYPES)
-    execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink ${CMAKE_CURRENT_SOURCE_DIR}/rtwizard.tcl ${CMAKE_BINARY_DIR}/${BIN_DIR}/rtwizard)
-    set(rtwizard_cmd_outputs ${CMAKE_BINARY_DIR}/${BIN_DIR}/rtwizard)
-  else(NOT CMAKE_CONFIGURATION_TYPES)
-    foreach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
-      string(TOUPPER "${CFG_TYPE}" CFG_TYPE_UPPER)
-      execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink ${CMAKE_CURRENT_SOURCE_DIR}/rtwizard.tcl ${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${BIN_DIR}/rtwizard)
-      set(rtwizard_cmd_outputs ${rtwizard_cmd_outputs} ${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${BIN_DIR}/rtwizard)
-    endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
-  endif(NOT CMAKE_CONFIGURATION_TYPES)
-else(HAVE_SYMLINK)
-  if(NOT CMAKE_CONFIGURATION_TYPES)
-    add_custom_command(
-      OUTPUT ${CMAKE_BINARY_DIR}/${BIN_DIR}/rtwizard ${CMAKE_BINARY_DIR}/${BIN_DIR}/rtwizard.bat
-      COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_CURRENT_SOURCE_DIR}/rtwizard.bat ${CMAKE_BINARY_DIR}/${BIN_DIR}/rtwizard.bat
-      COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_CURRENT_SOURCE_DIR}/rtwizard.tcl ${CMAKE_BINARY_DIR}/${BIN_DIR}/rtwizard
-      DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/rtwizard.tcl ${CMAKE_CURRENT_SOURCE_DIR}/rtwizard.bat
-      )
-    set(rtwizard_cmd_outputs ${CMAKE_BINARY_DIR}/${BIN_DIR}/rtwizard ${CMAKE_BINARY_DIR}/${BIN_DIR}/rtwizard.bat)
-  else(NOT CMAKE_CONFIGURATION_TYPES)
-    foreach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
-      string(TOUPPER "${CFG_TYPE}" CFG_TYPE_UPPER)
-      add_custom_command(
-	OUTPUT ${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${BIN_DIR}/rtwizard ${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${BIN_DIR}/rtwizard.bat
-	COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/rtwizard.bat ${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${BIN_DIR}/rtwizard.bat
-	COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/rtwizard.tcl ${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${BIN_DIR}/rtwizard
-	DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/rtwizard ${CMAKE_CURRENT_SOURCE_DIR}/rtwizard.bat
-	)
-      set(rtwizard_cmd_outputs ${rtwizard_cmd_outputs} ${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${BIN_DIR}/rtwizard ${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${BIN_DIR}/rtwizard.bat)
-    endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
-  endif(NOT CMAKE_CONFIGURATION_TYPES)
-  install(PROGRAMS rtwizard.bat DESTINATION ${BIN_DIR})
-  add_custom_target(rtwizard ALL DEPENDS ${rtwizard_cmd_outputs})
-endif(HAVE_SYMLINK)
-
-install(PROGRAMS rtwizard.tcl DESTINATION ${BIN_DIR} RENAME rtwizard)
-DISTCLEAN(${rtwizard_cmd_outputs})
-
 set(rtwizard_TCLSCRIPTS
   RaytraceWizard.tcl
-  rtwizard.tcl
+  rtwizard
   rtwizard.bat
   )
 BRLCAD_ADDDATA(rtwizard_TCLSCRIPTS tclscripts/rtwizard)
@@ -103,6 +64,24 @@ set(PictureTypeF_DATA
   examples/PictureTypeF/preview.small.gif
   )
 BRLCAD_ADDDATA(PictureTypeF_DATA tclscripts/rtwizard/examples/PictureTypeF)
+
+if(WIN32)
+  BRLCAD_MANAGE_FILES("rtwizard.bat" ${BIN_DIR} EXEC)
+endif(WIN32)
+BRLCAD_MANAGE_FILES("rtwizard" ${BIN_DIR} EXEC)
+
+add_custom_target(rtwizard ALL DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/rtwizard)
+add_dependencies(rtwizard bwish rt rtedge fbserv fb-png fb-pix fbclear fblabel fbfree fbline fb-fb pix-bw bwmod bw-pix pixmatte pix-fb)
+if(TARGET tkpng)
+  add_dependencies(rtwizard tkpng)
+endif(TARGET tkpng)
+foreach(item ${pkgIndex_target_list})
+  add_dependencies(rtwizard ${item})
+endforeach(item ${pkgIndex_target_list})
+foreach(item ${tclIndex_target_list})
+  add_dependencies(rtwizard ${item})
+endforeach(item ${tclIndex_target_list})
+
 
 CMAKEFILES(examples pkgIndex.tcl tclIndex)
 

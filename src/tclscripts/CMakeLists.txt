@@ -84,7 +84,6 @@ add_subdirectory(lib)
 add_subdirectory(lod)
 add_subdirectory(mged)
 add_subdirectory(pl-dm)
-add_subdirectory(rtwizard)
 add_subdirectory(sdialogs)
 add_subdirectory(swidgets)
 add_subdirectory(util)
@@ -109,6 +108,10 @@ set(tclscripts_TCLSCRIPTS
 BRLCAD_ADDDATA(tclscripts_TCLSCRIPTS tclscripts)
 pkgIndex_BUILD(tclscripts)
 tclIndex_BUILD(tclscripts)
+
+# Put rtwizard last so we can define a build target
+# that relies on the other tclscripts being set up.
+add_subdirectory(rtwizard)
 
 CMAKEFILES(README pkgIndex.tcl tclIndex hv3_man_browser_test.tcl)
 
