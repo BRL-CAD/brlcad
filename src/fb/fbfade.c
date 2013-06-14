@@ -65,9 +65,8 @@
 #include "pkg.h"
 
 
-#define USAGE1 "fbfade [ -s size ] [ -w width ] [ -n height ] [ -f in_fb_file ]"
-#define USAGE2	\
-    "\t[ -h ] [ -S size ] [ -W width ] [ -N height ] [ [ -F ] out_fb_file ]"
+#define USAGE1 "Usage: fbfade [ -s size ] [ -w width ] [ -n height ] [ -f in_fb_file ]\n\
+[ -h ] [ -S size ] [ -W width ] [ -N height ] [ [ -F ] out_fb_file ]"
 #define OPTSTR "f:F:hn:N:s:S:w:W:"
 
 
@@ -191,13 +190,13 @@ main(int argc, char **argv)
 	    }
 
 	if (errors)
-	    Fatal(fbp, "Usage: %s\n%s", USAGE1, USAGE2);
+	    Fatal(fbp, USAGE1);
     }
 
     if (bu_optind < argc) {
 	/* out_fb_file */
 	if (bu_optind < argc - 1 || out_fb_file != NULL) {
-	    Message("Usage: %s\n%s", USAGE1, USAGE2);
+	    Message(USAGE1);
 	    Fatal(fbp, "Can't handle multiple output frame buffers!");
 	}
 
