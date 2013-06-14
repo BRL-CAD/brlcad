@@ -163,7 +163,7 @@ macro(BRLCAD_ADDEXEC execname srcslist libslist)
   target_link_libraries(${execname} ${libslist})
 
 
-  # If an executable isn't to be installed or needs to be installed 
+  # If an executable isn't to be installed or needs to be installed
   # somewhere other than the default location, the NO_INSTALL argument
   # bypasses the standard install command call.  Otherwise, call install
   # with standard arguments.
@@ -287,9 +287,9 @@ macro(BRLCAD_ADDLIB libname srcslist libslist)
       target_link_libraries(${libname} ${libslist})
     endif(NOT "${libslist}" STREQUAL "" AND NOT "${libslist}" STREQUAL "NONE")
 
-    # If a library isn't to be installed or needs to be installed 
+    # If a library isn't to be installed or needs to be installed
     # somewhere other than the default location, the NO_INSTALL argument
-    # bypasses the standard install command call. Otherwise, call install 
+    # bypasses the standard install command call. Otherwise, call install
     # with standard arguments.
     CHECK_OPT("NO_INSTALL" NO_LIB_INSTALL "${ARGN}")
     if(NOT NO_LIB_INSTALL)
@@ -346,9 +346,9 @@ macro(BRLCAD_ADDLIB libname srcslist libslist)
       set_target_properties(${libname}-static PROPERTIES OUTPUT_NAME "${libname}")
     endif(NOT MSVC)
 
-    # If a library isn't to be installed or needs to be installed 
+    # If a library isn't to be installed or needs to be installed
     # somewhere other than the default location, the NO_INSTALL argument
-    # bypasses the standard install command call. Otherwise, call install 
+    # bypasses the standard install command call. Otherwise, call install
     # with standard arguments.
     CHECK_OPT("NO_INSTALL" NO_LIB_INSTALL "${ARGN}")
     if(NOT NO_LIB_INSTALL)

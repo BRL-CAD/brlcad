@@ -11,7 +11,7 @@
 #include "wdb.h"
 
 /*************************
- *   Utility functions 
+ *   Utility functions
  *************************/
 
 #if 0
@@ -75,7 +75,7 @@ get_connected_faces(struct rt_bot_internal *bot, size_t face_num,  std::map<size
     points[1] = bot->faces[face_num*3+1]*3;
     points[2] = bot->faces[face_num*3+2]*3;
     std::set<size_t>::iterator it;
-    for (int i = 0; i < 3; ++i) { 
+    for (int i = 0; i < 3; ++i) {
 	for (it = (*vert_to_face)[points[i]].begin(); it != (*vert_to_face)[points[i]].end(); it++) {
 	    face_cnt[(*it)] += 1;
 	}
@@ -88,7 +88,7 @@ get_connected_faces(struct rt_bot_internal *bot, size_t face_num,  std::map<size
     }
 }
 
-/* To avoid drawing dupliate lines, build the final vlist using a set */
+/* To avoid drawing duplicate lines, build the final vlist using a set */
 static void
 plot_patch_borders(std::vector<std::map<std::pair<size_t, size_t>, size_t> > *patch_edge_cnt, struct rt_bot_internal *bot, struct bu_list *vhead)
 {
@@ -134,7 +134,7 @@ rt_bot_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
     std::vector<int> face_to_plane;
     std::vector<std::set<size_t> > patches;
     std::map<size_t, std::set<size_t> > vert_to_face;
-    
+
     /* Initialize containers */
     face_areas.resize(bot->num_faces);
     face_to_plane.resize(bot->num_faces);
@@ -152,7 +152,7 @@ rt_bot_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
     VSET(gvects[3], 1,0,0);
     VSET(gvects[4], 0,1,0);
     VSET(gvects[5], 0,0,1);
- 
+
     // Calculate face normals dot product with bounding rpp planes
     for (size_t i=0; i < bot->num_faces; ++i) {
 	size_t pt_A, pt_B, pt_C;
@@ -185,7 +185,7 @@ rt_bot_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
 	}
 	groups[result_max].push_back(i);
 	face_to_plane[i]=result_max;
-        face_areas[i] = face_area(bot, i); 
+        face_areas[i] = face_area(bot, i);
     }
 
     // Order the groups by number of bots
@@ -206,9 +206,9 @@ rt_bot_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
 		}
 	    }
 	}
-	if (max > 0) 
+	if (max > 0)
 	    ordered_groups.push_back(largest_group);
-	group_bin.erase(largest_group); 
+	group_bin.erase(largest_group);
     }
 
     // All faces must belong to some patch - continue until all faces are processed
@@ -225,7 +225,7 @@ rt_bot_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
             patch_cnt++;
 	    // Find largest remaining face in group
 	    double face_size_criteria = 0.0;
-	    for (int f_it = 0; f_it < groups[curr_group].size(); f_it++) { 
+	    for (int f_it = 0; f_it < groups[curr_group].size(); f_it++) {
 		if (face_pool[groups[curr_group][f_it]]) {
 		    double fa = face_areas[groups[curr_group][f_it]];
 		    if (fa > face_size_criteria) {
@@ -265,7 +265,7 @@ rt_bot_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
 				if (VDOT(largest_face_normal, face_normal) > 0.85) {
 				    face_queue.push((*cf_it));
 				    face_pool[(*cf_it)] = 0;
-				} 
+				}
 			    }
 			}
 		    }

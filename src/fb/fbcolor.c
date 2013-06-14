@@ -75,7 +75,7 @@ main(int argc, char **argv)
 	printusage();
 	fprintf(stderr, "       Program continues running:\n");
     }
-    	
+
     if (! pars_Argv(argc, argv)) {
     	printusage();
 	bu_exit(1, NULL);

@@ -1799,7 +1799,7 @@ weight_volume_terminate(struct cstate *state)
 	    delta = hi - low;
 
 	    if (verbose)
-		bu_vls_printf(_ged_current_gedp->ged_result_str, 
+		bu_vls_printf(_ged_current_gedp->ged_result_str,
 		    "\t%s running avg weight %g %s hi=(%g) low=(%g)\n",
 		    obj_tbl[obj].o_name,
 		    (tmp / num_views) / units[WGT]->val,
@@ -1847,7 +1847,7 @@ weight_volume_terminate(struct cstate *state)
 	    delta = hi - low;
 
 	    if (verbose)
-		bu_vls_printf(_ged_current_gedp->ged_result_str, 
+		bu_vls_printf(_ged_current_gedp->ged_result_str,
 		    "\t%s running avg volume %g %s hi=(%g) low=(%g)\n",
 		    obj_tbl[obj].o_name,
 		    (tmp / num_views) / units[VOL]->val, units[VOL]->name,
@@ -2468,14 +2468,14 @@ ged_gqa(struct ged *gedp, int argc, const char *argv[])
 	gridSpacing *= 0.25;
 	if (gridSpacing < gridSpacingLimit) gridSpacing = gridSpacingLimit;
 
-	bu_log("Trying estimated initial grid spacing: %g %s\n", 
+	bu_log("Trying estimated initial grid spacing: %g %s\n",
 	    gridSpacing / units[LINE]->val, units[LINE]->name);
     } else {
-	bu_log("Trying initial grid spacing: %g %s\n", 
+	bu_log("Trying initial grid spacing: %g %s\n",
 	    gridSpacing / units[LINE]->val, units[LINE]->name);
     }
 
-    bu_log("Using grid spacing lower limit: %g %s\n", 
+    bu_log("Using grid spacing lower limit: %g %s\n",
 	    gridSpacingLimit / units[LINE]->val, units[LINE]->name);
 
     if (options_prep(rtip, state.span) != GED_OK) return GED_ERROR;

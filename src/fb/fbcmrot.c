@@ -102,7 +102,7 @@ main(int argc, char **argv)
 	printusage();
 	fprintf(stderr, "       Program continues running:\n");
     }
-    	
+
     if (!get_args(argc, argv)) {
     	printusage();
 	bu_exit(1, NULL);
