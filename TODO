@@ -36,22 +36,39 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
   simplify that whole process and possibly eliminate
   the need for the tcl scripts
 
+
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------------
+
+* resolve bot bin sort optimization crash, disabled during release
 
 * investigate INFINITY spatial partitioning issue.
 
 * closing the graphics window brings down X11 on Mac due to a bad
   context.  fix or revert recent close window behavior.
 
-* Rework p2t so it doesn't take down the application
-  when a NURBS tessellation fails - should just abandon the
-  problem input and continue.
+* Rework p2t so it doesn't take down the application when a NURBS
+  tessellation fails - should just abandon the problem input and
+  continue.
 
-* fix bottie crash on 32b builds
+* create a BRL-CAD .g with all possible object types embedded.  The
+  csgbrep command is a good starting point, but only about half of
+  them.
+
+* make sure we can run db_dirbuild() multiple times without creating
+  duplicate entries.
+
+* rename all the g_* tools sans "_" [save until 7.22]
+
+* havoc.g s.nos5g reliably exhibits the grazing edge bug where only
+  one hit point is being returned.  to reproduce:
+  e s.nos5g ; ae 35 25 ; units mm ; center 26912.4 7089.08 7168.96 ; nirt
+
 
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
+
+* fix bottie crash on 32b builds
 
 * finish the DSP tutorial on the wiki
 
@@ -84,39 +101,30 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   merging them into one tool in the util directory.  similar to the
   'join' command, but arguably easier to use.
 
-* temp colors and temp matrices during ray tracing, need a
-  command-line and mged method to override parameters temporarily.
-
-* resolve bot bin sort optimization crash, disabled during release
+* temp colors and temp matrices during ray tracing, rt, rtwizard.
+  need a command-line and mged method to override parameters.
 
 * test new edit command
 
 * fix 64b detection across platforms. Fix rhel 32/64 confusion
-
-* bu_bomb not printing stack trace as it is supposed to
 
 * test/fix patch-g on windows.  the input file read loops assume
   unix-style files resulting in parser errors.
 
 * merge conv-vg2g into dbupgrade
 
-* add the ability for search to filter objects based on whether
-  they are being unioned, intersected or subtracted from a parent
+* add the ability for search to filter objects based on whether they
+  are being unioned, intersected, or subtracted from a parent
 
 * add option to rtedge to also show back-facing hidden edges
 
 * add option to push/xpush to stop at the region level, to stop before
   primitives, to stop after N levels, to stop before N levels.
 
-* consolidate push/xpush together
-
 * make rt_dirbuild()+rt_dirbuild() work without vomiting error
   messages about duplicate geometry.  should be able to open the same
   database multiple times without running into rt_uniresource
   directory duplication
-
-* add an export menu to MGED that connects to auto-detected available
-  exporters (g-* tools).
 
 * add an export menu to Archer that connects to auto-detected
   available exporters (g-* tools).
@@ -130,10 +138,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 
 * create a FASTGEN sample geometry with all entities defined and a
   corresponding regression test to make sure outputs don't change.
-
-* create a BRL-CAD .g with all possible object types embedded.  The
-  csgbrep command is a good starting point, but only about half of
-  them.
 
 * investigate bu_vls_encode/decode failures on g-dot.c (see that
   file for FIXME note); add tests for both functions (note only
@@ -180,24 +184,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   than r1 (i.e., smaller cap is partially or fully within the larger
   cap's radius).  It ends up rendering the larger sphere.
 
-* something wrong with brep/nurbs subdivision spatial partitioning
-  causing inline failure in BANode<ON_BoundingBox>::addChild().
-  disable NOSTRICTCXX strict flag on librt with Release mode
-  compilation to diagnose.  need to make sure class composition and
-  data members are correct and, iff correct, expand inline-unit-growth
-  to accommodate.
-
-* get dev consensus on format of these man page source files which
-  describe library APIs:
-
-    ./src/libbn/libplot3.3
-    ./src/libbu/htond.3
-    ./src/libbu/redblack.3
-    ./src/libcursor/libcursor.3
-    ./src/liborle/liborle.3
-    ./src/librt/librt.3
-    ./src/libwdb/libwdb.3
-
 * update mged to not call wdb_init_obj and wdb_create_cmd, trace down
   other vestiges of wdb_obj for removal
 
@@ -209,9 +195,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 
 * change fbserv usage to require a flag for its non-daemon mode, make
   the device type optional for both daemon and non-daemon mode
-
-* make sure we can run db_dirbuild() multiple times without creating
-  duplicate entries.
 
 * work on vdeck/comgeom-g converters needed:
   - primitives recognized by comgeom-g but not vdeck:
@@ -285,14 +268,6 @@ comp.r4 ID 5678 material code 5 LOS 75
   it's clear when you're using headers from another library and
   breaking encapsulation.
 
-* add an increment option to reid to increment with something other
-  than 1 at a time.
-
-* add a conflict-detection option to reid in case there are
-  already-used region numbers being numbered.
-
-* rerun conversion.sh and compare to previous run
-
 * killall command reports db_lookup failures if the target object
   doesn't exist (maybe we only care about refs).  should keep quiet.
 
@@ -329,12 +304,6 @@ comp.r4 ID 5678 material code 5 LOS 75
   bounding box in the plane of each nmg face.  even better would be to
   calculate the convex hull and align the maximal edge to one of the
   UV edges.  the csgbrep routine provides a simple box test case.
-
-* investigate off-by-one AND off-by-many errors from identical rt
-  invocations.  running with -P1 results in no errors, parallel (on
-  64-bit Linux RHEL) is giving many floating-point related errors.
-  running with -B also results in no errors indicating maybe something
-  related to libbn random numbers.
 
 * investigate why epa primitive is so sensitive to coarse absolute
   value changes (run csgbrep, tol abs=1, facetize and get 321k poly)
@@ -446,15 +415,8 @@ comp.r4 ID 5678 material code 5 LOS 75
        draw feature control frame  (characteristic tolerances in symbolic form: www.draftingzone.com/shoppingzone/6-1.pdf)
        3d thickness
 
-* rt/rtedge command-line options for overriding object colors
-
-* rtwizard enhancement to allow color overrides to be specified for
-  selected objects.
-
 * upgrade source repository back-end to the latest SVN 1.5 so we can
   benefit from proper merge tracking.
-
-* implement support for the other file entity types to libbu
 
 * implement http network transfer tool for crash reports and benchmark
   analyses (via libfetch)
@@ -478,17 +440,10 @@ comp.r4 ID 5678 material code 5 LOS 75
 * make bu_basename/bu_dirname not allocation memory.  have caller pass
   buffer in as a parameter with size ala snprintf/memcpy.
 
-* solids regression is failing in optimized builds  - 3 off by many.
-  Looks to be floating fuzz overlap/pick issue? pixel 131329.
-
 * restore libged axis/grid commands code made in r44153 but with
   libged decoupled from libdm/libfb.
 
 * migrate / update screengrab command in libged (libfb/libdm dep)
-
-* add code regression that makes sure none of our code cheats by
-  including bu/bu.h -- e.g., make sure BU_CPPFLAGS et al. are used so
-  new dependencies are obvious and intentional.
 
 * offset surfaces.  provide feature edit operation to create a solid
   "level set" style object so you can represent degraded geometry
@@ -520,8 +475,6 @@ comp.r4 ID 5678 material code 5 LOS 75
 * deprecate dbcp and merge functionality (and improved
   double-buffering) with the buffer tool.
 
-* rename all the g_* tools sans "_" [save until 7.22]
-
 * vls name wrapping (reversible argv-to-vls, vls-to-argv).  look at
   src/libged/glob.c code, very similar.
 
@@ -543,14 +496,6 @@ comp.r4 ID 5678 material code 5 LOS 75
 
 * add support for user-specified sorting for the attr command (case,
   case-insensitive, creation, value, etc.)
-
-* investigate why solids.sh fails on three pixels on some 64-bit
-  platforms. it grazingly hits/misses a tgc causing a regression
-  failure.
-
-  havoc.g s.nos5g reliably exhibits the grazing edge bug where only
-  one hit point is being returned.  to reproduce:
-  e s.nos5g ; ae 35 25 ; units mm ; center 26912.4 7089.08 7168.96 ; nirt
 
 * make sure 'preview' works, particularly the 'tree' subcommand.
 
