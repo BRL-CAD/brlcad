@@ -1881,17 +1881,17 @@ pars_Argv(int argc, char **argv)
     int c;
 
     /* Parse options. */
-    while ( (c = bu_getopt( argc, argv, "hp" )) != -1 )
+    while ( (c = bu_getopt( argc, argv, "Hph?" )) != -1 )
     {
 	switch ( c )
 	{
-	    case 'h' :
+	    case 'H' :
 		cur_width = 1024;
 		break;
 	    case 'p' :
 		pad_flag = true;
 		break;
-	    case '?' :
+	    default :
 		return 0;
 	}
     }
