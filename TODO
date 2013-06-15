@@ -73,6 +73,10 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* the scale structure in bn_cmd_noise_slice (bn_tcl.c) was never
+  initialized. it looks like somebody has planned to extend the
+  function but never carried out
+
 * fix bottie crash on 32b builds
 
 * finish the DSP tutorial on the wiki
@@ -1575,8 +1579,8 @@ ARCHER
   file).
 
 
-CMAKE
------
+INFRASTRUCTURE
+--------------
 
 * ensure successful build on mingw
 
@@ -1612,14 +1616,6 @@ CMAKE
 * fix failure disabling IF_X when X11 headers are not found.
   include/fb.h still ends up entering the IF_X section and declaring a
   function that takes a Display and other X11 objects
-
-
-ODDITIES
---------
-
-* the scale structure in bn_cmd_noise_slice (bn_tcl.c) was never
-  initialized. it looks like somebody has planned to extend the
-  function but never carried out
 
 
 THESE BREAK PROTOCOL OR ARE BACKWARDS-INCOMPATIBLE
