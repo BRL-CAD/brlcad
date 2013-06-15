@@ -213,6 +213,18 @@ file(READ ${BRLCAD_SOURCE_DIR}/include/conf/PATCH BRLCAD_PATCH_VERSION)
 string(STRIP ${BRLCAD_PATCH_VERSION} BRLCAD_PATCH_VERSION)
 
 set(BRLCAD_VERSION "${BRLCAD_MAJOR_VERSION}.${BRLCAD_MINOR_VERSION}.${BRLCAD_PATCH_VERSION}")
+# the following number should be a single integer MMmmpp (e.g., 72400)
+if (${BRLCAD_MINOR_VERSION} STRLESS "10")
+  set(BRLCAD_MINOR_VERSION_NUM "0${BRLCAD_MINOR_VERSION}")
+else
+  set(BRLCAD_MINOR_VERSION_NUM "${BRLCAD_MINOR_VERSION}")
+endif
+if (${BRLCAD_PATCH_VERSION} STRLESS "10")
+  set(BRLCAD_PATCH_VERSION_NUM "0${BRLCAD_PATCH_VERSION}")
+else
+  set(BRLCAD_PATCH_VERSION_NUM "${BRLCAD_PATCH_VERSION}")
+endif
+set(BRLCAD_VERSION_NUMBER "${BRLCAD_MAJOR_VERSION}${BRLCAD_MINOR_VERSION_NUM}${BRLCAD_PATCH_VERSION_NUM}")
 
 #---------------------------------------------------------------------
 # Define relative install locations.  Don't set these if they have already
@@ -772,6 +784,7 @@ CONFIG_H_APPEND(BRLCAD "#define BRLCAD_DOC_DIR \"${DOC_DIR}\"\n")
 CONFIG_H_APPEND(BRLCAD "#define BRLCAD_MAN_DIR \"${MAN_DIR}\"\n")
 CONFIG_H_APPEND(BRLCAD "#define PACKAGE_VERSION \"${BRLCAD_VERSION}\"\n")
 CONFIG_H_APPEND(BRLCAD "#define VERSION \"${BRLCAD_VERSION}\"\n")
+CONFIG_H_APPEND(BRLCAD "#define BRLCAD_VERSION_NUMBER ${BRLCAD_VERSION_NUMBER}\n")
 
 #----------------------------------------------------------------------
 # Decide whether to do a 32 or a 64 bit build.
