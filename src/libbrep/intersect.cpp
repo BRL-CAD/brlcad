@@ -96,9 +96,11 @@ public:
     {
 	m_node = bbox;
     }
-    bool IsPointIn(const ON_3dPoint &pt)
+    bool IsPointIn(const ON_3dPoint &pt, double tolerance = 0.0)
     {
-	return m_node.IsPointIn(pt);
+	ON_3dVector vtol(tolerance,tolerance,tolerance);
+	ON_BoundingBox new_bbox(m_node.m_min-vtol, m_node.m_max+vtol);
+	return new_bbox.IsPointIn(pt);
     }
 };
 
@@ -243,7 +245,9 @@ ON_Intersect(const ON_3dPoint& pointA,
 	     double tolerance,
 	     const ON_Interval* curveB_domain)
 {
-    bu_log("PCI called.\n");
+    if (tolerance <= 0.0)
+	tolerance = 0.01;
+
     Subcurve root;
     if (curveB_domain == NULL) {
 	root.m_curve = curveB.Duplicate();
@@ -267,7 +271,7 @@ ON_Intersect(const ON_3dPoint& pointA,
     root.SetBBox(root.m_curve->BoundingBox());
     root.m_islinear = root.m_curve->IsLinear();
 
-    if (!root.IsPointIn(pointA))
+    if (!root.IsPointIn(pointA, tolerance))
 	return false;
 
     std::vector<Subcurve*> candidates, next_candidates;
@@ -281,9 +285,9 @@ ON_Intersect(const ON_3dPoint& pointA,
 		next_candidates.push_back(candidates[j]);
 	    } else {
 		if (candidates[j]->Split() == 0) {
-		    if (candidates[j]->m_children[0]->IsPointIn(pointA))
+		    if (candidates[j]->m_children[0]->IsPointIn(pointA, tolerance))
 			next_candidates.push_back(candidates[j]->m_children[0]);
-		    if (candidates[j]->m_children[1]->IsPointIn(pointA))
+		    if (candidates[j]->m_children[1]->IsPointIn(pointA, tolerance))
 			next_candidates.push_back(candidates[j]->m_children[1]);
 		} else
 		    next_candidates.push_back(candidates[j]);
