@@ -257,7 +257,7 @@ ON_Intersect(const ON_3dPoint& pointA,
 	tolerance = PCI_DEFAULT_TOLERANCE;
 
     Subcurve root;
-    if (curveB_domain == NULL) {
+    if (curveB_domain == NULL || *curveB_domain == curveB.Domain()) {
 	root.m_curve = curveB.Duplicate();
 	root.m_t = curveB.Domain();
     }
@@ -378,7 +378,9 @@ ON_Intersect(const ON_3dPoint& pointA,
     ON_3dPoint closest_point_3d = surfaceB.PointAt(closest_point_uv.x, closest_point_uv.y);
     bu_log("%lf %lf %lf\n", pointA.x, pointA.y, pointA.z);
     bu_log("%lf %lf %lf\n", closest_point_3d.x, closest_point_3d.y, closest_point_3d.z);
-    if (pointA.DistanceTo(closest_point_3d) <= tolerance) {
+    if (pointA.DistanceTo(closest_point_3d) <= tolerance
+	&& u_domain.Includes(closest_point_uv.x)
+	&& v_domain.Includes(closest_point_uv.y)) {
 	ON_PX_EVENT Event;
 	Event.m_type = ON_PX_EVENT::psx_point;
 	Event.m_A = pointA;
