@@ -218,7 +218,7 @@ ON_Intersect(const ON_3dPoint& pointA,
 	     double tolerance)
 {
     if (tolerance <= 0.0)
-	tolerance = 0.01;
+	tolerance = ON_ZERO_TOLERANCE;
 
     if (pointA.DistanceTo(pointB) <= tolerance) {
 	ON_PX_EVENT Event;
@@ -234,10 +234,18 @@ ON_Intersect(const ON_3dPoint& pointA,
 }
 
 
-#define MAX_PCI_DEPTH 8
 /**
  * Point-curve intersections (PCI)
  */
+
+// The maximal depth for subdivision - trade-off between accurancy and
+// performance
+#define MAX_PCI_DEPTH 8
+
+// We make the default tolerance for PSI the same as that of curve-curve
+// intersections defined by openNURBS (see other/openNURBS/opennurbs_curve.h)
+#define PCI_DEFAULT_TOLERANCE 0.001
+
 bool
 ON_Intersect(const ON_3dPoint& pointA,
 	     const ON_Curve& curveB,
@@ -246,7 +254,7 @@ ON_Intersect(const ON_3dPoint& pointA,
 	     const ON_Interval* curveB_domain)
 {
     if (tolerance <= 0.0)
-	tolerance = 0.01;
+	tolerance = PCI_DEFAULT_TOLERANCE;
 
     Subcurve root;
     if (curveB_domain == NULL) {
@@ -332,6 +340,11 @@ ON_Intersect(const ON_3dPoint& pointA,
 /**
  * Point-surface intersections (PSI)
  */
+
+// We make the default tolerance for PSI the same as that of curve-surface
+// intersections defined by openNURBS (see other/openNURBS/opennurbs_curve.h)
+#define PSI_DEFAULT_TOLERANCE 0.001
+
 bool
 ON_Intersect(const ON_3dPoint& pointA,
 	     const ON_Surface& surfaceB,
@@ -341,7 +354,7 @@ ON_Intersect(const ON_3dPoint& pointA,
 	     const ON_Interval* surfaceB_vdomain)
 {
     if (tolerance <= 0.0)
-	tolerance = 0.01;
+	tolerance = PSI_DEFAULT_TOLERANCE;
 
     ON_Interval u_domain, v_domain;
     if (surfaceB_udomain == 0)
@@ -542,7 +555,10 @@ struct PointPair {
 };
 
 
+// The maximal depth for subdivision - trade-off between accurancy and
+// performance
 #define MAX_SSI_DEPTH 8
+
 int
 ON_Intersect(const ON_Surface* surfA,
 	     const ON_Surface* surfB,
