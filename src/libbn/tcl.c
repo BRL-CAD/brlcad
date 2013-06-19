@@ -54,9 +54,9 @@ bn_decode_mat(fastf_t *mat, const char *str)
     if (*str == '{') str++;
 
     ret = sscanf(str,
-		  "%lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf",
-		  &m[0], &m[1], &m[2], &m[3], &m[4], &m[5], &m[6], &m[7],
-		  &m[8], &m[9], &m[10], &m[11], &m[12], &m[13], &m[14], &m[15]);
+		 "%lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf",
+		 &m[0], &m[1], &m[2], &m[3], &m[4], &m[5], &m[6], &m[7],
+		 &m[8], &m[9], &m[10], &m[11], &m[12], &m[13], &m[14], &m[15]);
     MAT_COPY(mat, m);
 
     return ret;
@@ -708,13 +708,13 @@ bn_math_cmd(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
 	ret = bn_dist_pt2_lseg2(&dist, pca, ptA, ptB, pt, &tol);
 	switch (ret) {
-	case 0:
-	case 1:
-	case 2:
-	    dist = 0.0;
-	    break;
-	default:
-	    break;
+	    case 0:
+	    case 1:
+	    case 2:
+		dist = 0.0;
+		break;
+	    default:
+		break;
 	}
 
 	bu_vls_printf(&result, "%g", dist);
