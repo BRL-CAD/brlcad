@@ -196,7 +196,7 @@ rt_bot_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
     unsigned int *patch_vert_cnt = (unsigned int *)bu_malloc(sizeof(unsigned int) * bot->num_vertices, "patch_vert_cnt");
     unsigned int *vert_edge_status = (unsigned int *)bu_calloc(bot->num_vertices, sizeof(unsigned int), "vert status");
     for (unsigned int i = 0; i < patch_cnt; i++) {
-        for (unsigned int j = 0; j < bot->num_vertices; j++) patch_vert_cnt[j] = 0;
+        memset(patch_vert_cnt, 0, bot->num_vertices * sizeof(unsigned int));
 	for (unsigned int j = 0; j < bot->num_faces; j++) {
 	    if (patches[j] == i+1) {
 		patch_vert_cnt[bot->faces[j*3+0]]++;
