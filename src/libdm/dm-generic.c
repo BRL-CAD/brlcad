@@ -38,7 +38,7 @@
 
 extern struct dm *plot_open(Tcl_Interp *interp, int argc, const char *argv[]);
 extern struct dm *ps_open(Tcl_Interp *interp, int argc, const char *argv[]);
-extern struct dm *txt_open_dm(Tcl_Interp *interp, int argc, const char **argv);
+extern struct dm *txt_open(Tcl_Interp *interp, int argc, const char **argv);
 
 #ifdef DM_X
 #  if defined(HAVE_TK)
@@ -94,7 +94,7 @@ dm_open(Tcl_Interp *interp, int type, int argc, const char *argv[])
 	case DM_TYPE_NULL:
 	    return null_open(interp, argc, argv);
 	case DM_TYPE_TXT:
-	    return txt_open_dm(interp, argc, argv);
+	    return txt_open(interp, argc, argv);
 	case DM_TYPE_PLOT:
 	    return plot_open(interp, argc, argv);
 	case DM_TYPE_PS:

@@ -34,8 +34,9 @@
 #include "vmath.h"
 #include "dm.h"
 
+
 struct dm *
-txt_open_dm(Tcl_Interp *interp, int argc, const char **argv)
+txt_open(Tcl_Interp *interp, int argc, const char **argv)
 {
     struct dm *dmp;
 
@@ -51,6 +52,7 @@ txt_open_dm(Tcl_Interp *interp, int argc, const char **argv)
 
     return dmp;
 }
+
 
 HIDDEN int
 txt_close(struct dm *UNUSED(dmp))
