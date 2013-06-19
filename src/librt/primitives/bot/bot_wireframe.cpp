@@ -1,50 +1,10 @@
 #include "common.h"
 
-#include <map>
-#include <set>
 #include <queue>
-#include <list>
-#include <vector>
 
 #include "vmath.h"
 #include "raytrace.h"
 #include "wdb.h"
-
-/*************************
- *   Utility functions
- *************************/
-
-#if 0
-// Make an edge id using the Szudzik pairing function:
-long unsigned int edge_id(size_t pt_A, size_t pt_B)
-{
-    return (pt_A >= pt_B) ? (pt_A * pt_A + pt_A + pt_B) : (pt_B * pt_B + pt_A);
-}
-
-// shift one of the vertex index numbers up to form a unique ID.  Offset is
-// log10(bot->num_vertices) + 1
-long unsigned int edge_id(size_t pt_A, size_t pt_B, int offset)
-{
-    return (pt_A <= pt_B) ? (pt_A * pow(10,offset) + pt_B) : (pt_B * pow(10,offset) + pt_A);
-}
-
-void breakout(long unsigned int id, int offset, size_t *A, size_t *B)
-{
-    (*B) = (size_t)((long)id % (int)pow(10,offset));
-    (*A) = (size_t)(id - (*B))/ (int)(pow(10, offset));
-}
-#endif
-
-// Make an edge using consistent vertex ordering
-static std::pair<size_t, size_t>
-mk_edge(size_t pt_A, size_t pt_B)
-{
-    if (pt_A <= pt_B) {
-	return std::make_pair(pt_A, pt_B);
-    } else {
-	return std::make_pair(pt_B, pt_A);
-    }
-}
 
 
 // Calculate area of a face
@@ -65,49 +25,6 @@ face_area(struct rt_bot_internal *bot, size_t face_num)
     return area;
 }
 
-// Given a BoT face, return the three other faces that share an edge with that face
-static void
-get_connected_faces(struct rt_bot_internal *bot, size_t face_num,  std::map<size_t, std::set<size_t> > *vert_to_face, std::set<size_t> *faces)
-{
-    std::map<size_t, size_t> face_cnt;
-    size_t points[3];
-    points[0] = bot->faces[face_num*3+0]*3;
-    points[1] = bot->faces[face_num*3+1]*3;
-    points[2] = bot->faces[face_num*3+2]*3;
-    std::set<size_t>::iterator it;
-    for (int i = 0; i < 3; ++i) {
-	for (it = (*vert_to_face)[points[i]].begin(); it != (*vert_to_face)[points[i]].end(); it++) {
-	    face_cnt[(*it)] += 1;
-	}
-    }
-    std::map<size_t, size_t>::iterator mit;
-    for (mit = face_cnt.begin(); mit != face_cnt.end(); ++mit) {
-	if ((*mit).second > 1) {
-	    faces->insert((*mit).first);
-	}
-    }
-}
-
-/* To avoid drawing duplicate lines, build the final vlist using a set */
-static void
-plot_patch_borders(std::vector<std::map<std::pair<size_t, size_t>, size_t> > *patch_edge_cnt, struct rt_bot_internal *bot, struct bu_list *vhead)
-{
-    std::set<std::pair<size_t, size_t> > final_edge_set;
-    std::set<std::pair<size_t, size_t> >::iterator fe_it;
-    std::map<std::pair<size_t, size_t>, size_t>::iterator e_it;
-    for (int i = 0; i < patch_edge_cnt->size(); i++) {
-	for (e_it = (*patch_edge_cnt)[i].begin(); e_it != (*patch_edge_cnt)[i].end(); e_it++) {
-	    if ((*e_it).second == 1) {
-                final_edge_set.insert((*e_it).first);
-	    }
-	}
-    }
-    for (fe_it = final_edge_set.begin(); fe_it != final_edge_set.end(); fe_it++) {
-	RT_ADD_VLIST(vhead, &(bot->vertices[(*fe_it).first]), BN_VLIST_LINE_MOVE);
-	RT_ADD_VLIST(vhead, &(bot->vertices[(*fe_it).second]), BN_VLIST_LINE_DRAW);
-    }
-}
-
 /**********************************************************
  *   Code for identifying semi-flat patches in bots
  *   and creating wireframe edges
@@ -120,32 +37,7 @@ rt_bot_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
     BU_CK_LIST_HEAD(info->vhead);
     bot = (struct rt_bot_internal *)ip->idb_ptr;
     RT_BOT_CK_MAGIC(bot);
-
-    if (bot->num_vertices <= 0 || !bot->vertices || bot->num_faces <= 0 || !bot->faces)
-        return 0;
-
-    /* Declare key containers */
     vect_t gvects[6];
-    std::vector<double> face_areas;
-    std::vector<double> face_normals;
-    std::vector<std::vector<size_t> > groups;
-    std::vector<std::map<std::pair<size_t, size_t>, size_t> > groups_edge_face_cnt;
-    std::vector<std::vector<size_t> > categorization_results;
-    std::vector<int> face_to_plane;
-    std::vector<std::set<size_t> > patches;
-    std::map<size_t, std::set<size_t> > vert_to_face;
-
-    /* Initialize containers */
-    face_areas.resize(bot->num_faces);
-    face_to_plane.resize(bot->num_faces);
-    face_normals.resize(bot->num_faces*3);
-    groups.resize(6);
-    groups_edge_face_cnt.resize(6);
-    categorization_results.resize(6);
-    for (int i = 0; i < 6; ++i) {
-	categorization_results[i].resize(bot->num_faces); //categories can hold at most all faces in bot
-    }
-    patches.resize(bot->num_faces*3); // Max number of patches should be the same as the face cnt, but it isn't always
     VSET(gvects[0], -1,0,0);
     VSET(gvects[1], 0,-1,0);
     VSET(gvects[2], 0,0,-1);
@@ -153,118 +45,140 @@ rt_bot_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
     VSET(gvects[4], 0,1,0);
     VSET(gvects[5], 0,0,1);
 
-    // Calculate face normals dot product with bounding rpp planes
-    for (size_t i=0; i < bot->num_faces; ++i) {
-	size_t pt_A, pt_B, pt_C;
-	size_t result_max;
-	double vdot = 0.0;
-	double result = 0.0;
+    if (bot->num_vertices <= 0 || !bot->vertices || bot->num_faces <= 0 || !bot->faces)
+        return 0;
+
+    /* Declare key containers */
+    double *face_areas= (double *)bu_calloc(bot->num_faces, sizeof(double), "areas");
+    double *face_normals= (double *)bu_calloc(bot->num_faces * 3, sizeof(double), "normals");
+    /* Stash all the initial categorization test results - can be re-used later */
+//    unsigned int *categorization_results = (unsigned int *)bu_calloc(sizeof(unsigned int) * bot->num_faces * 6, "categorization results");
+    /* Initial group assignments */
+    unsigned int *groups = (unsigned int *)bu_calloc(bot->num_faces, sizeof(unsigned int), "groups");
+    /* Initially, patch breakdown is made in a faces -> patch_id map */
+    unsigned int *patches= (unsigned int *)bu_calloc(bot->num_faces, sizeof(unsigned int), "patch_id_numbers");
+    /* Don't know yet how big this needs to be */
+    unsigned int *vert_to_face = NULL;
+
+    /* Sanity check vertex indicies in face definitions */
+    for (unsigned int i = 0; i < bot->num_faces; ++i) {
+        if ((unsigned int)bot->faces[i*3+0] > (unsigned int)(bot->num_vertices)) bu_log("bot->faces[%d*3+0]: %d, bot->num_vertices: %d", i, bot->faces[i*3+0], bot->num_vertices);
+        if ((unsigned int)bot->faces[i*3+1] > (unsigned int)(bot->num_vertices)) bu_log("bot->faces[%d*3+1]: %d, bot->num_vertices: %d", i, bot->faces[i*3+1], bot->num_vertices);
+        if ((unsigned int)bot->faces[i*3+2] > (unsigned int)(bot->num_vertices)) bu_log("bot->faces[%d*3+2]: %d, bot->num_vertices: %d", i, bot->faces[i*3+2], bot->num_vertices);
+    } 
+    /* Pre-compute face areas once */
+    for (unsigned int i = 0; i < bot->num_faces; i++) {
+	face_areas[i] = face_area(bot, i);
+    }
+    /* Pre-compute face normals once */
+    for (unsigned int i = 0; i < bot->num_faces; i++) {
 	vect_t a, b, norm_dir;
-	// Add vert -> edge and edge -> face mappings to global map.
-	pt_A = bot->faces[i*3+0]*3;
-	pt_B = bot->faces[i*3+1]*3;
-	pt_C = bot->faces[i*3+2]*3;
-	vert_to_face[pt_A].insert(i);
-	vert_to_face[pt_B].insert(i);
-	vert_to_face[pt_C].insert(i);
-	// Categorize face
 	VSUB2(a, &bot->vertices[bot->faces[i*3+1]*3], &bot->vertices[bot->faces[i*3]*3]);
 	VSUB2(b, &bot->vertices[bot->faces[i*3+2]*3], &bot->vertices[bot->faces[i*3]*3]);
 	VCROSS(norm_dir, a, b);
 	VUNITIZE(norm_dir);
-        face_normals[i*3]=norm_dir[0];
-        face_normals[i*3+1]=norm_dir[1];
-        face_normals[i*3+2]=norm_dir[2];
-	for (int j=0; j < 6; j++) {
+	face_normals[i*3]=norm_dir[0];
+	face_normals[i*3+1]=norm_dir[1];
+	face_normals[i*3+2]=norm_dir[2];
+    }
+    /* Calculate categorization results and assign groups */
+    for (unsigned int i = 0; i < bot->num_faces; i++) {
+	int result_max = 0;
+	double result = 0.0;
+	double vdot = 0.0;
+	vect_t norm_dir;
+	VSET(norm_dir, face_normals[i*3], face_normals[i*3+1], face_normals[i*3+2]);
+	for (unsigned int j=0; j < 6; j++) {
 	    vdot = VDOT(gvects[j],norm_dir);
-            categorization_results[j][i] = vdot;
+	    //categorization_results[i*j] = vdot;
 	    if (vdot > result) {
 		result_max = j;
 		result = vdot;
 	    }
 	}
-	groups[result_max].push_back(i);
-	face_to_plane[i]=result_max;
-        face_areas[i] = face_area(bot, i);
+        groups[i] = result_max;
+    }
+    /* Determine the maximun number of faces associated with any one vertex */
+    unsigned int *vert_face_cnt = (unsigned int *)bu_calloc(bot->num_vertices, sizeof(unsigned int), "vert face cnt");
+    for (unsigned int i = 0; i < bot->num_faces; i++) {
+        vert_face_cnt[bot->faces[i*3+0]]++;
+        vert_face_cnt[bot->faces[i*3+1]]++;
+        vert_face_cnt[bot->faces[i*3+2]]++;
+    }
+    unsigned int max_face_cnt = 0;
+    for (unsigned int i = 0; i < bot->num_vertices; i++) {
+	if (vert_face_cnt[i] > max_face_cnt)
+	    max_face_cnt = vert_face_cnt[i];
+    }
+    /* Now, allocate a 2D array that can hold the full vert->face map
+     * and populate it */
+    vert_to_face = (unsigned int *)bu_calloc(bot->num_vertices * max_face_cnt, sizeof(unsigned int), "map");
+    for (unsigned int i = 0; i < bot->num_faces; i++) {
+	for (unsigned int j = 0; j < 3; j++) {
+            unsigned int k = 0;
+	    unsigned int vert = bot->faces[i*3+j];
+            /* rows are vertex indexes, columns hold the faces */
+	    while (vert_to_face[max_face_cnt * vert + k] && k < max_face_cnt) k++;
+            /* Need to increment face index by one so we can reference 
+	     * the first face and still use the true/false test that 0 allows */
+	    vert_to_face[max_face_cnt * vert + k] = i + 1;
+            //bu_log("vert_to_face(%d,%d)[%d] = %d\n", vert, k, max_face_cnt * vert + k, i + 1); 
+	}
+    }
+    
+    /* Order the groups by number of bots */
+    unsigned int group_cnt[6] = {0};
+    unsigned int ordered_groups[6] = {0};
+    for (unsigned int i = 0; i < bot->num_faces; i++) {
+        group_cnt[groups[i]]++;
+    }
+    for (unsigned int i = 0; i < 6; i++) {
+        unsigned int more = 5;
+	for (unsigned int j = 0; j < 6; j++) {
+            if (group_cnt[j] > group_cnt[i]) more--;
+	}
+        ordered_groups[more] = i;
     }
 
-    // Order the groups by number of bots
-    std::vector<int> ordered_groups;
-    int group_ids[] = {0, 1, 2, 3, 4, 5};
-    std::set<int> group_bin (group_ids, group_ids+6);
-    std::set<int>::iterator fg_it;
-    while (!group_bin.empty()) {
-        int largest_group = 0;
-        int max = 0;
-	for (fg_it = group_bin.begin(); fg_it != group_bin.end(); fg_it++) {
-	    if (groups[(*fg_it)].size() == 0) {
-                group_bin.erase((*fg_it));
-	    } else {
-		if (groups[(*fg_it)].size() > max) {
-		    max = groups[(*fg_it)].size();
-		    largest_group = (*fg_it);
-		}
-	    }
-	}
-	if (max > 0)
-	    ordered_groups.push_back(largest_group);
-	group_bin.erase(largest_group);
-    }
+
 
     // All faces must belong to some patch - continue until all faces are processed
-    std::vector<int> face_pool (bot->num_faces, 1);
-    std::vector<int> face_to_patch (bot->num_faces, -1);
-    int patch_cnt = -1;
-    for (int i = 0; i < ordered_groups.size(); i++) {
+    unsigned int patch_cnt = 0;
+    for (unsigned int i = 0; i < 6; i++) {
 	int largest_face = 0;
-	int curr_group = ordered_groups[i];
 	while (largest_face != -1) {
 	    // Start a new patch
 	    vect_t largest_face_normal;
 	    largest_face = -1;
-            patch_cnt++;
+	    patch_cnt++;
 	    // Find largest remaining face in group
 	    double face_size_criteria = 0.0;
-	    for (int f_it = 0; f_it < groups[curr_group].size(); f_it++) {
-		if (face_pool[groups[curr_group][f_it]]) {
-		    double fa = face_areas[groups[curr_group][f_it]];
-		    if (fa > face_size_criteria) {
-			largest_face = groups[curr_group][f_it];
-			face_size_criteria = fa;
-		    }
+	    for (unsigned int j = 0; j < bot->num_faces; j++) {
+		if (ordered_groups[i] == groups[j] && !patches[j] && (face_areas[j] > face_size_criteria)) {
+		    largest_face = j;
+		    face_size_criteria = face_areas[j];
 		}
 	    }
 	    if (largest_face != -1) {
-		std::queue<int> face_queue;
+		std::queue<unsigned int> face_queue;
 		face_queue.push(largest_face);
-
+		patches[largest_face] = patch_cnt;
 		VSET(largest_face_normal, face_normals[largest_face*3], face_normals[largest_face*3+1], face_normals[largest_face*3+2]);
-		face_pool[largest_face] = 0;
 		while (!face_queue.empty()) {
-		    size_t pt_A, pt_B, pt_C;
-		    int face_num = face_queue.front();
+		    unsigned int face_num = face_queue.front();
 		    face_queue.pop();
-		    patches[patch_cnt].insert(face_num);
-		    face_to_patch[face_num] = patch_cnt;
-		    pt_A = bot->faces[face_num*3+0]*3;
-		    pt_B = bot->faces[face_num*3+1]*3;
-		    pt_C = bot->faces[face_num*3+2]*3;
-		    groups_edge_face_cnt[curr_group][mk_edge(pt_A, pt_B)] += 1;
-		    groups_edge_face_cnt[curr_group][mk_edge(pt_B, pt_C)] += 1;
-		    groups_edge_face_cnt[curr_group][mk_edge(pt_C, pt_A)] += 1;
-
-		    std::set<size_t> connected_faces;
-		    std::set<size_t>::iterator cf_it;
-		    get_connected_faces(bot, face_num, &(vert_to_face), &connected_faces);
-		    for (cf_it = connected_faces.begin(); cf_it != connected_faces.end() ; cf_it++) {
-			if (face_pool[(*cf_it)]) {
-			    double curr_face_area = face_areas[(*cf_it)];
-			    if (curr_face_area < (face_size_criteria*10) && curr_face_area > (face_size_criteria*0.1)) {
-				vect_t face_normal;
-				VSET(face_normal, face_normals[face_num*3], face_normals[face_num*3+1], face_normals[face_num*3+2]);
-				if (VDOT(largest_face_normal, face_normal) > 0.85) {
-				    face_queue.push((*cf_it));
-				    face_pool[(*cf_it)] = 0;
+		    for (unsigned int k = 0; k < 3; k++) {
+			unsigned int vert_id = bot->faces[face_num*3+k]; 
+			for (unsigned int l = 0; l < vert_face_cnt[vert_id]; l++) {
+			    unsigned int new_face = vert_to_face[max_face_cnt * vert_id  + l] - 1;
+			    if (groups[new_face] == ordered_groups[i] && !patches[new_face]) {
+				if (face_areas[new_face] > face_areas[largest_face] * 0.1) {
+				    vect_t new_face_normal;
+				    VSET(new_face_normal, face_normals[new_face*3], face_normals[new_face*3+1], face_normals[new_face*3+2]);
+				    if (VDOT(largest_face_normal, new_face_normal) > 0.65) {
+					face_queue.push(new_face);
+					patches[new_face] = patch_cnt;
+				    }
 				}
 			    }
 			}
@@ -273,7 +187,47 @@ rt_bot_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
 	    }
 	}
     }
-    plot_patch_borders(&(groups_edge_face_cnt), bot, info->vhead);
+    bu_log("patch_cnt: %d\n", patch_cnt);
+    bu_free(face_areas, "face_areas");
+    bu_free(face_normals, "face_normals");
+    bu_free(groups, "groups");
+    bu_free(vert_to_face, "vert_to_face");
+
+    unsigned int *patch_vert_cnt = (unsigned int *)bu_malloc(sizeof(unsigned int) * bot->num_vertices, "patch_vert_cnt");
+    unsigned int *vert_edge_status = (unsigned int *)bu_calloc(bot->num_vertices, sizeof(unsigned int), "vert status");
+    for (unsigned int i = 0; i < patch_cnt; i++) {
+        for (unsigned int j = 0; j < bot->num_vertices; j++) patch_vert_cnt[j] = 0;
+	for (unsigned int j = 0; j < bot->num_faces; j++) {
+	    if (patches[j] == i+1) {
+		patch_vert_cnt[bot->faces[j*3+0]]++;
+		patch_vert_cnt[bot->faces[j*3+1]]++;
+		patch_vert_cnt[bot->faces[j*3+2]]++;
+	    }
+	}
+	for (unsigned int j = 0; j < bot->num_vertices; j++) {
+            if (patch_vert_cnt[j] && patch_vert_cnt[j] != vert_face_cnt[j]) vert_edge_status[j]++;
+	}
+    }
+    bu_free(patches, "patches");
+    bu_free(patch_vert_cnt, "patch_vert_cnt");
+    bu_free(vert_face_cnt, "vert_face_cnt");
+
+    for (unsigned int j = 0; j < bot->num_faces; j++) {
+	if (vert_edge_status[bot->faces[j*3+0]] &&  vert_edge_status[bot->faces[j*3+1]]) {
+	    RT_ADD_VLIST(info->vhead, &(bot->vertices[bot->faces[j*3+0]*3]), BN_VLIST_LINE_MOVE);
+	    RT_ADD_VLIST(info->vhead, &(bot->vertices[bot->faces[j*3+1]*3]), BN_VLIST_LINE_DRAW);
+	}
+        if (vert_edge_status[bot->faces[j*3+1]] &&  vert_edge_status[bot->faces[j*3+2]]) {
+	    RT_ADD_VLIST(info->vhead, &(bot->vertices[bot->faces[j*3+1]*3]), BN_VLIST_LINE_MOVE);
+	    RT_ADD_VLIST(info->vhead, &(bot->vertices[bot->faces[j*3+2]*3]), BN_VLIST_LINE_DRAW);
+	}
+	if (vert_edge_status[bot->faces[j*3+2]] &&  vert_edge_status[bot->faces[j*3+0]]) {
+	    RT_ADD_VLIST(info->vhead, &(bot->vertices[bot->faces[j*3+2]*3]), BN_VLIST_LINE_MOVE);
+	    RT_ADD_VLIST(info->vhead, &(bot->vertices[bot->faces[j*3+0]*3]), BN_VLIST_LINE_DRAW);
+	}
+    }
+
+    bu_free(vert_edge_status, "vert status");
 
     return 0;
 }
