@@ -48,7 +48,6 @@
 #include "./sedit.h"
 #include "./mged_dm.h"
 
-
 #define NEED_GUI(_type) (\
 	IS_DM_TYPE_WGL(_type) || \
 	IS_DM_TYPE_OGL(_type) || \
@@ -56,12 +55,14 @@
 	IS_DM_TYPE_GLX(_type) || \
 	IS_DM_TYPE_PEX(_type) || \
 	IS_DM_TYPE_TK(_type) || \
-	IS_DM_TYPE_X(_type))
+	IS_DM_TYPE_X(_type) || \
+	IS_DM_TYPE_TXT(_type))
 
 
 /* All systems can compile these! */
 extern int Plot_dm_init(struct dm_list *o_dm_list, int argc, const char *argv[]);
 extern int PS_dm_init(struct dm_list *o_dm_list, int argc, const char *argv[]);
+extern int Txt_dm_init(struct dm_list *o_dm_list, int argc, const char *argv[]);
 
 #ifdef DM_X
 extern int X_dm_init();
@@ -114,6 +115,7 @@ static fastf_t windowbounds[6] = { XMIN, XMAX, YMIN, YMAX, (int)GED_MIN, (int)GE
 struct w_dm which_dm[] = {
     { DM_TYPE_PLOT, "plot", Plot_dm_init },  /* DM_PLOT_INDEX defined in mged_dm.h */
     { DM_TYPE_PS, "ps", PS_dm_init },      /* DM_PS_INDEX defined in mged_dm.h */
+    { DM_TYPE_TXT, "txt", Txt_dm_init },
 #ifdef DM_X
     { DM_TYPE_X, "X", X_dm_init },
 #endif /* DM_X */

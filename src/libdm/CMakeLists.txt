@@ -77,6 +77,7 @@ set(LIBDM_SRCS
   dm-ps.c
   dm_obj.c
   dm_util.c
+  dm-txt.c
   focus.c
   grid.c
   knob.c
