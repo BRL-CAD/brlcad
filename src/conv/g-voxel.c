@@ -69,6 +69,7 @@ main(int argc, char **argv)
     threshold = 0.5;
     levelOfDetail = 4;
 
+    /* testing for any optional parameters and updating values if necessary */
     bu_optind = 1;
     while ((c = bu_getopt(argc, (char * const *)argv, (const char *)"s:d:t:")) != -1) {
 	double scan[3];
