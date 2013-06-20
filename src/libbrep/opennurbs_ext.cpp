@@ -930,7 +930,8 @@ SurfaceTree::surfaceBBox(const ON_Surface *localsurf, bool isLeaf, ON_3dPoint *m
 						ON_3dPoint(max)),
 			  m_face,
 			  u, v);
-	node->prepTrims();
+	if (!m_removeTrimmed)
+	    node->prepTrims();
 
     } else {
 	node = new BBNode(ctree, ON_BoundingBox(ON_3dPoint(min),

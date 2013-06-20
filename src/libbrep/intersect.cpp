@@ -372,7 +372,11 @@ ON_Intersect(const ON_3dPoint& pointA,
     brep->AddSurface(surfaceB.Duplicate());
     brep->NewFace(0);
     ON_2dPoint closest_point_uv;
-    brlcad::get_closest_point(closest_point_uv, brep->Face(0), pointA);
+    if (brlcad::get_closest_point(closest_point_uv, brep->Face(0), pointA) == false) {
+	delete brep;
+	return false;
+    }
+
     delete brep;
 
     ON_3dPoint closest_point_3d = surfaceB.PointAt(closest_point_uv.x, closest_point_uv.y);
