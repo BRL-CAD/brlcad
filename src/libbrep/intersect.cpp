@@ -345,6 +345,12 @@ ON_Intersect(const ON_3dPoint& pointA,
 // intersections defined by openNURBS (see other/openNURBS/opennurbs_curve.h)
 #define PSI_DEFAULT_TOLERANCE 0.001
 
+// The default maximal depth for creating a surfacee tree (8) is way too
+// much - killing performance. Since it's only used for getting an
+// estimation, and we use Newton iterations afterwards, it's reasonable
+// to use a smaller depth in this step.
+#define MAX_PSI_DEPTH 4
+
 bool
 ON_Intersect(const ON_3dPoint& pointA,
 	     const ON_Surface& surfaceB,
@@ -372,16 +378,17 @@ ON_Intersect(const ON_3dPoint& pointA,
     brep->AddSurface(surfaceB.Duplicate());
     brep->NewFace(0);
     ON_2dPoint closest_point_uv;
-    if (brlcad::get_closest_point(closest_point_uv, brep->Face(0), pointA) == false) {
+    brlcad::SurfaceTree *tree = new brlcad::SurfaceTree(brep->Face(0), true, MAX_PSI_DEPTH);
+    if (brlcad::get_closest_point(closest_point_uv, brep->Face(0), pointA, tree) == false) {
 	delete brep;
+	delete tree;
 	return false;
     }
 
     delete brep;
+    delete tree;
 
     ON_3dPoint closest_point_3d = surfaceB.PointAt(closest_point_uv.x, closest_point_uv.y);
-    bu_log("%lf %lf %lf\n", pointA.x, pointA.y, pointA.z);
-    bu_log("%lf %lf %lf\n", closest_point_3d.x, closest_point_3d.y, closest_point_3d.z);
     if (pointA.DistanceTo(closest_point_3d) <= tolerance
 	&& u_domain.Includes(closest_point_uv.x)
 	&& v_domain.Includes(closest_point_uv.y)) {
