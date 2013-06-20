@@ -87,7 +87,7 @@ struct icv_image_file {
     int fd;
     int format;			/* ICV_IMAGE_* */
     int width, height, depth;	/* pixel, pixel, byte */
-    unsigned char *data;
+    unsigned char *data;	/* this should be considered private */
     unsigned long flags;
 };
 typedef struct icv_image_file icv_image_file_t;
@@ -146,6 +146,26 @@ ICV_EXPORT extern int icv_image_save(unsigned char *data,
 				   int depth,
 				   char *filename,
 				   int filetype);
+
+/**
+ * Load a file into an ICV struct. For most formats, this will be called with
+ * format=ICV_IMAGE_AUTO, hint_format=0, hint_width=0, hint_height=0 and
+ * hint_depth=0 for default values. At the moment, the data is packed into the
+ * data field as rgb24 (raw pix style).
+ *
+ * For pix and bw files, having width and height set to 0 will trigger a
+ * heuristic sizing algorithm based on file size, assuming that the image is
+ * square at first, then looking through a set of common sizes, finally assuming
+ * 512x512.
+ *
+ * @param filename File to load
+ * @param hint_format Probable format of the file, typically ICV_IMAGE_AUTO
+ * @param hint_width Width when passed as parameter from calling program. 0 for default
+ * @param hint_height Height when passed as parameter from calling program. 0 for default
+ * @param hint_depth Default depth field, 0 for default.
+ * @return A newly allocated struct holding the loaded image info.
+ */
+ICV_EXPORT struct icv_image_file *icv_image_load(const char *filename, int hint_format, int hint_width, int hint_height, int hint_depth);
 
 /** @} */
 /* end image utilities */

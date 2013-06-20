@@ -239,8 +239,8 @@ ppm_save(int fd, unsigned char *rgb, int width, int height)
 
 /* begin public functions */
 
-int
-icv_image_load()
+struct icv_image_file *
+icv_image_load(const char *UNUSED(filename), int UNUSED(hint_format), int UNUSED(hint_width), int UNUSED(hint_height), int UNUSED(hint_depth))
 {
     bu_log("icv_image_load not implemented\n");
     return 0;
