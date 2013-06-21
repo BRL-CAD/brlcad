@@ -1,10 +1,76 @@
 #include "common.h"
 
+#include <map>
 #include <queue>
 
 #include "vmath.h"
 #include "raytrace.h"
 #include "wdb.h"
+
+// Make an edge using consistent vertex ordering
+static std::pair<unsigned int, unsigned int>
+mk_edge(unsigned int pt_A, unsigned int pt_B)
+{
+    if (pt_A <= pt_B) {
+	return std::make_pair(pt_A, pt_B);
+    } else {
+	return std::make_pair(pt_B, pt_A);
+    }
+}
+
+// Build a set of edge-centric data structures to represent the mesh
+unsigned int
+edge_mappings(struct rt_bot_internal *bot, unsigned int **edges_ptr, unsigned int **faces_ptr) {
+
+    // Nick Reed's idea - use a C++ map of pairs to ints as a one-time method
+    // to generate unique int identifiers for edges.
+    std::map<std::pair<unsigned int, unsigned int>, unsigned int> edge_to_int;
+    std::pair<std::map<std::pair<unsigned int, unsigned int>, unsigned int>::iterator, bool> ret;
+    unsigned int edge_cnt = 0;
+    // Each face will have 3 edges
+    unsigned int *faces = *edges_ptr;
+    // Max possible need for this array is 3 edges for each face, 2 vertex indices per edge
+    unsigned int *edges = *faces_ptr;
+
+    for (unsigned int i = 0; i < bot->num_faces; ++i) {
+	ret = edge_to_int.insert(std::pair<std::pair<unsigned int, unsigned int>, unsigned int>(mk_edge(bot->faces[i*3+0], bot->faces[i*3+1]), edge_cnt));
+	if (ret.second == false) {
+	    // rows are faces, columns are the 1st, 2nd and 3rd edges 
+	    faces[3 * i + 0] = ret.first->second;
+	} else {
+	    // rows are faces, columns are the 1st, 2nd and 3rd edges 
+	    faces[3 * i + 0] = edge_cnt;
+            edges[2 * edge_cnt + 0] = bot->faces[i*3+0];
+            edges[2 * edge_cnt + 1] = bot->faces[i*3+1];
+	    edge_cnt++;
+	}
+	ret = edge_to_int.insert(std::pair<std::pair<unsigned int, unsigned int>, unsigned int>(mk_edge(bot->faces[i*3+1], bot->faces[i*3+2]), edge_cnt));
+	if (ret.second == false) {
+	    // rows are faces, columns are the 1st, 2nd and 3rd edges 
+	    faces[3 * i + 1] = ret.first->second;
+	} else {
+	    // rows are faces, columns are the 1st, 2nd and 3rd edges 
+	    faces[3 * i + 1] = edge_cnt;
+            edges[2 * edge_cnt + 0] = bot->faces[i*3+1];
+            edges[2 * edge_cnt + 1] = bot->faces[i*3+2];
+	    edge_cnt++;
+	}
+	ret = edge_to_int.insert(std::pair<std::pair<unsigned int, unsigned int>, unsigned int>(mk_edge(bot->faces[i*3+2], bot->faces[i*3+0]), edge_cnt));
+	if (ret.second == false) {
+	    // rows are faces, columns are the 1st, 2nd and 3rd edges 
+	    faces[3 * i + 2] = ret.first->second;
+	} else {
+	    // rows are faces, columns are the 1st, 2nd and 3rd edges 
+	    faces[3 * i + 2] = edge_cnt;
+            edges[2 * edge_cnt + 0] = bot->faces[i*3+2];
+            edges[2 * edge_cnt + 1] = bot->faces[i*3+0];
+	    edge_cnt++;
+	}
+    }
+
+    return edge_cnt;
+}
+
 
 // Calculate area of a face
 static double
@@ -95,6 +161,27 @@ rt_bot_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
         groups[i] = result_max;
     }
     bu_free(face_normals, "face_normals");
+
+#if 0
+    // Each face will have 3 edges
+    unsigned int *faces = (unsigned int *)bu_calloc(bot->num_faces * 3, sizeof(unsigned int), "face definitions via edge ids");
+    // Max possible need for this array is 3 edges for each face, 2 vertex indices per edge
+    unsigned int *edges = (unsigned int *)bu_calloc(bot->num_faces * 3 * 2, sizeof(unsigned int), "2d array of edge id to vert index mappings");
+
+    unsigned int cnt = edge_mappings(bot, &faces, &edges);
+
+    // Each edge will have at most 2 faces, and hence a maximum of 2 patches
+    unsigned int *edges_to_faces = (unsigned int *)bu_calloc(cnt * 2, sizeof(unsigned int), "face definitions via edge ids");
+
+    for (unsigned int i = 0; i < bot->num_faces; i++) {
+	unsigned int id = 2 * faces[i*3+0];
+	if (!edges_to_faces[id]) {
+	    edges_to_faces[id] = i + 1;
+	} else {
+	    edges_to_faces[id + 1] = i + 1;
+	}
+    }
+#endif     
 
     /* Determine the maximun number of faces associated with any one vertex */
     unsigned int *vert_face_cnt = (unsigned int *)bu_calloc(bot->num_vertices, sizeof(unsigned int), "vert face cnt");
