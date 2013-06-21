@@ -109,9 +109,43 @@ struct wdb_metaballpt {
 #define WDB_METABALLPT_TYPE_LINE 0x1
 #define WDB_METABALLPT_NULL	((struct wdb_metaballpt *)0)
 
-
+/**
+ *
+ * Make a database header (ID) record.
+ */
 WDB_EXPORT WDB_EXTERN(int mk_id, (struct rt_wdb *fp, const char *title) );
+
+/**
+ *
+ * Make a database header (ID) record, and note the user's preferred
+ * editing units (specified as a string).
+ *
+ * Returns -
+ * <0 error
+ * 0 success
+ */
 WDB_EXPORT WDB_EXTERN(int mk_id_units, (struct rt_wdb *fp, const char *title, const char *units) );
+
+
+/**
+ *
+ * Make a database header (ID) record, and note the user's preferred
+ * editing units (specified as a conversion factor).
+ *
+ * Note that the v4 database format offers only a limited number of
+ * choices for the preferred editing units.  If the user is editing in
+ * unusual units (like 2.5feet), don't fail to create the database
+ * header.
+ *
+ * In the v5 database, the conversion factor will be stored intact.
+ *
+ * Note that the database-layer header record will have already been
+ * written by db_create().  All we have to do here is update it.
+ *
+ * Returns -
+ * <0 error
+ * 0 success
+ */
 WDB_EXPORT int mk_id_editunits(
     struct rt_wdb *fp,
     const char *title,
@@ -749,10 +783,21 @@ WDB_EXPORT WDB_EXTERN(int mk_dsp, (struct rt_wdb *fp, const char *name, const ch
 WDB_EXPORT WDB_EXTERN(int mk_ebm, (struct rt_wdb *fp, const char *name, const char *file,
 				   size_t xdim, size_t ydim, fastf_t tallness, const matp_t mat));
 
+/**
+ * M K _ V O L
+ */
 WDB_EXPORT WDB_EXTERN(int mk_vol, (struct rt_wdb *fp, const char *name, const char *file,
 				   size_t xdim, size_t ydim, size_t zdim, size_t lo, size_t hi,
 				   const vect_t cellsize, const matp_t mat));
 
+
+/**
+ *
+ * Create a submodel solid.  If file is NULL or "", the treetop refers
+ * to the current database.  Treetop is the name of a single database
+ * object in 'file'.  meth is 0 (RT_PART_NUBSPT) or 1
+ * (RT_PART_NUGRID).  method 0 is what is normally used.
+ */
 WDB_EXPORT WDB_EXTERN(int mk_submodel, (struct rt_wdb *fp, const char *name, const char *file,
 					const char *treetop, int meth));
 
@@ -783,6 +828,19 @@ WDB_EXPORT int mk_write_color_table( struct rt_wdb *ofp );
  *  First you build a list of nodes with mk_addmember,
  *  then you output the combination.
  */
+
+
+/**
+ *
+ * Obtain dynamic storage for a new wmember structure, fill in the
+ * name, default the operation and matrix, and add to doubly linked
+ * list.  In typical use, a one-line call is sufficient.  To change
+ * the defaults, catch the pointer that is returned, and adjust the
+ * structure to taste.
+ *
+ * The caller is responsible for initializing the header structures
+ * forward and backward links.
+ */
 WDB_EXPORT WDB_EXTERN (struct wmember *mk_addmember,
 		       (const char	*name,
 			struct bu_list	*headp,
@@ -799,6 +857,19 @@ WDB_EXPORT WDB_EXTERN (struct wmember *mk_addmember,
 	mk_comb( fp, name, &((_headp)->l), region_flag, shadername, shaderargs, \
 		rgb, id, air, material, los, inherit_flag, 0, 0 )
 
+
+/**
+ * Make a combination, where the members are described by a linked
+ * list of wmember structs.
+ *
+ * The linked list is freed when it has been output.
+ *
+ * Has many operating modes.
+ *
+ * Returns -
+ * -1 ERROR
+ * 0 OK
+ */
 WDB_EXPORT int mk_comb(
     struct rt_wdb	*wdbp,			/**< database to write to */
     const char		*combname,		/**< name of the combination */
@@ -816,11 +887,22 @@ WDB_EXPORT int mk_comb(
     int			gift_semantics);	/**<  0 = pure, 1 = gift */
 
 /** Convenience routines for quickly making combinations */
+
+/**
+ *
+ * Convenience interface to make a combination with a single member.
+ */
 WDB_EXPORT int mk_comb1( struct rt_wdb *fp,
 			 const char *combname,
 			 const char *membname,
 			 int regflag );
 
+
+/**
+ *
+ * Convenience routine to make a region with shader and rgb possibly
+ * set.
+ */
 WDB_EXPORT int mk_region1(
     struct rt_wdb *fp,
     const char *combname,
@@ -841,7 +923,27 @@ WDB_EXPORT int mk_region1(
 /*
  *  Routines to establish conversion factors
  */
+
+ /**
+ *
+ * Given a string conversion value, find the appropriate factor, and
+ * establish it.
+ *
+ * Returns -
+ * -1 error
+ * 0 OK
+ */
 WDB_EXPORT WDB_EXTERN(int mk_conversion, (char *units_string) );
+
+
+/**
+ *
+ * Establish a new conversion factor for LIBWDB routines.
+ *
+ * Returns -
+ * -1 error
+ * 0 OK
+ */
 WDB_EXPORT WDB_EXTERN(int mk_set_conversion, (double val) );
 
 /**
@@ -859,6 +961,10 @@ WDB_EXPORT extern int	mk_version;		/**< @brief  Which version database to write 
 /*
  *  Internal routines
  */
+
+/**
+ * M K _ F R E E M E M B E R S
+ */
 WDB_EXPORT void mk_freemembers( struct bu_list *headp );
 
 #define mk_export_fwrite(wdbp, name, gp, id)	wdb_export(wdbp, name, gp, id, mk_conv2mm)
@@ -866,6 +972,39 @@ WDB_EXPORT void mk_freemembers( struct bu_list *headp );
 /*
  *	Dynamic geometry routines
  */
+
+/**
+ * This routine is intended to be used to make a hole in some
+ * geometry.  The hole is described using the same parameters as an
+ * RCC, and the hole is represented as an RCC. The objects to be
+ * "holed" are passed in as a list of "struct directory" pointers. The
+ * objects pointed at by this list must be combinations. The "struct
+ * rt_wdb" pointer passed in indicates what model this hole should
+ * appear in.
+ *
+ * The end state after this routine runs is a modified model with a
+ * new RCC primitive having a name of the form "make_hole_X" (where X
+ * is some integer). The combinations specified in the list will be
+ * modified as follows:
+ *
+ *        before                          after
+ *      |                       -
+ *      |                          / \
+ *      |                         /   \
+ *  original combination tree                /     \
+ *                    original combination tree   make_hole_X
+ *
+ * The modified combination is written to the struct rt_wdb. Note that
+ * to do dynamic geometry a "wdb_dbopen" would normally be called on
+ * an already existing (and possibly prepped) model.  Using the
+ * RT_WDB_TYPE_DB_INMEM parameter in this call will result in geometry
+ * changes that only exist in memory and will not be permanently
+ * stored in the original database.
+ *
+ * This routine should be preceded by a call to "rt_unprep" and
+ * followed by a call to "rt_reprep".
+ */
+
 WDB_EXPORT WDB_EXTERN( int make_hole, ( struct rt_wdb *wdbp,
 					point_t hole_start,
 					vect_t hole_depth,
@@ -873,6 +1012,28 @@ WDB_EXPORT WDB_EXTERN( int make_hole, ( struct rt_wdb *wdbp,
 					int num_objs,
 					struct directory **dp ) );
 
+
+/**
+ *
+ * This routine provides a quick approach to simply adding a hole to
+ * existing prepped geometry.  The geometry must already be prepped
+ * prior to calling this routine. After calling this routine, the
+ * geometry is ready for raytracing (no other routine need to be
+ * called).
+ *
+ * A new RCC primitive is created and written to the database
+ * (wdbp). Note that this will be temporary if the wdbp pointer was
+ * created by a call to wdb_dbopen with the RT_WDB_TYPE_DB_INMEM flag.
+ *
+ * The "regions" parameter is a list of "struct region" pointers
+ * (prepped regions) to get holed.  The regions structures are
+ * modified, but the on disk region records are never modified, so the
+ * actual holes will never be permanent regardless of how "wdbp" was
+ * opened.
+ *
+ * There is no need to call "rt_unprep" nor "rt_reprep" with this
+ * routine.
+ */
 WDB_EXPORT WDB_EXTERN( int make_hole_in_prepped_regions, ( struct rt_wdb *wdbp,
 							   struct rt_i *rtip,
 							   point_t hole_start,

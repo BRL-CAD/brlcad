@@ -183,18 +183,6 @@ mk_tree_gift(struct rt_comb_internal *comb, struct bu_list *member_hd)
 }
 
 
-/**
- * M K _ A D D M E M B E R
- *
- * Obtain dynamic storage for a new wmember structure, fill in the
- * name, default the operation and matrix, and add to doubly linked
- * list.  In typical use, a one-line call is sufficient.  To change
- * the defaults, catch the pointer that is returned, and adjust the
- * structure to taste.
- *
- * The caller is responsible for initializing the header structures
- * forward and backward links.
- */
 struct wmember *
 mk_addmember(
     const char *name,
@@ -230,10 +218,6 @@ mk_addmember(
     return wp;
 }
 
-
-/**
- * M K _ F R E E M E M B E R S
- */
 void
 mk_freemembers(struct bu_list *headp)
 {
@@ -248,20 +232,6 @@ mk_freemembers(struct bu_list *headp)
 }
 
 
-/**
- * M K _ C O M B
- *
- * Make a combination, where the members are described by a linked
- * list of wmember structs.
- *
- * The linked list is freed when it has been output.
- *
- * Has many operating modes.
- *
- * Returns -
- * -1 ERROR
- * 0 OK
- */
 int
 mk_comb(
     struct rt_wdb *wdbp,
@@ -372,11 +342,6 @@ mk_comb(
 }
 
 
-/**
- * M K _ C O M B 1
- *
- * Convenience interface to make a combination with a single member.
- */
 int
 mk_comb1(struct rt_wdb *wdbp,
 	 const char *combname,
@@ -394,13 +359,6 @@ mk_comb1(struct rt_wdb *wdbp,
 		   0, 0, 0);
 }
 
-
-/**
- * M K _ R E G I O N 1
- *
- * Convenience routine to make a region with shader and rgb possibly
- * set.
- */
 int
 mk_region1(
     struct rt_wdb *wdbp,
