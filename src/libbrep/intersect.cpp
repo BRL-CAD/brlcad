@@ -246,6 +246,11 @@ ON_Intersect(const ON_3dPoint& pointA,
 // intersections defined by openNURBS (see other/openNURBS/opennurbs_curve.h)
 #define PCI_DEFAULT_TOLERANCE 0.001
 
+// Newton-Raphson iteration needs a good start. Although we can almost get
+// a good starting point every time, but in case of some unfortunate cases,
+// we define a maximum iteration, preventing from infinite loop.
+#define PCI_MAX_ITERATIONS 100
+
 bool
 ON_Intersect(const ON_3dPoint& pointA,
 	     const ON_Curve& curveB,
@@ -305,29 +310,60 @@ ON_Intersect(const ON_3dPoint& pointA,
     }
 
     for (unsigned int i = 0; i < candidates.size(); i++) {
-	// Use linear approximation to get the intersection point
+	// Use linear approximation to get an estimated intersection point
 	ON_Line line(candidates[i]->m_curve->PointAtStart(), candidates[i]->m_curve->PointAtEnd());
 	double t, dis;
 	line.ClosestPointTo(pointA, &t);
-	// Get the closest point on the line *segment* to the point
-	double closest_point_t;
+
+	// Make sure line_t belongs to [0, 1]
+	double line_t;
 	if (t < 0)
-	    closest_point_t = 0;
+	    line_t = 0;
 	else if (t > 1)
-	    closest_point_t = 1;
+	    line_t = 1;
 	else
-	    closest_point_t = t;
-	ON_3dPoint closest_point = line.PointAt(closest_point_t);
-	dis = pointA.DistanceTo(closest_point);
+	    line_t = t;
+
+	double closest_point_t = candidates[i]->m_t.Min() + candidates[i]->m_t.Length()*line_t;
+	ON_3dPoint closest_point = curveB.PointAt(closest_point_t);
+	dis = closest_point.DistanceTo(pointA);
+
+	// Use Newton-Raphson method with the starting point from linear
+	// approximation.
+	// It's similar to point projection (or point inversion, or get
+	// closest point on curve). We calculate the root of:
+	//       (curve(t) - pointA) \dot tangent(t) = 0 (*)
+	// Then curve(t) may be the closest point on the curve to pointA.
+	//
+	// In some cases, the closest point (intersection point) is the
+	// endpoints of the curve, it does not satisfy (*), but that's
+	// OK because it already comes out with the linear approximation
+	// above.
+
+	double last_t = DBL_MAX;
+	int iterations = 0;
+	while (!ON_NearZero(last_t-closest_point_t)
+	    && dis > tolerance
+	    && iterations++ < PCI_MAX_ITERATIONS) {
+	    ON_3dVector tangent, s_deriv;
+	    last_t = closest_point_t;
+	    curveB.Ev2Der(closest_point_t, closest_point, tangent, s_deriv);
+	    double F = ON_DotProduct(closest_point-pointA, tangent);
+	    double derivF = ON_DotProduct(closest_point-pointA, s_deriv) + ON_DotProduct(tangent, tangent);
+	    if (!ON_NearZero(derivF))
+		closest_point_t -= F/derivF;
+	    dis = closest_point.DistanceTo(pointA);
+	}
+	closest_point = curveB.PointAt(closest_point_t);
 
 	if (dis <= tolerance) {
 	    ON_PX_EVENT *Event = new ON_PX_EVENT;
 	    Event->m_type = ON_PX_EVENT::pcx_point;
 	    Event->m_A = pointA;
 	    Event->m_B = closest_point;
-	    Event->m_b[0] = candidates[i]->m_t.Min()+candidates[i]->m_t.Length()*closest_point_t;
+	    Event->m_b[0] = closest_point_t;
 	    Event->m_Mid = (pointA + Event->m_B) * 0.5;
-	    Event->m_radius = dis * 0.5;
+	    Event->m_radius = closest_point.DistanceTo(pointA) * 0.5;
 	    x.Append(*Event);
 	    return true;
 	}
