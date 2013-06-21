@@ -240,10 +240,26 @@ ppm_save(int fd, unsigned char *rgb, int width, int height)
 /* begin public functions */
 
 struct icv_image_file *
-icv_image_load(const char *UNUSED(filename), int UNUSED(hint_format), int UNUSED(hint_width), int UNUSED(hint_height), int UNUSED(hint_depth))
+icv_image_load(const char *UNUSED(filename), int hint_format, int UNUSED(hint_width), int UNUSED(hint_height), int UNUSED(hint_depth))
 {
-    bu_log("icv_image_load not implemented\n");
-    return 0;
+    if(hint_format == ICV_IMAGE_AUTO) {
+	/* do some voodoo with the file magic or something... */
+	hint_format = ICV_IMAGE_PIX;
+    }
+
+    switch(hint_format) {
+	/*
+	case ICV_IMAGE_PIX:
+	    return load_pix(filename, hint_width, hint_height);
+	case ICV_IMAGE_BW:
+	    return load_bw(filename, hint_width, hint_height);
+	case ICV_IMAGE_PNG:
+	    return load_png(filename);
+	*/
+	default:
+	    bu_log("icv_image_load not implemented for this format\n");
+	    return NULL;
+    }
 }
 
 int
