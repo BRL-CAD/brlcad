@@ -1,0 +1,408 @@
+/*                       D M - Q T . C
+ * BRL-CAD
+ *
+ * Copyright (c) 2013 United States Government as represented by
+ * the U.S. Army Research Laboratory.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public License
+ * version 2.1 as published by the Free Software Foundation.
+ *
+ * This library is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this file; see the file named COPYING for more
+ * information.
+ */
+/** @file libdm/dm-qt.c
+ *
+ */
+
+#include "common.h"
+#include "bio.h"
+
+#include <stdio.h>
+#ifdef HAVE_SYS_TIME_H
+#  include <sys/time.h>
+#endif
+
+#include "tcl.h"
+#include "bu.h"
+#include "vmath.h"
+#include "dm.h"
+
+struct dm *
+qt_open(Tcl_Interp *interp, int argc, const char **argv)
+{
+    struct dm *dmp;
+
+    if (argc < 0 || !argv)
+	return DM_NULL;
+
+    BU_ALLOC(dmp, struct dm);
+
+    *dmp = dm_qt;
+    dmp->dm_interp = interp;
+
+    bu_log("qt_open called\n");
+
+    return dmp;
+}
+
+HIDDEN int
+qt_close(struct dm *UNUSED(dmp))
+{
+    bu_log("qt_close not implemented\n");
+    return 0;
+}
+
+
+HIDDEN int
+qt_drawBegin(struct dm *UNUSED(dmp))
+{
+    bu_log("qt_drawBegin not implemented\n");
+    return 0;
+}
+
+
+HIDDEN int
+qt_drawEnd(struct dm *UNUSED(dmp))
+{
+    bu_log("qt_drawEnd not implemented\n");
+    return 0;
+}
+
+
+HIDDEN int
+qt_normal(struct dm *UNUSED(dmp))
+{
+    bu_log("qt_normal not implemented\n");
+    return 0;
+}
+
+
+HIDDEN int
+qt_loadMatrix(struct dm *UNUSED(dmp), fastf_t *UNUSED(mat), int UNUSED(which_eye))
+{
+    bu_log("qt_loadMatrix not implemented\n");
+    return 0;
+}
+
+
+HIDDEN int
+qt_loadPMatrix(struct dm *UNUSED(dmp), fastf_t *UNUSED(mat))
+{
+    bu_log("qt_loadPMatrix not implemented\n");
+    return 0;
+}
+
+
+HIDDEN int
+qt_drawString2D(struct dm *UNUSED(dmp), const char *UNUSED(str), fastf_t UNUSED(x), fastf_t UNUSED(y), int UNUSED(size), int UNUSED(use_aspect))
+{
+    bu_log("qt_drawString2D not implemented\n");
+    return 0;
+}
+
+
+HIDDEN int
+qt_drawLine2D(struct dm *UNUSED(dmp), fastf_t UNUSED(x_1), fastf_t UNUSED(y_1), fastf_t UNUSED(x_2), fastf_t UNUSED(y_2))
+{
+    bu_log("qt_drawLine2D not implemented\n");
+    return 0;
+}
+
+
+HIDDEN int
+qt_drawLine3D(struct dm *UNUSED(dmp), point_t UNUSED(pt1), point_t UNUSED(pt2))
+{
+    bu_log("qt_drawLine3D not implemented\n");
+    return 0;
+}
+
+
+HIDDEN int
+qt_drawLines3D(struct dm *UNUSED(dmp), int UNUSED(npoints), point_t *UNUSED(points), int UNUSED(sflag))
+{
+    bu_log("qt_drawLines3D not implemented\n");
+    return 0;
+}
+
+
+HIDDEN int
+qt_drawPoint2D(struct dm *UNUSED(dmp), fastf_t UNUSED(x), fastf_t UNUSED(y))
+{
+    bu_log("qt_drawPoint2D not implemented\n");
+    return 0;
+}
+
+
+HIDDEN int
+qt_drawPoint3D(struct dm *UNUSED(dmp), point_t UNUSED(point))
+{
+    bu_log("qt_drawPoint3D not implemented\n");
+    return 0;
+}
+
+
+HIDDEN int
+qt_drawPoints3D(struct dm *UNUSED(dmp), int UNUSED(npoints), point_t *UNUSED(points))
+{
+    bu_log("qt_drawPoints3D not implemented\n");
+    return 0;
+}
+
+
+HIDDEN int
+qt_drawVList(struct dm *UNUSED(dmp), struct bn_vlist *UNUSED(vp))
+{
+    bu_log("qt_drawVList not implemented\n");
+    return 0;
+}
+
+
+HIDDEN int
+qt_drawVListHiddenLine(struct dm *UNUSED(dmp), struct bn_vlist *UNUSED(vp))
+{
+    bu_log("qt_drawVListHiddenLine not implemented\n");
+    return 0;
+}
+
+
+HIDDEN int
+qt_draw(struct dm *UNUSED(dmp), struct bn_vlist *(*callback_function)(void *), genptr_t *UNUSED(data))
+{
+    /* set callback_function as unused */
+    (void)callback_function;
+    bu_log("qt_draw not implemented\n");
+    return 0;
+}
+
+
+HIDDEN int
+qt_setFGColor(struct dm *UNUSED(dmp), unsigned char UNUSED(r), unsigned char UNUSED(g), unsigned char UNUSED(b), int UNUSED(strict), fastf_t UNUSED(transparency))
+{
+    bu_log("qt_setFGColor not implemented\n");
+    return 0;
+}
+
+
+HIDDEN int
+qt_setBGColor(struct dm *UNUSED(dmp), unsigned char UNUSED(r), unsigned char UNUSED(g), unsigned char UNUSED(b))
+{
+    bu_log("qt_setBGColor not implemented\n");
+    return 0;
+}
+
+
+HIDDEN int
+qt_setLineAttr(struct dm *UNUSED(dmp), int UNUSED(width), int UNUSED(style))
+{
+    bu_log("qt_setLineAttr not implemented\n");
+    return 0;
+}
+
+
+HIDDEN int
+qt_configureWin(struct dm *UNUSED(dmp), int UNUSED(force))
+{
+    bu_log("qt_configureWin not implemented\n");
+    return 0;
+}
+
+
+HIDDEN int
+qt_setWinBounds(struct dm *UNUSED(dmp), fastf_t *UNUSED(w))
+{
+    bu_log("qt_setWinBounds not implemented\n");
+    return 0;
+}
+
+
+HIDDEN int
+qt_setLight(struct dm *UNUSED(dmp), int UNUSED(light_on))
+{
+    bu_log("qt_setLight not implemented\n");
+    return 0;
+}
+
+
+HIDDEN int
+qt_setTransparency(struct dm *UNUSED(dmp), int UNUSED(transparency))
+{
+    bu_log("qt_setTransparency not implemented\n");
+    return 0;
+}
+
+
+HIDDEN int
+qt_setDepthMask(struct dm *UNUSED(dmp), int UNUSED(mask))
+{
+    bu_log("qt_setDepthMask not implemented\n");
+    return 0;
+}
+
+
+HIDDEN int
+qt_setZBuffer(struct dm *UNUSED(dmp), int UNUSED(zbuffer_on))
+{
+    bu_log("qt_setZBuffer not implemented\n");
+    return 0;
+}
+
+
+HIDDEN int
+qt_debug(struct dm *UNUSED(dmp), int UNUSED(lvl))
+{
+    bu_log("qt_debug not implemented\n");
+    return 0;
+}
+
+
+HIDDEN int
+qt_beginDList(struct dm *UNUSED(dmp), unsigned int UNUSED(list))
+{
+    bu_log("qt_beginDList not implemented\n");
+    return 0;
+}
+
+
+HIDDEN int
+qt_endDList(struct dm *UNUSED(dmp))
+{
+    bu_log("qt_endDList not implemented\n");
+    return 0;
+}
+
+
+HIDDEN void
+qt_drawDList(unsigned int UNUSED(list))
+{
+    bu_log("qt_drawDList not implemented\n");
+}
+
+
+HIDDEN int
+qt_freeDLists(struct dm *UNUSED(dmp), unsigned int UNUSED(list), int UNUSED(range))
+{
+    bu_log("qt_freeDList not implemented\n");
+    return 0;
+}
+
+
+HIDDEN int
+qt_genDLists(struct dm *UNUSED(dmp), size_t UNUSED(range))
+{
+    bu_log("qt_genDLists not implemented\n");
+    return 0;
+}
+
+
+HIDDEN int
+qt_getDisplayImage(struct dm *UNUSED(dmp), unsigned char **UNUSED(image))
+{
+    bu_log("qt_getDisplayImage not implemented\n");
+    return 0;
+}
+
+
+HIDDEN void
+qt_reshape(struct dm *UNUSED(dmp), int UNUSED(width), int UNUSED(height))
+{
+    bu_log("qt_reshape not implemented\n");
+}
+
+
+HIDDEN int
+qt_makeCurrent(struct dm *UNUSED(dmp))
+{
+    bu_log("qt_makeCurrent not implemented\n");
+    return 0;
+}
+
+
+struct dm dm_qt = {
+    qt_close,
+    qt_drawBegin,
+    qt_drawEnd,
+    qt_normal,
+    qt_loadMatrix,
+    qt_loadPMatrix,
+    qt_drawString2D,
+    qt_drawLine2D,
+    qt_drawLine3D,
+    qt_drawLines3D,
+    qt_drawPoint2D,
+    qt_drawPoint3D,
+    qt_drawPoints3D,
+    qt_drawVList,
+    qt_drawVListHiddenLine,
+    qt_draw,
+    qt_setFGColor,
+    qt_setBGColor,
+    qt_setLineAttr,
+    qt_configureWin,
+    qt_setWinBounds,
+    qt_setLight,
+    qt_setTransparency,
+    qt_setDepthMask,
+    qt_setZBuffer,
+    qt_debug,
+    qt_beginDList,
+    qt_endDList,
+    qt_drawDList,
+    qt_freeDLists,
+    qt_genDLists,
+    qt_getDisplayImage,
+    qt_reshape,
+    qt_makeCurrent,
+    0,
+    0,				/* no displaylist */
+    0,				/* no stereo */
+    0.0,			/* zoom-in limit */
+    1,				/* bound flag */
+    "qt",
+    "Qt Display",
+    DM_TYPE_QT,
+    0,/* top */
+    0,/* width */
+    0,/* height */
+    0,/* bytes per pixel */
+    0,/* bits per channel */
+    0,
+    0,
+    0,
+    0,
+    {0, 0},
+    BU_VLS_INIT_ZERO,		/* bu_vls path name*/
+    BU_VLS_INIT_ZERO,		/* bu_vls full name drawing window */
+    BU_VLS_INIT_ZERO,		/* bu_vls short name drawing window */
+    {0, 0, 0},			/* bg color */
+    {0, 0, 0},			/* fg color */
+    {0.0, 0.0, 0.0},		/* clipmin */
+    {0.0, 0.0, 0.0},		/* clipmax */
+    0,				/* no debugging */
+    0,				/* no perspective */
+    0,				/* no lighting */
+    0,				/* no transparency */
+    0,				/* depth buffer is not writable */
+    0,				/* no zbuffer */
+    0,				/* no zclipping */
+    1,                          /* clear back buffer after drawing and swap */
+    0,                          /* not overriding the auto font size */
+    0				/* Tcl interpreter */
+};
+
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

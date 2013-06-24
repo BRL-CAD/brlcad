@@ -53,6 +53,11 @@ if(BRLCAD_ENABLE_TK AND NOT WIN32)
   set(dmtk_srcs dm-tk.c)
 endif(BRLCAD_ENABLE_TK AND NOT WIN32)
 
+if(BRLCAD_ENABLE_QT)
+  list(APPEND libdm_DEFINES DM_QT)
+  set(dmqt_srcs dm-qt.c)
+endif(BRLCAD_ENABLE_QT)
+
 set_property(GLOBAL PROPERTY libdm_DEFINES "${libdm_DEFINES}")
 
 # Unfortunately, on Mac OS X the OpenGL headers are not C90
@@ -67,6 +72,7 @@ set(LIBDM_SRCS
   ${dmogl_srcs}
   ${dmrtgl_srcs}
   ${dmtk_srcs}
+  ${dmqt_srcs}
   adc.c
   axes.c
   clip.c

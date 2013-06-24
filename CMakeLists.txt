@@ -1087,6 +1087,9 @@ if(BRLCAD_ENABLE_AQUA)
   set(OPENGL_USE_AQUA ON CACHE STRING "Aqua enabled - use Aqua OpenGL" FORCE)
 endif(BRLCAD_ENABLE_AQUA)
 
+# Enable features requiring Qt
+option(BRLCAD_ENABLE_QT "Enable features requiring Qt" ON)
+
 #----------------------------------------------------------------------
 # The following are fine-grained options for enabling/disabling compiler
 # and source code definition settings.  Typically these are set to
