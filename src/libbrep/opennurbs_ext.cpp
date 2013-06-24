@@ -1654,53 +1654,24 @@ SurfaceTree::subdivideSurface(const ON_Surface *localsurf,
 	ON_Interval second(0.5, 1.0);
 
 	if ((!isVFlat || (width/height > ratio)) && (!isUFlat || (height/width > ratio))) {
-	    ON_Surface *north = NULL;
-	    ON_Surface *south = NULL;
+	    ON_Surface *q0surf = NULL;
+	    ON_Surface *q1surf = NULL;
 	    ON_Surface *q2surf = NULL;
 	    ON_Surface *q3surf = NULL;
-	    ON_Surface *q1surf = NULL;
-	    ON_Surface *q0surf = NULL;
 
 	    ON_BoundingBox box = localsurf->BoundingBox();
 
-	    int dir = 1;
-	    bool split = localsurf->Split(dir, localsurf->Domain(dir).Mid(), south, north);
-
+	    bool split = ON_Surface_Quad_Split(localsurf, u, v, localsurf->Domain(0).Mid(), localsurf->Domain(1).Mid(), &q0surf, &q1surf, &q2surf, &q3surf);
 	    /* FIXME: this needs to be handled more gracefully */
-	    if (!split || !south || !north) {
-		bu_log("DEBUG: Split failure (split:%d, surf1:%p, surf2:%p)\n", split, (void *)south, (void *)north);
+	    if (!split) {
 		delete parent;
 		return NULL;
 	    }
-
-	    south->ClearBoundingBox();
-	    north->ClearBoundingBox();
-
-	    dir = 0;
-	    split = south->Split(dir, south->Domain(dir).Mid(), q0surf, q1surf);
-
-	    /* FIXME: this needs to be handled more gracefully */
-	    if (!split || !q0surf || !q1surf) {
-		bu_log("DEBUG: Split failure (split:%d, surf1:%p, surf2:%p)\n", split, (void *)q0surf, (void *)q1surf);
-		delete parent;
-		return NULL;
-	    }
-
-	    delete south;
 	    q0surf->ClearBoundingBox();
 	    q1surf->ClearBoundingBox();
-	    split = north->Split(dir, north->Domain(dir).Mid(), q3surf, q2surf);
-
-	    /* FIXME: this needs to be handled more gracefully */
-	    if (!split || !q3surf || !q2surf) {
-		bu_log("DEBUG: Split failure (split:%d, surf1:%p, surf2:%p)\n", split, (void *)q3surf, (void *)q2surf);
-		delete parent;
-		return NULL;
-	    }
-
-	    delete north;
-	    q3surf->ClearBoundingBox();
 	    q2surf->ClearBoundingBox();
+	    q3surf->ClearBoundingBox();
+
 	    /*********************************************************************
 	     * In order to avoid fairly expensive re-calculation of 3d points at
 	     * uv coordinates, all values that are shared between children at
