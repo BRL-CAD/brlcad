@@ -110,6 +110,7 @@
 #define DM_TYPE_TK	8
 #define DM_TYPE_RTGL	9
 #define DM_TYPE_TXT	10
+#define DM_TYPE_QT	11
 
 /* Line Styles */
 #define DM_SOLID_LINE 0
@@ -126,6 +127,7 @@
 #define IS_DM_TYPE_WGL(_t) ((_t) == DM_TYPE_WGL)
 #define IS_DM_TYPE_RTGL(_t) ((_t) == DM_TYPE_RTGL)
 #define IS_DM_TYPE_TXT(_t) ((_t) == DM_TYPE_TXT)
+#define IS_DM_TYPE_QT(_t) ((_t) == DM_TYPE_QT)
 
 #define GET_DM(p, structure, w, hp) { \
 	register struct structure *tp; \
@@ -337,6 +339,7 @@ DM_EXPORT extern struct dm dm_tk;
 DM_EXPORT extern struct dm dm_wgl;
 DM_EXPORT extern struct dm dm_X;
 DM_EXPORT extern struct dm dm_txt;
+DM_EXPORT extern struct dm dm_qt;
 
 DM_EXPORT extern int Dm_Init();
 DM_EXPORT extern struct dm *dm_open(Tcl_Interp *interp,
