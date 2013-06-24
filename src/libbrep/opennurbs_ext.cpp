@@ -945,18 +945,6 @@ SurfaceTree::subdivideSurfaceByKnots(const ON_Surface *localsurf,
     const ON_Surface* surf = m_face->SurfaceOf();
     ON_Interval usurf = surf->Domain(0);
     ON_Interval vsurf = surf->Domain(1);
-    BBNode* parent = initialBBox(ctree, localsurf, m_face, u, v);
-    BBNode* quads[4];
-    int spanu_cnt = localsurf->SpanCount(0);
-    int spanv_cnt = localsurf->SpanCount(1);
-    double *spanu = NULL;
-    double *spanv = NULL;
-    spanu = new double[spanu_cnt+1];
-    spanv = new double[spanv_cnt+1];
-    localsurf->GetSpanVector(0, spanu);
-    localsurf->GetSpanVector(1, spanv);
-
-    ///////////////////////////////////
     double uq = u.Length()*0.25;
     double vq = v.Length()*0.25;
     surf->FrameAt(u.Mid() - uq, v.Mid() - vq, frames[5]);
@@ -964,9 +952,52 @@ SurfaceTree::subdivideSurfaceByKnots(const ON_Surface *localsurf,
     surf->FrameAt(u.Mid() + uq, v.Mid() - vq, frames[7]);
     surf->FrameAt(u.Mid() + uq, v.Mid() + vq, frames[8]);
 
+
+    unsigned int do_u_split = 0;
+    unsigned int do_v_split = 0;
+    BBNode* parent = NULL;
+    BBNode* quads[4];
+    double usplit;
+    double vsplit;
+
+    // Knots
+    int spanu_cnt = localsurf->SpanCount(0);
+    int spanv_cnt = localsurf->SpanCount(1);
     if ((spanu_cnt > 1) && (spanv_cnt > 1)) {
-	double usplit = spanu[(spanu_cnt+1)/2];
-	double vsplit = spanv[(spanv_cnt+1)/2];
+	double *spanu = new double[spanu_cnt+1];
+	double *spanv = new double[spanv_cnt+1];
+	localsurf->GetSpanVector(0, spanu);
+	localsurf->GetSpanVector(1, spanv);
+	parent = initialBBox(ctree, localsurf, m_face, u, v);
+	do_u_split = 1;
+	do_v_split = 1;
+	usplit = spanu[(spanu_cnt+1)/2];
+	vsplit = spanv[(spanv_cnt+1)/2];
+	delete [] spanu;
+	delete [] spanv;
+    }
+    if ((spanu_cnt > 1) && (spanv_cnt <= 1)) {
+	double *spanu = new double[spanu_cnt+1];
+	localsurf->GetSpanVector(0, spanu);
+	parent = initialBBox(ctree, localsurf, m_face, u, v);
+	do_u_split = 1;
+	usplit = spanu[(spanu_cnt+1)/2];
+	delete [] spanu;
+    }
+    if ((spanu_cnt <= 1) && (spanv_cnt > 1)) {
+	double *spanv = new double[spanv_cnt+1];
+	localsurf->GetSpanVector(1, spanv);
+	parent = initialBBox(ctree, localsurf, m_face, u, v);
+	do_v_split = 1;
+	vsplit = spanv[(spanv_cnt+1)/2];
+	delete [] spanv;
+    }
+
+
+
+    ///////////////////////////////////
+
+    if ((spanu_cnt > 1) && (spanv_cnt > 1)) {
 	ON_Interval firstu(u.Min(), usplit);
 	ON_Interval secondu(usplit, u.Max());
 	ON_Interval firstv(v.Min(), vsplit);
@@ -1117,7 +1148,6 @@ SurfaceTree::subdivideSurfaceByKnots(const ON_Surface *localsurf,
 	    }
 	}
     } else if (spanu_cnt > 1) {
-	double usplit = spanu[(spanu_cnt+1)/2];
 	ON_Interval firstu(u.Min(), usplit);
 	ON_Interval secondu(usplit, u.Max());
 	//////////////////////////////////////
@@ -1276,7 +1306,6 @@ SurfaceTree::subdivideSurfaceByKnots(const ON_Surface *localsurf,
 	    }
 	}
     } else if (spanv_cnt > 1) {
-	double vsplit = spanv[(spanv_cnt+1)/2];
 	ON_Interval firstv(v.Min(), vsplit);
 	ON_Interval secondv(vsplit, v.Max());
 
@@ -1425,8 +1454,6 @@ SurfaceTree::subdivideSurfaceByKnots(const ON_Surface *localsurf,
 	delete parent;
 	return subdivideSurface(localsurf, u, v, frames, 0, depthLimit);
     }
-    delete [] spanu;
-    delete [] spanv;
 
     parent->BuildBBox();
     return parent;
