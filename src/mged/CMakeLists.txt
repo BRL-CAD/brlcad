@@ -80,6 +80,7 @@ set(MGED_SOURCES
   dm-plot.c
   dm-ps.c
   dm-txt.c
+  dm-qt.c
   dodraw.c
   doevent.c
   dozoom.c

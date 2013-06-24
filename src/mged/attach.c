@@ -56,7 +56,8 @@
 	IS_DM_TYPE_PEX(_type) || \
 	IS_DM_TYPE_TK(_type) || \
 	IS_DM_TYPE_X(_type) || \
-	IS_DM_TYPE_TXT(_type))
+	IS_DM_TYPE_TXT(_type) || \
+	IS_DM_TYPE_QT(_type))
 
 
 /* All systems can compile these! */
@@ -102,6 +103,10 @@ extern int Glx_dm_init();
 extern int Pex_dm_init();
 #endif /* DM_PEX */
 
+#ifdef DM_QT
+extern int Qt_dm_init();
+#endif /* DM_QT */
+
 extern void fbserv_set_port(void);		/* defined in fbserv.c */
 extern void share_dlist(struct dm_list *dlp2);	/* defined in share.c */
 
@@ -142,6 +147,9 @@ struct w_dm which_dm[] = {
 #ifdef DM_PEX
     { DM_TYPE_PEX, "pex", Pex_dm_init },
 #endif /* DM_PEX */
+#ifdef DM_QT
+    { DM_TYPE_QT, "qt", Qt_dm_init },
+#endif /* DM_QT */
     { -1, (char *)NULL, (int (*)())NULL}
 };
 
