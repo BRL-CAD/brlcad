@@ -1941,54 +1941,6 @@ SurfaceTree::subdivideSurface(const ON_Surface *localsurf,
     }
 }
 
-
-/**
- * Determine whether a given surface is flat enough, i.e. it falls
- * beneath our simple flatness constraints. The flatness constraint in
- * this case is a sampling of normals across the surface such that the
- * product of their combined dot products is close to 1.
- *
- * @f[ \prod_{i=1}^{7} n_i \dot n_{i+1} = 1 @f]
- *
- * Would be a perfectly flat surface. Generally something in the range
- * 0.8-0.9 should suffice (according to Abert, 2005).
- *
- * We're using a slightly different placement of the interior normal
- * tests to save on calculations
- *
- *   +-------------------+
- *   |                   |
- *   |    +         +    |
- *   |                   |
- *  V|         +         |
- *   |                   |
- *   |    +         +    |
- *   |                   |
- *   +-------------------+
- *             U
- *
- *
- * The "+" indicates the normal sample.
- *
- * The frenet frames are stored in the frames arrays according
- * to the following index values:
- *
- *   3-------------------2
- *   |                   |
- *   |    6         8    |
- *   |                   |
- *  V|         4         |
- *   |                   |
- *   |    5         7    |
- *   |                   |
- *   0-------------------1
- *             U
- *
- * The actual values used in the flatness test are 0, 1, 2, 3 and
- * 5, 6, 7, 8 - the center point is not used.
- *
- */
-
 #define NE 1
 #define NW 2
 #define SW 3
