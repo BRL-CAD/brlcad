@@ -414,7 +414,7 @@ ON_Intersect(const ON_3dPoint& pointA,
     brep->AddSurface(surfaceB.Duplicate());
     brep->NewFace(0);
     ON_2dPoint closest_point_uv;
-    brlcad::SurfaceTree *tree = new brlcad::SurfaceTree(brep->Face(0), true, MAX_PSI_DEPTH);
+    brlcad::SurfaceTree *tree = new brlcad::SurfaceTree(brep->Face(0), false, MAX_PSI_DEPTH);
     if (brlcad::get_closest_point(closest_point_uv, brep->Face(0), pointA, tree) == false) {
 	delete brep;
 	delete tree;
