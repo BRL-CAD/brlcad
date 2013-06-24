@@ -26,6 +26,7 @@
 #include <iostream>
 
 #include "opennurbs.h"
+#include "bu.h"
 
 bool ON_NearZero(double val, double epsilon) {
     return (val > -epsilon) && (val < epsilon);
@@ -259,6 +260,65 @@ bool ON_Surface_SubSurface(
     return split;
 }
 
+bool ON_Surface_Quad_Split(
+	const ON_Surface *surf,
+	const ON_Interval& u,
+	const ON_Interval& v,
+	double upt,
+	double vpt,
+	ON_Surface **q0,
+	ON_Surface **q1,
+	ON_Surface **q2,
+	ON_Surface **q3)
+{
+    bool split_success = true;
+    ON_Surface *north = NULL;
+    ON_Surface *south = NULL;
+
+    // upt and vpt must be within their respective domains
+    if (!u.Includes(upt, true) || !v.Includes(vpt, true)) return false;
+
+    // All four output surfaces should be NULL - the point of this function is to create them
+    if ((*q0) || (*q1) || (*q2) || (*q3)) {
+	bu_log("ON_Surface_Quad_Split was supplied non-NULL surfaces as output targets: q0: %p, q1: %p, q2: %p, q3: %p\n", (*q0), (*q1), (*q2), (*q3));
+	return false;
+    }
+
+    // First, get the north and south pieces
+    split_success = surf->Split(1, vpt, south, north);
+    if (!split_success || !south || !north) {
+	delete south;
+	delete north;
+	return false;
+    }
+
+    // Split the south pieces to get q0 and q1 
+    split_success = south->Split(0, upt, (*q0), (*q1));
+    if (!split_success || !(*q0) || !(*q1)) {
+	delete south;
+	delete north;
+	if (*q0) delete (*q0);
+	if (*q1) delete (*q1);
+	return false;
+    }
+
+    // Split the north pieces to get q2 and q3 
+    split_success = north->Split(0, upt, (*q3), (*q2));
+    if (!split_success || !(*q3) || !(*q2)) {
+	delete south;
+	delete north;
+	if (*q0) delete (*q0);
+	if (*q1) delete (*q1);
+	if (*q2) delete (*q2);
+	if (*q3) delete (*q3);
+	return false;
+    }
+
+    delete south;
+    delete north;
+
+    return true;
+}
 
 // Local Variables:
 // tab-width: 8

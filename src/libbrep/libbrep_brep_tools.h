@@ -213,6 +213,59 @@ bool ON_Surface_SubSurface(
 	ON_Surface **result
 	);
 
+/**
+  \brief Create four sub-surfaces from a parent surface
+
+  Create four NURBS surfaces that corresponds to subsets
+  of an input surface, as defined by UV intervals and a
+  point within the U and V intervals. 
+ 
+  \verbatim
+     *---------------------*
+     |          |          |
+     |    q3    |    q2    |
+     |          |          |
+   V |----------+----------|
+     |          |          |
+     |    q0    |    q1    |
+     |          |          |
+     *---------------------*
+               U
+
+  + is the point (upt, vpt) that defines the quads
+  * points represent the mins and maxes of the U and V domains
+   
+  \endverbatim
+  
+
+  @param srf parent ON_Surface
+  @param u U interval of parent surface 
+  @param v V interval of parent surface 
+  @param upt U interval point for quad definition 
+  @param upt U interval point for quad definition 
+  @param q0 surface calculated by split algorithm
+  @param q1 surface calculated by split algorithm
+  @param q2 surface calculated by split algorithm
+  @param q3 surface calculated by split algorithm
+
+  @return @c true if surfaces are successfully created, @c false if one or more split
+  operations failed, the q* containers are not NULL, or the upt,vpt coordinates are
+  not contained within the UV interval.
+*/
+NURBS_EXPORT
+bool ON_Surface_Quad_Split(
+	const ON_Surface *srf,
+	const ON_Interval& u,
+	const ON_Interval& v,
+	double upt,
+	double vpt,
+	ON_Surface **q0,
+	ON_Surface **q1,
+	ON_Surface **q2,
+	ON_Surface **q3
+	);
+
+
 #endif /* __LIBBREP_BREP_TOOLS */
 /** @} */
 
