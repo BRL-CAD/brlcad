@@ -1941,11 +1941,6 @@ SurfaceTree::subdivideSurface(const ON_Surface *localsurf,
     }
 }
 
-#define NE 1
-#define NW 2
-#define SW 3
-#define SE 4
-
 bool
 SurfaceTree::isFlat(ON_Plane *frames)
 {

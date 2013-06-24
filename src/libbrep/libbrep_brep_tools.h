@@ -31,6 +31,21 @@
 
 #include "opennurbs.h"
 
+/* Directions */
+#ifndef NE
+#  define NE 1
+#endif
+#ifndef NW
+#  define NW 2
+#endif
+#ifndef SW
+#  define SW 3
+#endif
+#ifndef SE
+#  define SE 4
+#endif
+
+
 #ifndef NURBS_EXPORT
 #  if defined(NURBS_DLL_EXPORTS) && defined(NURBS_DLL_IMPORTS)
 #    error "Only NURBS_DLL_EXPORTS or NURBS_DLL_IMPORTS can be defined, not both."
