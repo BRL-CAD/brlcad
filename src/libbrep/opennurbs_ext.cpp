@@ -1497,12 +1497,16 @@ SurfaceTree::subdivideSurface(const ON_Surface *localsurf,
 	ON_Interval second(0.5, 1.0);
 
 	if ((!isVFlat || (width/height > ratio)) && (!isUFlat || (height/width > ratio))) {
+	    ON_Interval firstu(u.Min(), u.Mid());
+	    ON_Interval secondu(u.Mid(), u.Max());
+	    ON_Interval firstv(v.Min(), v.Mid());
+	    ON_Interval secondv(v.Mid(), v.Max());
+	    ON_BoundingBox box = localsurf->BoundingBox();
+
 	    ON_Surface *q0surf = NULL;
 	    ON_Surface *q1surf = NULL;
 	    ON_Surface *q2surf = NULL;
 	    ON_Surface *q3surf = NULL;
-
-	    ON_BoundingBox box = localsurf->BoundingBox();
 
 	    bool split = ON_Surface_Quad_Split(localsurf, u, v, localsurf->Domain(0).Mid(), localsurf->Domain(1).Mid(), &q0surf, &q1surf, &q2surf, &q3surf);
 	    /* FIXME: this needs to be handled more gracefully */
@@ -1587,28 +1591,28 @@ SurfaceTree::subdivideSurface(const ON_Surface *localsurf,
 	    newframes[2] = frames[4];
 	    newframes[3] = sharedframes[1];
 	    newframes[4] = frames[5];
-	    quads[0] = subdivideSurface(q0surf, u.ParameterAt(first), v.ParameterAt(first), newframes, divDepth+1, depthLimit);
+	    quads[0] = subdivideSurface(q0surf, firstu, firstv, newframes, divDepth+1, depthLimit);
 	    delete q0surf;
 	    newframes[0] = sharedframes[0];
 	    newframes[1] = frames[1];
 	    newframes[2] = sharedframes[3];
 	    newframes[3] = frames[4];
 	    newframes[4] = frames[7];
-	    quads[1] = subdivideSurface(q1surf, u.ParameterAt(second), v.ParameterAt(first), newframes, divDepth+1, depthLimit);
+	    quads[1] = subdivideSurface(q1surf, secondu, firstv, newframes, divDepth+1, depthLimit);
 	    delete q1surf;
 	    newframes[0] = frames[4];
 	    newframes[1] = sharedframes[3];
 	    newframes[2] = frames[2];
 	    newframes[3] = sharedframes[2];
 	    newframes[4] = frames[8];
-	    quads[2] = subdivideSurface(q2surf, u.ParameterAt(second), v.ParameterAt(second), newframes, divDepth+1, depthLimit);
+	    quads[2] = subdivideSurface(q2surf, secondu, secondv, newframes, divDepth+1, depthLimit);
 	    delete q2surf;
 	    newframes[0] = sharedframes[1];
 	    newframes[1] = frames[4];
 	    newframes[2] = sharedframes[2];
 	    newframes[3] = frames[3];
 	    newframes[4] = frames[6];
-	    quads[3] = subdivideSurface(q3surf, u.ParameterAt(first), v.ParameterAt(second), newframes, divDepth+1, depthLimit);
+	    quads[3] = subdivideSurface(q3surf, firstu, secondv, newframes, divDepth+1, depthLimit);
 	    delete q3surf;
 	    bu_free(newframes, "free subsurface frames array");
 
