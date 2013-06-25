@@ -171,9 +171,9 @@ main(int argc, char **argv)
     post_gam = atof(argv[bu_optind+12]);
 
     if (verbose) {
-	fprintf(stderr, "r+ = %g, r* = %g, r gam=%g\n", ra, rm, rg);
-	fprintf(stderr, "g+ = %g, g* = %g, g gam=%g\n", ga, gm, gg);
-	fprintf(stderr, "b+ = %g, b* = %g, b gam=%g\n", ba, bm, bg);
+	fprintf(stderr, "r+ = %g, r* = %g, r_gam=%g\n", ra, rm, rg);
+	fprintf(stderr, "g+ = %g, g* = %g, g_gam=%g\n", ga, gm, gg);
+	fprintf(stderr, "b+ = %g, b* = %g, b_gam=%g\n", ba, bm, bg);
 	fprintf(stderr, "pre_gam = %g, + = %g, * = %g, post_gam = %g\n",
 		pre_gam, add, mul, post_gam);
     }
