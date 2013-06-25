@@ -576,10 +576,10 @@ ON_Intersect(const ON_Curve* curveA,
 		splittedA.push_back((*i).first->m_children[1]);
 	    }
 	    if ((*i).second->m_islinear || (*i).second->Split() != 0) {
-		splittedA.push_back((*i).second);
+		splittedB.push_back((*i).second);
 	    } else {
-		splittedA.push_back((*i).second->m_children[0]);
-		splittedA.push_back((*i).second->m_children[1]);
+		splittedB.push_back((*i).second->m_children[0]);
+		splittedB.push_back((*i).second->m_children[1]);
 	    }
 	    for (unsigned int j = 0; j < splittedA.size(); j++)
 		for (unsigned int k = 0; k < splittedB.size(); k++)
@@ -643,6 +643,7 @@ ON_Intersect(const ON_Curve* curveA,
 	    ON_3dPoint pointB2 = curveB->PointAt(t_b2);
 	    double distance1 = pointA1.DistanceTo(pointB1);
 	    double distance2 = pointA2.DistanceTo(pointB2);
+
 	    // Check the validity of the solution
 	    if (distance1 < intersection_tolerance && distance2 < intersection_tolerance) {
 		ON_X_EVENT Event;
