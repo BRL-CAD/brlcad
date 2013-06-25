@@ -66,8 +66,8 @@
 
 
 #define USAGE1 "Usage: fbfade [ -s size ] [ -w width ] [ -n height ] [ -f in_fb_file ]\n\
-[ -h ] [ -S size ] [ -W width ] [ -N height ] [ [ -F ] out_fb_file ]"
-#define OPTSTR "f:F:hn:N:s:S:w:W:"
+[ -H ] [ -S size ] [ -W width ] [ -N height ] [ [ -F ] out_fb_file ]"
+#define OPTSTR "f:F:Hn:N:s:S:w:W:h?"
 
 
 typedef int bool_t;
@@ -148,7 +148,7 @@ main(int argc, char **argv)
 		    out_fb_file = bu_optarg;
 		    break;
 
-		case 'h':	/* -h */
+		case 'H':	/* -h */
 		    hires = 1;
 		    break;
 
@@ -189,6 +189,8 @@ main(int argc, char **argv)
 		    break;
 	    }
 
+	if (argc == 1 && isatty(fileno(stdin)) && isatty(fileno(stdout)))
+    	    errors = 1;
 	if (errors)
 	    Fatal(fbp, USAGE1);
     }
