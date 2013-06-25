@@ -2800,7 +2800,7 @@ brep_intersect_point_point(struct rt_db_internal *intern1, struct rt_db_internal
 	for (int k = 0; k < events.Count(); k++) {
 	    ON_wString wstr;
 	    ON_TextLog textlog(wstr);
-	    events[i].Dump(textlog);
+	    events[k].Dump(textlog);
 	    ON_String str = ON_String(wstr);
 	    bu_log("Intersection event %d:\n %s", k + 1, str.Array());
 	}
@@ -2838,7 +2838,7 @@ brep_intersect_point_curve(struct rt_db_internal *intern1, struct rt_db_internal
 	for (int k = 0; k < events.Count(); k++) {
 	    ON_wString wstr;
 	    ON_TextLog textlog(wstr);
-	    events[i].Dump(textlog);
+	    events[k].Dump(textlog);
 	    ON_String str = ON_String(wstr);
 	    bu_log("Intersection event %d:\n %s", k + 1, str.Array());
 	}
@@ -2876,7 +2876,7 @@ brep_intersect_point_surface(struct rt_db_internal *intern1, struct rt_db_intern
 	for (int k = 0; k < events.Count(); k++) {
 	    ON_wString wstr;
 	    ON_TextLog textlog(wstr);
-	    events[i].Dump(textlog);
+	    events[k].Dump(textlog);
 	    ON_String str = ON_String(wstr);
 	    bu_log("Intersection event %d:\n %s", k + 1, str.Array());
 	}
@@ -2914,7 +2914,7 @@ brep_intersect_curve_curve(struct rt_db_internal *intern1, struct rt_db_internal
 	for (int k = 0; k < events.Count(); k++) {
 	    ON_wString wstr;
 	    ON_TextLog textlog(wstr);
-	    events[i].Dump(textlog);
+	    events[k].Dump(textlog);
 	    ON_String str = ON_String(wstr);
 	    bu_log("Intersection event %d:\n %s", k + 1, str.Array());
 	}
@@ -2952,7 +2952,7 @@ brep_intersect_curve_surface(struct rt_db_internal *intern1, struct rt_db_intern
 	for (int k = 0; k < events.Count(); k++) {
 	    ON_wString wstr;
 	    ON_TextLog textlog(wstr);
-	    events[i].Dump(textlog);
+	    events[k].Dump(textlog);
 	    ON_String str = ON_String(wstr);
 	    bu_log("Intersection event %d:\n %s", k + 1, str.Array());
 	}
