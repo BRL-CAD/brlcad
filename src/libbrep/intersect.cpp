@@ -542,7 +542,7 @@ ON_Intersect(const ON_Curve* curveA,
 	     const ON_Curve* curveB,
 	     ON_SimpleArray<ON_X_EVENT>& x,
 	     double intersection_tolerance,
-	     double UNUSED(overlap_tolerance),
+	     double overlap_tolerance,
 	     const ON_Interval* curveA_domain,
 	     const ON_Interval* curveB_domain)
 {
