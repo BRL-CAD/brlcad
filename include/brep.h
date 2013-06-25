@@ -1960,6 +1960,100 @@ ON_Intersect(const ON_3dPoint& pointA,
 	     const ON_Interval* surfaceB_udomain = 0,
 	     const ON_Interval* surfaceB_vdomain = 0);
 
+/**
+ * An overload of ON_Intersect for curve-curve intersection.
+ *
+ * Description:
+ *   Intersect curveA with curveB.
+ *
+ * Parameters:
+ *   curveA - [in]
+ *
+ *   curveB - [in]
+ *
+ *   x - [out] Intersection events are appended to this array.
+ *
+ *   intersection_tolerance - [in]  If the distance from a point
+ *     on curveA to curveB is <= intersection tolerance,
+ *     then the point will be part of an intersection event.
+ *     If the input intersection_tolerance <= 0.0, then 0.001 is used.
+ *
+ *   overlap_tolerance - [in] If t1 and t2 are parameters of
+ *     curveA's intersection events and the distance from curveA(t) to
+ *     curveB is <= overlap_tolerance for every t1 <= t <= t2,
+ *     then the event will be returened as an overlap event.
+ *     If the input overlap_tolerance <= 0.0, then
+ *     intersection_tolerance*2.0 is used.
+ *
+ *   curveA_domain - [in] optional restriction on curveA domain
+ *
+ *   curveB_domain - [in] optional restriction on curveB domain
+ *
+ * Returns:
+ *    Number of intersection events appended to x.
+ */
+extern BREP_EXPORT int
+ON_Intersect(const ON_Curve* curveA,
+	     const ON_Curve* curveB,
+	     ON_SimpleArray<ON_X_EVENT>& x,
+	     double intersection_tolerance = 0.0,
+	     double overlap_tolerance = 0.0,
+	     const ON_Interval* curveA_domain = 0,
+	     const ON_Interval* curveB_domain = 0);
+
+/**
+ * An overload of ON_Intersect for curve-surface intersection.
+ *
+ * Description:
+ *   Intersect curveA with surfaceB.
+ *
+ * Parameters:
+ *   curveA - [in]
+ *
+ *   surfaceB - [in]
+ *
+ *   x - [out] Intersection events are appended to this array.
+ *
+ *   intersection_tolerance - [in]
+ *     If the distance from a point on curveA to the surface
+ *     is <= intersection tolerance, then the point will be part
+ *     of an intersection event, or there is an intersection event
+ *     the point leads to. If the input intersection_tolerance <= 0.0,
+ *     then 0.001 is used.
+ *
+ *   overlap_tolerance - [in]
+ *     If the input overlap_tolerance <= 0.0, then
+ *     2.0*intersection_tolerance is used.  Otherwise, overlap
+ *     tolerance must be >= intersection_tolerance.
+ *     In all cases, the intersection calculation is performed
+ *     with an overlap_tolerance that is >= intersection_tolerance.
+ *     If t1 and t2 are curve parameters of intersection events
+ *     and the distance from curve(t) to the surface
+ *     is <= overlap_tolerance for every t1 <= t <= t2, then the
+ *     event will be returned as an overlap event.
+ *
+ *   curveA_domain - [in]
+ *     optional restriction on curveA domain
+ *
+ *   surfaceB_udomain - [in]
+ *     optional restriction on surfaceB u domain
+ *
+ *   surfaceB_vdomain - [in]
+ *     optional restriction on surfaceB v domain
+ *
+ * Returns:
+ *    Number of intersection events appended to x.
+ */
+extern BREP_EXPORT int
+ON_Intersect(const ON_Curve* curveA,
+	     const ON_Surface* surfaceB,
+	     ON_SimpleArray<ON_X_EVENT>& x,
+	     double intersection_tolerance = 0.0,
+	     double overlap_tolerance = 0.0,
+	     const ON_Interval* curveA_domain = 0,
+	     const ON_Interval* surfaceB_udomain = 0,
+	     const ON_Interval* surfaceB_vdomain = 0);
+
 } /* extern C++ */
 #endif
 

@@ -102,6 +102,11 @@ public:
 	ON_BoundingBox new_bbox(m_node.m_min-vtol, m_node.m_max+vtol);
 	return new_bbox.IsPointIn(pt);
     }
+    bool Intersect(const Subcurve& other) const
+    {
+	ON_BoundingBox intersection;
+	return intersection.Intersection(m_node, other.m_node);
+    }
 };
 
 
@@ -439,6 +444,253 @@ ON_Intersect(const ON_3dPoint& pointA,
 	return true;
     }
     return false;
+}
+
+
+/**
+ * Curve-curve intersection (CCI)
+ */
+
+// We make the default tolerance for CCI the same as that of curve-curve
+// intersections defined by openNURBS (see other/openNURBS/opennurbs_curve.h)
+#define CCI_DEFAULT_TOLERANCE 0.001
+
+// The maximal depth for subdivision - trade-off between accurancy and
+// performance
+#define MAX_CCI_DEPTH 8
+
+// Newton-Raphson iteration needs a good start. Although we can almost get
+// a good starting point every time, but in case of some unfortunate cases,
+// we define a maximum iteration, preventing from infinite loop.
+#define CCI_MAX_ITERATIONS 100
+
+// We can only test a finite number of points to determine overlap.
+// Here we test 16 points uniformly distributed.
+#define CCI_OVERLAP_TEST_POINTS 16
+
+// Build the curve tree root within a given domain
+bool
+build_root(const ON_Curve* curve, const ON_Interval* domain, Subcurve& root)
+{
+    if (domain == NULL || *domain == curve->Domain()) {
+	root.m_curve = curve->Duplicate();
+	root.m_t = curve->Domain();
+    } else {
+	// Use ON_Curve::Split() to get the sub-curve inside the domain
+	ON_Curve *temp_curve1 = NULL, *temp_curve2 = NULL, *temp_curve3 = NULL;
+	if (!curve->Split(domain->Min(), temp_curve1, temp_curve2))
+	    return false;
+	delete temp_curve1;
+	temp_curve1 = NULL;
+	if (!temp_curve2->Split(domain->Max(), temp_curve1, temp_curve3))
+	    return false;
+	delete temp_curve1;
+	delete temp_curve2;
+	root.m_curve = temp_curve3;
+	root.m_t = *domain;
+    }
+
+    root.SetBBox(root.m_curve->BoundingBox());
+    root.m_islinear = root.m_curve->IsLinear();
+    return true;
+}
+
+void
+newton_cci(double& t_a, double& t_b, const ON_Curve* curveA, const ON_Curve* curveB, double intersection_tolerance)
+{
+    // Equations:
+    //   x_a(t_a) - x_b(t_b) = 0
+    //   y_a(t_a) - y_b(t_b) = 0
+    //   z_a(t_a) - z_b(t_b) = 0
+    // It's an over-determined system.
+    // We use Newton-Raphson iterations to solve the first two equations,
+    // and use the third for checking.
+    double last_t_a = DBL_MAX*.5, last_t_b = DBL_MAX*.5;
+    ON_3dPoint pointA = curveA->PointAt(t_a);
+    ON_3dPoint pointB = curveB->PointAt(t_b);
+    double distance = pointA.DistanceTo(pointB);
+    int iteration = 0;
+    while (fabs(last_t_a - t_a) + fabs(last_t_b - t_b) > ON_ZERO_TOLERANCE
+	&& distance > intersection_tolerance
+	&& iteration++ < CCI_MAX_ITERATIONS) {
+	last_t_a = t_a, last_t_b = t_b;
+	ON_3dVector derivA, derivB;
+	curveA->Ev1Der(t_a, pointA, derivA);
+	curveB->Ev1Der(t_b, pointB, derivB);
+	ON_Matrix J(2, 2), F(2, 1);
+	J[0][0] = derivA.x;
+	J[0][1] = -derivB.x;
+	J[1][0] = derivA.y;
+	J[1][1] = -derivB.y;
+	F[0][0] = pointA.x - pointB.x;
+	F[1][0] = pointA.y - pointB.y;
+	if (J.Invert(0.0)) {
+	    // FIXME: More elegant error handling.
+	    bu_log("Inverse failed.\n");
+	    continue;
+	}
+	ON_Matrix Delta;
+	Delta.Multiply(J, F);
+	t_a -= Delta[0][0];
+	t_b -= Delta[1][0];
+	distance = pointA.DistanceTo(pointB);
+    }
+}
+
+int
+ON_Intersect(const ON_Curve* curveA,
+	     const ON_Curve* curveB,
+	     ON_SimpleArray<ON_X_EVENT>& x,
+	     double intersection_tolerance,
+	     double UNUSED(overlap_tolerance),
+	     const ON_Interval* curveA_domain,
+	     const ON_Interval* curveB_domain)
+{
+    if (intersection_tolerance <= 0.0)
+	intersection_tolerance = 0.001;
+    if (overlap_tolerance <= 0.0)
+	overlap_tolerance = 2*intersection_tolerance;
+
+    Subcurve rootA, rootB;
+    if (!build_root(curveA, curveA_domain, rootA))
+	return 0;
+    if (!build_root(curveB, curveB_domain, rootB))
+	return 0;
+
+    typedef std::vector<std::pair<Subcurve*, Subcurve*> > NodePairs;
+    NodePairs candidates, next_candidates;
+    if (rootA.Intersect(rootB))
+	candidates.push_back(std::make_pair(&rootA, &rootB));
+
+    // Use sub-division and bounding box intersections first.
+    for (int h = 0; h <= MAX_CCI_DEPTH; h++) {
+	if (candidates.empty())
+	    break;
+	next_candidates.clear();
+	for (NodePairs::iterator i = candidates.begin(); i != candidates.end(); i++) {
+	    std::vector<Subcurve*> splittedA, splittedB;
+	    if ((*i).first->m_islinear || (*i).first->Split() != 0) {
+		splittedA.push_back((*i).first);
+	    } else {
+		splittedA.push_back((*i).first->m_children[0]);
+		splittedA.push_back((*i).first->m_children[1]);
+	    }
+	    if ((*i).second->m_islinear || (*i).second->Split() != 0) {
+		splittedA.push_back((*i).second);
+	    } else {
+		splittedA.push_back((*i).second->m_children[0]);
+		splittedA.push_back((*i).second->m_children[1]);
+	    }
+	    for (unsigned int j = 0; j < splittedA.size(); j++)
+		for (unsigned int k = 0; k < splittedB.size(); k++)
+		    if (splittedA[j]->Intersect(*splittedB[k]))
+			next_candidates.push_back(std::make_pair(splittedA[j], splittedB[k]));
+	}
+	candidates = next_candidates;
+    }
+
+    // For intersected bounding boxes, we calculate an accurate intersection
+    // point.
+    for (NodePairs::iterator i = candidates.begin(); i != candidates.end(); i++) {
+	/*
+	// First, use linear approximation to get a starting point
+	ON_Line lineA(curveA->PointAt(i->first->m_t.Min()), curveA->PointAt(i->first->m_t.Max()));
+	ON_Line lineB(curveB->PointAt(i->second->m_t.Min()), curveB->PointAt(i->second->m_t.Max()));
+	double t_lineA, t_lineB;
+	double t_a, t_b;
+	if (ON_IntersectLineLine(lineA, lineB, &t_lineA, &t_lineB, ON_ZERO_TOLERANCE, true)) {
+	    // The line segments intersect
+	    t_a = i->first->m_t.ParameterAt(t_lineA);
+	    t_b = i->second->m_t.ParameterAt(t_lineB);
+	} else {
+	    // Sometimes the approximated line segments do not intersect,
+	    // but the curves DO intersect. We use the mid-points of the
+	    // sub-curves as the starting point.
+	    t_a = i->first->m_t.Mid();
+	    t_b = i->second->m_t.Mid();
+	}*/
+
+	// Use two different start points - the two end-points of the interval
+	// If they converge to one point, it's considered an intersection
+	// point, otherwise it's considered an overlap event.
+	double t_a1 = i->first->m_t.Min(), t_b1 = i->second->m_t.Min();
+	newton_cci(t_a1, t_b1, curveA, curveB, intersection_tolerance);
+	double t_a2 = i->first->m_t.Max(), t_b2 = i->second->m_t.Max();
+	newton_cci(t_a2, t_b2, curveA, curveB, intersection_tolerance);
+
+	if (fabs(t_a1 - t_a2) + fabs(t_b1 - t_b2) < ON_ZERO_TOLERANCE*2) {
+	    // the errors may double, so we use ON_ZERO_TOLERANCE*2
+	    // it's considered the same point
+	    ON_3dPoint pointA = curveA->PointAt(t_a1);
+	    ON_3dPoint pointB = curveB->PointAt(t_b1);
+	    double distance = pointA.DistanceTo(pointB);
+	    // Check the validity of the solution
+	    if (distance < intersection_tolerance) {
+		ON_X_EVENT Event;
+		Event.m_A[0] = pointA;
+		Event.m_B[0] = pointB;
+		Event.m_a[0] = t_a1;
+		Event.m_b[0] = t_b1;
+		Event.m_type = ON_X_EVENT::ccx_point;
+		x.Append(Event);
+	    }
+	} else {
+	    // Check overlap
+	    bu_log("Maybe overlap.\n");
+	    ON_3dPoint pointA1 = curveA->PointAt(t_a1);
+	    ON_3dPoint pointB1 = curveB->PointAt(t_b1);
+	    ON_3dPoint pointA2 = curveA->PointAt(t_a2);
+	    ON_3dPoint pointB2 = curveB->PointAt(t_b2);
+	    double distance1 = pointA1.DistanceTo(pointB1);
+	    double distance2 = pointA2.DistanceTo(pointB2);
+	    // Check the validity of the solution
+	    if (distance1 < intersection_tolerance && distance2 < intersection_tolerance) {
+		ON_X_EVENT Event;
+		Event.m_A[0] = pointA1;
+		Event.m_A[1] = pointA2;
+		Event.m_B[0] = pointB1;
+		Event.m_B[1] = pointB2;
+		Event.m_a[0] = t_a1;
+		Event.m_a[1] = t_a2;
+		Event.m_b[0] = t_b1;
+		Event.m_b[1] = t_b2;
+		int j;
+		for (j = 1; j < CCI_OVERLAP_TEST_POINTS; j++) {
+		    double strike = 1.0/CCI_OVERLAP_TEST_POINTS;
+		    ON_3dPoint test_point = curveA->PointAt(t_a1 + (t_a2-t_a1)*j*strike);
+		    ON_ClassArray<ON_PX_EVENT> pci_x;
+		    // Use point-curve intersection
+		    if (!ON_Intersect(test_point, *curveA, pci_x, overlap_tolerance))
+			break;
+		}
+		if (j != CCI_OVERLAP_TEST_POINTS)
+		    Event.m_type = ON_X_EVENT::ccx_point;
+		else
+		    Event.m_type = ON_X_EVENT::ccx_overlap;
+		x.Append(Event);
+	    }
+	}
+    }
+
+    return x.Count();
+}
+
+
+/**
+ * Curve-surface intersection (CSI)
+ */
+int
+ON_Intersect(const ON_Curve*,
+	     const ON_Surface*,
+	     ON_SimpleArray<ON_X_EVENT>&,
+	     double,
+	     double,
+	     const ON_Interval*,
+	     const ON_Interval*,
+	     const ON_Interval*)
+{
+    // Implement later.
+    return 0;
 }
 
 
