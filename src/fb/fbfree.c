@@ -45,7 +45,7 @@ main(int argc, char **argv)
     int c;
     FBIO *fbp;
 
-    while ((c = bu_getopt(argc, argv, "F:")) != -1) {
+    while ((c = bu_getopt(argc, argv, "F:h?")) != -1) {
 	switch (c) {
 	    case 'F':
 		framebuffer = bu_optarg;
