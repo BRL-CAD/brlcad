@@ -669,6 +669,24 @@ ON_Intersect(const ON_Curve* curveA,
 		else
 		    Event.m_type = ON_X_EVENT::ccx_overlap;
 		x.Append(Event);
+	    } else if (distance1 < intersection_tolerance) {
+		// in case that the second one was not correct
+		ON_X_EVENT Event;
+		Event.m_A[0] = pointA1;
+		Event.m_B[0] = pointB1;
+		Event.m_a[0] = t_a1;
+		Event.m_b[0] = t_b1;
+		Event.m_type = ON_X_EVENT::ccx_point;
+		x.Append(Event);
+	    } else if (distance2 < intersection_tolerance) {
+		// in case that the first one was not correct
+		ON_X_EVENT Event;
+		Event.m_A[0] = pointA2;
+		Event.m_B[0] = pointB2;
+		Event.m_a[0] = t_a2;
+		Event.m_b[0] = t_b2;
+		Event.m_type = ON_X_EVENT::ccx_point;
+		x.Append(Event);
 	    }
 	}
     }
