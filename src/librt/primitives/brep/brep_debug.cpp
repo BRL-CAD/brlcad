@@ -2889,18 +2889,78 @@ brep_intersect_point_surface(struct rt_db_internal *intern1, struct rt_db_intern
 
 
 int
-brep_intersect_curve_curve(struct rt_db_internal *, struct rt_db_internal *, int, int)
+brep_intersect_curve_curve(struct rt_db_internal *intern1, struct rt_db_internal *intern2, int i, int j)
 {
-    // Curve-curve intersection is to be implemented.
-    return -1;
+    RT_CK_DB_INTERNAL(intern1);
+    RT_CK_DB_INTERNAL(intern2);
+    struct rt_brep_internal *bi1, *bi2;
+    bi1 = (struct rt_brep_internal *)intern1->idb_ptr;
+    bi2 = (struct rt_brep_internal *)intern2->idb_ptr;
+    RT_BREP_CK_MAGIC(bi1);
+    RT_BREP_CK_MAGIC(bi2);
+
+    ON_Brep *brep1 = bi1->brep;
+    ON_Brep *brep2 = bi2->brep;
+
+    if (i < 0 || i >= brep1->m_C3.Count() || j < 0 || j >= brep2->m_C3.Count()) {
+	bu_log("Out of range: \n");
+	bu_log("\t0 <= i <= %d\n", brep1->m_C3.Count() - 1);
+	bu_log("\t0 <= j <= %d\n", brep2->m_C3.Count() - 1);
+	return -1;
+    }
+
+    ON_SimpleArray<ON_X_EVENT> events;
+    if (ON_Intersect(brep1->m_C3[i], brep2->m_C3[j], events)) {
+	for (int k = 0; k < events.Count(); k++) {
+	    ON_wString wstr;
+	    ON_TextLog textlog(wstr);
+	    events[i].Dump(textlog);
+	    ON_String str = ON_String(wstr);
+	    bu_log("Intersection event %d:\n %s", k + 1, str.Array());
+	}
+    } else {
+	bu_log("No intersection.\n");
+    }
+
+    return 0;
 }
 
 
 int
-brep_intersect_curve_surface(struct rt_db_internal *, struct rt_db_internal *, int, int)
+brep_intersect_curve_surface(struct rt_db_internal *intern1, struct rt_db_internal *intern2, int i, int j)
 {
-    // Curve-surface intersection is to be implemented.
-    return -1;
+    RT_CK_DB_INTERNAL(intern1);
+    RT_CK_DB_INTERNAL(intern2);
+    struct rt_brep_internal *bi1, *bi2;
+    bi1 = (struct rt_brep_internal *)intern1->idb_ptr;
+    bi2 = (struct rt_brep_internal *)intern2->idb_ptr;
+    RT_BREP_CK_MAGIC(bi1);
+    RT_BREP_CK_MAGIC(bi2);
+
+    ON_Brep *brep1 = bi1->brep;
+    ON_Brep *brep2 = bi2->brep;
+
+    if (i < 0 || i >= brep1->m_C3.Count() || j < 0 || j >= brep2->m_S.Count()) {
+	bu_log("Out of range: \n");
+	bu_log("\t0 <= i <= %d\n", brep1->m_C3.Count() - 1);
+	bu_log("\t0 <= j <= %d\n", brep2->m_S.Count() - 1);
+	return -1;
+    }
+
+    ON_SimpleArray<ON_X_EVENT> events;
+    if (ON_Intersect(brep1->m_C3[i], brep2->m_S[j], events)) {
+	for (int k = 0; k < events.Count(); k++) {
+	    ON_wString wstr;
+	    ON_TextLog textlog(wstr);
+	    events[i].Dump(textlog);
+	    ON_String str = ON_String(wstr);
+	    bu_log("Intersection event %d:\n %s", k + 1, str.Array());
+	}
+    } else {
+	bu_log("No intersection.\n");
+    }
+
+    return 0;
 }
 
 
