@@ -16,7 +16,6 @@
 <refsynopsisdiv xml:id="synopsis">
 <cmdsynopsis sepchar=" ">
   <command>fbframe</command>
-    <arg choice="opt" rep="norepeat">-h </arg>
     <arg choice="opt" rep="norepeat">-F <replaceable>framebuffer</replaceable></arg>
     <arg choice="opt" rep="norepeat">-w <replaceable>frame_width</replaceable></arg>
     <arg choice="opt" rep="norepeat">-n <replaceable>frame_height</replaceable></arg>
@@ -50,14 +49,11 @@ above the red line.</para>
 
 <para>By default, the dimensions of the frame will be taken from the framebuffer
 used.  Alternatively, one or more of the options
-<option>-h -s -w -n</option>
+<option> -s -w -n</option>
 may be used to set the dimensions of the frame drawn.</para>
 
 <para>The
-<option>-h</option>
-option sets the frame dimensions to
-1024x1024.
-The options
+options
 <option>-w </option><replaceable>frame_width</replaceable>
 and
 <option>-n </option><replaceable>frame_height</replaceable>
