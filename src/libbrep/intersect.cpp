@@ -350,8 +350,8 @@ ON_Intersect(const ON_3dPoint& pointA,
 	double last_t = DBL_MAX;
 	int iterations = 0;
 	while (!ON_NearZero(last_t-closest_point_t)
-	    && dis > tolerance
-	    && iterations++ < PCI_MAX_ITERATIONS) {
+	       && dis > tolerance
+	       && iterations++ < PCI_MAX_ITERATIONS) {
 	    ON_3dVector tangent, s_deriv;
 	    last_t = closest_point_t;
 	    curveB.Ev2Der(closest_point_t, closest_point, tangent, s_deriv);
@@ -512,7 +512,7 @@ newton_cci(double& t_a, double& t_b, const ON_Curve* curveA, const ON_Curve* cur
     ON_3dPoint pointB = curveB->PointAt(t_b);
     int iteration = 0;
     while (fabs(last_t_a - t_a) + fabs(last_t_b - t_b) > ON_ZERO_TOLERANCE
-	&& iteration++ < CCI_MAX_ITERATIONS) {
+	   && iteration++ < CCI_MAX_ITERATIONS) {
 	last_t_a = t_a, last_t_b = t_b;
 	ON_3dVector derivA, derivB;
 	curveA->Ev1Der(t_a, pointA, derivA);
@@ -616,15 +616,15 @@ ON_Intersect(const ON_Curve* curveA,
 	double t_lineA, t_lineB;
 	double t_a, t_b;
 	if (ON_IntersectLineLine(lineA, lineB, &t_lineA, &t_lineB, ON_ZERO_TOLERANCE, true)) {
-	    // The line segments intersect
-	    t_a = i->first->m_t.ParameterAt(t_lineA);
-	    t_b = i->second->m_t.ParameterAt(t_lineB);
+	// The line segments intersect
+	t_a = i->first->m_t.ParameterAt(t_lineA);
+	t_b = i->second->m_t.ParameterAt(t_lineB);
 	} else {
-	    // Sometimes the approximated line segments do not intersect,
-	    // but the curves DO intersect. We use the mid-points of the
-	    // sub-curves as the starting point.
-	    t_a = i->first->m_t.Mid();
-	    t_b = i->second->m_t.Mid();
+	// Sometimes the approximated line segments do not intersect,
+	// but the curves DO intersect. We use the mid-points of the
+	// sub-curves as the starting point.
+	t_a = i->first->m_t.Mid();
+	t_b = i->second->m_t.Mid();
 	}*/
 
 	// Use two different start points - the two end-points of the interval

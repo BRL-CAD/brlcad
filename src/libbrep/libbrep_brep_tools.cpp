@@ -154,7 +154,7 @@ bool ON_Surface_IsStraight(ON_Plane *frames, double s_tol)
     for(int i=0; i<8; i++) {
 	for( int j=i+1; j<9; j++) {
 	    if ((Xdot = Xdot * frames[0].xaxis * frames[1].xaxis) < s_tol) {
-		    return false;
+		return false;
 	    }
 	}
     }
@@ -163,20 +163,20 @@ bool ON_Surface_IsStraight(ON_Plane *frames, double s_tol)
 }
 
 /**
- \brief Create surfaces and store their pointers in the t* arguments.
+   \brief Create surfaces and store their pointers in the t* arguments.
 
- For any pre-existing surface passed as one of the t* args, this is a no-op.
+   For any pre-existing surface passed as one of the t* args, this is a no-op.
 
- @param t1 Pointer to pointer addressing first surface
- @param t2 Pointer to pointer addressing second surface
- @param t3 Pointer to pointer addressing third surface
- @param t4 Pointer to pointer addressing fourth surface
+   @param t1 Pointer to pointer addressing first surface
+   @param t2 Pointer to pointer addressing second surface
+   @param t3 Pointer to pointer addressing third surface
+   @param t4 Pointer to pointer addressing fourth surface
 */
- void ON_Surface_Create_Scratch_Surfaces(
-	ON_Surface **t1,
-	ON_Surface **t2,
-	ON_Surface **t3,
-	ON_Surface **t4)
+void ON_Surface_Create_Scratch_Surfaces(
+    ON_Surface **t1,
+    ON_Surface **t2,
+    ON_Surface **t3,
+    ON_Surface **t4)
 {
     if (!(*t1)) {
 	ON_NurbsSurface *nt1 = ON_NurbsSurface::New();
@@ -197,15 +197,15 @@ bool ON_Surface_IsStraight(ON_Plane *frames, double s_tol)
 }
 
 bool ON_Surface_SubSurface(
-	const ON_Surface *srf,
-	ON_Interval *u_val,
-	ON_Interval *v_val,
-	ON_Surface **t1,
-	ON_Surface **t2,
-	ON_Surface **t3,
-	ON_Surface **t4,
-	ON_Surface **result
-	)
+    const ON_Surface *srf,
+    ON_Interval *u_val,
+    ON_Interval *v_val,
+    ON_Surface **t1,
+    ON_Surface **t2,
+    ON_Surface **t3,
+    ON_Surface **t4,
+    ON_Surface **result
+    )
 {
     bool split = true;
     ON_Surface **target;
@@ -261,15 +261,15 @@ bool ON_Surface_SubSurface(
 }
 
 bool ON_Surface_Quad_Split(
-	const ON_Surface *surf,
-	const ON_Interval& u,
-	const ON_Interval& v,
-	double upt,
-	double vpt,
-	ON_Surface **q0,
-	ON_Surface **q1,
-	ON_Surface **q2,
-	ON_Surface **q3)
+    const ON_Surface *surf,
+    const ON_Interval& u,
+    const ON_Interval& v,
+    double upt,
+    double vpt,
+    ON_Surface **q0,
+    ON_Surface **q1,
+    ON_Surface **q2,
+    ON_Surface **q3)
 {
     bool split_success = true;
     ON_Surface *north = NULL;

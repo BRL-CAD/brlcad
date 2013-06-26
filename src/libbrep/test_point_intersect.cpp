@@ -62,7 +62,7 @@ test_pci(ON_3dPoint &p, ON_Curve &c)
     ON_3dPoint start = c.PointAtStart();
     ON_3dPoint end = c.PointAtEnd();
     bu_log("(%lf,%lf,%lf) and [(%lf,%lf,%lf) to (%lf,%lf,%lf)]:\n",
-	p[0], p[1], p[2], start[0], start[1], start[2], end[0], end[1], end[2]);
+	   p[0], p[1], p[2], start[0], start[1], start[2], end[0], end[1], end[2]);
     if (x.Count() == 0) {
 	bu_log("No intersection.\n");
     } else {

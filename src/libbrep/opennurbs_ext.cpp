@@ -1483,7 +1483,7 @@ SurfaceTree::subdivideSurface(const ON_Surface *localsurf,
     double ratio = 5.0;
     localsurf->GetSurfaceSize(&width, &height);
     if (((width/height < ratio) && (width/height > 1.0/ratio) && isFlat(frames) && isStraight(frames))
-	 || (divDepth >= depthLimit)) { //BREP_MAX_FT_DEPTH))) {
+	|| (divDepth >= depthLimit)) { //BREP_MAX_FT_DEPTH))) {
 	return surfaceBBox(localsurf, true, frames, u, v);
     } else {
 	bool isUFlat = isFlatU(frames);
