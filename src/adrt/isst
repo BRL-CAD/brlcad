@@ -167,11 +167,6 @@ proc ::isst::setup {} {
     open_dm
     bind $oglwin <Configure> { reshape %w %h }
     pack $oglwin -expand true -fill both
-
-    frame .f
-    pack .f -side bottom
-    button .f.b1 -text " Quit " -command exit
-    pack .f.b1 -side left -anchor w -padx 5
 }
 
 proc ::isst::RotStart {x y W} {
