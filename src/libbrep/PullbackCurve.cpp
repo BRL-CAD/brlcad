@@ -607,14 +607,15 @@ newNURBSCurve(BSpline& spline, int dimension = 3)
 ON_Curve*
 interpolateCurve(ON_2dPointArray &samples)
 {
-    if (samples.Count() == 2) {
+    ON_NurbsCurve* nurbs;
+
+    if (samples.Count() == 2)
 	// build a line
 	return new ON_LineCurve(samples[0], samples[1]);
+
 #ifdef DEBUG_USE_BEZIER_CURVE_INTERPOLATION
-    } else
-	ON_BezierCurve *bezier = new ON_BezierCurve(
-	    samples);
     ON_NurbsCurve nurbcurve;
+    ON_BezierCurve *bezier = new ON_BezierCurve(samples);
     if (bezier->GetNurbForm(nurbcurve)) {
 	return ON_NurbsCurve::New(*bezier);
     }
@@ -626,33 +627,14 @@ interpolateCurve(ON_2dPointArray &samples)
     generateKnots(spline);
     generateParameters(spline);
     generateControlPoints(spline, samples);
-    ON_NurbsCurve* nurbs = newNURBSCurve(spline);
+
+    nurbs = newNURBSCurve(spline);
+#else
+    // local vs. global interpolation for large point sampled curves
+    nurbs = interpolateLocalCubicCurve(samples);
+#endif
 
     return nurbs;
-#else
-    }
-    else
-    {
-	ON_TextLog dump;
-	ON_NurbsCurve* nurbs;
-	if (false) { //(samples.Count() < 1000) { //
-	    BSpline spline;
-	    spline.p = 3;
-	    spline.n = samples.Count() - 1;
-	    spline.m = spline.n + spline.p + 1;
-	    generateKnots(spline);
-	    generateParameters(spline);
-	    generateControlPoints(spline, samples);
-	    nurbs = newNURBSCurve(spline, 2);
-	    //nurbs->Dump(dump);
-	} else {
-	    // local vs. global interpolation for large point sampled curves
-	    nurbs = interpolateLocalCubicCurve(samples);
-	    //nurbs->Dump(dump);
-	}
-	return nurbs;
-    }
-#endif
 }
 
 
@@ -901,9 +883,9 @@ pullback_samples(PBCData* data,
 // to the same side of the range as the previous point.
 static ON_2dPoint
 resolve_seam_point_from_prev(
-	const ON_Surface *surf,
-	const ON_2dPoint &pt,
-	const ON_2dPoint &prev_pt)
+    const ON_Surface *surf,
+    const ON_2dPoint &pt,
+    const ON_2dPoint &prev_pt)
 {
     ON_2dPoint newpt = pt;
 
