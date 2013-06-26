@@ -36,11 +36,12 @@
 #include "fb.h"
 #include "pkg.h"
 
-char *options = "vf:F:";
+char *options = "vf:F:h?";
 
 static char usage[] = "\
 Usage: fbgammamod [-v] [-f in_file] [-F framebuffer] \
-	r+ r* r_gam g+ g* g_gam b+ b* b_gam global_pre_gam global+ global* global_post_gam\n";
+	r+ r* r_gam g+ g* g_gam b+ b* b_gam global_pre_gam global+ global* global_post_gam\n\
+       (last 13 items after '-F framebuffer' are numbers which are input to program variables)\n";
 
 int verbose = 0;
 char *framebuffer = (char *)NULL;
