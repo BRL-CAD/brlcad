@@ -833,6 +833,15 @@ comp.r4 ID 5678 material code 5 LOS 75
 
 * automatic geometry voxelizer (perhaps using arbs or vol primitive)
 
+* implement support for raw voxel data (g-voxel) where each position
+  in the binary array (unsigned 8-bit integer) corresponds to a voxel
+  coordinate given by X + Y x Nx + Z x Nx * Ny where Nx = grid width
+  and Ny = grid height.  this consequently happens to match our bw
+  format if you concatenated N bw image slices into one file.  for a
+  2x2 example, position=>coordinate: 0=>0,0,0; 1=>1,0,0; 2=>0,1,0;
+  3=>1,1,0; 4=>0,0,1; 5=>1,0,1; 6=>0,1,1; 7=>1,1,1. See
+  http://support.echoview.com/WebHelp/Reference/File_formats/Export_file_formats/Volume_data_set_file_formats.htm
+
 * turn geometry converters and image converters into libraries
   (started as libraries libgcv and libicv)
 
