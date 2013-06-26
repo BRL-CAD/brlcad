@@ -131,10 +131,14 @@ proc ::isst::setup {} {
     . configure -menu .mb
     .mb add cascade -label "File" -menu .mb.file -underline 0
     menu .mb.file -tearoff 0
-
     .mb.file add command -label "Open Database" -underline 0 -command ::isst::loaddatabase
-
     .mb.file add command -label "Exit" -underline 0 -command exit
+
+    .mb add cascade -label "Mode" -menu .mb.mode -underline 0
+    menu .mb.mode -tearoff 0
+    .mb.mode add command -label "Phong" -underline 0 -command {render_mode $oglwin phong}
+    .mb.mode add command -label "Normal" -underline 0 -command {render_mode $oglwin normal}
+    .mb.mode add command -label "Depth" -underline 0 -command {render_mode $oglwin depth}
 
     bind . <Key-1> {if {[::isst::overwin %X %Y $oglwin]} {render_mode $oglwin phong}}
     bind . <Key-2> {if {[::isst::overwin %X %Y $oglwin]} {render_mode $oglwin normal} else {puts "Place mouse over geometry window."}}
