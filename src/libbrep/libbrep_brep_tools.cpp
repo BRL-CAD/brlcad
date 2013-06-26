@@ -53,7 +53,7 @@ int ON_Curve_Has_Tangent(const ON_Curve* curve, double ct_min, double ct_max, do
     x_changed =(tanx1 != tanx2);
     y_changed =(tany1 != tany2);
 
-    if (x_changed && y_changed) return 3; //horz & vert 
+    if (x_changed && y_changed) return 3; //horz & vert
     if (x_changed) return 1;//need to get vertical tangent
     if (y_changed) return 2;//need to find horizontal tangent
 
@@ -74,7 +74,7 @@ int ON_Curve_Has_Tangent(const ON_Curve* curve, double ct_min, double ct_max, do
     return 0;
 }
 
-bool ON_Surface_IsFlat(ON_Plane *frames, double f_tol) 
+bool ON_Surface_IsFlat(ON_Plane *frames, double f_tol)
 {
     double Ndot=1.0;
 
@@ -147,23 +147,23 @@ bool ON_Surface_IsFlat_V(ON_Plane *frames, double f_tol)
     return true;
 }
 
-bool ON_Surface_IsStraight(ON_Plane *frames, double s_tol) 
+bool ON_Surface_IsStraight(ON_Plane *frames, double s_tol)
 {
     double Xdot=1.0;
 
     for(int i=0; i<8; i++) {
-        for( int j=i+1; j<9; j++) {
-            if ((Xdot = Xdot * frames[0].xaxis * frames[1].xaxis) < s_tol) {
-                    return false;
-            }
-        }
+	for( int j=i+1; j<9; j++) {
+	    if ((Xdot = Xdot * frames[0].xaxis * frames[1].xaxis) < s_tol) {
+		    return false;
+	    }
+	}
     }
 
     return true;
 }
 
 /**
- \brief Create surfaces and store their pointers in the t* arguments.  
+ \brief Create surfaces and store their pointers in the t* arguments.
 
  For any pre-existing surface passed as one of the t* args, this is a no-op.
 
@@ -292,7 +292,7 @@ bool ON_Surface_Quad_Split(
 	return false;
     }
 
-    // Split the south pieces to get q0 and q1 
+    // Split the south pieces to get q0 and q1
     split_success = south->Split(0, upt, (*q0), (*q1));
     if (!split_success || !(*q0) || !(*q1)) {
 	delete south;
@@ -302,7 +302,7 @@ bool ON_Surface_Quad_Split(
 	return false;
     }
 
-    // Split the north pieces to get q2 and q3 
+    // Split the north pieces to get q2 and q3
     split_success = north->Split(0, upt, (*q3), (*q2));
     if (!split_success || !(*q3) || !(*q2)) {
 	delete south;

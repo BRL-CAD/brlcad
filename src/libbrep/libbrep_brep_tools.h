@@ -63,7 +63,7 @@
 
 
   @param val value to be tested
-  @param epsilon distance from zero defining the interval to be treated as "near" zero for the test 
+  @param epsilon distance from zero defining the interval to be treated as "near" zero for the test
 
   @return @c true if the value is within the near-zero interval specified by epsilon, @c false otherwise.
 */
@@ -98,7 +98,7 @@ int ON_Curve_Has_Tangent(const ON_Curve* curve, double ct_min, double ct_max, do
     |    5         7    |
     |                   |
     0-------------------1
-              U
+	      U
   \endverbatim
 */
 #endif
@@ -110,12 +110,12 @@ int ON_Curve_Has_Tangent(const ON_Curve* curve, double ct_min, double ct_max, do
   beneath our simple flatness constraints. The flatness constraint in
   this case is a sampling of normals across the surface such that the
   product of their combined dot products is close to 1.
-  
-  @f[ \prod_{i=1}^{7} n_i \dot n_{i+1} = 1 @f] 
-  
+
+  @f[ \prod_{i=1}^{7} n_i \dot n_{i+1} = 1 @f]
+
   This code is using a slightly different placement of the interior normal
   tests as compared to <a href="http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.90.7500&rep=rep1&type=pdf">Abert's</a> approach:
-  
+
   \verbatim
      +-------------------+
      |                   |
@@ -126,17 +126,17 @@ int ON_Curve_Has_Tangent(const ON_Curve* curve, double ct_min, double ct_max, do
      |    +         +    |
      |                   |
      +-------------------+
-               U
+	       U
   \endverbatim
-  
-  
+
+
   The "+" indicates the normal sample.
-  
+
   The frenet frames are stored in the frames arrays according
   to the following index values:
-  
+
   \verbatim
-     3-------------------2 
+     3-------------------2
      |                   |
      |    6         8    |
      |                   |
@@ -145,7 +145,7 @@ int ON_Curve_Has_Tangent(const ON_Curve* curve, double ct_min, double ct_max, do
      |    5         7    |
      |                   |
      0-------------------1
-               U
+	       U
   \endverbatim
 
   @param frames Array of 9 frenet frames
@@ -233,8 +233,8 @@ bool ON_Surface_SubSurface(
 
   Create four NURBS surfaces that corresponds to subsets
   of an input surface, as defined by UV intervals and a
-  point within the U and V intervals. 
- 
+  point within the U and V intervals.
+
   \verbatim
      *---------------------*
      |          |          |
@@ -245,19 +245,19 @@ bool ON_Surface_SubSurface(
      |    q0    |    q1    |
      |          |          |
      *---------------------*
-               U
+	       U
 
   + is the point (upt, vpt) that defines the quads
   * points represent the mins and maxes of the U and V domains
-   
+
   \endverbatim
-  
+
 
   @param srf parent ON_Surface
-  @param u U interval of parent surface 
-  @param v V interval of parent surface 
-  @param upt U interval point for quad definition 
-  @param upt U interval point for quad definition 
+  @param u U interval of parent surface
+  @param v V interval of parent surface
+  @param upt U interval point for quad definition
+  @param upt U interval point for quad definition
   @param q0 surface calculated by split algorithm
   @param q1 surface calculated by split algorithm
   @param q2 surface calculated by split algorithm

@@ -994,7 +994,6 @@ SurfaceTree::subdivideSurfaceByKnots(const ON_Surface *localsurf,
     }
 
 
-
     ///////////////////////////////////
 
     if ((spanu_cnt > 1) && (spanv_cnt > 1)) {
@@ -1009,7 +1008,7 @@ SurfaceTree::subdivideSurfaceByKnots(const ON_Surface *localsurf,
 	ON_Surface *q1surf = NULL;
 	ON_Surface *q0surf = NULL;
 
-        bool split = ON_Surface_Quad_Split(localsurf, u, v, usplit, vsplit, &q0surf, &q1surf, &q2surf, &q3surf);
+	bool split = ON_Surface_Quad_Split(localsurf, u, v, usplit, vsplit, &q0surf, &q1surf, &q2surf, &q3surf);
 
 	/* FIXME: this needs to be handled more gracefully */
 	if (!split) {
@@ -1583,7 +1582,7 @@ SurfaceTree::subdivideSurface(const ON_Surface *localsurf,
 	    localsurf->FrameAt(u.Min(), v.Mid(), sharedframes[1]);
 	    localsurf->FrameAt(u.Mid(), v.Max(), sharedframes[2]);
 	    localsurf->FrameAt(u.Max(), v.Mid(), sharedframes[3]);
-	    	    
+
 	    ON_Plane *newframes;
 	    newframes = (ON_Plane *)bu_malloc(9*sizeof(ON_Plane), "new frames");
 	    newframes[0] = frames[0];
