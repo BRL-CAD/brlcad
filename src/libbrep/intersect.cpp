@@ -510,7 +510,6 @@ newton_cci(double& t_a, double& t_b, const ON_Curve* curveA, const ON_Curve* cur
     double last_t_a = DBL_MAX*.5, last_t_b = DBL_MAX*.5;
     ON_3dPoint pointA = curveA->PointAt(t_a);
     ON_3dPoint pointB = curveB->PointAt(t_b);
-    double distance = pointA.DistanceTo(pointB);
     int iteration = 0;
     while (fabs(last_t_a - t_a) + fabs(last_t_b - t_b) > ON_ZERO_TOLERANCE
 	&& iteration++ < CCI_MAX_ITERATIONS) {
@@ -551,7 +550,6 @@ newton_cci(double& t_a, double& t_b, const ON_Curve* curveA, const ON_Curve* cur
 	Delta.Multiply(J, F);
 	t_a -= Delta[0][0];
 	t_b -= Delta[1][0];
-	distance = pointA.DistanceTo(pointB);
     }
 }
 
