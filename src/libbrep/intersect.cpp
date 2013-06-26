@@ -102,10 +102,12 @@ public:
 	ON_BoundingBox new_bbox(m_node.m_min-vtol, m_node.m_max+vtol);
 	return new_bbox.IsPointIn(pt);
     }
-    bool Intersect(const Subcurve& other) const
+    bool Intersect(const Subcurve& other, double tolerance = 0.0) const
     {
+	ON_3dVector vtol(tolerance,tolerance,tolerance);
+	ON_BoundingBox new_bbox(m_node.m_min-vtol, m_node.m_max+vtol);
 	ON_BoundingBox intersection;
-	return intersection.Intersection(m_node, other.m_node);
+	return intersection.Intersection(new_bbox, other.m_node);
     }
 };
 
@@ -559,7 +561,7 @@ ON_Intersect(const ON_Curve* curveA,
 
     typedef std::vector<std::pair<Subcurve*, Subcurve*> > NodePairs;
     NodePairs candidates, next_candidates;
-    if (rootA.Intersect(rootB))
+    if (rootA.Intersect(rootB, intersection_tolerance))
 	candidates.push_back(std::make_pair(&rootA, &rootB));
 
     // Use sub-division and bounding box intersections first.
@@ -583,7 +585,7 @@ ON_Intersect(const ON_Curve* curveA,
 	    }
 	    for (unsigned int j = 0; j < splittedA.size(); j++)
 		for (unsigned int k = 0; k < splittedB.size(); k++)
-		    if (splittedA[j]->Intersect(*splittedB[k]))
+		    if (splittedA[j]->Intersect(*splittedB[k], intersection_tolerance))
 			next_candidates.push_back(std::make_pair(splittedA[j], splittedB[k]));
 	}
 	candidates = next_candidates;
