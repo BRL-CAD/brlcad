@@ -54,6 +54,8 @@ set_target_properties(libbrep PROPERTIES VERSION 20.0.1 SOVERSION 20)
 
 BRLCAD_ADDEXEC(test_point_intersect test_point_intersect.cpp "libbrep" NOSTRICT NO_INSTALL LOCAL)
 
+BRLCAD_ADDEXEC(test_curve_intersect test_curve_intersect.cpp "libbrep" NOSTRICT NO_INSTALL LOCAL)
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake
