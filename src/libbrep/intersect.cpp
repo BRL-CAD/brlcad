@@ -591,6 +591,7 @@ ON_Intersect(const ON_Curve* curveA,
 	candidates = next_candidates;
     }
 
+    ON_SimpleArray<ON_X_EVENT> tmp_x;
     // For intersected bounding boxes, we calculate an accurate intersection
     // point.
     for (NodePairs::iterator i = candidates.begin(); i != candidates.end(); i++) {
@@ -634,7 +635,7 @@ ON_Intersect(const ON_Curve* curveA,
 		Event->m_a[0] = t_a1;
 		Event->m_b[0] = t_b1;
 		Event->m_type = ON_X_EVENT::ccx_point;
-		x.Append(*Event);
+		tmp_x.Append(*Event);
 	    }
 	} else {
 	    // Check overlap
@@ -670,7 +671,7 @@ ON_Intersect(const ON_Curve* curveA,
 		    Event->m_type = ON_X_EVENT::ccx_point;
 		else
 		    Event->m_type = ON_X_EVENT::ccx_overlap;
-		x.Append(*Event);
+		tmp_x.Append(*Event);
 	    } else if (distance1 < intersection_tolerance) {
 		// in case that the second one was not correct
 		ON_X_EVENT *Event = new ON_X_EVENT;
@@ -679,7 +680,7 @@ ON_Intersect(const ON_Curve* curveA,
 		Event->m_a[0] = t_a1;
 		Event->m_b[0] = t_b1;
 		Event->m_type = ON_X_EVENT::ccx_point;
-		x.Append(*Event);
+		tmp_x.Append(*Event);
 	    } else if (distance2 < intersection_tolerance) {
 		// in case that the first one was not correct
 		ON_X_EVENT *Event = new ON_X_EVENT;
@@ -688,11 +689,21 @@ ON_Intersect(const ON_Curve* curveA,
 		Event->m_a[0] = t_a2;
 		Event->m_b[0] = t_b2;
 		Event->m_type = ON_X_EVENT::ccx_point;
-		x.Append(*Event);
+		tmp_x.Append(*Event);
 	    }
 	}
     }
 
+    for (int i = 0; i < tmp_x.Count(); i++) {
+	int j;
+	for (j = 0; j < x.Count(); j++) {
+	    if (ON_NearZero(tmp_x[i].m_a[0] - x[j].m_a[0]) && ON_NearZero(tmp_x[i].m_a[1] - x[j].m_a[1])
+		&& ON_NearZero(tmp_x[i].m_b[0] - x[j].m_b[0]) && ON_NearZero(tmp_x[i].m_b[1] - x[j].m_b[1]))
+		break;
+	}
+	if (j == x.Count())
+	    x.Append(tmp_x[i]);
+    }
     return x.Count();
 }
 
