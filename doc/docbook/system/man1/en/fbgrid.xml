@@ -16,7 +16,7 @@
 <refsynopsisdiv xml:id="synopsis">
 <cmdsynopsis sepchar=" ">
   <command>fbgrid</command>
-    <arg choice="opt" rep="norepeat">-hcbdo </arg>
+    <arg choice="opt" rep="norepeat">-cbdo </arg>
     <arg choice="opt" rep="norepeat">-F <replaceable>framebuffer</replaceable></arg>
     <arg choice="opt" rep="norepeat">-S <replaceable>squaresize</replaceable></arg>
     <arg choice="opt" rep="norepeat">-W <replaceable>width</replaceable></arg>
@@ -36,11 +36,7 @@ is used to select the display device (see
 <citerefentry><refentrytitle>brlcad</refentrytitle><manvolnum>1</manvolnum></citerefentry>).
 If this variable is not set, the default device for your system will
 be used.
-If the
-<option>-h</option>
-option is used, a
-1024x1024 grid is written;
-alternatively, the
+The
 <option>-SWN</option>
 options can all be used in the normal way to specify the size of
 the grid (see
