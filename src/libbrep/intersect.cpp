@@ -98,13 +98,13 @@ public:
     }
     bool IsPointIn(const ON_3dPoint &pt, double tolerance = 0.0)
     {
-	ON_3dVector vtol(tolerance,tolerance,tolerance);
+	ON_3dVector vtol(tolerance, tolerance, tolerance);
 	ON_BoundingBox new_bbox(m_node.m_min-vtol, m_node.m_max+vtol);
 	return new_bbox.IsPointIn(pt);
     }
     bool Intersect(const Subcurve& other, double tolerance = 0.0) const
     {
-	ON_3dVector vtol(tolerance,tolerance,tolerance);
+	ON_3dVector vtol(tolerance, tolerance, tolerance);
 	ON_BoundingBox new_bbox(m_node.m_min-vtol, m_node.m_max+vtol);
 	ON_BoundingBox intersection;
 	return intersection.Intersection(new_bbox, other.m_node);
@@ -497,6 +497,7 @@ build_root(const ON_Curve* curve, const ON_Interval* domain, Subcurve& root)
     return true;
 }
 
+
 void
 newton_cci(double& t_a, double& t_b, const ON_Curve* curveA, const ON_Curve* curveB)
 {
@@ -552,6 +553,7 @@ newton_cci(double& t_a, double& t_b, const ON_Curve* curveA, const ON_Curve* cur
 	t_b -= Delta[1][0];
     }
 }
+
 
 int
 ON_Intersect(const ON_Curve* curveA,
@@ -963,18 +965,22 @@ ON_Intersect(const ON_Surface* surfA,
 		if ((*i).second->m_children[0] == NULL)
 		    ret2 = (*i).second->Split();
 		if (ret1) {
-		    if (ret2) { /* both splits failed */
+		    if (ret2) {
+			/* both splits failed */
 			tmp_pairs.push_back(*i);
 			h = MAX_SSI_DEPTH;
-		    } else { /* the first failed */
+		    } else {
+			/* the first failed */
 			for (int j = 0; j < 4; j++)
 			    tmp_pairs.push_back(std::make_pair((*i).first, (*i).second->m_children[j]));
 		    }
 		} else {
-		    if (ret2) { /* the second failed */
+		    if (ret2) {
+			/* the second failed */
 			for (int j = 0; j < 4; j++)
 			    tmp_pairs.push_back(std::make_pair((*i).first->m_children[j], (*i).second));
-		    } else { /* both success */
+		    } else {
+			/* both success */
 			for (int j = 0; j < 4; j++)
 			    for (int k = 0; k < 4; k++)
 				tmp_pairs.push_back(std::make_pair((*i).first->m_children[j], (*i).second->m_children[k]));
@@ -1293,6 +1299,7 @@ ON_Intersect(const ON_Surface* surfA,
 
     return x.Count();
 }
+
 
 // Local Variables:
 // tab-width: 8
