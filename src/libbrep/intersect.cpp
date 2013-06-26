@@ -505,7 +505,7 @@ newton_cci(double& t_a, double& t_b, const ON_Curve* curveA, const ON_Curve* cur
     //   y_a(t_a) - y_b(t_b) = 0
     //   z_a(t_a) - z_b(t_b) = 0
     // It's an over-determined system.
-    // We use Newton-Raphson iterations to solve the first two equations,
+    // We use Newton-Raphson iterations to solve two equations of the three,
     // and use the third for checking.
     double last_t_a = DBL_MAX*.5, last_t_b = DBL_MAX*.5;
     ON_3dPoint pointA = curveA->PointAt(t_a);
@@ -527,9 +527,26 @@ newton_cci(double& t_a, double& t_b, const ON_Curve* curveA, const ON_Curve* cur
 	F[0][0] = pointA.x - pointB.x;
 	F[1][0] = pointA.y - pointB.y;
 	if (!J.Invert(0.0)) {
-	    // FIXME: More elegant error handling.
-	    bu_log("Inverse failed.\n");
-	    continue;
+	    // bu_log("Inverse failed.\n");
+	    J[0][0] = derivA.x;
+	    J[0][1] = -derivB.x;
+	    J[1][0] = derivA.z;
+	    J[1][1] = -derivB.z;
+	    F[0][0] = pointA.x - pointB.x;
+	    F[1][0] = pointA.z - pointB.z;
+	    if (!J.Invert(0.0)) {
+		// bu_log("Inverse failed again.\n");
+		J[0][0] = derivA.y;
+		J[0][1] = -derivB.y;
+		J[1][0] = derivA.z;
+		J[1][1] = -derivB.z;
+		F[0][0] = pointA.y - pointB.y;
+		F[1][0] = pointA.z - pointB.z;
+		if (!J.Invert(0.0)) {
+		    // bu_log("Inverse failed and never try again.\n");
+		    continue;
+		}
+	    }
 	}
 	ON_Matrix Delta;
 	Delta.Multiply(J, F);
