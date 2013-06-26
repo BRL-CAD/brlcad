@@ -498,7 +498,7 @@ build_root(const ON_Curve* curve, const ON_Interval* domain, Subcurve& root)
 }
 
 void
-newton_cci(double& t_a, double& t_b, const ON_Curve* curveA, const ON_Curve* curveB, double intersection_tolerance)
+newton_cci(double& t_a, double& t_b, const ON_Curve* curveA, const ON_Curve* curveB)
 {
     // Equations:
     //   x_a(t_a) - x_b(t_b) = 0
@@ -513,7 +513,6 @@ newton_cci(double& t_a, double& t_b, const ON_Curve* curveA, const ON_Curve* cur
     double distance = pointA.DistanceTo(pointB);
     int iteration = 0;
     while (fabs(last_t_a - t_a) + fabs(last_t_b - t_b) > ON_ZERO_TOLERANCE
-	&& distance > intersection_tolerance
 	&& iteration++ < CCI_MAX_ITERATIONS) {
 	last_t_a = t_a, last_t_b = t_b;
 	ON_3dVector derivA, derivB;
@@ -634,12 +633,16 @@ ON_Intersect(const ON_Curve* curveA,
 	// If they converge to one point, it's considered an intersection
 	// point, otherwise it's considered an overlap event.
 	double t_a1 = i->first->m_t.Min(), t_b1 = i->second->m_t.Min();
-	newton_cci(t_a1, t_b1, curveA, curveB, intersection_tolerance);
+	newton_cci(t_a1, t_b1, curveA, curveB);
 	double t_a2 = i->first->m_t.Max(), t_b2 = i->second->m_t.Max();
-	newton_cci(t_a2, t_b2, curveA, curveB, intersection_tolerance);
+	newton_cci(t_a2, t_b2, curveA, curveB);
 
-	if (fabs(t_a1 - t_a2) + fabs(t_b1 - t_b2) < ON_ZERO_TOLERANCE*2) {
-	    // the errors may double, so we use ON_ZERO_TOLERANCE*2
+	ON_3dPoint pointA1 = curveA->PointAt(t_a1);
+	ON_3dPoint pointB1 = curveB->PointAt(t_b1);
+	ON_3dPoint pointA2 = curveA->PointAt(t_a2);
+	ON_3dPoint pointB2 = curveB->PointAt(t_b2);
+	if (pointA1.DistanceTo(pointA2) < intersection_tolerance
+	    && pointB1.DistanceTo(pointB2) < intersection_tolerance) {
 	    // it's considered the same point
 	    ON_3dPoint pointA = curveA->PointAt(t_a1);
 	    ON_3dPoint pointB = curveB->PointAt(t_b1);
@@ -656,11 +659,7 @@ ON_Intersect(const ON_Curve* curveA,
 	    }
 	} else {
 	    // Check overlap
-	    bu_log("Maybe overlap.\n");
-	    ON_3dPoint pointA1 = curveA->PointAt(t_a1);
-	    ON_3dPoint pointB1 = curveB->PointAt(t_b1);
-	    ON_3dPoint pointA2 = curveA->PointAt(t_a2);
-	    ON_3dPoint pointB2 = curveB->PointAt(t_b2);
+	    // bu_log("Maybe overlap.\n");
 	    double distance1 = pointA1.DistanceTo(pointB1);
 	    double distance2 = pointA2.DistanceTo(pointB2);
 
@@ -714,8 +713,10 @@ ON_Intersect(const ON_Curve* curveA,
     for (int i = 0; i < tmp_x.Count(); i++) {
 	int j;
 	for (j = 0; j < x.Count(); j++) {
-	    if (ON_NearZero(tmp_x[i].m_a[0] - x[j].m_a[0]) && ON_NearZero(tmp_x[i].m_a[1] - x[j].m_a[1])
-		&& ON_NearZero(tmp_x[i].m_b[0] - x[j].m_b[0]) && ON_NearZero(tmp_x[i].m_b[1] - x[j].m_b[1]))
+	    if (tmp_x[i].m_A[0].DistanceTo(x[j].m_A[0]) < intersection_tolerance
+		&& tmp_x[i].m_A[1].DistanceTo(x[j].m_A[1]) < intersection_tolerance
+		&& tmp_x[i].m_B[0].DistanceTo(x[j].m_B[0]) < intersection_tolerance
+		&& tmp_x[i].m_B[1].DistanceTo(x[j].m_B[1]) < intersection_tolerance)
 		break;
 	}
 	if (j == x.Count())
