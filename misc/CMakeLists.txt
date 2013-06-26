@@ -72,7 +72,6 @@ set(misc_ignore_files
   doxygen_structure
   flawfinder
   jove.emacs
-  libtool.m4
   macosx
   nsis
   win32-msvc
